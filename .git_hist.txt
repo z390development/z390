@@ -1,0 +1,145 @@
+==> Create initial dir with git repository
+md z390
+cd z390
+git init
+
+==> Create initial .gitignore file (inherited from prior attempt to create repository):
+# Java compiler output stuff
+**/*.[jJ][aA][rR]
+**/*.[eEe][xX][eE]
+**/*.[lL][iI][nN][kK]
+
+# Assembler/emulator input stuff
+# **/*.cbl --> Cobol source code
+# **/*.cpy --> Assembler copy members
+# **/*.in[0-9] --> Test input data
+# **/*.ini --> Initialization file
+# **/*.ivp --> Data for Installation Verification Procedure
+# **/*.lkd --> Link-edit instructions
+# **/*.mac --> Macro definitions
+# **/*.mcr --> Macro definitions
+# **/*.mlc --> Assembler source code
+# **/*.opt --> Assembler options file
+# **/*.rtf --> rtf documents
+# **/*.tf[1-3] --> test data files
+# **/*.tq[1-3] --> test data files
+# **/*.txt --> plain text documents
+# **/*.ver --> version info files
+# **/*.xgt --> XGET input file
+# **/*.xrd --> XREAD input file
+# **/*.zap --> Superzap script files
+# **/*.zsm --> HLASM source code needing to be pre-processed by ZSTRMAC
+# util/superzap/*.sav --> Saved version of input file
+
+# Assembler/emulator output stuff
+[jJ][aA][rR]*/
+**/*.class
+**/*.390
+**/*.[bB][aA][lL]
+**/*.[dD][fF]?
+**/*.[dD][iI]?
+**/*.[eE][rR][rR]
+**/*.[iI][mM][gG]
+**/*.[lL][oO][gG]
+**/*.[lL][sS][tT]
+**/*.[oO][bB][jJ]
+**/*.[oO][uU][tT]
+**/*.[pP][cC][hH]
+**/*.[pP][rR]1
+**/*.[pP][rR][nN]
+**/*.[rR][pP][tT]
+**/*.[sS][fF][0-9]
+**/*.[sS][tT][aA]
+**/*.[sS][vV]*
+**/*.[tT][fF][0-9]
+!**/*.[tT][fF][1-3]
+**/*.[tT][rR]?
+**/*.[tT][sS][tT]
+**/*.[xX][pP][hH]
+**/*_ZC_LABELS.CPY
+
+# Other output stuff
+**/[aA][lL][lL]/
+**/[cC][lL][aA][sS][sS][eE][sS]/
+**/[dD][iI][fF]/
+**/[dD][iI][fF][fF]/
+**/[sS][aA][vV][eE]/
+**/*.[bB][mM][kK]
+**/*.[hH][tT][mM]
+**/*.[hH][tT][mM][lL]
+**/*.[oO][tT][1-9]
+**/*.[rR][lLuU][eEgE]
+**/*.[uU][lL][dD]
+**/*.[uU][rR][fF]
+**/*.[vV][eE][sS]
+**/*.[vV][xX][0nN]
+linklib/RTGENCMP.[dD][aA][tT]
+linklib/ZAPDEMO1.[dD][aA][tT]
+rt/rtgendr[1-3].[dD][aA][tT]
+util/superzap/*.[dD][aA][tT]
+
+# redirection files
+**/*.[lL][nN][kK]
+
+# Cobol related stuff
+**/.[cC][bB][lL]
+zcobol/**/*.[hH][lL][aA]
+zcobol/**/*.[dD][eE][cC]
+zcobol/**/[zZ]390
+zcobol/demo/i586/
+zcobol/demo/java/
+zcobol/demo/vce/
+zcobol/demo/z390/
+zcobol/test/z390/
+
+# Unneeded documents
+**/[jJ][aA][vV][aA][dD][oO][cC]/
+**/[wW][eE][bB][dD][oO][cC]*/
+**/*.[bB][mM][pP]
+**/*.[dD][oO][cC]
+**/*.[gG][iI][fF]
+**/*.[iI][cC][oO]
+**/*.[jJ][pP][gG]
+**/*.[pP][dD][fF]
+**/*.[pP][nN][gG]
+**/*.[pP][pP][tT]
+
+# Backup and junk files
+**/_private/
+**/_vti_cnf/
+**/_vti_pvt/
+**/*.[bB][aA][kK]
+**/*.[cC][pP][lL]
+**/*.[mM][aA]1
+**/*.[sS][aA][vV]
+!util/superzap/*.[sS][aA][vV]
+**/*.[tT][mM][pP]
+**/*.[zZ][iI][pP]
+**/*(2).*
+**/~*.*
+**/*.*~
+**/*.$$$
+**/[jJ][uU][nN][kK].*
+**/[tT][eE][mM][pP].*
+**/[tT][eE][mM][pP][1-9].*
+**/[A-Z][A-Z][A-Z][A-Z][A-Z][A-Z][A-Z][A-Z]
+!**/[A-Z][A-Z][A-Z][A-Z][A-Z][A-Z][A-Z][A-Z]/
+**/* - Copy.*
+**/[cC][iI][cC][sS]
+zpar/*.[dD][aA][tT]
+
+==> Create initial commit
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2005-01-01 12:00:00 -0500
+set GIT_COMMITTER_DATE=2021-03-20 11:22:00 +0100
+git commit -m "Empty repository before z390 started"
+git tag -a v0000 -m "Empty repository before z390 started"
+
+==> Create initial commit
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2005-01-01 12:00:00 -0500
+set GIT_COMMITTER_DATE=2021-03-20 11:35:00 +0100
+git commit -m "Empty repository before z390 started"
+git tag -a v0.0.00 -m "Empty repository before z390 started"
