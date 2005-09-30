@@ -1,0 +1,42 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N       POINT &DCB,&REL,&RBA=
+.*
+.* SET FILE POINTER FOR READ/WRITE RANDOM ACCESS
+.*   DCB  - REQUIRED WITH DCBBLKSI DEFINED 
+.*   REL  - RX OF FULL WORD RELATIVE RECORD NUMBER (0-N)
+.*   RBA= - RX OF DOUBLE WORD RELATIVE BYTE POSITION (OVERRIDES REL)
+.*
+.*   NOTE RBA= IS EXTENSION OF POINT FOR UP TO 2 GB RANDOM ACCESS
+.*
+&N       DS    0H
+         AIF   ('&DCB'(1,1) EQ '(').DCBREG
+         LA    1,&DCB
+         AGO   .CHKRBA
+.DCBREG  ANOP
+         LR    1,&DCB(1)
+.CHKRBA  ANOP
+         AIF   (&RBA EQ '').CHKREL
+         AIF   ('&RBA'(1,1) EQ '(').RBAREG
+         LG    0,&RBA
+         AGO   .SVC
+.RBAREG  ANOP
+         LG    0,0(&RBA(1))
+.CHKREL  ANOP
+         AIF   ('&REL'(1,1) EQ '(').RELREG
+         LGF   0,&REL
+         AGO   .TORBA
+.RELREG  ANOP
+         LGF   0,0(&REL(1))
+.TORBA   ANOP
+         LH    15,DCBBLKSI-IHADCB(1)
+         MSGFR 0,15
+.SVC     ANOP
+         SVC   156 POINT R1=DCB R0=(64 BIT RBA)
+         MEND

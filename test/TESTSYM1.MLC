@@ -1,0 +1,33 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTSYM1 SUBENTRY
+         WTO   'TESTSYM1 - TEST SYMBOL T AND L OPERATORS'
+         SUBEXIT
+         MACRO
+         TSYM  &SDS,&ST,&SL
+&T       SETC  T'&SDS
+&L       SETA  L'&SDS
+         MNOTE 'DS=&SDS T=&T L=&L'
+         AIF   (&T NE &ST).ERR
+         AIF   (&L NE &SL).ERR
+         MEXIT
+.ERR     ANOP
+         MNOTE 12,'SYMBOL TYPE OR LENGTH ERROR'        
+         MEND
+         TSYM  SA,A,4
+         TSYM  SAL3,A,3
+         TSYM  S2A,A,4
+         TSYM  SEAL3,A,3
+         TSYM  SS,S,2
+ADUP     EQU   3
+SA       DS    A
+SAL3     DS    AL3
+S2A      DS    2A
+SEAL3    DS    (ADUP)AL3
+SS       DS    S
+         END

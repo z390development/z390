@@ -1,0 +1,18 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N       ABEND &ID,&DUMP
+.*
+.* ABORT TASK WITH OPTIONAL DUMP
+.*
+&N       LA   1,&ID
+         AIF  (&DUMP EQ '').SKIPDUMP
+         OIHH 1,X'8000'
+.SKIPDUMP ANOP  
+         SVC  13
+         MEND

@@ -1,0 +1,24 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+         CVTD
+.*
+.* EZ390 CVT DSECT - ADDRESS STORED AT LOC X'10' AND X'4C'
+.*
+IHACVT  DSECT
+        ORG    IHACVT+X'08'
+CVTPGM  DS     CL8   390 PROGRAM NAME LOADED AT IPL
+        ORG    IHACVT+X'10'
+CVTFQ24 DS     A     ADDRESS OF FIRST FQE FOR 24 BIT MEMORY
+        ORG    IHACVT+X'14'
+CVTFQ31 DS     A     ADDRESS OF FIRST FQE FOR 31 BIT MEMORY
+        ORG    IHACVT+X'18'
+CVTSAVE DS     18F   SAVE AREA
+        ORG    IHACVT+X'60'
+CVTEXIT DS     XL2   SVC 3 EXIT BRANCH ENTRY USING BR 14
+        MEND

@@ -1,0 +1,23 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTMAC2 SUBENTRY
+         WTO   'TESTMAC2 - TEST CONDITIONAL COMPARES'
+         SUBEXIT
+         MACRO
+&N       TEST  &P1
+         MNOTE 'N=&N P1=&P1'
+         AIF   (&N NE &P1).SKIP
+         MNOTE '&N EQ &P1'
+         MEXIT
+.SKIP    ANOP
+         MNOTE '&N NE &P1'
+         MEND
+A        TEST  P1
+B        TEST  P2
+XYZ      TEST  XYZ
+         END

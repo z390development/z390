@@ -1,0 +1,14 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N       SUBEXIT
+&N       L     13,4(13)
+         LM    0,12,20(13)
+         L     14,12(13)
+         BR    14
+         MEND

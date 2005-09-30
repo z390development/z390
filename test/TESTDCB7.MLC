@@ -1,0 +1,39 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTDCB7 SUBENTRY
+         WTO   'TESTDCB7 COPY SYSUT1 EBCDIC VB FILE TO SYSUT2 VT'
+         OPEN  (SYSUT1,(INPUT),SYSUT2,(OUTPUT),SYSOUT,(OUTPUT))
+LOOP     EQU   *
+         GET   SYSUT1,RECORD
+         LH    R1,RECORD
+         AHI   R1,-4
+         EX    R1,MVCREC
+         AP    PTOT,=P'1'
+         MVC   DTOT,=X'40202020'
+         ED    DTOT,PTOT
+         PUT   SYSOUT,MSG
+         PUT   SYSUT2,RECORD
+         B     LOOP
+MVCREC   MVC   DREC(0),RECORD+4
+EOF      CLOSE (SYSUT1,,SYSUT2,,SYSOUT)
+         WTO   'TESTDCB7 ENDED OK'
+         SUBEXIT
+SYSUT1   DCB   DSORG=PS,DDNAME=SYSUT1,EODAD=EOF,MACRF=GM,              X
+               RECFM=VB,BLKSIZE=8000            
+SYSUT2   DCB   DSORG=PS,DDNAME=SYSUT2,MACRF=PM,RECFM=VT,BLKSIZE=84
+SYSOUT   DCB   DSORG=PS,DDNAME=SYSOUT,RECFM=FT,BLKSIZE=120,MACRF=PM
+RECORD   DC    CL84' '
+PTOT     DC    PL2'0'
+MSG      DS    0CL120
+         DC    C'REC#='
+DTOT     DC    CL4' ',C' TEXT='
+DREC     DC    CL80' '
+         DC    (MSG+120-*)C' '
+         DCBD
+         EQUREGS
+         END

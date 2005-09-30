@@ -1,0 +1,106 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N       TIME  &TYPE,&ADDR,&LINKAGE=SVC,&DATETYPE=YYYYDDD
+.*
+.* RETURN TIME AND DATE IN REQUESTED FORMAT
+.*
+&N       DS    0H
+         AIF   (&LINKAGE EQ 'SVC').SVCLINK
+         AIF   (&LINKAGE EQ 'SYSTEM').SYSLINK
+         MNOTE 12,'INVALID LINKAGE TYPE - &LINKAGE'
+         MEXIT
+.*
+.* LINKAGE=SVC DEFAULT
+.*
+.SVCLINK ANOP
+         AIF   (&TYPE EQ '').SVCDEC
+         AIF   (&TYPE EQ 'DEC').SVCDEC
+         AIF   (&TYPE EQ 'BIN').SVCBIN
+         AIF   (&TYPE EQ 'TU').SVCTU
+         AIF   (&TYPE EQ 'MIC').SVCMIC
+         AIF   (&TYPE EQ 'STCK').SVCSTCK
+         MNOTE 12,'INVALID SVC LINKAGE TYPE - &TYPE'
+         MEXIT
+.SVCDEC  ANOP             R1 = HEX CCYYDDDF
+         LA    0,0   DEC  R0 = HEX HHMMSSTH
+         AGO   .SVCSVC
+.SVCBIN  ANOP
+         LA    0,1   BIN  R0 = 0.01 SECONDS
+         AGO   .SVCSVC
+.SVCTU   ANOP
+         LA    0,2   TU   R0 = 26.04166 MIC UNITS
+         AGO   .SVCSVC
+.SVCMIC  ANOP
+         LA    0,3   MIC  0(8,R1) = DOUBLE WORD MICROSECONDS
+         AGO   .SVCADDR
+.SVCSTCK ANOP
+         LA    0,4   STCK 0(8,R1) = DOUBLE WORD CLOCK (BIT 51=MIC)
+.SVCADDR ANOP
+         AIF   ('&ADDR'(1,1) EQ '(').SVCAREG
+         LA    1,&ADDR
+         AGO   .SVCSVC
+.SVCAREG ANOP
+         LR    1,&ADDR(1)
+.SVCSVC  ANOP
+         SVC   11 TIME AND DATE
+         MEXIT
+.*
+.* LINKAGE=SYSTEM 
+.*
+.SYSLINK ANOP
+         AIF   (&TYPE EQ '').SYSDEC
+         AIF   (&TYPE EQ 'DEC').SYSDEC
+         AIF   (&TYPE EQ 'BIN').SYSBIN
+         AIF   (&TYPE EQ 'MIC').SYSMIC
+         AIF   (&TYPE EQ 'STCK').SYSSTCK
+         AIF   (&TYPE EQ 'STCKE').SYSSTCKE
+         MNOTE 12,'INVALID SYS LINKAGE TYPE - &TYPE'
+         MEXIT
+.SYSDEC  ANOP
+         LA    0,10   DEC   0(4,R1) = HHMMSSTH
+         AGO   .SYSADDR
+.SYSBIN  ANOP
+         LA    0,11   BIN   0(4,R1) = 0.01 SECONDS
+         AGO   .SYSADDR 
+.SYSMIC  ANOP
+         LA    0,13  MIC    0(8,R1) = MICROSECONDS 
+         AGO   .SYSADDR
+.SYSSTCK ANOP
+         LA    0,14   STCK  0(8,R1) = CLOCK (BIT 51 = MIC)
+         AGO   .SYSADDR
+.SYSSTCKE ANOP
+         LA    0,15   SKCKE 0(16,R1) = ECLOCK (BIT 59 = MIC)
+.SYSADDR ANOP
+         AIF   ('&ADDR'(1,1) EQ '(').SYSAREG
+         LA    1,&ADDR
+         AGO   .SYSDATE
+.SYSAREG ANOP
+         LR    1,&ADDR(1)
+.SYSDATE ANOP
+         AIF   (&TYPE EQ 'STCKE').SYSSVC NO DATE
+         AIF   (&DATETYPE EQ 'YYYYDDD').SYSYYYYDDD
+         AIF   (&DATETYPE EQ 'MMDDYYYY').SYSMMDDYYYY
+         AIF   (&DATETYPE EQ 'DDMMYYYY').SYSDDMMYYYY
+         AIF   (&DATETYPE EQ 'YYYYMMDD').SYSYYYYMMDD
+         MNOTE 12,'INVALID SYS LINKAGE DATEYYPE - &DATETYPE'
+         MEXIT
+.SYSYYYYDDD ANOP
+         IILH  0,1      8(4,R1) = HEX 0YYYYDDD
+         AGO   .SYSSVC
+.SYSMMDDYYYY ANOP
+         IILH  0,2      8(4,R1) = HEX MMDDYYYY
+         AGO   .SYSSVC
+.SYSDDMMYYYY ANOP 
+         IILH  0,3      8(4,R1) = HEX DDMMYYYY
+         AGO   .SYSSVC
+.SYSYYYYMMDD ANOP
+         IILH  0,4      8(4,R1) = HEX YYYYMMDD
+.SYSSVC  ANOP
+         SVC   11 TIME AND DATE
+         MEND

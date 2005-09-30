@@ -1,0 +1,24 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTACT1 SUBENTRY
+         WTO   'TESTACT1 TEST ACTR LIMIT IN OPEN CODE AND MACRO'
+.LOOP    ANOP
+&A       SETA  &A+1
+         AIF   (&A LT 4000).LOOP
+         WTO   'OPEN CODE A=&A'
+         MACRO
+         TEST
+.LOOP    ANOP
+&A       SETA  &A+1
+         AIF   (&A LT 4000).LOOP
+         WTO   'MACRO CODE A=&A'
+         MEND
+         TEST
+         WTO  'TESTACT1 TEST ENDED OK'
+         SUBEXIT
+         END

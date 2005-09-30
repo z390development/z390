@@ -1,0 +1,69 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTUSE1 SUBENTRY
+         WTO   'TESTUSE1 TEST LABELD AND DEPENDANT USING'
+*
+* TEST S TYPE ADDRESS 
+*
+         DC    X'4110',S(X)
+         CL    1,=A(X)
+         BNE   ERR
+*
+* TEST MULT REG USING AND RANGE LIMITS
+*
+         USING CST2,1,2
+         CLC   =S(CST2+4095,CST2+4096),=X'1FFF2000'
+         BNE   ERR
+         USING (CST2+10,CST2+20),3
+         CLC   =S(CST2+10,CST2+21),=X'30001015'
+         BNE   ERR
+         B     SKPLIT
+         LTORG
+         DROP  1,2,3
+SKPLIT   DS    0H
+
+*
+* TEST UNLABELED DEPENDANT USING
+*
+         USING IHADCB,SYSUT1
+         CLC   DCBDDNAM,=CL8'SYSUT1'
+         BNE   ERR
+         CLC   DCBLRECL,=H'80'
+         BNE   ERR
+         USING IHADCB,SYSUT2
+         CLC   DCBDDNAM,=CL8'SYSUT2'
+         BNE   ERR
+         CLC   DCBLRECL,=H'120'
+         BNE   ERR
+         DROP
+         USING TESTUSE1+8,13
+*
+* TEST LABELED DEPENDANT USING
+*
+DCB1     USING IHADCB,SYSUT1
+DCB2     USING IHADCB,SYSUT2
+         CLC   DCB1.DCBDDNAM,=CL8'SYSUT1'
+         BNE   ERR
+         CLC   DCB1.DCBLRECL,=H'80'
+         BNE   ERR
+         CLC   DCB2.DCBDDNAM,=CL8'SYSUT2'
+         BNE   ERR
+         CLC   DCB2.DCBLRECL,=H'120'
+         BNE   ERR
+         DROP  DCB1,DCB2
+         WTO   'TESTUSE1 ENDED OK'
+         SUBEXIT
+ERR      WTO   'TESTUSE1 ABORTING WITH ERROR'
+         SUBEXIT RC=16
+SYSUT1   DCB   DSORG=PS,RECFM=FB,LRECL=80,MACRF=GM,DDNAME=SYSUT1
+SYSUT2   DCB   DSORG=PS,RECFM=FB,LRECL=120,MACRF=PM,DDNAME=SYSUT2
+X        EQU   *
+CST2     CSECT
+         DS    XL8192
+         DCBD
+         END

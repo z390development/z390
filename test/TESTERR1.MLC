@@ -1,0 +1,64 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+         TITLE 'TESTERR1 TEST MZ390 ERRORS'
+TESTERR1 CSECT
+         USING *,15
+* INVALID MACRO EXPRESSIONS
+&A1      SETA
+&A2      SETA 1+
+&A3      SETA 1/0
+&B1      SETB
+&B2      SETB 1+
+&B3      SETB 1/0
+&X1      SETC
+&X2      SETC 'XXX
+&X3      SETC 'X'(1, 
+         LCLA A(2)
+&A(0)    SETA 1
+&A(1)    SETA 1
+&A(3)    SETA 1
+         LCLB B(2)
+&B(0)    SETB 1
+&B(1)    SETB 1
+&B(3)    SETB 1
+         LCLC C(2)
+&C(0)    SETC 'C'
+&C(1)    SETC 'C'
+&C(3)    SETC 'C' 
+         GBLA GA(2)
+&GA(0)    SETA 1
+&GA(1)    SETA 1
+&GA(3)    SETA 1
+         GBLB GB(2)
+&GB(0)    SETB 1
+&GB(1)    SETB 1
+&GB(3)    SETB 1
+         GBLC GC(2)
+&GC(0)    SETC 'C'
+&GC(1)    SETC 'C'
+&GC(3)    SETC 'C' 
+* INVALID SYSLIST SUBSCRIPT
+         MACRO
+         TEST1 
+         MNOTE 'P1=&SYSLIST(-1)'       ERROR
+         MNOTE 'P1(1)=&SYSLIST(1)'     OK
+         MNOTE 'P1(1,2)=&SYSLIST(1,2)' OK
+         MNOTE 'P1(1,2)=&SYSLIST(1,0)' ERROR
+         MEND
+         TEST1 (A,
+         MACRO
+&N       TEST2 &P1,&K1=
+&N       SETA  1
+&P1      SETB  1
+&K1      SETC  'X'
+         MNOTE 'N=&N P1=&P1 K1=&K1'
+         MEND
+A        TEST2 B,K1=C
+* VALID COPY STATEMENT ON NEXT LINE IN TESTERR1.MLC
+         COPY  TESTERR1
+         END 

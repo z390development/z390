@@ -1,0 +1,36 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N       DCB   &DSORG=PS,                                              X
+               &EODAD=0,                                               X
+               &RECFM=FB,                                              X                        
+               &DDNAME=X,                                              X
+               &MACRF=GM,                                              X
+               &SYNAD=0,                                               X
+               &BLKSIZE=0,                                             X
+               &LRECL=0                                                 
+&N       DS    0D
+         ORG   &N+DCBDSORG-IHADCB
+         DC    AL1(DCBDSORG_&DSORG)
+         ORG   &N+DCBEODAD-IHADCB
+         DC    A(&EODAD)
+         ORG   &N+DCBRECFM-IHADCB
+         DC    AL1(DCBRECFM_&RECFM)
+         ORG   &N+DCBDDNAM-IHADCB
+         DC    CL8'&DDNAME'
+         ORG   &N+DCBOFLGS-IHADCB
+         DC    AL1(DCBOFLGS_&MACRF)
+         ORG   &N+DCBMACRF-IHADCB
+         DC    AL2(DCBMACRF_&MACRF)
+         ORG   &N+DCBSYNAD-IHADCB
+         DC    A(&SYNAD)
+         ORG   &N+DCBBLKSI-IHADCB
+         DC    H'&BLKSIZE'
+         ORG   &N+DCBLRECL-IHADCB
+         DC    H'&LRECL'
+         MEND

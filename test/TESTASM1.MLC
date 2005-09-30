@@ -1,0 +1,21 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTASM1 SUBENTRY
+         WTO   'STARTING TESTASM1 - MISC ASSEMBLER INSTR'
+         CNOP  0,4
+         CNOP  2,4
+         CNOP  0,4
+         CNOP  0,8
+         CNOP  6,8
+         CNOP  4,8
+         CNOP  2,8
+         CNOP  0,8
+         WTO   'TESTASM1 END OK'
+         SUBEXIT
+         EQUREGS
+         END         

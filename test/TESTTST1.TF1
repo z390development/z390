@@ -1,0 +1,81 @@
+* this is a test input file for testtst1.mlc when executed via ez390
+* with option test(sysut1) where sysut1 environment variable is set
+* to point to this file.
+*
+* h - help command summary
+h
+* next the memory area starting at 300. is set to expected values
+* and then list memory is used to verify the area.  Also the
+* program verifies that area when executed.  This also tests the
+* different self defining terms supported.
+300.=F'255'
+l 300. 4
+5r=12.
+l 5r% 4
+5r=FF000300.
+l 5r% 4
+4r=80000300.
+l 4r? 4
+b=300.
++4.=H'50'
+l +4 2
++6.=B'1001'
+l +6 1
+b=308.
+-1=C'HELLO'
+l -1 5
++4=X'ABCDEF'
+l +4 3
+* next set and verify register 4 expected value
+4R=F'123'
+l 4r
+* list command with no operands lists all registers and current psw instruction
+l
+* go exec 1 instruction using current trace setting
+g 1
+* go exec 2 instruction using current trace setting
+z 2
+* go trace instructions until next lr instruction found
+t lr
+* set reg 5 and then test setting break on register.  Since the break
+* conditions are met, the break on message appears after each set
+5r=2 
+s 5r=2 
+s 5r>1
+s 5r<3
+s 5r>=2 
+s 5r>=1 
+s 5r<=3
+s 5r<=2
+s 5r!=1
+* change current psw
+j *+2
+j *-2
+* list memory area at current psw
+l * 32
+* go stops after 1 instruction due to register break being on
+g
+* turn off all breaks
+s
+* set memory and then test setting breaks on memory.  Since the break
+* conditions are met, the break on message appears after each set
+0.=x'b'
+s 0.=x'b'
+s 0.!=x'a'
+s 0.>x'a'
+s 0.<x'c'
+s 0.<=x'c'
+s 0.<=x'b'
+s 0.>=x'a'
+s 0.>=x'b'
+* test c'...' sdt with embedded double quotes
+400.=c'a''b'
+s 400.=c'a''b'
+l 400. 40.
+* reset reg and memory breaks
+s
+* go find next bras (branch relative and save) instruction
+G bras
+h
+* zoom to end of normal execution
+z

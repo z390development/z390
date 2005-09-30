@@ -1,0 +1,52 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N       WRITE  &DECB,&TYPE,&DCB,&AREA
+.*
+.*       SEQUENTIALLY WRITE BLOCK AT CURRENT FILE POSITION
+.*
+.*       USE CHECK TO VERIFY COMPLETION AND TAKE EODAD/SYNAD EXITS
+.*       USE POINT TO CHANGE CURRENT FILE POSITION
+.*
+.*       DECB -  CREATED INLINE FOR REFERENCE BY CHECK (SEE DECBD)
+.*       TYPE -  SF FOR SEQUENTIAL FORWARD, SB FOR SEQUENTIAL BACKWARD
+.*       DCB  -  DATA CONTROL BLOCK OPENED WITH RW MACRF
+.*       AREA -  AREA TO RECEIVE BLOCK (MUST BE >= DCBBLKSI)
+.*
+&N       DS    0H
+         AIF   ('&DECB'(1,1) EQ '(').DECBREG
+         CNOP  0,4
+         BAL   1,&DECB+DECBL
+&DECB    DC    F'0' DECBECB  (X'40' OK, X'41' I/O ERROR, X'42' EOF)
+         DC    H'0' DECBTYPE
+         DC    AL2(DECBL)
+         DC    A(0) DECBDCBA OPEN DCB WITH MACRF R OR RW
+         DC    A(0) DECBAREA AREA FOR BLOCK MUST BE >= DCBBLKSI
+         ORG   &DECB+DECBL
+         AGO   .CHKDCB
+.DECBREG ANOP
+         LR    1,&DECB(1)
+.CHKDCB  ANOP
+         AIF   (&DCB EQ '').CHKAREA
+         AIF   ('&DCB'(1,1) EQ '(').DCBREG
+         LA    0,&DCB
+         ST    0,DECBDCBA-IHADECB(1)
+         AGO   .CHKAREA
+.DCBREG  ANOP
+         ST    &DCB(1),DECDCBA-IHADECB(1)
+.CHKAREA ANOP
+         AIF   (&AREA EQ '').SVC
+         AIF   ('&AREA'(1,1) EQ '(').AREAREG
+         LA    0,&AREA
+         ST    0,DECBAREA-IHADECB(1)
+         AGO   .SVC
+.AREAREG ANOP
+         ST    &AREA(1),DECBAREA-IHADECB(1)
+.SVC     ANOP
+         SVC   154 WRITE 
+         MEND

@@ -1,0 +1,18 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTSUB1 SUBENTRY
+         WTO   'TESTSUB1 CSECT HELLO WORLD'
+         SUBEXIT
+TESTSUB2 SUBENTRY
+         WTO   'TESTSUB2 CSECT HELLO WORLD'
+         SUBEXIT
+TESTSUB3 SUBENTRY NOCSECT
+         WTO   'TESTSUB3 ENTRY HELLO WORLD'
+         SUBEXIT
+         ENTRY  TESTSUB3
+         END

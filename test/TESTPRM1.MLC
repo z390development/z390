@@ -1,0 +1,19 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTPRM1 SUBENTRY
+         WTO   'TESTPRM1 TEST POSITIONAL AND KEYWORD PARMS'
+POS0     TESTPRM1 POS1,KEY1=KEY1,POS2,,POS4,KEY2=,KEY3=KEY3
+         MACRO
+         TEST 
+         MNOTE 'P1=&SYSLIST(1)'
+         MNOTE 'P1(1)=&SYSLIST(1)'
+         MNOTE 'P1(1,2)=&SYSLIST(1,2)'
+         MEND
+         TEST (A,
+         SUBEXIT
+         END        

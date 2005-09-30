@@ -1,0 +1,113 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+         TITLE 'TESTTIM1 REGRSSION TEST TIME MACRO FUNCTIONS'
+*
+* NOTE THIS REGRESSION TEST REQUIRES EZ390 BE RUN WITH NOTIMING
+* OPTION IN ORDER FOR TIMESTAMP TO BE FORCED TO 22:33:44:567 2005.002
+*
+TESTIM1  RT1   MAIN
+         EQUREGS
+PWORK    DC    XL8'FF'
+WORK8    DC    XL8'FF'
+WORK16   DC    XL16'FF'
+WTOMSG1  DC    0F'0',AL2(MSG1END-*,0)
+         DC    C' TIME ='
+TIMEDATE DC    X'402120',C':',X'2020',C':',X'2020',C':',X'2020'
+         DC    C'  DATE = '
+         DC    X'20202020',C'.',X'202020'
+MSG1END  EQU   *
+*
+* TIME CONSTANTS WHEN RUNNING EZ390 WITH OPTION NOTIMING
+*
+SVC_DATE   EQU X'0105002F'                DATE CCYYDDDF
+SYS_DATE   EQU X'02005002'                DATE 0YYYYDDD
+TOD_DEC    EQU X'22334456'                TOD  HHMMSSTH
+TOD_BIN    EQU ((22*60+33)*60+44)*100+56  TOD  0.01 SEC
+TOD_MIC    DC  XL8'00'                    TOD  MIC
+TOD_TU     DC  F'0'                       TOD  26.04166 MIC UNITS
+TOD_STCK   DC  XL8'00'                    TOD  BIT 51   MIC
+TOD_STCKE  DC  XL16'00'                   TOD  BIT 59   MIC
+         RT1   START
+*
+* INITIALIZE CALCULATED TOD CONSTANTS USING NOTIMING DEFAULT TIME
+*
+         LG    R3,=AL8(TOD_BIN)
+         MSGF  R3,=A(10)           R3 = MILLISECONDS
+         AG    R3,=FL8'7'
+         MSGF  R3,=F'1000'         R3 = MICROSECONDS
+         STG   R3,TOD_MIC        SET TOD IN MICROSECONDS
+         MSGF  R3,=F'100000'       R3 =  MIC SCALED UP FOR INT DIV
+         DSGF  R2,=F'2604166'      DIV MICS BY 26.04166
+         ST    R3,TOD_TU         SET TOD IN TIMER UNITS
+         LG    R3,TOD_MIC
+         SLLG  R2,R3,(63-51)          MAKE BIT 51 MICROSECONDS
+         STG   R2,TOD_STCK       SET TOD IN STCK CLOCK UNITS
+         LG    R3,TOD_MIC        SET TOD IN TIMER UNITS
+         SLLG  R2,R3,(63-59)          MAKE BIT 59 MICROSECONDS
+         STG   R2,TOD_STCKE      SET TOD IN STCK CLOCK UNITS
+* SVC DEC
+         TIME  DEC
+         STM   R0,R1,PWORK
+         RT1   CCE,PWORK(4),=A(TOD_DEC)'
+         RT1   CCE,PWORK+4(4),=A(SVC_DATE)
+         MVI   PWORK+4,X'20'  CHANGE CC TO 20
+         ED    TIMEDATE(MSG1END-TIMEDATE),PWORK
+         WTO   MF=(E,WTOMSG1)
+* SVC BIN
+         TIME  BIN
+         STM   R0,R1,PWORK
+         RT1   CCE,PWORK(4),=A(TOD_BIN)
+         RT1   CCE,PWORK+4(4),=A(SVC_DATE)
+* SVC TU
+         TIME  TU
+         STM   R0,R1,PWORK
+         RT1   CCE,PWORK(4),TOD_TU
+         RT1   CCE,PWORK+4(4),=A(SVC_DATE)
+* SVC MIC
+         TIME  MIC,WORK8
+         LG    R2,WORK8
+         LG    R3,TOD_MIC
+         STM   R0,R1,PWORK
+         RT1   CCE,WORK8,TOD_MIC
+         RT1   CCE,PWORK+4(4),=A(SVC_DATE)
+* SVC STCK
+         TIME  STCK,WORK8
+         STM   R0,R1,PWORK
+         RT1   CCE,WORK8,TOD_STCK
+         RT1   CCE,PWORK+4(4),=A(SVC_DATE)
+* SYS DEC
+         TIME  DEC,WORK16,LINKAGE=SYSTEM
+         RT1   CCE,WORK16(4),=A(TOD_DEC)
+         RT1   CCE,WORK16+8(4),=A(SYS_DATE)
+* SYS BIN
+         TIME  BIN,WORK16,LINKAGE=SYSTEM
+         RT1   CCE,WORK16(4),=A(TOD_BIN) 
+         RT1   CCE,WORK16+8(4),=A(SYS_DATE)
+* SYS MIC
+         TIME  MIC,WORK16,LINKAGE=SYSTEM
+         RT1   CCE,WORK16(8),TOD_MIC 
+         RT1   CCE,WORK16+8(4),=A(SYS_DATE)
+* SYS STCK
+         TIME  STCK,WORK16,LINKAGE=SYSTEM
+         RT1   CCE,WORK16(8),TOD_STCK
+         RT1   CCE,WORK16+8(4),=A(SYS_DATE)
+* SYS STCKE
+         TIME  STCKE,WORK16,LINKAGE=SYSTEM
+         RT1   CCE,WORK16,TOD_STCKE
+* SYS ALTERNATE DATE TYPES
+         TIME  DEC,WORK16,LINKAGE=SYSTEM,DATETYPE=YYYYDDD
+         RT1   CCE,WORK16+8(4),=A(SYS_DATE)
+         TIME  DEC,WORK16,LINKAGE=SYSTEM,DATETYPE=MMDDYYYY
+         RT1   CCE,WORK16+8(4),=X'01022005'
+         TIME  DEC,WORK16,LINKAGE=SYSTEM,DATETYPE=DDMMYYYY
+         RT1   CCE,WORK16+8(4),=X'02012005'
+         TIME  DEC,WORK16,LINKAGE=SYSTEM,DATETYPE=YYYYMMDD
+         RT1   CCE,WORK16+8(4),=X'20050102'
+         WTO   'TESTTIM1 ENDED OK'
+         RT1   END
+         END

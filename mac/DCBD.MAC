@@ -1,0 +1,55 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+         DCBD   
+.*
+.*       DATA CONTROL BLOCK DSECT 
+.*
+IHADCB   DSECT
+         ORG   IHADCB+X'1A'
+DCBDSORG DS    X              DATA SET ORGANIZATION
+DCBDSORG_PS EQU X'40'           PHYSICAL SEQUENTIAL
+DCBDSORG_DA EQU X'20'           DIRECT ACCESS
+         ORG   IHADCB+X'1C'
+DCBIOBAD DS    A              INPUT/OUTPUT BLOCK (TIOT TABLE INDEX)
+         ORG   IHADCB+X'20'
+DCBEODAD DS    A ADDRESS OF END OF FILE EXIT
+         ORG   IHADCB+X'24'
+DCBRECFM DS    X              RECORD FORMAT
+DCBRECFM_F  EQU X'80'           FIXED
+DCBRECFM_V  EQU X'40'           VARIABLE
+DCBRECFM_FB EQU X'90'           FIXED BLOCKED
+DCBRECFM_VB EQU X'50'           VARIABLE BLOCKED
+DCBRECFM_FT EQU X'A0'           FIXED ASCII TEXT
+DCBRECFM_VT EQU X'60'           VARIABLE ASCII TEXT
+         ORG   IHADCB+X'28'
+DCBDDNAM DS    CL8            DDNAME > ENV VAR > FILE NAME
+         ORG   IHADCB+X'30'
+DCBOFLGS DS    X              OPEN FLAGS
+DCBOFLGS_OPEN EQU X'80'          FILE OPEN
+DCBOFLGS_GM   EQU X'40'          READ  ALLOWED
+DCBOFLGS_PM   EQU X'20'          WRITE ALLOWED
+DCBOFLGS_R    EQU X'40'          READ  ALLOWED
+DCBOFLGS_W    EQU X'20'          WRITE ALLOWED
+DCBOFLGS_RW   EQU X'60'          READ AND WRITE ALLOWED
+         ORG   IHADCB+X'32'
+DCBMACRF DS    H              MACRO REFERENCE ACCESS TYPE
+DCBMACRF_GM EQU X'5000'         GET MOVE QSAM
+DCBMACRF_PM EQU X'0050'         PUT MOVE QSAM
+DCBMACRF_R  EQU X'2000'         READ RANDOM
+DCBMACRF_W  EQU X'0020'         WRITE RANDOM
+DCBMACRF_RW EQU X'2020'         READ/WRITE RANDOM
+         ORG   IHADCB+X'38'
+DCBSYNAD DS    A              ERROR EXIT 
+         ORG   IHADCB+X'3E'
+DCBBLKSI DS    H              BLOCK SIZE    (ALSO UNBLOCKED MAX RECORD)
+         ORG   IHADCB+X'52'
+DCBLRECL DS    H              RECORD LENGTH (MAY BE ZERO FOR UNBLOCKED)
+         ORG   IHADCB+X'58'
+DCBLEN   EQU   *-IHADCB
+         MEND

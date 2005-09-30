@@ -1,0 +1,35 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTDC1  RT1   MAIN
+         RT1   START
+         RT1   CCE,=A(-1),=X'FFFFFFFF'
+         RT1   CCE,=A(-1,0,1),=XL4'FFFFFFFF,0,1',12
+         RT1   CCE,=AL1(-1,0,1),=X'FF0001',3
+         RT1   CCE,=B'11',=X'3'
+         RT1   CCE,=B'1,11,111',=X'1,3,7',3
+         RT1   CCE,=BL2'1,10,11',=X'000100020003',6
+         RT1   CCE,=B'1,10,101',=X'1,2,5',3
+         RT1   CCE,=BL2'1,10,101',=XL2'1,2,5',6
+         RT1   CCE,=B'11110000,1111000111110010',=C'012',3
+         RT1   CCE,=C'1',=X'F1'
+         RT1   CCE,=C'ABC',=X'C1C2C3'
+         RT1   CCE,=CL3'A',=X'C14040'
+         RT1   CCE,=F'1',=X'00000001'
+         RT1   CCE,=FL1'1',=X'01'
+         RT1   CCE,=FL1'1,-1,3',=X'01FF03',3
+         RT1   CCE,=H'1',=X'0001'
+         RT1   CCE,=HL1'1',=X'01'
+         RT1   CCE,=HL1'1,-1,3',=X'01FF03',3
+         RT1   CCE,=P'1',=X'1C'
+         RT1   CCE,=PL2'1,-1,12',=X'001C001D012C',6
+         RT1   CCE,=P'12,1234',=X'012C01234C',5
+         RT1   CCE,=X'1,1',=X'0101',2
+         RT1   CCE,=XL2'1,1',=X'00010001',4
+         RT1   CCE,=Z'123',=X'F1F2F3'
+         RT1   END
+         END         

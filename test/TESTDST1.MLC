@@ -1,0 +1,33 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTDST1 SUBENTRY
+         WTO   'TESTDST1 TEST CSECT AND DSECT SUPPORT'
+         LA    2,=A(CS1)
+         USING CS1,2
+         USING DS1,2
+         LA    3,=A(CS1)
+         USING CS2,3
+         CLC   DS1F2,DS1F2-DS1+CS2
+         BNE   1
+         WTO   'TESTDST1 ENDED OK'
+         SUBEXIT
+DS1      DSECT
+         DS   XL3
+CS1      CSECT
+CS1F1    DC   C'ABC'
+CS1F2    DC   C'DEF'
+CS2      CSECT
+         DS   XL3
+CS1      CSECT
+CS1F3    DC   C'GHI'
+CS2      CSECT
+         DC   C'DEF'
+DS1      CSECT
+DS1F2    DS   CL3
+DS1F3    DS   CL3        
+         END

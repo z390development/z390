@@ -1,0 +1,13 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTPRM2 SUBENTRY
+         WTO   'TESTPRM2 - TEST POSITIONAL AND KEYWORD PARMS'
+POS0     TESTPRM2 'POS1',KEY1=c'KEY1',C'POS2',,'''POS4''',KEY2=' KEY2,'X
+               ,KEY3=KEY3
+         SUBEXIT
+         END        

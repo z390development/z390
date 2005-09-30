@@ -1,0 +1,32 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTDCB1 SUBENTRY
+         WTO   'TESTDCB1 COPY SYSUT1 ASC TEXT FILE TO SYSUT2 ASC TEXT'
+         OPEN  (SYSUT1,(INPUT),SYSUT2,(OUTPUT),SYSOUT,(OUTPUT))
+LOOP     EQU   *
+         GET   SYSUT1,RECORD
+         AP    PTOT,=P'1'
+         MVC   DTOT,=X'40202020'
+         ED    DTOT,PTOT
+         PUT   SYSOUT,MSG
+         PUT   SYSUT2,RECORD
+         B     LOOP
+EOF      CLOSE (SYSUT1,,SYSUT2,,SYSOUT)
+         WTO   'TESTDCB1 ENDED OK'
+         SUBEXIT
+SYSUT1   DCB   DDNAME=SYSUT1,RECFM=FT,LRECL=80,EODAD=EOF,MACRF=GM
+SYSUT2   DCB   DDNAME=SYSUT2,RECFM=FT,LRECL=80,MACRF=PM
+SYSOUT   DCB   DDNAME=SYSOUT,RECFM=FT,BLKSIZE=120,MACRF=PM
+PTOT     DC    PL2'0'
+MSG      DS    0CL120
+         DC    C'REC#='
+DTOT     DC    CL4' ',C' TEXT='
+RECORD   DC    CL80' '
+         DC    (MSG+120-*)C' '
+         DCBD
+         END

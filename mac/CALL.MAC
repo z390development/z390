@@ -1,0 +1,22 @@
+        MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N      CALL   &NAME,&PARMS
+&N      DS     0H
+&NPARMS SETA   N'&PARMS
+        AIF    (&NPARMS EQ 0).NOPARM
+        LA     1,=A&PARMS
+.NOPARM ANOP
+        AIF    ('&NAME'(1,1) EQ '(').REG
+        L      15,=V(&NAME)
+        AGO    .BALR
+.REG    ANOP
+        LR     15,&NAME(1)
+.BALR   ANOP
+        BALR   14,15
+        MEND

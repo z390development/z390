@@ -1,0 +1,24 @@
+        MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N      ESTAE &ADDR
+.*
+.* Set or reset program interruption exit
+.*    ESTAE ADDR  (0 CANCELS ESTAE)
+.* Notes:
+.*  1.  Currently its all or nothing versus list of selected codes
+.*
+&N      DS     0H
+        AIF    ('&ADDR'(1,1) EQ '(').AREG
+        LA     1,&ADDR
+        AGO    .SVC
+.AREG   ANOP
+        LR     1,&ADDR(1)
+.SVC    ANOP
+        SVC    X'3C' ESTAE
+        MEND

@@ -1,0 +1,28 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTRLD1 SUBENTRY 
+         WTO   'TESTRLD1 - TEST RELOCATABLE ADDRESS CONSTANT'
+         L     R1,=A(WTOMSG)
+         SVC   WTO
+         BAL   R1,*+4
+         NILH  R1,X'7FFF'
+         CL    R1,=A(*-4)
+         BNE   ABORT
+         BAL   R1,*+4
+         NILH  R1,X'7FFF'
+         CL    R1,=A(*-4)
+         BNE   ABORT
+         WTO   'TESTRLD1 ENDED OK'
+         SUBEXIT
+ABORT    WTO   'TESTRLD1 ERROR ABORTING'
+         SUBEXIT RC=16
+WTOMSG   DC    AL2(WTOEND-*,0),C'HELLO WORLD'
+WTOEND   EQU   *
+R1       EQU   1
+WTO      EQU   35 WRITE TO OPERATOR
+         END   

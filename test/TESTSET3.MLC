@@ -1,0 +1,79 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTSET3 SUBENTRY
+         WTO   'TESTSET3 - TEST CREATED SET VARIABLES'
+.*
+.* TEST SETA
+.*
+&(SA1)   SETA  1
+         MNOTE 'SA1=&(SA1)'
+         AIF   (&SA1 NE 1).ERR
+&(SAVEA&(SA1)) SETA &(SA1)
+&(SA&(SA1)) SETA 2
+         MNOTE 'SA1=&(SA&(SAVEA1))'
+         AIF   (&SA1 NE 2).ERR
+&(SA&SA1.X) SETA 1
+         MNOTE 'SA2X=&SA2X'
+         AIF   (&SA2X NE 1).ERR
+         GBLA  &(A)(10),&(B)(10)
+&A(1)    SETA  1
+&A(2)    SETA  2
+&B(1)    SETA  1
+&B(2)    SETA  2
+         MNOTE 'A(1)=&A(1) A(2)=&A(2)'
+         MNOTE 'B(1)=&B(1) B(2)=&B(2)'
+         AIF   (&A(1) NE &B(1)).ERR
+         AIF   (&A(2) EQ &B(1)).ERR
+.*
+.* TEST SETB
+.*
+&(SB1)   SETB  1
+         MNOTE 'SB1=&(SB1)'
+         AIF   (&SB1 NE 1).ERR
+&(SAVEB&(SB1)) SETB 1
+&(SB&(SB1)) SETB 0
+         MNOTE 'SB1=&(SB&(SAVEB1))'
+         AIF   (&SB1 NE 0).ERR
+&(SB&SB1.X) SETB 1
+         MNOTE 'SB0X=&SB0X'
+         AIF   (&SB0X NE 1).ERR
+         GBLB  &(C)(10),&(D)(10)
+&C(1)    SETB  0
+&C(2)    SETB  1
+&D(1)    SETB  0
+&D(2)    SETB  1
+         MNOTE 'C(1)=&C(1) C(2)=&C(2)'
+         MNOTE 'D(1)=&D(1) D(2)=&D(2)'
+         AIF   (&C(1) NE &D(1)).ERR
+         AIF   (&C(2) EQ &D(1)).ERR
+.*
+.* TEST SETC
+.*
+&(SC1)   SETC  1
+         MNOTE 'SC1=&(SC1)'
+         AIF   (&SC1 NE 1).ERR
+&(SAVEC&(SC1)) SETC &(SC1)
+&(SC&(SC1)) SETC 2
+         MNOTE 'SC1=&(SC&(SAVEC1))'
+         AIF   (&SC1 NE 2).ERR
+&(SC&SC1.X) SETC 1
+         MNOTE 'SC2X=&SC2X'
+         AIF   (&SC2X NE 1).ERR
+         GBLC  &(T1)(2),&(T2)(2)
+&T1(1)   SETC  'A'
+&T2(2)   SETC  '&T1(1).B'
+&TEXT    SETC  'X'
+&TEXT    SETC  '&TEXT.&T2(2).C'
+         MNOTE 'T1(1)=&T1(1). T2(2)=&T2(2).'
+         MNOTE 'TEXT=Z&TEXT.Z'
+         AIF   (&TEXT NE 'XABC').ERR
+         WTO   'TESTSET3 ENDED OK'
+         SUBEXIT
+         AGO   .EXIT
+.ERR     MNOTE 12,'TESTSET3 ERROR - ABORTING'
+.EXIT    END

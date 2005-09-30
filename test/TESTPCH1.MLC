@@ -1,0 +1,39 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+         MACRO
+         TEST1
+&TEXT    AREAD
+         WTO  '&TEXT'
+         MEND
+TESTPCH1 SUBENTRY
+         WTO   'START TESTPCH1 AREAD AND PUNCH USING DEFAULT PCH'
+         TEST1
+TEST1 RECORD 1
+         TEST1
+TEST1 RECORD 2
+         MACRO
+         TEST2
+.LOOP    ANOP
+&TEXT    AREAD
+         AIF   (&TEXT EQ 'TEST2 END OF DATA').ENDLOOP
+         WTO   '&TEXT'
+         AGO   .LOOP
+.ENDLOOP ANOP
+         MEND
+         TEST2
+TEST2 RECORD 1
+TEST2 RECORD 2
+TEST2 RECORD 3
+TEST2 END OF DATA
+         WTO   'END   AREAD TEXT'
+         WTO   'START PUNCH TEST'
+         PUNCH 'TEST3 RECORD 1'
+         PUNCH 'TEST3 RECORD 2'
+         WTO   'END TESTPCH1 OK'
+         SUBEXIT
+         END    

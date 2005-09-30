@@ -1,0 +1,47 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTDCB9 SUBENTRY
+         WTO   'TESTDCB9 READ SYSUT1 RANDOM RECORDS AND WRITE SYSUT2'
+         OPEN  (SYSUT1,(INPUT),SYSUT2,(OUTPUT),SYSOUT,(OUTPUT))
+         MVC   RELKEY,=F'1' READ 2ND RECORD USING RELATIVE RECORD
+         POINT SYSUT1,RELKEY
+         READ  DECB1,SB,SYSUT1,RECORD  
+         CHECK DECB1
+         PUT   SYSOUT,RECORD
+         WRITE DECB2,SF,SYSUT2,RECORD
+         CHECK DECB2
+         MVC   RBAKEY,=FL8'0' READ 1ND RECORD
+         POINT SYSUT1,RBA=RBAKEY
+         LA    R3,DECB1
+         READ  (R3),SB,SYSUT1,RECORD  
+         CHECK DECB1
+         PUT   SYSOUT,RECORD
+         LA    R4,DECB2
+         WRITE (R4),SF,SYSUT2,RECORD
+         CHECK (R4)
+         MVC   RBAKEY,=FL8'160' READ 3RD RECORD
+         POINT SYSUT1,RBA=RBAKEY
+         READ  (R3),SB,SYSUT1,RECORD  
+         CHECK (R3)
+         PUT   SYSOUT,RECORD
+         WRITE (R4),SF,SYSUT2,RECORD
+         CHECK (R4)
+         CLOSE (SYSUT1,,SYSUT2,,SYSOUT)
+         WTO   'TESTDCB9 ENDED OK'
+         SUBEXIT
+SYSUT1   DCB   DSORG=PS,DDNAME=SYSUT1,MACRF=R,                         X
+               RECFM=F,BLKSIZE=80            
+SYSUT2   DCB   DSORG=PS,DDNAME=SYSUT2,MACRF=W,RECFM=F,BLKSIZE=80
+SYSOUT   DCB   DSORG=PS,DDNAME=SYSOUT,RECFM=FT,BLKSIZE=80,MACRF=PM
+RECORD   DC    CL80' '
+RELKEY   DC    F'0'
+RBAKEY   DC    FL8'0'
+         DCBD
+         DECBD
+         EQUREGS
+         END

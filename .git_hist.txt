@@ -143,3 +143,60 @@ SetGit ++Don 2005-01-01 12:00:00 -0500
 set GIT_COMMITTER_DATE=2021-03-20 11:35:00 +0100
 git commit -m "Empty repository before z390 started"
 git tag -a v0.0.00 -m "Empty repository before z390 started"
+
+==> Copy all files for V1.0.00
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.0.00
+git add ASM.BAT
+git add ASML.BAT
+git add ASMLG.BAT
+git add AZ390.BAT
+git add Doc/
+git add EXEC.BAT
+git add EZ390.BAT
+git add LINK.BAT
+git add LZ390.BAT
+git add MAC.BAT
+git add MZ390.BAT
+git add RT.BAT
+git add RT1.BAT
+git add RT2.BAT
+git add RT3.BAT
+git add RT4.BAT
+git add RT5.BAT
+git add RTDEMO.BAT
+git add RTTEST.BAT
+git add VDIFF.BAT
+git add Z390.BAT
+git add demo.bat
+git add demo/
+git add mac/
+git add src/
+git add test/
+
+==> Create commit for V1.0.00
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2005-09-30 12:00:00 -0500
+set GIT_COMMITTER_DATE=2021-03-20 11:45:00 +0100
+git commit -m "Reconstructed version v1.0.00 of z390 committed on behalf of Don Higgins"
+git tag -a v1.0.00 -m "Reconstructed version v1.0.00 of z390 committed on behalf of Don Higgins"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

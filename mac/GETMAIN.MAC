@@ -1,0 +1,71 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N       GETMAIN &TYPE,&LV=,&LOC=
+.*
+.* GETMAIN - ALLOCATE MEMORY FROM ABOVE OR BELOW 16MB LINE
+.*
+.*  TYPE
+.*    R   - UNCONDITIONAL (DEFAULT IS BELOW THE LINE)
+.*    RC  - CONDITIONAL (DEFAULT IS ABOVE THE LINE)
+.*    RU  - UNCONDITIONAL (DEFAULT IS ABOVE THE LINE)
+.*  LENGTH LV= 
+.*    ABSOLUTE LENGTH OR (REG) WITH DEFAULT BEING REG 1
+.*  LOCCATION LOC=
+.*    ABOVE - ALLOCATE MEMORY ABOVE 16M LINE
+.*    BELOW - ALLOCATE MEMORY BELOW 16M LINE
+.*  INPUT TO SVC 4
+.*    R0 OPTION BITS
+.*        BIT 0 - AMODE 31 ALLOCATION ABOVE LINE
+.*        BIT 1 - CONDITIONAL REQUEST
+.*    R1 LENGTH
+.*  OUTPUT
+.*    R0 = ADDRESS OF ALLOCATED AREA
+.*    R15 RETURN CODE
+.*         0 - OK
+.*         4 - REQUEST FAILED OR ABEND 80A IF UNCONDITIONAL
+.*
+&N       DS    0H
+         AIF   (&TYPE EQ 'R').R
+         AIF   (&TYPE EQ 'RC').RC
+         AIF   (&TYPE EQ 'RU').RU
+         MNOTE 12,'GETMAIN INVALID TYPE - &TYPE'
+         MEXIT
+.R       ANOP
+&ABOVE   SETB 0  
+&COND    SETB 0  
+         AGO  .LV
+.RC      ANOP
+&ABOVE   SETB 1
+&COND    SETB 1
+         AGO  .LV
+.RU      ANOP
+&ABOVE   SETB 1
+&COND    SETB 0
+.LV      ANOP
+         AIF  (&LV EQ '').LOC
+         AIF  ('&LV'(1,1) EQ '(').LVREG
+         LA   1,&LV
+         AGO  .LOC
+.LVREG   ANOP
+         LR   1,&LV(1)
+.LOC     ANOP
+         AIF  (&LOC EQ '').OPTIONS
+         AIF  (&LOC EQ 'ABOVE').SETABOVE
+         AIF  (&LOC EQ 'BELOW').SETBELOW
+         MNOTE 12,'GETMAIN INVALIDE LOC - &LOC'
+         MEXIT
+.SETABOVE ANOP
+&ABOVE   SETB  1
+         AGO   .OPTIONS
+.SETBELOW ANOP
+&ABOVE   SETB  0
+.OPTIONS ANOP
+         LA    0,B'&ABOVE&COND'
+         SVC   4 GETMAIN R0=(X'02'=AMODE31,X'01'=COND), R1=LEN
+         MEND

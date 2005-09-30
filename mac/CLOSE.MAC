@@ -1,0 +1,34 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N       CLOSE
+.*
+.* CLOSE 1 OR MORE FILES DEFINED BY DCB'S 
+.*
+&N       DS    0H
+&NP      SETA  N'&SYSLIST(1)
+&I       SETA  -1
+.LOOP    ANOP
+&I       SETA   &I+2
+         AIF   (&I GT &NP).EXIT
+&DCB     SETC  &SYSLIST(1,&I,1)
+&OPTION  SETC  &SYSLIST(1,&I+1,1)
+         AIF   ('&DCB'(1,1) EQ '(').DCBREG
+         LA    1,&DCB
+         AGO   .CHKOPT
+.DCBREG  ANOP
+         LR    1,&DCB(1)
+.CHKOPT  ANOP
+         AIF   ('&OPTION' EQ '').SVC
+         MNOTE 12,'CLOSE OPTION NOT SUPPORTED - &OPTION'
+         MEXIT
+.SVC     ANOP
+         SVC   20
+         AGO   .LOOP
+.EXIT    ANOP
+         MEND

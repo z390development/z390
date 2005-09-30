@@ -1,0 +1,37 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+         TITLE 'TESTLNK1 TEST LINK, LOAD, AND DELETE'
+TESTLNK1 RT1  MAIN
+         EQUREGS
+         RT1  START
+         LINK EP=TESTSUB1 EXEC IN AMODE31 PER LZ390 AMODE31 DEFAULT
+         LOAD EP=TESTSUB1  USE=1
+         LR   R3,R0
+         LR   R15,R0
+         BALR R14,R15
+         LOAD EP=TESTSUB1  USE=2
+         LR   R4,R0
+         LR   R15,R3
+         BALR R14,R15
+         CLR  R3,R4
+         RT1  CCE
+         DELETE EP=TESTSUB1 USE-1
+         DELETE EP=TESTSUB1 USE-0 CAUSES PHY DELETE
+         LOAD EP=TESTSUB4 REPLACE OLD ADDR WITH DIFF MOD
+         LR   R15,R0
+         BALR R14,R15 EXEC IN CALLER AMODE31
+         LOAD EP=TESTSUB1 RELOAD AT DIFF ADDR
+         LR   R4,R0
+         LR   R15,R0
+         BALR R14,R15
+         CLR  R3,R4
+         RT1  CCH
+         LINK EP=TESTSUB4 EXEC IN AMODE24 PER LZ390 AMODE24 OPTION
+         LINK EP=TESTSUB4 AGAIN AND RETURN TO CALLER AMODE31
+         RT1  END
+         END

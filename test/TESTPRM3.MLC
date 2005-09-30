@@ -1,0 +1,42 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTPRM3 SUBENTRY
+         WTO   'TESTPRM3 - TEST SUBLIST PARMS AND N AND K OPERATORS'
+         MACRO
+&N       TEST  &P1,&S1,&S2
+         MNOTE 'N=&N P1=&P1 S1=&S1 S2=&S2'
+         MNOTE 'P1(S1)=&P1(&S1)'
+         MNOTE 'P1(S1,S2)=&P1(&S1,&S2)'
+&I       SETA  0
+.LOOP    ANOP
+         MNOTE 'SYSLIST(&I)=&SYSLIST(&I)'
+&I       SETA  &I+1
+         AIF   (&I LE 3).LOOP
+         MNOTE 'SYSLIST(1,&S1)=&SYSLIST(1,&S1)'
+         MNOTE 'SYSLIST(1,&S1,1)=&SYSLIST(1,&S1,1)'
+         MNOTE 'SYSLIST(1,&S1,&S2)=&SYSLIST(1,&S1,&S2)'
+&T       SETC  '&SYSLIST(1)'
+         MNOTE 'SETC SYSLIST(1)=&T'
+&T       SETC  '&SYSLIST(1,&S1)'
+         MNOTE 'SETC SYSLIST(1,&S1)=&T'
+&T       SETC  '&SYSLIST(1,&S1,1)'
+         MNOTE 'SETC SYSLIST(1,&S1,1)=&T'
+&T       SETC  '&SYSLIST(1,&S1,2)'
+         MNOTE 'SETC SYSLIST(1,&S1,2)=&T'
+&NP      SETA  N'&P1
+         MNOTE 'N''P1=&NP'
+&NP      SETA  N'&SYSLIST
+         MNOTE 'N''SYSLIST=&NP'
+&NP      SETA  N'&SYSLIST(2)
+         MNOTE 'N''SYSLIST(2)=&NP'
+         MEND
+T1       TEST  (A),1,1
+T2       TEST  (A,B),2,1
+T3       TEST  (A,(B1,B2),C),2,2
+         SUBEXIT
+         END

@@ -1,0 +1,20 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&POS0    TESTPRM2 &POS1,&KEY1=DEFKEY1,&POS2,&POS3,&POS4,&KEY2=DEFKEY2,&X
+               KEY3=DEFKEY3,&KEY4=DEFKEY4
+         MNOTE ' POS0 = &POS0'
+         MNOTE ' POS1 = &POS1'
+         MNOTE ' POS2 = &POS2'
+         MNOTE ' POS3 = &POS3'
+         MNOTE ' POS4 = &POS4'
+         MNOTE ' KEY1 = &KEY1'
+         MNOTE ' KEY2 = &KEY2'
+         MNOTE ' KEY3 = &KEY3'
+         MNOTE ' KEY4 = &KEY4'
+         MEND

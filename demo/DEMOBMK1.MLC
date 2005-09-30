@@ -1,0 +1,14 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+DEMOBMK1 SUBENTRY
+         WTO  'DEMO2 Z390 FIRST EMULATION BENCHMARK FOR 2,000,000 INS'
+         L    1,=A(2000000)
+LOOP     EQU  *
+         BCT  1,LOOP
+         SUBEXIT
+         END      

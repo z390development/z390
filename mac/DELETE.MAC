@@ -1,0 +1,25 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N       DELETE &EP=,&EPLOC=
+         AIF   (&EP NE '').EP
+         AIF   (&EPLOC NE '').EPLOC
+         MNOTE 12,'DELETE REQUIRES EP= OR EPLOC='
+         MEXIT
+.EP      ANOP
+         LA    0,=CL8'&EP'
+         AGO   .SVC
+.EPLOC   ANOP
+         AIF   ('&EPLOC'(1,1) EQ '(').EPLOCREG
+         LA    0,&EPLOC
+         AGO   .SVC
+.EPLOCREG ANOP
+         LR    0,&EPLOC(1)
+.SVC     ANOP
+         SVC   9 DELETE R0=A(NAME)
+         MEND

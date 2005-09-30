@@ -1,0 +1,37 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+&N       FREEMAIN &LV=,&A=
+.*
+.* GETMAIN - RELEASE MEMORY FROM ABOVE OR BELOW 16MB LINE
+.*
+.*  LENGTH LV= 
+.*    ABSOLUTE LENGTH OR (REG) WITH DEFAULT REG 1
+.*  ADDRESS A= 
+.*    RX OF FULLWORD OR (REG) WITH DEFAULT REG 0
+.* OUTPUT
+.*    ABORT WITH A0A ABEND IF REQUEST FAILS
+.*
+&N       DS    0H
+.LV      ANOP
+         AIF  (&LV EQ '').A
+         AIF  ('&LV'(1,1) EQ '(').LVREG
+         L    1,&LV
+         AGO  .A
+.LVREG   ANOP
+         LR   1,&LV(1)
+.A       ANOP
+         AIF  (&A EQ '').SVC
+         AIF  ('&A'(1,1) EQ '(').AREG
+         L    0,&A
+         AGO  .SVC
+.AREG    ANOP
+         LR   0,&A(1)
+.SVC     ANOP
+         SVC   5 FREEMAIN R0=ADDR, R1=LEN
+         MEND
