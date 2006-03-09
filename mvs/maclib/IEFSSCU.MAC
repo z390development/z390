@@ -1,0 +1,73 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSCUCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSCU
+.*/ %SSCUCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSCU                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = COMMON UNALLOCATION JES3 EXIT        @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSCUPLS;              /*                               @ZA34144
+*
+SSOBCUCD EQU   25         COMMON UNALLOCATION FUNCTION ID(SSOBFUNC)
+*                                                              @Y02BPSD
+*
+*    COMMON UNALLOCATION RETURN CODES (SSOBRETN)
+*
+*       NO COMMON ALLOCATION RETURN CODES CURRENTLY DEFINED
+*
+         ORG   SSOBGN             SSCU START                   @Y02BPSD
+SSCUBGN  EQU   *                  COMMON UNALLOCATION          @Y02BPSD
+*                                 BEGINNING                    @Y02BPSD
+SSCULEN  DC    AL2(SSCUSIZE)      COMMON UNALLOCATION          @Y02BPSD
+*                                 EXTENSION LENGTH             @Y02BPSD
+SSCUFLGS DS    B                  COMMON UNALLOCATION FLAGS    @Y02BPSD
+SSCULSCL EQU   X'80'              THIS IS THE LAST CALL FOR    @Y02BPSD
+*                                 THE STEP, SET ON FOR EACH DD @Y02BPSD
+*                                 BEING UNALLOCATED AT STEP    @Y02PBSD
+*                                 UNALLOCATION                 @Y02BPSD
+SSCURSVF EQU   X'7F'              RESERVED FLAGS               @Y02BPSD
+SSCURSV0 DS    X                  RESERVED                     @Y02BPSD
+SSCUPSTN DS    A                  POINTER TO STEP NUMBER       @Y02BPSD
+SSCUPDDN DS    A                  POINTER TO DDNAME            @Y02BPSD
+SSCUPRPN DS    A                  POINTER TO RELATIVE POSITION @Y02BPSD
+*                                 NUMBER                       @Y02BPSD
+SSCUPAUR DS    A                  ADDRESS OF ALLOCATION UNLOAD @Y02BPSD
+*                                 ROUTINE                      @Y02BPSD
+SSCURSV1 DS    F                  RESERVED                     @Y02BPSD
+*
+SSCUSIZE EQU   *-SSCUBGN          EXTENSION LENGTH             @Y02BPSD
+SSOBLN12 EQU   SSOBHSIZ+SSCUSIZE  TOTAL SSOB LENGTH            @Y02BPSD
+         MEND                                                @ZA34144*/
+* %SSCUPLS:;                            /*                   @ZA34144*/
+*    /*    FUNCTION IDS (SSOBFUNC)                                   */
+*  DCL SSOBCUCD FIXED(15) CONSTANT(25); /* COMMON UNALLOCATION
+*                                                            @Y02BPSD*/
+*     /*                                                             */
+*     /*  COMMON UNALLOCATION RETURN CODES (SSOBRETN) -              */
+* /*                                                                 */
+* /*    NO COMMON UNALLOCATION RETURN CODES CURRENTLY DEFINED        */
+* /*                                                                 */
+*   /*   S S C U                                                     */
+*  DCL
+*  1     SSCU       SSOBCU,       /* BEGINNING COMMON UNALLOCATION
+*                                    SSOB EXTENSION          @Y02BPSD*/
+*    2     SSCULEN  FIXED(15),    /* LENGTH OF SSCU          @Y02BPSD*/
+*    2     SSCUFLGS BIT(8),       /* COMMON UNALLOCATION FLAGS
+*                                                            @Y02BPSD*/
+*      3   SSCULSCL BIT(1),       /* THIS IS THE LAST CALL FOR THE
+*                                    STEP, SET ON FOR EACH DD BEING
+*                                    UNALLOCATED AT STEP UNALLOCATION
+*                                                            @Y02BPSD*/
+*      3   SSCURSVF BIT(7),       /* RESERVED FLAGS          @Y02BPSD*/
+*    2     SSCURSV0 BIT(8),       /* RESERVED                @Y02BPSD*/
+*    2     SSCUPSTN PTR(31),      /* PTR TO STEP NUMBER      @Y02BPSD*/
+*    2     SSCUPDDN PTR(31),      /* PTR TO DDNAME           @Y02BPSD*/
+*    2     SSCUPRPN PTR(31),      /* PTR TO RELATIVE POSITION NUMBER
+*                                                            @Y02BPSD*/
+*    2     SSCUPAUR PTR(31),      /* PTR TO ALLOCATION UNLOAD ROUTINE
+*                                                            @Y02BPSD*/
+*    2     SSCURSV1 FIXED(31);    /* RESERVED                @Y02BPSD*/
+

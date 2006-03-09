@@ -1,0 +1,229 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    FESTAE &CNCL,&WRKREG=,&EXITADR=,&RBADDR=,&PARAM=,&TCBADDR=,   X
+               &PURGE=,&ASYNCH=,&TERM=,&RECORD=,&XCTL=,&ERRET=
+*   MACDATE 75293
+*   MACCOMP SC1CM/PZD81
+*   MACSTAT 75293/Z40FPXE
+         LCLA  &FLG1
+         LCLA  &FLG2
+         LCLA  &FLG3
+         LCLB  &ESTA
+         LCLB  &ASY
+         LCLB  &PNONE
+         LCLB  &HALT
+         LCLB  &XCTLB
+         LCLB  &KEY0
+         LCLB  &SUPER
+         LCLB  &TERMB
+         LCLB  &REC
+         LCLB  &BRNTR
+         LCLB  &ERRBIT
+         LCLC  &L1
+&L1      SETC  '&SYSNDX'
+         AIF   ('&CNCL' NE '').CANCEL
+&ESTA    SETB  1
+&ASY     SETB  ('&ASYNCH' EQ 'YES' OR '&ASYNCH' EQ '')
+&PNONE   SETB  ('&PURGE' EQ 'NONE' OR '&PURGE' EQ '')
+&HALT    SETB  ('&PURGE' EQ 'HALT')
+&XCTLB   SETB  ('&XCTL' EQ 'YES')
+&KEY0    SETB  1
+&SUPER   SETB  1
+&TERMB   SETB  ('&TERM' EQ 'YES')
+&REC     SETB  ('&RECORD' EQ 'YES')
+&BRNTR   SETB  1
+         AIF   ('&XCTL' NE 'YES' AND '&XCTL' NE 'NO' AND '&XCTL' NE '')X
+               .XCTLERR
+.PURCK   AIF   ('&PURGE' NE 'QUIESCE' AND '&PURGE' NE 'NONE' AND       X
+               '&PURGE' NE 'HALT' AND '&PURGE' NE '').PURERR
+.ASYCK   AIF   ('&ASYNCH' NE 'YES' AND '&ASYNCH' NE 'NO' AND '&ASYNCH' X
+               NE '').ASYERR
+.TERCK   AIF   ('&TERM' NE 'YES' AND '&TERM' NE 'NO' AND '&TERM' NE '')X
+               .TERERR
+.RECCK   AIF   ('&RECORD' NE 'YES' AND '&RECORD' NE 'NO' AND '&RECORD' X
+               NE '').RECERR
+.CKERR   AIF   ('&ERRBIT' EQ '0').NOERR
+         MEXIT
+.NOERR   ANOP
+&FLG1    SETA  16*&ESTA+4*&ASY+2*&PNONE+&HALT
+&FLG2    SETA  64*&XCTLB+2*&KEY0+&SUPER
+&FLG3    SETA  64*&TERMB+32*&REC+4*&BRNTR
+         AIF   ('&EXITADR' EQ '').CANERR
+         AIF   ('&EXITADR'(1,1) NE '(').EXNREG
+         AIF   ('&RBADDR' EQ '').NRBA
+         AIF   ('&RBADDR'(1,1) NE '(').RBNREG
+&NAME    L     15,RBSEXIT-RBSECT+RBPRFXLN(0,&RBADDR(1)) OBTAIN CURRENT
+*                                            RB SCBEXIT VALUE
+         LTR   15,15                         IF ZERO - SCB AVAILABLE
+         BZ    IHB1&L1                       CONTINUE PROCESSING
+         LA    15,8(0,0)                     INDICATE PREVIOUS EXIT
+*                                            IN THIS RB
+         AIF   ('&ERRET' EQ '').NERRET
+         B     &ERRET
+         AGO   .NERRET1
+.NERRET  ANOP
+         B     IHB2&L1                       CONTINUE USERS EXECUTION
+.NERRET1 ANOP
+IHB1&L1  DS    0H
+         ST    &EXITADR(1),RBSEXIT-RBSECT+RBPRFXLN(0,&RBADDR(1)) STORE
+*                                            EXIT ADDR IN SCB
+         AIF   ('&PARAM' EQ '').GETPARM
+         AIF   ('&PARAM'(1,1) NE '(').PARERR
+         ST    &PARAM(1),RBSPARM-RBSECT+RBPRFXLN(0,&RBADDR(1))  STORE
+*                                            PARM ADDR IN SCB
+         AGO   .CONT
+.GETPARM ANOP
+         LA    &EXITADR(1),RBFEPARM-RBSECT+RBPRFXLN(0,&RBADDR(1)) GET
+*                                            DEFAULT PARAMETER AREA
+         ST    &EXITADR(1),RBSPARM-RBSECT+RBPRFXLN(0,&RBADDR(1)) STORE
+*                                            IT IN SCB
+.CONT    ANOP
+         MVI   RBSFLGS1-RBSECT+RBPRFXLN(&RBADDR(1)),&FLG1 INIT FLAGS
+         MVI   RBSFLGS2-RBSECT+RBPRFXLN(&RBADDR(1)),&FLG2 INIT FLAGS
+         MVI   RBSFLG3-RBSECT+RBPRFXLN(&RBADDR(1)),&FLG3  INIT FLAGS
+         AIF   ('&TCBADDR' EQ '').NTCB
+         AIF   ('&TCBADDR'(1,1) NE '(').TCBERR
+         L     &EXITADR(1),TCBSTAB-TCB(0,&TCBADDR(1)) GET ADDR PREVIOUS
+*                                            SCB
+         LA    &EXITADR(1),0(0,&EXITADR(1))   CLEAR HIGH BYTE
+         ST    &EXITADR(1),RBSCHAIN-RBSECT+RBPRFXLN(0,&RBADDR(1)) CHAIN
+*                                            TO CURRENT SCB
+         LA    &EXITADR(1),RBSCBB-RBSECT+RBPRFXLN(0,&RBADDR(1)) GET
+*                                            ADDR CURRENT SCB
+         STCM  &EXITADR(1),7,TCBSTABB-TCB(&TCBADDR(1)) MAKE IT CURRENT
+         AGO   .CONT1
+.NTCB    ANOP
+         L     15,PSATOLD-PSA(0,0)           GET CURRENT TCB ADDRESS
+         L     &EXITADR(1),TCBSTAB-TCB(0,15)  GET ADDRESS PREVIOUS SCB
+         LA    &EXITADR(1),0(0,&EXITADR(1))   CLEAR HIGH BYTE
+         ST    &EXITADR(1),RBSCHAIN-RBSECT+RBPRFXLN(0,&RBADDR(1)) CHAIN
+*                                            TO CURRENT SCB
+         LA    &EXITADR(1),RBSCBB-RBSECT+RBPRFXLN(0,&RBADDR(1)) GET
+*                                            ADDR CURRENT SCB
+         STCM  &EXITADR(1),7,TCBSTABB-TCB(15) MAKE IT CURRENT
+         SLR   15,15
+.CONT1   ANOP
+         OI    RBFLAGS1-RBPRFX(&RBADDR(1)),X'02'  MARK RB AS OWNING SCB
+IHB2&L1  DS    0H
+         MEXIT
+.XCTLERR MNOTE 4,'***  XCTL   INVALID VALUE SPECIFIED - &XCTL'
+&ERRBIT  SETB  1
+         AGO   .PURCK
+.PURERR  MNOTE 4,'***  PURGE  INVALID VALUE SPECIFIED - &PURGE'
+&ERRBIT  SETB  1
+         AGO   .ASYCK
+.ASYERR  MNOTE 4,'***  ASYNCH INVALID VALUE SPECIFIED - &ASYNCH'
+&ERRBIT  SETB  1
+         AGO   .TERCK
+.TERERR  MNOTE 4,'***  TERM   INVALID VALUE SPECIFIED - &TERM'
+&ERRBIT  SETB  1
+         AGO   .RECCK
+.RECERR  MNOTE 4,'***  RECORD INVALID VALUE SPECIFIED - &RECORD'
+&ERRBIT  SETB  1
+         AGO   .CKERR
+.EXNREG  MNOTE 12,'*** EXITADR SPECIFIED - NOT IN REGISTER'
+         MEXIT
+.NRBA    MNOTE 12,'***RBADDR MUST BE SPECIFIED WITH EXITADR'
+         MEXIT
+.RBNREG  MNOTE 12,'*** RBADDR NOT IN A REGISTER'
+         MEXIT
+.PARERR  MNOTE 8,'*** PARAM SPECIFIED - NOT IN REGISTER'
+         MEXIT
+.TCBERR  MNOTE 8,'***TCBADDR SPECIFIED - NOT IN REGISTER'
+         MEXIT
+.CANCEL  ANOP
+         AIF   ('&CNCL' NE '0').CANERR
+         AIF   ('&WRKREG' EQ '').WRKERR
+         AIF   ('&WRKREG'(1,1) NE '(').WRKNREG
+         AIF   ('&EXITADR' NE '' OR '&RBADDR' NE '' OR '&PARAM' NE ''  X
+               OR '&PURGE' NE '' OR '&ASYNCH' NE '' OR '&TERM' NE ''   X
+               OR '&RECORD' NE '' OR '&XCTL' NE '').EXCESS
+.CONT3   AIF   ('&TCBADDR' NE '').CKTCB
+&NAME    L     15,PSATOLD-PSA(0,0)           GET CURRENT TCB ADDRESS
+         ICM   &WRKREG(1),7,TCBSTABB-TCB(15)  GET CURRENT SCB ADDRESS
+         BZ    IHB3&L1                       ZERO IF NO SCB FOR TCB
+         CLC   TCBRBP-TCB+1(3,15),SCBOWNRA-SCB(&WRKREG(1)) IS SCB FOR
+*                                            CURRENT RB
+         BNE   IHB3&L1
+         TM    SCBFLGS3-SCB(&WRKREG(1)),X'04' WAS SCB CREATED BY
+*                                            FESTAE OR BRANCH ENTRY SVC
+         BO    IHB5&L1                       CONTINUE CHECKING
+IHB3&L1  DS    0H
+         LA    15,12(0,0)                    INDICATE CURRENT SCB NOT
+*                                            CREATED BY FESTAE
+         AIF   ('&ERRET' EQ '').NERRE
+         B     &ERRET
+         AGO   .NERRE1
+.NERRE   ANOP
+         B     IHB8&L1                       EXIT
+.NERRE1  ANOP
+IHB5&L1  DS    0H
+         SLR   15,15                         GET ZEROS
+         ST    15,SCBEXIT-SCB(0,&WRKREG(1))   MAKE SCB AVAILABLE
+         L     15,PSATOLD-PSA(0,0)           GET CURRENT TCB ADDRESS
+         L     &WRKREG(1),SCBCHAIN-SCB(0,&WRKREG(1)) GET PREVIOUS SCB
+         STCM  &WRKREG(1),7,TCBSTABB-TCB(15)  MAKE IT CURRENT
+         LTR   &WRKREG(1),&WRKREG(1)         IS THERE AN SCB
+         BZ    IHB6&L1                       GO INDICATE NO MORE SCBS
+         CLC   TCBRBP-TCB+1(3,15),SCBOWNRA-SCB(&WRKREG(1)) PREVIOUS FOR
+*                                            CURRENT RB
+         BE    IHB7&L1                       SET RETURN CODE AND EXIT
+IHB6&L1  DS    0H
+         L     15,TCBRBP-TCB(0,15)            GET CURRENT RB ADDRESS
+         LA     &WRKREG(1),RBPRFXLN           GET LENGTH OF PREFIX
+         SLR    15,&WRKREG(1)                 CALC PREFIX ADDRESS
+         NI    RBFLAGS1-RBPRFX(15),X'FD'      INDICATE  NO MORE SCB FOR
+*                                             THIS RB
+IHB7&L1  DS    0H
+         SLR   15,15
+IHB8&L1  DS    0H
+         MEXIT
+.CKTCB   ANOP
+         AIF   ('&TCBADDR'(1,1) NE '(').TCBERR
+&NAME    ICM   &WRKREG(1),7,TCBSTABB-TCB(&TCBADDR(1)) GET CURRENT SCB
+         BZ    IHB3&L1                       ZERO IF NO SCB FOR TCB
+         CLC   TCBRBP-TCB+1(3,&TCBADDR(1)),SCBOWNRA-SCB(&WRKREG(1)) IS
+*                                            SCB FOR CURRENT RB
+         BNE   IHB3&L1                       CONTINUE CHECKING
+*                                            NOT OWNED BY CURRENT RB
+         TM    SCBFLGS3-SCB(&WRKREG(1)),X'04'    WAS SCB CREATED BY
+*                                            FESTAE OR BRANCH ENTRY SVC
+         BO    IHB5&L1                       CONTINUE CHECKING
+IHB3&L1  DS    0H
+         LA    15,12(0,0)                    INDICATE CURRENT SCB NOT
+*                                            CREATED BY FESTAE
+         AIF   ('&ERRET' EQ '').NERET
+         B     &ERRET
+         AGO   .NERET1
+.NERET   ANOP
+         B     IHB8&L1                       EXIT
+.NERET1  ANOP
+IHB5&L1  DS    0H
+         L     15,SCBCHAIN-SCB(0,&WRKREG(1))  GET PREVIOUS SCB ADDRESS
+         STCM  15,7,TCBSTABB-TCB(&TCBADDR(1))    MAKE IT CURRENT
+         LTR   15,15                         IS THERE AN SCB
+         BZ    IHB6&L1
+         CLC   TCBRBP-TCB+1(3,&TCBADDR(1)),SCBOWNRA-SCB(15) IS PREVIOUS
+*                                            FOR CURRENT RB
+         BE    IHB7&L1
+IHB6&L1  DS    0H
+         LA    15,RBPRFXLN                    GET LENGTH OF PREFIX
+         LNR   15,15                          NEGATE FOR SUBTRACTION
+         AL    15,TCBRBP-TCB(0,&TCBADDR(1))   CALC PREFIX ADDRESS
+         NI    RBFLAGS1-RBPRFX(15),X'FD'      INDICATE  NO MORE SCB FOR
+*                                            THIS RB
+IHB7&L1  DS    0H
+         SLR   15,15                GET ZEROS
+         ST    15,SCBEXIT-SCB(0,&WRKREG(1))   MAKE SCB AVAILABLE
+IHB8&L1  DS    0H
+          MEXIT
+.CANERR  MNOTE 12,'*** EXITADR/0 OPERAND MISSING'
+         MEXIT
+.WRKERR  MNOTE 12,'*** WRKREG MUST BE SPECIFIED WITH CANCEL REQUEST'
+         MEXIT
+.WRKNREG MNOTE 8,'*** WRKREG SPECIFIED - NOT IN REGISTER'
+         MEXIT
+.EXCESS  MNOTE *,'***EXCESSIVE PARAMETERS W/CANCEL REQUEST IGNORED'
+         AGO   .CONT3
+         MEND
+

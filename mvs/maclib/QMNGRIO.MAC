@@ -1,0 +1,20 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO QMNGRBSL;                                             /*
+         MACRO
+&NAME    QMNGRIO
+*      LINKAGE MACRO FOR JES QUEUE MANAGER
+&NAME    L     15,16(0,0)               LOAD CVT POINTER
+         USING CVTMAP,15
+         L     15,CVTJESCT              LOAD JESCT POINTER
+         USING JESCT,15
+         L     15,JESRESQM              LOAD QUEUE MNGR ENTRY POINT
+         DROP  15
+         BALR  14,15                    LINK TO QUEUE MANAGER
+         MEND  , */
+*%QMNGRBSL:;
+*/* LINKAGE MACRO FOR JES QUEUE MANAGER                              */
+*        DCL   QMPTR REG(15) PTR(31);
+*        QMPTR=CVTPTR->CVTJESCT->JESRESQM;  /* FOLLOW CVT/JESCT CHAIN
+*                                               TO GET QMGR ADDRESS  */
+*        GEN ( BALR 14,15);            /* GO TO QUEUE MANAGER        */
+

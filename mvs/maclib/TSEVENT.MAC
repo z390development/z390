@@ -1,0 +1,70 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /* MACCOMP Z-4 SC1CX/PKD16                                         */
+* /* MACSTAT Z-4 75007/Z40BPSS                                       */
+         MACRO
+&LABEL   TSEVENT   &EVENT,&ASID=,&ASIDL=,&ENTRY=SVC
+         LCLA      &EVENTO
+* /* MACDATE Y-2 73257                                               */
+&EVENTO  SETA      0
+         AIF   ('&EVENT'EQ'PPMODE').EOK
+&EVENTO  SETA      50
+         AGO       .ERROR1
+.EOK     AIF       ('&ASID'NE''AND'&ASIDL'NE'').ERROR4
+         AIF       ('&ASID'EQ'').NULREG
+         AIF       ('&ASID'(1,1)NE'(').ERROR2
+         AIF       ('&ASID'EQ'(0)').SKPREG
+&LABEL   LR    0,&ASID(1)              PUT ASID INTO REGISTER 0
+         AGO       .SHFTID
+.NULREG  AIF       ('&ASIDL'EQ'').OKLAB
+         AIF       ('&ASIDL'(1,1)EQ'(').ERROR3
+         AIF       ('&ASIDL'(K'&ASIDL,1)NE')').OKLAB
+&LABEL   LH    0,&ASIDL                PUT ASID INTO REGISTER 0
+         AGO       .SHFTID
+.OKLAB   ANOP
+&LABEL   LA    0,&EVENTO.(0,0)         TSEVENT CODE
+         AIF       ('&ASIDL'EQ'').OKID
+         ICM   0,12,&ASIDL             PUT ASID INTO REGISTER 0
+         AGO       .OKID
+.SKPREG  AIF       ('&LABEL'EQ'').SHFTID
+&LABEL   DS    0H
+.SHFTID  SLL   0,16(0)                 SHIFT INTO PROPER POSITION
+         AIF       (&EVENTO EQ 0).OKID
+         AIF       ('&ENTRY'NE'BRANCH').IC
+         LA    14,&EVENTO.(0,0)        TSEVENT CODE
+         OR    0,14                    PUT CODE INTO REGISTER 0
+         AGO       .OKID
+.IC      IC    0,IRAC&SYSNDX+1         PUT CODE INTO REGISTER 0
+         B     IRAB&SYSNDX             BRANCH AROUND CONSTANT
+IRAC&SYSNDX DC AL2(&EVENTO)            TSEVENT CODE
+IRAB&SYSNDX EQU *
+.OKID    AIF       ('&ENTRY'EQ'BRANCH').BR
+         AIF       ('&ENTRY'NE'SVC').ERROR5
+.SVC     SVC   95                      SYSTEM RESOURCES MANAGER SVC
+         MEXIT
+.BR      ANOP
+         L     15,CVTPTR(,0)           SYSTEM CVT ADDRESS
+         L     15,CVTOPTE-CVT(,15)     SYSTEM RESOURCES MANAGER ENTRY
+         BALR  14,15                   INVOKE SYSTEM RESOURCES MANAGER
+         MEXIT
+.ERROR1  MNOTE     4,'***  IRA001  INVALID TSEVENT MNEMONIC NAME OPERANX
+               D -                 &EVENT  ***'
+         MNOTE     *,'             -PPMODE- IS THE ONLY MNEMONIC SUPPORX
+               TED                 IN THE CURRENT RELEASE OF OS/VS2'
+         MEXIT
+.ERROR2  MNOTE     8,'***  IRA002  INVALID ASID OPERAND SPECIFICATION -X
+                                   &ASID  ***'
+         MNOTE     *,'             USE ASIDL KEYWORD WHEN THE ASID VALUX
+               E                   IS NOT CONTAINED IN A REGISTER'
+         MEXIT
+.ERROR3  MNOTE     8,'***  IRA003  INVALID ASIDL OPERAND SPECIFICATION X
+               -                   &ASIDL  ***'
+         MNOTE     *,'             USE ASID KEYWORD IF THE ASID VALUE IX
+               S                   PROVIDED IN A REGISTER'
+         MEXIT
+.ERROR4  MNOTE     8,'***  IRA004  ASID AND ASIDL PARAMETERS ARE       X
+                                   MUTUALLY EXCLUSIVE  ***'
+         MEXIT
+.ERROR5  MNOTE     4,'***  IRA005  INVALID ENTRY TYPE - SVC ASSUMED  **X
+               *'
+         AGO       .SVC
+         MEND

@@ -1,0 +1,75 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+* /* MACCOMP Y-1 SC1C5/PZD81                                         */
+* /* MACSTAT Y-1 72277                                               */
+* /*
+         MACRO
+&LABEL   TTIMER &CANCEL,&UNIT,&ADDR,&ERRET=
+* /* MACDATE Y-1 72277                                               */
+* /*
+         LCLB  &B(5)
+         LCLA  &SUM
+&B(1)    SETB  ('&CANCEL' EQ '')
+&B(2)    SETB  ('&CANCEL' EQ 'CANCEL')
+&B(3)    SETB  ('&UNIT' EQ 'TU')
+&B(4)    SETB  ('&UNIT' EQ 'MIC')
+&B(5)    SETB  ('&UNIT' EQ '')
+         AIF   (&B(1)+&B(2) NE 1).ERRCAN
+         AIF   (&B(3)+&B(4)+&B(5) NE 1).E1
+         AIF   (&B(3) OR &B(5)).TU
+         AIF   ('&ADDR' EQ '').E3
+         AGO   .ADR
+.TU      AIF   ('&ADDR' NE '').E2
+         AGO   .TTI
+.ADR     AIF   ('&ADDR'(1,1) EQ '(').REG
+&LABEL   LA    0,&ADDR
+         AGO   .TTIM
+.REG     AIF   ('&ADDR' EQ '(0)').TTI
+&LABEL   LR    0,&ADDR(1)
+         AGO   .TTIM
+.TTI     AIF   ('&ERRET' EQ '').TUT
+&SUM     SETA  4                                  RETURN CODE FLAG
+.TUT     AIF   (&B(1)+&B(3)+&B(5) EQ 2).ZERO
+&SUM     SETA  &SUM+&B(2)+2*&B(4)
+.LC      ANOP
+&LABEL   LA    1,&SUM.(0,0)                 LOAD 1 TO SET FLAG BYTE
+         AGO   .ISVC                                              20272
+.ZERO    AIF   (&SUM NE 0).LC
+&LABEL   SR    1,1                          INDICATE NOT CANCELLED,TU
+         AGO   .ISVC
+.TTIM    AIF   ('&ERRET' EQ '').MIC
+&SUM     SETA  4                                  RETURN CODE FLAG
+.MIC     ANOP
+&SUM     SETA  &SUM+&B(2)+2*&B(4)
+         LA    1,&SUM.(0,0)                 LOAD 1 TO SET FLAG BYTE
+.ISVC    SVC   46                           ISSUE TTIMER
+         AIF   ('&ERRET' EQ '').DONE
+         LTR   15,15                   ANY RETURN CODE
+         AIF   ('&ERRET'(1,1) EQ '(').BCR
+         BNZ   &ERRET                  YES. BR TO USER EXIT
+         AGO   .DONE
+.BCR     BCR   7,&ERRET(1)
+.DONE    MEXIT                                                    20272
+.ERRCAN  IHBERMAC 36,,&CANCEL,,,0           INVALID 1ST OPERAND
+         MEXIT
+.E1      IHBERMAC 37,,&UNIT,,,0             INVALID 2ND OPERAND
+         MEXIT
+.E2      IHBERMAC 38,,OMIT,,,0              3RD OPERAND NOT ALLOWED
+         MEXIT
+.E3      IHBERMAC 4                         3RD OPERAND REQUIRED
+         MEXIT
+         MEND                                                     20272
+**/
+* TTIMER : /*                                                        */
+*          /*      TTIMEMVM--AOS/2                                   */
+*          /*                                                        */
+*          MACRO KEYS(
+*                     TU,          /*RETURN TASK TIME INTERVAL       */
+*                     CANCEL,      /*CANCELL TASK TIME INTERVAL      */
+*                     MIC,         /*ADDR OF TASK TIME INTERVAL AREA */
+*                     ERRET,       /*ADDR OF CLOCK MALFUNCTION ROUTIN*/
+*                     RTCD         /*SVC RETURN CODE AREA            */
+*                           );
+*        ANS('?'||MACLABEL||'TTIMERP '||MACLIST||MACKEYS||';');
+*% END;
+

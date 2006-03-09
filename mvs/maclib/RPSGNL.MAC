@@ -1,0 +1,53 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    RPSGNL &FUNCTON,&CPU=
+         GBLC  &MESSAGE
+         AIF   ('&NAME' EQ '').CONT
+&NAME    DS    0H
+.CONT    AIF   ('&FUNCTON' NE '').SWITCH
+         IHBERMAC 24
+         MEXIT
+.SWITCH AIF    ('&FUNCTON' NE 'SWITCH').SIO
+         LA    0,128(0,0)               X'80' - SWITCH FUNCTN CODE WHEN
+         SLL   0,24(0)                  SHIFTED INTO HIGH ORDER BYTE
+         AGO   .TESTADR
+.SIO     AIF   ('&FUNCTON' NE 'SIO').RQCHECK
+         LA    0,64(0,0)                X'40' - SIO FUNCTION CODE WHEN
+         SLL   0,24(0)                  SHIFTED INTO HIGH ORDER BYTE
+         AGO   .TESTADR
+.RQCHECK AIF   ('&FUNCTON' NE 'RQCHECK').GTFCRM
+         LA    0,32(0,0)                X'20' - RQCHECK FUNCTN CDE WHEN
+         SLL   0,24(0)                  SHIFTED INTO HIGH ORDER BYTE
+         AGO   .TESTADR
+.GTFCRM  AIF   ('&FUNCTON' NE 'GTFCRM').MODE
+         LA    0,16(0,0)                X'10' - GTFCRM FUNCTN CODE WHEN
+         SLL   0,24(0)                  SHIFTED INTO HIGH ORDER BYTE
+         AGO   .TESTADR
+.MODE    AIF   ('&FUNCTON' NE 'MODE').MF1TCH
+         LA    0,4(0,0)                 X'04'   MODE FUNCTION CODE WHEN
+         SLL   0,24(0)                  SHIFTED INTO HIGH ORDER BYTE
+         AGO   .TESTADR
+.MF1TCH  AIF   ('&FUNCTON' NE 'MF1TCH').ERR
+         LA    0,2(0,0)                 X'02' - MF1TCH FUNCTN CDE WHEN
+         SLL   0,24(0)                  SHIFTED INTO HIGH ORDER BYTE
+         AGO   .TESTADR
+.ERR     ANOP
+         IHBERMAC 1001,FUNCTION,&FUNCTON
+         MEXIT
+.TESTADR AIF   ('&CPU' EQ '(1)').MNLCDE
+         AIF   ('&CPU' NE '').ADRCDE
+         IHBERMAC 1006,CPU
+         MEXIT
+.ERREG1  ANOP
+&MESSAGE SETC  'REGISTER NOTATION'
+.*       IHB280 REGISTER NOTATION INVALID WITH CPU
+         IHBERMAC 1020,&MESSAGE,CPU
+         MEXIT
+.ADRCDE  ANOP
+         AIF   ('&CPU'(1,1) EQ '(').ERREG1
+         LA    1,&CPU                   PHYSICAL CCA ADDRESS
+.MNLCDE  ANOP
+         L     14,CVTPTR(0,0)           CVT ADDRESS
+         L     15,CVTIPCRP-CVT(0,14)    IEAVERP ENTRY POINT ADDRESS
+         BALR  14,15                    ENTER IEAVERP AND EST RETURN
+         MEND

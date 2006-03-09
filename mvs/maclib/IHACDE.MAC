@@ -1,0 +1,143 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO CDEBSL;                                               /*
+         MACRO
+         IHACDE
+CDENTRY  DSECT
+         SPACE 1
+***********************************************************************
+*          MACCOMP OS/VS2,RELEASE 4       SC1CJ/PZD81                 *
+*                                                                     *
+*          MACSTAT OS/VS2,RELEASE 4       74240                       *
+*                                                                     *
+*          MACMEAN CDE MEANS CONTENTS DIRECTORY ENTRY                 *
+***********************************************************************
+         SPACE 1
+CDCHAIN  DS    F -            ADDRESS OF NEXT CDE IN QUEUE (EITHER JPAQ
+*                             OR LPAQ)
+CDRRBP   DS    F -            IF THE MODULE IS REENTERABLE, THIS FIELD
+*                             CONTAINS THE ADDRESS OF THE LAST RB THAT
+*                             CONTROLLED THE MODULE.  IF THE MODULE IS
+*                             SERIALLY REUSABLE, THIS FIELD CONTAINS
+*                             THE ADDRESS OF THE RB AT THE TOP OF THE
+*                             WAITING (RBPGMQ) QUEUE.  IF THE MODULE
+*                             WAS REQUESTED ONLY THROUGH LOAD MACRO
+*                             INSTRUCTIONS, CONTAINS ZERO.
+CDNAME   DS    CL8 -          8-BYTE NAME
+CDENTPT  DS    F -            MODULE'S RELOCATED ENTRY POINT ADDRESS
+CDXLMJP  DS    F -            EXTENT LIST ADDRESS OR MAJOR CDE ADDRESS
+*                             IF THIS CDE IS A MINOR
+CDUSE    DS    H -            VALUE CONTAINS THE TOTAL MODULE USE
+*                             COUNT
+CDATTRB  DS    B -            FLAG BYTE                        @ZA47842
+CDIDENTY EQU   X'40' -        ON=MAJOR BUILT BY IDENTIFY FOR AN
+*                             UNAUTHORIZED CALLER THAT IDENTIFIED TO
+*                             AN APF LIBRARY JPA MODULE        @ZA47842
+CDRESV1  DS    B  -           RESERVED - D                     @ZA47842
+CDATTR   DS    B -            ATTRIBUTE FLAGS
+CDNIP    EQU   X'80' -        MODULE LOADED BY NIP OR FIXED/MODIFIED
+*                             LPA MODULE
+CDNIC    EQU   X'40' -        MODULE IS IN PROCESS OF BEING LOADED
+CDREN    EQU   X'20' -        MODULE IS REENTERABLE
+CDSER    EQU   X'10' -        MODULE IS SERIALLY REUSABLE
+CDNFN    EQU   X'08' -        MODULE IS NOT REUSABLE (NON-FUNCTIONAL)
+CDMIN    EQU   X'04' -        THIS IS A MINOR CDE
+CDJPA    EQU   X'02' -        MODULE IS IN JOB PACK AREA
+CDNLR    EQU   X'01' -        MODULE IS NOT LOADABLE-ONLY
+CDATTR2  DS    B -            SECOND ATTRIBUTE FIELD
+CDSPZ    EQU   X'80' -        MODULE IS IN SUBPOOL ZERO
+CDREL    EQU   X'40' -        MODULE IS INACTIVE AND MAY BE RELEASED
+CDXLE    EQU   X'20' -        EXTENT LIST HAS BEEN BUILT FOR MODULE.
+*                             MAIN STORAGE OCCUPIED BY MODULE IS
+*                             DESCRIBED THEREIN.
+CDRLC    EQU   X'10' -        THIS CDE CONTAINS A MINOR ENTRY POINT
+*                             ADDRESS THAT HAS BEEN RELOCATED BY THE
+*                             PROGRAM FETCH ROUTINE
+CDOLY    EQU   X'04' -        MODULE IS IN OVERLAY FORMAT        A27026
+CDSYSLIB EQU   X'02' -        AUTHORIZED LIBRARY MODULE
+CDAUTH   EQU   X'01' -        PROGRAM AUTHORIZATION FLAG         ICB360
+CDATTR3  DS    H  -            RESERVED                         D
+         MEND  , */
+*%CDEBSL  :  ;
+*
+* /* *************************************************************** */
+* /*         MACCOMP OS/VS2,RELEASE 4        SC1CJ/PZD81             */
+* /*                                                                 */
+* /*         MACSTAT OS/VS2,RELEASE 4        74240                   */
+* /*                                                                 */
+* /*         MACMEAN  CDE MEANS CONTENTS DIRECTORY ENTRY             */
+* /* *************************************************************** */
+*
+*DECLARE
+*  1 CDENTRY  BASED(CDENTPTR),
+*   2 CDCHAIN     PTR(31),               /* ADDRESS OF NEXT CDE IN
+*                                           QUEUE (EITHER JPAQ OR
+*                                           LPAQ)                    */
+*   2 CDRRBP      PTR(31),               /* IF THE MODULE IS
+*                                           REENTERABLE, THIS FIELD
+*                                           CONTAINS THE ADDRESS OF
+*                                           THE LAST RB THAT
+*                                           CONTROLLED THE MODULE.
+*                                           IF THE MODULE IS SERIALLY
+*                                           REUSABLE, THIS FIELD
+*                                           CONTAINS THE ADDRESS OF
+*                                           THE RB AT THE TOP OF THE
+*                                           WAITING (RBPGMQ) QUEUE.
+*                                           IF THE MODULE WAS
+*                                           REQUESTED ONLY THROUGH
+*                                           LOAD MACRO INSTRUCTIONS,
+*                                           CONTAINS ZERO.           */
+*   2 CDNAME      CHAR(8),               /* 8 BYTE NAME              */
+*   2 CDENTPT     PTR(31),               /* MODULE'S RELOCATED ENTRY
+*                                           POINT ADDRESS            */
+*   2 CDXLMJP     PTR(31),               /* EXTENT LIST ADDRESS OR
+*                                           MAJOR CDE ADDRESS IF THIS
+*                                           CDE IS A MINOR.          */
+*   2 CDUSE       PTR(15),               /* VALUE CONTAINS THE TOTAL
+*                                           MODULE USE COUNT         */
+*   2 CDATTRB     CHAR(1),               /* FLAG BYTE        @ZA47842*/
+*     3 *        BIT(1),                 /* RESERVED         @ZA47842*/
+*     3 CDIDENTY BIT(1),                 /* ON=MAJOR BUILT BY IDENTIFY
+*                                           FOR AN UNAUTHORIZED CALLER
+*                                           THAT IDENTIFIED TO AN APF
+*                                           LIBRARY JPA MODULE
+*                                                            @ZA47842*/
+*     3 *        BIT(6),                 /* RESERVED         @ZA47842*/
+*   2 *           FIXED(8),              /* RESERVED -  D    @ZA47842*/
+*   2 CDATTR      CHAR(1),               /* ATTRIBUTE FLAGS          */
+*     3 CDNIP    BIT(1),                 /* MODULE LOAD BY NIP OR
+*                                           FIXED/MODIFIED LPA
+*                                           MODULE                   */
+*     3 CDNIC    BIT(1),                 /* MODULE IS IN PROCESS OF
+*                                           BEING LOADED             */
+*     3 CDREN    BIT(1),                 /* MODULE IS REENTRABLE     */
+*     3 CDSER    BIT(1),                 /* MODULE IS SERIALLY
+*                                           REUSABLE                 */
+*     3 CDNFN    BIT(1),                 /* MODULE IS NOT REUSABLE
+*                                           (NON-FUNCTIONAL)         */
+*     3 CDMIN    BIT(1),                 /* THIS IS A MINOR CDE      */
+*     3 CDJPA    BIT(1),                 /* MODULE IS IN JOB PACK
+*                                           AREA                     */
+*     3 CDNLR    BIT(1),                 /* MODULE IS NOT
+*                                           LOADABLE-ONLY            */
+*   2 CDATTR2     CHAR(1),               /* SECOND ATTRIBUTE FIELD   */
+*     3 CDSPZ    BIT(1),                 /* MODULE IS IN SUBPOOL ZERO*/
+*     3 CDREL    BIT(1),                 /* MODULE IS INACTIVE AND
+*                                           MAY BE RELEASED          */
+*     3 CDXLE    BIT(1),                 /* EXTENT LIST HAS BEEN
+*                                           BUILT FOR MODULE.
+*                                           MAIN STORAGE  OCCUPIED
+*                                           BY MODULE IS DESCRIBED
+*                                           THEREIN                  */
+*     3 CDRLC    BIT(1),                 /* THIS CDE CONTAINS A
+*                                           MINOR ENTRY POINT ADDRESS
+*                                           THAT HAS BEEN RELOCATED
+*                                           BY THE PROGRAM FETCH
+*                                           ROUTINE                  */
+*     3 *        BIT(1),                 /* RESERVED                 */
+*     3 CDOLY    BIT(1),                 /* MODULE IS IN OVERLAY
+*                                           FORMAT             A27026*/
+*     3 CDSYSLIB BIT(1),                 /* AUTHORIZED LIBRARY MODULE*/
+*     3 CDAUTH   BIT(1),                 /* PROGRAM AUTHORIZATION
+*                                           FLAG               ICB360*/
+*   2 CDATTR3    CHAR(2);                /* RESERVED                 */
+

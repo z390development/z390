@@ -1,0 +1,13 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    JX    &D,&A                    JUMP RELATIVE INDIRECT
+         GBLA  &DISP
+         GBLC  &LBL1
+         LCLA  &DL
+         AIF   ('&D' LE '15').JX1
+         MNOTE 4,'***  IHB349  DISPLACEMENT NOT 0-15 DIGITS'
+.JX1     ANOP
+&DL      SETA  16*&D
+&NAME    DC    0H'0',X'BF',AL1(&DL),AL2(&A-&LBL1+&DISP)
+         MEND
+

@@ -1,0 +1,157 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    IHBINNRB &EP,&EPLOC,&DE,&DCB,&HIARCHY,&ERRET=,&SF=I
+         GBLC  &IHBNO
+         LCLB  &B(4)
+         LCLA  &CTR,&A,&LIST
+         LCLC  &CHARS
+&B(1)    SETB  ('&EP' NE '')
+&B(2)    SETB  ('&EPLOC' NE '')
+&B(3)    SETB  ('&DE' NE '')
+&B(4)    SETB  ('&ERRET' NE '')
+&LIST    SETA  (8+4*&B(4))
+         AIF   (&B(1)+&B(2)+&B(3) GT 1).E1
+         AIF   ('&EP' EQ '').AGONE
+         AIF   ('&EP'(1,1) EQ '(').E1A
+.AGONE   ANOP
+         AIF   ('&SF' EQ 'I').IROUT
+         AIF   ('&SF' EQ 'L').LROUT
+         AIF   (N'&SF NE 2).E2
+         AIF   ('&SF(1)' NE 'E').E2
+         AIF   ('&SF'(4,1) EQ '(').ISAREG
+         LA    15,&SF(2)      LOAD SUP. PARM LIST
+         AGO   .CONTA
+.E1      IHBERMAC 88,&IHBNO   TOO MANY PARAMETERS PRESENT
+         MEXIT
+.E1A     IHBERMAC 42,&EP      R-FORM INVALID FOR EP NAME
+         MEXIT
+.E2      IHBERMAC 41,,&SF,,,0   SF PARAMETER BAD
+         MEXIT
+.E3      IHBERMAC 72,&IHBNO   REG. NOT. W/SF=L
+         MEXIT
+.E4      IHBERMAC 31,&IHBNO   EP,EPLOC,DE ALL MISSING
+         MEXIT
+.ISAREG  AIF   ('&SF(2)' EQ '(15)').CONTA
+&A       SETA  K'&SF-6
+&CHARS   SETC  '&SF'(5,&A)
+         LR    15,&CHARS      LOAD SUP. PARM LIST ADDR
+.CONTA   AIF   (NOT &B(1)).CONTB
+         LA    0,*+8          LOAD EP ADDR IN REG 0
+         B     *+12           BRANCH AROUND EP
+         DC    CL8'&EP'       EP SYMBOL
+         ST    0,0(0,15)      STORE IN SUP. PARMLIST
+         AGO   .DCBCHK
+.CONTB   AIF   (&B(2)+&B(3) EQ 0).DCBCHK
+         AIF   ('&EPLOC&DE'(1,1) EQ '(').ISAREGA
+         LA    0,&EPLOC&DE    PICK UP SUP. PARMLIST
+         ST    0,0(0,15)      STORE IN SUP. PARMLIST
+         AGO   .DECHK
+.ISAREGA LA    0,0(0,&EPLOC(1)&DE(1)) PICKUP EPLOC OR DE PARM @ZA65467
+         ST    0,0(0,15)     STORE IN SUP. PARMLIST           @ZA65467
+.DECHK   AIF   (NOT &B(3)).DCBCHK
+         MVI   0(15),X'80'    SET DE SWITCH BIT ON
+.DCBCHK  AIF   ('&DCB' EQ '').RETCK
+         AIF   ('&DCB'(1,1) EQ '(').ISAREGB
+         LA    0,&DCB         PICK UP DCB PARM
+         AGO   .STORDCB
+.ISAREGB LA    0,0(0,&DCB(1))  PICK UP DCB PARM
+.STORDCB ST    0,4(0,15)      STORE DCB PARAMETER IN LIST        YM1995
+.RETCK   AIF   ('&ERRET' EQ '').END
+         MVI   4(15),X'80'    TURN ON RETURN REQUESTED BIT
+         AIF   ('&ERRET'(1,1) EQ '(').RFORM
+         LA    0,&ERRET       PICK UP RETURN ADDRESS
+         ST    0,8(0,15)      STORE RETURN ADDRESS IN PARM LIST
+         AGO   .END
+.RFORM   LA    0,0(0,&ERRET(1)) PICK UP RETURN ADDRESS PARM    @ZA65467
+         ST    0,8(0,15)    STORE RETURN ADDRESS IN PARM LIST  @ZA65467
+         AGO   .END
+.LROUT   CNOP  0,4
+         AIF   (NOT &B(1)).CKEPLOC
+&NAME    DC    A(*+&LIST)         ADDRESS OF EP PARAMETER
+         AGO   .CHKDCB
+.CKEPLOC AIF   (&B(2)+&B(3) EQ 0).PUTZERO
+         AIF   ('&EPLOC&DE'(1,1) EQ '(').E3
+&NAME    DC    B'&B(3).0000000'    SET DE-EPLOC SW BIT
+         DC    AL3(&EPLOC&DE)      EPLOC OR DE PARAMETER
+         AGO   .CHKDCB
+.PUTZERO ANOP
+&NAME    DC    A(0)            SUPERVISOR PARAMETER
+.CHKDCB  AIF   ('&DCB' EQ '').ZERODCB
+         AIF   ('&DCB'(1,1) EQ '(').E3
+         AIF   ('&ERRET' EQ '').DCBNORE
+         AIF   ('&ERRET'(1,1) EQ '(').E3
+         DC    X'80'          RETURN REQUEST INDICATOR BIT SET
+         DC    AL3(&DCB)      DCB ADDRESS PARAMETER
+         DC    A(&ERRET)      RETURN ADDRESS PARAMETER
+         AGO   .CHKEP
+.DCBNORE DC    A(&DCB)        DCB ADDRESS PARAMETER
+         AGO   .CHKEP
+.ZERODCB AIF   ('&ERRET' EQ '').NODCBRE
+         AIF   ('&ERRET'(1,1) EQ '(').E3
+         DC    X'80'          RETURN REQUEST INDICATOR BIT SET
+         DC    AL3(0)         DCB ADDRESS PARAMETER
+         DC    A(&ERRET)      RETURN ADDRESS PARAMETER
+         AGO   .CHKEP
+.NODCBRE DC    A(0)           DCB ADDRESS PARAMETER
+.CHKEP   AIF   (NOT &B(1)).END
+         DC    CL8'&EP'       EP PARAMETER
+         AGO   .END
+.IROUT   AIF   (&B(1)+&B(2)+&B(3) NE 1).E4
+&CTR     SETA  12+8*&B(1)+4*&B(4)
+         CNOP  0,4
+         BAL   15,*+&CTR          BRANCH AROUND CONSTANTS
+         AIF   (NOT &B(1)).NOEP
+         DC    A(*+&LIST)         ADDR. OF PARM. LIST
+         AGO   .DCB
+.NOEP    AIF   ('&EPLOC&DE'(1,1) EQ '(').ZERODE
+         DC    B'&B(3).0000000'    SET DE-EPLOC SW BIT
+         DC    AL3(&EPLOC&DE)      EPLOC OR DE PARAMETER
+         AGO   .DCB
+.ZERODE  DC    A(0)           EPLOC OR DE PARAMETER
+.DCB     AIF   ('&DCB' EQ '').ZDCB
+         AIF   ('&DCB'(1,1) EQ '(').NODCRET
+         AIF   ('&ERRET' EQ '').NORETDC
+         DC    X'80'               RETURN REQUESTED BIT SET
+         DC    AL3(&DCB)           DCB ADDRESS PARAMETER
+         AIF   ('&ERRET'(1,1) EQ '(').RFRM
+         DC    A(&ERRET)           ERROR ADDRESS PARAMETER
+         AGO   .EPCHECK
+.NORETDC DC    A(&DCB)             DCB ADDRESS PARAMETER
+         AGO   .EPCHECK
+.NODCRET DC    A(0)               DCB ADDRESS PARAMETER
+         AIF   (NOT &B(4)).EPCHECK
+         AIF   ('&ERRET'(1,1) EQ '(').RFRM
+         DC    A(&ERRET)          RETURN ADDRESS PARAMETER
+         AGO   .EPCHECK
+.RFRM    DC    A(0)                ERROR ADDRESS PARAMETER
+         AGO   .EPCHECK
+.ZDCB    AIF   ('&ERRET' EQ '').NODCH0
+         DC    X'80'               RETURN REQUESTED INDICATOR
+         DC    AL3(0)              DCB ADDRESS PARAMETER
+         AIF   ('&ERRET'(1,1) EQ '(').ZERORET
+         DC    A(&ERRET)           RETURN ADDRESS PARAMETER
+         AGO   .EPCHECK
+.ZERORET DC    A(0)                RETURN ADDRESS PARAMETER
+         AGO   .EPCHECK
+.NODCH0  DC    A(0)                DCB ADDRESS PARAMETER
+.EPCHECK AIF   (NOT &B(1)).ACTION
+         DC    CL8'&EP'            EP PARAMETER
+.ACTION  AIF   (&B(1)).TESTDCB
+         AIF   ('&EPLOC&DE'(1,1) NE '(').TESTDCB
+         LA    0,0(0,&EPLOC(1)&DE(1)) PICKUP EPLOC OR DE PARM  @ZA65467
+         ST    0,0(0,15)      STORE IN SUP. PARM LIST          @ZA65467
+         AIF   (NOT &B(3)).TESTDCB
+         MVI   0(15),X'80'              SET DE SWITCH BIT ON
+.TESTDCB AIF   ('&DCB' EQ '').ERTEST
+         AIF   ('&DCB'(1,1) NE '(').ERTEST
+         LA    0,0(0,&DCB(1))      PICK UP DCB ADDRESS         @ZA65467
+         ST    0,4(0,15)      STORE DCB ADDRESS IN SUP PARMS   @ZA65467
+         AIF   ('&ERRET' EQ '').END
+         MVI   4(15),X'80'              SET RETURN REQUESTED BIT ON
+         AGO   .CONTERR
+.ERTEST  AIF   ('&ERRET' EQ '').END
+.CONTERR AIF   ('&ERRET'(1,1) NE '(').END
+         LA    0,0(0,&ERRET(1))    PICK UP ERROR ADDRESS       @ZA65467
+         ST    0,8(0,15)      STORE ERROR ADDRESS PARAMETER    @ZA65467
+.END     MEND
+

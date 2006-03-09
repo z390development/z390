@@ -1,0 +1,1509 @@
+.* MVS 3.8J PUBLIC DOMAIN
+ %FBITS : BBITS : MACRO;
+ /*                                                                  */
+ /*   FUNCTION : THIS MACRO CONVERTS THE SYMBOLIC CODES WHICH        */
+ /*   DESCRIBE THE FLAGS IN THE FIELD ATTRIBUTE TABLE AND THE BIT    */
+ /*   STRING TABLE INTO A BIT STRING CONSTANT WHICH IS USED TO       */
+ /*   INITIALIZE THE TABLES.                                         */
+ /*                                                                  */
+ /*   INPUT : A CHARACTER STRING WHICH CONTAINS ANY OF THE           */
+ /*   SYMBOLIC CODES DESCRIBED IN ONE OF THE TABLES BELOW.  THE CODES*/
+ /*   MAY BE IN ANY ORDER.                                           */
+ /*                                                                  */
+ /*   OUTPUT : A BIT STRING CONSTANT. THE CONSTANT RETURNED BY       */
+ /*   FBITS IS 24 BITS LONG. THE CONSTANT RETURNED BY BBITS IS 8     */
+ /*   BITS LONG.                                                     */
+ /*                                                                  */
+ /*                                                                  */
+ /*   FIELD ATTRIBUTE TABLE FLAGS                                    */
+ /*                                                                  */
+ /*   BIT POSITION   CODE   DESCRIPTION                              */
+ /*         0        GOK    VALID FOR GENCB                          */
+ /*         1        MOK    VALID FOR MODCB                          */
+ /*         2        SOK    VALID FOR SHOWCB                         */
+ /*         3        TOK    VALID FOR TESTCB                         */
+ /*         4        NOR    NORMAL ENTRY                             */
+ /*         5        BIT    BIT STRING ENTRY                         */
+ /*         6        SUB    SUBROUTINE ENTRY                         */
+ /*         7        CBL    CONTROL BLOCK LENGTH ENTRY               */
+ /*         8        OPN    ACB MUST BE OPEN                         */
+ /*         9        ACB    VALID FOR ACB                            */
+ /*        10        EXL    VALID FOR EXLST                          */
+ /*        11        RPL    VALID FOR RPL                            */
+ /*        12        CHR    CHARACTER STRING ENTRY                   */
+ /*        13        AMB    FIELD IS IN AMB                          */
+ /*        14        AMD    FIELD IS IN AMDSB                        */
+ /*        15        BUF    FIELD IS IN BUFC                         */
+ /*        16        ARD    FIELD IS IN ARDB                         */
+ /*        17        NIB    VALID FOR NIB                            */
+ /*        18        VTM    VALID FOR VTAM ONLY                      */
+ /*        19        BSP    FIELD IS IN BSPH                         */
+ /*        20        PLH    FIELD IS IN PLHDR                        */
+ /*                                                                  */
+ /*                                                                  */
+ /*   BIT STRING TABLE FLAGS                                         */
+ /*                                                                  */
+ /*   BIT POSITION   CODE   DESCRIPTION                              */
+ /*         0        EOB    END OF BIT STRING MARKER                 */
+ /*         1        BON    BIT SETTING - 1 IF BIT IS TO BE SET ON   */
+ /*         2        LEG    LAST ENTRY IN A GROUP                    */
+ /*         3        MEX    MEMBER OF A MUTUALLY EXCLUSIVE GROUP     */
+ /*         4        DEF    DEFAULT                                  */
+ /*         5        RSV    RESERVED                                 */
+ /*         6        VTM    VALID FOR VTAM ONLY                      */
+ /*                                                                  */
+         DCL BITS CHAR;                     /* BIT STRING TO BE BUILT*/
+         DCL CODES CHAR;                    /* BIT CODE VECTOR       */
+         DCL PAD CHAR;                      /* PAD STRING - ZEROES   */
+         DCL CODE CHAR;                     /* SEARCH ARGUMENT       */
+         DCL ARGS CHAR;                     /* MACLIST CHAR STRING   */
+         DCL I FIXED;                       /* VECTOR INDEX          */
+         DCL ACOL FIXED;                    /* COMMENT ALIGNMENT COL */
+         BITS = '';                         /* SET STRING TO NULL    */
+         ARGS = MACLIST;                    /* COPY MACLIST          */
+         IF MACNAME = 'BBITS'
+           THEN GO TO L1;
+         CODES = 'GOKMOKSOKTOKNORBITSUB' ||  /* FBITS INITIALIZATION */
+                 'CBLOPNCHRACBEXLRPLAMB' ||
+                 'AMDBUFARDNIBVTMBSPPLH';
+         PAD = '000';
+         ACOL = 47;
+         GO TO L2;
+ L1 :    CODES = 'EOBBONLEGMEXDEFRSVVTM';    /* BBITS INITIALIZATION */
+         PAD = '0';
+         ACOL = 31;
+ L2 :    BITS = '';
+         I = -2;
+ L3 :    I = I + 3;                          /* SCAN MACLIST         */
+         IF I > LENGTH(CODES)                /*   FOR EACH CODE      */
+           THEN GO TO L4;
+         CODE = CODES(I:I+2);
+         IF INDEX(ARGS,CODE) > 0            /* BUILD BIT STRING      */
+           THEN BITS = BITS || '1';
+           ELSE BITS = BITS || '0';
+         GO TO L3;
+ L4 :    BITS = BITS || PAD;                /* PAD WITH ZEROES       */
+         ANS(QUOTE(BITS) || 'B');           /* RETURN BINARY CONSTANT*/
+         ANS(' ') COL(ACOL);                /* ALIGN COMMENTS        */
+        %END;
+ %BIT : MACRO;
+ /*                                                                  */
+ /*   FUNCTION : THIS MACRO CONVERTS A DECIMAL SELF-DEFINING TERM    */
+ /*   REPRESENTING A BIT POSITION WITHIN A BYTE INTO THE EQUIVALENT  */
+ /*   HEXADECIMAL MASK.                                              */
+ /*                                                                  */
+ /*   INPUT : A DECIMAL SELF-DEFINING TERM IN THE RANGE 0 TO 7.      */
+ /*                                                                  */
+ /*   OUTPUT : A HEXADECIMAL CONSTANT OF LENGTH 2.                   */
+ /*                                                                  */
+         DCL CODES CHAR;                    /* HEX CODE VECTOR       */
+         DCL XCHAR CHAR;                    /* 2 HEX DIGITS          */
+         DCL I FIXED;                       /* VECTOR INDEX          */
+         CODES = '8040201008040201';        /* INITIALIZE HEX VECTOR */
+         I = FIXED(MACLIST(1));             /* CONVERT ARGUMENT      */
+         IF I < 0 THEN GO TO ERR;           /* TEST FOR ARG TOO LOW  */
+         IF I > 7 THEN GO TO ERR;           /* TEST FOR ARG TOO HIGH */
+         I = 2 * (I+1);                     /* CALCULATE VECTOR INDEX*/
+         XCHAR = CODES(I-1:I);              /* GET HEX DIGITS        */
+         ANS(QUOTE(XCHAR) || 'X');          /* RETURN HEX CONSTANT   */
+         ANS(' ') COL(19);                  /* ALIGN COMMENTS        */
+         RETURN;                            /* MEXIT                 */
+ ERR :   ANS MSG('INVALID BIT POSITION');   /* WRITE ERROR MESSAGE   */
+         %END;
+ /********************************************************************/
+ /*                                                                  */
+ /*            BIT  STRING TABLE                                     */
+ /*                                                                  */
+ /********************************************************************/
+ DCL 1 BST (87) FIXED(31) STATIC,
+       2 BSTFLGS CHAR(1) INIT(              /* FLAGS                 */
+           ?BBITS(BON,MEX)          ;,      /* ATRB(KSDS)            */
+           ?BBITS(MEX,LEG)          ;,      /* ATRB(ESDS)            */
+           ?BBITS(BON,LEG)          ;,      /* ATRB(WCK)             */
+           ?BBITS(BON,LEG)          ;,      /* ATRB(SSWD)            */
+           ?BBITS(BON,LEG)          ;,      /* ATRB(REPL)            */
+           ?BBITS(BON,LEG)          ;,      /* ATRB(RRDS)            */
+           ?BBITS(BON,LEG)          ;,      /* ATRB(SPAN)            */
+           ?BBITS(BON,LEG,EOB)      ;,      /* ATRB(UNQ)             */
+           ?BBITS(BON,DEF)          ;,      /* MACRF(KEY)            */
+           ?BBITS(BON)              ;,      /* MACRF(ADR)            */
+           ?BBITS(BON,LEG)          ;,      /* MACRF(CNV)            */
+           ?BBITS(BON,DEF)          ;,      /* MACRF(SEQ)            */
+           ?BBITS(BON)              ;,      /* MACRF(SKP)            */
+           ?BBITS(BON,LEG)          ;,      /* MACRF(DIR)            */
+           ?BBITS(BON,DEF)          ;,      /* MACRF(IN)             */
+           ?BBITS(BON,LEG)          ;,      /* MACRF(OUT)            */
+           ?BBITS(MEX)              ;,      /* MACRF(NUB)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* MACRF(UBF)            */
+           ?BBITS(MEX,VTM)          ;,      /* MACRF(LOGON)          */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* MACRF(NLOGON)         */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VSAM     */
+           ?BBITS(MEX,DEF)          ;,      /* MACRF(DDN)            */
+           ?BBITS(MEX,BON,LEG)      ;,      /* MACRF(DSN)            */
+           ?BBITS(MEX,DEF)          ;,      /* MACRF(NRM)            */
+           ?BBITS(MEX,LEG,BON)      ;,      /* MACRF(AIX)            */
+           ?BBITS(MEX,DEF)          ;,      /* MACRF(NSR)            */
+           ?BBITS(MEX,BON)          ;,      /* MACRF(LSR)            */
+           ?BBITS(MEX,BON,LEG)      ;,      /* MACRF(GSR)            */
+           ?BBITS(MEX,DEF)          ;,      /* MACRF(NCI)            */
+           ?BBITS(MEX,BON,LEG)      ;,      /* MACRF(ICI)            */
+           ?BBITS(MEX,DEF)          ;,      /* MACRF(NDF)            */
+           ?BBITS(MEX,BON,LEG)      ;,      /* MACRF(DFR)            */
+           ?BBITS(MEX,DEF)          ;,      /* MACRF(NIS)            */
+           ?BBITS(BON,LEG,MEX)      ;,      /* MACRF(SIS)            */
+           ?BBITS(MEX,DEF)          ;,      /* MACRF(NFX)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* MACRF(CFX)            */
+           ?BBITS(BON,MEX)          ;,      /* MACRF(RST)            */
+           ?BBITS(MEX,DEF,LEG,EOB)  ;,      /* MACRF(NRS)            */
+           ?BBITS(BON,MEX,VTM)      ;,      /* BRANCH(YES)           */
+           ?BBITS(MEX,LEG,EOB,VTM)  ;,      /* BRANCH(NO)            */
+           ?BBITS(BON,MEX)          ;,      /* CATALOG(YES)          */
+           ?BBITS(EOB,MEX,LEG)      ;,      /* CATALOG(NO)           */
+           ?BBITS(BON,MEX)          ;,      /* CRA(SCRA)             */
+           ?BBITS(BON,MEX,LEG,EOB)  ;,      /* CRA(UCRA)             */
+           ?BBITS(EOB,BON,LEG)      ;,      /* OFLAGS(OPEN)          */
+           ?BBITS(BON,LEG)          ;,      /* OPENOBJ(AIX)          */
+           ?BBITS(BON,LEG)          ;,      /* OPENOBJ(PATH)         */
+           ?BBITS(BON,LEG,EOB)      ;,      /* OPENOBJ(BASE)         */
+           ?BBITS(BON,VTM)          ;,      /* DATAFLG(UNSOL)        */
+           ?BBITS(BON,VTM)          ;,      /* DATAFLG(EOB)          */
+           ?BBITS(BON,VTM)          ;,      /* DATAFLG(EOM)          */
+           ?BBITS(BON,VTM)          ;,      /* DATAFLG(EOT)          */
+           ?BBITS(BON,VTM)          ;,      /* DATAFLG(LOGOFF)       */
+           ?BBITS(BON,VTM)          ;,      /* DATAFLG(LG)           */
+           ?BBITS(BON,LEG,EOB,VTM)  ;,      /* DATAFLG(SOH)          */
+           ?BBITS(BON,MEX)          ;,      /* OPTCD(KEY)            */
+           ?BBITS(BON,MEX)          ;,      /* OPTCD(ADR)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* OPTCD(CNV)            */
+           ?BBITS(BON,MEX)          ;,      /* OPTCD(SEQ)            */
+           ?BBITS(BON,MEX)          ;,      /* OPTCD(DIR)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* OPTCD(SKP)            */
+           ?BBITS(MEX)              ;,      /* OPTCD(SYN)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* OPTCD(ASY)            */
+           ?BBITS(MEX)              ;,      /* OPTCD(NUP)            */
+           ?BBITS(BON,MEX)          ;,      /* OPTCD(UPD)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* OPTCD(NSP)            */
+           ?BBITS(MEX)              ;,      /* OPTCD(KEQ)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* OPTCD(KGE)            */
+           ?BBITS(MEX)              ;,      /* OPTCD(FKS)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* OPTCD(GEN)            */
+           ?BBITS(MEX)              ;,      /* OPTCD(MVE)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* OPTCD(LOC)            */
+           ?BBITS(MEX,DEF)          ;,      /* OPTCD(FWD)            */
+           ?BBITS(MEX,LEG,BON)      ;,      /* OPTCD(BWD)            */
+           ?BBITS(MEX,DEF)          ;,      /* OPTCD(ARD)            */
+           ?BBITS(MEX,LEG,BON)      ;,      /* OPTCD(LRD)            */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VSAM     */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VSAM     */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VSAM     */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VSAM     */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VSAM     */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VSAM     */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VSAM     */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VSAM     */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VSAM     */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VSAM     */
+           ?BBITS(RSV)             ;),      /* RESERVED FOR VSAM     */
+       2 BSTMASK CHAR(1) INIT(              /* BIT MASK              */
+           ?BIT(0);,                        /* ATRB(KSDS)            */
+           ?BIT(0);,                        /* ATRB(ESDS)            */
+           ?BIT(1);,                        /* ATRB(WCK)             */
+           ?BIT(2);,                        /* ATRB(SSWD)            */
+           ?BIT(3);,                        /* ATRB(REPL)            */
+           ?BIT(6);,                        /* ATRB(RRDS)            */
+           ?BIT(7);,                        /* ATRB(SPAN)            */
+           ?BIT(0);,                        /* ATRB(UNQ)             */
+           ?BIT(0);,                        /* MACRF(KEY)            */
+           ?BIT(1);,                        /* MACRF(ADR)            */
+           ?BIT(2);,                        /* MACRF(CNV)            */
+           ?BIT(3);,                        /* MACRF(SEQ)            */
+           ?BIT(3);,                        /* MACRF(SKP)            */
+           ?BIT(4);,                        /* MACRF(DIR)            */
+           ?BIT(5);,                        /* MACRF(IN)             */
+           ?BIT(6);,                        /* MACRF(OUT)            */
+           ?BIT(7);,                        /* MACRF(NUB)            */
+           ?BIT(7);,                        /* MACRF(UBF)            */
+           ?BIT(4);,                        /* MACRF(LOGON)          */
+           ?BIT(4);,                        /* MACRF(NLOGON)         */
+           0       ,                        /* RESERVED FOR VSAM     */
+           ?BIT(6);,                        /* MACRF(DDN)            */
+           ?BIT(6);,                        /* MACRF(DSN)            */
+           ?BIT(7);,                        /* MACRF(NRM)            */
+           ?BIT(7);,                        /* MACRF(AIX)            */
+           ?BIT(1);,                        /* MACRF(NSR)            */
+           ?BIT(1);,                        /* MACRF(LSR)            */
+           ?BIT(2);,                        /* MACRF(GSR)            */
+           ?BIT(3);,                        /* MACRF(NCI)            */
+           ?BIT(3);,                        /* MACRF(ICI)            */
+           ?BIT(4);,                        /* MACRF(NDF)            */
+           ?BIT(4);,                        /* MACRF(DFR)            */
+           ?BIT(5);,                        /* MACRF(NIS)            */
+           ?BIT(5);,                        /* MACRF(SIS)            */
+           ?BIT(6);,                        /* MACRF(NFX)            */
+           ?BIT(6);,                        /* MACRF(CFX)            */
+           ?BIT(5);,                        /* MACRF(RST)            */
+           ?BIT(5);,                        /* MACRF(NRS)            */
+           ?BIT(6);,                        /* BRANCH(YES)           */
+           ?BIT(6);,                        /* BRANCH(NO)            */
+           ?BIT(3);,                        /* CATALOG(YES)          */
+           ?BIT(3);,                        /* CATALOG(NO)           */
+           ?BIT(4);,                        /* CRA(SCRA)             */
+           ?BIT(5);,                        /* CRA(UCRA)             */
+           ?BIT(3);,                        /* OFLAGS(OPEN)          */
+           ?BIT(2);,                        /* OPENOBJ(AIX)          */
+           ?BIT(0);,                        /* OPENOBJ(PATH)         */
+           ?BIT(3);,                        /* OPENOBJ(BASE)         */
+           ?BIT(0);,                        /* DATAFLG(UNSOL)        */
+           ?BIT(2);,                        /* DATAFLG(EOB)          */
+           ?BIT(3);,                        /* DATAFLG(EOM)          */
+           ?BIT(4);,                        /* DATAFLG(EOT)          */
+           ?BIT(5);,                        /* DATAFLG(LOGOFF)       */
+           ?BIT(6);,                        /* DATAFLG(LG)           */
+           ?BIT(7);,                        /* DATAFLG(SOH)          */
+           ?BIT(0);,                        /* OPTCD(KEY)            */
+           ?BIT(1);,                        /* OPTCD(ADR)            */
+           ?BIT(2);,                        /* OPTCD(CNV)            */
+           ?BIT(2);,                        /* OPTCD(SEQ)            */
+           ?BIT(1);,                        /* OPTCD(DIR)            */
+           ?BIT(3);,                        /* OPTCD(SKP)            */
+           ?BIT(4);,                        /* OPTCD(SYN)            */
+           ?BIT(4);,                        /* OPTCD(ASY)            */
+           ?BIT(6);,                        /* OPTCD(NUP)            */
+           ?BIT(6);,                        /* OPTCD(UPD)            */
+           ?BIT(7);,                        /* OPTCD(NSP)            */
+           ?BIT(5);,                        /* OPTCD(KEQ)            */
+           ?BIT(5);,                        /* OPTCD(KGE)            */
+           ?BIT(6);,                        /* OPTCD(FKS)            */
+           ?BIT(6);,                        /* OPTCD(GEN)            */
+           ?BIT(0);,                        /* OPTCD(MVE)            */
+           ?BIT(0);,                        /* OPTCD(LOC)            */
+           ?BIT(3);,                        /* OPTCD(FWD)            */
+           ?BIT(3);,                        /* OPTCD(AWD)            */
+           ?BIT(4);,                        /* OPTCD(ARD)            */
+           ?BIT(4);,                        /* OPTCD(LRD)            */
+           0       ,                        /* RESERVED FOR VSAM     */
+           0       ,                        /* RESERVED FOR VSAM     */
+           0       ,                        /* RESERVED FOR VSAM     */
+           0       ,                        /* RESERVED FOR VSAM     */
+           0       ,                        /* RESERVED FOR VSAM     */
+           0       ,                        /* RESERVED FOR VSAM     */
+           0       ,                        /* RESERVED FOR VSAM     */
+           0       ,                        /* RESERVED FOR VSAM     */
+           0       ,                        /* RESERVED FOR VSAM     */
+           0       ,                        /* RESERVED FOR VSAM     */
+           0      ),                        /* RESERVED FOR VSAM     */
+       2 BSTOFF FIXED(15) INIT(             /* BYTE OFFSET           */
+           ADDR(AMDATTR )-ADDR(IDAAMDSB),   /* ATRB(KSDS)            */
+           ADDR(AMDATTR )-ADDR(IDAAMDSB),   /* ATRB(CSDS)            */
+           ADDR(AMDATTR )-ADDR(IDAAMDSB),   /* ATRB(WCK)             */
+           ADDR(AMDATTR )-ADDR(IDAAMDSB),   /* ATRB(SSWD)            */
+           ADDR(AMDATTR )-ADDR(IDAAMDSB),   /* ATRB(REPL)            */
+           ADDR(AMDATTR )-ADDR(IDAAMDSB),   /* ATRB(RRDS)            */
+           ADDR(AMDATTR )-ADDR(IDAAMDSB),   /* ATRB(SPAN)            */
+           ADDR(AMDATTR3)-ADDR(IDAAMDSB),   /* ATRB(UNQ)             */
+           ADDR(ACBMACR1)-ADDR(IFGACB  ),   /* MACRF(KEY)            */
+           ADDR(ACBMACR1)-ADDR(IFGACB  ),   /* MACRF(ADR)            */
+           ADDR(ACBMACR1)-ADDR(IFGACB  ),   /* MACRF(CNV)            */
+           ADDR(ACBMACR1)-ADDR(IFGACB  ),   /* MACRF(SEQ)            */
+           ADDR(ACBMACR2)-ADDR(IFGACB  ),   /* MACRF(SKP)            */
+           ADDR(ACBMACR1)-ADDR(IFGACB  ),   /* MACRF(DIR)            */
+           ADDR(ACBMACR1)-ADDR(IFGACB  ),   /* MACRF(IN)             */
+           ADDR(ACBMACR1)-ADDR(IFGACB  ),   /* MACRF(OUT)            */
+           ADDR(ACBMACR1)-ADDR(IFGACB  ),   /* MACRF(NUB)            */
+           ADDR(ACBMACR1)-ADDR(IFGACB  ),   /* MACRF(UBF)            */
+           ADDR(ACBMACR2)-ADDR(IFGACB  ),   /* MACRF(LOGON)          */
+           ADDR(ACBMACR2)-ADDR(IFGACB  ),   /* MACRF(NLOGON)         */
+           0                            ,   /* RESERVED FOR VSAM     */
+           ADDR(ACBMACR2)-ADDR(IFGACB  ),   /* MACRF(DDN)            */
+           ADDR(ACBMACR2)-ADDR(IFGACB  ),   /* MACRF(DSN)            */
+           ADDR(ACBMACR2)-ADDR(IFGACB  ),   /* MACRF(NRM)            */
+           ADDR(ACBMACR2)-ADDR(IFGACB  ),   /* MACRF(AIX)            */
+           ADDR(ACBMACR3)-ADDR(IFGACB  ),   /* MACRF(NSR)            */
+           ADDR(ACBMACR3)-ADDR(IFGACB  ),   /* MACRF(LSR)            */
+           ADDR(ACBMACR3)-ADDR(IFGACB  ),   /* MACRF(GSR)            */
+           ADDR(ACBMACR3)-ADDR(IFGACB  ),   /* MACRF(NCI)            */
+           ADDR(ACBMACR3)-ADDR(IFGACB  ),   /* MACRF(ICI)            */
+           ADDR(ACBMACR3)-ADDR(IFGACB  ),   /* MACRF(NDF)            */
+           ADDR(ACBMACR3)-ADDR(IFGACB  ),   /* MACRF(DFR)            */
+           ADDR(ACBMACR3)-ADDR(IFGACB  ),   /* MACRF(NIS)            */
+           ADDR(ACBMACR3)-ADDR(IFGACB  ),   /* MACRF(SIS)            */
+           ADDR(ACBMACR3)-ADDR(IFGACB  ),   /* MACRF(NFX)            */
+           ADDR(ACBMACR3)-ADDR(IFGACB  ),   /* MACRF(CFX)            */
+           ADDR(ACBMACR2)-ADDR(IFGACB  ),   /* MACRF(RST)            */
+           ADDR(ACBMACR2)-ADDR(IFGACB  ),   /* MACRF(NRS)            */
+           ADDR(RPLEXTD1)-ADDR(IFGRPL  ),   /* BRANCH(YES)           */
+           ADDR(RPLEXTD1)-ADDR(IFGRPL  ),   /* BRANCH(NO)            */
+           ADDR(ACBINFLG)-ADDR(IFGACB  ),   /* CATALOG(YES)          */
+           ADDR(ACBINFLG)-ADDR(IFGACB  ),   /* CATALOG(NO)           */
+           ADDR(ACBINFLG)-ADDR(IFGACB  ),   /* CRA(SCRA)             */
+           ADDR(ACBINFLG)-ADDR(IFGACB  ),   /* CRA(UCRA)             */
+           ADDR(ACBOFLGS)-ADDR(IFGACB  ),   /* OFLAGS(OPEN)          */
+           ADDR(AMBLTYPE)-ADDR(IDAAMBL ),   /* OPENOBJ(AIX)          */
+           ADDR(AMBLTYPE)-ADDR(IDAAMBL ),   /* OPENOBJ(PATH)         */
+           ADDR(AMBLTYPE)-ADDR(IDAAMBL ),   /* OPENOBJ(BASE)         */
+           ADDR(RPLFDB3 )-ADDR(IFGRPL  ),   /* DATAFLG(UNSOL)        */
+           ADDR(RPLFDB3 )-ADDR(IFGRPL  ),   /* DATAFLG(EOB)          */
+           ADDR(RPLFDB3 )-ADDR(IFGRPL  ),   /* DATAFLG(EOM)          */
+           ADDR(RPLFDB3 )-ADDR(IFGRPL  ),   /* DATAFLG(EOT)          */
+           ADDR(RPLFDB3 )-ADDR(IFGRPL  ),   /* DATAFLG(LOGOFF)       */
+           ADDR(RPLFDB3 )-ADDR(IFGRPL  ),   /* DATAFLG(LG)           */
+           ADDR(RPLFDB3 )-ADDR(IFGRPL  ),   /* DATAFLG(SOH)          */
+           ADDR(RPLOPT2 )-ADDR(IFGRPL  ),   /* OPTCD(KEY)            */
+           ADDR(RPLOPT2 )-ADDR(IFGRPL  ),   /* OPTCD(ADR)            */
+           ADDR(RPLOPT2 )-ADDR(IFGRPL  ),   /* OPTCD(CNV)            */
+           ADDR(RPLOPT1 )-ADDR(IFGRPL  ),   /* OPTCD(SEQ)            */
+           ADDR(RPLOPT1 )-ADDR(IFGRPL  ),   /* OPTCD(DIR)            */
+           ADDR(RPLOPT1 )-ADDR(IFGRPL  ),   /* OPTCD(SKP)            */
+           ADDR(RPLOPT1 )-ADDR(IFGRPL  ),   /* OPTCD(SYN)            */
+           ADDR(RPLOPT1 )-ADDR(IFGRPL  ),   /* OPTCD(ASY)            */
+           ADDR(RPLOPT2 )-ADDR(IFGRPL  ),   /* OPTCD(NUP)            */
+           ADDR(RPLOPT2 )-ADDR(IFGRPL  ),   /* OPTCD(UPD)            */
+           ADDR(RPLOPT2 )-ADDR(IFGRPL  ),   /* OPTCD(NSP)            */
+           ADDR(RPLOPT1 )-ADDR(IFGRPL  ),   /* OPTCD(KEQ)            */
+           ADDR(RPLOPT1 )-ADDR(IFGRPL  ),   /* OPTCD(KGE)            */
+           ADDR(RPLOPT1 )-ADDR(IFGRPL  ),   /* OPTCD(FKS)            */
+           ADDR(RPLOPT1 )-ADDR(IFGRPL  ),   /* OPTCD(GEN)            */
+           ADDR(RPLOPT1 )-ADDR(IFGRPL  ),   /* OPTCD(MVE)            */
+           ADDR(RPLOPT1 )-ADDR(IFGRPL  ),   /* OPTCD(LOC)            */
+           ADDR(RPLOPT2 )-ADDR(IFGRPL  ),   /* OPTCD(FWD)            */
+           ADDR(RPLOPT2 )-ADDR(IFGRPL  ),   /* OPTCD(BWD)            */
+           ADDR(RPLOPT2 )-ADDR(IFGRPL  ),   /* OPTCD(ARD)            */
+           ADDR(RPLOPT2 )-ADDR(IFGRPL  ),   /* OPTCD(LRD)            */
+           0                            ,   /* RESERVED FOR VSAM     */
+           0                            ,   /* RESERVED FOR VSAM     */
+           0                            ,   /* RESERVED FOR VSAM     */
+           0                            ,   /* RESERVED FOR VSAM     */
+           0                            ,   /* RESERVED FOR VSAM     */
+           0                            ,   /* RESERVED FOR VSAM     */
+           0                            ,   /* RESERVED FOR VSAM     */
+           0                            ,   /* RESERVED FOR VSAM     */
+           0                            ,   /* RESERVED FOR VSAM     */
+           0                            ,   /* RESERVED FOR VSAM     */
+           0                           );   /* RESERVED FOR VSAM     */
+ /********************************************************************/
+ /*                                                                  */
+ /*            BIT  STRING TABLE (PART 2)                            */
+ /*                                                                  */
+ /********************************************************************/
+ DCL 1 BST2 (61) FIXED(31) STATIC,
+       2 BSTFLGS2 CHAR(1) INIT(             /* FLAGS                 */
+           ?BBITS(MEX,VTM)          ;,      /* OPTCD(CA)             */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(CS)             */
+           ?BBITS(MEX,VTM)          ;,      /* OPTCD(ED)             */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(CD)             */
+           ?BBITS(MEX,VTM)          ;,      /* OPTCD(RELEASE)        */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(PASS)           */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(NERASE)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(EAU)            */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(ERASE)          */
+           ?BBITS(MEX,VTM)          ;,      /* OPTCD(SPEC)           */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(ANY)            */
+           ?BBITS(MEX,VTM)          ;,      /* OPTCD(NCONV)          */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(CONV)           */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(LBT)            */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(LBM)            */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(BLK)            */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(COND)           */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(UNCOND)         */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(LOCK)           */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VTAM     */
+           ?BBITS(RSV)              ;,      /* RESERVED FOR VTAM     */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(LOGONMSG)       */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(DEVCHAR)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(TERMS)          */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(APPSTAT)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(COUNTS)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(RNNAME)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(CIDXLATE)       */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(TOPLOGON)       */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(BSCID)          */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(DISPLAY)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(RELRQ)          */
+           ?BBITS(MEX,LEG,VTM)      ;,      /* OPTCD(NRELRQ)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(Q)              */
+           ?BBITS(MEX,LEG,VTM)      ;,      /* OPTCD(NQ)             */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(PEND)           */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(SESSION)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(ACTIVE)         */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(UNCONDL)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(QUIESCE)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(START)          */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(STOP)           */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(ACCEPT)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(ACQUIRE)        */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(PREEMPT)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(CONALL)         */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(CONANY)         */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* OPTCD(RECEIVE)        */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(SEND)           */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(KEEP)           */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(TRUNC)          */
+           ?BBITS(BON,DEF,MEX,LEG,VTM);,    /* OPTCD(NIBTK)          */
+           ?BBITS(BON,DEF,MEX,VTM)  ;,      /* OPTCD(SRCACS)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(CACS)           */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* OPTCD(SR)             */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OPTCD(FMHDR)          */
+           ?BBITS(MEX,VTM,LEG,EOB)  ;,      /* OPTCD(NFMHDR)         */
+           ?BBITS(MEX)              ;,      /* LISTEND(YES)          */
+           ?BBITS(BON,MEX,LEG,EOB)  ;,      /* LISTEND(NO)           */
+           ?BBITS(BON,MEX)          ;,      /* CON(YES)              */
+           ?BBITS(MEX,LEG,EOB)     ;),      /* CON(NO)               */
+       2 BSTMASK2 CHAR(1) INIT(             /* BIT MASK              */
+           ?BIT(0);,                        /* OPTCD(CA)             */
+           ?BIT(0);,                        /* OPTCD(CS)             */
+           ?BIT(1);,                        /* OPTCD(ED)             */
+           ?BIT(1);,                        /* OPTCD(CD)             */
+           ?BIT(2);,                        /* OPTCD(RELEASE)        */
+           ?BIT(2);,                        /* OPTCD(PASS)           */
+           ?BIT(3);,                        /* OPTCD(NERASE)         */
+           ?BIT(4);,                        /* OPTCD(EAU)            */
+           ?BIT(5);,                        /* OPTCD(ERASE)          */
+           ?BIT(6);,                        /* OPTCD(SPEC)           */
+           ?BIT(6);,                        /* OPTCD(ANY)            */
+           ?BIT(7);,                        /* OPTCD(NCONV)          */
+           ?BIT(7);,                        /* OPTCD(CONV)           */
+           ?BIT(2);,                        /* OPTCD(LBT)            */
+           ?BIT(1);,                        /* OPTCD(LBM)            */
+           ?BIT(0);,                        /* OPTCD(BLK)            */
+           ?BIT(3);,                        /* OPTCD(COND)           */
+           ?BIT(4);,                        /* OPTCD(UNCOND)         */
+           ?BIT(5);,                        /* OPTCD(LOCK)           */
+           0       ,                        /* RESERVED FOR VTAM     */
+           0       ,                        /* RESERVED FOR VTAM     */
+           ?BIT(0);,                        /* OPTCD(LOGONMSG)       */
+           ?BIT(1);,                        /* OPTCD(DEVCHAR)        */
+           ?BIT(2);,                        /* OPTCD(TERMS)          */
+           ?BIT(4);,                        /* OPTCD(APPSTAT)        */
+           ?BIT(3);,                        /* OPTCD(COUNTS)         */
+           ?BIT(5);,                        /* OPTCD(RNNAME)         */
+           ?BIT(6);,                        /* OPTCD(CIDXLATE)       */
+           ?BIT(7);,                        /* OPTCD(TOPLOGON)       */
+           ?BIT(0);,                        /* OPTCD(BSCID)          */
+           ?BIT(1);,                        /* OPTCD(DISPLAY)        */
+           ?BIT(5);,                        /* OPTCD(RELRQ)          */
+           ?BIT(5);,                        /* OPTCD(NRELRQ)         */
+           ?BIT(3);,                        /* OPTCD(Q)              */
+           ?BIT(3);,                        /* OPTCD(NQ)             */
+           ?BIT(3);,                        /* OPTCD(PEND)           */
+           ?BIT(4);,                        /* OPTCD(SESSION)        */
+           ?BIT(5);,                        /* OPTCD(ACTIVE)         */
+           ?BIT(6);,                        /* OPTCD(UNCONDL)        */
+           ?BIT(0);,                        /* OPTCD(QUIESCE)        */
+           ?BIT(1);,                        /* OPTCD(START)          */
+           ?BIT(2);,                        /* OPTCD(STOP)           */
+           ?BIT(1);,                        /* OPTCD(ACCEPT)         */
+           ?BIT(0);,                        /* OPTCD(ACQUIRE)        */
+           ?BIT(2);,                        /* OPTCD(PREEMPT)        */
+           ?BIT(0);,                        /* OPTCD(CONALL)         */
+           ?BIT(1);,                        /* OPTCD(CONANY)         */
+           ?BIT(0);,                        /* OPTCD(RECEIVE)        */
+           ?BIT(0);,                        /* OPTCD(SEND)           */
+           ?BIT(1);,                        /* OPTCD(KEEP)           */
+           ?BIT(2);,                        /* OPTCD(TRUNC)          */
+           ?BIT(3);,                        /* OPTCD(NIBTK)          */
+           ?BIT(4);,                        /* OPTCD(SRCACS)         */
+           ?BIT(5);,                        /* OPTCD(CACS)           */
+           ?BIT(6);,                        /* OPTCD(SR)             */
+           ?BIT(7);,                        /* OPTCD(FMHDR)          */
+           ?BIT(7);,                        /* OPTCD(NFMHDR)         */
+           ?BIT(0);,                        /* LISTEND(YES)          */
+           ?BIT(0);,                        /* LISTEND(NO)           */
+           ?BIT(1);,                        /* CON(YES)              */
+           ?BIT(1);),                       /* CON(NO)               */
+       2 BSTOFF2 FIXED(15) INIT(            /* BYTE OFFSET           */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(CA)             */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(CS)             */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(ED)             */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(CD)             */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(RELEASE)        */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(PASS)           */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(NERASE)         */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(EAU)            */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(ERASE)          */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(SPEC)           */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(ANY)            */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(NCONV)          */
+           ADDR(RPLOPT5 )-ADDR(IFGRPL  ),   /* OPTCD(CONV)           */
+           ADDR(RPLOPT6 )-ADDR(IFGRPL  ),   /* OPTCD(LBT)            */
+           ADDR(RPLOPT6 )-ADDR(IFGRPL  ),   /* OPTCD(LBM)            */
+           ADDR(RPLOPT6 )-ADDR(IFGRPL  ),   /* OPTCD(BLK)            */
+           ADDR(RPLOPT6 )-ADDR(IFGRPL  ),   /* OPTCD(COND)           */
+           ADDR(RPLOPT6 )-ADDR(IFGRPL  ),   /* OPTCD(UNCOND)         */
+           ADDR(RPLOPT6 )-ADDR(IFGRPL  ),   /* OPTCD(LOCK)           */
+           0                            ,   /* RESERVED FOR VTAM     */
+           0                            ,   /* RESERVED FOR VTAM     */
+           ADDR(RPLOPT9 )-ADDR(RPLVTEXT)+   /* OPTCD(LOGONMSG)       */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT9 )-ADDR(RPLVTEXT)+   /* OPTCD(DEVCHAR)        */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT9 )-ADDR(RPLVTEXT)+   /* OPTCD(TERMS)          */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT9 )-ADDR(RPLVTEXT)+   /* OPTCD(APPSTAT)        */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT9 )-ADDR(RPLVTEXT)+   /* OPTCD(COUNTS)         */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT9 )-ADDR(RPLVTEXT)+   /* OPTCD(RNNAME)         */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT9 )-ADDR(RPLVTEXT)+   /* OPTCD(CIDXLATE)       */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT9 )-ADDR(RPLVTEXT)+   /* OPTCD(TOPLOGON)       */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT10)-ADDR(RPLVTEXT)+   /* OPTCD(BSCID)          */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT10)-ADDR(RPLVTEXT)+   /* OPTCD(DISPLAY)        */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT7 )-ADDR(IFGRPL  ),   /* OPTCD(RELRQ)          */
+           ADDR(RPLOPT7 )-ADDR(IFGRPL  ),   /* OPTCD(NRELRQ)         */
+           ADDR(RPLOPT7 )-ADDR(IFGRPL  ),   /* OPTCD(Q)              */
+           ADDR(RPLOPT7 )-ADDR(IFGRPL  ),   /* OPTCD(NQ)             */
+           ADDR(RPLOPT8 )-ADDR(IFGRPL  ),   /* OPTCD(PEND)           */
+           ADDR(RPLOPT8 )-ADDR(IFGRPL  ),   /* OPTCD(SESSION)        */
+           ADDR(RPLOPT8 )-ADDR(IFGRPL  ),   /* OPTCD(ACTIVE)         */
+           ADDR(RPLOPT8 )-ADDR(IFGRPL  ),   /* OPTCD(UNCONDL)        */
+           ADDR(RPLOPT11)-ADDR(RPLVTEXT)+   /* OPTCD(QUIESCE)        */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT11)-ADDR(RPLVTEXT)+   /* OPTCD(START)          */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT11)-ADDR(RPLVTEXT)+   /* OPTCD(STOP)           */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT8 )-ADDR(IFGRPL  ),   /* OPTCD(ACCEPT)         */
+           ADDR(RPLOPT8 )-ADDR(IFGRPL  ),   /* OPTCD(ACQUIRE)        */
+           ADDR(RPLOPT8 )-ADDR(IFGRPL  ),   /* OPTCD(PREEMPT)        */
+           ADDR(RPLOPT7 )-ADDR(IFGRPL  ),   /* OPTCD(CONALL)         */
+           ADDR(RPLOPT7 )-ADDR(IFGRPL  ),   /* OPTCD(CONANY)         */
+           ADDR(RPLOPT12)-ADDR(RPLVTEXT)+   /* OPTCD(RECEIVE)        */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT12)-ADDR(RPLVTEXT)+   /* OPTCD(SEND)           */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT12)-ADDR(RPLVTEXT)+   /* OPTCD(KEEP)           */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT12)-ADDR(RPLVTEXT)+   /* OPTCD(TRUNC)          */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT12)-ADDR(RPLVTEXT)+   /* OPTCD(NIBTK)          */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT12)-ADDR(RPLVTEXT)+   /* OPTCD(SRCACS)         */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT12)-ADDR(RPLVTEXT)+   /* OPTCD(CACS)           */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT12)-ADDR(RPLVTEXT)+   /* OPTCD(SR)             */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT12)-ADDR(RPLVTEXT)+   /* OPTCD(FMHDR)          */
+           LENGTH(RPLCOMN),
+           ADDR(RPLOPT12)-ADDR(RPLVTEXT)+   /* OPTCD(NFMHDR)         */
+           LENGTH(RPLCOMN),
+           ADDR(NIBFLG1 )-ADDR(ISTNIB  ),   /* LISTEND(YES)          */
+           ADDR(NIBFLG1 )-ADDR(ISTNIB  ),   /* LISTEND(NO)           */
+           ADDR(NIBFLG1 )-ADDR(ISTNIB  ),   /* CON(YES)              */
+           ADDR(NIBFLG1 )-ADDR(ISTNIB  ));  /* CON(NO)               */
+ /********************************************************************/
+ /*                                                                  */
+ /*            BIT  STRING TABLE (PART 3)                            */
+ /*                                                                  */
+ /********************************************************************/
+ DCL 1 BST3 (60) FIXED(31) STATIC,
+       2 BSTFLGS3 CHAR(1) INIT(             /* FLAGS                 */
+           ?BBITS(BON,MEX)          ;,      /* PROC(MSG)             */
+           ?BBITS(BON,MEX)          ;,      /* PROC(TRANS)           */
+           ?BBITS(BON,MEX)          ;,      /* PROC(CONT)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(BLOCK)           */
+           ?BBITS(BON,MEX)          ;,      /* PROC(NLGIN)           */
+           ?BBITS(MEX,LEG)          ;,      /* PROC(LGIN)            */
+           ?BBITS(MEX)              ;,      /* PROC(LGOUT)           */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(NLGOUT)          */
+           ?BBITS(MEX)              ;,      /* PROC(NCONFTXT)        */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(CONFTXT)         */
+           ?BBITS(MEX)              ;,      /* PROC(TMFLL)           */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(NTMFLL)          */
+           ?BBITS(MEX)              ;,      /* PROC(ERPIN)           */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(NERPIN)          */
+           ?BBITS(MEX)              ;,      /* PROC(ERPOUT)          */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(NERPOUT)         */
+           ?BBITS(MEX)              ;,      /* PROC(NMONITOR)        */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(MONITOR)         */
+           ?BBITS(MEX)              ;,      /* PROC(NELC)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(ELC)             */
+           ?BBITS(MEX)              ;,      /* PROC(NEIB)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(EIB)             */
+           ?BBITS(MEX)              ;,      /* PROC(TIMEOUT)         */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(NTIMEOUT)        */
+           ?BBITS(MEX)              ;,      /* PROC(NASYIPX)         */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(ASYIPX)          */
+           ?BBITS(MEX)              ;,      /* PROC(KEEP)            */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(TRUNC)           */
+           ?BBITS(MEX)              ;,      /* PROC(NBINARY)         */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(BINARY)          */
+           ?BBITS(MEX,DEF)          ;,      /* PROC(NDFASYX)         */
+           ?BBITS(BON,MEX,LEG)      ;,      /* PROC(DFASYX)          */
+           ?BBITS(MEX,DEF)          ;,      /* PROC(NRESPX)          */
+           ?BBITS(BON,MEX,LEG,EOB)  ;,      /* PROC(RESPX)           */
+           ?BBITS(MEX,DEF)          ;,      /* SDT(SYSTEM)           */
+           ?BBITS(BON,MEX,LEG,EOB)  ;,      /* SDT(APPL)             */
+           ?BBITS(MEX,VTM,BON)      ;,      /* BRACKET(BB)           */
+           ?BBITS(MEX,LEG,DEF,VTM)  ;,      /* BRACKET(NBB)          */
+           ?BBITS(MEX,VTM,BON)      ;,      /* BRACKET(EB)           */
+           ?BBITS(MEX,LEG,DEF,VTM,EOB);,    /* BRACKET(NEB)          */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* CHNGDIR(NCMD)         */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* CHNGDIR(CMD)          */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* CHNGDIR(NREQ)         */
+           ?BBITS(BON,MEX,LEG,VTM,EOB);,    /* CHNGDIR(REQ)          */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* STYPE(REQ)            */
+           ?BBITS(BON,MEX,LEG,VTM,EOB);,    /* STYPE(RESP)           */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* RTYPE(NRESP)          */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* RTYPE(RESP)           */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* RTYPE(DFSYN)          */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* RTYPE(NDFSYN)         */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* RTYPE(NDFASY)         */
+           ?BBITS(BON,MEX,LEG,VTM)  ;,      /* RTYPE(DFASY)          */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* RTYPE(NREAD)          */
+           ?BBITS(BON,MEX,LEG,VTM,EOB);,    /* RTYPE(READ)           */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CHAIN(FIRST)          */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CHAIN(MIDDLE)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CHAIN(LAST)           */
+           ?BBITS(BON,MEX,DEF,VTM,EOB,LEG);, /* CHAIN(ONLY)          */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* POST(RESP)            */
+           ?BBITS(BON,MEX,LEG,VTM,EOB);),   /* POST(SCHED)           */
+       2 BSTMASK3 CHAR(1) INIT(             /* BIT MASK              */
+           ?BIT(5);,                        /* PROC(MSG)             */
+           ?BIT(6);,                        /* PROC(TRANS)           */
+           ?BIT(7);,                        /* PROC(CONT)            */
+           ?BIT(4);,                        /* PROC(BLOCK)           */
+           ?BIT(2);,                        /* PROC(NLGIN)           */
+           ?BIT(2);,                        /* PROC(LGIN)            */
+           ?BIT(2);,                        /* PROC(LGOUT)           */
+           ?BIT(2);,                        /* PROC(NLGOUT)          */
+           ?BIT(7);,                        /* PROC(NCONFTXT)        */
+           ?BIT(7);,                        /* PROC(CONFTXT)         */
+           ?BIT(5);,                        /* PROC(TMFLL)           */
+           ?BIT(5);,                        /* PROC(NTMFLL)          */
+           ?BIT(1);,                        /* PROC(ERPIN)           */
+           ?BIT(1);,                        /* PROC(NERPIN)          */
+           ?BIT(1);,                        /* PROC(ERPOUT)          */
+           ?BIT(1);,                        /* PROC(NERPOUT)         */
+           ?BIT(5);,                        /* PROC(NMONITOR)        */
+           ?BIT(5);,                        /* PROC(MONITOR)         */
+           ?BIT(6);,                        /* PROC(NELC)            */
+           ?BIT(6);,                        /* PROC(ELC)             */
+           ?BIT(0);,                        /* PROC(NEIB)            */
+           ?BIT(0);,                        /* PROC(EIB)             */
+           ?BIT(3);,                        /* PROC(TIMEOUT)         */
+           ?BIT(3);,                        /* PROC(NTIMEOUT)        */
+           ?BIT(0);,                        /* PROC(NASYIPX)         */
+           ?BIT(0);,                        /* PROC(ASYIPX)          */
+           ?BIT(1);,                        /* PROC(KEEP)            */
+           ?BIT(1);,                        /* PROC(TRUNC)           */
+           ?BIT(2);,                        /* PROC(NBINARY)         */
+           ?BIT(2);,                        /* PROC(BINARY)          */
+           ?BIT(3);,                        /* PROC(NDFASYX)         */
+           ?BIT(3);,                        /* PROC(DFASYX)          */
+           ?BIT(4);,                        /* PROC(NRESPX)          */
+           ?BIT(4);,                        /* PROC(RESPX)           */
+           ?BIT(2);,                        /* SDT(SYSTEM)           */
+           ?BIT(2);,                        /* SDT(APPL)             */
+           ?BIT(0);,                        /* BRACKET(BB)           */
+           ?BIT(0);,                        /* BRACKET(NBB)          */
+           ?BIT(1);,                        /* BRACKET(EB)           */
+           ?BIT(1);,                        /* BRACKET(NEB)          */
+           ?BIT(2);,                        /* CHNGDIR(NCMD)         */
+           ?BIT(2);,                        /* CHNGDIR(CMD)          */
+           ?BIT(3);,                        /* CHNGDIR(NREQ)         */
+           ?BIT(3);,                        /* CHNGDIR(REQ)          */
+           ?BIT(0);,                        /* STYPE(REQ)            */
+           ?BIT(0);,                        /* STYPE(RESP)           */
+           ?BIT(4);,                        /* RTYPE(NRESP)          */
+           ?BIT(4);,                        /* RTYPE(RESP)           */
+           ?BIT(5);,                        /* RTYPE(DFSYN)          */
+           ?BIT(5);,                        /* RTYPE(NDFSYN)         */
+           ?BIT(6);,                        /* RTYPE(NDFASY)         */
+           ?BIT(6);,                        /* RTYPE(DFASY)          */
+           ?BIT(7);,                        /* RTYPE(NREAD)          */
+           ?BIT(7);,                        /* RTYPE(READ)           */
+           ?BIT(0);,                        /* CHAIN(FIRST)          */
+           ?BIT(1);,                        /* CHAIN(MIDDLE)         */
+           ?BIT(2);,                        /* CHAIN(LAST)           */
+           ?BIT(3);,                        /* CHAIN(ONLY)           */
+           ?BIT(0);,                        /* POST(RESP)            */
+           ?BIT(0);),                       /* POST(SCHED)           */
+       2 BSTOFF3 FIXED(15) INIT(            /* BYTE OFFSET           */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC4)-ADDR(ISTPROCD),   /* PROC(MSG)             */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC4)-ADDR(ISTPROCD),   /* PROC(TRANS)           */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC4)-ADDR(ISTPROCD),   /* PROC(CONT)            */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC4)-ADDR(ISTPROCD),   /* PROC(BLOCK)           */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC3)-ADDR(ISTPROCD),   /* PROC(NLGIN)           */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC3)-ADDR(ISTPROCD),   /* PROC(LGIN)            */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC2)-ADDR(ISTPROCD),   /* PROC(LGOUT)           */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC2)-ADDR(ISTPROCD),   /* PROC(NLGOUT)          */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC2)-ADDR(ISTPROCD),   /* PROC(NCONFTXT)        */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC2)-ADDR(ISTPROCD),   /* PROC(CONFTXT)         */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC2)-ADDR(ISTPROCD),   /* PROC(TMFLL)           */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC2)-ADDR(ISTPROCD),   /* PROC(NTMFLL)          */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC3)-ADDR(ISTPROCD),   /* PROC(ERPIN)           */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC3)-ADDR(ISTPROCD),   /* PROC(NERPIN)          */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC2)-ADDR(ISTPROCD),   /* PROC(ERPOUT)          */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC2)-ADDR(ISTPROCD),   /* PROC(NERPOUT)         */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC3)-ADDR(ISTPROCD),   /* PROC(NMONITOR)        */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC3)-ADDR(ISTPROCD),   /* PROC(MONITOR)         */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC2)-ADDR(ISTPROCD),   /* PROC(NELC)            */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC2)-ADDR(ISTPROCD),   /* PROC(ELC)             */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC4)-ADDR(ISTPROCD),   /* PROC(NEIB)            */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC4)-ADDR(ISTPROCD),   /* PROC(EIB)             */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC3)-ADDR(ISTPROCD),   /* PROC(TIMEOUT)         */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC3)-ADDR(ISTPROCD),   /* PROC(NTIMEOUT)        */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC1)-ADDR(ISTPROCD),   /* PROC(NASYIPX)         */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC1)-ADDR(ISTPROCD),   /* PROC(ASYIPX)          */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC1)-ADDR(ISTPROCD),   /* PROC(KEEP)            */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC1)-ADDR(ISTPROCD),   /* PROC(TRUNC)           */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC1)-ADDR(ISTPROCD),   /* PROC(NBINARY)         */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC1)-ADDR(ISTPROCD),   /* PROC(BINARY)          */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC1)-ADDR(ISTPROCD),   /* PROC(NDFASYX)         */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC1)-ADDR(ISTPROCD),   /* PROC(DFASYX)          */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC1)-ADDR(ISTPROCD),   /* PROC(NRESPX)          */
+           ADDR(NIBPROCD)-ADDR(ISTNIB  )+
+           ADDR(PROPROC1)-ADDR(ISTPROCD),   /* PROC(RESPX)           */
+           ADDR(NIBFLG1 )-ADDR(ISTNIB  ),   /* SDT(SYSTEM)           */
+           ADDR(NIBFLG1 )-ADDR(ISTNIB  ),   /* SDT(APPL)             */
+           ADDR(RPLRH3  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* BRACKET(BB)           */
+           ADDR(RPLRH3  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* BRACKET(NBB)          */
+           ADDR(RPLRH3  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* BRACKET(EB)           */
+           ADDR(RPLRH3  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* BRACKET(NEB)          */
+           ADDR(RPLRH3  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CHNGDIR(NCMD)         */
+           ADDR(RPLRH3  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CHNGDIR(CMD)          */
+           ADDR(RPLRH3  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CHNGDIR(NREQ)         */
+           ADDR(RPLRH3  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CHNGDIR(REQ)          */
+           ADDR(RPLSRTYP)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* STYPE(REQ)            */
+           ADDR(RPLSRTYP)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* STYPE(RESP)           */
+           ADDR(RPLSRTYP)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RTYPE(NRESP)          */
+           ADDR(RPLSRTYP)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RTYPE(RESP)           */
+           ADDR(RPLSRTYP)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RTYPE(DFSYN)          */
+           ADDR(RPLSRTYP)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RTYPE(NDFSYN)         */
+           ADDR(RPLSRTYP)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RTYPE(NDFASY)         */
+           ADDR(RPLSRTYP)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RTYPE(DFASY)          */
+           ADDR(RPLSRTYP)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RTYPE(NREAD)          */
+           ADDR(RPLSRTYP)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RTYPE(READ)           */
+           ADDR(RPLCHN  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CHAIN(FIRST)          */
+           ADDR(RPLCHN  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CHAIN(MIDDLE)         */
+           ADDR(RPLCHN  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CHAIN(LAST)           */
+           ADDR(RPLCHN  )-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CHAIN(ONLY)           */
+           ADDR(RPLVTFL2)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* POST(RESP)            */
+           ADDR(RPLVTFL2)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ));  /* POST(SCHED)           */
+ /********************************************************************/
+ /*                                                                  */
+ /*            BIT STRING TABLE (PART 4)                             */
+ /*                                                                  */
+ /********************************************************************/
+ DCL 1 BST4 (48) FIXED (31) STATIC,
+         2 BSTFLGS4 CHAR(1) INIT(           /* FLAGS                 */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* RESPOND(NEX)          */
+           ?BBITS(BON,MEX,VTM,LEG)  ;,      /* RESPOND(EX)           */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* RESPOND(FME)          */
+           ?BBITS(BON,MEX,VTM,LEG)  ;,      /* RESPOND(NFME)         */
+           ?BBITS(MEX,DEF,VTM)      ;,      /* RESPOND(NRRN)         */
+           ?BBITS(BON,MEX,LEG,VTM,EOB);,    /* RESPOND(RRN)          */
+           ?BBITS(BON,MEX,DEF,VTM)  ;,      /* CONTROL(DATA)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(CANCEL)       */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(QC)           */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(QEC)          */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(CHASE)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(RELQ)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(BID)          */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(RTR)          */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(LUS)          */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(SIGNAL)       */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(SDT)          */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(CLEAR)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(STSN)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(SHUTD)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* CONTROL(RQR)          */
+           ?BBITS(BON,MEX,LEG,VTM,EOB);,    /* CONTROL(RSHUTD)       */
+           ?BBITS(BON,MEX,DEF,VTM)  ;,      /* OBSQAC(SET)           */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OBSQAC(TESTSET)       */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OBSQAC(RESET)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OBSQAC(IGNORE)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OBSQAC(TESTPOS)       */
+           ?BBITS(BON,MEX,VTM)      ;,      /* OBSQAC(TESTNEG)       */
+           ?BBITS(BON,MEX,LEG,VTM,EOB);,    /* OBSQAC(INVALID)       */
+           ?BBITS(BON,MEX,DEF,VTM)  ;,      /* IBSQAC(SET)           */
+           ?BBITS(BON,MEX,VTM)      ;,      /* IBSQAC(TESTSET)       */
+           ?BBITS(BON,MEX,VTM)      ;,      /* IBSQAC(RESET)         */
+           ?BBITS(BON,MEX,VTM)      ;,      /* IBSQAC(IGNORE)        */
+           ?BBITS(BON,MEX,VTM)      ;,      /* IBSQAC(TESTPOS)       */
+           ?BBITS(BON,MEX,VTM)      ;,      /* IBSQAC(TESTNEG)       */
+           ?BBITS(BON,MEX,LEG,VTM,EOB);,    /* IBSQAC(INVALID)       */
+           ?BBITS(BON,MEX,VTM)        ;,    /* SSENSEO(CPM)          */
+           ?BBITS(BON,MEX,VTM)        ;,    /* SSENSEO(STATE)        */
+           ?BBITS(BON,MEX,VTM)        ;,    /* SSENSEO(FI)           */
+           ?BBITS(BON,MEX,VTM,LEG,EOB);,    /* SSENSEO(RR)           */
+           ?BBITS(BON,MEX,VTM)        ;,    /* SSENSEI(PATH)         */
+           ?BBITS(BON,MEX,VTM)        ;,    /* SSENSEI(CPM)          */
+           ?BBITS(BON,MEX,VTM)        ;,    /* SSENSEI(STATE)        */
+           ?BBITS(BON,MEX,VTM)        ;,    /* SSENSEI(FI)           */
+           ?BBITS(BON,MEX,VTM,LEG,EOB);,    /* SSENSEI(RR)           */
+           ?BBITS(MEX,DEF,VTM)        ;,    /* SWITCHC(NO)           */
+           ?BBITS(BON,MEX,LEG,VTM,EOB);,    /* SWITCHC(YES)          */
+           ?BBITS(BON,LEG,EOB)        ;),   /* AIXFLAG(AIXPKP)       */
+          2 BSTMASK4 CHAR(1) INIT(          /* BIT MASK              */
+           ?BIT(5);,                        /* RESPOND(NEX)          */
+           ?BIT(5);,                        /* RESPOND(EX)           */
+           ?BIT(6);,                        /* RESPOND(FME)          */
+           ?BIT(6);,                        /* RESPOND(NFME)         */
+           ?BIT(7);,                        /* RESPOND(NRRN)         */
+           ?BIT(7);,                        /* RESPOND(RRN)          */
+           ?BIT(0);,                        /* CONTROL(DATA)         */
+           ?BIT(1);,                        /* CONTROL(CANCEL)       */
+           ?BIT(2);,                        /* CONTROL(QC)           */
+           ?BIT(3);,                        /* CONTROL(QEC)          */
+           ?BIT(4);,                        /* CONTROL(CHASE)        */
+           ?BIT(5);,                        /* CONTROL(RELQ)         */
+           ?BIT(0);,                        /* CONTROL(BID)          */
+           ?BIT(1);,                        /* CONTROL(RTR)          */
+           ?BIT(2);,                        /* CONTROL(LUS)          */
+           ?BIT(3);,                        /* CONTROL(SIGNAL)       */
+           ?BIT(0);,                        /* CONTROL(SDT)          */
+           ?BIT(1);,                        /* CONTROL(CLEAR)        */
+           ?BIT(2);,                        /* CONTROL(STSN)         */
+           ?BIT(3);,                        /* CONTROL(SHUTD)        */
+           ?BIT(5);,                        /* CONTROL(RQR)          */
+           ?BIT(6);,                        /* CONTROL(RSHUTD)       */
+           ?BIT(0);,                        /* OBSQAC(SET)           */
+           ?BIT(1);,                        /* OBSQAC(TESTSET)        */
+           ?BIT(2);,                        /* OBSQAC(RESET)         */
+           ?BIT(3);,                        /* OBSQAC(IGNORE)        */
+           ?BIT(4);,                        /* OBSQAC(TESTPOS)       */
+           ?BIT(5);,                        /* OBSQAC(TESTNEG)       */
+           ?BIT(6);,                        /* OBSQAC(INVALID)       */
+           ?BIT(0);,                        /* IBSQAC(SET)           */
+           ?BIT(1);,                        /* IBSQAC(TESTSET)        */
+           ?BIT(2);,                        /* IBSQAC(RESET)         */
+           ?BIT(3);,                        /* IBSQAC(IGNORE)        */
+           ?BIT(4);,                        /* IBSQAC(TESTPOS)       */
+           ?BIT(5);,                        /* IBSQAC(TESTNEG)       */
+           ?BIT(6);,                        /* IBSQAC(INVALID)       */
+           ?BIT(1);,                        /* SSENSEO(CPM)          */
+           ?BIT(2);,                        /* SSENSEO(STATE)        */
+           ?BIT(3);,                        /* SSENSEO(FI)           */
+           ?BIT(4);,                        /* SSENSEO(RR)           */
+           ?BIT(0);,                        /* SSENSEI(PATH)         */
+           ?BIT(1);,                        /* SSENSEI(CPM)          */
+           ?BIT(2);,                        /* SSENSEI(STATE)        */
+           ?BIT(3);,                        /* SSENSEI(FI)           */
+           ?BIT(4);,                        /* SSENSEI(RR)           */
+           ?BIT(0);,                        /* SWITCHC(NO)           */
+           ?BIT(0);,                        /* SWITCHC(YES)          */
+           ?BIT(0);),                       /* AIXFLAG(AIXPKP)       */
+          2 BSTOFF4 FIXED(15) INIT(         /* BYTE OFFSET           */
+           ADDR(RPLVTFL2)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RESPOND(NEX)          */
+           ADDR(RPLVTFL2)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RESPOND(EX)           */
+           ADDR(RPLVTFL2)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RESPOND(FME)          */
+           ADDR(RPLVTFL2)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RESPOND(NFME)         */
+           ADDR(RPLVTFL2)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RESPOND(NRRN)         */
+           ADDR(RPLVTFL2)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* RESPOND(RRN)          */
+           ADDR(RPLCNTDF)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(DATA)         */
+           ADDR(RPLCNTDF)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(CANCEL)       */
+           ADDR(RPLCNTDF)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(QC)           */
+           ADDR(RPLCNTDF)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(QEC)          */
+           ADDR(RPLCNTDF)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(CHASE)        */
+           ADDR(RPLCNTDF)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(RELQ)         */
+           ADDR(RPLCNTDC)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(BID)          */
+           ADDR(RPLCNTDC)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(RTR)          */
+           ADDR(RPLCNTDC)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(LUS)          */
+           ADDR(RPLCNTDC)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(SIGNAL)       */
+           ADDR(RPLCNTSC)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(SDT)          */
+           ADDR(RPLCNTSC)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(CLEAR)        */
+           ADDR(RPLCNTSC)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(STSN)         */
+           ADDR(RPLCNTSC)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(SHUTD)        */
+           ADDR(RPLCNTSC)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(RQR)          */
+           ADDR(RPLCNTSC)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* CONTROL(RSHUTD)       */
+           ADDR(RPLOBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* OBSQAC(SET)           */
+           ADDR(RPLOBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* OBSQAC(TESTSET)       */
+           ADDR(RPLOBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* OBSQAC(RESET)         */
+           ADDR(RPLOBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* OBSQAC(IGNORE)        */
+           ADDR(RPLOBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* OBSQAC(TESTPOS)       */
+           ADDR(RPLOBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* OBSQAC(TESTNEG)       */
+           ADDR(RPLOBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* OBSQAC(INVALID)       */
+           ADDR(RPLIBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* IBSQAC(SET)           */
+           ADDR(RPLIBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* IBSQAC(TESTSET)       */
+           ADDR(RPLIBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* IBSQAC(RESET)         */
+           ADDR(RPLIBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* IBSQAC(IGNORE)        */
+           ADDR(RPLIBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* IBSQAC(TESTPOS)       */
+           ADDR(RPLIBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* IBSQAC(TESTNEG)       */
+           ADDR(RPLIBSQ )-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),   /* IBSQAC(INVALID)       */
+           ADDR(RPLSSNSO)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                 /* SSENSEO(CPM)          */
+           ADDR(RPLSSNSO)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                 /* SSENSEO(STATE)        */
+           ADDR(RPLSSNSO)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                 /* SSENSEO(FI)           */
+           ADDR(RPLSSNSO)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                 /* SSENSEO(RR)           */
+           ADDR(RPLSSNSI)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                 /* SSENSEI(PATH)         */
+           ADDR(RPLSSNSI)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                 /* SSENSEI(CPM)          */
+           ADDR(RPLSSNSI)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                 /* SSENSEI(STATE)        */
+           ADDR(RPLSSNSI)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                 /* SSENSEI(FI)           */
+           ADDR(RPLSSNSI)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                 /* SSENSEI(RR)           */
+           ADDR(RPLVTFL1)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* SWITCHC(NO)           */
+           ADDR(RPLVTFL1)-ADDR(RPLOF16 )+
+           ADDR(RPLKEYLE)-ADDR(IFGRPL  ),   /* SWITCHC(YES)          */
+           ADDR(RPLAIXID)-ADDR(IFGRPL  ));  /* AIXFLAG(AIXPKP)       */
+ /********************************************************************/
+ /*                                                                  */
+ /*            FIELD ATTRIBUTE TABLE                                 */
+ /*                                                                  */
+ /********************************************************************/
+ DCL 1 FAT (100) CHAR(6) STATIC BDY(HWORD),
+       2 FATLENG PTR(8) INIT(               /* CTL BLOCK FIELD LENGTH*/
+              0,                            /* 01 - ATRB - BIT STR   */
+              LENGTH(AMDASPA ),             /* 02 - AVSPAC           */
+              LENGTH(ACBLENG ),             /* 03 - ACBLEN - VSAM    */
+              LENGTH(ACBBUFND),             /* 04 - BUFND            */
+              LENGTH(ACBBUFNI),             /* 05 - BUFNI            */
+              LENGTH(BUFDRNO ),             /* 06 - BUFNO            */
+              LENGTH(ACBBUFSP),             /* 07 - BUFSP            */
+              LENGTH(AMDCINV ),             /* 08 - CINV             */
+              LENGTH(ACBDDNM ),             /* 09 - DDNAME           */
+              LENGTH(HIGHRBA ),             /* 10 - ENDRBA           */
+              1,                            /* 11 - ERROR            */
+              LENGTH(ACBUEL  ),             /* 12 - EXLST            */
+              LENGTH(AMDFSCA ),             /* 13 - FS               */
+              LENGTH(ACBMSGAR),             /* 14 - MAREA            */
+              LENGTH(ACBMSGLN),             /* 15 - MLEN             */
+              LENGTH(AMDKEYLN),             /* 16 - KEYLEN           */
+              LENGTH(AMDLRECL),             /* 17 - LRECL            */
+              0,                            /* 18 - MACRF - BIT STR  */
+              LENGTH(AMDNCIS ),             /* 19 - NCIS             */
+              LENGTH(AMDDELR ),             /* 20 - NDELR            */
+              LENGTH(AMDEXCP ),             /* 21 - NEXCP            */
+              LENGTH(AMDNEXT ),             /* 22 - NEXT             */
+              LENGTH(AMDIREC ),             /* 23 - NINSR            */
+              LENGTH(AMDNIL  ),             /* 24 - NIXL             */
+              LENGTH(AMDNLR  ),             /* 25 - NLOGR            */
+              LENGTH(AMDRETR ),             /* 26 - NRETR            */
+              LENGTH(AMDNCAS ),             /* 27 - NSSS             */
+              LENGTH(AMDUPR  ),             /* 28 - NUPDR            */
+              0,                            /* 29 - OFLAGS - BIT STR */
+              LENGTH(ACBPASSW),             /* 30 - PASSWD           */
+              LENGTH(AMDRKP  ),             /* 31 - RKP              */
+              LENGTH(ACBSTRNO),             /* 32 - STRNO            */
+              LENGTH(AMBLTYPE),             /* 33 - OPENOBJ          */
+              0,                            /* 34 - CATALOG - BIT STR*/
+              LENGTH(AMDSTSP ),             /* 35 - STMST            */
+              LENGTH(ACBBSTNO),             /* 36 - BSTRNO           */
+              LENGTH(EXLEODP ),             /* 37 - EODAD            */
+              0,                            /* 38 - RESERVED         */
+              LENGTH(EXLJRNP ),             /* 39 - JRNAD            */
+              LENGTH(EXLLERP ),             /* 40 - LERAD            */
+              LENGTH(EXLSYNP ),             /* 41 - SYNAD            */
+              LENGTH(EXLLEN  ),             /* 42 - EXLLEN - VSAM    */
+              LENGTH(RPLDACB ),             /* 43 - ACB              */
+              LENGTH(RPLAREA ),             /* 44 - AREA             */
+              LENGTH(RPLBUFL ),             /* 45 - AREALEN          */
+              LENGTH(RPLARG  ),             /* 46 - ARG              */
+              LENGTH(RPLECB  ),             /* 47 - ECB              */
+              LENGTH(RPLKEYL ),             /* 48 - KEYLEN           */
+              LENGTH(RPLERMSA),             /* 49 - MSGAREA - RPL    */
+              LENGTH(RPLEMLEN),             /* 50 - MSGLEN - RPL     */
+              LENGTH(RPLCHAIN),             /* 51 - NXTRPL           */
+              0,                            /* 52 - OPTCD - BIT STR  */
+              LENGTH(RPLRLEN ),             /* 53 - RECLEN           */
+              0,                            /* 54 - IO - BIT STR     */
+              LENGTH(RPLLEN  ),             /* 55 - RPLLEN - VSAM    */
+              LENGTH(RPLERRCD),             /* 56 - FDBK             */
+              LENGTH(RPLDDDD ),             /* 57 - RBA              */
+              LENGTH(RPLAIXPC),             /* 58 - AIXPC            */
+              0,                            /* 59 - AIXFLAG - BIT STR*/
+              LENGTH(AMDAXRKP),             /* 60 - AIXRKP           */
+              LENGTH(ACBLENG),              /* 61 - ACBLEN - VTAM    */
+              LENGTH(RPLLEN),               /* 62 - RPLLEN - VTAM    */
+              LENGTH(EXLLEN),               /* 63 - EXLLEN - VTAM    */
+              0,                            /* 64 - AM               */
+              LENGTH(ACBAPID ),             /* 65 - APPLID           */
+              LENGTH(EXLTPNDP),             /* 66 - TPEND            */
+              LENGTH(EXLLGNP ),             /* 67 - LOGON            */
+              LENGTH(EXLNLGNP),             /* 68 - LOSTERM          */
+              LENGTH(EXLATTNP),             /* 69 - ATTN             */
+              LENGTH(EXLRLRQP),             /* 70 - RELREQ           */
+              LENGTH(EXLUNSPP),             /* 71 - UNSIP            */
+              LENGTH(EXLASYPP),             /* 72 - ASYIP            */
+              LENGTH(RPLAARLN),             /* 73 - AAREALN          */
+              LENGTH(RPLARCLN),             /* 74 - ARECLEN          */
+              LENGTH(RPLECB  ),             /* 75 - EXIT             */
+              0,                            /* 76 - RESERVED         */
+              0,                            /* 77 - RESERVED         */
+              4,                            /* 78 - USER (RPLUSFLD)  */
+              LENGTH(RPLARG  ),             /* 79 - NIB              */
+              0,                            /* 80 - PROC - BIT STR   */
+              LENGTH(NIBUSER ),             /* 81 - USERFLD          */
+              0,                            /* 82 - LISTEND - BIT STR*/
+              LENGTH(NIBLEN  ),             /* 83 - NIBLEN           */
+              LENGTH(NIBMODE ),             /* 84 - MODE             */
+              LENGTH(NIBCONDN),             /* 85 - CONDN            */
+              LENGTH(NIBDEVCH),             /* 86 - DEVCHAR          */
+              LENGTH(RPLAAREA),             /* 87 - AAREA            */
+              0,                            /* 88 - BRANCH - BIT STR */
+              0,                            /* 89 - CRA - BIT STR    */
+              LENGTH(NIBCID  ),             /* 90 - CID              */
+              LENGTH(NIBSYM  ),             /* 91 - NAME             */
+              0,                            /* 92 - CON - BIT STR    */
+              0,                            /* 93 - DATAFLG - BIT STR*/
+              LENGTH(RPLRTNCD),             /* 94 - RTNCD            */
+              LENGTH(RPLSTRID),             /* 95 - TRANSID          */
+              LENGTH(RPLFDB2 ),             /* 96 - FDBK2            */
+              2,                            /* 97 - SENSE (RPLDSB)   */
+              LENGTH(RPLREQ  ),             /* 98 - REQ              */
+              LENGTH(RPLFDB2 ),             /* 99 - FTNCD            */
+              0),                           /* 100 RESERVED          */
+       2 FATFLAGS CHAR(3) INIT(             /* FIELD ATTRIBUTE FLAGS */
+           ?FBITS(TOK,BIT,OPN,ACB,AMD)        ;, /* 01 - ATRB        */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 02 - AVSPAC      */
+           ?FBITS(SOK,TOK,NOR,CBL,ACB)        ;, /* 03 - ACBLEN-VSAM */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,ACB)    ;, /* 04 - BUFND       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,ACB)    ;, /* 05 - BUFNI       */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,BUF)    ;, /* 06 - BUFNO       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,ACB)    ;, /* 07 - BUFSP       */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 08 - CINV        */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,CHR,ACB);, /* 09 - DDNAME      */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,ARD)    ;, /* 10 - ENDRBA      */
+           ?FBITS(SOK,TOK,NOR,ACB)            ;, /* 11 - ERROR       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,ACB)    ;, /* 12 - EXLST       */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 13 - FS          */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,ACB)    ;, /* 14 - MAREA       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,ACB)    ;, /* 15 - MLEN        */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 16 - KEYLEN      */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 17 - LRECL       */
+           ?FBITS(GOK,MOK,TOK,BIT,ACB)        ;, /* 18 - MACRF       */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 19 - NCIS        */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 20 - NDELR       */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 21 - NEXCP       */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 22 - NEXT        */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 23 - NINSR       */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 24 - NIXL        */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 25 - NLOGR       */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 26 - NRETR       */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 27 - NSSS        */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 28 - NUPDR       */
+           ?FBITS(TOK,BIT,ACB)                ;, /* 29 - OFLAGS      */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,ACB)    ;, /* 30 - PASSWD      */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 31 - RKP         */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,ACB)    ;, /* 32 - STRNO       */
+           ?FBITS(TOK,BIT,OPN,ACB)            ;, /* 33 - OPENOBJ     */
+           ?FBITS(GOK,MOK,TOK,BIT,ACB)        ;, /* 34 - CATALOG     */
+           ?FBITS(SOK,TOK,NOR,OPN,ACB,AMD)    ;, /* 35 - STMST       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,ACB)    ;, /* 36 - BSTRNO      */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL)    ;, /* 37 - EODAD       */
+           ?FBITS()                           ;, /* 38 - RESERVED    */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL)    ;, /* 39 - JRNAD       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL)    ;, /* 40 - LERAD       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL)    ;, /* 41 - SYNAD       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,CBL,EXL);, /* 42 - EXLLEN-VSAM */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL)    ;, /* 43 - ACB         */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL)    ;, /* 44 - AREA        */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL)    ;, /* 45 - AREALEN     */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL)    ;, /* 46 - ARG         */
+           ?FBITS(GOK,MOK,SOK,TOK,SUB,RPL)    ;, /* 47 - ECB         */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL)    ;, /* 48 - KEYLEN      */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL)    ;, /* 49 - MSGAREA-RPL */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL)    ;, /* 50 - MSGLEN-RPL  */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL)    ;, /* 51 - NXTRPL      */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL)        ;, /* 52 - OPTCD       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL)    ;, /* 53 - RECLEN      */
+           ?FBITS(TOK,SUB,RPL)                ;, /* 54 - IO          */
+           ?FBITS(SOK,TOK,NOR,CBL,RPL)        ;, /* 55 - RPLLEN-VSAM */
+           ?FBITS(SOK,TOK,NOR,RPL)            ;, /* 56 - FDBK        */
+           ?FBITS(SOK,TOK,NOR,RPL)            ;, /* 57 - RBA         */
+           ?FBITS(SOK,TOK,NOR,RPL)            ;, /* 58 - AIXPC       */
+           ?FBITS(TOK,RPL,BIT)                ;, /* 59 - AIXFLAG     */
+           ?FBITS(SOK,TOK,NOR,ACB,AMD,OPN)    ;, /* 60 - AIXRKP      */
+           ?FBITS(SOK,TOK,NOR,CBL,ACB,VTM)    ;, /* 61 - ACBLEN-VTAM */
+           ?FBITS(SOK,TOK,NOR,CBL,RPL,VTM)    ;, /* 62 - RPLLEN-VTAM */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,CBL,EXL,VTM);, /*63-EXLLEN-VTAM*/
+           ?FBITS(GOK,SUB,ACB,RPL,EXL);,         /* 64 - AM          */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,ACB,VTM);, /* 65 - APPLID      */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL,VTM);, /* 66 - TPEND       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL,VTM);, /* 67 - LOGON       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL,VTM);, /* 68 - LOSTERM     */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL,VTM);, /* 69 - ATTN        */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL,VTM);, /* 70 - RELREQ      */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL,VTM);, /* 71 - UNSIP       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL,VTM);, /* 72 - ASYIP       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL,VTM);, /* 73 - AAREALN     */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL,VTM);, /* 74 - ARECLEN     */
+           ?FBITS(GOK,MOK,SOK,TOK,SUB,RPL,VTM);, /* 75 - EXIT        */
+           ?FBITS()                           ;, /* 76 - RESERVED    */
+           ?FBITS()                           ;, /* 77 - RESERVED    */
+           ?FBITS(SOK,TOK,NOR,RPL,VTM)        ;, /* 78 - USER        */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL,VTM);, /* 79 - NIB         */
+           ?FBITS(GOK,MOK,TOK,BIT,NIB)        ;, /* 80 - PROC        */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,NIB)    ;, /* 81 - USERFLD     */
+           ?FBITS(GOK,MOK,TOK,BIT,NIB)        ;, /* 82 - LISTEND     */
+           ?FBITS(SOK,TOK,NOR,CBL,NIB)        ;, /* 83 - NIBLEN      */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,CHR,NIB);, /* 84 - MODE        */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,NIB)    ;, /* 85 - CONDN       */
+           ?FBITS(SOK,TOK,NOR,CHR,NIB)        ;, /* 86 - DEVCHAR     */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL,VTM);, /* 87 - AAREA       */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 88 - BRANCH      */
+           ?FBITS(GOK,MOK,TOK,BIT,ACB)        ;, /* 89 - CRA         */
+           ?FBITS(SOK,TOK,NOR,NIB)            ;, /* 90 - CID         */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,CHR,NIB);, /* 91 - NAME        */
+           ?FBITS(TOK,BIT,NIB)                ;, /* 92 - CON         */
+           ?FBITS(TOK,BIT,RPL,VTM)            ;, /* 93 - DATAFLG     */
+           ?FBITS(SOK,TOK,NOR,RPL)            ;, /* 94 - RTNCD       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL)    ;, /* 95 - TRANSID     */
+           ?FBITS(SOK,TOK,NOR,RPL)            ;, /* 96 - FDBK2       */
+           ?FBITS(SOK,TOK,NOR,RPL,VTM)        ;, /* 97 - SENSE       */
+           ?FBITS(SOK,TOK,NOR,RPL)            ;, /* 98 - REQ         */
+           ?FBITS(SOK,TOK,NOR,RPL)            ;, /* 99 - FTNCD       */
+           ?FBITS()                      ;),/* 100 RESERVED          */
+       2 FATOFFS FIXED(15) INIT(            /* CTL BLK FIELD OFFSETS */
+           0,                               /* 01 - ATRB - BST OFFSET*/
+           ADDR(AMDASPA )-ADDR(IDAAMDSB),   /* 02 - AVSPAC           */
+           LENGTH(ACBCOMN),                 /* 03 - ACBLEN - VSAM    */
+           ADDR(ACBBUFND)-ADDR(IFGACB  ),   /* 04 - BUFND            */
+           ADDR(ACBBUFNI)-ADDR(IFGACB  ),   /* 05 - BUFNI            */
+           ADDR(BUFDRNO )-ADDR(IDABUFDR),   /* 06 - BUFNO            */
+           ADDR(ACBBUFSP)-ADDR(IFGACB  ),   /* 07 - BUFSP            */
+           ADDR(AMDCINV )-ADDR(IDAAMDSB),   /* 08 - CINV             */
+           ADDR(ACBDDNM )-ADDR(IFGACB  ),   /* 09 - DDNAME           */
+           0,                               /* 10 - ENDRBA - UNUSED  */
+           ADDR(ACBERFLG)-ADDR(IFGACB  ),   /* 11 - ERROR            */
+           ADDR(ACBUEL  )-ADDR(IFGACB  ),   /* 12 - EXLST            */
+           ADDR(AMDFSCA )-ADDR(IDAAMDSB),   /* 13 - FS               */
+           ADDR(ACBMSGAR)-ADDR(IFGACB  ),   /* 14 - MAREA            */
+           ADDR(ACBMSGLN)-ADDR(IFGACB  ),   /* 15 - MLEN             */
+           ADDR(AMDKEYLN)-ADDR(IDAAMDSB),   /* 16 - KEYLEN           */
+           ADDR(AMDLRECL)-ADDR(IDAAMDSB),   /* 17 - LRECL            */
+           32,                              /* 18 - MACRF - BST OFFS */
+           ADDR(AMDNCIS )-ADDR(IDAAMDSB),   /* 19 - NCIS             */
+           ADDR(AMDDELR )-ADDR(IDAAMDSB),   /* 20 - NDELR            */
+           ADDR(AMDEXCP )-ADDR(IDAAMDSB),   /* 21 - NEXCP            */
+           ADDR(AMDNEXT )-ADDR(IDAAMDSB),   /* 22 - NEXT             */
+           ADDR(AMDIREC )-ADDR(IDAAMDSB),   /* 23 - NINSR            */
+           ADDR(AMDNIL  )-ADDR(IDAAMDSB),   /* 24 - NIXL             */
+           ADDR(AMDNLR  )-ADDR(IDAAMDSB),   /* 25 - NLOGR            */
+           ADDR(AMDRETR )-ADDR(IDAAMDSB),   /* 26 - NRETR            */
+           ADDR(AMDNCAS )-ADDR(IDAAMDSB),   /* 27 - NSSS             */
+           ADDR(AMDUPR  )-ADDR(IDAAMDSB),   /* 28 - NUPDR            */
+           176,                             /* 29 - OFLAGS - BST OFFS*/
+           ADDR(ACBPASSW)-ADDR(IFGACB  ),   /* 30 - PASSWD           */
+           ADDR(AMDRKP  )-ADDR(IDAAMDSB),   /* 31 - RKP              */
+           ADDR(ACBSTRNO)-ADDR(IFGACB  ),   /* 32 - STRNO            */
+           180,                             /* 33 - OPENOBJ- BST OFFS*/
+           160,                             /* 34 - CATALG - BST OFFS*/
+           ADDR(AMDSTSP )-ADDR(IDAAMDSB),   /* 35 - STMST            */
+           ADDR(ACBBSTNO)-ADDR(IFGACB  ),   /* 36 - BSTRNO           */
+           ADDR(EXLEODF )-ADDR(IFGEXLST),   /* 37 - EODAD            */
+           0,                               /* 38 - RESERVED         */
+           ADDR(EXLJRNF )-ADDR(IFGEXLST),   /* 39 - JRNAD            */
+           ADDR(EXLLERF )-ADDR(IFGEXLST),   /* 40 - LERAD            */
+           ADDR(EXLSYNF )-ADDR(IFGEXLST),   /* 41 - SYNAD            */
+           LENGTH(EXLCOMN),                 /* 42 - EXLLEN - VSAM    */
+           ADDR(RPLDACB )-ADDR(IFGRPL  ),   /* 43 - ACB              */
+           ADDR(RPLAREA )-ADDR(IFGRPL  ),   /* 44 - AREA             */
+           ADDR(RPLBUFL )-ADDR(IFGRPL  ),   /* 45 - AREALEN          */
+           ADDR(RPLARG  )-ADDR(IFGRPL  ),   /* 46 - ARG              */
+           ECBSUBID,                        /* 47 - ECB - SUBRTN ID  */
+           ADDR(RPLKEYL )-ADDR(IFGRPL  ),   /* 48 - KEYLEN           */
+           ADDR(RPLERMSA)-ADDR(IFGRPL  ),   /* 49 - MSGAREA          */
+           ADDR(RPLEMLEN)-ADDR(IFGRPL  ),   /* 50 - MSGLEN           */
+           ADDR(RPLCHAIN)-ADDR(IFGRPL  ),   /* 51 - NXTRPL           */
+           220,                             /* 52 - OPTCD - BST OFFS */
+           ADDR(RPLRLEN )-ADDR(IFGRPL  ),   /* 53 - RECLEN           */
+           IOSUBID,                         /* 54 - IO - SUBRTN ID   */
+           LENGTH(RPLCOMN),                 /* 55 - RPLLEN - VSAM    */
+           ADDR(RPLERRCD)-ADDR(IFGRPL  ),   /* 56 - FDBK             */
+           ADDR(RPLDDDD )-ADDR(IFGRPL  ),   /* 57 - RBA              */
+           ADDR(RPLAIXPC)-ADDR(IFGRPL  ),   /* 58 - AIXPC            */
+           ADDR(BST4)-ADDR(BST)+188,        /* 59 - AIXFLAG- BST OFFS*/
+           ADDR(AMDAXRKP)-ADDR(IDAAMDSB),   /* 60 - AIXRKP           */
+           LENGTH(ACBCOMN)+LENGTH(ACBVTEXT),  /* 61 - ACBLEN - VTAM  */
+           LENGTH(RPLCOMN)+LENGTH(RPLVTEXT),  /* 62 - RPLLEN - VTAM  */
+           LENGTH(EXLCOMN)+LENGTH(EXLVTEXT),  /* 63 - EXLLEN - VTAM  */
+           AMSUBID,                         /* 64 - AM - ACB,RPL,EXL */
+           ADDR(ACBAPID )-ADDR(IFGACB  ),   /* 65 - APPLID           */
+           ADDR(EXLTPNDF)-ADDR(EXLVTEXT)+   /* 66 - TPEND            */
+           LENGTH(EXLCOMN),
+           ADDR(EXLLGNF )-ADDR(IFGEXLST),   /* 67 - LOGON            */
+           ADDR(EXLNLGNF)-ADDR(EXLVTEXT)+   /* 68 - LOSTERM          */
+           LENGTH(EXLCOMN),
+           ADDR(EXLATTNF)-ADDR(EXLVTEXT)+   /* 69 - ATTN             */
+           LENGTH(EXLCOMN),
+           ADDR(EXLRLRQF)-ADDR(EXLVTEXT)+   /* 70 - RELREQ           */
+           LENGTH(EXLCOMN),
+           ADDR(EXLUNSPF)-ADDR(EXLVTEXT)+   /* 71 - UNSIP            */
+           LENGTH(EXLCOMN),
+           ADDR(EXLASYPF)-ADDR(EXLVTEXT)+   /* 72 - ASYIP            */
+           LENGTH(EXLCOMN),
+           ADDR(RPLAARLN)-ADDR(RPLVTEXT)+   /* 73 - AAREALN          */
+           LENGTH(RPLCOMN),
+           ADDR(RPLARCLN)-ADDR(RPLVTEXT)+   /* 74 - ARECLEN          */
+           LENGTH(RPLCOMN),
+           ECBSUBID,                        /* 75 - EXIT             */
+           0,                               /* 76 - RESERVED         */
+           0,                               /* 77 - RESERVED         */
+           ADDR(RPLUSFLD)-ADDR(RPLVTEXT)+   /* 78 - USER             */
+           LENGTH(RPLCOMN),
+           ADDR(RPLARG  )-ADDR(IFGRPL  ),   /* 79 - NIB              */
+           ADDR(BST3)-ADDR(BST),            /* 80 - PROC - BST OFFS  */
+           ADDR(NIBUSER )-ADDR(ISTNIB  ),   /* 81 - USERFLD          */
+           ADDR(BST2)-ADDR(BST)+228,        /* 82 - LISTEND - BST OFF*/
+           LENGTH(ISTNIB),                  /* 83 - NIBLEN           */
+           ADDR(NIBMODE )-ADDR(ISTNIB  ),   /* 84 - MODE             */
+           ADDR(NIBCONDN)-ADDR(ISTNIB  ),   /* 85 - CONDN            */
+           ADDR(NIBDEVCH)-ADDR(ISTNIB  ),   /* 86 - DEVCHAR          */
+           ADDR(RPLAAREA)-ADDR(RPLVTEXT)+   /* 87 - AAREA            */
+           LENGTH(RPLCOMN),
+           152,                             /* 88 - BRANCH - BST OFFS*/
+           168,                             /* 89 - CRA    - BST OFFS*/
+           ADDR(NIBCID  )-ADDR(ISTNIB  ),   /* 90 - CID              */
+           ADDR(NIBSYM  )-ADDR(ISTNIB  ),   /* 91 - NAME             */
+           ADDR(BST2)-ADDR(BST)+236,        /* 92 - CON - BST OFFS   */
+           192,                             /* 93 - DATAFLG - BST OFF*/
+           ADDR(RPLRTNCD)-ADDR(IFGRPL  ),   /* 94 - RTNCD            */
+           ADDR(RPLSTRID)-ADDR(IFGRPL  ),   /* 95 - TRANSID          */
+           ADDR(RPLFDB2 )-ADDR(IFGRPL  ),   /* 96 - FDBK2            */
+           ADDR(RPLDSB  )-ADDR(RPLVTEXT)+   /* 97 - SENSE            */
+           LENGTH(RPLCOMN),
+           ADDR(RPLREQ  )-ADDR(IFGRPL  ),   /* 98 - REQ              */
+           ADDR(RPLFDB2 )-ADDR(IFGRPL  ),   /* 99 - FTNCD            */
+           0);                              /* 100 RESERVED          */
+ /********************************************************************/
+ /*                                                                  */
+ /*            FIELD ATTRIBUTE TABLE    (PART 2)                     */
+ /*                                                                  */
+ /********************************************************************/
+ DCL 1 FAT2 (41) CHAR(6) STATIC BDY(HWORD),
+       2 FATLENG2 PTR(8) INIT(              /* CTL BLOCK FIELD LENGTH*/
+              0,                            /* 101 -CHNGDIR- BIT STR */
+              0,                            /* 102 - STYPE - BIT STR */
+              0,                            /* 103 - RTYPE - BIT STR */
+              0,                            /* 104 - CHAIN - BIT STR */
+              0,                            /* 105 - POST - BIT STR  */
+              0,                            /* 106 -RESPOND- BIT STR */
+              0,                            /* 107 -CONTROL- BIT STR */
+              0,                            /* 108 -OBSQAC - BIT STR */
+              0,                            /* 109 -IBSQAC - BIT STR */
+              LENGTH(RPLOBSQV),             /* 110 - OBSQVAL         */
+              LENGTH(RPLIBSQV),             /* 111 - IBSQVAL         */
+              LENGTH(RPLSEQNO),             /* 112 - SEQNO           */
+              0,                            /* 113 -SSENSEO- BIT STR */
+              0,                            /* 114 -SSENSEI- BIT STR */
+              LENGTH(RPLUSNSO),             /* 115 - USENSEO         */
+              LENGTH(RPLUSNSI),             /* 116 - USENSEI         */
+              LENGTH(RPLVTFL1),             /* 117 - SWITCHC         */
+              0,                            /* 118 - RESERVED        */
+              0,                            /* 119 - RESERVED        */
+              LENGTH(EXLSCIPP),             /* 120 - SCIP            */
+              LENGTH(EXLDFASP),             /* 121 - DFASY           */
+              LENGTH(EXLRESPP),             /* 122 - RESP            */
+              LENGTH(EXLDFSYP),             /* 123 - DFASY           */
+              LENGTH(BSPHFND),              /* 124 - BFRFND          */
+              LENGTH(BSPHRDS),              /* 125 - BUFRDS          */
+              LENGTH(BSPHNUIW),             /* 126 - NUIW            */
+              LENGTH(BSPHUIW),              /* 127 - UIW             */
+              LENGTH(PLHDRMAX),             /* 128 - STRMAX          */
+              0,                            /* 129 - RESERVED        */
+              LENGTH(NIBEXLST),             /* 130 - EXLST           */
+              LENGTH(NIBLIMIT),             /* 131 - RESPLIM         */
+              0,                            /* 132 - SDT - BIT STR   */
+              0,                            /* 133 - BRACKET - BIT   */
+              LENGTH(RPLSSMO),              /* 134 - SSENSMO         */
+              LENGTH(RPLSSMI),              /* 135 - SSENSMI         */
+              LENGTH(RPLSIGDA),             /* 136 - SIGDATA         */
+              0,                            /* 137 - RESERVED        */
+              0,                            /* 138 - RESERVED        */
+              0,                            /* 139 - RESERVED        */
+              LENGTH(ACBUAPTR),             /* 140 - USERPTR         */
+              LENGTH(ACBUJFCB)),            /* 141 - JFCB            */
+       2 FATFLAG2 CHAR(3) INIT(             /* FIELD ATTRIBUTE FLAGS */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 101 - CHNGDIR    */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 102 - STYPE      */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 103 - RTYPE      */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 104 - CHAIN      */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 105 - POST       */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 106 - RESPOND    */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 107 - CONTROL    */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 108 - OBSQAC     */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 109 - IBSQAC     */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL,VTM);, /* 110 - OBSQVAL    */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL,VTM);, /* 111 - IBSQVAL    */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL,VTM);, /* 112 - SEQNO      */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 113 - SSENSEO    */
+           ?FBITS(TOK,BIT,RPL,VTM)            ;, /* 114 - SSENSEI    */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL,VTM);, /* 115 - USENSEO    */
+           ?FBITS(SOK,TOK,NOR,RPL,VTM)        ;, /* 116 - USENSEI    */
+           ?FBITS(TOK,BIT,RPL,VTM)            ;, /* 117 - SWITCHC    */
+           ?FBITS()                           ;, /* 118 - RESERVED   */
+           ?FBITS()                           ;, /* 119 - RESERVED   */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL,VTM);, /* 120 - SCIP       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL,VTM);, /* 121 - DFASY      */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL,VTM);, /* 122 - RESP       */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,EXL,VTM);, /* 123 - DFSYN      */
+           ?FBITS(SOK,NOR,OPN,ACB,BSP)        ;, /* 124 - BFRFND     */
+           ?FBITS(SOK,NOR,OPN,ACB,BSP)        ;, /* 125 - BUFRDS     */
+           ?FBITS(SOK,NOR,OPN,ACB,BSP)        ;, /* 126 - NUIW       */
+           ?FBITS(SOK,NOR,OPN,ACB,BSP)        ;, /* 127 - UIW        */
+           ?FBITS(SOK,NOR,OPN,ACB,PLH)        ;, /* 128 - STRMAX     */
+           ?FBITS()                           ;, /* 129 - RESERVED   */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,NIB)    ;, /* 130 - EXLST      */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,NIB)    ;, /* 131 - RESPLIM    */
+           ?FBITS(GOK,MOK,TOK,BIT,NIB)        ;, /* 132 - SDT        */
+           ?FBITS(GOK,MOK,TOK,BIT,RPL,VTM)    ;, /* 133 - BRACKET    */
+           ?FBITS(GOK,MOK,SOK,TOK,NOR,RPL,VTM);, /* 134 - SSENSMO    */
+           ?FBITS(SOK,TOK,NOR,RPL,VTM)        ;, /* 135 - SSENSMI    */
+           ?FBITS(SOK,TOK,RPL,NOR,VTM)        ;, /* 136 - SIGDATA    */
+           ?FBITS()                           ;, /* 137 - RESERVED   */
+           ?FBITS()                           ;, /* 138 - RESERVED   */
+           ?FBITS()                           ;, /* 139 - RESERVED   */
+           ?FBITS(GOK,MOK,SOK,TOK,ACB,NOR)    ;, /* 140 - USERPTR    */
+           ?FBITS(GOK,MOK,SOK,TOK,ACB,NOR)   ;), /* 141 - JFCB       */
+       2 FATOFF2 FIXED(15) INIT(            /* CTL BLK FIELD OFFSETS */
+           ADDR(BST3)-ADDR(BST)+160,             /* 101 - CHNGDIR    */
+           ADDR(BST3)-ADDR(BST)+176,             /* 102 - STYPE      */
+           ADDR(BST3)-ADDR(BST)+184,             /* 103 - RTYPE      */
+           ADDR(BST3)-ADDR(BST)+216,             /* 104 - CHAIN      */
+           ADDR(BST3)-ADDR(BST)+232,             /* 105 - POST       */
+           ADDR(BST4)-ADDR(BST),                 /* 106 - RESPOND    */
+           ADDR(BST4)-ADDR(BST)+24,              /* 107 - CONTROL    */
+           ADDR(BST4)-ADDR(BST)+88,              /* 108 - OBSQAC     */
+           ADDR(BST4)-ADDR(BST)+116,             /* 109 - IBSQAC     */
+           ADDR(RPLOBSQV)-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),        /* 110 - OBSQVAL    */
+           ADDR(RPLIBSQV)-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),        /* 111 - IBSQVAL    */
+           ADDR(RPLSEQNO)-ADDR(RPLOF60 )+
+           ADDR(RPLRBAR )-ADDR(IFGRPL  ),        /* 112 - SEQNO      */
+           ADDR(BST4)-ADDR(BST)+144,             /* 113 - SSENSEO    */
+           ADDR(BST4)-ADDR(BST)+160,             /* 114 - SSENSEI    */
+           ADDR(RPLUSNSO)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                      /* 115 - USENSEO    */
+           ADDR(RPLUSNSI)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                      /* 116 - USENSEI    */
+           ADDR(BST4)-ADDR(BST)+180,             /* 117 - SWITCHC    */
+           0,                                    /* 118 - RESERVED   */
+           0,                                    /* 119 - RESERVED   */
+           ADDR(EXLSCIPF)-ADDR(IFGEXLST),        /* 120 - SCIP       */
+           ADDR(EXLDFASF)-ADDR(EXLDFAS )+
+           ADDR(EXLJRNF )-ADDR(IFGEXLST),        /* 121 - DFASY      */
+           ADDR(EXLRESPF)-ADDR(EXLRESP )+
+           ADDR(EXLOPNF )-ADDR(IFGEXLST),        /* 122 - RESP       */
+           ADDR(EXLDFSYF)-ADDR(EXLDFSY )+
+           ADDR(EXLASYPF)-ADDR(EXLVTEXT)+
+           LENGTH(EXLCOMN),                      /* 123 - DFSYN      */
+           ADDR(BSPHFND)-ADDR(IDABSPH),          /* 124 - BFRFND     */
+           ADDR(BSPHRDS)-ADDR(IDABSPH),          /* 125 - BUFRDS     */
+           ADDR(BSPHNUIW)-ADDR(IDABSPH),         /* 126 - NUIW       */
+           ADDR(BSPHUIW)-ADDR(IDABSPH),          /* 127 - UIW        */
+           ADDR(PLHDRMAX)-ADDR(IDAPLHDR),        /* 128 - STRMAX     */
+           0,                                    /* 129 - RESERVED   */
+           ADDR(NIBEXLST)-ADDR(ISTNIB  ),        /* 130 - EXLST      */
+           ADDR(NIBLIMIT)-ADDR(ISTNIB  ),        /* 131 - RESPLIM    */
+           ADDR(BST3)-ADDR(BST)+136,             /* 132 - SDT - BST  */
+           ADDR(BST3)-ADDR(BST)+144,             /* 133 - BRACKET    */
+           ADDR(RPLSSMO )-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                      /* 134 - SSENSMO    */
+           ADDR(RPLSSMI )-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                      /* 135 - SSENSEI    */
+           ADDR(RPLSIGDA)-ADDR(RPLVTEXT)+
+           LENGTH(RPLCOMN),                      /* 136 - SIGDATA    */
+           0,                                    /* 137 - RESERVED   */
+           0,                                    /* 138 - RESERVED   */
+           0,                                    /* 139 - RESERVED   */
+           ADDR(ACBUAPTR)-ADDR(IFGACB  ),        /* 140 - USERPTR    */
+           ADDR(ACBUJFCB)-ADDR(IFGACB  ));       /* 141 - JFCB       */
+

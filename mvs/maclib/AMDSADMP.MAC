@@ -1,0 +1,504 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&SADMP   AMDSADMP  &IPL=D3330,&OUTPUT=,&CONSOLE=(01F,3215),            X
+               &SYSUT=SYSDA,&VOLSER=SADUMP,&ULABEL=NOPURGE,            X
+               &TYPE=HI,&ADDR=REAL
+         LCLC  &HEXN
+         LCLB  &IPLNGTH
+         LCLC  &IPL2,&CONADR,&CONTYPE,&TYPE2,&OUTPUT2,&JOBNAME,&ADDR2
+         LCLC  &SYSUTP,&VOLSER1,&AP,&UNIT,&DEN,&IPLVAR
+          AGO   .NOPROA                 SKIP PROLOGUE CODE
+         SPACE
+**********************************************************************
+*                                                                    *
+* STATUS --                                                          *
+*     LEVEL - OS/VS2 RELEASE 3.7                             @ZA15487*
+*A170070,C170140,A170210-170420,C006500                      @ZA15487*
+*A171050                                                     @ZA15487*
+*A000000-999999                                                Y01981*
+*A098300                                                     @G51AGSG*
+* FUNCTION --                                                        *
+*    THE AMDSADMP MACRO GENERATES JCL INPUT TO STAGE 2 OF AMDSADMP   *
+*    INITIALIZATION.  THIS INCLUDES INPUT TO AMDSADM2, AMDSALDR, AND *
+*    IEHDASDR (IF REQUIRED-IPL=D OPTION ONLY).                       *
+*                                                                    *
+* ENTRY POINTS --                                                    *
+*         AMDSADMP                                                   *
+*                                                                    *
+* INPUT --                                                           *
+*    THE FOLLOWING ARE ALLOWED MACRO PARAMETERS:                     *
+*       IPL=, TYPE=, OUTPUT=, CONSOLE=, SYSUT=,VOLSER=,ULABEL=,ADDR= *
+*                                                                    *
+*  OUTPUT --                                                         *
+*    A JOBSTREAM TO INITIALIZE AMDSADMP ON A TAPE OR D.A. DEVICE     *
+*                                                                    *
+* EXTERNAL REFERENCES --                                             *
+*    NONE                                                            *
+*                                                                    *
+*  EXITS, NORMAL --                                                  *
+*    RETURN TO ASSEMBLER                                             *
+*                                                                    *
+* EXITS, ERROR --                                                    *
+*    MNOTES TO USER                                                  *
+*                                                                    *
+* ATTRIBUTES --                                                      *
+*    MACRO                                                           *
+*                                                                    *
+* CHARACTER CODE DEPENDENCY --                                       *
+*    STANDARD CHARACTER SET                                          *
+*                                                                    *
+* NOTES --                                                           *
+*    NONE                                                            *
+*                                                                    *
+**********************************************************************
+*/*AMDSADMP: CHART (SEQ) */
+*/*HEADER
+*/*CHART AB
+*/*ROUTINE (AMDSADMP)
+*/*DATE: JULY 19, 1971
+*/*PAGE # */
+*/* E START AMDSADMP */
+*/* N THIS MACRO GENERATES JCL INTERPRETS AND PASSES PARMS TO MACRO
+*/* 2 */
+*/* N KYWRDS: IPL,CONSOLE, TYPE,OUTPUT, SYSUT,VOLSER, ULABEL,ADDR */
+*/* D (YES,%T3,NO,) IPL = NULL? */
+*/* D (NO,%A2,YES,) IPL GT OR = 4 CHARS? */
+*/* D (YES,%A1,NO,%A2) IPL LESS THAN OR = 7 CHARS? */
+*/*%A1: D (YES,%A3,NO,) IPL(1) = T OR D? */
+*/*%A2: S (,%T3) MNOTE: IPL=&IPL INVALID, IPL=D3330 ASSUMED */
+*/*%T3: P (,%T4)  SET IPL2  = D3330 */
+*/*%A3: P SET IPL2 = IPL */
+*/*%T4: D (YES,%T5,NO,) CONSOLE = NULL? */
+*/* D (YES,%B1,NO,) CONSOLE(1) = NULL? */
+*/* D (YES,%B2,NO,) CONSOLE(1) = XXX? */
+*/* S (,%B1) MNOTE: CONADDR =&CONADDR INVALID 01F ASSUMED */
+*/*%B1: P (,%B3) CONADDR = 01F */
+*/*%B2: P CONADDR = XXX */
+*/*%B3: D (YES,%B4,NO,) CONSOLE(2) = NULL? */
+*/* D (YES,%B5,NO,) CONSOLE(2) = XXXX? */
+*/*%B6: S (,%B4) MNOTE: CONTYPE =&CONTYPE INVALID, 3215 ASSUM */
+*/*%B4: P (,%T7) CONTYPE = 3215 */
+*/*%B5: D (NO,%B6,YES,) CONSOLE(2) = VALID TYPE? */
+*/* P (,%T7) CONTYPE = XXXX */
+*/*%T5: P (,%T7) CONADDR = 01F, CONTYPE = 3215 */
+*/*%T7: D (YES,TYPE03,NO,) TYPE = LO? */
+*/* D (YES,%T13,NO,%T12) TYPE = HI? */
+*/*TYPE03: D (YES,TYPE04,NO,) IPL2 EQ TAPE? */
+*/* P (,%T20) SET TYPE2 = LO */
+*/*TYPE04: P MNOTE: IPL = &IPL2 AND TYPE2 = &TYPE ARE INVALID */
+*/* R EXIT */
+*/*%T12: D (YES,%T13,NO,) TYPE = NULL? */
+*/* S (,%T13) MNOTE: TYPE =&TYPE INVALID, HI ASSUMED */
+*/*%T13: P (,%T18) SET TYPE2 = HI */
+*/*%T14: D (YES,%T22,NO,%T15) OUTPUT = 4 CHARS? */
+*/*%T15: S (,%T19) MNOTE: 1 OUTPUT =&OUTPUT INVALID, T282 ASSUMED */
+*/*%T18: N TEST OUTPUT PARM FOR TYPE=HI */
+*/* D (NO,%T14,YES,) OUTPUT = NULL? */
+*/*%T19: P (,%T26) SET OUTPUT2 = T282 */
+*/*%T22: D (NO,%T15,YES,) OUTPUT(1) = T? */
+*/*%T25: P (,%T26) SET OUTPUT2 = &OUTPUT */
+*/*%T16: D (YES,%T23,NO,) OUTPUT = 4 CHARS? */
+*/*%T17: S (,%T21) MNOTE: OUTPUT =&OUTPUT INVALID, P00E ASSUMED */
+*/*%T20: N TEST OUTPUT PARMS FOR TYPE=LO */
+*/*      D (NO,%AD2,YES,) ADDR= NULL? */
+*/*%AD7: P (,%T31) SET ADDR2= REAL */
+*/*%AD2: D (YES,%AD7,NO,) ADDR= REAL? */
+*/*      D (YES,%AD5,NO,) ADDR= VIRTUAL? */
+*/*      S (,%AD7) MNOTE: ADDR= &ADDR INVALID, REAL ASSUMED */
+*/*%AD5: P (,%T31) SET ADDR2 = VIRTUAL */
+*/*%T31: D (NO,%T16,YES,) OUTPUT = NULL? */
+*/*%T21: P (,%T26) SET OUTPUT2 = P00E */
+*/*%T23: D (NO,%T17,YES,) OUTPUT(1) = T OR P? */
+*/*P SET OUTPUT2 =&OUTPUT */
+*/*%T26: D (YES,%X1,NO,) SYSUT = NULL? */
+*/* D (YES,%P1,NO,) SYSUT LE 6 CHARS? */
+*/* S MNOTE: SYSUT =&SYSUT INVALID, SYSDA ASSUMED */
+*/*%X1: P (,%X2) SET SYSUTP = SYSDA */
+*/*%P1: P (,%X2) SET SYSUTP = SYSUT */
+*/*%X2: D (YES,%X5,NO,) MACRO1 LABEL = NULL? */
+*/* P (,%X6) JOB NAME = LABEL */
+*/*%X5: P JOB NAME = AMDSADMP */
+*/*%X6: P ASMFC JCL TO ASSEMBLE MACRO 2 */
+*/* N ALL JCL CONDITIONAL ON PRECEDING STEPS */
+*/*%T28: D (YES,%X4,NO,) VOLSER = NULL? */
+*/* D (YES,%V1,NO,) VOLSER LE 6 CHARS? */
+*/* S MNOTE: VOLSER =&VOLSER INVALID, SADUMP ASSUMED */
+*/*%X4: P (,%W3) SET VOLSER1 = SADUMP */
+*/*%V1: P (,%W3) SET VOLSER1 = VOLSER */
+*/*%X3: D (TAPE,%T30,D.A.,) IPL2 = T OR D ? */
+*/* D (YES,%M7,NO,) ULABEL = PURGE? */
+*/* D (YES,%M4,NO,) ULABEL = NOPURGE? */
+*/* D (YES,%M4,NO,) ULABEL = NULL? */
+*/* S MNOTE: ULABEL =&ULABEL INVALID, NOPURGE ASSUMED */
+*/*%M4: P (,%T30) IEHDASDR JCL FOR LDMKR OUTPUT TO DA (NO PURGE OF USER
+*/*LABELS) */
+*/*%W3: D (LO,%T27,HI,) TYPE2 = ? */
+*/* P (,%X3)  JCL FOR AMDSADM2 AND THE LOADER MAKER FOR HI OPTION
+*/*  */
+*/*%M7: P IEHDASDR JCL FOR LDMKR OUTPUT TO D. A. (PURGE USER
+*/*LABELS) */
+*/*%T30: R END */
+*/*%T27: P (,%X3)  JCL FOR AMDSADM2 AND THE LOADER MAKER FOR LO OPTION
+*/*  */
+*/*AMDSADMP: END */
+.NOPROA   ANOP                          MACRO 1 CODE START
+         SPACE
+.**********************************************************************
+.*                                                                    *
+.*  PROCESS IPL= PARAMETER.  TWO DEVICE TYPES D (DISK) AND T (TAPE)   *
+.*  ARE ALLOWED.  IF IPL= IS NOT SPECIFIED D3330 IS ASSUMED.          *
+.*                                                                    *
+.**********************************************************************
+.*       SPACE
+         AIF   ('&IPL' EQ '').IPL03 .  IS IPL SPECIFIED?
+         AIF   (K'&IPL LT 4).IPL02 .   VALIDITY CHECK OF IPL
+         AIF   (K'&IPL GT 7).IPL02 .   FOR HIGH AND LOW LIMITS
+         AIF   (K'&IPL NE 4).IPL04     IF NOT DEV ADDR FORMAT, THEN
+.*                                     SKIP ADDR VALIDITY CHECK
+.*                                                             @ZM40017
+.*                                     THE NEXT 7 LINES CHECK WHETHER
+.*                                     A 3 CHARACTER INPUT,PUT IN HEXN,
+.*                                     REPRESENTS A VALID 3 DIGIT HEX
+.*                                     NUMBER. IF THE CHECK FAILS ON
+.*                                     ANY DIGIT, A BRANCH IS TAKEN TO
+.*                                     THE ERROR ROUTINE FOR THE INPUT.
+&HEXN    SETC  '&IPL'(2,3)                                     @ZM40017
+.* THE NEXT 6 LINES WERE ADDED FOR PTM VS40017                 @ZM40017
+        AIF (NOT(('&HEXN'(1,1) GE 'A' AND '&HEXN'(1,1) LE 'F') OR      X
+               ('&HEXN'(1,1) GE '0' AND '&HEXN'(1,1) LE '9'))).IPL02
+        AIF (NOT(('&HEXN'(2,1) GE 'A' AND '&HEXN'(2,1) LE 'F') OR      X
+               ('&HEXN'(2,1) GE '0' AND '&HEXN'(2,1) LE '9'))).IPL02
+        AIF (NOT(('&HEXN'(3,1) GE 'A' AND '&HEXN'(3,1) LE 'F') OR      X
+               ('&HEXN'(3,1) GE '0' AND '&HEXN'(3,1) LE '9'))).IPL02
+.IPL04   ANOP                                                  @ZM40017
+         AIF   ('&IPL'(1,1) EQ 'T').IPL00 VALIDITY CHECK TAPE IPL
+         AIF   ('&IPL'(1,1) NE 'D').IPL02 VALIDITY CHECK DISK IPL
+.IPL01   ANOP .                        HERE IF IPL PARM IS VALID
+&IPL2    SETC  '&IPL' .                SET IPL2 TO WHAT USER REQUESTED
+&IPLVAR  SETC  '&IPL2'(1,1) .          SET UP LDR MAKER PARMS
+         AGO   .CONSLE1 .              GO PREPARE CONSOLE PROCESSING
+.IPL00   ANOP .                        CHECK FOR 7 TRK TAPE
+         AIF   (K'&IPL NE 7).IPL01     IF NOT X400-X USE AS IS
+         AIF   ('&IPL'(6,7) NE '-2').IPL01 IF NOT 7 TRACK USE AS IS
+&IPLNGTH SETB  1 .                     SET SW FOR 7 TRACK TAPE IPL
+         AGO   .IPL01 .                GO SET IPL PARMS
+.IPL02   ANOP .                        ERROR. DEFAULT TO BE ASSUMED
+         MNOTE 4,'IPL=&IPL IS INVALID, IPL=D3330 IS ASSUMED'
+.IPL03   ANOP .                        SET UP THE DEFAULT DEVICE
+&IPL2    SETC  'D3330' .               DEFAULT IPL DEVICE TYPE
+&IPLVAR  SETC  '&IPL2'(1,1) .          SET UP LDR MAKER PARMS
+.CONSLE1 ANOP .                        CONSOLE PROCESSING
+.**********************************************************************
+.*                                                                    *
+.*  PROCESS THE CONSOLE= PARAMETER.  THE CONSOLE PARAMETER PROVIDES   *
+.*  TWO VARIABLES, A CONSOLE ADDRESS (CONADDR) AND A CONSOLE TYPE     *
+.*  (CONTYPE).  01F IS THE DEFAULT CONSOLE ADDRESS WHILE 3215 IS THE  *
+.*  DEFAULT CONSOLE TYPE                                              *
+.*                                                                    *
+.**********************************************************************
+.*       SPACE
+&UNIT    SETC  '&IPL2'(2,7) .          SET UP UNIT PARM
+         AIF   ('&CONSOLE' EQ '').CONSLE9 CONSOLE DEFAULT SPECIFIED
+         AIF   ('&CONSOLE(1)' EQ '').CONSLE2 IS CONSOLE ADDR DEF?
+         AIF   (K'&CONSOLE(1) NE 3).CONSLEA VALIDITY CHECK     @ZM40017
+.*                                                             @ZM40017
+.*                                     THE NEXT 7 LINES CHECK WHETHER
+.*                                     A 3 CHARACTER INPUT,PUT IN HEXN,
+.*                                     REPRESENTS A VALID 3 DIGIT HEX
+.*                                     NUMBER. IF THE CHECK FAILS ON
+.*                                     ANY DIGIT, A BRANCH IS TAKEN TO
+.*                                     THE ERROR ROUTINE FOR THE INPUT.
+&HEXN    SETC  '&CONSOLE(1)'(1,3)                              @ZM40017
+.* THE NEXT 6 LINES WERE ADDED FOR PTM VS40017                 @ZM40017
+        AIF (NOT(('&HEXN'(1,1) GE 'A' AND '&HEXN'(1,1) LE 'F') OR      X
+               ('&HEXN'(1,1) GE '0' AND '&HEXN'(1,1) LE '9'))).CONSLEA
+        AIF (NOT(('&HEXN'(2,1) GE 'A' AND '&HEXN'(2,1) LE 'F') OR      X
+               ('&HEXN'(2,1) GE '0' AND '&HEXN'(2,1) LE '9'))).CONSLEA
+        AIF (NOT(('&HEXN'(3,1) GE 'A' AND '&HEXN'(3,1) LE 'F') OR      X
+               ('&HEXN'(3,1) GE '0' AND '&HEXN'(3,1) LE '9'))).CONSLEA
+         AGO   .CONSLE3                                        @ZM40017
+.CONSLEA ANOP                                                  @ZM40017
+         MNOTE 4,'CONSOLE ADDR=&CONSOLE(1) IS INVALID, CONSOLE ADDR=01FX
+                IS ASSUMED'
+.CONSLE2 ANOP .                        SET UP CONSOLE DEFAULT
+&CONADR  SETC  '01F' .                 DEFAULT CONSOLE ADDR
+         AGO   .CONSLE4 .              GO HANDLE CONSOLE DEV TYPE
+.CONSLE3 ANOP .                        ADDR IS VALID, SET UP ADDR
+&CONADR SETC  '&CONSOLE(1)' .          SET CONADDR TO WHAT USER REQ
+.CONSLE4 ANOP .                        HANDLE CONSOLE DEV TYPE
+         AIF   ('&CONSOLE(2)' EQ '').CONSLE6 DEFAULT DEV TYPE?
+         AIF   (K'&CONSOLE(2) EQ 4).CONSLE7 VALIDITY CHECK DEV TYPE
+.CONSLE5 ANOP .                        DEV TYPE IN ERROR
+         MNOTE 4,'CONSOLE TYPE=&CONSOLE(2) IS INVALID, CONSOLE TYPE=321X
+               5 IS ASSUMED'
+.CONSLE6 ANOP .                        SET DEFAULT CONSOLE TYPE
+&CONTYPE SETC  '3215' .                DEFAULT CONSOLE TYPE
+         AGO   .TYPE01 .               GO CHECK TYPE
+.CONSLE7 ANOP .                        VALIDITY CHECK CONSOLE TYPE
+         AIF   ('&CONSOLE(2)' EQ '1052').CONSLE8 1052 CONSOLE TYPE?
+         AIF   ('&CONSOLE(2)' EQ '2150').CONSLE8 2150 CONSOLE TYPE?
+         AIF   ('&CONSOLE(2)' EQ '3210').CONSLE8 3210 CONSOLE TYPE?
+         AIF   ('&CONSOLE(2)' EQ '3215').CONSLE8 3215 CONSOLE TYPE?
+         AIF   ('&CONSOLE(2)' EQ '3066').CONSLE8 3066 CONSOLE TYPE?
+         AIF ('&CONSOLE(2)' EQ '3158').CONSLE8  3158 TYPE      @ZA00418
+         AIF ('&CONSOLE(2)' EQ '3277').CONSLE8  3277 TYPE      @ZA00418
+         AIF   ('&CONSOLE(2)' EQ '3036').CONSLE8 3036 TYPE     @G51AGSG
+         AGO   .CONSLE5 .               ERROR IN DEV TYPE, TAKE DEFAULT
+.CONSLE8 ANOP .                         SET CONSOLE TYPE
+&CONTYPE SETC  '&CONSOLE(2)' .          SET CONSOLE TYPE TO USER SPEC
+         AGO   .TYPE01 .                HANDLE TYPE PARM
+.CONSLE9 ANOP .                         SET DEFAULT CONSOLE ADDR
+&CONADR  SETC  '01F'                    DEFAULT CONSOLE ADDR IS 01F
+         AGO   .CONSLE6 .               SET UP DEFAULT CONSOLE TYPE
+.**********************************************************************
+.*                                                                    *
+.*  PROCESS THE TYPE= PARAMETER.  THE POSSIBILITIES ARE TYPE=HI       *
+.*  (DEFAULT SPECIFICATION) AND TYPE=LO                               *
+.*                                                                    *
+.**********************************************************************
+.*       SPACE
+.TYPE01  ANOP .                        TYPE PROCESSING ENTRY POINT
+         AIF   ('&TYPE' EQ 'LO').TYPE03 CHECK TYPE = LO
+         AIF   ('&TYPE' EQ 'HI').TYPE02 CHECK TYPE = HI
+         AIF   ('&TYPE' EQ '').TYPE02  CHECK DEFAULT
+         MNOTE 4,'TYPE=&TYPE IS INVALID, TYPE=HI IS ASSUMED'
+.TYPE02  ANOP .                        SET THE TYPE FIELD TO HI
+&TYPE2   SETC  'HI' .                  TYPE2 PARM FOR LDRMKER AND MAC2
+         AGO   .OUTPUT3 .              GO HANDLE OUTPUT PARMS
+.TYPE03  ANOP .                        PROCESS TYPE = LO
+         AIF   ('&IPL2'(1,1) EQ 'T').TYPE04 IF IPL=TAPE;HAVE ERROR
+&TYPE2   SETC  'LO' .                  SET LO SPECIFIED
+.*       SPACE
+.**********************************************************************
+.*                                                                    *
+.*  THIS SECTION PROCESSES THE ADDR= PARAMETER FOR TYPE=LO.  THE    *
+.*  DEFAULT USED IS ADDR=REAL.                                      *
+.*                                                                    *
+.**********************************************************************
+.*       SPACE
+         AIF   ('&ADDR' EQ '').ADDR01  ADDR DEFAULT SPECIFIED    Y02006
+         AIF   ('&ADDR' EQ 'REAL').ADDR01 CHECK ADDR = REAL      Y02006
+         AIF   ('&ADDR' EQ 'VIRTUAL').ADDR02 CHECK ADDR =VIRTUAL Y02006
+         MNOTE 4,'ADDR=&ADDR IS INVALID. ADDR=REAL IS ASSUMED'   Y02006
+.ADDR01  ANOP .                        SET ADDR                  Y02006
+&ADDR2   SETC  'REAL' .                SET ADDR2=REAL            Y02006
+         AGO   .ADDR04 .               GO CHECK OUTPUT           Y02006
+.ADDR02  ANOP .                        SET ADDR                  Y02006
+&ADDR2   SETC  'VIRTUAL' .             SET ADDR=VIRTUAL          Y02006
+.ADDR04  ANOP .                        OUTPUT CHECK FOR TYPE =LO Y02006
+.*       SPACE
+.**********************************************************************
+.*                                                                    *
+.*  THIS SECTION PROCESSES THE OUTPUT= PARAMETER FOR TYPE=LO. THE     *
+.*  DEFAULT DEVICE USED IS OUTPUT=P00E                                *
+.*                                                                    *
+.**********************************************************************
+.*       SPACE
+         AIF   ('&OUTPUT' EQ '').OUTPUT2 CHECK OUTPUT PARM DEF
+         AIF   (K'&OUTPUT NE 4).OUTPUT1 VALIDITY CHECK LENGTH
+.*                                                             @ZM40017
+.*                                     THE NEXT 7 LINES CHECK WHETHER
+.*                                     A 3 CHARACTER INPUT,PUT IN HEXN,
+.*                                     REPRESENTS A VALID 3 DIGIT HEX
+.*                                     NUMBER. IF THE CHECK FAILS ON
+.*                                     ANY DIGIT, A BRANCH IS TAKEN TO
+.*                                     THE ERROR ROUTINE FOR THE INPUT.
+&HEXN    SETC  '&OUTPUT'(2,3)                                  @ZM40017
+.* THE NEXT 6 LINES WERE ADDED FOR PTM VS40017                 @ZM40017
+        AIF (NOT(('&HEXN'(1,1) GE 'A' AND '&HEXN'(1,1) LE 'F') OR      X
+               ('&HEXN'(1,1) GE '0' AND '&HEXN'(1,1) LE '9'))).OUTPUT1
+        AIF (NOT(('&HEXN'(2,1) GE 'A' AND '&HEXN'(2,1) LE 'F') OR      X
+               ('&HEXN'(2,1) GE '0' AND '&HEXN'(2,1) LE '9'))).OUTPUT1
+        AIF (NOT(('&HEXN'(3,1) GE 'A' AND '&HEXN'(3,1) LE 'F') OR      X
+               ('&HEXN'(3,1) GE '0' AND '&HEXN'(3,1) LE '9'))).OUTPUT1
+         AIF   ('&OUTPUT'(1,1) EQ 'T').OUTPUT6 IF TAPE OKAY
+         AIF   ('&OUTPUT'(1,1) EQ 'P').OUTPUT6 IF PRINTER OKAY
+.OUTPUT1 ANOP .                        ERROR DEFAULT ASSUMED
+         MNOTE 4,'OUTPUT=&OUTPUT IS INVALID, OUTPUT=P00E IS ASSUMED'
+.OUTPUT2 ANOP .                        SET DEFAULT
+&OUTPUT2 SETC  'P00E' .                DEFAULT DEV TYPE FOR TYPE=LO
+         AGO   .SYSUT01 .              HANDLE SYSUT PARM
+.TYPE04  ANOP .                        SEVERE ERROR-INCOMPATIBLE
+.*                                     ATTRIBUTES SPECIFIED
+         MNOTE 8,'PARAMETERS IPL=&IPL2 AND TYPE=&TYPE ARE INCOMPATIBLE X
+               MACRO PROCESSING TERMINATED'
+         MEXIT
+.**********************************************************************
+.*                                                                    *
+.*  THIS OUTPUT PROCESSING IS FOR TYPE = HI PROCESSING ONLY           *
+.*                                                                    *
+.**********************************************************************
+.*       SPACE
+.OUTPUT3 ANOP .                       HANDLE OUTPUT PARMS
+         AIF   ('&OUTPUT' EQ '').OUTPUT5 DEFAULT SPECIFIED?
+         AIF   (K'&OUTPUT NE 4).OUTPUT4 VALIDITY CHECK LENGTH
+.*                                                             @ZM40017
+.*                                     THE NEXT 7 LINES CHECK WHETHER
+.*                                     A 3 CHARACTER INPUT,PUT IN HEXN,
+.*                                     REPRESENTS A VALID 3 DIGIT HEX
+.*                                     NUMBER. IF THE CHECK FAILS ON
+.*                                     ANY DIGIT, A BRANCH IS TAKEN TO
+.*                                     THE ERROR ROUTINE FOR THE INPUT.
+&HEXN    SETC  '&OUTPUT'(2,3)                                  @ZM40017
+.* THE NEXT 6 LINES WERE ADDED FOR PTM VS40017                 @ZM40017
+        AIF (NOT(('&HEXN'(1,1) GE 'A' AND '&HEXN'(1,1) LE 'F') OR      X
+               ('&HEXN'(1,1) GE '0' AND '&HEXN'(1,1) LE '9'))).OUTPUT4
+        AIF (NOT(('&HEXN'(2,1) GE 'A' AND '&HEXN'(2,1) LE 'F') OR      X
+               ('&HEXN'(2,1) GE '0' AND '&HEXN'(2,1) LE '9'))).OUTPUT4
+        AIF (NOT(('&HEXN'(3,1) GE 'A' AND '&HEXN'(3,1) LE 'F') OR      X
+               ('&HEXN'(3,1) GE '0' AND '&HEXN'(3,1) LE '9'))).OUTPUT4
+         AIF   ('&OUTPUT'(1,1) EQ 'T').OUTPUT6 IF TAPE OUTPUT VALID
+.OUTPUT4 ANOP .                       ANY OTHER SPEC IS IN ERROR
+         MNOTE 4,'OUTPUT=&OUTPUT IS INVALID, OUTPUT=T282 IS ASSUMED'
+.OUTPUT5 ANOP .                        DEFAULT SET UP
+&OUTPUT2 SETC  'T282' .                TAPE DEFAULT ADDR
+         AGO   .SYSUT01 .              GO HANDLE SYSUT PARM
+.OUTPUT6 ANOP .                        SET UP USER SPECIFIED PARM
+&OUTPUT2 SETC  '&OUTPUT' .             TAPE ADDR
+.SYSUT01 ANOP .                        PROCESS SYSUT PARMS
+.**********************************************************************
+.*                                                                    *
+.*  THIS CODE PROCESSES SYSUT SPECIFICATION.  SYSUT=SYSDA IS THE      *
+.*  DEFAULT SPECIFICATION.                                            *
+.*                                                                    *
+.**********************************************************************
+.*       SPACE
+         AIF   ('&SYSUT' EQ '').SYSUT02 DEFAULT SPECIFIED?
+         AIF   (K'&SYSUT LE 6).SYSUT03  PROPER LENGTH?
+         MNOTE 4,'SYSUT=&SYSUT IS INVALID, SYSUT=SYSDA IS ASSUMED'
+.SYSUT02 ANOP .                        SET SYSUT DEFAULT
+&SYSUTP  SETC  'SYSDA'                 DEFAULT UNIT IS SYSDA
+         AGO   .LBL01 .                PROCESS JOBNAME STATEMENT
+.SYSUT03 ANOP .                        SET THE SYSUT PARM
+&SYSUTP  SETC  '&SYSUT' .              SET TO USER SPECIFIED
+.LBL01   ANOP .                        PROCESSING JOBNAME
+.**********************************************************************
+.*                                                                    *
+.*  THE LABEL NAME OF THE MACRO IS USED FOR THE JOBNAME               *
+.*                                                                    *
+.**********************************************************************
+.*       SPACE
+         AIF   ('&SADMP' EQ '').LBL02 IS LABEL BLANKS?
+&JOBNAME SETC  '&SADMP' .              SET JOBNAME TO SADMP LABEL
+         AGO   .JCLASM1 .              PROCESS JCL
+.LBL02   ANOP .                        SET DEFAULT JOBNAME
+&JOBNAME SETC  'AMDSADMP'              DEFAULT JOBNAME
+.**********************************************************************
+.*                                                                    *
+.*  THIS IS THE JCL TO EXECUTE THE ASSEMBLER. THE INPUT FOR MACRO TWO *
+.*  IS CREATED AND PASSED AT THIS TIME.                               *
+.*                                                                    *
+.**********************************************************************
+         SPACE
+.JCLASM1 ANOP .                        ASSEMBLY JCL
+         PUNCH '//&JOBNAME JOB MSGLEVEL=(1,1),REGION=128K'
+         PUNCH '//ASM EXEC PGM=ASMBLR,PARM=''LOAD,NODECK'''
+         PUNCH '//SYSLIB DD DSN=SYS1.MACLIB,DISP=SHR'
+         PUNCH '//SYSUT1 DD UNIT=&SYSUTP,SPACE=(1700,(400,50))'
+         PUNCH '//SYSUT2 DD UNIT=&SYSUTP,SPACE=(1700,(400,50))'
+         PUNCH '//SYSUT3 DD UNIT=&SYSUTP,SPACE=(1700,(400,50))'
+         PUNCH '//SYSPRINT DD SYSOUT=A'
+         PUNCH '//SYSGO DD DSN=&&LOADSET,UNIT=&SYSUTP,'
+         PUNCH '// SPACE=(80,(250,50)),DISP=(,PASS)'
+         PUNCH '//SYSIN DD *'
+         PUNCH '         CSECT'
+         PUNCH '         AMDSADM2   TYPE2=&TYPE2,CONTYPE=&CONTYPE,CONADX
+               DR=&CONADR,                 X'
+         AIF   ('&TYPE2' EQ 'LO').JCLADR1  IF TYPE=LO PUNCH ADDR=  PARM
+         PUNCH '               OUTPUT2=&OUTPUT2,IPL2=&IPL2'
+         AGO   .JCLWK1          SKIP LO JCL
+.JCLADR1 ANOP .                 PUNCH ADDR= FOR LO
+         PUNCH '               OUTPUT2=&OUTPUT2,IPL2=&IPL2,ADDR2=&ADDR2X
+               '
+.JCLWK1  ANOP .                CONTINUE COMMON JCL PROCESSING
+         PUNCH '         END'
+         PUNCH '/*'
+.**********************************************************************
+.*                                                                    *
+.*  THIS CODE HANDLES THE VOLSER PARM.  THE DEFAULT IS SYSDA          *
+.*                                                                    *
+.**********************************************************************
+.*       SPACE
+         AIF   ('&VOLSER' EQ '').JCLVOL2 DEFAULT REQUESTED?
+         AIF   (K'&VOLSER LE 6).JCLVOL3 VOLSER VALID; HANDLE USR LBL
+         MNOTE 4,'VOLSER=&VOLSER IS INVALID, VOLSER=SADUMP IS ASSUMED'
+.JCLVOL2 ANOP .                        SET DEFAULT FOR VOLSER
+&VOLSER1 SETC  'SADUMP' .              VOLSER DEFAULT
+         AGO   .LDR1 .                 SET THE VOLSER
+.JCLVOL3 ANOP .                        THIS CODE SETS THE VOLSER
+&VOLSER1 SETC  '&VOLSER'               SPECIFIED BY THE USER
+.LDR1    ANOP .                        LOADER MAKER CODE SECTION
+.**********************************************************************
+.*                                                                    *
+.*  THIS JCL WILL EXECUTE THE LOADER MAKER PROGRAM WHICH CONVERTS THE *
+.*  OBJECT CODE AND LOAD MODULE CODE TO MACHINE EXECUTABLE CODE.      *
+.*                                                                    *
+.**********************************************************************
+         SPACE
+         PUNCH '//LDMKER EXEC PGM=AMDSALDR,COND=(1,LE),'
+         PUNCH '// PARM=''IPL2=&IPLVAR,TYPE2=&TYPE2'''
+         PUNCH '//SYSPRINT DD SYSOUT=A'
+         PUNCH '//SYSUT1 DD DSN=&&LOADSET,DISP=(OLD,DELETE)'
+         PUNCH '//SYSUT2 DD DSN=SYS1.LINKLIB,DISP=SHR'
+         AIF   ('&IPL2'(1,1) EQ 'T').TLDR IF TAPE IPL SET UP DCB PARMS
+         AIF   ('&SYSUTP' NE 'SYSDA').JCLLDR2 NOT SYSDA?       @ZA15487
+         PUNCH '//SYSUT3 DD DSN=&&REALDUMP,DISP=(,PASS),'      @ZA15487
+         PUNCH '// SPACE=(TRK,(5,1)),VOL=REF=SYS1.NUCLEUS,'    @ZA15487
+         PUNCH '// UNIT=&SYSUTP'                               @ZA15487
+         AGO   .JCLLDR3             GOTO SYSUT4 PROCESSING     @ZA15487
+.JCLLDR2 ANOP                       SYSUTP IS NOT SYSDA        @ZA15487
+         PUNCH '//SYSUT3 DD DSN=&&REALDUMP,DISP=(,PASS),UNIT=&SYSUTP,'
+         PUNCH '// SPACE=(TRK,(5,1))'
+.JCLLDR3 ANOP                       SELECT PROPER SYSUT4       @ZA15487
+         AIF   ('&TYPE2' EQ 'LO').JCLLDR1 FOR TYPE=LO PGE NOT NEEDED
+         PUNCH '//SYSUT4 DD UNIT=&UNIT,DISP=(,KEEP),'
+         PUNCH '// VOL=SER=&VOLSER1,DSN=SYS1.PAGEDUMP,'
+         PUNCH '// SPACE=(6144,(45),,CONTIG),LABEL=EXPDT=99366'
+         AGO   .ULBL1 .                GO PROCESS VOLSER DATA
+.JCLLDR1 ANOP .                        THIS IS LOW SPEED LDRMAKER JCL
+         PUNCH '//SYSUT4 DD UNIT=&UNIT,DISP=(,KEEP),'
+         PUNCH '// VOL=SER=&VOLSER1,DSN=SYS1.PAGEDUMP,'
+         PUNCH '// SPACE=(TRK,(1),,CONTIG),LABEL=EXPDT=99366'
+         AGO   .ULBL1 .                GO PROCESS VOLSER DATA
+.TLDR    ANOP .                        TAPE LOADER MAKER JCL
+&AP      SETC  ')'                     SET UP PAREN
+&DEN     SETC  ' ' .                   INIT FOR 9 TRK TAPE
+         AIF   (NOT(&IPLNGTH)).TLDR1   CHECK FOR 7 TRK TAPE
+&AP      SETC  ',TRTCH=C'              7 TRK TAPE SET UP DCB PARMS
+&DEN     SETC  ',DEN=2)' .             SET UP DENSITY
+.TLDR1   ANOP .                        HERE FOR DCB INPUT TO GENER
+         PUNCH '//SYSUT3 DD UNIT=&UNIT,DISP=OLD,LABEL=(,NL),DSN=SADMP,'
+         PUNCH '// VOL=SER=&VOLSER1,DCB=(BLKSIZE=24576&AP&DEN'
+.ULBL1   ANOP .                        USER LABEL PROCESSING
+.**********************************************************************
+.*                                                                    *
+.*  THIS CODE PRODUCES THE USER LABEL PURGE OR NO PURGE PARMS FOR     *
+.*  IEHDASDR PROGRAM.  THE DEFAULT IS NO PURGE.                       *
+.*                                                                    *
+.**********************************************************************
+.*       SPACE
+         AIF   ('&IPL2'(1,1) EQ 'T').ENDUP1 IF TAPE SKIP DASDR
+         SPACE
+         PUNCH '//DASDR EXEC PGM=IEHDASDR,COND=(1,LE)'
+         PUNCH '//SYSPRINT DD SYSOUT=A'
+         PUNCH '//IPLDEV DD DISP=OLD,UNIT=&UNIT,VOL=SER=&VOLSER1'
+         PUNCH '//INPUT DD DSN=&&REALDUMP,DISP=(OLD,DELETE)'
+         PUNCH '//SYSIN DD *'
+         AIF   ('&ULABEL' EQ 'PURGE').ULBL3 IF PURGE OUTPUT CARD
+         AIF   ('&ULABEL' EQ 'NOPURGE').ULBL2 IF NOPURGE VALID INPUT
+         AIF   ('&ULABEL' EQ '').ULBL2 DEFAULT REQUESTED
+         MNOTE 4,'ULABEL=&ULABEL IS INVALID, ULABEL=NOPURGE IS ASSUMED'
+.ULBL2   ANOP .                        DEFAULT PROCESSING
+         PUNCH '          PUTIPL   FROMDD=INPUT,TODD=IPLDEV,PURGE=NO'
+         AGO   .ULBL4 .                HANDLE /*
+.ULBL3   ANOP .                        HERE FOR PURGE KEYWORD
+         PUNCH '          PUTIPL   FROMDD=INPUT,TODD=IPLDEV,PURGE=YES'
+.ULBL4   ANOP .                        THE /* PROCESSING
+         PUNCH '/*'
+.ENDUP1  ANOP .                        END OF PROCESSING
+         MNOTE *,'THE ASSEMBLY OF THIS MACRO HAS BEEN SUCCESSFULLY'
+         MNOTE *,'COMPLETED.  THE OUTPUT CONSISTS OF JCL TO WHICH'
+         MNOTE *,'A START RDR COMMAND MAY BE ISSUED IN ORDER TO'
+         MNOTE *,'INITIALIZE THE AMDSADMP PROGRAM.'
+         MEND
+

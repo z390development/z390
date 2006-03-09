@@ -1,0 +1,78 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&LABEL    RESUME &TCB=(4),&RB=(5),&RETURN=Y
+.**********************************************************************
+.*        DECLARE LOCAL VARIABLES
+.**********************************************************************
+          LCLC    &OPERAND,&ERRFLG
+.**********************************************************************
+.*        VALIDITY CHECK PARAMETERS
+.**********************************************************************
+&ERRFLG   SETC    'OFF'
+&OPERAND  SETC    'TCB='
+.*
+          AIF (N'&TCB NE 1).ERROR
+.RET1     ANOP
+&OPERAND  SETC    'RB='
+.*
+          AIF (N'&RB NE 1).ERROR
+.*
+.RET2     ANOP
+&OPERAND  SETC  'RETURN='
+          AIF (('&RETURN' NE 'Y') AND ('&RETURN' NE 'N')).ERROR
+.*
+.**********************************************************************
+.*        GENERATE BAL CODE FOR TCB=
+.**********************************************************************
+          AIF  ('&ERRFLG' EQ 'ON').OUT
+&LABEL   DS   0H
+          AIF  ('&TCB' EQ '(4)').RET4
+          AIF  ('&TCB'(1,1) EQ '(').RET5
+.*        MUST BE  ADDRESS OF TCB
+         L     4,&TCB             LOAD TCB ADDRESS
+          AGO   .RET4
+.*        TCB ADDRESS IS IN A REGISTER NOT 4
+.RET5     ANOP
+         LR    4,&TCB(1)          LOAD TCB ADDRESS
+          AGO   .RET4
+.**********************************************************************
+.*        GENERATE BAL CODE FOR RB=
+.**********************************************************************
+.RET4    ANOP
+*                                 REGISTER 4 HAS TCB ADDRESS
+         AIF   ('&RB' EQ '(5)').RET7
+         AIF   ('&RB'(1,1) EQ '(').RET8
+.*      MUST BE  ADDRESS OF RB
+         L     5,&RB              LOAD RB ADDRESS
+         AGO    .RET7
+.*      RB ADDRESS IS IN A REGISTER NOT 5
+.RET8    ANOP
+         LR    5,&RB(1)           LOAD RB ADDRESS
+         AGO   .RET7
+.**********************************************************************
+.*       GENERATE BAL CODE  FOR RETURN=
+.**********************************************************************
+.RET7    ANOP
+*                                 REGISTER 5 HAS RB ADDRESS
+         AIF   ('&RETURN' EQ 'Y').RET10
+         SLR   14,14              INDICATE  NO RETURN
+         L     15,FLCCVT-FLC(0,0) GET CVT ADDRESS
+         L     15,CVTRSUME-CVT(0,15)    GET ADDRESS OF RESUME
+         BR    15                 GO TO ROUTINE
+.OUT     MEXIT
+.*       RETURN=Y
+.RET10   ANOP
+         L     15,FLCCVT-FLC(0,0) GET CVT ADDRESS
+         L     15,CVTRSUME-CVT(0,15)    GET ADDRESS OF RESUME
+         BALR  14,15              GO TO ROUTINE, INDICATE RETURN
+         MEXIT
+.**********************************************************************
+.*       ERROR PROCESSING
+.**********************************************************************
+.ERROR   ANOP
+&ERRFLG  SETC  'ON'
+         IHBERMAC  1014,&OPERAND
+         AIF   ('&OPERAND' EQ 'TCB=').RET1
+         AIF   ('&OPERAND' EQ 'RB=').RET2
+         MEND
+

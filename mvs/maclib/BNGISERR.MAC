@@ -1,0 +1,97 @@
+.* MVS 3.8J PUBLIC DOMAIN
+***********************************************************************
+*                                                                     *
+* MODULE NAME = BNGISERR                                              *
+*                                                                     *
+* DESCRIPTIVE NAME =  IMS DEMF SCREEN FORMAT MODULE FOR ERROR MESSAGE *
+*                     DISPLAY                                         *
+*                                                                     *
+*                                                                     *
+* STATUS = RELEASE 1, LEVEL 1                                         *
+*                                                                     *
+* FUNCTION = DEFINES THE FORMAT OF 'ERROR MSG' DISPLAY SCREEN USING   *
+*            BOTH MESSAGE INPUT DESCRIPTOR (MID) AND MESSAGE OUTPUT   *
+*            DESCRIPTOR (MOD) FOR IMS APPLICATION PROGRAM.            *
+*                                                                     *
+* NOTES = NONE                                                        *
+*                                                                     *
+*    DEPENDENCIES = NONE                                              *
+*                                                                     *
+*    RESTRICTIONS = NONE                                              *
+*                                                                     *
+*    REGISTER CONVENTIONS = NONE                                      *
+*                                                                     *
+*    PATCH LABEL = NONE                                               *
+*                                                                     *
+* MODULE TYPE = IMS SCREEN                                            *
+*                                                                     *
+*    PROCESSOR = ASSEMBLER H                                          *
+*                                                                     *
+*    MODULE SIZE =  480 DECIMAL BYTES (FOR 3277 MODEL 2)              *
+*                =  470 DECIMAL BYTES (FOR 3277 MODEL 1)              *
+*                                                                     *
+*    ATTRIBUTES = SERIALLY REUSABLE                                   *
+*                                                                     *
+* ENTRY POINT = BNGIER                                                *
+*                                                                     *
+*    PURPOSE = SEE FUNCTION                                           *
+*                                                                     *
+*    LINKAGE = MESSAGE INPUT DESCRIPTOR (MID) NAME  : BNGIIERR        *
+*              MESSAGE OUTPUT DESCRIPTOR (MOD) NAME : BNGIOERR        *
+*                                                                     *
+* EXIT-NORMAL = NONE                                                  *
+*                                                                     *
+* EXIT-ERROR  = NONE                                                  *
+*                                                                     *
+* EXTERNAL REFERENCE =  NONE                                          *
+*                                                                     *
+*    ROUTINES = NONE                                                  *
+*                                                                     *
+*    DATA AREAS = N/A                                                 *
+*                                                                     *
+*    CONTROL BLOCK = NONE                                             *
+*                                                                     *
+* TABLES = NONE                                                       *
+*                                                                     *
+* MACROS = PRINT, FMT, DIV, DPAGE, DFLD, DEV, FMTEND, MSG, SEG,       *
+*          MFLD, MSGEND                                               *
+*                                                                     *
+* CHANGE ACTIVITIES AS FOLLOWS:                                       *
+* CHANGE 01   11/15/77  PROLOGUE ADDED                                *
+*                                                                     *
+***********************************************************************
+         PRINT NOGEN
+BNGIER   FMT
+         DEV   TYPE=(3270,2),FEAT=(IGNORE)
+         DIV   TYPE=INOUT
+         DPAGE FILL=NONE,CURSOR=((1,7))
+FLD1     DFLD  POS=(1,2),LTH=4,ATTR=(MOD,NUM,PROT)
+FLD2     DFLD  POS=(1,7),LTH=29
+D2       DFLD  POS=(1,37),LTH=4,ATTR=(PROT,NUM)
+FLD3     DFLD  POS=(2,2),LTH=39,ATTR=(PROT,NUM)
+FLD4     DFLD  POS=(3,2),LTH=39,ATTR=(PROT,NUM)
+FLD5     DFLD  POS=(4,2),LTH=39,ATTR=(PROT,NUM)
+         DEV   TYPE=(3270,1),FEAT=(IGNORE)
+         DIV   TYPE=INOUT
+         DPAGE FILL=NONE,CURSOR=((1,7))
+FLD1     DFLD  POS=(1,2),LTH=4,ATTR=(MOD,NUM,PROT)
+FLD2     DFLD  POS=(1,7),LTH=29
+D2       DFLD  POS=(1,37),LTH=4,ATTR=(NUM,PROT)
+FLD3     DFLD  POS=(2,2),LTH=39,ATTR=(PROT,NUM)
+FLD4     DFLD  POS=(3,2),LTH=39,ATTR=(PROT,NUM)
+FLD5     DFLD  POS=(4,2),LTH=39,ATTR=(PROT,NUM)
+         FMTEND
+BNGIOERR MSG   TYPE=OUTPUT,OPT=1,NXT=BNGIIERR,SOR=(BNGIER,IGNORE)
+SEG1     SEG
+         MFLD  (FLD1,'DEMF')
+         MFLD  FLD3,LTH=39
+         MFLD  FLD4,LTH=39
+         MFLD  FLD5,LTH=39
+         MSGEND
+BNGIIERR MSG   TYPE=INPUT,OPT=1,SOR=BNGIER
+SEG1     SEG
+         MFLD  FLD1,LTH=5,FILL=C' '
+         MFLD  FLD2,LTH=29,FILL=C' '
+         MSGEND
+         END
+

@@ -1,0 +1,32 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    LINK  &EP=,&EPLOC=,&DE=,&PARAM=,&DCB=,&VL=,&ID=,&SF=I,        X
+               &MF=I,&ERRET=,&HIARCHY=
+         GBLB  &IHBSWA,&IHBSWB
+&IHBSWA  SETB  ('&VL' EQ '1')
+&IHBSWB  SETB  ('&SF' EQ '(E,(15))')
+         AIF   ('&MF' EQ 'L').E1
+         AIF   ('&SF' EQ 'L' AND '&MF&PARAM&ID&VL' NE 'I').E2
+         AIF   ('&NAME' EQ '' OR '&SF' EQ 'L').CONTA
+&NAME    DS    0H
+.CONTA   AIF   ('&PARAM' EQ '' AND '&MF(1)' NE 'E').CONTB
+         IHBOPLST  ,&PARAM,MF=&MF
+.CONTB   ANOP
+&NAME    IHBINNRB &EP,&EPLOC,&DE,&DCB,ERRET=&ERRET,SF=&SF
+         AIF   ('&SF' EQ 'L').END
+         SVC   6                   ISSUE LINK SVC
+         AIF   ('&ID' EQ '').END
+         DC    X'4700'             NOP INSTRUCTION WITH
+         DC    AL2(&ID)            ID IN LAST TWO BYTES
+         MEXIT
+.E1      IHBERMAC 84
+         MEXIT
+.E2      IHBERMAC 75
+.END     MEND
+**/
+*LINK:   MACRO
+*        KEYS(MF,EP,DE,DCB,ID,SF,PARAM,ERRET,VL);
+*        ANS('?'||MACLABEL||'LINKP '||MACLIST||MACKEYS||';');
+*%END;
+

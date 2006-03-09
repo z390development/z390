@@ -1,0 +1,504 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*% GOTO SPP002;                         /*BYPASS BAL EXPAN   @ZA45504*/
+         MACRO
+         IHASPP &DSECT=YES,&MDSECT=YES                       @G38ESMH
+.* /* START OF SPECIFICATIONS ****
+.*
+.*01  MODULE-NAME = IHASPP
+.*
+.*
+.*01  STATUS = VS2 RELEASE 3.8 LEVEL 0                       @G38ESMH
+.*
+.*01  DESCRIPTIVE-NAME = SETPRT PARAMETER LIST
+.*
+.*01  FUNCTION = USED TO DESCRIBE THE SETPRT PARAMETER LIST.
+.*
+.*01  MODULE-TYPE = MACRO
+.*
+.*02    MACRO-SIZE = NA FOR MAPPING MACRO
+.*
+.*02    PARAMETER-RECEIVED = NONE
+.*
+.*01  TABLES = NONE
+.*
+.*01  INNER-MACROS = NONE
+.*
+.*01  SYSTEM-MACROS = NONE
+.*
+.*01  CHANGE-ACTIVITY = SEE BELOW
+.*    VS2 REL 2
+.*       MACRO CREATED
+.*    VS2 REL 3.8
+.*       FEATURE FDM-1133                                    @G38ESMH
+.*       SYSOUT SERIALIZATION                                @ZA45504
+.*
+.*
+.**** END OF SPECIFICATIONS ***/
+*/*                                                                  */
+*/*THIS DSECT DESCRIBES THE FIELDS OF THE SETPRT (SVC 81)      Y02072*/
+*/*PARAMETER LIST.                                             Y02072*/
+*/*                                                                  */
+*/*DESCRIPTIVE LAYOUT                                                */
+*/*                                                                  */
+*/*  +0 (00) ___________________________________________________     */
+*/*          |    *       |  SPPDCBB                           |     */
+*/*  +4 (04) |____________|____________________________________|     */
+*/*          | SPPUCS                                          |     */
+*/*  +8 (08) |_________________________________________________|     */
+*/*          | SPPLDMOD   | SPPVERFY   | SPPFDUNF   | SPPFCB...|     */
+*/* +12 (0C) |____________|____________|____________|__________|     */
+*/*          | ...SPPFCB                            | SPPVERAL |     */
+*/* +16 (10) |______________________________________|__________|     */
+*/*          |  SPPFLAG1  |  SPPFLAG2  |  SPPCPYNR  | SPPSTCNR |     */
+*/* +20 (14) |____________|____________|____________|__________|     */
+*/*          |     SPPLEN      @G38ESMH|  SPPFRMNR  | SPPTRC   |     */
+*/* +24 (18) |_________________________|____________|__________|     */
+*/*          |                SPPMODPT                         |     */
+*/* +28 (1C) |_________________________________________________|     */
+*/*          |                SPPIMAGE                         |     */
+*/* +32 (20) |_________________________________________________|     */
+*/*          |                SPPXLAT1                         |     */
+*/* +36 (24) |_________________________________________________|     */
+*/*          |                SPPXLAT2                         |     */
+*/* +40 (28) |_________________________________________________|     */
+*/*          |                SPPXLAT3                         |     */
+*/* +44 (2C) |_________________________________________________|     */
+*/*          |                SPPXLAT4                         |     */
+*/*          |_________________________________________________|     */
+*/* +48 (30) |                SPPEMSGA                 @G38ESMH|     */
+*/*          |_________________________________________________|     */
+*/* +52 (34) |                SPPLIDCB                 @G38ESMH|     */
+*/*          |_________________________________________________|     */
+*/*                                                                  */
+*/*                                                                  */
+         EJECT                                                 @G38ESMH
+         GBLB  &IHA38E                 FEATURE FDM1133 VERSION @G38ESMH
+&IHA38E  SETB  1                       SET FLAG TO INDICATE    @G38ESMH
+.*                                     NEW VERSION OF IHASPP   @G38ESMH
+         AIF   ('&DSECT' EQ 'NO').SPPNODS  NO DSECT?           @Y40MSBB
+SPPARM   DSECT
+         AGO   .SPPDSCT                                        @Y40MSBB
+.SPPNODS ANOP                                                  @Y40MSBB
+SPPARM   DS    0F                                              @Y40MSBB
+.SPPDSCT ANOP                                                  @Y40MSBB
+SPPDCBA  DS    0A                       SAME AS SPPDCBB BELOW
+         DS    X                        FILLER
+SPPDCBB  DS    AL3                      ADDRESS OF USERS DCB
+SPPUCS   DS    CL4                      UCS IMAGE ID
+SPPLDMOD DS    X                        LOAD MODE
+SPPVERFY DS    X                        VERIFY UCS IMAGE
+SPPFDUNF DS    X                        OPTCD - FOLD OR UNFOLD
+SPPFBLK  EQU   X'80'                    BLOCK DATA CHECKS
+SPPFUBLK EQU   X'40'                    UNBLOCK DATA CHECKS
+SPPSCHED EQU   X'20'                    SCHEDULE FOR IMMED PRT @G38ESMH
+SPPNOSCD EQU   X'10'                    DO NOT SCHED IMMED PRT @G38ESMH
+SPPUNFLD EQU   X'08'                    UNFOLD OPTION ASKED
+SPPFOLD  EQU   X'04'                    FOLD OPTION ASKED
+SPPEXTL  EQU   X'01'                    EXTENDED SETPRINT LIST
+SPPFCB   DS    0CL4                     FCB IMAGE ID
+SPPFCBAD DS    0AL4                     FCB IMAGE ADDRESS
+         DS    AL1                      *
+SPPFCBB  DS    AL3                      *
+SPPVERAL DS    X                        VERIFY/ALIGN FCB
+SPPVERIF EQU   X'80'                    VERIFY IMAGE
+*
+SPPFLAG1 DS    X                        FIRST BYTE OF FLAGS    @Y40MSBB
+SPPBURST EQU   X'80'                    BURST OPTION ASKED     @Y40MSBB
+SPPREX   EQU   X'40'                    RETRANSMIT ASKED       @Y40MSBB
+SPPINIT  EQU   X'20'                    INIT REQUESTED         @Y40MSBB
+SPPNOMSG EQU   X'10'                    SUPPRESS MESSAGE PRINT @G38ESMH
+*
+SPPBFREQ EQU   X'08'                    BYPASS WTOR FOR FORMS OVERLAY
+SPPBTREQ EQU   X'04'                    BYPASS WTOR FOR BURST-THREAD
+*                                                              @Y40MSBB
+SPPBOMSG EQU   X'02'                    BYPASS WCGM OVF. MSG.  @G38ESMH
+SPPFORC  EQU   X'01'                    JES FORCE LOAD         @ZA35789
+SPPFLAG2 DS    X                        SECOND BYTE OF FLAGS   @Y40MSBB
+SPPMODI  EQU   X'80'                    COPY MOD               @Y40MSBB
+*                                       ADDRESS SUPPLIED       @Z40MSAP
+SPPXLT10 EQU   X'40'                    TRANSLATE TABLE 1      @Y40MSBB
+*                                       ADDRESS SUPPLIED       @Z40MSAP
+SPPXLT20 EQU   X'20'                    TRANSLATE TABLE 2      @Y40SMBB
+*                                       ADDRESS SUPPLIED       @Z40MSAP
+SPPXLT30 EQU   X'10'                    TRANSLATE TABLE 3      @Y40MSBB
+*                                       ADDRESS SUPPLIED       @Z40MSAP
+SPPXLT40 EQU   X'08'                    THANSLATE TABLE 4      @Y40MABB
+*                                       ADDRESS SUPPLIED       @Z40MSAP
+SPPADFCB EQU   X'04'                    FCB                    @Z40MSAP
+*                                       ADDRESS SUPPLIED       @Z40MSAP
+*                                                              @Y40MSBB
+SPPCPYNR DS    X                        NO OF COPIES           @Z40MSAP
+*                                       TO BE PRINTED          @Z40MSAP
+SPPSTCNR DS    X                        STARTING COPY NUMBER   @Y40MSBB
+SPPLEN   DS    XL2                      PARMLIST LENGTH        @G38ESMH
+SPPFRMNR DS    X                        NUMBER OF FORM OVERLAY @Z40MSAP
+*                                       FRAME FLASHED COPIES   @Z40MSAP
+SPPTRC   DS    X                        TABLE REF CHAR         @Y40MSBB
+*                                                              @Y40MSBB
+SPPMODPT DS    0A                       COPY MODIFY            @Y40MSBB
+SPPMDPTA DS    0A                       COPY MOD NAME OR ADDR  @Y40MSBB
+         DS    X                        FILLER                 @Y40MSBB
+SPPMDPTB DS    AL3                      COPY MODIFY ADDRESS    @Y40MSBB
+*                                                              @Y40MSBB
+SPPIMAGE DS    0A                       FORMS OVERLAY          @Y40MSBB
+SPPIMAGA DS    0A                       IMAGE NAME OR ADDRESS  @Y40MSBB
+         DS    X                        FILLER                 @Y40MSBB
+SPPIMAGB DS    AL3                      IMAGE ADDRESS          @Y40MSBB
+*                                                              @Y40MSBB
+SPPXLAT1 DS    0A                       TRANSLATE TABLE 1      @Y40MSBB
+SPPXLT1A DS    0A                       TRANS TABLE 1 NAME     @Y40MSBB
+         DS    X                        FILLER                 @Y40MSBB
+SPPXLT1B DS    AL3                      TRANS TABLE 1 ADDRESS  @Y40MSBB
+*                                                              @Y40MSBB
+SPPXLAT2 DS    0A                       TRANSLATE TABLE 2      @Y40MSBB
+SPPXLT2A DS    0A                       TRANS TABLE 2 NAME     @Y40MSBB
+         DS    X                        FILLER                 @Y40MSBB
+SPPXLT2B DS    AL3                      TRANS TABLE 2 ADDRESS  @Y40MSBB
+*                                                              @Y40MSBB
+SPPXLAT3 DS    0A                       TRANSLATE TABLE 3      @Y40MSBB
+SPPXLT3A DS    0A                       TRANS TABLE 3 NAME     @Y40MSBB
+         DS    X                        FILLER                 @Y40MSBB
+SPPXLT3B DS    AL3                      TRANS TABLE 3 ADDRESS  @Y40MSBB
+*                                                              @Y40MSBB
+SPPXLAT4 DS    0A                       TRANSLATE TABLE 4      @Y40MSBB
+SPPXLT4A DS    0A                       TRANS TABLE 4 NAME     @Y40MSBB
+         DS    X                        FILLER                 @Y40MSBB
+SPPXLT4B DS    AL3                      TRANS TABLE 4 ADDRESS  @Y40MSBB
+SPPEMSGA DS    A                        USER MESSAGE AREA PTR. @G38ESMH
+SPPLIDCB DS    A                        USER LIB DCB ADDRESS   @G38ESMH
+SPPEND   EQU   *                        END OF SETPRT PARMLIST @G38ESMH
+         AIF   ('&MDSECT' EQ 'NO').NOMSG  NO MSG DSECT ?       @G383SMH
+         EJECT                                                 @G38ESMH
+************************************************************** @G38ESMH
+*   MAP OF SETPRT MESSAGE COMMUNICATION AREA                 * @G38ESMH
+************************************************************** @G38ESMH
+         SPACE 1                                               @G38ESMH
+SPPMCOMA DSECT                                                 @G38ESMH
+SPPMCLEN DS    XL2                      LENGTH OF AREA         @G38ESMH
+SPPRSV02 DS    XL2                      RESERVED               @G38ESMH
+SPPRSV04 DS    XL2                      RESERVED               @G38ESMH
+SPPTXTL  DS    XL2                      LENGTH OF RETURN TEXT  @G38ESMH
+SPPRSV08 DS    XL2                      RESERVED               @G38ESMH
+SPPTXT   DS    C                        RETURNED TEXT          @G38ESMH
+.NOMSG   ANOP                                                  @G38ESMH
+         EJECT                                                 @G38ESMH
+***************************************************************@G38ESMH
+*                                                              @G38ESMH
+*        SET PRINT ERROR RETURN CODES. THESE CODES WILL BE     @G38ESMH
+*        PLACED IN THE PROPER LOCATION IN REGISTER 15, TO      @G38ESMH
+*        INDICATE THE ERROR CONDITION THAT HAS OCCURED.        @G38ESMH
+*                                                              @G38ESMH
+***************************************************************@G38ESMH
+*                                                              @G38ESMH
+SPPSUCCP EQU   X'00'                    SUCCESSFUL COMPLETION  @G38ESMH
+SPPIMNO  EQU   X'04'                    IMAGE NOT FOUND        @G38ESMH
+SPPBLDLP EQU   X'08'                    BLDL PERMANENT         @G38ESMH
+*                                       I/O ERROR              @G38ESMH
+SPPLOADP EQU   X'0C'                    LOAD PERMANENT         @G38ESMH
+*                                       I/O ERROR              @G38ESMH
+SPPREADP EQU   X'10'                    READ PERMANENT         @G38ESMH
+*                                       I/O ERROR              @G38ESMH
+SPPFCBV  EQU   X'14'                    WRONG FCB IMAGE        @G38ESMH
+SPPNOOP  EQU   X'18'                    NO OPERATION PERFORMED @G38ESMH
+SPPUCERR EQU   X'1C'                    NOP, PREVIOUS          @G38ESMH
+*                                       UNCORRECTIABLE ERROR   @G38ESMH
+SPPSPACE EQU   X'20'                    INSUFFICIENT SPACE     @G38ESMH
+SPPIMLIB EQU   X'24'                    IMAGE LIBRARY CAN      @G38ESMH
+*                                       NOT BE OPENED          @G38ESMH
+SPPFOVLF EQU   X'28'                    CAN NOT LOAD FORMS     @G38ESMH
+*                                       OVERLAY FRAME          @G38ESMH
+SPPCANCL EQU   X'2C'                    OPERATOR CANCELED      @G38ESMH
+SPPMCGM  EQU   X'30'                    TOO MANY CGMS          @G38ESMH
+*                                       REQUESTED              @G38ESMH
+SPPTRCIN EQU   X'34'                    COPY MOD TRC           @G38ESMH
+*                                       FIELD INVALID          @G38ESMH
+SPPEODSR EQU   X'38'                    ERROR WHILE            @G38ESMH
+*                                       ISSUING EODS           @G38ESMH
+SPPNOBR  EQU   X'3C'                    NO BURSTER/SHEET       @G38ESMH
+*                                       STACKERFEATURE         @G38ESMH
+*                                       INSTALLED              @G38ESMH
+SPPPIOER EQU   X'40'                    A PERMENT I/O ERROR    @G38ESMH
+*                                       HAS OCCURED            @G38ESMH
+SPPNOCGM EQU   X'44'                    CGM NOT SPECIFIED IN   @G38ESMH
+*                                       CHARACTER ARRANGEMENT  @G38ESMH
+*                                       TABLE TRAILER          @G38ESMH
+SPPLDATA EQU   X'48'                    LOST DATA DUE TO CANCEL@G38ESMH
+*                                       KEY OR SYSTEM RESTART  @G38ESMH
+SPPLDCHK EQU   X'4C'                    I/O ERROR LOAD CHECK   @G38ESMH
+SPPSPOOL EQU   X'50'                    ERROR ON SETPRT-SYSOUT @G38ESMH
+         EJECT                                                 @G38ESMH
+***********************************************************************
+*                                                                     *
+*        SET PRINT 3800 REASON CODES. THESE CODES WILL APPEAR IN      *
+*        REGISTER 0, WHEN AN ERROR CONDITION IS RETURNED.             *
+*                                                                     *
+***********************************************************************
+*                                                              @G38ESMH
+SPPTRTBL EQU   X'04'                    TRANSLATE TABLE        @G38ESMH
+SPPPJAM  EQU   X'04'                    PRINTER SYSTEM RESTART @G38ESMH
+SPPISTOR EQU   X'04'                    IN STORAGE ADDRESS     @G38ESMH
+*                                       SPECIFIED FOR SYSOUT   @G38ESMH
+SPPCPMOD EQU   X'08'                    COPY MODIFY RECORD     @G38ESMH
+SPPCNCLK EQU   X'08'                    CANCEL KEY             @G38ESMH
+SPPJFCB  EQU   X'08'                    ERROR REDING JFCB OR   @G38ESMH
+*                                       JFCBE FOR SYSOUT DATA  @G38ESMH
+SPPCPNR  EQU   X'0C'                    COPY NUMBER            @G38ESMH
+SPPCLOSE EQU   X'0C'                    CLOSE SSI ERROR        @G38ESMH
+SPPGCMR  EQU   X'10'                    GRAPHIC CHARACTER      @G38ESMH
+*                                       MODULE RECORD          @G38ESMH
+SPPOPEN  EQU   X'10'                    OPEN SSI ERROR         @G38ESMH
+SPPFOSEQ EQU   X'14'                    FORMS OVERLAY          @G38ESMH
+*                                       SEQUENCE CONTROL       @G38ESMH
+*                                       RECORD                 @G38ESMH
+SPPSFA   EQU   X'14'                    SPOOL FILE ALLOCATION  @G38ESMH
+*                                       ERROR FOR SYSOUT DATA  @G38ESMH
+SPPLCS   EQU   X'18'                    LIBRARY CHARACTER SET  @G38ESMH
+SPPENQ   EQU   X'18'                    SYSOUT TIOT ENQ ERROR  @ZA45504
+SPPCGMR  EQU   X'1C'                    CHARACTER GENERATION   @G38ESMH
+*                                       MODULE                 @G38ESMH
+SPPOPCT  EQU   X'1C'                    MULTIPLE SYSOUT DCBS   @ZA45504
+SPPFCBRC EQU   X'20'                    FORMS CONTROL BUFFER   @G38ESMH
+         AIF   ('&DSECT' EQ 'NO' OR '&MDSECT' EQ 'NO').SKIPD   @G38ESMH
+         SPACE 2                                               @G38ESMH
+SPPARM   DSECT                          RESUME PARMLIST DSECT  @G38ESMH
+.SKIPD   ANOP                                                  @G38ESMH
+         SPACE 1                                               @G38ESMH
+         MEND
+*%SPP002:;                              /*                     Y02072*/
+*/*                                                                  */
+*/*THIS STRUCTURE DESCRIBES THE FIELDS OF THE SETPRT (SVC 81)        */
+*/*PARAMETER LIST.                                                   */
+*/*                                                                  */
+*/*DESCRIPTIVE LAYOUT                                                */
+*/*                                                                  */
+*/*  +0 (00) ___________________________________________________     */
+*/*          |    *       |  SPPDCBB                           |     */
+*/*  +4 (04) |____________|____________________________________|     */
+*/*          | SPPUCS                                          |     */
+*/*  +8 (08) |_________________________________________________|     */
+*/*          | SPPLDMOD   | SPPVERFY   | SPPFDUNF   | SPPFCB...|     */
+*/* +12 (0C) |____________|____________|____________|__________|     */
+*/*          | ...SPPFCB                            | SPPVERAL |     */
+*/* +16 (10) |______________________________________|__________|     */
+*/*          |  SPPFLAG1  |  SPPFLAG2  |  SPPCPYNR  | SPPSTCNR |     */
+*/* +20 (14) |____________|____________|____________|__________|     */
+*/*          |       SPPLEN    @G38ESMH|  SPPFRMNR  | SPPTRC   |     */
+*/* +24 (18) |_________________________|____________|__________|     */
+*/*          |               SPPMODPT                          |     */
+*/* +28 (1C) |_________________________________________________|     */
+*/*          |               SPPIMAGE                          |     */
+*/* +32 (20) |_________________________________________________|     */
+*/*          |               SPPXLAT1                          |     */
+*/* +36 (24) |_________________________________________________|     */
+*/*          |               SPPXLAT2                          |     */
+*/* +40 (28) |_________________________________________________|     */
+*/*          |               SPPXLAT3                          |     */
+*/* +44 (2C) |_________________________________________________|     */
+*/*          |               SPPXLAT4                          |     */
+*/*          |_________________________________________________|     */
+*/* +48 (30) |               SPPEMSGA                  @G38ESMH|     */
+*/*          |_________________________________________________|     */
+*/* +52 (34) |               SPPLIDCB                  @G38ESMH|     */
+*/*          |_________________________________________________|     */
+*/*                                                                  */
+*DCL  1  SPPARM  BASED,                 /*                     Y02072*/
+*        2  SPPDCBA  PTR (31),          /*SAME AS SPPDCBB      Y02072*/
+*           3  *  CHAR(1),              /*NOT USED             Y02072*/
+*           3  SPPDCBB  PTR(24),        /*DCB ADDRESS          Y02072*/
+*        2  SPPUCS  CHAR(4),            /*UCS IMAGE ID         Y02072*/
+*        2  SPPLDMOD  CHAR(1),          /*LOAD MODE            Y02072*/
+*        2  SPPVERFY  CHAR(1),          /*VER UCS IMAGE        Y02072*/
+*        2  SPPFDUNF  BIT(8),           /*OPTCD-FOLD/UNFOLD    Y02072*/
+*           3  SPPFBLK  BIT(1),         /*BLOCK DATA CHK       Y02072*/
+*           3  SPPFUBLK  BIT(1),        /*UNBLOCK DATA CHK     Y02072*/
+*           3  SPPSCHED  BIT(1),        /*SCHED FOR IMMED PRT@G38ESMH*/
+*           3  SPPNOSCD  BIT(1),        /*DO NOT PRINT IMMED @G38ESMH*/
+*           3  SPPUNFLD  BIT(1),        /*UNFOLD OPT ADKED     Y02072*/
+*           3  SPPFOLD  BIT(1),         /*FOLD OPT ADKED       Y02072*/
+*           3  *  BIT(1),               /*NOT USED             Y02072*/
+*           3  SPPEXTL  BIT(1),         /*LONG LIST                  */
+*        2  SPPFCBAD  PTR(31)BDY(WORD,4),/*FCB IMAGE ADDRESS @Z40MSTT*/
+*           3  SPPFCB  CHAR(4)          /*FCB IMAGE ID               */
+*                      BDY(WORD,4),     /*                   @G38ESMH*/
+*              4  *  CHAR(1),           /*                           */
+*              4 SPPFCBB  PTR(24)BDY(WORD),/*                @Z40MSTT*/
+*        2  SPPVERAL  CHAR(1),          /*VER/ALIGN FCB        Y02072*/
+*           3 SPPVERIF BIT(1),          /*VERIFY IMAGE         Y02072*/
+*        2  SPPFLAG1  BIT(8),           /*FIRST BYTE OF FLAGS@Y40MSBB*/
+*           3  SPPBURST  BIT(1),        /*BURST OPTION ASKED @Y40MSBB*/
+*           3  SPPREX  BIT(1),          /*RETRANSMIT ASKED   @Y40MSBB*/
+*           3  SPPINIT  BIT(1),         /* INIT REQUESTED    @Z40MSAP*/
+*           3  SPPNOMSG BIT(1),         /*SUPPRESS MSG PRT.  @G38ESMH*/
+*           3  SPPBFREQ  BIT(1),        /*BYPASS FORMS OVERLAY WTOR  */
+*           3  SPPBTREQ  BIT(1),        /*BYPASS BURST-THREAD WTOR   */
+*           3  SPPBOMSG  BIT(1),        /*BYPASS WCGM OVF MSG@G38ESMH*/
+*           3  SPPFORC   BIT(1),        /*JES FORCE LOAD     @ZA35789*/
+*        2  SPPFLAG2  BIT(8),           /*SECOND BYTE FLAGS  @Y40MSBB*/
+*           3  SPPMODI BIT(1),          /*COPY MOD           @Z40MSAP*/
+*                                       /* ADDRESS SUPPLIED  @Z40MSAP*/
+*           3  SPPXLT10  BIT(1),        /* TRANSLATE TABLE 1 @Z40MSAP*/
+*                                       /* ADDRESS SUPPLIED  @Z40MSAP*/
+*           3  SPPXLT20  BIT(1),        /* TRANSLATE TABLE 2 @Z40MSAP*/
+*                                       /* ADDRESS SUPPLIED  @Z40MSAP*/
+*           3  SPPXLT30  BIT(1),        /* TRANSLATE TABLE 3 @Z40MSAP*/
+*                                       /* ADDRESS SUPPLIED  @Z40MSAP*/
+*           3  SPPXLT40  BIT(1),        /* TRANSLATE TABLE 4 @Z40MSAP*/
+*                                       /* ADDRESS SUPPLIED  @Z40MSAP*/
+*           3  SPPADFCB  BIT(1),        /* FCB IMAGE         @Z40MSAP*/
+*                                       /* ADDRESS SUPPLIED  @Z40MSAP*/
+*           3  *  BIT(2),               /*NOT USED           @Y40MSBB*/
+*        2  SPPCPYNR  PTR(8),           /* NUMBER OF COPIES  @Z40MSAP*/
+*                                       /* TO BE PRINTED     @Z40MSAP*/
+*        2  SPPSTCNR  PTR(8),           /*STARTING COPY NR   @Y40MSBB*/
+*        2  SPPLEN  FIXED(15),          /*LENGTH OF PARMLIST @G38ESMH*/
+*        2  SPPFRMNR  PTR(8),           /* NUMBER OF FORM    @Z40MSAP*/
+*                                       /* OVERLAY FRAME     @Z40MSAP*/
+*                                       /* FLASHED COPIES    @Z40MSAP*/
+*        2  SPPTRC  CHAR(1),            /*TABLE REF CHAR     @Y40MSBB*/
+*        2  SPPMODPT  PTR(31),          /*COPY MODIFY        @Y40MSBB*/
+*           3  SPPMDPTA  CHAR(4)        /*COPY MOD NAME      @Y40MSBB*/
+*                        BDY(WORD),     /*                   @G38ESMH*/
+*              4  *  CHAR(1),           /*NOT USED           @Y40MSBB*/
+*              4  SPPMDPTB  PTR(24),    /*COPY MOD ADDRESS   @Y40MSBB*/
+*        2  SPPIMAGE  CHAR(4),          /*FORMS OVERLAY      @Y40MSBB*/
+*                                       /*FRAME NAME         @Y40MSBB*/
+*        2 SPPXLAT1  PTR(31),           /*TRANSLATE TABLE 1  @Y40MSBB*/
+*           3  SPPXLT1A  CHAR(4)        /*TRANS TABLE 1 NAME @Y40MSBB*/
+*                        BDY(WORD),     /*                   @G38ESMH*/
+*              4  *  CHAR(1),           /*NOT USED           @Y40MSBB*/
+*              4  SPPXLT1B  PTR(24),    /*TRANS TABLE 1 ADDR @Y40MSBB*/
+*        2  SPPXLAT2  PTR(31),          /*TRANSLATE TABLE 2  @Y40MSBB*/
+*           3  SPPXLT2A  CHAR(4)        /*TRANS TABLE 2 NAME @Y40MSBB*/
+*                        BDY(WORD),     /*                   @G38ESMH*/
+*              4  *  CHAR(1),           /*NOT USED           @Y40MSBB*/
+*              4  SPPXLT2B  PTR(24),    /*TRANS TABLE 2 ADDR @Y40MSBB*/
+*        2  SPPXLAT3  PTR(31),          /*TRANSLATE TABLE 3  @Y40MSBB*/
+*           3  SPPXLT3A  CHAR(4)        /*TRANS TABLE 3 NAME @Y40MSBB*/
+*                        BDY(WORD),     /*                   @G38ESMH*/
+*              4  *  CHAR(1),           /*NOT USED           @Y40MSBB*/
+*              4  SPPXLT3B  PTR(24),    /*TRANS TABLE 3 ADDR @Y40MSBB*/
+*        2  SPPXLAT4  PTR(31),          /*TRANSLATE TABLE 4  @Y40MSBB*/
+*           3  SPPXLT4A  CHAR(4)        /*TRANS TABLE 4 NAME @Y40MSBB*/
+*                        BDY(WORD),     /*                   @G38ESMH*/
+*              4  *  CHAR(1),           /*NOT USED           @Y40MSBB*/
+*              4  SPPXLT4B  PTR(24),    /*TRANS TABLE 4 ADDR @Y40MSBB*/
+*        2  SPPEMSGA  PTR(31),          /*MSG. AREA POINTER  @G38ESMH*/
+*        2  SPPLIDCB  PTR(31);          /*LIB DCB POINTER    @G38ESMH*/
+*DCL  SPPXLAT(4)  PTR(31)  BASED(ADDR(SPPXLAT1));  /*ARRAY   @Y40MSBB*/
+*/*********************************************************************
+**                                                                   **
+**       THE FOLLOWING STRUCTURE MAPS THE ERROR MESSAGE AREA         **
+**                                                                   **
+**********************************************************************/
+*  DECLARE
+*  1 SPPMCOMA BASED(SPPEMSGA),         /* MESSAGE            @G38ESMH*/
+*                                      /* COMMUNICATION AREA @G38ESMH*/
+*    2 SPPMCLEN FIXED(15) BDY(BYTE),   /* TOTAL LENGTH OF    @G38ESMH*/
+*                                      /* AREA               @G38ESMH*/
+*    2 SPPRSV02 FIXED(15) BDY(BYTE),   /* RESERVED           @G38ESMH*/
+*    2 SPPRSV04 FIXED(15) BDY(BYTE),   /* RESERVED           @G38ESMH*/
+*    2 SPPTXTL  FIXED(15) BDY(BYTE),   /* LENGTH OF TEXT     @G38ESMH*/
+*    2 SPPRSV08 FIXED(15) BDY(BYTE),   /* RESERVED           @G38ESMH*/
+*    2 SPPTXT   CHAR(*);               /* FORMATTED TEXT     @G38ESMH*/
+*
+*/***********************************************************@G38ESMH**
+**                                                           @G38ESMH**
+**       SET PRINT ERROR RETURN CODES. THESE CODES WILL BE   @G38ESMH**
+**       PLACED IN THE PROPER LOCATION IN REGISTER 15, TO    @G38ESMH**
+**       INDICATE THE ERROR CONDITION THAT HAS OCCURED.      @G38ESMH**
+**                                                           @G38ESMH**
+*************************************************************@G38ESMH*/
+*                                       /*                   @G38ESMH*/
+*    DECLARE                            /*                   @G38ESMH*/
+*        SPPSUCCP BIT(8)                /* SUCCESSFUL        @G38ESMH*/
+*                 CONSTANT('00'X),      /* COMPLETION        @G38ESMH*/
+*        SPPIMNO  BIT(8)                /* IMAGE NOT FOUND   @G38ESMH*/
+*                 CONSTANT('04'X),      /*                   @G38ESMH*/
+*        SPPBLDLP BIT(8)                /* BLDL PERMANENT    @G38ESMH*/
+*                 CONSTANT('08'X),      /* I/O ERROR         @G38ESMH*/
+*        SPPLOADP BIT(8)                /* LOAD PERMANENT    @G38ESMH*/
+*                 CONSTANT('0C'X),      /* I/O ERROR         @G38ESMH*/
+*        SPPREADP BIT(8)                /* READ PERMANENT    @G38ESMH*/
+*                 CONSTANT('10'X),      /* I/O ERROR         @G38ESMH*/
+*        SPPFCBV  BIT(8)                /* WRONG FCB IMAGE   @G38ESMH*/
+*                 CONSTANT('14'X),      /*                   @G38ESMH*/
+*        SPPNOOP  BIT(8)                /* NO OPERATION      @G38ESMH*/
+*                 CONSTANT('18'X),      /* PERFORMED         @G38ESMH*/
+*        SPPUCERR BIT(8)                /* NOP, PREVIOUS     @G38ESMH*/
+*                 CONSTANT('1C'X),      /* UNCORRECTIABLE    @G38ESMH*/
+*                                       /* ERROR             @G38ESMH*/
+*        SPPSPACE BIT(8)                /* INSUFFICIENT      @G38ESMH*/
+*                 CONSTANT('20'X),      /* SPACE             @G38ESMH*/
+*        SPPIMLIB BIT(8)                /* IMAGE LIBRARY CAN @G38ESMH*/
+*                 CONSTANT('24'X),      /* NOT BE OPENED     @G38ESMH*/
+*        SPPFOVLF BIT(8)                /* CAN NOT LOAD      @G38ESMH*/
+*                 CONSTANT('28'X),      /* FORMS OVERLAY     @G38ESMH*/
+*                                       /* FRAME             @G38ESMH*/
+*        SPPCANCL BIT(8)                /* OPERATOR          @G38ESMH*/
+*                 CONSTANT('2C'X),      /* CANCELED          @G38ESMH*/
+*        SPPMCGM  BIT(8)                /* TOO MANY CGMS     @G38ESMH*/
+*                 CONSTANT('30'X),      /* REQUESTED         @G38ESMH*/
+*        SPPTRCIN BIT(8)                /* COPY MOD TRC      @G38ESMH*/
+*                 CONSTANT('34'X),      /* FIELD INVALID     @G38ESMH*/
+*        SPPEODSR BIT(8)                /* ERROR WHILE       @G38ESMH*/
+*                 CONSTANT('38'X),      /* ISSUING INIT. PRT @G38ESMH*/
+*        SPPNOBR  BIT(8)                /* NO BURSTER TRIMMER@G38ESMH*/
+*                 CONSTANT('3C'X),      /* STACKER FEATURE   @G38ESMH*/
+*                                       /* INSTALLED         @G38ESMH*/
+*        SPPPIOER BIT(8)                /* A PERMANENT I/O   @G38ESMH*/
+*                 CONSTANT('40'X),      /* ERROR HAS OCCURED @G38ESMH*/
+*        SPPNOCGM BIT(8)                /* CGM NOT SPECIFIED @G38ESMH*/
+*                 CONSTANT('44'X),      /* IN CHARACTER      @G38ESMH*/
+*                                       /* ARRANGEMENT TABLE @G38ESMH*/
+*        SPPLDATA BIT(8)                /* LOST DATA DUE TO  @G38ESMH*/
+*                 CONSTANT('48'X),      /* SYSTEM RESTART OR @G38ESMH*/
+*                                       /* CANCEL KEY        @G38ESMH*/
+*        SPPLDCHK BIT(8)                /* I/O ERROR         @G38ESMH*/
+*                 CONSTANT('4C'X),      /* LOAD CHECK        @G38ESMH*/
+*        SPPSPOOL BIT(8)                /* ERROR ON SETPRT   @G38ESMH*/
+*                 CONSTANT('50'X);      /* TO SYSOUT DATASET @G38ESMH*/
+*/***********************************************************@G38ESMH**
+**                                                           @G38ESMH**
+**       SET PRINT 3800 REASON CODES. THESE CODES WILL APPEAR@G38ESMH**
+**       IN REGISTER 0, WHEN AN ERROR CONDITION IS RETURNED. @G38ESMH**
+**                                                           @G38ESMH**
+*************************************************************@G38ESMH*/
+*                                       /*                   @G38ESMH*/
+*    DECLARE                            /*                   @G38ESMH*/
+*        SPPTRTBL BIT(8)                /* TRANSLATE TABLE   @G38ESMH*/
+*                 CONSTANT('04'X),      /*                   @G38ESMH*/
+*        SPPPJAM  BIT(8)                /* SYSTEM RESTART    @G38ESMH*/
+*                 CONSTANT('04'X),      /* PAPER JAM         @G38ESMH*/
+*        SPPCLOSE BIT(8)                /* SETPRT TO SYSOUT  @G38ESMH*/
+*                 CONSTANT('04'X),      /* CLOSE SSI ERROR   @G38ESMH*/
+*        SPPCPMOD BIT(8)                /* COPY MODIFY       @G38ESMH*/
+*                 CONSTANT('08'X),      /* RECORD            @G38ESMH*/
+*        SPPCNCLK BIT(8)                /* CANCEL KEY        @G38ESMH*/
+*                 CONSTANT('08'X),      /*                   @G38ESMH*/
+*        SPPUNAL  BIT(8)                /* SETPRT TO SYSOUT  @G38ESMH*/
+*                 CONSTANT('08'X),      /* UNALLOCATE SSI ERR@G38ESMH*/
+*        SPPCPNR  BIT(8)                /* COPY NUMBER       @G38ESMH*/
+*                 CONSTANT('0C'X),      /*                   @G38ESMH*/
+*        SPPALLOC BIT(8)                /* SETPRT TO SYSOUT  @G38ESMH*/
+*                 CONSTANT('0C'X),      /* ALLOCATE SSI ERROR@G38ESMH*/
+*        SPPGCMR  BIT(8)                /* GRAPHIC CHARACTER @G38ESMH*/
+*                 CONSTANT('10'X),      /* MODULE RECORD     @G38ESMH*/
+*        SPPOPEN  BIT(8)                /* SETPRT TO SYSOUT  @G38ESMH*/
+*                 CONSTANT('10'X),      /* OPEN SSI ERROR    @G38ESMH*/
+*        SPPFOSEQ BIT(8)                /* FORMS OVERLAY     @G38ESMH*/
+*                 CONSTANT('14'X),      /* SEQUENCE CONTROL  @G38ESMH*/
+*                                       /* RECORD            @G38ESMH*/
+*        SPPSFA   BIT(8)                /* SPOOL FILE        @ZA45504*/
+*                 CONSTANT('14'X),      /* ALLOCATION ERROR  @ZA45504*/
+*                                       /* FOR SYSOUT DATA   @ZA45504*/
+*        SPPLCS   BIT(8)                /* LIBRARY CHARACTER @G38ESMH*/
+*                 CONSTANT('18'X),      /* SET               @G38ESMH*/
+*        SPPENQ   BIT(8)                /* SYSOUT TIOT ENQ   @ZA45504*/
+*                 CONSTANT('18'X),      /* FAILED            @ZA45504*/
+*        SPPCGMR  BIT(8)                /* CHARACTER         @G38ESMH*/
+*                 CONSTANT('1C'X),      /* GENERATION MODULE @G38ESMH*/
+*        SPPOPCT  BIT(8)                /* MULTIPLE DCBS     @ZA45504*/
+*                 CONSTANT('1C'X),      /* OPEN FOR SYSOUT   @ZA45504*/
+*        SPPFCBRC BIT(8)                /* FORMS CONTROL     @G38ESMH*/
+*                 CONSTANT('20'X);      /* BUFFER            @G38ESMH*/
+

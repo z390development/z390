@@ -1,0 +1,122 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO  PLSQVOD1;                /*
+         MACRO
+         IHAQVOD
+**/
+*%PLSQVOD1:;
+*/*********QUEUE VERIFICATION OUTPUT DATA AREA***********************/
+*/*                                                                 */
+*/*  OS/VS2 RELEASE 2    5/15/73   LEVEL=1                          */
+*/*     BAL- DSECT  ALWAYS PRODUCED, PERFORM USING ON QVOD          */
+*/*                                                                 */
+*/*     PL/S  - QVOD WILL BE BASED(QVPLODA) .                       */
+*/*                                                                 */
+*/*******************************************************************/
+*        %GOTO PLSQVOD2;              /*
+QVOD     DSECT
+***********************************************************************
+*                                                                     *
+*                             HEADER                                  *
+*                                                                     *
+***********************************************************************
+QVODHDR  DS    0F                 HEADER TO DATA AREA
+QVODRES1 DS    CL1                RESERVED BYTE 1
+QVODSIZE DS    CL1                TOTAL AVAILABLE SIZE IN BYTES
+QVODRES2 DS    CL1                RESERVED BYTE 2
+QVODUSED DS    CL1                NUMBER OF BYTES USED
+***********************************************************************
+*                                                                     *
+*                         COMMON SECTION                              *
+*                                                                     *
+***********************************************************************
+QVODCMMN DSECT                    COMMON PORTION OF DATA AREA
+QVODR15  DS    0F                 SAME CONTENTS AS REG 15 ON RETURN
+QVODFLGS DS    CL1                FLAG BYTE
+QVODOVFL EQU   X'80'              IF TOP BIT ON, AN OVERFLOW OF
+*                                 RECORDING INFORMATION HAS OCCURRED
+QVODRES3 EQU   X'7F'              RESERVED BITS
+QVODNREC DS    CL1                NUMBER OF ERRORS RECORDED
+QVODNDET DS    CL1                NUMBER OF ERRORS DETECTED
+QVODRCOD DS    CL1                RETURN CODE
+QVODFENT DS    0CL16              FIRST ERROR ENTRY
+***********************************************************************
+*                                                                     *
+*                          ERROR ENTRY                                *
+*                                                                     *
+***********************************************************************
+QVODENT  DSECT                    ERROR ENTRY FORMAT
+QVODCDAT DS    0F                 CONSTANT DATA
+QVODERRC DS    CL1                ERROR CODE
+QVODERRX DS    CL1                EXTENDED ERROR CODE
+QVODRES4 DS    H                  RESERVED
+QVODVDAT DS    0CL12              VARIABLE DATA
+QVODVW1  DS    F                  VARIABLE DATA WORD 1
+QVODVW2  DS    F                  VARIABLE DATA WORD 2
+QVODVW3  DS    F                  VARIABLE DATA WORD 3
+QVODEND  EQU   *                   END OF QVOD
+QVODENSZ EQU   QVODEND-QVODENT     SIZE OF QVOD
+         MEND
+* */
+*%PLSQVOD2:;
+*
+*/*******************************************************************/
+*/*                                                                 */
+*/*                           HEADER                                */
+*/*                                                                 */
+*/*******************************************************************/
+*   DECLARE 1 QVODHDR  BASED(QVPLODA) BDY(WORD),
+*                                      /*HEADER TO DATA AREA        */
+*
+*          5 QVODRES1 PTR(8),          /*RESERVED BYTE 1            */
+*
+*          5 QVODSIZE PTR(8),          /*TOTAL AVAILABLE SIZE,      */
+*                                      /*            IN BYTES       */
+*          5 QVODRES2 PTR(8),          /*RESERVED BYTE 2            */
+*
+*          5 QVODUSED PTR(8);          /*NUMBER OF BYTES USED       */
+*
+*/*******************************************************************/
+*/*                                                                 */
+*/*                       COMMON SECTION                            */
+*/*                                                                 */
+*/*******************************************************************/
+*   DECLARE 1 QVODVRA BASED BDY(WORD),
+*
+*        4 QVODCMMN,                   /*COMMON PORTION OF DATA AREA*/
+*
+*          5 QVODR15,                  /*SAME CONTENTS AS REG 15 ON */
+*                                      /*RETURN                     */
+*            6 QVODFLGS BIT(8),        /*FLAG BYTE                  */
+*
+*              7 QVODOVFL BIT(1),      /*IF ON, OVERFLOW OF RECORDING*/
+*                                      /*INFORMATION HAS OCURRED    */
+*              7 QVODRES3 BIT(7),      /*REMAINDER OF BYTE RESERVED */
+*
+*            6 QVODNREC PTR(8),        /*NUMBER OF ERRORS RECORDED  */
+*
+*            6 QVODNDET PTR(8),        /*NUMBER OF ERRORS RECORDED  */
+*
+*            6 QVODRCOD PTR(8),        /*RETURN CODE                */
+*
+*/*******************************************************************/
+*/*                                                                 */
+*/*                        ERROR ENTRY                              */
+*/*                                                                 */
+*/*******************************************************************/
+*         4 QVODENT (15) CHAR(16) BDY(WORD),
+*                                      /*ERROR ENTRY                */
+*            5 QVODCDAT,               /*CONSTANT DATA              */
+*
+*              6 QVODERRC PTR(8),      /*ERROR CODE                 */
+*
+*              6 QVODERRX PTR(8),      /*EXTENDED ERROR CODE        */
+*
+*              6 QVODRES4 PTR(15),     /*RESERVED HALF WORD         */
+*
+*            5 QVODVDAT,               /*VARIABLE DATA              */
+*
+*              6 QVODVW1 PTR(31),      /*VARIABLE DATA WORD 1       */
+*
+*              6 QVODVW2 PTR(31),      /*VARIABLE DATA WORD 2       */
+*
+*              6 QVODVW3 PTR(31);      /*VARIABLE DATA WORD 3       */

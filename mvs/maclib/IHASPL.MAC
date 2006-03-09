@@ -1,0 +1,112 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO SPL0;               /*
+         MACRO
+         IHASPL
+**/
+*%SPL0:;
+*/*
+**********************************************************************
+*                                                                    *
+*        SERVICE  PRIORITY LIST  (SPL)                               *
+*                                                                    *
+**********************************************************************
+**/
+* %GOTO  SPL1;
+*/*
+**********************************************************************
+*                                                                    *
+*                      ENTRY IN  SPL                                 *
+*                                                                    *
+**********************************************************************
+SPLENTRY DSECT
+SPLFSRB  DS    A                   ADDRESS OF FIRST SRB
+SPLLSRB  DS    A                   ADDRESS OF LAST SRB
+**********************************************************************
+*                                                                    *
+*                       GLOBAL SPL                                   *
+*                                                                    *
+**********************************************************************
+GSPL     DSECT
+GSPLNQ   DS    0CL8                NON-QUIESCABLE  LEVEL
+GSPLNQF  DS    A                   FIRST NONQ SRB
+GSPLNQL  DS    A                   LAST NONQ SRB
+GSPLSYS  DS    0CL8                SYSTEM PRIORITY LEVEL
+GSPLSYSF DS    A                   FIRST SYSTEM SRB
+GSPLSYSL DS    A                   LAST SYSTEM SRB
+GSPLEND  DS    0A                  END OF GSPL
+GSPLSIZE EQU   GSPLEND-GSPL        SIZE OF GSPL
+***********************************************************************
+*                                                                     *
+*                      LOCAL SPL                                      *
+*                                                                     *
+***********************************************************************
+LSPL     DSECT
+LSPLNQ   DS    0CL8                NON-QUIESCEABLE LEVEL
+LSPLNQF  DS    A                   FIRST NONQ SRB
+LSPLNQL  DS    A                   LAST NONQ SRB
+LSPLSYS  DS    0CL8                SYSTEM PRIORITY LEVEL
+LSPLSYSF DS    A                   FIRST SYSTEM SRB
+LSPLSYSL DS    A                   LAST SYSTEM SRB
+LSPLEND  DS    0A                  END OF LSPL
+LSPLSIZE EQU   LSPLEND-LSPL        LSPL SIZE
+         MEND
+**/
+*%SPL1:;
+*/*******************************************************************/
+*/*                                                                 */
+*/*                       ENTRY IN SPL                              */
+*/*                                                                 */
+*/*******************************************************************/
+* DECLARE
+*
+*   1 SPLENTRY BDY(WORD)   BASED,  /* ENTRY IN THE SPL           */
+*
+*        2 SPLFSRB PTR(31),        /*POINTER TO FIRST SRB ON Q   */
+*
+*        2 SPLLSRB PTR(31);        /*POINTER TO LAST SRB         */
+*/*******************************************************************/
+*/*                                                                 */
+*/*                     GLOBAL  SPL                                 */
+*/*                                                                 */
+*/*******************************************************************/
+* DECLARE
+*   1 GSPL   BDY(WORD) BASED(GSPLPTR), /* GLOBAL SPL             */
+*
+*        2 GSPLNQ         ,        /*NON-QUIESCEABLE PRIORITY    */
+*
+*              3 GSPLNQF PTR(31),  /*FIRST NONQ SRB              */
+*
+*              3 GSPLNQL PTR(31),  /*LAST NONQ SRB               */
+*
+*        2 GSPLSYS        ,        /*SYSTEM PRIORITY LEVEL       */
+*
+*              3 GSPLSYSF PTR(31), /* FIRST SYSTEM SRB           */
+*
+*              3 GSPLSYSL PTR(31), /* LAST  SYSTEM SRB           */
+*
+*        2 GSPLEND CHAR(0);        /* END OF GSPL                */
+*/*******************************************************************/
+*/*                                                                 */
+*/*                   LOCAL SPL                                     */
+*/*                                                                 */
+*/*******************************************************************/
+*
+* DECLARE
+*
+*   1 LSPL BDY(WORD)  BASED(LSPLPTR), /*LOCAL SPL                */
+*
+*        2 LSPLNQ        ,         /* NON-QUIESCEABLE PRIORITY   */
+*
+*              3 LSPLNQF  PTR(31), /* FIRST NONQ SRB             */
+*
+*              3 LSPLNQL  PTR(31), /* LAST  NONQ SRB             */
+*
+*
+*
+*        2 LSPLSYS        ,        /* SYSTEM PRIORITY LEVEL      */
+*
+*              3 LSPLSYSF  PTR(31), /*  FIRST SYSTEM SRB         */
+*
+*              3 LSPLSYSL  PTR(31), /*  LAST  SYSTEM SRB         */
+*
+*        2 LSPLEND CHAR(0);        /* END OF  LSPL               */

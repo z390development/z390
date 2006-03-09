@@ -1,0 +1,359 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    RESETPOL &DECB,&TYPE,&SPEC
+         LCLC  &X
+&X       SETC  '&SYSNDX'
+.*
+.* CHANGE ACTIVITY
+.*            APARS                    PTMS
+.*        YA03232  (12/20/73)      YM4072  (10/19/73)
+.*        YA03226  (2/1/74)        YM5667  (12/14/73)
+.*        YA03242  (2/1/74)        YM5699  (2/13/74)
+.*        YA03253  (2/1/74)        YM7709  (4/2 74)
+.*        YA03236
+.*        ZA00503   05/03/74
+.*        ZA00537   11/15/74
+.*        ZA00548  (11/15/74)
+.*        ZA00549   11/15/74
+.*        AZ04199   09/22/75
+.*        AZ04659   09/22/75
+.*        AZ05393   09/22/75
+.*        AZ08050   01/29/76       AZ08056   01/29/76
+.*        AZ13193   09/10/76       AZ14028   09/13/76
+.*        AZ15411   11/12/76       AZ15413   11/12/76
+.*        AZ17733   05/26/77       AZ25182   09/26/77
+.*        AZ31061   03/16/78       AZ31078   03/16/78
+.*        AZ37047   12/06/78       AZ45123   02/21/80
+.*        AZ59479   02/05/82
+.*        AZ61484   04/15/82
+.*
+&NAME    DS    0H
+         AIF   ('&DECB'(1,1) EQ '(').REG
+         LA    1,&DECB
+         AGO   .CON
+.REG     AIF   ('&DECB(1)' EQ '1').CON
+         AIF   (T'&DECB EQ 'U').UREG
+         AIF   ('&DECB(1)' GT '12').ER
+.UREG    LR    1,&DECB(1)
+.CON     SR    0,0
+         SR    15,15
+         IC    0,25(1)        GET RELATIVE LINE NUMBER FROM DECB.
+         L     14,8(1)        GET DCB ADDRESS FROM DECB.
+         TM    48(14),X'10'            HAS DCB BEEN OPENED?
+         BO    IECA&X              IF SO, CONTINUE.
+IECJ&X   LA    15,12                   IF NOT, SET RETURN CODE   A28622
+         B     IECB&X              AND EXIT.
+IECA&X   EQU   *
+         AIF   ('&TYPE' EQ 'ATTENT' OR '&TYPE' EQ '').ANR
+.NOTANR  MVC   IECK&X.(1),26(1)    MOVE RESPN TO SAVE
+         MVC   IECK&X+1(1),5(1)  MOVE OPERATION TYPE               000H
+         NI    IECK&X+1,X'7F' HIGH ORDER BIT OFF                   000H
+         SR    1,1                                                 000G
+         IC    1,36(14)       GET IOB SIZE FROM DCB.
+         MR    0,0            MULTIPLY IOB SIZE TIMES RELATIVE LINE NO.
+         A     1,28(14)       ADD IOB ADDRESS MINUS SIZE TO RESULT.
+         OI    1(1),X'01'     SET POLLING RESET BIT IN IOB.        000A
+         L     15,44(14)      GET ADDR FROM DEB                @ZA31061
+         LA    15,0(15)       CLEAR HI-ORDER BYTE              @ZA31061
+         IC    0,32(1)        GET UCB-INDEX FROM IOB           @ZA31061
+         SLA   0,2            MULTIPLY RLN BY 4                @ZA31061
+         AR    15,0           USE RLN*R AS INDEX               @ZA31061
+         L     15,32(15)      TO DEBUCBAD AND GET UCB ADDR     @ZA31061
+         CLI   19(15),X'82'  IS THIS A 2260                    @ZA15413
+         BE    IECE&X         YES, GIVE ZERO RC                @ZA25182
+.*            ONE LINE DELETED FOR THE FOLLOWING APAR           YA03236
+.*
+         AIF   ('&TYPE' EQ 'POLLING' OR '&TYPE' EQ '').POLL        000D
+         AIF   ('&TYPE' EQ 'ANSRING').ANSR
+         MNOTE 12,'***  IHB002  INVALID TYPE OPERAND SPECIFIED-&TYPE'
+         MEXIT
+.*
+.*
+.POLL    ANOP                                                      000A
+.*
+         L     15,16(1)       LOAD ADDRESS OF FIRST CCW.
+         CLI   0(15),X'06' IS THE CCW A PREPARE COMMAND            000G
+         BE    IECR&X  IF SO BRANCH                                000H
+         CLI   IECK&X+1,X'0E'  IS THIS WRITE TCO                   000H
+         BE    IECV&X  YES, CHECK FOR PREPARE                      000H
+         CLI   IECK&X+1,X'1E'      READ CONNECT WITH TONE      @ZA13193
+         BE    IECF&X              YES, HANDLE              CC @ZA37047
+         CLI   8(15),X'06'  IS NEXT CCW A PREPARE                  000H
+         BNE   IECC&X   BRANCH IF NOT                              000H
+         CLI   16(15),X'04'  IS THE CCW A SENSE                    000H
+         BNE   IECC&X         BRANCH IF NOT                        000H
+         B     IECS&X     BRANCH TO CHECK RESPONSE                 000H
+IECV&X   LA    15,40(15)  POINT TO SIXTH CCW                       000H
+         CLI   0(15),X'06'  IS THIS CCW A PREPARE                  000H
+         BE    IECR&X  CHECK FOR SENSE COMMAND NEXT                000H
+         B     IECE&X                                              000H
+IECR&X   CLI   8(15),X'04'  IS THE CCW A SENSE                     000H
+         BNE   IECC&X   BRANCH IF NOT                              000G
+IECS&X   CLI   IECK&X,X'FF'  IS RESPN X'FF'                        000H
+         BE    IECP&X   BRANCH IF YES                              000G
+         B     IECE&X                                              000G
+IECC&X   LA    15,72(1)           POLL ALWAYS AT IOBCPA+8       YA01244
+         CLI   0(15),X'09'        IS IT THERE?                  YA01244
+         BE    IECD&X             YES, CHECK FOR WRAPLIST       YA01244
+         AIF   ('&TYPE' EQ 'POLLING').POLL01                    YA01244
+         B     IECF&X             CHECK ENABLE,PREPARE          YA01244
+         AGO   .POLL02                                          YA01244
+.POLL01  B     IECE&X             QUIT                          YA01244
+.POLL02  ANOP                                                   YA01244
+IECD&X   CLI   8(15),X'08'    IS THE CCW FOLLOWING THE POLL        000A
+         BNE   IECQ&X    COMMAND A TIC COMMAND?  IF NOT, EXIT. @ZA15411
+         L     15,8(15)       LOAD ADDRESS OF SECOND POLL COMMAND. 000A
+         MVI   8(15),X'03'    SET COMMAND CODE IN CCW FOLLOWING    000A
+*                        SECOND POLL COMMAND TO AN I/O NO-OP.      000A
+         LA    1,0(1)         CLEAR HI-ORDER BYTE OF IOB ADDR    YM4072
+         LA    0,8(15)        ADDR OF ALTERED VIRTUAL CCW        YM4072
+         SR    0,1            OFFSET OF THIS CCW FROM IOB        YM4072
+         SR    15,15          CLEAR WORK REG                     YM4072
+***      PREPARE FOR REISSUE OF IOHALT IF RC=4 AND IOBBUSY     @ZA59479
+         ST    15,IEC2&X+12   INIT *COUNTER TO ZEROES          @ZA59479
+         ST    15,IEC2&X+16   INIT *COUNTER TO ZEROES
+         ST    1,IEC2&X+8     SAVE *IOBADDR                    @ZA59479
+***      *COUNTER AND *IOBADDR ARE INITIALIZED                 @ZA59479
+         IC    15,32(1)       NUMBER OF EXTENTS FROM IOB         YM4072
+         SLL   15,2           MULT EXTENTS BY 4                  YM4072
+         L     14,44(14)      GET DEB ADDR FROM DCB              YM4072
+         L     1,32(14,15)    GET UCB ADDR IN PARAMETER REG      YM4072
+***      THIS STATEMENT DELETED BY APAR OZ45123                @ZA45123
+         LA    1,0(1)         CLEAR HI_ORDER BYTE              @ZA45123
+         STM   0,1,IEC2&X     SAVE R0 AND R1                   @ZA59479
+***      THIS STATEMENT DELETED BY APAR OZ45123                @ZA45123
+IECM&X   IOHALT (1),(0)       TERMINATE POLLING (CCW MODIFY)   @ZA59479
+         LA    14,4           LOAD X'04' FOR COMPARE             YM4072
+         CLR   15,14          RETURN CODE = X'04' ? IF NO,       YM4072
+         BNE   IEC3&X         TEST IOHALT RC=X'10'             @ZA59479
+         L     14,IEC2&X+8    ELSE, GET *IOBADDR               @ZA59479
+         TM    28(14),X'40'   IS IOBBUSY ON?                   @ZA59479
+         BNO   IECE&X         IOHALT DONE; EXIT WITH RC=0      @ZA59479
+***      IF IOHALT RC=04 AND THE IOB IS BUSY, RESETPL TRIES    @ZA59479
+***      TO AVOID PASSING A RESETPL RETURN CODE OF X'00'.      @ZA59479
+***      IT WILL REISSUE IOHALT AND TEST FOR IOBBUSY FOR       @ZA59479
+***      A MAXIMUM OF 7 TIMES BEFORE PASSING RC OF X'0C'.      @ZA59479
+         IC    15,IEC2&X+12  GET RETRY COUNT FOR TEST          @ZA59479
+         LA    14,6          GET RELATIVE MAX RETRY COUNT      @ZA59479
+         CLR   15,14         IS RETRY AT MAX COUNT? IF NO,     @ZA59479
+         BNH   IEC4&X        INCREMENT COUNTER AND RE-IOHALT   @ZA59479
+IEC5&X   LA    15,12         ELSE GIVE UP, SET RC TO X'0C'     @ZA59479
+         B     IECB&X        AND EXIT.                         @ZA59479
+IEC3&X   LA    14,16          LOAD X'10' INTO REG FOR COMPARES @ZA59479
+         CLR   15,14          RETURN CODE = X'10'                YM4072
+         BL    IECB&X         EXIT WITH IOHALT RETURN CODE       YM4072
+         BE    IECE&X         EXIT WITH 0 RETURN CODE            YM4072
+         LA    14,24          LOAD X'18' FOR COMPARE          LD YM7709
+         CLR   15,14          IS RETURN CODE X'18'            LD YM7709
+         BE    IECE&X         YES, EXIT WITH 0 RTN CODE       LD YM7709
+         LA    14,20          LOAD X'14' INTO REG FOR COMPARES   YM4072
+         CLR   15,14          RETURN CODE = X'14'                YM4072
+         LM    0,1,IEC2&X     RESTORE R0 AND R1                @ZA31061
+         BNE   IEC5&X         IF NOT X'14' SET RC=X'0C'          YM4072
+**  IF THE RETURN CODE = X'14', REISSUE SVC 33 FOR MAXIMUM OF    YM4072
+**  255 TIMES.
+         IC    15,IEC2&X+16  GET RETRY COUNT FOR TEST          @ZA59479
+         LA    14,6          GET RELATIVE MAX RETRY COUNT      @ZA59479
+         CLR   15,14         IS RETRY AT MAX COUNT? IF NO,     @ZA59479
+         BE    IEC5&X        SET RC=X'0C'
+         LA    15,1(15)      ELSE ADD ONE TO RETRY COUNT
+         ST    15,IEC2&X+16  SAVE UPDATED COUNT                @ZA59479
+         B     IECM&X        RE-ISSUE IOHALT                   @ZA59479
+IEC4&X   LA    15,1(15)      ADD ONE TO RETRY COUNT            @ZA59479
+         ST    15,IEC2&X+12  SAVE UPDATED COUNT                @ZA59479
+         B     IECM&X        RE-ISSUE IOHALT                   @ZA59479
+***      PSEUDO LABELS USED IN COMMMENTS                       @ZA59479
+IEC2&X   DC    5F'0'          CREATE SAVE AREA                 @ZA59479
+*REG0    DC    F'0'           REGISTER 0                       @ZA59479
+*REG1    DC    F'0'           REGISTER 1                       @ZA59479
+*IOBADDR DC    F'0'           IEC2&X+8  EQU *IOBADDR           @ZA59479
+*COUNTER DC    F'0'           IEC2&X+12 EQU *COUNTER           @ZA59479
+*CNTER1  DC    F'0'           IEC2&X+16 EQU *COUNTER1
+***      END OF SAVEAREA DSECT                                 @ZA59479
+***      THIS STMT DELETED BY OZ59479                          @ZA59479
+.*
+.*        THIS STATEMENT DELETED BY APAR OZ37047            CC @ZA37047
+IECF&X   EQU   *                                                   000D
+.*
+.*
+.ANSR    ANOP                                                      000A
+.*
+.*
+         L     15,16(1)       LOAD ADDRESS OF FIRST CCW.
+         CLI   0(15),X'2F'    IS THE CCW A DISABLE COMMAND?        000A
+         BNE   IECG&X         IF NOT, BRANCH.                      000A
+         TM    4(15),X'40'    IS THE CCW COMMAND CHAINED?          000A
+         BNO   IEC0&X         IF NOT, EXIT WITH RC=X'10'       @ZA04199
+         LA    15,8(15)       LOAD ADDRESS OF NEXT CCW.            000A
+         CLI   0(15),X'08'         IS IT A TIC?                 YA02058
+         BNE   IECG&X              NO, BRANCH                   YA02058
+         L     15,0(15)            GET NEXT CCW ADDRESS         YA02058
+         LA    15,0(15)            CLEAR HI ORDER BYTE          YA02058
+IECG&X   CLI   0(15),X'27'        IS THE CCW AN ENABLE COMMAND     000B
+         BE    IECN&X                                              000B
+         CLI   0(15),X'06'        IS THE CCW A PREPARE COMMAND     000B
+         BNE   IEC1&X             IF NOT, EXIT                 @ZA17733
+         CLI   13(15),X'0B'       IS THE NEXT CCW READ INQUIRY     000B
+         BE    IECP&X                                              000B
+         CLI   13(15),X'8B'            IS IT READ INQUIRY          3128
+         BE    IECP&X                                              3128
+         B     IECI&X                                              000H
+.*
+IECN&X   CLI   13(15),X'0B'       IS THE NEXT CCW READ INQUIRY     000B
+         BE    IECP&X                                              000B
+         CLI   13(15),X'8B'            IS IT READ INQUIRY          3128
+         BE    IECP&X                                   Y          3128
+         CLI   13(15),X'07'            IS NEXT CCW READ ID ENQ?  A43785
+         BE    IECP&X                  GO TO ISSUE HIO           A43785
+         CLI   21(15),X'07'                                       M2860
+         BE    IECP&X                                             M2860
+         CLI   21(15),X'87'   READ ID ENQ CCW WITH             @ZA04659
+*                              LAST CCW FLAG ON                @ZA04659
+         BE    IECP&X          YES, ISSUE HALT IO              @ZA04659
+         TM    4(15),X'40'              IS CCW COMMAND CHAIN     A30763
+         BNO   IECP&X                   NO, ISSUE HIO            A30763
+IECH&X   LA    15,8(15)       LOAD ADDRESS OF NEXT CCW.            000H
+         CLI   0(15),X'06'              IS THIS CCW PREP?          000H
+         BE    IECI&X                                              000H
+IEC1&X   EQU   *                                               @ZA17733
+         TM    4(15),X'40'              IS THE CCW COMMAND CHAINED? 00H
+         BO    IECH&X         TRY NEXT CCW                     @ZA31078
+         CLI   IECK&X+1,X'0B' WRITE RESET MONITOR ?            @ZA31078
+         BE    IECQ&X         SET RETURN CODE TO X'04'         @ZA31078
+         B     IEC0&X         SET RETURN CODE TO X'10'         @ZA31078
+IEC0&X   LA    15,16          SET RETURN CODE = X'10'          @ZA04199
+         B     IECB&X                   EXIT                   @ZA04199
+.*       2 LINES DELETED FOR THE FOLLOWING APAR                 YA03232
+IECI&X   CLI   8(15),X'0A'    IS NEXT CCW INHIBIT?              YA03232
+         AIF   ('&SPEC' EQ 'HIO2740').HAL2740                   YA02146
+         AIF   (T'&SPEC EQ 'O').NO2740                          YA02146
+         MNOTE * '***          SPEC &SPEC NOT RECOGNIZED.'      YA02146
+         AGO   .NO2740                                          YA02146
+.HAL2740 ANOP                                                   YA02146
+         BE    IECP&X                   YES, DO THE HIO         YA02146
+         CLI   13(15),X'11'              READ DATA?            @ZA00503
+         BE    IECP&X                   YES, DO THE HIO         YA02146
+         CLI   13(15),X'91'             LAST A READ DATA?       YA02146
+         BE    IECP&X                   YES, DO THE HIO         YA03242
+*        THE ABOVE GENERATED CODE WILL CAUSE A HALT I/O TO      YA02146
+*        BE INDISCRIMINENTLY ISSUED TO A 2740                   YA02146
+         AGO   .YES2740                                         YA02146
+.NO2740  ANOP                                                   YA02146
+         BE    IECP&X                   YES, DO THE HIO         YA03232
+.YES2740 ANOP                                                   YA02146
+.*       3 LINES DELETED FOR THE FOLLOWING APAR                 YA03232
+         CLI   13(15),X'0B'        CCW READ RESPONSE?           YA03232
+         BE    IECP&X              YES, HALT I/O                 S99245
+         CLI   13(15),X'8B'        LAST CCW READ RESPONSE?      YA03232
+         BNE   IECE&X              NO, SET RETURN CODE           S99245
+.*
+.END     ANOP                                                    A28606
+IECP&X   SR    15,15                                               000B
+         IC    15,32(1)       GET EXTENT NUMBER.
+         SLL   15,2           MULTIPLY EXTENT NUMBER BY 4.
+         L     14,44(14)      GET DEB ADDRESS.
+         L     1,32(14,15)    LOAD UCB ADDRESS INTO PARAMTER REG.
+         LA    1,0(1)         CLEAR HI-ORDER BYTE              @ZA45123
+         IOHALT (1)
+         B     IECB&X
+.*
+IECY&X   EQU   *                                            LD @ZA00548
+         CLI   0(15),X'27'         STILL ENABLE ?           LD @ZA00548
+         BE    IECP&X              YES, RESET               LD @ZA00548
+         B     IECE&X              RETURN                   LD @ZA00548
+.*
+.ANREND  ANOP
+IECK&X   DC    H'0' SAVE AREA FOR WTTA                             000G
+IECL&X   DC    X'0080'        FLAG FOR SVC 33                    YM4072
+*
+IECQ&X   LA    15,4           SET RETURN CODE 4                @ZA15411
+         B     IECB&X         AND EXIT                         @ZA15411
+*
+IECE&X   SR    15,15                                            YA02053
+IECB&X   EQU   *
+         MEXIT                                                     000D
+.*
+.ER      MNOTE 12,'***  IHB078  DECB OPERAND REGISTER NOTATION INVALID-X
+               &DECB'
+         MEXIT
+.ANR     ANOP
+         L     15,44(14)           GET ADDR OF DEB
+         LA    15,0(15)            CLEAR HIGH-ORDER BYTE
+         SLA   0,2                 MULTIPLY RLN BY 4
+         AR    15,0                USE RLN*4 AS INDEX
+         L     15,28(15)           TO DEBUCBAD-4 AND GET UCB ADDR
+         CLI   18(15),X'10'        DEVICE CLASS = GRAPHICS
+         BNE   IECO&X              NO, DEVICE IS NOT ANR
+         CLI   5(1),X'01'          IS OPERATION READ INITIAL
+         BNE   IECX&X              NO, GIVE RC=10 AND EXIT
+         TM    0(1),X'40'          IS THE OPERATION COMPLETE
+         BO    IECQ&X              YES, GIVE RC=4 AND EXIT
+         LR    0,1                 DECB ADDR TO REG 0
+.*     ONE LINE DELETED BY THE FOLLOWING PTM:                    YM5699
+         LR    1,15                UCB ADDR TO REG 1
+         LA    15,4                ROUTING CODE OF 4 IN REG 15
+         SVC   116                 INVOKE ESR TO DO RESET
+         LR    0,15                LOAD DECB ADDR              @ZA14028
+         SRL   0,8                 SHIFT DECB ADDR LO 3 BYTES  @ZA14028
+         SLL   15,24               MAKE SURE THAT ONLY      LD @ZA05393
+         SRL   15,24               RC IS IN REG 15          LD @ZA00537
+         LA    1,4                 ESTABLISH COMPARAND
+         CR    15,1                IS RC 0 OR 4
+         BH    IECZ&X              NO RETURN WITH R.C.         @ZA14028
+         STH   15,IECK&X           SAVE RETURN CODE
+*
+         L     1,28(14)            GET IOB BASE FROM DCB
+         LA    1,88(1)             GET ADDR OF FIRST IOB
+         L     14,44(14)           GET DEB ADDR FROM DCB
+         SR    0,0
+         IC    0,16(14)            GET NO. OF EXTENTS FROM DEB
+*                                  AND USE AS LOOP COUNTER
+         LA    14,32(14)           GET ADDR OF FIRST DEB UCB PTR
+*
+IECT&X   OI    1(1),X'01'          SET RESETPL ISSUED FLAG
+         TM    28(1),X'01'         RFT IN PROGRESS
+         BO    IECW&X              YES, GIVE R.C. = 0          @ZA08056
+         L     15,0(14)            GET ADDR OF UCB
+         TM    6(15),X'20'         OUTSTANDING I/O OPERATION
+         BO    IECU&X              YES, KEEP IOB BUSY
+         NI    28(1),X'BF'         TURN OFF IOB BUSY FLAG
+*
+IECU&X   LA    1,88(1)             STEP TO NEXT IOB
+         LA    14,4(14)            STEP TO NEXT UCB PTR
+         BCT   0,IECT&X            LOOP IF NOT FINISHED
+         LH    15,IECK&X           RESTORE RETURN CODE
+         B     IECB&X              EXIT WITH RC
+*
+IECZ&X   LA    1,16                ESTABLISH COMPARAND         @ZA14028
+         CR    15,1                IS RC = 16                  @ZA14028
+         BNE   IECB&X              NO - EXIT WITH RC           @ZA14028
+         LR    1,0                 LOAD DECB ADDR              @ZA14028
+         TM    0(1),X'40'          IS OPERATION COMPLETE       @ZA14028
+         BO    IECQ&X              YES - GIVE RC = 4 AND EXIT  @ZA14028
+         B     IECB&X              EXIT WITH ORIGINAL RC       @ZA14028
+*
+IECW&X   XC    IECK&X,IECK&X       SET RC TO ZERO
+         B     IECU&X
+*               THREE LINES REMOVED BY------------------------>@ZA15411
+IECX&X   LA    15,16               SET RETURN CODE OF X'10'
+         B     IECB&X              AND EXIT
+*
+.*
+         AIF   ('&TYPE' EQ 'ATTENT').ANRRC8
+IECO&X   SRA   0,2                 RESTORE REG 0 (RLN)
+         AGO   .NOTANR
+.*
+.ANRRC8  ANOP
+IECO&X   LA    15,8                INVALID DEVICE, SET RC=8
+         B     IECB&X              AND EXIT
+         AGO   .ANREND
+.*
+         MEND                                                      000D
+***TEST  PROGRAM
+BASEREG  EQU 12
+DECBREG  EQU 1
+         USING IECTDECB,DECBREG
+         USING *,BASEREG
+         RESETPOL (1)
+         END
+

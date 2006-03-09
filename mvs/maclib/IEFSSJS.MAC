@@ -1,0 +1,118 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSJSCMT;           /*                                  @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSJS
+.*/ %SSJSCMT:;             /*                                @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSJS                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = JOB SELECT FUNCTION                  @ZA34144*/
+*/*  STATUS =           MVS 3.8                              @ZA48827*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/*  CHANGE ACTIVITY =                                               */
+*/*        CODE HAS BEEN ADDED FOR THE FOLLOWING SUPPORT CODES       */
+*/*   SECURITY SUPPORT                                       @Z40RPPJ*/
+*/*   SPLITOUT FROM IEFJSSOB MACRO                           @ZA34144*/
+*/*   ADDED FIELD FOR JES3 JOB CLASS (VERSION 1) SEE OZ48696 @ZA48827*/
+*/********************************************************************/
+*   %GOTO SSJSPLS;         /*                                  @ZA34144
+*
+SSOBJBSL EQU   5                  JOB SELECTION FUNCTION ID (SSOBFUNC)
+*
+*  SUBSYSTEM JOB SELECTION RETURN CODES (SSOBRETN)
+*
+SSJSRTOK EQU   0                  OK-JOB HAS BEEN SELECTED
+SSJSISTP EQU   4                  INITIATOR SHOULD STOP
+SSJSYSER EQU   16                 SYSTEM ERROR OCCURRED DURING
+*                                 SUBSYSTEM PROCESSING - SYSTEM ERROR
+*                                 CODE IS IN SSJSSERR
+SSJSPERR EQU   36                 PROGRAM ERROR
+*
+         ORG   SSOBGN
+SSJSBGN  EQU   *
+SSJSLEN  DC    AL2(SSJSIZE)       JOB SELECT EXTENSION LENGTH
+SSJSVER  DS    XL1                VERSION NUMBER OF SSJS       @ZA48827
+SSJSCVER EQU   1                  CURRENT VERSION NUMBER OF SSJS
+*                                                              @ZA48827
+SSJSRESV DS    C                  RESERVED
+SSJSSTEP DS    H                  STEP NUMBER OR ZERO
+SSJSFLG1 DS    B                  JOB DESCRIPTOR BITS
+SSJSSTRS EQU   X'80'              STEP RESTART
+SSJSCHRS EQU   X'40'              CHECKPOINT/RESTART
+SSJSCNRS EQU   X'20'              CONTINUE RESTART
+SSJSWARM EQU   X'08'              WARM START THE JOB
+SSJSAIFG EQU   X'04'              ALTERNATE INTERPRETER FLAG
+*                                 IF ON SELECT INTERPRETER ADDRESS
+*                                 FROM SSJSAIAD FIELD            Y02886
+SSJSRSV2 EQU   X'03'              RESERVED
+SSJSRSV3 DS    X                  RESERVED
+SSJSLCT  DS    A                  LCT ADDRESS
+SSJSMACB DS    A                  MESSAGE ACB ADDRESS
+SSJSJACB DS    A                  JOURNAL ACB ADDRESS
+SSJSTACB DS    A                  INTERNAL TEXT ACB ADDRESS
+SSJSIPRM DS    A                  ADDRESS OF PARAMETER FOR PHASE
+*                                 TWO OF THE INTERPRETER
+SSJSJMR  DS    A                  JMR ADDRESS
+SSJSSERR DS    F                  SYSTEM ERROR RETURN CODE - FROM
+*                                 CONVERTER OR SWA CREATE
+SSJSAIAD DS    F                  ALTERNATE INTERPRETER ADDRESS  Y02886
+SSJSPASS DS    0CL9               SECURITY FIELD               @Z40RPPJ
+SSJSPSLN DS    X                  PASSWORD LENGTH              @Z40RPPJ
+SSJSPSWD DS    CL8                SECURITY PASSWORD            @Z40RPPJ
+SSJSPAS2 DS    0CL9               NEW PASSWORD FIELD           @Z40RPPJ
+SSJSPSL2 DS    X                  NEW PASSWORD LENGTH          @Z40RPPJ
+SSJSPSW2 DS    CL8                NEW PASSWORD                 @Z40RPPJ
+SSJSCLSS DS    CL8                JES3 JOB CLASS               @ZA48827
+*
+SSJSIZE  EQU   *-SSJSBGN          JOB SELECT EXTENSION LENGTH
+SSOBLEN3 EQU   SSOBHSIZ+SSJSIZE   TOTAL SSOB LENGTH
+         MEND                                                @ZA34144*/
+* %SSJSPLS:;                                /*               @ZA34144*/
+*   DCL SSOBJBSL    FIXED(15) CONSTANT(05); /* FUNCTION ID (SSOBFUNC)*/
+*   /*                                                               */
+*   /*  SUBSYSTEM JOB SELECTION RETURN CODES (SSOBRETN)              */
+*   /*                                                               */
+*   DCL SSJSRTOK  FIXED(31) CONSTANT(0); /* OK-JOB HAS BEEN SELECTED */
+*   DCL SSJSISTP  FIXED(31) CONSTANT(4); /* INITIATOR SHOULD STOP    */
+*   DCL SSJSYSER  FIXED(31) CONSTANT(16);/* SYSTEM ERROR OCCURRED
+*                                 DURING SUBSYSTEM PROCESSING - SYSTEM
+*                                 ERROR CODE IS IN SSJSSERR          */
+*   DCL SSJSPERR  FIXED(31) CONSTANT(36); /* PROGRAM ERROR           */
+*   DCL SSJSCVER FIXED(8) CONSTANT(1); /* CURRENT VERSION NUMBER OF
+                                          SSJS               @ZA48827*/
+*   /*    S S J S                                                    */
+*  DECLARE
+*   1       SSJS          SSOBJS,
+*     2       SSJSLEN     FIXED(15),/* LENGTH OF SSJS                */
+*     2       SSJSVER     FIXED(8), /* SSJS VERSION NUMBER   @ZA48827*/
+*     2       *           FIXED(8), /* RESERVED                      */
+*     2       SSJSSTEP    FIXED(15),/* STEP NO. OR ZERO              */
+*     2       SSJSFLG1    BIT(8),   /* JOB DESCRIPTOR BITS           */
+*       3       SSJSSTRS  BIT(1),   /* STEP RESTART                  */
+*       3       SSJSCHRS  BIT(1),   /* CHECKPOINT/RESTART            */
+*       3       SSJSCNRS  BIT(1),   /* CONTINUE RESTART              */
+*       3       *         BIT(1),   /*                               */
+*       3       SSJSWARM  BIT(1),   /* WARM START THE JOB            */
+*       3       SSJSAIFG  BIT(1),   /* ALTERNATE INTERPRETER FLAG IF
+*                                      ON SELECT INTERPRETER ADDRESS
+*                                      FROM SSJSAIAD FIELD     Y02886*/
+*       3       *         BIT(2),   /* RESERVED                      */
+*     2       *           CHAR(1),  /* RESERVED                      */
+*     2       SSJSLCT     PTR(31),  /* ADDRESS OF THE LCT            */
+*     2       SSJSMACB    PTR(31),  /* ADDRESS OF THE MESSAGE ACB    */
+*     2       SSJSJACB    PTR(31),  /* ADDRESS OF THE JOURNAL ACB    */
+*     2       SSJSTACB    PTR(31),  /* ADDRESS OF INTERNAL TEXT ACB  */
+*     2       SSJSIPRM    PTR(31),  /* ADDRESS OF PARAMETER FOR PHASE
+*                                      TWO OF THE INTERPRETER        */
+*     2       SSJSJMR     PTR(31),  /* JMR ADDRESS                   */
+*     2       SSJSSERR    FIXED(31),/* SYSTEM ERROR RETURN CODE - FROM
+*                                      CONVERTER OR SWA CREATE       */
+*     2       SSJSAIAD    PTR(31),  /* ALTERNATE INTERPRETER ADDRESS
+*                                                              Y02886*/
+*     2       SSJSPASS,             /* SECURITY PASSWORD FIELD
+*                                                            @Z40RPPJ*/
+*        3      SSJSPSLN  FIXED(8), /* PASSWORD LENGTH       @Z40RPPJ*/
+*        3      SSJSPSWD  CHAR(8),  /* SECURITY PASSWORD     @Z40RPPJ*/
+*     2       SSJSPAS2,             /* NEW PASSWORD FIELD    @Z40RPPJ*/
+*        3      SSJSPSL2  FIXED(8), /* NEW PASSWORD LENGTH   @Z40RPPJ*/
+*        3      SSJSPSW2  CHAR(8),  /*NEW PASSWORD           @Z40RPPJ*/
+*     2       SSJSCLSS CHAR(8);     /*JES3 JOB CLASS         @ZA48827*/

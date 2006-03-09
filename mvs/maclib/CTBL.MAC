@@ -1,0 +1,31 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    CTBL  &C
+         LCLA  &X                       COUNTER OF TABLE ENTRIES
+         LCLA  &L                       LENGTH OF TABLE ENTRIES
+         LCLA  &L1                      NEW LENGTH
+&NAME    DS    0H                       TAB BEGINS ON EVEN BYTE BOUNDRY
+&X       SETA  1
+.A       AIF   ('&SYSLIST(&X)' EQ '').B END OF ENTRIES
+&X       SETA  &X+1                     INCREMENT COUNTER
+         AGO   .A                       GET NEXT ENTRY
+.B       ANOP
+&X       SETA  &X-1
+         DC    AL2(&X)                  NUMBER OF ENTRIES IN TABLE
+&X       SETA  0
+&L       SETA  K'&SYSLIST(1)            LENGTH OF ENTRY
+         AIF   ((&L-(&L/2)*2) NE 1).C   IS LENGTH ODD NUMBER
+&L1      SETA  (&L+1)/2                 YES, MAKE EVEN
+         AGO   .D
+.C       ANOP
+&L1      SETA  &L/2                     NO
+.D       ANOP
+&X       SETA  &X+1
+         AIF   ('&SYSLIST(&X)' EQ '').END
+         AIF   (K'&SYSLIST(&X) EQ &L).E
+         MNOTE 8,'***  IHB358  ALL TABLE ENTRIES MUST BE EQUAL LENGTH'
+.E       ANOP
+         DC    XL&L1'&SYSLIST(&X)'      TABLE ENTRY
+         AGO   .D
+.END     MEND
+

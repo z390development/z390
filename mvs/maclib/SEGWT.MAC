@@ -1,0 +1,17 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SEGWT &EXN
+         AIF   ('&EXN' EQ '').E1
+         AIF   ('&EXN'(1,1) EQ '(').E2
+         CNOP  0,4
+&NAME    B     *+8                               BRANCH AROUND VCON
+         DC    V(&EXN)                           EXTERNAL NAME
+         L     1,*-4                             LOAD EXTERNAL ADDRESS
+         LA    0,1(0,0)                          INDICATE SEGWT
+         SVC   37                                ISSUE SEGWT SVC
+         MEXIT
+.E1      IHBERMAC 01
+         MEXIT
+.E2      IHBERMAC 36,,&EXN
+         MEND
+

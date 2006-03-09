@@ -1,0 +1,664 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+* MACSTAT Y-3                                                  @ZA00466
+* MACSTAT Y-3                                                  @ZA14267
+* MACSTAT Y-3                                                  @ZA24620
+* MACSTAT Y-3 77.277/OZ26012                                   @ZA26012
+* MACSTAT Y-3 77.277/OZ26497                                   @ZA26497
+* MACSTAT Y-3 79.066/OZ37604 FIX DEQ EXECUTE WITH UCB          @ZA37604
+* MACSTAT Y-3 81.293/OZ53727 UPDATE PARAMETER BYTE WITH PARAMETERS
+*                            SPECIFIED IN EACH ELEMENT ON MULTIPLE
+*                            ENQUEUE.                          @ZA53727
+         MACRO
+&NAME    ENQ   &P,&SMC=,&RET=,&UCB=,&ECB=,&TCB=,&GENERIC=NO,&MF=I,     X
+               &RELATED=
+.*                                                               X02113
+.*
+.* DEFINE VARIABLES
+.*
+         GBLB  &IHBRES                 RESERVE MACRO CALL INDICATOR
+         GBLB  &IHBDEQ                 DEQ MACRO CALL INDICATOR
+         GBLC  &LABEL                  USED TO BRANCH PAST PARM LIST
+         LCLA  &QN,&RN,&ES,&RL,&SS     INDICES TO PARM SUB OPERANDS
+         LCLA  &LEN                    LENGTH INTERMEDIARY
+         LCLA  &LIST                   PARAMETER BUILD LIST POINTER
+         LCLA  &LISTA                  PARAMETER BUILD LIST POINTER
+         LCLA  &MASK                   TO GATHER 'AND' AND 'OR' FOR EXC
+         LCLA  &NUMBER                 COUNT OF POSITIONAL PARMS
+         LCLA  &LSTEND                 USED TO SET LISTEND BITS  X02113
+         LCLB  &NQ                     ENQ/RES EXTRA PARM INDICATOR
+         LCLB  &B(8),&BB(5),&BA(2)     REPRESENTING BITS OF CODE FIELD
+         LCLC  &C                      TO GATHER REG PARM W/O PARENS
+.*
+.* SET MACRO COUNTS
+&NQ      SETB  (NOT(&IHBDEQ))
+         AIF   ('&MF(1)' NE 'E' AND '&P' EQ '').ERR1
+&NUMBER  SETA  N'&P
+         AIF   ('&NUMBER' GT '5' AND '&UCB' NE '').ERR7
+.*
+.* INDICATORS FOR KEYWORD OPERANDS APPLYING TO ALL ENTRIES
+.*
+         AIF   (&IHBDEQ).CHKGEN                                  X02113
+         AIF   ('&GENERIC' NE 'NO').ERR18                        X02113
+         AGO   .NCHKGEN                                          X02113
+.CHKGEN  ANOP                                                    X02113
+         AIF   ('&GENERIC' NE 'NO' AND '&GENERIC' NE 'YES').ERR16
+.*                                                               X02113
+         AIF   ('&GENERIC' EQ 'YES' AND '&RET' NE 'HAVE').ERR17  X02113
+.NCHKGEN ANOP                                                    X02113
+         AIF   (&IHBRES OR &IHBDEQ).NOTENQ                       X02113
+         AIF   ('&TCB' NE '' AND '&ECB' NE '').BOTH2  RET NOT  @ZA14267
+.*                                     PERMITTED WITH ECB AND  @ZA14267
+.*                                     TCB (SAME AS ECB ONLY)  @ZA14267
+         AIF   ('&RET' EQ 'HAVE' AND '&TCB' NE '').ERR13         X02113
+         AIF   ('&RET' EQ 'NONE' AND '&TCB' NE '').ERR13         X02113
+         AIF   ('&RET' EQ '' AND '&TCB' NE '').ERR13             X02113
+.*                                     TCB NOT ALLOWED WITH      X02113
+.*                                     RET=HAVE,NONE,OMITTED     X02113
+.*                                     ON ENQ                    X02113
+.BOTH2   ANOP                                                  @ZA14267
+         AIF   ('&TCB' NE '' AND '&SMC' NE '').ERR12             X02113
+.*                                     TCB WITH SMC INVALID      X02113
+.NOTENQ  ANOP                                                    X02113
+         AIF   ('&ECB' NE '' AND '&SMC' NE '' OR '&ECB' NE '' AND '&RET*
+               ' NE '').ERR11            SMC, RET NOT ALLOWED WITH ECB
+.SMC     AIF   ('&SMC' EQ '' OR '&SMC' EQ 'NONE').RET
+&B(2)    SETB  0                                               @ZA12435
+&B(3)    SETB  ('&SMC' EQ 'STEP')
+         AIF   (NOT &B(3)).ERR8                                @ZA12435
+.RET     AIF   ('&RET' EQ '' OR '&RET' EQ 'NONE').LOOP
+         AIF   (&IHBDEQ).RETDEQ
+&B(5)    SETB  ('&RET' EQ 'TEST' OR '&ECB' NE '')
+&B(6)    SETB ('&RET' EQ 'TEST' OR '&RET' EQ 'USE' OR '&RET' EQ 'CHNG')
+&B(7)    SETB ('&RET' EQ 'TEST' OR '&RET' EQ 'USE' OR '&RET' EQ 'HAVE')
+         AGO   .RETCK
+.RETDEQ  ANOP
+&B(7)    SETB  ('&RET' EQ 'HAVE')
+.RETCK   AIF   (NOT &B(5) AND NOT &B(6) AND NOT &B(7)).ERR5
+.LOOP    ANOP
+.*
+.* SORT MACRO FORM
+         AIF   ('&MF(1)' EQ 'E').EROUT EXECUTE FORM ROUTINE
+         AIF   ('&MF' EQ 'L').DS       SET NAME FIELD FOR LIST FORM
+         AIF   ('&MF' NE 'I').ERR4     LAST POSSIBLE CHOICE
+.*
+.* SET THE NAME FIELD AND ADDRESS THE LIST
+&LABEL   SETC  'IHB'.'&SYSNDX'         UNIQUE TAG TO BRANCH AROUND LIST
+         CNOP  0,4
+&NAME    BAL   1,&LABEL                BRANCH AROUND AND ADDRESS LIST
+         AGO   .CHKTCB1                CHECK FOR PREFIX        @ZA14267
+.DS      ANOP
+         DS    0F                      ESTABLISH A FULLWORD BOUNBARY
+.*
+.* DEFINE THE PARAMETER LIST
+.*
+.* TCB PARAMETER                                               @ZA14267
+.CHKTCB1 AIF ('&TCB' EQ '').ECB        NOT TCB, CHECK ECB      @ZA14267
+&LSTEND  SETA  1                       SHOW DIRECTED ENQ/DEQ     X02113
+         AIF   ('&MF' EQ 'I').STNDARD  IF LIST FORM, TCB=0       X02113
+         AIF   ('&TCB' NE '0').ERR15   ERROR IN SPECIFYING TCB   X02113
+.STNDARD ANOP                                                    X02113
+.TCBREG  DC    A(0)                    PREFIX - TCB ADDRESS      X02113
+.*
+.* ECB PARAMETER
+.ECB     AIF   ('&ECB' EQ '').DEFLOOP  IF NOT ECB, CONTINUE    @ZA14267
+         AIF   (&IHBDEQ).ERR6          ECB NOT ALLOWED W. DEQ
+&B(5)    SETB  1                       ECB INDICATOR
+         AIF   ('&ECB'(1,1) EQ '(').ECBREG     ADDRESS FOUND IN A REG
+         DC    A(&ECB)                 PREFIX - ECB ADDRESS
+         AGO   .DEFLOOP
+.ECBREG  AIF   ('&MF' EQ 'L').ERR3
+         DC    A(0)                    PREFIX - ECB ADDRESS
+.*
+.* SET POSITIONAL PARAMETER INDICES
+.DEFLOOP ANOP
+         AIF   ('&GENERIC' EQ 'NO').NOGEN1                       X02113
+&LSTEND  SETA  &LSTEND+2               INDICATE GENERIC DEQ      X02113
+.NOGEN1  ANOP                                                    X02113
+         AIF   ('&MF' EQ 'I').STNDFRM                            X02113
+         AIF   ('&NAME' EQ '').STNDFRM                           X02113
+&NAME    EQU   *                                                 X02113
+.STNDFRM ANOP                                                    X02113
+&QN      SETA  1                       INDEX TO QNAME POSITIONAL PARM
+.LOOP1   ANOP
+&RN      SETA  &QN+1                   RNAME - 2ND POSITIONAL PARM
+&ES      SETA  &RN+&NQ                 EX/SHR - 3RD W. ENQ RES
+&RL      SETA  &ES+1                   RNAME LENGTH - NEXT PARM
+&SS      SETA  &RL+1                   STEP/SYSTEM - LAST PARM OF SEQ
+.* ENTRY VARIABLES
+&B(8)    SETB  0                       SHARED/EXCLUSIVE - EX DEFAULTS
+&B(1)    SETB  0                       SCOPE - 1 EQ SYSTEM OR SYSTEMS
+&B(4)    SETB  0                       0 EQ STEP; 1 EQ SYSTEMS OR UCB
+.*
+.* EXCLUSIVE/SHARED PARAMETER - ENQ/RES ONLY
+         AIF   (&IHBDEQ).SCOPE
+         AIF   ('&P(&ES)' EQ '' OR '&P(&ES)' EQ 'E').SCOPE
+         AIF   ('&P(&ES)' NE 'S').ERR9
+&B(8)    SETB  1                       SHARED REQUEST
+.* SCOPE - STEP/SYSTEM/SYSTEMS
+.SCOPE   AIF   ('&UCB' NE '').UCB
+         AIF   ('&P(&SS)' EQ '' OR '&P(&SS)' EQ 'STEP').LISTEND
+&B(1)    SETB  ('&P(&SS)' EQ 'SYSTEMS')
+&B(4)    SETB  ('&P(&SS)' EQ 'SYSTEMS')
+         AIF   (&B(1)).LISTEND
+&B(1)    SETB  ('&P(&SS)' EQ 'SYSTEM')
+         AIF   (NOT &B(1)).ERR10
+         AGO   .LISTEND
+.UCB     ANOP
+&B(4)    SETB  1                                                   SDS1
+.*
+.* DEFINE THE FIELDS FOR ONE ENTRY
+.LISTEND AIF   ('&LSTEND' NE '0').NOLD IF NO NEW OPTIONS, SET    X02113
+.*                                     TO DISREGARD BITS 2-7     X02113
+&LSTEND  SETA  64                      INDICATE NO NEW OPTIONS   X02113
+.NOLD    ANOP                                                    X02113
+         AIF   (&QN+4+&NQ LE &NUMBER).NOTLAST                    X02113
+&LSTEND  SETA  &LSTEND+128             SET TO SHOW END OF LIST   X02113
+.NOTLAST DC    AL1(&LSTEND)            LISTEND BYTE              X02113
+.* RNAME LENGTH
+.LENGTH  AIF   ('&P(&RL)' EQ '' AND '&MF' EQ 'L').NAMEL
+         AIF   ('&P(&RN)' EQ '').SKIP
+         AIF   ('&P(&RL)' EQ '' AND '&P(&RN)'(1,1) EQ '(').ERR2
+.SKIP    AIF   ('&P(&RL)' EQ '').NAMEL
+         AIF   ('&P(&RL)'(1,1) EQ '(').REGL
+         DC    AL1(&P(&RL))            RNAME LENGTH
+         AGO   .CODE
+.REGL    AIF   ('&MF' EQ 'L').ERR3
+.ZEROL   DC    AL1(0)                   RNAME LENGTH
+         AGO   .CODE
+.NAMEL   AIF   ('&P(&RN)' EQ '').ZEROL
+&LEN     SETA  L'&P(&RN)
+         DC    AL1(&LEN)               RNAME LENGTH
+.* OPTIONS AND CODE
+.CODE    DC    BL1'&B(8)&B(1)&B(2)&B(3)&B(4)&B(5)&B(6)&B(7)'  OPTIONS
+         DC    AL1(0)                  RETURN CODE FIELD
+.* QNAME AND RNAME ADDRESSES
+         AIF   ('&P(&QN)' EQ '' AND '&MF' EQ 'L').ZEROQ
+         AIF   ('&P(&QN)' EQ '').ERR2
+         AIF   ('&P(&QN)'(1,1) EQ '(').REGQ
+         DC    A(&P(&QN))              QNAME ADDRESS
+         AGO   .RNAME
+.REGQ    AIF   ('&MF' EQ 'L').ERR3
+.ZEROQ   DC    A(0)                    QNAME ADDRESS
+.RNAME   AIF   ('&P(&RN)' EQ '' AND '&MF' EQ 'L').ZEROR
+         AIF   ('&GENERIC' EQ 'NO').NOGEN2                       X02113
+         AIF   ('&P(&RN)' EQ '').ZEROR SHOULD BE NO RNAME W GEN. X02113
+         IHBERMAC 1016,RNAME,GENERIC                             X02113
+         AGO   .ZEROR                                            X02113
+.NOGEN2  ANOP                                                    X02113
+         AIF   ('&P(&RN)' EQ '').ERR2
+         AIF   ('&P(&RN)'(1,1) EQ '(').REGR
+         DC    A(&P(&RN))              RNAME ADDRESS
+         AGO   .CONT
+.REGR    AIF   ('&MF' EQ 'L').ERR3
+.ZEROR   DC    A(0)                    RNAME ADDRESS
+.CONT    ANOP
+&QN      SETA  &QN+4+&NQ
+         AIF   (&QN LE &NUMBER).LOOP1                            X02113
+.*
+.* UCB PARAMETER
+.END     AIF   ('&UCB' EQ '').ENQ050                               SDS1
+         AIF   ('&UCB'(1,1) EQ '(').ENQ040                         SDS1
+         DC    A(&UCB)                 UCB PARAMETER
+         AGO   .ENQ050                                             SDS1
+.ENQ040  AIF   ('&MF' EQ 'L').ERR3
+         DC    A(0)                    UCB PARAMETER
+.* LIST FORM EXIT
+.ENQ050  AIF   ('&MF' EQ 'I').STORE
+&IHBDEQ  SETB  0
+&IHBRES  SETB  0                                                   SDS1
+         MEXIT
+.*
+.*  STORE VALUES IF PRESENT                                    @ZA14267
+.*
+.STORE   ANOP
+&LABEL   DS    0H            OBJECT OF THE BAL
+         AIF   ('&TCB' EQ '').CHKECB   IF NOT TCB, CHECK ECB   @ZA14267
+         AIF   ('&TCB'(1,1) EQ '(').STRGTCB CHK FOR NONREG PTR @ZA14267
+         L     0,&TCB                  PICK UP TCB ADDRESS     @ZA14267
+         ST    0,0(0,1)                PUT IN PREFIX           @ZA14267
+         AGO   .CHKECB                 GO CHECK FOR ECB PFX    @ZA14267
+.STRGTCB ANOP                          TCB PTR PASSED IN REG   @ZA14267
+&LEN     SETA  K'&TCB-2                SET LEN OF REG NBR      @ZA14267
+&C       SETC  '&TCB'(2,&LEN)          SET DC TO REG NBR       @ZA14267
+         ST    &C,0(0,1)               STORE TCB ADDRESS       @ZA14267
+.CHKECB  ANOP                                                  @ZA14267
+         AIF   ('&ECB' EQ '').CHKLA    ECB NOT CODED           @ZA14267
+         AIF   ('&ECB'(1,1) NE '(').CHKLA                      @ZA14267
+.* (IF ECB WAS CODED BUT NOT AS A REG, IT IS ALREADY IN PFX)   @ZA14267
+&LEN     SETA  K'&ECB-2                SET LEN OF REG NBR      @ZA14267
+&C       SETC  '&ECB'(2,&LEN)          SET &C TO REG NBR       @ZA14267
+         AIF   ('&TCB' NE '').BOTH4    8-BYTE PREFIX           @ZA14267
+.* STORE ECB PTR IN 4-BYTE PREFIX                              @ZA14267
+         ST    &C,0(0,1)               STORE ECB ADDRESS       @ZA14267
+         AGO   .CHKLA                  CONTINUE                @ZA14267
+.BOTH4   ANOP  STORE ECB PTR IN SECOND HALF OF PREFIX          @ZA14267
+         ST    &C,4(0,1)               STORE ECB ADDRESS       @ZA14267
+.*
+.* ADJUST PARAMETER LIST POINTER PAST THE PREFIX IF PRESENT
+.CHKLA   AIF   ('&TCB' EQ '' AND '&ECB' EQ '').SETUP NO PREFIX @ZA14267
+         AIF   ('&TCB' NE '' AND '&ECB' NE '').BOTH 8-BYTE PFX @ZA14267
+         LA    1,4(0,1)               MOVE POINTER PAST PREFIX @ZA14267
+         AGO   .SETUP                                          @ZA14267
+.BOTH    LA    1,8(0,1)               MOVE POINTER PAST PREFIX @ZA14267
+.*
+.* ESTABLISH COUNTS
+.SETUP   ANOP
+&LIST    SETA  0                         INDEX TO PARAMETER LIST
+&QN      SETA  1
+.LOOP2   ANOP
+&RN      SETA  &QN+1
+&RL      SETA  &QN+2+&NQ
+&LIST    SETA  &LIST+1                  POINT INDEX TO RNAME LENGTH
+         AIF   ('&P(&RL)' EQ '').NOREGL
+         AIF   ('&P(&RL)'(1,1) NE '(').NOREGL
+&LEN     SETA  K'&P(&RL)-2
+&C       SETC  '&P(&RL)'(2,&LEN)
+         STC   &C,&LIST.(0,1)                     STORE RNAME LENGTH
+.*
+.* QNAME ADDRESS
+.NOREGL  ANOP
+&LIST    SETA  &LIST+3                   ADDRESS QNAME ADDRESS SLOT
+         AIF   ('&P(&QN)'(1,1) NE '(').NOREGQ
+&LEN     SETA  K'&P(&QN)-2
+&C       SETC  '&P(&QN)'(2,&LEN)
+         ST    &C,&LIST.(0,1)                     STORE QNAME ADDRESS
+.*
+.* RNAME ADDRESS
+.NOREGQ  ANOP
+&LIST    SETA  &LIST+4
+         AIF   ('&GENERIC' EQ 'YES').NOREGR                      X02113
+.*                                     IGNORE RNAME IF GENERIC   X02113
+         AIF   ('&P(&RN)'(1,1) NE '(').NOREGR
+&LEN     SETA  K'&P(&RN)-2
+&C       SETC  '&P(&RN)'(2,&LEN)
+         ST    &C,&LIST.(0,1)                     STORE RNAME ADDRESS
+.NOREGR  ANOP
+&LIST    SETA  &LIST+4
+&QN      SETA  &QN+4+&NQ
+         AIF   (&QN LE &NUMBER).LOOP2                            X02113
+.END1    AIF   ('&UCB' EQ '').ENQ060                               SDS1
+         AIF   ('&UCB'(1,1) NE '(').ENQ060                         SDS1
+&LEN     SETA  K'&UCB-2                                            SDS1
+&C       SETC  '&UCB'(2,&LEN)                                     SDS1
+         ST    &C,&LIST.(0,1)     STORE UCB PARAMETER              SDS1
+.ENQ060  AIF   (&IHBDEQ OR &IHBRES).MEXIT                          SDS1
+         SVC   56
+.* RETURN WITHOUT SVC
+.MEXIT   MEXIT
+.*
+.* EXECUTE FORM
+.*
+.EROUT   ANOP
+         AIF   (N'&MF NE 2).ERR4
+         AIF   ('&TCB' NE '' AND '&ECB' NE '').BOTH3           @ZA14267
+.*                                     BRANCH IF 8-BYTE PREFIX @ZA14267
+         AIF   ('&TCB' EQ '').CHKECB2  GO CHECK FOR ECB        @ZA14267
+.*
+.* BUILD PREFIX IF ONLY TCB WAS SPECIFIED                      @ZA14267
+.*
+&BA(1)   SETB  1
+         AIF   ('&MF(2)'(1,1) EQ '(').NEGADR                     X02113
+.*                                     MUST ADDR TCB W NEG REG   X02113
+         AIF   ('&TCB'(1,1) EQ '(').STRTCB                       X02113
+&NAME    L     1,&TCB                  PICK UP TCB ADDRESS       X02113
+         ST    1,&MF(2)-4              STORE IN PARM LIST PREFIX X02113
+         AGO   .ADDRLST                                          X02113
+.*                                                               X02113
+.STRTCB  ANOP                                                    X02113
+&LEN     SETA  K'&TCB-2                SET &LEN TO LEN OF REG NBRX02113
+&C       SETC  '&TCB'(2,&LEN)          SET &C TO REG NBR         X02113
+&NAME    ST    &C,&MF(2)-4             PUT TCB ADDR IN PARM LIST X02113
+.ADDRLST LA    1,&MF(2)                ADDRESS THE LIST          X02113
+         AGO   .EXLOOPS                                          X02113
+.*                                                               X02113
+.* PARM LIST ADDRESS IS IN REG                                   X02113
+.NEGADR  ANOP                                                    X02113
+&NAME    LA    0,4(0,0)                LENGTH OF PREFIX          YM1995
+         AIF   (K'&MF(2) EQ 3 AND '&MF(2)'(2,1) EQ '1').INREG1   X02113
+.*                                     CHECK IF PARM LIST ADDR   X02113
+.*                                     IS IN REG 1               X02113
+&LEN     SETA  K'&MF(2)-2              IF NOT IN REG1, GET REG   X02113
+&C       SETC  '&MF(2)'(2,&LEN)        AND PUT CONTENTS IN REG 1 X02113
+         LR    1,&C                    SET PARM LIST IN REG 1    X02113
+.INREG1  SR    1,0                     ADDRESS THE PREFIX        X02113
+         AIF   ('&TCB'(1,1) EQ '(').TCBINR                       X02113
+         L     0,&TCB                  PICK UP TCB ADDRESS       X02113
+         ST    0,0(0,1)                SET ITS ADDR IN PREFIX    YM1995
+         LA    1,4(0,1)                ADDRESS PARM LIST BODY    YM1995
+         AGO   .EXLOOPS                                          X02113
+.*                                                               X02113
+.TCBINR  ANOP                          TCB IS IN REG             X02113
+&LEN     SETA  K'&TCB-2                                          X02113
+&C       SETC  '&TCB'(2,&LEN)                                    X02113
+         ST    &C,0(0,1)               SET TCB IN PARM PREFIX    YM1995
+         AR    1,0                     ADDRESS PARM LIST BODY    X02113
+         AGO   .EXLOOPS                                          X02113
+.*
+.CHKECB2 AIF   ('&ECB' EQ '').INNRA    NO PREFIX               @ZA14267
+.*
+.*BUILD PREFIX IF ONLY ECB WAS SPECIFIED                       @ZA14267
+.*
+         AIF   ('&MF(2)'(1,1) EQ '(').NEG   MUST ADDRESS W NEG REG
+.*
+.* THE PARAMETER LIST IS NAMED
+         AIF   ('&ECB'(1,1) EQ '(').STORECB
+&NAME    LA    1,&ECB                  . ADDRESS THE ECB
+         ST    1,&MF(2)-4              . SET IN PARM LIST PREFIX
+         AGO   .ADLIST
+.*
+.STORECB ANOP
+&LEN     SETA  K'&ECB-2                                          X02113
+&C       SETC  '&ECB'(2,&LEN)          GET REGISTER NAME         X02113
+&NAME    ST    &C,&MF(2)-4             . SET ECB ADDR IN PREFIX
+.ADLIST  LA    1,&MF(2)                . ADDRESS THE LIST
+         AGO   .EXLOOPS
+.*
+.* MUST ADDRESS THE ECB SLOT IN A REG
+.NEG     ANOP
+&NAME    LA    0,4(0,0)                . LENGTH OF PREFIX        YM1995
+         AIF   (K'&MF(2) EQ 3 AND '&MF(2)'(2,1) EQ '1').PASS2
+&LEN     SETA  K'&MF(2)-2
+&C       SETC  '&MF(2)'(2,&LEN)
+         LR    1,&C                    . SET PARM LIST REG 1
+.PASS2   SR    1,0                     . ADDRESS THE PREFIX
+         AIF   ('&ECB'(1,1) EQ '(').STREG
+         LA    0,&ECB                  . AND THE ECB
+         ST    0,0(0,1)            . SET ITS ADDR IN PARM PREFIX YM1995
+         LA    1,4(0,1)            . ADDRESS PARM LIST BODY      YM1995
+         AGO   .EXLOOPS
+.*
+.STREG   ANOP
+&LEN     SETA  K'&ECB-2
+&C       SETC  '&ECB'(2,&LEN)
+         ST    &C,0(0,1)               . SET ECB IN PARM PREFIX  YM1995
+         AR    1,0                     . ADDRESS PARM LIST BODY
+         AGO   .EXLOOPS
+.*
+.*
+.* BUILD PREFIX IF BOTH TCB AND ECB ARE SPECIFIED              @ZA14267
+.*
+.BOTH3   ANOP                                                  @ZA14267
+&BA(1)   SETB  1                       SET TCB                 @ZA14267
+         AIF   ('&MF(2)'(1,1) EQ '(').NEGADR2                  @ZA14267
+.*                                     A REG POINTS TO LIST    @ZA14267
+.*       THE PARAMETER LIST IS NAMED                           @ZA14267
+.*
+         AIF   ('&TCB'(1,1) EQ '(').STRTCB2 PTR TO TCB IN REG  @ZA14267
+&NAME    L     1,&TCB                  PICK UP TCB ADDRESS     @ZA14267
+         ST    1,&MF(2)-8              STORE IN PARM LIST PFX  @ZA14267
+         AGO   .YECB1                  PROCESS ECB             @ZA14267
+.*                                                             @ZA14267
+.STRTCB2 ANOP                                                  @ZA14267
+&LEN     SETA  K'&TCB-2                SET &LEN TO LEN/REG NBR @ZA14267
+&C       SETC  '&TCB'(2,&LEN)          SET &C TO REG NBR       @ZA14267
+&NAME    ST    &C,&MF(2)-8             PUT TCB ADDR IN PARMLST @ZA14267
+.*
+.YECB1   AIF   ('&ECB'(1,1) EQ '(').STOREC2 ECB PTR IN REG     @ZA14267
+         LA    1,&ECB                  ADDRESS THE ECB         @ZA14267
+         ST    1,&MF(2)-4              SET IN PARM LIST PFX    @ZA14267
+         AGO   .ADLIST2                GO ADDRESS PARMLIST     @ZA14267
+.*
+.STOREC2 ANOP                                                  @ZA14267
+&LEN     SETA  K'&ECB-2                GET LENGTH              @ZA14267
+&C       SETC  '&ECB'(2,&LEN)          GET REGISTER NAME       @ZA14267
+         ST    &C,&MF(2)-4             SET ECB ADDR IN PREFIX  @ZA14267
+.ADLIST2 LA    1,&MF(2)                ADDRESS THE LIST        @ZA14267
+         AGO   .EXLOOPS                CONTINUE PROCESSING     @ZA14267
+.*
+.* PARM LIST ADDRESS IS IN REG                                 @ZA14267
+.*
+.NEGADR2 ANOP                                                  @ZA14267
+&NAME    LA    0,8(0,0)                LENGTH OF PREFIX        @ZA14267
+         AIF   (K'&MF(2) EQ 3 AND '&MF(2)'(2,1) EQ '1').INREG2 @ZA14267
+.*                                     CHECK IF PARM LIST ADDR @ZA14267
+.*                                     IS IN REG 1             @ZA14267
+&LEN     SETA  K'&MF(2)-2              IF NOT IN REG1, GET REG @ZA14267
+&C       SETC  '&MF(2)'(2,&LEN)        AND PUT CONTENTS IN R1  @ZA14267
+         LR    1,&C                    SET PARM LIST IN REG 1  @ZA14267
+.*
+.INREG2  SR    1,0                     ADDRESS THE PREFIX      @ZA14267
+.*
+         AIF   ('&TCB'(1,1) EQ '(').TCBINR2 PTR TO TCB IN REG  @ZA14267
+         L     0,&TCB                  PICK UP TCB ADDRESS     @ZA14267
+         ST    0,0(0,1)                SET ITS ADDR IN PREFIX  @ZA14267
+         AGO   .YECB2                  GO SET ECB PTR          @ZA14267
+.*
+.TCBINR2 ANOP                          PTR TO TCB IS IN REG    @ZA14267
+&LEN     SETA  K'&TCB-2                GET LENGTH              @ZA14267
+&C       SETC  '&TCB'(2,&LEN)          GET REGISTER NAME       @ZA14267
+         ST    &C,0(0,1)               SET TCB IN PARM PREFIX  @ZA14267
+.*
+.YECB2   ANOP                                                  @ZA14267
+         AIF   ('&ECB'(1,1) EQ '(').STREG2 PTR TO ECB IN REG   @ZA14267
+         LA    0,&ECB                  ADDRESS THE ECB         @ZA14267
+         ST    0,4(0,1)                SET ADDR IN PARM PREFIX @ZA14267
+         AGO   .EXLOOP1                GO ADDRESS PARM LIST    @ZA14267
+.*
+.STREG2  ANOP                                                  @ZA14267
+&LEN     SETA  K'&ECB-2                GET LENGTH              @ZA14267
+&C       SETC  '&ECB'(2,&LEN)          GET REGISTER NUMBER     @ZA14267
+         ST    &C,4(0,1)               SET ECB IN PARM PREFIX  @ZA14267
+.*
+.EXLOOP1 LA    1,8(0,1)                ADDRESS PARM LIST BODY  @ZA14267
+         AGO   .EXLOOPS                SKIP  IHBINNRA          @ZA14267
+.*
+.INNRA   ANOP
+&NAME    IHBINNRA &MF(2)
+.*                                                               X02113
+.EXLOOPS ANOP
+&QN      SETA  1
+&LIST    SETA  0
+&BB(1)   SETB  ('&SMC' EQ '')
+&BB(2)   SETB  ('&RET' EQ '')
+&BB(5)   SETB  ('&UCB' EQ '')                                      SDS1
+         AIF   ('&P' NE '').LLOOP
+         AIF   (&BB(1) AND &BB(2) AND &BB(5) AND NOT &BA(1)).ENQ060
+&BB(3)   SETB  1
+&BB(4)   SETB  1
+         AIF   (&BB(5)).ENQ065                                     SDS1
+&BB(4)   SETB  0                                                   SDS1
+&B(4)    SETB  1                                                   SDS1
+.ENQ065  ANOP                                                      SDS1
+&LIST    SETA  &LIST+2
+         AGO   .ENQ080                                             SDS1
+.LLOOP   AIF   (&QN GT &NUMBER).ENQ110                        BH A33990
+&RN      SETA  &QN+1
+&ES      SETA  &RN+&NQ
+&RL      SETA  &ES+1
+&SS      SETA  &RL+1
+         AIF   (&IHBDEQ).SHR
+&BB(3)   SETB  ('&P(&ES)' EQ '')
+.SHR     ANOP
+&BB(4)   SETB  ('&P(&SS)' EQ '')
+.NOGEN3  ANOP                                                    X02113
+&LIST    SETA  &LIST+1
+         AIF   ('&P(&RL)' EQ '').ECODES
+         AIF   ('&P(&RL)'(1,1) EQ '(').EREGL
+         MVI   &LIST.(1),&P(&RL)         MOVE RNAME LENGTH TO LIST
+         AGO   .ECODES
+.EREGL   ANOP
+&LEN     SETA  K'&P(&RL)-2
+&C       SETC  '&P(&RL)'(2,&LEN)
+         STC   &C,&LIST.(0,1)
+.ECODES  ANOP
+&LIST    SETA  &LIST+1
+         AIF   (&BB(1) AND &BB(2) AND &BB(5) AND (&BB(3) OR &IHBDEQ) ANX
+               D &BB(4) AND NOT &BA(1)).ENQ090                   YM2888
+         AIF   (&IHBDEQ).SHRD
+&B(8)    SETB  ('&P(&ES)' EQ 'S')
+         AIF   (NOT &B(8) AND NOT &BB(3) AND NOT '&P(&ES)' EQ 'E').ERR9
+.SHRD    ANOP
+&BB(4)   SETB  0                                                   SDS1
+&BB(5)   SETB  0                                                   SDS1
+         AIF   (&IHBRES).ENQ070                                    SDS1
+         AIF   ('&UCB' NE '').ENQ070                           @ZA37604
+&B(1)    SETB  ('&P(&SS)' EQ 'SYSTEMS')                      SDS1
+&B(4)    SETB  ('&P(&SS)' EQ 'SYSTEMS')                      SDS1
+         AIF   (&B(1)).ENQ080                                      SDS1
+&B(1)    SETB  ('&P(&SS)' EQ 'SYSTEM')                       SDS1
+         AIF   (&B(1)).ENQ080                                 BH A33990
+         AIF   ('&P(&SS)' EQ 'STEP').ENQ080                    @ZA53727
+         AIF   ('&P(&SS)' EQ '' AND ('&MF' EQ 'L')).ENQ080    BH A33990
+&BB(4)   SETB  1                                              BH A33990
+&BB(5)   SETB  1                                              BH A33990
+.*                                                            BH A33990
+         AIF   ('&P(&SS)' EQ '' AND ('&MF(1)' EQ 'E')).ENQ080 BH A33990
+         AGO   .ERR10                                         BH A33990
+.ENQ070  ANOP                                                      SDS1
+&B(4)    SETB  1                                                   SDS1
+.ENQ080  ANOP                                                      SDS1
+&BA(2)   SETB  ('&GENERIC' EQ 'YES')
+         AIF   ('&TCB' NE '' OR '&GENERIC' EQ 'YES').ENQ083
+         AGO   .ENQ085
+.ENQ083  ANOP
+&LISTA   SETA  &LIST-2
+         NI    &LISTA.(1),191            TURN OFF OPTIONS
+&MASK    SETA  2*&BA(2)+&BA(1)
+         OI    &LISTA.(1),&MASK          TURN ON OPTIONS
+.ENQ085  ANOP                            GENERATE THE NI AND OI@ZA53727
+.*                                       TO UPDATE THE FLAG    @ZA53727
+.*                                       BYTE IN THE RESOURCE  @ZA53727
+.*                                       ELEMENTS SPECIFIED.   @ZA53727
+&MASK    SETA  128*&BB(3)+64*&BB(4)+48*&BB(1)+8*&BB(5)+7*&BB(2)    SDS1
+         AIF   (&MASK EQ 255).ENQ090                               SDS1
+         LR    14,1                      PRESERVE REG 1        @ZA00466
+         NI    &LIST.(14),&MASK          SET OPTIONS SPECIFIED @ZA00466
+&MASK    SETA  128*&B(8)+64*&B(1)+32*&B(2)+16*&B(3)+8*&B(4)+4*&B(5)+2*&X
+               B(6)+&B(7)                                          SDS1
+         AIF   (&MASK EQ 0).ENQNOOI      GENERATE LOOP BUT NOT @ZA26497
+.*                                       OI IF RET=NONE        @ZA26497
+         OI    &LIST.(14),&MASK          FOR THIS ELEMENT      @ZA00466
+         AIF   ('&UCB' NE '').ENQ090     NO LOOP IF RESERVE    @ZA26012
+         AIF   ('&MF(1)' NE 'E').ENQ090  IS IT EXEC FORM       @ZA00466
+         AIF   (&QN GT 1).ENQ090         BRANCH AROUND BUILDING@ZA53727
+.*                                       CODE FOR LOOP IF NOT  @ZA53727
+.*                                       FIRST TIME THROUGH    @ZA53727
+.*                                                             @ZA53727
+.*                                       IT IS NECESSARY       @ZA53727
+.*                                       GENERATE THE FOLLOWING@ZA53727
+.*                                       LOOP BECAUSE ALL      @ZA53727
+.*                                       RESOURCE ELEMENTS IN  @ZA53727
+.*                                       THE PARM LIST MAY NOT @ZA53727
+.*                                       BE SPECIFIED IN THE   @ZA53727
+.*                                       EXECUTE FORM. IF RET  @ZA53727
+.*                                       OR SMC PARAMETERS WERE@ZA53727
+.*                                       SPECIFIED, THE FLAG   @ZA53727
+.*                                       BYTE IN EACH ELEMENT  @ZA53727
+.*                                       IN THE PARMLIST MUST  @ZA53727
+.*                                       BE UPDATED.           @ZA53727
+.*                                                             @ZA53727
+         TM    0(14),128                 IS IT END OF LIST     @ZA00466
+         BO    *+20                      YES, GET OUT OF LOOP  @ZA53727
+         LA    14,12(14)                 INDEX TO NEXT ENTRY   @ZA00466
+&MASK    SETA  128+64+48*&BB(1)+8+7*&BB(2)                     @ZA53727
+         NI    &LIST.(14),&MASK          SET RET AND SMC IN ALL@ZA53727
+&MASK    SETA  32*&B(2)+16*&B(3)+4*&B(5)+2*&B(6)+&B(7)         @ZA53727
+         OI    &LIST.(14),&MASK          ELEMENTS IN LIST.     @ZA53727
+         B     *-20                      STAY IN LOOP          @ZA53727
+         AGO   .ENQ090                   CONTINUE MAINLINE     @ZA26497
+.ENQNOOI ANOP                                                  @ZA26497
+         AIF   ('&UCB' NE '').ENQ090     NO LOOP IF RESERVE    @ZA26012
+         AIF   ('&MF(1)' NE 'E').ENQ090  IS IT EXEC FORM       @ZA26497
+         AIF   (&QN GT 1).ENQ090         NOT FIRST TIME THROUGH@ZA53727
+         TM    0(14),128                 IS IT END OF LIST     @ZA26497
+         BO    *+16                      YES, GET OUT OF LOOP  @ZA53727
+         LA    14,12(14)                 INDEX TO NEXT ENTRY   @ZA26497
+&MASK    SETA  128+64+48*&BB(1)+8+7*&BB(2)                     @ZA53727
+         NI    &LIST.(14),&MASK          SET RET AND SMC       @ZA53727
+         B     *-16                      STAY IN LOOP          @ZA53727
+.ENQ090  AIF   ('&P' EQ '').ENQ100                             SDS1
+&LIST    SETA  &LIST+2
+         AIF   ('&P(&QN)' EQ '').ERN
+         AIF   ('&P(&QN)'(1,1) EQ '(').EQNREG
+         LA    14,&P(&QN)                GET QNAME ADDRESS
+         ST    14,&LIST.(0,1)            STORE QNAME ADDRESS
+         AGO   .ERN
+.EQNREG  ANOP
+&LEN     SETA  K'&P(&QN)-2
+&C       SETC  '&P(&QN)'(2,&LEN)
+         ST    &C,&LIST.(0,1)            STORE QNAME ADDRESS
+.ERN     ANOP
+&LIST    SETA  &LIST+4
+         AIF   ('&P(&RN)' EQ '').EEND
+         AIF   ('&GENERIC' EQ 'NO').NOGEN4                       X02113
+         IHBERMAC 1016,RNAME,GENERIC                             X02113
+         AGO   .EEND                                             X02113
+.NOGEN4  ANOP                                                    X02113
+         AIF   ('&P(&RN)'(1,1) EQ '(').ERNREG
+         LA    14,&P(&RN)                GET RNAME ADDRESS
+         ST    14,&LIST.(0,1)            STORE RNAME ADDRESS
+         AGO   .EEND
+.ERNREG  ANOP
+&LEN     SETA  K'&P(&RN)-2
+&C       SETC  '&P(&RN)'(2,&LEN)
+         ST    &C,&LIST.(0,1)            STORE RNAME ADDRESS
+.EEND    ANOP
+&LIST    SETA  &LIST+4
+&QN      SETA  &QN+4+&NQ
+         AGO   .LLOOP
+.ENQ100  ANOP                                                      SDS1
+&LIST    SETA  12                                                  SDS1
+.ENQ110  AIF   ('&UCB' EQ '').ENQ060                               SDS1
+         AIF   ('&UCB'(1,1) EQ '(').ENQ120                         SDS1
+         LA    14,&UCB            GET UCB PARAMETER                SDS1
+         ST    14,&LIST.(0,1)     STORE UCB PARAMETER              SDS1
+         AGO   .ENQ060                                             SDS1
+.ENQ120  ANOP                                                      SDS1
+&LEN     SETA  K'&UCB-2                                            SDS1
+&C       SETC  '&UCB'(2,&LEN)                                      SDS1
+         ST    &C,&LIST.(0,1)     STORE UCB PARAMETER              SDS1
+         AGO   .ENQ060                                             SDS1
+.*
+.*
+.* ERROR EXITS
+.*
+.*
+.ERR1    IHBERMAC 2                    INVALID FIRST OPERAND
+         AGO   .ERREX
+.ERR2    IHBERMAC  24                  REQ'D OPERANDS NOT SPECIFIED
+         AGO   .ERREX
+.ERR3    IHBERMAC 69                   INVALID REG NOTATION WITH MF=L
+         AGO   .ERREX
+.ERR4    IHBERMAC  35,,&MF             INVALID MF OPERAND SPEC - MF=XXX
+         AGO   .ERREX
+.ERR5    IHBERMAC 157,RET,&RET         INVALID CODE FOR RET - IGNORED
+         AGO   .ERREX
+.ERR6    IHBERMAC 1001,DEQ,,&ECB       INVALID DEQ OP SPEC - ECB=
+         AGO   .ERREX
+.ERR7    IHBERMAC 196                 MORE THAN 5 POSITIONAL OPERANDS
+&IHBRES  SETB  0                                                   SDS1
+         MEXIT
+.ERR8    IHBERMAC 1001,SMC,&SMC       INVALID SMC SPECIFIED    @ZA12435
+         AGO   .ERREX
+.ERR9    IHBERMAC 157,SCOPE,&P(&ES)   INVALID CODE FOR SCOPE-IGNORED
+         AGO   .ERREX
+.ERR10   IHBERMAC 157,SYSTEMS,&P(&SS) INVALID CODE FOR SYSTEMS - IGNORE
+         AGO   .ERREX
+.ERR11   IHBERMAC 1003,RET,SMC       RET AND/OR SMC PARAMETERS INVALID
+         AGO   .ERREX                                            X02113
+.ERR12   IHBERMAC 1020,SMC,TCB         SMC INVALID WITH TCB      X02113
+         AGO   .ERREX                                            X02113
+.ERR13   IHBERMAC 1003,RET,TCB         INVALID RET AND/OR TCB    X02113
+         AGO   .ERREX                                            X02113
+.ERR15   IHBERMAC 1001,TCB,&TCB        INVALID TCB SPECIFIED     X02113
+         AGO   .ERREX                                            X02113
+.ERR16   IHBERMAC 1001,GENERIC,&GENERIC                          X02113
+.*                                     INVALID GENERIC SPECIFIED X02113
+         AGO   .ERREX                                            X02113
+.ERR17   IHBERMAC 1003,RET,GENERIC     RET AND/OR GENERIC INVALIDX02113
+         AGO   .ERREX                                            X02113
+.ERR18   IHBERMAC 1014,GENERIC         GENERIC INVALID ON ENQ OR X02113
+.*                                     RESERVE                   X02113
+.ERREX   ANOP
+&IHBDEQ  SETB  0
+&IHBRES  SETB  0                                                   SDS1
+         MEND
+**/
+*   ENQ:/*************************************************************/
+*   /* PL/S VERSION OF ENQ MACRO                                     */
+*   /*****************************************************************/
+*      MACRO KEYS(MF,RET,ECB,SMC,TCB,LS,RELATED);
+*        ANS('?'||MACLABEL||'ENQP '||MACLIST||MACKEYS||';');
+*%END;
+

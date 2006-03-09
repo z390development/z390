@@ -1,0 +1,28 @@
+.* MVS 3.8J PUBLIC DOMAIN
+ /*  NAME         - IDAVBPL                                          */
+ /*  COMMON NAME  - LOGICAL GROUP CHAIN BLOCK (LGCB)                 */
+ /* OWNER         - VIRTUAL BLOCK PROCESSOR                          */
+ /*  LANGUAGE     - PLS2                                             */
+ /*  FUNCTION     - HAS INDICATION OF WHETHER THE DATASET(LOGICAL    */
+ /*                 GROUP) IS JOURNALED OR NOT AND WHETHER THE       */
+ /*                 NO STORED IS THE LOGICAL GROUP NUMBER            */
+ /*                 OR THE STORAGE LOCATOR SYMBOL                    */
+ /*  LOCATION     - IS CHAINED OFF OF ASCB IN CSA IN SUBPOOL 241     */
+ /*                 STORAGE ACQUIRED BY -                            */
+ /*                                       IDAVBPO1, IDAVBPJ2         */
+ /*                 BLOCK UPDATED BY -                               */
+ /*                                    IDAVBPJ2,IDAVBPJ1,IDAVBPS1    */
+ /*                                    AND IDAVBPS2                  */
+ /*                                                                  */
+ /*    16 BYTE  LGCB        */
+         DCL 1 LGCB    BASED BDY(WORD),
+               2 LGCBCPTR PTR(31),/* ADDR OF NEXT LGCB OR 0(LAST LGCB)*/
+               2 LGCBLGN  CHAR(8),      /* LOGICAL GROUP NO.         */
+                 3 LGCBSSYM CHAR(8),    /* STORAGE LOCATOR SYMBOL    */
+               2 LGCBFLAG BIT(8),       /* STATUS FLAG BYTE          */
+                 3 LGCBJNL BIT(1),      /* IF ON, LOG.GROUP JOURNALD
+   AND S-SYMBOL STORED IN LGCB ELSE LGN STORED */
+                 3 *   BIT(7),          /* NOT USED                  */
+               2 * CHAR(1),  /* NOT USED */
+               2 LGCBASID CHAR(2);/* ASID OF THE MEMORY */
+

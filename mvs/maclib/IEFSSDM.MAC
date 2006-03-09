@@ -1,0 +1,41 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSDMCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSDM
+.*/ %SSDMCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSDM                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = DELETE OPERATOR MESSAGES             @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSDMPLS;              /*                               @ZA34144
+*
+SSOBDOM  EQU   14                 DOM FUNCTION ID (SSOBFUNC)
+*
+*  DOM RETURN CODES (SSOBRETN) -
+*
+*    NO DOM RETURN CODES CURRENTLY DEFINED
+*
+         ORG   SSOBGN
+SSDMBGN  EQU   *
+SSDMLEN  DC    AL2(SSDMSIZE)      DOM EXTENSION LENGTH
+SSDMRESV DS    H                  RESERVED
+SSDMDMCB DS    A                  DOM CONTROL BLOCK ADDRESS
+*
+SSDMSIZE EQU   *-SSDMBGN          DOM EXTENSION LENGTH
+SSOBLENA EQU   SSOBHSIZ+SSDMSIZE  TOTAL SSOB LENGTH
+         MEND                                                @ZA34144*/
+* %SSDMPLS:;                            /*                   @ZA34144*/
+*   DCL SSOBDOM FIXED(15) CONSTANT(14); /* DOM FUNCTION ID (SSOBFUNC)*/
+*   /*                                                               */
+*   /*  DOM RETURN CODES (SSOBRETN) -                                */
+* /*                                                                 */
+* /*    NO DOM RETURN CODES CURRENTLY DEFINED                        */
+* /*                                                                 */
+*   /*   S S D M                                                     */
+*   DECLARE
+*   1       SSDM          SSOBDM,   /* DELETE OPERATOR MESSAGES      */
+*     2       SSDMLEN     FIXED(15),/* LENGTH OF SSDM                */
+*     2       *           FIXED(15),/* RESERVED                      */
+*     2       SSDMDMCB    PTR(31);  /* ADDRESS OF DOM CONTROL BLOCK  */

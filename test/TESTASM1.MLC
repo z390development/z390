@@ -1,3 +1,4 @@
+         TITLE 'TESTASM1 - MISC ASSEMBLER TESTS'
 *********************************************************************
 * Copyright 2005 Automated Software Tools Corporation               *
 * This source code is part of z390 assembler/emulator package       *
@@ -5,8 +6,34 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-TESTASM1 SUBENTRY
-         WTO   'STARTING TESTASM1 - MISC ASSEMBLER INSTR'
+* MAINTENANCE
+* 10/03/05 RPI9   TEST LENGTH OPERATOR IN INS AND DC
+* 11/13/05 RPI87  TEST ORG PRECEEDED BY ABS VALUE CALC
+* 11/13/05 RPI90  TEST SINGLE CHARACTER B,C,X SYMBOLS
+* 01/13/06 RPI171 TEST UNARY OPERATORS                 
+*********************************************************************
+TESTASM1 RT1   MAIN
+         EQUREGS
+F1       DC    A(0)
+F2       DC    A(L'X2)
+A        DC    C'ABC'
+         ORG   A
+         DC    C'12'
+         ORG
+         DC    C'D'
+* TEST ORG AFTER ABS
+RPI87    DC    C'ABCD'
+ABS1     EQU   0
+         ORG   RPI87+1
+         DC    C'XX'
+ABS2     EQU   0
+         ORG 
+* TEST B,C,X SYMBOLS
+B        DC    C'B'
+C        DC    C'C'
+X        DC    C'X'
+         RT1   START
+* TEST ALIGNMENT OPERATOR
          CNOP  0,4
          CNOP  2,4
          CNOP  0,4
@@ -15,7 +42,34 @@ TESTASM1 SUBENTRY
          CNOP  4,8
          CNOP  2,8
          CNOP  0,8
-         WTO   'TESTASM1 END OK'
-         SUBEXIT
-         EQUREGS
+* TEST LENGTH OPERATOR
+X2       MVC   F1(L'F2),F2
+         RT1   CCE,F1,=A(6)
+* TEST ORG VALUE AFTER OVERLAY 
+         CLC   A(4),=C'12CD'
+         RT1   CCE
+* TEST ORG AFTER ABS VALUE CALC FOR RPI87
+         CLC   RPI87(4),=C'AXXD'
+         RT1   CCE
+* TEST B,C,X SYMBOLS FOR RPI90
+         CLI   B,C'B'
+         RT1   CCE
+         CLI   C,C'C'
+         RT1   CCE
+         CLI   X,C'X'
+         RT1   CCE
+* TEST UNARY OPERATORS
+         CLC   =A(-1),=A(1-2)
+         RT1   CCE
+         CLC   =A(--1),=A(1)
+         RT1   CCE
+         CLC   =A(-1*-1),=A(1)
+         RT1   CCE
+         CLC   =A(-1*(-1+2)),=A(1-2)
+         RT1   CCE
+         CLC   =A(+1*+1),=A(1)
+         RT1   CCE
+         CLC   =A(+1*(+1+2)),=A(3)
+         RT1   CCE
+         RT1   END
          END         

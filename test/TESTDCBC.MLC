@@ -1,0 +1,41 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* MAINTENANCE
+* 10/18/05 CHANGE DSN TO EBCDIC UNLESS ASCII MODE
+*********************************************************************
+TESTDCBC SUBENTRY
+         WTO   'TESTDCBC ASCII MODE, DCBREC, DCBDSNAM, NEW OUTPUT'
+         OPEN  (SYSUT1,(INPUT),SYSUT2,(OUTPUT),SYSOUT,(OUTPUT))
+LOOP     EQU   *
+         GET   SYSUT1
+         AP    PTOT,=P'1'
+         MVC   DTOT,=X'40202020'
+         ED    DTOT,PTOT
+         PUT   SYSOUT,MSG
+         PUT   SYSUT2
+         B     LOOP
+EOF      CLOSE (SYSUT1,,SYSUT2,,SYSOUT)
+         WTO   'TESTDCBCBC ENDED OK'
+         SUBEXIT
+SYSUT1   DCB   RECFM=FT,LRECL=80,EODAD=EOF,MACRF=GM,                   X
+               RECORD=RECORD,DSNAME=DSN1
+SYSUT2   DCB   RECFM=FT,LRECL=80,MACRF=PM,                             X
+               RECORD=RECORD,DSNAME=DSN2
+SYSOUT   DCB   RECFM=FT,BLKSIZE=120,MACRF=PM,                          X
+               RECORD=RECORD,DSNAME=DSN3
+DSN1     DC    C'TEST\TESTDCBC.TF1',X'00'
+DSN2     DC    C'TEST\TESTDCBC.TF2',X'00'
+DSN3     DC    C'TEST\TESTDCBC.TF3',X'00'
+PTOT     DC    PL2'0'
+MSG      DS    0CL120
+         DC    C'REC#='
+DTOT     DC    CL4' ',C' TEXT='
+RECORD   DC    CL80' '
+         DC    (MSG+120-*)C' '
+         DCBD
+         END

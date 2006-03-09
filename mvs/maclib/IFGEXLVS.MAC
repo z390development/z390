@@ -1,0 +1,50 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GO TO EXLEXTXX;
+* /*                                                                */
+* /*     CHANGE LEVEL = 0                                   @ZA34940*/
+* /*     DATE OF LAST CHANGE = 13  NOV   78 ( 78*317 )      @ZA34940*/
+* /*                                                                */
+* /******************************************************************/
+* /*                                                                */
+* /*     EXLST VSAM EXTENSION                                       */
+* /*                                                                */
+* /*     THE EXTENSION DESCRIBES ADDITIONAL VSAM CONTROL            */
+* /*     DATA. THE EXTENSION IS CALLED UNCONDITIONALLY              */
+* /*     BY IFGEXLST AND IS APPENDED TO THE EXLST COMMON AREA.      */
+* /*                                                                */
+* /*     IN ADDITION, IFGEXLVS INVOKES THE VTAM EXTENSION,          */
+* /*     ISTEXLEX, UNDER THE FOLLOWING CONDITIONS:                  */
+* /*                                                                */
+* /*        PLS:  THE MODULE CONTAINING AN INCLUDE FOR IFGEXLST     */
+* /*              SETS THE MACRO VARIABLE 'ACBRPLXL' TO 'VTAM'      */
+* /*              PRIOR TO ISSUING THE INCLUDE.                     */
+* /*        BAL:  THE AM=VTAM PARAMETER IS CODED ON THE MACRO       */
+* /*              CALL.                                             */
+* /*                                                                */
+* /*                                                                */
+* /******************************************************************/
+* /*                                                                */
+* /*                  PL/S VSAM EXLST EXTENSION                     */
+* /*                                                                */
+*%EXLEXTXX:;
+* /*                                                                */
+*     %IF ACBRPLXL ^= 'VTAM'                /* IS IT VTAM           */
+*         %THEN %GOTO VSAMEXL;              /* NO, BUYPASS          */
+*         %INCLUDE SYSLIB(ISTEXLEX);        /* YES, GET EXTENSION   */
+*     %GOTO EXLEXEND;                       /* EXIT                 */
+*%VSAMEXL: ;
+*         2 * CHAR(0);                      /* GENERATE END OF EXLST*/
+*     %GOTO EXLEXEND;                       /* EXIT*/
+*
+* /*                  ASSEMBLER VSAM EXLST EXTENSION
+*
+         MACRO
+         IFGEXLVS &AM=
+         AIF   ('&AM' NE 'VTAM').ENDEXLX    IS IT VTAM
+         ISTEXLEX                       YES, CALL VTAM EXTENSION
+*
+.ENDEXLX ANOP
+         MEND
+*              END OF VSAM EXLST EXTENSION                          */
+*%EXLEXEND: ;
+*

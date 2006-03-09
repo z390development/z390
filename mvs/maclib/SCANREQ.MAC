@@ -1,0 +1,544 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SCANREQ    &DACAA,&OPTYP,&SOURA,&SINKA,&SOURL,&SINKL,&DEVAD,  -
+               &SCR1,&SCR2,&RVOID=,&PROT=,&MF=
+         LCLB  &LBOPR(5)      OPERAND REGISTER FLAGS
+.*                  WHERE     LBOPR(1) ON INDICATES DACAA IS REG
+.*                            LBOPR(2) ON INDICATES SOURA IS REG
+.*                            LBOPR(3) ON INDICATES SINKA IS REG
+.*                            LBOPR(4) ON INDICATES SOURL IS REG
+.*                            LBOPR(5) ON INDICATES SINKL IS REG
+         LCLB  &NOCODE        FLAG TO PREVENT CODE GENERATION
+         LCLA  &LAOPTY        BTAM OPERATION TYPE
+         LCLB  &LBMFE,&LBMFL  SWITCHES FOR REMEMBERING MF
+         LCLC  &LCM1          CHARACTER DATA
+         LCLC  &LCM2          CHARACTER REGISTER DATA
+         LCLC  &LCM3          CHARACTER DATA - PART OF NI INSTRUCTION
+         LCLC  &LCM4          CHARACTER DATA - 000000 OR 111111
+         LCLC &SCREEN6       2260 SCREEN SIZE
+         LCLC  &NORVOID       INDICATES RVOID = NO IF 0
+         LCLC  &NOPROT        INDICATES PROT  = NO IF 0
+         LCLB  &OPTP(8)  SET UP BYTE FOR DACOPTYP
+.*                  WHERE     OPTP(1) ON INDICATES RVOID = YES
+.*                            OPTP(2) ON INDICATES PROT  = YES
+.*                            OPTP(3) ON INDICATES OPTYP = 1
+.*                            OPTP(4) ON INDICATES OPTYP = 2
+.*                            OPTP(5) ON INDICATES OPTYP = 3
+.*                            OPTP(6) ON INDICATES OPTYP = 4
+.*                            OPTP(7) ON INDICATES OPTYP = 5
+.*                            OPTP(8) ON INDICATES OPTYP = 6
+         LCLB  &NLOPTYP       INDICATES OPTYPE = 0
+         LCLB  &OMSCR1
+         LCLB  &VLSCR1(6)     REMEMBER 2260 SCREEN SIZE
+.*                  WHERE     VLSCR1(1) ON INDICATES SCR1 =  6X40
+.*                            VLSCR1(2) ON INDICATES SCR1 = 12X40
+.*                            VLSCR1(3) ON INDICATES SCR1 = 12X80
+.*                            VLSCR1(4) ON INDICATES SCR1 = 15X64
+.*                            VLSCR1(5) ON INDICATES SCR1 = 24X80
+.*                            VLSCR1(6) ON INDICATES SCR1 = __X132
+         LCLB  &VLSCR2(3)     REMEMBER 3270 SCREEN SIZE
+.*                  WHERE     VLSCR2(1) ON INDICATES SCR2 = 12X40
+.*                            VLSCR2(2) ON INDICATES SCR2 = 24X80
+.*                            VLSCR2(3) ON INDICATES SCR2 = __X132
+         LCLA  &LATEMP        ARITHMETIC SCRATCH
+&LBMFE   SETB  ('&MF' EQ 'E')
+&LBMFL   SETB  ('&MF' EQ 'L')
+         AIF   (&LBMFE OR &LBMFL OR T'&MF EQ 'O').CKDACA1
+         MNOTE 9,'MF=&MF INVALID, MACRO IGNORED.'
+         MEXIT
+.CKDACA1 ANOP
+&NORVOID SETC  '1'
+&NOPROT  SETC  '1'
+&LCM4    SETC  '000000'
+         AIF   (T'&DACAA NE 'O').CKDACA2
+         MNOTE 5,'DACA OPERAND OMITTED, REQUIRED PARAMETER.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKOPTP1
+.CKDACA2 ANOP
+         AIF   ('&DACAA'(1,1) EQ '(' AND '&DACAA'(K'&DACAA,1)          -
+               EQ ')').DACAAR
+         AGO   .CKOPTP1  IF DACAA IS NOT REGISTER, T' SHOULD BE U
+.DACAAR  ANOP
+         AIF   (&LBMFE).CKDACA3    DACAA REGISTER ONLY FOR MF=E
+.DACAMNT MNOTE 5,'DACA=&DACAA, REGISTER FORM INVALID.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKOPTP1
+.CKDACA3 ANOP
+&LBOPR(1) SETB (1)            REMEMBER DACA IS REGISTER
+         AIF   (T'&DACAA EQ 'U').CKOPTP1
+         AIF   (T'&DACAA NE 'N').DACAMNT
+&LCM1    SETC  '&DACAA'(2,K'&DACAA-2)
+&LATEMP  SETA  &LCM1
+         AIF   (&LATEMP GE 1 AND &LATEMP LE 12).CKOPTP1
+         MNOTE 5,'DACA=&DACAA, ILLEGAL REGISTER.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+.CKOPTP1 ANOP
+         AIF   (T'&OPTYP NE 'O').CKOPTP2
+         MNOTE 5,'OPTYPE OPERAND OMITTED, REQUIRED PARAMETER.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKSRA1
+.CKOPTP2 ANOP
+         AIF   (K'&OPTYP EQ 1).CKOPTP3
+         MNOTE 5,'OPTYPE=&OPTYP, FIELD SIZE ILLEGAL.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKSRA1
+.CKOPTP3 ANOP
+         AIF   (T'&OPTYP EQ 'N').CKOPTP4
+&LCM1    SETC  T'&OPTYP
+         MNOTE 5,'OPTYPE=&OPTYP, TYPE-ATTRIBUTE &LCM1 ILLEGAL.'
+&NOCODE  SETB  (1)
+         AGO   .CKSRA1
+.CKOPTP4 ANOP
+&LATEMP  SETA  &OPTYP
+         AIF   (&LATEMP LE 6).CKOPTP5
+         MNOTE 5,'OPTYPE=&OPTYP, ILLEGAL OPERATION TYPE.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKSRA1
+.CKOPTP5 ANOP
+&NLOPTYP SETB  ('&OPTYP' EQ '0')
+&OPTP(3) SETB  ('&OPTYP' EQ '1')
+&OPTP(4) SETB  ('&OPTYP' EQ '2')
+&OPTP(5) SETB  ('&OPTYP' EQ '3')
+&OPTP(6) SETB  ('&OPTYP' EQ '4')
+&OPTP(7) SETB  ('&OPTYP' EQ '5')
+&OPTP(8) SETB  ('&OPTYP' EQ '6')
+.CKSRA1  ANOP
+         AIF   (T'&SOURA EQ 'O').CKSKA1
+         AIF   ('&SOURA'(1,1) EQ '(' AND '&SOURA'(K'&SOURA,1) EQ ')').C-
+               KSRA2
+&LCM1    SETC  T'&SOURA
+         AIF   (T'&SOURA EQ 'C' OR T'&SOURA EQ 'F' OR T'&SOURA EQ 'H'  -
+               OR T'&SOURA EQ 'X' OR T'&SOURA EQ 'T' OR T'&SOURA EQ    -
+               'U').CKSKA1
+         MNOTE 0,'SOURCE ADDRESS=&SOURA, TYPE-ATTRIBUTE &LCM1 MAY BE IM-
+               PROPER.'
+         AGO   .CKSKA1
+.CKSRA2  ANOP
+         AIF   (&LBMFL).CKSRAE1
+&LBOPR(2) SETB (1)            REMEMBER SOURCE AREA IS REGISTER
+         AIF   (T'&SOURA EQ 'U').CKSKA1
+         AIF   (T'&SOURA NE 'N').CKSRAE1
+&LCM1    SETC  '&SOURA'(2,K'&SOURA-2)
+&LATEMP  SETA  &LCM1
+         AIF   (&LATEMP GE 2 AND &LATEMP LE 12).CKSKA1
+         MNOTE 5,'SOURCE AREA=&SOURA, ILLEGAL REGISTER.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKSKA1
+.CKSRAE1 ANOP
+         MNOTE 5,'SOURCE AREA=&SOURA, REGISTER FORM INVALID.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+.CKSKA1  ANOP
+         AIF   (T'&SINKA EQ 'O').CKSRL1
+         AIF   ('&SINKA'(1,1) EQ '(' AND '&SINKA'(K'&SINKA,1) EQ ')').C-
+               KSKA2
+&LCM1    SETC  T'&SINKA
+         AIF   ('&LCM1' EQ 'C' OR '&LCM1' EQ 'F' OR '&LCM1' EQ 'H' OR  -
+               '&LCM1' EQ 'X' OR '&LCM1' EQ 'T' OR '&LCM1' EQ 'U').CKSR-
+               L1
+         MNOTE 0,'SINK ADDRESS=&SINKA, TYPE-ATTRIBUTE &LCM1 MAY BE IMPR-
+               OPER.'
+         AGO   .CKSRL1
+.CKSKA2  ANOP
+         AIF   (&LBMFL).CKSKAE1
+&LBOPR(3) SETB (1)            REMEMBER SINK AREA IS REGISTER
+         AIF   (T'&SINKA EQ 'U').CKSRL1
+         AIF   (T'&SINKA NE 'N').CKSKAE1
+&LCM1    SETC  '&SINKA'(2,K'&SINKA-2)
+&LATEMP  SETA  &LCM1
+         AIF   (&LATEMP GE 2 AND &LATEMP LE 12).CKSRL1
+         MNOTE 5,'SINK AREA=&SINKA, ILLEGAL REGISTER.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKSRL1
+.CKSKAE1 ANOP
+         MNOTE 5,'SINK AREA=&SINKA, REGISTER FORM INVALID.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+.CKSRL1  ANOP
+         AIF   (T'&SOURL EQ 'O').CKSKL1
+         AIF   ('&SOURL'(1,1) EQ '(' AND '&SOURL'(K'&SOURL,1) EQ ')').C-
+               KSRL3
+&LCM1    SETC  T'&SOURL
+         AIF   ('&LCM1' EQ 'U').CKSKL1
+         AIF   ('&LCM1' EQ 'N').CKSRL2
+         MNOTE 5,'SOURCE LENGTH=&SOURL, TYPE-ATTRIBUTE &LCM1 ILLEGAL.  -
+               '
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKSKL1
+.CKSRL2  ANOP
+&LATEMP  SETA  &SOURL
+         AIF   (&LATEMP GE 1 AND &LATEMP LE 32767).CKSKL1
+         MNOTE 5,'SOURCE LENGTH=&SOURL, VALUE ILLEGAL.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKSKL1
+.CKSRL3  ANOP
+         AIF   (&LBMFL).CKSRLE1
+&LBOPR(4) SETB (1)            REMEMBER SOURCE LENGTH IS REGISTER
+         AIF   (T'&SOURL EQ 'U').CKSKL1
+         AIF   (T'&SOURL NE 'N').CKSRLE1
+&LCM1    SETC  '&SOURL'(2,K'&SOURL-2)
+&LATEMP  SETA  &LCM1
+         AIF   (&LATEMP GE 2 AND &LATEMP LE 12).CKSKL1
+         MNOTE 5,'SOURCE LENGTH=&SOURL, ILLEGAL REGISTER.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKSKL1
+.CKSRLE1 ANOP
+         MNOTE 5,'SOURCE LENGTH=&SOURL, REGISTER FORM INVALID.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+.CKSKL1  ANOP
+         AIF   (T'&SINKL EQ 'O').CKDVD1
+         AIF   ('&SINKL'(1,1) EQ '(' AND '&SINKL'(K'&SINKL,1) EQ ')').C-
+               KSKL3
+&LCM1    SETC  T'&SINKL
+         AIF   ('&LCM1' EQ 'U').CKDVD1
+         AIF   ('&LCM1' EQ 'N').CKSKL2
+         MNOTE 5,'SINK LENGTH=&SINKL, TYPE-ATTRIBUTE &LCM1 ILLEGAL.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKDVD1
+.CKSKL2  ANOP
+&LATEMP  SETA  &SINKL
+         AIF   (&LATEMP GE 1 AND &LATEMP LE 32767).CKDVD1
+         MNOTE 5,'SINK LENGTH=&SINKL, VALUE ILLEGAL.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKDVD1
+.CKSKL3  ANOP
+         AIF   (&LBMFL).CKSKLE1
+&LBOPR(5) SETB (1)            REMEMBER SINK LENGTH IS REGISTER
+         AIF   (T'&SINKL EQ 'U').CKDVD1
+         AIF   (T'&SINKL NE 'N').CKSKLE1
+&LCM1    SETC  '&SINKL'(2,K'&SINKL-2)
+&LATEMP  SETA  &LCM1
+         AIF   (&LATEMP GE 2 AND &LATEMP LE 12).CKDVD1
+         MNOTE 5,'SINK LENGTH=&SINKL, ILLEGAL REGISTER.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKDVD1
+.CKSKLE1 ANOP
+         MNOTE 5,'SINK LENGTH=&SINKL, REGISTER FORM INVALID.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+.CKDVD1  ANOP
+         AIF   (T'&DEVAD EQ 'O').CKSR11
+         AIF   (K'&DEVAD LE 2).CKDVD2
+         MNOTE 5,'2260 DEVICE ADDRESS=&DEVAD INVALID.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+.CKDVD2  ANOP
+.CKSR11  ANOP
+         AIF   (T'&SCR1 EQ 'O').CKSR13
+&LCM1    SETC  T'&SCR1
+         AIF   ('&LCM1' EQ 'U').CKSR12
+         MNOTE 5,'2260 SCREEN SIZE=&SCR1, TYPE-ATTRIBUTE &LCM1 ILLEGAL.-
+               '
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKSR21
+.CKSR12  ANOP
+&VLSCR1(1) SETB ('&SCR1' EQ  '6X40')
+&VLSCR1(2) SETB ('&SCR1' EQ '12X40')
+&VLSCR1(3) SETB ('&SCR1' EQ '12X80')
+&VLSCR1(4) SETB ('&SCR1' EQ '15X64')
+&VLSCR1(5) SETB ('&SCR1' EQ '24X80')
+&VLSCR1(6) SETB ('&SCR1'(K'&SCR1-3,4) EQ 'X132')
+         AIF   (&VLSCR1(1) OR &VLSCR1(2) OR &VLSCR1(3) OR &VLSCR1(4)   -
+               OR &VLSCR1(5) OR &VLSCR1(6)).CKSR21
+         MNOTE 5,'2260 SCREEN SIZE=&SCR1, VALUE ILLEGAL.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKSR21
+.CKSR13  ANOP
+&OMSCR1  SETB  (1)            REMEMBER THAT &SCR1 IS OMITTED
+.CKSR21  ANOP
+         AIF   (T'&SCR2 EQ 'O').SETSCRN
+&LCM1    SETC  T'&SCR2
+         AIF   ('&LCM1' EQ 'U').CKSR22
+         MNOTE 5,'3270 SCREEN SIZE=&SCR2, TYPE-ATTRIBUTE &LCM1 ILLEGAL.-
+               '
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO  .CKRVD1
+.CKSR22  ANOP
+&VLSCR2(1) SETB ('&SCR2' EQ '12X40')
+&VLSCR2(2) SETB ('&SCR2' EQ '24X80')
+&VLSCR2(3) SETB ('&SCR2'(K'&SCR2-3,4) EQ 'X132')
+         AIF   (&VLSCR2(1) OR &VLSCR2(2) OR &VLSCR2(3)).CKSR23
+         MNOTE 5,'3270 SCREEN SIZE=&SCR2, VALUE ILLEGAL.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+         AGO   .CKRVD1
+.CKSR23  ANOP
+         AIF   (NOT &OMSCR1).SETSCRN
+&VLSCR1(2) SETB (&VLSCR2(1))
+&VLSCR1(5) SETB (&VLSCR2(2))
+&VLSCR1(6) SETB (&VLSCR2(3))
+.SETSCRN ANOP
+         AIF   (NOT &VLSCR2(1)).SCRNOK1
+         AIF   (&VLSCR1(3) OR &VLSCR1(4) OR &VLSCR1(5) OR &VLSCR1(6)).S-
+               CRNBAD
+.SCRNOK1 ANOP
+         AIF   (&VLSCR2(2) AND &VLSCR1(6)).SCRNBAD
+         AGO   .SCRNOK2
+.SCRNBAD ANOP
+         MNOTE 5,'2260 SCREEN SIZE IS GREATER THAN 3270 SCREEN SIZE'
+&NOCODE  SETB  (1)
+         AGO   .CKRVD1
+.SCRNOK2 ANOP
+         AIF   (NOT &VLSCR1(1)).DACAG9
+&SCREEN6 SETC  '0628'
+         AGO   .CKRVD1
+.DACAG9  ANOP
+         AIF   (NOT &VLSCR1(2)).DACAG10
+&SCREEN6 SETC  '0C28'
+         AGO   .CKRVD1
+.DACAG10 ANOP
+         AIF   (NOT &VLSCR1(3)).DACAG11
+&SCREEN6 SETC  '0C50'
+         AGO   .CKRVD1
+.DACAG11 ANOP
+         AIF   (NOT &VLSCR1(4)).DACAG12
+&SCREEN6 SETC  '0F40'
+         AGO   .CKRVD1
+.DACAG12 ANOP
+         AIF   (NOT &VLSCR1(5)).DCAG12E
+&SCREEN6 SETC  '1850'
+         AGO   .CKRVD1
+.DCAG12E ANOP
+&SCREEN6 SETC  'FF84'
+.CKRVD1  ANOP
+         AIF   (T'&RVOID EQ 'O').CKPRT1
+&OPTP(1) SETB  ('&RVOID' EQ 'YES')
+         AIF   ('&RVOID' EQ 'YES' OR '&RVOID' EQ 'NO').CKPRT1
+         MNOTE 5,'RVOID=&RVOID, VALUE ILLEGAL.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+.CKPRT1  ANOP
+         AIF   (T'&PROT EQ 'O').CKCODE
+&OPTP(2) SETB  ('&PROT' EQ 'YES')
+         AIF   ('&PROT' EQ 'YES' OR '&PROT' EQ 'NO').CKCODE
+         MNOTE 5,'PROT=&PROT, VALUE ILLEGAL.'
+&NOCODE  SETB  (1)            SKIP CODE GENERATION
+.CKCODE  ANOP
+         AIF   (NOT &NOCODE).SRCODE
+         MNOTE 9,'CODE GENERATION SUPPRESSED.'
+         MEXIT
+.*
+.*       CODE GENERATION
+.*
+.SRCODE  ANOP
+         AIF   (&LBMFE).GENMFE
+         AIF   (&LBMFL).GENMFL
+.*
+.*       OTHERWISE, GENERATE CODE FOR MF OMITTED
+         CNOP  0,4
+&NAME    BAL   1,*+28         SET ADDRESS OF DACA AND BRANCH AROUND
+         AGO   .DACAGEN
+.*
+.GENMFL  ANOP                 GENERATE CODE FOR MF=L
+&NAME    DC    0F'0'
+.*
+.DACAGEN ANOP
+&DACAA   DC    H'0'                     CURSOR ADDRESS
+         DC    X'FFFF'                  SOM ADDRESS
+         AIF   (&LBOPR(2) OR T'&SOURA EQ 'O').DACAG1
+         DC    AL4(&SOURA)              SOURCE AREA ADDRESS
+         AGO   .DACAG2
+.DACAG1  ANOP
+         DC    AL4(0)                   NULL SOURCE AREA ADDRESS
+.DACAG2  ANOP
+         AIF   (&LBOPR(3) OR T'&SINKA EQ 'O').DACAG3
+         DC    AL4(&SINKA)              SINK AREA ADDRESS
+         AGO   .DACAG4
+.DACAG3  ANOP
+         DC    AL4(0)                   NULL SINK AREA ADDRESS
+.DACAG4  ANOP
+         AIF   (&LBOPR(4) OR T'&SOURL EQ 'O').DACAG5
+         DC    Y(&SOURL)                SOURCE AREA LENGTH
+         AGO   .DACAG6
+.DACAG5  ANOP
+         DC    Y(0)                     NULL SOURCE AREA LENGTH
+.DACAG6  ANOP
+         AIF   (&LBOPR(5) OR T'&SINKL EQ 'O').DACAG7
+         DC    Y(&SINKL)                SINK AREA LENGTH
+         AGO   .DACAG8
+.DACAG7  ANOP
+         DC    Y(0)                     NULL SINK AREA LENGTH
+.DACAG8  ANOP
+         AIF   (&OMSCR1).DACAG13
+         DC    X'&SCREEN6'              2260 SCREEN ADDRESS
+         AGO   .DACAG16
+.DACAG13 ANOP
+         AIF   (T'&SCR2 NE 'O').DACAG14
+         DC    X'0000'                  NULL 2260 SCREEN SIZE
+         AGO   .DACAG16
+.DACAG14 ANOP
+         DC    X'&SCREEN6'              2260 SCREEN SIZE = 3270
+.DACAG16 ANOP
+         AIF   (T'&SCR2 NE 'O').DACAG17
+         DC    X'0000'                  NULL 3270 SCREEN SIZE
+         AGO   .DACAG19
+.DACAG17 ANOP
+         AIF   (NOT &VLSCR2(1)).DACAG18
+         DC    X'0C28'                  3270 SCREEN SIZE
+         AGO   .DACAG19
+.DACAG18 ANOP
+         AIF   (NOT &VLSCR2(2)).DCAG18E
+         DC    X'1850'                  3270 SCREEN SIZE
+         AGO   .DACAG19
+.DCAG18E ANOP
+         DC    X'FF84'                  3270 LINE LENGTH
+.DACAG19 ANOP
+         AIF   (T'&DEVAD NE 'O').DACAG20
+         DC    X'00'                    NULL 2260 DEVICE ADDRESS
+         AGO   .DACAG21
+.DACAG20 ANOP
+         DC    X'&DEVAD'                2260 DEVICE ADDRESS
+.DACAG21 ANOP
+         DC    B'&OPTP(1)&OPTP(2)&OPTP(3)&OPTP(4)&OPTP(5)&OPTP(6)&OPTP(-
+               7)&OPTP(8)'              OPTYPE BYTE
+         DC    X'0000'                  RESERVED
+         AIF   (&LBMFL).MEND            DONE IF MF=L
+         AIF   (NOT &LBOPR(2)).GLINK1
+&LCM2    SETC  '&SOURA'(2,K'&SOURA-2)
+         ST    &LCM2,4(1)               STORE SOURCE ADDRESS REG
+.GLINK1  ANOP
+         AIF   (NOT &LBOPR(3)).GLINK2
+&LCM2    SETC  '&SINKA'(2,K'&SINKA-2)
+         ST    &LCM2,8(1)               STORE SINK ADDRESS REG
+.GLINK2  ANOP
+         AIF   (NOT &LBOPR(4)).GLINK3
+&LCM2    SETC  '&SOURL'(2,K'&SOURL-2)
+         STH   &LCM2,12(1)              STORE SOURCE LENGTH REG
+.GLINK3  ANOP
+&LCM1    SETC  ' '
+         AIF   (NOT &LBOPR(5)).GENLINK
+&LCM2    SETC  '&SINKL'(2,K'&SINKL-2)
+         STH   &LCM2,14(1)              STORE SINK LENGTH REG
+         AGO   .GENLINK
+.*
+.*
+.GENMFE  ANOP
+.*
+.*
+&LCM1    SETC  '&NAME'                  PICK UP NAME, IF ANY
+         AIF   (&LBOPR(1)).RDACA        TEST FOR REGISTER DACA
+&LCM1    LA    1,&DACAA                 GET DACA ADDRESS
+&LCM1    SETC  ' '                      NULLIFY ANY EXISTING NAME
+         AGO   .RDACA1
+.RDACA   ANOP
+         AIF   ('&DACAA'(2,K'&DACAA-2) EQ '1').RDACA1  LEGIT REG 1
+&LCM1    LR    1,&DACAA(1)              LOAD 1 FROM USER REGISTER
+&LCM1    SETC  ' '            CLEAR NAME IF ANY
+.RDACA1  ANOP
+         AIF   (T'&SOURA EQ 'O').RDACA3
+         AIF   (&LBOPR(2)).RDACA2
+&LCM1    LA    14,&SOURA                GET SOURCE AREA ADDRESS
+         ST    14,4(1)                  PLACE SOURCE ADDRESS IN YA01255
+&LCM1    SETC  ' '
+         AGO   .RDACA3
+.RDACA2  ANOP
+&LCM2    SETC  '&SOURA'(2,K'&SOURA-2)
+&LCM1    ST    &LCM2,4(1)               STORE SOURCE ADDRESS REG
+&LCM1    SETC  ' '
+.RDACA3  ANOP
+         AIF   (T'&SINKA EQ 'O').RDACA5
+         AIF   (&LBOPR(3)).RDACA4
+&LCM1    LA    14,&SINKA                GET SINK AREA ADDRESS
+         ST    14,8(1)                  PLACE SINK ADDRESS IN   YA01255
+&LCM1    SETC  ' '
+         AGO   .RDACA5
+.RDACA4  ANOP
+&LCM2    SETC  '&SINKA'(2,K'&SINKA-2)
+&LCM1    ST    &LCM2,8(1)               STORE SINK ADDRESS REG
+&LCM1    SETC  ' '
+.RDACA5  ANOP
+         AIF   (T'&SOURL EQ 'O').RDACA7
+         AIF   (&LBOPR(4)).RDACA6
+&LCM1    B     *+6
+         DC    AL2(&SOURL)              SOURCE LENGTH
+         MVC   12(2,1),*-2              MOVE IN SOURCE LENGTH
+&LCM1    SETC  ' '
+         AGO   .RDACA7
+.RDACA6  ANOP
+&LCM2    SETC  '&SOURL'(2,K'&SOURL-2)
+&LCM1    STH   &LCM2,12(1)              STORE SOURCE LENGTH REG
+&LCM1    SETC  ' '
+.RDACA7  ANOP
+         AIF   (T'&SINKL EQ 'O').RDACA9
+         AIF   (&LBOPR(5)).RDACA8
+&LCM1    B     *+6
+         DC    AL2(&SINKL)              SINK LENGTH
+         MVC   14(2,1),*-2              MOVE IN SINK LENGTH
+&LCM1    SETC  ' '
+         AGO   .RDACA9
+.RDACA8  ANOP
+&LCM2    SETC  '&SINKL'(2,K'&SINKL-2)
+&LCM1    STH   &LCM2,14(1)              STORE SINK LENGTH REG
+&LCM1    SETC  ' '
+.RDACA9  ANOP
+         AIF   (&OMSCR1).RDACA14
+&LCM1    B     *+6
+         DC    X'&SCREEN6'              2260 SCREEN SIZE
+         MVC   16(2,1),*-2              MOVE IN 2260 SCREEN SIZE
+&LCM1    SETC  ' '
+         AGO   .RDACA16
+.RDACA14 ANOP
+         AIF   (T'&SCR2 EQ 'O').RDACA16
+&LCM1    B     *+6
+         DC    X'&SCREEN6'              2260 = 3270 SCREEN SIZE
+         MVC   16(2,1),*-2              MOVE IN 2260 SCREEN SIZE
+&LCM1    SETC  ' '
+.RDACA16 ANOP
+         AIF    (T'&SCR2 EQ 'O').RDACA18
+         AIF   (NOT &VLSCR2(1)).RDACA17
+&LCM1    B     *+6
+         DC    X'0C28'                  3270 SCREEN SIZE
+         MVC   18(2,1),*-2              MOVE IN 3270 SCREEN SIZE
+&LCM1    SETC  ' '
+         AGO   .RDACA18
+.RDACA17 ANOP
+         AIF   (NOT &VLSCR2(2)).RDCA17E
+&LCM1    B     *+6
+         DC    X'1850'                  3270 SCREEN SIZE
+         MVC   18(2,1),*-2              MOVE IN 3270 SCREEN SIZE
+&LCM1    SETC  ' '
+         AGO   .RDACA18
+.RDCA17E ANOP
+&LCM1    B     *+6
+         DC    X'FF84'                  3270 LINE LENGTH
+         MVC   18(2,1),*-2              MOVE IN 3270 LINE LENGTH
+&LCM1    SETC  ' '                      NULLIFY ANY EXISTING NAME
+.RDACA18 ANOP
+         AIF   (T'&DEVAD EQ 'O').RDACA19
+&LCM1    MVI   20(1),X'&DEVAD'          MOVE 2260 DEVICE ADDRESS
+&LCM1    SETC  ' '
+.RDACA19 ANOP
+         AIF   (NOT &NLOPTYP).RDACA20
+&LCM4    SETC  '111111'
+.RDACA20 ANOP
+         AIF   (NOT &NLOPTYP  AND   T'&RVOID NE 'O' AND T'&PROT NE 'O')-
+               .RDACA24
+         AIF   (&NLOPTYP AND T'&RVOID EQ 'O' AND T'&PROT EQ 'O').GENLIN-
+               K
+         AIF   ('&RVOID' NE 'NO').RDACA31
+&NORVOID SETC  '0'
+.RDACA31 ANOP
+         AIF   ('&PROT' NE 'NO').RDACA32
+&NOPROT  SETC  '0'
+.RDACA32 ANOP
+         AIF   ('&RVOID' EQ 'NO' OR '&PROT' EQ 'NO' OR NOT &NLOPTYP).RD-
+               ACA21
+         AGO   .RDACA22
+.RDACA21 ANOP
+&LCM3    SETC  '&NORVOID'.'&NOPROT'.'&LCM4'
+&LCM1    NI    21(1),B'&LCM3'
+&LCM1    SETC  ' '
+.RDACA22 ANOP
+         AIF   ('&RVOID' EQ 'YES' OR '&PROT' EQ 'YES' OR NOT &NLOPTYP).-
+               RDACA23
+         AGO   .GENLINK
+.RDACA23 ANOP
+&LCM1    OI    21(1),B'&OPTP(1)&OPTP(2)&OPTP(3)&OPTP(4)&OPTP(5)&OPTP(6)-
+               &OPTP(7)&OPTP(8)'
+&LCM1    SETC  ' '
+         AGO   .GENLINK
+.RDACA24 ANOP
+&LCM1    MVI   21(1),B'&OPTP(1)&OPTP(2)&OPTP(3)&OPTP(4)&OPTP(5)&OPTP(6)-
+               &OPTP(7)&OPTP(8)'        MOVE OPTYPE BYTE
+&LCM1    SETC  ' '
+.GENLINK ANOP
+         CNOP  0,4                      ALIGN TO A FULL WORD
+&LCM1    BAL   15,*+8                   GET ADDRESS OF VCON
+         DC    V(IECTSCAN)              ADDRESS OF IECTSCAN ROUTINE
+         L     15,0(15)                 LOAD ADDRESS OF IECTSCAN
+         BALR  14,15                    LINK TO IECTSCAN ROUTINE
+.MEND    MEND

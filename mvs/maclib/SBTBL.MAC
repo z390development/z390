@@ -1,0 +1,102 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SBTBL &N                      BINARY SEARCH TABLE     @ZA00773
+         LCLA  &X                      INDEX FOR TABLE ENTRIES @ZA00773
+         LCLA  &ENT                    NUMBER OF ENTRIES       @ZA00773
+         LCLA  &ENTL                   ENTRY LENGTH            @ZA00773
+         LCLA  &COMPL                  COMPARE LENGTH          @ZA00773
+         LCLA  &P                      LENGTH OF INDIVIDUAL ENTRY
+.*                                                             @ZA00773
+         LCLC  &PREV                   PREVIOUS ENTRY (OLD)    @ZA37241
+         LCLC  &CURR                   CURRENT ENTRY  (NEW)    @ZA37241
+         LCLA  &I                      CHARACTER INDEX         @ZA37241
+         LCLA  &C                      COMPARE LENGTH          @ZA37246
+         LCLA  &L                      ENTRY LENGTH            @ZA00773
+         GBLC  &LBL1                   LABEL ON ENTR MACRO     @ZA00773
+         GBLA  &DISP                   DISPLACEMENT            @ZA00773
+         ACTR  600000                  SET AGO/AIF COUNTER     @ZA04464
+         DS    0H
+.*                                                             @ZA00733
+&ENT     SETA  N'&SYSLIST-1                                    @ZA00773
+&ENTL    SETA  (K'&SYSLIST(2)+1)/2                             @ZA00773
+&L       SETA  K'&SYSLIST(2)           ENTRY LENGTH FOR THIS TABLE
+.*                                                             @ZA00773
+&NAME    EQU   *
+.*                                                             @ZA00733
+         DC    AL2(&NAME-&LBL1+&DISP+6+(&ENTL*&ENT)-&ENTL)
+.*                                     END OF TABLE ADDRESS    @ZA00773
+         DC    H'&ENT'                 NUMBER OF ENTRIES IN TABLE
+.*                                                             @ZA00773
+         DC    AL1(&ENTL)              LENGTH OF ENTRIES
+.*                                                             @ZA00773
+&C       SETA  (&SYSLIST(1)+1)/2*2     SET COMPARE LENGTH      @ZA37246
+&COMPL   SETA  (&SYSLIST(1)+1)/2                               @ZA00773
+         DC    AL1(&COMPL)             COMPARE LENGTH
+.*                                                             @ZA00773
+&X       SETA  1                       INITIALIZE INDEX TO IGNORE
+.*                                     COMPARE LENGTH          @ZA00773
+.SBTBL1  ANOP                                                  @ZA00773
+&X       SETA  &X+1                    INCREMENT INDEX         @ZA00773
+         AIF   ('&SYSLIST(&X)' EQ '').END END OF ENTRIES       @ZA00773
+&P       SETA  K'&SYSLIST(&X)          NO,LENGTH OF THIS ENTRY @ZA00773
+         AIF   ('&P' GT '0' AND '&P' LE '32').SBTBL2           @ZA00773
+         MNOTE 12,'*** IHB427 ENTRY LENGTH GREATER THAN 32 DIGITS'
+.*                                                             @ZA00773
+         AGO   .ERROR                                          @ZA00773
+.SBTBL2  ANOP                                                  @ZA00773
+         AIF   (&P EQ &L).SBTBL15      CORRECT ENTRY LENGTH    @ZA00773
+         MNOTE 8,'*** IHB358 ALL TABLE ENTRIES MUST BE EQUAL LENGTH'
+.*                                                             @ZA00773
+         AGO   .ERROR                                          @ZA00773
+.SBTBL15 ANOP                                                  @ZA00773
+         AIF   ((&P-(&P/2)*2) NE 1).SBTBL3 DISPLACEMENT EVEN   @ZA00773
+         MNOTE 12,'*** IHB428 ENTRY LENGTH IS ODD'
+.*                                                             @ZA00773
+         AGO   .ERROR                                          @ZA00773
+.SBTBL3  ANOP                                                  @ZA00773
+         AIF   ('&ENTL' GE '&COMPL').SBTBL4                    @YM01767
+         MNOTE 12,'*** IHB429 ENTRY LENGTH LESS THAN COMPARE LENGTH'
+.*                                                             @ZA00773
+         AGO   .ERROR                                          @ZA00773
+.SBTBL4  ANOP                                                  @ZA00773
+&CURR    SETC  '&SYSLIST(&X)'          GET CURRENT ENTRY       @ZA37244
+         AIF   ('&X' EQ '2').SBTBL5    FIRST ENTRY, NO SEQ CHK @ZA37242
+&I       SETA  1                       POINT TO FIRST CHAR     @ZA37241
+.SBTBL42 ANOP                                                  @ZA00773
+         AIF   ('&CURR'(&I,1) LT '0').SBTBL44 NEW IS A-F       @ZA37241
+.*                                     NEW IS 0-9              @ZA37241
+         AIF   ('&PREV'(&I,1) LT '0').SBTBL49 OLD IS A-F, SEQ ERR      C
+                                                               @ZA37241
+         AGO   .SBTBL46                OLD IS 0-9, GO COMPARE  @ZA37241
+.SBTBL44 ANOP                                                  @ZA37241
+         AIF   ('&PREV'(&I,1) GE '0').SBTBL5 OLD IS 0-9, SEQ OK@ZA37241
+.SBTBL46 ANOP                                                  @ZA37241
+.*       CONTROL COMES HERE IF THE PREVIOUS ENTRY CHARACTER    @ZA37241
+.*       AND THE CURRENT ENTRY CHARACTER ARE BOTH 0-9 OR BOTH  @ZA37241
+.*       A-F TO PERFORM A COMPARE.  THE ASSEMBLER WILL FLAG    @ZA37241
+.*       INVALID HEX DIGITS.                                   @ZA37241
+         AIF   ('&CURR'(&I,1) GT '&PREV'(&I,1)).SBTBL5 NEW IS GT OLD,  C
+                                       SEQ OK                  @ZA37241
+.*                                     NEW IS NGT OLD, CHK LT  @ZA37241
+         AIF   ('&CURR'(&I,1) LT '&PREV'(&I,1)).SBTBL49 NEW IS LT OLD, C
+                                       SEQ ERR                 @ZA37241
+.*                                     NEW IS EQ OLD, CONT CHK @ZA37241
+         AIF   ('&I' GE '&C').SBTBL49  LAST CHAR, SEQ ERR      @ZA37243
+&I       SETA  &I+1                    POINT TO NEXT CHAR      @ZA37241
+         AGO   .SBTBL42                COMPARE NEXT CHAR       @ZA37241
+.*                                                             @ZA37241
+.SBTBL49 ANOP                                                  @ZA37241
+         MNOTE 4,'*** IHB430 ENTRY OUT OF SEQUENCE'
+.*                                                             @ZA00773
+         DC    XL&ENTL'&SYSLIST(&X)'   SEQUENCE ERROR
+.*                                                             @ZA37244
+         AGO   .SBTBL1                 GET NEXT ENTRY          @ZA37244
+.SBTBL5  ANOP                                                  @ZA00773
+         DC    XL&ENTL'&SYSLIST(&X)'   TABLE ENTRY
+.*                                                             @ZA00773
+&PREV    SETC  '&CURR'                 NEW NOW OLD             @ZA37244
+         AGO   .SBTBL1                 GET NEXT ENTRY          @ZA00773
+.END     ANOP                                                  @ZA00773
+.ERROR   ANOP                                                  @ZA00773
+         MEND
+

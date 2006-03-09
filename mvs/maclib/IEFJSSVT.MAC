@@ -1,0 +1,69 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        % GO TO SSVTPLS;         /*
+         MACRO
+         IEFJSSVT
+*
+*  SUBSYSTEM VECTOR TABLE
+*
+SSVT     DSECT
+SSVTBEGN EQU   *
+SSVTRSV1 DS    H                  RESERVED
+SSVTFNUM DS    H                  NUMBER OF FUNCTIONS SUPPORTED BY
+*                                 THIS SUBSYSTEM
+         SPACE
+*
+*  256 BYTE FUNCTION MATRIX -
+*
+*    THE SSOB FUNCTION ID MINUS ONE IS USED AS AN OFFSET INTO
+*    THIS MATRIX.
+*
+*        MATRIX FUNCTION BYTE  =0 : THE FUNCTION SPECIFIED IN THE
+*                                   SSOB IS NOT SUPPORTED BY THIS
+*                                   SUBSYSTEM.
+*        MATRIX FUNCTION BYTE ^=0 : THE VALUE (FUNCTION BYTE-1)*4
+*                                   IS ADDED TO THE ADDRESS OF
+*                                   SSVTFRTN TO OBTAIN THE
+*                                   ADDRESS OF THE WORD CONTAINING
+*                                   THE FUNCTION ROUTINE POINTER FOR
+*                                   THIS REQUEST.
+*
+SSVTFCOD DS    256X               FUNCTION MATRIX
+SSVTFSIZ EQU   *-SSVTBEGN         SSVT FIXED AREA SIZE
+SSVTFRTN DS    F                  SSVTFRTN IS THE FIRST WORD OF A
+*                                 VARIABLE LENGTH MATRIX CONTAINING
+*                                 FUNCTION ROUTINE POINTERS FOR
+*                                 FUNCTIONS SUPPORTED BY THIS
+*                                 SUBSYSTEM.  THE MATRIX CAN BE A
+*                                 MAXIMUM OF 256 WORDS LONG.
+         ORG   SSVTFRTN+1024      MAXIMUM SSVTFRTN SIZE IS 1024 BYTES
+SSVTSIZE EQU   *-SSVTBEGN         MAXIMUM SSVT SIZE
+         MEND                     */
+* %SSVTPLS:;
+*/*                                                                  */
+*/*  SUBSYSTEM VECTOR TABLE                                          */
+*/*                                                                  */
+*  DCL 1 SSVT  BASED(SSVTPTR),
+*        2     SSVTFSIZ,           /* SSVT FIXED AREA SIZE           */
+*          3   SSVTRSV1 CHAR(2),   /* RESERVED                       */
+*          3   SSVTFNUM FIXED(15), /* NUMBER OF FUNCTIONS SUPPORTED
+*                                     BY THIS SUBSYSTEM              */
+*/*                                                                  */
+*/*  256 BYTE FUNCTION MATRIX                                        */
+*/*                                                                  */
+*/*    THE SSOB FUNCTION ID IS USED AS A SUBSCRIPT INTO THIS MATRIX  */
+*/*                                                                  */
+*/*      MATRIX FUNCTION BYTE  =0 : THE FUNCTION SPECIFIED IN THE    */
+*/*                                 SSOB IS NOT SUPPORTED BY THIS    */
+*/*                                 SUBSYSTEM.                       */
+*/*      MATRIX FUNCTION BYTE ^=0 : THE VALUE IN THE FUNCTION BYTE   */
+*/*                                 IS USED AS A SUBSCRIPT INTO      */
+*/*                                 SSVTFRTN TO OBTAIN THE           */
+*/*                                 ADDRESS OF THE WORD              */
+*/*                                 CONTAINING THE FUNCTION ROUTINE  */
+*/*                                 POINTER FOR THIS REQUEST         */
+*/*                                                                  */
+*          3   SSVTFCOD(256) PTR(8),  /* FUNCTION MATRIX             */
+*/* SSVTFRTN IS THE FIRST WORD OF A VARIABLE LENGHT MATRIX CONTAINING*/
+*/* FUNCTION ROUTINE POINTERS FOR FUNCTIONS SUPPORTED BY THIS        */
+*/* SUBSYSTEM. THE MATRIX CAN BE A MAXIMUM OF 256 WORDS LONG.        */
+*        2     SSVTFRTN(*) PTR(31);   /* FUNCTION POINTER            */

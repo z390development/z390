@@ -6,8 +6,24 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-&N       SUBEXIT
-&N       L     13,4(13)
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.*********************************************************************
+&N       SUBEXIT &RC=0   
+         AIF   (&SYSLIST(1) EQ '').NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&RC'(1,1) EQ '(').RCREG
+         LA    15,&RC
+         AGO   .RCEND
+.RCREG   ANOP
+         AIF   (&RC(1) EQ '15' OR &RC(1) EQ 'R15').RCEND  RPI163
+         LR    15,&RC(1)
+.RCEND   ANOP
+         L     13,4(13)
          LM    0,12,20(13)
          L     14,12(13)
          BR    14

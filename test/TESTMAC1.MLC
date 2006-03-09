@@ -15,14 +15,12 @@ TESTMAC1 SUBENTRY
          DC    C'A=&A'
 &BC      SETC  '&TEXT'(2,2)
          DC    C'BC=&BC'
-&TWOAMP  SETC  '&&'
-         DC    C'AMPAMP=&TWOAMP'
-&ONEAMP  SETC  '&&'(1,1)
-         DC    C'AMP=&ONEAMP'
-         DC    C'AMP=&'
-&SQ      SETC  ''''
-         DC    C'SQSQ=&SQ&SQ'
-         DC    C'SQSQ='''
+&TWOAMP  SETC  '&&&&'
+         MNOTE '&&TWOAMP=&TWOAMP'
+         DC    C'TWOAMP=&TWOAMP'
+&DQ      SETC  ''''''
+         MNOTE '&&DQ=&DQ'
+         DC    C'DQ=&DQ'
          DC     C'A',C'B',CL2'ABC',(2)C'1' TEST COMMENT, MULT FLD,
          dc     c'A',c'B',cl2'ABC',(2)c'1' EXPLICIT LEN, DUP FIELD, LC
          MACRO 

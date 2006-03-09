@@ -1,0 +1,152 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSSOCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSSO
+.*/ %SSSOCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSSO                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = PROCESS SYSOUT DATA SETS             @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSSOPLS;              /*                               @ZA34144
+SSOBSOUT EQU   1                  SYSOUT FUNCTION ID (SSOBFUNC)
+*
+*  PROCESS SYSOUT DATA SETS RETURN CODES (SSOBRETN)
+*
+SSSORTOK EQU   0                  EVERYTHING IS OK
+SSSOEODS EQU   4                  NO MORE DATA SETS TO SELECT
+SSSONJOB EQU   8                  JOB NOT FOUND
+SSSOINVA EQU   12                 INVALID SEARCH ARGUMENTS
+SSSOUNAV EQU   16                 UNABLE TO PROCESS NOW
+SSSODUPJ EQU   20                 DUPLICATE JOBNAMES
+SSSOINVJ EQU   24                 INVALID JOBNAME/JOBID COMBINATION
+SSSOIDST EQU   28                 INVALID DESTINATION SPECIFIED
+*
+         ORG   SSOBGN
+SSSOBGN  EQU   *
+SSSOLEN  DC    AL2(SSSOSIZE)      SYSOUT EXTENSION LENGTH
+SSSOUFLG DS    B                  USER SELECTION OPTIONS CLASS
+*                                 ROUTING AND DISPOSITION FLAGS
+SSSOSETC EQU   X'80'              USE SSSOCLAS AS DISPOSITION
+SSSODELC EQU   X'40'              DELETE SELECTED DATA SET
+SSSOROUT EQU   X'20'              REROUTE SELECTED DATA SET TO
+*                                 DESTINATION IN SSSODEST
+SSSOHOLD EQU   X'10'              HOLD ALL SELECTED DATA SETS
+SSSORLSE EQU   X'08'              RELEASE ALL SELECTED DATA SETS
+*        EQU   X'07'              RESERVED FLAGS
+SSSORESV DS    X                  RESERVED
+SSSOFLG1 DS    B                  DATA SET SELECTION CONTROL FLAGS
+SSSOHLD  EQU   X'80'              SELECTION SHOULD INCLUDE HELD
+*                                 SYSOUT DATA SETS
+SSSOSCLS EQU   X'40'              USE CLASS
+SSSODST  EQU   X'20'              USE REMOTE DESTINATION
+SSSOSJBN EQU   X'10'              USE JOB NAME
+SSSOSJBI EQU   X'08'              USE JOB ID
+SSSOSPGM EQU   X'04'              USE USER WRITER PROGRAM NAME
+SSSOSFRM EQU   X'02'              USE FORM NUMBER
+SSSORSV2 EQU   X'01'              RESERVED
+*
+SSSOFLG2 DS    B                  CURRENT DATA SET DISPOSITION FLAGS
+SSSOCTRL EQU   X'80'              1 - PROCESSING COMPLETED
+*                                 0 - RETURN DATA SET NAME
+SSSOCHKP EQU   X'40'              USE SSSORBA TO CHECKPOINT RBA
+*                                 OF CURRENT DATA SET IN CLASS
+SSSORSV3 EQU   X'3F'              RESERVED FLAGS
+SSSOCOPY DS    H                  NUMBER OF COPIES
+SSSOJOBN DS    CL8                JOB NAME
+SSSOJOBI DS    CL8                JOB ID
+SSSOCLAS DS    CL1                NAME OF DESTINATION CLASS SPECIFIED
+*                                 VIA THE NEWCLASS PARAMETER
+SSSORSV5 DS    CL3                RESERVED
+SSSODEST DS    CL8                REMOTE DESTINATION SPECIFIED
+*                                 VIA THE DEST PARAMETER
+SSSOPGMN DS    CL8                USER WRITER NAME
+SSSORBA  DS    CL8                RBA OF SYSOUT DATA SET
+SSSODSN  DS    CL44               SYSOUT DATA SET NAME
+SSSOFORM DS    CL4                FORM NUMBER
+*
+*  SSSOCLSL WILL CONTAIN 1-8 CLASSES WHEN USED FOR REROUTING OR DELETE
+*  FUNCTIONS AND WILL CONTAIN ONLY ONE CLASS WHEN USED FOR PRINTING.
+*
+SSSOCLSL DS    CL8                CLASS SELECTION LIST FOR
+*                                 DATA SET SELECTION
+SSSOWTRC DS    A                  A POINTER TO A COMMUNICATION  YM02726
+*                                 AREA FOR THE USER WRITTEN     YM02726
+*                                 WRITER                        YM02726
+SSSODSID DS    CL8                DATA SET ID TO PLACE SYSOUT  @Z30OPSD
+*                                 ON EXTERNAL DEVICES          @Z30OPSD
+*
+SSSOSIZE EQU   *-SSSOBGN          SYSOUT EXTENSION LENGTH
+SSOBLEN1 EQU   SSOBHSIZ+SSSOSIZE  SSOB LENGTH=HEADER + SYSOUT EXTENSION
+         MEND                                                @ZA34144*/
+* %SSSOPLS:;                            /*                   @ZA34144*/
+*  DCL SSOBSOUT FIXED(15) CONSTANT(01); /* FUNCTION ID (SSOBFUNC)    */
+*   /*                                                               */
+*   /*  PROCESS SYSOUT DATA SETS RETURN CODES (SSOBRETN)             */
+*   /*                                                               */
+*   DCL SSSORTOK FIXED(31) CONSTANT(0); /* EVERYTHING IS OK          */
+*   DCL SSSOEODS FIXED(31) CONSTANT(4); /*NO MORE DATA SETS TO SELECT*/
+*   DCL SSSONJOB FIXED(31) CONSTANT(8); /* JOB NOT FOUND             */
+*   DCL SSSOINVA FIXED(31) CONSTANT(12);/* INVALID SEARCH ARGUMENTS  */
+*   DCL SSSOUNAV FIXED(31) CONSTANT(16);/* UNABLE TO PROCESS NOW     */
+*   DCL SSSODUPJ FIXED(31) CONSTANT(20);/* DUPLICATE JOBNAMES        */
+*   DCL SSSOINVJ FIXED(31) CONSTANT(24);/* INVALID JOBNAME/JOBID
+*                                          COMBINATION               */
+*   DCL SSSOIDST FIXED(31) CONSTANT(28); /* INVALID DESTINATION
+*                                          SPECIFIED                 */
+*   /*   S S S O                                                     */
+*  DECLARE
+*   1       SSSO          SSOBSO,
+*     2       SSSOLEN     FIXED(15),/* LENGTH OF SSSO                */
+*     2       SSSOUFLG    BIT(8),   /* USER SELECTION OPTIONS CLASS
+*                                      ROUTING AND DISPOSITION FLAGS */
+*       3       SSSOSETC  BIT(1),   /* USE SSSOCLAS AS DISPOSITION   */
+*       3       SSSODELC  BIT(1),   /* DELETE SELECTED DATA SET      */
+*       3       SSSOROUT  BIT(1),   /* REROUTE SELECTED DATA SET
+*                                      TO DESTINATION IN SSSODEST    */
+*       3       SSSOHOLD  BIT(1),   /* HOLD ALL SELECTED DATA SETS   */
+*       3       SSSORLSE  BIT(1),   /* RELEASE ALL SELECTED DATA SETS*/
+*       3       *         BIT(3),   /* RESERVED FLAGS                */
+*     2       *           PTR(8),   /* RESERVED                      */
+*     2       SSSOFLG1    BIT(8),   /* FLAGS TO CONTROL SELECTION
+*                                      OF DATA SETS                  */
+*       3       SSSOSHLD  BIT(1),   /* SELECTION SHOULD INCLUDE -HELD-
+*                                      SYSOUT DATA SETS              */
+*       3       SSSOSCLS  BIT(1),   /* USE CLASS                     */
+*       3       SSSOSDST  BIT(1),   /* USE REMOTE USERID             */
+*       3       SSSOSJBN  BIT(1),   /* USE JOB NAME                  */
+*       3       SSSOSJBI  BIT(1),   /* USE JOB ID                    */
+*       3       SSSOSPGM  BIT(1),   /* USE USER WRITER PROGRAM NAME  */
+*       3       SSSOSFRM  BIT(1),   /* USE FORM NUMBER               */
+*       3       *         BIT(1),   /* RESERVED                      */
+*     2       SSSOFLG2    BIT(8),   /* FLAGS INDICATING DISPOSITION
+*                                      OF CURRENT DATA SET           */
+*       3       SSSOCTRL  BIT(1),   /* 1 - PROCESSING COMPLETED
+*                                      0 - RETURN DATA SET NAME      */
+*       3       SSSOCHKP  BIT(1),   /* USE SSSORBA TO CHECKPOINT RBA
+*                                      OF CURRENT DATA SET IN CLASS  */
+*       3       *         BIT(6),   /* RESERVED                      */
+*     2       SSSOCOPY    FIXED(15),/* NUMBER OF COPIES              */
+*     2       SSSOJOBN    CHAR(8),  /* JOB NAME                      */
+*     2       SSSOJOBI    CHAR(8),  /* JOB ID                        */
+*     2       SSSOCLAS    CHAR(1),  /* NAME OF DEST CLASS SPECIFIED
+*                                      VIA THE NEWCLASS PARAMETER    */
+*     2       *           CHAR(3),  /* RESERVED                      */
+*     2       SSSODEST    CHAR(8),  /* REMOTE DESTINATION SPECIFIED
+*                                      VIA THE DEST PARAMETER        */
+*     2       SSSOPGMN    CHAR(8),  /* USER WRITER NAME              */
+*     2       SSSORBA     CHAR(8),  /* RBA OF SYSOUT DATA SET        */
+*     2       SSSODSN     CHAR(44), /* SYSOUT DATA SET NAME          */
+*     2       SSSOFORM    CHAR(4),  /* FORM NUMBER                   */
+*   /* SSSOCLSL WILL CONTAIN 1-8 CLASSES WHEN USED FOR REROUTING OR  */
+*   /* DELETE FUNCTIONS AND WILL CONTAIN ONLY ONE CLASS WHEN USED    */
+*   /* FOR PRINTING.                                                 */
+*     2       SSSOCLSL    CHAR(8),  /* CLASS SELECTION LIST FOR
+*                                      DATA SET SELECTION            */
+*     2       SSSOWTRC    PTR(31),  /* POINTER TO COMMUNICATION
+*                                      AREA FOR THE USER
+*                                      WRITTEN WRITER         YM02726*/
+*     2       SSSODSID    CHAR(8);  /* DATA SET ID TO PLACE SYSOUT
+*                                      ON EXTERNAL DEVICES   @Z30OPSD*/
+

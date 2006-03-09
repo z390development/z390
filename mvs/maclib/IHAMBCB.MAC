@@ -1,0 +1,21 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO PLSVER;                                               /*
+         MACRO
+         IHAMBCB
+MBCB     DSECT                 MAIN SVRB POOL CONTROL BLOCK
+MBCBID   DS    F               ID IS 'SVRB'
+MBCBLINK DS    F               LINK TO NEXT POOL ELEMENT
+MBCBSVRB DS    CL(SVRBLEN)     SVRB
+MBCBBUFF DS    CL(8)           BUFFER BETWEEN SVRBS
+MBCBEND  DS    0H              END OF MBCB
+MBCBLEN  EQU   MBCBEND-MBCB    LENGTH OF MBCB
+MBCBPXLN EQU   MBCBSVRB-MBCB   LENGTH OF PREFIX
+         MEND                                                        */
+*%PLSVER:;
+*DECLARE 1 MBCB BASED,            /* MAIN SVRB POOL CONTROL BLOCK    */
+*          3 MBCBMAIN,            /* 8 BYTE HEADER                   */
+*            5 MBCBID CHAR(4),    /* ID IS 'SVRB'                    */
+*            5 MBCBLINK PTR(31),  /* LINK TO NEXT POOL ELEMENT       */
+*          3 MBCBSVRB CHAR(SVRBLGN),   /* SVRB                       */
+*          3 MBCBBUFF CHAR(8);    /* BUFFER BETWEEN SVRBS            */
+

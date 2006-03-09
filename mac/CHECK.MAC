@@ -6,7 +6,13 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.*********************************************************************
 &N       CHECK  &DECB
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
 .*
 .*       CHECK COMPLETION OF SEQUENTIAL READ OR WRITE
 .*
@@ -15,11 +21,14 @@
 .*          ELSE IF ECB = X'41' TAKE SYNAD EXIT
 .*          ELSE    EXIT NORMALLY
 .*
+         AIF   (&N EQ '').SKIPDS
 &N       DS    0H
+.SKIPDS  ANOP
          AIF   ('&DECB'(1,1) EQ '(').DECBREG
          LA    1,&DECB
          AGO   .SVC
 .DECBREG ANOP
+         AIF   (&DECB(1) EQ '1' OR &DECB(1) EQ 'R1').SVC  RPI163
          LR    1,&DECB(1)
 .SVC     ANOP
          SVC   155 CHECK R1=DECB

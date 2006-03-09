@@ -1,0 +1,1235 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IDACB2 &CALLER=GEN,&BLKTYPE=,&MF=,   *** INTERNAL KEYWORDS ***C
+               &LABEL=,                                                C
+               &AM=,                                            X04SVHSC
+               &ACBLEN=,&ATRB=,&AVSPAC=,&BUFND=,   *** ACB KEYWORDS ***C
+               &BUFNI=,&BUFNO=,&BUFSP=,&CINV=,&DDNAME=,&ENDRBA=,       C
+               &ERROR=,&EXLST=,&FS=,&KEYLEN=,&LRECL=,&JFCB=,   @XM01140C
+               &MACRF=,&NCIS=,&NDELR=,&NEXCP=,&NEXT=,&NINSR=,&NIXL=,   C
+               &NLOGR=,&NRETR=,&NSSS=,&NUPDR=,&OFLAGS=,&PASSWD=,&RKP=, C
+               &BSTRNO=,&CRA=,&OPENOBJ=,&AIXRKP=,               X04SVHSC
+               &MAREA=,&MLEN=,                                  X04SVHSC
+               &STRNO=,&STMST=,&CATALOG=,&APPLID=,               X03004C
+               &NSEXIT=,                                       @G40AKCM*
+               &USERPTR=,                                      @XM01129C
+               &EODAD=,&JRNAD=,                  *** EXLST KEYWORDS ***C
+               &LERAD=,&SYNAD=,&EXLLEN=,&LOGON=,&LOSTERM=,       X03004C
+               &RELREQ=,&ATTN=,&TPEND=,                        @Z40BHUC*
+               &SCIP=,&DFASY=,&RESP=,                          @Z40BHUC*
+               &ACB=,&AREA=,&AREALEN=,&ARG=,&ECB=, *** RPL KEYWORDS ***C
+               &FDBK=,&MSGAREA=,&MSGLEN=,&NXTRPL=,&OPTCD=,             C
+               &RBA=,&RECLEN=,&IO=,&RPLLEN=,&AAREA=,&AAREALN=,   X03004C
+               &ARECLEN=,&EXIT=,&NIB=,                          X04SVHSC
+               &BRANCH=,&USER=,&RTNCD=,&FDBK2=,&SENSE=,          X03004C
+               &REQ=,&DATAFLG=,                                  X03004C
+               &TRANSID=,&AIXPC=,&FTNCD=,&AIXFLAG=,             X04SVHSC
+               &CHNGDIR=,&STYPE=,&RTYPE=,&CHAIN=,&POST=,        X3004BSC
+               &RESPOND=,&CONTROL=,&OBSQAC=,&IBSQAC=,           X3004BSC
+               &OBSQVAL=,&IBSQVAL=,&SEQNO=,&SSENSEO=,           X3004BSC
+               &SSENSEI=,&USENSEO=,&USENSEI=,                  @Z40BHUCC
+               &BRACKET=,&SSENSMO=,&SSENSMI=,&SIGDATA=,        X03004HSC
+               &NAME=,&USERFLD=,&MODE=,      *** NIB KEYWORDS ***X03004C
+               &LISTEND=,&CONDN=,&PROC=,&NIBLEN=,                X03004C
+               &CID=,&DEVCHAR=,&CON=,&RESPLIM=,&SDT=,           X3004BSC
+               &LOGMODE=,&BNDAREA=,&CODESEL=,                  @Z40BHUC*
+               &CRYPT=,&ENCR=                                  @G40AKSL
+.* FUNCTION - 1. VALIDITY CHECK AND TRANSFORM ALL CONTROL BLOCK
+.*               KEYWORDS
+.*            2. GENERATE THE CODE REQUIRED TO BUILD AND DYNAMICALLY
+.*               MODIFY THE PARAMETER LIST AND ARGUMENT CONTROL ENTRIES
+.*            3. GENERATE THE CODE FOR LINKAGE TO THE CONTROL BLOCK
+.*               MANIPULATION ROUTINE
+.* INNER MACROS - IDACB1,IDAERMAC
+.* CALLERS - GENCB,MODCB,SHOWCB,TESTCB
+.* CHANGE ACTIVITY
+.*   A64988,C79600,79800,D85000-85200                          XM07073
+.*   MOVED 57020-57420 AFTER 59500, A115500,440100-442858     @ZA07565
+.*   A443066                                                  @ZA07565
+.*   D078920,C443597-444347                                   @ZA10861
+.*   C(444397,444715-444719)                                  @ZA25133
+.*   C(057300)                                                @ZA33610
+.* GLOBALS
+         GBLB  &IDACB01                ERROR INDICATOR
+         GBLA  &IDACB02                NUMBER OF FIELDS IN HEADER ACE
+         GBLA  &IDACB03                LENGTH OF HEADER ACE
+         GBLA  &IDACB04(5)             HEADER TYPE ARRAY
+         GBLC  &IDACB05(5)             HEADER VALUE ARRAY
+         GBLA  &IDACB06(5)             HEADER OFFSET ARRAY
+         GBLA  &IDACB07(5)             HEADER FIELD LENGTH ARRAY
+         GBLA  &IDACB09                NUMBER OF SHOWCB ELEMENTS
+         GBLA  &IDACB10(50)            SHOWCB ELEMENT ID ARRAY
+         GBLA  &IDACB11                VALUE TYPE-SET BY IDACB1
+         GBLC  &IDACB12                EXIT LIST CODES-SET BY IDACB1
+         GBLC  &IDACB13                OPERAND VALUE - SET BY IDACB1
+         GBLB  &IDABUG                 DEBUG SWITCH
+         GBLA  &IDAENO                 NUMBER OF ELEMENTS
+         GBLA  &IDAETYP(50)            ELEMENT TYPE ARRAY
+         GBLA  &IDAEID(50)             ELEMENT ID ARRAY
+         GBLA  &IDAELEN(50)            ELEMENT FIELD LENGTH ARRAY
+         GBLC  &IDAVALX(50)            ELEMENT ARITHMETIC VALUE ARRAY
+         GBLC  &IDAVALC(50)            ELEMENT CHARACTER VALUE ARRAY
+         GBLC  &IDAOPT2,&IDAOPT3       OPTCD BIT STRING EXTENSION
+         GBLC  &IDAPRC2                PROC BIT STRING EXTENSION
+.* LOCALS
+         GBLA  &EOFF(50)               ELEMENT OFFSET ARRAY
+         LCLA  &ACBID,&EXLID,&RPLID    BLOCK TYPE CODES
+         LCLA  &NIBID                  BLOCK TYPE CODES          X03004
+         LCLA  &VN1,&VN2,&VN3,&AN1,&AN2,&AN3,&AN4 OPERAND TYPE CODES
+         LCLA  &I,&J,&WORKA            WORK VARIABLES           X04SVHS
+         LCLA  &BTC                    BLOCK TYPE CODE
+         LCLA  &FTC                    FUNCTION TYPE CODE
+         LCLB  &RMF                    REENTRANT MACRO FORM SWITCH
+         LCLA  &PLLEN                  PARAMETER LIST LENGTH
+         LCLC  &PLLBL,&LNKLBL,&ERRLBL  GENERATED LABELS
+         LCLC  &PLADR                  REMOTE PARAMETER LIST ADDRESS
+         LCLC  &H                      USED TO FORM STH OP CODE
+         LCLC  &WORKC                  WORK VARIABLE
+         LCLC  &BLK                    BLOCK TYPE CODE
+         LCLC  &Z16                     WORK CONSTANT           X04SVHS
+.* INITIALIZATION *****************************************************
+&ACBID   SETA  X'0A0'                  ACB BLOCK TYPE CODE
+&EXLID   SETA  X'0B0'                  EXLST BLOCK TYPE CODE
+&RPLID   SETA  X'0C0'                  RPL BLOCK TYPE CODE
+&NIBID   SETA  X'0D0'                  NIB BLOCK TYPE CODE       X03004
+&VN1     SETA  1                       SELF-DEFINING TERM < 4096
+&VN2     SETA  2                       BIT CODE SUBLIST
+&VN3     SETA  3                       CHARACTER STRING
+&AN1     SETA  4                       REGISTER SPECIFICATION
+&AN2     SETA  5                       S-ADCON EXPRESSION
+&AN3     SETA  6                       INDIRECT ADDRESS
+&AN4     SETA  7                       A-ADCON EXPRESSION
+&PLLBL   SETC  'IDA'.'&SYSNDX'.'A'
+&ERRLBL  SETC  'IDA'.'&SYSNDX'.'A'
+.*
+&Z16     SETC  '0000000000000000'       INITIALIZE TO 16 ZEROES X04SVHS
+.*             INITIALIZE GLOBAL ARRAYS TO ZERO
+&IDAENO  SETA  0                        INIT NUMBER OF ELEMENTS X04SVHS
+.I000050 ANOP                                                   X04SVHS
+&I       SETA  &I+1                     BUMP INDEX              X04SVHS
+         AIF   (&I GT 50).I000075       ARE ALL ELEMENTS INIT   X04SVHS
+&IDAETYP(&I) SETA 0                     INIT TYPE ELEMENT       X04SVHS
+&IDAEID(&I) SETA 0                      INIT ID ELEMENT         X04SVHS
+&IDAELEN(&I) SETA 0                     INIT LENGTH ELEMENT     X04SVHS
+&IDAVALX(&I) SETC '&Z16&Z16'            INIT EXLST CODE ELEMENT X04SVHS
+&IDAVALC(&I) SETC '&Z16&Z16'            INIT VALUE ELEMENT      X04SVHS
+         AGO   .I000050                 POINT TO NEXT ELEMENT   X04SVHS
+.**********************************************************************
+.I000075 ANOP                                                   X04SVHS
+         AIF   ('&MF' EQ '' OR '&MF(1)' EQ 'L' OR '&MF(1)' EQ 'E' OR   C
+               '&MF(1)' EQ 'G').I000100 VALIDITY CHECK MF
+         IDAERMAC 3,MF,&MF
+&IDACB01 SETB  1
+.I000100 ANOP
+.* SET REENTRANT FORM OF MACRO SWITCH
+&RMF     SETB  ('&MF(1)' EQ 'G' OR ('&MF(1)' EQ 'L' AND N'&MF GT 1))
+.**********************************************************************
+.* SET FUNCTION TYPE CODE
+&FTC     SETA  1
+         AIF   ('&CALLER' EQ 'GEN').I000200  TEST FOR GENCB
+&FTC     SETA  2
+         AIF   ('&CALLER' EQ 'MOD').I000200  TEST FOR MODCB
+&FTC     SETA  3
+         AIF   ('&CALLER' EQ 'SHOW').I000200 TEST FOR SHOWCB
+&FTC     SETA  4                             ASSUME TESTCB
+.I000200 AIF   ('&AM' NE 'VTAM').I000300
+&FTC     SETA  &FTC+16
+.**********************************************************************
+.*             PROCESS SHOWCB
+.**********************************************************************
+.I000300 AIF   ('&CALLER' NE 'SHOW').I000900
+         AIF   ('&BLKTYPE' NE 'ACB').I000400
+&BTC     SETA  &ACBID
+         AGO   .I000700
+.I000400 AIF   ('&BLKTYPE' NE 'EXLST').I000500
+&BTC     SETA  &EXLID
+         AGO   .I000700
+.I000500 AIF   ('&BLKTYPE' NE 'RPL').I000600
+&BTC     SETA  &RPLID
+         AGO   .I000700
+.I000600 AIF   ('&BLKTYPE' NE 'NIB').I000700
+&BTC     SETA  &NIBID                                            X03004
+.I000700 ANOP
+.*************************************************             @ZA07565
+.* LOOK FOR REGISTER FORM                        *             @Z40BHCJ
+.*************************************************             @Z40BHCJ
+         AIF   (&IDACB09 NE 1).I000710                         @Z40BHCJ
+         AIF   (&IDACB10(1) NE X'35').I000710                  @Z40BHCJ
+         AIF   ('&IDACB05(4)' LT '4').I000710                  @ZA33610
+         AIF   (&IDACB04(3) EQ &AN1 AND '&IDACB05(3)' EQ '1').I000710
+         AIF   ('&MF(1)' EQ '').I022700                        @Z40BHCJ
+.I000710 ANOP                                                  @ZA07565
+&IDAENO  SETA  &IDACB09                 SET NO. OF FIELDS TO BE SHOWN
+&I       SETA  0                       BYPASS VALIDITY CHECKS AND ...
+.I000800 ANOP                             TRANSFORMATIONS FOR SHOWCB
+&I       SETA  &I+1
+         AIF   (&I GT &IDAENO).I013500 HAVE ALL ELEMENTS BEEN PROCESSED
+&IDAEID(&I) SETA  &IDACB10(&I)         SET ELEMENT ID ARRAY
+         AGO   .I000800                CHECK NEXT ELEMENT
+.**********************************************************************
+.*       CHECK BLKTYPE
+.**********************************************************************
+.I000900 AIF   ('&BLKTYPE' EQ 'ACB').I001400 CHECK FOR ACB
+         AIF   ('&BLKTYPE' EQ 'RPL').I001100 CHECK FOR RPL
+         AIF   ('&BLKTYPE' EQ 'NIB').I001300 CHECK FOR NIB
+.*             'BLKTYPE' IS EITHER NULL OR 'EXLST'. IF NULL, IDACB2 HAS
+.*             BEEN CALLED BY THE EXECUTE FORM OF GENCB, MODCB, OR
+.*             TESTCB, AND TO DETERMINE WHAT TYPE CONTROL BLOCK WILL BE
+.*             AFFECTED, EACH INNER MACRO (IDACBRPL, IDACBEXL, IDACBACB
+.*             IDACBNIB) IS CALLED UNTIL A VALID KEYWORD (OTHER THAN
+.*             AM) IS FOUND. IF NO VALID KEYWORD IS FOUND, AN ERROR
+.*             MESSAGE IS ISSUED BECAUSE IT IS IMPOSSIBLE TO DETERMINE
+.*             WHAT TYPE CONTROL BLOCK THE USER WANTS.
+.*             IF BLOCK IS A NIB AND EXLST IS THE ONLY         @XA07799
+.*             PARAMETER ON A GENCB, BLK=NIB IS REQUIRED.      @XA07799
+.*             WHEN USING MODCB OR TESTCB, NIB OR ACB MUST BE  @XA07799
+.*             USED IF EXLST IS A PARAMETER AND NOT A BLKTYPE. @XA07799
+.*
+.**********************************************************************
+.*             EXLST
+.**********************************************************************
+         IDACBEXL AM=&AM,MF=&MF,CALLER=&CALLER,EODAD=&EODAD,           *
+               JRNAD=&JRNAD,LERAD=&LERAD,SYNAD=&SYNAD,EXLLEN=&EXLLEN,  *
+               LOGON=&LOGON,LOSTERM=&LOSTERM,RELREQ=&RELREQ,           *
+               NSEXIT=&NSEXIT,                                 @G40AKCM*
+               ATTN=&ATTN,TPEND=&TPEND,                        @Z40BHUC*
+               SCIP=&SCIP,DFASY=&DFASY,RESP=&RESP              @Z40BHUC
+         AIF   (&IDAENO EQ 1 AND '&AM' NE '' AND                       *
+               '&BLKTYPE' NE 'EXLST' AND '&CALLER' EQ 'GEN').I001000
+.*                                                              X04SVHS
+.*             IF THE ABOVE CONDITIONS ARE MET, NO VALID EXLST KEYWORD
+.*             EXCEPT AM WAS FOUND AND IT IS ASSUMED THAT AN EXLST
+.*             IS NOT TO BE GENERATED.
+         AIF   (&IDAENO EQ 0 AND '&BLKTYPE' NE 'EXLST').I001100 X04SVHS
+.*             IF BLKTYPE ISN'T EQUAL TO EXLST AND ELEMENT COUNT
+.*             IS ZERO, TRY RPL.
+&BTC     SETA  &EXLID                   INDICATE EXLST          X04SVHS
+         AGO   .I001500
+.I001000 ANOP                                                   X04SVHS
+&IDAENO  SETA  0                                                X04SVHS
+.I001100 ANOP
+.**********************************************************************
+.*             RPL
+.**********************************************************************
+         IDACBRPL AM=&AM,MF=&MF,CALLER=&CALLER,ACB=&ACB,AREA=&AREA,    *
+               AREALEN=&AREALEN,ARG=&ARG,ECB=&ECB,FDBK=&FDBK,          *
+               MSGAREA=&MSGAREA,MSGLEN=&MSGLEN,NXTRPL=&NXTRPL,         *
+               OPTCD=&OPTCD,RBA=&RBA,RECLEN=&RECLEN,IO=&IO,            *
+               RPLLEN=&RPLLEN,AAREA=&AAREA,AAREALN=&AAREALN,           *
+               ARECLEN=&ARECLEN,EXIT=&EXIT,KEYLEN=&KEYLEN,             *
+               NIB=&NIB,BRANCH=&BRANCH,USER=&USER,                     *
+               RTNCD=&RTNCD,FDBK2=&FDBK2,SENSE=&SENSE,REQ=&REQ,        *
+               DATAFLG=&DATAFLG,TRANSID=&TRANSID,AIXPC=&AIXPC,         *
+               FTNCD=&FTNCD,AIXFLAG=&AIXFLAG,CHNGDIR=&CHNGDIR,         *
+               STYPE=&STYPE,RTYPE=&RTYPE,CHAIN=&CHAIN,POST=&POST,      *
+               RESPOND=&RESPOND,CONTROL=&CONTROL,OBSQAC=&OBSQAC,       *
+               IBSQAC=&IBSQAC,OBSQVAL=&OBSQVAL,IBSQVAL=&IBSQVAL,       *
+               SEQNO=&SEQNO,SSENSEO=&SSENSEO,SSENSEI=&SSENSEI,         *
+               USENSEO=&USENSEO,USENSEI=&USENSEI,              @Z40BHUC*
+               BRACKET=&BRACKET,SSENSMO=&SSENSMO,SSENSMI=&SSENSMI,     *
+               SIGDATA=&SIGDATA,CODESEL=&CODESEL,              @Z40BHUC*
+               CRYPT=&CRYPT                                    @G40AKSL
+.**********************************************************    @Z40BHCJ
+.* TEST FOR POSSIBLE REGISTER FORM                             @Z40BHCJ
+.**********************************************************    @Z40BHCJ
+         AIF   ('&BLKTYPE' NE 'RPL' OR '&CALLER' NE 'MOD').I001190
+         AIF   ('&MF(1)' NE '').I001190   NOT L, E, OR G MODE  @ZA10885
+         AIF   ('&RECLEN' EQ '').I001190                       @Z40BHCJ
+         AIF   (&IDAENO EQ 1).I022700                          @Z40BHCJ
+.I001190 ANOP                                                  @Z40BHCJ
+         AIF   ('&BLKTYPE' NE 'RPL' AND &IDAENO EQ 1 AND               *
+               '&AM' NE '' AND '&CALLER' EQ 'GEN').I001200
+.*             IF THE ABOVE CONDITIONS ARE MET, NO VALID RPL KEYWORD
+.*             EXCEPT AM WAS FOUND AND IT IS ASSUMED THAT AN RPL
+.*             IS NOT TO BE GENERATED.
+         AIF   (&IDAENO EQ 0 AND '&BLKTYPE' NE 'RPL').I001300  @XA07799
+.*             IF BLKTYPE IS NOT RPL AND ELEMENT COUNT IS ZERO,
+.*             TRY NIB.                                        @XA07799
+&BTC     SETA  &RPLID
+         AGO   .I001500
+.I001200 ANOP                                                   X04SVHS
+&IDAENO  SETA  0                                                X04SVHS
+.I001300 ANOP                                                   X04SVHS
+.**********************************************************************
+.*             NIB
+.**********************************************************************
+         IDACBNIB EXLST=&EXLST,MF=&MF,CALLER=&CALLER,NAME=&NAME,       *
+               USERFLD=&USERFLD,MODE=&MODE,LISTEND=&LISTEND,           *
+               CONDN=&CONDN,PROC=&PROC,NIBLEN=&NIBLEN,CID=&CID,        *
+               DEVCHAR=&DEVCHAR,CON=&CON,RESPLIM=&RESPLIM,SDT=&SDT,    *
+               LOGMODE=&LOGMODE,BNDAREA=&BNDAREA,              @Z40BHUC*
+               ENCR=&ENCR                                      @G40AKSL
+         AIF   (&IDAENO EQ 0 AND '&BLKTYPE' NE 'NIB').I001400  @XA07799
+         AIF   (&IDAENO EQ 1 AND '&EXLST' NE '' AND                    C
+               '&BLKTYPE' NE 'NIB').I001350                    @XA07799
+&BTC     SETA  &NIBID                                            X03004
+         AGO   .I001500
+.I001350 ANOP
+&IDAENO  SETA  0
+.I001400 ANOP
+.**********************************************************************
+.*             ACB
+.**********************************************************************
+         IDACBACB AM=&AM,MF=&MF,CALLER=&CALLER,ACBLEN=&ACBLEN,         *
+               ATRB=&ATRB,AVSPAC=&AVSPAC,BUFND=&BUFND,BUFNI=&BUFNI,    *
+               BUFNO=&BUFNO,BUFSP=&BUFSP,CINV=&CINV,DDNAME=&DDNAME,    *
+               ENDRBA=&ENDRBA,ERROR=&ERROR,EXLST=&EXLST,FS=&FS,        *
+               KEYLEN=&KEYLEN,LRECL=&LRECL,MACRF=&MACRF,NCIS=&NCIS,    *
+               NDELR=&NDELR,NEXCP=&NEXCP,NEXT=&NEXT,NINSR=&NINSR,      *
+               NIXL=&NIXL,NLOGR=&NLOGR,NRETR=&NRETR,NSSS=&NSSS,        *
+               NUPDR=&NUPDR,OFLAGS=&OFLAGS,PASSWD=&PASSWD,RKP=&RKP,    *
+               BSTRNO=&BSTRNO,CRA=&CRA,OPENOBJ=&OPENOBJ,AIXRKP=&AIXRKP,*
+               STRNO=&STRNO,STMST=&STMST,CATALOG=&CATALOG,             *
+               USERPTR=&USERPTR,JFCB=&JFCB,                    @XM01140*
+               APPLID=&APPLID,MAREA=&MAREA,MLEN=&MLEN
+.*
+         AIF   ('&BLKTYPE' NE 'ACB' AND &IDAENO EQ 1                   *
+               AND '&AM' NE '' AND '&CALLER' EQ 'GEN').I001450
+.*             IF THESE ABOVE CONDITIONS ARE MET, THEN ONLY 'AM'
+.*             KEYWORD WAS SPECIFIED WITH MF=E FOR GENCB, AND THERE
+.*             IS NO WAY TO DETERMINE WHAT TYPE CONTROL BLOCK IS
+.*             REQUIRED
+         AIF   (&IDAENO NE 0 OR '&BLKTYPE' EQ 'ACB').I001475    X04SVHS
+.*             IF ELEMENT COUNT IS 0 AND BLKTYPE NOT ACB,
+.*             THEN THERE ARE NO VALID KEYWORDS SPECIFIED, BLOCK TYPE
+.*             HAS NOT BEEN SPECIFIED, AND IT IS IMPOSSIBLE TO
+.*             DETERMINE WHAT TYPE CONTROL BLOCK IS REQUIRED.
+         AIF   ('&AM' NE 'VTAM' AND '&MF(1)' EQ 'E').I001500
+.*             IF AM=VTAM, THEN BLOCK TYPE MUST BE SPECIFIED.  ELSE
+.*             IT MUST BE SPECIFIED EXCEPT WHEN USING EXECUTE FORM
+.*             OF GENCB.
+.I001450 ANOP
+         AIF   ('&CALLER' NE 'GEN').I001500                     X04SVHS
+.*             IF CALLER IS EQUAL GEN, THEN AT THIS POINT IT IS
+.*             IMPOSSIBLE TO DETERMINE WHAT TYPE CONTROL BLOCK THE
+.*             USER IS REQUESTING. THIS WILL OCCUR ONLY ON THE
+.*             EXECUTE FORM OF GENCB.
+         IDAERMAC 2,BLOCK-TYPE
+&IDACB01 SETB  1
+         AGO   .I001500                                         X04SVHS
+.I001475 ANOP                                                   X04SVHS
+&BTC     SETA  &ACBID                   INDICATE BLK=ACB        X04SVHS
+.**********************************************************************
+.* SCAN CONTROL BLOCK LENGTH KEYWORDS    -    TESTCB ONLY
+.**********************************************************************
+.I001500 AIF   ('&CALLER' NE 'TEST').I001900
+         AIF   ('&EXLLEN' EQ '').I001600         *** EXLLEN ***
+         AIF   ('&BLKTYPE' NE 'EXLST' AND '&BLKTYPE' NE '').I001600
+         AIF   (NOT ('&AM' EQ 'VSAM' OR '&AM' EQ '')).I001510
+         IDACB3 ARG=&EXLLEN,ARGNAME=EXLLEN,KWTC=X'2A',MF=&MF
+.I001510 AIF   ('&AM' NE 'VTAM').I001600
+         IDACB3 ARG=&EXLLEN,ARGNAME=EXLLEN,KWTC=X'3F',MF=&MF
+.I001600 AIF   ('&RPLLEN' EQ '').I001700         *** RPLLEN ***
+         AIF   ('&BLKTYPE' NE 'RPL' AND '&BLKTYPE' NE '').I001700
+         AIF   (NOT ('&AM' EQ 'VSAM' OR '&AM' EQ '')).I001610
+         IDACB3 ARG=&RPLLEN,ARGNAME=RPLLEN,KWTC=X'37',MF=&MF
+.I001610 AIF   ('&AM' NE 'VTAM').I001700
+         IDACB3 ARG=&RPLLEN,ARGNAME=RPLLEN,KWTC=X'3E',MF=&MF
+.I001700 AIF   ('&ACBLEN' EQ '').I001800         *** ACBLEN ***
+         AIF   ('&BLKTYPE' NE 'ACB' AND '&BLKTYPE' NE '').I001800
+         AIF   (NOT ('&AM' EQ 'VSAM' OR '&AM' EQ '')).I001710
+         IDACB3 ARG=&ACBLEN,ARGNAME=ACBLEN,KWTC=X'03',MF=&MF
+.I001710 AIF   ('&AM' NE 'VTAM').I001800
+         IDACB3 ARG=&ACBLEN,ARGNAME=ACBLEN,KWTC=X'3D',MF=&MF
+.I001800 AIF   ('&NIBLEN' EQ '').I001900         *** NIBLEN ***
+         AIF   ('&BLKTYPE' NE 'NIB' AND '&BLKTYPE' NE '').I001900
+         IDACB3 ARG=&NIBLEN,ARGNAME=NIBLEN,KWTC=X'53',MF=&MF
+.**********************************************************************
+.* SCAN FOR INVALID CONTROL BLOCK KEYWORDS
+.**********************************************************************
+.I001900 AIF   (&BTC NE &ACBID).I002000
+&BLK     SETC  'ACB'
+         AGO   .I002300
+.I002000 AIF   (&BTC NE &RPLID).I002100
+&BLK     SETC  'RPL'
+         AGO   .I002300
+.I002100 AIF   (&BTC NE &NIBID).I002200                          X03004
+&BLK     SETC  'NIB'                                             X03004
+         AGO   .I002300
+.I002200 AIF   (&BTC NE &EXLID).I002300                        @ZA07565
+&BLK     SETC  'EXLST'
+.**********************************************************************
+.*             THE FOLLOWING BLOCK OF CODE CHECKS TO SEE IF ALL
+.*             KEYWORDS SPECIFIED ARE VALID FOR THE CONTROL BLOCK
+.*             SPECIFIED.
+.**********************************************************************
+.*             EXLST KEYWORDS ONLY
+.******************************
+.I002300 AIF   ('&BLK' EQ 'EXLST').I003900
+         AIF   ('&EODAD' EQ '').I002400
+         IDAERMAC 11,EODAD,&BLK
+.I002400 AIF   ('&JRNAD' EQ '').I002500
+         IDAERMAC 11,JRNAD,&BLK
+.I002500 AIF   ('&LERAD' EQ '').I002600
+         IDAERMAC 11,LERAD,&BLK
+.I002600 AIF   ('&SYNAD' EQ '').I002700                          X03004
+         IDAERMAC 11,SYNAD,&BLK
+.I002700 AIF   ('&LOGON' EQ '').I002800                          X03004
+         IDAERMAC 11,LOGON,&BLK                                  X03004
+.I002800 AIF   ('&LOSTERM' EQ '').I002900                        X03004
+         IDAERMAC 11,LOSTERM,&BLK                                X03004
+.I002900 AIF   ('&RELREQ' EQ '').I003200                       @Z40BHUC
+         IDAERMAC 11,RELREQ,&BLK                                 X03004
+.I003200 AIF   ('&ATTN' EQ '').I003300                           X03004
+         IDAERMAC 11,ATTN,&BLK                                   X03004
+.I003300 AIF   ('&TPEND' EQ '').I003350                        @G40AKCM
+         IDAERMAC 11,TPEND,&BLK                                  X03004
+.I003350 AIF   ('&NSEXIT' EQ '').I003400                       @G40AKCM
+         IDAERMAC 11,NSEXIT,&BLK                               @G40AKCM
+.I003400 AIF   ('&SCIP' EQ '').I003500                          X3004BS
+         IDAERMAC 11,SCIP,&BLK                                  X3004BS
+.I003500 AIF   ('&DFASY' EQ '').I003600                         X3004BS
+         IDAERMAC 11,DFASY,&BLK                                 X3004BS
+.I003600 AIF   ('&RESP' EQ '').I003800                         @Z40BHUC
+         IDAERMAC 11,RESP,&BLK                                  X3004BS
+.I003800 AIF   ('&EXLLEN' EQ '' OR '&BLKTYPE' EQ '').I003900
+         IDAERMAC  11,EXLLEN,&BLK
+.******************************
+.*       RPL KEYWORDS ONLY
+.******************************
+.I003900 AIF   ('&BLK' EQ 'RPL').I008600
+         AIF   ('&ACB' EQ '').I004000
+         AIF   ('&CALLER' NE 'GENCB'  AND  '&BLK' EQ 'ACB').I004000
+         IDAERMAC 11,ACB,&BLK
+.I004000 AIF   ('&AREA' EQ '').I004100
+         IDAERMAC 11,AREA,&BLK
+.I004100 AIF   ('&AREALEN' EQ '').I004200
+         IDAERMAC 11,AREALEN,&BLK
+.I004200 AIF   ('&ARG' EQ '').I004300
+         IDAERMAC 11,ARG,&BLK
+.I004300 AIF   ('&ECB' EQ '').I004400
+         IDAERMAC 11,ECB,&BLK
+.I004400 AIF   ('&KEYLEN' EQ ''  OR  '&BLK' EQ 'ACB').I004500   X04SVHS
+         IDAERMAC 11,KEYLEN,&BLK
+.I004500 AIF   ('&MSGAREA' EQ '').I004600
+         IDAERMAC 11,MSGAREA,&BLK
+.I004600 AIF   ('&MSGLEN' EQ '').I004700
+         IDAERMAC 11,MSGLEN,&BLK
+.I004700 AIF   ('&NXTRPL' EQ '').I004800
+         IDAERMAC 11,NXTRPL,&BLK
+.I004800 AIF   ('&OPTCD' EQ '').I004900
+         IDAERMAC 11,OPTCD,&BLK
+.I004900 AIF   ('&RECLEN' EQ '').I005000
+         IDAERMAC 11,RECLEN,&BLK
+.I005000 AIF   ('&IO' EQ '').I005100
+         IDAERMAC 11,IO,&BLK
+.I005100 AIF   ('&FDBK' EQ '').I005200
+         IDAERMAC 11,FDBK,&BLK
+.I005200 AIF   ('&RBA' EQ '').I005300
+         IDAERMAC 11,RBA,&BLK
+.I005300 AIF   ('&AAREA' EQ '').I005400                          X03004
+         IDAERMAC 11,AAREA,&BLK                                  X03004
+.I005400 AIF   ('&AAREALN' EQ '').I005500                        X03004
+         IDAERMAC 11,AAREALN,&BLK                                X03004
+.I005500 AIF   ('&ARECLEN' EQ '').I005600                        X03004
+         IDAERMAC 11,ARECLEN,&BLK                                X03004
+.I005600 AIF   ('&EXIT' EQ '').I005900                           X03004
+         IDAERMAC 11,EXIT,&BLK                                   X03004
+.I005900 AIF   ('&NIB' EQ '').I006000                            X03004
+         AIF ('&CALLER' NE 'GENCB' AND '&BLK' EQ 'NIB').I006000  X03004
+         IDAERMAC 11,NIB,&BLK                                    X03004
+.I006000 AIF   ('&BRANCH' EQ '').I006100                         X03004
+         IDAERMAC 11,BRANCH,&BLK                                 X03004
+.I006100 AIF   ('&USER' EQ '').I006300                           X03004
+         IDAERMAC 11,USER,&BLK                                   X03004
+.I006300 AIF   ('&RTNCD' EQ '').I006400                          X03004
+         IDAERMAC 11,RTNCD,&BLK                                  X03004
+.I006400 AIF   ('&FDBK2' EQ '').I006500                          X03004
+         IDAERMAC 11,FDBK2,&BLK                                  X03004
+.I006500 AIF   ('&SENSE' EQ '').I006600                          X03004
+         IDAERMAC 11,SENSE,&BLK                                  X03004
+.I006600 AIF   ('&REQ' EQ '').I006700                            X03004
+         IDAERMAC 11,REQ,&BLK                                    X03004
+.I006700 AIF   ('&DATAFLG' EQ '').I006800                        X03004
+         IDAERMAC 11,DATAFLG,&BLK                                X03004
+.I006800 AIF   ('&CHNGDIR' EQ '').I006850                       X3004BS
+         IDAERMAC 11,CHNGDIR,&BLK                               X3004BS
+.I006850 AIF   ('&CODESEL' EQ '').I006900                      @Z40BHUC
+         IDAERMAC 11,CODESEL,&BLK                              @Z40BHUC
+.I006900 AIF   ('&STYPE' EQ '').I007000                         X3004BS
+         IDAERMAC 11,STYPE,&BLK                                 X3004BS
+.I007000 AIF   ('&RTYPE' EQ '').I007100                         X3004BS
+         IDAERMAC 11,RTYPE,&BLK                                 X3004BS
+.I007100 AIF   ('&CHAIN' EQ '').I007200                         X3004BS
+         IDAERMAC 11,CHAIN,&BLK                                 X3004BS
+.I007200 AIF   ('&POST' EQ '').I007300                          X3004BS
+         IDAERMAC 11,POST,&BLK                                  X3004BS
+.I007300 AIF   ('&RESPOND' EQ '').I007400                       X3004BS
+         IDAERMAC 11,RESPOND,&BLK                               X3004BS
+.I007400 AIF   ('&CONTROL' EQ '').I007500                       X3004BS
+         IDAERMAC 11,CONTROL,&BLK                               X3004BS
+.I007500 AIF   ('&OBSQAC' EQ '').I007600                        X3004BS
+         IDAERMAC 11,OBSQAC,&BLK                                X3004BS
+.I007600 AIF   ('&IBSQAC' EQ '').I007700                        X3004BS
+         IDAERMAC 11,IBSQAC,&BLK                                X3004BS
+.I007700 AIF   ('&OBSQVAL' EQ '').I007800                       X3004BS
+         IDAERMAC 11,OBSQVAL,&BLK                               X3004BS
+.I007800 AIF   ('&IBSQVAL' EQ '').I007850                      @Z40BHUC
+         IDAERMAC 11,IBSQVAL,&BLK                               X3004BS
+.I007850 AIF   ('&SIGDATA' EQ '').I007900                      @Z40BHUC
+         IDAERMAC 11,SIGDATA,&BLK                              @Z40BHUC
+.I007900 AIF   ('&SEQNO' EQ '').I008000                         X3004BS
+         IDAERMAC 11,SEQNO,&BLK                                 X3004BS
+.I008000 AIF   ('&SSENSEO' EQ '').I008100                       X3004BS
+         IDAERMAC 11,SSENSEO,&BLK                               X3004BS
+.I008100 AIF   ('&SSENSEI' EQ '').I008200                       X3004BS
+         IDAERMAC 11,SSENSEI,&BLK                               X3004BS
+.I008200 AIF   ('&USENSEO' EQ '').I008300                       X3004BS
+         IDAERMAC 11,USENSEO,&BLK                               X3004BS
+.I008300 AIF   ('&USENSEI' EQ '').I008410                      @Z40BHUC
+         IDAERMAC 11,USENSEI,&BLK                               X3004BS
+.I008410 AIF   ('&BRACKET' EQ '').I008420                       X04SVHS
+         IDAERMAC 11,BRACKET,&BLK                               X04SVHS
+.I008420 AIF   ('&SSENSMO' EQ '').I008430                       X04SVHS
+         IDAERMAC 11,SSENSMO,&BLK                               X04SVHS
+.I008430 AIF   ('&SSENSMI' EQ '').I008440                       X04SVHS
+         IDAERMAC 11,SSENSMI,&BLK                               X04SVHS
+.I008440 AIF   ('&SIGDATA' EQ '').I008450                       X04SVHS
+         IDAERMAC 11,SIGDATA,&BLK                               X04SVHS
+.I008450 AIF   ('&AIXPC' EQ '').I008460                         X04SVHS
+         IDAERMAC 11,AIXPC,&BLK                                 X04SVHS
+.I008460 AIF   ('&AIXFLAG' EQ '').I008470                       X04SVHS
+         IDAERMAC 11,AIXFLAG,&BLK                               X04SVHS
+.I008470 AIF   ('&TRANSID' EQ '').I008480                       X04SVHS
+         IDAERMAC 11,TRANSID,&BLK                               X04SVHS
+.I008480 AIF   ('&FTNCD' EQ '').I008500                         X04SVHS
+         IDAERMAC 11,FTNCD,&BLK                                 X04SVHS
+.I008500 AIF   ('&RPLLEN' EQ '' OR '&BLKTYPE' EQ '').I008510   @G40AKSL
+         IDAERMAC  11,RPLLEN,&BLK
+.I008510 AIF   ('&CRYPT' EQ '').I008600                        @G40AKSL
+         IDAERMAC  11,CRYPT,&BLK                               @G40AKSL
+.******************************
+.*       NIB KEYWORDS ONLY
+.******************************
+.I008600 AIF   ('&BLK' EQ 'NIB').I010000
+         AIF   ('&NAME' EQ '').I008700                           X03004
+         IDAERMAC 11,NAME,&BLK                                   X03004
+.I008700 AIF   ('&USERFLD' EQ '').I008800                        X03004
+         IDAERMAC 11,USERFLD,&BLK                                X03004
+.I008800 AIF   ('&MODE' EQ '').I008900                           X03004
+         IDAERMAC 11,MODE,&BLK                                   X03004
+.I008900 AIF   ('&LISTEND' EQ '').I009000                        X03004
+         IDAERMAC 11,LISTEND,&BLK                                X03004
+.I009000 AIF   ('&CONDN' EQ '').I009100                          X03004
+         IDAERMAC 11,CONDN,&BLK                                  X03004
+.I009100 AIF   ('&PROC' EQ '').I009200                           X03004
+         IDAERMAC 11,PROC,&BLK                                   X03004
+.I009200 AIF   ('&CID' EQ '').I009300                            X03004
+         IDAERMAC 11,CID,&BLK                                    X03004
+.I009300 AIF   ('&DEVCHAR' EQ '').I009400                        X03004
+         IDAERMAC 11,DEVCHAR,&BLK                                X03004
+.I009400 AIF   ('&CON' EQ '').I009500                            X03004
+         IDAERMAC 11,CON,&BLK                                    X03004
+.I009500 AIF   ('&EXLST' EQ '' OR '&BLK' EQ 'ACB').I009600      X3004BS
+         AIF   ('&CALLER' NE 'GENCB'  AND  '&BLK' EQ 'EXLST').I009600
+         IDAERMAC 11,EXLST,&BLK                                 X3004BS
+.I009600 AIF   ('&RESPLIM' EQ '').I009700                       X3004BS
+         IDAERMAC 11,RESPLIM,&BLK                               X3004BS
+.I009700 AIF   ('&SDT' EQ '').I009800                           X3004BS
+         IDAERMAC 11,SDT,&BLK                                   X3004BS
+.I009800 AIF   ('&PROC' EQ '').I009840                         @Z40BHUC
+         IDAERMAC 11,PROC,&BLK                                  X3004BS
+.I009840 AIF   ('&LOGMODE' EQ '').I009870                      @Z40BHUC
+         IDAERMAC 11,LOGMODE,&BLK                              @Z40BHUC
+.I009870 AIF   ('&BNDAREA' EQ '').I009900                      @Z40BHUC
+         IDAERMAC 11,BNDAREA,&BLK                              @Z40BHUC
+.I009900 AIF   ('&NIBLEN' EQ ''  OR  '&BLKTYPE' EQ '').I009910 @G40AKSL
+         IDAERMAC 11,NIBLEN,&BLK                                 X03004
+.I009910 AIF   ('&ENCR' EQ '').I010000                         @G40AKSL
+         IDAERMAC 11,ENCR,&BLK                                 @G40AKSL
+.******************************
+.*       ACB KEYWORDS ONLY
+.******************************
+.I010000 AIF   ('&BLK' EQ 'ACB').I013100
+         AIF   ('&ATRB' EQ '').I010100
+         IDAERMAC 11,ATRB,&BLK
+.I010100 AIF   ('&AVSPAC' EQ '').I010200
+         IDAERMAC 11,AVSPAC,&BLK
+.I010200 AIF   ('&BUFND' EQ '').I010300
+         IDAERMAC 11,BUFND,&BLK
+.I010300 AIF   ('&BUFNI' EQ '').I010400
+         IDAERMAC 11,BUFNI,&BLK
+.I010400 AIF   ('&BUFNO' EQ '').I010500
+         IDAERMAC 11,BUFNO,&BLK
+.I010500 AIF   ('&BUFSP' EQ '').I010600
+         IDAERMAC 11,BUFSP,&BLK
+.I010600 AIF   ('&CINV' EQ '').I010700
+         IDAERMAC 11,CINV,&BLK
+.I010700 AIF   ('&DDNAME' EQ '').I010800
+         IDAERMAC 11,DDNAME,&BLK
+.I010800 AIF   ('&ENDRBA' EQ '').I010900
+         IDAERMAC 11,ENDRBA,&BLK
+.I010900 AIF   ('&ERROR' EQ '').I011000
+         IDAERMAC 11,ERROR,&BLK
+.I011000 AIF   ('&EXLST' EQ '').I011100
+         AIF   ('&BLK' EQ 'NIB').I011100                        X3004BS
+         AIF   ('&CALLER' NE 'GENCB'  AND  '&BLK' EQ 'EXLST').I011100
+         IDAERMAC 11,EXLST,&BLK
+.I011100 AIF   ('&FS' EQ '').I011150                           @XM01140
+         IDAERMAC 11,FS,&BLK
+.I011150 AIF   ('&JFCB' EQ '').I011200                         @XM01140
+         IDAERMAC 11,JFCB,&BLK                                 @XM01140
+.I011200 AIF   ('&LRECL' EQ '').I011300
+         IDAERMAC 11,LRECL,&BLK
+.I011300 AIF   ('&MACRF' EQ '').I011400
+         IDAERMAC 11,MACRF,&BLK
+.I011400 AIF   ('&NCIS' EQ '').I011500
+         IDAERMAC 11,NCIS,&BLK
+.I011500 AIF   ('&NDELR' EQ '').I011600
+         IDAERMAC 11,NDELR,&BLK
+.I011600 AIF   ('&NEXCP' EQ '').I011700
+         IDAERMAC 11,NEXCP,&BLK
+.I011700 AIF   ('&NEXT' EQ '').I011800
+         IDAERMAC 11,NEXT,&BLK
+.I011800 AIF   ('&NINSR' EQ '').I011900
+         IDAERMAC 11,NINSR,&BLK
+.I011900 AIF   ('&NIXL' EQ '').I012000
+         IDAERMAC 11,NIXL,&BLK
+.I012000 AIF   ('&NLOGR' EQ '').I012100
+         IDAERMAC 11,NLOGR,&BLK
+.I012100 AIF   ('&NRETR' EQ '').I012200
+         IDAERMAC 11,NRETR,&BLK
+.I012200 AIF   ('&NSSS' EQ '').I012300
+         IDAERMAC 11,NSSS,&BLK
+.I012300 AIF   ('&NUPDR' EQ '').I012400
+         IDAERMAC 11,NUPDR,&BLK
+.I012400 AIF   ('&OFLAGS' EQ '').I012500
+         IDAERMAC 11,OFLAGS,&BLK
+.I012500 AIF   ('&PASSWD' EQ '').I012600
+         IDAERMAC 11,PASSWD,&BLK
+.I012600 AIF   ('&RKP' EQ '').I012700
+         IDAERMAC 11,RKP,&BLK
+.I012700 AIF   ('&STRNO' EQ '').I012800
+         IDAERMAC 11,STRNO,&BLK
+.I012800 AIF   ('&STMST' EQ '').I012900
+         IDAERMAC 11,STMST,&BLK
+.I012900 AIF   ('&APPLID' EQ '').I013010                        X04SVHS
+         IDAERMAC 11,APPLID,&BLK                                 X03004
+.I013010 AIF   ('&BSTRNO' EQ '').I013020                        X04SVHS
+         IDAERMAC 11,BSTRNO,&BLK                                X04SVHS
+.I013020 AIF   ('&MAREA' EQ '').I013030                         X04SVHS
+         IDAERMAC 11,MAREA,&BLK                                 X04SVHS
+.I013030 AIF   ('&MLEN' EQ '').I013040                          X04SVHS
+         IDAERMAC 11,MLEN,&BLK                                  X04SVHS
+.I013040 AIF   ('&CRA' EQ '').I013050                           X04SVHS
+         IDAERMAC 11,CRA,&BLK                                   X04SVHS
+.I013050 AIF   ('&AIXRKP' EQ '').I013060                        X04SVHS
+         IDAERMAC 11,AIXRKP,&BLK                                X04SVHS
+.I013060 AIF   ('&OPENOBJ' EQ '').I013070
+         IDAERMAC 11,OPENOBJ,&BLK                               X04SVHS
+.I013070 ANOP
+.I013080 AIF   ('&USERPTR' EQ '').I013000                      @XM01129
+         IDAERMAC 11,USERPTR,&BLK                              @XM01129
+.I013000 AIF   ('&ACBLEN' EQ ''  OR  '&BLKTYPE' EQ '').I013100
+         IDAERMAC 11,ACBLEN,&BLK
+.I013100   AIF   ('&CALLER' NE 'TEST'  OR  &IDAENO LE 1).I013200
+         IDAERMAC 9,&IDAENO
+         MEXIT
+.I013200 AIF   (NOT &IDACB01).I013300
+         MEXIT                         EXIT IF ANY ERRORS DETECTED
+.**********************************************************************
+.I013300 ANOP
+&I       SETA  &IDAENO+1
+.I013400 ANOP                          SET DEFAULT ELEMENT LENGTH TO 4
+&I       SETA  &I-1
+         AIF   (&I LE 0).I013500
+         AIF   (&IDAELEN(&I) NE 0).I013400
+&IDAELEN(&I) SETA 4
+         AIF   (&BTC NE &EXLID OR '&MF(1)' EQ 'E').I013400
+&IDAELEN(&I) SETA 8
+         AGO   .I013400
+.*
+.* CODE GENERATION
+.*
+.I013500 ANOP
+         AIF   ('&MF(1)' NE 'E').I016600
+.**********************************************************************
+.* EXECUTE FORM *******************************************************
+.**********************************************************************
+         IDACB1 ARG=&MF,ARGNAME=MF,TYPE=C,POS=2,MF=E
+         AIF   (&IDACB11 EQ &AN2).I013600 S TYPE ADCON SPECIFIED
+         AIF   (&IDACB11 EQ &AN3).I013700 INDIRECT ADDR SPECIFIED
+         AIF   (&IDACB11 EQ &AN4).I013800 A TYPE ADCON SPECIFIED
+         AIF   ('&IDACB13' EQ '1').I013900  PARM LIST IN REG 1
+&LABEL   LR    1,&IDACB13              POINT TO PARAMETER LIST
+         AGO   .I014000
+.I013600 ANOP
+.*                                      S TYPE ADCON
+&LABEL   DC    X'4110'                 POINT TO ...
+         DC    S(&IDACB13)             PARAMETER LIST
+         AGO   .I014000
+.I013700 ANOP
+.*                                      INDIRECT ADDRESS
+&LABEL   DC    X'4110'                 POINT TO ...
+         DC    S(&IDACB13)             PARAMETER LIST ADDRESS
+         L     1,0(,1)                 POINT TO PARAMETER LIST
+         AGO   .I014000
+.I013800 ANOP
+.*                                      A TYPE ADCON
+&LABEL   LA    1,&IDACB13              POINT TO PARAMETER LIST
+         AGO   .I014000
+.I013900 AIF   ('&LABEL' EQ '').I014000
+         DS    0H                                               XA03893
+&LABEL   EQU   *
+.I014000 ANOP
+         L     15,0(,1)                POINT TO HEADER
+         TM    1(15),X'10'             TEST LIST FOR AM=VTAM     X03004
+         AIF   ('&AM' EQ 'VTAM').I014100
+         BO    &ERRLBL                 ERROR IF ON EXECUTE       X03004
+         AGO   .I014200
+.I014100 ANOP                                                    X03004
+         BZ    &ERRLBL                 ERROR IF NOT ON EXECUTE   X03004
+.I014200 ANOP                                                    X03004
+&I       SETA  &IDACB04(1)+&IDACB04(2)+&IDACB04(3)+&IDACB04(4)
+.*             NO HEADER ACE IS BUILT IF EXECUTE FORM AND WAREA,
+.*             LENGTH, AND COPIES PARAMETERS ARE NULL
+         AIF   (&I+&IDAENO LE 0).I016400
+         AIF   (&I LE 0).I015100
+.* MODIFY HEADER ARGUMENT CONTROL ENTRY  -  MF=E
+&I       SETA  &IDACB02+1              NUMBER OF FIELDS IN HEADER
+.I014300 ANOP
+&I       SETA  &I-1
+         AIF   (&I LE 0).I015000         TEST FOR END OF LIST
+         AIF   (&IDACB04(&I) LE 0).I014300 TEST FOR FLD TO BE MODIFIED
+&WORKA   SETA  4-&IDACB07(&I)
+         AIF   (&IDACB04(&I) EQ &AN3).I014800  INDIRECT ADDR SPECIFIED
+         AIF   (&IDACB04(&I) EQ &AN4).I014900  A TYPE ADCON SPECIFIED
+&H       SETC  ''
+         AIF   (&IDACB07(&I) NE 2).I014400 TEST FOR HALF-WORD FIELD
+&H       SETC  'H'
+.I014400 AIF   (&IDACB04(&I) EQ &AN1).I014600  REGISTER SPECIFICATION
+         AIF   (&IDACB04(&I) EQ &AN2).I014700  S TYPE ADCON SPECIFIED
+         AIF   (&IDACB04(&I) EQ &VN1).I014500  SELF DEFINING TERM
+         IDAERMAC 7,IDACB2-HMOD        INVALID HEADER TYPE CODE
+         MEXIT
+.*                                     *** VN1 ***  SELF DEFINING TERM
+.I014500 LA    14,&IDACB05(&I)         LOAD HEADER FIELD VALUE
+         ST&H  14,&IDACB06(&I)(,15)    STORE VALUE IN HEADER
+         AGO   .I014300
+.*                                     *** AN1 ***  REG SPECIFIECATION
+.I014600 ST&H  &IDACB05(&I),&IDACB06(&I)(,15) STORE VALUE IN HEADER
+         AGO   .I014300
+.*                                     *** AN2 ***  S TYPE ADCON
+.I014700 DC    X'41E0'                 LOAD VALUE ...
+         DC    S(&IDACB05(&I))         OF HEADER FIELD
+         ST&H  14,&IDACB06(&I)(,15)    STORE VALUE IN HEADER
+         AGO   .I014300
+.*                                     *** AN3 ***  INDIRECT ADDRESS
+.I014800 DC    X'41E0'                 LOAD POINTER TO ...
+         DC    S(&IDACB05(&I))         VALUE OF HEADER FIELD
+         MVC   &IDACB06(&I)(&IDACB07(&I),15),&WORKA.(14)               C
+                                       MOVE VALUE TO HEADER
+         AGO   .I014300
+.*                                     *** AN4 ***  A TYPE ADCON
+.I014900 CNOP  0,4
+         BAL   14,*+8                  BRANCH AROUND CONSTANT
+         DC    A(&IDACB05(&I))         VALUE OF HEADER FIELD
+         MVC   &IDACB06(&I)(&IDACB07(&I),15),&WORKA.(14)               C
+                                       MOVE VALUE TO HEADER
+         AGO   .I014300
+.I015000 AIF   (&IDAENO LE 0).I016400    TEST FOR NO ELEMENTS TO MODIFY
+.******************************
+.* LOCATE AND MODIFY ELEMENT ARGUMENT CONTROL ENTRIES   -   MF=E
+.******************************
+.I015100 ANOP
+&I       SETA  0
+.I015200 ANOP
+&I       SETA  &I+1
+         AIF   (&I GT &IDAENO).I016400 TEST FOR ALL ELEMENTS MODIFIED
+         LR    14,1                    POINT TO PARAMETER LIST
+         AIF   (&I GT 1).I015300         TEST FOR FIRST ELEMENT
+         B     *+20                    BYPASS HEADER
+.I015300 LA    14,4(,14)               POINT TO NEXT PLIST ENTRY
+         L     15,0(,14)               POINT TO NEXT ELEMENT
+         CLI   1(15),&IDAEID(&I)       TEST ELEMENT ID
+         BE    *+14                    BRANCH IF ELEMENT FOUND
+         LTR   15,15                   TEST FOR END OF PARAMETER LIST
+         BP    *-18                    CONTINUE SEARCH IF NOT END
+         B     &ERRLBL                 ELEMENT NOT FOUND - ERROR
+.*
+         AIF   (&IDAETYP(&I) EQ &VN1).I015400 SELF DEFINING TERM
+         AIF   (&IDAETYP(&I) EQ &VN2).I015500 BIT STRING
+         AIF   (&IDAETYP(&I) EQ &VN3).I015800 CHARACTER STRING
+         AIF   (&IDAETYP(&I) EQ &AN1).I015900 REGISTER SPECIFICATION
+         AIF   (&IDAETYP(&I) EQ &AN2).I016000 S TYPE ADCON
+         AIF   (&IDAETYP(&I) EQ &AN3).I016100 INDIRECT ADDRESS
+         AIF   (&IDAETYP(&I) EQ &AN4).I016200 A TYPE ADCON
+         AIF   (&IDAETYP(&I) EQ 0).I016300
+         IDAERMAC 7,IDACB2-EMOD
+         MEXIT
+.*                                     *** VN1 *** SELF DEFINING TERM
+.I015400 LA    14,&IDAVALC(&I)         LOAD ELEMENT VALUE
+         ST    14,4(,15)               STORE VALUE IN ELEMENT
+         AGO   .I015200
+.*                                     *** VN2 *** BIT STRING
+.I015500 AIF   (&IDAEID(&I) EQ X'34').I015600 TEST FOR OPTCD     X03004
+         AIF   (&IDAEID(&I) EQ X'50').I015700 TEST FOR PROC      X03004
+         BAL   14,*+8                  BRANCH AROUND CONSTANT    X03004
+         DC    B'&IDAVALC(&I)'         BINARY VALUE
+         MVC   4(4,15),0(14)           MOVE VALUE TO ELEMENT
+         AIF   (&IDAEID(&I) EQ X'40').I016300                   X04SVHS
+.*             IF KEYWORD IS AM, CHECK FOR EXLST
+         AGO   .I015200
+.I015600 BAL   14,*+16                 BRANCH AROUND CONSTANT    X03004
+         DC    B'&IDAVALC(&I)'         BINARY VALUE              X03004
+         DC    B'&IDAOPT2'             BINARY VALUE              X03004
+         DC    B'&IDAOPT3'             BINARY VALUE              X03004
+         MVC   4(12,15),0(14)          MOVE VALUE TO ELEMENT     X03004
+         AGO   .I015200
+.I015700 BAL   14,*+12                 BRANCH AROUND CONSTANT    X03004
+         DC    B'&IDAVALC(&I)'         BINARY VALUE              X03004
+         DC    B'&IDAPRC2'             BINARY VALUE              X03004
+         MVC   4(8,15),0(14)           MOVE VALUE TO ELEMENT     X03004
+         AGO   .I015200
+.*                                     *** VN3 *** CHARACTER STRING
+.I015800 BAL   14,*+12                 BRANCH AROUND CONSTANT
+         DC    CL8'&IDAVALC(&I)'       EIGHT-BYTE CHARACTER STRING
+         MVC   4(8,15),0(14)           MOVE CHARACTER STRING TO ELEMENT
+         AGO   .I015200
+.*                                     *** AN1 *** REG SPECIFICATION
+.I015900 ST    &IDAVALC(&I),4(,15)     STORE VALUE IN ELEMENT
+         AGO   .I016300
+.*                                     *** AN2 *** S TYPE ADCON
+.I016000 DC    X'41E0'                 LOAD ADDRESS VALUE
+         DC    S(&IDAVALC(&I))
+         ST    14,4(,15)               STORE VALUE IN ELEMENT
+         AGO   .I016300
+.*                                     *** AN3 *** INDIRECT ADDRESS
+.I016100 DC    X'41E0'                 LOAD POINTER ...
+         DC    S(&IDAVALC(&I))         TO VALUE
+         MVC   4(&IDAELEN(&I),15),0(14) MOVE VALUE TO ELEMENT
+         AGO   .I016300
+.*                                     *** AN4 *** A TYPE ADCON
+.I016200 CNOP  0,4
+         BAL   14,*+8                  BRANCH AROUND CONSTANT
+         DC    A(&IDAVALC(&I))         ADDRESS VALUE
+         MVC   4(4,15),0(14)           MOVE VALUE TO ELEMENT
+.I016300 AIF   (&BTC NE &EXLID OR &IDAEID(&I) EQ 42).I015200
+.*             IF EXLST EXIT FLAGS MUST BE GENERATED
+.*                                     *** EXIT LIST ENTRY ***
+         BAL   14,*+8                  BRANCH AROUND CONSTANT
+         DC    B'&IDAVALX(&I)'         EXIT ATTRIBUTES
+         MVC   8(4,15),0(14)           MOVE ATTRIBUTES TO ELEMENT
+         AGO   .I015200
+.I016400 B     IDA&SYSNDX.B            BRANCH AROUND ERR CODE  X03004HS
+&ERRLBL  LA    15,8                    SET ERROR RETURN CODE
+         AIF   (&IDABUG).I016500         TEST FOR DEBUG MODE
+         CNOP  0,4                     ADJUST TO WORD BOUNDARY @Z40BHCJ
+         B     *+20                    BYPASS LINKAGE          @Z40BHCJ
+         AGO   .I022100                                         X04SVHS
+.I016500 ANOP                                                  X03004HS
+         CNOP  0,4                     ADJUST TO WORD BOUNDARY X03004HS
+         B     *+20                    BYPASS LINKAGE          @Z40BHCJ
+         AGO   .I022000                  ISSUE CALL FOR IDA019C1
+.**********************************************************************
+.* STANDARD FORM ******************************************************
+.* DYNAMIC MODIFICATION ***********************************************
+.**********************************************************************
+.I016600 ANOP
+&PLLEN   SETA  4*(&IDAENO+1)              CALCULATE LENGTH OF PARM LIST
+.*      CALC OFFSET FROM START OF PARM LIST TO EACH ELEMENT VALUE FIELD
+&EOFF(1) SETA  &PLLEN+&IDACB03+4        ACCOUNT FOR LENGTH OF HEADER
+&I       SETA  1
+.I016700 ANOP
+&I       SETA  &I+1
+         AIF   (&I GT &IDAENO).I016800  CHECK FOR END OF LIST
+&EOFF(&I) SETA &EOFF(&I-1)+&IDAELEN(&I-1)+4
+.*                                      SET ELEMENT OFFSET ARRAY
+         AGO   .I016700
+.*      MODIFY HEADER ARGUMENT CONTROL ENTRY  -  MF=S
+.I016800 AIF   ('&MF' NE 'L').I016900   CHECK FOR LIST FORM
+         AIF   ('&LABEL' EQ '').I018700
+&PLLBL   SETC  '&LABEL'
+         AGO   .I018700
+.I016900 AIF   ('&LABEL' EQ '').I017000
+         DS    0H                                               XA03893
+&LABEL   EQU   *
+.I017000 AIF   (&RMF).I020600            GO IF MF = REENTRANT
+.I017100 ANOP
+&I       SETA  0
+.I017200 ANOP
+&I       SETA  &I+1
+         AIF   (&I GT &IDACB02).I017800  TEST FOR END OF HEADER LIST
+         AIF   (&IDACB04(&I) LT &AN1 OR &IDACB04(&I) GT &AN3).I017200
+.*             CHECK IF HEADER ELEMENT IS REGISTER SPECIFICATION,
+.*             S TYPE ADCON, OR INDIRECT ADDRESS
+&H       SETC  ''
+         AIF   (&IDACB07(&I) NE 2).I017300
+&H       SETC  'H'
+.I017300 ANOP
+&WORKA   SETA  &PLLEN+&IDACB06(&I)     CALC OFFSET FROM START OF PLIST
+         AIF   (&IDACB04(&I) EQ &AN3).I017600
+.*                                      CHECK FOR INDIRECT ADDRESS
+&WORKC   SETC  '&WORKA'.'(,1)'         OPERAND 2 FOR MF = REENTRANT
+         AIF   (&RMF).I017400
+&WORKC   SETC  '&PLLBL'.'+'.'&WORKA'   OPERAND 2 FOR MF = S/L
+.I017400 AIF   (&IDACB04(&I) EQ &AN2).I017500 CHECK FOR S TYPE ADCON
+         AIF   (&IDACB04(&I) EQ &AN3).I017600 CHECK FOR INDIRECT ADDR
+.*                                     *** AN1 *** REG SPECIFICATION
+         ST&H  &IDACB05(&I),&WORKC     STORE VALUE IN HEADER
+         AGO   .I017200
+.*                                     *** AN2 *** S TYPE ADCON
+.I017500 DC    X'41F0'                 LOAD ADDRESS VALUE ...
+         DC    S(&IDACB05(&I))         FOR HEADER FIELD
+         ST&H  15,&WORKC               STORE VALUE IN HEADER
+         AGO   .I017200
+.*                                     *** AN3 *** INDIRECT ADDRESS
+.I017600 DC    X'41F0'                 LOAD POINTER TO VALUE
+         DC    S(&IDACB05(&I))         FOR HEADER FIELD
+&J       SETA  4-&IDACB07(&I)          CALC OFFSET IN USER FIELD
+&WORKC   SETC  '&WORKA'.'('.'&IDACB07(&I)'.',1)' OPERND 1 FOR MF=REENT
+         AIF   (&RMF).I017700
+&WORKC   SETC  '&PLLBL'.'+'.'&WORKA'.'('.'&IDACB07(&I)'.')' OP1 MF=S/L
+.I017700 MVC   &WORKC,&J.(15)          MOVE VALUE TO HEADER
+         AGO   .I017200
+.******************************
+.*      MODIFY ELEMENT ARGUMENT CONTROL ENTRIES  -  MF=S
+.******************************
+.I017800 ANOP
+&I       SETA  0
+.I017900 ANOP
+&I       SETA  &I+1
+         AIF   (&I GT &IDAENO).I018500    TEST FOR END OF ELEMENT LIST
+         AIF   (&IDAETYP(&I) LT &AN1 OR &IDAETYP(&I) GT &AN3).I017900
+.*             CHECK IF ELEMENT TYPE IS REGISTER SPECIFICATION,
+.*             S TYPE ADCON, OR INDIRECT ADDRESS
+         AIF   (&IDAETYP(&I) EQ &AN3).I018200 CHECK FOR INDIRECT ADDR
+&WORKC   SETC  '&EOFF(&I)'.'(,1)'      OPERAND 2 FOR MF = REENTRANT
+         AIF   (&RMF).I018000
+&WORKC   SETC  '&PLLBL'.'+'.'&EOFF(&I)' OPERAND 2 FOR MF = S/L
+.I018000 AIF   (&IDAETYP(&I) EQ &AN2).I018100
+.*                                     *** AN1 *** REG SPECIFICATION
+         ST    &IDAVALC(&I),&WORKC     STORE VALUE IN ELEMENT
+         AGO   .I017900
+.*                                     *** AN2 *** S TYPE ADCON
+.I018100 DC    X'41F0'                 LOAD ADDRESS VALUE
+         DC    S(&IDAVALC(&I))
+         ST    15,&WORKC
+         AGO   .I017900
+.*                                     *** AN3 *** INDIRECT ADDRESS
+.I018200 DC    X'41F0'                 LOAD POINTER TO VALUE
+         DC    S(&IDAVALC(&I))
+&J       SETA  4
+         AIF   (&BTC EQ &EXLID AND &IDAEID(&I) NE 42).I018300
+&J       SETA  &IDAELEN(&I)
+.I018300 ANOP
+&WORKC   SETC  '&EOFF(&I)'.'('.'&J'.',1)' OPERAND 1 FOR MF = REENT
+         AIF   (&RMF).I018400
+&WORKC   SETC  '&PLLBL'.'+'.'&EOFF(&I)'.'('.'&J'.')'
+.*                                     OP 1 FOR MF = S/L
+.I018400 MVC   &WORKC,0(15)            MOVE VALUE TO ELEMENT
+         AGO   .I017900
+.I018500 AIF   (&RMF).I021900            GO IF MF = REENTRANT
+         AIF   (&IDAENO GE 1).I018600   TEST FOR NO ELEMENTS IN LIST
+         CNOP  0,4
+&WORKA   SETA  &IDACB03+4
+         BAL   1,&PLLBL+&WORKA         BRANCH AROUND CONSTANTS
+         AGO   .I018700
+.I018600 CNOP  0,4
+&WORKA   SETA  &EOFF(&IDAENO)+&IDAELEN(&IDAENO)
+         BAL   1,&PLLBL+&WORKA         BRANCH AROUND CONSTANTS
+.**********************************************************************
+.* STANDARD AND LIST FORMS ********************************************
+.* BUILD PARAMETER LIST
+.**********************************************************************
+.I018700 AIF   (&IDAENO GT 0).I018800  TEST FOR NO ELEMENTS IN LIST
+&PLLBL   DC    A(*+4+X'80000000')      ADDRESS OF HEADER
+         AGO   .I019100
+.I018800 ANOP
+&PLLBL   DC    A(*+&PLLEN)             ADDRESS OF HEADER
+&I       SETA  0
+.I018900 ANOP
+&I       SETA  &I+1
+         AIF   (&I GE &IDAENO).I019000
+&WORKA   SETA  &EOFF(&I)-4
+         DC    A(&PLLBL+&WORKA)        ELEMENT ADDRESS
+         AGO   .I018900
+.I019000 ANOP
+&WORKA   SETA  &EOFF(&I)-4
+         DC    A(&PLLBL+&WORKA+X'80000000') ADDRESS OF LAST ELEMENT
+.******************************
+.* BUILD HEADER ARGUMENT CONTROL ENTRY
+.******************************
+.I019100 DC    AL1(&BTC)               BLOCK TYPE CODE
+         DC    AL1(&FTC)               FUNCTION TYPE CODE
+&I       SETA  0
+.I019200 ANOP
+&I       SETA  &I+1
+         AIF   (&I GT &IDACB02).I019400
+         AIF   (&IDACB04(&I) EQ &VN1 OR &IDACB04(&I) EQ &AN4).I019300
+.******************************
+.*             CHECK IF HEADER TYPE IS SELF DEFINING TERM OR
+.*             A TYPE ADCON.
+.******************************
+         DC    AL&IDACB07(&I)(0)        HEADER FIELD VALUE
+         AGO   .I019200
+.I019300 DC    AL&IDACB07(&I)(&IDACB05(&I)) HEADER FIELD VALUE
+         AGO   .I019200
+.******************************
+.* BUILD ELEMENT ARGUMENT CONTROL ENTRIES
+.******************************
+.I019400 ANOP
+&I       SETA  0
+.I019500 ANOP
+&I       SETA  &I+1
+         AIF   (&I GT &IDAENO).I020500
+         DC    AL2(&IDAEID(&I))           ELEMENT ID
+         AIF   (&IDAEID(&I) NE X'34').I019600 TEST FOR OPTCD     X03004
+         DC    AL2(2)                  BIT STRING LENGTH         X03004
+         AGO   .I019800                                          X03004
+.I019600 AIF   (&IDAEID(&I) NE X'50').I019700 TEST FOR PROC      X03004
+         DC    AL2(1)                  BIT STRING LENGTH         X03004
+         AGO   .I019800                                          X03004
+.I019700 DC    AL2(0)                  RESERVED                  X03004
+         AIF   ('&CALLER' EQ 'SHOW').I019500
+.I019800 AIF   (&IDAETYP(&I) EQ &VN2).I019900 CHECK FOR BIT STRING
+         AIF   (&IDAETYP(&I) EQ &VN3).I020100 CHECK FOR CHAR STRING
+         AIF   (&IDAETYP(&I) GE &AN1 AND &IDAETYP(&I) LE &AN3).I020200
+.******************************
+.*                                     *** VN1 OR AN4 ***
+.*             SELF DEFINING TERM OR A TYPE ADCON
+.******************************
+         DC    A(&IDAVALC(&I))         ELEMENT VALUE
+         AGO   .I020300
+.*                                     *** VN2 *** BIT STRING
+.I019900 DC    B'&IDAVALC(&I)'         ELEMENT VALUE
+         AIF   (&IDAEID(&I) NE X'34').I020000 TEST FOR OPTCD     X03004
+         DC    B'&IDAOPT2'             ELEMENT VALUE             X03004
+         DC    B'&IDAOPT3'             ELEMENT VALUE             X03004
+         AGO   .I019500
+.I020000 AIF   (&IDAEID(&I) NE X'50').I020050 TEST FOR PROC
+         DC    B'&IDAPRC2'             ELEMENT VALUE             X03004
+         AGO   .I019500
+.I020050 AIF   (&IDAEID(&I) EQ X'40').I020300                   X04SVHS
+.*             IF KEYWORD IS AM, CHECK FOR EXLST                X04SVHS
+         AGO   .I019500                 CHECK NEXT ELEMENT      X04SVHS
+.*                                     *** VN3 *** CHAR STRING
+.I020100 DC    CL8'&IDAVALC(&I)'       ELEMENT VALUE
+         AGO   .I019500
+.*                                     *** AN1, AN2, OR AN3 ***
+.*             REGISTER SPECIFICATION, S TYPE ADCON, OR INDIRECT ADDR
+.I020200 DC    A(0)                    ELEMENT VALUE TO BE MODIFIED
+.I020300 AIF   (&BTC EQ &EXLID AND &IDAEID(&I) NE 42 AND               C
+               &IDAEID(&I) NE 63).I020400
+         AIF   (&IDAELEN(&I) LE 4).I019500
+         DC    A(0)                    REMAINDER OF ELEMENT FIELD
+         AIF   (&IDAELEN(&I) LE 8).I019500
+         DC    A(0)                   REMAINDER OF ELEMENT FIELD X03004
+         AGO   .I019500
+.I020400 DC    B'&IDAVALX(&I)'         EXIT ATTRIBUTES
+         AGO   .I019500
+.I020500 AIF   (&RMF).I021200            GO IF MF = REENTRANT
+         AIF   ('&MF' NE 'L').I022000
+         MEXIT
+.**********************************************************************
+.* REENTRANT MACRO FORMS - GENERATE AND LIST **************************
+.* GENERATE EQUATE FOR LENGTH OF PARAMETER LIST AREA USED
+.**********************************************************************
+.I020600 AIF   (N'&MF LT 3).I020900
+         AIF   (&IDAENO GT 0).I020700
+&WORKA   SETA  &IDACB03+4
+         AGO   .I020800
+.I020700 ANOP
+&WORKA   SETA  &EOFF(&IDAENO)+&IDAELEN(&IDAENO) CALC AREA LENGTH
+.I020800 ANOP
+&MF(3)   EQU   &WORKA                  LENGTH OF PARM LIST AREA USED
+.I020900 CNOP  0,4
+         AIF   (&IDAENO GT 0).I021000
+&WORKA   SETA  &IDACB03+4
+         AGO   .I021100
+.I021000 ANOP
+&WORKA   SETA  &EOFF(&IDAENO)+&IDAELEN(&IDAENO)-&PLLEN+4
+.*                                     CALC LENGTH OF ACES
+.I021100 BAL   15,*+&WORKA             BRANCH OVER CONSTANTS
+.******************************
+.* BUILD HEADER AND ELEMENT ACES INLINE
+         AGO   .I019100                  SHARE MF = L/S CODE
+.******************************
+.* TRANSFORM AREA ADDRESS AND LOAD REGISTER 1
+.******************************
+.I021200 IDACB1 ARG=&MF,TYPE=C,POS=2,MF=&MF
+.*             THE VALUES IN GLOBALS &IDACB11 AND &IDACB13 ARE SET
+.*             BY IDACB1.
+         AIF   (&IDACB11 EQ &AN2).I021300 S TYPE ADCON
+         AIF   (&IDACB11 EQ &AN3).I021400 INDIRECT ADDRESS
+         AIF   (&IDACB11 EQ &AN4).I021500 A TYPE ADCON
+         AIF   ('&IDACB13' EQ '1').I021600 IS PARM LIST IN REG 1
+         LR    1,&IDACB13              POINT TO PARAMETER LIST AREA
+         AGO   .I021600
+.I021300 ANOP                          *** AN2 *** S TYPE ADCON
+         DC    X'4110'                 POINT TO ...
+         DC    S(&IDACB13)             PARAMETER LIST AREA
+         AGO   .I021600
+.I021400 ANOP                          *** AN3 *** INDIRECT ADDRESS
+         DC    X'4110'                 POINT TO ...
+         DC    S(&IDACB13)             ADDRESS OF PARAMETER LIST AREA
+         L     1,0(,1)                 POINT TO PARAMETER LIST AREA
+         AGO   .I021600
+.I021500 ANOP                          *** AN4 *** A TYPE ADCON
+         LA    1,&IDACB13              POINT TO PARAMETER LIST AREA
+.I021600 ANOP
+&WORKA   SETA  &WORKA-4
+         MVC   &PLLEN.(&WORKA,1),0(15) MOVE ACES TO AREA
+.******************************
+.* BUILD PARAMETER LIST
+.******************************
+         LA    15,&PLLEN.(,1)          POINT TO HEADER ACE
+         ST    15,0(,1)                STORE ADDRESS IN PARAMETER LIST
+&I       SETA  0                       INIT ELEMENT STACK INDEX
+&J       SETA  0                       INIT PLIST ENTRY OFFSET
+.I021700 ANOP
+&I       SETA  &I+1                    INCR ELEMENT STACK INDEX
+         AIF   (&I GT &IDAENO).I021800
+&J       SETA  &J+4                    INCR PLIST ENTRY OFFSET
+&WORKA   SETA  &EOFF(&I)-4          OFFSET TO ELEMENT ACE
+         LA    15,&WORKA.(,1)          POINT TO ELEMENT ACE
+         ST    15,&J.(,1)              STORE ADDRESS IN PARAMETER LIST
+         AGO   .I021700
+.I021800 OI    &J.(1),X'80'            MARK END OF PARAMETER LIST
+.******************************
+.* MODIFY HEADER AND ELEMENT ACES
+.******************************
+         AGO   .I017100                  SHARE CODE WITH MF = S
+.I021900 AIF   ('&MF(1)' EQ 'G').I022000
+         MEXIT
+.**********************************************************************
+.* LINKAGE ************************************************************
+.**********************************************************************
+.I022000 ANOP                                                  X03004HS
+         AIF   (NOT(&IDABUG)).I022100   CHECK FOR DEBUG MODE
+         CNOP  0,4                     ALIGN TO FULL WORD BOUNDRY
+IDA&SYSNDX.B B     *+8                                         X03004HS
+         DC    V(IDA019C1)
+         L     15,*-4
+         AGO  .I022200
+.* LOCATE AND BRANCH TO CONTROL BLOCK MANIPULATION ROUTINE
+.I022100 ANOP                                                  X03004HS
+IDA&SYSNDX.B L     15,16                  POINT TO CVT         X03004HS
+         L     15,256(,15)             POINT TO AMCBS
+         L     15,12(,15)              POINT TO CB MANIPULATION ROUTINE
+.I022200 AIF   ('&BLK' EQ '').I022650  NO VALID BLKTYPE        @ZA07565
+.* EITHER BLK WAS SPECIFIED OR A VALID PARAMETER IDENTIFIED BLK@ZA07565
+.I022250 ANOP                          CHECK FOR GENCB         @ZA07565
+&WORKA   SETA  8                       SET INDEX TO GENCB/ACB  @Z40BHCJ
+         AIF  ('&CALLER' NE 'GEN').I022300                     @Z40BHCJ
+         AIF  ('&BLK' EQ 'ACB').I022600                        @ZA07565
+&WORKA   SETA  12                      SET INDEX TO GENCB/RPL  @Z40BHCJ
+         AIF  ('&BLK' EQ 'RPL').I022600                        @ZA07565
+&WORKA   SETA  16                      SET INDEX TO GENCB/EXLST@Z40BHCJ
+         AIF  ('&BLK' EQ 'EXLST').I022600                      @ZA07565
+&WORKA   SETA  20                      SET INDEX TO GENCB/NIB  @Z40BHCJ
+         AIF  ('&BLK' EQ 'NIB').I022600                        @ZA07565
+.I022300 ANOP                          CHECK FOR MODCB         @Z40BHCJ
+&WORKA   SETA  24                       SET INDEX TO MODCB/ACB @Z40BHCJ
+         AIF  ('&CALLER' NE 'MOD').I022400                     @Z40BHCJ
+         AIF  ('&BLK' EQ 'ACB').I022600                        @ZA07565
+&WORKA   SETA  28                      SET INDEX TO MODCB/RPL  @Z40BHCJ
+         AIF  ('&BLK' EQ 'RPL').I022600                        @ZA07565
+&WORKA   SETA  32                      SET INDEX TO MODCB/EXLST@Z40BHCJ
+         AIF  ('&BLK' EQ 'EXLST').I022600                      @ZA07565
+&WORKA   SETA  36                      SET INDEX TO MODCB/NIB  @Z40BHCJ
+         AIF  ('&BLK' EQ 'NIB').I022600                        @ZA07565
+.I022400 ANOP                          CHECK FOR SHOWCB        @Z40BHCJ
+&WORKA   SETA  40                      SET INDEX TO SHOWCB/ACB @Z40BHCJ
+         AIF  ('&CALLER' NE 'SHOW').I022500                    @Z40BHCJ
+         AIF  ('&BLK' EQ 'ACB').I022600                        @ZA07565
+&WORKA   SETA  44                      SET INDEX TO SHOWCB/RPL @Z40BHCJ
+         AIF  ('&BLK' EQ 'RPL').I022600                        @ZA07565
+&WORKA   SETA  48                      SET INDEX TO SHOWCB/EXL @Z40BHCJ
+         AIF  ('&BLK' EQ 'EXLST').I022600                      @ZA07565
+&WORKA   SETA  52                      SET INDEX TO SHOWCB/NIB @Z40BHCJ
+         AIF  ('&BLK' EQ 'NIB').I022600                        @ZA07565
+.*                TESTCB CHECK
+.I022500 ANOP                          ASSUME TESTCB           @Z40BHCJ
+         AIF  ('&CALLER' NE 'TEST').I022650                    @Z40BHCJ
+&WORKA   SETA  56                      SET INDEX TO TESTCB/ACB @Z40BHCJ
+         AIF  ('&BLK' EQ 'ACB').I022600                        @ZA07565
+&WORKA   SETA  60                      SET INDEX TO TESTCB/RPL @Z40BHCJ
+         AIF  ('&BLK' EQ 'RPL').I022600                        @ZA07565
+&WORKA   SETA  64                      SET INDEX TO TESTCB/EXL @Z40BHCJ
+         AIF  ('&BLK' EQ 'EXLST').I022600                      @ZA07565
+&WORKA   SETA  68                      SET INDEX TO TESTCB/NIB @Z40BHCJ
+.I022600 ANOP                          BUILD BRANCH INSTRUCTION@Z40BHCJ
+         BAL   14,&WORKA.(,15)         BRANCH TO ROUTINE       @Z40BHCJ
+         MEXIT                                                 @Z40BHCJ
+.*****************************************************         @Z40BHCJ
+.* DON'T KNOW CALLER OR BLKTYPE SO USE OLD INTERFACE *         @Z40BHCJ
+.*****************************************************         @Z40BHCJ
+.I022650 ANOP                                                  @Z40BHCJ
+         BAL   14,0(,15)               BRANCH TO ROUTINE       @ZA07565
+         MEXIT                                                 @Z40BHCJ
+.**********************************************                @Z40BHCJ
+.*  REGISTER FORM CODE GENERATION             *                @Z40BHCJ
+.**********************************************                @Z40BHCJ
+.I022700 ANOP                                                  @Z40BHCJ
+&I       SETA  2                                               @Z40BHCJ
+         AIF   (&IDACB04(&I) NE &AN1).I022800  NOT REGISTER    @Z40BHCJ
+         AIF   ('&IDACB05(&I)' EQ '1').I023100  REGISTER1      @Z40BHCJ
+&LABEL   LR    1,&IDACB05(&I)          POINT TO RPL            @ZA10861
+         AGO   .I023110                                        @Z40BHCJ
+.I022800 AIF   (&IDACB04(&I) NE &AN2).I022900 NOT S-TYPE ADCON @Z40BHCJ
+&LABEL   DC    X'4110'                 POINT TO                @ZA10861
+         DC    S(&IDACB05(&I))         RPL                     @Z40BHCJ
+         AGO   .I023110                                        @Z40BHCJ
+.I022900 AIF  (&IDACB04(&I) NE &AN3).I023000 NOT INDIRECT ADDR @Z40BHCJ
+&LABEL   DC    X'4110'                 POINT TO                @ZA10861
+         DC    S(&IDACB05(&I))         ADDRESS OF RPL          @Z40BHCJ
+         L     1,0(,1)                 POINT TO RPL            @Z40BHCJ
+         AGO   .I023110                                        @ZA10861
+.I023000 ANOP                          DIRECT ADDRESS          @Z40BHCJ
+&LABEL   LA    1,&IDACB05(&I)          POINT TO RPL            @ZA10884
+         AGO   .I023110                                        @ZA10884
+.I023100 ANOP                          RPL IN REGISTER 1       @Z40BHCJ
+&LABEL   DS    0H                                              @ZA10861
+.I023110 AIF  ('&CALLER' NE 'MOD').I023600                     @Z40BHCJ
+         IDACB1 ARG=&RECLEN,ARGNAME=RECLEN                     @Z40BHCJ
+         AIF   (&IDACB11 NE &AN1).I023300  RECLEN NOT IN REG   @Z40BHCJ
+         AIF   ('&IDACB13' EQ '0').I023600                     @Z40BHCJ
+         LR    0,&IDACB13              LOAD RECLEN             @Z40BHCJ
+         AGO   .I023600                                        @Z40BHCJ
+.I023300 AIF   (&IDACB11 NE &AN2).I023400  NOT S-TYPE ADCON    @Z40BHCJ
+         DC    X'4100'                 LOAD REGISTER 0         @ZA25133
+         DC    S(&IDACB13)             WITH RECLEN             @Z40BHCJ
+         AGO   .I023600                                        @Z40BHCJ
+.I023400 AIF   (&IDACB11 NE &AN3).I023500  NOT INDIRECT ADDR   @Z40BHCJ
+         DC    X'41F0'                 POINT TO                @ZA25133
+         DC    S(&IDACB13)             ADDRESS OF RECLEN       @ZA25133
+         L     0,0(,15)                POINT TO RECLEN         @Z40BHCJ
+         AGO   .I023600                                        @Z40BHCJ
+.I023500 ANOP                                                  @Z40BHCJ
+         CNOP  0,4                     ALIGN TO WORD BOUNDARY
+         B     *+8                     BRANCH AROUND CONSTANT  @Z40BHCJ
+         DC    AL4(&IDACB13)           RECLEN                  @Z40BHCJ
+         L     0,*-4                   LOAD RECLEN             @Z40BHCJ
+.I023600 ANOP                                                  @Z40BHCJ
+         AIF   (NOT(&IDABUG)).I023700                          @Z40BHCJ
+         CNOP  0,4                     ALIGN TO WORD BOUNDRY   @Z40BHCJ
+         B     *+8                     BRANCH AROUND ADCON     @Z40BHCJ
+         DC    V(IDA019C1)             ADDRESS OF IDA019C1     @Z40BHCJ
+         L     15,*-4                  POINT TO ROUTINE        @Z40BHCJ
+         AGO   .I023800                                        @Z40BHCJ
+.I023700 ANOP                                                  @Z40BHCJ
+         L     15,16                   POINT TO CVT            @Z40BHCJ
+         L     15,256(,15)             POINT TO AMCBS          @Z40BHCJ
+         L     15,12(,15)              POINT TO ROUTINE        @Z40BHCJ
+.I023800 ANOP                                                  @Z40BHCJ
+         AIF  ('&CALLER' NE 'MOD').I023900                     @Z40BHCJ
+         BAL   14,80(,15)              BRANCH TO ROUTINE       @Z40BHCJ
+         MEXIT                                                 @Z40BHCJ
+.I023900 ANOP                                                  @Z40BHCJ
+         BAL   14,76(,15)               BRANCH TO ROUTINE      @Z40BHCJ
+         AIF  (&IDACB04(3) NE &AN1).I024000                    @Z40BHCJ
+         ST    0,0(,&IDACB05(3))        STORE RECLEN IN AREA   @Z40BHCJ
+         MEXIT                                                 @Z40BHCJ
+.I024000 AIF  (&IDACB04(3) NE &AN2).I024100                    @Z40BHCJ
+         DC    X'5000'                  STORE RECLEN           @Z40BHCJ
+         DC    S(&IDACB05(3))           IN AREA                @Z40BHCJ
+         MEXIT                                                 @Z40BHCJ
+.I024100 ANOP                                                  @Z40BHCJ
+         AIF  (&IDACB04(3) NE &AN3).I024200                    @Z40BHCJ
+         L     1,&IDACB05(3)            LOAD ADDRESS OF AREA   @Z40BHCJ
+         ST    0,0(,1)                  STORE RECLEN IN AREA   @Z40BHCJ
+         MEXIT                                                 @Z40BHCJ
+.I024200 ANOP                                                  @Z40BHCJ
+         ST    0,&IDACB05(3)            STORE ADDRESS IN AREA  @Z40BHCJ
+         MEND                                                  @Z40BHCJ

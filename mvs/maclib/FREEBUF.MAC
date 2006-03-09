@@ -1,0 +1,23 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    FREEBUF &DCB,&REG,&DUMMY=
+         LCLB  &NOGO
+         AIF   ('&DCB' EQ '').E1
+.R1      AIF   ('&REG' EQ '').E2
+.R2      AIF   ('&REG(1)' EQ '0').E3
+         AIF   ('&REG(1)' EQ '1' OR '&REG(1)' EQ '14').E3
+         AIF   (&NOGO EQ 1).TERM
+&NAME    IHBINNRA &DCB
+         L     14,20(0,1)                        LOAD BUFCB ADDRESS
+         MVC   0(4,&REG(1)),0(14)                ATTACH BUFFER TO CHAIN
+         ST    &REG(1),0(0,14)                   PUT BUF ADDR IN BUFCB
+         MEXIT
+.E1      IHBERMAC 06
+&NOGO    SETB  1
+         AGO   .R1
+.E2      IHBERMAC 18
+&NOGO    SETB  1
+         AGO   .R2
+.E3      IHBERMAC 37,,&REG
+.TERM    MEND
+

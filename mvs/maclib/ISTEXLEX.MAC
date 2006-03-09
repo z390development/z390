@@ -1,0 +1,166 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GOTO   EXLEXTPL;                          /* SKIP THE COMMENTS    */
+* /*                                                                */
+* /*     CHANGE LEVEL = 0                                   @ZA34940*/
+* /*     DATE OF LAST CHANGE = 13  NOV   78 ( 78*317 )      @ZA34940*/
+* /*                                                                */
+* /******************************************************************/
+* /*                                                                */
+* /*     EXTL VTAM EXTENSION                                        */
+* /*                                                                */
+* /*     THE EXTENSION DESCRIBES CONTROL DATA THAT ONLY VTAM USES.  */
+* /*     THE EXTENSION IS CALLED BY THE VSAM EXTENSION      @ZA34940*/
+* /*     (IFGEXLVS) UNDER THE FOLLOWING CONDITIONS:         @ZA34940*/
+* /*                                                                */
+* /*        PLS:  THE MODULE CONTAINING AN INCLUDE FOR IFGEXLST     */
+* /*              SETS THE MACRO VARIABLE 'ACBRPLXL' TO 'VTAM'      */
+* /*              PRIOR TO ISSUING THE INCLUDE.                     */
+* /*        BAL:  THE AM=VTAM PARAMETER IS CODED ON THE IFGEXLST    */
+* /*              MACRO CALL                                        */
+* /*                                                                */
+* /* CHANGE ACTIVITY                                                */
+* /*      CBMM SPLIT SUPPORT                                @ZA34940*/
+* /*                                                                */
+* /******************************************************************/
+* /*                                                                */
+*%EXLEXTPL: ;
+*             2 EXLVTEXT,                   /* START OF EXTENSION   */
+*              3 EXLNLGNF    BIT(8),        /* LOSTERM ENTRY
+*                                              DESCRIPTION    X03004*/
+*                4 EXLNLGNS  BIT(1),        /* EXIT SPECIFIED X03004*/
+*                4 EXLNLGNA  BIT(1),        /* EXIT ACTIVE    X03004*/
+*                4 EXLNLGNK  BIT(1),        /* RESERVED       X03004*/
+*                4 *         BIT(2),        /* RESERVED       X03004*/
+*              3 EXLNLGNP    PTR(31) BDY(BYTE), /* POINTER TO LOSTERM
+*                                                  EXIT       X03004*/
+*              3 EXLRLRQF    BIT(8),        /* RELREQ ENTRY
+*                                              DESCRIPTION    X03004*/
+*                4 EXLRLRQS  BIT(1),        /* EXIT SPECIFIED X03004*/
+*                4 EXLRLRQA  BIT(1),        /* EXIT ACTIVE    X03004*/
+*                4 EXLRLRQK  BIT(1),        /* RESERVED       X03004*/
+*                4 *         BIT(2),        /* RESERVED       X03004*/
+*              3 EXLRLRQP    PTR(31) BDY(BYTE), /* POINTER TO RELREQ
+*                                                  EXIT       X03004*/
+*              3 *           CHAR(5),       /* RESERVED     @X50BHUC*/
+*              3 EXLATTNF    BIT(8),        /* ATTN ENTRY
+*                                              DESCRIPTION    X03004*/
+*                4 EXLATTNS  BIT(1),        /* EXIT SPECIFIED X03004*/
+*                4 EXLATTNA  BIT(1),        /* EXIT ACTIVE    X03004*/
+*                4 EXLATTNK  BIT(1),        /* RESERVED       X03004*/
+*                4 *         BIT(2),        /* RESERVED       X03004*/
+*              3 EXLATTNP    PTR(31) BDY(BYTE), /* POINTER TO ATTN
+*                                                  EXIT       X03004*/
+*              3 EXLTPNDF    BIT(8),        /* TPEND ENTRY
+*                                              DESCRIPTION    X03004*/
+*                4 EXLTPNDS  BIT(1),        /* EXIT SPECIFIED X03004*/
+*                4 EXLTPNDA  BIT(1),        /* EXIT ACTIVE    X03004*/
+*                4 EXLTPNDK  BIT(1),        /* RESERVED       X03004*/
+*                4 *         BIT(2),        /* RESERVED       X03004*/
+*              3 EXLTPNDP    PTR(31) BDY(BYTE), /* POINTER TO TPEND
+*                                                  EXIT      G40AKCM*/
+*              3 EXLTNSEF    BIT(8),        /* NSEXIT ENTRY
+*                                              DESCRIPTION   G40AKCM*/
+*                4 EXLTNSES  BIT(1),       /* EXIT SPECIFIED G40AKCM*/
+*                4 EXLTNSEA  BIT(1),       /* EXIT ACTIVE    G40AKCM*/
+*                4 EXLTNSEK  BIT(1),        /* RESERVED      G40AKCM*/
+*                4 *         BIT(2),        /* RESERVED      G40AKCM*/
+*              3 EXLTNSEP    PTR(31) BDY(BYTE); /* POINTER TO NSEXIT
+*                                                  EXIT      G40AKCM*/
+*     DCL  1 EXLDFAS BASED(ADDR(EXLJRNF)),  /* BASE AT JRNAD X3004BH*/
+*            2 EXLDFASF    BIT(8),          /* DFASY ENTRY
+*                                              DESCRIPTION   X3004BH*/
+*              3 EXLDFASS  BIT(1),          /* EXIT SPECIFIEDX3004BH*/
+*              3 EXLDFASA  BIT(1),          /* EXIT ACTIVE   X3004BH*/
+*              3 EXLDFASK  BIT(1),          /* RESERVED      X3004BH*/
+*              3 *         BIT(2),          /* RESERVED      X3004BH*/
+*            2 EXLDFASP    PTR(31) BDY(BYTE); /* POINTER TO DFASY
+*                                                  EXIT      X3004BH*/
+*     DCL  1 EXLRESP BASED(ADDR(EXLOPNF)),  /* BASE AT OPENADX3004BH*/
+*            2 EXLRESPF    BIT(8),          /* RESP ENTRY
+*                                              DESCRIPTION   X3004BH*/
+*              3 EXLRESPS  BIT(1),          /* EXIT SPECIFIEDX3004BH*/
+*              3 EXLRESPA  BIT(1),          /* EXIT ACTIVE   X3004BH*/
+*              3 EXLRESPK  BIT(1),          /* RESERVED      X3004BH*/
+*              3 *         BIT(2),          /* RESERVED      X3004BH*/
+*            2 EXLRESPP    PTR(31) BDY(BYTE); /* POINTER TO RESP
+*                                                  EXIT      X3004BH*/
+*%GOTO EXLEND;                              /* SKIP TO THE END OF
+*                                              MACRO                */
+* /*
+*                    ASSEMBLER DSECT FOR EXTL VTAM EXTENSION        *
+*                                                                   *
+         MACRO
+         ISTEXLEX
+EXLNLGNF DS    XL1                          LOSTERM ENTRY
+*                                           DESCRIPTION          X03004
+EXLNLGNS EQU   X'80'                        LOSTERM EXIT PRESENT X03004
+EXLNLGNA EQU   X'40'                        LOSTERM EXIT ACTIVE  X03004
+EXLNLGNK EQU   X'20'                        RESERVED             X03004
+EXLNLGNP DS    AL4                          LOSTERM EXIT ADDRESS X03004
+EXLNLGNL EQU   45                           LENGTH OF LIST TO HERE -
+*                                           45 BYTES (EQUATED VALUE;
+*                                           NO BITS ACTUALLY SET)X03004
+EXLRLRQF DS    XL1                          RELREQ ENTRY
+*                                           DESCRIPTION          X03004
+EXLRLRQS EQU   X'80'                        RELREQ EXIT PRESENT  X03004
+EXLRLRQA EQU   X'40'                        RELREQ EXIT ACTIVE   X03004
+EXLRLRQK EQU   X'20'                        RESERVED             X03004
+EXLRLRQP DS    AL4                          RELREQ EXIT ADDRESS  X03004
+EXLRLRQL EQU   50                           LENGTH OF LIST TO HERE -
+*                                           50 BYTES (EQUATED VALUE;
+*                                           NO BITS ACTUALLY SET)X03004
+         DS    XL5                          RESERVED           @X50BHUC
+EXLUNSPL EQU   55                           LENGTH OF LIST TO HERE -
+*                                           55 BYTES (EQUATED VALUE;
+*                                           NO BITS ACTUALLY SET)X03004
+EXLATTNF DS    XL1                          ATTN ENTRY
+*                                           DESCRIPTION          X03004
+EXLATTNS EQU   X'80'                        ATTN EXIT PRESENT    X03004
+EXLATTNA EQU   X'40'                        ATTN EXIT ACTIVE     X03004
+EXLATTNK EQU   X'20'                        RESERVED             X03004
+EXLATTNP DS    AL4                          ATTN EXIT ADDRESS    X03004
+EXLATTNL EQU   60                           LENGTH OF LIST TO HERE -
+*                                           60 BYTES (EQUATED VALUE;
+*                                           NO BITS ACTUALLY SET)X03004
+EXLTPNDF DS    XL1                          TPEND ENTRY
+*                                           DESCRIPTION          X03004
+EXLTPNDS EQU   X'80'                        TPEND EXIT PRESENT   X03004
+EXLTPNDA EQU   X'40'                        TPEND EXIT ACTIVE    X03004
+EXLTPNDK EQU   X'20'                        RESERVED             X03004
+EXLTPNDP DS    AL4                          TPEND EXIT ADDRESS   X03004
+EXLTPNDL EQU   65                           LENGTH OF LIST TO HERE -
+*                                           65 BYTES (EQUATED VALUE;
+*                                           NO BITS ACTUALLY SET)X03004
+EXLTNSEF DS    XL1                          TPEND ENTRY
+*                                           DESCRIPTION         G40AKCM
+EXLTNSES EQU   X'80'                        TPEND EXIT PRESENT  G40AKCM
+EXLTNSEA EQU   X'40'                        TPEND EXIT ACTIVE   G40AKCM
+EXLTNSEK EQU   X'20'                        RESERVED            G40AKCM
+EXLTNSEP DS    AL4                         NSEXIT EXIT ADDRESS  G40AKCM
+EXLTNSEL EQU   70                           LENGTH OF LIST TO HERE -
+*                                           70 BYTES (EQUATED VALUE NO
+*                                           BITS ACTUALLY SET)  G40AKCM
+         ORG   EXLJRNF                      BASE AT JRNAD       X3004BH
+EXLDFASF DS    XL1                          DFASY ENTRY         X3004BH
+*                                           DESCRIPTION         X3004BH
+EXLDFASS EQU   X'80'                        DFASY EXIT PRESENT  X3004BH
+EXLDFASA EQU   X'40'                        DFASY EXIT ACTIVE   X3004BH
+EXLDFASK EQU   X'20'                        RESERVED            X3004BH
+EXLDFASP DS    AL4                          DFASY EXIT ADDRESS  X3004BH
+EXLDFASL EQU   35                           LENGTH OF LIST TO HERE -
+*                                           35 BYTES (EQUATED VALUE; NO
+*                                           BITS ACTUALLY SET)  X3004BH
+         ORG   EXLOPNF                      BASE AT OPENAD      X3004BH
+EXLRESPF DS    XL1                          RESP ENTRY
+*                                           DESCRIPTION         X3004BH
+EXLRESPS EQU   X'80'                        RESP EXIT PRESENT   X3004BH
+EXLRESPA EQU   X'40'                        RESP EXIT ACTIVE    X3004BH
+EXLRESPK EQU   X'20'                        RESERVED            X3004BH
+EXLRESPP DS    AL4                          RESP EXIT ADDRESS   X3004BH
+EXLRESPL EQU   40                           LENGTH OF LIST TO HERE -
+*                                           40 BYTES (EQUATED VALUE; NO
+*                                           BITS ACTUALLY SET)  X3004BH
+         MEND
+*        END OF EXTL VTAM EXTENSION                                 */
+*%EXLEND: ;
+

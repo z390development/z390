@@ -1,0 +1,143 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO SHWPLS;                  /* BILINGUAL MAPPING
+         MACRO
+&SHWNAME IGGSHWPL &DSECT=YES                                        */
+*%SHWPLS:;
+*/*                                                                 */
+*/*      IGGSHWPL - VSAM SHOW CATALOG INPUT/OUTPUT PARM LISTS       */
+*/*               - 6/18/74                                         */
+*/*                                                                 */
+*/*
+         AGO   .SHW5                                                */
+*    /* SHOW CATALOG INPUT PARAMETER LIST                           */
+*
+*    %IF SHWPL999 ^= ','                /* IF BLOCK NOT CONTINUED   */
+*      %THEN %SHWPL999 = ';';           /* THEN CLOSE DCL STMNT     */
+*    %IF SHWPLLVL = ''                  /* IF BLOCK NOT CONCATENATED*/
+*      %THEN %GOTO SHWPL001;            /* THEN GENERATE DCL        */
+*    %SHWPLDUM = SHWPLLVL||' SHWPL';    /* SET MINOR LEVEL NUMBER   */
+*        SHWPLDUM                       /* SHWPL CONCATENATED LEVEL */
+*    %GOTO SHWPL002;                    /* SKIP DCL                 */
+*%SHWPL001:;                            /* DECLARE                  */
+*    DCL 1 SHWPL BASED(SHWPLPTR)        /* DECLARE SHWPL LEVEL ONE  */
+*%SHWPL002:;                            /* SKIP DECLARE             */
+*        BDY(WORD)                    , /* WORD BOUNDARY            */
+*          5 SHWFLGS  BIT(8)          , /* SHOWCAT FLAGS            */
+*            10 SHWNAME  BIT(1)       , /* ON - NAME SPECIFIED      */
+*                                       /* OFF - CI SPECIFIED       */
+*            10 *        BIT(7)       , /* RESERVED                 */
+*          5 *        CHAR(3)         , /* RESERVED                 */
+*          5 SHWENT   PTR(31)         , /* NAME/CI ENTRY ADDRESS    */
+*          5 SHWACB   PTR(31)         , /* ACB ADDRESS              */
+*          5 SHWAREA  PTR(31)  SHWPL999 /* RETURN AREA ADDRESS      */
+*    %SHWPLLEN = 'LENGTH(SHWPL)';       /* LENGTH OF SHWPL          */
+*
+*    /* SHOW CATALOG OUTPUT PARAMETER LIST                          */
+*    %IF SHWPLLVL = ''                  /* IF BLOCK NOT CONCATENATED*/
+*      %THEN %GOTO SHWPL003;            /* THEN GENERATE DCL        */
+*    %SHWPLDUM = SHWPLLVL||' SHWOUT';   /* SET MINOR LEVEL NUMBER   */
+*        SHWPLDUM                       /* SHWOUT CONCATENATED LEVEL*/
+*    %GOTO SHWPL004;                    /* SKIP DCL                 */
+*%SHWPL003:;                            /* DECLARE                  */
+*    DCL 1 SHWOUT BASED(SHWAREA)        /* DECLARE SHWOUT LEVEL ONE */
+*%SHWPL004:;                            /* SKIP DECLARE             */
+*        BDY(WORD)                    , /* WORD BOUNDARY            */
+*          5 SHWLEN1  FIXED(15)       , /* WORK AREA LENGTH SUPPLIED*/
+*                                       /* BY THE CALLER            */
+*          5 SHWLEN2  FIXED(15)       , /* WORK AREA LENGTH REQUIRED*/
+*                                       /* BY VSAM SHOW CATALOG     */
+*          5 SHWACBP  PTR(31)         , /* ACB ADDRESS OF THE VSAM  */
+*                                       /* CATALOG IN WHICH OBJECT  */
+*                                       /* WAS FOUND                */
+*          5 SHWTYPE  CHAR(1)         , /* ENTRY TYPE - SET TO      */
+*                                       /* C, G, R, D, I, OR Y      */
+*          5 SHWATTR  BIT(8)          , /* PATH/AIX ATTRIBUTES      */
+*            10 SHWUP   BIT(1)        , /* UPDATE PATH/UPGRADE      */
+*                                       /* MEMBERSHIP INDICATOR     */
+*            10 *       BIT(7)        , /* RESERVED                 */
+*          5 SHWASS0  BDY(HWORD)      , /* IF NOT D OR I ENTRY TYPE,*/
+*                                       /* ASSOCIATIONS BEGIN HERE  */
+*            10 SHWDSB  BDY(HWORD)    , /* AMDSB FIELDS FOR D OR I  */
+*               15 SHWRKP   FIXED(15) , /* RELATIVE KEY POSITION    */
+*               15 SHWKEYLN FIXED(15) , /* KEY LENGTH               */
+*               15 SHWCISZ  FIXED(31)   /* CI SIZE                  */
+*                         BDY(HWORD)  ,
+*               15 SHWMREC  FIXED(31)   /* MAX RECORD SIZE          */
+*                         BDY(HWORD)  ,
+*          5 SHWASS   CHAR(0)  SHWPL999 /*   FOR D OR I ENTRY TYPE  */
+*                                       /* ASSOCIATIONS BEGIN HERE  */
+*    %SHWOUTLN = 'LENGTH(SHWOUT)';      /* LENGTH OF SHWOUT         */
+*
+*    /* SHOW CATALOG ASSOCIATION MAPPING                            */
+*    %IF SHWPLLVL = ''                  /* IF BLOCK NOT CONCATENATED*/
+*      %THEN %GOTO SHWPL005;            /* THEN GENERATE DCL        */
+*    %SHWPLDUM = SHWPLLVL||' SHWASSOC'; /* SET MINOR LEVEL NUMBER   */
+*        SHWPLDUM                       /* SHWASSOC LEVEL           */
+*    %GOTO SHWPL006;                    /* SKIP DCL                 */
+*%SHWPL005:;                            /* DECLARE                  */
+*    DCL 1 SHWASSOC BASED(ADDR(SHWASS)) /* DCL SHWASSOC LEVEL ONE   */
+*%SHWPL006:;                            /* SKIP DECLARE             */
+*        BDY(HWORD)                   , /* HWORD BOUNDARY           */
+*          5 SHWACT   FIXED(15)       , /* ASSOCIATION COUNT        */
+*          5 SHWASSN(*)               , /* ASSOCIATION ARAAY        */
+*            10 SHWATYPE CHAR(1)      , /* ASSOCIATION TYPE         */
+*            10 SHWACI   PTR(24)        /* ASSOCIATION CI           */
+*                         BDY(BYTE) SHWPL999
+*    %SHWASSLN = 'LENGTH(SHWASSOC)';    /* LENGTH OF SHWASSOC       */
+*    %GOTO SHWPLS1;                     /*
+.SHW5    ANOP
+         AIF   ('&DSECT' NE 'YES').SHW1
+SHWPL    DSECT ,                        SHOW CATALOG INPUT MAPPING
+         AGO   .SHW2
+.SHW1    ANOP
+SHWPL    DS    0F                       SHOW CAT INPUT MAPPING ALIGN
+.SHW2    ANOP
+         AIF   ('&SHWNAME' EQ '').SHW4
+&SHWNAME EQU   *                        START SHOW CAT MAPPING
+.SHW4    ANOP
+SHWFLGS  DS    XL1                      FIRST SHOW CAT FLAGS
+SHWNAME  EQU   X'80'                    1 - NAME SPECIFIED
+*                                       0 - CI SPECIFIED
+         DS    XL3                      RESERVED
+SHWENT   DS    A                        NAME/CI ENTRY ADDRESS
+SHWACB   DS    A                        ACB ADDRESS
+SHWAREA  DS    A                        RETURN AREA ADDRESS
+SHWPLLEN EQU   *-SHWPL                  SHOW CAT INPUT MAPPING LENGTH
+         AIF   ('&DSECT' NE 'YES').SHW6
+SHWOUT   DSECT ,                        SHOW CATALOG OUTPUT MAPPING
+         AGO   .SHW7
+.SHW6    ANOP
+SHWOUT   DS    0F                     SHOW CAT INPUT MAPPING ALIGN
+.SHW7    ANOP
+SHWLEN1  DS    H                        CALLER WORK AREA LENGTH
+SHWLEN2  DS    H                        WORK AREA LENGTH REQUIRED BY
+*                                       VSAM SHOW CATALOG
+SHWACBP  DS    A                        VSAM CATALOG ACB ADDRESS
+SHWTYPE  DS    XL1                      ENTRY TYPE
+SHWATTR  DS    XL1                      PATH/AIX ATTRIBUTES
+SHWUP    EQU   X'80'                    UPDATE PATH/UPGRADE
+*                                       MEMBERSHIP INDICATOR
+SHWASS0  DS    0H                       ASSOCIATIONS BEGIN HERE - NOT
+*                                       D OR I
+SHWDSB   DS    0H                       AMDSB FIELDS FOR D OR I
+SHWRKP   DS    H                        RELATIVE KEY POSITION
+SHWKEYLN DS    H                        KEY LENGTH
+SHWCISZ  DS    FL4                      CI SIZE
+SHWMREC  DS    FL4                      MAX RECORD SIZE
+SHWASS   DS    0H                       ASSOCIATIONS BEGIN HERE - D OR
+*                                       I
+SHWOUTLN EQU   *-SHWOUT                 SHOW CAT OUTPUT MAPPING LENGTH
+         AIF   ('&DSECT' NE 'YES').SHW8
+SHWASSOC DSECT ,                        SHOW CATALOG OUTPUT MAPPING
+         AGO   .SHW9
+.SHW8    ANOP
+SHWASSOC DS    0H                       SHOW CAT OUTPUT MAPPING ALIGN
+.SHW9    ANOP
+SHWACT   DS    H                        ASSOCIATION COUNT
+SHWASSN  DS    0H                       ASSOCIATIONS
+SHWATYPE DS    CL1                      ASSOCIATION TYPE
+SHWACI   DS    AL3                      ASSOCIATION CI NUMBER
+SHWASSLN EQU   *-SHWASSOC               SHOW CAT ASSOCIATION MAP LEN
+         MEND                                                */
+*%SHWPLS1:;
+

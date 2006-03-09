@@ -1,0 +1,75 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 10/28/05                                                 *
+*********************************************************************
+* 11/13/05 RPI88  ADD VALIDATION FOR REGISTER CONFLICTS
+* 11/17/05 RPI96  ADD VALIDATION FOR RX DCB. RECFM/LRECL/BLKSIZE
+* 11/20/05 RPI102 ADD MUTUALY EXCLUSIVE EP/EPLOC       
+*********************************************************************
+         TITLE 'TESTERR3 TEST MZ390 DCB, LOAD, LINK, XCTL, DEL ERRORS'
+TESTERR3 SUBENTRY
+* TEST OPEN PARMS
+         OPEN  (SYSUT1,(INPUT))        OK
+         OPEN  ((R1),(INPUT))          OK
+         OPEN  (2)                     RX ERR MISSING ()
+         OPEN  (2,(INPUT))             RX ERR MISSING ()
+         GET   SYSUT1,(R1)             R1 ERR REG CONFLICT
+         PUT   SYSUT1,(R1)             R1 ERR REG CONFLICT
+* TEST GET, PUT, READ, WRITE REG CONFLICTS
+         READ  (R1),'SF',(R1),AREA     R1 ERR REG CONFLICT
+         WRITE (R1),'SF',(R1),AREA     R1 ERR REG CONFLICT
+         READ  (R1),'SF',SYSUT1,(R1)   R1 ERR REG CONFLICT
+         WRITE (R1),'SF',SYSUT1,(R1)   R1 ERR REG CONFLICT
+SYSUT1   DCB   DSORG=PS,MACRF=GM,DDNAME=SYSUT1,LRECL=80
+AREA     DS    X
+SYSUT2   DCB   DSORG=PS,MACRF=GM,DDNAME=SYSUT2,DSNAME==C'"TEST"',      X
+               LRECL=80                DD/DS ERR DD/DSN CONFLICT
+* TEST LOAD, LINK, XCTL DDNAME/DSNAME CONFLICTS
+         LOAD  EP=X,DDNAME=X,DSNAME=Y   ERR DD/DSN CONFLICT 
+         LINK  EP=X,DDNAME=X,DSNAME=Y   ERR DD/DSN CONFLICT
+         XCTL  EP=X,DDNAME=X,DSNAME=Y   ERR DD/DSN CONFLICT
+         DELETE EP=X,DDNAME=X,DSNAME=Y  ERR DD/DSN CONFLICT
+         LOAD  EP=X,EPLOC=X             ERR EP/EPLOC CONFLICT 
+         LINK  EP=X,EPLOC=X             ERR EP/EPLOC CONFLICT 
+         XCTL  EP=X,EPLOC=X             ERR EP/EPLOC CONFLICT 
+         DELETE EP=X,EPLOC=X            ERR EP/EPLOC CONFLICT 
+* TEST DCB RECFM/LRECL/BLKSIZE CONFLICTS
+* NOTE DCB WILL ACCEPT EITHER LRECL OR BLKSIZE SINCE BLOCKED
+* FILES ARE REALLY NOT TREATED ANY DIFFERENT THAN UNBLOCKED FILES
+* USING RBA FLAT FILE INTERFACE.
+F1       DCB   DSORG=PS,RECFM=F      ERR    LRECL/BLKSIZE
+F2       DCB   DSORG=PS,RECFM=F,     OK     LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=80 
+F3       DCB   DSORG=PS,RECFM=F,     ERR    LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=160
+FB1      DCB   DSORG=PS,RECFM=FB     ERR    LRECL/BLKSIZE
+FB2      DCB   DSORG=PS,RECFM=FB,    OK     LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=160
+FB3      DCB   DSORG=PS,RECFM=FB,    ERR    LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=150
+V1       DCB   DSORG=PS,RECFM=V      ERR    LRECL/BLKSIZE
+V2       DCB   DSORG=PS,RECFM=V,     OK     LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=80  
+V3       DCB   DSORG=PS,RECFM=V,     ERR    LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=84 
+VB1      DCB   DSORG=PS,RECFM=VB     ERR    LRECL/BLKSIZE
+VB2      DCB   DSORG=PS,RECFM=VB,    OK     LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=84  
+VB3      DCB   DSORG=PS,RECFM=VB,    ERR    LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=80 
+FT1      DCB   DSORG=PS,RECFM=FT     ERR    LRECL/BLKSIZE
+FT2      DCB   DSORG=PS,RECFM=FT,    OK     LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=80  
+FT3      DCB   DSORG=PS,RECFM=FT,    ERR    LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=160
+VT1      DCB   DSORG=PS,RECFM=VT     ERR    LRECL/BLKSIZE
+VT2      DCB   DSORG=PS,RECFM=VT,    OK     LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=80  
+VT3      DCB   DSORG=PS,RECFM=VT,    ERR    LRECL/BLKSIZE              X
+               LRECL=80,BLKSIZE=160
+VBS      DCB   DSORG=PS,RECFM=VBS    ERR    LRECL/BLKSIZE NOT YET
+U        DCB   DSORG=PS,RECFM=U      ERR    LRECL/BLKSIZE NOT YET         
+         END 

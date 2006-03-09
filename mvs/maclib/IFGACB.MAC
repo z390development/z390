@@ -1,0 +1,581 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GOTO   ACBBSL1 ;
+* /*
+         MACRO
+         IFGACB &DSECT=YES,&AM=
+         AGO   .ACBDESC
+*                                                                   */
+* /*     CHANGE LEVEL = 8                                   @ZA34940*/
+* /*     DATE OF LAST CHANGE = 13  NOV   78 ( 78*317 )      @ZA34940*/
+* /*                                                                */
+* /*
+.ACBDESC ANOP                                                       */
+* /******************************************************************/
+* /*                                                                */
+* /*      ACCESS METHOD CONTROL BLOCK (ACB)                         */
+* /*                                                                */
+* /*      THE ACB DESCRIBES THE CURRENT USE OF A VSAM DATA SET.     */
+* /*      IN MVS, THE ACB DESCRIBES THE CURRENT USE OF A DATA SET   */
+* /*      WHEN THE JOB ENTRY SUBSYSTEM (JES) IS BEING USED FOR      */
+* /*      INPUT/OUTPUT CONTROL.  IN VTAM, THE ACB REPRESENTS A      */
+* /*      PROCESSING APPLICATION.                                   */
+* /*                                                                */
+* /*      THE ACB IS CREATED BY THE USER WITH THE ACB MACRO         */
+* /*      INSTRUCTION.   OTHER INFORMATION MAY BE ADDED FROM THE    */
+* /*      DD STATEMENT.  IT IS ACCESSED THROUGH THE RPLDACB FIELD   */
+* /*      IN THE REQUEST PARAMETER LIST.                            */
+* /*                                                                */
+* /*      THE CONTROL BLOCK CONSISTS OF AN AREA COMMON TO   @ZA34940*/
+* /*      ALL USERS, A CONTIGUOUS EXTENSION CREATED FOR     @ZA34940*/
+* /*      VSAM AND A CONTIGUOUS EXTENSION CREATED FOR VTAM. @ZA34940*/
+* /*      THE VTAM EXTENSION IS GENERATED IF 'AM=VTAM' IS   @ZA34940*/
+* /*      CODED IN THE ACB MACRO.                           @ZA34940*/
+* /*                                                                */
+* /*      CHANGE ACTIVITY                                           */
+* /*  C87700,155146                                        @ZM30033 */
+* /*  CONTROL BLOCKS IN COMMON SUPPORT                     @ZA16012 */
+* /*      MVS GUSHER SUPPORT                               @G29ASRL */
+* /*      CBMM SPLIT SUPPORT                               @ZA34940 */
+* /*                                                       @ZA26638 */
+* /*                                                                */
+* /******************************************************************/
+* /*
+         AGO   .ACBBAL
+*                                                                   */
+* /*                                                                */
+* /*     ACB DIAGRAM                                                */
+* /*                                                                */
+* /*   0  _______________________________________________           */
+* /*     |           |           |                       |          */
+* /*     |  ACBID    | ACBSTYP   |        ACBLENG        |          */
+* /*   4 |___________|___________|_______________________|          */
+* /*     |                                               |  @X04SVHS*/
+* /*     |       ACBAMBL/ACBJWA/ACBIBCT/ACBAMWAP         |  @G29ASRL*/
+* /*   8 |_______________________________________________|          */
+* /*     |                                               |          */
+* /*     |                     ACBINRTN                  |          */
+* /*  12 |_______________________________________________|          */
+* /*     |       ACBMACRF        |           |           |  @X04SVHS*/
+* /*     | ACBMACR1  | ACBMACR2  | ACBBSTNO  | ACBSTRNO  |  @X04SVHS*/
+* /*  16 |___________|___________|___________|___________|  @X04SVHS*/
+* /*     |                       |                       |          */
+* /*     |       ACBBUFND        |       ACBBUFNI        |          */
+* /*  20 |_______________________|_______________________|          */
+* /*     |                    ACBBUFPL                   |  @X04SVHS*/
+* /*     | ACBMACR3  | ACBMACR4  |       ACBJBUF         |  @X04SVHS*/
+* /*  24 |___________|___________|_______________________|  @X04SVHS*/
+* /*     |           |           |                       |          */
+* /*     | ACBRECFM  | ACBCCTYP  |       ACBDSORG        |          */
+* /*  28 |___________|___________|_______________________|          */
+* /*     |                                               |          */
+* /*     |                   ACBMSGAR                    |  @X04SVHS*/
+* /*  32 |_______________________________________________|          */
+* /*     |                                               |          */
+* /*     |                     ACBPASSW                  |          */
+* /*  36 |_______________________________________________|          */
+* /*     |                                               |          */
+* /*     |            ACBEXLST/ACBUEL                    |          */
+* /*  40 |_______________________________________________| __  B    */
+* /*     |             OFFSET 40 BEFORE OPEN             |   | E    */
+* /*     |                                               |   | F    */
+* /*     |_                   ACBDDNM                   _|   | O    */
+* /*     |                  ( 8 BYTES )                  |   | R    */
+* /*     |                                               |   | E    */
+* /*  48 |_______________________________________________|   |      */
+* /*     |           |           |       ACBINFLG        |   | O    */
+* /*     |  ACBOFLGS | ACBERFLG  | ACBINFL1  | ACBINFL2  |   | P    */
+* /*     |___________|___________|___________|___________| __| E    */
+* /*                                                           N    */
+* /*                   OFFSET 40 AFTER OPEN                         */
+* /*                                                                */
+* /*  40  _______________________________________________  __  A    */
+* /*     |                       |           |           |   | F    */
+* /*     |        ACBTIOT        |  ACBINFL  | ACBAMETH  |   | T    */
+* /*  44 |_______________________|___________|___________|   | E    */
+* /*     |           |                                   |   | R    */
+* /*     |  ACBERFL  |             ACBDEB                |   |      */
+* /*  48 |___________|___________________________________|   | O    */
+* /*     |           |           |                       |   | P    */
+* /*     |  ACBOFLGS |  ACBERFLG |                       |   | E    */
+* /*     |___________|___________|_______________________| __| N    */
+* /*                                                                */
+* /*  52  _______________________________________________           */
+* /*     |                                               |          */
+* /*     |                     ACBUJFCB                  |          */
+* /*  56 |_______________________________________________|          */
+* /*     |                                               |          */
+* /*     |                     ACBBUFSP                  |          */
+* /*  60 |_______________________________________________|          */
+* /*     |                     |                         |          */
+* /*     |  ACBBLKSZ/ACBMSGLN  |       ACBLRECL          |  @X04SVHS*/
+* /*  64 |_____________________|_________________________|          */
+* /*     |                                               |          */
+* /*     |                  ACBUAPTR                     |          */
+* /*  68 |_______________________________________________|          */
+* /*     |                                               |          */
+* /*     |                  ACBCBMWA                     |          */
+* /*  72 |_______________________________________________|          */
+* /*     |                                               |          */
+* /*     |              ACBAPID/ACBAMAX                  |  @G29ASRL*/
+* /*     |_______________________________________________|          */
+* /*                                                                */
+* /*           THE VTAM EXTENSION BEGINS AT OFFSET 76.              */
+* /*          IT IS CONTIGUOUS TO THE COMMON AREA ABOVE.            */
+* /*                                                                */
+* /*  76  _______________________________________________           */
+* /*     |                                               |    X03004*/
+* /*     |                  ACBRTN                       |    X03004*/
+* /*  80 |                      _________________________|    X03004*/
+* /*     |                     |                         |    X03004*/
+* /*     |                     |            *            |    X03004*/
+* /*  84 |_____________________|_________________________|    X03004*/
+* /*     |                                               |    X03004*/
+* /*     |                     *                         |    X03004*/
+* /*     |_______________________________________________|    X03004*/
+* /*                                                                */
+* /*     ACB DECLARATION                                            */
+* /*                                                                */
+*%ACBBSL1: ;
+*   DCL  1 IFGACB        BASED ,            /* LEVEL ONE DECLARE    */
+*          2 ACBCOMN,                       /* ACB COMMON SECTION
+*                                                             X03004*/
+*              4 ACBID       PTR(8),        /* ACB IDENTIFIER       */
+*                % ACBIDVAL = '''A0''X';    /* IDENTIFIER VALUE     */
+*              4 ACBSTYP     PTR(8),        /* ACB SUBTYPE          */
+*                % ACBSVSAM = '''10''X';    /* VSAM SUBTYPE @X04SVHS*/
+*                % ACBSVRP  = '''11''X';    /* VRP SUBTYPE  @X04SVHS*/
+*                % ACBSVTAM = '''20''X';    /* VTAM SUBTYPE @X04SVHS*/
+*                % ACBS3540 = '''40''X';    /* 3540 SUBTYPE @X04SVHS*/
+*              4 ACBLENG     FIXED(15),     /* ACB LENGTH IN BYTES  */
+*                5 ACBLENG2  FIXED(15),     /* ACB LENGTH IN BYTES  */
+*                  6 ACBLEN2 FIXED(15),     /* ACB LENGTH IN BYTES
+*                                                             X03004*/
+*              4 ACBAMBL     PTR(31),       /* AMB LIST ADDRESS     */
+*                5 ACBJWA  PTR(31),         /* JES WORKAREA ADDRESS */
+*                  6 ACBIBCT PTR(31),       /* IBCT ADDRESS         */
+*                    7 ACBAMWAP PTR(31),    /* ACCESS METHOD WORKAREA
+*                                              POINTER      @G29ASRL*/
+*              4 ACBINRTN    PTR(31),       /* INTERFACE ROUTINE
+*                                              ADDRESS              */
+*              4 ACBMACRF    BIT(16),       /* MACRF FLAGS          */
+*                5 ACBMACR1  BIT(8),        /* MACRF FIRST BYTE     */
+*                  6 ACBKEY  BIT(1),        /* ACCESS DATA VIA INDEX*/
+*                  6 ACBADR  BIT(1),        /* ACCESS WITHOUT INDEX */
+*                    7 ACBADD BIT(1),       /* SAME AS ABOVE        */
+*                  6 ACBCNV  BIT(1),        /* CONTROL INTERVAL
+*                                              PROCESSING           */
+*                    7 ACBBLK BIT(1),       /* SAME AS ABOVE        */
+*                  6 ACBSEQ  BIT(1),        /* SEQUENTIAL PROCESSING*/
+*                  6 ACBDIR  BIT(1),        /* DIRECT PROCESSING    */
+*                  6 ACBIN   BIT(1),        /* GET, READ            */
+*                  6 ACBOUT  BIT(1),        /* PUT, WRITE           */
+*                  6 ACBUBF  BIT(1),        /* USER BUFFERS         */
+*                5 ACBMACR2  BIT(8),        /* MACRF SECOND BYTE    */
+*                  6 *       BIT(3),        /* RESERVED     @X04SVHS*/
+*                  6 ACBSKP  BIT(1),        /* SKIP SEQUENTIAL
+*                                              PROCESSING           */
+*                  6 ACBLOGON BIT(1),       /* LOGON INDICATOR(VTAM)
+*                                                             X03004*/
+*                  6 ACBRST  BIT(1),        /* SET DATA SET TO EMPTY
+*                                              STATE        @X04SVHS*/
+*                  6 ACBDSN  BIT(1),        /* BASIC SUBTASK SHARED
+*                                              CONTROL BLOCK CONNECTION
+*                                              ON COMMON DSNAMES
+*                                                           @X04SVHS*/
+*                  6 ACBAIX  BIT(1),        /* ENTITY TO BE PROCESSED
+*                                              IS AIX OF THE PATH
+*                                              SPECIFIED IN THE GIVEN
+*                                              DDNAME       @X04SVHS*/
+*              4 ACBBSTNO    PTR(8),        /* NO OF CONCURRENT STRINGS
+*                                              FOR AIX PATH @X04SVHS*/
+*              4 ACBSTRNO    PTR(8),        /* NUMBER OF STRINGS
+*                                                           @X04SVHS*/
+*              4 ACBBUFND    FIXED(15),     /* NUMBER OF BUFFERS
+*                                              REQUESTED FOR DATA   */
+*              4 ACBBUFNI    FIXED(15),     /* NUMBER OF BUFFERS
+*                                              REQUESTED FOR INDEX  */
+*              4 ACBBUFPL  PTR(31),         /* JES BUFFER POOL ADDR */
+*                5 ACBMACR3 BIT(8),         /* MACRF THIRD BYTE
+*                                                           @X04SVHS*/
+*                  6 *        BIT(1),       /* RESERVED     @X04SVHS*/
+*                  6 ACBLSR   BIT(1),       /* LOCAL SHARED RESOURCE
+*                                                           @X04SVHS*/
+*                  6 ACBGSR   BIT(1),       /* GLOBAL SHARED RESOURCE
+*                                                           @X04SVHS*/
+*                  6 ACBICI   BIT(1),       /* IMPROVED CONTROL
+*                                              INTERVAL PROCESSING
+*                                                           @X04SVHS*/
+*                  6 ACBDFR   BIT(1),       /* DEFER WRITES @X04SVHS*/
+*                  6 ACBSIS   BIT(1),       /* SEQUENTIAL INSERT
+*                                              STRATEGY     @X04SVHS*/
+*                  6 ACBNCFX  BIT(1),       /* NFX=0/CFX=1  @X04SVHS*/
+*                  6 *        BIT(1),       /* RESERVED FOR VSAM    */
+*                5 ACBMACR4   BIT(8),       /* RESERVED FOR VSAM    */
+*                5 ACBJBUF FIXED(15),       /* NUMBER OF BUFFERS
+*                                              REQUESTED FOR JOURNAL*/
+*              4 ACBRECFM    BIT(8),        /* RECORD FORMAT        */
+*                  6 ACBRECAF  BIT(1),      /* JES FORMAT           */
+*                  6 *         BIT(6),      /* RESERVED             */
+*              4 ACBCCTYP    BIT(8),        /* CONTROL CHARACTER    */
+*                5 ACBTRCID  BIT(2),        /* 3800 TRANSLATE TABLE
+*                                                           @Z40SVHS*/
+*                5 *         BIT(2),        /* RESERVED             */
+*                5 ACBASA    BIT(4),        /* CONTROL CHARACTER
+*                                              TYPE                 */
+*                  % ACBCCASA = '''4''X';   /* ASA CHARACTERS       */
+*                  % ACBCCMCH = '''2''X';   /* MACHINE CHARACTERS   */
+*              4 ACBOPT      BIT(16),       /* NON-USER OPTIONS     */
+*                5 ACBDSORG  BIT(16),       /* MATCH ACBDORGA WITH
+*                                                         DCBDSORG  */
+*                  6 ACBCROPS BIT(2),       /* CHECKPOINT/RESTART
+*                                              OPTIONS              */
+*                    7 ACBCRNCK BIT(1),     /* NO CHECK FOR MODIFY  */
+*                    7 ACBCRNRE BIT(1),     /* NO DATA ERASE OR
+*                                              REPOSITION           */
+*                  6 ACBDVIND BIT(1),       /* DEVICE INDICATOR
+*                                                           @ZA26638*/
+*                    7 ACBOPTJ BIT(1),      /* 3800 CONTROL CHARACTER
+*                                              PRESENT      @ZA26638*/
+*                  6 *       BIT(9),        /* RESERVED             */
+*                  6 ACBDORGA BIT(1),       /* ACB INDICATOR        */
+*                  6 *       BIT(3),        /* RESERVED             */
+*              4 ACBMSGAR    PTR(31),       /* MSG AREA     @X04SVHS*/
+*              4 ACBPASSW    PTR(31),       /* PASSWORD ADDRESS     */
+*              4 ACBEXLST    PTR(31),       /* USER EXIT LIST ADDR  */
+*                5 ACBUEL    PTR(31),       /* SAME AS ABOVE        */
+* /* BEFORE OPEN                                                    */
+* /* (FOR VTAM, ACBDDNM INITIALIZED TO X'FF000000000000')     X03004*/
+*              4 ACBDDNM     CHAR(8) BDY(WORD), /*  DDNAME          */
+* /* AFTER OPEN                                                     */
+*                5 ACBTIOT   FIXED (15),    /* TIOT OFFSET          */
+*                5 ACBINFL   PTR (8),       /* INDICATOR FLAGS      */
+*                5 ACBAMETH  PTR (8),       /* ACCESS METHOD TYPE   */
+*                  6 ACBAM   PTR (8),       /* ACCESS METHOD TYPE
+*                                                             X03004*/
+*                     % ACBVSAM = '''11''X';   /* VSAM              */
+*                     % ACBJAM  = '''21''X';   /* JES/JAM           */
+*                     % ACBRTAM = '''22''X';   /* JES/RTAM          */
+*                     % ACBRCI  = '''23''X';   /* JES/RCI           */
+*                     % ACBTCAM = '''31''X';   /* TCAM              */
+*                     % ACBSUBS = '''41''X';   /* SUBSYSTEMS        */
+*                     % ACBVTAM = '''60''X';   /* VTAM        X03004*/
+*                5 ACBERFL   BIT(8),        /* ERROR FLAGS          */
+*                5 ACBDEB    PTR(24),       /* DEB ADDRESS          */
+* /* NOT MOVED BY OPEN                                              */
+*              4 ACBOFLGS    BIT(8),        /* OPEN / CLOSE FLAGS   */
+*                5 *         BIT(2),        /* RESERVED             */
+*                5 ACBEOV    BIT(1),        /* EOV CONCATENATION    */
+*                5 ACBOPEN   BIT(1),        /* ACB IS OPEN          */
+*                5 ACBDSERR  BIT(1),        /* NO FURTHER REQUESTS
+*                                              POSSIBLE AGAINST ACB */
+*                5 *         BIT(1),        /* RESERVED             */
+*                5 ACBEXFG   BIT(1),        /* USER EXIT FLAG       */
+*                  6 ACBLOCK BIT(1),        /* ACB IS LOCKED  X03004*/
+*                5 ACBIOSFG  BIT(1),        /* OPEN/CLOSE IN CONTROL*/
+*                  6 ACBBUSY BIT(1),        /* ACB IS BUSY    X03004*/
+*              4 ACBERFLG    BIT(8),        /* ERROR FLAGS          */
+*%/* THE FOLLOWING CODES ARE COMMON TO ALL ACCESS METHODS.  CODES   */
+* /* FOR A SPECIFIC ACCESS METHOD ARE LOCATED IN THE EXTENSION      */
+* /* FOR THAT ACCESS METHOD                                   X03004*/
+*                  ACBOALR  = '''04''X';    /* ACB ALREADY OPEN     */
+*                % ACBCALR  = '''04''X';    /* ACB NOT OPEN @ZM30033*/
+*              4 ACBINFLG    BIT(16),       /* INDICATOR FLAGS      */
+*                5 ACBINFL1  BIT(8),        /* FIRST BYTE    @ZA16012*/
+*                  6 *         BIT(1),      /* RESERVED FOR EXCP    */
+*                  6 ACBJEPS   BIT(1),      /* JEPS PROCESSING      */
+*                  6 ACBIJRQE  BIT(1),      /* RQE BEING HELD BY JAM*/
+*                  6 ACBCAT    BIT(1),      /* ACB FOR VSAM CATALOG */
+*                  6 ACBSCRA   BIT(1),      /* CATALOG CONTROL BLOCK
+*                                              SYSTEM AREA  @X04SVHS*/
+*                  6 ACBUCRA   BIT(1),      /* CATALOG CONTROL BLOCK
+*                                              USER AREA    @X04SVHS*/
+*                  6 ACBVVIC   BIT(1),      /* DATA SET BEING OPENED
+*                                              IS SYS1.VVIC @X04SVHS*/
+*                    7 ACBSDS  BIT(1),      /* OPEN AS SYSTEM DATA
+*                                              SET           @Z40SVUC*/
+*                  6 ACBBYPSS  BIT(1),      /* BYPASS SECURITY ON OPEN
+*                                              IF USER AUTH  @Z40RSUC*/
+*                5 ACBINFL2  BIT(8),        /* FIRST BYTE    @ZA16012*/
+*                  6 *         BIT(2),      /* RESERVED      @ZA16012*/
+*                  6 ACBCBIC   BIT(1),      /* OPEN WITH CONTROL BLOCKS
+*                                              IN COMMON STORAGE AREA
+*                                                            @ZA16012*/
+*                  6 *         BIT(5),      /* RESERVED      @ZA16012*/
+*              4 ACBUJFCB    PTR(31),       /* USER JFCB ADDRESS    */
+*                5 ACBOPTN BIT(8),          /* JAM UCS INDICATOR    */
+*                5 *       PTR(24),         /* RESERVED             */
+*              4 ACBBUFSP    FIXED(31),     /* SIZE AVAILABLE FOR
+*                                              BUFFERS              */
+*              4 ACBBLKSZ    FIXED(15),     /* BLOCKSIZE            */
+*                5 ACBMSGLN  FIXED(15),     /* LENGTH OF MSG AREA
+*                                                           @X04SVHS*/
+*              4 ACBLRECL    FIXED(15),     /* LOGICAL RECORD LENGTH*/
+*              4 ACBUAPTR    PTR(31),       /* USER WORKAREA ADDR
+*                                              CAXWA ADDRESS FOR
+*                                              CATALOG OPEN         */
+*              4 ACBCBMWA    PTR(31),       /* CBM WORK AREA ADDRESS*/
+*           %IF ACBRPLXL='3540'             /* IS IT 3540   @X04AAHS*/
+*             %THEN  %GOTO ACBE2;           /* GET 3540 EXT @X04AAHS*/
+*              4 ACBAPID    PTR(31),        /* APPLICATION ID
+*                                              ADDRESS        X03004*/
+*                5 ACBAMAX PTR(31),         /* ACCESS METHOD ACB
+*                                              EXTENSION    @G29ASRL*/
+*
+*    %INCLUDE SYSLIB(IFGACBVS); /* GET VSAM EXTENSION @ZA34940*/
+*
+*%GOTO   ACBBSL2 ;
+*%ACBE2 : ;
+*              4 ACBAPID    PTR(31),        /* APPLICATION ID ADDRESS*/
+*                5 ACBAMAX PTR(31),         /* ACCESS METHOD ACB
+*                                              EXTENSION    @G29ASRL*/
+*         %INCLUDE SYSLIB(IFGACB35);        /* GET 3540 EXT  @X04AAHS*/
+*%GOTO   ACBBSL2 ;
+* /*                                                                */
+* /*                         ASSEMBLER DSECT FOR ACB
+*
+.ACBBAL  ANOP
+         AIF   ('&DSECT' EQ 'NO').ACBNODS
+IFGACB   DSECT                                 ACCESS METHOD CONTROL
+*                                              BLOCK
+         AGO   .ACBDSCT
+.ACBNODS ANOP
+IFGACB   DS    0D                              ACCESS METHOD CONTROL
+*                                              BLOCK
+.ACBDSCT ANOP
+ACBID    DS    XL1                             ACB IDENTIFIER
+ACBIDVAL EQU   X'A0'                           IDENTIFIER VALUE - X'A0'
+ACBSTYP  DS    XL1                             ACB SUBTYPE
+ACBSVSAM EQU   X'10'                           VSAM SUBTYPE     X04SVHS
+ACBSVRP  EQU   X'11'                           VRP SUBTYPE      X04SVHS
+ACBSVTAM EQU   X'20'                           VTAM SUBTYPE     X04SVHS
+ACBS3540 EQU   X'40'                           3540 SUBTYPE     X04SVHS
+ACBLENG  DS    0H                              ACB LENGTH IN BYTES
+ACBLEN2  DS    0H                              ALTERNATE NAME FOR
+*                                              ACBLENG           X03004
+ACBLENG2 DS    H                               ALTERNATE NAME FOR
+*                                              ACBLENG           X03004
+ACBAMBL  DS    0A                              AMB LIST ADDRESS(VSAM)
+ACBJWA   DS    0A                              JES WORK AREA ADDRESS
+ACBIBCT  DS    0A                              INTERFACE BUFFER CONTROL
+*                                              TABLE (RTAM)    @G29ASRL
+ACBAMWAP DS    A                               ACCESS METHOD WORKAREA
+*                                              POINTER         @G29ASRL
+ACBINRTN DS    A                               DATA MANAGEMENT
+*                                              INTERFACE ROUTINE
+*                                              ADDRESS; VTAM REQUEST
+*                                              PROCESSOR ADDRESS X03004
+ACBMACRF DS    0BL2                            MACRF PROCESSING OPTIONS
+ACBMACR1 DS    BL1                             MACRF FIRST BYTE
+ACBKEY   EQU   X'80'                           KEYED PROCESSING VIA
+*                                              INDEX
+ACBADR   EQU   X'40'                           ADDRESSED PROCESSING
+*                                              WITHOUT INDEX
+ACBADD   EQU   X'40'                           ALTERNATE NAME FOR
+*                                              ACBADR
+ACBCNV   EQU   X'20'                           PROCESSING BY
+*                                              CONTROL INTERVAL
+ACBBLK   EQU   X'20'                           ALTERNATE NAME FOR
+*                                              ACBCNV
+ACBSEQ   EQU   X'10'                           SEQUENTIAL PROCESSING
+ACBDIR   EQU   X'08'                           DIRECT PROCESSING
+ACBIN    EQU   X'04'                           INPUT PROCESSING USING
+*                                              GET OR READ
+ACBOUT   EQU   X'02'                           OUTPUT PROCESSING USING
+*                                              PUT OR WRITE
+ACBUBF   EQU   X'01'                           USER CONTROLS BUFFERS -
+*                                              VALID ONLY WITH CONTROL
+*                                              INTERVAL PROCESSING
+ACBMACR2 DS    BL1                             MACRF SECOND BYTE
+ACBSKP   EQU   X'10'                           SKIP SEQUENTIAL
+*                                              PROCESSING
+ACBLOGON EQU   X'08'                           LOGON REQUESTS TO AN
+*                                              APPLICATION WILL BE
+*                                              REJECTED(VTAM)    X03004
+ACBRST   EQU   X'04'                           SET DATA SET TO  X04SVHS
+*                                              EMPTY STATE      X04SVHS
+ACBDSN   EQU   X'02'                           BASIC SUBTASK SHARED
+*                                              CONTROL BLOCK CONNECTION
+*                                              ON COMMON DSNAMES
+*                                                               X04SVHS
+ACBAIX   EQU   X'01'                           ENTITY TO BE PROCESSED
+*                                              IS AIX PATH SPECIFIED IN
+*                                              IN THE GIVEN DDNAME
+*                                                               X04SVHS
+ACBBSTNO DS    FL1                             NUMBER OF CONCURRENT
+*                                              STRINGS FOR AIX  X04SVHS
+*                                              PATH             X04SVHS
+ACBSTRNO DS    FL1                             NUMBER OF CONCURRENT
+*                                              REQUEST STRINGS  X04SVHS
+ACBBUFND DS    H                               NUMBER OF DATA RECORD
+*                                              BUFFERS
+ACBBUFNI DS    H                               NUMBER OF INDEX RECORD
+*                                              BUFFERS
+ACBBUFPL DS    0A                              JES BUFFER POOL
+ACBLFB   DS    0A                              RESERVED NAME
+ACBMACR3 DS    XL1                             MACRF THIRD BYTE X04SVHS
+ACBLSR   EQU   X'40'                           LOCAL SHARED RESOURCE
+*                                                               X04SVHS
+ACBGSR   EQU   X'20'                           GLOBAL SHARED RESOURCE
+*                                                               X04SVHS
+ACBICI   EQU   X'10'                           IMPROVED CONTROL
+*                                              INTERVAL PROCESSING
+*                                                               X04SVHS
+ACBDFR   EQU   X'08'                           DEFER WRITES     X04SVHS
+ACBSIS   EQU   X'04'                           SEQUENTIAL INSERT
+*                                              STRATEGY         X04SVHS
+ACBNCFX  EQU   X'02'                           NFX=0/CFX=1      X04SVHS
+ACBMACR4 DS    XL1                             RESERVED         X04SVHS
+ACBJBUF  DS    H                               NUMBER OF JOURNAL
+*                                              BUFFERS(VSAM)
+ACBRECFM DS    BL1                             RECORD FORMAT
+ACBRECAF EQU   X'80'                           JES FORMAT
+ACBCCTYP DS    BL1                             CONTROL CHARACTER TYPE
+ACBTRCID EQU   X'C0'                           3800 TRANSLATE TABLE+8
+*                                                               Z40SVHS
+ACBCCASA EQU   X'04'                           ASA CONTROL CHARACTERS
+ACBCCMCH EQU   X'02'                           MACHINE CONTROL
+*                                              CHARACTERS
+ACBOPT   DS    0BL2                            NON-USER OPTIONS
+ACBDSORG DS    0BL2                            MATCH ACBDORGA WITH
+*                                              DCBDSORG
+ACBDSOR1 DS    BL1                             DSORG FIRST BYTE
+*        CHECKPOINT/RESTART OPTIONS
+ACBCRNCK EQU   X'80'                           NO CHECK BY RESTART
+*                                              FOR MODIFICATIONS SINCE
+*                                              LAST CHECKPOINT
+ACBCRNRE EQU   X'40'                           DATA ADDED SINCE
+*                                              LAST CHECKPOINT NOT
+*                                              ERASED BY RESTART AND
+*                                              NO REPOSITION TO LAST
+*                                              CHECKPOINT TAKES PLACE
+ACBDVIND EQU   X'20'                           DEVICE INDICATR @ZA26638
+ACBOPTJ  EQU   X'20'                           3800 CONTROL    @ZA26638
+*                                              CHAR PRESENT    @ZA26638
+ACBDSOR2 DS    BL1                             DSORG SECOND BYTE
+ACBDORGA EQU   X'08'                           ACB INDICATOR
+ACBMSGAR DS    A                               MSG AREA PTR     X04SVHS
+ACBPASSW DS    A                               PASSWORD ADDRESS
+ACBEXLST DS    0A                              USER EXIT LIST ADDRESS
+ACBUEL   DS    A                               ALTERNATE NAME FOR
+*                                              ACBEXLST
+*              BEFORE ACB IS OPENED
+*              (FOR VTAM, ACBDDNM IS INITIALIZED TO
+*              X'FF00000000000000')                              X03004
+ACBDDNM  DS    CL8                             DDNAME - MUST BE THE
+*                                              SAME AS THE NAME FIELD
+*                                              ON THE DD STATEMENT
+*                                              DEFINING THE DATA SET
+*                                              ASSOCIATED WITH THIS ACB
+*              AFTER ACB IS OPENED
+         ORG   ACBDDNM
+ACBTIOT  DS    H                               OFFSET FROM TIOT ORIGIN
+*                                              TO THE TIOELNGH FIELD IN
+*                                              THE TIOT ENTRY FOR THE
+*                                              DD STATEMENT FOR THIS
+*                                              ACB
+ACBINFL  DS    BL1                             CONTENTS AND MEANING
+*                                              ARE THE SAME AS
+*                                              ACBINFLG (BEFORE OPEN)
+ACBAM    DS    0B                              ALTERNATE NAME FOR
+*                                              ACBAMETH          X03004
+ACBAMETH DS    BL1                             ACCESS METHOD TYPE
+ACBVTAM  EQU   X'60'                           VTAM              X03004
+ACBSUBS  EQU   X'41'                           SUBSYSTEMS
+ACBTCAM  EQU   X'31'                           TCAM
+ACBRCI   EQU   X'23'                           JES/RCI
+ACBRTAM  EQU   X'22'                           JES/RTAM
+ACBJAM   EQU   X'21'                           JES/JAM
+ACBVSAM  EQU   X'11'                           VSAM
+ACBERFL  DS    BL1                             FOR JES, CONTENTS AND
+*                                              MEANING ARE THE SAME
+*                                              AS ACBERFLG (BEFORE
+*                                              OPEN) - NOT USED BY
+*                                              VSAM/VTAM
+ACBDEB   DS    AL3                             DEB ADDRESS
+*              NOT MOVED BY OPEN
+ACBOFLGS DS    BL1                             OPEN / CLOSE FLAGS
+ACBEOV   EQU   X'20'                           EOV CONCATENATION
+ACBOPEN  EQU   X'10'                           THE ACB IS OPEN
+ACBDSERR EQU   X'08'                           NO FURTHER REQUESTS ARE
+*                                              POSSIBLE AGAINST THIS
+*                                              ACB
+ACBEXFG  EQU   X'02'                           USER EXIT FLAG - SET TO
+*                                              0 BY AN I/O SUPPORT
+*                                              WHEN A USER EXIT TAKEN;
+*                                              SET TO 1 ON RETURN
+ACBLOCK  EQU   X'02'                           ALTERNATE NAME FOR
+*                                              ACBEXFG          X03004
+ACBIOSFG EQU   X'01'                           OPEN/CLOSE IN CONTROL -
+*                                              THE ACB IS BEING
+*                                              PROCESSED BY AN I/O
+*                                              SUPPORT FUNCTION
+ACBBUSY  EQU   X'01'                           ALTERNATE NAME FOR
+*                                              ACBIOSFG         X03004
+*              BEFORE ACB IS OPENED
+ACBERFLG DS    BL1                             ERROR FLAGS - FOR
+*                                              VSAM/VTAM THIS FIELD IS
+*                                              NOT MOVED BY OPEN AND
+*                                              ERROR FLAGS ARE
+*                                              RETURNED HERE; FOR JES
+*                                              THIS FIELD IS MOVED TO
+*                                              ACBERFL BY OPEN
+*              THE FOLLOWING CODES ARE COMMON TO ALL ACCESS      X03004
+*              METHODS.                                          X03004
+ACBOALR  EQU   X'04'                           THE ACB IS ALREADY OPEN
+ACBCALR  EQU   X'04'                           THE ACB IS NOT OPEN
+*                                                              @ZM30033
+ACBINFLG DS    0BL2                            INDICATOR FLAGS @ZA16012
+ACBINFL1 DS    BL1                             FIRST IND FLAGS @ZA16012
+.*             BIT 0 - X'80' MATCHES WITH BIT 0 OF THE DCBMACR FIELD,
+.*             INDICATING AN EXCP DCB.  THIS BIT IS USED TO
+.*             DIFFERENTIATE BETWEEN AN ACB AND A DCB AND MUST NEVER
+.*             BE ASSIGNED IN THE ACB.
+ACBJEPS  EQU   X'40'                           JEPS IS USING THIS ACB
+ACBIJRQE EQU   X'20'                           AN RQE IS HELD BY JAM
+ACBCAT   EQU   X'10'                           ACB FOR VSAM CATALOG
+ACBSCRA  EQU   X'08'                           CATALOG CONTROL BLOCK
+*                                              SYSTEM AREA      X04SVHS
+ACBUCRA  EQU   X'04'                           CATALOG CONTROL BLOCK
+*                                              USER AREA        X04SVHS
+ACBVVIC  EQU   X'02'                           DATA SET BEING OPENED
+*                                              IS SYS1.VVIC     X04SVHS
+ACBSDS   EQU   X'02'                           OPEN AS SYSTEM DATA SET
+*                                                              @Z40SVUC
+ACBBYPSS EQU   X'01'                           BYPASS SECURITY ON OPEN
+*                                              IF CALLER AUTH  @Z40RSUC
+ACBINFL2 DS    BL1                             2ND IND FLAGS   @ZA16012
+ACBCBIC  EQU   X'20'                           OPEN WITH CONTROL BLOCKS
+*                                              IN COMMON STORAGE AREA
+*                                                              @ZA16012
+*              NOT MOVED BY OPEN
+ACBUJFCB DS    0A                              USER JFCB ADDRESS
+ACBOPTN  DS    XL1                             JAM UCS INDICATORX04SVHS
+         DS    XL3                             RESERVED         X04SVHS
+ACBBUFSP DS    F                               VIRTUAL CORE AVAILABLE
+*                                              FOR BUFFERS
+ACBBLKSZ DS    0H                              BLOCKSIZE
+ACBMSGLN DS    H                               LNG OF MSG AREA  X04SVHS
+ACBLRECL DS    H                               LOGICAL RECORD LENGTH
+ACBUAPTR DS    A                               USER WORKAREA ADDRESS;
+*                                              CAXWA ADDRESS FOR
+*                                              CATALOG OPEN
+ACBCBMWA DS    A                               CONTROL BLOCK
+*                                              MANIPULATION WORKAREA
+*                                              ADDRESS
+ACBAPID  DS    0A                              APPLICATION ID @G29ASRL
+ACBAMAX  DS    A                               ACCESS METHOD ACB
+*                                              EXTENSION      @G29ASRL
+*                                              ADDRESS(VTAM)    X03004
+         AIF   ('&AM' EQ 'VTAM').VSEXT         IS IT VTAM     @ZA34940
+.NOVTAM  ANOP
+         AIF   ('&AM' NE '3540').VSEXT         IS IT 3540     @ZA34940
+         IFGACB35                              GET 3540 EXT    X04AAHS
+         AGO   .ENDACB                                        @ZA34940
+.VSEXT   ANOP                                                 @ZA34940
+         IFGACBVS AM=&AM                GET VSAM EXTENSION    @ZA34940
+         AGO   .ENDACB                                        @ZA34940
+.ENDACB  ANOP                                  END COMMON ACB   X03004
+         MEND
+*                            END OF ACB                             */
+*%ACBBSL2: ;
+

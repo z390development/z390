@@ -6,7 +6,18 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-&N       WRITE  &DECB,&TYPE,&DCB,&AREA
+.* MAINTENANCE
+.* 10/13/05 ADD DCBREC SUPPORT
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 10/20/05 RPI38 - check for register conflicts
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 01/11/06 RPI170 ALLOW 'S' AS FIFTH PARM  
+.*********************************************************************
+&N       WRITE  &DECB,&TYPE,&DCB,&AREA,&LENGTH
+         AIF   (N'&SYSLIST LT 5).NPOK
+         AIF   (N'&SYSLIST EQ 5 AND &SYSLIST(5) EQ '''S''').NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
+.NPOK    ANOP
 .*
 .*       SEQUENTIALLY WRITE BLOCK AT CURRENT FILE POSITION
 .*
@@ -18,7 +29,9 @@
 .*       DCB  -  DATA CONTROL BLOCK OPENED WITH RW MACRF
 .*       AREA -  AREA TO RECEIVE BLOCK (MUST BE >= DCBBLKSI)
 .*
+         AIF   (&N EQ '').SKIPDS
 &N       DS    0H
+.SKIPDS  ANOP
          AIF   ('&DECB'(1,1) EQ '(').DECBREG
          CNOP  0,4
          BAL   1,&DECB+DECBL
@@ -30,6 +43,7 @@
          ORG   &DECB+DECBL
          AGO   .CHKDCB
 .DECBREG ANOP
+         AIF   (&DECB(1) EQ '1' OR &DECB(1) EQ 'R1').CHKDCB  RPI163
          LR    1,&DECB(1)
 .CHKDCB  ANOP
          AIF   (&DCB EQ '').CHKAREA
@@ -38,15 +52,25 @@
          ST    0,DECBDCBA-IHADECB(1)
          AGO   .CHKAREA
 .DCBREG  ANOP
-         ST    &DCB(1),DECDCBA-IHADECB(1)
+         AIF   (&DCB(1) EQ 1 OR &DCB(1) EQ 'R1').ERR1
+         ST    &DCB(1),DECBDCBA-IHADECB(1)
 .CHKAREA ANOP
-         AIF   (&AREA EQ '').SVC
+         AIF   (&AREA EQ '').AREADEF
          AIF   ('&AREA'(1,1) EQ '(').AREAREG
          LA    0,&AREA
          ST    0,DECBAREA-IHADECB(1)
          AGO   .SVC
+.AREADEF ANOP
+         L     15,DECBDCBA-IHADECB(1)
+         MVC   DECBAREA-IHADECB(4,1),DCBREC-IHADCB(15)
+         AGO   .SVC
 .AREAREG ANOP
+         AIF   (&AREA(1) EQ 1 OR &AREA(1) EQ 'R1').ERR2
          ST    &AREA(1),DECBAREA-IHADECB(1)
 .SVC     ANOP
          SVC   154 WRITE 
+         MEXIT
+.ERR1    MNOTE 12,'WRITE INVALID DCB REGISTER - &DCB(1)'
+         MEXIT
+.ERR2    MNOTE 12,'WRITE INVALID AREA REGISTER - &AREA(1)'
          MEND

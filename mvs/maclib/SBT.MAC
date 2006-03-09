@@ -1,0 +1,21 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SBT   &D,&A                   SEARCH BINARY           @ZA00773
+         GBLA  &DISP                   DISPLACEMENT            @ZA00773
+         GBLC  &LBL1                   LABEL ON ENTR MACRO     @ZA00773
+         LCLA  &DL                                             @ZA00773
+         AIF   ('&D' LE '15').SBT1     DISPLACEMENT IS 0-15    @ZA00773
+         MNOTE 4,'*** IHB349 DISPLACEMENT NOT 0-15 DIGITS'
+.*                                                             @ZA00773
+         AGO   .SBT2                                           @ZA00773
+.SBT1    ANOP                                                  @ZA00773
+         AIF   ((&D-(&D/2)*2) NE 1).SBT2 DISPLACEMENT EVEN     @ZA00773
+         MNOTE 4,'*** IHB426 DISPLACEMENT IS ODD'
+.*                                                             @ZA00773
+.SBT2    ANOP                                                  @ZA00773
+&DL      SETA  16*&D                   PUT DISPLACEMENT IN HIGH ORDER
+.*                                     4 BITS                  @ZA00773
+&NAME    DC    0H'0',X'5A',AL1(&DL),AL2(&A-&LBL1+&DISP)
+.*                                                             @ZA00773
+         MEND
+

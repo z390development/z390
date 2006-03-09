@@ -6,16 +6,30 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-&N      CALL   &NAME,&PARMS
-&N      DS     0H
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 10/21/05 RPI41 - add VL positional parm support
+.* 12/12/05 RPI18 - correct VL bit OI instrcution (missing .)
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.*********************************************************************
+&N      CALL   &NAME,&PARMS,&VL
+         AIF   (N'&SYSLIST LE 3).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
+.NPOK    ANOP
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
 &NPARMS SETA   N'&PARMS
-        AIF    (&NPARMS EQ 0).NOPARM
+        AIF    (&NPARMS EQ 0).ENDPARM
         LA     1,=A&PARMS
-.NOPARM ANOP
+        AIF    (&VL NE 'VL').ENDPARM
+&OFF     SETA   N'&PARMS*4-4
+         OI     &OFF.(1),X'80'
+.ENDPARM ANOP
         AIF    ('&NAME'(1,1) EQ '(').REG
         L      15,=V(&NAME)
         AGO    .BALR
 .REG    ANOP
+        AIF    (&NAME(1) EQ '15' OR &NAME(1) EQ 'R15').BALR  RPI163
         LR     15,&NAME(1)
 .BALR   ANOP
         BALR   14,15

@@ -1,0 +1,125 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    ANALYZ &DCBLST,&POINTR,&MF=S
+         LCLA  &A0
+         LCLC  &C0
+         AIF   ('&MF' EQ 'S').SFORM
+         AIF   ('&MF' EQ 'L').LFORM
+         AIF   ('&MF(1)' EQ 'E').EFORM
+.ERR     ANOP
+         IHBERMAC 35,,&MF
+         MEXIT
+.EFORM   ANOP
+&A0      SETA  N'&MF
+         AIF   ('&A0' NE '2').ERR
+         AGO   .EFORM1
+.SFORM   ANOP
+         CNOP  2,4                      ALIGN TO A HALF WORD BNDRY.
+&NAME    LA    14,A&SYSNDX+4           LOAD RETURN ADDRESS
+         L     15,A&SYSNDX              LOAD ANLZ ROUTINE ADR.IN REG15
+         BALR  1,15                     PLACE STARTING ADDRESS OF
+*                                       PARAMETER LIST IN REG1 AND
+*                                       BRANCH TO ANLZ ROUTINE
+         AIF   (T'&DCBLST EQ 'O').M1
+         DC    A(&DCBLST)              POINTER TO DCB LIST STARTING ADR
+         AGO   .M2
+.M1      ANOP
+         IHBERMAC 180,DCBLST,0
+         DC    4XL1'00'
+.M2      ANOP
+         AIF   (T'&POINTR EQ 'O').M3
+         DC    A(&POINTR)              POINTER TO TABLE STARTING ADR.
+         AGO   .M4
+.M3      ANOP
+         IHBERMAC 180,POINTR,0
+         DC    4XL1'00'
+.M4      ANOP
+         DC    4XL1'00'                RESERVE STORAGE FOR RESUME PTR
+A&SYSNDX DC    V(ANLZ)                  PTR TO ANLZ ROUTINE
+.RESTOF  ANOP
+         L     14,4(0,1)               LOAD TABLE PTR
+         LA    1,B&SYSNDX
+         B     0(1,15)
+B&SYSNDX B     C&SYSNDX                0 LP
+         B     C&SYSNDX                4 KYBD
+         B     C&SYSNDX                8 AE
+         B     C&SYSNDX                12 EOS
+         LA    15,4                    16 LOAD CODE NO POSTED GCBS
+         B     H&SYSNDX+10             BRANCH
+         LA    15,12                   24 LOAD CODE FOR PARAM MISSING
+         B     H&SYSNDX+10             BRANCH
+         LA    15,16                   32 LOAD CODE WORD 5 MISSING
+         B     H&SYSNDX+10             BRANCH
+C&SYSNDX L     1,0(14,15)              LOAD ROUTINE ADDRESS FROM TABLE
+         LA    1,0(0,1)                ZERO HI ORDER BYTE
+         LA    15,0                    LOAD COMPARE ADDRESS
+         CLR   1,15                    TEST FOR ZERO ADDRESS
+         BC    7,H&SYSNDX              BRANCH IF ADDRESS NOT ZERO
+         LA    15,8                    LOAD CODE FOR ATTENTION OCCURED
+*                                      BUT NO ROUTINE PROVIDED
+         B     H&SYSNDX+10             BRANCH
+H&SYSNDX LR    15,1                    LOAD WHERE TO GO ADDRESS
+         LR    1,0                     OUTPUT AREA ADR TO REG1
+         BALR  14,15                   BRANCH TO ROUTINE
+         LA    15,0                    LOAD NORMAL RETURN CODE
+         AGO   .END
+.LFORM   ANOP
+         DS    0F
+         AIF   (T'&DCBLST EQ 'O').M100
+&NAME    DC    A(&DCBLST)              DCB LIST ADDRESS
+         AGO   .M101
+.M100    ANOP
+         IHBERMAC 180,DCBLST,ONE-WORD
+&NAME    DC    A(0)                    RESERVED FOR DCB LIST ADDRESS
+.M101    AIF   (T'&POINTR EQ 'O').M102
+         DC    A(&POINTR)              POINTR ADDRESS
+         AGO   .M103
+.M102    ANOP
+         IHBERMAC 180,POINTR,ONE-WORD
+         DC    A(0)                    RESERVED FOR POINTR ADDRESS
+.M103    DC    1F'0'                   RESERVED FOR SYSTEM USE
+         DC    V(ANLZ)                 ADCON FOR POLLING ROUTINE
+         AGO   .END
+.EFORM1  ANOP
+         AIF   (T'&DCBLST EQ 'O').M104
+         AGO   .EWITH
+.M104    AIF   (T'&POINTR EQ 'O').M105
+         AGO   .EWITH
+.M105    ANOP
+&C0      SETC  '&MF'(4,1)
+         AIF   ('&C0' EQ '(').M106
+&NAME    LA    1,&MF(2)                LOAD LIST ADDRESS
+         AGO   .M107
+.M106    ANOP
+&NAME    LA    1,0&MF(2)               LOAD LIST ADDRESS
+.M107    L     15,12(0,1)              LOAD POLLING ROUTINE ADDRESS
+         BALR  14,15                   LINK TO POLLING ROUTINE
+         AGO   .RESTOF
+.EWITH   ANOP
+&C0      SETC  '&MF'(4,1)
+         AIF   ('&C0' EQ '(').M108
+&NAME    LA    1,&MF(2)                LOAD LIST ADDRESS
+         AGO   .M109
+.M108    ANOP
+&NAME    LA    1,0&MF(2)               LOAD LIST ADDRESS
+.M109    AIF   (T'&DCBLST EQ 'O').M110
+&C0      SETC  '&DCBLST'(1,1)
+         AIF   ('&C0' EQ '(').M111
+         LA    14,&DCBLST              LOAD DCBLST ADDRESS
+         AGO   .M112
+.M111    LA    14,0&DCBLST             LOAD DCBLST ADDRESS
+.M112    ST    14,0(0,1)               STORE DCBLST ADDRESS
+         LA    14,0                    LOAD ZERO
+         ST    14,8(0,1)               CLEAR SYSTEM POINTER
+.M110    AIF   (T'&POINTR EQ 'O').M113
+&C0      SETC  '&POINTR'(1,1)
+         AIF   ('&C0' EQ '(').M114
+         LA    14,&POINTR              LOAD POINTR ADDRESS
+         AGO   .M115
+.M114    LA    14,0&POINTR             LOAD POINTR ADDRESS
+.M115    ST    14,4(0,1)               STORE POINTR ADDRESS
+.M113    L     15,12(0,1)              LOAD POLLING ROUTINE ADDRESS
+         BALR  14,15                   LINK TO POLLING ROUTINE
+         AGO   .RESTOF
+.END     ANOP
+         MEND

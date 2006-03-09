@@ -1,0 +1,324 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SAEC  &EP=,&DCB=,&COMAREA=,&ATTNTYP=,&PFKMSK=,&RESTART=,&MF=L
+         LCLA  &B(32)
+         LCLA  &N1,&N2,&PN,&PFKCT,&MFNO,&AN,&ESW
+         LCLA  &ENDB,&LPB,&EOSB,&AEB,&B2260,&CANB
+         LCLC  &NC1,&NC2,&CN
+         LCLC  &GACBNM,&GACBR,&COMR,&DCBR,&EPR
+&MFNO    SETA  N'&MF
+.*2289,063200                                                      8882
+         AIF   (T'&MF EQ 'O').ASSMF     MF OMITTED ASSUME L FORM
+         AIF   (&MFNO GT 1).EFORM
+         AIF   ('&MF' NE 'L').ERRMF
+         AIF   (T'&NAME EQ 'O').ERRL    LFORM REQUIRES NAME
+.STGEN   AIF   (T'&COMAREA EQ 'O').ASSCOM
+&NAME    DC    A(&COMAREA)
+.CKDCB   AIF   (T'&DCB EQ 'O').ASSDCB
+         DC    A(&DCB)
+.TSPFK   ANOP
+         AIF   ('&PFKMSK' EQ '').ASSPF
+         AGO   .EPFK
+.ASSCOM  ANOP
+&NAME    DC    A(0)
+         AGO   .CKDCB
+.ASSDCB  DC    A(0)
+         AGO   .TSPFK
+.ASSPF   AGO   .FORMPFK
+.ERRPF   AIF   (&ESW EQ 1).ERRPF2
+         IHBERMAC 183,PFKMSK,ZERO
+.FORMPFK DC    F'0'
+         AGO   .ATTNTY
+.ERRPF2  IHBERMAC 157,&PFKMSK,PFKMSK
+         AGO   .ATTNTY
+.ERRMF   IHBERMAC 183,MF,L-ASSUMED
+         AGO   .STGEN
+.ASSMF   AGO   .STGEN
+.ERRL    IHBERMAC 147,,GACB
+         AGO   .STGEN
+.EPFK    AIF   (&ESW NE 1).PFKCK
+         AIF   ('&PFKMSK' EQ '').ATTNTY
+         AIF   ('&PFKMSK' EQ 'SAVE').SAVEP
+         AIF   ('&PFKMSK' EQ 'RESTORE').RESTP
+         AIF   ('&PFKMSK' EQ 'NULL').NULLP
+.PFKCK   AIF   (N'&PFKMSK GT 1).DOUBCK
+         AIF   ('&PFKMSK' EQ 'NULL').FORMPFK
+         AIF   ('&PFKMSK' EQ 'A').NEXTEP
+         AIF   ('&PFKMSK' EQ 'S').NEXTEP
+         AIF   ('&PFKMSK' EQ 'R').NEXTEP
+         AGO   .SETLOOP
+.DOUBCK  AIF   ('&PFKMSK(1)' EQ 'A').NEXTEP
+         AIF   ('&PFKMSK(1)' EQ 'S').NEXTEP
+         AIF   ('&PFKMSK(1)' EQ 'R').NEXTEP
+.SETLOOP ANOP
+&PN      SETA  0
+         AGO   .NEXT
+.SAVEP   MVC   28(4,1),8(1)
+         AGO   .ATTNTY
+.RESTP   MVC   8(4,1),28(1)
+         AGO   .ATTNTY
+.NULLP   SR    0,0                      NULL
+         ST    0,8(1)
+         AGO   .ATTNTY
+.NEXTEP  ANOP
+&PN      SETA  1
+.NEXT    AIF   (N'&PFKMSK EQ &PN).FORMBIT
+         AIF   (&PN GT 32).STOP
+&PN      SETA  &PN+1
+&CN      SETC  '&PFKMSK(&PN)'
+         AIF   ('&PFKMSK(&PN)' EQ 'ALL').ALLBIT
+         AIF   (K'&PFKMSK(&PN) EQ 0).NEXT
+         AIF   (K'&PFKMSK(&PN) EQ 1).CFRT
+         AIF   (K'&PFKMSK(&PN) EQ 2).CFRT
+         AIF   (K'&PFKMSK(&PN) EQ 3).C3RT
+         AIF   (K'&PFKMSK(&PN) EQ 4).C4RT
+         AIF   (K'&PFKMSK(&PN) EQ 5).C5RT
+         AGO   .ERRPF
+.CFRT    ANOP
+&N1      SETA  &PFKMSK(&PN)
+&N2      SETA  &PFKMSK(&PN)
+         AGO   .SETBIT
+.C3RT    AIF   ('&CN'(2,1) NE '-').ERRPF
+&NC1     SETC  '&CN'(1,1)
+&NC2     SETC  '&CN'(3,1)
+&N1      SETA  &NC1
+&N2      SETA  &NC2
+         AGO   .SETBIT
+.C4RT    AIF   ('&CN'(2,1) NE '-').ERRPF
+&NC1     SETC  '&CN'(1,1)
+&NC2     SETC  '&CN'(3,2)
+&N1      SETA  &NC1
+&N2      SETA  &NC2
+         AGO   .SETBIT
+.C5RT    AIF   ('&CN'(3,1) NE '-').ERRPF
+&NC1     SETC  '&CN'(1,2)
+&NC2     SETC  '&CN'(4,2)
+&N1      SETA  &NC1
+&N2      SETA  &NC2
+.SETBIT  AIF   (&N1 GT &N2).ERRPF
+         AIF   (&N1 GT 31).ERRPF
+         AIF   (&N1 LT 0).ERRPF
+.SETIT   ANOP
+&B(1+&N1) SETA 1
+&N1      SETA  &N1+1
+         AIF   (&N1 GT &N2).NEXT
+        AGO    .SETIT
+.FORMBIT AIF   (&ESW NE 1).BYPASS
+         CNOP  0,4
+         B     *+8
+.BYPASS  ANOP
+IHBP&SYSNDX DC B'&B(1)&B(2)&B(3)&B(4)&B(5)&B(6)&B(7)&B(8)'
+         DC    B'&B(9)&B(10)&B(11)&B(12)&B(13)&B(14)&B(15)&B(16)'
+         DC    B'&B(17)&B(18)&B(19)&B(20)&B(21)&B(22)&B(23)&B(24)'
+         DC    B'&B(25)&B(26)&B(27)&B(28)&B(29)&B(30)&B(31)&B(32)'
+         AIF   (&ESW NE 1).ATTNTY
+         AGO   .COMP
+.ALLBIT  ANOP
+         AIF   (&ESW NE 1).GETALL
+         CNOP  0,4
+         B     *+8
+.GETALL  ANOP
+IHBP&SYSNDX DC X'FFFFFFFF'
+         AIF   (&ESW NE 1).ATTNTY
+.COMP    AIF   (N'&PFKMSK GT 1).PFKDOU
+         AIF   ('&PFKMSK' EQ 'A').ADDIT
+         AIF   ('&PFKMSK' EQ 'S').SUBIT
+         AGO   .MVPFK
+.PFKDOU  AIF   ('&PFKMSK(1)' EQ 'A').ADDIT
+         AIF   ('&PFKMSK(1)' EQ 'S').SUBIT
+.MVPFK   MVC   8(4,1),IHBP&SYSNDX
+         AGO   .ATTNTY
+.ADDIT   L     0,8(0,1)
+         O     0,IHBP&SYSNDX
+         ST    0,8(0,1)
+         AGO   .ATTNTY
+.SUBIT   L     0,8(0,1)
+         X     0,IHBP&SYSNDX
+         N     0,8(0,1)
+         ST    0,8(0,1)
+.ATTNTY  ANOP
+         AIF   (&ESW NE 1).ATTCK
+         AIF   ('&ATTNTYP' EQ '').EPENTRY
+         AIF   ('&ATTNTYP' EQ 'SAVE').SAVEA
+         AIF   ('&ATTNTYP' EQ 'RESTORE').RESTA
+         AIF   ('&ATTNTYP' EQ 'NULL').NULLA
+.ATTCK   ANOP
+         AIF   ('&ATTNTYP' EQ '').ASSATT
+         AIF   (N'&ATTNTYP GT 1).DOUBATT
+         AIF   ('&ATTNTYP' EQ 'NULL').FORMT
+         AIF   ('&ATTNTYP' EQ 'A').ATTNEP
+         AIF   ('&ATTNTYP' EQ 'S').ATTNEP
+         AIF   ('&ATTNTYP' EQ 'R').ATTNEP
+         AGO   .ATTLOOP
+.DOUBATT ANOP
+         AIF   ('&ATTNTYP(1)' EQ 'A').ATTNEP
+         AIF   ('&ATTNTYP(1)' EQ 'S').ATTNEP
+         AIF   ('&ATTNTYP(1)' EQ 'R').ATTNEP
+.ATTLOOP ANOP
+&AN      SETA  0
+         AGO   .ATTNE1
+.SAVEA   MVC   32(4,1),12(1)
+         AGO   .EPENTRY
+.RESTA   MVC   12(4,1),32(1)
+         AGO   .EPENTRY
+.NULLA   SR    0,0
+         ST    0,12(1)
+         AGO   .EPENTRY
+.ATTNEP  ANOP
+&AN      SETA  1
+.ATTNE1  ANOP
+         AIF   (N'&ATTNTYP EQ &AN).FORMATT
+         AIF   (N'&ATTNTYP GT 7).STOP   ATTNTYPE SHOULD NOT MORE THAN 7
+&AN      SETA  &AN+1
+         AIF   (K'&ATTNTYP(&AN) EQ 0).ATTNE1
+         AIF   ('&ATTNTYP(&AN)' EQ 'ALL').ALLTYPE
+         AIF   ('&ATTNTYP(&AN)' EQ 'END').SETEND
+         AIF   ('&ATTNTYP(&AN)' EQ 'CANCEL').SETCAN
+         AIF   ('&ATTNTYP(&AN)' EQ 'LP').SETLP
+         AIF   ('&ATTNTYP(&AN)' EQ '2260').SET2260
+         AIF   ('&ATTNTYP(&AN)' EQ 'EOS').SETEOS
+         AIF   ('&ATTNTYP(&AN)' EQ 'AE').SETAE
+.ERRATT  AIF   (&ESW EQ 1).ERRATT2
+         IHBERMAC 183,ATTNTYP,ZERO
+.FORMT   ANOP
+IHBT&SYSNDX DC F'0'
+         AGO   .EPENTRY
+.ERRATT2 IHBERMAC 157,ATTNTYP,&ATTNTYP
+         AGO   .EPENTRY
+.ASSATT  AGO   .FORMT
+.SETEND  ANOP
+&ENDB    SETA  1
+         AGO   .ATTNE1
+.SETCAN  ANOP
+&CANB    SETA  1
+         AGO   .ATTNE1
+.SET2260 ANOP
+&B2260   SETA  1
+         AGO   .ATTNE1
+.SETLP   ANOP
+&LPB     SETA  1
+         AGO   .ATTNE1
+.SETEOS  ANOP
+&EOSB    SETA  1
+         AGO   .ATTNE1
+.SETAE   ANOP
+&AEB     SETA  1
+         AGO   .ATTNE1
+.FORMATT AIF   (&ESW NE 1).PASSIT
+         CNOP  0,4
+         B     *+8
+.PASSIT  ANOP
+IHBT&SYSNDX DC X'000000'
+         DC    B'00&B2260&AEB&CANB&EOSB&LPB&ENDB'
+         AIF   (&ESW NE 1).EPENTRY
+         AGO   .ATTNE
+.ALLTYPE AIF   (&ESW NE 1).ALLT
+         CNOP  0,4
+         B     *+8
+.ALLT    ANOP
+IHBT&SYSNDX DC F'63'
+         AIF   (&ESW NE 1).EPENTRY
+.ATTNE   AIF   (N'&ATTNTYP GT 1).ATTDOU
+         AIF   ('&ATTNTYP' EQ 'A').ADDA
+         AIF   ('&ATTNTYP' EQ 'S').SUBA
+         AGO   .MVATT
+.ATTDOU  AIF   ('&ATTNTYP(1)' EQ 'A').ADDA
+         AIF   ('&ATTNTYP(1)' EQ 'S').SUBA
+.MVATT   MVC   12(4,1),IHBT&SYSNDX
+         AGO   .EPENTRY
+.ADDA    L     0,12(0,1)
+         O     0,IHBT&SYSNDX
+         ST    0,12(0,1)
+         AGO   .EPENTRY
+.SUBA    L     0,12(0,1)
+         X     0,IHBT&SYSNDX
+         N     0,12(0,1)
+         ST    0,12(0,1)
+.EPENTRY AIF   (&ESW EQ 1).EEP
+         AIF   (T'&EP EQ 'O').ASSUMEP
+         DC    A(&EP)                   EP1
+.EPE1    DC    F'0'                     EP2
+         DC    3F'0'                    SAVEAREAS
+         DC    F'0'                     ECB
+         DC    F'0'                     RESERVED FOR Q1 ADDR
+         AIF   (T'&RESTART NE 'O').AROUND
+         DC    F'0'
+         DC    A(0)                ATTNINQ ADDR (IGG019OK)
+         DC    A(0)                RESERVED
+         AGO   .OK
+.AROUND  AIF   ('&RESTART' EQ 'YES').WYES
+         AIF   ('&RESTART' EQ 'NO').WNO
+         AGO   .WNO
+.WYES    DC    AL1(0)                  RESERVED
+         DC    AL1(1)                  RESTART
+         DC    AL2(0)                  RESERVED
+         DC    A(0)                ATTNINQ ADDR (IGG019OK)
+         DC    A(0)                RESERVED
+         AGO   .OK
+.WNO     DC    AL1(0)                  RESERVED
+         DC    AL1(0)                  NO RESTART
+         DC    AL2(0)                  RESERVED
+         DC    A(0)                ATTNINQ ADDR (IGG019OK)
+         DC    A(0)                RESERVED
+         AGO   .OK
+.EEP     AIF   (T'&EP EQ 'O').OK
+         AIF   ('&EP'(1,1) EQ '(').REGEP
+         LA    0,&EP
+         ST    0,16(1)
+         AGO   .OK
+.REGEP   AIF   ('&EP'(K'&EP,1) NE ')').ERREP2
+&EPR     SETC  '&EP'(2,K'&EP-2)
+         ST    &EPR,16(1)
+         AGO   .OK
+.ASSUMEP DC    A(0)
+         AGO   .EPE1
+.ERREP2  IHBERMAC 42,,IGNORED
+         AGO   .OK
+.STOP    IHBERMAC 53,,PFK/ATTP
+.OK      MEXIT
+.EFORM   ANOP
+&ESW     SETA 1
+         AIF   ('&MF(1)' NE 'E').ERRMF
+         AIF   (N'&MF NE 2).ERRMF
+&GACBNM  SETC  '&MF(2)'
+.EFORM1  AIF   ('&GACBNM'(1,1) EQ '(').REGGACB
+&NAME    LA    1,&GACBNM
+.EFORM2  AIF   (T'&RESTART EQ 'O').EFORM2A
+         AIF   ('&RESTART' EQ 'NO').NONE
+         AIF   ('&RESTART' EQ 'YES').YESS
+         IHBERMAC 157,RESTART,&RESTART
+         AGO   .EFORM2A
+.YESS    LA    15,X'01'                LOAD CODE
+         STC   15,45(1)                STORE CODE
+         AGO   .EFORM2A
+.NONE    LA    15,X'00'                LOAD CODE
+         STC   15,45(1)                STORE CODE
+.EFORM2A ANOP
+         AIF   (T'&COMAREA EQ 'O').EFORM3
+         AIF   ('&COMAREA'(1,1) EQ '(').REGCOM
+         LA    0,&COMAREA
+         ST    0,0(1)
+.EFORM3  AIF   (T'&DCB EQ 'O').EPFK
+         AIF   ('&DCB'(1,1) EQ '(').REGDCB
+         LA    0,&DCB
+         ST    0,4(1)
+         AGO   .EPFK
+.REGGACB AIF   ('&MF(2)'(K'&MF(2),1) NE ')').ERRGACB
+&GACBR   SETC  '&MF(2)'(2,K'&MF(2)-2)
+&NAME    LR    1,&GACBR
+         AGO   .EFORM2
+.REGCOM  AIF   ('&COMAREA'(K'&COMAREA,1) NE ')').ERRCOM
+&COMR    SETC  '&COMAREA'(2,K'&COMAREA-2)
+         ST    &COMR,0(1)
+         AGO   .EFORM3
+.REGDCB  AIF   ('&DCB'(K'&DCB,1) NE ')').ERRDCB
+&DCBR    SETC  '&DCB'(2,K'&DCB-2)
+         ST    &DCBR,4(1)
+         AGO   .EPFK
+.ERRGACB IHBERMAC 36,,&GACBNM                                      8882
+         AGO   .OK
+.ERRCOM  IHBERMAC 188,COMAREA,IGNORED
+         AGO   .EFORM3
+.ERRDCB  IHBERMAC 188,DCB,IGNORED
+         AGO   .EPFK
+         MEND

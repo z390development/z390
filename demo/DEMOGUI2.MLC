@@ -1,0 +1,141 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 11/28/05                                                 *
+*********************************************************************
+*
+* RUN DEMOGUI2 WITH GUI OPTION TO DEMO WTO/WTOR GUI MCS CONSOLE
+* WITH LOOP COUNTER RUNNING BETWEEN REPLYS TO SHOW MULTI-PROCESSING
+*
+* DEMOGUI2 CAN BE RUN IN 4 DIFFERENT MODES:
+*    1. Windows command line interface                         
+*       a.  Enter command: ez390 demo\demogui2
+*       b.  Enter replies when prompted and terminal with END.
+*       c.  When a WTOR reply is pending with GUI option off,
+*           ez390 monitors the system standard input for keyboard input
+*           and when ready, stores reply and posts ecb complete.
+*
+*    2. Windows z390 GUI system window interface               
+*       a.  Enter command: ez390 demo\demogui2
+*       b.  Enter replies when prompted and terminal with END.
+*       c.  When a WTOR reply is pending GUI option off,
+*           ez390 monitors the system standard input for keyboard input
+*           and when ready, stores reply and posts ecb complete.  Note 
+*           this case the standard input is supplied to ez390 process
+*           started from the z390 GUI system window and the wto message
+*           and reply messages are routed back to the z390 GUI system 
+*           window scrolling log display.
+*
+*    3. Windows command line interface                         
+*       a.  Enter command: ez390 demo\demogui2 gui
+*       b.  Enter replies when prompted and terminal with END.
+*       c.  When a WTOR reply is pending with GUI option on,
+*           ez390 monitors the GUI application window for command input
+*           and when ready, stores reply and posts ecb complete.  WTO
+*           and reply messages are routed to the GUI application window
+*           for display on MCS console view panel and are also logged 
+*           on the z390 system log file.
+*
+*    4. Windows z390 GUI system window interface               
+*       a.  Enter command: ez390 demo\demogui2 gui
+*       b.  Enter replies when prompted and terminal with END.
+*       c.  When a WTOR reply is pending with GUI option on,
+*           ez390 monitors the GUI application window for command input
+*           and when ready, stores reply and posts ecb complete.  WTO
+*           and reply messages are routed to the GUI application window
+*           for display on MCS console view panel.  Note in this case
+*           wto messages and reply messages are also routed to the 
+*           separate Z390 GUI system window scrolling log display and
+*           system log file.
+*
+*   See DEMOGUI1 for simllar demo using WAIT for each reply.         
+*  
+*********************************************************************
+DEMOGUI2 SUBENTRY
+         WTO   'DEMOGUI2 DEMO WTO AND WTOR MULTI-PROCESSING'
+         SGR   R3,R3           R3 = TOTAL INSTRUCTION COUNT
+LOOP1    EQU   *
+         WTOR  'ENTER TEXT TO DISPLAY OR END',REPLY,,WAITECB
+         TIME  NS,TOD_NS_START
+         STG   R3,INS_START
+         LG    R4,=FL8'3'      INS INC = AGR,TM,BO LOOP2
+LOOP2    EQU   *
+         AGR   R3,R4           COUNT INSTRUCTIONS EXECUTED
+         TM    WAITECB,X'80'   ARE WE STILL WAITING FOR REPLY
+         BO    LOOP2           YES, KEEP COUNTING
+         TIME  NS,TOD_NS_END
+         STG   R3,INS_END
+         WTO   MF=(E,WTOMSG1)       DISPLAY REPLY =
+         TIME  DEC,TIMEDATE,LINKAGE=SYSTEM,DATETYPE=MMDDYYYY
+         UNPK  DWORK(9),TIMEDATE+8(5)
+         MVC   DDATE(2),DWORK
+         MVC   DDATE+3(2),DWORK+2
+         MVC   DDATE+6(2),DWORK+6
+         WTO   MF=(E,WTOMSG2)       DISPLAY DATE = MM/DD/YY
+         MVC   DTIME,MTIME
+         ED    DTIME,TIMEDATE
+         WTO   MF=(E,WTOMSG3)       DISPLAY TIME = HH:MM:SS:TH
+         CVDG  R3,PWORK16
+         MVC   DCOUNT,MCOUNT
+         ED    DCOUNT,PWORK16+10
+         WTO   MF=(E,WTOMSG4)       DISPLAY TOTAL INS COUNT
+         LG    R4,INS_END
+         SG    R4,INS_START         R4 = INT COUNT                            
+         CVDG  R4,PWORK16
+         MVC   DICOUNT,MCOUNT
+         ED    DICOUNT,PWORK16+10
+         WTO   MF=(E,WTOMSG5)       DISPLAY INTERVAL INS COUNT
+         LG    R5,TOD_NS_END
+         SG    R5,TOD_NS_START      R5 = INT NS
+         LGR   R1,R5
+         DSGF  R0,=F'1000000'                                       
+         CVDG  R1,PWORK16           R1 = INT MILLISECONDS
+         MVC   DITIME,MCOUNT
+         ED    DITIME,PWORK16+10
+         WTO   MF=(E,WTOMSG6)       DISPLAY INTERVAL NS
+         LGR   R1,R4
+         MSGF  R1,=F'1000000000'    R1=INT COUNT * 10E9
+         DSGR  R0,R5
+         CVDG  R1,PWORK16
+         MVC   DRATE,MCOUNT
+         ED    DRATE,PWORK16+10
+         WTO   MF=(E,WTOMSG7)
+         CLC   REPLY(3),=C'END'
+         BNE   LOOP1
+EOF      WTO   'DEMOGUI2 ENDING OK'
+         SUBEXIT
+WAITECB  DC    F'0'
+PWORK16  DC    XL16'0'
+TOD_NS_START DC FL8'0'
+TOD_NS_END   DC FL8'0'
+INS_START    DC FL8'0'
+INS_END      DC FL8'0'
+MTIME    DC    C' ',X'2120',C':',X'2020',C':',X'2020',C':',X'2020'
+MCOUNT   DC    C' ',11X'20'
+TIMEDATE DC    XL16'00' 
+DWORK    DC    XL9'00'
+WTOMSG1  DC    AL2(WTOEND1-*,0),C'WTOR REPLY            = '
+REPLY    DC    CL40' '
+WTOEND1  EQU   *
+WTOMSG2  DC    AL2(WTOEND2-*,0),C'CURRENT DATE          = '
+DDATE    DC    C'MM/DD/YY'
+WTOEND2  EQU   *
+WTOMSG3  DC    AL2(WTOEND3-*,0),C'CURRENT TIME          ='
+DTIME    DC    C' HH:MM:SS:TH'
+WTOEND3  EQU   *
+WTOMSG4  DC    AL2(WTOEND4-*,0),C'TOTAL INSTRUCTIONS    ='
+DCOUNT   DC    CL12' '
+WTOEND4  EQU   *                                                                                                       
+WTOMSG5  DC    AL2(WTOEND5-*,0),C'INTERVAL INSTRUCTIONS ='
+DICOUNT  DC    CL12' '
+WTOEND5  EQU   *                                                                                                       
+WTOMSG6  DC    AL2(WTOEND6-*,0),C'INTERVAL TIME (MS)    ='
+DITIME   DC    CL12' '
+WTOEND6  EQU   *                                                                                                       
+WTOMSG7  DC    AL2(WTOEND7-*,0),C'INTERVAL INS/SEC      ='
+DRATE    DC    CL12' '
+WTOEND7  EQU   * 
+         EQUREGS
+         END

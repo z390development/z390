@@ -1,0 +1,387 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*  %/*
+         MACRO
+&NAME    WTO   &MESG,&MF=I,&ROUTCDE=,&DESC=,&MSGTYP=,&MCSFLAG=,&QID=,&AX
+               REAID=
+.**********************************************************************
+.*                                                             @G64DPSS
+.*                  WTO - WRITE TO OPERATOR                    @G64DPSS
+.*                                                             @G64DPSS
+.* STATUS     - OS/VS2 SYSTEM CONTROL PROGRAM 2                @G64DPSS
+.*              05/17/78  LEVEL=04                             @G64DPSS
+.*                                                             @G64DPSS
+.* INVOCATION - SPECIFY:  WTO MESG,ROUTCDE=,DESC=,MSGTYP=,     @G64DPSS
+.*                            MCSFLAG=,QID=,AREAID=,MF=        @G64DPSS
+.*              WHERE:                                         @G64DPSS
+.*                MESG     THE MESSAGE TEXT FOR A SINGLE OR    @G64DPSS
+.*                         MULTIPLE LINE MESSAGE TO BE         @G64DPSS
+.*                         WRITTEN.                            @G64DPSS
+.*                ROUTCDE= ROUTING CODES TO BE ASSIGNED TO THE @G64DPSS
+.*                         MESSAGE.                            @G64DPSS
+.*                                                             @G64DPSS
+.*                DESC=    DESCRIPTOR CODES TO BE ASSIGNED TO  @G64DPSS
+.*                         THE MESSAGE.                        @G64DPSS
+.*                                                             @G64DPSS
+.*                MSGTYP=  SPECIFIES HOW THE MESSAGE IS TO BE  @G64DPSS
+.*                         ROUTED. VALID VALUES ARE:           @G64DPSS
+.*                           N,Y,SESS,JOBNAMES,STATUS,ACTIVE,  @G64DPSS
+.*                           SHOW                              @G64DPSS
+.*                                                             @G64DPSS
+.*                MCSFLAG= SPECIFIES ATTRIBUTES OF THE         @G64DPSS
+.*                         MESSAGE. VALID VALUES ARE:          @G64DPSS
+.*                           REG0,RESP,REPLY,BRDCST,HRDCPY,    @G64DPSS
+.*                           QREG0,NOTIME,NOCPY                @G64DPSS
+.*                                                             @G64DPSS
+.*                QID=     REMOTE ENTRY SERVICES (RSS) QUEUE   @G64DPSS
+.*                         ID (OS/VS1 ONLY).                   @G64DPSS
+.*                                                             @G64DPSS
+.*                AREAID=  SPECIFIES A DISPLAY AREA ON THE     @G64DPSS
+.*                         CONSOLE WHERE THE MESSAGE IS TO BE  @G64DPSS
+.*                         WRITTEN.                            @G64DPSS
+.*                                                             @G64DPSS
+.*                MF=      SPECIFIES THE TYPE OF EXPANSION     @G64DPSS
+.*                         REQUIRED. VALID VALUES ARE:         @G64DPSS
+.*                           I,L,E                             @G64DPSS
+.*                                                             @G64DPSS
+.* FUNCTION   - BUILDS A WRITE TO OPERATOR PARAMETER LIST      @G64DPSS
+.*              (WPL) AND/OR THE CODE WHICH WILL INVOKE SVC 35 @G64DPSS
+.*              TO ISSUE THE MESSAGE.                          @G64DPSS
+.*                                                             @G64DPSS
+.* CHANGE ACTIVITY -                                           @G64DPSS
+.*              G64DPSS,OZ43167                                @G64DPSS
+.*                                                             @G64DPSS
+.**********************************************************************
+         GBLB  &IHBWTL,&IHBWTOR
+         LCLA  &LT(256),&H,&I,&N,&J,&LEN,&LNUM,&LLCNT            X02007
+         LCLB  &NODFLT
+         LCLB  &B(16),&AD,&E,&E1,&E2,&E3,&E4,&E5,&E6,&MCS,&MLW   X02007
+         LCLB  &SECONDL,&SWM,&TWO,&PAIR                          X02007
+         LCLC  &CFLG(16),&CD(16),&GNAME                          X02007
+         ACTR  30000                                           @G64DPSS
+&GNAME   SETC  'IHB'.'&SYSNDX'
+         AIF    ('&MF' EQ 'I' OR '&MF' EQ 'L').NUMCHK            X02007
+         AIF   (N'&MF NE 2).E1
+         AIF   ('&MF(1)' NE 'E').E1
+&NAME    IHBINNRA &MF(2)
+         AIF   (&IHBWTL).END
+         AIF   (T'&QID EQ 'O').S3                                X02050
+         LR    14,1                 * MOVE                       X02050
+         AH    14,0(1,0)            *   QID                      YM1995
+         AIF   ('&QID'(1,1) EQ '(').S2                           X02050
+         MVC   6(2,14),&QID         *     INTO PARAM LIST        X02050
+         AGO   .S3                                               X02050
+.S2      ANOP                                                    X02050
+         MVC   6(2,14),0(&QID(1))   *     INTO PARAM LIST        X02050
+.S3      ANOP                                                    X02050
+         SVC   35                                ISSUE SVC
+         AGO   .END
+.NUMCHK  ANOP                                                    X02007
+         AIF   (N'&SYSLIST EQ 0 OR N'&SYSLIST GT 255).NOTXT    @G64DPSS
+         AIF   ('&MF' EQ 'I').IROUT                              X02007
+.LROUT   AIF   (&IHBWTOR).MESCHK
+&NAME    DS    0F
+.MESCHK  ANOP
+&I       SETA  1
+&MCS     SETB  (T'&ROUTCDE NE 'O' OR T'&MSGTYP NE 'O' OR T'&QID NE 'O')
+.*                                                               X02050
+&B(3)    SETB  0                                                   MCS
+         AIF   ('&MESG' EQ '').NOTXT                             X02007
+&MLW     SETB  (N'&SYSLIST NE 1 OR N'&SYSLIST(1) NE 1)           X02007
+         AIF   (T'&DESC EQ 'O').SETNCLR
+&MCS     SETB  1
+.*
+.*  DESCRIPTOR CODES
+.*
+.DCHK    ANOP
+&N       SETA  &DESC(&I)
+&I       SETA  &I+1
+         AIF   (&N GE 1 AND &N LE 16).ASSIGND
+         MNOTE 8,'DESC &N IS INVALID DESCRIPTOR- IGNORED'      @ZA43167
+         AGO   .NXTD
+.ASSIGND ANOP
+&B(&N)   SETB  1
+.NXTD    AIF   (&I LE N'&DESC).DCHK
+&I       SETA  1
+         AGO   .SETNCLR
+.*
+.*  ROUTE CODES
+.*
+.RTCHK   AIF   (T'&ROUTCDE NE 'O').RCHK0
+.DEFLAG  ANOP
+&I       SETA  3
+         AIF   (&J EQ N'&MCSFLAG OR T'&MCSFLAG EQ 'O').DODEF
+&J       SETA  &J+1
+         AIF   ('&MCSFLAG(&J)' EQ 'REG0' OR '&MCSFLAG(&J)' EQ 'QREG0').*
+               SETNCLR
+         AGO   .DEFLAG
+.DODEF   ANOP
+&B(2)    SETB  (&MCS)
+&I       SETA  3
+         AGO   .SETNCLR
+.*
+.RCHK0   ANOP
+.RCHK    ANOP
+&N       SETA  &ROUTCDE(&I)
+&I       SETA  &I+1
+         AIF   (&N GE 1 AND &N LE 16).ASSIGNR
+         MNOTE 8,'ROUTCDE &N  IS INVALID ROUTE- IGNORED'       @ZA43167
+         AGO   .NXTR
+.ASSIGNR ANOP
+&NODFLT  SETB  (&NODFLT OR &N NE 16)
+&B(&N)   SETB  1
+.NXTR    AIF   (&I LE N'&ROUTCDE).RCHK
+&I       SETA  3
+&B(2)    SETB  (&B(2) OR NOT &NODFLT)
+&NODFLT  SETB  0
+&B(16)   SETB  0
+.NOT11   ANOP
+.*
+.*  SET OUTPUT AREAS AND CLEAR BINARY FLAGS
+.*
+.SETNCLR ANOP
+&CD(&I)  SETC  '&B(1)&B(2)&B(3)&B(4)&B(5)&B(6)&B(7)&B(8)'
+&CD(&I+1) SETC '&B(9)&B(10)&B(11)&B(12)&B(13)&B(14)&B(15)&B(16)'
+&N       SETA  1
+.CLR     ANOP
+&B(&N)   SETB  0
+&N       SETA  &N+1
+         AIF   (&N LT 17).CLR
+         AIF   (&I EQ 1).RTCHK
+         AIF   (&I EQ 5).FLGCHK0
+         AIF   (&I EQ 7).GENDCS                                  X02007
+.*
+.*  MESSAGE TYPES
+.*
+.TYPCHK  ANOP                                                    X02050
+         AIF   (T'&QID EQ 'O' OR '&QID(1)' EQ 'N').TYPCHK1       X02050
+&B(4)    SETB  1                                                 X02050
+&SWM     SETB  1                                                 X02050
+         AGO   .TYPCHK2                                          X02050
+.TYPCHK1 ANOP                                                    X02050
+         AIF   (T'&MSGTYP EQ 'O').FLGCHK0                        X02050
+         AIF   ('&MSGTYP(1)' EQ 'N').FLGCHK0
+.TYPCHK2 ANOP                                                    X02050
+&SWM     SETB  1                                                 X02007
+&I       SETA  5
+&N       SETA  1
+         AIF   ('&MSGTYP(1)' EQ 'Y' OR '&MSGTYP(1)' EQ 'N').SETNCLR
+&I       SETA  1
+.*
+&CFLG(1) SETC  'JOBNAMES'
+&CFLG(2) SETC  'STATUS'
+&CFLG(3) SETC  'ACTIVE'                                          X02007
+&CFLG(4) SETC  ''
+&CFLG(5) SETC  'SHOW'                                              CRJE
+&CFLG(6) SETC  'SESS'                                            20034
+.*
+.TCHK    AIF   ('&MSGTYP(&I)' EQ '&CFLG(&N)').SETTYP
+&N       SETA  &N+1
+         AIF   (&N LE 8).TCHK
+         MNOTE 8,'MESSAGE TYPE FIELD INVALID- N IS ASSUMED'
+&N       SETA  1                                                 X02007
+&I       SETA  5                                                 X02007
+&SWM     SETB  0                                                 X02007
+         AGO   .CLR                                              X02007
+.SETTYP  AIF   ('&CFLG(&N)' EQ '').ADDIT
+&B(&N)   SETB 1
+.ADDIT   ANOP
+&I       SETA  &I+1
+&N       SETA  1
+         AIF   (&I LE N'&MSGTYP).TCHK
+&I       SETA  5
+         AGO   .SETNCLR
+.*
+.*  MCSFLAGS
+.*
+.FLGCHK0 ANOP
+&B(1)    SETB  (&MCS)
+&B(4)    SETB  (&SWM)
+&B(10)   SETB  (&MLW)              THIS IS MLWTO LIST            X02007
+&I       SETA  7
+         AIF   (T'&MCSFLAG EQ 'O').SETNCLR
+&I       SETA  1
+&N       SETA  1
+.*
+&CFLG(1) SETC  'REG0'
+&CFLG(2) SETC  'RESP'
+&CFLG(3) SETC  ''
+&CFLG(4) SETC  'REPLY'
+&CFLG(5) SETC  'BRDCST'
+&CFLG(6) SETC  'HRDCPY'
+&CFLG(7) SETC  'QREG0'
+&CFLG(8) SETC  'NOTIME'
+&CFLG(13) SETC 'NOCPY'
+.*
+.FLGCHK  AIF   ('&MCSFLAG(&I)' EQ '&CFLG(&N)').SETFLG
+&N       SETA  &N+1
+         AIF   (&N LE 15).FLGCHK
+         MNOTE 8,'&MCSFLAG(&I) IS INVALID- IGNORED'
+         AGO   .ADDI
+.SETFLG  AIF   ('&CFLG(&N)' EQ '').ADDI
+         AIF   ('&CFLG(&N)' NE 'HRDCPY').HDCYOK                  X02007
+         AIF   (NOT &MLW).HDCYOK                                 X02007
+         IHBERMAC 248
+&GNAME.A DS    0H                                                A57404
+         MEXIT                                                   A57404
+.HDCYOK  ANOP
+&B(&N+1) SETB  1
+.ADDI    ANOP
+&I       SETA  &I+1
+&N       SETA  1
+         AIF   (&I LE N'&MCSFLAG).FLGCHK
+         AIF   (&B(7) AND &B(14)).MUTEXC  THESE PARAM MUTUALLY EXCLUSIV
+.*                                      HARDCOPY AND NO HARD COPY
+         AGO   .SETTER
+.MUTEXC  ANOP
+&B(14)   SETB  0
+         MNOTE 8,'HRDCPY AND NOCPY MUTUALLY EXCLUSIVE, HRDCPY ASSUMED'
+.SETTER  ANOP
+&I       SETA  7
+         AGO   .SETNCLR
+.IROUT   AIF   (&IHBWTOR).MESCHK
+         CNOP  0,4
+&NAME    BAL   1,&GNAME.A                        BRANCH AROUND MESSAGE
+         AGO   .MESCHK
+.*                                                               X02007
+.*  * *  SET LINETYPE  * * * * *                                 X02007
+.*                                                               X02007
+.GENDCS  AIF   (NOT &MLW).NOTMLW1  GENERATE REGULAR WTO          X02007
+&H       SETA  1                                                 X02007
+         AIF   ('&SYSLIST(1,1)' EQ '').MLW04                     X02007
+         AIF   (N'&SYSLIST(1) GT 2).MLW05                        X02007
+         AIF   ('&SYSLIST(1,2)' NE 'C').MLW02                    X02007
+&LT(1)   SETA  80                                                X02007
+.MLW01   AIF   (N'&SYSLIST LE &H).MLW11                          X02007
+&H       SETA  &H+1                                              X02007
+         AIF   (N'&SYSLIST(&H) GT 2).MLW05                       X02007
+.MLW02   AIF   ('&SYSLIST(&H,2)' NE 'L' OR '&SYSLIST(&H,1)' EQ '').MLW0X
+               4                                                 X02007
+&LT(&H)  SETA  40                                                X02007
+         AIF   (&SECONDL).MLW03                                  X02007
+&SECONDL SETB  1                                                 X02007
+         AGO   .MLW01                                            X02007
+.MLW03   AIF   (N'&SYSLIST LE &H).MLW11                          X02007
+&H       SETA  &H+1                                              X02007
+         AIF   (N'&SYSLIST(&H) GT 2).MLW05                       X02007
+.MLW04   AIF   ('&SYSLIST(&H,2)' EQ 'E').MLW06                   X02007
+         AIF   ('&SYSLIST(&H,1)' EQ '').MLW05                    X02007
+         AIF   ('&SYSLIST(&H,2)' EQ 'DE').MLW08                  X02007
+         AIF   ('&SYSLIST(&H,2)' EQ 'L' OR '&SYSLIST(&H,2)' EQ 'C').MLWX
+               09                                                X02007
+         AIF   ('&SYSLIST(&H,2)' NE 'D' AND '&SYSLIST(&H,2)' NE '').MLW*
+               10                                                X02007
+&LT(&H)  SETA  20                                                X02007
+         AGO   .MLW03                                            X02007
+.MLW05   ANOP                                                    X02007
+&E5      SETB  1                                                 X02007
+&LT(&H)  SETA  10                                                X02007
+         AGO   .MLW11                                            X02007
+.MLW06   ANOP                                                    X02007
+&LT(&H)  SETA  10                                                X02007
+.MLW07   ANOP                                                    X02007
+&E4      SETB  (&H NE N'&SYSLIST)                                X02007
+         AGO   .MLW11                                            X02007
+.MLW08   ANOP                                                    X02007
+&LT(&H)  SETA  30                                                X02007
+         AGO   .MLW07                                            X02007
+.MLW09   ANOP                                                    X02007
+&E3      SETB  1                                                 X02007
+&LT(&H)  SETA  30                                                X02007
+         AGO   .MLW11                                            X02007
+.MLW10   ANOP                                                    X02007
+&E5      SETB  1                                                 X02007
+&LT(&H)  SETA  30                                                X02007
+.MLW11   ANOP                                                    X02007
+&LLCNT   SETA  &H                                                X02007
+&H       SETA  1                                                 X02007
+.NOTMLW1 ANOP                                                    X02007
+&I       SETA  1                                                 X02007
+&LEN     SETA  K'&SYSLIST(1,1)-2                                 X02007
+&PAIR    SETB  0                                                 X02007
+.QLOOP1  ANOP                                                    X02007
+&I       SETA  &I+1+&PAIR                                        X02007
+         AIF   (&I GE K'&SYSLIST(1,1)).QDONE1                    X02007
+&PAIR    SETB  ('&SYSLIST(1,1)'(&I,2) EQ '''''' OR '&SYSLIST(1,1)'(&I,2X
+               ) EQ '&&')                                        A57481
+&LEN     SETA  &LEN-&PAIR                                        X02007
+         AGO   .QLOOP1                                           X02007
+.QDONE1  ANOP                                                    X02007
+&AD      SETB  (&LT(1) NE 10)      0 IF E-TYPE LINE, 1 IF NOT    X02007
+&LEN     SETA  4+&LEN*&AD                                        X02007
+         DC    AL2(&LEN)           TEXT LENGTH
+         DC    B'&CD(7)&CD(8)'     MCS FLAGS
+         AIF   (&LEN EQ 4).SKIPDC                                X02007
+         DC    C&SYSLIST(1,1)
+.SKIPDC  AIF   (NOT &MCS).OLDEXIT                                X02007
+         DC    B'&CD(1)&CD(2)'     DESCRIPTOR CODES
+         DC    B'&CD(3)&CD(4)'     ROUTING CODES
+         AIF   ('&MSGTYP(1)' NE 'Y' AND NOT &SWM).OLDEXIT        X02007
+         DC    B'&CD(5)&CD(6)'     MESSAGE TYPE
+         AIF   (T'&QID EQ 'O' OR '&QID(1)' EQ 'N').OLDEXIT       X02050
+         AIF   (T'&QID EQ 'N').GENDCS1                           X02050
+         AIF   ('&QID(1)' EQ 'Y').GENDCS0                        X02050
+         MNOTE 8,'QID FIELD IS INVALID- ZERO ASSUMED'
+.GENDCS0 ANOP                                                    X02050
+         DC    AL2(0)                   QID FIELD                X02050
+         AGO   .OLDEXIT                                          X02050
+.GENDCS1 ANOP                                                    X02050
+         DC    AL2(&QID)                QID                      X02050
+.OLDEXIT AIF   (NOT &MLW).NOTMLW2                                X02007
+         DC    XL2'&LT(1)00'       LINE TYPE
+         AIF   ('&AREAID' EQ '').ID0                             X02007
+         DC    CL1'&AREAID'            AREA ID                   X02007
+         AGO   .IDA                                              X02007
+.ID0     DC    X'00'
+.IDA     ANOP                                                    X02007
+         DC    AL1(&LLCNT)             TOTAL NUMBER OF LINES     X02007
+.MLW12   AIF   (&H GE &LLCNT).MLW14                              X02007
+&H       SETA  &H+1                                              X02007
+&I       SETA  1                                                 X02007
+&LEN     SETA  K'&SYSLIST(&H,1)-2                                X02007
+&PAIR    SETB  0                                                 X02007
+.QLOOPH  ANOP                                                    X02007
+&I       SETA  &I+1+&PAIR                                        X02007
+         AIF   (&I GE K'&SYSLIST(&H,1)).QDONEH                   X02007
+&PAIR    SETB  ('&SYSLIST(&H,1)'(&I,2) EQ '''''' OR '&SYSLIST(&H,1)'(&IX
+               ,2) EQ '&&')                                      A57481
+&LEN     SETA  &LEN-&PAIR                                        X02007
+         AGO   .QLOOPH                                           X02007
+.QDONEH  ANOP                                                    X02007
+&AD      SETB  (&LT(&H) NE 10)     0 IF E-TYPE LINE, 1 IF NOT    X02007
+&LEN     SETA  4+&LEN*&AD                                        X02007
+         DC    AL2(&LEN)           LENGTH
+         DC    XL2'&LT(&H)00'      LINE TYPE
+         AIF   (&LEN EQ 4).MLW12                                 X02007
+         DC    C&SYSLIST(&H,1)
+         AGO   .MLW12                                            X02007
+.MLW14   AIF   (NOT &E4).MLW15                                   X02007
+         IHBERMAC 242
+.MLW15   AIF   (NOT &E5).MLW17                                   X02007
+         IHBERMAC 243
+.MLW17   AIF   (NOT &E3).NOTMLW2                                 X02007
+         IHBERMAC 244
+.NOTMLW2 AIF   (&IHBWTOR OR '&MF' NE 'I').END                    X02007
+.MLWHC   ANOP
+&GNAME.A DS    0H
+         AIF   (&E6 OR &E3 OR &IHBWTL).END                       X02007
+         SVC   35
+         MEXIT                                                   X02007
+.E1      IHBERMAC 35,,&MF
+         MEXIT
+.NOTXT   ANOP                                                    X02007
+         MNOTE 12,'NUMBER OF LINES REQUESTED IS 0 OR GREATER THAN 255 -X
+                GENERATION TERMINATED'                         @G64DPSS
+.END     MEND
+**/
+*  WTO: MACRO KEYS(
+*                   ROUTCDE,      /*ROUTING CODES FOR MESSAGE        */
+*                   DESC,         /*MESSAGE DESCRIPTOR CODES         */
+*                   MSGTYP,       /*ROUTE TO MESSAGE CONSOLES        */
+*                   MCSFLAG,      /*MESSAGE ATTRIBUTES               */
+*                   AREAID,       /*DISPLAY AREA                     */
+*                   RTCD,         /*SVC RETURN CODE                  */
+*                   MF            /*LIST FORMAT                      */
+*                          );
+*    ANS('?'||MACLABEL||'WTOP '||MACLIST||MACKEYS||';');
+*%END WTO;
+

@@ -1,0 +1,9 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO                    LOAD AUXILIARY STORAGE       @ZA04484
+&NAME    LAS   &L,&A                                           @ZA04484
+         AIF   ('&L' NE '0' AND '&L' LT '17').L1               @ZA04484
+         MNOTE 12,'***  IHB350  LENGTH NOT 1-16 DIGITS'
+.L1      ANOP                                                  @ZA04484
+&NAME    DC    0H'0',X'C1',AL1(16*0+&L-1),AL2(&A)
+         MEND                                                  @ZA04484
+

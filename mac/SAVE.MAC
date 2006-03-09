@@ -1,0 +1,35 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.*********************************************************************
+&N       SAVE  &REGS
+         AIF   (N'&SYSLIST LE 3).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
+.NPOK    ANOP
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+&R1      SETA  &REGS(1)
+&R2      SETA  &REGS(2)
+         AIF   (&R1 LT 0 OR &R1 GT 15).ERR
+         AIF   (&R2 LT 0 OR &R2 GT 15).ERR
+         AIF   (&R1 EQ 13).ERR
+         AIF   (&R2 EQ 13).ERR
+         AIF   (&R1 GE 14).R1_GE_14
+         AIF   (&R1 GT &R2).ERR OVERLAPS 13        
+         STM   &R1,&R2,20+4*&R1(13)
+         AGO   .EXIT
+.R1_GE_14 ANOP
+         AIF   (&R2 EQ 14 AND &R1 EQ 15).ERR OVERLAPS 13
+         STM   &R1,&R2,12+4*(&R1-14)(13)
+         AGO   .EXIT
+.ERR     ANOP
+         MNOTE 8,'MZ390E 1002 SAVE RANGE INVALID (&R1,&R2)'
+.EXIT    ANOP
+         MEND

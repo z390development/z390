@@ -5,9 +5,10 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 11/07/05 RPI84 IGNORE COMMENTS AFTER COPY FILE NAME
 TESTCPY1 SUBENTRY
          WTO   'TESTCPY1 TEST NESTED COPY SUPPORT'
-         COPY  TESTCP11
+         COPY  TESTCP11 TEST COMMENTS AFTER FILE NAME
          COPY  TESTCP12
          SUBEXIT
          END

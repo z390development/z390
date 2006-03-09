@@ -1,0 +1,207 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    TGROUP &TC1=,&TC2=,&TC3=,&TC4=,&TC5=,&TC6=,&TC7=,&TC8=,&TC9=
+         GBLA  &IECNDGP(100),&IECCNTR
+.*             IECNDGP(1)  NUMBER OF BYTES COUNTER
+.*             IECNDGP(6)  COUNTER FOR NUMBER OF TGROUP MACROS
+         GBLB  &IECSW(9),&IECSEQ(10)                              21094
+.*             IECSW(1)   INDICATES CORE SIZE
+.*             IECSW(3)   INDICATES NOT FIRST MACRO
+.*             IECSEQ(3) SEQUENCE INDICATOR
+         GBLC  &IECDGRP(100)
+         LCLA  &A,&B,&SAVE(4),&CNST,&C,&D
+         LCLB  &NCODE,&SW(4),&SV
+         LCLC  &CHAR,&TYPE(2)
+         ACTR  500
+         AIF   (&IECSW(3)).BY
+&IECSEQ(3) SETB 1
+.BY      AIF   (&IECSEQ(1) AND &IECSEQ(2) AND &IECSEQ(3) AND NOT&IECSEQ-
+               (4) AND NOT&IECSEQ(5) AND NOT&IECSEQ(6)).SEQOK
+&NCODE   SETB  1
+         MNOTE 12,'MACRO SEQUENCE ERROR'
+.SEQOK   AIF   ('&NAME' NE '').NMOK
+&NCODE   SETB  1
+         MNOTE 12,'NAME FIELD REQUIRED'
+.NMOK    AIF   (T'&TC1 NE 'O' OR T'&TC2 NE 'O' OR T'&TC3 NE 'O' OR     X
+               T'&TC4 NE 'O' OR T'&TC5 NE 'O' OR T'&TC6 NE 'O').TCNOK
+         AIF   (T'&TC7 NE 'O' OR T'&TC8 NE 'O' OR T'&TC9 NE 'O').TCNOK
+&NCODE   SETB  1
+         MNOTE 12,'AT LEAST ONE OPERAND REQUIRED'
+.TCNOK   AIF   (&IECSW(3)).THRU
+&IECCNTR SETA  &IECCNTR+1
+&IECSW(3) SETB 1
+         SPACE 1
+*                  AREA STATION SEQUENCE TABLE
+         SPACE 1
+IECASSEQ DC    &IECCNTR.X'00'      AS-SEQ TABLE
+&C       SETA  &C+1
+&A       SETA  0
+         SPACE 1
+*                  DATA ENTRY UNIT INDEX TABLE
+         SPACE 1
+IECDENDX EQU   *
+         DC    YL1(0)
+.LOOPB   ANOP
+&A       SETA  &A+1
+&B       SETA  &IECNDGP(&A)+&B
+         AIF   (&B GT 1023).OUT
+         AIF   (&B GT 767 AND NOT &SW(3)).SETC
+         AIF   (&B GT 511 AND NOT &SW(2)).SETC
+         AIF   (&B GT 255 AND NOT &SW(1)).SETC
+         AIF   (&B EQ 0 AND &IECCNTR EQ 1).NDGPOK
+         AIF   (&B EQ 1 AND &IECCNTR EQ 1).NDGPOK
+         AIF   (&IECCNTR EQ 1).NDGPOK                             M2750
+         DC    YL1(&B-&CNST)
+         AIF   (&A NE &IECCNTR-1).LOOPB
+         AGO   .OUT
+.SETC    ANOP
+&SW(&C)  SETB  1
+&SAVE(&C) SETA &A
+&CNST    SETA  &CNST+256
+&C       SETA  &C+1
+         DC    YL1(&B-&CNST)
+         AIF   (&A NE &IECCNTR-1).LOOPB                           M2764
+.OUT     ANOP
+&A       SETA  &A+1
+&B       SETA  &IECNDGP(&A)+&B
+         AIF   (&B LE 1024).NDGPOK
+         MNOTE 12,'NUMBER OF DEUS EXCEEDS 1024, DEU-SEQ AND DEU TABLES -
+               SUPRESSED'
+&IECNDGP(6) SETA 0                                                21094
+         AGO   .TBSUP
+.NDGPOK  ANOP
+         SPACE 1
+*                  DATA ENTRY UNIT SEQUENCE TABLE
+         SPACE 1
+IECDESEQ DC    &B.X'00'
+&IECNDGP(1) SETA &B+4*&IECCNTR+22  TOTAL NUMBER OF BYTES
+&IECNDGP(6) SETA 0
+         SPACE 1
+*                  DATA ENTRY UNIT TABLE
+         SPACE 1
+IECDEUTB EQU   *
+&A       SETA  0
+&CNST    SETA  0
+&B       SETA  0
+&C       SETA  1
+.LOOPZ   ANOP
+&D       SETA  18
+&A       SETA  &A+1
+.AGN     AIF   (&A GT &SAVE(&C) AND &SAVE(&C) NE 0).G255
+         AIF   ('&IECDGRP(&A)' NE '').DCC
+&IECDGRP(&A) SETC 'IECFTGRP'
+&D       SETA  0
+.DCC     DC    YL1((((&IECDGRP(&A)-IECFTGRP)+&D)/18)*4+&CNST)
+         AIF   (&A NE &IECCNTR).LOOPZ
+.TBSUP   ANOP
+         DS    0H'0'
+         SPACE 1
+*                  TRANSACTION GROUP TABLE
+         SPACE 1
+IECFTGRP EQU *
+         AGO   .THRU
+.G255    ANOP
+&CNST    SETA  &CNST+1
+&C       SETA  &C+1
+         AGO   .AGN
+.THRU    ANOP
+&IECNDGP(6) SETA &IECNDGP(6)+1
+         AIF   (&IECNDGP(6) LE 63).NUMOK
+         MNOTE 3,'NUMBER OF TGROUP MACROS EXCEEDS 63,MACRO IGNORED'
+         MEXIT
+.NUMOK   AIF   (&NCODE).NOGEN
+&NAME    EQU   *
+&A       SETA  0
+&B       SETA  1
+&SW(1)   SETB  0
+.LPCNTRL AIF   (&B NE 1).SETTC2
+&TYPE(1) SETC  T'&TC1(1)
+&TYPE(2) SETC  '&TC1(2)'
+&CHAR    SETC  '&TC1(1)'
+&SW(1)   SETB  (T'&TC1 EQ 'O')
+&C       SETA  N'&TC1
+         AGO   .CKTCOP
+.SETTC2  AIF   (&B NE 2).SETTC3
+&TYPE(1) SETC  T'&TC2(1)
+&TYPE(2) SETC  '&TC2(2)'
+&CHAR    SETC  '&TC2(1)'
+&SW(1)   SETB  (T'&TC2 EQ 'O')
+&C       SETA  N'&TC2
+         AGO   .CKTCOP
+.SETTC3  AIF   (&B NE 3).SETTC4
+&TYPE(1) SETC  T'&TC3(1)
+&TYPE(2) SETC  '&TC3(2)'
+&CHAR    SETC  '&TC3(1)'
+&SW(1)   SETB  (T'&TC3 EQ 'O')
+&C       SETA  N'&TC3
+         AGO   .CKTCOP
+.SETTC4  AIF   (&B NE 4).SETTC5
+&TYPE(1) SETC  T'&TC4(1)
+&TYPE(2) SETC  '&TC4(2)'
+&CHAR    SETC  '&TC4(1)'
+&SW(1)   SETB  (T'&TC4 EQ 'O')
+&C       SETA  N'&TC4
+         AGO   .CKTCOP
+.SETTC5  AIF   (&B NE 5).SETTC6
+&TYPE(1) SETC  T'&TC5(1)
+&TYPE(2) SETC  '&TC5(2)'
+&CHAR    SETC  '&TC5(1)'
+&SW(1)   SETB  (T'&TC5 EQ 'O')
+&C       SETA  N'&TC5
+         AGO   .CKTCOP
+.SETTC6  AIF   (&B NE 6).SETTC7
+&TYPE(1) SETC  T'&TC6(1)
+&TYPE(2) SETC  '&TC6(2)'
+&CHAR    SETC  '&TC6(1)'
+&SW(1)   SETB  (T'&TC6 EQ 'O')
+&C       SETA  N'&TC6
+         AGO   .CKTCOP
+.SETTC7  AIF   (&B NE 7).SETTC8
+&TYPE(1) SETC  T'&TC7(1)
+&TYPE(2) SETC  '&TC7(2)'
+&CHAR    SETC  '&TC7(1)'
+&SW(1)   SETB  (T'&TC7 EQ 'O')
+&C       SETA  N'&TC7
+         AGO   .CKTCOP
+.SETTC8  AIF   (&B NE 8).SETTC9
+&TYPE(1) SETC  T'&TC8(1)
+&TYPE(2) SETC  '&TC8(2)'
+&CHAR    SETC  '&TC8(1)'
+&SW(1)   SETB  (T'&TC8 EQ 'O')
+&C       SETA  N'&TC8
+         AGO   .CKTCOP
+.SETTC9  AIF   (&B NE 9).MEND
+&TYPE(1) SETC  T'&TC9(1)
+&TYPE(2) SETC  '&TC9(2)'
+&CHAR    SETC  '&TC9(1)'
+&SW(1)   SETB  (T'&TC9 EQ 'O')
+&C       SETA  N'&TC9
+.CKTCOP  AIF   (NOT &SW(1)).CKMORE
+&SV      SETB  1
+         AGO   .TCOK2
+.CKMORE  AIF   (&C LE 2).NTCOK
+         MNOTE 3,'NUMBER OF SUBOPERANDS GREATER THAN 2,OPERAND IGNORED'
+&SV      SETB  1
+.NTCOK   AIF   ('&TYPE(2)' EQ 'E' OR '&TYPE(2)' EQ '').TCOK1
+         MNOTE 3,'TC&B.(2) INCORRECT,OPERAND IGNORED'
+&SV      SETB  1
+.TCOK1   AIF   ('&TYPE(1)' EQ 'R' OR '&TYPE(1)' EQ 'M').TCOK2
+         MNOTE 3,'TC&B.(1) TYPE ATTRIBUTE=&TYPE(1) IMPROPER,OPERAND    X
+               IGNORED'
+&SV      SETB  1
+.TCOK2   AIF   (NOT &SV).SKIP1
+         DC    YL2(0)
+         AGO   .ADD1
+.SKIP1   AIF   ('&TYPE(2)' NE 'E').ADDNT
+&A       SETA  X'8000'
+.ADDNT   ANOP
+         DC    AL2(&A+(&CHAR-IEC15TAB))
+.ADD1    ANOP
+&A       SETA  0
+&B       SETA  &B+1
+&SW(1)   SETB  0
+&SV      SETB  0
+&IECNDGP(1) SETA &IECNDGP(1)+2
+         AGO   .LPCNTRL
+.NOGEN   MNOTE 12,'TEXT GENERATION SUPRESSED'
+.MEND    MEND

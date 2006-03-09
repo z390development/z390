@@ -1,0 +1,195 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    CNTRL &DCB,&CODE,&NO,&NTMKS=,&NTMKSA=,&MKCODE=,        XL03127,
+               &MKCODEA=,&LNNUM=,&LNNUMA=                       XL03127
+         LCLA  &CTR,&BAL0                                       XL03127
+         LCLB  &B(16),&D2,&D3,&KWD(6)                           XL03127
+         LCLC  &SIGN                                            XL03127
+         AIF   ('&DCB' EQ '').E1
+         AIF   ('&CODE' EQ 'LT').CMR1A
+&NAME    IHBINNRA &DCB                      LOAD DCB ADDR IN REG 1
+         AIF   ('&CODE' EQ 'DIS').AROUND
+.CHKNO   AIF   ('&CODE' EQ '').E2
+         AIF   (K'&CODE EQ 3).CONTON
+         AIF   (K'&CODE LT 2).E4
+         AIF   ('&CODE'(1,1) NE 'S').CONTON
+         AIF   ('&NO' EQ '').E3
+         AIF   (T'&NO NE 'N').E5
+&CTR     SETA  &NO
+         AIF   ('&CODE'(2,1) EQ 'S' AND &CTR GT 2 OR '&CODE'(2,1) EQ 'P'
+               '  AND &CTR GT 3 OR '&CODE'(2,1) EQ 'K' AND &CTR GT 12 OR
+               R &CTR LT 1).E5
+         AIF   ('&NO' EQ '&NO(1)').CONTA
+         IHBINNRA ,&NO                      LOAD  NO IN REG 0
+         AGO   .CHKCODE
+.CONTA   IHBINNRA ,&NO.(0,0)
+.CHKCODE AIF   ('&CODE' EQ 'SP' OR '&CODE' EQ 'SS').OUT
+         AIF   ('&CODE' NE 'SK').E4
+         LCR   0,0                               INDICATE SK ACTION
+         AGO   .OUT
+.CONTON  AIF   ('&CODE' EQ 'BSR' OR '&CODE' EQ 'FSR').CONTX
+         AIF   ('&CODE' NE 'BSM' AND '&CODE' NE 'FSM').CZCODE
+         AIF   ('&NO' NE '').E5
+         AGO   .AROUND
+.CONTX   AIF   ('&NO' EQ '').USEONE
+         AIF   ('&NO'(1,1) EQ '(').REG
+         AIF   (T'&NO NE 'N').NOREG
+         AIF   (&NO GT 4095).NOREG
+         LA    0,&NO.(0,0)                       LOAD REG 0 WITH NO.
+         AGO   .AROUND
+.USEONE  LA    0,1(0,0)                          ONE ASSUMED FOR NO.
+         AGO   .AROUND
+.REG     LR    0,&NO(1)                          LOAD REG 0 WITH NO.
+         AGO   .AROUND
+.NOREG   B     *+6                               BRANCH AROUND NUMBER
+         DC    AL2(&NO)                          NUMBER OF BLOCKS
+         LH    0,*-2                             LOAD REG 0 WITH NO.
+.AROUND  L     15,84(1,0)                        LOAD CONTROL ROUT.ADDR
+         AIF   ('&CODE' NE 'DIS').AROUND1
+         BAL   14,4(15)                 LINK TO CONTROL RTN
+         AGO   .END
+.AROUND1  BALR  14,15
+.CZCODE  ANOP
+&B(1)    SETB  ('&CODE' EQ 'BSR')
+&B(2)    SETB  ('&CODE' EQ 'BSM')
+&B(3)    SETB  ('&CODE' EQ 'FSR')
+&B(4)    SETB  ('&CODE' EQ 'FSM')
+&B(5)    SETB  ('&CODE' EQ 'ESD')
+&B(6)    SETB  ('&CODE' EQ 'RKB')
+&B(7)    SETB  ('&CODE' EQ 'HDR')
+&B(8)    SETB  ('&CODE' EQ 'MKL')
+&B(9)    SETB  ('&CODE' EQ 'INC')
+&B(10)   SETB  ('&CODE' EQ 'EJD')
+&B(11)   SETB  ('&CODE' EQ 'SSD')
+&B(12)   SETB  ('&CODE' EQ 'ESP')                               XL03127
+&B(13)   SETB  ('&CODE' EQ 'LMK')                               XL03127
+&B(14)   SETB  ('&CODE' EQ 'DMK')                               XL03127
+&B(15)   SETB  ('&CODE' EQ 'ENG')                               XL03123
+&B(16)   SETB  ('&CODE' EQ 'DSG')                               XL03123
+         AIF   (&B(1)+&B(2)+&B(3)+&B(4)+&B(5)+&B(6)+&B(7)+&B(8)+&B(9)+&X
+               B(10)+&B(11)+&B(12)+&B(13)+&B(14)+&B(15)+&B(16) NE      ,
+               1).E4                                            XL03127
+&CTR     SETA  39*&B(1)+47*&B(2)+55*&B(3)+63*&B(4)+4*(&B(5)+&B(12)+&B(1,
+               5))+8*(&B(6)+&B(13)+&B(16))+12*(&B(7)+&B(14))+16*&B(8)+2,
+               0*&B(9)+24*&B(10)+28*&B(11)                      XL03123
+         AIF   (&B(1) OR &B(2) OR &B(3) OR &B(4)).CONTB
+         CNOP  0,4
+&BAL0    SETA  8+4*(&B(12)+&B(14))+8*&B(13)                     XL03127
+         BAL   0,*+&BAL0
+         DC    AL1(&CTR)
+         AIF   (NOT (&B(5) OR &B(7) OR &B(11) OR &B(12))).CONTC XL03127
+         AIF   ('&NO' EQ '').E3
+         AIF   (&B(7) OR T'&NO NE 'N').CONTA90                  XL03127
+         AIF   (&NO LT 1 OR &NO GT 4 OR &B(12)*&NO GT 2).E5     XL03127
+.CONTA90 DC    AL3(&NO)
+         AGO   .CONTC10                                         XL03127
+.CONTC   DC    AL3(0)
+.CONTC10 AIF   (NOT (&B(12) OR &B(13) OR &B(14))).OUT           XL03127
+&KWD(1)  SETB  ('&NTMKS' NE '')                                 XL03127
+&KWD(2)  SETB  ('&NTMKSA' NE '')                                XL03127
+&KWD(3)  SETB  ('&MKCODE' NE '')                                XL03127
+&KWD(4)  SETB  ('&MKCODEA' NE '')                               XL03127
+&KWD(5)  SETB  ('&LNNUM' NE '')                                 XL03127
+&KWD(6)  SETB  ('&LNNUMA' NE '')                                XL03127
+         AIF   (NOT (&B(12) OR &KWD(3) OR &KWD(4))).E8          XL03127
+         AIF   (&KWD(1)+&KWD(2)+&KWD(3)+&KWD(4) GT 1).E9        XL03127
+         AIF   (&KWD(1)+&KWD(2)+&KWD(3)+&KWD(4) EQ 0).CONTC27   XL03127
+&D2      SETB  ('&NTMKS&NTMKSA&MKCODE&MKCODEA'(1,1) EQ '(')     XL03127
+         AIF   (&D2).CONTC27                                    XL03127
+         AIF   (T'&NTMKS NE 'N').CONTC20                        XL03127
+         AIF   (&NTMKS LT 1 OR &NTMKS GT 33).E10                XL03127
+.CONTC20 AIF   (T'&MKCODE NE 'N').CONTC22                       XL03127
+         AIF   (&MKCODE LT 1 OR &MKCODE GT 15).E11              XL03127
+.CONTC22 ANOP
+&SIGN    SETC  '+'                                              XL03127
+         AIF   (&KWD(2) OR &KWD(4)).CONTC25                     XL03127
+&SIGN    SETC  '-'                                              XL03127
+.CONTC25 DC    A(0&SIGN&NTMKS&NTMKSA&MKCODE&MKCODEA)
+         AGO   .CONTC30                                         XL03127
+.CONTC27 DC    A(0)
+.CONTC30 AIF   (NOT &B(13)).CONTC40                             XL03127
+         AIF   (&KWD(5)+&KWD(6) GT 1).E9                        XL03127
+         AIF   (&KWD(5)+&KWD(6) EQ 0).CONTC37                   XL03127
+&D3      SETB  ('&LNNUM&LNNUMA'(1,1) EQ '(')
+         AIF   (&D3).CONTC37                                    XL03127
+&SIGN    SETC  '+'                                              XL03127
+         AIF   (&KWD(6)).CONTC35                                XL03127
+&SIGN    SETC  '-'                                              XL03127
+         AIF   (T'&LNNUM NE 'N').CONTC35                        XL03127
+         AIF   (&LNNUM LT 1 OR &LNNUM GT 33).E12                XL03127
+.CONTC35 DC    A(0&SIGN&LNNUM&LNNUMA)
+         AGO   .CONTC40                                         XL03127
+.CONTC37 DC    A(0)
+.CONTC40 AIF   (NOT &D2).CONTC50                                XL03127
+&CTR     SETA  4+4*&B(13)+2*(&KWD(1)+&KWD(3))                   XL03127
+         AIF   (&KWD(2) OR &KWD(4)).CONTC45                     XL03127
+         LNR   14,&NTMKS(1)&MKCODE(1)   INDICATE DIGIT
+         ST    14,*-&CTR
+         AGO   .CONTC50                                         XL03127
+.CONTC45 ST    &NTMKSA(1)&MKCODEA(1),*-&CTR
+.CONTC50 AIF   (NOT &D3).OUT                                    XL03127
+&CTR     SETA  4+2*(&D2*(&KWD(1)+&KWD(3)+2)+&KWD(5))            XL03127
+         AIF   (&KWD(6)).CONTC55                                XL03127
+         LNR   14,&LNNUM(1)             INDICATE DIGIT
+         ST    14,*-&CTR
+         AGO   .OUT                                             XL03127
+.CONTC55 ST    &LNNUMA(1),*-&CTR
+         AGO   .OUT
+.CONTB   DC    AL2(&CTR)                ACTION QUALIFIER
+         AGO   .END
+.CMR1A   ANOP
+         CNOP  0,4
+&NAME    BAL   1,*+12                   BRANCH AROUND LIST
+         AIF   ('&DCB'(1,1) EQ '(').MREGD
+         DC    A(&DCB)                  DCB ADDRESS
+.CMR1B   AIF   ('&NO' EQ '').E3
+         AIF   ('&NO'(1,1) EQ '(').MREGL
+         DC    A(&NO)                   LIGHT BUCKET ADDRESS
+         AIF   (&D2).CMR2A
+.CMR1F   L     14,0(1,0)                LOAD DCB ADDRESS
+         L     15,84(14,0)              LOAD CNTRL RTN ADDRESS
+.CMR1D   BALR  14,15                    BRANCH TO CNTRL RTN
+         MEXIT
+.MREGD   ANOP
+         AIF   ('&DCB' EQ '(1)').E6     REG 1 CANNOT BE USED FOR DCB
+         DC    A(0)                     DCB ADDRESS
+&D2      SETB  1
+         AGO   .CMR1B
+.MREGL   ANOP
+         AIF   ('&NO' EQ '(1)').E7      REG 1 CANNOT BE USED FOR LT
+         DC    A(0)                     LIGHT BUCKET ADDRESS
+&D3      SETB  1
+         AIF   (NOT &D2).CMR1C
+.CMR2A   ST    &DCB(1),0(1)             STORE DCB ADDRESS IN LIST
+.CMR1C   AIF   (NOT &D3).CMR1E
+         ST    &NO(1),4(1)              STORE LIGHT BUCKET ADDR IN LIST
+.CMR1E   AIF   (NOT &D2).CMR1F
+         L     15,84(&DCB(1))           LOAD CNTRL RTN ADDRESS
+         AGO   .CMR1D
+.OUT     L     15,84(1,0)                        LOAD CONTROL ROUT.ADDR
+         BALR  14,15                             LINK TO CONTROL ROUT.
+         MEXIT
+.E1      IHBERMAC 6,024                     DCB MISSING
+         AGO   .CHKNO
+.E2      IHBERMAC 3,024                     PARAM TWO MISSING
+         MEXIT
+.E3      IHBERMAC 4,024                     PARAM THREE MISSING
+         MEXIT
+.E4      IHBERMAC 37,024,&CODE
+         MEXIT
+.E5      IHBERMAC 38,,&NO
+         MEXIT
+.E6      IHBERMAC  36,,&DCB             REG 1 INVALID FOR DCB
+         MEXIT
+.E7      IHBERMAC  38,,&NO              REG 1 INVALID FOR LT
+         MEXIT                                                  XL03127
+.E8      IHBERMAC 24                    REQUIRED OPND NOT SPEC  XL03127
+         MEXIT                                                  XL03127
+.E9      IHBERMAC 171                   INCONSISTENT OPERAND    XL03127
+         MEXIT                                                  XL03127
+.E10     IHBERMAC 273,,&NTMKS           INVALID OPERAND         XL03127
+         MEXIT                                                  XL03127
+.E11     IHBERMAC 271,,&MKCODE          INVALID OPERAND         XL03127
+         MEXIT                                                  XL03127
+.E12     IHBERMAC 267,,&LNNUM           INVALID OPERAND         XL03127
+.END     MEND                                                   XL03127

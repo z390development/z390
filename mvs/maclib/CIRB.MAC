@@ -1,0 +1,114 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    CIRB  &EP=,&KEY=PP,&MODE=PP,&STAB=,&SVAREA=NO,&WKAREA=0,&RETIQ*
+               E=YES,&TYPE=IRB,&ENABLE=YES,&BRANCH=NO,                 *
+               &RETRN=NO                                         YM4054
+         LCLB  &B(9)                                             YM4054
+         LCLC  &D
+         AIF   ('&TYPE' EQ 'IRB').IRBTP IS IT AN IRB?
+         AGO   .E7
+.IRBTP   ANOP
+&B(8)    SETB  1
+         AIF   ('&ENABLE' NE 'YES').E9
+         AIF   ('&EP' EQ '').E1
+&NAME    IHBINNRA ,&EP
+&B(1)    SETB  ('&KEY' EQ 'PP')
+         AIF   (NOT &B(1) AND '&KEY' NE 'SUPR').E2
+&B(2)    SETB  ('&MODE' EQ 'PP')
+         AIF   (NOT &B(2) AND '&MODE' NE 'SUPR').E3
+&B(3)    SETB  ('&SVAREA' EQ 'YES')
+         AIF   (NOT &B(3) AND '&SVAREA' NE 'NO').E4
+&B(6)    SETB  ('&RETIQE' EQ 'NO')                                 A2C
+         AIF   (NOT &B(6) AND '&RETIQE' NE 'YES').E6
+&B(9)    SETB  ('&RETRN' EQ 'YES')                               YM4054
+         AIF   (NOT &B(9) AND '&RETRN' NE 'NO').E11              YM4054
+         AIF   ('&STAB' EQ '').CONTX
+.CONTA   AIF   (K'&STAB GT 3).CONTB
+&B(4)    SETB  ('&STAB' EQ 'RE')
+&B(5)    SETB  ('&STAB' EQ 'DYN')
+         AGO   .THRU
+.CONTB   AIF   (K'&STAB GT 7).CONTC
+&B(4)    SETB  ('&STAB' EQ '(RE)' OR '&STAB' EQ '(,RE)' OR '&STAB' EQ 'X
+               (RE,)')
+&B(5)    SETB  ('&STAB' EQ '(DYN)' OR '&STAB' EQ '(,DYN)' OR '&STAB' EQX
+                '(DYN,)')
+         AGO   .THRU
+.CONTC   AIF   (K'&STAB NE 8).THRU
+&B(4)    SETB  ('&STAB' EQ '(RE,DYN)' OR '&STAB' EQ '(DYN,RE)')
+&B(5)    SETB  (&B(4))
+.THRU    AIF   (&B(4)+&B(5) EQ 0).E5
+.CONTX   AIF   ('&WKAREA'(1,1) EQ '(').REG
+         CNOP  0,4
+         B     *+8                               BRANCH AROUND CONST.
+         DC    BL2'&B(7)&B(8)000&B(1)&B(2)&B(3).0000&B(6)&B(9)&B(5).0'
+.*                                                               YM4054
+         DC    AL1(0)                            RESERVED
+         DC    AL1(&WKAREA)                      WORK AREA SIZE
+         L     1,*-4                             LOAD REG 1 WITH CONST.
+         AGO   .END
+.REG     B     *+6                               BRANCH AROUND FLAGS
+         DC    BL2'&B(7)&B(8)000&B(1)&B(2)&B(3).0000&B(6)&B(9)&B(5).0'
+.*                                                               YM4054
+         LR    1,&WKAREA(1)    GET WORK AREA SIZE
+         ICM   1,12,*-4  INSERT MASK
+.END     ANOP
+         AIF   ('&BRANCH' EQ 'NO').SVC
+         AIF   ('&BRANCH' EQ 'YES').BRANCH
+         AGO   .E10
+.SVC     SVC   43                                ISSUE CIRB SVC
+         MEXIT
+.BRANCH  ANOP
+         L     15,CVTPTR(0,0) GET CVT ADDRESS                    YM1995
+         L     15,CVTS1EE-CVTMAP(15,0) GET ADDR OF IGC043BR      YM1995
+         BALR  14,15     CALL CIRB
+         MEXIT
+.E1      IHBERMAC 27,408
+         MEXIT
+.E2      ANOP
+&D       SETC  'KEY=&KEY'
+         AGO   .OUT
+.E3      ANOP
+&D       SETC  'MODE=&MODE'
+         AGO   .OUT
+.E4      ANOP
+&D       SETC  'SVAREA=&SVAREA'
+         AGO   .OUT
+.E5      ANOP
+&D       SETC  'STAB=&STAB'
+         AGO   .OUT
+.E6      ANOP
+&D       SETC  'RETIQE=&RETIQE'
+.OUT     IHBERMAC 54,408,&D
+         MEXIT
+.E7      ANOP
+&D       SETC  'TYPE=&TYPE'
+         AGO   .OUT
+.E9      ANOP
+&D       SETC  'ENABLE=&ENABLE'
+         AGO   .OUT
+.E10     ANOP
+&D       SETC  'BRANCH=&BRANCH'
+         AGO   .OUT
+.E11     ANOP                                                    YM4054
+&D       SETC  'RETRN=&RETRN'                                    YM4054
+         AGO   .OUT                                              YM4054
+         MEND
+**/
+*  CIRB :  /*                                                        */
+*          /*      CIRB      MVM--AOS/2                              */
+*          /*                                                        */
+*          MACRO KEYS(
+*                     EP,         /*ENTRY POINT OF EXIT ROUTINE      */
+*                     TYPE,       /* TYPE OF IRB                     */
+*                     KEY,        /*KEY OF EXIT ROUTINE              */
+*                     MODE,       /*MODE OF ASYNCHRONOUS EXIT        */
+*                     SVAREA,     /*SAVE AREA OPTION                 */
+*                     WKAREA,     /*SIZE OF WORK AREA                */
+*                     STAB,       /*DISPOSITION OF RB                */
+*                     RETIQE,     /*INDICATES SCHEDULING OF ROUTINE  */
+*                     BRANCH,     /* BRANCH ENTRY                    */
+*                     RETRN       /*IQES CAN BE RETURNED       YM4054*/
+*                           );
+*        ANS('?'||MACLABEL||'CIRBP '||MACLIST||MACKEYS||';');
+*%END;

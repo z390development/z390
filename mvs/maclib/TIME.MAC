@@ -1,0 +1,65 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+* /* MACCOMP Y-1 SC1C5/PZD81                                         */
+* /* MACSTAT Y-1 72277                                               */
+* /*
+         MACRO
+&NAME    TIME  &UNIT,&ADDR,&ZONE=,&ERRET=
+* /* MACDATE Y-1 72277                                               */
+* /*
+         LCLA  &CTR
+         LCLB  &B(4)
+         AIF   (('&UNIT' EQ 'DEC' OR '&UNIT' EQ '' OR '&UNIT' EQ 'TU' O*
+               R '&UNIT' EQ 'BIN') AND '&ADDR' NE '').ERR1        20071
+&B(1)    SETB  ('&UNIT' EQ 'DEC' OR '&UNIT' EQ '')
+&B(2)    SETB  ('&UNIT' EQ 'BIN')
+&B(3)    SETB  ('&UNIT' EQ 'MIC')                                 20071
+&B(4)    SETB  ('&UNIT' EQ 'STCK')
+         AIF   ('&ZONE' EQ '').CKRET
+         AIF   ('&UNIT' EQ 'STCK').E3
+         AIF   ('&ZONE' EQ 'LT').CKRET
+         AIF   ('&ZONE' NE 'GMT').E5
+&CTR     SETA  128                                GMT FLAG
+.CKRET   AIF   ('&ERRET' EQ '').CKTU
+&CTR     SETA  &CTR+64                            RETURN CODE FLAG
+.CKTU    AIF   ('&UNIT' EQ 'TU').TU
+         AIF   (&B(1)+&B(2)+&B(3)+&B(4) NE 1).E1
+&CTR     SETA  &B(2)+2*&B(1)+3*&B(3)+4*&B(4)+&CTR
+.LC      ANOP
+&NAME    LA    1,&CTR.(0,0)                      LOAD 1 TO SPECIFY UNIT
+         AIF   ('&UNIT' NE 'MIC' AND '&UNIT' NE 'STCK').SVC
+         AIF   ('&ADDR' EQ '').ERR2                               20071
+         AIF   ('&ADDR'(1,1) EQ '(').REG
+         LA    0,&ADDR                                            20071
+         AGO   .SVC                                               20071
+.REG     ANOP
+         AIF   ('&ADDR' EQ '(0)').SVC
+         LR    0,&ADDR(1)
+         AGO   .SVC
+.TU      ANOP
+         AIF   (&CTR NE 0).LC
+&NAME    SR    1,1                               ZERO 1 TO SPECIFY UNIT
+.SVC     SVC   11                                ISSUE TIME SVC
+         AIF   ('&ERRET' EQ '').DONE
+         LTR   15,15                   ANY RETURN CODE
+         AIF   ('&ERRET'(1,1) EQ '(').BCR
+         BNZ   &ERRET                  YES. BR TO USER EXIT
+         AGO   .DONE
+.BCR     BCR   7,&ERRET(1)
+.DONE    MEXIT
+.E3      MNOTE 4,'ZONE NOT MEANINGFUL WITH STCK--ZONE IGNORED'
+         AGO   .CKRET
+.E1      IHBERMAC 36,,&UNIT,,,0             INVALID UNIT SPECIFIED
+         MEXIT                                                    20071
+.ERR1    IHBERMAC  236                                            20071
+         MEXIT                                                    20071
+.ERR2    IHBERMAC 3                                               20071
+         MEXIT
+.E5      IHBERMAC 54,,&ZONE
+         MEXIT
+         MEND
+**/
+*TIME:   MACRO
+*        KEYS(ZONE,ERRET);
+*        ANS('?'||MACLABEL||'TIMEP '||MACLIST||MACKEYS||';');
+*%END;

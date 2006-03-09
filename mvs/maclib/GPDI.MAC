@@ -1,0 +1,6 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GPDI
+&NAME    IHBGAM2 10887
+         MEND
+

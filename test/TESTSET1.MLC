@@ -5,11 +5,13 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 12/08/05 RPI119 ADD TESTS FOR MULT VALUE SETS
+*********************************************************************
 TESTSET1 SUBENTRY
          WTO   'TESTSET1 - TEST SUBSCRIPTED VARIABLES'
-.*
-.* TEST SETA
-.*
+*
+* TEST SETA
+*
          LCLA  &A(10),&B(10)
 &A(1)    SETA  1
 &A(2)    SETA  2
@@ -19,9 +21,9 @@ TESTSET1 SUBENTRY
          MNOTE 'B(1)=&B(1) B(2)=&B(2)'
          AIF   (&A(1) NE &B(1)).ERR
          AIF   (&A(2) EQ &B(1)).ERR
-.*
-.* TEST SETB
-.*
+*
+* TEST SETB
+*
          LCLB  &C(10),&D(10)
 &C(1)    SETB  0
 &C(2)    SETB  1
@@ -31,9 +33,9 @@ TESTSET1 SUBENTRY
          MNOTE 'D(1)=&D(1) D(2)=&D(2)'
          AIF   (&C(1) NE &D(1)).ERR
          AIF   (&C(2) EQ &D(1)).ERR
-.*
-.* TEST SETC
-.*
+*
+* TEST SETC
+*
          LCLC  &T1(2),&T2(2)
 &T1(1)   SETC  'A'
 &T2(2)   SETC  '&T1(1).B'
@@ -64,6 +66,42 @@ OK2      equ   *
          b     OK3
          wto   'LC label error'
 ok3      equ   *
+*
+* TEST MULT VALUE SETS
+*
+         LCLA  &LA(3)
+         LCLB  &LB(3)
+         LCLC  &LC(3)
+         GBLA  &GA(3)
+         GBLB  &GB(3)
+         GBLC  &GC(3)
+&LA(2)   SETA  2,3
+         AIF   (&LA(2) NE 2 OR &LA(3) NE 3).ERR
+&LB(2)   SETB  2,3
+         AIF   (&LB(2) NE 2 OR &LB(3) NE 3).ERR
+&LC(2)   SETC  '2','3'
+         AIF   (&LC(2) NE '2' OR &LC(3) NE '3').ERR
+&GA(2)   SETA  2,3
+         AIF   (&GA(2) NE 2 OR &GA(3) NE 3).ERR
+&GB(2)   SETB  2,3
+         AIF   (&GB(2) NE 2 OR &GB(3) NE 3).ERR
+&GC(2)   SETC  '2','3'
+         AIF   (&GC(2) NE '2' OR &GC(3) NE '3').ERR
+* TEST UNARY +- IN PARENS
+&X       SETA  -1
+         AIF   (&X NE -1).ERR
+&X       SETA  --1
+         AIF   (&X NE 1).ERR
+&X       SETA  -1*-1
+         AIF   (&X NE 1).ERR
+&X       SETA  -1*(-1+2)
+         AIF   (&X NE -1).ERR
+&X       SETA  +1
+         AIF   (&X NE 1).ERR
+&X       SETA  +1*+1
+         AIF   (&X NE 1).ERR
+&X       SETA  +1*(+1+2)
+         AIF   (&X NE 3).ERR
          WTO   'TESTSET1 ENDED OK'
          SUBEXIT
          AGO   .EXIT

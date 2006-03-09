@@ -1,0 +1,64 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GOTO PLSEVNT1; /*
+         MACRO
+         IHAEVNT
+.*/ %PLSEVNT1:;
+*/********************************************************************/
+*/*                                                                  */
+*/*      MACMEAN            EVENTS TABLE DSECT                       */
+*/*                                                                  */
+*/*      MACCOMP           Y1               SC1CL / PZD81            */
+*/*                                                                  */
+*/*      MACSTAT           Y1               74214 / Y30HPVA          */
+*/*                                                                  */
+*/********************************************************************/
+* %GOTO PLSEVNT2; /*
+         SPACE
+EVNT     DSECT
+EVNTBEGN DS    0D                      BEGINING OF EVENT TABLE
+EVNTHEDR DS    0D                      EVENT TABLE HEADER
+EVNTLNK  DS    A                       EVENT TABLE QUEUE LINK PTR
+EVNTTCBP DS    A                       TCB POINTER
+EVNTRBP  DS    A                       WAITING RB POINTER
+EVNTFST  DS    A                       PTR TO FIRST EVENT ENTRY
+EVNTLST  DS    A                       PTR TO LAST ENTRY OF TABLE
+EVNTLSTA DS    A                       PTR TO LAST ACTIVE EVENT
+*                                      ENTRY IN TABLE
+EVNTFLG1 DS    AL1                     EVENT TABLE FLAGS
+EVNTUPR  EQU   X'80'                   UPDATE EVENT TABLE INDICATOR
+EVNTLNTH DS    AL3                     LENGTH OF EVENT TABLE
+EVNTRES2 DS    A                       RESERVED
+EVNTRES3 DS    A                       RESERVED
+EVNTDUMY DS    A                       DUMMY EVENT ENTRY
+EVNTHEND DS    0A                      END OF EVENT TABLE HEADER
+EVNTENTY DS    0A                      EVENT ENTRY
+EVNTFLGS DS    AL1                     EVENT ENTRY FLAGS
+EVNTENDL EQU   X'80'                   END OF LIST INDICATOR
+EVNTENTP DS    AL3                     PTR TO POSTED ECB
+         MEND
+**/
+* %PLSEVNT2:;
+*  DCL
+*    1 EVNT BASED(EVNTPTR),
+*      2 EVNTBEGN,                   /* BEGINING OF EVENT TABLE      */
+*        4 EVNTHEDR,                 /* EVENT TABLE HEADER           */
+*          6 EVNTLNK PTR(31),        /* EVENT TABLE QUEUE LINK PTR   */
+*        4 EVNTTCBP PTR(31),         /* TCB POINTER                  */
+*        4 EVNTRBP  PTR(31),         /* WAITING RB POINTER           */
+*        4 EVNTFST  PTR(31),         /* PTR TO FIRST EVENT ENTRY     */
+*        4 EVNTLST  PTR(31),         /* PTR TO LAST ENTRY OF TABLE   */
+*        4 EVNTLSTA PTR(31),         /* PTR TO LAST ACTIVE EVENT
+*                                       ENTRY IN TABLE               */
+*        4 EVNTFLG1 BIT(8),          /* EVENT TABLE FLAGS            */
+*          6 EVNTUPR BIT(1),         /* UPDATE EVENT TABLE INDICATOR */
+*        4 EVNTLNTH PTR(24),         /* LENGTH OF EVENT TABLE        */
+*        4 EVNTRES2 PTR(31),         /* RESERVED                     */
+*        4 EVNTRES3 PTR(31),         /* RESERVED                     */
+*        4 EVNTDUMY PTR(31),         /* DUMMY EVENT ENTRY            */
+*      2 EVNTHEND;                   /* END OF EVENT TABLE HEADER    */
+*  DCL
+*    1 EVNTENTY(*) PTR(31) BASED(EVNTEPTR),/* EVENT ENTRY            */
+*      2 EVNTFLGS PTR(8),            /* EVENT ENTRY FLAGS            */
+*        4 EVNTENDL BIT(1),          /* END OF LIST INDICATOR        */
+*        4 *        BIT(7),          /* UNUSED                       */
+*      2 EVNTENTP PTR(24);           /* PTR TO POSTED ECB            */

@@ -1,0 +1,614 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IHBERMAC &A,&B,&D,&E,&F,&H
+.*           OS/VS2 RELEASE 4
+.*              06/30/75
+         LCLA  &H1
+         LCLC  &G(14)
+         LCLC  &C
+&C       SETC  '***  IHB'
+         AIF   (&A GT 1000).OS1000
+         AIF   (&A GT 288).INVALID                             @Z40MP9B
+         AIF   (&A GT 279).ARG                                 @Z40MP9B
+         AIF   (&A GT 274).INVALID                               YM2157
+         AIF   (&A GT 266).SHARK4                                YM2157
+         AIF   (&A GT 264).SHARK3                                YM2157
+         AIF   (&A GT 261).INVALID                               YM2157
+         AIF   (&A GT 259).SHARK1                                YM2157
+         AIF   (&A GT 254).INVALID                               YM2157
+         AIF   (&A GT 249).SHARK2                                YM2157
+         AIF   (&A GT 232).NEXT3                                  20202
+         AIF   (&A GE 202).OCR                                    20202
+         AIF   (&A GT 197).NEXT2                                  19033
+.*0824                                                             LC0A
+         AIF   (&A GT 179).GRAP
+         AIF   (&A GT 99).NEXT
+         AIF   (&A EQ 1).E24
+         AIF   (&A LE 13).E13
+         AIF   (&A EQ 24).E24
+         AIF   (&A LE 25).E25
+         AIF   (&A EQ 26).E26
+         AIF   (&A EQ 27).E27
+         AIF   (&A EQ 31).E31
+         AIF   (&A LE 34).E34
+         AIF   (&A EQ 42).E42
+         AIF   (&A LE 46).E46
+         AIF   (&A EQ 47).E47
+         AIF   (&A EQ 52).E52
+         AIF   (&A LE 57).E57
+         AIF   (&A EQ 60).E60
+         AIF   (&A EQ 61).E61
+         AIF   (&A LE 67).E67
+         AIF   (&A EQ 69).E69
+         AIF   (&A EQ 71).E71
+         AIF   (&A EQ 72).E72
+         AIF   (&A EQ 73).E73
+         AIF   (&A EQ 74).E74
+         AIF   (&A EQ 75).E75
+         AIF   (&A EQ 78).E78
+         AIF   (&A EQ 84).E84
+         AIF   (&A EQ 87).E87
+         AIF   (&A EQ 88).E88
+         AIF   (&A EQ 89).E89
+         AIF   (&A EQ 90).E90
+         AIF   (&A EQ 91).E91
+         AIF   (&A EQ 92).E92
+         AIF   (&A EQ 93).E93
+         AIF   (&A EQ 94).E94
+         AIF   (&A EQ 95).E95
+.NEXT    AIF   (&A LE 147).DCBA
+         AIF   (&A LE 157).DCBB
+         AIF   (&A EQ 158).DCBC
+         AIF   (&A EQ 159).DCBD
+         AIF   (&A EQ 160).DCBE
+         AIF   (&A EQ 161).DCBF
+         AIF   (&A EQ 162).DCBG
+         AIF   (&A EQ 163).DCBH
+         AIF   (&A EQ 164).DCBI
+         AIF   (&A EQ 165).DCBJ
+         AIF   (&A EQ 166).DCBK
+         AIF   (&A EQ 167).DCBQ
+         AIF   (&A EQ 168).DCBR
+         AIF   (&A EQ 169).DCBS
+         AIF   (&A EQ 170).DCBL
+         AIF   (&A EQ 171).DCBM
+         AIF   (&A EQ 172).DCBN
+         AIF   (&A EQ 173).DCBO
+         AIF   (&A EQ 174).DCBP
+         AIF   (&A EQ 175).DCBAE
+         AIF   (&A EQ 176).DCBAA
+         AIF   (&A EQ 177).DCBAB
+         AIF   (&A EQ 178).DCBAC
+         AIF   (&A EQ 179).DCBAD
+.GRAP    AIF   (&A EQ 180).E180
+         AIF   (&A EQ 181).E181
+         AIF   (&A EQ 182).E182
+         AIF   (&A EQ 183).E183
+         AIF   (&A EQ 184).E184
+         AIF   (&A EQ 185).E185
+         AIF   (&A EQ 186).E186
+         AIF   (&A EQ 187).E187
+         AIF   (&A EQ 188).E188
+         AIF   (&A EQ 189).E189
+         AIF   (&A EQ 190).SETPRA                                  UCSA
+         AIF   (&A EQ 191).SETPRB                                  UCSA
+         AIF   (&A EQ 192).SETPRC                                  UCSA
+         AIF   (&A EQ 193).SETPRD                                  UCSA
+         AIF   (&A EQ 194).SETPRE                                  UCSA
+         AIF   (&A EQ 195).LCSERR                                  LC0A
+         AIF   (&A EQ 196).E196                                    SD0A
+         AIF   (&A EQ 197).E197
+.NEXT2   ANOP                                                     19033
+         AIF   (&A EQ 198).E198                                   19033
+         AIF   (&A EQ 199).E199                                   19033
+         AIF   (&A EQ 200).E200                                   19033
+         AIF   (&A EQ 201).E201                                   19033
+.OCR     AIF   (&A EQ 202).OCR120                                 19017
+         AIF   (&A EQ 203).OCR121                                 19017
+         AIF   (&A EQ 204).OCR122                                 19017
+         AIF   (&A EQ 205).OCR123                                 19017
+         AIF   (&A EQ 206).OCR124                                 19017
+         AIF   (&A EQ 207).OCR125                                 19017
+         AIF   (&A EQ 208).OCR126                                 19017
+         AIF   (&A EQ 209).OCR127                                 19017
+         AIF   (&A EQ 210).OCR128                                 19017
+         AIF   (&A EQ 211).OCR129                                 19017
+         AIF   (&A EQ 212).OCR130                                 19017
+         AIF   (&A EQ 213).OCR131                                 19017
+         AIF   (&A EQ 214).OCR132                                 19017
+         AIF   (&A EQ 215).OCR133                                 19017
+         AIF   (&A EQ 216).OCR134                                 19017
+         AIF   (&A EQ 217).OCR135                                 19017
+         AIF   (&A EQ 218).OCR136                                 19017
+         AIF   (&A EQ 219).OCR137                                 19017
+         AIF   (&A EQ 220).OCR138                                 19017
+         AIF   (&A EQ 221).OCR139                                 19017
+         AIF   (&A EQ 222).OCR140                                 19017
+         AIF   (&A EQ 223).OCR141                                 19017
+         AIF   (&A EQ 224).OCR142                                 19017
+         AIF   (&A EQ 225).OCR143                                 19017
+         AIF   (&A EQ 226).OCR144                                 19017
+         AIF   (&A EQ 227).OCR145                                 19017
+         AIF   (&A EQ 228).OCR146                                 19017
+         AIF   (&A EQ 229).OCR147                                X02959
+.NEXT3   ANOP                                                     20202
+         AIF   (&A EQ 236).TOD236                                 20071
+         AIF   (&A EQ 237).SETPRF                                 20202
+         AIF   (&A EQ 238).A027                                  A28592
+         AIF   (&A EQ 240).REDPIKE
+         AIF   (&A EQ 241).PIKERED
+         AIF   (&A EQ 242).M1428A
+         AIF   (&A EQ 243).M1428B
+         AIF   (&A EQ 244).M1428C
+         AIF   (&A EQ 245).M1428D
+         AIF   (&A EQ 246).M1428E
+         AIF   (&A EQ 247).INNER
+         AIF   (&A EQ 248).HDCY1
+.ARG     ANOP                                                  @Z40MP9B
+         AIF   (&A EQ 280).ARG282                              @Z40MP9B
+         AIF   (&A EQ 281).ARG283                              @Z40MP9B
+         AIF   (&A EQ 282).ARG284                              @Z40MP9B
+         AIF   (&A EQ 283).ARG285                              @Z40MP9B
+         AIF   (&A EQ 284).ARG286                              @Z40MP9B
+         AIF   (&A EQ 285).ARG287                              @Z40MP9B
+         AIF   (&A EQ 286).ARG288                              @Z40MP9B
+         AIF   (&A EQ 287).ARG289                              @Z40MP9B
+         AIF   (&A EQ 288).ARG290                              @Z40MP9B
+         AGO   .INVALID
+.HDCY1   MNOTE 16,'&C.375 MCSFLAG=HRDCPY INVALID FOR MLWTO - GENERATIONX
+                TERMINATED'                                      X02037
+         MEXIT
+.INNER   MNOTE 12,'&C.084 IPLTXID OPERAND EXCEEDS 7 CHARACTERS.'
+         MEXIT
+.DCBA    MNOTE 4,'&C.050  &B OPERAND INCONSISTENT-IGNORED'
+         MEXIT
+.DCBB    MNOTE 8,'&C.051  &D INVALID CODE FOR &B-IGNORED'
+         MEXIT
+.DCBC    MNOTE 12,'&C.052  DSORG OMITTED'
+         MEXIT
+.DCBD    MNOTE 12,'&C.053  &D INVALID CODE FOR DSORG'
+         MEXIT
+.DCBE    MNOTE 8,'&C.054  &D INVALID DSORG QUALIFIER-IGNORED'
+         MEXIT
+.DCBF    MNOTE 8,'&C.055  MACRF NOT SPECIFIED-EXCP ASSUMED'
+         MEXIT
+.DCBG    MNOTE 8,'&C.056  &D OF MACRF INVALID WITH DSORG=&E-IGNORED'
+         MEXIT
+.DCBH    MNOTE 8,'&C.057  &D INVALID QUALIFIER FOR &E OF MACRF IF DSORGX
+               =&F-IGNORED'
+         MEXIT
+.DCBI    MNOTE 8,'&C.058  &D OF RECFM INVALID WITH DSORG=&E-IGNORED'
+         MEXIT
+.DCBJ    MNOTE 8,'&C.059  &D OF OPTCD INVALID WITH DSORG=&E-IGNORED'
+         MEXIT
+.DCBK    MNOTE 8,'&C.060  &D INVALID CODE FOR DEVD WITH DSORG=&E-IGNOREX
+               D'
+         MEXIT
+.DCBL    MNOTE 8,'&C.065  MACRF=&D INVALID-EXCP ASSUMED'
+         MEXIT
+.DCBM    MNOTE 12,'&C.066  INCONSISTENT OPERAND'
+         MEXIT
+.DCBN    MNOTE 4,'&C.067  DCBD MACRO PREVIOUSLY USED'
+         MEXIT
+.DCBO    MNOTE *,'&C.068  NO VALID DSORG SPECIFIED-EXCP ASSUMED'
+         MEXIT
+.DCBP    MNOTE *,'&C.069  DEVD NOT SPECIFIED-ALL ASSUMED'
+         MEXIT
+.DCBQ    MNOTE *,'&C.061  DDNAME NOT SPECIFIED'
+         MEXIT
+.DCBR    MNOTE 4,'&C.062  DDNAME LONG-TRUNCATED TO 8 CHAR'
+         MEXIT
+.DCBS    MNOTE *,'&C.250  DDNAME SHORT-PADDED TO 8 CHAR'         X02959
+         MEXIT
+.DCBAA   MNOTE *,'&C.252  &D TOO LONG FOR &B-TRUNCATED TO 2 CHAR'
+         MEXIT
+.DCBAB   MNOTE *,'&C.253  &D TOO SHORT FOR &B-PADDED TO 2 CHAR'  X02959
+         MEXIT
+.DCBAC   MNOTE *,'&C.254  &B NOT SPECIFIED-PRESET TO &D'         X02959
+         MEXIT
+.DCBAD   MNOTE 4,'&C.073  AERR OPERAND REQUIRES UMSK OPERAND'    X02959
+         MEXIT                                                   X02959
+.DCBAE   MNOTE 8,'&C.064  UMSK OPERAND REQUIRES AERR OPERAND'    X02959
+         MEXIT                                                   X02959
+.E13     ANOP
+&G(1)    SETC 'FIRST'
+&G(2)    SETC 'SECOND'
+&G(3)    SETC 'THIRD'
+&G(4)    SETC 'FOURTH'
+&G(5)    SETC 'DCB'
+&G(6)    SETC 'DECB'
+&G(7)    SETC 'KEY'
+&G(8)    SETC 'SEEKADDR'
+&G(9)    SETC  'LOW.LIM.'
+&G(10)   SETC  'ECB'
+&G(11)   SETC  'BLKREF'
+&G(12)   SETC  'AREA'
+         MNOTE 12,'&C.001  &G(&A-1) OPERAND REQ''D-NOT SPECIFIED'
+         MEXIT
+.E25     ANOP
+&G(1)    SETC  'LENGTH'
+&G(2)    SETC  'VALUE'
+&G(3)    SETC  'QCB'
+&G(4)    SETC  'MODE'
+&G(5)    SETC  'REGISTER'
+&G(6)    SETC  'MESSAGE'
+&G(7)    SETC  'ABEXR'
+&G(8)    SETC  'LABEL'
+&G(9)    SETC  'TBLOC'
+&G(10)   SETC  'FIELDS'
+&G(12)   SETC  'TYPE'
+         MNOTE 12,'&C.001  &G(&A-13) OPERAND REQ''D-NOT SPECIFIED'
+         MEXIT
+.E24     MNOTE 12,'&C.004  REQUIRED OPERAND(S) NOT SPECIFIED'
+         MEXIT
+.E26     MNOTE 12,'&C.001  ENTRY SYMBOL OPERAND REQ''D-NOT SPECIFIED'
+         MEXIT
+.E27     MNOTE 12,'&C.001  ENTRY PT. ADR. OPERAND REQ''D-NOT SPECIFIED'
+         MEXIT
+.E31     MNOTE 12,'&C.001  EP,EPLOC,OR DE OPERAND REQ''D-NOT SPECIFIED'
+         MEXIT
+.E34     ANOP
+&G(1)    SETC  'CODE'
+&G(2)    SETC  'COUNT'
+&G(3)    SETC  'QEL'
+&G(5)    SETC  'TERMINAL'
+&G(6)    SETC  'LINE'
+&G(7)    SETC  'LIST'
+&G(12)   SETC  'LIST'
+&G(13)   SETC  'NUMBER'
+         MNOTE 12,'&C.001  &G(&A-27) &G(&A-20) OPERAND REQ''D-NOT SPECIX
+               FIED'
+         MEXIT
+.E42     MNOTE 12,'&C.002  INVALID EP OR EPLOC OPERAND SPECIFIED-&D'
+         MEXIT
+.E46     ANOP
+&G(1)    SETC  'MF'
+&G(2)    SETC  'FIRST'
+&G(3)    SETC  'SECOND'
+&G(4)    SETC  'THIRD'
+&G(5)    SETC  'FOURTH'
+&G(6)    SETC  'IOB'
+&G(7)    SETC  'SF'
+&G(9)    SETC  'FUNCTION'
+&G(10)   SETC  'LENGTH'
+&G(11)   SETC  'MODE'
+&G(12)   SETC  'TYPE'                                             19015
+&G(13)   SETC  'SP'
+         AIF   (T'&H EQ 'O').E4601
+&H1      SETA  &H
+.E4601   ANOP
+         MNOTE 12,'&C.002  INVALID &G(&A+&H1-34) OPERAND SPECIFIED-&D'
+         MEXIT
+.E47     MNOTE 12,'&C.002  INVALID AREA OR LENGTH OPERAND SPECIFIED-&D'
+         MEXIT
+.E52     MNOTE 12,'&C.001  OPTION THREE OPERAND REQ''D-NOT SPECIFIED'
+         MEXIT
+.E57     ANOP
+&G(1)    SETC  'TYPE'
+&G(2)    SETC  'OPTION'
+&G(3)    SETC  'OPTION 1'
+&G(4)    SETC  'OPTION 2'
+&G(6)    SETC  'OPTION 3'
+&G(7)    SETC  'KEYWORD'
+         MNOTE 12,'&C.002  INVALID &G(&A-47) OPERAND SPECIFIED-&D'
+         MEXIT
+.E60     MNOTE 12,'&C.023 THIRD OPERAND INVALID WITH SCRATCH-SPECIFIED C
+               AS - &D'
+         MEXIT
+.E61     MNOTE 12,'&C.005  INVALID REGISTER NOTATION IN RC OPERAND-&D'
+         MEXIT
+.E67     ANOP
+&G(1)    SETC  'OP CODE'
+&G(2)    SETC  'TYPE'
+&G(3)    SETC  'TYPE'
+&G(4)    SETC  'TYPE'
+&G(5)    SETC  'TYPE'
+&G(6)    SETC  'FIELDS'
+         MNOTE 12,'&C.002  INVALID &G(&A-61) OPERAND SPECIFIED-&D'
+         MEXIT
+.E69     MNOTE 12,'&C.006  INVALID REGISTER NOTATION WITH MF=L FORM.'
+         MEXIT
+.E71     MNOTE 12,'&C.007  PARAM= OPERAND INVALID WITH SF=L FORM.'
+         MEXIT
+.E72     MNOTE 12,'&C.008  INVALID REGISTER NOTATION WITH SF=L FORM.'
+         MEXIT
+.E73     MNOTE 12,'&C.009  ENTRY SYMBOL NOT ALLOWED WITH MF=L FORM.'
+         MEXIT
+.E74     MNOTE 12,'&C.010  ID= OPERAND INVALID WITH MF=L FORM.'
+         MEXIT
+.E75     MNOTE 12,'&C.011  INVALID OPERAND SPECIFIED WITH SF=L FORM.'
+         MEXIT
+.E78     MNOTE 4,'&C.024  CSECT NAME OMITTED. MACRO NAME FIELD BLANK'
+         MEXIT
+.E84     MNOTE 12,'&C.013  MF=L NOT ALLOWED'
+         MEXIT
+.E87     MNOTE 12,'&C.014  DECB NOT SPECIFIED AS SYMBOL'
+         MEXIT
+.E88     MNOTE 12,'&C.015  MORE THAN ONE OF EP,EPLOC OR DE PRESENT'
+         MEXIT
+.E89     MNOTE 12,'&C.016  LV OPERAND NOT ALLOWED WITH SPECIFIED MODE'
+         MEXIT
+.E90     MNOTE 12,'&C.017  LA OPERAND NOT ALLOWED WITH SPECIFIED MODE'
+         MEXIT
+.E91     MNOTE 12,'&C.018  BOTH LV AND LA OPERANDS SPECIFIED'
+         MEXIT
+.E92     MNOTE 12,'&C.019  SP NOT ALLOWED WITH LV SPECIAL REG. NOTATIONC
+               '
+         MEXIT
+.E93     MNOTE 12,'&C.020  A= OPERAND NOT ALLOWED IN R-TYPE MACRO'
+         MEXIT
+.E94     MNOTE 12,'&C.021  MORE THAN MAXIMUM VALUE IN FIELDS OPERAND'
+         MEXIT
+.E95     MNOTE 12,'&C.012  PARAM OR VL ALLOWED ONLY WITH MF=(E,ADDR)'
+         MEXIT
+.E180    MNOTE 4,'&C.256  &B OPERAND INVALID OR NOT SPECIFIED-SET TO &D'
+               '
+         MEXIT
+.E181    MNOTE 4,'&C.257  BPX COUNTER INDICATES WRAP AROUND TO TOP OF CR
+               RT'
+         MEXIT
+.E182    MNOTE 4,'&C.258  BLC GREATER THAN OR EQUAL TO BLIM'
+         MEXIT
+.E183    MNOTE 4,'&C.077  &B INVALID-SET TO &D'
+         MEXIT
+.E184    MNOTE *,'&C.259  CURRENT BUFFER &B = &D'                X02959
+         MEXIT
+.E185    MNOTE *,'&C.260  CURRENT BEAM POSITION COUNTER IS X=&B, Y=&D'
+         MEXIT
+.E186    MNOTE 4,'&C.261  &B COUNTER EXCEEDS CRT LIMITS'
+         MEXIT
+.E187    MNOTE 4,'&C.262  LOAD VARIABLE SPACE ORDER MAY HAVE NOT BEEN SP
+               PECIFIED PRIOR TO ENTERING STROKE MODE'
+         MEXIT
+.E188    MNOTE 8,'&C.263  INVALID &B ADDRX-&D'
+         MEXIT
+.E189    MNOTE 7,'&C.083  STORAGE/LIST FORMAT INCORRECT'
+         MEXIT                                                     UCSA
+.SETPRA MNOTE 12,'&C.092 DCB IS MISSING OR INVALID'                UCSA
+         MEXIT                                                     UCSA
+.SETPRB MNOTE 12,'&C.093  UCS SUBLIST IS INVALID'                  UCSA
+         MEXIT                                                     UCSA
+.SETPRC MNOTE 12,'&C.094  MACRO-FORM IS INVALID'                   UCSA
+         MEXIT                                                     UCSA
+.SETPRD MNOTE 12,'&C.095  OPTCD IS INVALID'                        UCSA
+         MEXIT                                                     UCSA
+.SETPRE MNOTE 12,'&C.096 INSUFFICIENT PARAMETERS SPECIFIED'    @Z40MP9B
+         MEXIT                                                    20202
+.SETPRF MNOTE 12,'&C.026  FCB SUBLIST IS INVALID'                 20202
+         MEXIT                                                     LC0A
+.LCSERR  MNOTE 12,'&C.025  INVALID HIARCHY OPERAND SPECIFIED'      LC0A
+         MEXIT                                                     SD0A
+.E196    MNOTE 12,'&C.264  MORE THAN 5 POSITIONAL OPERANDS'        SD0A
+         MEXIT
+.E197    MNOTE 12,'&C.097  TCB OPERAND INVALID WITH MF=L FORM.'
+         MEXIT                                                    19033
+.E198    MNOTE *,'&C.098  BUFNO LESS THAN 12--12 ASSUMED'         19033
+         MEXIT                                                    19033
+.E199    MNOTE *,'&C.099  BUFL AND BLKSIZE UNEQUAL-BUFL ASSUMED'  19033
+         MEXIT                                                    19033
+.E200    MNOTE *,'&C.102 LREC PLUS 6 IS GREATER THAN BUFL-BUFL ASSUMED'
+         MEXIT                                                    19033
+.E201    MNOTE 4,'&C.101  SSRTN TOO LONG--TRUNCATED TO 8 CHAR'    19033
+         MEXIT                                                    19017
+.OCR120  MNOTE 16,'&C.120  DCB ADDRESS MISSING OR INVALID. GENERATION TC
+               ERMINATED'                                         19017
+         MEXIT                                                    19017
+.OCR121  MNOTE 16,'&C.121  REGISTER SPECIFICATION INVALID. GENERATION TC
+               ERMINATED.'                                        19017
+         MEXIT                                                    19017
+.OCR122  MNOTE 16,'&C.122  REGISTER SPECIFICATIONS NOT PAIRED. GENERATIC
+               ON TERMINATED'                                     19017
+         MEXIT                                                    19017
+.OCR123  MNOTE 4,'&C.123  NUMBER OF RETRIES EXCEEDS 9, 9 ASSUMED.'     C
+                                                                  19017
+         MEXIT                                                    19017
+.OCR124  MNOTE 4,'&C.124  NUMBER OF RETRIES INVALID, 1 ASSUMED.'  19017
+         MEXIT                                                    19017
+.OCR125  MNOTE 8,'&C.125  UNRECOGNIZABLE PARAMETER. PARAMETER IGNORED.'
+         MEXIT                                                    19017
+.OCR126  MNOTE 4,'&C.126  PARAMETER PREVIOUSLY DEFINED. FIRST DEFINITIOC
+               N ASSUMED.'                                        19017
+         MEXIT                                                    19017
+.OCR127  MNOTE 16,'&C.127  LABEL PREFIX MISSING OR INVALID. GENERATION C
+               TERMINATED.'                                       19017
+         MEXIT                                                    19017
+.OCR128  MNOTE 16,'&C.128  UNRECOGNIZABLE PARAMETER SPECIFIED. GENERATIC
+               ON TERMINATED.'                                    19017
+         MEXIT                                                    19017
+.OCR129  MNOTE 16,'&C.129  TIMES NOT PRECEDED BY FIELD LENGTH. GENERATIC
+               ON TERMINATED.'                                    19017
+         MEXIT                                                    19017
+.OCR130  MNOTE 16,'&C.130  TIMES NOT FOLLOWED BY NUMBER. GENERATION TERC
+               MINATED.'                                          19017
+         MEXIT                                                    19017
+.OCR131  MNOTE 4,'&C.131  OPTIONAL PARAMETER SPECIFIED AFTER FIELD DEFIC
+               NITION. PARAMETER IGNORED.'                        19017
+         MEXIT                                                    19017
+.OCR132  MNOTE 16,'&C.132  LABEL FOR LOAD FORMAT DATA MISSING OR INVALIC
+               D. GENERATION TERMINATED.'                         19017
+         MEXIT                                                    19017
+.OCR133  MNOTE 16,'&C.133  LABEL PREFIX FOR DEFAREA MISSING OR INVALID.C
+                GENERATION TERMINATED.'                           19017
+         MEXIT                                                    19017
+.OCR134  MNOTE 4,'&C.134  REFMARK OR UNFORMAT NOT SPECIFIED PRIOR TO DEC
+               FINITION OF FIRST FIELD. FORMATTED MODE ASSUMED.'  19017
+         MEXIT                                                    19017
+.OCR135  MNOTE 16,'&C.135  REFMARK SPECIFIED WHEN PROCESSING IN UNFORMAC
+               TTED MODE. GENERATION TERMINATED.'                 19017
+         MEXIT                                                    19017
+.OCR136  MNOTE 16,'&C.136  THRU NOT PRECEDED BY FIELD NUMBER. GENERATIOC
+               N TERMINATED.'                                     19017
+         MEXIT                                                    19017
+.OCR137  MNOTE 16,'&C.137  THRU NOT FOLLOWED BY FIELD NUMBER. GENERATIOC
+               N TERMINATED.'                                     19017
+         MEXIT                                                    19017
+.OCR138  MNOTE 16,'&C.138  ENDING VALUE IN THRU LESS THAN STARTING VALUC
+               E. GENERATION TERMINATED.'                         19017
+         MEXIT                                                    19017
+.OCR139  MNOTE 8,'&C.139  LAST CCW GENERATED USES COMMAND CHAINING. POSC
+               SIBLE ERROR.'
+         MEXIT                                                    19017
+.OCR140  MNOTE 16,'&C.140  SYMBOL WITH LABEL PARAMETER MISSING OR INVALC
+               ID. GENERATION TERMINATED.'                        19017
+         MEXIT                                                    19017
+.OCR141  MNOTE 16,'&C.141  FIELD NUMBER FOR RBT/RFT MISSING OR INVALID.C
+                GENERATION TERMINATED.'                           19017
+         MEXIT                                                    19017
+.OCR142  MNOTE 16,'&C.142  SYMBOL FOR RBT/RFT MISSING OR INVALID. GENERC
+               ATION TERMINATED.'                                 19017
+         MEXIT                                                    19017
+.OCR143  MNOTE 16,'&C.143  SYMBOL(S) FOR COMPARE MISSING OR INVALID. GEC
+               NERATION TERMINATED.'                              19017
+         MEXIT                                                    19017
+.OCR144  MNOTE 16,'&C.144  SYMBOL FOR BRANCH MISSING OR INVALID. GENERAC
+               TION TERMINATED.'                                  19017
+         MEXIT                                                    19017
+.OCR145  MNOTE 16,'&C.145  STACKER NUMBER FOR ESD MISSING OR INVALID. GC
+               ENERATION TERMINATED.'                             19017
+         MEXIT                                                    19017
+.OCR146  MNOTE 16,'&C.146  SYMBOL FOLLOWING REFMARK MISSING OR INVALID.C
+                GENERATION TERMINATED.'                           19017
+         MEXIT                                                   A28592
+.OCR147  MNOTE 4,'&C.147  ID= OPERAND EXCEEDS MAXIMUM ALLOWED,ID=1 ASSUX
+               MED'                                              X02959
+         MEXIT                                                   X02959
+.A027    MNOTE 12,'&C.027 EXCESSIVE POSITIONAL PARAMETERS SPECIFIED'
+.*                                                               A28592
+         MEXIT                                                    20071
+.TOD236  MNOTE 4,'&C.236 SECOND OPERAND NOT ALLOWED -- IGNORED'   20071
+         MEXIT
+.REDPIKE MNOTE 12,'&C.150 INVALID COMBINATION OF CHARACTERS IN &B OPERA*
+               ND - &D.'
+         MEXIT
+.PIKERED MNOTE 12,'&C.151 INVALID CHARACTER IN &B OPERAND - &D.'
+         MEXIT
+.M1428A  MNOTE *,'&C.147 GENERATION TERMINATED BY E OR DE LINE TYPE.'
+         MEXIT
+.M1428B  MNOTE 4,'&C.148 INVALID LINE TYPE, E OR DE ASSUMED.'
+         MEXIT
+.M1428C  MNOTE 12,'&C.149 INVALID C OR L LINETYPE, DE ASSUMED--GENERATI*
+               ON TERMINATED.'
+         MEXIT
+.M1428D  MNOTE 12,'&C.152 NUMBER OF LINES REQUESTED IS 0 OR GREATER THA*
+               N 10 -- GENERATION TERMINATED.'
+         MEXIT
+.M1428E  MNOTE 12,'&C.153 MLWTO/WTOR MUTUALLY EXCLUSIVE--GENERATION TER8
+               MINATED.'
+         MEXIT
+.OS1000  AIF   (&A NE 1001).AOS1002
+          MNOTE 12,'&C.002 INVALID &B OPERAND SPECIFIED-&D.'
+          MEXIT
+.AOS1002  AIF     (&A NE 1002).AOS1003
+          MNOTE   12,'&C.237 &B SPECIFIED WITH OTHER OPERAND(S).'
+          MEXIT
+.AOS1003  AIF     (&A NE 1003).AOS1004
+          MNOTE   12,'&C.238 &B AND/OR &D PARAMETER(S) INCORRECT.'
+          MEXIT
+.AOS1004  AIF     (&A NE 1004).AOS1005
+          MNOTE   12,'&C.239 MORE THAN ONE &B PARM LIST ADDRESS.'
+          MEXIT
+.AOS1005  AIF     (&A NE 1005).AOS1006
+          MNOTE   12,'&C.240 &B.=&D INVALID WITH LSQA.'
+          MEXIT
+.AOS1006  AIF     (&A NE 1006).AOS1007
+          MNOTE   12,'&C.001 &B OPERAND REQUIRED, NOT SPECIFIED.'
+          MEXIT
+.AOS1007  AIF   (&A NE 1007).AOS1008
+          MNOTE   12,'&C.243 INVALID OPERAND FOR &B OPTION.'
+          MEXIT
+.AOS1008  AIF   (&A NE 1008).AOS1009
+&G(1)     SETC  'POSIT-NL'
+&G(2)     SETC  'KEYWORD'
+          MNOTE   12,'&C.244 INVALID &G(&D) &B OPERAND.'
+          MEXIT
+.AOS1009  AIF  (&A NE 1009).AOS1010
+         MNOTE   12,'&C.245 COMPLETION CODE CANNOT APPEAR IN LIST FORM'
+          MEXIT
+.AOS1010  AIF  (&A NE 1010).AOS1011
+          MNOTE  12,'&C.246 &B OPERAND SPECIFIED WITHOUT &D OPERAND.'
+          MEXIT
+.AOS1011  AIF   (&A NE 1011).AOS1012
+          MNOTE  12,'&C.241 &B OR &D INVALID WITH ECB.'
+          MEXIT
+.AOS1012  AIF  (&A NE 1012).AOS1013
+         MNOTE 12,'&C.247 INCORRECT NUMBER OF &B VALUES.'
+          MEXIT
+.AOS1013  AIF   (&A NE 1013).AOS1014
+        MNOTE  12,'&C.248 &B SPECIFICATIONS NOT PAIRED.'
+          MEXIT
+.AOS1014  AIF   (&A NE 1014).AOS1015
+         MNOTE 12,'&C.249 INVALID &B PARAMETER SPECIFIED.'
+          MEXIT
+.AOS1015  AIF   (&A NE 1015).AOS1016
+         MNOTE 4,'&C.242 &B INVALID FOR &D, &E ASSUMED.'
+         MEXIT
+.AOS1016  AIF   (&A NE 1016).AOS1017
+         MNOTE 4,'&C.276 &B INCOMPATIBLE WITH &D--IGNORED.'
+          MEXIT
+.AOS1017  AIF   (&A NE 1017).AOS1018
+         MNOTE 12,'&C.001 &B OPERAND REQ''D-NOT SPECIFIED.'
+          MEXIT
+.AOS1018  AIF   (&A NE 1018).AOS1020
+      MNOTE  4,'&C.278 ''AREAID'' PARAMETER NOT ALPHABETIC CHARACTER.'
+          MEXIT
+.AOS1020  AIF   (&A NE 1020).AOS1021
+          MNOTE  12,'&C.280 &B INVALID WITH &D.'
+          MEXIT
+.AOS1021  AIF   (&A NE 1021).INVALID
+          MNOTE  12,'&C.281 &B NOT SPECIFIED WITH MF=L FORM.'
+          MEXIT
+.SHARK1  ANOP                                                    YM2157
+&G(1)    SETC  'DEVT'                                            YM2157
+&G(2)    SETC  'FRID'                                            YM2157
+         MNOTE 12,'&C.001  &G(&A-259) OPERAND REQ''D-NOT SPECIFIED'
+.*                                                               YM2157
+         MEXIT                                                   YM2157
+.SHARK2  ANOP                                                    YM2157
+&G(1)    SETC  'LINENO'                                          YM2157
+&G(2)    SETC  'LINEFMAT'                                        YM2157
+&G(3)    SETC  'DCB'                                             YM2157
+&G(4)    SETC  'DEVT'                                            YM2157
+&G(5)    SETC  'FRID'                                            YM2157
+         MNOTE 12,'&C.002  INVALID &G(&A-249) OPERAND SPECIFIED-&D'
+.*                                                               YM2157
+         MEXIT                                                   YM2157
+.SHARK3  ANOP                                                    YM2157
+&G(1)    SETC  'MKCODE'                                          YM2157
+&G(2)    SETC  'MKCODEA'                                         YM2157
+         MNOTE 12,'&C.001  &G(&A-264) OPERAND REQ''D-NOT SPECIFIED'
+.*                                                               YM2157
+         MEXIT                                                   YM2157
+.SHARK4  ANOP                                                    YM2157
+&G(1)    SETC  'LNNUM'                                           YM2157
+&G(2)    SETC  'LNNUMA'                                          YM2157
+&G(3)    SETC  'LFMATNO'                                         YM2157
+&G(4)    SETC  'LFMATNOA'                                        YM2157
+&G(5)    SETC  'MKCODE'                                          YM2157
+&G(6)    SETC  'MKCODEA'                                         YM2157
+&G(7)    SETC  'NTMKS'                                           YM2157
+&G(8)    SETC  'NTMKSA'                                          YM2157
+         MNOTE 12,'&C.002  INVALID &G(&A-266) OPERAND SPECIFIED-&D'
+.*                                                               YM2157
+         MEXIT                                                   YM2157
+.ARG282  MNOTE 12,'&C.282 COPIES IS INVALID.'                  @Z40MP9B
+         MEXIT                                                 @Z40MP9B
+.ARG283  MNOTE 12,'&C.283 BURST IS INVALID.'                   @Z40MP9B
+         MEXIT                                                 @Z40MP9B
+.ARG284  MNOTE 12,'&C.284 FLASH SUBLIST IS INVALID.'           @Z40MP9B
+         MEXIT                                                 @Z40MP9B
+.ARG285  MNOTE 12,'&C.285 MODIFY SUBLIST IS INVALID.'          @Z40MP9B
+         MEXIT                                                 @Z40MP9B
+.ARG286  MNOTE 12,'&C.286 CHARS SUBLIST IS INVALID.'           @Z40MP9B
+         MEXIT                                                 @Z40MP9B
+.ARG287  MNOTE 12,'&C.287 COPYNR IS INVALID.'                  @Z40MP9B
+         MEXIT                                                 @Z40MP9B
+.ARG288  MNOTE 12,'&C.288 INIT IS INVALID.'                    @Z40MP9B
+         MEXIT                                                 @Z40MP9B
+.ARG289  MNOTE 12,'&C.293 REXMIT IS INVALID.'                  @Z40MP9B
+         MEXIT                                                 @Z40MP9B
+.ARG290  MNOTE *,'&C.294 ONLY COPIES, COPYNR AND FLASH KEYWORDS ARE PRO*
+               CESSED WITH REXMIT=Y.'                          @Z40MP9B
+         MEXIT                                                 @Z40MP9B
+.INVALID MNOTE 12,'&C.087 INVALID OPERAND &A PASSED TO SYSTEM MACRO IHB*
+               ERMAC.'
+          MEND

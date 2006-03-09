@@ -1,0 +1,104 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IDACBEXL &AM=,&MF=,&CALLER=,                                  C
+               &EODAD=,&JRNAD=,                  *** EXLST KEYWORDS ***C
+               &LERAD=,&SYNAD=,&EXLLEN=,&LOGON=,&LOSTERM=,       X03004C
+               &NSEXIT=,                                       @G40AKCM*
+               &RELREQ=,&ATTN=,&TPEND=,&SCIP=,&DFASY=,&RESP=   @Z40BHUC
+.*
+.* FUNCTION    THIS MACRO ACTS AS A CONTROLLER FOR GENCB, MODCB, AND
+.*             TESTCB FOR PROCESSING AN EXLST.
+.*             IT IS CALLED BY IDACB2 TO BUILD VARIOUS ARRAYS TO BE
+.*             USED BY THAT MACRO TO BUILD A PARAMETER LIST OF ARGUMENT
+.*             CONTROL ENTRIES THAT WILL BE PASSED TO THE CONTROL
+.*             BLOCK MANIPULATION MODULE AT EXECUTE TIME.
+.*             FOR NON-BIT KEYWORDS, THIS MACRO CALLS IDACB3 WHICH
+.*             SETS VALUES INTO ALL THE ARRAYS THAT ARE REQUIRED.
+.*
+.*             FOR BIT KEYWORDS, IDACB3 IS CALLED, BUT THIS MACRO
+.*             SETS THE VALUE IN THE &IDAVALC ARRAY.
+.*
+.* GLOBALS
+         GBLB  &IDACB01                ERROR INDICATOR
+         GBLA  &IDAENO                 NUMBER OF ELEMENTS
+         GBLC  &IDAVALC(50)            ELEMENT CHARACTER VALUE ARRAY
+.* LOCALS
+         LCLB  &VSAM,&VTAM             AM CODES
+         LCLC  &Z16                    UNUSED BIT STRING VALUE
+.* INITIALIZATION
+&Z16     SETC  '0000000000000000'      INITIALIZE CONSTANT
+.* SCAN EXLST KEYWORDS ************************************************
+         AIF   ('&AM' EQ '').E000200  CHECK FOR NULL AM         X04SVHS
+         AIF   ('&CALLER' NE 'GEN').E000200                     X04SVHS
+.*             ARGUMENT CONTROL ENTRY IS BUILT ONLY FOR GENCB   X04SVHS
+&VSAM    SETB  ('&AM' EQ 'VSAM')        CHK FOR AM=VSAM         X04SVHS
+&VTAM    SETB  ('&AM' EQ 'VTAM')        CHK FOR AM=VTAM         X04SVHS
+         AIF   (&VSAM OR &VTAM).E000100
+.*                          ERROR IF NOT VSAM OR VTAM
+         IDAERMAC 5,AM,&AM                                      X04SVHS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.E000100 ANOP                                                   X04SVHS
+         IDACB3 ARG=&AM,KWTC=X'40',BIT=YES                      X04SVHS
+&IDAVALC(&IDAENO) SETC '&VSAM&VTAM.00000000000000&Z16'
+.**********************************************************************
+.E000200 ANOP
+.*                                      LERAD
+         IDACB3 ARG=&LERAD,ARGNAME=LERAD,KWTC=X'28',MF=&MF,TYPE=X,     *
+               CALLER=&CALLER                                   X04SVHS
+.**********************************************************************
+.*                                      SYNAD
+         IDACB3 ARG=&SYNAD,ARGNAME=SYNAD,KWTC=X'29',MF=&MF,TYPE=X,     *
+               CALLER=&CALLER                                   X04SVHS
+.**********************************************************************
+.*                                      EODAD
+         IDACB3 ARG=&EODAD,ARGNAME=EODAD,KWTC=X'25',MF=&MF,TYPE=X,     *
+               CALLER=&CALLER                                   X04SVHS
+.**********************************************************************
+.*                                      JRNAD
+         IDACB3 ARG=&JRNAD,ARGNAME=JRNAD,KWTC=X'27',MF=&MF,TYPE=X,     *
+               CALLER=&CALLER                                   X04SVHS
+.**********************************************************************
+.*                                      LOGON
+         IDACB3 ARG=&LOGON,ARGNAME=LOGON,KWTC=X'43',TYPE=X,MF=&MF,     *
+               CALLER=&CALLER,CHKAM=VTAM,AM=&AM                 X04SVHS
+.**********************************************************************
+.*                                      LOSTERM
+         IDACB3 ARG=&LOSTERM,ARGNAME=LOSTERM,KWTC=X'44',MF=&MF,TYPE=X, *
+               CALLER=&CALLER,CHKAM=VTAM,AM=&AM                 X04SVHS
+.**********************************************************************
+.*                                      RELREQ
+         IDACB3 ARG=&RELREQ,ARGNAME=RELREQ,KWTC=X'46',MF=&MF,TYPE=X,   *
+               CALLER=&CALLER,CHKAM=VTAM,AM=&AM                 X04SVHS
+.**********************************************************************
+.*                                      ATTN
+         IDACB3 ARG=&ATTN,ARGNAME=ATTN,KWTC=X'45',MF=&MF,TYPE=X,       *
+               CALLER=&CALLER,CHKAM=VTAM,AM=&AM                 X04SVHS
+.**********************************************************************
+.*                                      TPEND
+         IDACB3 ARG=&TPEND,ARGNAME=TPEND,KWTC=X'42',MF=&MF,TYPE=X,     *
+               CALLER=&CALLER,CHKAM=VTAM,AM=&AM                 X04SVHS
+.**********************************************************************
+.*                                      NSEXIT
+         IDACB3 ARG=&NSEXIT,ARGNAME=NSEXIT,KWTC=X'93',MF=&MF,TYPE=X,   *
+               CALLER=&CALLER,CHKAM=VTAM,AM=&AM                G40AKCM
+.**********************************************************************
+.*                                      SCIP
+         IDACB3 ARG=&SCIP,ARGNAME=SCIP,KWTC=X'78',MF=&MF,TYPE=X,       *
+               CALLER=&CALLER,CHKAM=VTAM,AM=&AM                 X04SVHS
+.**********************************************************************
+.*                                      DFASY
+         IDACB3 ARG=&DFASY,ARGNAME=DFASY,KWTC=X'79',MF=&MF,TYPE=X,     *
+               CALLER=&CALLER,CHKAM=VTAM,AM=&AM                 X04SVHS
+.**********************************************************************
+.*                                      RESP
+         IDACB3 ARG=&RESP,ARGNAME=RESP,KWTC=X'7A',MF=&MF,TYPE=X,       *
+               CALLER=&CALLER,CHKAM=VTAM,AM=&AM                 X04SVHS
+.**********************************************************************
+.* TEST FOR INCOMPATIBLE VTAM KEYWORDS                          X3004BS
+         AIF ('&DFASY' EQ '' OR '&JRNAD' EQ '').E000300         X04SVHS
+         IDAERMAC 19,DFASY,JRNAD                                X3004BS
+&IDACB01 SETB  1                                                X3004BS
+.E000300 ANOP                                                  @Z40BHUC
+.**********************************************************************
+         MEND
+

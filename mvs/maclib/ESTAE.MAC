@@ -1,0 +1,376 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*    MACCOMP Y-1 SC1CM/PZD81
+*    MACSTAT Y-1 75289/Z40FPXA
+         MACRO
+&NAME    ESTAE &EXIT,&TYPE,&PARAM=I,&XCTL=NO,&MF=I,&PURGE=,&ASYNCH=,   J
+               &TCB=,&ESTAR=,&TERM=,&RECORD=,&BRANCH=,&SVEAREA=,       J
+               &RELATED=,&KEY=
+*    MACDATE Y-1 75302
+         LCLA  &LENGTH
+         LCLA  &FLAGS
+         LCLA  &FLGS
+         LCLA  &ANDOFF
+         LCLA  &TESTF
+         LCLA  &FLAGS2
+         LCLA  &FLAGS3
+         LCLA  &TURNOFF
+         LCLA  &EXITL
+         LCLA  &KEYVAL
+         LCLB  &TERMON
+         LCLB  &RECON
+         LCLB  &BRNCHON
+         LCLB  &ASY
+         LCLB  &ASY1
+         LCLB  &HALT
+         LCLB  &NONE
+         LCLB  &PNONE
+         LCLB  &TCBON
+         LCLB  &ASYOFF
+         LCLB  &PRGOFF
+         LCLB  &TERMOFF
+         LCLB  &RECOFF
+         LCLB  &BRANOFF
+         LCLB  &STAROFF
+         LCLB  &ESTARON
+         LCLB  &ESTA
+         LCLC  &GNAME
+         LCLC  &LNAME
+         LCLC  &EXITR
+&ASY1    SETB  ('&ASYNCH' EQ 'YES')
+&ASY     SETB  ('&ASYNCH' EQ 'YES' OR '&ASYNCH' EQ '')
+&HALT    SETB  ('&PURGE' EQ 'HALT')
+&NONE    SETB  ('&PURGE' EQ 'NONE' OR '&PURGE' EQ '')
+&PNONE   SETB  ('&PURGE' EQ 'NONE')
+&TCBON   SETB  ('&TCB' NE '')
+&ESTARON SETB  ('&ESTAR' EQ 'YES')
+&ESTA    SETB  1               ESTAE INDICATOR
+&FLAGS   SETA  128*&TCBON+64*&ESTARON+16*&ESTA+4*&ASY+2*&NONE+&HALT
+&FLGS    SETA  128*&TCBON+64*&ESTARON+16*&ESTA+4*&ASY1+2*&PNONE+&HALT
+&TERMON  SETB  ('&TERM' EQ 'YES')
+&RECON   SETB  ('&RECORD' EQ 'YES')
+&BRNCHON SETB  ('&BRANCH' EQ 'YES')
+&FLAGS2  SETA  (64*&TERMON+32*&RECON)
+&LENGTH  SETA  20
+         AIF   ('&KEY' NE '' AND '&BRANCH' EQ '').NOKEY
+         AIF   ('&KEY' NE '' AND '&BRANCH' EQ 'NO').NOKEY
+         AIF   ('&TCB' EQ '').NOSTAI
+         AIF   ('&XCTL' EQ 'NO').NIXXCTL
+         IHBERMAC 1020,XCTL,TCB
+         MEXIT
+.NOKEY  MNOTE    8,'**** KEY OPERAND ONLY ALLOWED WITH BRANCH'
+        MEXIT
+.NIXXCTL ANOP
+         AIF   ('&EXIT' EQ '0').ER1
+         AIF   ('&TYPE' EQ 'OV').ER2
+         AIF   ('&BRANCH' EQ 'YES').ER4
+         AGO   .NOSTAI
+.ER1     ANOP
+         IHBERMAC 1020,EXIT/0,TCB
+         MEXIT
+.ER2     ANOP
+         IHBERMAC 1020,TYPE/OV,TCB
+         MEXIT
+.ER3     ANOP
+         IHBERMAC 1020,XCTL,ESTAR
+         MEXIT
+.ER4     ANOP
+         IHBERMAC 1020,BRANCH,TCB
+         MEXIT
+.NOSTAI  ANOP
+         AIF   ('&TCB' EQ '' AND '&TYPE' EQ 'PROP').ER10
+         AIF   ('&ESTAR' NE '' AND '&ESTAR' NE 'YES' AND '&ESTAR'      J
+               NE 'NO').ESTARER
+         AIF   ('&ESTAR' NE 'YES').NOSTAR
+         AIF   ('&XCTL' NE 'NO').ER3
+         AIF   ('&TYPE' EQ 'PROP').ER5
+         AIF   ('&BRANCH' EQ 'YES').ER6
+         AIF   ('&EXIT' EQ '0').ER7
+         AIF   ('&TCB' NE '').ER8
+         AIF   ('&PURGE' NE 'HALT').ER11
+.NOSTAR  ANOP
+         AIF   (('&EXIT' EQ '0') AND ('&TYPE' NE '' OR '&PARAM' NE 'I' J
+               OR '&XCTL' NE 'NO' OR '&PURGE' NE '' OR '&ASYNCH' NE    J
+               '' OR '&TERM' NE '' OR '&RECORD' NE '')).CANERR
+.RESUME  ANOP
+         AIF   ('&ASYNCH' NE '' AND '&ASYNCH' NE 'NO' AND '&ASYNCH' NE C
+               'YES').ERRASY
+         AIF   ('&PURGE' NE '' AND '&PURGE' NE 'HALT' AND '&PURGE' NE  C
+               'NONE' AND '&PURGE' NE 'QUIESCE').PURERR
+         AIF   ('&TERM' NE '' AND '&TERM' NE 'YES' AND '&TERM' NE      J
+               'NO').TERMERR
+         AIF   ('&RECORD' NE '' AND '&RECORD' NE 'YES' AND '&RECORD'   J
+               NE 'NO').RECERR
+         AIF   ('&BRANCH' NE '' AND '&BRANCH' NE 'YES' AND '&BRANCH'   J
+               NE 'NO').BRNERR
+         AIF   ('&TYPE' NE 'PROP' AND '&TYPE' NE 'CT' AND '&TYPE'      J
+               NE 'OV' AND '&TYPE' NE '').BADOPT
+         AIF   ('&MF(1)' EQ 'L').LROUT
+         AIF   ('&BRANCH' EQ 'YES' AND '&SVEAREA' EQ '').SAVERR
+         AIF   ('&KEY' EQ 'SAVE' OR '&KEY' EQ '').OK1
+         AIF  ('&KEY' GT '15' OR '&KEY' LT '0').BADKEY
+.OK1     AIF   ('&MF(1)' EQ 'I').IROUT
+         AIF   ('&MF(1)' EQ 'E').EROUTA
+         IHBERMAC 35,,&MF(1)            INVALID MF= OPERAND
+         MEXIT
+.ER5     ANOP
+         IHBERMAC 1020,TYPE/PROP,ESTAR
+         MEXIT
+.ER6     ANOP
+         IHBERMAC 1020,BRANCH,ESTAR
+         MEXIT
+.ER7     ANOP
+         IHBERMAC 1020,EXIT/0,ESTAR
+         MEXIT
+.ER8     ANOP
+         IHBERMAC 1020,TCB,ESTAR
+         MEXIT
+.ER10    ANOP
+         MNOTE 12,'***     TCB MUST BE SPECIFIED WITH TYPE/PROP'
+         MEXIT
+.ER11    ANOP
+         IHBERMAC 1020,PURGE/QUIESCE/NONE,ESTAR
+         MEXIT
+.CANERR  ANOP
+         MNOTE *,'***     EXCESS PARAMETERS W/ CANCEL REQUEST IGNORED'
+         AGO   .RESUME
+.SAVERR  ANOP
+         MNOTE 12,'***   SVEAREA MUST BE SPECIFIED WITH BRANCH/YES'
+         MEXIT
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*
+.*
+.*       EXECUTE ROUTE       MF=E
+.*
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*
+.EROUTA  AIF   (N'&MF GT 2).EXCESSA
+.EROUT   AIF   ('&MF(2)' NE '').EXEC
+.NOPARM  IHBERMAC 24                    REQ'D. PARMS. MISSING
+         MEXIT
+.EXEC    ANOP
+&ASYOFF  SETB  ('&ASYNCH' EQ 'NO')
+&PRGOFF  SETB  ('&PURGE' NE '')
+&STAROFF SETB  ('&ESTAR' EQ 'NO')
+&ANDOFF  SETA  255-(64*&STAROFF+4*&ASYOFF+3*&PRGOFF)
+&TERMOFF SETB  ('&TERM' EQ 'NO')
+&RECOFF  SETB  ('&RECORD' EQ 'NO')
+&BRANOFF SETB  ('&BRANCH' EQ 'NO')
+&TURNOFF SETA  255-(64*&TERMOFF+32*&RECOFF)
+&NAME    IHBINNRA &MF(2)               LOAD LIST ADDR IN REG 1
+         AIF   ('&EXIT' EQ '').TSTPX
+         AIF   ('&EXIT' EQ '0').CANCEL
+         AIF   ('&EXIT'(1,1) EQ '(').ST1
+         IHBINNRA ,&EXIT               LOAD NEW EXIT ADDR IN REG 0
+         STCM  0,7,1(1)                STORE USER EXIT ADDRESS
+         AGO   .TSTPX
+.ST1     ANOP
+         STCM  &EXIT(1),7,1(1)         STORE USER EXIT ADDRESS
+.TSTPX   ANOP
+         AIF   (&ANDOFF EQ 255).TESTOR
+&TESTF   SETA  (&FLGS+64*&STAROFF+32+8+4*&ASYOFF+3*&PRGOFF)
+         AIF   (&TESTF GE 255).MVI1
+         NI    0(1),&ANDOFF            TURN OFF FLAG BITS
+.TESTOR  ANOP
+         OI    0(1),&FLGS              FLAGS FOR TCB,PURGE,ASYNCH
+         AGO   .MVISKP1
+.MVI1    MVI   0(1),&FLGS              SET FLAGS FOR TCB,PURGE,ASYNCH
+.MVISKP1 AIF   ('&PARAM' EQ 'I').ETSTTCB
+         AIF   ('&PARAM'(1,1) EQ '(').ST2
+         IHBINNRA ,&PARAM
+         ST    0,4(0,1)                MODIFY REMOTE LIST - PARM ADDR
+         AGO   .ETSTTCB
+.ST2     ST    &PARAM(1),4(0,1)        MODIFY LIST - PARAM ADDR
+.ETSTTCB AIF   ('&TCB' EQ '').TSTPX2
+         AIF   ('&TCB'(1,1) EQ '(').ST3
+         IHBINNRA ,&TCB
+         ST    0,8(0,1)                MODIFY LIST - TCB ADDR.
+         AGO   .TSTPX2
+.ST3     ST    &TCB(1),8(0,1)          MODIFY LIST - TCB ADDR
+.TSTPX2  ANOP
+&TESTF   SETA   (&FLAGS2+128+64*&TERMOFF+32*&RECOFF+16+4+3)
+         AIF    (&TESTF GE 255).MVI2
+         AIF   (&TURNOFF EQ 255).TSTORF
+         NI    12(1),&TURNOFF          TURN OFF FLAG BITS
+.TSTORF  ANOP
+         AIF   (&FLAGS2 EQ 0).TSTOPT
+         OI    12(1),&FLAGS2           FLAGS FOR TERM AND RECORD
+         AGO   .SKMVI
+.MVI2    MVI   12(1),&FLAGS2           FLAGS FOR TERM AND RECORD
+.TSTOPT  ANOP
+.SKMVI   AIF   ('&EXIT' EQ '0').CANCEL
+         AGO   .OPTTST
+.EXCESSA MNOTE *,'***     EXCESS PARAMETERS W/MF=E IGNORED'
+         AGO   .EROUT
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*
+.*
+.*       LIST ROUTE          MF=L
+.*
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*
+.LROUT   AIF   (N'&MF GT 1).EXCESS
+.LROUT1  ANOP
+         AIF   ('&XCTL' EQ 'YES').XCTLIG
+.LROUT3  ANOP
+&FLAGS3  SETA  64*&TERMON+32*&RECON
+         AIF   ('&BRANCH' NE '' AND '&SVEAREA' NE '').IGNORE
+.LROUT2  ANOP
+         DS    0F
+&NAME    DC    AL1(&FLAGS)             FLAGS FOR TCB,PURGE,ASYNCH
+         AIF   ('&EXIT' NE '').LREGA
+         DC    AL3(0)                  EXIT ADDR. NOT SPECIFIED
+         AGO   .LREGB
+.LREGA   AIF   ('&EXIT'(1,1) EQ '(').LISTERR
+         DC    AL3(&EXIT)              STAE EXIT ROUTINE ADDR.
+.LREGB   AIF   ('&PARAM' NE 'I').LREGC
+         DC    A(0)                    PARM. LIST ADDR. NOT SPECIFIED
+         AGO   .LREGD
+.LREGC   AIF   ('&PARAM'(1,1) EQ '(').LISTERR
+         DC    A(&PARAM)               STAE EXIT PARM. LIST ADDR.
+.LREGD   AIF   ('&TCB' EQ '').LREGE
+         AIF   ('&TCB'(1,1) EQ '(').LISTERR
+         DC    A(&TCB)                 TCB ADDRESS
+         AGO   .LREGF
+.LREGE   DC    A(0)                    TCB NOT SPECIFIED
+.LREGF   DC    AL1(&FLAGS3)            FLAGS
+         DC    AL3(0)                  RESERVED
+         MEXIT
+.EXCESS  MNOTE *,'***     EXCESS PARAMETERS W/MF=L IGNORED'
+         AGO   .LROUT1
+.IGNORE  ANOP
+         MNOTE *,'***    BRANCH/SVEAREA IGNORED W/MF=L'
+         AGO   .LROUT2
+.XCTLIG  ANOP
+         MNOTE *,'***     XCTL=YES IGNORED W/MF=L'
+         AGO   .LROUT3
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*
+.*
+.*       REGULAR ROUTE       MF=I
+.*
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*
+.IROUT   AIF   ('&EXIT' EQ '').NOPARM
+         AIF   ('&EXIT' NE '0').STDA
+&NAME    DS    0H
+.CANCEL AIF  ('&BRANCH' EQ 'YES').BECAN
+         LA    0,132(0,0)              INDICATE CANCEL OPTION
+         AGO   .SVC1
+.BECAN   ANOP
+         L     15,FLCCVT-PSA(0,0)      LOAD CVT ADDRESS
+         LA    0,148(0,0)              BRANCH ENTRY CANCEL CODE
+         AGO   .BRENTRY
+.STDA    CNOP  0,4                     ESTAB. FULL WD. BOUND. ALIGN.
+&LNAME   SETC  'IHB'.'&SYSNDX'
+&NAME    BAL   1,*+&LENGTH             LIST ADDR IN REG1 SKIP LIST
+&LNAME   EQU   *
+         AIF   ('&EXIT'(1,1) EQ '(').EREG1
+         DC    AL1(&FLAGS)             FLAGS FOR TCB, PURGE, ASYNCH
+         DC    AL3(&EXIT)              STAE EXIT ROUTINE ADDR.
+         AGO   .STDB
+.EREG1   DC    A(0)                    SPACE FOR STAE EXIT RTN ADDRESS
+.STDB    ANOP
+         AIF   ('&PARAM' EQ 'I' OR '&PARAM'(1,1) EQ '(').STDC1
+         DC    A(&PARAM)               STAE EXIT PARM. LIST ADDR.
+         AGO   .TCBTST
+.STDC1   DC    A(0)                    SPACE FOR PARM LIST ADDR
+.TCBTST  ANOP
+         AIF   ('&TCB' EQ '').TCBREG
+         AIF   ('&TCB'(1,1) EQ '(').TCBREG
+         DC    A(&TCB)                 TCB ADDR
+         DC    AL1(&FLAGS2)            FLAGS FOR TERM AND RECORD
+         DC    AL3(0)                  RESERVED
+         AGO   .TSTSW
+.TCBREG  DC    A(0)                    SPACE FOR TCB ADDR
+         DC    AL1(&FLAGS2)            FLAGS FOR TERM AND RECORD
+         DC    AL3(0)                  RESERVED
+         AIF   ('&TCB' EQ '').TSTSW
+         ST    &TCB(1),&LNAME+8        PUT TCB ADDR IN LIST
+.TSTSW   ANOP
+         AIF   ('&EXIT'(1,1) NE '(').CHKPARM
+         ST    &EXIT(1),&LNAME         PUT EXIT ADDR. IN LIST
+         MVI   &LNAME,&FLAGS           FLAGS FOR TCB,PURGE,ASYNCH
+.CHKPARM ANOP
+         AIF   ('&PARAM'(1,1) NE '(').OPTTST
+         ST    &PARAM(1),&LNAME+4      PUT PARAM ADDR. IN LIST
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*
+.*
+.*       COMMON TO E ROUTE AND I ROUTE
+.*
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*
+.OPTTST  ANOP
+         AIF    ('&BRANCH' NE 'YES').SKBR
+         L     15,FLCCVT-PSA(0,0)      ACCESS CVT ADDRESS
+.SKBR    AIF   (('&TYPE' EQ '') OR ('&TYPE' EQ 'CT')).CREATE
+         AIF   ('&TYPE' EQ 'OV').OVRLAY
+         AGO   .PROP
+.BADOPT  IHBERMAC  49,,&TYPE           INVALID OPTION-STD. FORM
+         MEXIT
+.CREATE  ANOP
+         SLR   0,0                     INDICATE CREATE OPTION
+         AGO   .SVC
+.PROP    ANOP
+         LA    0,2(0,0)                INDICATE PROPAGATE OPTION
+         AGO   .SVC
+.OVRLAY  LA    0,8(0,0)                INDICATE OVERLAY OPTION
+.SVC     AIF   ('&XCTL' EQ 'NO').NOXCTL
+         AIF   ('&XCTL' NE 'YES').BADXCTL
+         AIF   ('&MF' EQ 'I').SVC1
+&GNAME   SETC  'IHB'.'&SYSNDX'
+         CNOP  0,4                     FORCE FULL WORD ALIGNMENT
+         O     1,&GNAME                XCTL=YES - MAKE REG 1 NEGATIVE
+         B     *+8                     BRANCH AROUND CONSTANT
+&GNAME   DC    X'80000000'             MASK TO SET REG 1 NEGATIVE
+.SVC1    ANOP
+         AIF   ('&BRANCH' EQ 'YES').BRENTRY
+         SVC   60                      ISSUE STAE SVC
+         MEXIT
+.BRENTRY ANOP
+         L     15,CVTSV60-CVTMAP(0,15) BRANCH ENTRY ADDRESS
+         AIF   ('&SVEAREA'(1,1) EQ '(').LR13
+         LA    13,&SVEAREA(1)          ACCESS ADDRESS OF USER SAVE AREA
+         AGO   .GOBRNCH
+.LR13    ANOP
+         AIF   ('&SVEAREA(1)' EQ '13').GOBRNCH
+         LR    13,&SVEAREA(1)          ACCESS ADDRESS OF USER SAVE AREA
+.GOBRNCH ANOP
+         AIF   ('&KEY' EQ 'SAVE').SAVKEY
+         AGO   .KEY2
+.SAVKEY  IPK                           SAVE CURRENT KEY IN REG2
+.KEY2    AIF    ('&KEY' EQ '').KEY3
+         SPKA  0(0)                    SET KEY 0 FOR BRANCH ENTRY
+.KEY3    ANOP
+         BALR  14,15                   BRANCH ENTER SVC 60
+         AIF   ('&KEY' EQ 'SAVE').RESTKEY
+         AIF   ('&KEY' EQ '').KEYEND
+         AIF   ('&KEY' EQ '0').KEYEND
+         AIF   ('&KEY' GT '0' AND '&KEY' LT '16').SETKEY
+.BADKEY  MNOTE  8,'**** INVALID KEY VALUE SPECIFIED '
+.KEYEND  MEXIT
+.RESTKEY SPKA  0(2)                    RESTORE KEY SAVED IN REG2
+         AGO    .KEYEND
+.SETKEY  ANOP
+&KEYVAL  SETA   (&KEY*16)
+         SPKA  &KEYVAL.(0)             SET SPECIFIED KEY
+         MEXIT
+.NOXCTL  ANOP
+         AIF   ('&MF(1)' EQ 'E' AND 'MF(2)' NE '1').SVC1
+         LA    1,0(0,1)                MAKE REG1 POS.  XCTL=NO
+         AGO   .SVC1
+.BADXCTL MNOTE 8,'***     XCTL=&XCTL - PARAMETER INVALID'
+         MEXIT
+.LISTERR IHBERMAC 69                    REG NOTE W/MF=L - INVALID
+         MEXIT
+.ERRASY  ANOP
+         IHBERMAC  54,,&ASYNCH
+         MEXIT
+.PURERR  ANOP
+         IHBERMAC  54,,&PURGE
+         MEXIT
+.TERMERR ANOP
+         IHBERMAC 54,,&TERM
+         MEXIT
+.RECERR  ANOP
+         IHBERMAC  54,,&RECORD
+         MEXIT
+.BRNERR  ANOP
+         IHBERMAC  54,,&BRANCH
+         MEXIT
+.ESTARER ANOP
+         IHBERMAC  54,,&ESTAR
+         MEND
+

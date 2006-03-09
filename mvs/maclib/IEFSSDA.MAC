@@ -1,0 +1,68 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSDACMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSDA
+.*/ %SSDACMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSDA                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = OPEN/CLOSE, CHECKPOINT/RESTART       @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSDAPLS;              /*                               @ZA34144
+*
+*    DATA MANAGEMENT SSOB FUNCTION IDS (SSOBFUNC)
+*
+SSOBOPEN EQU   16                 OPEN FUNCTION ID
+SSOBCLOS EQU   17                 CLOSE FUNCTION ID
+SSOBCKPT EQU   18                 CHECKPOINT FUNCTION ID
+SSOBREST EQU   19                 RESTART FUNCTION ID
+*
+*  OPEN/CLOSE, C/R RETURN CODES (SSOBRETN)
+*
+SSDMOK   EQU   0                  REQUEST SUCCESSFUL            YM02677
+SSDMFAIL EQU   4                  REQUEST UNSUCCESSFUL          YM02677
+*
+         ORG SSOBGN
+SSDABGN  EQU   *
+SSDALEN  DC    AL2(SSDASIZE)      O/C, C/R EXTENSION LENGTH
+SSDARESV DS    B                  RESERVED
+SSDARESF DS    B                  RESTART FLAGS
+SSDAAUTO EQU   X'80'              AUTO CHECKPOINT RESTART
+SSDADEFR EQU   X'40'              DEFERRED CHECKPOINT RESTART
+SSDABUFR DS    A                  4K BUFFER POINTER - GOTTEN BY CHECKPT
+*                                 AND RESTART, USED BY SUBSYSTEM
+SSDAJFCB DS    A                  JFCB POINTER
+SSDADEBP DS    A                  DEB POINTER
+SSDASSCM DS    A                  POINTER TO SUBSYSTEM INFORMATION
+*
+SSDASIZE EQU   *-SSDABGN          O/C,C/R EXTENSION LENGTH
+SSOBLENC EQU   SSOBHSIZ+SSDASIZE  TOTAL SSOB LENGTH
+         MEND                                                @ZA34144*/
+* %SSDAPLS:;                             /*                  @ZA34144*/
+*   /*                                                               */
+*   /*    DATA MANAGEMENT SSOB FUNCTION IDS (SSOBFUNC)               */
+*   DCL SSOBOPEN FIXED(15) CONSTANT(16); /* OPEN FUNCTION ID         */
+*   DCL SSOBCLOS FIXED(15) CONSTANT(17); /* CLOSE FUNCTION ID        */
+*   DCL SSOBCKPT FIXED(15) CONSTANT(18); /* CHECKPOINT FUNCTION ID   */
+*   DCL SSOBREST FIXED(15) CONSTANT(19); /* RESTART FUNCTION ID      */
+*   /*                                                               */
+*   /*  OPEN/CLOSE, C/R RETURN CODES (SSOBRETN)                      */
+*   /*                                                               */
+*   DCL SSDMOK   FIXED(31) CONSTANT(0); /* REQUEST SUCCESSFUL YM02677*/
+*   DCL SSDMFAIL FIXED(31) CONSTANT(4); /* REQUEST UNSUCCESSFUL
+*                                                             YM02677*/
+*   /*     S S D A                                                   */
+*   DECLARE
+*   1       SSDA          SSOBDA,   /* DATA MANAGEMENT FUNCTION      */
+*     2       SSDALEN     FIXED(15),/* LENGTH OF SSDA                */
+*     2       SSDARESV    PTR(8),   /* RESERVED                      */
+*     2       SSDARESF    BIT(8),   /* RESTART FLAGS                 */
+*       3     SSDAAUTO    BIT(1),   /* AUTO CHECKPOINT RESTART       */
+*       3     SSDADEFR    BIT(1),   /* DEFERRED CHECKPOINT RESTART   */
+*       3     *           BIT(6),   /* RESERVED                      */
+*     2       SSDABUFR    PTR(31),  /* 4K BUFFER PTR-GOTTEN BY CHECKPT
+*                                      AND RESTART, USED BY SUBSYSTEM*/
+*     2       SSDAJFCB    PTR(31),  /* JFCB POINTER                  */
+*     2       SSDADEBP    PTR(31),  /* DEB POINTER                   */
+*     2       SSDASSCM    PTR(31);/* POINTER TO SUBSYSTEM INFORMATION*/

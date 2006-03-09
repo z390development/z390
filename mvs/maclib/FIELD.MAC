@@ -1,0 +1,110 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    FIELD &FLD1,&FLD2,&FLD3,&FLD4,&FLD5,&FLD6,&FLD7,&FLD8
+         GBLA  &C(7),&DE(7),&L(8),&SUM
+         GBLB  &FT(7),&D(7),&IP(7),&IMP,&FRP,&FR(7)
+         LCLA  &X,&Z,&POS,&COUNT,&U
+         LCLB  &F,&DA,&I,&S
+&X       SETA  1                        COUNTER FOR FIELD NUMBERS
+&SUM     SETA  0
+&IMP     SETB  0
+&FRP     SETB  0
+.A       ANOP                           RESET PARMS TO INITIAL VALUES
+&FR(&X)  SETB  1
+&C(&X)   SETA  0
+&DE(&X)  SETA  0
+&L(&X)   SETA  0
+&FT(&X)  SETB  0
+&D(&X)   SETB  0
+&IP(&X)  SETB  0
+         AIF   ('&SYSLIST(&X)' EQ '').M IF FIELD NULL, GET NEXT FLD
+&F       SETB  0                        SET ALL OPTIONS OFF
+&DA      SETB  0
+&I       SETB  0
+&S       SETB  0
+&C(&X)   SETA  &SYSLIST(&X,1)           NUMBER OF DIGITS
+         AIF   (&C(&X) LE 30).A1
+         MNOTE 8,'***  IHB407  INVALID DIGIT LENGTH FOR FIELD &X'
+.A1      ANOP
+         AIF   ('&SYSLIST(&X,2)' EQ '').B  ONLY DIGIT LTH GIVEN,BR
+&L(&X)   SETA  &SYSLIST(&X,2)           NUMBER OF BYTES
+         AIF   (&L(&X) EQ 0).A2
+         AIF   (&C(&X) LE (&L(&X)*2) AND &L(&X) LE 15).C       @YM00637
+.A2      MNOTE 8,'***  IHB364  INVALID BYTE LENGTH FOR FIELD &X'
+.B       ANOP
+&U       SETA  &C(&X)
+         AIF   ((&C(&X)-(&C(&X)/2)*2) NE 1).B1
+&U       SETA  &C(&X)+1
+.B1      ANOP
+&L(&X)   SETA  &U/2                     DEFAULT NUMBER OF BYTES
+.C       ANOP
+&SUM     SETA  &SUM+&L(&X)
+         AIF   ('&SYSLIST(&X,3)' EQ '').J   OPTIONS NOT SPEC.,BRANCH
+&COUNT   SETA  K'&SYSLIST(&X,3)         NUMBER OF OPTIONS SPEC.
+&POS     SETA  1                        POSITION IN OPTION LIST
+.C1      ANOP
+&F       SETB  ('&SYSLIST(&X,3)'(&POS,1) EQ 'F' OR &F)     FIXED REC.
+&DA      SETB  ('&SYSLIST(&X,3)'(&POS,1) EQ 'D' OR &DA)    DASH TRANS.
+&I       SETB  ('&SYSLIST(&X,3)'(&POS,1) EQ 'I' OR &I)     IMAGE PROC.
+&S       SETB  ('&SYSLIST(&X,3)'(&POS,1) EQ 'S' OR &S)     SYM.ERR.COR.
+&COUNT   SETA  &COUNT-1
+         AIF   (&COUNT EQ 0).C2
+&POS     SETA  &POS+1
+         AGO   .C1
+.C2      AIF   (&F NE 1).D
+&FT(&X)  SETB  1                        FIXED LENGTH
+         AGO   .E
+.D       ANOP
+&FT(&X)  SETB  0                        VARIABLE LENGTH
+.E       AIF   (&DA NE 1).F
+&D(&X)   SETB  1                        SEND DASHES
+         AGO   .G
+.F       ANOP
+&D(&X)   SETB  0                        DO NOT SEND DASHES
+.G       AIF   (&I NE 1).H
+&IP(&X)  SETB  1                        IMAGE PROCESS
+&IMP     SETB  1
+         AGO   .I
+.H       ANOP
+&IP(&X)  SETB  0                        NO IMAGE PROCESS
+.I       AIF   (&S NE 1).J
+&FRP     SETB  1                        PERFORM SYMBOL ERROR CORRECTION
+&FR(&X)  SETB  0
+.J       ANOP
+         AIF   ('&SYSLIST(&X,4)' NE '').K
+&DE(&X)  SETA  0                        ZERO DIGIT ERRORS
+         AGO   .M
+.K       AIF   (&IP(&X) EQ 1).L
+         MNOTE 4,'***  IHB363  FIELD &X - ERROR DIGIT NO. SPEC., BUT NOX
+               T IP'
+.L       ANOP
+&DE(&X)  SETA  &SYSLIST(&X,4)           NO.OF ALLOWED DIGIT ERRORS
+         AIF   (&DE(&X) LE 15).M
+         MNOTE 8,'***  IHB416 INVALID NUMBER OF ERROR DIGITS SPECIFIED'
+&DE(&X)  SETA  0                        DEFAULT NUMBER OF ERROR DIGITS
+.M       ANOP
+&X       SETA  &X+1                     INCREMENT COUNTER
+         AIF   (&X LT 8).A
+         AIF   ('&SYSLIST(8)' EQ '').P  FIELD 8
+         AIF   ('&SYSLIST(8,1)' EQ '').S                       @ZA04485
+&Z       SETA  &SYSLIST(8,1)
+&L(8)    SETA  (&Z+1)/2
+         AGO   .T                                              @ZA04485
+.S       ANOP                                                  @ZA04485
+&L(8)    SETA  &SYSLIST(8,2)                                   @ZA04485
+.T       ANOP                                                  @ZA04485
+&SUM     SETA  &SUM+&L(8)
+         AGO   .Q
+.P       ANOP
+&L(8)    SETA  0
+.Q       ANOP
+         AIF   (&SUM LE 36).R
+         MNOTE 8,'***  IHB366 SUM OF FIELDS 0-8 GREATER THAN 36 BYTES'
+.*                                                             @ZA00767
+.R       AIF   ('&SYSLIST(1)' NE '' OR '&SYSLIST(2)' NE '' OR '&SYSLISTX
+               (3)' NE '' OR '&SYSLIST(4)' NE '' OR '&SYSLIST(5)' NE ''X
+                OR '&SYSLIST(6)' NE '' OR '&SYSLIST(7)' NE '').END
+         AIF   ('&SYSLIST(8)' EQ '').END
+         MNOTE 4,'***  IHB411 FIELD 8 ONLY FIELD DEFINED'
+.END     MEND
+

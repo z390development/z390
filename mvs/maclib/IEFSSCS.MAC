@@ -1,0 +1,199 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSCSCMT;            /*                                 @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSCS
+.*/ %SSCSCMT:;              /*                               @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSCS                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = CANCEL/STATUS FUNCTION               @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB                 @ZA34144*/
+*/* C036500                                                  @ZA59113*/
+*/********************************************************************/
+* %GOTO SSCSPLS;          /*                                   @ZA34144
+*
+SSOBCANC EQU   2                  CANCEL FUNCTION ID (SSOBFUNC)
+SSOBSTAT EQU   3                  JOB STATUS FUNCTION ID (SSOBFUNC)
+*
+*  CANCEL/STATUS RETURN CODES (SSOBRETN)
+*
+SSCSRTOK EQU   0                  CANCEL/STATUS COMPLETED
+SSCSNOJB EQU   4                  JOB NAME NOT FOUND
+SSCSBADI EQU   8                  INVALID JOBNAME/JOB ID COMBINATION
+SSCSNCAN EQU   12                 JOB NOT CANCELLED - DUPLICATE
+*                                 JOBNAMES AND NO JOB ID GIVEN
+SSCSMALL EQU   16                 STATUS ARRAY TOO SMALL
+SSCSOUTP EQU   20                 JOB NOT CANCELLED-JOB ON OUTPUT QUEUE
+SSCSYNTX EQU   24                 JOBID WITH INVALID SYNTAX FOR
+*                                 SYBSYSTEM                     YM06023
+SSCSICAN EQU   28                 INVALID CANCEL REQUEST - CANNOT
+*                                 CANCEL AN ACTIVE TSO USER OR STARTED
+*                                 TASK / TSO USER MAY NOT CANCEL THE
+*                                 ABOVE JOBS UNLESS THEY ARE ON AN
+*                                 OUTPUT QUEUE.                 YM06036
+*
+         ORG   SSOBGN
+SSCSBGN  EQU   *
+SSCSLEN  DC    AL2(SSCSIZE)       CANCEL/STATUS EXTENSION LENGTH
+SSCSFLGS DS    B                  USER SELECTION FLAGS
+SSCSUSID EQU   X'80'              USERID IS IN JOBNAME FIELD
+SSCSCOUT EQU   X'40'              CANCEL THE JOBS OUTPUT         Y02886
+*        EQU   X'3F'              RESERVED FLAGS
+SSCSULEN DS    X                  USERID LENGTH
+SSCSJOBN DS    CL8                JOB NAME
+SSCSJOBI DS    CL8                JOB ID OR BLANKS
+SSCSDIMP DS    H                  SET BY CALLER TO INDICATE SIZE
+*                                 OF ARRAY AVAILABLE TO SUBSYSTEM
+*                                 TO STORE RESULTS IN
+SSCSDIMR DS    H                  SET BY SUBSYSTEM TO INDICATE SIZE
+*                                 OF ARRAY USED, OR NEEDED IF NOT
+*                                 ENOUGH IS AVAILABLE
+         SPACE
+*
+*  SSCSARAY MAPS AN ELEMENT OF AN ARRAY GOTTEN BY THE CALLER FOR
+*  THE SUBSYSTEM TO RETURN RESULTS IN.  IF MORE THAN ONE ELEMENT
+*  EXISTS, ADDRESSABILITY TO THIS ARRAY MUST BE UPDATED BY THE
+*  ELEMENT SIZE (SSCSELSZ). THE TOTAL ARRAY SPACE USED FOR JOB
+*  STATUS REPLIES FROM THE SUBSYSTEM(ARRAY ELEMENT SIZE IN BYTES
+*  TIMES THE NUMBER OF ELEMENTS) MUST BE INDICATED IN SSCSDIMR.
+*  MESSAGES MUST FOLLOW THE LAST SSCSARAY ELEMENT USED FOR JOB
+*  STATUS.
+*
+SSCSARAY DS    0CL16
+SSCSARBG EQU   *
+SSCSARID DS    CL8                JOB IDENTIFIER
+SSCSFLG1 DS    B                  FLAGS SET BY SUBSYSTEM
+SSCSJACT EQU   X'80'              JOB IS CURRENTLY ACTIVE (EXECUTING
+*                                 AFTER BEING GIVEN CONTROL BY THE
+*                                 INITIATOR)
+SSCSEXCQ EQU   X'40'              JOB IS WAITING FOR EXECUTION (ON A
+*                                 PRE-EXECUTION QUEUE)
+SSCSOUTQ EQU   X'20'              JOB IS ON OUTPUT QUEUE
+SSCSHOLD EQU   X'10'              JOB IS HELD IN ITS CURRENT QUEUE
+SSCSSECL EQU   X'08'              JOB HAS A SECOND LEVEL MESSAGE
+SSCSNJEA EQU   X'04'                    JOB ACTIVE IN NJE    @AZ59113
+*        EQU   X'03'              RESERVED FLAGS
+SSCSUJOB DS    CL1                JOBNAME CHARACTER RETURNED
+*                                 BY SUBSYSTEM FOR USERID AS JOBNAME
+SSCSRSV2 DS    CL2                RESERVED
+SSCSMPTR DS    A                  POINTER TO MESSAGE RETURNED IN ARRAY
+*
+*  THE SECOND LEVEL MESSAGE AREA IS MAPPED BY A MULTI-LEVEL PUTLINE
+*  OUTPUT LINE DESCRIPTOR (OLD).  THE FIRST 9 BYTES OF THE FIRST OR
+*  ONLY MESSAGE SEGMENT ARE RESERVED FOR THE INSERTION OF A MESSAGE
+*  ID BY THE CALLER.  ONE TO 62 BYTES OF MESSAGE TEXT MAY BE PROVIDED
+*  BY THE SUBSYSTEM. A MAPPING OF THE OLD FORMAT NEEDED FOLLOWS.
+*
+*  SSCSMPTR -> ONE TSO PUTLINE OUTPUT LINE DESCRIPTOR (OLD)
+*     +0 0 (NO OTHER OLD)
+*     +4 NUMBER OF MESSAGE SEGMENTS
+*     +8 PTR TO FIRST MESSAGE SEGMENT
+*     +. PTR TO NTH MESSAGE SEGMENT
+*     ........ MESSAGE SEGMENT FORMAT......
+*     +0 TOTAL LENGTH OF MSG SEGMENT (INCLUDING THIS FIELD)
+*     +2 0 IF FIRST SEGMENT, OR OFFSET FOR INSERT IN FIRST
+*     +4 10 BLANKS FOR MSG ID (ONLY IN FIRST SEGMENT)
+*     +D MESSAGE TEXT (1-62 BYTES TOTAL FOR ALL SEGMENTS)
+*
+SSCSELSZ EQU   *-SSCSARAY         ARRAY ELEMENT SIZE
+SSCSIZE  EQU   *-SSCSBGN          CANCEL/STATUS EXTENSION LENGTH
+SSOBLEN2 EQU   SSOBHSIZ+SSCSIZE   TOTAL SSOB LENGTH
+         MEND                                                @ZA34144*/
+* %SSCSPLS:;                            /*                   @ZA34144*/
+*   /*    CANCEL/STATUS FUNCTION IDS (SSOBFUNC)                      */
+*  DCL SSOBCANC FIXED(15) CONSTANT(02); /* FUNCTION ID TO CANCEL JOB */
+*  DCL SSOBSTAT FIXED(15) CONSTANT(03); /* FUNCTION ID TO FIND THE
+*                                          STATUS OF A JOB           */
+*   /*                                                               */
+*   /*  CANCEL/STATUS RETURN CODES (SSOBRETN)                        */
+*   /*                                                               */
+*   DCL SSCSRTOK FIXED(31) CONSTANT(0);  /* CANCEL/STATUS COMPLETED  */
+*   DCL SSCSNOJB FIXED(31) CONSTANT(4);  /* JOB NAME NOT FOUND       */
+*   DCL SSCSBADI FIXED(31) CONSTANT(8);  /* INVALID JOBNAME/JOB ID
+*                                           COMBINATION              */
+*   DCL SSCSNCAN FIXED(31) CONSTANT(12); /* JOB NOT CANCELLED -
+*                                           DUPLICATE JOBNAMES AND
+*                                           NO JOB ID GIVEN          */
+*   DCL SSCSMALL FIXED(31) CONSTANT(16); /* STATUS ARRAY TOO SMALL   */
+*   DCL SSCSOUTP FIXED(31) CONSTANT(20); /* JOB NOT CANCELLED -
+*                                           JOB ON OUTPUT QUEUE      */
+*   DCL SSCSYNTX FIXED(31) CONSTANT(24); /* JOBID WITH INVALID SYNTAX
+*                                           FOR SUBSYSTEM     YM06023*/
+*   DCL SSCSICAN FIXED(31) CONSTANT(28); /* INVALID CANCEL REQUEST -
+*                                           CANNOT CANCEL AN ACTIVE TSO
+*                                           USER OR STARTED TASK /
+*                                           TSO USERS MAY NOT CANCEL
+*                                           THE ABOVE JOBS UNLESS THEY
+*                                           ARE ON AN OUTPUT QUEUE
+*                                                             YM06036*/
+*   /*  S S C S                                                      */
+*  DECLARE
+*   1       SSCS          SSOBCS,   /* CANCEL/STATUS FUNCTION
+*                                      DEPENDENT SECTION             */
+*     2       SSCSLEN     FIXED(15),/* LENGTH OF SSCS                */
+*     2       SSCSFLGS    BIT(8),   /* USER SELECTION FLAGS          */
+*       3       SSCSUSID  BIT(1),   /* USERID IS IN JOBNAME FIELD    */
+*       3       SSCSCOUT  BIT(1),   /* CANCEL THE JOBS OUTPUT  Y02886*/
+*       3       *         BIT(6),   /* RESERVED FLAGS                */
+*     2       SSCSULEN    PTR(8),   /* USERID LENGTH                 */
+*     2       SSCSJOBN    CHAR(8),  /* JOB NAME                      */
+*     2       SSCSJOBI    CHAR(8),  /* JOB ID OR BLANKS              */
+*     2       SSCSDIMP    FIXED(15),/* SET BY CALLER TO INDICATE
+*                                      SIZE OF ARRAY AVAIL. TO SUBSYS.
+*                                      TO STORE RESULTS IN           */
+*     2       SSCSDIMR    FIXED(15),/* SET BY SUBSYSTEM TO INDICATE
+*                                      IF NOT ENOUGH AVAILABLE       */
+*/********************************************************************/
+*/*                                                                  */
+*/* SSCSARAY MAPS AN ELEMENT OF AN ARRAY GOTTEN BY THE CALLER FOR    */
+*/* THE SUBSYSTEM TO RETURN RESULTS IN.  IF MORE THAN ONE ELEMENT    */
+*/* EXISTS, ADDRESSABILITY TO THIS ARRAY MUST BE UPDATED BY THE      */
+*/* ELEMENT SIZE (SSCSELSZ). THE TOTAL ARRAY SPACE USED FOR JOB      */
+*/* STATUS REPLIES FROM THE SUBSYSTEM(ARRAY ELEMENT SIZE IN BYTES    */
+*/* TIMES THE NUMBER OF ELEMENTS) MUST BE INDICATED IN SSCSDIMR.     */
+*/* MESSAGES MUST FOLLOW THE LAST SSCSARAY ELEMENT USED FOR JOB      */
+*/* STATUS.                                                          */
+*/*                                                                  */
+*/********************************************************************/
+*     2  SSCSARAY (CSARAYSZ) CHAR(16) BDY (WORD), /* 1 OR MORE AREAS
+*                              GOTTEN BY  THE CALLER, FOR THE SUBSYSTEM
+*                                         TO RETURN RESULTS IN
+*                                         (USED FOR STATUS ONLY)     */
+*       3       SSCSARID    CHAR(8), /* JOB IDENTIFIER               */
+*       3       SSCSFLG1    BIT(8),  /* SET BY SUBSYSTEM             */
+*         4       SSCSJACT  BIT(1),   /* JOB IS CURRENTLY ACTIVE
+*                                      (EXECUTING AFTER BEING GIVEN
+*                                      CONTROL BY THE INITIATOR)     */
+*         4       SSCSEXCQ  BIT(1),   /* JOB IS WAITING FOR EXECUTION
+*                                       (ON A PRE-EXECUTION QUEUE)   */
+*         4       SSCSOUTQ  BIT(1),   /* JOB IS ON OUTPUT QUEUE      */
+*         4       SSCSHOLD  BIT(1),   /* JOB IS HELD IN ITS CURRENT
+*                                        QUEUE                       */
+*         4       SSCSSECL  BIT(1),   /* JOB HAS A 2ND LEVEL MSG     */
+*         4       SSCSNJEA  BIT(1),   /* JOB ACTIVE IN NJE   @AZ53114*/
+*         4       *         BIT(2),   /* RESERVED                    */
+*       3       SSCSUJOB    CHAR(1),  /* JOBNAME CHARACTER RETURNED
+*                                 BY SYBSYSTEM FOR USERID AS JOBNAME */
+*       3       *           CHAR(2),  /* RESERVED                    */
+*       3       SSCSMPTR    PTR(31);  /* POINTER TO MESSAGE RETURNED
+*                                        IN ARRAY                   */
+*/********************************************************************/
+*/*                                                                  */
+*/*THE SECOND LEVEL MESSAGE AREA IS MAPPED BY A MULTI-LEVEL PUTLINE  */
+*/*OUTPUT LINE DESCRIPTOR (OLD).  THE FIRST 9 BYTES OF THE FIRST OR  */
+*/*ONLY MESSAGE SEGMENT ARE RESERVED FOR THE INSERTION OF A MESSAGE  */
+*/*ID BY THE CALLER.  ONE TO 62 BYTES OF MESSAGE TEXT MAY BE PROVIDED*/
+*/*BY THE SUBSYSTEM. A MAPPING OF THE OLD FORMAT NEEDED FOLLOWS.     */
+*/*                                                                  */
+*/* SSCSMPTR -> ONE TSO PUTLINE OUTPUT LINE DESCRIPTOR (OLD)         */
+*/*   +0 0 (NO OTHER OLD)                                            */
+*/*   +4 NUMBER OF MESSAGE SEGMENTS                                  */
+*/*   +8 PTR TO FIRST MESSAGE SEGMENT                                */
+*/*   +. PTR TO NTH MESSAGE SEGMENT                                  */
+*/*   ........ MESSAGE SEGMENT FORMAT......                          */
+*/*   +0 TOTAL LENGTH OF MSG SEGMENT (INCLUDING THIS FIELD)          */
+*/*   +2 0 IF FIRST SEGMENT, OR OFFSET FOR INSERT IN FIRST           */
+*/*   +4 10 BLANKS FOR MSG ID (ONLY IN FIRST SEGMENT)                */
+*/*   +D MESSAGE TEXT (1-62 BYTES TOTAL FOR ALL SEGMENTS)            */
+*/*                                                                  */
+*/********************************************************************/

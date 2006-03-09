@@ -1,0 +1,303 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    IHBRDWRD &DECB,&TYPE,&DCB,&AREA,&LENGTH,&KEYADR,&RCDREF,&NEXT,X
+               &MF=I
+.*       CHANGE LEVEL 01   06JUL72
+         GBLB  &IHBWR,&IHBT(2),&IHBS(4)
+         LCLB  &B1,&B2,&B3,&B4,&B5,&B6,&B7,&B8,&B9,&BA,&NULL,&ISW
+         LCLC  &PARA,&D
+         LCLB  &ESW,&Z1,&Z2,&Z3
+         LCLA  &CTR,&CTRA,&L1,&L2  SET A SYMBOL
+         LCLB  &CHAR5              5TH CHAR FOR TYPE
+&CHAR5   SETB  (K'&TYPE EQ 5)      SET IF TYPE IS 5 CHAR
+&L1      SETA  K'&TYPE             LAST CHAR OF TYPE
+&L2      SETA  K'&TYPE-1          LAST-1 CHAR OF TYPE
+&CTRA    SETA  111+30*&IHBWR
+         AIF   (&L2 LT 1).E3      MORE THAN 1 TYPE CHAR?         M3543
+&B9      SETB  ('&TYPE'(&L1,1) EQ 'R' OR '&TYPE'(&L2,1) EQ 'R')
+.*                                 SET IF 'R' IS SPECIFIED
+&BA      SETB  ('&TYPE'(&L1,1) EQ 'U' OR '&TYPE'(&L2,1) EQ 'U')
+.*                                 SET IF 'U' IS SPECIFIED
+&D       SETC  'NEXT ADD'               FOR ERROR MSG
+         AIF   ('&NEXT' EQ '' AND &B9 AND '&MF' EQ 'I').E13  ERROR
+         AIF   (NOT &B9 AND &BA).E13    ERROR
+         AIF   ('&MF' NE 'L').BD1
+         AIF   ('&DECB'(1,1) EQ '(').E5
+&NAME    DS    0F
+&DECB    DC    A(0)                              EVENT CONTROL BLOCK
+         AIF   (&IHBS(1)).ALLDONE
+.SETROUT AIF   (&IHBS(2)+&IHBS(3)+&IHBS(4)+&CHAR5 NE 1).E1  MNOTE
+&B7      SETB  ('&TYPE'(2,1) EQ 'K')
+&B8      SETB  ('&TYPE'(2,1) EQ 'A')
+&NULL    SETB  ('&TYPE'(2,1) EQ 'I')
+         AIF   (&B7+&B8+&NULL NE 1).E2
+         AIF   (NOT &IHBWR AND &B8).E2
+         AIF   (&IHBS(2)).ALLDONE
+&B3      SETB  ('&TYPE'(3,1) EQ 'X')
+&B1      SETB  ('&TYPE'(3,1) EQ 'F')
+&B9      SETB  ('&TYPE'(3,1) EQ 'R')    SET IF 'R'
+&BA      SETB  ('&TYPE'(3,1) EQ 'U')    SET IF 'U'
+         AIF   ( NOT(&B1 OR &B3 OR &B9 OR &BA)).E3 INVALID TYPE
+         AIF   (&B3 AND &B8).E3
+         AIF   (&IHBS(3)).ALLDONE
+&B3      SETB  ('&TYPE'(4,1) EQ 'X' OR '&TYPE'(3,1) EQ 'X') TYPE
+&B9      SETB  ('&TYPE'(4,1) EQ 'R')    SET IF 'R'
+&BA      SETB  ('&TYPE'(4,1) EQ 'U')    SET IF 'U'
+         AIF   (NOT (&B3 OR &BA OR &B9)).E4  INVALID TYPE
+         AIF   (&IHBS(4)).ALLDONE       GOTO ALL DONE
+         AIF   (NOT('&TYPE'(5,1) EQ 'R' OR '&TYPE'(5,1) EQ 'U')).E4
+.*                                 TYPE ERROR
+.ALLDONE ANOP
+&B2      SETB  ('&AREA' EQ '''S''')
+&B4      SETB  ('&KEYADR' EQ '''S''')
+&B5      SETB  ('&LENGTH' EQ '''S''')
+&B6      SETB  (NOT &IHBWR)
+&B9      SETB  ('&TYPE'(&L1,1) EQ 'R' OR '&TYPE'(&L2,1) EQ 'R')
+.*                                 SET IF 'R' IS SPECIFIED
+&BA      SETB  ('&TYPE'(&L1,1) EQ 'U' OR '&TYPE'(&L2,1) EQ 'U')
+.*                                 SET IF 'U' IS SPECIFIED
+         AIF   (&ESW).ERETURN
+         DC    BL1'000&B1.0&B2&B3.0'             TYPE FIELD
+         DC    BL1'&B4&B5&BA&B9&B6&B7&B8.0'  TYPE FIELD
+         AIF   (&ISW).IRETURN
+         AIF   (&B5 OR '&LENGTH' EQ '').PUTZERA
+         AIF   ('&LENGTH'(1,1) EQ '(').E5
+         DC    AL2(&LENGTH)                      LENGTH
+         AGO   .CHKDCB
+.E1      IHBERMAC 48,&CTRA,&TYPE
+         MEXIT
+.E2      IHBERMAC 64,&CTRA,&TYPE
+         MEXIT
+.E3      IHBERMAC 65,&CTRA,&TYPE
+         MEXIT
+.E4      IHBERMAC 66,&CTRA,&TYPE
+         MEXIT
+.E5      IHBERMAC 69,&CTRA
+         MEXIT
+.E6      IHBERMAC 87,&CTRA
+         MEXIT
+.PUTZERA DC    AL2(0)                            LENGTH
+.CHKDCB  AIF   ('&DCB' EQ '').NODCB
+         AIF   ('&DCB'(1,1) EQ '(').E5
+         DC    A(&DCB)                           DCB ADDRESS
+         AGO   .CHKAREA
+.NODCB   DC    A(0)                              DCB ADDRESS
+.CHKAREA AIF   (&B2 OR '&AREA' EQ '').NOAREA
+         AIF   ('&AREA'(1,1) EQ '(').E5
+         DC    A(&AREA)                          AREA ADDRESS
+         AGO   .CHKIOB
+.NOAREA  DC    A(0)                              AREA ADDRESS
+.CHKIOB  DC    A(0)                              IOB ADDRESS
+.CHKKEY  AIF   (&B4 OR '&KEYADR' EQ '').NOKEY
+         AIF   ('&KEYADR'(1,1) EQ '(').E5
+         DC    A(&KEYADR)                        KEY ADDRESS
+         AGO   .CHKRR
+.NOKEY   DC    A(0)                              KEY ADDRESS
+.CHKRR   AIF   ('&RCDREF' EQ '').NORR
+         AIF   ('&RCDREF'(1,1) EQ '(').E5
+         DC    A(&RCDREF)                        BLKREF ADDRESS
+         AGO   .CHKFD1             GOTO CHECK NEXT ADDR
+.NORR    DC    A(0)                              BLKREF ADDRESS
+.CHKFD1  AIF   ('&NEXT' EQ '').NONXTAD  NO &NEXT,SEE IF RQUIRED SA52366
+         AIF   ('&NEXT'(1,1) EQ '(').E5      GOTO ERROR
+         DC    AL4(&NEXT)          NEXT ADDRESS
+         AGO   .END
+.NONXTAD AIF   (NOT &B9).END            BR IF R NOT CODED       SA52366
+         DC    A(0)                NEXT ADDRESS
+         MEXIT                                                  SA52366
+.BD1     AIF   ('&MF' NE 'I').EROUT
+         AIF   ('&DECB'(1,1) EQ '(').E6
+         CNOP  0,4
+         AIF   (&B9 AND '&NEXT' EQ '').E13   GOTO MNOTE
+         AIF   (NOT &B9).NONOFD    SKIP NEXT ADDRESS
+&NAME    BAL   1,*+36              LOAD DECB ADDRESS
+         AGO   .GOGOGO             SKIP TO CHECK DECB
+.NONOFD  ANOP
+&NAME    BAL   1,*+32                            LOAD DECB ADDRESS
+.GOGOGO  ANOP
+&DECB    DC    A(0)                              EVENT CONTROL BLOCK
+&ISW     SETB  1
+         AGO   .SETROUT
+.IRETURN AIF   ('&LENGTH' EQ '').PUTZERB
+         AIF   ('&LENGTH'(1,1) EQ '(' OR &B5).PUTZERB
+         DC    AL2(&LENGTH)                      LENGTH
+         AGO   .CKDCB
+.PUTZERB DC    AL2(0)                            LENGTH
+.CKDCB   AIF   ('&DCB' EQ '').E8
+         AIF   ('&DCB'(1,1) EQ '(').PUTZERC
+         DC    A(&DCB)                           DCB ADDRESS
+         AGO   .CKAREA
+.PUTZERC DC    A(0)                              DCB ADDRESS
+.CKAREA  AIF   ('&AREA' EQ '').E9
+         AIF   (&B2 OR '&AREA'(1,1) EQ '(').PUTZERD
+         DC    A(&AREA)                          AREA ADDRESS
+         AGO   .CKIOB
+.PUTZERD DC    A(0)                              AREA ADDRESS
+.CKIOB   DC    A(0)                              IOB ADDRESS
+.CKKEY   AIF   ('&KEYADR' EQ '').E11
+         AIF   ('&KEYADR'(1,1) EQ '(' OR &B4).PUTZERF
+         DC    A(&KEYADR)                        KEY ADDRESS
+         AGO   .CKRR
+.PUTZERF DC    A(0)                              KEY ADDRESS
+.CKRR    AIF   ('&RCDREF' EQ '').E10
+         AIF   ('&RCDREF'(1,1) EQ '(').PUTZERE
+         DC    A(&RCDREF)                        BLKREF ADDRESS
+         AGO   .CONT
+.PUTZERE DC    A(0)                              BLKREF ADDRESS
+.CONT    AIF   (NOT &B9).CONTIN    NO &NEXT,SKIP EXPANSION
+         AIF   ('&NEXT'(1,1) EQ '(').FEEDRG  GOTO REG &NEXT
+         DC    AL4(&NEXT)          NEXT ADDRESS
+         AGO   .CONTIN             GOTO CHECK &LENGTH
+.FEEDRG  DC    AL4(0)              NEXT ADDRESS
+         ST    &NEXT(1),28(0,1)    STORE NEXT ADDRESS
+.CONTIN  AIF   ('&LENGTH' EQ '').TSTDCB      GOTO TEST DCB
+         AIF   ('&LENGTH'(1,1) NE '(').TSTDCB
+         STH   &LENGTH(1),6(0,1)                 STORE LENGTH
+.TSTDCB  AIF   ('&DCB'(1,1) NE '(').TSTAREA
+         ST    &DCB(1),8(0,1)                    STORE DCB ADDRESS
+.TSTAREA AIF   ('&AREA'(1,1) NE '(').TSTRR
+         ST    &AREA(1),12(0,1)                  STORE AREA ADDRESS
+.TSTRR   AIF   ('&RCDREF'(1,1) NE '(').TSTKEY
+         ST    &RCDREF(1),24(0,1)                STORE BLKREF ADDRESS
+.TSTKEY  AIF   ('&KEYADR'(1,1) NE '(').CONTA
+         ST    &KEYADR(1),20(0,1)                   STORE KEY ADDRESS
+.CONTA   AIF   ('&DCB' EQ '').CONTAA
+         AIF   ('&DCB'(1,1) EQ '(').REGDCB
+&CTR     SETA  K'&DCB
+         AIF   ('&DCB'(&CTR,1) EQ ')').CONTAA
+         L     15,&DCB+48                        LOAD RDWR ROUTINE ADDR
+         AGO   .FINISH
+.CONTAA  L     15,8(0,1)                         LOAD DCB ADDRESS
+         L     15,48(0,15)                       LOAD RDWR ROUTINE ADDR
+.FINISH  BALR  14,15                             LINK TO RDWR ROUTINE
+         AGO   .END
+.REGDCB  L     15,48(0,&DCB(1))                  LOAD RDWR ROUTINE ADDR
+         AGO   .FINISH
+.EROUT   AIF   ('&MF(1)' NE 'E').E12
+         AIF   ('&DECB'(1,1) EQ '(').DECBREG
+&NAME    LA    1,&DECB                           LOAD DECB ADDRESS
+.CONTBAC ANOP
+         AIF   (&IHBS(1)).NOTYPE
+&ESW     SETB  1
+         AGO   .SETROUT
+.DECBREG AIF   ('&DECB' EQ '(1)').NAMEIT
+&NAME    LR    1,&DECB(1)                        LOAD DECB ADDRESS
+         AGO   .CONTBAC
+.NAMEIT  AIF   ('&NAME' EQ '').CONTBAC
+&NAME    DS    0H
+         AGO   .CONTBAC
+.ERETURN ANOP
+&Z1      SETB  ('&AREA' EQ '')
+&Z2      SETB  ('&KEYADR' EQ '')
+&Z3      SETB  ('&LENGTH' EQ '')
+         AIF   (&Z1+&Z2+&Z3 NE 0).CONTC
+&CTR     SETA  16*&B1+4*&B2+2*&B3
+         MVI   4(1),&CTR                         SET TYPE FIELD
+&CTR     SETA  128*&B4+64*&B5+32*&BA+8*&B6+4*&B7+2*&B8+16*&B9 TYPE
+         MVI   5(1),&CTR                         SET TYPE FIELD
+         AGO   .CONTD
+.CONTC   AIF   (&Z1).CONTE
+&CTR     SETA  16*&B1+4*&B2+2*&B3
+         MVI   4(1),&CTR                         SET TYPE FIELD
+         AGO   .CONTF
+.CONTE   NI    4(1),4                            MODIFY TYPE FIELD
+&CTR     SETA  16*&B1+2*&B3
+         AIF   (&CTR EQ 0).CONTF
+         OI    4(1),&CTR                         MODIFY TYPE FIELD
+.CONTF   AIF   (&Z2 OR &Z3).CONTG
+&CTR     SETA  128*&B4+64*&B5+32*&BA+8*&B6+4*&B7+2*&B8+16*&B9 TYPE
+         MVI   5(1),&CTR                         SET TYPE FIELD
+         AGO   .CONTD
+.CONTG   ANOP
+&CTR     SETA  128*&Z2+64*&Z3
+         NI    5(1),&CTR                         MODIFY TYPE FIELD
+&CTR     SETA  128*&B4+64*&B5+32*&BA+8*&B6+4*&B7+2*&B8+16*&B9 TYPE
+         AIF   (&CTR EQ 0).CONTD
+         OI    5(1),&CTR                         MODIFY TYPE FIELD
+         AGO   .CONTD
+.NOTYPE  AIF   ('&AREA' EQ '').CONTH
+         AIF   ('&AREA' EQ '''S''').CONTI
+         NI    4(1),18                           MODIFY TYPE FIELD
+         AGO   .CONTH
+.CONTI   OI    4(1),4                            MODIFY TYPE FIELD
+.CONTH   AIF   ('&KEYADR' EQ '' AND '&LENGTH' EQ '').CONTJ
+&B4      SETB  ('&KEYADR' EQ '''S''')
+&B5      SETB  ('&LENGTH' EQ '''S''')
+&B6      SETB  (NOT &IHBWR)
+         AIF   ('&KEYADR' EQ '').CONTK
+         AIF   ('&LENGTH' EQ '').CONTL
+         NI    5(1),6                            MODIFY TYPE FIELD
+&CTR     SETA  128*&B4+64*&B5+8*&B6
+         AIF   (&CTR EQ 0).CONTD
+         OI    5(1),&CTR                         MODIFY TYPE FIELD
+         AGO   .CONTD
+.CONTL   NI    5(1),70                           MODIFY TYPE FIELD
+&CTR     SETA  128*&B4+8*&B6
+         AIF   (&CTR EQ 0).CONTD
+         OI    5(1),&CTR                         MODIFY TYPE FIELD
+         AGO   .CONTD
+.CONTK   NI    5(1),134                          MODIFY TYPE FIELD
+&CTR     SETA  64*&B5+8*&B6
+         AIF   (&CTR EQ 0).CONTD
+         OI    5(1),&CTR                         MODIFY TYPE FIELD
+         AGO   .CONTD
+.CONTJ   AIF   (&IHBWR).CONTM
+         OI    5(1),8                            MODIFY TYPE FIELD
+         AGO   .CONTD
+.CONTM   NI    5(1),198                          MODIFY TYPE FIELD
+.CONTD   AIF   ('&LENGTH' EQ '' OR '&LENGTH' EQ '''S''').XLENGTH
+         AIF   ('&LENGTH'(1,1) NE '(').NOREGA
+         STH   &LENGTH(1),6(0,1)                 STORE LENGTH
+         AGO   .XLENGTH
+.NOREGA  AIF   (NOT &IHBT(1)).LARGEL
+         AIF   (&LENGTH GT 4095).LARGEL
+         LA    14,&LENGTH.(0,0)                  PICK UP LENGTH
+         STH   14,6(0,1)                         STORE LENGTH
+         AGO   .XLENGTH
+.LARGEL  B     *+6                               BRANCH AROUND LENGTH
+         DC    AL2(&LENGTH)                      LENGTH
+         MVC   6(2,1),*-2                        MOVE IN LENGTH
+.XLENGTH AIF   ('&DCB' EQ '').XDCB
+         AIF   ('&DCB'(1,1) EQ '(').DCBRG
+         LA    14,&DCB                           PICK UP DCB ADDRESS
+         ST    14,8(0,1)                         STORE DCB ADDRESS
+         AGO   .XDCB
+.DCBRG   ST    &DCB(1),8(0,1)                    STORE DCB ADDRESS
+.XDCB    AIF   ('&AREA' EQ '' OR '&AREA' EQ '''S''').XAREA
+         AIF   ('&AREA'(1,1) EQ '(').AREARG
+         LA    14,&AREA                          PICK UP AREA ADDRESS
+         ST    14,12(0,1)                        STORE AREA ADDRESS
+         AGO   .XAREA
+.AREARG  ST    &AREA(1),12(0,1)                  STORE AREA ADDRESS
+.XAREA   AIF   ('&RCDREF' EQ '').XRR
+         AIF   ('&RCDREF'(1,1) EQ '(').RRREG
+         LA    14,&RCDREF                        PICK UP BLKREF ADDRESS
+         ST    14,24(0,1)                        STORE BLKREF ADDRESS
+         AGO   .XRR
+.RRREG   ST    &RCDREF(1),24(0,1)                STORE BLKREF ADDRESS
+.XRR     AIF   ('&KEYADR' EQ '' OR '&KEYADR' EQ '''S''').CONTAAA
+         AIF   ('&KEYADR'(1,1) EQ '(').KEYREG
+         LA    14,&KEYADR                        PICK UP KEY ADDRESS
+         ST    14,20(0,1)                        STORE KEY ADDRESS
+         AGO   .CONTAAA            GOTO CHECK &NEXT
+.KEYREG  ST    &KEYADR(1),20(0,1)                STORE KEY ADDRESS
+.CONTAAA AIF   (NOT &B9 OR '&NEXT' EQ '').CONTA   SKIP,NO NEXT
+         AIF   ('&NEXT'(1,1) EQ '(').REGFDD  GOTO &NEXT IN REG
+         LA    14,&NEXT            LOAD NEXT ADDRESS
+         ST    14,28(0,1)          STORE NEXT ADDRESS IN DECB
+         AGO   .CONTA              GOTO CHECK &DCB
+.REGFDD  ST    &NEXT(1),28(0,1)    STORE NEXT ADDRESS IN DECB
+         AGO   .CONTA
+.E8      IHBERMAC 06,&CTRA
+         MEXIT
+.E9      IHBERMAC 13,&CTRA
+         MEXIT
+.E10     IHBERMAC 12,&CTRA
+         MEXIT
+.E11     IHBERMAC 08,&CTRA
+         MEXIT
+.E12     IHBERMAC 35,&CTRA,&MF
+         MEXIT                    GET OUT
+.E13     IHBERMAC 46,,&D           NEXT ADDRESS IS MISSING
+.END     MEND
+

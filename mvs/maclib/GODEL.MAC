@@ -1,0 +1,19 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GODEL &START,&PARTAB
+         AIF   (T'&START EQ 'O' OR T'&PARTAB EQ 'O').ERR1
+         AIF   (T'&START EQ 'N').ERR2
+         AIF   (T'&PARTAB EQ 'N').ERR3
+IHBG&SYSNDX EQU *
+         ORG   &PARTAB
+         DC    A(&START)
+         DC    A(IHBG&SYSNDX-&START)
+         ORG
+         MEXIT
+.ERR1    IHBERMAC  1
+         MEXIT
+.ERR2    IHBERMAC  36,,&START
+         MEXIT
+.ERR3    IHBERMAC  37,,&PARTAB
+         MEND
+

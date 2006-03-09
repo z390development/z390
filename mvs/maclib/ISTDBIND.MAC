@@ -1,0 +1,242 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*    THIS STRUCTURE MAY BE USED TO MAP THE SESSION PARAMETERS
+*    OR THE DATA PORTION OF A BIND RU.
+*
+*    INITIAL LEVEL (LEVEL SET TO CURRENT BIND LEVEL)  005 02/07/75
+         MACRO
+         ISTDBIND
+ISTDBIND DSECT
+BINFMTY  DS    C                   BIND FORMAT AND TYPE
+BINFMT   EQU   X'F0'               BIND FORMAT
+BINTYPE  EQU   X'0F'               BIND TYPE
+BINFM    DS    C                   FUNCTION MANAGEMENT PROFILE
+BINTS    DS    C                   TRANSMISSION SERVICES PROFILE
+BINPRIP  DS    C                   PRIMARY NAU PROTOCOLS
+BINPCHN  EQU   X'80'               1 = MULTIPLE RU CHAINS,
+*                                  0 = SINGLE RU CHAINS
+BINPMCH  EQU   X'40'               1 = MULTIPLE OUTSTANDING CHAINS
+*                                  (DELAYED REQUEST MODE)
+*                                  0 = SINGLE OUTSTANDING CHAIN
+*                                  (IMMEDIATE REQUEST MODE)
+BINPCHNR EQU   X'30'               CHAIN RESPONSE PROTOCOL
+BINRSV01 EQU   X'0C'               RESERVED
+BINPCMP  EQU   X'02'               1 = COMPRESSION MAY BE USED,
+*                                  0 = COMPRESSION MUST NOT BE USED
+BINPSEB  EQU   X'01'               1 = PRIMARY MAY SEND EB,
+*                                  0 = PRIMARY WILL NOT SEND EB
+BINSECP  DS    C                   SECONDARY NAU PROTOCOLS
+BINSCHN  EQU   X'80'               1 = MULTIPLE RU CHAINS,
+*                                  0 = SINGLE RU CHAIN
+BINSMCH  EQU   X'40'               1 = MULTIPLE OUTSTANDING CHAINS
+*                                  (DELAYED REQUEST MODE)
+*                                  0 = SINGLE OUTSTANDING CHAIN
+*                                  (IMMEDIATE REQUEST MODE)
+BINSCHNR EQU   X'30'               CHAIN RESPONSE PROTOCOLS
+BINRSV02 EQU   X'0C'               RESERVED
+BINSCMP  EQU   X'02'               1 = COMPRESSION MAY BE USED
+*                                  0 = COMPRESSION MUST NOT BE USED
+BINSSEB  EQU   X'01'               1 = SECONDARY MAY SEND EB,
+*                                  0 = SECONDARY WILL NOT SEND EB
+BINCMNP  DS    C                   COMMON NAU PROTOCOLS
+BINRSV03 EQU   X'80'               RESERVED
+BINFMHD  EQU   X'40'               1 = FM HEADERS MAY BE USED
+*                                  0 = FM HEADERS MUST NOT BE USED
+BINBRAK  EQU   X'20'               1 = BRACKETS WILL BE USED,
+*                                  0 = BRACKETS WILL NOT BE USED
+BINBKTR  EQU   X'10'               1 = CONDITIONAL TERMINATION
+*                                  0 = UNCONDITIONAL TERMINATION
+BINALT   EQU   X'08'               1 = ALTERNATE CODE MAY BE USED
+*                                  0 = ALT. CODE MUST NOT BE USED
+BINRSV04 EQU   X'07'               RESERVED
+BINCMNP2 DS    C                   COMMON NAU PROTOCOLS
+BINFMTRM EQU   X'C0'               FM TRANSACTION MODE
+BINRCVR  EQU   X'20'               1 = SENDER OF RU RESPONSIBLE
+*                                  FOR RECOVERY,  0 = PRIMARY
+*                                  RESPONSIBLE FOR RECOVERY
+BINBKFS  EQU   X'10'               1 = PRIMARY IS BRACKETS
+*                                  FIRST SPEAKER,  0 = SECONDARY
+*                                  IS BRACKETS FIRST SPEAKER
+BINMDIBK EQU   X'0C'               RESERVED
+BINRCHN  EQU   X'02'               RESERVED
+BINCONR  EQU   X'01'               CONTENTION RESOLUTION-
+*                                  FOR HDX FLIP-FLOP:
+*                                  1 = PRIMARY SPEAKS FIRST WHEN
+*                                  DATA TRAFFIC RESET STATE IS LEFT
+*                                  0 = SECONDARY SPEAKS FIRST WHEN
+*                                  DATA TRAFFIC RESET STATE IS LEFT
+*                                  FOR HDX CONTENTION:
+*                                  1 = PRIMARY WINS CONTENTION
+*                                  0 = SECONDARY WINS CONTENTION
+BINTSU   DS    CL6                 TS USAGE
+BINPRSVC DS    CL12                PRESENTATION SERVICES
+BINRSV05 DS    C                   RESERVED
+BINPRIML DS    C                   PRIMARY NAU NAME LENGTH
+BINPRIM  DS    8C                  PRIMARY NAU NAME
+BINUSEL  DS    C                   USER DATA LENGTH
+BINUSE   EQU   *                   USER DATA
+BINUSERD EQU   X'00'               USER DATA LENGTH DEFAULT
+*
+*  OVERLAY FOR 'BINTSU' (TS USAGE)
+         ORG   BINTSU
+BINRSV06 DS    C                   RESERVED
+BINRPACE DS    C                   SLU RECEIVE PACING COUNT
+BINRSV07 EQU   X'C0'               RESERVED
+BINRPACM EQU   X'3F'               SLU RECEIVE PACING COUNT
+BINRUSZ  DS    0CL2                RU SIZES
+BINSRUSZ DS    C                   SLU MAXIMUM SEND RU SIZE
+BINPRUSZ DS    C                   PLU MAXIMUM SEND RU SIZE
+BINRUSZM EQU   X'F0'               MANTISSA (M)
+BINRUSZE EQU   X'0F'               EXPONENT (E)  SIZE=M*2**E
+BINRSV08 DS    CL2                 RESERVED
+*
+*  OVERLAY FOR 'BINPRSVC' (PRESENTATION SERVICES)
+         ORG   BINPRSVC
+BINLUP   DS    C                   LU PROFILE
+BINRSV27 EQU   X'80'               RESERVED
+BINLUTYP EQU   X'7F'               LU TYPE
+BINPSCHR DS    CL11                LU PROFILE DEPENDENT PRESENTATION
+*                                  SERVICES CHARACTERISTICS
+*
+*  OVERLAY FOR 'BINPSCHR' (PRESENTATION SERVICES CHARACTERISTICS
+*                          FOR LU PROFILE 1.)
+         ORG   BINPSCHR
+BINLUP1  DS    X                   LU PROFILE 1 FMHS AND DSN
+BINFMHS1 EQU   X'F0'               FM HEADER SUBSET
+BINDSP1  EQU   X'0F'               DATA STREAM PROFILE
+BINPLUS1 DS    0XL5                PLU USAGE
+BINPFMF1 DS    0XL2                FMH SUBSET DEPENDENT FLAGS
+BINPFMB1 DS    X                   FIRST BYTE
+BINPFMB2 DS    X                   SECOND BYTE
+BINPDSP1 DS    0XL2                DATA STREAM FLAGS FOR DSP0 & DSP1
+BINPDSB1 DS    X                   FIRST BYTE
+BINPDSB2 DS    X                   SECOND BYTE (RESERVED)
+BINPMED1 DS    X                   MEDIA FLAGS
+BINSLUS1 DS    0XL5                SLU USAGE
+BINSFMF1 DS    0XL2                FMH SUBSET DEPENDENT FLAGS
+BINSFMB1 DS    X                   FIRST BYTE
+BINSFMB2 DS    X                   SECOND BYTE
+BINSDSP1 DS    0XL2                DATA STREAM FLAGS FOR DSP0 & DSP1
+BINSDSB1 DS    X                   FIRST BYTE
+BINSDSB2 DS    X                   SECOND BYTE (RESERVED)
+BINSMED1 DS    X                   MEDIA FLAGS
+*
+*  FLAGS FOR LU PROFILE 1
+*
+*  FLAGS FOR BINPFMB1 AND BINSFMB1 (FIRST BYTE OF FM HEADER FLAGS)
+BINDESTS EQU   X'80'               NUMBER OF OUTSTANDING DESTINATIONS
+*                                  (0=TRANSMISSION MAY BE INTERUPTED
+*                                   ONCE, 1=TWICE.
+BINCMPCT EQU   X'40'               0=PRIMARY WILL NOT SEND COMPACTION
+*                                  TABLE HEADERS/SECONDARY WILL NOT
+*                                  QUERY FOR COMPACTION TABLES.
+*                                  1=PRIMARY MAY SEND/SECONDARY MAY Q.
+BINPDIR  EQU   X'20'               0=PDIR WILL NOT BE SENT
+*                                  1=PDIR MAY BE SENT
+BINRSV09 EQU   X'1F'               RESERVED FOR FMHS1
+*  ADDITIONAL FLAGS FOR FMHS3
+BINKDDSI EQU   X'10'               0=KEYED DIRECT DATA SET WILL NOT BE
+*                                  SENT, 1=MAY BE SENT.
+BINSDSI  EQU   X'08'               0=SEQUENTIAL DATA SETS WILL NOT BE
+*                                  SENT, 1=MAY BE SENT.
+BINSAI   EQU   X'04'               0=SEQUENTIAL ACCESS TO ADDRESSED
+*                                  DIRECT DATA SET WILL NOT BE SENT,
+*                                  1=MAY BE SENT.
+BINSIDS  EQU   X'02'               0=SERIES ID NOT SUPPORTED (WITH
+*                                  STATUS IN REPLY), 1=SUPPORTED.
+BINARRR  EQU   X'01'               0=ADD REPLICATE, REPLACE REPLICATE
+*                                  NOT SUPPORTED,  1=SUPPORTED.
+*  FLAGS FOR BINPFMB2 AND BINSFMB2 (SECOND BYTE OF FM HEADER FLAGS)
+BINRSV17 EQU   X'FF'               RESERVED FOR FMHS1
+*  ADDITIONAL FLAGS FOR FMHS3
+BINRSV16 EQU   X'80'               RESERVED
+BINQDSI  EQU   X'40'               0=QUERY DATA SET NOT SUPPORTED,
+*                                  1=SUPPORTED.
+BINCSDS  EQU   X'20'               0=CREATE/SCRATCH/SCRATCH ALL DATA
+*                                  SET NOT ALLOWED, 1=ALLOWED.
+BINXFPD  EQU   X'10'               0=EXECUTE FP DELAYED NOT ALLOWED,
+*                                  1=ALLOWED.
+BINRSV11 EQU   X'0F'               RESERVED FOR FMHS3
+*
+*  FLAGS FOR 'BINPDSB1 AND BINSDSB1' (PLU/SLU DATA STREAM
+*                                     FLAGS FOR DSP0 AND DSP1)
+BININTR  EQU   X'80'               INTERACTIVE DATA STREAM (BS,CR,LF,
+*                                  ENP,INP)-0=WILL NOT BE SENT,
+*                                  1=MAY BE SENT.
+BINHFDS  EQU   X'40'               HORIZONTAL FORMAT, DATA STREAM(SHF,
+*                                  HT)-0=WILL NOT BE SENT,1=MAY BE SENT
+BINVTDS  EQU   X'20'               VERTICAL TAB DATA STREAM (SVF,VT)-
+*                                  0=WILL NOT BE SENT, 1=MAY BE SENT.
+BINVSDS  EQU   X'10'               VERTICAL SELECT DATA STREAM (SVF
+*                                  (CHANNELS),SEL)-0=WILL NOT BE SENT,
+*                                  1=MAY BE SENT.
+BINRSV12 EQU   X'0E'               RESERVED
+BINTRNDS EQU   X'01'               TRANSPARENCY DATA STREAM (TRN,IRS)-
+*                                  0=WILL NOT BE SENT, 1=MAY BE SENT.
+*
+*  FLAGS FOR BINPMED1 AND BINSMED1 (PLU/SLU MEDIA FLAGS)
+BINDOCMT EQU   X'80'               0=DOCUMENT FORMAT WILL NOT BE SENT,
+*                                  1=MAY BE SENT.
+BINCARD  EQU   X'40'               0=CARD FORMAT WILL NOT BE SENT,
+*                                  1=MAY BE SENT.
+BINXCHNG EQU   X'20'               0=EXCHANGE MEDIA FORMAT WILL NOT BE
+*                                  SENT, 1=MAY BE SENT.
+BINDISK  EQU   X'10'               0=DISK FORMAT WILL NOT BE SENT,
+*                                  1=MAY BE SENT.
+BINRSV13 EQU   X'0F'               RESERVED
+*
+*  OVERLAY FOR 'BINPSCHR' (PRESENTATION SERVICES CHARACTERISTICS
+*                          FOR LU PROFILE 2)
+         ORG   BINPSCHR
+BINRSV14 DS    XL9                 RESERVED
+BINPRESZ DS    X                   PRESENTATION SPACE SIZE
+BINRSV15 DS    X                   RESERVED
+*
+*  OVERLAY FOR 'BINPSCHR' (PRESENTATION SERVICES CHARACTERISTICS
+*                          FOR LU TYPE 3
+         ORG   BINPSCHR
+BINRSV26 DS    XL11                RESERVED
+*
+*    VALUES FOR BINPCHNR/BINSCHNR
+*    (TYPE OF RESPONSES ASKED FOR BY REQUESTS FROM PRIMARY/SECONDARY)
+BINNORSP EQU   X'00'               NO RESPONSE
+BINEXRSP EQU   X'10'               NO RESPONSE OR
+*                                  EXCEPTION RESPONSE
+BINDFRSP EQU   X'20'               DEFINITE RESPONSE
+BINNYRSP EQU   X'30'               DEFINITE OR EXCEPTION RESPONSE
+*    VALUES FOR BINFMTRM  (TRANSACTION MODE)
+BINFLDPX EQU   X'00'               FULL DUPLEX
+BINHDXC  EQU   X'40'               HDX CONTENTION
+BINHDXFF EQU   X'80'               HDX FLIP FLOP
+BINMSTSL EQU   X'C0'               MASTER/SLAVE
+*    VALUES FOR BINTS (TRANSMISSION SERVICES PROFILE)
+BINTS0   EQU   X'00'               ID'S - NO RESET STATE
+BINTS1   EQU   X'01'               ID'S - NO RESET STATE
+BINTS2   EQU   X'02'               SEQ NOS - NO RESET STATE
+BINTS3   EQU   X'03'               SEQ NOS - RESET STATE
+BINTS4   EQU   X'04'               SEQ NOS - RESET STATE - STSN - RQR
+*    VALUES FOR BINTYPE (TYPE)
+BINCOLD  EQU   X'01'               COLD
+*    VALUES FOR BINFMT (FORMAT)
+BINFMT0  EQU   X'00'               FORMAT 0
+*  VALUES FOR BINSRUSZ AND BINPRUSZ (RU SIZES)
+BINRU256 EQU   X'85'               PRESENTATION OF 256 (8*2**5)
+*  VALUES FOR BINLUP (LU PROFILE)
+BINLUP1C EQU   X'01'               LU PROFILE 1
+BINLUP2C EQU   X'02'               LU PROFILE 2
+BINLUP3C EQU   X'03'               LU PROFILE 3
+*  VALUES FOR BINFMHS1 (FM HEADER FOR LU PROFILE)
+BINFMS1C EQU   X'10'               TYPE 1 HEADERS, DATA SET NAME FIELD
+*                                  NOT USED, ALSO ONLY BEGIN DATA SET
+*                                  AND END DATA SET IN SAME CHAIN CAN
+*                                  SHARE A CHAIN WITH DATA.
+BINFMS2C EQU   X'20'
+BINFMS3C EQU   X'30'               DATA MANAGEMENT SUBSET
+*  VALUES FOR BINDSP1 (DATA STREAM PROFILE)
+BINDSP0C EQU   X'00'               BASIC CONTROLS
+BINDSP1C EQU   X'01'               BASIC CONTROLS, CARDS MAY SPAN RUS
+*  VALUES FOR BINPRESZ (PRESENTATION SPACE SIZE)
+BINPSZ1  EQU   X'01'               12X40 CHARACTER MATRIX
+BINPSZ2  EQU   X'02'               24X80 CHARACTER MATRIX
+*  VALUES FOR BINDSP1 (DATA STREAM PROFILE)
+         MEND
+

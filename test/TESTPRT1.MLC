@@ -1,0 +1,32 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+         PRINT NOGEN
+TESTPRT1 SUBENTRY
+         WTO   'TESTPRT1 TEST PUSH/POP PRINT'
+         PRINT GEN
+         WTO   'TEST PRINT GEN'
+         PUSH  PRINT
+         PRINT OFF
+         WTO   'TEST PRINT OFF'
+         PRINT ON,NOGEN
+         WTO   'TEST PRINT ON,NOGEN'
+         PRINT OFF
+         POP   PRINT
+         WTO   'TEST BACK TO PRINT GEN AFTER POP'
+         WTO   'TESTPRT1 ENDED OK'
+         PRINT NOGEN
+         SUBEXIT
+DC1      DC    16AL1(*-DC1)
+         PRINT DATA
+DC2      DC    16AL1(*-DC2)
+DS1      DS    16AL1(*-DC2)
+LC1      LA    1,=16AL1(*-LC1)
+LC2      LA    1,=16AL1(*-LC1)
+         PRINT NODATA
+DC4      DC    16AL1(*-DC2)
+         END

@@ -1,0 +1,16 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    THI   &H,&I                    TEST HEADER UNDER IMM. MASK
+         LCLA  &V
+&V       SETA  &I
+         AIF   (&V LE 255).TH0
+         MNOTE 8,'***  IHB421 IMMEDIATE VALUE EXCEEDS ALLOWED MAXIMUM'
+.TH0     ANOP
+         AIF   ('&H' LT '12').TH1
+         MNOTE 8,'***  IHB354  HEADER BYTE NOT 0-11; 0 ASSUMED'
+&NAME    DC    0H'0',X'60',AL1(&I)
+         AGO   .END
+.TH1     ANOP
+&NAME    DC    0H'0',AL.4(6),AL.4(&H),AL1(&I)
+.END     MEND
+

@@ -1,0 +1,139 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO     SDUPLS;               /*  BILINGUAL HEADER
+         MACRO
+         IHASDUMP  &DSECT=YES                                        */
+*%SDUPLS: ;
+* /* MACMEAN SDUMP MEANS SDUMP PARAMETER LIST                        */
+* /* MACCOMP Y-2 SC1CM/PZD10                                         */
+* /* MACSTAT Y-1 78073/G64RPHD                                       */
+*        %GOTO SDUMPPLS;                 /*
+         AIF   ('&DSECT' EQ 'YES').SDU001
+SDUMP    DS    0F
+         AGO   .SDU002
+.SDU001  ANOP
+SDUMP    DSECT , SDUMPPTR                SDUMP PARAMETER LIST
+.SDU002  SPACE 2
+         IEZBITS
+SDUFLAG0 DS    X                       FIRST BYTE OF FLAGS
+SDUDCB   EQU   BIT0                    1=USER SUPPLIED DCB
+*                                      0=USE OF SYS1.DUMP DATA SET
+SDUBUF   EQU   BIT1                    1=DUMP 4K SQA BUFFER
+*                                      0=BYPASS 4K SQA BUFFER
+SDUSTOR  EQU   BIT2                    1=STORAGE LIST SPECIFIED
+*                                      0=NO STORAGE LIST
+SDUHDR   EQU   BIT3                    1=USER DATA SPECIFIED
+*                                      0=NO USER DATA
+SDUECB   EQU   BIT4                    1=ECB SPECIFIED
+*                                      0=ECB NOT SPECIFIED
+SDUASID  EQU   BIT5                    1=SCHEDULE DUMP REQUEST ASID
+*                                        SPECIFIED
+*                                      0=ASID NOT SPECIFIED
+SDUQUIET EQU   BIT6                    1=SET SYSTEM NON-DISPATCHABLE
+*                                        WHILE DUMPING SQA/CSA
+*                                      0=MAINTAIN CURRENT SYSTEM STATUS
+SDUBRANH EQU   BIT7                    1=BRANCH ENTRY
+*                                      0=SVC 51 ENTRY
+SDUFLAG1 DS    X                       SECOND BYTE OF FLAGS
+DUMPTYPE EQU   BIT0                    1=SVC DUMP REQUEST
+SDUABEND EQU   BIT1                    1=SYSMDUMP REQUEST
+SDUNEW   EQU   BIT2                    1=ENHANCED SVC DUMP REQUEST
+SDUASLST EQU   BIT3                    1=ASIDLST SPECIFIED
+SDUSULST EQU   BIT4                    1=SUMLIST SPECIFIED
+SDUIGNCD EQU   BIT5              1=IGNORE CHNGDUMP OPTIONS    @G64RPHD
+SDUTSOXT EQU   BIT6              1=TSO USER EXTENSION PRESENT @G64RPHD
+SDUSDATA DS    0XL2                    SDATA OPTION FLAGS     @G64RPHD
+SDUSDAT1 DS    X                       FIRST BYTE OF SDATA FLAGS
+SDUALPSA EQU   BIT0                    DUMP ALL PSA'S IN SYSTEM
+SDUPSA   EQU   BIT1                    DUMP THE CURRENT PSA
+SDUNUC   EQU   BIT2                    DUMP THE NUCLEUS
+SDUSQA   EQU   BIT3                    DUMP SQA
+SDULSQA  EQU   BIT4                    DUMP LSQA
+SDURGN   EQU   BIT5                    DUMP REGION (PRIVATE AREA)
+SDULPA   EQU   BIT6                    DUMP ACTIVE LPA MOD. FOR RGN
+SDUTRT   EQU   BIT7                    DUMP TRACE TABLE / GTF BUFFERS
+SDUSDAT2 DS    X                       SECOND BYTE OF SDATA FLAGS
+SDUCSA   EQU   BIT0                    DUMP CSA
+SDUSWA   EQU   BIT1                    DUMP SWA FOR REGION
+SDUSMDMP EQU   BIT2                    SUMMARY DUMP REQUESTED
+SDUNSMDP EQU   BIT3                    DO NOT DUMP SUMMARY DUMP
+SDUNAPSA EQU   BIT4                    DO NOT DUMP ALL PSA
+SDUNASQA EQU   BIT5                    DO NOT DUMP SQA
+SDUDCBAD DS    A                       ADDRESS USER SUPPLIED DCB
+SDUSTORA DS    A                       ADDRESS OF STORAGE LIST
+SDUHDRAD DS    A                       ADDRESS OF USER DATA
+SDUECBAD DS    A                       ADDRESS USER SUPPLIED ECB
+SDUMASID DS    0AL4                    SCHEDULE DUMP ASIDS
+SDUCASID DS    AL2                     CALLERS ASID
+SDUTASID DS    AL2                     TARGET ASID OF SCHEDULE DUMP
+SDUASIDP DS    A                       ADDRESS CALLERS ASID LIST
+SDUSUMLP DS    A                       ADDRESS CALLERS SUMMARY LIST
+SDUTUSID DS    0CL8                    TSO USER ID THIS DUMP   @G64RPHD
+SDUSYSMS DS    A                       ADDR SYSMDUMP 4K SQA AREA
+SDUSYSMC DS    A                       ADDR SYSMDUMP CSA WORK AREA
+         MEND
+*        */
+*%SDUMPPLS: ;
+*  DCL 1 SDUMP BASED(SDUMPPTR) BDY(WORD),
+*        2 SDUFLAG0 CHAR(1),           /*FIRST BYTE OF FLAGS         */
+*          3 SDUDCB      BIT(1),       /*1=USER SUPPLIED DCB
+*                                        0=USE A SYS1.DUMP DATA SET  */
+*          3 SDUBUF      BIT(1),       /*1=DUMP 4K SQA BUFFER
+*                                        0=BYPASS 4K SQA BUFFER      */
+*          3 SDUSTOR     BIT(1),       /*1=STORAGE LIST SPECIFIED
+*                                        0=NO STORAGE LIST           */
+*          3 SDUHDR      BIT(1),       /*1=USER DATA SPECIFIED
+*                                        0=NO USER DATA              */
+*          3 SDUECB      BIT(1),       /*1=ECB SPECIFIED
+*                                        0=ECB NOT SPECIFIED         */
+*          3 SDUASID     BIT(1),       /*1=SCHEDULE DUMP REQUEST
+*                                        ASID SPECIFIED
+*                                        0= ASID NOT SPECIFIED       */
+*          3 SDUQUIET    BIT(1),       /*1=SET SYSTEM NON-DISPATCHABLE
+*                                          WHILE DUMPING SQA/CSA
+*                                        0=MAINTAIN CURRENT SYSTEM
+*                                          STATUS                    */
+*          3 SDUBRANH    BIT(1),       /*1=BRANCH ENTRY
+*                                        0=SVC 51 ENTRY              */
+*        2 SDUFLAG1 CHAR(1),           /*SECOND BYTE OF FLAGS        */
+*          3 DUMPTYPE    BIT(1),       /*1=SVC DUMP REQUEST          */
+*          3 SDUABEND    BIT(1),       /*1=SYSMDUMP REQUEST          */
+*          3 SDUNEW      BIT(1),       /*1=ENHANCED SVC DUMP REQ     */
+*          3 SDUASLST    BIT(1),       /*1=ASIDLST SPECIFIED         */
+*          3 SDUSULST    BIT(1),       /*1=SUMLIST SPECIFIED         */
+*          3 SDUIGNCD    BIT(1),       /*1=IGNORE CHNGDUMP PARAMETERS
+*                                                            @G64RPHD*/
+*          3 SDUTSOXT    BIT(1),       /*1=TSO USER EXTENSION IS
+*                                                    PRESENT @G64RPHD*/
+*          3 *           BIT(1),       /*RESERVED            @G64RPHD*/
+*        2 SDUSDATA      CHAR(2),      /*SDATA OPTION FLAGS  @G64RPHD*/
+*          3 SDUSDAT1      CHAR(1),   /* 1ST BYTE OF OPTIONS @G64RPHD*/
+*            4 SDUALPSA    BIT(1),     /* DUMP ALL PSA'S     @G64RPHD*/
+*            4 SDUPSA      BIT(1),     /* DUMP CURRENT PSA   @G64RPHD*/
+*            4 SDUNUC      BIT(1),     /* DUMP THE NUCLEUS   @G64RPHD*/
+*            4 SDUSQA      BIT(1),     /* DUMP SQA           @G64RPHD*/
+*            4 SDULSQA     BIT(1),     /* DUMP LSQA          @G64RPHD*/
+*            4 SDURGN      BIT(1),  /* DUMP RGN-PRIVATE AREA @G64RPHD*/
+*            4 SDULPA      BIT(1),  /* DUMP LPA MOD. FOR RGN @G64RPHD*/
+*            4 SDUTRT      BIT(1),  /* DUMP TRACE DATA       @G64RPHD*/
+*          3 SDUSDAT2      CHAR(1), /*SECOND BYTE SDATA FLGS @G64RPHD*/
+*            4 SDUCSA      BIT(1),     /* DUMP CSA           @G64RPHD*/
+*            4 SDUSWA      BIT(1),     /* DUMP SQA           @G64RPHD*/
+*            4 SDUSMDMP    BIT(1), /*DUMP SUMMARY DUMP DATA  @G64RPHD*/
+*            4 SDUNSMDP    BIT(1), /*DON'T DUMP SUMMARY DUMP @G64RPHD*/
+*            4 SDUNAPSA    BIT(1),    /* DO NOT DUMP ALL PSA @G64RPHD*/
+*            4 SDUNASQA    BIT(1),    /* DO NOT DUMP SQA     @G64RPHD*/
+*            4 *           BIT(2),    /* RESERVED            @G64RPHD*/
+*        2 SDUDCBAD      PTR(31),      /*ADDRESS USER SUPPLIED DCB   */
+*        2 SDUSTORA      PTR(31),      /*ADDRESS OF STORAGE LIST     */
+*        2 SDUHDRAD      PTR(31),      /*ADDRESS OF USER DATA        */
+*        2 SDUECBAD      PTR(31),      /*ADDRESS USER SUPPLIED ECB   */
+*        2 SDUMASID,
+*          3 SDUCASID    FIXED(16),    /*CALLER'S ASID               */
+*          3 SDUTASID    FIXED(16),    /*TARGET ASID OF SCHEDULE DUMP*/
+*        2 SDUASIDP      PTR(31),      /*ADDRESS CALLERS ASIDLIST    */
+*        2 SDUSUMLP      PTR(31),      /*ADDRESS CALLERS SUMLIST     */
+*        2 SDUTUSID CHAR(8) BDY(WORD),  /*TSO USER ID ASSOCIATED WITH
+*                                                  THIS DUMP @G64RPHD*/
+*          3 SDUSYSMS    PTR(31), /*ADDR SYSMDUMP 4K SQA AREA @G64RPHD*/
+*          3 SDUSYSMC    PTR(31);   /*ADDR SYSMDUMP CSA WORK AREA
+*                                                            @G64RPHD*/

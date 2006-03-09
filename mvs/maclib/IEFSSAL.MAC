@@ -1,0 +1,118 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSALCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSAL
+.*/ %SSALCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSAL                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = ALLOCATION/UNALLOCATION OF           @ZA34144*/
+*/*                     SYSOUT FUNCTION                      @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSALPLS;              /*                               @ZA34144
+*
+SSOBALOC EQU   6                  ALLOCATION FUNCTION ID (SSOBFUNC)
+SSOBUNAL EQU   7                  UNALLOCATION FUNCTION ID (SSOBFUNC)
+*
+*  ALLOCATION/UNALLOCATION RETURN CODES (SSOBRETN)
+*
+SSALRTOK EQU   0                  ALLOCATION/UNALLOCATION SUCCESSFUL
+SSALWTFL EQU   4                  ALLOCATION WAIT FAILED        YM04976
+SSALCREQ EQU   8                  CANCEL REQUESTED
+SSALIDST EQU   12                 INVALID DESTINATION
+SSALNAUT EQU   16                 USER UNAUTHORIZED TO ALLOCATE
+*                                 THIS DATA SET
+SSALUNAL EQU   20                 UNABLE TO ALLOCATE            YM04976
+*
+         ORG   SSOBGN
+SSALBGN  EQU   *
+SSALLEN  DC    AL2(SSALSIZE)      ALLOC/UNALLOC EXTENSION LENGTH
+SSALFLG1 DS    B                  ALLOCATION/UNALLOCATION FLAGS
+SSALDELT EQU   X'80'              DELETE AT UNALLOCATION
+SSALHOLD EQU   X'40'              HOLD AT UNALLOCATION
+SSALNHLD EQU   X'20'              NOHOLD OPTION SPECIFIED      @ZA08725
+SSALWAIT EQU   X'10'              WAIT FOR ALLOCATION
+SSALTRKM EQU   X'08'              ASSIGN A SEPARATE TRACK GROUP MAP
+SSALSPIN EQU   X'04'              SPIN OFF DATA SET
+SSALASNM EQU   X'02'              DATA SET REQUIRES A DATA SET NAME
+SSALKEEP EQU   X'01'              SUBSYSTEM SHOULD KEEP THE DS @ZA06466
+*
+SSALRSV2 DS    X                  RESERVED
+*
+*  FOLLOWING FIELDS CONTAIN POINTERS TO THE INDICATED DATA -
+*    (NUMBERS IN PARENTHESES INDICATE LENGTH OF AREA POINTED TO)
+*
+SSALDDNM DS    A                  DDNAME (8)
+SSALDEST DS    A                  REMOTE DESTINATION ID OR BLANK (8)
+SSALDISP DS    A                  DATA SET DISPOSITION (1)
+SSALDUMY DS    A                  DUMMY/SYSIN FLAGS (1)
+SSALSOUT DS    A                  SYSOUT FLAGS (1)
+SSALUNIT DS    A                  UNIT TYPE (8)
+SSALPGMN DS    A                  USER WRITER PROGRAM NAME (8)
+SSALFORM DS    A                  FORMS NUMBER (4)
+SSALCLAS DS    A                  CLASS (1)
+SSALADSP DS    A                  ALTERNATE DISPOSITION FLAGS (1)
+SSALCOPY DS    A                  NUMBER OF COPIES TO BE PRINTED (1)
+SSALSSNM DS    A                  SUBSYSTEM NAME (4)
+SSALJFCB DS    A                  JFCB (176)
+SSALSSCM DS    A                  SUBSYSTEM INFORMATION (LENGTH IS
+*                                 DEPENDENT ON SUBSYSTEM)
+SSALCNCL DS    A                  CANCEL ECB (ALLOCATION) (4)
+*
+SSALSIZE EQU   *-SSALBGN          ALLOC/UNALLOC EXTENSION LENGTH
+SSOBLEN4 EQU   SSOBHSIZ+SSALSIZE  TOTAL SSOB LENGTH
+         MEND                                                @ZA34144*/
+* %SSALPLS:;                              /*                 @ZA34144*/
+*   /*    ALLOCATION/UNALLOCATION FUNCTION IDS (SSOBFUNC)            */
+*   DCL SSOBALOC  FIXED(15) CONSTANT(06); /* ALLOCATION FUNCTION ID  */
+*   DCL SSOBUNAL  FIXED(15) CONSTANT(07); /* UNALLOCATION FUNCTION ID*/
+*   /*                                                               */
+*   /*  ALLOCATION/UNALLOCATION RETURN CODES (SSOBRETN)              */
+*   /*                                                               */
+*   DCL SSALRTOK  FIXED(31) CONSTANT(0); /* ALLOC/UNALLOC SUCCESSFUL */
+*   DCL SSALWTFL  FIXED(31) CONSTANT(4); /* ALLOCATION WAIT FAILED
+*                                                             YM04976*/
+*   DCL SSALCREQ  FIXED(31) CONSTANT(8); /* CANCEL REQUESTED         */
+*   DCL SSALIDST  FIXED(31) CONSTANT(12);/* INVALID DESTINATION      */
+*   DCL SSALNAUT  FIXED(31) CONSTANT(16);/* USER UNAUTHORIZED TO
+*                                           ALLOCATE THIS DATA SET   */
+*   DCL SSALUNAL  FIXED(31) CONSTANT(20);/* UNABLE TO ALLOCATE
+*                                                             YM04976*/
+*   /*   S S A L                                                     */
+*  DECLARE
+*   1       SSAL          SSOBAL,
+*     2       SSALLEN     FIXED(15),/* LENGTH OF SSAL                */
+*     2       SSALFLG1    BIT(8),   /* ALLOCATION/UNALLOCATION FLAGS */
+*       3       SSALDELT  BIT(1),   /* DELETE AT UNALLOCATION        */
+*       3       SSALHOLD  BIT(1),   /* HOLD AT UNALLOCATION          */
+*       3       SSALNHLD  BIT(1),   /* NOHOLD OPTION OV'RIDE @ZA08725*/
+*       3       SSALWAIT  BIT(1),   /* WAIT                          */
+*       3       SSALTRKM  BIT(1),   /* ASSIGN A SEPARATE TRACK GROUP */
+*       3       SSALSPIN  BIT(1),   /* SPIN OFF DATA SET             */
+*       3       SSALASNM  BIT(1),   /* DATA SET REQUIRES DS NAME     */
+*       3       SSALKEEP  BIT(1),   /* THE SUBSYSTEM SHOULD KEEP THIS
+*                                      DATASET EVEN IF EMPTY @ZA06466*/
+*     2       *           PTR(8),   /* RESERVED                      */
+*     /*                                                             */
+*     /*  FOLLOWING FIELDS CONTAIN POINTERS TO THE INDICATED DATA -  */
+*     /*    (NUMBERS IN PARENTHESES INDICATE LENGTH OF AREA          */
+*     /*     POINTED TO)                                             */
+*     /*                                                             */
+*     2       SSALDDNM    PTR(31),  /* DDNAME (8)                    */
+*     2       SSALDEST    PTR(31),  /* REMOTE DEST ID OR BLANK (8)   */
+*     2       SSALDISP    PTR(31),  /* DATA SET DISPOSITION (1)      */
+*     2       SSALDUMY    PTR(31),  /* DUMMY/SYSIN FLAGS (1)         */
+*     2       SSALSOUT    PTR(31),  /* SYSOUT FLAGS (1)              */
+*     2       SSALUNIT    PTR(31),  /* UNIT TYPE (8)                 */
+*     2       SSALPGMN    PTR(31),  /* USER WRITER PROGRAM NAME (8)  */
+*     2       SSALFORM    PTR(31),  /* FORMS NUMBER (4)              */
+*     2       SSALCLAS    PTR(31),  /* CLASS (1)                     */
+*     2       SSALADSP    PTR(31),  /* ALTERNATE DISPOSITION FLAGS(1)*/
+*     2       SSALCOPY    PTR(31),  /* NUMBER OF COPIES TO BE
+*                                      PRINTED (1)                   */
+*     2       SSALSSNM    PTR(31),  /* SUBSYSTEM NAME (4)            */
+*     2       SSALJFCB    PTR(31),  /* JFCB (176)                    */
+*     2       SSALSSCM    PTR(31),  /* SUBSYSTEM INFORMATION (LENGTH
+*                                      IS DEPENDENT ON SUBSYSTEM)    */
+*     2       SSALCNCL    PTR(31);  /* CANCEL ECB (ALLOCATION) (4)   */

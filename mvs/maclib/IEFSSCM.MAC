@@ -1,0 +1,55 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSCMCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSCM
+.*/ %SSCMCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSCM                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = COMMAND PROCESSING EXIT              @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSCMPLS;              /*                               @ZA34144
+*
+SSOBCMND EQU   10                 CMD PROCESSING FUNCTION ID (SSOBFUNC)
+*
+*  COMMAND PROCESSING RETURN CODES (SSOBRETN)
+*
+SSCMSCMD EQU   0                  SVC 34 SHOULD PROCESS THIS COMMAND
+SSCMSUBC EQU   4                  SUBSYSTEM PROCESSED THIS COMMAND
+SSCMIMSG EQU   8                  SUBSYSTEM COULD NOT EXECUTE THE
+*                                 COMMAND; SVC 34 ISSUES MESSAGE
+*
+         ORG   SSOBGN
+SSCMBGN  EQU   *
+SSCMLEN  DC    AL2(SSCMSIZE)      COMMAND EXTENSION LENGTH
+SSCMRESV DS    H                  RESERVED
+SSCMBUFF DS    A                  COMMAND BUFFER ADDRESS
+SSCMSCID DS    F                  COMMAND SOURCE - CONSOLE ID OR 0
+*                                      - ASID OF TIME-SHARING USER
+*                                      - CMD AUTHORITY OF INPUT STREAM
+*
+SSCMSIZE EQU   *-SSCMBGN          COMMAND EXTENSION LENGTH
+SSOBLEN7 EQU   SSOBHSIZ+SSCMSIZE  TOTAL SSOB LENGTH
+         MEND                                                @ZA34144*/
+* %SSCMPLS:;                              /*                 @ZA34144*/
+*   DCL SSOBCMND  FIXED(15) CONSTANT(10); /*CMD FUNCTION ID(SSOBFUNC)*/
+*   /*                                                               */
+*   /*  COMMAND PROCESSING RETURN CODES (SSOBRETN)                   */
+*   /*                                                               */
+*   DCL SSCMSCMD  FIXED(31) CONSTANT(0); /* SVC 34 SHOULD PROCESS
+*                                           THE COMMAND              */
+*   DCL SSCMSUBC  FIXED(31) CONSTANT(4); /* SUBSYSTEM PROCESSED THIS
+*                                           COMMAND                  */
+*   DCL SSCMIMSG  FIXED(31) CONSTANT(8); /* SUBSYSTEM COULD NOT EXECUTE
+*                                 THE CMD, SVC 34 ISSUES MESSAGE     */
+*   /*   S S C M                                                     */
+*DECLARE
+*   1       SSCM          SSOBCM,
+*     2       SSCMLEN     FIXED(15),/* LENGTH OF SSCM                */
+*     2       *           FIXED(15),/* RESERVED                      */
+*     2       SSCMBUFF    PTR(31),  /* ADDRESS OF THE COMMAND BUFFER */
+*     2       SSCMSCID    PTR(31);  /* COMMAND SOURCE -
+*                                 - CONSOLE ID OR 0
+*                                 - ASID OF TIME-SHARING USER
+*                                 - CMD AUTHORITY OF INPUT STREAM    */

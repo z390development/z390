@@ -6,13 +6,19 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 10/27/05 RPI56 - correct OIHH to OILH to set dump bit       
+.*********************************************************************
 &N       ABEND &ID,&DUMP
+         AIF   (N'&SYSLIST LE 2).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+.NPOK    ANOP
 .*
 .* ABORT TASK WITH OPTIONAL DUMP
 .*
 &N       LA   1,&ID
          AIF  (&DUMP EQ '').SKIPDUMP
-         OIHH 1,X'8000'
+         OILH 1,X'8000'
 .SKIPDUMP ANOP  
          SVC  13
          MEND

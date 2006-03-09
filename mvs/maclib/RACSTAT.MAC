@@ -1,0 +1,187 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* START OF SPECIFICATIONS *********************************************
+*                                                                     *
+* $MAC(RACSTAT) COMP(SC1BN) PROD(RACF):                               *
+*                                                                     *
+* DESCRIPTIVE NAME = RACF STATUS EXTRACTION INTERFACE                 *
+*                                                                     *
+* STATUS = OS/VS2 EBB1102                                             *
+*                                                                     *
+* FUNCTIONAL DESCRIPTION = THIS MACRO PROVIDES THE INTERFACE TO THE   *
+*            RACF STATUS EXTRACTION ROUTINE.                          *
+*                                                                     *
+*            INPUT TO THE STATUS ROUTINE PROVIDED BY THIS MACRO       *
+*            CONSISTS OF THE ADDRESS OF A PARAMETER LIST IN REGISTER  *
+*            ONE. OUTPUT CONSISTS OF A RETURN CODE IN REGISTER 15.    *
+*                                                                     *
+* MACROS = IHBINNRA                                                   *
+*                                                                     *
+* CHANGE ACTIVITY =                                                   *
+*                      UZ90283                                @ZA90283*
+*                      UZ90284                                @ZA90284*
+*                      UZ90285                                @ZA90285*
+*                                                                     *
+* END OF SPECIFICATIONS ***********************************************
+* A-000000-999999                                            @PC0039T
+         MACRO                                                        *
+&LABEL   RACSTAT &CLASS=,&ENTRY=,&MF=S
+         LCLB  &MFLIST              1 => LIST FORM
+         LCLB  &MFEXEC              1 => EXECUTE FORM
+         LCLB  &MFSTAND             1 => STANDARD FORM
+         LCLB  &NOENT               1 => IGNORE ENTRY PARAMETER
+.*
+.* PERFORM PARAMETER ANALYSIS AND DIAGNOSIS
+.*
+.* VALIDATE MF PARAMETER
+.*
+         AIF   ('&MF' EQ 'S').STAT030
+         AIF   ('&MF(1)' EQ 'E').STAT020
+         AIF   ('&MF' EQ 'L').STAT010
+         MNOTE 8,'*** INVALID MACRO FORM PARAMETER ***'
+         AGO   .STAT030
+.STAT010 ANOP
+&MFLIST  SETB  1
+         AGO   .STAT040
+.STAT020 ANOP
+&MFEXEC  SETB  1
+         AGO   .STAT040
+.STAT030 ANOP
+&MFSTAND SETB  1
+.STAT040 ANOP
+.*
+.* VALIDATE ENTRY PARAMETER
+.*
+         AIF   (NOT &MFSTAND OR                                        +
+               '&ENTRY' EQ '' OR                                       +
+               '&CLASS' NE '').STAT050
+         MNOTE 4,'*** CLASS PARAMETER OMITTED, ENTRY PARAMETER IGNORED +
+               ***'
+&NOENT   SETB  1
+.STAT050 ANOP
+.*
+.* VALIDATE USAGE OF REGISTERS FOR ADDRESSES
+.*
+.* REGISTERS NOT ALLOWED FOR LIST FORM
+.*
+         AIF   (NOT &MFLIST).STAT070
+         AIF   ('&CLASS' EQ '').STAT060
+         AIF   ('&CLASS'(1,1) NE '(').STAT060
+         MNOTE 8,'*** REGISTER FORM OF ADDRESS PARAMETER NOT VALID WITH+
+                LIST FORM ***'
+         AGO   .STAT070
+.STAT060 ANOP
+         AIF   ('&ENTRY' EQ '').STAT070
+         AIF   ('&ENTRY'(1,1) NE '(').STAT070
+         MNOTE 8,'*** REGISTER FORM OF ADDRESS PARAMETER NOT VALID WITH+
+                LIST FORM ***'
+.STAT070 ANOP
+.*
+.* REGISTERS USED AS ADDRESSES MUST BE REGISTERS 2-12
+.*
+         AIF   ('&CLASS' EQ '').STAT080
+         AIF   (T'&CLASS(1) NE 'N').STAT080
+         AIF   ('&CLASS'(1,1) NE '(' OR                                +
+               ('&CLASS(1)' GT '1' AND                                 +
+               '&CLASS(1)' LT '13')).STAT080
+         MNOTE 8,'*** ONLY REGISTERS 2-12 VALID FOR ADDRESSES ***'
+         AGO   .STAT090
+.STAT080 ANOP
+         AIF   ('&ENTRY' EQ '').STAT090
+         AIF   (T'&ENTRY(1) NE 'N').STAT090
+         AIF   ('&ENTRY'(1,1) NE '(' OR                                +
+               ('&ENTRY(1)' GT '1' AND                                 +
+               '&ENTRY(1)' LT '13')).STAT090
+         MNOTE 8,'*** ONLY REGISTERS 2-12 VALID FOR ADDRESSES ***'
+.STAT090 ANOP
+.*
+.* GENERATE CODE
+.*
+         AIF   (&MFEXEC).STAT170
+         AIF   (&MFLIST).STAT100
+         AIF   ('&CLASS' EQ '').STAT160
+&LABEL   CNOP  0,4
+         AIF   ('&CLASS'(1,1) EQ '''').STAT095
+         BAL   1,*+12
+         AGO   .STAT110
+.STAT095 ANOP
+         BAL   1,*+20
+         AGO   .STAT110
+.STAT100 ANOP
+&LABEL   DS    0F
+.STAT110 ANOP
+         AIF   ('&CLASS' EQ '' ).STAT120
+         AIF   ('&CLASS'(1,1) EQ '(').STAT120
+         AIF   ('&CLASS'(1,1) EQ '''').STAT115
+         DC    A(&CLASS)            ADDRESS OF CLASS PARAMETER
+         AGO   .STAT130
+.STAT115 ANOP
+         DC    A(ICH0&SYSNDX)          ADDRESS OF CLASS PARAMETER
+         AGO   .STAT130
+.STAT120 ANOP
+         DC    A(0)                 ADDRESS OF CLASS PARAMETER
+.STAT130 ANOP
+         AIF   ('&ENTRY' EQ '' ).STAT140
+         AIF   ('&ENTRY'(1,1) EQ '(' OR                                +
+               &NOENT).STAT140
+         DC    A(&ENTRY)            ADDRESS OF ENTRY PARAMETER
+         AGO   .STAT150
+.STAT140 ANOP
+         DC    A(0)                 ADDRESS OF ENTRY PARAMETER
+.STAT150 ANOP
+         AIF   ('&CLASS' EQ '').STAT155
+         AIF   ('&CLASS'(1,1) NE '''').STAT155
+ICH0&SYSNDX DC    CL8&CLASS         CLASS NAME
+.STAT155 ANOP
+         AIF   (&MFSTAND).STAT180
+         MEXIT
+.STAT160 ANOP
+         AIF   ('&LABEL' EQ '').STAT220
+&LABEL   DS    0H
+         AGO   .STAT220
+.STAT170 ANOP
+&LABEL   IHBINNRA &MF(2)
+.STAT180 ANOP
+         AIF   ('&CLASS' EQ '').STAT200
+         AIF   ('&CLASS'(1,1) EQ '(').STAT190
+         AIF   (&MFSTAND).STAT200
+         LA    0,&CLASS
+         ST    0,0(1)               SET CLASS PARAMETER ADDRESS
+         AGO   .STAT200
+.STAT190 ANOP
+         ST    &CLASS(1),0(1)       SET CLASS PARAMETER ADDRESS
+.STAT200 ANOP
+         AIF   ('&ENTRY' EQ '' OR                                      +
+               &NOENT).STAT220
+         AIF   ('&ENTRY'(1,1) EQ '(').STAT210
+         AIF   (&MFSTAND).STAT220
+         LA    0,&ENTRY
+         ST    0,4(1)               SET ENTRY PARAMETER ADDRESS
+         AGO   .STAT220
+.STAT210 ANOP
+         ST    &ENTRY(1),4(1)       SET ENTRY PARAMETER ADDRESS
+.STAT220 ANOP
+         L     15,16(0,0)           ADDRESS OF CVT
+         L     15,X'03E0'(0,15)     ADDRESS OF RCVT
+         LTR   15,15                DOES RACF CVT EXIST
+         BZ    *+12                 NO, GO TO NON-EXISTENT R. C.
+         CLI   X'AC'(15),X'02'      IS VERSION OF RACF CORRECT
+         BNL   *+12                 YES, CONTINUE STATUS CHECK
+         LA    15,24(0,0)           RACF CVT NON-EXISTENT RETURN CODE
+         AIF   (&MFSTAND AND                                           +
+               '&CLASS' EQ '').STAT230
+         B     *+10                 END STATUS CHECK
+         L     15,X'C0'(0,15)       ADDRESS OF STATUS ROUTINE
+         BALR  14,15                CALL STATUS ROUTINE
+         AGO   .STAT240
+.STAT230 ANOP
+         B     *+32                 END STATUS CHECK
+         TM    X'35'(15),X'80'      WAS RACF IPLED ACTIVE
+         BO    *+12                 NO, GO TO INACTIVE RETURN CODE
+         TM    X'99'(15),X'80'      IS RACF CURRENTLY ACTIVE
+         BNO   *+12                 YES, GO TO ACTIVE RETURN CODE
+         LA    15,12(0,0)           RACF INACTIVE
+         B     *+8                  SKIP ACTIVE RETURN CODE
+         LA    15,0(0,0)            RACF ACTIVE
+.STAT240 ANOP
+         MEXIT
+         MEND

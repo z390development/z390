@@ -1,0 +1,90 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SAVE  &REG,&CODE,&ID
+         LCLA  &A,&B,&C
+         LCLC  &E,&F,&G,&H
+         AIF   ('&REG' EQ '').E1
+         AIF   ('&ID' EQ '').NULLID
+         AIF   ('&ID' EQ '*').SPECID
+         AIF   ('&ID'(1,1) NE '''').NOQUOTE                    @ZA58263
+&B       SETA  1                                               @ZA58263
+&C       SETA  2                                               @ZA58263
+.NOQUOTE ANOP                                                  @ZA58263
+&A       SETA  ((K'&ID+2)/2)*2+4-&C                            @ZA58263
+&NAME    B     &A.(0,15)                         BRANCH AROUND ID
+&A       SETA  K'&ID-&C                                        @ZA58863
+         DC    AL1(&A)                           LENGTH OF IDENTIFIER
+.CONTB   AIF   (&A GT 32).SPLITUP
+.CONTAA  AIF   (&A GT 8).BRAKDWN
+&E       SETC  '&ID'(&B+1,&A)
+         DC    CL&A'&E'                          IDENTIFIER
+         AGO   .CONTA
+.BRAKDWN ANOP
+&E       SETC  '&ID'(&B+1,8)
+         DC    CL8'&E'                           IDENTIFIER
+&B       SETA  &B+8
+&A       SETA  &A-8
+         AGO   .CONTAA
+.SPLITUP ANOP
+&E       SETC  '&ID'(&B+1,8)
+&F       SETC  '&ID'(&B+9,8)
+&G       SETC  '&ID'(&B+17,8)
+&H       SETC  '&ID'(&B+25,8)
+         DC    CL32'&E.&F.&G.&H'                      IDENTIFIER
+&B       SETA  &B+32
+&A       SETA  &A-32
+         AGO   .CONTB
+.NULLID  ANOP
+&NAME    DS    0H
+         AGO   .CONTA
+.SPECID  AIF   ('&NAME' EQ '').CSECTN
+&E       SETC  '&NAME'
+&A       SETA  1
+.CONTQ   AIF   ('&E'(1,&A) EQ '&E').LEAVE
+&A       SETA  &A+1
+         AGO   .CONTQ
+.LEAVE   ANOP
+&B       SETA  ((&A+2)/2)*2+4
+&NAME    B     &B.(0,15)                         BRANCH AROUND ID
+         DC    AL1(&A)
+         DC    CL&A'&E'                          IDENTIFIER
+         AGO   .CONTA
+.CSECTN  AIF   ('&SYSECT' EQ '').E4
+&E       SETC  '&SYSECT'
+&A       SETA  1
+         AGO   .CONTQ
+.E4      IHBERMAC 78,360                    CSECT NAME NULL
+.CONTA   AIF   (T'&REG(1) NE 'N').E3
+         AIF   ('&CODE' EQ 'T').CONTC
+         AIF   ('&CODE' NE '').E2
+&A       SETA  &REG(1)*4+20
+         AIF   (&A LE 75).CONTD
+&A       SETA  &A-64
+.CONTD   AIF   (N'&REG NE 2).CONTE
+         STM   &REG(1),&REG(2),&A.(13)           SAVE REGISTERS
+         MEXIT
+.CONTE   AIF   (N'&REG NE 1).E3
+         ST    &REG(1),&A.(13,0)                 SAVE REGISTER
+         MEXIT
+.CONTC   AIF   (&REG(1) GE 14 OR &REG(1) LE 2).CONTF
+         STM   14,15,12(13)                      SAVE REGISTERS
+&A       SETA  &REG(1)*4+20
+         AIF   (N'&REG NE 2).CONTG
+         STM   &REG(1),&REG(2),&A.(13)           SAVE REGISTERS
+         MEXIT
+.CONTG   AIF   (N'&REG NE 1).E3
+         ST    &REG(1),&A.(13,0)                 SAVE REGISTER
+         MEXIT
+.CONTF   AIF   (N'&REG NE 2).CONTH
+         STM   14,&REG(2),12(13)                 SAVE REGISTERS
+         MEXIT
+.CONTH   AIF   (N'&REG NE 1).E3
+         STM   14,&REG(1),12(13)                 SAVE REGISTERS
+         MEXIT
+.E1      IHBERMAC 18,360                    REG PARAM MISSING
+         MEXIT
+.E2      IHBERMAC 37,360,&CODE              INVALID CODE SPECIFIED
+         MEXIT
+.E3      IHBERMAC 36,360,&REG               INVALID REGS. SPECIFIED
+         MEND
+

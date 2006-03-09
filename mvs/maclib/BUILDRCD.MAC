@@ -1,0 +1,173 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    BUILDRCD   &POOL,&NO,&LTH,&REC,&RECL,&MF=I
+         LCLB  &NOGO
+         LCLC  &PAREN,&CHAR
+.*
+.*         RELEASE 22 DELETIONS/CHANGES
+.*         RELEASE 21 DELETIONS/CHANGES
+.*    040000-144000,160000-184000,200000-216000,232000,272000-   M1754
+.*    280000,296000,320000,352000-384000,400000.416000.432000,   M1754
+.*    464000,480000-496000,576000,600000,624000-648000,672000-   M1754
+.*    712000,728000-736000,760000-768000,784000-929000           M1754
+.*         RELEASE 20 DELETIONS/CHANGES
+.*
+         AIF   ('&MF(1)' EQ 'E').EXEC
+         AIF   ('&MF' EQ 'L').LIST                               M1754
+         AIF   ('&MF' EQ 'I').T2                                 M1754
+         IHBERMAC   35,&MF,&MF          INVALID MACRO FORM       M1754
+         AGO   .TERM                                             M1754
+.T2      AIF   ('&POOL' NE '').T3                                M1754
+&NOGO    SETB  1                                                 M1754
+         IHBERMAC   02,009              BUF POOL ADR NOT SPEC.   M1754
+.T3      AIF   ('&NO' NE '').T4                                  M1754
+&NOGO    SETB  1                                                 M1754
+         IHBERMAC   03,009              BUF NO. NOT SPECIFIED    M1754
+.T4      AIF   ('&LTH' NE '').T5                                 M1754
+&NOGO    SETB  1                                                 M1754
+         IHBERMAC   04,009              REC LENGTH NOT SPECIFIED M1754
+.T5      AIF   ('&REC' NE '').STAND                              M1754
+         IHBERMAC   05,009              REC AREA NOT SPECIFIED   M1754
+         AGO   .TERM                                             M1754
+.LIST    AIF   ('&POOL' EQ '&POOL(1)').LT3 BUF POOL A SUBLIST    M1754
+&NOGO    SETB  1                        YES. INVALID OPERAND     M1754
+         IHBERMAC   36,,&POOL           BUF POOL ADR INVALID     M1754
+.LT3     AIF   ('&NO' EQ '&NO(1)').LT4  BUF NO A SUBLIST         M1754
+&NOGO    SETB  1                        YES. INVALID OPERAND     M1754
+         IHBERMAC   37,,&NO             BUF NO. INVALID          M1754
+.LT4     AIF   ('&LTH' EQ '&LTH(1)').LT5 BUF LENGTH A SUB LIST   M1754
+&NOGO    SETB  1                        YES. BUF LENGTH INVALID  M1754
+         IHBERMAC   38,,&LTH            REC LENGTH INVALID       M1754
+.LT5     AIF   ('&REC' EQ '&REC(1)').LT6 REC ADR A SUB LIST      M1754
+&NOGO    SETB  1                        YES. REC ADR INVALID     M1754
+         IHBERMAC   39,,&REC            REC AREA INVALID OPERAND M1754
+.LT6     AIF   ('&RECL' EQ '&RECL(1)').LT7 REC LEN A SUB LIST    M1754
+&NOGO    SETB  1                        YES. REC LEN INVALID     M1754
+         IHBERMAC 44,,&RECL             REC LEN INVALID OPERAND  M1754
+.LT7     AIF   (&NOGO EQ 1).TERM                                 M1754
+&NAME    DS    0F
+         AGO   .A1
+.STAND   AIF   (&NOGO EQ 1).TERM                                 M1754
+         CNOP  0,4
+         AIF   ('&RECL' EQ '').SHORT                             M1754
+&NAME    BAL   1,*+20                   BRANCH AROUND PARAMETER LIST
+         AGO   .A1
+.SHORT   ANOP                                                    M1754
+&NAME    BAL   1,*+16                   BRANCH AROUND PARAMETER LIST
+.A1      AIF   ('&POOL' EQ '').A                                 M1754
+         AIF   ('&POOL' NE '&POOL(1)').A                         M1754
+         DC    A(&POOL)                 ADDRESS OF BUFFER POOL
+         AGO   .B
+.A       DC    A(0)                     ADDRESS OF BUFFER POOL
+.B       AIF   ('&NO' EQ '').C                                   M1754
+         AIF   ('&NO' NE '&NO(1)').C                             M1754
+         DC    AL2(&NO)                 NUMBER OF BUFFERS
+         AGO   .D
+.C       DC    AL2(0)                   NUMBER OF BUFFERS
+.D       AIF   ('&LTH' EQ '').E                                  M1754
+         AIF   ('&LTH' NE '&LTH(1)').E                           M1754
+         DC    AL2(&LTH)                LENGTH OF BUFFERS
+         AGO   .F
+.E       DC    AL2(0)                   LENGTH OF BUFFERS
+.F       AIF   ('&RECL' EQ '').G
+         DC    AL1(0)                   ALIGNMENT FIELD
+         AGO   .H
+.G       DC    AL1(128)                 END OF PARAMETER LIST FLAG
+.H       AIF   ('&REC' EQ '').I                                  M1754
+         AIF   ('&REC' NE '&REC(1)').I                           M1754
+         DC    AL3(&REC)                ADDRESS OF RECORD AREA
+         AGO   .J
+.I       DC    AL3(0)                   ADDRESS OF RECORD AREA
+.J       AIF   ('&RECL' EQ '').STORE
+         DC    AL1(128)                 END OF PARAMETER LIST FLAG
+         AIF   ('&RECL' EQ '&RECL(1)').K                         M1754
+         DC    AL3(0)                   LENGTH OF RECORD AREA
+         AGO   .STORE
+.K       DC    AL3(&RECL)               LENGTH OF RECORD AREA
+.STORE   AIF   ('&MF' EQ 'I').L                                  M1754
+         MEXIT
+.L       AIF   ('&POOL' EQ '&POOL(1)').M                         M1754
+         ST    &POOL(1),0(0,1)          MOVE BUF POOL ADDR INTO LIST
+.M       AIF   ('&NO' EQ '&NO(1)').N
+         STH   &NO(1),4(0,1)            MOVE BUF NUMBER INTO LIST
+.N       AIF   ('&LTH' EQ '&LTH(1)').O
+         STH   &LTH(1),6(0,1)           MOVE BUF POOL LENGTH INTO LIST
+.O       AIF   ('&REC' EQ '&REC(1)').P
+         ST    &REC(1),8(0,1)           MOVE REC AREA ADDR INTO LIST
+         AIF   ('&RECL' NE '').P
+         OI    8(1),X'80'               TURN ON END OF PARM LIST FLAG
+.P       AIF   ('&RECL' EQ '&RECL(1)').Q
+         ST    &RECL(1),12(0,1)         MOVE REC AREA LENGTH INTO LIST
+         OI    12(1),X'80'              TURN ON END OF PARM LIST FLAG
+.Q       LINK  EP=IGG019B0              LINK TO BUILDRCD ROUTINE M1754
+         MEXIT
+.EXEC    AIF   ('&NAME' EQ '').NONAME                            M1754
+&NAME    DS    0H
+.NONAME  ANOP                                                    M1754
+&CHAR    SETC  '&MF(2)'
+&PAREN   SETC  '&CHAR'(1,1)
+         AIF   ('&PAREN' EQ '(').R
+         LA    1,&MF(2)                 LOAD PARM LIST ADDR INTO REG 1
+         AGO   .TEST
+.R       AIF   ('&MF(2)' EQ '(1)').TEST
+         LR    1,&MF(2)                 LOAD PARM LIST ADDR INTO REG 1
+.TEST    AIF   ('&POOL' EQ '').CON1
+         AIF   ('&POOL' EQ '&POOL(1)').NUMB
+         ST    &POOL(1),0(0,1)          MOVE BUF POOL ADDR INTO LIST
+         AGO   .CON1
+.NUMB    LA    0,&POOL
+         ST    0,0(0,1)                 MOVE BUF POOL ADDR INTO LIST
+.CON1    AIF   ('&NO' EQ '').CON2
+         AIF   ('&NO' EQ '&NO(1)').NUMC
+         STH   &NO(1),4(0,1)            MOVE BUF NUMBER INTO LIST
+         AGO   .CON2
+.USEDC   B     *+6                      BRANCH AROUND VALUE
+         DC    AL2(&NO)                 NUMBER OF BUFFERS
+         MVC   4(2,1),*-2               MOVE BUF NUMBER INTO LIST
+         AGO   .CON2                                             M1754
+.NUMC    AIF   (T'&NO NE 'N').USEDC                              M1754
+         AIF   (&NO GT 4095).USEDC                               M1754
+         LA    0,&NO                    LOAD BUF NUMBER
+         STH   0,4(0,1)                 MOVE BUF NUMBER INTO LIST
+.CON2    AIF   ('&LTH' EQ '').CON3
+         AIF   ('&LTH' EQ '&LTH(1)').NUMD
+         STH   &LTH(1),6(0,1)           MOVE BUF POOL LENGTH INTO LIST
+         AGO   .CON3
+.USEDCL  B     *+6                      BRANCH AROUND VALUE
+         DC    AL2(&LTH)                BUFFER POOL LENGTH
+         MVC   6(2,1),*-2               MOVE BUF POOL LENGTH INTO LIST
+         AGO   .CON3                                             M1754
+.NUMD    AIF   (T'&LTH NE 'N').USEDCL                            M1754
+         AIF   (&LTH GT 4095).USEDCL                             M1754
+         LA    0,&LTH                   LOAD BUF POOL LENGTH
+         STH   0,6(0,1)                 MOVE BUF POOL LENGTH INTO LIST
+.CON3    AIF   ('&REC' EQ '').CON4
+         IC    0,8(0,1)                 SAVE FLAG FIELD
+         AIF   ('&REC' EQ '&REC(1)').NUME
+         ST    &REC(1),8(0,1)           MOVE REC AREA ADDR INTO LIST
+         STC   0,8(0,1)                 RESTORE FLAG FIELD
+         AGO   .CON4
+.NUME    LA    15,&REC                  LOAD REC AREA ADDR
+         ST    15,8(0,1)                MOVE REC AREA ADDR INTO LIST
+         STC   0,8(0,1)                 RESTORE FLAG FIELD
+.CON4    AIF   ('&RECL' EQ '').Q
+         AIF   ('&RECL' EQ '&RECL(1)').NUMF
+         IC    0,12(0,1)                SAVE FLAG FIELD
+         ST    &RECL(1),12(0,1)         MOVE REC LENGTH INTO LIST
+         STC   0,12(0,1)                RESTORE FLAG FIELD
+         AGO   .Q
+.USEDCR  B     *+8                      BRANCH AROUND VALUE
+         DC    AL4(&RECL)               RECORD LENGTH
+         MVC   13(3,1),*-3              MOVE RECORD LENGTH INTO LIST
+         AGO   .Q                                                M1754
+.NUMF    AIF   (T'&RECL NE 'N').USEDCR                           M1754
+         AIF   (&RECL GT 4095).USEDCR                            M1754
+         IC    0,12(0,1)                SAVE FLAG FIELD
+         LA    15,&RECL                 LOAD RECORD LENGTH
+         ST    15,12(0,1)               MOVE REC LENGTH INTO LIST
+         STC   0,12(0,1)                RESTORE FLAG FIELD
+         AGO   .Q
+.TERM    AIF   ('&NAME' EQ '').END                               M1754
+&NAME    DS    0H
+.END     MEND
+

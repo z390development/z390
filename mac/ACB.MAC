@@ -1,0 +1,46 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* MAINTENANCE
+.* 10/22/05 INITIAL CODING                                       
+.*********************************************************************
+&N       ACB   &AM=VSAM,                                               X
+               &DDNAME=,                                               X
+               &DSNAME=0,                                              X 
+               &EXLST=0,                                               X
+               &MACRF=,                                                X
+               &RMODE31=ALL                                             
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.POSEND  ANOP                  
+&N       DS    0D
+         ORG   &N+ACBDDNAM-IHAACB
+         AIF   (&DDNAME EQ '').DDDEF
+         DC    CL8'&DDNAME'
+         AGO   .DDEND
+.DDDEF   ANOP
+         DC    CL8'&N'
+.DDEND   ANOP
+         ORG   &N+ACBDSNAM-IHAACB
+         DC    A(&DSNAME)
+&NV      SETA  N'&MACRF
+&TV      SETC  '0'
+.VLOOP   ANOP
+&IV      SETA  &IV+1
+         AIF   (&IV GT &NV).ELOOP
+&TV      SETC  '&TV+ACBMACRF_&MACRF(&IV)' 
+         AGO   .VLOOP
+.ELOOP   ANOP        
+         ORG   &N+ACBMACRF-IHAACB
+         DC    AL2(&TV)
+         ORG   &N+ACBLEN
+         MEND

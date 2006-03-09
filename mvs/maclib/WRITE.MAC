@@ -1,0 +1,52 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /* MACCOMP Y-2 SC1D0/SJD48                                         */
+* /* MACSTAT Y-2 73078/021160                                        */
+         MACRO
+&NAME    WRITE &DECB,&TYPE,&DCB,&ADDR,&LENGTH,&KEY,&RCDREF,&MF=I,      *
+               &RPL=,&ACB=,&AREA=,&AREALEN=,&RECLEN=,&AAREA=,    Y02072*
+               &AAREALN=,&ARECLEN=,&ECB=,&EXIT=,                 Y02072*
+               &OPTCD=,&ARG=,&BRANCH=                           ZM30024
+         GBLB  &IHBWR,&IHBT(2),&IHBS(4)
+         LCLB  &ERR(2)
+         AIF   ('&RPL' NE '').VTAM      ISSUE VTAM WRITE         Y02072
+&ERR(1)  SETB  ('&DECB' EQ '')
+&ERR(2)  SETB  ('&TYPE' EQ '')
+         AIF   (&ERR(2)).E0
+&IHBS(1) SETB  (K'&TYPE EQ 1)
+&IHBS(2) SETB  (K'&TYPE EQ 2)
+&IHBS(3) SETB  (K'&TYPE EQ 3)
+&IHBS(4) SETB  (K'&TYPE EQ 4)
+&IHBWR   SETB  1
+&IHBT(1) SETB  (T'&LENGTH EQ 'N')
+&IHBT(2) SETB  (T'&RCDREF EQ 'N')
+         AIF   ('&TYPE'(1,1) EQ 'S').BSAMR
+         AIF   ('&TYPE'(1,1) EQ 'K').BISAMR
+         AIF   ('&TYPE'(1,1) EQ 'D').BDAMR
+         AIF   ('&TYPE'(1,1) EQ 'T').BTAMR
+         IHBERMAC 63,,&TYPE             TYPE INVALID
+         AGO   .E0
+.BSAMR   AIF   (&ERR(1)).E0
+&NAME    IHBRDWRS &DECB,&TYPE,&DCB,&ADDR,&LENGTH,&KEY,&RCDREF,MF=&MF
+         MEXIT
+.BISAMR  AIF   (&ERR(1)).E0
+&NAME    IHBRDWRK &DECB,&TYPE,&DCB,&ADDR,&LENGTH,&KEY,&RCDREF,MF=&MF
+         MEXIT
+.BTAMR   AIF   (&ERR(1)).E0
+&NAME    IHBRDWRT &DECB,&TYPE,&DCB,&ADDR,&LENGTH,&KEY,&RCDREF,MF=&MF
+         MEXIT
+.BDAMR   AIF   (&ERR(1)).E0
+&NAME    IHBRDWRD &DECB,&TYPE,&DCB,&ADDR,&LENGTH,&KEY,&RCDREF,MF=&MF
+         MEXIT
+.VTAM    ANOP                                                    Y02072
+&IHBWR   SETB  1                      SET FOR ALL WRITES         Y02072
+&NAME    IHBRDWRA ACB=&ACB,AREA=&AREA,AREALEN=&AREALEN,          Y02072*
+               RECLEN=&RECLEN,AAREA=&AAREA,AAREALN=&AAREALN,     Y02072*
+               ARECLEN=&ARECLEN,ECB=&ECB,EXIT=&EXIT,ARG=&ARG,    Y02072*
+               OPTCD=&OPTCD,                                     Y02072*
+               IHBRW=X'11',RPL=&RPL,BRANCH=&BRANCH              ZM30024
+         MEXIT                                                   Y02072
+.E0      AIF   (NOT &ERR(1)).E1
+         IHBERMAC 07                    &DECB MISSING
+.E1      AIF   (NOT &ERR(2)).MEND
+         IHBERMAC 25                    &TYPE MISSING
+.MEND    MEND

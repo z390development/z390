@@ -1,0 +1,18 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 11/16/05 RPI95 TEST XCTL
+*********************************************************************
+         TITLE 'TESTXCL2 TEST TESTXCL2 XCTL TO TESTXCL3'
+TESTXCL2 SUBENTRY
+         SNAP  ID=2,PDATA=CDE,TEXT='VERIFY TESTXCL1 AND TESTXCL2'
+         WTO   'TESTXCL2 NOW XCTL TO TESTXCL3'
+         BALR  12,0         ESTABLISH TEMP BASE FOR XCTL USE
+         USING *,12
+         L     13,4(13)            RESTORE TESTXCL1 SAVE AREA POINTER
+         XCTL  (2,12),EP=TESTXCL3  RESTORE REGS,DEL XCL2, TRANS XCL3
+         END

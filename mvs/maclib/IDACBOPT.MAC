@@ -1,0 +1,596 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IDACBOPT &OPTCD=,&AM=,&MF=,&CALLER=
+.* FUNCTION -  THIS MACRO PROCESSES THE RPL KEYWORD OPTCD. IT IS CALLED
+.*             BY IDACBRPL.  IT VALIDITY CHECKS THE OPTIONS SPECIFIED
+.*             BY THE USER ON GENCB, MODCB, OR TESTCB FOR OPTCD. IT
+.*             CHECKS FOR MUTUALLY EXCLUSIVE OPTIONS SPECIFIED AND
+.*             ISSUES ERROR MESSAGES VIA IDAERMAC.  IF THE OPTIONS ARE
+.*             VALID, IDACBOPT SETS VALUES IN VARIOUS GLOBAL ARRAYS
+.*             TO BE USED BY IDACB2 TO BUILD A PARAMETER LIST OF
+.*             ARGUMENT CONTROL ENTRIES FOR THE CONTROL BLOCK
+.*             MANIPULATION MODULE TO BE USED AT EXECUTE TIME.
+.*             IT CALLS IDACB3 TO SET THE ELEMENT TYPE CODE AND THE
+.*             KEYWORD TYPE CODE FOR OPTCD.
+.*
+.*             IT IS ALSO CALLED BY THE RPL DECLARATIVE MACRO VIA
+.*             IDACBRPL. WHEN CALLED BY THE DECLARATIVE MACRO,
+.*             DIFFERENT GLOBALS ARE SET THAN THASE USED BY THE CBMM.
+.*             THEREFORE, THE BITS SET IN THESE GLOBALS MUST BE
+.*             IDENTICAL TO THE WAY THEY WILL APPEAR WHEN THE
+.*             CONTROL BLOCK IS GENERATED.
+.*
+.*
+.*
+.*  CHANGE ACTIVITY
+.*   SESSPARM MUTUALLY EXCLUSIVE WITH LOGONMSG DEFAULT         @ZA07555
+.*
+.* GLOBALS
+         GBLB  &IDACB01                ERROR INDICATOR
+         GBLA  &IDAENO                 NUMBER OF ELEMENTS
+         GBLC  &IDAVALC(50)            ELEMENT CHARACTER VALUE ARRAY
+         GBLA  &IDAELEN(50)            ELEMENT FIELD LENGTH ARRAY
+         GBLC  &IDAOPT2,&IDAOPT3       BIT STRING EXTENSIONS
+.*             THE FOLLOWING GLOBALS ARE USED TO PASS THE VALUES OF
+.*             THE OPTCD BYTES BACK TO THE DECLARATIVE MACRO RPL.
+         GBLC  &IDAOP1,&IDAOP2,&IDAOP5,&IDAOP6,&IDAOP7,&IDAOP8  X04SVHS
+         GBLC  &IDAOP9,&IDAOPA,&IDAOPB,&IDAOPC
+.* LOCALS
+         LCLA  &I,&A,&B,&C,&D,&ERR               WORK VARIABLES X04SVHS
+         LCLB  &KEY,&ADR,&CNV,&SEQ,&DIR,&SKP     OPTCD CODES
+         LCLB  &SYN,&ASY,&NUP,&UPD,&NSP,&KEQ      OPTCD CODES
+         LCLB  &KGE,&FKS,&GEN,&MVE,&LOC          OPTCD CODES
+         LCLB  &CA,&CS,&RELEASE,&PASS            OPTCD CODES   @Z40BHUC
+         LCLB  &WAITX,&NWAITX                    OPTCD CODES   @ZA07549
+         LCLB  &NERASE,&EAU,&ERASE,&SPEC,&ANY    OPTCD CODES     X03004
+         LCLB  &NCONV,&CONV,&LBT,&BLK,&COND      OPTCD CODES     X03004
+         LCLB  &UNCOND,&LOCK,&LGONMSG,&DEVCHAR   OPTCD CODES     X03004
+         LCLB  &TERMS,&APPSTAT,&COUNTS,&RNNAME   OPTCD CODES     X03004
+         LCLB  &CIDXLAT,&TOPLGON,&BSCID,&LBM     OPTCD CODES     X03004
+         LCLB  &DISPLAY,&RELRQ,&NRELRQ,&Q,&NQ    OPTCD CODES     X03004
+         LCLB  &PEND,&SESSION,&ACTIVE,&UNCONDL   OPTCD CODES     X03004
+         LCLB  &QUIESCE,&START,&STOP,&ACCEPT     OPTCD CODES     X03004
+         LCLB  &ACQUIRE,&CONALL,&CONANY          OPTCD CODES   @Z40BHUC
+         LCLB  &KEEP,&TRUNC                      OPTCD CODES   @Z40BHUC
+         LCLB  &NIBTK                            OPTCD CODES   @Z40BHUC
+         LCLB  &FMHDR,&NFMHDR                    OPTCD CODE    X03004HS
+         LCLB  &FWD,&BWD,&ARD,&LRD               OPTCD CODES    X04SVHS
+         LCLB  &SESSPRM                          OPTCD CODE    @Z40BHUC
+         LCLB  &SESSKEY                          OPTCD CODE    @G40AKSL
+.*
+         AIF   ('&OPTCD' EQ '').T010100 CHECK FOR NULL PARAM    X04SVHS
+         AIF   ('&CALLER' EQ 'RPL').T000100                     X04SVHS
+.*             IF CALLED BY RPL DECLARATIVE, BYPASS CALL OF IDACB3
+         IDACB3 ARG=&OPTCD,ARGNAME=OPTCD,KWTC=X'34',MF=&MF,BIT=YES,    *
+               INDRECT=YES
+&IDAELEN(&IDAENO) SETA 12                                       X04SVHS
+         AIF   ('&OPTCD(1)' EQ '*').T011600                     X04SVHS
+.T000100 ANOP
+&I       SETA  &I+1                     BUMP INDEX VARIABLE
+         AIF   (&I GT N'&OPTCD).T000300 HAVE ALL OPTIONS BEEN CHECKED
+&KEY     SETB  ('&OPTCD(&I)' EQ 'KEY' OR &KEY)
+&ADR     SETB  ('&OPTCD(&I)' EQ 'ADR' OR &ADR)
+&CNV     SETB  ('&OPTCD(&I)' EQ 'CNV' OR &CNV)
+&SEQ     SETB  ('&OPTCD(&I)' EQ 'SEQ' OR &SEQ)
+&DIR     SETB  ('&OPTCD(&I)' EQ 'DIR' OR &DIR)
+&SKP     SETB  ('&OPTCD(&I)' EQ 'SKP' OR &SKP)
+&SYN     SETB  ('&OPTCD(&I)' EQ 'SYN' OR &SYN)
+&ASY     SETB  ('&OPTCD(&I)' EQ 'ASY' OR &ASY)
+&NUP     SETB  ('&OPTCD(&I)' EQ 'NUP' OR &NUP)
+&UPD     SETB  ('&OPTCD(&I)' EQ 'UPD' OR &UPD)
+&NSP     SETB  ('&OPTCD(&I)' EQ 'NSP' OR &NSP)
+&KEQ     SETB  ('&OPTCD(&I)' EQ 'KEQ' OR &KEQ)
+&KGE     SETB  ('&OPTCD(&I)' EQ 'KGE' OR &KGE)
+&FKS     SETB  ('&OPTCD(&I)' EQ 'FKS' OR &FKS)
+&GEN     SETB  ('&OPTCD(&I)' EQ 'GEN' OR &GEN)
+&MVE     SETB  ('&OPTCD(&I)' EQ 'MVE' OR &MVE)
+&LOC     SETB  ('&OPTCD(&I)' EQ 'LOC' OR &LOC)
+&FWD     SETB  ('&OPTCD(&I)' EQ 'FWD' OR &FWD)                  X04SVHS
+&BWD     SETB  ('&OPTCD(&I)' EQ 'BWD' OR &BWD)                  X04SVHS
+&ARD     SETB  ('&OPTCD(&I)' EQ 'ARD' OR &ARD)                  X04SVHS
+&LRD     SETB  ('&OPTCD(&I)' EQ 'LRD' OR &LRD)                  X04SVHS
+&WAITX   SETB  ('&OPTCD(&I)' EQ 'WAITX' OR &WAITX)             @ZA07549
+&NWAITX  SETB  ('&OPTCD(&I)' EQ 'NWAITX' OR &NWAITX)           @ZA07549
+&A       SETA  &KEY+&ADR+&CNV+&SEQ+&DIR+&SKP+&SYN+&ASY+&NUP+&UPD+&NSP+&*
+               KEQ+&KGE+&FKS+&GEN+&MVE+&LOC+&FWD+&BWD+&ARD+&LRD+&WAITX+*
+               &NWAITX                                         @ZA07549
+.*             &A CONTAINS THE NUMBER OF VSAM OPTIONS SPECIFIED
+.*             &B, &C, AND &D CONTAIN THE NUMBER OF VTAM OPTIONS SPEC
+.*             &ERR CONTAINS THE NUMBER OF ERRORS
+         AIF   (&A+&B+&C+&D+&ERR EQ &I).T000100
+.*             IF &A+&B+&C+&D+&ERR EQUAL &I, THE LAST OPTION CHECKED
+.*             WAS A VALID VSAM OPTION.  ELSE CHECK FOR A VALID VTAM
+.*             OPTION
+&CA      SETB  ('&OPTCD(&I)' EQ 'CA' OR &CA)                     X03004
+&CS      SETB  ('&OPTCD(&I)' EQ 'CS' OR &CS)                     X03004
+&RELEASE SETB  ('&OPTCD(&I)' EQ 'RELEASE' OR &RELEASE)           X03004
+&PASS    SETB  ('&OPTCD(&I)' EQ 'PASS' OR &PASS)                 X03004
+&NERASE  SETB  ('&OPTCD(&I)' EQ 'NERASE' OR &NERASE)             X03004
+&EAU     SETB  ('&OPTCD(&I)' EQ 'EAU' OR &EAU)                   X03004
+&ERASE   SETB  ('&OPTCD(&I)' EQ 'ERASE' OR &ERASE)               X03004
+&SPEC    SETB  ('&OPTCD(&I)' EQ 'SPEC' OR &SPEC)                 X03004
+&ANY     SETB  ('&OPTCD(&I)' EQ 'ANY' OR &ANY)                   X03004
+&NCONV   SETB  ('&OPTCD(&I)' EQ 'NCONV' OR &NCONV)               X03004
+&CONV    SETB  ('&OPTCD(&I)' EQ 'CONV' OR &CONV)                 X03004
+&LBT     SETB  ('&OPTCD(&I)' EQ 'LBT' OR &LBT)                   X03004
+&LBM     SETB  ('&OPTCD(&I)' EQ 'LBM' OR &LBM)                   X03004
+&BLK     SETB  ('&OPTCD(&I)' EQ 'BLK' OR &BLK)                   X03004
+&COND    SETB  ('&OPTCD(&I)' EQ 'COND' OR &COND)                 X03004
+&UNCOND  SETB  ('&OPTCD(&I)' EQ 'UNCOND' OR &UNCOND)             X03004
+&LOCK    SETB  ('&OPTCD(&I)' EQ 'LOCK' OR &LOCK)                 X03004
+&LGONMSG SETB  ('&OPTCD(&I)' EQ 'LOGONMSG' OR &LGONMSG)          X03004
+&DEVCHAR SETB  ('&OPTCD(&I)' EQ 'DEVCHAR' OR &DEVCHAR)           X03004
+&TERMS   SETB  ('&OPTCD(&I)' EQ 'TERMS' OR &TERMS)               X03004
+&APPSTAT SETB  ('&OPTCD(&I)' EQ 'APPSTAT' OR &APPSTAT)           X03004
+&COUNTS  SETB  ('&OPTCD(&I)' EQ 'COUNTS' OR &COUNTS)             X03004
+&RNNAME  SETB  ('&OPTCD(&I)' EQ 'RNNAME' OR &RNNAME)             X03004
+&CIDXLAT SETB  ('&OPTCD(&I)' EQ 'CIDXLATE' OR &CIDXLAT)          X03004
+&TOPLGON SETB  ('&OPTCD(&I)' EQ 'TOPLOGON' OR &TOPLGON)          X03004
+&BSCID   SETB  ('&OPTCD(&I)' EQ 'BSCID' OR &BSCID)               X03004
+&DISPLAY SETB  ('&OPTCD(&I)' EQ 'DISPLAY' OR &DISPLAY)           X03004
+&RELRQ   SETB  ('&OPTCD(&I)' EQ 'RELRQ' OR &RELRQ)               X03004
+&NRELRQ  SETB  ('&OPTCD(&I)' EQ 'NRELRQ' OR &NRELRQ)             X03004
+&Q       SETB  ('&OPTCD(&I)' EQ 'Q' OR &Q)                       X03004
+&NQ      SETB  ('&OPTCD(&I)' EQ 'NQ' OR &NQ)                     X03004
+&PEND    SETB  ('&OPTCD(&I)' EQ 'PEND' OR &PEND)                 X03004
+&SESSION SETB  ('&OPTCD(&I)' EQ 'SESSION' OR &SESSION)           X03004
+&ACTIVE  SETB  ('&OPTCD(&I)' EQ 'ACTIVE' OR &ACTIVE)             X03004
+&UNCONDL SETB  ('&OPTCD(&I)' EQ 'UNCONDL' OR &UNCONDL)           X03004
+&QUIESCE SETB  ('&OPTCD(&I)' EQ 'QUIESCE' OR &QUIESCE)           X03004
+&START   SETB  ('&OPTCD(&I)' EQ 'START' OR &START)               X03004
+&STOP    SETB  ('&OPTCD(&I)' EQ 'STOP' OR &STOP)                 X03004
+&ACCEPT  SETB  ('&OPTCD(&I)' EQ 'ACCEPT' OR &ACCEPT)             X03004
+&ACQUIRE SETB  ('&OPTCD(&I)' EQ 'ACQUIRE' OR &ACQUIRE)           X03004
+&CONALL  SETB  ('&OPTCD(&I)' EQ 'CONALL' OR &CONALL)             X03004
+&CONANY  SETB  ('&OPTCD(&I)' EQ 'CONANY' OR &CONANY)             X03004
+&KEEP    SETB  ('&OPTCD(&I)' EQ 'KEEP' OR &KEEP)                X3004BS
+&TRUNC   SETB  ('&OPTCD(&I)' EQ 'TRUNC' OR &TRUNC)              X3004BS
+&NIBTK   SETB  ('&OPTCD(&I)' EQ 'NIBTK' OR &NIBTK)              X3004BS
+&FMHDR   SETB  ('&OPTCD(&I)' EQ 'FMHDR' OR &FMHDR)             X03004HS
+&NFMHDR  SETB  ('&OPTCD(&I)' EQ 'NFMHDR' OR &NFMHDR)           X03004HS
+&SESSPRM SETB  ('&OPTCD(&I)' EQ 'SESSPARM' OR &SESSPRM)        @Z40BHUC
+&SESSKEY SETB  ('&OPTCD(&I)' EQ 'SESSKEY' OR &SESSKEY)         @G40AKSL
+&B       SETA  &CA+&CS+&RELEASE+&PASS+&NERASE+&EAU+&ERASE+&SPEC+&ANY+&N*
+               CONV+&CONV+&LBT+&LBM+&BLK+&COND+&UNCOND+&LOCK+&LGONMSG+&*
+               DEVCHAR+&TERMS+&APPSTAT+&COUNTS+&RNNAME+&CIDXLAT
+&C       SETA  &TOPLGON+&BSCID+&DISPLAY+&RELRQ+&NRELRQ+&Q+&NQ+&PEND+&SE*
+               SSION+&ACTIVE+&UNCONDL+&QUIESCE+&START+&STOP+&ACCEPT+&AC*
+               QUIRE+&CONALL+&CONANY+&KEEP
+&D       SETA  &TRUNC+&NIBTK+&FMHDR+&NFMHDR+&SESSPRM+&SESSKEY
+.*                                                             @G40AKSL
+.*             &A CONTAINS THE NUMBER OF VSAM OPTIONS SPECIFIED
+.*             &B, &C, AND &D CONTAIN THE NUMBER OF VTAM OPTIONS SPEC
+.*             &ERR CONTAINS THE NUMBER OF ERRORS
+         AIF   (&A+&B+&C+&D+&ERR EQ &I).T000200
+.*             IF &A+&B+&C+&D+&ERR EQUAL &I, THE LAST OPTION CHECKED
+.*             WAS A VALID VTAM OPTION. ELSE IT WAS INVALID OR
+.*             DUPLICATED A PREVIOUSLY SPECIFIED OPTION.
+         IDAERMAC 5,OPTCD,&OPTCD(&I)
+&IDACB01 SETB  1
+&ERR     SETA  &ERR+1                   BUMP ERROR COUNT        X04SVHS
+         AGO   .T000100
+.T000200 AIF   ('&AM' EQ 'VTAM').T000100
+         IDAERMAC 20,&OPTCD(&I),OPTCD                            X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .T000100
+.**********************************************************************
+.*
+.*             THE FOLLOWING CODE CHECKS FOR MUTUALLY EXCLUSIVE OPTIONS
+.*             IF THEY EXIST, AN ERROR MSG IS ISSUED
+.*
+.T000300 AIF   (NOT(&KEY AND &ADR)).T000400
+         IDAERMAC 8,OPTCD,KEY,ADR
+&IDACB01 SETB  1
+.T000400 AIF   (NOT(&KEY AND &CNV)).T000500
+         IDAERMAC 8,OPTCD,KEY,CNV
+&IDACB01 SETB  1
+.T000500 AIF   (NOT(&ADR AND &CNV)).T000600
+         IDAERMAC 8,OPTCD,ADR,CNV
+&IDACB01 SETB  1
+.T000600 AIF   (NOT(&SEQ AND &DIR)).T000700
+         IDAERMAC 8,OPTCD,SEQ,DIR
+&IDACB01 SETB  1
+.T000700 AIF   (NOT(&SEQ AND &SKP)).T000800
+         IDAERMAC 8,OPTCD,SEQ,SKP
+&IDACB01 SETB  1
+.T000800 AIF   (NOT(&DIR AND &SKP)).T000900
+         IDAERMAC 8,OPTCD,DIR,SKP
+&IDACB01 SETB  1
+.T000900 AIF   (NOT(&SYN AND &ASY)).T001000
+         IDAERMAC 8,OPTCD,SYN,ASY
+&IDACB01 SETB  1
+.T001000 AIF   (NOT(&NUP AND &UPD)).T001100
+         IDAERMAC 8,OPTCD,NUP,UPD
+&IDACB01 SETB  1
+.T001100 AIF   (NOT(&NUP AND &NSP)).T001150
+         IDAERMAC 8,OPTCD,NUP,NSP
+&IDACB01 SETB  1
+.T001150 AIF   (NOT(&UPD AND &NSP)).T001200
+         IDAERMAC 8,OPTCD,UPD,NSP
+&IDACB01 SETB  1
+.T001200 AIF   (NOT(&KEQ AND &KGE)).T001350                    @ZA07549
+         IDAERMAC 8,OPTCD,KEQ,KGE
+&IDACB01 SETB  1
+.T001350 AIF   (NOT(&WAITX AND &NWAITX)).T001400               @ZA07549
+         IDAERMAC 8,OPTCD,WAITX,NWAITX                         @ZA07549
+&IDACB01 SETB  1                                               @ZA07549
+.T001400 AIF   (NOT(&FKS AND &GEN)).T001500
+         IDAERMAC 8,OPTCD,FKS,GEN
+&IDACB01 SETB  1
+.T001500 AIF   (NOT(&MVE AND &LOC)).T001600                      X03004
+         IDAERMAC 8,OPTCD,MVE,LOC
+&IDACB01 SETB  1
+.T001600 AIF   (NOT(&CA AND &CS)).T001800                      @Z40BHUC
+         IDAERMAC 8,OPTCD,CA,CS                                  X03004
+&IDACB01 SETB  1                                                 X03004
+.T001800 AIF   (NOT(&RELEASE AND &PASS)).T001900                 X03004
+         IDAERMAC 8,OPTCD,RELEASE,PASS                           X03004
+&IDACB01 SETB  1                                                 X03004
+.T001900 AIF   (NOT(&NERASE AND &EAU)).T002000                   X03004
+         IDAERMAC 8,OPTCD,NERASE,EAU                             X03004
+&IDACB01 SETB  1                                                 X03004
+.T002000 AIF   (NOT(&NERASE AND &ERASE)).T002100                 X03004
+         IDAERMAC 8,OPTCD,NERASE,ERASE                           X03004
+&IDACB01 SETB  1                                                 X03004
+.T002100 AIF   (NOT(&EAU AND &ERASE)).T002200                    X03004
+         IDAERMAC 8,OPTCD,EAU,ERASE                              X03004
+&IDACB01 SETB  1                                                 X03004
+.T002200 AIF   (NOT(&SPEC AND &ANY)).T002300                     X03004
+         IDAERMAC 8,OPTCD,SPEC,ANY                               X03004
+&IDACB01 SETB  1                                                 X03004
+.T002300 AIF   (NOT(&NCONV AND &CONV)).T002400                   X03004
+         IDAERMAC 8,OPTCD,NCONV,CONV                             X03004
+&IDACB01 SETB  1                                                 X03004
+.T002400 AIF   (NOT(&LBT AND &LBM)).T002500                      X03004
+         IDAERMAC 8,OPTCD,LBT,LBM                                X03004
+&IDACB01 SETB  1                                                 X03004
+.T002500 AIF   (NOT(&LBT AND &BLK)).T002600                      X03004
+         IDAERMAC 8,OPTCD,LBT,BLK                                X03004
+&IDACB01 SETB  1                                                 X03004
+.T002600 AIF   (NOT(&LBM AND &BLK)).T002700                      X03004
+         IDAERMAC 8,OPTCD,LBM,BLK                                X03004
+&IDACB01 SETB  1                                                 X03004
+.T002700 AIF   (NOT(&COND AND &UNCOND)).T002800                  X03004
+         IDAERMAC 8,OPTCD,COND,UNCOND                            X03004
+&IDACB01 SETB  1                                                 X03004
+.T002800 AIF   (NOT(&COND AND &LOCK)).T002900                    X03004
+         IDAERMAC 8,OPTCD,COND,LOCK                              X03004
+&IDACB01 SETB  1                                                 X03004
+.T002900 AIF   (NOT(&UNCOND AND &LOCK)).T003000                  X03004
+         IDAERMAC 8,OPTCD,UNCOND,LOCK                            X03004
+&IDACB01 SETB  1                                                 X03004
+.T003000 AIF   (NOT(&LGONMSG AND &DEVCHAR)).T003100              X03004
+         IDAERMAC 8,OPTCD,LOGONMSG,DEVCHAR                       X03004
+&IDACB01 SETB  1                                                 X03004
+.T003100 AIF   (NOT(&LGONMSG AND &TERMS)).T003200                X03004
+         IDAERMAC 8,OPTCD,LOGONMSG,TERMS                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T003200 AIF   (NOT(&LGONMSG AND &APPSTAT)).T003300              X03004
+         IDAERMAC 8,OPTCD,LOGONMSG,APPSTAT                       X03004
+&IDACB01 SETB  1                                                 X03004
+.T003300 AIF   (NOT(&LGONMSG AND &COUNTS)).T003400               X03004
+         IDAERMAC 8,OPTCD,LOGONMSG,COUNTS                        X03004
+&IDACB01 SETB  1                                                 X03004
+.T003400 AIF   (NOT(&LGONMSG AND &RNNAME)).T003500               X03004
+         IDAERMAC 8,OPTCD,LOGONMSG,RNNAME                        X03004
+&IDACB01 SETB  1                                                 X03004
+.T003500 AIF   (NOT(&LGONMSG AND &CIDXLAT)).T003600              X03004
+         IDAERMAC 8,OPTCD,LOGONMSG,CIDXLATE                      X03004
+&IDACB01 SETB  1                                                 X03004
+.T003600 AIF   (NOT(&LGONMSG AND &TOPLGON)).T003700              X03004
+         IDAERMAC 8,OPTCD,LOGONMSG,TOPLOGON                      X03004
+&IDACB01 SETB  1                                                 X03004
+.T003700 AIF   (NOT(&LGONMSG AND &BSCID)).T003800                X03004
+         IDAERMAC 8,OPTCD,LOGONMSG,BSCID                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T003800 AIF   (NOT(&LGONMSG AND &DISPLAY)).T003900              X03004
+         IDAERMAC 8,OPTCD,LOGONMSG,DISPLAY                       X03004
+&IDACB01 SETB  1                                                 X03004
+.T003900 AIF   (NOT(&LGONMSG AND &SESSPRM)).T003930            @G40AKSL
+         IDAERMAC 8,OPTCD,LOGONMSG,SESSPARM                    @ZA07555
+&IDACB01 SETB  1                                               @ZA07555
+.T003930 AIF   (NOT(&LGONMSG AND &SESSKEY)).T003950            @G40AKSL
+         IDAERMAC 8,OPTCD,LOGONMSG,SESSKEY                     @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.T003950 AIF   (NOT(&DEVCHAR AND &TERMS)).T004000              @ZA07555
+         IDAERMAC 8,OPTCD,DEVCHAR,TERMS                          X03004
+&IDACB01 SETB  1                                                 X03004
+.T004000 AIF   (NOT(&DEVCHAR AND &APPSTAT)).T004100              X03004
+         IDAERMAC 8,OPTCD,DEVCHAR,APPSTAT                        X03004
+&IDACB01 SETB  1                                                 X03004
+.T004100 AIF   (NOT(&DEVCHAR AND &COUNTS)).T004200               X03004
+         IDAERMAC 8,OPTCD,DEVCHAR,COUNTS                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T004200 AIF   (NOT(&DEVCHAR AND &RNNAME)).T004300               X03004
+         IDAERMAC 8,OPTCD,DEVCHAR,RNNAME                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T004300 AIF   (NOT(&DEVCHAR AND &CIDXLAT)).T004400              X03004
+         IDAERMAC 8,OPTCD,DEVCHAR,CIDXLATE                       X03004
+&IDACB01 SETB  1                                                 X03004
+.T004400 AIF   (NOT(&DEVCHAR AND &TOPLGON)).T004500              X03004
+         IDAERMAC 8,OPTCD,DEVCHAR,TOPLOGON                       X03004
+&IDACB01 SETB  1                                                 X03004
+.T004500 AIF   (NOT(&DEVCHAR AND &BSCID)).T004600                X03004
+         IDAERMAC 8,OPTCD,DEVCHAR,BSCID                          X03004
+&IDACB01 SETB  1                                                 X03004
+.T004600 AIF   (NOT(&DEVCHAR AND &DISPLAY)).T004650            @ZA07555
+         IDAERMAC 8,OPTCD,DEVCHAR,DISPLAY                        X03004
+&IDACB01 SETB  1                                                 X03004
+.T004650 AIF   (NOT(&DEVCHAR AND &SESSPRM)).T004670            @G40AKSL
+         IDAERMAC 8,OPTCD,DEVCHAR,SESSPARM                     @ZA07555
+&IDACB01 SETB  1                                               @ZA07555
+.T004670 AIF   (NOT(&DEVCHAR AND &SESSKEY)).T004700            @G40AKSL
+         IDAERMAC 8,OPTCD,DEVCHAR,SESSKEY                      @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.T004700 AIF   (NOT(&TERMS AND &APPSTAT)).T004800                X03004
+         IDAERMAC 8,OPTCD,TERMS,APPSTAT                          X03004
+&IDACB01 SETB  1                                                 X03004
+.T004800 AIF   (NOT(&TERMS AND &COUNTS)).T004900                 X03004
+         IDAERMAC 8,OPTCD,TERMS,COUNTS                           X03004
+&IDACB01 SETB  1                                                 X03004
+.T004900 AIF   (NOT(&TERMS AND &RNNAME)).T005000                 X03004
+         IDAERMAC 8,OPTCD,TERMS,RNNAME                           X03004
+&IDACB01 SETB  1                                                 X03004
+.T005000 AIF   (NOT(&TERMS AND &CIDXLAT)).T005100                X03004
+         IDAERMAC 8,OPTCD,TERMS,CIDXLATE                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T005100 AIF   (NOT(&TERMS AND &TOPLGON)).T005200                X03004
+         IDAERMAC 8,OPTCD,TERMS,TOPLOGON                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T005200 AIF   (NOT(&TERMS AND &BSCID)).T005300                  X03004
+         IDAERMAC 8,OPTCD,TERMS,BSCID                            X03004
+&IDACB01 SETB  1                                                 X03004
+.T005300 AIF   (NOT(&TERMS AND &DISPLAY)).T005350              @ZA07555
+         IDAERMAC 8,OPTCD,TERMS,APPSTAT                          X03004
+&IDACB01 SETB  1                                                 X03004
+.T005350 AIF   (NOT(&TERMS AND &SESSPRM)).T005370              @G40AKSL
+         IDAERMAC 8,OPTCD,TERMS,SESSPARM                       @ZA07555
+&IDACB01 SETB  1                                               @ZA07555
+.T005370 AIF   (NOT(&TERMS AND &SESSKEY)).T005400              @G40AKSL
+         IDAERMAC 8,OPTCD,TERMS,SESSKEY                        @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.T005400 AIF   (NOT(&APPSTAT AND &COUNTS)).T005500               X03004
+         IDAERMAC 8,OPTCD,APPSTAT,COUNTS                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T005500 AIF   (NOT(&APPSTAT AND &RNNAME)).T005600               X03004
+         IDAERMAC 8,OPTCD,APPSTAT,RNNAME                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T005600 AIF   (NOT(&APPSTAT AND &CIDXLAT)).T005700              X03004
+         IDAERMAC 8,OPTCD,APPSTAT,CIDXLATE                       X03004
+&IDACB01 SETB  1                                                 X03004
+.T005700 AIF   (NOT(&APPSTAT AND &TOPLGON)).T005800              X03004
+         IDAERMAC 8,OPTCD,APPSTAT,TOPLOGON                       X03004
+&IDACB01 SETB  1                                                 X03004
+.T005800 AIF   (NOT(&APPSTAT AND &BSCID)).T005900                X03004
+         IDAERMAC 8,OPTCD,APPSTAT,BSCID                          X03004
+&IDACB01 SETB  1                                                 X03004
+.T005900 AIF   (NOT(&APPSTAT AND &DISPLAY)).T005950            @ZA07555
+         IDAERMAC 8,OPTCD,APPSTAT,DISPLAY                        X03004
+&IDACB01 SETB  1                                                 X03004
+.T005950 AIF   (NOT(&APPSTAT AND &SESSPRM)).T005960            @G40AKSL
+         IDAERMAC 8,OPTCD,APPSTAT,SESSPARM                     @ZA07555
+&IDACB01 SETB  1                                               @ZA07555
+.T005960 AIF   (NOT(&APPSTAT AND &SESSKEY)).T006000            @G40AKSL
+         IDAERMAC 8,OPTCD,APPSTAT,SESSKEY                      @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.T006000 AIF   (NOT(&COUNTS AND &RNNAME)).T006100                X03004
+         IDAERMAC 8,OPTCD,COUNTS,RNNAME                          X03004
+&IDACB01 SETB  1                                                 X03004
+.T006100 AIF   (NOT(&COUNTS AND &CIDXLAT)).T006200               X03004
+         IDAERMAC 8,OPTCD,COUNTS,CIDXLATE                        X03004
+&IDACB01 SETB  1                                                 X03004
+.T006200 AIF   (NOT(&COUNTS AND &TOPLGON)).T006300               X03004
+         IDAERMAC 8,OPTCD,COUNTS,TOPLOGON                        X03004
+&IDACB01 SETB  1                                                 X03004
+.T006300 AIF   (NOT(&COUNTS AND &BSCID)).T006400                 X03004
+         IDAERMAC 8,OPTCD,COUNTS,BSCID                           X03004
+&IDACB01 SETB  1                                                 X03004
+.T006400 AIF   (NOT(&COUNTS AND &DISPLAY)).T006450             @ZA07555
+         IDAERMAC 8,OPTCD,COUNTS,DISPLAY                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T006450 AIF   (NOT(&COUNTS AND &SESSPRM)).T006470             @G40AKSL
+         IDAERMAC 8,OPTCD,COUNTS,SESSPARM                      @ZA07555
+&IDACB01 SETB  1                                               @ZA07555
+.T006470 AIF   (NOT(&COUNTS AND &SESSKEY)).T006500             @G40AKSL
+         IDAERMAC 8,OPTCD,COUNTS,SESSKEY                       @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.T006500 AIF   (NOT(&RNNAME AND &CIDXLAT)).T006600               X03004
+         IDAERMAC 8,OPTCD,RNNAME,CIDXLATE                        X03004
+&IDACB01 SETB  1                                                 X03004
+.T006600 AIF   (NOT(&RNNAME AND &TOPLGON)).T006700               X03004
+         IDAERMAC 8,OPTCD,RNNAME,TOPLOGON                        X03004
+&IDACB01 SETB  1                                                 X03004
+.T006700 AIF   (NOT(&RNNAME AND &BSCID)).T006800                 X03004
+         IDAERMAC 8,OPTCD,RNNAME,BSCID                           X03004
+&IDACB01 SETB  1                                                 X03004
+.T006800 AIF   (NOT(&RNNAME AND &DISPLAY)).T006850             @ZA07555
+         IDAERMAC 8,OPTCD,RNNAME,DISPLAY                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T006850 AIF   (NOT(&RNNAME AND &SESSPRM)).T006870             @G40AKSL
+         IDAERMAC 8,OPTCD,RNNAME,SESSPARM                      @ZA07555
+&IDACB01 SETB  1                                               @ZA07555
+.T006870 AIF   (NOT(&RNNAME AND &SESSKEY)).T006900             @G40AKSL
+         IDAERMAC 8,OPTCD,RNNAME,SESSKEY                       @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.T006900 AIF   (NOT(&CIDXLAT AND &TOPLGON)).T007000              X03004
+         IDAERMAC 8,OPTCD,CIDXLATE,TOPLOGON                      X03004
+&IDACB01 SETB  1                                                 X03004
+.T007000 AIF   (NOT(&CIDXLAT AND &BSCID)).T007100                X03004
+         IDAERMAC 8,OPTCD,CIDXLATE,BSCID                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T007100 AIF   (NOT(&CIDXLAT AND &DISPLAY)).T007150            @ZA07555
+         IDAERMAC 8,OPTCD,CIDXLATE,DISPLAY                       X03004
+&IDACB01 SETB  1                                                 X03004
+.T007150 AIF   (NOT(&CIDXLAT AND &SESSPRM)).T007170            @G40AKSL
+         IDAERMAC 8,OPTCD,CIDXLATE,SESSPARM                    @ZA07555
+&IDACB01 SETB  1                                               @ZA07555
+.T007170 AIF   (NOT(&CIDXLAT AND &SESSKEY)).T007200            @G40AKSL
+         IDAERMAC 8,OPTCD,CIDXLATE,SESSKEY                     @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.T007200 AIF   (NOT(&TOPLGON AND &BSCID)).T007300                X03004
+         IDAERMAC 8,OPTCD,TOPLOGON,BSCID                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T007300 AIF   (NOT(&TOPLGON AND &DISPLAY)).T007350            @ZA07555
+         IDAERMAC 8,OPTCD,TOPLOGON,DISPLAY                       X03004
+&IDACB01 SETB  1                                                 X03004
+.T007350 AIF   (NOT(&TOPLGON AND &SESSPRM)).T007370            @G40AKSL
+         IDAERMAC 8,OPTCD,TOPLOGON,SESSPARM                    @ZA07555
+&IDACB01 SETB  1                                               @ZA07555
+.T007370 AIF   (NOT(&TOPLGON AND &SESSKEY)).T007400            @G40AKSL
+         IDAERMAC 8,OPTCD,TOPLOGON,SESSKEY                     @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.T007400 AIF   (NOT(&BSCID AND &DISPLAY)).T007410              @ZA07555
+         IDAERMAC 8,OPTCD,BSCID,DISPLAY                          X03004
+&IDACB01 SETB  1                                                 X03004
+.T007410 AIF   (NOT(&BSCID AND &SESSPRM)).T007415              @G40AKSL
+         IDAERMAC 8,OPTCD,BSCID,SESSPARM                       @ZA07555
+&IDACB01 SETB  1                                               @ZA07555
+.T007415 AIF   (NOT(&BSCID AND &SESSKEY)).T007420              @G40AKSL
+         IDAERMAC 8,OPTCD,BSCID,SESSKEY                        @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.T007420 AIF   (NOT(&DISPLAY AND &SESSPRM)).T007450            @G40AKSL
+         IDAERMAC 8,OPTCD,DISPLAY,SESSPARM                     @ZA07555
+&IDACB01 SETB  1                                               @ZA07555
+.T007450 AIF   (NOT(&DISPLAY AND &SESSKEY)).T007470            @G40AKSL
+         IDAERMAC 8,OPTCD,DISPLAY,SESSKEY                      @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.T007470 AIF   (NOT(&SESSPRM AND &SESSKEY)).T007500            @G40AKSL
+         IDAERMAC 8,OPTCD,SESSPARM,SESSKEY                     @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.T007500 AIF   (NOT(&RELRQ AND &NRELRQ)).T007600                 X03004
+         IDAERMAC 8,OPTCD,RELRQ,NRELRQ                           X03004
+&IDACB01 SETB  1                                                 X03004
+.T007600 AIF   (NOT(&Q AND &NQ)).T007700                         X03004
+         IDAERMAC 8,OPTCD,Q,NQ                                   X03004
+&IDACB01 SETB  1                                                 X03004
+.T007700 AIF   (NOT(&PEND AND &SESSION)).T007800                 X03004
+         IDAERMAC 8,OPTCD,PEND,SESSION                           X03004
+&IDACB01 SETB  1                                                 X03004
+.T007800 AIF   (NOT(&PEND AND &ACTIVE)).T007900                  X03004
+         IDAERMAC 8,OPTCD,PEND,ACTIVE                            X03004
+&IDACB01 SETB  1                                                 X03004
+.T007900 AIF   (NOT(&PEND AND &UNCONDL)).T008000                 X03004
+         IDAERMAC 8,OPTCD,PEND,UNCONDL                           X03004
+&IDACB01 SETB  1                                                 X03004
+.T008000 AIF   (NOT(&SESSION AND &ACTIVE)).T008100               X03004
+         IDAERMAC 8,OPTCD,SESSION,ACTIVE                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T008100 AIF   (NOT(&SESSION AND &UNCONDL)).T008200              X03004
+         IDAERMAC 8,OPTCD,SESSION,UNCONDL                        X03004
+&IDACB01 SETB  1                                                 X03004
+.T008200 AIF   (NOT(&ACTIVE AND &UNCONDL)).T008300               X03004
+         IDAERMAC 8,OPTCD,ACTIVE,UNCONDL                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T008300 AIF   (NOT(&QUIESCE AND &START)).T008400                X03004
+         IDAERMAC 8,OPTCD,QUIESCE,START                          X03004
+&IDACB01 SETB  1                                                 X03004
+.T008400 AIF   (NOT(&QUIESCE AND &STOP)).T008500                 X03004
+         IDAERMAC 8,OPTCD,QUIESCE,STOP                           X03004
+&IDACB01 SETB  1                                                 X03004
+.T008500 AIF   (NOT(&START AND &STOP)).T008600                   X03004
+         IDAERMAC 8,OPTCD,START,STOP                             X03004
+&IDACB01 SETB  1                                                 X03004
+.T008600 AIF   (NOT(&ACCEPT AND &ACQUIRE)).T008900             @Z40BHUC
+         IDAERMAC 8,OPTCD,ACCEPT,ACQUIRE                         X03004
+&IDACB01 SETB  1                                                 X03004
+.T008900 AIF   (NOT(&CONALL AND &CONANY)).T009100              @Z40BHUC
+         IDAERMAC 8,OPTCD,CONALL,CONANY                          X03004
+&IDACB01 SETB  1                                                 X03004
+.T009100 AIF   (NOT(&KEEP AND &TRUNC)).T009200                  X3004BS
+         IDAERMAC 8,OPTCD,KEEP,TRUNC                            X3004BS
+&IDACB01 SETB  1                                                X3004BS
+.T009200 AIF   (NOT(&KEEP AND &NIBTK)).T009300                  X3004BS
+         IDAERMAC 8,OPTCD,KEEP,NIBTK                            X3004BS
+&IDACB01 SETB  1                                                X3004BS
+.T009300 AIF   (NOT(&NIBTK AND &TRUNC)).T009700                @Z40BHUC
+         IDAERMAC 8,OPTCD,NIBTK,TRUNC                           X3004BS
+&IDACB01 SETB  1                                                X3004BS
+.T009700 AIF   (NOT(&FMHDR AND &NFMHDR)).T009800                X04SVHS
+.*                                      CHK FOR MUTUALLY OPTS  X03004HS
+         IDAERMAC 8,OPTCD,FMHDR,NFMHDR                         X03004HS
+&IDACB01 SETB  1                                               X03004HS
+.T009800 ANOP                                                   X04SVHS
+         AIF   (NOT(&BWD AND &FWD)).T009900 CHK FOR MUTUALLY    X04SVHS
+.*                                      EXCLUSIVE OPTIONS       X04SVHS
+         IDAERMAC 8,OPTCD,FWD,BWD                               X04SVHS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.T009900 ANOP                                                   X04SVHS
+         AIF   (NOT(&ARD AND &LRD)).T010000 CHK FOR MUTUALLY    X04SVHS
+.*                                      EXCLUSIVE OPTIONS       X04SVHS
+         IDAERMAC 8,OPTCD,ARD,LRD                               X04SVHS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.T010000 ANOP                                                   X04SVHS
+         AIF   ('&CALLER' EQ 'RPL').T010100                     X04SVHS
+.*             IF CALLED BY RPL, THEN GLOBALS MUST BE SET FOR
+.*             RPL TO GENERATE CODE FROM IN THE FORM OF DC'S
+&IDAVALC(&IDAENO) SETC '&KEY&ADR&CNV&SEQ&DIR&SKP&SYN&ASY&NUP&UPD&NSP&KE*
+               Q&KGE&FKS&GEN&MVE&LOC&FWD&BWD&ARD&LRD.0&WAITX&NWAITX.000*
+               00000'                                          @ZA07549
+&IDAOPT2 SETC  '&CA&CS.00&RELEASE&PASS&NERASE&EAU&ERASE&SPEC&ANY&NCONV&*
+               CONV&LBT&LBM&BLK&COND&UNCOND&LOCK.00&LGONMSG&DEVCHAR&TER*
+               MS&APPSTAT&COUNTS&RNNAME&CIDXLAT&TOPLGON'       @Z40BHUC
+&IDAOPT2 SETC  '&IDAOPT2&BSCID&DISPLAY&RELRQ'                    X03004
+&IDAOPT3 SETC  '&NRELRQ&Q&NQ&PEND&SESSION&ACTIVE&UNCONDL&QUIESCE&START&*
+               STOP&ACCEPT&ACQUIRE.0&CONALL&CONANY.00&KEEP&TRUNC&NIBTK.*
+               00&SESSKEY&FMHDR&NFMHDR&SESSPRM.000000'         @G40AKSL
+         MEXIT
+.T010100 ANOP                                                   X04SVHS
+         AIF   ('&CALLER' NE 'RPL').T011600                     X04SVHS
+.*             AT THIS POINT EITHER IDACBOPT WAS CALLED BY RPL,
+.*             OPTCD IS UNSPECIFIED, OR BOTH. IF CALLED BY RPL
+.*             SET ANY UNSPECIFIED DEFAULTS.
+.*             DEFAULTS FOR CBM WILL BE SET AT EXECUTE TIME
+.*
+&KEY     SETB  (NOT(&ADR OR &CNV) OR &KEY)                      X04SVHS
+.*             IF NOT ADR, OR CNV, SET KEY AS DEFAULT
+&SEQ     SETB  (NOT(&DIR OR &SKP) OR &SEQ)                      X04SVHS
+.*             IF NOT DIR, OR SKP, SET SEQ AS DEFAULT
+         AIF   ('&AM' NE 'VTAM').T011500  WAS VTAM SPECIFIED    X04SVHS
+.*             SET VTAM DEFAULTS
+&ACCEPT  SETB  (NOT(&ACQUIRE) OR &ACCEPT)                      @Z40BHUC
+.*             IF NOT ACQUIRE, SET ACCEPT DEFAULT
+&Q       SETB  (NOT(&NQ) OR &Q)                                 X04SVHS
+.*             IF NOT NQ SET Q AS DEFAULT
+&RELRQ   SETB  (NOT(&NRELRQ) OR &RELRQ)                         X04SVHS
+.*             IF NOT NRELRQ SET RELRQ DEFAULT
+&NERASE  SETB  (NOT(&EAU OR &ERASE) OR &NERASE)                 X04SVHS
+.*             IF NOT EAU OR ERASE, SET NERASE DEFAULT
+&LBT     SETB  (NOT(&BLK OR &LBM) OR &LBT)                      X04SVHS
+.*             IF NOT BLK OR LBM, SET LBT DEFAULT
+&COND    SETB  (NOT(&UNCOND OR &LOCK) OR &COND)                 X04SVHS
+.*             IF NOT UNCOND OR LOCK, SET COND DEFAULT
+&CONALL  SETB  (NOT(&CONANY) OR &CONALL)                        X04SVHS
+.*             IF NOT CONANY SET CONALL DEFAULT
+&QUIESCE SETB  (NOT(&START OR &STOP) OR &QUIESCE)               X04SVHS
+.*             IF NOT START OR STOP, SET QUIESCE DEFAULT
+&LGONMSG SETB  (NOT(&DEVCHAR OR &TERMS OR &APPSTAT OR &COUNTS OR &RNNAM*
+               E OR &CIDXLAT OR &TOPLGON OR &BSCID OR &DISPLAY OR &SESS*
+               PRM OR &SESSKEY) OR &LGONMSG)                   @G40AKCM
+.*             IF NONE OF ABOVE, LOGONMSG IS DEFAULT
+&PEND    SETB  (NOT(&SESSION OR &ACTIVE OR &UNCONDL) OR &PEND)  X04SVHS
+.*             IF NONE OF ABOVE, SET PEND DEFAULT
+&NIBTK   SETB  (NOT(&TRUNC OR &KEEP) OR &NIBTK)                 X04SVHS
+.*             IF NOT KEEP OR TRUNC SET NIBTK DEFAULT
+.T011500 ANOP                                                   X3004BH
+.*             SET GLOBALS TO BE ASSEMBLED BY DECLARATIVE AS CONSTANTS
+&IDAOP1  SETC  '&LOC&DIR&SEQ&SKP&ASY&KGE&GEN'   OPTCD BYTE 1    X04SVHS
+&IDAOP2  SETC  '&KEY&ADR&CNV&BWD&LRD&WAITX&UPD&NSP'            @ZA07549
+.*                                      OPTCD BYTE 2           @ZA07549
+         AIF   ('&AM' NE 'VTAM').T011600                        X04SVHS
+.*             IF NOT VTAM, BYPASS SETTING VTAM OPTION BYTES
+&IDAOP5  SETC  '&CS.0&PASS&NERASE&EAU&ERASE&ANY&CONV'          @Z40BHUC
+.*                                      OPTCD BYTE 5            X04SVHS
+&IDAOP6  SETC  '&BLK&LBM&LBT&COND&UNCOND&LOCK.00' OPTCD BYTE 6  X04SVHS
+&IDAOP7  SETC  '&CONALL&CONANY.0&Q.0&RELRQ.00' OPTCD BYTE 7     X04SVHS
+&IDAOP8  SETC  '&ACQUIRE&ACCEPT.0&PEND&SESSION&ACTIVE&UNCONDL.0'
+.*                                      OPTCD BYTE 8           @Z40BHUC
+&IDAOP9  SETC  '&LGONMSG&DEVCHAR&TERMS&COUNTS&APPSTAT&RNNAME&CIDXLAT&TO*
+               PLGON'                   OPTCD BYTE 9            X04SVHS
+&IDAOPA  SETC  '&BSCID&DISPLAY&SESSPRM&SESSKEY.0000'
+.*                                      OPTCD BYTE 10          @G40AKSL
+&IDAOPB  SETC  '&QUIESCE&START&STOP.00000' OPTCD BYTE 11        X04SVHS
+&IDAOPC  SETC  '0&KEEP&TRUNC&NIBTK.000&FMHDR'                  @Z40BHUC
+.*                                      OPTCD BYTE 12           X04SVHS
+.T011600 ANOP                                                   X04SVHS
+         MEND
+

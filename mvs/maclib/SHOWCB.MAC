@@ -1,0 +1,707 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&LBL     SHOWCB &ACB=,&EXLST=,&RPL=,&AREA=,&LENGTH=,&OBJECT=,&FIELDS=, C
+               &MF=,&NIB=,&AM=                                   X03004
+.* GLOBALS
+         GBLB  &IDACB01                ERROR INDICATOR
+         GBLA  &IDACB02                NUMBER OF FIELDS IN HEADER ACE
+         GBLA  &IDACB03                LENGTH OF HEADER ACE
+         GBLA  &IDACB04(5)             HEADER TYPE ARRAY
+         GBLC  &IDACB05(5)             HEADER VALUE ARRAY
+         GBLA  &IDACB06(5)             HEADER OFFSET ARRAY
+         GBLA  &IDACB07(5)             HEADER FIELD LENGTH ARRAY
+         GBLA  &IDACB09                NUMBER OF ELEMENTS
+         GBLA  &IDACB10(50)            ELEMENT ID ARRAY
+         GBLA  &IDACB11                OPERAND TYPE - SET BY IDACB1
+         GBLC  &IDACB13                OPERAND VALUE - SET BY IDACB1
+.* LOCALS
+         LCLA  &OT,&BA,&UA,&AL,&RS,&I  ARRAY INDICES
+         LCLB  &ECB,&EXIT              INCOMPATIBLE FIELDS      Y30ASHS
+         LCLB  &ARG,&NIBF              INCOMPATIBLE FIELDS       X03004
+         LCLB  &RBA,&SEQNO,&DFASY,&JRNAD,&DFSYN,&ASYIP          X3004BS
+.*                                     INCOMPATIBLE FIELDS      X3004BS
+         LCLC  &BLKTYPE                TYPE OF BLOCK TO BE DISPLAYED
+.* INITIALIZATION
+&IDACB01 SETB  0                       CLEAR ERROR INDICATOR
+&IDACB02 SETA  5                       NUMBER OF HEADER FIELDS
+&IDACB03 SETA  16                      HEADER LENGTH
+&IDACB09 SETA  1                       INITIALIZE ELEMENT COUNTER
+&OT      SETA  1                       OBJECT TYPE INDEX
+&BA      SETA  2                       BLOCK ADDRESS INDEX
+&UA      SETA  3                       USER AREA INDEX
+&AL      SETA  4                       AREA LENGTH INDEX
+&RS      SETA  5                       RESERVED FIELD INDEX
+.* TEST FOR POSITIONAL PARAMETERS
+&I       SETA  0
+.L10     ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&SYSLIST).L20
+         IDAERMAC 1,&SYSLIST(&I)
+         AGO   .L10
+.* VALIDITY CHECK AND TRANSFORM REQUEST KEYWORDS
+.L20     ANOP                          *** BLOCK TYPE AND ADDRESS ***
+&IDACB04(&BA) SETA 0
+&IDACB06(&BA) SETA 4
+&IDACB07(&BA) SETA 4
+         AIF   ('&RPL' NE '').L30      CHECKS MUST BE MADE
+         AIF   ('&ACB' NE '').L40      IN THIS ORDER DUE TO
+         AIF   ('&NIB' NE '').L60      THE USE OF BLOCK         X03004
+         AIF   ('&EXLST' NE '').L50    NAMES AS KEYWORDS
+         AGO   .L80
+.L30     IDACB1 ARG=&RPL,ARGNAME=RPL,MF=&MF
+&BLKTYPE SETC  'RPL'
+         AGO   .L70
+.L40     IDACB1 ARG=&ACB,ARGNAME=ACB,MF=&MF
+&BLKTYPE SETC  'ACB'
+         AGO   .L70
+.L50     IDACB1 ARG=&EXLST,ARGNAME=EXLST,MF=&MF
+&BLKTYPE SETC  'EXLST'
+         AGO   .L70                                              X03004
+.L60     IDACB1 ARG=&NIB,ARGNAME=NIB,MF=&MF                      X03004
+&BLKTYPE SETC  'NIB'                                             X03004
+.L70     ANOP
+&IDACB04(&BA) SETA &IDACB11
+&IDACB05(&BA) SETC '&IDACB13'
+.L80     ANOP                          *** OBJECT TYPE ***
+&IDACB04(&OT) SETA 0
+&IDACB06(&OT) SETA 2
+&IDACB07(&OT) SETA 2
+         AIF   ('&OBJECT' EQ '' OR '&OBJECT' EQ 'DATA').L100
+         AIF   ('&OBJECT' EQ 'INDEX').L90
+         IDAERMAC 3,OBJECT,&OBJECT
+&IDACB01 SETB  1
+         AGO   .L100
+.L90     ANOP
+&IDACB04(&OT) SETA 1
+&IDACB05(&OT) SETC '1'
+.L100    ANOP                          *** USER AREA ADDRESS ***
+&IDACB04(&UA) SETA 0
+&IDACB06(&UA) SETA 8
+&IDACB07(&UA) SETA 4
+         AIF   ('&AREA' NE '').L105
+         AIF   ('&MF(1)' EQ 'E').L110
+         IDAERMAC 2,AREA               AREA KEYWORD REQUIRED - MISSING
+&IDACB01 SETB  1
+         AGO   .L110
+.L105    IDACB1 ARG=&AREA,ARGNAME=AREA,MF=&MF
+&IDACB04(&UA) SETA &IDACB11
+&IDACB05(&UA) SETC '&IDACB13'
+.L110    ANOP                          *** USER AREA LENGTH ***
+&IDACB04(&AL) SETA 0
+&IDACB06(&AL) SETA 12
+&IDACB07(&AL) SETA 2
+         AIF   ('&LENGTH' NE '').L115
+         AIF   ('&MF(1)' EQ 'E').L120
+         IDAERMAC 2,LENGTH             LENGTH KW REQUIRED - MISSING
+&IDACB01 SETB  1
+         AGO   .L120
+.L115    IDACB1 ARG=&LENGTH,ARGNAME=LENGTH,MF=&MF
+&IDACB04(&AL) SETA &IDACB11
+&IDACB05(&AL) SETC '&IDACB13'
+.L120    ANOP
+&IDACB04(&RS) SETA 0
+&IDACB06(&RS) SETA 14
+&IDACB07(&RS) SETA 2
+         AIF   ('&FIELDS' NE '').L130
+         AIF   ('&MF(1)' EQ 'E').L850
+         IDAERMAC 2,FIELDS             FIELDS KEYWORD REQUIRED BUT ...
+&IDACB01 SETB  1                       NOT SPECIFIED
+         AGO   .L850
+.L130    AIF   ('&MF(1)' NE 'E').L140
+         IDAERMAC 4,FIELDS             FIELDS KEYWORD NOT VALID ...
+         AGO   .L850                   FOR EXECUTE FORM - IGNORED
+.L140    ANOP
+&I       SETA  0
+         AIF   ('&BLKTYPE' EQ 'RPL').L270
+         AIF   ('&BLKTYPE' EQ 'ACB').L450
+         AIF   ('&BLKTYPE' EQ 'NIB').L791                        X03004
+         AIF   ('&BLKTYPE' EQ '').L800
+.* SCAN FIELDS SUBLIST FOR EXIT LIST KEYWORD CODES ********************
+.L150    ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&FIELDS).L230                           X3004BS
+         AIF   ('&FIELDS(&I)' EQ 'TPEND').L217                   X03004
+         AIF   ('&FIELDS(&I)' EQ 'TPEND').L217                   X03004
+         AIF   ('&FIELDS(&I)' EQ 'NSEXIT').L221                 G40AKCM
+         AIF   ('&FIELDS(&I)' EQ 'EODAD').L170
+         AIF   ('&FIELDS(&I)' EQ 'JRNAD').L190
+         AIF   ('&FIELDS(&I)' EQ 'LERAD').L200
+         AIF   ('&FIELDS(&I)' EQ 'SYNAD').L210
+         AIF   ('&FIELDS(&I)' EQ 'LOGON').L211                   X03004
+         AIF   ('&FIELDS(&I)' EQ 'LOSTERM').L212                 X03004
+         AIF   ('&FIELDS(&I)' EQ 'RELREQ').L213                  X03004
+         AIF   ('&FIELDS(&I)' EQ 'ATTN').L216                    X03004
+         AIF   ('&FIELDS(&I)' EQ 'TPEND').L217                   X03004
+         AIF   ('&FIELDS(&I)' EQ 'SCIP').L218                   X3004BS
+         AIF   ('&FIELDS(&I)' EQ 'DFASY').L219                  X3004BS
+         AIF   ('&FIELDS(&I)' EQ 'RESP').L220                   X3004BS
+         AIF   ('&FIELDS(&I)' EQ 'EXLLEN').L240
+         IDAERMAC 5,FIELDS,&FIELDS(&I)
+&IDACB01 SETB  1
+         AGO   .L150
+.L170    ANOP
+&IDACB10(&IDACB09) SETA X'25'          EODAD TYPE CODE
+         AGO   .L250
+.L190    ANOP
+&IDACB10(&IDACB09) SETA X'27'          JRNAD TYPE CODE
+         AGO   .L250
+.L200    ANOP
+&IDACB10(&IDACB09) SETA X'28'          LERAD TYPE CODE
+         AGO   .L250
+.L210    ANOP
+&IDACB10(&IDACB09) SETA X'29'          SYNAD TYPE CODE
+         AGO   .L250
+.L211    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'43'          LOGON TYPE CODE           X03004
+         AIF   ('&AM' EQ 'VTAM').L250                            X03004
+         IDAERMAC 18,LOGON                                       X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L250                                             X03004
+.L212    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'44'          LOSTERM TYPE CODE         X03004
+         AIF   ('&AM' EQ 'VTAM').L250                            X03004
+         IDAERMAC 18,LOSTERM                                     X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L250                                             X03004
+.L213    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'46'          RELREQ TYPE CODE          X03004
+         AIF   ('&AM' EQ 'VTAM').L250                            X03004
+         IDAERMAC 18,RELREQ                                      X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L250                                             X03004
+.L216    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'45'          ATTN TYPE CODE            X03004
+         AIF   ('&AM' EQ 'VTAM').L250                            X03004
+         IDAERMAC 18,ATTN                                        X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L250                                             X03004
+.L217    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'42'          TPEND TYPE CODE           X03004
+         AIF   ('&AM' EQ 'VTAM').L250                            X03004
+         IDAERMAC 18,TPEND                                       X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L250                                             X03004
+.L218    ANOP                                                   X3004BS
+&IDACB10(&IDACB09) SETA X'78'           SCIP TYPE CODE          X3004BS
+         AIF   ('&AM' EQ 'VTAM').L250                           X3004BS
+         IDAERMAC 18,SCIP                                       X3004BS
+&IDACB01 SETB  1                                                X3004BS
+         AGO   .L250                                            X3004BS
+.L219    ANOP                                                   X3004BS
+&IDACB10(&IDACB09) SETA X'79'          DFASY TYPE CODE          X3004BS
+         AIF   ('&AM' EQ 'VTAM').L250                           X3004BS
+         IDAERMAC 18,DFASY                                      X3004BS
+&IDACB01 SETB  1                                                X3004BS
+         AGO   .L250                                            X3004BS
+.L220    ANOP                                                   X3004BS
+&IDACB10(&IDACB09) SETA X'7A'           RESP TYPE CODE          X3004BS
+         AIF   ('&AM' EQ 'VTAM').L250                           X3004BS
+         IDAERMAC 18,RESP                                       X3004BS
+&IDACB01 SETB  1                                                X3004BS
+         AGO   .L250                                            X3004BS
+.L221    ANOP                                                   G40AKCM
+&IDACB10(&IDACB09) SETA X'93'          NSEXIT TYPE CODE         G40AKCM
+         AIF   ('&AM' EQ 'VTAM').L250                           G40AKCM
+         IDAERMAC 18,NSEXIT                                     G40AKCM
+&IDACB01 SETB  1                                                G40AKCM
+         AGO   .L250                                            G40AKCM
+.L230    AIF   (NOT(&DFASY AND &JRNAD)).L850                   @Z40BHUC
+         IDAERMAC 8,FIELDS,DFASY,JRNAD                          X3004BS
+         AGO   .L850                                            X3004BS
+.L240    ANOP
+&IDACB10(&IDACB09) SETA X'2A'          EXLLEN TYPE CODE
+         AIF   ('&AM' NE 'VTAM').L250
+&IDACB10(&IDACB09) SETA X'3F'          EXLLEN TYPE CODE - VTAM
+.L250    ANOP
+&IDACB09 SETA  &IDACB09+1
+         AGO   .L150
+.* SCAN FIELDS SUBLIST FOR RPL KEYWORD CODES **************************
+.L270    ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&FIELDS).L440                            X03004
+         AIF   ('&FIELDS(&I)' EQ 'ACB').L280
+         AIF   ('&FIELDS(&I)' EQ 'AREA').L290
+         AIF   ('&FIELDS(&I)' EQ 'AREALEN').L300
+         AIF   ('&FIELDS(&I)' EQ 'ARG').L310
+         AIF   ('&FIELDS(&I)' EQ 'ECB').L320
+         AIF   ('&FIELDS(&I)' EQ 'FDBK').L330
+         AIF   ('&FIELDS(&I)' EQ 'KEYLEN').L340
+         AIF   ('&FIELDS(&I)' EQ 'MSGAREA').L350
+         AIF   ('&FIELDS(&I)' EQ 'MSGLEN').L360
+         AIF   ('&FIELDS(&I)' EQ 'NXTRPL').L370
+         AIF   ('&FIELDS(&I)' EQ 'RBA').L380
+         AIF   ('&FIELDS(&I)' EQ 'RECLEN').L390
+         AIF   ('&FIELDS(&I)' EQ 'RPLLEN').L410
+         AIF   ('&FIELDS(&I)' EQ 'AAREA').L411                   X03004
+         AIF   ('&FIELDS(&I)' EQ 'AAREALN').L412                 X03004
+         AIF   ('&FIELDS(&I)' EQ 'ARECLEN').L413                 X03004
+         AIF   ('&FIELDS(&I)' EQ 'EXIT').L414                    X03004
+         AIF   ('&FIELDS(&I)' EQ 'NIB').L417                     X03004
+         AIF   ('&FIELDS(&I)' EQ 'USER').L418                    X03004
+         AIF   ('&FIELDS(&I)' EQ 'RTNCD').L419                   X03004
+         AIF   ('&FIELDS(&I)' EQ 'FDBK2').L420                   X03004
+         AIF   ('&FIELDS(&I)' EQ 'SENSE').L421                   X03004
+         AIF   ('&FIELDS(&I)' EQ 'REQ').L422                     X03004
+         AIF   ('&FIELDS(&I)' EQ 'OBSQVAL').L423                X3004BS
+         AIF   ('&FIELDS(&I)' EQ 'IBSQVAL').L424                X3004BS
+         AIF   ('&FIELDS(&I)' EQ 'SEQNO').L425                  X3004BS
+         AIF   ('&FIELDS(&I)' EQ 'USENSEO').L426                X3004BS
+         AIF   ('&FIELDS(&I)' EQ 'USENSEI').L426A               X3004BS
+         AIF   ('&FIELDS(&I)' EQ 'SSENSMO').L427               X03004HS
+         AIF   ('&FIELDS(&I)' EQ 'SSENSMI').L428               X03004HS
+         AIF   ('&FIELDS(&I)' EQ 'SIGDATA').L429               X03004HS
+         AIF   ('&FIELDS(&I)' EQ 'TRANSID').L42901              X04SVHS
+         AIF   ('&FIELDS(&I)' EQ 'AIXPC').L42902                X04SVHS
+         AIF   ('&FIELDS(&I)' EQ 'FTNCD').L42903                X04SVHS
+         IDAERMAC 5,FIELDS,&FIELDS(&I)
+&IDACB01 SETB  1
+         AGO   .L270
+.L280    ANOP
+&IDACB10(&IDACB09) SETA X'2B'          ACB TYPE CODE
+         AGO   .L430
+.L290    ANOP
+&IDACB10(&IDACB09) SETA X'2C'          AREA TYPE CODE
+         AGO   .L430
+.L300    ANOP
+&IDACB10(&IDACB09) SETA X'2D'          AREALEN TYPE CODE
+         AGO   .L430
+.L310    ANOP
+&IDACB10(&IDACB09) SETA X'2E'          ARG TYPE CODE
+&ARG     SETB  1                                                 X03004
+         AGO   .L430
+.L320    ANOP
+&IDACB10(&IDACB09) SETA X'2F'          ECB TYPE CODE
+&ECB     SETB  1                                                 X03004
+         AGO   .L430
+.L330    ANOP
+&IDACB10(&IDACB09) SETA X'38'          FDBK TYPE CODE
+         AGO   .L430
+.L340    ANOP
+&IDACB10(&IDACB09) SETA X'30'          KEYLEN TYPE CODE
+         AGO   .L430
+.L350    ANOP
+&IDACB10(&IDACB09) SETA X'31'          MSGAREA TYPE CODE
+         AGO   .L430
+.L360    ANOP
+&IDACB10(&IDACB09) SETA X'32'          MSGLEN TYPE CODE
+         AGO   .L430
+.L370    ANOP
+&IDACB10(&IDACB09) SETA X'33'          NXTRPL TYPE CODE
+         AGO   .L430
+.L380    ANOP
+&IDACB10(&IDACB09) SETA X'39'          RBA TYPE CODE
+         AGO   .L430
+.L390    ANOP
+&IDACB10(&IDACB09) SETA X'35'          RECLEN TYPE CODE
+         AGO   .L430
+.L410    ANOP
+&IDACB10(&IDACB09) SETA X'37'          RPLLEN TYPE CODE
+         AIF   ('&AM' NE 'VTAM').L430
+&IDACB10(&IDACB09) SETA X'3E'          RPLLEN TYPE CODE - VTAM
+         AGO   .L430                                             X03004
+.L411    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'57'          AAREA TYPE CODE           X03004
+         AIF   ('&AM' EQ 'VTAM').L430                            X03004
+         IDAERMAC 18,AAREA                                       X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L430                                             X03004
+.L412    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'49'          AAREALN TYPE CODE         X03004
+         AIF   ('&AM' EQ 'VTAM').L430                            X03004
+         IDAERMAC 18,AAREALN                                     X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L430                                             X03004
+.L413    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'4A'          ARECLEN TYPE CODE         X03004
+         AIF   ('&AM' EQ 'VTAM').L430                            X03004
+         IDAERMAC 18,ARECLEN                                     X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L430                                             X03004
+.L414    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'4B'          EXIT TYPE CODE            X03004
+&EXIT    SETB  1                                                 X03004
+         AIF   ('&AM' EQ 'VTAM').L430                            X03004
+         IDAERMAC 18,EXIT                                        X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L430                                             X03004
+.L417    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'4F'          NIB TYPE CODE             X03004
+&NIBF    SETB  1                                                 X03004
+         AIF   ('&AM' EQ 'VTAM').L430                            X03004
+         IDAERMAC 18,NIB                                         X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L430                                             X03004
+.L418    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'4E'          USER TYPE CODE            X03004
+         AIF   ('&AM' EQ 'VTAM').L430                            X03004
+         IDAERMAC 18,USER                                        X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L430                                             X03004
+.L419    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'5E'          RTNCD TYPE CODE           X03004
+         AGO   .L430                                             X03004
+.L420    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'60'          FDBK2 TYPE CODE           X03004
+         AGO   .L430                                             X03004
+.L421    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'61'          SENSE TYPE CODE           X03004
+         AIF   ('&AM' EQ 'VTAM').L430                            X03004
+         IDAERMAC 18,SENSE                                       X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L430                                             X03004
+.L422    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'62'          REQ TYPE CODE             X03004
+         AGO   .L430                                           X03004HS
+.L423    ANOP                                                   X3004BS
+&IDACB10(&IDACB09) SETA X'6E'        OBSQVAL TYPE CODE          X3004BS
+         AIF   ('&AM' EQ 'VTAM').L430                           X3004BS
+         IDAERMAC 18,OBSQVAL                                    X3004BS
+&IDACB01 SETB  1                                                X3004BS
+         AGO   .L430                                            X3004BS
+.L424    ANOP                                                   X3004BS
+&IDACB10(&IDACB09) SETA X'6F'        IBSQVAL TYPE CODE          X3004BS
+         AIF   ('&AM' EQ 'VTAM').L430                           X3004BS
+         IDAERMAC 18,IBSQVAL                                    X3004BS
+&IDACB01 SETB  1                                                X3004BS
+         AGO   .L430                                            X3004BS
+.L425    ANOP                                                   X3004BS
+&IDACB10(&IDACB09) SETA X'70'          SEQNO TYPE CODE          X3004BS
+         AIF   ('&AM' EQ 'VTAM').L430                           X3004BS
+         IDAERMAC 18,SEQNO                                      X3004BS
+&IDACB01 SETB  1                                                X3004BS
+         AGO   .L430                                            X3004BS
+.L426    ANOP                                                   X3004BS
+&IDACB10(&IDACB09) SETA X'73'        USENSEO TYPE CODE          X3004BS
+         AIF   ('&AM' EQ 'VTAM').L430                           X3004BS
+         IDAERMAC 18,USENSEO                                    X3004BS
+&IDACB01 SETB  1                                                X3004BS
+         AGO   .L430                                            X3004BS
+.L426A   ANOP                                                   X3004BS
+&IDACB10(&IDACB09) SETA X'74'        USENSEI TYPE CODE          X3004BS
+         AIF   ('&AM' EQ 'VTAM').L430                           X3004BS
+         IDAERMAC 18,USENSEI                                    X3004BS
+&IDACB01 SETB  1                                                X3004BS
+         AGO   .L430                                            X3004BS
+.L427    ANOP                           PROCESS SSENSMO        X03004HS
+&IDACB10(&IDACB09) SETA X'86'           SSENSMO TYPE CODE      X03004HS
+         AIF   ('&AM' EQ 'VTAM').L430                          X03004HS
+         IDAERMAC 18,SSENSMO            IF NOT VTAM, INVALID   X03004HS
+.*                                      KEYWORD                X03004HS
+&IDACB01 SETB  1                        SET ERROR SWITCH       X03004HS
+         AGO   .L430                                           X03004HS
+.L428    ANOP                           PROCESS SSENSMI        X03004HS
+&IDACB10(&IDACB09) SETA X'87'           SSENSMI TYPE CODE      X03004HS
+         AIF   ('&AM' EQ 'VTAM').L430                          X03004HS
+         IDAERMAC 18,SSENSMI            IF NOT VTAM, INVALID   X03004HS
+.*                                      KEYWORD                X03004HS
+&IDACB01 SETB  1                        SET ERROR SWITCH       X03004HS
+         AGO   .L430                                           X03004HS
+.L429    ANOP                           PROCESS SIGDATA        X03004HS
+&IDACB10(&IDACB09) SETA X'88'           SIGDATA TYPE CODE      X03004HS
+         AIF   ('&AM' EQ 'VTAM').L430                          X03004HS
+         IDAERMAC 18,SIGDATA            IF NOT VTAM, INVALID   X03004HS
+.*                                      KEYWORD                X03004HS
+&IDACB01 SETB  1                        SET ERROR SWITCH       X03004HS
+         AGO   .L430                                            X04SVHS
+.L42901  ANOP                                                   X04SVHS
+&IDACB10(&IDACB09) SETA X'5F'           SET TRANSID KWTC        X04SVHS
+         AGO   .L430                                            X04SVHS
+.L42902  ANOP                                                   X04SVHS
+&IDACB10(&IDACB09) SETA X'3A'           SET AIXPC KWTC          X04SVHS
+         AGO   .L430                                            X04SVHS
+.L42903  ANOP                                                   X04SVHS
+&IDACB10(&IDACB09) SETA X'63'           SET FTNCD KWTC          X04SVHS
+.L430    ANOP
+&IDACB09 SETA  &IDACB09+1
+         AGO   .L270
+.L440    AIF   (NOT(&ARG AND &NIBF)).L441                        X03004
+         IDAERMAC 8,FIELDS,ARG,NIB                               X03004
+&IDACB01 SETB 1                                                  X03004
+.L441    AIF   (NOT(&ECB AND &EXIT)).L447                       Y30ASHS
+         IDAERMAC 8,FIELDS,ECB,EXIT                              X03004
+&IDACB01 SETB 1                                                  X03004
+.L447    AIF   (NOT(&RBA AND &SEQNO)).L850                      X3004BS
+         IDAERMAC 8,FIELDS,RBA,SEQNO                            X3004BS
+&IDACB01 SETB  1                                                X3004BS
+         AGO   .L850                                             X03004
+.* SCAN FIELDS SUBLIST FOR ACB KEYWORD CODES***************************
+.L450    ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&FIELDS).L850
+         AIF   ('&FIELDS(&I)' EQ 'AVSPAC').L460
+         AIF   ('&FIELDS(&I)' EQ 'BFRFND').L465                @XM07762
+         AIF   ('&FIELDS(&I)' EQ 'BUFND').L470
+         AIF   ('&FIELDS(&I)' EQ 'BUFNI').L480
+         AIF   ('&FIELDS(&I)' EQ 'BUFNO').L490
+         AIF   ('&FIELDS(&I)' EQ 'BUFRDS').L495                @XM07762
+         AIF   ('&FIELDS(&I)' EQ 'BUFSP').L500
+         AIF   ('&FIELDS(&I)' EQ 'CINV').L510
+         AIF   ('&FIELDS(&I)' EQ 'DDNAME').L520
+         AIF   ('&FIELDS(&I)' EQ 'ENDRBA').L530
+         AIF   ('&FIELDS(&I)' EQ 'HALCRBA').L531               @ZA17045
+         AIF   ('&FIELDS(&I)' EQ 'ERROR').L540
+         AIF   ('&FIELDS(&I)' EQ 'EXLST').L550
+         AIF   ('&FIELDS(&I)' EQ 'FS').L560
+         AIF   ('&FIELDS(&I)' EQ 'JFCB').L570                  @XM01140
+         AIF   ('&FIELDS(&I)' EQ 'KEYLEN').L590
+         AIF   ('&FIELDS(&I)' EQ 'LRECL').L600
+         AIF   ('&FIELDS(&I)' EQ 'NCIS').L610
+         AIF   ('&FIELDS(&I)' EQ 'NDELR').L620
+         AIF   ('&FIELDS(&I)' EQ 'NEXCP').L630
+         AIF   ('&FIELDS(&I)' EQ 'NEXT').L640
+         AIF   ('&FIELDS(&I)' EQ 'NINSR').L650
+         AIF   ('&FIELDS(&I)' EQ 'NIXL').L660
+         AIF   ('&FIELDS(&I)' EQ 'NLOGR').L670
+         AIF   ('&FIELDS(&I)' EQ 'NRETR').L680
+         AIF   ('&FIELDS(&I)' EQ 'NSSS').L690
+         AIF   ('&FIELDS(&I)' EQ 'NUIW').L695                  @XM07762
+         AIF   ('&FIELDS(&I)' EQ 'NUPDR').L700
+         AIF   ('&FIELDS(&I)' EQ 'PASSWD').L710
+         AIF   ('&FIELDS(&I)' EQ 'RKP').L720
+         AIF   ('&FIELDS(&I)' EQ 'STRNO').L730
+         AIF   ('&FIELDS(&I)' EQ 'STMST').L740
+         AIF   ('&FIELDS(&I)' EQ 'STRMAX').L744                @XM07762
+         AIF   ('&FIELDS(&I)' EQ 'UIW').L748                   @XM07762
+         AIF   ('&FIELDS(&I)' EQ 'USERPTR').L749               @XM01129
+         AIF   ('&FIELDS(&I)' EQ 'APPLID').L750                  X03004
+         AIF   ('&FIELDS(&I)' EQ 'ACBLEN').L760
+         AIF   ('&FIELDS(&I)' EQ 'BSTRNO').L765
+         AIF   ('&FIELDS(&I)' EQ 'MAREA').L770
+         AIF   ('&FIELDS(&I)' EQ 'MLEN').L775
+         AIF   ('&FIELDS(&I)' EQ 'AIXRKP').L780
+         IDAERMAC 5,FIELDS,&FIELDS(&I)
+&IDACB01 SETB  1
+         AGO   .L450
+.L460    ANOP
+&IDACB10(&IDACB09) SETA X'02'          AVSPAC TYPE CODE
+         AGO   .L790
+.L465    ANOP                                                  @XM07762
+&IDACB10(&IDACB09) SETA X'7C'          BFRFND TYPE CODE        @XM07762
+         AGO   .L790                                           @XM07762
+.L470    ANOP
+&IDACB10(&IDACB09) SETA X'04'          BUFND TYPE CODE
+         AGO   .L790
+.L480    ANOP
+&IDACB10(&IDACB09) SETA X'05'          BUFNI TYPE CODE
+         AGO   .L790
+.L490    ANOP
+&IDACB10(&IDACB09) SETA X'06'          BUFNO TYPE CODE
+         AGO   .L790
+.L495    ANOP                                                  @XM07762
+&IDACB10(&IDACB09) SETA X'7D'          BUFRDS TYPE CODE        @XM07762
+         AGO   .L790                                           @XM07762
+.L500    ANOP
+&IDACB10(&IDACB09) SETA X'07'          BUFSP TYPE CODE
+         AGO   .L790
+.L510    ANOP
+&IDACB10(&IDACB09) SETA X'08'          CINV TYPE CODE
+         AGO   .L790
+.L520    ANOP
+&IDACB10(&IDACB09) SETA X'09'          DDNAME TYPE CODE
+         AGO   .L790
+.L530    ANOP
+&IDACB10(&IDACB09) SETA X'0A'          ENDRBA TYPE CODE
+         AGO   .L790
+.L531    ANOP                                                  @ZA17045
+&IDACB10(&IDACB09) SETA X'94'          HALCRBA TYPE CODE       @ZA17045
+         AGO   .L790                                           @ZA17045
+.L540    ANOP
+&IDACB10(&IDACB09) SETA X'0B'          ERROR TYPE CODE
+         AGO   .L790
+.L550    ANOP
+&IDACB10(&IDACB09) SETA X'0C'          EXLST TYPE CODE
+         AGO   .L790
+.L560    ANOP
+&IDACB10(&IDACB09) SETA X'0D'          FS TYPE CODE
+         AGO   .L790
+.L570    ANOP                                                  @XM01140
+&IDACB10(&IDACB09) SETA X'8D'          JFCB TYPE CODE          @XM01140
+         AGO   .L790                                           @XM01140
+.L590    ANOP
+&IDACB10(&IDACB09) SETA X'10'          KEYLEN TYPE CODE
+         AGO   .L790
+.L600    ANOP
+&IDACB10(&IDACB09) SETA X'11'          LRECL TYPE CODE
+         AGO   .L790
+.L610    ANOP
+&IDACB10(&IDACB09) SETA X'13'          NCIS TYPE CODE
+         AGO   .L790
+.L620    ANOP
+&IDACB10(&IDACB09) SETA X'14'          NDELR TYPE CODE
+         AGO   .L790
+.L630    ANOP
+&IDACB10(&IDACB09) SETA X'15'          NEXCP TYPE CODE
+         AGO   .L790
+.L640    ANOP
+&IDACB10(&IDACB09) SETA X'16'          NEXT TYPE CODE
+         AGO   .L790
+.L650    ANOP
+&IDACB10(&IDACB09) SETA X'17'          NINSR TYPE CODE
+         AGO   .L790
+.L660    ANOP
+&IDACB10(&IDACB09) SETA X'18'          NIXL TYPE CODE
+         AGO   .L790
+.L670    ANOP
+&IDACB10(&IDACB09) SETA X'19'          NLOGR TYPE CODE
+         AGO   .L790
+.L680    ANOP
+&IDACB10(&IDACB09) SETA X'1A'          NRETR TYPE CODE
+         AGO   .L790
+.L690    ANOP
+&IDACB10(&IDACB09) SETA X'1B'          NSSS TYPE CODE
+         AGO   .L790
+.L695    ANOP                                                  @XM07762
+&IDACB10(&IDACB09) SETA X'7E'          NUIW TYPE CODE          @XM07762
+         AGO   .L790                                           @XM07762
+.L700    ANOP
+&IDACB10(&IDACB09) SETA X'1C'          NUPDR TYPE CODE
+         AGO   .L790
+.L710    ANOP
+&IDACB10(&IDACB09) SETA X'1E'          PASSWD TYPE CODE
+         AGO   .L790
+.L720    ANOP
+&IDACB10(&IDACB09) SETA X'1F'          RKP TYPE CODE
+         AGO   .L790
+.L730    ANOP
+&IDACB10(&IDACB09) SETA X'20'          STRNO TYPE CODE
+         AGO   .L790
+.L740    ANOP
+&IDACB10(&IDACB09) SETA X'23'          STMST TYPE CODE
+         AGO   .L790
+.L744    ANOP                                                  @XM07762
+&IDACB10(&IDACB09) SETA X'80'          STRMAX TYPE CODE        @XM07762
+         AGO   .L790                                           @XM07762
+.L748    ANOP                                                  @XM07762
+&IDACB10(&IDACB09) SETA X'7F'          UIW TYPE CODE           @XM07762
+         AGO   .L790                                           @XM07762
+.L749    ANOP                                                  @XM01129
+&IDACB10(&IDACB09) SETA X'8C'          USERPTR TYPE CODE       @MX01129
+         AGO   .L790                                           @XM01129
+.L750    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'41'          APPLID TYPE CODE          X03004
+         AIF   ('&AM' EQ 'VTAM').L790                            X03004
+         IDAERMAC 18,APPLID                                      X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L790                                             X03004
+.L760    ANOP
+&IDACB10(&IDACB09) SETA X'03'          ACBLEN TYPE CODE - VSAM
+         AIF   ('&AM' NE 'VTAM').L790
+&IDACB10(&IDACB09) SETA X'3D'          ACBLEN TYPE CODE - VTAM
+         AGO   .L790
+.L765    ANOP
+&IDACB10(&IDACB09) SETA X'24'           BSTRNO TYPE CODE        X04SVHS
+         AGO   .L790                                            X04SVHS
+.L770    ANOP
+&IDACB10(&IDACB09) SETA X'0E'           MSGAREA TYPE CODE       X04SVHS
+         AGO   .L790                                            X04SVHS
+.L775    ANOP
+&IDACB10(&IDACB09) SETA X'0F'           MSGLEN TYPE CODE        X04SVHS
+         AGO   .L790                                            X04SVHS
+.L777    ANOP
+.L780    ANOP
+&IDACB10(&IDACB09) SETA X'3C'           AIXRKP TYPE CODE        X04SVHS
+         AGO   .L790                                            X04SVHS
+.L785    ANOP
+&IDACB10(&IDACB09) SETA X'40'     AM TYPE CODE                  X04SVHS
+.L790    ANOP
+&IDACB09 SETA  &IDACB09+1
+         AGO   .L450
+.* SCAN FIELDS SUBLIST FOR NIB KEYWORD CODES ******************* X03004
+.L791    ANOP                                                    X03004
+&I       SETA  &I+1                                              X03004
+         AIF   (&I GT N'&FIELDS).L850                            X03004
+         AIF   ('&FIELDS(&I)' EQ 'NAME').L792                    X03004
+         AIF   ('&FIELDS(&I)' EQ 'USERFLD').L793                 X03004
+         AIF   ('&FIELDS(&I)' EQ 'MODE').L794                    X03004
+         AIF   ('&FIELDS(&I)' EQ 'CONDN').L795                   X03004
+         AIF   ('&FIELDS(&I)' EQ 'CID').L796                     X03004
+         AIF   ('&FIELDS(&I)' EQ 'DEVCHAR').L797                 X03004
+         AIF   ('&FIELDS(&I)' EQ 'NIBLEN').L798                  X03004
+         AIF   ('&FIELDS(&I)' EQ 'EXLST').L7980                 X3004BS
+         AIF   ('&FIELDS(&I)' EQ 'RESPLIM').L7981               X3004BS
+         AIF   ('&FIELDS(&I)' EQ 'LOGMODE').L7982              @Z40BHUC
+         AIF   ('&FIELDS(&I)' EQ 'BNDAREA').L7983              @Z40BHUC
+         IDAERMAC 5,FIELDS,&FIELDS(&I)                           X03004
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L791                                             X03004
+.L792    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'5B'          NAME TYPE CODE            X03004
+         AGO   .L799                                             X03004
+.L793    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'51'          USERFLD TYPE CODE         X03004
+         AGO   .L799                                             X03004
+.L794    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'54'          MODE TYPE CODE            X03004
+         AGO   .L799                                             X03004
+.L795    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'55'          CONDN TYPE CODE           X03004
+         AGO   .L799                                             X03004
+.L796    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'5A'          CID TYPE CODE             X03004
+         AGO   .L799                                             X03004
+.L797    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'56'          DEVCHAR TYPE CODE         X03004
+         AGO   .L799                                             X03004
+.L798    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'53'          NIBLEN TYPE CODE          X03004
+         AGO   .L799                                            X3004BS
+.L7980   ANOP                                                   X3004BS
+&IDACB10(&IDACB09) SETA X'82'           EXLST TYPE CODE         X3004BS
+         AGO   .L799                                            X3004BS
+.L7981   ANOP                                                   X3004BS
+&IDACB10(&IDACB09) SETA X'83'         RESPLIM TYPE CODE         X3004BS
+         AGO   .L799                                            X3004BS
+.L7982   ANOP                                                   X3004BS
+&IDACB10(&IDACB09) SETA X'8E'         LOGMODE TYPE CODE        @Z40BHUC
+         AGO   .L799                                           @Z40BHUC
+.L7983   ANOP                                                  @Z40BHUC
+&IDACB10(&IDACB09) SETA X'8F'         BNDAREA TYPE CODE        @Z40BHUC
+.L799    ANOP                                                    X03004
+&IDACB09 SETA  &IDACB09+1                                        X03004
+         AGO   .L791                                             X03004
+.* SCAN CONTROL BLOCK LENGTH KEYWORDS ONLY ****************************
+.L800    ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&FIELDS).L845
+         AIF   ('&FIELDS(&I)' EQ 'ACBLEN').L810
+         AIF   ('&FIELDS(&I)' EQ 'RPLLEN').L820
+         AIF   ('&FIELDS(&I)' EQ 'EXLLEN').L830
+         AIF   ('&FIELDS(&I)' EQ 'NIBLEN').L835                  X03004
+         IDAERMAC 5,FIELDS,&FIELDS(&I)
+&IDACB01 SETB  1
+         AGO   .L800
+.L810    ANOP
+&IDACB10(&IDACB09) SETA X'03'          ACBLEN TYPE CODE
+         AIF   ('&AM' NE 'VTAM').L840
+&IDACB10(&IDACB09) SETA X'3D'          ACBLEN TYPE CODE - VTAM
+         AGO   .L840
+.L820    ANOP
+&IDACB10(&IDACB09) SETA X'37'          RPLLEN TYPE CODE
+         AIF   ('&AM' NE 'VTAM').L840
+&IDACB10(&IDACB09) SETA X'3E'          RPLLEN TYPE CODE - VTAM
+         AGO   .L840
+.L830    ANOP
+&IDACB10(&IDACB09) SETA X'2A'          EXLLEN TYPE CODE
+         AIF   ('&AM' NE 'VTAM').L840
+&IDACB10(&IDACB09) SETA X'3F'          EXLLEN TYPE CODE - VTAM
+         AGO   .L840                                             X03004
+.L835    ANOP                                                    X03004
+&IDACB10(&IDACB09) SETA X'53'          NIBLEN TYPE CODE          X03004
+.L840    ANOP
+&IDACB09 SETA  &IDACB09+1
+         AGO   .L800
+.L845    AIF   (&IDACB09 GT 1).L850
+         IDAERMAC 2,BLOCK-TYPE
+         MEXIT
+.L850    AIF   ('&MF' EQ '' OR '&MF(1)' EQ 'L' OR '&MF(1)' EQ 'E' OR   C
+               '&MF(1)' EQ 'G').L860
+         IDAERMAC 3,MF,&MF
+         MEXIT
+.L860    AIF   (NOT &IDACB01).L870     EXIT IF ANY ERRORS FOUND
+         MEXIT
+.L870    ANOP
+&IDACB09 SETA  &IDACB09-1
+         IDACB2 CALLER=SHOW,BLKTYPE=&BLKTYPE,LABEL=&LBL,MF=&MF,  X03004C
+               AM=&AM                                            X03004
+         MEND
+

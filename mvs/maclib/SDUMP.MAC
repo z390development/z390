@@ -1,0 +1,603 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SDUMP &HDR=,&HDRAD=,&DCB=,&ASID=,&ASIDLST=,&ECB=,&SDATA=,     X
+               &STORAGE=,&LIST=,&SUMLIST=,&BUFFER=,&QUIESCE=,&BRANCH=, X
+               &MF=                                            @G33VPHD
+.*
+.*       DEFINE SET SYMBOLS
+.*
+         LCLA  &SDFLAG0           SDFLAG0 FIELD OF PARAMETER LIST
+         LCLA  &SDFLAG1           SDFLAG1 FIELD OF PARAMETER LIST
+         LCLA  &SDATAF1,&SDATAF2  SDATA FIELD OF PARAMETER LIST
+         LCLA  &CTR1,&CTR2        COUNTERS FOR LOOP CONTROL, INDEX
+         LCLA  &HDRCTR            NUMBER OF PAIRED APOSTROPHES
+         LCLA  &DISP              DISPLACEMENT FOR STORING ADDRESSES
+         LCLC  &GNAME             SYMBOLIC NAME-BRANCH AROUND CONSTANTS
+         LCLB  &SDDCB             SET IF DCB ADDRESS IS SPECIFIED
+         LCLB  &SDBUFF            SET IF BUFFER IS TO BE DUMPED
+         LCLB  &SDSTOR            SET IF STORAGE OR LIST IS SPECIFIED
+         LCLB  &SDHDR             SET IF HDR OR HDRAD IS SPECIFIED
+         LCLB  &SDECB             SET IF AN ECB ADDRESS IS SUPPLIED
+         LCLB  &SDASID            SET IF AN ASID IS SPECIFIED
+         LCLB  &SDASIDL           SET IF AN ASIDLIST IS SPECIFIED
+.*                                                             @G33VPHD
+         LCLB  &SDQUIET           SET IF SYSTEM IS TO BE QUIESCED
+         LCLB  &SDBRNCH           SET IF INTERFACE IS BRANCH ENTRY
+         LCLB  &DUMPTYP           ALWAYS SET FOR SVC DUMP
+         LCLB  &SDALPSA           SET IF ALL PSA IN SYSTEM TO BE DUMPED
+         LCLB  &SDPSA             SET IF CURRENT PSA IS TO BE DUMPED
+         LCLB  &SDNUC             SET IF NUCLEUS IS TO BE DUMPED
+         LCLB  &SDSQA             SET IF SQA IS TO BE DUMPED
+         LCLB  &SDLSQA            SET IF LSQA IS TO BE DUMPED
+         LCLB  &SDRGN             SET IF VIRTUAL MEMORY IS TO BE DUMPED
+         LCLB  &SDLPA             SET IF ACTIVE LPA MOD FOR MEMORY REQ
+         LCLB  &SDTRT             SET IF GTF INCORE TRACE BUFFERS  REQ
+         LCLB  &SDCSA             SET IF CSA SUBPOOLS ARE TO BE DUMPED
+         LCLB  &SDSWA             SET IF SWA FOR MEMORY TO BE DUMPED
+.*
+         LCLB  &SDSUMLT           SET IF SUMLIST SPECIFIED     @G33VPHD
+         LCLB  &SDSMDMP           SET IF SUMDUMP SPECIFIED     @G33VPHD
+         LCLB  &SDNSMDP           SET IF NO SUMDUMP SPECIFIED  @G33VPHD
+         LCLB  &SDNSQA            SET IF NO SQA SPECIFIED      @G33VPHD
+         LCLB  &SDNAPSA           SET IF NOALLPSA IS SPECIFIED @G33VPHD
+         LCLB  &SDNEW             SET IF ENHANCED SVC DUMP     @G33VPHD
+.*       INITIAL ERRORS
+.*
+         AIF   ('&HDR' NE '' AND '&HDRAD' NE '').MESG2A     MUTUALLY
+         AIF   ('&STORAGE' NE '' AND '&LIST' NE '').MESG2B   EXCLUSIVE
+         AIF   ('&HDR' EQ '').SD3           HDR SPECIFIED
+         AIF   ('&HDR'(1,1) NE '''').MESG9  IS FIRST CHAR APOSTROPHE
+&CTR1    SETA  K'&HDR-1                     LENGTH OF USER DATA +1
+&HDRCTR  SETA  0                            NUMBER OF PAIRED APOSTROHES
+&CTR2    SETA  2                            INDEX FIRST CHAR-USER DATA
+.SDLOOP  ANOP
+         AIF   (&CTR2 GE &CTR1).SD2              END OF SCAN
+         AIF   ('&HDR'(&CTR2,2) EQ '''''').SD1   PAIRED APOSTROPHES
+&CTR2    SETA  &CTR2+1                           UPDATE INDEX BY 1
+         AGO   .SDLOOP                           CONTINUE LOOP
+.SD1     ANOP
+&HDRCTR  SETA  &HDRCTR+1                    ONE MORE PAIRED APOSTROPHES
+&CTR2    SETA  &CTR2+2                      UPDATE INDEX BY 2
+         AGO   .SDLOOP                      CONTINUE LOOP
+.SD2     ANOP
+&CTR1    SETA  K'&HDR-2-&HDRCTR             LENGTH OF USER DATA
+         AIF   (&CTR1 GT 100).MESG8         USER DATA TOO LONG
+.SD3     AIF   ('&MF' NE 'L').SD5           IS MF STANDARD OR EXECUTE
+         AIF   ('&ASID' NE '').MESG5A       ASID INVALID W/MF=L
+         AIF   ('&ECB' NE '').MESG5B        ECB INVALID W/MF=L
+         AIF   ('&BRANCH' NE '').MESG5C     BRANCH INVALID W/MF=L
+         AIF   ('&ASIDLST' NE '').MESG5D   ASID INV W/MF=L     @G33VPHD
+         AIF   ('&SUMLIST' NE '').MESG5E   SUMLIST INV W/MF=L  @G33VPHD
+         AGO   .SD8                 BYPASS STANDARD, EXEC FORM @G33VPHD
+.SD5     AIF   ('&ASID' NE '').SD7          IS ASID SPECIFIED  @G33VPHD
+         AIF   ('&ASIDLST' NE '').SD8      IS ASIDLIST SPECIFIED
+.*                                                             @G33VPHD
+         AIF   ('&BRANCH' EQ 'YES').MESG3A   BRANCH WITHOUT ASID OR
+.*                                                     ASIDLIST INVALID
+.*                                                             @G33VPHD
+         AIF   ('&ECB' NE '').MESG3B        ECB WITHOUT ASID OR
+.*                                                     ASIDLIST INVALID
+.*                                                             @G33VPHD
+.SD7     AIF   ('&ASIDLST' NE '').MESG10    ASID WITH ASSIDLIST INVALID
+.*                                                             @G33VPHD
+.SD8     AIF   ('&BUFFER' EQ '').SD9        IS BUFFER SPECIFIED
+.*                                                             @G33VPHD
+         AIF   ('&BUFFER' NE 'YES' AND '&BUFFER' NE 'NO').MESG4B
+.*                                                             @G33VPHD
+.SD9     AIF   ('&BRANCH' EQ '').SD11       IS BRANCH SPECIFIED
+         AIF   ('&BRANCH' NE 'YES' AND '&BRANCH' NE 'NO').MESG4C
+.SD11    AIF   ('&QUIESCE' EQ '').SD13      IS QUIESCE SPECIFIED
+         AIF   ('&QUIESCE' NE 'YES' AND '&QUIESCE' NE 'NO').MESG4D
+.SD13    AIF   ('&STORAGE' EQ '').SD15      IS STORAGE SPECIFIED
+&CTR1    SETA  N'&STORAGE/2                 NUMBER OF ADDRESS PAIRS
+&CTR2    SETA  (N'&STORAGE-1)/2             NUMBER OF PAIRS MINUS 1
+         AIF   (&CTR1 EQ &CTR2).MESG6       ODD NUMBER OF ADDRESSES
+.SD15    ANOP
+.*
+.*       SDFLAG0 PROCESSING
+.*
+&SDDCB   SETB  ('&DCB' NE '')                IF DCB SPECIFIED
+&SDBUFF  SETB  ('&BUFFER' EQ 'YES')          IF BUFFER TO BE DUMPED
+&SDSTOR  SETB  ('&STORAGE' NE '' OR '&LIST' NE '')    STORAGE ADDR LIST
+&SDHDR   SETB  ('&HDR' NE '' OR '&HDRAD' NE '')       USER DATA
+&SDECB   SETB  ('&ECB' NE '')                IF ECB SPECIFIED
+&SDASID  SETB  ('&ASID' NE '')               IF ASID SPECIFIED
+&SDQUIET SETB  ('&QUIESCE' NE 'NO')          IF SYSTEM TO BE QUIESCED
+&SDBRNCH SETB  ('&BRANCH' EQ 'YES')          IF LINKAGE BY BRANCH ENTRY
+&SDFLAG0 SETA  128*&SDDCB+64*&SDBUFF+32*&SDSTOR+16*&SDHDR+8*&SDECB+4*&SX
+               DASID+2*&SDQUIET+1*&SDBRNCH
+.*
+.*       SDFLAG1 PROCESSING
+.*
+&DUMPTYP SETB  1                  ALWAYS ON FOR SVC DUMP
+&SDNEW   SETB  1                  ALWAYS SET TO 1 FOR NEW SDUMP MACRO
+.*                                                             @G33VPHD
+&SDASIDL SETB  ('&ASIDLST' NE '') IF ASIDLIST WAS SPECIFIED
+.*                                                             @G33VPHD
+&SDSUMLT SETB  ('&SUMLIST' NE '') IF SUMLIST WAS SPECIFIED
+.*                                                             @G33VPHD
+&SDFLAG1 SETA  128*&DUMPTYP+32*&SDNEW+16*&SDASIDL+8*&SDSUMLT
+.*                                                             @G33VPHD
+.*
+.*       SDATA PROCESSING
+.*
+         AIF   ('&SDATA' EQ '').SD80        IS SDATA SPECIFIED
+         AIF   ('&SDATA'(1,1) EQ '(').SD60  MORE THAN 1 OPTION, IN ()
+&CTR1    SETA  0
+&SDALPSA SETB  ('&SDATA' EQ 'ALLPSA')       SET IF ALLPSA SPECIFIED
+&SDPSA   SETB  ('&SDATA' EQ 'PSA')          SET IF PSA SPECIFIED
+&SDNUC   SETB  ('&SDATA' EQ 'NUC')          SET IF NUC SPECIFIED
+&SDSQA   SETB  ('&SDATA' EQ 'SQA')          SET IF SQA SPECIFIED
+&SDLSQA  SETB  ('&SDATA' EQ 'LSQA')         SET IF LSQA SPECIFIED
+&SDRGN   SETB  ('&SDATA' EQ 'RGN')          SET IF RGN SPECIFIED
+&SDLPA   SETB  ('&SDATA' EQ 'LPA')          SET IF LPA SPECIFIED
+&SDTRT   SETB  ('&SDATA' EQ 'TRT')          SET IF TRT SPECIFIED
+&SDCSA   SETB  ('&SDATA' EQ 'CSA')          SET IF CSA SPECIFIED
+&SDSWA   SETB  ('&SDATA' EQ 'SWA')          SET IF SWA SPECIFIED
+&SDSMDMP SETB  ('&SDATA' EQ 'SUMDUMP' OR '&SDATA' EQ 'SUM')
+.*                         SET IF SUMDUMP OR SUM ARE SPECIFIED @G33VPHD
+&SDNSQA  SETB  ('&SDATA' EQ 'NOSQA')        SET IF NOSQA SPECIFIED
+.*                                                             @G33VPHD
+&SDNAPSA SETB  ('&SDATA' EQ 'NOALLPSA' OR '&SDATA' EQ 'NOALL')
+.*                          SET IF NOALLPSA OR NOALL SPECIFIED @G33VPHD
+&SDNSMDP SETB  ('&SDATA' EQ 'NOSUMDUMP' OR '&SDATA' EQ 'NOSUM')
+.*          SET IF NOSUMDUMP OR NOSUM ARE SPECIFIED            @G33VPHD
+&CTR1    SETA  &SDALPSA+&SDPSA+&SDNUC+&SDSQA+&SDLSQA+&SDRGN+&SDLPA+&SDTX
+               RT+&SDCSA+&SDSWA+&SDSMDMP+&SDNSMDP+&SDNSQA+&SDNAPSA
+.*                                                             @G33VPHD
+&CTR2    SETA  1                            IF INVALID, MESG PRINTS IT
+         AIF   ('&CTR1' EQ '0').MESG4A      IS SPECIFIED OPTION VALID
+         AGO   .SD80                        SDATA OPTION PROCESSED
+.SD60    ANOP                     SDATA OPTIONS IN PARENTHESIS
+&CTR1    SETA  N'&SDATA           NUMBER OF OPTIONS ON SDATA PARAMETER
+&CTR2    SETA  0                  NUMBER BY POSITION OPERAND WORKING ON
+.LOOPA1  ANOP
+&CTR2    SETA  &CTR2+1            NUMBER OF NEXT OPTION TO WORK ON
+         AIF   ('&SDATA(&CTR2)' EQ 'ALLPSA').SETAPSA
+         AIF   ('&SDATA(&CTR2)' EQ 'PSA').SETPSA
+         AIF   ('&SDATA(&CTR2)' EQ 'NUC').SETNUC
+         AIF   ('&SDATA(&CTR2)' EQ 'SQA').SETSQA
+         AIF   ('&SDATA(&CTR2)' EQ 'LSQA').SETLSQA
+         AIF   ('&SDATA(&CTR2)' EQ 'RGN').SETRGN
+         AIF   ('&SDATA(&CTR2)' EQ 'LPA').SETLPA
+         AIF   ('&SDATA(&CTR2)' EQ 'TRT').SETTRT
+         AIF   ('&SDATA(&CTR2)' EQ 'CSA').SETCSA
+         AIF   ('&SDATA(&CTR2)' EQ 'SWA').SETSWA
+         AIF   ('&SDATA(&CTR2)' EQ 'SUMDUMP').SETSUM SUMDUMP SPEC
+.*                                                             @G33VPHD
+         AIF   ('&SDATA(&CTR2)' EQ 'SUM').SETSUM  SET IF SUM SPECIFIED
+.*                                                             @G33VPHD
+         AIF   ('&SDATA(&CTR2)' EQ 'NOSUMDUMP').SETNSUM SET IF
+.*                                   NO SUMDUMP IS SPECIFIED   @G33VPHD
+         AIF   ('&SDATA(&CTR2)' EQ 'NOSUM').SETNSUM  SET IF NOSUM IS
+.*                                                   SPECIFIED
+.*                                                             @G33VPHD
+         AIF   ('&SDATA(&CTR2)' EQ 'NOSQA').SETNSQA  SET IF NOSQA SPEC
+.*                                                             @G33VPHD
+         AIF   ('&SDATA(&CTR2)' EQ 'NOALLPSA').SETNAPA
+.*                                                             @G33VPHD
+         AIF   ('&SDATA(&CTR2)' EQ 'NOALL').SETNAPA
+.*                                                             @G33VPHD
+         AGO   .MESG4A                 SDATA OPTION IS INVALID
+.LOOPA2  AIF   (&CTR1 NE &CTR2).LOOPA1 MORE OPTIONS, CONTINUE LOOP
+         AGO   .SD80                   ALL OPTIONS PROCESSED
+.SETAPSA ANOP                          ALLPSA SPECIFIED
+         AIF   (&SDNAPSA EQ 1).MESG13  NOALLPSA AND ALLPSA IS ERROR
+.*                                                             @G33VPHD
+&SDALPSA SETB  1                       SET INDICATOR
+         AGO   .LOOPA2                 CONTINUE LOOP
+.SETPSA  ANOP                          PSA SPECIFIED
+&SDPSA   SETB  1                       SET INDICATOR
+         AGO   .LOOPA2                 CONTINUE LOOP
+.SETNUC  ANOP                          NUC SPECIFIED
+&SDNUC   SETB  1                       SET INDICATOR
+         AGO   .LOOPA2                 CONTINUE LOOP
+.SETSQA  ANOP                          SQA SPECIFIED
+         AIF   (&SDNSQA EQ 1).MESG12   SQA AND NOSQA IS ERROR
+.*                                                             @G33VPHD
+&SDSQA   SETB  1                       SET INDICATOR
+         AGO   .LOOPA2                 CONTINUE LOOP
+.SETLSQA ANOP                          LSQA SPECIFIED
+&SDLSQA  SETB  1                       SET INDICATOR
+         AGO   .LOOPA2                 CONTINUE LOOP
+.SETRGN  ANOP                          RGN SPECIFIED
+&SDRGN   SETB  1                       SET INDICATOR
+         AGO   .LOOPA2                 CONTINUE LOOP
+.SETLPA  ANOP                          LPA SPECIFIED
+&SDLPA   SETB  1                       SET INDICATOR
+         AGO   .LOOPA2                 CONTINUE LOOP
+.SETTRT  ANOP                          TRT SPECIFIED
+&SDTRT   SETB  1                       SET INDICATOR
+         AGO   .LOOPA2                 CONTINUE LOOP
+.SETCSA  ANOP                          CSA SPECIFIED
+&SDCSA   SETB  1                       SET INDICATOR
+         AGO   .LOOPA2                 CONTINUE LOOP
+.SETSWA  ANOP                          SWA SPECIFIED
+&SDSWA   SETB  1                       SET INDICATOR
+         AGO  .LOOPA2                  CONTINUE LOOP
+.SETSUM  ANOP                          SUMDUMP OR SUM SPECIFIED
+.*                                                             @G33VPHD
+         AIF   (&SDNSMDP EQ 1).MESG11  NOSUMDUMP AND SUMDUMP IS ERROR
+.*                                                             @G33VPHD
+&SDSMDMP SETB  1                       SET SUMDUMP INDICATOR
+.*                                                             @G33VPHD
+         AGO   .LOOPA2                 CONTINUE LOOP
+.*                                                             @G33VPHD
+.SETNSUM ANOP                          NOSUMDUMP OR NOSUM SPECIFIED
+.*                                                             @G33VPHD
+         AIF   (&SDSMDMP EQ 1).MESG11  NOSUMDUMP AND SUMDUMP IS ERROR
+.*                                                             @G33VPHD
+&SDNSMDP SETB  1                       SET NOSUMDUMP INDICATOR
+.*                                                             @G33VPHD
+         AGO   .LOOPA2                 CONTINUE LOOP
+.*                                                             @G33VPHD
+.SETNSQA ANOP                          NOSQA SPECIFIED
+.*                                                             @G33VPHD
+         AIF   (&SDSQA EQ 1).MESG12    SQA AND NOSQA IS AN ERROR
+.*                                                             @G33VPHD
+&SDNSQA  SETB  1                       SET NOSQA INDICATOR
+.*                                                             @G33VPHD
+         AGO   .LOOPA2                 CONTINUE LOOP
+.*                                                             @G33VPHD
+.SETNAPA ANOP                          NOALLPSA OR NOALL SPECIFIED
+.*                                                             @G33VPHD
+         AIF   (&SDALPSA EQ 1).MESG13  NOALLPSA AND ALLPSA IS ERROR
+.*                                                             @G33VPHD
+&SDNAPSA SETB  1                       SET NOALLPSA INDICATOR
+.*                                                             @G33VPHD
+         AGO   .LOOPA2                 CONTINUE LOOP
+.*                                                             @G33VPHD
+         AGO   .LOOPA2                 CONTINUE LOOP
+.SD80    ANOP         ALL SDATA OPTIONS PROCESSED,BUILD SDATA  @G33VPHD
+&SDATAF1 SETA  128*&SDALPSA+64*&SDPSA+32*&SDNUC+16*&SDSQA+8*&SDLSQA+4*&X
+               SDRGN+2*&SDLPA+1*&SDTRT
+&SDATAF2 SETA  128*&SDCSA+64*&SDSWA+32*&SDSMDMP+16*&SDNSMDP+8*&SDNAPSA+X
+               4*&SDNSQA
+.*                                                             @G33VPHD
+.*
+.*       WHICH FORM OF MACRO
+.*
+         AIF   ('&MF' EQ '').STFORM          IS IT STANDARD FORM
+         AIF   ('&MF' EQ 'L').LSTFORM        IS IT LIST FORM
+         AIF   ('&MF'(1,3) NE '(E,').MESG7   ELSE, IF NOT EXECUTE, ERR
+.*
+.*       EXECUTE FORM OF MACRO
+.*
+         AIF   ('&NAME' EQ '').SDEX2        IS NAME SPECIFIED
+&NAME    DS    0H
+.SDEX2   ANOP
+         IHBSETR   &MF(2),1                 LOAD REG 1 WITH LIST ADDR
+         AIF   ('&QUIESCE' NE '').SDEX3     IS QUIESCE SPECIFIED
+&SDFLAG0 SETA  &SDFLAG0-2                   NO, LEAVE AS SPECIFIED ON L
+.SDEX3   AIF   ('&SDFLAG0' EQ '0').SDEX3A   ANY OPTIONS TO TURN ON
+         OI    0(1),&SDFLAG0                SET OPTION FLAGS
+.SDEX3A  AIF   ('&BUFFER' EQ 'NO').SDEX4    BUFFER NOT REQUESTED
+         AGO   .SDEX6                       GO CHECK FOR QUIESCE
+.SDEX4   ANOP
+         NI    0(1),X'BF'                   TURN OFF BUFFER FLAG
+.SDEX6   AIF   ('&QUIESCE' EQ 'NO').SDEX8   QUIESCE NOT REQUESTED
+         AGO   .SDEX10                      GO SET SVC DUMP FLAG
+.SDEX8   ANOP
+         NI    0(1),X'FD'                   TURN OFF QUIESCE FLAG
+.SDEX10  ANOP
+         AIF   ('&SUMLIST' EQ '' AND '&ASIDLST' EQ '').SDEX11  @G33VPHD
+         OI    1(1),&SDFLAG1                 SET OPTION BITS
+.SDEX11  ANOP                                                  @G33VPHD
+         AIF   ('&SDATA' EQ '').SDEX12      IS SDATA OPTIONS SPECIFIED
+         MVI   2(1),&SDATAF1                SET OPTION FLAGS
+         MVI   3(1),&SDATAF2                SET OPTION FLAGS
+.SDEX12  AIF   ('&DCB' EQ '').SDEX15        IS DCB SPECIFIED
+         IHBSETR   &DCB,0                   LOAD REG 0 WITH DCB ADDR
+         ST    0,4(1,0)               ADDR OF DCB INTO PARAM LISTYM1995
+.SDEX15  ANOP
+         AIF   ('&LIST' EQ '').SDEX20       IS LIST SPECIFIED
+         IHBSETR   &LIST,0                  LOAD REG 0 WITH LIST ADDR
+         ST    0,8(1,0)               ADDR OF LIST INTO PARAM LSTYM1995
+         AGO   .SDEX25                      GO CHECK FOR USER DATA
+.SDEX20  AIF   ('&STORAGE' EQ '').SDEX25    IS STORAGE SPECIFIED
+         L     15,8(1,0)    ADDR OF STORAGE LIST FROM PARAM LIST YM1995
+&DISP    SETA  -4                 DISPLACEMENT OF ADDR IN STORAGE LIST
+&CTR1    SETA  N'&STORAGE         NUMBER OF ADDRESSES SPECIFIED
+&CTR2    SETA  0                  POSITION NUMBER OF ADDR WORKING ON
+.LOOPC1  ANOP
+&DISP    SETA  &DISP+4                 DISP OF NEXT ADDR IN STORAGE LST
+&CTR2    SETA  &CTR2+1                 POSITION NUMBER OF NEXT ADDRESS
+         IHBSETR   &STORAGE(&CTR2),0   PUT STORAGE ADDRESS IN REG 0
+         ST    0,&DISP.(0,15)          STORAGE ADDR INTO STORAGE LIST
+&CTR1    SETA  &CTR1-1                 NUMBER OF REMAINING ADDRESSES
+         AIF   (&CTR1 NE 0).LOOPC1   ANY MORE ADDRESSES
+         OI    &DISP.(15),X'80'      SET END OF LIST INDICATOR
+.SDEX25  AIF   ('&HDRAD' EQ '').SDEX30      IS HDRAD SPECIFIED
+         IHBSETR   &HDRAD,0                 LOAD REG0 WITH HDR RCD ADDR
+         ST    0,12(1,0)              ADDR OF USER DATA INTO LISTYM1995
+         AGO   .SDEX35                      GO CHECK FOR ECB
+.SDEX30  AIF   ('&HDR' EQ '').SDEX35        IS HDR SPECIFIED
+&GNAME   SETC  'IHB'.'&SYSNDX'              GET A UNIQUE SYMBOL
+         BAL   15,&GNAME                    BRANCH AROUND USER DATA
+&CTR1    SETA  K'&HDR-2-&HDRCTR             LENGTH OF USER DATA
+         DC    AL1(&CTR1)                   LENGTH OF USER DATA
+         DC    C&HDR                        USER DATA
+         CNOP  2,4
+&GNAME   DS    0H
+         ST    15,12(1,0)             ADDR OF USER DATA INTO LISTYM1995
+.SDEX35  AIF   ('&ECB' EQ '').SDEX40        IS ECB SPECIFIED
+         AIF   ('&ECB'(1,1) EQ '(').SDEX37  IS ADDR OF ECB IN A REG
+         L     15,&ECB                      ADDRESS OF ECB
+         ST    15,16(1,0)             ADDR OF ECB INTO PARAM LISTYM1995
+         AGO   .SDEX40                      GO CHECK FOR ASID
+.SDEX37  ANOP
+         ST    &ECB,16(1,0)           ADDR OF ECB INTO PARAM LISTYM1995
+.SDEX40  AIF   ('&ASID' EQ '').SDEX45       IS ASID SPECIFIED
+         AIF   ('&ASID'(1,1) EQ '(').SDEX42 IS ASID IN A REGISTER
+         LH    0,&ASID                      ASID OF MEMORY TO BE DUMPED
+         STH   0,22(1,0)              ASID INTO PARAMETER LIST   YM1995
+         AGO   .SDEX47                      GO CHECK FOR SUMLIST
+.*                                                             @G33VPHD
+.SDEX42  ANOP
+         STH   &ASID,22(1,0)          ASID INTO PARAMETER LIST   YM1995
+         AGO   .SDEX47                      GO CHECK FOR SUMLIST
+.*                                                             @ZA39011
+.SDEX45  AIF   ('&ASIDLST' EQ '').SDEX47 IF ASIDLIST SPECIFIED
+.*                                                             @G33VPHD
+         IHBSETR   &ASIDLST,0           LOAD REG 0 WITH ASIDLIST ADDR
+.*                                                             @G33VPHD
+         ST    0,24(1)                  ADDR ASIDLIST INTO PARM LIST
+.*                                                             @G33VPHD
+.SDEX47  AIF   ('&SUMLIST' EQ '').SDEX49 IF SUMLIST IS SPECIFIED
+.*                                                             @G33VPHD
+         AIF   (&SDNSMDP EQ 1).MESG14 SUMLIST WITH NOSUMDUMP ERROR
+.*                                                             @ZA39011
+         IHBSETR   &SUMLIST,0           LOAD REG 0 WITH SUMLIST ADDR
+.*                                                             @G33VPHD
+         ST    0,28(1)                  ADDR SUMLIST INTO PARM LIST
+.*                                                             @G33VPHD
+.SDEX49  AIF   ('&BRANCH' EQ 'YES').SDEX50  IS BRANCH ENTRY REQUESTED
+         SVC   51                           INVOKE SVC DUMP VIA SVC
+         AGO   .SDEND                       GO END MACRO PROCESSING
+.SDEX50  ANOP
+         L     15,CVTPTR(0,0)               ADDRESS OF CVT       YM1995
+         L     15,CVTSDMP-CVTMAP(15,0)  ADDRESS OF SVC DUMP ENTRYYM1995
+         BALR  14,15                        INVOKE SVC DUMP VIA BAL
+         AGO   .SDEND                       GO END MACRO PROCESSING
+.*
+.*       LIST FORM OF MACRO
+.*
+.LSTFORM ANOP
+&NAME    DS    0F                           SDUMP PARAMETER LIST
+         DC    AL1(&SDFLAG0)                FLAG BYTE
+         DC    AL1(&SDFLAG1)                FLAG BYTE
+         DC    AL1(&SDATAF1)                FLAG BYTE
+         DC    AL1(&SDATAF2)                FLAG BYTE
+         AIF   ('&DCB' EQ '').SDLST10       IS DCB SPECIFIED
+         AIF   ('&DCB'(1,1) EQ '(').MESG1   IS DCB ADDRESS IN A REG
+         DC    A(&DCB)                      ADDRESS OF DCB
+         AGO   .SDLST15                     GO CHECK FOR STORAGE ADDR
+.SDLST10 ANOP
+         DC    A(0)                         ADDRESS OF DCB
+.SDLST15 AIF   ('&SDSTOR' EQ '0').SDLST24   IS STORAGE OR LIST SPECIFED
+         AIF   ('&LIST' EQ '').SDLST20      IS LIST SPECIFIED
+         AIF   ('&LIST'(1,1) EQ '(').MESG1  IS LIST ADDRESS IN A REG
+         DC    A(&LIST)                     ADDRESS OF STORAGE LIST
+         AGO   .SDLST25                     GO CHECK FOR USER DATA
+.SDLST20 ANOP
+         DC    A(*+32)                 ADDRESS OF STORAGE LIST @G33VPHD
+         AGO   .SDLST25                     GO CHECK FOR USER DATA
+.SDLST24 ANOP
+         DC    A(0)                         ADDRESS OF STORAGE LIST
+.SDLST25 ANOP
+         AIF   ('&SDHDR' EQ '0').SDLST38    IS USER DATA SPECIFIED
+         AIF   ('&HDRAD' NE '').SDLST35     IS HDRAD SPECIFIED
+&CTR1    SETA  0                            PROCESS FOR HDR
+         AIF   ('&STORAGE' EQ '').SDLST28   IS STORAGE SPECIFIED
+&CTR1    SETA  N'&STORAGE                   NUMBER OF STORAGE ADDRESSES
+&CTR1    SETA  &CTR1*4                      LENGTH OF STORAGE ADDR LIST
+.SDLST28 ANOP
+&DISP    SETA  28+&CTR1                     DISPL TO USER DATA @G33VPHD
+         DC    A(*+&DISP)                   ADDRESS OF USER DATA
+         AGO   .SDLST40                     GO DEFINE REST OF PARAM LST
+.SDLST35 AIF   ('&HDRAD'(1,1) EQ '(').MESG1 IS ADDR OF USER DATA IN REG
+         DC    A(&HDRAD)                    ADDRESS OF USER DATA
+         AGO   .SDLST40                     GO DEFINE REST OF PARAM LST
+.SDLST38 ANOP
+         DC    A(0)                         ADDRESS OF USER DATA
+.SDLST40 ANOP
+         DC    A(0)                         ADDRESS OF ECB
+         DC    AL2(0)                       CURRENT ASID
+         DC    AL2(0)                       OTHER ASID
+         DC    A(0)                         ADDRESS OF ASID LIST
+         DC    A(0)                         ADDRESS OF SUMLIST
+.*                                                             @G33VPHD
+.SDLST50 ANOP
+         DC    A(0)                      RESERVED              @G33VPHD
+         DC    A(0)                      RESERVED              @G33VPHD
+         AIF   ('&STORAGE' EQ '').SDLST60   BUILD STORAGE LIST
+.*                                                             @G33VPHD
+&CTR1    SETA  N'&STORAGE                   NUMBER OF STORAGE ADDRESSES
+&CTR2    SETA   0                           POSITION NO. OF ADDRESS
+.LOOPD1  ANOP
+&CTR2    SETA  &CTR2+1                      NUMBER OF NEXT ADDRESS
+         AIF   ('&STORAGE(&CTR2)'(1,1) EQ '(').MESG1  ADDR IN A REG
+         DC    A(&STORAGE(&CTR2))           STORAGE ADDRESS
+&CTR1    SETA  &CTR1-1                      NUMBER OF REMAINING ADDR.S
+         AIF   ('&CTR1' GT '1').LOOPD1      IF NOT LAST ADDRESS, LOOP
+&CTR2    SETA  &CTR2+1                      NUMBER OF LAST ADDRESS
+         AIF   ('&STORAGE(&CTR2)'(1,1) EQ '(').MESG1  ADDR IN A REG
+         DC    AL4(X'80000000'+&STORAGE(&CTR2))  LAST ADDRESS
+.SDLST60 ANOP
+.*                                                             @G33VPHD
+         AIF   ('&HDR' EQ '').SDEND         IS USER DATA SPECIFIED
+&CTR1    SETA  K'&HDR-2-&HDRCTR             LENGTH OF USER DATA
+         DC    AL1(&CTR1)                   LENGTH OF USER DATA
+         DC    C&HDR                        USER DATA
+         AGO   .SDEND                       GO END MACRO PROCESSING
+.*
+.*       STANDARD FORM
+.*
+.STFORM  ANOP
+&GNAME   SETC  'IHB'.'&SYSNDX'              OBTAIN UNIQUE SYMBOL-LABEL
+         CNOP  0,4
+         AIF   ('&NAME' EQ '').SDSTF10      IS NAME SPECIFIED
+&NAME    DS    0F
+.SDSTF10 ANOP
+         BAL   1,&GNAME                     BRANCH AROUND PARAM LIST
+         DC    AL1(&SDFLAG0)                FLAG BYTE
+         DC    AL1(&SDFLAG1)                FLAG BYTE
+         DC    AL1(&SDATAF1)                FLAG BYTE
+         DC    AL1(&SDATAF2)                FLAG BYTE
+         DC    A(0)                         ADDRESS OF DCB
+         DC    A(0)                         ADDRESS OF STORAGE LIST
+         DC    A(0)                         ADDRESS OF HEADER RECORD
+         DC    A(0)                         ADDRESS OF ECB
+         DC    AL2(0)                       CURRENT ASID
+         DC    AL2(0)                       OTHER ASID
+         DC    A(0)                         ADDRESS OF ASID LIST
+.*                                                             @G33VPHD
+         DC    A(0)                         ADDRESS OF SUMLIST
+         DC    A(0)                         RESERVED           @G33VPHD
+         DC    A(0)                         RESERVED           @G33VPHD
+         AIF   ('&STORAGE' EQ '').SDSTF20   IS STORAGE SPECIFIED
+&CTR1    SETA  N'&STORAGE                   NUMBER OF STORAGE ADDRESSES
+         DC    &CTR1.F'0'                   STORAGE ADDRESSES
+.SDSTF20 ANOP
+         AIF   ('&HDR' EQ '').SDSTF30       IS HDR SPECIFIED
+&CTR1    SETA  K'&HDR-2-&HDRCTR             LENGTH OF USER DATA
+         DC    AL1(&CTR1)                   LENGTH OF USER DATA
+         DC    C&HDR                        USER DATA
+         CNOP  2,4
+.SDSTF30 ANOP
+&GNAME   DS    0H
+         AIF   ('&DCB' EQ '').SDSTF35       IS DCB SPECIFIED
+         IHBSETR   &DCB,0                   ADDRESS OF DCB IN REG 0
+         ST    0,4(1,0)               ADDR OF DCB INTO PARAM LISTYM1995
+.SDSTF35 AIF   ('&LIST' EQ '').SDSTF40      IS LIST SPECIFIED
+         IHBSETR   &LIST,0                  ADDR OF STORAGE LIST IN R0
+         ST    0,8(1,0)               ADDR OF LIST INTO PARAM LSTYM1995
+         AGO   .SDSTF50                     GO CHECK FOR USER DATA
+.SDSTF40 AIF   ('&STORAGE' EQ '').SDSTF50   STORAGE ADDRESSES SPECIFIED
+         LA    15,40(1,0)             ADDR OF STORAGE LIST      G33VPHD
+         ST    15,8(1,0)              INTO PARAM LIST            YM1995
+&CTR1    SETA  N'&STORAGE          NUMBER OF STORAGE ADDRESSES
+&CTR2    SETA  0                   NUMBER ADDRESSES BY POSITION
+&DISP    SETA  36               DISPLACEMENT INTO STORAGE LIST  G33VPHD
+.LOOPE1  ANOP
+&CTR2    SETA  &CTR2+1                 NUMBER OF ADDRESS WORKING ON
+&DISP    SETA  &DISP+4                 DISP OF ADDRESS INTO LIST
+         IHBSETR   &STORAGE(&CTR2),0   PUT ADDRESS INTO REGISTER 0
+         ST    0,&DISP.(1,0)     STORAGE ADDRESS INTO LIST       YM1995
+         AIF   ('&CTR1' NE '&CTR2').LOOPE1  ANY  MORE ADDRESSES
+         OI    &DISP.(1),X'80'              END OF LIST INDICATOR
+.SDSTF50 AIF   ('&HDRAD' EQ '').SDSTF60     IS HDRAD SPECIFIED
+         IHBSETR   &HDRAD,0                 ADDR OF USER DATA IN REG 0
+         ST    0,12(1,0)         ADDR OF USER DATA INTO PARAM LSTYM1995
+         AGO   .SDSTF70                     GO CHECK FOR ECB
+.SDSTF60 AIF   ('&HDR' EQ '').SDSTF70       IS HDR SPECIFIED
+&CTR1    SETA  0
+         AIF   ('&STORAGE' EQ '').SDSTF62   IS STORAGE SPECIFIED
+&CTR1    SETA  N'&STORAGE                   NUMBER OF STORAGE ADDRESSES
+&CTR1    SETA  &CTR1*4                      LENGTH OF STORAGE LIST
+.SDSTF62 ANOP
+&DISP    SETA  40+&CTR1             DISPLACEMENT TO USER DATA  @G33VPHD
+         LA    0,&DISP.(1,0)          ADDRESS OF USER DATA       YM1995
+         ST    0,12(1,0)              INTO PARAMETER LIST        YM1995
+.SDSTF70 AIF   ('&ECB' EQ '').SDSTF80       IS ECB SPECIFIED
+         AIF   ('&ECB'(1,1) EQ '(').SDSTF72 IS ECB ADDRESS IN A REG
+         L     0,&ECB                       ADDRESS OF ECB
+         ST    0,16(1,0)              ADDR OF ECB INTO PARAM LISTYM1995
+         AGO   .SDSTF80                     GO CHECK FOR ASID
+.SDSTF72 ANOP
+         ST    &ECB,16(1,0)           ADDR OF ECB INTO PARAM LISTYM1995
+.SDSTF80 AIF   ('&ASID' EQ '').SDSTF90      IS ASID SPECIFIED
+         AIF   ('&ASID'(1,1) EQ '(').SDSTF82     IS ASID IN A REGISTER
+         LH    0,&ASID                      ASID OF MEMORY TO BE DUMPED
+         STH   0,22(1,0)              ASID INTO PARAMETER LIST   YM1995
+         AGO   .SDSTF90                     GO CHECK FOR BRANCH ENTRY
+.SDSTF82 ANOP
+         STH   &ASID,22(1,0)          ASID INTO PARAMETER LIST   YM1995
+.SDSTF90 AIF   ('&ASIDLST' EQ '').SDSTF93  IS ASIDLIST SPECIFIED
+.*                                                             @G33VPHD
+         IHBSETR   &ASIDLST,0           ADDR OF ASIDLIST IN R0
+.*                                                             @G33VPHD
+         ST    0,24(1)                  ADDR ASIDLIST INTO PARM LIST
+.*                                                             @G33VPHD
+.SDSTF93 AIF   ('&SUMLIST' EQ '').SDSTF98 IS SUMLIST SPECIFIED
+.*                                                             @G33VPHD
+         AIF   (&SDNSMDP EQ 1).MESG14   SUMLIST WITH  NOSUMDUMP ERROR
+.*                                                             @ZA39011
+         IHBSETR   &SUMLIST,0
+.*                                                             @G33VPHD
+         ST    0,28(1)
+.*                                                             @G33VPHD
+.SDSTF98 AIF   ('&BRANCH' EQ 'YES').SDSTF99  IS BRANCH ENTRY REQUESTED
+.*                                                             @G33VPHD
+         SVC   51                           INVOKE SVC DUMP VIA SVC
+         AGO   .SDEND                       GO END MACRO PROCESSING
+.SDSTF99 ANOP
+.*                                                             @G33VPHD
+         L     15,CVTPTR(0,0)               ADDRESS OF CVT       YM1995
+         L     15,CVTSDMP-CVTMAP(15,0)  ADDRESS OF SVC DUMP ENTRYYM1995
+         BALR  14,15                        INVOKE SVC DUMP VIA BAL
+         AGO   .SDEND                       GO END MACRO PROCESSING
+.*
+.*       MESSAGES
+.*
+.MESG1   MNOTE 12,'REGISTER NOTATION INVALID W/MF=L'
+         MEXIT
+.MESG2A  MNOTE 12,'HDR AND HDRAD MUTUALLY EXCLUSIVE'
+         MEXIT
+.MESG2B  MNOTE 12,'STORAGE AND LIST MUTUALLY EXCLUSIVE'
+         MEXIT
+.MESG3A  MNOTE 12,'MISSING PARAMETERS: ASID OR ASIDLST  REQUIRED WITH BX
+               RANCH=YES'                                     @G33VPHD
+         MEXIT
+.MESG3B  MNOTE 12,'MISSING PARAMETERS ASID OR ASIDLST  REQUIRED WITH ECX
+               B'                                              @G33VPHD
+         MEXIT
+.MESG4A  MNOTE 12,'INVALID SDATA OPERAND SPECIFIED &SDATA(&CTR2)'
+         MEXIT
+.MESG4B  MNOTE 12,'INVALID BUFFER OPERAND SPECIFIED &BUFFER'
+         MEXIT
+.MESG4C  MNOTE 12,'INVALID BRANCH OPERAND SPECIFIED &BRANCH'
+         MEXIT
+.MESG4D  MNOTE 12,'INVALID QUIESCE OPERAND SPECIFIED &QUIESCE'
+         MEXIT
+.MESG5A  MNOTE 12,'ASID OPERAND INVALID W/MF=L'
+         MEXIT
+.MESG5B  MNOTE 12,'ECB OPERAND INVALID W/MF=L'
+         MEXIT
+.MESG5C  MNOTE 12,'BRANCH OPERAND INVALID W/MF=L'
+         MEXIT
+.MESG5D  MNOTE 12,'ASIDLST OPERAND INVALID W/MF=L'
+         MEXIT
+.MESG5E  MNOTE 12,'SUMLIST OPERAND INVALID W/MF=L'
+         MEXIT
+.MESG6   MNOTE 12,'ODD NUMBER OF STORAGE ADDRESSES'
+         MEXIT
+.MESG7   MNOTE 12,'MACRO FORM IS INVALID'
+         MEXIT
+.MESG8   MNOTE 12,'USER DATA TOO LONG'
+         MEXIT
+.MESG9   MNOTE 12,'INITIAL CHARACTER OF HDR OPERAND NOT AN APOSTROPHE'
+         MEXIT
+.*                                                             @G33VPHD
+.MESG10  MNOTE 12,'MUTUALLY EXCLUSIVE OPERANDS: ASID AND ASIDLST'
+.*                                                             @G33VPHD
+         MEXIT
+.*                                                             @G33VPHD
+.MESG11  MNOTE 12,'MUTUALLY EXCLUSIVE OPERANDS: SUMDUMP/SUM AND NOSUMDUX
+               MP/NOSUM'
+.*                                                             @G33VPHD
+         MEXIT
+.*                                                             @G33VPHD
+.MESG12  MNOTE 12,'MUTUALLY EXCLUSIVE OPERANDS:SQA AND NOSQA'
+.*                                                             @G33VPHD
+         MEXIT
+.*                                                             @G33VPHD
+.MESG13  MNOTE 12,'MUTUALLY EXCLUSIVE OPERANDS: ALLPSA AND NOALLPSA'
+.*                                                             @G33VPHD
+         MEXIT
+.*                                                             @G33VPHD
+.MESG14  MNOTE 12,'MUTUALLY EXCLUSIVE OPERANDS: SUMLIST AND NOSUMDUMP/NX
+               OSUM'
+.*                                                             @ZA39011
+.SDEND   MEXIT
+         MEND

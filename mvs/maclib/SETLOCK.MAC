@@ -1,0 +1,551 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    SETLOCK &REQUEST,&TYPE=,&ADDR=,&MODE=,&DISABLE,&RELATED=,     X
+               &REGS=,&BRANCH=
+         GBLC  &MESSAGE
+         LCLA   &INDEX,&INDEX0
+         LCLA  &OFSET,&MASK,&BYTE,&I
+         LCLB  &ADVALID,&COND(4)
+         LCLB  &TYPEREG
+         LCLC  &MESSAG2,&REG,&RADDR,&BRADR(4)
+         LCLC  &INSTR,&AREA
+         AIF   ('&REQUEST' EQ 'TEST').TEST
+&INDEX   SETA  0
+         AIF   (T'&RELATED NE 'O').RELATED
+.*       IHB001  RELATED OPERAND REQUIRED, NOT SPECIFIED
+         IHBERMAC 1006,RELATED
+         MEXIT
+.RELATED ANOP
+         AIF   (T'&BRANCH EQ 'O').NOBRNAM
+.*       IHB280 BRANCH INVALID WITH OBTAIN/RELEASE
+         IHBERMAC 1020,BRANCH,&REQUEST
+         MEXIT
+.NOBRNAM ANOP
+         AIF   ('&REQUEST' EQ 'OBTAIN').OBTAIN
+         AIF   ('&REQUEST' EQ 'RELEASE').RELEASE
+         IHBERMAC 24
+         MEXIT
+.OBTAIN  AIF   ('&DISABLE' EQ '').OBTAIN2
+         AIF   ('&DISABLE' NE 'DISABLED').ERROD
+.OBTAIN2 ANOP
+         AIF   ('&MODE' EQ 'COND').COND      COND REQUIRES NO INCREMENT
+         AIF   ('&MODE' EQ 'UNCOND').UNCOND
+         AIF   ('&MODE' NE '').MODERR
+.*       IHB001  MODE OPERAND REQUIRED, NOT SPECIFIED
+         IHBERMAC 1006,MODE
+         MEXIT
+.MODERR  ANOP
+.*       IHB002  INVALID MODE OPERAND SPECIFIED - XXX
+               IHBERMAC 1001,MODE,&MODE
+         MEXIT
+.ERROD   ANOP
+         AIF   ('&DISABLE' EQ 'DISABLED').ERROD1
+.*       IHB244  INVALID POSIT-NL XXX OPERAND
+.INVLDIS IHBERMAC 1008,&DISABLE,1
+         MEXIT
+.ERROD1  ANOP
+&MESSAGE SETC  'COND OR SUSPEND LOCK OBTAIN'
+.*       IHB280  DISABLE INVALID WITH COND OR SUSPEND LOCK OBTAIN
+         IHBERMAC 1020,&DISABLE,&MESSAGE
+         MEXIT
+.UNCOND  ANOP
+&INDEX   SETA  (&INDEX+12)              INCREMENT TO UNCOND OBTAIN
+         AGO   .REGS
+.RELEASE AIF   ('&MODE' NE '').ERRMOD
+         AIF   ('&DISABLE' EQ 'DISABLED').TESTSUP  TEST FOR SUSPEND REQ
+         AIF   ('&DISABLE' EQ '').RELSE
+.*       IHB244  INVALID POSIT-NL XXX OPERAND
+         IHBERMAC 1008,&DISABLE,1
+         MEXIT
+.ERRMOD  ANOP
+.*       IHB280               MODE INVALID WITH RELEASE
+         IHBERMAC 1020,MODE,RELEASE
+         MEXIT
+.RELSE   ANOP
+&INDEX   SETA  (&INDEX+24)              INCREMENT TO RELEASE W/O DISBLE
+         AGO   .REGS
+.TESTSUP AIF   ('&TYPE' EQ 'CMS').ERRDIS
+         AIF   ('&TYPE' EQ 'LOCAL').ERRDIS
+&INDEX   SETA  (&INDEX+36)              INCREMENT TO RELEASE DISABLE
+         AGO   .REGS
+.ERRDIS  ANOP
+.*       IHB280  DISABLE INVALID WITH CMS/LOCAL
+         IHBERMAC 1020,&DISABLE,&TYPE
+         MEXIT
+.COND    ANOP
+         AIF   ('&DISABLE' NE '').ERROD
+.REGS    ANOP
+         AIF   ('&REGS' EQ 'SAVE').TYPE SAVE IS VALID PARAMETER
+         AIF   ('&REGS' EQ 'USE').TYPE  USE IS VALID PARAMETER
+         AIF   ('&REGS' EQ '').TYPE     PARAMETER IS NOT REQUIRED
+.*       IHB002 INVALID REGS OPERAND SPECIFIED - XXX
+         IHBERMAC 1001,REGS,&REGS
+         MEXIT
+.TYPE    ANOP
+&INDEX0  SETA  &INDEX
+         AIF   ('&TYPE' EQ 'DISP').CODE HIGHEST LOCK INCREMENT NOT REQD
+&INDEX   SETA  (&INDEX+48)              INCREMENT FOR 1 SPIN LOCK ENTRY
+         AIF   ('&TYPE' EQ 'IOSCAT').CODEA
+&INDEX   SETA  (&INDEX+48)
+         AIF   ('&TYPE' EQ 'IOSUCB').CODEA
+&INDEX   SETA  (&INDEX+48)
+         AIF   ('&TYPE' EQ 'IOSLCH').CODEA
+&INDEX   SETA  (&INDEX+48)
+         AIF   ('&TYPE' EQ 'IOSYNCH').CODEA
+&INDEX   SETA  (&INDEX+48)
+         AIF   ('&TYPE' EQ 'TPNCB').CODEA
+&INDEX   SETA  (&INDEX+48)
+         AIF   ('&TYPE' EQ 'TPDNCB').CODEA
+&INDEX   SETA  (&INDEX+48)
+         AIF   ('&TYPE' EQ 'TPACBDEB').CODEA
+&INDEX   SETA  (&INDEX+48)
+         AIF   ('&TYPE' EQ 'ASM').CODEA
+&INDEX   SETA  (&INDEX+48)
+         AIF   ('&TYPE' EQ 'SALLOC').CODE
+&INDEX   SETA  (&INDEX+48)
+         AIF   ('&TYPE' EQ 'SRM').CODE
+&INDEX   SETA  (&INDEX+48)
+         AIF   ('&TYPE' EQ 'CMS').CODE
+&INDEX   SETA  (&INDEX+36)
+         AIF   ('&TYPE' EQ 'LOCAL').CODE
+&INDEX   SETA  &INDEX+36-&INDEX0
+         AIF   ('&REQUEST' NE 'RELEASE').BADTYPE
+         AIF   (T'&ADDR NE 'O').ERRADD
+         AIF   ('&TYPE' EQ 'SPIN').RSPIN
+         AIF   ('&TYPE' EQ 'ALL').RALL
+         AIF   ('&TYPE'(1,1) NE '(').BADTYPE
+         AIF   ('&TYPE'(K'&TYPE,1) EQ ')').RREG
+.BADTYPE AIF   ('&TYPE' NE '').INVTYP
+.*       IHB001 TYPE OPERAND REQUIRED NOT SPECIFIED
+         IHBERMAC 1006,TYPE
+         MEXIT
+.INVTYP  ANOP
+.*       IHB002  INVALID TYPE OPERAND SPECIFIED
+         IHBERMAC 1001,TYPE,&TYPE
+         MEXIT
+.CODE    AIF   ('&ADDR' NE '').ERRADD
+         AIF   ('&REGS' EQ 'SAVE').SAVE1
+         AIF   ('&REGS' EQ 'USE').USE1
+&NAME    L     13,PSALITA-FLC(0,0)      ADDRESS OF LOCK INTERFACE TABLE
+         AIF   ('&TYPE' EQ 'LOCAL').LOAD
+         LM    11,13,&INDEX.(13)        LOAD ADDRESS OF THE LOCKWORD,
+*                                       CLHT AND LOCK RTNS ENTRY POINT
+         AGO   .MNLCODE
+.SAVE1   ANOP
+&NAME    LR    15,13                    LOAD SAVE AREA ADDRESS
+         STM   11,14,0(15)              SAVE REGISTERS
+         L     13,PSALITA-FLC(0,0)      ADDRESS OF LOCK INTERFACE TABLE
+         AIF   ('&TYPE' EQ 'LOCAL').LOAD
+         LM    11,13,&INDEX.(13)        LOAD ADDRESS OF THE LOCKWORD,
+*                                       CLHT AND LOCK RTNS ENTRY POINT
+         AGO   .MNLCODE
+.USE1    ANOP
+&NAME    LR    15,11                    SAVE REGISTER 11
+         LR    0,12                     SAVE REGISTER 12
+         LR    1,13                     SAVE REGISTER 13
+         L     13,PSALITA-FLC(0,0)      ADDRESS OF LOCK INTERFACE TABLE
+         AIF   ('&TYPE' EQ 'LOCAL').LOAD
+         LM    11,13,&INDEX.(13)        LOAD ADDRESS OF THE LOCKWORD,
+*                                       CLHT AND LOCK RTNS ENTRY POINT
+         AGO   .MNLCODE
+.LOAD    ANOP
+&INDEX   SETA  (&INDEX+8)
+         L     13,&INDEX.(0,13)        LOAD ADDRESS OF LOCK RTN
+         AGO   .MNLCODE
+.ERRADD  ANOP
+.*       IHB280 ADDR INVALID WITH TYPE=XXX
+&MESSAGE SETC  'TYPE='.'&TYPE'
+         IHBERMAC 1020,ADDR,&MESSAGE
+         MEXIT
+.CODEA   ANOP
+&INDEX   SETA  (&INDEX+4)     INCREMENT PAST LK ADDR
+         AIF   ('&ADDR' EQ '(11)').MR11 LOCKWORD ADDRESS ALREADY LOADED
+         AIF   ('&ADDR' NE '').ADRLA
+.*       IHB001 ADDR OPERAND REQUIRED NOT SPECIFIED
+         IHBERMAC 1006,ADDR
+         MEXIT
+.ERREG1  ANOP
+&MESSAGE SETC  'REGISTER NOTATION'
+.*       IHB280 REGISTER NOTATION INVALID WITH ADDR
+         IHBERMAC 1020,&MESSAGE,ADDR
+         MEXIT
+.ADRLA   ANOP
+         AIF   ('&ADDR'(1,1) EQ '(').ERREG1
+         AIF   ('&REGS' EQ 'SAVE').SAVE2
+         AIF   ('&REGS' EQ 'USE').USE2
+&NAME    LA    11,&ADDR                 LOCKWORD ADDRESS
+         L     13,PSALITA-FLC(0,0)      ADDRESS OF LOCK INTERFACE TABLE
+         LM    12,13,&INDEX.(13)        LOAD CLHT & ENTRY POINT ADDRESS
+         AGO   .MNLCODE
+.SAVE2   ANOP
+&NAME    LR    15,13                    LOAD SAVE AREA ADDRESS
+         STM   11,14,0(15)              SAVE REGISTERS
+         LA    11,&ADDR                 LOCKWORD ADDRESS
+         L     13,PSALITA-FLC(0,0)      ADDRESS OF LOCK INTERFACE TABLE
+         LM    12,13,&INDEX.(13)        LOAD LOCKWORD AND CLHT ADDRESS
+         AGO   .MNLCODE
+.USE2    ANOP
+&NAME    LR    15,11                    SAVE REGISTER 11
+         LR    0,12                     SAVE REGISTER 12
+         LR    1,13                     SAVE REGISTER 13
+         LA    11,&ADDR                 LOCKWORD ADDRESS
+         L     13,PSALITA-FLC(0,0)      ADDRESS OF LOCK INTERFACE TABLE
+         LM    12,13,&INDEX.(13)        LOAD LOCKWORD AND CLHT ADDRESS
+         AGO   .MNLCODE
+.MR11    ANOP
+         AIF   ('&REGS' EQ 'SAVE').SAVE3
+         AIF   ('&REGS' EQ 'USE').USE3
+&NAME    L     13,PSALITA-FLC(0,0)      ADDRESS OF LOCK INTERFACE TABLE
+         LM    12,13,&INDEX.(13)        LOAD CLHT & ENTRY POINT ADDRESS
+         AGO   .MNLCODE
+.SAVE3   ANOP
+&NAME    LR    15,13                    LOAD SAVE AREA ADDRESS
+         STM   11,14,0(15)              SAVE REGISTERS
+         L     13,PSALITA-FLC(0,0)      ADDRESS OF LOCK INTERFACE TABLE
+         LM    12,13,&INDEX.(13)        LOAD LOCKWORD AND CLHT ADDRESS
+         AGO   .MNLCODE
+.USE3    ANOP
+&NAME    LR    15,11                    SAVE REGISTER 11
+         LR    0,12                     SAVE REGISTER 12
+         LR    1,13                     SAVE REGISTER 13
+         L     13,PSALITA-FLC(0,0)      ADDRESS OF LOCK INTERFACE TABLE
+         LM    12,13,&INDEX.(13)        LOAD LOCKWORD AND CLHT ADDRESS
+.MNLCODE ANOP
+         AIF   ('&MODE' EQ 'UNCOND').BALCK
+.MNLCOD2 ANOP
+         BALR  14,13                    BRANCH ENTER LOCK ROUTINE
+.MNLCOD3 ANOP
+         AIF   ('&REGS' EQ 'SAVE').SAVE4
+         AIF   ('&REGS' NE 'USE').ENDIT
+         LR    11,15                    RESTORE REGISTER 11
+         LR    15,13                    PUT RETURN CODE IN REGISTER 15
+         LR    12,0                     RESTORE REGISTER 12
+         LR    13,1                     RESTORE REGISTER 13
+         AGO   .ENDIT
+.BALCK   ANOP
+         AIF   ('&DISABLE' EQ '').MNLCOD2
+         AIF   ('&TYPE' EQ 'LOCAL').ERROD1
+         AIF   ('&TYPE' EQ 'CMS').ERROD1
+         BAL   14,4(0,13)              BRANCH TO LOCK RTN AT DIS ENTRY
+*        NOTE: YOU HAVE JUST SAID THAT YOU ARE DISABLED
+         AGO   .MNLCOD3
+.SAVE4   ST    13,16(0,15)              STORE RETURN CODE
+         LM    11,15,0(15)              RESTORE REGS - RC IN REG 15
+         MEXIT
+.RALL    ANOP
+         AIF   ('&NAME' EQ '').RALLNN
+&NAME    DC    0H'0'
+.RALLNN  AIF   (T'&REGS EQ 'O').RCMS
+         AIF   ('&REGS' EQ 'SAVE').RALLS
+         LR    15,11              SAVE REG11
+         LR    0,12               SAVE REG12
+         LR    1,13               SAVE REG13
+         AGO   .RCMS
+.RALLS   ANOP
+         LR    15,13              SAVE AREA ADDRESS
+         STM   11,14,0(15)        SAVE REG11 THRU R14
+.RCMS    ANOP
+         TM    PSAHLHI-FLC+3(0),2       IS CMS LOCK HELD?      @ZA35343
+         BZ    IHB&SYSNDX.A       NO: SKIP CMS LOCK RELEASE
+         SETLOCK RELEASE,TYPE=CMS,RELATED=&RELATED
+IHB&SYSNDX.A DC   0H'0'
+         TM    PSAHLHI-FLC+3(0),1       IS LOCAL LOCK HELD?    @ZA35343
+         BZ    IHB&SYSNDX.B       NO: SKIP LOCAL LOCK RELEASE
+         SETLOCK RELEASE,TYPE=LOCAL,RELATED=&RELATED
+IHB&SYSNDX.B DC   0H'0'
+         AGO   .RSPINC
+.RSPIN   ANOP
+         AIF   ('&NAME' EQ '').RSPINNN
+&NAME    DC    0H'0'
+.RSPINNN AIF   (T'&REGS EQ 'O').RSPINC
+         AIF   ('&REGS' EQ 'SAVE').RSPINS
+         LR    15,11              SAVE REG11
+         LR    0,12               SAVE REG12
+         LR    1,13               SAVE REG13
+         AGO   .RSPINC
+.RSPINS  ANOP
+         LR    15,13              SAVE AREA ADDRESS
+         STM   11,14,0(15)        SAVE REGS 11 THRU 14
+.RSPINC  ANOP
+         L     13,PSALITA-FLC(0,0) GET LOCK INTERFACE TABLE ADDR
+         LM    11,13,&INDEX.(13)  GET PARM & EP ADDR FROM TABLE
+         N     11,PSAHLHI-FLC(0,0)      KEEP ONLY SPIN LOCKS
+*                                        HELD                  @ZA35343
+         BZ    *+10               EXIT IF NONE HELD
+         AIF   (T'&DISABLE EQ 'O').RSPINE
+         AIF   ('&DISABLE' NE 'DISABLED').INVLDIS
+         MVI   PSAMPSW-FLC(0),X'00'     INDICATE RETURN
+*                                        DISABLED              @ZA35343
+         AGO   .RSPINR
+.RSPINE  ANOP
+         MVI   PSAMPSW-FLC(0),X'03'     INDICATE RETURN
+*                                        ENABLED               @ZA35343
+.RSPINR  ANOP
+         BALR  14,13              LINK TO LOCK MANAGER
+         AIF   (T'&REGS EQ 'O').RSPINX
+         AIF   ('&REGS' EQ 'USE').RSPINU
+         LM    11,14,0(15)        RESTORE REGS 11 THRU 14
+.RSPINX  MEXIT
+.RSPINU  ANOP
+         LR    11,15              RESTORE REG11
+         LR    12,0               RESTORE REG12
+         LR    13,1               RESTORE REG13
+         MEXIT
+.RREG    ANOP
+         AIF   ('&NAME' EQ '').RREGNN
+&NAME    DC    0H'0'
+.RREGNN  AIF   (T'&REGS EQ 'O').RREGC
+         AIF   ('&REGS' EQ 'SAVE').RREGS
+         LR    15,11              SAVE REG11
+         LR    0,12               SAVE REG12
+         LR    1,13               SAVE REG13
+         AGO   .RREGC
+.RREGS   ANOP
+         LR    15,13              SAVE AREA ADDRESS
+         STM   11,14,0(15)        SAVE REGS 11 THRU 14
+.RREGC   ANOP
+         LR    11,&TYPE(1)        PUT STRING IN PROPER REGISTER
+         N     11,PSAHLHI-FLC(0,0)      ARE ALL SPECIFIED
+*                                        LOCKS HELD?           @ZA35343
+         CR    11,&TYPE(1)        COMPARE WITH INPUT
+         BE    IHB&SYSNDX.A       ALL ARE HELD: RELEASE
+         ABEND X'073',DUMP,,SYSTEM   NOT ALL HELD: ABEND
+IHB&SYSNDX.A DC   0H'0'
+         LA    12,2               MASK TO CHECK FOR CMS
+         NR    12,&TYPE(1)        IS CMS RELEASE REQUESTED?
+         BZ    IHB&SYSNDX.B       NO: GO TO CHECK FOR LOCAL
+         SETLOCK RELEASE,TYPE=CMS,RELATED=&RELATED
+IHB&SYSNDX.B DC   0H'0'
+         LA    12,1               MASK TO CHECK FOR LOCAL
+         NR    12,&TYPE(1)        IS LOCAL RELEASE REQUESTED?
+         BZ    IHB&SYSNDX.C       NO: SKIP LOCAL RELEASE
+         SETLOCK RELEASE,TYPE=LOCAL,RELATED=&RELATED
+IHB&SYSNDX.C DC   0H'0'
+         L     13,PSALITA-FLC(0,0) GET LOCK INTERFACE TABLE ADDRESS
+         LM    11,13,&INDEX.(13)  GET PARM & EP ADDR FROM TABLE
+         NR    11,&TYPE(1)        ANY SPIN LOCK SPECIFIED?
+         BZ    IHB&SYSNDX.D       NO: EXIT
+         AIF   (T'&DISABLE EQ 'O').RREGE
+         AIF   ('&DISABLE' NE 'DISABLED').INVLDIS
+         MVI   PSAMPSW-FLC(0),X'00'     INDICATE RETURN
+*                                        DISABLED              @ZA35343
+         AGO   .RREGCMS
+.RREGE   ANOP
+         MVI   PSAMPSW-FLC(0),X'03'     INDICATE RETURN
+*                                        ENABLED               @ZA35343
+.RREGCMS ANOP
+         BALR  14,13              LINK TO LOCK MANAGER
+IHB&SYSNDX.D DC    0H'0'
+         AIF   (T'&REGS EQ 'O').RREGX
+         AIF   ('&REGS' EQ 'USE').RREGU
+         LM    11,14,0(15)        RESTORE REGS 11 THRU 14
+.RREGX   MEXIT
+.RREGU   ANOP
+         LR    11,15              RESTORE REG11
+         LR    12,0               RESTORE REG12
+         LR    13,1               RESTORE REG13
+         MEXIT
+.TEST    ANOP
+         AIF   (T'&MODE EQ 'O').TSTDIS
+.*       IHB280 MODE INVALID WITH TEST
+         IHBERMAC 1020,MODE,TEST
+         MEXIT
+.TSTDIS  AIF   (T'&DISABLE EQ 'O').TSTADR
+.*       IHB280 DISABLED INVALID WITH TEST
+         IHBERMAC 1020,DISABLED,TEST
+         MEXIT
+.TSTADR  AIF   (T'&ADDR EQ 'O').TSTREG
+         AIF   ('&ADDR'(1,1) NE '(').TSTBADR
+         AIF   ('&ADDR'(K'&ADDR,1) EQ ')').TSTREG
+.*       IHB002  INVALID ADDR OPERAND SPECIFIED- XXX
+.TSTBADR IHBERMAC 1001,ADDR,&ADDR
+         MEXIT
+.TSTREG  AIF   (T'&REGS EQ 'O').TSTBR
+         AIF   ('&REGS'(1,1) NE '(').TSTBREG
+         AIF   ('&REGS'(K'&REGS,1) EQ ')').TSTBR
+.*       IHB002  INVALID REGS OPERAND SPECIFIED- XXX
+.TSTBREG IHBERMAC 1001,REGS,&REGS
+         MEXIT
+.TSTBR   AIF   (T'&BRANCH EQ 'O').TSTTYPE
+         AIF   (N'&BRANCH EQ 2).TSTCOND
+.*       IHB247 INCORRECT NUMBER OF BRANCH VALUES
+.TINVBR  IHBERMAC 1012,BRANCH
+         MEXIT
+.TSTCOND ANOP
+         AIF   ('&BRANCH(1)' EQ 'HELD').TSTTYPE
+         AIF   ('&BRANCH(1)' EQ 'NOTHELD').TSTTYPE
+.INVCOND ANOP
+.*       IHB002 INVALID BRANCH OPERAND SPECIFIED- XXX
+         IHBERMAC 1001,BRANCH,&BRANCH(1)
+         MEXIT
+.TSTTYPE ANOP
+         AIF   (T'&TYPE EQ 'O').ERTTYP
+&BYTE    SETA  2
+&OFSET   SETA  0
+&MASK    SETA  16
+         AIF   ('&TYPE' EQ 'DISP').TNAMSYS
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  &MASK/2
+         AIF   ('&TYPE' EQ 'ASM').TNAMC
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  &MASK/2
+         AIF   ('&TYPE' EQ 'SALLOC').TNAMSYS
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  &MASK/2
+         AIF   ('&TYPE' EQ 'IOSYNCH').TNAMC
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  &MASK/2
+         AIF   ('&TYPE' EQ 'IOSCAT').TNAMC
+&BYTE    SETA  3
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  128
+         AIF   ('&TYPE' EQ 'IOSUCB').TNAMC
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  &MASK/2
+         AIF   ('&TYPE' EQ 'IOSLCH').TNAMC
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  &MASK/2
+         AIF   ('&TYPE' EQ 'TPNCB').TNAMC
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  &MASK/2
+         AIF   ('&TYPE' EQ 'TPDNCB').TNAMC
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  &MASK/2
+         AIF   ('&TYPE' EQ 'TPACBDEB').TNAMC
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  &MASK/2
+         AIF   ('&TYPE' EQ 'SRM').TNAMSYS
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  &MASK/2
+         AIF   ('&TYPE' EQ 'CMS').TNAMSYS
+&OFSET   SETA  &OFSET+4
+&MASK    SETA  &MASK/2
+         AIF   ('&TYPE' EQ 'LOCAL').TNAMSYS
+         AIF   (T'&ADDR EQ 'O').TALL
+.*       IHB280 ADDR INVALID WITH TYPE=ALL/REG
+.TADINVL ANOP
+&MESSAGE SETC  'TYPE='.'&TYPE'
+         IHBERMAC 1020,ADDR,&MESSAGE
+         MEXIT
+.TALL    AIF   ('&TYPE' EQ 'ALL').TALLC
+         AIF   ('&TYPE' EQ 'SPIN').TALLC
+.TREG    ANOP
+         AIF   ('&TYPE'(1,1) NE '(').TTYPINV
+         AIF   ('&TYPE'(K'&TYPE,1) EQ ')').TREGC
+.*       IHB002 INVALID TYPE OPERAND SPECIFIED- XXX
+.TTYPINV IHBERMAC 1001,TYPE,&TYPE
+         MEXIT
+.*       IHB001 TYPE OPERAND REQUIRED NOT SPECIFIED
+.ERTTYP IHBERMAC 1006,TYPE
+         MEXIT
+.TNAMSYS ANOP
+         AIF   (T'&ADDR NE 'O').TADINVL
+.TNAMC   ANOP
+         AIF   (T'&REGS EQ 'O').TNAMC1
+.*       IHB280 REGS INVALID WITH TYPE=NAME
+&MESSAGE SETC 'TYPE='.'&TYPE'
+         IHBERMAC 1020,REGS,&MESSAGE
+         MEXIT
+.TNAMC1  ANOP
+         AIF   ('&NAME' EQ '').TNAMNN
+&NAME    DC    0H'0'
+.TNAMNN  AIF   (T'&BRANCH NE 'O').TNAMCB
+         SR    15,15                    PRESET LOCK HELD RETURN CODE
+.TNAMCB  AIF   (T'&ADDR EQ 'O').TNAMTM
+         C     &ADDR(1),PSACLHT-FLC+&OFSET.(0,0)
+*                                       CHECK LKWD ADDR IN CLHT@ZA35343
+         AIF   (T'&BRANCH EQ 'O').TNAMARC
+         AIF   ('&BRANCH(1)' EQ 'HELD').TNAMABH
+         BNE   &BRANCH(2)               BRANCH NOT HELD
+         MEXIT
+.TNAMABH BE    &BRANCH(2)               BRANCH HELD
+         MEXIT
+.TNAMARC BE    *+8                      BRANCH HELD
+         LA    15,4(0,0)                SET R. C. LOCK NOT HELD
+         MEXIT
+.TNAMTM  TM    PSAHLHI-FLC+&BYTE.(0),&MASK
+*                                       TEST BIT IN CPU LK HELD
+*                                        STRING                @ZA35343
+         AIF   (T'&BRANCH EQ 'O').TNAMTRC
+         AIF   ('&BRANCH(1)' EQ 'HELD').TNAMTBH
+         BZ    &BRANCH(2)               BRANCH NOT HELD
+         MEXIT
+.TNAMTBH BO    &BRANCH(2)               BRANCH HELD
+         MEXIT
+.TNAMTRC BO    *+8                      BRANCH HELD
+         LA    15,4(0,0)                SET R. C. LOCK NOT HELD
+         MEXIT
+.TALLC   ANOP
+         AIF   (T'&REGS NE 'O').TALLCR
+.*       IHB001 WITH TYPE=ALL, REGS OPERAND REQUIRED NOT SPECIFIED
+&MESSAGE SETC  'WITH TYPE='.'&TYPE'.', REGS'
+         IHBERMAC 1006,&MESSAGE
+         MEXIT
+.TALLCR  ANOP
+         AIF   ('&NAME' EQ '').TALLCNA
+&NAME    DC    0H'0'
+.TALLCNA ANOP
+         AIF   (T'&BRANCH NE 'O').TALLCNS
+         SR    15,15               PRESET R. C. AT LEAST ONE LOCK HELD
+.TALLCNS AIF   ('&TYPE' EQ 'SPIN').TSPINC
+         L     &REGS(1),PSAHLHI-FLC(0,0) GET CPU LOCKS HELD
+*                                        STRING                @ZA35343
+         AGO   .TALLCOM
+.TSPINC  LA    &REGS(1),4(0,0)     GET VALUE TO GENERATE MASK
+         LCR   &REGS(1),&REGS(1)   GENERATE MASK TO CHECK ONLY SPIN LKS
+         N     &REGS(1),PSAHLHI-FLC(0,0) KEEP ONLY HELD SPIN
+*                                        LOCKS,IF ANY          @ZA35343
+.TALLCOM ANOP
+         LTR   &REGS(1),&REGS(1)   CHECK FOR ZERO
+         AIF   (T'&BRANCH EQ 'O').TALLRC
+         AIF   ('&BRANCH(1)' EQ 'HELD').TALLBH
+         BZ    &BRANCH(2)          BRANCH NO LOCK HELD
+         MEXIT
+.TALLBH  BNZ   &BRANCH(2)          BRANCH AT LEAST ONE LOCK HELD
+         MEXIT
+.TALLRC  BNZ   *+8                 BRANCH AT LEAST ONE LOCK HELD
+         LA    15,4(0,0)           SET R. C. NO LOCK HELD
+         MEXIT
+.TREGC   ANOP
+         AIF (T'&BRANCH EQ 'O').TREGCNB
+         AIF (T'&REGS NE 'O').TREGCBR
+.*       IHB001 WITH BRANCH OPTION OF TYPE=REG,REGS REQUIRED NOT SPECI-
+.*       FIED
+&MESSAGE SETC  'WITH BRANCH OPTION OF TYPE='.'&TYPE'.', REGS'
+         IHBERMAC 1006,&MESSAGE
+         MEXIT
+.TREGCBR ANOP
+         AIF   ('&NAME' EQ '').TREGCNN
+&NAME    DC    0H'0'
+.TREGCNN LR    &REGS(1),&TYPE(1)        SAVE INPUT STRING
+         N     &REGS(1),PSAHLHI-FLC(0,0) COMPARE TO LOCKS HELD
+*                                        STRING                @ZA35343
+         CR    &REGS(1),&TYPE(1)        ARE ALL SPECIFIED LOCKS HELD
+         AIF   ('&BRANCH(1)' EQ 'HELD').TREGCBH
+         BNE   &BRANCH(2)               BRANCH NOT ALL HELD
+         MEXIT
+.TREGCBH BE    &BRANCH(2)               BRANCH ALL HELD
+         MEXIT
+.TREGCNB ANOP
+         AIF   ('&NAME' EQ '').TREGRNN
+&NAME    DC    0H'0'
+.TREGRNN LR    15,&TYPE(1)              SAVE INPUT STRING
+&REG     SETC  '&TYPE(1)'
+         AIF   (T'&REGS EQ 'O').TREGCNR
+&REG     SETC  '&REGS(1)'
+         LR    &REG,&TYPE(1)            MOVE STRING IN WORK REGISTER
+.TREGCNR N     &REG,PSAHLHI-FLC(0,0)    COMPARE TO LOCKS HELD
+*                                        STRING                @ZA35343
+         XR    15,&REG                  SET RC=0 IF ALL HELD
+         BZ    *+8                      EXIT ALL HELD
+         LA    15,4(0,0)                SET RC NOT ALL HELD
+         MEXIT
+.ENDIT   ANOP
+         MEND
+* */
+*  SETLOCK :
+*  MACRO
+*  KEYS(TYPE,ADDR,MODE,DISABLED,RTCD,RETADDR,REGS,RELATED);
+*  ANS('?'||MACLABEL||'SETLOCKP '||MACLIST||MACKEYS||';');
+*% END;

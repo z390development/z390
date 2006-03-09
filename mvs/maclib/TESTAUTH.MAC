@@ -1,0 +1,77 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&LABEL   TESTAUTH &FCTN=,&AUTH=,&STATE=,&KEY=,&RBLEVEL=2,&BRANCH=
+         LCLA  &FLAGS
+         LCLB  &FCTNB
+         AIF   ('&LABEL' EQ '').NOLAB
+&LABEL   DS    0H             LABEL
+.NOLAB   ANOP
+         AIF  ('&FCTN' NE '' OR '&KEY' NE '' OR '&STATE' NE '').SKIP
+         LA    1,1(0,0)       SPECIFY FUNCTION CODE OF 1         YM1995
+&FCTNB   SETB  1
+         AGO   .CKAUTH
+.SKIP    ANOP
+         AIF   ('&FCTN' NE '').YSFUNC
+         SR    1,1            ZERO FOR INSERT
+         AGO   .PART2
+.YSFUNC  ANOP
+         AIF   ('&FCTN'(1,1) EQ '(').FUNCREG
+         LA    1,&FCTN.(0,0)  SPECIFY FUNCTION CODE              YM1995
+         AGO   .CKAUTH
+.FUNCREG ANOP
+         LR    1,&FCTN(1)     SPECIFY FUNCTION CODE
+.CKAUTH  ANOP
+         AIF   ('&AUTH' EQ '').NOAUTH
+         AIF   ('&AUTH'(1,1) EQ '(').AUTHREG
+         LA    0,&AUTH.(0,0)  SPECIFY AUTHORIZATION CODE         YM1995
+         AGO   .PART2
+.NOAUTH  ANOP
+         BAL   0,*+4          NO AUTH CODE SPEC (GPR 0 NEG)
+         AGO   .PART2
+.AUTHREG ANOP
+         LR    0,&AUTH(1)     SPECIFY AUTHORIZATION CODE
+         AGO   .PART2
+.PART2   ANOP
+         AIF   ('&STATE' EQ '' AND '&KEY' EQ '').PART3
+         AIF   ('&RBLEVEL' EQ '1').LEV1
+         AIF   ('&RBLEVEL' NE '2').ERR4
+&FLAGS   SETA  &FLAGS+8
+.LEV1    ANOP
+         AIF   ('&STATE' EQ '').NOSTAT
+         AIF   ('&STATE' EQ 'NO').NOSTAT
+         AIF   ('&STATE' NE 'YES').ERR2
+&FLAGS   SETA  &FLAGS+4
+.NOSTAT  ANOP
+         AIF   ('&KEY' EQ '').NOKEY
+         AIF   ('&KEY' EQ 'NO').NOKEY
+         AIF   ('&KEY' NE 'YES').ERR3
+&FLAGS   SETA  &FLAGS+2
+.NOKEY   ANOP
+         AIF   ('&FCTN' NE '' OR &FCTNB EQ 1).YESAPF
+&FLAGS   SETA  &FLAGS+1
+.YESAPF  ANOP
+         NOPR  &FLAGS
+         ICM   1,4,*-1        INSERT THE FLAGS
+.PART3   ANOP
+         AIF   ('&BRANCH' EQ '').SVC
+         AIF   ('&BRANCH' EQ 'NO').SVC
+         AIF   ('&BRANCH' NE 'YES').ERR5
+         L     15,16(0,0)                                        YM1995
+         L     15,CVTAPF-CVT(15,0)                               YM1995
+         BALR  14,15
+*/*      NOTE: REGISTERS 14-3 HAVE BEEN CHANGED.
+         AGO   .DONE
+.SVC     ANOP
+         SVC   119
+.DONE    ANOP
+         MEXIT
+.ERR2    IHBERMAC  157,STATE,&STATE INVALID CODE FOR STATE-IGNORED
+         MEXIT
+.ERR3    IHBERMAC 157,KEY,&KEY  INVALID CODE FOR KEY - IGNORED
+         MEXIT
+.ERR4    IHBERMAC 157,RBLEVEL,&RBLEVEL INVALID CODE FOR RBLEVEL IGNORED
+         MEXIT
+.ERR5    IHBERMAC 157,BRANCH,&BRANCH INVALID CODE FOR BRANCH-IGNORED
+         MEXIT
+         MEND
+

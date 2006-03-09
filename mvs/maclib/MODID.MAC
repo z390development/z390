@@ -1,0 +1,25 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&LABEL   MODID   &BRANCH=,&BR=
+.*  CHANGE LEVEL OZ07193,OZ15314                               @ZA15314
+.*  OZ07193- CHANGE DISTLIB FROM ATSOMACS TO AMACLIB           @ZA15314
+.*  OZ15314- SUPPORT FOR ADDING THE PTF NUMBER TO THE          @ZA15314
+.*           MODID MACRO.                                      @ZA15314
+         LCLC  &LABELC,&PARMC
+&LABELC  SETC  '&LABEL'
+&PARMC   SETC  'R03700'                                        @ZA15314
+         AIF   ('&LABELC' NE '').CKPRM
+&LABELC  SETC  '&SYSECT'
+.CKPRM   AIF   ('&SYSPARM' EQ '').CKBR
+&PARMC   SETC  '&SYSPARM'
+.CKBR    AIF   (T'&BRANCH EQ 'O' AND T'&BR EQ 'O').BR
+         AIF   ('&BRANCH' EQ 'NO' OR '&BR' EQ 'NO').NOBR
+.BR      ANOP
+         B     *+30                                            @ZA15314
+.NOBR    DC    CL8'&LABELC'            MODULE NAME
+         DC    CL9'&PARMC'             RELEASE OR PTF NUMBER   @ZA15314
+         DC    CL8'&SYSDATE'           DATE
+         DS    0H                                              @ZA15314
+         MEXIT
+         MEND
+

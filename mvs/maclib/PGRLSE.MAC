@@ -1,0 +1,188 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    PGRLSE    &MF=,&LA=,&HA=
+         LCLB  &B1,&B11,&B2,&B22,&LISTADR
+         LCLA  &A                                                YM1995
+         LCLC  &LISTR                                            YM1995
+.*
+         AIF   (T'&MF EQ 'O').IMM      DETERMINE FORM
+         AIF   ('&MF' EQ 'L').LIST
+         AIF   ('&MF(1)' EQ 'E').EXECU
+         IHBERMAC 1001,MF,&MF
+         MEXIT
+.*
+.**** EXECUTE FORM ****
+.*
+.EXECU   AIF   (T'&MF(2) EQ 'O' OR '&MF(2)' EQ '').EE
+         AIF   ('&MF(2)'(1,1) EQ '(').E1
+&LISTADR SETB  1
+         AGO   .E1
+.EE      ANOP
+         IHBERMAC 1017,'LISTADR'
+         MEXIT
+.E1      ANOP
+&B11     SETB  (T'&LA NE 'O' AND '&LA' NE '') IS LOW ADR TO BE UPDATED?
+         AIF   (NOT &B11).E1A
+&B1      SETB  ('&LA'(1,1) NE '(')     IS IT NOT IN A REGISTER?
+.E1A     ANOP
+&B22     SETB  (T'&HA NE 'O' AND '&HA' NE '') IS HIGH ADR TO BE UPDATED
+         AIF   (NOT &B22).E1B
+&B2      SETB  ('&HA'(1,1) NE '(')     IS IT NOT IN A REGISTER?
+.*
+         AIF   (&B1 AND &B2 AND &B11 AND &B22).E17
+.*
+.E1B     ANOP
+         AIF   ((&B11 AND &B1) OR (&B22 AND &B2)).E2
+.** OTHERWISE UPDATED PARAMETERS ARE IN REGS IF THEY EXIST **
+         AIF   ('&NAME' EQ '').E3
+&NAME    DS    0H
+.E3      AIF   (NOT &LISTADR).E333
+         LA    15,&MF(2) LOAD PARAMETER LIST ADDRESS
+&LISTR   SETC  '15'                                              YM1995
+         AGO   .E33
+.E333    ANOP
+&A       SETA   K'&MF-6                                          YM1995
+&LISTR   SETC  '&MF'(5,&A)                                       YM1995
+.E33     AIF   (&B11).E4
+         L     0,0(&LISTR,0) LOAD LOW ADDRESS FROM LIST          YM1995
+         AGO   .E6
+.E4      ST    &LA(1),0(&LISTR,0) UPDATE PARAMETER LIST          YM1995
+         AIF   (T'&LA(1) NE 'N').E5
+         AIF   ('&LA(1)' EQ '0').E6
+.E5      LR    0,&LA(1) LOAD LOW ADDRESS
+.E6      AIF   (&B22).E7
+         L     1,4(&LISTR,0) LOAD HIGH ADDRESS FROM LIST         YM1995
+         AGO   .RELSVC
+.E7      ST    &HA(1),4(&LISTR,0) UPDATE PARAMETER LIST          YM1995
+         AIF   (T'&HA(1) NE 'N').E8
+         AIF   ('&HA(1)' EQ '1').RELSVC
+.E8      LR    1,&HA(1) LOAD HIGH ADDRESS
+         AGO   .RELSVC
+.*
+.** ONE AND ONLY ONE OF THE PARAMETERS TO BE UPDATED IS NOT IN A REG **
+.*
+.E2      CNOP  0,4
+         AIF   ('&NAME' EQ '').E9
+&NAME    DS    0H
+.E9      AIF   (NOT &LISTADR).E999
+         LA    15,&MF(2) LOAD PARAMETER LIST ADDRESS
+&LISTR   SETC  '15'                                              YM1995
+         AGO   .E99
+.E999    ANOP
+&A       SETA   K'&MF-6                                          YM1995
+&LISTR   SETC  '&MF'(5,&A)                                       YM1995
+.E99     B     *+8 BRANCH AROUND ADCON
+         AIF   (&B1 AND &B11).E10
+         DC    A(&HA) HIGH ADDRESS
+         MVC   4(4,&LISTR),*-4 UPDATE HIGH ADDR IN PARAMETER LISTYM1995
+         AIF   (&B11).E11
+         LM    0,1,0(&LISTR) LOAD ADDRESSES                      YM1995
+         AGO   .RELSVC
+.E11     ST    &LA(1),0(&LISTR,0) UPDATE LOW ADDR IN PARAM LIST  YM1995
+         AIF   (T'&LA(1) NE 'N').E12
+         AIF   ('&LA(1)' EQ '0').E13
+.E12     LM    0,1,0(&LISTR) LOAD ADDRESSES                      YM1995
+         AGO   .RELSVC
+.E13     L     1,*-14 LOAD HIGH ADDRESS
+         AGO   .RELSVC
+.E10     DC    A(&LA) LOW ADDRESS
+         MVC   0(4,&LISTR),*-4 UPDATE LOW ADDR IN PARAMETER LIST YM1995
+         AIF   (&B22).E14
+         LM    0,1,0(&LISTR) LOAD ADDRESSES                      YM1995
+         AGO   .RELSVC
+.E14     ST    &HA(1),4(&LISTR,0) UPDATE HIGH ADDR IN PARAM LIST YM1995
+         AIF   (T'&HA(1) NE 'N').E15
+         AIF   ('&HA(1)' EQ '1').E16
+.E15     LM    0,1,0(&LISTR) LOAD ADDRESSES                      YM1995
+         AGO   .RELSVC
+.E16     L     0,*-14 LOAD LOW ADDRESS
+         AGO   .RELSVC
+.*
+.** BOTH PARAMETERS ARE TO BE MODIFIED, NEITHER IS IN A REGISTER **
+.*
+.E17     CNOP  0,4
+         AIF   ('&NAME' EQ '').E18
+&NAME    DS    0H
+.E18     AIF   (NOT &LISTADR).E1888
+         LA    15,&MF(2) LOAD PARAMETER LIST ADDRESS
+&LISTR   SETC  '15'                                              YM1995
+         AGO   .E188
+.E1888   ANOP
+&A       SETA  K'&MF-6                                           YM1995
+&LISTR   SETC  '&MF'(5,&A)                                       YM1995
+.E188    B     *+12 BRANCH AROUND ADCONS
+         DC    A(&LA) LOW ADDRESS
+         DC    A(&HA) HIGH ADDRESS
+         MVC   0(8,&LISTR),*-8 UPDATE PARAMETER LIST             YM1995
+         LM    0,1,0(&LISTR)                                     YM1995
+         AGO   .RELSVC
+.*
+.**** LIST FORM ****
+.*
+.LIST    AIF   (T'&LA EQ 'O').L0
+         AIF   ('&LA'(1,1) NE '(').L0
+         IHBERMAC 69
+         MEXIT
+.L0      AIF   (T'&HA EQ 'O').L1
+         AIF   ('&HA'(1,1) NE '(').L1
+         IHBERMAC 69
+         MEXIT
+.L1      ANOP                                                    YM0449
+         AIF   (T'&LA NE 'O' AND '&LA' NE '').L3
+&NAME    DC    A(0) LOW ADDRESS                                  YM0449
+         AGO   .L4
+.L3      ANOP                                                    YM0449
+&NAME    DC    A(&LA) LOW ADDRESS                                YM0449
+.L4      AIF   (T'&HA NE 'O' AND '&HA' NE '').L5
+         DC    A(0) HIGH ADDRESS                                 YM0449
+         AGO   .L6
+.L5      DC    A(&HA) HIGH ADDRESS
+.L6      MEXIT
+.*
+.**** IMMEDIATE FORM ****
+.*
+.IMM     AIF   (T'&LA  NE 'O' AND '&LA' NE '').I0
+         IHBERMAC 1017,LA
+         MEXIT
+.I0      AIF   (T'&HA NE 'O' AND '&HA' NE '').I1
+         IHBERMAC 1017,HA
+         MEXIT
+.I1      ANOP
+&B1      SETB  ('&LA'(1,1) NE '(')
+&B2      SETB  ('&HA'(1,1) NE '(')
+         AIF   (NOT(&B1 OR &B2)).I2
+         CNOP  0,4
+.I2      AIF   ('&NAME' EQ '').I3
+&NAME    DS    0H
+.I3      AIF   (NOT(&B1 OR &B2)).I8
+         B     *+4+(&B1*4)+(&B2*4)
+         AIF   (NOT &B1).I4
+         DC    A(&LA) LOW ADDRESS
+.I4      AIF   (NOT &B2).I5
+         DC    A(&HA) HIGH ADDRESS
+.I5      AIF   (NOT(&B1 AND &B2)).I6
+         LM    0,1,*-8 LOAD LOW AND HIGH ADDRESS
+         AGO   .RELSVC
+.I6      AIF   (NOT &B1).I7
+         AIF   (T'&HA(1) NE 'N').I9
+         AIF   ('&HA(1)' EQ '1').I10
+.I9      LR    1,&HA(1) LOAD HIGH ADDRESS
+         L     0,*-6 LOAD LOW ADDRESS
+         AGO   .RELSVC
+.I10     L     0,*-4 LOAD LOW ADDRESS
+         AGO   .RELSVC
+.I7      AIF   (T'&LA(1) NE 'N').I11
+         AIF   ('&LA(1)' EQ '0').I12
+.I11     LR    0,&LA(1) LOAD LOW ADDRESS
+         L     1,*-6 LOAD HIGH ADDRESS
+         AGO   .RELSVC
+.I12     L     1,*-4 LOAD HIGH ADDRESS
+         AGO   .RELSVC
+.I8      AIF   (T'&LA(1) NE 'N').I13
+         AIF   ('&LA(1)' EQ '0').I14
+.I13     LR    0,&LA(1) LOAD LOW ADDRESS
+.I14     AIF   (T'&HA(1) NE 'N').I15
+         AIF   ('&HA(1)' EQ '1').RELSVC
+.I15     LR    1,&HA(1) LOAD HIGH ADDRESS
+.RELSVC  SVC   112 ISSUE SVC
+         MEND

@@ -1,0 +1,207 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    OPEN  &PAR1,&MF=I,&TYPE=                                A45585
+         GBLB  &IHBRDJ                  ON IF RDJFCB MACRO USED
+         LCLA  &ACTR,&ASUM,&CTR,&CTR1,&LGTH,&NUMBER
+         LCLB  &MFESW,&MFISW,&MFI2SW,&B(12),&NULLSW,&OPT2SW    @Z40JSGD
+         LCLC  &PARA
+&NUMBER  SETA  N'&PAR1
+&CTR     SETA  1
+&CTR1    SETA  2
+         AIF   (N'&SYSLIST LE 1).TYPE   IF ONLY 1 (PARMLIST)     A45585
+         IHBERMAC 238                   EXCESSIVE POS. PARMS     A45585
+.TYPE    AIF   (T'&TYPE NE 'O' AND '&TYPE' NE 'J').ERROR8        A45585
+         AIF   ('&MF' EQ 'L').RTEL
+         AIF   ('&MF' EQ 'I').TESTI
+         AIF   (N'&MF LE 1).ERROR3
+         AIF   ('&MF(1)' NE 'E').ERROR3
+&NAME    IHBINNRA &MF(2)                    LOAD REG 1 WITH LIST ADDR
+         AGO   .ISSSVC
+.*---------------------------------------------------------------------
+.RTEL    ANOP
+&NAME    DC    0F'0'                             ALIGN LIST TO FULLWORD
+         AIF   ('&PAR1' EQ '').ERROR5
+.CLRSW   ANOP
+&ASUM    SETA  0
+         AIF   (&CTR1 GT &NUMBER).J
+         AIF   ('&PAR1(&CTR1)' EQ '').DC1
+         AIF   ('&PAR1(&CTR1)'(1,1) NE '(').NOPAREN
+&B(1)    SETB  ('&PAR1(&CTR1)'(2,5) EQ 'INPUT')
+&B(2)    SETB  ('&PAR1(&CTR1)'(2,6) EQ 'RDBACK')
+&B(3)    SETB  ('&PAR1(&CTR1)'(2,5) EQ 'INOUT')
+&B(4)    SETB  ('&PAR1(&CTR1)'(2,5) EQ 'UPDAT')
+&B(11)   SETB  ('&PAR1(&CTR1)'(2,6) EQ 'OUTINX')               @Z40JSGD
+&B(5)    SETB  ('&PAR1(&CTR1)'(2,5) EQ 'OUTIN' AND NOT &B(11)) @Z40JSGD
+&B(6)    SETB  ('&PAR1(&CTR1)'(2,6) EQ 'OUTPUT')
+&B(12)   SETB  ('&PAR1(&CTR1)'(2,6) EQ 'EXTEND')               @Z40JSGD
+         AIF   (K'&PAR1(&CTR1) LE 8).STOPNOW
+&B(7)    SETB  ('&PAR1(&CTR1)'(8,4) EQ 'LEAV'  OR '&PAR1(&CTR1)'(9,4) EX
+               Q 'LEAV')
+&B(8)    SETB  ('&PAR1(&CTR1)'(8,4) EQ 'RERE' OR '&PAR1(&CTR1)'(9,4) EQX
+                'RERE')
+&B(9)    SETB  ('&PAR1(&CTR1)'(8,4) EQ 'DISP' OR '&PAR1(&CTR1)'(9,4) EQX
+                'DISP')
+&B(10)   SETB  ('&PAR1(&CTR1)'(8,4) EQ 'IDLE' OR '&PAR1(&CTR1)'(9,4) EQX
+                'IDLE')
+&OPT2SW  SETB  1
+         AIF   (&B(7)+&B(8)+&B(9)+&B(10) NE 1).ERROR1
+.STOPNOW AIF   (&B(1)+&B(2)+&B(3)+&B(4)+&B(5)+&B(6)+&B(11)+&B(12) NE 1)X
+               .ERROR1                                         @Z40JSGD
+&ASUM    SETA  &B(2)+3*&B(3)+4*&B(4)+7*&B(5)+15*&B(6)+48*&B(7)+16*&B(8)X
+               +32*&B(10)+6*&B(11)+14*&B(12)                   @Z40JSGD
+         AGO   .RESET
+.NOPAREN ANOP
+&B(1)    SETB  ('&PAR1(&CTR1)' EQ 'INPUT')
+&B(2)    SETB  ('&PAR1(&CTR1)' EQ 'RDBACK')
+&B(3)    SETB  ('&PAR1(&CTR1)' EQ 'INOUT')
+&B(4)    SETB  ('&PAR1(&CTR1)' EQ 'UPDAT')
+&B(5)    SETB  ('&PAR1(&CTR1)' EQ 'OUTIN')
+&B(6)    SETB  ('&PAR1(&CTR1)' EQ 'OUTPUT')
+&B(11)   SETB  ('&PAR1(&CTR1)' EQ 'OUTINX')                    @Z40JSGD
+&B(12)   SETB  ('&PAR1(&CTR1)' EQ 'EXTEND')                    @Z40JSGD
+         AGO   .STOPNOW
+.RESET   ANOP
+&B(7)    SETB  0
+&B(8)    SETB  0
+&B(10)   SETB  0
+.DC1     AIF   (&MFESW).ERTRTRN
+         AIF   (&CTR1 LT &NUMBER).K
+.J       ANOP
+&ASUM    SETA  &ASUM+128
+.K       AIF   (&MFI2SW).I2ROUT
+         AIF   (&MFISW).IROUTRN
+         DC    AL1(&ASUM)                        OPTION BYTE
+         AIF   ('&PAR1(&CTR)' NE '').NOBLANK
+         DC    AL3(0)                            DCB ADDRESS
+         AGO   .NOTLST
+.NOBLANK AIF   ('&PAR1(&CTR)'(1,1) EQ '(').ERROR6
+         DC    AL3(&PAR1(&CTR))                  DCB ADDRESS
+.NOTLST  AIF   (&CTR1 GE &NUMBER).FINI
+&CTR     SETA  &CTR+2
+&CTR1    SETA  &CTR1+2
+         AGO   .CLRSW
+.*---------------------------------------------------------------------
+.TESTI   CNOP  0,4                               ALIGN LIST TO FULLWORD
+&LGTH    SETA  ((&NUMBER+1)/2)*4+4
+&NAME    BAL   1,*+&LGTH                         LOAD REG1 W/LIST ADDR.
+&MFISW   SETB  1
+.RTEYE   AIF   ('&PAR1(&CTR)' EQ '').ERROR5
+         AIF   ('&PAR1(&CTR)'(1,1) NE '(').CLRSW
+         DC    A(0)                              OPT BYTE AND DCB ADDR.
+         AGO   .UPCTRS
+.IROUTRN DC    AL1(&ASUM)                        OPTION BYTE
+         DC    AL3(&PAR1(&CTR))                  DCB ADDRESS
+.UPCTRS  AIF   (&CTR1 GE &NUMBER).QUITS
+&CTR     SETA  &CTR+2
+&CTR1    SETA  &CTR1+2
+         AGO   .RTEYE
+.QUITS   ANOP
+&CTR     SETA  1
+&CTR1    SETA  2
+.ILOOP2  AIF   ('&PAR1(&CTR)'(1,1) NE '(').UPCTR2
+&LGTH    SETA  K'&PAR1(&CTR)-2
+&PARA    SETC  '&PAR1(&CTR)'(2,&LGTH)
+         ST    &PARA,&ACTR.(1,0)                 STORE INTO LIST
+&MFI2SW  SETB  1
+         AGO   .CLRSW
+.I2ROUT  AIF   (&ASUM EQ 0).UPCTR2
+         MVI   &ACTR.(1),&ASUM                   MOVE IN OPTION BYTE
+.UPCTR2  AIF   (&CTR1 GE &NUMBER).SVCSVC
+&CTR     SETA  &CTR+2
+&CTR1    SETA  &CTR1+2
+&ACTR    SETA  &ACTR+4
+         AGO   .ILOOP2
+.*---------------------------------------------------------------------
+.ISSSVC  AIF   ('&PAR1' EQ '').SVCSVC
+.LOOPA   AIF   ('&PAR1(&NUMBER)' NE '').LOOPB
+&NUMBER  SETA  &NUMBER-1
+         AIF   (&NUMBER EQ 0).SVCSVC
+         AGO   .LOOPA
+.LOOPB   AIF   ('&PAR1(&CTR)' NE '').TESTCTR
+&NULLSW  SETB  1
+.TESTCTR AIF   (&CTR EQ &NUMBER).QUITNOW
+         AIF   ('&PAR1(&CTR1)' EQ '').NULLTWO
+&MFESW   SETB  1
+         AGO   .CLRSW
+.ERTRTRN AIF   (&CTR1 EQ &NUMBER).THRUNOW
+         AIF   (&NULLSW).NOFIRST
+         AIF   ('&PAR1(&CTR)'(1,1) EQ '(').REGISTR
+         AIF   (NOT &OPT2SW).OPTA
+         LA    14,&PAR1(&CTR)                    PICK UP DCB ADDRESS
+         ST    14,&ACTR.(1,0)                    STORE INTO LIST
+.SHORTB  MVI   &ACTR.(1),&ASUM                   MOVE IN OPTION BYTE
+         AGO   .INCRMT
+.OPTA    IC    14,&ACTR.(1,0)                    SAVE OPTION BYTE
+         LA    0,&PAR1(&CTR)                     PICK UP DCB ADDRESS
+         ST    0,&ACTR.(1,0)                     STORE INTO LIST
+.SHORTA  STC   14,&ACTR.(1,0)                    RESTORE OPTION BYTE
+.OPTC    NI    &ACTR.(1),X'F0'                   CLEAR OPT 1 BITS
+         AIF   (&ASUM EQ 0).INCRMT
+         OI    &ACTR.(1),&ASUM                   INSERT OPT 1 BITS
+         AGO   .INCRMT
+.REGISTR ANOP
+&LGTH    SETA  K'&PAR1(&CTR)-2
+&PARA    SETC  '&PAR1(&CTR)'(2,&LGTH)
+         AIF   (NOT &OPT2SW).OPTB
+         ST    &PARA,&ACTR.(1,0)                 STORE INTO LIST
+         AGO   .SHORTB
+.OPTB    IC    14,&ACTR.(1,0)                    SAVE OPTION BYTE
+         ST    &PARA,&ACTR.(1,0)                 STORE INTO LIST
+         AGO   .SHORTA
+.NOFIRST AIF   (NOT &OPT2SW).OPTC
+         AGO   .SHORTB
+.NULLTWO AIF   (&NULLSW).INCRMT
+         AIF   ('&PAR1(&CTR)'(1,1) EQ '(').REGSTER
+         IC    14,&ACTR.(1,0)                    SAVE OPTION BYTE
+         LA    0,&PAR1(&CTR)                     PICK UP DCB ADDRESS
+         ST    0,&ACTR.(1,0)                     STORE INTO LIST
+.SHORTC  STC   14,&ACTR.(1,0)                    RESTORE OPTION BYTE
+         AGO   .INCRMT
+.REGSTER IC    14,&ACTR.(1,0)                    SAVE OPTION BYTE
+&LGTH    SETA  K'&PAR1(&CTR)-2
+&PARA    SETC  '&PAR1(&CTR)'(2,&LGTH)
+         ST    &PARA,&ACTR.(1,0)                 STORE INTO LIST
+         AGO   .SHORTC
+.QUITNOW IC    14,&ACTR.(1,0)                    SAVE OPTION BYTE
+         AIF   ('&PAR1(&CTR)'(1,1) EQ '(').REGST
+         LA    0,&PAR1(&CTR)                     PICK UP DCB ADDRESS
+         ST    0,&ACTR.(1,0)                     STORE INTO LIST
+.SHORTD  STC   14,&ACTR.(1,0)                    RESTORE OPTION BYTE
+         AGO   .SVCSVC
+.REGST   ANOP
+&LGTH    SETA  K'&PAR1(&CTR)-2
+&PARA    SETC  '&PAR1(&CTR)'(2,&LGTH)
+         ST    &PARA,&ACTR.(1,0)                 STORE INTO LIST
+         AGO   .SHORTD
+.THRUNOW AIF   (NOT &OPT2SW).OPTD
+         NI    &ACTR.(1),X'80'                   CLEAR OPTION BITS
+.SHORTE  AIF   (&ASUM EQ 0).CONTA
+         OI    &ACTR.(1),&ASUM                   INSERT OPTION BITS
+.CONTA   AIF   (&NULLSW).SVCSVC
+         AGO   .QUITNOW
+.OPTD    NI    &ACTR.(1),X'F0'                   CLEAR OPTION 1 BITS
+         AGO   .SHORTE
+.INCRMT  ANOP
+&CTR     SETA  &CTR+2
+&CTR1    SETA  &CTR1+2
+&ACTR    SETA  &ACTR+4
+&OPT2SW  SETB  0
+&NULLSW  SETB  0
+         AGO   .LOOPB
+.*---------------------------------------------------------------------
+.SVCSVC  AIF   (&IHBRDJ).FINI                                   SA51997
+         AIF   ('&TYPE' EQ 'J').SVC22   IF TYPE=J
+         SVC   19                                ISSUE OPEN SVC
+         MEXIT
+.SVC22   SVC   22                                ISSUE OPENJ SVC
+         MEXIT
+.ERROR1  IHBERMAC 49,,&PAR1(&CTR1)      INVALID OPTION OPERAND
+         MEXIT
+.ERROR3  IHBERMAC 35,,&MF               INVALID MF OPERAND SPECIFIED
+         MEXIT
+.ERROR5  IHBERMAC 6                     DCB MISSING
+         MEXIT
+.ERROR6  IHBERMAC 69                    INVALID REG NOTATION W/MF=L
+         MEXIT
+.ERROR8  IHBERMAC 63,,&TYPE             INVALID TYPE OPERAND     M0626
+.FINI    MEND

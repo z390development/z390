@@ -1,22 +1,30 @@
         MACRO
 .*********************************************************************
-.* Copyright 2005 Automated Software Tools Corporation               *
+.* Copyright 2005 Automated Software Tools Corporation               * 
 .* This source code is part of z390 assembler/emulator package       *
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-&N      ESPIE &OP,&ADDR,&LIST
+.* 10/20/05 RPI27  - issue error for any undefined operands     
+.* 11/20/05 RPI106 - correct alignment for SPM mask             
+.* 12/12/05 RPI132 - correct to support range within list (5,7,(9,11))
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.*********************************************************************
+&N       ESPIE &OP,&ADDR,&LIST
+         AIF   (N'&SYSLIST LE 3).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
+.NPOK    ANOP
 .*
 .* Set or reset program interruption exit
 .*    ESPIE SET,ADDR
 .*    ESPIE RESET
 .* Notes:
 .*  1.  SPM can be used to set the psw program mask bits and cc:
-.*         mask bit 0 > pic  8 - fixed point overflow
-.*         mask bit 1 > pic 10 - packed decimal overflow
+.*         mask bit 0 - pic  8 - fixed point overflow
+.*         mask bit 1 - pic 10 - packed decimal overflow
 .*         mask bit 2 - pic 13 - HFP floating point exponent underflow
-.*         mask bit 3 - pic 14 - HFP floating point mantissa significance
+.*         mask bit 3 - pic 14 - HFP floating point mantissa signif.
 .*  2.  If mask bit is off, then the above exceptions are not
 .*      generated and cannot be handled by ESPIE or ESTAE.
 .*  3.  The interrupt codes that can be specified in 3rd positional
@@ -43,16 +51,18 @@
 .*         9 - fixed point divide
 .*        10 - decimal overflow       (SPM mask bit x'4')
 .*        11 - decimal divide                          
-.*        12 - HFP exponent overflow  (SPM mask bit x'2')
+.*        12 - HFP exponent overflow                          
 .*        13 - HFP exponent underflow (SPM mask bit x'2')
 .*        14 - HFP significance       (SPM mask bit x'1')
 .*        15 - HFP divide
 .*
-.*  4.  Any of the above interrupts raised and not handled by ESPIE
+.*  4.  Any of the above interrupts raised are not handled by ESPIE
 .*      or ESTAE user defined exit will result in 0Cx abend.
 .*
         LCLA   B(31)
-&N      DS     0H
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
         AIF    (&OP EQ 'SET').SET
         AIF    (&OP EQ 'RESET').RESET
         MNOTE  8,'ESPIE INVALID OPERATION - SET/RESET - &OP'
@@ -60,14 +70,11 @@
 .SET    ANOP
 &NP     SETA   N'&LIST
         IPM    0  GET CURRENT PGM MASK
+&MASK   SETA   0
 .PLOOP  ANOP
-        AIF    (&NP EQ 0).BLDPIE
-&RANGE  SETC   &LIST(&NP)
-&I1     SETA   &RANGE
-&I2     SETA   &I1
-&DASH   SETA   (&RANGE FIND '-')
-        AIF    (&DASH EQ 0).RLOOP
-&I2     SETA   '&RANGE'(&DASH+1,K'&RANGE-&DASH)
+        AIF    (&NP EQ 0).SETMASK
+&I1     SETA   &LIST(&NP,1)
+&I2     SETA   &LIST(&NP,2)
 .RLOOP  ANOP
         AIF    (&I1 GT 0 AND &I1 LT 16).SETBIT
         MNOTE  8,'ESPIE INVALID INTERRUPT CODE = &RANGE'
@@ -80,21 +87,24 @@
         AIF    (&I1 EQ 14).SETM3 HFP   SIGNIFICANCE
         AGO    .NEXT
 .SETM0  ANOP
-        OILL   0,8
+&MASK   SETA   &MASK+X'0800'
         AGO    .NEXT
 .SETM1  ANOP
-        OILL   0,4
+&MASK   SETA   &MASK+X'0400'
         AGO    .NEXT
 .SETM2  ANOP
-        OILL   0,2
+&MASK   SETA   &MASK+X'0200'
         AGO    .NEXT
 .SETM3  ANOP
-        OILL   0,1
+&MASK   SETA   &MASK+X'0100'
 .NEXT   ANOP
 &I1     SETA   &I1+1
         AIF    (&I1 LE &I2).RLOOP
 &NP     SETA   &NP-1
         AGO    .PLOOP
+.SETMASK ANOP
+        AIF    (&MASK EQ 0).BLDPIE
+        OILH   0,&MASK
 .BLDPIE ANOP
         SPM    0 TURN ON ANY MASKS REQUIRED
 &I      SETA   1
@@ -110,6 +120,7 @@
         LA     1,&ADDR
         AGO    .SVC
 .AREG   ANOP
+        AIF    (&ADDR(1) EQ '1' OR &ADDR(1) EQ 'R1').SVC  RPI163
         LR     1,&ADDR(1)
         AGO    .SVC
 .RESET  ANOP

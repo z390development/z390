@@ -1,0 +1,23 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+         TITLE 'TESTXLT1 TEST XLATE TRANSLATION'     
+TESTXLT1 RT1   MAIN
+         EQUREGS
+A1       DC    C"01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+VA1      DC    C'01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+E1       DC    C'01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+VE1      DC    C"01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+         RT1   START
+         XLATE A1,L'A1,TO=E
+         CLC   A1,VA1
+         RT1   CCE
+         XLATE E1,L'E1,TO=A
+         CLC   E1,VE1
+         RT1   CCE
+         RT1   END
+         END

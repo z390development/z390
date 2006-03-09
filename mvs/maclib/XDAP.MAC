@@ -1,0 +1,414 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /* MACCOMP Y-2 SC1D7/SJD48      */
+* /* MACSTAT Y-2 73135/021160     */
+         MACRO
+&NAME    XDAP  &ECB,&TYPE,&DCB,&AREA,&LENGTH,&KEYADD,&BLKREF,   S20201 X
+               &SECTOR,&MF=I                                    S20201
+.* CHANGE LEVEL 003      MAY 15,1973
+.* DATE OF LAST CHANGE   FEBRUARY 8, 1982                      @ZA20451
+.* RELEASE 21 DELETIONS
+.*D013000-015200,023230-023800                                  SA45783
+.* VS2 RELEASE 02 DELETIONS
+.*A061900                                                        Y02072
+.*  VS2  RELEASE  037 CHANGES
+.*A028600-028720                                               @ZA20451
+.*  VS2  RELEASE  038 ADDITION/CHANGES/DELETIONS
+.*A038201-038203     D051800                                   @ZA57807
+         LCLA  &LGTHKA1,&LGTHKA2,&CTR
+         LCLB  &SW,&SW1,&B(6),&ITYPE                            SA45783
+         LCLC  &GNAME,&KEYLEN,&PAR1,&PAR2
+&GNAME   SETC  'IHB'.'&SYSNDX'
+         AIF   ('&TYPE' EQ '').NOTYPE                           SA45783
+&ITYPE   SETB  ('&TYPE'(2,1) EQ 'I')                            SA45783
+.NOTYPE  ANOP                                                   SA45783
+         AIF   ('&ECB' NE '').TNM
+         IHBERMAC 11
+         MEXIT
+.TNM     AIF   ('&MF' EQ 'L').GO
+         AIF   ('&NAME' EQ '').TMFE
+&NAME    DS    0H
+         AGO   .TMFE
+.GO      AIF   ('&ECB'(1,1) EQ '(').REGERR
+&B(1)    SETB  ('&TYPE' EQ 'RI')                                SA45783
+&B(2)    SETB  ('&TYPE' EQ 'RK')                                SA45783
+&B(3)    SETB  ('&TYPE' EQ 'WI')                                SA45783
+&B(4)    SETB  ('&TYPE' EQ 'WK')                                SA45783
+&B(5)    SETB  ('&TYPE' EQ 'VI')                                SA45783
+&B(6)    SETB  ('&TYPE' EQ 'VK')                                SA45783
+         AIF   (&B(1)+&B(2)+&B(3)+&B(4)+&B(5)+&B(6) NE 1).E1    SA45783
+&CTR     SETA  14*&B(1)+6*&B(2)+13*&B(3)+5*&B(4)+14*&B(5)+6*&B(6)
+.*                                                              SA45783
+         CNOP  4,8
+         AIF   ('&NAME' EQ '').NAMLESS
+&NAME    EQU   *
+.NAMLESS ANOP
+&ECB     DC    1F'0'                             EVENT CONTROL BLOCK
+         DC    X'42'                              IOB START FLAG
+         DC    X'00000000'
+         DC    AL3(&ECB)                          ECB ADDRESS
+         DC    2F'0'                              3RD WORD
+         DC    X'00'                              4TH WORD START
+         DC    AL3(&ECB+44)                      CCW1 ADDRESS
+         DC    X'00'
+         AIF   ('&DCB' EQ '').NODCB
+         AIF   ('&DCB'(1,1) EQ '(').REGERR
+         DC    AL3(&DCB)                          DCB ADDRESS
+         AGO   .SDWD5
+.NODCB   DC    X'000000'                          NO DCB SPECIFIED
+.SDWD5   DC    2F'0'                              FIFTH DOUBLE WORD
+&GNAME   DC    2F'0'                              BLKREF FIELD
+         AIF   ('&SECTOR' EQ '').STCHP                          S20201
+         AIF   ('&SECTOR'(1,1) EQ '(').REGERR                   S20201
+         AIF   ('&TYPE'(2,1) NE 'I').STCHP                      S20201
+         DC    X'23',AL3(&SECTOR),X'40000001' SET SECTOR        S20201
+.STCHP   AIF   ('&TYPE' EQ '').TYPERR
+         AIF   (K'&TYPE LT 2).E1
+         AIF   ('&TYPE'(2,1) NE 'I').TTK
+&GNAME.A DC    X'31'                              SET OPCODE IN CCW-1
+         DC    AL3(&GNAME+3)                      SET UP IOBSEEK+3
+         DC    X'40'                              FLAG BYTE
+         DC    X'00'
+         DC    H'05'                              SET UP COUNT FIELD
+         AGO   .STCCW2
+.TTK     AIF   ('&TYPE'(2,1) EQ 'K').SK
+.E2C     IHBERMAC 48,,&TYPE
+         MEXIT
+.SK      ANOP
+&GNAME.A DC    X'29'                              SET OPCODE CCW1
+         AIF   ('&KEYADD' EQ '').NOKAD
+         AIF   ('&KEYADD(1)'(1,1) EQ '(').REGERR
+         DC    AL3(&KEYADD(1))                    KEYADDRESS
+         AGO   .STFL
+.NOKAD   DC    X'000000'
+.STFL    DC    X'40'                              SET FLAG BYTE
+         DC    X'00'
+         AIF   ('&KEYADD' EQ '').NOKL
+         AIF   (N'&KEYADD EQ 1).NOKL
+         AIF   ('&KEYADD(2)'(1,1) EQ '(').REGERR
+         DC    AL1(0)
+         DC    AL1(&KEYADD(2))                   KEY LENGTH
+         AGO   .STCCW2
+.NOKL    DC    X'0000'                            NO KEY LENGTH GIVEN
+.STCCW2  DC    X'08'                              CCW2
+         DC    AL3(&GNAME.A)
+         DC    X'00000000'                        2ND WD IN CCW2
+         DC    AL1(&CTR)                         CCW3 OPCODE
+         AIF   ('&AREA' NE '').SETFLA                           SA45783
+         DC    AL3(0)
+         AGO   .SETFL
+.SETFLA  AIF   ('&AREA'(1,1) EQ '(').REGERR
+         DC    AL3(&AREA)                         SET AREA ADDR IN CCW3
+.SETFL   AIF   ('&TYPE'(1,1) EQ 'V').SETV
+         DC    X'00'                              FLAG BYTE IN CCW3
+         AGO   .STL
+.SETV    DC    X'10'                              FLAG BYTE IN CCW3
+.STL     DC    X'00'
+         AIF   ('&LENGTH' EQ '').NOLGTH
+         AIF   ('&LENGTH'(1,1) EQ '(').REGERR
+         DC    AL2(&LENGTH)                      LENGTH IN CCW3
+         AGO   .END
+.NOLGTH  DC    X'0000'                           NO LENGTH SPECIFIED
+         AGO   .END
+.E1      IHBERMAC 48,,&TYPE                                     SA45783
+         MEXIT                                                  SA45783
+.REGERR  IHBERMAC 69
+         MEXIT
+.TYPERR  IHBERMAC 25
+         MEXIT
+.TMFE    AIF   ('&MF' EQ 'E').PR
+         AIF   ('&MF' EQ 'I').PROCI
+         IHBERMAC 35,,&MF
+         MEXIT
+.PR      AIF   ('&ECB'(1,1) EQ '(').REG1
+         LA    1,&ECB+4                          LOAD IOB ADDRESS
+         AGO   .ADD8
+.REG1    LA    1,4(0,&ECB(1))                    LOAD IOB ADDRESS
+.ADD8    AIF   ('&DCB' EQ '').PRE5
+         AIF   ('&DCB'(1,1) EQ '(').REGE1
+         LA    14,&DCB                            LOAD DCB ADDRESS
+         ST    14,20(1,0)                        STORE DCB INTO IOB
+         AGO   .PRE5
+.REGE1   ST    &DCB(1),20(1,0)                   STORE DCB INTO IOB
+.PRE5    AIF   ('&BLKREF' EQ '').PRCCW1E
+         AIF   ('&BLKREF'(1,1) EQ '(').REGE2
+         MVC   32(8,1),&BLKREF                    MOVE BLKREF TO IOB
+         AGO   .PRCCW1E
+.REGE2   MVC   32(8,1),0(&BLKREF(1))              MOVE BLKREF TO IOB
+.PRCCW1E ANOP                                                   SA45783
+         AIF   ('&SECTOR' EQ '').PRCCW1G                        S20201
+         AIF   ('&SECTOR'(1,1) EQ '(').PRCCW1F                  SA45783
+         LA    14,&SECTOR               SECTOR ADDR             S20201
+         ST    14,40(0,1)               IN CCW FOR LDH          S20201
+         AGO   .PRCCWSX                                         S20201
+.PRCCW1F ST    &SECTOR(1),40(0,1)       STORE ADDR IN SCTR CCW  S20201
+.PRCCWSX ANOP                                                   S20201
+         MVI   40(1),X'23'              MOVE IN SET SCTR CODE   S20201
+.PRCCW1G ANOP                                                   S20201
+.PRKE    AIF   ('&KEYADD' EQ '').PRCCW3E
+         AIF   ('&KEYADD(1)'(1,1) EQ '(').REGE3
+         LA    14,&KEYADD(1)
+         ST    14,40(1,0)                        STORE KEYADD IN CCW1
+         AGO   .XE1
+.REGE3   ANOP
+&LGTHKA1 SETA  K'&KEYADD(1)
+&LGTHKA1 SETA  &LGTHKA1-2
+&PAR1    SETC  '&KEYADD(1)'(2,&LGTHKA1)
+         ST    &PAR1,40(1,0)                     STORE KEYADD IN CCW1
+.XE1     MVI   40(1),X'29'                        MOVE OPCODE TO CCW1
+         AIF   (N'&KEYADD LT 2).PRCCW3E
+         AIF   ('&KEYADD(2)'(1,1) EQ '(').REGE4
+         LA    14,&KEYADD(2).(0,0)               PICK UP KEYLEN
+         STH   14,46(1,0)                        STORE KEYLEN IN CCW1
+         AGO   .PRCCW3E
+.REGE4   ANOP
+&LGTHKA2 SETA  K'&KEYADD(2)
+&LGTHKA2 SETA  &LGTHKA2-2
+&PAR2    SETC  '&KEYADD(2)'(2,&LGTHKA2)
+         STH   &PAR2,46(1,0)                     STORE KEYLEN IN CCW1
+.PRCCW3E AIF   ('&AREA' EQ '').PRLE
+         AIF   ('&TYPE' NE '').XE2
+         AIF   ('&SECTOR' NE '').XE2D                          @ZA20451
+         AGO   .XE2E                                           @ZA20451
+.XE2D    IC    15,64(1,0)               SAVE CCW3 OPCODE       @ZA20451
+         AGO   .XE2                                            @ZA20451
+.XE2E    IC    15,56(1,0)               SAVE CCW3 OPCODE       @ZA20451
+.XE2     AIF   ('&AREA'(1,1) EQ '(').REGE5
+         LA    14,&AREA
+         AIF   ('&SECTOR' NE '').XE2A                           SA45783
+         AGO   .XE2B                                            S20201
+.XE2A    ST    14,64(0,1)               STORE AREA IN CCW3      S20201
+         AGO   .XE2C                                            S20201
+.XE2B    ST    14,56(0,1)               STORE AREA IN CCW3      S20201
+.XE2C    AIF   ('&TYPE' NE '').PRLE                             S20201
+         AGO   .XE3
+.REGE5   AIF   ('&SECTOR' NE '').REG5A                          SA45783
+         AGO   .REG5B                                           S20201
+.REG5A   ST    &AREA(1),64(0,1)         STORE AREA IN CCW3      S20201
+         AGO   .REG5C                                           S20201
+.REG5B   ST    &AREA(1),56(0,1)         STORE AREA IN CCW3      S20201
+.REG5C   AIF   ('&TYPE' NE '').PRLE                             S20201
+.XE3     AIF   ('&SECTOR' NE '').XE3A                           SA45783
+         AGO   .XE3B                                            S20201
+.XE3A    STC   15,64(0,1)               RESTORE CCW3 OP CODE    S20201
+         AGO   .PRLE                                            S20201
+.XE3B    STC   15,56(0,1)               RESTORE CCW3 OP CODE    S20201
+.PRLE    AIF   ('&LENGTH' EQ '').XE4
+         AIF   ('&LENGTH'(1,1) EQ '(').REGE6
+         AIF   (T'&LENGTH NE 'N').LIT
+         AIF   ('&LENGTH' GT '4095').LIT
+         LA    14,&LENGTH.(0,0)
+         AIF   ('&SECTOR' NE '').PRLE1                          SA45783
+         AGO   .PRLE2                                           S20201
+.PRLE1   STH   14,70(0,1)               STORE LENGTH IN CCW3    S20201
+         AGO   .XE4                                             S20201
+.PRLE2   STH   14,62(0,1)               STORE LENGTH IN CCW3    S20201
+         AGO   .XE4
+.LIT     B     *+6                               BRANCH AROUND LENGTH
+         DC    AL2(&LENGTH)                      LENGTH
+         AIF   ('&SECTOR' NE '').LIT1                           SA45783
+         AGO   .LIT2                                            S20201
+.LIT1    MVC   70(2,1),*-2              MOVE LENGTH IN CCW3     S20201
+         AGO   .XE4                                             S20201
+.LIT2    MVC   62(2,1),*-2              MOVE LENGTH IN CCW3     S20201
+         AGO   .XE4
+.REGE6   AIF   ('&SECTOR' NE '').REGE6A                         SA45783
+         AGO   .REGE6B                                          S20201
+.REGE6A  STH   &LENGTH(1),70(0,1)       STORE LENGTH IN CCW3    S20201
+         AGO   .XE4                                             S20201
+.REGE6B  STH   &LENGTH(1),62(0,1)       STORE LENGTH IN CCW3    S20201
+.XE4     AIF   ('&TYPE' EQ '').ISVC
+         AIF   ('&TYPE' NE 'RI').T1
+         AIF   ('&SECTOR' NE '' AND '&TYPE'(2,1) EQ 'I').XE4A   S20201
+         AGO   .XE4B                                            S20201
+.XE4A    MVI   64(1),X'0E'              MOVE RI CODE TO CCW3    S20201
+         AGO   .XE4C                                            S20201
+.XE4B    MVI   56(1),X'0E'              MOVE RI CODE TO CCW3    S20201
+.XE4C    AIF   (&SW).PP21                                       S20201
+         AIF   ('&SECTOR' NE '' AND '&TYPE'(2,1) EQ 'I').XE4D   S20201
+         AGO   .XE4E                                            S20201
+.XE4D    MVI   68(1),X'00'              MOVE FLAG TO CCW3       S20201
+         AGO   .ISVC                                            S20201
+.XE4E    MVI   60(1),X'00'              MOVE FLAG TO CCW3       S20201
+         AGO   .ISVC
+.T1      AIF   ('&TYPE' NE 'RK').T2
+         MVI   56(1),X'06'                        MOVE RK CODE TO CCW3
+         AIF   (&SW).PP21
+         MVI   60(1),X'00'                       MOVE FLAG TO CCW3
+         AGO   .ISVC
+.T2      AIF   ('&TYPE' NE 'WI').T3
+         AIF   ('&SECTOR' NE '' AND '&TYPE'(2,1) EQ 'I').T2A    S20201
+         AGO   .T2B                                             S20201
+.T2A     MVI   64(1),X'0D'              MOVE WI CODE TO CCW3    S20201
+         AGO   .T2C                                             S20201
+.T2B     MVI   56(1),X'0D'              MOVE WI CODE TO CCW3    S20201
+.T2C     AIF   (&SW).PP21                                       S20201
+         AIF   ('&SECTOR' NE '' AND '&TYPE'(2,1) EQ 'I').T2D    S20201
+         AGO   .T2E                                             S20201
+.T2D     MVI   68(1),X'00'              MOVE FLAG TO CCW3       S20201
+         AGO   .ISVC                                            S20201
+.T2E     MVI   60(1),X'00'              MOVE FLAG TO CCW3       S20201
+         AGO   .ISVC
+.T3      AIF   ('&TYPE' NE 'WK').T4
+         MVI   56(1),X'05'                        MOVE WK CODE TO CCW3
+         AIF   (&SW).PP21
+         MVI   60(1),X'00'                       MOVE FLAG TO CCW3
+         AGO   .ISVC
+.T4      AIF   ('&TYPE' NE 'VI').T5
+         AIF   ('&SECTOR' NE '' AND '&TYPE'(2,1) EQ 'I').T4A    S20201
+         AGO   .T4B                                             S20201
+.T4A     MVI   64(1),X'0E'              MOVE VI CODE TO CCW3    S20201
+         AGO   .T5A                                           @ZA57807
+.T4B     MVI   56(1),X'0E'              MOVE VI CODE TO CCW3    S20201
+.T4C     AIF   (&SW).PP21                                       S20201
+         AGO   .PP26
+.T5      AIF   ('&TYPE' NE 'VK').E1
+         MVI   56(1),X'06'                        MOVE VK CODE TO CCW3
+         AIF   (&SW).PP21
+.T5A     AIF   ('&SECTOR' EQ '').PP26                         @ZA57807
+         MVI   68(1),X'10'                                    @ZA57807
+         AGO   .ISVC                                          @ZA57807
+.PP26    MVI   60(1),X'10'                       MOVE FLAG TO CCW3
+         AGO   .ISVC
+.PROCI   ANOP
+&SW      SETB  1
+         AIF   ('&ECB'(1,1) EQ '(').ERROR
+         LA    1,&ECB+4                          LOAD IOB ADDRESS
+.LIOB1   AIF   ('&DCB' NE '').PRDCBI
+         IHBERMAC 06
+         MEXIT
+.PRDCBI  AIF   ('&DCB'(1,1) NE '(').PP7
+         ST    &DCB(1),20(1,0)                   STORE DCB IN IOB
+.PP7     AIF   ('&BLKREF' NE '').PP8
+         IHBERMAC 12
+         MEXIT
+.PP8     AIF   ('&BLKREF'(1,1) EQ '(').PP9
+         MVC   32(8,1),&BLKREF
+         AGO   .PP10
+.PP9     MVC   32(8,1),0(&BLKREF(1))
+.PP10    AIF   ('&SECTOR' EQ '').PP10B                          S20201
+         AIF   ('&SECTOR'(1,1) EQ '(' AND '&TYPE'(2,1) EQ              X
+               'I').PP10A
+         AIF   ('&TYPE'(2,1) NE 'I').PP10B                      S20201
+         LA    14,&SECTOR               SECTOR ADDR             S20201
+         ST    14,40(0,1)               IN CCW FOR LDH          S20201
+         AGO   .PP10SX                                          S20201
+.PP10A   ST    &SECTOR(1),40(0,1)       STORE ADDR IN SCTR CCW  S20201
+.PP10SX  ANOP                                                   S20201
+         MVI   40(1),X'23'              MOVE IN SET SCTR CODE   S20201
+.PP10B   AIF   ('&TYPE' NE '').PP11                             S20201
+         IHBERMAC 25
+         MEXIT
+.PP11    AIF   ('&TYPE'(2,1) EQ 'K').PPK
+         AIF   ('&TYPE'(2,1) NE 'I').E2C
+         AGO   .PCCW2I
+.PPK     AIF   (N'&KEYADD EQ 2).PP13
+         IHBERMAC 08
+         MEXIT
+.PP13    AIF   ('&KEYADD'(2,1) NE '(').PP15
+&LGTHKA1 SETA  K'&KEYADD(1)
+&LGTHKA1 SETA  &LGTHKA1-2
+&PAR1    SETC  '&KEYADD(1)'(2,&LGTHKA1)
+         ST    &PAR1,40(1,0)                     STORE KEY ADDRESS
+         MVI   40(1),X'29'                       MOVE IN CCW1 OPCODE
+.PP15    AIF   ('&KEYADD(2)'(1,1) NE '(').PCCW2I
+&LGTHKA2 SETA  K'&KEYADD(2)
+&LGTHKA2 SETA  &LGTHKA2-2
+&PAR2    SETC  '&KEYADD(2)'(2,&LGTHKA2)
+         STH   &PAR2,46(1,0)                     STORE KEY LENGTH
+.PCCW2I  AIF   ('&AREA' NE '').PP20
+         IHBERMAC 13
+         MEXIT
+.PP20    AIF   ('&AREA'(1,1) NE '(').PP21
+         AIF   ('&SECTOR' NE '' AND '&TYPE'(2,1) EQ 'I').PP20A  S20201
+         AGO   .PP20B                                           S20201
+.PP20A   ST    &AREA(1),64(0,1)         STORE AREA ADDRESS      S20201
+         AGO   .XE4                                             S20201
+.PP20B   ST    &AREA(1),56(0,1)         STORE AREA ADDRESS      S20201
+         AGO   .XE4
+.PP21    AIF   ('&LENGTH' NE '').PP23
+         IHBERMAC 14
+         MEXIT
+.PP23    AIF   ('&LENGTH'(1,1) NE '(').TT14
+         AIF   ('&SECTOR' NE '' AND '&TYPE'(2,1) EQ 'I').PP23A  S20201
+         AGO   .PP23B                                           S20201
+.PP23A   STH   &LENGTH(1),70(0,1)       STORE LENGTH            S20201
+         AGO   .TT14                                            S20201
+.PP23B   STH   &LENGTH(1),62(0,1)       STORE LENGTH            S20201
+.TT14    B     &GNAME.Y                          BRANCH AROUND
+         CNOP  4,8
+&ECB     DC    1F'0'                             EVENT CONTROL BLOCK
+.PP28    DC    X'42'                             FLAG IN IOB
+         DC    X'000000'                         FILL 1ST WORD OF IOB
+         DC    X'00'                             START 2ND WD OF IOB
+         AIF   (&SW1).XXX1
+         DC    AL3(&ECB)                         ECB ADDR IN IOB
+         AGO   .XXX2
+.XXX1    DC    AL3(&GNAME.X)                     ECBD ADDR IN IOB
+.XXX2    DC    2F'0'                       3RD AND 4TH WD OF IOB
+         DC    X'00'                             START 5TH WORD OF IOB
+         DC    AL3(&ECB+44)             CCW START ADDR IN IOB   S20201
+         DC    X'00'                             START 6TH WD IN IOB
+         DC    AL3(&DCB(1))                      DCB ADDR IN IOB
+         DC    2F'0'                             7TH AND 8TH WD OF IOB
+&GNAME.2 DC    2F'0'                             IOBSEEK DOUBLE WD
+         AIF   ('&SECTOR' NE '' AND '&TYPE'(2,1) EQ 'I').Q19    S20201
+         AGO   .Q20                                             S20201
+.Q19     DC    X'23',AL3(&SECTOR),X'40000001' SET SECTOR        S20201
+.Q20     ANOP                                                   S20201
+&GNAME.1 EQU   *                                                S20201
+         AIF   ('&TYPE'(2,1) NE 'I').Q2                         S20201
+         DC    X'31'                             OP CODE IN CCW1
+         DC    AL3(&GNAME.2+3)                   IOBSEEK&3 IN CCW1
+         AGO   .SET40
+.Q2      AIF   ('&KEYADD'(2,1) EQ '(').Q3
+         DC    X'29'                             OP CODE IN CCW1
+         DC    AL3(&KEYADD(1))                   KEYADDR IN CCW1
+         AGO   .SET40
+.Q3      DC    F'0'                              1ST WD OF CCW1
+.SET40   DC    X'40'                             FLAG IN CCW1
+         DC    X'00'                             BYTE 2, WD 2 OF CCW1
+         AIF   ('&TYPE'(2,1) NE 'I').Q4
+         DC    H'05'                             COUNT FIELD IN CCW1
+         AGO   .Q5
+.Q4      AIF   ('&KEYADD(2)'(1,1) EQ '(').Q6
+         DC    AL1(0)
+         DC    AL1(&KEYADD(2))                   KEY LENGTH IN CCW1
+         AGO   .Q5
+.Q6      DC    X'0000'                                 CCW2
+.Q5      DC    X'08'                             OP CODE IN CCW2
+         DC    AL3(&GNAME.1)                     CCW1 ADDR IN CCW2
+         DC    F'0'                              2ND WD OF CCW2
+         AIF   ('&TYPE' NE 'RI').S1
+         DC    X'0E'                             RI CODE IN CCW3
+         AGO   .SX
+.S1      AIF   ('&TYPE' NE 'RK').S2
+         DC    X'06'                             RK CODE IN CCW3
+         AGO   .SX
+.S2      AIF   ('&TYPE' NE 'WI').S3
+         DC    X'0D'                             WI CODE IN CCW3
+         AGO   .SX
+.S3      AIF   ('&TYPE' NE 'WK').S4
+         DC    X'05'                             WK CODE IN CCW3
+         AGO   .SX
+.S4      AIF   ('&TYPE' NE 'VI').S5
+         DC    X'0E'                             VI CODE IN CCW3
+         AGO   .SX
+.S5      AIF   ('&TYPE' NE 'VK').E1
+         DC    X'06'                             VK CODE IN CCW3
+.SX      DC    AL3(&AREA(1))                     AREA ADDRESS IN CCW3
+         AIF   ('&TYPE'(1,1) EQ 'V').Q9
+         DC    X'00'                             FLAG IN CCW3
+         AGO   .Q10
+.Q9      DC    X'10'                             FLAF IN CCW3
+.Q10     DC    X'00'                             2ND BYTE, 2ND WD CCW3
+         AIF   ('&LENGTH'(1,1) EQ '(').Q11
+         DC    AL2(&LENGTH)                      LENGTH IN CCW3
+         AGO   .OUT
+.Q11     DC    H'0'                              LENGTH FIELD IN CCW3
+.OUT     ANOP
+&GNAME.Y EQU   *
+.ISVC    OI    0(1),X'01'                         SVC ISSUE EXCP Y02072
+         SVC   0                                  EXCP SVC
+         AGO   .END
+.ERROR   IHBERMAC 36,,&ECB
+.END     MEND

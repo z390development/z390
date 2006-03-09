@@ -1,0 +1,24 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*  %     /*
+         MACRO
+&NAME    PGLOAD &FORM,&LA=,&A=,&ECB=,&EA=,&RELEASE=
+&NAME IHBPSINR &FORM,TYPE=LOAD,LA=&LA,A=&A,ECB=&ECB,EA=&EA,            X
+               RELEASE=&RELEASE
+         MEND
+*        */
+*   PGLOAD: MACRO
+*    KEYS(A,                       /* VIRTUAL ADDR OF PAGE TO BE FIXED
+*                                     (R FORM ONLY)                  */
+*         LA,                      /* ADDR OF FIRST ENTRY OF A VIRTUAL
+*                                     SUBAREA LIST(L FORM ONLY       */
+*         EA,                      /* END ADDR+1 OF A VIRTUAL AREA TO
+*                                     BE FIXED                       */
+*         ECB,                     /* ADDR OF EVENT CONTROL BLOCK    */
+*         RELEASE,                 /* RELEASE(Y)-CONTENTS OF ENTIRE
+*                                          VIRTUAL PAGE DISCARDED
+*                                     RELEASE(N)-CONTENTS OF PAGE
+*                                          REMAIN INTACT (DEFAULT)   */
+*         RTCD);                   /* RETURN CODE FROM SVC           */
+*    ANS('?'||MACLABEL||'PGLOADP '||MACLIST||MACKEYS||';');
+*%END;
+

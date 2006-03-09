@@ -1,0 +1,31 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTCAL1 SUBENTRY
+         WTO 'TESTCAL1 TEST LOCAL STATIC LINKED CALL WITH PARMS'
+         CALL MYSUB,(PARM1),VL
+         CALL MYSUB,(PARM1,PARM2),VL
+         WTO  'TESTEXT2 ENDED OK'
+         SUBEXIT
+PARM1    DC   CL20'PARM1 MSG'
+PARM2    DC   CL20'PARM2 MSG'
+MYSUB    SUBENTRY
+         LR   R2,R1
+LOOP     EQU  *
+         L    R3,0(R2)
+         MVC  DMSG,0(R3)
+         WTO  MF=(E,WTOMSG)
+         AHI  R2,4
+         LTR  R3,R3
+         BP   LOOP
+         SUBEXIT
+WTOMSG   DC   AL2(WTOEND-*,0)
+         DC   C'PARM='
+DMSG     DC   CL20' '
+WTOEND   EQU  *
+         EQUREGS
+         END

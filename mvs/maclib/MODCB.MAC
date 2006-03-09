@@ -1,0 +1,113 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&LBL     MODCB &ACB=,&EXLST=,&RPL=,&MF=,&BUFND=,&BUFNI=,               C
+               &BUFSP=,&DDNAME=,&MACRF=,&PASSWD=,&STRNO=,              C
+               &AREA=,&AREALEN=,&ARG=,&ECB=,&KEYLEN=,&MSGAREA=,        C
+               &MSGLEN=,&NXTRPL=,&OPTCD=,&RECLEN=,&CATALOG=,&EODAD=,   C
+               &JRNAD=,&LERAD=,&SYNAD=,&TRANSID=,&BSTRNO=,      X04SVHSC
+               &CRA=,&MAREA=,&MLEN=,&JFCB=,                    @XM01140*
+               &USERPTR=,                                      @XM01129*
+               &AM=,&APPLID=,&LOGON=,        *** VTAM KEYWORDS***X03004C
+               &LOSTERM=,&RELREQ=,&ATTN=,                      @Z40BHUC*
+               &TPEND=,&AAREA=,&AAREALN=,&ARECLEN=,&EXIT=,       X03004C
+               &NSEXIT=,                                       @G40AKCM*
+               &NIB=,&BRANCH=,&NAME=,                           Y30ASHSC
+               &USERFLD=,&MODE=,&LISTEND=,&CONDN=,&PROC=,        X03004C
+               &CHNGDIR=,&STYPE=,&RTYPE=,&CHAIN=,&POST=,        X3004BSC
+               &RESPOND=,&CONTROL=,&OBSQAC=,&IBSQAC=,           X3004BSC
+               &OBSQVAL=,&IBSQVAL=,&SEQNO=,&SSENSEO=,           X3004BSC
+               &USENSEO=,&RESPLIM=,&SDT=,&SCIP=,&DFASY=,        X3004BSC
+               &RESP=,&BRACKET=,&SSENSMO=,                     @Z40BHUC*
+               &LOGMODE=,&BNDAREA=,&SIGDATA=,&CODESEL=,        @Z40BHUC*
+               &CRYPT=,&ENCR=                                  @G40AKSL
+.* GLOBALS
+         GBLB  &IDACB01                ERROR INDICATOR
+         GBLA  &IDACB02                NUMBER OF FIELDS IN HEADER ACE
+         GBLA  &IDACB03                LENGTH OF HEADER ACE
+         GBLA  &IDACB04(5)             HEADER TYPE ARRAY
+         GBLC  &IDACB05(5)             HEADER VALUE ARRAY
+         GBLA  &IDACB06(5)             HEADER OFFSET ARRAY
+         GBLA  &IDACB07(5)             HEADER FIELD LENGTH ARRAY
+         GBLA  &IDACB11                OPERAND TYPE - SET BY IDACB1
+         GBLC  &IDACB13                OPERAND VALUE - SET BY IDACB1
+.* LOCALS
+         LCLA  &RS,&BA,&I              ARRAY INDICES
+         LCLC  &BLKTYPE                TYPE OF BLOCK TO BE MODIFIED
+.* INITIALIZATION
+&IDACB01 SETB  0                       CLEAR ERROR INDICATOR
+&IDACB02 SETA  2                       NUMBER OF HEADER FIELDS
+&IDACB03 SETA  8                       HEADER LENGTH
+&RS      SETA  1                       RESERVED FIELD INDEX
+&IDACB04(3) SETA 0                     CLEAR UNUSED PORTION
+&IDACB04(4) SETA 0                       OF HEADER TYPE ARRAY
+&BA      SETA  2                       BLOCK ADDRESS INDEX
+.* TEST FOR POSITIONAL PARAMETERS
+&I       SETA  N'&SYSLIST+1
+.L10     ANOP
+&I       SETA  &I-1
+         AIF   (&I LE 0).L20
+         IDAERMAC 1,&SYSLIST(&I)
+         AGO   .L10
+.* VALIDITY CHECK AND TRANSFORM REQUEST KEYWORDS
+.L20     ANOP                          *** BLOCK TYPE AND ADDRESS ***
+&IDACB04(&BA) SETA 0
+&IDACB06(&BA) SETA 4
+&IDACB07(&BA) SETA 4
+         AIF   ('&RPL' NE '').L30           CHECKING MUST BE DONE
+         AIF   ('&ACB' NE '').L40           IN THIS ORDER BECAUSE
+         AIF   ('&NIB' NE '').L60           OF USE OF BLOCK NAMESX03004
+         AIF   ('&EXLST' NE '').L50         AS KEYWORDS
+         AIF   ('&MF(1)' EQ 'E').L80
+         IDAERMAC 2,BLOCK-TYPE
+&IDACB01 SETB  1
+         AGO   .L80
+.L30     IDACB1 ARG=&RPL,ARGNAME=RPL,MF=&MF
+&BLKTYPE SETC  'RPL'
+         AGO   .L70
+.L40     IDACB1 ARG=&ACB,ARGNAME=ACB,MF=&MF
+&BLKTYPE SETC  'ACB'
+         AGO   .L70
+.L50     IDACB1 ARG=&EXLST,ARGNAME=EXLST,MF=&MF
+&BLKTYPE SETC  'EXLST'
+         AGO   .L70                                              X03004
+.L60     IDACB1 ARG=&NIB,ARGNAME=NIB,MF=&MF                      X03004
+&BLKTYPE SETC  'NIB'                                             X03004
+.L70     ANOP
+&IDACB04(&BA) SETA &IDACB11
+&IDACB05(&BA) SETC '&IDACB13'
+.L80     ANOP                          *** RESERVED FIELD ***
+&IDACB04(&RS) SETA 0
+&IDACB06(&RS) SETA 2
+&IDACB07(&RS) SETA 2
+.L100    IDACB2 CALLER=MOD,BLKTYPE=&BLKTYPE,LABEL=&LBL,MF=&MF,         C
+               BUFND=&BUFND,BUFNI=&BUFNI,BUFSP=&BUFSP,DDNAME=&DDNAME,  C
+               EXLST=&EXLST,MACRF=&MACRF,PASSWD=&PASSWD,STRNO=&STRNO,  C
+               ACB=&ACB,AREA=&AREA,AREALEN=&AREALEN,                   C
+               ARG=&ARG,ECB=&ECB,KEYLEN=&KEYLEN,MSGAREA=&MSGAREA,      C
+               MSGLEN=&MSGLEN,NXTRPL=&NXTRPL,OPTCD=&OPTCD,             C
+               RECLEN=&RECLEN,CATALOG=&CATALOG,EODAD=&EODAD,           C
+               JRNAD=&JRNAD,LERAD=&LERAD,SYNAD=&SYNAD,           X03004C
+               USERPTR=&USERPTR,JFCB=&JFCB,                            *
+               APPLID=&APPLID,LOGON=&LOGON, *** VTAM KEYWORDS ***X03004C
+               LOSTERM=&LOSTERM,RELREQ=&RELREQ,ATTN=&ATTN,     @Z40BHUC*
+               TPEND=&TPEND,                                   @Z40BHUC*
+               NSEXIT=&NSEXIT,                                 @G40AKCM*
+               AAREA=&AAREA,AAREALN=&AAREALN,ARECLEN=&ARECLEN,   X03004C
+               EXIT=&EXIT,                                      Y30ASHSC
+               NIB=&NIB,BRANCH=&BRANCH,NAME=&NAME,               X03004C
+               USERFLD=&USERFLD,MODE=&MODE,LISTEND=&LISTEND,     X03004C
+               CONDN=&CONDN,PROC=&PROC,AM=&AM,                   X03004C
+               CHNGDIR=&CHNGDIR,STYPE=&STYPE,RTYPE=&RTYPE,      X3004BSC
+               CHAIN=&CHAIN,POST=&POST,RESPOND=&RESPOND,        X3004BSC
+               CONTROL=&CONTROL,OBSQAC=&OBSQAC,IBSQAC=&IBSQAC,  X3004BSC
+               OBSQVAL=&OBSQVAL,IBSQVAL=&IBSQVAL,SEQNO=&SEQNO,  X3004BSC
+               SSENSEO=&SSENSEO,USENSEO=&USENSEO,               X3004BSC
+               RESPLIM=&RESPLIM,SDT=&SDT,SCIP=&SCIP,            X3004BSC
+               DFASY=&DFASY,RESP=&RESP,                        @Z40BHUC*
+               BRACKET=&BRACKET,SSENSMO=&SSENSMO,               X04SVHSC
+               TRANSID=&TRANSID,CRA=&CRA,BSTRNO=&BSTRNO,        X04SVHSC
+               MAREA=&MAREA,MLEN=&MLEN,                         X04SVHSC
+               LOGMODE=&LOGMODE,BNDAREA=&BNDAREA,              @Z40BHUCC
+               SIGDATA=&SIGDATA,CODESEL=&CODESEL,              @Z40BHUC*
+               CRYPT=&CRYPT,ENCR=&ENCR                         @G40AKSL
+         MEND

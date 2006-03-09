@@ -1,0 +1,38 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    VTBL  &MOD=,&REM=,&WTS=,&OPT=
+         LCLA  &X
+         DS    0H                                              @ZA00777
+         AIF   ('&OPT' EQ '1' OR '&OPT' EQ '2').A
+         MNOTE 8,'***  IHB357  OPTION 1 OR 2 NOT SPECIFIED; 1 ASSUMED'
+&NAME    DC    XL1'80'                   OPTION 1              @ZA00777
+         AGO   .C
+.A       AIF   ('&OPT' EQ '2').B
+&NAME    DC    XL1'80'                   OPTION 1              @ZA00777
+         AGO   .C
+.B       ANOP
+&NAME    DC    XL1'0'                   OPTION 2
+.C       ANOP
+         AIF   ('&MOD' NE '' AND '&MOD' LE '99').C1
+         DC    XL1'10'
+         MNOTE 8,'***  IHB359 MODULUS INVALID OR NOT SPEC.; 10 ASSUMED'
+         AGO   .C2
+.C1      ANOP
+         DC    XL1'&MOD'                MODULUS IN UNSIGNED PACKED DEC.
+.C2      ANOP
+         AIF   ('&REM' NE '').C3
+         DC    XL1'0'
+         AGO   .D
+.C3      ANOP
+         DC    XL1'&REM'                REMAINDER IN CHECK DIGIT
+.D       AIF   (&X EQ 16).END
+&X       SETA  &X+1                     COUNTER
+         AIF   ('&WTS(&X)' EQ '').NULL
+         AIF   ('&WTS(&X)' GT '11').ERR
+         DC    AL1(&WTS(&X))            WEIGHTING FACTOR
+         AGO   .D
+.ERR     MNOTE 12,'***  IHB360  WT. FACTOR GREATER THAN 11; 0 ASSUMED'
+.NULL    DC    XL1'0'
+         AGO   .D
+.END     MEND
+

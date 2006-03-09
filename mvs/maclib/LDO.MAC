@@ -1,0 +1,230 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /* START OF SPECIFICATIONS ****
+*
+*01*  MODULE-NAME = LDO
+*
+*01*  DESCRIPTIVE-NAME = LOGICAL DEVICE ORDER
+*
+*
+*01*  STATUS = RELEASE 1
+*
+*01*  FUNCTION = THE PURPOSE OF THIS MACRO IS TO BUILD A LOGICAL
+*     DEVICE ORDER CONTROL BLOCK
+*
+*01*  NOTES = THE ACCESS METHOD ALLOWS FOR THE EXECUTION OF A SERIES
+*     OF LDOS AS A SINGLE REQUEST. EACH LDO IS CREATED BY AN LDO MACRO
+*     INSTRUCTION AND THE DO MACRO IS USED TO EXECUTE THE SERIES OF LDO
+*     (USING JUMP LDO)  OR THE SINGLE LDO
+*
+*02*    CHARACTER-CODE-DEPENDENCIES = NONE
+*02*    DEPENDENCIES = NONE
+*02*    RESTRICTIONS = NONE
+*02*    REGISTER-CONVENTIONS = NONE
+*02*    PATCH-LABEL = NONE
+*01*  MODULE-TYPE = MACRO
+*
+*02*    PROCESSOR = ASSEM-370R
+*
+*02*    MACRO-SIZE = RES: CHOOSE: (9) STATEMENTS,
+*                    COMMENTS: ENTER SIZE WHEN MACRO HAS BEEN CODED;
+*
+*02*    ATTRIBUTES = LIST-EXEC
+*
+*01*  ENTRY-POINT = NA
+*
+*01*  EXIT-NORMAL = NA
+*
+*01*  EXIT-ERROR = NA
+*
+*01*  EXTERNAL-REFERENCES = NONE
+*01*  TABLES = NONE
+*01*  INNER-MACROS = NONE
+*01*  SYSTEM-MACROS = NONE
+*01*  CHANGE-ACTIVITY = DCRS=1H0262 , K1938
+*
+**** END OF SPECIFICATIONS ***/
+*/*LDO:          CHART         (AMODE) */
+*/*              HEADING
+*/*                            LEVEL 4 LDO MACRO
+*/*                            PAGE # */
+*/*              FOOTING
+*/* DCR'S APPLIED: 1938,1858                            AUGUST 13, 1973
+*/**/
+*/*LDO:          E             LDO MACRO */
+*/*              N LDO &CMD=, &FLAGS=, &ADDR=, &LENGTH= */
+*/*              M DEFINE &C, &F, &L, &A USED TO BUILD LDO */
+*/*              D             (N,,Y,%X00) &CMD ='' */
+*/*              D             (N,,Y,%X02) &CMD =READ */
+*/*              D             (N,,Y,%XF2) &CMD =SOLICIT */
+*/*              D             (N,,Y,%X05) &CMD =WRITE */
+*/*              D             (N,,Y,%X09) &CMD =WRITELBM */
+*/*              D             (N,,Y,%X0D) &CMD =WRITELBT */
+*/*              D             (N,,Y,%X1D) &CMD =ERASET */
+*/*              D             (N,,Y,%X11) &CMD =EAU */
+*/*              D             (N,,Y,%X0B) &CMD =RESETL */
+*/*              D             (N,,Y,%X26) &CMD =RESETO */
+*/*              D             (N,,Y,%X1B) &CMD =RESETC */
+*/*              D             (N,,Y,%X08) &CMD =JUMP */
+*/*              D             (N,,Y,%X2D) &CMD =COPYT */
+*/*              D             (N,,Y,%X16) &CMD =READBUF */
+*/*              D             (N,,Y,%X12) &CMD =READMOD */
+*/*              D             (N,,Y,%X7F) &CMD =WRTPR */
+*/*              D             (N,,Y,%X2F) &CMD =WRTNR */
+*/*              D             (N,,Y,%X3F) &CMD =WRTAR */
+*/*              D             (N,,Y,%X1F) &CMD =WRTRVI */
+*/*              D             (N,,Y,%X5F) &CMD =WRTPRLG */
+*/*              D             (N,,Y,%X6F) &CMD =WRTNLRG */
+*/*              D             (N,,Y,%X29) &CMD =COPYM */
+*/*              D             (N,,Y,%X19) &CMD =ERASEMSG */
+*/*              D             (N,,Y,%X0F) &CMD =WRTHDR */
+*/*         D (N,,Y,%X03) &CMD = CONTACT */
+*/*               D (N,,Y,%X23) &CMD = DISCNECT */
+*/*              P             PRINT &CMD VALUE ERROR */
+*/*%X00:         P             (,%A00) SET &C= X'00' */
+*/*%X11:         P             (,%A00) SET &C= X'11' */
+*/*%X02:         P             (,%A00) SET &C= X'02' */
+*/*%X03:          P (,%A00) SET &C= X'03' */
+*/*%XF2:         P             (,%A00) SET &C= X'F2' */
+*/*%X05:         P             (,%A00) SET &C= X'05' */
+*/*%X09:         P             (,%A00) SET &C= X'09' */
+*/*%X0D:         P             (,%A00) SET &C= X'0D' */
+*/*%X1D:         P             (,%A00) SET &C= X'1D' */
+*/*%X0B:         P             (,%A00) SET &C= X'0B' */
+*/*%X23:          P (,%A00) SET &C= X'23' */
+*/*%X26:         P             (,%A00) SET &C= X'26' */
+*/*%X1B:         P             (,%A00) SET &C= X'1B' */
+*/*%X08:         P             (,%A00) SET &C= X'08' */
+*/*%X2D:         P             (,%A00) SET &C= X'2D' */
+*/*%X16:         P             (,%A00) SET &C= X'16' */
+*/*%X12:         P             (,%A00) SET &C= X'12' */
+*/*%X7F:         P             (,%A00) SET &C= X'7F' */
+*/*%X2F:         P             (,%A00) SET &C= X'2F' */
+*/*%X3F:         P             (,%A00) SET &C= X'3F' */
+*/*%X1F:         P             (,%A00) SET &C= X'1F' */
+*/*%X5F:         P             (,%A00) SET &C= X'5F' */
+*/*%X6F:         P             (,%A00) SET &C= X'6F' */
+*/*%X29:         P             (,%A00) SET &C= X'29' */
+*/*%X19:         P             (,%A00) SET &C= X'19' */
+*/*%X0F:         P             (,%A00) SET &C= X'0F' */
+*/*%A00:         D             (N,,Y,%F00) &FLG='' */
+*/*              D             (N,,Y,.FLGC) &FLAGS = C */
+*/*              D             (N,,Y,.FLGD) &FLAGS = D */
+*/*              P             &F = X'00' */
+*/*              P             GENERATE MNOTE FOR &FLAGS ERROR */
+*/*.LDO4:              P             SET &L=&LENGTH */
+*/*.LDO7:        P             SET &A=&ADDR */
+*/*              P             GENERATE DC TO CONCATENATE &C,&F,&L,&A
+*/**/
+*/*%EXIT:        R             EXIT */
+*/*%F00:         P             (,.LDO4) SET &F=X'00' */
+*/*.FLGC:        P             (,.LDO4) SET &F = X'40' */
+*/*.FLGD:        P             (,.LDO4) SET &F = X'80' */
+*/*LDO:          END */
+         MACRO
+&LBL     LDO   &CMD=,&FLAGS=,&ADDR=,&LEN=
+         LCLA &TEST
+         LCLC  &C,&F,&A,&L
+         AIF   ('&CMD' EQ '').LDO02C3
+         AIF   ('&CMD' NE 'READ').LDO01X1
+&C       SETC  '02'
+         AGO   .LDO02D3
+.LDO01X1 AIF   ('&CMD' NE 'CONTACT').LDO01X2
+&C       SETC  '03'
+         AGO   .LDO02D3
+.LDO01X2 AIF   ('&CMD' NE 'DISCONCT').LDO01F1
+&C       SETC  '23'
+         AGO   .LDO02D3
+.LDO01F1 AIF   ('&CMD'  NE 'SOLICIT').LDO01G1
+&C       SETC  'F2'
+         AGO   .LDO02D3
+.LDO01G1 AIF   ('&CMD' NE 'WRITE').LDO01H1
+&C       SETC  '05'
+         AGO   .LDO02D3
+.LDO01H1 AIF   ('&CMD' NE 'WRITELBM').LDO01J1
+&C       SETC  '09'
+         AGO   .LDO02D3
+.LDO01J1 AIF   ('&CMD' NE 'WRITELBT').LDO01K1
+&C       SETC  '0D'
+         AGO   .LDO02D3
+.LDO01K1 AIF   ('&CMD' NE 'ERASELBT').LDO01A3
+&C       SETC  '1D'
+         AGO   .LDO02D3
+.LDO01A3 AIF   ('&CMD' NE 'EAU').LDO01B3
+&C       SETC  '11'
+         AGO   .LDO02D3
+.LDO01B3 AIF   ('&CMD' NE 'RESETL').LDO01C3
+&C       SETC  '0B'
+         AGO   .LDO02D3
+.LDO01C3 AIF   ('&CMD' NE 'RESETU').LDO01D3
+&C       SETC  '2B'
+         AGO   .LDO02D3
+.LDO01D3 AIF   ('&CMD' NE 'RESETC').LDO01E3
+&C       SETC  '1B'
+         AGO   .LDO02D3
+.LDO01E3 AIF   ('&CMD' NE 'JUMP').LDO01F3
+&C       SETC  '08'
+         AGO   .LDO02D3
+.LDO01F3 AIF   ('&CMD' NE 'COPYLBT').LDO01G3
+&C       SETC  '2D'
+         AGO   .LDO02D3
+.LDO01G3 AIF   ('&CMD' NE 'READBUF').LDO01H3
+&C       SETC  '16'
+         AGO   .LDO02D3
+.LDO01H3 AIF   ('&CMD' NE 'READMOD').LDO01J3
+&C       SETC  '12'
+         AGO   .LDO02D3
+.LDO01J3 AIF   ('&CMD' NE 'WRTPR').LDO01K3
+&C       SETC  '7F'
+         AGO   .LDO02D3
+.LDO01K3 AIF   ('&CMD' NE 'WRTNR').LDO02A1
+&C       SETC  '2F'
+         AGO   .LDO02D3
+.LDO02A1 AIF   ('&CMD' NE 'WRTAR').LDO02B1
+&C       SETC  '3F'
+         AGO   .LDO02D3
+.LDO02B1 AIF   ('&CMD' NE 'WRTRVI').LDO02C1
+&C       SETC  '1F'
+         AGO   .LDO02D3
+.LDO02C1 AIF   ('&CMD' NE 'WRTPRLG').LDO02D1
+&C       SETC  '5F'
+         AGO   .LDO02D3
+.LDO02D1 AIF   ('&CMD' NE 'WRTNRLG').LDO02E1
+&C       SETC  '6F'
+         AGO   .LDO02D3
+.LDO02E1 AIF   ('&CMD' NE 'COPYLBM').LDO02H1
+&C       SETC  '29'
+         AGO   .LDO02D3
+.LDO02H1 AIF   ('&CMD' NE 'ERASELBM').LDO02J1
+&C       SETC  '19'
+         AGO   .LDO02D3
+.LDO02J1 AIF   ('&CMD' NE 'WRTHDR').LDO02K1
+&C       SETC  '0F'
+         AGO   .LDO02D3
+.LDO02K1 ANOP
+.LDO02B3 MNOTE 4,'VALUE ERROR  CMD=&CMD'
+.LDO02C3 ANOP
+&C       SETC  '00'
+.LDO02D3 AIF   ('&FLAGS' NE '').LDO02E3
+&F       SETC  '00'
+         AGO   .LDO02J3
+.LDO02E3 AIF   ('&FLAGS' NE 'C').LDO02F3
+&F       SETC  '40'
+         AGO   .LDO02J3
+.LDO02F3 AIF   ('&FLAGS' NE 'D').LDO02G3
+&F       SETC  '80'
+         AGO   .LDO02J3
+.LDO02G3 ANOP
+&F       SETC  '00'
+         MNOTE 4,'VALUE ERROR FOR FLAGS=&FLAGS'
+.LDO02J3 ANOP
+&L       SETC  '&LEN'
+         AIF   ('&LEN' NE '').LDO07A
+&L       SETC  '0'
+.LDO07A  ANOP
+&A       SETC  '&ADDR'
+         AIF   ('&A' NE '').LDO07B
+&A       SETC  '0'
+.LDO07B  ANOP
+&LBL     DC    X'&C',X'&F',AL2(&L),AL4(&A)
+         MEND
+

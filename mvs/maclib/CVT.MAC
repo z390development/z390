@@ -1,0 +1,2771 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*
+*        %GOTO CVTL1;       /* BILINGUAL MAPPING
+         MACRO
+&CVTNAME CVT   &SYS=AOS2,&OPTIONS=(NOSLICE,INTERVAL,0),&TSO=NO,        *
+               &PREFIX=NO,&FLAG=00,&FLAGB=00,&PATCH=NO,&REAL=0,        *
+               &DSECT=NO,&RPS=NO,&CVTTZ=0,&CTLFLGS=00,&LIST=NO,        *
+               &LOADBAL=NO,&CBMRTN=NO,&WARN=0,&STORAGE=0             */
+*%CVTL1 : ;
+*/*                                                                  */
+*/*      COMMUNICATION VECTOR TABLE                                  */
+*/*                                                                  */
+*/*      OS/VS2 SU64, 04/24/80, LEVEL=6                              */
+*/*                                                                  */
+*/*  METHOD OF ACCESS                                                */
+*/*      PL/S - DCL CVTPTR PTR                                       */
+*/*      BAL  - DSECT=YES SHOULD BE SPECIFIED ON MACRO CALL EXCEPT   */
+*/*             WHEN CALLED DURING SYSGEN TO CREATE CSECT.  CVT FOR  */
+*/*             OS/VS2 IS MAPPED UNLESS SYS=AOS1 IS SPECIFIED.  THE  */
+*/*             PREFIX IS NOT MAPPED UNLESS PREFIX=YES IS SPECIFIED. */
+*/*             A USING ON CVTMAP OR DSECT NAME WILL ESTABLISH       */
+*/*             ADDRESSABILITY FOR ALL SYMBOLS EXCEPT IN THE 2       */
+*/*             EXTENSIONS.  TO ESTABLISH ADDRESSABILITY FOR THE     */
+*/*             OS - OS/VS COMMON EXTENSION, YOU SHOULD CODE         */
+*/*                                                                  */
+*/*             L     REG,CVTEXT1                                    */
+*/*             USING CVTXTNT1,REG                                   */
+*/*                                                                  */
+*/*             TO ESTABLISH ADDRESSABILITY FOR THE OS/VS1 - OS/VS2  */
+*/*             COMMON EXTENSION, YOU SHOULD CODE                    */
+*/*                                                                  */
+*/*             L     REG,CVTEXT2                                    */
+*/*             USING CVTXTNT2,REG                                   */
+*/*                                                                  */
+*/*             WHERE REG IN EITHER CASE IS ANY REGISTER OTHER       */
+*/*             THAN ZERO.                                           */
+*/*                                                                  */
+*/*             WHEN LISTING IS SUPPRESSED, YOU CAN DETERMINE WHICH  */
+*/*             DSECT A SYMBOL IS IN BY USING THE STATEMENT NUMBER   */
+*/*             IN THE DEFN COLUMN IN THE CROSS REFERENCE LISTING.   */
+*/*             FOR EXAMPLE, ANY SYMBOL DEFINED BETWEEN THE          */
+*/*             STATEMENT NUMBERS FOR CVTXTNT1 AND CVTXTNT2 IS IN    */
+*/*             THE OS - OS/VS COMMON EXTENSION.                     */
+*/*                                                                  */
+*/*  F.E.'S                                                          */
+*/*      MICROFICHE LISTING - CVT                                    */
+*/*                                                                  */
+*/*  DEVELOPERS                                                      */
+*/*      BAL LISTING  - SPECIFY LIST=YES ON MACRO CALL               */
+*/*      PL/S LISTING - SPECIFY %IHALIST='YES' BEFORE INCLUDE        */
+*/*                                                                  */
+*/*      FOR INTEGRATION, A LISTING MUST NOT BE REQUESTED UNLESS     */
+*/*      YOUR MODULE CREATES THE CSECT.                              */
+*
+*%GOTO CVTL2;   /*
+.*
+.*       CHANGE-ACTIVITY -
+.*               OZ58427 - RESERVED FIELD CVTRV324 (X'1A8') WILL BE
+.*                         USED TO DEFINE AN ENTRY POINT, IEAPPGMX,
+.*                         IN MODULE IEAVLK02.                 @ZA58427
+.*       CALLED DURING OS/VS1 SYSGEN BY SGIEA2CV
+.*       CALLED DURING OS/VS2 SYSGEN BY IEAVBK
+.*
+.*             OPERATING SYSTEM OPTIONS
+         LCLB  &CVTAOS1,&CVTAOS2
+.*
+.*             MULTIPROGRAMMING WITH A FIXED NUMBER OF PARTITION TASKS
+&CVTAOS1 SETB  ('&SYS' EQ 'AOS1' OR '&SYS' EQ 'MFT' OR '&SYS' EQ 'INT')
+.*
+.*             MULTIPROGRAMMING WITH A VARIABLE NUMBER OF REGION TASKS
+&CVTAOS2 SETB  ('&SYS' EQ 'AOS2' OR '&SYS' EQ 'MVT' OR '&SYS' EQ 'VMS')
+.*
+         PUSH  PRINT
+         AIF   ('&LIST' EQ 'YES').CVT1A
+         PRINT OFF
+.CVT1A   ANOP
+CVTPTR   EQU   16 -          ABSOLUTE ADDRESS OF POINTER TO CVT
+         AIF   ('&PREFIX' EQ 'NO').CVT15
+*
+*              BEGINNING OF CVT PREFIX
+*
+         AIF   ('&DSECT' EQ 'NO').CVT10
+CVTFIX   DSECT -             CVTMAP-256 - PREFIX
+         DS    0F
+         DS    CL248 -       RESERVED
+         AGO   .CVT12
+.CVT10   ANOP
+         DS    0F
+CVTFIX   EQU   *-248 -       CVTMAP-256
+.CVT12   ANOP
+         DS    H -           RESERVED
+CVTMDL   DS    CL2 -         CPU MODEL NUMBER IN SIGNLESS PACKED
+*                            DECIMAL, I.E., A MODEL 145 WOULD BE
+*                            REPRESENTED AS 0145 HEX
+         AIF   ('&DSECT' EQ 'NO').CVT13                          YM2188
+CVTRELNO DS    0CL4 -        RELEASE NUMBER (EBCDIC)
+CVTNUMB  DS    CL2 -         RELEASE NUMBER                      YM2188
+CVTLEVL  DS    CL2 -         LEVEL NUMBER OF THIS RELEASE        YM2188
+         AGO   .CVT14                                            YM2188
+.CVT13   ANOP
+         IHBRELNO , -                                            YM2188
+.CVT14   ANOP
+*
+*              END OF CVT PREFIX
+*
+         AGO   .CVT16
+.CVT15   ANOP
+*
+*              BEGINNING OF CVT PROPER
+*
+         AIF   ('&DSECT' EQ 'NO').CVT16
+CVT      DSECT , -
+         AGO   .CVT18
+.CVT16   ANOP
+         DS    0F
+.CVT18   ANOP
+         AIF   ('&CVTNAME' EQ '').CVT01
+&CVTNAME EQU   * -           CVTPTR CONTENT POINTS HERE
+         AGO   .CVT02
+.CVT01   ANOP
+CVTMAP   EQU   * -           CVTPTR CONTENT POINTS HERE
+.CVT02   ANOP
+*
+CVTTCBP  DC    V(IEATCBP) -  ADDRESS OF A DOUBLE WORD, THE FIRST
+*                            CONTAINING THE NEXT-TO-BE-DISPATCHED TCB
+*                            ADDRESS, THE SECOND CONTAINING THE LAST
+*                            (CURRENT) TCB ADDRESS.  BOTH WORDS ARE
+*                            IDENTICAL UNLESS THE TASK GOES INTO A
+*                            WAIT STATE.  WHEN IN A WAIT STATE, THE
+*                            FIRST WORD IS SET TO ZERO UNTIL THE
+*                            WAITING IS OVER AND THEN BOTH WORDS ARE
+*                            ONCE AGAIN IDENTICAL.  (OS/VS1)
+*                            ADDRESS OF 4-WORD LIST OF ADDRESSES -
+*                            THE NEXT TCB, THE CURRENT TCB, THE NEXT
+*                            ASCB AND THE CURRENT ASCB, IN THAT
+*                            ORDER (OS/VS2)                      MDC026
+CVT0EF00 DC    V(IEA0EF00) - ADDRESS OF ROUTINE TO SCHEDULE
+*                            ASYNCHRONOUS EXITS
+CVTLINK  DC    V(IEFLINK) -  ADDRESS OF DCB FOR SYS1.LINKLIB DATA SET
+         AIF   (&CVTAOS2).CVTM9
+CVTJOB   DC    V(IEFJOB) -   ADDRESS OF QUEUE MANAGER RESIDENT DATA
+*                            AREA (QMRES) (OS/VS1)               XM4042
+         AGO   .CVTM10
+.CVTM9   ANOP
+         DC    A(0) -        ** CVTJOB FIELD UNUSED IN MVS **
+*                            (MDC083)                          @Z40AQ9A
+.CVTM10  ANOP
+CVTBUF   DC    A(0) -        ADDRESS OF THE BUFFER OF THE RESIDENT
+*                            CONSOLE INTERRUPT ROUTINE
+CVTXAPG  DC    V(IECXAPG) -  ADDRESS OF I/O SUPERVISOR APPENDAGE VECTOR
+*                            TABLE
+CVT0VL00 DC    V(IEA0VL00) - ADDRESS OF ENTRY POINT OF THE TASK
+*                            SUPERVISOR'S ADDRESS VALIDITY CHECKING
+*                            ROUTINE
+CVTPCNVT DC    V(IECPCNVT) - ADDRESS OF ENTRY POINT OF THE ROUTINE
+*                            WHICH CONVERTS A RELATIVE TRACK ADDRESS
+*                            (TTR) TO AN ABSOLUTE TRACK ADDRESS
+*                            (MBBCCHHR)
+CVTPRLTV DC    V(IECPRLTV) - ADDRESS OF ENTRY POINT OF THE ROUTINE
+*                            WHICH CONVERTS AN ABSOLUTE TRACK ADDRESS
+*                            (MBBCCHHR) TO A RELATIVE TRACK ADDRESS
+*                            (TTR)
+CVTILK1  DC    V(IECILK1) -  ADDRESS OF THE CHANNEL AND CONTROL UNIT
+*                            PORTION OF THE UCB LOOKUP TABLE
+CVTILK2  DC    V(IECILK2) -  ADDRESS OF THE UCB HALFWORD ADDRESS LIST
+*                            PORTION OF THE UCB LOOKUP TABLE
+CVTXTLER DC    V(IECXTLER) - ADDRESS OF ERROR RECOVERY PROCEDURE (ERP)
+*                            LOADER (IECVERPL) ENTRY POINT IECXTLER
+*                            (MDC349)                          @Z40AQ9A
+CVTSYSAD DC    A(0) -        ADDRESS OF THE SYSTEM RESIDENCE VOLUME
+*                            ENTRY IN THE UCB LOOKUP TABLE
+         AIF   (&CVTAOS2).CVTM11
+CVTBTERM DC    V(IEA0AB00) - ADDRESS OF ENTRY POINT OF THE ABTERM
+*                            ROUTINE
+         AGO   .CVTM12
+.CVTM11  ANOP
+CVTBTERM DC    V(IEAVTRT1) - ADDRESS OF ENTRY POINT OF THE ABTERM
+*                            ROUTINE                             MDC084
+.CVTM12  ANOP
+CVTDATE  DC    F'0' -        CURRENT DATE IN PACKED DECIMAL
+CVTMSLT  DC    V(IEEMSER) -  ADDRESS OF THE MASTER COMMON AREA IN
+*                            MASTER SCHEDULER RESIDENT DATA AREA.
+*                              NOTE - USE CVTMSER INSTEAD TO ADDRESS
+*                              MASTER SCHEDULER RESIDENT DATA AREA
+CVTZDTAB DC    V(IECZDTAB) - ADDRESS OF I/O DEVICE CHARACTERISTIC TABLE
+CVTXITP  DC    V(IECXITP) -  ADDRESS OF ERROR INTERPRETER ROUTINE
+         AIF   (&CVTAOS2).CVTM5
+CVTDAR   DS    0A -          SAME AS CVTDARA BELOW (OS/VS1)      ICB370
+CVTFLGS1 DC    B'0' -        FLAG BYTE (OS/VS1)                  ICB370
+CVTDMPLK EQU   X'80' -       SVC DUMP IS IN PROGRESS             ICB370
+CVTRSV01 EQU   X'40',,C'X' - RESERVED
+CVTRSV02 EQU   X'20',,C'X' - RESERVED
+CVTRSV03 EQU   X'10',,C'X' - RESERVED
+CVTRSV04 EQU   X'08',,C'X' - RESERVED
+CVTRSV05 EQU   X'04',,C'X' - RESERVED
+CVTRSV06 EQU   X'02',,C'X' - RESERVED
+CVTRSV07 EQU   X'01',,C'X' - RESERVED
+CVTDARA  DC    AL3(0) -      ADDRESS OF THE SYS1.DUMP I/O CONTROL
+*                            BLOCKS NEEDED BY ABEND'S DAMAGE ASSESSMENT
+*                            ROUTINE (DAR) (OS/VS1)              ICB370
+         AGO   .CVTM6
+.CVTM5   ANOP
+         DC    A(0) -        ** CVTDAR FIELD UNUSED IN MVS **
+*                            (MDC029)                          @Z40AQ9A
+.CVTM6   ANOP
+.*
+.*             CVT0FN00: OS/VS1, OS/VS2
+.*
+         AIF   (&CVTAOS2).CVT21
+CVT0FN00 DC    V(IEA0FN00) - ADDRESS OF ENTRY POINT OF THE FINCH
+*                            ROUTINE (OS/VS1)
+         AGO   .CVT22
+.CVT21   ANOP
+CVT0FN00 DC    A(0) -        RESERVED (OS/VS2)
+.CVT22   ANOP
+.*
+CVTEXIT  SVC   3 -           EXIT TO DISPATCHER
+CVTBRET  BR    14 -          RETURN TO CALLER (USED BY DATA MANAGEMENT
+*                            ROUTINES)
+CVTSVDCB DC    V(IEASVDCB) - ADDRESS OF THE DCB FOR THE SYS1.SVCLIB
+*                            DATA SET
+CVTTPC   DC    V(IEATPC) -   ADDRESS OF THE TIMER SUPERVISOR WORK AREA
+         AIF   (&CVTAOS2).CVT41
+CVTNIPSV DS    H         -   RESERVED MVS                      @ZA51978
+CVTICPID DC    H'0'      -   IPL'ED CPU PHYSICAL ID            @ZA51978
+CVTSJQ   DC    V(IEESJQ) -   ADDRESS OF THE SELECTED JOB QUEUE (OS/VS1)
+         AGO   .CVT42
+.CVT41   ANOP
+CVTNIPSV DS    H         -      RESERVED MVS                   @ZA51978
+CVTICPID DC    H'0'      -   IPL'ED CPU PHYSICAL ID            @ZA51978
+CVTSJQ   DC    A(0) -        RESERVED (OS/VS2)
+.CVT42   ANOP
+.*
+CVTCUCB  DC    V(IEECUCB) -  ADDRESS OF THE TABLE THAT CONTAINS THE
+*                            CURRENT CONSOLE UCB ADDRESSES
+.*
+.*             CVTQTE00, CVTQTD00: INTERVAL TIMING, NONE
+.*
+         AIF   ('&OPTIONS(2)' EQ 'INTERVAL').CVT51
+CVTQTE00 DC    A(0) -        RESERVED (NO INTERVAL TIMER)
+CVTQTD00 DC    A(0) -        RESERVED (NO INTERVAL TIMER)
+         AGO   .CVT52
+.CVT51   ANOP
+CVTQTE00 DC    V(IEAQTE00) - ADDRESS OF THE TIMER ENQUEUE ROUTINE FOR
+*                            INTERVAL TIMER
+CVTQTD00 DC    V(IEAQTD00) - ADDRESS OF THE TIMER DEQUEUE ROUTINE FOR
+*                            INTERVAL TIMER
+.CVT52   ANOP
+.*
+CVTSTB   DC    V(IECSTB) -   ADDRESS OF THE I/O DEVICE STATISTICS TABLE
+.*
+.*             CVTDCB, CVTDCBA: OS/VS1, OS/VS2
+.*
+         AIF   (NOT &CVTAOS1).CVT62
+CVTDCB   DC    XL1'22' -     OPERATING SYSTEM
+CVTRSV08 EQU   X'80',,C'X' - RESERVED
+CVT1SSS  EQU   X'40' -       OPTION 1 (PCP) SSS
+CVT2SPS  EQU   X'20' -       OPTION 2 (MFT) SPS, OS/VS1
+CVT4MS1  EQU   X'10' -       OPTION 4 (MVT) MS1, OS/VS2
+CVTRSV09 EQU   X'08',,C'X' - RESERVED
+CVT4MPS  EQU   X'04' -       MODEL 65 MULTIPROCESSING
+CVT6DAT  EQU   X'02' -       DYNAMIC ADDRESS TRANSLATION BY CPU
+*                            (OS/VS1, OS/VS2)
+CVTMVS2  EQU   X'01' -       MULTIPLE MEMORY OPTION OF OS/VS2 IS
+*                            PRESENT                             MDC131
+CVTDCBA  DC    VL3(IFBDCB) - ADDRESS OF THE DCB FOR THE SYS1.LOGREC
+*                            (OUTBOARD RECORDER) DATA SET FOR SYSTEM
+*                            ENVIRONMENT RECORDING (SER)
+CVTIOQET DC    V(IECIOQET) - ADDRESS OF IOS REQUEST ELEMENT TABLE
+*                            (OS/VS1)                            MDC020
+         AGO   .CVT64
+.CVT62   ANOP
+CVTDCB   DC    XL1'13' -     OPERATING SYSTEM                    MDC132
+CVTRSV08 EQU   X'80',,C'X' - RESERVED
+CVT1SSS  EQU   X'40' -       OPTION 1 (PCP) SSS
+CVT2SPS  EQU   X'20' -       OPTION 2 (MFT) SPS, OS/VS1
+CVT4MS1  EQU   X'10' -       OPTION 4 (MVT) MS1, OS/VS2
+CVTRSV09 EQU   X'08',,C'X' - RESERVED
+CVT4MPS  EQU   X'04' -       MODEL 65 MULTIPROCESSING
+CVT6DAT  EQU   X'02' -       DYNAMIC ADDRESS TRANSLATION BY CPU
+*                            (OS/VS1, OS/VS2)
+CVTMVS2  EQU   X'01' -       MULTIPLE MEMORY OPTION OF OS/VS2 IS
+*                            PRESENT                             MDC131
+CVT8AOS2 EQU   CVT4MS1+CVT6DAT - OS/VS2 SYSTEM
+CVTDCBA  DC    VL3(IFBDCB) - ADDRESS OF THE DCB FOR THE SYS1.LOGREC
+*                            (OUTBOARD RECORDER) DATA SET FOR SYSTEM
+*                            ENVIRONMENT RECORDING (SER)
+CVTSV76M DC    F'0' -        SVC 76 MESSAGE COUNT FIELD (OS/VS2)
+*                            (MDC372)                          @ZA18857
+.CVT64   ANOP
+CVTIXAVL DC    V(IECIXAVL) - ADDRESS OF THE I/O SUPERVISOR'S FREELIST
+*                            POINTER WHICH CONTAINS THE ADDRESS OF THE
+*                            NEXT REQUEST ELEMENT  (OS/VS1)
+*                            ADDRESS OF THE I/O SUPERVISOR'S
+*                            COMMUNICATION AREA (IOCOM)  (OS/VS2)
+CVTNUCB  DC    A(0) -        LOWEST ADDRESS NOT IN THE NUCLEUS (ON PAGE
+*                            BOUNDARY FOR OS/VS1)  (ON SEGMENT BOUNDARY
+*                            FOR OS/VS2)  (MDC318)             @Z30AQ9A
+         AIF   (&CVTAOS2).CVTJF1                                 YM4043
+CVTFBOSV DC    V(IEWFBOSV) - ADDRESS OF PROGRAM FETCH ROUTINE
+         AGO   .CVTJF2                                           YM4043
+.CVTJF1  ANOP                                                    YM4043
+CVTFBOSV DC    A(0) -        ADDRESS OF PROGRAM FETCH ROUTINE
+*                            (MDC222)                            YM4043
+.CVTJF2  ANOP                                                    YM4043
+CVT0DS   DC    V(IEA0DS) -   ADDRESS OF ENTRY POINT OF THE DISPATCHER
+CVTILCH  DC    V(IECILCH) -  ADDRESS OF THE LOGICAL CHANNEL WORD TABLE
+         AIF   (&CVTAOS2).CVTJF3                                 YM4043
+CVTIERLC DC    V(IECIERLC) - ADDRESS OF THE ASYNCHRONOUS EXIT QUEUE
+*                            (OS/VS1)  (MDC218)                  YM4043
+         AGO   .CVTJF4                                           YM4043
+.CVTJF3  ANOP                                                    YM4043
+CVTRV516 DC    A(0) -        ** CVTIERLC FIELD UNUSED IN MVS **
+*                            (MDC218)                            YM4043
+.CVTJF4  ANOP                                                    YM4043
+CVTMSER  DC    V(IEEMSER) -  ADDRESS OF DATA AREA OF MASTER SCHEDULER
+*                            RESIDENT DATA AREA
+CVT0PT01 DC    V(IEA0PT01) - ADDRESS OF BRANCH ENTRY POINT OF POST
+*                            ROUTINE
+CVTRSV11 DS    A -           ** CVTTRMTB FIELD UNUSED IN OS/VS **
+         AIF   (&CVTAOS2).CVT72
+CVTHEAD  DC    V(IEAHEAD) -  ADDRESS OF THE HIGHEST PRIORITY TCB IN THE
+*                            READY QUEUE (OS/VS1)                MDC025
+CVTMZ00  DC    A(0) -        HIGHEST ADDRESS IN VIRTUAL STORAGE FOR
+*                            THIS MACHINE
+         AGO   .CVT73
+.CVT72   ANOP
+CVTSV76C DC    XL4'00' -     SVC 76 MESSAGE CONTROL FIELD.  HIGH-ORDER
+*                            BIT IS DEFINED, AND ALL OTHER BITS ARE
+*                            ZERO.  (OS/VS2)  (MDC373)         @ZA18857
+CVTSV76Q EQU   X'80' -       SVC 76 ENQUEUE SWITCH.  THIS IS THE
+*                            HIGH-ORDER BIT OF CVTSV76C.  (OS/VS2)
+*                            (MDC374)                          @ZA18857
+CVTMZ00  DC    X'00FFFFFF' - HIGHEST ADDRESS IN VIRTUAL STORAGE FOR
+*                            THIS MACHINE
+.CVT73   ANOP
+CVT1EF00 DC    A(0) -        ADDRESS OF ROUTINE WHICH CREATES IRB'S
+*                            FOR EXITS
+         AIF   (NOT &CVTAOS1).CVT83
+CVTQOCR  DC    V(IEAQOCR) -  GRAPHICS INTERFACE TASK (GFX) FIELD.
+*                            ADDRESS OF SEVENTH WORD OF GFX PARAMETER
+*                            LIST, IF GFX IS ACTIVE.  ZERO IF GFX IS
+*                            NOT ACTIVE
+         AGO   .CVT84
+.CVT83   ANOP
+CVTQOCR  DC    A(0) -        GRAPHICS INTERFACE TASK (GFX) FIELD.
+*                            ADDRESS OF SEVENTH WORD OF GFX PARAMETER
+*                            LIST, IF GFX IS ACTIVE.  ZERO IF GFX IS
+*                            NOT ACTIVE
+.CVT84   ANOP
+CVTQMWR  DC    V(IEFQMWR) -  ADDRESS OF QUEUE MANAGER'S SYSTEM OUTPUT
+*                            COMMUNICATIONS-DATA-AREA (CDA), WHICH IS
+*                            STORED ON AN EXTERNAL DEVICE
+CVTSNCTR DC    H'0' -        SERIAL NUMBER COUNTER FOR ASSIGNING SERIAL
+*                            NUMBERS TO NON-SPECIFIC, UNLABELED
+*                            MAGNETIC TAPE VOLUMES
+CVTOPTA  DC    AL1(&FLAG) -  OPTION INDICATORS
+CVTCCH   EQU   X'80' -       CHANNEL CHECK HANDLER (CCH) OPTION PRESENT
+*                            - RECOVERY MANAGEMENT SUPPORT (RMS) XM4686
+CVTAPR   EQU   X'40' -       ALTERNATE PATH RETRY (APR) OPTION PRESENT
+*                            - RECOVERY MANAGEMENT SUPPORT (RMS)
+CVTDDR   EQU   X'20' -       DYNAMIC DEVICE RECONFIGURATION (DDR)
+*                            OPTION PRESENT - RECOVERY MANAGEMENT
+*                            SUPPORT (RMS)  (OS/VS1)
+*                            DDR SYSTEM-INITIATED SWAP ACTIVE  (OS/VS2)
+*                                                                MDC126
+CVTNIP   EQU   X'10' -       NIP IS EXECUTING
+CVTRSV12 EQU   X'08',,C'X' - RESERVED
+CVT121TR EQU   X'04',,C'X'   DO NOT TRANSLATE EXCP V=R       @ZA45816
+CVTASCII EQU   X'02' -       ASCII TAPE PROCESSING IS GENERATED IN
+*                            THIS SYSTEM
+CVTXPFP  EQU   X'01' -       CPU HAS EXTENDED PRECISION FLOATING POINT
+*                            FEATURE
+CVTOPTB  DC    AL1(&FLAGB) - MISCELLANEOUS FLAGS
+CVTPROT  EQU   X'80' -       CPU HAS STORE PROTECTION FEATURE (OS/VS1)
+CVTCTIMS EQU   X'40' -       IF ON, HARDWARE HAS THE CLOCK COMPARATOR
+*                            AND CPU TIMER FEATURE INSTALLED, AND
+*                            OS/VS1 SYSGEN HAS SPECIFIED THIS FEATURE
+*                            (OS/VS1)                            MDC127
+CVTTOD   EQU   X'20' -       CPU HAS TIME-OF-DAY CLOCK FEATURE
+CVTNLOG  EQU   X'10' -       SYS1.LOGREC IS UNAVAILABLE FOR ERROR
+*                            RECORDING.  ALWAYS SET TO ZERO FOR
+*                            OS/VS1.                             MDC127
+CVTAPTHR EQU   X'08' -       NIP SETS THIS BIT TO 1 WHEN DEVICE TESTING
+*                            IS COMPLETE.  IF 1, I/O SUPERVISOR USES
+*                            AN ALTERNATE PATH TO A DEVICE WHEN A
+*                            CONDITION CODE OF 3 EXISTS.  THIS BIT IS
+*                            RESET TO 0 BY NIP AFTER THE LINK PACK
+*                            AREA IS INITIALIZED.                YM2670
+CVTFP    EQU   X'04' -       CPU HAS FETCH PROTECTION FEATURE (OS/VS1)
+*                                                                ICB427
+CVTVS1A  EQU   X'02' -       VS1 ASSIST IS AVAILABLE FOR USE (OS/VS1)
+*                            (MDC353)                          @X60CA9A
+CVTVS1B  EQU   X'01' -       VS1 ASSIST SUBSET IS AVAILABLE FOR USE
+*                            (OS/VS1)  (MDC365)                @X60KU9A
+.*
+.*             CVTQCDSR, CVTQLPAQ: OS/VS1, OS/VS2
+.*
+         AIF   (&CVTAOS1).CVT91
+CVTQCDSR DC    V(IEAQCDSR) - CDE SEARCH ROUTINE ADDRESS  (OS/VS2)
+CVTQLPAQ DC    V(IEAQLPAQ) - ADDRESS OF POINTER TO MOST RECENT ENTRY
+*                            ON LINK PACK AREA CDE QUEUE  (OS/VS2)
+         AGO   .CVT92
+.CVT91   ANOP
+CVTQCDSR DC    A(0) -        ADDRESS OF THE ROUTINE THAT SEARCHES THE
+*                            REENTERABLE LOAD MODULE QUEUE  (OS/VS1)
+CVTQLPAQ DC    A(0) -        ADDRESS OF THE REENTERABLE LOAD MODULE
+*                            QUEUE  (OS/VS1)
+.CVT92   ANOP
+CVTRSV18 DC    A(0) -        ** CVTMPCVT FIELD UNUSED IN OS/VS **
+CVTSMCA  DC    A(0) -        ADDRESS OF THE SYSTEM MANAGEMENT CONTROL
+*                            AREA (SMCA) IF THE SYSTEM MANAGEMENT
+*                            FACILITIES (SMF) OPTION IS PRESENT IN THE
+*                            SYSTEM.  OTHERWISE, ZERO.
+.*
+.*             CVTABEND: OS/VS1, OS/VS2
+.*
+         AIF   (NOT &CVTAOS2).CVTB1
+CVTABEND DC    V(IEABEND) -  ADDRESS OF SECONDARY CVT FOR ABEND IN EOT
+*                            (OS/VS2)
+         AGO   .CVTB2
+.CVTB1   ANOP
+CVTABEND DC    A(0) -        USED BY AN INTERNAL ABEND TRACE ROUTINE
+*                            FOR DEBUG PURPOSES (OS/VS1)         XM0615
+.CVTB2   ANOP
+.*
+CVTUSER  DC    A(0) -        A WORD AVAILABLE TO THE USER
+CVTMDLDS DC    A(0) -        RESERVED FOR MODEL-DEPENDENT SUPPORT
+CVTQABST SVC   13 -          AN ABEND INVOCATION (OS/VS2)
+CVTLNKSC SVC   6 -           A LINK INVOCATION                   ICB369
+.*
+.*             CVTTSCE: TIME SLICING, NONE
+.*
+         AIF   (&CVTAOS2).CVTC1
+         AIF   ('&OPTIONS(1)' NE 'TSLICE').CVTC1
+CVTTSCE  DC    V(IEATSCE) -  ADDRESS OF THE FIRST TIME SLICE CONTROL
+*                            ELEMENT (TSCE)
+         AGO   .CVTC2
+.CVTC1   ANOP
+CVTTSCE  DC    A(0) -        ADDRESS OF THE FIRST TIME SLICE CONTROL
+*                            ELEMENT (TSCE)
+.CVTC2   ANOP
+.*
+.*             CVTPATCH: PATCH AREA, NONE
+.*
+         AIF   (&CVTAOS2).CVTC5
+         AIF   ('&PATCH' NE 'YES').CVTC3
+.CVTC5   ANOP
+CVTPATCH DC    V(IEAPATCH) - ADDRESS OF A 200-BYTE FE PATCH AREA
+         AGO   .CVTC4
+.CVTC3   ANOP
+CVTPATCH DC    A(0) -        ADDRESS OF A 200-BYTE FE PATCH AREA
+.CVTC4   ANOP
+.*
+CVTRMS   DC    V(IGFRVT) -   RECOVERY MANAGEMENT SUPPORT (RMS)
+*                            COMMUNICATIONS VECTOR.  ADDRESS OF A
+*                            MACHINE STATUS BLOCK.
+CVTRV515 DC    A(0) -        ** CVTTSCVT FIELD UNUSED IN MVS **
+*                            (MDC037)                          @Z40AQ9A
+         AIF   ('&RPS' EQ 'NO').CVTC6
+CVT0SCR1 DC    V(IEC0SCR1) - ADDRESS OF THE SECTOR CALCULATION ROUTINE
+*                            FOR ROTATIONAL POSITION SENSING (RPS)
+         AGO   .CVTC7
+.CVTC6   ANOP
+CVT0SCR1 DC    A(0) -        ADDRESS OF THE SECTOR CALCULATION ROUTINE
+*                            FOR ROTATIONAL POSITION SENSING (RPS)
+.CVTC7   ANOP
+CVTGTF   DS    0A -          GENERALIZED TRACE FACILITY (GTF) CONTROL
+*                            WORD                                ICB312
+CVTGTFST DC    AL1(0) -      GTF FLAG BYTES                      ICB312
+         AIF   (&CVTAOS2).CVTM13
+CVTGTFS  EQU   X'C0' -       GTF STATUS (OS/VS1)                 MDC088
+CVTGTFIN EQU   X'00' -       GTF NOT ACTIVE (OS/VS1)             MDC089
+CVTGTFSP EQU   X'80' -       GTF STOPPING (OS/VS1)               MDC090
+CVTGTFSR EQU   X'40' -       GTF STARTING (OS/VS1)               MDC091
+CVTGTFAC EQU   X'C0' -       GTF ACTIVE (OS/VS1)                 MDC092
+CVTSTATE EQU   X'20' -       GTF IS IN CONTROL PROCESSING A HOOK
+*                            (OS/VS1)                            MDC093
+CVTTMODE EQU   X'10' -       IF 0, MODE=INT SPECIFIED.  IF 1, MODE=EXT
+*                            SPECIFIED WHICH MEANS TRACE DATA IS TO BE
+*                            WRITTEN TO AN EXTERNAL DEVICE.
+CVTFORM  EQU   X'08' -       TRACE DATA IS TO BE FORMATTED ON ABNORMAL
+*                            TERMINATION                         MDC095
+         AGO   .CVTM14
+.CVTM13  ANOP
+CVTGTFAV EQU   X'80' -       IF ZERO, GTF NOT ACTIVE.  IF ONE, GTF
+*                            ACTIVE.  (OS/VS2)                   MDC098
+CVTRV315 EQU   X'40',,C'X' - RESERVED (OS/VS2)
+CVTRV316 EQU   X'20',,C'X' - RESERVED (OS/VS2)
+CVTRV317 EQU   X'10',,C'X' - RESERVED (OS/VS2)
+CVTRV318 EQU   X'08',,C'X' - RESERVED (OS/VS2)
+.CVTM14  ANOP
+CVTUSR   EQU   X'04' -       TRACE=USR SPECIFIED.  USER-REQUESTED TRACE
+*                            DATA IS TO BE INCLUDED IN THE TRACE DATA
+*                            SET.  (MDC317)                    @Z30AP9A
+CVTRNIO  EQU   X'02' -       GTF IS ACTIVE AND TRACING RNIO EVENTS
+*                                                                MDC187
+CVTRSV27 EQU   X'01',,C'X' - RESERVED
+         AIF   (&CVTAOS2).CVTG1
+CVTGTFA  DC    VL3(HHLHCTQ) -ADDRESS OF THE MONITOR CALL VECTOR
+*                            TABLE (OS/VS1)                      MDC156
+         AGO   .CVTG2
+.CVTG1   ANOP
+CVTGTFA  DC    VL3(AHLHEAD) -ADDRESS OF MAIN MONITOR CALL ROUTING
+*                            TABLE, MCHEAD  (OS/VS2)             MDC156
+.CVTG2   ANOP
+CVTAQAVT DS    0A -          ADDRESS OF THE FIRST WORD OF THE TCAM
+*                            DISPATCHER WHICH CONTAINS THE ADDRESS OF
+*                            THE ADDRESS VECTOR TABLE (AVT).  IF ZERO,
+*                            TCAM IS NOT STARTED.
+CVTTCMFG DC    X'00' -       TCAM FLAGS
+CVTTCRDY EQU   X'80' -       TCAM IS READY TO ACCEPT USERS
+CVTLDEV  EQU   X'40' -       LOCAL DEVICE ATTACHED TO TCAM
+*                            (MDC357)                          @Z40XA9A
+CVTRSV29 EQU   X'20',,C'X' - RESERVED
+CVTRSV30 EQU   X'10',,C'X' - RESERVED
+CVTRSV31 EQU   X'08',,C'X' - RESERVED
+CVTRSV32 EQU   X'04',,C'X' - RESERVED
+CVTRSV33 EQU   X'02',,C'X' - RESERVED
+CVTRSV34 EQU   X'01',,C'X' - RESERVED
+CVTAQAVB DC    AL3(0) -      SAME AS CVTAQAVT ABOVE
+         AIF   (&CVTAOS2).CVTP2
+CVTTATA  DS    0A -          ADDRESS OF THE FIRST ENTRY IN THE TCB
+*                            ADDRESS TABLE.  THE FIRST ENTRY IS FOR
+*                            PARTITION 0.  (OS/VS1)
+CVTTSKS  DC    FL1'0' -      MAXIMUM ALLOWABLE NUMBER OF ENTRIES IN THE
+*                            TCB ADDRESS TABLE  (OS/VS1)
+CVTTAT   DC    AL3(0) -      SAME AS CVTTATA ABOVE
+CVTATER  DS    0A -          SAME AS CVTATERA BELOW              ICB346
+.*
+.*             CVTSYST: OPTIONS(3)
+.*
+         AIF   ('&OPTIONS(3)' EQ '').CVT85
+CVTSYST  DC    AL1(&OPTIONS(3)) NUMBER OF ENTRIES IN THE TCB ADDRESS
+*                            TABLE FOR TCB'S CREATED DURING SYSTEM
+*                            GENERATION  (OS/VS1)
+         AGO   .CVT86
+.CVT85   ANOP
+CVTSYST  DC    FL1'0' -      NUMBER OF ENTRIES IN THE TCB ADDRESS
+*                            TABLE FOR TCB'S CREATED DURING SYSTEM
+*                            GENERATION  (OS/VS1)
+.CVT86   ANOP
+CVTATERA DC    VL3(IEASETCB) ADDRESS OF THE SYSTEM ERROR TCB.  THE
+*                            PURGE ROUTINE USES THIS FIELD TO ACCESS
+*                            THE SIRB.  (OS/VS1)                 ICB346
+         AGO   .CVTP3
+.CVTP2   ANOP
+CVTVOLM2 DS    0A -          ADDRESS OF TABLE FOR POWER WARNING FEATURE
+*                            (PWF)  (OS/VS2)  (MDC308)         @Z30AQ9A
+CVTVOLF2 DC    X'80' -       PWF FLAG BYTE.  THIS BYTE IS OVERLAID BY
+*                            CVTVOLM2 AFTER PWF INITIALIZATION.
+*                            (OS/VS2)  (MDC309)                @Z30AQ9A
+CVTVOLI2 EQU   X'80' -       PWF INITIALIZATION HAS NOT OCCURRED
+*                            (OS/VS2)  (MDC310)                @Z30AQ9A
+CVTVOLT2 DC    AL3(&WARN) -  PWF RECHECK TIME DELAY.  THIS VALUE IS
+*                            OVERLAID BY CVTVOLM2 AFTER PWF
+*                            INITIALIZATION. (OS/VS2) (MDC311) @Z30AQ9A
+         DC    A(0) -        RESERVED  (OS/VS2)
+.CVTP3   ANOP
+CVTEXT1  DC    A(CVTXTNT1) - ADDRESS OF OS - OS/VS COMMON EXTENSION
+*                                                                ICB421
+         AIF   (&CVTAOS2).CVTP7
+         AIF   ('&CBMRTN' EQ 'NO').CVTP7
+CVTCBSP  DC    V(IDA019C2) - ADDRESS OF ACCESS METHOD CONTROL BLOCK
+*                            STRUCTURE                           MDC195
+         AGO   .CVTP8
+.CVTP7   ANOP
+CVTCBSP  DC    A(0) -        ADDRESS OF ACCESS METHOD CONTROL BLOCK
+*                            STRUCTURE                           MDC195
+.CVTP8   ANOP
+CVTPURG  DS    0A -          ADDRESS OF SUBSYSTEM PURGE ROUTINE  ICB330
+CVTRSV35 DS    XL1 -         RESERVED                            ICB330
+CVTPURGA DC    AL3(0) -      ADDRESS OF SUBSYSTEM PURGE ROUTINE  ICB330
+CVTAMFF  DC    XL4'00' -     RESERVED FOR ACCESS METHOD FLAGS    ICB436
+CVTQMSG  DS    0A -          ADDRESS OF INFORMATION TO BE PRINTED
+*                            BY ABEND                            ICB307
+CVTRSV36 DS    XL1 -         RESERVED                            ICB307
+CVTQMSGA DC    VL3(IEAQMSGS) ADDRESS OF INFORMATION TO BE PRINTED
+*                            BY ABEND                            ICB449
+CVTDMSR  DS    0A -          SAME AS CVTDMSRA BELOW              ICB346
+         AIF   (&CVTAOS2).CVTP4
+CVTRSV37 DS    X -           RESERVED  (OS/VS1)                  ICB346
+CVTDMSRA DC    VL3(IFG019RA) ADDRESS OF THE OPEN/CLOSE/EOV SUPERVISORY
+*                            ROUTINE IN THE NUCLEUS.  THIS ROUTINE
+*                            HANDLES THE ROUTING OF CONTROL AMONG THE
+*                            I/O SUPPORT ROUTINES.               ICB346
+         AGO   .CVTP5
+.CVTP4   ANOP
+CVTDMSRF DC    XL1'00' -     OPEN/CLOSE/EOV FLAG BYTE.  SETTING BOTH
+*                            BIT 0 AND BIT 1 ON WILL CAUSE BOTH KINDS
+*                            OF DUMPS TO BE TAKEN.  THESE BITS ARE USED
+*                            DURING TESTING AND DEBUGGING WHEN OTHER
+*                            DEBUG METHODS ARE INEFFECTIVE.  (OS/VS2)
+*                            (MDC350)                          @Z40AQ9A
+CVTSDUMP EQU   X'80' -       SET BY COREZAP.  WILL CAUSE AN SDUMP TO BE
+*                            TAKEN AND IEC999I MESSAGE ISSUED FOR EVERY
+*                            ABEND ISSUED WITHIN AN OPEN/CLOSE/EOV OR
+*                            DADSM FUNCTION. (OS/VS2) (MDC351) @Z40AQ9A
+CVTUDUMP EQU   X'40' -       SET BY COREZAP.  WILL CAUSE AN ABEND DUMP
+*                            TO BE TAKEN FOR EVERY ABEND ISSUED WITHIN
+*                            AN OPEN/CLOSE/EOV OR DADSM FUNCTION.
+*                            (OS/VS2)  (MDC352)                @Z40AQ9A
+CVTRV629 EQU   X'20',,C'X' - RESERVED (OS/VS2)                 @Z40AQ9A
+CVTRV630 EQU   X'10',,C'X' - RESERVED (OS/VS2)                 @Z40AQ9A
+CVTRV631 EQU   X'08',,C'X' - RESERVED (OS/VS2)                 @Z40AQ9A
+CVTRV632 EQU   X'04',,C'X' - RESERVED (OS/VS2)                 @Z40AQ9A
+CVTRV633 EQU   X'02',,C'X' - RESERVED (OS/VS2)                 @Z40AQ9A
+CVTRV634 EQU   X'01',,C'X' - RESERVED (OS/VS2)                 @Z40AQ9A
+CVTDMSRA DC    AL3(0) -      ADDRESS OF THE OPEN/CLOSE/EOV SUPERVISORY
+*                            ROUTINE IN THE NUCLEUS.  THIS ROUTINE
+*                            HANDLES THE ROUTING OF CONTROL AMONG THE
+*                            I/O SUPPORT ROUTINES.               ICB346
+.CVTP5   ANOP
+CVTRSV38 DS    F -           RESERVED
+CVTRSV39 DS    F -           RESERVED
+*
+*              OS/VS1 - OS/VS2 COMMON SECTION
+*
+CVTREAL  DC    A(&REAL) -    ADDRESS OF THE VIRTUAL STORAGE BYTE
+*                            FOLLOWING THE HIGHEST VIRTUAL=REAL
+*                            STORAGE ADDRESS                     ICB368
+CVTPTRV  DC    V(IEAPTRV) -  ADDRESS OF PAGING SUPERVISOR GENERAL
+*                            ROUTINE TO TRANSLATE REAL ADDRESSES TO
+*                            VIRTUAL ADDRESSES
+         AIF   (&CVTAOS2).CVTJ1
+CVTMODE  DC    V(IEAMODBR) - ADDRESS OF ROUTINE TO CHANGE SYSTEM MASK
+*                            (OS/VS1)  (MDC217)                  YM4244
+CVTJESCT DS    A -           ADDRESS OF JOB ENTRY SUBSYSTEM (JES)
+*                            CONTROL TABLE
+CVTJEPS  DC    V(IEAJPTCB) - ADDRESS OF JOB ENTRY PERIPHERAL SERVICES
+*                            (JEPS) MONITOR TCB  (OS/VS1)        YM2702
+         AGO   .CVTJ2
+.CVTJ1   ANOP
+         DC    A(0) -        RESERVED (WAS CVTMODE) (OS/VS2)
+*                            (MDC217)                            YM4244
+CVTJESCT DC    V(IEFJESCT) - ADDRESS OF JOB ENTRY SUBSYSTEM (JES)
+*                            CONTROL TABLE                       ICB342
+         DS    A -           RESERVED (WAS CVTJEPS) (OS/VS2)     YM2702
+.CVTJ2   ANOP
+CVTTZ    DC    F'&CVTTZ' -   DIFFERENCE BETWEEN LOCAL TIME AND
+*                            GREENWICH MEAN TIME IN BINARY UNITS OF
+*                            1.048576 SECONDS
+CVTMCHPR DS    A -           ADDRESS OF MACHINE CHECK PARAMETER LIST
+         AIF   (&CVTAOS2).CVTJ5                                  YM3590
+CVTEORM  DC    A(0) -        HIGHEST REAL ADDRESS IN MAIN STORAGE
+*                            (OS/VS1)                            MDC087
+CVTERPV  DC    V(IEAERPV) -  POINTER TO I/O SUPERVISOR SUBROUTINE TO
+*                            CONVERT CCW DATA ADDRESSES TO VIRTUAL
+*                            ADDRESSES (OS/VS1)  (MDC219)        YM4043
+         AIF   ('&LOADBAL' EQ 'YES').CVTJ3
+CVTINTLA DC    A(0) -        ADDRESS OF A TIME INTERVAL.  I/O LOAD
+*                            BALANCING COUNTS THE NUMBER OF EXCP'S
+*                            ISSUED DURING THIS TIME INTERVAL AND USES
+*                            THE VALUE IN DETERMINING THE AMOUNT OF I/O
+*                            ACTIVITY IN THE SYSTEM.  (OS/VS1)
+*                            (MDC220)                            YM4043
+         AGO   .CVTJ6                                            YM4043
+.CVTJ3   ANOP
+CVTINTLA DC    V(IEAEXINT) - ADDRESS OF A TIME INTERVAL.  I/O LOAD
+*                            BALANCING COUNTS THE NUMBER OF EXCP'S
+*                            ISSUED DURING THIS TIME INTERVAL AND USES
+*                            THE VALUE IN DETERMINING THE AMOUNT OF I/O
+*                            ACTIVITY IN THE SYSTEM.  (OS/VS1)
+*                            (MDC220)                            YM4043
+         AGO   .CVTJ6                                            YM3590
+.CVTJ5   ANOP                                                    YM3590
+CVTEORM  DC    A(&STORAGE) - POTENTIAL REAL HIGH STORAGE         YM3613
+*                            ADDRESS (OS/VS2)                    YM3613
+CVTRV517 DC    A(0) -        ** CVTERPV FIELD UNUSED IN MVS **
+*                            (MDC219)                            YM4043
+CVTRV518 DC    A(0) -        ** CVTINTLA FIELD UNUSED IN MVS **
+*                            (MDC220)                            YM4043
+.CVTJ6   ANOP                                                    YM3590
+CVTAPF   DS    0A -          SAME AS CVTAPFA BELOW               ICB360
+CVTRSV40 DS    X -           RESERVED                            ICB360
+CVTAPFA  DC    VL3(IEAVTEST) ADDRESS OF BRANCH ENTRY POINT IN
+*                            AUTHORIZED PROGRAM FACILITY (APF) ROUTINE
+CVTEXT2  DS    0A -          ADDRESS OF OS/VS1 - OS/VS2 COMMON
+*                            EXTENSION                           ICB330
+CVTRSV41 DS    XL1 -         RESERVED                            ICB330
+CVTEXT2A DC    AL3(CVTXTNT2) SAME AS CVTEXT2 ABOVE               ICB330
+CVTHJES  DS    0A -          SAME AS CVTHJESA BELOW              ICB454
+CVTRSV42 DS    X -           RESERVED                            ICB454
+CVTHJESA DC    AL3(0) -      ADDRESS OF OPTIONAL JOB ENTRY SUBSYSTEM
+*                            (JES) COMMUNICATION VECTOR TABLE    ICB454
+CVTRSV43 DS    H -           RESERVED
+CVTRSV44 DS    H -           RESERVED
+CVTRSV45 DS    F -           RESERVED
+CVTRSV46 DS    F -           RESERVED
+         AIF   (&CVTAOS2).CVTV2
+*
+*              OS/VS1 OVERLAY
+*
+CVTPGSIA DC    V(IHAPGSIA) - ADDRESS OF PAGING SUPERVISOR INFORMATION
+*                            AREA
+CVTPCVT  DC    V(IEAPCVT) -  ADDRESS OF PAGED CVT EXTENSION
+CVTA1F1  DS    B -           PAGE FAULT FLAGS
+CVTPFSW  EQU   X'80' -       ONLY THE PAGING TASK MAY BE DISPATCHED
+CVTSRSW  EQU   X'40' -       NO TASK EXCEPT THE PAGING TASK MAY EXECUTE
+*                            DISABLED CODE
+CVTRSV47 EQU   X'20',,C'X' - RESERVED
+CVTRSV48 EQU   X'10',,C'X' - RESERVED
+CVTRSV49 EQU   X'08',,C'X' - RESERVED
+CVTRSV50 EQU   X'04',,C'X' - RESERVED
+CVTRSV51 EQU   X'02',,C'X' - RESERVED
+CVTRSV52 EQU   X'01',,C'X' - RESERVED
+CVTSYSK  DS    B -           SYSTEM LOCK.  IF NOT ZERO, ONLY THE PAGING
+*                            TASK MAY BE DISPATCHED
+CVTRSV53 EQU   X'80',,C'X' - RESERVED
+CVTRSV54 EQU   X'40',,C'X' - RESERVED
+CVTRSV55 EQU   X'20',,C'X' - RESERVED
+CVTRSV56 EQU   X'10',,C'X' - RESERVED
+CVTSLKR  EQU   X'08' -       MACHINE CHECK HANDLING IS IN
+*                            PROGRESS                            ICB320
+CVTSLKQ  EQU   X'04' -       SYSTEM QUEUE AREA (SQA) HAS BEEN EXHAUSTED
+CVTSLKP  EQU   X'02' -       LAST PAGING CONTROL BLOCK (PCB) HAS BEEN
+*                            USED
+CVTSLKO  EQU   X'01' -       A ROUTINE RUNNING DISABLED HAS PRODUCED A
+*                            PAGE FAULT
+CVTSULK  DS    H -           SUPERVISOR LOCK.  NUMBER OF TASKS
+*                            ATTEMPTING TO EXECUTE DISABLED ROUTINES.
+*                            IF NOT ZERO, ONLY ENABLED TASKS MAY RUN.
+CVTSMF   DC    V(SMFTCBIT) - ADDRESS OF SYSTEM MANAGEMENT FACILITIES
+*                            (SMF) TCB                           ICB395
+CVTPNWFR DC    V(IEAFNPAN) - ADDRESS OF ROUTINE WHICH FREES THE
+*                            'EMERGENCY' WORK AREA (ICB413)      XM2452
+CVTDDCE  DC    V(IEADDCE) -  ADDRESS OF DYNAMIC DISPATCHING CONTROL
+*                            ELEMENT                             ICB466
+CVTRSV57 DS    H -           RESERVED
+CVTRSV58 DS    H -           RESERVED
+CVTSTOA  DS    F -           SAVE AREA FOR THE REAL STORAGE ADDRESS OF
+*                            THE SEGMENT TABLE ORIGIN            ICB496
+CVTVOLM1 DS    0A -          ADDRESS OF TABLE FOR POWER WARNING FEATURE
+*                            (PWF)  (MDC312)                   @X04AQ9A
+CVTVOLF1 DC    X'80' -       PWF FLAG BYTE.  THIS BYTE IS OVERLAID BY
+*                            CVTVOLM1 AFTER PWF INITIALIZATION.
+*                            (MDC313)                          @X04AQ9A
+CVTVOLI1 EQU   X'80' -       PWF INITIALIZATION HAS NOT OCCURRED
+*                            (MDC314)                          @X04AQ9A
+CVTVOLT1 DC    AL3(&WARN) -  PWF RECHECK TIME DELAY.  THIS VALUE IS
+*                            OVERLAID BY CVTVOLM1 AFTER PWF
+*                            INITIALIZATION.  (MDC315)         @X04AQ9A
+CVTSU    DC    V(IEAIHASU) - ADDRESS OF SU BIT STRING (MDC366) @X60KV9A
+CVTRV490 DC    A(0) -        RESERVED  (MDC359)                @X60CV9A
+CVTAUTH  DC    A(0) -        POINTER TO AUTHORIZED LIBRARY TABLE MDC188
+CVTACTAP DC    V(ISTAPC42) - ADDRESS OF BRANCH ENTRY TO VTAM'S SVC
+*                            ROUTINE  (MDC216)                 @X31BH9A
+CVTRV485 DS    A -           RESERVED                            MDC106
+CVTRV486 DS    A -           RESERVED                            MDC106
+CVTRV487 DS    A -           RESERVED                            MDC106
+CVTRV488 DS    A -           RESERVED                            MDC106
+         AGO   .CVTV4
+.CVTV2   ANOP
+*
+*              OS/VS2 OVERLAY
+*
+CVTGETL  DC    A(0) -        ADDRESS OF IKJGETL, TSO GET LINE ROUTINE
+*                            (MDC206)                            YM2225
+CVTLPDSR DC    V(IEAVVMSR) - ADDRESS OF LINK PACK AREA (LPA) DIRECTORY
+*                            SEARCH ROUTINE
+CVTPVTP  DC    V(CSECPVT) -  ADDRESS OF PAGE VECTOR TABLE
+CVTLPDIA DS    0A -          ADDRESS OF LINK PACK AREA (LPA) DIRECTORY
+*                            (ON PAGE BOUNDARY)
+CVTDIRST DS    B -           FLAG BYTE
+CVTDICOM EQU   X'80' -       LPA DIRECTORY HAS BEEN INITIALIZED BY NIP
+CVTRSV63 EQU   X'40',,C'X' - RESERVED
+CVTRSV64 EQU   X'20',,C'X' - RESERVED
+CVTRSV65 EQU   X'10',,C'X' - RESERVED
+CVTRSV66 EQU   X'08',,C'X' - RESERVED
+CVTRSV67 EQU   X'04',,C'X' - RESERVED
+CVTRSV68 EQU   X'02',,C'X' - RESERVED
+CVTRSV69 EQU   X'01',,C'X' - RESERVED
+CVTLPDIR DS    AL3 -         ADDRESS OF LINK PACK AREA (LPA) DIRECTORY
+*                            (ON PAGE BOUNDARY)
+CVTPSAD0 DC    V(IGFPSAD0) - PSA PROTECT DISABLE (MDC393)      @ZA36872
+CVTPSAE0 DC    V(IGFPSAE0) - PSA PROTECT ENABLE (MDC394)       @ZA36872
+CVTSLIDA DS    0CL4 -        IDENTITY OF TCB CAUSING SUPERVISOR LOCK
+*                            BYTE (CVTSYLK) TO BE SET OR IDENTITY OF
+*                            TCB THAT SECOND EXIT PROCESSING IS FOR
+*                            WHEN CVTSEIC=1
+CVTSYLK  DS    C -           SUPERVISOR LOCK.  ONLY ENABLED TASKS MAY
+*                            BE DISPATCHED
+CVTSYLKS EQU   X'FF' -       SET LOCK BYTE
+CVTSYLKR EQU   X'00' -       RESET LOCK BYTE
+CVTSLID  DS    CL3 -         SAME AS CVTSLIDA ABOVE
+CVTRV322 DC    A(0) -        RESERVED FOR FUTURE USE  (MDC343) @Z40AQ9A
+CVTRV328 DC    A(0) -        ** CVTSEG AND CVTSEGA FIELDS UNUSED IN
+*                            MVS **  (MDC139)                  @Z40AQ9A
+CVTVLDWT DC    V(IEEVLDWT) - ADDRESS OF STOP/RESTART INTERFACE ROUTINE
+*                            (MDC392)                          @G64UP9A
+CVTEXSLF DC    F'20000000' - EXCESSIVE SPIN LENGTH FACTOR
+*                            (MDC385)                          @G64UP9A
+CVTEXSNR DC    V(IEEVEXSN) - ADDRESS OF EXCESSIVE SPIN NOTIFICATION
+*                            ROUTINE  (MDC386)                 @G64UP9A
+CVTEXSNL DC    XL1'00' -     SERIALIZATION BYTE FOR EXCESSIVE SPIN
+*                            NOTIFICATION ROUTINE  (MDC387)    @G64UP9A
+CVTSPVLK DS    FL1 -         NUMBER OF TASKS WHICH HAVE TERMINATED
+*                            WHILE OWNING SUPERVISOR LOCK WITHOUT
+*                            OPERATOR HAVING YET BEEN NOTIFIED
+CVTCTLFG DC    AL1(&CTLFLGS) SYSTEM CONTROL FLAGS
+CVTRV323 EQU   X'80',,C'X' - ** CVTPSIC BIT UNUSED IN MVS **
+*                            (MDC118)                          @Z40AQ9A
+CVTRV333 EQU   X'40',,C'X' - ** CVTAPGB BIT UNUSED IN MVS **
+*                            (MDC151)                          @Z40AQ9A
+CVTRSV78 EQU   X'20',,C'X' - RESERVED
+CVTDSTAT EQU   X'10' -       DEVSTAT OPTION IN EFFECT.  DEVICE ADDRESS
+*                            FOR 2319, 3330, 2314, 3330-1, 3340 CAN
+*                            VARY ACROSS SYSTEMS                 MDC189
+CVTRSV79 EQU   X'08',,C'X' - RESERVED
+CVTNOMP  EQU   X'04' -       MULTIPROCESSING CODE IS NOT IN THE SYSTEM
+*                                                                MDC176
+CVTGTRCE EQU   X'02' -       GENERALIZED TRACE FACILITY (GTF) HAS
+*                            SUPPRESSED SUPERVISOR TRACE         ICB446
+CVTSDTRC EQU   X'01' -       SVC DUMP HAS SUPPRESSED SUPERVISOR TRACE
+*                                                                ICB446
+CVTAPG   DC    FL1'7' -      DISPATCHING PRIORITY OF AUTOMATIC PRIORITY
+*                            GROUP (APG)                         MDC152
+CVTTRACE BR    11 -          BRANCH ON REGISTER INSTRUCTION.  SET BY
+*                            NIP.  REGISTER TEN FOR TRACE.  REGISTER
+*                            ELEVEN FOR NO TRACE.
+CVTTRAC2 BR    11 -          THIS ALLOWS FOR SUPPRESSING TRACE
+*                            DYNAMICALLY BY SETTING CONDITION CODE
+*                            MASK TO ZERO IN FIRST INSTRUCTION
+*                            (CVTTRACE)
+CVTRSCN  DC    V(IEATRSCN) - ADDRESS OF ROUTINE TO SCAN TCB TREE
+CVTTAS   DC    A(0) -        ADDRESS OF ROUTINE TO TRANSFER ADDRESS
+*                            SPACE                               YM2706
+CVTRV332 DC    A(0) -        ** CVTPVALD FIELD UNUSED IN MVS **
+*                            (MDC148)                          @Z40AQ9A
+CVTSHRVM DS    A -           LOWEST ADDRESS OF SHARED VIRTUAL STORAGE
+*                            AREA.  THIS ADDRESS WILL BE THE BEGINNING
+*                            OF THE COMMON SERVICE AREA (CSA)
+*                            (MDC324)                          @Z30AQ9A
+CVT0VL01 DC    V(IEA0VL01) - ENTRY POINT ADDRESS OF VALIDITY CHECK
+*                            ROUTINE (IEA0VL01) USED TO COMPARE
+*                            PROTECT KEY OF AN ADDRESS WITH TCB
+*                            PROTECT KEY
+CVTPPGMX DC    V(IEAPPGMX) - ADDRESS OF A BRANCH ENTRY POINT   @ZA58427
+*                            TO PROGRAM MANAGER RESOURCE       @ZA58427
+*                            MANAGEMENT ROUTINES               @ZA58427
+CVTRV325 DC    A(0) -        ** CVTPFIXR FIELD UNUSED IN MVS **
+*                            (MDC120)                          @Z40AQ9A
+CVTRV326 DC    A(0) -        ** CVTPFIXP FIELD UNUSED IN MVS **
+*                            (MDC121)                          @Z40AQ9A
+CVTASCRF DC    A(0) -        CREATED ASCB QUEUE HEADER
+*                            (MDC337)                          @ZA04120
+CVTASCRL DC    A(0) -        CREATED ASCB QUEUE TRAILER
+*                            (MDC338)                          @ZA04120
+CVTPUTL  DC    A(0) -        ADDRESS OF IKJPUTL, TSO PUT LINE ROUTINE
+*                            (MDC207)                            YM2225
+CVTSRBRT DC    V(IEAPDSRT) - DISPATCHER RETURN ADDRESS FOR SRB ROUTINES
+*                                                                MDC130
+CVTOLT0A DC    V(IFDOLT0A) - BRANCH ENTRY TO OLTEP MEMORY TERMINATION
+*                            RESOURCE MANAGER                    MDC129
+CVTSMFEX DC    V(IEASMFEX) - BRANCH ENTRY TO SYSTEM MANAGEMENT
+*                            FACILITIES (SMF) EXCP COUNTING ROUTINE
+*                            FOR VAM WINDOW INTERCEPT            MDC133
+CVTCSPIE DC    A(0) -        FOR CHECKPOINT/RESTART, BRANCH ENTRY TO
+*                            SPIE                                MDC149
+CVTPTGT  DC    A(0) -        ADDRESS OF IKJPTGT, TSO PUTGET ROUTINE
+*                            (MDC208)                            YM2225
+CVTIOSPL DS    FL1 -         PRIORITY LEVEL OF I/O SUPERVISOR CHANNEL
+*                            SCHEDULER                           MDC019
+CVTRV513 DS    XL1 -         RESERVED                            MDC165
+CVTDSSAC DC    XL1'00' -     DYNAMIC SUPPORT SYSTEM (DSS) ACTIVATED
+*                            FLAG - USED BY RESTART FLIH.  IF X'00',
+*                            DSS NOT INITIALIZED.  IF X'FF', DSS HAS
+*                            BEEN INITIALIZED.                   MDC163
+CVTRV139 DS    XL1 -         RESERVED
+CVTSTCK  DC    A(0) -        ADDRESS OF IKJSTCK, TSO STACK ROUTINE
+*                            (MDC209)                            YM2225
+CVTMAXMP DC    H'1' -        FOR MEASUREMENT FACILITY (MF/1), MAXIMUM
+*                            PHYSICAL CPU ADDRESS SUPPORTED BY THIS
+*                            RELEASE                             MDC165
+CVTRV144 DS    H -           RESERVED
+CVTSCAN  DC    A(0) -        ADDRESS OF IKJSCAN, TSO SCAN ROUTINE
+*                            (MDC210)                            YM2225
+CVTAUTHL DS    A -           POINTER TO AUTHORIZED LIBRARY TABLE MDC001
+CVTBLDCP DC    V(IEAVBLDP) - BRANCH ENTRY TO BUILD POOL          MDC003
+CVTGETCL DC    V(IEAVGTCL) - BRANCH ENTRY TO GET CELL            MDC004
+CVTFRECL DC    V(IEAVFRCL) - BRANCH ENTRY TO FREE CELL           MDC005
+CVTDELCP DC    V(IEAVDELP) - BRANCH ENTRY TO DELETE POOL         MDC006
+CVTCRMN  DC    V(CRBRANCH) - BRANCH ENTRY TO SVC 120 (GETMAIN/FREEMAIN
+*                            CRBRANCH)                           MDC007
+CVTCRAS  DC    V(IEAVGCAS) - BRANCH ENTRY TO 'CREATE ADDRESS SPACE'
+*                                                                MDC008
+CVTQSAS  DC    V(IEAQSPET) - BRANCH ENTRY TO TASK TERMINATION    MDC009
+CVTFRAS  DC    V(IEAVGFAS) - BRANCH ENTRY TO 'FREE ADDRESS SPACE'
+*                                                                MDC010
+CVTS1EE  DC    V(IGC043BR) - BRANCH ENTRY TO STAGE 1 EXIT EFFECTOR
+*                                                                MDC011
+CVTPARS  DC    A(0) -        ADDRESS OF IKJPARS, TSO PARSE ROUTINE
+*                            (MDC211)                            YM2225
+CVTQUIS  DC    V(IEAVAR02) - BRANCH ENTRY TO QUIESCE             MDC013
+CVTSTXU  DC    A(0) -        BRANCH ENTRY TO ATTENTION EXIT EPILOGUE
+*                            (MDC321)                          @Z30HP9A
+CVTOPTE  DC    V(IRARMI00) - BRANCH ENTRY ADDRESS TO SYSEVENT    MDC015
+CVTSDRM  DS    A -           BRANCH ENTRY ADDRESS OF THE RESOURCE
+*                            MANAGER ROUTINE FOR SVC DUMP.  THIS
+*                            ROUTINE CAN BE INVOKED BY MEMORY
+*                            TERMINATION                         MDC077
+CVTIOSCS DS    A -           ENTRY POINT OF I/O SUPERVISOR CHANNEL
+*                            SCHEDULER                           MDC018
+CVTAQTOP DC    V(IEFAQTOP) - POINTER TO AREA CONTAINING QUIESCE
+*                            DESCRIPTOR BLOCK (QDB'S) FOR DEVICE
+*                            ALLOCATION                          MDC021
+CVTVVMDI DS    A -           CONSTANT USED BY PAGED LINK PACK AREA
+*                            (LPA) DIRECTORY SEARCH ALGORITHM    MDC022
+CVTASVT  DS    A -           POINTER TO ADDRESS SPACE VECTOR TABLE
+*                            (ASVT)                              MDC070
+CVTGDA   DS    A -           POINTER TO GLOBAL DATA AREA (GDA) IN SQA
+*                                                                MDC024
+CVTASCBH DC    V(IEAMASCB) - POINTER TO HIGHEST PRIORITY ADDRESS SPACE
+*                            CONTROL BLOCK (ASCB) ON THE ASCB
+*                            DISPATCHING QUEUE (HEAD OF ASCB QUEUE)
+*                                                                MDC027
+CVTASCBL DC    V(IEAMASCB) - POINTER TO LOWEST PRIORITY ASCB ON THE
+*                            ASCB DISPATCHING QUEUE (MDC339)   @Z40WP9A
+CVTRTMCT DS    A -           POINTER TO RECOVERY/TERMINATION CONTROL
+*                            TABLE                               MDC031
+CVTSV60  DS    A -           ADDRESS OF SVC 60 BRANCH ENTRY POINT
+*                            (MDC354)                          @Z40FP9A
+CVTSDMP  DC    V(IEAVTSDX) - ADDRESS OF SVC DUMP BRANCH ENTRY POINT
+*                                                                MDC033
+CVTSCBP  DC    V(IEAVTSBP) - ADDRESS OF SCB PURGE RESOURCE MANAGER
+*                                                                MDC034
+CVTSDBF  DC    X'80000000' - ADDRESS OF 4K SQA BUFFER USED BY SVC
+*                            DUMP.  HIGH-ORDER BIT OF THIS CVT WORD
+*                            IS USED AS LOCK TO INDICATE BUFFER IS
+*                            IN USE                              MDC035
+CVTRTMS  DC    A(0) -        ADDRESS OF SERVICABILITY LEVEL INDICATOR
+*                            PROCESSING (SLIP) HEADER (MDC358) @G17SP9A
+CVTTPIOS DS    A -           ADDRESS OF THE TELEPROCESSING I/O
+*                            SUPERVISOR ROUTINE (TPIOS)          MDC078
+CVTSIC   DS    A -           BRANCH ADDRESS OF THE ROUTINE TO SCHEDULE
+*                            SYSTEM INITIALIZED CANCEL           MDC042
+CVTOPCTP DC    V(IRARMCNS) - ADDRESS OF SYSTEM RESOURCES MANAGER (SRM)
+*                            CONTROL TABLE                       MDC043
+CVTEXPRO DC    V(IEAVEXPR) - ADDRESS OF EXIT PROLOGUE/TYPE 1 EXIT
+*                                                                MDC044
+CVTGSMQ  DC    V(IEAGSMQ) -  ADDRESS OF GLOBAL SERVICE MANAGER QUEUE
+*                                                                MDC045
+CVTLSMQ  DC    V(IEALSMQ) -  ADDRESS OF LOCAL SERVICE MANAGER QUEUE
+*                                                                MDC046
+CVTGSPL  DC    V(IEAGSPL) -  ADDRESS OF GLOBAL SYSTEM PRIORITY LIST
+*                            QUEUE                               MDC047
+CVTVWAIT DC    V(IEAVWAIT) - ADDRESS OF WAIT ROUTINE             MDC048
+CVTPARRL DC    V(IEAPPGMA) - ADDRESS OF PARTIALLY LOADED DELETE QUEUE
+*                                                                MDC049
+CVTAPFT  DS    A -           ADDRESS OF AUTHORIZED PROGRAM FACILITY
+*                            (APF) TABLE.  INITIALIZED BY NIP.   MDC050
+CVTQCS01 DC    V(IEAQCS01) - BRANCH ENTRY ADDRESS TO PROGRAM MANAGER
+*                            USED BY ATTACH                      MDC051
+CVTFQCB  DS    A -           POINTER TO FIRST MAJOR QCB FOR ENQ  MDC052
+CVTLQCB  DS    A -           POINTER TO LAST MAJOR QCB FOR ENQ   MDC053
+CVTRENQ  DC    V(IEAVENQ2) - RESOURCE MANAGER ADDRESS FOR ENQ    MDC054
+CVTRSPIE DC    A(0) -        RESOURCE MANAGER FOR SPIE           MDC055
+CVTLKRMA DC    V(IEAVELRM) - RESOURCE MANAGER ADDRESS FOR LOCK MANAGER
+*                                                                MDC056
+CVTCSD   DS    A -           VIRTUAL ADDRESS OF COMMON SYSTEM DATA AREA
+*                            (CSD).  INITIALIZED BY NIP.         MDC057
+CVTDQIQE DC    V(IEADQIQE) - RESOURCE MANAGER FOR EXIT EFFECTORS MDC058
+CVTRPOST DC    V(IEARPOST) - RESOURCE MANAGER FOR POST           MDC059
+CVT062R1 DC    V(IGC062R1) - BRANCH ENTRY TO DETACH              MDC060
+CVTVEAC0 DC    V(IEAVEAC0) - ASCBCHAP BRANCH ENTRY               MDC061
+CVTGLMN  DC    V(GLBRANCH) - GLOBAL BRANCH ENTRY ADDRESS FOR
+*                            GETMAIN/FREEMAIN                    MDC062
+CVTSPSA  DC    V(IEAVGWSA) - POINTER TO GLOBAL WORK/SAVE AREA VECTOR
+*                            TABLE (WSAG)                        MDC071
+CVTWSAL  DC    V(IEAVWSAL) - ADDRESS OF TABLE OF LENGTHS OF LOCAL
+*                            WORK/SAVE AREAS                     MDC072
+CVTWSAG  DC    V(IEAVWSAG) - ADDRESS OF TABLE OF LENGTHS OF GLOBAL
+*                            WORK/SAVE AREAS  (MDC391)         @G64UP9A
+CVTWSAC  DC    V(IEAVWSAC) - ADDRESS OF TABLE OF LENGTHS OF CPU
+*                            WORK/SAVE AREAS                     MDC074
+CVTRECRQ DC    V(IEAVTRER) - ADDRESS OF THE RECORDING REQUEST FACILITY
+*                            (PART OF RTM1 - CALLED BY RTM2 AND RMS)
+*                                                                MDC075
+CVTASMVT DC    V(ASMVT) -    POINTER TO AUXILIARY STORAGE MANAGEMENT
+*                            VECTOR TABLE (AMVT)  (MDC340)     @Z40WP9A
+CVTIOBP  DC    V(IDA121CV) - ADDRESS OF THE BLOCK PROCESSOR CVT
+*                            (MDC079)                            YM0029
+CVTSPOST DC    V(IEASPOST) - POST RESOURCE MANAGER TERMINATION ROUTINE
+*                            (RMTR) ENTRY POINT                  MDC085
+CVTRSTWD DC    F'0' -        RESTART RESOURCE MANAGEMENT WORD -
+*                            CONTAINS IDENTIFIER OF USER IF RESTART IS
+*                            IN USE.  OTHERWISE, ZERO.           MDC161
+CVTFETCH DC    V(IEWMSEPT) - ADDRESS OF ENTRY POINT FOR BASIC FETCH
+*                                                                MDC196
+CVT044R2 DC    V(IGC044R2) - ADDRESS OF IGC044R2 IN CHAP SERVICE
+*                            ROUTINE                             MDC197
+CVTPERFM DC    A(0) -        ADDRESS OF THE PERFORMANCE WORK AREA.
+*                            SET BY IGX00018.                    MDC205
+CVTDAIR  DC    A(0) -        ADDRESS OF IKJDAIR, TSO DYNAMIC
+*                            ALLOCATION INTERFACE ROUTINE  (MDC212)
+*                                                                YM2225
+CVTEHDEF DC    A(0) -        ADDRESS OF IKJEHDEF, TSO DEFAULT SERVICE
+*                            ROUTINE  (MDC213)                   YM2225
+CVTEHCIR DC    A(0) -        ADDRESS OF IKJEHCIR, TSO CATALOG
+*                            INFORMATION ROUTINE  (MDC214)       YM2225
+CVTSSAP  DS    A -           ADDRESS OF SYSTEM SAVE AREA         MDC063
+CVTAIDVT DS    A -           POINTER TO APPENDAGE ID VECTOR TABLE
+*                                                                MDC064
+CVTIPCDS DC    V(IEAVEDR) -  BRANCH ENTRY FOR DIRECT SIGNAL
+*                            SERVICE ROUTINE                     MDC065
+CVTIPCRI DC    V(IEAVERI) -  BRANCH ENTRY FOR REMOTE IMMEDIATE
+*                            SIGNAL SERVICE ROUTINE              MDC066
+CVTIPCRP DC    V(IEAVERP) -  BRANCH ENTRY FOR REMOTE PENDABLE
+*                            SIGNAL SERVICE ROUTINE              MDC067
+CVTPCCAT DS    A -           POINTER TO PHYSICAL CCA VECTOR TABLE
+*                                                                MDC068
+CVTLCCAT DS    A -           POINTER TO LOGICAL CCA VECTOR TABLE MDC069
+CVTRV210 DS    B -           RESERVED
+CVTRV211 EQU   X'80',,C'X' - RESERVED
+CVTRV212 EQU   X'40',,C'X' - RESERVED
+CVTRV213 EQU   X'20',,C'X' - RESERVED
+CVTRV214 EQU   X'10',,C'X' - RESERVED
+CVTRV215 EQU   X'08',,C'X' - RESERVED
+CVTRV216 EQU   X'04',,C'X' - RESERVED
+CVTRV217 EQU   X'02',,C'X' - RESERVED
+CVTRV218 EQU   X'01',,C'X' - RESERVED
+CVTRV219 DS    B -           RESERVED
+CVTRV220 EQU   X'80',,C'X' - RESERVED
+CVTRV221 EQU   X'40',,C'X' - RESERVED
+CVTRV222 EQU   X'20',,C'X' - RESERVED
+CVTRV223 EQU   X'10',,C'X' - RESERVED
+CVTRV224 EQU   X'08',,C'X' - RESERVED
+CVTRV225 EQU   X'04',,C'X' - RESERVED
+CVTRV226 EQU   X'02',,C'X' - RESERVED
+CVTRV227 EQU   X'01',,C'X' - RESERVED
+CVTRV228 DS    B -           RESERVED
+CVTRV229 EQU   X'80',,C'X' - RESERVED
+CVTRV230 EQU   X'40',,C'X' - RESERVED
+CVTRV231 EQU   X'20',,C'X' - RESERVED
+CVTRV232 EQU   X'10',,C'X' - RESERVED
+CVTRV233 EQU   X'08',,C'X' - RESERVED
+CVTRV234 EQU   X'04',,C'X' - RESERVED
+CVTRV235 EQU   X'02',,C'X' - RESERVED
+CVTRV236 EQU   X'01',,C'X' - RESERVED
+CVTRV237 DS    B -           RESERVED
+CVTRV238 EQU   X'80',,C'X' - RESERVED
+CVTRV239 EQU   X'40',,C'X' - RESERVED
+CVTRV240 EQU   X'20',,C'X' - RESERVED
+CVTRV241 EQU   X'10',,C'X' - RESERVED
+CVTRV242 EQU   X'08',,C'X' - RESERVED
+CVTRV243 EQU   X'04',,C'X' - RESERVED
+CVTRV244 EQU   X'02',,C'X' - RESERVED
+CVTRV245 EQU   X'01',,C'X' - RESERVED
+CVTRV246 DS    XL1 -         RESERVED
+CVTRV247 DS    XL1 -         RESERVED
+CVTRV248 DS    XL1 -         RESERVED
+CVTRV249 DS    XL1 -         RESERVED
+CVTRV250 DS    XL1 -         RESERVED
+CVTRV251 DS    XL1 -         RESERVED
+CVTRV252 DS    AL2 -         RESERVED
+CVTRV253 DS    H -           RESERVED
+CVTRV254 DS    H -           RESERVED
+CVTPWI   DC    A(0) -        ADDRESS OF THE WINDOW INTERCEPT ROUTINE
+*                            (MDC104)                            YM4043
+CVTPVBP  DC    A(0) -        ADDRESS OF THE VIRTUAL BLOCK PROCESSOR
+*                            (MDC105)                            YM4043
+CVTMFCTL DC    A(0) -        POINTER TO MEASUREMENT FACILITY CONTROL
+*                            BLOCK                               MDC100
+CVTMFRTR DC    A(CVTBRET) -  IF MEASUREMENT FACILITY IS ACTIVE,
+*                            CONTAINS ADDRESS OF MEASUREMENT FACILITY
+*                            ROUTINE.  OTHERWISE, ADDRESS OF CVTBRET.
+*                                                                MDC101
+CVTMFACT EQU   X'80' -       IF ONE, I/O SUPERVISOR AND TIMER SECOND
+*                            LEVEL INTERRUPT HANDLER HOOKS BRANCH
+*                            TO MEASUREMENT FACILITY ROUTER.  USED TO
+*                            SET HIGH-ORDER BIT OF CVTMFRTR.     MDC102
+CVTVPSIB DC    V(IEAVPSIB) - BRANCH ENTRY TO PAGE SERVICES       MDC108
+CVTVSI   DC    V(IEAVAMSI) - BRANCH ENTRY TO VAM SERVICES        MDC109
+CVTVFP   DC    V(IEAVFP1) -  BRANCH ENTRY TO FINDPAGE            MDC110
+CVTRV262 DS    B -           RESERVED
+CVTRV263 EQU   X'80',,C'X' - RESERVED
+CVTRV264 EQU   X'40',,C'X' - RESERVED
+CVTRV265 EQU   X'20',,C'X' - RESERVED
+CVTRV266 EQU   X'10',,C'X' - RESERVED
+CVTRV267 EQU   X'08',,C'X' - RESERVED
+CVTRV268 EQU   X'04',,C'X' - RESERVED
+CVTRV269 EQU   X'02',,C'X' - RESERVED
+CVTRV270 EQU   X'01',,C'X' - RESERVED
+CVTRV271 DS    B -           RESERVED
+CVTRV272 EQU   X'80',,C'X' - RESERVED
+CVTRV273 EQU   X'40',,C'X' - RESERVED
+CVTRV274 EQU   X'20',,C'X' - RESERVED
+CVTRV275 EQU   X'10',,C'X' - RESERVED
+CVTRV276 EQU   X'08',,C'X' - RESERVED
+CVTRV277 EQU   X'04',,C'X' - RESERVED
+CVTRV278 EQU   X'02',,C'X' - RESERVED
+CVTRV279 EQU   X'01',,C'X' - RESERVED
+CVTRV280 DS    B -           RESERVED
+CVTRV281 EQU   X'80',,C'X' - RESERVED
+CVTRV282 EQU   X'40',,C'X' - RESERVED
+CVTRV283 EQU   X'20',,C'X' - RESERVED
+CVTRV284 EQU   X'10',,C'X' - RESERVED
+CVTRV285 EQU   X'08',,C'X' - RESERVED
+CVTRV286 EQU   X'04',,C'X' - RESERVED
+CVTRV287 EQU   X'02',,C'X' - RESERVED
+CVTRV288 EQU   X'01',,C'X' - RESERVED
+CVTRV289 DS    B -           RESERVED
+CVTRV290 EQU   X'80',,C'X' - RESERVED
+CVTRV291 EQU   X'40',,C'X' - RESERVED
+CVTRV292 EQU   X'20',,C'X' - RESERVED
+CVTRV293 EQU   X'10',,C'X' - RESERVED
+CVTRV294 EQU   X'08',,C'X' - RESERVED
+CVTRV295 EQU   X'04',,C'X' - RESERVED
+CVTRV296 EQU   X'02',,C'X' - RESERVED
+CVTRV297 EQU   X'01',,C'X' - RESERVED
+CVTTRCA  DC    A(0) -        ADDRESS OF TRACE TABLE HEADER
+*                            (MDC327)                          @ZA02352
+CVTRV302 DS    AL2 -         RESERVED
+CVTRV303 DS    AL2 -         RESERVED
+CVTRV304 DS    H -           RESERVED
+CVTRV305 DS    H -           RESERVED
+CVTRV306 DS    H -           RESERVED
+CVTRV307 DS    H -           RESERVED
+CVTVIOP  DC    V(IEAVPIOP) - ENTRY POINT OF PAGE I/O POST        MDC111
+CVTRMBR  DC    V(RMBRANCH) - ADDRESS OF REGMAIN BRANCH ENTRY     MDC123
+CVTLFRM  DC    V(FMBRANCH) - LIST FORMAT FREEMAIN BRANCH ENTRY POINT
+*                                                                MDC124
+CVTGMBR  DC    V(GMBRANCH) - LIST FORMAT GETMAIN BRANCH ENTRY POINT
+*                                                                MDC125
+CVT0TC0A DC    A(0) -        ADDRESS OF TASK CLOSE MODULE IFG0TC0A
+*                                                                MDC128
+CVTRLSTG DC    F'0' -        SIZE OF ACTUAL REAL STORAGE ONLINE AT
+*                            IPL TIME IN 'K'.  VALUE PLACED HERE BY
+*                            IEAVNIP0.                           MDC153
+CVTSPFRR DC    V(IEAVESPR) - 'SUPER FRR' ADDRESS (ADDRESS OF FUNCTIONAL
+*                            RECOVERY ROUTINE ESTABLISHED AT NIP0 TIME
+*                            TO PROTECT SUPERVISOR CONTROL PROGRAM)
+*                                                                MDC154
+CVTVEMS0 DC    V(IEAVEMS0) - ADDRESS OF MEMORY SWITCH ROUTINE    MDC155
+CVTJRECM DC    A(0) -        ADDRESS OF SUBSYSTEM INTERFACE RESOURCE
+*                            MANAGER                             MDC157
+CVTIRECM DC    A(0) -        ADDRESS OF INITIATOR RESOURCE MANAGER
+*                                                                MDC158
+CVTDARCM DC    A(0) -        ADDRESS OF DEVICE ALLOCATION RESOURCE
+*                            MANAGER                             MDC159
+CVT0PT02 DC    V(IEA0PT02) - ADDRESS OF POST ENTRY POINT IEA0PT02
+*                                                                MDC160
+CVTSTPRS DC    V(IEESTPRS) - ENTRY POINT OF STOP AND RESTART
+*                            SUBROUTINE                          MDC162
+CVTWTCB  DC    V(IEAWTCB) -  ADDRESS OF WAIT STATE TCB           MDC164
+CVTVACR  DC    A(0) -        ACR/VARY CPU CHANNEL RECOVERY ROUTINE
+*                            ADDRESS.  ADDRESS FILLED IN BY VARY CPU
+*                            PROCESSOR.                          MDC178
+CVTQUIT  DC    A(0) -        VARY CPU SHUTDOWN ROUTINE ADDRESS.
+*                            ADDRESS FILLED IN BY VARY CPU PROCESSOR.
+*                                                                MDC179
+CVTGTFR8 DC    V(AHLVCCR8) - GENERALIZED TRACE FACILITY (GTF) CONTROL
+*                            REGISTER 8 INITIALIZATION ROUTINE ADDRESS
+*                                                                MDC180
+CVTVSTOP DC    V(IEEVSTOP) - ADDRESS OF VARY CPU STOP CPU ROUTINE
+*                                                                MDC169
+CVTVPSA  DC    A(0) -        ADDRESS OF COPY OF SYSGEN'ED PSA - PLACED
+*                            HERE BY NIP                         MDC170
+CVTRMPTT DC    A(0) -        ADDRESS OF ISTRAMA1, THE VTAM RESOURCE
+*                            MANAGER FOR NORMAL AND ABNORMAL TASK
+*                            TERMINATION  (MDC322)             @Z30AP9A
+CVTRMPMT DC    A(0) -        ADDRESS OF ISTRAMA2, THE VTAM RESOURCE
+*                            MANAGER FOR NORMAL AND ABNORMAL MEMORY
+*                            TERMINATION  (MDC323)             @Z30AP9A
+CVTEXP1  DC    V(IEAVEXP1) - ADDRESS OF EXIT PROLOGUE WHICH RETURNS TO
+*                            THE DISPATCHER                      MDC173
+CVTCSDRL DC    A(0) -        REAL ADDRESS OF COMMON SYSTEM DATA AREA
+*                            (CSD).  INITIALIZED BY NIP.         MDC174
+CVTSSRB  DC    V(IGC07903) - STATUS STOP SRB ENTRY               MDC175
+CVTRPT   DC    A(0) -        ADDRESS OF IGARPT01 MODULE OF RADIX
+*                            PARTITION TREE SERVICES.  INITIALIZED
+*                            BY NIP.                             MDC177
+CVTQV1   DC    V(IEAVEQV1) - ADDRESS OF QUEUE VERIFICATION FOR SINGLE
+*                            THREADED QUEUES WITH HEADERS ONLY   MDC181
+CVTQV2   DC    V(IEAVEQV2) - ADDRESS OF QUEUE VERIFICATION FOR SINGLE
+*                            THREADED QUEUES WITH HEADER AND TRAILER
+*                                                                MDC182
+CVTQV3   DC    V(IEAVEQV3) - ADDRESS OF QUEUE VERIFICATION FOR DOUBLE
+*                            THREADED QUEUES                     MDC183
+CVTGSDA  DC    F'0' -        ADDRESS OF GLOBAL SYSTEM DUPLEX AREA.
+*                            ADDRESS FILLED IN BY NIP0.          MDC184
+CVTGSDAB EQU   X'80' -       IF HIGH-ORDER BIT IS ONE, THERE IS A VALID
+*                            VALUE IN FOLLOWING 31 BITS          MDC185
+CVTADV   DC    V(IEAVEADV) - ADDRESS OF ADDRESS VERIFICATION ROUTINE
+*                                                                MDC186
+CVTTPIO  DC    V(IGC124) -   ADDRESS OF VTAM TPIO (SVC 124) ROUTINE
+*                                                                MDC193
+CVTCRCA  DC    A(0) -        WHEN CHANNEL RECONFIGURATION HARDWARE
+*                            (CRH) IS ACTIVE, ADDRESS OF CRH
+*                            COMMUNICATION AREA IECVCRCA.
+*                            OTHERWISE, ZERO.  (MDC306)        @Z30CQ9A
+CVTEVENT DC    V(IEAVEVT0) - BRANCH ENTRY ADDRESS TO EVENTS (FAST
+*                            MULTIPLE WAIT ROUTINE)  (MDC316)  @Z30HP9A
+CVTSSCR  DC    A(0) -        ADDRESS OF STORAGE SYSTEM CONTROLLER
+*                            RECOVERY MANAGER CLEANUP ROUTINE
+*                            (SSC RMCR)  (MDC319)              @Z30LP9A
+CVTCBBR  DC    V(CBBRANCH) - BRANCH ENTRY ADDRESS TO GETMAIN/FREEMAIN
+*                            (MDC325)                          @Z30EN9A
+CVTEFF02 DC    A(0) -        ADDRESS OF IKJEFF02, TSO MESSAGE ISSUER
+*                            SERVICE ROUTINE  (MDC326)         @ZM30972
+CVTRV604 DC    A(0) -        RESERVED  (MDC307)                @Z30AQ9A
+CVTRV605 DC    A(0) -        RESERVED  (MDC307)                @Z30AQ9A
+CVTHSM   DC    A(0) -        POINTER TO HIERARCHICAL STORAGE MANAGER
+*                            (HSM) QUEUE CONTROL TABLE
+*                            (MDC375)                          @ZA27771
+CVTRAC   DC    A(0) -        ADDRESS OF ACCESS CONTROL CVT
+*                            (MDC320)                          @Z40RP9A
+CVTCGK   DC    V(IEAVCKEY) - ADDRESS OF ROUTINE USED TO CHANGE THE KEY
+*                            OF VIRTUAL PAGES  (MDC331)        @Z40EP9A
+CVTRV609 DC    A(0) -        RESERVED  (MDC332)                @Z40AQ9A
+CVT0PT0E DC    V(IEA0PT0E) - ENTRY POINT TO IDENTIFY POST EXIT ROUTINES
+*                            (MDC334)                          @Z40EP9A
+CVT0PT03 DC    V(IEA0PT03) - POST REINVOCATION ENTRY POINT FROM POST
+*                            EXIT ROUTINES  (MDC335)           @Z40EP9A
+CVTTCASP DC    A(0) -        RESERVED FOR FUTURE USE  (MDC336) @Z40DQ9A
+CVTASMRM DC    V(ILRTERMR) - ADDRESS OF AUXILIARY STORAGE MANAGEMENT
+*                            RESOURCE MANAGER FOR ADDRESS SPACE
+*                            TERMINATION  (MDC341)             @Z40WP9A
+CVTJTERM DC    V(ILRJTERM) - ADDRESS OF AUXILIARY STORAGE MANAGEMENT
+*                            JOB TERMINATION RESOURCE MANAGER
+*                            (MDC342)                          @Z40WP9A
+CVTRSUME DC    V(IEAVRSME) - ADDRESS OF RESUME FUNCTION
+*                            (MDC344)                          @Z40FP9A
+CVTTCTL  DC    V(IEAVTCTL) - ADDRESS OF TRANSFER CONTROL (TCTL)
+*                            FUNCTION  (MDC345)                @Z40FP9A
+CVTCDAL  DC    A(0) -        ADDRESS OF COMMON DISPATCHER ACTIVE LIST
+*                            (MDC346)                          @Z40FP9A
+CVTT6SVC DC    V(IEAVET6E) - ENTRY POINT ADDRESS FOR TYPE 6 SVC EXIT
+*                            FUNCTION  (MDC347)                @Z40FP9A
+CVTSUSP  DC    V(IEAVSPND) - ADDRESS OF SUSPEND ROUTINE
+*                            (MDC348)                          @Z40FP9A
+CVTIHASU DC    V(IEAIHASU) - ADDRESS OF BIT STRING  (MDC355)   @Z404P9A
+CVTVDCCR DC    V(IEEVDCCR) - ADDRESS OF DISABLED CONSOLE COMMUNICATION
+*                            ROUTINE (IEEVDCCR)  (MDC384)      @G64UP9A
+CVTCST   DC    A(0) -        ADDRESS OF CHANNEL SET TABLE (CST)
+*                            (MDC377)                          @G64AP9A
+CVTRV623 DC    A(0) -        RESERVED  (MDC307)                @Z30AQ9A
+CVTRV624 DC    A(0) -        RESERVED  (MDC307)                @Z30AQ9A
+CVTRV625 DC    A(0) -        RESERVED  (MDC307)                @Z30AQ9A
+CVTRV626 DC    A(0) -        RESERVED  (MDC307)                @Z30AQ9A
+CVTRV627 DC    A(0) -        RESERVED  (MDC307)                @Z30AQ9A
+CVTRV628 DC    A(0) -        RESERVED  (MDC307)                @Z30AQ9A
+.CVTV4   ANOP
+*
+*              OS - OS/VS COMMON EXTENSION
+*              ADDRESS OF EXTENSION IS IN CVTEXT1
+*
+         AIF   ('&DSECT' EQ 'NO').CVTW1
+CVTXTNT1 DSECT
+         AGO   .CVTW2
+.CVTW1   ANOP
+CVTXTNT1 EQU   * -           START OF OS - OS/VS EXTENSION       ICB421
+.CVTW2   ANOP
+CVTFACHN DC    A(0) -        ADDRESS OF CHAIN OF DCB FIELD AREAS
+*                            (ISAM)                              ICB421
+CVTRSV87 DS    F -           RESERVED
+CVTRSV88 DS    F -           RESERVED
+*
+*              OS/VS1 - OS/VS2 COMMON EXTENSION
+*              ADDRESS OF EXTENSION IS IN CVTEXT2
+*
+         AIF   ('&DSECT' EQ 'NO').CVTW3
+CVTXTNT2 DSECT
+         AGO   .CVTW4
+.CVTW3   ANOP
+CVTXTNT2 EQU   * -           START OF OS/VS1 - OS/VS2 EXTENSION  ICB330
+.CVTW4   ANOP
+CVTDSSV  DS    0A -          ADDRESS OF THE DYNAMIC SUPPORT SYSTEM
+*                            (DSS) VECTOR TABLE                  ICB313
+CVTRSV89 DS    XL1 -         RESERVED                            ICB313
+CVTDSSVA DC    VL3(IQADSV00) ADDRESS OF THE DYNAMIC SUPPORT SYSTEM
+*                            (DSS) VECTOR TABLE                  ICB393
+CVTNUCLS DS    C -           IDENTIFICATION OF THE NUCLEUS MEMBER
+*                            NAME                                ICB322
+CVTFLGBT DC    XL1'00' -     FLAG BYTE  (OS/VS1)  (MDC301)     @X04EP9A
+CVTNPE   EQU   X'80' -       INDICATES NON-PAGING ENVIRONMENT (VM
+*                            HANDSHAKING)  (OS/VS1)  (MDC302)  @X04EP9A
+CVTVME   EQU   X'40' -       INDICATES MACHINE IS OPERATING IN VM
+*                            ENVIRONMENT  (OS/VS1)  (MDC303)   @X04EP9A
+CVTBAH   EQU   X'20' -       INDICATES THAT THE VM/370 - OS/VS1 BTAM
+*                            AUTOPOLL HANDSHAKE IS OPERATIONAL
+*                            (OS/VS1)  (MDC356)                @X60KL9A
+CVTRSV9D EQU   X'10',,C'X' - RESERVED
+CVTRSV9E EQU   X'08',,C'X' - RESERVED
+CVTRSV9F EQU   X'04',,C'X' - RESERVED
+CVTRSV9G EQU   X'02',,C'X' - RESERVED
+CVTRSV9H EQU   X'01',,C'X' - RESERVED
+CVTRSV91 DS    H -           RESERVED
+CVTDEBVR DC    V(IFGDEBVR) - ADDRESS OF BRANCH ENTRY POINT OF DEB
+*                            VALIDITY CHECK ROUTINE (ICB380)     XM9028
+CVTRSV92 DC    A(0) -        RESERVED  (MDC190)                  YM2278
+CVTRSV93 DS    F -           RESERVED
+CVTRSV94 DS    F -           RESERVED
+CVTQID   DS    0A -          SAME AS CVTQIDA BELOW               ICB381
+CVTRSV95 DC    XL1'00' -     RESERVED                            ICB381
+CVTQIDA  DC    AL3(0) -      ADDRESS OF QUEUE IDENTIFICATION (QID)
+*                            TABLE PREFIX                        ICB381
+CVTOLTEP DS    A -           POINTER TO CONTROL BLOCK CREATED BY SVC 59
+*                            TO POINT TO PSEUDO-DEB'S            ICB423
+CVTRSV96 DS    H -           RESERVED
+CVTRSV97 DS    H -           RESERVED
+CVTRSV98 DS    F -           RESERVED
+CVTCCVT  DC    A(0) -        ADDRESS OF CRYPTOGRAPHIC FACILITY CVT
+*                            (MDC370)                          @ZA27771
+CVTSKTA  DC    A(0) -        ADDRESS OF STORAGE KEY TABLE (VM
+*                            HANDSHAKING)  (OS/VS1)  (MDC304)  @X04EP9A
+         AIF   (&CVTAOS2).CVTW5                                @Z30LP9A
+CVTICB   DC    V(ICBSS1CB) - ADDRESS OF MASS STORAGE SYSTEM (MSS)
+*                            CONTROL BLOCK  (MDC305)           @X04AC9A
+         AGO   .CVTW6                                          @Z30LP9A
+.CVTW5   ANOP                                                  @Z30LP9A
+CVTICB   DC    A(0) -        ADDRESS OF MASS STORAGE SYSTEM (MSS)
+*                            CONTROL BLOCK  (MDC305)           @Z30LP9A
+.CVTW6   ANOP                                                  @Z30LP9A
+CVTRV400 DS    B -           RESERVED
+CVTRV401 EQU   X'80',,C'X' - RESERVED
+CVTRV402 EQU   X'40',,C'X' - RESERVED
+CVTRV403 EQU   X'20',,C'X' - RESERVED
+CVTRV404 EQU   X'10',,C'X' - RESERVED
+CVTRV405 EQU   X'08',,C'X' - RESERVED
+CVTRV406 EQU   X'04',,C'X' - RESERVED
+CVTRV407 EQU   X'02',,C'X' - RESERVED
+CVTRV408 EQU   X'01',,C'X' - RESERVED
+CVTRV409 DS    B -           RESERVED
+CVTRV410 EQU   X'80',,C'X' - RESERVED
+CVTRV411 EQU   X'40',,C'X' - RESERVED
+CVTRV412 EQU   X'20',,C'X' - RESERVED
+CVTRV413 EQU   X'10',,C'X' - RESERVED
+CVTRV414 EQU   X'08',,C'X' - RESERVED
+CVTRV415 EQU   X'04',,C'X' - RESERVED
+CVTRV416 EQU   X'02',,C'X' - RESERVED
+CVTRV417 EQU   X'01',,C'X' - RESERVED
+CVTRV418 DS    XL1 -         RESERVED
+CVTRV419 DS    XL1 -         RESERVED
+CVTRV420 DS    AL2 -         RESERVED
+CVTRV421 DS    H -           RESERVED
+CVTRV422 DS    H -           RESERVED
+CVTRV423 DS    H -           RESERVED
+CVTATCVT DS    A -           POINTER TO VTAM'S CVT               MDC080
+CVTATACT EQU   X'80'         IF ON, VTAM IS ACTIVE               MDC081
+CVTRV425 DS    A -           RESERVED
+CVTRV426 DS    A -           RESERVED
+CVTRV427 DS    A -           RESERVED
+CVTRV428 DS    F -           RESERVED
+CVTRV429 DS    B -           RESERVED
+CVTRV430 EQU   X'80',,C'X' - RESERVED
+CVTRV431 EQU   X'40',,C'X' - RESERVED
+CVTRV432 EQU   X'20',,C'X' - RESERVED
+CVTRV433 EQU   X'10',,C'X' - RESERVED
+CVTRV434 EQU   X'08',,C'X' - RESERVED
+CVTRV435 EQU   X'04',,C'X' - RESERVED
+CVTRV436 EQU   X'02',,C'X' - RESERVED
+CVTRV437 EQU   X'01',,C'X' - RESERVED
+CVTRV438 DS    B -           RESERVED
+CVTRV439 EQU   X'80',,C'X' - RESERVED
+CVTRV440 EQU   X'40',,C'X' - RESERVED
+CVTRV441 EQU   X'20',,C'X' - RESERVED
+CVTRV442 EQU   X'10',,C'X' - RESERVED
+CVTRV443 EQU   X'08',,C'X' - RESERVED
+CVTRV444 EQU   X'04',,C'X' - RESERVED
+CVTRV445 EQU   X'02',,C'X' - RESERVED
+CVTRV446 EQU   X'01',,C'X' - RESERVED
+CVTRV447 DS    XL1 -         RESERVED
+CVTRV448 DS    XL1 -         RESERVED
+CVTRV449 DS    AL2 -         RESERVED
+CVTRV450 DS    H -           RESERVED
+CVTRV451 DS    H -           RESERVED
+CVTRV452 DS    H -           RESERVED
+CVTRV453 DS    A -           RESERVED
+CVTRV454 DS    A -           RESERVED
+CVTRV455 DS    A -           RESERVED
+CVTRV456 DS    A -           RESERVED
+CVTRV457 DS    B -           RESERVED
+CVTRV458 EQU   X'80',,C'X' - RESERVED
+CVTRV459 EQU   X'40',,C'X' - RESERVED
+CVTRV460 EQU   X'20',,C'X' - RESERVED
+CVTRV461 EQU   X'10',,C'X' - RESERVED
+CVTRV462 EQU   X'08',,C'X' - RESERVED
+CVTRV463 EQU   X'04',,C'X' - RESERVED
+CVTRV464 EQU   X'02',,C'X' - RESERVED
+CVTRV465 EQU   X'01',,C'X' - RESERVED
+CVTRV466 DS    B -           RESERVED
+CVTRV467 EQU   X'80',,C'X' - RESERVED
+CVTRV468 EQU   X'40',,C'X' - RESERVED
+CVTRV469 EQU   X'20',,C'X' - RESERVED
+CVTRV470 EQU   X'10',,C'X' - RESERVED
+CVTRV471 EQU   X'08',,C'X' - RESERVED
+CVTRV472 EQU   X'04',,C'X' - RESERVED
+CVTRV473 EQU   X'02',,C'X' - RESERVED
+CVTRV474 EQU   X'01',,C'X' - RESERVED
+CVTRV475 DS    XL1 -         RESERVED
+CVTRV476 DS    XL1 -         RESERVED
+CVTRV477 DS    XL1 -         RESERVED
+CVTRV478 DS    XL1 -         RESERVED
+CVTRV479 DS    H -           RESERVED
+CVTRV480 DS    A -           RESERVED
+CVTRV481 DS    A -           RESERVED
+CVTRV482 DS    A -           RESERVED
+*
+*              END OF CVT
+         POP   PRINT
+         MEND  , */
+* %CVTL2  :  ;
+*%IF IKEPLS=''  %THEN
+*    %GOTO CVTL3;
+*%IHALPUSH='@LISTPUSH';
+*%IHALPOP='@LISTPOP';
+*%IHALOFF='@LISTOFF';
+*IHALPUSH;
+*%IF IHALIST='YES'  %THEN
+*    %GOTO CVTL3;
+*IHALOFF;
+*%CVTL3:;
+* /*                   CVT PROPER                                    */
+*
+* DECLARE
+*   1 CVTMAP   BASED(CVTPTR) BDY(WORD),
+*    2 CVT      CHAR(0) BDY(WORD),   /* BEGINNING OF CVT       MDC150*/
+*    2 CVTTCBP  PTR(31),             /* ADDRESS OF A DOUBLE WORD, THE
+*                                       FIRST CONTAINING THE NEXT-TO-
+*                                       BE-DISPATCHED TCB ADDRESS.
+*                                       THE SECOND CONTAINING THE
+*                                       LAST (CURRENT) TCB ADDRESS.
+*                                       BOTH WORDS ARE IDENTICAL
+*                                       UNLESS THE TASK GOES INTO A
+*                                       WAIT STATE.  WHEN IN A WAIT
+*                                       STATE, THE FIRST WORD IS SET
+*                                       TO ZERO UNTIL THE WAITING IS
+*                                       OVER AND THEN BOTH WORDS ARE
+*                                       ONCE AGAIN IDENTICAL.
+*                                       (OS/VS1)
+*                                       ADDRESS OF 4-WORD LIST OF
+*                                       ADDRESSES - THE NEXT TCB, THE
+*                                       CURRENT TCB, THE NEXT ASCB
+*                                       AND THE CURRENT ASCB, IN THAT
+*                                       ORDER (OS/VS2)         MDC026*/
+*    2 CVT0EF00 PTR(31),             /* ADDRESS OF ROUTINE TO SCHEDULE
+*                                       ASYNCHRONOUS EXITS           */
+*    2 CVTLINK  PTR(31),             /* ADDRESS OF DCB FOR
+*                                       SYS1.LINKLIB DATA SET        */
+*    2 CVTJOB   PTR(31),             /* ADDRESS OF QUEUE MANAGER
+*                                       RESIDENT DATA AREA (QMRES)
+*                                       (OS/VS1) (MDC083)      XM4042*/
+*    2 CVTBUF   PTR(31),             /* ADDRESS OF THE BUFFER OF THE
+*                                       RESIDENT CONSOLE INTERRUPT
+*                                       ROUTINE                      */
+*    2 CVTXAPG  PTR(31),             /* ADDRESS OF I/O SUPERVISOR
+*                                       APPENDAGE VECTOR TABLE       */
+*    2 CVT0VL00 PTR(31),             /* ADDRESS OF ENTRY POINT OF THE
+*                                       TASK SUPERVISOR'S ADDRESS
+*                                       VALIDITY CHECKING ROUTINE    */
+*    2 CVTPCNVT PTR(31),             /* ADDRESS OF ENTRY POINT OF THE
+*                                       ROUTINE WHICH CONVERTS A
+*                                       RELATIVE TRACK ADDRESS (TTR)
+*                                       TO AN ABSOLUTE TRACK ADDRESS
+*                                       (MBBCCHHR)                   */
+*    2 CVTPRLTV PTR(31),             /* ADDRESS OF ENTRY POINT OF THE
+*                                       ROUTINE WHICH CONVERTS AN
+*                                       ABSOLUTE TRACK ADDRESS
+*                                       (MBBCCHHR) TO A RELATIVE
+*                                       TRACK ADDRESS (TTR)          */
+*    2 CVTILK1  PTR(31),             /* ADDRESS OF THE CHANNEL AND
+*                                       CONTROL UNIT PORTION OF THE
+*                                       UCB LOOKUP TABLE             */
+*    2 CVTILK2  PTR(31),             /* ADDRESS OF THE UCB HALFWORD
+*                                       ADDRESS LIST PORTION OF THE
+*                                       UCB LOOKUP TABLE             */
+*    2 CVTXTLER PTR(31),             /* ADDRESS OF ERROR RECOVERY
+*                                       PROCEDURE (ERP) LOADER
+*                                       (IECVERPL) ENTRY POINT
+*                                       IECXTLER  (MDC349)   @Z40AQ9A*/
+*    2 CVTSYSAD PTR(31),             /* ADDRESS OF THE SYSTEM
+*                                       RESIDENCE VOLUME ENTRY IN THE
+*                                       UCB LOOKUP TABLE             */
+*    2 CVTBTERM PTR(31),             /* ADDRESS OF ENTRY POINT OF THE
+*                                       ABTERM ROUTINE               */
+*    2 CVTDATE  CHAR(4) BDY(WORD),   /* CURRENT DATE IN PACKED
+*                                       DECIMAL                      */
+*    2 CVTMSLT  PTR(31),             /* ADDRESS OF THE MASTER COMMON
+*                                       AREA IN MASTER SCHEDULER
+*                                       RESIDENT DATA AREA.
+*                                         NOTE - USE CVTMSER INSTEAD
+*                                         TO ADDRESS MASTER SCHEDULER
+*                                         RESIDENT DATA AREA.        */
+*    2 CVTZDTAB PTR(31),             /* ADDRESS OF I/O DEVICE
+*                                       CHARACTERISTIC TABLE         */
+*    2 CVTXITP  PTR(31),             /* ADDRESS OF ERROR INTERPRETER
+*                                       ROUTINE                      */
+*    2 CVTDAR   PTR(31),             /* SAME AS CVTDARA BELOW
+*                                       (OS/VS1)               MDC029*/
+*     3 CVTFLGS1 BIT(8),             /* FLAG BYTE (OS/VS1)     MDC030*/
+*      4 CVTDMPLK BIT(1),            /* SVC DUMP IS IN PROGRESS
+*                                       (OS/VS1)               MDC030*/
+*      4 CVTRSV01 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV02 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV03 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV04 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV05 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV06 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV07 BIT(1),            /* RESERVED                     */
+*     3 CVTDARA  PTR(24),            /* ADDRESS OF THE SYS1.DUMP I/O
+*                                       CONTROL BLOCKS NEEDED BY
+*                                       ABEND'S DAMAGE ASSESSMENT
+*                                       ROUTINE (DAR) (OS/VS1) MDC029*/
+*    2 CVT0FN00 PTR(31),             /* ADDRESS OF ENTRY POINT OF THE
+*                                       FINCH ROUTINE (OS/VS1)       */
+*    2 CVTEXIT  CHAR(2) BDY(WORD),   /* AN SVC 3 INSTRUCTION.  EXIT
+*                                       TO DISPATCHER.               */
+*    2 CVTBRET  CHAR(2) BDY(WORD,3), /* A BCR 15,14 INSTRUCTION.
+*                                       RETURN TO CALLER (USED BY
+*                                       DATA MANAGEMENT ROUTINES)    */
+*    2 CVTSVDCB PTR(31),             /* ADDRESS OF THE DCB FOR THE
+*                                       SYS1.SVCLIB DATA SET         */
+*    2 CVTTPC   PTR(31),             /* ADDRESS OF THE TIMER
+*                                       SUPERVISOR WORK AREA         */
+*    2 CVTNIPSV FIXED(16),           /* RESERVED             @ZA51978*/
+*    2 CVTICPID FIXED(16),           /* PHYSICAL ID OF IPL'ED CPU
+*                                                      (MVS) @ZA51978*/
+*    2 CVTSJQ   PTR(31),             /* ADDRESS OF THE SELECTED JOB
+*                                       QUEUE (OS/VS1)               */
+*    2 CVTCUCB  PTR(31),             /* ADDRESS OF THE TABLE THAT
+*                                       CONTAINS THE CURRENT CONSOLE
+*                                       UCB ADDRESSES                */
+*    2 CVTQTE00 PTR(31),             /* ADDRESS OF THE TIMER ENQUEUE
+*                                       ROUTINE FOR INTERVAL TIMER   */
+*    2 CVTQTD00 PTR(31),             /* ADDRESS OF THE TIMER DEQUEUE
+*                                       ROUTINE FOR INTERVAL TIMER   */
+*    2 CVTSTB   PTR(31),             /* ADDRESS OF THE I/O DEVICE
+*                                       STATISTICS TABLE             */
+*    2 CVTDCB   CHAR(1) BDY(WORD),   /* OPERATING SYSTEM
+*                                       CONFIGURATION                */
+*      4 CVTRSV08 BIT(1),            /* RESERVED                     */
+*      4 CVT1SSS  BIT(1),            /* PCP                          */
+*      4 CVT2SPS  BIT(1),            /* MFT, OS/VS1                  */
+*      4 CVT4MS1  BIT(1),            /* MVT, OS/VS2                  */
+*      4 CVTRSV09 BIT(1),            /* RESERVED                     */
+*      4 CVT4MPS  BIT(1),            /* MODEL 65 MULTIPROCESSING     */
+*      4 CVT6DAT  BIT(1),            /* DYNAMIC ADDRESS TRANSLATION
+*                                       BY CPU (OS/VS1, OS/VS2)      */
+*      4 CVTMVS2  BIT(1),            /* MULTIPLE MEMORY OPTION OF
+*                                       OS/VS2 IS PRESENT      MDC131*/
+*%DCL CVT8AOS2 CHAR;
+*%CVT8AOS2='''12''X';                /* OS/VS2 SYSTEM                */
+*    2 CVTDCBA  PTR(24),             /* ADDRESS OF THE DCB FOR THE
+*                                       SYS1.LOGREC (OUTBOARD
+*                                       RECORDER) DATA SET FOR SYSTEM
+*                                       ENVIRONMENT RECORDING (SER)  */
+*    2 CVTIOQET PTR(31),             /* ADDRESS OF IOS REQUEST ELEMENT
+*                                       TABLE (OS/VS1)         MDC020*/
+*     3 CVTSV76M FIXED(31),          /* SVC 76 MESSAGE COUNT FIELD
+*                                       (OS/VS2)  (MDC372)   @ZA18857*/
+*    2 CVTIXAVL PTR(31),             /* ADDRESS OF THE I/O
+*                                       SUPERVISOR'S FREELIST POINTER
+*                                       WHICH CONTAINS THE ADDRESS OF
+*                                       THE NEXT REQUEST ELEMENT
+*                                       (OS/VS1)
+*                                       ADDRESS OF THE I/O
+*                                       SUPERVISOR'S COMMUNICATION
+*                                       AREA (IOCOM)  (OS/VS2)       */
+*    2 CVTNUCB  PTR(31),             /* LOWEST ADDRESS NOT IN THE
+*                                       NUCLEUS (ON PAGE BOUNDARY FOR
+*                                       OS/VS1)  (ON SEGMENT BOUNDARY
+*                                       FOR OS/VS2) (MDC318) @Z30AQ9A*/
+*    2 CVTFBOSV PTR(31),             /* ADDRESS OF PROGRAM FETCH
+*                                       ROUTINE                      */
+*    2 CVT0DS   PTR(31),             /* ADDRESS OF ENTRY POINT OF THE
+*                                       DISPATCHER                   */
+*    2 CVTILCH  PTR(31),             /* ADDRESS OF THE LOGICAL
+*                                       CHANNEL WORD TABLE           */
+*    2 CVTIERLC PTR(31),             /* ADDRESS OF THE ASYNCHRONOUS
+*                                       EXIT QUEUE (OS/VS1)
+*                                       (MDC218)               YM4043*/
+*     3 CVTRV516 PTR(31),            /* ** CVTIERLC FIELD UNUSED IN
+*                                       MVS **  (MDC218)       YM4043*/
+*    2 CVTMSER  PTR(31),             /* ADDRESS OF DATA AREA OF
+*                                       MASTER SCHEDULER RESIDENT
+*                                       DATA AREA                    */
+*    2 CVT0PT01 PTR(31),             /* ADDRESS OF BRANCH ENTRY POINT
+*                                       OF POST ROUTINE              */
+*    2 CVTRSV11 PTR(31),             /* ** CVTTRMTB FIELD UNUSED
+*                                       IN OS/VS **                  */
+*    2 CVTHEAD  PTR(31),             /* ADDRESS OF THE HIGHEST
+*                                       PRIORITY TCB IN THE READY
+*                                       QUEUE (OS/VS1)         MDC025*/
+*     3 CVTSV76C BIT(32) BDY(WORD),  /* SVC 76 MESSAGE CONTROL FIELD.
+*                                       HIGH-ORDER BIT IS DEFINED,
+*                                       AND ALL OTHER BITS ARE ZERO.
+*                                       (OS/VS2)  (MDC373)   @ZA18857*/
+*      4 CVTSV76Q BIT(1),            /* SVC 76 ENQUEUE SWITCH
+*                                       (OS/VS2)  (MDC374)   @ZA18857*/
+*    2 CVTMZ00  PTR(31),             /* HIGHEST ADDRESS IN VIRTUAL
+*                                       STORAGE FOR THE MACHINE      */
+*    2 CVT1EF00 PTR(31),             /* ADDRESS OF ROUTINE WHICH
+*                                       CREATES IRB'S FOR EXITS      */
+*    2 CVTQOCR  PTR(31),             /* GRAPHICS INTERFACE TASK (GFX)
+*                                       FIELD.  ADDRESS OF SEVENTH
+*                                       WORD OF GFX PARAMETER LIST,
+*                                       IF GFX IS ACTIVE.  ZERO IF
+*                                       GFX IS NOT ACTIVE.           */
+*    2 CVTQMWR  PTR(31),             /* ADDRESS OF QUEUE MANAGER'S
+*                                       SYSTEM OUTPUT COMMUNICATIONS-
+*                                       DATA-AREA (CDA), WHICH IS
+*                                       STORED ON AN EXTERNAL DEVICE */
+*    2 CVTSNCTR FIXED(15),           /* SERIAL NUMBER COUNTER FOR
+*                                       ASSIGNING SERIAL NUMBERS TO
+*                                       NON-SPECIFIC, UNLABELED
+*                                       MAGNETIC TAPE VOLUMES        */
+*    2 CVTOPTA  CHAR(1),             /* OPTION INDICATORS            */
+*     3 CVTCCH   BIT(1),             /* CHANNEL CHECK HANDLER (CCH)
+*                                       OPTION PRESENT - RECOVERY
+*                                       MANAGEMENT SUPPORT (RMS)
+*                                                              XM4686*/
+*     3 CVTAPR   BIT(1),             /* ALTERNATE PATH RETRY (APR)
+*                                       OPTION PRESENT - RECOVERY
+*                                       MANAGEMENT SUPPORT (RMS)     */
+*     3 CVTDDR   BIT(1),             /* DYNAMIC DEVICE
+*                                       RECONFIGURATION (DDR) OPTION
+*                                       PRESENT - RECOVERY MANAGEMENT
+*                                       SUPPORT (RMS) (OS/VS1)
+*                                       DDR SYSTEM-INITIATED SWAP
+*                                       ACTIVE (OS/VS2)        MDC126*/
+*     3 CVTNIP   BIT(1),             /* NIP IS EXECUTING             */
+*     3 CVTRSV12 BIT(1),             /* RESERVED                     */
+*     3 CVT121TR BIT(1),             /* NO XLATE EXCP V=R    @ZA45816*/
+*     3 CVTASCII BIT(1),             /* ASCII TAPE PROCESSING IS
+*                                       GENERATED IN THIS SYSTEM     */
+*     3 CVTXPFP  BIT(1),             /* CPU HAS EXTENDED PRECISION
+*                                       FLOATING POINT FEATURE       */
+*    2 CVTOPTB  CHAR(1),             /* MISCELLANEOUS FLAGS          */
+*     3 CVTPROT  BIT(1),             /* CPU HAS STORE PROTECTION
+*                                       FEATURE (OS/VS1)             */
+*     3 CVTCTIMS BIT(1),             /* IF ON, HARDWARE HAS THE CLOCK
+*                                       COMPARATOR AND CPU TIMER
+*                                       FEATURE INSTALLED, AND OS/VS1
+*                                       SYSGEN HAS SPECIFIED THIS
+*                                       FEATURE (OS/VS1)       MDC127*/
+*     3 CVTTOD   BIT(1),             /* CPU HAS TIME-OF-DAY CLOCK
+*                                       FEATURE                      */
+*     3 CVTNLOG  BIT(1),             /* SYS1.LOGREC IS UNAVAILABLE
+*                                       FOR ERROR RECORDING.  ALWAYS
+*                                       SET TO ZERO FOR OS/VS1 ICB382*/
+*     3 CVTAPTHR BIT(1),             /* NIP SETS THIS BIT TO 1 WHEN
+*                                       DEVICE TESTING IS COMPLETE.
+*                                       IF 1, I/O SUPERVISOR USES AN
+*                                       ALTERNATE PATH TO A DEVICE
+*                                       WHEN A CONDITION CODE OF 3
+*                                       EXISTS.  THIS BIT IS RESET BY
+*                                       NIP TO 0 AFTER THE LINK PACK
+*                                       AREA IS INITIALIZED.   YM2670*/
+*     3 CVTFP    BIT(1),             /* CPU HAS FETCH PROTECTION
+*                                       FEATURE (OS/VS1)       ICB427*/
+*     3 CVTVS1A  BIT(1),             /* VS1 ASSIST IS AVAILABLE FOR
+*                                       USE (OS/VS1)
+*                                       (MDC353)             @X60CA9A*/
+*     3 CVTVS1B  BIT(1),             /* VS1 ASSIST SUBSET IS
+*                                       AVAILABLE FOR USE (OS/VS1)
+*                                       (MDC365)             @X60KU9A*/
+*    2 CVTQCDSR PTR(31),             /* CDE SEARCH ROUTINE ADDRESS
+*                                       (OS/VS2)
+*                                       ADDRESS OF THE ROUTINE THAT
+*                                       SEARCHES THE REENTERABLE LOAD
+*                                       MODULE QUEUE (OS/VS1)        */
+*    2 CVTQLPAQ PTR(31),             /* ADDRESS OF POINTER TO MOST
+*                                       RECENT ENTRY ON LINK PACK
+*                                       AREA CDE QUEUE (OS/VS2)
+*                                       ADDRESS OF THE REENTERABLE
+*                                       LOAD MODULE QUEUE (OS/VS1)   */
+*    2 CVTRSV18 PTR(31),             /* ** CVTMPCVT FIELD UNUSED IN
+*                                       OS/VS **                     */
+*    2 CVTSMCA  PTR(31),             /* ADDRESS OF THE SYSTEM
+*                                       MANAGEMENT CONTROL AREA
+*                                       (SMCA) IF THE SYSTEM
+*                                       MANAGEMENT FACILITIES (SMF)
+*                                       OPTION IS PRESENT IN THE
+*                                       SYSTEM.  OTHERWISE, ZERO.    */
+*    2 CVTABEND PTR(31),             /* ADDRESS OF SECONDARY CVT FOR
+*                                       ABEND IN EOT (OS/VS2)
+*                                       USED BY AN INTERNAL ABEND
+*                                       TRACE ROUTINE FOR DEBUG
+*                                       PURPOSES (OS/VS1)      XM0615*/
+*    2 CVTUSER  PTR(31),             /* A WORD AVAILABLE TO THE USER */
+*    2 CVTMDLDS PTR(31),             /* RESERVED FOR MODEL-DEPENDENT
+*                                       SUPPORT                      */
+*    2 CVTQABST CHAR(2) BDY(WORD),   /* AN SVC 13 (ABEND) INSTRUCTION
+*                                       (OS/VS2)  RESERVED (OS/VS1)  */
+*    2 CVTLNKSC CHAR(2) BDY(WORD,3), /* AN SVC 6 (LINK) INSTRUCTION
+*                                                              ICB369*/
+*    2 CVTTSCE  PTR(31),             /* ADDRESS OF THE FIRST TIME
+*                                       SLICE CONTROL ELEMENT (TSCE) */
+*    2 CVTPATCH PTR(31),             /* ADDRESS OF A 200-BYTE FE
+*                                       PATCH AREA                   */
+*    2 CVTRMS   PTR(31),             /* RECOVERY MANAGEMENT SUPPORT
+*                                       (RMS) COMMUNICATIONS VECTOR.
+*                                       ADDRESS OF A MACHINE STATUS
+*                                       BLOCK.                       */
+*    2 CVTRV515 PTR(31),             /* ** CVTTSCVT FIELD UNUSED IN
+*                                       MVS **  (MDC037)     @Z40AQ9A*/
+*    2 CVT0SCR1 PTR(31),             /* ADDRESS OF THE SECTOR
+*                                       CALCULATION ROUTINE FOR
+*                                       ROTATIONAL POSITION SENSING
+*                                       (RPS)                        */
+*    2 CVTGTF   PTR(31),             /* GENERALIZED TRACE FACILITY
+*                                       (GTF) CONTROL WORD     ICB312*/
+*     3 CVTGTFST BIT(8),             /* GTF FLAG BYTE          ICB312*/
+*      4 CVTGTFS  BIT(2),            /* GTF STATUS (OS/VS1)    MDC088*/
+*%CVTGTFIN = '''00''B';              /* GTF NOT ACTIVE (OS/VS1)MDC089*/
+*%CVTGTFSR = '''01''B';              /* GTF STARTING (OS/VS1)  MDC091*/
+*%CVTGTFSP = '''10''B';              /* GTF STOPPING (OS/VS1)  MDC090*/
+*%CVTGTFAC = '''11''B';              /* GTF ACTIVE (OS/VS1)    MDC092*/
+*       5 CVTGTFAV BIT(1),           /* IF ZERO, GTF NOT ACTIVE.
+*                                       IF ONE, GTF ACTIVE.
+*                                       (OS/VS2)               MDC098*/
+*       5 CVTRV315 BIT(1),           /* RESERVED (OS/VS2)            */
+*      4 CVTSTATE BIT(1),            /* GTF IS IN CONTROL PROCESSING
+*                                       A HOOK (OS/VS1)        MDC093*/
+*       5 CVTRV316 BIT(1),           /* RESERVED (OS/VS2)            */
+*      4 CVTTMODE BIT(1),            /* IF 0, MODE=INT SPECIFIED.
+*                                       IF 1, MODE=EXT SPECIFIED
+*                                       WHICH MEANS TRACE DATA IS TO
+*                                       BE WRITTEN TO AN EXTERNAL
+*                                       DEVICE.  (OS/VS1)      MDC094*/
+*       5 CVTRV317 BIT(1),           /* RESERVED (OS/VS2)            */
+*      4 CVTFORM  BIT(1),            /* TRACE DATA IS TO BE FORMATTED
+*                                       ON ABNORMAL TERMINATION
+*                                       (OS/VS1)               MDC095*/
+*       5 CVTRV318 BIT(1),           /* RESERVED (OS/VS2)            */
+*      4 CVTUSR   BIT(1),            /* TRACE=USR SPECIFIED.
+*                                       USER-REQUESTED TRACE DATA IS
+*                                       TO BE INCLUDED IN THE TRACE
+*                                       DATA SET.  (MDC317)  @Z30AP9A*/
+*      4 CVTRNIO  BIT(1),            /* GTF IS ACTIVE AND TRACING
+*                                       RNIO EVENTS            MDC187*/
+*      4 CVTRSV27 BIT(1),            /* RESERVED                     */
+*     3 CVTGTFA  PTR(24),            /* ADDRESS OF THE MONITOR CALL
+*                                       VECTOR TABLE (OS/VS1)
+*                                       ADDRESS OF MAIN MONITOR CALL
+*                                       ROUTING TABLE, MCHEAD
+*                                       (OS/VS2)               MDC156*/
+*    2 CVTAQAVT PTR(31),             /* ADDRESS OF THE FIRST WORD OF
+*                                       THE TCAM DISPATCHER WHICH
+*                                       CONTAINS THE ADDRESS OF THE
+*                                       ADDRESS VECTOR TABLE (AVT).
+*                                       IF ZERO, TCAM IS NOT STARTED */
+*     3 CVTTCMFG CHAR(1),            /* TCAM FLAGS                   */
+*      4 CVTTCRDY BIT(1),            /* TCAM IS READY TO ACCEPT USERS*/
+*      4 CVTLDEV  BIT(1),            /* LOCAL DEVICE ATTACHED TO TCAM
+*                                       (MDC357)             @Z40XA9A*/
+*      4 CVTRSV29 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV30 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV31 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV32 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV33 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV34 BIT(1),            /* RESERVED                     */
+*     3 CVTAQAVB PTR(24),            /* SAME AS CVTAQAVT ABOVE       */
+*    2 CVTVOLM2 PTR(31),             /* ADDRESS OF TABLE FOR POWER
+*                                       WARNING FEATURE (PWF)
+*                                       (OS/VS2)  (MDC308)   @Z30AQ9A*/
+*     3 CVTTATA  PTR(31),            /* ADDRESS OF THE FIRST ENTRY IN
+*                                       THE TCB ADDRESS TABLE.  THE
+*                                       FIRST ENTRY IS FOR PARTITION
+*                                       0.  (OS/VS1)                 */
+*      4 CVTTSKS  PTR(8),            /* MAXIMUM ALLOWABLE NUMBER OF
+*                                       ENTRIES IN THE TCB ADDRESS
+*                                       TABLE  (OS/VS1)              */
+*       5 CVTVOLF2 BIT(8),           /* PWF FLAG BYTE.  THIS BYTE IS
+*                                       OVERLAID BY CVTVOLM2 AFTER
+*                                       PWF INITIALIZATION.
+*                                       (OS/VS2)  (MDC309)   @Z30AQ9A*/
+*        6 CVTVOLI2 BIT(1),          /* PWF INITIALIZATION HAS NOT
+*                                       OCCURRED (OS/VS2)
+*                                       (MDC310)             @Z30AQ9A*/
+*      4 CVTTAT   PTR(24),           /* SAME AS CVTTATA ABOVE        */
+*       5 CVTVOLT2 PTR(24),          /* PWF RECHECK TIME DELAY.
+*                                       THIS VALUE IS OVERLAID BY
+*                                       CVTVOLM2 AFTER PWF
+*                                       INITIALIZATION.  (OS/VS2)
+*                                       (MDC311)             @Z30AQ9A*/
+*    2 CVTATER  PTR(31),             /* ADDRESS OF THE SYSTEM ERROR
+*                                       TCB.  THE PURGE ROUTINE USES
+*                                       THIS FIELD TO ACCESS THE
+*                                       SIRB.  (OS/VS1)        ICB346*/
+*     3 CVTSYST  PTR(8),             /* NUMBER OF ENTRIES IN THE TCB
+*                                       ADDRESS TABLE FOR TCB'S
+*                                       CREATED DURING SYSTEM
+*                                       GENERATION  (OS/VS1)         */
+*     3 CVTATERA PTR(24),            /* SAME AS CVTATER ABOVE        */
+*    2 CVTEXT1  PTR(31),             /* ADDRESS OF OS - OS/VS COMMON
+*                                       EXTENSION              ICB421*/
+*    2 CVTCBSP  PTR(31),             /* ADDRESS OF ACCESS METHOD
+*                                       CONTROL BLOCK STRUCTURE
+*                                                              MDC195*/
+*    2 CVTPURG  PTR(31),             /* ADDRESS OF SUBSYSTEM PURGE
+*                                       ROUTINE                ICB330*/
+*     3 CVTRSV35 PTR(8),             /* RESERVED               ICB330*/
+*     3 CVTPURGA PTR(24),            /* ADDRESS OF SUBSYSTEM PURGE
+*                                       ROUTINE                ICB330*/
+*    2 CVTAMFF  CHAR(4),             /* RESERVED FOR ACCESS METHOD
+*                                       FLAGS                  ICB436*/
+*    2 CVTQMSG  PTR(31),             /* ADDRESS OF INFORMATION TO BE
+*                                       PRINTED BY ABEND       ICB307*/
+*     3 CVTRSV36 PTR(8),             /* RESERVED               ICB307*/
+*     3 CVTQMSGA PTR(24),            /* ADDRESS OF INFORMATION TO BE
+*                                       PRINTED BY ABEND       ICB307*/
+*    2 CVTDMSR  PTR(31),             /* SAME AS CVTDMSRA BELOW ICB346*/
+*     3 CVTRSV37 PTR(8),             /* RESERVED (OS/VS1)      ICB346*/
+*      4 CVTDMSRF BIT(8),            /* OPEN/CLOSE/EOV FLAG BYTE.
+*                                       SETTING BOTH BIT 0 AND BIT 1
+*                                       ON WILL CAUSE BOTH KINDS OF
+*                                       DUMPS TO BE TAKEN.  THESE
+*                                       BITS ARE USED DURING TESTING
+*                                       AND DEBUGGING WHEN OTHER
+*                                       DEBUG METHODS ARE INEFFECTIVE.
+*                                       (OS/VS2)  (MDC350)   @Z40AQ9A*/
+*       5 CVTSDUMP BIT(1),           /* SET BY COREZAP.  WILL CAUSE
+*                                       AN SDUMP TO BE TAKEN AND
+*                                       IEC999I MESSAGE ISSUED FOR
+*                                       EVERY ABEND ISSUED WITHIN AN
+*                                       OPEN/CLOSE/EOV OR DADSM
+*                                       FUNCTION.  (OS/VS2)
+*                                       (MDC351)             @Z40AQ9A*/
+*       5 CVTUDUMP BIT(1),           /* SET BY COREZAP.  WILL CAUSE
+*                                       AN ABEND DUMP TO BE TAKEN FOR
+*                                       EVERY ABEND ISSUED WITHIN AN
+*                                       OPEN/CLOSE/EOV OR DADSM
+*                                       FUNCTION.  (OS/VS2)
+*                                       (MDC352)             @Z40AQ9A*/
+*       5 CVTRV629 BIT(1),           /* RESERVED  (OS/VS2)   @Z40AQ9A*/
+*       5 CVTRV630 BIT(1),           /* RESERVED  (OS/VS2)   @Z40AQ9A*/
+*       5 CVTRV631 BIT(1),           /* RESERVED  (OS/VS2)   @Z40AQ9A*/
+*       5 CVTRV632 BIT(1),           /* RESERVED  (OS/VS2)   @Z40AQ9A*/
+*       5 CVTRV633 BIT(1),           /* RESERVED  (OS/VS2)   @Z40AQ9A*/
+*       5 CVTRV634 BIT(1),           /* RESERVED  (OS/VS2)   @Z40AQ9A*/
+*     3 CVTDMSRA PTR(24),            /* ADDRESS OF THE OPEN/CLOSE/EOV
+*                                       SUPERVISORY ROUTINE IN THE
+*                                       NUCLEUS.  THIS ROUTINE
+*                                       HANDLES THE ROUTING OF
+*                                       CONTROL AMONG THE I/O SUPPORT
+*                                       ROUTINES.              ICB346*/
+*    2 CVTRSV38 PTR(31),             /* RESERVED                     */
+*    2 CVTRSV39 PTR(31),             /* RESERVED                     */
+*
+* /*           OS/VS1 - OS/VS2 COMMON SECTION                        */
+*
+*    2 CVTREAL  PTR(31),             /* ADDRESS OF THE VIRTUAL
+*                                       STORAGE BYTE FOLLOWING THE
+*                                       HIGHEST VIRTUAL=REAL STORAGE
+*                                       ADDRESS                ICB368*/
+*    2 CVTPTRV  PTR(31),             /* ADDRESS OF PAGING SUPERVISOR
+*                                       GENERAL ROUTINE TO TRANSLATE
+*                                       REAL ADDRESSES TO VIRTUAL
+*                                       ADDRESSES                    */
+*    2 CVTMODE  PTR(31),             /* ADDRESS OF ROUTINE TO CHANGE
+*                                       SYSTEM MASK (OS/VS1)
+*                                       (MDC217)               YM4244*/
+*    2 CVTJESCT PTR(31),             /* ADDRESS OF JOB ENTRY
+*                                       SUBSYSTEM (JES) CONTROL TABLE*/
+*    2 CVTJEPS  PTR(31),             /* ADDRESS OF JOB ENTRY
+*                                       PERIPHERAL SERVICES (JEPS)
+*                                       MONITOR TCB (OS/VS1)   YM2702*/
+*    2 CVTTZ    FIXED(31),           /* DIFFERENCE BETWEEN LOCAL TIME
+*                                       AND GREENWICH MEAN TIME IN
+*                                       BINARY UNITS OF 1.048576
+*                                       SECONDS                      */
+*    2 CVTMCHPR PTR(31),             /* ADDRESS OF MACHINE CHECK
+*                                       PARAMETER LIST               */
+*    2 CVTEORM  PTR(31),             /* HIGHEST REAL ADDRESS IN MAIN
+*                                       STORAGE (OS/VS1)  POTENTIAL
+*                                       REAL HIGH STORAGE ADDRESS
+*                                       (OS/VS2)               MDC087*/
+*    2 CVTERPV  PTR(31),             /* ADDRESS OF I/O SUPERVISOR
+*                                       SUBROUTINE TO CONVERT CCW
+*                                       DATA ADDRESSES TO VIRTUAL
+*                                       ADDRESSES (OS/VS1)
+*                                       (MDC219)               YM4043*/
+*     3 CVTRV517 PTR(31),            /* ** CVTERPV FIELD UNUSED IN
+*                                       MVS **  (MDC219)       YM4043*/
+*    2 CVTINTLA PTR(31),             /* ADDRESS OF A TIME INTERVAL.
+*                                       I/O LOAD BALANCING COUNTS THE
+*                                       NUMBER OF EXCP'S ISSUED
+*                                       DURING THIS TIME INTERVAL AND
+*                                       USES THE VALUE IN DETERMINING
+*                                       THE AMOUNT OF I/O ACTIVITY IN
+*                                       THE SYSTEM.  (OS/VS1)
+*                                       (MDC220)               YM4043*/
+*     3 CVTRV518 PTR(31),            /* ** CVTINTLA FIELD UNUSED IN
+*                                       MVS **  (MDC220)       YM4043*/
+*    2 CVTAPF   PTR(31),             /* SAME AS CVTAPFA BELOW  ICB360*/
+*     3 CVTRSV40 PTR(8),             /* RESERVED               ICB360*/
+*     3 CVTAPFA  PTR(24),            /* ADDRESS OF BRANCH ENTRY POINT
+*                                       IN AUTHORIZED PROGRAM FACILITY
+*                                       (APF) ROUTINE                */
+*    2 CVTEXT2  PTR(31),             /* ADDRESS OF OS/VS1 - OS/VS2
+*                                       COMMON EXTENSION       ICB330*/
+*     3 CVTRSV41 PTR(8),             /* RESERVED               ICB330*/
+*     3 CVTEXT2A PTR(24),            /* SAME AS CVTEXT2 ABOVE  ICB330*/
+*    2 CVTHJES  PTR(31),             /* SAME AS CVTHJESA BELOW ICB454*/
+*     3 CVTRSV42 PTR(8),             /* RESERVED               ICB454*/
+*     3 CVTHJESA PTR(24),            /* ADDRESS OF OPTIONAL JOB ENTRY
+*                                       SUBSYSTEM (JES) COMMUNICATION
+*                                       VECTOR TABLE           ICB454*/
+*    2 CVTRSV43 FIXED(15),           /* RESERVED                     */
+*    2 CVTRSV44 FIXED(15),           /* RESERVED                     */
+*    2 CVTRSV45 PTR(31),             /* RESERVED                     */
+*    2 CVTRSV46 PTR(31),             /* RESERVED                     */
+*
+* /*           OS/VS1 OVERLAY                                        */
+*
+*    2 CVTPGSIA PTR(31),             /* ADDRESS OF PAGING SUPERVISOR
+*                                       INFORMATION AREA             */
+*    2 CVTPCVT  PTR(31),             /* ADDRESS OF PAGED CVT
+*                                       EXTENSION                    */
+*    2 CVTA1F1  CHAR(1),             /* PAGE FAULT FLAGS             */
+*     3 CVTPFSW  BIT(1),             /* ONLY THE PAGING TASK MAY BE
+*                                       DISPATCHED                   */
+*     3 CVTSRSW  BIT(1),             /* NO TASK EXCEPT THE PAGING TASK
+*                                       MAY EXECUTE DISABLED CODE    */
+*     3 CVTRSV47 BIT(1),             /* RESERVED                     */
+*     3 CVTRSV48 BIT(1),             /* RESERVED                     */
+*     3 CVTRSV49 BIT(1),             /* RESERVED                     */
+*     3 CVTRSV50 BIT(1),             /* RESERVED                     */
+*     3 CVTRSV51 BIT(1),             /* RESERVED                     */
+*     3 CVTRSV52 BIT(1),             /* RESERVED                     */
+*    2 CVTSYSK  CHAR(1),             /* SYSTEM LOCK.  IF NOT ZERO,
+*                                       ONLY THE PAGING TASK MAY BE
+*                                       DISPATCHED                   */
+*     3 CVTRSV53 BIT(1),             /* RESERVED                     */
+*     3 CVTRSV54 BIT(1),             /* RESERVED                     */
+*     3 CVTRSV55 BIT(1),             /* RESERVED                     */
+*     3 CVTRSV56 BIT(1),             /* RESERVED                     */
+*     3 CVTSLKR  BIT(1),             /* MACHINE CHECK HANDLING IS IN
+*                                       PROGRESS               ICB320*/
+*     3 CVTSLKQ  BIT(1),             /* SYSTEM QUEUE AREA (SQA) HAS
+*                                       BEEN EXHAUSTED               */
+*     3 CVTSLKP  BIT(1),             /* LAST PAGING CONTROL BLOCK
+*                                       (PCB) HAS BEEN USED          */
+*     3 CVTSLKO  BIT(1),             /* A ROUTINE RUNNING DISABLED
+*                                       HAS PRODUCED A PAGE FAULT    */
+*    2 CVTSULK  FIXED(15),           /* SUPERVISOR LOCK.  NUMBER OF
+*                                       TASKS ATTEMPTING TO EXECUTE
+*                                       DISABLED ROUTINES.  IF NOT
+*                                       ZERO, ONLY ENABLED TASKS MAY
+*                                       RUN.                         */
+*    2 CVTSMF   PTR(31),             /* ADDRESS OF SYSTEM MANAGEMENT
+*                                       FACILITIES (SMF) TCB   ICB395*/
+*    2 CVTPNWFR PTR(31),             /* ADDRESS OF ROUTINE WHICH
+*                                       FREES THE 'EMERGENCY' WORK
+*                                       AREA (ICB413)          XM2452*/
+*    2 CVTDDCE  PTR(31),             /* ADDRESS OF DYNAMIC DISPATCHING
+*                                       CONTROL ELEMENT        ICB466*/
+*    2 CVTRSV57 FIXED(15),           /* RESERVED                     */
+*    2 CVTRSV58 FIXED(15),           /* RESERVED                     */
+*    2 CVTSTOA  FIXED(31),           /* SAVE AREA FOR THE REAL
+*                                       STORAGE ADDRESS OF THE
+*                                       SEGMENT TABLE ORIGIN   ICB496*/
+*    2 CVTVOLM1 PTR(31),             /* ADDRESS OF TABLE FOR POWER
+*                                       WARNING FEATURE (PWF)
+*                                       (MDC312)             @X04AQ9A*/
+*     3 CVTVOLF1 BIT(8),             /* PWF FLAG BYTE.  THIS BYTE IS
+*                                       OVERLAID BY CVTVOLM1 AFTER
+*                                       PWF INITIALIZATION.
+*                                       (MDC313)             @X04AQ9A*/
+*      4 CVTVOLI1 BIT(1),            /* PWF INITIALIZATION HAS NOT
+*                                       OCCURRED  (MDC314)   @X04AQ9A*/
+*     3 CVTVOLT1 PTR(24),            /* PWF RECHECK TIME DELAY.
+*                                       THIS VALUE IS OVERLAID BY
+*                                       CVTVOLM1 AFTER PWF
+*                                       INITIALIZATION.
+*                                       (MDC315)             @X04AQ9A*/
+*    2 CVTSU    PTR(31),             /* ADDRESS OF SU BIT STRING
+*                                       (MDC366)             @X60KV9A*/
+*    2 CVTRV490 PTR(31),             /* RESERVED  (MDC359)   @X60CV9A*/
+*    2 CVTAUTH  PTR(31),             /* POINTER TO AUTHORIZED LIBRARY
+*                                       TABLE                  MDC188*/
+*    2 CVTACTAP PTR(31),             /* ADDRESS OF BRANCH ENTRY TO
+*                                       VTAM'S SVC ROUTINE ISTAPC42
+*                                       (MDC216)             @X31BH9A*/
+*    2 CVTRV485 PTR(31),             /* RESERVED               MDC106*/
+*    2 CVTRV486 PTR(31),             /* RESERVED               MDC106*/
+*    2 CVTRV487 PTR(31),             /* RESERVED               MDC106*/
+*    2 CVTRV488 PTR(31);             /* RESERVED               MDC106*/
+*
+* /*           OS/VS2 OVERLAY                                        */
+*
+* DECLARE
+*%IF IKEPLS='2'  %THEN
+*    %GOTO CVTP1;
+*   1 CVTS01   BASED(ADDR(CVTPGSIA)) BDY(WORD),
+*%GOTO CVTP2;
+*%CVTP1 : ;
+*   1 CVTS01   DEF(CVTPGSIA) BDY(WORD),
+*%CVTP2:;
+*    2 CVTGETL  PTR(31),             /* ADDRESS OF IKJGETL, TSO GET
+*                                       LINE ROUTINE (MDC206)  YM2225*/
+*    2 CVTLPDSR PTR(31),             /* ADDRESS OF LINK PACK AREA
+*                                       (LPA) DIRECTORY SEARCH
+*                                       ROUTINE                      */
+*    2 CVTPVTP  PTR(31),             /* ADDRESS OF PAGE VECTOR TABLE */
+*    2 CVTLPDIA PTR(31),             /* ADDRESS OF LINK PACK AREA
+*                                       (LPA) DIRECTORY (ON PAGE
+*                                       BOUNDARY)                    */
+*     3 CVTDIRST CHAR(1),            /* FLAG BYTE                    */
+*      4 CVTDICOM BIT(1),            /* LPA DIRECTORY HAS BEEN
+*                                       INITIALIZED BY NIP           */
+*      4 CVTRSV63 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV64 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV65 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV66 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV67 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV68 BIT(1),            /* RESERVED                     */
+*      4 CVTRSV69 BIT(1),            /* RESERVED                     */
+*     3 CVTLPDIR PTR(24),            /* ADDRESS OF LPA DIRECTORY.
+*                                       ON PAGE BOUNDARY             */
+*    2 CVTPSAD0 PTR(31),             /* PSA PROTECT DISABLE (MDC393)
+*                                       MVS **               @ZA36872*/
+*    2 CVTPSAE0 PTR(31),             /* PSA PROTECT ENABLE (MDC394)
+*                                       MVS **               @ZA36872*/
+*    2 CVTSLIDA CHAR(4) BDY(WORD),   /* IDENTITY OF TCB CAUSING
+*                                       SUPERVISOR LOCK BYTE (CVTSYLK)
+*                                       TO BE SET OR IDENTITY OF TCB
+*                                       THAT SECOND EXIT PROCESSING
+*                                       IS FOR WHEN CVTSEIC=1        */
+*     3 CVTSYLK  CHAR(1),            /* SUPERVISOR LOCK.  ONLY
+*                                       ENABLED TASKS MAY BE
+*                                       DISPATCHED                   */
+*%DCL CVTSYLKS CHAR;
+*%CVTSYLKS='''FF''X';                /* SET LOCK BYTE                */
+*%DCL CVTSYLKR CHAR;
+*%CVTSYLKR='''00''X';                /* RESET LOCK BYTE              */
+*     3 CVTSLID  CHAR(3),            /* SAME AS CVTSLIDA ABOVE       */
+*    2 CVTRV322 PTR(31),             /* RESERVED FOR FUTURE USE
+*                                       (MDC343)             @Z40AQ9A*/
+*    2 CVTRV328 PTR(31),             /* ** CVTSEG AND CVTSEGA FIELDS
+*                                       UNUSED IN MVS **
+*                                       (MDC139)             @Z40AQ9A*/
+*    2 CVTVLDWT PTR(31),             /* ADDRESS OF STOP/RESTART
+*                                       INTERFACE ROUTINE
+*                                       (MDC392)             @G64UP9A*/
+*    2 CVTEXSLF FIXED(31),           /* EXCESSIVE SPIN LENGTH FACTOR
+*                                       (MDC385)             @G64UP9A*/
+*    2 CVTEXSNR PTR(31),             /* ADDRESS OF EXCESSIVE SPIN
+*                                       NOTIFICATION ROUTINE
+*                                       (MDC386)             @G64UP9A*/
+*    2 CVTEXSNL CHAR(1),             /* SERIALIZATION BYTE FOR
+*                                       EXCESSIVE SPIN NOTIFICATION
+*                                       ROUTINE  (MDC387)    @G64UP9A*/
+*    2 CVTSPVLK PTR(8),              /* NUMBER OF TASKS WHICH HAVE
+*                                       TERMINATED WHILE OWNING
+*                                       SUPERVISOR LOCK WITHOUT
+*                                       OPERATOR HAVING YET BEEN
+*                                       NOTIFIED                     */
+*    2 CVTCTLFG CHAR(1),             /* SYSTEM CONTROL FLAGS         */
+*     3 CVTRV323 BIT(1),             /* ** CVTPSIC BIT UNUSED IN
+*                                       MVS **  (MDC118)     @Z40AQ9A*/
+*     3 CVTRV333 BIT(1),             /* ** CVTAPGB BIT UNUSED IN
+*                                       MVS **  (MDC151)     @Z40AQ9A*/
+*     3 CVTRSV78 BIT(1),             /* RESERVED               ICB382*/
+*     3 CVTDSTAT BIT(1),             /* DEVSTAT OPTION IN EFFECT.
+*                                       DEVICE ADDRESS FOR 2319,
+*                                       3330, 2314, 3330-1, 3340 CAN
+*                                       VARY ACROSS SYSTEMS    MDC189*/
+*     3 CVTRSV79 BIT(1),             /* RESERVED                     */
+*     3 CVTNOMP  BIT(1),             /* MULTIPROCESSING CODE IS NOT
+*                                       IN THE SYSTEM          MDC176*/
+*     3 CVTGTRCE BIT(1),             /* GENERALIZED TRACE FACILITY
+*                                       (GTF) HAS SUPPRESSED
+*                                       SUPERVISOR TRACE       ICB446*/
+*     3 CVTSDTRC BIT(1),             /* SVC DUMP HAS SUPPRESSED
+*                                       SUPERVISOR TRACE       ICB446*/
+*    2 CVTAPG   CHAR(1),             /* DISPATCHING PRIORITY OF
+*                                       AUTOMATIC PRIORITY GROUP
+*                                       (APG)                  ICB339*/
+*    2 CVTTRACE CHAR(2) BDY(WORD),   /* BRANCH ON REGISTER
+*                                       INSTRUCTION.  SET BY NIP.
+*                                       REGISTER TEN FOR TRACE.
+*                                       REGISTER ELEVEN FOR NO TRACE.*/
+*    2 CVTTRAC2 CHAR(2) BDY(WORD,3), /* BRANCH ON REGISTER 11
+*                                       INSTRUCTION.  THIS ALLOWS FOR
+*                                       SUPPRESSING TRACE DYNAMICALLY
+*                                       BY SETTING CONDITION CODE
+*                                       MASK TO ZERO IN FIRST
+*                                       INSTRUCTION  (CVTTRACE)      */
+*    2 CVTRSCN  PTR(31),             /* ADDRESS OF ROUTINE TO SCAN
+*                                       TCB TREE                     */
+*    2 CVTTAS   PTR(31),             /* ADDRESS OF ROUTINE TO
+*                                       TRANSFER ADDRESS SPACE       */
+*    2 CVTRV332 PTR(31),             /* ** CVTPVALD FIELD UNUSED IN
+*                                       MVS **  (MDC148)     @Z40AQ9A*/
+*    2 CVTSHRVM PTR(31),             /* LOWEST ADDRESS OF SHARED
+*                                       VIRTUAL STORAGE AREA.  THIS
+*                                       ADDRESS WILL BE THE
+*                                       BEGINNING OF THE COMMON
+*                                       SERVICE AREA (CSA)
+*                                       (MDC324)             @Z30AQ9A*/
+*    2 CVT0VL01 PTR(31),             /* ENTRY POINT ADDRESS OF
+*                                       VALIDITY CHECK ROUTINE
+*                                       (IEA0VL01) USED TO COMPARE
+*                                       PROTECT KEY OF AN ADDRESS
+*                                       WITH TCB PROTECT KEY.        */
+*    2 CVTPPGMX PTR(31),             /* ADDRESS OF A BRANCH ENTRY
+*                                       POINT TO PROGRAM MANAGER
+*                                       RESOURCE MANAGEMENT ROUTINES
+*                                                            @ZA58427*/
+*    2 CVTRV325 PTR(31),             /* ** CVTPFIXR FIELD UNUSED IN
+*                                       MVS **  (MDC120)     @Z40AQ9A*/
+*    2 CVTRV326 PTR(31),             /* ** CVTPFIXP FIELD UNUSED IN
+*                                       MVS **  (MDC121)     @Z40AQ9A*/
+*    2 CVTASCRF PTR(31),             /* CREATED ASCB QUEUE HEADER
+*                                       (MDC337)             @ZA04120*/
+*    2 CVTASCRL PTR(31),             /* CREATED ASCB QUEUE TRAILER
+*                                       (MDC338)             @ZA04120*/
+*    2 CVTPUTL  PTR(31),             /* ADDRESS OF IKJPUTL, TSO PUT
+*                                       LINE ROUTINE (MDC207)  YM2225*/
+*    2 CVTSRBRT PTR(31),             /* DISPATCHER RETURN ADDRESS FOR
+*                                       SRB ROUTINES           MDC130*/
+*    2 CVTOLT0A PTR(31),             /* BRANCH ENTRY TO OLTEP MEMORY
+*                                       TERMINATION RESOURCE MANAGER
+*                                                              MDC129*/
+*    2 CVTSMFEX PTR(31),             /* BRANCH ENTRY TO SYSTEM
+*                                       MANAGEMENT FACILITIES (SMF)
+*                                       EXCP COUNTING ROUTINE FOR
+*                                       VAM WINDOW INTERCEPT   MDC133*/
+*    2 CVTCSPIE PTR(31),             /* FOR CHECKPOINT/RESTART, BRANCH
+*                                       ENTRY TO SPIE          MDC149*/
+*    2 CVTPTGT  PTR(31),             /* ADDRESS OF IKJPTGT, TSO
+*                                       PUTGET ROUTINE  (MDC208)
+*                                                              YM2225*/
+*    2 CVTIOSPL PTR(8),              /* PRIORITY LEVEL OF I/O
+*                                       SUPERVISOR CHANNEL SCHEDULER
+*                                                              MDC019*/
+*    2 CVTRV513 CHAR(1),             /* RESERVED               MDC165*/
+*    2 CVTDSSAC CHAR(1),             /* DYNAMIC SUPPORT SYSTEM (DSS)
+*                                       ACTIVATED FLAG - USED BY
+*                                       RESTART FLIH.  IF X'00', DSS
+*                                       NOT INITIALIZED.  IF X'FF',
+*                                       DSS HAS BEEN INITIALIZED.
+*                                                              MDC163*/
+*    2 CVTRV139 PTR(8),              /* RESERVED                     */
+*    2 CVTSTCK  PTR(31),             /* ADDRESS OF IKJSTCK, TSO STACK
+*                                       ROUTINE  (MDC209)      YM2225*/
+*    2 CVTMAXMP PTR(15),             /* FOR MEASUREMENT FACILITY
+*                                       (MF/1), MAXIMUM PHYSICAL
+*                                       CPU ADDRESS SUPPORTED BY
+*                                       THIS RELEASE           MDC165*/
+*    2 CVTRV144 FIXED(15),           /* RESERVED                     */
+*    2 CVTSCAN  PTR(31),             /* ADDRESS OF IKJSCAN, TSO SCAN
+*                                       ROUTINE  (MDC210)      YM2225*/
+*    2 CVTAUTHL PTR(31),             /* POINTER TO AUTHORIZED
+*                                       LIBRARY TABLE          MDC001*/
+*    2 CVTBLDCP PTR(31),             /* BRANCH ENTRY TO BUILD POOL
+*                                                              MDC003*/
+*    2 CVTGETCL PTR(31),             /* BRANCH ENTRY TO GET CELL
+*                                                              MDC004*/
+*    2 CVTFRECL PTR(31),             /* BRANCH ENTRY TO FREE CELL
+*                                                              MDC005*/
+*    2 CVTDELCP PTR(31),             /* BRANCH ENTRY TO DELETE POOL
+*                                                              MDC006*/
+*    2 CVTCRMN  PTR(31),             /* BRANCH ENTRY TO SVC 120
+*                                       (GETMAIN/FREEMAIN:CRBRANCH)
+*                                                              MDC007*/
+*    2 CVTCRAS  PTR(31),             /* BRANCH ENTRY TO 'CREATE
+*                                       ADDRESS SPACE'         MDC008*/
+*    2 CVTQSAS  PTR(31),             /* BRANCH ENTRY TO TASK
+*                                       TERMINATION            MDC009*/
+*    2 CVTFRAS  PTR(31),             /* BRANCH ENTRY TO FREE
+*                                       ADDRESS SPACE          MDC010*/
+*    2 CVTS1EE  PTR(31),             /* BRANCH ENTRY TO STAGE 1 EXIT
+*                                       EFFECTOR               MDC011*/
+*    2 CVTPARS  PTR(31),             /* ADDRESS OF IKJPARS, TSO PARSE
+*                                       ROUTINE  (MDC211)      YM2225*/
+*    2 CVTQUIS  PTR(31),             /* BRANCH ENTRY TO QUIESCE
+*                                                              MDC013*/
+*    2 CVTSTXU  PTR(31),             /* BRANCH ENTRY TO ATTENTION
+*                                       EXIT EPILOGUE          MDC014*/
+*    2 CVTOPTE  PTR(31),             /* BRANCH ENTRY ADDRESS TO
+*                                       SYSEVENT               MDC015*/
+*    2 CVTSDRM  PTR(31),             /* BRNACH ENTRY ADDRESS OF THE
+*                                       RESOURCE MANAGER ROUTINE FOR
+*                                       SVC DUMP.  THIS ROUTINE CAN
+*                                       BE INVOKED BY MEMORY
+*                                       TERMINATION            MDC077*/
+*    2 CVTIOSCS PTR(31),             /* ENTRY POINT OF I/O SUPERVISOR
+*                                       CHANNEL SCHEDULER      MDC018*/
+*    2 CVTAQTOP PTR(31),             /* POINTER TO AREA CONTAINING
+*                                       QUIESCE DESCRIPTOR BLOCK
+*                                       (QDB'S) FOR DEVICE ALLOCATION
+*                                                              MDC021*/
+*    2 CVTVVMDI PTR(31),             /* CONSTANT USED BY PAGED LINK
+*                                       PACK AREA (LPA) DIRECTORY
+*                                       SEARCH ALGORITHM       MDC022*/
+*    2 CVTASVT  PTR(31),             /* POINTER TO ADDRESS SPACE
+*                                       VECTOR TABLE (ASVT)    MDC070*/
+*    2 CVTGDA   PTR(31),             /* POINTER TO GLOBAL DATA AREA
+*                                       (GDA) IN SQA           MDC024*/
+*    2 CVTASCBH PTR(31),             /* POINTER TO HIGHEST PRIORITY
+*                                       ADDRESS SPACE CONTROL BLOCK
+*                                       (ASCB) ON THE ASCB
+*                                       DISPATCHING QUEUE (HEAD OF
+*                                       ASCB QUEUE)           MDC027*/
+*    2 CVTASCBL PTR(31),             /* POINTER TO LOWEST PRIORITY
+*                                       ASCB ON ASCB DISPATCHING QUEUE
+*                                                              MDC028*/
+*    2 CVTRTMCT PTR(31),             /* POINTER TO RECOVERY/TERMINATION
+*                                       CONTROL TABLE          MDC031*/
+*    2 CVTSV60  PTR(31),             /* ADDRESS OF SVC 60 BRANCH ENTRY
+*                                       POINT  (MDC354)      @Z40FP9A*/
+*    2 CVTSDMP  PTR(31),             /* ADDRESS OF SVC DUMP BRANCH
+*                                       ENTRY POINT            MDC033*/
+*    2 CVTSCBP  PTR(31),             /* ADDRESS OF SCB PURGE RESOURCE
+*                                       MANAGER                MDC034*/
+*    2 CVTSDBF  PTR(31),             /* ADDRESS OF 4K SQA BUFFER USED
+*                                       BY SVC DUMP.  HIGH ORDER BIT
+*                                       OF THIS CVT WORD IS USED AS
+*                                       LOCK TO INDICATE BUFFER IS IN
+*                                       USE                    MDC035*/
+*    2 CVTRTMS  PTR(31),             /* ADDRESS OF SERVICABILITY
+*                                       LEVEL INDICATOR PROCESSING
+*                                       (SLIP) HEADER
+*                                       (MDC358)             @G17SP9A*/
+*    2 CVTTPIOS PTR(31),             /* ADDRESS OF THE TELEPROCESSING
+*                                       I/O SUPERV1SOR ROUTINE
+*                                       (TPIOS)                MDC078*/
+*    2 CVTSIC   PTR(31),             /* BRANCH ENTRY ADDRESS OF THE
+*                                       ROUTINE TO SCHEDULE SYSTEM
+*                                       INITIALIZED CANCEL     MDC042*/
+*    2 CVTOPCTP PTR(31),             /* ADDRESS OF SYSTEM RESOURCES
+*                                       MANAGER (SRM) CONTROL TABLE
+*                                                              MDC043*/
+*    2 CVTEXPRO PTR(31),             /* ADDRESS OF EXIT PROLOGUE/TYPE
+*                                       1 EXIT                 MDC044*/
+*    2 CVTGSMQ  PTR(31),             /* ADDRESS OF GLOBAL SERVICE
+*                                       MANAGER QUEUE          MDC045*/
+*    2 CVTLSMQ  PTR(31),             /* ADDRESS OF LOCAL SERVICE
+*                                       MANAGER QUEUE          MDC046*/
+*    2 CVTGSPL  PTR(31),             /* ADDRESS OF GLOBAL SYSTEM
+*                                       PRIORITY LIST QUEUE    MDC047*/
+*    2 CVTVWAIT PTR(31),             /* ADDRESS OF WAIT ROUTINE
+*                                                              MDC048*/
+*    2 CVTPARRL PTR(31),             /* ADDRESS OF PARTIALLY LOADED
+*                                       DELETE QUEUE           MDC049*/
+*    2 CVTAPFT  PTR(31),             /* ADDRESS OF AUTHORIZED PROGRAM
+*                                       FACILITY (APF) TABLE.
+*                                       INITIALIZED BY NIP.    MDC050*/
+*    2 CVTQCS01 PTR(31),             /* BRANCH ENTRY ADDRESS TO
+*                                       PROGRAM MANAGER USED BY
+*                                       ATTACH                 MDC051*/
+*    2 CVTFQCB  PTR(31),             /* POINTER TO FIRST MAJOR QCB
+*                                       FOR ENQ                MDC052*/
+*    2 CVTLQCB  PTR(31),             /* POINTER TO LAST MAJOR QCB
+*                                       FOR ENQ                MDC053*/
+*    2 CVTRENQ  PTR(31),             /* RESOURCE MANAGER ADDRESS
+*                                       FOR ENQ                MDC054*/
+*    2 CVTRSPIE PTR(31),             /* RESOURCE MANAGER FOR SPIE
+*                                                              MDC055*/
+*    2 CVTLKRMA PTR(31),             /* RESOURCE MANAGER ADDRESS FOR
+*                                       LOCK MANAGER           MDC056*/
+*    2 CVTCSD   PTR(31),             /* VIRTUAL ADDRESS OF COMMON
+*                                       SYSTEM DATA AREA (CSD).
+*                                       INITIALIZED BY NIP.    MDC057*/
+*    2 CVTDQIQE PTR(31),             /* RESOURCE MANAGER FOR EXIT
+*                                       EFFECTORS              MDC058*/
+*    2 CVTRPOST PTR(31),             /* RESOURCE MANAGER FOR POST
+*                                                              MDC059*/
+*    2 CVT062R1 PTR(31),             /* BRANCH ENTRY TO DETACH MDC060*/
+*    2 CVTVEAC0 PTR(31),             /* ASCBCHAP BRANCH ENTRY  MDC061*/
+*    2 CVTGLMN  PTR(31),             /* GLOBAL BRANCH ENTRY ADDRESS
+*                                       FOR GETMAIN/FREEMAIN   MDC062*/
+*    2 CVTSPSA  PTR(31),             /* POINTER TO GLOBAL WORK/SAVE
+*                                       AREA VECTOR TABLE (WSAG)
+*                                                              MDC071*/
+*    2 CVTWSAL  PTR(31),             /* ADDRESS OF TABLE OF LENGTHS
+*                                       OF LOCAL WORK/SAVE AREAS
+*                                                              MDC072*/
+*    2 CVTWSAG  PTR(31),             /* ADDRESS OF TABLE OF LENGTHS
+*                                       OF GLOBAL WORK/SAVE AREAS
+*                                       (MDC391)             @G64UP9A*/
+*    2 CVTWSAC  PTR(31),             /* ADDRESS OF TABLE OF LENGTHS
+*                                       OF CPU WORK/SAVE AREAS MDC074*/
+*    2 CVTRECRQ PTR(31),             /* ADDRESS OF THE RECORDING
+*                                       REQUEST FACILITY  (PART OF
+*                                       RTM1 - CALLED BY RTM2 AND
+*                                       RMS)                   MDC075*/
+*    2 CVTASMVT PTR(31),             /* POINTER TO AUXILIARY STORAGE
+*                                       MANAGEMENT VECTOR TABLE
+*                                       (AMVT)                 MDC076*/
+*    2 CVTIOBP  PTR(31),             /* ADDRESS OF THE BLOCK PROCESSOR
+*                                       CVT                    MDC079*/
+*    2 CVTSPOST PTR(31),             /* POST RESOURCE MANAGER
+*                                       TERMINATION ROUTINE (RMTR)
+*                                       ENTRY POINT            MDC085*/
+*    2 CVTRSTWD FIXED(31),           /* RESTART RESOURCE MANAGEMENT
+*                                       WORD - CONTAINS IDENTIFIER OF
+*                                       USER IF RESTART IS IN USE.
+*                                       OTHERWISE, ZERO.       MDC161*/
+*    2 CVTFETCH PTR(31),             /* ADDRESS OF ENTRY POINT FOR
+*                                       BASIC FETCH            MDC196*/
+*    2 CVT044R2 PTR(31),             /* ADDRESS OF IGC044R2 IN CHAP
+*                                       SERVICE ROUTINE        MDC197*/
+*    2 CVTPERFM PTR(31),             /* ADDRESS OF THE PERFORMANCE
+*                                       WORK AREA.  SET BY IGX00018.
+*                                                              MDC205*/
+*    2 CVTDAIR  PTR(31),             /* ADDRESS OF IKJDAIR, TSO
+*                                       DYNAMIC ALLOCATION INTERFACE
+*                                       ROUTINE  (MDC212)      YM2225*/
+*    2 CVTEHDEF PTR(31),             /* ADDRESS OF IKJEHDEF, TSO
+*                                       DEFAULT SERVICE ROUTINE
+*                                       (MDC213)               YM2225*/
+*    2 CVTEHCIR PTR(31),             /* ADDRESS OF IKJEHCIR, TSO
+*                                       CATALOG INFORMATION ROUTINE
+*                                       (MDC214)               YM2225*/
+*    2 CVTSSAP  PTR(31),             /* ADDRESS OF SYSTEM SAVE AREA
+*                                                              MDC063*/
+*    2 CVTAIDVT PTR(31),             /* POINTER TO APPENDAGE ID
+*                                       VECTOR TABLE           MDC064*/
+*    2 CVTIPCDS PTR(31),             /* BRANCH ENTRY FOR DIRECT
+*                                       SIGNAL SERVICE ROUTINE MDC065*/
+*    2 CVTIPCRI PTR(31),             /* BRANCH ENTRY FOR REMOTE
+*                                       IMMEDIATE SIGNAL SERVICE
+*                                       ROUTINE                MDC066*/
+*    2 CVTIPCRP PTR(31),             /* BRANCH ENTRY FOR REMOTE
+*                                       PENDABLE SIGNAL SERVICE
+*                                       ROUTINE                MDC067*/
+*    2 CVTPCCAT PTR(31),             /* POINTER TO PHYSICAL CCA VECTOR
+*                                       TABLE                  MDC068*/
+*    2 CVTLCCAT PTR(31),             /* POINTER TO LOGICAL CCA VECTOR
+*                                       TABLE                  MDC069*/
+*    2 CVTRV210 BIT(8),              /* RESERVED                     */
+*     3 CVTRV211 BIT(1),             /* RESERVED                     */
+*     3 CVTRV212 BIT(1),             /* RESERVED                     */
+*     3 CVTRV213 BIT(1),             /* RESERVED                     */
+*     3 CVTRV214 BIT(1),             /* RESERVED                     */
+*     3 CVTRV215 BIT(1),             /* RESERVED                     */
+*     3 CVTRV216 BIT(1),             /* RESERVED                     */
+*     3 CVTRV217 BIT(1),             /* RESERVED                     */
+*     3 CVTRV218 BIT(1),             /* RESERVED                     */
+*    2 CVTRV219 BIT(8),              /* RESERVED                     */
+*     3 CVTRV220 BIT(1),             /* RESERVED                     */
+*     3 CVTRV221 BIT(1),             /* RESERVED                     */
+*     3 CVTRV222 BIT(1),             /* RESERVED                     */
+*     3 CVTRV223 BIT(1),             /* RESERVED                     */
+*     3 CVTRV224 BIT(1),             /* RESERVED                     */
+*     3 CVTRV225 BIT(1),             /* RESERVED                     */
+*     3 CVTRV226 BIT(1),             /* RESERVED                     */
+*     3 CVTRV227 BIT(1),             /* RESERVED                     */
+*    2 CVTRV228 BIT(8),              /* RESERVED                     */
+*     3 CVTRV229 BIT(1),             /* RESERVED                     */
+*     3 CVTRV230 BIT(1),             /* RESERVED                     */
+*     3 CVTRV231 BIT(1),             /* RESERVED                     */
+*     3 CVTRV232 BIT(1),             /* RESERVED                     */
+*     3 CVTRV233 BIT(1),             /* RESERVED                     */
+*     3 CVTRV234 BIT(1),             /* RESERVED                     */
+*     3 CVTRV235 BIT(1),             /* RESERVED                     */
+*     3 CVTRV236 BIT(1),             /* RESERVED                     */
+*    2 CVTRV237 BIT(8),              /* RESERVED                     */
+*     3 CVTRV238 BIT(1),             /* RESERVED                     */
+*     3 CVTRV239 BIT(1),             /* RESERVED                     */
+*     3 CVTRV240 BIT(1),             /* RESERVED                     */
+*     3 CVTRV241 BIT(1),             /* RESERVED                     */
+*     3 CVTRV242 BIT(1),             /* RESERVED                     */
+*     3 CVTRV243 BIT(1),             /* RESERVED                     */
+*     3 CVTRV244 BIT(1),             /* RESERVED                     */
+*     3 CVTRV245 BIT(1),             /* RESERVED                     */
+*    2 CVTRV246 PTR(8),              /* RESERVED                     */
+*    2 CVTRV247 PTR(8),              /* RESERVED                     */
+*    2 CVTRV248 PTR(8),              /* RESERVED                     */
+*    2 CVTRV249 PTR(8),              /* RESERVED                     */
+*    2 CVTRV250 PTR(8),              /* RESERVED                     */
+*    2 CVTRV251 PTR(8),              /* RESERVED                     */
+*    2 CVTRV252 PTR(15),             /* RESERVED                     */
+*    2 CVTRV253 FIXED(15),           /* RESERVED                     */
+*    2 CVTRV254 FIXED(15),           /* RESERVED                     */
+*    2 CVTPWI   PTR(31),             /* ADDRESS OF THE WINDOW
+*                                       INTERCEPT ROUTINE      MDC104*/
+*    2 CVTPVBP  PTR(31),             /* ADDRESS OF THE VIRTUAL BLOCK
+*                                       PROCESSOR              MDC105*/
+*    2 CVTMFCTL PTR(31),             /* POINTER TO MEASUREMENT
+*                                       FACILITY CONTROL BLOCK MDC100*/
+*    2 CVTMFRTR PTR(31),             /* IF MEASUREMENT FACILITY IS
+*                                       ACTIVE, CONTAINS ADDRESS OF
+*                                       MEASUREMENT FACILITY ROUTER.
+*                                       OTHERWISE, ADDRESS OF
+*                                       CVTBRET.               MDC101*/
+*     3 CVTMFACT BIT(1),             /* IF ONE, I/O SUPERVISOR AND
+*                                       TIMER SECOND LEVEL INTERRUPT
+*                                       HANDLER HOOKS BRANCH TO
+*                                       MEASUREMENT FACILITY ROUTER
+*                                                              MDC102*/
+*    2 CVTVPSIB PTR(31),             /* BRANCH ENTRY TO PAGE SERVICES
+*                                                              MDC108*/
+*    2 CVTVSI   PTR(31),             /* BRANCH ENTRY TO VAM SERVICES
+*                                                              MDC109*/
+*    2 CVTVFP   PTR(31),             /* BRANCH ENTRY TO FINDPAGE
+*                                                              MDC110*/
+*    2 CVTRV262 BIT(8),              /* RESERVED                     */
+*     3 CVTRV263 BIT(1),             /* RESERVED                     */
+*     3 CVTRV264 BIT(1),             /* RESERVED                     */
+*     3 CVTRV265 BIT(1),             /* RESERVED                     */
+*     3 CVTRV266 BIT(1),             /* RESERVED                     */
+*     3 CVTRV267 BIT(1),             /* RESERVED                     */
+*     3 CVTRV268 BIT(1),             /* RESERVED                     */
+*     3 CVTRV269 BIT(1),             /* RESERVED                     */
+*     3 CVTRV270 BIT(1),             /* RESERVED                     */
+*    2 CVTRV271 BIT(8),              /* RESERVED                     */
+*     3 CVTRV272 BIT(1),             /* RESERVED                     */
+*     3 CVTRV273 BIT(1),             /* RESERVED                     */
+*     3 CVTRV274 BIT(1),             /* RESERVED                     */
+*     3 CVTRV275 BIT(1),             /* RESERVED                     */
+*     3 CVTRV276 BIT(1),             /* RESERVED                     */
+*     3 CVTRV277 BIT(1),             /* RESERVED                     */
+*     3 CVTRV278 BIT(1),             /* RESERVED                     */
+*     3 CVTRV279 BIT(1),             /* RESERVED                     */
+*    2 CVTRV280 BIT(8),              /* RESERVED                     */
+*     3 CVTRV281 BIT(1),             /* RESERVED                     */
+*     3 CVTRV282 BIT(1),             /* RESERVED                     */
+*     3 CVTRV283 BIT(1),             /* RESERVED                     */
+*     3 CVTRV284 BIT(1),             /* RESERVED                     */
+*     3 CVTRV285 BIT(1),             /* RESERVED                     */
+*     3 CVTRV286 BIT(1),             /* RESERVED                     */
+*     3 CVTRV287 BIT(1),             /* RESERVED                     */
+*     3 CVTRV288 BIT(1),             /* RESERVED                     */
+*    2 CVTRV289 BIT(8),              /* RESERVED                     */
+*     3 CVTRV290 BIT(1),             /* RESERVED                     */
+*     3 CVTRV291 BIT(1),             /* RESERVED                     */
+*     3 CVTRV292 BIT(1),             /* RESERVED                     */
+*     3 CVTRV293 BIT(1),             /* RESERVED                     */
+*     3 CVTRV294 BIT(1),             /* RESERVED                     */
+*     3 CVTRV295 BIT(1),             /* RESERVED                     */
+*     3 CVTRV296 BIT(1),             /* RESERVED                     */
+*     3 CVTRV297 BIT(1),             /* RESERVED                     */
+*    2 CVTTRCA  PTR(31),             /* ADDRESS OF TRACE TABLE
+*                                       HEADER  (MDC327)     @ZA02352*/
+*    2 CVTRV302 PTR(15),             /* RESERVED                     */
+*    2 CVTRV303 PTR(15),             /* RESERVED                     */
+*    2 CVTRV304 FIXED(15),           /* RESERVED                     */
+*    2 CVTRV305 FIXED(15),           /* RESERVED                     */
+*    2 CVTRV306 FIXED(15),           /* RESERVED                     */
+*    2 CVTRV307 FIXED(15),           /* RESERVED                     */
+*    2 CVTVIOP  PTR(31),             /* ENTRY POINT OF PAGE I/O POST
+*                                                              MDC111*/
+*    2 CVTRMBR  PTR(31),             /* ADDRESS OF REGMAIN BRANCH
+*                                       ENTRY                  MDC123*/
+*    2 CVTLFRM  PTR(31),             /* LIST FORMAT FREEMAIN BRANCH
+*                                       ENTRY POINT            MDC124*/
+*    2 CVTGMBR  PTR(31),             /* LIST FORMAT GETMAIN BRANCH
+*                                       ENTRY POINT            MDC125*/
+*    2 CVT0TC0A PTR(31),             /* ADDRESS OF TASK CLOSE MODULE
+*                                       IFG0TC0A               MDC128*/
+*    2 CVTRLSTG FIXED(31),           /* SIZE OF ACTUAL REAL STORAGE
+*                                       ONLINE AT IPL TIME IN 'K'.
+*                                       VALUE PLACED HERE BY IEAVNIP0.
+*                                                              MDC153*/
+*    2 CVTSPFRR PTR(31),             /* 'SUPER FRR' ADDRESS (ADDRESS
+*                                       OF FUNCTIONAL RECOVERY
+*                                       ROUTINE ESTABLISHED AT NIP0
+*                                       TIME TO PROTECT SUPERVISOR
+*                                       CONTROL PROGRAM)       MDC154*/
+*    2 CVTVEMS0 PTR(31),             /* ADDRESS OF MEMORY SWITCH
+*                                       ROUTINE                MDC155*/
+*    2 CVTJRECM PTR(31),             /* ADDRESS OF SUBSYSTEM
+*                                       INTERFACE RESOURCE MANAGER
+*                                                              MDC157*/
+*    2 CVTIRECM PTR(31),             /* ADDRESS OF INITIATOR
+*                                       RESOURCE MANAGER       MDC158*/
+*    2 CVTDARCM PTR(31),             /* ADDRESS OF DEVICE ALLOCATION
+*                                       RESOURCE MANAGER       MDC159*/
+*    2 CVT0PT02 PTR(31),             /* ADDRESS OF POST ENTRY POINT
+*                                       IEA0PT02               MDC160*/
+*    2 CVTSTPRS PTR(31),             /* ENTRY POINT OF STOP AND
+*                                       RESTART SUBROUTINE     MDC162*/
+*    2 CVTWTCB  PTR(31),             /* ADDRESS OF WAIT STATE TCB
+*                                                              MDC164*/
+*    2 CVTVACR  PTR(31),             /* ACR/VARY CPU CHANNEL RECOVERY
+*                                       ROUTINE ADDRESS.  ADDRESS
+*                                       FILLED IN BY VARY CPU
+*                                       PROCESSOR.             MDC178*/
+*    2 CVTQUIT  PTR(31),             /* VARY CPU SHUTDOWN ROUTINE
+*                                       ADDRESS.  ADDRESS FILLED IN
+*                                       BY VARY CPU PROCESSOR. MDC179*/
+*    2 CVTGTFR8 PTR(31),             /* GENERALIZED TRACE FACILITY
+*                                       (GTF) CONTROL REGISTER 8
+*                                       INITIALIZATION ROUTINE
+*                                       ADDRESS                MDC180*/
+*    2 CVTVSTOP PTR(31),             /* ADDRESS OF VARY CPU STOP CPU
+*                                       ROUTINE                MDC169*/
+*    2 CVTVPSA  PTR(31),             /* ADDRESS OF COPY OF SYSGEN'ED
+*                                       PSA - PLACED HERE BY NIP
+*                                                              MDC170*/
+*    2 CVTRMPTT PTR(31),             /* ADDRESS OF ISTRAMA1, THE VTAM
+*                                       RESOURCE MANAGER FOR NORMAL
+*                                       AND ABNORMAL TASK TERMINATION
+*                                       (MDC322)             @Z30AP9A*/
+*    2 CVTRMPMT PTR(31),             /* ADDRESS OF ISTRAMA2, THE VTAM
+*                                       RESOURCE MANAGER FOR NORMAL
+*                                       AND ABNORMAL MEMORY
+*                                       TERMINATION (MDC323) @Z30AP9A*/
+*    2 CVTEXP1  PTR(31),             /* ADDRESS OF EXIT PROLOGUE
+*                                       WHICH RETURNS TO THE
+*                                       DISPATCHER             MDC173*/
+*    2 CVTCSDRL PTR(31),             /* REAL ADDRESS OF COMMON SYSTEM
+*                                       DATA AREA (CSD).  INITIALIZED
+*                                       BY NIP.                MDC174*/
+*    2 CVTSSRB  PTR(31),             /* STATUS STOP SRB ENTRY  MDC175*/
+*    2 CVTRPT   PTR(31),             /* ADDRESS OF IGARPT01 MODULE OF
+*                                       RADIX PARTITION TREE SERVICES.
+*                                       INITIALIZED BY NIP.    MDC177*/
+*    2 CVTQV1   PTR(31),             /* ADDRESS OF QUEUE VERIFICATION
+*                                       FOR SINGLE THREADED QUEUES
+*                                       WITH HEADERS ONLY      MDC181*/
+*    2 CVTQV2   PTR(31),             /* ADDRESS OF QUEUE VERIFICATION
+*                                       FOR SINGLE THREADED QUEUES
+*                                       WITH HEADER AND TRAILER
+*                                                              MDC182*/
+*    2 CVTQV3   PTR(31),             /* ADDRESS OF QUEUE VERIFICATION
+*                                       FOR DOUBLE THREADED QUEUES
+*                                                              MDC183*/
+*    2 CVTGSDA  PTR(31),             /* ADDRESS OF GLOBAL SYSTEM
+*                                       DUPLEX AREA.  ADDRESS FILLED
+*                                       IN BY NIP0.            MDC184*/
+*     3 CVTGSDAB BIT(1),             /* IF HIGH-ORDER BIT IS ONE,
+*                                       THERE IS A VALID VALUE IN
+*                                       FOLLOWING 31 BITS      MDC185*/
+*    2 CVTADV   PTR(31),             /* ADDRESS OF ADDRESS
+*                                       VERIFICATION ROUTINE   MDC186*/
+*    2 CVTTPIO  PTR(31),             /* ADDRESS OF VTAM TPIO (SVC
+*                                       124) ROUTINE           MDC193*/
+*    2 CVTCRCA  PTR(31),             /* WHEN CHANNEL RECONFIGURATION
+*                                       HARDWARE (CRH) IS ACTIVE,
+*                                       ADDRESS OF CRH COMMUNICATION
+*                                       AREA IECVCRCA.  OTHERWISE,
+*                                       ZERO.  (MDC306)      @Z30CQ9A*/
+*    2 CVTEVENT PTR(31),             /* BRANCH ENTRY ADDRESS TO
+*                                       EVENTS (FAST MULTIPLE WAIT
+*                                       ROUTINE)  (MDC316)   @Z30HP9A*/
+*    2 CVTSSCR  PTR(31),             /* ADDRESS OF STORAGE SYSTEM
+*                                       CONTROLLER RECOVERY MANAGER
+*                                       CLEANUP ROUTINE (SSC RMCR)
+*                                       (MDC319)             @Z30LP9A*/
+*    2 CVTCBBR  PTR(31),             /* BRANCH ENTRY ADDRESS TO
+*                                       GETMAIN/FREEMAIN
+*                                       (MDC325)             @Z30EN9A*/
+*    2 CVTEFF02 PTR(31),             /* ADDRESS OF IKJEFF02, TSO
+*                                       MESSAGE ISSUER SERVICE
+*                                       ROUTINE  (MDC326)    @ZM30972*/
+*    2 CVTRV604 PTR(31),             /* RESERVED  (MDC307)   @Z30AQ9A*/
+*    2 CVTRV605 PTR(31),             /* RESERVED  (MDC307)   @Z30AQ9A*/
+*    2 CVTHSM   PTR(31),             /* POINTER TO HIERARCHICAL
+*                                       STORAGE MANAGER (HSM) QUEUE
+*                                       CONTROL TABLE
+*                                       (MDC375)             @ZA27771*/
+*    2 CVTRAC   PTR(31),             /* ADDRESS OF ACCESS CONTROL CVT
+*                                       (MDC320)             @Z40RP9A*/
+*    2 CVTCGK   PTR(31),             /* ADDRESS OF ROUTINE USED TO
+*                                       CHANGE THE KEY OF VIRTUAL
+*                                       PAGES  (MDC331)      @Z40EP9A*/
+*    2 CVTRV609 PTR(31),             /* RESERVED  (MDC332)   @Z40AQ9A*/
+*    2 CVT0PT0E PTR(31),             /* ENTRY POINT TO IDENTIFY POST
+*                                       EXIT ROUTINES
+*                                       (MDC334)             @Z40EP9A*/
+*    2 CVT0PT03 PTR(31),             /* POST REINVOCATION ENTRY POINT
+*                                       FROM POST EXIT ROUTINES
+*                                       (MDC335)             @Z40EP9A*/
+*    2 CVTTCASP PTR(31),             /* RESERVED FOR FUTURE USE
+*                                       (MDC336)             @Z40DQ9A*/
+*    2 CVTASMRM PTR(31),             /* ADDRESS OF AUXILIARY STORAGE
+*                                       MANAGEMENT RESOURCE MANAGER
+*                                       FOR ADDRESS SPACE TERMINATION
+*                                       (MDC341)             @Z40WP9A*/
+*    2 CVTJTERM PTR(31),             /* ADDRESS OF AUXILIARY STORAGE
+*                                       MANAGEMENT JOB TERMINATION
+*                                       RESOURCE MANAGER
+*                                       (MDC342)             @Z40WP9A*/
+*    2 CVTRSUME PTR(31),             /* ADDRESS OF RESUME FUNCTION
+*                                       (MDC344)             @Z40FP9A*/
+*    2 CVTTCTL  PTR(31),             /* ADDRESS OF TRANSFER CONTROL
+*                                       (TCTL) FUNCTION
+*                                       (MDC345)             @Z40FP9A*/
+*    2 CVTCDAL  PTR(31),             /* ADDRESS OF COMMON DISPATCHER
+*                                       ACTIVE LIST (MDC346) @Z40FP9A*/
+*    2 CVTT6SVC PTR(31),             /* ENTRY POINT ADDRESS FOR TYPE
+*                                       6 SVC EXIT FUNCTION
+*                                       (MDC347)             @Z40FP9A*/
+*    2 CVTSUSP  PTR(31),             /* ADDRESS OF SUSPEND ROUTINE
+*                                       (MDC348)             @Z40FP9A*/
+*    2 CVTIHASU PTR(31),             /* ADDRESS OF BIT STRING
+*                                       (MDC355)             @Z404P9A*/
+*    2 CVTVDCCR PTR(31),             /* ADDRESS OF DISABLED CONSOLE
+*                                       COMMUNICATION ROUTINE
+*                                       (IEEVDCCR)  (MDC384) @G64UP9A*/
+*    2 CVTCST   PTR(31),             /* ADDRESS OF CHANNEL SET TABLE
+*                                       (CST)  (MDC377)      @G64AP9A*/
+*    2 CVTRV623 PTR(31),             /* RESERVED  (MDC307)   @Z30AQ9A*/
+*    2 CVTRV624 PTR(31),             /* RESERVED  (MDC307)   @Z30AQ9A*/
+*    2 CVTRV625 PTR(31),             /* RESERVED  (MDC307)   @Z30AQ9A*/
+*    2 CVTRV626 PTR(31),             /* RESERVED  (MDC307)   @Z30AQ9A*/
+*    2 CVTRV627 PTR(31),             /* RESERVED  (MDC307)   @Z30AQ9A*/
+*    2 CVTRV628 PTR(31);             /* RESERVED  (MDC307)   @Z30AQ9A*/
+*
+* /*                                                                 */
+* /*           OS - OS/VS COMMON EXTENSION                           */
+* /*                                                                 */
+*
+* DECLARE
+*   1 CVTXTNT1 BASED(CVTEXT1),       /* START OF OS - OS/VS COMMON
+*                                       EXTENSION              ICB421*/
+*    2 CVTFACHN PTR(31),             /* ADDRESS OF CHAIN OF DCB FIELD
+*                                       AREAS (ISAM)           ICB421*/
+*    2 CVTRSV87 PTR(31),             /* RESERVED                     */
+*    2 CVTRSV88 PTR(31);             /* RESERVED                     */
+*
+* /*                                                                 */
+* /*           OS/VS1 - OS/VS2 COMMON EXTENSION                      */
+* /*                                                                 */
+*
+* DECLARE
+*   1 CVTXTNT2 BASED(CVTEXT2),       /* START OF OS/VS1 - OS/VS2
+*                                       EXTENSION                    */
+*    2 CVTDSSV  PTR(31),             /* ADDRESS OF THE DYNAMIC
+*                                       SUPPORT SYSTEM (DSS) VECTOR
+*                                       TABLE                  ICB313*/
+*     3 CVTRSV89 PTR(8),             /* RESERVED               ICB313*/
+*     3 CVTDSSVA PTR(24),            /* ADDRESS OF THE DSS VECTOR
+*                                       TABLE                  ICB313*/
+*    2 CVTNUCLS CHAR(1),             /* IDENTIFICATION OF THE NUCLEUS
+*                                       MEMBER NAME            ICB322*/
+*    2 CVTFLGBT BIT(8),              /* FLAG BYTE  (OS/VS1)
+*                                       (MDC301)             @X04EP9A*/
+*     3 CVTNPE   BIT(1),             /* INDICATES NON-PAGING
+*                                       ENVIRONMENT (VM HANDSHAKING)
+*                                       (OS/VS1)  (MDC302)   @X04EP9A*/
+*     3 CVTVME   BIT(1),             /* INDICATES MACHINE IS
+*                                       OPERATING IN VM ENVIRONMENT
+*                                       (OS/VS1)  (MDC303)   @X04EP9A*/
+*     3 CVTBAH   BIT(1),             /* INDICATES THAT THE VM/370 -
+*                                       OS/VS1 BTAM AUTOPOLL
+*                                       HANDSHAKE IS OPERATIONAL
+*                                       (OS/VS1)  (MDC356)   @X60KL9A*/
+*     3 CVTRSV9D BIT(1),             /* RESERVED                     */
+*     3 CVTRSV9E BIT(1),             /* RESERVED                     */
+*     3 CVTRSV9F BIT(1),             /* RESERVED                     */
+*     3 CVTRSV9G BIT(1),             /* RESERVED                     */
+*     3 CVTRSV9H BIT(1),             /* RESERVED                     */
+*    2 CVTRSV91 FIXED(15),           /* RESERVED                     */
+*    2 CVTDEBVR PTR(31),             /* ADDRESS OF BRANCH ENTRY POINT
+*                                       OF DEB VALIDITY CHECK ROUTINE
+*                                       (ICB380)               XM9028*/
+*    2 CVTRSV92 PTR(31),             /* RESERVED  (MDC190)     YM2278*/
+*    2 CVTRSV93 PTR(31),             /* RESERVED                     */
+*    2 CVTRSV94 PTR(31),             /* RESERVED                     */
+*    2 CVTQID   PTR(31),             /* SAVE AS CVTQIDA BELOW  ICB381*/
+*     3 CVTRSV95 PTR(8),             /* RESERVED               ICB381*/
+*     3 CVTQIDA  PTR(24),            /* ADDRESS OF QUEUE
+*                                       IDENTIFICATION (QID) TABLE
+*                                       PREFIX                 ICB381*/
+*    2 CVTOLTEP PTR(31),             /* POINTER TO CONTROL BLOCK
+*                                       CREATED BY SVC 59 TO POINT TO
+*                                       PSEUDO-DEB'S           ICB423*/
+*    2 CVTRSV96 FIXED(15),           /* RESERVED                     */
+*    2 CVTRSV97 FIXED(15),           /* RESERVED                     */
+*    2 CVTRSV98 PTR(31),             /* RESERVED                     */
+*    2 CVTCCVT  PTR(31),             /* ADDRESS OF CRYPTOGRAPHIC
+*                                       FACILITY CVT
+*                                       (MDC370)             @ZA27771*/
+*    2 CVTSKTA  PTR(31),             /* ADDRESS OF STORAGE KEY TABLE
+*                                       (VM HANDSHAKING)  (OS/VS1)
+*                                       (MDC304)             @X04EP9A*/
+*    2 CVTICB   PTR(31),             /* ADDRESS OF MASS STORAGE
+*                                       SYSTEM (MSS) CONTROL BLOCK
+*                                       (MDC305)             @Z30LP9A*/
+*    2 CVTRV400 BIT(8),              /* RESERVED                     */
+*     3 CVTRV401 BIT(1),             /* RESERVED                     */
+*     3 CVTRV402 BIT(1),             /* RESERVED                     */
+*     3 CVTRV403 BIT(1),             /* RESERVED                     */
+*     3 CVTRV404 BIT(1),             /* RESERVED                     */
+*     3 CVTRV405 BIT(1),             /* RESERVED                     */
+*     3 CVTRV406 BIT(1),             /* RESERVED                     */
+*     3 CVTRV407 BIT(1),             /* RESERVED                     */
+*     3 CVTRV408 BIT(1),             /* RESERVED                     */
+*    2 CVTRV409 BIT(8),              /* RESERVED                     */
+*     3 CVTRV410 BIT(1),             /* RESERVED                     */
+*     3 CVTRV411 BIT(1),             /* RESERVED                     */
+*     3 CVTRV412 BIT(1),             /* RESERVED                     */
+*     3 CVTRV413 BIT(1),             /* RESERVED                     */
+*     3 CVTRV414 BIT(1),             /* RESERVED                     */
+*     3 CVTRV415 BIT(1),             /* RESERVED                     */
+*     3 CVTRV416 BIT(1),             /* RESERVED                     */
+*     3 CVTRV417 BIT(1),             /* RESERVED                     */
+*    2 CVTRV418 PTR(8),              /* RESERVED                     */
+*    2 CVTRV419 PTR(8),              /* RESERVED                     */
+*    2 CVTRV420 PTR(15),             /* RESERVED                     */
+*    2 CVTRV421 FIXED(15),           /* RESERVED                     */
+*    2 CVTRV422 FIXED(15),           /* RESERVED                     */
+*    2 CVTRV423 FIXED(15),           /* RESERVED                     */
+*    2 CVTATCVT PTR(31),             /* POINTER TO VTAM'S CVT  MDC080*/
+*     3 CVTATACT BIT(1),             /* IF ON, VTAM IS ACTIVE  MDC081*/
+*    2 CVTRV425 PTR(31),             /* RESERVED                     */
+*    2 CVTRV426 PTR(31),             /* RESERVED                     */
+*    2 CVTRV427 PTR(31),             /* RESERVED                     */
+*    2 CVTRV428 FIXED(31),           /* RESERVED                     */
+*    2 CVTRV429 BIT(8),              /* RESERVED                     */
+*     3 CVTRV430 BIT(1),             /* RESERVED                     */
+*     3 CVTRV431 BIT(1),             /* RESERVED                     */
+*     3 CVTRV432 BIT(1),             /* RESERVED                     */
+*     3 CVTRV433 BIT(1),             /* RESERVED                     */
+*     3 CVTRV434 BIT(1),             /* RESERVED                     */
+*     3 CVTRV435 BIT(1),             /* RESERVED                     */
+*     3 CVTRV436 BIT(1),             /* RESERVED                     */
+*     3 CVTRV437 BIT(1),             /* RESERVED                     */
+*    2 CVTRV438 BIT(8),              /* RESERVED                     */
+*     3 CVTRV439 BIT(1),             /* RESERVED                     */
+*     3 CVTRV440 BIT(1),             /* RESERVED                     */
+*     3 CVTRV441 BIT(1),             /* RESERVED                     */
+*     3 CVTRV442 BIT(1),             /* RESERVED                     */
+*     3 CVTRV443 BIT(1),             /* RESERVED                     */
+*     3 CVTRV444 BIT(1),             /* RESERVED                     */
+*     3 CVTRV445 BIT(1),             /* RESERVED                     */
+*     3 CVTRV446 BIT(1),             /* RESERVED                     */
+*    2 CVTRV447 PTR(8),              /* RESERVED                     */
+*    2 CVTRV448 PTR(8),              /* RESERVED                     */
+*    2 CVTRV449 PTR(15),             /* RESERVED                     */
+*    2 CVTRV450 FIXED(15),           /* RESERVED                     */
+*    2 CVTRV451 FIXED(15),           /* RESERVED                     */
+*    2 CVTRV452 FIXED(15),           /* RESERVED                     */
+*    2 CVTRV453 PTR(31),             /* RESERVED                     */
+*    2 CVTRV454 PTR(31),             /* RESERVED                     */
+*    2 CVTRV455 PTR(31),             /* RESERVED                     */
+*    2 CVTRV456 PTR(31),             /* RESERVED                     */
+*    2 CVTRV457 BIT(8),              /* RESERVED                     */
+*     3 CVTRV458 BIT(1),             /* RESERVED                     */
+*     3 CVTRV459 BIT(1),             /* RESERVED                     */
+*     3 CVTRV460 BIT(1),             /* RESERVED                     */
+*     3 CVTRV461 BIT(1),             /* RESERVED                     */
+*     3 CVTRV462 BIT(1),             /* RESERVED                     */
+*     3 CVTRV463 BIT(1),             /* RESERVED                     */
+*     3 CVTRV464 BIT(1),             /* RESERVED                     */
+*     3 CVTRV465 BIT(1),             /* RESERVED                     */
+*    2 CVTRV466 BIT(8),              /* RESERVED                     */
+*     3 CVTRV467 BIT(1),             /* RESERVED                     */
+*     3 CVTRV468 BIT(1),             /* RESERVED                     */
+*     3 CVTRV469 BIT(1),             /* RESERVED                     */
+*     3 CVTRV470 BIT(1),             /* RESERVED                     */
+*     3 CVTRV471 BIT(1),             /* RESERVED                     */
+*     3 CVTRV472 BIT(1),             /* RESERVED                     */
+*     3 CVTRV473 BIT(1),             /* RESERVED                     */
+*     3 CVTRV474 BIT(1),             /* RESERVED                     */
+*    2 CVTRV475 PTR(8),              /* RESERVED                     */
+*    2 CVTRV476 PTR(8),              /* RESERVED                     */
+*    2 CVTRV477 PTR(8),              /* RESERVED                     */
+*    2 CVTRV478 PTR(8),              /* RESERVED                     */
+*    2 CVTRV479 FIXED(15),           /* RESERVED                     */
+*    2 CVTRV480 PTR(31),             /* RESERVED                     */
+*    2 CVTRV481 PTR(31),             /* RESERVED                     */
+*    2 CVTRV482 PTR(31);             /* RESERVED                     */
+*
+* /*                      CVT PREFIX                                 */
+*
+*    DCL 1 CVTFIX BASED(CVTPTR-256) BDY(WORD),
+*    2 *        CHAR(248) BDY(WORD), /* RESERVED                     */
+*    2 *        CHAR(2) BDY(WORD),   /* RESERVED                     */
+*    2 CVTMDL   CHAR(2) BDY(WORD,3), /* CPU MODEL NUMBER IN SIGNLESS
+*                                       PACKED DECIMAL, I.E., A MODEL
+*                                       145 WOULD BE REPRESENTED AS
+*                                       0145 HEX                     */
+*    2 CVTRELNO CHAR(4) BDY(WORD),   /* RELEASE NUMBER (EBCDIC)      */
+*     3 CVTNUMB  CHAR(2) BDY(WORD),  /* RELEASE NUMBER               */
+*     3 CVTLEVL  CHAR(2) BDY(WORD,3);/* LEVEL NUMBER OF THIS RELEASE */
+*
+* /*                   END OF CVT MACRO                              */
+*
+*%IF IKEPLS=''  %THEN
+*    %GOTO CVTL4;
+*IHALPOP;
+*%CVTL4 : ;

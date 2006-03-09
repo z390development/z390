@@ -1,0 +1,373 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO PLSS99K1;               /*
+         MACRO
+         IEFZB4D2
+**/
+*%PLSS99K1: ;
+* /*******************************************************************/
+* /*                     IEFZB4D2                                    */
+* /*                                                                 */
+* /* MACMEAN IEFZB4D2 MAPS THE DYNAMIC ALLOCATION TEXT UNIT KEYS     */
+* /* MACCOMP Y-2 SC1B4/PZD02                                 @G16APPK*/
+* /* MACSTAT Y-2 76196/G29AN2F                               @G16APPK*/
+* /*                                                                 */
+* /* STATUS - OZ25778 - SUPPORT NEW SUBSYSTEM ATTRIBUTE KEY  @ZA25778*/
+* /*                                                                 */
+* /* THIS MACRO DEFINES THE DYNAMIC ALLOCATION KEYS FOR EACH OF THE  */
+* /* DYNAMIC ALLOCATION FUNCTIONS. THE KEYS ARE USED IN THE TEXT UNIT*/
+* /* INPUT TO DYNAMIC ALLOCATION. A KEY IDENTIFIES THE INFORMATION   */
+* /* BEING PASSED IN A PARTICULAR TEXT UNIT. THE NAMES FOR THE KEYS  */
+* /* CONSIST OF THE CHARACTER 'D' REPRESENTING DYNAMIC ALLOCATION,   */
+* /* TWO CHARACTERS REPRESENTING THE DYNAMIC ALLOCATION FUNCTION,    */
+* /* FOLLOWED BY UP TO FIVE DESCRIPTIVE CHARACTERS. THE CHARACTER    */
+* /* REPRESENTATION FOR THE DYNAMIC ALLOCATION FUNCTIONS ARE: 'AL'   */
+* /* FOR ALLOCATION, 'UN' FOR UNALLOCATION, 'CC' FOR CONCATENATION,  */
+* /* 'DC' FOR DECONCATENATION, 'RI' FOR REMOVE IN-USE, 'DN' FOR      */
+* /* DDNAME ALLOCATION, AND 'IN' FOR INFORMATION RETRIEVAL. A KEY    */
+* /* IS TWO BYTES IN LENGTH.                                         */
+* /*                                                                 */
+* /*******************************************************************/
+* /* IEFZB4D2 C - SU29 VECTOR PROCESSING SUBSYSTEM SUPPORT   @G29AN2F*/
+* /* IEFZB4D2 C - SU32 RACF PROTECT KEY SUPPORT              @G32HPPJ*/
+* /* IEFZB4D2 C - MERGED BACK TO REL 3.7                     @ZA28413*/
+* /* IEFZB4D2 C - ADD SUBSYSTEM ATTRIBUTE TEXT UNIT          @ZA25778*/
+*        %GOTO PLSS99K2;               /*
+SVC99KYS DSECT
+***********************************************************************
+*
+* KEYS FOR ALLOCATION FUNCTION
+*
+***********************************************************************
+DALDDNAM EQU   X'0001'                 DDNAME
+DALDSNAM EQU   X'0002'                 DSNAME
+DALMEMBR EQU   X'0003'                 MEMBER NAME
+DALSTATS EQU   X'0004'                 DATA SET STATUS
+DALNDISP EQU   X'0005'                 DATA SET NORMAL DISPOSITION
+DALCDISP EQU   X'0006'                 DATA SET CONDITIONAL DISP
+DALTRK   EQU   X'0007'                 TRACK SPACE TYPE
+DALCYL   EQU   X'0008'                 CYLINDER SPACE TYPE
+DALBLKLN EQU   X'0009'                 AVERAGE DATA BLOCK LENGTH
+DALPRIME EQU   X'000A'                 PRIMARY SPACE QUANTITY
+DALSECND EQU   X'000B'                 SECONDARY SPACE QUANTITY
+DALDIR   EQU   X'000C'                 DIRECTORY SPACE QUANTITY
+DALRLSE  EQU   X'000D'                 UNUSED SPACE RELEASE
+DALSPFRM EQU   X'000E'                 CONTIG,MXIG,ALX SPACE FORMAT
+DALROUND EQU   X'000F'                 WHOLE CYLINDER (ROUND) SPACE
+DALVLSER EQU   X'0010'                 VOLUME SERIAL
+DALPRIVT EQU   X'0011'                 PRIVATE VOLUME
+DALVLSEQ EQU   X'0012'                 VOL SEQUENCE NUMBER
+DALVLCNT EQU   X'0013'                 VOLUME COUNT
+DALVLRDS EQU   X'0014'                 VOLUME REFERENCE TO DSNAME
+DALUNIT  EQU   X'0015'                 UNIT DESCRIPTION
+DALUNCNT EQU   X'0016'                 UNIT COUNT
+DALPARAL EQU   X'0017'                 PARALLEL MOUNT
+DALSYSOU EQU   X'0018'                 SYSOUT
+DALSPGNM EQU   X'0019'                 SYSOUT PROGRAM NAME
+DALSFMNO EQU   X'001A'                 SYSOUT FORM NUMBER
+DALOUTLM EQU   X'001B'                 OUTPUT LIMIT
+DALCLOSE EQU   X'001C'                 UNALLOCATE AT CLOSE
+DALCOPYS EQU   X'001D'                 SYSOUT COPIES
+DALLABEL EQU   X'001E'                 LABEL TYPE
+DALDSSEQ EQU   X'001F'                 DATA SET SEQUENCE NUMBER
+DALPASPR EQU   X'0020'                 PASSWORD PROTECTION
+DALINOUT EQU   X'0021'                 INPUT ONLY OR OUTPUT ONLY
+DALEXPDT EQU   X'0022'                 EXPIRATION DATE
+DALRETPD EQU   X'0023'                 RETENTION PERIOD
+DALDUMMY EQU   X'0024'                 DUMMY ALLOCATION
+DALFCBIM EQU   X'0025'                 FCB IMAGE-ID
+DALFCBAV EQU   X'0026'                 FCB FORM ALIGNMENT,IMAGE VERIFY
+DALQNAME EQU   X'0027'                 QNAME ALLOCATION
+DALTERM  EQU   X'0028'                 TERMINAL ALLOCATION
+DALUCS   EQU   X'0029'                 UNIVERSAL CHARACTER SET
+DALUFOLD EQU   X'002A'                 UCS FOLD MODE
+DALUVRFY EQU   X'002B'                 UCS VERIFY CHARACTER SET
+DALDCBDS EQU   X'002C'                 DCB DSNAME REFERENCE
+DALDCBDD EQU   X'002D'                 DCB DDNAME REFERENCE
+DALBFALN EQU   X'002E'                 BUFFER ALIGNMENT
+DALBFTEK EQU   X'002F'                 BUFFERING TECHNIQUE
+DALBLKSZ EQU   X'0030'                 BLOCKSIZE
+DALBUFIN EQU   X'0031'                 NUMBER OF INPUT BUFFERS
+DALBUFL  EQU   X'0032'                 BUFFER LENGTH
+DALBUFMX EQU   X'0033'                 MAXIMUM NUMBER OF BUFFERS
+DALBUFNO EQU   X'0034'                 NUMBER OF DCB BUFFERS
+DALBUFOF EQU   X'0035'                 BUFFER OFFSET
+DALBUFOU EQU   X'0036'                 NUMBER OF OUTPUT BUFFERS
+DALBUFRQ EQU   X'0037'                 NUMBER OF GET MACRO BUFFERS
+DALBUFSZ EQU   X'0038'                 LINE BUFFER SIZE
+DALCODE  EQU   X'0039'                 PAPER TAPE CODE
+DALCPRI  EQU   X'003A'                 SEND/RECEIVE PRIORITY
+DALDEN   EQU   X'003B'                 TAPE DENSITY
+DALDSORG EQU   X'003C'                 DATA SET ORGANIZATION
+DALEROPT EQU   X'003D'                 ERROR OPTIONS
+DALGNCP  EQU   X'003E'                 NO. OF GAM I/O BEFORE WAIT
+DALINTVL EQU   X'003F'                 POLLING INTERVAL
+DALKYLEN EQU   X'0040'                 DATA SET KEYS LENGTH
+DALLIMCT EQU   X'0041'                 SEARCH LIMIT
+DALLRECL EQU   X'0042'                 LOGICAL RECORD  LENGTH
+DALMODE  EQU   X'0043'                 CARD READER/PUNCH MODE
+DALNCP   EQU   X'0044'                 NO. READ/WRITE BEFORE CHECK
+DALOPTCD EQU   X'0045'                 OPTIONAL SERVICES
+DALPCIR  EQU   X'0046'                 RECEIVING PCI
+DALPCIS  EQU   X'0047'                 SENDING PCI
+DALPRTSP EQU   X'0048'                 PRINTER LINE SPACING
+DALRECFM EQU   X'0049'                 RECORD FORMAT
+DALRSRVF EQU   X'004A'                 FIRST BUFFER RESERVE
+DALRSRVS EQU   X'004B'                 SECONDARY BUFFER RESERVE
+DALSOWA  EQU   X'004C'                 TCAM USER WORK AREA SIZE
+DALSTACK EQU   X'004D'                 STACKER BIN
+DALTHRSH EQU   X'004E'                 MESSAGE QUEUE PERCENTAGE
+DALTRTCH EQU   X'004F'                 7-TRACK RECORDING TECHNIQUE
+DALPASSW EQU   X'0050'                 PASSWORD
+DALIPLTX EQU   X'0051'                 IPL TEXT ID
+DALPERMA EQU   X'0052'                 PERMANENTLY ALLOCATED ATTRIB
+DALCNVRT EQU   X'0053'                 CONVERTIBLE ATTRIBUTE
+DALDIAGN EQU   X'0054'                 OPEN/CLOSE/EOV DIAGNOSTIC TRACE
+DALRTDDN EQU   X'0055'                 RETURN DDNAME
+DALRTDSN EQU   X'0056'                 RETURN DSNAME
+DALRTORG EQU   X'0057'                 RETURN D.S. ORGANIZATION
+DALSUSER EQU   X'0058'                 SYSOUT REMOTE USER
+DALSHOLD EQU   X'0059'                 SYSOUT HOLD QUEUE
+DALFUNC  EQU   X'005A'                 D.S. TYPE FOR 3525 CARD DEVICE
+DALFRID  EQU   X'005B'                 IMAGELIB MEMBER FOR SHARK
+DALSSREQ EQU   X'005C'                 SUBSYSTEM REQUEST
+DALRTVOL EQU   X'005D'                 RETURN VOLUME SERIAL
+DALMSVGP EQU   X'005E'                 MSVGP FOR 3330V        @Y30LPPD
+DALSSNM  EQU   X'005F'                 SUBSYSTEM NAME REQUEST @G29AN2F
+DALSSPRM EQU   X'0060'                 SUBSYSTEM PARAMETERS   @G29AN2F
+DALPROT  EQU   X'0061'                 RACF PROTECT FEATURE   @G32HPPJ
+DALSSATT EQU   X'0062'                 SUBSYSTEM ATTRIBUTE    @ZA25778
+**********************************************************************
+*
+* KEYS FOR CONCATENATION FUNCTION
+*
+**********************************************************************
+DCCDDNAM EQU   X'0001'                 DDNAMES
+DCCPERMC EQU   X'0004'                 PERMANENTLY CONCATENATED
+**********************************************************************
+*
+* KEYS FOR DECONCATENATION FUNCTION
+*
+***********************************************************************
+DDCDDNAM EQU   X'0001'                 DDNAME
+***********************************************************************
+*
+* KEYS FOR INFORMATION RETRIEVAL FUNCTION
+*
+***********************************************************************
+DINDDNAM EQU   X'0001'                 DDNAME
+DINDSNAM EQU   X'0002'                 DSNAME
+DINRTDDN EQU   X'0004'                 RETURN DDNAME
+DINRTDSN EQU   X'0005'                 RETURN DSNAME
+DINRTMEM EQU   X'0006'                 RETURN MEMBER NAME
+DINRTSTA EQU   X'0007'                 RETURN DATA SET STATUS
+DINRTNDP EQU   X'0008'                 RETURN NORMAL DISPOSITION
+DINRTCDP EQU   X'0009'                 RETURN CONDITIONAL DISP
+DINRTORG EQU   X'000A'                 RETURN D.S. ORGANIZATION
+DINRTLIM EQU   X'000B'                 RETURN # TO NOT-IN-USE LIMIT
+DINRTATT EQU   X'000C'                 RETURN DYN. ALLOC ATTRIBUTES
+DINRTLST EQU   X'000D'                 RETURN LAST ENTRY INDICATION
+DINRTTYP EQU   X'000E'                 RETURN D.S. TYPE INDICATION
+DINRELNO EQU   X'000F'                 RELATIVE REQUEST NUMBER
+**********************************************************************
+*
+* KEYS FOR REMOVE IN-USE FUNCTION
+*
+**********************************************************************
+DRITCBAD EQU   X'0001'                 TCB ADDRESS
+DRICURNT EQU   X'0002'                 CURRENT TASK OPTION
+**********************************************************************
+*
+* KEYS FOR DDNAME ALLOCATION FUNCTION
+*
+**********************************************************************
+DDNDDNAM EQU   X'0001'                 DDNAME
+DDNRTDUM EQU   X'0002'                 RETURN DUMMY D.S. INDICATION
+**********************************************************************
+*
+* KEYS FOR UNALLOCATION FUNCTION
+*
+**********************************************************************
+DUNDDNAM EQU   X'0001'                 DDNAME
+DUNDSNAM EQU   X'0002'                 DSNAME
+DUNMEMBR EQU   X'0003'                 MEMBER NAME
+DUNOVDSP EQU   X'0005'                 OVERRIDING DISPOSITION
+DUNUNALC EQU   X'0007'                 UNALLOC OPTION
+DUNREMOV EQU   X'0008'                 REMOVE OPTION
+DUNOVSNH EQU   X'000A'                 OVERRIDING SYSOUT NOHOLD
+DUNOVCLS EQU   X'0018'                 OVERRIDING SYSOUT CLASS
+DUNOVSUS EQU   X'0058'                 OVERRIDING SYSOUT REMOTE USER
+DUNOVSHQ EQU   X'0059'                 OVERRIDING SYSOUT HOLD QUEUE
+         MEND  , */
+*%PLSS99K2 : ;
+*DCL
+*  /******************************************************************/
+*  /*                                                                */
+*  /* KEYS FOR ALLOCATION FUNCTION                                   */
+*  /*                                                                */
+*  /******************************************************************/
+*  DALDDNAM BIT(16) CONSTANT('0001'X), /*DDNAME                      */
+*  DALDSNAM BIT(16) CONSTANT('0002'X), /*DSNAME                      */
+*  DALMEMBR BIT(16) CONSTANT('0003'X), /*MEMBER NAME                 */
+*  DALSTATS BIT(16) CONSTANT('0004'X), /*DATA SET STATUS             */
+*  DALNDISP BIT(16) CONSTANT('0005'X), /*DATA SET NORMAL DISPOSITION */
+*  DALCDISP BIT(16) CONSTANT('0006'X), /*DATA SET CONDITIONAL DISP   */
+*  DALTRK   BIT(16) CONSTANT('0007'X), /*TRACK SPACE TYPE            */
+*  DALCYL   BIT(16) CONSTANT('0008'X), /*CYLINDER SPACE TYPE         */
+*  DALBLKLN BIT(16) CONSTANT('0009'X), /*AVERAGE DATA BLOCK LENGTH   */
+*  DALPRIME BIT(16) CONSTANT('000A'X), /*PRIMARY SPACE QUANTITY      */
+*  DALSECND BIT(16) CONSTANT('000B'X), /*SECONDARY SPACE QUANTITY    */
+*  DALDIR   BIT(16) CONSTANT('000C'X), /*DIRECTORY SPACE QUANTITY    */
+*  DALRLSE  BIT(16) CONSTANT('000D'X), /*UNUSED SPACE RELEASE        */
+*  DALSPFRM BIT(16) CONSTANT('000E'X), /*CONTIG,MXIG,ALX SPACE FORMAT*/
+*  DALROUND BIT(16) CONSTANT('000F'X), /*WHOLE CYLINDER (ROUND) SPACE*/
+*  DALVLSER BIT(16) CONSTANT('0010'X), /*VOLUME SERIAL               */
+*  DALPRIVT BIT(16) CONSTANT('0011'X), /*PRIVATE VOLUME              */
+*  DALVLSEQ BIT(16) CONSTANT('0012'X), /*VOLUME SEQUENCE NUMBER      */
+*  DALVLCNT BIT(16) CONSTANT('0013'X), /*VOLUME COUNT                */
+*  DALVLRDS BIT(16) CONSTANT('0014'X), /*VOLUME REFERENCE TO DSNAME  */
+*  DALUNIT  BIT(16) CONSTANT('0015'X), /*UNIT DESCRIPTION            */
+*  DALUNCNT BIT(16) CONSTANT('0016'X), /*UNIT COUNT                  */
+*  DALPARAL BIT(16) CONSTANT('0017'X), /*PARALLEL MOUNT              */
+*  DALSYSOU BIT(16) CONSTANT('0018'X), /*SYSOUT                      */
+*  DALSPGNM BIT(16) CONSTANT('0019'X), /*SYSOUT PROGRAM NAME         */
+*  DALSFMNO BIT(16) CONSTANT('001A'X), /*SYSOUT FORM NUMBER          */
+*  DALOUTLM BIT(16) CONSTANT('001B'X), /*OUTPUT LIMIT                */
+*  DALCLOSE BIT(16) CONSTANT('001C'X), /*UNALLOCATE AT CLOSE         */
+*  DALCOPYS BIT(16) CONSTANT('001D'X), /*SYSOUT COPIES               */
+*  DALLABEL BIT(16) CONSTANT('001E'X), /*LABEL TYPE                  */
+*  DALDSSEQ BIT(16) CONSTANT('001F'X), /*DATA SET SEQUENCE NUMBER    */
+*  DALPASPR BIT(16) CONSTANT('0020'X), /*PASSWORD PROTECTION         */
+*  DALINOUT BIT(16) CONSTANT('0021'X), /*INPUT ONLY OR OUTPUT ONLY   */
+*  DALEXPDT BIT(16) CONSTANT('0022'X), /*EXPIRATION DATE             */
+*  DALRETPD BIT(16) CONSTANT('0023'X), /*RETENTION PERIOD            */
+*  DALDUMMY BIT(16) CONSTANT('0024'X), /*DUMMY ALLOCATION            */
+*  DALFCBIM BIT(16) CONSTANT('0025'X), /*FCB IMAGE-ID                */
+*  DALFCBAV BIT(16) CONSTANT('0026'X), /*FORM ALIGNMENT, IMAGE VERIFY*/
+*  DALQNAME BIT(16) CONSTANT('0027'X), /*QNAME ALLOCATION            */
+*  DALTERM  BIT(16) CONSTANT('0028'X), /*TERMINAL ALLOCATION         */
+*  DALUCS   BIT(16) CONSTANT('0029'X), /*UNIVERSAL CHARACTER SET     */
+*  DALUFOLD BIT(16) CONSTANT('002A'X), /*UCS FOLD MODE               */
+*  DALUVRFY BIT(16) CONSTANT('002B'X), /*UCS VERIFY CHARACTER SET    */
+*  DALDCBDS BIT(16) CONSTANT('002C'X), /*DCB DSNAME REFERENCE        */
+*  DALDCBDD BIT(16) CONSTANT('002D'X), /*DCB DDNAME REFERENCE        */
+*  DALBFALN BIT(16) CONSTANT('002E'X), /*BUFFER ALIGNMENT            */
+*  DALBFTEK BIT(16) CONSTANT('002F'X), /*BUFFERING TECHNIQUE         */
+*  DALBLKSZ BIT(16) CONSTANT('0030'X), /*BLOCKSIZE                   */
+*  DALBUFIN BIT(16) CONSTANT('0031'X), /*NUMBER OF INPUT BUFFERS     */
+*  DALBUFL  BIT(16) CONSTANT('0032'X), /*BUFFER LENGTH               */
+*  DALBUFMX BIT(16) CONSTANT('0033'X), /*MAXIMUM NUMBER OF BUFFERS   */
+*  DALBUFNO BIT(16) CONSTANT('0034'X), /*NUMBER OF DCB BUFFERS       */
+*  DALBUFOF BIT(16) CONSTANT('0035'X), /*BUFFER OFFSET               */
+*  DALBUFOU BIT(16) CONSTANT('0036'X), /*NUMBER OF OUTPUT BUFFERS    */
+*  DALBUFRQ BIT(16) CONSTANT('0037'X), /*NUMBER OF GET MACRO BUFFERS */
+*  DALBUFSZ BIT(16) CONSTANT('0038'X), /*LINE BUFFER SIZE            */
+*  DALCODE  BIT(16) CONSTANT('0039'X), /*PAPER TAPE CODE             */
+*  DALCPRI  BIT(16) CONSTANT('003A'X), /*SEND/RECEIVE PRIORITY       */
+*  DALDEN   BIT(16) CONSTANT('003B'X), /*TAPE DENSITY                */
+*  DALDSORG BIT(16) CONSTANT('003C'X), /*DATA SET ORGANIZATION       */
+*  DALEROPT BIT(16) CONSTANT('003D'X), /*ERROR OPTIONS               */
+*  DALGNCP  BIT(16) CONSTANT('003E'X), /*NO. OF GAM I/O BEFORE WAIT  */
+*  DALINTVL BIT(16) CONSTANT('003F'X), /*POLLING INTERVAL            */
+*  DALKYLEN BIT(16) CONSTANT('0040'X), /*DATA SET KEYS LENGTH        */
+*  DALLIMCT BIT(16) CONSTANT('0041'X), /*SEARCH LIMIT                */
+*  DALLRECL BIT(16) CONSTANT('0042'X), /*LOGICAL RECORD LENGTH       */
+*  DALMODE  BIT(16) CONSTANT('0043'X), /*CARD READER/PUNCH MODE      */
+*  DALNCP   BIT(16) CONSTANT('0044'X), /*NO. READ/WRITE BEFORE CHECK */
+*  DALOPTCD BIT(16) CONSTANT('0045'X), /*OPTIONAL SERVICES           */
+*  DALPCIR  BIT(16) CONSTANT('0046'X), /*RECEIVING PCI               */
+*  DALPCIS  BIT(16) CONSTANT('0047'X), /*SENDING PCI                 */
+*  DALPRTSP BIT(16) CONSTANT('0048'X), /*PRINTER LINE SPACING        */
+*  DALRECFM BIT(16) CONSTANT('0049'X), /*RECORD FORMAT               */
+*  DALRSRVF BIT(16) CONSTANT('004A'X), /*FIRST BUFFER RESERVE        */
+*  DALRSRVS BIT(16) CONSTANT('004B'X), /*SECONDARY BUFFER RESERVE    */
+*  DALSOWA  BIT(16) CONSTANT('004C'X), /*TCAM USER WORK AREA SIZE    */
+*  DALSTACK BIT(16) CONSTANT('004D'X), /*STACKER BIN                 */
+*  DALTHRSH BIT(16) CONSTANT('004E'X), /*MESSAGE QUEUE PERCENTAGE    */
+*  DALTRTCH BIT(16) CONSTANT('004F'X), /*7-TRACK RECORDING TECHNIQUE */
+*  DALPASSW BIT(16) CONSTANT('0050'X), /*PASSWORD                    */
+*  DALIPLTX BIT(16) CONSTANT('0051'X), /*IPL TEXT ID                 */
+*  DALPERMA BIT(16) CONSTANT('0052'X), /*PERMANENTLY ALLOCATED ATTRIB*/
+*  DALCNVRT BIT(16) CONSTANT('0053'X), /*CONVERTIBLE ATTRIBUTE       */
+*  DALDIAGN BIT(16) CONSTANT('0054'X), /*OPEN/CLOSE/EOV DIAGN. TRACE */
+*  DALRTDDN BIT(16) CONSTANT('0055'X), /*RETURN DDNAME               */
+*  DALRTDSN BIT(16) CONSTANT('0056'X), /*RETURN DSNAME               */
+*  DALRTORG BIT(16) CONSTANT('0057'X), /*RETURN D.S. ORGANIZATION    */
+*  DALSUSER BIT(16) CONSTANT('0058'X), /*SYSOUT REMOTE USER          */
+*  DALSHOLD BIT(16) CONSTANT('0059'X), /*SYSOUT HOLD QUEUE           */
+*  DALFUNC  BIT(16) CONSTANT('005A'X), /*3525 CARD DEVICE D.S. TYPE  */
+*  DALFRID  BIT(16) CONSTANT('005B'X), /*IMAGELIB MEMBER FOR SHARK   */
+*  DALSSREQ BIT(16) CONSTANT('005C'X), /*SUBSYSTEM REQUEST           */
+*  DALRTVOL BIT(16) CONSTANT('005D'X), /*RETURN VOLUME SERIAL        */
+*  DALMSVGP BIT(16) CONSTANT('005E'X), /*MSVGP FOR 3330V     @Y30LPPD*/
+*  DALSSNM  BIT(16) CONSTANT('005F'X), /*SUBSYSTEM NAME REQ  @G29AN2F*/
+*  DALSSPRM BIT(16) CONSTANT('0060'X), /*SUBSYSTEM PARAMETERS@G29AN2F*/
+*  DALPROT  BIT(16) CONSTANT('0061'X), /*RACF PROTECT        @G32HPPJ*/
+*  DALSSATT BIT(16) CONSTANT('0062'X); /*SUBSYSTEM ATTRIBUTE @ZA25778*/
+*DCL
+*  /******************************************************************/
+*  /*                                                                */
+*  /* KEYS FOR CONCATENATION FUNCTION                                */
+*  /*                                                                */
+*  /******************************************************************/
+*  DCCDDNAM BIT(16) CONSTANT('0001'X), /*DDNAMES                     */
+*  DCCPERMC BIT(16) CONSTANT('0004'X); /*PERMANENTLY CONCATENATED    */
+*DCL
+*  /******************************************************************/
+*  /*                                                                */
+*  /* KEYS FOR DECONCATENATION FUNCTION                              */
+*  /*                                                                */
+*  /******************************************************************/
+*  DDCDDNAM BIT(16) CONSTANT('0001'X); /*DDNAME                      */
+*DCL
+*  /******************************************************************/
+*  /*                                                                */
+*  /* KEYS FOR INFORMATION RETRIEVAL FUNCTION                        */
+*  /*                                                                */
+*  /******************************************************************/
+*  DINDDNAM BIT(16) CONSTANT('0001'X), /*DDNAME                      */
+*  DINDSNAM BIT(16) CONSTANT('0002'X), /*DSNAME                      */
+*  DINRTDDN BIT(16) CONSTANT('0004'X), /*RETURN DDNAME               */
+*  DINRTDSN BIT(16) CONSTANT('0005'X), /*RETURN DSNAME               */
+*  DINRTMEM BIT(16) CONSTANT('0006'X), /*RETURN MEMBER NAME          */
+*  DINRTSTA BIT(16) CONSTANT('0007'X), /*RETURN DATA SET STATUS      */
+*  DINRTNDP BIT(16) CONSTANT('0008'X), /*RETURN NORMAL DISPOSITION   */
+*  DINRTCDP BIT(16) CONSTANT('0009'X), /*RETURN CONDITIONAL DISP     */
+*  DINRTORG BIT(16) CONSTANT('000A'X), /*RETURN D.S. ORGANIZATION    */
+*  DINRTLIM BIT(16) CONSTANT('000B'X), /*RETURN # TO NOT-IN-USE LIMIT*/
+*  DINRTATT BIT(16) CONSTANT('000C'X), /*RETURN DYN. ALLOC ATTRIBUTES*/
+*  DINRTLST BIT(16) CONSTANT('000D'X), /*RETURN LAST ENTRY INDICATION*/
+*  DINRTTYP BIT(16) CONSTANT('000E'X), /*RETURN D.S. TYPE INDICATION */
+*  DINRELNO BIT(16) CONSTANT('000F'X); /*RELATIVE REQUEST NUMBER     */
+*DCL
+*  /******************************************************************/
+*  /*                                                                */
+*  /* KEYS FOR REMOVE IN-USE FUNCTION                                */
+*  /*                                                                */
+*  /******************************************************************/
+*  DRITCBAD BIT(16) CONSTANT('0001'X), /*TCB ADDRESS                 */
+*  DRICURNT BIT(16) CONSTANT('0002'X); /*CURRENT TASK OPTION         */
+*DCL
+*  /******************************************************************/
+*  /*                                                                */
+*  /* KEYS FOR DDNAME ALLOCATION FUNCTION                            */
+*  /*                                                                */
+*  /******************************************************************/
+*  DDNDDNAM BIT(16) CONSTANT('0001'X), /*DDNAME                      */
+*  DDNRTDUM BIT(16) CONSTANT('0002'X); /*RETURN DUMMY D.S. INDICATION*/
+*DCL
+*  /******************************************************************/
+*  /*                                                                */
+*  /* KEYS FOR UNALLOCATION FUNCTION                                 */
+*  /*                                                                */
+*  /******************************************************************/
+*  DUNDDNAM BIT(16) CONSTANT('0001'X), /*DDNAME                      */
+*  DUNDSNAM BIT(16) CONSTANT('0002'X), /*DSNAME                      */
+*  DUNMEMBR BIT(16) CONSTANT('0003'X), /*MEMBER NAME                 */
+*  DUNOVDSP BIT(16) CONSTANT('0005'X), /*OVERRIDING DISPOSITION      */
+*  DUNUNALC BIT(16) CONSTANT('0007'X), /*UNALLOC OPTION              */
+*  DUNREMOV BIT(16) CONSTANT('0008'X), /*REMOVE OPTION               */
+*  DUNOVSNH BIT(16) CONSTANT('000A'X), /*OVERRIDING SYSOUT NOHOLD    */
+*  DUNOVCLS BIT(16) CONSTANT('0018'X), /*OVERRIDING SYSOUT CLASS     */
+*  DUNOVSUS BIT(16) CONSTANT('0058'X), /*OVERIDING SYSOUT REMOTE USER*/
+*  DUNOVSHQ BIT(16) CONSTANT('0059'X); /*OVERRIDING SYSOUT HOLD QUEUE*/
+

@@ -1,0 +1,1625 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         PRINT OFF
+         MACRO
+&NAME    BNGHJN &LABEL,&HJN
+         LCLA  &K
+         LCLC  &HJA,&HJB,&HJC
+&HJC     SETC  'PTF NO.'
+&K       SETA  K'&SYSPARM
+         AIF   (&K LT 4).CODE
+&HJA     SETC  '&SYSPARM'(1,4)
+         AIF   (&K LT 8).CODE
+&HJB     SETC  '&SYSPARM'(5,4)
+         AIF   (&K LT 15).CODE
+&HJC     SETC  '&SYSPARM'(9,7)
+.CODE    ANOP
+         AIF   ('&LABEL' EQ '').NOBRNCH
+         B     &LABEL .                 BR AROUND CONSTANTS
+         SPACE 2
+.NOBRNCH ANOP
+         AIF   ('&NAME' EQ '').NOLABEL
+         DC    C'&NAME' .              MODULE IDENTIFIER
+.NOLABEL ANOP
+         AIF   ('&HJA' EQ '').NEXT
+         DC    X'&HJA' .                DATE OF MODIFICATION
+.NEXT    ANOP
+         AIF   ('HJB' EQ '').DATE
+         AIF   ('&HJN' NE 'HJN').DATE
+         DC    X'&HJB' .                HJN OF MODIFICATION
+.DATE    ANOP
+         DC    C'&HJC' .                PTF LEVEL
+.NOPTF   ANOP
+         AIF   ('&LABEL' EQ '').NOLBL
+         SPACE 2
+&LABEL   DS    0H
+.NOLBL   ANOP
+         MEND
+         PRINT ON
+***********************************************************************
+*                                                                     *
+* MODULE NAME = BNGCDISP                                              *
+*                                                                     *
+* DESCRIPTIVE NAME = CICS DEMF DISPLAY CONTROL MODULE                 *
+*                                                                     *
+*                                                                     *
+* STATUS = RELEASE 1, LEVEL 1                                         *
+*                                                                     *
+* FUNCTION = 1) RECEIVES CONTROL FROM CICS;                           *
+*            2) EDITS THE INPUT INTO 6 PARM FIELDS WITH LEFT JUSTIFY; *
+*            3) DOES SYNTAX CHECK ON DEMF COMMANDS AND PARAMETERS;    *
+*            4) DETERMINES WHETHER THE REQUEST IS FOR MENU,REMOTE,    *
+*               LOCAL OR 3270 SCREEN ERROR DISPLAY AND PASSES CONTROL *
+*               TO BNGTMENU,BNGTRMOT,BNGTLOCL OR BNGT3270 SEGMENT     *
+*               ACCORDINGLY WITH PARAMETERS;                          *
+*            5) HANDLES ALL,LINE AND CTRL ERROR DISPLAY REQUEST AND   *
+*               WRITES ITS ERROR INFORMATION TO THE 3270 DISPLAY      *
+*               TERMINAL AND ISSUES SOME OF THE DISPLAY MESSAGES;     *
+*            6) ACCESSES SYS1.DEMFLOG DATA FILE FOR ALL,LINE AND CTRL *
+*               ERROR DISPLAY REQUEST;                                *
+*            7) RETURNS CONTROL TO CICS.                              *
+*                                                                     *
+* NOTES = NONE                                                        *
+*                                                                     *
+*    DEPENDENCIES =                                                   *
+*                                                                     *
+*    THE FOLLOWING ARE CICS TABLES/CONTROL BLOCKS AND THEIR LABELS    *
+*    USED BY DEMF CICS MODULES (BNGCDISP,BNGC3270,BNGCLOCL,BNGCRMOT   *
+*    BNGCMENU) :                                                      *
+*                                                                     *
+*    CICS TABLE AND                                                   *
+*    CONTROL BLOCKS                  LABELS USED                      *
+*    ----------------------          -----------                      *
+*                                                                     *
+*    COMMON SYSTEM AREA              CSATCTBA                         *
+*    (CSA)                                                            *
+*                                                                     *
+*    TERMINAL CONTROL TABLE          TCTTEDA                          *
+*    TERMINAL ENTRY (TCTTE)          TCTTETM                          *
+*                                    TCTTELT                          *
+*                                    TCTTETI                          *
+*                                    TCTTECLT                         *
+*                                    TCTTETEL                         *
+*                                    TCTTETT                          *
+*                                    TCTTEGU                          *
+*                                    TCTTETA                          *
+*                                                                     *
+*    TERMINAL CONTROL TABLE          TCTLELF                          *
+*    LINE ENTRY (TCTLE)              TCTLEFAA                         *
+*                                    TCTLEPI                          *
+*                                    TCTLEMFP                         *
+*                                    TCTLEPA                          *
+*                                    TCTLEDCB                         *
+*                                    TCTLERLN                         *
+*                                                                     *
+*    TERMINAL INPUT/OUTPUT AREA      TIOADBA                          *
+*    (TIOA)                          TIOATDL                          *
+*                                                                     *
+*    TASK CONTROL AREA               TCAFCAAA                         *
+*    (TCA)                           TCAFCAA                          *
+*                                    TCAPCPI                          *
+*                                    TCASCSA                          *
+*                                                                     *
+*    FILE INPUT/OUTPUT AREA          FIOADBA                          *
+*    (FIOA)                                                           *
+*                                                                     *
+*    RESTRICTIONS = NONE                                              *
+*                                                                     *
+*    REGISTER CONVENTIONS = R12 ADDRESS OF TCA                        *
+*                           R13 ADDRESS OF CSA                        *
+*                                                                     *
+*    PATCH LABEL = NONE                                               *
+*    PATCH LABEL = PATCH                                       @OX21950
+*                                                                     *
+* MODULE TYPE =  CICS DISPLAY CONTROL                                 *
+*                                                                     *
+*    PROCESSOR = ASSEMBLER H                                          *
+*                                                                     *
+*    MODULE SIZE = 5632 DECIMAL BYTES                                 *
+*                                                                     *
+*    ATTRIBUTES = QUASI-REENTRANT                                     *
+*                                                                     *
+* ENTRY POINT = BNGCDISP                                              *
+*                                                                     *
+*    PURPOSE = SEE FUNCTION                                           *
+*                                                                     *
+*    LINKAGE = R12 LOADED WITH THE ADDRESS OF TCA                     *
+*              R13 LOADED WITH THE ADDRESS OF CSA                     *
+*              R14 LOADED WITH THE RETURN ADDR (USED BY SUBROUTINE)   *
+*              R15 LOADED WITH ENTRY POINT                            *
+*                                                                     *
+* INPUT =  INPUT TIOA                                                 *
+*                                                                     *
+* OUTPUT = OUTPUT TIOA                                                *
+*                                                                     *
+* EXIT-NORMAL = REGISTER 15 RETURN CODE RETURNED TO CALLER :          *
+*               00 - OPERATION PERFORMED AS REQUESTED                 *
+*                                                                     *
+* EXIT-ERROR  = NONE                                                  *
+*                                                                     *
+* EXTERNAL REFERENCE = BNGCLOCL,BNGCRMOT,BNGCMENU AND BNGC3270        *
+*                                                                     *
+*    ROUTINES = LOCATE ROUTINE                                        *
+*               MOD1SCAN ROUTINE                                      *
+*               MOD1 TABLE BUILD (AT LABEL S215) ROUTINE              *
+*                                                                     *
+*    DATA AREAS =  TWA (300 BYTES)                                    *
+*                                                                     *
+*    CONTROL BLOCK = DFHCSADS, DFHTCTTE, DFHTCTLE, DFHTCADS,          *
+*                    DFHTIOA, DFHFIOA                                 *
+*                                                                     *
+* TABLES = TABLE    - FUNCTION/COMPANION TABLE                        *
+*          MOD1TAB  - 3277 MODEL 1 TABLE                              *
+*          HXTOEB   - HEX CHARS TO EBCDIC CHARS TABLE                 *
+*          EBTOHX   - EBCDIC CHARS TO HEX CHARS TABLE                 *
+*          LOTOUP   - LOWER TO UPPER CASE CHARS TABLE                 *
+*                                                                     *
+* MACROS = DCBD, DFHFC, DFHSC, DFHTC, DFHPC                           *
+*                                                                     *
+* CHANGE ACTIVITIES AS FOLLOWS:                                       *
+* CHANGE 01  11/15/77  PROLOGUE ADDED                                 *
+* CHANGE 02  02/22/78  BNGHJN MACRO ADDED                             *
+*A139000                                                       @OZ29900
+*C521500                                                       @OZ30480
+*A489500                                                       @OZ31882
+*D454000-455000                                                @OZ31878
+*C456500-457000,551500-552000,601000-602000,603500-607000      @OZ31878
+*C608500-611000                                                @OZ31878
+*A412000,654500,684000                                         @OZ31885
+*C037000,360500-361500                                         @OX21950
+*A728500                                                       @OX21950
+*C142500                                                       @OX22096
+*A654800                                                       @OX22096
+*C358000,641000-642500,645000,646000,647000,648000,650500      @OX22095
+*C651500,653500-654000,654700                                  @OX22095
+*A281500                                                       @OX22763
+*DUMMY APAR TO CORRECT PREREQ STRINGS ON PREVIOUS PTF'S        @OZ36693
+*C288000                                                       @OZ37867
+*A431500                                                       @OZ38643
+*C332500                                                       @OZ43235
+*A295505-295565                                                @OX25492
+*C076000-077000                                                @OZ39277
+*A285700,285800,292700,292800                                  @OX25587
+*C285500,286500,292500,293500                                  @OX25587
+***********************************************************************
+BNGCDISP TITLE 'DISPLAY AUDITS INPUT AND DISPLAYS ALL LINES,LINE, CTRL'
+         PRINT OFF
+         COPY  DFHCSADS
+         COPY  DFHTCTTE
+         COPY  DFHTCTLE
+         COPY  DFHTIOA
+         COPY  DFHTCADS
+         PRINT ON
+PARM1    DS    D                   1ST INPUT PARM - DEMF
+PARM2    DS    D                   2ND INPUT PARM - ALL/LINE/CTRL/
+*                                                    3270
+PARM3    DS    D                   3RD INPUT PARM
+PARM4    DS    D                   4TH INPUT PARM
+PARM5    DS    D                   5TH INPUT PARM
+PARM6    DS    D                   6TH INPUT PARM
+SBACNT   DS    PL1                 COUNT OF SBA'S IN INPUT
+RELREC   DS    CL3                 BDAM RELATIVE BLOCK ADDRESS
+SVRELREC DS    CL3           SAVE AREA FOR LINE/CTRL RELATIVE BLOCK NO.
+DBLWD    DS    D                   DOUBLEWORD WORK AREA
+DUBLWD   EQU   DBLWD
+FULLWD   DS    F                   FULLWORD WORK AREA
+TWALINE  DS    F             SAVE AREA FOR CICS SYMBOLIC LINE POINTER
+*   THE TWA FROM HERE UP MUST REMAIN IN THAT ORDER TO MATCH TWALINE
+*         WITH TWATCTID IN THE 3270 PROGRAM.
+LINEID   DS    XL6                 HARDWARE LINE ADDRESS
+LINENAME DS    CL8           LINE NAME SAVE AREA FOR RECAP HEADER
+CTRLID   DS    X                   HARDWARE CONTROL UNIT ADDRESS
+CTRLNAME DS    XL8'00'       CTRL/CLUSTER NAME WORK AREA       @OZ39277
+TERMNAME DS    XL8'00'             TERML/LOGICAL UNIT NAME WORK@OZ39277
+CLUSNAME DS    XL8'00'       CTRL/CLUSTER NAME SAVE AREA       @OZ39277
+NEWPARM  DS    C                   NEW-PARM SWITCH
+CTRPARM  DS    C                   COUNTER OF CHARS STORED IN PARM(X)
+SAVETIOA DS    F                   SAVE AREA FOR ORIGINAL TIOA
+SAVEBBSS DS    F                   SAVE POINTER TO BLK AND SLOT
+TWASLOT  DS    C                   INPUT SLOT COUNT IN HEX
+WRKSLOT  DS    C                   TWASLOT WORK AREA
+*                                  DISPLACEMENTS IN TIOA
+SAVERCAP DS    F                   SAVEAREA FOR POINTER TO RECAP LINE
+SAVEITEM DS    F                   SAVEAREA FOR POINTER TO FIRST LINE
+*                                  AND CTRL DISPLAYS
+SLOTCNT  DS    C                   COUNT OF DETAIL SLOTS READ
+ITEMCNT  DS    PL2                 COUNT OF OUTPUT ITEMS IN LINE
+WORKCNT  DS    PL2                 ITEM WORK COUNTER
+WORK15   DS    CL15
+QUITSW   DS    C             USED TO STOP EDIT OF INPUT ON 3RD SBA
+*                             IF 2ND SBA = L1P7 OR L6P26  ***ALSO*** XH
+*                            USED AS MOD-1 OUTPUT-FULL-SWITCH        XH
+*                               00 = NOT FULL   FF = OUTPUT FULL BUT XH
+*     CONTINUE SCANNING DATA BASE FOR CORRECT ERROR COUNTS           XH
+***********************************************************************
+MOD1TABL DS    CL64          MAX OF 32 ENTRIES FOR MOD-1 TABLE
+*                              LOCAL TERM = 2-BYTES
+*                              REMOTE CU AND TERM = 2-BYTES
+TBRELREC DS    CL3           SAVE AREA FOR PAGING 'BBB'
+TBSLOT   DS    C             SAVE AREA FOR PAGING 'SS'
+TBCTRL   DS    C             SAVE AREA FOR MDR CTRL UNIT
+TBLINE   DS    CL6           SAVE AREA FOR LINE ADDR OF PAGE
+TBARG    DS    CL2           SAVE AREA FOR TABLE ARGUMENT
+TABLECNT DS    PL2           COUNT OF ENTRIES IN TABLE
+WKTBLCNT DS    PL2           WORK AREA FOR COUNT OF TABLE ENTRIES
+MOD1SW   DS    X             00 = SWT OFF    FF = SWT ON
+*                            IF ON, PERFORM MOD1 TABLE SCAN
+SOUTLOOP DS    F             SAVE AREA FOR OUTLOOP REGISTER
+***********************************************************************
+         COPY  DFHFIOA
+CTRLLAST DS    F                   LAST USED ADDR IN DATASET
+CTRLTOTL DS    F                   TOTAL BLOCKS IN DATASET
+CTRLBACK DS    F                   BACKWARD PTR IN CTRL BLK CHAIN
+CTRLFWD  DS    F                   FORWARD PTR IN CTRL BLK CHAIN
+CTRLENTS DS    C                   NBR ENTRIES IN THIS CTRL BLK
+         DS    CL15                FOR FUTURE USE
+CTRLSLT1 DS    0C                  START OF CTRL SLOT NBR ONE.
+         ORG   FIOADBA
+DATAPORT DS    CL6                 PORT & LIB ADDR
+DATATIME DS    CL4                 TIME BLOCK CREATED
+DATADATE DS    CL4                 DATE BLOCK CREATED
+DATAFWD  DS    CL3                 FORWARD CHAIN ADDR
+DATABACK DS    CL3                 BACKWAD CHAIN ADDR
+BLKLTH   DS    CL2                 NBR BYTES USED IN THIS BLOCK
+         DS    CL10
+DATASLT1 DS    0C                  START OF 1ST DATA SLOT
+SLOTS    DSECT           MAP OF ENTRIES IN CONTROL BLOCK
+         USING SLOTS,DATAREG
+SLOTLINE DS    CL6                CHANNEL ADDRESS(PORT OR LIB)
+SLOTNBC  DS    CL2                NUMBER OF BLOCKS IN THIS CHAIN
+SLOTHITS DS    CL2                TOTAL HITS ON THIS LINE
+SLOTRFB  DS    CL3                RELATIVE ADDRESS FIRST BLOCK IN CHAIN
+SLOTRLB  DS    CL3                RELATIVE ADDRESS LAST BLOCK IN CHAIN
+SLOTLTH  EQU   *-SLOTS
+         ORG   SLOTS         MAP OF MDR AND OBR IN DETAIL BLOCKS
+DATALTH  DS    C                   LTH OF THIS SLOT
+LINEIDA  DS    CL6                 LINE AND LIB ADDR
+ENTRYTYP DS    C                   ENTRY TYPE - MDR OR OBR
+         DS    CL3
+MDRTYPE  DS    C                   TYPE HDWE - 03 EQUALS 3270
+         DS    CL3
+DATE     DS    CL4                 DATE OF ERROR - 00YY0DDF
+TIME     DS    CL4                 TIME OF ERROR - HHMMSSHH
+         DS    CL8
+MDRCUA   DS    CL2                 MDR CHAN & UNIT ADDR
+MDRCTRL  DS    C                   MDR CTRL UNIT POLL ADDR
+MDRTERM  DS    C                   MDR TERMIL POLL ADDR
+MDRSTATS DS    CL2                 REMOTE 3270 STATUS
+         DS    CL2
+OBRCCW   DS    CL8                 LAST CCW EXECUTED
+OBRCSW   DS    CL8                 CHANNEL STATUS WORD
+         DS    CL6
+OBRUCB   DS    C
+         DS    CL3
+OBRCUA   DS    CL2                 OBR CHAN & UNIT ADDR
+OBRCTRL  DS    C
+OBRTERM  DS    C
+         DS    CL12
+OBRSENSE DS    CL2                 OBR SENSE BYTES
+***********************************************************************
+BNGCDISP CSECT
+SBA      EQU   X'11'         SET BUFFER ADDRESS
+SF       EQU   X'1D'         START FIELD
+IC       EQU   X'13'         INSERT CURSOR
+UNA      EQU   X'40'         UNPROTECTED,NORMAL INTENSITY, ALPHAMERIC
+PNA      EQU   X'60'         PROTECTED, NORMAL INTENSITY, ALPHAMERIC
+PHA      EQU   X'E8'             PROTECTED, HIGH INTENSITY, ALPHAMERIC
+MNP      EQU   X'61'             PROT,MODIFIED,NORMAL
+PIA      EQU   X'6D'             PROTECTED,MODIFIED,INVISIBLE,ALPHA
+L1P1     EQU   X'4040'       LINE 1, POSITION 1  BUFFER ADDRESS.
+L1P7     EQU   X'40C6'       LINE 1, POSITION 7  BUFFER ADDRESS.
+L1P36    EQU   X'40E3'       LINE 1, POSITION 36 BUFFER ADDRESS.
+L2P1     EQU   X'C150'       LINE 2, POSITION 1  BUFFER ADDRESS.
+L2P4     EQU   X'C1D3'       PAGE FWD  BUFFER ADDR FOR 3277-2
+L2P44    EQU   X'C17B'       PAGE BKWD BUFFER ADDR FOR 3277-2
+L3P1     EQU   X'C260'       LINE 3, POSITION 1 BUFFER ADDRESS.
+L3P4     EQU   X'C1D3'       LINE 3, POSITION 4 BUFFER ADDRESS.
+L4P1     EQU   X'C3F0'       LINE 4, POSITION 1  BUFFER ADDRESS.
+L4P4     EQU   X'C17B'       PAGE BKWD BUFFER ADDR FOR 3277-1
+L6P26    EQU   X'C6E9'       LINE 6, POSITION 26 BUFFER ADDRESS.
+TCTTEAR  EQU   2             POINTS TO TCTTE
+BASE1    EQU   3             BASE REGISTER ONE = 0-4095
+BASE2    EQU   4             BASE REGISTER TWO = 4096-8191
+TIOABAR  EQU   5             POINTS TO TIOA
+FIOABAR  EQU   6             POINTS TO FIOA
+PARMREG  EQU   6             POINTS TO PARM AREA
+OUTREG   EQU   7             POINTS TO DATA IN TIOA AREA
+OUTLOOP  EQU   8             USED FOR LOOPING THRU DATA IN TIOA AREA
+MOD1REG  EQU   8             POINTS TO MOD-1 TABLE (MOD1TABL)
+DATAREG  EQU   9             POINTS TO DATA IN FIOA AREA
+DATALOOP EQU   10            USED FOR LOOPING THRU DATA IN FIOA AREA
+TABLEREG EQU   11            POINTS TO FUNCTION/COMPANION TABLE
+R11      EQU   11            PARMLIST COUNTER WORK REGISTER FOR CTRPARM
+LINKREG  EQU   11            SUBROUTINE LINKAGE
+R14      EQU   14
+R15      EQU   15
+***********************************************************************
+         BALR  BASE1,0
+         USING *,BASE1,BASE2
+BNGCDISP BNGHJN GO                                             @OZ29900
+         LA    BASE2,2048(BASE1)
+         LA    BASE2,2048(BASE2)
+         L     TCTTEAR,TCAFCAAA
+         LA    TCTTEAR,0(TCTTEAR)
+         L     TIOABAR,TCTTEDA
+         ZAP   SBACNT,=P'0'        SET SBA COUNTER TO ZERO.
+         SR    DATAREG,DATAREG          CLEAR WORKREG          @OX22096
+         LH    DATAREG,TIOATDL          GET TERMINAL DATA LEN  @OX22096
+         BCTR  DATAREG,0                REDUCE BY ONE FOR EX   @OX22096
+         EX    DATAREG,TRANS            DO DATA TRANSLATION    @OX22096
+         LA    DATAREG,TIOADBA     POINT TO 1ST BYTE IN TIOA.
+         LR    DATALOOP,DATAREG    SETUP DATA LOOP
+         AH    DATALOOP,TIOATDL
+         XC    PARM1(48),PARM1     ZERO OUT PARM FIELDS
+         LA    PARMREG,PARM1       POINT TO PARMS.
+         LR    14,PARMREG
+         MVI   QUITSW,X'00'        SET QUITSW OFF.
+         MVI   NEWPARM,C'1'        TURN ON 'NEW PARM' SWITCH.
+         MVI   CTRPARM,X'00'       SET CHARS COUNTER IN PARM = ZERO
+A160     CLI   0(DATAREG),SBA      IS THIS BYTE AN SBA?
+         BNE   A210                NO. CHECK IT FURTHER.
+         CLI   QUITSW,X'FF'            QUIT SWITCH ON?
+         BE    C10                          YES.  QUIT EDIT.
+         CLC   1(2,DATAREG),=AL2(L1P7)  IS 2ND SBA = LINE 1 POSN 7?
+         BE    A170                              NO. CONTINUE EDIT
+         CLC   1(2,DATAREG),=AL2(L6P26) IS 2ND SBA = LINE 6 POSN 26?
+         BNE   A180                              NO. CONTINUE EDIT
+A170     MVI   QUITSW,X'FF'            TURN QUIT SWITCH ON
+A180     AP    SBACNT,=P'1'        YES. ADD TO TO SBA COUNTER.
+         LA    DATAREG,2(DATAREG)  BUMP TIOA POINTER BY 2.
+         B     B80
+A210     CLI   0(DATAREG),C'A'     IS IT AN 'A' OR HIGHER?
+         BL    B80                 NO. CHECK NEW PARM SWITCH.
+         CLI   NEWPARM,C'1'        IS FIRST CHAR FOR PARM(X)?
+         BNE   B10                 NO.
+         MVI   NEWPARM,C'0'        YES. SET FIRST CHAR IN FOR PARM
+         MVI   CTRPARM,X'00'       SET PARM CHAR CTR = 0
+B10      IC    R11,CTRPARM         LOAD R11 = CTRPARM
+         LA    R11,1(R11)          ADD CTRPARM = CTRPARM + 1
+         STC   R11,CTRPARM         STORE NEW CTR BACK CTRPARM
+         CLI   CTRPARM,X'08'       IS CHAR COUNT IN PARM OVER 8 ?
+         BH    B50                 YES. GO BACK LOOP WITHOUT STORING
+         MVC   0(1,14),0(DATAREG)  PUT THIS BYTE IN THIS PARM
+         CLI   PARM6+7,X'00'       ARE ALL PARMS USED UP?
+         BNE   C10                 YES. GOTO SYNTAX CHECKING ROUTINE
+         LA    14,1(14)            BUMP PARM POINTER WORKREG.
+B40      LA    DATAREG,1(DATAREG)  BUMP TIOA POINTER.
+         CR    DATAREG,DATALOOP    IS THERE MORE DATA IN TIOA?
+         BL    A160                YES. GO PROCESS MORE DATA.
+         B     C10                 NO. GOTO SYNTAX CHECKING ROUTINE
+B50      CLC   PARM2(5),=X'F3F2F7F000'  IS THIS A 3270 SCREEN INPUT ?
+         BNE   B40                      NO.
+         CP    SBACNT,=P'2'        IS THIS NON-FORMATTED INPUT ?
+         BH    B40                 NO.
+         B     Z40                 YES. SEND INVALID FORMAT MSG.
+B80      CLI   NEWPARM,C'1'        IS NEW-PARM SWITCH ON?
+         BE    B40                 YES. CHECK FOR MORE DATA.
+         CLI   PARM6,X'00'         NO. ARE ALL PARMS USED UP?
+         BNE   C10                 YES. GOTO SYNTAX CHECKING ROUTINE
+         LA    PARMREG,8(PARMREG)  NO. BUMP TO NEXT NEW PARM.
+         LR    14,PARMREG          POINT WORK REG TO NEXT PARM.
+         MVI   NEWPARM,C'1'        TURN ON NEW-PARM SWICH.
+         B     B40                 GO CHECK FOR MORE DATA.
+***********************************************************************
+*                                                                     *
+*        AT THIS POINT UP TO 5 PARMS HAVE BEEN EDITED AND             *
+*        ARE LEFT JUSTIFIED WITH TRAILING X'00'S                      *
+*                                                                     *
+***********************************************************************
+         EJECT
+***********************************************************************
+*                                                                     *
+*        SYNTAX CHECKING ROUTINE                                      *
+*                                                                     *
+***********************************************************************
+C10      CLI   QUITSW,X'FF'            IS SBA QUIT SWT ON ?
+         BE    C15                     YES. DATA ENTERED FROM 29 AREA
+         CP    SBACNT,=P'1'            NO. IS SBACNT > 1 ?
+         BH    CC10                    YES. BYPASS SYNTAX CHECK
+         CLI   PARM2,X'00'             IS PARM2 BLANK ?
+         BE    D80                     YES. GOTO BNGCMENU
+C15      CLC   PARM2(5),=X'D4C5D5E400' IS PARM2=MENU ?
+         BNE   C20                     NO
+         CLI   PARM3,X'00'             IS PARM3 = 00 ?
+         BE    D80                     YES. GOTO BNGCMENU
+         B     Z40                     NO. GO ISSUE INVALID FORMAT MSG
+C20      CLC   PARM2(4),=X'C1D3D300'   IS PARM2 = ALL ?
+         BNE   C30                     NO
+         CLI   PARM3,X'00'             IS PARM3 = 00 ?
+         BE    CC10                    YES.GO SCHEDULE APPROPRIATE PGM
+         B     Z40                     NO. GO ISSUE INVALID FORMAT MSG
+C30      CLC   PARM2(6),=X'D3D6C3C1D300'  IS PARM2 = LOCAL ?
+         BNE   C40                        NO
+         CLI   PARM3,X'00'             IS PARM3 = 00 ?
+         BE    CC10                   YES.GO SCHEDULE APPROPRIATE PGM
+         CLC   PARM3+1(2),=C'SS'       IS LOCAL/REMOTE SCREEN ?
+         BE    CC10                   YES.
+         B     Z40                     NO. GO ISSUE INVALID FORMAT MSG
+C40      CLC   PARM2(6),=X'D9C5D4D6E3C5' IS PARM2 = REMOTE ?
+         BNE   C50                     NO.
+         CLC   PARM2+7(1),=C'S'        IS REMOTE SCREEN ?
+         BE    C45                     YES.
+         CLI   PARM2+6,X'00'           IS REMOTE SYNTAX ERROR ?
+         BNE   Z40                     YES. GO ISSUE INVALID FORMAT MSG
+         CLI   PARM3,X'00'             IS PARM3 = 00 ?
+         BE    CC10                   YES.GO SCHEDULE APPROPRIATE PGM
+         B     Z40                     NO. GO ISSUE INVALID FORMAT MSG
+C45      CLI   PARM3,X'00'             IS REMOTE SCREEN ?
+         BNE   CC10                   YES.
+         B     Z40                     NO. GO ISSUE INVALID FORMAT MSG
+C50      CLC   PARM2(5),=X'D3C9D5C500' IS PARM2 = LINE ?
+         BNE   C60                     NO
+         CLI   PARM4,X'00'             IS PARM4 = 00 ?
+         BNE   Z40                     NO. GO ISSUE INVALID FORMAT MSG
+C55      CLI   PARM3+3,X'00'           LINE ADDR = 4 OR MORE ?
+         BNE   Z40                     YES.
+         CLI   PARM3+2,X'00'           LINE ADDR = 2 OR LESS ?
+         BE    Z40                     YES.
+         LA    DATALOOP,3              SET FOR SCAN 3 CHARS
+         LA    DATAREG,PARM3           SET DATAREG = PARM3 PTR
+C57      CLI   0(DATAREG),X'F0'        IS BYTE(PARM3) >= C'0' ?
+         BNL   C59                     YES. IT IS NUMERIC
+         CLI   0(DATAREG),X'C6'        IS BYTE(PARM3) > C'F' ?
+         BH    Z40                     YES. IT IS INVALID FORMAT
+C59      LA    DATAREG,1(DATAREG)      BUMP TO NEXT BYTE OF PARM3
+         BCT   DATALOOP,C57            LOOP
+         B     CC10                    NO. GO SCHEDULE APPROPRIATE PGM
+C60      CLC   PARM2(5),=X'C3E3D9D300' IS PARM2 = CTRL ?
+         BNE   C70                     NO
+         CLI   PARM5,X'00'             IS PARM5 = 00 ?
+         BNE   Z40                     NO.
+         CLI   PARM4,X'00'             IS PARM4 = 00 ?
+         BE    C55                     YES.
+C65      CLI   PARM4+2,X'00'           CTRL ADDR = 3 OR MORE ?
+         BNE   Z40                     YES.
+         CLI   PARM4+1,X'00'           CTRL ADDR = 1 OR LESS ?
+         BE    Z40                     YES.
+C66      LA    DATALOOP,2              SET FOR SCAN 2 CHARS
+         LA    DATAREG,PARM4           SET DATAREG = PARM4 PTR
+C67      CLI   0(DATAREG),X'F0'        IS BYTE(PARM3) >= C'0' ?
+         BNL   C69                     YES. IT IS NUMERIC
+         CLI   0(DATAREG),X'C6'        IS BYTE(PARM3) > C'F' ?
+         BH    Z40                     YES. IT IS INVALID FORMAT
+C69      LA    DATAREG,1(DATAREG)      BUMP TO NEXT BYTE OF PARM3
+         BCT   DATALOOP,C67            LOOP
+         B     C55                     NO. GO CHECK LINE ADDR (PARM3)
+C70      CLC   PARM2(5),=X'F3F2F7F000' IS PARM2 = 3270 ?
+         BNE   Z40                     NO.
+         CLI   PARM6,X'00'             IS PARM6 = 00 ?
+         BNE   Z40                     NO.
+         CLI   PARM5,X'00'             IS PARM5 = 00 ?
+         BE    C75                     YES.
+         CLI   PARM5+2,X'00'           IS TERMINAL ADDR = 3 OR MORE ?
+         BNE   Z40                     YES.
+         CLI   PARM5+1,X'00'           IS TERMINAL ADDR = 1 OR LESS ?
+         BE    Z40                     YES.
+         LA    DATALOOP,2              SET FOR SCAN 2 CHARS
+         LA    DATAREG,PARM5           SET DATAREG = PARM5 PTR
+C72      CLI   0(DATAREG),X'F0'        IS BYTE(PARM3) >= C'0' ?
+         BNL   C74                     YES. IT IS NUMERIC
+         CLI   0(DATAREG),X'C6'        IS BYTE(PARM3) > C'F' ?
+         BH    Z40                     YES. IT IS INVALID FORMAT
+C74      LA    DATAREG,1(DATAREG)      BUMP TO NEXT BYTE OF PARM3
+         BCT   DATALOOP,C72            LOOP
+         B     C65                     NO. GO CHK LINE AND CTRL
+C75      CLI   PARM4,X'00'             IS PARM4 = 00 ?
+         BNE   Z40                     NO.
+         CLI   PARM3,X'00'             IS PARM3 = 00 ?
+         BE    D10                     YES. BRANCH TO BNGC3270
+***********************************************************************
+*                                                                     *
+*     THE FOLLOWING CODE CHECKS FOR A CICS SYMBOLIC MATCH             *
+*                                                                     *
+***********************************************************************
+         MVC   WORK15(8),PARM3         SAVE PARM3
+         OC    PARM3,=CL8' '           MAKE ZEROS
+         BAL   LINKREG,CICSLOC         CALL SYMBOLIC NAME CONV. RTN
+         CLI   PARM3+7,X'00'           IS NAME CONVERTED ?
+         BE    D10                     YES. BYPASS SYNTAX CHK
+         MVC   PARM3,WORK15            NO. RESTO PARM3-CONT. SYNTAX CHK
+*        ******************            **************************
+         CLI   PARM3+3,X'00'           IS TERM/LINE = 4 OR MORE ?
+         BNE   Z70                     YES. GO ISSUE SYMBOLIC ERR MSG
+         CLI   PARM3+2,X'00'           IS TERM/LINE = 2 OR LESS ?
+         BE    Z70                     YES. GO ISSUE SYMBOLIC ERR MSG
+         LA    DATALOOP,3              SET FOR SCAN 3 CHARS
+         LA    DATAREG,PARM3           SET DATAREG = PARM3 PTR
+C77      CLI   0(DATAREG),X'F0'        IS BYTE(PARM3) >= C'0' ?
+         BNL   C79                     YES. IT IS NUMERIC
+         CLI   0(DATAREG),X'C6'        IS BYTE(PARM3) > C'F' ?
+         BH    Z70                     YES. IT IS SYMBOLIC ERROR
+C79      LA    DATAREG,1(DATAREG)      BUMP TO NEXT BYTE OF PARM3
+         BCT   DATALOOP,C77            LOOP
+***********************************************************************
+*                                                                     *
+*        AT THIS POINT UP TO 5 PARMS HAVE BEEN EDITED AND             *
+*        ARE LEFT JUSTIFIED WITH TRAILING X'00'S                      *
+*                                                                     *
+***********************************************************************
+CC10     CP    SBACNT,=P'3'        CNT OF SBA LESS THAN THREE
+         BL    D10                 YES,THIS IS INIT ENTRY
+***********************************************************************
+*                                                                     *
+*        ENTRY IS FROM A FORMATTED SCREEN. THEREFORE,                 *
+*        THIS SECTION TRANSFERS CONTROL TO APPROPRIATE                *
+*        COMPANION PROGRAM.                                           *
+*                                                                     *
+***********************************************************************
+         CLC   PARM2(4),=C'MENU'   IS THIS MENU SCREEN ?
+         BE    D32                 YES. GO CHECK MENU PARAMETERS
+         CLI   TIOADBA+35,C'%'     IS THIS FROM BITS PROMPTER SCR ?  XH
+         BE    C190                YES. GOTO BNGC3270                XH
+         CLI   PARM4,X'00'         IS PARM4 BLANK ?
+         BE    D80                 YES. USER DID NOT X ANY ENTRIES
+         CLC   TIOADBA+15(2),=X'C1D3'   IS THIS A PAGE FORWARD-LG
+*                                       OR A PAGE BACKWARD-SM?
+         BNE   CC40                YES.                              BB
+         CLI   TCTTETM,X'F1'       IS THIS A 3277-1?                 BB
+         BE    CC60                YES. DO PAGE BACKWARD-SM.         BB
+         B     CC50                NO. DO PAGE FORWARD-LG.           BB
+CC40     CLC   TIOADBA+15(2),=X'C17B'   IS THIS A PAGE BACKWRD-LG?   BB
+         BE    CC60                YES.                              BB
+         CLC   TIOADBA+15(2),=X'406B'   IS THIS A PAGE FORWARD-SM?   BB
+         BNE   C109                NO. MUST BE BLOWUP REQUEST        BB
+CC50     MVC   PARM4(4),=C'PAGE'    SET UP PARMS FOR PAGING          BB
+         MVC   PARM5(7),=C'FORWARD'     FORWARD.                     BB
+         B     D10                  GO TO APPROPRIATE PGM.           BB
+CC60     MVC   PARM4(4),=C'PAGE'    SET UP PARMS FOR PAGING          BB
+         MVC   PARM5(7),=C'BACKWRD'     BACKWARD.                    BB
+         B     D10                  GO TO APPROPRIATE PGM.           BB
+***********************************************************************
+*                                                                     *
+*     AT THIS POINT, THE REQUEST IS FOR A BLOWUP OF AN ENTRY OF ONE   *
+*     OF THE DISPLAYS. THE FUNCTION/COMPANION TABLE IS SEARCHED FOR   *
+*     THE NAME OF THE PROGRAM TO PERFORM THE NEXT DISPLAY.            *
+*                                                                     *
+***********************************************************************
+C109     LA    TABLEREG,TABLE      POINT AT FUNCTION/COMPANION TABLE.
+C110     CLC   0(4,TABLEREG),PARM2 PGRM NAME IN TABLE?
+         BE    C170                YES.
+         CLC   0(3,TABLEREG),=C'END'    END OF TABLE?
+         BE    D30                 YES. GO CK FOR MENU REQUEST
+         LA    TABLEREG,TABLENTY(TABLEREG)  BUMP TO NEXT ENTRY.
+         B     C110                GO CH NEXT ENTRY.
+C170     OC    4(4,TABLEREG),4(TABLEREG) IS THERE A COMPANION PGRM?
+         BZ    D10                       NO.
+         MVC   PARM2(4),4(TABLEREG)      MOVE COMPANION NAME TO PARM2.
+         CLC   PARM2(4),=C'TERM'   IS THIS A TERML ERROR REQUEST?
+         BNE   D10                 NO.
+C190     DFHPC TYPE=XCTL,PROGRAM=BNGC3270
+***********************************************************************
+*                                                                     *
+*        THE FOLLOWING CODE CHECKS ALL SINGLE PARM ENTRIES FOR        *
+*        A CICS SYMBOLIC MATCH.                                       *
+*                                                                     *
+***********************************************************************
+***********************************************************************
+*                                                                     *
+*        THIS IS THE CICS SYMBOLIC NAME LOCATE/CONVERT ROUTINE.       *
+*                                                                     *
+***********************************************************************
+CICSLOC  L     14,CSATCTBA         POINT TO TCT PREFIX.
+         L     14,4(14)            POINT TO BTAM ADCON LIST.
+D0510    CLC   0(4,14),=X'FFFFFFFF'  ANY MORE LINES TO LOOK AT?
+         BE    D0600               NO. LINE NAME NOT IN CICS TCT.--EXIT
+         L     1,0(14)             POINT TO A LINE.
+         ST    1,TWALINE           STORE ADDR IN CASE THIS IS IT.
+         TM    TCTLELF,TCTLEFAA    IS THIS A POOLED LINE?
+         BZ    D0520               NO.
+         TM    TCTLEPI,TCTLEMFP    YES. IS IT 1ST IN POOL?
+         BZ    D0540               NO. SKIP IT - DOESN'T POINT TO DCB.
+D0520    L     15,TCTLEPA          YES. POINT TO 1ST TERML.
+D0530    CLC   PARM3(4),0(15)      IS THIS OUR TERML?
+         BE    D0550               YES. HAVE LOCATED ITS LINE ENTRY.
+         TM    (TCTTELT-TCTTETI)(15),TCTTECLT  LAST TERML ON LINE?
+         BO    D0540               YES. GO LOOK AT NEXT LINE.
+         AH    15,(TCTTETEL-TCTTETI)(15)  BUMP TO NEXT TERML.
+         B     D0530
+D0540    LA    14,4(14)            BUMP TO NEXT LINE ADDRESS.
+         B     D0510
+D0550    EQU   *
+         LR    TCTTEAR,15
+         CLI   TCTTETT,X'91'       IS THIS A 3277 REMOTE?
+         BE    D0560               YES.
+         CLI   TCTTETT,X'92'       IS THIS A 3275?
+         BE    D0560               YES.
+         CLI   TCTTETT,X'99'       IS THIS A 3277 LOCAL?
+         BE    D0560               YES.
+         CLI   TCTTETT,X'93'            IS THIS REMOTE 3284    @OX22763
+         BE    D0560                    YES                    @OX22763
+         CLI   TCTTETT,X'94'            IS THIS REMOTE 3286    @OX22763
+         BE    D0560                    YES                    @OX22763
+         CLI   TCTTETT,X'9B'            IS THIS LOCAL 3284     @OX22763
+         BE    D0560                    YES                    @OX22763
+         CLI   TCTTETT,X'9C'            IS THIS LOCAL 3286     @OX22763
+         BE    D0560                    YES                    @OX22763
+         B     D0590               NO. CAN'T USE SYMBOLIC NAME--EXIT
+D0560    L     1,TWALINE           POINT TO THIS TERML'S LINE.
+         L     14,TCTLEDCB         POINT TO THE DCB.
+         USING IHADCB,14
+         DCBD
+BNGCDISP CSECT
+         SR    15,15
+         TM    TCTTETT,X'60'       IS THIS A LOCAL DEVICE?     @OX25587
+         BNZ   NOTLOCL1            NO                          @OX25587
+         TM    TCTTETT,X'98'       IS THIS A LOCAL DEVICE?     @OX25587
+         BO    D0570               YES. GET REL NBR FROM TE    @OX25587
+NOTLOCL1 IC    15,TCTLERLN         NO. GET REL NBR FROM LE     @OX25587
+         B     D0572
+D0570    IC    15,TCTTEGU
+D0572    TM    DCBOFLGS,DCBOFOPN  DCB OPEN ?                   @OZ37867
+         BNO   D0600               NO, CAN NOT GET TO UCB      @OZ37867
+         L     1,DCBDEBAD          POINT TO THE DEB.           @OZ37867
+         LA    1,32(1)             POINT TO LIST OF UCBS.
+D0574    BCT   15,D0576
+         B     D0578
+D0576    LA    1,4(1)              BCT TO APPROPRIATE RLN UCB.
+         B     D0574
+D0578    L     1,0(1)              POINT TO THE UCB.
+         XC    PARM3,PARM3
+         MVC   PARM3(3),13(1)      MOVE LINEID TO INPUT PARM FIELD.
+         TM    TCTTETT,X'60'       IS THIS A LOCAL 3270?       @OX25587
+         BNZ   NOTLOCL2            YES NOT LOCAL.              @OX25587
+         TM    TCTTETT,X'98'       IS THIS A LOCAL 3270?       @OX25587
+         BO    D0590               YES. BYPASS POLL CHARS.     @OX25587
+NOTLOCL2 L     14,TCTTETA          POINT TO ADDRESSING LIST.   @OX25587
+         UNPK  DUBLWD,0(2,14)      GET CTRL UNIT ADDRESS.
+         TR    DUBLWD,HXTOEB       CONVERT IT TO 2 EBCDIC CHARS.
+         MVC   PARM4(2),DUBLWD+5   MOVE THEM TO INPUT PARM FIELD.
+         NI    PARM4,X'FD'         CONVERT REMOTE CU TO ACTUAL CU NUM
+         CLI   0(14),X'61'         SPECIAL CASE                @OX25492
+         BNE   TESTF0              NO, CHECK AGAIN             @OX25492
+TESTC3   MVI   PARM4,X'C3'         YES                         @OX25492
+         B     OUT1                CNTL POLL CHAR COMPLETE     @OX25492
+TESTF0   CLI   0(14),X'F0'         SECOND SPECIAL CASE         @OX25492
+         BNE   TESTE0              NO, WAS '2' BYTE ANDED      @OX25492
+         MVI   PARM4,X'F5'         YES                         @OX25492
+         B     OUT1                CNTL POLL CHAR COMPLETE     @OX25492
+TESTE0   TM    0(14),X'10'         TEST FOR '1' BYTE           @OX25492
+         BO    OUT1                NOT 'E'                     @OX25492
+         TM    0(14),X'E0'         CHECK FOR 'E'               @OX25492
+         BO    TESTC3              YES, MAKE IT AN 'E'         @OX25492
+OUT1     EQU   *                                               @OX25492
+         UNPK  DUBLWD,2(2,14)      GET TERML ADDRESS.
+         TR    DUBLWD,HXTOEB       CONVERT IT TO 2 EBCDIC CHARS.
+         MVC   PARM5(2),DUBLWD+5   MOVE THEM TO INPUT PARM FIELD.
+D0590    EQU   *
+         MVC   TWALINE,TCTTETI     SAVE CICS SYMBOLIC NAME FOR
+*                                  3270 PROGRAM.
+         L     TCTTEAR,TCAFCAAA    POINT BACK TO ORIGINAL TCT
+         LA    TCTTEAR,0(TCTTEAR)  CLEAR HIGH ORDER BYTE FROM ADDR
+         BR    LINKREG
+D0600    XC    TWALINE,TWALINE
+         BR    LINKREG
+***********************************************************************
+*                                                                     *
+*        THIS SECTION TRANSFERS CONTROL TO APPROPRIATE PROGRAM.       *
+*                                                                     *
+***********************************************************************
+D10      LA    TABLEREG,TABLE      POINT AT FUNCTION/COMPANION TABLE.
+D20      CLC   0(4,TABLEREG),PARM2 PROGRAM NAME IN TABLE?
+         BE    D25                 YES.
+         CLC   0(3,TABLEREG),=C'END' END OF TABLE?
+         BE    D30                 YES. GO TO CK MENU REQUEST
+         LA    TABLEREG,TABLENTY(TABLEREG)  BUMP TO NEXT ENTRY.
+         B     D20                 GO CHECK NEXT ENTRY.
+D25      CLI   4(TABLEREG),X'00'   IS THERE A PGRM NAME TO XCTL TO?
+         BNE   E10                 NO.
+         MVC   TCAPCPI,8(TABLEREG) STORE NAME IN TCA.
+         DFHPC TYPE=XCTL
+D30      CLC   PARM2(4),=C'MENU'
+         BNE   D80                 NO.
+D32      CLI   TCTTETM,X'F1'       IS THIS A 3277 MODEL 1?
+         BE    D50                 YES.
+         CLC   TIOADBA+15(2),=X'4AD6' LARGE MENU 'ALL' = L9P23
+         BE    D40                 YES.
+         CLC   TIOADBA+15(2),=X'4BE6' LARGE MENU '3270'= L10P23
+         BE    D41                 YES.
+         CLC   TIOADBA+15(2),=X'4CF6' LARGE MENU 'RMOT'= L11P23
+         BE    D42                 YES.
+         CLC   TIOADBA+15(2),=X'4FD6' LARGE MENU 'LOCL'= L13P23
+         BNE   D80                 NO. MUST BE FOR MENU.
+D35      DFHPC TYPE=XCTL,PROGRAM=BNGCLOCL YES. GO TO LOCAL PROG.
+D40      MVC   PARM2(3),=C'ALL'    SETUP TO
+         LA    TABLEREG,TABLE          DO
+         ZAP   SBACNT,=P'1'        ALL LINES DISPLAY.
+         B     E10
+D41      XC    PARM2(32),PARM2     CLEAR PARMS FOR TRANSFER
+         MVC   PARM2(4),=C'3270'   SETUP TO DO
+         ZAP   SBACNT,=P'1'        3270  DISPLAY.
+         DFHPC TYPE=XCTL,PROGRAM=BNGC3270
+D42      DFHPC TYPE=XCTL,PROGRAM=BNGCRMOT
+D50      CLC   TIOADBA+15(2),=X'C17A' SMALL MENU 'ALL' = L4P3
+         BE    D40                 YES.
+         CLC   TIOADBA+15(2),=X'C2E2' SMALL MENU '3270'= L5P3
+         BE    D41                 YES.
+         CLC   TIOADBA+15(2),=X'C34A' SMALL MENU 'RMOT'= L6P3
+         BE    D42                 YES.
+         CLC   TIOADBA+15(2),=X'C45A' SMALL MENU 'LOCL'= L8P3
+         BE    D35                 YES.
+D80      DFHPC TYPE=XCTL,PROGRAM=BNGCMENU
+***********************************************************************
+*                                                                     *
+*        AT THIS POINT IT HAS BEEN DETERMINED THAT THE REQUEST IS FOR *
+*        ALL LINES, LINE, OR CTRL. THIS MODULE HANDLES THOSE DISPLAYS.*
+*                                                                     *
+***********************************************************************
+         EJECT
+***********************************************************************
+*                                                                     *
+*        THIS SECTION CREATES THE COMMON HEADER FOR                   *
+*        ALL LINES, ONE LINE, AND CTRL.                               *
+*                                                                     *
+***********************************************************************
+E10      MVC   SAVETIOA,TCTTEDA    SAVE ORIGINAL TIOA ADDRESS.
+*                                  GET TIOA BIG ENOUGH FOR OUTPUT
+         DFHSC TYPE=GETMAIN,CLASS=TERM,NUMBYTE=2056,INITIMG=00 @OZ43235
+         L     TIOABAR,TCASCSA     POINT TO NEW TIOA
+         ST    TIOABAR,TCTTEDA     POINT TO NEW TIOA
+         LA    OUTREG,TIOADBA      POINT TO START OF OUTPUT DATA AREA
+         MVC   0(HDR1LTH,OUTREG),HDR1        MOVE STANDARD FIRST LINE.
+         MVC   HDR1LTH(4,OUTREG),0(TABLEREG) MOVE NAME OF THIS
+*                                            DISPLAY TO TIOA.
+         OC    HDR1LTH(4,OUTREG),=CL4' '     CHANGE ALL'00' TO ALL' '
+         LA    OUTREG,HDR1LTH+4(OUTREG)      UPDATE DATA POINTER.
+         CLI   TCTTETM,X'F1'       IS THIS A 3277 MODEL 1?
+         BE    E150                YES.
+         MVC   0(3,OUTREG),HDR1X   MOVE SBA L2P1 FOR MOD 2.
+         LA    OUTREG,3(OUTREG)
+E150     MVC   0(HDR2LTH,OUTREG),HDR2   MOVE PAGE-FOWARD HEADER TO TIOA
+         MVC   HDR2LTH(HDR3LTH,OUTREG),HDR3  MOVE PAGE-BACK HEADER
+         LA    OUTREG,HDR2LTH+HDR3LTH-15(OUTREG)
+         ST    OUTREG,SAVEBBSS     SAVE POINTER TO BBBSS IN TIOA
+         LA    OUTREG,15(OUTREG)
+         ST    OUTREG,SAVERCAP     SAVE POINTER TO RECAP LINE
+         MVC   0(41,OUTREG),16(TABLEREG)  MOVE RECAP HEADER TO TIOA
+         LA    OUTREG,41(OUTREG)
+         CLI   TCTTETM,C'1'        IS THIS A MODEL 1?
+         BE    F30                 YES.
+         MVC   0(3,OUTREG),HDR3X   MOVE SBA L4P1 FOR MOD 2.
+         LA    OUTREG,3(OUTREG)
+F30      MVC   0(41,OUTREG),57(TABLEREG)  MOVE COLUMN HEADER TO TIOA.
+         LA    OUTREG,41(OUTREG)
+         ST    OUTREG,SAVEITEM     SAVE POINTER TO FIRST LINE ITEM
+         CLI   TCTTETM,X'F1'       IS THIS A MODEL 1?
+         BE    F130                YES.
+         MVC   0(41,OUTREG),57(TABLEREG)  MOVE COLUMN HEADER AGAIN
+         LA    OUTREG,41(OUTREG)
+         ST    OUTREG,SAVEITEM     SAVE POINTER TO FIRST LINE ITEM
+         LA    OUTLOOP,80          SETUP FOR 80 LINE ITEMS FOR MOD 2
+         B     F150
+F130     LA    OUTLOOP,14          SETUP FOR 14 LINE ITEMS FOR MOD 1
+***********************************************************************
+*                                                                     *
+*        THIS SECTION BUILDS THE APPROPRIATE DISPLAY                  *
+*                                                                     *
+***********************************************************************
+F150     CP    SBACNT,=P'2'        IS COUNT OF SBA'S LESS THAN 3?
+         BH    R10                 NO. GO TO CONTINUATION SCREEN.
+F180     XC    RELREC,RELREC       POINT TO FIRST CONTROL BLOCK.
+         DFHFC TYPE=GET,RDIDADR=RELREC,NORESP=G120,DATASET=EMFILE
+F190     UNPK  DBLWD,TCAFCAA(3)                                      PH
+         MVC   IOERCODE(2),DBLWD+3
+         TR    IOERCODE,HXTOEB     MOVE CICS RETURN CODE TO I/O ERR MSG
+         UNPK  DBLWD,RELREC(4)
+         MVC   IOERBLK,DBLWD+4     MOVE BLK NBR THAT WAS BEING READ
+         TR    IOERBLK,HXTOEB
+         LA    DATAREG,X'0'             LOAD MSG NUMBER        @OX22095
+F240     B     Z80
+IOERMSG  DC    AL2(IOERLTH-4),X'0000'
+         DC   AL1(SBA),AL2(L1P1),AL1(SF,MNP),C'DEMF',AL1(SF,UNA,IC)
+         DC    CL34' ',AL1(SF,PNA),CL39' '
+         DC    CL39'BNG001A C I/O ERR READING SYS1.DEMFLOG '   @OX21950
+         DC    CL28'  THE CICS RESPONSE CODE IS '              @OX21950
+IOERCODE DC    CL4'00  '                                       @OX21950
+         DC    CL9' '
+         DC    CL34'THE BDAM RELATIVE BLOCK NUMBER IS  '
+IOERBLK  DC    CL3'000'
+IOERLTH  EQU   *-IOERMSG
+G120     L     FIOABAR,TCAFCAA     POINT TO FIOA AREA.
+         OC    CTRLENTS,CTRLENTS   ANY LINE ENTRIES?
+         BZ    Z30                 NO. WRITE 'NO LINE ERRORS'
+         SR    DATALOOP,DATALOOP
+         IC    DATALOOP,CTRLENTS   SET LOOP CTR FOR READING SLOTS.
+         LA    DATAREG,CTRLSLT1    POINT TO FIRST SLOT IN BLOCK.
+         CLC   PARM2(3),=C'ALL'    DOES PARM2 = ALL?
+         BE    J10                 YES.
+         OC    PARM3,PARM3         WAS A LINE ADDRESS ENTERED?
+         BZ    Z40                 NO. WRITE 'NO LINE ENTERED'
+         MVC   LINENAME,PARM3           MOVE LINE ADDRESS TO SAVE AREA
+         MVC   CLUSNAME,PARM4           MOVE CONTROL UNIT NAME TO SAVE
+         MVC   MSG7CTRL,PARM4           MOVE CTRL ADDR TO ERRS MSG AREA
+         OC    MSG7CTRL,=CL8' '
+         MVC   NOLINE,PARM3        MOVE LINE ADDRESS TO 'NO ERROR' MSG
+         OC    NOLINE,=CL3' '
+         MVC   MSG7LINE,NOLINE     MOVE LINE ADDRESS TO 'NO ERRORS'
+*                                  FOR CONTROL UNIT
+H40      TR    PARM3(3),EBTOHX     CHANGE F0C6F2 TO 000F02 ETC.
+         PACK  DBLWD,PARM3(4)      PACK   000F02 TO 0000F2 ETC.
+         MVC   LINEID(3),DBLWD+4   MOVE GOOD PORTION TO SAVE AREA
+         MVC   LINEID+3(3),=XL3'000000'
+H80      CLC   SLOTLINE,LINEID     IS THIS CONTROL SLOT FOR OUR LINE?
+         BE    L60                 YES. GO GET DETAIL BLOCK.
+         LA    DATAREG,SLOTLTH(DATAREG)   POINT TO NEXT SLOT.
+         BCT   DATALOOP,H80        CHECK NEXT SLOT.
+         CLC   CTRLFWD,=F'0'       MORE CONTROL BLOCKS?
+         BE    Z10                      NO. GO WRITE 'NO LINE ERRORS'
+         MVC   RELREC,CTRLFWD+1    POINT TO NEXT BLK TO BE READ.
+         DFHFC TYPE=RELEASE
+         DFHFC TYPE=GET,RDIDADR=RELREC,NORESP=H180,DATASET=EMFILE
+         B     F190                BRANCH IF I/O ERROR.
+H180     L     FIOABAR,TCAFCAA     POINT TO FIOA
+         SR    DATALOOP,DATALOOP
+         IC    DATALOOP,CTRLENTS   SET SLOT LOOP CONTROL
+         LA    DATAREG,CTRLSLT1    POINT TO FIRST SLOT.
+         B     H80
+***********************************************************************
+*                                                                     *
+*        THIS SECTION FORMATS 'ALL LINE' ENTRIES                      *
+*                                                                     *
+***********************************************************************
+J10      L     14,SAVEBBSS         LOAD SAVED ADDR OF BLK/SLOT TIOA.
+         MVC   0(5,14),=C'00001'   MOVE 00001 TO FIRST AND
+         MVC   10(5,14),0(14)      PREVIOUS BBBSS'S
+J40      MVC   PARM1(6),SLOTLINE   SETUP LINE ADDRESS FOR
+J110     UNPK  DBLWD,SLOTLINE(4)   UNPK LINE ADDR IN WORKAREA
+         TR    DBLWD+4(3),HXTOEB   CONVERT TO EBCDIC
+         MVC   DTLITEM,=CL8' '     CLEAR DETAIL LINE ITEM
+         MVC   DTLITEM(3),DBLWD+4  PUT LINE ADDR IN DETAIL ENTRY
+J150     LH    14,SLOTHITS         PUT LINE ERRORS IN REG.
+         CVD   14,DBLWD            CONVERT TO DECIMAL
+         UNPK  DTLCOUNT,DBLWD+5(3) PUT LINE ERROR COUNT
+         OI    DTLCOUNT+3,X'F0'    IN OUTPUT
+         MVC   0(DTLLTH,OUTREG),DTLENTRY MOVE DETAIL ENTRY TO OUTPUT
+         MVC   DTLCOUNT,=C'0001'   RESTORE PROGRAM CONSTANT.
+         LA    OUTREG,DTLLTH(OUTREG) UPDATE OUTPUT POINTER
+         BCT   DATALOOP,K100       MORE SLOTS IN THIS CTRL BLK?
+         CLC   CTRLFWD,=F'0'       NO. MORE CTRL BLKS?
+         BE    K120                NO. PREPARE TO EXIT.
+         MVC   RELREC,CTRLFWD+1    POINT TO NEXT BLK TO BE READ.
+         DFHFC TYPE=RELEASE
+         DFHFC TYPE=GET,RDIDADR=RELREC,NORESP=K50,DATASET=EMFILE
+         B     F190                I/O ERROR
+K50      L     FIOABAR,TCAFCAA     POINT TO FIOA
+         SR    DATALOOP,DATALOOP
+         IC    DATALOOP,CTRLENTS   SET LOOP CONTROL.
+         LA    DATAREG,CTRLSLT1    POINT TO FIRST SLOT
+         B     J40
+K100     LA    DATAREG,SLOTLTH(DATAREG) POINT TO NEXT SLOT.
+         BCT   OUTLOOP,J40         ROOM LEFT IN TIOA?
+K120     L     15,SAVEBBSS         NO. POINT TO BLK/SLT AREA IN TIOA.
+         UNPK  DBLWD,RELREC(4)     STORE BDAM RELATIVE
+         TR    DBLWD,HXTOEB        CONTROL BLK NUMBER
+         MVC   5(3,15),DBLWD+4     (LAST BBBSS) IN OUTPUT
+         SR    14,14
+         IC    14,CTRLENTS         GET ORIGINAL COUNT OF SLOTS
+         SR    14,DATALOOP         DETERMINE LAST SLOT READ.
+         STC   14,DBLWD+6          STORE
+         UNPK  DBLWD(3),DBLWD+6(2) SLOT NUMBER
+         TR    DBLWD,HXTOEB        (LAST BBBSS)
+         MVC   8(2,15),DBLWD       IN OUTPUT.
+K230     LA    14,TIOADBA          COMPUTE LENGTH OF
+         SR    OUTREG,14           DATA IN TIOA.
+         STH   OUTREG,TIOATDL      STORE LENGTH IN TIOA
+         DFHTC TYPE=(WRITE,ERASE)  ALL DONE. SEND DISPLAY.
+         DFHPC TYPE=RETURN
+***********************************************************************
+*                                                                     *
+*        THIS SECTION PREPARES THE 'LINE' OR 'CTRL' DISPLAY           *
+*                                                                     *
+***********************************************************************
+L60      MVI   QUITSW,X'00'        TURN OFF OUTPUT-FULL-SWITCH       XH
+         ZAP   ITEMCNT,=P'0'       SET CTR OF OUTPUT ITEMS = 0
+         MVC   RELREC,SLOTRFB      SAVE POINTER TO DETAIL BLK
+L140     DFHFC TYPE=RELEASE        RELEASE CONTROL BLOCK
+         MVC   SVRELREC,RELREC     SAVE FOR LAST BBBSS'S
+         OC    RELREC,RELREC       IS THERE ANY DATA BLOCKS ?  @OZ31885
+         BZ    Z130                NO, WRITE 'NO DATA BLKS MSG'@OZ31885
+         DFHFC TYPE=GET,RDIDADR=RELREC,NORESP=L170,DATASET=EMFILE
+         B     F190                I/O ERROR
+L170     L     FIOABAR,TCAFCAA     POINT TO FIOA
+         SR    DATALOOP,DATALOOP
+         LH    DATALOOP,BLKLTH     SET SLOT LOOP CONTROL
+         LA    DATAREG,DATASLT1    POINT FOR FIRST SLOT
+L210     MVI   SLOTCNT,X'00'       ZERO OUT DETAIL SLOT COUNTER.
+         OC    LINENAME,=CL8' '
+         OC    CLUSNAME,=CL8' '
+L220     L     1,SAVERCAP          POINT TO RECAP HEADER
+         CLC   PARM2(4),=C'LINE'   PARM2 = LINE?
+         BE    L230                YES.
+         CLC   PARM4,=CL8' '       IS PARM4 BLANK?
+         BE    L225                YES. MUST BE LOCAL.
+         OC    PARM4,PARM4         OR IS PARM4 ZEROS?
+         BZ    L225                YES. MUST BE LOCAL ALSO
+         MVC   22(8,1),CLUSNAME    MOVE CONTROL UNIT TO HEADER
+         MVC   30(3,1),=C'ON '
+         MVC   33(8,1),LINENAME    MOVE LINE ADDR. TO HEADER
+         B     M10
+L225     MVC   11(19,1),=C'LOCAL CONTROL UNIT '
+         MVC   30(8,1),LINENAME    MOVE CTRL UNIT TO HEADER
+         B     M10
+L230     MVC   21(8,1),LINENAME    MOVE LINE ADDR. TO HEADER
+***********************************************************************
+*                                                                     *
+*        THIS SECTION FORMATS A 'LINE' ITEM OR A 'CTRL' ITEM.         *
+*                                                                     *
+***********************************************************************
+M10      MVC   CTRLNAME,=D'0'      ZERO  OUT CONTROL UNIT WORK AREA.
+         MVC   TERMNAME,=CL8' '    BLANK OUT TERMINAL WORK AREA.
+         MVC   RELREC,DATAFWD      SAVE NEXT DETAIL BLK ADDR.
+         MVC   TBARG,=CL2' '       CLEAR MOD-1 TABLE ARGUMENT        XH
+         CLI   ENTRYTYP,X'91'      IS THIS AN MDR ENTRY?
+         BE    N10                 YES.
+         CLI   ENTRYTYP,X'30'      IS IT AN OBR ENTRY?
+         BE    N80                 YES.
+         CLI   ENTRYTYP,X'34'      IS IT TCAM OBR?
+         BE    N80                 YES,BR
+         B     M140                NO, SKIP IT                 @OZ38643
+M100     CLC   PARM2(4),=C'LINE'   IS THIS A 'LINE' DISPLAY?
+         BE    N150                YES.
+         OC    CTRLNAME,=CL8' '
+         OC    PARM4,=CL8' '
+         CLC   PARM4,CTRLNAME      IS PARM 4 = REMOTE CTRL UNIT NAME?
+         BE    N150                YES. PROCESS ENTRY
+         CLI   PARM4,X'40'         IS PARM4 BLANK ?
+         BNE   M140                NO. MUST BE REMOTE--BYPASS CK LOCAL
+         OC    LINENAME,=CL8' '
+         CLC   LINENAME,CTRLNAME   IS LINENAME = LOCAL CTRL UNIT ?
+         BE    N150                YES. PROCESS ENTRY
+M140     SR    R15,R15                                               XH
+         IC    R15,SLOTCNT         ADD ONE                           XH
+         AH    R15,=H'1'           TO                                XH
+         STC   R15,SLOTCNT         SLOT COUNTER.                     XH
+M160     SR    R14,R14                                               XH
+         IC    R14,DATALTH         PUT LTH OF SLOT IN WORK REG
+         AR    DATAREG,R14         POINT TO NEXT DETAIL SLOT.
+         SR    DATALOOP,R14        MORE SLOTS IN THIS DETAIL BLK?
+         BP    M10                 YES.
+         OC    RELREC,RELREC       MORE DETAIL BLOCKS?
+         BNE   L140                YES.
+M240     ZAP   WORKCNT,ITEMCNT
+         BZ    Z50
+         B     K230
+N10      CLI   MOD1SW,X'00'        MOD-1 SWITCH OFF ?                XH
+         BE    N30                 YES. BYPASS MOD-1 SCANNER CHECK   XH
+         CLC   PARM2(4),=C'CTRL'   IS THIS A 'CTRL' DISPLAY ?        XH
+         BE    N20                 YES. USE REMOTE TERMINAL ADDR     XH
+         MVC   TBARG(1),MDRCTRL    SET TBARG = REMOTE CTRL UNIT      XH
+         B     N25                 GO CK ADDR AGAINST MOD-1 TABLE    XH
+N20      MVC   TBARG(1),MDRTERM    SET TBARG = REMOTE TERMINAL       XH
+N25      BAL   LINKREG,MOD1SCAN    CK IF REMOTE CU OR TERMINAL       XH
+         CLC   TBARG,=X'0000'        IN MOD-1 TABLE?                 XH
+         BE    M140                YES. BYPASS THIS ERROR ENTRY      XH
+N30      UNPK  CTRLNAME(3),MDRCTRL(2)   MDR - PUT CONTROL UNIT       XH
+         TR    CTRLNAME(2),HXTOEB       NAME
+         MVI   CTRLNAME+2,X'00'         IN WORK AREA.
+         UNPK  TERMNAME(3),MDRTERM(2)   PUT TERMINAL
+         TR    TERMNAME(2),HXTOEB       NAME
+         MVI   TERMNAME+2,C' '          IN WORK AREA.
+         B     M100
+N80      CLI   OBRUCB,X'10'        IS THIS A LOCAL
+         BE    N110                YES, GO MOVE 3 BYTE ADDRESS
+N85      CLI   MOD1SW,X'00'        IS MOD-1 SWITCH OFF ?             XH
+         BE    N95                 YES. BYPASS MOD-1 SCANNER CHECK   XH
+         CLC   PARM2(4),=C'CTRL'      IS THIS A 'CTRL' DISPLAY?@OZ31878
+         BE    N88                    YES. USE REMOTE TERM ADDR@OZ31878
+         MVC   TBARG(1),OBRCTRL       PASS REMOTE CU TO MOD-1  @OZ31878
+         B     N90                    GO CK ADDR AGAINST MOD-1 @OZ31878
+N88      MVC   TBARG(1),OBRTERM       PASS REMOTE TERM ADDR    @OZ31878
+*                                     TO MOD-1                 @OZ31878
+N90      BAL   LINKREG,MOD1SCAN       CK IF REMOTE CU OR TERM  @OZ31878
+         CLC   TBARG,=X'0000'        ADDR FOR REMOTE LINE ERRORS     XH
+*                                    IS IN MOD-1 TABLE ?             XH
+         BE    M140                YES. BYPASS THIS ERROR ENTRY      XH
+N95      UNPK  DBLWD,OBRCTRL(2)    OBR - MOVE 1 BYTE REMOTE CU ADR   XH
+         TR    DBLWD+4(3),HXTOEB
+         MVC   CTRLNAME(2),DBLWD+5 TO WORK AREA
+         UNPK  DBLWD,OBRTERM(2)    MOVE 1-BYTE REMOTE TERML ADDR
+         TR    DBLWD+4(3),HXTOEB
+         MVC   TERMNAME(2),DBLWD+5 WORK AREA.
+         B     M100
+N110     CLI   MOD1SW,X'00'        IS MOD-1 SWITCH OFF ?             XH
+         BE    N130                YES. BYPASS MOD-1 SCANNER CHECK   XH
+         MVC   TBARG,OBRCUA        SET TBARG = LOCAL TERMINAL ADDR   XH
+         BAL   LINKREG,MOD1SCAN    CK IF LOCAL TERMINAL IS IN        XH
+         CLC   TBARG,=X'0000'           MOD-1 TABLE ?                XH
+         BE    M140                YES. BYPASS THIS ERROR ENTRY      XH
+N130     UNPK  DBLWD,LINEIDA(4)    OBR - MOVE 3-BYTE CONTROL UNIT    XH
+         TR    DBLWD+4(3),HXTOEB        ADDRESS(POSSIBLY ROUNDED)
+         MVC   CTRLNAME(3),DBLWD+4      TO WORK AREA.
+         UNPK  DBLWD,OBRCUA(3)          MOVE REAL 3-BYTE CONTROL
+         TR    DBLWD+4(3),HXTOEB        UNIT ADDRESS
+         MVC   TERMNAME(3),DBLWD+4      WORK AREA.
+         B     M100
+N150     OC    CTRLNAME,=CL8' '
+         L     R14,SAVEITEM        POINT TO FIRST ITEM IN TIOA
+         ZAP   WORKCNT,ITEMCNT     ANY ITEMS IN TIOA?
+         BZ    P50         NO,ADD NEW ITEM
+N170     CLC   PARM2(4),=C'LINE'   IS THIS A 'LINE' DISPLAY?
+         BE    P20                 YES.
+         CLC   TERMNAME,ITEMLTH(R14) WORKTERMINAL = TIOA TERMINAL?
+         BE    P40                 YES.
+N230     LA    R14,DTLLTH(R14)     BUMP TO NEXT ITEM
+         SP    WORKCNT,=PL2'1'     SUBT ONE FROM ITEM COUNTER.
+         BZ    P90     ANY ITEMS?  NO. ADD NEW ITEM.
+         B     N170
+P20      CLC   CTRLNAME,ITEMLTH(R14)    WORK CTRL = TIOA CTRL?
+         BNE   N230                NO.
+P40      PACK  FULLWD(3),COUNTLTH(4,R14)  ADD
+         AP    FULLWD(3),=P'1'            ONE
+         UNPK  COUNTLTH(4,R14),FULLWD(3)  TO
+         OI    COUNTLTH+3(R14),X'F0'      COUNT FIELD.
+         B     M140                GO CHECK NEXT SLOT.
+P50      CLC   PARM2(4),=C'LINE'   IS IT LINE
+         BE    P170                YES,BR
+         SR    R15,R15
+         IC    R15,SLOTCNT
+         AH    R15,=H'1'
+         STC   R15,SLOTTTR
+         L     R15,SAVEBBSS
+         UNPK  DBLWD(3),SLOTTTR(2)
+         TR    DBLWD,HXTOEB
+         MVC   3(2,R15),DBLWD
+P90      CLI   QUITSW,X'FF'        MOD-1 OUTPUT-FULL-SW ON ?         XH
+         BE    M140                YES. BYPASS PUTTING ADDR IN OUTPUTXH
+         CLC   PARM2(4),=C'LINE'        IS THIS A 'LINE' DISPLAY?    XH
+         BE    P170                     YES.
+         MVC   DTLITEM,TERMNAME    NO. MOVE TERMINAL
+P120     MVC   0(DTLLTH,OUTREG),DTLENTRY  TO OUTPUT
+         LA    OUTREG,DTLLTH(OUTREG) UPDATE OUTPUT POINTER.
+         AP    ITEMCNT,=P'1'       ADD 1 TO COUNT OF OUTPUT ITEMS.
+         SR    R15,R15                                               XH
+         IC    R15,SLOTCNT         ADD ONE                           XH
+         AH    R15,=H'1'           TO                                XH
+         STC   R15,SLOTCNT         SLOT COUNTER.                     XH
+         L     R15,SAVEBBSS        NO. POINT TO BLK/SLT AREA IN TIOA.XH
+         MVI   QUITSW,X'00'        TURN OFF OUTPUT-FULL-SW.    @OZ31882
+         UNPK  DBLWD,SVRELREC(4)   STORE BDAM RELATIVE               XH
+         TR    DBLWD,HXTOEB        CONTROL BLK NUMBER                XH
+         MVC   5(3,R15),DBLWD+4    (LAST BBBSS) IN OUTPUT            XH
+         SR    R14,R14                                               XH
+         UNPK  DBLWD(3),SLOTCNT(2) STORE SLOT NUMBER IN              XH
+         TR    DBLWD,HXTOEB        (LAST BBBSS)                      XH
+         MVC   8(2,R15),DBLWD      IN OUTPUT.                        XH
+         CP    ITEMCNT,=P'1'       IS THIS THE FIRST ITEM IN TIOA ?  XH
+         BNE   P140                NO. BYPASS UPDATING FIRST BBBSS   XH
+         MVC   0(5,15),5(15)       SET FIRST BBBSS = LAST BBBSS      XH
+         CLC   10(5,15),=C'BBBSS'  IS PREV BBBSS FILLED IN ?         XH
+         BNE   P140                YES. BYPASS UPDATING PREV BBBSS   XH
+         MVC   10(5,15),0(15)      SET PREV BBBSS = FIRST BBBSS      XH
+P140     BCT   OUTLOOP,M160        MORE ROOM IN TIOA?                XH
+         CLI   TCTTETM,X'F2'       IS THIS A 3270-2 ?                XH
+         BE    M240                YES. PREPARE TO EXIT              XH
+         MVI   QUITSW,X'FF'        TURN ON OUTPUT-FULL-SW FOR MOD-1  XH
+         B     M160                CONTINUE SCANNING REST OF DATABASEXH
+P170     MVC   DTLITEM,CTRLNAME    SETUP CONTROL UNIT ADDRESS
+         B     P120                     FOR OUTPUT.
+***********************************************************************
+*                                                                     *
+*        THIS SECTION PREPARES FOR AN ENTRY BLOWUP OR FOR PAGING.     *
+*                                                                     *
+***********************************************************************
+R10      L     R14,SAVETIOA        RESTORE POINTER TO INPUT DATA.
+         LA    14,12(14)           BUMP PASS 'SSA' 12-BYTES
+         CLC   PARM4(4),=C'PAGE'   IS THIS A 'PAGE' REQUEST?
+         BE    S010                YES,BR CK FOR FWD OR BACK
+         OC    PARM5,PARM5         MAKE SURE A FIELD WAS X'ED
+         BZ    Z40                 BR,ZERO NO FIELD WAS X'ED
+         CLC   PARM2(4),=C'LINE'   NO. THIS MUST BE COMPANION REQUEST.
+         BNE   R010                IF NOT LINE DISPLAY, GO READ RECORD.
+         MVC   PARM3,PARM5         IS LINE, MOVE THE X'D FIELD TO PRM3.
+         MVC   LINENAME,PARM5        MOVE LINE ADDRESS TO SAVE AREA
+         XC    PARM4(16),PARM4       AS IF LINE ID HAD BEEN KEYED IN.
+         B     F180                GO DO LINE DISPLAY AS IF THIS WERE
+*                                  AN INITIAL 'LINE' INPUT.
+R010     MVC   CLUSNAME,PARM5      MOVE CONTROL UNIT ADDR TO SAVE
+         MVC   PARM4,PARM5         MOVE X'D CTRL UNIT TO PARM4 AS IF
+         XC    PARM5,PARM5           IT HAD BEEN KEYED IN.
+         MVC   PARM1,PARM4         PUT CTRL NAME IN PARM1 FOR TABLE
+         OC    PARM1,=CL8' '
+R140     L    14,SAVETIOA          RESTORE REG 14
+         LA    14,12(14)
+         TR    17(3,14),EBTOHX     GET BLOCK NUMBER OF
+         PACK  DBLWD,17(4,14)         REQUESTED LINE INTO HEX.
+         MVC   RELREC,DBLWD+4
+         DFHFC TYPE=GET,RDIDADR=RELREC,NORESP=R170,DATASET=EMFILE
+         B     F190                I/O ERROR.
+R170     L     FIOABAR,TCAFCAA
+         XC    PARM3,PARM3
+         UNPK  DBLWD,DATAPORT(4)        MOVE LINE ID
+         TR    DBLWD+4,HXTOEB           FROM PREVIOUS BLOCK
+         MVC   LINENAME(3),DBLWD+4     TO PARM3 AS IF IT HAD BEEN
+         MVC   PARM3(6),LINENAME        KEYED IN.
+         DFHFC TYPE=RELEASE
+         CLC   PARM3,PARM4         IS THIS A LOCAL CTRL UNIT?
+         BNE   F180                NO. GO TO PROCESS REMOTE.
+         XC    PARM4,PARM4         YES. CLEAR REDUNDANT CU ADDR
+         B     F180                GO DO A 'CTRL' DISPLAY AS IF ABOVE
+*                                  CTRL & LINE HAD BEEN TYPED IN.
+S010     EQU   *
+         CLC   19(2,14),=X'C1D3'   IS THIS A PAGE FORWARD-LG   @OZ30480
+*                                       OR A PAGE BACKWARD-SM? @OZ30480
+         BE    S090                YES.                        @OZ30480
+         CLC   19(2,14),=X'C17B'   IS THIS A PAGE BACKWRD-LG?  @OZ30480
+         BE    S090                YES.                        @OZ30480
+         CLC   19(2,14),=X'406B'   IS THIS A PAGE FORWARD-SM?  @OZ30480
+         BNE   S100                NO, NO OTHER PAGE REQUEST   @OZ30480
+S090     LA    14,4(14)              BUMP WORK REG BY 4        @OZ30480
+S100     MVC   WORK15,21(14)       CONVERT BBBSS'S TO HEX      @OZ30480
+         TR    WORK15,EBTOHX
+         CLC   PARM5(4),=C'FORW'   IS IT A 'PAGE FORWARD' REQUEST?
+         BE    S110                YES.
+         PACK  DBLWD,WORK15+10(6)
+         MVC   RELREC,DBLWD+3      THE 'PREVIOUS' BLOCK.
+         MVC   TWASLOT,DBLWD+6     AND SLOT TO RESUME AT.
+         MVC   TBRELREC,RELREC     SAVE CURRENT 'BBB'                XH
+         MVC   TBSLOT,TWASLOT      SAVE CURRENT 'SS'                 XH
+         L     15,SAVEBBSS         POINT TO NEW OUTPUT HEADER.
+         MVC   0(5,15),31(14)      OLD PREVIOUS NOW BECOMES NEW
+         MVC   10(5,15),31(14)     FIRST AND PREVIOUS.
+         B     S180
+S110     EQU   *
+         PACK  DBLWD,WORK15+5(6)
+         MVC   RELREC,DBLWD+3      PLACE TO PAGE FORWARD FROM
+         MVC   TWASLOT,DBLWD+6
+         MVC   TBRELREC,RELREC     SAVE CURRENT 'BBB'                XH
+         MVC   TBSLOT,TWASLOT      SAVE CURRENT 'SS'                 XH
+         L     15,SAVEBBSS         POINT TO NEW OUTPUT HEADER.
+         MVC   0(5,15),26(14)      OLD LAST IS NEW FIRST AND
+         MVC   10(5,15),21(14)     OLD FIRST IS NEW PREVIOUS.
+S180     BAL   LINKREG,LOCATE      LOCATE PROPER BLOCK & SLOT.
+         CLC   PARM2(3),=C'ALL'
+         BE    J40                 GO RESUME WHERE LEFT OFF AT (ALL)
+         B     S215                PERFORM MOD-1 TABLE BUILD         XH
+S190     ZAP   ITEMCNT,=P'0'       SET CTR OF OUTPUT ITEMS = 0       XH
+         SR    R15,R15
+         IC    R15,DBLWD+6             UPDATE SLOT COUNTER
+         SH    R15,=H'1'                   FOR PAGING IN
+         STC   R15,SLOTCNT             LINE OR CTRL DISPLAYS.
+S200     UNPK  DBLWD,LINEIDA(4)        MOVE LINE ADDRESS
+         TR    DBLWD+4(3),HXTOEB                TO
+         MVC   LINENAME(3),DBLWD+4     SAVE AREA FOR RECAP HDR.
+         MVC   LINENAME+3(5),=CL5' '        CLEAR OUT GARBAGE
+         XC    PARM4,PARM4
+         CLI   ENTRYTYP,X'91'          IS THIS AN MDR ENTRY?
+         BE    S210                         YES.
+         CLI   OBRUCB,X'40'            IS THIS A REMOTE OBR ?        XH
+         BNE   S205                         NO.                      XH
+         UNPK  CLUSNAME(3),OBRCTRL(2)       MOVE MDR DUMMY LINE ADDR XH
+         TR    CLUSNAME(2),HXTOEB                TO                  XH
+         MVC   CLUSNAME+2(6),=CL6' '        SAVE AREA FOR RECAP HDR. XH
+         MVC   PARM4(2),CLUSNAME              MOVE  ADDR  TO PARM4   XH
+         B     L220        GO RESUME WHERE LEFT OFF AT (LINE OR CTRL)XH
+S205     MVC   CLUSNAME,LINENAME       MOVE OBR CTRL ADDR. TO SAVE ARXH
+         B     L220        GO RESUME WHERE LEFT OFF AT (LINE OR CTRL)XH
+S210     UNPK  CLUSNAME(3),MDRCTRL(2)       MOVE MDR CTRL ADDR.
+         TR    CLUSNAME(2),HXTOEB                TO
+         MVC   CLUSNAME+2(6),=CL6' '        SAVE AREA FOR RECAP HDR.
+         MVC   PARM4(2),CLUSNAME       MOVE MDR CTRL ADDR. TO PARM4
+         B     L220        GO RESUME WHERE LEFT OFF AT (LINE OR CTRL)
+***********************************************************************
+*                                                                     *
+*   THIS IS THE MOD-1 'LINE' AND 'CTRL' TABLE BUILD ROUTINE           *
+*                                                                     *
+***********************************************************************
+S215     ST    OUTLOOP,SOUTLOOP    SAVE OUTLOOP REGISTER
+         MVC   MOD1TABL,=CL64' '   INITIALIZE MOD1TABL TO BLANKS
+         CLI   ENTRYTYP,X'91'      IS THIS AN MDR ?
+         BE    S218                YES. SAVE MDR CTRL UNIT     @OZ31878
+         CLI   OBRUCB,X'40'        IS THIS A REMOTE OBR ?      @OZ31878
+         BNE   S220                NO. BYPASS SAVING CTRL UNIT @OZ31878
+         MVC   TBCTRL,OBRCTRL      YES. SAVE REMOTE OBR CU     @OZ31878
+         B     S220                                            @OZ31878
+S218     MVC   TBCTRL,MDRCTRL      SET TBCTRL = MDRCTRL        @OZ31878
+S220     MVC   TBLINE,LINEIDA      SAVE CURRENT LINE ID
+         XC    RELREC,RELREC       POINT TO FIRST CONTROL BLOCK.
+         DFHFC TYPE=GET,RDIDADR=RELREC,NORESP=S220R,DATASET=EMFILE
+         B     F190                GET I/O ERROR, GO ISSUE ERR MSG.
+S220R    L     FIOABAR,TCAFCAA     POINT TO FIOA AREA.
+         OC    CTRLENTS,CTRLENTS   ANY LINE ENTRIES?
+         BZ    Z30                 NO. WRITE 'NO LINE ERRORS'
+         SR    DATALOOP,DATALOOP
+         IC    DATALOOP,CTRLENTS   SET LOOP CTR FOR READING SLOTS.
+         LA    DATAREG,CTRLSLT1    POINT TO FIRST SLOT IN BLOCK.
+S220A    CLC   TBLINE,SLOTLINE     IS THIS CONTROL SLOT FOR OUR LINE?
+         BE    S222                YES. GO GET DETAIL BLOCK.
+         LA    DATAREG,SLOTLTH(DATAREG)   POINT TO NEXT SLOT.
+         BCT   DATALOOP,S220A      CHECK NEXT SLOT.
+         CLC   CTRLFWD,=F'0'       MORE CONTROL BLOCKS?
+         BE    Z10                 NO. GO WRITE 'NO LINE ERRORS'
+         MVC   RELREC,CTRLFWD+1    POINT TO NEXT BLK TO BE READ.
+         DFHFC TYPE=GET,RDIDADR=RELREC,NORESP=S222R,DATASET=EMFILE
+         B     F190                GET I/O ERROR, GO ISSUE ERR MSG.
+S222R    L     FIOABAR,TCAFCAA     POINT TO INPUT RECORD AREA
+         SR    DATALOOP,DATALOOP
+         IC    DATALOOP,CTRLENTS   SET SLOT LOOP CONTROL
+         LA    DATAREG,CTRLSLT1    POINT TO FIRST SLOT.
+         B     S220A
+S222     ZAP   TABLECNT,=P'0'      SET CTR OF TABLE ITEMS = 0
+         LA    MOD1REG,MOD1TABL    POINT TO MOD-1 TABLE
+         MVC   RELREC,SLOTRFB      MOVE POINTER TO DETAIL BLK
+S222A    MVC   SVRELREC,RELREC     SAVE FOR COMPARE TO TABLE RELREC
+         DFHFC TYPE=GET,RDIDADR=RELREC,NORESP=S222AR,DATASET=EMFILE
+         B     F190                GET I/O ERROR, GO ISSUE ERR MSG.
+S222AR   L     FIOABAR,TCAFCAA     POINT TO INPUT RECORD AREA
+         SR    DATALOOP,DATALOOP
+         LH    DATALOOP,BLKLTH     SET SLOT LOOP CONTROL
+         LA    DATAREG,DATASLT1    POINT FOR FIRST SLOT
+         MVI   SLOTCNT,X'01'       SET COUNT OF DETAIL BLK SLOTS=1
+         MVC   RELREC,DATAFWD      SAVE NEXT DETAIL BLK ADDR.
+S222B    CLC   SVRELREC,TBRELREC   IS THIS THE RIGHT DETL BLK ?
+         BNE   S222B10             NO. CONTINUE SCAN
+         CLC   SLOTCNT,TBSLOT      IS THIS THE RIGHT ENTRY ?
+         BNE   S222B10             NO. CONTINUE SCAN
+S222B03  MVI   MOD1SW,X'FF'        TURN MOD-1 SWITCH ON
+S222B05  MVC   RELREC,TBRELREC     RESTORE PAGING 'BBB'
+         MVC   TWASLOT,TBSLOT      RESTORE PAGING 'SS'
+         BAL   LINKREG,LOCATE      LOCATE STARTING 'BBBSS' FOR DISP
+         L     OUTLOOP,SOUTLOOP    RESTORE THE CONTENT OF OUTLOOP REG
+         B     S190                RESUME PAGING SETUP
+S222B10  LA    14,MOD1TABL         POINT OT MOD-1 TABLE
+         CLI   ENTRYTYP,X'91'      IS THIS AN MDR ENTRY?
+         BE    S222C               YES.
+         CLI   ENTRYTYP,X'30'      IS IT A BTAM OBR?
+         BE    S222D               YES.
+         CLI   ENTRYTYP,X'34'      IS IT A TCAM OBR?
+         BE    S222D               YES.
+S222B20  SR    15,15
+         IC    15,SLOTCNT          ADD ONE
+         AH    15,=H'1'            TO
+         STC   15,SLOTCNT          SLOT COUNTER.
+         SR    14,14
+         IC    14,DATALTH          PUT LTH OF SLOT IN WORK REG.
+         AR    DATAREG,14          POINT TO NEXT DETAIL SLOT.
+         SR    DATALOOP,14         MORE SLOTS IN THIS DETAIL BLK?
+         BP    S222B               YES.
+         OC    RELREC,RELREC       MORE DETAIL BLOCKS?
+         BNE   S222A               YES.
+         ZAP   WKTBLCNT,TABLECNT   ANY ITEMS IN MOD-1 TABLE?
+         BZ    S222B05             NO. EXIT BUT DON'T TURN ON MOD-1 SW.
+         B     S222B03             YES. EXIT NORMALLY
+S222C    CLC   PARM2(4),=C'CTRL'   IS THIS A 'CTRL' DISPLAY ?
+         BE    S222C50             YES.  USE TERMINAL ADDR ONLY
+         ZAP   WKTBLCNT,TABLECNT   ANY ITEMS IN TABLE ?
+         BZ    S222C30             NO. ADD NEW ITEM
+S222C10  CLC   0(1,14),MDRCTRL     IS THIS CTRL UNIT IN THE TABLE ?
+         BE    S222B20             YES.  BYPASS THIS ENTRY
+         LA    14,2(14)            BUMP TO NEXT ENTRY
+         SP    WKTBLCNT,=PL2'1'    SUBTRACT ONE FROM ITEM COUNT
+         BZ    S222C30             BRANCH IF NO MORE ITEMS TO CK
+         B     S222C10
+S222C30  CP    TABLECNT,=P'32'     IS THIS THE 33TH ENTRY ?
+         BE    S222B03             YES.
+         MVC   0(1,MOD1REG),MDRCTRL     STORE IN TABLE
+         B     S228
+S222C50  CLC   TBCTRL,MDRCTRL      DOES CTRL UNIT ENTRY = REQUESTED CU?
+         BNE   S222B20             NO. BYPASS PUTTING TERMINAL IN TABLE
+         ZAP   WKTBLCNT,TABLECNT
+         BZ    S222C70
+S222C60  CLC   0(1,14),MDRTERM     IS THIS TERMINAL IN THE TABLE ?
+         BE    S222B20             YES. BYPASS THIS ENTRY
+         LA    14,2(14)            BUMP TO NEXT ENTRY
+         SP    WKTBLCNT,=PL2'1'
+         BZ    S222C70
+         B     S222C60
+S222C70  CP    TABLECNT,=P'32'     IS THIS THE 33TH ENTRY ?
+         BE    S222B03             YES.
+         MVC   0(1,MOD1REG),MDRTERM    PUT REMOTE TERMINAL INTO TABLE
+         B     S228
+S222D    CLI   OBRUCB,X'10'        IS THIS A LOCAL?
+         BE    S222G               YES. GO MOVE 3-BYTE ADDR
+         CLC   PARM2(4),=C'CTRL'   IS THIS A 'CTRL' DISPLAY ?  @OZ31878
+         BE    S222D50             YES.  USE TERMINAL ADDR ONLY@OZ31878
+         ZAP   WKTBLCNT,TABLECNT   ANY ITEMS IN TABLE ?        @OZ31878
+         BZ    S222D30             NO. ADD NEW ITEM            @OZ31878
+S222D10  CLC   0(1,14),OBRCTRL     IS THIS CTRL UNIT IN TABLE? @OZ31878
+         BE    S222B20             YES.  BYPASS THIS ENTRY     @OZ31878
+         LA    14,2(14)            BUMP TO NEXT ENTRY          @OZ31878
+         SP    WKTBLCNT,=PL2'1'    SUBTRACT ONE FROM ITEM COUNT@OZ31878
+         BZ    S222D30             BRANCH IF NO MORE ITEMS     @OZ31878
+         B     S222D10                                         @OZ31878
+S222D30  CP    TABLECNT,=P'32'     IS THIS THE 33TH ENTRY ?    @OZ31878
+         BE    S222B03             YES.                        @OZ31878
+         MVC   0(1,MOD1REG),OBRCTRL     STORE IN TABLE         @OZ31878
+         B     S228                                            @OZ31878
+S222D50  CLC   TBCTRL,OBRCTRL      DOES CU ENTRY = REQSTED CU? @OZ31878
+         BNE   S222B20             NO. DON'T PUT TERM IN TBL   @OZ31878
+         ZAP   WKTBLCNT,TABLECNT                               @OZ31878
+         BZ    S222D70                                         @OZ31878
+S222D60  CLC   0(1,14),OBRTERM     IS THIS TERMINAL IN THE TBL?@OZ31878
+         BE    S222B20             YES. BYPASS THIS ENTRY      @OZ31878
+         LA    14,2(14)            BUMP TO NEXT ENTRY          @OZ31878
+         SP    WKTBLCNT,=PL2'1'                                @OZ31878
+         BZ    S222D70                                         @OZ31878
+         B     S222D60                                         @OZ31878
+S222D70  CP    TABLECNT,=P'32'     IS THIS THE 33TH ENTRY ?    @OZ31878
+         BE    S222B03             YES.                        @OZ31878
+         MVC   0(1,MOD1REG),OBRTERM   PUT REMOTE TERM IN TABLE @OZ31878
+         B     S228                                            @OZ31878
+S222G    CLC   PARM2(4),=C'LINE'   IS THIS A 'LINE' DISPLAY ?
+         BE    S222B20             YES. BYPASS THIS ERROR DATA
+         ZAP   WKTBLCNT,TABLECNT   ANY ITEMS IN TABLE ?        @OZ31878
+         BZ    S225                NO. ADD NEW ITEM TO TABLE   @OZ31878
+S224     CLC   0(2,14),OBRCUA      ARG MATCH TABLE ENTRY ?     @OZ31878
+         BE    S222B20             YES.  BYPASS THIS ARGUMENT  @OZ31878
+         SP    WKTBLCNT,=PL2'1'    SUBTRACT ONE FROM ITEM CNT  @OZ31878
+         BZ    S225                NO MORE ITEMS TO CK--SO ADD @OZ31878
+*                                  THIS NEW ITEM TO TABLE
+         LA    14,2(14)            BUMP TO NEXT TABLE ENTRY
+         B     S224                GO CK ANOTHER ENTRY         @OZ31878
+S225     CP    TABLECNT,=P'32'     MORE THAN 33 ENTRIES--USER  @OZ31878
+*                                  MUST BE PAGING FROM MOD-2   @OZ31878
+         BE    S222B03             PREPARE TO EXIT ROUTINE.    @OZ31878
+         MVC   0(2,MOD1REG),OBRCUA ADD CTRL UNIT TO MOD-1 TABLE@OZ31878
+S228     LA    MOD1REG,2(MOD1REG)  UPDATE TABLE POINTER.       @OZ31878
+         AP    TABLECNT,=P'1'      ADD 1 TO COUNT OF TABLE ITEMS
+         B     S222B20             GO CK ANOTHER ENTRY
+***********************************************************************
+*                                                                     *
+*   THIS IS THE MOD-1 TABLE SCANNER ROUTINE                           *
+*                                                                     *
+***********************************************************************
+MOD1SCAN ST    OUTLOOP,SOUTLOOP    SAVE OUTLOOP REGISTER CONTENT
+         LA    MOD1REG,MOD1TABL    POINT TO MOD-1 TABLE
+         ZAP   WKTBLCNT,TABLECNT   ANY ITEMS IN TABLE ?
+         BZ    MOD1EXIT            NO. EXIT AND LEAVE TBARG = ADDR.
+MOD1LOOP CLC   0(2,MOD1REG),TBARG  ARG MATCH TABLE ENTRY ?
+         BE    MOD1PASS            YES.  BYPASS THIS ARGUMENT
+         SP    WKTBLCNT,=PL2'1'    SUBTRACT ONE FROM ITEM CNT
+         BZ    MOD1EXIT            NO MORERE ITEMS TO CK--SO EXIT
+         LA    MOD1REG,2(MOD1REG)  BUMP TO NEXT TABLE ENTRY
+         B     MOD1LOOP            GO CHECK ANOTHER ENTRY
+MOD1PASS MVC   TBARG,=X'0000'      CLEAR ARGUMENT = DO NOT USE
+MOD1EXIT L     OUTLOOP,SOUTLOOP    RESTORE THE CONTENT OF OUTLOOP REG
+         BR    LINKREG             RETURN TO CALLER
+***********************************************************************
+*                                                                     *
+*        THIS IS THE LOCATE ROUTINE                                   *
+*                                                                     *
+***********************************************************************
+LOCATE   DFHFC TYPE=GET,DATASET=EMFILE,RDIDADR=RELREC,NORESP=S230
+         B     F190                BRANCH IF GET I/O ERROR.
+S230     L     FIOABAR,TCAFCAA     POINT TO DATA BLK.
+         MVC   SVRELREC,RELREC     SAVE FOR LAST BBBSS'S
+         CLC   PARM2(3),=C'ALL'    IS THIS 'ALL' BEING CONTINUED?
+         BNE   S250                NO. GO SETUP FOR DATA BLOCK.
+         CLC   TWASLOT,CTRLENTS    YES. SETUP FOR CNTRL BLOCK.
+         BH    S290                QUIT IF GARBAGE KEYED IN.
+         LA    DATAREG,CTRLSLT1
+         SR    DATALOOP,DATALOOP   LOOP THRU CONTROL
+         IC    DATALOOP,CTRLENTS   BLOCK TILL REQUESTED SLOT NBR
+         SR    1,1                 IS SATISFIED.
+         IC    1,TWASLOT
+S235     BCT   1,S240
+         BR    LINKREG
+S240     BCTR  DATALOOP,0
+         LA    DATAREG,SLOTLTH(DATAREG)
+         B     S235
+S250     LH    DATALOOP,BLKLTH     SETUP LOOP NBR BYTES THIS BLK.
+         LA    DATAREG,DATASLT1    POINT TO FIRST DATA ITEM
+         MVC   WRKSLOT,TWASLOT     MOVE TWASLOT TO WRKAREA
+S260     CLI   WRKSLOT,2           IF RQSTED SLOT = 1, THIS IS IT.
+         BL    S320                GO RESUME DISPLAY BUILDING.
+         SR    1,1
+         IC    1,WRKSLOT           DECREMENT SLOT COUNT BY 1.
+         BCTR  1,0
+         STC   1,WRKSLOT
+         IC    1,0(DATAREG)        BUMP TO NEXT SLOT.
+         LTR   1,1
+         BZ    S290                PREVENT LOOP IF GARBAGE INPUT.
+         AR    DATAREG,1
+         SR    DATALOOP,1
+         LTR   DATALOOP,DATALOOP   VERIFY SLOT NBR VALID FOR THIS BLK.
+         BP    S260
+S290     LA    DATAREG,X'5'             LOAD MSG NUMBER        @OX22095
+         B     Z80                                             @OX22095
+S320     BR    LINKREG             RETURN TO MAIN LINE.
+***********************************************************************
+Z10      CLC   PARM2(4),=C'CTRL'          IS PARM2 = CTRL ?
+         BE    Z50                        YES.
+         LA    DATAREG,X'4'             LOAD MSG NUMBER        @OX22095
+         B     Z80
+Z20      LA    DATAREG,X'2'             LOAD MSG NUMBER        @OX22095
+         B     Z80
+Z30      LA    DATAREG,X'3'             LOAD MSG NUMBER        @OX22095
+         B     Z80
+Z40      LA    DATAREG,X'6'             LOAD MSG NUMBER        @OX22095
+         B     Z80
+Z50      CLC   MSG7CTRL,=CL2' '           REMOTE CTRL UNIT PRESENT?
+         BNE   Z50A                       YES.
+         MVC   MSG8CTRL,MSG7LINE          NO. MOVE LOCAL LINE TO CTRL
+         LA    DATAREG,X'8'             LOAD MSG NUMBER        @OX22095
+         B     Z80
+Z50A     LA    DATAREG,X'7'             LOAD MSG NUMBER        @OX22095
+         B     Z80
+Z70      MVC   MSG1TERM,PARM3        MOVE SYMBOLIC NAME TO ERROR MSG
+         OC    MSG1TERM,=CL8' '      CONVERT X'00' TO BLANK
+         LA    DATAREG,X'1'             LOAD MSG NUMBER        @OX22095
+Z80      DFHSC TYPE=GETMAIN,CLASS=TERM,NUMBYTE=255,INITIMG=00  @OX22095
+         L     TIOABAR,TCASCSA          POINT TO NEW TIOA      @OX22095
+         ST    TIOABAR,TCTTEDA          POINT TO NEW TIOA      @OX22095
+         MH    DATAREG,=X'000A'         SET UP TO MOVE MSG     @OX22095
+         B     *+4(DATAREG)             BRANCH INTO MOVE TABLE @OX22095
+         MVC   TIOATDL(IOERLTH),IOERMSG MOVE IN I/O ERR MSG    @OX22095
+         B     PUTMSG                   WRITE THE MESSAGE      @OX22095
+         MVC   TIOATDL(MSG1LTH),MSG1    MOVE IN THE MESSAGE    @OX22095
+         B     PUTMSG                   WRITE THE MESSAGE      @OX22095
+         MVC   TIOATDL(MSG2LTH),MSG2    MOVE IN THE MESSAGE    @OX22095
+         B     PUTMSG                   WRITE THE MESSAGE      @OX22095
+         MVC   TIOATDL(MSG3LTH),MSG3    MOVE IN THE MESSAGE    @OX22095
+         B     PUTMSG                   WRITE THE MESSAGE      @OX22095
+         MVC   TIOATDL(MSG4LTH),MSG4    MOVE IN THE MESSAGE    @OX22095
+         B     PUTMSG                   WRITE THE MESSAGE      @OX22095
+         MVC   TIOATDL(MSG5LTH),MSG5    MOVE IN THE MESSAGE    @OX22095
+         B     PUTMSG                   WRITE THE MESSAGE      @OX22095
+         MVC   TIOATDL(MSG6LTH),MSG6    MOVE IN THE MESSAGE    @OX22095
+         B     PUTMSG                   WRITE THE MESSAGE      @OX22095
+         MVC   TIOATDL(MSG7LTH),MSG7    MOVE IN THE MESSAGE    @OX22095
+         B     PUTMSG                   WRITE THE MESSAGE      @OX22095
+         MVC   TIOATDL(MSG8LTH),MSG8    MOVE IN THE MESSAGE    @OX22095
+PUTMSG   DFHTC TYPE=(WRITE,ERASE)       WRITE THE MESSAGE      @OX22095
+         DFHPC TYPE=RETURN
+Z130     MVC   MSG13LN,MSG7LINE                                @OZ31885
+         LA    DATAREG,X'9'             LOAD MSG NUMBER        @OX22095
+         B     Z80                                             @OZ31885
+TRANS    TR    TIOADBA(0),LOTOUP        TRANS LOWER CASE TO UP @OX22096
+*
+MSG1     DC    AL2(MSG1LTH-4),X'0000'
+         DC    AL1(SBA),AL2(L1P1),AL1(SF,MNP),C'DEMF',AL1(SF,UNA,IC)
+         DC    AL1(SBA),AL2(L2P1),AL1(SF,PNA)
+         DC    C'BNG002I C UNABLE TO CONVERT SYMBOLIC '
+         DC    AL1(SBA),AL2(L3P1),AL1(SF,PNA)
+         DC    C'TERMINAL NAME '
+MSG1TERM DC    CL8' '
+MSG1LTH  EQU   *-MSG1
+MSG2     DC    AL2(MSG2LTH-4),X'0000'
+         DC    AL1(SBA),AL2(L1P1),AL1(SF,MNP),C'DEMF',AL1(SF,UNA,IC)
+         DC    AL1(SBA),AL2(L2P1),AL1(SF,PNA)
+         DC    C'BNG002I C INVALID INPUT FROM SCREEN'
+MSG2LTH  EQU   *-MSG2
+MSG3     DC    AL2(MSG3LTH-4),X'0000'
+         DC    AL1(SBA),AL2(L1P1),AL1(SF,MNP),C'DEMF',AL1(SF,UNA,IC)
+         DC    AL1(SBA),AL2(L2P1),AL1(SF,PNA)                        XH
+         DC    C'BNG003I C NO ERRORS RECORDED'                       XH
+MSG3LTH  EQU   *-MSG3
+MSG4     DC    AL2(MSG4LTH-4),X'0000'
+         DC    AL1(SBA),AL2(L1P1),AL1(SF,MNP),C'DEMF',AL1(SF,UNA,IC)
+         DC    AL1(SBA),AL2(L2P1),AL1(SF,PNA)                        XH
+         DC    C'BNG004I C NO ERRORS RECORDED FOR '                  XH
+         DC    AL1(SBA),AL2(L3P1),AL1(SF,PNA)                        XH
+         DC    C'LINE '
+NOLINE   DC    CL3' '
+MSG4LTH  EQU   *-MSG4
+MSG5     DC    AL2(MSG5LTH-4),X'0000'
+         DC    AL1(SBA),AL2(L1P1),AL1(SF,MNP),C'DEMF',AL1(SF,UNA,IC)
+         DC    AL1(SBA),AL2(L2P1),AL1(SF,PNA)
+         DC    C'BNG005I C ERROR NOT FOUND ON FILE FOR '
+         DC    AL1(SBA),AL2(L3P1),AL1(SF,PNA)
+         DC    C'THE SELECTED ITEM '
+MSG5LTH  EQU   *-MSG5
+MSG6     DC    AL2(MSG6LTH-4),X'0000'
+         DC    AL1(SBA),AL2(L1P1),AL1(SF,MNP),C'DEMF',AL1(SF,UNA,IC)
+         DC    AL1(SBA),AL2(L2P1),AL1(SF,PNA)
+         DC    C'BNG006I C INVALID FORMAT--CHECK PAGE 2 '            XH
+         DC    AL1(SBA),AL2(L3P1),AL1(SF,PNA)                        XH
+         DC    C'OF MENU FOR CORRECT FORMATS'                        XH
+MSG6LTH  EQU   *-MSG6
+MSG7     DC    AL2(MSG7LTH-4),X'0000'
+         DC    AL1(SBA),AL2(L1P1),AL1(SF,MNP),C'DEMF',AL1(SF,UNA,IC)
+         DC    AL1(SBA),AL2(L2P1),AL1(SF,PNA)
+         DC    C'BNG007I C NO ERRORS RECORDED FOR REMOTE'            XH
+         DC    AL1(SBA),AL2(L3P1),AL1(SF,PNA)
+         DC    C'LINE '
+MSG7LINE DC    CL3' '                                                XH
+         DC    C'    CONTROL UNIT '
+MSG7CTRL DC    CL2' '                                                XH
+MSG7LTH  EQU   *-MSG7
+MSG8     DC    AL2(MSG8LTH-4),X'0000'
+         DC    AL1(SBA),AL2(L1P1),AL1(SF,MNP),C'DEMF',AL1(SF,UNA,IC) XH
+         DC    AL1(SBA),AL2(L2P1),AL1(SF,PNA)                        XH
+         DC    C'BNG008I C NO ERRORS RECORDED FOR '                  XH
+         DC    AL1(SBA),AL2(L3P1),AL1(SF,PNA)                        XH
+         DC    C'LOCAL CONTROL UNIT '                                XH
+MSG8CTRL DC    CL3' '                                                XH
+MSG8LTH  EQU   *-MSG8                                                XH
+MSG13    DC    AL2(MSG13LTH-4),X'0000'                         @OZ31885
+         DC    AL1(SBA),AL2(L1P1),AL1(SF,MNP),C'DEMF'          @OZ31885
+         DC    AL1(SF,UNA,IC),AL1(SBA),AL2(L2P1),AL1(SF,PNA)   @OZ31885
+         DC    CL39'BNG013A C NO DATA BLOCKS AVAILABLE FOR '   @OZ31885
+         DC    CL5'LINE '                                      @OZ31885
+MSG13LN  DC    CL3' '                                          @OZ31885
+         DC    CL31':  DATA BASE IN DEGRADED MODE. '           @OZ31885
+         DC    CL39' MUST ALLOCATE MORE BLOCKS THAN LINES'     @OZ31885
+MSG13LTH EQU   *-MSG13                                         @OZ31885
+***********************************************************************
+HDR3X    DC    AL1(SBA),AL2(L4P1)
+HDR1X    DC    AL1(SBA),AL2(L2P1)
+DTLENTRY DC    AL1(SF,PNA),C'(',AL1(SF,UNA),C'? ) '
+DTLITEM  DC    CL8' '
+         DC    AL1(SF,PNA)
+DTLCOUNT DC    CL4'0001'
+DTLLTH   EQU   *-DTLENTRY
+ITEMLTH  EQU   DTLITEM-DTLENTRY
+COUNTLTH EQU   DTLCOUNT-DTLENTRY
+***********************************************************************
+*                                                                     *
+*   THE FUNCTION/COMPANION TABLE DETERMINES WHICH PROGRAM IS TO WRITE *
+*   THE REQUESTED DISPLAY AND PROVIDES THE CORRECT SCREEN AND COLUMN  *
+*   HEADERS FOR THAT DISPLAY.                                         *
+*                                                                     *
+***********************************************************************
+TABLE    DS    0C                  FUNCTION/COMPANION TABLE
+         DC    C'ALL',X'00',C'LINE',XL8'00',AL1(SF,PNA)
+         DC    CL39'    RECAP OF ALL LINES HAVING ERRORS',AL1(SF,PNA)
+         DC    CL39'       LINEID  ERRS        LINEID  ERRS'
+SLOT2    DC    C'LINECTRL',XL8'00',AL1(SF,PNA)
+         DC    CL17'    RECAP OF LINE',AL1(SF,PNA),CL20' ',AL1(SF,PNA)
+         DC    CL39'      CTRLUNIT ERRS       CTRLUNIT ERRS'
+         DC    C'CTRLTERM',XL8'00',AL1(SF,PNA)
+         DC    CL18'RECAP OF CTRL UNIT',AL1(SF,PNA),CL19' ',AL1(SF,PNA)
+         DC    CL39'       TERMID  ERRS        TERMID  ERRS'
+         DC    C'3270',XL4'00',C'BNGC3270',CL82' '
+         DC    C'LOCA',XL4'00',C'BNGCLOCL',CL82' '
+         DC    C'REMO',XL4'00',C'BNGCRMOT',CL82' '
+         DC    C'END'
+TABLELTH EQU   *-TABLE
+TABLENTY EQU   SLOT2-TABLE
+HDR1     DS    0C
+         DC    AL1(SBA),AL2(L1P1),AL1(SF,MNP),C'DEMF'
+         DC    AL1(SF,UNA,IC,SBA),AL2(L1P36),AL1(SF,MNP)
+HDR1LTH  EQU   *-HDR1
+HDR2     DS    0C
+         DC    AL1(SF,PNA),C'(',AL1(SF,UNA),C'?'
+         DC    AL1(SF,PNA)
+         DC    C') PAGE FORWARD '
+         DC    CL20' '
+HDR2LTH  EQU   *-HDR2
+HDR3     DS    0C
+         DC    AL1(SF,PNA),C'(',AL1(SF,UNA),C'?'
+         DC    AL1(SF,PNA)
+         DC    C') PAGE BACKWRD '
+         DC    CL4' '
+         DC    AL1(SF,PIA)
+         DC    CL15'BBBSSBBBSSBBBSS'     BBBSSBBBSSBBBSS BLOCK & SLOT
+HDR3LTH  EQU   *-HDR3
+HXTOEB   DC    4XL16'00',C' ',XL15'00',7XL16'00'  THIS TABLE CONVERTS
+         DC    X'F0F1F2F3F4F5F6F7F8F9C1C2C3C4C5C6'  HEX CHARS
+         DC    2XL16'00'                CHARS FA-THRU-FF BACK
+         DC    X'F0F1F2F3F4F5F6F7F8F9C1C2C3C4C5C6'  A THRU F
+EBTOHX   DC    X'00000000000000000000000000000000'     00-0F  THIS
+         DC    X'00000000000000000000000000000000'     10-1F  TABLE
+         DC    X'00000000000000000000000000000000'     20-2F  CONVERTS
+         DC    X'00000000000000000000000000000000'     30-3F  INPUT
+         DC    X'00000000000000000000000000000000'     40-4F  A THRU F
+         DC    X'00000000000000000000000000000000'     50-5F    TO
+         DC    X'00000000000000000000000000000000'     60-6F  0A - 0F
+         DC    X'00000000000000000000000000000000'     70-7F   AND
+         DC    X'00000000000000000000000000000000'     80-8F  F0 - F9
+         DC    X'00000000000000000000000000000000'     90-9F    TO
+         DC    X'00000000000000000000000000000000'     A0-AF  00 - 09
+         DC    X'00000000000000000000000000000000'     B0-BF    AND
+         DC    X'000A0B0C0D0E0F000000000000000000'     C0-CF     *
+         DC    X'00000000000000000000000000000000'     D0-DF   BECOME
+         DC    X'00000000000000000000000000000000'     E0-EF    FF.
+         DC    X'00010203040506070809000000000000'     F0-FF
+LOTOUP   DS    0C          LOWER CASE TO UPPER CASE TR TABLE
+         DC    X'000102030405060708090A0B0C0D0E0F'
+         DC    X'101112131415161718191A1B1C1D1E1F'
+         DC    X'202122232425262728292A2B2C2D2E2F'
+         DC    X'303132333435363738393A3B3C3D3E3F'
+         DC    X'404142434445464748494A4B4C4D4E4F'
+         DC    X'505152535455565758595A5B5C5D5E5F'
+         DC    X'606162636465666768696A6B6C6D6E6F'
+         DC    X'707172737475767778797A7B7C7D7E7F'
+         DC    X'80C1C2C3C4C5C6C7C8C98A8B8C8D8E8F'
+         DC    X'90D1D2D3D4D5D6D7D8D99A9B9C9D9E9F'
+         DC    X'A0A1E2E3E4E5E6E7E8E9AAABACADAEAF'
+         DC    X'F0F1F2F3F4F5F6F7F8F9BABBBCBDBEBF'
+         DC    X'C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF'
+         DC    X'D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF'
+         DC    X'E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF'
+         DC    X'F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF'
+SLOTTTR  DC    C' '
+PATCH    DS    20F                                             @OX21950
+         LTORG
+         END   BNGCDISP
+

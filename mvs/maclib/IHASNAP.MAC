@@ -1,0 +1,137 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO SNAPLS; /*
+         MACRO
+         IHASNAP &DSECT=YES                                          */
+*%SNAPLS:  ;
+* /* MACMEAN SNAP MEANS SNAP PARAMETER LIST                          */
+* /* MACCOMP Y-1 SC1C5/PZD81                                         */
+* /* MACSTAT Y-1 72245/Y02705                                        */
+* /* UPDATED FOR SU 33 9/15/76                               @G33SPHW*/
+*        %GOTO SNAPPLS;  /*
+         AIF ('&DSECT' EQ 'YES').SNAP00
+SNPPARMS EQU   *
+         AGO    .SNAP01
+.SNAP00  ANOP
+SNPPARMS DSECT
+.SNAP01  DS    0F
+         IEZBITS
+SNPIDENT DS    B                   DUMP ID SUPPLIED BY USER
+SNPFLAG  DS    B                   FLAG BYTE
+SNPSNAP  EQU   BIT0                0=SNAP REQUEST
+*                                  1=SVC DUMP REQUEST
+SNPVS2   EQU   BIT1                0=OS/VS2 REL.1 PARAMETER LIST
+*                                  1=OS/VS2 REL.2 PARAMETER LIST
+SNPVS2EN EQU   BIT2                1=OS/VS2 ENHANCED SNAP    @G33SPHW
+SNPABEND EQU   BIT3                0=ABEND IS CALLER
+*                                  1=SNAP REQUEST
+SNPID    EQU   BIT4                1=ID SPECIFIED
+SNPTCB   EQU   BIT5                1=TCB SPECIFIED
+SNPSLIST EQU   BIT6                1=STORAGE LIST SPECIFIED
+SNPHDR   EQU   BIT7                1=HEADER LIST SPECIFIED    @G33SPHW
+         DS    H                   RESERVED
+SNPSDATA DS    B                   SDATA OPTIONS
+SNPNUC   EQU   BIT0                1=DUMP NUCLEUS,PSA,SQA,LSQA
+SNPSQA   EQU   BIT1                1=DUMP SQA
+SNPLSQA  EQU   BIT2                1=DUMP LSQA
+SNPSWA   EQU   BIT3                1=DUMP SWA
+SNPTRT   EQU   BIT4                1=INCLUDE TRACE TABLE (SUPERVISOR
+*                                  OR GTF)
+SNPCB    EQU   BIT5                1=FORMAT CNTRL BLKS FOR TASK
+SNPQCB   EQU   BIT6                1=FORMAT ENQUEUE CNTRL BLKS
+*                                  FOR TASK
+SNPDM    EQU   BIT7                1=FORMAT DATA MGT. CONTROL BLKS.
+*                                                              @G33SPHW
+SNPSDAT1 DS    B                   SDATA OPTIONS
+SNPIO    EQU   BIT0                1-FORMAT CONTROL BLKS.      @G33SPHW
+SNPERR   EQU   BIT1                1=FORMAT ERROR CONTROL BLKS @G33SPHW
+*        EQU   BIT2                RESERVED
+*        EQU   BIT3                RESERVED
+*        EQU   BIT4                RESERVED
+*        EQU   BIT5                RESERVED
+*        EQU   BIT6                RESERVED
+*        EQU   BIT7                RESERVED
+SNPPDATA DS    B                   PDATA OPTIONS
+SNPSAVE  EQU   BIT0                1=DISPLAY SAVE AREA TRACE
+SNPSAVE2 EQU   BIT1                0=DISPLAY ENTIRE SAVE AREA
+*                                  1=DISPLAY SAVE AREA HEADS
+SNPREGS  EQU   BIT2                1=DISPLAY REGS- ENTRY TO SNAP/ABEND
+SNPLPA   EQU   BIT3                1=DISPLAY ACTIVE LPA MODULES
+SNPJPA   EQU   BIT4                1=DISPLAY JPA MODULES
+SNPPSW   EQU   BIT5                1=DISPLAY PSW, ILC, INTERRUPT CODE
+SNPSPLS  EQU   BIT6                1=DISPLAY USER SUBPOOLS: 0-127
+*        EQU   BIT7                RESERVED
+         DS    B                   RESERVED
+SNPDCB   DS    A                   ADDRESS OF DCB FOR DUMP DATA
+*                                  SET
+SNPTCBA  DS    A                   ADDRESS OF TCB TO BE DISPLAYED
+SNPSTOR  DS    A                   ADDRESS OF STORAGE LIST
+*                                  LIST CONTAINS BEGIN AND END
+*                                  ADDR OF AREAS TO BE DUMPED
+SNPHDRA  DS    A                   ADDR OF HEADER LIST       @G33SPHW
+         MEND
+**/
+*%SNAPPLS : ;
+*  %IF SNAP9999^=',' %THEN
+*    %SNAP9999=';';
+*  %IF SNAPLVL^='' %THEN
+*    %GOTO SNAPPLS1;
+*DECLARE
+*    1 SNPPARMS BASED (SNAPPTR) BDY(WORD),
+*  %GOTO SNAPPLS2;
+*%SNAPPLS1: ;
+*    SNAPLVL SNPPARMS BDY(WORD),
+*%SNAPPLS2: ;
+*      6 SNPIDENT CHAR(1),         /* DUMP ID SUPPLIED BY USER       */
+*      6 SNPFLAG  CHAR(1),         /* FLAG BYTE                      */
+*        8 SNPSNAP  BIT(1),        /* 0=SNAP REQUEST
+*                                     1=SVC DUMP REQUEST             */
+*        8 SNPVS2   BIT(1),        /* 0=OS/VS2 REL.1 PARAMETER LIST
+*                                     1=OS/VS2 REL.2 PARAMETER LIST  */
+*        8 SNPVS2EN BIT(1),        /* 1=OS/VS2 ENHANCED SNAP @G33SPHW*/
+*        8 SNPABEND BIT(1),        /* 0=ABEND IS CALLER
+*                                     1=SNAP REQUEST                 */
+*        8 SNPID    BIT(1),        /* 1=ID SPECIFIED                 */
+*        8 SNPTCB   BIT(1),        /* 1=TCB SPECIFIED                */
+*        8 SNPSLIST BIT(1),        /* 1=STORAGE LIST SPECIFIED       */
+*        8 SNPHDR   BIT(1),        /* 1=STORAGE HEADER LIST
+*                                     SPECIFIED                      */
+*      6 *        FIXED(15),       /* RESERVED                       */
+*      6 SNPSDATA BIT(8),          /* SDATA OPTIONS                  */
+*        8 SNPNUC   BIT(1),        /* 1=DUMP NUCLEUS, PSA, SQA, LSQA */
+*        8 SNPSQA   BIT(1),        /* 1=DUMP SQA                     */
+*        8 SNPLSQA  BIT(1),        /* 1=DUMP LSQA                    */
+*        8 SNPSWA   BIT(1),        /* 1=DUMP SWA                     */
+*        8 SNPTRT   BIT(1),        /* 1=INCLUDE TRACE TABLE(SUPER-
+*                                       VISOR OR GTF)                */
+*        8 SNPCB    BIT(1),        /* 1=FORMAT CNTRL BLKS FOR TASK   */
+*        8 SNPQCB   BIT(1),        /* 1=FORMAT ENQUEUE CNTRL BLKS
+*                                     FOR TASK                       */
+*        8 SNPDM    BIT(1),        /* 1=DATA MGT CONTROL BLKS
+*                                                            @G33SPHW*/
+*      6 SNPSDAT1   BIT(8),        /* SDATA OPTIONS                  */
+*        8 SNPIO    BIT(1),        /* 1=DUMP IOS CONTROL BLKS.
+*                                                            @G33SPHW*/
+*        8 SNPERR   BIT(1),        /* 1-DUMP ERROR CONTROL BLKS.
+*                                                            @G33SPHW*/
+*        8 BIT(6),                 /* RESERVED               @G33SPHW*/
+*      6 SNPPDATA BIT(8),          /* PDATA OPTIONS                  */
+*        8 SNPSAVE  BIT(1),        /* 1=DISPLAY SAVE AREA TRACE      */
+*        8 SNPSAVE2 BIT(1),        /* 0=DISPLAY ENTIRE SAVE AREA
+*                                     1=DISPLAY SAVE AREA HEADS      */
+*        8 SNPREGS  BIT(1),        /* 1=DISPLAY REGS- ENTRY TO
+*                                     SNAP/ABEND                     */
+*        8 SNPLPA   BIT(1),        /* 1=DISPLAY ACTIVE LPA MODULES   */
+*        8 SNPJPA   BIT(1),        /* 1=DISPLAY JPA MODULES          */
+*        8 SNPPSW   BIT(1),        /* 1=DISPLAY PSW, ILC, INTERRUPT
+*                                     CODE                           */
+*        8 SNPSPLS  BIT(1),        /* 1=DISPLAY USER SUBPOOLS: 0-127 */
+*        8 *        BIT(1),        /* RESERVED                       */
+*      6 * BIT(8),                 /* RESERVED                       */
+*      6 SNPDCB   PTR(31),         /* ADDRESS OF DCB FOR DUMP DATA
+*                                     SET                            */
+*      6 SNPTCBA  PTR(31),         /* ADDRESS OF TCB TO BE DISPLAYED */
+*      6 SNPSTOR  PTR(31),         /* ADDRESS OF STORAGE LIST
+*                                     LIST CONTAINS BEG AND END
+*                                     ADDR OF AREAS TO BE DUMPED     */
+*      6 SNPHDRA  PTR(31) SNAP9999 /* ADDRESS OF HEADER LIST @G33SPHW*/
+*% SNAPLEN='LENGTH(SNPPARMS)';     /* LENGTH OF SNAP PARAMETER LIST  */

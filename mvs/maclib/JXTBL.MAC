@@ -1,0 +1,22 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    JXTBL &A,&B,&C,&D,&E,&F,&G,&H,&I,&J,&K,&L,&M,&O,&P,&Q
+         LCLA  &N,&S(16)
+.CHK     ANOP                      TOP OF LOOP
+&N       SETA  &N+1                OPERAND PTR
+         AIF ('&SYSLIST(&N)' EQ '').SETZ  OPERAND OMITTED?
+.*   IS OPERAND IN RANGE
+         AIF   (&SYSLIST(&N) LE 255).OK
+         MNOTE 8,'***  IHB361          ERROR IN OPERAND NUMBER &N'
+.SETZ    ANOP
+&S(&N)   SETA  0                   OMITTED OPERAND SET TO ZERO
+         AGO   .BL
+.OK      ANOP
+&S(&N)   SETA  &SYSLIST(&N)        OPERAND PROVIDED
+.BL      AIF   (&N LT 16).CHK      BOTTOM OF LOOP
+&NAME    DC    0H'0',AL1(&S(1)),AL1(&S(2)),AL1(&S(3)),AL1(&S(4))
+         DC    AL1(&S(5)),AL1(&S(6)),AL1(&S(7)),AL1(&S(8)),AL1(&S(9))
+         DC    AL1(&S(10)),AL1(&S(11)),AL1(&S(12))
+         DC    AL1(&S(13)),AL1(&S(14)),AL1(&S(15)),AL1(&S(16))
+         MEND
+

@@ -1,0 +1,23 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    STBL  &N
+         LCLA  &X                       COUNTER OF TABLE ENTRIES
+         LCLA  &P
+&NAME    EQU   *
+.A       ANOP
+&X       SETA  &X+1
+         AIF   ('&SYSLIST(&X)' EQ '').END
+&P       SETA  &SYSLIST(&X)
+         AIF   ('&P' GE '11' AND '&P' LE '16' OR '&P' GE '21' AND '&P' X
+               LE '26' OR '&P' GE '31' AND '&P' LE '36' OR '&P' GE '41'X
+                AND '&P' LE '46' OR '&P' GE '51' AND '&P' LE '56').B
+         AIF   ('&P' GE '61' AND '&P' LE '66').B
+         MNOTE 12,'***  IHB356  INVALID MODULE POCKET  CODE;  MP11 IS  X
+               ASSUMED'
+         DC    XL1'11'                  DEFAULT TABLE ENTRY
+         AGO   .A
+.B       ANOP
+         DC    X'&SYSLIST(&X)'          TABLE ENTRY
+         AGO   .A
+.END     MEND
+

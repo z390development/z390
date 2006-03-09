@@ -1,28 +1,103 @@
          MACRO
-.*********************************************************************
+.********************************************************************* 
 .* Copyright 2005 Automated Software Tools Corporation               *
 .* This source code is part of z390 assembler/emulator package       *
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-&N       LINK  &PARMS,&EP=,&EPLOC=
-         AIF    (&PARMS EQ '').NOPARM
-         LA     1,=A&PARMS
-.NOPARM  ANOP
+.* 10/20/05 RPI27  - issue error for any undefined operands     
+.* 10/21/05 RPI41  - add PARAM= and VL= support
+.* 11/13/05 RPI89  - add support for DDNAME= and DSNAME=
+.* 11/16/05 RPI95  - add DDNAME= and DSNAME= conflict checking
+.* 11/19/05 RPI102 - allow DDNAME or DSNAME to replace EP or EPLOC
+.* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.*********************************************************************
+.* LOAD AND EXEC PGM VIA SVC 6
+.*   R0  = ADDR PGM NAME (8 BYTES SPACE FILLED)
+.*   R15 = 0    USE SYS390 DEFAULT PATH FROM EZ390 PARM
+.*   R15 = ADDR DSNAME FILE SPEC IF HIGH BIT OFF (NULL OR DQ DELIMITED)
+.*   R15 = ADDR DDNAME IF HIGH BIT ON (8 BYTES SPACE FILLED)
+.* NOTES:
+.*   1.  DSNAME OR DDNAME MAY BE 1 OR MORE DIRECTORY PATHS TO SEARCH
+.*       OR THEY MAY BE PATH AND FILE NAME WHICH OVERRIDES EP/EPLOC
+.*   2.  RETURN CODE SET BY CALLED PGM IF SUCCESSFUL
+.*   3.  ABEND WITH S806
+.*********************************************************************
+&N       LINK  &EP=,          PGMNAME 1-8 CHAR                         X
+               &EPLOC=,       RX LABEL OR (REG) POINTER TO PGM FIELD   X
+               &PARAM=,       PARAMETER LIST                           X
+               &VL=1,         SET HIGH BIT IN LAST PARM ADDR           X
+               &DDNAME=,      LOAD FROM DIR OR FILE DEFINED IN ENV.VAR X
+               &DSNAME=       LOAD FROM RX OR (REG) FILE SPEC          
+         AIF   (N'&SYSLIST LE 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF    (&PARAM EQ '').ENDPARM
+         LA     1,=A&PARAM
+         AIF    (&VL NE 1).ENDPARM
+&OFF     SETA   N'&PARAM*4-4
+         OI     &OFF.(1),X'80'
+.ENDPARM ANOP
          AIF   (&EP NE '').EP
          AIF   (&EPLOC NE '').EPLOC
-         MNOTE 12,'LINK REQUIRES EP= OR EPLOC='
+         SR    0,0
+         AIF   (&DDNAME NE '' OR &DSNAME NE '').CHKDSN
+         MNOTE 12,'LINK REQUIRES EP, EPLOC, DDNAME, OR DSNAME'
          MEXIT
 .EP      ANOP
          LA    0,=CL8'&EP'
-         AGO   .SVC
+         AGO   .CHKDSN
 .EPLOC   ANOP
          AIF   ('&EPLOC'(1,1) EQ '(').EPLOCREG
          LA    0,&EPLOC
-         AGO   .SVC
+         AGO   .CHKDSN
 .EPLOCREG ANOP
+         AIF   (&EPLOC(1) EQ 1).EPERR
+         AIF   (&EPLOC(1) EQ '0' OR &EPLOC(1) EQ 'R0').CHKDSN  RPI163
          LR    0,&EPLOC(1)
+         AGO   .CHKDSN
+.EPERR   ANOP
+         MNOTE 12,'LINK INVALID EPLOC REG'
+         MEXIT
+.CHKDSN  ANOP
+         AIF   (&DSNAME EQ '').CHKDD
+         AIF   (&DDNAME EQ '').DSNOK
+         MNOTE 12,'DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
+.DSNOK   ANOP
+         AIF   ('&DSNAME'(1,1) EQ '(').DSNREG
+         LA    15,&DSNAME
+         AGO   .SVC
+.DSNREG  ANOP
+         AIF   (&DSNAME(1) LE 1).DSNERR
+         AIF   (&DSNAME(1) EQ '15' OR &DSNAME(1) EQ 'R15').SVC  RPI163
+         LR    15,&DSNAME(1)
+         AGO   .SVC
+.DSHERR  ANOP
+         MNOTE 12,'LINK INVALID DSNAME REG'
+         MEXIT
+.CHKDD   ANOP
+         AIF   (&DDNAME EQ '').DEFPATH
+         AIF   ('&DDNAME'(1,1) EQ '(').DDREG
+         LA    15,=CL8'&DDNAME'
+         OILH  15,X'8000' DD VS DSN
+         AGO   .SVC
+.DDREG   ANOP
+         AIF   (&DDNAME(1) LE 1).DDERR
+         AIF   (&DDNAME(1) EQ '15' OR &DDNAME(1) EQ 'R15').SKP1 RPI163
+         LR    15,&DDNAME(1)
+.SKP1    ANOP
+         OILH  15,X'8000' DD VS DSN
+         AGO   .SVC
+.DDERR   ANOP
+         MNOTE 12,'LINK INVALID DDNAME REG'
+         MEXIT
+.DEFPATH ANOP
+         SR    15,15 USE DEFAULT SYS390 SEARCH
 .SVC     ANOP
-         SVC    6 LINK R0=A(PGM) R1-PARMS    
+         SVC    6 LINK R0=A(PGM) R1-PARMS R15=DDNAME/DSNAME ADDR OR 0
          MEND

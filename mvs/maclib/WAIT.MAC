@@ -1,0 +1,52 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    WAIT  &CNT,&ECB=,&ECBLIST=,&LONG=NO,&RELATED=
+         AIF   ('&ECB&ECBLIST' EQ '').E1
+         AIF   (T'&ECB NE 'O' AND T'&ECBLIST NE 'O').E2
+         AIF   ('&LONG' NE 'YES' AND '&LONG' NE 'NO').E3
+         AIF   ('&ECB' NE '').CHECK
+         AIF   ('&ECBLIST'(1,1) EQ '(').REG
+         AGO   .CONTD
+.CHECK   AIF   ('&ECB'(1,1) NE '(').CONTD
+.REG     ANOP
+&NAME    LA    1,0(0,&ECB(1)&ECBLIST(1))   CLEAR HIGH BYTE OF REG
+         AIF   ('&CNT' EQ '').CONTF
+         AIF   ('&CNT'(1,1) EQ '(').CONTG
+         LA    0,&CNT.(0,0)                 LOAD PARAMETER REG 0 YM1995
+         AGO   .CONTA
+.CONTD   ANOP
+         AIF   ('&CNT' EQ '&CNT(1)' AND '&CNT' NE '').CONTC
+&NAME    IHBINNRA &ECB&ECBLIST,&CNT         LOAD REG 0 AND REG 1
+         AIF   ('&CNT' NE '').CONTA
+.CONTF   LA    0,1(0,0)                      COUNT OMITTED,1 USED
+         AGO   .CONTA
+.CONTG ANOP
+         LR    0,&CNT(1)
+         AGO   .CONTA
+.CONTC   ANOP
+&NAME    IHBINNRA &ECB&ECBLIST,&CNT.(0,0)
+.CONTA   AIF   ('&ECBLIST' EQ '').CONTB
+         LCR   1,1                               INDICATE ECBLIST USED
+.CONTB   AIF   ('&LONG' EQ 'NO').CONT        TEST FOR LONG WAIT
+         BCR   8,0                   GIVES AN INLINE '80'
+         ICM   0,8,*-1                 INSERT INTO HI BYTE
+.CONT    SVC   1                                 LINK TO WAIT ROUTINE
+         MEXIT
+.E1      IHBERMAC 11                        ECB AND ECBLIST MISSING
+         MEXIT
+.E2      IHBERMAC 54,,'ECB=&ECB AND ECBLIST=&ECBLIST'
+         MEXIT
+.E3      IHBERMAC 1001,LONG,&LONG        INVALID LONG PARAMETER
+         MEND
+**/
+*  WAIT : /***********************************************************/
+*/*                                                                  */
+*/*************** PL/S VERSION OF THE WAIT MACRO *********************/
+*/*                                                                  */
+*/********************************************************************/
+*
+* MACRO
+*   KEYS( ECB, ECBLIST, LONG, RELATED );
+*        ANS('?'||MACLABEL||'WAITP '||MACLIST||MACKEYS||';');
+*%END;

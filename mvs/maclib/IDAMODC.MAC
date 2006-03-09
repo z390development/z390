@@ -1,0 +1,68 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /*                                                                 */
+* /* MACCOMP Y-2 SC1DE/SJD61                                         */
+* /* MACSTAT Y-2 73103/Y02113                                        */
+* /*                                                                 */
+*        %GO TO MODPLS1;
+*/*      MODCB HEADER ARGUMENT CONTROL ENTRY                         */
+*/*      CREATED BY USER WITH MODCB MACRO                            */
+*/*                                                                  */
+*/*                                                                  */
+*/*    0 ___________________________________________________         */
+*/*      |            |           |                        |         */
+*/*      |   MODBTC   |  MODFTC   |           *            |         */
+*/*      |____________|___________|________________________|         */
+*/*      |                                                 |         */
+*/*      |                     MODBLAD                     |         */
+*/*      |_________________________________________________|         */
+*/*                                                                  */
+*%MODPLS1 :;
+*        %IF MODEND ^= ','                  /* IF LAST BLOCK         */
+*          %THEN %MODEND = ';';             /*   THEN CLOSE DCL STMT */
+*        %IF MODLVL ^= ''                   /* IF BLOCK CONCATENATED */
+*          %THEN %GO TO MODPLS2;            /*   THEN BYPASS DECLARE */
+*        DCL 1 MODC BASED                   /* LEVEL ONE DECLARE     */
+*        %GO TO MODPLS3;                    /* SKIP MINOR LEVEL DCL  */
+*%MODPLS2 : MODDUM = MODLVL || ' MODC';     /* SET MINOR LEVEL NUMBER*/
+*          MODDUM                           /* MINOR STRUCTURE       */
+*%MODPLS3 :;
+*              BDY(WORD),
+*              /******************************************************/
+*              /*                                                    */
+*              /*    MODCB HEADER ARGUMENT CONTROL ENTRY             */
+*              /*                                                    */
+*              /******************************************************/
+*
+*              5 MODBTC BIT(8),             /* BLOCK TYPE CODE       */
+*              %MODACB = '''A0''X';         /* ACB BLOCK TYPE CODE   */
+*              %MODXLST = '''B0''X';        /* EXLST BLOCK TYPE CODE */
+*              %MODRPL = '''C0''X';         /* RPL BLOCK TYPE CODE   */
+*              5 MODFTC BIT(8),             /* FUNCTION TYPE CODE    */
+*              %MODFTYP = '''02''X';        /* MODCB FUNCT TYPE CODE */
+*              %MODFTVT = '''12''X';        /* MODCB FTC FOR VTAM    */
+*              5 * FIXED(15),               /* RESERVED              */
+*              5 MODBLAD PTR(31)MODEND      /* CONTROL BLOCK ADDRESS */
+*        %MODLEN = 'LENGTH(MODC)';          /* LENGTH OF THIS BLOCK  */
+*        %GO TO MODPLS4;
+         MACRO
+         IDAMODC &DSECT=YES
+         AIF   ('&DSECT' EQ 'YES').MOD1
+MODC     DS    0F                      MODCB HEADER ARG CONTROL ENTRY
+         AGO   .MOD2
+.MOD1    ANOP
+MODC     DSECT                         MODCB HEADER ARG CONTROL ENTRY
+.MOD2    ANOP
+MODBTC   DS    B                       BLOCK TYPE CODE
+MODACB   EQU   X'A0'                   ACB BLOCK TYPE CODE
+MODXLST  EQU   X'B0'                   EXLST BLOCK TYPE CODE
+MODRPL   EQU   X'C0'                   RPL BLOCK TYPE CODE
+MODFTC   DS    B                       FUNCTION TYPE CODE
+MODFTYP  EQU   2                       MODCB FUNCTION TYPE CODE
+MODFTVT  EQU   12                      MODCB FTC FOR VTAM
+         DS    H                       RESERVED
+MODDATA  EQU   0                       DATA OBJECT TYPE CODE
+MODINDX  EQU   1                       INDEX OBJECT TYPE CODE
+MODBLAD  DS    A                       CONTROL BLOCK ADDRESS
+MODLEN   EQU   *-MODC                  LENGTH OF THIS BLOCK
+         MEND
+*%MODPLS4 :;

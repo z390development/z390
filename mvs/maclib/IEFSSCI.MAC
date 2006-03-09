@@ -1,0 +1,88 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSCICMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSCI
+.*/ %SSCICMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSCI                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = SUBSYS KEYWORD CONVERTER EXIT        @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSCIPLS;              /*                               @ZA34144
+*                                                              @G29AN2F
+SSOBCONV EQU    38          CONVERTER SUBSYS EXIT (SSOBFUNC)   @G29AN2F
+*                                                              @G29AN2F
+*     CONVERTER EXIT RETURN CODES (SSOBRETN)                   @G29AN2F
+SSCIRTOK EQU    0           SUCCESSFUL SYNTAX CHECK            @G29AN2F
+SSCICMOD EQU    4           SUCCESSFUL-INTERNAL TEXT MODIFIED  @G29AN2F
+SSCISYNC EQU    8           SYNTATICAL ERROR - CONTINUE JOB    @G29AN2F
+SSCISYNT EQU    12          SYNTATICAL ERROR - TERMINATE JOB   @G29AN2F
+SSCIPERR EQU    36          PROGRAM ERROR IN ROUTINE           @G29AN2F
+*                                                              @G29AN2F
+         ORG    SSOBGN                                         @G29AN2F
+SSCIBGN  EQU    *           CONVERTER EXTENSION BEGINNING      @G29AN2F
+SSCILEN  DC     AL2(SSCISIZE) CONVERTER EXTENSION SIZE         @G29AN2F
+SSCIFLG1 DS     X           FLAGS RESERVED                     @G29AN2F
+SSCIFLG2 DS     X           FLAGS RESERVED                     @G29AN2F
+SSCIINTP DS     A           ADDRESS INTERNAL TEXT OF JCL STMT  @G29AN2F
+SSCISUBS DS     A           ADDRESS OF FIRST SUBSYS LEN/PARM   @G29AN2F
+SSCIMLEN DS     H           MAX LENGTH OF MESSAGE              @G29AN2F
+SSCINPRM DS     H           NUMBER OF LENGTH/PARM PAIRS IN     @G29AN2F
+*                           SUBSYSTEM DATA                     @G29AN2F
+SSCIMPTR DS     A           POINTER TO MESSAGE AREA            @G29AN2F
+SSCISSNM DS     CL4         SUBSYSTEM NAME                     @G29AN2F
+SSCISIZE EQU    *-SSCIBGN   EXTENSION LENGTH                   @G29AN2F
+*                                                              @G29AN2F
+*   ERROR MESSAGE PROCESSING                                   @G29AN2F
+*   - FIELD SSCIMPTR POINTS TO A MESSAGE AREA CREATED          @G29AN2F
+*     BY THE CALLER IN WHICH THE SUBSYSTEM IS TO RETURN        @G29AN2F
+*     ERROR MESSAGES.                                          @G29AN2F
+*   - EACH MESSAGE AREA CONSISTS OF A 2 BYTE LENGTH FOLLOWED   @G29AN2F
+*     BY A MESSAGE TEXT AREA OF LENGTH DEFINED IN SSCIMLEN.    @G29AN2F
+*   - A MESSAGE IS TO BE RETURNED WHEN A NON-ZERO SSOBRETN     @G29AN2F
+*     IS RETURNED BY THE SUBSYSTEM.                            @G29AN2F
+*                                                              @G29AN2F
+SSOBLN19 EQU    SSOBHSIZ+SSCISIZE   TOTOAL SSOB LENGTH         @G29AN2F
+         MEND                                                @ZA34144*/
+* %SSCIPLS:;                        /*                       @ZA34144*/
+*     /*  FUNCTION IDS (SSOBFUNC)                            @G29AN2F*/
+*  DCL  SSOBCONV FIXED(15) CONSTANT(38);/* CONVERTER EXIT    @G29AN2F*/
+*     /*                                                     @G29AN2F*/
+*     /*  CONVERTER EXIT RETURN CODES (SSOBRETN)             @G29AN2F*/
+*     /*                                                     @G29AN2F*/
+*  DCL  SSCIRTOK FIXED(15) CONSTANT(0); /*SUCCESSFUL SYNTAX
+*                                         CHECK              @G29AN2F*/
+*  DCL  SSCICMOD FIXED(15) CONSTANT(4); /*SUCCESSFUL INTERNAL
+*                                         TEXT MODIFIED      @G29AN2F*/
+*  DCL  SSCISYNC FIXED(15) CONSTANT(8); /*SYNTACTICAL ERROR
+*                                         CONTINUE JOB       @G29AN2F*/
+*  DCL  SSCISYNT FIXED(15) CONSTANT(12);/*SYNTACTICAL ERROR
+*                                         TERMINATE JOB      @G29AN2F*/
+*  DCL  SSCIPERR FIXED(15) CONSTANT(36);/*PERMANENT ERROR    @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* /*    S S C I                                              @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* DECLARE
+*  1     SSCI     SSOBCI,     /* BEGINNING                   @G29AN2F*/
+*    2   SSCILEN  FIXED(15),  /* LENGTH OF EXTENSION         @G29AN2F*/
+*    2   SSCIFLG1 BIT(8),     /* FLAG BYTE RESERVED          @G29AN2F*/
+*    2   SSCIFLG2 BIT(8),     /* FLAG BYTE RESERVED          @G29AN2F*/
+*    2   SSCIINTP PTR(31),    /* PTR TO STMT INTERNAL TEXT   @G29AN2F*/
+*    2   SSCISUBS PTR(31),    /* PTR TO SUBSYS LEN/PARM      @G29AN2F*/
+*    2   SSCIMLEN FIXED(15),  /* MAX LENGTH OF MSG           @G29AN2F*/
+*    2   SSCINPRM FIXED(15),  /* NUMBER OF LENGTH PARM PAIRS
+*                                IN SUBSYSTEM DATA           @G29AN2F*/
+*    2   SSCIMPTR PTR(31),    /* POINTER TO MESSAGE AREA     @G29AN2F*/
+*    2   SSCISSNM CHAR(4);    /* SUBSYSTEM NAME              @G29AN2F*/
+*/*                                                          @G29AN2F*/
+*/* ERROR MESSAGE PROCESSING                                 @G29AN2F*/
+*/* - FIELD SSCIMPTR POINTS TO A MESSAGE AREA CREATED        @G29AN2F*/
+*/*   BY THE CALLER IN WHICH THE SUBSYSTEM IS TO RETURN      @G29AN2F*/
+*/*   ERROR MESSAGES.                                        @G29AN2F*/
+*/* - EACH MESSAGE AREA CONSISTS OF A 2 BYTE LENGTH FOLLOWED @G29AN2F*/
+*/*   BY A MESSAGE TEXT AREA OF LENGTH DEFINED IN SSCIMLEN.  @G29AN2F*/
+*/* - A MESSAGE IS TO BE RETURNED WHEN A NON-ZERO SSOBRETN   @G29AN2F*/
+*/*   IS RETURNED BY THE SUBSYSTEM.                          @G29AN2F*/
+*/*                                                          @G29AN2F*/
+

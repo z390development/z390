@@ -1,0 +1,30 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    PUTIX &RPL=
+         LCLA  &I                       WORK VARIABLE
+         AIF   (N'&SYSLIST EQ 0).NOPOS  GO IF NO POSITIONAL OPERANDS
+.POSLOOP ANOP
+&I       SETA  &I+1                     POINT TO NEXT POS OPERAND
+         IDAERMAC 1,&SYSLIST(&I)        ISSUE WARNING MNOTE
+         AIF   (&I LT N'&SYSLIST).POSLOOP  GO IF MORE POS OPERANDS
+.NOPOS   ANOP
+         AIF   ('&RPL' NE '').OKY       GO IF RPL IS SPECIFIED
+         IDAERMAC 2,RPL                 ISSUE ERROR MNOTE
+         MEXIT                          ..AND TERMINATE
+.OKY     ANOP
+         AIF   ('&NAME' EQ '').NAMEB    GO IF NO NAME
+&NAME    DS    0H
+.NAMEB   ANOP
+         AIF   ('&RPL'(1,1) EQ '(').RPLR  GO IF RPL SPECIFIED AS REG
+         LA    1,&RPL                   LOAD RPL ADDRESS
+         AGO   .AREG                    GO AROUND REG CODE
+.RPLR    ANOP
+         AIF   ('&RPL' EQ '(1)').AREG   GO IF RPL ADDRESS ALREADY IN 1
+         LR    1,&RPL(1)                LOAD RPL ADDRESS
+.AREG    ANOP
+         LA    0,12                     INDICATE PUT INDEX
+         L     15,24(,1)                LOAD ACB ADDRESS FROM RPL
+         L     15,8(,15)                LOAD VSAM INTERFACE RTN ADDR
+         BALR  14,15                    LINK TO INTERFACE ROUTINE
+         MEND
+

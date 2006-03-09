@@ -1,0 +1,132 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO ICH_SAFP1;                              /*
+         MACRO
+         ICHSAFP &DSECT=YES
+         AGO   .SAFPL2A                                */
+*%ICH_SAFP1: ;
+*% ;                                                  /*
+.SAFPL2A ANOP                                         */
+*/********************************************************************/
+*/*                                                                  */
+*/*       $MAC(ICHSAFP) COMP(SC1BN) PROD(SAF):                       */
+*/*                                                                  */
+*/*       MODULE NAME = ICHSAFP                                      */
+*/*                                                                  */
+*/*       DESCRIPTIVE NAME = SAF ROUTER PARAMETER LIST               */
+*/*                                                                  */
+*/*                                                                  */
+*/*       STATUS= OS/VS2 EBB1102                                     */
+*/*                                                                  */
+*/*       FUNCTION =                                                 */
+*/*         DESCRIPTOR FOR DATA PASSED TO THE SAF ROUTER             */
+*/*         BY THE RACROUTE MACRO                                    */
+*/*                                                                  */
+*/*       METHOD OF ACCESS =                                         */
+*/*         PL/S - %INCLUDE SYSLIB(ICHSAFP)                          */
+*/*                DECLARE SAFPPTR PTR(31)                           */
+*/*                                                                  */
+*/*         BAL -  INVOKE THE MACRO ICHSAFP.  NORMALLY, THE          */
+*/*                MACRO GENERATES A DSECT, TO BE  BASED ON          */
+*/*                A REGISTER AS SHOWN BELOW.  IF THIS IS            */
+*/*                NOT DESIRABLE, SPECIFY THE VALUE NO FOR           */
+*/*                THE DSECT KEYWORD.                                */
+*/*                                                                  */
+*/*                L       REG,SAFPPTR                               */
+*/*                USING   SAFP,REG                                  */
+*/*                                                                  */
+*/*                WHERE REG IS ANY REGISTER EXCEPT ZERO,            */
+*/*                USED FOR ADDRESSING ALL FIELDS.                   */
+*/*                                                                  */
+*/*                                                                  */
+*/*       CHANGE ACTIVITY =                                          */
+*/*         $T0=UZ90211,SAF/RF15,810702,CNTDSD:                      */
+*/*         $L6=HRF1602,RACF/160,830503,CNTDSD:                  @L6A*/
+*/*         UZ90283                                          @ZA90283*/
+*/*         UZ90284                                          @ZA90284*/
+*/*         UZ90285                                          @ZA90285*/
+*/*                                                                  */
+*/********************************************************************/
+*%;                                                                  /*
+         AGO   .SAFPL4               */
+*%GOTO ICH_SAFP3;                    /*
+.SAFPL4  ANOP
+         AIF   ('&DSECT' EQ 'NO').SAFPL5
+SAFP     DSECT
+         AGO   .SAFPL5A
+.SAFPL5  ANOP
+SAFP     DS    0F
+.SAFPL5A ANOP
+SAFPRRET DS    F                   RACF OR INSTALLATION EXIT
+*                                  RETURN CODE
+SAFPRREA DS    F                   RACF OR INSTALLATION EXIT
+*                                  REASON CODE
+SAFPPLN  DS    H                   LENGTH OF SAFP PARAMETER LIST
+*                                  (IN BYTES)
+         DS    XL2                 RESERVED
+SAFPREQT DS    H                   REQUEST NUMBER (VALUES DEFINED
+*                                  BELOW)
+         DS    XL2                 RESERVED
+SAFPREQR DS    A                   REQUESTOR NAME ADDRESS (POINTS
+*                                  TO AN 8-BYTE CHARACTER FIELD)
+SAFPSUBS DS    A                   SUBSYSTEM NAME ADDRESS (POINTS
+*                                  TO AN 8-BYTE CHARACTER FIELD)
+SAFPWA   DS    A                   SAF WORKAREA ADDRESS
+         DS    2F                  RESERVED
+SAFPRACP DS    F                   OFFSET TO RACF-RELATED
+*                                  PARAMETER LIST FROM BASE ADDRESS
+*                                  OF SAFP
+         DS    0F
+*
+*             CONSTANTS USED FOR REQUEST NUMBER VALUES
+*
+SAFPAU   EQU   1                   RACHECK  - AUTHORIZATION FUNCTION
+SAFPFAU  EQU   2                   FRACHECK - FAST AUTHORIZATION
+*                                             FUNCTION
+SAFPLIS  EQU   3                   RACLIST  - INCORE LIST BUILDING
+*                                             FUNCTION
+SAFPDEF  EQU   4                   RACDEF   - DEFINITION FUNCTION
+SAFPVER  EQU   5                   RACINIT  - VERIFICATION FUNCTION
+SAFPEXT  EQU   6                   ICHEXTRT - EXTRACT FUNCTION    @L6A
+         MEND
+*        */
+*%ICH_SAFP3: ;
+*   DCL
+*     1 SAFP BASED(SAFPPTR) BDY(WORD),
+*      2 SAFPRRET FIXED(31),        /* RACF OR INSTALLATION EXIT
+*                                      RETURN CODE                   */
+*      2 SAFPRREA FIXED(31),        /* RACF OR INSTALLATION EXIT
+*                                      REASON CODE                   */
+*      2 SAFPPLN FIXED(15),         /* LENGTH OF SAFP PARAMETER LIST
+*                                      (IN BYTES)                    */
+*      2 * CHAR(2),                 /* RESERVED                      */
+*      2 SAFPREQT FIXED(15),        /* REQUEST NUMBER (VALUES DEFINED
+*                                      BELOW)                        */
+*      2 * CHAR(2),                 /* RESERVED                      */
+*      2 SAFPREQR PTR(31),          /* REQUESTOR NAME ADDRESS (POINTS
+*                                      TO AN 8-BYTE CHARACTER FIELD) */
+*      2 SAFPSUBS PTR(31),          /* SUBSYSTEM NAME ADDRESS (POINTS
+*                                      TO AN 8-BYTE CHARACTER FIELD) */
+*      2 SAFPWA   PTR(31),          /* SAF WORKAREA  ADDRESS         */
+*      2 *(2) PTR (31),             /* RESERVED                      */
+*      2 SAFPRACP FIXED(31),        /* OFFSET TO RACF-RELATED
+*                                      PARAMETER LIST FROM BASE
+*                                      ADDRESS OF SAFP               */
+*      2 * CHAR(0) BDY(WORD);
+*
+*   DCL
+*     SAFPLEN FIXED(31) CONSTANT(LENGTH(SAFP));
+*
+*          /*  CONSTANTS FOR REQUEST NUMBER VALUES  */
+*
+*   DCL
+*     SAFPAU  FIXED(8) CONSTANT(1), /* RACHECK  - AUTHORIZATION
+*                                                 FUNCTION           */
+*     SAFPFAU FIXED(8) CONSTANT(2), /* FRACHECK - FAST AUTHORIZATION
+*                                                 FUNCTION           */
+*     SAFPLIS FIXED(8) CONSTANT(3), /* RACLIST  - INCORE LIST BUILDING
+*                                                 FUNCTION           */
+*     SAFPDEF FIXED(8) CONSTANT(4), /* RACDEF   - DEFINITION FUNCTION*/
+*     SAFPVER FIXED(8) CONSTANT(5), /* RACINIT  - VERIFICATION
+*                                                 FUNCTION       @L6A*/
+*     SAFPEXT FIXED(8) CONSTANT(6); /* ICHEXTRT - EXTRACT FUNCTION
+*                                                                @L6A*/

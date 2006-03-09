@@ -1,0 +1,187 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IDACBPRC &PROC=,&MF=
+.* FUNCTION -  THIS MACRO PROCESSES THE NIB KEYWORD PROC.  IT IS CALLED
+.*             BY IDACBNIB.  IT VALIDITY CHECKS THE OPTIONS SPECIFIED
+.*             BY THE USER ON GENCB, MODCB, OR TESTCB FOR PROC.  IT
+.*             CHECKS FOR MUTUALLY EXCLUSIVE OPTIONS SPECIFIED AND
+.*             ISSUES ERROR MESSAGES VIA IDAERMAC.  IF THE OPTIONS ARE
+.*             VALID, IDACBPRC SETS VALUES IN VARIOUS GLOBAL ARRAYS
+.*             TO BE USED BY IDACB2 TO BUILD A PARAMETER LIST OF
+.*             ARGUMENT CONTROL ENTRIES FOR THE CONTROL BLOCK
+.*             MANIPULATION MODULE TO BE USED AT EXECUTE TIME.
+.*             IT CALLS IDACB3 TO SET THE ELEMENT TYPE CODE AND THE
+.*             KEYWORD TYPE CODE FOR PROC.
+.*
+.* GLOBALS
+         GBLB  &IDACB01                ERROR SWITCH
+         GBLA  &IDAENO                 NUMBER OF ELEMENTS
+         GBLA  &IDAELEN(50)            ELEMENT FIELD LENGTH ARRAY
+         GBLC  &IDAVALC(50)            ELEMENT CHARACTER VALUE ARRAY
+         GBLC  &IDAPRC2                PROC BIT STRING EXTENSION
+.* LOCALS
+         LCLA  &I,&A,&B,&C             WORK VARIABLES
+         LCLB  &MSG,&TRANS,&CONT,&BLOCK,&NLGIN   PROC CODES      X03004
+         LCLB  &LGIN,&LGOUT,&NLGOUT,&NCNFTXT     PROC CODES      X03004
+         LCLB  &CONFTXT,&TMFLL,&NTMFLL,&ERPIN    PROC CODES      X03004
+         LCLB  &NERPIN,&ERPOUT,&NERPOUT          PROC CODES      X03004
+         LCLB  &NMONITR,&MONITOR,&NELC,&ELC      PROC CODES      X03004
+         LCLB  &NEIB,&EIB,&TIMEOUT,&NTIMOUT      PROC CODES      X03004
+         LCLB  &CA,&CS,&RPLC,&KEEP,&TRUNC        PROC CODES    @Z40BHUC
+         LCLB  &NBINARY,&BINARY                  PROC CODES      X03004
+         LCLB  &NDFASYX,&DFASYX,&NRESPX,&RESPX   PROC CODES     X3004BS
+         LCLB  &SYSRESP,&APLRESP                 PROC CODES     G40AKCM
+         LCLB  &NODRESP,&ORDRESP                 PROC CODES     G40AKCM
+         LCLC  &Z16                     UNUSED PORTION OF BIT STRING
+&Z16     SETC  '0000000000000000'    INITIALIZE CONSTANT        X04SVHS
+.**********************************************************************
+&I       SETA  0                     ZERO SUBPARM COUNT          X03004
+.P000100 ANOP                                                    X03004
+&I       SETA  &I+1                  BUMP SUBPARM COUNT          X03004
+         AIF   (&I GT N'&PROC).P000200                           X03004
+.*                                      HAVE ALL OPTIONS BEEN CHECKED
+&MSG     SETB  ('&PROC(&I)' EQ 'MSG' OR &MSG)                    X03004
+&TRANS   SETB  ('&PROC(&I)' EQ 'TRANS' OR &TRANS)                X03004
+&CONT    SETB  ('&PROC(&I)' EQ 'CONT' OR &CONT)                  X03004
+&BLOCK   SETB  ('&PROC(&I)' EQ 'BLOCK' OR &BLOCK)                X03004
+&NLGIN   SETB  ('&PROC(&I)' EQ 'NLGIN' OR &NLGIN)                X03004
+&LGIN    SETB  ('&PROC(&I)' EQ 'LGIN' OR &LGIN)                  X03004
+&LGOUT   SETB  ('&PROC(&I)' EQ 'LGOUT' OR &LGOUT)                X03004
+&NLGOUT  SETB  ('&PROC(&I)' EQ 'NLGOUT' OR &NLGOUT)              X03004
+&NCNFTXT SETB  ('&PROC(&I)' EQ 'NCONFTXT' OR &NCNFTXT)           X03004
+&CONFTXT SETB  ('&PROC(&I)' EQ 'CONFTXT' OR &CONFTXT)            X03004
+&TMFLL   SETB  ('&PROC(&I)' EQ 'TMFLL' OR &TMFLL)                X03004
+&NTMFLL  SETB  ('&PROC(&I)' EQ 'NTMFLL' OR &NTMFLL)              X03004
+&ERPIN   SETB  ('&PROC(&I)' EQ 'ERPIN' OR &ERPIN)                X03004
+&NERPIN  SETB  ('&PROC(&I)' EQ 'NERPIN' OR &NERPIN)              X03004
+&ERPOUT  SETB  ('&PROC(&I)' EQ 'ERPOUT' OR &ERPOUT)              X03004
+&NERPOUT SETB  ('&PROC(&I)' EQ 'NERPOUT' OR &NERPOUT)            X03004
+&NMONITR SETB  ('&PROC(&I)' EQ 'NMONITOR' OR &NMONITR)           X03004
+&MONITOR SETB  ('&PROC(&I)' EQ 'MONITOR' OR &MONITOR)            X03004
+&NELC    SETB  ('&PROC(&I)' EQ 'NELC' OR &NELC)                  X03004
+&ELC     SETB  ('&PROC(&I)' EQ 'ELC' OR &ELC)                    X03004
+&NEIB    SETB  ('&PROC(&I)' EQ 'NEIB' OR &NEIB)                  X03004
+&EIB     SETB  ('&PROC(&I)' EQ 'EIB' OR &EIB)                    X03004
+&TIMEOUT SETB  ('&PROC(&I)' EQ 'TIMEOUT' OR &TIMEOUT)            X03004
+&NTIMOUT SETB  ('&PROC(&I)' EQ 'NTIMEOUT' OR &NTIMOUT)           X03004
+&KEEP    SETB  ('&PROC(&I)' EQ 'KEEP' OR &KEEP)                  X03004
+&TRUNC   SETB  ('&PROC(&I)' EQ 'TRUNC' OR &TRUNC)                X03004
+&NBINARY SETB  ('&PROC(&I)' EQ 'NBINARY' OR &NBINARY)            X03004
+&BINARY  SETB  ('&PROC(&I)' EQ 'BINARY' OR &BINARY)              X03004
+&NDFASYX SETB  ('&PROC(&I)' EQ 'NDFASYX' OR &NDFASYX)           X3004BS
+&DFASYX  SETB  ('&PROC(&I)' EQ 'DFASYX' OR &DFASYX)             X3004BS
+&NRESPX  SETB  ('&PROC(&I)' EQ 'NRESPX' OR &NRESPX)             X3004BS
+&RESPX   SETB  ('&PROC(&I)' EQ 'RESPX' OR &RESPX)               X3004BS
+&CA      SETB  ('&PROC(&I)' EQ 'CA' OR &CA)                    @Z40BHUC
+&CS      SETB  ('&PROC(&I)' EQ 'CS' OR &CS)                    @Z40BHUC
+&RPLC    SETB  ('&PROC(&I)' EQ 'RPLC' OR &RPLC)                @Z40BHUC
+&SYSRESP SETB  ('&PROC(&I)' EQ 'SYSRESP' OR &SYSRESP)          @G40AKCM
+&APLRESP SETB ('&PROC(&I)' EQ 'APPLRESP' OR &APLRESP)          @G40AKCM
+&NODRESP SETB ('&PROC(&I)' EQ 'NORDRESP' OR &NODRESP)          @G40AKCM
+&ORDRESP SETB ('&PROC(&I)' EQ 'ORDRESP' OR &ORDRESP)           @G40AKCM
+.*
+&A       SETA  &MSG+&TRANS+&CONT+&BLOCK+&NLGIN+&LGIN+&LGOUT+&NLGOUT+&NC*
+               NFTXT+&CONFTXT+&TMFLL+&NTMFLL+&ERPIN+&NERPIN+&ERPOUT+&NE*
+               RPOUT+&NMONITR+&MONITOR+&NELC+&ELC+&NEIB+&EIB+&TIMEOUT
+.*                                                              X04SVHS
+&B       SETA  &NTIMOUT+&KEEP+&TRUNC+&NBINARY+&BINARY+&NDFASYX+&DFASYX+*
+               &NRESPX+&RESPX+&CA+&CS+&RPLC+&SYSRESP+&APLRESP+&NODRESP+*
+               &ORDRESP                                       @G40AKCM
+.*
+.*             &A AND &B CONTAIN THE NUMBER OF VALID OPTIONS CHECKED
+.*             &C CONTAINS THE NUMBER OF ERRORS DETECTED
+         AIF   (&A+&B+&C EQ &I).P000100  IF NUMBER BITS SET IS NOT
+.*              EQUAL TO NUMBER OF OPTIONS CHECKED, THEN THE LAST
+.*              OPTION CHECKED WAS EITHER INVALID OR DUPLICATED
+.*             A PREVIOUSLY SPECIFIED OPTION.
+         IDAERMAC 5,PROC,&PROC(&I)                               X03004
+&IDACB01 SETB  1                                                 X03004
+&C       SETA  &C+1                     BUMP ERROR COUNTER      X04SVHS
+         AGO   .P000100                                          X03004
+.**********************************************************************
+.P000200 AIF   (NOT(&MSG AND &TRANS)).P000300                    X03004
+         IDAERMAC 8,PROC,MSG,TRANS                               X03004
+&IDACB01 SETB  1                                                 X03004
+.P000300 AIF   (NOT(&MSG AND &CONT)).P000400                     X03004
+         IDAERMAC 8,PROC,MSG,CONT                                X03004
+&IDACB01 SETB  1                                                 X03004
+.P000400 AIF   (NOT(&MSG AND &BLOCK)).P000500                    X03004
+         IDAERMAC 8,PROC,MSG,BLOCK                               X03004
+&IDACB01 SETB  1                                                 X03004
+.P000500 AIF   (NOT(&TRANS AND &CONT)).P000600                   X03004
+         IDAERMAC 8,PROC,TRANS,CONT                              X03004
+&IDACB01 SETB  1                                                 X03004
+.P000600 AIF   (NOT(&TRANS AND &BLOCK)).P000700                  X03004
+         IDAERMAC 8,PROC,TRANS,BLOCK                             X03004
+&IDACB01 SETB  1                                                 X03004
+.P000700 AIF   (NOT(&CONT AND &BLOCK)).P000800                   X03004
+         IDAERMAC 8,PROC,CONT,BLOCK                              X03004
+&IDACB01 SETB  1                                                 X03004
+.P000800 AIF   (NOT(&NLGIN AND &LGIN)).P000900                   X03004
+         IDAERMAC 8,PROC,NLGIN,LGIN                              X03004
+&IDACB01 SETB  1                                                 X03004
+.P000900 AIF   (NOT(&NLGOUT AND &LGOUT)).P001000                 X03004
+         IDAERMAC 8,PROC,NLGOUT,LGOUT                            X03004
+&IDACB01 SETB  1                                                 X03004
+.P001000 AIF   (NOT(&NCNFTXT AND &CONFTXT)).P001100              X03004
+         IDAERMAC 8,PROC,NCONFTXT,CONFTXT                        X03004
+&IDACB01 SETB  1                                                 X03004
+.P001100 AIF   (NOT(&TMFLL AND &NTMFLL)).P001200                 X03004
+         IDAERMAC 8,PROC,TMFLL,NTMFLL                            X03004
+&IDACB01 SETB  1                                                 X03004
+.P001200 AIF   (NOT(&ERPIN AND &NERPIN)).P001400                 X03004
+         IDAERMAC 8,PROC,ERPIN,NERPIN                            X03004
+&IDACB01 SETB  1                                                 X03004
+.P001400 AIF   (NOT(&ERPOUT AND &NERPOUT)).P001500               X03004
+         IDAERMAC 8,PROC,ERPOUT,NERPOUT                          X03004
+&IDACB01 SETB  1                                                 X03004
+.P001500 AIF   (NOT(&NMONITR AND &MONITOR)).P001600              X03004
+         IDAERMAC 8,PROC,MONITOR,NMONITOR                        X03004
+&IDACB01 SETB  1                                                 X03004
+.P001600 AIF   (NOT(&NELC AND &ELC)).P001700                     X03004
+         IDAERMAC 8,PROC,NELC,ELC                                X03004
+&IDACB01 SETB  1                                                 X03004
+.P001700 AIF   (NOT(&NEIB AND &EIB)).P001800                     X03004
+         IDAERMAC 8,PROC,NEIB,EIB                                X03004
+&IDACB01 SETB  1                                                 X03004
+.P001800 AIF   (NOT(&TIMEOUT AND &NTIMOUT)).P002100            @Z40BHUC
+         IDAERMAC 8,PROC,TIMEOUT,NTIMEOUT                        X03004
+&IDACB01 SETB  1                                                 X03004
+.P002100 AIF   (NOT(&KEEP AND &TRUNC)).P002200                   X03004
+         IDAERMAC 8,PROC,KEEP,TRUNC                              X03004
+&IDACB01 SETB  1                                                 X03004
+.P002200 AIF   (NOT(&NBINARY AND &BINARY)).P002300               X03004
+         IDAERMAC 8,PROC,NBINARY,BINARY                          X03004
+&IDACB01 SETB  1                                                 X03004
+.P002300 AIF   (NOT(&NDFASYX AND &DFASYX)).P002400              X3004BS
+         IDAERMAC 8,PROC,NDFASYX,DFASYX                         X3004BS
+&IDACB01 SETB  1                                                X3004BS
+.P002400 AIF   (NOT(&NRESPX AND &RESPX)).P002500                X3004BS
+         IDAERMAC 8,PROC,NRESPX,RESPX                           X3004BS
+&IDACB01 SETB  1                                                X3004BS
+.P002500 AIF   (NOT(&CA AND &CS)).P002600                      @Z40BHUC
+         IDAERMAC 8,PROC,CA,CS                                 @Z40BHUC
+&IDACB01 SETB  1                                               @Z40BHUC
+.P002600 AIF   (NOT(&CA AND &RPLC)).P002700                    @Z40BHUC
+         IDAERMAC 8,PROC,CA,RPLC                               @Z40BHUC
+&IDACB01 SETB  1                                               @Z40BHUC
+.P002700 AIF   (NOT(&CS AND &RPLC)).P002800                    @Z40BHUC
+         IDAERMAC 8,PROC,CS,RPLC                               @Z40BHUC
+&IDACB01 SETB  1                                               @Z40BHUC
+.P002800 ANOP                                                  @Z40BHUC
+         AIF (NOT(&SYSRESP AND &APLRESP)).P002900              @G40AKCM
+         IDAERMAC 8,PROC,SYSRESP,APPLRESP                      @G40AKSL
+&IDACB01 SETB 1                                                @G40AKCM
+.P002900 AIF (NOT(&NODRESP AND &ORDRESP)).P003000              @G40AKCM
+         IDAERMAC 8,PROC,NODRESP,ORDRESP                       @G40AKSL
+&IDACB01 SETB 1                                                @G40AKCM
+.P003000 IDACB3 ARG=&PROC,KWTC=X'50',BIT=YES                    X04SVHS
+&IDAELEN(&IDAENO) SETA 8                                         X03004
+&IDAVALC(&IDAENO) SETC '&MSG&TRANS&CONT&BLOCK&NLGIN&LGIN&LGOUT&NLGOUT&N*
+               CNFTXT&CONFTXT&TMFLL&NTMFLL&ERPIN&NERPIN&ERPOUT&NERPOUT&*
+               NMONITR&MONITOR&NELC&ELC&NEIB&EIB&TIMEOUT&NTIMOUT'
+&IDAVALC(&IDAENO) SETC '&IDAVALC(&IDAENO)&NODRESP&ORDRESP&KEEP&TRUNC&NB*
+               INARY&BINARY&NDFASYX&DFASYX'                    @G40AKCM
+&IDAPRC2 SETC  '&NRESPX&RESPX&CA&CS&RPLC&SYSRESP&APLRESP.000000000&Z16'
+.*                                                             @G40AKCM
+         MEND

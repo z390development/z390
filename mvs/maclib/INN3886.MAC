@@ -1,0 +1,53 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    INN3886 &IDCB,&IFRID,&IMF
+.*  FUNCTION - GENERATE THE LIST AND EXECUTE CODE FOR A SETDEV WITH
+.*             DEVT OF 3886
+         LCLC  &MFADDR
+         AIF   ('&IMF(1)' EQ 'E').EXECFM   TST FOR EXECUTE FORM
+.*             GENERATE  LIST FORM OF MACRO
+          AIF   ('&IDCB' EQ '').NODCB      TST IF DCB SPECIFIED
+         AIF   ('&IDCB'(1,1) NE '(').DCBOK  TST FOR VALID DCB W MF=L
+.*             ISSUE MNOTE FOR INVALID DCB SPECIFICATION WITH MF=1
+         IHBERMAC 069
+         MEXIT
+.DCBOK   ANOP
+&NAME    DC    A(&IDCB)            DCB ADDRESS
+         AGO   .FRIDENT
+.NODCB   ANOP
+&NAME    DC    A(0)                DCB ADDRESS
+.FRIDENT ANOP
+         AIF    ('&IFRID' NE '').GFRNO   IF NO FR SPEC GEN BLANKS
+         DC     CL4' '            FORMAT RECORD IDENTIFER
+         AGO    .GFLGS
+.GFRNO   ANOP
+         DC    CL4'&IFRID'          FORMAT RECORD IDENTIFER
+.GFLGS   ANOP
+         DC    X'FF020000'    SETDEV FLAGS
+         MEXIT
+.*             GENERATE  EXECUTE FORM OF MACRO
+.EXECFM  ANOP
+         AIF   ('&NAME' EQ '').NONAME    TEST IF SETDEV HAS SEQ SYMBOLS
+&NAME    EQU   *
+.NONAME  ANOP
+&MFADDR  SETC  '&IMF(2)'
+         AIF   ('&MFADDR' EQ '(1)').PROCDCB  IF R1 ADDR PARM LST GO ON
+         AIF   ('&MFADDR'(1,1) EQ '(').GENLR   TST IF PARM LST IN REG
+         LA    1,&IMF(2)            SET POINTER TO PARM LIST
+         AGO   .PROCDCB
+.GENLR   ANOP
+         LR    1,&IMF(2)       SET POINTER TO PARM LIST
+.PROCDCB AIF   ('&IDCB' EQ '').MVFRID  TEST IF DCB SPEC
+         AIF   ('&IDCB'(1,1) EQ '(').DCBIREG TEST IF DCB ADR IN REG
+         LA    0,&IDCB                  GET ADDR OF DCB
+         ST    0,0(1,0)                 STORE DCB ADDR IN PARM LIST
+         AGO   .MVFRID                  GO MOVE FRID PARAMETER
+.DCBIREG ANOP
+         ST    &IDCB,0(1,0)             STORE DCB ADDR IN PARM LIST
+.MVFRID  AIF   ('&IFRID' EQ '').EXDONE   TEST IF FRID SPEC
+         B     *+10                     BRANCH AROUND CONSTANT
+         DC    CL4'&IFRID'              FORMAT RECORD ID
+         DC    X'FF02'
+         MVC   4(6,1),*-6               MOVE FRID INTO PARMLIST
+.EXDONE  ANOP
+         MEND

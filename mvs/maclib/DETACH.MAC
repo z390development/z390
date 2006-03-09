@@ -1,0 +1,28 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+* /* MACCOMP Y-1 SC1CL/PZD81                                         */
+* /* MACSTAT Y-1 72271/015035                                        */
+* /*
+        MACRO
+&NAME    DETACH &TCB,&STAE=,&RELATED=                             20021
+* /* MACDATE Y-1 72271                                               */
+* /*
+         AIF   ('&TCB' EQ '').E1
+&NAME    IHBINNRA &TCB                      LOAD REG 1
+         AIF   ('&STAE' EQ '' OR '&STAE' EQ 'NO').G1              20021
+         AIF   ('&STAE' NE 'YES').E2
+         LA    0,X'80'(0,0)   GET BIT IN REGISTER                YM1995
+         SLL   0,24(0)        SHIFT INTO HIGH BIT POSITION       YM1995
+         OR    1,0            SET HIGH ORDER BIT IN REG 1         20021
+.G1     SVC   62             ISSUE DETACH SVC
+         MEXIT
+.E1      IHBERMAC 01,324                    MISSING PARAMETER
+         MEXIT
+.E2      IHBERMAC 1001,STAE,&STAE      INVALID STAE PARAMETER
+         MEND
+**/
+*DETACH: MACRO
+*        KEYS(STAE,RELATED);
+*        ANS('?'||MACLABEL||'DETACHP '||MACLIST||MACKEYS||';');
+*%END;
+

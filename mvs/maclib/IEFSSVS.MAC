@@ -1,0 +1,72 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSVSCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSVS
+.*/ %SSVSCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSVS                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = SUBSYSTEM VERIFICATION               @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSVSPLS;              /*                               @ZA34144
+*
+SSOBVERS EQU   15                  FUNCTION ID (SSOBFUNC)
+*
+*  SUBSYSTEM VERIFICATION RETURN CODES (SSOBRETN)
+*
+SSVSSNAM EQU   0                  SSIB CONTAINS A SUBSYSTEM NAME
+*                                 AND FIELDS SSVSUPSS AND      @G29AN2F
+*                                 SSVSSCTP IN THE FUNCTION     @G29AN2F
+*                                 DEPENDENT SECTION ARE SET    @G29AN2F
+SSVSJBNM EQU   4                  NAME IS NOT NAME OF A SUBSYSTEM
+*
+         ORG   SSOBGN                                          @G29AN2F
+SSVSBGN  EQU   *                                               @G29AN2F
+SSVSLEN  DC    AL2(SSVSSIZE)      VS EXTENSION LENGTH          @G29AN2F
+SSVSFLG1 DS    B                  FLAG BYTE                    @G29AN2F
+SSVSUPSS EQU   X'80'              SET BY MASTER SUBSYSTEM TO   @G29AN2F
+*                                 INDICATE THAT THE SPECIFIED  @G29AN2F
+*                                 SUBSYSTEM REQUIRES THE USE   @G29AN2F
+*                                 OF THE PRIMARY SUBSYSTEM'S   @G29AN2F
+*                                 SERVICES (E.G. SYSOUT)       @G29AN2F
+SSVSFLG2 DS    B                  RESERVED FLAG BYTE           @G29AN2F
+SSVSSCTP DS    A                  PTR TO SSCT OF THE SPECIFIED @G29AN2F
+*                                 SUBSYSTEM-RETURNED BY THE    @G29AN2F
+*                                 MASTER SUBSYSTEM             @G29AN2F
+SSVSSIZE EQU   *-SSVSBGN          VS EXTENSION LENGTH          @G29AN2F
+SSOBLN1A EQU   SSOBHSIZ+SSVSSIZE  TOTAL SSOB LENGTH            @ZM44655
+         MEND                                                @ZA34144*/
+* %SSVSPLS:;                              /*                 @ZA34144*/
+*   /*                                                               */
+*   DCL SSOBVERS  FIXED(15) CONSTANT(15); /* FUNCTION ID (SSOBFUNC)  */
+*   /*                                                               */
+*   /*  SUBSYSTEM VERIFICATION RETURN CODES (SSOBRETN)               */
+*   /*                                                               */
+*   DCL SSVSSNAM FIXED(31) CONSTANT(0); /* SSIB CONTAINS A SUBSYSTEM
+*                                          NAME AND FIELDS SSVSUPSS
+*                                          AND SSVSSCTP IN THE
+*                                          FUNCTION DEPENDENT
+*                                          SECTION ARE SET   @G29AN2F*/
+*   DCL SSVSJBNM FIXED(31) CONSTANT(4)  /* NAME IS NOT NAME OF A
+*                                          SUBSYSTEM                */;
+*   /*                                                       @G29AN2F*/
+*   /*     S S V S                                           @G29AN2F*/
+*   /*                                                       @G29AN2F*/
+*   DECLARE
+*   1       SSVS          SSOBVS,      /* SUBSYSTEM VERIFICATION
+*                                         FUNCTION           @G29AN2F*/
+*     2     SSVSLEN       FIXED(15),   /* LENGTH OF SSVS     @G29AN2F*/
+*     2     SSVSFLG1      BIT(8),      /* FLAG FIELD         @G29AN2F*/
+*       3   SSVSUPSS      BIT(1),      /* SET BY MASTER SUBSYSTEM
+*                                         TO INDICATE THAT THE
+*                                         SPECIFIED SUBSYSTEM REQUIRES
+*                                         THE USE OF THE PRIMARY
+*                                         SUBSYSTEM'S SERVICES
+*                                         (E.G. SYSOUT)      @G29AN2F*/
+*       3   *             BIT(7),      /* RESERVED FLAGS     @G29AN2F*/
+*     2     SSVSFLG2      BIT(8),      /* RESERVED FLAGS     @G29AN2F*/
+*     2     SSVSSCTP      PTR(31);     /* PTR TO SSCT OF THE SPECIFIED
+*                                         SUBSYSTEM, RETURNED BY THE
+*                                         MASTER SUBSYSTEM   @G29AN2F*/
+

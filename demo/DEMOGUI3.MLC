@@ -1,0 +1,37 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 11/30/05                                                 *
+*********************************************************************
+*
+* RUN DEMOGUI3 WITH GUI OPTION TO DEMO GUI SCREEN TGET/TPUT EDIT MODE
+*
+* DEMOGUI3 SHOWS HOW TPUT AND TGET USE GUI SCREEN VIEW 
+*   1.  TPUT SCROLLS EACH MESSAGE AND WRAPS AT END OF SCREEN
+*   2.  ONLY PRINTABLE CHARACTERS ARE DISPLAYED AND NO TN3270
+*       CONTROLS ARE REQUIRED OR USED.
+*********************************************************************
+* 12/02/05 RPI47 ADD DEMO OF TPUT AND TGET DEFAULT EDIT MODE
+*********************************************************************
+DEMOGUI3 SUBENTRY
+         WTO   'DEMOGUI3 STARTING'
+         TPUT  MSG1,MSG1L   
+LOOP     EQU   *
+         TPUT  MSG2,MSG2L         
+         TGET  REPLY,REPLYL      
+         TPUT  MSG3,MSG3L          
+         CLC   REPLY(3),=C'END'
+         BNE   LOOP
+         WTO   'DEMOGUI3 ENDING'
+         SUBEXIT
+MSG1     DC    C'DEMOGUI3 TEST TN3270 EDIT MODE'
+MSG1L    EQU   *-MSG1
+MSG2     DC    C'ENTER TEXT TO DISPLAY'
+MSG2L    EQU   *-MSG2
+MSG3     EQU   *
+REPLY    DC    CL40' '
+REPLYL   EQU   *-REPLY
+MSG3L    EQU   *-MSG3
+         END

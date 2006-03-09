@@ -1,0 +1,91 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO PCCBBSL;  /*
+         MACRO
+         IEFPCCB
+***********************************************************************
+*                                                                     *
+*       STATUS                                                        *
+*             VERSION - 002        DATE - JUNE 15, 1973               *
+*                                                                     *
+*       FUNCTION                                                      *
+*             A PRIVATE CATALOG CONTROL BLOCK                         *
+*                                                                     *
+*       ENTRY                                                         *
+*             IEFPCCB                                                 *
+*                                                                     *
+*       INPUT                                                         *
+*             BAL: DSECT                                              *
+*             BSL: DCL (PCCBPTR) PTR                                  *
+*                                                                     *
+*       ATTRIBUTES                                                    *
+*             BILINGUAL                                               *
+*                                                                     *
+*                                                                     *
+***********************************************************************
+IEFPCCB  DSECT
+         SPACE
+PCCACRO  DS    CL4                 ACRONYM OF BLOCK - PCCB -
+PCCNEXTP DS    A -                 ADDRESS OF NEXT PCCB OR ZERO
+PCCPREVP DS    A -                 ADDR OF PREVIOUS PCCB OR ZERO
+PCCSTATS DS    0F                  STATUS AND INDICATORS
+PCCSTAT1 DS    CL1                 STATUS BYTE NUMBER 1
+PCCSTEPC EQU   X'80'               CATALOG IS A STEPCAT
+PCCALIAS EQU   X'40'               CTLG CONNECTOR IS ALIAS OF DSNAME
+PCCACTIV EQU   X'20'               CATALOG ALLOCATED - ACTIVE
+PCOSCVOL EQU   X'10'               CATALOG IS AN OS CVOL
+PCCTCL   EQU   X'08'               CTLG IS TEMPORARILY CLOSED  @YM04224
+PCCSTAT2 DS    CL1                 NOT USED
+PCCSTAT3 DS    CL1                 NOT USED
+PCCSTAT4 DS    CL1                 NOT USED
+PCCACBP  DS    A -                 ADDRESS OF ACB FOR PVT CAT
+PCCDDNAM DS    CL8                 DD NAME FOR DYN ALLOC CATALOG
+PCCDSNAM DS    CL44                CATALOG DATA SET NAME
+PCCTGCON DS    CL44                CATALOG CONNECTOR (ALIAS)
+PCVOLSER DS    CL6                 CVOL VOLUME SERIAL
+PCCRSVD1 DS    CL2                 NOT USED
+PCCLACBP DS    A -                 ACB ADDRESS IF TEMP CLOSED  @YM04224
+PCCRSVD2 DS    CL48                NOT USED
+***********************************************************************
+*        END OF PCCB                                                  *
+         MEND
+     */  %PCCBBSL:;
+*/********************************************************************/
+*/*     STATUS                                                       */
+*/*           VERSION - 002         DATE - JUNE 15, 1973             */
+*/*     FUNCTION                                                     */
+*/*           A PRIVATE CATALOG CONTROL BLOCK                        */
+*/*     ENTRY                                                        */
+*/*           IEFPCCB                                                */
+*/*     INPUT                                                        */
+*/*           BAL: DSECT                                             */
+*/*           BSL: DCL (PCCBPTR) PTR                                 */
+*/*     ATTRIBUTES                                                   */
+*/*           BILINGUAL                                              */
+*/*                                                                  */
+*/********************************************************************/
+*        DCL 1 IEFPCCB BASED(PCCBPTR), /* PVT CAT CONTROL BLOCK      */
+*              2  PCCACRO  CHAR(4),    /* ACRONYM OF BLOCK 'PCCB'    */
+*              2  PCCNEXTP PTR(31),    /* ADDR OF NEXT PCCB OR ZERO  */
+*              2  PCCPREVP PTR(31),    /* ADDR OF PREVIOUS PCCB OR 0 */
+*              2  PCCSTATS,            /* PCCB INDICATORS            */
+*                4  PCCSTAT1,          /* STATUS BYTE NUMBER 1       */
+*                  6  PCCSTEPC BIT(1), /* CATALOG IS A STEPCAT       */
+*                  6  PCCALIAS BIT(1), /* CTLG CON ALIAS FOR DSNAME  */
+*                  6  PCCACTIV BIT(1), /* CATALOG ALLOCATED - ACTIVE */
+*                  6  PCOSCVOL BIT(1), /* CATALOG IS AN OS CVOL      */
+*                  6  PCCTCL   BIT(1), /* TEMPORARILY CLOSED @YM04224*/
+*                  6  *        BIT(3), /* NOT USED                   */
+*                4  PCCSTAT2   BIT(8), /* NOT USED                   */
+*                4  PCCSTAT3   BIT(8), /* NOT USED                   */
+*                4  PCCSTAT4   BIT(8), /* NOT USED                   */
+*              2  PCCACBP  PTR(31),    /* ADDR OF ACB FOR PVT CAT    */
+*              2  PCCDDNAM CHAR(8),    /* DD NAME FOR DYN ALLOC CTLG */
+*              2  PCCDSNAM CHAR(44),   /* CATALOG DATA SET NAME      */
+*              2  PCCTGCON CHAR(44),   /* CATALOG CONNECTOR (ALIAS)  */
+*              2  PCVOLSER CHAR(6),    /* CVOL VOLUME SERIAL         */
+*              2  PCCRSVD1 CHAR(2),    /* NOT USED                   */
+*              2  PCCLACBP PTR(31),    /* ACB ADDRESS OF TEMPORARILY
+*                                         CLOSED CATALOG     @YM04224*/
+*              2  PCCRSVD2 CHAR(48);   /* NOT USED                   */
+*  /*******              ***   END OF PCCB   ***               *******/
+

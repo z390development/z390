@@ -1,0 +1,533 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GOTO   RPLEXTPL;
+* /*                                                                */
+* /*     CHANGE LEVEL = 03                                          */
+* /*     DATE OF LAST CHANGE = 06 AUG 81   ( 81*218 )               */
+* /*                                                                */
+* /******************************************************************/
+* /*                                                                */
+* /*     RPL VTAM EXTENSION                                         */
+* /*                                                                */
+* /*     THE EXTENSION DESCRIBES CONTROL DATA THAT ONLY VTAM USES.  */
+* /*     THE EXTENSION IS CALLED AS AN INNER MACRO BY IFGRPL UNDER  */
+* /*     THE FOLLOWING CONDITIONS:                                  */
+* /*                                                                */
+* /*        PLS:  THE MODULE CONTAINING AN INCLUDE FOR IFGRPL SETS  */
+* /*              THE MACRO VARIABLE 'ACBRPLXL' TO 'VTAM' PRIOR     */
+* /*              TO ISSUING THE INCLUDE.                           */
+* /*        BAL:  THE AM=VTAM PARAMETER IS CODED ON THE MACRO       */
+* /*              CALL.                                             */
+* /*                                                                */
+* /*     CHANGE ACTIVITY                                            */
+* /*     A87886,87986,104886                                @ZM31226*/
+* /*                                                        @ZA48668*/
+* /*                                                                */
+* /*                                                                */
+* /******************************************************************/
+* /*                                                                */
+*%RPLEXTPL: ;                               /* START OF EXTENSION   */
+*             2 RPLVTEXT,                   /* RPL VTAM EXTENSION
+*                                                             X03004*/
+*              3 RPLAAREA    PTR(31),       /* ALTERNATE AREA ADDR
+*                                                             X03004*/
+*              3 RPLAARLN    PTR(31),       /* ALTERNATE AREA LENGTH
+*                                                             X03004*/
+*              3 RPLARCLN    PTR(31),       /* ALTERNATE RECORD
+*                                              LENGTH         X03004*/
+*              3 RPLFDBK2    BIT(32),       /* FEED BACK WORD 2
+*                                                             X03004*/
+*                  5 RPLSSNSI  BIT(16),     /* SYSTEM SENSE
+*                                              INPUT         X03004JS*/
+*                    6 RPLDSB  BIT(16),     /* DEVICE STATUS BYTES
+*                                                            X03004JS*/
+*                      7 RPLDSB1   BIT(8),  /* DEVICE STATUS BYTE 1
+*                                                            X03004JS*/
+*                        8 RPLSSEI BIT(8),  /* SYSTEM SENSE ERROR
+*                                              CODES         X03004JS*/
+*                          9 RPLPATHI BIT(1),/* SSENSEI PATH X03004JS*/
+*                          9 RPLCPMI  BIT(1),/* SSENSEI CPM  X03004JS*/
+*                          9 RPLSTATI BIT(1),/* SSENSEI STATEX03004JS*/
+*                          9 RPLFII   BIT(1),/* SSENSEI FI   X03004JS*/
+*                          9 RPLRRI   BIT(1),/* SSENSEI RR   X03004JS*/
+*                          9 *        BIT(3),/* RESERVED FOR VTAM
+*                                                            X03004JS*/
+*                      7 RPLDSB2   BIT(8),  /* DEVICE STATUS BYTE 2
+*                                                            X03004JS*/
+*                        8 RPLSSMI PTR(8),  /* SYSTEM SENSE MODIFIER
+*                                              INPUT         X03004HS*/
+*                  5 RPLUSNSI  PTR(16),     /* USER SENSE
+*                                              INPUT         X03004HS*/
+*                    6 RPLESR1 BIT(8),      /* EXTENDED SYSTEM
+*                                              RESPONSE 1    X03004JS*/
+*                    6 RPLESR2 BIT(8),      /* EXTENDED SYSTEM
+*                                              RESPONSE 2    X03004JS*/
+*              3 RPLUSFLD    BIT(32),       /* USER FIELD     X03004*/
+*              3 RPLOPTC3    BIT(32),       /* VTAM OPTIONS   X03004*/
+*                4 RPLOPT9   BIT(8),        /* OPTION BYTE 9  X03004*/
+*                  5 RPLLOGON BIT(1),       /* INQ LOGON MSG  X03004*/
+*                  5 RPLDEVCH BIT(1),       /* INQ DEVICE CHARX03004*/
+*                  5 RPLTERMS BIT(1),       /* INQ TERMS      X03004*/
+*                  5 RPLCOUNT BIT(1),       /* INQ COUNTS     X03004*/
+*                  5 RPLAPPST BIT(1),       /* INQ APPSTAT    X03004*/
+*                  5 RPLRNNM  BIT(1),       /* INQ RNNAME     X03004*/
+*                  5 RPLCIDE  BIT(1),       /* INQ CIDXLATE   X03004*/
+*                  5 RPLTOPL  BIT(1),       /* INQ TOP LOGON  X03004*/
+*                4 RPLOPT10  BIT(8),        /* OPTION BYTE 10 X03004*/
+*                  5 RPLBSCID BIT(1),       /* INQ BSC ID     X03004*/
+*                  5 RPLDSPLY BIT(1),       /* INQ DISPLAY    X03004*/
+*                  5 RPLSPARM BIT(1),       /* INQ SESSPARM  @Z40BHUC*/
+*                  5 RPLTSKY  BIT(1),       /* INQ SESSKEY   @G40AKSL*/
+*                  5 RPLRSVI3 BIT(1),       /* RESERVED       X03004*/
+*                  5 RPLRSVI4 BIT(1),       /* RESERVED       X03004*/
+*                  5 RPLRSVI5 BIT(1),       /* RESERVED       X03004*/
+*                  5 RPLRSVI6 BIT(1),       /* RESERVED       X03004*/
+*                4 RPLOPT11  BIT(8),        /* OPTION BYTE 11 X03004*/
+*                  5 RPLQUIES BIT(1),       /* SETLOGON QUIESCE
+*                                                             X03004*/
+*                  5 RPLSTART BIT(1),       /* SETLOGON START X03004*/
+*                  5 RPLSTOP  BIT(1),       /* SETLOGON STOP  X03004*/
+*                  5 RPLRSVE4 BIT(1),       /* RESERVED       X03004*/
+*                  5 RPLRSVE5 BIT(1),       /* RESERVED       X03004*/
+*                  5 RPLRSVE6 BIT(1),       /* RESERVED       X03004*/
+*                  5 RPLRSVE7 BIT(1),       /* RESERVED       X03004*/
+*                  5 RPLRSVE8 BIT(1),       /* RESERVED       X03004*/
+*                4 RPLOPT12  BIT(8),        /* OPTION BYTE 12 X03004*/
+*                  5 *        BIT(1),       /* RESERVED      @Z40BHUC*/
+*                  5 RPLKEEP  BIT(1),       /* RECEIVE KEEP   X3004BH*/
+*                  5 RPLTRUNC BIT(1),       /* RECEIVE TRUNC  X3004BH*/
+*                  5 RPLNIBTK BIT(1),       /* RECEIVE NIBTK  X3004BH*/
+*                  5 *        BIT(1),       /* RESERVED      @Z40BHUC*/
+*                  5 *        BIT(1),       /* RESERVED      @Z40BHUC*/
+*                  5 *        BIT(1),       /* RESERVED      @Z40BHUC*/
+*                  5 RPLFMHDR BIT(1),       /* 0=NFMHDR/1=FMHDR
+*                                                            X03004JS*/
+*              3 RPLOSENS    BIT(32),       /* SENSE OUTPUT
+*                                              DATA           X3004BH*/
+*                4 RPLSSNSO  BIT(16),       /* SYSTEM SENSE
+*                                              OUTPUT         X3004BH*/
+*                  5 RPLSSEO   BIT(8),      /* SYSTEM SENSE ERROR CODES
+*                                                            X03004JS*/
+*                    6 *        BIT(1),     /* RESERVED FOR VTAM
+*                                                            X03004JS*/
+*                    6 RPLCPMO  BIT(1),     /* SSENSEO CPM   X03004JS*/
+*                    6 RPLSTATO BIT(1),     /* SSENSEO STATE X03004JS*/
+*                    6 RPLFIO   BIT(1),     /* SSENSEO FI    X03004JS*/
+*                    6 RPLRRO   BIT(1),     /* SSENSEO RR    X03004JS*/
+*                    6 *        BIT(3),     /* RESERVED FOR VTAM
+*                                                            X03004JS*/
+*                  5 RPLSSMO   PTR(8),      /* SYSTEM SENSE MODIFIER
+*                                              OUTPUT        X03004HS*/
+*                4 RPLUSNSO  PTR(16),       /* USER SENSE
+*                                              OUTPUT        @Y30ASHS*/
+*              3 RPLSAV13 PTR(31),          /* SAVE AREA FOR VTAM
+*                                              FAST PATH     @Y30ASHS*/
+*              3 RPLSIGDA  PTR(31);         /* SIGNAL DATA FIELD
+*                                                            @Z40BHUC*/
+*     DCL  1 RPLOF16 BASED(ADDR(RPLKEYLE)), /* BASE AT OFFSET
+*                                              16             X3004BH*/
+*            2 RPLRH3        BIT(8),        /* THIRD RH BYTE  X3004BH*/
+*              3 RPLBB       BIT(1),        /* BRACKET - 0=NBB/1=BB
+*                                                            X03004JS*/
+*              3 RPLEB       BIT(1),        /* BRACKET - 0=NEB/1=EB
+*                                                            X03004JS*/
+*              3 RPLCMD      BIT(1),        /* CHNGDIR -
+*                                              0=NCMD/1=CMD   X3004BH*/
+*              3 RPLCHREQ    BIT(1),        /* CHNGDIR -
+*                                              0=NREQ/1=REQ   X3004BH*/
+*              3 RPLCSI      BIT(1),        /* 0=STANDARD  -  CODESEL
+*                                              1=ALT         @Z40BHUC*/
+*              3 *           BIT(3),        /* RESERVED FOR
+*                                              VTAM           X3004BH*/
+*            2 RPLSRTYP      BIT(8),        /* SEND OR RECEIVE
+*                                              TYPE           X3004BH*/
+*              3 RPLSTYPE    BIT(4),        /* SEND TYPE      X3004BH*/
+*                4 RPLSRESP  BIT(1),        /* STYPE -
+*                                              0=REQ/1=RESP   X3004BH*/
+*                4 *         BIT(3),        /* RESERVED FOR
+*                                              VTAM           X3004BH*/
+*              3 RPLRTYPE    BIT(4),        /* RECEIVE TYPE   X3004BH*/
+*                4 RPLRRESP  BIT(1),        /* RTYPE - 0=NRESP/
+*                                              1=RESP         X3004BH*/
+*                4 RPLNFSYN  BIT(1),        /* RTYPE - 0=DFSYN/
+*                                              1=NDFSYN       X3004BH*/
+*                4 RPLDFASY  BIT(1),        /* RTYPE - 0=NDFASY/
+*                                              1=DFASY        X3004BH*/
+*                4 *         BIT(1),        /* RESERVED      @Z40BHUC*/
+*            2 RPLCHN        BIT(8),        /* POSITION IN RU
+*                                              CHAIN          X3004BH*/
+*              3 RPLFIRST    BIT(1),        /* CHAIN FIRST    X3004BH*/
+*              3 RPLMIDLE    BIT(1),        /* CHAIN MIDDLE   X3004BH*/
+*              3 RPLLAST     BIT(1),        /* CHAIN LAST     X3004BH*/
+*              3 RPLONLY     BIT(1),        /* CHAIN ONLY     X3004BH*/
+*              3 *           BIT(4),        /* RESERVED FOR
+*                                              VTAM           X3004BH*/
+*            2 RPLVTFL1      BIT(8),        /* VTAM FLAGS     X3004BH*/
+*              3 *           BIT(1),        /* RESERVED      @Z40BHUC*/
+*              3 RPLVTUSE    BIT(1),        /* 0=APPL/1=SYSTEMX3004BH*/
+*              3 RPLAUTUS    BIT(1),        /* VTAM FAST PATH@Y30ASHS*/
+*              3 RPLTNDSP    BIT(1),        /* 1=DOMAIN REQ  @G40AKCM*/
+*              3 RPLTLGAC    BIT(1),        /* 1=LOGON ACCOMPLISHED
+*                                                            @G40AKCM*/
+*              3 *           BIT(3),        /* RESERVED FOR
+*                                              VTAM          @G40AKCM*/
+*            2 RPLVTFL2      BIT(8),        /* POST/RESPOND
+*                                              FLAGS          X3004BH*/
+*              3 RPLPOSTV    BIT(4),        /* POST FLAGS     X3004BH*/
+*                4 RPLSCHED  BIT(1),        /* POST -
+*                                              0=RESP/1=SCHED X3004BH*/
+*                4 *         BIT(3),        /* RESERVED FOR
+*                                              VTAM           X3004BH*/
+*              3 RPLRESP     BIT(4),        /* RESPOND FLAGS  X3004BH*/
+*                4 RPLQRI    BIT(1),        /* RESPOND -
+*                                             0=NQREQ/1=QREQ @G40AKSL*/
+*                4 RPLEX     BIT(1),        /* RESPOND -
+*                                              0=NEX/1=EX     X3004BH*/
+*                4 RPLNFME   BIT(1),        /* RESPOND -
+*                                              0=FME/1=NFME   X3004BH*/
+*                4 RPLRRN    BIT(1),        /* RESPOND -
+*                                              0=NRRN/1=RRN   X3004BH*/
+*            2 RPLCNTRL      CHAR(3),       /* RU CONTROL
+*                                              CODES          X3004BH*/
+*              3 RPLCNTDF    BIT(8),        /* DATA FLOW CONTROL
+*                                              CODES          X3004BH*/
+*                4 RPLDATA   BIT(1),        /* CONTROL DATA   X3004BH*/
+*                4 RPLCNCEL  BIT(1),        /* CONTROL CANCEL X3004BH*/
+*                4 RPLQC     BIT(1),        /* CONTROL QC     X3004BH*/
+*                4 RPLQEC    BIT(1),        /* CONTROL QEC    X3004BH*/
+*                4 RPLCHASE  BIT(1),        /* CONTROL CHASE  X3004BH*/
+*                4 RPLRELQ   BIT(1),        /* CONTROL RELQ   X3004BH*/
+*                4 RPLQI     BIT(1),        /* RESERVED FOR
+*                                              VTAM          X03004JS*/
+*                4 *         BIT(1),        /* RESERVED FOR
+*                                              VTAM           X3004BH*/
+*              3 RPLCNTDC    BIT(8),        /* DATA FLOW CONTROL CTD
+*                                                            X03004JS*/
+*                4 RPLBID    BIT(1),        /* CONTROL BID   X03004JS*/
+*                4 RPLRTR    BIT(1),        /* CONTROL RTR   X03004JS*/
+*                4 RPLLUS    BIT(1),        /* CONTROL LUS   X03004JS*/
+*                4 RPLSIGNL  BIT(1),        /* CONTROL SIGNALX03004JS*/
+*                4 RPLTBIND  BIT(1),        /* CONTROL BIND  @G40AKSL*/
+*                4 RPLTUNBD  BIT(1),        /* CONTROL UNBIND@G40AKSL*/
+*                4 RPLSBI    BIT(1),        /* CONTROL SBI   @G40AKSL*/
+*                4 RPLBIS    BIT(1),        /* CONTROL BIS   @G40AKSL*/
+*              3 RPLCNTSC    BIT(8),        /* SESSION CONTROL
+*                                              CODES          X3004BH*/
+*                4 RPLSDT    BIT(1),        /* CONTROL SDT    X3004BH*/
+*                4 RPLCLEAR  BIT(1),        /* CONTROL CLEAR  X3004BH*/
+*                4 RPLSTSN   BIT(1),        /* CONTROL STSN   X3004BH*/
+*                4 RPLSHUTD  BIT(1),        /* CONTROL SHUTD  X3004BH*/
+*                4 RPLSHUTC  BIT(1),        /* CONTROL SHUTC  X3004BH*/
+*                4 RPLRQR    BIT(1),        /* CONTROL RQR    X3004BH*/
+*                4 RPLRSHUT  BIT(1),        /* CONTROL RSHUTDX03004JS*/
+*                4 *         BIT(1);        /* RESERVED FOR
+*                                              VTAM          X03004JS*/
+*     DCL  1 RPLOF60 BASED(ADDR(RPLRBAR)),  /* BASE AT OFFSET
+*                                              60             X3004BH*/
+*            2 RPLOBSQV      FIXED(16),     /* STSN OUTBOUND
+*                                              SEQ. NO.       X3004BH*/
+*            2 RPLIBSQV      FIXED(16),     /* STSN INBOUND
+*                                              SEQ. NO.       X3004BH*/
+*            2 RPLOBSQ       BIT(8),        /* STSN OUTBOUND ACTION
+*                                              CODES          X3004BH*/
+*              3 RPLOSET     BIT(1),        /* OBSQAC SET     X3004BH*/
+*              3 RPLOTST     BIT(1),        /* OBSQAC TESTSET X3004BH*/
+*              3 RPLORSET    BIT(1),        /* OBSQAC RESET   X3004BH*/
+*              3 RPLOIGN     BIT(1),        /* OBSQAC IGNORE  X3004BH*/
+*              3 RPLOPOS     BIT(1),        /* OBSQAC TESTPOS X3004BH*/
+*              3 RPLONEG     BIT(1),        /* OBSQAC TESTNEG X3004BH*/
+*              3 RPLOINV     BIT(1),        /* OBSQAC INVALID X3004BH*/
+*              3 *           BIT(1),        /* RESERVED FOR
+*                                              VTAM           X3004BH*/
+*            2 RPLIBSQ       BIT(8),        /* STSN INBOUND ACTION
+*                                              CODES          X3004BH*/
+*              3 RPLISET     BIT(1),        /* IBSQAC SET     X3004BH*/
+*              3 RPLITST     BIT(1),        /* IBSQAC TESTSET X3004BH*/
+*              3 RPLIRSET    BIT(1),        /* IBSQAC RESET   X3004BH*/
+*              3 RPLIIGN     BIT(1),        /* IBSQAC IGNORE  X3004BH*/
+*              3 RPLIPOS     BIT(1),        /* IBSQAC TESTPOS X3004BH*/
+*              3 RPLINEG     BIT(1),        /* IBSQAC TESTNEG X3004BH*/
+*              3 RPLIINV     BIT(1),        /* IBSQAC INVALID X3004BH*/
+*              3 *           BIT(1),        /* RESERVED FOR
+*                                              VTAM           X3004BH*/
+*            2 RPLSEQNO      FIXED(16);     /* SEQUENCE NUMBERX3004BH*/
+*     DCL      ISTRPL BASED (ADDR(IFGRPL))  /* ISTRPL LENGTH   X03004*/
+*                            CHAR(LENGTH(IFGRPL));
+*        %INCLUDE SYSLIB(ISTRPLFB);         /* INCLUDE FEEDBACK CODES*/
+*                                           /* MACRO           X03004*/
+*%GOTO   RPLEND;
+* /*
+*                   ASSEMBLER DSECT FOR RPL VTAM EXTENSION          *
+*                                                                   *
+         MACRO
+         IFGRPLVT
+RPLAAREA DS    A                               POINTER TO THE ALTERNATE
+*                                              DATA AREA(VTAM) - INPUT
+*                                              AREA FOR DATA RECEIVED
+*                                              IN CONVERSATIONAL
+*                                              MODE              X03004
+RPLAARLN DS    F                               ALTERNATE AREA
+*                                              LENGTH(VTAM)      X03004
+RPLARCLN DS    F                               ALTERNATE RECORD
+*                                              LENGTH(VTAM)      X03004
+RPLFDBK2 DS    0XL4                            FEEDBACK WORD TWO(VTAM)
+*                                                                X03004
+RPLSSNSI DS    0XL2                            SYSTEM SENSE INPUT
+*                                                               X3004BH
+RPLDSB   DS    0XL2                            DEVICE STATUS BYTE(VTAM)
+*                                                                X03004
+RPLDSB1  DS    0XL1                            DEVICE STATUS BYTE 1
+*                                                              X03004JS
+RPLSSEI  DS    XL1                             SYSTEM SENSE ERROR CODES
+*                                                              X03004JS
+RPLPATHI EQU   X'80'                           PATH ERROR      X03004JS
+RPLCPMI  EQU   X'40'                           CONNECTION POINT
+*                                              MANAGER ERROR   X03004JS
+RPLSTATI EQU   X'20'                           STATE ERROR     X03004JS
+RPLFII   EQU   X'10'                           FUNCTION INTERPRETER
+*                                              ERROR           X03004JS
+RPLRRI   EQU   X'08'                           REQUEST REJECT  X03004JS
+RPLDSB2  DS    0XL1                            DEVICE STATUS BYTE 2
+*                                                              X03004JS
+RPLSSMI  DS    XL1                             SYSTEM SENSE MODIFIER
+*                                              INPUT           X03004JS
+RPLUSNSI DS    0XL2                            USER SENSE INPUT X3004BH
+RPLESR1  DS    XL1                             RESPONSE 1 FROM 3270
+*                                              CONTROL UNIT      X03004
+RPLESR2  DS    XL1                             RESPONSE 2 FROM 3270
+*                                              CONTROL UNIT      X03004
+RPLUSFLD DS    XL4                             USER FIELD(VTAM) - AT
+*                                              OPNDST TIME THE CONTENTS
+*                                              ARE SAVED FOR EACH
+*                                              TERMINAL AND RETURNED
+*                                              TO THE RPL ON COMPLETION
+*                                              OF ANY REQUEST FOR OR BY
+*                                              THAT TERMINAL     X03004
+RPLOPTC3 DS    0XL4                            VTAM OPTIONS      X03004
+RPLOPT9  DS    XL1                             OPTION BYTE 9     X03004
+RPLLOGON EQU   X'80'                           PASS THE LOGON MESSAGE
+*                                              TO THE APPLICATIONX03004
+RPLDEVCH EQU   X'40'                           PASS THE DEVICE
+*                                              CHARACTERISTICS TO THE
+*                                              APPLICATION       X03004
+RPLTERMS EQU   X'20'                           PASS THE SYMBOLIC NAME
+*                                              OF THE TERMINAL AND ITS
+*                                              CHARACTERISTICS TO
+*                                              THE APPLICATION   X03004
+RPLCOUNT EQU   X'10'                           PASS THE NUMBER OF
+*                                              ACTIVE CONNECTIONS AND
+*                                              QUEUED LOGON REQUESTS
+*                                              TO THE APPLICATIONX03004
+RPLAPPST EQU   X'08'                           INDICATE THE APPLICATION
+*                                              STATUS            X03004
+RPLRNNM  EQU   X'04'                           INDICATE THE 3705
+*                                              SYMBOLIC NAME     X03004
+RPLCIDE  EQU   X'02'                           INDICATE THE SYMBOLIC
+*                                              NAME CORRESPONDING TO
+*                                              THE COMMUNICATION
+*                                              IDENTIFIER        X03004
+RPLTOPL  EQU   X'01'                           PASS THE SYMBOLIC NAME
+*                                              OF THE FIRST TERMINAL
+*                                              ON THE LOGON QUEUEX03004
+RPLOPT10 DS    XL1                             OPTION BYTE 10    X03004
+RPLBSCID EQU   X'80'                           PASS THE HARDWARE
+*                                              IDENTIFIER OF A BINARY
+*                                              SYNCHRONOUS TERMINAL
+*                                                                X03004
+RPLDSPLY EQU   X'40'                           DISPLAY INFORMATION FROM
+*                                              THE NETWORK OPERATOR
+*                                              CONTROL           X03004
+RPLSPARM EQU   X'20'                           SESSPARM        @Z40BHUC
+RPLTSKY  EQU   X'10'                           SESSKEY         @G40AKSL
+RPLRSVI3 EQU   X'08'                           RESERVED          X03004
+RPLRSVI4 EQU   X'04'                           RESERVED          X03004
+RPLRSVI5 EQU   X'02'                           RESERVED          X03004
+RPLRSVI6 EQU   X'01'                           RESERVED          X03004
+RPLOPT11 DS    XL1                             OPTION BYTE 11    X03004
+RPLQUIES EQU   X'80'                           STOP ACCEPTING LOGONS
+*                                              AS THE APPLICATION IS
+*                                              PREPARING TO SHUTDOWN
+*                                              (USED WITH SETLOGON)
+*                                                               X03004
+RPLSTART EQU   X'40'                           START ACCEPTING LOGONS
+*                                              WHICH WERE TEMPORARILY
+*                                              STOPPED           X03004
+RPLSTOP  EQU   X'20'                           STOP ACCEPTING LOGONS
+*                                              TEMPORARILY (USED WITH
+*                                              SETLOGON)         X03004
+RPLRSVE4 EQU   X'10'                           RESERVED          X03004
+RPLRSVE5 EQU   X'08'                           RESERVED          X03004
+RPLRSVE6 EQU   X'04'                           RESERVED          X03004
+RPLRSVE7 EQU   X'02'                           RESERVED          X03004
+RPLRSVE8 EQU   X'01'                           RESERVED          X03004
+RPLOPT12 DS    XL1                             OPTION BYTE 12    X03004
+RPLKEEP  EQU   X'40'                           KEEP OVERLENGTH DATA ON
+*                                              INPUT QUEUE      X3004BH
+RPLTRUNC EQU   X'20'                           TRUNCATE OVERLENGTH
+*                                              DATA             X3004BH
+RPLNIBTK EQU   X'10'                           USE KEEP OR TRUNCATE
+*                                              OPTION SET IN NIB AT
+*                                              OPENDST          X3004BH
+RPLFMHDR EQU   X'01'                           1=FUNCTION MANAGEMENT
+*                                              HEADER INCLUDED IN DATA
+*                                              STREAM          X03004JS
+RPLOSENS DS    0XL4                            SENSE OUTPUT DATAX3004BH
+RPLSSNSO DS    0XL2                            SYSTEM SENSE OUTPUT
+*                                                               X3004BH
+RPLSSEO  DS    XL1                             SYSTEM SENSE ERROR
+*                                              CODES           X03004JS
+RPLCPMO  EQU   X'40'                           CONNECTION POINT MANAGER
+*                                              ERROR           X03004JS
+RPLSTATO EQU   X'20'                           STATE ERROR     X03004JS
+RPLFIO   EQU   X'10'                           FUNCTION INTERPRETER
+*                                              ERROR           X03004JS
+RPLRRO   EQU   X'08'                           REQUEST REJECT  X03004JS
+RPLSSMO  DS    XL1                             SYSTEM SENSE MODIFIER
+*                                              CODES           X03004JS
+RPLUSNSO DS    XL2                             USER SENSE OUTPUTX3004BH
+RPLSAV13 DS    XL4                             SAVE AREA FOR VTAM
+*                                              FAST PATH       @ZM31226
+RPLSIGDA DS    XL4                             SIGNAL DATA FLD @Z40BHUC
+*              END OF VTAM EXTENSION                           @Z40BHUC
+         ORG   RPLKEYLE                                         X3004BH
+RPLRH3   DS    XL1                     THIRD REQUEST HEADER BYTEX3004BH
+RPLBB    EQU   X'80'                   BEGIN BRACKET           X03004JS
+RPLEB    EQU   X'40'                   END BRACKET             X03004JS
+RPLCMD   EQU   X'20'                   CHANGE DIRECTION FROM SEND
+*                                      TO RECEIVE IMMEDIATELY   X3004BH
+RPLCHREQ EQU   X'10'                   CHANGE DIRECTION FROM SEND
+*                                      TO RECEIVE IS REQUESTED  X3004BH
+RPLCSI   EQU   X'08'                   0=STANDARD - CODESEL    @Z40BHUC
+*                                      1=ALTERNATE             @Z40BHUC
+RPLSRTYP DS    XL1                     SEND OR RECEIVE TYPE     X3004BH
+RPLSRESP EQU   X'80'                   A RESPONSE IS BEING SENT; IF 0,
+*                                      A NEW REQUEST IS BEING SENT
+*                                                               X3004BH
+RPLRRESP EQU   X'08'                   RECEIVE THE FIRST RESPONSE FROM
+*                                      THE RESPONSE QUEUE       X3004BH
+RPLNFSYN EQU   X'04'                   IF 0, RECEIVE THE FIRST UNIT
+*                                      FROM THE DATA FLOW SYNCHRONOUS
+*                                      QUEUE                    X3004BH
+RPLDFASY EQU   X'02'                   RECEIVE THE FIRST UNIT FROM THE
+*                                      DATA FLOW ASYNCHRONOUS QUEUE
+*                                                               X3004BH
+RPLCHN   DS    XL1                     POSITION IN REQUEST UNIT
+*                                      CHAIN                    X3004BH
+RPLFIRST EQU   X'80'                   FIRST IN RU CHAIN        X3004BH
+RPLMIDLE EQU   X'40'                   AN INTERMEDIATE RU       X3004BH
+RPLLAST  EQU   X'20'                   LAST IN RU CHAIN         X3004BH
+RPLONLY  EQU   X'10'                   ONLY ONE RU IN CHAIN     X3004BH
+RPLVTFL1 DS    XL1                     VTAM FLAGS               X3004BH
+RPLVTUSE EQU   X'40'                   THIS IS A VTAM SYSTEM RPL; IF 0,
+*                                      THIS IS A USER RPL       X3004BH
+RPLAUTUS EQU   X'20'                   VTAM FAST PATH          @ZM31226
+RPLTNDSP EQU   X'10'                   1=DOMAIN REQUEST        @G40AKCM
+RPLTLGAC EQU   X'08'                   1=LOGON ACCOMPLISHED    @G40AKCM
+RPLVTFL2 DS    XL1                     POST/RESPOND FLAGS       X3004BH
+RPLSCHED EQU   X'80'                   POST THE RPL WHEN THE REQUEST
+*                                      HAS BEEN SCHEDULED; IF 0, POST
+*                                      THE RPL WHEN THE RESPONSE
+*                                      HAS ARRIVED              X3004BH
+RPLQRI   EQU   X'08'                   IF ON THEN QUEUE AL RESPONSES
+*                                      IF OFF DONT QUEUE       @G40AKSL
+RPLEX    EQU   X'04'                   RETURN ONLY EXCEPTION RESPONSES
+*                                      (WITH SEND) OR THIS IS AN
+*                                      EXCEPTION RESPONSE (WITH
+*                                      RECEIVE); IF 0, RETURN ALL
+*                                      RESPONSES                X3004BH
+RPLNFME  EQU   X'02'                   IF 0, RETURN A FUNCTIONAL
+*                                      MANAGEMENT END RESPONSE (WITH
+*                                      SEND) OR THIS IS A FUNCTIONAL
+*                                      MANAGEMENT END RESPONSE (WITH
+*                                      RECEIVE)                X3004BH
+RPLRRN   EQU   X'01'                   RETURN A REACHED RECOVERY
+*                                      NODE RESPONSE (WITH SEND)
+*                                      OR THIS IS A REACHED RECOVERY
+*                                      NODE RESPONSE (WITH
+*                                      RECEIVE)                 X3004BH
+RPLCNTRL DS    0XL3                    REQUEST UNIT CONTROL CODES
+*                                                               X3004BH
+RPLCNTDF DS    XL1                     DATA FLOW CONTROL CODES  X3004BH
+RPLDATA  EQU   X'80'                   DATA REQUEST, NOT A CONTROL
+*                                      CODE                     X3004BH
+RPLCNCEL EQU   X'40'                   CANCEL REQUEST UNIT CHAINX3004BH
+RPLQC    EQU   X'20'                   THE QUIESCE IS COMPLETE(FOLLOWS
+*                                      QEC)                     X3004BH
+RPLQEC   EQU   X'10'                   QUIESCE AT THE END OF THE
+*                                      CURRENT REQUEST UNIT CHAIN
+*                                                               X3004BH
+RPLCHASE EQU   X'08'                   SEND ALL OUTSTANDING RESPONSES
+*                                      FOLLOWED BY THE CHASE RESPONSE
+*                                                               X3004BH
+RPLRELQ  EQU   X'04'                   QUIESCE IS RELEASED      X3004BH
+RPLQI    EQU   X'02'                   RESERVED FOR VTAM       X03004JS
+RPLCNTDC DS    XL1                     DATA FLOW CONTROL CODES X03004JS
+RPLBID   EQU   X'80'                   REQUEST PERMISSION TO BEGIN
+*                                      BRACKET                 X03004JS
+RPLRTR   EQU   X'40'                   READY TO RECEIVE        X03004JS
+RPLLUS   EQU   X'20'                   LOGICAL UNIT STATUS     X03004JS
+RPLSIGNL EQU   X'10'                   SIGNAL DATA AVAILABLE   X03004JS
+RPLTBIND EQU   X'08'                   BIND                    G40AKCM
+RPLTUNBD EQU   X'04'                   UNBIND                  G40AKCM
+RPLSBI   EQU   X'02'                   SBI                     G40AKCM
+RPLBIS   EQU   X'01'                   BIS                     G40AKCM
+RPLCNTSC DS    XL1                     SESSION CONTROL CODES    X3004BH
+RPLSDT   EQU   X'80'                   START DATA TRAFFIC       X3004BH
+RPLCLEAR EQU   X'40'                   CLEAR ALL DATA TRAFFIC FOR
+*                                      THIS SESSION             X3004BH
+RPLSTSN  EQU   X'20'                   SET AND TEST SEQUENCE
+*                                      NUMBERS                  X3004BH
+RPLSHUTD EQU   X'10'                   SHUTDOWN IS REQUESTED    X3004BH
+RPLSHUTC EQU   X'08'                   SHUTDOWN IS COMPLETE     X3004BH
+RPLRQR   EQU   X'04'                   REQUEST RECOVERY OF SESSION
+*                                                               X3004BH
+RPLRSHUT EQU   X'02'                   REQUEST SHUTDOWN        X03004JS
+         ORG   RPLRBAR                                          X3004BH
+RPLOBSQV DS    AL2                     STSN OUTBOUND SEQUENCE
+*                                      NUMBER                   X3004BH
+RPLIBSQV DS    AL2                     STSN INBOUND SEQUENCE
+*                                      NUMBER                   X3004BH
+RPLOBSQ  DS    XL1                     STSN OUTBOUND ACTION CODES
+*                                                               X3004BH
+RPLOSET  EQU   X'80'                   SET THE OUTBOUND SEQUENCE
+*                                      NUMBER                   X3004BH
+RPLOTST  EQU   X'40'                   SET THE OUTBOUND SEQUENCE
+*                                      NUMBER UNCONDITIONALLY AND
+*                                      INDICATE IF ACCEPTABLE   X3004BH
+RPLORSET EQU   X'20'                   RESET THE OUTBOUND SEQUENCE
+*                                      TO THE DEFAULT VALUE(0)  X3004BH
+RPLOIGN  EQU   X'10'                   IGNORE THE OUTBOUND SEQUENCE
+*                                      NUMBER                   X3004BH
+RPLOPOS  EQU   X'08'                   THE OUTBOUND SEQUENCE NUMBER
+*                                      IS ACCEPTABLE (FOLLOWS TESTSET)
+*                                                               X3004BH
+RPLONEG  EQU   X'04'                   THE OUTBOUND SEQUENCE NUMBER
+*                                      IS NOT ACCEPTABLE (FOLLOWS
+*                                      TESTSET)                 X3004BH
+RPLOINV  EQU   X'02'                   THE OUTBOUND SEQUENCE NUMBER
+*                                      IS INVALID               X3004BH
+RPLIBSQ  DS    XL1                     STSN INBOUND ACTION CODES
+*                                                               X3004BH
+RPLISET  EQU   X'80'                   SET THE INBOUND SEQUENCE
+*                                      NUMBER                   X3004BH
+RPLITST  EQU   X'40'                   SET THE INBOUND SEQUENCE
+*                                      NUMBER UNCONDITIONALLY AND
+*                                      INDICATE IF ACCEPTABLE   X3004BH
+RPLIRSET EQU   X'20'                   RESET THE INBOUND SEQUENCE
+*                                      TO THE DEFAULT VALUE(0)  X3004BH
+RPLIIGN  EQU   X'10'                   IGNORE THE INBOUND SEQUENCE
+*                                      NUMBER                   X3004BH
+RPLIPOS  EQU   X'08'                   THE INBOUND SEQUENCE NUMBER
+*                                      IS ACCEPTABLE (FOLLOWS TESTSET)
+*                                                               X3004BH
+RPLINEG  EQU   X'04'                   THE INBOUND SEQUENCE NUMBER
+*                                      IS NOT ACCEPTABLE (FOLLOWS
+*                                      TESTSET)                 X3004BH
+RPLIINV  EQU   X'02'                   THE INBOUND SEQUENCE NUMBER
+*                                      IS INVALID               X3004BH
+RPLSEQNO DS    AL2                     RESPONSE SEQUENCE NUMBER
+*                                      IDENTIFIER               X3004BH
+         ORG  ,                                                @ZA48668
+         ISTRPLFB ,                    INCLUDE FEEDBACK CODES    X03004
+         MEND
+*        END OF RPL VTAM EXTENSION                                   */
+*%RPLEND: ;

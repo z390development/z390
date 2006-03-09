@@ -1,0 +1,16 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    EXC   &D,&A                   EXECUTE                 @ZA00773
+         GBLA  &DISP                   DISPLACEMENT            @ZA00773
+         GBLC  &LBL1                   LABEL ON ENTR MACRO     @ZA00773
+         LCLA  &DL                                             @ZA00773
+         AIF   ('&D' LE '15').EXC1     DISPLACEMENT IS 0-15    @ZA00773
+         MNOTE 4,'*** IHB349 DISPLACEMENT NOT 0-15 DIGITS'
+.*                                                             @ZA00773
+.EXC1    ANOP                                                  @ZA00773
+&DL      SETA  16*&D                   PUT DISPLACEMENT IN HIGH ORDER
+.*                                     4 BITS                  @ZA00773
+&NAME    DC    0H'0',X'F9',AL1(&DL),AL2(&A-&LBL1+&DISP)
+.*                                                             @ZA00773
+         MEND
+

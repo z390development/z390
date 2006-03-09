@@ -1,0 +1,359 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %/* START OF SPECIFICATIONS ****
+*
+*01*  MODULE-NAME = CHANGKEY
+*
+*01*  DESCRIPTIVE-NAME = CHANGE STORAGE PROTECT KEY MACRO
+*
+*
+*01*  STATUS = OS/VS2 REL 4
+*
+*     MOVED FROM APVTMACS TO AMACLIB FOR APAR OZ29657         @ZA29657
+*
+*01*  PROCESSOR = ASSEMBLER,PLS2 (BILINGUAL)
+*
+*     *** END OF SPECIFICATIONS ***
+         MACRO
+&LABEL   CHANGKEY &TYPE,&BA=,&EA=,&LISTAD=,&KEY=,&BRANCH=
+.* A000000-999999                                             @Z40EPYG
+*
+*        OS/VS2 RELEASE 4 VERSION      02/10/75
+.**********************************************************************
+.*       DECLARE VARIABLES                                            *
+.**********************************************************************
+         LCLB  &L
+         LCLC  &CHR,&OPERAND,&OPVAL,&DESC
+.*
+.**********************************************************************
+.*       INITIALIZE VARIABLES                                         *
+.**********************************************************************
+&L       SETB  0
+&CHR     SETC  'A'
+.*
+.**********************************************************************
+.*       VALIDITY CHECK PARAMETERS                                    *
+.**********************************************************************
+&OPERAND SETC  'REQUEST-TYPE'
+         AIF   ('&TYPE' EQ '').ERR05
+&OPERAND SETC  'POSITIONAL PARAMETER'
+         AIF   (N'&SYSLIST GT 1).ERR15
+&OPERAND SETC  'TYPE'
+&OPVAL   SETC  '&TYPE'
+         AIF   ('&TYPE' NE 'R' AND '&TYPE' NE 'L').ERR10
+.*
+&OPERAND SETC  'BRANCH'
+         AIF   ('&BRANCH' EQ '').ERR05
+&OPVAL   SETC  '&BRANCH'
+         AIF   ('&BRANCH' NE 'YES').ERR10
+.*
+&OPERAND SETC  'KEY'
+         AIF   ('&KEY' EQ '').ERR05
+         AIF   ('&KEY'(1,1) NE '(').TXT05
+&CHR     SETC  'R'
+         AIF   ('&KEY(2)' NE '').ERR15
+.TXT05   ANOP
+.*
+.**********************************************************************
+.*       DETERMINE TYPE OF REQUEST                                    *
+.**********************************************************************
+         AIF   ('&TYPE' EQ 'L').TXT50
+.*
+.**********************************************************************
+.*       PROCESS R-TYPE REQUEST                                       *
+.**********************************************************************
+&OPERAND SETC  'LISTAD'
+         AIF   ('&LISTAD' NE '').ERR20
+&OPERAND SETC  'BA'
+         AIF   ('&BA' EQ '').ERR05
+         AIF   ('&BA'(1,1) NE '(').TXT10
+         AIF   ('&BA(2)' NE '').ERR15
+.TXT10   ANOP
+.*
+&OPERAND SETC  'EA'
+         AIF   ('&EA' EQ '').ERR05
+         AIF   ('&EA'(1,1) NE '(').TXT15
+         AIF   ('&EA(2)' NE '').ERR15
+.TXT15   ANOP
+.*
+.**********************************************************************
+.*       GENERATE BAL TEXT                                            *
+.**********************************************************************
+&OPERAND SETC  '&KEY'
+         AIF   ('&CHR' EQ 'A').TXT20
+&OPERAND SETC  '&KEY(1)'
+         AIF   ('&OPERAND' EQ '0').TXT25
+&LABEL   LR    0,&OPERAND              STORAGE KEY REQUESTED
+         AGO   .TXT25
+.TXT20   ANOP
+&LABEL   LA    0,&KEY*16+8             KEY IN BITS 24-27 WITH FP
+.TXT25   ANOP
+         AIF   (&L).TXT60
+.*
+&CHR     SETC  'A'
+&OPERAND SETC  '&BA'
+         AIF   ('&BA'(1,1) NE '(').TXT30
+&CHR     SETC  'R'
+&OPERAND SETC  '&BA(1)'
+         AIF   ('&OPERAND' EQ '1').TXT35
+.TXT30   ANOP
+         L&CHR 1,&OPERAND              FIRST PAGE ADDRESS
+.TXT35   ANOP
+.*
+&CHR     SETC  'A'
+&OPERAND SETC  '&EA'
+         AIF   ('&EA'(1,1) NE '(').TXT40
+&CHR     SETC  'R'
+&OPERAND SETC  '&EA(1)'
+         AIF   ('&OPERAND' EQ '2').TXT45
+.TXT40   ANOP
+         L&CHR 2,&OPERAND              LAST PAGE ADDRESS
+.TXT45   AGO   .TXT90
+.*
+.**********************************************************************
+.*       PROCESS L-TYPE REQUEST                                       *
+.**********************************************************************
+.TXT50   ANOP
+&OPERAND SETC  'BA AND EA'
+         AIF   ('&BA&EA' NE '').ERR20
+&OPERAND SETC  'LISTAD'
+         AIF   ('&LISTAD' EQ '').ERR05
+         AIF   ('&LISTAD'(1,1) NE '(').TXT55
+         AIF   ('&LISTAD(2)' NE '').ERR15
+.TXT55   ANOP
+.*
+.**********************************************************************
+.*       GENERATE BAL TEXT                                            *
+.**********************************************************************
+&L       SETB  1
+         AGO   .TXT15
+.*
+.TXT60   ANOP
+         LA    15,X'80'                INDICATE
+         SLL   15,24                     L-TYPE
+         OR    0,15                        REQUEST
+&CHR     SETC  'A'
+&OPERAND SETC  '&LISTAD'
+         AIF   ('&LISTAD'(1,1) NE '(').TXT65
+&CHR     SETC  'R'
+&OPERAND SETC  '&LISTAD(1)'
+         AIF   ('&OPERAND' EQ '1').TXT70
+.TXT65   ANOP
+         L&CHR 1,&OPERAND              PARAMETER LIST ADDRESS
+.TXT70   ANOP
+.*
+.TXT90   ANOP
+         L     15,CVTCGK               ENTRY PT TO IEAVCKEY
+         BALR  14,15                   CALL IEAVCKEY
+         MEXIT
+.*
+.**********************************************************************
+.*       PROCESS ERROR CONDITIONS                                     *
+.**********************************************************************
+.ERR05   ANOP
+         IHBERMAC 1006,&OPERAND
+         MEXIT
+.ERR10   ANOP
+&OPERAND SETC  '&OPERAND'.'='
+         IHBERMAC 1014,&OPERAND&OPVAL
+         MEXIT
+.ERR15   ANOP
+         IHBERMAC 1012,&OPERAND
+         MEXIT
+.ERR20   ANOP
+&DESC    SETC  '-TYPE REQUEST'
+         IHBERMAC 1020,&OPERAND,&TYPE&DESC
+         MEXIT
+         MEND
+* */
+* CHANGKEY: MACRO KEYS(BA,EA,LISTAD,KEY,BRANCH);
+*
+*        /*  OS/VS2  RELEASE 4        02/10/75 */
+*
+*        /* VARIABLE DECLARES */
+*        DCL EHAREGS CHAR EXT;         /*REGS DCLD BY EPILOG*/
+*        DCL ITEXT(15) CHAR;           /*PL/S TEXT GENERATED*/
+*        DCL GLBLSWCH CHAR EXT;        /*DCL IEAVCKEY SWITCH*/
+*        DCL INDX FIXED;               /*LOOP INDEX*/
+*        DCL ICNT FIXED;               /*NUMBER LINES GENERATED*/
+*        DCL ICMT CHAR;                /*DO-END COMMENT*/
+*        DCL SKEY FIXED;               /*KEYS 0-15*/
+*        DCL KEYVAL CHAR;              /*KEYS '0'-'15'*/
+*
+*        /* INITIALIZE VARIABLES */
+*
+*        IF INDEX(EHAREGS,'00F')=0 THEN /*DCL FOR R0 REQUESTED?*/
+*          EHAREGS=EHAREGS||'00F';     /* NO: REQUEST IT*/
+*        IF INDEX(EHAREGS,'01F')=0 THEN /*DCL FOR R1 REQUESTED?*/
+*          EHAREGS=EHAREGS||'01F';     /* NO: REQUEST IT*/
+*        IF INDEX(EHAREGS,'14F')=0 THEN /*DCL FOR R14 REQUESTED?*/
+*          EHAREGS=EHAREGS||'14F';     /* NO: REQUEST IT*/
+*        IF INDEX(EHAREGS,'15F')=0 THEN /*DCL FOR R15 REQUESTED?*/
+*          EHAREGS=EHAREGS||'15F';     /* NO: REQUEST IT*/
+*        INDX=1;
+*        ICNT=1;
+*        SKEY=0;
+*        ITEXT(ICNT)='RESPECIFY (GPR00F,GPR01F,GPR14F,GPR15F';
+*        ICNT=ICNT+1;
+* IF GLBLSWCH='' THEN        /*IEAVCKEY ENTRY DECLARED ?*/
+*   DO;                      /*NO: DECLARE IT*/
+*     ITEXT(ICNT)='DCL IEAVCKEY ENTRY BASED(CVTCGK) VALRG(*); /*CHANGE
+* KEY ENTRY POINT*/';
+*     ICNT=ICNT+1;
+*     GLBLSWCH='ON';             /*ENTRY DECLARED ONLY ONCE*/
+*   END;
+*
+*        /* VALIDITY CHECK PARMS AND GENERATE PL/S TEXT */
+*
+*        IF NUMBER(MACLIST)=0 THEN     /*REQUEST TYPE SPECIFIED?*/
+*          DO;                         /* NO: ERROR*/
+*            ANS MSG('AHA0013  ''MACLIST(1)'' IS REQUIRED BUT IS NOT SUP
+*PLIED. NO TEXT IS GENERATED.');
+*            GOTO LHA05000;
+*          END;                        /* YES: CONTINUE*/
+*        IF NUMBER(MACLIST)>1 THEN     /*MACLIST TOO LONG?*/
+*          ANS MSG('AHA0031  ''MACLIST'' IS TOO LONG. ARGUMENTS ARE IGNO
+*RED AFTER '||MACLIST(1)||'.');        /* YES: WARNING*/
+*        IF MACLIST(1)^='R' THEN       /*VALID TYPE REQUESTED?*/
+*          IF MACLIST(1)^='L' THEN
+*            DO;                       /* NO: ERROR*/
+*              ANS MSG('AHA0043  MACLIST(1) MUST BE ''L'' OR ''R''. NO T
+*EXT IS GENERATED.');
+*              GOTO LHA05000;
+*            END;                      /* YES: CONTINUE*/
+*
+*        IF BRANCH='' THEN             /*KEYWORD 'BRANCH' SUPPLIED?*/
+*          DO;                         /* NO: ERROR*/
+*            ANS MSG('AHA0013  ''BRANCH'' IS REQUIRED BUT IS NOT SUPPLIE
+*D. NO TEXT IS GENERATED');
+*            GOTO LHA05000;
+*          END;                        /* YES: CONTINUE*/
+*        IF NUMBER(BRANCH)^=0 THEN     /*ARGS SUPPLIED?*/
+*          ANS MSG('AHA0031  BRANCH'||BRANCH||' IS TOO LONG. ARGUMENTS A
+*RE IGNORED AFTER ''BRANCH''.');       /* YES: WARNING*/
+*
+*        IF NUMBER(KEY)=0 THEN         /*KEYWORK AND ARG SUPPLIED?*/
+*          DO;                         /* NO: ERROR*/
+*            ANS MSG('AHA0013  ''KEY(1)'' IS REQUIRED BUT IS NOT SUPPLIE
+*D. NO TEXT IS GENERATED.');
+*            GOTO LHA05000;
+*          END;                        /* YES: CONTINUE*/
+*        IF NUMBER(KEY)>1 THEN         /*TOO MANY ARGS SUPPLIED?*/
+*          ANS MSG('AHA0031  KEY'||KEY||' IS TOO LONG. ARGUMENTS ARE IGN
+*ORED AFTER '||KEY(1)||'.');           /* YES: WARNING*/
+*        ITEXT(ICNT)='GPR00F='||KEY(1)||'; /*STORAGE KEY REQUESTED*/';
+*        ICNT=ICNT+1;
+*        IF LENGTH(KEY(1))>2 THEN      /*POSSIBLE 0-15?*/
+*          GOTO LHA01000;              /* NO: CONTINUE*/
+*        IF LENGTH(KEY(1))=2 THEN      /*POSSIBLE 10-15?*/
+*          SKEY=SKEY+10;               /* YES: CHECK IF 10-15*/
+*LHA00500: ;
+*        KEYVAL=CHAR(SKEY);            /*CHARACTER COMPARE*/
+*        IF INDEX(KEY(1),KEYVAL)=1 THEN  /*KEY A NUMBER?*/
+*          DO;                         /* YES: KEY 0?*/
+*            IF SKEY=0 THEN            /*  YES:FP ON*/
+*              DO;
+*                ITEXT(ICNT)='GPR00F=GPR00F+8; /*FETCH PROTECTED*/';
+*                ICNT=ICNT+1;
+*                GOTO LHA01000;
+*              END;
+*            ITEXT(ICNT)='GPR00F=GPR00F*16+8; /*KEY IN BITS 24-27 WITH F
+*ETCH PROTECT*/';
+*            ICNT=ICNT+1;
+*            GOTO LHA01000;
+*          END;
+*        SKEY=SKEY+1;                 /* NO: NEXT NUMBER*/
+*        IF SKEY<=15 THEN             /*CHECKED 0-15?*/
+*           GOTO LHA00500;            /* NO: CHECK NEXT NUMBER*/
+*LHA01000: ;
+*
+*        /* DETERMINE TYPE OF REQUEST */
+*
+*        IF MACLIST(1)='L' THEN
+*          GOTO LHA02000;
+*
+*        /* PROCESS R-TYPE REQUEST */
+*
+*        IF INDEX(EHAREGS,'02F')=0 THEN /*DCL FOR R2 REQUESTED?*/
+*          EHAREGS=EHAREGS||'02F';     /* NO: REQUEST IT*/
+*        ITEXT(1)=ITEXT(1)||',GPR02F';
+*        IF LISTAD^='' THEN            /*KEYWORD SUPPLIED?*/
+*          DO;                         /* YES: ERROR*/
+*            ANS MSG('AHA0023  ''LISTAD'' IS INVALID WITH R-TYPE REQUEST
+*. NO TEXT IS GENERATED.');
+*            GOTO LHA05000;
+*          END;                        /* NO: CONTINUE*/
+*        IF NUMBER(BA)=0 THEN          /*KEYWORK AND ARG SUPPLIED?*/
+*          DO;                         /* NO: ERROR*/
+*            ANS MSG('AHA0013  ''BA(1)'' IS REQUIRED BUT IS NOT SUPPLIED
+*. NO TEXT IS GENERATED.');
+*            GOTO LHA05000;
+*          END;                        /* YES: CONTINUE*/
+*        IF NUMBER(BA)>1 THEN          /*TOO MANY ARGS?*/
+*          ANS MSG('AHA0031  BA'||BA||' IS TOO LONG. ARGUMENTS ARE IGNOR
+*ED AFTER '||BA(1)||'.');              /* YES: WARNING*/
+*        ITEXT(ICNT)='GPR01F=ADDR('||BA(1)||'); /*FIRST PAGE ADDRESS*/';
+*        ICNT=ICNT+1;
+*
+*        IF NUMBER(EA)=0 THEN          /*KEYWORD AND ARG SUPPLIED?*/
+*          DO;                         /* NO: ERROR*/
+*            ANS MSG('AHA0013  ''EA(1)'' IS REQUIRED BUT IS NOT SUPPLIED
+*. NO TEXT IS GENERATED.');
+*            GOTO LHA05000;
+*          END;                        /* YES: CONTINUE*/
+*        IF NUMBER(EA)>1 THEN          /*TOO MANY ARGS?*/
+*          ANS MSG('AHA0031  EA'||EA||' IS TOO LONG. ARGUMENTS ARE IGNOR
+*ED AFTER '||EA(1)||'.');              /* YES: WARNING*/
+*        ITEXT(ICNT)='GPR02F=ADDR('||EA(1)||'); /*LAST PAGE ADDRESS*/';
+*        ICNT=ICNT+1;
+*        GOTO LHA03000;
+*
+*        /* PROCESS L-TYPE REQUEST */
+*
+*LHA02000: ;
+*        IF BA||EA^='' THEN            /*BA OR EA SUPPLIED?*/
+*          DO;                         /* YES: ERROR*/
+*            ANS MSG('AHA0023  ''BA'' OR ''EA'' INVALID WITH L-TYPE REQU
+*EST. NO TEXT IS GENERATED');
+*            GOTO LHA05000;
+*          END;                        /* NO: CONTINUE*/
+*        IF NUMBER(LISTAD)=0 THEN      /*KEYWORD AND ARG SUPPLIED?*/
+*          DO;                         /* NO: ERROR*/
+*            ANS MSG('AHA0013  ''LISTAD(1)'' IS REQUIRED BUT IS NOT SUPP
+*LIED. NO TEXT IS GENERATED.');
+*            GOTO LHA05000;
+*          END;                        /* YES: CONTINUE*/
+*        IF NUMBER(LISTAD)>1 THEN      /*TOO MANY ARGS?*/
+*          ANS MSG('AHA0031  LISTAD'||LISTAD||' IS TOO LONG. ARGUMENTS A
+*RE IGNORED AFTER '||LISTAD(1)||'.');   /* YES: WARNING*/
+*        ITEXT(ICNT)='GPR15F=''80''X; /*INDICATE*/';
+*        ICNT=ICNT+1;
+*        ITEXT(ICNT)='SLL(GPR15F,24); /*  L-TYPE*/';
+*        ICNT=ICNT+1;
+*        ITEXT(ICNT)='GPR00F=GPR00F|GPR15F; /*    REQUEST*/';
+*        ICNT=ICNT+1;
+*        ITEXT(ICNT)='GPR01F=ADDR('||LISTAD(1)||'); /* PARM LIST ADDRESS
+**/';
+*        ICNT=ICNT+1;
+*LHA03000: ;
+*        ITEXT(ICNT)='CALL IEAVCKEY; /*CALL CHANGE KEY*/';
+*        ICNT=ICNT+1;
+*        ITEXT(ICNT)=ITEXT(1)||') UNRESTRICTED;';
+*        ITEXT(1)=ITEXT(1)||') RESTRICTED;';
+*
+*        /* GENERATE PL/S TEXT */
+*
+*        IF MACLABEL^='' THEN          /*LABEL ON MACRO CALL?*/
+*          ANS(MACLABEL) COL(MACLMAR); /* YES: GEN LABEL*/
+*        ICMT='?'||MACLABEL||MACNAME||MACLIST||MACKEYS;
+*        ANS('DO; '||COMMENT(ICMT)) COL(MACCOL);
+*LHA04000: ;
+*        IF INDX>ICNT THEN             /*ALL TEXT GENERATED?*/
+*          GOTO LHA04500;              /* YES: END MACRO*/
+*        ANS(ITEXT(INDX)) COL(MACCOL); /* NO: GEN NEXT LINE*/
+*        INDX=INDX+1;
+*        GOTO LHA04000;
+*LHA04500: ;
+*        ANS('END; '||COMMENT(ICMT)) COL(MACCOL);
+*LHA05000: ;
+*%       END CHANGKEY;
+

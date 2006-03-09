@@ -1,0 +1,110 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO QCBBSL;                                               /*
+         MACRO
+&NAME    IHAQCB
+QCB      DSECT
+*         *   MAJOR QCB                   *
+*******************************************
+*0(NMAJ)                                  *
+*     ADDRESS OF THE NEXT MAJOR QCB       *
+*                                         *
+*******************************************
+*4(PMAJ)                                  *
+*     ADDRESS OF THE PREVIOUS MAJOR       *
+*                                         *
+*******************************************
+*8(FMIN)                                  *
+*     ADDRESS OF THE FIRST MINOR QCB      *
+*                                         *
+*******************************************
+*12(LMIN)                                 *
+*     ADDRESS OF THE LAST MINOR QCB       *
+*                                         *
+*******************************************
+*16(NAME)                                 *
+*         MAJOR QCB NAME                  *
+*                                         *
+***********                               *
+*                                         *
+*                                         *
+*                                         *
+*******************************************
+*
+*         *  MINOR QCB                    *
+*******************************************
+*0(NMIN)                                  *
+*      ADDRESS OF THE NEXT MINOR QCB      *
+*                                         *
+*******************************************
+*4(PMIN)                                  *
+*      ADDRESS OF THE PREVIOUS MINOR QCB  *
+*                                         *
+*******************************************
+*8(FQEL)                                  *
+*      ADDRESS OF THE FIRST QEL           *
+*                                         *
+*******************************************
+*12(LQEL)                                 *
+*      ADDRESS OF THE LAST QEL            *
+*                                         *
+*******************************************
+*16(NAMEL)*17(FLGS) *18(ASID)             *
+*   NAME  * FLAGS   * ADDRESS SPACE I.D.  *
+* LENGTH  *         *                     *
+*******************************************
+*20(NAME)                                 *
+*           MINOR NAME                    *
+*        (VARIABLE LENGTH)                *
+*******************************************
+MAJ      EQU   *
+MAJNMAJ  DS    A                   ADDRESS OF NEXT MAJOR QCB
+MAJPMAJ  DS    A                   ADDRESS OF PREVIOUS MAJOR QCB
+MAJFMIN  DS    A                   ADDRESS OF THE FIRST MINOR QCB
+MAJLMIN  DS    A                   ADDRESS OF THE LAST MINOR QCB
+MAJNAME  DS    CL8                 MAJOR NAME FOR THIS QCB
+MIN      DSECT
+MINNMIN  DS    A                   ADDRESS OF THE NEXT MINOR QCB.
+MINPMIN  DS    A                   ADDRESS OF THE PREVIOUS MINOR.
+MINFQEL  DS    A                   ADDRESS OF THE FIRST QEL.
+MINLQEL  DS    A                   ADDRESS OF THE LAST QEL
+MINNAMEL DS    AL1                 LENGTH OF MINOR NAME
+MINFLGS  DS    AL1                 FLAGS FIELD
+MINSYS   EQU   X'80'               SCOPE OF SYSTEM
+MINSYSS  EQU   X'40'               SCOPE OF SYSTEMS
+MINSTEP  EQU   X'20'               SCOPE OF STEP
+MINNOENQ EQU   X'10'               IF 1,NO ENQS ALLOWED (SET BY FRR)
+MINASID  DS    H                   ADDRESS SPACE I.D. (STEP ONLY)
+MINNAME  DS    C                   VARIABLE LENGTH MINOR NAME
+         MEND  ,                                                     */
+*%QCBBSL  :  ;
+*/* **************************************************************** */
+*/*              MAJOR QCB                                           */
+*/* **************************************************************** */
+*DECLARE
+*  1 MAJ         BASED,
+*   2 MAJNMAJ    PTR(31),          /* ADDRESS OF NEXT MAJOR QCB      */
+*   2 MAJPMAJ    PTR(31),          /* ADDRESS OF PREVIOUS MAJOR      */
+*   2 MAJFMIN    PTR(31),          /* ADDRESS OF THE FIRST MINOR     */
+*   2 MAJLMIN    PTR(31),          /* ADDRESS OF LAST MINOR QCB      */
+*   2 MAJNAME    CHAR(8);          /* MAJOR NAME FOR THIS QCB        */
+*/* **************************************************************** */
+*/*              MINOR QCB                                           */
+*/* **************************************************************** */
+*DECLARE
+*  1 MIN         BASED,
+*   2 MINNMIN    PTR(31),          /* ADDRESS OF THE NEXT MINOR      */
+*   2 MINPMIN    PTR(31),          /* ADDRESS OF THE PREVIOUS MINOR  */
+*   2 MINFQEL    PTR(31),          /* ADDRESS OF THE FIRST QEL       */
+*   2 MINLQEL    PTR(31),          /* ADDRESS OF THE LAST QEL        */
+*   2 MINNAMEL   PTR(8),           /* LENGTH OF MINOR NAME           */
+*   2 MINFLGS    CHAR(1),          /* MINOR FLAGS                    */
+*    3 MINSYS    BIT(1),           /* SCOPE OF SYSTEM                */
+*    3 MINSYSS   BIT(1),           /* SCOPE OF SYSTEMS               */
+*    3 MINSTEP   BIT(1),           /* SCOPE OF STEP                  */
+*    3 MINNOENQ  BIT(1),           /* IF 1, ENQS DENIED (SET BY FRR) */
+*    3 *         BIT(1),           /* RESERVED                       */
+*    3 *         BIT(1),           /* RESERVED                       */
+*    3 *         BIT(1),           /* RESERVED                       */
+*    3 *         BIT(1),           /* RESERVED                       */
+*   2 MINASID    PTR(16),          /* ADDRESS SPACE I.D.(STEP ONLY)  */
+*   2 MINNAME    CHAR(1);          /* MINOR NAME (VARIABLE LENGTH)   */

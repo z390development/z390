@@ -1,0 +1,74 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    ABEND &CC,&DUMP,&STEP,&USESYS,&DUMPOPT=
+.*000400,000800,001600-001700,001800-002600,003400-005400
+.*005800-006000,006200,006800-007200,007600-008400,008800
+         LCLA  &CTR
+         LCLB  &B(3)
+&NAME    DS    0H
+         AIF   ('&CC' EQ '').E1
+&B(1)    SETB  ('&DUMP' EQ 'DUMP')
+&B(2)    SETB  ('&STEP' EQ 'STEP')
+&B(3)    SETB  ('&DUMPOPT' NE '')
+         AIF   ('&USESYS' NE 'SYSTEM' AND '&USESYS' NE 'USER' AND '&USEC
+               SYS' NE '').E4
+.TEST0   AIF   ('&DUMP' NE '' AND NOT &B(1)).E2
+.TEST    AIF   ('&STEP' NE '' AND NOT &B(2)).E3
+.SETFLGS ANOP
+&CTR     SETA  128*&B(1)+64*&B(2)+32*&B(3)
+         AIF   ('&CC'(1,1) EQ '(').CONTA
+         AIF   (T'&CC NE 'N').AA
+         AIF   (&CC GT 4095).AA0
+.CONTA   ANOP
+         IHBINNRA &CC             LOAD REG1 WITH COMPCODE
+         AIF   (T'&CC EQ 'N' AND '&CC'(1,1) NE '(').CKSYS
+.POSITIO ANOP
+         AIF   ('&USESYS' EQ '').FLAGS
+         SLL   1,20(0)            SHIFT OFF > 12 BITS
+         AIF   ('&USESYS' NE 'SYSTEM').USER
+         SRL   1,8(0)             CODE IN SYSTEM POSITION
+         AGO   .FLAGS
+.USER    SRL   1,20(0)            SHIFT TO USER POSITION
+         AGO   .FLAGS
+.AA0     ANOP
+         AIF   ('&USESYS' EQ '').AA1
+         MNOTE *,'CC EXCEEDS SPECIFIED LIMITS - LOW 12 BITS USED'
+         AGO   .AA
+.AA1     MNOTE *,'CC EXCEEDS SPECIFIED LIMITS'
+.AA      CNOP  0,4
+         B     *+8                BRANCH AROUND CONSTANTS
+         DC    AL4(&CC)
+         L     1,*-4              LOAD REG1 WITH COMPCODE
+         AGO   .POSITIO
+.CKSYS   AIF   ('&USESYS' NE 'SYSTEM').FLAGS
+         SLL   1,12(0)            CODE IN SYSTEM POSITION
+.FLAGS   AIF   (&CTR EQ 0).SVC
+         LA    0,&CTR.(0,0)       PICK UP DUMP/STEP/DUMPOPTS     YM1995
+         SLL   0,24(0)            SHIFT TO HIGH ORDER
+         OR    1,0                OR IN WITH COMPCODE
+.DUMPOPT AIF  (NOT &B(3)).SVC
+         IHBINNRA ,&DUMPOPT       LOAD REG0
+.SVC     SVC   13                 LINK TO ABEND ROUTINE
+         MEXIT
+.E2      IHBERMAC  37,,&DUMP
+         AGO   .TEST
+.E3      IHBERMAC  38,,&STEP
+         AGO   .SETFLGS
+.E4      IHBERMAC  39,,&USESYS
+         AGO   .TEST0
+.E1      IHBERMAC 28,303
+         MEND
+**/
+*  ABEND: /***********************************************************/
+*/*ABEND: PL/S VERSION OF ABEND MACRO                                */
+*/********************************************************************/
+* MACRO
+*  KEYS(DUMP,
+*       STEP,
+*       USER,
+*       SYSTEM,
+*       DUMPOPTS);
+*        ANS('?'||MACLABEL||'ABENDP '||MACLIST||MACKEYS||';');
+*%END;
+

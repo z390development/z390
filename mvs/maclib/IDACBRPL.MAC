@@ -1,0 +1,816 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IDACBRPL &AM=,&MF=,&CALLER=,                                  C
+               &ACB=,&AREA=,&AREALEN=,&ARG=,&ECB=, *** RPL KEYWORDS ***C
+               &FDBK=,&MSGAREA=,&MSGLEN=,&NXTRPL=,&OPTCD=,&KEYLEN=,    C
+               &RBA=,&RECLEN=,&IO=,&RPLLEN=,&AAREA=,&AAREALN=,   X03004C
+               &ARECLEN=,&EXIT=,&NIB=,                          X04SVHSC
+               &BRANCH=,&USER=,&RTNCD=,&FDBK2=,&SENSE=,          X03004C
+               &REQ=,&DATAFLG=,                                  X03004C
+               &TRANSID=,&AIXPC=,&FTNCD=,&AIXFLAG=,             X04SVHSC
+               &CHNGDIR=,&STYPE=,&RTYPE=,&CHAIN=,&POST=,        X3004BSC
+               &RESPOND=,&CONTROL=,&OBSQAC=,&IBSQAC=,           X3004BSC
+               &OBSQVAL=,&IBSQVAL=,&SEQNO=,&SSENSEO=,           X3004BSC
+               &SSENSEI=,&USENSEO=,&USENSEI=,                  @Z40BHUCC
+               &BRACKET=,&SSENSMO=,&SSENSMI=,                          C
+               &SIGDATA=,&CODESEL=,                            @Z40BHUCC
+               &CRYPT=                                         @G40AKSL
+.*
+.* FUNCTION    THIS MACRO ACTS AS A CONTROLLER FOR GENCB, MODCB, AND
+.*             TESTCB FOR PROCESSING AN RPL.
+.*             IT IS CALLED BY IDACB2 TO BUILD VARIOUS ARRAYS TO BE
+.*             USED BY THAT MACRO TO BUILD A PARAMETER LIST OF ARGUMENT
+.*             CONTROL ENTRIES THAT WILL BE PASSED TO THE CONTROL
+.*             BLOCK MANIPULATION MODULE AT EXECUTE TIME.
+.*             FOR NON-BIT KEYWORDS, THIS MACRO CALLS IDACB3 WHICH
+.*             SETS VALUES INTO ALL THE ARRAYS THAT ARE REQUIRED.
+.*
+.*             FOR BIT KEYWORDS, IDACB3 IS CALLED, BUT THIS MACRO
+.*             SETS THE VALUE IN THE &IDAVALC ARRAY.
+.*             IT ALSO VALIDITY CHECKS BIT OPTIONS AND IF MUTUALLY
+.*             EXCLUSIVE OPTIONS ARE SPECIFIED, AN ERROR MESSAGE IS
+.*             ISSUED. THE ONE EXCEPTION IS OPTCD.
+.*             IDACBOPT IS ISSUED TO PROCESS OPTCD
+.*
+.*             IT IS ALSO CALLED BY THE RPL DECLARATIVE MACRO TO
+.*             PROCESS THE BIT KEYWORDS OPTCD, BRANCH, POST, RESPOND,
+.*             CHAIN, CONTROL, CHNGDIR, BRACKET, SSENSEO, RTYPE,
+.*             STYPE, IBSQAC, AND OBSQAC.
+.*             WHEN CALLED BY RPL, DIFFERENT GLOBALS ARE SET THAN
+.*             THOSE USED BY THE CBMM. THESE GLOBALS ARE SET IN SUCH
+.*             A MANNER TO ALLOW THE DECLARATIVE MACRO TO GENERATE
+.*             A 'DC' USING THE GLOBALS DIRECTLY.
+.*             THEREFORE THE BITS SET IN THESE GLOBALS MUST BE
+.*             IDENTICAL TO THE WAY THEY WILL APPEAR WHEN THE
+.*             CONTROL BLOCK IS GENERATED.
+.* GLOBALS
+         GBLB  &IDACB01                ERROR INDICATOR
+         GBLA  &IDAENO                 NUMBER OF ELEMENTS
+         GBLC  &IDAVALC(50)            ELEMENT CHARACTER VALUE ARRAY
+.*             THE FOLLOWING GLOBALS ARE SET WHEN CALLED BY THE RPL
+.*             DECLARATIVE MACRO TO SET BIT STRING KEYWORDS
+         GBLC  &IDABRCH                 BRANCH CODE             X04SVHS
+         GBLC  &IDASNSO                 SSENSEO CODES           X04SVHS
+         GBLC  &IDARH3                  CHNGDIR/BRACKET CODES   X04SVHS
+         GBLC  &IDASRTY                 STYPE/RTYPE CODES       X04SVHS
+         GBLC  &IDACHN                  CHAIN CODES             X04SVHS
+         GBLC  &IDAPORE                 POST/RESPOND CODES      X04SVHS
+         GBLC  &IDACRYP                 ENCRIPTION FEATURE     @G40AKSL
+         GBLC  &IDACON1,&IDACON2,&IDACON3 CONTROL CODES         X04SVHS
+         GBLC  &IDAOBQC                 OBSQAC CODES            X04SVHS
+         GBLC  &IDAIBQC                 IBSQAC CODES            X04SVHS
+.* LOCALS
+         LCLA  &I,&A                             WORK VARIABLES X04SVHS
+         LCLB  &VSAM,&VTAM                       AM CODES
+         LCLB  &PRIME,&AIXRBA                    AIXFLAG CODES  X04SVHS
+         LCLB  &NCMD,&CMD,&NREQ,&CREQ            CHNGDIR CODES  X3004BS
+         LCLB  &SREQ,&SRESP                      STYPE CODES    X3004BS
+         LCLB  &NRESP,&RRESP,&RDFSYN,&NDFSYN     RTYPE CODES    X3004BS
+         LCLB  &NDFASY,&RDFASY                   RTYPE CODES   @Z40BHUC
+         LCLB  &ONLY,&FIRST,&MIDDLE,&LAST        CHAIN CODES    X3004BS
+         LCLB  &PRESP,&SCHED                     POST CODES     X3004BS
+         LCLB  &NEX,&EX,&FME,&NFME,&NRRN,&RRN    RESPOND CODES  X3004BS
+         LCLB  &QRESP,&NQRESP                    RESPOND CODES @G40AKSL
+         LCLB  &DATA,&CANCEL,&QC,&QEC,&CHASE     CONTROL CODES  X3004BS
+         LCLB  &RELQ,&CSDT,&CLEAR,&STSN          CONTROL CODES X03004HS
+         LCLB  &SHUTD,&RQR,&SHUTC                CONTROL CODES @ZA07554
+         LCLB  &BID,&LUS,&SIGNAL,&RTR,&RSHUTD    CONTROL CODES X03004HS
+         LCLB  &SBI,&BIS,&BIND,&UNBIND           CONTROL CODES @G40AKCM
+         LCLB  &STDRD,&ALT                       CODESEL CODE  @Z40BHUC
+         LCLB  &SET,&TESTSET,&RESET,&IGNORE      OBSQAC CODES   X3004BS
+         LCLB  &TESTPOS,&TESTNEG,&INVALID        OBSQAC CODES   X3004BS
+         LCLB  &ISET,&ITESTSE,&IRESET,&IIGNORE   IBSQAC CODES   X3004BS
+         LCLB  &ITESTPO,&ITESTNE,&IINVALI        IBSQAC CODES   X3004BS
+         LCLB  &OCPM,&OSTATE,&OFI,&ORR           SSENSEO CODES X03004HS
+         LCLB  &IPATH,&ICPM,&ISTATE,&IFI,&IRR    SSENSEI CODES X03004HS
+         LCLB  &BB,&NBB,&EB,&NEB                 BRACKET CODES X03004HS
+         LCLB  &NO,&YES                          SWITCHC CODES  X3004BS
+         LCLB  &UNSOL,&EOB,&EOM,&EOT,&LOGOFF     DATAFLG CODES   X03004
+         LCLB  &LG,&SOH                          DATAFLG CODES   X03004
+         LCLB  &BRYES,&BRNO             BRANCH CODES            X04SVHS
+         LCLB  &COMPLET                 IO CODE                 X04SVHS
+         LCLB  &CRYES,&CRNO             ENCRIPTION CODES       @G40AKSL
+         LCLC  &Z16,&Z8                 UNUSED PORTION OF BITSTRING
+.*
+&Z16     SETC  '0000000000000000'       INITIALIZE CONSTANT     X04SVHS
+&Z8      SETC  '00000000'               INITIALIZE CONSTANT    @Z40BHUC
+.* SCAN RPL KEYWORDS **************************************************
+.*                                      ACB
+         IDACB3 ARG=&ACB,ARGNAME=ACB,KWTC=X'2B',MF=&MF          X04SVHS
+.**********************************************************************
+.*                                      AREA
+         IDACB3 ARG=&AREA,ARGNAME=AREA,KWTC=X'2C',MF=&MF        X04SVHS
+.**********************************************************************
+.*                                      AREALEN
+         IDACB3 ARG=&AREALEN,ARGNAME=AREALEN,KWTC=X'2D',MF=&MF  X04SVHS
+.**********************************************************************
+.*                                      ARG
+         IDACB3 ARG=&ARG,ARGNAME=ARG,KWTC=X'2E',MF=&MF          X04SVHS
+.**********************************************************************
+.*                                      ECB
+         AIF ('&AM' EQ 'VTAM' AND '&ECB' EQ 'INTERNAL').R000050
+.*                                    CHECK VTAM ECB=INTERNAL  @ZA53800
+         IDACB3 ARG=&ECB,ARGNAME=ECB,KWTC=X'2F',MF=&MF          X04SVHS
+.R000050 ANOP                                                  @ZA53800
+.**********************************************************************
+.*                                      KEYLEN
+         IDACB3 ARG=&KEYLEN,ARGNAME=KEYLEN,KWTC=X'30',MF=&MF    X04SVHS
+.**********************************************************************
+.*                                      MSGAREA
+         IDACB3 ARG=&MSGAREA,ARGNAME=MSGAREA,KWTC=X'31',MF=&MF  X04SVHS
+.**********************************************************************
+.*                                      MSGLEN
+         IDACB3 ARG=&MSGLEN,ARGNAME=MSGLEN,KWTC=X'32',MF=&MF    X04SVHS
+.**********************************************************************
+.*                                      NXTRPL
+         IDACB3 ARG=&NXTRPL,ARGNAME=NXTRPL,KWTC=X'33',MF=&MF    X04SVHS
+.**********************************************************************
+.*                                      OPTCD
+         IDACBOPT OPTCD=&OPTCD,AM=&AM,MF=&MF,CALLER=&CALLER     X04SVHS
+.*             OPTCD IS PROCESSED BY THE INNER MACRO IDACBOPT
+.**********************************************************************
+.*                                      CHNGDIR
+.R000100 AIF   ('&CHNGDIR' EQ '').R000600 *** CHNGDIR ***       X3004BS
+         IDACB3 ARG=&CHNGDIR,KWTC=X'65',BIT=YES,CHKAM=VTAM,AM=&AM
+.*                                                              X04SVHS
+&I       SETA  0                        CLEAR INDEX VARIABLE    X3004BS
+&A       SETA  0                        ZERO ERROR COUNTER      X04SVHS
+.R000200 ANOP                                                   X3004BS
+&I       SETA  &I+1                     BUMP INDEX INTO LIST    X04SVHS
+         AIF   (&I GT N'&CHNGDIR).R000300 CHECK FOR END OF LIST X04SVHS
+&NCMD    SETB  ('&CHNGDIR(&I)' EQ 'NCMD' OR &NCMD)              X3004BS
+&CMD     SETB  ('&CHNGDIR(&I)' EQ 'CMD' OR &CMD)                X3004BS
+&NREQ    SETB  ('&CHNGDIR(&I)' EQ 'NREQ' OR &NREQ)              X3004BS
+&CREQ    SETB  ('&CHNGDIR(&I)' EQ 'REQ' OR &CREQ)               X3004BS
+         AIF   (&NCMD+&CMD+&NREQ+&CREQ+&A EQ &I).R000200        X04SVHS
+.*             CHK FOR NEW BIT SET
+         IDAERMAC 5,CHNGDIR,&CHNGDIR(&I)                        X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+&A       SETA  &A+1                     BUMP ERROR COUNTER      X04SVHS
+         AGO   .R000200                 CHECK NEXT OPTION       X04SVHS
+.*             CHECK FOR MUTUALLY EXCLUSIVE OPTIONS
+.R000300 AIF   (NOT(&NCMD AND &CMD)).R000400                    X3004BS
+         IDAERMAC 8,CHNGDIR,NCMD,CMD                            X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R000400 AIF   (NOT(&NREQ AND &CREQ)).R000500                   X3004BS
+         IDAERMAC 8,CHNGDIR,NREQ,REQ                            X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R000500 ANOP                                                   X3004BS
+         AIF   ('&CALLER' EQ 'RPL').R000600                     X04SVHS
+.*             IF CALLED BY RPL, VALUE SET IN RPLRH3 UNDER CODESEL CODE
+&IDAVALC(&IDAENO) SETC '&NCMD&CMD&NREQ&CREQ.000000000000&Z16'   X3004BS
+.**********************************************************************
+.R000600 ANOP                                                  X03004HS
+.*                                      BRACKET
+         AIF   ('&BRACKET' EQ '').R001010                      X03004HS
+         IDACB3 ARG=&BRACKET,KWTC=X'85',CHKAM=VTAM,AM=&AM,BIT=YES
+&I       SETA  0                        INITIALIZE INDEX VALUE X03004HS
+&A       SETA  0                        ZERO ERROR COUNTER      X04SVHS
+.R000700 ANOP                                                  X03004HS
+&I       SETA  &I+1                     BUMP INDEX INTO LIST    X04SVHS
+         AIF   (&I GT N'&BRACKET).R000800                      X03004HS
+.*             DETERMINE IF ALL SUBPARMS HAVE BEEN CHECKED     X03004HS
+&BB      SETB  ('&BRACKET(&I)' EQ 'BB' OR &BB)                 X03004HS
+&NBB     SETB  ('&BRACKET(&I)' EQ 'NBB' OR &NBB)               X03004HS
+&EB      SETB  ('&BRACKET(&I)' EQ 'EB' OR &EB)                 X03004HS
+&NEB     SETB  ('&BRACKET(&I)' EQ 'NEB' OR &NEB)               X03004HS
+         AIF   (&BB+&NBB+&EB+&NEB+&A EQ &I).R000700             X04SVHS
+.*                                      CHK FOR NEW BIT SET
+         IDAERMAC 5,BRACKET,&BRACKET(&I)                       X03004HS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+&A       SETA  &A+1                     BUMP ERROR COUNTER      X04SVHS
+         AGO   .R000700                 CHK NEXT SUBPARM       X03004HS
+.R000800 ANOP                                                  X03004HS
+         AIF   (NOT(&BB AND &NBB)).R000900 CHK MUTUALLY        X03004HS
+.*                                      EXCLUSIVE KEYWORDS     X03004HS
+         IDAERMAC 8,BRACKET,BB,NBB                             X03004HS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R000900 ANOP                                                  X03004HS
+         AIF   (NOT(&EB AND &NEB)).R001000 CHK MUTUALLY        X03004HS
+.*                                      EXCLUSIVE KEYWORDS     X03004HS
+         IDAERMAC 8,BRACKET,EB,NEB                             X03004HS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R001000 ANOP                                                  X03004HS
+         AIF   ('&CALLER' EQ 'RPL').R001010                     X04SVHS
+.*             IF CALLED BY RPL, VALUE SET IN RPLRH3 UNDER CODESEL CODE
+&IDAVALC(&IDAENO) SETC '&BB&NBB&EB&NEB.000000000000&Z16'       X03004HS
+.*                                                              X04SVHS
+.**********************************************************************
+.*                                      CODESEL                @Z40BHUC
+.R001010 AIF   ('&CODESEL' EQ '').R001070 *** CODESEL ***      @Z40BHUC
+         IDACB3 ARG=&CODESEL,KWTC=X'91',CHKAM=VTAM,AM=&AM,BIT=YES
+&STDRD SETB ('&CODESEL' EQ 'STANDARD' OR '&CODESEL' EQ '(STANDARD)')
+&ALT   SETB ('&CODESEL' EQ 'ALT' OR '&CODESEL' EQ '(ALT)')     @Z40BHUC
+         AIF   (&STDRD+&ALT EQ 1).R001020 CHECK VALID OPTION   @Z40BHUC
+         IDAERMAC  5,CODESEL,&CODESEL                          @Z40BHUC
+&IDACB01 SETB  1                                               @Z40BHUC
+.R001020 AIF   (N'&CODESEL EQ 1).R001050   ONE OPTION ALLOWED  @Z40BHUC
+         IDAERMAC 22,CODESEL                                   @Z40BHUC
+&IDACB01 SETB  1                                               @Z40BHUC
+.R001050 AIF   ('&CALLER' EQ 'RPL').R001070                    @Z40BHUC
+.*             IF CALLED BY RPL, BYPASS SETTING CBM GLOBAL     @Z40BHUC
+&IDAVALC(&IDAENO) SETC '&STDRD&ALT.000000&Z8&Z16'              @Z40BHUC
+         AGO   .R001100                                        @Z40BHUC
+.R001070 ANOP                                                  @Z40BHUC
+.*    IDACBRPL HAS BEEN CALLED BY THE RPL DECLARATIVE MACRO    @Z40BHUC
+.*    OR CODESEL IS NULL                                       @Z40BHUC
+&IDARH3  SETC  '&BB&EB&CMD&CREQ&ALT.000'   SET BRACKET/CHNGDIR/CODESEL
+.**********************************************************************
+.*                                      STYPE
+.R001100 AIF   ('&STYPE' EQ '').R001500 *** STYPE ***           X3004BS
+         IDACB3 ARG=&STYPE,KWTC=X'66',CHKAM=VTAM,AM=&AM,BIT=YES
+&I       SETA  0                                                X3004BS
+&A       SETA  0                        ZERO ERROR COUNTER      X04SVHS
+.R001200 ANOP                                                   X3004BS
+&I       SETA  &I+1                     BUMP INDEX INTO LIST    X04SVHS
+         AIF   (&I GT N'&STYPE).R001300 CHECK FOR END OF LIST   X04SVHS
+&SREQ    SETB  ('&STYPE(&I)' EQ 'REQ' OR &SREQ)                 X3004BS
+&SRESP   SETB  ('&STYPE(&I)' EQ 'RESP' OR &SRESP)               X3004BS
+         AIF   (&SREQ+&SRESP+&A EQ &I).R001200                  X04SVHS
+.*                                      CHK FOR NEW BIT SET
+         IDAERMAC 5,STYPE,&STYPE(&I)                            X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+&A       SETA  &A+1                     BUMP ERROR COUNTER      X04SVHS
+         AGO   .R001200                                         X3004BS
+.*             CHECK FOR MUTUALLY EXCLUSIVE OPTIONS
+.R001300 AIF   (NOT(&SREQ AND &SRESP)).R001400                  X3004BS
+         IDAERMAC 8,STYPE,REQ,RESP                              X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+.R001400 ANOP                                                   X3004BS
+         AIF   ('&CALLER' EQ 'RPL').R001500                     X04SVHS
+.*             IF CALLED BY RPL, BYPASS SETTING CBM GLOBAL
+&IDAVALC(&IDAENO) SETC '&SREQ&SRESP.00000000000000&Z16'         X3004BS
+.**********************************************************************
+.*                                      RTYPE
+.R001500 AIF   ('&RTYPE' EQ '').R002150 *** RTYPE ***           X3004BS
+         IDACB3 ARG=&RTYPE,KWTC=X'67',CHKAM=VTAM,AM=&AM,BIT=YES X04SVHS
+&I       SETA  0                        ZERO INDEX              X3004BS
+&A       SETA  0                        ZERO ERROR COUNTER      X04SVHS
+.R001600 ANOP                                                   X3004BS
+&I       SETA  &I+1                     BUMP INDEX INTO LIST    X04SVHS
+         AIF   (&I GT N'&RTYPE).R001700 CHECK FOR END OF LIST   X04SVHS
+&NRESP   SETB  ('&RTYPE(&I)' EQ 'NRESP' OR &NRESP)              X3004BS
+&RRESP   SETB  ('&RTYPE(&I)' EQ 'RESP' OR &RRESP)               X3004BS
+&RDFSYN  SETB  ('&RTYPE(&I)' EQ 'DFSYN' OR &RDFSYN)             X3004BS
+&NDFSYN  SETB  ('&RTYPE(&I)' EQ 'NDFSYN' OR &NDFSYN)            X3004BS
+&NDFASY  SETB  ('&RTYPE(&I)' EQ 'NDFASY' OR &NDFASY)            X3004BS
+&RDFASY  SETB  ('&RTYPE(&I)' EQ 'DFASY' OR &RDFASY)             X3004BS
+         AIF   (&NRESP+&RRESP+&RDFSYN+&NDFSYN+&NDFASY+&RDFASY+&A EQ &I)*
+               .R001600                                        @Z40BHUC
+.*                                      CHK FOR NEW BIT SET
+         IDAERMAC 5,RTYPE,&RTYPE(&I)                            X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+&A       SETA  &A+1                     BUMP ERROR COUNTER      X04SVHS
+         AGO   .R001600                                         X3004BS
+.*             CHECK FOR MUTUALLY EXCLUSIVE OPTIONS
+.R001700 AIF   (NOT(&NRESP AND &RRESP)).R001800                 X3004BS
+         IDAERMAC 8,RTYPE,NRESP,RESP                            X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+.R001800 AIF   (NOT(&NDFSYN AND &RDFSYN)).R001900               X3004BS
+         IDAERMAC 8,RTYPE,NDFSYN,DFSYN                          X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+.R001900 AIF   (NOT(&NDFASY AND &RDFASY)).R002100              @Z40BHUC
+         IDAERMAC 8,RTYPE,NDFASY,DFASY                          X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+.R002100 ANOP                                                   X3004BS
+         AIF   ('&CALLER' EQ 'RPL').R002150                     X04SVHS
+.*             IF CALLED BY RPL BYPASS SETTING CBM GLOBAL
+&IDAVALC(&IDAENO) SETC '&NRESP&RRESP&RDFSYN&NDFSYN&NDFASY&RDFASY.000000*
+               0000&Z16'
+         AGO   .R002200                                         X04SVHS
+.R002150 ANOP                                                   X04SVHS
+&IDASRTY SETC  '&SRESP.000&RRESP&NDFSYN&RDFASY.0'              @Z40BHUC
+.*             SET STYPE/RTYPE CODES FOR RPL                    X04SVHS
+.**********************************************************************
+.*                                      CHAIN
+.R002200 AIF   ('&CHAIN' EQ '').R002450 *** CHAIN ***           X3004BS
+         IDACB3 ARG=&CHAIN,KWTC=X'68',CHKAM=VTAM,AM=&AM,BIT=YES X04SVHS
+&ONLY    SETB  ('&CHAIN' EQ 'ONLY' OR '&CHAIN' EQ '(ONLY)')     X04SVHS
+&FIRST   SETB  ('&CHAIN' EQ 'FIRST' OR '&CHAIN' EQ '(FIRST)')   X04SVHS
+&MIDDLE  SETB  ('&CHAIN' EQ 'MIDDLE' OR '&CHAIN' EQ '(MIDDLE)') X04SVHS
+&LAST    SETB  ('&CHAIN' EQ 'LAST' OR '&CHAIN' EQ '(LAST)')     X04SVHS
+         AIF   (&ONLY+&FIRST+&MIDDLE+&LAST EQ 1).R002300        X04SVHS
+.*                                      CHK FOR NEW BIT SET
+         IDAERMAC 5,CHAIN,&CHAIN                                X3004BS
+&IDACB01 SETB  1                                                X3004BS
+.R002300 ANOP                                                   X04SVHS
+         AIF   (N'&CHAIN EQ 1).R002400 ONLY ONE OPTION MAY BE SPECIFIED
+         IDAERMAC 22,CHAIN                                      X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R002400 ANOP                                                   X3004BS
+         AIF   ('&CALLER' EQ 'RPL').R002450                     X04SVHS
+.*             IF CALLED BY RPL BYPASS SETTING CBM GLOBAL
+&IDAVALC(&IDAENO) SETC '&FIRST&MIDDLE&LAST&ONLY.000000000000&Z16'
+.*                                                              X04SVHS
+         AGO   .R002500                                         X04SVHS
+.R002450 ANOP                                                   X04SVHS
+.*       AT THIS POINT CHAIN IS EITHER UNSPECIFIED, OR IDACBRPL
+.*       WAS CALLED BY THE RPL DECLARATIVE MACRO
+         AIF   ('&CHAIN' NE '').R002475 IF CHAIN IS SPEC,       X04SVHS
+.*             THEN CALLER IS RPL AND DECLARATIVE GLOBAL MUST BE SET
+         AIF   ('&CALLER' NE 'RPL').R002500 ICALLER IS RPL,     X04SVHS
+.*             THEN DEFAULT VALUE MUST BE SET
+&ONLY    SETB  1                        SET DEFAULT VALUE       X04SVHS
+.R002475 ANOP                                                   X04SVHS
+&IDACHN  SETC  '&FIRST&MIDDLE&LAST&ONLY.0000'                   X04SVHS
+.*                                      SET CHAIN CODES         X04SVHS
+.**********************************************************************
+.*                                      POST
+.R002500 AIF   ('&POST' EQ '').R002900 *** POST ***             X3004BS
+         IDACB3 ARG=&POST,KWTC=X'69',CHKAM=VTAM,AM=&AM,BIT=YES  X04SVHS
+&I       SETA  0                                                X3004BS
+&A       SETA  0                        ZERO ERROR COUNTER      X04SVHS
+.R002600 ANOP                                                   X3004BS
+&I       SETA  &I+1                     BUMP INDEX INTO LIST    X04SVHS
+         AIF   (&I GT N'&POST).R002700  CHECK FOR END OF LIST   X04SVHS
+&PRESP   SETB  ('&POST(&I)' EQ 'RESP' OR &PRESP)                X3004BS
+&SCHED   SETB  ('&POST(&I)' EQ 'SCHED' OR &SCHED)               X3004BS
+         AIF   (&PRESP+&SCHED+&A EQ &I).R002600                 X04SVHS
+.*                                      CHK FOR NEW BIT SET
+         IDAERMAC 5,POST,&POST(&I)                              X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+&A       SETA  &A+1                     BUMP ERROR COUNTER      X04SVHS
+         AGO   .R002600                                         X3004BS
+.*             CHECK FOR MUTUALLY EXCLUSIVE KEYWORDS
+.R002700 AIF   (NOT(&PRESP AND &SCHED)).R002800                 X3004BS
+         IDAERMAC 8,POST,RESP,SCHED                             X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+.R002800 ANOP                                                   X3004BS
+         AIF   ('&CALLER' EQ 'RPL').R002900                     X04SVHS
+.*             IF CALLED BY RPL BYPASS SETTING CBM GLOBAL
+&IDAVALC(&IDAENO) SETC '&PRESP&SCHED.00000000000000&Z16'        X3004BS
+.**********************************************************************
+.*                                      RESPOND
+.R002900 AIF   ('&RESPOND' EQ '').R003450 *** RESPOND ***       X3004BS
+         IDACB3 ARG=&RESPOND,KWTC=X'6A',CHKAM=VTAM,AM=&AM,BIT=YES
+.*                                                              X04SVHS
+&I       SETA  0                                                X3004BS
+&A       SETA  0                        ZERO ERROR COUNTER      X04SVHS
+.R003000 ANOP                                                   X3004BS
+&I       SETA  &I+1                     BUMP INDEX INTO ARRAYS  X04SVHS
+         AIF   (&I GT N'&RESPOND).R003100 CHECK FOR END OF LIST X04SVHS
+&NEX     SETB  ('&RESPOND(&I)' EQ 'NEX' OR &NEX)                X3004BS
+&EX      SETB  ('&RESPOND(&I)' EQ 'EX' OR &EX)                  X3004BS
+&FME     SETB  ('&RESPOND(&I)' EQ 'FME' OR &FME)                X3004BS
+&NFME    SETB  ('&RESPOND(&I)' EQ 'NFME' OR &NFME)              X3004BS
+&NRRN    SETB  ('&RESPOND(&I)' EQ 'NRRN' OR &NRRN)              X3004BS
+&RRN     SETB  ('&RESPOND(&I)' EQ 'RRN' OR &RRN)                X3004BS
+&QRESP   SETB  ('&RESPOND(&I)' EQ 'QRESP' OR &QRESP)           @G40AKSL
+&NQRESP  SETB  ('&RESPOND(&I)' EQ 'NQRESP' OR &NQRESP)         @G40AKSL
+         AIF   (&NEX+&EX+&FME+&NFME+&NRRN+&RRN+&A+&QRESP+&NQRESP EQ &I)*
+               .R003000                                        @G40AKSL
+.*             CHECK FOR VALID OPTION
+         IDAERMAC 5,RESPOND,&RESPOND(&I)                        X3004BS
+&IDACB01 SETB  1                          SET ERROR SWITCH      X3004BS
+&A       SETA  &A+1                     BUMP ERROR COUNTER      X04SVHS
+         AGO   .R003000                                         X3004BS
+.*             CHECK FOR MUTUALLY EXCLUSIVE KEYWORDS
+.R003100 AIF   (NOT(&NEX AND &EX)).R003200                      X3004BS
+         IDAERMAC 8,RESPOND,NEX,EX                              X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R003200 AIF   (NOT(&FME AND &NFME)).R003300                    X3004BS
+         IDAERMAC 8,RESPOND,FME,NFME                            X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R003300 AIF   (NOT(&NRRN AND &RRN)).R003400                    X3004BS
+         IDAERMAC 8,RESPOND,NRRN,RRN                            X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R003400 ANOP                                                   X3004BS
+         AIF   ('&CALLER' EQ 'RPL').R003450                     X04SVHS
+.*             IF CALLED BY RPL BYPASS SETTING CBM GLOBAL
+&IDAVALC(&IDAENO) SETC '&NEX&EX&FME&NFME&NRRN&RRN&QRESP&NQRESP.00000000*
+               &Z16'                                           @G40AKSL
+         AGO   .R003500                                         X04SVHS
+.R003450 ANOP                                                   X04SVHS
+&IDAPORE SETC  '&SCHED.000&QRESP&EX&NFME&RRN' SET POST/RESPOND @G40AKCM
+.**********************************************************************
+.*                                      CONTROL
+.R003500 AIF   ('&CONTROL' EQ '').R003750                       X04SVHS
+         AIF   ('&AM' NE 'VTAM').AMERR
+         IDACB3 ARG=&CONTROL,KWTC=X'6B',BIT=YES
+.*                                                              X04SVHS
+&DATA    SETB  ('&CONTROL' EQ 'DATA' OR '&CONTROL' EQ '(DATA)') X04SVHS
+&CANCEL  SETB  ('&CONTROL' EQ 'CANCEL' OR '&CONTROL' EQ '(CANCEL)')
+.*                                                              X04SVHS
+&QC      SETB  ('&CONTROL' EQ 'QC' OR '&CONTROL' EQ '(QC)')     X04SVHS
+&QEC     SETB  ('&CONTROL' EQ 'QEC' OR '&CONTROL' EQ '(QEC)')   X04SVHS
+&CHASE   SETB  ('&CONTROL' EQ 'CHASE' OR '&CONTROL' EQ '(CHASE)')
+.*                                                              X04SVHS
+&RELQ    SETB  ('&CONTROL' EQ 'RELQ' OR '&CONTROL' EQ '(RELQ)') X04SVHS
+&CSDT    SETB  ('&CONTROL' EQ 'SDT' OR '&CONTROL' EQ '(SDT)')   X04SVHS
+&CLEAR   SETB  ('&CONTROL' EQ 'CLEAR' OR '&CONTROL' EQ '(CLEAR)')
+.*                                                              X04SVHS
+&STSN    SETB  ('&CONTROL' EQ 'STSN' OR '&CONTROL' EQ '(STSN)') X04SVHS
+&SHUTD   SETB  ('&CONTROL' EQ 'SHUTD' OR '&CONTROL' EQ '(SHUTD)')
+.*                                                              X04SVHS
+&RQR     SETB  ('&CONTROL' EQ 'RQR' OR '&CONTROL' EQ '(RQR)')   X04SVHS
+&BID     SETB  ('&CONTROL' EQ 'BID' OR '&CONTROL' EQ '(BID)')   X04SVHS
+&LUS     SETB  ('&CONTROL' EQ 'LUS' OR '&CONTROL' EQ '(LUS)')   X04SVHS
+&RTR     SETB  ('&CONTROL' EQ 'RTR' OR '&CONTROL' EQ '(RTR)')   X04SVHS
+&SIGNAL  SETB  ('&CONTROL' EQ 'SIGNAL' OR '&CONTROL' EQ '(SIGNAL)')
+.*                                                              X04SVHS
+&RSHUTD  SETB  ('&CONTROL' EQ 'RSHUTD' OR '&CONTROL' EQ '(RSHUTD)')
+.*                                                              X04SVHS
+&SHUTC   SETB  ('&CONTROL' EQ 'SHUTC' OR '&CONTROL' EQ '(SHUTC)')
+.*             CHECK IF VALID OPTION WAS SPECIFIED             @ZA07554
+&BIND    SETB  ('&CONTROL' EQ 'BIND'   OR '&CONTROL' EQ '(BIND)')
+.*                                                             @G40AKCM
+&UNBIND  SETB  ('&CONTROL' EQ 'UNBIND' OR '&CONTROL' EQ '(UNBIND)')
+.*             CHECK IF VALID OPTION WAS SPECIFIED             @G40AKCM
+&SBI     SETB  ('&CONTROL' EQ 'SBI'    OR '&CONTROL' EQ '(SBI)')
+.*                                                             @G40AKCM
+&BIS     SETB  ('&CONTROL' EQ 'BIS'   OR '&CONTROL' EQ '(BIS)')
+.*             CHECK IF VALID OPTION WAS SPECIFIED             @G40AKCM
+         AIF   (&DATA+&CANCEL+&QC+&QEC+&CHASE+&RELQ+&CSDT+&CLEAR+&STSN+*
+               &SHUTD+&RQR+&BID+&LUS+&RTR+&SIGNAL+&RSHUTD+&SHUTC+&BIND+*
+               &UNBIND+&SBI+&BIS EQ 1).R003600                 @G40AKCM
+         IDAERMAC 5,CONTROL,&CONTROL                            X3004BS
+&IDACB01 SETB  1                         SET ERROR SWITCH       X3004BS
+.R003600 ANOP
+         AIF (N'&CONTROL EQ 1).R003700   ONLY ONE OPTION IS ALLOWED
+         IDAERMAC 22,CONTROL                                    X3004BS
+&IDACB01 SETB  1                         SET ERROR SWITCH       X04SVHS
+.R003700 ANOP                                                   X3004BS
+         AIF   ('&CALLER' EQ 'RPL').R003750                     X04SVHS
+.*   IF CALLED BY RPL BYPASS SETTING CBM GLOBAL
+&IDAVALC(&IDAENO) SETC '&DATA&CANCEL&QC&QEC&CHASE&RELQ&BID&RTR&LUS&SIGN*
+               AL&CSDT&CLEAR&STSN&SHUTD&RQR&RSHUTD&SHUTC&BIND&UNBIND&SB*
+               I&BIS.000&Z8'                                   @G40AKCM
+         AGO   .R003900
+.R003750 ANOP
+.*       AT THIS POINT EITHER CONTROL IS NOT SPECIFIED, OR IDACBRPL
+.*       HAS BEEN CALLED BY THE RPL DECLARATIVE MACRO
+         AIF   ('&CONTROL' NE '').R003775 IF CONTROL IS SPEC,   X04SVHS
+.*             THEN CALLER IS RPL, AND DECLARATIVE GLOBALS MUST BE SET
+         AIF   ('&CALLER' NE 'RPL').R003900 IF CONTROL IS NULL  X04SVHS
+.*             AND CALLER IS RPL, THEN VTAM DEFAULT VALUE MUST BE SET
+&DATA    SETB  1                        SET VTAM DEFAULT        X04SVHS
+.R003775 ANOP
+&IDACON1 SETC  '&DATA&CANCEL&QC&QEC&CHASE&RELQ.00'              X04SVHS
+&IDACON2 SETC  '&BID&RTR&LUS&SIGNAL&BIND&UNBIND&SBI&BIS'       @G40AKCM
+&IDACON3 SETC  '&CSDT&CLEAR&STSN&SHUTD&SHUTC&RQR.00'           @G40AKCM
+         AGO   .R003900
+.AMERR   MNOTE 8,'CONTROL IS INVALID UNLESS AM IS SPECIFIED'
+&IDACB01 SETB  1
+.**********************************************************************
+.*                                      OBSQAC
+.R003900 AIF   ('&OBSQAC' EQ '').R004050 *** OBSQAC ***
+         IDACB3 ARG=&OBSQAC,KWTC=X'6C',CHKAM=VTAM,AM=&AM,BIT=YES
+.*                                                              X04SVHS
+&SET     SETB  ('&OBSQAC' EQ 'SET' OR '&OBSQAC' EQ '(SET)')     X04SVHS
+&TESTSET SETB  ('&OBSQAC' EQ 'TESTSET' OR '&OBSQAC' EQ '(TESTSET)')
+.*                                                              X04SVHS
+&RESET   SETB  ('&OBSQAC' EQ 'RESET' OR '&OBSQAC' EQ '(RESET)') X04SVHS
+&IGNORE  SETB  ('&OBSQAC' EQ 'IGNORE' OR '&OBSQAC' EQ '(IGNORE)')
+.*                                                              X04SVHS
+&TESTPOS SETB  ('&OBSQAC' EQ 'TESTPOS' OR '&OBSQAC' EQ '(TESTPOS)')
+.*                                                              X04SVHS
+&TESTNEG SETB  ('&OBSQAC' EQ 'TESTNEG' OR '&OBSQAC' EQ '(TESTNEG)')
+.*                                                              X04SVHS
+&INVALID SETB  ('&OBSQAC' EQ 'INVALID' OR '&OBSQAC' EQ '(INVALID)')
+.*                                                              X04SVHS
+         AIF   (&SET+&TESTSET+&RESET+&IGNORE+&TESTPOS+&TESTNEG+&INVALID*
+                EQ 1).R003950
+.*             CHECK FOR VALID OPTION
+         IDAERMAC 5,OBSQAC,&OBSQAC(&I)                          X3004BS
+&IDACB01 SETB  1                    SET ERROR SWITCH            X3004BS
+.R003950 AIF   (N'&OBSQAC EQ 1).R004000  ONE OPTION IS ALLOWED
+         IDAERMAC 22,OBSQAC                                     X3004BS
+&IDACB01 SETB  1                    SET ERROR SWITCH            X04SVHS
+.R004000 ANOP                                                   X3004BS
+         AIF   ('&CALLER' EQ 'RPL').R004050                     X04SVHS
+.*             IF CALLED BY RPL BYPASS SETTING CBM GLOBAL
+&IDAVALC(&IDAENO) SETC '&SET&TESTSET&RESET&IGNORE&TESTPOS&TESTNEG&INVAL*
+               ID.000000000&Z16'
+         AGO   .R004100                                         X04SVHS
+.R004050 ANOP                                                   X04SVHS
+.*       AT THIS POINT, EITHER OBSQAC IS NOT SPECIFIED, OR IDACBRPL
+.*       HAS BEEN CALLED BY THE RPL DECLARATIVE MACRO
+         AIF   ('&OBSQAC' NE '').R004075 I FOBSQAC IS SPEC,     X04SVHS
+.*             THEN CALLER I SRPL, AND DECLARATIVE GLOBALS MUST BE SET
+         AIF   ('&CALLER' NE 'RPL').R004100                     X04SVHS
+.*             IF OBSQAC IS NULL, AND CALLER IS RPL, THEN DEFAULT
+.*             VALUE MUST BE SET
+&SET     SETB  1                        SET DEFAULT VALUE       X04SVHS
+.R004075 ANOP                                                   X04SVHS
+&IDAOBQC SETC  '&SET&TESTSET&RESET&IGNORE&TESTPOS&TESTNEG&INVALID.0'
+.*                                      SET OBSQAC CODES        X04SVHS
+.**********************************************************************
+.*                                      IBSQAC
+.R004100 AIF   ('&IBSQAC' EQ '').R004350 *** IBSQAC ***         X3004BS
+         IDACB3 ARG=&IBSQAC,KWTC=X'6D',CHKAM=VTAM,AM=&AM,BIT=YES
+.*                                                              X04SVHS
+&ISET    SETB  ('&IBSQAC' EQ 'SET' OR '&IBSQAC' EQ '(SET)')     X04SVHS
+&ITESTSE SETB  ('&IBSQAC' EQ 'TESTSET' OR '&IBSQAC' EQ '(TESTSET)')
+.*                                                              X04SVHS
+&IRESET  SETB  ('&IBSQAC' EQ 'RESET' OR '&IBSQAC' EQ '(RESET)') X04SVHS
+&IIGNORE SETB  ('&IBSQAC' EQ 'IGNORE' OR '&IBSQAC' EQ '(IGNORE)')
+.*                                                              X04SVHS
+&ITESTPO SETB  ('&IBSQAC' EQ 'TESTPOS' OR '&IBSQAC' EQ '(TESTPOS)')
+.*                                                              X04SVHS
+&ITESTNE SETB  ('&IBSQAC' EQ 'TESTNEG' OR '&IBSQAC' EQ '(TESTNEG)')
+.*                                                              X04SVHS
+&IINVALI SETB  ('&IBSQAC' EQ 'INVALID' OR '&IBSQAC' EQ '(INVALID)')
+.*                                                              X04SVHS
+         AIF   (&ISET+&ITESTSE+&IRESET+&IIGNORE+&ITESTPO+&ITESTNE+&IINV*
+               ALI EQ 1).R004200                                X04SVHS
+.*             CHECK FOR VALID OPTION
+         IDAERMAC 5,IBSQAC,&IBSQAC                              X3004BS
+&IDACB01 SETB  1                         SET ERROR SWITCH       X3004BS
+.R004200 AIF   (N'&IBSQAC EQ 1).R004300  ONLY ONE OPTION IS ALLOWED
+         IDAERMAC 22,IBSQAC                                     X3004BS
+&IDACB01 SETB  1                         SET ERROR SWITCH       X3004BS
+.R004300 ANOP                                                   X3004BS
+         AIF   ('&CALLER' EQ 'RPL').R004350                     X04SVHS
+.*             IF CALLED BY RPL BYPASS SETTING CBM GLOBAL
+&IDAVALC(&IDAENO) SETC '&ISET&ITESTSE&IRESET&IIGNORE&ITESTPO&ITESTNE&II*
+               NVALI.000000000&Z16'                             X04SVHS
+         AGO   .R004400                                         X04SVHS
+.R004350 ANOP                                                   X04SVHS
+.*       AT THIS POINT EITHER IBSQAC IS NOT SPECIFIED, OR IDACBRPL
+.*       HAS BEEN CALLED BY THE RPL DECLARATIVE MACRO
+         AIF   ('&IBSQAC' NE '').R004375 IF IBSQAC IS SPEC,     X04SVHS
+.*             THEN CALLER IS RPL AND DECLARATIVE GLOBALS MUST BE SET
+         AIF   ('&CALLER' NE 'RPL').R004400 IF CALLER IS RPL,   X04SVHS
+.*             THEN DEFAULT VALUE MUST BE SET                   X04SVHS
+&ISET    SETB  1                        SET DEFAULT VALUE       X04SVHS
+.R004375 ANOP                                                   X04SVHS
+&IDAIBQC SETC  '&ISET&ITESTSE&IRESET&IIGNORE&ITESTPO&ITESTNE&IINVALI.0'
+.*                                      SET IBSQAC CODES        X04SVHS
+.**********************************************************************
+.*                                      SSENSEO
+.R004400 AIF   ('&SSENSEO' EQ '').R004700 *** SSENSEO ***       X3004BS
+         AIF   ('&SSENSEO' EQ '0' OR '&SSENSEO' EQ '(0)').R004700
+.*                                                             @ZA42444
+         IDACB3 ARG=&SSENSEO,KWTC=X'71',CHKAM=VTAM,AM=&AM,BIT=YES
+.*                                                              X04SVHS
+&OCPM    SETB  ('&SSENSEO' EQ 'CPM' OR '&SSENSEO' EQ '(CPM)')   X04SVHS
+&OSTATE  SETB  ('&SSENSEO' EQ 'STATE' OR '&SSENSEO' EQ '(STATE)')
+.*                                                              X04SVHS
+&OFI     SETB  ('&SSENSEO' EQ 'FI' OR '&SSENSEO' EQ '(FI)')     X04SVHS
+&ORR     SETB  ('&SSENSEO' EQ 'RR' OR '&SSENSEO' EQ '(RR)')     X04SVHS
+         AIF   (&OCPM+&OSTATE+&OFI+&ORR EQ 1).R004500           X04SVHS
+.*                                      TEST FOR VALID OPTION SPEC
+         IDAERMAC 5,SSENSEO,&SSENSEO                            X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+.R004500 ANOP                                                  X03004HS
+         AIF   (N'&SSENSEO EQ 1).R004600                        X04SVHS
+         IDAERMAC 22,SSENSEO            ONLY ONE OPTION IS ALLOWED
+&IDACB01 SETB  1                        SET ERROR SWITCH       X03004HS
+.R004600 ANOP                                                  X03004HS
+         AIF   ('&CALLER' EQ 'RPL').R004650                     X04SVHS
+.*             IF CALLED BY RPL BYPASS SETTING CBM GLOBAL
+&IDAVALC(&IDAENO) SETC '&OCPM&OSTATE&OFI&ORR.000000000000&Z16' X03004HS
+         AGO   .R004700                                         X04SVHS
+.R004650 ANOP                                                   X04SVHS
+&IDASNSO SETC  '0&OCPM&OSTATE&OFI&ORR.000'                      X04SVHS
+.*                                      SET SSENSEO CODES       X04SVHS
+         AGO   .R005250                 WHEN CALLED BY RPL, PROCESS
+.*                                      BRANCH KEYWORD          X04SVHS
+.**********************************************************************
+.*                                      SSENSEI
+.R004700 AIF   ('&SSENSEI' EQ '').R005000 *** SSENSEI ***       X3004BS
+         IDACB3 ARG=&SSENSEI,KWTC=X'72',CHKAM=VTAM,AM=&AM,BIT=YES
+.*                                                              X04SVHS
+&IPATH   SETB  ('&SSENSEI' EQ 'PATH' OR '&SSENSEI' EQ '(PATH)') X04SVHS
+&ICPM    SETB  ('&SSENSEI' EQ 'CPM' OR '&SSENSEI' EQ '(CPM)')   X04SVHS
+&ISTATE  SETB  ('&SSENSEI' EQ 'STATE' OR '&SSENSEI' EQ '(STATE)')
+.*                                                              X04SVHS
+&IFI     SETB  ('&SSENSEI' EQ 'FI' OR '&SSENSEI' EQ '(FI)')     X04SVHS
+&IRR     SETB  ('&SSENSEI' EQ 'RR' OR '&SSENSEI' EQ '(RR)')     X04SVHS
+         AIF   (&IPATH+&ICPM+&ISTATE+&IFI+&IRR EQ 1).R004800
+.*                                      TEST FOR VALID OPTION SPEC
+         IDAERMAC 5,SSENSEI,&SSENSEI                            X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+.R004800 ANOP                                                  X03004HS
+         AIF   (N'&SSENSEI EQ 1).R004900 ONLY ONE OPTION IS ALLOWED
+         IDAERMAC 22,SSENSEI                                   X03004HS
+&IDACB01 SETB  1                        SET ERROR SWITCH       X03004HS
+.R004900 ANOP                                                   X04SVHS
+&IDAVALC(&IDAENO) SETC '&IPATH&ICPM&ISTATE&IFI&IRR.00000000000&Z16'
+.R005000 ANOP                                                  @Z40BHUC
+.**********************************************************************
+.*                                      SSENSMO
+         IDACB3 ARG=&SSENSMO,ARGNAME=SSENSMO,KWTC=X'86',MF=&MF,        *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      SSENSMI
+         IDACB3 ARG=&SSENSMI,ARGNAME=SSENSMI,KWTC=X'87',MF=&MF,        *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      SIGDATA
+         IDACB3 ARG=&SIGDATA,ARGNAME=SIGDATA,KWTC=X'88',MF=&MF,        *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      OBSQVAL
+         IDACB3 ARG=&OBSQVAL,ARGNAME=OBSQVAL,KWTC=X'6E',MF=&MF,        *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      IBSQVAL
+         IDACB3 ARG=&IBSQVAL,ARGNAME=IBSQVAL,KWTC=X'6F',MF=&MF,        *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      SEQNO
+         IDACB3 ARG=&SEQNO,ARGNAME=SEQNO,KWTC=X'70',MF=&MF,            *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      USENSEO
+         IDACB3 ARG=&USENSEO,ARGNAME=USENSEO,KWTC=X'73',MF=&MF,        *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      USENSEI
+         IDACB3 ARG=&USENSEI,ARGNAME=USENSEI,KWTC=X'74',MF=&MF,        *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      RECLEN
+         IDACB3 ARG=&RECLEN,ARGNAME=RECLEN,KWTC=X'35',MF=&MF    X04SVHS
+.**********************************************************************
+.*                                      AAREA
+         IDACB3 ARG=&AAREA,ARGNAME=AAREA,KWTC=X'57',MF=&MF,            *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      AAREALN
+         IDACB3 ARG=&AAREALN,ARGNAME=AAREALN,KWTC=X'49',MF=&MF,        *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      ARECLEN
+         IDACB3 ARG=&ARECLEN,ARGNAME=ARECLEN,KWTC=X'4A',MF=&MF,        *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      EXIT
+         IDACB3 ARG=&EXIT,ARGNAME=EXIT,KWTC=X'4B',MF=&MF,CHKAM=VTAM,   *
+               AM=&AM                                           X04SVHS
+.**********************************************************************
+.*                                      NIB
+         IDACB3 ARG=&NIB,ARGNAME=NIB,KWTC=X'4F',MF=&MF,CHKAM=VTAM,     *
+               AM=&AM                                           X04SVHS
+.**********************************************************************
+.*                                      BRANCH
+.R005250 ANOP                                                   X04SVHS
+         AIF   ('&BRANCH' EQ '').R005400 *** BRANCH ***          X03004
+         IDACB3 ARG=&BRANCH,KWTC=X'58',CHKAM=VTAM,AM=&AM,BIT=YES
+.*                                                              X04SVHS
+&BRYES   SETB  ('&BRANCH' EQ 'YES')
+&BRNO    SETB  ('&BRANCH' EQ 'NO')
+         AIF   (&BRYES OR &BRNO).R005300 TEST FOR VALID OPTION  X04SVHS
+         IDAERMAC 3,BRANCH,&BRANCH                               X03004
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R005300 ANOP
+         AIF   ('&CALLER' EQ 'RPL').R005350                     X04SVHS
+.*             IF CALLED BY RPL BYPASS SETTING CBM GLOBAL
+&IDAVALC(&IDAENO) SETC '&BRYES&BRNO.00000000000000&Z16'          X03004
+         AGO   .R005400                                        @G40AKSL
+.R005350 ANOP                                                   X04SVHS
+&IDABRCH SETC  '&BRYES'                 SET BRANCH CODE         X04SVHS
+.**********************************************************************
+.*                                      CRYPT                  @G40AKSL
+.R005400 ANOP                                                  @G40AKSL
+         AIF   ('&CRYPT' EQ '').R005440      ***CRYPT***       @G40AKSL
+         IDACB3 ARG=&CRYPT,KWTC=X'95',AM=&AM,CHKAM=VTAM,BIT=YES
+&CRYES   SETB  ('&CRYPT' EQ 'YES')                             @G40AKSL
+&CRNO    SETB  ('&CRYPT' EQ 'NO')                              @G40AKSL
+         AIF   (&CRYES OR &CRNO).R005425    TEST FOR VALID OPTION
+         IDAERMAC 3,CRYPT,&CRYPT                               @G40AKSL
+&IDACB01 SETB  1                                               @G40AKSL
+.R005425 ANOP                                                  @G40AKSL
+         AIF   ('&CALLER' EQ 'RPL').R005430                    @G40AKSL
+.*             IF CALLED BY RPL BYPASS SETTING CBM GLOBAL      @G40AKSL
+&IDAVALC(&IDAENO) SETC '&CRYES&CRNO.00000000000000&Z16'        @G40AKSL
+         AGO   .R005440                                        @G40AKSL
+.R005430 ANOP                                                  @G40AKSL
+&IDACRYP SETC  '&CRYES'   SET CRYPT CODE                       @G40AKSL
+.**********************************************************************
+.R005440 AIF   ('&CALLER' NE 'RPL').R005450                     X04SVHS
+.*             IF CALLER IS RPL, ALL KEYWORDS HAVE BEEN PROCESSED
+         MEXIT                                                  X04SVHS
+.*
+.* TEST FOR INCOMPATIBLE VTAM KEYWORDS                           X03004
+.R005450 AIF ('&ARG' EQ '' OR '&NIB' EQ '').R005500              X03004
+         IDAERMAC 19,ARG,NIB                                     X03004
+&IDACB01 SETB  1                                                 X03004
+.R005500 AIF ('&ECB' EQ '' OR '&EXIT' EQ '').R006100             X03004
+         IDAERMAC 19,ECB,EXIT                                    X03004
+&IDACB01 SETB  1                                                 X03004
+.R006100 AIF ('&RBA' EQ '' OR '&SEQNO' EQ '').R006200           X3004BS
+         IDAERMAC 19,RBA,SEQNO                                  X3004BS
+&IDACB01 SETB  1                                                X3004BS
+.R006200 AIF ('&KEYLEN' EQ '' OR '&CHNGDIR' EQ '').R006300      X3004BS
+         IDAERMAC 19,KEYLEN,CHNGDIR                             X3004BS
+&IDACB01 SETB  1                                                X3004BS
+.R006300 AIF ('&KEYLEN' EQ '' OR '&STYPE' EQ '').R006400        X3004BS
+         IDAERMAC 19,KEYLEN,STYPE                               X3004BS
+&IDACB01 SETB  1                                                X3004BS
+.R006400 AIF ('&KEYLEN' EQ '' OR '&RTYPE' EQ '').R006450        X04SVHS
+         IDAERMAC 19,KEYLEN,RTYPE                               X3004BS
+&IDACB01 SETB  1                                                X3004BS
+.R006450 AIF   ('&KEYLEN' EQ '' OR '&BRACKET' EQ '').R006500    X04SVHS
+         IDAERMAC 19,KEYLEN,BRACKET                             X04SVHS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R006500 ANOP                                                   X04SVHS
+.**********************************************************************
+.*                                      TRANSID
+         IDACB3 ARG=&TRANSID,ARGNAME=TRANSID,KWTC=X'5F',MF=&MF  X04SVHS
+.**********************************************************************
+.*                                      AM
+         AIF   ('&AM' EQ '' OR '&CALLER' NE 'GEN').R006700      X04SVHS
+.*             ARGUMENT CONTROL ENTRY IS ONLY BUILT FOR GENCB FOR AM
+&VSAM    SETB  ('&AM' EQ 'VSAM')        CHK FOR AM=VSAM         X04SVHS
+&VTAM    SETB  ('&AM' EQ 'VTAM')        CHK FOR AM=VTAM         X04SVHS
+         AIF   (&VSAM OR &VTAM).R006600
+.*             IF NOT VSAM OR VTAM, ERROR
+         IDAERMAC 5,AM,&AM                                      X04SVHS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R006600 ANOP                                                   X04SVHS
+         IDACB3 ARG=&AM,KWTC=X'40',BIT=YES                      X04SVHS
+&IDAVALC(&IDAENO) SETC '&VSAM&VTAM.00000000000000&Z16'
+.**********************************************************************
+.R006700 ANOP                                                   X04SVHS
+         AIF   ('&CALLER' EQ 'GEN' OR '&CALLER' EQ 'MOD').R007500
+.*                                                              X04SVHS
+.*             THE FOLLOWING KEYWORDS ARE VALID ONLY FOR TESTCB
+.*
+.**********************************************************************
+.*                                      IO
+         AIF   ('&IO' EQ '').R006900   *** IO ***
+         IDACB3 ARG=&IO,ARGNAME=IO,KWTC=X'36',MF=&MF,INDRECT=YES,      *
+               BIT=YES                                          X04SVHS
+         AIF   ('&IO(1)' EQ '*').R006900
+.*       IF INDIRECT ADDRESS WAS SPECIFIED, THE VALUE ARRAY(&IDAVALC)
+.*       WAS SET IN IDACB3
+&COMPLET SETB  ('&IO' EQ 'COMPLETE')                            X04SVHS
+         AIF   (&COMPLET).R006800       CHK FOR CORRECT OPTION  X04SVHS
+         IDAERMAC 3,IO,&IO
+&IDACB01 SETB  1                        SET ERROR SWITCH
+.R006800 ANOP
+&IDAVALC(&IDAENO) SETC '&COMPLET.000000000000000&Z16'           X04SVHS
+.**********************************************************************
+.R006900 ANOP
+.*                                      FDBK
+         IDACB3 ARG=&FDBK,ARGNAME=FDBK,KWTC=X'38',MF=&MF        X04SVHS
+.**********************************************************************
+.*                                      RBA
+         IDACB3 ARG=&RBA,ARGNAME=RBA,KWTC=X'39',MF=&MF          X04SVHS
+.**********************************************************************
+.*                                      AIXPC
+         IDACB3 ARG=&AIXPC,ARGNAME=AIXPC,KWTC=X'3A',MF=&MF      X04SVHS
+.**********************************************************************
+         AIF   ('&AIXFLAG' EQ '').R007100 ** AIXFLAG ***        X04SVHS
+&PRIME   SETB  ('&AIXFLAG' EQ 'AIXPKP')                        @XM07772
+         AIF   (&PRIME).R007000                                @XM07772
+.*                                      CHK FOR VALID OPTION SPEC
+         IDAERMAC 5,AIXFLAG,&AIXFLAG                            X04SVHS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.R007000 ANOP                                                   X04SVHS
+         IDACB3 ARG=&AIXFLAG,KWTC=X'3B',BIT=YES                 X04SVHS
+&IDAVALC(&IDAENO) SETC '&PRIME.000000000000000&Z16'            @XM07772
+.**********************************************************************
+.R007100 ANOP                                                   X04SVHS
+.*                                      USER
+         IDACB3 ARG=&USER,ARGNAME=USER,KWTC=X'4E',MF=&MF,              *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      RTNCD
+         IDACB3 ARG=&RTNCD,ARGNAME=RTNCD,KWTC=X'5E',MF=&MF      X04SVHS
+.**********************************************************************
+.*                                      FDBK2
+         IDACB3 ARG=&FDBK2,ARGNAME=FDBK2,KWTC=X'60',MF=&MF      X04SVHS
+.**********************************************************************
+.*                                      SENSE
+         IDACB3 ARG=&SENSE,ARGNAME=SENSE,KWTC=X'61',MF=&MF,            *
+               CHKAM=VTAM,AM=&AM                                X04SVHS
+.**********************************************************************
+.*                                      REQ
+         IDACB3 ARG=&REQ,ARGNAME=REQ,KWTC=X'62',MF=&MF          X04SVHS
+.**********************************************************************
+.*                                      DATAFLG
+         AIF   ('&DATAFLG' EQ '').R007400 *** DATAFLG ***       X04SVHS
+         IDACB3 ARG=&DATAFLG,KWTC=X'5D',CHKAM=VTAM,AM=&AM,BIT=YES
+.*                                                              X04SVHS
+&I       SETA  0                                                 X03004
+&A       SETA  0                        ZERO ERROR COUNTER      X04SVHS
+.R007200 ANOP                                                    X03004
+&I       SETA  &I+1                     BUMP INDEX INTO LIST     X03004
+         AIF   (&I GT N'&DATAFLG).R007300 CHECK FOR END OF LIST  X03004
+&UNSOL   SETB  ('&DATAFLG(&I)' EQ 'UNSOL' OR &UNSOL)             X03004
+&EOB     SETB  ('&DATAFLG(&I)' EQ 'EOB' OR &EOB)                 X03004
+&EOM     SETB  ('&DATAFLG(&I)' EQ 'EOM' OR &EOM)                 X03004
+&EOT     SETB  ('&DATAFLG(&I)' EQ 'EOT' OR &EOT)                 X03004
+&LOGOFF  SETB  ('&DATAFLG(&I)' EQ 'LOGOFF' OR &LOGOFF)           X03004
+&LG      SETB  ('&DATAFLG(&I)' EQ 'LG' OR &LG)                   X03004
+&SOH     SETB  ('&DATAFLG(&I)' EQ 'SOH' OR &SOH)                 X03004
+         AIF   (&UNSOL+&EOB+&EOM+&EOT+&LOGOFF+&LG+&SOH+&A EQ &I).R00720*
+               0                                                X04SVHS
+                                        TEST FOR VALID OPTION SPEC
+         IDAERMAC 5,DATAFLG,&DATAFLG(&I)                         X03004
+&IDACB01 SETB  1                        SET ERROR SWITCH         X03004
+&A       SETA  &A+1                     BUMP ERROR COUNTER      X04SVHS
+         AGO   .R007200                                          X03004
+.R007300 ANOP                                                    X03004
+&IDAVALC(&IDAENO) SETC '&UNSOL&EOB&EOM&EOT&LOGOFF&LG&SOH.000000000&Z16'
+.*                                                              X04SVHS
+.**********************************************************************
+.R007400 ANOP                                                   X04SVHS
+.*                                      FTNCD
+         IDACB3 ARG=&FTNCD,ARGNAME=FTNCD,KWTC=X'63',MF=&MF
+.**********************************************************************
+.R007500 ANOP
+         MEND

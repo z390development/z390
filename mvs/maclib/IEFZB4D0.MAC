@@ -1,0 +1,260 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO S99PLS1;               /*
+         MACRO
+         IEFZB4D0
+**/
+*%S99PLS1: ;
+* /*******************************************************************/
+* /*                         IEFZB4D0                                */
+* /* MACMEAN IEFZB4D0 MAPS DYNAMIC ALLOCATION (SVC 99) PARAMETER LIST*/
+* /* MACCOMP Y-2 SC1B4/PZD82                                         */
+* /* MACSTAT Y-2 82320/OZ63125                               @ZA63125*/
+* /*                                                                 */
+* /* THE PARAMETER LIST CONSISTS OF:                                 */
+* /*                                                                 */
+* /* 1) A REQUEST BLOCK POINTER. THIS IS A FULLWORD CONTAINING THE   */
+* /*    ADDRESS OF THE DYNAMIC ALLOCATION REQUEST BLOCK. THE HIGH-   */
+* /*    ORDER BIT MUST BE ON. THIS WORD MUST BE LOCATED BY REG. ONE. */
+* /*                                                                 */
+* /* 2) A REQUEST BLOCK. THIS BLOCK IS LOCATED BY THE REQUEST BLOCK  */
+* /*    POINTER AND CONTAINS:                                        */
+* /*    . A ONE BYTE FIELD CONTAINING THE LENGTH OF THIS REQUEST     */
+* /*      BLOCK. THE LENGTH IS IN BINARY AND HAS A VALUE OF 20.      */
+* /*    . A ONE BYTE FIELD CONTAINING A VERB CODE CORRESPONDING TO A */
+* /*      DYNAMIC ALLOCATION FUNCTION. MNEMONIC NAMES FOR THE VERB   */
+* /*      CODES ARE CONTAINED IN THIS MACRO.                         */
+* /*    . TWO BYTES OF FLAGS.                                        */
+* /*    . TWO BYTES IN WHICH DYNAMIC ALLOCATION WILL RETURN AN ERROR */
+* /*      REASON CODE.                                               */
+* /*    . TWO BYTES IN WHICH DYNAMIC ALLOCATION WILL RETURN AN       */
+* /*      INFORMATIONAL REASON CODE.                                 */
+* /*    . A FULLWORD CONTAINING THE ADDRESS OF A LIST OF POINTERS TO */
+* /*      TEXT UNITS.                                                */
+* /*    . FOUR RESERVED BYTES OF BINARY ZEROES.                      */
+* /*    . FOUR BYTES OF FLAGS FOR AUTHORIZED FUNCTIONS.              */
+* /*                                                                 */
+* /* 3) A LIST OF FULLWORDS CONTAINING THE ADDRESSES OF TEXT UNITS.  */
+* /*    A WORD WITH A VALUE OF ZERO IS IGNORED. THE LAST WORD IN THE */
+* /*    LIST MUST HAVE THE HIGH ORDER BIT ON.                        */
+* /*                                                                 */
+* /* 4) TEXT UNITS. A TEXT UNIT CONSISTS OF:                         */
+* /*    . A TWO BYTE FIELD CONTAINING A KEY WHICH IDENTIFIES THE     */
+* /*      INFORMATION IN THIS TEXT UNIT. A TEXT UNIT HAVING A KEY    */
+* /*      WITH A VALUE OF ZERO IS IGNORED. THE MACRO IEFZB4D2 LISTS  */
+* /*      MNEMONIC NAMES FOR THE VALUES OF THE KEYS.                 */
+* /*    . A TWO BYTE FIELD WHICH CONTAINS THE NUMBER OF LENGTH/PARA- */
+* /*      METER ENTRIES WHICH FOLLOW. A VALUE OF ZERO INDICATES NO   */
+* /*      ENTRIES FOLLOW.                                            */
+* /*    . A TWO BYTE FIELD WHICH CONTAINS THE LENGTH OF THE IMMED-   */
+* /*      IATELY FOLLOWING PARAMETER.                                */
+* /*    . A PARAMETER.                                               */
+* /*                                                                 */
+* /*******************************************************************/
+*        %GOTO S99PLS2;                /*
+***********************************************************************
+*                SVC 99 INPUT REQUEST BLOCK
+***********************************************************************
+S99RBP   DSECT
+S99RBPTR DS     F                      REQUEST BLOCK POINTER
+S99RBPND EQU    X'80'                  LAST POINTER INDICATOR
+S99RB    DSECT                         REQUEST BLOCK
+         DS     0F
+S99RBLN  DS     CL1                    LENGTH OF REQUEST BLOCK
+S99VERB  DS     CL1                    VERB CODE
+S99VRBAL EQU    X'01'                  ALLOCATION
+S99VRBUN EQU    X'02'                  UNALLOCATION
+S99VRBCC EQU    X'03'                  CONCATENATION
+S99VRBDC EQU    X'04'                  DECONCATENATION
+S99VRBRI EQU    X'05'                  REMOVE IN-USE
+S99VRBDN EQU    X'06'                  DDNAME ALLOCATION
+S99VRBIN EQU    X'07'                  INFORMATION RETRIEVAL
+S99FLAG1 DS     0CL2                   FLAGS
+S99FLG11 DS     CL1                    FIRST FLAGS BYTE
+S99ONCNV EQU    X'80'                  ALLOC FUNCTION-DO NOT USE AN
+*                                      EXISTING ALLOCATION THAT DOES
+*                                      NOT HAVE THE CONVERTIBLE
+*                                      ATTRIBUTE TO SATISFY A REQUEST
+S99NOCNV EQU    X'40'                  ALLOC FUNCTION-DO NOT USE AN
+*                                      EXISTING ALLOCATION TO SATISFY
+*                                      THE REQUEST
+S99NOMNT EQU    X'20'                  ALLOC FUNCTION-DO NOT MOUNT
+*                                      VOLUMES OR CONSIDER OFFLINE
+*                                      UNITS (THIS FLAG OVERRIDES
+*                                      S99MOUNT AND S99OFFLN BELOW)
+S99JBSYS EQU    X'10'                  ALLOC FUNC-JOB RELATED SYSOUT
+S99CNENQ EQU    X'08'                  ALL FUNCTIONS-ISSUE A   @ZA32641
+*                                      CONDITIONAL ENQ ON TIOT @ZA32641
+*                                      RESOURCE. IF NOT        @ZA32641
+*                                      AVAILABLE, RETURN AN    @ZA32641
+*                                      ERROR CODE TO USER.     @ZA32641
+S99FLG12 DS     CL1                    SECOND BYTE OF FLAGS
+S99RSC   DS     0CL4                   REASON CODE FIELDS
+S99ERROR DS     XL2                    ERROR REASON CODE
+S99INFO  DS     XL2                    INFORMATION REASON CODE
+S99TXTPP DS     F                      ADDR OF LIST OF TEXT UNIT PTRS
+S99RSV01 DS     F                      RESERVED
+S99FLAG2 DS     0CL4                   FLAGS FOR AUTHORIZED FUNCTIONS
+S99FLG21 DS     CL1                    FIRST BYTE OF FLAGS
+S99WTVOL EQU    X'80'                  ALLOC FUNCTION-WAIT FOR
+*                                      VOLUMES
+S99WTDSN EQU    X'40'                  ALLOC FUNCTION-WAIT FOR DSNAME
+S99NORES EQU    X'20'                  ALLOC FUNCTION-DO NOT DO
+*                                      DATA SET RESERVATION
+S99WTUNT EQU    X'10'                  ALLOC FUNCTION-WAIT FOR UNITS
+S99OFFLN EQU    X'08'                  ALLOC FUNCTION-CONSIDER OFFLINE
+*                                      UNITS
+S99TIONQ EQU    X'04'                  ALL FUNCTIONS-TIOT ENQ ALREADY
+*                                      DONE
+S99CATLG EQU    X'02'                  ALLOC FUNCTION-SET SPECIAL
+*                                      CATALOG DATA SET INDICATORS
+S99MOUNT EQU    X'01'                  ALLOC FUNCTION-MAY MOUNT VOLUME
+S99FLG22 DS     CL1                    SECOND BYTE OF FLAGS
+S99UDEVT EQU    X'80'                  ALLOCATION FUNCTION-UNIT NAME
+*                                      PARM IS A DEVICE TYPE
+S99PCINT EQU    X'40'                  ALLOC FUNCTION-ALLOC    @Y30QPPB
+*                                      PRIVATE CATALOG TO      @Y30QPPB
+*                                      INITIATOR               @Y30QPPB
+S99DYNDI EQU    X'20'                  ALLOC FUNCTION-NO JES3  @ZA63125
+*                                      DSN INTEGRITY PROCESS   @ZA63125
+S99FLG23 DS     CL1                    THIRD BYTE OF FLAGS
+S99FLG24 DS     CL1                    FOURTH BYTE OF FLAGS
+S99RBEND EQU    *                      END MARKER
+***********************************************************************
+* SVC 99 TEXT UNIT POINTER LIST
+***********************************************************************
+S99TUPL  DSECT                         TEXT UNIT POINTER LIST
+S99TUPTR DS     F                      TEXT UNIT POINTER
+S99TUPLN EQU    X'80'                  LAST TEXT UNIT POINTER IN LIST
+***********************************************************************
+* SVC 99 TEXT UNIT
+***********************************************************************
+S99TUNIT DSECT                         TEXT UNIT
+S99TUKEY DS     XL2                    KEY
+S99TUNUM DS     XL2                    N0. OF LENGTH+PARAMETER ENTRIES
+S99TUENT DS     0C                     ENTRY OF LENGTH+PARAMETER
+S99TULNG DS     XL2                    LENGH OF 1ST (OR ONLY) PARAMETER
+S99TUPAR DS     C                      1ST (OR ONLY) PARAMETER
+* THE FOLLOWING DSECT IS PROVIDED FOR USE WITH MULTIPLE
+* LENGTH/PARAMETER ENTRIES TO ALLOW ZERO DISPLACEMENT TO THE
+* LENGTH FIELD
+S99TUFLD DSECT
+S99TULEN DS     XL2                    LENGTH OF PARAMETER
+S99TUPRM DS     C                      PARAMETER
+         MEND   , */
+*%S99PLS2:  ;
+* /*******************************************************************/
+* /*                     N O T E                                     */
+* /*                                                                 */
+* /* THE REQUEST BLOCK, S99RB, AND THE REQUEST BLOCK POINTER,        */
+* /* S99RBPTR, DEFAULT TO NON-BASED STRUCTURES.                      */
+* /* TO GIVE S99RBPTR A BASED ATTRIBUTE, CODE:                       */
+* /*            %S99BASE1 = 'BASED';                                 */
+* /* TO GIVE S99RB A BASED ATTRIBUTE, CODE:                          */
+* /*            %S99BASE2 = 'BASED'; OR                              */
+* /*            %S99BASE2 = 'BASED(S99RBPTR)';                       */
+* /*                                                                 */
+* /* SVC 99 INPUT REQUEST BLOCK                                      */
+* /*******************************************************************/
+*  %IF S99BASE1 = '' %THEN %S99BASE1 = ' '; /* DEFAULT IF NOT SET    */
+*  %IF S99BASE2 = '' %THEN %S99BASE2 = ' ';
+* DCL
+*   1 S99RBPTR PTR(31) S99BASE1,       /* POINTER TO REQUEST BLOCK   */
+*     2 S99RBPND BIT(1);               /* LAST POINTER INDICATOR     */
+* DCL
+*   1 S99RB S99BASE2,                  /* REQUEST BLOCK              */
+*     2 S99RBLN CHAR(1),               /* LENGTH OF REQUEST BLOCK    */
+*     2 S99VERB CHAR(1),               /* VERB CODE                  */
+*     2 S99FLAG1 CHAR(2),              /* FLAGS                      */
+*       3 S99FLG11 CHAR(1),            /* FIRST BYTE OF FLAGS        */
+*         4 S99ONCNV BIT(1),           /* ALLOC FUNCTION-DON'T USE
+*                                         AN EXISTING ALLOCATION THAT
+*                                         DOES NOT HAVE THE CON-
+*                                         VERTIBLE ATTRIBUTE TO
+*                                         SATISFY THE REQUEST        */
+*         4 S99NOCNV BIT(1),           /* ALLOC FUNCTION-DON'T USE AN
+*                                         EXISTING ALLOCATION TO
+*                                         SATISFY THE REQUEST        */
+*         4 S99NOMNT BIT(1),           /* ALLOC FUNCTION-DO NOT MOUNT
+*                                         VOLUMES OR CONSIDER OFFLINE
+*                                         UNITS - THIS FLAG OVERRIDES
+*                                         S99MOUNT AND S99OFFLN BELOW*/
+*         4 S99JBSYS BIT(1),           /* ALLOC FUNC-JOB RELATED
+*                                         SYSOUT             @ZA63446*/
+*         4 S99CNENQ BIT(1),           /* ALL FUNCTIONS-ISSUE A
+*                                         CONDITIONAL ENQ ON THE TIOT
+*                                         RESOURCE. IF NOT AVAILABLE,
+*                                         RETURN AN ERROR CODE TO
+*                                         THE USER.          @ZA32641*/
+*       3 S99FLG12 CHAR(1),            /* SECOND BYTE OF FLAGS       */
+*     2 S99RSC CHAR(4),                /* REASON CODE FIELDS         */
+*       3 S99ERROR CHAR(2),            /* ERROR REASON CODE          */
+*       3 S99INFO CHAR(2),             /* INFORMATION REASON CODE    */
+*     2 S99TXTPP PTR(31),              /* ADDR OF LIST OF TEXT UNIT
+*                                         POINTERS                   */
+*     2 S99RSV01 FIXED(31),            /* RESERVED                   */
+*     2 S99FLAG2 CHAR(4),              /* FLAGS FOR AUTH. FUNCTIONS  */
+*       3 S99FLG21 CHAR(1),            /* FIRST BYTE OF FLAGS        */
+*         4 S99WTVOL BIT(1),           /* ALLOC FUNCTION-WAIT FOR
+*                                         VOLUMES                    */
+*         4 S99WTDSN BIT(1),           /* ALLOC FUNCTION-WAIT FOR
+*                                         DSNAME                     */
+*         4 S99NORES BIT(1),           /* ALLOC FUNCTION- DON'T DO
+*                                         DATA SET RESERVATION       */
+*         4 S99WTUNT BIT(1),           /* ALLOC FUNCTION-WAIT FOR
+*                                         UNITS                      */
+*         4 S99OFFLN BIT(1),           /* ALLOC FUNCTION-CONSIDER
+*                                         OFFLINE UNITS              */
+*         4 S99TIONQ BIT(1),           /* ALL FUNCTIONS-TIOT ENQ
+*                                         ALREADY DONE               */
+*         4 S99CATLG BIT(1),           /* ALLOC FUNCTION-SET SPECIAL
+*                                         CATALOG DATA SET INDICATORS*/
+*         4 S99MOUNT BIT(1),           /* ALLOC FUNCTION - MAY
+*                                         MOUNT VOLUMES              */
+*       3 S99FLG22 CHAR(1),            /* SECOND BYTE OF FLAGS       */
+*         4 S99UDEVT BIT(1),           /* ALLOC FUNCTION-UNIT NAME
+*                                         PARM IS A DEVICE TYPE      */
+*         4 S99PCINT BIT(1),           /* ALLOC FUNCTION-ALLOC
+*                                         PRIVATE CATALOG TO
+*                                         INITIATOR          @Y30QPPB*/
+*         4 S99DYNDI BIT(1),           /* ALLOC FUNCTION-NO JES3
+*                                         DSN INTEGRITY PROCESSING
+*                                                            @ZA63125*/
+*       3 S99FLG23 CHAR(1),            /* THIRD BYTE OF FLAGS        */
+*       3 S99FLG24 CHAR(1);            /* FOURTH BYTE OF FLAGS       */
+* DCL                                  /* VERB FUNCTION CODES        */
+*   S99VRBAL BIT(8) CONSTANT('01'X),   /* ALLOCATION                 */
+*   S99VRBUN BIT(8) CONSTANT('02'X),   /* UNALLOCATION               */
+*   S99VRBCC BIT(8) CONSTANT('03'X),   /* CONCATENATION              */
+*   S99VRBDC BIT(8) CONSTANT('04'X),   /* DECONCATENATION            */
+*   S99VRBRI BIT(8) CONSTANT('05'X),   /* REMOVE IN-USE              */
+*   S99VRBDN BIT(8) CONSTANT('06'X),   /* DDNAME ALLOCATION          */
+*   S99VRBIN BIT(8) CONSTANT('07'X);   /* INFORMATION RETRIEVAL      */
+* /*******************************************************************/
+* /* SVC 99 TEXT UNIT POINTER LIST                                   */
+* /*******************************************************************/
+* DCL
+*   1 S99TUPL  (*) BASED(S99TXTPP),    /* TEXT UNIT POINTER LIST     */
+*     2 S99TUPTR PTR(31),              /* TEXT UNIT POINTER          */
+*       3 S99TUPLN BIT(1);             /* ON FOR LAST TEXT UNIT PTR  */
+* DCL
+*   1 S99TUP PTR(31) BASED,            /* ONE ELEMENT IN TEXT UNIT
+*                                         POINTER LIST               */
+*     2 S99TUPND BIT(1);               /* ON WHEN THIS IS LAST TEXT
+*                                         UNIT POINTER               */
+* /*******************************************************************/
+* /* SVC 99 TEXT UNIT                                                */
+* /*******************************************************************/
+* DCL
+*   1 S99TUNIT BASED(S99TUP),          /* TEXT UNIT                  */
+*     2 S99TUKEY CHAR(2),              /* KEY                        */
+*     2 S99TUNUM FIXED(15) BDY(BYTE),  /* NO. OF LENGTH+PARM ENTRIES */
+*     2 S99TUENT,                      /* TEXT ENTRY OF LENGTH+PARM  */
+*       3 S99TULNG FIXED(15) BDY(BYTE), /* LENGTH OF 1ST (ONLY) PARM */
+*       3 S99TUPAR CHAR(*);            /* 1ST (OR ONLY) PARAMETER    */
+* /* THE FOLLOWING DECLARE IS PROVIDED FOR USE WITH MULTIPLE         */
+* /* LENGTH/PARAMETER ENTRIES TO ALLOW ZERO DISPLACEMENT TO THE      */
+* /* LENGTH FIELD                                                    */
+* DCL
+*   1 S99TUFLD BASED(S99TUFP),         /* TEXT ENTRY OF LENGTH+PARM  */
+*     2 S99TULEN FIXED(15) BDY(BYTE),  /* LENGTH OF FOLLOWING PARM   */
+*     2 S99TUPRM CHAR(*);              /* PARAMETER                  */

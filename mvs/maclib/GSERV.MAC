@@ -1,0 +1,31 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GSERV &DCBLST,&BIT
+         LCLC  &C0
+&C0      SETC  '&DCBLST'
+         AIF   (N'&SYSLIST GT 2).ERR
+         AIF   ('&C0' EQ '(1)').REG
+         AIF   (T'&DCBLST EQ 'O').ERR
+         AIF   (T'&BIT EQ 'O').ERR
+&C0      SETC  '&BIT'
+         AIF   ('&C0' EQ '1').OK
+         AIF   ('&C0' EQ '2').OK
+         AIF   ('&C0' EQ '3').OK
+         AGO   .ERR
+.OK      ANOP
+&NAME    L     1,D&SYSNDX              LOAD PARAMETER
+         SVC   70
+         B     D&SYSNDX+4
+         DS    0F
+D&SYSNDX DC    X'0&BIT'
+         DC    AL3(&DCBLST)
+         AGO   .END
+.REG     ANOP
+&NAME    SVC   70
+         AGO   .END
+.ERR     ANOP
+         IHBERMAC 171
+         MEXIT
+.END     ANOP
+         MEND
+

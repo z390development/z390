@@ -1,0 +1,23 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*  %     /*
+         MACRO
+&NAME    PGOUT &FORM,&LA=,&A=,&EA=,&ECB=,&KEEPREL=
+&NAME IHBPSINR &FORM,TYPE=OUT,LA=&LA,A=&A,EA=&EA,                      X
+               KEEPREL=&KEEPREL
+         MEND
+**/
+*   PGOUT: MACRO
+*      KEYS(A,                     /* VIRTUAL ADDR OF PAGE TO BE PAGED
+*                                     OUT- R FORM ONLY               */
+*         LA,                      /* ADDR OF FIRST ENTRY OF A VIRTUAL
+*                                     SUBAREA LIST(L FORM ONLY       */
+*         EA,                      /* END ADDR+1 OF A VIRTUAL AREA TO
+*                                     BE FIXED                       */
+*         KEEPREAL,                /* KEEPREAL(Y)-VIRTUAL PAGES NOT
+*                                     TO BE INVALIDATED
+*                                     KEEPREAL(N)-VIR PAGE WILL BE
+*                                     MARKED INVALID                 */
+*         RTCD);                   /* RETURN CODE FROM SVC           */
+*      ANS('?'||MACLABEL||'PGOUTP '||MACLIST||MACKEYS||';');
+*%END;
+

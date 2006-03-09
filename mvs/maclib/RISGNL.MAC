@@ -1,0 +1,60 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    RISGNL &FUNCTON,&CPU=,&EP=,&PARM=
+         GBLC  &MESSAGE
+         GBLC  &TYPE
+         AIF   ('&FUNCTON' NE '').PARLEL
+         IHBERMAC 24
+         MEXIT
+.PARLEL  AIF   ('&FUNCTON' NE 'PARALLEL').SERIAL
+&NAME    LA    0,128(0,0)              LOADS X'80', PARALLEL INDICATOR
+         SLL   0,24(0)                 AND SHIFTS INTO HIGH ORDER BYTE
+         AGO   .PCCAADR
+.SERIAL  AIF   ('&FUNCTON' NE 'SERIAL').ERR1
+&NAME    LA    0,64(0,0)               LOADS X'40', SERIAL INDICATOR
+         SLL   0,24(0)                 AND SHIFTS INTO HIGH ORDER BYTE
+         AGO   .PCCAADR
+.ERR1    ANOP
+         IHBERMAC 1001,FUNCTION,&FUNCTON
+         MEXIT
+.PCCAADR AIF   ('&CPU' EQ '(1)').EPADDR1
+         AIF   ('&CPU' NE '').EPADDR
+         IHBERMAC 1006,CPU
+         MEXIT
+.EPADDR  ANOP
+         AIF   ('&CPU'(1,1) EQ '(').ERREG1
+         LA    1,&CPU                  PHYSICAL CCA ADDRESS
+.EPADDR1 ANOP
+         AIF   ('&EP' EQ '(12)').PARMAD1
+         AIF   ('&EP' NE '').PARMADR
+         IHBERMAC 1006,EP
+         MEXIT
+.PARMADR ANOP
+         AIF   ('&EP'(1,1) EQ '(').ERREG2
+         LA    12,&EP                  RECEIVING RTNS ENTRY POINT
+.PARMAD1 ANOP
+         AIF   ('&PARM' EQ '(11)').MNLCDE
+         AIF   ('&PARM' NE '').LACDE
+         LA    11,0(0,0)
+         AGO   .MNLCDE
+.ERREG1  ANOP
+&TYPE    SETC  'CPU'
+         AGO   .ERREG
+.ERREG2  ANOP
+&TYPE    SETC  'EP'
+         AGO   .ERREG
+.ERREG3  ANOP
+&TYPE    SETC  'PARM'
+.ERREG   ANOP
+.*       IHB280 REGISTER NOTATION INVALID WITH XXX
+&MESSAGE SETC  'REGISTER NOTATION'
+         IHBERMAC 1020,&MESSAGE,&TYPE
+         MEXIT
+.LACDE   ANOP
+         AIF   ('&PARM'(1,1) EQ '(').ERREG3
+         L     11,&PARM       PARAMETER
+.MNLCDE  ANOP
+         L     14,CVTPTR(0,0)          CVT ADDRESS
+         L     15,CVTIPCRI-CVT(0,14)   IEAVERI ENTRY POINT ADDRESS
+         BALR  14,15
+         MEND

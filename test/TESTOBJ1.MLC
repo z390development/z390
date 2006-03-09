@@ -1,0 +1,22 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTOBJ1 SUBENTRY                   CST/SD TYPE ESD
+         WTO 'TEST OBJHEX OPTION SHOWING ALL TYPES OF OBJ RCDS'
+         CALL TESTSUB1              EXT/ER TYPE ESD
+         WXTRN TESTSUB2             WXT/WX TYPE ESD
+         L    15,=A(TESTSUB2)
+         BALR 14,15
+         ENTRY MYSUB                ENT/LD TYPE ESD
+         L    15,=A(MYSUB)
+         BALR 14,15
+         WTO  'TESTEXT1 ENDED OK'
+         SUBEXIT
+MYSUB    EQU  *
+         WTO  'HELLO FROM MYSUB'
+         BR   14
+         END

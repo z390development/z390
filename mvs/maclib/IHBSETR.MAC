@@ -1,0 +1,11 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IHBSETR  &ADDRESS,&REG
+         AIF   ('&ADDRESS'(1,1) EQ '(').REG  IS ADDRESS A REGISTER
+         LA    &REG,&ADDRESS                 ADDR OF PARAM IN REG
+         AGO   .DONE                         DONE, GO RETURN TO CALLER
+.REG     ANOP                                REGISTER ADDRESS
+         LA    &REG,0(&ADDRESS,0)     ADDR IN SPECIFIED REGISTER YM1995
+.DONE    MEXIT
+         MEND
+

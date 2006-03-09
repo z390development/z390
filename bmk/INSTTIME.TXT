@@ -1,0 +1,727 @@
+*FMT  -INST-  TYPE --LL--    COMMENTS
+*                  L1  L2
+*                  XB
+*234  123456  123  123456
+RR    BALR    B              BALR R1,R2
+RR    BALR    B0             BALR R1,0
+RR    BCTR    B              BCTR R1,R2
+RR    BCTR    B0             BCTR R1,0
+RR    BCR     B              UNCOND
+RR    BCR     B0             NOPR
+RR    BASR    B              BASR R1,R2
+RR    BASR    B0             BASR R1,0
+RR    MVCL              1
+RR    MVCL             10
+RR    MVCL             50
+RR    MVCL            100
+RR    MVCL            500
+RR    MVCL           1000
+RR    MVCL           5000
+RR    MVCL          10000
+RR    CLCL              1
+RR    CLCL             10
+RR    CLCL             50
+RR    CLCL            100
+RR    ALR
+RR    AR
+RR    CLR
+RR    CR
+RR    DR
+RR    LCR
+RR    LNR
+RR    LPR
+RR    LR
+RR    LTR
+RR    MR
+RR    NR
+RR    OR
+RR    SLR
+RR    SR
+RR    XR
+*
+RX    STH     H    0BS
+RX    STH     H    XBS
+RX    LA      H    00
+RX    LA      H    0B
+RX    LA      H    X0
+RX    LA      H    XB
+RX    STC     H    0BS
+RX    STC     H    XBS
+RX    IC      H    00
+RX    IC      H    0B
+RX    IC      H    X0
+RX    IC      H    XB
+RX    BAL     B    0B
+RX    BAL     B    XB
+RX    BC      B    0B        UNCOND
+RX    BC      B    XB        UNCOND
+RX    BC      B0   0B        NOP
+RX    BC      B0   XB        NOP
+RX    LH      H    00
+RX    LH      H    0B
+RX    LH      H    X0
+RX    LH      H    XB
+RX    CH      H    00
+RX    CH      H    0B
+RX    CH      H    X0
+RX    CH      H    XB
+RX    AH      H    00
+RX    AH      H    0B
+RX    AH      H    X0
+RX    AH      H    XB
+RX    SH      H    00
+RX    SH      H    0B
+RX    SH      H    X0
+RX    SH      H    XB
+RX    MH      H    00
+RX    MH      H    0B
+RX    MH      H    X0
+RX    MH      H    XB
+RX    BAS     B    0B
+RX    BAS     B    XB
+RX    CVD     P8   0BS
+RX    CVD     P8   XBS
+RX    CVB     P8   0B
+RX    CVB     P8   XB
+RX    ST      F    0BS
+RX    ST      F    XBS
+RX    N       F    00
+RX    N       F    0B
+RX    N       F    X0
+RX    N       F    XB
+RX    CL      F    00
+RX    CL      F    0B
+RX    CL      F    X0
+RX    CL      F    XB
+RX    O       F    00
+RX    O       F    0B
+RX    O       F    X0
+RX    O       F    XB
+RX    X       F    00
+RX    X       F    0B
+RX    X       F    X0
+RX    X       F    XB
+RX    L       F    00
+RX    L       F    0B
+RX    L       F    X0
+RX    L       F    XB
+RX    C       F    00
+RX    C       F    0B
+RX    C       F    X0
+RX    C       F    XB
+RX    A       F    00
+RX    A       F    0B
+RX    A       F    X0
+RX    A       F    XB
+RX    S       F    00
+RX    S       F    0B
+RX    S       F    X0
+RX    S       F    XB
+RX    M       F    00
+RX    M       F    0B
+RX    M       F    X0
+RX    M       F    XB
+RX    D       F    0B
+RX    D       F    XB
+RX    AL      F    00
+RX    AL      F    0B
+RX    AL      F    X0
+RX    AL      F    XB
+RX    SL      F    00
+RX    SL      F    0B
+RX    SL      F    X0
+RX    SL      F    XB
+*
+RS    BXH                    BRANCH
+RS    BXH     B0             NO BRANCH
+RS    BXLE                   BRANCH
+RS    BXLE    B0             NO BRANCH
+*
+RS    SRL          0B
+RS    SRL          00
+RS    SLL          0B
+RS    SLL          00
+RS    SRA          0B
+RS    SRA          00
+RS    SLA          0B
+RS    SLA          00
+RS    SRDL         0B
+RS    SRDL         00
+RS    SLDL         0B
+RS    SLDL         00
+RS    SRDA         0B
+RS    SRDA         00
+RS    SLDA         0B
+RS    SLDA         00
+*
+RS    STM          01        L1=NO. OF REGISTERS
+RS    STM          04        L1=NO. OF REGISTERS
+RS    STM          08        L1=NO. OF REGISTERS
+RS    STM          12        L1=NO. OF REGISTERS
+RS    STM          16        L1=NO. OF REGISTERS
+*
+SI    TM
+SI    MVI
+SI    TS
+SI    NI
+SI    CLI
+SI    OI
+SI    XI
+*
+RS    LM           01        L1=NO. OF REGISTERS
+RS    LM           04        L1=NO. OF REGISTERS
+RS    LM           08        L1=NO. OF REGISTERS
+RS    LM           12        L1=NO. OF REGISTERS
+RS    LM           16        L1=NO. OF REGISTERS
+*
+RI    IIHH
+RI    IIHL
+RI    IILH
+RI    IILL
+RI    NIHH
+RI    NIHL
+RI    NILH
+RI    NILL
+RI    OIHH
+RI    OIHL
+RI    OILH
+RI    OILL
+RI    LLIHH
+RI    LLIHL
+RI    LLILH
+RI    LLILL
+*
+RI    TMLH
+RI    TMH
+RI    TMLL
+RI    TML
+RI    TMHH
+RI    TMHL
+RI    LHI
+RI    LGHI
+RI    AHI
+RI    AGHI
+RI    MHI
+RI    MGHI
+RI    CHI
+RI    CGHI
+*
+RRE   MSR
+*
+RRE   LPGR
+RRE   LNGR
+RRE   LTGR
+RRE   LCGR
+RRE   LGR
+RRE   AGR
+RRE   SGR
+RRE   ALGR
+RRE   SLGR
+RRE   MSGR
+RRE   DSGR
+RRE   LRVGR
+RRE   LPGFR
+RRE   LNGFR
+RRE   LTGFR
+RRE   LCGFR
+RRE   LGFR
+RRE   LLGFR
+RRE   LLGTR
+RRE   AGFR
+RRE   SGFR
+RRE   ALGFR
+RRE   SLGFR
+RRE   MSGFR
+RRE   DSGFR
+RRE   LRVR
+RRE   CGR
+RRE   CLGR
+RRE   CGFR
+RRE   CLGFR
+RRE   NGR
+RRE   OGR
+RRE   XGR
+RRE   MLGR
+RRE   DLGR
+*RRE   ALCGR   not supported
+*RRE   SLBGR   not supported
+RRE   MLR
+RRE   DLR
+*RRE   ALCR    not supported
+*RRE   SLBR    not supported
+*
+RS    CLM
+RS    STCM
+RS    ICM
+*
+SS1   MVN               1
+SS1   MVN               8
+SS1   MVN              16
+SS1   MVN              32
+SS1   MVN              64
+SS1   MVN             128
+SS1   MVN             256
+SS1   MVC               1
+SS1   MVC               8
+SS1   MVC              16
+SS1   MVC              32
+SS1   MVC              64
+SS1   MVC             128
+SS1   MVC             256
+SS1   MVZ               1
+SS1   MVZ               8
+SS1   MVZ              16
+SS1   MVZ              32
+SS1   MVZ              64
+SS1   MVZ             128
+SS1   MVZ             256
+SS1   NC                1
+SS1   NC                8
+SS1   NC               16
+SS1   NC               32
+SS1   NC               64
+SS1   NC              128
+SS1   NC              256
+SS1   CLC               1
+SS1   CLC               8
+SS1   CLC              16
+SS1   CLC              32
+SS1   CLC              64
+SS1   CLC             128
+SS1   CLC             256
+SS1   OC                1
+SS1   OC                8
+SS1   OC               16
+SS1   OC               32
+SS1   OC               64
+SS1   OC              128
+SS1   OC              256
+SS1   XC                1
+SS1   XC                8
+SS1   XC               16
+SS1   XC               32
+SS1   XC               64
+SS1   XC              128
+SS1   XC              256
+SS1   TR                1
+SS1   TR                8
+SS1   TR               16
+SS1   TR               32
+SS1   TR               64
+SS1   TR              128
+SS1   TR              256
+SS1   TRT               1
+SS1   TRT               8
+SS1   TRT              16
+SS1   TRT              32
+SS1   TRT              64
+SS1   TRT             128
+SS1   TRT             256
+SS1   ED                1
+SS1   ED                8
+SS1   ED               16
+SS1   ED               32
+SS1   ED               64
+SS1   ED              128
+SS1   ED              256
+SS1   EDMK              1
+SS1   EDMK              8
+SS1   EDMK             16
+SS1   EDMK             32
+SS1   EDMK             64
+SS1   EDMK            128
+SS1   EDMK            256
+*
+RXY   LG      D    00
+RXY   LG      D    0B
+RXY   LG      D    X0
+RXY   LG      D    XB
+RXY   CVBY    P8   0B
+RXY   CVBY    P8   XB
+RXY   AG      D    00
+RXY   AG      D    0B
+RXY   AG      D    X0
+RXY   AG      D    XB
+RXY   SG      D    00
+RXY   SG      D    0B
+RXY   SG      D    X0
+RXY   SG      D    XB
+RXY   ALG     D    00
+RXY   ALG     D    0B
+RXY   ALG     D    X0
+RXY   ALG     D    XB
+RXY   SLG     D    00
+RXY   SLG     D    0B
+RXY   SLG     D    X0
+RXY   SLG     D    XB
+RXY   MSG     D    00
+RXY   MSG     D    0B
+RXY   MSG     D    X0
+RXY   MSG     D    XB
+RXY   DSG     D    0B
+RXY   DSG     D    XB
+RXY   CVBG    P16  0B
+RXY   CVBG    P16  XB
+RXY   LRVG    D    00
+RXY   LRVG    D    0B
+RXY   LRVG    D    X0
+RXY   LRVG    D    XB
+RXY   LGF     F    00
+RXY   LGF     F    0B
+RXY   LGF     F    X0
+RXY   LGF     F    XB
+RXY   LGH     H    00
+RXY   LGH     H    0B
+RXY   LGH     H    X0
+RXY   LGH     H    XB
+RXY   LLGF    F    00
+RXY   LLGF    F    0B
+RXY   LLGF    F    X0
+RXY   LLGF    F    XB
+RXY   LLGT    F    00
+RXY   LLGT    F    0B
+RXY   LLGT    F    X0
+RXY   LLGT    F    XB
+RXY   AGF     F    00
+RXY   AGF     F    0B
+RXY   AGF     F    X0
+RXY   AGF     F    XB
+RXY   SGF     F    00
+RXY   SGF     F    0B
+RXY   SGF     F    X0
+RXY   SGF     F    XB
+RXY   ALGF    F    00
+RXY   ALGF    F    0B
+RXY   ALGF    F    X0
+RXY   ALGF    F    XB
+RXY   SLGF    F    00
+RXY   SLGF    F    0B
+RXY   SLGF    F    X0
+RXY   SLGF    F    XB
+RXY   MSGF    F    00
+RXY   MSGF    F    0B
+RXY   MSGF    F    X0
+RXY   MSGF    F    XB
+RXY   DSGF    F    0B
+RXY   DSGF    F    XB
+*RXY   LRV     F    00  NOT SUPPORTED
+*RXY   LRV     F    0B  NOT SUPPORTED
+*RXY   LRV     F    X0  NOT SUPPORTED
+*RXY   LRV     F    XB  NOT SUPPORTED
+RXY   LRVH    H    00
+RXY   LRVH    H    0B
+RXY   LRVH    H    X0
+RXY   LRVH    H    XB
+RXY   CG      D    00
+RXY   CG      D    0B
+RXY   CG      D    X0
+RXY   CG      D    XB
+RXY   CLG     D    00
+RXY   CLG     D    0B
+RXY   CLG     D    X0
+RXY   CLG     D    XB
+RXY   STG     D    0BS
+RXY   STG     D    XBS
+RXY   CVDY    P8   0BS
+RXY   CVDY    P8   XBS
+RXY   CVDG    P16  0BS
+RXY   CVDG    P16  XBS
+RXY   STRVG   D    0BS
+RXY   STRVG   D    XBS
+RXY   CGF     F    00
+RXY   CGF     F    0B
+RXY   CGF     F    X0
+RXY   CGF     F    XB
+RXY   CLGF    F    00
+RXY   CLGF    F    0B
+RXY   CLGF    F    X0
+RXY   CLGF    F    XB
+RXY   STRV    F    0BS
+RXY   STRV    F    XBS
+RXY   STRVH   H    0BS
+RXY   STRVH   H    XBS
+RXY   STY     F    0BS
+RXY   STY     F    XBS
+RXY   MSY     F    00
+RXY   MSY     F    0B
+RXY   MSY     F    X0
+RXY   MSY     F    XB
+RXY   NY      F    00
+RXY   NY      F    0B
+RXY   NY      F    X0
+RXY   NY      F    XB
+RXY   CLY     F    00
+RXY   CLY     F    0B
+RXY   CLY     F    X0
+RXY   CLY     F    XB
+RXY   OY      F    00
+RXY   OY      F    0B
+RXY   OY      F    X0
+RXY   OY      F    XB
+RXY   XY      F    00
+RXY   XY      F    0B
+RXY   XY      F    X0
+RXY   XY      F    XB
+RXY   LY      F    00
+RXY   LY      F    0B
+RXY   LY      F    X0
+RXY   LY      F    XB
+RXY   CY      F    00
+RXY   CY      F    0B
+RXY   CY      F    X0
+RXY   CY      F    XB
+RXY   AY      F    00
+RXY   AY      F    0B
+RXY   AY      F    X0
+RXY   AY      F    XB
+RXY   SY      F    00
+RXY   SY      F    0B
+RXY   SY      F    X0
+RXY   SY      F    XB
+RXY   ALY     F    00
+RXY   ALY     F    0B
+RXY   ALY     F    X0
+RXY   ALY     F    XB
+RXY   SLY     F    00
+RXY   SLY     F    0B
+RXY   SLY     F    X0
+RXY   SLY     F    XB
+RXY   STHY    H    0BS
+RXY   STHY    H    XBS
+RXY   LAY     H    00
+RXY   LAY     H    0B
+RXY   LAY     H    X0
+RXY   LAY     H    XB
+RXY   STCY    S    0BS
+RXY   STCY    S    XBS
+RXY   ICY     S    00
+RXY   ICY     S    0B
+RXY   ICY     S    X0
+RXY   ICY     S    XB
+RXY   LB      S    00
+RXY   LB      S    0B
+RXY   LB      S    X0
+RXY   LB      S    XB
+RXY   LGB     S    00
+RXY   LGB     S    0B
+RXY   LGB     S    X0
+RXY   LGB     S    XB
+RXY   LHY     H    00
+RXY   LHY     H    0B
+RXY   LHY     H    X0
+RXY   LHY     H    XB
+RXY   CHY     H    00
+RXY   CHY     H    0B
+RXY   CHY     H    X0
+RXY   CHY     H    XB
+RXY   AHY     H    00
+RXY   AHY     H    0B
+RXY   AHY     H    X0
+RXY   AHY     H    XB
+RXY   SHY     H    00
+RXY   SHY     H    0B
+RXY   SHY     H    X0
+RXY   SHY     H    XB
+RXY   NG      D    00
+RXY   NG      D    0B
+RXY   NG      D    X0
+RXY   NG      D    XB
+RXY   OG      D    00
+RXY   OG      D    0B
+RXY   OG      D    X0
+RXY   OG      D    XB
+RXY   XG      D    00
+RXY   XG      D    0B
+RXY   XG      D    X0
+RXY   XG      D    XB
+RXY   MLG     D    00
+RXY   MLG     D    0B
+RXY   MLG     D    X0
+RXY   MLG     D    XB
+RXY   DLG     D    0B
+RXY   DLG     D    XB
+*RXY   ALCG    D    00    NOT SUPPORTED
+*RXY   ALCG    D    0B    NOT SUPPORTED
+*RXY   ALCG    D    X0    NOT SUPPORTED
+*RXY   ALCG    D    XB    NOT SUPPORTED
+*RXY   SLBG    D    00    NOT SUPPORTED
+*RXY   SLBG    D    0B    NOT SUPPORTED
+*RXY   SLBG    D    X0    NOT SUPPORTED
+*RXY   SLBG    D    XB    NOT SUPPORTED
+*RXY   STPQ    Q    00S   NOT SUPPORTED
+*RXY   STPQ    Q    0BS   NOT SUPPORTED
+*RXY   STPQ    Q    X0S   NOT SUPPORTED
+*RXY   STPQ    Q    XBS   NOT SUPPORTED
+*RXY   LPQ     Q    00    NOT SUPPORTED
+*RXY   LPQ     Q    0B    NOT SUPPORTED
+*RXY   LPQ     Q    X0    NOT SUPPORTED
+*RXY   LPQ     Q    XB    NOT SUPPORTED
+RXY   LLGC    S    00
+RXY   LLGC    S    0B
+RXY   LLGC    S    X0
+RXY   LLGC    S    XB
+RXY   LLGH    H    00
+RXY   LLGH    H    0B
+RXY   LLGH    H    X0
+RXY   LLGH    H    XB
+RXY   ML      F    00
+RXY   ML      F    0B
+RXY   ML      F    X0
+RXY   ML      F    XB
+RXY   DL      F    0B
+RXY   DL      F    XB
+*RXY   ALC     F    00   NOT SUPPORTED
+*RXY   ALC     F    0B   NOT SUPPORTED
+*RXY   ALC     F    X0   NOT SUPPORTED
+*RXY   ALC     F    XB   NOT SUPPORTED
+*RXY   SLB     F    00   NOT SUPPORTED
+*RXY   SLB     F    0B   NOT SUPPORTED
+*RXY   SLB     F    X0   NOT SUPPORTED
+*RXY   SLB     F    XB   NOT SUPPORTED
+*
+SS1   MVCIN             1
+SS1   MVCIN             8
+SS1   MVCIN            16
+SS1   MVCIN            32
+SS1   MVCIN            64
+SS1   MVCIN           128
+SS1   MVCIN           256
+*
+SS2   SRP     P    01
+SS2   SRP     P    04
+SS2   SRP     P    08
+SS2   SRP     P    16
+SS2   MVO          01  01
+SS2   MVO          04  01
+SS2   MVO          08  01
+SS2   MVO          16  01
+SS2   MVO          01  04
+SS2   MVO          04  04
+SS2   MVO          08  04
+SS2   MVO          16  04
+SS2   MVO          01  08
+SS2   MVO          04  08
+SS2   MVO          08  08
+SS2   MVO          16  08
+SS2   MVO          01  16
+SS2   MVO          04  16
+SS2   MVO          08  16
+SS2   MVO          16  16
+SS2   PACK         01  01
+SS2   PACK         04  01
+SS2   PACK         08  01
+SS2   PACK         16  01
+SS2   PACK         01  04
+SS2   PACK         04  04
+SS2   PACK         08  04
+SS2   PACK         16  04
+SS2   PACK         01  08
+SS2   PACK         04  08
+SS2   PACK         08  08
+SS2   PACK         16  08
+SS2   PACK         01  16
+SS2   PACK         04  16
+SS2   PACK         08  16
+SS2   PACK         16  16
+SS2   UNPK         01  01
+SS2   UNPK         04  01
+SS2   UNPK         08  01
+SS2   UNPK         16  01
+SS2   UNPK         01  04
+SS2   UNPK         04  04
+SS2   UNPK         08  04
+SS2   UNPK         16  04
+SS2   UNPK         01  08
+SS2   UNPK         04  08
+SS2   UNPK         08  08
+SS2   UNPK         16  08
+SS2   UNPK         01  16
+SS2   UNPK         04  16
+SS2   UNPK         08  16
+SS2   UNPK         16  16
+SS2   ZAP     P    01  01
+SS2   ZAP     P    04  01
+SS2   ZAP     P    08  01
+SS2   ZAP     P    16  01
+SS2   ZAP     P    01  04
+SS2   ZAP     P    04  04
+SS2   ZAP     P    08  04
+SS2   ZAP     P    16  04
+SS2   ZAP     P    01  08
+SS2   ZAP     P    04  08
+SS2   ZAP     P    08  08
+SS2   ZAP     P    16  08
+SS2   ZAP     P    01  16
+SS2   ZAP     P    04  16
+SS2   ZAP     P    08  16
+SS2   ZAP     P    16  16
+SS2   CP      P    01  01
+SS2   CP      P    04  01
+SS2   CP      P    08  01
+SS2   CP      P    16  01
+SS2   CP      P    01  04
+SS2   CP      P    04  04
+SS2   CP      P    08  04
+SS2   CP      P    16  04
+SS2   CP      P    01  08
+SS2   CP      P    04  08
+SS2   CP      P    08  08
+SS2   CP      P    16  08
+SS2   CP      P    01  16
+SS2   CP      P    04  16
+SS2   CP      P    08  16
+SS2   CP      P    16  16
+SS2   AP      P    01  01
+SS2   AP      P    04  01
+SS2   AP      P    08  01
+SS2   AP      P    16  01
+SS2   AP      P    01  04
+SS2   AP      P    04  04
+SS2   AP      P    08  04
+SS2   AP      P    16  04
+SS2   AP      P    01  08
+SS2   AP      P    04  08
+SS2   AP      P    08  08
+SS2   AP      P    16  08
+SS2   AP      P    01  16
+SS2   AP      P    04  16
+SS2   AP      P    08  16
+SS2   AP      P    16  16
+SS2   SP      P    01  01
+SS2   SP      P    04  01
+SS2   SP      P    08  01
+SS2   SP      P    16  01
+SS2   SP      P    01  04
+SS2   SP      P    04  04
+SS2   SP      P    08  04
+SS2   SP      P    16  04
+SS2   SP      P    01  08
+SS2   SP      P    04  08
+SS2   SP      P    08  08
+SS2   SP      P    16  08
+SS2   SP      P    01  16
+SS2   SP      P    04  16
+SS2   SP      P    08  16
+SS2   SP      P    16  16
+SS2   MP      P    01  01
+SS2   MP      P    04  01
+SS2   MP      P    08  01
+SS2   MP      P    16  01
+SS2   MP      P    01  04
+SS2   MP      P    04  04
+SS2   MP      P    08  04
+SS2   MP      P    16  04
+SS2   MP      P    01  08
+SS2   MP      P    04  08
+SS2   MP      P    08  08
+SS2   MP      P    16  08
+SS2   MP      P    01  16
+SS2   MP      P    04  16
+SS2   MP      P    08  16
+SS2   MP      P    16  16
+SS2   DP      P    04  01
+SS2   DP      P    08  01
+SS2   DP      P    16  01
+SS2   DP      P    08  04
+SS2   DP      P    16  04
+

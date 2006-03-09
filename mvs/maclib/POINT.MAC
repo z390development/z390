@@ -1,0 +1,32 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    POINT &DCB,&LOC,&RPL=
+.*       CHANGE LEVEL = 08
+.*       DATE OF LAST CHANGE = 24 MARCH 72  ( 72*084 )
+         LCLB  &NOGO
+         AIF   ('&RPL' NE '').JES
+         AIF   ('&DCB' EQ '').ERR1
+.R1      AIF   ('&LOC' EQ '').ERR2
+         AIF   (&NOGO EQ 1).TERM
+&NAME    IHBINNRA &DCB,&LOC
+         L     15,84(0,1)               LOAD POINT RTN ADDR
+         BAL   14,4(15,0)               LINK TO POINT ROUTINE
+         MEXIT
+.ERR1    IHBERMAC 6
+&NOGO    SETB  1
+         AGO   .R1
+.ERR2    IHBERMAC 3
+.TERM    ANOP
+         MEXIT
+.JES     ANOP
+&NAME    DS    0H
+         AIF   ('&RPL'(1,1) EQ '(').RPLR
+         LA    1,&RPL                   LOAD RPL ADDR
+         AGO   .AREG
+.RPLR    LR    1,&RPL(1)                LOAD RPL ADDR VIA REG
+.AREG    LA    0,X'03'                  INDICATE POINT IN REG
+         L     15,24(1)                 LOAD ACB ADDR FROM RPL
+         L     15,8(15)                 LOAD JES INTERFACE MOD ADDR
+         BALR  14,15                    LINK TO INTERFACE ROUTINE
+         MEND
+

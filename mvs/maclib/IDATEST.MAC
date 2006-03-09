@@ -1,0 +1,78 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /*                                                                 */
+* /* MACCOMP Y-2 SC1DE/SJD61                                         */
+* /* MACSTAT Y-2 73103/Y02113                                        */
+* /*                                                                 */
+*        %GO TO TESTPLS1;
+*/*      TESTCB HEADER ARGUMENT CONTROL ENTRY                        */
+*/*      CREATED BY USER WITH TESTCB MACRO                           */
+*/*                                                                  */
+*/*                                                                  */
+*/*    0 ___________________________________________________         */
+*/*      |            |           |                        |         */
+*/*      |  TESTBTC   |  TESTFTC  |        TESTOBJ         |         */
+*/*      |____________|___________|________________________|         */
+*/*      |                                                 |         */
+*/*      |                     TESTBLAD                    |         */
+*/*    8 |_________________________________________________|         */
+*/*      |                                                 |         */
+*/*      |                     TESTERET                    |         */
+*/*   12 |_________________________________________________|         */
+*/*      |                                                 |         */
+*/*      |                        *                        |         */
+*/*      |_________________________________________________|         */
+*/*                                                                  */
+*%TESTPLS1 :;
+*        %IF TESTEND ^= ','                 /* IF LAST BLOCK         */
+*          %THEN %TESTEND = ';';            /*   THEN CLOSE DCL STMT */
+*        %IF TESTLVL ^= ''                  /* IF BLOCK CONCATENATED */
+*          %THEN %GO TO TESTPLS2;           /*   THEN BYPASS DECLARE */
+*        DCL 1 TEST BASED                   /* LEVEL ONE DECLARE     */
+*        %GO TO TESTPLS3;                   /* SKIP MINOR LEVEL DCL  */
+*%TESTPLS2 : TESTDUM = TESTLVL || ' TEST '; /* SET MINOR LEVEL NUMBER*/
+*          TESTDUM                          /* MINOR STRUCTURE       */
+*%TESTPLS3 :;
+*              BDY(WORD),
+*              /******************************************************/
+*              /*                                                    */
+*              /*     TESTCB HEADER ARGUMENT CONTROL ENTRY           */
+*              /*                                                    */
+*              /******************************************************/
+*              5 TESTBTC BIT(8),            /* BLOCK TYPE CODE       */
+*              %TESTACB = '''A0''X';        /* ACB BLOCK TYPE CODE   */
+*              %TESTXLST = '''B0''X';       /* EXLST BLOCK TYPE CODE */
+*              %TESTRPL = '''C0''X';        /* RPL BLOCK TYPE CODE   */
+*              5 TESTFTC BIT(8),            /* FUNCTION TYPE CODE    */
+*              %TESTFTYP = '''04''X';       /* TESTCB FUNC TYPE CODE */
+*              5 TESTOBJ FIXED(15),         /* OBJECT TYPE CODE      */
+*              %TESTDATA = '0';             /* DATA OBJECT TYPE CODE */
+*              %TESTINDX = '1';             /* INDEX OBJECT TYPE CODE*/
+*              5 TESTBLAD PTR(31),          /* CONTROL BLOCK ADDRESS */
+*              5 TESTERET PTR(31),          /* ERROR RETURN ADDRESS  */
+*              5 * FIXED(31)TESTEND         /* RESERVED              */
+*        %TESTLEN = 'LENGTH(TEST)';         /* LENGTH OF THIS BLOCK  */
+*        %GO TO TESTPLS4;
+         MACRO
+         IDATEST &DSECT=YES
+         AIF   ('&DSECT' EQ 'YES').TEST1
+TEST     DS    0F                      TESTCB HEADER ARG CONTROL ENTRY
+         AGO   .TEST2
+.TEST1   ANOP
+TEST     DSECT                         TESTCB HEADER ARG CONTROL ENTRY
+.TEST2   ANOP
+TESTBTC  DS    B                       BLOCK TYPE CODE
+TESTACB  EQU   X'A0'                   ACB BLOCK TYPE CODE
+TESTXLST EQU   X'B0'                   EXLST BLOCK TYPE CODE
+TESTRPL  EQU   X'C0'                   RPL BLOCK TYPE CODE
+TESTFTC  DS    B                       FUNCTION TYPE CODE
+TESTFTYP EQU   4                       TESTCB FUNCTION TYPE CODE
+TESTOBJ  DS    H                       OBJECT TYPE CODE
+TESTDATA EQU   0                       DATA OBJECT TYPE CODE
+TESTINDX EQU   1                       INDEX OBJECT TYPE CODE
+TESTBLAD DS    A                       CONTROL BLOCK ADDRESS
+TESTERET DS    A                       ERROR RETURN ADDRESS
+         DS    F                       RESERVED
+TESTLEN  EQU   *-TEST                  LENGTH OF THIS BLOCK
+         MEND
+*%TESTPLS4 :;
+

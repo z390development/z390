@@ -1,0 +1,15 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO                    STORE PROGRAM STORAGE        @ZA04484
+&NAME    SPS   &L,&A                                           @ZA04484
+         GBLA  &DISP                                           @ZA04484
+         GBLC  &LBL1                                           @ZA04484
+         AIF   ('&L' NE '0' AND '&L' LT '17').L1               @ZA04484
+         MNOTE 12,'***  IHB350  LENGTH NOT 1-16 DIGITS'
+.L1      AIF   ('&A'(1,2) EQ 'X''').L2                         @ZA04484
+&NAME    DC    0H'0',X'C1',AL1(16*3+&L-1),AL2(&A-&LBL1+&DISP)
+         AGO   .L3                                             @ZA04484
+.L2      ANOP                                                  @ZA04484
+&NAME    DC    0H'0',X'C1',AL1(16*3+&L-1),AL2(&A)
+.L3      ANOP                                                  @ZA04484
+         MEND                                                  @ZA04484
+

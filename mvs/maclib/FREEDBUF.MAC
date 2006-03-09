@@ -1,0 +1,19 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    FREEDBUF &DECB,&TYPE,&DCB
+         LCLB  &ERR(3)
+&ERR(1)  SETB  ('&DECB' EQ '')
+&ERR(2)  SETB  ('&DCB' EQ '')
+&ERR(3)  SETB  ('&TYPE' NE '' AND '&TYPE' NE 'D' AND '&TYPE' NE 'K')
+         AIF   (&ERR(1)+&ERR(2)+&ERR(3) NE 0).E0
+&NAME    IHBINNRA &DCB,&DECB
+         SVC   57                                ISSUE FREEDBUF SVC
+         MEXIT
+.E0      AIF   (NOT &ERR(1)).E1
+         IHBERMAC 7                     &DECB MISSING
+.E1      AIF   (NOT &ERR(2)).E2
+         IHBERMAC 6                     &DCB MISSING
+.E2      AIF   (NOT &ERR(3)).MEND
+         IHBERMAC 48,,&TYPE             &TYPE INVALID
+.MEND    MEND
+

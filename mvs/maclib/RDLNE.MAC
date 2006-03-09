@@ -1,0 +1,35 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    RDLNE &DCB
+.*
+.* MODULE-NAME=RDLNE(OS/VS2)MACRO                              @YM00638
+.*
+.* DESCRIPTIVE-NAME=READ LINE IN ONLINE CORRECTION MODE        @YM00638
+.*
+.*
+         LCLC  &REG1,&REG2
+         AIF   (T'&DCB NE 'O').RL002
+.RL001   IHBERMAC 202
+         MEXIT
+.RL002   AIF   (T'&NAME EQ 'O').RL003
+&NAME    EQU   *
+.RL003   AIF   ('&DCB'(1,1) NE '(').RL007
+         AIF   ('&DCB'(K'&DCB,1) NE ')').RL001
+         AIF   (K'&DCB EQ 4).RL004
+&REG1    SETC  '&DCB'(2,1)
+         AIF   ('&REG1' EQ '1').RL008
+         AIF   ('&REG1' GT '1' AND '&REG1' LE '9').RL006
+         AGO   .RL001
+.RL004   AIF   ('&DCB'(2,1) NE '1').RL001
+         AIF   ('&DCB'(3,1) GE '0' AND '&DCB'(3,1) LE '2').RL005
+         AGO   .RL001
+.RL005   ANOP
+&REG1    SETC  '&DCB'(2,1)
+&REG2    SETC  '&DCB'(3,1)
+.RL006   LR    1,&REG1&REG2 GET DCB ADDRESS
+         AGO   .RL008
+.RL007   LA    1,&DCB GET DCB ADDRESS
+.RL008   L     15,12(1) GET ADDRESS OF RDLNE MODULE
+         BALR  14,15 LINK TO RDLNE MODULE
+         MEND
+

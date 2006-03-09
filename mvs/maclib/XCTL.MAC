@@ -1,0 +1,54 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    XCTL  &REG,&EP=,&EPLOC=,&DE=,&DCB=,&PARAM=,&VL=,&HIARCHY=,    X
+               &SF=I,&MF=I
+         GBLB  &IHBSWA,&IHBSWB
+         LCLA  &CTR
+.*4048000400,002000,003000
+.*003220,003360                                                  A31501
+&IHBSWA  SETB  ('&VL' EQ '1')
+&IHBSWB  SETB  1
+         AIF   ('&PARAM&VL' NE '' AND '&MF(1)' NE 'E').E1
+         AIF   ('&MF' EQ 'L').E2
+         AIF   ('&SF' EQ 'L' AND '&MF&PARAM&VL&REG' NE 'I').E3
+         AIF   ('&HIARCHY' NE '').E0
+.CONT    AIF   ('&NAME' EQ '' OR '&SF' EQ 'L').CONTA
+&NAME    DS    0H
+.CONTA   AIF   ('&MF(1)' NE 'E').CONTB
+         IHBOPLST ,&PARAM,MF=&MF
+.CONTB   ANOP
+&NAME    IHBINNRB  &EP,&EPLOC,&DE,&DCB,&HIARCHY,SF=&SF
+         AIF   ('&SF' EQ 'L').END
+         AIF   ('&REG' EQ '').SVC
+         AIF   (T'&REG(1) NE 'N').E4
+         AIF   (&REG(1) LT 2 OR &REG(1) GT 12).E4
+         AIF   (N'&REG EQ 1).CONTC
+         AIF   (N'&REG NE 2).E4
+         AIF   (T'&REG(2) NE 'N').E4
+         AIF   (&REG(2) LE &REG(1) OR &REG(2) GT 12).E4
+&CTR     SETA  &REG(1)*4+20
+         LM    &REG(1),&REG(2),&CTR.(13)         RESTORE REGISTERS
+         AGO   .SVC
+.CONTC   ANOP
+&CTR     SETA  &REG(1)*4+20
+         L     &REG(1),&CTR.(13,0)               RESTORE REGISTER
+.SVC     SVC   7                                 ISSUE XCTL SVC
+         MEXIT
+.E0      AIF   ('&HIARCHY' LT '0' OR '&HIARCHY' GT '1').E5
+         AGO   .CONT
+.E4      IHBERMAC 36,,&REG
+         MEXIT
+.E1      IHBERMAC 95
+         MEXIT
+.E2      IHBERMAC 84
+         MEXIT
+.E3      IHBERMAC 75
+         MEXIT
+.E5      IHBERMAC 195
+.END     MEND
+**/
+*XCTL:   MACRO
+*        KEYS(DCB,DE,EP,REGS,PARAM,SF,VL,MF);
+*        ANS('?'||MACLABEL||'XCTLP '||MACLIST||MACKEYS||';');
+*%END;

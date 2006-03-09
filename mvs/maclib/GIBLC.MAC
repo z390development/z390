@@ -1,0 +1,15 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GIBLC &N
+         GBLA  &IHBBLC,&IHBBLIM
+         AIF   (T'&N EQ 'O').ERR
+         AIF   (T'&N NE 'N').ERR1
+&IHBBLC    SETA  &IHBBLC+&N
+         AIF   (&IHBBLIM GE &IHBBLC).OK
+         IHBERMAC 182
+.OK      MEXIT
+.ERR1    IHBERMAC  36,,&N
+         MEXIT
+.ERR     IHBERMAC 2
+         MEND
+

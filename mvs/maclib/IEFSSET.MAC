@@ -1,0 +1,58 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSETCMT;             /*                                @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSET
+.*/ %SSETCMT:;               /*                              @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSET                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = END OF TASK (EOT) FUNCTION           @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSETPLS;             /*                                @ZA34144
+*
+SSOBEOT  EQU   4                  EOT FUNCTION ID (SSOBFUNC)
+*
+*  EOT RETURN CODES (SSOBRETN) -
+*
+*    NO EOT RETURN CODES CURRENTLY DEFINED
+*
+         ORG   SSOBGN
+SSETBGN  EQU   *
+SSETLEN  DC    AL2(SSETSIZE)      EOT EXTENSION LENGTH
+SSETRSV0 DS    H                  RESERVED
+SSETASID DS    H                  ASID OF MEMORY IN WHICH TASK
+*                                 WAS ACTIVE
+SSETFLAG DS    B                  END OF TASK FLAGS -
+SSETYPE  EQU   X'80'              ON - ABNORMAL TASK TERMINATION
+*                                 OFF- NORMAL TASK TERMINATION
+SSETRSV1 DS    X                  RESERVED
+SSETCBA  DS    A                  ADDRESS OF TERMINATING TCB
+SSETASCB DS    A                  ASCB ADDRESS OF TERMINATING
+*                                 TASK'S MEMORY
+*
+SSETSIZE EQU   *-SSETBGN          EOT EXTENSION LENGTH
+SSOBLEND EQU   SSOBHSIZ+SSETSIZE  TOTAL SSOB LENGTH
+         MEND                                                @ZA34144*/
+* %SSETPLS:;                           /*                    @ZA34144*/
+*   DCL SSOBEOT FIXED(15) CONSTANT(4); /* EOT FUNCTION ID(SSOBFUNC)  */
+*   /*                                                               */
+*   /*  EOT RETURN CODES (SSOBRETN) -                                */
+* /*                                                                 */
+* /*    NO EOT RETURN CODES CURRENTLY DEFINED                        */
+* /*                                                                 */
+*   /*   S S E T                                                     */
+*   DCL
+*   1      SSET           SSOBET,
+*     2      SSETLEN      FIXED(15),/* LENGTH OF SSET                */
+*     2      *            FIXED(15),/* RESERVED                      */
+*     2      SSETASID     FIXED(15),/* ASID OF MEMORY IN WHICH TASK
+*                                      WAS ACTIVE                    */
+*     2      SSETFLAG     BIT(8),   /* END OF TASK FLAGS             */
+*       3    SSETYPE      BIT(1),   /* ON - ABNORMAL TASK TERMINATION
+*                                      OFF- NORMAL TASK TERMINATION  */
+*       3    *            BIT(7),   /* RESERVED FLAGS                */
+*     2      *            PTR(8),   /* RESERVED                      */
+*     2      SSETCBA      PTR(31),  /* ADDRESS OF TERMINATING TCB    */
+*     2      SSETASCB     PTR(31);  /* ASCB ADDRESS OF TERMINATING
+*                                      TASK'S MEMORY                 */

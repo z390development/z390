@@ -1,0 +1,31 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    V     &DL,&A                   VERIFY
+         GBLA  &DISP,&VAL3890(250)                             @ZA00766
+         GBLC  &LBL1,&DEF3890(250)                             @ZA00766
+         LCLC  &OP,&LABEL                                      @ZA00766
+         LCLA  &LD,&RL,&M                                      @ZA00766
+&M       SETA  1                                               @ZA00766
+&OP      SETC  '5E'
+         AIF   (N'&DL EQ 1).V3
+         AIF   ('&DL(1)' LT '16').V1
+         MNOTE 12,'***  IHB349  DISPLACEMENT NOT 0-15 DIGITS'
+.V1      AIF   ('&DL(2)' NE '0' AND '&DL(2)' LT '17').V2
+         MNOTE 12,'***  IHB350  LENGTH NOT 1-16 DIGITS'
+.V2      ANOP
+&LD      SETA  16*&DL(1)+&DL(2)-1
+&NAME    DC    0H'0',X'&OP',AL1(&LD),AL2(&A-&LBL1+&DISP)
+         AGO   .END
+.V3      ANOP
+.V7      AIF   (&M GT 250).V8                                  @ZA00766
+&LABEL   SETC  '&DEF3890(&M)'                                  @ZA00766
+.V5      AIF   ('&DL'   EQ '&LABEL').V6                        @ZA00766
+&M       SETA  &M+1                                            @ZA00766
+         AGO   .V7                                             @ZA00766
+.V8      ANOP                                                  @ZA00766
+         MNOTE 12,'***   IHB425 &DL NOT EQUATED IN DWF MACRO'  @ZA00766
+.V6      ANOP                                                  @ZA00766
+&RL      SETA  &VAL3890(&M)                                    @ZA00766
+&NAME    DC    0H'0',X'&OP',AL1(&RL),AL2(&A-&LBL1+&DISP)       @ZA00766
+.END     MEND
+

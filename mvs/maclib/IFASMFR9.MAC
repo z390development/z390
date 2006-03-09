@@ -1,0 +1,518 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO IFAL80;   /*
+         MACRO
+&NAME    IFASMFR9 &RECTYPE
+.* *                                                                  *
+.* * $MAC(IFASMFR9) COMP(SC1BN) PROD(RACF):                           *
+.* *                                                                  *
+.* *             NUMBER G120-2083                                     *
+.* *                                                                  *
+.* * STATUS = OS/VS2 EBB1102                                      @L6A*
+.* *                                                                  *
+.* * MACMEAN IFASMFR9 MEANS SYSTEM MANAGEMENT FACILITY RECORD MAPPING *
+.* * MACCOMP Y-2 SC1BN/BL27P                                          *
+.* * MACSTAT Y-2 73298/42020                                          *
+.* * METHOD OF ACCESS                                                 *
+.* *  PL/S - INCLUDE MACRO FROM LIBRARY                               *
+.* *          EXAMPLE - %INCLUDE SYSLIB(IFASMFR9)                     *
+.* *                                                                  *
+.* *         THIS MACRO EXPANDS RECORDS 80-93                         *
+.* *                                                                  *
+.* * CHANGE ACTIVITY =                                                *
+.* *        $L4=HRF1402,RACF/140,810701,SJRDSD:                   @L4A*
+.* *        $L5=HRF1502,RACF/150,820302,CNTDSD:                   @L5A*
+.* *        OZ73241                                           @ZA73241*
+.* *        $L6=HRF1602,RACF/160,830914,CNTDSD:                   @L6A*
+.* *        UZ90283                                           @ZA90283*
+.* *        UZ90284                                           @ZA90284*
+.* *        UZ90285                                           @ZA90285*
+.* *                                                                  *
+.* *
+.* THIS IS AN SMF MACRO WHICH BUILDS SMF RECORDS 80-93. THE REQUIRED
+.* FORMAT IS -
+.*
+.*       IFASMFR9  &RECTYPE
+.**********************************************************************
+         AIF   (&RECTYPE EQ 80).IFAS080                        @G32FPRL
+         AIF   (&RECTYPE EQ 81).IFAS081                        @G32FPRL
+.E5      ANOP
+         SPACE 3
+         MNOTE 4,'&RECTYPE INVALID RECORD TYPE SPECIFIED'
+.CONTB   ANOP
+         MEXIT
+.IFAS080 ANOP                                                  @Z40RPPE
+         EJECT                                                 @Z40RPPE
+* RACF OPERATOR RECORD                                         @Z40RPPE
+         DS    0F       ALIGN TO FULL WORD BOUNDARY            @Z40RPPE
+SMFRCD80 EQU   *        HEADER SEGMENT                         @Z40RPPE
+SMF80LEN DS    BL2      RECORD LENGTH                          @Z40RPPE
+SMF80SEG DS    BL2      SEGMENT DESCRIPTOR                     @Z40RPPE
+SMF80FLG DS    BL1      HEADER FLAG BYTE - SYSTEM              @Z40RPPE
+*                       BIT MEANING WHEN SET                   @Z40RPPE
+*                       BIT 6 - VS2                            @Z40RPPE
+SMF80RTY DS    BL1      RECORD TYPE(80), ONLY HEADER FIELD SET @Z40RPPE
+*                       BY GENERATOR OF RECORD                 @Z40RPPE
+SMF80TME DS    BL4      TOD FROM TIME MACRO - BINARY           @Z40RPPE
+SMF80DTE DS    PL4      DATE FROM TIME MACRO                   @Z40RPPE
+SMF80SID DS    CL4      SYSTEM IDENTIFICATION                  @Z40RPPE
+SMF80DES DS    BL2      DESCRIPTOR FLAGS                       @Z40RPPE
+*                       BIT MEANING WHEN SET                   @Z40RPPE
+*                       BIT 0 - THIS EVENT IS A VIOLATION      @Z40RPPE
+*                       BIT 1 - USER NOT DEFINED TO RACF       @Z40RPPE
+*                       BIT 2 - RCD CONTAINS VERSION INDICATOR @PC003LS
+*                       BIT 3 - THIS EVENT IS A WARNING            @L6A
+*                       BITS 4-15 - RESERVED                       @L6A
+SMF80EVT DS    BL1      EVENT CODE                             @Z40RPPE
+*                       1 - JOB INITIATION/TSO LOGON           @Z40RPPE
+*                       2 - RESOURCE ACCESS                    @G32FPRL
+*                       3 - END OF VOLUME                      @G32FPRL
+*                       4 - RENAME DATASET                     @Z40RPPE
+*                       5 - SCRATCH DATASET OR TAPE VOLUME     @G32FPRL
+*                       6 - DELETE 1 VOLUME OF MULTIVOLUME     @Z40RPPE
+*                           DATASET OR TAPE VOLUME SET         @G32FPRL
+*                       7 - DEFINE DATASET OR TAPE VOLUME SET  @G32FPRL
+*                       8 - ADDSD                              @G32FPRL
+*                       9 - ADDGROUP                           @G32FPRL
+*                       10- ADDUSER                            @G32FPRL
+*                       11- ALTDSD                             @G32FPRL
+*                       12- ALTGROUP                           @G32FPRL
+*                       13- ALTUSER                            @G32FPRL
+*                       14- CONNECT                            @G32FPRL
+*                       15- DELDSD                             @G32FPRL
+*                       16- DELGROUP                           @G32FPRL
+*                       17- DELUSER                            @G32FPRL
+*                       18- PASSWORD                           @G32FPRL
+*                       19- PERMIT                             @G32FPRL
+*                       20- RALTER                             @G32FPRL
+*                       21- RDEFINE                            @G32FPRL
+*                       22- RDELETE                            @G32FPRL
+*                       23- REMOVE                             @G32FPRL
+*                       24- SETROPTS                           @G32FPRL
+*                       25- RVARY                              @G32FPRL
+SMF80EVQ DS    BL1      EVENT CODE QUALIFIER                   @Z40RPPE
+SMF80USR DS    CL8      USER ID FOR WHICH THIS EVENT RECORDED  @Z40RPPE
+SMF80GRP DS    CL8      GROUP TO WHICH USER WAS CONNECTED      @Z40RPPE
+SMF80REL DS    BL2      OFFSET OF FIRST RELOCATE SECTION FROM  @Z40RPPE
+*                       BEGINNING OF THE RECORD HEADER         @Z40RPPE
+SMF80CNT DS    BL2      NUMBER OF RELOCATE SECTIONS            @Z40RPPE
+SMF80ATH DS    BL1      SPECIAL AUTHORITIES USED               @G32FPRS
+*                       BIT MEANINGS WHEN SET -                @G32FPRS
+*                       BIT 0 - NORMAL AUTHORITY CHECK         @G32FPRS
+*                       BIT 1 - SPECIAL ATTRIBUTE              @G32FPRS
+*                       BIT 2 - OPERATIONS ATTRIBUTE           @G32FPRS
+*                       BIT 3 - AUDITOR ATTRIBUTE              @G32FPRS
+*                       BIT 4 - INSTALLATION EXIT ACTION       @G32FPRL
+*                       BIT 5 - FAILSOFT PROCESSING                @L6A
+*                       BIT 6-7 - RESERVED                     @G32FPRL
+SMF80REA DS    BL1      REASON FOR LOGGING                     @G32FPRS
+*                       BIT MEANINGS WHEN SET:                 @G32FPRS
+*                       BIT 0 - CHANGES TO THIS CLASS OF       @G32FPRS
+*                       PROFILE BEING AUDITED                  @G32FPRS
+*                       BIT 1 - USER BEING AUDITED             @G32FPRS
+*                       BIT 2 - SPECIAL USERS BEING AUDITED    @G32FPRS
+*                       BIT 3 - ACCESS TO ENTITY BEING AUDITED
+*                               DUE TO AUDIT OPTION
+*                               OR RACHECK INSTALLATION EXIT
+*                               REQUESTED LOGGING, OR TO
+*                               FAILSOFT  PROCESSING               @L6A
+*                       BIT 4 - *RACINIT* FAILURE              @G32FPRS
+*                       BIT 5 - THIS COMMAND IS ALWAYS AUDITED @G32FPRL
+*                       BIT 6 - VIOLATION DETECTED AND CMDVIOL @G32FPRL
+*                               IN EFFECT                      @G32FPRL
+*                       BIT 7 - ACCESS TO ENTITY BEING AUDITED
+*                               DUE TO GLOBALAUDIT OPTION          @L5A
+SMF80TLV DS    BL1      TERMINAL LEVEL NUMBER OF FOREGROUND    @G32FPRL
+*                       USER (ZERO IF NOT AVAILABLE OR NOT     @G32FPRL
+*                       VERIFIED)                              @G32FPRL
+SMF80ERR DS    BL1      COMMAND PROCESSING ERROR FLAG          @G32FPRS
+*                       BIT MEANINGS WHEN SET:                 @G32FPRS
+*                       BIT 0 - COMMAND HAD ERROR AND COULD    @G32FPRS
+*                               NOT BACKOUT SOME CHANGES       @G32FPRS
+*                       BIT 1 - NO PROFILE UPDATES MADE        @G32FPRL
+*                               BECAUSE OF ERROR IN PROCESSING @G32FPRL
+*                       BIT 2-7 - RESERVED                     @G32FPRL
+SMF80TRM DS    CL8      TERMINAL ID OF FOREGROUND USER         @G32FPRS
+*                       (ZEROES IF NOT AVAILABLE)              @G32FPRS
+SMF80JBN DS    CL8      JOB NAME                               @G32FPRL
+SMF80RST DS    BL4      TIME READER RECOGNIZED JOB CARD        @G32FPRL
+*                       IN HUNDREDTHS OF SECONDS               @G32FPRL
+SMF80RSD DS    PL4      DATE READER RECOGNIZED JOB CARD        @G32FPRL
+*                       00YYDDDF FORMAT                        @G32FPRL
+SMF80UID DS    CL8      USER IDENTIFICATION                    @G32FPRL
+SMF80VER DS    XL1      VERSION INDICATOR
+*                       5 = VERSION 1 RELEASE 5                    @L5A
+***************************************************************@Z40RPPE
+*     RELOCATE SECTION                                         @Z40RPPE
+***************************************************************@Z40RPPE
+SMF80DTP DS    BL1      DATA TYPE                              @Z40RPPE
+SMF80DLN DS    BL1      LENGTH OF DATA THAT FOLLOWS            @Z40RPPE
+SMF80DTA DS    CL255    DATA                                   @Z40RPPE
+         AGO   .CONTB                                          @Z40RPPE
+.IFAS081 ANOP                                                  @Z40RPPE
+         EJECT                                                 @Z40RPPE
+* RACF INITIALIZATION RECORD                                   @Z40RPPE
+         DS    0F       ALIGN TO FULL WORD BOUNDARY            @Z40RPPE
+SMFRCD81 EQU   *        HEADER SEGMENT                         @Z40RPPE
+SMF81LEN DS    BL2      RECORD LENGTH                          @Z40RPPE
+SMF81SEG DS    BL2      SEGMENT DESCRIPTOR                     @Z40RPPE
+SMF81FLG DS    BL1      HEADER FLAG BYTE - SYSTEM              @Z40RPPE
+*                       BIT MEANING WHEN SET                   @Z40RPPE
+*                       BIT 6 - VS2                            @Z40RPPE
+SMF81RTY DS    BL1      RECORD TYPE(81), ONLY HEADER FIELD SET @Z40RPPE
+*                       BY GENERATOR OF RECORD                 @Z40RPPE
+SMF81TME DS    BL4      TOD FROM TIME MACRO - BINARY           @Z40RPPE
+SMF81DTE DS    PL4      DATE FROM TIME MACRO                   @Z40RPPE
+SMF81SID DS    CL4      SYSTEM IDENTIFICATION                  @Z40RPPE
+SMF81RDS DS    CL44     DSN OF RACF DATASET FOR THIS IPL       @Z40RPPE
+SMF81RVL DS    CL6      VOLID OF RACF DATASET                  @Z40RPPE
+SMF81RUN DS    CL3      UNIT NAME OF RACF DATASET              @Z40RPPE
+SMF81UDS DS    CL44     DSN OF UADS DATASET FOR THIS IPL       @Z40RPPE
+SMF81UVL DS    CL6      VOLID OF UADS DATA SET                 @Z40RPPE
+SMF81OPT DS    BL1      OPTIONS INDICATOR                      @Z40RPPE
+*                       BIT MEANING WHEN SET                   @Z40RPPE
+*                       BIT 0 - NO RACINIT STATISTICS          @Z40RPPE
+*                       BIT 1 - NO DATASET STATISTICS          @Z40RPPE
+*                       BIT 2 - RACINIT PRE-PROCESSING         @G32FPRL
+*                               INSTALLATION EXIT ACTIVE       @G32FPRL
+*                       BIT 3 - RACHECK PRE-PROCESSING         @G32FPRL
+*                               INSTALLATION EXIT ACTIVE       @G32FPRL
+*                       BIT 4 - RACDEF PRE-PROCESSING          @G32FPRL
+*                               INSTALLATION EXIT ACTIVE       @G32FPRL
+*                       BIT 5 - RACINIT POST PROCESSING        @G32FPRL
+*                               INSTALLATION EXIT IS ACTIVE    @G32FPRL
+*                       BIT 6 - RACHECK POST PROCESSING        @G32FPRL
+*                               INSTALLATION EXIT IS ACTIVE    @G32FPRL
+*                       BIT 7 - NEW PASSWORD VERIFICATION          @L4A
+*                               INSTALLATION EXIT IS ACTIVE.       @L4A
+SMF81OP2 DS    BL1      OPTIONS INDICATOR 2                    @G32FPRS
+*                       BIT MEANINGS WHEN SET:                 @G32FPRS
+*                       BIT 0 - NO TAPE VOL. STATS ARE BEING   @G32FPRS
+*                               RECORDED                       @G32FPRS
+*                       BIT 1 - NO DASD VOLUME STATISTICS ARE  @G32FPRS
+*                               BEING RECORDED                 @G32FPRS
+*                       BIT 2 - NO TERMINAL STATISTICS ARE
+*                               BEING RECORDED                     @L5A
+*                       BIT 3 - REGULAR NAMING CONVENTION EXIT
+*                               IS ACTIVE                          @L5A
+*                       BIT 4 - DELETE NAMING CONVENTION EXIT
+*                               IS ACTIVE                          @L5A
+*                       BIT 5 - ADSP IS NOT ACTIVE                 @L5A
+*                       BIT 6 - ICHDEX01 IS ACTIVE                 @L6A
+*                       BIT 7 - ICHNCV00 IS ACTIVE                 @L6A
+SMF81OP3 DS    BL1      OPTIONS INDICATOR 3                    @G32FPRS
+*                       BIT MEANINGS WHEN SET:                 @G32FPRS
+*                       BIT 0 - TAPE VOLUME PROTECTION IS IN   @G32FPRS
+*                               EFFECT                         @G32FPRS
+*                       BIT 1 - NO DUPLICATE DATA SET PROTEC-  @PC003LS
+*                               TION                           @PC003LS
+*                       BIT 2 - DASD VOLUME PROTECTION IS IN   @PC003LS
+*                               EFFECT                         @PC003LS
+*                       BIT 3 - RCD CONTAINS VERSION INDICATOR @PC003LS
+*                       BIT 4 - FRACHACK INSTALLATION EXIT IS  @PC003LS
+*                               ACTIVE                         @PC003LS
+*                       BIT 5 - RACLIST PRE-PROCESSING INSTAL- @PC003LS
+*                               LATION EXIT IS ACTIVE          @PC003LS
+*                       BIT 6 - RACLIST SELECTION INSTALLATION @PC003LS
+*                               EXIT IS ACTIVE                 @PC003LS
+*                       BIT 7 - RACDEF POST-PROCESSING
+*                               INSTALLATION EXIT IS ACTIVE        @L5A
+SMF81AOP DS    BL1      AUDIT OPTIONS                          @G32FPRS
+*                       BIT MEANINGS FOR AUDIT OPTIONS:        @G32FPRS
+*                       BIT 0 - USER CLASS PROFILE             @G32FPRL
+*                               CHANGES BEING LOGGED           @G32FPRL
+*                       BIT 1 - GROUP CLASS PROFILE            @G32FPRL
+*                               CHANGES BEING LOGGED           @G32FPRL
+*                       BIT 2 - DATA SET CLASS PROFILE         @G32FPRL
+*                               CHANGES BEING LOGGED           @G32FPRL
+*                       BIT 3 - TAPEVOL CLASS PROFIEL          @G32FPRL
+*                               CHANGES BEING LOGGED           @G32FPRL
+*                       BIT 4 - DASDVOL CLASS PROFILE          @G32FPRL
+*                               CHANGES BEING LOGGED           @G32FPRL
+*                       BIT 5 - TERMINAL CLASS PROFILE         @G32FPRL
+*                               CHANGES BEING LOGGED           @G32FPRL
+*                       BIT 6 - *RACF* COMMAND VIOLATIONS      @G32FPRL
+*                               BEING LOGGED                   @G32FPRL
+*                       BIT 7 - *SPECIAL* USER ACTIVITY        @G32FPRL
+*                               BEING LOGGED                   @G32FPRL
+SMF81AO2 DS    BL1      RESERVED                               @G32FPRL
+SMF81TMO DS    BL1      TERMINAL VERIFICATION OPTION           @G32FPRL
+*                       BIT MEANINGS FOR TERM. VER. OPTION:    @G32FPRS
+*                       BIT 0 - TERMINAL AUTHORIZATION         @G32FPRL
+*                               CHECKING IS IN EFFECT          @G32FPRL
+*                       BIT 1 - UNIVERSAL ACCESS FOR           @G32FPRS
+*                               UNDEFINED TERMINALS IS *NONE*  @G32FPRS
+*                       BIT 2 - REALDSN IS IN EFFECT               @L6A
+*                       BIT 3 - JES-XBMALLRACF IS IN EFFECT        @L6A
+*                       BIT 4 - JES-EARLYVERIFY IS IN EFFECT       @L6A
+*                       BIT 5 - JES-BATCHALLRACF IS IN EFFECT      @L6A
+*                       BIT 6 - FRACHECK POST PROCESSING EXIT ACTIVE
+*                                                                  @L6A
+*                       BIT 7 - RESERVED                           @L6A
+SMF81PIV DS    BL1      MAXIMUM PASSWORD INTERVAL              @G32FPRL
+SMF81REL DS    XL2      OFFSET FROM BEGINNING OF THE RECORD    @PC003LS
+*                       HEADER TO THE FIRST RELOCATE SECTION   @PC003LS
+SMF81CNT DS    XL2      NUMBER OF RELOC. SECTIONS IN THIS RCD  @PC003LS
+SMF81VER DS    XL1      VERSION INDICATOR
+*                       5 = VERSION 1, RELEASE 5                   @L5A
+SMF81QL  DS    CL8      INSTALLATION CONTROLLED PREFIX FOR SINGLE
+*                       LEVEL DATASET NAME                     @ZA73241
+         DS    CL16     RESERVED                                   @L5A
+***************************************************************@Z40RPPE
+*     RELOCATE SECTION                                         @Z40RPPE
+***************************************************************@Z40RPPE
+SMF81DTP DS    BL1      DATA TYPE                              @PC003LS
+SMF81DLN DS    BL1      LENGTH OF DATA THAT FOLLOWS            @PC003LS
+SMF81DTA DS    CL255    DATA                                   @PC003LS
+         AGO   .CONTB                                          @PC003LS
+         MEND      */
+ %IFAL80: IF IFAR80='' %THEN %GOTO IFAL81;                 /*@Z40RPPE*/
+    DCL 1 SMFRCD80 BASED(SMF80PTR) BDY(WORD),              /*@Z40RPPE*/
+ /* RECORD TYPE 80 - RACF OPERATOR RECORD                    @Z40RPPE*/
+ /* WRITTEN IF REQUESTED BY THE ADDSD OR ALTDSD COMMAND      @Z40RPPE*/
+         3 SMF80LEN FIXED(15),    /*RECORD LENGTH            @Z40RPPE*/
+         3 SMF80SEG FIXED(15),    /*SEGMENT DESCRIPTOR       @Z40RPPE*/
+         3 SMF80FLG BIT(8),       /*HEADER FLAG BYTE-SYSTEM  @Z40RPPE*/
+                                  /*BIT 6 ON MEANS VS2       @Z40RPPE*/
+         3 SMF80RTY FIXED(8),     /*RECORD TYPE 80           @Z40RPPE*/
+         3 SMF80TME FIXED(31) BDY(BYTE), /*TOD RECORD WRITTEN@Z40RPPE*/
+         3 SMF80DTE CHAR(4),      /*DATE RECORD WRITTEN      @Z40RPPE*/
+         3 SMF80SID CHAR(4),      /*SYSTEM ID                @Z40RPPE*/
+         3 SMF80DES BIT(16),      /*DESCRIPTOR FLAGS
+                                    BIT MEANING WHEN SET
+                                    BIT 0 - THIS EVENT IS A
+                                            VIOLATION
+                                    BIT 1 - USER NOT DEFINED
+                                            TO RACF
+                                    BIT 2 - RECORD CONTAINS VERSION
+                                            INDICATOR        @PC003LS
+                                    BIT 3 - THIS EVENT IS A WARNING
+                                                                 @L6A
+                                    BITS 4-15 - RESERVED         @L6A*/
+         3 SMF80EVT BIT(8),       /*EVENT CODE               @Z40RPPE*/
+                                  /*1 - JOB INITIATION
+                                        TSO LOGON
+                                    2 - RESOURCE ACCESS
+                                    3 - END OF VOLUME
+                                    4 - RENAME DATASET
+                                    5 - SCRATCH DATASET OR TAPE VOLUME
+                                    6 - DELETE 1 VOLUME OF MULTIVOLUME
+                                        DATASET OR TAPE VOLUME SET
+                                    7 - DEFINE DATASET OR TAPE
+                                        VOLUME SET
+                                    8 - ADDSD
+                                    9 - ADDGROUP
+                                    10- ADDUSER
+                                    11- ALTDSD
+                                    12- ALTGROUP
+                                    13- ALTUSER
+                                    14- CONNECT
+                                    15- DELDSD
+                                    16- DELGROUP
+                                    17- DELUSER
+                                    18- PASSWORD
+                                    19- PERMIT
+                                    20- RALTER
+                                    21- RDEFINE
+                                    22- RDELETE
+                                    23- REMOVE
+                                    24- SETROPTS
+                                    25- RVARY                @G32FPRL*/
+         3 SMF80EVQ BIT(8),       /*EVENT CODE QUALIFIER     @Z40RPPE*/
+         3 SMF80USR CHAR(8),      /*USER ID FOR WHICH THIS
+                                    EVENT IS RECORDED        @Z40RPPE*/
+         3 SMF80GRP CHAR(8),      /*GROUP TO WHICH USER WAS
+                                    CONNECTED                @Z40RPPE*/
+         3 SMF80REL FIXED(15),    /*OFFSET OF FIRST RELOCATE
+                                    SECTION FROM BEGINNING
+                                    OF THE RECORD HEADER     @Z40RPPE*/
+         3 SMF80CNT FIXED(15),    /*NUMBER OF RELOCATE
+                                    SECTIONS                 @Z40RPPE*/
+         3 SMF80ATH BIT(8),       /*SPECIAL AUTHORITIES USED @G32FPRS*/
+                                  /*BIT 0 - NORMAL AUTHORITY
+                                          CHECK
+                                    BIT 1 - SPECIAL ATTRIBUTE
+                                    BIT 2 - OPERATIONS
+                                            ATTRIBUTE
+                                    BIT 3 - AUDITOR
+                                            ATTRIBUTE
+                                    BIT 4 - INSTALLATION EXIT ACTION
+                                    BIT 5 - FAILSOFT PROCESSING
+                                    BIT 6-7 RESERVED             @L6A*/
+         3 SMF80REA BIT(8),       /* REASON FOR LOGGING      @G32FPRS*/
+                                  /* BIT 0 - CHANGES TO THIS
+                                     CLASS OF PROFILE BEING
+                                     AUDITED
+                                     BIT 1 - USER BEING
+                                     AUDITED
+                                     BIT 2 - SPECIAL USERS
+                                     BEING AUDITED
+                                     BIT 3 - ACCESS TO
+                                     ENTITY BEING AUDITED
+                                     DUE TO AUDIT OPTION
+                                     OR RACHECK INSTALLATION EXIT
+                                     REQUESTED LOGGING, OR TO
+                                     FAILSOFT PROCESSING
+                                     BIT 4 - *RACINIT*
+                                     FAILURE
+                                     BIT 5 - THIS COMMAND IS
+                                     ALWAYS AUDITED
+                                     BIT 6 - VIOLATION DETECTED AND
+                                     CMDVIOL IN EFFECT
+                                     BIT 7 - ACCESS TO ENTITY BEING
+                                     AUDITED DUE TO GLOBALAUDIT OPTION
+                                                                 @L6A*/
+         3 SMF80TLV FIXED(8),     /* TERMINAL LEVEL NUMBER OF
+                                     FOREGROUND USER (ZERO IF NOT
+                                     AVAILABLE OR NOT VERIFIED)
+                                                             @G32FPRL*/
+         3 SMF80ERR BIT(8),       /* COMMAND PROCESSING ERROR
+                                     FLAG
+                                     BIT 0 - COMMAND HAD
+                                     ERROR AND COULD NOT BE
+                                     BACK OUT SOME CHANGES
+                                     BIT 1 - NO PROFILE UPDATES MADE
+                                     BECAUSE OF ERROR IN PROCESSING
+                                     BIT 2-7: RESERVED       @G32FPRL*/
+         3 SMF80TRM CHAR(8),      /* TERMINAL ID OF FOREGRND.
+                                     USER (0 IF NOT AVAIAL.  @G32FPRS*/
+         3 SMF80JBN CHAR(8),      /* JOBNAME                 @G32FPRL*/
+         3 SMF80RST FIXED(31) BDY(BYTE), /* TIME, IN HUNDREDTHS OF A
+                                     A SECOND, READER RECOGNIZED CARD
+                                     FOR THIS JOB            @G32FPRL*/
+         3 SMF80RSD CHAR(4),      /* DATE READER RECOGNIZED THE JOB
+                                     CARD, IN FORM 00YYDDDF  @G32FPRL*/
+         3 SMF80UID CHAR(8),      /* USER IDENTIFICATION     @G32FPRL*/
+         3 SMF80VER FIXED(8);     /* VERSION INDICATOR
+                                     5 = VERSION 1 RELEASE 5     @L5A*/
+ /***********************************************************@Z40RPPE*/
+ /*              RELOCATE SECTION                            @Z40RPPE*/
+ /***********************************************************@Z40RPPE*/
+    DCL 1 SMF80VAR BASED,         /*                         @Z40RPPE*/
+         3 SMF80DTP FIXED(8),     /*DATATYPE                 @Z40RPPE*/
+         3 SMF80DLN FIXED(8),     /*LENGTH OF FOLLOWING DATA @Z40RPPE*/
+         3 SMF80DTA CHAR(255);    /*DATA                     @Z40RPPE*/
+ %IFAL81: IF IFAR81='' %THEN %GOTO IFAL82;                 /*@Z40RPPE*/
+    DCL 1 SMFRCD81 BASED(SMF81PTR) BDY(WORD),              /*@Z40RPPE*/
+ /* RECORD TYPE 81 - RACF INITIALIZATION RECORD              @Z40RPPE*/
+ /* WRITTEN WHEN RACF HAS COMPLETED ITS INITIALIZATION       @Z40RPPE*/
+         3 SMF81LEN FIXED(15),    /*RECORD LENGTH            @Z40RPPE*/
+         3 SMF81SEG FIXED(15),    /*SEGMENT DESCRIPTOR       @Z40RPPE*/
+         3 SMF81FLG BIT(8),       /*HEADER FLAG BYTE-SYSTEM  @Z40RPPE*/
+                                  /*BIT 6 ON MEANS VS2       @Z40RPPE*/
+         3 SMF81RTY FIXED(8),     /*RECORD TYPE 81           @Z40RPPE*/
+         3 SMF81TME FIXED(31) BDY(BYTE), /*TOD RECORD WRITTEN@Z40RPPE*/
+         3 SMF81DTE CHAR(4),      /*DATE RECORD WRITTEN      @Z40RPPE*/
+         3 SMF81SID CHAR(4),      /*SYSTEM ID                @Z40RPPE*/
+         3 SMF81RDS CHAR(44),     /*DSN OF RACF DATASET FOR
+                                    THIS IPL                 @Z40RPPE*/
+         3 SMF81RVL CHAR(6),      /*VOLID OF RACF DATASET    @Z40RPPE*/
+         3 SMF81RUN CHAR(3),      /*UNIT NAME OF RACF DATASET@Z40RPPE*/
+         3 SMF81UDS CHAR(44),     /*DSN OF UADS DATASET FOR
+                                    THIS IPL                 @Z40RPPE*/
+         3 SMF81UVL CHAR(6),      /*VOLID OF UADS DATASET    @Z40RPPE*/
+         3 SMF81OPT BIT(8),       /*OPTIONS INDICATOR
+                                    BIT MEANING WHEN SET
+                                    BIT 0 - NO RACINIT STATISTICS
+                                    BIT 1 - NO DATASET STATISTICS
+                                    BIT 2 - RACINIT PREPROCESSING
+                                            INSTALLATION EXIT ACTIVE
+                                    BIT 3 - RACHECK PREPROCESSING
+                                            INSTALLATION EXIT ACTIVE
+                                    BIT 4 - RACDEF PREPROCESSING
+                                            INSTALLATION EXIT ACTIVE
+                                    BIT 5 - RACINIT POSTPROCESSING
+                                            INSTALLATION EXIT ACTIVE
+                                    BIT 6 - RACHECK POSTPROCESSING
+                                            INSTALLATION EXIT ACTIVE
+                                    BIT 7 - NEW PASSWORD VERIFY
+                                            INSTALLATION EXIT ACTIVE
+                                                                 @L4A*/
+         3 SMF81OP2 BIT(8),       /* OPTIONS INDICATOR
+                                     BIT MEANING WHEN SET
+                                     BIT 0 - NO TAPE VOLUME
+                                     STATISTICS ARE RECORDED
+                                     BIT 1 - NO DASD VOLUME
+                                     STATISTICS ARE RECORDED
+                                     BIT 2 - NO TERMINAL STATISTICS
+                                     ARE RECORDED
+                                     BIT 3 - REGULAR NAMING
+                                     CONVENTION EXIT IS ACTIVE
+                                     BIT 4 - DELETE NAMING
+                                     CONVENTION EXIT IS ACTIVE
+                                     BIT 5 - ADSP IS NOT ACTIVE
+                                     BIT 6 - ICHDEX01 IS ACTIVE
+                                     BIT 7 - ICHNCV00 IS ACTIVE @L6A*/
+         3 SMF81OP3 BIT(8),       /* OPTIONS INDICATOR
+                                     BIT 0 - TAPE VOLUME
+                                     PROTECTION IS IN EFFECT
+                                     BIT 1 - NO DUPLICATE DATA SET
+                                             PROTECTION
+                                     BIT 2 - DASD VOLUME PROTECTION
+                                             IS IN EFFECT
+                                     BIT 3 - RECORD CONTAINS VERSION
+                                             INDICATOR
+                                     BIT 4 - FRACHECK INSTALLATION EXIT
+                                             IS ACTIVE
+                                     BIT 5 - RACLIST PRE-PROCESSING
+                                             INSTALLATION EXIT IS
+                                             ACTIVE
+                                     BIT 6 - RACLIST SELECTION INSTAL-
+                                             LATION EXIT IS ACTIVE
+                                     BIT 7 - RACDEF POST-PROCESSING
+                                             EXIT IS ACTIVE
+                                                                 @L5A*/
+         3 SMF81AOP BIT(8),       /* AUDIT OPTIONS
+                                     BIT 0 - USER CLASS PROFILE
+                                     CHANGES BEING LOGGED
+                                     BIT 1 - GROUP CLASS PROFILE
+                                     CHANGES BEING LOGGED
+                                     BIT 2 - DATA SET CLASS PROFILE
+                                     CHANGES BEING LOGGED
+                                     BIT 3 - TAPEVOL CLASS PROFILE
+                                     CHANGES BEING LOGGED
+                                     BIT 4 - DASDVOL CLASS PROFILE
+                                     CHANGES BEING LOGGED
+                                     BIT 5 - TERMINAL CLASS PROFILE
+                                     CHANGES BEING LOGGED
+                                     BIT 6 - *RACF* COMMAND VIOLATIONS
+                                     BEING LOGGED
+                                     BIT 7 - *SPECIAL* USER ACTIVITY
+                                     BEING LOGGED            @G32FPRS*/
+         3 SMF81AO2 BIT(8),       /* RESERVED                @G32FPRS*/
+         3 SMF81TMO BIT(8),       /* TERMINAL VERIFICATION
+                                     OPTION
+                                     BIT 0 - TERMINAL AUTHORIZATION
+                                     CHECKING IS IN EFFECT
+                                     BIT 1 - UNIVERSAL ACCESS FOR
+                                     UNDEFINED TERMINALS IS *NONE*
+                                     BIT 2 - REALDSN IS IN EFFECT
+                                     BIT 3 - JES-XBMALLRACF IS IN
+                                             EFFECT
+                                     BIT 4 - JES-EARLYVERIFY IS IN
+                                             EFFECT
+                                     BIT 5 - JES-BATCHALLRACF IS IN
+                                             EFFECT
+                                     BIT 6 - FRACHECK POST PROCESSING
+                                             EXIT IS ACTIVE
+                                     BIT 7 - RESERVED        @L6A*/
+         3 SMF81PIV FIXED(8),     /* MAX. PASSWORD INTERVAL  @G32FPRS*/
+         3 SMF81REL FIXED(16)UNSIGNED,/* OFFSET FROM START OF RECORD
+                                     HEADER TO FIRST RELOCATE
+                                     BLOCK  @PC003LS*/
+         3 SMF81CNT FIXED(16)UNSIGNED,/* NUMBER OF RELOCATE BLOCKS
+                                            @PC003LS*/
+         3 SMF81VER FIXED(8),     /* VERSION INDICATOR
+                                     5 = VERSION 1 RELEASE 5     @L5A*/
+         3 SMF81QL CHAR(8),       /* INSTALLATION CONTROLLED PREFIX
+                                     FOR SINGLE LEVEL DATASET NAMES
+                                                                 @L5A*/
+         3 * CHAR(16);            /* RESERVED                    @L5A*/
+ /***********************************************************@PC003LS*/
+ /*              RELOCATE SECTION                            @PC003LS*/
+ /***********************************************************@PC003LS*/
+    DCL 1 SMF81VAR BASED,         /*                         @PC003LS*/
+         3 SMF81DTP FIXED(8),     /*DATATYPE                 @PC003LS*/
+         3 SMF81DLN FIXED(8),     /*LENGTH OF FOLLOWING DATA @PC003LS*/
+         3 SMF81DTA CHAR(255);    /*DATA                     @PC003LS*/
+ %IFAL82: ;
+

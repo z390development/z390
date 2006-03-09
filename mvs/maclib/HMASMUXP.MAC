@@ -1,0 +1,395 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/*A000000-999999                                            @Z67SP00*/
+*%GOTO UXPPLS00;                    /* SKIP OVER ASSEMBLER VERSION
+         MACRO
+         HMASMUXP &UXPALL=Y,&UXPMAIN=N,&UXPRTN=N,&UXP001=N,    @IR09435X
+               &UXP002=N                                       @IR09435
+         LCLC  &UXPLALL
+         GBLB  &UXPSW1
+         AIF   ('&UXPMAIN' EQ 'Y').UXPLB00
+         AIF   ('&UXPRTN' EQ 'Y').UXPLB00
+         AIF   ('&UXP001' EQ 'Y').UXPLB00
+         AIF   ('&UXP002' EQ 'Y').UXPLB00                      @IR09435
+&UXPLALL SETC  'Y'
+         AGO   .UXPLB02
+.UXPLB00 ANOP
+&UXPLALL SETC  'N'
+.UXPLB02 ANOP
+         AIF   ('&UXPSW1' EQ '1').UXPLB01
+&UXPSW1  SETB  1
+***********************************************************************
+*                                                                     *
+*        HMASMUXP - HMASMP USER EXIT INTERFACE PARAMETER MAPPING      *
+*                                                                     *
+***********************************************************************
+*                                                                     *
+* THIS MACRO MAPS THE PARAMETER LIST THAT HMASMP USES TO INTERFACE    *
+*      WITH ALL ITS SUPPORTED USER EXITS.                             *
+*      THE MACRO IS DIVIDED UP INTO MULTIPLE DSECTS, ONE FOR THE      *
+*      COMMON PARAMETER LIST, AND ONE FOR EACH USER EXIT WITH A       *
+*      SPECIFIC PARAMETER FOR THAT EXIT. THE EXPANSION IS CONTROLLED  *
+*      BY THE FOLLOWING PARAMETERS THAT MAY BE SET TO Y OR N          *
+*                                                                     *
+*      ..NAME..  DEFAULT  MEANING                                     *
+*      UXPALL       Y     EXPANSION TO INCLUDE ALL DSECTS             *
+*      UXPMAIN      N     EXPANSION TO INCLUDE MAIN SECTION           *
+*      UXPRTN       N     EXPANSION TO INCLUDE RETURN CODES           *
+*      UXP001       N     EXPANSION TO INCLUDE EXIT 001 PARM          *
+*      UXP002       N     EXPANSION TO INCLUDE EXIT 002 PARM  @IR09435*
+*                                                                     *
+* ONLY THOSE RETURN CODES DEFINED WITHIN THIS MACRO WILL BE           *
+*      ACCEPTED BY HMASMP. ANY OTHER CODE WILL RESULT IN AN ERROR.    *
+*                                                                     *
+* TO ESTABLISH ADDRESSIBILITY FOR ANY SECTION THE FOLLOWING           *
+*      SHOULD BE DONE UPON ENTRY                                      *
+*                                                                     *
+*      L     REGA,0(REG1)      LOAD ADDRESS OF HMASMUXP               *
+*      USING HMASMUXP,REGA     ADDRESSIBILITY FOR HMASMUXP            *
+*      L     REGB,UXPPRMAD     LOAD ADDRESS OF PARM FOR SPECIFIC EXIT *
+*      USING UXNNNPRM,REGB     ADDRESSIBILITY FOR SPECIFIC PARM FOR   *
+*                              THIS EXIT. NNN IS EXIT NUMBER          *
+*                                                                     *
+*   THE LISTS POINTED TO BY UXPCTBAD AND UXPMODAD ARE INTENDED        *
+*        FOR FUTURE USE TO POINT TO THE INTERNAL SMP CONTROL          *
+*        BLOCKS AND SMP MODULES ACCESSIBLE BY THE USER.               *
+*        AT PRESENT NO SUPPORT IS AVAILABLE AND THESE ADDRESSES       *
+*        WILL BE SET TO ZERO.                                         *
+*                                                                     *
+* CHANGE_ACTIVITY = HMASMP RELEASE 04.10                      @IR09435*
+*                                                                     *
+*     04.00 - Z67SP00, INITIAL LEVEL OF SMP RELEASE 04                *
+*     04.10 - IR09435, X37 RETRY USER EXIT SUPPORT            @IR09435*
+*                                                                     *
+***********************************************************************
+.UXPLB01 ANOP
+         AIF   ('&UXPLALL' EQ 'Y').UXPMN00
+         AIF   ('&UXPMAIN' NE 'Y').UXPMN99
+.UXPMN00 ANOP
+HMASMUXP DSECT
+UXPUXNUM DS    H                  USER EXIT NUMBER
+         DS    CL2                RESERVED
+UXPUXNAM DS    CL8                USER EXIT LMOD NAME(IF AVAILABLE)
+UXPUXAD  DS    F                  USER EXIT ADDRESS (IF AVAILABLE)
+UXPFUNCT DS    CL8                SMP FUNCTION IN PROCESS
+UXPPRMAD DS    F                  ADDRESS OF PARAMETER FOR SPECIFIC
+*                                   EXIT IDENTIFIED BY UXPUXNUM
+UXPLOJAD DS    F                  WORK AREA FOR COMMUNICATIONS FOR
+*                                   LIFE OF SMP JOB. AREA IS
+*                                   INITIALIZED TO ZERO BEFORE
+*                                   FIRST USER EXIT CALL AND THEN NOT
+*                                   MODIFIED AGAIN BY HMASMP.
+UXPLOEAD DS    F                  WORK AREA FOR COMMUNICATIONS FOR
+*                                   LIFE OF EXIT. AREA IS INITIALIZED
+*                                   TO ZERO BEFORE FIRST CALL AFTER
+*                                   EACH LOGICAL LOAD OF THE EXIT AND
+*                                   THEN NOT MODIFIED AGAIN BY HMASMP.
+         DS    F                  RESERVED
+         DS    F                  RESERVED
+*********      END OF HMASMUXP MAPPING
+.UXPMN99 ANOP
+         AIF   ('&UXPLALL' EQ 'Y').UXPRC00
+         AIF   ('&UXPRTN' NE 'Y').UXPRC99
+.UXPRC00 ANOP
+***********************************************************************
+*                                                                     *
+*        RETURN CODE DEFINITIONS                                      *
+*                                                                     *
+***********************************************************************
+*                                                                     *
+* THESE RETURN CODES ARE ACCEPTABLE FROM ALL HMASMP EXITS             *
+*                                                                     *
+UXPGOOD  EQU   0                  EXIT PROCESSED NORMALLY
+UXPTPTF  EQU   8                  TERMINATE SYSMOD IN PROCESS
+UXPTFUNC EQU   12                 TERMINATE FUNCTION IN PROCESS
+UXPTSMP  EQU   16                 TERMINATE SMP
+* THESE RETURN CODES ARE ACCEPTABLE FOR ONLY SPECIFIC EXITS
+*        SEE EACH EXIT FOR DEFINITION OF ADDITIONAL RETURN CODES
+UXPADD   EQU   20                 ADD A RECORD
+UXPDEL   EQU   24                 DELETE A RECORD
+UXPRNC   EQU   20                 RETRY WITHOUT COMPRESSING    @IR09435
+********       END OF UXP RETURN CODE DEFINITIONS
+.UXPRC99 ANOP
+         AIF   ('&UXPLALL' EQ 'Y').UXP0100
+         AIF   ('&UXP001' NE 'Y').UXP0199
+.UXP0100 ANOP
+***********************************************************************
+*                                                                     *
+* HMASMP EXIT 001 - RECEIVE SMPPTFIN SCAN EXIT                        *
+*                                                                     *
+*    FUNCTION - RECEIVE TIME EXIT TO LOOK AT ALL SMPPTFIN             *
+*               INPUT CARDS PRIOR TO PROCESSING BY HMASMP             *
+*    RTN CODE - IN ADDITION TO STANDARD                               *
+*               UXPADD - RETURN TO USER EXIT AFTER PROCESSING         *
+*                        CURRENT RECORD. EXIT WILL PUT NEXT RECORD    *
+*                        INTO BUFFER.                                 *
+*               UXPDEL - DO NOT PROCESS CURRENT RECORD. READ NEXT     *
+*                        RECORD AND RETURN TO EXIT.                   *
+*    NOTES    - WHEN HMASMP HITS END OF FILE ON SMPPTFIN IT WILL SET  *
+*                 UX001RC TO UX001EOF AND CALL EXIT. THE EXIT MAY     *
+*                 ADD RECORDS AFTER END OF FILE BY SETTING THE        *
+*                 RETURN CODE TO UXPADD AND RETURNING. AT THE NEXT    *
+*                 ENTRY THE EXIT MAY START TO ADD RECORDS.            *
+*                                                                     *
+***********************************************************************
+UXPUX001 EQU   1                  VALUE FOR UXPUXNUM TO IDENTIFY
+*                                 REQUEST FOR RECEIVE USER EXIT
+UX001PRM DSECT
+UX001RC  DS    CL1                CODE INDICATOR SET TO UX001EOF AT
+*                                 END OF FILE ELSE SET TO 0
+UX001RCD DS    CL80               SMPPTFIN RECORD
+UX001EOF EQU   4                  END OF FILE CODE FOR UX001RC
+*********      END OF UXPUX001 MAPPING
+.UXP0199 ANOP  .                  .
+         AIF   ('&UXPLALL' EQ 'Y').UXP0200                     @IR09435
+         AIF   ('&UXP002' NE 'Y').UXP0299                      @IR09435
+.UXP0200 ANOP
+**************************************************************@IR09435*
+*                                                             @IR09435*
+* HMASMP EXIT 002 - RETRY USER EXIT                           @IR09435*
+*                                                             @IR09435*
+*    FUNCTION - AFTER SMP HAS DETERMINED THAT A RETRY CAN     @IR09435*
+*               BE ATTEMPTED (COMPRESS AND RE-INVOKE THE      @IR09435*
+*               FAILING UTILITY), THE USER EXIT IS CALLED     @IR09435*
+*               TO DETERMINE IF THE USER WISHES TO PER-       @IR09435*
+*               FORM THE RETRY.                               @IR09435*
+*    RTN CODE - IN ADDITION TO STANDARD                       @IR09435*
+*               UXPRNC - PERFORM THE RETRY (RE-INVOKE THE     @IR09435*
+*                        FAILING UTILITY) WITHOUT FIRST       @IR09435*
+*                        COMPRESSING THE DATA SET.            @IR09435*
+*               NOTE:  THE STANDARD RETURN CODE OF UXPPTF     @IR09435*
+*                      IS INVALID FOR THE RETRY USER EXIT.    @IR09435*
+*                                                             @IR09435*
+**************************************************************@IR09435*
+UXPUX002 EQU   2                  VALUE FOR UXPUXNUM TO       @IR09435
+*                                 IDENTIFY REQUEST FOR        @IR09435
+*                                 RETRY USER EXIT             @IR09435
+UX002PRM DSECT                                                @IR09435
+UX002DDN DS    CL8                FAILING DDNAME              @IR09435
+UX002PGM DS    CL8                FAILING UTILITY NAME        @IR09435
+UX002ACH DS    XL3                ABEND CODE IN HEX (SAME     @IR09435
+*                                 FORMAT AS SDWA FIELD        @IR09435
+*                                 SDWACMPC)                   @IR09435
+UX002RCH DS    XL1                ABEND REASON CODE IN HEX    @IR09435
+UX002ACP DS    CL3                ABEND CODE IN EBCDIC        @IR09435
+UX002RCP DS    CL2                ABEND REASON CODE IN EBCDIC @IR09435
+UX002LTH EQU   *-UX002PRM         LENGTH OF EXIT 002 PLIST    @IR09435
+*********      END OF UXPUX002 MAPPING                        @IR09435
+.UXP0299 ANOP  .                  .                           @IR09435
+         MEND                          END OF ASSEMBLER VERSION      */
+*%UXPPLS00: ;
+*@EJECT;                            /*                               */
+*/********************************************************************/
+*/*                                                                  */
+*/* HMASMUXP - PARAMETER LIST TO HMASMP USER EXIT ROUTINES           */
+*/*                                                                  */
+*/********************************************************************/
+*/*                                                                  */
+*/* THIS MACRO IS USED BY HMASMP TO INTERFACE WITH THE SMP           */
+*/*      INTERFACE ROUTINE TO THE USER EXITS AND FOR THE             */
+*/*      INTERFACE ROUTINE TO CALL THE USER EXIT ROUTINE.            */
+*/*                                                                  */
+*/* THE LISTS POINTED TO BY UXPCTBAD AND UXPMODAD ARE INTENDED       */
+*/*      FOR FUTURE USE TO POINT TO THE INTERNAL SMP CONTROL         */
+*/*      BLOCKS AND SMP MODULES ACCESSIBLE BY THE USER.              */
+*/*      AT PRESENT NO SUPPORT IS AVAILABLE AND THESE ADDRESSES      */
+*/*      WILL BE SET TO ZERO.                                        */
+*/*                                                                  */
+*/* ONLY THOSE RETURN CODES DEFINED WITHIN THIS MACRO WILL BE        */
+*/*      ACCEPTED BY HMASMP. IF ANY OTHER VALUES IS RETURNED         */
+*/*      HMASMP WILL ISSUE AN ERROR MESSAGE AND TERMINATE THE        */
+*/*      CURRENT FUNCTION.                                           */
+*/*                                                                  */
+*/* THE EXPANSION OF THIS MACRO IS CONTROLLED BY THE FOLLOWING       */
+*/*      PLS MACRO VARIABLES.                                        */
+*/*                                                                  */
+*/*      UXP_ALL  - REQUEST FOR ALL PARMS FOR ALL USER EXIT ROUTINES */
+*/*                 SET TO -YES- INDICATE ALL REQUEST.               */
+*/*                 THE EXPANSION WILL THEN INCLUDE ALL OF FOLLOWING */
+*/*      UXP_MAIN - REQUEST FOR MAIN MAPPING OF PARM TO ACTUAL       */
+*/*                 USER EXIT                                        */
+*/*      UXP_RTN  - REQUEST FOR EXPANSION OF VALID RETURN CODE       */
+*/*                 CONSTANTS.                                       */
+*/*      UXP_001  - REQUEST FOR MAPPING OF PARM FOR RECEIVE EXIT     */
+*/*                 SET TO -YES- INDICATE REQUEST FOR ONLY THE       */
+*/*                 PARAMETER LIST AND VALUE DECLARE FOR THE         */
+*/*                 RECEIVE USER EXIT ( SMP EXIT 001 )               */
+*/*      UXP_002  - REQUEST FOR MAPPING OF PARM FOR RETRY    @IR09435*/
+*/*                 EXIT SET TO -YES- INDICATES REQUEST FOR  @IR09435*/
+*/*                 ONLY THE PARAMETER LIST AND VALUE        @IR09435*/
+*/*                 DECLARE FOR THE RETRY USER EXIT (SMP     @IR09435*/
+*/*                 EXIT 002)                                @IR09435*/
+*/*                                                                  */
+*/*      NOTE...  - AT LEAST ONE OF THE ABOVE VARIABLES MUST         */
+*/*                 BE SET                                           */
+*/*                                                                  */
+*/*      UXP_XXX_BASE - FOR EACH OF THE ABOVE SECTIONS THERE IS      */
+*/*                 AN ADDITIONAL VARIABLE TO CONTROL THE            */
+*/*                 ATTRIBUTES OF THE EXPANSION. XXX IS EQUAL TO     */
+*/*                 THE SECOND QUALIFIER OF THE ABOVE VARIABLES.     */
+*/*                                                                  */
+*/*  CHANGE_ACTIVITY = HMASMP RELEASE 04.10                  @IR09435*/
+*/*                                                                  */
+*/*      04.00 - Z67SP00, INITIAL LEVEL OF SMP RELEASE 04            */
+*/*      04.10 - IR09435, X37 RETRY USER EXIT SUPPORT        @IR09435*/
+*/*                                                                  */
+*/********************************************************************/
+*%IF UXP_MAIN_BASE=''               /*                               */
+*  %THEN                            /*                               */
+*  %UXP_MAIN_BASE=UXP_ALL_BASE;     /*                               */
+*%IF UXP_ALL='YES'                  /* IF REQUEST FOR ALL PARTS      */
+*   %THEN                           /*                               */
+*   %GOTO UXPMN01;                  /*                               */
+*%IF UXP_MAIN='YES'                 /* IF REQUEST FOR MAIN SEGMENT   */
+*   %THEN                           /*                               */
+*   %GOTO UXPMN01;                  /*                               */
+*%GOTO UXPMN99;                     /*                               */
+*%UXPMN01: ;                        /*                               */
+*   DECLARE                         /*                               */
+*     1 HMASMUXP BDY(WORD)
+*       UXP_MAIN_BASE
+*       ,                           /*                               */
+*       3 UXPUXNUM FIXED(15),       /* USER EXIT IDENTIFICATION      */
+*       3 *        CHAR(2),         /* UNUSED                        */
+*       3 UXPUXNAM CHAR(8),         /* USER EXIT NAME                */
+*       3 UXPUXAD  PTR(31),         /* USER EXIT ADDRESS             */
+*       3 UXPFUNCT CHAR(8),         /* SMP FUNCTION IN PROCESS       */
+*       3 UXPPRMAD PTR(31),         /* ADDR OF USER EXIT PARM LIST   */
+*       3 UXPLOJAD PTR(31),         /* FOR USE BY USER EXITS         */
+*       3 UXPLOEAD PTR(31),         /* FOR USE BY USER EXITS         */
+*       3 UXPCTBAD PTR(31),         /* ADDR OF SMP CONTROL BLOCKS    */
+*       3 UXPMODAD PTR(31);         /* ADDR OF SMP MODULES           */
+*%UXPMN99: ;                        /*                               */
+*%IF UXP_ALL='YES'                  /* IF REQUEST FOR ALL PARTS      */
+*   %THEN                           /*                               */
+*   %GOTO UXPRTN01;                 /*                               */
+*%IF UXP_RTN='YES'                  /* IF REQUEST FOR RETURN CODES   */
+*   %THEN                           /*                               */
+*   %GOTO UXPRTN01;                 /*                               */
+*%GOTO UXPRTN99;                    /*                               */
+*%UXPRTN01: ;                       /*                               */
+*/********************************************************************/
+*/*                                                                  */
+*/*    THESE ARE THE COMMON RETURN CODES THAT MAY BE RETURNED FROM   */
+*/*    ANY OF THE HMASMP USER EXITS                                  */
+*/*                                                                  */
+*/********************************************************************/
+*
+*   DECLARE                         /*                               */
+*     UXPGOOD  CONSTANT(0),         /* PROCESSING COMPLETED OK       */
+*     UXPTPTF  CONSTANT(8),         /* TERMINATE SYSMOD              */
+*     UXPTFUNC CONSTANT(12),        /* TERMINATE FUNCTION            */
+*     UXPTSMP  CONSTANT(16);        /* TERMINATE SMP                 */
+*
+*/********************************************************************/
+*/*                                                                  */
+*/*    THESE RETURN CODES ARE ACCEPTABLE FOR ONLY SPECIFIC EXITS.    */
+*/*    SEE EACH EXIT FOR THE DEFINITION OF ADDITIONAL RETURN CODES.  */
+*/*                                                                  */
+*/********************************************************************/
+*
+*   DECLARE                         /*                               */
+*     UXPADD   CONSTANT(20),        /* ADD RCD AFTER CURRENT ONE     */
+*     UXPDEL   CONSTANT(24),        /* DELETE CURRENT RECORD         */
+*     UXPRNC   CONSTANT(20);        /* RETRY WITHOUT         @IR09435*/
+*                                   /* COMPRESSING           @IR09435*/
+*%UXPRTN99: ;                       /*                               */
+*%IF UXP_001_BASE=''                /* IF NO 001 BASE THEN USE ALL   */
+*  %THEN                            /*                               */
+*  %UXP_001_BASE=UXP_ALL_BASE;      /*                               */
+*%IF UXP_ALL='YES'                  /* IF TOTAL UXP LIST REQUESTED   */
+*  %THEN                            /*                               */
+*  %GOTO UXP00101;                  /*                               */
+*%IF UXP_001='YES'                  /* IF EXIT 001 PARM REQUESTED    */
+*  %THEN                            /*                               */
+*  %GOTO UXP00101;                  /*                               */
+*%GOTO UXP00199;                    /*                               */
+*%UXP00101: ;                       /*                               */
+*@EJECT;                            /*                               */
+*/********************************************************************/
+*/*                                                                  */
+*/* HMASMP EXIT 001                                                  */
+*/*                                                                  */
+*/*   FUNCTION - RECEIVE TIME EXIT TO LOOK AT ALL SMPPTFIN           */
+*/*              CONTROL CARDS PRIOR TO PROCESSING BY HMASMP.        */
+*/*   RTN CODE - IN ADDITION TO STANDARD                             */
+*/*              UXPADD - RETURN TO USER EXIT AFTER PROCESSSING      */
+*/*                       CURRENT RECORD BUT BEFORE READING NEXT     */
+*/*                       RECORD.                                    */
+*/*                       USER EXIT WILL ADD A RECORD TO BUFFER      */
+*/*                       TO BE PROCESSED DURING SECOND CALL.        */
+*/*              UXPDEL - DO NOT PROCESS CURRENT RECORD IN BUFFER.   */
+*/*                       READ NEXT RECORD AND RETURN TO EXIT.       */
+*/*   NOTES    - WHEN HMASMP HITS END OF FILE ON SMPPTFIN IT WILL    */
+*/*              SET UX001RC TO UX001EOF AND CALL EXIT. THE EXIT     */
+*/*              MAY CONTINUE TO ADD RECORDS AFTER END OF FILE BY    */
+*/*              RETURNING CODE UXPADD IN REGISTER 15. WHEN A        */
+*/*              RETURN CODE UXPGOOD IS RETURN SMP WILL CONTINUE     */
+*/*              WITH NORMAL EOF PROCESSING.                         */
+*/*                                                                  */
+*/********************************************************************/
+*
+*   DECLARE                         /*                               */
+*     UXPUX001 FIXED(15) CONSTANT(1);/* RECEIVE USER EXIT - VALUE SET
+*                                      UXPUXNUM UPON ENTRY           */
+*   DECLARE                         /*                               */
+*     1 UX001PRM
+*       UXP_001_BASE
+*       ,                           /*                               */
+*       3 UX001RC  FIXED(8),        /* SET TO UX001EOF AT END OF FILE*/
+*       3 UX001RCD CHAR(80);        /* SMPPTFIN RECORD               */
+*   DECLARE                         /*                               */
+*     UX001EOF FIXED(8) CONSTANT(4);/* TO INDICATE END OF FILE       */
+*%UXP00199: ;                       /*                               */
+*%IF UXP_002_BASE=''                /* IF NO 002 BASE THEN   @IR09435*/
+*  %THEN                            /*   USE ALL             @IR09435*/
+*  %UXP_002_BASE=UXP_ALL_BASE;      /*                       @IR09435*/
+*%IF UXP_ALL='YES'                  /* IF TOTAL UXP LIST     @IR09435*/
+*  %THEN                            /*   REQUESTED           @IR09435*/
+*  %GOTO UXP00201;                  /*                       @IR09435*/
+*%IF UXP_002='YES'                  /* IF EXIT 002 PARM      @IR09435*/
+*  %THEN                            /*   REQUESTED           @IR09435*/
+*  %GOTO UXP00201;                  /*                       @IR09435*/
+*%GOTO UXP00299;                    /*                       @IR09435*/
+*%UXP00201: ;                       /*                       @IR09435*/
+*@EJECT;                            /*                       @IR09435*/
+*/***********************************************************@IR09435*/
+*/*                                                          @IR09435*/
+*/* HMASMP EXIT 002 - RETRY USER EXIT                        @IR09435*/
+*/*                                                          @IR09435*/
+*/*   FUNCTION - AFTER SMP HAS DETERMINED THAT A RETRY CAN   @IR09435*/
+*/*              BE ATTEMPTED (COMPRESS AND RE-INVOKE THE    @IR09435*/
+*/*              FAILING UTILITY), THE USER EXIT IS CALLED   @IR09435*/
+*/*              TO DETERMINE IF THE USER WISHES TO PER-     @IR09435*/
+*/*              FORM THE RETRY.                             @IR09435*/
+*/*   RTN CODE - IN ADDITION TO STANDARD                     @IR09435*/
+*/*              UXPRNC - PERFORM THE RETRY (RE-INVOKE THE   @IR09435*/
+*/*                       FAILING UTILITY) WITHOUT FIRST     @IR09435*/
+*/*                       COMPRESSING THE DATA SET.          @IR09435*/
+*/*              NOTE:  THE STANDARD RETURN CODE OF UXPPTF   @IR09435*/
+*/*                     IS INVALID FOR THE RETRY USER EXIT.  @IR09435*/
+*/*                                                          @IR09435*/
+*/***********************************************************@IR09435*/
+*
+*   DECLARE                         /*                               */
+*     UXPUX002 FIXED(15) CONSTANT(2);/* RETRY USER EXIT -    @IR09435*/
+*                                   /* VALUE FOR UXPUXNUM TO @IR09435*/
+*                                   /* IDENTIFY USER EXIT    @IR09435*/
+*   DECLARE                         /*                       @IR09435*/
+*     1 UX002PRM                    /*                       @IR09435*/
+*       UXP_002_BASE
+*       ,
+*       3 UX002DDN CHAR(8),         /* FAILING DDNAME        @IR09435*/
+*       3 UX002PGM CHAR(8),         /* FAILING UTILITY NAME  @IR09435*/
+*       3 UX002ACH BIT(24),         /* ABEND CODE IN HEX     @IR09435*/
+*                                   /* (SAME FORMAT AS SDWA  @IR09435*/
+*                                   /* FIELD SDWACMPC)       @IR09435*/
+*       3 UX002RCH BIT(8),          /* ABEND REASON CODE     @IR09435*/
+*                                   /* IN HEX                @IR09435*/
+*       3 UX002ACP CHAR(3),         /* ABEND CODE IN EBCDIC  @IR09435*/
+*       3 UX002RCP CHAR(2);         /* ABEND REASON CODE     @IR09435*/
+*                                   /* IN EBCDIC             @IR09435*/
+*
+*   DECLARE                         /*                       @IR09435*/
+*     UX002LTH FIXED(8)             /* LENGTH OF EXIT 002    @IR09435*/
+*     INIT(LENGTH(UX002PRM));       /* PLIST                 @IR09435*/
+*%UXP00299: ;                       /*                       @IR09435*/

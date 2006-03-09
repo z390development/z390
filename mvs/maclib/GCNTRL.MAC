@@ -1,0 +1,343 @@
+.* MVS 3.8J PUBLIC DOMAIN
+        MACRO
+&NAME    GCNTRL &DECB,&TYPE,&DCB,&AREA,&DCB2,&MF=
+         LCLA  &WCODE,&WCOST,&WINDEX                             A26234
+         LCLC  &A,&B                                          LI A46455
+.* 720000,726000                                                 A33599
+.*       THIS MACRO REWRITEN FOR RELEASE 19               A25386,A26234
+.*675000                                                          M2880
+.*C369000                                                        A37134
+.* D306000,D321000                                               A42287
+.* A370000-374000,A464000-466000                                 A42287
+.* A10000,A111600-113400                                      LI A46455
+.* A28000,A109000-110000                                      LI A47179
+.* C99000-102000                                              LI A46455
+&WCODE   SETA  0                        INIALIZATION OF STORAGE AREA
+&WCOST   SETA  0
+&WINDEX  SETA  0
+         AIF   (T'&TYPE EQ 'O').ABORT1   IF NO TYPE GET OUT   LI A47179
+         AIF   (T'&DECB EQ 'O' AND '&MF' EQ 'E').ERRORA          A26234
+         AIF   (T'&TYPE EQ 'O' OR T'&DCB2 EQ 'O').CONTE          A26234
+         AIF   ('&TYPE' EQ 'STR').CONTE                          A26234
+         IHBERMAC   48,,&TYPE                                    A26234
+         MEXIT                                                   A26234
+.CONTE   AIF   ('&MF' EQ 'E').BUILD                              A26234
+         AIF   (T'&DECB EQ 'O').CONT1                            A26234
+         AIF   ('&DECB'(1,1) EQ '(').BUILD2                      A26234
+.CONT1   AIF   (T'&DCB NE 'O').CONT2                             A26234
+         AIF   ('&MF' EQ 'L').COO                                A26234
+         IHBERMAC   6                                            A26234
+&WCODE   SETA  1                                                 A26234
+         AGO   .CONT2                                            A26234
+.COO     IHBERMAC   178,DCB,0                                    A26234
+.CONT2   AIF   (T'&DECB NE 'O').CONT3                            A26234
+.ERRORB  IHBERMAC   7                                            A26234
+&WCODE   SETA  1                                                 A26234
+.CONT3   AIF   (T'&AREA EQ 'O').LOCAL
+.AR      AIF   ('&TYPE' EQ 'ALM' OR '&TYPE' EQ 'HLT' OR '&TYPE' EQ 'INDC
+               ' OR '&TYPE' EQ 'INS' OR '&TYPE' EQ 'RMV' OR '&TYPE' EQ C
+               'STR').GON                                        A26234
+         AIF   ('&TYPE' EQ 'ERSW' OR '&TYPE' EQ 'ERS').HELP      A26234
+         AGO   .ERROR6
+.HELP    AIF   ('&AREA'(1,1) EQ '(').SUB1 REG NOTATION        LI A46455
+         AIF   (T'&AREA NE 'O').READY    IF UNIT NOT OMITTED  LI A46455
+.ERROR7  IHBERMAC   178,UNIT,1                                   A26234
+         AGO   .TLOC
+.ABORT1  IHBERMAC  25                   NO TYPE OPERAND       LI A47179
+         MEXIT                          GET OUT               LI A47179
+.READY   AIF   (&AREA GT 25 OR &AREA LT 1).ERROR7                A26234
+         AIF   (T'&AREA EQ 'N').SUB     BRANCH IF DEC INTEGER LI A46455
+&A       SETC  'UNIT MAY'               IF NOT SELF DEFINING  LI A46455
+&B       SETC  ' BE'                    SETUP WARNING MESSAGE LI A46455
+         IHBERMAC 183,&A&B,&AREA                              LI A46455
+.SUB     ANOP
+&WINDEX  SETA  &AREA-1
+.SUB1    ANOP                                                    A26234
+&WCOST   SETA  1
+         AGO   .GON
+.LOCAL   AIF   ('&TYPE' EQ 'ERSW').TLOC                          A26234
+         AIF   ('&TYPE' NE 'ERS').ERROR5                         A26234
+.TLOC    ANOP
+&WINDEX  SETA  0
+&WCOST   SETA  1
+         AGO   .GON
+.ERROR5  AIF   ('&TYPE' EQ 'ALM').GON                            A26234
+         AIF   ('&MF' EQ 'L').ERROR5A                            A29088
+         IHBERMAC 180,FOURTH,0
+         AGO   .AR
+.ERROR5A IHBERMAC   178,FORTH,0                                  A29088
+         AGO   .AR                                               A29088
+.ERROR6  IHBERMAC   178,TYPE,0
+         AIF   (T'&AREA EQ 'N').READY
+         AIF   (T'&AREA EQ 'O').ERROR7                           A26234
+         AIF   ('&AREA'(1,1) EQ '(').TLOC                        A26234
+.GON     AIF   (&WCODE NE 1).DONE       TEST IF ERROR CONDITION STOP
+         AIF   ('&MF' EQ 'L').GON1
+         AIF   (T'&MF NE 'O').WRNG
+.GON1    MEXIT                                                   A26234
+.BUILD2  AIF   ('&MF' EQ 'L').ERRORB                             A26234
+.BUILD   AIF   (T'&DECB NE 'O').BUILD0                           A26234
+.ERRORA  IHBERMAC   7                                            A26234
+         MEXIT                                                   A26234
+.BUILD0  ANOP                                                    A26234
+&NAME    SR    15,15                    CLEAR REGISTER
+         AIF   ('&DECB'(1,1) EQ '(').RFORM                       A26234
+         LA    1,&DECB                  PARAMETER LIST
+         AGO   .RFORM1                                           A26234
+.RFORM   AIF   ('&DECB' EQ '(1)').RFORM1                         A26234
+         LA    1,0&DECB                 PARAMETER LIST           A26234
+.RFORM1  AIF   (T'&TYPE EQ 'O').BDCB                             A26234
+         AIF   ('&TYPE' NE 'ALM').BTYPE1
+         ST    15,4(0,1)                CLEAR TYPE AREA IN DECB
+         MVI   4(1),X'40'               ALM TYPE CODE TO DECB
+         AGO   .BDCB                                               6847
+.BTYPE1  AIF   ('&TYPE' NE 'HLT').BTYPE2
+         ST    15,4(0,1)                CLEAR TYPE AREA IN DECB
+         MVI   4(1),X'4A'               HLT TYPE CODE TO DECB
+         AGO   .BDCB                                               6847
+.BTYPE2  AIF   ('&TYPE' NE 'IND').BTYPE3
+         ST    15,4(0,1)                CLEAR TYPE AREA IN DECB
+         MVI   4(1),X'50'               IND TYPE CODE TO DECB
+         AGO   .BDCB                                               6847
+.BTYPE3  AIF   ('&TYPE' NE 'INS').BTYPE4
+         XC    20(4,1),20(1)           ZERO OPCB IN DECB         A25386
+         MVI   4(1),X'5A'               INS TYPE CODE TO DECB
+         AGO   .BDCB                                               6847
+.BTYPE4  AIF   ('&TYPE' NE 'RMV').BTYPE5
+         XC    20(4,1),20(1)           ZER0 OPCB IN DECB         A25386
+         MVI   4(1),X'62'               RMV TYPE CODE TO DECB
+         AGO   .BDCB                                               6847
+.BTYPE5  AIF   ('&TYPE' NE 'STR').BTYPE6
+         ST    15,4(0,1)                CLEAR TYPE AREA IN DECB
+         MVI   4(1),X'6C'               STR TYPE CODE TO DECB
+         AGO   .BDCB                                               6847
+.BTYPE6  AIF   ('&TYPE' NE 'ERS').BTYPE7
+         ST    15,4(0,1)                CLEAR TYPE AREA IN DECB
+         MVI   4(1),X'70'               ERS TYPE CODE TO DECB
+         AGO   .BDCB                                             A26234
+.BTYPE7  AIF   ('&TYPE' NE 'ERSW').BTYPE8
+         ST    15,4(0,1)           CLEAR TYPE AREA IN DECB
+         MVI   4(1),X'70'
+         AGO   .BDCB
+.BTYPE8  IHBERMAC   178,TYPE,N/C                                 A26234
+.BDCB    AIF   (T'&DCB EQ 'O').BAREA                             A26234
+         AIF   ('&DCB'(1,1) EQ '(').BDCB1                        A26234
+         LA    15,&DCB                  DCB ADDRESS
+         ST    15,8(0,1)                DCB ADDRESS IN DECB
+         AGO   .BAREA
+.BDCB1   LA    15,0&DCB                 DCB ADDRESS              A26234
+         ST    15,8(0,1)                DCB ADDRESS IN DECB
+.BAREA   AIF   (T'&AREA EQ 'O').BDCB2                            A26234
+         AIF   ('&AREA'(1,1) EQ '(').BAREA1                      A26234
+         AIF   (T'&AREA NE 'N').BAREA2
+         AIF   (&AREA GT 25 OR &AREA LT 1).BERROR                A26234
+&WINDEX  SETA  &AREA-1
+.BUNIT   L     15,=A(&WINDEX)                                    A26234
+.BUNIT1  ST    15,28(0,1)               UNIT INDEX IN DECB       A37134
+         AIF   ('&TYPE' NE 'ERS').LBIT                           A42287
+         MVI   29(1),X'00'
+         AGO   .BEXCP                                            A42287
+.LBIT    AIF   ('&TYPE' NE 'ERSW').BEXCP                         A42287
+         MVI   29(1),X'01'
+         AGO   .BEXCP                                         LI  M1528
+.BAREA2  LA    15,&AREA                 AREA ADDRESS             A26234
+.BPRAM   AIF   (T'&TYPE NE 'O').MTYPE                            A26234
+         CLI   4(1),X'70'               2260 ERASE TYPE
+         BE    *+12
+         TM    4(1),X'02'               IF ADDR TO BUFFER LOC IN DECB
+         BC    14,*+12
+         ST    15,28(0,1)               BUFFER ADDRESS IN DECB
+         B     *+24
+         TM    4(1),X'04'               IF ADDR TO START LOC IN DECB
+         BC    14,*+12
+         ST    15,24(0,1)               START ADDRESS IN DECB
+         B     *+8
+         ST    15,12(0,1)               AREA ADDRESS IN DECB
+.BDCB2   AIF   (T'&DCB2 EQ 'O').BEXCP                            A26234
+         AIF   ('&DCB2'(1,1) EQ '(').BDCB2R                      A26234
+         MVI   24(1),X'80'              TURN ON 2ND DCB IND.
+         LA    15,&DCB2                 2ND DCB ADDR TO REG 15.
+         ST    15,12(0,1)               2ND DCB ADDR IN DECB+12.
+         AGO   .BEXCP
+.BDCB2R  MVI   24(1),X'80'              TURN 2ND DCB IND.        A26234
+         LA    15,0&DCB2                2ND DCB ADDR TO REG 15.
+         ST    15,12(0,1)               2ND DCB ADDR IN DECB+12.
+         AGO   .BEXCP
+.BERROR  IHBERMAC   178,UNIT,1                                   A26234
+&WINDEX  SETA  0
+         AGO   .BUNIT
+.BAREA1  LR    15,&AREA(1)              AREA ADDRESS             A26234
+         AGO   .BPRAM
+.MTYPE   AIF   ('&TYPE' EQ 'ALM' OR '&TYPE' EQ 'IND').MPTYPE     A26234
+         AIF   ('&TYPE' NE 'HLT').MTYPE2
+.MPTYPE1 LA    15,0(0,15)     CLEAR HI ORDER BYTE
+         ST    15,28(0,1)
+         AGO   .BEXCP
+.MTYPE2  AIF   ('&TYPE' EQ 'INS' OR '&TYPE' EQ 'RMV').MPTYPE1    A26234
+         AIF   ('&TYPE' EQ 'ERS' OR '&TYPE' EQ 'ERSW').BUNIT1    A26234
+.MTYPE7  ST    15,24(0,1)               START ADDRESS IN DECB    A26234
+         AGO   .BDCB2
+.MPTYPE  ST    15,12(0,1)               AREA ADDRESS IN DECB     A26234
+.BEXCP   XC    0(4,1),0(1)              CLEAR ECB                A26234
+         L     15,8(0,1)                DCB ADDRESS
+         L     15,48(0,15)              GIOCR ADDRESS
+         CALL  (15)                     LINK TO GIOCR
+         MEXIT
+.WRNG    IHBERMAC   54                                           A26234
+         MEXIT
+.DONE    AIF   ('&MF' EQ 'L').PARM
+         AIF   (T'&MF NE 'O').WRNG
+         AIF   ('&DECB'(1,1) EQ '(').BUILD                       A26234
+         CNOP  0,4                                               A26234
+&NAME    BAL   1,*+36                   PARAMETER LIST REGISTER  A26234
+         AGO   .PARM1
+.PARM    ANOP
+&NAME    DS    0F
+.PARM1   ANOP
+&DECB    DC    F'0'
+         AIF   (&WCOST EQ 1).CHECK
+         AIF   ('&TYPE' NE 'ALM').THLT  2250 TYPE CODES
+         DC    BL2'0100000000000000'
+.NALM    DC    H'0'                                              A26234
+         AIF   (T'&DCB EQ 'O').CONTR
+         AIF   ('&DCB'(1,1) EQ '(').CONTR                        A26234
+         DC    A(&DCB)
+.NDCB    AIF   (&WCOST EQ 1).CONTR1                              A26234
+         AIF   (T'&AREA EQ 'O').CONTR2
+         AIF   ('&AREA'(1,1) EQ '(').CONTR2                      A26234
+         DC    A(&AREA)
+.NIOB    DC    F'0'                                              A26234
+         DC    F'0'
+         DC    F'0'
+         DC    F'0'
+         AIF   ('&MF' EQ 'L').FINE                               A26234
+         AIF   (T'&AREA EQ 'O').FINE3                            A26234
+         AIF   ('&AREA'(1,1) NE '(').FINE3                       A26234
+         ST    &AREA(1),12(1)           PLACE AREA ADDR. IN LIST A26234
+         AGO   .FINE3                                            A26234
+.CHECK   AIF   ('&TYPE' NE 'ERS').TSOME 2260 TYPE CODE
+         DC    BL2'0111000000000000'
+         AGO   .NALM
+.CONTR   DC    F'0'                                              A26234
+         AGO   .NDCB
+.CONTR1  DC    F'0'                                              A26234
+         DC    F'0'
+         DC    F'0'
+         DC    F'0'
+         AIF   (T'&AREA EQ 'O').RUNIT                            A26234
+         AIF   ('&AREA'(1,1) EQ '(').RUNIT                       A26234
+         DC    AL1(&WINDEX)
+.TPERSW  AIF   ('&TYPE' NE 'ERSW').TPERS
+         DC    X'01'
+         DC    XL2'00'
+.FINE5   AIF   ('&MF' EQ 'L').FINE                               A26234
+         AIF   (T'&AREA EQ 'O').FINE3                            A26234
+         AIF   ('&AREA'(1,1) NE '(').FINE3                       A26234
+         STC   &AREA(1),28(0,1)         PLACE UNIT NO. IN LIST   A26234
+         AGO   .FINE3                                            A26234
+.RUNIT   DC    X'00'                    UNIT INDEX               A26234
+         AGO   .TPERSW                                           A26234
+.TPERS   DC    XL3'00'                                           A26234
+         AGO   .FINE5                                            A26234
+.CONTR2  DC    F'0'                                              A26234
+         AGO   .NIOB
+.THLT    AIF   ('&TYPE' NE 'HLT').TIND
+         DC    BL2'0100101000000000'
+.NHLT    DC    H'0'                                               M2880
+         AIF   (T'&DCB EQ 'O').ACONT
+         AIF   ('&DCB'(1,1) EQ '(').ACONT                        A26234
+         DC    A(&DCB)
+.AZERO   DC    F'0'                                              A26234
+         DC    F'0'
+         DC    F'0'
+         DC    F'0'
+         AIF   (T'&AREA EQ 'O').BCONT
+         AIF   ('&AREA'(1,1) EQ '(').BCONT                       A26234
+         DC    A(&AREA)
+.FINE3   AIF   ('&MF' EQ 'L').FINE                               A26234
+         AIF   (T'&DCB EQ 'O').FINE2                             A26234
+         AIF   ('&DCB'(1,1) NE '(').FINE2                        A26234
+         ST    &DCB(1),8(1)             PLACE DCB ADDR. IN LIST  A26234
+         L     15,48&DCB                GET GIOCR'S ENTRY POINT  A33599
+         AGO   .FINE1                                            A26234
+.FINE2   L     15,&DCB+48               GET GIOCR'S ENTRY POINT  A33599
+.FINE1   XC    0(4,1),0(1)              CLEAR ECB                A26234
+         CALL  (15)                                              A26234
+.FINE    MEXIT                                                   A26234
+.ACONT   DC    F'0'                                              A26234
+         AGO   .AZERO
+.BCONT   DC    F'0'                                              A26234
+         AIF   (T'&AREA EQ 'O').FINE3                            A26234
+         AIF   ('&AREA'(1,1) NE '(').FINE3                       A26234
+         ST    &AREA(1),28(1)           PLACE AREA ADDR. IN LIST A26234
+         AGO   .FINE3                                            A26234
+.TIND    AIF   ('&TYPE' NE 'IND').TINS
+         DC    BL2'0101000000000000'
+         AGO   .NALM
+.TINS    AIF   ('&TYPE' NE 'INS').TRMV
+         DC    BL2'0101101000000000'
+         AGO   .NHLT
+.TRMV    AIF   ('&TYPE' NE 'RMV').TSTR
+         DC    BL2'0110001000000000'
+         AGO   .NHLT
+.TSOME   AIF   ('&TYPE' NE 'ERSW').TSOME1
+         DC    BL2'0111000000000000'
+         AGO   .NALM
+.TSTR    AIF   ('&TYPE' NE 'STR').CHECK                          A26234
+         DC    BL2'0110110000000000'
+         DC    H'0'
+         AIF   (T'&DCB EQ 'O').CCONT
+         AIF   ('&DCB'(1,1) EQ '(').CCONT                        A26234
+         DC    A(&DCB)
+.CDCB2   AIF   (T'&DCB2 EQ 'O').BZERO
+         AIF   ('&DCB2'(1,1) EQ '(').CCONTA                      A26234
+         DC    A(&DCB2)
+.DDCB2   DC    F'0'                                              A26234
+         DC    F'0'
+         DC    BL1'10000000'
+         AIF   (T'&AREA EQ 'O').NOAREA
+         AIF   ('&AREA'(1,1) EQ '(').NOAREA                      A26234
+         DC    AL3(&AREA)
+         DC    F'0'
+         AGO   .FINE4                                            A26234
+.NOAREA  DC    AL3(0)
+         DC    F'0'
+         AIF   ('&MF' EQ 'L').FINE                               A26234
+         AIF   (T'&AREA EQ 'O').FINE4                            A26234
+         AIF   ('&AREA'(1,1) NE '(').FINE4                       A26234
+         ST    &AREA(1),24(1)           PLACE AREA ADDR. IN LIST A26234
+         MVI   24(0,1),X'80'            TURN ON 2ND DCB IND.     A26234
+.FINE4   AIF   ('&MF' EQ 'L').FINE                               A26234
+         AIF   (T'&DCB2 EQ 'O').FINE3                            A26234
+         AIF   ('&DCB2'(1,1) NE '(').FINE3                       A26234
+         ST    &DCB(1),12(1)         PLACE 2ND DCB ADDR. IN LIST A26234
+         AGO   .FINE3                                            A26234
+.BZERO   DC    F'0'                                              A26234
+         DC    F'0'
+         DC    F'0'
+         AIF   (T'&AREA EQ 'O').DCONT
+         AIF   ('&AREA'(1,1) EQ '(').DCONT                       A26234
+         DC    A(&AREA)
+         DC    F'0'
+         AGO   .FINE3                                            A26234
+.CCONT   DC    F'0'                                              A26234
+         AGO   .CDCB2
+.CCONTA  DC    F'0'                                              A26234
+         AGO   .DDCB2                                            A26234
+.DCONT   DC    F'0'                                              A26234
+         DC    F'0'
+         AIF   ('&MF' EQ 'L').FINE                               A26234
+         AIF   (T'&AREA EQ 'O').FINE3                            A26234
+         AIF   ('&AREA'(1,1) NE '(').FINE3                       A26234
+         LA    15,0&AREA                CLEAR HIGH ORDOR BYTE    A26234
+         ST    15,24(0,1)               PLACE AREA ADDR. IN LIST A26234
+         AGO   .FINE3                                            A26234
+.TSOME1  DC    F'0'                                              A26234
+         AIF   (T'&DCB EQ 'O').TNDCB
+         AIF   ('&DCB'(1,1) EQ '(').TNDCB                        A26234
+         DC    A(&DCB)
+.FCONT   AIF   (&WCOST EQ 1).CONTR1                              A26234
+         AGO   .CONTR2
+.TNDCB   DC    F'0'                                              A26234
+         AGO   .FCONT
+         MEND

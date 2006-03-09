@@ -1,0 +1,37 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 12/06/05 RPI118- use RESTORE in RETURN and XCTL to restore regs
+.*********************************************************************
+&N       RESTORE &REGS
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'RESTORE REQUIRES SINGLE REGISTER SUBLIST OPERAND'
+         MEXIT
+.NPOK    ANOP
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+&R1      SETA  &REGS(1)
+&R2      SETA  &R1
+         AIF   (&REGS(2) EQ '').R2OK
+&R2      SETA  &REGS(2)
+.R2OK    ANOP
+         AIF   (&R1 LT 0 OR &R1 GT 15).ERR
+         AIF   (&R2 LT 0 OR &R2 GT 15).ERR
+         AIF   (&R1 EQ 13).ERR
+         AIF   (&R2 EQ 13).ERR
+         AIF   (&R1 GE 14).R1_GE_14
+         AIF   (&R1 GT &R2).ERR OVERLAPS 13        
+         LM    &R1,&R2,20+4*&R1.(13)
+         MEXIT
+.R1_GE_14 ANOP
+         AIF   (&R2 EQ 14 AND &R1 EQ 15).ERR OVERLAPS 13
+         LM    &R1,&R2,12+4*(&R1-14)(13)
+         MEXIT
+         MNOTE 8,'MZ390E 1003 RESTORE RANGE INVALID (&R1,&R2)'
+         MEND

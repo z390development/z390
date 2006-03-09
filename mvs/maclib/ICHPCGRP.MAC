@@ -1,0 +1,154 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/********************************************************************/
+*/*                                                                  */
+*/*                                                                  */
+*/* $MAC(ICHPCGRP) COMP(SC1BN) PROD(RACF):                           */
+*/*                                                                  */
+*/* DESCRIPTIVE NAME = CONNECT GROUP NAME TABLE DEFINITION           */
+*/*                                                                  */
+*/*                                                                  */
+*/* STATUS = OS/VS2 EBB1102                                      @L6A*/
+*/*                                                                  */
+*/* METHOD OF ACCESS = %INCLUDE SYSLIB(ICHPCGRP) FOR PLS             */
+*/*                                                                  */
+*/* FUNCTION = THE CGRP TABLE CONTAINS THE NAMES OF THE GROUPS       */
+*/*              THAT THE USERID IN THE ACEEUSRI IS A MEMBER OF.     */
+*/*                                                                  */
+*/*              THE CONNECT GROUP TABLE IS THE ANCHOR TABLE FOR     */
+*/*              THE GROUP AUTHORITY TABLE, AND CONTAINS THE USER'S  */
+*/*              CONNECT GROUP AUTHORITY TO EACH GROUP PRESENT       */
+*/*              IN THE TABLE.                                   @L6A*/
+*/*                                                                  */
+*/*              THIS TABLE IS BASED ON THE 'ACEECGRP' ADDRESS       */
+*/*              IN THE ACEE.                                        */
+*/*                                                                  */
+*/*                                                                  */
+*/* MACROS = NONE                                                    */
+*/*                                                                  */
+*/* CHANGE ACTIVITY =                                                */
+*/*            $L0=HRF1402,RACF/140,810701,SJRDSD:                   */
+*/*            $L6=HRF1602,RACF/160,830509,CNTDSD:               @L6A*/
+*/*            UZ90283                                       @UZ90283*/
+*/*            UZ90284                                       @UZ90284*/
+*/*            UZ90285                                       @UZ90285*/
+*/*            OZ79446                                       @OZ79446*/
+*/*                                                                  */
+*/********************************************************************/
+*%GOTO ICHPCGRPLBL01;                 /* BILINGUAL HEADER
+         MACRO
+         ICHPCGRP
+CGRP     DSECT
+CGRPID   DS   CL4                   TABLE IDENTIFIER = CGRP
+CGRPCORE DS   F                     TABLE SUBPOOL AND LENGTH.
+         ORG  CGRPCORE
+CGRPSP   DS   AL1                   TABLE SUBPOOL NUMBER.
+CGRPLEN  DS   AL3                   SIZE OF TABLE.
+CGRPNUM  DS   H                     MAXIMUM NUMBER OF ENTRIES IN
+*                                    TABLE.
+CGRPVRSN DS   AL1                   VERSION = 1.                   @L6A
+         DS   AL1                   RESERVED.
+CGRPSYNC DS   F                     SYNCHRONIZE VALUE.
+CGRPGPAT DS   A                     ADDRESS OF GROUP AUTHORITIES
+*                                   TABLE, OR ZERO IF NO SUCH TABLE
+*                                   EXISTS                         @L6A
+         DS   CL12                  RESERVED                       @L6A
+CGRPENT  DS   CL24                  INDIVIDUAL GROUP ENTRY.        @L6A
+*
+* FOLLOWING DSECT DESCRIBES AN INDIVIDUAL GROUP ENTRY.
+*
+CGRPENTD DSECT
+CGRPNAME DS   CL8                   GROUP NAME.
+CGRPIND  DS   X                     INDICATORS.
+CGRPCHK  EQU  X'80'                 ALWAYS ZERO, WAS REVOKE
+*                                    INDICATOR.                    @L6A
+CGRPREFR EQU  X'40'                 ON IF GROUP AUTHORITY TABLE MUST
+*                                    BE REFRESHED FOR THIS CONNECT
+*                                    GROUP                         @L6A
+CGRPCOMP EQU  X'20'                 ON IF GROUP ENTERED INTO GROUP
+*                                    AUTHORITY TABLE AND NO LATER
+*                                    AUTHORITY CHANGES WERE MADE
+*                                    OR THE GROUP DID NOT NEED TO BE
+*                                    ENTERED INTO THE TABLE        @L6A
+CGRPPROP EQU  X'10'                 ON IF THIS GROUP IS OWNED BY ITS
+*                                    SUPERIOR GROUP.  INDICATES THE
+*                                    GROUP IS PART OF THE SUBGROUP TREE
+*                                    FOR PROPAGATION OF GROUP
+*                                    AUTHORITIES               @OZ79446
+CGRPAUTH DS   X                     INDICATORS.
+CGRPSPEC EQU  X'80'                 ON IF GROUP-SPECIAL AUTHORITY  @L6A
+CGRPOPER EQU  X'20'                 ON IF GROUP-OPERATIONS AUTHORITY
+*                                                                  @L6A
+CGRPAUDT EQU  X'10'                 ON IF GROUP-AUDITOR AUTHORITY  @L6A
+*                                    BE REFRESHED FOR THIS CONNECT
+*                                    GROUP                         @L6A
+CGRPGPNM DS   H                     NUMBER OF ENTRIES IN GROUP
+*                                    AUTHORITY TABLE RELATED TO THIS
+*                                    CONNECT GROUP                 @L6A
+CGRPGPTE DS   A                     ADDRESS OF FIRST GROUP AUTHORITY
+*                                    TABLE ENTRY RELATED TO THIS
+*                                    CONNECT GROUP                 @L6A
+CGRPSUPG DS   H                     INDEX IN CGRPENT OF ENTRY FOR
+*                                    SUPERIOR GROUP OF THIS ENTRY,
+*                                    TO WHICH USER IS CONNECTED    @L6A
+         DS   CL6                   RESERVED.                      @L6A
+         MEND
+*  TERMINATE PLS COMMENT                                             */
+*%ICHPCGRPLBL01:;
+         DCL 1 CGRP BASED,          /* CONNECT GROUP NAME TABLE.     */
+               2 CGRPID CHAR(4),    /* TABLE ID.                     */
+               2 CGRPCORE,          /* CGRP SUBPOOL AND LENGTH.      */
+                 3 CGRPSP FIXED(8), /* SUBPOOL NUMBER.               */
+                 3 CGRPLEN PTR(24), /* LENGTH OF CGRP.               */
+               2 CGRPNUM FIXED(15), /* MAXIMUM ENTRIES IN TABLE.     */
+               2 CGRPVRSN FIXED(8), /* VERSION = 1.                  */
+               2 * CHAR(1),         /* RESERVED.                     */
+               2 CGRPSYNC FIXED(31),/* SYNCRONIZE VALUE.             */
+               2 CGRPGPAT PTR(31),  /* ADDRESS OF GROUP AUTHORITIES
+                                       TABLE, OR ZERO IF NO SUCH TABLE
+                                       EXISTS                    @L6A*/
+               2 * CHAR(12),        /* RESERVED                  @L6A*/
+               2 CGRPENT(*),        /* GROUP NAME ENTRY.             */
+                 3 CGRPNAME CHAR(8),/* GROUP NAME.                   */
+                 3 CGRPIND BIT(8),  /* INDICATORS FOR THIS ENTRY     */
+                   4 CGRPCHK BIT(1),/* ALWAYS ZERO, WAS REVOKE
+                                       INDICATOR                 @L6A*/
+                   4 CGRPREFR BIT(1),/* ON IF GROUP AUTHORITY TABLE
+                                       MUST BE REFRESHED FOR THIS
+                                       CONNECT GROUP             @L6A*/
+                   4 CGRPCOMP BIT(1),/* ON IF GROUP ENTERED INTO
+                                       GROUP AUTHORITY TABLE AND
+                                       NO LATER AUTHORITY CHANGES
+                                       WERE MADE OR THE
+                                       GROUP DID NOT NEED TO BE
+                                       ENTERED INTO THE TABLE    @L6A*/
+                   4 CGRPPROP BIT(1),/* ON IF THIS GROUP IS
+                                     OWNED BY ITS
+                                     SUPERIOR GROUP.  INDICATES THE
+                                     GROUP IS PART OF THE SUBGROUP TREE
+                                     FOR PROPAGATION OF GROUP
+                                     AUTHORITIES             @OZ79446*/
+                   4 * BIT(4),       /* RESERVED                 @L6A*/
+                  3 CGRPAUTH BIT(8), /* GROUP AUTHORITY INDICATORS
+                                                                 @L6A*/
+                   4 CGRPSPEC BIT(1),/* ON IF GROUP-SPECIAL
+                                        AUTHORITY                @L6A*/
+                   4 * BIT(1),       /* RESERVED                 @L6A*/
+                   4 CGRPOPER BIT(1),/* ON IF GROUP-OPERATIONS
+                                        AUTHORITY                @L6A*/
+                   4 CGRPAUDT BIT(1),/* ON IF GROUP-AUDITOR
+                                        AUTHORITY                @L6A*/
+                   4 * BIT(4),       /* RESERVED                 @L6A*/
+                 3 CGRPGPNM FIXED(15),/* NUMBER OF ENTRIES IN GROUP
+                                         AUTHORITY TABLE RELATED TO
+                                         THIS CONNECT GROUP      @L6A*/
+                 3 CGRPGPTE FIXED(31),/* ADDRESS OF FIRST GROUP
+                                         AUTHORITY TABLE ENTRY RELATED
+                                         TO THIS CONNECT GROUP   @L6A*/
+                 3 CGRPSUPG FIXED(15),/* INDEX IN CGRPENT OF ENTRY FOR
+                                         SUPERIOR GROUP OF THIS ENTRY,
+                                         TO WHICH THE USER IS
+                                         CONNECTED               @L6A*/
+                 3 * CHAR(6),         /* RESERVED.               @L6A*/
+                 3 * CHAR(0);       /* END OF ENTRY.                 */
+         DCL CGRPTID CHAR(4) CONSTANT('CGRP');/* TABLE ID.           */
+

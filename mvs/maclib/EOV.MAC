@@ -1,0 +1,10 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    EOV   &PARA,&DUMMY=
+         AIF   ('&PARA' EQ '').E1
+&NAME    IHBINNRA &PARA
+         SVC   55                                ISSUE EOV SVC
+         MEXIT
+.E1      IHBERMAC 06
+         MEND
+

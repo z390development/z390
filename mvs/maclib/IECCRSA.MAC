@@ -1,0 +1,155 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/*  INCLUDE SYSLIB(IECCRSA)                                         */
+*   %GOTO PLSCRSA1;                     /*EXPAND PLS PORTION         */
+*/*
+*    CRSA (COMPONENT RECOVERY STATUS AREA) DECLARATION
+*         THE OPEN/CLOSE/EOV (O/C/E) CRSA IS A VARIABLE LENGTH
+*         CONTROL BLOCK CONSISTING OF THE FOLLOWING:
+*            (1) A HEADER SECTION (COMMON TO ALL CRSA'S)
+*            (2) A COMPONENT-RELATED SECTION (O/C/E)
+*         THE O/C/E-RELATED SECTION CONTAINS A BASIC SECTION AND A
+*         TWELVE-BYTE ENTRY FOR EACH DCB/ACB THAT UNDERGOES O/C/E
+*         RECOVERY ROUTINE PROCESSING.
+*
+*         THE CRSA WILL BE POINTED TO BY AN ADDRESS IN THE
+*         SDWACOMP FIELD OF THE RTCA, THUS MAKING IT AVAILABLE
+*         FOR INTERROGATION BY A USER ESTAE ROUTINE.
+*
+*
+*
+*        CRSA DIAGRAM
+*
+*        CRSA HEADER (COMMON FORMAT)
+*         ___________________________________________________
+*        | 0(0)                                 | 3(3)       |
+*        |               CRSIECID               |  CRSIECMM  |
+*        |______________________________________|____________|
+*        | 4(4)                    | 6(6)       |  7(7)      |
+*        |        CRSIECLN         |  CRSIECSP  |  CRSIECKY  |
+*        |_________________________|____________|____________|
+*        | 8(8)                                              |
+*        |                     RESERVED                      |
+*        |___________________________________________________|
+*        |12(C)                                              |
+*        |                     RESERVED                      |
+*        |_____________________________________________15(F)_|
+*
+*        CRSA BASIC SECTION (O/C/E ONLY)
+*         ___________________________________________________
+*        |16(10)      |17(11)                                |
+*        |  CRSIECFN  |               RESERVED               |
+*        |____________|_______________________________19(13)_|
+*
+*        CRSA ENTRY (O/C/E ONLY)
+*         ___________________________________________________
+*        | +0                                                |
+*        |                     CRSIECNT                      |
+*        |___________________________________________________|
+*        | +4                                                |
+*        |                     CRSFCXAT                      |
+*        |___________________________________________________|
+*        | +8                                                |
+*        |                     RESERVED                      |
+*        |___________________________________________________|
+*                                                                    */
+* %PLSCRSA1: ;
+*DCL 1 IECCRSA BASED(SDWACOMP) BDY(WORD),
+*      2 CRSIECHD,                      /*CRSA HEADER SECTION        */
+*        3 CRSIECID   CHAR(3),          /*COMPONENT ID: 'IEC'        */
+*        3 CRSIECMM   BIT(8),           /*MAPPING MACRO FORMAT ID    */
+*        3 CRSIECLN   FIXED(15),        /*LENGTH OF CRSA             */
+*        3 CRSIECSP   FIXED(8),         /*SUBPOOL NO. OF CRSA        */
+*        3 CRSIECKY   FIXED(8),         /*KEY OF CRSA                */
+*        3 *          CHAR(8),          /*RESERVED                   */
+*      2 CRSIECBS     CHAR(4),          /*O/C/E CRSA BASIC SECTION   */
+*        3 CRSIECFN   CHAR(1),          /*O/C/E FUNCTION IN CONTROL  */
+*        3 *          CHAR(3);          /*RESERVED                   */
+*DCL 1 CRSIECNT BASED BDY(WORD),        /*O/C/E CRSA ENTRY           */
+*      2 CRSIECFC   CHAR(1),            /*DCB/ACB FORCE CLOSE STATUS */
+*        3 CRSLAST  BIT(1),             /*LAST ENTRY                 */
+*        3 CRSFCAT  BIT(1),             /*FORCE CLOSE ATTEMPTED      */
+*        3 CRSOPMOD BIT(1),             /*DCB/ACB FIELDS MODIFIED BY
+*                                         OPEN WERE RESTORED         */
+*        3 CRSFCINC BIT(1),             /*FORCE CLOSE INCOMPLETE     */
+*        3 CRSFCCOM BIT(1),             /*FORCE CLOSE COMPLETE       */
+*        3 *        BIT(2),             /*RESERVED                   */
+*        3 CRSREOPN BIT(1),             /*OPEN CAN BE REISSUED
+*                                         FOR THIS DCB/ACB           */
+*      2 CRSIECTP   CHAR(1),            /*TAPE DATA SET STATUS       */
+*        3 CRSTMAD  BIT(1),             /*TM WRITTEN AFTER DATA      */
+*        3 CRSTM2AD BIT(1),             /*2ND TM WRITTEN AFTER DATA  */
+*        3 CRSEOF1  BIT(1),             /*TRAILER LABEL EOF1 WRITTEN */
+*        3 CRSEOF2  BIT(1),             /*TRAILER LABEL EOF2 WRITTEN */
+*        3 CRSEOF1T BIT(1),             /*TM WRITTEN AFTER EOF1      */
+*        3 CRSEOF2T BIT(1),             /*TM WRITTEN AFTER EOF2      */
+*        3 CRSDISP  BIT(1),             /*REWIND DISPOSITION TAKEN   */
+*        3 CRSNSL   BIT(1),             /*NSL OUTPUT ROUTINE HAD
+*                                         CONTROL BEFORE ERROR       */
+*      2 CRSIECDA   CHAR(1),            /*DIRECT ACCESS D/S STATUS   */
+*        3 CRSDSCB  BIT(1),             /*UPDATED DSCB WRITTEN       */
+*        3 CRSEOFM  BIT(1),             /*EOF MARK WRITTEN FOR
+*                                         OUTPUT PS DATA SET         */
+*        3 *        BIT(6),             /*RESERVED                   */
+*      2 CRSFCXRC   FIXED(8),           /*FORCE CLOSE EXEC RETURN CODE*/
+*      2 CRSFCXAT   CHAR(4),            /*FORCE CLOSE EXEC AUDIT TRAIL*/
+*      2 *          CHAR(4);            /*RESERVED                   */
+*
+* %GOTO PLSCRSA2;
+*
+*
+         MACRO
+&LABEL   IECCRSA
+&LABEL   DSECT                          COMPONENT RECOVERY STATUS AREA
+*
+*
+CRSIECHD DS    0CL16                    CRSA HEADER SECTION
+CRSIECID DS    CL3                      COMPONENT ID:  'IEC'
+CRSIECMM DS    C                        MAPPING MACRO FORMAT ID
+CRSMMOCE EQU   X'01'                    OPEN/CLOSE/EOV FORMAT
+CRSIECLN DS    CL2                      LENGTH OF CRSA
+CRSIECSP DS    C                        SUBPOOL NO. OF CRSA
+CRSIECKY DS    C                        KEY OF CRSA
+         DS    CL8                      RESERVED
+*
+*
+CRSIECBS DS    0CL4                     O/C/E CRSA BASIC SECTION
+CRSIECFN DS    C                        O/C/E FUNCTION IN CONTROL
+CRSIECO  EQU   X'13'                    OPEN
+CRSIECOJ EQU   X'16'                    OPEN TYPE=J
+CRSIECC  EQU   X'14'                    CLOSE
+CRSIECCT EQU   X'17'                    CLOSE TYPE=T
+CRSIECE  EQU   X'37'                    EOV
+CRSIECFE EQU   X'1F'                    FEOV
+         DS    CL3                      RESERVED
+*
+*
+CRSIECNT DS    0CL12                    O/C/E CRSA ENTRY
+CRSIECFC DS    C                        DCB/ACB FORCE CLOSE STATUS
+CRSLAST  EQU   X'80'                    LAST ENTRY
+CRSFCAT  EQU   X'40'                    FORCE CLOSE ATTEMPTED
+CRSOPMOD EQU   X'20'                    DCB/ACB FIELDS MODIFIED BY
+*                                       OPEN WERE RESTORED
+CRSFCINC EQU   X'10'                    FORCE CLOSE INCOMPLETE
+CRSFCCOM EQU   X'08'                    FORCE CLOSE COMPLETE
+CRSREOPN EQU   X'01'                    OPEN CAN BE REISSUED FOR
+*                                       THIS DCB/ACB
+CRSIECTP DS    C                        TAPE DATA SET STATUS
+CRSTMAD  EQU   X'80'                    TAPEMARK WRITTEN AFTER DATA
+CRSTM2AD EQU   X'40'                    2ND TAPEMARK WRITTEN AFTER DATA
+CRSEOF1  EQU   X'20'                    TRAILER LABEL EOF1 WRITTEN
+CRSEOF2  EQU   X'10'                    TRAILER LABEL EOF2 WRITTEN
+CRSEOF1T EQU   X'08'                    TAPEMARK WRITTEN AFTER EOF1
+CRSEOF2T EQU   X'04'                    TAPEMARK WRITTEN AFTER EOF2
+CRSDISP  EQU   X'02'                    REWIND DISPOSITION TAKEN
+CRSNSL   EQU   X'01'                    NSL OUTPUT ROUTINE HAD CONTROL
+*                                       BEFORE ERROR OCCURRED
+CRSIECDA DS    C                        DIRECT ACCESS DATA SET STATUS
+CRSDSCB  EQU   X'80'                    UPDATED DSCB WRITTEN
+CRSEOFM  EQU   X'40'                    EOF MARK WRITTEN FOR OUTPUT
+*                                       PS DATA SET
+CRSFCXRC DS    C                        FORCE CLOSE EXEC RETURN CODE
+CRSFCXAT DS    CL4                      FORCE CLOSE EXEC AUDIT TRAIL
+         DS    CL4                      RESERVED
+         MEND
+*  %PLSCRSA2: ;
+

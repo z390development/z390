@@ -1,0 +1,10 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    BCS   &M,&A                    BRANCH ON CONDITION
+         GBLA  &DISP
+         GBLC  &LBL1
+         LCLA  &MK
+&MK      SETA  16*&M
+&NAME    DC    0H'0',X'BC',AL1(&MK),AL2(&A-&LBL1+&DISP)
+         MEND
+

@@ -1,0 +1,153 @@
+.* MVS 3.8J PUBLIC DOMAIN
+           MACRO
+&NAME       DEMF
+.**********************************************************************
+.*                                                                    *
+.* MODULE NAME = BNGTDEMF                                             *
+.*                                                                    *
+.* DESCRIPTIVE NAME = TCAM DEMF MACRO                                 *
+.*                                                                    *
+.*                                                                    *
+.* STATUS = RELEASE 1, LEVEL 1                                        *
+.*                                                                    *
+.* FUNCTION = 1) LINKS TO BNGTQEMA TO SEE IF THIS IS A VALID DEMF     *
+.*               REQUEST;                                             *
+.*            2) IF YES, BNGTDEMF PUTS SOME INFORMATION ABOUT THE     *
+.*               TERMINAL IN THE FIRST NINE POSITIONS OF THE          *
+.*               MESSAGE AND RETURNS TO NSI.                          *
+.*                                                                    *
+.* NOTES = NONE                                                       *
+.*                                                                    *
+.*    DEPENDENCIES = NONE                                             *
+.*                                                                    *
+.*    RESTRICTIONS = NONE                                             *
+.*                                                                    *
+.*    REGISTER CONVENTIONS = NONE                                     *
+.*                                                                    *
+.*    PATCH LABEL = NONE                                              *
+.*                                                                    *
+.* MODULE TYPE = TCAM DEMF MACRO                                      *
+.*                                                                    *
+.*    PROCESSOR = ASSEMBLER H                                         *
+.*                                                                    *
+.*    MODULE SIZE = 504 DECIMAL BYTES                                 *
+.*                                                                    *
+.*    ATTRIBUTES = SERIALLY REUSABLE                                  *
+.*                                                                    *
+.* ENTRY POINT = DEMF                                                 *
+.*                                                                    *
+.*    PURPOSE = SEE FUNCTION                                          *
+.*                                                                    *
+.*    LINKAGE = R1  LOADED WITH THE PARAM LIST POINTER                *
+.*              R14 LOADED WITH THE RETURN ADDR (USED BY SUBROUTINE)  *
+.*                                                                    *
+.* INPUT = PARAM LIST ITEMS USED ARE :                                *
+.*         OUT MESSAGE ADDRESS                                        *
+.*         OUT MESSAGE COUNT                                          *
+.*         IN MESSAGE ADDRESS                                         *
+.*         IN MESSAGE COUNT                                           *
+.*                                                                    *
+.* OUTPUT = PARAM LIST FOR OUTPUT ACCESS MODULE                       *
+.*          PARAM LIST FOR CONSOLE ACCESS MODULE                      *
+.*                                                                    *
+.* EXIT-NORMAL = REGISTER 15 RETURN CODES RETURNED TO CALLER :        *
+.*    NOTE: THESE RETURN CODES ARE SET BY INNER MACRO ROUTINES AND    *
+.*          THIS MACRO JUST PASSES IT BACK TO CALLER.                 *
+.*               00 - DEMF REQUEST HONORED, MSG FRDWRD TO BNGTIN QUE  *
+.*               04 - DEMF REQUEST NOT HONORED, NO TCAM BUFFER AVAIL. *
+.*               08 - NOT A DEMF REQUEST OR DEMF REQUEST FROM A       *
+.*                    TERMINAL THAT IS NOT ALLOWED TO ENTER REQUEST   *
+.*                    (TERMINAL IS IN LOCK MODE, TSO SESSION, OR NOT  *
+.*                    A 3270).                                        *
+.*                                                                    *
+.* EXIT-ERROR = NONE                                                  *
+.*                                                                    *
+.* EXTERNAL REFERENCE = BNGTQEMA, BNGTIN                              *
+.*                                                                    *
+.*    ROUTINES = NONE                                                 *
+.*                                                                    *
+.*    DATA AREAS = NONE                                               *
+.*                                                                    *
+.*    CONTROL BLOCK = NONE                                            *
+.*                                                                    *
+.* TABLES = NONE                                                      *
+.*                                                                    *
+.* MACROS = LOCOPT, MSGEDIT, FORWARD                                  *
+.*                                                                    *
+.* CHANGE ACTIVITIES AS FOLLOWS:                                      *
+.* CHANGE 01  11/15/77  PROLOGUE ADDED                                *
+.* A058500,063000,067000,070000                                @OZ30476
+.*                                                                    *
+.*                                                                    *
+***********************************************************************
+*           THIS MACRO SHOULD BE ISSUED IN THE INHEADER OF ALL 3270
+*           MESSAGE HANDLERS THAT WILL ENTER DEMF REQUESTS.
+*           IT LINKS TO THE MODULE BNGTQEMA TO SEE IF THIS IS A VALID
+*           DEMF REQUEST, IF YES IT PUTS SOME INFORMATION ABOUT THE
+*           TERMINAL IN THE FIRST NINE POSITIONS OF THE MESSAGE AND
+*           RETURNS TO THE NSI. THE RETURN CODES PLACED IN REG15 ARE;
+*             RC0 DEMF REQUEST HONORED MESSAGE FORWARDED TO BNGTIN QUE.
+*             RC4 DEMF REQUEST NOT HONORED NO TCAM BUFFER AVAILABLE
+*             FOR MSGEDIT OR INVALID FORWARD DESTINATION.
+*             RC8 NOT A DEMF REQUEST OR DEMF REQUEST FROM A TERMINAL
+*             THAT IS NOT ALLOWED TO ENTER REQUEST.(TERMINAL IS IN LOCK
+*             MODE,TSO SESSION OR NOT A 3270)
+***********************************************************************
+             CNOP  0,4                 ALIGN
+&NAME        BAL   1,BNG5&SYSNDX       SET UP POINTER TO PARM LIST
+BNG1&SYSNDX  DC    CL8'PARMFIEL'       DEMF PARM
+BNG2&SYSNDX  DC    CL1'D'              DEMF PARM FIELD TWO
+*                                 MEANING OF THE TWO ABOVE PARM FIELDS
+*                                 SIZE   2C  SIZE OF THIS MESSAGE
+*                                 STAT   1C  91=REMOTE 99=LOCAL
+*                                 MODEL  1C  F1=MODEL OME F2=MODEL TWO
+*                                 LADR   3C  LINE ADDRESS
+*                                 CTADR  1C  CONTROL UNIT POLL CHAR
+*                                 CUADR  1C  TERMINAL POLL CHAR
+BNG3&SYSNDX  DC    CL1'0'              RETURN CODE FROM BNGTQEMA
+             CNOP  0,4
+BNG4&SYSNDX  DC      V(BNGTQEMA)       DEMF SCAN ROUTINE
+BNG5&SYSNDX  L       15,BNG4&SYSNDX    LOAD SCAN ROUTINE ADDRESS
+             BALR    14,15             DO DEMF REQUEST SCAN
+             B       BNGB&SYSNDX       RETURN HERE NOT DEMF REQUEST
+***    THIS MODULE ISSUES THE TCAM MACRO LOCOPT TO FIND THE
+***    OPTION FIELD MODEL, IF THE USER DOES NOT HAS A TERMINAL
+***    OPTION FIELD NAMED MODEL THERE WILL BE A ASSEMBLER ERROR
+***    ON LOCOPT. THE MCP WILL OPERATE CORRECTLY,BUT IF IT IS
+***    DESIRED TO ELIMINATE THIS ERROR THE LOCOPT STATEMENT AND
+***    THE THREE STATEMENTS FOLLOWING IT SHOULD BE REMOVED FROM THE
+***    DEMF MACRO
+***********************************************************************
+*          LOCOPT  MODEL             LOCATE MODEL OPTION FIELD @OZ30476
+***********************************************************************
+             LOCOPT  MODEL
+             LTR     15,15             TEST IF OPTION FIELD FOUND
+             BZ      BNG6&SYSNDX       BR,NOT FOUND
+             MVC     BNG1&SYSNDX+3(1),0(15)   MODEL TYPE IN PARM
+BNG6&SYSNDX  L       15,BNG7&SYSNDX+8   LOAD ADR OF MSGEDIT DATA
+             MVC     0(8,15),BNG1&SYSNDX MOVE IN DATA FOR MSGEDIT
+***********************************************************************
+*          MSGEDIT ((I,C'PARMFIEL',0)) PUT NEEDED INFO IN MSG  @OZ30476
+***********************************************************************
+BNG7&SYSNDX  MSGEDIT ((I,C'PARMFIEL',0))
+             LTR     15,15              DID MSGEDIT WORK OK
+             BNZ     BNGA&SYSNDX        NO,BR TO NO DEMF
+             L       15,BNG9&SYSNDX+8   GET ADR OF MSGEDIT DATA
+BNG8&SYSNDX  MVC     0(1,15),BNG2&SYSNDX MOVE IN DATA FOR MSGEDIT
+***********************************************************************
+*          MSGEDIT ((I,C'D',8))     PUT NEEDED INFO IN MESSAGE @OZ30476
+***********************************************************************
+BNG9&SYSNDX  MSGEDIT ((I,C'D',8))
+             LTR     15,15              DID MSGEDIT WORK OK
+             BNZ     BNGA&SYSNDX        NO BUFFER AVAILABLE FOR MSGEDIT
+***********************************************************************
+*          FORWARD DEST=C'BNGTIN'     FORWARD DEMF MSG         @OZ30476
+***********************************************************************
+             FORWARD DEST=C'BNGTIN'
+             LTR     15,15
+             BNZ     BNGA&SYSNDX        INVALED DEST ON FORWARD
+BNGB&SYSNDX  SR      15,15
+             IC      15,BNG3&SYSNDX     GET SCAN ROUTINE RETURN CODE
+BNGA&SYSNDX  EQU     *                  BR TO HERE ON ERROR
+             MEND
+

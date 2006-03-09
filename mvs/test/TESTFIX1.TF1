@@ -1,0 +1,10 @@
+* TEST SOURCE PROGRAM FOR TESTFIX1                                      12345678
+* ADD MVS 3.8J PUBLIC DOMAIN MSG                                        12345678
+* AND REMOVE OBSOLETE COPYRIGHT INFO (THIS WILL GO)                     12345678
+* LICENSED BY XXX (THIS WILL GO)                                        12345678
+* PROPERTY OF XXX (THIS WILL GO)                                        12345678
+* ALSO STRIP SEQUENCE # IN 73-80 AND TRIM SPACES                        12345678
+         MACRO                                                          12345678
+         TEST  &P1,                                                    X12345678
+               &P2                                                      12345678
+         MEND                                                           12345678

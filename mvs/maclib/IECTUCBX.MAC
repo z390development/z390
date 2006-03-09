@@ -1,0 +1,52 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IECTUCBX
+*        THE FOLLOWING DSECTS ARE USED TO PROVIDE SYMBOLIC REFERENCE
+*        TO THE UCB'S NEEDED BY THIS ROUTINE
+*              UCB FOR THE UCB OF THE INTERRUPTING DEVICE
+*              MSTRUCB FOR THE UCB OF RLN 1
+*
+UCB      DSECT
+UCBCMSEG DS    6F                   UCB COMMON SEGMENT
+         ORG   UCB+2
+UCBID    DS    X                    MUST BE X'FF'
+         ORG   UCB+6
+UCBFL1   DS    X                    UCB FLAG BYTE
+         ORG   UCB+18
+UCBDVCLS DS    X                    UCBTYP DEVICE CLASS FIELD
+UCBUNTYP DS    X                    UCBTYP UNIT TYPE FIELD
+         ORG   UCB+24               ORIGIN OF GRAPHICS EXTENSION
+         DS    H                    ADDITIONAL FEATURES
+         DS    X                    ATTN CNT (RLN 1 ONLY)
+UCBGCB   DS    X                    GRAPHICS CONTROL BYTE
+*        DC    X'01'                ATTENTION RECEIVED
+*        DC    X'02'                SKIP READ INITIALS
+*        DC    X'04'                READ INITIAL PENDING
+UCBIRB   DS    F                    IRB ADDRESS
+         DS    X                    INITIALIZED RLN (RLN 1 ONLY)
+         DS    XL3                  RESERVED
+UCBRLN   DS    X                    RELATIVE LINE NUMBER (RLN)
+         ORG   UCBRLN               CONTROL BLOCK LINK
+UCBCTLNK DS    F                    RLN 1 = DEB ADDRESS
+*                                   OTHERS = ADDR OF UCB FOR RLN 1
+*
+MSTRUCB  DSECT
+MTRCMSEG DS    6F                   UCB COMMON SEGMENT
+         ORG   MSTRUCB+2
+MTRUCBID DS    X                    MUST BE X'FF'
+         ORG   MSTRUCB+18
+MTRDVCLS DS    X                    UCBTYP DEVICE CLASS FIELD
+MTRUNTYP DS    X                    UCBTYP UNIT TYPE FIELD
+         ORG   MSTRUCB+24           ORIGIN OF GRAPHICS EXTENSION
+         DS    H                    ADDITIONAL FEATURES
+MTRATNCT DS    X                    ATTENTION COUNT
+MTRGCB   DS    X                    GRAPHICS CONTROL BYTE
+*        DC    X'04'                READ INITIAL PENDING
+MTRIRB   DS    F                    IRB ADDRESS
+MTRINRLN DS    X                    INITIALIZED RLN
+         DS    XL3                  RESERVED
+MTRRLN   DS    X                    RELATIVE LINE NUMBER (ALWAYS X'01')
+         ORG   MTRRLN               CONTROL BLOCK LINK
+MTRDEBAD DS    F                    ADDRESS OF DEB FOR LINE GROUP
+*
+         MEND

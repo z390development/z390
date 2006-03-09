@@ -1,0 +1,19 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GSBPOS &ADX,&ADY
+         GBLA  &IHBBPX,&IHBBPY
+         AIF   (T'&ADX EQ 'O').NOX
+         ORG   &ADX
+         DC    H'&IHBBPX'
+         ORG
+         AIF   (T'&ADY EQ 'O').EXIT
+.GENY    ANOP
+         ORG   &ADY
+         DC    H'&IHBBPY'
+         ORG
+         MEXIT
+.NOX     AIF   (T'&ADY EQ 'O').NOXY
+         AGO   .GENY
+.NOXY    IHBERMAC  1
+.EXIT    MEND
+

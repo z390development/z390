@@ -6,7 +6,17 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* 10/20/05 RPI27  - issue error for any undefined operands     
+.* 12/06/05 RPI117 - allow LV=full word and nnnK or nnnM short forms                     
+.* 01/09/06 RPI162 - correct support for nnnK and mmmM extensions.                    
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 01/21/06 RPI187 CORRECT FREEMAIN and GETMAIN comments, LA/L length,
+.*          limit check length, correct K/M support
+.*********************************************************************
 &N       GETMAIN &TYPE,&LV=,&LOC=
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+.NPOK    ANOP
 .*
 .* GETMAIN - ALLOCATE MEMORY FROM ABOVE OR BELOW 16MB LINE
 .*
@@ -15,7 +25,7 @@
 .*    RC  - CONDITIONAL (DEFAULT IS ABOVE THE LINE)
 .*    RU  - UNCONDITIONAL (DEFAULT IS ABOVE THE LINE)
 .*  LENGTH LV= 
-.*    ABSOLUTE LENGTH OR (REG) WITH DEFAULT BEING REG 1
+.*    ABSOLUTE LENGTH OR (REG) 
 .*  LOCCATION LOC=
 .*    ABOVE - ALLOCATE MEMORY ABOVE 16M LINE
 .*    BELOW - ALLOCATE MEMORY BELOW 16M LINE
@@ -30,7 +40,9 @@
 .*         0 - OK
 .*         4 - REQUEST FAILED OR ABEND 80A IF UNCONDITIONAL
 .*
+         AIF   (&N EQ '').SKIPDS
 &N       DS    0H
+.SKIPDS  ANOP
          AIF   (&TYPE EQ 'R').R
          AIF   (&TYPE EQ 'RC').RC
          AIF   (&TYPE EQ 'RU').RU
@@ -48,17 +60,35 @@
 &ABOVE   SETB 1
 &COND    SETB 0
 .LV      ANOP
-         AIF  (&LV EQ '').LOC
+         AIF  (&LV NE '').CHKLV
+         MNOTE 12,'GETMAIN LV= MISSING'
+         MEXIT
+.CHKLV   ANOP
          AIF  ('&LV'(1,1) EQ '(').LVREG
-         LA   1,&LV
+         AIF  ('&LV'(1,1) GE'0' AND '&LV'(1,1) LE '9').LVLIT
+         L    1,=A(&LV)
+         AGO  .LOC
+.LVLIT   ANOP
+&LEN     SETA &LV
+         AIF  ('&LV'(K'&LV,1) NE 'K').CHKLVM
+         AIF  (&LEN GT 1048576).ERR1
+&LEN     SETA &LEN*1024
+         AGO  .SETLV
+.CHKLVM  ANOP
+         AIF  ('&LV'(K'&LV,1) NE 'M').SETLV
+         AIF  (&LEN GT 1024).ERR1
+&LEN     SETA &LEN*1048576
+.SETLV   ANOP
+         L    1,=A(&LEN)  RPI 117
          AGO  .LOC
 .LVREG   ANOP
+         AIF  (&LV(1) EQ '1' OR &LV(1) EQ 'R1').LOC  RPI163
          LR   1,&LV(1)
 .LOC     ANOP
          AIF  (&LOC EQ '').OPTIONS
          AIF  (&LOC EQ 'ABOVE').SETABOVE
          AIF  (&LOC EQ 'BELOW').SETBELOW
-         MNOTE 12,'GETMAIN INVALIDE LOC - &LOC'
+         MNOTE 12,'GETMAIN INVALID LOC - &LOC'
          MEXIT
 .SETABOVE ANOP
 &ABOVE   SETB  1
@@ -68,4 +98,6 @@
 .OPTIONS ANOP
          LA    0,B'&ABOVE&COND'
          SVC   4 GETMAIN R0=(X'02'=AMODE31,X'01'=COND), R1=LEN
+         MEXIT
+.ERR1    MNOTE 12,'GETMAIN LENGTH TOO LONG - &LV'
          MEND

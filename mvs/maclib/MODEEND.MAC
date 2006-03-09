@@ -1,0 +1,17 @@
+.* MVS 3.8J PUBLIC DOMAIN
+          MACRO
+&NAME     MODEEND
+          GBLB  &ERRCK
+          GBLA  &ENTRYCT
+          AIF   ('&ERRCK' EQ '1').MODEEND
+          MNOTE 0,'MODETAB MACRO NEVER ISSUED - NO COUNT'
+          AGO   .MODEND
+.MODEEND  ANOP
+          ORG   *-((&ENTRYCT*44)+6)
+          DC    AL2(&ENTRYCT)
+          ORG   *+((&ENTRYCT*44)+4)
+.MODEND   ANOP
+&ENTRYCT  SETA  0
+&ERRCK    SETB  0
+          MEND
+

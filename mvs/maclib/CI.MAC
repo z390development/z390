@@ -1,0 +1,48 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    CI    &DL,&I                   COMPARE WR TO IMMEDIATE DATA
+         GBLC  &DEF3890(250)                                   @ZA00766
+         GBLA  &VAL3890(250)                                   @ZA00766
+         LCLA  &LD,&V,&RL,&M                                   @ZA00766
+         LCLC  &OP,&LABEL                                      @ZA00766
+&OP      SETC  '48'
+&V       SETA  &I
+&M       SETA  1                                               @ZA00766
+         AIF   (&V LE 65535).CI0
+         MNOTE 8,'***  IHB421 IMMEDIATE VALUE EXCEEDS ALLOWED MAXIMUM'
+.CI0     ANOP
+         AIF   (N'&DL EQ 1).CI3
+         AIF   ('&DL(1)' LT '16').CI1
+         MNOTE 12,'***  IHB349  DISPLACEMENT NOT 0-15 DIGITS'
+.CI1     AIF   ('&DL(2)' LT '5' AND '&DL(2)' NE '0').CI2
+         MNOTE 12,'***  IHB351  LENGTH NOT 1-4 DIGITS'
+.CI2     ANOP
+&LD      SETA  16*&DL(1)+&DL(2)-1
+&NAME    DC    0H'0',X'&OP',AL1(&LD),AL2(&I)
+         AGO   .END
+.CI3     ANOP
+.CI7     AIF   (&M GT 250).CI8                                 @ZA00766
+&LABEL   SETC  '&DEF3890(&M)'                                  @ZA00766
+.CI5     AIF   ('&DL'   EQ '&LABEL').CI6                       @ZA00766
+&M       SETA  &M+1                                            @ZA00766
+         AGO   .CI7                                            @ZA00766
+.CI8     ANOP                                                  @ZA00766
+         MNOTE 12,'***   IHB425 &DL NOT EQUATED IN DWF MACRO'  @ZA00766
+.CI6     ANOP                                                  @ZA00766
+&RL      SETA  &VAL3890(&M)                                    @ZA00766
+         AIF   ( &RL  LE  03  OR  &RL  GE  16  AND  &RL  LE  19  OR  &RX
+               L  GE  32  AND  &RL  LE  35  OR  &RL  GE  48  AND  &RL  X
+               LE  51  OR  &RL  GE  64  AND  &RL  LE  67 ).CI4 @ZA00766
+         AIF   ( &RL  GE  80  AND  &RL  LE  83  OR  &RL  GE  96  AND  &X
+               RL  LE  99  OR  &RL  GE  112 AND  &RL  LE 115 OR  &RL   X
+               GE 128  AND  &RL  LE 131 ).CI4                  @ZA00766
+         AIF   ( &RL  GE 144  AND  &RL  LE  147 OR  &RL  GE  160 AND  &X
+               RL  LE  163 OR  &RL  GE  176 AND  &RL  LE  179 OR  &RL  X
+               GE  192 AND  &RL  LE  195).CI4                  @ZA00766
+         AIF   ( &RL  GE  208 AND  &RL  LE  211 OR  &RL  GE  224 AND  &X
+               RL  LE  227 OR  &RL  GE  240 AND  &RL  LE  243).CI4
+.*                                                             @ZA00766
+         MNOTE 12,'***  IHB351  LENGTH NOT 1-4 DIGITS'
+.CI4     ANOP
+&NAME    DC    0H'0',X'&OP',AL1(&RL),AL2(&I)                   @ZA00766
+.END     MEND

@@ -14,8 +14,8 @@
 *
 * SEE TESTINS2 FOR OTHER INSTR UNIT TESTS
 *********************************************************************
-** MAINTENANCE
-********************************************************************* 
+* 11/20/05 RPI106 CORRECT MASK ALIGNMENT FOR SPM
+* 02/08/06 RPI185 ADD MAYR, MYR, MAY, MY 
 *********************************************************************
          MACRO
 &N       LX    &R1,&S2   LOAD  LH/LB
@@ -747,8 +747,9 @@ SE1      ESPIE RESET
          RT1   ABORT
 SE2      ESPIE RESET
          WTO   'ESPIE HFP SIGNIFICANCE OK'
-         LA    0,X'E'
-         SPM   0  TURN OFF HFP SIG. AGAIN
+         IPM   0
+         NILH  0,X'0E00'
+         SPM   0  TURN OFF HFP SIG. MASK BIT AGAIN
 * 7C   MDE
          LE    R0,=EH'2'
          MDE   R0,=EH'3'
@@ -1392,6 +1393,21 @@ DDBR1    ESPIE RESET
          LE    R1,=EH'3'
          MEER  R0,R1
          CE    R0,=EH'6'
+         RT1   CCE
+* B33A MAYR Z9 MULTIPLY AND ADD L > E
+         LX    R0,=L'10'
+         LD    R2,=D'2'
+         LD    R3,=D'3'
+         MAYR  R0,R2,R3
+         LX    R4,=LH'16'
+         CXR   R0,R4
+         RT1   CCE
+* B33B MYR Z9 MULTIPLY L > E
+         LD    R2,=D'2'
+         LD    R3,=D'3'
+         MYR   R0,R2,R3
+         LX    R4,=LH'6'
+         CXR   R0,R4
          RT1   CCE
 * B33E MADR
          LD    R0,=DH'1'
@@ -2204,6 +2220,19 @@ KDB2     ESPIE RESET
          LE    R0,=EH'2'
          MEE   R0,=EH'3'
          CE    R0,=EH'6'
+         RT1   CCE
+* ED3A MAY Z9 MULTIPLY AND ADD L > E
+         LX    R0,=L'10'
+         LD    R3,=D'3'
+         MAY   R0,R3,=D'2'
+         LX    R4,=LH'16'
+         CXR   R0,R4
+         RT1   CCE
+* ED3B MY Z9 MULTIPLY L > E
+         LD    R3,=D'3'
+         MY    R0,R3,=D'2'
+         LX    R4,=LH'6'
+         CXR   R0,R4
          RT1   CCE
 * ED3E MAD 
          LD    R0,=DH'1'

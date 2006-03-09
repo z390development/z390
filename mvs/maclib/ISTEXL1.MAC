@@ -1,0 +1,668 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    ISTEXL1 &EODAD=,&SCIP=,&LERAD=,&AM=,                  @ZA34940C
+               &JRNAD=,&SYNAD=,&OPENAD=,&LOGON=,&RELREQ=,        X03004C
+               &NSEXIT=,                                       @G40AKCM*
+               &ATTN=,&TPEND=,&LOSTERM=,                       @Z40BHUCC
+               &DFASY=,&RESP=,&UPAD=,                          @ZA34940C
+               &PARMS=,&PARM2=,&PARM3=                         @ZA34940
+.*                                                             @ZA34940
+.*             CHANGE LEVEL = 0                                @ZA34940
+.*             DATE OF LAST CHANGE =  25 JULY 78 ( 78*206 )    @ZA34940
+.*
+.* FUNCTION-   THE FUNCTION OF THIS MACRO IS TO BUILD,         @ZA34940
+.*             AT ASSEMBLY TIME, AN EXIT LIST FOR VTAM USERS.  @ZA34940
+.*             ISTEXL1 IS INVOKED BY MACRO EXLST WHEN A USER   @ZA34940
+.*             ISSUES AN EXLST MACRO WITH 'AM=VTAM'            @ZA34940
+.*             SPECIFIED.                                      @ZA34940
+.*                                                             @ZA34940
+.*             PARAMETERS ARE PASSED TO THE EXLST MACRO IN THE
+.*             FOLLOWING FORMS
+.*                                                             @ZA34940
+.*                      KEYWORD=ADDRESS
+.*                      KEYWORD=0
+.*                      KEYWORD=(ADDRESS,N,L,A)                @Z40BHUC
+.*                      KEYWORD=(0,N,A,L)                      @X30BHUC
+.*
+.* CHANGE ACTIVITY                                             @ZA34940
+.*      CBMM SPLIT SUPPORT                                     @ZA34940
+.*                                                             @ZA34940
+         LCLA  &FLAG,&ACTIVE,&LINT,&CNT,&LENGTH
+         LCLA  &STYPE                   SUBTYPE                 X04SVHS
+         LCLB  &DUP1,&MEX1                                     @X30BHUC
+         LCLC  &NMPARA,&NMMEX,&MEXVAL                           X3004BH
+&NAME    DS    0F
+         DC    X'81'                    EXLIST IDENTIFICATION
+         AIF   ('&AM' EQ '').SSTYPE     IF AM IS NOT SPEC       X04SVHS
+.*                                      DEFAULT TO ZERO SUBTYPE X04SVHS
+&STYPE   SETA  X'10'                    SET VSAM SUBTYPE        X04SVHS
+         AIF   ('&AM' EQ 'VSAM').SSTYPE CHECK FOR VSAM          X04SVHS
+&STYPE   SETA  X'20'                    SET VTAM SUBTYPE        X04SVHS
+         AIF   ('&AM' EQ 'VTAM').SSTYPE CHECK FOR VTAM          X04SVHS
+.*                                      IF NOT, ERROR           X04SVHS
+&STYPE   SETA  0                        ZERO SUBTYPE            X04SVHS
+         MNOTE 12,'INVALID VALUE &AM, FOR AM KEYWORD'           X04SVHS
+.SSTYPE  ANOP                                                   X04SVHS
+         DC    AL1(&STYPE)              EXLST SUBTYPE           X04SVHS
+.*
+.*             THIS IS A VARIABLE LENGTH LIST THAT IS DETERMINED BY
+.*             THE EXITS SPECIFIED. THE LENGTH MUST BE FOUND
+.*
+&LENGTH  SETA  70                       START WITH MAX LENGTH   G40AKCM
+&NMPARA  SETC  'NSEXIT'                 ERROR MESSAGE INSERT    G40AKCM
+         AIF   ('&NSEXIT' NE '').VTMTST TAKE THIS IF SPECIFIED  G40AKCM
+.ERR70   ANOP                           ERROR RETURN            G40AKCM
+&LENGTH  SETA  &LENGTH-5                TRY NEXT LENGTH         G40AKCM
+&NMPARA  SETC  'TPEND'                  ERROR MESSAGE INSERT     X03004
+         AIF   ('&TPEND' NE '').VTMTST  TAKE THIS IF SPECIFIED  X3004BH
+.ERR65   ANOP                           ERROR RETURN             X03004
+&LENGTH  SETA  &LENGTH-5                TRY NEXT LENGTH          X03004
+&NMPARA  SETC  'ATTN'                   ERROR MESSAGE INSERT     X03004
+         AIF   ('&ATTN' NE '').VTMTST   TAKE THIS IF SPECIFIED  X3004BH
+.ERR60   ANOP                           ERROR RETURN             X03004
+&LENGTH  SETA  &LENGTH-10               TRY NEXT LENGTH        @Z40BHUC
+&NMPARA  SETC  'RELREQ'                 ERROR MESSAGE INSERT     X03004
+         AIF   ('&RELREQ' NE '').VTMTST TAKE THIS IF SPECIFIED  X3004BH
+.ERR50   ANOP                           ERROR RETURN             X03004
+&LENGTH  SETA  &LENGTH-5                TRY NEXT LENGTH          X03004
+&NMPARA  SETC  'LOSTERM'                ERROR MESSAGE INSERT     X03004
+         AIF   ('&LOSTERM' NE '').VTMTST TAKE THIS IF SPECIFIED X3004BH
+.ERR45   ANOP                           ERROR RETURN             X03004
+&LENGTH  SETA  &LENGTH-5                TRY NEXT LENGTH          X03004
+&NMPARA  SETC  'RESP'                   ERROR MESSAGE INSERT    X3004BH
+&MEX1    SETB  1                        CLEAR MUTUALLY EXCL SW  X3004BH
+&MEXVAL  SETC  '&OPENAD'                SET MUTUALLY EXCL VALUE X3004BH
+&NMMEX   SETC  'OPENAD'                 ERROR MESSAGE INSERT    X3004BH
+         AIF   ('&RESP' NE '').MEXTST   TAKE THIS IF SPECIFIED  X3004BH
+         AIF   ('&OPENAD' NE '').LNGSET TAKE THIS IF SPECIFIED
+.ERR40   ANOP                           ERROR RETURN            X3004BH
+&LENGTH  SETA  &LENGTH-5                TRY NEXT LENGTH
+&NMPARA  SETC  'DFASY'                  ERROR MESSAGE INSERT    X3004BH
+&MEX1    SETB  1                        CLEAR MUTUALLY EXCL SW  X3004BH
+&MEXVAL  SETC  '&JRNAD'                 SET MUTUALLY EXCL VALUE X3004BH
+&NMMEX   SETC  'JRNAD'                  ERROR MESSAGE INSERT    X3004BH
+         AIF   ('&DFASY' NE '').MEXTST  TAKE THIS IF SPECIFIED  X3004BH
+         AIF   ('&JRNAD' NE '').LNGSET  TAKE THIS IF SPECIFIED
+.ERR35   ANOP                           ERROR RETURN            X3004BH
+&LENGTH  SETA  &LENGTH-5                TRY NEXT LENGTH
+&NMPARA  SETC  'LOGON'                  ERROR MESSAGE INSERT     X03004
+         AIF   ('&LOGON' NE '').VTMTST  TAKE THIS IF SPECIFIED  X3004BH
+.ERR30   ANOP                           ERROR RETURN             X03004
+         AIF ('&AM' NE 'VTAM').OVLY30   VSAM HAS OWN VERSION FOR THIS
+.*                                      FIELD                 @ZA14800
+&LENGTH  SETA  &LENGTH-5                TRY NEXT LENGTH
+&NMPARA  SETC  'SCIP'                   ERROR MESSAGE INSERT    X3004BH
+         AIF   ('&SCIP' NE '').VTMTST   TAKE THIS IF SPECIFIED  X3004BH
+         AGO   .ERR25                   SKIP VSAM OVERLAY     @ZA07549
+.OVLY30  ANOP                           OVERLAY FOR VSAM      @ZA07549
+&LENGTH  SETA &LENGTH-5                 TRY NEXT LENGTH       @ZA07549
+         AIF   ('&UPAD' NE '').LNGSET   TAKE THIS IF SPECIFIED @ZA07549
+.ERR25   ANOP                           ERROR RETURN            X3004BH
+&LENGTH  SETA  &LENGTH-5                TRY NEXT LENGTH
+         AIF   ('&LERAD' NE '').LNGSET  TAKE THIS IF SPECIFIED
+&LENGTH  SETA  &LENGTH-5                TRY NEXT LENGTH
+         AIF   ('&SYNAD' NE '').LNGSET  TAKE THIS IF SPECIFIED
+&LENGTH  SETA  &LENGTH-5                TRY NEXT LENGTH
+         AIF   ('&EODAD' NE '').LNGSET  TAKE THIS IF SPECIFIED
+.*
+.*             IF NO EXITS THEN SEVERE ERROR MESSAGE
+         MNOTE 12,'AM00004 NO EXITS SPECIFIED MACRO TERMINATED'
+         AGO   .ENDEXL                  EXIT IF NO PARMS
+.MEXTST  ANOP                                                   X3004BH
+         AIF   ('&MEXVAL' EQ '').VTMTST                         X3004BH
+         MNOTE 8,'*** &NMPARA AND &NMMEX ARE MUTUALLY EXCLUSIVE - BOTH X
+               ARE IGNORED ***'                                 X3004BH
+         AIF   ('&AM' EQ 'VTAM').LENRET                         X3004BH
+         AIF   (&MEX1).VTMMSG                                   X3004BH
+         MNOTE 8,'*** VTAM KEYWORD, &NMMEX, SPECIFIED WITHOUT SPECIFYINX
+               G AM=VTAM - KEYWORD IGNORED ***'                 X3004BH
+         AGO   .VTMMSG                                          X3004BH
+.VTMTST  ANOP                                                   X3004BH
+         AIF   ('&AM' EQ 'VTAM').LNGSET  WAS VTAM SPECIFIED      X03004
+.VTMMSG  ANOP                                                   X3004BH
+         MNOTE 8,'*** VTAM KEYWORD, &NMPARA, SPECIFIED WITHOUT SPECIFYIX
+               NG AM=VTAM - KEYWORD IGNORED ***'                 X03004
+.LENRET  ANOP                                                   X3004BH
+         AIF   ('&LENGTH' EQ '70').ERR70  TEST NEXT EXIT        G40AKCM
+         AIF   ('&LENGTH' EQ '65').ERR65  TEST NEXT EXIT        G40AKCM
+         AIF   ('&LENGTH' EQ '60').ERR60  TEST NEXT EXIT         X03004
+         AIF   ('&LENGTH' EQ '50').ERR50  TEST NEXT EXIT         X03004
+         AIF   ('&LENGTH' EQ '45').ERR45  TEST NEXT EXIT         X03004
+         AIF   ('&LENGTH' EQ '40').ERR40  TEST NEXT EXIT        X3004BH
+         AIF   ('&LENGTH' EQ '35').ERR35  TEST NEXT EXIT        X3004BH
+         AIF   ('&LENGTH' EQ '30').ERR30  TEST NEXT EXIT        X3004BH
+         AGO   .ERR25                   RETURN TO TEST NEXT EXITX3004BH
+.LNGSET  ANOP                           USE LENGTH SPECIFIED    X3004BH
+.*       THE LENGTH MUST BE PLACED IN THE LENGTH FIELD
+         DC    H'&LENGTH'               EXLST LIST LENGTH
+         DC    X'00'                    EXLST FLAGS
+.*             EACH PARAMETER MUST NOW BE SCANNED FOR THE VALUES
+.*             PASSED
+.*
+.*                           EODAD
+.*
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR DEFAULT
+.*             VALUES
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPECIFIED
+&ACTIVE  SETA  0                        DEFAULT TO INACTIVE
+&LINT    SETA  0                        DEFAULT TO ADDR SPECIFIED
+&DUP1    SETB  0                        RESET DUPLICATE FLAG
+&CNT     SETA  1                        POSITION TO FIRST VALUE
+         AIF   ('&EODAD' EQ '').NOEOD   BR TO END IF NOT SPECIFIED
+&FLAG    SETA  128                      GET DEFAULT SPECIFIED VALUES
+&ACTIVE  SETA  64                       DEFAULT TO ACTIVE IF SPECIFIED
+         AIF   ('&EODAD(1)' NE '0').EODLP CHECK 0 ADDR
+&ACTIVE  SETA  0                        0 ADDR INDICATES INACTIVE
+.*
+.EODLP   ANOP
+&CNT     SETA  &CNT+1                   INCR PARAMETER COUNT
+         AIF   (&CNT GT N'&EODAD).SETEOD SET BITS IF ALL PARMS TESTED
+         AIF   ('&EODAD(&CNT)' NE 'N').EODACT CHECK ACTIVE IF NOT N
+         AIF   (&DUP1).EODERR           ERROR IF DUPLICATE
+&DUP1    SETB  1                        INDICATE PARAMETER FOUND
+&ACTIVE  SETA  0                        INDICATE INACTIVE IF N
+         AGO   .EODLP                   CONTINUE CHECKING
+.EODACT  ANOP
+         AIF   ('&EODAD(&CNT)' NE 'A').EODLNK CHECK IF LINK
+         AIF   (&DUP1).EODERR           ERROR IF DUPLICATE
+&DUP1    SETB  1                        INDICATE PARAMETER FOUND
+&ACTIVE  SETA  64                       INDICATE ACTIVE IF A
+         AGO   .EODLP                   LOOP UNTIL ALL CHECKED
+.EODLNK  ANOP
+         AIF   ('&EODAD(&CNT)' NE 'L').EODERR UNKNOWN IF NOT L OR N
+&LINT    SETA  32                       INDICATE LINK SPECIFIED
+         AGO   .EODLP                   LOOP UNTIL ALL CHECKED
+.*
+.EODERR  ANOP
+.*             ERROR MESSAGE IF INVALID PARAMETER
+         MNOTE 4,'AM00006 EODAD=&EODAD(&CNT) INVALID, DUPLICATE OR CONFX
+               LICTING OPTION-IGNORED'
+         AGO   .EODLP                   LOOP UNTIL ALL CHECKED
+.*
+.SETEOD  ANOP                           SET FOUND VALUES
+&FLAG    SETA  &FLAG+&ACTIVE+&LINT      ADD ALL BITS SET
+         DC    AL1(&FLAG)               EODAD ENTRY DESCRIPTION
+         DC    AL4(&EODAD(1))           POINTER TO EODAD EXIT
+         AGO   .ENDEOD
+.NOEOD   ANOP                           NO ENTRY SPECIFIED
+         DC    AL1(0)                   EODAD ENTRY NOT PRESENT
+         DC    AL4(0)                   ZERO EODAD ENTRY POINTER
+.ENDEOD  ANOP
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY
+.*
+.*                           SYNAD
+.*
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR DEFAULT
+.*             VALUES
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPECIFIED
+&ACTIVE  SETA  0                        DEFAULT TO INACTIVE
+&LINT    SETA  0                        DEFAULT TO ADDR SPECIFIED
+&DUP1    SETB  0                        RESET DUPLICATE FLAG
+&CNT     SETA  1                        POSITION TO FIRST VALUE
+.SYN     AIF   ('&SYNAD' EQ '').NOSYN   BR TO END IF NOT SPECIFIED
+&FLAG    SETA  128                      GET DEFAULT SPECIFIED VALUES
+&ACTIVE  SETA  64                       DEFAULT TO ACTIVE IF SPECIFIED
+         AIF   ('&SYNAD(1)' NE '0').SYNLP CHECK 0 ADDR
+&ACTIVE  SETA  0                        0 ADDR INDICATES INACTIVE
+.*
+.SYNLP   ANOP
+&CNT     SETA  &CNT+1                   INCR PARAMETER COUNT
+         AIF   (&CNT GT N'&SYNAD).SETSYN SET BITS IF ALL PARMS TESTED
+         AIF   ('&SYNAD(&CNT)' NE 'N').SYNACT CHECK ACTIVE IF NOT N
+         AIF   (&DUP1).SYNERR           ERROR IF DUPLICATE
+&DUP1    SETB  1                        INDICATE PARAMETER FOUND
+&ACTIVE  SETA  0                        INDICATE INACTIVE IF N
+         AGO   .SYNLP                   CONTINUE CHECKING
+.SYNACT  ANOP
+         AIF   ('&SYNAD(&CNT)' NE 'A').SYNLNK CHECK IF LINK
+         AIF   (&DUP1).SYNERR           ERROR IF DUPLICATE
+&DUP1    SETB  1                        INDICATE PARAMATER FOUND
+&ACTIVE  SETA  64                       INDICATE ACTIVE IF A
+         AGO   .SYNLP                   CONTINUE CHECKING
+.SYNLNK  ANOP
+         AIF   ('&SYNAD(&CNT)' NE 'L').SYNERR UNKNOWN IF NOT L OR N
+&LINT    SETA  32                       INDICATE LINK SPECIFIED
+         AGO   .SYNLP                   LOOP UNTIL ALL CHECKED
+.*
+.SYNERR  ANOP
+.*             ERROR MESSAGE IF INVALID PARAMETER
+         MNOTE 4,'AM00006 SYNAD=&SYNAD(&CNT) INVALID, DUPLICATE OR CONFX
+               LICTING OPTION-IGNORED'
+         AGO   .SYNLP                   LOOP UNTIL ALL CHECKED
+.*
+.SETSYN  ANOP                           SET FOUND VALUES
+&FLAG    SETA  &FLAG+&ACTIVE+&LINT      ADD ALL BITS SET
+         DC    AL1(&FLAG)               SYNAD ENTRY DESCRIPTION
+         DC    AL4(&SYNAD(1))           POINTER TO SYNAD EXIT
+         AGO   .ENDSYN
+.NOSYN   ANOP                           NO ENTRY SPECIFIED
+         DC    AL1(0)                   SYNAD ENTRY NOT PRESENT
+         DC    AL4(0)                   ZERO SYNAD ENTRY POINTER
+.ENDSYN  ANOP
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY
+.*
+.*                           LERAD
+.*
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR DEFAULT
+.*             VALUES
+.LER     ANOP
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPECIFIED
+&ACTIVE  SETA  0                        DEFAULT TO INACTIVE
+&LINT    SETA  0                        DEFAULT TO ADDR SPECIFIED
+&DUP1    SETB  0                        RESET DUPLICATE FLAG
+&CNT     SETA  1                        POSITION TO FIRST VALUE
+         AIF   ('&LERAD' EQ '').NOLER   BR TO END IF NOT SPECIFIED
+&FLAG    SETA  128                      GET DEFAULT SPECIFIED VALUES
+&ACTIVE  SETA  64                       DEFAULT TO ACTIVE IF SPECIFIED
+         AIF   ('&LERAD(1)' NE '0').LERLP CHECK 0 ADDR
+&ACTIVE  SETA  0                        0 ADDR INDICATES INACTIVE
+.*
+.LERLP   ANOP
+&CNT     SETA  &CNT+1                   INCR PARAMETER COUNT
+         AIF   (&CNT GT N'&LERAD).SETLER SET BITS IF ALL PARMS TESTED
+         AIF   ('&LERAD(&CNT)' NE 'N').LERACT CHECK ACTIVE IF NOT N
+         AIF   (&DUP1).LERERR           ERROR IF DUPLICATE
+&DUP1    SETB  1                        INDICATE PARAMETER FOUND
+&ACTIVE  SETA  0                        INDICATE INACTIVE IF N
+         AGO   .LERLP                   CONTINUE CHECKING
+.LERACT  ANOP
+         AIF   ('&LERAD(&CNT)' NE 'A').LERLNK CHECK IF LINK
+         AIF   (&DUP1).LERERR           ERROR IF DUPLICATE
+&DUP1    SETB  1                        INDICATE PARAMETER FOUND
+&ACTIVE  SETA  64                       INDICATE ACTIVE IF A
+         AGO   .LERLP                   LOOP UNTIL ALL CHECKED
+.LERLNK  ANOP
+         AIF   ('&LERAD(&CNT)' NE 'L').LERERR UNKNOWN IF NOT L OR N
+&LINT    SETA  32                       INDICATE LINK SPECIFIED
+         AGO   .LERLP                   LOOP UNTIL ALL CHECKED
+.*
+.LERERR  ANOP
+.*             ERROR MESSAGE IF INVALID PARAMETER
+         MNOTE 4,'AM00006 LERAD=&LERAD(&CNT) INVALID, DUPLICATE OR CONFX
+               LICTING OPTION-IGNORED'
+         AGO   .LERLP                   LOOP UNTIL ALL CHECKED
+.*
+.SETLER  ANOP                           SET FOUND VALUES
+&FLAG    SETA  &FLAG+&ACTIVE+&LINT      ADD ALL BITS SET
+         DC    AL1(&FLAG)               LERAD ENTRY DESCRIPTION
+         DC    AL4(&LERAD(1))           POINTER TO LERAD EXIT
+         AGO   .ENDLER
+.NOLER   ANOP                           NO ENTRY SPECIFIED
+         DC    AL1(0)                   LERAD ENTRY NOT PRESENT
+         DC    AL4(0)                   ZERO LERAD ENTRY POINTER
+.ENDLER  ANOP
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY
+         AIF ('&AM' EQ 'VTAM').VTSCIP   PROCESS VTAMS OVERLAY FOR THIS
+.*                                      FIELD                 @ZA07549
+.*                                                             @ZA07549
+.*                           UPAD                              @ZA07549
+.*                                                             @ZA07549
+.*          THE FLAG BITS MUST BE INITIALIZED TO THEIR DEFAULT@ZA07549
+.*             VALUES                                          @ZA07549
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPEC@ZA07549
+&ACTIVE  SETA  0                        DEFAULT TO INACTIVE    @ZA07549
+&LINT    SETA  0                        DEFAULT TO ADDR SPEC   @ZA07549
+&DUP1    SETB  0                        RESET DUPLICATE FLAG   @ZA07549
+&CNT     SETA  1                        POSITION TO FIRST VALUE@ZA07549
+         AIF   ('&UPAD'  EQ '').NOUPAD  BR TO END IF NOT SPEC  @ZA07549
+&FLAG    SETA  128                      GET DEF SPEC VALUES    @ZA07549
+&ACTIVE  SETA  64                       DEF TO ACTIVE IF SPEC  @ZA07549
+         AIF   ('&UPAD(1)'  NE '0').UPADLP CHECK 0 ADDR        @ZA07549
+&ACTIVE  SETA  0                        0 ADDR IND INACTIVE    @ZA07549
+.*                                                             @ZA07549
+.UPADLP  ANOP                                                  @ZA07549
+&CNT     SETA  &CNT+1                   INCR PARAMETER COUNT   @ZA07549
+         AIF   (&CNT GT N'&UPAD).SETUPAD SET BIT IF PARM TESTD @ZA07549
+         AIF   ('&UPAD(&CNT)' NE 'N').UPADACT CK ACTIVE IF NO N@ZA07549
+         AIF   (&DUP1).UPADERR          ERROR IF DUPLICATE     @ZA07549
+&DUP1    SETB  1                        INDICATE PARM FOUND    @ZA07549
+&ACTIVE  SETA  0                        INDICATE INACTIVE IF N @ZA07549
+         AGO   .UPADLP                  CONTINUE CHECKING      @ZA07549
+.UPADACT ANOP                                                  @ZA07549
+         AIF   ('&UPAD(&CNT)' NE 'A').UPADLNK CHECK IF LINK    @ZA07549
+         AIF   (&DUP1).UPADERR          ERROR IF DUPLICATE     @ZA07549
+&DUP1    SETB  1                        INDICATE PARAMETER FND @ZA07549
+&ACTIVE  SETA  64                       INDICATE ACTIVE IF A   @ZA07549
+         AGO   .UPADLP                  LOOP UNTIL ALL CHECKED @ZA07549
+.UPADLNK ANOP                                                  @ZA07549
+         AIF   ('&UPAD(&CNT)' NE 'L').UPADERR UNKNOWN, NOT L|N @ZA07549
+&LINT    SETA  32                       INDICATE LINK SPEC     @ZA07549
+         AGO   .UPADLP                  LOOP UNTIL ALL CHECKED @ZA07549
+.*                                                             @ZA07549
+.UPADERR ANOP                                                  @ZA07549
+.*             ERROR MESSAGE IF INVALID PARAMETER              @ZA07549
+         MNOTE 4,'AM00006 UPAD=&UPAD(&CNT) INVALID, DUPLICATE OR CONFLIX
+               CTING OPTION-IGNORED'                           @ZA07549
+         AGO   .UPADLP                  LOOP UNTIL ALL CHECKED @ZA07549
+.*                                                             @ZA07549
+.SETUPAD ANOP                           SET FOUND VALUES       @ZA07549
+&FLAG    SETA  &FLAG+&ACTIVE+&LINT      ADD ALL BITS SET       @ZA07549
+         DC    AL1(&FLAG)               UPAD ENTRY DESCRIPTION @ZA07549
+         DC    AL4(&UPAD(1))            POINTER TO UPAD EXIT   @ZA07549
+         AGO   .ENDUPAD                                        @ZA07549
+.NOUPAD  ANOP                           NO ENTRY SPECIFIED     @ZA07549
+         DC    AL1(0)                   UPAD  ENTRY NOT PRESENT@ZA07549
+         DC    AL4(0)                   ZERO UPAD  ENTRY PNTR  @ZA07549
+.ENDUPAD ANOP                                                  @ZA07549
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED @ZA07549
+&LENGTH  SETA  &LENGTH-5                DECR FOR THIS ENTRY    @ZA07549
+         AGO .NVTSCIP                   BR AROUND FIELD        @ZA07549
+.VTSCIP  ANOP                                                  @ZA07549
+.*                                                              X3004BH
+.*                          SCIP                                X3004BH
+.*                                                              X3004BH
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR       X3004BH
+.*             DEFAULT VALUES                                   X3004BH
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPEC X3004BH
+         AIF   ('&SCIP' EQ '').NOSCP    BRANCH IF NOT SPECIFIED X3004BH
+         AIF   ('&AM' EQ 'VTAM').SCPOK  BRANCH IF SPECIFIED     X3004BH
+         MNOTE 8,'*** VTAM KEYWORD, SCIP, SPECIFIED WITHOUT SPECIFYING X
+               AM=VTAM - KEYWORD IGNORED ***'                   X3004BH
+         AGO   .NOSCP                   GO ERASE POINTER        X3004BH
+.SCPOK   ANOP                           SET SCIP                X3004BH
+&FLAG    SETA  128                      GET DEF SPECIFIED VALUESX3004BH
+.*                                                              X3004BH
+         DC    AL1(&FLAG)               SCIP ENTRY DESCRIPTION  X3004BH
+         DC    AL4(&SCIP(1))            POINTER TO SCIP EXIT    X3004BH
+         AGO   .ENDSCP                                          X3004BH
+.NOSCP   ANOP                           NO ENTRY SPECIFIED      X3004BH
+         DC    AL1(0)                   SCIP ENTRY NOT PRESENT  X3004BH
+         DC    AL4(0)                   ZERO SCIP ENTRY POINTER X3004BH
+.ENDSCP  ANOP                                                   X3004BH
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED  X3004BH
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRYX3004BH
+.NVTSCIP ANOP                                                  @ZA07549
+.*
+.*                           LOGON                               X03004
+.*
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR DEFAULT
+.*             VALUES
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPECIFIED
+         AIF   ('&LOGON' EQ '').NOLOG   BRANCH IF NOT SPECIFIED  X03004
+         AIF   ('&AM' EQ 'VTAM').LOGOK  BRANCH IF SPECIFIED      X03004
+         MNOTE 8,'*** VTAM KEYWORD, LOGON, SPECIFIED WITHOUT SPECIFYINGX
+                AM=VTAM - KEYWORD IGNORED ***'                   X03004
+         AGO   .NOLOG                   GO ERASE POINTER         X03004
+.LOGOK   ANOP                           SET LOGON                X03004
+&FLAG    SETA  128                      GET DEFAULT SPECIFIED VALUES
+         DC    AL1(&FLAG)               LOGON ENTRY DESCRIPTION  X03004
+         DC    AL4(&LOGON(1))           POINTER TO LOGON EXIT    X03004
+         AGO   .ENDLOG                                           X03004
+.NOLOG   ANOP                           NO ENTRY SPECIFIED       X03004
+         DC    AL1(0)                   LOGON ENTRY NOT PRESENT  X03004
+         DC    AL4(0)                   ZERO LOGON ENTRY POINTER X03004
+.ENDLOG  ANOP                                                    X03004
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED   X03004
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY X03004
+.*                                                              X3004BH
+.*                                                              X3004BH
+.*                           DFASY                              X3004BH
+.*                                                              X3004BH
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR       X3004BH
+.*             DEFAULT VALUES                                   X3004BH
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPEC X3004BH
+&MEX1    SETB  0                        RESET MUTUALLY EXCL SW  X3004BH
+         AIF   ('&DFASY' EQ '').TSTJRN  BRANCH IF NOT SPECIFIED X3004BH
+         AIF   ('&AM' EQ 'VTAM').DFAMEX BRANCH IF VTAM          X3004BH
+         MNOTE 8,'*** VTAM KEYWORD, DFASY, SPECIFIED WITHOUT SPECIFYINGX
+               AM=VTAM - KEYWORD IGNORED ***'                   X3004BH
+&MEX1    SETB  1                        SET ERROR SWITCH        X3004BH
+.DFAMEX  ANOP                                                   X3004BH
+         AIF   ('&JRNAD' EQ '').DFANMX  ERROR IF BOTH           X3004BH
+         MNOTE 8,'*** DFASY AND JRNAD ARE MUTUALLY EXCLUSIVE - BOTH AREX
+                IGNORED ***'                                    X3004BH
+         AGO   .NODFA                   GO SET TO ZERO          X3004BH
+.DFANMX  ANOP                                                   X3004BH
+         AIF   (&MEX1).NODFA            BRANCH IF PREV ERROR    X3004BH
+&FLAG    SETA  128                      GET DEFAULT VALUES      X3004BH
+         DC    AL1(&FLAG)               DFASY ENTRY DESCRIPTION X3004BH
+         DC    AL4(&DFASY(1))           POINTER TO DFASY EXIT   X3004BH
+         AGO   .ENDDFA                                          X3004BH
+.NODFA   ANOP                           NO ENTRY SPECIFIED      X3004BH
+         DC    AL1(0)                   DFASY ENTRY NOT PRESENT X3004BH
+         DC    AL4(0)                   ZERO DFASY ENTRY POINTERX3004BH
+.ENDDFA  ANOP                                                   X3004BH
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED  X3004BH
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRYX3004BH
+         AGO   .TSTRES                                          X3004BH
+.*
+.*                           JRNAD
+.*
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR DEFAULT
+.*             VALUES
+.TSTJRN  ANOP                                                   X3004BH
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPECIFIED
+&ACTIVE  SETA  0                        DEFAULT TO INACTIVE
+&LINT    SETA  0                        DEFAULT TO ADDR SPECIFIED
+&DUP1    SETB  0                        RESET DUPLICATE FLAG
+&CNT     SETA  1                        POSITION TO FIRST VALUE
+         AIF   ('&JRNAD' EQ '').NOJRN   BR TO END IF NOT SPECIFIED
+&FLAG    SETA  128                      GET DEFAULT SPECIFIED VALUES
+&ACTIVE  SETA  64                       DEFAULT TO ACTIVE IF SPECIFIED
+         AIF   ('&JRNAD(1)' NE '0').JRNLP CHECK 0 ADDR
+&ACTIVE  SETA  0                        0 ADDR INDICATES INACTIVE
+.*
+.JRNLP   ANOP
+&CNT     SETA  &CNT+1                   INCR PARAMETER COUNT
+         AIF   (&CNT GT N'&JRNAD).SETJRN SET BITS IF ALL PARMS TESTED
+         AIF   ('&JRNAD(&CNT)' NE 'N').JRNACT CHECK ACTIVE IF NOT N
+         AIF   (&DUP1).JRNERR           ERROR IF DUPLICATE
+&DUP1    SETB  1                        INDICATE PARAMETER FOUND
+&ACTIVE  SETA  0                        INDICATE INACTIVE IF N
+         AGO   .JRNLP                   CONTINUE CHECKING
+.JRNACT  ANOP
+         AIF   ('&JRNAD(&CNT)' NE 'A').JRNLNK CHECK IF LINK
+         AIF   (&DUP1).JRNERR           ERROR IF DUPLICATE
+&DUP1    SETB  1                        INDICATE PARAMETER FOUND
+&ACTIVE  SETA  64                       INDICATE ACTIVE IF A
+         AGO   .JRNLP                   LOOP UNTIL ALL CHECKED
+.JRNLNK  ANOP
+         AIF   ('&JRNAD(&CNT)' NE 'L').JRNERR UNKNOWN IF NOT L OR N
+&LINT    SETA  32                       INDICATE LINK SPECIFIED
+         AGO   .JRNLP                   LOOP UNTIL ALL CHECKED
+.*
+.JRNERR  ANOP
+.*             ERROR MESSAGE IF INVALID PARAMETER
+         MNOTE 4,'AM00006 JRNAD=&JRNAD(&CNT) INVALID, DUPLICATE OR CONFX
+               LICTING OPTION-IGNORED'
+         AGO   .JRNLP                   LOOP UNTIL ALL CHECKED
+.*
+.SETJRN  ANOP                           SET FOUND VALUES
+&FLAG    SETA  &FLAG+&ACTIVE+&LINT      ADD ALL BITS SET
+         DC    AL1(&FLAG)               JRNAD ENTRY DESCRIPTION
+         DC    AL4(&JRNAD(1))           POINTER TO JRNAD EXIT
+         AGO   .ENDJRN
+.NOJRN   ANOP                           NO ENTRY SPECIFIED
+         DC    AL1(0)                   JRNAD ENTRY NOT PRESENT
+         DC    AL4(0)                   ZERO JRNAD ENTRY POINTER
+.ENDJRN  ANOP
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY
+.*                                                              X3004BH
+.*                           RESP                               X3004BH
+.*                                                              X3004BH
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR       X3004BH
+.*             DEFAULT VALUES                                   X3004BH
+.TSTRES  ANOP                                                   X3004BH
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPEC X3004BH
+&MEX1    SETB  0                        RESET MUTUALLY EXCL SW  X3004BH
+         AIF   ('&RESP' EQ '').TSTOPN   BRANCH IF NOT SPECIFIED X3004BH
+         AIF   ('&AM' EQ 'VTAM').RESMEX BRANCH IF SPECIFIED     X3004BH
+         MNOTE 8,'*** VTAM KEYWORD, RESP, SPECIFIED WITHOUT SPECIFYING X
+               AM=VTAM - KEYWORD IGNORED ***'                   X3004BH
+&MEX1    SETB  1                        SET ERROR SWITCH        X3004BH
+.RESMEX  ANOP                                                   X3004BH
+         AIF   ('&OPENAD' EQ '').RESNMX ERROR IF BOTH           X3004BH
+         MNOTE 8,'*** RESP AND OPENAD ARE MUTUALLY EXCLUSIVE - BOTH AREX
+                IGNORED ***'                                    X3004BH
+         AGO   .NORES                   GO SET TO ZERO          X3004BH
+.RESNMX  ANOP                                                   X3004BH
+         AIF   (&MEX1).NORES            BRANCH IF PREV ERROR    X3004BH
+&FLAG    SETA  128                      GET DEFAULT SPEC VALUES X3004BH
+         DC    AL1(&FLAG)               RESP ENTRY DESCRIPTION  X3004BH
+         DC    AL4(&RESP(1))            POINTER TO RESP EXIT    X3004BH
+         AGO   .ENDRES                                          X3004BH
+.NORES   ANOP                           NO ENTRY SPECIFIED      X3004BH
+         DC    AL1(0)                   RESP ENTRY NOT PRESENT  X3004BH
+         DC    AL4(0)                   ZERO RESP ENTRY POINTER X3004BH
+.ENDRES  ANOP                                                   X3004BH
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED  X3004BH
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRYX3004BH
+         AGO   .TSTEND                                          X3004BH
+.*
+.*                           OPENAD
+.*
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR DEFAULT
+.*             VALUES
+.TSTOPN  ANOP                                                   X3004BH
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPECIFIED
+&ACTIVE  SETA  0                        DEFAULT TO INACTIVE
+&LINT    SETA  0                        DEFAULT TO ADDR SPECIFIED
+&DUP1    SETB  0                        RESET DUPLICATE FLAG
+&CNT     SETA  1                        POSITION TO FIRST VALUE
+         AIF   ('&OPENAD' EQ '').NOOPEN BR TO END IF NOT SPECIFIED
+&FLAG    SETA  128                      GET DEFAULT SPECIFIED VALUES
+&ACTIVE  SETA  64                       DEFAULT TO ACTIVE IF SPECIFIED
+         AIF   ('&OPENAD(1)' NE '0').OPENLP CHECK 0 ADDR
+&ACTIVE  SETA  0                        0 ADDR INDICATES INACTIVE
+.*
+.OPENLP  ANOP
+&CNT     SETA  &CNT+1                   INCR PARAMETER COUNT
+         AIF   (&CNT GT N'&OPENAD).SETOPEN SET BITS IF ALL TESTED
+         AIF   ('&OPENAD(&CNT)' NE 'N').OPENACT CHECK ACTIVE IF NOT N
+         AIF   (&DUP1).OPENERR          ERROR IF DUPLICATE
+&DUP1    SETB  1                        INDICATE PARAMETER FOUND
+&ACTIVE  SETA  0                        INDICATE INACTIVE IF N
+         AGO   .OPENLP                  CONTINUE CHECKING
+.OPENACT ANOP
+         AIF   ('&OPENAD(&CNT)' NE 'A').OPENLNK CHECK IF LINK
+         AIF   (&DUP1).OPENERR          ERROR IF DUPLICATE
+&DUP1    SETB  1                        INDICATE PARAMETER FOUND
+&ACTIVE  SETA  64                       INDICATE ACTIVE IF A
+         AGO   .OPENLP                  LOOP UNTIL ALL CHECKED
+.OPENLNK ANOP
+         AIF   ('&OPENAD(&CNT)' NE 'L').OPENERR UNKNOWN IF NOT L OR N
+&LINT    SETA  32                       INDICATE LINK SPECIFIED
+         AGO   .OPENLP                  LOOP UNTIL ALL CHECKED
+.*
+.OPENERR ANOP
+.*             ERROR MESSAGE IF INVALID PARAMETER
+         MNOTE 4,'AM00006 OPENAD=&OPENAD(&CNT) INVALID, DUPLICATE OR COX
+               NFLICTING OPTION-IGNORED'
+         AGO   .OPENLP                  LOOP UNTIL ALL CHECKED
+.*
+.SETOPEN ANOP                           SET FOUND VALUES
+&FLAG    SETA  &FLAG+&ACTIVE+&LINT      ADD ALL BITS SET
+         DC    AL1(&FLAG)               OPENAD ENTRY DESCRIPTION
+         DC    AL4(&OPENAD(1))          POINTER TO OPENAD EXIT
+         AGO   .ENDOPEN
+.NOOPEN  ANOP                           NO ENTRY SPECIFIED
+         DC    AL1(0)                   OPENAD ENTRY NOT PRESENT
+         DC    AL4(0)                   ZERO OPENAD ENTRY POINTER
+.ENDOPEN ANOP
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY
+.TSTEND  ANOP                                                   X3004BH
+         AIF   ('&AM' NE 'VTAM').ENDEXL  STOP HERE IF NOT VTAM   X03004
+.*                                                               X03004
+.*                           LOSTERM                             X03004
+.*                                                               X03004
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR        X03004
+.*             DEFAULT VALUES                                    X03004
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPEC  X03004
+         AIF   ('&LOSTERM' EQ '').NOLGF  BR TO END IF NOT SPECIFIED
+.*                                                               X03004
+&FLAG    SETA  128                      GET DEFAULT VALUES       X03004
+         DC    AL1(&FLAG)               LOSTERM ENTRY DESCRIPTIONX03004
+         DC    AL4(&LOSTERM(1))         POINTER TO LOSTERM EXIT  X03004
+         AGO   .ENDLGF                                           X03004
+.NOLGF   ANOP                           NO ENTRY SPECIFIED       X03004
+         DC    AL1(0)                   LOSTERM ENTRY NOT PRESENTX03004
+         DC    AL4(0)                   ZERO LOSTERM ENTRY PTR   X03004
+.ENDLGF  ANOP                                                    X03004
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED   X03004
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY X03004
+.*                                                               X03004
+.*                                                               X03004
+.*                           RELREQ                              X03004
+.*                                                               X03004
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR        X03004
+.*             DEFAULT VALUES                                    X03004
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPEC  X03004
+         AIF   ('&RELREQ' EQ '').NOREL  BRANCH IF NOT SPECIFIED  X03004
+&FLAG    SETA  128                      GET DEFAULT VALUES       X03004
+         DC    AL1(&FLAG)               RELREQ ENTRY DESCRIPTION X03004
+         DC    AL4(&RELREQ(1))          POINTER TO RELREQ EXIT   X03004
+         AGO   .ENDREL                                           X03004
+.NOREL   ANOP                           NO ENTRY SPECIFIED       X03004
+         DC    AL1(0)                   RELREQ ENTRY NOT PRESENT X03004
+         DC    AL4(0)                   ZERO RELREQ ENTRY POINTERX03004
+.ENDREL  ANOP                                                    X03004
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED   X03004
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY X03004
+         DC    AL1(0)                   RESERVED               @Z40BHUC
+         DC    AL4(0)                   RESERVED               @X30BHUC
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED   X03004
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY X03004
+.*                                                               X03004
+.*                                                               X03004
+.*                           ATTN                                X03004
+.*                                                               X03004
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR        X03004
+.*             DEFAULT VALUES                                    X03004
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPEC  X03004
+         AIF   ('&ATTN' EQ '').NOATN    BRANCH IF NOT SPECIFIED  X03004
+&FLAG    SETA  128                      GET DEFAULT VALUES       X03004
+         DC    AL1(&FLAG)               ATTN ENTRY DESCRIPTION   X03004
+         DC    AL4(&ATTN(1))            POINTER TO ATTN EXIT     X03004
+         AGO   .ENDATN                                           X03004
+.NOATN   ANOP                           NO ENTRY SPECIFIED       X03004
+         DC    AL1(0)                   ATTN ENTRY NOT PRESENT   X03004
+         DC    AL4(0)                   ZERO ATTN ENTRY POINTER  X03004
+.ENDATN  ANOP                                                    X03004
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED   X03004
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY X03004
+.*                                                               X03004
+.*                                                               X03004
+.*                           TPEND                               X03004
+.*                                                               X03004
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR        X03004
+.*             DEFAULT VALUES                                    X03004
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPEC  X03004
+         AIF   ('&TPEND' EQ '').NOTPE   BRANCH IF NOT SPECIFIED  X03004
+&FLAG    SETA  128                      GET DEFAULT VALUES       X03004
+         DC    AL1(&FLAG)               TPEND ENTRY DESCRIPTION  X03004
+         DC    AL4(&TPEND(1))           POINTER TO TPEND EXIT    X03004
+         AGO   .ENDTPE                                           X03004
+.NOTPE   ANOP                           NO ENTRY SPECIFIED       X03004
+         DC    AL1(0)                   TPEND ENTRY NOT PRESENT  X03004
+         DC    AL4(0)                   ZERO TPEND ENTRY POINTER X03004
+.ENDTPE  ANOP                                                    X03004
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED   X03004
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY X03004
+.*                                                             @G40AKCM
+.*                                                             @G40AKCM
+.*                                                             @G40AKCM
+.*                           NSEXIT                            @G40AKCM
+.*                                                             @G40AKCM
+.*             THE FLAG BITS MUST BE INITIALIZED TO THEIR      @G40AKCM
+.*             DEFAULT VALUES                                   G40AKCM
+&FLAG    SETA  0                        DEFAULT TO NO EXIT SPEC G40AKCM
+         AIF   ('&NSEXIT' EQ '').NONSE  BRANCH IF NOT SPECIFIED G40AKCM
+&FLAG    SETA  128                      GET DEFAULT VALUES      G40AKCM
+         DC    AL1(&FLAG)               NSEXIT ENTRY DESCRIP.   G40AKCM
+         DC    AL4(&NSEXIT(1))          POINTER TO NSEXIT EXIT  G40AKCM
+         AGO   .ENDNSE                                          G40AKCM
+.NONSE   ANOP                           NO ENTRY SPECIFIED      G40AKCM
+         DC    AL1(0)                   NSEXIT ENTRY NOT PRESENTG40AKCM
+         DC    AL4(0)                   ZERO NSEXIT ENTRY PTR.  G40AKCM
+.ENDNSE  ANOP                                                    X03004
+         AIF   (&LENGTH EQ 10).ENDEXL   EXIT WHEN LAST REACHED   X03004
+&LENGTH  SETA  &LENGTH-5                DECREMENT FOR THIS ENTRY X03004
+.*
+.ENDEXL  ANOP                                                    X03004
+         MEND
+

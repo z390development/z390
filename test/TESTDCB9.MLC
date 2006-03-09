@@ -5,15 +5,17 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 01/11/05 RPI170 TEST LENGTH PARM 'S' ON READ/WRITE
+*********************************************************************
 TESTDCB9 SUBENTRY
          WTO   'TESTDCB9 READ SYSUT1 RANDOM RECORDS AND WRITE SYSUT2'
          OPEN  (SYSUT1,(INPUT),SYSUT2,(OUTPUT),SYSOUT,(OUTPUT))
          MVC   RELKEY,=F'1' READ 2ND RECORD USING RELATIVE RECORD
          POINT SYSUT1,RELKEY
-         READ  DECB1,SB,SYSUT1,RECORD  
+         READ  DECB1,SB,SYSUT1,RECORD,'S'  
          CHECK DECB1
          PUT   SYSOUT,RECORD
-         WRITE DECB2,SF,SYSUT2,RECORD
+         WRITE DECB2,SF,SYSUT2,RECORD,'S'
          CHECK DECB2
          MVC   RBAKEY,=FL8'0' READ 1ND RECORD
          POINT SYSUT1,RBA=RBAKEY

@@ -1,0 +1,428 @@
+.* MVS 3.8J PUBLIC DOMAIN
+********************************************************************
+*
+*  $MAC(RACROUTE) COMP(SC1BN) PROD(SAF):
+*
+*  DESCRIPTIVE NAME = INTERFACE TO SAF ROUTER
+*
+*
+*  STATUS = OS/VS2 JBB1222
+*
+*  FUNCTION = THE RACROUTE MACRO PROVIDES A STANDARD INTERFACE TO
+*             THE MVS SYSTEM AUTHORIZATION FACILITY (SAF).
+*             (MODULE NAME - ICHSFR00)
+*
+*  INVOCATION = THE SAF ROUTER IS INVOKED BY THE RACROUTE MACRO VIA
+*               A BRANCH-AND-LINK INSTRUCTION.
+*
+*   REQUIREMENTS FOR USE - 1) THE CALLER MUST HAVE REGISTER 13 POINTING
+*                             TO A SAVEAREA (STANDARD LINKAGE).
+*
+*  MODULE TYPE = MACRO
+*
+*  CHANGE ACTIVITY=
+*              $T0=UZ90211,SAF/RF15,811015,CNTDSD:
+*              $L5=HRF1502,RACF/150,820223,CNTDSD:                 @L5A
+*              $L6=HRF1602,RACF/160,830307,CNTDSD:                 @L6A
+*              UZ90283                                         @ZA90283
+*              UZ90284                                         @ZA90284
+*              UZ90285                                         @ZA90285
+*
+********************************************************************
+         MACRO
+&NAME    RACROUTE &REQUEST=,                                           *
+               &REQSTOR=,                                              *
+               &SUBSYS=,                                               *
+               &WORKA=,                                                *
+               &RELATED=,                                              *
+               &MF=S,      PARAMS BELOW ARE USED IN FOLLOWING MACROS:  *
+               &ACCLVL=,      RACHECK                              @L5A*
+               &ACEE=,        RACHECK/DEF/INIT/LIST,FRACHECK,RACXTRT   *
+               &ACTINFO=,     RACINIT                                  *
+               &APPL=,        RACHECK,FRACHECK,RACLIST,RACINIT         *
+               &ATTR=,        RACHECK,FRACHECK                         *
+               &AUDIT=,       RACDEF                                   *
+               &CHKAUTH=,     RACDEF                               @L5A*
+               &CLASS=,       RACHECK,FRACHECK,RACLIST,RACDEF          *
+               &DATA=,        RACDEF                                   *
+               &DSTYPE=,      RACHECK,RACDEF                           *
+               &ENCRYPT=,     RACINIT,RACXTRT                      @L6A*
+               &ENTITY=,      RACHECK,FRACHECK,RACDEF,RACXTRT      @L6A*
+               &ENVIR=,       RACLIST,RACINIT                          *
+               &FIELDS=,      RACXTRT                              @L6A*
+               &GENERIC=,     RACDEF,RACHECK                       @L6A*
+               &GROUP=,       RACINIT                                  *
+               &INSTLN=,      RACHECK,FRACHECK,RACLIST,RACDEF,RACINIT  *
+               &JOBNAME=,     RACINIT                                  *
+               &LEVEL=,       RACDEF                                   *
+               &LIST=,        RACLIST                                  *
+               &LOG=,         RACHECK                                  *
+               &MENTITY=,     RACDEF                                   *
+               &MVOLSER=,     RACDEF                                   *
+               &NEWNAME=,     RACDEF                                   *
+               &NEWPASS=,     RACINIT                                  *
+               &OIDCARD=,     RACINIT                                  *
+               &OLDVOL=,      RACHECK,RACDEF                           *
+               &OWNER=,       RACHECK,RACLIST,RACDEF                   *
+               &PASSCHK=,     RACINIT                                  *
+               &PASSWRD=,     RACINIT                                  *
+               &PGMNAME=,     RACINIT                                  *
+               &PROFILE=,     RACHECK                                  *
+               &RACFIND=,     RACHECK,RACDEF                       @L5A*
+               &SMC=,         RACINIT                                  *
+               &SPECIAL=,     RACDEF                                   *
+               &START=,       RACINIT                                  *
+               &STAT=,        RACINIT                              @L6A*
+               &SUBPOOL=,     RACLIST,RACINIT,RACXTRT              @L6A*
+               &TERMID=,      RACINIT                                  *
+               &TYPE=,        RACDEF,RACXTRT                       @L6A*
+               &UACC=,        RACDEF                                   *
+               &UNIT=,        RACDEF                                   *
+               &USERID=,      RACINIT                                  *
+               &VOLSER=,      RACHECK,RACDEF                           *
+               &WARNING=,     RACDEF                               @L6A*
+               &WKAREA=       FRACHECK
+.*  DEFINE LOCAL VARIABLES
+         LCLA  &RQTYPE             USED TO CONTAIN NUMERIC VALUE
+.*                                 FOR REQUEST TYPE
+         LCLC  &NX                 USED TO CONTAIN SYSNDX FOR LABELS
+.*  DEFINE GLOBAL VARIABLES
+         GBLC  &ICHL               USED FOR ADDRESS OF RACF PARAM LIST
+         GBLA  &ICHCT              ICHCT - A COUNTER USED TO KEEP
+.*                                 TRACK OF WHERE IN THE PARAMETER
+.*                                 LIST THE PARAMETER IS TO BE
+.*                                 PLACED. ICHCT IS INITIALIZED TO
+.*                                 THE FIRST FULLWORD IN THE LIST
+.*                                 TO BE FILLED IN BY ICHMM,
+.*                                 AND INCREMENTED BY THE INNER
+.*                                 MACRO (ICHMM).
+         GBLB  &ICHRAC             ICHRAC - A FLAG WHICH IS
+.*                                 INITIALIZED IN THIS MACRO TO
+.*                                 COMMUNICATE TO THE RACF MACRO
+.*                                 THAT THE RACF MACRO IS BEING
+.*                                 INVOKED AS AN INNER MACRO
+.*                                 TO THE RACROUTE MACRO.
+         GBLB  &ICHLIST            ICHLIST - A FLAG WHICH IS SET TO
+.*                                 INDICATE THE FORMAT OF THE MACRO.
+.*                                 FOR LIST FORMAT, ICHLIST IS ON
+.*                                 FOR EXECUTE FORMAT, ICHLIST IS
+.*                                 OFF. FOR STANDARD FORMAT, THERE
+.*                                 ARE TWO PASSES DONE BY THE MACRO
+.*                                 A LIST PASS AND AN EXECUTE PASS.
+.*                                 INITIALLY, FOR STANDARD, THE
+.*                                 FLAG  IS ON - FOR THE LIST PASS.
+.*                                 IT IS THEN TURNED OFF FOR THE
+.*                                 EXECUTE PASS.
+         GBLB  &ICHNTFY            ICHNTFY - A GLOBAL INDICATOR
+.*                                 WHICH IS USED TO COMMUNICATE WITH
+.*                                 ICHMM - THE INNER MACRO. IF ICHNTFY
+.*                                 IS ON, THE INNER MACRO WILL NOT
+.*                                 ISSUE ITS OWN MNOTE IF IT FINDS AN
+.*                                 ERROR-IT WILL MERELY TURN ON THE
+.*                                 ICHINER FLAG AS NOTIFICATION TO THE
+.*                                 OUTER MACRO, WHICH WILL TAKE THE
+.*                                 APPROPRIATE ACTION.
+.*                                 IF ICHNTFY IS OFF, THE INNER MACRO
+.*                                 WILL TAKE ACTION ON ITS OWN,
+.*                                 IE. ISSUE AN MNOTE WITH A SEVERITY
+.*                                 CODE OF ITS CHOOSING.
+         GBLB  &ICHINER            ICHINER - A GLOBAL INDICATOR
+.*                                 WHICH IS USED BY ICHMM - AN INNER
+.*                                 MACRO - TO TELL THE OUTER MACRO IF
+.*                                 AN ERROR HAS BEEN DETECTED IN A
+.*                                 PARAMETER.  IF ICHINER IS ON, AN
+.*                                 ERROR HAS BEEN DETECTED.
+         GBLC  &ICHMF              ICHMF - AN INDICATOR OF THE
+.*                                 FORMAT - L, E, OR S.
+.************************
+.*   INITIALIZE VARIABLES
+.************************
+&NX      SETC  '&SYSNDX'
+&ICHL    SETC  'IHB&NX.C'
+&ICHNTFY SETB  0                   WANT ICHMM TO ISSUE ERROR MSGS
+&ICHINER SETB  0                   INITIALIZE ICHINER TO 0
+&ICHRAC  SETB  1                   WILL CALL RACF INTERNALLY
+.***********************************
+.*   SET UP INDICATORS FOR MF FORMAT
+.***********************************
+.*  VALIDATE MF PARAMETER
+         AIF   ('&MF' NE 'L' AND '&MF' NE 'S' AND '&MF(1)' NE          *
+               'E').ERR01
+         AIF   ('&MF(1)' EQ 'E').RTE0030
+.RTE0010 ANOP
+&ICHLIST SETB  1               MF LIST OR STANDARD
+         AIF   ('&MF' EQ 'L').RTE0020
+&ICHMF   SETC  'S'             STANDARD FORM
+         AGO   .CONT01
+.RTE0020 ANOP
+&ICHMF   SETC  'L'             LIST FORM
+         AGO   .CONT01
+.RTE0030 ANOP
+&ICHLIST SETB  0               MF EXECUTE
+&ICHMF   SETC  'E'
+         AIF   ('&MF(2)' EQ '' OR N'&MF NE 2).ERR01
+.****************************************************
+.*  REQUEST AND WORKA ARE REQUIRED PARAMETERS
+.****************************************************
+.CONT01  ANOP
+         AIF   ('&REQUEST' EQ '').ERR02
+         AIF   ('&WORKA' EQ '' AND '&ICHMF' EQ 'S').ERR05
+.****************************************************
+.*   VALIDATE REQUEST PARAMETER AND SET CORRESPONDING
+.*   VALUE FOR THE PARAMETER LIST.
+.****************************************************
+         AIF   ('&REQUEST' NE 'AUTH').RTE0100
+&RQTYPE  SETA  1
+         AIF   ('&ACTINFO&AUDIT&DATA&ENVIR&GROUP&JOBNAME&LEVEL&LIST&MEN*
+               TITY&MVOLSER&NEWNAME&NEWPASS' NE '').ERR03
+         AIF   ('&OIDCARD&PASSCHK&PASSWRD&PGMNAME&SMC&SPECIAL&START&SUB*
+               POOL&TERMID&TYPE&UACC&UNIT&USERID&WKAREA' NE '').ERR03
+         AIF   ('&CHKAUTH' NE '').ERR03                            @L5A
+         AIF   ('&WARNING&STAT&ENCRYPT&FIELDS' NE '').ERR03        @L6A
+         AGO   .CONT02
+.RTE0100 ANOP
+         AIF   ('&REQUEST' NE 'FASTAUTH').RTE0110
+&RQTYPE  SETA  2
+         AIF   ('&ACTINFO&AUDIT&DATA&DSTYPE&ENVIR&GROUP&JOBNAME&LEVEL&L*
+               IST&LOG&MENTITY&MVOLSER&NEWNAME' NE '').ERR03
+         AIF   ('&NEWPASS&OIDCARD&OLDVOL&OWNER&PASSCHK&PASSWRD&PGMNAME&*
+               PROFILE&SMC&SPECIAL&START&SUBPOOL&TERMID&TYPE&UACC&UNIT&*
+               USERID&VOLSER' NE '').ERR03
+         AIF   ('&RACFIND&ACCLVL&CHKAUTH' NE '').ERR03             @L5A
+         AIF   ('&WARNING&STAT&ENCRYPT&GENERIC&FIELDS' NE              *
+               '').ERR03                                           @L6A
+         AGO   .CONT02
+.RTE0110 ANOP
+         AIF   ('&REQUEST' NE 'LIST').RTE0120
+&RQTYPE  SETA  3
+         AIF   ('&ACTINFO&ATTR&AUDIT&DATA&DSTYPE&ENTITY&GROUP&JOBNAME&L*
+               EVEL&LOG&MENTITY&MVOLSER&NEWNAME' NE '').ERR03
+         AIF   ('&NEWPASS&OIDCARD&OLDVOL&PASSCHK&PASSWRD&PGMNAME&PROFIL*
+               E&SMC&SPECIAL&START&TERMID&TYPE&UACC&UNIT&USERID&VOLSER&*
+               WKAREA' NE '').ERR03
+         AIF   ('&RACFIND&ACCLVL&CHKAUTH' NE '').ERR03             @L5A
+         AIF   ('&WARNING&STAT&ENCRYPT&GENERIC&FIELDS'  NE             *
+               '').ERR03                                           @L6A
+         AGO   .CONT02
+.RTE0120 ANOP
+         AIF   ('&REQUEST' NE 'DEFINE').RTE0130
+&RQTYPE  SETA  4
+         AIF   ('&ACTINFO&APPL&ATTR&ENVIR&GROUP&JOBNAME&LIST&LOG&NEWPAS*
+               S&OIDCARD&PASSCHK&PASSWRD&PGMNAME&PROFILE&SMC&START&SUBP*
+               OOL&TERMID&USERID&WKAREA' NE '').ERR03
+         AIF   ('&ACCLVL' NE '').ERR03                             @L5A
+         AIF   ('&STAT&ENCRYPT&FIELDS' NE '').ERR03                @L6A
+         AGO   .CONT02
+.RTE0130 ANOP
+         AIF   ('&REQUEST' NE 'VERIFY').RTE0140                    @L6A
+&RQTYPE  SETA  5
+         AIF   ('&ATTR&AUDIT&CLASS&DATA&DSTYPE&ENTITY&LEVEL&LIST&LOG&ME*
+               NTITY&MVOLSER&NEWNAME&OLDVOL&OWNER&PROFILE&SPECIAL&TYPE&*
+               UACC&UNIT&VOLSER&WKAREA' NE '').ERR03
+         AIF   ('&RACFIND&ACCLVL&CHKAUTH' NE '').ERR03             @L5A
+         AIF   ('&WARNING&GENERIC&FIELDS' NE '').ERR03             @L6A
+         AGO   .CONT02                                             @L6A
+.RTE0140 ANOP  ,                                                   @L6A
+         AIF   ('&REQUEST' NE 'EXTRACT').ERR04                     @L6A
+&RQTYPE  SETA  6                                                   @L6A
+         AIF   ('&ACTINFO&ATTR&AUDIT&CLASS&DATA&DSTYPE&LEVEL&LIST&LOG&M*
+               ENTITY&MVOLSER&NEWNAME&OLDVOL&OWNER&PROFILE&SPECIAL&UACC*
+               &UNIT&VOLSER&WKAREA' NE '').ERR03                   @L6A
+         AIF   ('&RACFIND&ACCLVL&CHKAUTH' NE '').ERR03             @L6A
+         AIF   ('&WARNING&GENERIC' NE '').ERR03                    @L6A
+         AIF   ('&APPL&ENVIR&GROUP&INSTLN&JOBNAME&NEWPASS&OIDCARD&PASSC*
+               HK&PASSWRD&PGMNAME&SMC&START&STAT&TERMID&USERID' NE     *
+               '').ERR03                                           @L6A
+.CONT02  ANOP
+.**************************************************************
+.*  BEGIN THE PARAMETER LIST AND ESTABLISH ADDRESSABILITY TO IT
+.*  IN REGISTER 14 FOR MF=S AND MF=E.
+.**************************************************************
+.RTE0210 ANOP
+         AIF   ('&ICHMF' EQ 'E').RTE0230
+         AIF   ('&ICHMF' EQ 'L').RTE0220
+         CNOP  0,4
+&NAME    BAL   1,IHB&NX.B
+         AGO   .RTE0221
+.RTE0220 ANOP
+&NAME    DS    0F
+.RTE0221 ANOP
+IHB&NX.A EQU   *
+         DC    F'0'                 RACF OR INSTALL EXIT RETURN CODE
+         DC    F'0'                 RACF OR INSTALL EXIT REASON CODE
+         DC    AL2(40)              LENGTH OF LIST IN BYTES
+         DC    AL2(0)               RESVD
+         DC    AL2(&RQTYPE)         REQUEST BYTE
+         DC    AL2(0)               RESVD
+         AGO   .CONT03
+.RTE0230 ANOP
+&NAME    IHBINNRA &MF(2)
+.CONT03  ANOP
+.*************************************************************
+.*   USING THE INNER MACRO ICHMM , THE PARAMETERS ARE SET INTO
+.*   THE PARAMETER LIST AT THE CORRECT OFFSETS.
+.*************************************************************
+&ICHCT   SETA  4               INITIALIZE PARAMETER COUNTER
+         ICHMM &REQSTOR
+         ICHMM &SUBSYS
+         ICHMM &WORKA
+         AIF   (NOT &ICHLIST).CONT04
+         DC    A(0)                 RESVD
+         DC    A(0)                 RESVD
+         DC    A(&ICHL-IHB&NX.A)    OFFSET TO RACF PARAMETER LIST
+.CONT04  ANOP
+.***************************************************************
+.*  AT THIS POINT, THE LIST AND EXECUTE FORMS ARE COMPLETED.  IF
+.*  THE LIST PASS OF THE STANDARD FORM HAS JUST BEEN COMPLETED,
+.*  RETURN FOR AN EXECUTE PASS.
+.***************************************************************
+         AIF   ('&ICHMF' NE 'S').CONT05
+         AIF   (NOT &ICHLIST).CONT05
+&ICHLIST SETB  0
+IHB&NX.B DS    0H
+         AGO   .CONT03           DO EXECUTE PATH OF STANDARD FORM
+.CONT05  ANOP
+.*****************************************************
+.*  THE RACF MACRO CORRESPONDING TO THE REQUEST TYPE
+.*  IS INVOKED, PASSING TO IT THE RELEVANT PARAMETERS.
+.*****************************************************
+         AIF   ('&ICHMF' EQ 'L').RTE0400
+.*  SAVE ADDRESSABILITY TO RACROUTE LIST IN REGISTER 14
+         LR    14,1                 SAVE RACROUTE LIST ADDR
+.RTE0400 ANOP
+         AIF   (&RQTYPE NE 1).RTE2
+.RTE1    ANOP
+         RACHECK ACCLVL=&ACCLVL,                                   @L5A*
+               ACEE=&ACEE,                                             *
+               APPL=&APPL,                                             *
+               ATTR=&ATTR,                                             *
+               CLASS=&CLASS,                                           *
+               DSTYPE=&DSTYPE,                                         *
+               ENTITY=&ENTITY,                                         *
+               GENERIC=&GENERIC,                                   @L6A*
+               INSTLN=&INSTLN,                                         *
+               LOG=&LOG,                                               *
+               OLDVOL=&OLDVOL,                                         *
+               OWNER=&OWNER,                                           *
+               PROFILE=&PROFILE,                                       *
+               RACFIND=&RACFIND,                                   @L5A*
+               VOLSER=&VOLSER,                                         *
+               MF=&MF
+         AGO   .RTE0410
+.RTE2    ANOP
+         AIF   (&RQTYPE NE 2).RTE3
+         FRACHECK ACEE=&ACEE,                                          *
+               APPL=&APPL,                                             *
+               ATTR=&ATTR,                                             *
+               CLASS=&CLASS,                                           *
+               ENTITY=&ENTITY,                                         *
+               INSTLN=&INSTLN,                                         *
+               WKAREA=&WKAREA,                                         *
+               MF=&MF
+         AGO   .RTE0410
+.RTE3    ANOP
+         AIF   (&RQTYPE NE 3).RTE4
+         RACLIST ACEE=&ACEE,                                           *
+               APPL=&APPL,                                             *
+               CLASS=&CLASS,                                           *
+               ENVIR=&ENVIR,                                           *
+               INSTLN=&INSTLN,                                         *
+               LIST=&LIST,                                             *
+               OWNER=&OWNER,                                           *
+               SUBPOOL=&SUBPOOL,                                       *
+               MF=&MF
+         AGO   .RTE0410
+.RTE4    ANOP
+         AIF   (&RQTYPE NE 4).RTE5
+         RACDEF ACEE=&ACEE,                                            *
+               AUDIT=&AUDIT,                                           *
+               CHKAUTH=&CHKAUTH,                                   @L5A*
+               CLASS=&CLASS,                                           *
+               DATA=&DATA,                                             *
+               DSTYPE=&DSTYPE,                                         *
+               ENTITY=&ENTITY,                                         *
+               GENERIC=&GENERIC,                                   @L6A*
+               INSTLN=&INSTLN,                                         *
+               LEVEL=&LEVEL,                                           *
+               MENTITY=&MENTITY,                                       *
+               MVOLSER=&MVOLSER,                                       *
+               NEWNAME=&NEWNAME,                                       *
+               OLDVOL=&OLDVOL,                                         *
+               OWNER=&OWNER,                                           *
+               RACFIND=&RACFIND,                                   @L5A*
+               SPECIAL=&SPECIAL,                                       *
+               TYPE=&TYPE,                                             *
+               UACC=&UACC,                                             *
+               UNIT=&UNIT,                                             *
+               VOLSER=&VOLSER,                                         *
+               WARNING=&WARNING,                                   @L6A*
+               MF=&MF
+         AGO   .RTE0410
+.RTE5    ANOP
+         AIF   (&RQTYPE NE 5).RTE6                                 @L6A
+         RACINIT ACEE=&ACEE,                                           *
+               ACTINFO=&ACTINFO,                                       *
+               APPL=&APPL,                                             *
+               ENCRYPT=&ENCRYPT,                                   @L6A*
+               ENVIR=&ENVIR,                                           *
+               GROUP=&GROUP,                                           *
+               INSTLN=&INSTLN,                                         *
+               JOBNAME=&JOBNAME,                                       *
+               NEWPASS=&NEWPASS,                                       *
+               OIDCARD=&OIDCARD,                                       *
+               PASSCHK=&PASSCHK,                                       *
+               PASSWRD=&PASSWRD,                                       *
+               PGMNAME=&PGMNAME,                                       *
+               SMC=&SMC,                                               *
+               START=&START,                                           *
+               STAT=&STAT,                                         @L6A*
+               SUBPOOL=&SUBPOOL,                                       *
+               TERMID=&TERMID,                                         *
+               USERID=&USERID,                                         *
+               MF=&MF
+         AGO   .RTE0410                                            @L6A
+.RTE6    ANOP  ,                                                   @L6A
+         RACXTRT ENTITY=&ENTITY,                                   @L6A*
+               ACEE=&ACEE,                                         @L6A*
+               ENCRYPT=&ENCRYPT,                                   @L6A*
+               FIELDS=&FIELDS,                                     @L6A*
+               SUBPOOL=&SUBPOOL,                                   @L6A*
+               TYPE=&TYPE,                                         @L6A*
+               MF=&MF                                              @L6A
+.RTE0410 ANOP
+         AIF   ('&ICHMF' EQ 'L').EROUTE
+         LR    1,14                 RESTORE ADDRESSABILITY TO PARM LIST
+         L     15,16(0,0)           ADDRESS OF CVT
+         ICM   15,B'1111',248(15)   ADDRESS OF SAF VECTOR TABLE
+         BNZ   IHB&NX.D
+         LA    15,4                 SAF ROUTER NOT AVAILABLE IN SYSTEM
+         B     IHB&NX.E
+IHB&NX.D DS    0H
+         L     15,12(,15)           PICK UP ADDRESS OF SAF ROUTER
+         BALR  14,15                BRANCH TO SAF ROUTER
+IHB&NX.E DS    0H
+         AGO   .EROUTE
+.*****************
+.*  ERROR MESSAGES
+.*****************
+.ERR01   ANOP
+         MNOTE 12,'*** INVALID VALUE FOR MF PARAMETER'
+         AGO   .EROUTE
+.ERR02   ANOP
+         MNOTE 12,'*** REQUEST PARAMETER MISSING'
+         AGO   .EROUTE
+.ERR03   ANOP
+         MNOTE 08,'*** EXTRANEOUS PARAMETERS IGNORED FOR SPECIFIED REQU*
+               EST'
+         AGO   .CONT02
+.ERR04   ANOP
+         MNOTE 12,'*** INVALID VALUE FOR REQUEST PARAMETER'
+         AGO   .EROUTE
+.ERR05   ANOP
+         MNOTE 12,'*** WORKA PARAMETER MISSING'
+.EROUTE  ANOP
+.* RESET GLOBALS
+&ICHRAC  SETB  0
+&ICHL    SETC  ''
+         MEND
+

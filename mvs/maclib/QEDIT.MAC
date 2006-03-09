@@ -1,0 +1,238 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&LABEL   QEDIT &CIBCTR=,&BLOCK=,&ORIGIN=
+         LCLC  &OP,&REG,&SIGN,&OPERA   REGISTER SUBROUTINE PARAMETERS
+.* C 700000                                                    @YM2269P
+.* A 729000-734000                                             @YM8687P
+.* A 468500-471500                                             @YM0403P
+.*
+.*             TAB 1,10,16,36,40,44,72
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.
+.*
+.*             QEDIT               CIB CHAIN MANIPULATOR
+.*
+.*       THE QEDIT MACRO GENERATES BOTH THE REQUIRED ENTRY PARAMETERS
+.*       AND THE LINKAGE TO SVC 34 FOR THE FOLLOWING THREE FUNCTIONS
+.*
+.*       (1)   ADDING A CIB TO THE CHAIN FOR A TASK
+.*       (2)   DECHAINING AND FREEING A CIB
+.*       (3)   SETTING A LIMIT ON THE NUMBER OF CIB'S
+.*             TO BE SIMULTANEOUSLY CHAINED FOR A TASK
+.*
+.*             THE MACRO FORMAT IS
+.*
+.*       SYMBOL   QEDIT   ORIGIN=ADDRESS/(0),
+.*                        BLOCK=ADDRESS/(1),CIBCTR=NUMBER/(1)
+.*             WHERE
+.*       SYMBOL
+.*             IS ANY SYMBOL VALID IN THE ASSEMBLER LANGUAGE
+.*       ADDRESS
+.*             IS ANY ADDRESS VALID IN AN RX INSTRUCTION
+.*             OR ONE OF THE GENERAL REGISTERS 2 THROUGH 12
+.*             PREVIOUSLY LOADED WITH THE INDICATED ADDRESS
+.*             THE REGISTER MUST BE DESIGNATED BY A NUMBER
+.*             OR SYMBOL CODED WITHIN PARENTHESES
+.*       NUMBER
+.*             IS ANY ADDRESS VALID IN AN RX INSTRUCTION
+.*             OR ONE OF THE GENERAL REGISTERS 2 THROUGH 12
+.*             PREVIOUSLY LOADED WITH THE INDICATED ADDRESS
+.*             THE REGISTER MUST BE DESIGNATED BY A NUMBER
+.*             OR SYMBOL CODED WITHIN PARENTHESES
+.*             AND MUST NOT CONTAIN ZERO
+.*
+.*             AND
+.*
+.*       BLOCK
+.*             SPECIFIES THE ADDRESS OF THE CIB
+.*             WHICH IS TO BE OPERATED UPON
+.*       ORIGIN
+.*             SPECIFIES THE ADDRESS OF THE POINTER TO THE FIRST CIB
+.*             THIS PARAMETER IS EITHER THE ADDRESS
+.*             OF THE THIRD WORD OF THE START PARAMETER LIST
+.*             OR THE ADDRESS OF THE SECOND WORD RETURNED BY
+.*                    EXTRACT FIELDS=(COMM)
+.*             OTHERWISE THE OPERATION WILL BE IGNORED
+.*             AND A RETURN CODE OF FOUR RETURNED
+.*       CIBCTR
+.*             SPECIFIES A NONNEGATIVE INTEGER TO BE USED
+.*             AS A LIMIT ON THE NUMBER OF CIB'S
+.*             TO BE CHAINED AT ANY ONE TIME FOR A TASK
+.*
+.*       THE FOLLOWING TABLE INDICATES THE VALID OPERAND COMBINATIONS
+.*       OF THE MACRO ACCORDING TO THE FUNCTION BEING INVOKED
+.*
+.*             FUNCTION            OPERANDS
+.*
+.*             ADD A CIB           ORIGIN BLOCK
+.*             FREE A CIB          ORIGIN BLOCK
+.*             FREE ALL CIB'S      ORIGIN
+.*             SET CIB LIMIT       ORIGIN        CIBCTR
+.*
+.*                                                               A41876
+.*                                                                M0218
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.
+.*
+.*             THE QEDIT MACRO WILL ISSUE SVC 34
+.*
+.*       TO ADD OR FREE AN ELEMENT OF A CIB QUEUE
+.*             WITH (0) = +ORIGIN AND (1) = -BLOCK
+.*
+.*       TO FREE ALL THE ELEMENTS OF A CIB QUEUE
+.*             WITH (0) = +ORIGIN AND (1) = ZERO
+.*
+.*       OR TO SET THE CIB QUEUE LENGTH MAXIMUM IN A CSCB
+.*             WITH (0) = -ORIGIN AND (1) = -CIBCTR
+.*                             NOTE - (1) = ZERO IF CIBCTR = ZERO
+.*
+         AIF   ('&LABEL' EQ '').L
+&LABEL   DS    0H
+.L       ANOP                      CHECK INSTRUCTION SYNTAX
+.*
+.*                                 IS KEYWORD COMBINATION VALID ?
+.*
+         AIF   ((T'&CIBCTR EQ 'O' OR T'&BLOCK EQ 'O')                  +
+               AND T'&ORIGIN NE 'O').Q00
+         MNOTE 8,'ORIGIN MUST BE PRESENT AND CIBCTR OR BLOCK ABSENT'
+         MEXIT
+.Q00     ANOP
+.*
+.*                                     REGISTERS SEQUENTIALLY LOADED
+.*
+         AIF   ('&ORIGIN' NE '(1)').Q10
+         MNOTE 8,'ORIGIN=(1) OR EQUIVALENT MUST NOT BE SPECIFIED'
+         MEXIT
+.Q10     ANOP
+.*
+.*                                     OPERANDS DISTINCTLY NAMED
+.*
+         AIF   ('&CIBCTR' NE '&ORIGIN' AND '&BLOCK' NE '&ORIGIN').Q20
+         MNOTE 8,'OPERAND REFERENTS OBVIOUSLY MUST BE DISTINCT'
+         MEXIT
+.Q20     ANOP
+.*
+.*                                 R1 LOADED FIRST
+.*
+.S       ANOP
+&REG     SETC  '1'
+         AIF   (T'&CIBCTR NE 'O').S10
+         AIF   (T'&BLOCK NE 'O').S20
+.*
+.*                                     ORIGIN ALONE SPECIFIED
+.*
+&OP      SETC  '0'
+&SIGN    SETC  '+'
+         AGO   .X
+.*
+.*                                     CIBCTR AND ORIGIN
+.*
+.S10     ANOP
+         AIF   ('&CIBCTR'(1,1) EQ '(').S11                     @YM0403P
+.*                       BYPASS NUMBER COMPARE FOR REGISTERS   @YM0403P
+         AIF   ('&CIBCTR' LT '256').S11                        @YM0403P
+.*                             CIBCTR VALUE CANNOT EXCEED 255  @YM0403P
+         MNOTE 8,'CIBCTR CAN NOT EXCEED 255'                   @YM0403P
+         MEXIT                                                 @YM0403P
+.S11     ANOP                                                  @YM0403P
+         AIF   ('&CIBCTR' EQ '0').S15
+&OP      SETC  '&CIBCTR'
+         AIF   (K'&CIBCTR LT 3).S12
+&OPERA   SETC  '&CIBCTR'(2,K'&CIBCTR-2)                           M0218
+.S12     ANOP
+&SIGN    SETC  '-'
+         AGO   .X
+.*
+.*                                     CIBCTR EQUALS ZERO
+.*
+.S15     ANOP
+         SR    1,1 -                BAR CIB'S - SET ZERO PARAMETER
+         AGO   .R
+.*
+.*                                     BLOCK AND ORIGIN
+.*
+.S20     ANOP
+&OP      SETC  '&BLOCK'
+         AIF   (K'&BLOCK LT 3).S22
+&OPERA   SETC  '&BLOCK'(2,K'&BLOCK-2)
+.S22     ANOP
+&SIGN    SETC  '-'
+         AGO   .X
+.*
+.*                                 R0 LOADED SECOND
+.*
+.R       ANOP
+&REG     SETC  '0'
+         AIF   (T'&CIBCTR NE 'O').R10
+         AIF   (T'&BLOCK NE 'O').R20
+.*
+.*                                     ORIGIN ALONE SPECIFIED
+.*
+&OP      SETC  '&ORIGIN'
+         AIF   (K'&ORIGIN LT 3).R02
+&OPERA   SETC  '&ORIGIN'(2,K'&ORIGIN-2)
+.R02     ANOP
+&SIGN    SETC  '+'
+         AGO   .X
+.*
+.*                                     CIBCTR AND ORIGIN
+.*
+.R10     ANOP
+&OP      SETC  '&ORIGIN'
+         AIF   (K'&ORIGIN LT 3).R12
+&OPERA   SETC  '&ORIGIN'(2,K'&ORIGIN-2)
+.R12     ANOP
+&SIGN    SETC  '-'
+         AGO   .X
+.*
+.*                                     BLOCK AND ORIGIN
+.*
+.R20     ANOP
+&OP      SETC  '&ORIGIN'
+         AIF   (K'&ORIGIN LT 3).R22
+&OPERA   SETC  '&ORIGIN'(2,K'&ORIGIN-2)
+.R22     ANOP
+&SIGN    SETC  '+'
+         AGO   .X
+.*
+.*                                 LOAD REGISTER SUBROUTINE
+.*
+.X       ANOP
+         AIF   ('&OP'(1,1) EQ '(').X50
+.*
+.*                                     SYMBOLIC OPERAND NOT IN PARENS
+.*
+         LA    &REG,&OP              OBTAIN POSITIVE PARAMETER @YA00842
+         AIF   ('&SIGN' EQ '+').Y
+         LNR   &REG,&REG -          NEGATE OBTAINED PARAMETER
+         AGO   .Y
+.*
+.*
+.X50     ANOP
+         AIF   ('&OP'(3,1) NE')').X55                          @YM8687P
+.*                                     PARENS INDICATED A  REGISTER
+.*                                     REGISTER VALUE > 9      @YM8687P
+         AIF   ('&OP'(2,1) EQ '&REG').X70                      @YM8687P
+.X55     ANOP                                                  @YM8687P
+.*
+.*                                     DIFFERENT REGISTERS USED
+.*
+         AIF   ('&SIGN' EQ '+').X60
+         LNR   &REG,&OPERA -         OBTAIN NEGATIVE PARAMETER
+         AGO   .Y
+.X60     ANOP
+         LR    &REG,&OPERA -        OBTAIN POSITIVE PARAMETER
+         AGO   .Y
+.*
+.*                                     SAME REGISTER USED
+.*
+.X70     ANOP
+         AIF   ('&SIGN' EQ '+').Y
+         LNR   &REG,&REG -          NEGATE GIVEN PARAMETER
+         AGO   .Y
+.*
+.*                                 SVC ISSUED THIRD
+.*
+.Y       ANOP
+         AIF   ('&REG' EQ '1').R
+         SVC   34 -                 INVOKE COMMAND SCHEDULER
+         MEND
+

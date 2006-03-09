@@ -1,0 +1,132 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    DEFAREA   &LB,&P1,&P2,&P3,&P4,&P5,&P6,&P7,&P8,&P9,&P10,&P11,&PX
+               12,&P13,&P14,&P15,&P16,&P17,&P18,&P19,&P20,&P21,&P22,&P2X
+               3,&P24,&P25,&P26,&P27,&P28,&P29,&P30,&P31,&P32,&P33,&P34X
+               ,&P35,&P36,&P37,&P38,&P39,&P40,&P41,&P42,&P43,&P44,&P45,X
+               &P46,&P47,                                              X
+               &P48,&P49,&P50,&P51,&P52,&P53,&P54,&P55,&P56,&P57,      X
+               &P58,&P59,&P60,&P61,&P62,&P63,&P64,&P65,&P66,&P67,&P68,&X
+               P69,&P70,&P71,&P72,&P73,&P74,&P75,&P76,&P77,&P78,&P79,&PX
+               80,&P81,&P82,&P83,&P84,&P85,&P86,&P87,&P88,&P89,&P90,&P9X
+               1,&P92,&P93,&P94,&P95,&P96,&P97,&P98,&P99,&P100,&P101,&PX
+               102,&P103,&P104,&P105,&P106,&P107,&P108,&P109,&P110,&P11X
+               1,&P112,&P113,&P114,&P115,&P116,&P117,&P118,&P119,&P120,X
+               &P121,&P122,&P123,&P124,&P125,&P126,&P127,&P128,&P129,  X
+               &P130,&P131,&P132,&P133,&P134,&P135,&P136,&P137,&P138,  X
+               &P139,&P140,&P141,&P142,&P143,&P144,&P145,&P146,&P147,  X
+               &P148,&P149,&P150,&P151,&P152,&P153,&P154,&P155,        X
+               &P156,&P157,&P158,&P159,&P160,&P161,&P162,&P163,&P164,  X
+               &P165,&P166,&P167,&P168,&P169,&P170,&P171,&P172,&P173,  X
+               &P174,&P175,&P176,&P177,&P178,&P179,&P180,&P181,&P182,  X
+               &P183,&P184,&P185,&P186,&P187,&P188,&P189,&P190,&P191,  X
+               &P192,&P193,&P194,&P195,&P196,&P197,&P198
+.*
+.* MODULE-NAME=DEFAREA(OS/VS2)MACRO                            @YM00638
+.*
+.* DESCRIPTIVE-NAME=DEFINE INPUT AREA                          @YM00638
+.*
+.*
+         GBLA  &CNTS(2000)                                     @YA00407
+         LCLA  &FLDLN
+         LCLA  &A1,&COUNT,&FC,&TMSCT,&NX
+         LCLB  &NOGEN,&FLAG,&CNTR,&RGHT
+.DA000   ANOP
+&NX      SETA  &NX+1
+&CNTS(&NX) SETA 0
+         AIF   (&NX NE 198).DA000
+         AIF   (T'&LB NE 'O' AND K'&LB LE 4).DA001
+         IHBERMAC 209
+&NOGEN   SETB  1
+.DA001   ANOP
+&A1      SETA 1
+         AIF   (T'&NAME EQ 'O').DA002
+&NAME    EQU   *
+.DA002   ANOP
+&A1      SETA  &A1+1
+         AIF   (T'&SYSLIST(&A1) NE 'O').DA003
+         MEXIT
+.DA003   AIF   ('&SYSLIST(&A1)'(K'&SYSLIST(&A1),1) GE '0' AND '&SYSLISTX
+               (&A1)'(K'&SYSLIST(&A1),1) LE '9').DA015
+.DA010   AIF   ('&SYSLIST(&A1)' NE 'FLAG').DA011
+&FLAG    SETB  1
+         AGO   .DA002
+.DA011   AIF   ('&SYSLIST(&A1)' NE 'CNTR').DA012
+&CNTR    SETB  1
+         AGO   .DA002
+.DA012   AIF   ('&SYSLIST(&A1)' NE 'RIGHT').DA013
+&RGHT    SETB  1
+         AGO   .DA002
+.DA013   AIF   ('&SYSLIST(&A1)' NE 'TIMES').DA014
+         IHBERMAC 211
+&NOGEN   SETB  1
+         AGO   .DA002
+.DA014   IHBERMAC 210
+&NOGEN   SETB  1
+         AGO   .DA002
+.DA015   ANOP
+         AIF   (T'&SYSLIST(&A1) NE 'O').DA0155
+         MEXIT
+.DA0155  ANOP
+&COUNT   SETA  K'&SYSLIST(&A1)
+.DA016   AIF   ('&SYSLIST(&A1)'(&COUNT,1) LT '0' OR '&SYSLIST(&A1)'(&COX
+               UNT,1) GT '9').DA017
+&COUNT   SETA  &COUNT-1
+         AIF   (&COUNT EQ 0).DA019
+         AGO   .DA016
+.DA017   AIF   ('&SYSLIST(&A1)' EQ 'FLAG').DA018
+         AIF   ('&SYSLIST(&A1)' EQ 'CNTR').DA018
+         AIF   ('&SYSLIST(&A1)' EQ 'RIGHT').DA018
+         IHBERMAC 210
+&NOGEN   SETB  1
+&A1      SETA  &A1+1
+         AGO   .DA015
+.DA018   IHBERMAC 213
+&A1      SETA  &A1+1
+         AGO   .DA015
+.DA019   ANOP
+&FLDLN   SETA  &SYSLIST(&A1)
+         AIF   (&NOGEN EQ 0).DA020
+&A1      SETA  &A1+1
+         AGO   .DA015
+.DA020   ANOP
+&FC      SETA  &FC+1
+         AIF   (&FLDLN LT 257).DA021
+&CNTS(&FC) SETA &FLDLN
+&LB&FC   DC    &FLDLN.X'00'
+         AGO   .DA022
+.DA021   ANOP
+&LB&FC   DC    XL&FLDLN.'00'
+.DA022   AIF   (&RGHT EQ 0).DA023
+&LB&FC.R EQU   *-1
+.DA023   AIF   (&FLAG EQ 0).DA024
+&LB&FC.F DC    X'00'
+.DA024   AIF   (&CNTR EQ 0).DA025
+&LB&FC.C DC    3X'00'
+.DA025   AIF   (&TMSCT EQ 0).DA026
+&TMSCT   SETA  &TMSCT-1
+         AGO   .DA020
+.DA026   ANOP
+&A1      SETA  &A1+1
+         AIF   (T'&SYSLIST(&A1) NE 'O').DA027
+         MEXIT
+.DA027   ANOP
+         AIF   ('&SYSLIST(&A1)' NE 'TIMES').DA015
+&A1      SETA  &A1+1
+         AIF   ('&SYSLIST(&A1)'(1,1) GT '0' AND '&SYSLIST(&A1)'(1,1) LEX
+               '9').DA028
+         IHBERMAC 212
+&NOGEN   SETB  1
+         AGO   .DA015
+.DA028   ANOP
+&A1      SETA  &A1-3
+         AIF   ('&SYSLIST(&A1)' NE 'TIMES').DA029
+         IHBERMAC 211
+&NOGEN   SETB  1
+&A1      SETA  &A1+3
+         AGO   .DA015
+.DA029   ANOP
+&A1      SETA  &A1+3
+&TMSCT   SETA  &SYSLIST(&A1)-2
+         AGO   .DA020
+         MEND

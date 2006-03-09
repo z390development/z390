@@ -1,0 +1,91 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 10/29/05                                                 *
+.*********************************************************************
+.* MAINTENANCE
+.* 11/09/05 ADD &ID=0 TASK ID AND &WAIT=500 MILLISECONDS WAIT FOR READ 
+.* 11/11/05 FIX INCORRECT LENGHT IN R2                                 
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 01/16/06 RPI177 REQUIRE LENGTH PARM IF REC IS REGISTER FORM
+.*********************************************************************
+.*
+.* CMDPROC PROVIDES INTERFACE TO SUPPORT UP TO 10 CONCURRENT 
+.* WINDOWS PROCESSES:
+.*  START,ID=N STARTS PROCESS
+.*  STOP,ID=N  STOPS  PROCESS
+.*  WRITE,REC,ID=N SENDS NULL OR DOUBLE QUOTE DELIMITED COMMAND
+.*             TO A PROCESS STANDARD INPUT 
+.*  READ,REC,LEN,ID=N,WAIT=S READS NEXT STANDARD OUTPUT LINE FROM 
+.*             PROCESS.  READ WILL WAIT UP TO MILLISECOND LIMIT.
+.*  RETURN CODES:
+.*    0 - OPERATIN SUCCESSFUL (RECORD RETURNED FOR READ)
+.*    4 - NO READ RETURNED IN TIME ALLOWED
+.*    8 - NO READ RECORD RETURNED AND PROCESS ENDED
+.*   12 - PROCESS ERROR OCCURRED - SEE ERROR MESSAGE ON LOG 
+.*********************************************************************
+&N       CMDPROC &OP,&REC,&LEN,&ID=0,&WAIT=500
+         AIF   (N'&SYSLIST LE 3).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
+.NPOK    ANOP
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&OP EQ 'START').START
+         AIF   (&OP EQ 'STOP').STOP
+         AIF   (&OP EQ 'WRITE').WRITE
+         AIF   (&OP EQ 'READ').READ 
+         MNOTE 12,'CMDPROC UNDEFINED OPERATION - &OP'
+         MEXIT
+.START   ANOP
+         LA    0,0  START COMMAND PROCESSOR
+         AGO   .SVC
+.STOP    ANOP
+         LA    0,1  STOP COMMAND PROCESSOR
+         AGO   .SVC
+.WRITE   ANOP
+         LA    0,2  WRITE CMD TO PROCESS
+         AIF   ('&REC'(1,1) EQ '(').WRITE_REC_REG
+         LA    1,&REC EBCDIC NULL TERM OR DQOUTES
+         AGO   .SVC
+.WRITE_REC_REG  ANOP
+         AIF   (&REC(1) EQ '1' OR &REC(1) EQ 'R1').SVC  RPI163
+         LR    1,&REC(1)
+         AGO   .SVC
+.READ    ANOP
+         LA    0,3 READ CMD OUTPUT LINE
+         AIF   ('&REC'(1,1) EQ '(').READ_REC_REG
+         LA    1,&REC
+         AGO   .READ_LEN
+.READ_REC_REG ANOP
+         AIF   (&REC(1) EQ '1' OR &REC(1) EQ 'R1').READ_LEN  RPI163
+         LR    1,&REC(1)
+         AIF   (&LEN NE '').READ_LEN
+         MNOTE 12,'CMDPROC READ MISSING LENGTH FOR REGISTER REC FORM'
+         MEXIT
+.READ_LEN ANOP
+         AIF   (&LEN EQ '').LREC
+         AIF   ('&LEN'(1,1) EQ '(').READ_LEN_REG
+         LA    2,&LEN
+         AGO   .READ_WAIT
+.LREC    ANOP
+         LA    2,L'&REC
+         AGO   .READ_WAIT
+.READ_LEN_REG  ANOP
+         AIF   (&LEN(1) EQ '2' OR &LEN(1) EQ 'R2').READ_WAIT  RPI163
+         LR    2,&LEN(1)
+.READ_WAIT ANOP
+         AIF   ('&WAIT'(1,1) EQ '(').READ_WAIT_REG
+         LA    3,&WAIT
+         AGO   .SVC
+.READ_WAIT_REG  ANOP
+         AIF   (&WAIT(1) EQ '3' OR &WAIT(1) EQ 'R3').SVC  RPI163
+         LR    3,&WAIT(1)
+.SVC     ANOP
+         ICM   0,2,=AL1(&ID)  
+         SVC   34
+         MEXIT
+         MEND

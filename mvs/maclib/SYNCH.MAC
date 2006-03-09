@@ -1,0 +1,209 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*                                                           @ZA24619
+         MACRO                                                 @ZA24619
+&NAME    SYNCH &EP,&RESTORE=,&KEYADDR=,&STATE=,&MF=            @ZA24619
+.**************************************************************@ZA24619
+.* REWRITE OF THE SYNCH MACRO FOR OZ24619 ADDS NEW PARAMETERS  @ZA24619
+.*   RESTORE AND MF PLUS A PARAMETER LIST.                     @ZA24619
+.* ADDITIONAL PARAMETERS ADDED FOR OZ30455 ARE STATE AND KEY   @ZA24619
+.* ALL CODE IS FLAGGED WITH @ZA24619 SINCE ALL CHANGES WERE    @ZA24619
+.*   DONE AT THE SAME TIME.                                    @ZA24619
+.**************************************************************@ZA24619
+.*  DECLARE LOCAL VARIABLES                                    @ZA24619
+.**************************************************************@ZA24619
+         LCLA  &PARM,&PARML                                    @ZA24619
+         LCLB  &B0,&B1,&B2,&B3,&B4,&B5,&B6,&B7                 @ZA24619
+         LCLB  &B8,&B9,&B10,&B11,&B12,&B13,&B14,&B15           @ZA24619
+         LCLC  &PREG                                           @ZA24619
+.**************************************************************@ZA24619
+.* CHECK FOR PARAMETER INCONSISTENCIES                         @ZA24619
+.* IF MF=L THEN EP AND KEYADDR ARE NOT ALLOWED                 @ZA24619
+.* IF MF IS NOT L THEN EP IS REQUIRED                          @ZA24619
+.**************************************************************@ZA24619
+         AIF   ('&MF' NE 'L').SYN0     MF=L CODED ?            @ZA24619
+.*                                     YES,CONTINUE            @ZA24619
+         AIF   ('&EP' NE '').ERR4      CAN NOT HAVE EP         @ZA24619
+         AIF   (T'&KEYADDR NE 'O').ERR3  CAN NOT HAVE KEYADDR  @ZA24619
+         AGO   .SYN2                                           @ZA24619
+.SYN0    AIF   ('&EP' EQ '').ERR5      IF MF^=L MUST HAVE EP   @ZA24619
+.**************************************************************@ZA24619
+.* EXPAND CODE TO PUT ENTRY POINT ADDRESS IN REGISTER 15       @ZA24619
+.**************************************************************@ZA24619
+&NAME    DS    0H                      ALIGNMENT AND NAME      @ZA24619
+         AIF   ('&EP'(1,1) EQ '(').SYN1 REGISTER SPECIFIED?    @ZA24619
+.*                                      NO                     @ZA24619
+         LA    15,&EP                  LOAD ENTRY POINT ADDR.  @ZA24619
+         AGO   .SYN2                                           @ZA24619
+.SYN1    AIF   ('&EP(1)'(1,2) EQ '15').SYN2  EP IN REG 15 ?    @ZA24619
+.*                                      NO,LOAD INTO REG 15    @ZA24619
+         LR    15,&EP(1)               LOAD ENTRY POINT ADDR.  @ZA24619
+.**************************************************************@ZA24619
+.* CHECK PARAMETERS - WHICH SPECIFIED AND HOW                  @ZA24619
+.**************************************************************@ZA24619
+.SYN2    AIF   (T'&RESTORE EQ 'O').SYN4  RESTORE PARM CODED?   @ZA24619
+&PARM    SETA  1                         YES                   @ZA24619
+         AIF   ('&RESTORE' NE 'YES').SYN3                      @ZA24619
+&B0      SETB  1                         TURN ON BIT IN PARMLIS@ZA24619
+         AGO   .SYN4                                           @ZA24619
+.SYN3    AIF   ('&RESTORE' NE 'NO').ERR1 INVALID RESTORE PARM? @ZA24619
+.*                                       RESTORE=NO,CONTINUE   @ZA24619
+.SYN4    AIF   (T'&STATE EQ 'O').SYN6    STATE PARM CODED ?    @ZA24619
+&PARM    SETA  1                         YES                   @ZA24619
+         AIF   ('&STATE' NE 'SUPV').SYN5 STATE=SUPV ?          @ZA24619
+.*                                       YES                   @ZA24619
+&B9      SETB  1                         TURN ON IN PARMLIST   @ZA24619
+         AGO   .SYN6                                           @ZA24619
+.SYN5    AIF   ('&STATE' NE 'PROB').ERR2 INVALID STATE PARM?   @ZA24619
+.*                                       NO,CONTINUE           @ZA24619
+.SYN6    AIF   (T'&KEYADDR EQ 'O').SYN7   KEYADDR PARM CODED?  @ZA24619
+&PARM    SETA  1                         PARM SPECIFIED        @ZA24619
+         AIF   ('&KEYADDR' EQ 'NOKEYADDR').SYN7 KEY OVER RIDE? @ZA24619
+&B8      SETB  1                         NO,TURN ON PARM       @ZA24619
+.**************************************************************@ZA24619
+.*  ANALYZE MF  PARAMETER AND EXPAND CODE ACCORDINGLY          @ZA24619
+.**************************************************************@ZA24619
+.SYN7    AIF   ('&MF' NE 'L').SYN8       MF=L ?                @ZA24619
+.*                                       YES,CONTINUE          @ZA24619
+.**************************************************************@ZA24619
+.* MF=L FORM OF MACRO SPECIFIED, GENERATE LIST ONLY            @ZA24619
+.**************************************************************@ZA24619
+&NAME    DS    0H                      ALIGNMENT AND NAME      @ZA24619
+         DC    B'&B0&B1&B2&B3&B4&B5&B6&B7'                     @ZA24619
+         DC    B'&B8&B9&B10&B11&B12&B13&B14&B15'               @ZA24619
+         DC    X'00'                   KEY BYTE OF PARM. LIST  @ZA24619
+         DC    X'00'                   RESERVED                @ZA24619
+         AGO   .EXIT                                           @ZA24619
+.SYN8    AIF   (T'&MF NE 'O').SYN9     MF CODED ?              @ZA24619
+.**************************************************************@ZA24619
+.* MF NOT SPECIFIED,PUT PARAMETER LIST IN LINE IF NEEDED       @ZA24619
+.**************************************************************@ZA24619
+         AIF   (&PARM EQ 0).SVC        ANY OTHER PARMS CODED?  @ZA24619
+.*                                     YES,EXPAND PARM LIST    @ZA24619
+         CNOP  0,4                     ALIGNMENT FOR OR        @ZA24619
+         B     *+12                    BRANCH AROUND CONSTANTS @ZA24619
+         DC    XL4'00000001'           PARAMETER LIST CONSTANT @ZA24619
+         DC    B'&B0&B1&B2&B3&B4&B5&B6&B7'                     @ZA24619
+         DC    B'&B8&B9&B10&B11&B12&B13&B14&B15'               @ZA24619
+         DC    X'00'                   KEY BYTE OF PARM. LIST  @ZA24619
+         DC    X'00'                   RESERVED                @ZA24619
+         LA    14,*-4                  POINT REG14 TO PARMLIST @ZA24619
+         O     15,*-12                 INDICATE LIST EXISTS    @ZA24619
+         AGO   .SYN16                  GO CHECK KEYADDR        @ZA24619
+.SYN9    AIF   ('&MF(1)' NE 'E').ERR6  MF=E?                   @ZA24619
+.**************************************************************@ZA24619
+.*  MF=E FORM OF MACRO SPECIFIED, GET ADDRESS OF PARM. LIST   *@ZA24619
+.**************************************************************@ZA24619
+         AIF   ('&MF(2)' EQ '').ERR7   PARM ADDR. SPECIFIED ?  @ZA24619
+.*                                     YES,CONTINUE            @ZA24619
+         CNOP  0,4                     ALIGNMENT FOR OR        @ZA24619
+         B     *+8                     BRANCH AROUND CONSTANT  @ZA24619
+         DC    XL4'00000001'           PARAMETER LIST CONSTANT @ZA24619
+.*                                                             @ZA24619
+         AIF   ('&MF(2)'(1,1) NE '(').SYN10  REGISTER SPECIFIED@ZA24619
+&PARML   SETA  K'&MF(2)-2              GET LENGTH OF REGISTER  @ZA24619
+&PREG    SETC  '&MF(2)'(2,&PARML)      GET REGISTER SPECIFIED  @ZA24619
+.*                                                             @ZA24619
+         LA    14,0(&PREG)             POINT REG 14 TO PARMLIST@ZA24619
+         O     15,*-8                  INDICATE LIST EXISTS    @ZA24619
+.*                                                             @ZA24619
+         AGO   .SYN11                  GO CHECK FOR OTHER PARMS@ZA24619
+.SYN10   ANOP                                                  @ZA24619
+.*                                                             @ZA24619
+         LA    14,&MF(2)               POINT REG 14 TO PARMLIST@ZA24619
+         O     15,*-8                  INDICATE LIST EXISTS    @ZA24619
+.*                                                             @ZA24619
+.SYN11   AIF   (&PARM EQ 0).SVC        IF NO OTHER PARMS, ISSUE@ZA24619
+.**************************************************************@ZA24619
+.*  MF=E CHECK FOR OVER RIDING PARAMETERS                      @ZA24619
+.**************************************************************@ZA24619
+         AIF   (T'&RESTORE EQ 'O').SYN13    RESTORE CODED ?    @ZA24619
+         AIF   ('&RESTORE' NE 'YES').SYN12  RESTORE=YES ?      @ZA24619
+.*                                          YES,TURN ON BIT    @ZA24619
+         OI    0(14),B'&B0&B1&B2&B3&B4&B5&B6&B7'  RESTORE=YES  @ZA24619
+.*                                                             @ZA24619
+         AGO   .SYN13                       GO CHECK OTHER PARM@ZA24619
+.SYN12   ANOP                               NO ,TURN OFF BIT   @ZA24619
+.*                                                             @ZA24619
+         NI    0(14),X'FF'-X'80'       RESTORE=NO              @ZA24619
+.*                                                             @ZA24619
+.**************************************************************@ZA24619
+.* CHECK STATE AND KEYADDR FOR COMBINATIONS AND ADJUST BITS    @ZA24619
+.**************************************************************@ZA24619
+.SYN13   AIF   ((T'&STATE EQ 'O') AND (T'&KEYADDR EQ 'O')).SVC @ZA24619
+         AIF   (('&STATE' EQ 'PROB') AND ('&KEYADDR' EQ 'NOKEYADDR')).SX
+               YN13A                                           @ZA24619
+         AIF   ('&STATE' EQ 'PROB').SYN13B                     @ZA24619
+         AIF   ('&KEYADDR' EQ 'NOKEYADDR').SYN13C              @ZA24619
+         AGO   .SYN14                       TURN ON BIT OR BITS@ZA24619
+.SYN13A  ANOP                               NO,TURN OFF BOTH   @ZA24619
+         NI    1(14),X'FF'-X'C0'       TURN OFF BOTH BITS      @ZA24619
+         AGO   .SVC                         GO ISSUE SVC       @ZA24619
+.SYN13B  ANOP                                                  @ZA24619
+         NI    1(14),X'FF'-X'40'       TURN OFF SUPV BIT       @ZA24619
+         AIF   (T'&KEYADDR EQ 'O').SVC      KEYADDR SPECIFIED? @ZA24619
+         AGO   .SYN14                       GO TURN ON KEY BIT @ZA24619
+.SYN13C  ANOP                                                  @ZA24619
+         NI    1(14),X'FF'-X'80'       TURN OFF KEYADDR BIT    @ZA24619
+         AIF   (T'&STATE EQ 'O').SVC        STATE SPECIFIED ?  @ZA24619
+.**************************************************************@ZA24619
+.* TURN ON EITHER OR BOTH BITS IN PARAMETER LIST               @ZA24619
+.**************************************************************@ZA24619
+.SYN14   ANOP                                                  @ZA24619
+.*                                                             @ZA24619
+         OI    1(14),B'&B8&B9&B10&B11&B12&B13&B14&B15'         @ZA24619
+.**************************************************************@ZA24619
+.*  MOVE KEY INTO PARAMETER LIST                               @ZA24619
+.**************************************************************@ZA24619
+.SYN16   AIF   ('&KEYADDR' EQ 'NOKEYADDR').SVC NO KEY? BRANCH  @ZA24619
+         AIF   (T'&KEYADDR EQ 'O').SVC      KEYADDR SPECIFIED? @ZA24619
+.*                                          YES,GET KEY        @ZA24619
+         AIF   ('&KEYADDR'(1,1) EQ '(').SYN17 REGISTER ?       @ZA24619
+.*                                          NO,GENERATE CODE   @ZA24619
+         MVC   2(1,14),&KEYADDR        MOVE KEY TO PARM LIST   @ZA24619
+.*                                          NO,GENERATE CODE   @ZA24619
+         AGO   .SVC                         GO ISSUE SVC       @ZA24619
+.SYN17   ANOP                               REGISTER SPECIFIED @ZA24619
+&PARML   SETA  K'&KEYADDR-2                 GET LENGTH OF REG  @ZA24619
+&PREG    SETC  '&KEYADDR'(2,&PARML)         GET REGISTER       @ZA24619
+.*                                                             @ZA24619
+         MVC   2(1,14),0(&PREG)        MOVE KEY TO PARM LIST   @ZA24619
+         AGO   .SVC                         GO ISSUE SVC       @ZA24619
+.*                                                             @ZA24619
+.**************************************************************@ZA24619
+.*  KEYADDR=NOKEYADDR SPECIFIED - OVER RIDE PARAMETER LIST     @ZA24619
+.**************************************************************@ZA24619
+.SYN18   ANOP                               NOKEYADDR SPECIFIED@ZA24619
+.*                                                             @ZA24619
+         NI    1(14),X'FF'-X'80'       INDICATE NO KEY SUPPLIED@ZA24619
+.*                                                             @ZA24619
+.**************************************************************@ZA24619
+.*  NOW ISSUE SVC AND EXIT FROM MACRO                          @ZA24619
+.**************************************************************@ZA24619
+.SVC     ANOP                                                  @ZA24619
+         SVC   12                      SYNCH SVC               @ZA24619
+.EXIT    MEXIT                                                 @ZA24619
+.**************************************************************@ZA24619
+.*  MNOTES SECTION                                             @ZA24619
+.**************************************************************@ZA24619
+.ERR1    ANOP                                                  @ZA24619
+         MNOTE 12,'RESTORE PARAMETER SPECIFIED NOT YES OR NO'  @ZA24619
+         MEXIT                                                 @ZA24619
+.ERR2    ANOP                                                  @ZA24619
+         MNOTE 12,'STATE PARAMETER SPECIFIED IS NOT SUPV OR PROB'
+         MEXIT                                                 @ZA24619
+.ERR3    ANOP                                                  @ZA24619
+         MNOTE 12,'KEYADDR PARAMETER NOT SUPPORTED IN LIST FORM'
+         MEXIT                                                 @ZA24619
+.ERR4    ANOP                                                  @ZA24619
+         MNOTE 12,'ENTRY POINT PARAMETER NOT VALID IN LIST FORM'
+         MEXIT                                                 @ZA24619
+.ERR5    ANOP                                                  @ZA24619
+         MNOTE 12,'ENTRY POINT REQUIRED IF NOT LIST FORM'      @ZA24619
+         MEXIT                                                 @ZA24619
+.ERR6    ANOP                                                  @ZA24619
+         MNOTE 12,'MF SPECIFIED WAS NEITHER E NOR L'           @ZA24619
+         MEXIT                                                 @ZA24619
+.ERR7    ANOP                                                  @ZA24619
+         MNOTE 12,'MF=E SPECIFIED BUT NO PARAMETER LIST ADDR. SUPPLIED'
+         MEXIT                                                 @ZA24619
+         MEND                                                  @ZA24619

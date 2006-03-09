@@ -1,0 +1,129 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    XLATE &AREA,&LENGTH,&TO=E
+.*
+.*       MACRO DELETIONS/CHANGES FOR VS2 RELEASE 4
+.*0000                                                         @ZA02217
+.*
+.*
+.**********************************************************************
+.*
+.* MODULE NAME = XLATE (VS2-2)
+.*
+.* DESCRIPTIVE NAME = EBCDIC/ASCII TRANSLATE SVC
+.*
+.*
+.* STATUS = CHANGE LEVEL 001
+.*
+.* FUNCTION = THIS MACRO SETS UP THE INTERFACE FOR SVC 103 (IGC0010C).
+.*            IS IS USUALLY USED WITH READING OR WRITING ASCII
+.*            AL OR NL MAGNETIC TAPE.
+.*            IT FIRST LOADS REGISTER 0 WITH THE NUMBER OF BYTES
+.*            TO BE TRANSLATED AND REGISTER 1 WITH THE ADDRESS OF
+.*            THE DATA TO BE TRANSLATED.  BIT 0 OF REGISTER 1 IS SET
+.*            TO INDICATE THE DIRECTION OF TRANSLATION:  BIT 0 = 0
+.*            INDICATES TO TRANSLATE FROM ASCII TO EBCDIC, BIT 0 = 1
+.*            INDICATES TO TRANSLATE FROM EBCDIC TO ASCII.  IT THEN
+.*            ISSUES SVC 103.
+.*
+.* NOTES = SEE BELOW
+.*
+.*      DEPENDENCIES = NONE
+.*
+.*      RESTRICTIONS = REGISTERS USED AS ARGUMENTS MUST BE IN THE
+.*                     FORM (R), WHERE R MAY BE ANY REGISTER 2 - 15.
+.*                     THE HIGH ORDER BYTE IS SUPPOSED TO BE ZERO.
+.*                     WHERE REGISTER 0 OR 1 IS ALLOWED, FOR
+.*                     EFFIENCY IT SHOULD BE WRITTEN AS (0) OR (1)
+.*                     AND NOT (REG0).
+.*
+.*      REGISTER CONVENTIONS = NOT APPLICABLE
+.*
+.* PATCH LABEL = NOT APPLICABLE
+.*
+.* MODULE TYPE = MACRO
+.*
+.*      PROCESSOR = ASSEMBLER LANGUAGE
+.*
+.*      MODULE SIZE = NOT APPLICABLE
+.*
+.*      ATTRIBUTES = NOT APPLICABLE
+.*
+.* ENTRY POINT = NOT APPLICABLE
+.*
+.*      PURPOSE = SEE FUNCTION
+.*
+.*      LINKAGE = LABEL XLATE AREA,LENGTH,TO=
+.*
+.*      INPUT =   OPTIONAL LABEL SPECIFIED AS AN ACCEPTABLE ASSEMBLER
+.*                LABEL.
+.*
+.*                THE AREA ARGUMENT IS THE FIRST POSITIONAL PARAMETER.
+.*                IT MAY BE (1) THE NAME OF A DATA AREA,
+.*                (2) REGISTER 1 OR 2-15 CONTAINING THE ADDRESS
+.*                OF THE DATA AREA TO BE TRANSLATED.
+.*
+.*                THE LENGTH ARGUMENT IS THE SECOND POSITIONAL
+.*                PARAMETER.  IT MAY BE (1) THE BYTE COUNT, OR
+.*                (2) REGISTER 0 OR 2-15 CONTAINING THE BYTE COUNT.
+.*
+.*                TO= IS A KEYWORD PARAMETER WHOSE VALUES ARE TO=A
+.*                (TRANSLATE TO ASCII) AND TO=E (TRANSLATE TO EBCDIC).
+.*
+.*      OUTPUT = INTERFACE TO SVC 103
+.*
+.* EXIT-NORMAL = MEND STATEMENT
+.*
+.* EXIT-ERROR = ERROR MESSAGES:
+.*
+.*      MNOTE 8,EXCESSIVE POSITIONAL PARAMETERS - IGNORED
+.*      MNOTE 8,AREA AND LENGTH OPERANDS ARE EQUAL
+.*      MNOTE 12,IHB004 REQUIRED OPERAND(S) NOT SPECIFIED
+.*      MNOTE 8,INVALID REGISTER SPECIFICATION
+.*
+.* EXTERNAL REFERENCES = NONE
+.*
+.*      ROUTINES = NONE
+.*
+.*      DATA AREAS = NONE
+.*
+.*      CONTROL BLOCKS = NONE
+.*
+.* TABLES = NONE
+.*
+.* MACROS = IHBERMAC
+.*
+.* CHANGE ACTIVITY = SEE DELETIONS/CHANGES PRECEDING THE MACRO PROLOGUE
+.*
+.**********************************************************************
+.*
+         AIF   (N'&SYSLIST EQ 2).TWOARGS                       @ZA02217
+         AIF   (N'&SYSLIST LT 2).ERR1
+         MNOTE 8,'EXCESSIVE POSITIONAL PARAMETERS - IGNORED'   @ZA02217
+.TWOARGS AIF   ('&AREA' EQ '&LENGTH').ERR                      @ZA02217
+         AIF   ('&AREA' EQ '(0)' OR '&LENGTH' EQ '(1)').ERR2
+         AIF   ('&AREA'(1,1) EQ '(').REG1                      @ZA02217
+&NAME    LA    1,&AREA                  ADDRESS OF AREA TO TRANSLATE
+         AGO   .LEN1
+.REG1    AIF   ('&AREA' EQ '(1)').NAME                         @ZA02217
+&NAME    LR    1,&AREA(1)               ADDRESS OF AREA TO TRANSLATE
+         AGO   .LEN1
+.NAME    AIF   ('&NAME' EQ '').LEN1                            @ZA02217
+&NAME    DS    0H
+.LEN1    AIF   ('&LENGTH'(1,1) EQ '(').REG2
+         LA    0,&LENGTH.(,0)           LENGTH TO TRANSLATE
+         AGO   .TO                                             @ZA02217
+.REG2    AIF   ('&LENGTH' EQ '(0)').TO                         @ZA02217
+         LR    0,&LENGTH(1)             LENGTH TO TRANSLATE
+.TO      AIF   ('&TO' EQ 'E').SVC       ALREADY SET ASCII TO EBCDIC
+         LA    15,X'80'                 CONSTRUCT BIT MASK
+         SLL   15,24                    IN HIGH ORDER BYTE
+         OR    1,15                     SET EBCDIC TO ASCII INDICATOR
+.SVC     SVC   103                      ISSUE XLATE SVC
+         MEXIT                                                 @ZA02217
+.ERR     MNOTE 8,'AREA AND LENGTH OPERANDS ARE EQUAL'          @ZA02217
+         MEXIT
+.ERR1    IHBERMAC 24  IHB004 REQUIRED OPERAND(S) NOT SPECIFIED @ZA02217
+         MEXIT
+.ERR2    MNOTE 8,'INVALID REGISTER SPECIFICATION'
+         MEND                                                  @ZA02217

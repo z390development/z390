@@ -1,0 +1,29 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&LABEL   T6EXIT &RETURN=CALLER
+         AIF   (('&RETURN' NE 'CALLER') AND ('&RETURN' NE 'DISPATCH')  C
+               AND ('&RETURN' NE 'SRB')).ERROR
+&LABEL   DS    0H                            INITIALIZE RETURN EPA FOR
+         L     14,16(0,0)                    TYPE 6 SVC ROUTINES. R14
+         L     14,CVTT6SVC-CVT(14,0)         HAS RETURN ADDRESS
+         AIF   ('&RETURN' EQ 'SRB').SRB
+         AIF   ('&RETURN' EQ 'DISPATCH').DISP
+         SLR   2,2                           RETURN=CALLER CODE
+         BR    14                            EXIT TO SVC FLIH--IEAVESVC
+         MEXIT
+.DISP    ANOP
+         LA    2,4                           RETURN=DISPATCHER CODE
+         BR    14                            EXIT TO SVC FLIH--IEAVESVC
+         MEXIT
+.SRB     ANOP
+         LA    2,8                           RETURN=SRB CODE
+         BR    14                            EXIT TO SVC FLIH--IEAVESVC
+*                                            REGISTER 1 IS ASSUMED TO
+*                                            CONTAIN AN SRB ADDRESS.
+         MEXIT
+.ERROR   ANOP
+         LCLC  &OPERAND
+&OPERAND SETC  'RETURN='
+         IHBERMAC 1014,&OPERAND
+         MEND
+

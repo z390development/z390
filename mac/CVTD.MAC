@@ -6,19 +6,24 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.*********************************************************************
          CVTD
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
 .*
 .* EZ390 CVT DSECT - ADDRESS STORED AT LOC X'10' AND X'4C'
 .*
-IHACVT  DSECT
-        ORG    IHACVT+X'08'
-CVTPGM  DS     CL8   390 PROGRAM NAME LOADED AT IPL
-        ORG    IHACVT+X'10'
-CVTFQ24 DS     A     ADDRESS OF FIRST FQE FOR 24 BIT MEMORY
-        ORG    IHACVT+X'14'
-CVTFQ31 DS     A     ADDRESS OF FIRST FQE FOR 31 BIT MEMORY
-        ORG    IHACVT+X'18'
-CVTSAVE DS     18F   SAVE AREA
-        ORG    IHACVT+X'60'
-CVTEXIT DS     XL2   SVC 3 EXIT BRANCH ENTRY USING BR 14
-        MEND
+IHACVT   DSECT
+         ORG    IHACVT+X'08'
+CVTPGM   DS     CL8   390 PROGRAM NAME LOADED AT IPL
+         ORG    IHACVT+X'10'
+CVTFQ24  DS     A     ADDRESS OF FIRST FQE FOR 24 BIT MEMORY
+         ORG    IHACVT+X'14'
+CVTFQ31  DS     A     ADDRESS OF FIRST FQE FOR 31 BIT MEMORY
+         ORG    IHACVT+X'18'
+CVTSAVE  DS     18F   SAVE AREA
+         ORG    IHACVT+X'60'
+CVTEXIT  DS     XL2   SVC 3 EXIT BRANCH ENTRY USING BR 14
+         MEND

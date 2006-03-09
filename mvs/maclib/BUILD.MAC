@@ -1,0 +1,60 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    BUILD &POOL,&NO,&LTH,&DUMMY=
+         LCLB  &NOGO
+         AIF   ('&POOL' EQ '').E1
+.R1      ANOP
+         AIF   ('&NO' EQ '').E2
+.R2      AIF   ('&NO' EQ '(0)').T1
+         AIF   ('&LTH' EQ '').E3
+.R3      AIF   (&NOGO EQ 1).TERM
+&NAME    IHBINNRA &POOL
+         AIF   ('&LTH' EQ '&LTH(1)' AND '&NO' EQ '&NO(1)').CONT
+         AIF   ('&NO' EQ '&NO(1)').NUMB
+         AIF   ('&NO' EQ '(0)').ZERO
+         STH   &NO(1),0(0,1)                     STORE BUFFER NUMBER
+         AGO   .CHKLTH
+.ZERO    ST    &NO(1),0(0,1)                     STORE PARAMETERS
+         AGO   .LINK
+.NUMB    AIF   (T'&NO NE 'N').USEDC
+         AIF   (&NO GT 4095).USEDC
+         LA    14,&NO.(0,0)                      GET BUFFER NUMBER
+         STH   14,0(0,1)                         STORE INTO LIST
+         AGO   .CHKLTH
+.USEDC   B     *+6                               BRANCH AROUND VALUE
+         DC    AL2(&NO)                          NUMBER OF BUFFERS
+         MVC   0(2,1),*-2                        STORE INTO LIST
+.CHKLTH  AIF   ('&NO' EQ '(0)').LINK
+         AIF   ('&LTH' EQ '').E3
+         AIF   ('&LTH' EQ '&LTH(1)').NUMBL
+         STH   &LTH(1),2(0,1)                    STORE BUFFER LENGTH
+         AGO   .LINK
+.NUMBL   AIF   (T'&LTH NE 'N').USEDCL
+         AIF   (&LTH GT 4095).USEDCL
+         LA    14,&LTH.(0,0)                     GET BUFFER LENGTH
+         STH   14,2(0,1)                         STORE IN LIST
+         AGO   .LINK
+.USEDCL  B     *+6                               BRANCH AROUND VALUE
+         DC    AL2(&LTH)                         LENGTH OF BUFFERS
+         MVC   2(2,1),*-2                        STORE INTO LIST
+         AGO   .LINK
+.CONT    AIF   ('&LTH' EQ '').E3
+         B     *+8                               BRANCH AROUND VALUES
+         DC    AL2(&NO)                          NUMBER OF BUFFERS
+         DC    AL2(&LTH)                         LENGTH OF BUFFERS
+         MVC   0(4,1),*-4                        MOVE INTO LIST
+.LINK    LINK  EP=IECBBFB1
+         MEXIT
+.E1      IHBERMAC 02
+&NOGO    SETB  1
+         AGO   .R1
+.T1      AIF   ('&LTH' NE '').E4
+         AGO   .R3
+.E2      IHBERMAC 03
+&NOGO    SETB  1
+         AGO   .R2
+.E4      IHBERMAC 38,,&LTH
+         MEXIT
+.E3      IHBERMAC 04
+.TERM    ANOP
+         MEND

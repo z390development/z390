@@ -1,7 +1,5 @@
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -9,7 +7,6 @@ import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Random;
 
 import javax.swing.JTextArea;
 
@@ -45,10 +42,26 @@ public  class  lz390 {
     * 06/22/05 add AMODE and RMODE options
     * 08/17/05 add EXT AND ent SUPPORT
     * 08/22/05 add SYSOBJ, SYSLST, and SYS390 dir options
+    * 10/04/05 RPI5 - option ASCII use ASCII vs EBCDIC
+    * 10/04/05 RPI6 - option ERR(nn) limit errors
+    * 10/17/05 RPI25 - change TRACE to TRACEL option
+    * 10/18/05 RPI29 - use LZ390E and LZ390E prefixes
+    * 10/19/05 RPI32 - add SYSOBJ dir list support
+    * 11/28/05 RPI113 file path with drive: and no separator
+    * 12/07/05 RPI123 fix support for mult. paths
+    * 12/15/05 RPI135 use tz390 shared tables (keys)
+    * 12/23/05 RPI127 remove user mlc type from file name
+    *          and use shared set_pgm_dir_name_type
+    * 12/23/05 RPI131 limit file output to maxfile(mb)
+    * 01/21/06 RPI182 add support for WXTRN (see TESTWXT1)
+    * 01/25/06 RPI128 read binary or hex obj file
+    * 01/26/06 RPI191 correct setting of RMODE/AMODE
+    * 01/26/06 RPI 172 move options to tz390
+    * 02/21/06 RPI 208 use tz390.z390_abort to term
     ********************************************************
     * Global variables
     *****************************************************/
-    String version = null;
+    tz390 tz390 = null;
     int lz390_rc = 0;
     int lz390_errors = 0;
     Date cur_date = new Date();
@@ -57,73 +70,37 @@ public  class  lz390 {
     long tot_sec = 0;
     int tot_obj_bytes = 0;
     int tot_find_gbl_esd = 0;
-    String pgm_name = null;
     static boolean load_esds_only = true;
     String obj_file_name = null;
-    File obj_file = null;
-    BufferedReader obj_file_buff = null;
+    boolean obj_file_bin = false;
+    byte    obj_bin_id   = 0x02;
+    RandomAccessFile obj_file = null;
     boolean obj_eod = false;
     RandomAccessFile z390_file = null;
     File lst_file = null;
     BufferedWriter lst_file_buff = null;
     String obj_line = null;
     boolean obj_eof = false;
-    String  opt_parms = " ";
-    boolean opt_ok = false;
-    boolean opt_amode24  = false;
-    boolean opt_amode31  = true;
-    boolean opt_con      = true;
-    boolean opt_list     = true;
-    boolean opt_rmode24  = true;
-    boolean opt_rmode31  = false;
-    boolean opt_stats    = true;
-    boolean opt_timing   = true;
-    boolean opt_time     = true;
-    boolean opt_trace    = false;
-    boolean opt_traceall = false;
-    boolean opt_trap     = true;
     SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
     SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
     boolean log_tod = true; 
     JTextArea z390_log_text = null;
-    boolean lz390_aborted = false;
     /*
      * static limits
      */
-    static int max_errors = 100;
     static int max_gbl_esd = 10000;
     static int max_obj_files = 1000;
     static int max_obj_esd = 1000;
     static int max_rld = 100000;
-    long max_time_seconds = 15;     // max elapsed time
-    /*
-     * key search table data
-     */
-    static int max_key_root = 1023;
-    int max_key_tab = max_key_root + max_gbl_esd;
-    int tot_key_tab = max_key_root+1;
-    int tot_key = 0;
-    String key_text = null;
-    int key_index = 0;
-    int key_index_last = 0;
-    Random key_rand = new Random();
-    int key_hash = 0;
-    int tot_key_search = 0;
-    int tot_key_comp  = 0;
-    int avg_key_comp  = 0;
-    int cur_key_comp = 0;
-    int max_key_comp = 0;
-    String[]  key_tab_key   = new String[max_key_tab];
-    int[]     key_tab_hash  = (int[])Array.newInstance(int.class,max_key_tab);
-    int[]     key_tab_index = (int[])Array.newInstance(int.class,max_key_tab);
-    int[]     key_tab_low   = (int[])Array.newInstance(int.class,max_key_tab);
-    int[]     key_tab_high  = (int[])Array.newInstance(int.class,max_key_tab);
     /*
      * global ESD tables
      */
     long    tod_time_limit = 0;
     int     next_time_ins   = 0x1000;
     int     next_time_check = next_time_ins;
+    int tot_csect   = 0;
+    int tot_entry   = 0;
+    int tot_missing_wxtrn = 0;
     int tot_gbl_esd = 0;
     int cur_gbl_esd = 0;
     int cur_gbl_ext = 0;
@@ -132,6 +109,7 @@ public  class  lz390 {
     byte[]    gbl_esd_type = (byte[])Array.newInstance(byte.class,max_gbl_esd);
     static byte gbl_esd_ext = 0; // undefined ext
     static byte gbl_esd_ent = 1; // found cst/ent
+    static byte gbl_esd_wxt = 2; // undefined wxt
     int loc_ctr = 0;
     /*
      * object files loaded
@@ -139,6 +117,11 @@ public  class  lz390 {
     int tot_obj_files = 0;
     int cur_obj_file = 0;
     String[]  obj_file_names = new String[max_obj_files];
+    /*
+     * binary object file data
+     */
+    byte[] bin_byte = new byte[80];
+    ByteBuffer bin_byte_buff = ByteBuffer.wrap(bin_byte,0,80);
     /*
      * current obj esd table
      */
@@ -166,15 +149,13 @@ public  class  lz390 {
     *   2 - RMODE31 T/F - default F
     *   3 - RESERVED
     *   4 - RESERVED
-    * offset  4 - full word length of code
-    * offset  8 - full word entry offset
-    * offset 12 - full word count of rlds
+    * offset  8 - full word length of code
+    * offset 12 - full word entry offset
+    * offset 16 - full word count of rlds
 
     */ 
     String z390_code_ver = "1002";
     String z390_flags = null;
-    char   z390_amode31 = 'T';
-    char   z390_rmode31 = 'F';
     /*
      * binary load module image in byte buffer
      */
@@ -193,13 +174,6 @@ public  class  lz390 {
     int tot_rld = 0;
     int[]     rld_loc = (int[])Array.newInstance(int.class,max_rld);
     byte[]    rld_len = (byte[])Array.newInstance(byte.class,max_rld);
-  /*
-   * current directory global variables
-   */   
-    String dir_cur = null;
-    String dir_obj = null;
-    String dir_lst = null;
-    String dir_390 = null;
   /*
    * end of global lz390class data and start of procs
    */
@@ -223,7 +197,7 @@ public int process_lz390(String[] args,JTextArea log_text){
     *  of the z390 log window.
     */
 	    init_lz390(args,log_text);
-    	if (opt_trap){
+    	if (tz390.opt_trap){
      	   try {
                resolve_esds();
                load_obj_code();
@@ -248,69 +222,16 @@ private void init_lz390(String[] args, JTextArea log_text){
 	 * 2.  set options
 	 * 3.  compile regular expression parsers
 	 * 4.  open bal and obj buffered I/O files
-	 * 5.  Init ascii/ebcdic translation table
 	 */
 	    if  (log_text != null){
 	    	z390_log_text = log_text;
 	    }
-        version = "V1.0.00 09/30/05";  //dsh
-        process_args(args);
-        set_options();
+	    tz390 = new tz390();
+	    tz390.init_tables();
+        tz390.init_options(args,".OBJ");
 		open_files();
         put_copyright();
-        tod_time_limit = max_time_seconds * 1000 + tod_start;
-}
-private void process_args(String[] args){
-	/*
-	 * process bal bal macs options
-	 *  1.  Set dir_cur and dir_obj from
-	 *      file name path if specified
-	 */
-    if  (args.length >= 1){
-        set_dir_and_pgm_name(args[0]);
-        if (args.length > 1){
-           opt_parms = args[1];
-           int index1 = 2;
-           while (index1 < args.length){
-              	opt_parms = opt_parms.concat(" " + args[index1]);
-           	 	index1++;
-           }
-        }
-    } else {
-	    abort_error(1,"missing OBJ file");
-    }
-}
-private void set_dir_and_pgm_name(String file_name){
-	/*
-	 * set program name and default directory
-	 * for all files from first parm.
-	 * Notes:
-	 *   1.  Use current directory if not path
-	 *       specified with program name.
-	 *   2.  Options SYSOBJ, SYS390, and SYSLST
-	 *       can override default directories.
-	 */
-	if (file_name.charAt(0) == '\"'   // strip lsn quotes
-		|| file_name.charAt(0) == '\''){
-		file_name = file_name.substring(1,file_name.length() - 1);
-	}
-    int index = file_name.lastIndexOf(File.separator);
-    if (index != -1){  // get dir path if any
-    	dir_cur = file_name.substring(0,index+1).toUpperCase();
-    	file_name = file_name.substring(index + 1).toUpperCase();
-    } else {
-	  	dir_cur = System.getProperty("user.dir").toUpperCase() + File.separator;
-	  	file_name = file_name.toUpperCase();
-    }
-	dir_obj = dir_cur;
-	dir_lst = dir_cur;
-	dir_390 = dir_cur;
-    index = file_name.lastIndexOf("\\.");
-    if (index != -1){  // strip extension if any
-    	pgm_name = file_name.substring(0,index);
-    } else {
-    	pgm_name = file_name;
-    }
+        tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
 }
 private void exit_lz390(){
 	/*
@@ -322,7 +243,7 @@ private void exit_lz390(){
       }
   	  put_stats();
       close_files();
-	  if    (lz390_aborted){
+	  if    (tz390.z390_abort){
 	    	System.exit(lz390_rc);
 	  }
 }
@@ -330,37 +251,40 @@ private void put_stats(){
 	/*
 	 * display statistics as comments at end of bal
 	 */
-	if (opt_stats){
+	if (tz390.opt_stats){
 	   put_log("Stats total obj files = " + tot_obj_files);
 	   put_log("Stats total esds      = " + tot_gbl_esd);
-	   put_log("Stats Keys            = " + tot_key);
-	   put_log("Stats Key searches    = " + tot_key_search);
-	   if (tot_key_search > 0){
-	       avg_key_comp = tot_key_comp/tot_key_search;
+	   put_log("Stats total csects    = " + tot_csect);
+	   put_log("Stats total entries   = " + tot_entry);
+	   put_log("Stats missing wxtrn's = " + tot_missing_wxtrn);
+	   put_log("Stats Keys            = " + tz390.tot_key);
+	   put_log("Stats Key searches    = " + tz390.tot_key_search);
+	   if (tz390.tot_key_search > 0){
+	       tz390.avg_key_comp = tz390.tot_key_comp/tz390.tot_key_search;
 	   }
-	   put_log("Stats Key avg comps   = " + avg_key_comp);
-	   put_log("Stats Key max comps   = " + max_key_comp);
+	   put_log("Stats Key avg comps   = " + tz390.avg_key_comp);
+	   put_log("Stats Key max comps   = " + tz390.max_key_comp);
 	   put_log("Stats total obj bytes = " + tot_obj_bytes);
 	   put_log("Stats total obj rlds  = " + tot_rld);
-	   if (opt_timing){
+	   if (tz390.opt_timing){
 	      cur_date = new Date();
 	      tod_end = cur_date.getTime();
 	      tot_sec = (tod_end - tod_start)/1000;
 	      put_log("Stats total seconds         = " + tot_sec);
 	   }
 	}
-	put_log("LZ390 total errors          = " + lz390_errors);
-	put_log("LZ390 return code           = " + lz390_rc);
+	put_log("LZ390I total errors          = " + lz390_errors);
+	put_log("LZ390I return code           = " + lz390_rc);
 }
 private void close_files(){
-	  if (obj_file != null && obj_file.isFile()){
+	  if (obj_file != null){
 	  	  try {
-	  	  	  obj_file_buff.close();
+	  	  	  obj_file.close();
 	  	  } catch (IOException e){
 	  	  	  abort_error(3,"I/O error on obj close - " + e.toString());
 	  	  }
 	  }
-	  if  (opt_list){
+	  if  (tz390.opt_list){
 		  if (lst_file != null && lst_file.isFile()){
 		  	  try {
 		  	  	  lst_file_buff.close();
@@ -376,9 +300,9 @@ private void log_error(int error,String msg){
 	 * inc error total
 	 * 1.  supress if not gen_obj and not trace
 	 */
-      put_log("lz390 error " + error + " " + msg);
+      put_log("LZ390E error " + error + " " + msg);
 	  lz390_errors++;
-	  if (lz390_errors > max_errors){
+	  if (tz390.max_errors != 0 && lz390_errors > tz390.max_errors){
 	  	 abort_error(5,"max errors exceeded");	 
 	  }
 }
@@ -388,11 +312,12 @@ private void abort_error(int error,String msg){
 	 * inc error total
 	 */
 	  lz390_errors++;
-	  if (lz390_aborted){
+	  if (tz390.z390_abort){
+		 System.out.println("lz390 aborting due to recursive abort for " + msg);
 	  	 System.exit(16);
 	  }
-	  lz390_aborted = true;
-	  put_log("lz390 error " + error + " " + msg);
+	  tz390.z390_abort = true;
+	  put_log("LZ390E error " + error + " " + msg);
       exit_lz390();
 }
 private void put_copyright(){
@@ -400,20 +325,20 @@ private void put_copyright(){
 	    * display lz390 version, timestamp,
 	    * and copyright if running standalone
 	    */
-	   	if  (opt_timing){
+	   	if  (tz390.opt_timing){
 			cur_date = new Date();
-	   	    put_log("lz390 " + version 
+	   	    put_log("LZ390I " + tz390.version 
 	   			+ " Current Date " +mmddyy.format(cur_date)
-	   			+ " Time " + mmddyy.format(cur_date));
+	   			+ " Time " + hhmmss.format(cur_date));
 	   	} else {
-	   	    put_log("lz390 " + version);
+	   	    put_log("LZ390I " + tz390.version);
 	   	}
 	   	if  (z390_log_text == null){
 	   	    put_log("Copyright 2005 Automated Software Tools Corporation");
 	   	    put_log("z390 is licensed under GNU General Public License");
 	   	}
-	   	put_log("LZ390 program = " + dir_obj + pgm_name + ".OBJ");
-	   	put_log("LZ390 options = " + opt_parms);
+	   	put_log("LZ390I program = " + tz390.dir_obj + tz390.pgm_name + tz390.pgm_type);
+	   	put_log("LZ390I options = " + tz390.cmd_parms);
 	   }
 	   private synchronized void put_log(String msg) {
 	   	/*
@@ -421,23 +346,26 @@ private void put_copyright(){
 	   	 * if running standalone
 	   	 * 
 	   	 */
-   	    	put_prn_line(msg);
+   	    	put_lst_line(msg);
 	        if  (z390_log_text != null){
   	        	z390_log_text.append(msg + "\n");
    	        }
-	        if (opt_con){
+	        if (tz390.opt_con || tz390.z390_abort){
    	    	    System.out.println(msg);
    	        }
 	   }
-	   private void put_prn_line(String msg){
+	   private void put_lst_line(String msg){
 	   /*
 	    * put line to listing file
 	    */
-	   	   if (opt_list || opt_trace){
+	   	   if (tz390.opt_list || tz390.opt_tracel){
 	   	      try {
 	   	          lst_file_buff.write(msg + "\r\n");
+	   	          if (lst_file.length() > tz390.max_file){
+	   	        	  abort_error(34,"maximum lst file size exceeded");
+	   	          }
 	   	      } catch (Exception e){
-	   	          abort_error(6,"I/O error on LST listing file write");
+	   	          lz390_errors++;
 	   	      }
 	   	   }
 	   }
@@ -445,8 +373,8 @@ private void open_files(){
 	/*
 	 * open 390 and lst files
 	 */
-       	if (opt_list){
-            lst_file = new File(dir_lst + pgm_name + ".LST");
+       	if (tz390.opt_list){
+            lst_file = new File(tz390.dir_lst + tz390.pgm_name + ".LST");
          	try {
        	       lst_file_buff = new BufferedWriter(new FileWriter(lst_file));
        	    } catch (IOException e){
@@ -454,72 +382,6 @@ private void open_files(){
        	    }
        	}
 }
-private void set_options(){
-	/*
-	 * parse and set options
-	 */
-        String[] tokens = opt_parms.toUpperCase().split("\\s+");
-        int index1 = 0;
-        while (index1 < tokens.length){
-            if (tokens[index1].equals("CON")){
-            	opt_con = true;
-            } else if (tokens[index1].equals("AMODE24")){
-        		opt_amode24 = true;
-        		opt_amode31 = false;
-        		z390_amode31 = 'F';
-        	}
-           	if (tokens[index1].equals("AMODE31")){
-        		opt_amode24 = false;
-        		opt_amode31 = true;
-        		z390_amode31 = 'T';
-        	}
-        	if (tokens[index1].equals("NOCON")){
-        		opt_con = false;
-        	}
-            if (tokens[index1].equals("NOLIST")){
-            	opt_list = false;
-            } else if (tokens[index1].equals("NOSTATS")){
-            	opt_stats = false;
-            } else if (tokens[index1].equals("NOTIME")){
-            	opt_time = false;
-            } else if (tokens[index1].equals("NOTIMING")){
-            	opt_timing = false;
-            } else if (tokens[index1].length() > 7 
-            		&& tokens[index1].substring(0,7).equals("SYS390(")){
-            	dir_390 = tokens[index1].substring(7,tokens[index1].length()-1) + File.separator;
-            } else if (tokens[index1].length() > 7 
-            		&& tokens[index1].substring(0,7).equals("SYSLST(")){
-            	dir_lst = tokens[index1].substring(7,tokens[index1].length()-1) + File.separator;
-            } else if (tokens[index1].length() > 7 
-            		&& tokens[index1].substring(0,7).equals("SYSOBJ(")){
-            	dir_obj = tokens[index1].substring(7,tokens[index1].length()-1) + File.separator;
-            } else if (tokens[index1].equals("NOTRAP")){
-            	opt_trap = false;
-            } else if (tokens[index1].length() > 5
-            		&& tokens[index1].substring(0,5).equals("TIME(")){
-            	max_time_seconds = Long.valueOf(tokens[index1].substring(5,tokens[index1].length()-1)).longValue();
-            	if (tokens[index1].equals("RMODE24")){
-            		opt_rmode24 = true;
-            		opt_rmode31 = false;
-            		z390_rmode31 = 'F';
-            	}
-               	if (tokens[index1].equals("RMODE31")){
-            		opt_rmode24 = false;
-            		opt_rmode31 = true;
-            		z390_rmode31 = 'T';
-            	}
-            } else if (tokens[index1].equals("TRACE")){
-            	opt_trace = true;
-            } else if (tokens[index1].equals("TRACEALL")){
-            	opt_traceall = true;
-            	opt_trace = true;
-            }
-            index1++;
-        }
-        if (dir_obj.equals(".")){
-        	dir_obj = dir_cur;
-        }
-   }
 private void resolve_esds(){
 	/*
 	 * 1. load primary obj with any include
@@ -530,8 +392,8 @@ private void resolve_esds(){
 	 * 3. search and load obj files for extrns
 	 *    until all found or no more can be resolved 
 	 */
-	obj_file_name = dir_obj + pgm_name + ".OBJ"; // set primary
-	if (load_obj_file(load_esds_only)){
+	obj_file_name = tz390.find_file_name(tz390.dir_obj,tz390.pgm_name,tz390.pgm_type,tz390.dir_cur); 
+	if (obj_file_name != null && load_obj_file(load_esds_only)){
 	   add_gbl_esds();
        while (find_ext_file()){ 
     	  if (load_obj_file(load_esds_only)){
@@ -542,6 +404,8 @@ private void resolve_esds(){
        while (cur_gbl_ext <= tot_gbl_esd){
     	   if (gbl_esd_type[cur_gbl_ext] == gbl_esd_ext){
     	      log_error(27,"unresolved external reference - " + gbl_esd_name[cur_gbl_ext]);
+    	   } else if (gbl_esd_type[cur_gbl_ext] == gbl_esd_wxt){
+    		   tot_missing_wxtrn++;
     	   }
     	   cur_gbl_ext++;
        }
@@ -553,25 +417,19 @@ private boolean load_obj_file(boolean esds_only){
 	 * using obj_file_name and
 	 * return true if successful
 	 */
-    obj_file = new File(obj_file_name);
-	    try {
-	        obj_file_buff = new BufferedReader(new FileReader(obj_file));
-	    } catch (IOException e){
-		    abort_error(11,"I/O error on obj open - " + e.toString());
-	        return false;
-	    }
-    if (opt_trace){
+    open_obj_file(obj_file_name);
+    if (tz390.opt_tracel){
   	  	 put_log("TRACE LOADING OBJ FILE - " + obj_file_name);
     }
     tot_obj_esd = 0;
     obj_eod = false;
-	get_obj_esd_line();
+	get_obj_line();
 	if (esds_only && !obj_line.substring(0,4).equals(".ESD")){
 		obj_eod = true;
 	}
 	while (!obj_eod
 			&& tot_obj_esd < max_obj_esd){
-		if (opt_trace){
+		if (tz390.opt_tracel){
 			put_log("  LOADING " + obj_line);
 		}
 		if (obj_line.substring(0,4).equals(".END")){
@@ -585,7 +443,8 @@ private boolean load_obj_file(boolean esds_only){
 			obj_esd_type[tot_obj_esd] = obj_line.substring(45,48);
 			if (!esds_only
 				&& (obj_esd_type[tot_obj_esd].equals("CST")
-				 || obj_esd_type[tot_obj_esd].equals("EXT"))){
+				    || obj_esd_type[tot_obj_esd].equals("EXT")		
+				    || obj_esd_type[tot_obj_esd].equals("WXT"))){ //RPI182
 				if (find_gbl_esd(obj_esd_name[tot_obj_esd])){
 					obj_gbl_esd[obj_esd[tot_obj_esd]] = cur_gbl_esd;
 				}
@@ -622,7 +481,7 @@ private boolean load_obj_file(boolean esds_only){
 				} else {
 					rld_len[tot_rld] = (byte)- obj_rld_len;
 				}
-				if (gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]] > 0){
+				if (gbl_esd_type[obj_gbl_esd[obj_rld_xesd]] == gbl_esd_ent){ //RPI182
 					switch (obj_rld_len){
 					    case 3:
 					    	rld_off = gbl_esd_loc[obj_gbl_esd[obj_rld_esd]] + obj_rld_loc;
@@ -648,22 +507,22 @@ private boolean load_obj_file(boolean esds_only){
 					    	z390_code_buff.putInt(rld_off,rld_fld);
 					    	break;
 					}
+					tot_rld++;
 				}
-				tot_rld++;
 			} else {
 				abort_error(21,"z390 rld table exceeded");
 			}
 		} else {
 			abort_error(20,"unknown obj record type - " + obj_line);
 		}
-        get_obj_esd_line();
+        get_obj_line();
 		if ((esds_only && !obj_line.substring(0,4).equals(".ESD"))
 			|| obj_line.substring(0,4).equals(".END")){
 			obj_eod = true;
 		}
 	}
 	try {
-	    obj_file_buff.close();
+	    obj_file.close();
 	    if (tot_obj_files < max_obj_files){
 	    	if (esds_only){
 	    	   obj_file_names[tot_obj_files] = obj_file_name;
@@ -678,16 +537,113 @@ private boolean load_obj_file(boolean esds_only){
 		return false;
 	}
 }
-private void get_obj_esd_line(){
+private void get_obj_line(){
 	/*
 	 * get next esd line from obj file else 
 	 * set obj_eod
 	 */
 	try {
-		obj_line = obj_file_buff.readLine();
+		if (obj_file_bin){
+			if (obj_file.read(bin_byte,0,80) == 80){
+				obj_line = cvt_obj_bin_to_hex();
+			} else {
+			    obj_line = null;
+			}
+		} else {
+			obj_line = obj_file.readLine();
+		}
 	} catch (IOException e){
 		abort_error(14,"I/O error on obj read - " + e.toString());
 	}
+}
+private String cvt_obj_bin_to_hex(){
+	/*
+	 * convert binary obj file record in obj_bin
+	 * to ascii string text format
+	 */
+	String text     = "." + (char)tz390.ebcdic_to_ascii[bin_byte[1] & 0xff]
+	                      + (char)tz390.ebcdic_to_ascii[bin_byte[2] & 0xff] 
+	                      + (char)tz390.ebcdic_to_ascii[bin_byte[3] & 0xff]
+	                      ; // ascii hex obj record
+	String esd_id   = tz390.get_hex(bin_byte_buff.getShort(14),4);  // ESD ID number
+	String esd_loc  = "";  // ESD address
+	String esd_len  = "";  // ESD length
+    int index = 0;
+	if (text.equals(".ESD")){
+		String esd_name = "";  // ESD name
+		String esd_type = "";  // ESD type = CST,ENT,EXT,WXT
+		int esd_align = 0; // currently ignored
+		index = 16;
+		while (index < 24){
+			esd_name = esd_name + (char) tz390.ebcdic_to_ascii[bin_byte[index] & 0xff];
+			index++;
+		}
+		switch (bin_byte[24]){
+		case 0x00: // SD type
+			esd_type = "CST";
+			bin_byte[24] = 0;
+			esd_loc = tz390.get_hex(bin_byte_buff.getInt(24),8);
+			esd_align = bin_byte[28];
+			if (esd_align != 7){
+				abort_error(138,"unsupported SD alignment code - " + esd_align);
+			}
+			bin_byte[28] = 0;
+			esd_len = tz390.get_hex(bin_byte_buff.getInt(28),8);
+			break;
+		case 0x01: // LD type
+			esd_type = "ENT";
+			bin_byte[24] = 0;
+			esd_loc = tz390.get_hex(bin_byte_buff.getInt(24),8);
+			esd_align = bin_byte[28];
+			esd_len = tz390.get_hex(0,8);
+			esd_id = tz390.get_hex(bin_byte_buff.getShort(30),4);
+			break;
+		case 0x02: // ER type
+			esd_type = "EXT";
+			esd_loc = tz390.get_hex(0,8);
+			esd_align = bin_byte[28];
+			esd_len = tz390.get_hex(0,8);
+			break;
+		case 0x0a: // WR type
+			esd_type = "WXT";
+			esd_loc = tz390.get_hex(0,8);
+			esd_align = bin_byte[28];
+			esd_len = tz390.get_hex(0,8);
+			break;
+		default:
+			abort_error(37,"invalid ESD type");
+		}
+		text = text + " ESD=" + esd_id + " LOC=" + esd_loc + " LEN=" + esd_len + " TYPE=" + esd_type + " NAME=" + esd_name.trim();
+	} else if (text.equals(".TXT")){
+		bin_byte[4] = 0;
+		esd_loc = tz390.get_hex(bin_byte_buff.getInt(4),8);
+		bin_byte[10] = 0;
+		int count = bin_byte_buff.getShort(10);
+		esd_len = tz390.get_hex(count,2);
+		text = text + " ESD=" + esd_id + " LOC=" + esd_loc + " LEN=" + esd_len + " ";
+		index = 16;
+		while (count > 0){
+			text = text + tz390.get_hex(bin_byte[index] & 0xff,2);
+			index++;
+		    count--;
+		}
+	} else if (text.equals(".RLD")){
+		String xesd_id  = tz390.get_hex(bin_byte_buff.getShort(16),4);;  // XESD ID number ref or RLD
+		esd_id   = tz390.get_hex(bin_byte_buff.getShort(18),4);          // ESD ID number SD with RLD
+		String esd_rld_len = tz390.get_hex((bin_byte[20] >> 2)+1,1);
+    	String esd_rld_sign = "+";
+    	if ((bin_byte[20] & 0x02) != 0){
+	    	esd_rld_sign = "-";
+	    }
+    	bin_byte[20] = 0;
+		esd_loc = tz390.get_hex(bin_byte_buff.getInt(20),8);
+    	text = text + " ESD=" + esd_id + " LOC=" + esd_loc + " LEN=" + esd_rld_len + " SIGN=" + esd_rld_sign + " XESD=" + xesd_id;
+	} else if (text.equals(".END")){
+		
+	} else {
+		abort_error(36,"invalid object record type - " + text);
+	}
+	return text;
 }
 private void add_gbl_esds(){
 	/*
@@ -701,7 +657,9 @@ private void add_gbl_esds(){
 		if (obj_esd_type[obj_index1].equals("CST")){
             add_gbl_cst(obj_index1);
 		} else if (obj_esd_type[obj_index1].equals("EXT")){
-			add_gbl_ext(obj_index1);
+			add_gbl_ref(obj_index1,gbl_esd_ext);
+		} else if (obj_esd_type[obj_index1].equals("WXT")){ //RPI182
+			add_gbl_ref(obj_index1,gbl_esd_wxt);
 		} else if (obj_esd_type[obj_index1].equals("ENT")){
             add_gbl_ent(obj_index1);
 		}        
@@ -712,16 +670,18 @@ private void add_gbl_cst(int obj_index1){
 	/*
 	 * add obj cst to gbl table
 	 */
+	tot_csect++;
 	boolean esd_ok = true;
 	if (find_gbl_esd(obj_esd_name[obj_index1])){
-		if (gbl_esd_type[cur_gbl_esd] != gbl_esd_ext){
+		if (gbl_esd_type[cur_gbl_esd] != gbl_esd_ext
+			&& gbl_esd_type[cur_gbl_esd] != gbl_esd_wxt){ //RPI182
 		    esd_ok = false;
 			log_error(16,"ignoring duplicate CSECT - " + obj_esd_name[obj_index1]);
 		}
 	} else {
 		tot_gbl_esd++;
 		cur_gbl_esd = tot_gbl_esd;
-		add_key_index(cur_gbl_esd);
+		tz390.add_key_index(cur_gbl_esd);
 	}
 	if  (esd_ok){
 		gbl_esd_name[cur_gbl_esd] = obj_esd_name[obj_index1];
@@ -730,31 +690,33 @@ private void add_gbl_cst(int obj_index1){
 		gbl_esd_type[cur_gbl_esd] = gbl_esd_ent;
 	}
 }
-private void add_gbl_ext(int obj_index1){
+private void add_gbl_ref(int obj_index1,byte esd_type){
 	/*
-	 * add ext ref to gbl table
+	 * add ext or wxt ref to gbl table
 	 */
 	if (!find_gbl_esd(obj_esd_name[obj_index1])){
 		tot_gbl_esd++;
-		add_key_index(tot_gbl_esd);
+		tz390.add_key_index(tot_gbl_esd);
 		gbl_esd_name[tot_gbl_esd] = obj_esd_name[obj_index1];
-		gbl_esd_type[tot_gbl_esd] = gbl_esd_ext;
+		gbl_esd_type[tot_gbl_esd] = esd_type;
 	}
 }
 private void add_gbl_ent(int obj_index1){
 	/*
 	 * add obj entry to gbl table
 	 */
+	tot_entry++;
 	boolean esd_ok = true;
 	if (find_gbl_esd(obj_esd_name[obj_index1])){
-		if (gbl_esd_type[cur_gbl_esd] != gbl_esd_ext){
+		if (gbl_esd_type[cur_gbl_esd] != gbl_esd_ext
+				&& gbl_esd_type[cur_gbl_esd] != gbl_esd_wxt){ //RPI182
 		    esd_ok = false;
 			log_error(17,"ignoring duplicate ENTRY - " + obj_esd_name[obj_index1]);
 		}
 	} else {
 		tot_gbl_esd++;
 		cur_gbl_esd = tot_gbl_esd;
-		add_key_index(cur_gbl_esd);
+		tz390.add_key_index(cur_gbl_esd);
 	}
 	if  (esd_ok){
 		esd_ok = false;				}
@@ -783,7 +745,7 @@ private boolean find_gbl_esd(String esd_name){
 	 * abort if time exceeded
 	 */
 	  tot_find_gbl_esd++;
-	  if (opt_time
+	  if (tz390.opt_time
 			&& (tot_find_gbl_esd > next_time_check)){
 			next_time_check = tot_find_gbl_esd + next_time_ins;
 			cur_date = new Date();
@@ -792,7 +754,7 @@ private boolean find_gbl_esd(String esd_name){
                abort_error(24,"time limit exceeded");
 			}
 		}
-	    cur_gbl_esd = find_key_index("G:" + esd_name);
+	    cur_gbl_esd = tz390.find_key_index("G:" + esd_name);
 	    if (cur_gbl_esd != -1){
 	    	return true;
 	    } else {
@@ -807,13 +769,33 @@ private boolean find_ext_file(){
 	cur_gbl_ext++;
 	while (cur_gbl_ext <= tot_gbl_esd){
 		if (gbl_esd_type[cur_gbl_ext] == gbl_esd_ext){
-			obj_file_name = dir_obj + gbl_esd_name[cur_gbl_ext] + ".OBJ";
-			obj_file = new File(obj_file_name);
-			if (obj_file.isFile()){
-			   return true;
+			obj_file_name = tz390.dir_obj + gbl_esd_name[cur_gbl_ext] + tz390.pgm_type;
+			if (open_obj_file(obj_file_name)){
+				return true;
 			}
 		}
 		cur_gbl_ext++;
+	}
+	return false;
+}
+private boolean open_obj_file(String file){
+	/*
+	 * open object file and set type else
+	 * return false
+	 */
+	try {
+		obj_file = new RandomAccessFile(file,"r");
+    	int test_byte = obj_file.read();
+    	if (test_byte == obj_bin_id){
+    		obj_file_bin = true;
+    	} else if (test_byte == '.') {
+    		obj_file_bin = false;
+    	} else {
+    		abort_error(35,"invalid obj file id");
+    	}
+    	obj_file.seek(0);
+    	return true;
+	} catch (Exception e){
 	}
 	return false;
 }
@@ -837,100 +819,36 @@ private void load_obj_code(){
 }
 private void gen_load_module(){
 	/*
-	 * output 390 load module in ascii hex format
+	 * output 390 load module in binary format
+	 * skipping rlds for unresolved wxtrn's 
 	 */
+    if (loc_ctr > tz390.max_file){
+    	abort_error(32,"maximum 390 file size exceeded");
+    }
 	try {
-        z390_file = new RandomAccessFile(dir_390 + pgm_name + ".390","rw");
+        z390_file = new RandomAccessFile(tz390.dir_390 + tz390.pgm_name + ".390","rw");
         z390_file.setLength(0);
         z390_file.seek(0);
         z390_file.writeBytes(z390_code_ver);
-        z390_flags = "" + z390_amode31 + z390_rmode31 + "??";
-        z390_file.writeBytes(z390_flags);
-        z390_file.writeInt(loc_ctr);
-        z390_file.writeInt(0);
-        z390_file.writeInt(tot_rld);
+        z390_flags = "" + tz390.z390_amode31 + tz390.z390_rmode31 + "??";
+        z390_file.writeBytes(z390_flags);  // z390_flags
+        z390_file.writeInt(loc_ctr);       // z390_code_len
+        z390_file.writeInt(0);             // z390_code_ent offset
+        z390_file.writeInt(tot_rld);       // z390_code_rlds 
         z390_file.write(z390_code,0,loc_ctr);
         int cur_rld = 0;
         while (cur_rld < tot_rld){
         	z390_file.writeInt(rld_loc[cur_rld]);
         	z390_file.write(rld_len[cur_rld]);
+            if (z390_file.length() > tz390.max_file){
+            	abort_error(33,"maximum 390 file size exceeded");
+            }
         	cur_rld++;
         }
         z390_file.close();
 	} catch (Exception e){
 	 	abort_error(22,"I/O error on z390 load module file - " + e.toString());
 	}
-}
-private int find_key_index(String user_key){
-	/*
-	 * return user_key_index for user_key else -1
-	 * and set following for possible add_key_index:
-	 *    1.  key_text = user_key
-	 *    2.  key_hash = hash code for key
-	 *    3.  key_index_last = last search entry
-	 */
-	tot_key_search++;
-	key_text = user_key;
-    key_rand.setSeed((long) key_text.hashCode());
-    key_hash  = key_rand.nextInt();
-    key_index = key_rand.nextInt(max_key_root)+1;
-	if (key_tab_key[key_index] == null){
-		key_index_last = key_index;
-		return -1;
-	}
-    cur_key_comp = 0;
-	while (key_index > 0){
-		tot_key_comp++;
-		cur_key_comp++;
-		if (cur_key_comp > max_key_comp){
-			max_key_comp = cur_key_comp;
-		}
-		if (opt_traceall == true){
-			put_log("TRACE KEY SEARCHS=" + tot_key_search + " MAX DEPTH=" + max_key_comp + " COMPS=" + tot_key_comp);
-		}
-		if (key_hash == key_tab_hash[key_index]
-		    && user_key.equals(key_tab_key[key_index])){			
-			key_index_last = -1;
-	    	return key_tab_index[key_index];
-	    }
-		key_index_last = key_index;
-		if (key_hash < key_tab_hash[key_index]){
-		    key_index = key_tab_low[key_index];
-		} else {
-			key_index = key_tab_high[key_index];
-		}
-	}
-	return -1;
-}
-private void add_key_index(int user_index){
-	/*
-	 * add user_index entry based on
-	 * key_text, key_hash, and key_index_last
-	 * set by prior find_key_index
-	 * 
-	 */
-	if (key_tab_key[key_index_last] == null){
-		key_index = key_index_last;
-	} else {
-		if (tot_key_tab < max_key_tab){
-			key_index = tot_key_tab;
-			tot_key_tab++;
-		} else {
-			abort_error(87,"key search table exceeded");
-		}
-		if (key_hash < key_tab_hash[key_index_last]){
-		    key_tab_low[key_index_last] = key_index;
-	    } else {
-		    key_tab_high[key_index_last] = key_index;
-	    }
-	}
-	if (opt_traceall == true){
-		put_log("TRACE KEY ADD LAST INDEX =" + key_index_last + " NEW INDEX=" + key_index + " KEY=" + key_text);
-	}
-	tot_key++;
-	key_tab_key[key_index]   = key_text;
-	key_tab_hash[key_index]  = key_hash;
-	key_tab_index[key_index] = user_index;
 }
 /*
  *  end of lz390code 

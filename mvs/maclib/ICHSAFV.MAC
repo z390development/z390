@@ -1,0 +1,105 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%;   /*
+         MACRO
+         ICHSAFV &DSECT=YES                                          */
+*/********************************************************************/
+*/*                                                                  */
+*/*   $MAC(ICHSAFV) COMP(SC1BN) PROD(SAF):                           */
+*/*                                                                  */
+*/*   MODULE NAME = ICHSAFV                                          */
+*/*                                                                  */
+*/*   DESCRIPTIVE NAME = SAF ROUTER VECTOR TABLE MAP                 */
+*/*                                                                  */
+*/*                                                                  */
+*/*   STATUS =   OS/VS2 EBB1102                                      */
+*/*                                                                  */
+*/*   FUNCTION = PROVIDES PL/S AND BAL MAPPING OF THE SAF            */
+*/*              ROUTER VECTOR TABLE THAT IS BUILT DURING            */
+*/*              SYSTEM IPL AND USED DURING A CALL TO THE            */
+*/*              SAF ROUTER.                                         */
+*/*                                                                  */
+*/*   METHOD OF ACCESS =                                             */
+*/*       PL/S = %INCLUDE(ICHSAFV)                                   */
+*/*                                                                  */
+*/*              DECLARE SAFVPTR PTR(31),                            */
+*/*              TO CONTAIN THE ADRESS OF SAFV.                      */
+*/*                                                                  */
+*/*        BAL = ICHSAFP MACRO                                       */
+*/*              A DSECT IS PRODUCED UNLESS DSECT=NO IS SPECIFIED    */
+*/*                                                                  */
+*/*              L      REG,SAFVPTR                                  */
+*/*              USING  SAFV,REG                                     */
+*/*                     WHERE REG IS ANY REGISTER EXCEPT 0           */
+*/*                                                                  */
+*/*      NOTE:   THE ADDRESS OF THE SAF VECTOR TABLE IS              */
+*/*              STORED IN THE CVT AT POSITION 249 (OFFSET 248),     */
+*/*              WHEN IT HAS BEEN INITIALIZED                        */
+*/*                                                                  */
+*/*   CHANGE-ACTIVITY =                                              */
+*/*          $T0=UZ90211,SAF/RF15,820817,CNTDSD:                     */
+*/*          UZ90283                                         @ZA90283*/
+*/*          UZ90284                                         @ZA90284*/
+*/*          UZ90285                                         @ZA90285*/
+*/*                                                                  */
+*/********************************************************************/
+*%;   /*
+         AIF   ('&DSECT' EQ 'NO').SAFVN
+SAFV     DSECT ,SAFVPTR            SAF VECTOR TABLE
+         AGO   .SAFVC
+.SAFVN   ANOP
+SAFV     DS    0F                  SAF VECTOR TABLE
+.SAFVC   ANOP
+SAFVIDEN DS    CL4                 IDENTIFYING LITERAL FOR DUMPS 'SAFV'
+SAFVVRSN DS    X                   TABLE VERSION NUMBER - '00'X
+         DS    CL3                 RESERVED
+SAFVEXIT DS    A                   ADDRESS OF THE SAF ROUTER EXIT
+*                                    ROUTINE (ICHRTX00)
+SAFVSAFR DS    A                   ADDRESS OF THE SAF ROUTER
+*                                    ROUTINE (ICHSFR00)
+SAFVRACR DS    A                   ADDRESS OF THE RACF FRONT END
+*                                    ROUTINE (ICHRFR00), SET BY
+*                                    RACF INITIALIZATION (ICHSEC00)
+*                                    IF RACF IS INSTALLED
+SAFVRACT DS    A                   ADDRESS OF THE RACF FRONT END
+*                                    TABLE (ICHRFR01), SET BY
+*                                    RACF INITIALIZATION (ICHSEC00)
+*                                    IF RACF IS INSTALLED
+SAFVEXUS DS    A                   RESERVED FOR INSTALLATION EXIT USE
+*        DS    A                   RESERVED
+*        DS    0D                  ENSURE DOUBLE WORD LENGTH
+SAFVLEN  EQU   *-SAFV              LENGTH OF THE SAF
+*                                    ROUTER VECTOR TABLE
+SAFVIDC  EQU   C'SAFV'             LITERAL VALUE TO BE STORED
+*                                    IN SAFVIDEN
+SAFVVNC  EQU   0                   LITERAL VALUE OF SAF VERSION
+*                                    NUMBER STORED IN SAFVVRSN
+         MEND                                                        */
+*   DCL
+*     1 SAFV BASED(SAFVPTR) BDY(DWORD), /* SAF VECTOR TABLE          */
+*      2 SAFVIDEN CHAR(4),          /* IDENTIFYING LITERAL FOR DUMPS
+*                                      'SAFV'                        */
+*      2 SAFVVRSN FIXED(8),         /* TABLE VERSION NUMBER - '00'X  */
+*      2 * CHAR(3),                 /* RESERVED                      */
+*      2 SAFVEXIT PTR(31),          /* ADDRESS OF THE SAF ROUTER EXIT
+*                                      ROUTINE (ICHRTX00)            */
+*      2 SAFVSAFR PTR(31),          /* ADDRESS OF THE SAF ROUTER
+*                                      ROUTINE (ICHSFR00)            */
+*      2 SAFVRACR PTR(31),          /* ADDRESS OF THE RACF FRONT END
+*                                      ROUTINE (ICHRFR00), SET BY
+*                                      RACF INITIALIZATION (ICHSEC00)
+*                                      IF RACF IS INSTALLED          */
+*      2 SAFVRACT PTR(31),          /* ADDRESS OF THE RACF FRONT END
+*                                      TABLE (ICHRFR01), SET BY
+*                                      RACF INITIALIZATION (ICHSEC00)
+*                                      IF RACF IS INSTALLED          */
+*      2 SAFVEXUS PTR(31),          /* RESERVED FOR INSTALLATION EXIT
+*                                      USE                           */
+*      2 * FIXED(31),               /* RESERVED                      */
+*      2 * CHAR(0) BDY(DWORD);      /* ENSURE DOUBLE WORD LENGTH     */
+*   DCL SAFVLEN FIXED(31) CONSTANT(LENGTH(SAFV)); /* LENGTH OF THE SAF
+*                                      ROUTER VECTOR TABLE           */
+*   DCL SAFVIDC CHAR(4) CONSTANT('SAFV');/* LITERAL VALUE TO BE STORED
+*                                      IN SAFVIDEN                   */
+*   DCL SAFVVNC FIXED(8) CONSTANT(0); /* LITERAL VALUE OF SAF VERSION
+*                                      NUMBER STORED IN SAFVVRSN     */
+

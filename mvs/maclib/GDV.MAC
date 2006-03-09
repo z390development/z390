@@ -1,0 +1,292 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GDV   &X,&Y,&I
+         GBLA  &IHBBLC,&IHBBLIM,&IHBBPX,&IHBBPY,&IHBMOD
+         LCLA  &WORKX,&WORKY,&BLCBUK
+         LCLC  &XBUK,&YBUK
+         LCLB  &BEAM
+         IHBGAM3
+         AIF   (&IHBMOD EQ 2).INCR02
+&IHBBLC    SETA  &IHBBLC+4
+.INCR01  ANOP
+         AIF   (&IHBBLIM  GE &IHBBLC).OK
+         IHBERMAC 182
+.OK      AIF   (T'&I EQ 'O').ERI
+         AIF   ('&I'(1,1) EQ 'U').ON
+         AIF   ('&I'(1,1) EQ 'B').OFF
+         AIF   ('&I' EQ 'ON').ON
+         AIF   ('&I' EQ 'OFF').OFF
+.ERI     IHBERMAC  180,BEAM,BLANK
+.OFF     ANOP
+&BEAM    SETB  1
+         AGO   .RETURN
+.INCR02  ANOP
+&IHBBLC  SETA  &IHBBLC+2                    UPDATE BLC FOR INCR
+         AGO   .INCR01
+.ON      ANOP
+&BEAM    SETB  0
+.RETURN  AIF   (&IHBMOD EQ 1).REL
+         AIF   (&IHBMOD EQ 2).INCR          INCREMENTAL MODE
+.******************ABS MODE***********
+         AIF   (T'&X EQ 'O').ABSERRX
+         AIF   ('&X'(1,1) EQ '+').APLXFIX
+         AIF   ('&X'(1,1) EQ '-').ABSERRX
+         AIF   ('&X'(1,1) EQ '*').STARX
+         AIF   (T'&X NE 'N').ASYMX
+.ABSPLX  AIF   (&X GT 4095).ABSERRX
+&WORKX   SETA  &X
+.ABSCNT1 ANOP
+&IHBBPX    SETA  &WORKX
+         AIF   (&BEAM EQ 1).AXOFF
+&NAME    DC    H'&WORKX'
+         AGO   .ATESTY
+.AXOFF   ANOP
+&WORKX   SETA  &WORKX+16384
+&NAME    DC    H'&WORKX'
+         AGO   .ATESTY
+.APLXFIX     ANOP
+&WORKX   SETA  K'&X-1
+&XBUK    SETC  '&X'(2,&WORKX)
+&WORKX   SETA  &XBUK
+         AIF   (&WORKX GT 4095).ABSERRX
+         AGO   .ABSCNT1
+.ABSERRX IHBERMAC 180,X,0
+&WORKX   SETA  0
+         AGO   .ABSCNT1
+.ASYMX   AIF   (&BEAM EQ 1).ASYMXBL
+&NAME    DC    AL2(&X)
+         AGO   .ATESTY
+.ASYMXBL ANOP
+&NAME    DC    AL2(&X+16384)
+         AGO   .ATESTY
+.ATESTY  AIF   (T'&Y EQ 'O').ABSERRY
+         AIF   ('&Y'(1,1) EQ '+').APLYFIX
+         AIF   ('&Y'(1,1) EQ '-').ABSERRY
+         AIF   ('&Y'(1,1) EQ '*').STARY
+         AIF   (T'&Y NE 'N').ASYMY
+.ABSPLY  AIF   (&Y GT 4095).ABSERRY
+&WORKY   SETA  &Y
+.ABSCNT2 ANOP
+&IHBBPY    SETA  &WORKY
+         DC    H'&WORKY'
+         AGO   .XYTEST
+.APLYFIX       ANOP
+&WORKY   SETA  K'&Y-1
+&YBUK    SETC  '&Y'(2,&WORKY)
+&WORKY   SETA  &YBUK
+         AIF   (&WORKY GT 4095).ABSERRY
+         AGO   .ABSCNT2
+.ABSERRY IHBERMAC 180,Y,0
+&WORKY   SETA  0
+         AGO   .ABSCNT2
+.ASYMY   DC    AL2(&Y)
+         MEXIT
+.STARX   ANOP
+&WORKX   SETA  K'&X
+         AIF   (&WORKX EQ 1).STARX0
+&XBUK    SETC  '&X'(3,&WORKX-2)
+&WORKX   SETA  &XBUK
+         AIF   ('&X'(2,1) EQ '-').MSTARX
+&WORKX   SETA  &IHBBPX+&WORKX
+.STARX1  AIF   (&WORKX LT 0 OR &WORKX GT 4095).STXNOTE
+         AGO   .ABSCNT1
+.STARX0  ANOP
+&WORKX   SETA  &IHBBPX
+         AGO   .STARX1
+.STXNOTE IHBERMAC 183,*+OR-X,0
+&WORKX   SETA  0
+         AGO   .ABSCNT1
+.MSTARX  ANOP
+&WORKX   SETA  &IHBBPX-&WORKX
+         AGO   .STARX1
+.STARY   ANOP
+&WORKY   SETA  K'&Y
+         AIF   (&WORKY EQ 1).STARY0
+&YBUK    SETC  '&Y'(3,&WORKY-2)
+&WORKY   SETA  &YBUK
+         AIF   ('&Y'(2,1) EQ '-').MSTARY
+&WORKY   SETA  &IHBBPY+&WORKY
+.STARY1  AIF   (&WORKY LT 0 OR &WORKY GT 4095).STYNOTE
+         AGO   .ABSCNT2
+.STARY0  ANOP
+&WORKY   SETA  &IHBBPY
+         AGO   .STARY1
+.STYNOTE IHBERMAC 183,*+OR-Y,0
+&WORKY   SETA  0
+         AGO   .ABSCNT2
+.MSTARY  ANOP
+&WORKY   SETA  &IHBBPY-&WORKY
+         AGO   .STARY1
+.INCR    AIF   (T'&X EQ 'O').X0100           OMITTED-ERROR
+         AIF   ('&X'(1,1) EQ '+' OR '&X'(1,1) EQ '-').X0130   SIGNED
+         AIF   ('&X'(1,1) EQ '*').X0100      *-ERROR
+         AIF   (T'&X NE 'N').X0280           UNSIGNED SYMBOLIC
+         AIF   (&X GT 255).X0100        X TOO LARGE-ERROR
+&WORKX   SETA  &X
+&IHBBPX  SETA  &IHBBPX+&WORKX                UPDATE BPX
+&NAME    DC    AL1(&X/4*2+1)
+         AGO   .Y0000
+.X0100   IHBERMAC 183,X,0                    ** ERROR MESSAGE 183 **
+&NAME    DC    AL1(1)
+         AGO   .Y0000
+.X0130   ANOP
+&WORKX   SETA  K'&X-1                        REMOVE SIGN
+&XBUK    SETC  '&X'(2,&WORKX)
+         AIF   ('&X'(2,1) LT '0').X0310     SIGNED SYMBOLIC
+&WORKX   SETA  &XBUK
+         AIF   (('&X'(1,1) EQ '+' AND &WORKX GT 255) OR (&WORKX GT 256)*
+               ).X0100                  X-TOO LARGE, ERROR 183
+         AIF   ('&X'(1,1) EQ '+').X0240      +NUMERIC
+         AIF   (&WORKX GT &IHBBPX).X0340     BPX UNDERFLOW-ERROR
+&IHBBPX  SETA  &IHBBPX-&WORKX                UPDATE BPX
+.X0215   ANOP
+&NAME    DC    AL1(0&X/4*2+1)
+         AGO   .Y0000
+.X0240   ANOP                                GENERATE X SIGNED NUM
+&IHBBPX  SETA  &IHBBPX+&WORKX                UPDATE BPX
+&NAME    DC    AL1(0&X/4*2+1)
+         AGO   .Y0000
+.X0280   ANOP                                GENERATE X UNSIGNED SYM
+&NAME    DC    AL1(&X/4*2+1)
+         AGO   .Y0000
+.X0310   ANOP                                GENERATE X SIGNED SYM
+&NAME    DC    AL1(0&X/4*2+1)
+         AGO   .Y0000
+.X0340   IHBERMAC 186,BPX                    ** ERROR MESSAGE 186 **
+         AGO   .X0215
+.Y0000   AIF   (T'&Y EQ 'O').Y0130           OMITTED-ERROR
+         AIF   ('&Y'(1,1) EQ '+' OR '&Y'(1,1) EQ '-').Y0160   SIGNED
+         AIF   ('&Y'(1,1) EQ '*').Y0130      *-ERROR
+         AIF   (T'&Y NE 'N').Y0650           UNSIGNED SYMBOLIC
+         AIF   (&Y GT 255).Y0130        Y TOO LARGE-ERROR
+&WORKY   SETA  &Y
+&IHBBPY  SETA  &IHBBPY+&WORKY                UPDATE BPY
+.Y0650   ANOP
+         AIF   (&BEAM EQ 0).Y0100            UNSIGNED Y NUM BEAM ON
+         DC    AL1(&Y/4*2+1)
+         AGO   .XYTEST
+.Y0100   ANOP
+         DC    AL1(&Y/4*2)
+         AGO   .XYTEST
+.Y0130   IHBERMAC 183,Y,0                    ** ERROR MESSAGE 183 **
+         AIF   (&BEAM EQ 0).Y0143
+         DC    AL1(1)
+         AGO   .XYTEST
+.Y0143   ANOP
+         DC    AL1(0)
+         AGO   .XYTEST
+.Y0160   ANOP                                HERE ON SIGNED Y
+&WORKY   SETA  K'&Y-1                        REMOVE SIGN
+&YBUK    SETC  '&Y'(2,&WORKY)
+         AIF   ('&Y'(2,1) LT '0').Y0250
+&WORKY   SETA  &YBUK
+         AIF   (('&Y'(1,1) EQ '+' AND &WORKY GT 255) OR (&WORKY GT 256)*
+               ).Y0130                  Y-TOO LARGE, ERROR 183
+         AIF   ('&Y'(1,1) EQ '+').Y0320      + NUMERIC Y
+         AIF   (&WORKY GT &IHBBPY).Y0340
+&IHBBPY  SETA  &IHBBPY-&WORKY                UPDATE BPY
+.Y0250   ANOP
+         AIF   (&BEAM EQ 0).Y0290            SIGNED Y, BEAM ON
+         DC    AL1(0&Y/4*2+1)
+         AGO   .XYTEST
+.Y0290   ANOP
+         DC    AL1(0&Y/4*2)
+         AGO   .XYTEST
+.Y0320   ANOP                                UPDATE BPY
+&IHBBPY  SETA  &IHBBPY+&WORKY
+         AGO   .Y0250
+.Y0340   IHBERMAC  186,BPY
+         AGO   .Y0250
+.************REL MODE**********
+.REL     AIF   (T'&X EQ 'O').RELERRX
+         AIF   ('&X'(1,1) EQ '+').RPLXFIX
+         AIF   ('&X'(1,1) EQ '-').RELMINX
+         AIF   ('&X'(1,1) EQ '*').RELERRX
+&XBUK    SETC  '&X'
+         AIF   (T'&X NE 'N').RELSYMX
+.RELPLX  AIF   (&X GT 4095).RELERRX
+&WORKX   SETA  &X
+.RELCNT1 ANOP
+&IHBBPX    SETA  &IHBBPX+&WORKX
+         AIF   (&BEAM EQ 1).RXOFF
+&NAME    DC    H'&WORKX'
+         AGO   .RTESTY
+.RXOFF   ANOP
+&WORKX   SETA  &WORKX+16384
+&NAME    DC    H'&WORKX'
+         AGO   .RTESTY
+.RPLXFIX     ANOP
+&WORKX   SETA  K'&X-1
+&XBUK    SETC  '&X'(2,&WORKX)
+         AIF   ('&X'(2,1) LT '0').RELSYMX
+&WORKX   SETA  &XBUK
+         AIF   (&WORKX GT 4095).RELERRX
+         AGO   .RELCNT1
+.RELERRX IHBERMAC 183,DX,0
+&WORKX   SETA  0
+         AGO   .RELCNT1
+.RMSYMX  AIF   (&BEAM EQ 1).RMSBLX
+&NAME    DC    AL2(0-&XBUK-16384)
+         AGO   .RTESTY
+.RELSYMX AIF   (&BEAM EQ 1).RSYMXBL
+&NAME    DC    AL2(&XBUK)
+         AGO   .RTESTY
+.RMSBLX  ANOP
+&NAME    DC    AL2(0&X)
+         AGO   .RTESTY
+.RSYMXBL ANOP
+&NAME    DC    AL2(&XBUK+16384)
+         AGO   .RTESTY
+.RELMINX ANOP
+&WORKX   SETA  K'&X-1
+&XBUK    SETC  '&X'(2,&WORKX)
+         AIF   ('&X'(2,1) LT '0').RMSYMX
+&WORKX   SETA  0-&XBUK
+&IHBBPX    SETA  &IHBBPX+&WORKX
+         AIF   (&BEAM EQ 1).RMINXBL
+&WORKX   SETA  &WORKX-16384
+&NAME    DC    H'-&WORKX'
+         AGO   .RTESTY
+.RMINXBL ANOP
+&NAME    DC    H'-&WORKX'
+.RTESTY  AIF   (T'&Y EQ 'O').RELERRY
+         AIF   ('&Y'(1,1) EQ '+').RPLYFIX
+         AIF   ('&Y'(1,1) EQ '-').RELMINY
+         AIF   ('&Y'(1,1) EQ '*').RELERRY
+&YBUK    SETC  '&Y'
+         AIF   (T'&Y NE 'N').RELSYMY
+.RELPLY  AIF   (&Y GT 4095).RELERRY
+&WORKY   SETA  &Y
+.RELCNT2 ANOP
+&IHBBPY    SETA  &IHBBPY+&WORKY
+         DC    H'&WORKY'
+         AGO   .XYTEST
+.RPLYFIX       ANOP
+&WORKY   SETA  K'&Y-1
+&YBUK    SETC  '&Y'(2,&WORKY)
+         AIF   ('&Y'(2,1) LT '0').RELSYMY
+&WORKY   SETA  &YBUK
+         AIF   (&WORKY GT 4095).RELERRY
+         AGO   .RELCNT2
+.RELERRY IHBERMAC 183,DY,0
+&WORKY   SETA  0
+         AGO   .RELCNT2
+.RELSYMY DC    AL2(&YBUK)
+         MEXIT
+.RMSYMY  DC    AL2(0&Y)
+         MEXIT
+.RELMINY ANOP
+&WORKY   SETA  K'&Y-1
+&YBUK    SETC  '&Y'(2,&WORKY)
+         AIF   ('&Y'(2,1) LT '0').RMSYMY
+&WORKY   SETA  0-&YBUK
+&IHBBPY    SETA  &IHBBPY+&WORKY
+         DC    H'&Y'
+.XYTEST  AIF   (&IHBBPX LT 0 OR &IHBBPX GT 4095).XNOTE
+.YTEST   AIF   (&IHBBPY LT 0 OR &IHBBPY GT 4095).YNOTE
+         MEXIT
+.XNOTE   IHBERMAC 186,BPX
+         AGO   .YTEST
+.YNOTE   IHBERMAC 186,BPY
+         MEND
+

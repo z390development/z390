@@ -1,0 +1,791 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*
+* $MAC(RACHECK) COMP(SC1BN) PROD(RACF):
+*
+* DESCRIPTIVE_NAME = AUTHORIZATION CHECKING INTERFACE
+*
+*
+* STATUS = OS/VS2 EBB1102
+*
+* FUNCTION = THIS INTERFACE ALLOWS THE CALLER TO CHECK THE USERS
+*    AUTHORIZATION TO A RESOURCE.                                  @L5A
+*
+* CHANGE ACTIVITY = A000000-999999                             @Y40RSGD
+*                   RACF VERSION 1 RELEASE 2                   @PC002PY
+*                   RACF VERSION 1 RELEASE 3                   @PC003PY
+*                   $L4=HRF1402,RACF/140,810701,SJRDSD:            @L4A
+*                   OZ56981                                    @ZA56981
+*                   OZ60572                                    @ZA60572
+*                   $T1=UZ90210,SAF/RF15,810702,CNTDSD:            @T1A
+*                   $L5=HRF1502,RACF/150,811218,CNTDSD:            @L5A
+*                   OZ59764                                    @ZA59764
+*                   $L6=HRF1602,RACF/160,830307,CNTDSD:            @L6A
+*                   UZ90283                                    @ZA90283
+*                   UZ90284                                    @ZA90284
+*                   UZ90285                                    @ZA90285
+*
+         MACRO
+&SYMBOL  RACHECK &ENTITY=,&CLASS=,&PROFILE=,&VOLSER=,&OLDVOL=,         -
+               &ATTR=,&DSTYPE=,&LOG=,&MF=S,&INSTLN=,                   *
+               &OWNER=,                                          @L4A  *
+               &RACFIND=,                                        @L5A  *
+               &ACCLVL=,                                         @L5A  *
+               &ACEE=,&APPL=,                                    @L6A  *
+               &GENERIC=                                         @L6A
+.* DEFINE LOCAL SET SYMBOLS
+         LCLA  &BIT0,&BIT1,&BIT2,&BIT3,&BIT4,&BIT5,&BIT6,&BIT7,&CLNGTH
+         LCLA  &BIX0,&BIX1,&BIX2,&BIX3,&BIX4,&BIX5,&BIX6,&BIX7
+         LCLA  &OFFSET                                         @PC003PY
+         LCLB  &MFFLAG
+         LCLC  &SUBSTR
+.* DEFINE GLOBAL SET SYMBOLS                                       @T1A
+         GBLB  &ICHRAC              ICHRAC - A FLAG WHICH, WHEN    @T1A
+.*                                  ON, INDICATES THAT THIS MACRO  @T1A
+.*                                  IS BEING INVOKED INTERNALLY    @T1A
+.*                                  BY THE RACROUTE MACRO.         @T1A
+         GBLC  &ICHL                THIS IS USED TO COMMUNICATE    @T1A
+.*                                  TO THE RACROUTE MACRO THE      @T1A
+.*                                  ADDRESS OF THE PARAMETER LIST. @T1A
+.* PERFORM PARAMETER DIAGNOSIS
+         AIF   ('&ENTITY' EQ ''  AND '&PROFILE' EQ '' AND '&MF' EQ     -
+               'S' ).ERR00                                     @PC002PY
+.ERTN00  ANOP
+.* VALIDATE LOG PARAMETER
+         AIF   ('&LOG' NE 'ASIS' AND '&LOG' NE 'NOFAIL' AND '&LOG' NE  -
+               'NONE' AND '&LOG' NE 'NOSTAT' AND                       -
+               '&LOG' NE '').ERR02                             @ZA60572
+.ERTN02  ANOP
+.* VALIDATE DSTYPE PARAMETER
+         AIF   ('&DSTYPE' NE 'N' AND '&DSTYPE' NE 'V'                  -
+               AND '&DSTYPE' NE 'M'                                    -
+               AND '&DSTYPE' NE '').ERR03
+.ERTN03  ANOP
+.* VALIDATE ATTR PARAMETER
+         AIF   ('&ATTR' EQ 'READ' OR '&ATTR' EQ 'ALTER'                -
+                OR '&ATTR' EQ '').RCHK000
+         AIF   ( '&ATTR' EQ 'UPDATE' OR '&ATTR' EQ                     -
+               'CONTROL' OR '&ATTR'(1,1) EQ '(').RCHK000
+         AGO   .ERR04
+.RCHK000 ANOP
+.ERTN04  ANOP
+.* VALIDATE RACFIND PARAMETER                                      @L5A
+         AIF   ('&RACFIND' NE 'YES' AND '&RACFIND' NE 'NO' AND         *
+               T'&RACFIND NE 'O').ERR05                            @L5A
+.ERTN05  ANOP                                                      @L5A
+.* VALIDATE GENERIC PARAMETER
+         AIF   ('&GENERIC' EQ '').ERTN11                           @L6A
+         AIF   ('&GENERIC' NE 'YES' AND                                *
+               '&GENERIC' NE 'ASIS').ERR11                         @L6A
+.ERTN11  ANOP  ,                                                   @L6A
+.* VALIDATE MF PARAMETER
+         AIF   ('&MF' NE 'S' AND '&MF' NE 'L' AND '&MF'(1,2) NE        -
+               '(E').ERR06
+.ERTN06  ANOP
+.* REGISTER SPECIFICATION OF ADDR TYPE PARAMETERS NOT ALLOWED WITH LIST
+.* FORM
+         AIF   ('&MF' NE 'L').RCHK100
+         AIF   ('&INSTLN(1)' NE '&INSTLN').ERR07
+.RCHK006 ANOP
+         AIF   ('&ENTITY(1)' EQ '').RCHK010                    @PC002PY
+         AIF   ('&ENTITY(1)'(1,1) EQ '(').ERR07
+.RCHK010 ANOP
+         AIF   ('&CLASS' EQ '').RCHK020
+         AIF   ('&CLASS'(1,1) EQ '(').ERR07
+.RCHK020 ANOP
+         AIF   ('&PROFILE' EQ '').RCHK030
+         AIF   ('&PROFILE'(1,1) EQ '(').ERR07
+.RCHK030 ANOP
+         AIF   ('&VOLSER' EQ '').RCHK060
+         AIF   ('&VOLSER'(1,1) EQ '(').ERR07
+.RCHK060 ANOP
+         AIF   ('&OLDVOL' EQ '').RCHK065                       @PC002PY
+         AIF   ('&OLDVOL'(1,1) EQ '(').ERR07                   @PC002PY
+.RCHK065 ANOP
+         AIF   ('&ATTR' EQ '').RCHK070                         @PC002PY
+         AIF   ('&ATTR'(1,1) EQ '(').ERR07                     @PC002PY
+.RCHK070 ANOP
+         AIF   ('&APPL' EQ '').RCHK075                         @PC003PY
+         AIF   ('&APPL'(1,1) EQ '(').ERR07                     @PC003PY
+.RCHK075 ANOP                                                  @PC003PY
+         AIF   ('&ACEE' EQ '').RCHK080                         @PC003PY
+         AIF   ('&ACEE'(1,1) EQ '(').ERR07                     @PC003PY
+.RCHK080 ANOP                                                  @PC003PY
+         AIF   ('&OWNER' EQ '').RCHK090                          @L4A
+         AIF   ('&OWNER'(1,1) EQ '(').ERR07                      @L4A
+.RCHK090 ANOP  ,                                                 @L4A
+         AIF   ('&ACCLVL' EQ '').RCHK100                         @L5A
+         AIF   (T'&ACCLVL(1) EQ 'O').RCHK095                     @L5A
+         AIF   ('&ACCLVL(1)'(1,1) EQ '(').ERR07                  @L5A
+.RCHK095 ANOP  ,                                                 @L4A
+         AIF   (N'&ACCLVL EQ 1).RCHK100                          @L5A
+         AIF   (T'&ACCLVL(2) EQ 'O').RCHK100                     @L5A
+         AIF   ('&ACCLVL(2)'(1,1) EQ '(').ERR07                  @L5A
+.RCHK100 ANOP                                                  @PC003PY
+.ERTN07  ANOP
+.* PRODUCE LIST FORM IF REQUESTED
+         AIF   ('&MF' NE 'L').RCHK430
+         AIF   ('&SYMBOL' EQ '').RCHK160
+&SYMBOL  DS    0F
+         AGO   .RCHK16Y                                          @L4A
+.RCHK160 ANOP
+         DS    0F                                                @L4A
+.RCHK16Y ANOP  ,                                                 @L4A
+ICH0&SYSNDX EQU *
+.RCHK16X ANOP
+.* PRODUCE LENGTH AND INSTALLATION DATA
+.****** IF THIS MACRO WAS INVOKED BY THE RACROUTE MACRO            @T1A
+.****** THE 3 BYTES AFTER LENGTH ARE RESERVED, AND INSTLN IS       @T1A
+.****** GENERATED AT THE END OF THE LIST.                          @T1A
+         AIF   (NOT &ICHRAC).RCHK16A                               @T1A
+&ICHL    DC    AL1(56)          LENGTH OF RACHECK PARAMETER LIST   @T1A
+         DC    AL3(0)                                              @T1A
+         AGO   .RCHK162         PRODUCE 1ST FLAG BYTE              @T1A
+.RCHK16A ANOP                                                      @T1A
+         DC    AL1(56) - LENGTH OF RACHECK PARAMETER LIST          @T1A
+         AIF   ('&INSTLN' EQ '' OR                                     *
+               '&INSTLN(1)' NE '&INSTLN').RCHK161              @PC002PY
+         DC    AL3(&INSTLN) - ADDRESS OF INSTALLATION DATA
+         AGO   .RCHK162
+.RCHK161 ANOP
+         DC    AL3(0) - ADDRESS OF INSTALLATION DATA
+.RCHK162 ANOP
+.* PRODUCE FIRST FLAG BYTE IN LIST
+         AIF   (T'&RACFIND EQ 'O').RCHK166                         @L5A
+&BIT0    SETA  1                   RACFIND CODED                   @L5A
+         AIF   ('&RACFIND' NE 'YES').RCHK166                       @L5A
+&BIT1    SETA  1                   RACFIND=YES                     @L5A
+.RCHK166 ANOP                                                      @L5A
+         AIF   ('&ENTITY(2)' EQ '').RCHK170                    @PC002PY
+         AIF   ('&ENTITY(2)' NE 'CSA').RCHK170
+&BIT7    SETA  1                                               @PC002PY
+.RCHK170 ANOP
+         AIF   ('&DSTYPE' NE 'V').RCHK180                          @T1A
+&BIT3    SETA  1
+.RCHK180 ANOP                                                      @T1A
+.**************************************************                @T1A
+.* IF THIS MACRO WAS INVOKED BY THE RACROUTE MACRO,                @T1A
+.* THE PARAMETER LIST HAS 31-BIT ADDRESSING.                       @T1A
+.**************************************************                @T1A
+         AIF   (NOT &ICHRAC).RCHK200                               @T1A
+&BIT4    SETA  1                  31-BIT ADDRESSING IN PARM LIST   @T1A
+.RCHK200 ANOP
+         AIF   ('&LOG' NE 'NOFAIL' AND                                 -
+               '&LOG' NE 'NOSTAT').RCHK220                     @ZA60572
+&BIT5    SETA  1
+.RCHK220 ANOP
+         AIF   ('&LOG' NE 'NONE' AND                                   -
+               '&LOG' NE 'NOSTAT').RCHK230                     @ZA60572
+&BIT6    SETA  1
+.RCHK230 ANOP
+         DC    B'&BIT0&BIT1&BIT2&BIT3&BIT4&BIT5&BIT6&BIT7'
+.****** IF THIS MACRO WAS INVOKED BY THE RACROUTE MACRO            @T1A
+.****** THE NEXT 3 BYTES ARE RESERVED AND ENTITY AND PROFILE       @T1A
+.****** GENERATED AT THE END OF THE LIST.                          @T1A
+         AIF   (NOT &ICHRAC).RCHK235                               @T1A
+         DC    AL3(0)                                              @T1A
+         AGO   .RCHK270                                            @T1A
+.RCHK235 ANOP                                                      @T1A
+.* PRODUCE ENTITY NAME OR PROFILE ADDRESS                      @PC002PY
+         AIF   ('&ENTITY(1)' EQ '').RCHK240                    @PC002PY
+         AIF   ('&ENTITY(1)'(1,1) EQ '(').RCHK240
+         DC    AL3(&ENTITY(1)) - ENTITY NAME ADDRESS
+         AGO   .RCHK270
+.RCHK240 ANOP
+         AIF   ('&PROFILE' EQ '').RCHK260
+         AIF   ('&PROFILE'(1,1) EQ '(').RCHK260
+         DC    AL3(&PROFILE) -PROFILE ADDRESS
+         AGO   .RCHK270
+.RCHK260 ANOP
+         DC    AL3(0) -       ENTITY OR PROFILE ADDRESS FIELD  @PC002PY
+.RCHK270 ANOP
+.* PRODUCE SECOND FLAG BYTE WITH ATTR PARAMETER
+.* RESET BIT SET SYMBOLS
+&BIT0    SETA  0
+&BIT1    SETA  0
+&BIT2    SETA  0
+&BIT3    SETA  0
+&BIT4    SETA  0
+&BIT5    SETA  0
+&BIT6    SETA  0
+&BIT7    SETA  0
+         AIF   ('&ATTR' EQ '').RCHK335
+         AIF   ('&ATTR'(1,1) EQ '(').RCHK340
+         AIF   ('&ATTR' NE 'ALTER').RCHK280
+&BIT0    SETA  1
+         AGO   .RCHK340
+.RCHK280 ANOP
+         AIF   ('&ATTR' NE 'CONTROL').RCHK320
+&BIT4    SETA  1
+         AGO   .RCHK340
+.RCHK320 ANOP
+         AIF   ('&ATTR' NE 'UPDATE').RCHK330
+&BIT5    SETA  1
+         AGO   .RCHK340
+.RCHK330 ANOP
+         AIF   ('&ATTR' NE 'READ').RCHK340
+.RCHK335 ANOP
+&BIT6    SETA  1
+.RCHK340 ANOP
+         DC    B'&BIT0.000&BIT4&BIT5&BIT6.0'
+.****** IF THIS MACRO WAS INVOKED BY THE RACROUTE MACRO            @T1A
+.****** THE NEXT 3 BYTES ARE RESERVED AND CLASS NAME ADDR IS       @T1A
+.****** GENERATED AT THE END OF THE LIST.                          @T1A
+         AIF   (NOT &ICHRAC).RCHK345                               @T1A
+         DC    AL3(0)                                              @T1A
+         AGO   .RCHK370                                            @T1A
+.RCHK345 ANOP                                                      @T1A
+.* PRODUCE CLASS NAME ADDRESS IF REQUIRED
+         AIF   ('&CLASS' EQ '').RCHK360
+         AIF   ('&CLASS'(1,1) EQ '(').RCHK360
+         AIF   ('&CLASS'(1,1) EQ '''').RCHK350
+         DC    AL3(&CLASS) -  CLASS NAME ADDRESS
+         AGO   .RCHK370
+.RCHK350 ANOP
+         DC    AL3(ICH1&SYSNDX) CLASS NAME ADDRESS WITHIN LIST @PC003PY
+         AGO   .RCHK370
+.RCHK360 ANOP
+         DC    AL3(0) -       CLASS NAME ADDRESS FIELD
+.RCHK370 ANOP
+.* PRODUCE THIRD FLAG BYTE
+&BIT1    SETA  0                                                   @L4A
+&BIT2    SETA  0
+&BIT3    SETA  0                                                   @L6A
+&BIT4    SETA  0                                                   @L6A
+&BIT5    SETA  0                                                   @L6A
+         AIF   ('&DSTYPE' NE 'M').RCHK372                          @L4A
+&BIT1    SETA  1                                                   @L4A
+.RCHK372 AIF   ('&PROFILE' EQ '').RCHK373
+&BIT2    SETA  1
+.RCHK373 ANOP
+         AIF   ('&GENERIC' EQ '' OR '&GENERIC' EQ 'ASIS').RCHK374  @L6A
+&BIT5    SETA  1         GENERIC=YES SPECIFIED                     @L6A
+.RCHK374 ANOP  ,                                                   @L6A
+         DC    B'0&BIT1&BIT2&BIT3&BIT4&BIT5.00'    1ST PARM FLAGS  @L6A
+.****** IF THIS MACRO WAS INVOKED BY THE RACROUTE MACRO            @T1A
+.****** THE NEXT 3 BYTES ARE RESERVED AND VOLSER ADDR IS           @T1A
+.****** GENERATED AT THE END OF THE LIST.                          @T1A
+         AIF   (NOT &ICHRAC).RCHK380                               @T1A
+         DC    AL3(0)                                              @T1A
+         AGO   .RCHK410                                            @T1A
+.RCHK380 ANOP                                                      @T1A
+         AIF   ('&VOLSER' EQ '').RCHK400
+         AIF   ('&VOLSER'(1,1) EQ '(').RCHK400
+         DC    AL3(&VOLSER) - VOLSER ADDRESS
+         AGO   .RCHK410
+.RCHK400 ANOP
+         DC    AL3(0) -       VOLSER ADDR FIELD
+.RCHK410 ANOP
+         AIF   ('&OLDVOL' EQ '').RCHK415                       @PC002PY
+         AIF   ('&OLDVOL'(1,1) EQ '(').RCHK415                 @PC002PY
+         DC    A(&OLDVOL) - OLD VOLSER ADDRESS                 @PC002PY
+         AGO   .RCHK416                                        @PC002PY
+.RCHK415 ANOP                                                  @PC002PY
+         DC    A(0) -       OLD VOLSER ADDR FIELD              @PC002PY
+.RCHK416 ANOP                                                  @PC002PY
+         AIF   ('&APPL' EQ '').RCHK41B                         @PC003PY
+         AIF   ('&APPL'(1,1) EQ '(').RCHK41B                   @PC003PY
+         AIF   ('&APPL'(1,1) EQ '''').RCHK41A                  @PC003PY
+         DC    A(&APPL) - APPL NAME ADDRESS                    @PC003PY
+         AGO   .RCHK41C                                        @PC003PY
+.RCHK41A ANOP                                                  @PC003PY
+         DC    A(ICH2&SYSNDX) - APPL NAME ADDRESS              @PC003PY
+         AGO   .RCHK41C                                        @PC003PY
+.RCHK41B ANOP                                                  @PC003PY
+         DC    A(0)     - APPL ADDRESS                         @PC003PY
+.RCHK41C ANOP                                                  @PC003PY
+         AIF   ('&ACEE' EQ '').RCHK41D                         @PC003PY
+         AIF   ('&ACEE'(1,1) EQ '(').RCHK41D                   @PC003PY
+         DC    A(&ACEE) - ACEE NAME ADDRESS                    @PC003PY
+         AGO   .RCHK41E                                        @PC003PY
+.RCHK41D ANOP                                                  @PC003PY
+         DC    A(0)     - ACEE ADDRESS                         @PC003PY
+.RCHK41E ANOP                                                  @PC003PY
+         AIF   ('&OWNER' EQ '').RCHK41F                          @L4A
+         AIF   ('&OWNER'(1,1) EQ '(').RCHK41F                    @L4A
+         DC    A(&OWNER) - OWNER NAME ADDRESS.                   @L4A
+         AGO   .RCHK41G                                          @L4A
+.RCHK41F ANOP  ,                                                 @L4A
+         DC    A(0)     - OWNER ADDRESS.                         @L4A
+.RCHK41G ANOP  ,                                                 @L4A
+.******************************************************            @T1A
+.* IF THIS MACRO WAS INVOKED INTERNALLY BY THE RACROUTE            @T1A
+.* MACRO, INSTLN,CLASS,ENTITY,PROFILE,AND VOLSER ARE               @T1A
+.* PRODUCED HERE AS 31-BIT ADDRESSES.                              @T1A
+.******************************************************            @T1A
+         AIF   (NOT &ICHRAC).RCHK41Z                               @T1A
+.* PRODUCE INSTLN ADDRESS FIELD                                    @T1A
+         AIF   ('&INSTLN' EQ '' OR                                     *
+               '&INSTLN(1)' NE '&INSTLN').RCHK41H                  @T1A
+         DC    A(&INSTLN)   ADDRESS OF INSTALLATION DATA           @T1A
+         AGO   .RCHK41J                                            @T1A
+.RCHK41H ANOP                                                      @T1A
+         DC    A(0)            ADDRESS OF INSTALLATION DATA        @T1A
+.RCHK41J ANOP                                                      @T1A
+.* PRODUCE ENTITY NAME OR PROFILE ADDRESS                          @T1A
+         AIF   ('&ENTITY(1)' EQ '').RCHK41K                        @T1A
+         AIF   ('&ENTITY(1)'(1,1) EQ '(').RCHK41K                  @T1A
+         DC    A(&ENTITY(1))   ENTITY NAME ADDRESS                 @T1A
+         AGO   .RCHK41M                                            @T1A
+.RCHK41K ANOP                                                      @T1A
+         AIF   ('&PROFILE' EQ '').RCHK41L                          @T1A
+         AIF   ('&PROFILE'(1,1) EQ '(').RCHK41L                    @T1A
+         DC    A(&PROFILE)      PROFILE ADDRESS                    @T1A
+         AGO   .RCHK41M                                            @T1A
+.RCHK41L ANOP                                                      @T1A
+         DC    A(0)             ENTITY OR PROFILE ADDRESS FIELD    @T1A
+.RCHK41M ANOP                                                      @T1A
+.* PRODUCE CLASS NAME ADDRESS IF REQUIRED                          @T1A
+         AIF   ('&CLASS' EQ '').RCHK41P                            @T1A
+         AIF   ('&CLASS'(1,1) EQ '(').RCHK41P                      @T1A
+         AIF   ('&CLASS'(1,1) EQ '''').RCHK41N                     @T1A
+         DC    A(&CLASS)       CLASS NAME ADDRESS                  @T1A
+         AGO   .RCHK41Q                                            @T1A
+.RCHK41N ANOP                                                      @T1A
+         DC    A(ICH1&SYSNDX) CLASS NAME ADDRESS WITHIN LIST       @T1A
+         AGO   .RCHK41Q                                            @T1A
+.RCHK41P ANOP                                                      @T1A
+         DC    A(0)            CLASS NAME ADDRESS FIELD            @T1A
+.RCHK41Q ANOP                                                      @T1A
+.* PRODUCE VOLSER ADDRESS FIELD                                    @T1A
+         AIF   ('&VOLSER' EQ '').RCHK41R                           @T1A
+         AIF   ('&VOLSER'(1,1) EQ '(').RCHK41R                     @T1A
+         DC    A(&VOLSER)      VOLSER ADDRESS                      @T1A
+         AGO   .RCHK41Z                                            @T1A
+.RCHK41R ANOP                                                      @T1A
+         DC    A(0)            VOLSER ADDR FIELD                   @T1A
+.RCHK41Z ANOP                                                      @T1A
+         AIF   (&ICHRAC).RCHK41Y                                   @L5A
+.* GENERATE FOUR UNUSED FULLWORDS FOR 31-BIT COMPATIBILITY         @L5A
+         DC    4A(0)                                               @L5A
+.RCHK41Y ANOP                                                      @L5A
+         AIF   ('&ACCLVL' NE '').RCHKACH                         @L5A
+         DC    A(0)     - ACCESS VALUE ADDRESS.                  @L5A
+         DC    A(0)     - 2ND ACCESS ADDRESS.                    @L5A
+         AGO   .RCHKACI                                          @L5A
+.RCHKACH ANOP  ,                                                 @L5A
+         AIF   (T'&ACCLVL(1) NE 'O').RCHKACJ                     @L5A
+         DC    A(0)     - ACCESS VALUE ADDRESS.                  @L5A
+         AGO   .RCHKACL                                          @L5A
+.RCHKACJ ANOP  ,                                                 @L5A
+         AIF   ('&ACCLVL(1)'(1,1) NE '(').RCHKACK                @L5A
+         DC    A(0)     - ACCESS VALUE ADDRESS.                  @L5A
+         AGO   .RCHKACL                                          @L5A
+.RCHKACK ANOP  ,                                                 @L5A
+         DC    A(&ACCLVL(1)) - ACCESS VALUE ADDRESS.             @L5A
+.RCHKACL ANOP  ,                                                 @L5A
+         AIF   (T'&ACCLVL(2) NE 'O').RCHKACM                     @L5A
+         DC    A(0)     - 2ND ACCESS ADDRESS.                    @L5A
+         AGO   .RCHKACI                                          @L5A
+.RCHKACM ANOP  ,                                                 @L5A
+         AIF   ('&ACCLVL(2)'(1,1) NE '(').RCHKACN                @L5A
+         DC    A(0)     - 2ND ACCESS ADDRESS.                    @L5A
+         AGO   .RCHKACI                                          @L5A
+.RCHKACN ANOP  ,                                                 @L5A
+         DC    A(&ACCLVL(2)) - 2ND ACCESS ADDRESS.               @L5A
+.RCHKACI ANOP  ,                                                 @L5A
+.* IF CLASSNAME SPECIFIED EXPLICITLY, PRODUCE IT BELOW LIST FORM
+         AIF   ('&CLASS' EQ '').RCHK417
+         AIF   ('&CLASS'(1,1) NE '''').RCHK417
+&CLNGTH  SETA  K'&CLASS-2
+ICH1&SYSNDX EQU   *+1                                          @PC003PY
+         DC    AL2(&CLNGTH) - CLASS NAME LENGTH
+.* NOTE THAT TWO BYTES MUST BE RESERVED FOR ALIGNMENT OF SVC THAT MAY
+.* FOLLOW IN STANDARD FORM USAGE
+         DC    CL8&CLASS
+.* IF APPLNAME SPECIFIED EXPLICITLY, PRODUCE IT BELOW LIST FORM
+.RCHK417 ANOP                                                  @PC003PY
+         AIF   ('&APPL' EQ '').RCHK420                         @PC003PY
+         AIF   ('&APPL'(1,1) NE '''').RCHK420                  @PC003PY
+ICH2&SYSNDX DC    CL8&APPL                                     @PC003PY
+.* LIST FORM COMPLETE - TEST FOR STANDARD FORM PASS THROUGH LIST FORM
+.RCHK420 ANOP
+         AIF   (&MFFLAG).RCHK520
+         MEXIT
+.RCHK430 ANOP
+         AIF   ('&MF(1)' EQ 'E').RCHK530
+.* STANDARD FORM REQUESTED
+&SYMBOL  DS    0H
+&MFFLAG  SETB  1              SET TRUE FOR PASS THROUGH LIST FORM
+.* PRODUCE INSTRUCTIONS TO MODIFY IN-LINE LIST FORM WITH REGISTER ADDRS
+         AIF   ('&INSTLN' EQ '' OR '&INSTLN(1)' EQ '&INSTLN').RCHK431
+         AIF   (NOT &ICHRAC).RCHK43A                               @T1A
+         ST    &INSTLN(1),ICH0&SYSNDX+32  STORE INSTLN DATA ADDR   @T1A
+         AGO   .RCHK431                                            @T1A
+.RCHK43A ANOP                                                      @T1A
+         STCM  &INSTLN(1),7,ICH0&SYSNDX+1 -STORE INSTALLATION DATA ADDR
+.RCHK431 ANOP
+         AIF   ('&ENTITY(1)' EQ '').RCHK440                    @PC002PY
+         AIF   ('&ENTITY(1)'(1,1) NE '(').RCHK440              @PC002PY
+&SUBSTR  SETC  '&ENTITY(1)'(2,K'&ENTITY(1)-2)
+         AIF   (NOT &ICHRAC).RCHK435                               @T1A
+         ST    &SUBSTR,ICH0&SYSNDX+36     STORE ENTITY NAME ADDR   @T1A
+         AGO   .RCHK440                                            @T1A
+.RCHK435 ANOP                                                      @T1A
+         STCM  &SUBSTR,7,ICH0&SYSNDX+5 - STORE ENTITY NAME ADDRESS
+.RCHK440 ANOP
+         AIF   ('&PROFILE' EQ '').RCHK460
+         AIF   ('&PROFILE'(1,1) NE '(').RCHK460
+         AIF   (NOT &ICHRAC).RCHK450                               @T1A
+         ST    &PROFILE(1),ICH0&SYSNDX+36     STORE PROFILE ADDR   @T1A
+         AGO   .RCHK460                                            @T1A
+.RCHK450 ANOP                                                      @T1A
+         STCM  &PROFILE(1),7,ICH0&SYSNDX+5 - STORE PROFILE ADDRESS
+.RCHK460 ANOP
+         AIF   ('&CLASS' EQ '').RCHK470
+         AIF   ('&CLASS'(1,1) NE '(').RCHK470
+         AIF   (NOT &ICHRAC).RCHK465                               @T1A
+         ST    &CLASS(1),ICH0&SYSNDX+40    STORE CLASS NAME ADDR   @T1A
+         AGO   .RCHK470                                            @T1A
+.RCHK465 ANOP                                                      @T1A
+         STCM  &CLASS(1),7,ICH0&SYSNDX+9 - STORE CLASS NAME ADDRESS
+.RCHK470 ANOP
+         AIF   ('&ATTR' EQ '').RCHK495
+         AIF   ('&ATTR'(1,1) NE '(').RCHK495
+         STC   &ATTR(1),ICH0&SYSNDX+8 - STORE ATTR VALUE
+.RCHK495 ANOP
+         AIF   ('&VOLSER' EQ '').RCHK500
+         AIF   ('&VOLSER'(1,1) NE '(').RCHK500
+         AIF   (NOT &ICHRAC).RCHK498                               @T1A
+         ST    &VOLSER(1),ICH0&SYSNDX+44    STORE VOLSER ADDR      @T1A
+         AGO   .RCHK500                                            @T1A
+.RCHK498 ANOP                                                      @T1A
+         STCM  &VOLSER(1),7,ICH0&SYSNDX+13 - STORE VOLSER ADDRESS
+.RCHK500 ANOP
+         AIF   ('&OLDVOL' EQ '').RCHK501                       @PC002PY
+         AIF   ('&OLDVOL'(1,1) NE '(').RCHK501                 @PC002PY
+         ST    &OLDVOL(1),ICH0&SYSNDX+16 - STORE OLD VOLSER    @PC002PY
+.RCHK501 ANOP
+         AIF   ('&APPL' EQ '').RCHK502                         @PC003PY
+         AIF   ('&APPL'(1,1) NE '(').RCHK502                   @PC003PY
+         ST    &APPL(1),ICH0&SYSNDX+20 - STORE APPL ADDRESS    @PC003PY
+.RCHK502 ANOP                                                  @PC003PY
+         AIF   ('&ACEE' EQ '').RCHK503                         @PC003PY
+         AIF   ('&ACEE'(1,1) NE '(').RCHK503                   @PC003PY
+         ST    &ACEE(1),ICH0&SYSNDX+24 - STORE ACEE ADDRESS    @PC003PY
+.RCHK503 ANOP                                                  @PC003PY
+         AIF   ('&OWNER' EQ '').RCHK504                          @L4A
+         AIF   ('&OWNER'(1,1) NE '(').RCHK504                    @L4A
+         ST    &OWNER(1),ICH0&SYSNDX+28 - STORE OWNER ADDRESS.   @L4A
+.RCHK504 ANOP  ,                                                 @L4A
+         AIF   ('&ACCLVL' EQ '').RCHK506                         @L5A
+         AIF   ('&ACCLVL(1)'(1,1) NE '(').RCHK505                @L5A
+         AIF   (T'&ACCLVL(1) EQ 'O').RCHK505                     @L5A
+         ST    &ACCLVL(1),ICH0&SYSNDX+48 - STORE ACCESS ADDRESS. @L5A
+.RCHK505 ANOP  ,                                                 @L5A
+         AIF   (T'&ACCLVL(2) EQ 'O').RCHK506                     @L5A
+         AIF   ('&ACCLVL(2)'(1,1) NE '(').RCHK506                @L5A
+         ST    &ACCLVL(2),ICH0&SYSNDX+52 - STORE 2ND ACC ADDR.   @L5A
+.RCHK506 ANOP  ,                                                 @L5A
+.* LIST FORM MODIFICATION COMPLETE - PRODUCE LIST FORM WITH BAL AROUND
+         CNOP  0,4
+&OFFSET  SETA  60                                                @L5A
+         AIF   ('&CLASS' EQ '').RCHK518
+         AIF   ('&CLASS'(1,1) NE '''').RCHK518
+&OFFSET  SETA  &OFFSET+10                                      @PC003PY
+.RCHK518 ANOP
+         AIF   ('&APPL' EQ '').RCHK519                         @PC003PY
+         AIF   ('&APPL'(1,1) NE '''').RCHK519                  @PC003PY
+&OFFSET  SETA  &OFFSET+8                                       @PC003PY
+.RCHK519 ANOP                                                  @PC003PY
+         BAL   1,*+&OFFSET -  POINT REG 1 AT PARM LIST
+         AGO   .RCHK160
+.RCHK520 ANOP
+.************************************************************      @T1A
+.* IF THIS MACRO WAS INVOKED INTERNALLY BY THE RACROUTE            @T1A
+.* MACRO, SIMPLY EXIT RATHER  THAN GOING TO THE RACF ROUTINE.      @T1A
+.************************************************************      @T1A
+         AIF   (&ICHRAC).RCHK525                                   @T1A
+.* RETURN FROM LIST FORM TO PRODUCE SVC
+         SVC   130               INVOKE RACHECK SVC ROUTINE
+.RCHK525 ANOP                                                      @T1A
+         MEXIT
+.RCHK530 ANOP
+.* PRODUCE EXECUTE FORM OF MACRO
+         AIF   (&ICHRAC).RCK530A                                   @T1A
+&SYMBOL  IHBINNRA &MF(2) -    POINT REG1 AT LIST FORM
+         AGO   .RCHK53A                                            @T1A
+.***********************************************************       @T1A
+.* IF THIS MACRO IS BEING INVOKED INTERNALLY BY THE RACROUTE       @T1A
+.* MACRO, PICK UP THE ADDRESS OF THE RACHECK PARAMETER LIST        @T1A
+.* FROM THE RACROUTE PARAMETER LIST.                               @T1A
+.***********************************************************       @T1A
+.RCK530A ANOP                                                      @T1A
+         A     1,36(1)        POINT REG 1 AT RACHECK LIST          @T1A
+.RCHK53A ANOP                                                      @T1A
+.* PRODUCE INSTRUCTIONS TO MODIFY LIST
+.* PRODUCE INSTALLATION DATA ADDRESS
+         AIF   ('&INSTLN' EQ '').RCHK531
+         AIF   ('&INSTLN'(1,1) NE '(').RCHK532
+         AIF   (NOT &ICHRAC).RCHK53B                               @T1A
+         ST    &INSTLN(1),32(1)    STORE INSTALLATION ADDR         @T1A
+         AGO   .RCHK531                                            @T1A
+.RCHK53B ANOP                                                      @T1A
+         STCM  &INSTLN(1),7,1(1) - STORE INSTALLATION ADDR
+         AGO   .RCHK531
+.RCHK532 ANOP
+         LA    0,&INSTLN - ADDRESS INSTALLATION DATA ADDRESS
+         AIF   (NOT &ICHRAC).RCHK53C                               @T1A
+         ST    0,32(1)    STORE INSTALLATION ADDR                  @T1A
+         AGO   .RCHK531                                            @T1A
+.RCHK53C ANOP                                                      @T1A
+         STCM  0,7,1(1) - STORE INSTALLATION DATA ADDRESS
+.RCHK531 ANOP
+.* FLAGS FIELD
+         AIF   ('&ENTITY(2)' EQ '' AND '&DSTYPE' EQ '' AND '&LOG' EQ ''X
+                AND '&RACFIND' EQ '').RCHK534                      @L6A
+         AGO   .RCHK535                                            @L6A
+.RCHK534 ANOP  ,                                                   @L6A
+         AIF   ('&GENERIC' EQ '').RCHK623                          @L6A
+         AGO   .RCHK616                                            @L6A
+.RCHK535 ANOP  ,                                                   @L6A
+&BIX0    SETA  1                   ASSUME THAT                     @L5A
+&BIX1    SETA  1                     RACFIND IS NOT CODED          @L5A
+         AIF   ('&RACFIND' EQ '').RCHK540                          @L5A
+&BIX0    SETA  0                   RACFIND                         @L5A
+&BIX1    SETA  0                     IS                            @L5A
+&BIT0    SETA  1                       CODED                       @L5A
+         AIF   ('&RACFIND' EQ 'NO').RCHK540                        @L5A
+&BIT1    SETA  1                   RACFIND=YES CODED               @L5A
+.RCHK540 ANOP                                                      @L5A
+&BIX7    SETA  1                  ASSUME ENTITY(2) OMMITTED    @PC002PY
+         AIF   ('&ENTITY(2)' EQ '').RCHK550 SKIP IF OMMITED    @PC002PY
+&BIX7    SETA  0                  CLEAR CSA BIT                @PC002PY
+         AIF   ('&ENTITY(2)' NE 'CSA').RCHK550 SKIP NOT VALID  @PC002PY
+&BIT7    SETA  1                  SET CSA OPTION BIT           @PC002PY
+.RCHK550 ANOP
+&BIX3    SETA  1                  ASSUME DSTYPE OMMITED        @PC002PY
+         AIF   ('&DSTYPE' EQ '' ).RCHK580 SKIP IF OMMITED      @PC002PY
+&BIX3    SETA  0                  CLEAR DSTYPE BIT             @PC002PY
+         AIF   ('&DSTYPE' NE 'V' ).RCHK580 SKIP NOT VSAM       @PC002PY
+&BIT3    SETA  1                  SET DSTYPE=V BIT             @PC002PY
+.RCHK580 ANOP
+&BIX5    SETA  1                  ASSUME LOG OMITTED           @PC002PY
+&BIX6    SETA  1                  ASSUME LOG OMMITED           @PC002PY
+         AIF   ('&LOG' EQ '').RCHK610 SKIP IF OMITTED          @PC002PY
+&BIX5    SETA  0                  CLEAR LOG BITS               @PC002PY
+&BIX6    SETA  0                                               @PC002PY
+         AIF   ('&LOG' NE 'NOFAIL' AND                                 -
+               '&LOG' NE 'NOSTAT').RCHK600                     @ZA60572
+&BIT5    SETA  1
+.RCHK600 ANOP
+         AIF   ('&LOG' NE 'NONE' AND                                   -
+               '&LOG' NE 'NOSTAT').RCHK610                     @ZA60572
+&BIT6    SETA  1
+.RCHK610 ANOP
+.******************************************************            @T1A
+.* IF THIS MACRO WAS INVOKED INTERNALLY BY THE RACROUTE            @T1A
+.* MACRO, THE PARAMETER LIST HAS 31-BIT ADDRESSING.                @T1A
+.******************************************************            @T1A
+&BIX4    SETA  0                  ASSUME 24-BIT ADDRESSING         @T1A
+         AIF   (NOT &ICHRAC).RCHK615                               @T1A
+&BIT4    SETA  1                  31-BIT ADDRESSING                @T1A
+.RCHK615 ANOP                                                      @T1A
+         NI    4(1),B'&BIX0&BIX1&BIX2&BIX3&BIX4&BIX5&BIX6&BIX7'
+         OI    4(1),B'&BIT0&BIT1&BIT2&BIT3&BIT4&BIT5&BIT6&BIT7' FLAGS
+.RCHK616 ANOP  ,                                                   @L6A
+         AIF   ('&DSTYPE' EQ 'M' OR T'&DSTYPE EQ 'O').RCHK620  @ZA56981
+         AIF   ('&GENERIC' NE 'ASIS').RCHK618                      @L6A
+.RCHK617 ANOP  ,                                                   @L6A
+         NI    12(1),B'10111011'   RESET GENERIC=ASIS, DSTYPE=M    @L6A
+         AGO   .RCHK624                                            @L6A
+.RCHK618 ANOP  ,                                                   @L6A
+         NI    12(1),B'10111111' - RESET DSTYPE=M              @ZA56981
+.RCHK620 ANOP
+         AIF   ('&DSTYPE' NE 'M').RCHK622                          @L4A
+         NI    4(1),B'11101111' - RESET DSTYPE=V               @ZA56981
+         AIF   ('&GENERIC' NE 'YES').RCHK621                       @L6A
+         OI    12(1),B'01000100'  GENERIC=YES, DSTYPE=M            @L6A
+         AGO   .RCHK624                                            @L6A
+.RCHK621 ANOP  ,                                                   @L4A
+         OI    12(1),B'01000000' - SET DSTYPE=M FLAG.              @L6A
+         AGO   .RCHK623                                            @L6A
+.RCHK622 ANOP  ,                                                   @L4A
+         AIF   ('&GENERIC' NE 'YES').RCHK623                       @L6A
+         OI    12(1),B'00000100' - SET GENERIC=YES FLAG            @L6A
+.RCHK623 ANOP  ,                                                   @L6A
+         AIF   ('&GENERIC' NE 'ASIS').RCHK624                      @L6A
+         NI    12(1),B'11111011' - RESET GENERIC=ASIS FLAG         @L6A
+.RCHK624 ANOP  ,                                                   @L6A
+.* HANDLE ADDRESS TYPE PARAMETERS
+         AIF   ('&ENTITY(1)' EQ '').RCHK640                    @PC002PY
+         AIF   ('&ENTITY(1)'(1,1) NE '(').RCHK630
+         AIF   (NOT &ICHRAC).RCHK625                               @T1A
+         ST    &ENTITY(1),36(1)    STORE ENTITY NAME ADDRESS       @T1A
+         AGO   .RCHK680                                            @T1A
+.RCHK625 ANOP                                                      @T1A
+         STCM  &ENTITY(1),7,5(1) - STORE ENTITY NAME ADDRESS
+         AGO   .RCHK680
+.RCHK630 ANOP
+         LA    0,&ENTITY(1) - MOVE ENTITY NAME ADDRESS
+         AIF   (NOT &ICHRAC).RCHK635                               @T1A
+         ST    0,36(1)         INTO PARM LIST                      @T1A
+         AGO   .RCHK680                                            @T1A
+.RCHK635 ANOP                                                      @T1A
+         STCM  0,7,5(1) -      INTO PARM LIST
+         AGO   .RCHK680
+.RCHK640 ANOP
+         AIF   ('&PROFILE' EQ '').RCHK680
+         AIF   ('&PROFILE'(1,1) NE '(').RCHK670
+         AIF   (NOT &ICHRAC).RCHK650                               @T1A
+         ST    &PROFILE(1),36(1)    STORE PROFILE ADDRESS          @T1A
+         AGO   .RCHK680                                            @T1A
+.RCHK650 ANOP                                                      @T1A
+         STCM  &PROFILE(1),7,5(1) - STORE PROFILE ADDRESS
+         AGO   .RCHK680
+.RCHK670 ANOP
+         LA    0,&PROFILE -   MOVE PROFILE ADDRESS
+         AIF   (NOT &ICHRAC).RCHK675                               @T1A
+         ST    0,36(1)         INTO PARM LIST                      @T1A
+         AGO   .RCHK680                                            @T1A
+.RCHK675 ANOP                                                      @T1A
+         STCM  0,7,5(1) -      INTO PARM LIST
+.RCHK680 ANOP
+.* PRODUCE SECOND FLAGS BYTE WITH ATTR SPECS
+         AIF   ('&ATTR' EQ '').RCHK750
+         AIF   ('&ATTR'(1,1) EQ '(').RCHK745
+         AIF   ('&ATTR' NE 'ALTER').RCHK690
+         MVI   8(1),X'80' -   SET FOR ALTER ACCESS
+         AGO   .RCHK750
+.RCHK690 ANOP
+         AIF   ('&ATTR' NE 'UPDATE').RCHK730
+         MVI   8(1),X'04'               SET FOR UPDATE ACCESS
+         AGO   .RCHK750
+.RCHK730 ANOP
+         AIF   ('&ATTR' NE 'READ').RCHK740
+         MVI   8(1),X'02'               SET FOR READ ACCESS
+         AGO   .RCHK750
+.RCHK740 ANOP
+         AIF   ('&ATTR' NE 'CONTROL').RCHK750
+         MVI   8(1),X'08'               SET FOR CONTROL ACCESS
+         AGO   .RCHK750
+.RCHK745 ANOP
+         STC   &ATTR(1),8(1) - STORE ATTR VALUE IN LIST FORM
+.RCHK750 ANOP
+.* HANDLE CLASS PARAMETER
+         AIF   ('&CLASS' EQ '').RCHK756
+         AIF   ('&CLASS'(1,1) EQ '''').ERR09
+         AIF   ('&CLASS'(1,1) NE '(').RCHK754
+         AIF   (NOT &ICHRAC).RCHK752                               @T1A
+         ST    &CLASS(1),40(1)   STORE CLASS NAME ADDRESS          @T1A
+         AGO   .RCHK756                                            @T1A
+.RCHK752 ANOP                                                      @T1A
+         STCM  &CLASS(1),7,9(1) - STORE CLASS NAME ADDRESS
+         AGO   .RCHK756
+.RCHK754 ANOP
+         LA    0,&CLASS -     MOVE CLASS NAME ADDRESS
+         AIF   (NOT &ICHRAC).RCHK755                               @T1A
+         ST    0,40(1)         INTO PARM LIST                      @T1A
+         AGO   .RCHK756                                            @T1A
+.RCHK755 ANOP                                                      @T1A
+         STCM  0,7,9(1) -      INTO PARM LIST
+.ERTN09  ANOP
+.RCHK756 ANOP
+.* MODIFY THIRD FLAGS BYTE IF FIRST PARM SPECIFIED
+         AIF   ('&PROFILE' EQ '').RCHK759
+         OI    12(1),B'00100000' SET FOR PROFILE ADDRESS       @ZA56981
+.RCHK759 ANOP
+.* HANDLE VOLSER PARAMETERS
+         AIF   ('&VOLSER' EQ '').RCHK810
+         AIF   ('&VOLSER'(1,1) NE '(').RCHK800
+         AIF   (NOT &ICHRAC).RCHK75A                               @T1A
+         ST    &VOLSER(1),44(1)    STORE VOLSER ADDRESS            @T1A
+         AGO   .RCHK810                                            @T1A
+.RCHK75A ANOP                                                      @T1A
+         STCM  &VOLSER(1),7,13(1) -  STORE VOLSER ADDRESS
+         AGO   .RCHK810
+.RCHK800 ANOP
+         LA    0,&VOLSER -    MOVE VOLSER ADDRESS
+         AIF   (NOT &ICHRAC).RCHK805                               @T1A
+         ST    0,44(1)          INTO PARM LIST                     @T1A
+         AGO   .RCHK810                                            @T1A
+.RCHK805 ANOP                                                      @T1A
+         STCM  0,7,13(1) -      INTO PARM LIST
+.RCHK810 ANOP
+         AIF   ('&OLDVOL' EQ '').RCHK820                       @PC00P2Y
+         AIF   ('&OLDVOL'(1,1) NE '(').RCHK815                 @PC002PY
+         ST    &OLDVOL(1),16(1) - STORE OLD VOLSER ADDRESS     @PC002PY
+         AGO   .RCHK820                                        @PC002PY
+.RCHK815 ANOP                                                  @PC002PY
+         LA    0,&OLDVOL -   MOVE OLD VOLSER ADDRESS           @PC002PY
+         ST    0,16(1) -      INTO PARM LIST                   @PC002PY
+.RCHK820 ANOP                                                  @PC002PY
+         AIF   ('&APPL' EQ '').RCHK835                         @PC003PY
+         AIF   ('&APPL'(1,1) EQ '''').ERR10                    @PC003PY
+         AIF   ('&APPL'(1,1) NE '(').RCHK830                   @PC003PY
+         ST    &APPL(1),20(1) - STORE APPL ADDRESS             @PC003PY
+         AGO   .RCHK835                                        @PC003PY
+.RCHK830 ANOP                                                  @PC003PY
+         LA    0,&APPL -     MOVE APPL ADDRESS                 @PC003PY
+         ST    0,20(1) -      INTO PARM LIST                   @PC003PY
+.ERTN10  ANOP                                                  @PC003PY
+.RCHK835 ANOP                                                  @PC003PY
+         AIF   ('&ACEE' EQ '').RCHK845                         @PC003PY
+         AIF   ('&ACEE'(1,1) NE '(').RCHK840                   @PC003PY
+         ST    &ACEE(1),24(1) - STORE ACEE ADDRESS             @PC003PY
+         AGO   .RCHK845                                        @PC003PY
+.RCHK840 ANOP                                                  @PC003PY
+         LA    0,&ACEE -     MOVE ACEE ADDRESS                 @PC003PY
+         ST    0,24(1) -      INTO PARM LIST                   @PC003PY
+.RCHK845 ANOP                                                  @PC003PY
+         AIF   ('&OWNER' EQ '').RCHK855                          @L4A
+         AIF   ('&OWNER'(1,1) NE '(').RCHK850                    @L4A
+         ST    &OWNER(1),28(1) - STORE OWNER ADDRESS.            @L4A
+         AGO   .RCHK855                                          @L4A
+.RCHK850 ANOP  ,                                                 @L4A
+         LA    0,&OWNER -    MOVE OWNER ADDRESS                  @L4A
+         ST    0,28(1)  -     INTO PARM LIST.                    @L4A
+.RCHK855 ANOP  ,                                                 @L4A
+         AIF   ('&ACCLVL' EQ '').RCHK859                         @L5A
+         AIF   (T'&ACCLVL(1) EQ 'O').RCHK857                     @L5A
+         AIF   ('&ACCLVL(1)'(1,1) NE '(').RCHK856                @L5A
+         ST    &ACCLVL(1),48(1) - STORE ACCESS VALUE ADDRESS.    @L5A
+         AGO   .RCHK857                                          @L5A
+.RCHK856 ANOP  ,                                                 @L5A
+         LA    0,&ACCLVL(1) - MOVE ACCESS VALUE ADDRESS          @L5A
+         ST    0,48(1)      -  INTO PARM LIST.                   @L5A
+.RCHK857 ANOP  ,                                                 @L5A
+         AIF   (T'&ACCLVL(2) EQ 'O').RCHK859                     @L5A
+         AIF   ('&ACCLVL(2)'(1,1) NE '(').RCHK858                @L5A
+         ST    &ACCLVL(2),52(1) - STORE 2ND ACC ADDRESS.         @L5A
+         AGO   .RCHK859                                          @L5A
+.RCHK858 ANOP  ,                                                 @L5A
+         LA    0,&ACCLVL(2) - MOVE 2ND ACCESS ADDRESS            @L5A
+         ST    0,52(1)      -  INTO PARM LIST.                   @L5A
+.RCHK859 ANOP  ,                                                 @L5A
+.* MODIFICATION COMPLETE - AGO ABOVE TO PRODUCE ENTRY LOGIC
+         AGO   .RCHK520
+.* DIAGNOSTICS
+.ERR00   ANOP
+         MNOTE 8,'*** ENTITY OR PROFILE PARM REQUIRED ***'
+         AGO   .ERTN00
+.ERR02   ANOP
+         MNOTE 8,'*** INVALID LOG PARAMETER SPECIFIED ***'
+         AGO   .ERTN02
+.ERR03   ANOP
+         MNOTE 8,'*** INVALID DSTYPE PARAMETER SPECIFIED ***'
+         AGO   .ERTN03
+.ERR04   ANOP
+         MNOTE 8,'*** INVALID ATTR PARAMETER SPECIFIED ***'
+         AGO   .ERTN04
+.ERR05   ANOP                                                      @L5A
+         MNOTE 8,'*** INVALID RACFIND PARAMETER SPECIFIED ***'     @L5A
+         AGO   .ERTN05                                             @L5A
+.ERR06   ANOP
+         MNOTE 8,'*** INVALID MF PARAMETER SPECIFIED ***'
+         AGO   .ERTN06
+.ERR07   ANOP
+         MNOTE 8,'*** REGISTER ADDRESS SPECIFICATION NOT ALLOWED WITH L-
+               IST FORM ***'
+         AGO   .ERTN07
+.ERR09   ANOP
+         MNOTE 8,'*** ''CLASSNAME'' FORM NOT ALLOWED WITH MF=E ***'
+         AGO   .ERTN09
+.ERR10   ANOP                                                  @PC003PY
+         MNOTE 8,'*** ''APPLNAME'' FORM NOT ALLOWED WITH MF=E ***'
+         AGO   .ERTN10                                         @PC003PY
+.ERR11   ANOP                                                  @PC003PY
+         MNOTE 8,'*** INVALID GENERIC PARAMETER SPECIFIED ***'     @L6A
+         AGO   .ERTN11                                             @L6A
+         MEND
+**/
+

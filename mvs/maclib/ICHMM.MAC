@@ -1,0 +1,91 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*********************************************************************
+*
+*  $MAC(ICHMM) COMP(SC1BN) PROD(SAF):
+*
+*  DESCRIPTIVE NAME = ROUTE INNER MACRO,PARAMETER LIST GENERATOR
+*
+*
+*  STATUS = OS/VS2 EBB1102
+*
+*  FUNCTION = THIS INNER MACRO MAY BE USED BY ANY MACRO TO GENERATE
+*             A PARAMETER IN A PARAMETER LIST.
+*
+*  MODULE TYPE = MACRO
+*
+*  CHANGE ACTIVITY =
+*                    $T0=UZ90211,SAF/RF15,811015,CNTDSD:
+*                    UZ90283                                   @ZA90283
+*                    UZ90284                                   @ZA90284
+*                    UZ90285                                   @ZA90285
+*
+**********************************************************************
+         MACRO
+&NAME    ICHMM &PARM
+.* DEFINE GLOBAL SET VARIABLES
+         GBLA  &ICHCT          ICHCT - A COUNTER USED TO
+.*                             DETERMINE THE DISPLACEMENT IN THE
+.*                             PARAMETER LIST WHERE THE PARAMETER
+.*                             SHOULD BE PLACED.
+.*                             THE COUNTER IS INCREMENTED
+.*                             BY 1 ON EACH CALL BEFORE EXIT.
+         GBLB  &ICHLIST        ICHLIST - A FLAG WHICH INDICATES THE
+.*                             FORMAT OF THE MACRO. FOR LIST FORMAT,
+.*                             ICHLIST IS ON, FOR EXECUTE FORMAT, OFF.
+.*                             FOR STANDARD FORMAT,IF ICHLIST IS ON,
+.*                             IT IS THE LIST PASS OF STANDARD, IF
+.*                             ICHLIST IS OFF, IT IS THE EXECUTE PASS.
+         GBLB  &ICHNTFY        ICHNTFY - A GLOBAL INDICATOR WHICH IS
+.*                             SET BY THE OUTER(CALLING) MACRO.
+.*                             IF ICHNTFY IS ON, NO MNOTE WILL BE
+.*                             ISSUED - IT WILL BE LEFT TO THE OUTER
+.*                             MACRO TO DEAL WITH THE ERROR.
+         GBLB  &ICHINER        ICHINER - A GLOBAL INDICATOR WHICH IS
+.*                             USED TO COOMUNICATE TO THE OUTER MACRO
+.*                             THAT AN ERROR WAS FOUND IN A PARAMETER.
+         GBLC  &ICHMF          ICHMF - AN INDICATOR OF THE FORMAT
+.*                             L, E, OR S.
+.*  DEFINE LOCAL SET VARIABLES
+         LCLA  &DISP           DISP - THE DISPLACEMENT INTO THE
+.*                             PARAMETER LIST WHERE THE PARAMETER
+.*                             IS TO BE PLACED.
+.*  CALCULATE DISPLACEMENT OF PARAMETER INTO LIST
+&DISP    SETA  (&ICHCT*4)
+         AIF   (NOT &ICHLIST).AVM003
+.************************************************
+.*  GENERATE PARAMETER LIST ENTRY FOR LIST FORMAT
+.*  OR FOR LIST PASS OF STANDARD FORMAT.
+.************************************************
+         AIF   ('&PARM' EQ '').AVM001
+         AIF   ('&PARM'(1,1) NE '(').AVM002
+         AIF   ('&ICHMF' EQ 'L').ERR01      REG INVALID FOR MF=L
+.AVM001  ANOP
+         DC    A(0)
+         AGO   .AVMXIT
+.AVM002  ANOP
+         DC    A(&PARM)
+         AGO   .AVMXIT
+.*******************************************************
+.*  INSERT VALUE INTO PARAMETER LIST FOR EXECUTE FORMAT,
+.*  OR FOR EXECUTE PASS OF STANDARD FORMAT.
+.*******************************************************
+.AVM003  ANOP
+         AIF   ('&PARM' EQ '').AVMXIT
+         AIF   ('&PARM'(1,1) NE '(').AVM004
+         ST    &PARM(1),&DISP.(1)
+         AGO   .AVMXIT
+.AVM004  ANOP
+         AIF   ('&ICHMF' EQ 'S').AVMXIT
+         LA    15,&PARM
+         ST    15,&DISP.(1)
+         AGO   .AVMXIT
+.*   ERROR MESSAGE
+.ERR01   ANOP
+&ICHINER SETB  1           INDICATE ERROR FOUND
+         AIF   (&ICHNTFY).AVMXIT   ICHNTFY ON - LEAVE MACRO NORMALLY
+         MNOTE 12,'***INVALID FORMAT FOR LIST FORM - &PARM'
+         MEXIT
+.AVMXIT  ANOP
+&ICHCT   SETA  &ICHCT+1
+         MEND
+

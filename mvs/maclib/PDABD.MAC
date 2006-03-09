@@ -1,0 +1,14 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         PDABD
+IHAPDAB  DSECT
+PDANODCB DS    H                        NO. OF DCB ADDRESSES IN LIST
+PDAMAXCB DS    H                        MAXIMUM NO. ADDRESSES ALLOWABLE
+PDAGRTNA DS    A                        ADDR OF PARALLEL GET ROUTINE
+PDADCBAI DS    F                        DCB ADDRESS INCREMENT
+PDADCBLA DS    A                        ADDR OF LAST DCB ENTRY
+PDADCBEP DS    A                        ADDR OF DCB ENTRY LAST PROC
+PDAECBIX DS    F                        INDEX TO ECB LIST
+PDADCBAL EQU   *                        START OF DCB LIST
+         MEND
+

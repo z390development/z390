@@ -1,0 +1,88 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSCFCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSCF
+.*/ %SSCFCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSCF                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = FAILING SVC 34 COMMAND               @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSCFPLS;              /*                               @ZA34144
+*
+SSOBCFCD EQU   32            COMMAND FAIL FUNCTION (SSOBFUNC)  @Z30BPSV
+*
+*        COMMAND FAIL RETURN CODES (SSOBRETN)                  @Z30BPSV
+*
+SSOBCFOK EQU   0                  ISSUE SVC34 COMMAND          @Z30BPSV
+*                                 ABORTED MESSAGE              @Z30BPSV
+SSOBCFNO EQU   4                  SUPPRESS ISSUING SVC34       @Z30BPSV
+*                                 COMMAND ABORTED MESSAGE      @Z30BPSV
+*
+         ORG   SSOBGN             SSFC START                   @Z30BPSV
+SSCFBGN  EQU   *                  SSFC BEGINNING               @Z30BPSV
+SSCFLEN  DC    AL2(SSCFSIZE)      SSFC EXTENSION LENGTH        @Z30BPSV
+SSCFRSV0 DS    H                  RESERVED                     @Z30BPSV
+SSCFBFAD DS    A                  ADDRESS OF COMMAND BUFFER    @Z30BPSV
+SSCFMRRC DS    F                  RETURN CODE FROM MEMORY      @Z30BPSV
+*                                 REQUEST, OR CSCB CREATION    @Z30BPSV
+*                                 FAILURE CODE                 @Z30BPSV
+*
+*        MEMORY REQUEST RETURN CODES AND FAILURE CODES         @Z30BPSV
+*
+SSCFMROK EQU   0                  MEMORY REQUEST SUCCESSFUL    @Z30BPSV
+SSCFSRMN EQU   4                  SRM PROHIBITS ADDRESS SPACE  @Z30BPSV
+*                                 CREATION                     @Z30BPSV
+SSCFNORS EQU   8                  RESOURCES NOT AVAILABLE      @Z30BPSV
+*                                 (INSUFFICIENT SQA OR NO      @Z30BPSV
+*                                 ASID AVAILABLE)              @Z30BPSV
+SSCFABND EQU   12                 UNEXPECTED ABEND IN MEMORY   @Z30BPSV
+*                                 REQUEST                      @Z30BPSV
+SSCFCSFL EQU   32                 CSCB CREATION FAILURE CODE   @Z30BPSV
+*
+SSCFRSV1 DS    F                  RESERVED                     @Z30BPSV
+*
+SSCFSIZE EQU   *-SSCFBGN          EXTENSION LENGTH             @Z30BPSV
+SSOBLN16 EQU   SSOBHSIZ+SSCFSIZE  TOTAL SSOB LENGTH            @Z30BPSV
+         MEND                                                @ZA34144*/
+* %SSCFPLS:;                             /*                  @ZA34144*/
+*    /*                                                              */
+*    /*    FUNCTION IDS (SSOBFUNC)                                   */
+*   DCL SSOBCFCD FIXED(15) CONSTANT(32);/* COMMAND FAIL FUNCTION
+*                                                            @Z30BPSV*/
+*    /*                                                              */
+*    /*   COMMAND FAIL RETURN CODES (SSOBRETN)                       */
+*    /*                                                              */
+*   DCL SSOBCFOK FIXED(31) CONSTANT(0); /* ISSUE SVC34 COMMAND
+*                                          ABORTED MESSAGE   @Z30BPSV*/
+*   DCL SSOBCFNO FIXED(31) CONSTANT(4); /* SUPPRESS ISSUING SVC34
+*                                          COMMAND ABORTED MESSAGE
+*                                                            @Z30BPSV*/
+*    /*   S S C F                                                    */
+*   DCL
+*   1     SSCF      SSOBCF,       /* BEGINNING SSOBCF EXTENSION
+*                                                            @Z30BPSV*/
+*      2     SSCFLEN  FIXED(15),    /* SSCF EXTENSION LENGTH @Z30BPSV*/
+*      2     SSCFRSV0 FIXED(15),    /* RESERVED              @Z30BPSV*/
+*      2     SSCFBFAD PTR(31),      /* ADDRESS OF COMMAND
+*                                      BUFFER                @Z30BPSV*/
+*      2     SSCFMRRC FIXED (31),   /* RETURN CODE FROM MEMORY
+*                                      REQUEST, OR CSCB CREATION
+*                                      FAILURE CODE          @Z30BPSV*/
+*      2     SSCFRSV1 FIXED(31);    /* RESERVED              @Z30BPSV*/
+*     /*                                                             */
+*     /*   MEMORY REQUEST RETURN CODES AND FAILURE CODES     @Z30BPSV*/
+*     /*                                                             */
+*    DCL SSCFMROK FIXED(31) CONSTANT(0);  /* MEMORY REQUEST SUCCESSFUL
+*                                                            @Z30BPSV*/
+*    DCL SSCFSRMN FIXED(31) CONSTANT(4);  /* SRM PROHIBITS ADDRESS
+*                                            SPACE CREATION  @Z30BPSV*/
+*    DCL SSCFNORS FIXED(31) CONSTANT(8);  /* RESOURCES NOT AVAILABLE
+*                                            (INSUFFICIENT SQA OR NO
+*                                            ASID AVAILABLE) @Z30BPSV*/
+*    DCL SSCFABND FIXED(31) CONSTANT(12); /* UNEXPECTED ABEND IN
+*                                             MEMORY REQUEST @Z30BPSV*/
+*    DCL SSCFCSFL FIXED(31) CONSTANT(32); /* CSCB CREATION FAILURE
+*                                            CODE            @Z30BPSV*/
+

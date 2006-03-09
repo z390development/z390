@@ -6,11 +6,21 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* MAINTENANCE
+.* 10/12/05 ADD DCBAREA AND DCBDSNAM FIELDS
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 11/13/05 RPI88 - add DCBID id EBCDIC/ASCII ID for I/O verification
+.*********************************************************************
          DCBD   
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
 .*
 .*       DATA CONTROL BLOCK DSECT 
 .*
 IHADCB   DSECT
+         ORG   IHADCB+X'00'
+DCBID    DS    CL4            DCB ID RPI88
          ORG   IHADCB+X'1A'
 DCBDSORG DS    X              DATA SET ORGANIZATION
 DCBDSORG_PS EQU X'40'           PHYSICAL SEQUENTIAL
@@ -51,5 +61,7 @@ DCBBLKSI DS    H              BLOCK SIZE    (ALSO UNBLOCKED MAX RECORD)
          ORG   IHADCB+X'52'
 DCBLRECL DS    H              RECORD LENGTH (MAY BE ZERO FOR UNBLOCKED)
          ORG   IHADCB+X'58'
+DCBREC   DS    A              ADDRESS OF USER SUPPLIED RECORD AREA
+DCBDSNAM DS    A              ADDRESS OF USER SUPPLIED DSN FILE SPEC 
 DCBLEN   EQU   *-IHADCB
          MEND

@@ -1,0 +1,39 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME  GCNOP &N               NULL CHAR (NO-OP)
+         GBLA  &IHBBLC,&IHBBLIM,&IHBSMSW
+         LCLA  &COUNT,&BLCBUK
+         AIF   (T'&N EQ 'O').CNOP
+         AIF   ('&N'(1,1) EQ 'C').CNUL
+.CNOP    ANOP
+&NAME    DC    X'00'
+&IHBBLC    SETA  &IHBBLC+1              UPDATE BUFFER-LOC COUNTER
+         AIF   (T'&N EQ 'O').ALL
+         AIF   (T'&N NE 'N').ERN
+         AIF   (&N EQ 1).ALL
+         AIF   (&N EQ 0).ERN
+&COUNT   SETA  &N-1
+.ANOTH   DC    X'00'
+&IHBBLC    SETA  &IHBBLC+1              UPDATE BUFFER-LOC COUNTER
+&COUNT   SETA  &COUNT-1
+         AIF   (&COUNT EQ 0).ALL
+         AGO   .ANOTH
+.CNUL    ANOP
+&BLCBUK  SETA  &IHBBLC/2*2
+         AIF   (&IHBBLC EQ &BLCBUK).EVEN
+         AIF   (&IHBSMSW EQ 1).NULLSTR
+&NAME    DC    X'00'                   NULL CHARACTER
+         AGO   .CNUL2
+.NULLSTR ANOP
+&NAME    DC    X'08'                   NULL STROKE
+.CNUL2   ANOP
+&IHBBLC    SETA  &IHBBLC+1              UPDATE BUFFER-LOC COUNTER
+         AGO   .ALL
+.EVEN    AIF   ('&NAME' EQ '').OK
+&NAME    EQU   *
+         MEXIT
+.ERN     IHBERMAC 180,N,1
+.ALL     AIF   (&IHBBLIM GE &IHBBLC).OK
+         IHBERMAC 182
+.OK      MEND
+

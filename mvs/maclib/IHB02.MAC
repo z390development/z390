@@ -1,0 +1,100 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    IHB02 &DSORG,&MACRF,&DDNAME,&EXLST,&GNCP,&POLST,&GTYPE
+.*
+.*      SET SYMBOL DECLARATIONS
+.*
+         GBLA  &A0
+         GBLB  &DSORG8,&MACRF0,&MACRF1,&MACRF2,&MACRF3,&MACRF4,&MACRF5
+         GBLB  &MACRF6,&MACRF7,&MACRF8,&MACRF9,&MACRFA,&MACRFB,&MACRFC
+         GBLB  &MACRFD,&MACRFE,&MACRFF
+         LCLA  &A1,&A2
+         LCLB  &IFLGS4,&IFLGS5,&IFLGS6,&IFLGS7
+         LCLB  &B0,&B1,&B2,&B3
+         LCLC  &C0,&C1,&C2,&C3
+.*
+.*       ANALYZE  MACRF PARAMETER  RESULTS
+.*
+         AIF   (&MACRF2 OR &MACRFA).M1
+.M2      ANOP
+         IHBERMAC 171
+         MEXIT
+.M1      AIF   (&MACRF2).M3
+         AIF   (&MACRF6).M2
+.M3      AIF   (&MACRFA).M4
+         AIF   (&MACRFE).M2
+.M4      AIF   (&MACRF0 OR &MACRF1 OR &MACRF3 OR &MACRF4 OR &MACRF5).M2
+         AIF   (&MACRF7 OR &MACRF8 OR &MACRF9 OR &MACRFB OR &MACRFC).M2
+         AIF   (&MACRFD OR &MACRFF).M2
+.*
+.*       ANALYZE  GNCP  PARAMETER
+.*
+         AIF   ('&GNCP' GE '0').M7
+         IHBERMAC 147,GNCP
+&A1      SETA  1
+         AGO   .M9
+.M7      AIF   ('&GNCP' LE '99').M8
+         IHBERMAC 147,GNCP
+&A1      SETA  99
+         AGO   .M9
+.M8      ANOP
+&B3      SETB  1
+.*     ANALYZE POLST-EXLST-DDNAME
+.M9      ANOP
+&B1      SETB  0
+         AIF   ('&POLST' NE '0').M10
+         AIF   ('&GTYPE' EQ 'BASIC').M10
+         IHBERMAC 178,POLST,0
+.M10     AIF   ('&EXLST' NE '0').M11
+         IHBERMAC 178,EXLST,0
+&A2      SETA  1
+&B1      SETB  1
+.M11     AIF   ('&DDNAME' NE '0').M12
+         IHBERMAC 167
+         AGO   .M14
+.M12     AIF   (K'&DDNAME LE 8).M13
+         IHBERMAC 168
+.M13     AIF   (K'&DDNAME GE 8).M14
+         IHBERMAC 169
+.M14     ANOP
+.*
+.*       GENERATE  DCB  ORIGIN
+.*
+         ORG   *-&A0                    ELIMINATE UNUSED SPACE
+&NAME    DS    0F                       ORIGIN ON FULL WORD BOUNDRY
+         ORG   *+&A0                    ORIGIN GENERATION
+.*  GENERATE  GRAPHIC DEVICE INTERFACE
+         DC    14XL1'00'
+         AIF   ('&GTYPE' EQ 'BASIC').ADD1
+         AIF   ('&GTYPE' EQ 'EXPRESS').ADD3
+         IHBERMAC 183,GTYPE,EXPRESS
+.ADD3    DC    AL1(0)                  GTYPE
+         AGO   .ADD2
+.ADD1    DC    AL1(1)                  GTYPE
+         AIF   ('&POLST' EQ '0').ADD2
+         IHBERMAC 147,POLST
+.ADD2    ANOP
+         DC    5XL1'00'
+.*  GENERATE COMMON
+         DC    6XL1'00'
+         DC    BL2'0000000010000000'        DSORG
+         DC    4XL1'00'
+.*  GENERATE FOUNDATION EXTENSION
+         AIF   ('&B3' EQ '1').K10
+         DC    AL1(&A1)                GNCP
+         AGO   .K11
+.K10     DC    AL1(&GNCP)              GNCP
+.K11     ANOP
+         DC    AL3(&POLST)             POLST
+         DC    1XL1'00'
+         DC    AL3(&EXLST)             EXLST
+.*  GENERATE FOUNDATION
+         DC    CL8'&DDNAME'            DDNAME
+         DC    BL1'00000010'            OFLGS
+         DC    X'00'                   IFLG
+         DC    BL2'&MACRF0&MACRF1&MACRF2&MACRF3&MACRF4&MACRF5&MACRF6&MA*
+               CRF7&MACRF8&MACRF9&MACRFA&MACRFB&MACRFC&MACRFD&MACRFE&MA*
+               CRFF'                    MACRF
+.END     ANOP
+         MEND
+

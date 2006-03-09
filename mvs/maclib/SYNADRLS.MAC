@@ -1,0 +1,11 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME   SYNADRLS
+&NAME    LA    15,0(0,15)               ZERO HIGH ORDER BYTE
+         CNOP  0,4
+         O     15,*+8                  SET RELEASE CODE
+         B     *+8                      BRANCH AROUND CODE
+         DC    X'FF000000'              RELEASE CODE
+         SVC   68             ISSUE SVC
+         MEND
+

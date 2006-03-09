@@ -1,0 +1,108 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO                          HEADER STATEMENT
+&NAME    ASGNBFR &DCB,&NUM,&MF=         PROTOTYPE STATEMENT
+         LCLC  &PAREN,&REG,&B            LOCALS DEFINED
+         LCLA  &ADCB,&ANUM,&ASECT       DEFINE LOCALS
+         AIF   (T'&MF EQ 'O').SFORM      S-FORM ASSUMED IF MF= OMITTED
+         AIF   (N'&MF EQ 2).EFORM            ARE THERE 2 OPERANDS
+         AIF   ('&MF(1)' EQ 'L').LFORM  POSITIVE CHECK FOR L FORM
+         AGO   .ERREMF
+.EFORM   AIF   ('&MF(1)' NE 'E').ERREMF      POSITIVE CHECK FOR E FORM
+         AIF   ('&MF(2)'(1,1) EQ '(').REGMF  CHECK NOTATION OF LSTADDR
+&NAME    LA    1,&MF(2)                  REG 1 CONTAINS LSTADDR
+.CHECK   AIF   (T'&DCB EQ 'O' AND T'&NUM EQ 'O').DONE  IF OMITTED,DONE
+         AIF   (T'&DCB NE 'O').CHANGE1       ONLY DCB ADR SPECIFIED
+.NUMB    AIF   ('&NUM'(1,1) EQ '(').REGNUM  CHECK FOR REGISTER NOTATIN
+         LA    0,&NUM                    PUT BUFPRAM-ADDR IN PARAMLIST
+         ST    0,4(1)                    PUT BUFPRAM-ADDR IN PARAMLIST
+         AGO   .DONE                    BRANCH TO SVC INSTRUCTION
+.CHANGE1 AIF   ('&DCB'(1,1) EQ '(').REGDCB  CHECK NOTATION OF DCBADDR
+         LA    0,&DCB                  PUT DCB IN PARAM LIST
+         ST    0,0(1)                  PUT DCB IN PARAM LIST
+.GOON    AIF   (T'&NUM NE 'O').NUMB
+.DONE    MVI   0(1),X'04'                REINSTATE CODE ON LIST
+         SVC   71                        SVC THE ASSIGN BUFFER RTN
+         MEXIT                      BRANCH OUT OF MACRO DEFN
+.REGMF   ANOP                            CHECK FOR REG NOTATION OF LST
+&REG     SETC  '&MF(2)'(2,K'&MF(2)-2)    ISOLATE REG NUMBER
+&NAME    LR    1,&REG                    PUT LSTADDR IN REG 1
+         AGO   .CHECK
+.REGDCB  ANOP
+&PAREN   SETC  '&DCB'(2,K'&DCB-2)        ISOLATE REGISTER NIMBER
+         ST &PAREN,0(1)                  PUT DCBADDR IN PARAM LIST
+         AGO   .GOON
+.REGNUM  ANOP
+&REG     SETC  '&NUM'(2,K'&NUM-2)        ISOLATE REGISTER NUMBER
+         ST    &REG,4(1)                 PUT BUFPRAM-ADDR IN PARAMLIST
+         AGO   .DONE
+.SFORM   ANOP
+&NAME    LA    1,A&SYSNDX              LOAD ADR OF PARAM LST
+         AIF   (T'&DCB EQ 'O').NODCB
+         AIF   ('&DCB'(1,1) EQ '(').REGSDCB  CHECK NOTATION OF DCBADDR
+&PAREN   SETC  '&DCB'(1,1)               TO CHECK 1ST CHAR OF DCBADDR
+         AIF   ('&PAREN' LT 'A').ERRDCB   IF NOT ALPHA CHAR, ERROR
+         AIF   ('&PAREN' GT 'Z').ERRDCB   IF NOT ALPHA CHAR, ERROR
+&ADCB    SETA  1                   SET TO 1 IF SYMBOLIC
+.OK1     AIF   (T'&NUM EQ 'O').NONUM     CHECK FOR PTR OPERAND
+.CONTINU AIF   ('&NUM'(1,1) EQ '(').REGSNUM  CHECK FOR REGISTER
+&ANUM    SETA  1                        SET TO 1IF SYMBOLIC
+.ONWARD  CNOP  2,4
+         SVC   71                        SVC THE ASSIGN BUFFER RTN
+         B     A&SYSNDX+8                BRANCH AROUND PARAM LIST
+         AIF   (&ADCB EQ 1).SYM1   IF 1 GO TO SYM1
+A&SYSNDX DC    A(0)                CODE AND DCBADR
+.CHK1    AIF   (&ANUM EQ 1).SYM2        IF 1 GO TOSYM2
+         DC    A(0)                BUFPRM
+         MEXIT                           BRANCH OUT OF  MACRO DEFN
+.SYM1    ANOP
+A&SYSNDX DC    AL1(4)              CODE FOR ASSIGN
+         DC    AL3(&DCB)           DCBADR
+         AGO   .CHK1
+.SYM2    DC    A(&NUM)             BUFPRM PTR
+         MEXIT
+.REGSDCB ANOP
+&REG     SETC  '&DCB'(2,K'&DCB-2)        ISOLATE REGISTER NUMBER
+         ST    &REG,A&SYSNDX             PUT  IT IN PARAM LIST
+         MVI   A&SYSNDX,X'04'            REINSTATE CODE
+         AGO   .OK1
+.REGSNUM ANOP
+&REG     SETC  '&NUM'(2,K'&NUM-2)
+         ST    &REG,A&SYSNDX+4           PUT BUFPRAM-ADDR IN PARAMLIST
+         AGO   .ONWARD
+.LFORM   AIF   (T'&DCB EQ 'O' AND T'&NUM EQ 'O').FINI
+         AIF   (T'&DCB NE 'O').CHK
+.NUM     ANOP
+&PAREN   SETC  '&NUM'(1,1)
+         AIF   ('&PAREN' LT 'A' OR '&PAREN' GT 'Z').ERRNUM
+&ANUM    SETA  1                        SET TO 1
+.FINI    DS    0F                        START GENERATED CODING
+&NAME    DC    AL1(4)                    CODE FOR ASGNBF
+         AIF   (&ADCB EQ 1).FILL1
+         DC    AL3(0)                   DCBADR
+.CHK2    AIF   (&ANUM EQ 1).FILL2       IF 1 GO TO FILL2
+         DC    A(0)                     BUFPARAM
+         MEXIT
+.CHK     ANOP
+&PAREN   SETC  '&DCB'(1,1)               TO CHECK 1ST CHAR OF DCBADDR
+         AIF   ('&PAREN' LT 'A' OR '&PAREN' GT 'Z').ERLDCB
+&ADCB    SETA  1
+.OK2     AIF   (T'&NUM EQ 'O').FINI
+         AGO   .NUM
+.FILL1   DC    AL3(&DCB)                DCBADR
+         AGO   .CHK2
+.FILL2   DC    A(&NUM)                  BUFPARAM
+         MEXIT
+.ERREMF  IHBERMAC  35,,&MF         ERROR MSG FOR INVALID MF
+         MEXIT
+.ERRDCB  IHBERMAC  36,,DCBADR
+         AGO   .OK1
+.ERLDCB  IHBERMAC  36,,DCBADR
+         AGO   .OK2
+.NODCB   IHBERMAC  6
+         AGO   .OK1
+.NONUM   IHBERMAC  3
+         AGO   .ONWARD
+.ERRNUM  IHBERMAC  37,,BUFPARAM
+         AGO   .FINI
+         MEND
+

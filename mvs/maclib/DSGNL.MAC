@@ -1,0 +1,59 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    DSGNL &FUNCTON,&CPU=
+         GBLC  &MESSAGE
+         AIF   ('&NAME' EQ '').CONT
+&NAME    DS    0H
+.CONT    AIF   ('&FUNCTON' NE '').SENSE
+         IHBERMAC 24
+         MEXIT
+.SENSE   AIF   ('&FUNCTON' NE 'SENSE').START
+         LA    0,1(0,0)                 SENSE FUNCTION CODE
+         AGO   .TESTADR
+.START   AIF   ('&FUNCTON' NE 'START').STOP
+         LA    0,4(0,0)                 START FUNCTION CODE
+         AGO   .TESTADR
+.STOP    AIF   ('&FUNCTON' NE 'STOP').RESTART
+         LA    0,5(0,0)                 STOP FUNCTION CODE
+         AGO   .TESTADR
+.RESTART AIF   ('&FUNCTON' NE 'RESTART').IPR
+         LA    0,6(0,0)                 RESTART FUNCTION CODE
+         AGO   .TESTADR
+.IPR     AIF   ('&FUNCTON' NE 'IPR').PR
+         LA    0,7(0,0)                 INITIAL PGM RESET FUNCTION CODE
+         AGO   .TESTADR
+.PR      AIF   ('&FUNCTON' NE 'PR').SSS
+         LA    0,8(0,0)                 PROGRAM RESET FUNCTION CODE
+         AGO   .TESTADR
+.SSS     AIF   ('&FUNCTON' NE 'SSS').IMPL
+         LA    0,9(0,0)                 STOP & STORE STATUS FUNCTN CODE
+         AGO   .TESTADR
+.IMPL    AIF   ('&FUNCTON' NE 'IMPL').ICPUR
+         LA    0,10(0,0)                IMPL FUNCTION CODE
+         AGO   .TESTADR
+.ICPUR   AIF   ('&FUNCTON' NE 'ICPUR').CPUR
+         LA    0,11(0,0)                ICPUR FUNCTION CODE
+         AGO   .TESTADR
+.CPUR    AIF   ('&FUNCTON' NE 'CPUR').REG
+         LA    0,12(0,0)                CPUR FUNCTION CODE
+         AGO   .TESTADR
+.REG     AIF   ('&FUNCTON' EQ '(0)').TESTADR FUNCTION CODE PRELOADED
+         IHBERMAC 1020,FUNCTION,&FUNCTON
+         MEXIT
+.TESTADR AIF   ('&CPU' EQ '(1)').MNLCDE
+         AIF   ('&CPU' NE '').ADRCDE
+         IHBERMAC 1006,CPU
+         MEXIT
+.ERREG1  ANOP
+.*       IHB280 REGISTER NOTATION INVALID WITH CPU
+&MESSAGE SETC  'REGISTER NOTATION'
+         IHBERMAC 1020,&MESSAGE,CPU
+         MEXIT
+.ADRCDE  ANOP
+         AIF   ('&CPU'(1,1) EQ '(').ERREG1
+         LA    1,&CPU                   PHYSICAL CCA ADDRESS
+.MNLCDE  ANOP
+         L     14,CVTPTR(0,0)           LOCATE CVT ADDRESS
+         L     15,CVTIPCDS-CVT(0,14)    IEAVEDR ENTRY POINT
+         BALR  14,15                    ENTER IEAVEDR AND EST RETURN
+         MEND

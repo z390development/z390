@@ -1,0 +1,14 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    RDJFCB &PARA,&MF=I
+         GBLB  &IHBRDJ
+&IHBRDJ  SETB  1
+         AIF   (N'&SYSLIST LE 1).OPEN   IF ONLY 1 (PARMLIST)     A45585
+         IHBERMAC 238                   EXCESSIVE POS. PARMS     A45585
+.OPEN    ANOP                                                    A45585
+&NAME    OPEN  &PARA,MF=&MF
+&IHBRDJ  SETB  0
+         AIF   ('&MF' EQ 'L').END
+         SVC   64                                ISSUE RDJFCB SVC
+.END     MEND
+

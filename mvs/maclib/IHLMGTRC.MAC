@@ -1,0 +1,32 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IHLMGTRC
+         GBLB  &IHLMGT
+.*A000000-999999                                                 Y01014
+.*D005500-009500                                                 Y02014
+.*A010100-010492                                                 Y02014
+.*A10493-10496                                                 @Y30AI3O
+         AIF   (&IHLMGT).NOEXP
+&IHLMGT  SETB  1
+*
+* SYMBOLIC ID TABLE FOR THE GTRACE MACRO
+*
+IDAAM01  EQU   X'FF5'               4085
+IHLMDMA1 EQU   X'FFF'               4095
+IGGSP169 EQU   X'FFE'               4094                         Y02014
+IGGSP451 EQU   X'FFD'               4093                         Y02014
+IGGSP251 EQU   X'FFC'               4092                         Y02014
+IGGSP145 EQU   X'FFB'               4091                         Y02014
+IGGSP239 EQU   X'FFA'               4090                         Y02014
+IGGSP235 EQU   X'FF9'               4089                         Y02014
+IGGSP119 EQU   X'FF8'               4088                         Y02014
+IGGSP215 EQU   X'FF7'               4087                         Y02014
+IGGSP112 EQU   X'FF6'               4086                         Y02014
+IGGSP008 EQU   X'FF4'               4084                         Y02014
+IGGSP002 EQU   X'FF3'               4083                         Y02014
+ISTLNEID EQU   X'FF2'               4082    VTAM LINE TRACE    @Y30AI3O
+ISTCLEID EQU   X'FF1'               4081    VTAM CONTROL LAYER @Y30AI3O
+ISTRPEID EQU   X'FF0'               4080    VTAM CONTROL LAYER @Y30AI3O
+ISTTPEID EQU   X'FEF'               4079    VTAM TPIOS BUFFER  @Y30AI3O
+.NOEXP   MEND
+

@@ -1,0 +1,30 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    PCKT  &MP11,&MP12,&MP13,&MP14,&MP15,&MP16,&MP21,&MP22,&MP23,  X
+               &MP24,&MP25,&MP26,&MP31,&MP32,&MP33,&MP34,&MP35,&MP36,  X
+               &MP41,&MP42,&MP43,&MP44,&MP45,&MP46,&MP51,&MP52,&MP53,  X
+               &MP54,&MP55,&MP56,&MP61,&MP62,&MP63,&MP64,&MP65,&MP66,  X
+               &RPNO,&KPNO
+         GBLB  &CT(36),&K(36),&M
+         LCLA  &X
+&M       SETB  0                       INITIALIZE MERGE TO OFF
+&X       SETA  1                        COUNTER FOR POCKET NUMBERS
+.A       ANOP
+         AIF   ('&SYSLIST(&X)' NE '').A1
+&CT(&X)  SETB  0                        NO COUNT
+&K(&X)   SETB  0                        KILL POCKET
+         AGO   .E
+.A1      ANOP
+&CT(&X)  SETB  1                       COUNT DOCUMENTS
+         AIF   ('&RPNO' EQ '' AND '&KPNO' EQ '').C             @ZA04472
+&M       SETB  1                        SET MERGE BIT ON
+.C       AIF   ('&SYSLIST(&X)' NE 'K').D
+&K(&X)   SETB  1                        KILL POCKET
+         AGO   .E
+.D       ANOP
+&K(&X)   SETB  0                        REHANDLE POCKET
+.E       ANOP
+&X       SETA  &X+1                     INCREMENT COUNTER
+         AIF   (&X LT 37).A
+.END     MEND
+

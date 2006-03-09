@@ -1,0 +1,11 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    IFD   &I
+         AIF   ('&I' LT '5').IF1
+         MNOTE 8,'***  IHB404  VALUE GREATER THAN 4; 0 ASSUMED'
+&NAME    DC    0H'0',X'FD',X'0'
+         AGO   .END
+.IF1     ANOP
+&NAME    DC    0H'0',X'FD',AL.4(&I),AL.4(0)
+.END     MEND
+

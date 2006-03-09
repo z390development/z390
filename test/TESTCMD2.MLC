@@ -1,0 +1,50 @@
+         TITLE 'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR'
+TESTCMD1 SUBENTRY
+         WTO   'TESTCMD1 TEST SVC 34 CMDPROC MULT TASK SUPPORT'
+         CMDPROC START,ID=0
+         CMDPROC WRITE,=C'"PROMPT $G"',ID=0
+         CMDPROC WRITE,=C'"TEST\TESTCMD2.BAT"',ID=0
+         CMDPROC START,ID=1
+         CMDPROC WRITE,=C'"PROMPT $G"',ID=1
+         CMDPROC WRITE,=C'"TEST\TESTCMD2.BAT"',ID=1
+CMDLOOP  EQU   *
+         LA    4,10
+CMDREAD1 EQU   *
+         AHI   4,-1
+         BZ    ERROR1
+         CMDPROC READ,MSG,ID=0
+         CHI   15,4
+         BE    CMDREAD1 
+         CHI   15,8
+         BE    ERROR1
+         MVI   WTOCMD_ID,C'0'
+         WTO   MF=(E,WTOCMD)
+         CLC   MSG(8),=C'>REM END'
+         BE    CMDEND
+         LA    4,10
+CMDREAD2 EQU   *
+         AHI   4,-1
+         BZ    ERROR2                         
+         CMDPROC READ,MSG,ID=1
+         CHI   15,4
+         BE    CMDREAD2 
+         CHI   15,8
+         BE    ERROR2
+         MVI   WTOCMD_ID,C'1'
+         WTO   MF=(E,WTOCMD)
+         B     CMDLOOP
+CMDEND   EQU   *
+         CMDPROC STOP,ID=0
+         CMDPROC STOP,ID=1
+         WTO   'TESTSVC1 ENDING OK'
+         SUBEXIT
+ERROR1   WTO   'TESTCMD2 CMD READ1 ERROR'
+         SUBEXIT RC=16
+ERROR2   WTO   'TESTCMD2 CMD READ2 ERROR'
+         SUBEXIT RC=16
+WTOCMD   DC    AL2(WTOEND-*,0)
+         DC    C'MSG FROM CMD'
+WTOCMD_ID DC   C' ='
+MSG      DC    CL80' '
+WTOEND   EQU   *
+         END

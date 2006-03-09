@@ -1,0 +1,78 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSSICMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSSI
+.*/ %SSSICMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSSI                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = NOTIFY SUBSYSTEM OF STEP INIT        @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSSIPLS;              /*                               @ZA34144
+*
+SSOBNSSI EQU   22       NOTIFY SUBSYSTEM OF STEP INITIATION FUNCTION
+*                       ID (SSOBFUNC)                          @Y02BPSD
+*
+*
+*     NOTIFY SUBSYSTEM OF STEP INITIATION RETURN CODES (SSOBRETN)
+*
+*        NO NOTIFY SUBSYSTEM OF STEP INITIATION RETURN CODES
+*        CURRENTLY DEFINED
+*
+         ORG   SSOBGN             SSSI START                   @Y02BPSD
+SSSIBGN  EQU   *                  NOTIFY SUBSYSTEM OF STEP     @Y02BPSD
+*                                 INITIATION BEGINNING         @Y02BPSD
+SSSILEN  DC    AL2(SSSISIZE)      NSSI EXTENSION LENGTH        @Y02BPSD
+SSSIRSV0 DS    H                  RESERVED                     @Y02BPSD
+*
+*        THE FOLLOWING FIELDS CONTAIN POINTERS TO THE INDICATED DATA,
+*        NUMBERS IN PARANTHESES INDICATE LENGTH OF AREA POINTED TO.
+*
+SSSIPSNM DS    A                  FOR A NORMAL JOB, POINTER    @Y02BPSD
+*                                 TO NAME ON THE 'EXEC PGM='   @Y02BPSD
+*                                 STATEMENT.  (8)              @Y02BPSD
+*                                 FOR A STARTED JOB, POINTER   @Y02BPSD
+*                                 TO THE ID, UNIT TYPE, OR     @Y02BPSD
+*                                 'STARTING'.  (8)             @Y02BPSD
+SSSIPPSN DS    A                  FOR A NORMAL JOB, POINTER TO @Y02BPSD
+*                                 NAME ON THE 'EXEC PROC='     @Y02BPSD
+*                                 STATEMENT (OR BLANKS). (8)   @Y02BPSD
+*                                 FOR A STARTED JOB, POINTER   @Y02BPSD
+*                                 TO BLANKS. (8)               @Y02BPSD
+SSSIPSNO DS    A                  POINTER TO STEP NUMBER (1)   @Y02BPSD
+*
+SSSISIZE EQU   *-SSSIBGN          EXTENSION LENGTH             @Y02BPSD
+SSOBLENF EQU   SSOBHSIZ+SSSISIZE  TOTAL SSOB LENGTH            @Y02BPSD
+         MEND                                                @ZA34144*/
+* %SSSIPLS:;                            /*                   @ZA34144*/
+*    /*                                                              */
+*    /*    FUNCTION IDS (SSOBFUNC)                                   */
+*   DCL SSOBNSSI FIXED(15) CONSTANT(22);/* NOTIFY SUBSYSTEM OF STEP
+*                                          INITIATION        @Y02BPSD*/
+*   /*                                                               */
+*   /*   NOTIFY SUBSYSTEM OF STEP INITIATION                         */
+*   /*   RETURN CODES (SSOBRETN)                                     */
+* /*                                                                 */
+* /*      NO SSSI RETURN CODES CURRENTLY DEFINED                     */
+* /*                                                                 */
+*   /*   S S S I                                                     */
+*   DCL
+*   1      SSSI           SSOBSI,
+*     2      SSSILEN      FIXED(15),/* LENGTH OF SSSI        @Y02BPSD*/
+*     2      *            FIXED(15),/* RESERVED              @Y02BPSD*/
+*           /*   FOLLOWING FIELDS CONTAIN POINTERS TO THE INDICATED  */
+*           /*   DATA, NUMBERS IN PARENTHESES INDICATE LENGTH OF AREA*/
+*           /*   POINTED TO.                                 @Y02BPSD*/
+*     2      SSSIPSNM     PTR(31),  /* FOR A NORMAL JOB, POINTER TO
+*                                      NAME ON THE 'EXEC PGM='
+*                                      STATMENT.  FOR A STARTED JOB,
+*                                      POINTER TO THE ID, UNIT TYPE,
+*                                      OR 'STARTING'. (8)    @Y02BPSD*/
+*     2      SSSIPPSN     PTR(31),  /* FOR A NORMAL JOB, POINTER TO
+*                                      NAME ON THE 'EXEC PROC='
+*                                      STATEMENT (OR BLANKS). FOR A
+*                                      STARTED JOB, POINTER TO
+*                                      BLANKS.  (8)          @Y02BPSD*/
+*     2      SSSIPSNO     PTR(31);  /* PTR TO STEP NUMBER(1) @Y02BPSD*/
+

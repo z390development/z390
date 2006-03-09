@@ -31,10 +31,10 @@ l +4 3
 l 4r
 * list command with no operands lists all registers and current psw instruction
 l
-* go exec 1 instruction using current trace setting
+* go exec 1 instruction without trace
 g 1
-* go exec 2 instruction using current trace setting
-z 2
+* go exec 2 instruction with trace
+t 2
 * go trace instructions until next lr instruction found
 t lr
 * set reg 5 and then test setting break on register.  Since the break
@@ -54,7 +54,7 @@ j *-2
 * list memory area at current psw
 l * 32
 * go stops after 1 instruction due to register break being on
-g
+t
 * turn off all breaks
 s
 * set memory and then test setting breaks on memory.  Since the break
@@ -77,5 +77,24 @@ s
 * go find next bras (branch relative and save) instruction
 G bras
 h
+*
+* test 0c1 return to test
+j 500.
+t 1
+* test D, F, M, P, R information displays
+D
+F
+M
+P
+R
+* test multiple addr 
+300.+1+2=x'303'
++1+2=x'fff'
+*+1+2=x'ee'
+l 300.+1+2 2
+l +1+2 2
+l *+1+2 1
+j 300.+1+2
+t 1
 * zoom to end of normal execution
 z

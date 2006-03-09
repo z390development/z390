@@ -6,24 +6,53 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* 10/20/05 RPI  27 - issue error for any undefined operands     
+.* 12/06/05 RPI 117 - support 32 bit LV= and short forms nnnK, nnnM
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 01/21/06 RPI187 CORRECT FREEMAIN and GETMAIN comments, LA/L length,
+.*          limit check length, correct K/M support
+.*********************************************************************
 &N       FREEMAIN &LV=,&A=
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
 .*
-.* GETMAIN - RELEASE MEMORY FROM ABOVE OR BELOW 16MB LINE
+.* FREEMAIN - RELEASE MEMORY FROM ABOVE OR BELOW 16MB LINE
 .*
 .*  LENGTH LV= 
-.*    ABSOLUTE LENGTH OR (REG) WITH DEFAULT REG 1
+.*    ABSOLUTE LENGTH OR (REG) 
 .*  ADDRESS A= 
 .*    RX OF FULLWORD OR (REG) WITH DEFAULT REG 0
 .* OUTPUT
 .*    ABORT WITH A0A ABEND IF REQUEST FAILS
 .*
+         AIF   (&N EQ '').SKIPDS
 &N       DS    0H
+.SKIPDS  ANOP
 .LV      ANOP
-         AIF  (&LV EQ '').A
+         AIF  (&LV NE '').CHKLV
+         MNOTE 12,'FREEMAIN LV= MISSING'
+         MEXIT
+.CHKLV   ANOP
          AIF  ('&LV'(1,1) EQ '(').LVREG
-         L    1,&LV
+         AIF  ('&LV'(1,1) GE'0' AND '&LV'(1,1) LE '9').LVLIT
+         L    1,=A(&LV)
+         AGO  .A
+.LVLIT   ANOP
+&LEN     SETA &LV
+         AIF  ('&LV'(K'&LV,1) NE 'K').CHKLVM
+         AIF  (&LEN GT 1048576).ERR1
+&LEN     SETA &LEN*1024
+         AGO  .SETLV
+.CHKLVM  ANOP
+         AIF  ('&LV'(K'&LV,1) NE 'M').SETLV
+         AIF  (&LEN GT 1024).ERR1
+&LEN     SETA &LEN*1048576
+.SETLV   ANOP
+         L    1,=A(&LEN)  RPI 117
          AGO  .A
 .LVREG   ANOP
+         AIF   (&LV(1) EQ '1' OR &LV(1) EQ 'R1').A  RPI163
          LR   1,&LV(1)
 .A       ANOP
          AIF  (&A EQ '').SVC
@@ -31,7 +60,10 @@
          L    0,&A
          AGO  .SVC
 .AREG    ANOP
+         AIF   (&A(1) EQ '0' OR &A(1) EQ 'R0').SVC  RPI163
          LR   0,&A(1)
 .SVC     ANOP
          SVC   5 FREEMAIN R0=ADDR, R1=LEN
+         MEXIT
+.ERR1    MNOTE 12'FREEMAIN LV LENGTH TOO LONG - &LV'
          MEND

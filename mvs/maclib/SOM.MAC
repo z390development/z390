@@ -1,0 +1,6 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SOM
+&NAME    DC    0H'0',X'4500'
+         MEND
+

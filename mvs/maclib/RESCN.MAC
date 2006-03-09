@@ -1,0 +1,101 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    RESCN &DCB,&P1,&P2,&P3,&P4
+.*
+.* MODULE-NAME=RESCN(OS/VS2)MACRO                              @YM00638
+.*
+.* DESCRIPTIVE-NAME=REREAD FIELD X TIMES, ALLOW CORRECTION     @YM00638
+.*
+.*
+         LCLA  &AL1,&COUNT,&STEP,&NUMB
+         LCLB  &NOGEN,&FSWIT,&PARMSW,&NUMSW
+         LCLC  &PARM1,&PARM2,&REG1,&REG2
+.*C890000                                                        A39672
+.*D880000                                                        A39672
+&AL1     SETA  1
+&NUMB    SETA  0
+         AIF   (T'&DCB NE 'O').RS0011
+.RS001   IHBERMAC 202
+&NOGEN   SETB  1
+         AGO   .RS002
+.RS0011  AIF   (T'&NAME EQ 'O').RS0012
+&NAME    EQU   *
+.RS0012  AIF   ('&DCB'(1,1) NE '(' AND '&DCB'(K'&DCB,1) NE ')').RS0015
+         AIF   ('&DCB'(2,1) EQ '1' AND '&DCB'(3,1) EQ ')').RS002
+&REG1    SETC  '&DCB'(2,1)
+         AIF   ('&DCB'(3,1) NE ')').RS0013
+         AIF   ('&DCB'(2,1) GE '2' AND '&DCB'(2,1) LE '9').RS0014
+         AGO   .RS001
+.RS0013  ANOP
+&REG2    SETC  '&DCB'(3,1)
+         AIF   ('&DCB'(2,1) EQ '1' AND '&DCB'(3,1) GE '0' AND '&DCB'(3,X
+               1) LE '2').RS0014
+         AGO   .RS001
+.RS0014  LR    1,&REG1&REG2
+         AGO   .RS002
+.RS0015  LA    1,&DCB   GET DCB ADDRESS
+.RS002   ANOP
+&AL1     SETA  &AL1+1
+         AIF   (T'&SYSLIST(&AL1) EQ 'O').RS003
+         AIF   ('&SYSLIST(&AL1)'(1,1) NE '(' OR '&SYSLIST(&AL1)'(K'&SYSX
+               LIST(&AL1),1) NE ')').RS0024
+         AIF   (&PARMSW NE 1).RS0022
+         IHBERMAC 208
+         AGO   .RS002
+.RS0022  ANOP
+&PARMSW  SETB  1
+&AL1     SETA  &AL1+1
+         AIF   ('&SYSLIST(&AL1)'(1,1) EQ '(' AND '&SYSLIST(&AL1)'(K'&SYX
+               SLIST(&AL1),1) EQ ')').RS0023
+         IHBERMAC 204
+&NOGEN   SETB  1
+&AL1     SETA  &AL1-1
+         AGO   .RS002
+.RS0023  ANOP
+&PARM1   SETC  '&SYSLIST(&AL1-1)'
+&PARM2   SETC  '&SYSLIST(&AL1)'
+         AGO   .RS002
+.RS0024  AIF   ('&SYSLIST(&AL1)' NE 'F').RS0025
+&FSWIT   SETB  1
+         AGO   .RS002
+.RS0025  ANOP
+         AIF   ('&SYSLIST(&AL1)'(1,1) LT '0').RS0027
+&COUNT   SETA  K'&SYSLIST(&AL1)
+&STEP    SETA  1
+.RS0026  AIF   ('&SYSLIST(&AL1)'(&STEP,1) LT '0' OR '&SYSLIST(&AL1)'(&SX
+               TEP,1) GT '9').RS00291
+&COUNT   SETA  &COUNT-1
+&STEP    SETA  &STEP+1
+         AIF   (&COUNT EQ 0).RS0028
+         AGO   .RS0026
+.RS0027  IHBERMAC 207
+         AGO   .RS002
+.RS0028  AIF   (&NUMSW EQ 0).RS0029
+         IHBERMAC 208
+         AGO   .RS002
+.RS0029  ANOP
+&NUMSW   SETB  1
+         AIF   ('&SYSLIST(&AL1)' LE '9').RS00292
+         IHBERMAC 205
+&NUMB    SETA  9
+         AGO   .RS002
+.RS00291 IHBERMAC 206
+&NUMB    SETA  1
+         AGO   .RS002
+.RS00292 ANOP
+&NUMB    SETA  &SYSLIST(&AL1)
+         AGO   .RS002
+.RS003   AIF   (&NOGEN EQ 0).RS0031
+         MEXIT
+.RS0031  AIF   (&PARMSW EQ 0).RS004
+         L     15,68(1) GET IOB ADDRESS
+         MVC   48(16,15),0&PARM1 MOVE READ AND LF CCW,> TO IOB
+         MVC   40(8,15),0&PARM2  MOVE LF FOR REG MARK TO IOB
+.RS004   AIF   (&FSWIT EQ 0).RS0041
+         LA    0,X'F&NUMB.' SET NUMBER OF RETRIES AND FORCE CORRECTION
+         AGO   .RS005
+.RS0041  LA    0,X'0&NUMB.' SET NUMBER OF RETRIES                A39672
+.RS005   L     15,12(1)  GET ADDRESS OF RESCN MODULE
+         BALR  14,15  LINK TO RESCN MODULE
+         MEND
+

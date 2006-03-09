@@ -1,0 +1,19 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    LOPEN &DECB
+         CNOP  0,4                                                 000C
+&NAME    BAL   15,*+8                                              000C
+         DC    V(IECTLOPN)
+         AIF   ('&DECB'(1,1) NE '(').LOPEN1
+         AIF   ('&DECB'(K'&DECB,1) NE ')').ERR1
+        AIF   ('&DECB'(2,K'&DECB-2) EQ '1').LOPEN2
+         LR    1,&DECB
+         AGO   .LOPEN2
+.LOPEN1  LA    1,&DECB
+.LOPEN2  L     15,0(15)
+         BALR  14,15
+         MEXIT
+.ERR1    MNOTE 12,'***  IHB078  DECB OPERAND REGISTER NOTATION INVALID-X
+               &DECB'
+         MEND
+

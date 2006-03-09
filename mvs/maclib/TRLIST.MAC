@@ -1,0 +1,246 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    TRLIST &ROUTE=,&TRID=,&TEXT=NO,&INQDISP=,&DEMOD10=,&DEMOD11=, X
+               &GDU=
+         GBLA  &IECNDGP(100)
+.*             IECNDGP(1)              NO OF BYTES COUNTER
+.*             IECNDGP(2)  COUNTER FOR NUMBER OF ASLIST MACROS
+.*             IECNDGP(3)  COUNTER FOR NUMBER OF DEULIST MACROS
+.*             IECNDGP(4)  NORMAL GUIDENCE
+.*             IECNDGP(5)  TRID SEQUENCE COUNTER
+         GBLA  &IECPCTS                                           21094
+         GBLB  &IECSW(9),&IECTXT,&IECSEQ(10),&IECSWW(2),&IECCL,&IECAS
+.*             IECSWW(2) INDICATES NO CTRGROUP MACRO              21094
+.*             IECCL    INDICATES CTRLIST MACRO IS CODED          21094
+.*             IECAS    INDICATES ASLIST MACRO CODED              21094
+.*             IECSW(1)                INDICATES CORE SIZE
+.*             IECSW(4)                INDICATES NOT FIRST MACRO
+.*             IECSEQ(4)  SEQUENCE INDICATOR
+         GBLB  &IECDE,&IECINDS,&IECIN,&IECM10,&IECM11,&IECSQ(7)
+.*             IECDE    INDICATES DEULIST MACRO CODED
+.*             IECIN   INDICATES INQUIRY DISPLAY IN SYSTEM
+.*             IECINDS   INDICATES INQUIRY DISPLAY FOR TRANSACTION
+.*             IECM10              INDICATES MODULUS 10 CHECKING
+.*             IECM11              INDICATES MODULUS 11 CHECKING
+         GBLB  &IECGYES,&IECGDL
+.*             IECGYES  INDICATES GDU=YES CODED IN TRLIST MACRO
+.*             IECGDL ON INDICATES NOT FIRST GDULIST MACRO IN TRANS
+         LCLA &A,&SV
+         LCLB  &NCODE,&SW(7)
+.*             SW(1)                   ROUTE=DISK
+.*             SW(2)                   ROUTE=CPU
+.*             SW(3)                   ROUTE=LOG
+.*             SW(4)                   ROUTE=NULL
+.*             SW(5)                   ROUTE=ABSEXP  AS  ADDR
+.*             SW(7)                   ROUTE=NULL OR ABSEXP
+         LCLC  &CHAR
+         ACTR 500
+&IECM10  SETB  0
+&IECM11  SETB  0
+&IECINDS SETB  0
+&IECCL   SETB  0                                                  21094
+&IECDE   SETB  0                                                  21094
+&IECAS   SETB  0                                                  21094
+&IECSW(5) SETB 0
+&IECTXT  SETB 0
+&IECNDGP(2) SETA 0
+&IECNDGP(3) SETA 0
+         AIF   (&IECSW(4)).BY
+&IECNDGP(5) SETA 0
+&IECSEQ(4) SETB 1
+.BY      AIF   (&IECSEQ(1) AND &IECSEQ(2) AND &IECSEQ(4)               X
+               AND NOT&IECSEQ(6)).SEQOK
+&NCODE   SETB  1
+         MNOTE 12,'MACRO SEQUENCE ERROR'
+.SEQOK   AIF   ('&NAME' NE '').NMOK
+&NCODE   SETB 1
+         MNOTE 12,'NAME FIELD REQUIRED'
+.NMOK    AIF   (T'&ROUTE EQ 'O').RTOK
+.RTTYPOK ANOP
+&A       SETA  &A+1
+ AIF ('&ROUTE(&A)' EQ 'DISK' OR '&ROUTE(&A)' EQ 'LOG' OR '&ROUTE(&A)'  X
+               EQ 'CPU' OR '&ROUTE(&A)' EQ 'NULL').A123
+         AIF   (T'&ROUTE(&A) EQ 'N' OR T'&ROUTE(&A) EQ 'O').A123
+&NCODE   SETB  1
+         MNOTE 12,'ROUTE=&ROUTE(&A) INVALID'
+.A123    AIF   (&A LT 3).RTTYPOK
+&A       SETA  0
+         AIF   (&NCODE).RTOK
+.AX4     ANOP
+&A       SETA  &A+1
+         AIF   (&SW(1)).NXT1
+&SW(1)   SETB ('&ROUTE(&A)' EQ 'DISK')
+.NXT1    AIF   (&SW(2)).NXT2
+&SW(2)   SETB ('&ROUTE(&A)' EQ 'CPU')
+.NXT2    AIF   (&SW(3)).NXT3
+&SW(3)   SETB ('&ROUTE(&A)' EQ 'LOG')
+.NXT3    AIF   (&SW(4)).NXT4
+&SW(4)   SETB ('&ROUTE(&A)' EQ 'NULL')
+.NXT4    AIF   (&SW(5)).NXT5
+&SW(5)   SETB  (T'&ROUTE(&A) EQ 'N')
+&SV      SETA  &A
+.NXT5    AIF   (&A NE 3).AX4
+         AIF   (NOT &SW(1) OR NOT &SW(2)).OK
+&NCODE   SETB  1
+         MNOTE 12,'MUTUALLY EXCLUSIVE OPERANDS=DISK AND CPU CODED'
+.OK      ANOP                                                     21094
+         AIF   (&SW(4) OR &SW(5)).OK1                             21094
+         AGO   .MSGSW                                             21094
+.OK1     ANOP                                                     21094
+         AIF   (&IECSW(1)).MSGSW                                  21094
+&NCODE   SETB  1
+         MNOTE 12,'MESSAGE SWITCHING VALID ONLY IF CORE=32'
+.MSGSW   AIF   (NOT &SW(5)).CKMRE
+&A       SETA &ROUTE(&SV)
+         AIF   (&A GE 128 AND &A LE 227).CKMRE
+         AIF   (&A GE 0 AND &A LE 99).A128
+&NCODE   SETB  1
+         MNOTE 12,'AREA STATION ADDRESS=&A NOT IN ALLOWED RANGE'
+.A128    ANOP
+&A       SETA  &A+X'80'
+.CKMRE   AIF   (&SW(1) OR &SW(2) OR &SW(3) OR &SW(4) OR &SW(5)).RTOK
+&NCODE   SETB  1
+         MNOTE 12,'ROUTE=&ROUTE INVALID'
+.RTOK    AIF   ('&TEXT' EQ 'YES' OR '&TEXT' EQ 'NO').TXTOK
+         MNOTE 3,'TEXT=&TEXT INCORRECTLY CODED DEFAULT ASSUMED'
+.TXTOK   ANOP
+&IECTXT  SETB ('&TEXT' EQ 'YES')
+         AIF   (NOT &IECTXT).CKTRID
+         AIF   (&IECSW(1)).CKT                                    21094
+         MNOTE 3,'TEXT=YES VALID ONLY IF CORE=32'                 21094
+&IECTXT  SETB  0                                                  21094
+.CKT     ANOP                                                     21094
+         AIF   (&SW(4) OR &SW(5)).CKTRID
+         MNOTE 3,'TEXT=YES INVALID UNLESS MESSAGE SWITCHING INDICATED'
+&IECTXT  SETB  0
+.CKTRID  AIF   (T'&TRID EQ 'N').CKRNG1
+&NCODE   SETB  1
+&CHAR    SETC  T'&TRID
+         MNOTE 12,'REQUIRED OPERAND=TRID TYPE ATTRIBUTE=&CHAR IMPROPER'
+         AGO   .CKGEN
+.CKRNG3  AIF   (&SV EQ 0 AND NOT &IECGYES).INQD
+         AIF   (&IECGYES).CKRNG4
+&IECNDGP(5) SETA 0
+&IECGYES SETB  1
+.CKRNG4  AIF   (&SV GT &IECNDGP(5) AND &SV LE 99).INQD
+         AGO   .CKRNG5
+.CKRNG1  ANOP
+&SV      SETA  &TRID
+         AIF   (T'&GDU EQ 'O' OR '&GDU' EQ 'NO').CKRNG2
+         AIF   ('&GDU' EQ 'YES').CKRNG3
+         MNOTE 3,'GDU OPERAND INVALID,OPERAND IGNORED'
+.CKRNG2  ANOP
+         AIF   (&SV EQ 0 AND NOT &IECSW(4)).INQD
+         AIF   (&SV GT &IECNDGP(5) AND &SV LE 159).INQD
+.CKRNG5  ANOP
+&NCODE   SETB  1
+         MNOTE 12,'TRID=&TRID NOT IN ALLOWED RANGE OR IS OUT OF SEQ'
+.INQD    ANOP
+         AIF   (T'&INQDISP EQ 'O').CKGEN
+         AIF   ('&INQDISP' EQ 'YES' OR '&INQDISP' EQ 'NO').CKCORE
+         MNOTE 3,'INQDISP OPERAND CODED INCORRECT,DEFAULT ASSUMED'
+.CKCORE  ANOP
+         AIF   ('&INQDISP' NE 'YES').CKGEN
+         AIF   (&IECSW(1)).CKGEN1
+&NCODE   SETB  1
+         MNOTE 12,'INQDISP CAN NOT BE CODED UNLESS CORE=32 IN CONFIGUR X
+               MACRO'
+.CKGEN1  ANOP
+&IECINDS SETB  1
+         AIF   (&IECIN).CKGEN1A
+&NCODE   SETB  1
+         MNOTE 12,'INQDISP CAN NOT BE CODED UNLESS INQDISP=YES IN      X
+               CONFIGUR MACRO'
+         AGO   .CKGEN
+.CKGEN1A ANOP
+         AIF   (&IECSW(1)).CKGEN2
+&NCODE   SETB  1
+         MNOTE 12,'ROUTE=DISK CAN NOT BE CODED WHEN INQDISP=YES IS     X
+               CODED'
+         AGO   .CKGEN
+.CKGEN1B ANOP
+&SW(2)   SETB  1
+.CKGEN   ANOP
+         AIF   (T'&DEMOD10 EQ 'O').MOD11
+         AIF   ('&DEMOD10' EQ 'YES' OR '&DEMOD10' EQ 'NO').CKCORE1
+         MNOTE 3,'DEMOD10 OPERAND CODED INCORRECT,DEFAULT ASSUMED'
+.CKCORE1 ANOP
+         AIF   ('&DEMOD10' NE 'YES').MOD11
+         AIF   (&IECSW(1)).CKGEN2
+&NCODE   SETB  1
+         MNOTE 12,'DEMOD10 OPERAND CAN NOT BE CODED UNLESS CORE=32 IN  X
+               CONFIGUR MACRO'
+         AGO   .MOD11
+.CKGEN2  ANOP
+&IECM10  SETB  1
+.MOD11   ANOP
+         AIF   (T'&DEMOD11 EQ 'O').CKGEN3
+         AIF   ('&DEMOD11' EQ 'YES' OR '&DEMOD11' EQ 'NO').CKCORE3
+         MNOTE 3,'DEMOD11 OPERAND CODED INCORRECT,DEFAULT ASSUMED'
+.CKCORE3 ANOP
+         AIF   ('&DEMOD11' NE 'YES').CKGEN3
+         AIF   (&IECSW(1)).CKGEN4
+&NCODE   SETB  1
+         MNOTE 12,'DEMOD11 OPERAND CAN NOT BE CODED UNLESS CORE=32 IN  X
+               CONFIGUR MACRO'
+         AGO   .CKGEN3
+.CKGEN4  ANOP
+&IECM11  SETB  1
+.CKGEN3  ANOP
+         AIF   ('&DEMOD10' NE 'YES').CKGEN5
+         AIF   ('&DEMOD11' NE 'YES').CKGEN5
+&NCODE   SETB  1
+         MNOTE 12,'DEMOD10 AND DEMOD11 OPERANDS MUTUALLY EXCLUSIVE'
+.CKGEN5  ANOP
+         AIF   (NOT &NCODE).GENCODE
+         MNOTE 12,'TEXT GENERATION SUPRESSED'
+         AGO   .SET
+.GENCODE AIF   (&IECSW(4)).SKIP1
+         AIF   (NOT &IECSW(9)).NOPC                               21094
+         AIF   (&IECSWW(2)).NOPC                                  21094
+&IECSWW(2) SETB 1                                                 21094
+         DC    AL2(61440)                                         21094
+IECCTRGR EQU   *                                                  21094
+IECSCHED EQU   *                                                  21094
+         DC    AL2(12288)                                         21094
+&IECNDGP(1) SETA &IECNDGP(1)+2*&IECPCTS+8
+.NOPC    ANOP                                                     21094
+         AIF   (NOT &IECSQ(6)).NOPC1
+         DC    X'00'      END OF GDU TRANSLATE TABLE
+&IECNDGP(1) SETA &IECNDGP(1)+1
+.NOPC1  ANOP
+         SPACE 1
+*                   TRANSACTION TABLES
+         SPACE 1
+IECFTRLA EQU   *
+.SKIP1   ANOP
+         AIF   (NOT &IECSW(4) OR &IECSW(8)).NODC
+         DC    YL1(&IECNDGP(4)) END OF LIST BYTE FOR PRECEDING TRNS
+.NODC    ANOP
+&SW(7)   SETB  (&SW(4) OR &SW(5))
+&NAME    EQU   *
+         DC    B'&SW(7)&SW(3)&SW(1)&SW(2)&IECTXT.000'  ROUTE BYTE
+.NOSET   DC    YL1(&SV)       TRANSACTION IDENTIFIER
+         AIF   (&SW(5)).CKSWS
+&A       SETA  0
+.CKSWS   DC    YL1(&A)  AREA STATION ADDRESS OR NULL
+&A       SETA  0
+         AIF   ('&INQDISP' NE 'YES').SET4
+&IECINDS SETB  1
+&A       SETA  4
+.SET4    ANOP
+         AIF   (NOT &IECM10).SET5
+&A       SETA  &A+32
+.SET5    ANOP
+         AIF   (NOT &IECM11).SET6
+&A       SETA  &A+64
+.SET6    ANOP
+         DC    YL1(&A)
+&IECNDGP(1) SETA &IECNDGP(1)+5                                    21094
+&IECNDGP(5) SETA &TRID
+.SET     ANOP
+&IECNDGP(4) SETA 0        RESET FOR FOLLOWING MACROS
+&IECSW(4) SETB 1
+&IECSW(8) SETB 0
+.MEND    MEND
+

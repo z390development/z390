@@ -1,0 +1,10 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IECTATNR  &UCBREG
+         LR    1,&UCBREG            GET ADDR OF UCB IN REG 1
+.ATNR01  SR    0,0                  CLEAR REG 0
+         LA    15,1                 SET ROUTING CODE OF 1 IN REG 15
+         SVC   116                  INVOKE LTA FOR LINK TO SVC LOGIC
+*                                   RETURN TO MAINLINE
+         MEND
+

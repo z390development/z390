@@ -1,0 +1,27 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    STOW  &DCB,&AREA,&TYP
+         AIF   ('&DCB' EQ '').ERR1
+.D1      AIF   ('&AREA' EQ '').ERR2
+.D2      AIF   ('&TYP' NE '' AND '&TYP' NE 'A' AND '&TYP' NE 'C' AND   *
+               '&TYP' NE 'D' AND '&TYP' NE 'R').ERR3
+         AIF   ('&DCB' EQ '' OR '&AREA' EQ '').MEND
+&NAME    IHBINNRA &DCB,&AREA
+         AIF   ('&TYP' EQ '' OR '&TYP' EQ 'A').ISVC
+         AIF   ('&TYP' NE 'R').TSTD
+         LCR   1,1                               INDICATE TYPE R
+         AGO   .ISVC
+.TSTD    AIF   ('&TYP' NE 'D').TSTC
+         LCR   0,0                               INDICATE TYPE D
+         AGO   .ISVC
+.TSTC    LCR   1,1                          INDICATE TYPE C
+         LCR   0,0
+.ISVC    SVC   21                                ISSUE STOW SVC
+         MEXIT
+.ERR1    IHBERMAC 6
+         AGO   .D1
+.ERR2    IHBERMAC 13
+         AGO   .D2
+.ERR3    IHBERMAC 48,,&TYP
+.MEND    MEND
+

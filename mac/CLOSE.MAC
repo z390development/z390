@@ -6,22 +6,36 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 11/13/05 RPI88 - correct error in checking for DCB register parm
+.* 11/26/05 RPI112- check for invalid DCB RX form (reg) vs ((reg)) 
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.*********************************************************************
 &N       CLOSE
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+.NPOK    ANOP
 .*
 .* CLOSE 1 OR MORE FILES DEFINED BY DCB'S 
 .*
+         AIF   (&N EQ '').SKIPDS
 &N       DS    0H
+.SKIPDS  ANOP
 &NP      SETA  N'&SYSLIST(1)
 &I       SETA  -1
 .LOOP    ANOP
 &I       SETA   &I+2
          AIF   (&I GT &NP).EXIT
-&DCB     SETC  &SYSLIST(1,&I,1)
+&DCB     SETC  &SYSLIST(1,&I)
 &OPTION  SETC  &SYSLIST(1,&I+1,1)
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
+         AIF   ('&DCB'(1,1) GT '9' OR '&DCB'(1,1) LT '0').RXOK
+         MNOTE 12,'INVALID DCB RX ADDRESS - &DCB'
+.RXOK    ANOP
          LA    1,&DCB
          AGO   .CHKOPT
 .DCBREG  ANOP
+         AIF   (&DCB(1) EQ '1' OR &DCB(1) EQ 'R1').CHKOPT  RPI163
          LR    1,&DCB(1)
 .CHKOPT  ANOP
          AIF   ('&OPTION' EQ '').SVC

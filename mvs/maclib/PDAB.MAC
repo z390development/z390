@@ -1,0 +1,18 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    PDAB  &MAXDCB=
+         AIF   ('&MAXDCB' EQ '').E1
+         AIF   (T'&MAXDCB NE 'N').PDAB01
+         AIF   (&MAXDCB LT 0 OR &MAXDCB GT 32767).E2
+.PDAB01  ANOP
+&NAME    DS    0F
+         DC    AL2(0)
+         DC    AL2(&MAXDCB)
+         DC    5F'0'
+         DS    (8*&MAXDCB)F
+         MEXIT
+.E1      IHBERMAC 1006,MAXDCB 12,IHB001  MAXDCB OPERAND REQUIRED
+         MEXIT
+.E2      IHBERMAC 1001,MAXDCB,&MAXDCB 12,IHB002  INVALID OPERAND
+         MEND
+

@@ -1,0 +1,26 @@
+.* MVS 3.8J PUBLIC DOMAIN
+        MACRO
+&LABEL   SUSPEND  &RB=PREVIOUS
+         AIF (('&RB' NE 'PREVIOUS') AND                                X
+               ('&RB' NE 'CURRENT')).ERROR
+&LABEL   DS    0H
+         AIF ('&RB' EQ 'PREVIOUS').PREV
+         SLR   1,1                  SUSPEND CURRENT RB
+         AGO   .CURR
+.PREV    ANOP
+         LA    1,4                  SUSPEND PREVIOUS RB
+.CURR    ANOP
+         L     15,FLCCVT-FLC(0,0)   CVT ADDRESS
+         L     15,CVTSUSP-CVT(0,15) SUSPEND FUNCTION ADDRESS
+         BALR  14,15                CALL SUSPEND
+         MEXIT
+.**********************************************************************
+.*       ERROR PROCESSING
+.**********************************************************************
+.ERROR   ANOP
+         LCLC      &OPERAND
+&OPERAND SETC      'RB='
+         IHBERMAC  1014,&OPERAND
+.*
+         MEND
+

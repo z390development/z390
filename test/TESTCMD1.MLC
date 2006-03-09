@@ -1,0 +1,26 @@
+         TITLE 'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR'
+TESTCMD1 SUBENTRY
+         WTO   'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR'
+         CMDPROC START
+         CMDPROC WRITE,=C'"PROMPT $G"'
+         CMDPROC WRITE,=C'"TEST\TESTCMD1.BAT"'
+CMDLOOP  EQU   *
+         CMDPROC READ,MSG
+         CHI   15,4
+         BE    CMDLOOP
+         CHI   15,8
+         BE    CMDEND
+         WTO   MF=(E,WTOCMD)
+         CLC   MSG(8),=C'>REM END'
+         BNE   CMDLOOP
+CMDEND   EQU   *
+         CMDPROC STOP
+         WTO   'TESTSVC1 ENDING OK'
+         SUBEXIT
+ERROR    WTO   'TESTCMD1 COMMAND ERROR'
+         SUBEXIT RC=16
+WTOCMD   DC    AL2(WTOEND-*,0)
+         DC    C'MSG FROM CMD='
+MSG      DC    CL80' '
+WTOEND   EQU   *
+         END

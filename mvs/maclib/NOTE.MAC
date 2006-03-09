@@ -1,0 +1,11 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    NOTE  &DCB,&DUMMY=
+         AIF   ('&DCB' EQ '').ERR
+&NAME    IHBINNRA &DCB
+         L     15,84(0,1)                        LOAD NOTE  RTN ADDRESS
+         BALR  14,15                             LINK TO NOTE  ROUTINE
+         MEXIT
+.ERR     IHBERMAC 6
+         MEND
+

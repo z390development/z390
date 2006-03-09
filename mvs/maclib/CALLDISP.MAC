@@ -1,0 +1,46 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    CALLDISP  &BRANCH=NO
+.*************************************************************
+.*       VALIDITY CHECK PARAMETER
+.*************************************************************
+         AIF ('&BRANCH' EQ 'YES' OR                                    X
+               '&BRANCH' EQ 'NO').OK
+         LCLC  &OPERAND
+&OPERAND SETC  'BRANCH='
+         IHBERMAC  1014,&OPERAND
+         MEXIT
+.*************************************************************
+.*       GENERATE BAL CODE
+.*       OZ30340 - MAKE THE RBOPSW ENABLED FOR I/O & EXTERNAL  @ZA30340
+.*       OZ51780 - SAVE PROGRAM MASK WHEN BRANCH=YES
+.*                 IS SPECIFIED ON CALLDISP MACRO              @ZA51780
+.*************************************************************
+.OK      ANOP
+         AIF ('&BRANCH' EQ 'YES').YES
+&NAME    LA    15,8(0,0)           . CALLDISP ESR CODE
+         SVC   116                 . EXTEND. SVC ROUTER - TYPE 1
+         MEXIT
+.YES     ANOP
+         LCLC  &LAB
+&LAB     SETC  '@PSW&SYSNDX'       UNIQUE  LABEL
+&NAME    DS    0H                  BRANCH ENTER DISPATCHER
+         STNSM PSAPSWSV-FLC(0),X'FC'     DISABLE
+         ST    15,PSAPSWSV+4-FLC(0,0)    SAVE REG 15
+         L     15,PSATOLD-FLC(0,0)    GET CURRENT TCB
+         STM   0,14,TCBGRS-TCB(15)      SAVE 0 THRU 14 IN TCB
+         L     14,PSAPSWSV+4-FLC(0,0)    SAVE 15
+         ST    14,TCBGRS15-TCB(0,15)       IN TCB
+         L     15,TCBRBP-TCB(0,15)    GET ADDRESS OF RB
+         MVC   RBOPSW-RBSECT(8,15),&LAB     MOVE MODEL PSW
+         OC    RBOPSW-RBSECT(1,15),PSAPSWSV-FLC(0) SYSTEM MASK @ZA30340
+         BALR  14,0                GET PROGRAM MASK IN R14 AND @ZA51780
+         STCM  14,8,18(15)         STORE IT INTO RBOPSW        @ZA51780
+         NI    18(15),X'0F'        CLEAN UP EXTRA BITS         @ZA51780
+         L     15,FLCCVT-FLC(0,0)  GET CVT ADDRESS
+         L     14,CVT0DS-CVT(0,15) GET DISPATCHER E.P.
+         BR    14                  EXIT TO DISPATCHER
+&LAB     DS    0F                  MODEL PSW
+         DC    X'070C0000'         FIRST HALF - MAKE IT ENABLED@ZA30340
+         DC    A(*+4)              RETURN ADDRESS
+         MEND

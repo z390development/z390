@@ -6,6 +6,11 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* MAINTENANCE 
+.* 10/04/05 ADD SUPPORT FOR ASCII MODE ED MASK WITH X'A0' VS X'20'
+.* 11/02/05 REMOVE ASCII MODE ED MASK WITH X'A0' NO LONGER REQUIRED
+.* 11/20/05 CHANGE LA 1,X'101', SVC 13 TO ABEND 101                  
+.*********************************************************************
 &NAME    RT1   &CMD,&CLC1,&CLC2,&LL  
 .*
 .* REGRESSION TEST V1 COMMAND MACROS
@@ -62,8 +67,7 @@ RT1_END  DS    0H
          WTO   '&RT1NAME RT1 ENDED OK'
          SUBEXIT
 RT1_DUMP DS    0H
-         LA    1,X'101'
-         SVC   13
+         ABEND 101     
 RT1_LINK EQU   11
 RT1_DATA EQU   *
 RT1_TOT  DC    PL3'0' TOTAL RT1 TESTS COMPLETED

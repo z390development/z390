@@ -1,0 +1,21 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    DEVTYPE &DDLOC,&A,&DEVTAB,&RPS
+         AIF   ('&DDLOC' EQ '').E1
+         AIF   ('&A' EQ '').E2
+&NAME    IHBINNRA &DDLOC,&A
+         AIF   ('&DEVTAB' EQ '').SVC
+         AIF   ('&DEVTAB' NE 'DEVTAB').E3
+         AIF   ('&RPS' EQ '').NORP      NO RPS REQUESTED
+         AIF   ('&RPS' NE 'RPS').NORP   CORRECTLY
+         LCR   1,1                      COMPLEMENT               S20201
+.NORP    LCR   0,0                                               S20201
+.SVC     SVC   24
+         MEXIT
+.E1      IHBERMAC 2
+         MEXIT
+.E2      IHBERMAC 3
+         MEXIT
+.E3      IHBERMAC 38,,&DEVTAB
+         MEND
+

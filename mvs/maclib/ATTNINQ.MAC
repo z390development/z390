@@ -1,0 +1,213 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    ATTNINQ  &GACB,&MODE=,&TYP=,&UNIT=,&MF=                   RSTB
+         LCLA  &MFL,&MFE,&MODNUM,&JMPNUM                           RSTB
+         LCLC  &NAMGACB,&NAMEM,&BRADDR,&CTYPE,&C0,&C1,&LIST        RSTB
+         LCLA  &TYPE                                               RSTB
+         LCLA  &SWITCH                                             RSTB
+&NAMEM   SETC  '&NAME'                                             RSTB
+.*0655,000000-999999                                               RSTB
+         AIF   (T'&MF EQ 'O').SFORM                                RSTB
+         AIF   (N'&MF EQ 2).EFORM                                  RSTB
+         AIF   ('&MF(1)' EQ 'L').LFORM                             RSTB
+.MFERR   IHBERMAC 35,,&MF               ERROR MSG FOR INVALID MF   RSTB
+         MEXIT                                                     RSTB
+.ER1     IHBERMAC  2                                               RSTB
+         MEXIT                                                     RSTB
+.EFORM   AIF   ('&MF(1)' NE 'E').MFERR                             RSTB
+&MFE     SETA  1                        SET E-FORM SWITCH          RSTB
+         AGO   .ANYFRM                                             RSTB
+.LFORM   ANOP                                                      RSTB
+&MFL     SETA  1                        SET L-FORM SWITCH          RSTB
+         AGO   .ANYFRM                                             RSTB
+.SFORM   AIF   (T'&GACB EQ 'O').ER1                                RSTB
+.ANYFRM  ANOP                                                      RSTB
+&NAMGACB SETC  '&GACB'                                             RSTB
+.TSTMOD  AIF   (T'&MODE EQ 'O').RMOD    TEST FOR NO MODE SPECIFIED RSTB
+         AIF   ('&MODE' EQ 'R').RMOD    TEST FOR RELINQUISH MODE   RSTB
+         AIF   ('&MODE' EQ 'W').WMOD    TEST FOR WAIT MODE         RSTB
+         AIF   ('&MODE' EQ 'CLEAR').CLMOD                          RSTB
+         AIF   (N'&MODE NE 2).MODERR                               RSTB
+         AIF   ('&MODE(1)' EQ 'C').CMOD      TEST FOR COND.MODE    RSTB
+.MODERR  IHBERMAC 180,MODE,R            ERROR MSG FOR INVALID MODE RSTB
+.RMOD    ANOP                           ASSUMES  R MODE            RSTB
+&MODNUM  SETA  1                                                   RSTB
+         AGO   .SETJMP                                             RSTB
+.WMOD    ANOP                                                      RSTB
+&MODNUM  SETA  2                        SET CODE FOR MODE          RSTB
+         AGO   .SETJMP                                             RSTB
+.CLMOD   ANOP                                                      RSTB
+&MODNUM  SETA  8                       SET CODE                    RSTB
+.SETJMP  ANOP                                                      RSTB
+&JMPNUM  SETA  10                                                  RSTB
+.SETUP   AIF   ('&MFL' EQ '1').FORML   MF=L                        RSTB
+         AIF   ('&MFE' EQ '1').FORME   MF=E                        RSTB
+.PARAM   CNOP  0,4                                                 RSTB
+         AIF   (T'&GACB EQ 'O').BROVER                             RSTB
+.GOON    AIF   ('&GACB'(1,1) EQ '(').REGACB                        RSTB
+.BROVER  ANOP                                                      RSTB
+&NAMEM   BAL   1,*+&JMPNUM                                         RSTB
+IHBL&SYSNDX DC A(&NAMGACB)             GACB ADDRESS                RSTB
+            DC AL1(&MODNUM)            MODE TYPE                   RSTB
+         AIF   ('&UNIT' EQ 'ALL').ALL                              RSTB
+         AIF   (T'&UNIT EQ 'N').UNIT                               RSTB
+         AIF   (T'&UNIT EQ 'O').ALL                                RSTB
+.ALLERR  IHBERMAC  180,UNIT,ALL                                    RSTB
+.ALL     DC    AL1(255)                ALL OPTION FOR UNIT         RSTB
+.MORE    AIF   ('&MODNUM' NE '4').FINI                             RSTB
+         DC    AL2(&TYPE)              TYPE                        RSTB
+         DC    A(&BRADDR)              BRANCH ADDRESS              RSTB
+.FINI    AIF   (&SWITCH EQ 1).REG                                  RSTB
+.SYMB    L     15,&GACB+48             LOAD ATTNINQ (IGG0190K) ADR RSTB
+.BRANCH  BALR  14,15                   BRANCH TO CONTROL SECTION   RSTB
+         MEXIT                                                     RSTB
+.UNIT    AIF   ('&UNIT' LT '1' OR '&UNIT' GT '25').ALLERR          RSTB
+         DC    AL1(&UNIT)              UNIT OPTION                 RSTB
+         AGO   .MORE                                               RSTB
+.REG     L     15,48&GACB              LOAD ATTNINQ (IGG0190K)ADR  RSTB
+         AGO   .BRANCH                                             RSTB
+.REGACB  ANOP                                                      RSTB
+&NAMGACB SETC  '&GACB'(2,K'&GACB-2)    GET REGISTER NUMBER         RSTB
+&NAMEM   ST    &NAMGACB,IHBL&SYSNDX    STORE GACB ADR IN PARM LIST RSTB
+&NAMEM   SETC  ' '                                                 RSTB
+&NAMGACB SETC  '0'                                                 RSTB
+&SWITCH  SETA  1                                                   RSTB
+         AGO   .BROVER                                             RSTB
+.CMOD    ANOP                                                      RSTB
+&MODNUM  SETA  4                       SET MODE TYPE               RSTB
+&JMPNUM  SETA  16                                                  RSTB
+         AIF   (T'&TYP NE 'O').FNDTYP  CHECK FOR TYPE OPTION       RSTB
+.TYPANY  ANOP                                                      RSTB
+&TYPE    SETA  0                                                   RSTB
+.BRTST   AIF   ('&MFE' EQ '2').ETYPOK                              RSTB
+         AIF   (T'&MODE(2) NE 'O').BRADR                           RSTB
+         IHBERMAC 178,BRADDR,0         ERROR USE FOR NO BRANCH ADR RSTB
+&BRADDR  SETC  '0'                                                 RSTB
+         AGO   .SETUP                                              RSTB
+.BRADR   AIF   ('&MODE(2)'(1,1) EQ '(').BREG                       RSTB
+&BRADDR  SETC  '&MODE(2)'              SET BRANCH ADR              RSTB
+         AGO   .SETUP                                              RSTB
+.BREG    ANOP                                                      RSTB
+&BRADDR  SETC  '&MODE(2)'(2,K'&MODE(2)-2)   GET REGISTER           RSTB
+         AIF   ('&MFL' EQ '1' OR '&MFE' EQ '1').SETUP              RSTB
+         CNOP  0,4                          STORE BRANCH ADR       RSTB
+&NAMEM   ST    &BRADDR,IHBL&SYSNDX+8   ST. BRNCH ADR IN PARM LIST  RSTB
+&NAMEM   SETC  ' '                                                 RSTB
+&BRADDR  SETC  '0'                                                 RSTB
+         AGO   .GOON                                               RSTB
+.FNDTYP  AIF   ('&TYP' EQ 'ANY').TYPANY                            RSTB
+         AIF   ('&TYP' EQ 'END').TYPEND                            RSTB
+         AIF   ('&TYP' EQ 'LP').TYPLP                              RSTB
+         AIF   ('&TYP' EQ 'EOS').TYPEOS                            RSTB
+         AIF   ('&TYP' EQ 'CANCEL').TYPCAN                         RSTB
+         AIF   ('&TYP' EQ 'AE').TYPAE                              RSTB
+         AIF   (K'&TYP NE 5).TYPERR                                RSTB
+         AIF   ('&TYP'(1,3) EQ 'PFK').TYPPFK                       RSTB
+.TYPERR  IHBERMAC 180,TYP,ANY          ERR MSG ASSUMES TYP=ANY     RSTB
+         AGO   .TYPANY                                             RSTB
+.TYPEND  ANOP                                                      RSTB
+&TYPE    SETA  1                       SET TYPE CODE FOR END KEY   RSTB
+         AGO   .BRTST                                              RSTB
+.TYPLP   ANOP                                                      RSTB
+&TYPE    SETA  2                            TYP FOR LP             RSTB
+         AGO   .BRTST                                              RSTB
+.TYPEOS  ANOP                                                      RSTB
+&TYPE    SETA  3                            TYP FOR EOS            RSTB
+         AGO   .BRTST                                              RSTB
+.TYPCAN  ANOP                                                      RSTB
+&TYPE    SETA  4                       TYP FOR CANCEL KEY          RSTB
+         AGO   .BRTST                                              RSTB
+.TYPAE   ANOP                                                      RSTB
+&TYPE    SETA  5                       TYP FOR AE                  RSTB
+         AGO   .BRTST                                              RSTB
+.TYPPFK  ANOP                                                      RSTB
+&CTYPE   SETC  '&TYP'(4,2)                                         RSTB
+&C0      SETC  '&TYP'(4,1)                                         RSTB
+&C1      SETC  '&TYP'(5,1)                                         RSTB
+         AIF   ('&C0' EQ '3').HAD1                                 RSTB
+         AGO   .HAD2                                               RSTB
+.HAD1    AIF   ('&C1' EQ '0' OR '&C1' EQ '1').HAD                  RSTB
+         AGO   .TYPERR                                             RSTB
+.HAD2    AIF   ('&C0' EQ '0' OR '&C0' EQ '1' OR '&C0' EQ '2').HA   RSTB
+         AGO   .TYPERR                                             RSTB
+.HA      AIF   ('&C1' EQ '0' OR '&C1' EQ '1' OR '&C1' EQ '2' OR '&C1' E-
+               Q '9').HAD                                          RSTB
+.HAD     ANOP                                                      RSTB
+&TYPE    SETA  &CTYPE+8                                            RSTB
+         AGO   .BRTST                                              RSTB
+.FORML   DS    0F                                                  RSTB
+         AIF   (T'&GACB EQ 'O').SET0                               RSTB
+   AIF   ('&GACB'(1,1) GE 'A' AND '&GACB'(1,1) LE 'Z').SETGACB     RSTB
+         IHBERMAC  180,GACB,0          INVALID GACB NOTATION       RSTB
+.SET0    ANOP                                                      RSTB
+&NAMGACB SETC  '0'                                                 RSTB
+.SETGACB ANOP                                                      RSTB
+&NAME    DC    A(&NAMGACB)             GACB ADR                    RSTB
+         DC    AL1(&MODNUM)            MODE TYP                    RSTB
+         AIF   ('&UNIT' EQ 'ALL').LALL                             RSTB
+         AIF   (T'&UNIT EQ 'N').LUNIT                              RSTB
+         AIF   (T'&UNIT EQ 'O').LALL                               RSTB
+.LALLER  IHBERMAC  180,UNIT,ALL                                    RSTB
+.LALL    DC    AL1(255)                ALL OPTION FOR UNIT         RSTB
+.GOONL   AIF   ('&MODNUM' EQ '4').GOONL1                           RSTB
+         DC    AL2(0)                  TYPE                        RSTB
+         DC    A(0)                    BRANCH ADR                  RSTB
+         MEXIT                                                     RSTB
+.LUNIT   AIF   ('&UNIT' LT '1' OR '&UNIT' GT '25').LALLER          RSTB
+         DC    AL1(&UNIT)              UNIT OPTION                 RSTB
+         AGO   .GOONL                                              RSTB
+.GOONL1  DC    AL2(&TYPE)              TYPE OPTION                 RSTB
+         AIF   ('&MODE(2)'(1,1) LT 'A').BRERR                      RSTB
+         AIF   ('&MODE(2)'(1,1) LE 'Z').GOONL2                     RSTB
+.BRERR   IHBERMAC  180,BRADDR,0                                    RSTB
+         DC    A(0)                    BRANCH ADDRESS              RSTB
+         MEXIT                                                     RSTB
+.GOONL2  DC    A(&BRADDR)              BRANCH ADDRESS              RSTB
+         MEXIT                                                     RSTB
+.FORME   AIF   ('&MF(2)'(1,1) EQ '(').REGMF                        RSTB
+&NAME    LA    1,&MF(2)                LOAD PARAM LIST ADR IN REG1 RSTB
+.EGACB   AIF   (T'&GACB EQ 'O').CHECK                              RSTB
+         AIF   ('&GACB'(1,1) EQ '(').EREGACB                       RSTB
+         LA    0,&GACB                                             RSTB
+         ST    0,0(1)                  STORE GACB ADR IN PARAM LISTRSTB
+.CHECK   AIF   (T'&MODE EQ 'O').ETYP                               RSTB
+         MVI   4(1),&MODNUM            SET MODE CODE               RSTB
+         AIF   ('&MODNUM' NE '4').ETYP                             RSTB
+         AIF   ('&MODE(2)'(1,1) EQ '(').EBREG                      RSTB
+         LA    0,&BRADDR                                           RSTB
+         ST    0,8(1)                  ST BRNCH ADRS IN PARM LIST  RSTB
+.ETYP    AIF   (T'&TYP EQ 'O').EUNIT                               RSTB
+         AIF   ('&MODE(1)' EQ 'C').ETYPOK                          RSTB
+&MFE     SETA  2                                                   RSTB
+         AGO   .FNDTYP                                             RSTB
+.ETYPOK  MVI   7(1),&TYPE              MOVE IN TYPE CODE           RSTB
+.EUNIT   AIF   (T'&UNIT EQ 'O').ENDE                               RSTB
+         AIF   (T'&UNIT EQ 'N').UNITE                              RSTB
+         AIF   ('&UNIT' NE 'ALL').ALLERE                           RSTB
+.ALLE    MVI   5(1),255                MOVE UNIT OPT IN PARM LIST  RSTB
+.ENDE    AIF   (T'&GACB EQ 'O').GETADR                             RSTB
+         AIF   (&SWITCH EQ 1).REG                                  RSTB
+         AGO   .SYMB                                               RSTB
+.GETADR  L     15,0(1)                 LOAD GACB ADR FROM PARM LISTRSTB
+         L     15,48(15)               LOAD ATTNINQ ADR (IGG019OK) RSTB
+         AGO   .BRANCH                                             RSTB
+.ALLERE  IHBERMAC  180,UNIT,ALL                                    RSTB
+         AGO   .ALLE                                               RSTB
+.UNITE   AIF   ('&UNIT' LT '1' OR '&UNIT' GT '25').ALLERE          RSTB
+         MVI   5(1),&UNIT              MOVE UNIT OPT IN PARM LIST  RSTB
+         AGO   .ENDE                                               RSTB
+.REGMF   ANOP                                                      RSTB
+&LIST    SETC  '&MF(2)'(2,K'&MF(2)-2)                              RSTB
+&NAME    LR    1,&LIST                                             RSTB
+         AGO   .EGACB                                              RSTB
+.EREGACB ANOP                                                      RSTB
+&NAMGACB SETC  '&GACB'(2,K'&GACB-2)                                RSTB
+         ST    &NAMGACB,0(1)           STORE GACB ADR IN PARM LIST RSTB
+&SWITCH  SETA  1                                                   RSTB
+         AGO   .CHECK                                              RSTB
+.EBREG   ANOP                                                      RSTB
+&BRADDR  SETC  '&MODE(2)'(2,K'&MODE(2)-2)                          RSTB
+         ST    &BRADDR,8(1)            ST BRANCH ADR IN PARM LIST  RSTB
+         AGO   .ETYP                                               RSTB
+         MEND
+

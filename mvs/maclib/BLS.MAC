@@ -1,0 +1,16 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    BLS   &R,&A                    BRANCH AND LINK
+         GBLA  &DISP
+         GBLC  &LBL1
+         LCLA  &RG
+         AIF   ('&R' LT '4').B1
+         MNOTE 8,'***  IHB355  LINK REGISTER MUST BE 0-3; 0 ASSUMED'
+&RG      SETA  0
+         AGO   .B2
+.B1      ANOP
+&RG      SETA  16*&R
+.B2      ANOP
+&NAME    DC    0H'0',X'BD',AL1(&RG),AL2(&A-&LBL1+&DISP)
+         MEND
+

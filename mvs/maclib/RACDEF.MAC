@@ -1,0 +1,998 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*
+* $MAC(RACDEF) COMP(SC1BN) PROD(RACF):
+*
+* DESCRIPTIVE NAME = RESOURCE DEFINITION MACRO
+*
+*
+* STATUS = OS/VS2 EBB1102
+*
+* FUNCTION = ISSUED WHENEVER A RESOURCE MANAGER
+*    DETERMINES THAT A RESOURCE SHOULD BE DEFINED, DELETED OR
+*    CHANGED TO THE SECURITY PACKAGE.                              @L5A
+*
+* CHANGE ACTIVITY =  A 00000000-99999999                       @Y40RSGD
+*                    RACF VERSION 1, RELEASE 2                 @PC002PY
+*                    RACF VERSION 1, RELEASE 3                 @PC003PY
+*                    $L4=HRF1402,RACF/140,810701,SJRDSD:           @L4A
+*                    OZ56979                                   @ZA56979
+*                    OZ56982                                   @ZA56982
+*                    $T1=UZ90211,SAF/RF15,810702,CNTDSD:           @T1A
+*                    $L5=HRF1502,RACF/150,820311,CNTDSD:           @L5A
+*                    $L6=HRF1602,RACF/160,830307,CNTDSD:           @L6A
+*                    UZ90283                                   @ZA90283
+*                    UZ90284                                   @ZA90284
+*                    UZ90285                                   @ZA90285
+*
+         MACRO
+&SYMBOL  RACDEF &ENTITY=,&VOLSER=,&DSTYPE=,&OLDVOL=,&NEWNAME=,         -
+               &TYPE=DEFINE,&MF=S,&INSTLN=,&CLASS=,&MENTITY=,          -
+               &UNIT=,                                             @L4A-
+               &UACC=,                                             @L4A-
+               &OWNER=,                                            @L4A-
+               &LEVEL=,                                            @L4A-
+               &AUDIT=,                                            @L4A-
+               &DATA=,                                             @L4A-
+               &SPECIAL=,                                          @L4A-
+               &MVOLSER=,&ACEE=,                               @PC003PY-
+               &RACFIND=,&CHKAUTH=,                                @L5A-
+               &WARNING=,&GENERIC=                                 @L6A
+         LCLA  &BIT0,&BIT1,&BIT2,&BIT3,&BIT4,&BIT5,&CLNGTH     @PC002PY
+         LCLA  &BIT6,&BIT7                                       @L4A
+         LCLA  &BITA0,&BITA1,&BITA2                                @L5A
+         LCLA  &BITA3,&BITA4,&BITA5,&BITA6,&BITA7                  @L6A
+         LCLB  &UACC0,&UACC1,&UACC2,&UACC3,&UACC4,&UACC5         @L4A
+         LCLB  &UACC6,&UACC7                                     @L4A
+         LCLA  &UACCVAL                                          @L4A
+         LCLB  &AUDIT0,&AUDIT1,&AUDIT2,&AUDIT3,&AUDIT4,&AUDIT5   @L4A
+         LCLB  &AUDIT6,&AUDIT7                                   @L4A
+         LCLA  &AUDITVL                                          @L4A
+         LCLC  &AUDITRG,&AUD(2),&AUDQ(2)                           @L5A
+         LCLA  &I,&J                                               @L5A
+         LCLB  &MFFLAG
+         LCLC  &CHAR                                           @PC002PY
+.* DEFINE GLOBAL SET SYMBOLS                                       @T1A
+         GBLB  &ICHRAC             ICHRAC - A FLAG WHICH, WHEN     @T1A
+.*                                 ON, INDICATES THAT THIS MACRO   @T1A
+.*                                 IS BEING INVOKED INTERNALLY     @T1A
+.*                                 BY THE RACROUTE MACRO.          @T1A
+         GBLC  &ICHL               SETS ADDRESSABILITY TO THE      @T1A
+.*                                 PARAMETER LIST FOR THE          @T1A
+.*                                 RACROUTE MACRO.                 @T1A
+.* PERFORM PARAMETER ANALYSIS
+.* VALIDATE DSTYPE PARAMETER
+         AIF   ('&DSTYPE' NE 'N' AND '&DSTYPE' NE 'V' AND '&DSTYPE' NE -
+               '' AND '&DSTYPE' NE 'M').ERR01                  @L4A
+.ERTN01  ANOP
+.* VALIDATE SPECIAL PARAMETER.                                   @L4A
+         AIF   ('&SPECIAL' NE 'NO' AND '&SPECIAL' NE 'YES' AND         -
+               '&SPECIAL' NE '').ERR13                           @L4A
+.ERTN13  ANOP  ,                                                 @L4A
+.* VALIDATE RACFIND PARAMETER                                      @L5A
+         AIF   ('&RACFIND' NE 'YES' AND '&RACFIND' NE 'NO' AND         *
+               '&RACFIND' NE '').ERR14                             @L5A
+.ERTN14  ANOP                                                      @L5A
+.* VALIDATE CHKAUTH PARAMETER                                      @L5A
+         AIF   ('&CHKAUTH' NE 'YES' AND '&CHKAUTH' NE 'NO' AND         *
+               '&CHKAUTH' NE '').ERR15                             @L5A
+.ERTN15  ANOP                                                      @L5A
+.* VALIDATE WARNING PARAMETER
+         AIF   ('&WARNING' EQ '').ERTN16                           @L6A
+         AIF   ('&WARNING' NE 'YES' AND '&WARNING' NE 'NO').ERR16  @L6A
+.ERTN16  ANOP  ,                                                   @L6A
+.* VALIDATE GENERIC PARAMETER
+         AIF   ('&GENERIC' EQ '').ERTN17                           @L6A
+         AIF   ('&GENERIC' NE 'ASIS' AND                               -
+               '&GENERIC' NE 'YES').ERR17                          @L6A
+.ERTN17  ANOP  ,                                                   @L6A
+.* VALIDATE TYPE PARAMETER
+         AIF   ('&TYPE' EQ '').RDEF004                           @L4A
+         AIF   ('&TYPE' NE 'DEFINE' AND '&TYPE' NE 'DELETE' AND        -
+               '&TYPE' NE 'CHGVOL' AND '&TYPE' NE 'ADDVOL').ERR02
+         AIF   ('&TYPE' EQ 'DEFINE' AND                                *
+               '&NEWNAME' EQ '').RDEF005                       @PC002PY
+.RDEF004 ANOP  ,                                                 @L4A
+&CHAR    SETC  'MENTITY'                                       @PC002PY
+         AIF   ('&MENTITY' NE '').ERR07                        @PC002PY
+&CHAR    SETC  'MVOLSER'                                       @PC002PY
+         AIF   ('&MVOLSER' NE '').ERR07                        @PC002PY
+&CHAR    SETC  'WARNING'                                           @L6A
+         AIF   ('&WARNING' NE '').ERR07                            @L6A
+.ERTN07  ANOP                                                  @PC002PY
+.RDEF005 ANOP                                                  @PC002PY
+.ERTN02  ANOP
+.* VERIFY AND DECODE AUDIT                                         @L5A
+         AIF   ('&AUDIT' EQ '').RDEFA99                            @L5A
+         AIF   (N'&AUDIT GT 2).ERR10                               @L5A
+         AIF   (N'&AUDIT NE 1 OR K'&AUDIT LT 5).RDEFA08            @L5A
+         AIF   ('&AUDIT'(1,2) NE '((').RDEFA08                     @L5A
+&AUDITRG SETC  '&AUDIT'(3,K'&AUDIT-4)  EXTRACT REGISTER "NAME"         X
+                (NOTE - V1R4 REGISTER NOTATION HANDLED AT .ERR10)  @L5A
+         AGO   .RDEFA99                                            @L5A
+.RDEFA08 ANOP                                                      @L5A
+         AIF   ('&AUDIT' NE 'NONE').RDEFA10                        @L5A
+&AUDIT3  SETB  1                   AUDIT=NONE                      @L5A
+         AGO   .RDEFA90                                            @L5A
+.RDEFA10 ANOP                                                      @L5A
+&AUD(1)  SETC  '&AUDIT(1)'                                         @L5A
+&AUDQ(1) SETC  'READ'              DEFAULT QUALIFIER               @L5A
+&AUD(2)  SETC  '&AUDIT(2)'                                         @L5A
+&AUDQ(2) SETC  'READ'              DEFAULT QUALIFIER               @L5A
+&I       SETA  1                                                   @L5A
+.RDEFA30 ANOP                                                      @L5A
+&J       SETA  K'&AUD(&I)                                          @L5A
+         AIF   ('&AUD(&I)'(&J,1) NE ')').RDEFA34                   @L5A
+.RDEFA32 ANOP                                                      @L5A
+&J       SETA  &J-1                                                @L5A
+         AIF   (&J GE 2 AND '&AUD(&I)'(&J,1) NE '(').RDEFA32       @L5A
+&AUDQ(&I) SETC '&AUD(&I)'(&J+1,K'&AUD(&I)-&J-1)                    @L5A
+&AUD(&I) SETC  '&AUD(&I)'(1,&J-1)                                  @L5A
+.RDEFA34 ANOP                                                      @L5A
+         AIF   ('&AUD(&I)' NE 'ALL' AND '&AUD(&I)' NE 'SUCCESS' AND    X
+               '&AUD(&I)' NE 'FAILURES').ERR10                     @L5A
+         AIF   ('&AUDQ(&I)' NE 'READ' AND '&AUDQ(&I)' NE 'UPDATE' AND  X
+               '&AUDQ(&I)' NE 'CONTROL' AND                            X
+               '&AUDQ(&I)' NE 'ALTER').ERR10                       @L5A
+         AIF   ('&AUDQ(&I)' NE 'READ').RDEFA36                     @L5A
+&AUDQ(&I) SETC 'XEAD'              CHANGE FOR PROPER SORT ORDER    @L5A
+.RDEFA36 ANOP                                                      @L5A
+&I       SETA  &I+1                                                @L5A
+         AIF   (&I LE N'&AUDIT).RDEFA30                            @L5A
+.* RESOLVE AUDIT CONFLICTS                                         @L5A
+         AIF   (N'&AUDIT LT 2).RDEFA50                             @L5A
+         AIF   ('&AUD(1)' NE 'ALL' OR                                  X
+               '&AUDQ(1)'(1,1) LE '&AUDQ(2)'(1,1)).RDEFA41         @L5A
+&AUDQ(2) SETC  '&AUDQ(1)'                                          @L5A
+.RDEFA41 ANOP                                                      @L5A
+         AIF   ('&AUD(2)' NE 'ALL' OR                                  X
+               '&AUDQ(2)'(1,1) LE '&AUDQ(1)'(1,1)).RDEFA43         @L5A
+&AUDQ(1) SETC  '&AUDQ(2)'                                          @L5A
+.RDEFA43 ANOP                                                      @L5A
+         AIF   ('&AUD(1)' EQ '&AUD(2)').RDEFA47                    @L5A
+         AIF   ('&AUD(1)' NE 'ALL').RDEFA46                        @L5A
+&AUD(1)  SETC  'SUCCESS'                                           @L5A
+         AIF   ('&AUD(2)' EQ 'FAILURES').RDEFA46                   @L5A
+&AUD(1)  SETC  'FAILURES'                                          @L5A
+.RDEFA46 ANOP                                                      @L5A
+         AIF   ('&AUD(2)' NE 'ALL').RDEFA47                        @L5A
+&AUD(2)  SETC  'SUCCESS'                                           @L5A
+         AIF   ('&AUD(1)' EQ 'FAILURES').RDEFA47                   @L5A
+&AUD(2)  SETC  'FAILURES'                                          @L5A
+.RDEFA47 ANOP                                                      @L5A
+.RDEFA50 ANOP                      ENCODE AUDIT VALUE              @L5A
+&I       SETA  1                   RESET COUNTER                   @L5A
+.RDEFA51 ANOP                                                      @L5A
+&AUDIT0  SETB  (&AUDIT0 OR '&AUD(&I)' EQ 'ALL')                    @L5A
+&AUDIT1  SETB  (&AUDIT1 OR '&AUD(&I)' EQ 'SUCCESS')                @L5A
+&AUDIT2  SETB  (&AUDIT2 OR '&AUD(&I)' EQ 'FAILURES')               @L5A
+         AIF   ('&AUD(&I)' NE 'ALL' AND                                X
+               '&AUD(&I)' NE 'SUCCESS').RDEFA53                    @L5A
+&AUDIT4  SETB  (&AUDIT4 OR '&AUDQ(&I)' EQ 'CONTROL' OR                 X
+               '&AUDQ(&I)' EQ 'ALTER')                             @L5A
+&AUDIT5  SETB  (&AUDIT5 OR '&AUDQ(&I)' EQ 'UPDATE' OR                  X
+               '&AUDQ(&I)' EQ 'ALTER')                             @L5A
+.RDEFA53 ANOP                                                      @L5A
+         AIF   ('&AUD(&I)' NE 'ALL' AND                                X
+               '&AUD(&I)' NE 'FAILURES').RDEFA56                   @L5A
+&AUDIT6  SETB  (&AUDIT6 OR '&AUDQ(&I)' EQ 'CONTROL' OR                 X
+               '&AUDQ(&I)' EQ 'ALTER')                             @L5A
+&AUDIT7  SETB  (&AUDIT7 OR '&AUDQ(&I)' EQ 'UPDATE' OR                  X
+               '&AUDQ(&I)' EQ 'ALTER')                             @L5A
+.RDEFA56 ANOP                                                      @L5A
+&I       SETA  &I+1                                                @L5A
+         AIF   (&I LE N'&AUDIT).RDEFA51                            @L5A
+         AIF   (&AUDIT1+&AUDIT2 LT 2 AND NOT &AUDIT0).RDEFA59      @L5A
+&AUDIT0  SETB  1                   FORCE                           @L5A
+&AUDIT1  SETB  0                     AUDIT=ALL                     @L5A
+&AUDIT2  SETB  0                                                   @L5A
+.RDEFA59 ANOP                                                      @L5A
+.RDEFA90 ANOP                                                      @L5A
+&AUDITVL SETA  128*&AUDIT0+64*&AUDIT1+32*&AUDIT2+16*&AUDIT3+8*&AUDIT4+4X
+               *&AUDIT5+2*&AUDIT6+&AUDIT7                          @L5A
+.RDEFA99 ANOP                                                      @L5A
+.ERTN10  ANOP                                                      @L5A
+.* REGISTER FORMS OF ADDRESS PARAMETERS NOT VALID WITH LIST FORM
+         AIF   ('&MF' NE 'L').RDEF05F
+         AIF   ('&ENTITY' EQ '').RDEF010
+         AIF   ('&ENTITY'(1,1) EQ '(').ERR03
+.RDEF010 ANOP
+         AIF   ('&VOLSER' EQ '').RDEF020
+         AIF   ('&VOLSER'(1,1) EQ '(').ERR03
+.RDEF020 ANOP
+         AIF   ('&OLDVOL' EQ '').RDEF040
+         AIF   ('&OLDVOL'(1,1) EQ '(').ERR03
+.RDEF040 ANOP
+         AIF   ('&NEWNAME' EQ '').RDEF050
+         AIF   ('&NEWNAME'(1,1) EQ '(').ERR03
+.RDEF050 ANOP
+         AIF   ('&INSTLN' NE '' AND '&INSTLN(1)' NE '&INSTLN').ERR03
+         AIF   ('&CLASS' EQ '').RDEF052                        @PC002PY
+         AIF   ('&CLASS'(1,1) EQ '(').ERR03                    @PC002PY
+.RDEF052 ANOP                                                  @PC002PY
+         AIF   ('&MENTITY' EQ '').RDEF053                      @PC002PY
+         AIF   ('&MENTITY'(1,1) EQ '(').ERR03                  @PC002PY
+.RDEF053 ANOP                                                  @PC002PY
+         AIF   ('&MVOLSER' EQ '').RDEF054                      @PC002PY
+         AIF   ('&MVOLSER'(1,1) EQ '(').ERR03                  @PC002PY
+.RDEF054 ANOP                                                  @PC002PY
+         AIF   ('&ACEE' EQ '').RDEF055                         @PC----
+         AIF   ('&ACEE'(1,1) EQ '(').ERR03                     @PC003PY
+.RDEF055 ANOP                                                  @PC003PY
+         AIF   ('&UNIT' EQ '').RDEF056                             @L4A
+         AIF   ('&UNIT'(1,1) EQ '(').ERR03                         @L4A
+.RDEF056 ANOP  ,                                                   @L4A
+         AIF   ('&UACC' EQ '').RDEF057                             @L4A
+         AIF   ('&UACC'(1,1) EQ '(').ERR03                         @L4A
+         AIF   ('&UACC' EQ 'ALTER').RDEF057                        @L4A
+         AIF   ('&UACC' EQ 'CONTROL').RDEF057                      @L4A
+         AIF   ('&UACC' EQ 'UPDATE').RDEF057                       @L4A
+         AIF   ('&UACC' EQ 'READ').RDEF057                         @L4A
+         AIF   ('&UACC' EQ 'NONE').RDEF057                         @L4A
+         AGO   .ERR09                                              @L4A
+.ERTN09  ANOP  ,                                                   @L4A
+.RDEF057 ANOP  ,                                                   @L4A
+         AIF   ('&OWNER' EQ '').RDEF058                            @L4A
+         AIF   ('&OWNER'(1,1) EQ '(').ERR03                        @L4A
+.RDEF058 ANOP  ,                                                   @L4A
+         AIF   ('&LEVEL' EQ '').RDEF059                            @L4A
+         AIF   ('&LEVEL'(1,1) EQ '(').ERR03                        @L4A
+         AIF   (K'&LEVEL GT 2).ERR11                               @L4A
+.ERTN11  ANOP  ,                                                   @L4A
+.RDEF059 ANOP  ,                                                   @L4A
+         AIF   ('&AUDITRG' NE '').ERR03                            @L5A
+         AIF   ('&DATA' EQ '').RDEF05B                             @L4A
+         AIF   ('&DATA'(1,1) EQ '(').ERR03                         @L4A
+.RDEF05B ANOP  ,                                                   @L4A
+.RDEF05F ANOP
+.ERTN03  ANOP
+.* IF REGS SPECIFIED ON ADDRESS PARAMETERS, MUST BE 2 - 12
+         AIF   ('&ENTITY' EQ '').RDEF060
+         AIF   (T'&ENTITY(1) NE 'N').RDEF060
+         AIF   ('&ENTITY'(1,1) EQ '(' AND ('&ENTITY(1)' LT '2' OR      -
+               '&ENTITY(1)' GT '12')).ERR05
+.RDEF060 ANOP
+         AIF   ('&VOLSER' EQ '').RDEF070
+         AIF   (T'&VOLSER(1) NE 'N').RDEF070
+         AIF   ('&VOLSER'(1,1) EQ '(' AND ('&VOLSER(1)' LT '2' OR      -
+               '&VOLSER(1)' GT '12')).ERR05
+.RDEF070 ANOP
+         AIF   ('&OLDVOL' EQ '').RDEF090
+         AIF   (T'&OLDVOL(1) NE 'N').RDEF090
+         AIF   ('&OLDVOL'(1,1) EQ '(' AND ('&OLDVOL(1)' LT '2' OR      -
+               '&OLDVOL(1)' GT '12')).ERR05
+.RDEF090 ANOP
+         AIF   ('&INSTLN' EQ '').RDEF091
+         AIF   (T'&INSTLN(1) NE 'N').RDEF091
+         AIF   ('&INSTLN'(1,1) EQ '(' AND ('&INSTLN(1)' LT '2' OR      -
+               '&INSTLN(1)' GT '12')).ERR05
+.RDEF091 ANOP
+         AIF   ('&NEWNAME' EQ '').RDEF100
+         AIF   (T'&NEWNAME(1) NE 'N').RDEF100
+         AIF   ('&NEWNAME'(1,1) EQ '(' AND ('&NEWNAME(1)' LT '2' OR    -
+               '&NEWNAME(1)' GT '12')).ERR05
+.RDEF100 ANOP                                                  @PC002PY
+         AIF   ('&CLASS' EQ '').RDEF101                        @PC002PY
+         AIF   (T'&CLASS(1) NE 'N').RDEF101                    @PC002PY
+         AIF   ('&CLASS'(1,1) EQ '(' AND ('&CLASS(1)' LT '2'           -
+               OR '&CLASS(1)' GT '12')).ERR05                  @PC002PY
+.RDEF101 ANOP                                                  @PC002PY
+         AIF   ('&MENTITY' EQ '').RDEF102                      @PC002PY
+         AIF   (T'&MENTITY(1) NE 'N').RDEF102                  @PC002PY
+         AIF   ('&MENTITY'(1,1) EQ '(' AND ('&MENTITY(1)' LT '2'       -
+               OR '&MENTITY(1)' GT '12')).ERR05                @PC002PY
+.RDEF102 ANOP                                                  @PC002PY
+         AIF   ('&MVOLSER' EQ '').RDEF103                      @PC002PY
+         AIF   (T'&MVOLSER(1) NE 'N').RDEF103                  @PC002PY
+         AIF   ('&MVOLSER'(1,1) EQ '(' AND ('&MVOLSER(1)' LT '2'       -
+               OR '&MVOLSER(1)' GT '12')).ERR05                @PC002PY
+.RDEF103 ANOP                                                  @PC003PY
+         AIF   ('&ACEE' EQ '').RDEF104                         @PC003PY
+         AIF   (T'&ACEE(1) NE 'N').RDEF104                     @PC003PY
+         AIF   ('&ACEE'(1,1) EQ '(' AND ('&ACEE(1)' LT '2'             -
+               OR '&ACEE(1)' GT '12')).ERR05                   @PC003PY
+.RDEF104 ANOP                                                  @PC003PY
+         AIF   ('&UNIT' EQ '').RDEF105                             @L4A
+         AIF   (T'&UNIT(1) NE 'N').RDEF105                         @L4A
+         AIF   ('&UNIT'(1,1) EQ '(' AND                                -
+               ('&UNIT(1)' LT '2' OR '&UNIT(1)' GT '12')).ERR05    @L4A
+.RDEF105 ANOP  ,                                                   @L4A
+         AIF   ('&UACC' EQ '').RDEF106                             @L4A
+         AIF   (T'&UACC(1) NE 'N').RDEF106                         @L4A
+         AIF   ('&UACC'(1,1) EQ '(' AND                                -
+               ('&UACC(1)' LT '2' OR '&UACC(1)' GT '12')).ERR05    @L4A
+.RDEF106 ANOP  ,                                                   @L4A
+         AIF   ('&OWNER' EQ '').RDEF107                            @L4A
+         AIF   (T'&OWNER(1) NE 'N').RDEF107                        @L4A
+         AIF   ('&OWNER'(1,1) EQ '(' AND                               -
+               ('&OWNER(1)' LT '2' OR '&OWNER(1)' GT '12')).ERR05  @L4A
+.RDEF107 ANOP  ,                                                   @L4A
+         AIF   ('&LEVEL' EQ '').RDEF108                            @L4A
+         AIF   (T'&LEVEL(1) NE 'N').RDEF108                        @L4A
+         AIF   ('&LEVEL'(1,1) EQ '(' AND                               -
+               ('&LEVEL(1)' LT '2' OR '&LEVEL(1)' GT '12')).ERR05  @L4A
+.RDEF108 ANOP  ,                                                   @L4A
+         AIF   ('&AUDITRG' EQ '').RDEF109                          @L5A
+         AIF   (T'&AUDITRG NE 'N').RDEF109                         @L5A
+         AIF   ('&AUDITRG' LT '2' OR '&AUDITRG' GT '12').ERR05     @L5A
+.RDEF109 ANOP  ,                                                   @L4A
+         AIF   ('&DATA' EQ '').RDEF10A                             @L4A
+         AIF   (T'&DATA(1) NE 'N').RDEF10A                         @L4A
+         AIF   ('&DATA'(1,1) EQ '(' AND                                -
+               ('&DATA(1)' LT '2' OR '&DATA(1)' GT '12')).ERR05    @L4A
+.RDEF10A ANOP  ,                                                   @L4A
+.ERTN05  ANOP
+.* PRODUCE LIST FORM IF REQUESTED
+         AIF   ('&MF' NE 'L').RDEF269
+.* PRODUCE FIRST FLAGS BYTE FROM TYPE,OLDVOL,NEWNAME,&DSTYPE PARMS
+&SYMBOL  DS    0F
+.RDEF110 ANOP
+ICH0&SYSNDX EQU *
+.* PRODUCE LENGTH
+.**************************************************************    @T1A
+.* IF THIS MACRO WAS INVOKED BY THE RACROUTE MACRO, THE 3 BYTES    @T1A
+.* AFTER LENGTH ARE RESERVED, AND INSTLN IS GENERATED AT THE       @T1A
+.* END OF THE LIST.                                                @T1A
+.**************************************************************    @T1A
+         AIF   (NOT &ICHRAC).RDEF111                               @T1A
+&ICHL    DC    AL1(56)        LENGTH                               @T1A
+         DC    AL3(0)                                              @T1A
+         AGO   .RDEF114                                            @T1A
+.RDEF111 ANOP                                                      @T1A
+         DC    AL1(48) - LENGTH                                    @L4A
+.* PRODUCE INSTALLATION DATA ADDRESS
+         AIF   ('&INSTLN' EQ '' OR '&INSTLN(1)' NE '&INSTLN').RDEF112
+         DC    AL3(&INSTLN) - INSTALLATION DATA ADDRESS
+         AGO   .RDEF114
+.RDEF112 ANOP
+         DC    AL3(0) - INSTALLATION DATA ADDRESS
+.RDEF114 ANOP
+.* PRODUCE FIRST FLAGS BYTE
+         AIF   ('&TYPE' NE 'DELETE').RDEF120
+&BIT0    SETA  1
+.RDEF120 ANOP
+         AIF   ('&TYPE' NE 'ADDVOL').RDEF130
+&BIT1    SETA  1
+.RDEF130 ANOP
+         AIF   ('&TYPE' NE 'CHGVOL').RDEF135                       @L4A
+&BIT0    SETA  1                                                   @L4A
+&BIT1    SETA  1                                                   @L4A
+.RDEF135 ANOP  ,                                                   @L4A
+         AIF   ('&OLDVOL' EQ '').RDEF140
+&BIT2    SETA  1
+.RDEF140 ANOP
+         AIF   ('&NEWNAME' EQ '').RDEF145                          @T1A
+&BIT3    SETA  1
+.RDEF145 ANOP                                                      @T1A
+.******************************************************            @T1A
+.* IF THIS MACRO WAS INVOKED BY THE RACROUTE MACRO, THE            @T1A
+.* PARAMETER LIST HAS 31-BIT ADDRESSING.                           @T1A
+.******************************************************            @T1A
+         AIF   (NOT &ICHRAC).RDEF150                               @T1A
+&BIT4    SETA  1               31-BIT ADDRESSING IN LIST           @T1A
+.RDEF150 ANOP
+         AIF   ('&DSTYPE' NE 'M').RDEF160                          @L4A
+&BIT6    SETA  1                                                   @L4A
+.RDEF160 ANOP  ,                                                   @L4A
+         AIF   ('&DSTYPE' NE 'V').RDEF170
+&BIT5    SETA  1
+.RDEF170 ANOP
+         AIF   ('&SPECIAL' EQ 'NO' OR '&SPECIAL' EQ '').RDEF171  @L4A
+&BIT7    SETA  1                                                 @L4A
+.RDEF171 ANOP  ,                                                 @L4A
+         DC    B'&BIT0&BIT1&BIT2&BIT3&BIT4&BIT5&BIT6&BIT7' FLAGS @L4A
+.**************************************************************    @T1A
+.* IF THIS MACRO WAS INVOKED BY THE RACROUTE MACRO, THE 3 BYTES    @T1A
+.* AFTER FLAGS  ARE RESERVED, AND ENTITY IS GENERATED AT THE       @T1A
+.* END OF THE LIST.                                                @T1A
+.**************************************************************    @T1A
+         AIF   (NOT &ICHRAC).RDEF175                               @T1A
+         DC    AL3(0)                                              @T1A
+         AGO   .RDEF190                                            @T1A
+.RDEF175 ANOP                                                      @T1A
+.* PRODUCE ENTITY NAME ADDRESS
+         AIF   ('&ENTITY' EQ '').RDEF180
+         AIF   ('&ENTITY'(1,1) EQ '(').RDEF180
+         DC    AL3(&ENTITY) - ENTITY NAME ADDRESS
+         AGO   .RDEF190
+.RDEF180 ANOP
+         DC    AL3(0) -       ENTITY NAME ADDR FIELD
+.RDEF190 ANOP
+.* PRODUCE OLD VOLSER, OR NEWNAME ADDRESS
+         AIF   ('&OLDVOL' EQ '').RDEF210
+         AIF   ('&OLDVOL'(1,1) EQ '(').RDEF210
+         DC    A(&OLDVOL) -   OLD VOLSER ADDRESS
+         AGO   .RDEF230
+.RDEF210 ANOP
+         AIF   ('&NEWNAME' EQ '').RDEF220
+         AIF   ('&NEWNAME'(1,1) EQ '(').RDEF220
+         DC    A(&NEWNAME) -  NEW ENTITY NAME ADDRESS
+         AGO   .RDEF230
+.RDEF220 ANOP
+         DC    A(0) -         OLDVOL OR NEWNAME ADDRESS FIELD
+.RDEF230 ANOP
+.* PRODUCE VOLSER ADDRESS
+         AIF   ('&VOLSER' EQ '').RDEF24E NO VOLSER
+         AIF   ('&VOLSER'(1,1) EQ '(').RDEF24E
+         DC    A(&VOLSER) -   ENTITY VOLSER ADDRESS
+         AGO   .RDEF24F
+.RDEF24E ANOP
+         DC    A(0) -         ENTITY VOLSER ADDRESS FIELD
+.RDEF24F ANOP
+.* PRODUCE CLASS ADDRESS                                       @PC002PY
+         AIF   ('&CLASS' EQ '').RDEF251 NO CLASS               @PC002PY
+         AIF   ('&CLASS'(1,1) EQ '(').RDEF251                  @PC002PY
+         AIF   ('&CLASS'(1,1) EQ '''').RDEF250                 @PC002PY
+         DC    A(&CLASS) -    ENTITY CLASS ADDRESS             @PC002PY
+         AGO   .RDEF252                                        @PC002PY
+.RDEF250 ANOP                                                  @PC002PY
+         DC    A(ICH1&SYSNDX) -    ENTITY CLASS ADDRESS        @ZA56979
+         AGO   .RDEF252                                        @PC002PY
+.RDEF251 ANOP                                                  @PC002PY
+         DC    A(0) -         ENTITY CLASS ADDRESS FIELD       @PC002PY
+.RDEF252 ANOP                                                  @PC002PY
+.* PRODUCE MENTITY ADDRESS                                     @PC002PY
+         AIF   ('&MENTITY' EQ '').RDEF253 NO MENTITY           @PC002PY
+         AIF   ('&MENTITY'(1,1) EQ '(').RDEF253                @PC002PY
+         DC    A(&MENTITY) -  MENTITY ADDRESS                  @PC002PY
+         AGO   .RDEF254                                        @PC002PY
+.RDEF253 ANOP                                                  @PC002PY
+         DC    A(0) -         MENTITY ADDRESS FIELD            @PC002PY
+.RDEF254 ANOP                                                  @PC002PY
+.* PRODUCE MVOLSER ADDRESS                                     @PC002PY
+         AIF   ('&MVOLSER' EQ '').RDEF255 NO MVOLSER           @PC002PY
+         AIF   ('&MVOLSER'(1,1) EQ '(').RDEF255                @PC002PY
+         DC    A(&MVOLSER) -  ENTITY MVOLSER ADDRESS           @PC002PY
+         AGO   .RDEF256                                        @PC002PY
+.RDEF255 ANOP                                                  @PC002PY
+         DC    A(0) -         ENTITY MVOLSER ADDRESS FIELD     @PC002PY
+.RDEF256 ANOP                                                  @PC002PY
+.* PRODUCE ACEE ADDRESS                                        @PC003PY
+         AIF   ('&ACEE' EQ '').RDEF257 NO ACEE                 @PC003PY
+         AIF   ('&ACEE'(1,1) EQ '(').RDEF257                   @PC003PY
+         DC    A(&ACEE) -     ACEE ADDRESS                     @PC003PY
+         AGO   .RDEF258                                        @PC003PY
+.RDEF257 ANOP                                                  @PC003PY
+         DC    A(0) -         ACEE ADDRESS FIELD               @PC003PY
+.RDEF258 ANOP                                                  @PC003PY
+.* PRODUCE UNIT ADDRESS.                                           @L4A
+         AIF   ('&UNIT' EQ '').RDEF259                             @L4A
+         AIF   ('&UNIT'(1,1) EQ '(').RDEF259                       @L4A
+         DC    A(&UNIT) - UNIT ADDRESS.                            @L4A
+         AGO   .RDEF25A                                            @L4A
+.RDEF259 ANOP  ,                                                   @L4A
+         DC    A(0) -         NO UNIT ADDRESS FIELD.               @L4A
+.RDEF25A ANOP  ,                                                   @L4A
+.* PRODUCE UACC VALUE.                                             @L4A
+         AIF   ('&UACC' EQ '').RDEF25B                             @L4A
+         AIF   ('&UACC'(1,1) EQ '(').RDEF25B                       @L4A
+&UACC0   SETB  ('&UACC' EQ 'ALTER')                                @L4A
+&UACC1   SETB  ('&UACC' EQ 'CONTROL')                              @L4A
+&UACC2   SETB  ('&UACC' EQ 'UPDATE')                               @L4A
+&UACC3   SETB  ('&UACC' EQ 'READ')                                 @L4A
+&UACC4   SETB  0                                                   @L4A
+&UACC5   SETB  0                                                   @L4A
+&UACC6   SETB  0                                                   @L4A
+&UACC7   SETB  ('&UACC' EQ 'NONE')                                 @L4A
+&UACCVAL SETA  128*&UACC0+64*&UACC1+32*&UACC2+16*&UACC3+1*&UACC7   @L4A
+         DC    AL1(&UACCVAL) - UACC VALUE.                         @L4A
+         AGO   .RDEF25C                                            @L4A
+.RDEF25B ANOP  ,                                                   @L4A
+         DC    AL1(0) -       NO UACC VALUE FIELD.                 @L4A
+.RDEF25C ANOP  ,                                                   @L4A
+.* PRODUCE LEVEL VALUE.                                            @L4A
+         AIF   ('&LEVEL' EQ '').RDEF25D                            @L4A
+         AIF   ('&LEVEL'(1,1) EQ '(').RDEF25D                      @L4A
+         DC    AL1(&LEVEL) - LEVEL VALUE.                          @L4A
+         AGO   .RDEF25E                                            @L4A
+.RDEF25D ANOP  ,                                                   @L4A
+         DC    AL1(0) -       NO LEVEL NUMBER PRESENT.             @L4A
+.RDEF25E ANOP  ,                                                   @L4A
+.* PRODUCE AUDIT VALUE.                                            @L4A
+         AIF   ('&AUDIT' EQ '').RDEF25F                            @L4A
+         AIF   ('&AUDITRG' NE '').RDEF25F                          @L5A
+         DC    AL1(&AUDITVL) - AUDIT INDICATOR.                    @L4A
+         AGO   .RDEF25G                                            @L4A
+.RDEF25F ANOP  ,                                                   @L4A
+         DC    AL1(0) -       NO AUDIT INDICATOR PRESENT.          @L4A
+.RDEF25G ANOP  ,                                                   @L4A
+.* PRODUCE SECOND FLAG BYTE                                        @L5A
+.* INITIALIZE BIT SET VARIABLES
+&BIT0    SETA  0                                                   @L5A
+&BIT1    SETA  0                                                   @L5A
+&BIT2    SETA  0                                                   @L5A
+&BIT3    SETA  0                                                   @L6A
+&BIT4    SETA  0                                                   @L6A
+&BIT5    SETA  0                                                   @L6A
+&BIT6    SETA  0                                                   @L6A
+&BIT7    SETA  0                                                   @L6A
+         AIF   ('&RACFIND' EQ '').RDEF25J                          @L5A
+&BIT0    SETA  1              RACFIND CODED                        @L5A
+         AIF   ('&RACFIND' EQ 'NO').RDEF25J                        @L5A
+&BIT1    SETA  1              RACFIND=YES                          @L5A
+.RDEF25J ANOP                                                      @L5A
+         AIF   ('&CHKAUTH' NE 'YES').RDEF25K     DEFAULT IS NO     @L5A
+&BIT2    SETA  1              CHKAUTH=YES                          @L5A
+.RDEF25K ANOP                                                      @L5A
+         AIF   ('&WARNING' NE 'YES').RDEF25L                       @L6A
+&BIT6    SETA  1              WARNING=YES                          @L6A
+.RDEF25L ANOP  ,                                                   @L6A
+         AIF   ('&GENERIC' NE 'YES').RDEF25M                       @L6A
+&BIT7    SETA  1              GENERIC=YES                          @L6A
+.RDEF25M ANOP  ,                                                   @L6A
+         DC    B'&BIT0&BIT1&BIT2.000&BIT6&BIT7' 2ND FLAG BYTE      @L6A
+.* PRODUCE OWNER ADDRESS.                                          @L4A
+         AIF   ('&OWNER' EQ '').RDEF25H                            @L4A
+         AIF   ('&OWNER'(1,1) EQ '(').RDEF25H                      @L4A
+         DC    A(&OWNER) - OWNER ADDRESS.                          @L4A
+         AGO   .RDEF260                                            @L4A
+.RDEF25H ANOP  ,                                                   @L4A
+         DC    A(0) -         NO OWNER ADDRESS FIELD.              @L4A
+.RDEF260 ANOP  ,                                                   @L4A
+.* PRODUCE DATA ADDRESS.                                           @L4A
+         AIF   ('&DATA' EQ '').RDEF261                             @L4A
+         AIF   ('&DATA'(1,1) EQ '(').RDEF261                       @L4A
+         DC    A(&DATA) - DATA ADDRESS.                            @L4A
+         AGO   .RDEF262                                            @L4A
+.RDEF261 ANOP  ,                                                   @L4A
+         DC    A(0) -         NO DATA ADDRESS FIELD.               @L4A
+.RDEF262 ANOP  ,                                                   @L4A
+.******************************************************            @T1A
+.* IF THIS MACRO WAS INVOKED INTERNALLY BY THE RACROUTE            @T1A
+.* MACRO, INSTLN AND ENTITY ARE PRODUCED HERE AS                   @T1A
+.* 31-BIT ADDRESSES.                                               @T1A
+.******************************************************            @T1A
+         AIF   (NOT &ICHRAC).RDEF267                               @T1A
+.* PRODUCE INSTALLATION DATA ADDRESS                               @T1A
+         AIF   ('&INSTLN' EQ '' OR                                     *
+               '&INSTLN(1)' NE '&INSTLN').RDEF263                  @T1A
+         DC    A(&INSTLN)          INSTALLATION DATA ADDRESS       @T1A
+         AGO   .RDEF264                                            @T1A
+.RDEF263 ANOP                                                      @T1A
+         DC    A(0)           INSTALLATION DATA ADDRESS            @T1A
+.RDEF264 ANOP                                                      @T1A
+.* PRODUCE ENTITY NAME ADDRESS                                     @T1A
+         AIF   ('&ENTITY' EQ '').RDEF265                           @T1A
+         AIF   ('&ENTITY'(1,1) EQ '(').RDEF265                     @T1A
+         DC    A(&ENTITY)     ENTITY NAME ADDRESS                  @T1A
+         AGO   .RDEF267                                            @T1A
+.RDEF265 ANOP                                                      @T1A
+         DC    A(0)           ENTITY NAME ADDR FIELD               @T1A
+.RDEF267 ANOP                                                      @T1A
+.* IF CLASS NAME SPECIFIED EXPLICITLY, PRODUCE IT BELOW LIST FORM
+         AIF   ('&CLASS' EQ '').RDEF268                        @PC002PY
+         AIF   ('&CLASS'(1,1) NE '''').RDEF268                 @PC002PY
+&CLNGTH  SETA  K'&CLASS-2                                      @PC002PY
+ICH1&SYSNDX EQU   *                                            @ZA56979
+         DC    AL1(&CLNGTH) - CLASS NAME LENGTH                @PC002PY
+         DC    CL9&CLASS    - CLASS NAME                       @PC002PY
+.RDEF268 ANOP                                                  @PC002PY
+         AIF   (&MFFLAG).RDEF330
+         MEXIT
+.* END OF LIST FORM GENERATION
+.RDEF269 ANOP
+.* TEST FOR OTHER MACRO FORMS
+         AIF   ('&MF' EQ 'S').RDEF270
+         AIF   ('&MF(1)' NE 'E').ERR06
+         AGO   .RDEF345
+.RDEF270 ANOP
+.ERTN06  ANOP
+.* PRODUCE STANDARD FORM
+&SYMBOL  DS    0H
+&MFFLAG  SETB  1              SET TRUE FOR STANDARD FORM PASS THRU LIST
+.*                            FORM DEFINITION ABOVE
+.* PRODUCE LOGIC TO MODIFY IN-LINE LIST FORM
+.* PRODUCE INSTALLATION DATA
+         AIF   ('&INSTLN(1)' EQ '&INSTLN').RDEF271
+         AIF   (NOT &ICHRAC).RDEF27A                               @T1A
+         ST    &INSTLN(1),ICH0&SYSNDX+48    INSTALLATION DATA ADDR @T1A
+         AGO   .RDEF271                                            @T1A
+.RDEF27A ANOP                                                      @T1A
+         STCM  &INSTLN(1),7,ICH0&SYSNDX+1 - INSTALLATION DATA ADDRESS
+.RDEF271 ANOP
+         AIF   ('&ENTITY(1)' EQ '&ENTITY').RDEF280
+         AIF   (NOT &ICHRAC).RDEF275                               @T1A
+         ST    &ENTITY(1),ICH0&SYSNDX+52    STORE ENTITY NAME ADDR @T1A
+         AGO   .RDEF280                                            @T1A
+.RDEF275 ANOP                                                      @T1A
+         STCM  &ENTITY(1),7,ICH0&SYSNDX+5 STORE ENTITY NAME ADDRESS
+.RDEF280 ANOP
+         AIF   ('&OLDVOL' EQ '').RDEF300
+         AIF   ('&OLDVOL'(1,1) NE '(').RDEF300
+         ST    &OLDVOL(1),ICH0&SYSNDX+8 - STORE OLDVOL ADDR IN LIST
+         AGO   .RDEF310
+.RDEF300 ANOP
+         AIF   ('&NEWNAME' EQ '').RDEF310
+         AIF   ('&NEWNAME'(1,1) NE '(').RDEF310
+          ST    &NEWNAME,ICH0&SYSNDX+8 - STORE NEW NAME IN LIST
+.RDEF310 ANOP
+         AIF   ('&VOLSER' EQ '').RDEF320
+         AIF   ('&VOLSER'(1,1) NE '(').RDEF320
+         ST    &VOLSER(1),ICH0&SYSNDX+12 - STORE VOLSER ADDR IN LIST
+.RDEF320 ANOP
+         AIF   ('&CLASS' EQ '').RDEF321                        @PC002PY
+         AIF   ('&CLASS'(1,1) NE '(').RDEF321                  @PC002PY
+         ST    &CLASS(1),ICH0&SYSNDX+16 - STORE CLASS ADDR IN LIST
+.RDEF321 ANOP                                                  @PC002PY
+         AIF   ('&MENTITY' EQ '').RDEF322                      @PC002PY
+         AIF   ('&MENTITY'(1,1) NE '(').RDEF322                @PC002PY
+         ST    &MENTITY(1),ICH0&SYSNDX+20 - STORE MENTITY ADDR IN LIST
+.RDEF322 ANOP                                                  @PC002PY
+         AIF   ('&MVOLSER' EQ '').RDEF323                      @PC002PY
+         AIF   ('&MVOLSER'(1,1) NE '(').RDEF323                @PC002PY
+         ST    &MVOLSER(1),ICH0&SYSNDX+24 - STORE MVOLSER ADDR IN LIST
+.RDEF323 ANOP                                                  @PC003PY
+         AIF   ('&ACEE' EQ '').RDEF324                         @PC003PY
+         AIF   ('&ACEE'(1,1) NE '(').RDEF324                   @PC003PY
+         ST    &ACEE(1),ICH0&SYSNDX+28 - STORE ACEE ADDR IN LIST
+.RDEF324 ANOP                                                  @PC003PY
+         AIF   ('&UNIT' EQ '').RDEF325                             @L4A
+         AIF   ('&UNIT'(1,1) NE '(').RDEF325                       @L4A
+         ST    &UNIT(1),ICH0&SYSNDX+32 - STORE UNIT ADDR IN LIST.  @L4A
+.RDEF325 ANOP  ,                                                   @L4A
+         AIF   ('&UACC' EQ '').RDEF326                             @L4A
+         AIF   ('&UACC'(1,1) NE '(').RDEF326                       @L4A
+         STC   &UACC(1),ICH0&SYSNDX+36 - STORE UACC VALUE IN LIST. @L4A
+.RDEF326 ANOP  ,                                                   @L4A
+         AIF   ('&LEVEL' EQ '').RDEF327                            @L4A
+         AIF   ('&LEVEL'(1,1) NE '(').RDEF327                      @L4A
+         STC   &LEVEL(1),ICH0&SYSNDX+37 - STORE LEVEL VALUE.       @L4A
+.RDEF327 ANOP  ,                                                   @L4A
+         AIF   ('&AUDITRG' EQ '').RDEF328                          @L5A
+         STC   &AUDITRG,ICH0&SYSNDX+38 - STORE AUDIT VALUE.        @L5A
+.RDEF328 ANOP  ,                                                   @L4A
+         AIF   ('&OWNER' EQ '').RDEF329                            @L4A
+         AIF   ('&OWNER'(1,1) NE '(').RDEF329                      @L4A
+         ST    &OWNER(1),ICH0&SYSNDX+40 - STORE OWNER ADDRESS.     @L4A
+.RDEF329 ANOP  ,                                                   @L4A
+         AIF   ('&DATA' EQ '').RDEF32A                             @L4A
+         AIF   ('&DATA'(1,1) NE '(').RDEF32A                       @L4A
+         ST    &DATA(1),ICH0&SYSNDX+44 - STORE DATA ADDRESS.       @L4A
+.RDEF32A ANOP  ,                                                   @L4A
+.* LIST FORM MODIFICATION COMPLETE - PRODUCE LIST FORM WITH BAL AROUND
+         CNOP  0,4 -          ALIGN LIST FORM
+         AIF   ('&CLASS' EQ '').RDEF32F                        @PC002PY
+         AIF   ('&CLASS'(1,1) NE '''').RDEF32F                 @PC002PY
+         AIF   (NOT &ICHRAC).RDEF32B                               @T1A
+         BAL   1,*+70 -       POINT REG 1 AT LIST FORM             @T1A
+         AGO   .RDEF110                                            @T1A
+.RDEF32B ANOP                                                      @T1A
+         BAL   1,*+62 -       POINT REG 1 AT LIST FORM             @L4A
+         AGO   .RDEF110                                        @PC002PY
+.RDEF32F ANOP                                                  @PC002PY
+         AIF   (NOT &ICHRAC).RDEF32G                               @T1A
+         BAL   1,*+60 -       POINT REG 1 AT LIST FORM             @T1A
+         AGO   .RDEF110                                            @T1A
+.RDEF32G ANOP                                                      @T1A
+         BAL   1,*+52 -       POINT REG 1 AT LIST FORM             @L4A
+         AGO   .RDEF110
+.RDEF330 ANOP
+.***********************************************************       @T1A
+.* IF THIS MACRO WAS INVOKED INTERNALLY BY THE RACROUTE            @T1A
+.* MACRO, SIMPLY EXIT RATHER THAN GOING TO THE RACF ROUTINE.       @T1A
+.***********************************************************       @T1A
+         AIF   (&ICHRAC).RDEF340                                   @T1A
+.* TAKE SVC
+         SVC   133           ISSUE RACDEF SVC
+.RDEF340 ANOP                                                      @T1A
+         MEXIT
+.* PRODUCE EXECUTE FORM IF REQUESTED
+.RDEF345 ANOP
+         AIF   (&ICHRAC).RDEF346                                   @T1A
+&SYMBOL  IHBINNRA &MF(2) -    LOAD REG 1 WITH LIST FORM ADDRESS
+         AGO   .RDEF34G                                            @T1A
+.**********************************************************        @T1A
+.*  IF THIS MACRO WAS INVOKED INTERNALLY BY THE RACROUTE           @T1A
+.*  MACRO, PICK UP THE ADDRESS OF THE RACDEF PARAMETER LIST        @T1A
+.*  FROM THE RACROUTE PARAMETER LIST.                              @T1A
+.**********************************************************        @T1A
+.RDEF346 ANOP                                                      @T1A
+         A     1,36(1)              POINT REG1 AT RACDEF LIST      @T1A
+.RDEF34G ANOP                                                      @T1A
+.* MODIFY INSTALLATION DATA
+         AIF   ('&INSTLN' EQ '').RDEF349
+         AIF   ('&INSTLN(1)' NE '&INSTLN').RDEF348
+         LA    0,&INSTLN - INSTALLATION DATA ADDRESS
+         AIF   (NOT &ICHRAC).RDEF347                               @T1A
+         ST    0,48(1)            STORE INSTALLATION DATA ADDR     @T1A
+         AGO   .RDEF349                                            @T1A
+.RDEF347 ANOP                                                      @T1A
+         STCM  0,7,1(1) - STORE INSTALLATION DATA ADDRESS
+         AGO   .RDEF349
+.RDEF348 ANOP
+         AIF   (NOT &ICHRAC).RDEF34F                               @T1A
+         ST    &INSTLN(1),48(1) STORE INSTALLATION DATA ADDR       @T1A
+         AGO   .RDEF349                                            @T1A
+.RDEF34F ANOP                                                      @T1A
+         STCM  &INSTLN(1),7,1(1) - STORE INSTALLATION DATA ADDRESS
+.RDEF349 ANOP
+.* MODIFY LIST FLAG FIELD AS REQUESTED
+         AIF   ('&TYPE' EQ 'DELETE').RDF349A                       @L4A
+         AIF   ('&TYPE' EQ 'ADDVOL').RDF349A                       @L4A
+         AIF   ('&TYPE' EQ 'CHGVOL').RDF349A                       @L4A
+         AIF   ('&SPECIAL' EQ 'YES').RDF349A                       @L4A
+         AIF   ('&OLDVOL' NE '').RDF349A                           @L4A
+         AIF   ('&NEWNAME' NE '').RDF349A                          @L4A
+         AIF   ('&DSTYPE' NE 'N' AND                                   -
+               '&DSTYPE' NE 'V' AND '&DSTYPE' NE 'M').RDEF410
+.RDF349A ANOP  ,                                                   @L4A
+         AIF   ('&TYPE' NE 'CHGVOL').RDEF350                       @L4A
+&BIT0    SETA  1                                                   @L4A
+&BIT1    SETA  1                                                   @L4A
+.RDEF350 AIF   ('&TYPE' NE 'DELETE').RDEF351
+&BIT0    SETA  1
+.RDEF351 ANOP
+         AIF   ('&TYPE' NE 'ADDVOL').RDEF360
+&BIT1    SETA  1
+.RDEF360 ANOP
+         AIF   ('&OLDVOL' EQ '').RDEF370
+&BIT2    SETA  1
+.RDEF370 ANOP
+         AIF   ('&NEWNAME' EQ '').RDEF375                          @T1A
+&BIT3    SETA  1
+.******************************************************            @T1A
+.* IF THIS MACRO WAS INVOKED INTERNALLY BY THE RACROUTE            @T1A
+.* MACRO, THE PARAMETER LIST HAS 31-BIT ADDRESSING.                @T1A
+.******************************************************            @T1A
+.RDEF375 ANOP                                                      @T1A
+         AIF   (NOT &ICHRAC).RDEF380                               @T1A
+&BIT4    SETA  1               31-BIT ADDRESSING IN PARAM LIST     @T1A
+.RDEF380 ANOP
+         AIF   ('&DSTYPE' NE 'M').RDEF390                          @L4A
+&BIT6    SETA  1                                                   @L4A
+.RDEF390 ANOP  ,                                                   @L4A
+         AIF   ('&DSTYPE' NE 'V').RDEF400
+&BIT5    SETA  1
+.RDEF400 ANOP
+         AIF   ('&SPECIAL' NE 'YES').RDEF401                     @L4A
+&BIT7    SETA  1                                                 @L4A
+.RDEF401 ANOP  ,                                                 @L4A
+*                                SET FLAGS.                      @L4A
+         AIF   (T'&DSTYPE EQ 'O').RDEF402                     @ZA56982
+         NI    4(1),B'11111001' - RESET DSTYPE INDICATORS.    @ZA56982
+.RDEF402 ANOP  ,                                              @ZA56982
+         OI    4(1),B'&BIT0&BIT1&BIT2&BIT3&BIT4&BIT5&BIT6&BIT7'
+.RDEF410 ANOP
+.* MODIFY ADDRESS PARAMETERS AS REQUIRED
+         AIF   ('&ENTITY' EQ '').RDEF430
+         AIF   ('&ENTITY'(1,1) NE '(').RDEF420
+         AIF   (NOT &ICHRAC).RDEF415                               @T1A
+         ST    &ENTITY(1),52(1)    STORE ENTITY NAME ADDRESS       @T1A
+         AGO   .RDEF430                                            @T1A
+.RDEF415 ANOP                                                      @T1A
+         STCM  &ENTITY(1),7,5(1) - STORE ENTITY NAME ADDRESS
+         AGO   .RDEF430
+.RDEF420 ANOP
+         LA    0,&ENTITY -    MOVE ENTITY NAME ADDRESS
+         AIF   (NOT &ICHRAC).RDEF425                               @T1A
+         ST    0,52(1)         INTO PARM LIST                      @T1A
+         AGO   .RDEF430                                            @T1A
+.RDEF425 ANOP                                                      @T1A
+         STCM  0,7,5(1) -      INTO PARM LIST
+.RDEF430 ANOP
+         AIF   ('&OLDVOL' EQ '').RDEF470
+         AIF   ('&OLDVOL'(1,1) NE '(').RDEF460
+         ST    &OLDVOL(1),8(1) STORE OLD VOLSER ADDRESS
+         AGO   .RDEF490
+.RDEF460 ANOP
+         LA    0,&OLDVOL -    MOVE OLD VOLSER ADDRESS
+         ST    0,8(1) -        INTO PARM LIST
+         AGO   .RDEF490
+.RDEF470 ANOP
+         AIF   ('&NEWNAME' EQ '').RDEF490
+         AIF   ('&NEWNAME'(1,1) NE '(').RDEF480
+         ST    &NEWNAME(1),8(1) STORE NEW ENTITY NAME ADDRESS
+         AGO   .RDEF490
+.RDEF480 ANOP
+         LA    0,&NEWNAME -   MOVE NEW ENTITY NAME ADDRESS
+         ST    0,8(1) -        INTO PARM LIST
+.RDEF490 ANOP
+         AIF   ('&VOLSER' EQ '').RDEF510
+         AIF   ('&VOLSER'(1,1) NE '(').RDEF500
+         ST    &VOLSER(1),12(1) STORE VOLSER ADDRESS
+         AGO   .RDEF510
+.RDEF500 ANOP
+         LA    0,&VOLSER -    MOVE VOLSER ADDRESS
+         ST    0,12(1) -        INTO PARAMETER
+.RDEF510 ANOP
+         AIF   ('&CLASS' EQ '').RDEF530                        @PC002PY
+         AIF   ('&CLASS'(1,1) EQ '''').ERR08                   @PC002PY
+         AIF   ('&CLASS'(1,1) NE '(').RDEF520                  @PC002PY
+         ST    &CLASS(1),16(1) STORE CLASS ADDRESS             @PC002PY
+         AGO   .RDEF530                                        @PC002PY
+.RDEF520 ANOP                                                  @PC002PY
+         LA    0,&CLASS -     MOVE CLASS ADDRESS               @PC002PY
+         ST    0,16(1) -        INTO PARAMETER                 @PC002PY
+.ERTN08  ANOP                                                  @PC002PY
+.RDEF530 ANOP                                                  @PC002PY
+         AIF   ('&MENTITY' EQ '').RDEF550                      @PC002PY
+         AIF   ('&MENTITY'(1,1) NE '(').RDEF540                @PC002PY
+         ST    &MENTITY(1),20(1) STORE MENTITY ADDRESS         @PC002PY
+         AGO   .RDEF550                                        @PC002PY
+.RDEF540 ANOP                                                  @PC002PY
+         LA    0,&MENTITY -   MOVE MENTITY ADDRESS             @PC002PY
+         ST    0,20(1) -        INTO PARAMETER                 @PC002PY
+.RDEF550 ANOP                                                  @PC002PY
+         AIF   ('&MVOLSER' EQ '').RDEF570                      @PC002PY
+         AIF   ('&MVOLSER'(1,1) NE '(').RDEF560                @PC002PY
+         ST    &MVOLSER(1),24(1) STORE MVOLSER ADDRESS         @PC002PY
+         AGO   .RDEF570                                        @PC002PY
+.RDEF560 ANOP                                                  @PC002PY
+         LA    0,&MVOLSER -   MOVE MVOLSER ADDRESS             @PC002PY
+         ST    0,24(1) -        INTO PARAMETER                 @PC002PY
+.RDEF570 ANOP
+         AIF   ('&ACEE' EQ '').RDEF590                         @PC003PY
+         AIF   ('&ACEE'(1,1) NE '(').RDEF580                   @PC003PY
+         ST    &ACEE(1),28(1) STORE ACEE ADDRESS               @PC003PY
+         AGO   .RDEF590                                        @PC003PY
+.RDEF580 ANOP                                                  @PC003PY
+         LA    0,&ACEE -      MOVE ACEE ADDRESS                @PC003PY
+         ST    0,28(1) -        INTO PARAMETER                 @PC003PY
+.RDEF590 ANOP
+         AIF   ('&UNIT' EQ '').RDEF610                             @L4A
+         AIF   ('&UNIT'(1,1) NE '(').RDEF600                       @L4A
+         ST    &UNIT(1),32(1) - STORE UNIT ADDRESS.                @L4A
+         AGO   .RDEF610                                            @L4A
+.RDEF600 ANOP  ,                                                   @L4A
+         LA    0,&UNIT -      MOVE UNIT ADDRESS                    @L4A
+         ST    0,32(1) -        INTO PARAMETER.                    @L4A
+.RDEF610 ANOP  ,                                                   @L4A
+         AIF   ('&UACC' EQ '').RDEF630                             @L4A
+         AIF   ('&UACC'(1,1) NE '(').RDEF620                       @L4A
+         STC   &UACC(1),36(1) - STORE UACC VALUE IN LIST.          @L4A
+         AGO   .RDEF630                                            @L4A
+.RDEF620 ANOP  ,                                                   @L4A
+&UACC0   SETB  ('&UACC' EQ 'ALTER')                                @L4A
+&UACC1   SETB  ('&UACC' EQ 'CONTROL')                              @L4A
+&UACC2   SETB  ('&UACC' EQ 'UPDATE')                               @L4A
+&UACC3   SETB  ('&UACC' EQ 'READ')                                 @L4A
+&UACC4   SETB  0                                                   @L4A
+&UACC5   SETB  0                                                   @L4A
+&UACC6   SETB  0                                                   @L4A
+&UACC7   SETB  ('&UACC' EQ 'NONE')                                 @L4A
+&UACCVAL SETA  128*&UACC0+64*&UACC1+32*&UACC2+16*&UACC3+1*&UACC7   @L4A
+         MVI   36(1),&UACCVAL MOVE UACC VALUE INTO PARAMETER.      @L4A
+.RDEF630 ANOP  ,                                                   @L4A
+         AIF   ('&LEVEL' EQ '').RDEF650                            @L4A
+         AIF   ('&LEVEL'(1,1) NE '(').RDEF640                      @L4A
+         STC   &LEVEL(1),37(1) - STORE LEVEL VALUE.                @L4A
+         AGO   .RDEF650                                            @L4A
+.RDEF640 ANOP  ,                                                   @L4A
+         AIF   (T'&LEVEL(1) EQ 'N' AND K'&LEVEL(1) LE 2).RDEF641   @L4A
+         AGO   .ERR12                                              @L4A
+.ERTN12  ANOP  ,                                                   @L4A
+.RDEF641 ANOP  ,                                                   @L4A
+         MVI   37(1),&LEVEL - MOVE LEVEL VALUE INTO PARAMETER.     @L4A
+.RDEF650 ANOP  ,                                                   @L4A
+         AIF   ('&AUDIT' EQ '').RDEF670                            @L4A
+         AIF   ('&AUDITRG' EQ '').RDEF660                          @L5A
+         STC   &AUDITRG,38(1) - STORE AUDIT VALUE.                 @L5A
+         AGO   .RDEF670                                            @L4A
+.RDEF660 ANOP  ,                                                   @L4A
+         MVI   38(1),&AUDITVL MOVE AUDIT VALUE INTO PARAMETER.     @L4A
+.RDEF670 ANOP  ,                                                   @L4A
+         AIF   ('&RACFIND' EQ '' AND '&CHKAUTH' EQ '' AND              *
+               '&WARNING' EQ '' AND '&GENERIC' EQ '').RDEF680      @L6A
+.* PRODUCE SECOND FLAG BYTE                                        @L5A
+.* INITIALIZE BIT SET VARIABLES
+&BITA1   SETA  1                                                   @L5A
+&BITA2   SETA  1                                                   @L5A
+&BITA6   SETA  1                                                   @L6A
+&BITA7   SETA  1                                                   @L6A
+&BIT0    SETA  0                                                   @L5A
+&BIT1    SETA  0                                                   @L5A
+&BIT2    SETA  0                                                   @L5A
+&BIT3    SETA  0                                                   @L6A
+&BIT4    SETA  0                                                   @L6A
+&BIT5    SETA  0                                                   @L6A
+&BIT6    SETA  0                                                   @L6A
+&BIT7    SETA  0                                                   @L6A
+         AIF   ('&RACFIND' NE 'NO' AND '&CHKAUTH' NE 'NO' AND          *
+               '&WARNING' NE 'NO' AND                                  *
+               '&GENERIC' NE 'ASIS').RDEF675                       @L6A
+         AIF   ('&RACFIND' NE 'NO').RDEF671                        @L5A
+&BITA1   SETA  0            RACFIND=NO SPECIFIED                   @L5A
+.RDEF671 ANOP                                                      @L5A
+         AIF   ('&CHKAUTH' NE 'NO').RDEF672                        @L5A
+&BITA2   SETA  0            CHKAUTH=NO SPECIFIED                   @L5A
+.RDEF672 ANOP                                                      @L5A
+         AIF   ('&WARNING' NE 'NO').RDEF673                        @L6A
+&BITA6   SETA  0            WARNING=NO SPECIFIED                   @L6A
+.RDEF673 ANOP  ,                                                   @L6A
+         AIF   ('&GENERIC' NE 'ASIS').RDEF674                      @L6A
+&BITA7   SETA  0            GENERIC=ASIS SPECIFIED                 @L6A
+.RDEF674 ANOP  ,                                                   @L6A
+         NI    39(1),B'1&BITA1&BITA2.111&BITA6&BITA7' 2ND FLAG     @L6A
+.RDEF675 ANOP                                                      @L6A
+         AIF   ('&RACFIND' NE 'YES' AND '&CHKAUTH' NE 'YES' AND        *
+               '&WARNING' NE 'YES' AND                                 *
+               '&GENERIC' NE 'YES').RDEF680                        @L6A
+         AIF   ('&RACFIND' EQ '').RDEF676                          @L6A
+&BIT0    SETA  1            RACFIND CODED                          @L5A
+         AIF   ('&RACFIND' NE 'YES').RDEF676                       @L6A
+&BIT1    SETA  1            RACFIND=YES SPECIFIED                  @L5A
+.RDEF676 ANOP                                                      @L6A
+         AIF   ('&CHKAUTH' NE 'YES').RDEF677                       @L6A
+&BIT2    SETA  1            CHKAUTH=YES SPECIFIED                  @L5A
+.RDEF677 ANOP                                                      @L6A
+         AIF   ('&WARNING' NE 'YES').RDEF678                       @L6A
+&BIT6    SETA  1            WARNING=YES SPECIFIED                  @L6A
+.RDEF678 ANOP  ,                                                   @L6A
+         AIF   ('&GENERIC' NE 'YES').RDEF679                       @L6A
+&BIT7    SETA  1            GENERIC=YES SPECIFIED                  @L6A
+.RDEF679 ANOP  ,                                                   @L6A
+         OI    39(1),B'&BIT0&BIT1&BIT2.000&BIT6&BIT7' SET FLAG     @L6A
+.RDEF680 ANOP                                                      @L6A
+         AIF   ('&OWNER' EQ '').RDEF690                            @L4A
+         AIF   ('&OWNER'(1,1) NE '(').RDEF681                      @L6A
+         ST    &OWNER(1),40(1) - STORE OWNER ADDRESS.              @L4A
+         AGO   .RDEF690                                            @L4A
+.RDEF681 ANOP  ,                                                   @L6A
+         LA    0,&OWNER -     MOVE OWNER ADDRESS                   @L4A
+         ST    0,40(1) -        INTO PARAMETER.                    @L4A
+.RDEF690 ANOP  ,                                                   @L4A
+         AIF   ('&DATA' EQ '').RDEF710                             @L4A
+         AIF   ('&DATA'(1,1) NE '(').RDEF700                       @L4A
+         ST    &DATA(1),44(1) - STORE DATA ADDRESS.                @L4A
+         AGO   .RDEF710                                            @L4A
+.RDEF700 ANOP  ,                                                   @L4A
+         LA    0,&DATA -      MOVE DATA ADDRESS                    @L4A
+         ST    0,44(1) -        INTO PARAMETER.                    @L4A
+.RDEF710 ANOP  ,                                                   @L4A
+.* PRODUCE ENTRY LOGIC & EXIT
+         AGO   .RDEF330
+.* DIAGNOSTIC MESSAGES
+.ERR01   ANOP
+         MNOTE 8,'*** INVALID DSTYPE PARAMETER ***'
+         AGO   .ERTN01
+.ERR02   ANOP
+         MNOTE 8,'*** INVALID TYPE PARAMETER ***'
+         AGO   .ERTN02
+.ERR03   ANOP
+         MNOTE 8,'*** REGISTER SPECIFICATION NOT VALID, LIST FORM ***'
+         AGO   .ERTN03
+.ERR05   ANOP
+         MNOTE 8,'*** ONLY REGS 2-12 ALLOWED FOR PARAMETERS ***'
+         AGO   .ERTN05
+.ERR06   ANOP
+         MNOTE 8,'*** INVALID MF PARAMETER ***'
+         AGO   .ERTN06
+.ERR07   ANOP
+         MNOTE 8,'*** &CHAR PARAMETER ONLY VALID WITH TYPE=DEFINE ***'
+         AGO   .ERTN07
+.ERR08   ANOP                                                  @PC002PY
+         MNOTE 8,'*** ''CLASSNAME'' FORM NOT ALLOWED WITH MF=E ***'
+         AGO   .ERTN08                                         @PC002PY
+.ERR09   ANOP  ,                                                   @L4A
+         MNOTE 8,'*** INVALID UACC PARAMETER ***'                  @L4A
+         AGO   .ERTN09                                             @L4A
+.ERR10   ANOP  ,                   HANDLE V1R4 REGISTER NOTATION   @L5A
+         AIF   (N'&AUDIT NE 1 OR '&AUDIT(1)' EQ '&AUDIT').ERR10M   @L5A
+&AUDITRG SETC  '&AUDIT(1)'         SET V1R4 REGISTER "NAME"        @L5A
+         AGO   .ERTN10                                             @L5A
+.ERR10M  ANOP                                                      @L5A
+         MNOTE 8,'*** INVALID AUDIT PARAMETER ***'                 @L4A
+         AGO   .ERTN10                                             @L4A
+.ERR11   ANOP  ,                                                   @L4A
+         MNOTE 8,'*** INVALID LEVEL PARAMETER ***'                 @L4A
+         AGO   .ERTN11                                             @L4A
+.ERR12   ANOP  ,                                                   @L4A
+         MNOTE 8,'*** INVALID LEVEL PARAMETER ***'                 @L4A
+         AGO   .ERTN12                                             @L4A
+.ERR13   ANOP  ,                                                   @L4A
+         MNOTE 8,'*** ONLY YES OR NO ALLOWED ***'                  @L4A
+         AGO   .ERTN13                                             @L4A
+.ERR14   ANOP  ,                                                   @L5A
+         MNOTE 8,'*** INVALID RACFIND PARAMETER ***'               @L5A
+         AGO   .ERTN14                                             @L5A
+.ERR15   ANOP  ,                                                   @L5A
+         MNOTE 8,'*** INVALID CHKAUTH PARAMETER ***'               @L5A
+         AGO   .ERTN15                                             @L5A
+.ERR16   ANOP  ,                                                   @L6A
+         MNOTE 8,'*** INVALID WARNING PARAMETER ***'               @L6A
+         AGO   .ERTN16                                             @L6A
+.ERR17   ANOP  ,                                                   @L6A
+         MNOTE 8,'*** INVALID GENERIC PARAMETER ***'               @L6A
+         AGO   .ERTN17                                             @L6A
+.* DIAGNOSTICS COMPLETE
+         MEND
+

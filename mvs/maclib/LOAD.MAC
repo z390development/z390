@@ -1,0 +1,91 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    LOAD  &EP=,&EPLOC=,&DE=,&DCB=,&ERRET=,&HIARCHY=,&RELATED=
+         LCLB  &RET
+&RET     SETB  ('&ERRET' NE '')
+.NORC    AIF   ('&EP' NE '').PROCEP BRANCH IF EP PRESENT
+         AIF   ('&EPLOC' EQ '' AND '&DE' EQ '').E1
+         AIF   ('&EPLOC' NE '' AND '&DE' NE '').E2
+&NAME    CNOP  0,4
+         AIF   ('&DE&EPLOC'(1,1) NE '(').RXTYPE
+         AIF   ('&DE(1)&EPLOC(1)' NE '0').NOTZER
+         AGO   .EPHERE
+.NOTZER  ANOP
+         LA    0,0(0,&EPLOC(1)&DE(1))  LOAD PARAMETER INTO REG 0 YM1995
+         AGO   .EPHERE
+.RXTYPE  ANOP
+         LA    0,&EPLOC&DE        LOAD PARAMETER INTO REG 0
+.EPHERE  AIF   ('&DCB' NE '').DCB
+.EPOK    AIF   (&RET).FIN
+.SRONE   ANOP
+         SR    1,1                SHOW NO DCB PRESENT
+.SVC     AIF   ('&DE' EQ '').TERM
+         LNR   0,0                LOAD NEGATIVE REG 0 TO INDICATE DE
+.TERM    ANOP
+         SVC   8
+         AIF   ('&ERRET' EQ '').END
+         LTR   15,15              RETURN CODE TEST
+         AIF   ('&ERRET'(1,1) EQ '(').REGRET
+         BNZ   &ERRET           GO TO ERROR ROUTINE
+         AGO   .END
+.REGRET  ANOP
+         BCR   7,&ERRET(1)        GO TO ERROR ROUTINE
+         MEXIT
+.FIN     ANOP
+         L     1,*+8              NO DCB, RETURN CODE REQUESTED
+.TESTO   ANOP
+         B     *+8                BRANCH AROUND CONSTANT
+         DC    X'80000000'        RETURN CODE REQUESTED
+         AGO   .SVC
+.DCB     AIF   ('&DCB'(1,1) NE '(').RXSPEC
+         LA    1,0(0,&DCB(1))     LOAD ADDR. OF DCB INTO REG 1   YM1995
+         AGO   .TESTRC
+.RXSPEC  ANOP
+         LA    1,&DCB             LOAD ADDR OF DCB INTO REG 1
+.TESTRC  AIF   (NOT &RET).SVC
+         O     1,*+8              INSERT RETURN CODE REQUEST INDICATOR
+         AGO   .TESTO
+.PROCEP  AIF   ('&EPLOC' NE '' OR '&DE' NE '').E2
+         AIF   ('&EP'(1,1) EQ '(').E4
+&NAME    CNOP  0,4
+         AIF   (&RET).RCEPTST
+         LA    0,*+8              LOAD PARAMETER INTO REGISTER ZERO
+         B     *+12               BRANCH AROUND CONSTANT(S)
+         DC    CL8'&EP'           ENTRY POINT NAME
+         AIF   ('&DCB' NE '').NEXTON
+         AGO   .SRONE
+.NEXT    ANOP
+         LA    1,0(0,&DCB(1))     LOAD ADDR. OF DCB INTO REG 1   YM1995
+         AGO   .SVC
+.NEXTON  AIF   ('&DCB'(1,1) EQ '(').NEXT
+         LA    1,&DCB             LOAD ADDR. OF DCB INTO REG 1
+         AGO   .SVC
+.RCEPTST AIF   ('&DCB' NE '').PREDCB
+         L     1,*+12             NO DCB SPECIFIED,RETURN CODE REQUEST
+.COMPL   ANOP
+         LA    0,*+12             LOAD PARAMETER INTO REGISTER 0
+         B     *+16               BRANCH AROUND CONSTANT(S)
+         DC    X'80000000'        RETURN CODE REQUESTED
+         DC    CL8'&EP'           ENTRY POINT NAME
+         AGO   .TERM
+.PREDCB  AIF   ('&DCB'(1,1) EQ '(').NEXT1
+         LA    1,&DCB             LOAD DCB ADDRESS IN REGISTER 1
+         O     1,*+12             INDICATE RETURN CODE REQUESTED
+         AGO   .COMPL
+.NEXT1   ANOP
+         LA    1,0(0,&DCB(1))     LOAD DCB ADDRESS IN REGISTER 1 YM1995
+         O     1,*+12             INDICATE RETURN CODE REQUESTED
+         AGO   .COMPL
+.E1      IHBERMAC      31
+         MEXIT
+.E2      IHBERMAC      88
+         MEXIT
+.E4      IHBERMAC      26
+.END     MEND
+**/
+*LOAD:   MACRO
+*        KEYS(EP,DE,DCB,ERRET,RELATED);
+*        ANS('?'||MACLABEL||'LOADP '||MACLIST||MACKEYS||';');
+*%END;
+

@@ -23,9 +23,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FilePermission;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -90,24 +92,40 @@ public  class  z390 extends JApplet
 	 * ***************************************************
 	 * 03/05/05 copied from superzap, update menus, cmds
 	 * 09/26/05 replace z390 dialog with batch_cmds and options
+	 * 10/02/05 RPI8 fix "compatible java" in about desc. 
+	 * 10/03/05 change minimum J2RE release to 1.5
+	 * 10/04/05 RPI5 - option ASCII use ASCII vs EBCDIC
+     * 10/04/05 RPI6 - option ERR nn limit errors
+     * 10/04/05 trap any command errors and issue 51
+     * 10/09/05 RPI16 remove TEST and TRACE dependency bug
+     * 10/12/05 RPI15 & 17 fix CMD processing and status line
+     * 10/18/05 RPI29 use Z390E and Z390I prefixes 
+     * 10/27/05 RPI55 change /SC to execute GUI commands
+     *          which may include batch commands CMD.
+     * 11/03/05 RPI62 remove extra space added to test commands
+     * 11/12/05 RPI81 change menu item font_size
+     * 11/18/05 RPI98 add ASCII and DUMP to options
+     *          and add cr,lf around exit
+     * 12/15/05 RPI135 use tz390 shared file routines
+     * 02/21/06 RPI208 use tz390.z390_abort to term.
 	 ********************************************************
      * Global variables
      *****************************************************
      * global command mode variables
      */
+	    tz390 tz390 = null;
 	    String startup_cmd_file = null;
 	    int first_user_parm = 0;
         int hex_base = 16;
 	    boolean echo_cmd = true;
 	    boolean console_log = false;
-        int error_count = 0;
+        int z390_errors = 0;
 	    boolean cmd_error = false;
-	    int max_error_count = 100;
+	    int max_errors = 100;
         boolean main_applet  = false;  // running as browser applet
 	    boolean main_gui     = false;     // parm = /g
         boolean main_console = false; // parm = /c
 	    boolean main_batch   = false;   // parm = file name
-        String  version = null;
         String  main_title = "z390";
         boolean check_perms = true;          //reset with /NP
         boolean perm_file_user_dir = false;  //set if user.dir ok
@@ -123,10 +141,13 @@ public  class  z390 extends JApplet
         String mode_msg2 = null;
         Date lic_end_date = null;
         Date cur_date = null;
-        boolean show_dates = true; // reset by /RT regtest
    	    SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
    	    SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
     /*
+     * current directory file
+     */
+   	    File dir_cur_file = null;
+   	/*
      * Global log output file variables
      */
 	    String log_file_name = null;
@@ -138,9 +159,11 @@ public  class  z390 extends JApplet
      */   
         int     ins_count = 0;  
         int     io_count  = 0;
+        int     start_cmd_io_count;
+        long    start_cmd_time;
         Timer   monitor_timer = null;
         int     monitor_wait = 300;
-        int     monitor_timeout_limit = 0 * 1000; //dsh
+        int     monitor_timeout_limit = 0 * 1000;
         long    monitor_cmd_time_total = 0;
 	    long    monitor_last_time = 0;
         long    monitor_next_time = 0;
@@ -170,10 +193,11 @@ public  class  z390 extends JApplet
 	/*
 	 *  CMD Command execution variables
 	 */ 	
-        boolean cmd_mode = false;
-        int cmd_io_total = 0;
+    boolean cmd_mode = false;
+    boolean cmd_running = false;
+    int cmd_io_total = 0;
 	Process cmd_exec_process = null;
-	InputStreamReader     cmd_exec_error_reader = null;
+	InputStreamReader  cmd_exec_error_reader = null;
 	InputStreamReader  cmd_exec_output_reader = null;
     OutputStream       cmd_exec_input_writer  = null;
 	String cmd_exec_error_msg = "";
@@ -200,22 +224,23 @@ public  class  z390 extends JApplet
         int main_width_min  = 150;
         int main_height_min = 150;
         int main_border = 2;
-        int menu_height = 64; 
-        int start_menu_height = 36; //windows start bar
+        int start_bar_height = 36; //windows start bar
         int main_loc_x = 50;
         int main_loc_y = 50;
         int scrollbar_width = 15;
         int font_space = 10;
 	int font_size = 12;       //see FONT command
-	int font_width = font_size;
-        int log_char_height = font_size + font_space; //see FONT command
-        int tool_height = 36;     //reset to 0 if hidden;
-        int lines_per_page = 0;   //set by update_main_view()
+    int title_height = 0;
+	int menu_height = 0;
+	int font_width = 0;
+    int log_char_height = 0; //see FONT command
+    int tool_height = 0;     //reset to 0 if hidden;
+    int lines_per_page = 0;   //set by update_main_view()
 	int log_height = 0;       //set by update_main_view()
 	int log_width  = 0;      //set by update_main_view()
-	int command_height = font_size + font_space + main_border;
+	int command_height = 0;
 	int command_columns  = 75;
-	int status_height  = font_size + font_space + main_border;
+	int status_height  = 0;
 	int applet_status_height = 0;
 	boolean labels_visible = true;
 	int labels_min_width = main_width;
@@ -228,32 +253,56 @@ public  class  z390 extends JApplet
         JTextField  z390_cmd_line = null;
         JLabel status_line_label = null;
         JTextField  status_line = null;
-        int cur_cmd = -1;
-        int last_cmd = -1;
+        int cur_cmd = 0;
+        int last_cmd = 0;
         int max_cmd  = 100;
         int view_cmd = -1;
         String[] cmd_history = new String[100];
     /*
      *  Menu items requiring state changes
      */  
-        boolean opt_con      = true;
-        boolean opt_list     = true;
-        boolean opt_listcall = true;
-        boolean opt_stats    = true;
-        boolean opt_amode31  = true;
-        boolean opt_rmode31  = false;
-        boolean opt_test     = false;
-        boolean opt_trace    = false;
-        JCheckBoxMenuItem option_menu_con      = null;
-        JCheckBoxMenuItem option_menu_list     = null;
-        JCheckBoxMenuItem option_menu_listcall = null;
-        JCheckBoxMenuItem option_menu_stats    = null; 
-        JCheckBoxMenuItem option_menu_amode31  = null;
-        JCheckBoxMenuItem option_menu_rmode31  = null;
-        JCheckBoxMenuItem option_menu_test     = null;
-        JCheckBoxMenuItem option_menu_trace    = null; 
-        JCheckBoxMenuItem view_menu_status  = null;
-        JCheckBoxMenuItem view_menu_cmd     = null;
+        JMenuBar menuBar = null;  //RPI81       
+        JMenu file_menu = null;            
+        JMenu edit_menu = null;            
+        JMenu option_menu = null;          
+        JMenu view_menu = null;            
+        JMenu help_menu = null;             
+        JMenuItem file_menu_cd = null;         
+        JMenuItem file_menu_edit = null;       
+        JMenuItem file_menu_mac = null;        
+        JMenuItem file_menu_asm = null;        
+        JMenuItem file_menu_asml = null;       
+        JMenuItem file_menu_asmlg = null;      
+        JMenuItem file_menu_job = null;        
+        JMenuItem file_menu_link = null;       
+        JMenuItem file_menu_exec = null;       
+        JMenuItem file_menu_exit = null;       
+        JMenuItem edit_menu_cut = null;        
+        JMenuItem edit_menu_copy = null;       
+        JMenuItem edit_menu_paste = null;      
+        JMenuItem edit_menu_select_all = null; 
+        JMenuItem edit_menu_copy_log = null;   
+        JMenuItem edit_menu_notepad = null; 
+        JCheckBoxMenuItem option_menu_ascii = null;
+        JCheckBoxMenuItem option_menu_con = null;  
+        JCheckBoxMenuItem option_menu_dump = null;
+        JCheckBoxMenuItem option_menu_guam  = null;
+        JCheckBoxMenuItem option_menu_list = null;              
+        JCheckBoxMenuItem option_menu_listcall = null;         
+        JCheckBoxMenuItem option_menu_stats = null;            
+        JCheckBoxMenuItem option_menu_amode31 = null;          
+        JCheckBoxMenuItem option_menu_rmode31 = null;          
+        JCheckBoxMenuItem option_menu_test = null;              
+        JCheckBoxMenuItem option_menu_trace = null;             
+        JCheckBoxMenuItem view_menu_status = null;              
+        JCheckBoxMenuItem view_menu_cmd = null;              
+        JMenuItem help_menu_help = null;            
+        JMenuItem help_menu_commands = null;        
+        JMenuItem help_menu_guide = null;           
+        JMenuItem help_menu_perm = null;            
+        JMenuItem help_menu_releases = null;        
+        JMenuItem help_menu_support = null;         
+        JMenuItem help_menu_about = null;           
     /*
      * Pop-up edit menu variables (right click)
      */    
@@ -287,14 +336,8 @@ public  class  z390 extends JApplet
       * web site and install location
       */
         String web_site = "http://www.z390.org";
-        String install_loc = "c:\\program files\\Automated Software Tools\\z390";
-//dsh   String install_loc = "D:\\work\\z390"; // dshx
-        String install_doc = install_loc + "\\doc"; // dshx
-     /*
-      * current directory global variables
-      */   
-        File   cur_dir_file = null;
-        String cur_dir = null;
+        String install_loc = null;
+        String install_doc = null;
       /*
        * macro assembler command global variables
        */
@@ -321,7 +364,7 @@ public  class  z390 extends JApplet
                     main_applet = true;
                     applet_status_height = status_height;
                     if (set_main_mode(args) == 0){
-                 	   process_z390_gui(args);
+                 	   init_z390(args);
                     }
                 }
             });
@@ -336,7 +379,7 @@ public  class  z390 extends JApplet
             pgm.main_applet = false;
             pgm.set_main_mode(args);
             if  (pgm.main_gui){
-                pgm.process_z390_gui(args);
+                pgm.init_z390(args);
             }
           }
   	  private int set_main_mode(String[] args){
@@ -352,10 +395,10 @@ public  class  z390 extends JApplet
   			String java_vendor  = System.getProperty("java.vendor");
   			String java_version = System.getProperty("java.version");
   			if (!java_vendor.equals("Sun Microsystems Inc.")
-  				||	java_version.compareTo("1.4") < 0
+  				||	java_version.compareTo("1.5") < 0
   				|| java_version.compareTo("9.9" ) > 0){
   				MessageBox box = new MessageBox();
-  				box.messageBox("z390 Error",
+  				box.messageBox("SZ390E error ",
 				    "Unsupported Java Version " +                                                        java_vendor + " " + java_version);
   				if (!main_applet){
   					exit_main(16);
@@ -371,7 +414,6 @@ public  class  z390 extends JApplet
         /*
          * Check for security manager and set permissions
          */
-  	//dsh	 check_perms = false; //for testing applet perms   
   		 if (check_perms){
             SecurityManager sm = System.getSecurityManager();
             if  (sm != null){
@@ -426,25 +468,16 @@ public  class  z390 extends JApplet
   		 }
             perm_file_log = perm_file_write 
 			                && perm_file_user_dir;
-            if (perm_file_log){
-   		  	   cur_dir = System.getProperty("user.dir");
-		  	   cur_dir_file = new File(cur_dir);
-            }
             perm_select   = perm_file_read  
 			                && perm_file_user_dir 
 							&& perm_runtime_thread;
             if (!perm_file_log){
                 perm_file_write = false;
                 if  (main_batch){
-                	System.out.println("z390 Error " + "S015 batch log permission denied - aborting");
+                	System.out.println("SZ390E error 15 batch log permission denied - aborting");
                 	shut_down(16);
                 }
             }
-           /*******************************************
-            * Set version
-            *******************************************/  
-            version = "V1.0.00 09/30/05";  //dsh
-            main_title = "z390 " + version;
             /******************************************
              * Switch to demo mode if no read permission
              */
@@ -491,7 +524,7 @@ public  class  z390 extends JApplet
   					}
   					if  (args[index1].toUpperCase().equals("/RT")){
   						parm_ok = true;
-  						show_dates = false;
+  						tz390.opt_timing = false;
   					}  					
   					if  (args[index1].toUpperCase().equals("/SC")){
   						index1++;
@@ -536,35 +569,26 @@ public  class  z390 extends JApplet
   			  	    log_error(74,"missing log command file or OFF parm");  			  	
   			  }
   		}
- 	   private String get_file_name(String parm){
- 	   /*
- 	    * Strip long spacey name quotes if found
- 	    * 
- 	    * Add current directory if not specified
- 	    */
- 	   	    String file_name = null;
- 	    	if (parm.charAt(0) == '\"' 
-   	    		|| parm.charAt(0) == '\''){
-   	    		file_name = parm.substring(1,parm.length() - 1);
-   	    	} else {
-   	    	    file_name = parm;
-   	    	}
- 	    	if  (cur_dir == null){
- 	    		
- 	    	}
- 	    	if  (file_name.charAt(0) != '\\'
- 	    		 && (file_name.length() < 2 
- 	    		     || file_name.charAt(1) != ':')){
- 	    		file_name = cur_dir.concat(File.separator + file_name);	
- 	    	}
- 	    	return file_name;
- 	    }
 		private void open_log_file() {
 			/*
 			 * Open log file
 			 */ 
-	      if (perm_file_log){	
-			  log_file_name = get_file_name("z390");
+	      if (perm_file_log){
+	    	  install_loc = System.getProperty("user.dir");
+			  File temp_file = new File(install_loc);
+			  if (temp_file.isDirectory()){
+				  install_loc = temp_file.getPath();
+			  } else {
+				  abort_error(52,"invalid install directory - " + install_loc);
+			  }
+			  temp_file = new File(install_loc + File.separator + "doc");
+			  if (temp_file.isDirectory()){
+				  install_doc = temp_file.getPath();
+			  } else {
+				  install_doc = install_loc;
+				  put_log("install doc directory not found - " + install_doc);
+			  }
+			  log_file_name = tz390.get_file_name(tz390.dir_cur,"z390",".LOG");
 		      try {
 		      	  if  (log_tod){
 		      	      boolean new_log = false;
@@ -576,7 +600,7 @@ public  class  z390 extends JApplet
 			              temp_log_name = log_file_name + log_file_tod + ".log";
 				          File temp_log_file = new File(temp_log_name);
 		                  if  (temp_log_file.exists()){
-			                  Thread.sleep(1000);
+			                  sleep_now();
 		                  } else {
 		              	      new_log = true;
 		                  }
@@ -616,13 +640,13 @@ public  class  z390 extends JApplet
 		 * display error total on log and close
 		 * data and log files
 		 */	
-            put_log("z390 total errors = " + error_count);
+            put_log("Z390I total errors = " + z390_errors);
 	        close_log_file();
 		}
 		private void log_error(int error,String msg){
-			error_count++;
+			z390_errors++;
 			cmd_error = true;
-			msg = "z390 Error " + error + " " + msg;
+			msg = "SZ390E error " + error + " " + msg;
 			if  (msg.length() > max_line_length){
 				put_log(msg.substring(0,max_line_length));
 				int index1 = max_line_length;
@@ -637,22 +661,16 @@ public  class  z390 extends JApplet
 			} else {
 				put_log(msg);
 			}
-			if  (error_count > max_error_count){
+			if  (max_errors != 0 && z390_errors > max_errors){
 		        abort_error(10,"maximum errors exceeded");
             }
 		}
 		private void abort_error(int error,String msg){
-			error_count++;
-			msg = "z390 Error " + error + " " + msg;
-			if  (main_batch){
-				put_log(msg);
-				if (!console_log){
-				   System.out.println(msg);
-				}
-		        exit_main(16);
-			} else {
-				put_log(msg);
-			}
+			z390_errors++;
+			msg = "SZ390E " + error + " " + msg;
+			put_log(msg);
+ 		    System.out.println(msg);
+	        exit_main(16);
 		}
 		private void shut_down(int return_code){
 		/*
@@ -669,7 +687,7 @@ public  class  z390 extends JApplet
 				main_frame.dispose();
 			}
 			if (main_applet){
-				showStatus("z390 total errors = " + error_count);
+				showStatus("Z390I total errors = " + z390_errors);
 			} else {
 			    if  (!shutdown_exit){
 					shutdown_exit = true; //disable exit
@@ -697,7 +715,7 @@ public  class  z390 extends JApplet
 	   /*
 	    * display z390 version and copyright
 	    */
-	   	put_log("z390 " + version);
+	   	put_log("Z390I " + tz390.version);
 	   	put_log("Copyright 2005 Automated Software Tools Corporation");
 	   	put_log("z390 is licensed under GNU General Public License");
 	   	if  (mode_msg1 != null){
@@ -754,7 +772,7 @@ public  class  z390 extends JApplet
 	   	       }	   	 	
 	   	    }
 	   }
-	   private String process_command(String cmd_line) {
+	   private void process_command(String cmd_line) {
 	   	/* 
 	   	 * 1.  parse parms and execute 
 	   	 *     z390 command if found.
@@ -784,12 +802,12 @@ public  class  z390 extends JApplet
 	   	 * 4.  Use EXIT or BREAK event to abort CMD
 	   	 *     process. CTRL-C works in command mode only.
 	   	 */
+		 try {
 	   	    cmd_error = false;
 	   	    if  (cmd_line == null 
 	   	    		|| cmd_line.length() == 0
 					|| cmd_line.equals(" ")){
-	   	    	cmd_line = " ";
-	   	    	return cmd_line;
+	   	    	return;
 	   	    }
   	        String cmd_opcode = null;
             String cmd_parm1 = null;
@@ -797,37 +815,16 @@ public  class  z390 extends JApplet
 	   	    boolean cmd_opcode_ok = false;
             StringTokenizer st = new StringTokenizer(cmd_line," ,\'\"",true);
             String next_token;
-               cur_cmd++;
-               if (cur_cmd >= max_cmd){
-                  cur_cmd = 0;
-               } else {
-                  last_cmd = cur_cmd;
-               }
-               cmd_history[cur_cmd] = cmd_line;
-            view_cmd = -1;
             cmd_opcode = get_next_parm(st,true).toUpperCase();
             if (st.hasMoreTokens()) {
                 cmd_parm1 = get_next_parm(st,true);
                 if (st.hasMoreTokens()) {
                     cmd_parm2 = get_next_parm(st,true);
-                    if  (cmd_parm2 != null 
-                    		&& cmd_parm2.equals(",")){
-                    	cmd_parm2 = get_next_parm(st,false);
-                    }
-                    boolean comments = false;
-                    while (st.hasMoreTokens()
-                    		&& !comments){
+                    while (st.hasMoreTokens()){
                         next_token = st.nextToken();
                         if (next_token != null
-                        	&& next_token.equals(",")
-							&& st.hasMoreTokens()){   
-                           next_token = get_next_parm(st,false);
-                           if  (next_token != null 
-                           		&& !next_token.equals(" ")){
-                        	   cmd_parm2 = cmd_parm2 + "," + next_token;
-                           }
-                        } else {
-						    comments = true;
+                        	&& !next_token.equals(" ")){
+                        	cmd_parm2 = cmd_parm2 + " " + next_token; 
                         }
                     }
                 }
@@ -846,9 +843,13 @@ public  class  z390 extends JApplet
             }
         	if  (cmd_opcode.equals("AMODE31")){
              	cmd_opcode_ok = true;
-             	opt_amode31 = options_command(option_menu_amode31, cmd_parm1,cmd_parm2);
+             	tz390.opt_amode31 = options_command(option_menu_amode31, cmd_parm1,cmd_parm2);
              	break;
             }
+        	if  (cmd_opcode.equals("ASCII")){
+        		cmd_opcode_ok = true;
+             	tz390.opt_ascii = options_command(option_menu_ascii, cmd_parm1,cmd_parm2);
+        	}
             if  (cmd_opcode.equals("ASM")) {
               	cmd_opcode_ok = true;
               	batch_cmd("ASM",cmd_parm1,"MLC",cmd_parm2);
@@ -880,7 +881,7 @@ public  class  z390 extends JApplet
             }
         	if  (cmd_opcode.equals("CON")){
              	cmd_opcode_ok = true;
-             	opt_con = options_command(option_menu_con, cmd_parm1,cmd_parm2);
+             	tz390.opt_con = options_command(option_menu_con, cmd_parm1,cmd_parm2);
              	break;
             }
             if  (cmd_opcode.equals("COPYLOG")){
@@ -897,12 +898,16 @@ public  class  z390 extends JApplet
             if  (cmd_opcode.equals("CMD")) {
         	    cmd_opcode_ok = true;
         	    if (cmd_parm1 == null){
-        	    	cmd_command(null);
-        	    } else {
-        	    	if (!cmd_mode){
-        	    		cmd_command(null); // turn on cmd mode for batch
+        	    	if (cmd_mode){  //RPI15
+        	    		cmd_exec_cancel();
+        	    	} else {
+        	    		if (cmd_exec_rc() != -1){
+        	    			cmd_startup(null); // start cmd processor
+        	    		}
+        	    	    cmd_mode = true;
         	    	}
-        	    	int index1 = cmd_line.toUpperCase().indexOf("CMD") + 3;
+        	    } else {
+        	    	int index1 = cmd_line.toUpperCase().indexOf("CMD ") + 4;//RPI62
                     cmd_command(cmd_line.substring(index1));
         	    }
             	break;
@@ -927,6 +932,11 @@ public  class  z390 extends JApplet
                	batch_cmd("DD",cmd_parm1,"",cmd_parm2);
                	break;
              }
+         	if  (cmd_opcode.equals("DUMP")){
+             	cmd_opcode_ok = true;
+             	tz390.opt_dump = options_command(option_menu_dump, cmd_parm1,cmd_parm2);
+             	break;
+            }
         	 break;
          case 'E':
             if  (cmd_opcode.equals("ECHO")) {
@@ -947,6 +957,12 @@ public  class  z390 extends JApplet
              	batch_cmd("EDIT",cmd_parm1,"","");
              	break;
              }
+             if  (cmd_opcode.equals("ERR")) {
+                	cmd_opcode_ok = true;
+                	max_errors = Integer.valueOf(cmd_parm1).intValue();
+                	put_log("max errors set to - " + max_errors);
+                	break;
+              }
              if  (cmd_opcode.equals("EXEC")) {
                	cmd_opcode_ok = true;
                	batch_cmd("EXEC",cmd_parm1,"390",cmd_parm2);
@@ -966,6 +982,11 @@ public  class  z390 extends JApplet
             }
             break;
          case 'G': 
+          	if  (cmd_opcode.equals("GUAM")){
+             	cmd_opcode_ok = true;
+             	tz390.opt_guam = options_command(option_menu_guam, cmd_parm1,cmd_parm2);
+             	break;
+            } 
             if  (cmd_opcode.equals("GUIDE")) {
             	cmd_opcode_ok = true; 
             	if (!main_batch){
@@ -1000,12 +1021,12 @@ public  class  z390 extends JApplet
              }  
              if  (cmd_opcode.equals("LIST")){
              	cmd_opcode_ok = true;
-             	opt_list = options_command(option_menu_list, cmd_parm1,cmd_parm2);
+             	tz390.opt_list = options_command(option_menu_list, cmd_parm1,cmd_parm2);
              	break;
             }
          	if  (cmd_opcode.equals("LISTCALL")){
              	cmd_opcode_ok = true;
-             	opt_listcall = options_command(option_menu_listcall, cmd_parm1,cmd_parm2);
+             	tz390.opt_listcall = options_command(option_menu_listcall, cmd_parm1,cmd_parm2);
              	break;
             }
             if  (cmd_opcode.equals("LOG")) {
@@ -1031,7 +1052,7 @@ public  class  z390 extends JApplet
             	cmd_opcode_ok = true;
             	if (perm_file_execute){
             	   if (!main_batch){
-                      if (!exec_cmd("notepad.exe")){
+                      if (!tz390.exec_cmd("notepad.exe")){
                 	     log_error(16,"notepad.exe not found");
                       }
             	   } else {
@@ -1072,14 +1093,14 @@ public  class  z390 extends JApplet
             }
         	if  (cmd_opcode.equals("RMODE31")){
              	cmd_opcode_ok = true;
-             	opt_rmode31 = options_command(option_menu_rmode31, cmd_parm1,cmd_parm2);
+             	tz390.opt_rmode31 = options_command(option_menu_rmode31, cmd_parm1,cmd_parm2);
              	break;
             }
             break;
          case 'S':
         	if  (cmd_opcode.equals("STATS")){
              	cmd_opcode_ok = true;
-             	opt_stats = options_command(option_menu_stats,cmd_parm1,cmd_parm2);
+             	tz390.opt_stats = options_command(option_menu_stats,cmd_parm1,cmd_parm2);
              	break;
             }
             if  (cmd_opcode.equals("STATUS")){
@@ -1105,7 +1126,7 @@ public  class  z390 extends JApplet
          case 'T':
          	if  (cmd_opcode.equals("TEST")){
              	cmd_opcode_ok = true;
-             	opt_test = options_command(option_menu_test, cmd_parm1,cmd_parm2);
+             	tz390.opt_test = options_command(option_menu_test, cmd_parm1,cmd_parm2);
              	break;
             }
             if  (cmd_opcode.equals("TIMEOUT")){
@@ -1120,7 +1141,7 @@ public  class  z390 extends JApplet
             }
         	if  (cmd_opcode.equals("TRACE")){
              	cmd_opcode_ok = true;
-             	opt_trace = options_command(option_menu_trace, cmd_parm1,cmd_parm2);
+             	tz390.opt_trace = options_command(option_menu_trace, cmd_parm1,cmd_parm2);
              	break;
             }
             break;
@@ -1142,18 +1163,65 @@ public  class  z390 extends JApplet
              */
             if  (cmd_opcode_ok != true) {
                 process_command("CMD " + cmd_line);
+            } else {
+            	add_cmd_hist();  
             }
-            return cmd_line;
+		 } catch (Exception e){
+			 log_error(51,"command error on -" + cmd_line);
+		 }
        }
+	   private void add_cmd_hist(){
+		   /*
+		    * add command cmd_line to rolling history
+		    */
+		   view_cmd = -1;
+		   cur_cmd++;
+           if (cur_cmd >= max_cmd){
+              cur_cmd = 1;
+           } else {
+              last_cmd = cur_cmd;
+           }
+           cmd_history[cur_cmd] = cmd_line;
+	   }
+	   private void get_prev_cmd(){
+		   /*
+		    * restore prev cmd to z390_cmd_line
+		    */
+   	   	   if  (view_cmd < 0){
+   	   	   	   view_cmd = cur_cmd;
+   	   	   } else {
+   	   		   if (view_cmd > 0){
+   	   			   view_cmd--;
+   	   	       } else {
+   	   	           view_cmd = last_cmd;
+   	   	       }
+   	   	   }
+   	   	   z390_cmd_line.setText(cmd_history[view_cmd]);
+	   }
+	   private void get_next_cmd(){
+		   /*
+		    * restore next cmd to z390_cmd_line
+		    */
+  	   	   if  (view_cmd < 0){
+  	   	   	   view_cmd = cur_cmd;
+  	   	   } else {
+  	   		   if (view_cmd < last_cmd) {
+  	   			   view_cmd++;
+  	   	       } else {
+  	  	           view_cmd = 0;
+  	   	       }
+  	   	   }
+ 	   	   z390_cmd_line.setText(cmd_history[view_cmd]);
+	   }
 	   private String time_stamp(){
 		   /*
-		    * return date and time if show_dates
+		    * return date and time if tz390.opt_timing
 		    */
    	    String temp_date_text = "";
-	    if  (show_dates){
+	    if  (tz390.opt_timing){
 	        Date temp_date = new Date(); 
-            temp_date_text = "Date = " + mmddyy.format(temp_date)
-              + " Time = " + hhmmss.format(temp_date);
+            temp_date_text = mmddyy.format(temp_date)
+              + " " + hhmmss.format(temp_date);
         }
 	    return temp_date_text;
 	   }
@@ -1189,7 +1257,7 @@ public  class  z390 extends JApplet
 	   }
 	   private void about_command(){
 	   	  put_copyright();
-	   	  put_log("z390 portable mainframe macro assembler, linker, and emulator tool");
+	   	  put_log("z390 Portable mainframe macro assembler, linker, and emulator tool");
 	   	  put_log("  * edit, assemble, link, and execute mainframe assembler code");
 	   	  put_log("  * use interactive GUI, command line, or batch interface");
 	   	  put_log("  * macro assembler compatible with HLASM");
@@ -1199,7 +1267,7 @@ public  class  z390 extends JApplet
 	   	  put_log("  * emulator includes powerful trace and test debug tools");
           put_log("  * z390 distributed as InstallShield exe for Windows and as zip");
           put_log("  * z390 includes example demos and regression tests");
-          put_log("  * z390 written entirely in J2SE 1.5.0 comatible Java");
+          put_log("  * z390 written entirely in J2SE 1.5.0 compatible Java");  //rpi8 
           put_log("  * z390 distributed with source under GNU open source license");
           put_log("  * z390 open source project for support and extensions");         
           put_log("Visit www.z390.org for additional information");
@@ -1207,6 +1275,7 @@ public  class  z390 extends JApplet
 	   private void font_command(String cmd_parm1,String cmd_parm2){
 	   /* 
 	    * reset font size for log, and command line
+	    * and menu pop-ups (RPI 81)
 	    */
 	   	    int new_font_size;
 	   	    if (cmd_parm1 != null){
@@ -1216,21 +1285,70 @@ public  class  z390 extends JApplet
 	   	    	} else {
 	   	    		if (main_gui){
 		   	    		font_size = new_font_size;
-		   	    		log_char_height = font_size + font_space;
-		   	    		command_height = font_size + font_space + main_border;
-		   	    		status_height  = font_size + font_space;
-	   	                log_text.setFont(new Font("Courier",Font.BOLD,font_size));
-	   	                cmd_label.setFont(new Font("Courier",Font.BOLD,font_size));
-	   	                z390_cmd_line.setFont(new Font("Courier",Font.BOLD,font_size));
-	   	                status_line_label.setFont(new Font("Courier",Font.BOLD,font_size));
-	   	                status_line.setFont(new Font("Courier",Font.BOLD,font_size));
+		   	    		set_gui_size();
+                        set_text_font();
+                        set_tooltips();
 	   	                refresh_request = true;
 	   	    		}
 	   	    	}	
 	   	    } else {
 	   	    	log_error(63,"font outside New Courier fixed width font limits");
 	   	    }
-	   }	   private int get_dec_int(String cmd_parm){
+	   }
+	   private void set_text_font(){
+		   /*
+		    * reset font size for menu, log, cmd
+		    * and status line
+		    */
+	          menuBar.setFont(new Font("Courier",Font.BOLD,font_size)); //RPI81
+   	          file_menu.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          edit_menu.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          option_menu.setFont(new Font("Courier",Font.BOLD,font_size)); 
+   	          view_menu.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          help_menu.setFont(new Font("Courier",Font.BOLD,font_size)); 
+   	          file_menu_cd.setFont(new Font("Courier",Font.BOLD,font_size));     
+   	          file_menu_edit.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          file_menu_mac.setFont(new Font("Courier",Font.BOLD,font_size));    
+   	          file_menu_asm.setFont(new Font("Courier",Font.BOLD,font_size));    
+   	          file_menu_asml.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          file_menu_asmlg.setFont(new Font("Courier",Font.BOLD,font_size));  
+   	          file_menu_job.setFont(new Font("Courier",Font.BOLD,font_size));    
+   	          file_menu_link.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          file_menu_exec.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          file_menu_exit.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          edit_menu_cut.setFont(new Font("Courier",Font.BOLD,font_size));    
+   	          edit_menu_copy.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          edit_menu_paste.setFont(new Font("Courier",Font.BOLD,font_size));  
+   	          edit_menu_select_all.setFont(new Font("Courier",Font.BOLD,font_size)); 
+   	          edit_menu_copy_log.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          edit_menu_notepad.setFont(new Font("Courier",Font.BOLD,font_size));    
+   	          option_menu_ascii.setFont(new Font("Courier",Font.BOLD,font_size)); 
+   	          option_menu_con.setFont(new Font("Courier",Font.BOLD,font_size)); 
+   	          option_menu_dump.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          option_menu_guam.setFont(new Font("Courier",Font.BOLD,font_size));
+   	          option_menu_list.setFont(new Font("Courier",Font.BOLD,font_size));      
+   	          option_menu_listcall.setFont(new Font("Courier",Font.BOLD,font_size)); 
+   	          option_menu_stats.setFont(new Font("Courier",Font.BOLD,font_size));    
+   	          option_menu_amode31.setFont(new Font("Courier",Font.BOLD,font_size));  
+   	          option_menu_rmode31.setFont(new Font("Courier",Font.BOLD,font_size));  
+   	          option_menu_test.setFont(new Font("Courier",Font.BOLD,font_size));      
+   	          option_menu_trace.setFont(new Font("Courier",Font.BOLD,font_size));     
+   	          view_menu_status.setFont(new Font("Courier",Font.BOLD,font_size));      
+   	          view_menu_cmd.setFont(new Font("Courier",Font.BOLD,font_size));         
+   	          help_menu_help.setFont(new Font("Courier",Font.BOLD,font_size));       
+   	          help_menu_commands.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          help_menu_guide.setFont(new Font("Courier",Font.BOLD,font_size));      
+   	          help_menu_perm.setFont(new Font("Courier",Font.BOLD,font_size));       
+   	          help_menu_releases.setFont(new Font("Courier",Font.BOLD,font_size));   
+   	          help_menu_support.setFont(new Font("Courier",Font.BOLD,font_size));    
+   	          help_menu_about.setFont(new Font("Courier",Font.BOLD,font_size));      
+	          log_text.setFont(new Font("Courier",Font.BOLD,font_size));
+   	          cmd_label.setFont(new Font("Courier",Font.BOLD,font_size));
+   	          z390_cmd_line.setFont(new Font("Courier",Font.BOLD,font_size));
+   	          status_line_label.setFont(new Font("Courier",Font.BOLD,font_size));
+   	          status_line.setFont(new Font("Courier",Font.BOLD,font_size));
+	   }
+	   private int get_dec_int(String cmd_parm){
 		   /*
 		    * return int from immeidate decimal parm
 		    */
@@ -1343,36 +1461,33 @@ public  class  z390 extends JApplet
 	            	cmd_pgm = "cmd.exe";
 	            }
                 if  (cmd_line != null){
-                	cmd_mode = false;
-   	  		        if (main_gui){
-   	  		        	view_menu_cmd.setSelected(false);
-   	  		        }
                 	cmd_parms = new String[3];
                 	cmd_parms[0] = cmd_pgm;
                 	cmd_parms[1] = "/C";
                     cmd_parms[2] = cmd_line;
                 } else {
-                	cmd_mode = true;
-   	  		        if (main_gui){
-   	  		        	view_menu_cmd.setSelected(true);
-   	  		        }
                 	cmd_parms = new String[1];
                 	cmd_parms[0] = cmd_pgm;
                 }
             	rc = cmd_exec_start(cmd_parms);
                 if  (rc == 0){
    		            monitor_cmd_time_total = 0;
+   		            start_cmd_io_count = io_count;
+   		            start_cmd_time = cur_date.getTime();
    		            if (!main_gui){
    		            	while (cmd_exec_rc() == -1){
-				               try {  // wait until done if not gui
-		                           Thread.sleep(monitor_wait);
-		                       } catch (Exception e){
-		      	                   abort_error(77,"Wait interrupted " + e.toString() );
-		                       }
-				           }
+                            sleep_now();
+				       }
    		            }
+   		            if (tz390.opt_timing){
+   		            	cur_date = new Date();
+   		            }
+                    sync_cmd_dir();
+   		            put_log("*** " +  mmddyy.format(cur_date) 
+   		            		 + " " + hhmmss.format(cur_date)
+   		            		 + " CMD task started");
 	   	        } else {
-	   	        	log_error(66,"execution startup error rc = " + rc);
+	   	        	log_error(66,"CMD task startup error rc = " + rc);
     	 	        cmd_exec_cancel();
 	   	        }
                 return rc;
@@ -1381,6 +1496,32 @@ public  class  z390 extends JApplet
                 cmd_exec_cancel();
 	   		    return 16;
     	 	}
+	   }
+	   private void sleep_now(){
+		   /*
+		    * sleep for monitor interval if not abort
+		    */
+		   if (tz390.z390_abort){
+			   exit_command();
+		   }	    
+           try {  // wait until done if not gui
+               Thread.sleep(monitor_wait);
+           } catch (Exception e){
+                 abort_error(77,"Wait interrupted " + e.toString() );
+           }
+	   }
+	   private void sync_cmd_dir(){
+		   /*
+		    * sync the cmd task directory with
+		    * current directory.
+		    *
+		    */
+	           if (!tz390.dir_cur.equals(install_loc)){
+		           if (!tz390.dir_cur.substring(0,2).equals(install_loc.substring(0,2))){
+		           		cmd_exec_input(tz390.dir_cur.substring(0,2));
+		           }
+		           cmd_exec_input("CD " + tz390.dir_cur.substring(2));
+		       }
 	   }
 	   private void monitor_update(){
 	   /*
@@ -1401,21 +1542,31 @@ public  class  z390 extends JApplet
 	    * 
 	    * 5.  reset focus to z390_cmd_line after update
 	    */
+		    if (tz390.z390_abort){
+		    	exit_command();
+		    }
      	    if (cmd_exec_output_msg.length() + cmd_exec_error_msg.length() > 0){
 	   	    	put_log("");
-	   	    }
-	   	    if  (cmd_mode && cmd_exec_rc() != -1){
-	   	    	put_log("CMD mode ended");
-	   	    	cmd_mode = false;
-	  		    if (main_gui){
-   	  		       	view_menu_cmd.setSelected(false);
-   	  		    }
 	   	    }
 	        monitor_next_time = System.currentTimeMillis();
 	        monitor_next_ins_count = ins_count;
 	        monitor_next_io_count = io_count;
             monitor_cur_interval = monitor_next_time - monitor_last_time;
-	   	    monitor_cmd_time_total = monitor_cmd_time_total + monitor_cur_interval;
+	   	    monitor_cmd_time_total = (monitor_next_time - start_cmd_time)/1000;
+	   	    if (tz390.opt_timing){
+	   	    	cur_date = new Date();
+	   	    }
+	   	    if  ((cmd_mode || cmd_running) && cmd_exec_rc() != -1){
+	   	    	put_log("*** " + mmddyy.format(cur_date)
+	   	    			 + " " + hhmmss.format(cur_date)
+	   	    			 + " CMD task ended TOT SEC=" + monitor_cmd_time_total
+	   	    			 + " TOT LOG IO=" + (io_count-start_cmd_io_count));
+	   	    	cmd_mode = false;
+	   	    	cmd_running = false;
+	  		    if (main_gui){
+   	  		       	view_menu_cmd.setSelected(false);
+   	  		    }
+	   	    }
 	   	    if (main_gui){         	
 	   	       title_update();
 	   	       if  (ins_count > monitor_last_ins_count
@@ -1451,10 +1602,10 @@ public  class  z390 extends JApplet
 	   private void cmd_timeout_error(){
 	   	   cmd_exec_cancel();
  	       status_log_update();
-  	       abort_error(69,"CMD command timeout error");
+  	       log_error(69,"CMD command timeout error - command aborted");
 	   	   reset_z390_cmd();
 	   }
-	   private void cmd_command(String cmd_line){
+	   private void cmd_command(String cmd){
 	   /*
 	    * exec Windows command as follows:.
         * 1.  If cmd_mode set via prior cmd with no
@@ -1471,10 +1622,18 @@ public  class  z390 extends JApplet
         *     display of status of long running
         *     commands.        * 
 	    */	
+		     cmd_line = cmd;
 	   	     if  (cmd_exec_rc() == -1){
-	   	    	 cmd_exec_input(cmd_line); // route cmd to existing batch processor
+	   	    	 cmd_exec_input(cmd); // route cmd to existing CMD task running
 	   	     } else {
-	             cmd_startup(cmd_line);
+	   	    	 if (cmd == null){         //RPI15
+	                 cmd_startup(null);
+	   	    	 } else {
+	   	    		 cmd_startup(null);
+	   	    		 cmd_exec_input(cmd);
+	   	    		 cmd_running = true;
+	   	    	     cmd_exec_input("\r\n" + "exit" + "\r\n");  //RPI15, RPI 98
+	   	    	 }
   	 	     }
 	   }
 	   /*
@@ -1491,16 +1650,14 @@ public  class  z390 extends JApplet
       *     1.  Time of date
    	  *     2.  INS total
    	  *     3.  I/O total
-   	  *     4.  RBA
-   	  *     5.  CMD mode
+   	  *     4.  CMD mode
       */
      	String cmd_mode_text = "";
      	if (cmd_exec_rc() == -1){
      	   cmd_mode_text = " CMD";
      	}
      	String status_text = time_stamp()
-		  + " INS=" + get_pad(ins_count,6)
-		  + " IO=" + get_pad(io_count,6)
+		  + " LOG IO=" + get_pad(io_count,6)
 		  + cmd_mode_text;
      	return status_text;
      }
@@ -1543,7 +1700,13 @@ public  class  z390 extends JApplet
      	status_last_ins_count = status_next_ins_count;
      	status_last_io_count = status_next_io_count;
      }
-   private void process_z390_gui(String[] args){
+   private void init_z390(String[] args){
+	   /*
+	    * load shared tables and file routines
+	    */
+	   tz390 = new tz390();
+	   tz390.init_tables();
+       main_title = "Z390 " + tz390.version;
        /*
         * set runtime cancel hooks
         */
@@ -1554,7 +1717,7 @@ public  class  z390 extends JApplet
             main_frame = new JFrame();
             title_update();
             try {
-                main_height_max = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getHeight() - start_menu_height;
+                main_height_max = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getHeight() - start_bar_height;
                 main_width_max = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getWidth();
             } catch (Exception e){
 
@@ -1562,7 +1725,6 @@ public  class  z390 extends JApplet
             main_frame.setSize(main_width,main_height);
             main_frame.setLocation(main_loc_x,main_loc_y);
             main_frame.addComponentListener(this);
-            build_menu_bar();
             build_main_panel();
             open_log_file();
             edit_cmd = System.getenv("EDIT");
@@ -1571,13 +1733,21 @@ public  class  z390 extends JApplet
             }
             monitor_startup();
 			if (startup_cmd_file != null){
-				cmd_command(null); //switch to cmd mode
-				cmd_exec_input(startup_cmd_file);
+				try {
+					BufferedReader temp_file = new BufferedReader(new FileReader(startup_cmd_file));
+					String temp_line = temp_file.readLine();
+					while (!tz390.z390_abort && temp_line != null){
+					   process_command(temp_line);
+					   temp_line = temp_file.readLine();						   
+					}
+				} catch (Exception e){
+					log_error(72,"startup file I/O error - " + e.toString());
+				}
 			}
             main_frame.setVisible(true);
             z390_cmd_line.requestFocus();
    }
-        private void build_main_panel(){ 
+   private void build_main_panel(){ 
         /*
    	     *  Build the main panel with:
    	     *    a.  Scrolling log display
@@ -1586,26 +1756,60 @@ public  class  z390 extends JApplet
    	     */
    	        main_panel = new JPanel();
    	        main_panel.setBorder(BorderFactory.createEmptyBorder(0,main_border,main_border,main_border));
-            main_panel.setLayout(new FlowLayout(FlowLayout.LEFT));          
+            main_panel.setLayout(new FlowLayout(FlowLayout.LEFT)); 
+            set_gui_size();
+            build_menu_items();
+            set_tooltips();
             build_log_view();
             build_z390_cmd_line();
             build_status_line();
+            set_text_font();
+            menuBar.add(file_menu);
+            menuBar.add(edit_menu);
+            menuBar.add(option_menu);
+            menuBar.add(view_menu);
+            menuBar.add(help_menu);
+            main_frame.setJMenuBar(menuBar);
+    	    main_panel.add(log_view);
+    	    main_panel.add(cmd_label);
+    	    main_panel.add(z390_cmd_line);
+    	    main_panel.add(status_line_label);
+            main_panel.add(status_line);
        	    main_frame.getContentPane().add(main_panel);
 	        main_frame.addWindowListener(new WindowAdapter() {
 	  		       public void windowClosing(WindowEvent e) {
 	  		           exit_main(0);
 	  		       }
 	  		      });
+	        refresh_request = true;
         } 
         private void exit_main(int rc){
         	close_all_files();
 	        shut_down(rc);
         }
-        
+     private void set_gui_size(){
+    	 /* 
+    	  * calculate gui object sizes based on
+    	  * sreen size and font size
+    	  */
+    	title_height = 56;
+  	    menu_height = font_size + font_space;
+ 	    log_char_height = font_size + font_space;
+		log_height = main_height - title_height - menu_height - tool_height - command_height - status_height - applet_status_height;
+		log_width  = main_width - scrollbar_width - 4 * main_border;
+	    lines_per_page = log_height / log_char_height;
+   	    command_height = font_size + font_space 
+   	                   + main_border;
+   	    status_height  = font_size + font_space
+   	                   + main_border;
+     }
      private void build_log_view(){
+    	 /*
+    	  * build scrolling log view based on
+    	  * current screen and font size
+    	  */
         log_text = new JTextArea();
-        log_text.setFont(new Font("Courier",Font.BOLD,font_size));
-	        log_text.addMouseListener(this);
+	    log_text.addMouseListener(this);
         log_view = new JScrollPane(log_text);
         log_view.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener(){
     	  public void adjustmentValueChanged(AdjustmentEvent e){
@@ -1615,11 +1819,7 @@ public  class  z390 extends JApplet
     		}       
     	  }});
         log_view.setVerticalScrollBarPolicy(
-            JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-		log_height = main_height - menu_height - tool_height - command_height - status_height - applet_status_height;
-		log_width  = main_width - scrollbar_width - 4 * main_border;
-	    main_panel.add(log_view);
-	    lines_per_page = log_height / log_char_height;
+        JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 	    log_view.setPreferredSize(   	        		
          	new Dimension(log_width, log_height));
      }
@@ -1628,64 +1828,54 @@ public  class  z390 extends JApplet
      *   Build the command entry field
      */
      	cmd_label = new JLabel("Command: ");
-        cmd_label.setFont(new Font("Courier",Font.BOLD,font_size));
-     	main_panel.add(cmd_label);
         z390_cmd_line = new JTextField(command_columns);
-        z390_cmd_line.setFont(new Font("Courier",Font.BOLD,font_size));
         z390_cmd_line.addActionListener(this);
 	    z390_cmd_line.addMouseListener(this);
         z390_cmd_line.addKeyListener(this);
         z390_cmd_line.addFocusListener(this);
-	    main_panel.add(z390_cmd_line);
      }
      private void build_status_line(){
     	/*
          *   Build the statuts line
          */
      	    status_line_label = new JLabel(" Status: ");
-            status_line_label.setFont(new Font("Courier",Font.BOLD,font_size));
-     	    main_panel.add(status_line_label);
             status_line = new JTextField(command_columns);
-            status_line.setFont(new Font("Courier",Font.BOLD,font_size));
             status_line.addActionListener(this);
 	        status_line.addMouseListener(this);
             status_line.addKeyListener(this);
             status_line.addFocusListener(this);
-            main_panel.add(status_line);
          }
-     private void build_menu_bar(){
+     private void build_menu_items(){
     /* 
      *    Build the menu bar
      */
-     JMenuBar menuBar = new JMenuBar();
-     JMenu file_menu = new JMenu("File");
-     JMenu edit_menu = new JMenu("EDIT");
-     JMenu option_menu = new JMenu("Options");
-     JMenu view_menu = new JMenu("View");
-     JMenu help_menu = new JMenu("Help");
-     menuBar.add(file_menu);
-     menuBar.add(edit_menu);
-     menuBar.add(option_menu);
-     menuBar.add(view_menu);
-     menuBar.add(help_menu);
-     JMenuItem file_menu_cd     = new JMenuItem("CD..");
-     JMenuItem file_menu_edit   = new JMenuItem("EDIT..");
-     JMenuItem file_menu_mac    = new JMenuItem("MAC..");
-     JMenuItem file_menu_asm    = new JMenuItem("ASM..");
-     JMenuItem file_menu_asml   = new JMenuItem("ASML..");
-     JMenuItem file_menu_asmlg  = new JMenuItem("ASMLG..");
-     JMenuItem file_menu_job    = new JMenuItem("JOB..");
-     JMenuItem file_menu_link   = new JMenuItem("LINK..");
-     JMenuItem file_menu_exec   = new JMenuItem("EXEC..");
-     JMenuItem file_menu_exit   = new JMenuItem("Exit");
-     JMenuItem edit_menu_cut    = new JMenuItem("Cut");
-     JMenuItem edit_menu_copy   = new JMenuItem("Copy");
-     JMenuItem edit_menu_paste  = new JMenuItem("Paste");
-     JMenuItem edit_menu_select_all = new JMenuItem("Select All");
-     JMenuItem edit_menu_copy_log   = new JMenuItem("Copy Log");
-     JMenuItem edit_menu_notepad = new JMenuItem("Notepad");
+     menuBar = new JMenuBar();
+     file_menu = new JMenu("File");
+     edit_menu = new JMenu("Edit");
+     option_menu = new JMenu("Options");
+     view_menu = new JMenu("View");
+     help_menu = new JMenu("Help");
+     file_menu_cd     = new JMenuItem("CD..");
+     file_menu_edit   = new JMenuItem("EDIT..");
+     file_menu_mac    = new JMenuItem("MAC..");
+     file_menu_asm    = new JMenuItem("ASM..");
+     file_menu_asml   = new JMenuItem("ASML..");
+     file_menu_asmlg  = new JMenuItem("ASMLG..");
+     file_menu_job    = new JMenuItem("JOB..");
+     file_menu_link   = new JMenuItem("LINK..");
+     file_menu_exec   = new JMenuItem("EXEC..");
+     file_menu_exit   = new JMenuItem("Exit");
+     edit_menu_cut    = new JMenuItem("Cut");
+     edit_menu_copy   = new JMenuItem("Copy");
+     edit_menu_paste  = new JMenuItem("Paste");
+     edit_menu_select_all = new JMenuItem("Select All");
+     edit_menu_copy_log   = new JMenuItem("Copy Log");
+     edit_menu_notepad = new JMenuItem("Notepad");
+     option_menu_ascii = new JCheckBoxMenuItem("ASCII");
      option_menu_con = new JCheckBoxMenuItem("CON");
      option_menu_con.setSelected(true);
+     option_menu_dump = new JCheckBoxMenuItem("DUMP");
+     option_menu_guam  = new JCheckBoxMenuItem("GUAM");
      option_menu_list = new JCheckBoxMenuItem("LIST");
      option_menu_list.setSelected(true);
      option_menu_listcall = new JCheckBoxMenuItem("LISTCALL");
@@ -1700,49 +1890,13 @@ public  class  z390 extends JApplet
      view_menu_status = new JCheckBoxMenuItem("Status");
      view_menu_status.setSelected(true);
      view_menu_cmd    = new JCheckBoxMenuItem("CMD Mode");
-     JMenuItem help_menu_help       = new JMenuItem("Help");
-     JMenuItem help_menu_commands   = new JMenuItem("Commands");
-     JMenuItem help_menu_guide      = new JMenuItem("Guide");
-     JMenuItem help_menu_perm       = new JMenuItem("Permissions");
-     JMenuItem help_menu_releases   = new JMenuItem("Releases");
-     JMenuItem help_menu_support    = new JMenuItem("Support");
-     JMenuItem help_menu_about      = new JMenuItem("About");
-     /*
-      * Add tool tips
-      */
-     file_menu_cd.setToolTipText("CD change directory");
-     file_menu_edit.setToolTipText("Edit source file with notepad");
-     file_menu_mac.setToolTipText("MAC macro expand (MLC > BAL)");
-     file_menu_asm.setToolTipText("ASM macro assemble (MLC > BAL > OBJ)");
-     file_menu_asml.setToolTipText("ASML macro assemble and link (MLC > BAL > OBJ > 390");
-     file_menu_asmlg.setToolTipText("ASMLG macro assemble, link, and exec 390");
-     file_menu_job.setToolTipText("JOB execute selected batch job file BAT");
-     file_menu_link.setToolTipText("LINK link object files into load module (OBJ > 390)");
-     file_menu_exec.setToolTipText("EXEC execute 390 load module");
-     file_menu_exit.setToolTipText("Exit z390 GUI");
-     edit_menu_cut.setToolTipText("Cut selected text");
-     edit_menu_copy.setToolTipText("Copy selected text to clipboard");
-     edit_menu_paste.setToolTipText("Paste clipboard text (append if log has focus");
-     edit_menu_select_all.setToolTipText("Select all text");
-     edit_menu_copy_log.setToolTipText("Copy current log file to clipboard");
-     edit_menu_notepad.setToolTipText("Launch notepad to edit selected data on clipboard");
-     option_menu_con.setToolTipText("CON List statistics and log output on console");
-     option_menu_list.setToolTipText("LIST generate PRN, LST, and/or LOG output files");
-     option_menu_listcall.setToolTipText("LISTCALL trace each macro call and exit on BAL");
-     option_menu_stats.setToolTipText("STATS generate statistics comments");
-     option_menu_amode31.setToolTipText("AMODE31 link 390 with 31 bit addressing");
-     option_menu_rmode31.setToolTipText("RMODE31 link 390 to load above 24 bit limit");
-     option_menu_trace.setToolTipText("TRACE generate trace on BAL, PRN, LST, or LOG file");
-     option_menu_test.setToolTipText("TEST prompt for interactive debug commands");
-     view_menu_status.setToolTipText("Status line view or hide to save space");
-     view_menu_cmd.setToolTipText("Windows batch command input Mode");
-     help_menu_help.setToolTipText("Display summary of basic commands");
-     help_menu_commands.setToolTipText("Display alphabetical list of all commands");
-     help_menu_guide.setToolTipText("Link to PDF User Guide");
-     help_menu_perm.setToolTipText("Display Java security manager permissions");
-     help_menu_releases.setToolTipText("Display OS, Java, and z390 verions");
-     help_menu_support.setToolTipText("Link to www.z390.org online support");
-     help_menu_about.setToolTipText("Display information about this version of z390");
+     help_menu_help       = new JMenuItem("Help");
+     help_menu_commands   = new JMenuItem("Commands");
+     help_menu_guide      = new JMenuItem("Guide");
+     help_menu_perm       = new JMenuItem("Permissions");
+     help_menu_releases   = new JMenuItem("Releases");
+     help_menu_support    = new JMenuItem("Support");
+     help_menu_about      = new JMenuItem("About");
      /*
       * Mnemonic menu bar keys
       */
@@ -1766,7 +1920,10 @@ public  class  z390 extends JApplet
      edit_menu_select_all.setMnemonic(KeyEvent.VK_S);
      edit_menu_copy_log.setMnemonic(KeyEvent.VK_L);
      edit_menu_notepad.setMnemonic(KeyEvent.VK_N);
+     option_menu_ascii.setMnemonic(KeyEvent.VK_I);
      option_menu_con.setMnemonic(KeyEvent.VK_C);
+     option_menu_dump.setMnemonic(KeyEvent.VK_D);
+     option_menu_guam.setMnemonic(KeyEvent.VK_G);
      option_menu_list.setMnemonic(KeyEvent.VK_L);
      option_menu_listcall.setMnemonic(KeyEvent.VK_I);
      option_menu_stats.setMnemonic(KeyEvent.VK_S);
@@ -1828,7 +1985,10 @@ public  class  z390 extends JApplet
      edit_menu_select_all.addActionListener(this);
      edit_menu_copy_log.addActionListener(this);
      edit_menu_notepad.addActionListener(this);
+     option_menu_ascii.addActionListener(this);
      option_menu_con.addActionListener(this);
+     option_menu_dump.addActionListener(this);
+     option_menu_guam.addActionListener(this);
      option_menu_list.addActionListener(this);
      option_menu_listcall.addActionListener(this);
      option_menu_stats.addActionListener(this);
@@ -1861,7 +2021,10 @@ public  class  z390 extends JApplet
      edit_menu.add(edit_menu_select_all);
      edit_menu.add(edit_menu_copy_log);
      edit_menu.add(edit_menu_notepad);
+     option_menu.add(option_menu_ascii);
      option_menu.add(option_menu_con);
+     option_menu.add(option_menu_dump);
+     option_menu.add(option_menu_guam);
      option_menu.add(option_menu_list);
      option_menu.add(option_menu_listcall);
      option_menu.add(option_menu_stats);
@@ -1878,7 +2041,49 @@ public  class  z390 extends JApplet
      help_menu.add(help_menu_releases);
      help_menu.add(help_menu_support);
      help_menu.add(help_menu_about);
-     main_frame.setJMenuBar(menuBar);
+   }
+   private void set_tooltips(){
+	   /*
+	    * set tooltips after font changes
+	    */
+	     String text_font_pfx = "<html><font size=" + font_size/3 + ">";
+	     String text_font_sfx = "</html>";
+	     file_menu_cd.setToolTipText(text_font_pfx + "CD change directory" + text_font_sfx);
+	     file_menu_edit.setToolTipText(text_font_pfx + "Edit source file with notepad" + text_font_sfx);
+	     file_menu_mac.setToolTipText(text_font_pfx + "MAC macro expand (MLC > BAL)" + text_font_sfx);
+	     file_menu_asm.setToolTipText(text_font_pfx + "ASM macro assemble (MLC > BAL > OBJ)" + text_font_sfx);
+	     file_menu_asml.setToolTipText(text_font_pfx + "ASML macro assemble and link (MLC > BAL > OBJ > 390" + text_font_sfx);
+	     file_menu_asmlg.setToolTipText(text_font_pfx + "ASMLG macro assemble, link, and exec 390" + text_font_sfx);
+	     file_menu_job.setToolTipText(text_font_pfx + "JOB execute selected batch job file BAT" + text_font_sfx);
+	     file_menu_link.setToolTipText(text_font_pfx + "LINK link object files into load module (OBJ > 390)" + text_font_sfx);
+	     file_menu_exec.setToolTipText(text_font_pfx + "EXEC execute 390 load module" + text_font_sfx);
+	     file_menu_exit.setToolTipText(text_font_pfx + "Exit z390 GUI" + text_font_sfx);
+	     edit_menu_cut.setToolTipText(text_font_pfx + "Cut selected text" + text_font_sfx);
+	     edit_menu_copy.setToolTipText(text_font_pfx + "Copy selected text to clipboard" + text_font_sfx);
+	     edit_menu_paste.setToolTipText(text_font_pfx + "Paste clipboard text (append if log has focus" + text_font_sfx);
+	     edit_menu_select_all.setToolTipText(text_font_pfx + "Select all text" + text_font_sfx);
+	     edit_menu_copy_log.setToolTipText(text_font_pfx + "Copy current log file to clipboard" + text_font_sfx);
+	     edit_menu_notepad.setToolTipText(text_font_pfx + "Launch notepad to edit selected data on clipboard" + text_font_sfx);
+	     option_menu_ascii.setToolTipText(text_font_pfx + "ASCII use ASCII versus EBCDIC for character set" + text_font_sfx);
+	     option_menu_con.setToolTipText(text_font_pfx + "CON List statistics and log output on console" + text_font_sfx);
+	     option_menu_dump.setToolTipText(text_font_pfx + "DUMP generate full dump on abnoral termination" + text_font_sfx);
+	     option_menu_guam.setToolTipText(text_font_pfx + "Open GUAM Graphcial User Access Method dialog for MCS, TN3270, and GKS graphics");
+	     option_menu_list.setToolTipText(text_font_pfx + "LIST generate PRN, LST, and/or LOG output files" + text_font_sfx);
+	     option_menu_listcall.setToolTipText(text_font_pfx + "LISTCALL trace each macro call and exit on BAL" + text_font_sfx);
+	     option_menu_stats.setToolTipText(text_font_pfx + "STATS generate statistics comments" + text_font_sfx);
+	     option_menu_amode31.setToolTipText(text_font_pfx + "AMODE31 link 390 with 31 bit addressing" + text_font_sfx);
+	     option_menu_rmode31.setToolTipText(text_font_pfx + "RMODE31 link 390 to load above 24 bit limit" + text_font_sfx);
+	     option_menu_trace.setToolTipText(text_font_pfx + "TRACE generate trace on BAL, PRN, LST, or LOG file" + text_font_sfx);
+	     option_menu_test.setToolTipText(text_font_pfx + "TEST prompt for interactive debug commands" + text_font_sfx);
+	     view_menu_status.setToolTipText(text_font_pfx + "Status line view or hide to save space" + text_font_sfx);
+	     view_menu_cmd.setToolTipText(text_font_pfx + "Windows batch command input Mode" + text_font_sfx);
+	     help_menu_help.setToolTipText(text_font_pfx + "Display summary of basic commands" + text_font_sfx);
+	     help_menu_commands.setToolTipText(text_font_pfx + "Display alphabetical list of all commands" + text_font_sfx);
+	     help_menu_guide.setToolTipText(text_font_pfx + "Link to PDF User Guide" + text_font_sfx);
+	     help_menu_perm.setToolTipText(text_font_pfx + "Display Java security manager permissions" + text_font_sfx);
+	     help_menu_releases.setToolTipText(text_font_pfx + "Display OS, Java, and z390 verions" + text_font_sfx);
+	     help_menu_support.setToolTipText(text_font_pfx + "Link to www.z390.org online support" + text_font_sfx);
+	     help_menu_about.setToolTipText(text_font_pfx + "Display information about this version of z390" + text_font_sfx);
    }
    private void title_update(){
    /*
@@ -1898,6 +2103,7 @@ public  class  z390 extends JApplet
    	  	    if  (cmd_mode){
    	  		    if  (cmd_exec_rc() == -1){
    	  		    	cmd_line = z390_cmd_line.getText();
+  	  		    	add_cmd_hist();  
    	  		    	put_log("CMD input:" + cmd_line);
    	  		    	reset_z390_cmd();
 	   	            cmd_exec_input(cmd_line);
@@ -1927,12 +2133,19 @@ public  class  z390 extends JApplet
 	       z390_cmd_line.setText("ABOUT");
 	    }
 		if (event_name.equals("AMODE31")){
-		   	   if (opt_amode31){
+		   	   if (tz390.opt_amode31){
 		   	          z390_cmd_line.setText("AMODE31 OFF");
 		 	   } else {
 		 	  	   	  z390_cmd_line.setText("AMODE31 ON");
 		 	   }
 		}
+ 	 	if (event_name.equals("ASCII")){
+  	   	   if (tz390.opt_ascii){
+  	   	          z390_cmd_line.setText("ASCII OFF");
+  	 	   } else {
+  	 	  	   	  z390_cmd_line.setText("ASCII ON");
+  	 	   }
+  	   	}
  	    if (event_name.equals("ASM..")){
             batch_cmd("ASM","","MLC",asm_opt);
             break;
@@ -1967,7 +2180,7 @@ public  class  z390 extends JApplet
       	        z390_cmd_line.setText("COMMANDS");
       	}
 	  	if (event_name.equals("CON")){
-	   	   if (opt_con){
+	   	   if (tz390.opt_con){
 	   	          z390_cmd_line.setText("CON OFF");
 	 	   } else {
 	 	  	   	  z390_cmd_line.setText("CON ON");
@@ -1994,6 +2207,13 @@ public  class  z390 extends JApplet
  	  	
    	  	break;
    	 case 'D':
+ 	 	if (event_name.equals("DUMP")){
+		   if (tz390.opt_dump){
+		       z390_cmd_line.setText("DUMP OFF");
+		   } else {
+		   	   z390_cmd_line.setText("DUMP ON");
+		   }
+		} 
 	  	break;
    	 case 'E':
    	    if (event_name.equals("EDIT..")){
@@ -2010,6 +2230,13 @@ public  class  z390 extends JApplet
    	  	} 
    	  	break;
    	  case 'G':
+   	 	if (event_name.equals("GUAM")){
+ 		   if (tz390.opt_guam){
+ 		       z390_cmd_line.setText("GUAM OFF");
+ 		   } else {
+ 		   	   z390_cmd_line.setText("GUAM ON");
+ 		   }
+ 		}
    	    if (event_name.equals("GUIDE")){
    	       z390_cmd_line.setText("GUIDE");
    	    }
@@ -2030,14 +2257,14 @@ public  class  z390 extends JApplet
             break;
  	    }
 	  	if (event_name.equals("LIST")){
-		   	   if (opt_list){
+		   	   if (tz390.opt_list){
 		   	          z390_cmd_line.setText("LIST OFF");
 		 	   } else {
 		 	  	   	  z390_cmd_line.setText("LIST ON");
 		 	   }
 	  	}
 	  	if (event_name.equals("LISTCALL")){
-		   	   if (opt_listcall){
+		   	   if (tz390.opt_listcall){
 		   	          z390_cmd_line.setText("LISTCALL OFF");
 		 	   } else {
 		 	  	   	  z390_cmd_line.setText("LISTCALL ON");
@@ -2076,7 +2303,7 @@ public  class  z390 extends JApplet
 	      	   z390_cmd_line.setText("REL");
 	     }
 		 if (event_name.equals("RMODE31")){
-			   	   if (opt_rmode31){
+			   	   if (tz390.opt_rmode31){
 			   	          z390_cmd_line.setText("RMODE31 OFF");
 			 	   } else {
 			 	  	   	  z390_cmd_line.setText("RMODE31 ON");
@@ -2094,7 +2321,7 @@ public  class  z390 extends JApplet
 		   	   }
 		 }
 		 if (event_name.equals("STATS")){
-		   	   if (opt_stats){
+		   	   if (tz390.opt_stats){
 		   	          z390_cmd_line.setText("STATS OFF");
 		 	   } else {
 		 	  	   	  z390_cmd_line.setText("STATS ON");
@@ -2113,14 +2340,14 @@ public  class  z390 extends JApplet
          break;
       case 'T':
  		 if (event_name.equals("TEST")){
-		   	   if (opt_test){
+		   	   if (tz390.opt_test){
 		   	          z390_cmd_line.setText("TEST OFF");
 		 	   } else {
-		 	  	   	  z390_cmd_line.setText("TRACE ON");
+		 	  	   	  z390_cmd_line.setText("TEST ON");
 		 	   }
 		 }
 		 if (event_name.equals("TRACE")){
-		   	   if (opt_trace){
+		   	   if (tz390.opt_trace){
 		   	          z390_cmd_line.setText("TRACE OFF");
 		 	   } else {
 		 	  	   	  z390_cmd_line.setText("TRACE ON");
@@ -2202,7 +2429,7 @@ public  class  z390 extends JApplet
   	    } catch (Exception pe){
   	        put_log("Java Version Permission denied");
         }
-        put_log("z390 Version = " + version);
+        put_log("Z390I Version = " + tz390.version);
 	  }
    	  private void guide_command(){
    	  /*
@@ -2226,30 +2453,15 @@ public  class  z390 extends JApplet
    	   */	
  	  	start_doc(web_site);
       }
-   	  private boolean start_doc(String file_name){
-	       if  (exec_cmd("cmd.exe /c Start " +  file_name)){
-   	  	       put_log("Start issued for " + file_name);
+   	public boolean start_doc(String file_name){
+	       if  (tz390.exec_cmd("cmd.exe /c Start " +  file_name)){
+	  	       put_log("Start issued for " + file_name);
 	       	   return true;
-   	       } else {
+	       } else {
 	           log_error(41,"Start error for " + file_name);
 	       	   return false;
 	       }
-   	  }
-      private boolean exec_cmd(String cmd){
-      /*
-       * exec command as separate task
-       */
-      	   if  (perm_file_execute){
-	           try {
-	  	           Runtime.getRuntime().exec(cmd);
-	  	           return true;
-	  	       } catch(Exception e){
-	  	   	       return false;
-	  	       }
-      	   } else {
-      	   	   return false;
-      	   }
-   	  }
+	  }
       public static String getClipboard() {
       /*
        * Get string text from system clipboard
@@ -2279,41 +2491,11 @@ public  class  z390 extends JApplet
 //dsh          displayInfo(e, "KEY PRESSED: ");
            int keyCode = e.getKeyCode();
            if  (e.isActionKey()){
-           	   if (keyCode == KeyEvent.VK_UP
-           	   		&& last_cmd >= 0){ // up arrow  - backup
-           	   	   if  (view_cmd < 1){
-           	   	   	   view_cmd = cur_cmd;
-           	   	   } else {
-           	   	       view_cmd--;  
-           	   	       if  (view_cmd < 1){
-           	   	  	       view_cmd = last_cmd;
-           	   	  	       if (view_cmd == cur_cmd){
-           	   	  	       	  view_cmd = 1;
-           	   	  	       }
-           	   	       }
-           	   	       if  (view_cmd == cur_cmd){
-           	   	   	       view_cmd = cur_cmd + 1;
-           	   	       }
-           	   	   }
-           	   	   z390_cmd_line.setText(cmd_history[view_cmd]);
+           	   if (keyCode == KeyEvent.VK_UP){
+           	   		get_prev_cmd();
            	   }
-          	   if (keyCode == KeyEvent.VK_DOWN
-          	   		&& last_cmd >= 0){ // down arrow
-          	   	   if  (view_cmd < 1){
-          	   	   	   view_cmd = cur_cmd;
-          	   	   } else {
-   	   	  	           view_cmd++;
-          	   	       if  (view_cmd > last_cmd){
-         	   	  	       view_cmd = 1;
-         	   	  	       if  (cur_cmd == last_cmd){
-         	   	  	       	   view_cmd = last_cmd;
-         	   	  	       }
-          	   	       }
-         	   	  	   if  (view_cmd == cur_cmd + 1){
-         	   	  	   	   view_cmd = last_cmd;
-         	   	  	   }
-          	   	   }
-         	   	   z390_cmd_line.setText(cmd_history[view_cmd]);
+          	   if (keyCode == KeyEvent.VK_DOWN){
+          	   	   get_next_cmd();
           	   }
           	   if (keyCode == KeyEvent.VK_F1){   // F1 help
           	   	  process_command("HELP");
@@ -2540,7 +2722,6 @@ public  class  z390 extends JApplet
         		main_frame.setLocation(main_loc_x,main_loc_y);
        			main_frame.setSize(main_width,main_height);
            		refresh_request = true;
-           		refresh_request = true;
         	} else {
         		log_error(64,"invalid window location");
         	}
@@ -2579,7 +2760,6 @@ public  class  z390 extends JApplet
 	    	} else {
 	    		log_error(65,"invalid window size request");
 	    	}
-	    	refresh_request = true;
 	    	refresh_request = true;
 	    }
 	    private void status_command(String cmd_parm1,String cmd_parm2){
@@ -2654,18 +2834,18 @@ public  class  z390 extends JApplet
 	    	  	  put_log("Timeout limit for CMD set to " + sec + " seconds");	  
 	          }
 	    }
-	    private boolean options_command(JCheckBoxMenuItem opt_menu, String cmd_parm1, String cmd_parm2){
+	    private boolean options_command(JCheckBoxMenuItem option_men, String cmd_parm1, String cmd_parm2){
 	    	/*
 	    	 * check or uncheck option menu item 
 	    	 * and update option parm lists for commands
 	    	 */
-	    	boolean opt_flag = false;
+	    	boolean option_flag = false;
 	    	if (cmd_parm1.toUpperCase().equals("ON")){
-	    		opt_flag = true;
-	    		opt_menu.setSelected(true);
+	    		option_flag = true;
+	    		option_men.setSelected(true);
 	    	} else {
-	    		opt_flag = false;
-	    		opt_menu.setSelected(false);
+	    		option_flag = false;
+	    		option_men.setSelected(false);
 	    	}
 	    	mac_opt = "";
 	    	asm_opt = "";
@@ -2674,23 +2854,45 @@ public  class  z390 extends JApplet
 	    	job_opt = "";
 	    	link_opt = "";
 	    	exec_opt = "";
+	    	if (option_menu_ascii.isSelected()){  // do last to override trace setting NOCON
+	    		mac_opt   = mac_opt   + " ASCII";
+	    		asm_opt   = asm_opt   + " ASCII";
+	    		asml_opt  = asml_opt  + " ASCII";
+	    		asmlg_opt = asmlg_opt + " ASCII";
+	    		job_opt   = job_opt   + " ASCII";
+	    		link_opt  = link_opt  + " ASCII";
+	    		exec_opt  = exec_opt  + " ASCII";
+	    	}
 	    	if (!option_menu_con.isSelected()){  // do last to override trace setting NOCON
 	    		mac_opt   = mac_opt   + " NOCON";
 	    		asm_opt   = asm_opt   + " NOCON";
 	    		asml_opt  = asml_opt  + " NOCON";
 	    		asmlg_opt = asmlg_opt + " NOCON";
+	    		job_opt   = job_opt   + " NOCON";
 	    		link_opt  = link_opt  + " NOCON";
 	    		exec_opt  = exec_opt  + " NOCON";
+	    	}
+	    	if (option_menu_dump.isSelected()){  // do last to override trace setting NOCON
+	    		asmlg_opt = asmlg_opt + " DUMP";
+	    		job_opt   = job_opt   + " DUMP";
+	    		exec_opt  = exec_opt  + " DUMP";
+	    	}
+	    	if (option_menu_guam.isSelected()){  // do last to override trace setting NOCON
+	    		asmlg_opt = asmlg_opt + " GUAM";
+	    		job_opt   = job_opt   + " GUAM";
+	    		exec_opt  = exec_opt  + " GUAM";
 	    	}
 	    	if (!option_menu_amode31.isSelected()){
 	    		asml_opt  = asml_opt  + " NOAMODE31";
 	    		asmlg_opt = asmlg_opt + " NOAMODE31";
+	    		job_opt   = job_opt   + " NOAMODE31";
 	    		link_opt  = link_opt  + " NOAMODE31";
 	    	}
 	    	if (!option_menu_list.isSelected()){
 	    		asm_opt   = asm_opt   + " NOLIST";
 	    		asml_opt  = asml_opt  + " NOLIST";
 	    		asmlg_opt = asmlg_opt + " NOLIST";
+	    		job_opt   = job_opt   + " NOLIST";
 	    		link_opt  = link_opt  + " NOLIST";
 	    		exec_opt  = exec_opt  + " NOLIST";
 	    	}
@@ -2699,10 +2901,12 @@ public  class  z390 extends JApplet
 	    		asm_opt   = asm_opt   + " NOLISTCALL";
 	    		asml_opt  = asml_opt  + " NOLISTCALL";
 	    		asmlg_opt = asmlg_opt + " NOLISTCALL";
+	    		job_opt   = job_opt   + " NOLISTCALL";
 	    	}
 	    	if (option_menu_rmode31.isSelected()){
 	    		asml_opt  = asml_opt  + " RMODE31";
 	    		asmlg_opt = asmlg_opt + " RMODE31";
+	    		job_opt   = job_opt   + " RMODE31";
 	    		link_opt  = link_opt  + " RMODE31";
 	    	}
 	    	if (!option_menu_stats.isSelected()){
@@ -2710,18 +2914,21 @@ public  class  z390 extends JApplet
 	    		asm_opt   = asm_opt   + " NOSTATS";
 	    		asml_opt  = asml_opt  + " NOSTATS";
 	    		asmlg_opt = asmlg_opt + " NOSTATS";
+	    		job_opt   = job_opt   + " NOSTATS";
 	    		link_opt  = link_opt  + " NOSTATS";
 	    		exec_opt  = exec_opt  + " NOSTATS";
 	    	}
 	    	if (option_menu_test.isSelected()){
 	    		asmlg_opt = asmlg_opt + " TEST";
 	    		exec_opt  = exec_opt  + " TEST";
+	    		job_opt   = job_opt   + " TEST";
 	    	}
 	    	if (option_menu_trace.isSelected()){
 	    		mac_opt   = mac_opt   + " TRACE";
 	    		asm_opt   = asm_opt   + " TRACE";
 	    		asml_opt  = asml_opt  + " TRACE";
 	    		link_opt  = link_opt  + " TRACE";
+	    		job_opt   = job_opt   + " TRACE";
 	    		asmlg_opt = asmlg_opt + " TRACE";
 	    		exec_opt  = exec_opt  + " TRACE";
 		    	if (option_menu_con.isSelected()){  // override trace setting NOCON
@@ -2729,11 +2936,12 @@ public  class  z390 extends JApplet
 		    		asm_opt   = asm_opt   + " CON";
 		    		asml_opt  = asml_opt  + " CON";
 		    		asmlg_opt = asmlg_opt + " CON";
+		    		job_opt   = job_opt   + " CON";
 		    		link_opt  = link_opt  + " CON";
 		    		exec_opt  = exec_opt  + " CON";
 		    	}
 	    	}
-	    	return opt_flag;
+	    	return option_flag;
 	    }
 		  private void cd_command(String cmd_parm1){
 			  /*
@@ -2748,12 +2956,15 @@ public  class  z390 extends JApplet
 		    	            log_error(22,"CD missing directory");
 		    	    	}
 		    	    } else {
-		       	        String new_dir = get_file_name(cmd_parm1);              		
+		       	        String new_dir = tz390.get_file_name(tz390.dir_cur,cmd_parm1,"");              		
 		       	        File new_dir_file = new File(new_dir);
 				  	    if  (new_dir_file.isDirectory()){
-				  	    	cur_dir = new_dir;
-							cur_dir_file = new File(new_dir);
-				  	        System.setProperty("user.dir",cur_dir);
+				  	    	tz390.dir_cur = new_dir;
+							dir_cur_file = new File(new_dir);
+				  	        System.setProperty("user.dir",tz390.dir_cur);
+				  	        if (cmd_mode){
+				  	            sync_cmd_dir();
+				  	        }
 				  	        put_log("CD new current directory - " + System.getProperty("user.dir"));
 				  	    } else {
 				  	       	log_error(37,"directory not found - " + new_dir);
@@ -2766,7 +2977,7 @@ public  class  z390 extends JApplet
 		   private void select_dir(){
 		   	    /*
 		   	     * Invoke file chooser dialog to
-		   	     * set cur_dir
+		   	     * set dir_cur
 		   	     * (Note dialog is kept for non gui mode to avoid
 		   	     *  dispose causing gui shutdown on last window)
 		   	     */
@@ -2800,9 +3011,9 @@ public  class  z390 extends JApplet
 	     		     }
 	     		 });
 	             JPanel select_dir_panel = new JPanel();
-	        	 select_dir_panel.setLayout(new BorderLayout());
-	        	 if  (cur_dir_file != null){
-	       	         select_dir_chooser.setCurrentDirectory(cur_dir_file);
+	             select_dir_panel.setLayout(new BorderLayout());
+	        	 if  (dir_cur_file != null){
+	       	         select_dir_chooser.setCurrentDirectory(dir_cur_file);
 	        	 }
 	         	 select_dir_chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 	        	 select_dir_chooser.addActionListener(new ActionListener() {
@@ -2895,8 +3106,8 @@ public  class  z390 extends JApplet
 		     });
             JPanel select_file_panel = new JPanel();
    	        select_file_panel.setLayout(new BorderLayout());
-   	        if  (cur_dir_file != null){
-  	             select_file_chooser.setCurrentDirectory(cur_dir_file);
+   	        if  (dir_cur_file != null){
+  	             select_file_chooser.setCurrentDirectory(dir_cur_file);
    	        }
    	        select_file_chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
    	        select_file_chooser.addActionListener(new ActionListener() {
@@ -2924,25 +3135,29 @@ public  class  z390 extends JApplet
             	        }
                        if  (main_gui){
                        	 if (select_cmd.equals("EDIT")){
-      	     				 if (!exec_cmd("\"" + edit_cmd + "\" \"" 
+      	     				 if (!tz390.exec_cmd("\"" + edit_cmd + "\" \"" 
       	     						 + selected_file_name + "\"")){
    	     				         log_error(19,"start editor failed - " + edit_cmd);
    	     			         }
                        	 }  else if (select_cmd.equals("JOB")){
+                       		selected_file_name = get_short_file_name(selected_file_name);
                        		z390_cmd_line.setText(
-	                        			  "\"" + selected_file_name
-	                        			+ "\" " + select_opt);
+	                        			  selected_file_name 
+	                        			  + select_opt);
                        		z390_cmd_line.postActionEvent();
                        	 } else {
+                       		select_cmd = get_short_file_name(install_loc 
+            					       + File.separator 
+               			               + select_cmd);
+                       		selected_file_name = get_short_file_name(selected_file_name);
                        		z390_cmd_line.setText(
-                       			"CMD " + "\"" + install_loc + File.separator 
-                       			+ select_cmd + "\"" 
-                       			+ " \"" + selected_file_name
-                       			+ "\" " + select_opt);
+                                select_cmd 
+                       			+ " " + selected_file_name
+                       			+ " " + select_opt);
                        		z390_cmd_line.postActionEvent();
                        	 }
                        } else {
-               	         process_command(select_cmd + "\"" + selected_file_name + "\"");
+               	         process_command(select_cmd + " " + get_short_file_name(selected_file_name));
                        }
                     } else {
             	        log_error(37,"file not found");
@@ -2956,6 +3171,21 @@ public  class  z390 extends JApplet
             select_file_frame.getContentPane().add("North", select_file_panel);
             select_file_frame.pack();
 		}
+		private String get_short_file_name(String file_name){
+			/*
+			 * return shortest file name possible
+			 * with quotes if LSN
+			 */
+			if (file_name.length() > tz390.dir_cur.length()
+				&& file_name.substring(0,tz390.dir_cur.length()).equals(tz390.dir_cur)){
+				file_name = file_name.substring(tz390.dir_cur.length()+1); // skip dir + sep
+			}
+			int index = file_name.indexOf(" ");
+			if (index >=0){
+				return "\"" + file_name + "\""; // LSN
+			}
+			return file_name;
+		}
 	    private void commands_command(String cmd_parm1, String cmd_parm2){
 	    /*
 	     * display alphabetical list of basic and extended commands
@@ -2964,9 +3194,10 @@ public  class  z390 extends JApplet
 	    	put_log(" ");
 	    	put_log("ABOUT                    display summary information about z390 tool      ");
 	    	put_log("AMODE31  ON/OFF          set amode 24/31 for link cmd");
-	    	put_log("ASM      MLC file        assemble MLC source to OBJ object code file");
-	    	put_log("ASML     MLC file        assemble and link MLC source to 390 load module file");
-	    	put_log("ASMLG    MLC file        assemble, link, and execute 390 load module file");
+	    	put_log("ASCII    ON/OFF          set EBCDIC or ASCII mode mode");
+	    	put_log("ASM      MLC file        submit assembly of MLC source to OBJ object code file");
+	    	put_log("ASML     MLC file        submit assembly and link MLC source to 390 load module file");
+	    	put_log("ASMLG    MLC file        submit assembly, link, and execute 390 load module file");
 	    	put_log("CD       directory path  change directory");
 	    	put_log("CMD      command         set cmd mode and submit batch cmd");
 	    	put_log("Copy                     copy selected text to clipboard (GUI right click)    ");
@@ -2974,13 +3205,17 @@ public  class  z390 extends JApplet
 	    	put_log("CON      ON/OFF          set console output for file cmds");
 	    	put_log("COPYLOG                  copy the entire log text to clipboard (GUI only)     ");
 	    	put_log("Cut                      cut selected text (GUI right click)                  ");
+	    	put_log("Dump     ON/OFF          set option for indicative or full dump on abort");
 	    	put_log("Edit     any file        edit source file in seprarate window");
+	    	put_log("ERR      nnn             change error msg limit from 100 to nnn (0 is off)");
 	    	put_log("EXIT                     exit z390 after closing all files (also CTRL-BREAK");
-	    	put_log("EXEC     390 file        execute 390 load module");
+	    	put_log("EXEC     390 file        submit execution of 390 load module");
 	    	put_log("FONT     points          change font size");
+	    	put_log("GUI      ON/OFF          Open Graphical User Interface for MCS, 3270, and graphics");
 	    	put_log("GUIDE                    view PDF user guide in web browser          ");
 	    	put_log("HELP                     display help information summary                     ");
-	    	put_log("LINK     obj file        link obj file into 390 load module");
+	    	put_log("JOB      BAT file        submit batch job");
+	    	put_log("LINK     obj file        submit link obj file into 390 load module");
 	    	put_log("LIST     ON/OFF          set PRN, LST, and/or LOG output for file cmds");
 	    	put_log("LISTCALL ON/OFF          set trace calls for MAC file cmd");
 	    	put_log("LOC      x y pixels      set upper left location of window");
@@ -3022,6 +3257,7 @@ public  class  z390 extends JApplet
 	    		main_width = (int) main_frame.getSize().getWidth();
 	    		main_height = (int) main_frame.getSize().getHeight();
 	    		update_main_view();
+	            z390_cmd_line.requestFocus();
 	    		refresh_request = false;
 	    	}
 	    }
@@ -3030,12 +3266,12 @@ public  class  z390 extends JApplet
          * update log and command line size 
          * following any of the following changes:
          *   1.  Change in window size
-         *   2.  Change in log and command font size
+         *   2.  Change in font size
          */	
           if (main_gui){
-        		log_height = main_height - menu_height - command_height - status_height - applet_status_height;
+        		log_height = main_height - title_height - menu_height - command_height - status_height - applet_status_height;
         		log_width  = main_width - scrollbar_width - 4 * main_border;
-                main_panel.setSize(main_width - 4 * main_border,main_height - menu_height - main_border);
+                main_panel.setSize(main_width - 4 * main_border,main_height - title_height - menu_height - main_border);
                 lines_per_page = log_height / log_char_height;
        	        log_view.setPreferredSize(   	        		
    	        		new Dimension(log_width, log_height));
@@ -3160,12 +3396,10 @@ public  class  z390 extends JApplet
             		    cmd_exec_process_thread.start();
             		    cmd_exec_error_reader_thread.start();
             		    cmd_exec_output_reader_thread.start();
-        		    	put_log("Starting Windows command process");
-        		    	Thread.sleep(monitor_wait);
+        		    	sleep_now();
             		    int wait_count = 5;
             		    while (io_count == last_io_count && wait_count > 0){
-            		    	put_log("Starting Windows command process");
-            		    	Thread.sleep(monitor_wait);
+            		    	sleep_now();
             		    	wait_count--;
             		    }
             		    return 0;
@@ -3182,7 +3416,7 @@ public  class  z390 extends JApplet
             	if  (cmd_line == null){
             		cmd_line = "\r\n";
              	} else {
-            		cmd_line = cmd_line + "\r\n";
+            		cmd_line = cmd_line + "\r\n"; 
             	}
             	try {
             		cmd_exec_input_writer.write(cmd_line.getBytes());
@@ -3203,8 +3437,9 @@ public  class  z390 extends JApplet
                 	if  (cmd_exec_process != null){
                 	    try {
                 	    	rc = cmd_exec_process.exitValue(); 
-                	    	cmd_exec_cancel();
-                	    } catch (Exception e){}
+                	    } catch (Exception e){
+                	    	
+                	    }
                 	} else {
                 		rc = 0;
                 	}
@@ -3219,8 +3454,9 @@ public  class  z390 extends JApplet
             	if  (cmd_exec_process != null){
             	    try {
             	    	cmd_exec_process.destroy();	    	
-            	    } catch (Exception e){}
-                    cmd_exec_process = null;     
+            	    } catch (Exception e){
+                    	cmd_exec_process = null; 
+            		}
             	}
             	cmd_mode = false;
 	  		    if (main_gui){
@@ -3249,11 +3485,18 @@ public  class  z390 extends JApplet
       */	
      	try {
             int next_int = cmd_exec_output_reader.read();
-			while (next_int != -1){
+			while (!tz390.z390_abort && next_int != -1){
 				if  (next_int == ascii_lf){
 					String msg = cmd_exec_output_msg;
 					cmd_exec_output_msg = "";
-				    put_log(msg);
+					if (msg.equals("exit_request")){
+						// if ez390 issues exit request close down gui
+						// this is trigged when ez390 exits if 
+						// z390 sent "exit_request to input queue
+					    cmd_exec_input("\r\n" + "exit" + "\r\n");  // RPI 98
+					} else {
+						put_log(msg);
+					}
 				} else if (next_int != ascii_cr){
                     append_exec_output_msg(next_int);
 				}
@@ -3272,7 +3515,7 @@ public  class  z390 extends JApplet
          */	
         	try {
                int next_int = cmd_exec_error_reader.read();
-   			while (next_int != -1){
+   			while (!tz390.z390_abort && next_int != -1){
    				   if  (next_int == ascii_lf){
    				   	   String msg = cmd_exec_error_msg;
    				   	   cmd_exec_error_msg = "";
@@ -3325,37 +3568,29 @@ public  class  z390 extends JApplet
 	         */
 	    	 select_cmd = bat_cmd;
 	    	 select_opt = bat_opt;
- 		     put_log("\n********* starting batch cmd - " + select_cmd + " with options - " + select_opt + "*********");
+	    	 if (select_opt == null){
+	    		 select_opt = "";
+	    	 }
 	     	 if (perm_file_execute){
 	     	   if (bat_file_name == null || bat_file_name.length() == 0){
 	     	     	select_file(bat_cmd,bat_file_type, bat_opt);
 	     	   } else {
-	     		   bat_file_name = get_file_name(bat_file_name);
-	     		   File temp_file = new File(bat_file_name);
-	     		   if (temp_file.isFile()){
 	     			 if (bat_cmd.equals("EDIT")){
-	     				 if (!exec_cmd("\"" + edit_cmd + "\" \"" + bat_file_name + "\"")){
+	     				 if (!tz390.exec_cmd("\"" + edit_cmd + "\" \"" + bat_file_name + "\"")){
 	     				     log_error(19,"start editor failed - " + edit_cmd);
 	     			     }
-	     			 } else {
-	     			   bat_file_name = temp_file.getPath();
-	     			   if (!cmd_mode){
-	   				      cmd_command(null); //switch to cmd mode
-	     			   }
-	     			   if (select_cmd.equals("JOB")){
-	     				   cmd_command("\"" + bat_file_name 
-								   + "\" " + bat_opt);
-	     			   } else {
-	     				   cmd_command("\"" + install_loc 
-							   + File.separator 
-							   + bat_cmd + "\""
-							   + " \"" + bat_file_name 
-							   + "\" " + bat_opt);
-	     			   }
+	     			 } else { 
+	     			    if (select_cmd.equals("JOB")){
+	     				   cmd_command(get_short_file_name(bat_file_name) 
+								   + select_opt);
+	     			    } else {
+	     				   cmd_command(get_short_file_name(install_loc 
+							                          + File.separator 
+							                          + bat_cmd)
+							   + " " + get_short_file_name(bat_file_name) 
+							   + " " + select_opt);
+	     			    }
 	     			 }
-	     		   } else {
-	     			   log_error(18,"invalid batch command file name - " + bat_file_name);
-	     		   }
 	     	   }
 	     	} else {
 	     		log_error(17,"Permission for file execute denied");

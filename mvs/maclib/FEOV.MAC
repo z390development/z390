@@ -1,0 +1,17 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    FEOV  &DCB,&OPTION
+         AIF   ('&DCB' EQ '').E1
+         AIF   ('&OPTION'  EQ  '').CALL
+         AIF   ('&OPTION'  EQ  'REWIND').CALL
+         AIF   ('&OPTION'  EQ  'LEAVE').CALL
+         AGO   .E2
+.CALL    ANOP
+&NAME    IHBINNRA  &DCB,,,,&OPTION
+         SVC   31                                ISSUE FEOV SVC
+         MEXIT
+.E2      IHBERMAC  49,,&OPTION
+         MEXIT
+.E1      IHBERMAC 6                         NO DCB ADDR
+         MEND
+

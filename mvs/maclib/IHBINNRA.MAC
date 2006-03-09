@@ -1,0 +1,80 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    IHBINNRA  &A,&B,&C,&D,&E                                  LC0A
+.*0000000360                                                       LC0A
+         LCLA  &ASUM                                              19015
+         LCLB  &BIT(2)                                            19015
+         LCLC  &GVALU                                              LC0A
+&GVALU   SETC  'IHB'.'&SYSNDX'                                     LC0A
+         AIF   ('&E' EQ '').NOPT                                  19015
+&BIT(1)  SETB  ('&E' EQ 'REWIND')                                 19015
+&BIT(2)  SETB  ('&E' EQ 'LEAVE')                                  19015
+&ASUM    SETA  &BIT(1)*32+&BIT(2)*48                              19015
+         AIF   ('&A' EQ '(1)' OR '&A'(1,1) EQ '(').LDREG          19015
+         CNOP  0,4                                                19015
+&NAME    BAL   1,*+8                    BR AROUND LIST            19015
+         DC    AL1(&ASUM)               OPTION BYTE               19015
+         DC    AL3(&A(1))                                         19015
+         L     1,0(1,0)                 LOAD REG 1               YM1995
+         AGO   .END                                               19015
+.LDREG   ANOP                                                     19015
+         AIF   ('&A' EQ '(1)').ORIT                               19015
+         CNOP  0,4                                                19015
+&NAME    BAL   1,*+8                    BR AROUND LIST            19015
+         DC    AL1(&ASUM)               OPTION BYTE               19015
+         DC    AL3(0)                                             19015
+         L     1,0(1,0)                 LOAD R 1 WITH OPTION BYTEYM1995
+         OR    1,&A(1)                  OR IN DCB ADDRESS         19015
+         AGO   .END                                               19015
+.ORIT    ANOP                                                     19015
+         CNOP  0,4                                                19015
+&NAME    O     1,*+8                    SET OPTION BYTE IN REG 1  19015
+         B     *+8                                                19015
+         DC    AL1(&ASUM)               OPTION BYTE               19015
+         DC    AL3(0)                                             19015
+         AGO   .END                                               19015
+.NOPT    AIF   ('&A' EQ '' OR '&A' EQ '(1)').NAMEIT               19015
+         AIF   ('&A'(1,1) EQ '(').REGA
+         AIF   ('&C' NE '').HOH1                                   LC0A
+&NAME    LA    1,&A                              LOAD PARAMETER REG 1
+         AGO   .CHKB
+.REGA    ANOP
+&NAME    LR    1,&A(1)                           LOAD PARAMETER REG 1
+         AGO   .CHKB
+.NAMEIT  AIF   ('&NAME' EQ '').CHKB
+&NAME    DS    0H
+.CHKB    AIF   ('&B' EQ '' OR '&B' EQ '(0)').END
+         AIF   ('&B'(1,1) EQ '(').REGB
+         AIF   ('&A' EQ '').GEN                                    LC0A
+         AIF   ('&D' EQ '1').END                                   LC0A
+.GEN     ANOP                                                      LC0A
+         LA    0,&B                              LOAD PARAMETER REG 0
+         AGO   .END
+.HOH1    ANOP                                                      LC0A
+         AIF   ('&C' EQ '1').H1                                    LC0A
+&NAME    L     0,&GVALU  LOAD FOR HIARCHY ZERO                     LC0A
+         AGO   .HCHK                                               LC0A
+.H1      ANOP                                                      LC0A
+&NAME    L     0,&GVALU.A    LOAD FOR HIARCHY ONE                  LC0A
+.HCHK    ANOP                                                      LC0A
+         CNOP  2,4                                                 LCOA
+         LA    1,&A                                                LC0A
+         OR    1,0                                                 LC0A
+         AIF   ('&D' NE '1').TTT                                   LC0A
+         LA    0,*+8                                               LC0A
+         B     *+16                                                LC0A
+         DC    CL8'&B'                                             LC0A
+         AGO   .SSS                                                LC0A
+.TTT     ANOP                                                      LC0A
+         B     *+8                                                 LC0A
+.SSS     AIF   ('&C' EQ '1').L1                                    LC0A
+&GVALU   EQU   *                                                   LC0A
+         DC    X'01000000'                                         LC0A
+         AGO   .CHKB                                               LC0A
+.L1      ANOP                                                      LC0A
+&GVALU.A EQU   *                                                   LC0A
+         DC    X'02000000'                                         LC0A
+         AGO   .CHKB                                               LC0A
+.REGB    LR    0,&B(1)                           LOAD PARAMETER REG 0
+.END     MEND
+

@@ -1,0 +1,11 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    ESETL &DCB
+         AIF   ('&DCB' EQ '').E1
+&NAME    IHBINNRA &DCB
+         L     15,84(0,1)                        LOAD ESETL ROUT. ADDR.
+         BALR  14,15                             LINK TO ESETL ROUTINE
+         MEXIT
+.E1      IHBERMAC 06
+         MEND
+

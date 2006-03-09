@@ -1,0 +1,77 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    PURGEDQ    &ASID=,&ASIDTCB=,&RMTR=,&MF=I
+         AIF   ('&MF' EQ 'I').I1        STANDARD FORM
+         AIF   ('&MF' EQ 'L').L1        LIST FORM
+         AIF (N'&MF NE 2).ERR2          WRONG FORM
+         AIF   ('&MF(1)' EQ 'E').EX1    EXECUTE FORM
+.ERR2    ANOP                           MF SPECIFIED WRONG
+         IHBERMAC   1001,MF,&MF
+         MEXIT
+.I1      ANOP
+         CNOP  0,4
+&NAME    BAL   1,*+16         BRANCH AROUND PARAMETER LIST
+         DC    A(0) ADDRESS OF ASID PARAMETER
+         DC    A(0) ADDRESS OF ASIDTCB PARAMETER
+         DC    A(0) ADDRESS OF RMTR
+         AIF   ('&ASID' EQ '').OP2    ASID PRESENT?
+         STORADR    0,&ASID
+.OP2     ANOP
+         AIF   ('&ASIDTCB' EQ '').OP3   ASIDTCB PRESENT?
+         STORADR    4,&ASIDTCB
+.OP3     ANOP
+         AIF   ('&RMTR' EQ '').ERR1     RMTR PRESENT ?
+         STORADR    8,&RMTR
+         SVC   123                      ISSUE SVC
+         MEXIT
+.ERR1    ANOP
+         IHBERMAC  1017,RMTR
+         MEXIT
+.L1      ANOP  LIST FORM
+&NAME    DS    0A     FULLWORD ALIGNMENT
+         AIF   ('&ASID' NE '').L2  ASID PRESENT ?
+         DC    A(0) ADDRESS OF ASID
+         AGO   .L3  GET ASIDTCB
+.L2      ANOP  ASID SPECIFIED
+         AIF   ('&ASID'(1,1) EQ '(').ERR69
+         DC    A(&ASID)  ADDRESS OF ASID
+.L3      ANOP  FORM ASIDTCB ADDRESS
+         AIF   ('&ASIDTCB' NE '').L4    ASIDTCB PRESENT
+         DC    A(0) ASIDTCB NOT GIVEN
+         AGO   .L5  GET RMTR
+.L4      ANOP
+         AIF   ('&ASIDTCB'(1,1) EQ '(').ERR69
+         DC    A(&ASIDTCB)    ADDRESS OF ASIDTCB
+.L5      ANOP  PICK UP RMTR ADDRESS
+         AIF   ('&RMTR' NE '').L6  RMTR GIVEN ?
+         DC    A(0) RMTR NOT GIVEN
+         AGO   .L7
+.L6      ANOP
+         AIF   ('&RMTR'(1,1) EQ '(').ERR69
+         DC    A(&RMTR)  GET ADDRESS OF RMTR
+.L7      ANOP
+         MEXIT
+.EX1     ANOP                      EXECUTE FORM
+&NAME    DS    0H                       HALFWORD BOUNDARY
+         AIF   ('&MF(2)' EQ '(1)').EX2       ADDR IN REGISTER 1
+         AIF   ('&MF(2)'(1,1) EQ '(').REG    REGISTER NOTATION
+         LA    1,&MF(2)
+         AGO   .EX2
+.REG     ANOP
+         LR    1,&MF(2)                 LOAD ADDRESS INTO REG 1
+.EX2     ANOP
+         AIF   ('&ASID' EQ '').EXOP2   IS ASID SPECIFIED
+         STORADR              0,&ASID
+.EXOP2   ANOP
+         AIF   ('&ASIDTCB' EQ '').EXOP3   IS ASIDTCB SPECIFIED
+         STORADR              4,&ASIDTCB
+.EXOP3   ANOP
+         AIF   ('&RMTR' EQ '').SVC
+         STORADR              8,&RMTR
+.SVC     ANOP
+         SVC   123                      ISSUE SVC
+         MEXIT
+.ERR69   ANOP
+         IHBERMAC 69
+         MEND
+

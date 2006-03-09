@@ -1,0 +1,10 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    BSP   &DCB,&DUMMY=
+         AIF   ('&DCB' EQ '').E1
+&NAME    IHBINNRA &DCB
+         SVC   69                                ISSUE BSP SVC
+         MEXIT
+.E1      IHBERMAC 6                     DCB OPERAND MISSING
+         MEND
+

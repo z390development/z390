@@ -1,0 +1,46 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    RETURN &REG,&PARA,&RC=O
+         LCLA  &A
+         AIF   ('&NAME' EQ '').GO
+&NAME    DS    0H
+.GO      AIF   ('&REG' EQ '').CONTA
+         AIF   ('&RC' EQ '(15)').SPECRT
+.COMBACK ANOP
+&A       SETA  &REG(1)*4+20
+         AIF   (&A LE 75).CONTB
+&A       SETA  &A-64
+.CONTB   AIF   (N'&REG NE 2).CONTC
+         LM    &REG(1),&REG(2),&A.(13)           RESTORE THE REGISTERS
+         AGO   .CONTA
+.SPECRT  AIF   ('&REG(1)' NE '14' AND '&REG(1)' NE '15').COMBACK
+         AIF   ('&REG(1)' EQ '14' AND N'&REG  EQ 1).COMBACK
+         AIF   ('&REG(1)' EQ '15' AND N'&REG EQ 1).CONTA
+         AIF   ('&REG(1)' EQ '14').SKIP
+         AIF   ('&REG(2)' EQ '0').ZTWO
+.LM      LM    0,&REG(2),20(13)                  RESTORE THE REGISTERS
+         AGO   .CONTA
+.ZTWO    L     0,20(13,0)                        RESTORE REGISTER ZERO
+         AGO   .CONTA
+.SKIP    L     14,12(13,0)                       RESTORE REGISTER 14
+         AIF   ('&REG(2)' EQ '15').CONTA
+         AIF   ('&REG(2)' EQ '0').ZTWO
+         AGO   .LM
+.CONTC   AIF   (N'&REG NE 1).ERROR1
+         L     &REG(1),&A.(13,0)                 RESTORE REGISTER
+.CONTA   AIF   ('&PARA' EQ '').CONTD
+         AIF   ('&PARA' NE 'T').ERROR2
+         MVI   12(13),X'FF'                      SET RETURN INDICATION
+.CONTD   AIF   ('&RC' EQ 'O').CONTE
+         AIF   ('&RC'(1,1) EQ '(').ISAREG
+         LA    15,&RC.(0,0)                      LOAD RETURN CODE
+         AGO   .CONTE
+.ISAREG  AIF   ('&RC(1)' EQ '15').CONTE
+         IHBERMAC 61,,&RC
+         MEXIT
+.CONTE   BR    14                                RETURN
+         AGO   .END
+.ERROR1  IHBERMAC 36,,&REG
+         MEXIT
+.ERROR2  IHBERMAC 37,,&PARA
+.END     MEND

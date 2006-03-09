@@ -1,0 +1,15 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 11/16/05 RPI95 TEST XCTL
+*********************************************************************
+         TITLE 'TESTXCL3 TEST TESTXCL2 XCTL TO TESTXCL3'
+TESTXCL3 SUBENTRY
+         SNAP  ID=3,PDATA=CDE,TEXT='VERIFY TESTXCL1 AND TESTXCL3'
+         WTO   'TESTXCL3 NOW RETURNING TO TESTXCL1'
+         SUBEXIT
+         END

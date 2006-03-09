@@ -1,0 +1,32 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*   %    /*
+         MACRO
+&NAME    PGFREE &FORM,&A=,&EA=,&LA=,&ECB=,&RELEASE=,&RSAOPT=,          X
+               &RELATED=
+&NAME IHBPSINR &FORM,TYPE=FREE,LA=&LA,A=&A,EA=&EA,ECB=&ECB,            X
+               RELEASE=&RELEASE,RSAOPT=&RSAOPT
+         MEND
+*        */
+*    PGFREE: MACRO
+*    KEYS(A,                       /* VIRTUAL ADDR OF PAGE TO BE FIXED
+*                                     (R FORM ONLY)                  */
+*         LA,                      /* ADDR OF FIRST ENTRY OF A VIRTUAL
+*                                     SUBAREA LIST(L FORM ONLY       */
+*         EA,                      /* END ADDR+1 OF A VIRTUAL AREA TO
+*                                     BE FIXED                       */
+*         ECB,                     /* ADDR OF EVENT CONTROL BLOCK    */
+*         RELEASE,                 /* RELEASE(Y)-CONTENTS OF ENTIRE
+*                                          VIRTUAL PAGE DISCARDED
+*                                     RELEASE(N)-CONTENTS OF PAGE
+*                                          REMAIN INTACT (DEFAULT)   */
+*         RSAOPT,                  /* ALLOWED WITH L FORM ONLY
+*                                     RSAOPT(Y)-REAL ADDR ORIGIN OF
+*                                          SPECIFIED VIR. ADDR PLACED
+*                                       IN SECOND HALF OF PARMLIST
+*                                     RSAOPT(N)-NO REAL ADDR RETURNED*/
+*         RELATED,                 /* COMMENT FOR STATING WHERE PGFIX
+*                                     WAS FOR THIS PGFREE            */
+*         RTCD);                   /* RETURN CODE FROM SVC           */
+*    ANS('?'||MACLABEL||'PGFREEP '||MACLIST||MACKEYS||';');
+*%END;
+

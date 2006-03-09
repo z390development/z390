@@ -1,0 +1,40 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         ISTBLDO
+*
+*                       VTAM LOGICAL DEVICE ORDER
+*
+ISTBLDO  DSECT
+LDOCMD   DS    C                  COMMAND CODE
+LDOFLAGS DS    C                  FLAGS, INCL.DATA
+LDOACHN  EQU   X'80'              THIS LDO IS DATA CHAINED
+LDOCMHN  EQU   X'40'              THIS LDO IS COMMAND CHAINED
+LDOLEN   DS    2C                 LEN OF INPUT AREA OR OUTPUT DATA
+LDOADDR  DS    F                  ADDRESS OF AREA
+*
+*                       SYMBOLIC DESIGNATION OF COMMAND CODES
+*
+LDOREAD  EQU   X'02'              READ
+LDOCNTCT EQU   X'03'              CONTACT
+LDOSLCT  EQU   X'F2'              SOLICIT
+LDOWRITE EQU   X'05'              WRITE
+LDOWRTLM EQU   X'09'              WRITELBM
+LDOWRTLT EQU   X'0D'              WRITELBT
+LDOERAST EQU   X'1D'              ERASET
+LDOEAU   EQU   X'11'              EAU
+LDORSETL EQU   X'0B'              RESETL
+LDORSETU EQU   X'2B'              RESETU
+LDORSETC EQU   X'1B'              RESETC
+LDOJUMP  EQU   X'08'              JUMP
+LDOCOPYM EQU   X'29'              COPY MESSAGE
+LDOCOPYT EQU   X'3D'              COPY TRANSMISSION
+LDORDBUF EQU   X'16'              READBUF
+LDORDMOD EQU   X'12'              READMOD
+LDOWRTNR EQU   X'2F'              WRTNR
+LDOWRTAR EQU   X'3F'              WRTAR
+LDOWRTRV EQU   X'1F'              WRTRVI
+LDOWRTPG EQU   X'5F'              WRTPRLG
+LDOWRTNG EQU   X'6F'              WRTNRLG
+LDOERASM EQU   X'19'              ERASEMSG
+LDOWRTHD EQU   X'0F'              WRTHDR
+         MEND

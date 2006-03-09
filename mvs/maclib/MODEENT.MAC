@@ -1,0 +1,433 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    MODEENT &LOGMODE=,&FMPROF=0,&TSPROF=0,&PRIPROT=0,&SECPROT=0,  *
+               &COMPROT=0,&PSERVIC=X'00',&RUSIZES=X'0000',             *
+               &PSNDPAC=X'00',&SRCVPAC=X'00',&SSNDPAC=X'00'
+.**********************************************************************
+.*       DECLARE LOCALS AND GLOBALS
+.**********************************************************************
+         GBLB  &ERRCK
+         GBLA  &ENTRYCT
+         LCLC  &CHAR1,&CHAR2,&CHAR3(3),&CHAR4                @DM39835
+         LCLA  &LEN,&I,&J,&K                                 @DM39835
+.**********************************************************************
+.*       IF MODETAB WAS NOT PREVIOUSLY INVOKED, INDICATE ERROR
+.**********************************************************************
+         AIF   ('&ERRCK' EQ '1').MODLINE  THIS IS A VALID MACRO CALL
+         MNOTE 8,'MODETAB MACRO WAS NOT ISSUED MODEENT IS VOID'
+.**********************************************************************
+.*       IF LOGMODE WAS PASSED, GENERATE CL8 FOR ITS VALUE
+.*          OTHERWISE, GENERATE A CL8 OF BLANKS,
+.*          ISSUING AN ERROR MESSAGE IF THIS IS NOT THE FIRST ENTRY
+.**********************************************************************
+.MODLINE ANOP
+         AIF   ('&LOGMODE' EQ '').NLOGMOD WAS LOGMODE SPECIFIED ?
+         DC    CL8'&LOGMODE'                   LOGMODE
+         AGO   .FMPROF
+.NLOGMOD ANOP
+         AIF   ('&ENTRYCT' EQ '0').LOGMOD1 FIRST TABLE ENTRY ?
+         MNOTE 0,'LOGMODE= BLANK ONLY VALID FOR FIRST ENTRY '
+.LOGMOD1 ANOP
+         DC    CL8'        '                    LOGMODE DEFAULT
+.**********************************************************************
+.*       GENERATE CODE FOR THE FMPROF KEYWORD VALUE OR DEFAULT
+.*                HEXIDECIMAL CHECKING
+.**********************************************************************
+.FMPROF  ANOP
+         DC    XL1'00'                          FORMAT TYPE    @ZA47729
+&CHAR1   SETC  '&FMPROF'(1,2)                   FIRST 2 CHARS
+&LEN     SETA  K'&FMPROF                        VALUE LENGTH
+&CHAR2   SETC  '&FMPROF'(&LEN,1)                LAST CHAR
+         AIF   ('&CHAR1' NE 'X''').MODCKQ1      IF NOT HEX, BRANCH
+         AIF   ('&CHAR2' NE '''').FMPERR1       ENDING QUOTE MISSING
+         AIF   (&LEN GT 5).FMPERR2              VALUE TOO LONG
+&CHAR3(1) SETC  '&FMPROF'(3,&LEN-3)             GET VALUE
+&CHAR1   SETC  '&CHAR1'(1,1)                    SET TO X
+         DC    &CHAR1.L1&CHAR2&CHAR3(1)&CHAR2   FM PROFILE
+         AGO   .TSPROF
+.**********************************************************************
+.*       GENERATE CODE FOR THE FMPROF KEYWORD VALUE OR DEFAULT
+.*                DECIMAL PROCESSING
+.**********************************************************************
+.MODCKQ1 ANOP
+&CHAR1   SETC  '&FMPROF'                        GET VALUE
+         AIF   ('&CHAR1' LT '0').FMPERR3        INVALID, USE DEFAULT
+         AIF   ('&CHAR1' GT '255').FMPERR4      INVALID, USE DEFAULT
+         DC    AL1(&FMPROF)                     FM PROFILE - NUMERIC
+         AGO   .TSPROF
+.**********************************************************************
+.*       GENERATE CODE FOR THE FMPROF KEYWORD VALUE OR DEFAULT
+.*                DEFAULT PROCESSING
+.**********************************************************************
+.FMPERR1 MNOTE 0,'FMPROF INVALID - NO ENDING QUOTE'
+         AGO   .NFMPROF
+.FMPERR2 MNOTE 0,'FMPROF INVALID - TOO MANY DIGITS'
+         AGO   .NFMPROF
+.FMPERR3 MNOTE 0,'FMPROF INVALID - VALUE LESS THAN 0'
+         AGO   .NFMPROF
+.FMPERR4 MNOTE 0,'FMPROF INVALID - VALUE GREATER THAN 255'
+.NFMPROF ANOP
+         MNOTE 0,'FMPROF INVALID - DEFAULT VALUE USED'
+         DC    XL1'0'                           FM PROFILE DEFAULT
+.**********************************************************************
+.*       GENERATE CODE FOR THE TSPROF KEYWORD VALUE OR DEFAULT
+.*                HEXIDECIMAL CHECKING
+.**********************************************************************
+.TSPROF  ANOP
+&CHAR1   SETC  '&TSPROF'(1,2)                   FIRST 2 CHARS
+&LEN     SETA  K'&TSPROF                        VALUE LENGTH
+&CHAR2   SETC  '&TSPROF'(&LEN,1)                LAST CHAR
+         AIF   ('&CHAR1' NE 'X''').MODCKQ2      IF NOT HEX, BRANCH
+         AIF   ('&CHAR2' NE '''').TSPERR1       ENDING QUOTE MISSING
+         AIF   (&LEN GT 5).TSPERR2              VALUE TOO LONG
+&CHAR3(1) SETC  '&TSPROF'(3,&LEN-3)             GET VALUE
+&CHAR1   SETC  '&CHAR1'(1,1)                    SET TO X
+         DC    &CHAR1.L1&CHAR2&CHAR3(1)&CHAR2   TS PROFILE
+         AGO   .PRIPROT
+.**********************************************************************
+.*       GENERATE CODE FOR THE TSPROF KEYWORD VALUE OR DEFAULT
+.*                DECIMAL PROCESSING
+.**********************************************************************
+.MODCKQ2 ANOP
+&CHAR1   SETC  '&TSPROF'                        GET VALUE
+         AIF   ('&CHAR1' LT '0').TSPERR3        INVALID, USE DEFAULT
+         AIF   ('&CHAR1' GT '255').TSPERR4      INVALID, USE DEFAULT
+         DC    AL1(&TSPROF)                     TS PROFILE - NUMERIC
+         AGO   .PRIPROT
+.**********************************************************************
+.*       GENERATE CODE FOR THE TSPROF KEYWORD VALUE OR DEFAULT
+.*                DEFAULT PROCESSING
+.**********************************************************************
+.TSPERR1 MNOTE 0,'TSPROF INVALID - NO ENDING QUOTE'
+         AGO   .NTSPROF
+.TSPERR2 MNOTE 0,'TSPROF INVALID - TOO MANY DIGITS'
+         AGO   .NTSPROF
+.TSPERR3 MNOTE 0,'TSPROF INVALID - VALUE LESS THAN 0'
+         AGO   .NTSPROF
+.TSPERR4 MNOTE 0,'TSPROF INVALID - VALUE GREATER THAN 255'
+.NTSPROF ANOP
+         MNOTE 0,'TSPROF INVALID - DEFAULT VALUE USED'
+         DC    XL1'0'                           TS PROFILE DEFAULT
+.**********************************************************************
+.*       GENERATE CODE FOR THE PRIPROT KEYWORD VALUE OR DEFAULT
+.*                HEXIDECIMAL CHECKING
+.**********************************************************************
+.PRIPROT ANOP
+&CHAR1   SETC  '&PRIPROT'(1,2)                  FIRST 2 CHARS
+&LEN     SETA  K'&PRIPROT                       VALUE LENGTH
+&CHAR2   SETC  '&PRIPROT'(&LEN,1)               LAST CHAR
+         AIF   ('&CHAR1' NE 'X''').MODCKQ3      IF NOT HEX, BRANCH
+         AIF   ('&CHAR2' NE '''').PRIERR1       ENDING QUOTE MISSING
+         AIF   (&LEN GT 5).PRIERR2              VALUE TOO LONG
+&CHAR3(1) SETC  '&PRIPROT'(3,&LEN-3)            GET VALUE
+&CHAR1   SETC  '&CHAR1'(1,1)                    SET TO X
+         DC    &CHAR1.L1&CHAR2&CHAR3(1)&CHAR2   FM PROFILE
+         AGO   .SECPROT
+.**********************************************************************
+.*       GENERATE CODE FOR THE PRIPROT KEYWORD VALUE OR DEFAULT
+.*                DECIMAL PROCESSING
+.**********************************************************************
+.MODCKQ3 ANOP
+&CHAR1   SETC  '&PRIPROT'                       GET VALUE
+         AIF   ('&CHAR1' LT '0').PRIERR3        INVALID, USE DEFAULT
+         AIF   ('&CHAR1' GT '255').PRIERR4      INVALID, USE DEFAULT
+         DC    AL1(&PRIPROT)                    PRIPROT - NUMERIC
+         AGO   .SECPROT
+.**********************************************************************
+.*       GENERATE CODE FOR THE PRIPROT KEYWORD VALUE OR DEFAULT
+.*                DEFAULT PROCESSING
+.**********************************************************************
+.PRIERR1 MNOTE 0,'PRIPROT INVALID - NO ENDING QUOTE'
+         AGO   .PRIPROF
+.PRIERR2 MNOTE 0,'PRIPROT INVALID - TOO MANY DIGITS'
+         AGO   .PRIPROF
+.PRIERR3 MNOTE 0,'PRIPROT INVALID - VALUE LESS THAN 0'
+         AGO   .PRIPROF
+.PRIERR4 MNOTE 0,'PRIPROT INVALID - VALUE GREATER THAN 255'
+.PRIPROF ANOP
+         MNOTE 0,'PRIPROT INVALID - DEFAULT VALUE USED'
+         DC    XL1'0'                           PRIPROT DEFAULT
+.**********************************************************************
+.*       GENERATE CODE FOR THE SECPROT KEYWORD VALUE OR DEFAULT
+.*                HEXIDECIMAL CHECKING
+.**********************************************************************
+.SECPROT ANOP
+&CHAR1   SETC  '&SECPROT'(1,2)                  FIRST 2 CHARS
+&LEN     SETA  K'&SECPROT                       VALUE LENGTH
+&CHAR2   SETC  '&SECPROT'(&LEN,1)               LAST CHAR
+         AIF   ('&CHAR1' NE 'X''').MODCKQ4      IF NOT HEX, BRANCH
+         AIF   ('&CHAR2' NE '''').SECERR1       ENDING QUOTE MISSING
+         AIF   (&LEN GT 5).SECERR2              VALUE TOO LONG
+&CHAR3(1) SETC  '&SECPROT'(3,&LEN-3)            GET VALUE
+&CHAR1   SETC  '&CHAR1'(1,1)                    SET TO X
+         DC    &CHAR1.L1&CHAR2&CHAR3(1)&CHAR2   FM PROFILE
+         AGO   .COMPROT
+.**********************************************************************
+.*       GENERATE CODE FOR THE SECPROT KEYWORD VALUE OR DEFAULT
+.*                DECIMAL PROCESSING
+.**********************************************************************
+.MODCKQ4 ANOP
+&CHAR1   SETC  '&SECPROT'                       GET VALUE
+         AIF   ('&CHAR1' LT '0').SECERR3        INVALID, USE DEFAULT
+         AIF   ('&CHAR1' GT '255').SECERR4      INVALID, USE DEFAULT
+         DC    AL1(&SECPROT)                    FM PROFILE - NUMERIC
+         AGO   .COMPROT
+.**********************************************************************
+.*       GENERATE CODE FOR THE SECPROT KEYWORD VALUE OR DEFAULT
+.*                DEFAULT PROCESSING
+.**********************************************************************
+.SECERR1 MNOTE 0,'SECPROT INVALID - NO ENDING QUOTE'
+         AGO   .SECPROF
+.SECERR2 MNOTE 0,'SECPROT INVALID - TOO MANY DIGITS'
+         AGO   .SECPROF
+.SECERR3 MNOTE 0,'SECPROT INVALID - VALUE LESS THAN 0'
+         AGO   .SECPROF
+.SECERR4 MNOTE 0,'SECPROT INVALID - VALUE GREATER THAN 255'
+.SECPROF ANOP
+         MNOTE 0,'SECPROT INVALID - DEFAULT VALUE USED'
+         DC    XL1'0'                           SECPROT DEFAULT
+.**********************************************************************
+.*       GENERATE CODE FOR THE COMPROT KEYWORD VALUE OR DEFAULT
+.*                HEXIDECIMAL CHECKING
+.**********************************************************************
+.COMPROT ANOP
+&CHAR1   SETC  '&COMPROT'(1,2)                  FIRST 2 CHARS
+&LEN     SETA  K'&COMPROT                       VALUE LENGTH
+&CHAR2   SETC  '&COMPROT'(&LEN,1)               LAST CHAR
+         AIF   ('&CHAR1' NE 'X''').MODCKQ5      IF NOT HEX, BRANCH
+         AIF   ('&CHAR2' NE '''').COMERR1       ENDING QUOTE MISSING
+         AIF   (&LEN GT 7).COMERR2              VALUE TOO LONG
+&CHAR3(1) SETC  '&COMPROT'(3,&LEN-3)            GET VALUE
+&CHAR1   SETC  '&CHAR1'(1,1)                    SET TO X
+         DC    &CHAR1.L2&CHAR2&CHAR3(1)&CHAR2   COMPROT PROFILE
+         AGO   .SSNDS
+.**********************************************************************
+.*       GENERATE CODE FOR THE COMPROT KEYWORD VALUE OR DEFAULT
+.*                DECIMAL PROCESSING
+.**********************************************************************
+.MODCKQ5 ANOP
+&CHAR1   SETC  '&COMPROT'                       GET VALUE
+         AIF   ('&CHAR1' LT '0').COMERR3        INVALID, USE DEFAULT
+         AIF   ('&CHAR1' GT '65535').COMERR4    INVALID, USE DEFAULT
+         DC    AL2(&COMPROT)                    COMPROT - NUMERIC
+         AGO   .SSNDS
+.**********************************************************************
+.*       GENERATE CODE FOR THE COMPROT KEYWORD VALUE OR DEFAULT
+.*                DEFAULT PROCESSING
+.**********************************************************************
+.COMERR1 MNOTE 0,'COMPROT INVALID - NO ENDING QUOTE'
+         AGO   .COMPROF
+.COMERR2 MNOTE 0,'COMPROT INVALID - TOO MANY DIGITS'
+         AGO   .COMPROF
+.COMERR3 MNOTE 0,'COMPROT INVALID - VALUE LESS THAN 0'
+         AGO   .COMPROF
+.COMERR4 MNOTE 0,'COMPROT INVALID - VALUE GREATER THAN 65535'
+.COMPROF ANOP
+         MNOTE 0,'COMPROT INVALID - DEFAULT VALUE USED'
+         DC    XL2'00'                          COMPROT DEFAULT
+.**********************************************************************
+.*       GENERATE CODE FOR THE SSNDPAC KEYWORD VALUE OR DEFAULT
+.*                HEXIDECIMAL CHECKING
+.**********************************************************************
+.SSNDS   ANOP
+&CHAR1   SETC  '&SSNDPAC'(1,2)                  FIRST 2 CHARS
+&LEN     SETA  K'&SSNDPAC                       VALUE LENGTH
+&CHAR2   SETC  '&SSNDPAC'(&LEN,1)               LAST CHAR
+         AIF   ('&CHAR1' NE 'X''').MODCKQ6      IF NOT HEX, BRANCH
+         AIF   ('&CHAR2' NE '''').SSNERR1       ENDING QUOTE MISSING
+         AIF   (&LEN GT 5).SSNERR2              VALUE TOO LONG
+&CHAR3(1) SETC  '&SSNDPAC'(3,&LEN-3)            GET VALUE
+&CHAR1   SETC  '&CHAR1'(1,1)                    SET TO X
+         DC    &CHAR1.L1&CHAR2&CHAR3(1)&CHAR2   SSNDPAC PROFILE
+         AGO   .SRCVS
+.**********************************************************************
+.*       GENERATE CODE FOR THE SSNDPAC KEYWORD VALUE OR DEFAULT
+.*                DECIMAL PROCESSING
+.**********************************************************************
+.MODCKQ6 ANOP
+&CHAR1   SETC  '&SSNDPAC'                       GET VALUE
+         AIF   ('&CHAR1' LT '0').SSNERR3        INVALID, USE DEFAULT
+         AIF   ('&CHAR1' GT '63').SSNERR4       INVALID, USE DEFAULT
+         DC    AL1(&SSNDPAC)                    SSNDPAC - NUMERIC
+         AGO   .SRCVS
+.**********************************************************************
+.*       GENERATE CODE FOR THE SSNDPAC KEYWORD VALUE OR DEFAULT
+.*                DEFAULT PROCESSING
+.**********************************************************************
+.SSNERR1 MNOTE 0,'SSNDPAC INVALID - NO ENDING QUOTE'
+         AGO   .SSNPROF
+.SSNERR2 MNOTE 0,'SSNDPAC INVALID - TOO MANY DIGITS'
+         AGO   .SSNPROF
+.SSNERR3 MNOTE 0,'SSNDPAC INVALID - VALUE LESS THAN 0'
+         AGO   .SSNPROF
+.SSNERR4 MNOTE 0,'SSNDPAC INVALID - VALUE GREATER THAN 63'
+.SSNPROF ANOP
+         MNOTE 0,'SSNDPAC INVALID - DEFAULT VALUE USED'
+         DC    XL1'0'                           SSNDPAC DEFAULT
+.**********************************************************************
+.*       GENERATE CODE FOR THE SRCVPAC KEYWORD VALUE OR DEFAULT
+.*                HEXIDECIMAL CHECKING
+.**********************************************************************
+.SRCVS   ANOP
+&CHAR1   SETC  '&SRCVPAC'(1,2)                  FIRST 2 CHARS
+&LEN     SETA  K'&SRCVPAC                       VALUE LENGTH
+&CHAR2   SETC  '&SRCVPAC'(&LEN,1)               LAST CHAR
+         AIF   ('&CHAR1' NE 'X''').MODCKQ7      IF NOT HEX, BRANCH
+         AIF   ('&CHAR2' NE '''').SRCERR1       ENDING QUOTE MISSING
+         AIF   (&LEN GT 5).SRCERR2              VALUE TOO LONG
+&CHAR3(1) SETC  '&SRCVPAC'(3,&LEN-3)            GET VALUE
+&CHAR1   SETC  '&CHAR1'(1,1)                    SET TO X
+         DC    &CHAR1.L1&CHAR2&CHAR3(1)&CHAR2   SRCVPAC PROFILE
+         AGO   .RUSZS
+.**********************************************************************
+.*       GENERATE CODE FOR THE SRCVPAC KEYWORD VALUE OR DEFAULT
+.*                DECIMAL PROCESSING
+.**********************************************************************
+.MODCKQ7 ANOP
+&CHAR1   SETC  '&SRCVPAC'                       GET VALUE
+         AIF   ('&CHAR1' LT '0').SRCERR3        INVALID, USE DEFAULT
+         AIF   ('&CHAR1' GT '63').SRCERR4       INVALID, USE DEFAULT
+         DC    AL1(&SRCVPAC)                    SRCVPAC - NUMERIC
+         AGO   .RUSZS
+.**********************************************************************
+.*       GENERATE CODE FOR THE SRCVPAC KEYWORD VALUE OR DEFAULT
+.*                DEFAULT PROCESSING
+.**********************************************************************
+.SRCERR1 MNOTE 0,'SRCVPAC INVALID - NO ENDING QUOTE'
+         AGO   .SRCPROF
+.SRCERR2 MNOTE 0,'SRCVPAC INVALID - TOO MANY DIGITS'
+         AGO   .SRCPROF
+.SRCERR3 MNOTE 0,'SRCVPAC INVALID - VALUE LESS THAN 0'
+         AGO   .SRCPROF
+.SRCERR4 MNOTE 0,'SRCVPAC INVALID - VALUE GREATER THAN 63'
+.SRCPROF ANOP
+         MNOTE 0,'SRCVPAC INVALID - DEFAULT VALUE USED'
+         DC    XL1'0'                           SRCVPAC DEFAULT
+.**********************************************************************
+.*       GENERATE CODE FOR THE RUSIZES KEYWORD VALUE OR DEFAULT
+.*                HEXIDECIMAL CHECKING
+.**********************************************************************
+.RUSZS   ANOP
+&CHAR1   SETC  '&RUSIZES'(1,2)                  FIRST 2 CHARS
+&LEN     SETA  K'&RUSIZES                       VALUE LENGTH
+&CHAR2   SETC  '&RUSIZES'(&LEN,1)               LAST CHAR
+         AIF   ('&CHAR1' NE 'X''').RUSERR1      IF NOT HEX, BRANCH
+         AIF   ('&CHAR2' NE '''').RUSERR2       ENDING QUOTE MISSING
+         AIF   (&LEN GT 7).RUSERR3              VALUE TOO LONG
+&CHAR3(1) SETC  '&RUSIZES'(3,&LEN-3)            GET VALUE
+&CHAR1   SETC  '&CHAR1'(1,1)                    SET TO X
+         DC    &CHAR1.L2&CHAR2&CHAR3(1)&CHAR2   RUSIZES PROFILE
+         AGO   .RUSEND
+.**********************************************************************
+.*       GENERATE CODE FOR THE RUSIZES KEYWORD VALUE OR DEFAULT
+.*                DEFAULT PROCESSING
+.**********************************************************************
+.RUSERR1 MNOTE 4,'RUSIZES INVALID - NOT A HEX NUMBER'          @ZA43118
+         AGO   .RUSPROF
+.RUSERR2 MNOTE 4,'RUSIZES INVALID - NO ENDING QUOTE'           @ZA43118
+         AGO   .RUSPROF
+.RUSERR3 MNOTE 4,'RUSIZES INVALID - TOO MANY DIGITS'           @ZA43118
+.RUSPROF ANOP
+         MNOTE 4,'RUSIZES INVALID - DEFAULT VALUE USED'        @ZA43118
+         DC    XL2'00'                          RUSIZES DEFAULT
+.**********************************************************************
+.*       GENERATE CODE FOR THE PSNDPAC KEYWORD VALUE OR DEFAULT
+.*                HEXIDECIMAL CHECKING
+.**********************************************************************
+.RUSEND  ANOP
+&CHAR1   SETC  '&PSNDPAC'(1,2)                  FIRST 2 CHARS
+&LEN     SETA  K'&PSNDPAC                       VALUE LENGTH
+&CHAR2   SETC  '&PSNDPAC'(&LEN,1)               LAST CHAR
+         AIF   ('&CHAR1' NE 'X''').MODCKQ8      IF NOT HEX, BRANCH
+         AIF   ('&CHAR2' NE '''').PSNERR1       ENDING QUOTE MISSING
+         AIF   (&LEN GT 5).PSNERR2              VALUE TOO LONG
+&CHAR3(1) SETC  '&PSNDPAC'(3,&LEN-3)            GET VALUE
+&CHAR1   SETC  '&CHAR1'(1,1)                    SET TO X
+         DC    &CHAR1.L1&CHAR2&CHAR3(1)&CHAR2   PSNDPAC PROFILE
+         AGO   .PSERIC
+.**********************************************************************
+.*       GENERATE CODE FOR THE PSNDPAC KEYWORD VALUE OR DEFAULT
+.*                DECIMAL PROCESSING
+.**********************************************************************
+.MODCKQ8 ANOP
+&CHAR1   SETC  '&PSNDPAC'                       GET VALUE
+         AIF   ('&CHAR1' LT '0').PSNERR3        INVALID, USE DEFAULT
+         AIF   ('&CHAR1' GT '63').PSNERR4       INVALID, USE DEFAULT
+         DC    AL1(&PSNDPAC)                    PSNDPAC - NUMERIC
+         AGO   .PSERIC
+.**********************************************************************
+.*       GENERATE CODE FOR THE PSNDPAC KEYWORD VALUE OR DEFAULT
+.*                DEFAULT PROCESSING
+.**********************************************************************
+.PSNERR1 MNOTE 0,'PSNDPAC INVALID - NO ENDING QUOTE'
+         AGO   .PSNPROF
+.PSNERR2 MNOTE 0,'PSNDPAC INVALID - TOO MANY DIGITS'
+         AGO   .PSNPROF
+.PSNERR3 MNOTE 0,'PSNDPAC INVALID - VALUE LESS THAN 0'
+         AGO   .PSNPROF
+.PSNERR4 MNOTE 0,'PSNDPAC INVALID - VALUE GREATER THAN 63'
+.PSNPROF ANOP
+         MNOTE 0,'PSNDPAC INVALID - DEFAULT VALUE USED'
+         DC    XL1'0'                           PSNDPAC DEFAULT
+.**********************************************************************
+.*       GENERATE RESERVED FIELD
+.**********************************************************************
+.PSERIC  ANOP                                                @D34EKMP
+         DC    XL1'00'                       RESERVED        @D34EKMP
+.**********************************************************************
+.*       GENERATE CODE FOR THE PSERVIC KEYWORD VALUE OR DEFAULT
+.*                HEXIDECIMAL CHECKING
+.**********************************************************************
+&CHAR1   SETC  '&PSERVIC'(1,2)                  FIRST 2 CHARS
+&LEN     SETA  K'&PSERVIC                       VALUE LENGTH
+&CHAR2   SETC  '&PSERVIC'(&LEN,1)               LAST CHAR
+         AIF   ('&CHAR1' NE 'X''').PSEERR1      IF NOT HEX, BRANCH
+         AIF   ('&CHAR2' NE '''').PSEERR2       ENDING QUOTE MISSING
+         AIF   (&LEN GT 27).PSEERR3             VALUE TOO LONG
+.**********************************************************************
+.*       GENERATE CODE FOR THE PSERVIC KEYWORD VALUE OR DEFAULT
+.*                LOOP TO LOAD LOCAL ARRAY
+.**********************************************************************
+&LEN     SETA  &LEN-3
+&I       SETA  0                                             @DM39835
+&J       SETA  3                                             @DM39835
+&K       SETA  8                                             @DM39835
+.PSLOOP  ANOP                                                @DM39835
+&I       SETA  &I+1                                          @DM39835
+         AIF   (&K LE &LEN).PSMOVE                           @DM39835
+&K       SETA  &LEN                                          @DM39835
+.PSMOVE  ANOP                                                @DM39835
+&CHAR3(&I) SETC '&PSERVIC'(&J,&K)                            @DM39835
+&J       SETA  &J+&K                                         @DM39835
+&LEN     SETA  &LEN-&K                                       @DM39835
+         AIF   (&LEN GT 0).PSLOOP                            @DM39835
+&CHAR4   SETC  '&CHAR1'(2,1)
+&CHAR1   SETC  '&CHAR1'(1,1)
+         DC    &CHAR1.L12&CHAR4&CHAR3(1)&CHAR3(2)&CHAR3(3)&CHAR4
+*                                            PRESENTATION    @DM39835
+*                                            SERVICES        @DM39835
+         AGO   .DEF
+.**********************************************************************
+.*       GENERATE CODE FOR THE PSERVIC KEYWORD VALUE OR DEFAULT
+.*                DEFAULT PROCESSING
+.**********************************************************************
+.PSEERR1 MNOTE 0,'PSERVIC INVALID - NOT A HEX NUMBER'
+         AGO   .PSERVD
+.PSEERR2 MNOTE 0,'PSERVIC INVALID - NO ENDING QUOTE'
+         AGO   .PSERVD
+.PSEERR3 MNOTE 0,'PSERVIC INVALID - TOO MANY DIGITS'
+.PSERVD  ANOP
+         MNOTE 0,'PSERVIC INVALID - DEFAULT VALUE USED'
+         DC    XL2'00'                          PSERVIC DEFAULT
+.**********************************************************************
+.*       GENERATE FINAL CODE
+.**********************************************************************
+.DEF     ANOP
+         DC    XL1'00'                       RESERVED
+         DC    XL9'00'                       RESERVED
+         DC    XL1'00'                       USER DATA LENGTH
+         AIF   ('&ERRCK' NE '1').MODEEND
+&ENTRYCT SETA  &ENTRYCT+1         COUNT OF THE NUMBER OF MODE ENTRIES
+.MODEEND ANOP
+         MEND
+

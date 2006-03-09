@@ -1,0 +1,117 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO JESCTBSL;                                            /*
+         MACRO
+         IEFJESCT  &TYPE=DSECT
+         LCLC  &NAM
+*
+* MACMEAN JESCT MEANS JOB ENTRY SUBSYSTEM COMMUNICATION TABLE
+* MACCOMP Y-2 SC1B8/PZD16                                      @G64QPSJ
+* MACSTAT Y-2 78157/G64QPSJ                                    @G64QPSJ
+*
+* STATUS - VS2 SYSTEM CONTROL PROGRAM 2                        @G64QPSJ
+*
+*  APAR OZ15019 IS SUPPORTED BY @Z40FPPJ                       @ZA15019
+&NAM     SETC  'JESCT'           DEFAULT
+         AIF   ('TYPE' EQ 'DSECT').DSECT
+         AIF   ('&TYPE' EQ 'DC').DC
+         AGO   .DSECT                  DEFAULT
+.DC      ANOP
+&NAM     DS    0F
+         AGO   .J0
+.DSECT   ANOP
+&NAM     DSECT
+.J0      ANOP
+         DC    F'0'                RESERVED                      Y02668
+JESUNITS DC    F'0'                POINTER TO UCB'S              Y02668
+JESWAA   DC    A(0)                ADDRESS OF THE SWA            Y02668
+*                                  MANAGER - LOCATE MODE         Y02668
+JESQMGR  DC    A(0)                ADDRESS OF SWA MANAGER        Y02668
+*                                  MOVE MODE                     Y02668
+*
+JESRESQM DC    A(0)                ENTRY POINT USED TO INTERFACE
+*                                  BETWEEN THE QMNGRIO MACRO AND
+*                                  THE RESIDENT SWA MNGR         Y02668
+JESSSREQ DC    A(0)                ADDRESS OF THE IEFSSREQ       Y02668
+*                                  ROUTINE                       Y02668
+JESSSCT  DC    A(0)                ADDRESS OF THE FIRST          Y02668
+*                                  SUBSYSTEM COMMUNICATIONS      Y02668
+*                                  TABLE                         Y02668
+JESPJESN DC    F'0'                NAME OF PRIMARY JOB ENTRY     Y02668
+*                                  SUBSYSTEM SET AT SYSGEN       Y02668
+JESALLOC DC    A(0)                DEVICE ALLOCATION ENTRY     @Z40FPPJ
+*                                  POINT USED BY INITIATOR     @Z40FPPJ
+*                                                              @Z40FPPJ
+JESUNALC DC    A(0)                DEVICE UNALLOCATION ENTRY   @Z40FPPJ
+*                                  POINT USED BY INITIATOR     @Z40FPPJ
+*                                                              @Z40FPPJ
+JESCATL  DC    A(0)                DEVICE ALLOCATION PRIVATE   @Z40FPPJ
+*                                  CATALOG ENTRY POINT         @Z40FPPJ
+*                                  USED BY INITIATOR           @Z40FPPJ
+JESNUCBS DC    F'0'                NUMBER OF UCB'S IN SYSTEM.  @Z40FPPJ
+*                                  USED BY DEVICE ALLOCATION   @Z40FPPJ
+*                                                              @G29ANSF
+JESSASTA DC    A(0)                ADDRESS OF SUBSYSTEM        @G29AN2F
+*                                  ALLOCATION SEQUENCE TABLE   @G29AN2F
+JESEDT   DC    A(0)                ADDRESS OF ALLOCATION       @G64QPSJ
+*                                  ELIGIBLE DEVICE TABLE       @G64QPSJ
+         DC    4F'0'               RESERVED                    @G64QPSJ
+         MEND   , */
+*    %JESCTBSL:  ;
+*/*                                                                  */
+*/* MACMEAN JESCT MEANS JOB ENTRY SUBSYSTEM COMMUNICATION TABLE      */
+*/* MACCOMP Y-2 SC1B8/PZD16                                  @G64QPSJ*/
+*/* MACSTAT Y-2 78157/G64QPSJ                                @G64QPSJ*/
+*/*                                                                  */
+*/* STATUS - VS2 SYSTEM CONTROL PROGRAM 2                    @G64QPSJ*/
+*/*                                                                  */
+*/* APAR OZ15019 IS SUPPORTED BY @Z40FPPJ                    @ZA15019*/
+*/* APAR OZ15019 IS SUPPORTED BY @Z40FPPJ                    @ZA15019*/
+*DECLARE
+*  1 JESCT    BASED(CVTJESCT),
+*/*                                                                  */
+*   2 *         CHAR(4),     /* RESERVED                 */
+*   2 JESUNITS  PTR(31),     /* POINTER TO UCB'S   Y02668 */
+*   2 JESWAA    PTR(31),     /* ADDRESS OF SWA
+*                               MANAGER - LOCATE MODE   Y02668 */
+*   2 JESQMGR   PTR(31),     /* ADDRESS OF SWA MANAGER
+*                               MOVE - MODE   Y02668 */
+*   2 JESRESQM  PTR(31),     /* ENTRY POINT USED TO
+*                               INTERFACE BETWEEN THE
+*                               QMNGRIO MACRO AND THE
+*                               RESIDENT SWA MANAGER    Y02668     */
+*   2 JESSSREQ   PTR(31),   /* ADDRESS OF THE IEFSSREQ ROUTINE Y02668 */
+*   2 JESSSCT    PTR(31),    /* ADDRESS OF THE FIRST SUBSYSTEM
+*                               COMMUNICATIONS TABLE    Y02668 */
+*   2 JESPJESN  CHAR(4),     /* NAME OF PRIMARY JOB ENTRY
+*                               SUBSYSTEM SET AT SYSGEN    Y02668 */
+*   2 JESALLOC   PTR(31),   /* DEVICE ALLOCATION ENTRY
+*                              POINT USED BY INITIATOR @Z40FPPJ*/
+*   2 JESUNALC   PTR(31),   /* DEVICE UNALLOCATION ENTRY POINT
+*                              USED BY INITIATOR        @Z40FPPJ*/
+*   2 JESCATL    PTR(31),   /*DEVICE ALLOCATION PRIVATE CATALOG
+*                             ENTRY POINT USED BY INITIATOR @Z40FPPJ*/
+*   2 JESNUCBS   FIXED(31), /*NUMBER OF UCB'S IN THE SYSTEM. USED BY
+*                             DEVICE ALLOCATION        @Z40FPPJ*/
+*   2 JESSASTA   PTR(31),   /*ADDRESS OF SUBSYSTEM ALLOCATION
+*                             SEQUENCE TABLE                 @G64QPSJ*/
+*   2 JESEDT     PTR(31),   /*ADDRESS OF ALLOCATION
+*                             ELIGIBLE DEVICE TABLE          @G64QPSJ*/
+*   2 *          FIXED(31), /* RESERVED                      @G64QPSJ*/
+*   2 *          FIXED(31), /* RESERVED                      @G64QPSJ*/
+*   2 *          FIXED(31), /* RESERVED                      @G64QPSJ*/
+*   2 *          FIXED(31); /* RESERVED                      @G64QPSJ*/
+*
+*                          /*  TO CALL THE SWA MANAGER , USE THE SWAREQ
+*                              MACRO. IT WILL ISSUE A 'CALL SWAMGR' */
+*    DECLARE  SWAMGR  ENTRY  BASED(JESWAA);
+*                          /* TO CALL THE SUBSYSTEM, USE THE
+*                             IEFSSREQ MACRO. IT WILL ISSUE A
+*                             'CALL SSREQ'                 */
+*    DECLARE  SSREQ  ENTRY  BASED(JESSSREQ) OPTIONS(VLIST);
+*    DECLARE  IEFW21SD ENTRY  BASED(JESALLOC);  /* TO ENTER
+*                       ALLOCATION ISSUE CALL IEFW21SD.      @Z40FPPJ*/
+*    DECLARE  IEFBB410 ENTRY  BASED(JESUNALC);  /* TO ENTER UNALLOCATION
+*                              ISSUE CALL IEFBB410.          @Z40FPPJ*/
+*    DECLARE  IEFAB4F5 ENTRY  BASED(JESCATL);  /* TO ENTER PRIVATE
+*                              CATALOG ALLOCATION ISSUE CALL
+*                              IEFAB4F5                      @Z40FPPJ*/

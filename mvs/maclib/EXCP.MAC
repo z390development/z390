@@ -1,0 +1,10 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    EXCP  &IOB
+         AIF   ('&IOB' EQ '').E1
+&NAME    IHBINNRA &IOB                      LOAD REG 1
+         SVC   0                                 ISSUE SVC FOR EXCP
+         MEXIT
+.E1      IHBERMAC 01,039                    IOB MISSING
+         MEND
+

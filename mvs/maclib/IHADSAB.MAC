@@ -1,0 +1,193 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*         %GOTO  DSABPLS1;             /*
+          MACRO
+          IHADSAB
+* */
+* %DSABPLS1:  ;
+* /*******************************************************************/
+* /*                                                                 */
+* /*                       IHADSAB                                   */
+* /*                                                                 */
+* /*               DATA SET ASSOCIATION BLOCK                        */
+* /*                                                                 */
+* /* MACMEAN DSAB MEANS DATA SET ASSOCIATION BLOCK                   */
+* /* MACCOMP Y-2 SC1B4/PZD82                                         */
+* /* MACSTAT Y-2 73082/016236                                        */
+* /*                                                                 */
+* /* SUPPORT CODE - OZ28413,OZ60075                          @ZA60075*/
+* /*                                                                 */
+* /* THE DATA SET ASSOCIATION BLOCK, DSAB, AND ITS CORRESPONDING     */
+* /* TIOT DD ENTRY CONTAIN INFORMATION WHICH SERVE AS AN INTERFACE   */
+* /* BETWEEN ALLOCATION (BOTH STEP AND DYNAMIC) AND OTHER SYSTEM     */
+* /* COMPONENTS. DSAB'S ARE ELEMENTS OF A NON-CONTIGUOUS, DOUBLE     */
+* /* THREADED CHAIN. THIS CHAIN IS HEADED BY A QUEUE DESCRIPTOR      */
+* /* BLOCK WHICH IS ADDRESSED BY A FIELD IN THE JSCB, JSCBDSAB.      */
+* /* THE TIOT ENTRY IS ADDRESSED FROM THE DSAB FIELD, DSABTIOT.      */
+* /*                                                                 */
+* /*******************************************************************/
+* /* IHADSAB - C - DEFINE DSABVVDS FOR ICF CATALOG CONTROL   @ZA60075*/
+* /* IHADSAB - C - MERGED BACK TO REL 3.7                    @ZA28413*/
+* /* C 031005, 064040                                        @ZD03010*/
+*         %GOTO DSABPLS2;              /*
+DSAB    DSECT
+         DS    0F
+DSABID   DS    CL4                     IN-CORE ID,CHARACTERS 'DSAB'
+DSABFCHN DS    F                       NEXT DSAB PTR, 0 IF LAST
+DSABBCHN DS    F                       PREVIOUS DSAB PTR,0 IF FIRST
+DSABLNTH DS    H                       LENGTH OF DSAB
+DSABOPCT DS    H                       OPEN DCB COUNT FOR TIOT DD ENTRY
+DSABTIOT DS    F                       TIOT DD ENTRY PTR
+DSABRS01 DS    C                       RESERVED
+DSABSSVA DS    CL3                     SWA VIRTUAL ADDRESS OF SIOT
+DSABGIDP DS    F                       DEVICE GROUP-ID LIST PTR
+DSABANMP DS    F                       &NAME OR GDG-ALL DSNAME PTR,
+*                                      0 IF NONE
+DSABORG  DS    0CL2                    DATA SET  ORGANIZATION
+DSABORG1 DS    B                       1ST BYTE OF DSORG FLAGS
+DSABIS   EQU   X'80'                   INDEXED SEQUENTIAL ORGANIZATION
+DSABPS   EQU   X'40'                   PHYSICAL SEQUENTIAL ORGANIZATION
+DSABDA   EQU   X'20'                   DIRECT ACCESS ORGANIZATION
+DSABCX   EQU   X'10'                   COMMUNICATIONS LINE GROUP
+DSABCQ   EQU   X'08'                   DIRECT ACCESS MESSAGE QUEUE
+DSABMQ   EQU   X'04'                   PROBLEM PROGRAM MESSAGE QUEUE
+DSABPO   EQU   X'02'                   PARTITIONED ORGANIZATION
+DSABU    EQU   X'01'                   UNMOVEABLE
+DSABORG2 DS    B                       2ND BYTE OF DSORG FLAGS
+DSABGS   EQU   X'80'                   GRAPHICS ORGANIZATION
+DSABTX   EQU   X'40'                   TCAM LINE GROUP
+DSABTQ   EQU   X'20'                   TCAM MESSAGE QUEUE
+DSABAM   EQU   X'08'                   VSAM
+DSABTR   EQU   X'04'                   TCAM 3705
+DSABFLG1 DS    B                       FLAGS-RESTORED BY RESTART
+DSABDALC EQU   X'80'                   DYNAMICALLY ALLOCATED
+DSABPALC EQU   X'40'                   PERMANENTLY ALLOCATED ATTRIBUTE
+DSABDCNV EQU   X'20'                   DYNAMICALLY CONVERTED
+DSABCONV EQU   X'10'                   CONVERTIBLE ATTRIBUTE
+DSABDCAT EQU   X'08'                   DYNAMICALLY CONCATENATED
+DSABPCAT EQU   X'04'                   PERMANENTLY CONCATENATED
+DSABCATM EQU   X'02'                   CONCATENATED GROUP MEMBER
+DSABNUSE EQU   X'01'                   IN-USE ATTRIBUTE
+DSABFLG2 DS    B                       FLAGS-RESTORED BY RESTART
+DSABOPEN EQU   X'80'                   DATA SET HAS BEEN OPENED
+DSABIRM  EQU   X'40'                   D.S. REVERSED MERGED FOR INPUT
+DSABUNAL EQU   X'20'                   UNALLOCATE WHEN CLOSED
+DSABFLG3 DS    B                       FLAGS-NOT RESTORED BY RESTART
+DSABDEFR EQU   X'80'                   DEFERRED MOUNTING
+DSABPASS EQU   X'40'                   PASS/RETAIN IND         @ZD03010
+DSABVAM  EQU   X'20'                   VAM DATA SET
+DSABVMSC EQU   X'10'                   VAM PAGING SPACE RELEASED
+DSABCATL EQU   X'08'                   DATA SET IS A CATALOG
+DSABJSCT EQU   X'04'                   JOBCAT OR STEPCAT DATA SET
+DSABVVDS EQU   X'02'                   VVDS - ICF CATALOG      @ZA60075
+DSABFLG4 DS    B                       FLAGS-NOT RESTORED BY RESTART
+DSABCKDS EQU   X'80'                   THIS IS A CHECKPT DATA SET
+DSABCKVL EQU   X'40'                   VOLUME CONTAINING CHECKPT
+*                                      DATA SET IS SECURE
+DSABCKSI EQU   X'20'                   SECURITY INTERFACE EXISTS FOR
+*                                      THE CHECKPT DATA SET
+DSABRS02 DS    2C                      RESERVED
+DSABTCBP DS    F                       TCB UNDER WHICH SET IN-USE
+DSABPTTR DS    F                       RELATIVE TTR OF DATA SET
+*                                      PASSWORD
+DSABSSNM DS    CL4                     SUB-SYSTEM NAME
+DSABSSCM DS    F                       SUB-SYSTEM COMMUNICATION
+*                                      AREA POINTER
+DSABDCBM DS    CL6                     BIT MAP OF DCB FIELDS
+DSABRS03 DS    CL2                     RESERVED
+DSABSIOT DS    F                       SIOT IN-CORE ADDRESS
+DSABRS04 DS    F                       RESERVED
+DSABL    EQU   *-DSAB                  LENGTH OF DSECT
+DSABANMI DSECT                         ALTERNATE DSNAME INFORMATION
+DSABANML DS    FL1                     LENGTH OF ALTERNATE DSNAME
+DSABANAM DS    C                       ALTERNATE  DSNAME
+DSABANL  EQU   *-DSABANMI              LENGTH OF DSECT
+DSABGIDL DSECT                         DEVICE GROUP-ID LIST
+DSABLLEN DS    F                       DEVICE GROUP-ID LIST LENGTH
+DSABGRID DS    CL4                     DEVICE GROUP-ID
+DSABGL   EQU   *-DSABGIDL              LENGTH OF DSECT
+         MEND  ,  */
+* %DSABPLS2:   ;
+*
+* DCL
+*   1 DSAB BASED(DSABPTR) BDY(WORD),
+*     2 DSABID CHAR(4),                /*IN-CORE ID, CHARACTERS DSAB */
+*     2 DSABFCHN PTR(31),              /*NEXT DSAB PTR,0 IF LAST     */
+*     2 DSABBCHN PTR(31),              /*PREVIOUS DSAB PTR,0 IF FIRST*/
+*     2 DSABLNTH FIXED(15),            /*LENGTH OF DSAB              */
+*     2 DSABOPCT FIXED(15),            /*OPEN DCB COUNT FOR DD ENTRY */
+*     2 DSABTIOT PTR(31),              /*TIOT DD ENTRY PTR           */
+*     2 DSABRS01 CHAR(1),              /*RESERVED                    */
+*     2 DSABSSVA PTR(24),              /*SWA VIRTUAL ADDRESS OF SIOT */
+*     2 DSABGIDP PTR(31),              /*DEVICE GROUP-ID LIST PTR    */
+*     2 DSABANMP PTR(31),              /*&NAME OR GDG-ALL DSNAME PTR,
+*                                        0 IF NONE                   */
+*     2 DSABORG CHAR(2) BDY(HWORD),    /*DATA SET ORGANIZATION       */
+*       3 DSABORG1 CHAR(1),            /*FIRST DSORG BYTE            */
+*         4 DSABIS BIT(1),             /*INDEXED SEQUENTIAL ORGANIZ. */
+*         4 DSABPS BIT(1),             /*PHYSICAL SEQUENTIAL ORGANIZ.*/
+*         4 DSABDA BIT(1),             /*DIRECT ACCESS ORGANIZATION  */
+*         4 DSABCX BIT(1),             /*COMMUNICATIONS LINE GROUP   */
+*         4 DSABCQ BIT(1),             /*DIRECT ACCESS MESSAGE QUEUE */
+*         4 DSABMQ BIT(1),             /*TELECOMMUNIC. MSG. QUEUE    */
+*         4 DSABPO BIT(1),             /*PARTITIONED ORGANIZATION    */
+*         4 DSABU BIT(1),              /*UNMOVEABLE                  */
+*       3 DSABORG2 CHAR(1),            /*SECOND DSORG BYTE           */
+*         4 DSABGS BIT(1),             /*GRAPHICS ORGANIZATION       */
+*         4 DSABTX BIT(1),             /*TCAM LINE GROUP             */
+*         4 DSABTQ BIT(1),             /*TCAM MESSAGE QUEUE          */
+*         4 * BIT(1),                  /*RESERVED                    */
+*         4 DSABAM BIT(1),             /*VSAM                        */
+*         4 DSABTR BIT(1),             /*TCAM 3705                   */
+*         4 * BIT(2),                  /*RESERVED                    */
+*     2 DSABFLG1 CHAR(1),              /*FLAGS-RESTORED BY RESTART   */
+*       3 DSABDALC BIT(1),             /*DYNAMICALLY ALLOCATED       */
+*       3 DSABPALC BIT(1),             /*PERMANENTLY ALLOCATED
+*                                        ATTRIBUTE                   */
+*       3 DSABDCNV BIT(1),             /*DYNAMICALLY CONVERTED       */
+*       3 DSABCONV BIT(1),             /*CONVERTIBLE ATTRIBUTE       */
+*       3 DSABDCAT BIT(1),             /*DYNAMICALLY CONCATENATED    */
+*       3 DSABPCAT BIT(1),             /*PERMANENTLY CONCATENATED
+*                                        ATTRIBUTE                   */
+*       3 DSABCATM BIT(1),             /*CONCATENATED GROUP MEMBER   */
+*       3 DSABNUSE BIT(1),             /*IN-USE ATTRIBUTE            */
+*     2 DSABFLG2 CHAR(1),              /*FLAGS-RESTORED BY RESTART   */
+*       3 DSABOPEN BIT(1),             /*DATA SET HAS BEEN OPENED    */
+*       3 DSABIRM BIT(1),              /*D.S. REVERSE MERGE FOR INPUT*/
+*       3 DSABUNAL BIT(1),             /*UNALLOCATED WHEN CLOSED     */
+*       3 * BIT(5),
+*     2 DSABFLG3 CHAR(1),              /*FLAG-NOT RESTORED BY RESTART*/
+*       3 DSABDEFR BIT(1),             /*DEFERRED MOUNTING           */
+*       3 DSABPASS BIT(1),             /*PASS/RETAIN IND     @ZD03010*/
+*       3 DSABVAM  BIT(1),             /*VAM DATA SET                */
+*       3 DSABVMSC BIT(1),             /*VAM PAGING SPACE RELEASED   */
+*       3 DSABCATL BIT(1),             /*DATA SET IS A CATALOG       */
+*       3 DSABJSCT BIT(1),             /*JOBCAT OR STEPCAT DATA SET  */
+*       3 DSABVVDS BIT(1),             /*VVDS - ICF CATALOG  @ZA60075*/
+*       3 * BIT(1),                    /*RESERVED            @ZA60075*/
+*     2 DSABFLG4 CHAR(1),              /*FLAG-NOT RESTORED BY RESTART*/
+*       3 DSABCKDS BIT(1),             /*THIS IS A CHECKPT DATA SET  */
+*       3 DSABCKVL BIT(1),             /*VOLUME CONTAINING CHECKPT
+*                                        DATA SET IS SECURE          */
+*       3 DSABCKSI BIT(1),             /*SECURITY INTERFACE EXISTS
+*                                        FOR THE CHECKPT DATA SET    */
+*       3 *  BIT(5),                   /*RESERVED                    */
+*     2 DSABRS02 CHAR(2),              /*RESERVED                    */
+*     2 DSABTCBP PTR(31),              /*TCB UNDER WHICH SET IN-USE  */
+*
+*     2 DSABPTTR FIXED(31),            /*RELATIVE TTR OF DATA SET
+*                                        PASSWORD                    */
+*     2 DSABSSNM CHAR(4),              /*SUB-SYSTEM NAME             */
+*     2 DSABSSCM PTR(31),              /*SUB-SYSTEM COMMUNICATION
+*                                        AREA POINTER                */
+*     2 DSABDCBM CHAR(6),              /*BIT MAP OF DCB FIELDS       */
+*     2 DSABRS03 CHAR(2),              /*RESERVED                    */
+*     2 DSABSIOT PTR(31),              /*IN-CORE ADDRESS OF SIOT     */
+*     2 DSABRS04 FIXED(31);            /*RESERVED                    */
+* DCL
+*   1 DSABANMI BASED(DSABANMP),        /*ALTERNATE DSNAME INFORMATION*/
+*     2 DSABANML PTR(8),               /*LENGTH OF ALTERNATE DSNAME  */
+*     2 DSABANAM CHAR(*);              /*ALTERNATE DSNAME            */
+* DCL
+*   1 DSABGIDL BASED(DSABGIDP),        /*DEVICE GROUP-ID LIST        */
+*     2 DSABLLEN FIXED(31),            /*DEVICE GROUP-ID LIST LENGTH */
+*     2 DSABGRID (*) CHAR(4);          /*DEVICE GROUP-ID             */

@@ -1,0 +1,66 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 12/30/05 RPI49  TEST REDEFINE OF INSTRUCTION VIA INLINE MACRO 
+* 01/22/06 RPI178 TEST MACRO DEFINING LOCAL OVERIDING GLOBAL  
+* 01/22/06 RPI179 TEST MACRO EXPANDING ARRAYS  
+*********************************************************************
+TESTMAC3 SUBENTRY
+         WTO   'TESTMAC3 - TEST REDEFINE INSTRUCTION VIA INLINE MACRO'
+* TEST REDEFINE OF B AS BRC
+         MACRO
+&N       B     &P1
+&N       BRC   15,&P1          
+         MEND
+A        B     B   
+B        B     *+4
+* TEST REDEFINE OF GLOBAL AS LOCAL FOR NEW MACRO
+         MACRO
+         DEFG1
+         GBLC  &X
+&X       SETC  'GLOBAL'
+         MNOTE 'DEFG1 X=&X'
+         MEND
+         DEFG1
+         MACRO
+         DEFL1
+         LCLC  &X
+&X       SETC  'LOCAL'
+         MNOTE 'DEFL1 X=&X'
+         MEND
+         DEFL1
+         MACRO
+         DEFG2
+         GBLC  &X
+         MNOTE 'DEFG2 X=&X'
+         MEND
+         DEFG2
+* TEST MACRO ARRAY EXPANSION
+         LCLA  &A(10),&B(10)
+&A(1)    SETA  1
+&A(10)   SETA  10
+&A(15)   SETA  15
+&B(1)    SETA  2
+&B(10)   SETA  20
+&B(15)   SETA  25
+&B(25)   SETA  &B(35)  EXPAND TWICE IN ONE STATEMENT
+         AIF   (&A(1)  NE 1).ERR
+         AIF   (&A(10) NE 10).ERR
+         AIF   (&A(15) NE 15).ERR
+         AIF   (&B(1)  NE 2).ERR
+         AIF   (&B(10) NE 20).ERR
+         AIF   (&B(15) NE 25).ERR
+         AIF   (&B(25) NE 0).ERR
+         MNOTE 'A AND B EXPANSION OK'
+         AGO   .OK
+.ERR     MNOTE 12,'EXPANSION ERROR'
+         MEXIT
+.OK      ANOP
+
+         WTO   'TESTMAC3 ENDED OK'
+         SUBEXIT
+         END

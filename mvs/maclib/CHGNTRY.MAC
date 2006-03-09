@@ -1,0 +1,171 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    CHGNTRY  &LIST,&LSTYP,&ENTID,&NO,&STAT
+         LCLA  &CBAD(1),&NO1,&DLST
+         LCLB  &SW2
+         LCLC  &X
+&X       SETC  '&SYSNDX'
+&DLST    SETA  0
+&SW2     SETB  0
+.*
+&NAME    DS    0H
+         AIF   ('&LIST'(1,1) EQ '(').REG1
+         LA    1,&LIST
+         AGO   .T2
+.REG1    AIF   ('&LIST(1)' EQ '1').T2
+         LR    1,&LIST(1)
+.*
+.T2      AIF   ('&LSTYP' EQ 'DIALST').DIAL
+         AIF   ('&LSTYP' EQ 'SWLST').SWLST                         000L
+         AIF   ('&LSTYP' EQ 'IDLST').ER4
+         AIF   ('&LSTYP' EQ 'SSALST' OR '&LSTYP' EQ 'SSAWLST').SSA 000A
+         AIF   ('&LSTYP' EQ 'AUTOLST' OR '&LSTYP' EQ 'AUTOWLST').SSA
+         AIF   ('&LSTYP' EQ 'ATTLST').ANR
+.*
+.T3      AIF   ('&ENTID'(1,1)  EQ '(').RSP
+         AIF   ('&NO'(1,1) EQ '(').RSP8
+&CBAD(1) SETA  ((&NO+1)*&ENTID)-1+&DLST
+.TSTSKP  AIF   ('&STAT' NE 'SKIP').ACT
+         OI    &CBAD(1)(1),X'40'    SET SKIP FLAG
+         AGO   .FIN
+.ACT     AIF   ('&STAT' NE 'ACTIVATE').ER3
+         NI    &CBAD(1)(1),X'BF'    SET ACTIVATE FLAG
+         AGO   .FIN
+.RSP     ANOP
+         AIF   (T'&ENTID(1) NE 'N').SK1
+         AIF   ('&ENTID(1)' LT '2').ER1
+.SK1     LR    15,&ENTID(1)
+         AIF   ('&NO'(1,1) EQ '(').RSP9
+&NO1     SETA  (&NO+1)
+         LA    14,&NO1
+.MULT    ANOP
+         MR    14,14
+         AIF   (&SW2).T5
+         BCTR  15,0
+.T5      ANOP
+&CBAD(1) SETA  0
+         AR    1,15
+         AGO   .TSTSKP
+.RSP8    ANOP
+         LA    15,&ENTID
+         AIF   (T'&NO(1) NE 'N').SK2
+.RSP9    AIF   ('&NO(1)' LT '2').ER2
+.SK2     LA    14,1(&NO(1))
+         AGO   .MULT
+.*
+.DIAL    ANOP
+&SW2     SETB  1
+&DLST    SETA  1
+         SR    0,0
+         IC    0,0(1)
+         AR    1,0
+         AGO   .T3
+.*                                                                 000L
+.SWLST   ANOP                                                      000L
+         AIF   ('&ENTID'(1,1) EQ '(').REG                          000L
+         AIF   ('&NO'(1,1) EQ '(' OR T'&NO(1) EQ 'N').ER5          000L
+         AIF   ('&NO' NE 'ACTIVATE' AND '&NO' NE 'DISC' AND '&NO' NE   C
+               'POST').ER6                                         000L
+         LA    15,&ENTID                GET POSITION               000L
+.CNTBYT  ANOP                                                      000L
+         SR    0,0                                                 000L
+         IC    0,6(1)                   GET READ-IN-AREA LENGTH    000L
+         AR    1,0                      ADD LENGTH TO ADDR OF LIST 000L
+         IC    0,8(1)                   GET ID COUNT               000L
+         AR    1,0                      ADD TO LIST ADDRESS        000L
+         LA    1,8(1)                   POINT TO ENTRY-1           000L
+         AIF   ('&LIST'(1,1) EQ '(').LODREG                        000L
+         IC    0,&LIST+5                GET ENTRY LENGTH           000L
+.MULPLY  ANOP                                                      000L
+         MR    14,0                     POSITION X ENTRY LENGTH    000L
+         AR    1,15                     ADD TO HEADER              000L
+         AIF   ('&NO' EQ 'DISC').DISCON                            000L
+         AIF   ('&NO' EQ 'POST').POST                              000L
+         MVI   0(1),X'00'               ACTIVATE                   000L
+         AGO   .FIN                                                000L
+.DISCON  ANOP                                                      000L
+         MVI   0(1),X'01'               DISCONNECT                 000L
+         AGO   .FIN                                                000L
+.POST    ANOP                                                      000L
+         MVI   0(1),X'02'               POST                       000L
+         AGO   .FIN                                                000L
+.REG     ANOP                                                      000L
+         AIF   (T'&ENTID(1) NE 'N').SK3                            000L
+         AIF   ('&ENTID(1)' LT '2').ER1                            000L
+.SK3     ANOP                                                      000L
+         LR    15,&ENTID(1)             GET POSITION               000L
+         AGO   .CNTBYT                                             000L
+.LODREG  ANOP                                                      000L
+         LR    2,&LIST(1)               GET LIST ADDRESS           000L
+         IC    0,5(2)                   GET ENTRY LENGTH           000L
+         AGO   .MULPLY                                             000L
+.*                                                                 000A
+.SSA     ANOP                                                      000A
+         AIF   ('&ENTID'(1,1) EQ '(' AND '&ENTID'(K'&ENTID,1)          C
+               EQ ')').SSAR                                        000A
+         LA    0,&ENTID                                            000A
+         AGO   .STATUS                                             000A
+.SSAR    AIF   ('&ENTID(1)' EQ '0').STATUS                         000A
+         LR    0,&ENTID(1)                                         000A
+.STATUS  CNOP  2,4                                                 000A
+         AIF   ('&STAT' EQ 'SKIP').CALL                            000A
+         AIF   ('&STAT' NE 'ACTIVATE').ER3                         000A
+         O     1,*+18                                              000A
+.CALL    L     15,*+10                                             000A
+         BALR  14,15                                               000A
+         B     *+12                                                000A
+         DC    V(IECTCHGN)                                         000A
+         DC    X'80000000'                                         000A
+         MEXIT                                                     000A
+.*                                                                 000A
+.ANR     L     15,44(1)            GET DEB ADDR
+         L     14,24(15)           GET DCB ADDR FROM DEB
+         LA    14,0(14)            CLEAR HIGH-ORDER BYTE
+         LA    1,0(1)              CLEAR HIGH-ORDER BYTE
+         CR    1,14                DCB-DEB LOOP COMPLETE
+         BNE   IECA&X              NO, GIVE RETURN CODE = 8
+         LR    1,15                DEB ADDR TO REG 1
+.*
+         AIF   ('&ENTID'(1,1) EQ '(').ANRENT
+         LA    15,&ENTID           GET RLN
+.CHKRLN  SR    14,14
+         IC    14,16(1)            GET NUMBER OF EXTENTS
+         CR    15,14               IS RLN VALID
+         BH    IECA&X              NO, GIVE RETURN CODE = 8
+         SLA   15,2                MULTIPLY RLN BY 4
+         L     1,28(15,1)          GET ADDR OF UCB FROM DEB
+         SR    0,0
+         AIF   ('&STAT' EQ 'SKIP').ANRSKP
+         AIF   ('&STAT' NE 'ACTIVATE').ER3
+         LA    15,3                FUNCTION IS ACTIVATE
+.ESR     SVC   116                 INVOKE ESR
+         B     IECB&X              BRANCH TO EXIT
+IECA&X   LA    15,8                SET RETURN CODE OF 8
+IECB&X   EQU   *
+         MEXIT
+.*
+.ANRENT  AIF   (T'&ENTID(1) NE 'N').ANR1                        YA01245
+         AIF   ('&ENTID(1)' LT '2').ER1
+.ANR1    LR    15,&ENTID(1)        GET RLN
+         AGO   .CHKRLN
+.*
+.ANRSKP  LA    15,2                FUNCTION IS SKIP
+         AGO   .ESR
+.*
+.ER1     MNOTE 12,'***  IHB002  INVALID LISTNTRY OPERAND SPECIFIED-&ENTX
+               ID'
+         MEXIT
+.ER2     MNOTE 12,'***  IHB002  INVALID NUMCHARS OPERAND SPECIFIED-&NO'
+         MEXIT
+.ER3     MNOTE 12,'***  IHB002  INVALID SKIP/ACTIVATE OPERAND SPECIFIEDX
+               -&STAT'
+         MEXIT
+.ER4     MNOTE 12,'***  IHB002  INVALID TYPE OPERAND SPECIFIED-IDLST'
+         MEXIT
+.ER5     MNOTE  12,'*** IHB002  INVALID OPERAND SPECIFIED'         000L
+         MEXIT                                                     000L
+.ER6     MNOTE 12,'***  IHB002  INVALID ACTIVATE/DISC/POST OPERAND     X
+               SPECIFIED'                                          000L
+.FIN     ANOP
+         MEND
+

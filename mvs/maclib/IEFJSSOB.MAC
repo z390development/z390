@@ -1,0 +1,675 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/********************************************************************/
+*/*                                                                  */
+*/*       SUBSYSTEM OPTIONS BLOCK (SSOB)                             */
+*/*                                                                  */
+*/********************************************************************/
+* /*                                                                 */
+* /*  STATUS - FUNCTIONAL EXTENSIONS SPLIT OFF INTO SEPARATE @ZA34144*/
+* /*           MACROS                                        @ZA34144*/
+* /*                                                                 */
+* /*  THE SSOB IS USED TO REQUEST A PARTICULAR FUNCTION FROM         */
+* /*  A VS/2 SUBSYSTEM.  THE FORMAT OF THIS CONTROL BLOCK IS A FIXED */
+* /*  LENGTH HEADER SECTION WHICH POINTS TO A FUNCTION DEPENDENT     */
+* /*  SECTION.                                                       */
+* /*                                                                 */
+* /*  THE PARTICULAR FUNCTION REQUESTED IS INDICATED BY A FUNCTION   */
+* /*  ID IN THE HEADER.  PLS/2 CONSTANTS DEFINE THE VARIOUS ID'S.    */
+* /*                                                                 */
+* /*  MACRO VARIABLES ARE DEFINED TO CONTROL THE INNER MACRO @ZA34144*/
+* /*  CALLING OF THE SSOB HEADER AND FUNCTIONAL EXTENSIONS.  @ZA34144*/
+* /*  TO OBTAIN THE HEADER, SET THE VARIABLE 'SSOBSSOB' TO ANY NON-  */
+* /*  NULL/BLANK CHARACTER, E.G., %SSOBSSOB = 'BASED'.               */
+* /*  THIS VALUE WILL BE USED TO ASSIGN ATTRIBUTES TO THE SSOB.      */
+* /*  %SSOBSSOB = 'BDY(WORD)' WILL CAUSE PL/S TO GET                 */
+* /*  STORAGE FOR THE SSOB. THE ATTRIBUTES OF THE FUNCTION           */
+* /*  DEPENDENT SECTIONS ARE SIMILARLY SET.                          */
+* /*                                                                 */
+* /*  CONSTANTS DEFINING THE POSSIBLE VALUES OF SSOBRETN ARE         */
+* /*  GENERATED WITH EACH FUNCTION DEPENDENT SECTION THE             */
+* /*  VARIABLES WHICH CAN BE SET TO OBTAIN THE FUNCTION DEPENDENT    */
+* /*  SECTIONS ARE -                                                 */
+* /*                                                                 */
+* /*      SSOBSO - ACCESS SYSOUT DATA SETS                           */
+* /*      SSOBCS - FIND THE STATUS OF A JOB, OR CANCEL A JOB         */
+* /*               %CSARAYSZ DEFINES THE SIZE OF THE C/S ARRAY       */
+* /*               -SET %CSARAYSZ='*' IF THE C/S EXTENSION IS        */
+* /*                MAPPING STORAGE.                                 */
+* /*               -SET %CSARAYSZ TO THE ACTUAL ARRAY SIZE IF        */
+* /*                PLS IS GETTING STORAGE.                          */
+* /*      SSOBJS - SUBSYSTEM JOB SELECTION                           */
+* /*      SSOBAL - ALLOCATION/UNALLOCATION OF SYSOUT DATA SETS       */
+* /*      SSOBEN - NOTIFY SUBSYSTEM OF END OF MEMORY                 */
+* /*      SSOBET - NOTIFY SUBSYSTEM OF END OF TASK                   */
+* /*      SSOBWT - NOTIFY SUBSYSTEM OF A WRITE TO OPERATOR           */
+* /*      SSOBCM - NOTIFY SUBSYSTEM OF AN OPERATOR COMMAND           */
+* /*      SSOBUS - REQUEST SUBSYSTEM TO VERIFY A REMOTE DESTINATION  */
+* /*      SSOBJT - NOTIFY SUBSYSTEM OF JOB TERMINATION               */
+* /*      SSOBRQ - REQUEST SUBSYSTEM TO RE-ENQUEUE A JOB             */
+* /*      SSOBDM - REQUEST SUBSYSTEM TO DELETE OPERATOR MESSAGE      */
+* /*      SSOBVS - REQUEST (MSTR) SUBSYSTEM TO VERIFY SUBSYSTEM NAME */
+* /*      SSOBDA - OPEN/CLOSE/CHECKPOINT RESTART                     */
+* /*      SSOBRR - REQUEST/RETURN JOBID                              */
+* /*      SSOBCF - FAILING SVC34 COMMAND                     @Z30BPSV*/
+* /*      SSOBSI - NOTIFY SUBSYSTEM OF STEP INITIATION       @Y02BPSD*/
+* /*      SSOBDY - DYNAMIC ALLOCATION/JES3 EXIT              @Y02BPSD*/
+* /*      SSOBCA - COMMON ALLOCATION/JES3 EXIT               @Y02BPSD*/
+* /*      SSOBCU - COMMON UNALLOCATION/JES3 EXIT             @Y02BPSD*/
+* /*      SSOBDD - CHANGE DDNAME/JES3 EXIT                   @Y02BPSD*/
+* /*      SSOBNQ - CHANGE ENQ USE ATTRIBUTE/JES3 EXIT        @Y02BPSD*/
+* /*      SSOBDR - DYNAMIC DEVICE RECONFIGURATION/JES3 EXIT  @Y02BPSD*/
+* /*      SSOBMO - MASS STORAGE VOLUME CONTROL JES3 EXIT     @G18MP21*/
+* /*      SSOBMS - MSSC MESSAGE TASK JES3 EXIT               @G18MP21*/
+* /*      SSOBCI - CONVERTER SUBSYS KEYWORD EXIT             @G29AN2F*/
+* /*      SSOBAG - ALLOCATION GROUP SUBSYSTEM REQUESTS       @G29AN2F*/
+* /*                                                                 */
+* /*                                                                 */
+* /*******************************************************************/
+*  %GOTO PLSSSOB;                 /*
+         MACRO
+         IEFJSSOB &EXT,&CONTIG=
+.**********************************************************************
+.*
+.*  MACRO NAME = IEFJSSOB
+.*
+.*  DESCRIPTIVE NAME = SUBSYSTEM OPTIONS BLOCK (SSOB) MAPPING
+.*                     GENERATOR
+.*
+.*  FUNCTION = GENERATE MAPPING FOR THE SSOB
+.*
+.*  OPERATION = THE SSOB CONSISTS OF TWO PARTS - A FIXED HEADER
+.*              AND A VARIABLE EXTENSION THAT IDENTIFIES INFORMATION
+.*              PERTINANT TO THE FUNCTION BEING REQUESTED.
+.*
+.*              THE ISSUER OF IEFJSSOB MAY REQUEST THE FIXED HEADER
+.*              ONLY OR THE HEADER PLUS ANY OF THE SSOB EXTENSIONS.
+.*              ADDITIONALLY, THE ISSUER MAY SPECIFY WHETHER THE
+.*              EXTENSION IS TO BE CONTIGUOUS WITH THE FIXED HEADER.
+.*              IF IT IS TO BE CONTIGUOUS, NO DSECT CARD IS GENERATED
+.*              BETWEEN THE HEADER AND EXTENSIONS.  OTHERWISE, A
+.*              DSECT CARD IS GENERATED.
+.*
+.*              EACH EXTENSION AFTER THE FIRST IS ORG'ED BACK TO THE
+.*              BEGINNING OF THE FIRST EXTENSION.
+.*
+.*  INPUT = &EXT - A SUBLIST OF 2-CHARACTER SSOB EXTENSION
+.*                 IDENTIFIERS.  AN EXTENSION MAPPING IS GENERATED
+.*                 FOR EACH ID SPECIFIED.  IF &EXT IS NOT SPECIFIED,
+.*                 ONLY THE SSOB HEADER IS GENERATED.
+.*
+.*          &CONTIG - A KEYWORD PARAMETER WITH VALID VALUES OF
+.*                 YES OR NO.  IF NOT SPECIFIED, THE DEFAULT IS
+.*                 YES.  'YES' CAUSES THE EXTENSION TO BE CONTIGUOUS
+.*                 WITH THE HEADER (NO DSECT CARD IS GENERATED).
+.*                 'NO' GENERATES A DSECT CARD.
+.*
+.*  EXIT-NORMAL
+.*    CONDITIONS = SSOB MAPPING IS GENERATED
+.*    OUTPUT = SSOB HEADER AND OPTIONAL EXTENSIONS
+.*
+.*  EXIT-ERROR
+.*    CONDITIONS = -INVALID &CONTIG PARAMETER
+.*                 -INVALID &EXT PARAMETER
+.*                 -DUPLICATE &EXT PARAMETERS SPECIFIED
+.*    OUTPUT = NO MAPPING IS GENERATED
+.*
+.*  CHANGE ACTIVITY = Y02668,YM02677,YM02726,Y02886,YM04976,YM06023,
+.*                    YM06036,@Y30OPSD,@Y02BPSD,Z30CPPH,Z309PSV,ZM30478
+.*                    OZ03626,OZ08725,OZ04791,OZ06466,OZ06623
+.*                    @G18MP21,G29AN2F,ZM44655,OZ28624         @ZA28624
+.*                    OZ34144                                  @ZA34144
+.*
+.*  MNOTES = 'CONTIG=&CONTIG - INVALID PARAMETER'
+.*           '&EXT(&K) - INVALID PARAMETER'
+.*           '&EXT(&K) - DUPLICATE PARAMETERS'
+.*
+.*  SEVERITY CODES = 12 FOR ALL MNOTES
+.*
+.**********************************************************************
+***********************************************************************
+*                                                                     *
+*               SUBSYSTEM OPTIONS BLOCK (SSOB)                        *
+*                                                                     *
+***********************************************************************
+*
+*  STATUS - FUNCTIONAL EXTENSIONS SPLIT OFF INTO SEPERATE      @ZA34144
+*             MACROS                                           @ZA34144
+*
+*  THE SUBSYSTEM OPTIONS BLOCK (SSOB) IS USED TO REQUEST A
+*  PARTICULAR FUNCTION FROM A VS/2 SUBSYSTEM.  THE FORMAT IS
+*  A FIXED LENGTH HEADER SECTION FOLLOWED BY A FUNCTION-DEPENDENT
+*  EXTENSION.
+*
+*  THE MACRO CALL IS OF THE FOLLOWING FORM -
+*
+*        IEFJSSOB (EXTID1,EXTID2,...),CONTIG=YES/NO
+*
+*        EXTID1,...
+*        THE EXTENSION IDS SPECIFY WHICH FUNCTION-DEPENDENT
+*        EXTENSIONS ARE TO BE GENERATED.
+*        IF NO EXTENSION IDS ARE SPECIFIED, ONLY THE SSOB FIXED
+*        HEADER IS GENERATED.
+*
+*        CONTIG=NO - RESULTS IN A DSECT CARD BEING GENERATED
+*        BETWEEN THE FIXED HEADER AND THE EXTENSION.
+*
+*        CONTIG=YES - RESULTS IN THE EXTENSION BEING CONTIGUOUS
+*        WITH THE FIXED HEADER. (ALSO THE DEFAULT)
+*
+*  THE FOLLOWING EXTENSION IDS GENERATE THE INDICATED FUNCTION-
+*  DEPENDENT EXTENSIONS -
+*
+*        SO - ACCESS SYSOUT DATA SETS
+*        CS - FIND THE STATUS OF A JOB, CANCEL A JOB
+*        JS - SUBSYSTEM JOB SELECTION
+*        AL - ALLOCATION/UNALLOCATION OF SYSOUT DATA SETS
+*        EN - NOTIFY SUBSYSTEM OF END OF MEMORY
+*        ET - NOTIFY SUBSYSTEM OF END OF TASK
+*        WT - NOTIFY SUBSYSTEM OF A WRITE TO OPERATOR
+*        CM - NOTIFY SUBSYSTEM OF AN OPERATOR COMMAND
+*        US - REQUEST SUBSYSTEM TO VERIFY A REMOTE DESTINATION
+*        JT - NOTIFY SUBSYSTEM OF JOB TERMINATION
+*        RQ - REQUEST SUBSYSTEM TO RE-ENQUEUE A JOB
+*        DM - REQUEST SUBSYSTEM TO DELETE OPERATOR MESSAGE
+*        VS - REQUEST SUBSYSTEM (MASTER) TO VERIFY SUBSYSTEM NAME
+*        DA - OPEN/CLOSE/CHECKPOINT RESTART
+*        RR - REQUEST/RETURN JOBID
+*        CF - FAILING SVC34 COMMAND                            @Z30BPSV
+*        SI - NOTIFY SUBSYSTEM OF STEP INITIATION              @Y02BPSD
+*        DY - DYNAMIC ALLOCATION/JES3 EXIT                     @Y02BPSD
+*        CA - COMMON ALLOCATION/JES3 EXIT                      @Y02BPSD
+*        CU - COMMON UNALLOCATION/JES3 EXIT                    @Y02BPSD
+*        DD - CHANGE DDNAME/JES3 EXIT                          @Y02BPSD
+*        NQ - CHANGE ENQ USE ATTRIBUTE/JES3 EXIT               @Y02BPSD
+*        DR - DYNAMIC DEVICE RECONFIGURATION/JES3 EXIT         @Y02BPSD
+*        MO - MASS STORAGE VOLUME CONTROL JES3 EXIT            @G18MP21
+*        MS - MSSC MESSAGE TASK JES3 EXIT                      @G18MP21
+*        CI - CONVERTER SUBSYS KEYWORD EXIT                    @G29AN2F
+*        AG - ALLOCATION GROUP SUBSYSTEM REQUESTS              @G29AN2F
+*
+***********************************************************************
+.*
+.*  &N - NUMBER OF SSOB EXTENSIONS REQUESTED
+.*  &I - GENERATE NO DSECT CARD INDICATOR
+.*  &J - FIRST PASS, SECOND PASS INDICATOR
+.*  &K - CURRENT EXTENSION ID SUBSCRIPT
+.*  &M - EXTENSION ID HAS BEEN PREVIOUSLY SPECIFIED INDICATORS.
+.*       SUBSCRIPT OF 100 IS USED.  WHEN SSOB EXTENSIONS REACH 101,
+.*       THIS NUMBER SHOULD BE UPDATED.
+.*  &L - 'EXTENSION ID HAS PREVIOUSLY SPECIFIED' SUBSCRIPT
+.*
+         LCLA  &N,&J,&K,&L
+         LCLB  &I
+         LCLB  &M(100)
+.*  CHECK IF CONTIG PARAMETER WAS SPECIFIED-IF NOT, DEFAULT IS YES
+         AIF   ('&CONTIG' EQ '').NODSECT
+.*
+.*  CHECK IF CONTIG=YES WAS SPECIFIED (DONT GENERATE DSECT CARD
+.*  FOR THE SSOB EXTENSION)
+.*
+         AIF   ('&CONTIG' EQ 'YES').NODSECT
+.*
+.*  CHECK IF CONTIG=NO WAS SPECIFIED (GENERATE DSECT CARD FOR
+.*  THE SSOB EXTENSION)
+.*
+         AIF   ('&CONTIG' NE 'NO').ERR1
+.*  SET INDICATOR TO GENERATE DSECT CARD
+&I       SETB  0
+         AGO   .CKEXT
+.*  SET INDICATOR TO NOT GENERATE DSECT CARD
+.NODSECT ANOP
+&I       SETB  1
+.*
+.*  CHECK IF EXTENSION ID PARAMETER WAS SPECIFIED
+.*
+.CKEXT   ANOP
+&N       SETA  N'&EXT
+         AIF   (&N EQ 0).GENHDR
+.*  SET FIRST PASS SYNTAX CHECK INDICATOR
+&J       SETA  1
+.*  INITIALIZE EXTENSION ID SUBSCRIPT
+&K       SETA  1
+.*  CHECK FOR VALID EXTENSION ID PARAMETERS
+.EXTIDCK ANOP
+         AIF   ('&EXT(&K)' EQ 'SO').SOCHK
+         AIF   ('&EXT(&K)' EQ 'CS').CSCHK
+         AIF   ('&EXT(&K)' EQ 'JS').JSCHK
+         AIF   ('&EXT(&K)' EQ 'AL').ALCHK
+         AIF   ('&EXT(&K)' EQ 'EN').ENCHK
+         AIF   ('&EXT(&K)' EQ 'WT').WTCHK
+         AIF   ('&EXT(&K)' EQ 'CM').CMCHK
+         AIF   ('&EXT(&K)' EQ 'US').USCHK
+         AIF   ('&EXT(&K)' EQ 'JT').JTCHK
+         AIF   ('&EXT(&K)' EQ 'RQ').RQCHK
+         AIF   ('&EXT(&K)' EQ 'DM').DMCHK
+         AIF   ('&EXT(&K)' EQ 'VS').VSCHK
+         AIF   ('&EXT(&K)' EQ 'DA').DACHK
+         AIF   ('&EXT(&K)' EQ 'ET').ETCHK
+         AIF   ('&EXT(&K)' EQ 'RR').RRCHK
+         AIF   ('&EXT(&K)' EQ 'SI').SICHK                      @Y02BPSD
+         AIF   ('&EXT(&K)' EQ 'DY').DYCHK                      @Y02BPSD
+         AIF   ('&EXT(&K)' EQ 'CA').CACHK                      @Y02BPSD
+         AIF   ('&EXT(&K)' EQ 'CU').CUCHK                      @Y02BPSD
+         AIF   ('&EXT(&K)' EQ 'DD').DDCHK                      @Y02BPSD
+         AIF   ('&EXT(&K)' EQ 'NQ').NQCHK                      @Y02BPSD
+         AIF   ('&EXT(&K)' EQ 'DR').DRCHK                      @Z30BPSV
+         AIF   ('&EXT(&K)' EQ 'CF').CFCHK                      @Z30BPSV
+         AIF   ('&EXT(&K)' EQ 'MO').MOCHK                      @G18MP21
+         AIF   ('&EXT(&K)' EQ 'MS').MSCHK                      @G18MP21
+         AIF   ('&EXT(&K)' EQ 'CI').CICHK                      @G29AN2F
+         AIF   ('&EXT(&K)' EQ 'AG').AGCHK                      @G29AN2F
+.*
+.*  IF ADDITIONAL SSOB EXTENSIONS ARE DEFINED, THE CORRESPONDING
+.*  EXTENSION ID CHECK SHOULD BE ADDED HERE.
+.*
+.*  INVALID EXTENSION ID SPECIFIED - GO ISSUE MNOTE (THIS BRANCH
+.*  SHOULD NEVER OCCUR ON PASS 2)
+.*
+         AGO   .ERR2
+.*
+.*  FOLLOWING ARE EXTENSION ID PARAMETER ROUTINES -
+.*    IF PASS 1 - SET SUBSCRIPT FOR DUPLICATE PARAMETER CHECK
+.*              - GO TO COMMON ROUTINE TO CHECK IF THIS PARAMETER
+.*                HAS ALREADY BEEN SPECIFIED.
+.*
+.*    IF PASS 2 - GO GENERATE EXTENSION SPECIFIED.
+.*
+.SOCHK   ANOP
+         AIF   (&J EQ 2).GENSO
+&L       SETA  1
+         AGO   .DUPARM
+.CSCHK   ANOP
+         AIF   (&J EQ 2).GENCS
+&L       SETA  2
+         AGO   .DUPARM
+.JSCHK   ANOP
+         AIF   (&J EQ 2).GENJS
+&L       SETA  3
+         AGO   .DUPARM
+.ALCHK   ANOP
+         AIF   (&J EQ 2).GENAL
+&L       SETA  4
+         AGO   .DUPARM
+.ENCHK   ANOP
+         AIF   (&J EQ 2).GENEN
+&L       SETA  5
+         AGO   .DUPARM
+.WTCHK   ANOP
+         AIF   (&J EQ 2).GENWT
+&L       SETA  6
+         AGO   .DUPARM
+.CMCHK   ANOP
+         AIF   (&J EQ 2).GENCM
+&L       SETA  7
+         AGO   .DUPARM
+.USCHK   ANOP
+         AIF   (&J EQ 2).GENUS
+&L       SETA  8
+         AGO   .DUPARM
+.JTCHK   ANOP
+         AIF   (&J EQ 2).GENJT
+&L       SETA  9
+         AGO   .DUPARM
+.RQCHK   ANOP
+         AIF   (&J EQ 2).GENRQ
+&L       SETA  10
+         AGO   .DUPARM
+.DMCHK   ANOP
+         AIF   (&J EQ 2).GENDM
+&L       SETA  11
+         AGO   .DUPARM
+.VSCHK   ANOP
+         AIF   (&J EQ 2).GENVS
+&L       SETA  12
+         AGO   .DUPARM
+.DACHK   ANOP
+         AIF   (&J EQ 2).GENDA
+&L       SETA  13
+         AGO   .DUPARM
+.ETCHK   ANOP
+         AIF   (&J EQ 2).GENET
+&L       SETA  14
+         AGO   .DUPARM
+.RRCHK   ANOP
+         AIF   (&J EQ 2).GENRR
+&L       SETA  15
+         AGO   .DUPARM
+.SICHK   ANOP
+         AIF   (&J EQ 2).GENSI
+&L       SETA  16
+         AGO   .DUPARM
+.DYCHK   ANOP
+         AIF   (&J EQ 2).GENDY
+&L       SETA  17
+         AGO   .DUPARM
+.CACHK   ANOP
+         AIF   (&J EQ 2).GENCA
+&L       SETA  18
+         AGO   .DUPARM
+.CUCHK   ANOP
+         AIF   (&J EQ 2).GENCU
+&L       SETA  19
+         AGO   .DUPARM
+.DDCHK   ANOP
+         AIF   (&J EQ 2).GENDD
+&L       SETA  20
+         AGO   .DUPARM
+.NQCHK   ANOP
+         AIF   (&J EQ 2).GENNQ
+&L       SETA  21
+         AGO   .DUPARM
+.DRCHK   ANOP
+         AIF   (&J EQ 2).GENDR
+&L       SETA  22
+         AGO   .DUPARM
+.CFCHK   ANOP                                                  @Z30BPSV
+         AIF   (&J EQ 2).GENCF                                 @Z30BPSV
+&L       SETA  23                                              @Z30BPSV
+         AGO   .DUPARM                                         @Z30BPSV
+.MOCHK   ANOP                                                  @G18MP21
+         AIF   (&J EQ 2).GENMO                                 @G18MP21
+&L       SETA  24                                              @G18MP21
+         AGO   .DUPARM                                         @G18MP21
+.MSCHK   ANOP                                                  @G18MP21
+         AIF   (&J EQ 2).GENMS                                 @G18MP21
+&L       SETA  25                                              @G18MP21
+         AGO   .DUPARM                                         @G18MP21
+.CICHK   ANOP                                                  @G29AN2F
+         AIF   (&J EQ 2).GENCI                                 @G29AN2F
+&L       SETA  26                                              @G29AN2F
+         AGO   .DUPARM                                         @G29AN2F
+.AGCHK   ANOP                                                  @G29AN2F
+         AIF   (&J EQ 2).GENAG                                 @G29AN2F
+&L       SETA  27                                              @G29AN2F
+         AGO   .DUPARM                                         @G29AN2F
+.*
+.*  CODE FOR NEWLY DEFINED SSOB EXTENSIONS SHOULD BE ADDED HERE
+.*
+.*  CHECK IF PARAMETER HAS ALREADY BEEN SPECIFIED
+.DUPARM  ANOP
+         AIF   (&M(&L) EQ 1).ERR3
+.*  INDICATE PARAMETER HAS BEEN SPECIFIED
+&M(&L)   SETB  1
+.*  HAVE ALL EXTENSION ID PARAMETERS BEEN CHECKED -
+         AIF   (&K EQ &N).PASS2
+&K       SETA  &K+1
+.*  GO CHECK NEXT PARAMETER
+         AGO   .EXTIDCK
+.*
+.*  SET UP FOR PASS 2 - SSOB MAPPING GENERATION
+.*
+.PASS2   ANOP
+.*  RESET INDEX
+&K       SETA  1
+.*  SET PASS 2 INDICATOR
+&J       SETA  2
+.*  GO GENERATE SSOB HEADER
+         AGO   .GENHDR
+.*
+.*  GENERATE DSECT CARD IF SPECIFIED
+.*
+.GENDSCT ANOP
+         AIF   (&I EQ 1).SKPDSCT
+SSOBEXT  DSECT
+.SKPDSCT ANOP
+SSOBGN   EQU   *
+         SPACE
+.*  GO GENERATE SSOB EXTENSIONS
+         AGO   .EXTIDCK
+.*  CHECK IF MORE EXTENSIONS SHOULD BE GENERATED
+.GENMORE ANOP
+         AIF   (&K EQ &N).FINI
+&K       SETA  &K+1
+         AGO   .EXTIDCK
+.FINI    ANOP
+         MEXIT
+.GENHDR  ANOP
+         EJECT
+         IEFSSOBH                                              @ZA34144
+         AIF   (&N NE 0).GENDSCT
+         MEXIT
+.GENSO   ANOP
+         EJECT
+         IEFSSSO                                               @ZA34144
+         AGO   .GENMORE
+.GENCS   ANOP
+         EJECT
+         IEFSSCS                                               @ZA34144
+         AGO   .GENMORE
+.GENJS   ANOP
+         EJECT
+         IEFSSJS                                               @ZA34144
+         AGO   .GENMORE
+.GENAL   ANOP
+         EJECT
+         IEFSSAL                                               @ZA34144
+         AGO   .GENMORE
+.GENEN   ANOP
+         EJECT
+         IEFSSEN                                               @ZA34144
+         AGO   .GENMORE
+.GENWT   ANOP
+         EJECT
+         IEFSSWT                                               @ZA34144
+         AGO   .GENMORE
+.GENCM   ANOP
+         EJECT
+         IEFSSCM                                               @ZA34144
+         AGO   .GENMORE
+.GENUS   ANOP
+         EJECT
+         IEFSSUS                                               @ZA34144
+         AGO   .GENMORE
+.GENJT   ANOP
+         EJECT
+         IEFSSJT                                               @ZA34144
+         AGO   .GENMORE
+.GENRQ   ANOP
+         EJECT
+         IEFSSRQ                                               @ZA34144
+         AGO   .GENMORE
+.GENDM   ANOP
+         EJECT
+         IEFSSDM                                               @ZA34144
+         AGO   .GENMORE
+.GENVS   ANOP
+         EJECT
+         IEFSSVS                                               @ZA34144
+         AGO   .GENMORE
+.GENDA   ANOP
+         EJECT
+         IEFSSDA                                               @ZA34144
+         AGO   .GENMORE
+.GENET   ANOP
+         EJECT
+         IEFSSET                                               @ZA34144
+         AGO   .GENMORE
+.GENRR   ANOP
+         EJECT
+         IEFSSRR                                               @ZA34144
+         AGO   .GENMORE
+.GENCF   ANOP
+         EJECT
+         IEFSSCF                                               @ZA34144
+         AGO   .GENMORE
+.GENSI   ANOP
+         EJECT
+         IEFSSSI                                               @ZA34144
+         AGO   .GENMORE
+.GENDY   ANOP
+         EJECT
+         IEFSSDY                                               @ZA34144
+         AGO   .GENMORE
+.GENCA   ANOP
+         EJECT
+         IEFSSCA                                               @ZA34144
+         AGO   .GENMORE
+.GENCU   ANOP
+         EJECT
+         IEFSSCU                                               @ZA34144
+         AGO   .GENMORE
+.GENDD   ANOP
+         EJECT
+         IEFSSDD                                               @ZA34144
+         AGO   .GENMORE
+.GENNQ   ANOP
+         EJECT
+         IEFSSNQ                                               @ZA34144
+         AGO   .GENMORE
+.GENDR   ANOP
+         EJECT
+         IEFSSDR                                               @ZA34144
+         AGO   .GENMORE
+.GENMO   ANOP
+         EJECT
+         IEFSSMO                                               @ZA34144
+         AGO   .GENMORE                                        @G18MP21
+.GENMS   ANOP                                                  @G18MP21
+         EJECT                                                 @G18MP21
+         IEFSSMS                                               @ZA34144
+         AGO   .GENMORE                                        @G18MP21
+.GENCI   ANOP                                                  @G29AN2F
+         EJECT
+         IEFSSCI                                               @ZA34144
+         AGO   .GENMORE                                        @G29AN2F
+.GENAG   ANOP                                                  @G29AN2F
+         EJECT                                                 @G29AN2F
+         IEFSSAG                                               @ZA34144
+         AGO   .GENMORE                                        @G29AN2F
+***********************************************************************
+.ERR1    ANOP
+         MNOTE 12,'CONTIG=&CONTIG - INVALID PARAMETER'
+         MEXIT
+.ERR2    ANOP
+         MNOTE 12,'&EXT(&K) - INVALID PARAMETER'
+         MEXIT
+.ERR3    ANOP
+         MNOTE 12,'&EXT(&K) - DUPLICATE PARAMETERS'
+         MEXIT
+         MEND                      */
+*%PLSSSOB:;
+*%MACEJECT='@EJECT';
+*   %IF SSOBSSOB='' %THEN %GOTO SSOBHEND;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSOBH);                               /*@ZA34144*/
+*%SSOBHEND:;
+*   %IF SSOBSO='' %THEN %GOTO SSOBSOEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSSO);                                /*@ZA34144*/
+*%SSOBSOEN:;
+*   %IF SSOBCS='' %THEN %GOTO SSOBCSEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSCS);                                /*@ZA34144*/
+*%SSOBCSEN:;
+*   %IF SSOBJS='' %THEN %GOTO SSOBJSEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSJS);                                /*@ZA34144*/
+*%SSOBJSEN:;
+*   %IF SSOBAL='' %THEN %GOTO SSOBALEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSAL);                                /*@ZA34144*/
+*%SSOBALEN:;
+*   %IF SSOBEN='' %THEN %GOTO SSOBENEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSEN);                                /*@ZA34144*/
+*%SSOBENEN:;
+*   %IF SSOBWT='' %THEN %GOTO SSOBWTEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSWT);                                /*@ZA34144*/
+*%SSOBWTEN:;
+*   %IF SSOBCM='' %THEN %GOTO SSOBCMEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSCM);                                /*@ZA34144*/
+*%SSOBCMEN:;
+*   %IF SSOBUS='' %THEN %GOTO SSOBUSEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSUS);                                /*@ZA34144*/
+*%SSOBUSEN:;
+*   %IF SSOBJT='' %THEN %GOTO SSOBJTEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSJT);                                /*@ZA34144*/
+*%SSOBJTEN:;
+*   %IF SSOBRQ='' %THEN %GOTO SSOBRQEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSRQ);                                /*@ZA34144*/
+*%SSOBRQEN:;
+*   %IF SSOBDM='' %THEN %GOTO SSOBDMEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSDM);                                /*@ZA34144*/
+*%SSOBDMEN:;
+*   %IF SSOBVS='' %THEN %GOTO SSOBVSEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSVS);                                /*@ZA34144*/
+*%SSOBVSEN:;
+*   %IF SSOBDA='' %THEN %GOTO SSOBDAEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSDA);                                /*@ZA34144*/
+*%SSOBDAEN:;
+*   %IF SSOBET='' %THEN
+*   %GO TO SSOBETEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSET);                                /*@ZA34144*/
+*%SSOBETEN:;
+*  %IF SSOBRR='' %THEN %GO TO SSOBRREN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSRR);                                /*@ZA34144*/
+*%SSOBRREN:;
+*  %IF SSOBCF='' % THEN
+*  %GO TO SSOBCFEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSCF);                                /*@ZA34144*/
+*%SSOBCFEN:;
+*   %IF SSOBSI='' %THEN
+*   %GO TO SSOBSIEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSSI);                                /*@ZA34144*/
+*%SSOBSIEN:;
+*   %IF SSOBDY='' %THEN
+*   %GO TO SSOBDYEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSDY);                                /*@ZA34144*/
+*%SSOBDYEN:;
+*   %IF SSOBCA='' %THEN
+*   %GO TO SSOBCAEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSCA);                                /*@ZA34144*/
+*%SSOBCAEN:;
+*   %IF SSOBCU='' %THEN
+*   %GO TO SSOBCUEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSCU);                                /*@ZA34144*/
+*%SSOBCUEN:;
+*   %IF SSOBDD='' %THEN
+*   %GO TO SSOBDDEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSDD);                                /*@ZA34144*/
+*%SSOBDDEN:;
+*   %IF SSOBNQ='' %THEN %GOTO SSOBNQEN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSNQ);                                /*@ZA34144*/
+*%SSOBNQEN:;
+*    %IF SSOBDR='' %THEN
+*    %GO TO SSOBDREN;
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSDR);                                /*@ZA34144*/
+*%SSOBDREN:;
+*    %IF SSOBMO='' %THEN                                   /*@G18MP21*/
+*    %GO TO SSOBMOEN;                                      /*@G18MP21*/
+*MACEJECT;                                                 /*@G18MP21*/
+* %INCLUDE SYSLIB(IEFSSMO);                                /*@ZA34144*/
+*%SSOBMOEN:;                                              /* @G18MP21*/
+*    %IF SSOBMS='' %THEN                                  /* @G18MP21*/
+*    %GO TO SSOBMSEN;                                     /* @G18MP21*/
+*MACEJECT;                                                /* @G18MP21*/
+* %INCLUDE SYSLIB(IEFSSMS);                                /*@ZA34144*/
+*%SSOBMSEN:;                   /*                            @G18MP21*/
+*    %IF SSOBCI ='' %THEN      /*                            @G29AN2F*/
+*    %GOTO SSOBCIEN;           /*                            @G29AN2F*/
+*MACEJECT;
+* %INCLUDE SYSLIB(IEFSSCI);                                /*@ZA34144*/
+*%SSOBCIEN:;
+*     %IF SSOBAG = '' %THEN   /*                             @G29AN2F*/
+*     %GOTO SSOBAGEN;         /*                             @G29AN2F*/
+*MACEJECT;                                                   @G29AN2F*/
+* %INCLUDE SYSLIB(IEFSSAG);                                /*@ZA34144*/
+*%SSOBAGEN:;                 /*                              @G29AN2F*/

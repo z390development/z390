@@ -1,0 +1,12 @@
+.* MVS 3.8J PUBLIC DOMAIN
+       MACRO
+&NAME    SFI   &I                       SET FEATURE BYTES
+         LCLA  &V                                              @ZA00768
+&V       SETA  &I                                              @ZA00768
+         AIF   (&V LE 255).SF1                                 @ZA00768
+         MNOTE 8,'*** IHB421 IMMEDIATE VALUE EXCEEDS ALLOWED MAXIMUM'
+.*                                                             @ZA00768
+.SF1     ANOP                                                  @ZA00768
+&NAME    DC    0H'0',X'EA',AL1(&I)
+         MEND
+

@@ -1,0 +1,102 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO PSCBBSL  ; /*
+         MACRO
+         IKJPSCB
+.* C 350000,890000                                                M0759
+PSCB     DSECT
+***********************************************************************
+*    THE PROTECTED STEP CONTROL BLOCK IS CONSTRUCTED BY LOGON AND
+*    FILLED IN FROM THE UADS .  A FIXED LENGTH TABLE WITH ATTRIBUTE
+*    AND ACCOUNTING FIELDS, THE PSCB IS USED TO MAINTAIN USER ATTRI-
+*    BUTES AND ACCOUNTING DATA ON A USERID BASIS.  THE ADDRESS OF PSCB
+*    IS PASSED TO THE TMP.  HENCE IT IS AN EXTERNAL INTERFACE
+***********************************************************************
+         DS    0F
+PSCBUSER DS    CL7      USERID PADDED RIGHT WITH BLANKS
+PSCBUSRL DS    CL1      LENGTH OF USERID
+PSCBGPNM DS    CL8      ESOTERIC GROUP NAME INIT BY LOGON FROM UADS
+*                       USED BY DYN ALLOC WHEN UNITNAME NOT SPECIFIED
+*                       BUT IS REQUIRED
+PSCBATR1 DS    X        A 15 BIT STRING OF USER ATTRIBUTES
+PSCBCTRL EQU   X'80'    OPERATOR COMMAND USER
+PSCBACCT EQU   X'40'    ACCOUNT  COMMAND USER
+PSCBJCL  EQU   X'20'    SUBMIT   COMMAND USER
+PSCBVMNT EQU   X'10'    CNTL VOL MOUNT AUTH                      Y02669
+PSCBATTN EQU   X'08'    LINE DELETE CHAR IS ATTENTION            Y02669
+PSCBRCVR EQU   X'04'    EDIT RECOVER/NORECOVER              @Z40DQKV
+* BITS 6 - 15           RESERVED FOR IBM USE
+         DS    X        RESERVED
+PSCBATR2 DS    X        A 15 BIT STRING RESERVED FOR INSTALLATION USE
+         DS    X
+PSCBLTIM DS    F        DOUBLEWORD FOR LOGON TIME               Y02669
+PSCBLTI2 DS    F        IN STORE CLOCK UNITS                    Y02669
+PSCBSUBH DS    CL1      SUBMIT HOLD CLASS                      @DZ04005
+PSCBSUBC DS    CL1      SUBMIT CLASS                           @DZ04005
+PSCBSUBM DS    CL1      SUBMIT MSGCLASS                        @DZ04005
+PSCBSOUT DS    CL1      SYSOUT CLASS                           @DZ04005
+         DS    2F       RESERVED
+PSCBDEST DS    CL8      DEST FOR SYSOUT DATA SETS               Y02669
+PSCBRLGB DS    A        PTR TO RELOGON BUFFER
+PSCBUPT  DS    A        PTR TO USER PROFILE TABLE
+PSCBUPTL DS    H        LENGTH OF UPT
+PSCBCHAR DS    CL1      USER'S CHARACTER DELETE CHARACTER       Y02669
+PSCBLINE DS    CL1      USER'S LINE DELETE CHARACTER            Y02669
+PSCBRSZ  DS    A        REGION SIZE REQUESTED IN 2K UNITS
+PSCBU    DS    CL8      RESERVED FOR INSTALLATION USE
+**/
+         MEND
+* %PSCBBSL :  ;
+* %IF PSCBSTORAGE='' %THEN            /*                   @ZA29467  */
+*   %PSCBSTORAGE='BASED(PSCBPTR)';    /*                   @ZA29467  */
+* DECLARE
+*   1 PSCB PSCBSTORAGE,               /*                   @ZA29467  */
+* /* *************************************************************** */
+* /* THE PROTECTED STEP CONTROL BLOCK IS CONSTRUCTED BY LOGON AND    */
+* /* FILLED IN FROM THE UADS .  A FIXED LENGTH TABLE WITH ATTRIBUTE  */
+* /* AND ACCOUNTING FIELDS, THE PSCB IS USED TO MAINTAIN USER ATTRI- */
+* /* BUTES AND ACCOUNTING DATA ON A USERID BASIS. THE ADDRESS OF THE */
+* /* PSCB IS PASSED TO THE TMP.  HENCE IT IS AN EXTERNAL INTERFACE   */
+* /* *************************************************************** */
+*
+*    2 PSCBUSER CHAR(7)  BDY(WORD),
+*                                    /* USERID PADDED RIGHT WITH
+*                                       BLANKS                       */
+*    2  PSCBUSRL  PTR(8),            /* LENGTH OF USERID             */
+*    2 PSCBGPNM CHAR(8),             /* ESOTERIC GROUP NAME INIT BY
+*                                       LOGON FROM UADS USED BY DYN
+*                                       ALLOC WHEN UNITNAME NOT
+*                                       SPECIFIED BUT IS REQUIRED    */
+*    2    PSCBATR1 CHAR(2),          /* A 15 BIT  STRING OF USER
+*                                       ATTRIBUTES                   */
+*     3 PSCBCTRL BIT(1),             /* OPERATOR COMMAND USER        */
+*     3 PSCBACCT BIT(1),             /* ACCOUNT                      */
+*     3 PSCBJCL  BIT(1),             /* SUBMIT BITS                  */
+*     3 PSCBVMNT BIT(1),             /* CNTL VOL MOUNT AUTH    Y02669*/
+*     3 PSCBATTN BIT(1),           /* LINE DELETE CHAR IS ATTN Y02669*/
+*     3 PSCBRCVR BIT(1),            /* EDIT RECOVER/NORECOVER@Z40DQKV*/
+*     3 *        BIT(1),             /* RESERVED                     */
+*     3 *        BIT(1),             /* RESERVED                     */
+*    2  PSCBATR2  CHAR(2),        /* A 15 BIT STRING RESERVED FOR
+*                                       INSTALLATION USE             */
+*    2 PSCBLTIM FIXED(32),           /* DOUBLEWORD FOR LOGON   Y02669*/
+*    2 PSCBLTI2 FIXED(32),           /* TIME IN STORE CLOCK    Y02669*/
+*                                    /* UNITS                  Y02669*/
+*    2 PSCBSUBH CHAR(1),             /* SUBMIT HOLD CLASS    @DZ04005*/
+*    2 PSCBSUBC CHAR(1),             /* SUBMIT CLASS         @DZ04005*/
+*    2 PSCBSUBM CHAR(1),             /* SUBMIT MSGCLASS      @DZ04005*/
+*    2 PSCBSOUT CHAR(1),             /* SYSOUT CLASS         @DZ04005*/
+*    2 * FIXED(31),                  /* RESERVED                     */
+*    2 * FIXED(31),                  /* RESERVED                     */
+*    2 PSCBDEST CHAR(8),             /* DEST FOR SYSOUT        Y02669*/
+*                                    /* DATA SETS              Y02669*/
+*    2 PSCBRLGB PTR(31),             /* PTR TO RELOGON BUFFER        */
+*    2 PSCBUPT  PTR(31),             /* PTR TO USER PROFILE TABLE    */
+*    2 PSCBUPTL FIXED(15),           /* LENGTH OF UPT                */
+*    2 PSCBCHAR CHAR(1),             /*USER'S CHAR DELETE CHAR Y02669*/
+*    2 PSCBLINE CHAR(1),             /*USER'S LINE DELETE CHAR Y02669*/
+*    2 PSCBRSZ POINTER(32),          /* REGION SIZE REQUESTED IN 2K
+*                                       UNITS                        */
+*    2 PSCBU    CHAR(8);             /* RESERVED FOR INSTALLATION
+*                                       USE                          */
+*
+

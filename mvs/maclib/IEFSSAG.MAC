@@ -1,0 +1,171 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSAGCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSAG
+.*/ %SSAGCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSAG                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = ALLOCATION GROUPING OF SUBSYS        @ZA34144*/
+*/*                     DD REQUESTS                          @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSAGPLS;              /*                               @ZA34144
+*                                                              @G29AN2F
+SSOBAGRP EQU   39           GROUP SUBSYS REQUEST(SSOBFUNC)     @G29AN2F
+*                                                              @G29AN2F
+*        ALLOCATION GROUP RETURN CODES (SSOBRETN)              @G29AN2F
+*                                                              @G29AN2F
+SSAGRTOK EQU   0            ALL REQUESTS ALLOCATED             @G29AN2F
+SSAGDDER EQU   4            NO ALLOCATION-ONE OR MORE          @G29AN2F
+*                           REQUESTS IN ERROR - SSAGRBEC IS TO @G29AN2F
+*                           BE SET FOR THE REQUESTS IN ERROR   @G29AN2F
+SSAGGPER EQU   8            NO ALLOCATION-GROUP IN ERROR       @G29AN2F
+*                           SSAGGPEC IS TO BE SET AND SSAGRBEC @G29AN2F
+*                           MAY OPTIONALLY BE SET              @G29AN2F
+*                                                              @G29AN2F
+*   THE FOLLOWING RETURN CODES WILL BE RETURNED BY THE         @G29AN2F
+*   SUBSYSTEM IN FIELDS SSAGGPEC AND SSAGRBEC.                 @G29AN2F
+*   - FIELD SSAGGPEC (AND OPTIONALLY SSAGRBEC) IS TO BE        @G29AN2F
+*     SET WHEN SSAGGPER IS RETURNED IN SSOBRETN.               @G29AN2F
+*   - FIELD SSAGRBEC CORRESPONDING TO THE REQUEST(S) IN        @G29AN2F
+*     ERROR IS TO BE SET WHEN SSAGDDER IS RETURNED IN          @G29AN2F
+*     SSOBRETN.                                                @G29AN2F
+*                                                              @G29AN2F
+*   THE ASSOCIATED FIELDS SSAGGPIC AND SSAGRBIC ARE TO BE      @G29AN2F
+*   SET TO SUBSYSTEM DEFINED VALUES THAT WILL BE RETURNED      @G29AN2F
+*   AS DYNAMIC ALLOCATION INFORMATIONAL REASON CODES.          @G29AN2F
+*                                                              @G29AN2F
+*   ERROR MESSAGE PROCESSING                                   @G29AN2F
+*   - WHEN SSAGSMSG IS SET BY THE CALLER FIELDS SSAGGMP        @G29AN2F
+*     AND SSAGDMGP WILL EACH CONTAIN A POINTER TO AN AREA      @G29AN2F
+*     IN WHICH THE SUBSYSTEM IS TO RETURN SUBSYSTEM DEFINED    @G29AN2F
+*     ERROR MESSAGES CORRESPONDING TO THE VALUES SET IN        @G29AN2F
+*     FIELDS SSAGGPIC AND SSAGRBIC.                            @G29AN2F
+*   - EACH MESSAGE AREA CONSISTS OF A 2 BYTE LENGTH FOLLOWED   @G29AN2F
+*     BY A MESSAGE TEXT AREA OF LENGTH DEFINED IN SSAGGMLN     @G29AN2F
+*     AND SSAGDMLN. THE MESSAGE AREA IS NOT INITIALIZED        @G29AN2F
+*     BY THE CALLER AND THE SUBSYSTEM MUST SET THE LENGTH      @G29AN2F
+*     OF THE MESSAGE TEXT RETURNED.  BLANKS WILL BE            @G29AN2F
+*     COMPRESSED BY THE CALLER.                                @G29AN2F
+*   - MESSAGES ARE TO BE RETURNED ONLY FOR REQUESTS THAT ARE   @G29AN2F
+*     IN ERROR.                                                @G29AN2F
+*                                                              @G29AN2F
+*   NOTE:  FIELDS SSAGRBEC, SSAGRBIC, SSAGDMGP, AND            @G29AN2F
+*          SSAGDMLN ARE DEFINED IN THE GROUP ALLOCATION        @G29AN2F
+*          REQUEST BLOCK, 'SSAGARBK' - MAPPED BY MACRO         @G29AN2F
+*          IEFSSARB.                                           @G29AN2F
+*                                                              @G29AN2F
+SSAGRQOK EQU   0            REQUEST ALLOCATED                  @G29AN2F
+SSAGORUN EQU   4            OPERATING SYSTEM RESOURCE          @G29AN2F
+*                           NOT AVAILABLE                      @G29AN2F
+SSAGSRUN EQU   8            SUBSYSTEM RESOURCE NOT AVAILABLE   @G29AN2F
+SSAGIPRM EQU   12           INVALID PARAMETER SPECIFIED        @G29AN2F
+SSAGIREQ EQU   16           INVALID REQUEST                    @G29AN2F
+SSAGCREQ EQU   20           CANCEL REQUESTED                   @G29AN2F
+SSAGSSER EQU   24           SUBSYSTEM LOGIC ERROR              @G29AN2F
+         ORG   SSOBGN                                          @G29AN2F
+SSAGBGN  EQU   *            SSAG BEGINNING                     @G29AN2F
+SSAGLEN  DC    AL2(SSAGSIZE)  EXTENSION SIZE                   @G29AN2F
+SSAGFLGS DS    B            FLAG BYTE                          @G29AN2F
+SSAGWAIT EQU   X'80'        OK TO WAIT                         @G29AN2F
+SSAGSMSG EQU   X'40'        SUBSYSTEM TO RETURN ERROR MESSAGES @G29AN2F
+SSAGRSV1 EQU   X'20'        RESERVED FLAG                      @G29AN2F
+SSAGRSV2 EQU   X'10'        RESERVED FLAG                      @G29AN2F
+SSAGRSV3 EQU   X'08'        RESERVED FLAG                      @G29AN2F
+SSAGRSV4 EQU   X'04'        RESERVED FLAG                      @G29AN2F
+SSAGRSV5 EQU   X'02'        RESERVED FLAG                      @G29AN2F
+SSAGRSV6 EQU   X'01'        RESERVED FLAG                      @G29AN2F
+SSAGFLG2 DS    X            RESERVED                           @G29AN2F
+SSAGGPEC DS    H            GROUP(STEP) LEVEL ERROR CODE       @G29AN2F
+SSAGGPIC DS    H            GROUP(STEP) LEVEL INFO CODE        @G29AN2F
+SSAGARBP DS    A            POINTER TO FIRST RB                @G29AN2F
+SSAGCNCL DS    A            ADDRESS OF CANCEL ECB              @G29AN2F
+SSAGJBNM DS    A            ADDRESS OF JOB NAME                @G29AN2F
+SSAGGMLN DS    A            MAXIMUM LENGTH OF GROUP            @G29AN2F
+*                           LEVEL MESSAGE                      @G29AN2F
+SSAGGMGP DS    A            ADDRESS OF GROUP LEVEL MSG BLOCK   @G29AN2F
+SSAGSIZE EQU   *-SSAGBGN    SIZE OF EXTENSION HEADER           @ZM44655
+SSOBLN1B EQU   SSOBHSIZ+SSAGSIZE                               @ZM44655
+         MEND                                                @ZA34144*/
+* %SSAGPLS:;                            /*                   @ZA34144*/
+*/*      FUNCTION IDS (SSOBFUNC)                             @G29AN2F*/
+*  DCL  SSOBAGRP FIXED(15) CONSTANT(39);/* GROUP SUBSYS REQUESTS
+*                                                            @G29AN2F*/
+*/*                                                          @G29AN2F*/
+*/*      ALLOCATION GROUP REQUEST RETURN CODES (SSOBRETN)    @G29AN2F*/
+*/*                                                          @G29AN2F*/
+*  DCL SSAGRTOK FIXED(15) CONSTANT(0); /* SUCCESSFUL - ALL REQUESTS
+*                                         WERE ALLOCATED     @G29AN2F*/
+*  DCL SSAGDDER FIXED(15) CONSTANT(4); /* NO ALLOCATION- ONE OR MORE
+*                                         REQUEST IN ERROR   @G29AN2F*/
+*  DCL SSAGGPER FIXED(15) CONSTANT(8); /* NO ALLOCATION - GROUP
+*                                         LEVEL ERROR        @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* /*   THE FOLLOWING RETURN CODES WILL BE RETURNED BY THE    @G29AN2F*/
+* /*   SUBSYSTEM IN FIELDS SSAGGPEC AND SSAGRBEC.            @G29AN2F*/
+* /*   - FIELD SSAGGPEC (AND OPTIONALLY SSAGRBEC) IS TO BE   @G29AN2F*/
+* /*     SET WHEN SSAGGPER IS RETURNED IN SSOBRETN.          @G29AN2F*/
+* /*   - FIELD SSAGRBEC CORRESPONDING TO THE REQUEST(S) IN   @G29AN2F*/
+* /*     ERROR IS TO BE SET WHEN SSAGDDER IS RETURNED IN     @G29AN2F*/
+* /*     SSOBRETN.                                           @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* /*   THE ASSOCIATED FIELDS SSAGGPIC AND SSAGRBIC ARE TO BE @G29AN2F*/
+* /*   SET TO SUBSYSTEM DEFINED VALUES THAT WILL BE RETURNED @G29AN2F*/
+* /*   AS DYNAMIC ALLOCATION INFORMATIONAL REASON CODES.     @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* /********************************************************* @G29AN2F*/
+* /* ERROR MESSAGE PROCESSING                                @G29AN2F*/
+* /* -WHEN SSAGSMSG IS SET BY THE CALLER, FIELDS SSAGGMGP    @G29AN2F*/
+* /*  AND SSAGDMGP WILL EACH CONTAIN A POINTER TO AN AREA    @G29AN2F*/
+* /*  IN WHICH THE SUBSYSTEM IS TO RETURN SUBSYSTEM DEFINED  @G29AN2F*/
+* /*  ERROR MESSAGES CORRESPONDING TO THE VALUES SET IN      @G29AN2F*/
+* /*  FIELDS SSAGGPIC AND SSAGRBIC.                          @G29AN2F*/
+* /* -EACH MESSAGE AREA CONSISTS OF A 2 BYTE LENGTH FOLLOWED @G29AN2F*/
+* /*  BY A MESSAGE TEXT AREA OF LENGTH DEFINED IN SSAGGMLN   @G29AN2F*/
+* /*  AND SSAGDMLN. THE MESSAGE AREA IS NOT INITIALIZED      @G29AN2F*/
+* /*  BY THE CALLER AND THE SUBSYSTEM MUST SET THE LENGTH    @G29AN2F*/
+* /*  OF THE MESSAGE TEXT RETURNED.  BLANKS WILL BE          @G29AN2F*/
+* /*  COMPRESSED BY THE CALLER.                              @G29AN2F*/
+* /* -MESSAGES ARE TO BE RETURNED ONLY FOR REQUESTS THAT ARE @G29AN2F*/
+* /*  IN ERROR.                                              @G29AN2F*/
+* /********************************************************* @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* /*   NOTE:  FIELDS SSAGRBEC, SSAGRBIC, SSAGDMGP, AND       @G29AN2F*/
+* /*          SSAGDMLN ARE DEFINED IN THE GROUP              @G29AN2F*/
+* /*          ALLOCATION REQUEST BLOCK, 'SSAGARBK' -         @G29AN2F*/
+* /*          MAPPED BY MACRO IEFSSARB.                      @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* /********************************************************* @G29AN2F*/
+*  DCL SSAGRQOK FIXED(15) CONSTANT(0); /*REQUEST ALLOCATED   @G29AN2F*/
+*  DCL SSAGORUN FIXED(15) CONSTANT(4); /*OPERATING SYSTEM RESOURCE
+*                                        NOT AVAILABLE       @G29AN2F*/
+*  DCL SSAGSRUN FIXED(15) CONSTANT(8); /*SUBSYSTEM RESOURCE NOT
+*                                        AVAILABLE           @G29AN2F*/
+*  DCL SSAGIPRM FIXED(15) CONSTANT(12);/*INVALID PARAMETER   @G29AN2F*/
+*  DCL SSAGIREQ FIXED(15) CONSTANT(16);/*INVALID REQUEST     @G29AN2F*/
+*  DCL SSAGCREQ FIXED(15) CONSTANT(20);/*CANCEL REQUESTED    @G29AN2F*/
+*  DCL SSAGSSER FIXED(15) CONSTANT(24);/*SUBSYSTEM LOGIC ERR @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* /*  S S A G                                                @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* DECLARE                     /*                             @G29AN2F*/
+*  1       SSAG     SSOBAG,   /* BEGINNING OF EXTENSION      @G29AN2F*/
+*    2     SSAGEHDR,          /* EXTENSION HEADER            @G29AN2F*/
+*      3   SSAGLEN  FIXED(15),/* LENGTH OF EXTENSION         @G29AN2F*/
+*      3   SSAGFLGS BIT(16),  /* GROUP LEVEL FLAGS           @G29AN2F*/
+*        4 SSAGWAIT BIT(1),   /* OK TO WAIT FLAG             @G29AN2F*/
+*        4 SSAGSMSG BIT(1),   /* SUBSYSTEM TO RETURN ERROR
+*                                MESSAGES FLAG               @G29AN2F*/
+*        4 *        BIT(14),  /* RESERVED FLAGS              @G29AN2F*/
+*      3   SSAGGPEC FIXED(15),/* GROUP LEVEL ERROR CODE      @G29AN2F*/
+*      3   SSAGGPIC FIXED(15),/* GROUP LEVEL INFO CODE - DEFINED
+*                                BY THE SUBSYSTEM            @G29AN2F*/
+*      3   SSAGARBP PTR(31),  /* PTR TO FIRST RB             @G29AN2F*/
+*      3   SSAGCNCL PTR(31),  /* POINTER TO CANCEL ECB       @G29AN2F*/
+*      3   SSAGJBNM PTR(31),  /* POINTER TO JOB NAME         @G29AN2F*/
+*      3   SSAGGMLN FIXED(31),/* MAXIMUM LENGTH OF SUBSYSTEM
+*                                GROUP LEVEL MESSAGE         @G29AN2F*/
+*      3   SSAGGMGP PTR(31);  /* POINTER TO GROUP LEVEL MESSAGE
+*                                BLOCK                       @G29AN2F*/
+

@@ -1,0 +1,20 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    DWF   &D,&L                    DEFINE DISPLACEMENT & LENGTH
+         GBLC  &DEF3890(250)                                   @ZA00766
+         GBLA  &VAL3890(250),&NS                               @ZA00766
+&NS      SETA  &NS+1                                           @ZA00766
+         AIF   (&NS GT 250).DWF3                               @ZA00766
+&DEF3890(&NS) SETC   '&NAME'                                   @ZA00766
+         AGO   .DWF4                                           @ZA00766
+.DWF3    ANOP                                                  @ZA00766
+         MNOTE  12,'***  IHB424 LIMIT EXCEEDED FOR EQUATED &DL'
+.*                                                             @ZA00766
+.DWF4    AIF   ('&D' LT '16').DWF1                             @ZA00766
+         MNOTE 12,'***  IHB349  DISPLACEMENT NOT 0-15 DIGITS'
+.DWF1    AIF   ('&L' LT '17' AND '&L' NE '0').DWF2
+         MNOTE 12,'***  IHB350  LENGTH NOT 1-16 DIGITS'
+.DWF2    ANOP
+&VAL3890(&NS) SETA  16*&D+&L-1                                 @ZA00766
+.END     MEND
+

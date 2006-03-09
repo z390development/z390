@@ -1,0 +1,40 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO QMIOPBSL;                                             /*
+         MACRO
+         IEFQMIOP
+*      QMNGRIO MACRO PARAMETER LIST DSECT
+QMIOP    DSECT
+QMITCBAD DS    A                        POINTER TO REQUESTERS TCB
+QMIRECAD DS    A                        POINTER TO RECORD BUFFER
+QMIWRKAD DS    A                        POINTER TO WORK AREA FOR Q MGR
+QMIDSKAD DS    F                        REL DISK ADDR (TTR0) OF RECORD
+QMIRECL  DS    H                        RECORD LENGTH
+QMIFLAGS DS    XL1                      FUNCTION FLAGS
+QMIOREAD EQU   X'80'                    BIT 0 = READ REQUEST
+QMIOWRTE EQU   X'40'                    BIT 1 = WRITE REQUEST
+*                                       BITS 2 - 7 RESERVED
+         DS    XL1                     RESERVED
+         MEND  , */
+*%QMIOPBSL:  ;
+*/*    QMNGRIO MACRO PARAMETER LIST DSECT                            */
+*DECLARE
+*  1 QMIOP    BASED(QMIOPPTR),
+*   2 QMITCBAD    PTR(31),               /* POINTER TO REQUESTERS
+*                                           TCB                      */
+*   2 QMIRECAD    PTR(31),               /* POINTER TO RECORD BUFFER */
+*   2 QMIWRKAD    PTR(31),               /* POINTER TO WORK AREA FOR
+*                                           Q MGR                    */
+*   2 QMIDSKAD    FIXED(31),             /* REL DISK ADDR (TTR0) OF
+*                                           RECORD                   */
+*   2 QMIRECL     FIXED(15),             /* RECORD LENGTH            */
+*   2 QMIFLAGS    CHAR(1),               /* FUNCTION FLAGS           */
+*    3 QMIOREAD BIT(1),                  /* BIT 0 = READ REQUEST     */
+*    3 QMIOWRTE BIT(1),                  /* BIT 1 = WRITE REQUEST
+*                                           BITS 2 - 7 RESERVED      */
+*    3 *        BIT(1),                  /* RESERVED                 */
+*    3 *        BIT(1),                  /* RESERVED                 */
+*    3 *        BIT(1),                  /* RESERVED                 */
+*    3 *        BIT(1),                  /* RESERVED                 */
+*    3 *        BIT(1),                  /* RESERVED                 */
+*    3 *        BIT(1),                  /* RESERVED                 */
+*   2 *           CHAR(1);               /* RESERVED                 */

@@ -6,7 +6,12 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.*********************************************************************
          DECBD
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
 .*
 .*  EVENT CONTROL BLOCKS CREATED BY READ/WRITE
 .*

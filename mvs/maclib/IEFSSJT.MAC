@@ -1,0 +1,78 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSJTCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSJT
+.*/ %SSJTCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSJT                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = JOB DELETION FUNCTION                @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSJTPLS;              /*                               @ZA34144
+*
+SSOBTERM EQU   12                 JOB DELETION FUNCTION ID (SSOBFUNC)
+*
+*  JOB DELETION RETURN CODES (SSOBRETN)
+*
+SSJTPERR EQU   36                 PROGRAM ERROR
+*
+         ORG   SSOBGN
+SSJTBGN  EQU   *
+SSJTLEN  DC    AL2(SSJTSIZE)      JOB DELETION EXTENSION LENGTH
+*                                                              @Z30CPPH
+*  JOB STATUS INFORMATION                                      @Z30CPPH
+*                                                              @Z30CPPH
+SSJTFLG1 DS    B                   JOB STATUS FLAGS            @Z30CPPH
+SSJTJFAL EQU   X'80'               JOB FAILED INDICATOR        @Z30CPPH
+SSJTCFAL EQU   X'40'               JOB FAILED BECAUSE OF       @Z30CPPH
+*                                  CONDITION CODE              @Z30CPPH
+SSJTABND EQU   X'20'               JOB ABENDED (JCTABEND=ON)   @Z30CPPH
+SSJTRSV1 DS    B                   RESERVED                    @Z30CPPH
+SSJTJMR  DS    A                   JMR ADDRESS
+*
+SSJTPCOD DS    F                   PTR TO THE 2 BYTE CONDITION @Z30CPPH
+*                                  CODE OR ZERO                @Z30CPPH
+SSJTPSN1 DS    F                   PTR TO THE STEPNAME OF THE  @Z30CPPH
+*                                  ABENDING STEP IF JOB        @Z30CPPH
+*                                  ABENDED OR ZERO             @Z30CPPH
+SSJTPSN2 DS    F                   PTR TO THE STEPNAME OF THE  @Z30CPPH
+*                                  STEP WHICH CALLED THE PROC  @Z30CPPH
+*                                  ANY OR ZERO                 @Z30CPPH
+SSJTSNUM DS    F                   PTR TO THE NUMBER OF        @ZM30478
+*                                  THE LAST STEP TO COMPLETE   @ZM30478
+*                                  EXECUTION.                  @ZM30478
+SSJTSIZE EQU   *-SSJTBGN          JOB DELETION EXTENSION LENGTH
+SSOBLENB EQU   SSOBHSIZ+SSJTSIZE  TOTAL SSOB LENGTH
+         MEND                                                @ZA34144*/
+* %SSJTPLS:;                             /*                  @ZA34144*/
+*   DCL SSOBTERM FIXED(15) CONSTANT(12); /* JOB DELETE FUNCTION
+*                                           ID (SSOBFUNC)            */
+*   /*                                                               */
+*   /*  JOB DELETION RETURN CODES (SSOBRETN)                         */
+*   /*                                                               */
+*   DCL SSJTPERR FIXED(31) CONSTANT(36); /* PROGRAM ERROR            */
+*   /*   S S J T                                                     */
+*DECLARE
+*   1       SSJT          SSOBJT,
+*     2       SSJTLEN FIXED(15),  /* LENGTH OF SSJT                  */
+*   /*   JOB STATUS INFORMATION                              @Z30CPPH*/
+*     2       SSJTFLG1  BIT(8),   /* JOB STATUS FLAGS        @Z30CPPH*/
+*       3       SSJTJFAL BIT(1),  /* JOB FAILED INDICATOR    @Z30CPPH*/
+*       3       SSJTCFAL BIT(1),  /* JOB FAILED BECAUSE OF
+*                                    CONDITION CODES         @Z30CPPH*/
+*       3       SSJTABND BIT(1),  /* JOB ABENDED,JCTABEND=ON @Z30CPPH*/
+*       3       *        BIT(5),  /* RESERVED                @Z30CPPH*/
+*     2       SSJTRSV1   PTR(8),  /* RESERVED                @Z30CPPH*/
+*     2       SSJTJMR    PTR(31), /* JMR ADDRESS                     */
+*     2       SSJTPCOD   PTR(31), /* PTR TO THE 2 BYTE
+*                                    CONDITION CODE OR ZERO  @Z30CPPH*/
+*     2       SSJTPSN1   PTR(31), /* PTR TO THE STEPNAME OF
+*                                    THE ABENDING STEP, IF
+*                                    THE JOB ABENDED OR ZERO @Z30CPPH*/
+*     2       SSJTPSN2   PTR(31), /* PTR TO THE STEPNAME OF
+*                                    THE STEP WHICH CALLED
+*                                    THE PROC OR ZERO        @Z30CPPH*/
+*     2       SSJTSNUM   PTR(31); /* PTR TO THE NUMBER OF THE LAST STEP
+*                                    TO COMPLETE EXECUTION.  @ZM30478*/
+

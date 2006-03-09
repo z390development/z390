@@ -1,0 +1,111 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               * 
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 11/22/05 RPI110 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
+.* 01/06/06 RPI154 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
+.* 01/08/06 RPI154 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.*********************************************************************
+.* SNAP WILL GENERATE DUMP ON LOG FILE BASED ON THESE PARMS:
+.*  1. PDATA= (DEFAULT IS ALL)
+.*     A. REGS   - ALL REGISTERS     
+.*     B.   GPR  - GENERAL PURPOSE REGISTERS         
+.*     C.   FPR  - FLOATING POINT REGISTERS
+.*     D. CB     - ALL CONTROL BLOCKS
+.*     E.   CDE  - PROGRAMS (LINK AND LOAD)
+.*     F.   DCB  - DDNAME, DCB, AND DSNAME'S
+.*  2. STORAGE=(ADDR1,ADDR2) 
+.*  3. ID=0 - IDENTIFICATION NUMBER
+.*  4. TEXT=  IDENTIFICATION TEXT (EXTENDED OPTION)
+.*********************************************************************
+.* INPUT:
+.*   R0  BIT 0 - STORAGE REQUEST (R14=START, R15=END)
+.*   R0  BIT 1 = GPR REGS
+.*   R0  BIT 2 = FPR REGS
+.*   R0  BIT 3 = CDE LOADED 390 PROGRAMS AND FILES
+.*   R0  BIT 4 = DCBS WITH DDNAME AND DSNAME
+.*********************************************************************
+&N       SNAP  &STORAGE=,&PDATA=ALL,&ID=0,&TEXT=
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+&FLAGS   SETA  0
+&NP      SETA  N'&PDATA+1
+.NPLOOP  ANOP
+&NP      SETA  &NP-1
+         AIF   (&NP EQ 0).NPOK2
+         AIF   (&PDATA(&NP) EQ 'ALL').ALL
+         AIF   (&PDATA(&NP) EQ 'REGS').REGS
+         AIF   (&PDATA(&NP) EQ 'GPR').GPR
+         AIF   (&PDATA(&NP) EQ 'FPR').FPR
+         AIF   (&PDATA(&NP) EQ 'CDE').CDE
+         AIF   (&PDATA(&NP) EQ 'DCB').DCB 
+         MNOTE 8,'SNAP UNSUPPORTED PARM - &PDATA(&NP)'
+         AGO   .NPLOOP
+.ALL     ANOP
+&FLAGS   SETA  &FLAGS+X'7FFF'
+         AGO   .CHKSTOR
+.REGS    ANOP
+&FLAGS   SETA  &FLAGS+X'6000'
+         AGO   .NPLOOP 
+.GPR     ANOP
+&FLAGS   SETA  &FLAGS+X'4000'
+         AGO   .NPLOOP 
+.FPR     ANOP
+&FLAGS   SETA  &FLAGS+X'2000'
+         AGO   .NPLOOP 
+.CDE     ANOP
+&FLAGS   SETA  &FLAGS+X'1000'
+         AGO   .NPLOOP 
+.DCB     ANOP
+&FLAGS   SETA  &FLAGS+X'0800'
+         AGO   .NPLOOP 
+.NPOK2   ANOP
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+.*
+.* SNAP A MEMORY DUMP OF SPECIFIED AREA
+.*
+.CHKSTOR ANOP
+         AIF   (&STORAGE EQ '').SETUP
+         AIF   (N'&STORAGE NE 2).ERR1
+&FLAGS   SETA  &FLAGS+X'8000'           RPI110 
+         AIF   ('&STORAGE(1)'(1,1) EQ '(').ADDR1_REG
+         LA    14,&STORAGE(1)
+         AGO   .ADDR2_CHK
+.ADDR1_REG ANOP
+         AIF   (&STORAGE(1,1) EQ '14' OR &STORAGE(1,1) EQ 'R14').ADDR2_X
+               CHK  RPI163
+         LR    14,&STORAGE(1,1)
+.ADDR2_CHK ANOP
+         AIF   ('&STORAGE(2)'(1,1) EQ '(').ADDR2_REG
+         LA    15,&STORAGE(2)
+         AGO   .SETUP
+.ADDR2_REG ANOP
+         AIF   (&STORAGE(2,1) EQ 14).ERR1
+         AIF   (&STORAGE(2,1) EQ '15' OR &STORAGE(2,1) EQ 'R15').SETUP X
+               RPI163
+         LR    15,&STORAGE(2,1)
+.SETUP   ANOP
+         IILH  0,&FLAGS               RPI158
+         IILL  0,&ID                  RPI158
+         AIF   (&TEXT EQ '').NOTEXT
+&TEMP    SETC  &TEXT
+         AIF   ('&TEMP'(1,1) NE '''').SKIP
+&TEMP    SETC  '&TEMP'(2,K'&TEMP-2)
+.SKIP    ANOP
+         LA    1,=CL60'&TEMP'
+         AGO   .SVC
+.NOTEXT  ANOP
+         LA    1,0
+.SVC     ANOP
+         SVC   51
+         MEXIT
+.ERR1    MNOTE 12,'SNAP INVALID STORAGE=(ADDR1,ADDR2) - &STORAGE'
+         MEND

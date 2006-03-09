@@ -1,0 +1,79 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSWTCMT;             /*                                @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSWT
+.*/ %SSWTCMT:;               /*                              @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSWT                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = WRITE TO OPERATOR FUNCTION           @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+*  %GOTO SSWTPLS;             /*                               @ZA34144
+*
+SSOBWTO  EQU   9                  WTO FUNCTION ID (SSOBFUNC)
+SSOBCONS EQU   33                 CONSOLE STATUS FUNCTION ID   @ZA03626
+SSOBWTL  EQU   34                 WTL FUNCTION ID              @ZA04791
+*
+*  WRITE TO OPERATOR RETURN CODES (SSOBRETN)
+*
+SSWTRTOK EQU   0                  CONTINUE NORMAL WTO PROCESSING
+SSWTNDSP EQU   4                  DO NOT DISPLAY WTO
+*
+         ORG   SSOBGN
+SSWTBGN  EQU   *
+SSWTLEN  DC    AL2(SSWTSIZE)      WTO EXTENSION LENGTH
+SSWTRESV DS    H                  RESERVED
+*
+*  FOLLOWING WTO SUBSYSTEM INTERFACES MAY EXIST -
+*
+*    - SINGLE WTO OR FIRST LINE OF MULTI-LINE WTO:
+*        SSWTMIN, SSWTORE ARE 0
+*
+*    - SECOND TO N-TH LINE OF MULTI-LINE WTO:
+*        SSWTORE IS 0
+*
+*    - WTOR:
+*        SSWTMIN IS 0
+*
+SSWTWQE  DS    A                  WQE ADDRESS (MAJOR)
+SSWTMIN  DS    A                  MINOR WQE ADDRESS
+SSWTORE  DS    A                  OPERATOR REPLY ELEMENT ADDRESS
+*
+SSWTSIZE EQU   *-SSWTBGN          WTO EXTENSION LENGTH
+SSOBLEN6 EQU   SSOBHSIZ+SSWTSIZE  TOTAL SSOB LENGTH
+         MEND                                                @ZA34144*/
+* %SSWTPLS:;                             /*                  @ZA34144*/
+*   DCL SSOBWTO   FIXED(15) CONSTANT(9); /* WTO FUNCTION ID(SSOBFUNC)*/
+*   DCL SSOBCONS  FIXED(15) CONSTANT(33); /* CONSOLE STATUS FUNCTION
+                                             ID(SSOBFUNC)    @ZA03626*/
+*   DCL SSOBWTL   FIXED(15) CONSTANT(34); /* WTL FUNCTION ID @ZA04791*/
+*   /*                                                               */
+*   /*  WRITE TO OPERATOR RETURN CODES (SSOBRETN)                    */
+*   /*                                                               */
+*   DCL SSWTRTOK  FIXED(31) CONSTANT(0);  /* CONTINUE NORMAL WTO
+*                                            PROCESSING              */
+*   DCL SSWTNDSP  FIXED(31) CONSTANT(4);  /* DO NOT DISPLAY WTO      */
+*   /*     S S W T                                                   */
+*  DECLARE
+*   1       SSWT          SSOBWT,
+*     2       SSWTLEN     FIXED(15),/* LENGTH OF SSWT                */
+*     2       *           FIXED(15),/* RESERVED                      */
+*/********************************************************************/
+*/*                                                                  */
+*/*   FOLLOWING WTO SUBSYSTEM INTERFACES MAY EXIST -                 */
+*/*                                                                  */
+*/*     - SINGLE WTO OR FIRST LINE OF MULTI-LINE WTO :               */
+*/*        SSWTMIN,SSWTORE ARE 0                                     */
+*/*                                                                  */
+*/*     - SECOND TO N-TH LINE OF MULTI-LINE WTO :                    */
+*/*        SSWTORE IS 0                                              */
+*/*                                                                  */
+*/*     - WTOR :                                                     */
+*/*        SSWTMIN IS 0                                              */
+*/*                                                                  */
+*/********************************************************************/
+*     2       SSWTWQE     PTR(31),  /* WQE ADDRESS (MAJOR)           */
+*     2       SSWTMIN     PTR(31),  /* ADDRESS OF MINOR WQE          */
+*     2       SSWTORE     PTR(31);  /* OPERATOR REPLY ELEMENT ADDRESS*/
+

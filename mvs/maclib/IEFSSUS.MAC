@@ -1,0 +1,49 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSUSCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSUS
+.*/ %SSUSCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSUS                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = REMOTE DESTINATION VALIDITY CHECK    @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSUSPLS;              /*                               @ZA34144
+*
+SSOBUSER EQU   11                 REMOTE DEST FUNCTION ID (SSOBFUNC)
+*
+*  REMOTE DESTINATION VALIDITY CHECK RETURN CODES (SSOBRETN)
+*
+SSUSRTOK EQU   0                  VALID REQUEST
+SSUSNOUS EQU   4                  INVALID DESTINATION
+SSUSINCP EQU   8                  SUBSYSTEM COULD NOT COMPLETE THE
+*                                 VALIDITY CHECK
+*
+         ORG   SSOBGN
+SSUSBGN  EQU   *
+SSUSLEN  DC    AL2(SSUSIZE)       REMOTE DESTINATION EXTENSION LENGTH
+SSUSRESV DS    H                  RESERVED
+SSUSRSV1 DS    F                  RESERVED
+SSUSUSER DS    CL8                REMOTE DESTINATION TO BE VERIFIED
+*
+SSUSIZE  EQU   *-SSUSBGN          REMOTE DESTINATION EXTENSION LENGTH
+SSOBLEN8 EQU   SSOBHSIZ+SSUSIZE   TOTAL SSOB LENGTH
+         MEND                                                @ZA34144*/
+* %SSUSPLS:;                             /*                  @ZA34144*/
+*   DCL SSOBUSER  FIXED(15) CONSTANT(11); /* REMOTE DESTINATION
+*                                            FUNCTION ID (SSOBFUNC)  */
+*   /*                                                               */
+*   /*  REMOTE DESTINATION VALIDITY CHECK RETURN CODES (SSOBRETN)    */
+*   /*                                                               */
+*   DCL SSUSRTOK  FIXED(31) CONSTANT(0); /* VALID REQUEST            */
+*   DCL SSUSNOUS  FIXED(31) CONSTANT(4); /* INVALID DESTINATION      */
+*   DCL SSUSINCP  FIXED(31) CONSTANT(8); /* SUBSYSTEM COULD NOT
+*                                        COMPLETE THE VALIDITY CHECK */
+*   /*    S S U S                                                    */
+*DECLARE
+*   1       SSUS          SSOBUS,
+*     2       SSUSLEN     FIXED(15),/* LENGH OF SSUS                 */
+*     2       *           FIXED(15),/* RESERVED                      */
+*     2       *           FIXED(31),/* RESERVED                      */
+*     2       SSUSUSER    CHAR(8);  /* REMOTE DEST TO BE VERIFIED    */

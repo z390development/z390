@@ -1,0 +1,199 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/********************************************************************/
+*/*                                                                  */
+*/* MACRO NAME = SMWK                                                */
+*/*                                                                  */
+*/* MICROFICHE NAME = IHASMWK                                        */
+*/*                                                                  */
+*/* DESCRIPTIVE NAME = SUMMARY DUMP WORK AREA                        */
+*/*                                                                  */
+*/* STATUS = OS/VS2 RELEASE 3.7 PLUS SU 33     1/10/77       @G33VPHD*/
+*/*          SETDIE PTM FIX                    1/10/77 MJD   @ZM44932*/
+*/*          ENABLED SUMDUMP FIELD ADDED       2/4/77 MJD    @ZM45052*/
+*/*          STATISTICS FIELDS ADDED           2/11/77 MJD   @ZM45073*/
+*/*                                                                  */
+*/* FUNCTION = IHASMWK IS A MAPPING MACRO WHICH MAPS THE             */
+*/*     SUMMARY DUMP WORK AREA.  THE SMWK IS USED BY THE             */
+*/*     SUMMARY DUMP PORTION OF SVC DUMP TO CONTAIN SAVE             */
+*/*     AREAS, IMPORTANT ADDRESSES AND A TABLE OF REAL STORAGE       */
+*/*     ADDRESSES DESCRIBING THE REAL STORAGE FRAMES OBTAINED        */
+*/*     FROM RSM.  THE SMWK IS GETMAINED OUT OF SUBPOOL 245          */
+*/*     OF SQA DURING IPL BY MODULE IEAVTSDI.                        */
+*/*                                                                  */
+*/* METHOD OF ACCESS=                                                */
+*/*   BAL  - DSECT IS ALWAYS PRODUCED.  USING ON SMWK GIVES          */
+*/*          ADDRESSABILITY TO ALL SYMBOLS.  CVTRTMCT POINTS         */
+*/*          TO THE RTCT.  RTCTSDSW POINTS TO THE SMWK.              */
+*/*   PLS/2- INCLUDE IHASMWK FROM SYSLIB.  ALSO INCLUDE CVT TO       */
+*/*          DEFINE BASE OF CVTRTMCT.  ALSO INCLUDE IHARTCT          */
+*/*          FROM SYSLIB TO DEFINE BASE OF RTCTSDSW.                 */
+*/*                                                                  */
+*/* NOTES = FIELD SMWKRSM IS MAPPED BY MAPPING MACRO IHASDRSM.       */
+*/*         IT MUST ALSO BE INCLUDED FROM SYSLIB BEFORE IHASMWK      */
+*/*         IS INCLUDED BECAUSE IHASMWK REFERENCES THE LENGTH        */
+*/*         OF THE AREA MAPPED BY IHASDRSM.                          */
+*/*                                                                  */
+*/* SIZE = DECIMAL 972, X'3CC'                                       */
+*/*                                                                  */
+*/********************************************************************/
+*        %GOTO SMWKPLS;           /* BILINGUAL MAPPING       @G33VPHD*/
+         MACRO
+         IHASMWK
+SMWK     DSECT ,                  BAL MAPPING OF SMWK
+         IEZBITS ,                SYMBOLIC BIT NAMES
+*                                 SU 33                      @G33VPHD
+SMWKNAME DS    CL4                CONTAIN EBCDIC NAME C'SMWK'
+SMWKFLGS DS    0BL4               SUMMARY DUMP WORKING FLAGS
+SMWKFLG1 DS    B                  FIRST BYTE OF FLAGS
+SMWKSLCK EQU   BIT0               1=SALLOC LOCK OBTAINED
+SMWKRBUF EQU   BIT1               1=REAL STORAGE BUFFER OBTAINED
+SMWKRBFL EQU   BIT2               1=REAL STORAGE BUFFER FULL
+SMWKRSNM EQU   BIT3               1-ALL REQUESTED STORAGE NOT MOVED
+SMWKSLCL EQU   BIT4               1=SALLOC LOCK HELD BY CALLER @ZM45073
+SMWKSTBK EQU   BIT5               1=A STEAL BACK HAS OCCURRED  @ZM45073
+SMWKRES2 EQU   BIT6               RESERVED
+SMWKRES3 EQU   BIT7               RESERVED
+SMWKFLG2 DS    B                  SECOND BYTE OF FLAGS
+SMWKFLG3 DS    B                  THIRD BYTE OF FLAGS
+SMWKFLG4 DS    B                  FOURTH BYTE OF FLAGS
+SMWKSAVE DS    CL72               REGISTER SAVE AREA
+SMWKSAV1 DS    CL72               REGISTER SAVE AREA
+SMWKENTY DS    A                  ADDR SUM DUMP ROUTINE
+SMWKSSDE DS    A                  END ADDRESS OF SUMDUMP
+SMWKPFXB DS    A                  BEGIN ADDRESS OF PAGE FIXED AREA
+SMWKPFXE DS    A                  END ADDRESS OF PAGE FIXED AREA
+SMWKPSW  DS    0D                 MODEL PSW FOR SUM DUMP LPSW
+SMWKPSWS DS    X                  SYSTEM MASK PORTION OF PSW
+SMWKPSWK DS    X                  PROTECTION KEY PORTION OF PSW
+         DS    H                  RESERVED - INIT TO ZERO
+SMWKPSWA DS    A                  ADDRESS PORTION OF PSW
+SMWKVADR DS    F                  CURRENT VIRTUAL AREA ADDRESS
+SMWKENDA DS    F                  END OF CURRENT VIRTUAL AREA
+SMWKSAVA DS    F                  SAVED CURRENT VIRTUAL AREA ADDRESS
+SMWKPEND DS    F                  END ADDRESS OF REFERENCED PAGE
+SMWKCPUS DS    F                  SAVE AREA FOR SHIFTED CSDCPUAL BITS
+SMWKRSM  DS    CL416              REAL STORAGE BUFFER CONTROL AREA
+SMWKRFAD DS    A                  PTR TO NEXT REAL FRAME SPACE
+SMWKNFAV DS    H                  NUMBER OF REAL FRAMES AVAILABLE
+SMWKRSIX DS    H                  INDEX INTO FRAME ADDR TABLE
+SMWKFRUS DS    H                  NUMBER OF FRAMES USED BY SUMDUMP
+         DS    H                  RESERVED
+SMWKSMLK DS    A                  SUMLOCK RETURN REG SAVE AREA
+SMWKSDMP DS    A                  SUMDUMP RETURN REGISTER SAVE AREA
+SMWKSMDT DS    A                  SUMDATA RETURN REGISTER SAVE AREA
+SMWKSMRG DS    A                  SUMREGS RETURN REGISTER SAVE AREA
+SMWKSMLS DS    A                  SUMLIST RETURN REGISTER SAVE AREA
+SMWKSMBF DS    A                  SUMBUFF RETURN REGISTER SAVE AREA
+SMWKSMMV DS    A                  SUMMOVE RETURN REGISTER SAVE AREA
+SMWKSMVL DS    A                  SUMVALID RETURN REGISTER SAVE AREA
+SMWKHEAD DS    CL12               HEADER FOR STORAGE TO BE MOVED
+SMWKREGS DS    0CL128             TABLE OF NON DUPLICATE REG CONTENTS
+SMWKSREG DS    F                  ONE NON DUPLICATE REG CONTENT
+SMWKREGL EQU   *-SMWKREGS         LENGTH OF ON TABLE ENTRY
+         DS    CL124              REST OF REGISTER CONTENTS TABLE
+SMWKIDX1 DS    H                  INDEX VALUE FOR REGISTER SORTING
+SMWKIDX2 DS    H                  INDEX VALUE FOR REGISTER SORTING
+SMWKREGN DS    H                  NUMBER OF SAVED REGISTERS
+SMWKSCBF DS    H                  AVAILABLE SPACE ON CURRENT BUFFER
+SMWKALEN DS    H                  LENGTH OF AREA TO BE MOVED
+SMWKNFRI DS    H                  NUMBER OF BUFFERS FREED THIS INTERVAL
+SMWKNFRE DS    H                  NUMBER OF BUFFERS TO BE FREED
+SMWKNDIE DS    H                  NUMBER TIMES DIE ENTERED NO FREE
+SMWKSVLN DS    F                  SAVED AREA LENGTH FOR SUMLIST
+SMWKTQEA DS    A                  ADDRESS OF TQE FOR TIMER DIE
+         DS    F                  RESERVED                     @ZM44932
+SMWKTQE  DS    0D                INSURE TQE ON DOUBLE WORD BDY @ZM44932
+         DS    CL128             TQE FOR TIMER DIE IN SUMDUMP  @ZM44932
+SMWKPSSE DS    F                 PSEUDO ADDRESS FOR IEAVTSSE   @ZM45052
+*                                FOR ENABLED SUMMARY DUMPS OF  @ZM45052
+*                                MORE THAN ONE ADDRESS SPACE   @ZM45052
+SMWKNFRQ DS    H                  NUMBER OF FRAMES REQUESTED   @ZM45073
+SMWKNFAQ DS    H                  NUMBER OF FRAMES AQUIRED     @ZM45073
+SMWKNFUS DS    H                  NUMBER OF FRAMES USED        @ZM45073
+SMWKNTDI DS    H                  NUMBER OF TIMES DIE ENTERED  @ZM45073
+SMWKNTDQ DS    H                  NUMBER OF TIMES DIE REQUEUED @ZM45073
+SMWKNFFD DS    H                 NUMBER OF FRAMES FREED BY DIE @ZM45073
+SMWKNSTB DS    H           NUMBER OF TIMES STEAL BACK OCCURRED @ZM45073
+         DS    H                  RESERVED                     @ZM45073
+*
+SMWKLEN  EQU   *-SMWK             TOTAL LENGTH OF SUMMARY DUMP WORKAREA
+         MEND
+*%SMWKPLS: ;
+*DECLARE
+*  1 SMWK  BASED(RTCTSDSW),       /* SU 33                   @G33VPHD*/
+*    2 SMWKNAME    CHAR(4),       /* EBCDIC NAME C'SMWK'             */
+*    2 SMWKFLGS    CHAR(4),       /*SUMMARY DUMP WORKING FLAGS       */
+*      3 SMWKFLG1    BIT(8),      /*FIRST BYTE OF FLAGS              */
+*        4 SMWKSLCK  BIT(1),      /*1=SUM DUMP GOT SALLOC LOCK       */
+*        4 SMWKRBUF  BIT(1),      /*1=SUMMARY DUMP GOT REAL BUFFER   */
+*        4 SMWKRBFL  BIT(1),      /*1=REAL STORAGE BUFFER FULL       */
+*        4 SMWKRSNM  BIT(1),      /*1=ALL REQUESTED STORAGE NOT MOVED*/
+*        4 SMWKSLCL  BIT(1),     /*1=CALLER HELD SALLOC LOCK @ZM45073*/
+*        4 SMWKSTBK  BIT(1),      /*1=STEAL BACK HAS OCCURED @ZM45073*/
+*        4 *         BIT(1),      /*RESERVED                         */
+*        4 *         BIT(1),      /*RESERVED                         */
+*      3 SMWKFLG2    BIT(8),      /*SECOND BYTE OF FLAGS             */
+*      3 SMWKFLG3    BIT(8),      /*THIRD BYTE OF FLAGS              */
+*      3 SMWKFLG4    BIT(8),      /*FOURTH BYTE OF FLAGS             */
+*    2 SMWKSAVE    CHAR(72),      /* REGISTER SAVE AREA              */
+*    2 SMWKSAV1    CHAR(72),      /*REGISTER SAVE AREA               */
+*    2 SMWKENTY    PTR(31),       /*ADDRESS OF SUMDUMP ROUTINE       */
+*    2 SMWKSSDE    PTR(31),       /*END ADDRESS OF SUMDUMP           */
+*    2 SMWKPFXB    PTR(31),       /*BEGIN ADDRESS OF PAGE FIXED AREA */
+*    2 SMWKPFXE    PTR(31),       /*END ADDRESS OF PAGE FIXED AREA   */
+*    2 SMWKPSW BDY(DWORD),        /*MODEL PSW FOR LPSW USE           */
+*      3 SMWKPSWS  BIT(8),        /*SYSTEM MASK PORTION OF PSW       */
+*      3 SMWKPSWK  BIT(8),        /*PROTECT KEY PORTION OF PSW       */
+*      3 *         BIT(16),       /*RESERVED - INIT TO ZERO          */
+*      3 SMWKPSWA  PTR(31),       /*ADDRESS PORTION OF MODEL PSW     */
+*    2 SMWKVADR    PTR(31),       /*CURRENT VIRTUAL AREA ADDRESS     */
+*    2 SMWKENDA    PTR(31),       /*END OF CURRENT VIRTUAL AREA      */
+*    2 SMWKSAVA    PTR(31),       /*SAVED CURRENT VIRTUAL AREA ADDR  */
+*    2 SMWKPEND    PTR(31),       /*END ADDRESS OF REFERENCED PAGE   */
+*    2 SMWKCPUS    BIT(32),       /*SAVE AREA FOR SHIFTED CSDCPUAL BITS
+*                                                                    */
+*    2 SMWKRSM CHAR(LENGTH(SMWKRSCB)), /*REAL STORAGE BUFFER CONTROL
+*                                        AREA                        */
+*    2 SMWKRFAD    PTR(31),       /* PTR TO NEXT REAL FRAME SPACE    */
+*    2 SMWKNFAV    FIXED(15),     /* NUMBER OF REAL FRAMES AVAILABLE */
+*    2 SMWKRSIX    FIXED(15),     /*INDEX INTO FRAME ADDRESS TABLE   */
+*    2 SMWKFRUS    FIXED(15),     /*NUMBER OF FRAMES USED BY SUMDUMP */
+*    2 *           FIXED(15),     /*RESERVED                         */
+*      /*SAVE AREAS FOR IEAVTSSD INTERNAL PROCEDURES*/
+*    2 SMWKSMLK    PTR(31),       /*SUMLOCK RETURN REGISTER SAVE AREA*/
+*    2 SMWKSDMP    PTR(31),       /*SUMDUMP RETURN REGISTER SAVE AREA*/
+*    2 SMWKSMDT    PTR(31),       /*SUMDATA RETURN REGISTER SAVE AREA*/
+*    2 SMWKSMRG    PTR(31),       /*SUMREGS RETURN REGISTER SAVE AREA*/
+*    2 SMWKSMLS    PTR(31),       /*SUMLIST RETURN REGISTER SAVE AREA*/
+*    2 SMWKSMBF    PTR(31),       /*SUMBUFF RETURN REGISTER SAVE AREA*/
+*    2 SMWKSMMV    PTR(31),       /*SUMMOVE RETURN REGISTER SAVE AREA*/
+*    2 SMWKSMVL    PTR(31),       /*SUMVALID RETURN REG SAVE AREA    */
+*    2 SMWKHEAD    CHAR(LENGTH(SMDLRHDR)), /*HEADER FOR STORAGE AREA TO
+*                                                         BE MOVED   */
+*    2 SMWKREGS,                  /*TABLE OF NON DUPL REG CONTENTS   */
+*      3 SMWKSREG(32) PTR(31),    /*NON-DUPLICATE REGISTER CONTENTS  */
+*    2 SMWKIDX1    FIXED(15),     /*INDEX VALUE FOR REGISTER SORT    */
+*    2 SMWKIDX2    FIXED(15),     /*INDEX VALUE FOR REGISTER SORT    */
+*    2 SMWKREGN    FIXED(15),     /*NUMBER OF SAVED REGISTERS        */
+*    2 SMWKSCBF    FIXED(15),     /*AVAILABLE SPACE ON CURRENT BUFFER*/
+*    2 SMWKALEN    FIXED(15),     /*LENGTH OF AREA TO BE MOVED       */
+*    2 SMWKNFRI    FIXED(15),     /*NUMBER OF BUFFERS FREED INTERVAL */
+*    2 SMWKNFRE    FIXED(15),     /*NUMBER BUFFERS TO BE FREED       */
+*    2 SMWKNDIE    FIXED(15),     /*NUMBER TIME DIE ENTERED NO FREE  */
+*    2 SMWKSVLN    FIXED(31),     /*SAVED AREA LENGTH FOR SUMLIST    */
+*    2 SMWKTQEA    PTR(31),       /*ADDRESS OF TQE FOR TIMER DIE     */
+*    2 *           PTR(31),       /*RESERVED                 @ZM44932*/
+*    2 SMWKTQE     CHAR(128) BDY(DWORD), /*TQE FOR TIMER DIE @ZM44932*/
+*    2 SMWKPSSE    FIXED(31),   /*PSEUDO ADDRESS FOR IEAVTSSE FOR
+*            ENABLED SUMDUMPS OF MORE THAN ONE ADDRESS SPACE @ZM45052*/
+*    /*AREAS USED TO INDICATE THE STATISICS OF A SUMMARY DUMP*/
+*    2 SMWKNFRQ    FIXED(15),   /*NUMBER OF FRAMES REQUESTED @ZM45073*/
+*    2 SMWKNFAQ    FIXED(15),   /*NUMBER OF FRAMES AQUIRED   @ZM45073*/
+*    2 SMWKNFUS    FIXED(15),   /*NUMBER OF FRAMES USED      @ZM45073*/
+*    2 SMWKNTDI    FIXED(15),  /*NUMBER OF TIMES DIE ENTERED @ZM45073*/
+*    2 SMWKNTDQ    FIXED(15),   /*NUMBER OF DIE REQUEUED     @ZM45073*/
+*    2 SMWKNFFD    FIXED(15),   /*NUMBER FRAMES FREED BY DIE @ZM45073*/
+*    2 SMWKNSTB    FIXED(15),   /*TIMES STEAL BACKS OCCURRED @ZM45073*/
+*    2 *           FIXED(15);   /*RESERVED                   @ZM45073*/
+* DCL SMWKLEN      FIXED(31) STATIC LOCAL INIT(LENGTH(SMWK)); /* LENGTH
+*                                                        OF THE SMWK */

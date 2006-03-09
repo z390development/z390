@@ -1,0 +1,110 @@
+.* MVS 3.8J PUBLIC DOMAIN
+      MACRO
+         IECTIOBX
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +         +         +                   +
+*     0  +  FLAG 1 +  FLAG 2 +    SENSE BYTES    +
+*        +         +         +                   +
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +         +                             +
+*     4  + ECB CC  +         ADDRESS OF          +
+*        +         +     EVENT CONTROL BLOCK     +
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +         +                             +
+*     8  +IOS ERROR+      CHANNEL                +
+*        +  FLAGS  +                             +
+*        ++++++++++++++++  STATUS  +++++++++++++++
+*        +                                       +
+*    12  +                  WORD                 +
+*        +                                       +
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +   SIO   +                             +
+*    16  +CONDITION+  ADDRESS OF CHANNEL PROGRAM +
+*        +  CODE   +                             +
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +         +                             +
+*    20  +RESERVED +        ADDRESS OF DCB       +
+*        +         +                             +
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +         +                             +
+*    24  +RESERVED +       RESTART ADDRESS       +
+*        +         +     OF CHANNEL PROGRAM      +
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +                   +                   +
+*    28  +     BTAM FLAGS    +    ERROR COUNT    +
+*        +                   +                   +
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +  INDEX  +                             +
+*    32  +TO UCB IN+          RESERVED           +
+*        + THE DEB +                             +
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +                   +   RCV   +   SND   +
+*     36 +     RESERVED      +   ACK   +   ACK   +
+*        +                   +   PTR   +   PTR   +
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +                                       +
+*    40  +               DUMMY CCW               +
+*        +                                       +
+*        +++++++++++++++++  FOR  +++++++++++++++++
+*        +                                       +
+*    44  +       ERROR RECOVERY PROCEDURES       +
+*        +                                       +
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +                                       +
+*    48  +                 WORK                  +
+*        +                                       +
+*        ++++++++++++++++++    +++++++++++++++++++
+*        +                                       +
+*    52  +                 AREA                  +
+*        +                                       +
+*        ++++++++++++++++++    +++++++++++++++++++
+*        +                                       +
+*    56  +                  FOR                  +
+*        +                                       +
+*        ++++++++++++++++++    +++++++++++++++++++
+*        +                                       +
+*    60  +       ERROR RECOVERY PROCEDURES       +
+*        +                                       +
+*        +++++++++++++++++++++++++++++++++++++++++
+*        +                                       +
+*    64  +         CHANNEL PROGRAM AREA          +
+*        + (AREA SIZE = MAXIMUM # OF CCW'S X 8)  +
+*        +++++++++++++++++++++++++++++++++++++++++
+         EJECT
+IECTIOB  DSECT      IOB DUMMY SECTION
+IOBFLAG1 DS    1C   ERROR AND STATUS CONDITION INDICATORS, 1ST BYTE
+         SPACE
+IOBFLAG2 DS    1C   ERROR AND STATUS CONDITION INDICATORS, 2ND BYTE
+         SPACE
+IOBSENS0 DS    1C   SENSE INFORMATION, 1ST BYTE
+IOBSENS1 DS    1C   SENSE INFORMATION, 2ND BYTE
+         SPACE 2
+IOBECBCC DS    0CL1 EVENT CONTROL BLOCK CONDITION CODE
+IOBECBPT DS    1F   ADDRESS OF EVENT CONTROL BLOCK FOR THIS I/O OPER
+         SPACE 2
+IOBFLAG3 DS    0CL1 IOS ERROR FLAGS
+IOBCSW   DS    1D   CHANNEL STATUS WORD STORED AT INTERRUPT TIME
+         SPACE 2
+IOBSIOCC DS    0CL1 START I/O CONDITION CODE
+IOBSTART DS    1F   ADDRESS OF START OF CHANNEL PROGRAM
+         SPACE 2
+IOBDCBPT DS    1F   ADDRESS OF DATA CONTROL BLOCK
+         SPACE 2
+IOBRESTR DS    1F   ADDRESS OF CHANNEL PROGRAM RESTART CCW
+         SPACE 2
+IOBINCAM DS    1H   BTAM FLAGS
+         SPACE
+IOBERRCT DS    1H   ERROR COUNTS
+         SPACE 2
+IOBUCBX  DS    1C   INDEX TO A UCB IN THE DATA EXTENT BLOCK
+IOBWORK  DS    5C   RESERVED FOR ERP AND ONLINE TERMINAL TESTS     000B
+IOBRCVPT DS    1C   OFFSET TO RECEIVE ACKNOWLEDGEMENT CHARACTER    000B
+IOBSNDPT DS    1C   OFFSET TO SEND ACKNOWLEDGEMENT CHARACTER       000B
+         SPACE 2
+IOBERCCW DS    1D   DUMMY CCW FOR ERROR RECOVERY PROCEDURES
+         SPACE 2
+IOBERINF DS    2D   FOUR WORD WORK AREA FOR ERROR RECOVERY PROCEDURES
+         SPACE 2
+IOBCPA   DS    1D   START OF THE CHANNEL PROGRAM WITH A DOUBLE WORD
+*                        ALLOWED FOR EACH CCW REQUIRED
+         MEND

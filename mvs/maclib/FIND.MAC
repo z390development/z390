@@ -1,0 +1,35 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    FIND  &DCB,&AREA,&TYPE
+         LCLB  &ERR(4)
+&ERR(1)  SETB  ('&DCB' EQ '')
+&ERR(2)  SETB  ('&AREA' EQ '')
+&ERR(3)  SETB  ('&TYPE' EQ '')
+&ERR(4)  SETB  (NOT &ERR(3) AND '&TYPE' NE 'C' AND '&TYPE' NE 'D')
+         AIF   (&ERR(1)+&ERR(2)+&ERR(3)+&ERR(4) NE 0).E0
+         AIF   ('&TYPE' NE 'D').CTYPE
+&NAME    IHBINNRA &DCB,&AREA
+         LCR   1,1                               INDICATE TYPE D
+         SVC   18                                ISSUE FIND SVC
+         MEXIT
+.CTYPE   ANOP
+&NAME    IHBINNRA &DCB
+         AIF   ('&AREA'(1,1) EQ '(').REG
+         LA    15,&AREA                          LOAD AREA ADDRESS
+         AGO   .CONT
+.REG     LR    15,&AREA(1)                       LOAD AREA ADDRESS
+.CONT    MVC   0(4,1),0(15)                      MOVE RELAD TO DCB
+         LR    0,1                               INDICATE TYPE C
+         L     15,84(0,1)                    LOAD FIND RTN ADDR
+         BAL   14,4(0,15)                    LINK TO FIND ROUTINE
+         MEXIT
+.E0      AIF   (NOT &ERR(1)).E1
+         IHBERMAC 6                     &DCB MISSING
+.E1      AIF   (NOT &ERR(2)).E2
+         IHBERMAC 13                    &AREA MISSING
+.E2      AIF   (NOT &ERR(3)).E3
+         IHBERMAC 25                    &TYPE MISSING
+.E3      AIF   (NOT &ERR(4)).MEND
+         IHBERMAC 48,,&TYPE             &TYPE INVALID
+.MEND    MEND
+

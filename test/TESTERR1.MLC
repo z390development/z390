@@ -5,9 +5,36 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 11/10/05 RPI80  = ADD DUPLICATE AND MISSING MACRO LABEL ERRORS
+* 12/08/05 RPI119 - ADD TEST FOR SUBSCRIPT ON MULT VALUES        
+* 01/28/06 RPI192 - TEST SINGLE QUOTE AND SINGLE &               
+*********************************************************************
          TITLE 'TESTERR1 TEST MZ390 ERRORS'
 TESTERR1 CSECT
          USING *,15
+* INVALID USE OF ' VS '' QUOTE AND & VS && AMPERSAND
+&AMP     SETA  '&&' OK
+&AMP     SETA  '&'  BAD
+&AMP     SETA  '&X' BAD
+&AMP     SETA  '& ' BAD
+         MNOTE 'AMP=&&' OK
+         LA    1,=C'&&' OK
+         DC    C'&&' OK
+&SQ      SETC  '''' OK
+&SQ      SETC  '''  BAD
+* INVALID MULT VALUES BEYOND LIMIT
+         LCLA  &LA(2)
+&LA(1)   SETA  1,2,3
+         LCLB  &LB(2)
+&LB(1)   SETB  1,2,3
+         LCLC  &LC(2)
+&LC(1)   SETC  '1','2','3'
+         GBLA  &GA(2)
+&GA(1)   SETA  1,2,3
+         GBLB  &GB(2)
+&GB(1)   SETB  1,2,3
+         GBLC  &GC(2)
+&GC(1)   SETC  '1','2','3'
 * INVALID MACRO EXPRESSIONS
 &A1      SETA
 &A2      SETA 1+
@@ -61,4 +88,19 @@ TESTERR1 CSECT
 A        TEST2 B,K1=C
 * VALID COPY STATEMENT ON NEXT LINE IN TESTERR1.MLC
          COPY  TESTERR1
+* ADD DUPLICATE AND MISSING MACRO ERRORS IN MACRO CODE
+         MACRO
+         TESTLAB
+.LAB1    ANOP
+.LAB2    ANOP
+.LAB1    ANOP
+         AGO    .UNDEFINED1
+         AIF    (1 EQ 1).UNDEFINED2
+         MEND
+* ADD DUPLICATE AND MISSING MACRO ERRORS IN OPEN CODE
+.LAB1    ANOP
+.LAB2    ANOP
+.LAB1    ANOP
+         AGO    .UNDEFINED1
+         AIF    (1 EQ 1).UNDEFINED2
          END 

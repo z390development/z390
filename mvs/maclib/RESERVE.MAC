@@ -1,0 +1,74 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    RESERVE &PARAM,&SMC=,&RET=,&UCB=,&ECB=,&MF=I,&RELATED=
+         GBLB  &IHBRES
+&IHBRES  SETB  1
+         AIF   ('&MF(1)' EQ 'E').RES000
+         AIF   ('&UCB' NE '').RES000
+         IHBERMAC 157,UCB,&UCB
+.RES000  ANOP
+         AIF   ('&ECB' NE '').RES00A         *
+         AIF   ('&SMC' EQ '' AND '&RET' EQ '' AND '&UCB' EQ '').RES010
+         AIF   ('&SMC' EQ '' AND '&RET' EQ '').RES020
+         AIF   ('&RET' EQ '' AND '&UCB' EQ '').RES030
+         AIF   ('&SMC' EQ '' AND '&UCB' EQ '').RES040
+         AIF   ('&UCB' EQ '').RES050
+         AIF   ('&SMC' EQ '').RES060
+         AIF   ('&RET' EQ '').RES070
+&NAME    ENQ   &PARAM,SMC=&SMC,RET=&RET,UCB=&UCB,MF=&MF
+         AGO   .RES080
+.RES010  ANOP
+&NAME    ENQ   &PARAM,MF=&MF
+         AGO   .RES080
+.RES020  ANOP
+&NAME    ENQ   &PARAM,UCB=&UCB,MF=&MF
+         AGO   .RES080
+.RES030  ANOP
+&NAME    ENQ   &PARAM,SMC=&SMC,MF=&MF
+         AGO   .RES080
+.RES040  ANOP
+&NAME    ENQ   &PARAM,RET=&RET,MF=&MF
+         AGO   .RES080
+.RES050  ANOP
+&NAME    ENQ   &PARAM,SMC=&SMC,RET=&RET,MF=&MF
+         AGO   .RES080
+.RES060  ANOP
+&NAME    ENQ   &PARAM,RET=&RET,UCB=&UCB,MF=&MF
+       AGO     .RES080
+.RES070  ANOP
+&NAME    ENQ   &PARAM,SMC=&SMC,UCB=&UCB,MF=&MF
+         AGO   .RES080
+.RES00A  AIF   ('&SMC' EQ '' AND '&RET' EQ '' AND '&UCB' EQ '').RES01A
+         AIF   ('&SMC' EQ '' AND '&RET' EQ '').RES02A
+         AIF   ('&RET' EQ '' AND '&UCB' EQ '').RES03A
+         AIF   ('&SMC' EQ '' AND '&UCB' EQ '').RES04A
+         AIF   ('&UCB' EQ '').RES05A
+         AIF   ('&SMC' EQ '').RES06A
+         AIF   ('&RET' EQ '').RES07A
+&NAME    ENQ   &PARAM,SMC=&SMC,RET=&RET,UCB=&UCB,MF=&MF
+         AGO   .RES080
+.RES01A  ANOP
+&NAME    ENQ   &PARAM,ECB=&ECB,MF=&MF
+         AGO   .RES080
+.RES02A  ANOP
+&NAME    ENQ   &PARAM,UCB=&UCB,ECB=&ECB,MF=&MF
+         AGO   .RES080
+.RES03A  ANOP
+&NAME    ENQ   &PARAM,SMC=&SMC,ECB=&ECB,MF=&MF
+         AGO   .RES080
+.RES04A  ANOP
+&NAME    ENQ   &PARAM,RET=&RET,ECB=&ECB,MF=&MF
+         AGO   .RES080
+.RES05A  ANOP
+&NAME    ENQ   &PARAM,SMC=&SMC,RET=&RET,ECB=&ECB,MF=&MF
+         AGO   .RES080
+.RES06A  ANOP
+&NAME    ENQ   &PARAM,RET=&RET,UCB=&UCB,ECB=&ECB,MF=&MF
+       AGO     .RES080
+.RES07A  ANOP
+&NAME    ENQ   &PARAM,SMC=&SMC,UCB=&UCB,ECB=&ECB,MF=&MF
+.RES080  AIF   (NOT(&IHBRES)).RES090
+&IHBRES  SETB  0
+         SVC   56
+.RES090  MEND
+

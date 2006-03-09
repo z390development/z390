@@ -1,0 +1,60 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SETL  &DCB,&TYPE,&LL
+         LCLB  &B(7)
+         LCLA  &CTR
+         LCLC  &A
+         AIF   ('&DCB' EQ '').E1
+         AIF   ('&TYPE' EQ '').E2
+         AIF   ('&LL' EQ '' AND '&TYPE'(1,1) NE 'B').E3
+&NAME    IHBINNRA &DCB,&LL
+&A       SETC  '&TYPE'
+&B(1)    SETB  ('&A' EQ 'K' OR '&A' EQ 'KD' OR '&A' EQ 'KX' OR '&A' EQ X
+               'KDX' OR '&A' EQ 'KCD' OR '&A' EQ 'KCX' OR '&A' EQ 'KCDXX
+               ' OR '&A' EQ 'KC')
+&B(1)    SETB  (&B(1) OR '&A' EQ 'KH' OR '&A' EQ 'KDH' OR '&A' EQ 'KXH'X
+                OR '&A' EQ 'KDXH' OR '&A' EQ 'KCDH' OR '&A' EQ 'KCXH' OX
+               R '&A' EQ 'KCDXH' OR '&A' EQ 'KCH')
+&B(2)    SETB  ('&A' EQ 'KCD' OR '&A' EQ 'KCX' OR '&A' EQ 'KCDX')
+&B(2)    SETB  (&B(2) OR '&A' EQ 'KC')
+&B(2)    SETB  (&B(2) OR '&A' EQ 'KCDH' OR '&A' EQ 'KCXH' OR '&A' EQ 'KX
+               CDXH' OR '&A' EQ 'KCH')
+&B(3)    SETB  ('&A' EQ 'I' OR '&A' EQ 'ID' OR '&A' EQ 'IX' OR '&A' EQ X
+               'IDX')
+&B(4)    SETB  ('&A' EQ 'B' OR '&A' EQ 'BD' OR '&A' EQ 'BX' OR '&A' EQ X
+               'BDX')
+&B(5)    SETB  ('&A' EQ 'KD' OR '&A' EQ 'KDX' OR '&A' EQ 'KCD' OR '&A' X
+               EQ 'KCDX' OR '&A' EQ 'ID' OR '&A' EQ 'IDX' OR '&A' EQ 'BX
+               D' OR '&A' EQ 'BDX')
+&B(5)    SETB  (&B(5) OR '&A' EQ 'KDH' OR '&A' EQ 'KDXH' OR '&A' EQ 'KCX
+               DH' OR '&A' EQ  'KCDXH')
+&B(6)    SETB  ('&A' EQ 'KX' OR '&A' EQ 'KDX' OR '&A' EQ 'KCX' OR '&A' X
+               EQ 'KCDX' OR '&A' EQ 'IX' OR '&A' EQ 'IDX' OR '&A' EQ 'BX
+               X' OR '&A' EQ 'BDX')
+&B(6)    SETB  (&B(6) OR '&A' EQ 'KXH' OR '&A' EQ 'KDXH' OR '&A' EQ 'KCX
+               XH' OR '&A' EQ 'KCDXH')
+&B(7)    SETB  ('&A' EQ 'KH' OR '&A' EQ 'KDH' OR '&A' EQ 'KCH' OR '&A' X
+               EQ 'KCDH' OR '&A' EQ 'KXH' OR '&A' EQ 'KDXH' OR '&A' EQ X
+               'KCXH' OR '&A' EQ 'KCDXH')
+&CTR     SETA  128*&B(1)+64*&B(2)+32*&B(3)+16*&B(4)+8*&B(5)+4*&B(6)
+&CTR     SETA  &CTR+2*&B(7)
+         AIF   (&CTR EQ 0).E4
+         AIF   (&B(2) AND &B(7)).E4     C AND H INVALID COMB
+         AIF   (&B(4)).EASY
+         LA    14,&CTR                       PICK UP TYPE BYTE
+         SLL   14,24                         SHIFT TO HI-ORDER BYTE
+         OR    0,14                              PACK IN WITH LOW.LIM.
+         AGO   .FINI
+.EASY    LA    0,&CTR                        PICK UP TYPE BYTE
+         SLL   0,24                          SHIFT TO HI-ORDER BYTE
+.FINI    L     15,76(0,1)                    LOAD SETL RTN ADDR
+         BALR  14,15                             LINK TO SETL ROUTINE
+         MEXIT
+.E1      IHBERMAC 6
+         MEXIT
+.E2      IHBERMAC 25
+         MEXIT
+.E3      IHBERMAC 10
+         MEXIT
+.E4      IHBERMAC 48,,&TYPE
+         MEND

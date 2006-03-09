@@ -1,0 +1,111 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSDRCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSDR
+.*/ %SSDRCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSDR                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = DYNAMIC DEVICE RECONFIGURATION       @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSDRPLS;              /*                               @ZA34144
+*
+*       DYNAMIC DEVICE RECONFIGURATION JES3 FUNCTION IDS (SSOBFUNC)
+*
+SSOBDDR1 EQU   28                 DDR DEVICE CANDIDATE         @Y02BPSD
+*                                 SELECTION FUNCTION           @Y02BPSD
+SSOBDDR2 EQU   29                 DDR DEVICE CANDIDATE         @Y02BPSD
+*                                 VERIFICATION FUNCTION        @Y02BPSD
+SSOBDDR3 EQU   30                 DDR UCB SWAP NOTIFICATION    @Y02BPSD
+*                                 FUNCTION                     @Y02BPSD
+SSOBDDR4 EQU   31                 DDR SWAP COMPLETION FUNCTION @Y02BPSD
+*
+*  DYNAMIC DEVICE RECONFIGURATION/JES3 RETURN CODES (SSOBRETN)
+*
+*     RETURN CODES FOR SSOBDDR1 FUNCTION
+SSDR1EDL EQU   0                  LIST OF ELIGIBLE DEVICES IS  @Y02BPSD
+*                                 RETURNED                     @Y02BPSD
+SSDR1IDL EQU   4                  LIST OF INELIGIBLE DEVICES   @Y02BPSD
+*                                 IS RETURNED                  @Y02BPSD
+SSDR1NOL EQU   8                  NO LIST RETURNED, NO MORE    @Y02BPSD
+*                                 DEVICES ELIGIBLE             @Y02BPSD
+*
+*     RETURN CODES FOR SSOBDDR2 FUNCTION
+SSDR2ED  EQU   0                  CANDIDATE IS AN ELIGIBLE     @Y02BPSD
+*                                 DEVICE                       @Y02BPSD
+SSDR2ID  EQU   4                  CANDIDATE IS AN INELIGIBLE   @Y02BPSD
+*                                 DEVICE                       @Y02BPSD
+*
+*     RETURN CODES FOR SSOBDDR3 FUNCTION
+*          NO SSOBDDR3 RETURN CODES CURRENTLY DEFINED
+*
+*     RETURN CODES FOR SSOBDDR4 FUNCTION
+*          NO SSOBDDR4 RETURN CODES CURRENTLY DEFINED
+*
+*
+         ORG   SSOBGN             SSDR START                   @Y02BPSD
+SSDRBGN  EQU   *                  SSDR BEGINNING               @Y02BPSD
+SSDRLEN  DC    AL2(SSDRSIZE)      SSDR EXTENSION LENGTH        @Y02BPSD
+SSDRFLG1 DS    B                  SSDR FLAG BYTE FUNCTION 1&2  @Y02BPSD
+SSDRFLG2 DS    B                  SSDR FLAG BYTE FUNCTION 3&4  @Y02BPSD
+SSDR4SWP EQU   X'08'              FOR FUNCTION SSOBDDR4 ONLY   @Y02BPSD
+*                                 IF ON SWAP SUCCESSFUL        @Y02BPSD
+*                                 IF OFF SWAP UNSUCCESSFUL     @Y02BPSD
+SSDRSFRU DS    A                  POINTER TO SWAP FROM UCB     @Y02BPSD
+SSDRSTOU DS    A                  POINTER TO SWAP TO UCB       @Y02BPSD
+SSDRUCBL DS    A                  POINTER TO JES3 UCB LIST     @Y02BPSD
+*                                 (1/2 WORDS FOLLOWED BY       @Y02BPSD
+*                                  X'FFFF')                    @Y02BPSD
+*
+SSDRSIZE EQU   *-SSDRBGN          EXTENSION LENGTH             @Y02BPSD
+SSOBLN15 EQU   SSOBHSIZ+SSDRSIZE  TOTAL SSOB LENGTH            @Y02BPSD
+         MEND                                                @ZA34144*/
+* %SSDRPLS:;                      /*                         @ZA34144*/
+*     /* FUNCTION IDS (SSOBFUNC)                                     */
+*   DCL SSOBDDR1 FIXED(15) CONSTANT(28); /* DDR DEVICE CANDIDATE
+*                                         SELECTION FUNCTION @Y02BPSD*/
+*   DCL SSOBDDR2 FIXED(15) CONSTANT(29); /* DDR DEVICE CANDIDATE
+*                                      VERIFICATION FUNCTION @Y02BPSD*/
+*   DCL SSOBDDR3 FIXED(15) CONSTANT(30); /* DDR UCB SWAP NOTIFICATION
+*                                           FUNCTION         @Y02BPSD*/
+*   DCL SSOBDDR4 FIXED(15) CONSTANT(31); /* DDR SWAP COMPLETION
+*                                           FUNCTION         @Y02BPSD*/
+*     /* DYNAMIC DEVICE RECONFIGURATION/JES3 EXIT FUNCTIONS          */
+*     /* RETURN CODES (SSOBRETN) -                                   */
+*/*                                                                  */
+*        /* RETURN CODES FOR SSOBDDR1 FUNCTION                       */
+*   DCL SSDR1EDL FIXED(31) CONSTANT(0); /* LIST OF ELIGIBLE DEVICES
+*                                          IS RETURNED       @Y02BPSD*/
+*   DCL SSDR1IDL FIXED(31) CONSTANT(4); /* LIST OF INELIGIBLE DEVICES
+*                                          IS RETURNED       @Y02BPSD*/
+*   DCL SSDR1NOL FIXED(31) CONSTANT(8); /* NO LIST RETURNED, NO MORE
+*                                          DEVICES ELIGIBLE  @Y02BPSD*/
+*/*                                                                  */
+*        /* RETURN CODES FOR SSOBDDR2 FUNCTION                       */
+*   DCL SSDR2ED  FIXED(31) CONSTANT(0); /* CANDIDATE IS AN ELIGIBLE
+*                                          DEVICE            @Y02BPSD*/
+*   DCL SSDR2ID  FIXED(31) CONSTANT(4); /* CANDIDATE IS AN INELIGIBLE
+*                                          DEVICE            @Y02BPSD*/
+*/*                                                                  */
+*        /* RETURN CODES FOR SSOBDDR3 FUNCTION                       */
+*/*               NO SSOBDDR3 RETURN CODES CURRENTLY DEFINED         */
+*        /* RETURN CODES FOR SSOBDDR4 FUNCTION                       */
+*/*               NO SSOBDDR4 RETURN CODES CURRENTLY DEFINED         */
+*    /* S S D R                                                      */
+*   DCL
+*   1      SSDR     SSOBDR,       /* BEGINNING SSOBDR EXTENSION
+*                                                            @Y02BPSD*/
+*     2    SSDRLEN  FIXED(15),    /* LENGTH OF SSDR          @Y02BPSD*/
+*     2    SSDRFLG1 BIT(8),       /* SSDR FLAG BYTE FOR FUNCTIONS
+*                                    SSOBDDR1 AND SSOBDDR2   @Y02BPSD*/
+*     2    SSDRFLG2 BIT(8),       /* SSDR FLAG BYTE FOR FUNCTIONS
+*                                    SSOBDDR3 AND SSOBDDR4   @Y02BPSD*/
+*       3  *        BIT(4),       /* RESERVED FOR SSOBDDR3   @Y02BPSD*/
+*       3  SSDR4SWP BIT(1),       /* FOR FUNCTION 4 ONLY - IF ON,
+*                                    SWAP SUCCESSFUL - IF OFF, SWAP
+*                                    UNSUCCESSFUL            @Y02BPSD*/
+*     2    SSDRSFRU PTR(31),      /* PTR TO SWAP FROM UCB    @Y02BPSD*/
+*     2    SSDRSTOU PTR(31),      /* PTR TO SWAP TO UCB      @Y02BPSD*/
+*     2    SSDRUCBL PTR(31);      /* PTR TO JES3 UCB LIST (1/2 WORDS
+*                                    FOLLOWED BY X'FFFF')    @Y02BPSD*/

@@ -1,0 +1,41 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSMSCMT;               /*                              @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSMS
+.*/ %SSMSCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*   MACRO NAME =       IEFSSMS                             @ZA34144*/
+*/*   DESCRIPTIVE NAME = MSSC MESSAGE TASK JES3 EXIT         @ZA34144*/
+*/*   STATUS =           SPLITOUT FROM IEFJSSOB              @ZA34144*/
+*/*   ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO          @ZA34144*/
+*/********************************************************************/
+* %GOTO SSMSPLS;               /*                              @ZA34144
+*                                                              @G18MP21
+SSOBMSSC EQU   36             MSSC MSG TASK ID(SSOBFUNC)       @G18MP21
+*                                                              @G18MP21
+         ORG   SSOBGN         SSMS START                       @G18MP21
+SSMSBGN  EQU   *              MSSC MESSAGE TASK BEGINNING      @G18MP21
+SSMSLEN  DC    AL2(SSMSSIZE)  MSSC MESSAGE TASK EXT SIZE       @G18MP21
+SSMSRSV0 DS    H              RESERVED                         @G18MP21
+SSMSPSDG DS    A              POINTER TO THE SORTED SDG        @G18MP21
+*                                                              @G18MP21
+SSMSPLRU DS    A              POINTER TO FIRST SDG WITH LRU    @G18MP21
+SSMSSIZE EQU   *-SSMSBGN      EXTENSION LENGTH                 @G18MP21
+SSOBLN18 EQU   SSOBHSIZ+SSMSSIZE TOTAL SSOB LENGTH             @G18MP21
+         MEND                                                @ZA34144*/
+* %SSMSPLS:;                            /*                   @ZA34144*/
+*    /*    FUNCTION IDS (SSOBFUNC)                                   */
+*  DCL SSOBMSSC FIXED(15) CONSTANT(36); /* MSSC MESSAGE TASK @G18MP21*/
+*
+*    /*                                                              */
+*    /* NO MSSC MESSAGE TASK RETURN CODES                            */
+*    /*                                                              */
+*  /*   S S M S                                              @G18MP21*/
+*  DECLARE
+*   1      SSMS   SSOBMS,      /*                            @G18MP21*/
+*     2    SSMSLEN FIXED(15),  /* LENGTH OF SSMS             @G18MP21*/
+*     2    SSMSRV0 FIXED(15),  /* RESERVED                   @G18MP21*/
+*     2    SSMSPSDG PTR(31),   /* POINTER TO THE SORTED
+*                                 SDG LIST                   @G18MP21*/
+*     2    SSMSPLRU PTR(31);   /* POINTER TO FIRST SDG
+*                                 WITH LRU                   @G18MP21*/

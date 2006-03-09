@@ -1,0 +1,58 @@
+.* MVS 3.8J PUBLIC DOMAIN
+        MACRO
+&NAME    ACB   &DDNAME=,&EXLST=0,&MACRF=,                              C
+               &JFCB=0,&BUFND=0,&BUFNI=0,&PASSWD=0,                    C
+               &BLKSIZE=0,&LRECL=0,&BUFSP=0,                           C
+               &CCTYPE=,&STRNO=1,&CATALOG=NO,                          C
+               &BSTRNO=0,&MAREA=0,&MLEN=0,&CRA=,                       C
+               &AM=,&APPLID=0,&USERPTR=0,                              C
+               &PARMS=,&PARM2=,&PARM3=
+.*
+.*       CHANGE LEVEL = 0                                      @ZA34940
+.*       DATE OF LAST CHANGE =  3  OCT   78 ( 78*276 )         @ZA34940
+.*
+.* FUNCTION - THIS MACRO CONTAINS THE PROTOTYPE STATEMENT
+.*            FOR THE ACB MACRO.
+.*            THE FUNCTION OF THIS MACRO IS TO DETERMINE
+.*            IF THE PROGRAM ISSUING THE ACB MACRO IS
+.*            A VTAM USER OR A VSAM USER AND TO INVOKE
+.*            MACRO ACBVS FOR VSAM OR ISTACB1 FOR VTAM.
+.*
+.* CHANGE ACTIVITY
+.*      CBMM SPLIT SUPPORT                                     @ZA34940
+.*
+         AIF   ('&AM' EQ 'VTAM').VTACB  IS IT VTAM
+         AIF   ('&AM' EQ 'VSAM').VSACB  IS IT VSAM
+         AIF   ('&AM' EQ '').VSACB      IF NULL, DEFAULT VSAM
+.*
+         IDAVSERR  3,AM,&AM             ISSUE ERROR MSG
+         MEXIT
+.*
+.VTACB   ANOP
+&NAME    ISTACB1 DDNAME=&DDNAME,EXLST=&EXLST,                          C
+               MACRF=&MACRF,JFCB=&JFCB,BUFND=&BUFND,                   C
+               BUFNI=&BUFNI,PASSWD=&PASSWD,                            C
+               BLKSIZE=&BLKSIZE,LRECL=&LRECL,                          C
+               BUFSP=&BUFSP,CCTYPE=&CCTYPE,                            C
+               STRNO=&STRNO,CATALOG=&CATALOG,                          C
+               BSTRNO=&BSTRNO,MAREA=&MAREA,MLEN=&MLEN,                 C
+               CRA=&CRA,AM=&AM,APPLID=&APPLID,                         C
+               USERPTR=&USERPTR,                                       C
+               PARMS=&PARMS,PARM2=&PARM2,PARM3=&PARM3
+.*
+         MEXIT
+.*
+.*
+.VSACB   ANOP
+&NAME    ACBVS DDNAME=&DDNAME,EXLST=&EXLST,                            C
+               MACRF=&MACRF,JFCB=&JFCB,BUFND=&BUFND,                   C
+               BUFNI=&BUFNI,PASSWD=&PASSWD,                            C
+               BLKSIZE=&BLKSIZE,LRECL=&LRECL,                          C
+               BUFSP=&BUFSP,CCTYPE=&CCTYPE,                            C
+               STRNO=&STRNO,CATALOG=&CATALOG,                          C
+               BSTRNO=&BSTRNO,MAREA=&MAREA,MLEN=&MLEN,                 C
+               CRA=&CRA,AM=&AM,APPLID=&APPLID,                         C
+               USERPTR=&USERPTR,                                       C
+               PARMS=&PARMS,PARM2=&PARM2,PARM3=&PARM3
+.*
+         MEND

@@ -1,0 +1,28 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /*                                                                */
+* /* MACCOMP Y-2 SC1DE/SJD61                                        */
+* /* MACSTAT Y-2 73103/Y02113                                       */
+* /*                                                                */
+         MACRO
+&NAME    VERIFY   &RPL=
+         AIF   ('&RPL' NE '').OK
+         IHBERMAC 24
+         MEXIT
+.OK      ANOP
+         AIF   ('&RPL'(1,1) EQ '(').RPLR
+&NAME    LA    1,&RPL                   LOAD RPL ADDR
+         AGO   .AREG
+.RPLR    AIF   ('&RPL' EQ '(1)').SKLR   IF RPL=(1), SKIP LR INST.
+&NAME    LR    1,&RPL(1)                LOAD RPL ADDRESS IN REG. 1
+         AGO   .AREG
+.SKLR    ANOP
+&NAME    LA    0,6                      INDICATE A VERIFY REQUEST
+         AGO   .AMCALL
+.AREG    ANOP
+         LA    0,6                      INDICATE A VERIFY REQUEST
+.AMCALL  ANOP
+         L     15,24(1)                 GET ACB ADDR FROM RPL
+         L     15,8(15)                 LOAD AM/0 INTERFACE RTN ADDR
+         BALR  14,15                    LINK TO INTERFACE ROUTINE
+         MEND
+

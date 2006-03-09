@@ -1,0 +1,35 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO SCABSL;                                               /*
+         MACRO
+&NAME    IHASCA
+SCA      DSECT
+***********************************************************************
+*              SPIE CONTROL AREA                                      *
+***********************************************************************
+SCAPIE   DS    A                   ADDRESS OF PIE
+SCAPMASK DS    CL1                 PROGRAM MASK AT TIME OF SPIE
+*                                  INITIATION. RESTORED AT SPIE
+*                                  NULLIFICATION.
+SCARESV  DS    CL3                 RESERVED FOR FUTURE USE
+SCAPARMS DS    CL16                PROG CHECK FLIH'S SRB PARMS
+SCARPPTR DS    A                   RECOVERY PIE PICA ADDRESS  @ZA06785
+SCAFRPPQ DS    A                   FREE RPIEPICA QUEUE HEADER @ZA06785
+SCASRB   DS    0F                  SRB USED BY PROG CHECK FLIH
+SCALEN   EQU   *-SCA               LENGTH OF SCA EXCLUDING THE SRB
+         MEND  ,                                                     */
+*%SCABSL  :  ;
+*/* **************************************************************** */
+*/*            SPIE CONTROL AREA                                     */
+*/* **************************************************************** */
+*DECLARE
+*  1 SCA  BASED,                   /* SPIE CONTROL AREA              */
+*   2 SCAPIE     PTR(31),          /* ADDRESS OF PROG INTERRUPT ELEM */
+*   2 SCAPMASK   CHAR(1),          /* PROGRAM MASK AT THE TIME OF    */
+*                                  /* SPIE INITIATION. RESTORED AT   */
+*                                  /* SPIE NULLIFICATION.            */
+*   2 SCARESV    CHAR(3),          /* RESERVED FOR FUTURE USE        */
+*   2 SCAPARMS   CHAR(16),         /* PROG CHK FLIH'S SRB PARMS      */
+    2 SCARPPTR   PTR(31),         /*RECOVERY PIE PICA ADDRESS @ZA06785*/
+    2 SCAFRPPQ   PTR(31),         /*FREE RPIEPICA QUEUE PTR  @ZA06785*/
+*   2 SCASRB     CHAR(1);          /* SRB USED BY PROG CHECK FLIH    */
+

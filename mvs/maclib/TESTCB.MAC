@@ -1,0 +1,153 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&LBL     TESTCB &ACB=,&EXLST=,&RPL=,&OBJECT=,&ERET=,&MF=,&ACBLEN=,     C
+               &ATRB=,&AVSPAC=,&BUFND=,&BUFNI=,&BUFNO=,&BUFSP=,&CINV=, C
+               &DDNAME=,&ENDRBA=,&ERROR=,&FS=,&LRECL=,&MACRF=,         C
+               &NCIS=,&NDELR=,&NEXCP=,&NEXT=,&NINSR=,&NIXL=,&NLOGR=,   C
+               &NRETR=,&NSSS=,&NUPDR=,&OFLAGS=,&PASSWD=,&RKP=,&STMST=, C
+               &STRNO=,&RPLLEN=,&AREA=,&AREALEN=,&ARG=,&ECB=,          C
+               &FDBK=,&KEYLEN=,&MSGAREA=,&MSGLEN=,&NXTRPL=,&OPTCD=,    C
+               &RBA=,&RECLEN=,&IO=,&EXLLEN=,&CATALOG=,&EODAD=,         C
+               &JRNAD=,&LERAD=,&SYNAD=,                          X03004C
+               &TRANSID=,&AIXPC=,&FTNCD=,&AIXFLAG=,&BSTRNO=,    X04SVHSC
+               &CRA=,&OPENOBJ=,&AIXRKP=,&MAREA=,&MLEN=,         X04SVHSC
+               &JFCB=,&USERPTR=,                                       *
+               &AM=,&APPLID=,&LOGON=,       *** VTAM KEYWORDS ***X03004C
+               &LOSTERM=,&RELREQ=,&ATTN=,&TPEND=,&EXIT=,       @Z40BHUC*
+               &AAREA=,&AAREALN=,&ARECLEN=,                    @Z40BHUC*
+               &NSEXIT=,                                       @G40AKCM*
+               &NIB=,&BRANCH=,&USER=,&RTNCD=,                   Y30ASHSC
+               &FDBK2=,&SENSE=,&REQ=,&DATAFLG=,&NAME=,           X03004C
+               &USERFLD=,&MODE=,&LISTEND=,&CONDN=,&PROC=,        X03004C
+               &NIBLEN=,&CID=,&DEVCHAR=,&CON=,                   X03004C
+               &CHNGDIR=,&STYPE=,&RTYPE=,&CHAIN=,&POST=,        X3004BSC
+               &RESPOND=,&CONTROL=,&OBSQAC=,&IBSQAC=,           X3004BSC
+               &OBSQVAL=,&IBSQVAL=,&SEQNO=,&SSENSEO=,           X3004BSC
+               &SSENSEI=,&USENSEO=,&USENSEI=,&RESPLIM=,        @Z40BHUC*
+               &SDT=,&SCIP=,&DFASY=,&RESP=,                    @Z40BHUC*
+               &BRACKET=,&SSENSMO=,&SSENSMI=,&SIGDATA=,        @Z40BHUC*
+               &LOGMODE=,&BNDAREA=,&CODESEL=,                  @Z40BHUC*
+               &CRYPT=,&ENCR=                                  @G40AKSL
+.* GLOBALS
+         GBLB  &IDACB01                ERROR INDICATOR
+         GBLA  &IDACB02                NUMBER OF FIELDS IN HEADER ACE
+         GBLA  &IDACB03                LENGTH OF HEADER ACE
+         GBLA  &IDACB04(5)             HEADER TYPE ARRAY
+         GBLC  &IDACB05(5)             HEADER VALUE ARRAY
+         GBLA  &IDACB06(5)             HEADER OFFSET ARRAY
+         GBLA  &IDACB07(5)             HEADER FIELD LENGTH ARRAY
+         GBLA  &IDACB11                OPERAND TYPE - SET BY IDACB1
+         GBLC  &IDACB13                OPERAND VALUE - SET BY IDACB1
+.* LOCALS
+         LCLA  &OT,&BA,&ER,&RS,&I      ARRAY INDICES
+         LCLC  &BLKTYPE                TYPE OF BLOCK TO BE TESTED
+.* INITIALIZATION
+&IDACB01 SETB  0                       CLEAR ERROR INDICATOR
+&IDACB02 SETA  4                       NUMBER OF HEADER FIELDS
+&IDACB03 SETA  16                      HEADER LENGTH
+&OT      SETA  1                       OBJECT TYPE INDEX
+&BA      SETA  2                       BLOCK ADDRESS INDEX
+&ER      SETA  3                       ERROR RETURN ADDRESS INDEX
+&RS      SETA  4                       RESERVED FIELD INDEX
+.* TEST FOR POSITIONAL PARAMETERS
+&I       SETA  0
+.L10     ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&SYSLIST).L20
+         IDAERMAC 1,&SYSLIST(&I)
+         AGO   .L10
+.* VALIDITY CHECK AND TRANSFORM REQUEST KEYWORDS
+.L20     ANOP                          *** BLOCK TYPE AND ADDRESS ***
+&IDACB04(&BA) SETA 0
+&IDACB06(&BA) SETA 4
+&IDACB07(&BA) SETA 4
+         AIF   ('&RPL' NE '').L30     CHECKS MUST BE MADE
+         AIF   ('&ACB' NE '').L40     IN THIS ORDER DUE TO
+         AIF   ('&NIB' NE '').L60     THE USE OF BLOCK           X03004
+         AIF   ('&EXLST' NE '').L50   NAMES AS KEYWORDS
+         AGO   .L80
+.L30     IDACB1 ARG=&RPL,ARGNAME=RPL,MF=&MF
+&BLKTYPE SETC  'RPL'
+         AGO   .L70
+.L40     IDACB1 ARG=&ACB,ARGNAME=ACB,MF=&MF
+&BLKTYPE SETC  'ACB'
+         AGO   .L70
+.L50     IDACB1 ARG=&EXLST,ARGNAME=EXLST,MF=&MF
+&BLKTYPE SETC  'EXLST'
+         AGO   .L70                                              X03004
+.L60     IDACB1 ARG=&NIB,ARGNAME=NIB,MF=&MF                      X03004
+&BLKTYPE SETC 'NIB'                                              X03004
+.L70     ANOP
+&IDACB04(&BA) SETA &IDACB11
+&IDACB05(&BA) SETC '&IDACB13'
+.L80     ANOP                          *** OBJECT TYPE ***
+&IDACB04(&OT) SETA 0
+&IDACB06(&OT) SETA 2
+&IDACB07(&OT) SETA 2
+         AIF   ('&OBJECT' EQ '' OR '&OBJECT' EQ 'DATA').L100
+         AIF   ('&OBJECT' EQ 'INDEX').L90
+         IDAERMAC 3,OBJECT,&OBJECT
+&IDACB01 SETB  1
+         AGO   .L100
+.L90     ANOP
+&IDACB04(&OT) SETA 1
+&IDACB05(&OT) SETC '1'
+.L100    ANOP                          *** ERROR RETURN ADDRESS ***
+&IDACB04(&ER) SETA 0
+&IDACB06(&ER) SETA 8
+&IDACB07(&ER) SETA 4
+         AIF   ('&ERET' EQ '').L110
+         IDACB1 ARG=&ERET,ARGNAME=ERET,MF=&MF
+&IDACB04(&ER) SETA &IDACB11
+&IDACB05(&ER) SETC '&IDACB13'
+.L110    ANOP                          *** RESERVED FIELD ***
+&IDACB04(&RS) SETA 0
+&IDACB06(&RS) SETA 12
+&IDACB07(&RS) SETA 4
+         IDACB2 CALLER=TEST,BLKTYPE=&BLKTYPE,LABEL=&LBL,MF=&MF,        C
+               ACBLEN=&ACBLEN,ATRB=&ATRB,AVSPAC=&AVSPAC,BUFND=&BUFND,  C
+               BUFNI=&BUFNI,BUFNO=&BUFNO,BUFSP=&BUFSP,CINV=&CINV,      C
+               DDNAME=&DDNAME,ENDRBA=&ENDRBA,ERROR=&ERROR,EXLST=&EXLST,C
+               FS=&FS,LRECL=&LRECL,MACRF=&MACRF,                       C
+               NCIS=&NCIS,NDELR=&NDELR,NEXCP=&NEXCP,NEXT=&NEXT,        C
+               NINSR=&NINSR,NIXL=&NIXL,NLOGR=&NLOGR,NRETR=&NRETR,      C
+               NSSS=&NSSS,NUPDR=&NUPDR,OFLAGS=&OFLAGS,PASSWD=&PASSWD,  C
+               RKP=&RKP,STMST=&STMST,STRNO=&STRNO,                     C
+               RPLLEN=&RPLLEN,ACB=&ACB,AREA=&AREA,AREALEN=&AREALEN,    C
+               ARG=&ARG,ECB=&ECB,FDBK=&FDBK,KEYLEN=&KEYLEN,IO=&IO,     C
+               MSGAREA=&MSGAREA,MSGLEN=&MSGLEN,NXTRPL=&NXTRPL,         C
+               OPTCD=&OPTCD,RBA=&RBA,RECLEN=&RECLEN,EXLLEN=&EXLLEN,    C
+               CATALOG=&CATALOG,EODAD=&EODAD,JRNAD=&JRNAD,             C
+               LERAD=&LERAD,SYNAD=&SYNAD,                        X03004C
+               USERPTR=&USERPTR,JFCB=&JFCB,                            *
+               APPLID=&APPLID,LOGON=&LOGON, *** VTAM KEYWORDS ***X03004C
+               LOSTERM=&LOSTERM,RELREQ=&RELREQ,ATTN=&ATTN,     @Z40BHUC*
+               TPEND=&TPEND,                                   @Z40BHUC*
+               NSEXIT=&NSEXIT,                                 @G40AKCM*
+               AAREA=&AAREA,AAREALN=&AAREALN,ARECLEN=&ARECLEN,   X03004C
+               EXIT=&EXIT,                                      Y30ASHSC
+               NIB=&NIB,BRANCH=&BRANCH,USER=&USER,               X03004C
+               RTNCD=&RTNCD,FDBK2=&FDBK2,SENSE=&SENSE,           X03004C
+               REQ=&REQ,DATAFLG=&DATAFLG,NAME=&NAME,             X03004C
+               USERFLD=&USERFLD,MODE=&MODE,LISTEND=&LISTEND,     X03004C
+               CONDN=&CONDN,PROC=&PROC,NIBLEN=&NIBLEN,           X03004C
+               CID=&CID,DEVCHAR=&DEVCHAR,CON=&CON,AM=&AM,        X03004C
+               CHNGDIR=&CHNGDIR,STYPE=&STYPE,RTYPE=&RTYPE,      X3004BSC
+               CHAIN=&CHAIN,POST=&POST,RESPOND=&RESPOND,        X3004BSC
+               CONTROL=&CONTROL,OBSQAC=&OBSQAC,IBSQAC=&IBSQAC,  X3004BSC
+               OBSQVAL=&OBSQVAL,IBSQVAL=&IBSQVAL,SEQNO=&SEQNO,  X3004BSC
+               SSENSEO=&SSENSEO,SSENSEI=&SSENSEI,               X3004BSC
+               USENSEO=&USENSEO,USENSEI=&USENSEI,               X3004BSC
+               RESPLIM=&RESPLIM,SDT=&SDT,                      @Z40BHUC*
+               SCIP=&SCIP,DFASY=&DFASY,RESP=&RESP,             X03004HSC
+               BRACKET=&BRACKET,SSENSMO=&SSENSMO,              @Z40BHUC*
+               SSENSMI=&SSENSMI,SIGDATA=&SIGDATA,              @Z40BHUC*
+               LOGMODE=&LOGMODE,BNDAREA=&BNDAREA,              @Z40BHUC*
+               CODESEL=&CODESEL,                               @Z40BHUC*
+               TRANSID=&TRANSID,AIXPC=&AIXPC,FTNCD=&FTNCD,      X04SVHSC
+               AIXFLAG=&AIXFLAG,BSTRNO=&BSTRNO,CRA=&CRA,        X04SVHSC
+               OPENOBJ=&OPENOBJ,AIXRKP=&AIXRKP,                 X04SVHSC
+               MAREA=&MAREA,MLEN=&MLEN,                         X04SVHSC
+               CRYPT=&CRYPT,ENCR=&ENCR                         @G40AKSL
+         MEND
+

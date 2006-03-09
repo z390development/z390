@@ -1,0 +1,24 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    DELETE &EP=,&EPLOC=,&DE=,&RELATED=
+         AIF   ('&EP' NE '').EPPRES
+         AIF   ('&EPLOC' EQ '' AND '&DE' EQ '').E1 BOTH MISSING
+         AIF   ('&EPLOC' NE '' AND '&DE' NE '').E2 BOTH PRESENT
+&NAME    IHBINNRA ,&EPLOC&DE                LOAD REG 0
+         AGO   .SVC
+.EPPRES  AIF   ('&EPLOC' NE '' OR '&DE' NE '').E2
+&NAME    BAL   0,*+12                            LOAD ADDR OF EP SYMBOL
+         DC    CL8'&EP'                          EP SYMBOL
+.SVC     SVC   9                                 ISSUE DELETE SVC
+         MEXIT
+.E1      IHBERMAC 01,318                    PARAM MISSING
+         MEXIT
+.E2      IHBERMAC 88,318                    TWO MANY PARAMS
+         MEND
+**/
+*DELETE: MACRO
+*        KEYS(EP,DE,RTCD,RELATED);
+*        ANS('?'||MACLABEL||'DELETEP '||MACLIST||MACKEYS||';');
+*%END;
+

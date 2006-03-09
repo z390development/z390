@@ -1,0 +1,102 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*         %GOTO SARBPLS1; /*
+          MACRO
+&NAME     IEFSSARB
+**/
+*%SARBPLS1:  ;
+*/***********************************************************@G29AN2F*/
+*/*                                                          @G29AN2F*/
+*/* NAME - IEFSSARB                                          @G29AN2F*/
+*/*                                                          @G29AN2F*/
+*/* DESCRIPTIVE NAME - SUBSYSTEM ALLOCATION REQUEST BLOCK    @G29AN2F*/
+*/*                                                          @G29AN2F*/
+*/* STATUS - VS2 SU 16 - IN THIS MODULE, SU16 SUPPORTS       @G16APPK*/
+*/*          VPSS SUPPORT ( SU 29 - @G29AN2F).               @G16APPK*/
+*/*        - SU 4,10,16 MERGE                                @ZA28413*/
+*/*                                                          @G29AN2F*/
+*/* FUNCTION -                                               @G29AN2F*/
+*/*   THE SUBSYSTEM ALLOCATION REQUEST BLOCK(SSARB) IS       @G29AN2F*/
+*/*   A BLOCK REPRESENTING AN ALLOCATION REQUEST TO A        @G29AN2F*/
+*/*   DESIGNATED SUBSYSTEM.  AN SSARB MAY BE CHAINED TO      @G29AN2F*/
+*/*   OTHER SSARB'S.  THE FIRST SSARB MUST BE POINTED        @G29AN2F*/
+*/*   TO BY THE SSAG EXTENSION OF THE SSOB.  THE SSOB        @G29AN2F*/
+*/*   IS MAPPED BY MACRO IEFJSSOB.                           @G29AN2F*/
+*/*                                                          @G29AN2F*/
+*/* METHOD OF ACCESS -                                       @G29AN2F*/
+*/*   PL/S - DCL SSARBPTR PTR(31)                            @G29AN2F*/
+*/*   BAL  - USING ON SSARB                                  @G29AN2F*/
+*/*                                                          @G29AN2F*/
+*/***********************************************************@G29AN2F*/
+*/* IEFSSARB - C - MERGED BACK TO REL 3.7                   @ZA28413*/
+*         %GOTO SSARBPLS2; /*
+SSARB    DSECT
+SSAGARBK DS    0CL60          SSAG REQUEST BLOCK MAPPING       @G29AN2F
+SSAGRBLN DS    H              REQUEST BLOCK LENGTH             @G29AN2F
+SSAGRBFL DS    H              RESERVED FLAGS                   @G29AN2F
+SSAGRBEC DS    H              DD RELATED ERROR CODE            @G29AN2F
+SSAGRBIC DS    H              DD RELATED INFO CODE-DEFINED     @G29AN2F
+*                             BY THE SUBSYSTEM                 @G29AN2F
+SSAGDMLN DS    H              MAX LENGTH OF DD LEVEL MSG       @G29AN2F
+*        DS    H              RESERVED                         @G29AN2F
+SSAGNRBP DS    A              ADDRESS OF NEXT RB OR 0          @G29AN2F
+SSAGDDNM DS    A              ADDRESS OF DDNAME                @G29AN2F
+SSAGDISP DS    A              ADDRESS OF DATA SET DISP         @G29AN2F
+SSAGDUMY DS    A              ADDRESS OF DUMMY/SYSIN FLAGS     @G29AN2F
+SSAGSOUT DS    A              ADDRESS OF SYSOUT FLAGS          @G29AN2F
+SSAGUNIT DS    A              ADDRESS OF UNIT TYPE             @G29AN2F
+SSAGADSP DS    A              ADDRESS OF ALTERNATE DISP        @G29AN2F
+SSAGSSNM DS    A              ADDRESS OF SUBSYSTEM NAME        @G29AN2F
+SSAGJFCB DS    A              ADDRESS OF JFCB                  @G29AN2F
+SSAGSSWA DS    A              ADDRESS OF SSWA                  @G29AN2F
+SSAGSSCM DS    A              ADDRESS OF SUBSYSTEM INFO        @G29AN2F
+SSAGDMGP DS    A              ADDRESS OF DD LEVEL MSG BLOCK    @G29AN2F
+*                                                              @G29AN2F
+SSAGDMBK DSECT                DD LEVEL MESSAGE BLOCK POINTED   @G29AN2F
+*                             TO BY SSAGDMGP                   @G29AN2F
+SSAGDMGL DS    H              LENGTH OF MESSAGE RETURNED       @G29AN2F
+*                             BY THE SUBSYSTEM                 @G29AN2F
+SSAGDMSG DS    0C             DD LEVEL MESSAGE TEXT            @G29AN2F
+*                                                              @G29AN2F
+SSAGGMBK DSECT                GROUP LEVEL MESSAGE BLOCK        @G29AN2F
+*                             POINTED TO BY SSAGGMGP IN SSOBAG @G29AN2F
+SSAGGMGL DS    H              LENGTH OF MESSAGE RETURNED       @G29AN2F
+*                             BY THE SUBSYSTEM                 @G29AN2F
+SSAGGMSG DS    0C             GROUP LEVEL MESSAGE TEXT         @G29AN2F
+         MEND  */
+*%SSARBPLS2: ;
+*/*                                                          @G29AN2F*/
+*DCL                          /*                             @G29AN2F*/
+* 1    SSAGARBK  BASED(SSARBPTR), /* SSAG REQUEST BLOCK
+*                                    MAPPING                 @G29AN2F*/
+*   2  SSAGRBLN  FIXED(15),   /* REQUEST BLOCK LENGTH        @G29AN2F*/
+*   2  SSAGRBFL  BIT(16),     /* RESERVED FLAGS              @G29AN2F*/
+*   2  SSAGRBEC  FIXED(15),   /* DD RELATED ERROR CODE       @G29AN2F*/
+*   2  SSAGRBIC  FIXED(15),   /* DD RELATED INFO CODE-DEFINED
+*                                BY SUBSYSTEM                @G29AN2F*/
+*   2  SSAGDMLN  FIXED(15),   /* MAX LENGTH OF DD LEVEL MSG  @G29AN2F*/
+*   2  *         FIXED(15),   /* RESERVED                    @G29AN2F*/
+*   2  SSAGNRBP  PTR(31),     /* POINTER TO NEXT RB OR 0     @G29AN2F*/
+*   2  SSAGDDNM  PTR(31),     /* POINTER TO DDNAME           @G29AN2F*/
+*   2  SSAGDISP  PTR(31),     /* POINTER TO DATA SET DISP    @G29AN2F*/
+*   2  SSAGDUMY  PTR(31),     /* POINTER TO DUMMY/SYSIN
+*                                FLAGS                       @G29AN2F*/
+*   2  SSAGSOUT  PTR(31),     /* POINTER TO SYSOUT FLAGS     @G29AN2F*/
+*   2  SSAGUNIT  PTR(31),     /* POINTER TO UNIT TYPE        @G29AN2F*/
+*   2  SSAGADSP  PTR(31),     /* POINTER TO ALTERNATE DISP   @G29AN2F*/
+*   2  SSAGSSNM  PTR(31),     /* POINTER TO SUBSYSTEM NAME   @G29AN2F*/
+*   2  SSAGJFCB  PTR(31),     /* POINTER TO JFCB             @G29AN2F*/
+*   2  SSAGSSWA  PTR(31),     /* POINTER TO SSWA             @G29AN2F*/
+*   2  SSAGSSCM  PTR(31),     /* POINTER TO INFO             @G29AN2F*/
+*   2  SSAGDMGP  PTR(31);     /* POINTER TO DD LEVEL MESSAGE
+*                                BLOCK                       @G29AN2F*/
+*DCL                          /*                             @G29AN2F*/
+* 1    SSAGDMBK  BASED(SSAGDMGP), /* DD LEVEL MESSAGE BLOCK  @G29AN2F*/
+*   2  SSAGDMGL  FIXED(15),   /* LENGTH OF MESSAGE RETURNED
+*                                BY SUBSYSTEM                @G29AN2F*/
+*   2  SSAGDMSG  CHAR(*);     /* DD LEVEL MESSAGE TEXT       @G29AN2F*/
+*DCL                          /*                             @G29AN2F*/
+* 1    SSAGGMBK  BASED(SSAGGMGP), /* GROUP LEVEL MESSAGE BLK @G29AN2F*/
+*   2  SSAGGMGL  FIXED(15),   /* LENGTH OF MESSAGE RETURNED BY
+*                                SUBSYSTEM                   @G29AN2F*/
+*   2  SSAGGMSG  CHAR(*);     /* GROUP LEVEL MESSAGE TEXT    @G29AN2F*/
+

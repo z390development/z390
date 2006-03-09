@@ -5,6 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 11/02/05 RPI68 ADD CLOCK=STCK, CLOCK=STCKE, CLOCK=JAVA EXTENSIONS
+*********************************************************************
          TITLE 'TESTTIM1 REGRSSION TEST TIME MACRO FUNCTIONS'
 *
 * NOTE THIS REGRESSION TEST REQUIRES EZ390 BE RUN WITH NOTIMING
@@ -15,6 +17,8 @@ TESTIM1  RT1   MAIN
 PWORK    DC    XL8'FF'
 WORK8    DC    XL8'FF'
 WORK16   DC    XL16'FF'
+CLOCK    DC    XL16'00'
+IBM_INC  DC    XL8'0000020250EB7B80'  MICROSECONDS FROM 1900 TO 1970
 WTOMSG1  DC    0F'0',AL2(MSG1END-*,0)
          DC    C' TIME ='
 TIMEDATE DC    X'402120',C':',X'2020',C':',X'2020',C':',X'2020'
@@ -53,7 +57,7 @@ TOD_STCKE  DC  XL16'00'                   TOD  BIT 59   MIC
 * SVC DEC
          TIME  DEC
          STM   R0,R1,PWORK
-         RT1   CCE,PWORK(4),=A(TOD_DEC)'
+         RT1   CCE,PWORK(4),=A(TOD_DEC)
          RT1   CCE,PWORK+4(4),=A(SVC_DATE)
          MVI   PWORK+4,X'20'  CHANGE CC TO 20
          ED    TIMEDATE(MSG1END-TIMEDATE),PWORK
@@ -108,6 +112,23 @@ TOD_STCKE  DC  XL16'00'                   TOD  BIT 59   MIC
          RT1   CCE,WORK16+8(4),=X'02012005'
          TIME  DEC,WORK16,LINKAGE=SYSTEM,DATETYPE=YYYYMMDD
          RT1   CCE,WORK16+8(4),=X'20050102'
+* CLOCK=STCK   DOUBLE WORD WITH BIT 51 = MICROSECONDS FROM 1900
+         TIME  CLOCK,WORK16,CLOCKTYPE=STCK
+         STCKF CLOCK
+         RT1   CCE,WORK16(8),CLOCK
+* CLOCK=STCKE  2 DOUBLE WORDS WITH BIT 59 = MICROSECONDS FROM 1900
+         TIME  CLOCK,WORK16,CLOCKTYPE=STCKE
+         STCKE CLOCK
+         RT1   CCE,WORK16,CLOCK
+* CLOCK=JAVA   DOUBLE WORD WITH BIT 63 = MICROSECONDS FROM 1970
+         TIME  CLOCK,WORK16,CLOCKTYPE=JAVA
+         LG    R0,WORK16
+         AG    R0,IBM_INC   CVT JAVA TO IBM EPOCH
+         MSGF  R0,=F'1000'
+         SLLG  R0,R0,(63-51)
+         STG   R0,WORK16
+         STCKF CLOCK
+         RT1   CCE,WORK16(8),CLOCK
          WTO   'TESTTIM1 ENDED OK'
          RT1   END
          END

@@ -1,0 +1,1114 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GO TO ELEMPLS1;
+*/*
+         MACRO
+         IDAELEM &DSECT=YES
+          AGO   .ELEMBAL                                             */
+*/*      ELEMENT ARGUMENT CONTROL ENTRY                              */
+*/*      CREATED BY USER WITH GENCB, MODCB, SHOWCB, AND TESTCB MACROS*/
+*/*                                                                  */
+*/*      STATUS = MVS VERSION 037                                    */
+*/*                                                                  */
+*/*      ___________________________________________________         */
+*/*      |                        |                        |         */
+*/*      |        ELEMKWTC        |       ELEMBLEN         |         */
+*/*      |________________________|________________________|         */
+*/*      |                                                 |         */
+*/*      |                     ELEMVAL(1)                  |         */
+*/*      |_________________________________________________|         */
+*/*      |                                                 |         */
+*/*      |                     ELEMVAL(2)                  |         */
+*/*      |_________________________________________________|         */
+*/*                                                                  */
+*%ELEMPLS1 :;
+*        %IF ELEMEND ^= ','                 /* IF LAST BLOCK         */
+*          %THEN %ELEMEND = ';';            /*   THEN CLOSE DCL STMT */
+*        %IF ELEMLVL ^= ''                  /* IF BLOCK CONCATENATED */
+*          %THEN % GO TO ELEMPLS2;          /*   THEN BYPASS DECLARE */
+*        DCL 1 ELEM BASED                   /* LEVEL ONE DECLARE     */
+*        %GO TO ELEMPLS3;                   /* SKIP MINOR LEVEL DCL  */
+*%ELEMPLS2 : ELEMDUM = ELEMLVL || ' ELEM';  /* SET MINOR LEVEL NUMBER*/
+*          ELEMDUM                          /* MINOR STRUCTURE       */
+*%ELEMPLS3 :;
+*              BDY(WORD),
+*              /******************************************************/
+*              /*                                                    */
+*              /*     ELEMENT ARGUMENT CONTROL ENTRY                 */
+*              /*                                                    */
+*              /******************************************************/
+*
+*              5 ELEMKWTC FIXED(15),        /* KEYWORD TYPE CODE     */
+*             %/******************************************************/
+*              /*                                                    */
+*              /*     ACB KEYWORD TYPE CODES                         */
+*              /*                                                    */
+*              /******************************************************/
+*               ELEMATRB = '1';             /* ATRB                  */
+*              %ELEMAVSP = '2';             /* AVSPAC                */
+*              %ELEMACBL = '3';             /* ACBLEN FOR VSAM ACB   */
+*              %ELEMBFND = '4';             /* BUFND                 */
+*              %ELEMBFNI = '5';             /* BUFNI                 */
+*              %ELEMBFNO = '6';             /* BUFNO                 */
+*              %ELEMBFSP = '7';             /* BUFSP                 */
+*              %ELEMCINV = '8';             /* CINV                  */
+*              %ELEMDDNM = '9';             /* DDNAME                */
+*              %ELEMERBA = '10';            /* ENDRBA                */
+*              %ELEMERR  = '11';            /* ERROR                 */
+*              %ELEMXLST = '12';            /* EXLST                 */
+*              %ELEMFS   = '13';            /* FS                    */
+*              %ELEMOMAR = '14';            /* MAREA                 */
+*              %ELEMOMLN = '15';            /* MLEN                  */
+*              %ELEMKELA = '16';            /* KEYLEN                */
+*              %ELEMLRCL = '17';            /* LRECL                 */
+*              %ELEMMCRF = '18';            /* MACRF                 */
+*              %ELEMNCIS = '19';            /* NCIS                  */
+*              %ELEMNDLR = '20';            /* NDELR                 */
+*              %ELEMNXCP = '21';            /* NEXCP                 */
+*              %ELEMNEXT = '22';            /* NEXT                  */
+*              %ELEMNISR = '23';            /* NINSR                 */
+*              %ELEMNIXL = '24';            /* NIXL                  */
+*              %ELEMNLGR = '25';            /* NLOGR                 */
+*              %ELEMNRTR = '26';            /* NRETR                 */
+*              %ELEMNSSS = '27';            /* NSSS                  */
+*              %ELEMNUDR = '28';            /* NUPDR                 */
+*              %ELEMOFLG = '29';            /* OFLAGS                */
+*              %ELEMPSWD = '30';            /* PASSWD                */
+*              %ELEMRKP  = '31';            /* RKP                   */
+*              %ELEMSTRN = '32';            /* STRNO                 */
+*              %ELEMOOBJ = '33';            /* OPENOBJ               */
+*              %ELEMCTLG = '34';            /* CATALOG               */
+*              %ELEMSTST = '35';            /* STMST                 */
+*              %ELEMBSTN = '36';            /* BSTRNO                */
+*              %ELEMAXRK = '60';            /* AIXRKP                */
+*              %ELEMACBV = '61';            /* ACBLEN FOR VTAM ACB   */
+*              %ELEMAM   = '64';            /* AM                    */
+*              %ELEMAPPL = '65';            /* APPLID                */
+*              %ELEMCRA  = '89';            /* CRA                   */
+*              %ELEMBFRF = '124';           /* BFRFND                */
+*              %ELEMBFDS = '125';           /* BUFRDS                */
+*              %ELEMNUIW = '126';           /* NUIW                  */
+*              %ELEMUIW  = '127';           /* UIW                   */
+*              %ELEMSTMX = '128';           /* STRMAX                */
+*              %ELEMUPTR = '140';           /* USERPTR               */
+*              %ELEMJFCB = '141';           /* JFCB                  */
+*              %ELEMHRBA = '148';           /* HI ALLOCATE RBA       */
+*             %/******************************************************/
+*              /*                                                    */
+*              /*     EXLST KEYWORD TYPE CODES                       */
+*              /*                                                    */
+*              /******************************************************/
+*               ELEMEDAD = '37';            /* EODAD                 */
+*              %ELEMJNAD = '39';            /* JRNAD                 */
+*              %ELEMLEAD = '40';            /* LERAD                 */
+*              %ELEMSYAD = '41';            /* SYNAD                 */
+*              %ELEMXLEN = '42';            /* EXLLEN FOR VSAM EXLST */
+*              %ELEMEXLV = '63';            /* EXLLEN FOR VTAM EXLST */
+*              %ELEMTPEN = '66';            /* TPEND                 */
+*              %ELEMLGON = '67';            /* LOGON                 */
+*              %ELEMLSTM = '68';            /* LOSTERM               */
+*              %ELEMATTN = '69';            /* ATTN                  */
+*              %ELEMRLRQ = '70';            /* RELRQ                 */
+*              %ELEMSCIP = '120';           /* SCIP                  */
+*              %ELEMDFAS = '121';           /* DFASY                 */
+*              %ELEMERSP = '122';           /* RESP                  */
+*              %ELEMNSXT = '147';           /* NSEXIT        @ZA36992*/
+*             %/******************************************************/
+*              /*                                                    */
+*              /*     RPL KEYWORD TYPE CODES                         */
+*              /*                                                    */
+*              /******************************************************/
+*               ELEMACB  = '43';            /* ACB                   */
+*              %ELEMAREA = '44';            /* AREA                  */
+*              %ELEMALEN = '45';            /* AREALEN               */
+*              %ELEMARG  = '46';            /* ARG                   */
+*              %ELEMECB  = '47';            /* ECB                   */
+*              %ELEMKELR = '48';            /* KEYLEN                */
+*              %ELEMMSGA = '49';            /* MSGAREA               */
+*              %ELEMMSGL = '50';            /* MSGLEN                */
+*              %ELEMNRPL = '51';            /* NXTRPL                */
+*              %ELEMOPTC = '52';            /* OPTCD                 */
+*              %ELEMRECL = '53';            /* RECLEN                */
+*              %ELEMIO   = '54';            /* IO                    */
+*              %ELEMRPLL = '55';            /* RPLLEN FOR VSAM RPL   */
+*              %ELEMFDBK = '56';            /* FDBK                  */
+*              %ELEMRBA  = '57';            /* RBA                   */
+*              %ELEMAXPC = '58';            /* AIXPC                 */
+*              %ELEMAXFL = '59';            /* AIXFLAG               */
+*              %ELEMRPLV = '62';            /* RPLLEN FOR VTAM RPL   */
+*              %ELEMAALN = '73';            /* AAREALN               */
+*              %ELEMARCL = '74';            /* ARECLEN               */
+*              %ELEMEXIT = '75';            /* EXIT                  */
+*              %ELEMUSER = '78';            /* USER                  */
+*              %ELEMNIB  = '79';            /* NIB                   */
+*              %ELEMAARE = '87';            /* AAREA                 */
+*              %ELEMBRCH = '88';            /* BRANCH                */
+*              %ELEMDFLG = '93';            /* DATAFLG               */
+*              %ELEMRTNC = '94';            /* RTNCD                 */
+*              %ELEMTRNS = '95';            /* TRANSID               */
+*              %ELEMFDB2 = '96';            /* FDBK2                 */
+*              %ELEMSENS = '97';            /* SENSE                 */
+*              %ELEMREQ  = '98';            /* REQ                   */
+*              %ELEMFTNC = '99';            /* FTNCD                 */
+*              %ELEMCHNG = '101';           /* CHNGDIR               */
+*              %ELEMSTYP = '102';           /* STYPE                 */
+*              %ELEMRTYP = '103';           /* RTYPE                 */
+*              %ELEMCHAI = '104';           /* CHAIN                 */
+*              %ELEMPOST = '105';           /* POST                  */
+*              %ELEMRESP = '106';           /* RESP                  */
+*              %ELEMCTRL = '107';           /* CONTROL               */
+*              %ELEMOBSQ = '108';           /* OBSQAC                */
+*              %ELEMIBSQ = '109';           /* IBSQAC                */
+*              %ELEMOBSV = '110';           /* OBSQVAL               */
+*              %ELEMIBSV = '111';           /* IBSQVAL               */
+*              %ELEMSEQN = '112';           /* SEQNO                 */
+*              %ELEMSNEO = '113';           /* SSENSEO               */
+*              %ELEMSNEI = '114';           /* SSENSEI               */
+*              %ELEMUNEO = '115';           /* USENSEO               */
+*              %ELEMUNEI = '116';           /* USENSEI               */
+*              %ELEMBRCK = '133';           /* BRACKET               */
+*              %ELEMSNMO = '134';           /* SSENSMO               */
+*              %ELEMSNMI = '135';           /* SSENSMI               */
+*              %ELEMSIGD = '136';           /* SIGDATA               */
+*              %ELEMCDSL = '145';           /* CODESEL               */
+*              %ELEMCRYP = '149';           /* CRYPT                 */
+*             %/******************************************************/
+*              /*                                                    */
+*              /*     NIB KEYWORD TYPE CODES                         */
+*              /*                                                    */
+*              /******************************************************/
+*               ELEMPROC = '80';            /* PROC                  */
+*              %ELEMNUSR = '81';            /* USERFLD               */
+*              %ELEMLSTN = '82';            /* LISTEND               */
+*              %ELEMNIBL = '83';            /* NIBLEN                */
+*              %ELEMMODE = '84';            /* MODE                  */
+*              %ELEMCOND = '85';            /* CONDN                 */
+*              %ELEMDEVC = '86';            /* DEVCHAR               */
+*              %ELEMCID  = '90';            /* CID                   */
+*              %ELEMNAME = '91';            /* NAME                  */
+*              %ELEMCON  = '92';            /* CON                   */
+*              %ELEMEXLT = '130';           /* EXLST                 */
+*              %ELEMRPLI = '131';           /* RESPLIM               */
+*              %ELEMSDT  = '132';           /* SDT                   */
+*              %ELEMLMOD = '142';           /* LOGMODE               */
+*              %ELEMNDAR = '143';           /* BNDAREA               */
+*              %ELEMENCR = '150';           /* ENCRIPTION            */
+*              5 ELEMBLEN FIXED(15),        /* ELEMVAL LENGTH (WDS-1)*/
+*              5 ELEMCSTR CHAR(8) BDY(WORD),/* CHARACTER STRING ENTRY*/
+*                10 ELEMFIX FIXED(31),      /* FIXED POINT ENTRY     */
+*                  15 ELEMPTR PTR(31),      /* POINTER ENTRY         */
+*                    20 ELEMBSTR BIT(32),   /* BIT STRING ENTRY      */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     ATRB KEYWORD BIT STRING INDEXES   (ACB)  */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMKSDS = '1';       /* INDEX FOR KSDS CODE   */
+*                    %ELEMESDS = '2';       /* INDEX FOR ESDS CODE   */
+*                    %ELEMWCK  = '3';       /* INDEX FOR WCK  CODE   */
+*                    %ELEMSSWD = '4';       /* INDEX FOR SSWD CODE   */
+*                    %ELEMREPL = '5';       /* INDEX FOR REPL CODE   */
+*                    %ELEMRRDS = '6';       /* INDEX FOR RRDS CODE   */
+*                    %ELEMSPAN = '7';       /* INDEX FOR SPAN CODE   */
+*                    %ELEMUNQ  = '8';       /* INDEX FOR UNQ CODE    */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     MACRF KEYWORD BIT STRING INDEXES  (ACB)  */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMMKEY = '1';       /* INDEX FOR KEY CODE    */
+*                    %ELEMMADR = '2';       /* INDEX FOR ADR CODE    */
+*                    %ELEMMCNV = '3';       /* INDEX FOR CNV CODE    */
+*                    %ELEMMSEQ = '4';       /* INDEX FOR SEQ CODE    */
+*                    %ELEMMSKP = '5';       /* INDEX FOR SKP CODE    */
+*                    %ELEMMDIR = '6';       /* INDEX FOR DIR CODE    */
+*                    %ELEMMIN =  '7';       /* INDEX FOR IN  CODE    */
+*                    %ELEMMOUT = '8';       /* INDEX FOR OUT CODE    */
+*                    %ELEMMNUB = '9';       /* INDEX FOR NUB CODE    */
+*                    %ELEMMUBF = '10';      /* INDEX FOR UBF CODE    */
+*                    %ELEMLOGN = '11';      /* INDEX FOR LOGON CODE  */
+*                    %ELEMNLGN = '12';      /* INDEX FOR NLOGON CODE */
+*                    %ELEMDDN  = '14';      /* INDEX FOR DDN CODE    */
+*                    %ELEMDSN  = '15';      /* INDEX FOR DSN CODE    */
+*                    %ELEMNRM  = '16';      /* INDEX FOR NRM CODE    */
+*                    %ELEMAIX  = '17';      /* INDEX FOR AIX CODE    */
+*                    %ELEMNSR  = '18';      /* INDEX FOR NSR CODE    */
+*                    %ELEMLSR  = '19';      /* INDEX FOR LSR CODE    */
+*                    %ELEMGSR  = '20';      /* INDEX FOR GSR CODE    */
+*                    %ELEMNCI  = '21';      /* INDEX FOR NCI CODE    */
+*                    %ELEMICI  = '22';      /* INDEX FOR ICI CODE    */
+*                    %ELEMNDF  = '23';      /* INDEX FOR NDF CODE    */
+*                    %ELEMDFR  = '24';      /* INDEX FOR DFR CODE    */
+*                    %ELEMNIS  = '25';      /* INDEX FOR NIS CODE    */
+*                    %ELEMSIS  = '26';      /* INDEX FOR SIS CODE    */
+*                    %ELEMNFX  = '27';      /* INDEX FOR NFX CODE    */
+*                    %ELEMCFX  = '28';      /* INDEX FOR CFX CODE    */
+*                    %ELEMRST  = '29';      /* INDEX FOR RST CODE    */
+*                    %ELEMNRS  = '30';      /* INDEX FOR NRS CODE    */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     BRANCH KEYWORD BIT STRING INDEXES  (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMBYES = '1';       /* INDEX FOR YES CODE    */
+*                    %ELEMBNO  = '2';       /* INDEX FOR NO CODE     */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     CRA KEYWORD BIT STRING INDEXES    (ACB)  */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMCSCR = '1';       /* INDEX FOR SCRA CODE   */
+*                    %ELEMCUCR = '2';       /* INDEX FOR UCRA CODE   */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     OPENOBJ KEYWORD BIT STRING INDEXES (ACB) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMOAIX = '1';       /* INDEX FOR AIX CODE    */
+*                    %ELEMOPAT = '2';       /* INDEX FOR PATH CODE   */
+*                    %ELEMOBAS = '3';       /* INDEX FOR BASE CODE   */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     OFLAGS KEYWORD BIT STRING INDEXES  (ACB) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMOPEN = '1';       /* INDEX FOR OPEN CODE   */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     AM KEYWORD BIT STRING INDEXES      (ALL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMVSAM = '1';       /* INDEX FOR VSAM CODE   */
+*                    %ELEMVTAM = '2';       /* INDEX FOR VTAM CODE   */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     CATALOG KEYWORD BIT STRING INDEXES (ACB) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMCYES = '1';       /* INDEX FOR YES CODE    */
+*                    %ELEMCNO = '2';        /* INDEX FOR NO CODE     */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     DATAFLG KEYWORD BIT STRING INDEXES (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMDUNS = '1';       /* INDEX FOR UNSOL CODE  */
+*                    %ELEMDEOB = '2';       /* INDEX FOR EOB CODE    */
+*                    %ELEMDEOM = '3';       /* INDEX FOR EOM CODE    */
+*                    %ELEMDEOT = '4';       /* INDEX FOR EOT CODE    */
+*                    %ELEMDLGF = '5';       /* INDEX FOR LOGOFF CODE */
+*                    %ELEMDLG  = '6';       /* INDEX FOR LG CODE     */
+*                    %ELEMDSOH = '7';       /* INDEX FOR SOH CODE    */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     OPTCD KEYWORD BIT STRING INDEXES  (RPL)  */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMOKEY =  '1';      /* INDEX FOR KEY CODE    */
+*                    %ELEMOADR =  '2';      /* INDEX FOR ADR CODE    */
+*                    %ELEMOCNV =  '3';      /* INDEX FOR CNV CODE    */
+*                    %ELEMOSEQ =  '4';      /* INDEX FOR SEQ CODE    */
+*                    %ELEMODIR =  '5';      /* INDEX FOR DIR CODE    */
+*                    %ELEMOSKP =  '6';      /* INDEX FOR SKP CODE    */
+*                    %ELEMOSYN =  '7';      /* INDEX FOR SYN CODE    */
+*                    %ELEMOASY =  '8';      /* INDEX FOR ASY CODE    */
+*                    %ELEMONUP =  '9';      /* INDEX FOR NUP CODE    */
+*                    %ELEMOUPD = '10';      /* INDEX FOR UPD CODE    */
+*                    %ELEMONSP = '11';      /* INDEX FOR NSP CODE    */
+*                    %ELEMOKEQ = '12';      /* INDEX FOR KEQ CODE    */
+*                    %ELEMOKGE = '13';      /* INDEX FOR KGE CODE    */
+*                    %ELEMOFKS = '14';      /* INDEX FOR FKS CODE    */
+*                    %ELEMOGEN = '15';      /* INDEX FOR GEN CODE    */
+*                    %ELEMOMVE = '16';      /* INDEX FOR MVE CODE    */
+*                    %ELEMOLOC = '17';      /* INDEX FOR LOC CODE    */
+*                    %ELEMOFWD = '18';      /* INDEX FOR FWD CODE    */
+*                    %ELEMOBWD = '19';      /* INDEX FOR BWD CODE    */
+*                    %ELEMOARD = '20';      /* INDEX FOR ARD CODE    */
+*                    %ELEMOLRD = '21';      /* INDEX FOR LRD CODE    */
+*                    %ELEMOCA  = '33';      /* INDEX FOR CA CODE     */
+*                    %ELEMOCS  = '34';      /* INDEX FOR CS CODE     */
+*                    %ELEMOREL = '37';      /* INDEX FOR RELEASE CODE*/
+*                    %ELEMOPAS = '38';      /* INDEX FOR PASS CODE   */
+*                    %ELEMONER = '39';      /* INDEX FOR NERASE CODE */
+*                    %ELEMOEAU = '40';      /* INDEX FOR EAU CODE    */
+*                    %ELEMOERA = '41';      /* INDEX FOR ERASE CODE  */
+*                    %ELEMOSPC = '42';      /* INDEX FOR SPEC CODE   */
+*                    %ELEMOANY = '43';      /* INDEX FOR ANY CODE    */
+*                    %ELEMONCN = '44';      /* INDEX FOR NCONV CODE  */
+*                    %ELEMOCON = '45';      /* INDEX FOR CONV CODE   */
+*                    %ELEMOLBT = '46';      /* INDEX FOR LBT CODE    */
+*                    %ELEMOLBM = '47';      /* INDEX FOR LBM CODE    */
+*                    %ELEMOBLK = '48';      /* INDEX FOR BLK CODE    */
+*                    %ELEMOCND = '49';      /* INDEX FOR COND CODE   */
+*                    %ELEMOUNC = '50';      /* INDEX FOR UNCOND CODE */
+*                    %ELEMOLCK = '51';      /* INDEX FOR LOCK CODE   */
+*                    %ELEMOLMS = '54';      /* INDEX FOR LOGONMSG    */
+*                    %ELEMODVC = '55';      /* INDEX FOR DEVCHAR CODE*/
+*                    %ELEMOTER = '56';      /* INDEX FOR TERMS CODE  */
+*                    %ELEMOAPS = '57';      /* INDEX FOR APPSTAT CODE*/
+*                    %ELEMOCTS = '58';      /* INDEX FOR COUNTS CODE */
+*                    %ELEMORNN = '59';      /* INDEX FOR RNNAME CODE */
+*                    %ELEMOCIX = '60';      /* INDEX FOR CIDXLATE    */
+*                    %ELEMOTLG = '61';      /* INDEX FOR TOPLOGON    */
+*                    %ELEMOBSC = '62';      /* INDEX FOR BSCID CODE  */
+*                    %ELEMODIS = '63';      /* INDEX FOR DISPLAY CODE*/
+*                    %ELEMORLQ = '64';      /* INDEX FOR RELRQ CODE  */
+*                    %ELEMONRQ = '65';      /* INDEX FOR NRELRQ CODE */
+*                    %ELEMOQ   = '66';      /* INDEX FOR Q CODE      */
+*                    %ELEMONQ  = '67';      /* INDEX FOR NQ CODE     */
+*                    %ELEMOPND = '68';      /* INDEX FOR PEND CODE   */
+*                    %ELEMOSES = '69';      /* INDEX FOR SESSION CODE*/
+*                    %ELEMOACT = '70';      /* INDEX FOR ACTIVE CODE */
+*                    %ELEMOUCD = '71';      /* INDEX FOR UNCONDL CODE*/
+*                    %ELEMOQUI = '72';      /* INDEX FOR QUIESCE CODE*/
+*                    %ELEMOSTR = '73';      /* INDEX FOR START CODE  */
+*                    %ELEMOSTP = '74';      /* INDEX FOR STOP CODE   */
+*                    %ELEMOACC = '75';      /* INDEX FOR ACCEPT CODE */
+*                    %ELEMOACQ = '76';      /* INDEX FOR ACQUIRE CODE*/
+*                    %ELEMOCAL = '78';      /* INDEX FOR CONALL CODE */
+*                    %ELEMOCAN = '79';      /* INDEX FOR CONANY CODE */
+*                    %ELEMOKEE = '82';      /* INDEX FOR KEEP CODE   */
+*                    %ELEMOTRN = '83';      /* INDEX FOR TRUNC CODE  */
+*                    %ELEMONBT = '84';      /* INDEX FOR NIBTK CODE  */
+*                    %ELEMOSEK = '87';      /* INDEX FOR SESSKEY CODE*/
+*                    %ELEMOFMH = '88';      /* INDEX FOR FMHDR CODE  */
+*                    %ELEMONFM = '89';      /* INDEX FOR NFMHDR CODE */
+*                    %ELEMOSPM = '90';      /* INDEX FOR SESSPARM    */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     CHNGDIR KEYWORD BIT STRING INDEXES (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMCNCM = '1';       /* INDEX FOR NCMD CODE   */
+*                    %ELEMCCMD = '2';       /* INDEX FOR CMD CODE    */
+*                    %ELEMCNRQ = '3';       /* INDEX FOR NREQ CODE   */
+*                    %ELEMCREQ = '4';       /* INDEX FOR REQ CODE    */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     CODESEL KEYWORD BIT STRING INDEXES (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMCSTD = '1';       /* INDEX FOR STANDRD CODE*/
+*                    %ELEMCALT = '2';       /* INDEX FOR ALT CODE    */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     STYPE KEYWORD BIT STRING INDEXES   (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMSREQ = '1';       /* INDEX FOR STYPE CODE  */
+*                    %ELEMSRES = '2';       /* INDEX FOR RESP CODE   */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     RTYPE KEYWORD BIT STRING INDEXES   (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMRNRS = '1';       /* INDEX FOR NRESP CODE  */
+*                    %ELEMRRSP = '2';       /* INDEX FOR RESP CODE   */
+*                    %ELEMRDFY = '3';       /* INDEX FOR DFSYN CODE  */
+*                    %ELEMRNDF = '4';       /* INDEX FOR NDFSYN CODE */
+*                    %ELEMRNAS = '5';       /* INDEX FOR NDFASY CODE */
+*                    %ELEMRDFA = '6';       /* INDEX FOR DFASY CODE  */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     CHAIN KEYWORD BIT STRING INDEXES  (RPL)  */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMCFST = '1';       /* INDEX FOR FIRST CODE  */
+*                    %ELEMCMID = '2';       /* INDEX FOR MIDDLE CODE */
+*                    %ELEMCLST = '3';       /* INDEX FOR LAST CODE   */
+*                    %ELEMCONL = '4';       /* INDEX FOR ONLY CODE   */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     POST KEYWORD BIT STRING INDEXES   (RPL)  */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMPRSP = '1';       /* INDEX FOR RESP CODE   */
+*                    %ELEMPSCH = '2';       /* INDEX FOR SCHED CODE  */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     RESPOND KEYWORD BIT STRING INDEXES (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMRNEX = '1';       /* INDEX FOR NEX CODE    */
+*                    %ELEMREX  = '2';       /* INDEX FOR EX CODE     */
+*                    %ELEMRFME = '3';       /* INDEX FOR FME CODE    */
+*                    %ELEMRNFM = '4';       /* INDEX FOR NFME CODE   */
+*                    %ELEMRNRR = '5';       /* INDEX FOR NRRN CODE   */
+*                    %ELEMRRRN = '6';       /* INDEX FOR RRN CODE    */
+*                    %ELEMRQRE = '7';       /* INDEX FOR QRESP CODE  */
+*                    %ELEMRNQR = '8';       /* INDEX FOR NQRESP CODE */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     CONTROL KEYWORD BIT STRING INDEXES (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                    /*  VTAM CONTROL KEYWORDS                       */
+*                     ELEMCDAT = '1';       /* INDEX FOR DATA CODE   */
+*                    %ELEMCCAN = '2';       /* INDEX FOR CANCEL CODE */
+*                    %ELEMCQC  = '3';       /* INDEX FOR QC CODE     */
+*                    %ELEMCQEC = '4';       /* INDEX FOR QEC CODE    */
+*                    %ELEMCCHA = '5';       /* INDEX FOR CHASE CODE  */
+*                    %ELEMCREL = '6';       /* INDEX FOR RELQ CODE   */
+*                    %ELEMCBID = '7';       /* INDEX FOR BID CODE    */
+*                    %ELEMCRTR = '8';       /* INDEX FOR RTR CODE    */
+*                    %ELEMCLUS = '9';       /* INDEX FOR LUS CODE    */
+*                    %ELEMCSIG = '10';      /* INDEX FOR SIGNAL CODE */
+*                    %ELEMCSDT = '11';      /* INDEX FOR SDT CODE    */
+*                    %ELEMCCLR = '12';      /* INDEX FOR CLEAR CODE  */
+*                    %ELEMCSTS = '13';      /* INDEX FOR STSN CODE   */
+*                    %ELEMCSHU = '14';      /* INDEX FOR SHUTD CODE  */
+*                    %ELEMCRQR = '15';      /* INDEX FOR RQR CODE    */
+*                    %ELEMCRSH = '16';      /* INDEX FOR RSHUTD      */
+*                    %ELEMCSHC = '17';      /* INDEX FOR SHUTC       */
+*                    %ELEMBIND = '18';      /* INDEX FOR BIND CODE   */
+*                    %ELEMUNBD = '19';      /* INDEX FOR UNBIND CODE */
+*                    %ELEMSBI  = '20';      /* INDEX FOR SBI  CODE   */
+*                    %ELEMBIS  = '21';      /* INDEX FOR BIS   CODE  */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     OBSQAC KEYWORD BIT STRING INDEXES  (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMOSET = '1';       /* INDEX FOR SET CODE    */
+*                    %ELEMOTST = '2';       /* INDEX FOR TESTSET CODE*/
+*                    %ELEMORES = '3';       /* INDEX FOR RESET CODE  */
+*                    %ELEMOIGN = '4';       /* INDEX FOR IGNORE CODE */
+*                    %ELEMOTPO = '5';       /* INDEX FOR TESTPOS CODE*/
+*                    %ELEMOTNE = '6';       /* INDEX FOR TESTNEG CODE*/
+*                    %ELEMOINV = '7';       /* INDEX FOR INVALID CODE*/
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     IBSQAC KEYWORD BIT STRING INDEXES  (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMISET = '1';       /* INDEX FOR SET CODE    */
+*                    %ELEMITST = '2';       /* INDEX FOR TESTSET CODE*/
+*                    %ELEMIRES = '3';       /* INDEX FOR RESET CODE  */
+*                    %ELEMIIGN = '4';       /* INDEX FOR IGNORE CODE */
+*                    %ELEMITPO = '5';       /* INDEX FOR TESTPOS CODE*/
+*                    %ELEMITNE = '6';       /* INDEX FOR TESTNEG CODE*/
+*                    %ELEMIINV = '7';       /* INDEX FOR INVALID CODE*/
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     SSENSEO KEYWORD BIT STRING INDEXES  (RPL)*/
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMOCPM = '1';       /* INDEX FOR CPM CODE    */
+*                    %ELEMOSTA = '2';       /* INDEX FOR STATE CODE  */
+*                    %ELEMOFI  = '3';       /* INDEX FOR FI CODE     */
+*                    %ELEMORR  = '4';       /* INDEX FOR RR CODE     */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     SSENSEI KEYWORD BIT STRING INDEXES (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMIPAT = '1';       /* INDEX FOR PATH CODE   */
+*                    %ELEMICPM = '2';       /* INDEX FOR CPM CODE    */
+*                    %ELEMISTA = '3';       /* INDEX FOR STATE CODE  */
+*                    %ELEMIFI  = '4';       /* INDEX FOR FI CODE     */
+*                    %ELEMIRR  = '5';       /* INDEX FOR RR CODE     */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     AIXFLAG KEYWORD BIT STRING INDEXES (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMAPKP = '1';       /* INDEX FOR PRIME CODE  */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     IO KEYWORD BIT STRING INDEXES      (RPL) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMCOMP = '1';       /* INDEX FOR COMPLETE    */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*   CRYPT KEYWORD BIT STRING INDEXES (RPL)     */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMCCRY = '1';       /* INDEX FOR YES CODE    */
+*                    %ELEMCCRN = '2';       /* INDEX FOR NO CODE     */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*   ENCR KEYWORD BIT STRING INDEXES (NIB)      */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMESEL = '1';       /* INDEX FOR SEL CODE    */
+*                    %ELEMEREQ = '2';       /* INDEX FOR REQ CODE    */
+*                    %ELEMENON = '3';       /* INDEX FOR NONE CODE   */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     PROC KEYWORD BIT STRING INDEXES    (NIB) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMPMSG = '1';       /* INDEX FOR MSG CODE    */
+*                    %ELEMPTRA = '2';       /* INDEX FOR TRANS CODE  */
+*                    %ELEMPCON = '3';       /* INDEX FOR CONT CODE   */
+*                    %ELEMPBLK = '4';       /* INDEX FOR BLOCK CODE  */
+*                    %ELEMPNLG = '5';       /* INDEX FOR NLGIN CODE  */
+*                    %ELEMPLGI = '6';       /* INDEX FOR LGIN CODE   */
+*                    %ELEMPLGO = '7';       /* INDEX FOR LGOUT CODE  */
+*                    %ELEMPNLO = '8';       /* INDEX FOR NLGOUT CODE */
+*                    %ELEMPNCN = '9';       /* INDEX FOR NCONFTXT    */
+*                    %ELEMPCFT = '10';      /* INDEX FOR CONFTXT CODE*/
+*                    %ELEMPTMF = '11';      /* INDEX FOR TMFLL CODE  */
+*                    %ELEMPNTM = '12';      /* INDEX FOR NTMFLL CODE */
+*                    %ELEMPERP = '13';      /* INDEX FOR ERPIN CODE  */
+*                    %ELEMPNER = '14';      /* INDEX FOR NERPIN CODE */
+*                    %ELEMPERO = '15';      /* INDEX FOR ERPOUT CODE */
+*                    %ELEMNPRO = '16';      /* INDEX FOR NERPOUT CODE*/
+*                    %ELEMPNMO = '17';      /* INDEX FOR NMONITOR    */
+*                    %ELEMPMON = '18';      /* INDEX FOR MONITOR CODE*/
+*                    %ELEMPNEL = '19';      /* INDEX FOR NELC CODE   */
+*                    %ELEMPELC = '20';      /* INDEX FOR ELC CODE    */
+*                    %ELEMPNEI = '21';      /* INDEX FOR NEIB CODE   */
+*                    %ELEMPEIB = '22';      /* INDEX FOR EIB CODE    */
+*                    %ELEMPTIM = '23';      /* INDEX FOR TIMEOUT CODE*/
+*                    %ELEMPNTI = '24';      /* INDEX FOR NTIMEOUT    */
+*                    %ELEMPNOR = '25';      /* INDEX FOR NORDRESP    */
+*                    %ELEMPORD = '26';      /* INDEX FOR ORDRESP     */
+*                    %ELEMPKEE = '27';      /* INDEX FOR KEEP CODE   */
+*                    %ELEMPTRU = '28';      /* INDEX FOR TRUNC CODE  */
+*                    %ELEMPNBI = '29';      /* INDEX FOR NBINARY CODE*/
+*                    %ELEMPBIN = '30';      /* INDEX FOR BINARY CODE */
+*                    %ELEMPNDF = '31';      /* INDEX FOR NDFASYX CODE*/
+*                    %ELEMPDFA = '32';      /* INDEX FOR DFASYX CODE */
+*                    %ELEMPNRS = '33';      /* INDEX FOR NRESPX CODE */
+*                    %ELEMPRES = '34';      /* INDEX FOR RESPX CODE  */
+*                    %ELEMPRES = '35';      /* INDEX FOR CA CODE     */
+*                    %ELEMPRES = '36';      /* INDEX FOR CS CODE     */
+*                    %ELEMPRES = '37';      /* INDEX FOR RPLC CODE   */
+*                    %ELEMPSYS = '38';      /* INDEX FOR SYSRESP     */
+*                    %ELEMPAPP = '39';      /* INDEX FOR APPLRESP    */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     LISTEND KEYWORD BIT STRING INDEXES (NIB) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMLYES = '1';       /* INDEX FOR YES CODE    */
+*                    %ELEMLNO  = '2';       /* INDEX FOR NO CODE     */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     SDT KEYWORD BIT STRING INDEXES     (NIB) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMSSYS = '1';       /* INDEX FOR SYSTEM CODE */
+*                    %ELEMSAPP = '2';       /* INDEX FOR APPL CODE   */
+*                   %/************************************************/
+*                    /*                                              */
+*                    /*     CON KEYWORD BIT STRING INDEXES     (NIB) */
+*                    /*                                              */
+*                    /************************************************/
+*                     ELEMNYES = '1';       /* INDEX FOR YES CODE    */
+*                    %ELEMNNO  = '2';       /* INDEX FOR NO CODE     */
+*                10 ELEMXFLG BIT(32)ELEMEND /* EXIT LIST ENTRY FLAGS */
+*               %/****************************************************/
+*                /*                                                  */
+*                /*     BIT STRING INDEXES FOR EXLST ENTRY FLAGS     */
+*                /*                                                  */
+*                /****************************************************/
+*                 ELEMXA = '1';             /* ACTIVE CODE INDEX     */
+*                %ELEMXN = '2';             /* INACTIVE CODE INDEX   */
+*                %ELEMXL = '3';             /* LOAD CODE INDEX       */
+*                %ELEMXADR = '4';           /* EXIT ADDRESS SPECIFIED*/
+*        %ELEMSLEN = '4';                   /* LENGTH OF SHOWCB ELEM */
+*        %ELEMNLEN = '8';                   /* LENGTH OF NORMAL ELEM */
+*        %                                  /* LENGTH OF CHAR STRING */
+*         ELEMLLEN = '12';                  /*   OR EXLST ELEMENT    */
+*        %GO TO ELEMPLS4;
+.ELEMBAL AIF   ('&DSECT' EQ 'YES').ELEM1
+ELEM     DS    0F                      ELEMENT ARGUMENT CONTROL ENTRY
+         AGO   .ELEM2
+.ELEM1   ANOP
+ELEM     DSECT                         ELEMENT ARGUMENT CONTROL ENTRY
+.ELEM2   ANOP
+ELEMKWTC DS    H                       KEYWORD TYPE CODE
+*                                      ********************************
+*                                      *                              *
+*                                      *    ACB KEYWORD TYPE CODES    *
+*                                      *                              *
+*                                      ********************************
+ELEMATRB EQU   1                       ATRB
+ELEMAVSP EQU   2                       AVSPAC
+ELEMACBL EQU   3                       ACBLEN FOR VSAM ACB
+ELEMBFND EQU   4                       BUFND
+ELEMBFNI EQU   5                       BUFNI
+ELEMBFNO EQU   6                       BUFNO
+ELEMBFSP EQU   7                       BUFSP
+ELEMCINV EQU   8                       CINV
+ELEMDDNM EQU   9                       DDNAME
+ELEMERBA EQU   10                      ENDRBA
+ELEMERR  EQU   11                      ERROR
+ELEMXLST EQU   12                      EXLST
+ELEMFS   EQU   13                      FS
+ELEMOMAR EQU   14                      MAREA
+ELEMOMLN EQU   15                      MLEN
+ELEMKELA EQU   16                      KEYLEN
+ELEMLRCL EQU   17                      LRECL
+ELEMMCRF EQU   18                      MACRF
+ELEMNCIS EQU   19                      NCIS
+ELEMNDLR EQU   20                      NDELR
+ELEMNXCP EQU   21                      NEXCP
+ELEMNEXT EQU   22                      NEXT
+ELEMNISR EQU   23                      NINSR
+ELEMNIXL EQU   24                      NIXL
+ELEMNLGR EQU   25                      NLOGR
+ELEMNRTR EQU   26                      NRETR
+ELEMNSSS EQU   27                      NSSS
+ELEMNUDR EQU   28                      NUPDR
+ELEMOFLG EQU   29                      OFLAGS
+ELEMPSWD EQU   30                      PASSWD
+ELEMRKP  EQU   31                      RKP
+ELEMSTRN EQU   32                      STRNO
+ELEMOOBJ EQU   33                      OPENOBJ
+ELEMCTLG EQU   34                      CATALOG
+ELEMSTST EQU   35                      STMST
+ELEMBSTN EQU   36                      BSTRNO
+ELEMAXRK EQU   60                      AIXRKP
+ELEMACBV EQU   61                      ACBLEN FOR VTAM ACB
+ELEMAM   EQU   64                      AM
+ELEMAPPL EQU   65                      APPLID
+ELEMCRA  EQU   89                      CRA
+ELEMBFRF EQU   124                     BFRFND
+ELEMBFDS EQU   125                     BUFRDS
+ELEMNUIW EQU   126                     NUIW
+ELEMUIW  EQU   127                     UIW
+ELEMSTMX EQU   128                     STRMAX
+ELEMUPTR EQU   140                     USERPTR
+ELEMJFCB EQU   141                     JFCB
+ELEMHRBA EQU   148                     HI ALLOCATED RBA
+*                                      ********************************
+*                                      *                              *
+*                                      *    EXLST KEYWORD TYPE CODES  *
+*                                      *                              *
+*                                      ********************************
+ELEMEDAD EQU   37                      EODAD
+ELEMJNAD EQU   39                      JRNAD
+ELEMLEAD EQU   40                      LERAD
+ELEMSYAD EQU   41                      SYNAD
+ELEMXLEN EQU   42                      EXLLEN FOR VSAM EXLST
+ELEMEXLV EQU   63                      EXLLEN FOR VTAM EXLST
+ELEMTPEN EQU   66                      TPEND
+ELEMLGON EQU   67                      LOGON
+ELEMLSTM EQU   68                      LOSTERM
+ELEMATTN EQU   69                      ATTN
+ELEMRLRQ EQU   70                      RELRQ
+ELEMSCIP EQU   120                     SCIP
+ELEMDFAS EQU   121                     DFASY
+ELEMERSP EQU   122                     RESP
+ELEMNSXT EQU   147                     NSEXIT                  @ZA36992
+*                                      ********************************
+*                                      *                              *
+*                                      *    RPL KEYWORD TYPE CODES    *
+*                                      *                              *
+*                                      ********************************
+ELEMACB  EQU   43                      ACB
+ELEMAREA EQU   44                      AREA
+ELEMALEN EQU   45                      AREALEN
+ELEMARG  EQU   46                      ARG
+ELEMECB  EQU   47                      ECB
+ELEMKELR EQU   48                      KEYLEN
+ELEMMSGA EQU   49                      MSGAREA
+ELEMMSGL EQU   50                      MSGLEN
+ELEMNRPL EQU   51                      NXTRPL
+ELEMOPTC EQU   52                      OPTCD
+ELEMRECL EQU   53                      RECLEN
+ELEMIO   EQU   54                      IO
+ELEMRPLL EQU   55                      RPLLEN FOR VSAM RPL
+ELEMFDBK EQU   56                      FDBK
+ELEMRBA  EQU   57                      RBA
+ELEMAXPC EQU   58                      AIXPC
+ELEMAXFL EQU   59                      AIXFLAG
+ELEMRPLV EQU   62                      RPLLEN FOR VTAM RPL
+ELEMAALN EQU   73                      AAREALN
+ELEMARCL EQU   74                      ARECLEN
+ELEMEXIT EQU   75                      EXIT
+ELEMUSER EQU   78                      USER
+ELEMNIB  EQU   79                      NIB
+ELEMAARE EQU   87                      AAREA
+ELEMBRCH EQU   88                      BRANCH
+ELEMDFLG EQU   93                      DATAFLAG
+ELEMRTNC EQU   94                      RTNCD
+ELEMTRNS EQU   95                      TRANSID
+ELEMFDB2 EQU   96                      FDBK2
+ELEMSENS EQU   97                      SENSE
+ELEMREQ  EQU   98                      REQ
+ELEMFTNC EQU   99                      FTNCD
+ELEMCHNG EQU   101                     CHNGDIR
+ELEMSTYP EQU   102                     STYPE
+ELEMRTYP EQU   103                     RTYPE
+ELEMCHAI EQU   104                     CHAIN
+ELEMPOST EQU   105                     POST
+ELEMRESP EQU   106                     RESPOND
+ELEMCTRL EQU   107                     CONTROL
+ELEMOBSQ EQU   108                     OBSQAC
+ELEMIBSQ EQU   109                     IBSQAC
+ELEMOBSV EQU   110                     OBSQVAL
+ELEMIBSV EQU   111                     IBSQVAL
+ELEMSEQN EQU   112                     SEQNO
+ELEMSNEO EQU   113                     SSENSEO
+ELEMSNEI EQU   114                     SSENSEI
+ELEMUNEO EQU   115                     USENSEO
+ELEMUNEI EQU   116                     USENSEI
+ELEMBRCK EQU   133                     BRACKET
+ELEMSNMO EQU   134                     SSENSMO
+ELEMSNMI EQU   135                     SSENSMI
+ELEMSIGD EQU   136                     SIGDATA
+ELEMCDSL EQU   145                     CODESEL
+ELEMCRYP EQU   149                     CRYPT
+*                                      ********************************
+*                                      *                              *
+*                                      *    NIB KEYWORD TYPE CODES    *
+*                                      *                              *
+*                                      ********************************
+ELEMPROC EQU   80                      PROC
+ELEMNUSR EQU   81                      USERFLD
+ELEMLSTN EQU   82                      LISTEND
+ELEMNIBL EQU   83                      NIBLEN
+ELEMMODE EQU   84                      MODE
+ELEMCOND EQU   85                      CONDN
+ELEMDEVC EQU   86                      DEVCHAR
+ELEMCID  EQU   90                      CID
+ELEMNAME EQU   91                      NAME
+ELEMCON  EQU   92                      CON
+ELEMEXLT EQU   130                     EXLST
+ELEMRPLI EQU   131                     RESPLIM
+ELEMSDT  EQU   132                     SDT
+ELEMLMOD EQU   142                     LOGMODE
+ELEMNDAR EQU   143                     BNDAREA
+ELEMENCR EQU   150                     ENCRIPTION
+*
+ELEMBLEN DS    H                       ELEMVAL LENGTH (WORDS-1)
+ELEMCSTR DS    0CL8                    CHARACTER STRING ENTRY
+ELEMFIX  DS    0F                      FIXED POINT ENTRY
+ELEMPTR  DS    0A                      POINTER ENTRY
+*                                      BITS DEFINITION CODE
+BIT0     EQU   128                      BIT POSITION 0
+BIT1     EQU   64                       BIT POSITION 1
+BIT2     EQU   32                       BIT POSITION 2
+BIT3     EQU   16                       BIT POSITION 3
+BIT4     EQU   8                        BIT POSITION 4
+BIT5     EQU   4                        BIT POSITION 5
+BIT6     EQU   2                        BIT POSITION 6         @ZA36992
+BIT7     EQU   1                        BIT POSITION 7
+*
+ELEMBST1 DS    B                       BIT STRING ENTRY - BYTE 1
+*                                        ATRB KEYWORD BIT CODES
+ELEMKSDS EQU   BIT0                        KSDS
+ELEMESDS EQU   BIT1                        ESDS
+ELEMWCK  EQU   BIT2                        WCK
+ELEMSSWD EQU   BIT3                        SSWD
+ELEMREPL EQU   BIT4                        REPL
+ELEMRRDS EQU   BIT5                        RRDS
+ELEMSPAN EQU   BIT6                        SPAN
+ELEMUNQ  EQU   BIT7                        UNQ
+*                                        MACRF KEYWORD BIT CODES
+ELEMMKEY EQU   BIT0                        KEY
+ELEMMADR EQU   BIT1                        ADR
+ELEMMCNV EQU   BIT2                        CNV
+ELEMMSEQ EQU   BIT3                        SEQ
+ELEMSKP  EQU   BIT4                        SKP
+ELEMMDIR EQU   BIT5                        DIR
+ELEMIN   EQU   BIT6                        IN
+ELEMOUT  EQU   BIT7                        OUT
+*                                        CRA KEYWORD BIT CODES
+ELEMCSCR EQU   BIT0                        SCRA
+ELEMCUCR EQU   BIT1                        UCRA
+*                                        OPENOBJ KEYWORD BIT CODES
+ELEMOAIX EQU   BIT0                        AIX
+ELEMOPAT EQU   BIT1                        PATH
+ELEMOBAS EQU   BIT2                        BASE
+*                                        OFLAGS KEYWORD BIT CODES
+ELEMOPEN EQU   BIT0                        OPEN
+*                                        AM KEYWORD BIT CODES
+ELEMVSAM EQU   BIT0                        VSAM
+ELEMVTAM EQU   BIT1                        VTAM
+*                                        CATALOG KEYWORD BIT CODES
+ELEMCYES EQU   BIT0                        YES
+ELEMCNO  EQU   BIT1                        NO
+*                                        DATAFLAG KEYWORD BIT CODES
+ELEMDUNS EQU   BIT0                        UNSOL
+ELEMDEOB EQU   BIT1                        EOB
+ELEMDEOM EQU   BIT2                        EOM
+ELEMDEOT EQU   BIT3                        EOT
+ELEMDLGF EQU   BIT4                        LOGOFF
+ELEMDLG  EQU   BIT5                        LG
+ELEMDSOH EQU   BIT6                        SOH
+*                                        OPTCD KEYWORD BIT CODES
+ELEMOKEY EQU   BIT0                        KEY
+ELEMOADR EQU   BIT1                        ADR
+ELEMOCNV EQU   BIT2                        CNV
+ELEMOSEQ EQU   BIT3                        SEQ
+ELEMODIR EQU   BIT4                        DIR
+ELEMOSKP EQU   BIT5                        SKP
+ELEMOSYN EQU   BIT6                        SYN
+ELEMOASY EQU   BIT7                        ASY
+*                                        BRANCH KEYWORD BIT CODES
+ELEMBYES EQU   BIT0                        YES
+ELEMBNO  EQU   BIT1                        NO
+*                                        CHNGDIR KEYWORD BIT CODES
+ELEMCNCM EQU   BIT0                        NCMD
+ELEMCCMD EQU   BIT1                        CMD
+ELEMCNRQ EQU   BIT2                        NREQ
+ELEMCREQ EQU   BIT3                        REQ
+*                                        CODESEL KEYWORD BIT CODES
+ELEMCSTD EQU   BIT0                        STANDARD
+ELEMCALT EQU   BIT1                        ALT
+*                                        STYPE KEYWORD BIT CODES
+ELEMSREQ EQU   BIT0                        REQ
+ELEMSRES EQU   BIT1                        RESP
+*                                        RTYPE KEYWORD BIT CODES
+ELEMRNRS EQU   BIT0                        NRESP
+ELEMRRSP EQU   BIT1                        RESP
+ELEMRDFY EQU   BIT2                        DFSYN
+ELEMRNDF EQU   BIT3                        NDFSYN
+ELEMRNAS EQU   BIT4                        NDFASY
+ELEMRDFA EQU   BIT5                        DFASY
+*                                        CHAIN KEYWORD BIT CODES
+ELEMCFST EQU   BIT0                        FIRST
+ELEMCMID EQU   BIT1                        MIDDLE
+ELEMCLST EQU   BIT2                        LAST
+ELEMCONL EQU   BIT3                        ONLY
+*                                        POST KEYWORD BIT CODES
+ELEMPRSP EQU   BIT0                        RESP
+ELEMPSCH EQU   BIT1                        SCHED
+*                                        RESPOND KEYWORD BIT CODES
+ELEMRNEX EQU   BIT0                        NEX
+ELEMREX  EQU   BIT1                        EX
+ELEMRFME EQU   BIT2                        FME
+ELEMRNFM EQU   BIT3                        NFME
+ELEMRNRR EQU   BIT4                        NRRN
+ELEMRRRN EQU   BIT5                        RRN
+ELEMRQRE EQU   BIT6                        QRESP
+ELEMRNQR EQU   BIT7                        NQRESP
+*                                        CONTROL KWD BIT CODES (VTAM)
+ELEMCDAT EQU   BIT0                        DATA
+ELEMCCAN EQU   BIT1                        CANCEL
+ELEMCQC  EQU   BIT2                        QC
+ELEMCQEC EQU   BIT3                        QEC
+ELEMCCHA EQU   BIT4                        CHASE
+ELEMCREL EQU   BIT5                        RELQ
+ELEMCBID EQU   BIT6                        BID
+ELEMCRTR EQU   BIT7                        RTR
+*                                        OBSQAC KEYWORD BIT CODES
+ELEMOSET EQU   BIT0                        SET
+ELEMOTST EQU   BIT1                        TESTSET
+ELEMORES EQU   BIT2                        RESET
+ELEMOIGN EQU   BIT3                        IGNORE
+ELEMOTPO EQU   BIT4                        TESTPOS
+ELEMOTNE EQU   BIT5                        TESTNEG
+ELEMOINV EQU   BIT6                        INVALID
+*                                        IBSQAC KEYWORD BIT CODES
+ELEMISET EQU   BIT0                        SET
+ELEMITST EQU   BIT1                        TESTSET
+ELEMIRES EQU   BIT2                        RESET
+ELEMIIGN EQU   BIT3                        IGNORE
+ELEMITPO EQU   BIT4                        TESTPOS
+ELEMITNE EQU   BIT5                        TESTNEG
+ELEMIINV EQU   BIT6                        INVALID
+*                                        SSENSEO KEYWORD BIT CODES
+ELEMOCPM EQU   BIT0                        CPM
+ELEMOSTA EQU   BIT1                        STATE
+ELEMOFI  EQU   BIT2                        FI
+ELEMORR  EQU   BIT3                        RR
+*                                        SSENSEI KEYWORD BIT CODES
+ELEMIPAT EQU   BIT0                        PATH
+ELEMICPM EQU   BIT1                        CPM
+ELEMISTA EQU   BIT2                        STATE
+ELEMIFI  EQU   BIT3                        FI
+ELEMIRR  EQU   BIT4                        RR
+*                                        AIXFLAG KEYWORD BIT CODES
+ELEMAPKP EQU   BIT0                        PRIME
+*                                        IO KEYWORD BIT CODES
+ELEMCOMP EQU   BIT0                        COMPLETE
+*                                        PROC KEYWORD BIT CODES
+ELEMPMSG EQU   BIT0                        MSG
+ELEMPTRA EQU   BIT1                        TRANS
+ELEMPCON EQU   BIT2                        CONT
+ELEMPBLK EQU   BIT3                        BLK
+ELEMPNLG EQU   BIT4                        NLGIN
+ELEMPLGI EQU   BIT5                        LGIN
+ELEMPLGO EQU   BIT6                        LOGOUT
+ELEMPNLO EQU   BIT7                        NLOGOUT
+*                                        LISTEND KEYWORD BIT CODES
+ELEMLYES EQU   BIT0                        YES
+ELEMLNO  EQU   BIT1                        NO
+*                                        SDT KEYWORD BIT CODES
+ELEMSSYS EQU   BIT0                        SYSTEM
+ELEMSAPP EQU   BIT1                        APPL
+*                                        CON KEYWORD BIT CODES
+ELEMNYES EQU   BIT0                        YES
+ELEMNNO  EQU   BIT1                        NO
+*                                        CRYPT KEYWORD BIT CODES
+ELEMCCRY EQU   BIT0                        YES
+ELEMCCRN EQU   BIT1                        NO
+*                                        ENCRIPTION KEYWORD BIT CODES
+ELEMESEL EQU   BIT0                        SEL
+ELEMEREQ EQU   BIT1                        REQD
+ELEMENON EQU   BIT2                        NONE
+ELEMBST2 DS    B                       BIT STRING ENTRY - BYTE 2
+*                                        MACRF KEYWORD BIT CODES
+ELEMMNUB EQU   BIT0                        NUB
+ELEMUBF  EQU   BIT1                        UBF
+ELEMLOGN EQU   BIT2                        LOGON
+ELEMNLGN EQU   BIT3                        NLOGON
+ELEMDDN  EQU   BIT5                        DDN
+ELEMDSN  EQU   BIT6                        DSN
+ELEMNRM  EQU   BIT7                        NRM
+*                                        OPTCD KEYWORD BIT CODES
+ELEMONUP EQU   BIT0                        NUP
+ELEMOUPD EQU   BIT1                        UPD
+ELEMONSP EQU   BIT2                        NSP
+ELEMOKEQ EQU   BIT3                        KEQ
+ELEMOKGE EQU   BIT4                        KGE
+ELEMOFKS EQU   BIT5                        FKS
+ELEMOGEN EQU   BIT6                        GEN
+ELEMOMVE EQU   BIT7                        MVE
+*                                        CONTROL KEYWORD BIT CODES
+ELEMCLUS EQU   BIT0                        LUS
+ELEMCSIG EQU   BIT1                        SIGNAL
+ELEMCSDT EQU   BIT2                        SDT
+ELEMCCLR EQU   BIT3                        CLEAR
+ELEMCSTS EQU   BIT4                        STSN
+ELEMCSHU EQU   BIT5                        SHUTD
+ELEMCRQR EQU   BIT6                        RQR
+ELEMCRSH EQU   BIT7                        RSHUTD
+*                                        PROC KEYWORD BIT CODES
+ELEMPNCN EQU   BIT0                        NCONFTXT
+ELEMPCFT EQU   BIT1                        CONFTXT
+ELEMPTMF EQU   BIT2                        TMFLL
+ELEMPNTM EQU   BIT3                        NTMFLL
+ELEMPERP EQU   BIT4                        ERPIN
+ELEMPNER EQU   BIT5                        NERPIN
+ELEMPERO EQU   BIT6                        ERPOUT
+ELEMNPRO EQU   BIT7                        NERPOUT
+ELEMBST3 DS    B                       BIT STRING ENTRY - BYTE 3
+*                                        MACRF KEYWORD BIT CODES
+ELEMAIX  EQU   BIT0                        AIX
+ELEMNSR  EQU   BIT1                        NSR
+ELEMLSR  EQU   BIT2                        LSR
+ELEMGSR  EQU   BIT3                        GSR
+ELEMNCI  EQU   BIT4                        NCI
+ELEMICI  EQU   BIT5                        ICI
+ELEMNDF  EQU   BIT6                        NDF
+ELEMDFR  EQU   BIT7                        DFR
+*                                        OPTCD KEYWORD BIT CODES
+ELEMOLOC EQU   BIT0                        LOC
+ELEMOFWD EQU   BIT1                        FWD
+ELEMOBWD EQU   BIT2                        BWD
+ELEMOARD EQU   BIT3                        ARD
+ELEMOLRD EQU   BIT4                        LRD
+*                                        CONTROL KEYWORD BIT CODES
+ELEMCSHC EQU   BIT0                        SHUTC
+ELEMBIND EQU   BIT1                        BIND
+ELEMUNBD EQU   BIT2                        UNBIND
+ELEMSBI  EQU   BIT3                        SBI
+ELEMBIS  EQU   BIT4                        BIS
+*                                        PROC KEYWORD BIT CODES
+ELEMPNMO EQU   BIT0                        NMONITOR
+ELEMPMON EQU   BIT1                        MONITOR
+ELEMPNEL EQU   BIT2                        NELC
+ELEMPELC EQU   BIT3                        ELC
+ELEMPNEI EQU   BIT4                        NEIB
+ELEMPEIB EQU   BIT5                        EIB
+ELEMPTIM EQU   BIT6                        TIMEOUT
+ELEMPNTI EQU   BIT7                        NTIMEOUT
+ELEMBST4 DS    B                       BIT STRING ENTRY BYTE 4
+*                                        MACRF KEYWORD BIT CODES
+ELEMNIS  EQU   BIT0                        NIS
+ELEMSIS  EQU   BIT1                        SIS
+ELEMNFX  EQU   BIT2                        NFX
+ELEMCFX  EQU   BIT3                        CFX
+ELEMRST  EQU   BIT4                        RST
+ELEMNRS  EQU   BIT5                        NRS
+*                                        PROC KEYWORD BIT CODES
+ELEMPNOR EQU   BIT0                        NORDRESP
+ELEMPORD EQU   BIT1                        ORDRESP
+ELEMPKEE EQU   BIT2                        KEEP
+ELEMPTRU EQU   BIT3                        TRUNC
+ELEMPNBI EQU   BIT4                        NBINARY
+ELEMPBIN EQU   BIT5                        BINARY
+ELEMPNDF EQU   BIT6                        NDFASYX
+ELEMPDFA EQU   BIT7                        DFASYX
+ELEMBST5 DS    0B                      BIT STRING ENTRY BYTE 5
+*                                        OPTCD KEYWORD BIT CODES
+ELEMOCA  EQU   BIT0                        CA
+ELEMOCS  EQU   BIT1                        CS
+ELEMOREL EQU   BIT4                        RELEASE
+ELEMOPAS EQU   BIT5                        PASS
+ELEMONER EQU   BIT6                        NERASE
+ELEMOEAU EQU   BIT7                        EAU
+*                                        PROC KEYWORD BIT CODES
+ELEMPNRS EQU   BIT0                        NRESPX
+ELEMPRES EQU   BIT1                        RESPX
+ELEMPCA  EQU   BIT2                        CA
+ELEMPCS  EQU   BIT3                        CS
+ELEMPRPL EQU   BIT4                        RPLC
+ELEMPSYS EQU   BIT5                        SYSRESP
+ELEMPAPP EQU   BIT6                        APPLRESP
+ELEMBST6 DS    0B                      BIT STRING ENTRY BYTE 6
+*                                        OPTCD KEYWORD BIT CODES
+ELEMOERA EQU   BIT0                        ERASE
+ELEMOSPC EQU   BIT1                        SPEC
+ELEMOANY EQU   BIT2                        ANY
+ELEMONCN EQU   BIT3                        NCONV
+ELEMOCON EQU   BIT4                        CONV
+ELEMOLBT EQU   BIT5                        LBT
+ELEMOLBM EQU   BIT6                        LBM
+ELEMOBLK EQU   BIT7                        BLK
+ELEMBST7 DS    0B                      BIT STRING ENTRY BYTE 7
+*                                        OPTCD KEYWORD BIT CODES
+ELEMOCND EQU   BIT0                        COND
+ELEMOUNC EQU   BIT1                        UNCOND
+ELEMOLCK EQU   BIT2                        LOCK
+ELEMOLMS EQU   BIT5                        LOGONMSG
+ELEMODVC EQU   BIT6                        DEVCHAR
+ELEMOTER EQU   BIT7                        TERMS
+ELEMBST8 DS    0B                      BIT STRING ENTRY BYTE 8
+*                                        OPTCD KEYWORD BIT CODES
+ELEMOAPS EQU   BIT0                        APPSTAT
+ELEMOCTS EQU   BIT1                        COUNTS
+ELEMORNN EQU   BIT2                        RNNAME
+ELEMOCIX EQU   BIT3                        CIDXLATE
+ELEMOTLG EQU   BIT4                        TOPLOGON
+ELEMOBSC EQU   BIT5                        BSCID
+ELEMODIS EQU   BIT6                        DISPLAY
+ELEMORLQ EQU   BIT7                        RELRQ
+ELEMBST9 DS    0B                      BIT STRING ENTRY BYTE 9
+*                                        OPTCD KEYWORD BIT CODES
+ELEMONRQ EQU   BIT0                        NRELRQ
+ELEMOQ   EQU   BIT1                        Q
+ELEMONQ  EQU   BIT2                        NQ
+ELEMOPND EQU   BIT3                        PEND
+ELEMOSES EQU   BIT4                        SESSION
+ELEMOACT EQU   BIT5                        ACTIVE
+ELEMOUCD EQU   BIT6                        UNCONDL
+ELEMOQUI EQU   BIT7                        QUIESCE
+ELEMBSTA DS    0B                      BIT STRING ENTRY BYTE 10
+*                                        OPTCD KEYWORD BIT CODES
+ELEMOSTR EQU   BIT0                        START
+ELEMOSTP EQU   BIT1                        STOP
+ELEMOACC EQU   BIT2                        ACCEPT
+ELEMOACQ EQU   BIT3                        ACQUIRE
+ELEMOCAL EQU   BIT5                        CONALL
+ELEMOCAN EQU   BIT6                        CONANY
+ELEMBSTB DS    0B                      BIT STRING ENTRY BYTE 11
+*                                        OPTCD KEYWORD BIT CODES
+ELEMOKEE EQU   BIT1                        KEEP
+ELEMOTRN EQU   BIT2                        TRUNC
+ELEMONBT EQU   BIT3                        NIBTK
+ELEMOFMH EQU   BIT7                        FMHDR
+ELEMBSTC DS    0B                      BIT STRING ENTRY BYTE 12
+*                                        OPTCD KEYWORD BIT CODES
+ELEMONFM EQU   BIT0                        NFMHDR
+ELEMOSPM EQU   BIT1                        SESSPARM
+ELEMOSEK EQU   BIT2                        SESSKEY
+ELEMXFLG DS    B                       EXIT LIST ENTRY FLAGS
+ELEMXA   EQU   BIT0                    ACTIVE
+ELEMXN   EQU   BIT1                    INACTIVE
+ELEMXL   EQU   BIT2                    LOAD ROUTINE
+ELEMXADR EQU   BIT3                    EXIT ADDRESS SPECIFIED
+         DS    XL3                     RESERVED
+ELEMSLEN EQU   4                       LENGTH OF SHOWCB ELEMENT ACE
+ELEMNLEN EQU   8                       LENGTH OF NORMAL ELEMENT ACE
+ELEMLLEN EQU   12                      LENGTH OF CHARACTER STRING OR
+*                                         EXLST ELEMENT ACE
+         MEND
+*%ELEMPLS4 :;

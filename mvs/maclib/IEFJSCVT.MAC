@@ -1,0 +1,47 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        % GO TO SSCTPLS;         /*
+         MACRO
+         IEFJSCVT
+*
+*  SUBSYSTEM CVT
+*
+* STATUS - VS2 SU16 - IN THIS MODULE, SU 16 SUPPORTS           @G16APPK
+*          VPSS SUPPORT ( SU 29 - @G29AN2F).                   @G16APPK
+*
+SSCT     DSECT
+SSCTBEGN EQU   *
+SSCTID   DC    CL4'SSCT'          CONTROL BLOCK IDENTIFIER
+SSCTSCTA DS    A                  PTR TO NEXT SSCVT OR ZERO
+SSCTSNAM DS    CL4                SUBSYSTEM NAME
+SSCTFLG1 DS    B                  FLAGS
+SSCTSFOR EQU   X'80'              SERIAL FIB OPERATIONS REQUIRED       *
+                                                               @Z40EPSS
+SSCTUPSS EQU   X'40'              USE PRIMARY SUBSYSTEM'S      @G29AN2F
+*                                 SERVICES FOR THIS SUBSYSTEM  @G29AN2F
+*                                 (E.G. SYSOUT)                @G29AN2F
+SSCTRSV1 DS    3X                 RESERVED
+SSCTSSVT DS    A                  SUBSYSTEM VECTOR TABLE POINTER
+SSCTSUSE DS    F                  RESERVED FOR SUBSYSTEM USAGE
+SSCTSIZE EQU   *-SSCTBEGN         SSCVT LENGTH
+         MEND                     */
+*  %SSCTPLS:;
+*/*                                                                  */
+*/*  SUBSYSTEM CVT                                                   */
+*/*                                                                  */
+*/* STATUS - VS2 SU16 - IN THIS MODULE, SU 16 SUPPORTS       @G16APPK*/
+*/*          VPSS SUPPORT ( SU29 - @G29AN2F).                @G16APPK*/
+*/*                                                                  */
+*  DCL 1 SSCT  BASED(SSCTPTR),
+*        2     SSCTID   CHAR(4),  /* CONTROL BLOCK ID='SSCT'         */
+*        2     SSCTSCTA PTR(31),  /* PTR TO NEXT SSCVT OR ZERO       */
+*        2     SSCTSNAM CHAR(4),  /* SUBSYSTEM NAME                  */
+*        2     SSCTFLG1 BIT(8),   /* FLAGS                           */
+*              3 SSCTSFOR BIT(1), /* SERIAL FIB OPERATIONS REQUIRED
+*                                                            @Z40EPSS*/
+*              3 SSCTUPSS BIT(1), /*USE PRIMARY SUBSYSTEM'S
+*                                   SERVICES FOR THIS SUBSYSTEM
+*                                   (E.G. SYSOUT)            @G29AN2F*/
+*              3 *        BIT(6), /* RESERVED                @G29AN2F*/
+*        2     SSCTRSV1 PTR(24),  /* RESERVED                        */
+*        2     SSCTSSVT PTR(31),  /* SUBSYSTEM VECTOR TABLE POINTER  */
+*        2     SSCTSUSE PTR(31);  /* RESERVED FOR SUBSYSTEM USAGE    */

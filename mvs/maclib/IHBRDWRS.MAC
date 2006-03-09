@@ -1,0 +1,333 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&READNAM IHBRDWRS &DECB,&TYPE,&DCB,&AREA,&LENGTH,&KEYADR,&RCDREF,      ,
+               &HDRADR,&LNNUM,&LNNUMA,&LFMTNO,&LFMTNOA,&MF=I    XL03127
+         GBLB  &IHBWR,&IHBT(2),&IHBS(4)
+         LCLB  &MAX,&B(8),&ESW,&ISW,&XSW          SET SWITCHES  XL03127
+         LCLC  &D,&SIGN                                         XL03127
+         LCLA  &CTR,&CTRA,&BAL1                                 XL03127
+         LCLB  &BI
+         AIF   (NOT (&IHBS(2) OR &IHBS(3))).E3    TYPE OPERAND
+&B(7)    SETB  ('&TYPE' EQ 'SFR'    AND &IHBWR)   SET NXT ADR SW
+&B(8)    SETB  ('&TYPE' EQ 'RBL' AND NOT &IHBWR)                XL03127
+&CTRA    SETA  111+30*&IHBWR
+         AIF   ('&MF' NE 'L').F1
+         AIF   ('&DECB'(1,1) EQ '(').E1
+         AIF   ('&READNAM' EQ '').UNNAMED
+&READNAM DS    0F
+.UNNAMED ANOP
+&DECB    DC    F'0'                              EVENT CONTROL BLOCK
+         AIF   ('&TYPE' EQ 'SBM').MRLNKL
+         AIF   ('&LENGTH' EQ '').NOLNG
+         AIF   ('&LENGTH' NE '''S''').NOMAXL
+&MAX     SETB  1
+         DC    X'80'                             TYPE FIELD
+         AGO   .CKTYPL
+.MRLNKL  DC    F'0'                     LINK FIELD MICR
+         AGO   .CKDCBL
+.E1      IHBERMAC 87,&CTRA
+         MEXIT
+.E5      IHBERMAC 69,&CTRA
+         MEXIT
+.NOLNG   ANOP
+&MAX     SETB  1
+         DC    X'00'                             TYPE FIELD
+         AGO   .CKTYPL
+.NOMAXL  AIF   ('&LENGTH'(1,1) EQ '(').E5
+         DC    X'00'                             TYPE FIELD
+.CKTYPL  ANOP
+&BI      SETB  ('&TYPE'(2,2) EQ 'BM')   MICR IF BM
+&B(1)    SETB  ('&TYPE'(2,1) EQ 'F' AND (NOT &IHBWR))
+&B(2)    SETB  ('&TYPE'(2,1) EQ 'B' AND NOT &IHBWR AND &IHBS(2))
+&B(3)    SETB  ('&TYPE'(2,1) EQ 'F' AND &IHBWR)
+&B(4)    SETB  ('&TYPE'(2,1) EQ 'D' AND &IHBWR)
+&B(5)    SETB  ('&TYPE'(2,1) EQ 'E' AND &IHBWR)
+&B(6)    SETB  ('&TYPE'(2,1) EQ 'Z' AND &IHBWR)
+         AIF   (&IHBS(3) AND NOT (&B(7) OR &B(8))).ERR2         XL03127
+         AIF   (&B(1)+&B(2)+&B(3)+&B(4)+&B(5)+&B(6)+&B(8) EQ 1).CONTX
+.ERR2    IHBERMAC 64,&CTRA,&TYPE
+         MEXIT
+.CONTX   ANOP
+&CTR     SETA  80*(&B(1)+&B(8))+40*&B(2)+20*&B(3)+10*&B(4)+8*&B(5)+4*&B,
+               (6)+1*(&B(7)+&B(8))      SET TYPE FIELD          XL03127
+         AIF   (&ESW).ERTRN
+         AIF   (&XSW).COMEBK       IF SW IS ON,GOTO STANDARD FORM
+         DC    X'&CTR'                           TYPE FIELD
+         AIF   (&ISW).CHKLENG
+.CKLNGL  AIF   (&MAX).NOLNGL
+         DC    AL2(&LENGTH)                      LENGTH
+         AGO   .CKDCBL
+.NOLNGL  DC    AL2(0)                            LENGTH
+.CKDCBL  AIF   ('&DCB' EQ '').NODCBL
+         AIF   ('&DCB'(1,1) EQ '(').E5
+         DC    A(&DCB)                           DCB ADDRESS
+         AGO   .CKARL
+.NODCBL  DC    A(0)                              DCB ADDRESS
+.CKARL   AIF   ('&AREA' EQ '').NOARL
+         AIF   ('&AREA'(1,1) EQ '(').E5
+         DC    A(&AREA)                          AREA ADDRESS
+         AGO   .FINIL
+.NOARL   DC    A(0)                              AREA ADDRESS
+.FINIL   DC    A(0)                              RECORD POINTER WORD
+         AIF   (NOT &B(7)).C3886L                               XL03127
+&D       SETC  'OR NEXT ADDR REQD - NOT SPECIFIED'             @ZA13471
+         AIF   (&B(7) AND '&KEYADR' EQ '').E7    GO TO MNOTE   @ZA13471
+         AIF   ((NOT &B(7)) AND '&KEYADR' NE '').E2  MNOTE     @ZA13471
+         AIF   ('&KEYADR'(1,1) EQ '(').E5                      @ZA13471
+         DC    A(&KEYADR)          NEXT ADDRESS
+.*
+         AGO   .END                GOTO MEND
+.C3886L  AIF   (NOT &B(8)).END                                  XL03127
+         AIF   ('&HDRADR' EQ '').HDRADR5                        XL03127
+         AIF   ('&HDRADR'(1,1) EQ '(').E5                       XL03127
+         DC    A(&HDRADR)               RECORD HEADER ADDRESS
+         AGO   .LNNUM                                           XL03127
+.HDRADR5 DC    A(0)                     RECORD HEADER ADDRESS
+.LNNUM   AIF   ('&LNNUM' EQ '' AND '&LNNUMA' EQ '').LNNUM5      XL03127
+         AIF   ('&LNNUM' NE '' AND '&LNNUMA' NE '').E8          XL03127
+         AIF   ('&LNNUM&LNNUMA'(1,1) EQ '(').E5                 XL03127
+&SIGN    SETC  '+'                                              XL03127
+         AIF   ('&LNNUM' EQ '').LNNUM5                          XL03127
+&SIGN    SETC  '-'                                              XL03127
+         AIF   (T'&LNNUM NE 'N').LNNUM5                         XL03127
+         AIF   (&LNNUM LT 1).E11                                XL03127
+.LNNUM5  DC    A(0&SIGN&LNNUM&LNNUMA)
+&SIGN    SETC  ''                                               XL03127
+         AIF   ('&LFMTNO' EQ '' AND '&LFMTNOA' EQ '').LFMTNO5   XL03127
+         AIF   ('&LFMTNO' NE '' AND '&LFMTNOA' NE '').E8        XL03127
+         AIF   ('&LFMTNO&LFMTNOA'(1,1) EQ '(').E5               XL03127
+&SIGN    SETC  '+'                                              XL03127
+         AIF   ('&LFMTNO' EQ '').LFMTNO5                        XL03127
+&SIGN    SETC  '-1-'                                            XL03127
+         AIF   (T'&LFMTNO NE 'N').LFMTNO5                       XL03127
+         AIF   (&LFMTNO LT 0 OR &LFMTNO GT 63).E12              XL03127
+.LFMTNO5 DC    A(0&SIGN&LFMTNO&LFMTNOA) LINE FMT NO./ADDRESS
+         MEXIT                                                  XL03127
+.F1      AIF   ('&MF(1)' NE 'E').F2
+&ESW     SETB  1
+         AIF   ('&DECB'(1,1) EQ '(').REGS
+&READNAM LA    1,&DECB                           LOAD DECB ADDRESS
+         AGO   .CKTYPE
+.REGS    AIF   ('&DECB(1)' EQ '1').REGONE
+&READNAM LR    1,&DECB(1)                        LOAD DECB ADDRESS
+         AGO   .CKTYPE
+.REGONE  AIF   ('&READNAM' EQ '').CKTYPE
+&READNAM DS    0H
+.CKTYPE  AGO   .CKTYPL
+.ERTRN   AIF   (&BI).CKDCBE             IF 1419 BRANCH
+         MVI   5(1),X'&CTR'             SET TYPE FIELD
+.CKDCBE  AIF   ('&DCB' EQ '').CKARE
+         AIF   ('&DCB'(1,1) EQ '(').DCBRE
+         LA    14,&DCB                           LOAD DCB ADDRESS
+         ST    14,8(1,0)                         STORE DCB ADDRESS
+         AGO   .CKARE
+.DCBRE   ST    &DCB(1),8(1,0)                    STORE DCB ADDRESS
+.CKARE   AIF   ('&AREA' EQ '').CKLGE
+         AIF   ('&AREA'(1,1) EQ '(').ARRGE
+         LA    14,&AREA                          LOAD AREA ADDRESS
+         ST    14,12(1,0)                        STORE AREA ADDRESS
+         AGO   .CKLGE
+.ARRGE   ST    &AREA(1),12(1,0)                  STORE AREA ADDRESS
+.CKLGE   AIF   ('&LENGTH' EQ '').FINIE
+         AIF   ('&LENGTH' NE '''S''').NOMAXE
+         AIF   (&BI).FINIE              IF 1419(SBM) BRANCH
+         MVI   4(1),X'80'                        SET TYPE FIELD
+         AGO   .FINIE
+.NOMAXE  MVI   4(1),X'00'                        SET TYPE FIELD
+         AIF   ('&LENGTH'(1,1) EQ '(').LNGRE
+         AIF   (&IHBT(1)).LIT
+         AGO   .DC
+.LNGRE   STH   &LENGTH(1),6(1,0)                 STORE LENGTH IN DECB
+         AGO   .FINIE
+.LIT     AIF   (&LENGTH GT 4095).DC
+         LA    14,&LENGTH.(0,0)                  LOAD LENGTH
+         STH   14,6(1,0)                         STORE LENGTH
+         AGO   .FINIE
+.DC      B     *+6                               BRANCH AROUND LENGTH
+         DC    AL2(&LENGTH)                      LENGTH
+         MVC   6(2,1),*-2                        MOVE IN LENGTH
+.FINIE   AIF   (NOT &B(7) OR '&KEYADR' EQ '').C3886E            XL03127
+         AIF   ('&KEYADR'(1,1) EQ '(').REGRCD     GOTO REG. FM
+         LA    14,&KEYADR          LOAD NEXT ADDR
+         ST    14,20(1,0)          STORE IT INTO DECB
+         AGO   .GOOUT
+.REGRCD  ST    &KEYADR(1),20(1,0)  STORE NEXT ADDRESS INTO DECB
+         AGO   .GOOUT                                           XL03127
+.C3886E  AIF   (NOT &B(8)).GOOUT                                XL03127
+         AIF   ('&HDRADR' EQ '').CKLNNUM                        XL03127
+         AIF   ('&HDRADR'(1,1) EQ '(').HDRRE                    XL03127
+         LA    14,&HDRADR               LOAD RECORD HEADER ADDR
+         ST    14,20(1,0)               STORE RECORD HEADER ADDR
+         AGO   .CKLNNUM                                         XL03127
+.HDRRE   ST    &HDRADR(1),20(1,0)       STORE RECORD HEADER ADDR
+.CKLNNUM AIF   ('&LNNUM' EQ '' AND '&LNNUMA' EQ '').CKLFMTN     XL03127
+         AIF   ('&LNNUM' NE '' AND '&LNNUMA' NE '').E8          XL03127
+         AIF   ('&LNNUM&LNNUMA'(1,1) EQ '(').LNNUMRE            XL03127
+         LA    14,&LNNUM&LNNUMA         LOAD LINE NO./LINE ADDR
+         AIF   ('&LNNUM' EQ '').LNNUMS1                         XL03127
+         AIF   (T'&LNNUM NE 'N').LNNUMS0                        XL03127
+         AIF   (&LNNUM LT 1).E11                                XL03127
+.LNNUMS0 LNR   14,14                    INDICATE DIGIT
+.LNNUMS1 ST    14,24(1,0)               STORE LINE NO./LINE ADDR
+         AGO   .CKLFMTN                                         XL03127
+.LNNUMRE AIF   ('&LNNUM' EQ '').LNNUMAR                         XL03127
+         LNR   14,&LNNUM(1)             INDICATE DIGIT
+         ST    14,24(1,0)               STORE LINE NUMBER
+         AGO   .CKLFMTN                                         XL03127
+.LNNUMAR ST    &LNNUMA(1),24(1,0)       STORE ADDR OF LINE NUMBER
+.CKLFMTN AIF   ('&LFMTNO' EQ '' AND '&LFMTNOA' EQ '').GOOUT     XL03127
+         AIF   ('&LFMTNO' NE '' AND '&LFMTNOA' NE '').E8        XL03127
+         AIF   ('&LFMTNO&LFMTNOA'(1,1) EQ '(').LFMTRE           XL03127
+         LA    14,&LFMTNO&LFMTNOA
+         AIF   ('&LFMTNO' EQ '').LFMTNS1                        XL03127
+         AIF   (T'&LFMTNO NE 'N').LFMTNS0                       XL03127
+         AIF   (&LFMTNO LT 0 OR &LFMTNO GT 63).E12              XL03127
+.LFMTNS0 LA    14,1(14,0)
+         LNR   14,14                    INDICATE LFMTNO
+.LFMTNS1 ST    14,28(1,0)
+         AGO   .GOOUT                                           XL03127
+.LFMTRE  AIF   ('&LFMTNO' EQ '').LFMTARE                        XL03127
+         LA    14,1(&LFMTNO(1),0)
+         LNR   14,14                    INDICATE LFMTNO
+         ST    14,28(1,0)
+         AGO   .GOOUT                                           XL03127
+.LFMTARE ST    &LFMTNOA(1),28(1,0)
+.GOOUT   L     15,8(1,0)           LOAD DCB ADDRESS
+         L     15,48(0,15)                       LOAD RDWR ROUTINE ADDR
+         BALR  14,15                             LINK TO RDWR ROUTINE
+         AGO   .END
+.F2      AIF   ('&MF' NE 'I').E4
+.RTEI    AIF   ('&DECB'(1,1) EQ '(').E1
+&ISW     SETB  1
+         AIF   (NOT &B(7)).GOGOGOO      IF NOT 'SFR' AND NEXT
+&D       SETC  'OR NEXT ADDR REQD - NOT SPECIFIED'             @ZA13471
+         AIF   (&B(7) AND '&KEYADR' EQ '').E7     GOTO MNOTE
+         AIF   ((NOT &B(7)) AND '&KEYADR' NE '').E2  MNOTE
+&XSW     SETB  1                   SET ENTRY FROM NORMAL ON
+         CNOP  0,4
+         AGO   .CKTYPL             GOTO SET TYPE FIELD
+.COMEBK  ANOP                      DUMMY ADDR
+&XSW     SETB  0                   SET ENTRY FROM NORMAL OFF
+         AIF   (NOT &B(7)).GOGO    NO NEXT ADDR,SKIP
+&READNAM BAL   1,*+28              LOAD DECB ADDRESS
+         AGO   .JUMP               SKIP NEXT INSTRUCTION
+.GOGOGOO ANOP
+         CNOP  0,4
+.GOGO    ANOP                      DUMMY ADDR
+&BAL1    SETA  24+12*&B(8)                                      XL03127
+&READNAM BAL   1,*+&BAL1                LOAD DECB ADDRESS
+.JUMP    ANOP                      DUMMY ADDR
+&DECB    DC    F'0'                              EVENT CONTROL BLOCK
+         AIF   ('&TYPE' EQ 'SBM').MRLNKI
+         AIF   ('&LENGTH' EQ '').NOLENGT
+         AIF   ('&LENGTH' NE '''S''').NORMLH
+         DC    X'80'                             TYPE FIELD
+&MAX     SETB  1
+         AGO   .CHKTYPE
+.MRLNKI  DC    F'0'                     LINK FIELD MICR
+&BI      SETB  1
+         AGO   .CHKDCB
+.NOLENGT ANOP
+&MAX     SETB  1
+.NORMLH  DC    X'00'                             TYPE FIELD
+.CHKTYPE AGO   .CKTYPL
+.CHKLENG AIF   (&MAX).REGZERO
+         AIF   ('&LENGTH'(1,1) EQ '(').REGZERO
+         DC    AL2(&LENGTH)                      LENGTH
+         AGO   .CHKDCB
+.REGZERO DC    AL2(0)                            LENGTH
+.CHKDCB  AIF   ('&DCB' EQ '').E2
+         AIF   ('&DCB'(1,1) EQ '(').NODCBI
+         DC    A(&DCB)                           DCB ADDRESS
+         AGO   .CHKAREA
+.NODCBI  DC    A(0)                              DCB ADDRESS
+.CHKAREA ANOP
+         AIF   ('&AREA' EQ '' AND &BI).NOAREA
+         AIF   ('&AREA' EQ '' AND (NOT &B(6))).E6
+         AIF   ('&AREA' EQ '').NOAREA
+         AIF   ('&AREA'(1,1) EQ '(').NOAREA
+         DC    A(&AREA)                          AREA ADDRESS
+         AGO   .FINISH
+.NOAREA  DC    A(0)                              AREA ADDRESS
+.FINISH  DC    A(0)                              RECORD POINTER WORD
+         AIF   (NOT &B(7)).C3886I                               XL03127
+         AIF   ('&KEYADR'(1,1) EQ '(').REGGO TEST IF IN REG.FM
+         DC    A(&KEYADR)          NEXT ADDRESS
+         AGO   .CKRGDCB            GOTO CHECK DCB IN REG. FORM
+.REGGO   DC    A(0)                NEXT ADDRESS
+         ST    &KEYADR(1),20(1,0)  STORE NEXT ADDRESS IN DECB
+.C3886I  AIF   (NOT &B(8)).CKRGDCB                              XL03127
+         AIF   ('&HDRADR' EQ '').E9                             XL03127
+         AIF   ('&HDRADR'(1,1) EQ '(').HDRADR1                  XL03127
+         DC    A(&HDRADR)               RECORD HEADER ADDRESS
+         AGO   .LNNUM1I                                         XL03127
+.HDRADR1 DC    A(0)                     RECORD HEADER ADDRESS
+.LNNUM1I AIF   ('&LNNUM' EQ '' AND '&LNNUMA' EQ '').LNNUMAI     XL03127
+         AIF   ('&LNNUM' NE '' AND '&LNNUMA' NE '').E8          XL03127
+         AIF   ('&LNNUM&LNNUMA'(1,1) EQ '(').LNNUMAI            XL03127
+&SIGN    SETC  '+'                                              XL03127
+         AIF   ('&LNNUM' EQ '').LNNUM2I                         XL03127
+&SIGN    SETC  '-'                                              XL03127
+         AIF   (T'&LNNUM NE 'N').LNNUM2I                        XL03127
+         AIF   (&LNNUM LT 1).E11                                XL03127
+.LNNUM2I DC    A(0&SIGN&LNNUM&LNNUMA)   LINE NO./LINE ADDRESS
+&SIGN    SETC  ''                                               XL03127
+         AGO   .LFMTN0                                          XL03127
+.LNNUMAI DC    A(0)                     LINE NO./LINE ADDRESS
+.LFMTN0  AIF   ('&LFMTNO' EQ '' AND '&LFMTNOA' EQ '').LFMTN1I   XL03127
+         AIF   ('&LFMTNO' NE '' AND '&LFMTNOA' NE '').E8        XL03127
+         AIF   ('&LFMTNO&LFMTNOA'(1,1) EQ '(').LFMTN1I          XL03127
+&SIGN    SETC  '+'                                              XL03127
+         AIF   ('&LFMTNO' EQ '').LFMTN0I                        XL03127
+&SIGN    SETC  '-1-'                                            XL03127
+         AIF   (T'&LFMTNO NE 'N').LFMTN0I                       XL03127
+         AIF   (&LFMTNO LT 0 OR &LFMTNO GT 63).E12              XL03127
+.LFMTN0I DC    A(0&SIGN&LFMTNO&LFMTNOA) LINE FMT NO./ADDRESS
+         AGO   .CKRGDCB                                         XL03127
+.LFMTN1I DC    A(0)                     LINE FMT NO./ADDRESS
+.CKRGDCB ANOP                      DUMMY ADDR
+         AIF   ('&DCB'(1,1) NE '(').TESTARE
+         ST    &DCB(1),8(1,0)                    STORE DCB ADDRESS
+.TESTARE AIF   ('&AREA' EQ '').TESTLNT
+         AIF   ('&AREA'(1,1) NE '(').TESTLNT
+         ST    &AREA(1),12(1,0)                  STORE AREA ADDRESS
+.TESTLNT AIF   ('&LENGTH' EQ '').C3886RI  SKIP IF NO LENGTH      XM4331
+         AIF   ('&LENGTH'(1,1) NE '(').C3886RI                  XL03127
+         STH   &LENGTH(1),6(1,0)   STORE LENGTH
+.C3886RI AIF   (NOT &B(8)).GOOUT                                XL03127
+         AIF   ('&HDRADR'(1,1) NE '(').LNNUM3I                  XL03127
+         ST    &HDRADR(1),20(1,0)       STORE RCD HEADER ADDR
+.LNNUM3I AIF   ('&LNNUM&LNNUMA' EQ '').LFMTN2I                  XL03127
+         AIF   ('&LNNUM&LNNUMA'(1,1) NE '(').LFMTN2I            XL03127
+         AIF   ('&LNNUM' EQ '').LNNUM4I                         XL03127
+         LNR   14,&LNNUM(1)             INDICATE DIGIT
+         ST    14,24(1,0)               STORE LINE NUMBER
+         AGO   .LFMTN2I                                         XL03127
+.LNNUM4I ST    &LNNUMA(1),24(1,0)       STORE LINE NUMBER ADDR
+.LFMTN2I AIF   ('&LFMTNO&LFMTNOA' EQ '').GOOUT                  XL03127
+         AIF   ('&LFMTNO&LFMTNOA'(1,1) NE '(').GOOUT            XL03127
+         AIF   ('&LFMTNO' EQ '').LFMTN3I                        XL03127
+         LA    14,1(&LFMTNO(1),0)
+         LNR   14,14                    INDICATE LFMTNO
+         ST    14,28(1,0)               STORE FMT NUMBER
+         AGO   .GOOUT                                           XL03127
+.LFMTN3I ST    &LFMTNOA(1),28(1,0)      STORE FMT NUMBER ADDR
+         AGO   .GOOUT              GOTO OUT
+.E2      IHBERMAC 06,&CTRA
+         MEXIT
+.E3      IHBERMAC 48,&CTRA,&TYPE
+         MEXIT
+.E4      IHBERMAC 35,&CTRA,&MF
+         MEXIT
+.E6      IHBERMAC 13,&CTRA
+         MEXIT                     GOOUT
+.E7      IHBERMAC 46,,&D           MNOTE 'NXT ADDR' REQ'D NOT SPEC'
+         MEXIT                                                  XL03127
+.E8      IHBERMAC 171     12,IHB066  INCONSISTENT OPERAND       XL03127
+         MEXIT                                                  XL03127
+.E9      IHBERMAC 1006,HDRADR 12,IHB001 HDRADR REQD OPND        XL03127
+         MEXIT                                                  XL03127
+.E11     IHBERMAC 267,,&LNNUM                                   XL03127
+         MEXIT                                                  XL03127
+.E12     IHBERMAC 269,,&LFMTNO                                  XL03127
+.END     MEND

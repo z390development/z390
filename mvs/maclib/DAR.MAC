@@ -1,0 +1,96 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    DAR   &GACB,&MF=I
+         LCLA  &LNGTH,&INC,&CNT         DEFINE WORK AREAS
+         LCLC  &NAMGACB,&NAMLIST
+         LCLC  &MNAME
+         LCLA  &TOTLNG
+         LCLC  &REGAD
+&CNT     SETA  0                        COUNT IS NUMBER OF GACBS
+&INC     SETA  0                        NUMBER OF FULL WORDS
+.NXTST1  AIF   ('&MF' EQ 'I').TYPESL    TEST FOR TYPE S AND
+         AIF   ('&MF' EQ 'L').TYPESL    TYPE L.
+         AIF   (N'&MF NE 2).ER1         THEN A TEST IS MADE TO
+         AIF   ('&MF(1)' NE 'E').ER1    CHECK PROPER MF=E FORMAT
+         AIF   ('&MF(2)'(1,1) EQ '(').USEREG
+&NAME    LA    1,&MF(2)                 LOAD ADDRESS OF LIST
+         AGO   .OVUSRG                  INTO REGISTER 1
+.USEREG  ANOP                           IF A REGISTER WAS SPECIFIED
+&REGAD   SETC  '&MF(2)'(2,K'&MF(2)-2)   LOAD REGISTER INSTRUCTION
+&NAME    LR    1,&REGAD                 LOAD PARAMETER LIST ADDRESS
+.OVUSRG  AIF   (K'&GACB EQ 0).NOMOR      NO GACB IN MACRO TEST
+.NEXT    AIF   (N'&GACB EQ &CNT).NOMOR    CHECK FOR END OF GACB LIST
+&CNT     SETA  &CNT+1                   IF NOT, INCREMENT BOTH
+&INC     SETA  &INC+4                   COUNT AND INCREMENT
+         AIF   (K'&GACB(&CNT) EQ 0).NEXT    CHECK FOR BLANK ENTRY
+         AIF   ('&GACB(&CNT)'(1,1) EQ '(').REGIN   CHECK FOR REG
+&NAMGACB SETC  '&GACB(&CNT)'            LOAD GACB NAME INTO CONSTANT
+         LA    15,&NAMGACB              LOAD GACB ADDRESS INTO
+         ST    15,&INC.(1)              PARAMETER LIST
+         AGO   .NEXT                    GO TO NEXT GACB ADDRESS
+.REGIN   AIF   ('&GACB(&CNT)'(K'&GACB(&CNT),1) NE ')').ER4
+&NAMGACB SETC  '&GACB(&CNT)'(2,K'&GACB(&CNT)-2)   LOAD REG
+         ST    &NAMGACB,&INC.(1)        STORE REG INTO PARAMETER LIST
+         AGO   .NEXT                    GO TO NEXT GACB ADDRESS
+.NOMOR   SVC   74                       LINK TO DAR ROUTINE
+         MEXIT
+.TYPESL  AIF   (K'&GACB EQ 0).ER3       IF S OR L CHECK FOR GACBS
+&LNGTH   SETA  N'&GACB+1
+.PARFIL  AIF   (N'&MF NE 1).ER1         CHECK MF FORMAT
+         AIF   ('&MF' EQ 'I').TYPES     TEST FOR S FORMAT
+         AIF   (K'&NAME EQ 0).WRNMES    CHECK FOR NAME FIELD
+&MNAME   SETC  '&NAME'                  LOAD NAME INTO CONSTANT
+.AFWRN   DS    0F                        ALIGN ON FULLWORD BOUNDARY
+.GENPAR  ANOP                           GENERATE PARAMETER LIST
+&MNAME   DC    AL1(0)
+         DC    AL1(0)                   RESERVED
+         DC    AL2(&LNGTH)              LENGTH OF PARAMETER LIST
+         AIF   (K'&GACB EQ 0).JSTAL1    TEST FOR NO GACB ENTRY
+.LOOP    ANOP
+&CNT     SETA  &CNT+1                   KEEP TRACK OF NUMBER OF GACBS
+         AIF   (K'&GACB(&CNT) EQ 0).SETZER   TEST FOR BLANK ENTRY
+         AIF   ('&GACB(&CNT)'(1,1) EQ '(').SETZER   REGISTER TEST
+&NAMGACB SETC  '&GACB(&CNT)'            LOAD GACB NAME INTO CONSTANT
+.PUTIN   DC    A(&NAMGACB)               GACB ADDRESS
+         AIF   (N'&GACB NE &CNT).LOOP      TEST FOR END OF GACBS
+         MEXIT
+.SETZER  ANOP
+&NAMGACB SETC  '0'                      SET VALUE TO ZERO
+         AGO   .PUTIN
+.JSTAL1  ANOP                           JUST ONE DC STATEMENT
+         DC    A(0)                     GACB ADDRESS
+         MEXIT
+.TYPES   ANOP                           S TYPE MACRO
+&MNAME   SETC  'IHB&SYSNDX'             GET SYSTEM NAME
+&NAME    LA    1,&MNAME                 LOAD PARAMETER LIST ADDRESS
+&TOTLNG  SETA  (&LNGTH+1)*4             GET LENGTH OF LIST AND BRANCH
+         AIF   (K'&GACB EQ 0).NOSTR     TEST FOR NO STORE INSTRUCTION
+.LST     AIF   (N'&GACB EQ &CNT).NOSTMR  TEST FOR END OF GACB LIST
+&CNT     SETA  &CNT+1                   INCREMENT SUBLIST COUNT
+&INC     SETA  &INC+4
+         AIF   (K'&GACB(&CNT) EQ 0).LST     CHECK FOR BLANK GACB ENTRY
+         AIF   ('&GACB(&CNT)'(1,1) NE '(').LST   CHECK FOR NO REG
+         AIF   ('&GACB(&CNT)'(K'&GACB(&CNT),1) NE ')').ER5  REG CHECK
+&NAMGACB SETC  '&GACB(&CNT)'(2,K'&GACB(&CNT)-2)   GET REG NAME
+         ST    &NAMGACB,&MNAME+&INC     STORE REG INTO PARAMETER LIST
+         AGO   .LST
+.NOSTMR  ANOP
+&CNT     SETA  0                        RESET COUNT
+&INC     SETA  0                        AND INCREMENT.
+.NOSTR   SVC   74                       LINK TO DAR ROUTINE
+         CNOP  0,4                      ALIGN ON FULLWORD BOUNDARY
+         B     *+&TOTLNG                BRANCH OVER PARAMETER LIST
+         AGO   .GENPAR                  GO TO GENERATE PARAMETER LIST
+.ER1     IHBERMAC 35,,&MF               ERROR IN MF FORMAT
+         MEXIT
+.ER3     IHBERMAC 178,GACB,0            GACB NOT SPECIFIED
+&LNGTH   SETA  2
+         AGO   .PARFIL
+.ER4     IHBERMAC 147,&GACB(&CNT)        INVALID REGISTER NOTATION
+         AGO   .NEXT
+.ER5     IHBERMAC 147,&GACB(&CNT)        INVALID REGISTER NOTATION
+         AGO   .LST
+.WRNMES  IHBERMAC 180,NAME,ZERO
+         AGO   .AFWRN
+         MEND
+

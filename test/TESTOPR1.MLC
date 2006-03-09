@@ -1,0 +1,22 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTMAC4 SUBENTRY
+         WTO   'TESTMAC4 TEST OPERATORS UPPER, LOWER, ETC.'
+         SUBEXIT
+&LC      SETC  'abc'
+         AIF   (&LC NE 'abc').ERR 
+&UC      SETC  (UPPER &LC)
+         AIF   (&UC NE 'ABC').ERR
+&UC      SETC  'ABC'
+         AIF   (&UC NE 'ABC').ERR
+&LC      SETC  (LOWER &UC)
+         AIF   (&LC NE 'abc').ERR
+         AGO   .EXIT
+.ERR     MNOTE 12,'UPPER/LOWER ERROR'
+.EXIT    ANOP
+         END

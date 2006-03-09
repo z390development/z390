@@ -1,0 +1,72 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 11/28/05                                                 *
+*********************************************************************
+*
+* RUN DEMOGUI1 WITH GUI OPTION TO DEMO WTO/WTOR/WAIT GUI MCS CONSOLE
+*
+* DEMOGUI1 CAN BE RUN IN 4 DIFFERENT MODES:
+*    1. Windows command line interface                         
+*       a.  Enter command: ez390 demo\demogui1
+*       b.  Enter replies when prompted and terminal with END.
+*       c.  When a WTOR reply is pending with GUI option off,
+*           ez390 monitors the system standard input for keyboard input
+*           and when ready, stores reply and posts ecb complete.
+*
+*    2. Windows z390 GUI system window interface               
+*       a.  Enter command: ez390 demo\demogui1
+*       b.  Enter replies when prompted and terminal with END.
+*       c.  When a WTOR reply is pending GUI option off,
+*           ez390 monitors the system standard input for keyboard input
+*           and when ready, stores reply and posts ecb complete.  Note 
+*           this case the standard input is supplied to ez390 process
+*           started from the z390 GUI system window and the wto message
+*           and reply messages are routed back to the z390 GUI system 
+*           window scrolling log display.
+*
+*    3. Windows command line interface                         
+*       a.  Enter command: ez390 demo\demogui1 gui
+*       b.  Enter replies when prompted and terminal with END.
+*       c.  When a WTOR reply is pending with GUI option on,
+*           ez390 monitors the GUI application window for command input
+*           and when ready, stores reply and posts ecb complete.  WTO
+*           and reply messages are routed to the GUI application window
+*           for display on MCS console view panel and are also logged
+*           on the z390 system log file.
+*
+*    4. Windows z390 GUI system window interface               
+*       a.  Enter command: ez390 demo\demogui1 gui
+*       b.  Enter replies when prompted and terminal with END.
+*       c.  When a WTOR reply is pending with GUI option on,
+*           ez390 monitors the GUI application window for command input
+*           and when ready, stores reply and posts ecb complete.  WTO
+*           and reply messages are routed to the GUI application window
+*           for display on MCS console view panel.  Note in this case
+*           wto messages and reply messages are also routed to the 
+*           separate z390 GUI system window scrolling log display and 
+*           system log file.
+*
+*   See DEMOGUI2 for simllar demo but with counter being incremented
+*   in loop until WTOR ECB is posted indicationg reply is read.  The
+*   time and AP instructions since last reply is displayed.
+*  
+*********************************************************************
+DEMOGUI1 SUBENTRY
+         WTO   'DEMOGUI1 DEMO WTO AND WTOR WAIT LOOP'
+LOOP     EQU   *
+         WTOR  'ENTER TEXT TO DISPLAY OR END',REPLY,,WAITECB
+         WAIT  ECB=WAITECB
+         CLC   REPLY(3),=C'END'
+         BE    EOF
+         WTO   MF=(E,WTOMSG1)
+         B     LOOP
+EOF      WTO   'DEMOGUI1 ENDING OK'
+         SUBEXIT
+WAITECB  DC    F'0'
+WTOMSG1  DC    AL2(WTOEND1-*,0),C'TEXT ENTERED = '
+REPLY    DC    CL40' '
+WTOEND1  EQU   *
+         END

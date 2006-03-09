@@ -1,0 +1,24 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 11/08/05                                                 *
+*********************************************************************
+* 11/15/05 RPI92 TEST NON-ZERO MEMORY ADDRESSES
+*********************************************************************
+TESTDMP1 SUBENTRY
+         WTO   'TESTDMP4 TEST SNAP DUMP OPTIONS'
+         SNAP  ID=1,TEXT='DEFAULT ALL CONTROL BLOCKS TO LOG'
+         OPEN  (SYSUT1)
+         SNAP  ID=2,PDATA=(GPR,DCB),TEXT='GPR REGS AND FILES'
+         SNAP  ID=3,PDATA=FPR,ID=10,TEXT='FPR REGS'
+         SNAP  ID=4,STORAGE=(DATA1,DATA2),TEXT='LOW MEMORY'
+         SUBEXIT
+SYSUT1   DCB   RECFM=FT,BLKSIZE=80,MACRF=GM,                           X
+               DSNAME=DSN1
+DSN1     DC    C'TEST\TESTDMP4.TF1',X'00'
+DATA1    DC    C'MEMORY DUMP AREA'
+DATA2    EQU   *
+         DCBD
+         END

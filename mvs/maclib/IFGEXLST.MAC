@@ -1,0 +1,390 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GOTO   EXLST1 ;
+* /*
+         MACRO
+         IFGEXLST &DSECT=YES,&AM=
+         AGO   .EXLDESC
+*                                                                   */
+.EXLDESC ANOP                                                       */
+* /******************************************************************/
+* /*                                                                */
+* /*     EXIT LIST (EXLST)                                          */
+* /*                                                                */
+* /*     THE EXIT LIST CONTAINS ADDRESSES OF USER EXIT ROUTINES     */
+* /*     ASSOCIATED WITH A PARTICULAR VSAM DATA SET OR VTAM         */
+* /*     APPLICATION, TOGETHER WITH FLAGS GIVING INFORMATION        */
+* /*     ABOUT EACH EXIT ROUTINE.  THE INFORMATION IS SUPPLIED      */
+* /*     BY THE USER IN THE EXLST MACRO.  THE EXIT LIST IS          */
+* /*     ACCESSED VIA THE ACBEXLST FIELD IN THE ACB(ACCESS METHOD   */
+* /*     CONTROL BLOCK) IN VSAM AND VTAM OR VIA THE NIBEXLST        */
+* /*     FIELD IN THE NIB(NODE INFORMATION BLOCK) IN VTAM           */
+* /*     FOR A CONNECTION EXIT LIST.                                */
+* /*                                                                */
+* /*     VTAM EXITS ARE GENERATED ONLY IF AM=VTAM IS CODED IN THE   */
+* /*     EXLST MACRO.                                               */
+* /*                                                                */
+* /*     THE LENGTH OF THE EXIT LIST VARIES ACCORDING TO THE        */
+* /*     EXITS SPECIFIED.  THE FOLLOWING TABLE GIVES ITS MINIMUM    */
+* /*     LENGTH WHEN THE CORRESPONDING EXIT IS SPECIFIED AND THE    */
+* /*     PURPOSE OF EACH EXIT:                                      */
+* /*                                                                */
+* /*     EODAD          10 BYTES    FOR SPECIAL PROCESSING WHEN     */
+* /*                                THE END OF A DATA SET IS        */
+* /*                                REACH BY SEQUENTIAL ACCESS      */
+* /*     SYNAD          15 BYTES    FOR ANALYZING PHYSICAL ERRORS   */
+* /*     LERAD          20 BYTES    FOR ANALYZING LOGICAL ERRORS    */
+*/*      UPAD(VSAM)     25 BYTES    FOR  SYNCHRONOUS PROCESSING --  */
+*/*                                 THIS FIELD OVERLAYS SCIP        */
+* /*     SCIP(VTAM)     25 BYTES    FOR PROCESSING WHEN SESSION     */
+* /*                                CONTROL INPUT IS RECEIVED       */
+* /*     LOGON(VTAM)    30 BYTES    FOR PROCESSING USER LOGON       */
+* /*                                REQUESTS TO AN APPLICATION      */
+* /*     JRNAD(VSAM)    35 BYTES    FOR JOURNALLING AS DATA         */
+* /*                                RECORDS ARE PROCESSED           */
+* /*     DFASY(VTAM)    35 BYTES    FOR PROCESSING WHEN DATA FLOW   */
+* /*                                ASYNCHRONOUS INPUT IS RECEIVED  */
+* /*     OPENAD         40 BYTES    FOR SPECIAL PROCESSING WHEN     */
+* /*                                THE ACB IS BEING OPENED         */
+* /*     RESP(VTAM)     40 BYTES    FOR PROCESSING WHEN A RESPONSE  */
+* /*                                IS RECEIVED                     */
+* /*     LOSTERM(VTAM)  45 BYTES    FOR SPECIAL PROCESSING WHEN     */
+* /*                                A TERMINAL IS LOST BY AN        */
+* /*                                APPLICATION                     */
+* /*     RELREQ(VTAM)   50 BYTES    FOR SPECIAL PROCESSING WHEN     */
+* /*                                A TERMINAL HELD BY AN APPLICA-  */
+* /*                                TION IS REQUIRED BY ANOTHER     */
+* /*                                APPLICATION                     */
+* /*     ATTN(VTAM)     60 BYTES    FOR HANDLING AN UNSOLICITED     */
+* /*                                ATTENTION INTERRUPT COMING      */
+* /*                                FROM A TERMINAL HELD BY AN      */
+* /*                                APPLICATION                     */
+* /*     TPEND(VTAM)    65 BYTES    FOR SPECIAL PROCESSING BY AN    */
+* /*                                APPLICATION WHEN VTAM IS        */
+* /*                                CLOSING DOWN                    */
+* /*     NSEXIT(VTAM)   70 BYTES    FOR SPECIAL PROCESSING BY AN    */
+* /*                                APPLICATION WHEN VTAM IS        */
+* /*                                CLOSING DOWN           G40AKCM  */
+* /*                                                                */
+* /*                                                                */
+* /*     CHANGE LEVEL = 10                                  @ZA34940*/
+* /*                                                                */
+* /*     DATE OF LAST CHANGE = 13  NOV  78  ( 78*314 )      @ZA34940*/
+* /*                                                                */
+* /*     CHANGE ACTIVITY                                            */
+* /*  C25460,26140,28500,29500                             @XM07756 */
+* /*  D25760,26220,28569,31021                             @XM07756 */
+* /*  CBMM SPLIT SUPPORT                                   @ZA34940*/
+* /******************************************************************/
+* /*
+         AGO   .EXLBAL                                              */
+* /*                                                                */
+* /*       EXLST DIAGRAM                                            */
+* /*                                                                */
+* /*      1 BYTE       1 BYTE         2 BYTES           1 BYTE      */
+* /*  ____________________________________________________________  */
+* /* |             |            |                     |           | */
+* /* |    EXLID    |  EXLSTYP   |       EXLLEN        |     *     | */
+* /* |_____________|____________|_____________________|___________| */
+* /* |             |                                              | */
+* /* |    EXLEODF  |                   EXLEODP                    | */
+* /* |_____________|______________________________________________| */
+* /* |             |                                              | */
+* /* |    EXLSYNF  |                   EXLSYNP                    | */
+* /* |_____________|______________________________________________| */
+* /* |             |                                              | */
+* /* |    EXLLERF  |                   EXLLERP                    | */
+* /* |_____________|______________________________________________| */
+* /* |    EXLUPADF |                   EXLUPADP                   | */
+* /* |    EXLSCIPF |                   EXLSCIPP                   | */
+* /* |_____________|______________________________________________| */
+* /* |             |                                              | */
+* /* |    EXLLGNF  |                   EXLLGNP                    | */
+* /* |_____________|______________________________________________| */
+* /* |    EXLJRNF/ |                   EXLJRNP/                   | */
+* /* |    EXLDFASF |                   EXLDFASP                   | */
+* /* |_____________|______________________________________________| */
+* /* |    EXLOPNF/ |                   EXLOPNP/                   | */
+* /* |    EXLRESPF |                   EXLRESPP                   | */
+* /* |_____________|______________________________________________| */
+* /* |             |                                              | */
+* /* |    EXLNLGNF |                   EXLNLGNP                   | */
+* /* |_____________|______________________________________________| */
+* /* |             |                                              | */
+* /* |    EXLRLRQF |                   EXLRLRQP                   | */
+* /* |_____________|______________________________________________| */
+* /* |             |                                              | */
+* /* |       *     |                      *                       | */
+* /* |_____________|______________________________________________| */
+* /* |             |                                              | */
+* /* |    EXLATTNF |                   EXLATTNP                   | */
+* /* |_____________|______________________________________________| */
+* /* |             |                                              | */
+* /* |    EXLTPNDF |                   EXLTPNDP                   | */
+* /* |_____________|______________________________________________| */
+* /* |             |                                              | */
+* /* |    EXLTNSEF |                   EXLTNSEP                   | */
+* /* |_____________|______________________________________________| */
+* /*  ___________________________ 5 BYTES ________________________  */
+* /*                                                                */
+* /*     EXLST DECLARATION                                          */
+* /*                                                                */
+*%EXLST1: ;
+* DCL    1 IFGEXLST      BASED ,            /* LEVEL ONE DECLARE    */
+*          2 EXLCOMN,                       /* EXLST COMMON SECTION
+*                                                             X03004*/
+*              4 EXLID       PTR(8),        /* EXLST IDENTIFIER '81'*/
+*              4 EXLSTYP     PTR(8),        /* EXLST SUBTYPE        */
+*                % EXLSVSAM = '''10''X';    /* VSAM SUBTYPE @X04SVHS*/
+*                % EXLSVRP  = '''11''X';    /* VRP SUBTYPE  @X04SVHS*/
+*                % EXLSVTAM = '''20''X';    /* VTAM SUBTYPE @X04SVHS*/
+*              4 EXLLEN      FIXED(15),     /* LENGTH OF LIST       */
+*                5 EXLLEN2   FIXED(15),     /* LENGTH OF LISTX03004 */
+*              4 *           BIT(8),        /* RESERVED FLAGS       */
+*              4 EXLEODF     BIT(8),        /* EODAD ENTRY
+*                                              DESCRIPTION          */
+*                5 EXLEODS   BIT(1),        /* EXIT SPECIFIED       */
+*                5 EXLEODA   BIT(1),        /* EXIT ACTIVE          */
+*                5 EXLEODK   BIT(1),        /* ENTRY ADDRESS POINTS
+*                                              TO EXIT ROUTINE NAME */
+*                5 *         BIT(5),        /* RESERVED             */
+*              4 EXLEODP     PTR(31) BDY(BYTE), /* POINTER TO EODAD
+*                                                  EXIT             */
+*              4 EXLSYNF     BIT(8),        /* SYNAD ENTRY
+*                                              DESCRIPTION          */
+*                5 EXLSYNS   BIT(1),        /* EXIT SPECIFIED       */
+*                5 EXLSYNA   BIT(1),        /* EXIT ACTIVE          */
+*                5 EXLSYNK   BIT(1),        /* ENTRY ADDRESS POINTS
+*                                              TO EXIT ROUTINE NAME */
+*                5 *         BIT(5),        /* RESERVED             */
+*              4 EXLSYNP     PTR(31) BDY(BYTE), /* POINTER TO
+*                                                  SYNAD EXIT       */
+*              4 EXLLERF     BIT(8),        /* LERAD ENTRY
+*                                              DESCRIPTION          */
+*                5 EXLLERS   BIT(1),        /* EXIT SPECIFIED       */
+*                5 EXLLERA   BIT(1),        /* EXIT ACTIVE          */
+*                5 EXLLERK   BIT(1),        /* ENTRY ADDRESS POINTS
+*                                              TO EXIT ROUTINE NAME */
+*                5 *         BIT(5),        /* RESERVED             */
+*              4 EXLLERP     PTR(31) BDY(BYTE), /* POINTER TO LERAD
+*                                                  EXIT             */
+*              4 EXLSCIPF    BIT(8),        /* SCIP ENTRY           */
+*              5 EXLUPADF    BIT(8),        /* UPAD ENTRY   @ZA07549*/
+*                6 EXLSCIPS  BIT(1),        /* EXIT SPECIFIEDX3004BH*/
+*                7 EXLUPADS  BIT(1),      /* EXIT SPECIFIED @ZA07549*/
+*                6 EXLSCIPA  BIT(1),        /* EXIT ACTIVE   X3004BH*/
+*                7 EXLUPADA  BIT(1),        /* EXIT ACTIVE  @ZA07549*/
+*                6 EXLSCIPK  BIT(1),        /* RESERVED      X3004BH*/
+*                7 EXLUPADK  BIT(1),        /* ENTRY ADDRESS POINTS TO
+*                                         EXIT ROUTINE NAME @ZA07549*/
+*                6 *         BIT(5),        /* RESERVED     @XM07756*/
+*              4 EXLSCIPP    PTR(31) BDY(BYTE), /* POINTER TO SCIP
+*                                                  EXIT      X3004BH*/
+*              5 EXLUPADP    PTR(31) BDY(BYTE), /* POINTER TO UPAD
+*                                                  EXIT     @ZA07549*/
+*              4 EXLLGNF     BIT(8),        /* LOGON ENTRY
+*                                              DESCRIPTION    X03004*/
+*                5 EXLLGNS   BIT(1),        /* EXIT SPECIFIED X03004*/
+*                5 EXLLGNA   BIT(1),        /* EXIT ACTIVE    X03004*/
+*                5 EXLLGNK   BIT(1),        /* RESERVED       X03004*/
+*                5 *         BIT(5),        /* RESERVED     @XM07756*/
+*              4 EXLLGNP     PTR(31) BDY(BYTE), /* POINTER TO LOGON
+*                                                  EXIT       X03004*/
+*              4 EXLJRNF     BIT(8),        /* JRNAD ENTRY
+*                                              DESCRIPTION          */
+*                5 EXLJRNS   BIT(1),        /* EXIT SPECIFIED       */
+*                5 EXLJRNA   BIT(1),        /* EXIT ACTIVE          */
+*                5 EXLJRNK   BIT(1),        /* ENTRY ADDRESS POINTS
+*                                              TO EXIT ROUTINE NAME */
+*                5 *         BIT(5),        /* RESERVED             */
+*              4 EXLJRNP     PTR(31) BDY(BYTE), /* POINTER TO JRNAD
+*                                                  EXIT             */
+*              4 EXLOPNF     BIT(8),        /* OPENAD ENTRY
+*                                              DESCRIPTION          */
+*                5 EXLOPNS   BIT(1),        /* EXIT SPECIFIED       */
+*                5 EXLOPNA   BIT(1),        /* EXIT ACTIVE          */
+*                5 EXLOPNK   BIT(1),        /* ENTRY ADDRESS POINTS
+*                                              TO EXIT ROUTINE NAME */
+*                5 *         BIT(5),        /* RESERVED             */
+*              4 EXLOPNP     PTR(31) BDY(BYTE), /* POINTER TO
+*                                                  OPENAD EXIT      */
+*
+*   %INCLUDE SYSLIB(IFGEXLVS);/* GET VSAM EXTENSION @ZA34940*/
+*
+*     DCL   1 IFGEXLEF    BASED,            /* GENERAL ENTRY FORMAT */
+*              2 EXLENTRY    CHAR(5),       /* ENTRY DESCRIPTION
+*                                                             X03004*/
+*                3 EXLFLAG   BIT(8),        /* FLAG BYTE            */
+*                  4 EXLENFL BIT(8),        /* FLAG BYTE      X03004*/
+*                    5 EXLSPEC  BIT(1),     /* EXIT SPECIFID        */
+*                    5 EXLACTM  BIT(1),     /* EXIT ACTIVE          */
+*                    5 EXLLNK   BIT(1),     /* ENTRY ADDRESS POINTS
+*                                              TO EXIT ROUTINE NAME */
+*                    5 *        BIT(5),     /* RESERVED     @XM07756*/
+*                3 EXLEXITP   PTR(31) BDY(BYTE),  /* POINTER TO EXIT*/
+*                  4 EXLEADDR PTR(31) BDY(BYTE);  /* EXIT ADDRESS
+*                                                             X03004*/
+*%/*                                                                */
+* /*     THE FOLLOWING DECLARATIONS DEFINE THE BITS IN THE          */
+* /*     INDIVIDUAL EXIT FLAGS.                                     */
+*     DCL      (EXLPRES,EXLACTV,EXLLINK) CHAR;  /*          @XM07756*/
+*%       EXLPRES = '1';                     /* ENTRY PRESENT BIT    */
+*%       EXLACTV = '2';                     /* ENTRY ACTIVE BIT     */
+*%       EXLLINK = '3';                     /* POINTER TO NAME OF
+*                                               EXIT ROUTINE        */
+*%/*     THE FOLLOWING DECLARATIONS DEFINE THE MINIMUM LENGTH OF THE*/
+* /*     EXLST IF THE CORRESPONDING EXIT IS SPECIFIED               */
+*    DCL (EXLEODL,EXLSYNL,EXLLERL,EXLLGNL,EXLJRNL,EXLOPNL)CHAR;
+*%   DCL (EXLNLGNL,EXLRLRQL,EXLATTNL,EXLTPNDL,EXLTNSEL)CHAR;  /*
+*                                                        @G40AKCM*/
+*%   DCL (EXLSCIPL,EXLDFASL,EXLRESPL,EXLDFSYL,EXLUPADL)CHAR;  /*
+*                                                       @ZA07549    */
+*%             EXLEODL = '10';              /* MIN LENGTH IF EODAD  */
+*%             EXLSYNL = '15';              /* MIN LENGTH IF SYNAD  */
+*%             EXLLERL = '20';              /* MIN LENGTH IF LERAD  */
+*%             EXLSCIPL = '25';             /* MIN LENGTH IF SCIP
+*                                                            X3004BH*/
+*%             EXLUPADL = '25';             /* MIN LENGTH IF UPAD
+*                                                           @ZA07549*/
+*%             EXLLGNL = '30';              /* MIN LENGTH IF LOGON
+*                                                             X03004*/
+*%             EXLJRNL = '35';              /* MIN LENGTH IF JRNAD  */
+*%             EXLDFASL = '35';             /* MIN LENGTH IF DFASY
+*                                                            X3004BH*/
+*%             EXLOPNL = '40';              /* MIN LENGTH IF OPNAD  */
+*%             EXLRESPL = '40';             /* MIN LENGTH IF RESP
+*                                                            X3004BH*/
+*%             EXLNLGNL = '45';             /* MIN LENGTH IF LOGOFF
+*                                                             X03004*/
+*%             EXLRLRQL = '50';             /* MIN LENGTH IF RELREQ
+*                                                             X03004*/
+*%             EXLATTNL = '60';             /* MIN LENGTH IF ATTN
+*                                                             X03004*/
+*%             EXLTPNDL = '65';             /* MIN LENGTH IF TPEND
+*                                                             X03004*/
+*%             EXLTNSEL = '70';             /* MIN LENGTH IF NSEXIT
+*                                                            G40AKCM*/
+*%/*     THE FOLLOWING DECLARATIONS DEFINE THE EXLST ID AND SUBTYPE */
+*     DCL      (EXLIDD,EXLSUB) CHAR;
+*%             EXLIDD = '129';              /* ID OF EXLST 129='81'X*/
+*%             EXLSUB = '0';                /* SUBTYPE ID OF EXLST  */
+*%GOTO   EXLST2 ;
+* /*                                                                */
+* /*                         ASSEMBLER DSECT FOR EXLST
+*
+.EXLBAL  ANOP
+         AIF   ('&DSECT' EQ 'NO').EXLNODS   MAPPING ONLY REQUESTED
+IFGEXLST DSECT                              EXIT LIST CONTROL BLOCK
+         AGO   .EXLDSCT                     BRANCH AROUND MAP ONLY
+.EXLNODS ANOP
+IFGEXLST DS    0F                           EXIT LIST CONTROL BLOCK
+.EXLDSCT ANOP
+EXLID    DS    XL1                          EXIT LIST IDENTIFIER
+EXLIDD   EQU   X'81'                        IDENTIFIER VALUE - X'81'
+EXLSTYP  DS    XL1                          EXIT LIST SUBTYPE
+EXLSUB   EQU   X'00'                        SUBTYPE VALUE - X'00'
+EXLSVSAM EQU   X'10'                        VSAM SUBTYPE        X04SVHS
+EXLSVRP  EQU   X'11'                        VRP SUBTYPE         X04SVHS
+EXLSVTAM EQU   X'20'                        VTAM SUBTYPE        X04SVHS
+EXLLEN   DS    0H                           LENGTH OF EXIT LIST
+EXLLEN2  DS    H                            ALTERNATE NAME FOR
+*                                           EXLLEN               X03004
+         DS    XL1                          RESERVED FLAGS
+EXLEODF  DS    XL1                          EODAD ENTRY DESCRIPTION
+EXLEODS  EQU   X'80'                        EODAD EXIT PRESENT
+EXLEODA  EQU   X'40'                        EODAD EXIT ACTIVE
+EXLEODK  EQU   X'20'                        EXLEODP POINTS TO THE NAME
+*                                           OF THE EODAD EXIT ROUTINE
+EXLEODP  DS    AL4                          EODAD EXIT ADDRESS
+EXLEODL  EQU   10                           LENGTH OF LIST TO HERE -
+*                                           10 BYTES (EQUATED VALUE;
+*                                           NO BITS ACTUALLY SET)
+EXLSYNF  DS    XL1                          SYNAD ENTRY DESCRIPTION
+EXLSYNS  EQU   X'80'                        SYNAD EXIT PRESENT
+EXLSYNA  EQU   X'40'                        SYNAD EXIT ACTIVE
+EXLSYNK  EQU   X'20'                        EXLSYNP POINTS TO THE NAME
+*                                           OF THE SYNAD EXIT ROUTINE
+EXLSYNP  DS    AL4                          SYNAD EXIT ADDRESS
+EXLSYNL  EQU   15                           LENGTH OF LIST TO HERE -
+*                                           15 BYTES (EQUATED VALUE;
+*                                           NO BITS ACTUALLY SET)
+EXLLERF  DS    XL1                          LERAD ENTRY DESCRIPTION
+EXLLERS  EQU   X'80'                        LERAD EXIT PRESENT
+EXLLERA  EQU   X'40'                        LERAD EXIT ACTIVE
+EXLLERK  EQU   X'20'                        EXLLERP POINTS TO THE NAME
+*                                           OF THE LERAD EXIT ROUTINE
+EXLLERP  DS    AL4                          LERAD EXIT ADDRESS
+EXLLERL  EQU   20                           LENGTH OF LIST TO HERE -
+*                                           20 BYTES (EQUATED VALUE;
+*                                           NO BITS ACTUALLY SET)
+        AIF ('&AM' EQ 'VTAM').VTSCIP        THIS OVERLAYS SCIP FIELD
+*                                           AND IS VSAM ONLY   @ZA07549
+EXLUPADF DS    XL1                          UPAD ENTRY
+*                                           DESCRIPTION        @ZA07549
+EXLUPADS EQU   X'80'                        UPAD EXIT PRESENT  @ZA07549
+EXLUPADA EQU   X'40'                        UPAD EXIT ACTIVE   @ZA07549
+EXLUPADK EQU   X'20'                        RESERVED           @ZA07549
+EXLUPADP DS    AL4                          UPAD EXIT ADDRESS  @ZA07549
+EXLUPADL EQU   25                           LENGTH OF LIST TO HERE -
+*                                           25 BYTES (EQUATED VALUE; NO
+*                                           BITS ACTUALLY SET) @ZA07549
+       AGO .VSLGN                           SKIP VTAM EXPANSION@ZA07549
+.VTSCIP  ANOP                               VTAM OVRLAY OF UPAD@ZA07549
+EXLSCIPF DS    XL1                          SCIP ENTRY
+*                                           DESCRIPTION         X3004BH
+EXLSCIPS EQU   X'80'                        SCIP EXIT PRESENT   X3004BH
+EXLSCIPA EQU   X'40'                        SCIP EXIT ACTIVE    X3004BH
+EXLSCIPK EQU   X'20'                        RESERVED            X3004BH
+EXLSCIPP DS    AL4                          SCIP EXIT ADDRESS   X3004BH
+EXLSCIPL EQU   25                           LENGTH OF LIST TO HERE -
+*                                           25 BYTES (EQUATED VALUE; NO
+*                                           BITS ACTUALLY SET)  X3004BH
+.VSLGN   ANOP                                                  @ZA07549
+EXLLGNF  DS    XL1                          LOGON ENTRY
+*                                           DESCRIPTION          X03004
+EXLLGNS  EQU   X'80'                        LOGON EXIT PRESENT   X03004
+EXLLGNA  EQU   X'40'                        LOGON EXIT ACTIVE    X03004
+EXLLGNK  EQU   X'20'                        RESERVED             X03004
+EXLLGNP  DS    AL4                          LOGON EXIT ADDRESS   X03004
+EXLLGNL  EQU   30                           LENGTH OF LIST TO HERE -
+*                                           30 BYTES (EQUATED VALUE;
+*                                           NO BITS ACTUALLY SET)X03004
+EXLJRNF  DS    XL1                          JRNAD ENTRY DESCRIPTION
+EXLJRNS  EQU   X'80'                        JRNAD EXIT PRESENT
+EXLJRNA  EQU   X'40'                        JRNAD EXIT ACTIVE
+EXLJRNK  EQU   X'20'                        EXLJRNP POINTS TO THE NAME
+*                                           OF THE JRNAD EXIT ROUTINE
+EXLJRNP  DS    AL4                          JRNAD EXIT ADDRESS
+EXLJRNL  EQU   35                           LENGTH OF LIST TO HERE -
+*                                           35 BYTES (EQUATED VALUE;
+*                                           NO BITS ACTUALLY SET)
+EXLOPNF  DS    XL1                          OPENAD ENTRY DESCRIPTION
+EXLOPNS  EQU   X'80'                        OPENAD EXIT PRESENT
+EXLOPNA  EQU   X'40'                        OPENAD EXIT ACTIVE
+EXLOPNK  EQU   X'20'                        EXLOPNP POINTS TO THE NAME
+*                                           OF THE OPENAD EXIT ROUTINE
+EXLOPNP  DS    AL4                          OPENAD EXIT ADDRESS
+EXLOPNL  EQU   40                           LENTH OF LIST TO HERE -
+*                                           40 BYTES (EQUATED VALUE;
+*                                           NO BITS ACTUALLY SET)
+         IFGEXLVS AM=&AM                    GET VSAM EXTENSION @ZA34940
+*              BITS USED IN INDIVIDUAL EXIT FLAG FIELDS
+EXLPRES  EQU   X'80'                        ENTRY PRESENT BIT
+EXLACTV  EQU   X'40'                        ENTRY ACTIVE BIT
+EXLLINK  EQU   X'20'                        EXIT ADDRESS POINTS TO
+*                                           EXIT ROUTINE NAME
+*              GENERAL EXIT DESCRIPTION
+IFGEXLEF DSECT
+EXLENTRY DS    0XL5                         EXIT LIST ENTRY
+EXLFLAG  DS    0B                           FLAG BYTE
+EXLENFL  DS    BL1                          ALTERNATE NAME FOR
+*                                           EXLFLAG              X03004
+EXLSPEC  EQU   X'80'                        EXIT PRESENT
+EXLACTM  EQU   X'40'                        EXIT ACTIVE
+EXLLNK   EQU   X'20'                        EXIT ADDRESS POINTS TO
+*                                           EXIT ROUTINE NAME
+EXLEXITP DS    0AL4                         EXIT ADDRESS
+EXLEADDR DS    AL4                          ALTERNATE NAME FOR
+*                                           EXLEXITP             X03004
+.END     MEND
+*                            END OF EXLST                           */
+*%EXLST2: ;

@@ -1,0 +1,322 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %/*
+        MACRO
+&NAME    SETRP &RETADDR=,&RETREGS=,&DUMP=,&RECORD=,&WKAREA=,&REGS=,    J
+               &DUMPOPT=,&RECPARM=,&RC=0,&FRELOCK=,&CPU=,              J
+               &COMPCOD=,&FRESDWA=,&RUB=
+.*SU33(ENHANCED DUMP) 7/30/76                                  @G33SPHW
+.*A000000                                                        Y02704
+         LCLC  &A
+         LCLA  &B
+         LCLA  &I
+         LCLA  &J
+         LCLA  &K
+         LCLA  &L
+         LCLA  &M
+         LCLC  &N
+         LCLA  &LFLAG1
+         LCLA  &LFLAG2
+&B       SETA  &RC
+&I       SETA  1
+&J       SETA  N'&FRELOCK
+&LFLAG1  SETA  0
+&LFLAG2  SETA  0
+         AIF   ('&WKAREA' NE '').CONT
+         AIF   ('&NAME' EQ '').RC
+&NAME    EQU   *
+         AGO   .RC
+.CONT    ANOP
+&A       SETC  'WKAREA'
+         AIF   ('&WKAREA'(1,1) NE '(').ERR1
+&NAME    LR    1,&WKAREA(1) .          ACCESS POINTER TO SDWA
+.RC      ANOP
+         AIF   ('&RC'(1,1) EQ '(').ERR17
+         AIF   (&B EQ 16 OR &B EQ 0).STRC
+         AIF   (&B EQ 4).RETA
+         IHBERMAC 54,,&RC
+         MEXIT
+.RETA    ANOP
+         AIF   ('&RETADDR' EQ '').ERR2
+         AIF   ('&FRELOCK' NE '').ERR16
+         MVI   SDWARCDE-SDWA(1),&RC(1) . INITIALIZE RC FIELD
+         AIF   ('&RETADDR'(1,1) EQ '(').RETAR
+         LA    15,&RETADDR(1) .        ACCESS RETRY ADDRESS
+         ST    15,SDWARTYA-SDWA(,1) .  INITIALIZE RETRY ADDRESS FIELD
+         AGO   .FSDWA
+.RETAR   ANOP
+         ST    &RETADDR(1),SDWARTYA-SDWA(,1) STORE RETRY ADDR IN SDWA
+.FSDWA   ANOP
+         AIF   ('&FRESDWA' EQ '' OR '&FRESDWA' EQ 'NO').RECORD
+         AIF   ('&FRESDWA' NE 'YES').ERR11
+         OI    SDWAACF2-SDWA(1),SDWAFREE   TURN ON FREE SDWA
+         AGO   .RECORD
+.STRC    ANOP
+         MVI   SDWARCDE-SDWA(1),&RC(1) .       PUT RC IN SDWA
+         AIF   ('&FRESDWA' NE '' AND '&FRESDWA' NE 'NO').ERR10
+         AIF   ('&RETREGS' NE '' AND '&RETREGS' NE 'NO').ERR15
+         AIF   ('&RETADDR' NE '').ERR3
+.RECORD  ANOP
+         AIF   ('&RECORD' EQ 'NO').TRECP
+         AIF   ('&RECORD' EQ 'IGNORE' OR '&RECORD' EQ '').RECPARM
+         AIF   ('&RECORD' NE 'YES').ERR4
+         OI    SDWAACF2-SDWA(1),SDWARCRD   TURN ON RECORD INDICATOR
+.RECPARM ANOP
+         AIF   ('&RECPARM' EQ '').DUMP
+         AIF   ('&RECPARM'(1,1) EQ '(').RECPR
+         LA    15,&RECPARM(1) .        ACCESS RECORD PARAMETER LIST
+         AGO   .RECPCOM
+.RECPR   ANOP
+         LR    15,&RECPARM(1) .        ACCESS RECORD PARAMETER LIST
+.RECPCOM ANOP
+         MVC   SDWARECP-SDWA(24,1),0(15)
+*                                   MOVE RECORD PARAMETER INTO SDWA
+         AGO   .DUMP
+.TRECP   ANOP
+         AIF   ('&RECPARM' NE '').ERR6
+         NI    SDWAACF2-SDWA(1),X'FF'-SDWARCRD    TURN OFF RECORD FLAG
+.DUMP    ANOP
+         AIF   ('&DUMP' EQ 'IGNORE' OR '&DUMP' EQ '').TDUMPOP
+         AIF   ('&DUMP' EQ 'NO').TDOPTS
+         AIF   ('&DUMP' NE 'YES').ERR7
+         OI    SDWACMPF-SDWA(1),SDWAREQ   TURN ON DUMP INDICATOR
+         AIF   ('&DUMPOPT' EQ '').RETREGS
+         AIF   ('&DUMPOPT'(1,1) EQ '(').DUMPR
+         LA    15,&DUMPOPT(1) .        ACCESS PTR TO DUMP PARAMETERS
+         AGO   .DOPTCOM
+.DUMPR   ANOP
+         LR    15,&DUMPOPT(1) .        ACCESS PTR TO DUMP PARAMETERS
+.DOPTCOM ANOP
+         OI    SDWADPFS-SDWA(1),SDWADLST  TURN ON DUMP OPTION INDICATOR
+         MVC   SDWADDAT-SDWA(4,1),4(15)  ACCESS SDATA AND PDATA FIELDS
+         OI    SDWADPFS-SDWA(1),SDWAENSN INDICATE ENHANCED DUMP&G33SPHW
+         TM    1(15),X'02'             TEST FOR STORAGE LIST
+         BO    M&SYSNDX                BRANCH IF STORAGE LIST SPECIFIED
+         SR    14,14 .                 ZERO REGISTER FOR COMPARE
+         CL    14,16(,15) .             FURTHER TEST FOR STORAGE LIST
+         BE    E&SYSNDX .              BRANCH IF NO STORAGE LIST
+M&SYSNDX OI    SDWADPFS-SDWA(1),SDWASLST   TURN ON STORAGE LIST FLAG
+         L     15,16(,15) .             ACCESS POINTER TO STORAGE LIST
+         MVC   SDWAFRM1-SDWA(8,1),0(15) MOVE FIRST STORAGE RANGE
+         TM    4(15),X'80' .           TEST IF END OF LIST
+         BO    E&SYSNDX .              BRANCH IF END OF LIST
+         MVC   SDWAFRM2-SDWA(8,1),8(15) MOVE SECOND STORAGE RANGE
+         TM    12(15),X'80' .          TEST IF END OF LIST
+         BO    E&SYSNDX .              BRANCH IF END OF LIST
+         MVC   SDWAFRM3-SDWA(8,1),16(15) MOVE THIRD STORAGE RANGE
+         TM    20(15),X'80' .          TEST IF END OF LIST
+         BO    E&SYSNDX .              BRANCH IF END OF LIST
+         MVC   SDWAFRM4-SDWA(8,1),24(15) MOVE FOURTH STORAGE RANGE
+         OI    SDWATO4-SDWA(1),X'80'    END OF LIST FLAG
+E&SYSNDX EQU  *
+         AGO   .RETREGS
+.TDOPTS  ANOP
+         AIF   ('&DUMPOPT' NE '').ERR8
+         NI    SDWACMPF-SDWA(1),X'FF'-SDWAREQ TURN OFF DUMP INDICATOR
+.TDUMPOP ANOP
+         AIF   ('&DUMPOPT' NE '').ERR8
+.RETREGS ANOP
+         AIF   ('&RETREGS' EQ '' OR '&RETREGS' EQ 'NO').TSTRUB
+         AIF   ('&RETREGS' NE 'YES').ERR9
+         OI    SDWAACF2-SDWA(1),SDWAUPRG   TURN ON RETREGS INDICATOR
+         AIF   ('&RUB' EQ '').CPU
+         AIF   ('&RUB'(1,1) EQ '(').RUBR
+         LA    15,&RUB(1) .            GET PTR TO REGISTER UPDATE BLOCK
+         AGO   .RUBCOM
+.RUBR    ANOP
+         LR    15,&RUB(1) .            ACCESS PTR TO REG UPDATE BLOCK
+.RUBCOM  ANOP
+         LH    0,0(,15) .              ACCESS REGISTER BIT PATTERN
+         LA    15,2(,15) .             CREATE PTR TO USER REG VALUES
+         LA    14,SDWASRSV-SDWA(,1)    CREATE PTR TO SDWA REG SAVE AREA
+         SLL   0,16(0) .               SHIFT BIT PATTERN TO HI BYTE
+R&SYSNDX ALR   0,0 .                   SHIFT BIT TO SIGN POSITION
+         BC    12,I&SYSNDX .           BRANCH IF NO CARRY INTO SIGN
+         MVC   0(4,14),0(15) .         MODIFY REGISTER IN SDWA
+         LA    15,4(,15) .              UPDATE POINTER
+I&SYSNDX LA    14,4(,14) .              UPDATE POINTER IN SDWA
+         BC    5,R&SYSNDX .            TEST ALR CONDITION CODE TO TEST
+*                                      IF ALL BITS EXHAUSTED
+         AGO   .CPU
+.TSTRUB  ANOP
+         AIF   ('&RUB' NE '').ERR12
+.CPU     ANOP
+         AIF   ('&CPU' EQ '').CC
+&A       SETC  'CPU'
+         AIF   ('&CPU'(1,1) NE '(').ERR1
+         ST    &CPU(1),SDWACPUA-SDWA(,1)  STORE CPU ID IN SDWA
+         OI    SDWAACF2-SDWA(1),SDWASPIN
+.CC      ANOP
+         AIF   ('&COMPCOD' EQ '').FRELOCK
+         AIF   ('&COMPCOD(1)'(1,1) EQ '(').CCR
+         AIF   (T'&COMPCOD(1) NE 'N').CCS
+         AIF   (&COMPCOD(1) GT 4095).ERR13
+.CCS     ANOP
+         LA    14,&COMPCOD(1).(,0) .   ACCESS COMPLETION CODE
+         AGO   .CCOM
+.CCR     ANOP
+         LR    14,&COMPCOD(1) .        ACCESS COMPLETION CODE
+.CCOM    ANOP
+         AIF   ('&COMPCOD(2)' EQ '' OR '&COMPCOD(2)' EQ 'USER').STCODE
+         AIF   ('&COMPCOD(2)' NE 'SYSTEM').ERR14
+         SLL   14,12(0) .              SHIFT TO SYSTEM CODE POSITION
+.STCODE  ANOP
+         STCM  14,7,SDWACMPC-SDWA(1)  STORE COMPLETION CODE
+.FRELOCK ANOP
+         AIF   ('&FRELOCK' EQ '').REGS
+.LOCKLP  ANOP
+         AIF   (K'&FRELOCK(&I) LE 2).NOLOCK
+&K       SETA  K'&FRELOCK(&I)-2
+         AIF   ('&FRELOCK(&I)' NE 'DISP').OPTM
+&LFLAG1  SETA  &LFLAG1+16
+         AGO   .INITLP
+.OPTM    ANOP
+         AIF   ('&FRELOCK(&I)' NE 'SRM').SALLOC
+&LFLAG2  SETA  &LFLAG2+4
+         AGO   .INITLP
+.SALLOC  ANOP
+         AIF   ('&FRELOCK(&I)' NE 'SALLOC').CMS
+&LFLAG1  SETA  &LFLAG1+4
+         AGO   .INITLP
+.CMS     ANOP
+         AIF   ('&FRELOCK(&I)' NE 'CMS').LCL
+&LFLAG2  SETA  &LFLAG2+2
+         AGO   .INITLP
+.LCL     ANOP
+         AIF   ('&FRELOCK(&I)' NE 'LOCAL').FINDP
+&LFLAG2  SETA  &LFLAG2+1
+         AGO   .INITLP
+.FINDP   ANOP
+&L       SETA  &K
+.FINDP2  AIF   ('&FRELOCK(&I)'(&L,1) EQ '(').GETLOCK
+&L       SETA  &L-1
+         AIF   (&L LE 1).ERR5
+         AGO   .FINDP2
+.GETLOCK ANOP
+&M       SETA  &L-1                    LENGTH OF LOCK
+&N       SETC  '&FRELOCK(&I)'(&L+1,&K-&M)
+         AIF   ('&FRELOCK(&I)'(1,&M) NE 'IOSCAT').IOSUCB
+&LFLAG1  SETA  &LFLAG1+1
+         LA    15,&N .                 ACCESS ADDR OF LOCKWORD
+         ST    15,SDWAICLW-SDWA(,1)   INITIALIZE IOSCAT LOCKWORD
+         AGO   .INITLP
+.IOSUCB  ANOP
+         AIF   ('&FRELOCK(&I)'(1,&M) NE 'IOSUCB').IOSLCH
+&LFLAG2  SETA  &LFLAG2+128
+         LA    15,&N                   ACCESS ADDR OF LOCKWORD
+         ST    15,SDWAIULW-SDWA(,1)   INITIALIZE IOSUCB LOCKWORD
+         AGO   .INITLP
+.IOSLCH  ANOP
+         AIF   ('&FRELOCK(&I)'(1,&M) NE 'IOSLCH').IOSPRG
+&LFLAG2  SETA  &LFLAG2+64
+         LA    15,&N .                 ACCESS ADDR OF LOCKWORD
+         ST    15,SDWAILLW-SDWA(,1)   INITIALIZE IOSLCH LOCKWORD
+         AGO   .INITLP
+.IOSPRG  ANOP
+         AIF   ('&FRELOCK(&I)'(1,&M) NE 'IOSYNCH').ASMPAT
+&LFLAG1  SETA  &LFLAG1+2
+         LA    15,&N .                 ACCESS ADDR OF LOCKWORD
+         ST    15,SDWAIPLW-SDWA(,1)   INITIALIZE IOSPURGE LOCKWORD
+         AGO   .INITLP
+.ASMPAT  ANOP
+         AIF   ('&FRELOCK(&I)'(1,&M) NE 'ASM').NCB
+&LFLAG1  SETA  &LFLAG1+8
+         LA    15,&N .                 ACCESS ADDR OF LOCKWORD
+         ST    15,SDWAAPLW-SDWA(,1)   INITIALIZE ASMPAT LOCKWORD
+         AGO   .INITLP
+.NCB     ANOP
+         AIF   ('&FRELOCK(&I)'(1,&M) NE 'TPNCB').DNCB
+&LFLAG2  SETA  &LFLAG2+32
+         LA    15,&N .                 ACCESS ADDR OF LOCKWORD
+         ST    15,SDWATNLW-SDWA(,1)   INITIALIZE TPNCB LOCKWORD
+         AGO   .INITLP
+.DNCB    ANOP
+         AIF   ('&FRELOCK(&I)'(1,&M) NE 'TPDNCB').ACBDEB
+&LFLAG2  SETA  &LFLAG2+16
+         LA    15,&N .                 ACCESS ADDR OF LOCKWORD
+         ST    15,SDWATDLW-SDWA(,1)   INITIALIZE TPDNCB LOCKWORD
+         AGO   .INITLP
+.ACBDEB  ANOP
+         AIF   ('&FRELOCK(&I)'(1,&M) NE 'TPACBDEB').NXTLOCK
+&LFLAG2  SETA  &LFLAG2+8
+         LA    15,&N .                 ACCESS ADDR OF LOCKWORD
+         ST    15,SDWATALW-SDWA(,1)   INITIALIZE TPACBDEB LOCKWORD
+         AGO   .INITLP
+.NXTLOCK ANOP
+.NOLOCK  ANOP
+         MNOTE 12,'*** INVALID LOCK IN FRELOCK SUBSTRING ELEMENT &I'
+         MEXIT
+.INITLP  ANOP
+&I       SETA  &I+1
+         AIF   (&I LE &J).LOCKLP
+         AIF   (&LFLAG1 EQ 0).LOCK1
+         OI    SDWAACF3-SDWA(1),&LFLAG1 INITIALIZE LOCK FLAGS
+.LOCK1   ANOP
+         AIF   (&LFLAG2 EQ 0).REGS
+         OI    SDWAACF4-SDWA(1),&LFLAG2 INITIALIZE LOCK FLAGS
+.REGS    ANOP
+         AIF   ('&REGS(1)' EQ '').RETUSER
+&A       SETC   'REGS'
+         AIF   ('&REGS'(1,1) NE '(').ERR1
+         AIF   ('&REGS(2)' EQ '').RET2
+         RETURN  (&REGS(1),&REGS(2)) .
+         MEXIT
+.RET2    RETURN  (&REGS(1))
+.RETUSER ANOP
+         MEXIT
+.ERR1    ANOP
+         MNOTE 12,'***  REGISTER SPECIFICATION REQUIRED FOR &A KEYWORD'
+         MEXIT
+.ERR2    ANOP
+         MNOTE 12,'***   RETADDR MUST BE SPECIFIED WITH RC/&RC'
+         MEXIT
+.ERR3    ANOP
+         IHBERMAC 1020,RETADDR,RC/&RC
+         MEXIT
+.ERR4    ANOP
+         IHBERMAC 54,,&RECORD
+         MEXIT
+.ERR5    ANOP
+         MNOTE 12,'*** INVALID SYNTAX IN FRELOCK SUBSTRING ELEMENT &I'
+         MEXIT
+.ERR6    ANOP
+         IHBERMAC 1020,RECPARM,RECORD/NO
+         MEXIT
+.ERR7    ANOP
+         IHBERMAC 54,,&DUMP
+         MEXIT
+.ERR8    ANOP
+         IHBERMAC 1020,DUMPOPT,DUMP/NO
+         MEXIT
+.ERR9    ANOP
+         IHBERMAC 54,,&RETREGS
+         MEXIT
+.ERR10   ANOP
+         IHBERMAC 1020,FRESDWA,RC/&RC
+         MEXIT
+.ERR11   ANOP
+         IHBERMAC 54,,&FRESDWA
+         MEXIT
+.ERR12   ANOP
+         IHBERMAC 1020,RUB,RETREGS/NO
+         MEXIT
+.ERR13   ANOP
+         MNOTE 12,'***   COMPCOD OPERAND EXCEEDS SPECIFIED LIMITS'
+         MEXIT
+.ERR14   ANOP
+         IHBERMAC 54,,&COMPCOD(2)
+         MEXIT
+.ERR15   ANOP
+         IHBERMAC 1020,RETREGS,RC/&RC
+         MEXIT
+.ERR16   ANOP
+         IHBERMAC 1020,FRELOCK,RC/&RC
+         MEXIT
+.ERR17   ANOP
+         MNOTE 12,'*** REGISTER SPECIFICATION ILLEGAL FOR RC KEYWORD'
+         MEXIT
+         MEND
+* */
+* SETRP: MACRO KEYS(WKAREA,RETADDR,RC,RETREGS,DUMP,RECORD,REGS,
+*     DUMPOPT,RECPARM,FRELOCK,CPU,COMPCOD,FRESDWA,RUB);
+*     ANS ('?' || MACLABEL || 'SETRPP ' || MACLIST || MACKEYS || ';');
+* %END;

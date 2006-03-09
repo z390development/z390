@@ -1,0 +1,20 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SMFWTM  &MSGAD
+         AIF   ('&MSGAD' EQ '').E1
+         AIF   ('&MSGAD' EQ '(1)').SVCA
+         AIF   ('&MSGAD'(1,1) EQ '(').REGA
+         AGO   .LODIT
+.E1      MNOTE  '* * * NO OPERAND SPECIFIED * * *'
+         MEXIT
+.SVCA    ANOP
+&NAME    SVC   83                  ISSUE SVC
+         MEXIT
+.REGA    ANOP
+&NAME    LR    1,&MSGAD(1)         LOAD PARAMETER REG 1
+         AGO   .SVC
+.LODIT   ANOP
+&NAME    LA    1,&MSGAD            LOAD PARAMETER REG 1
+.SVC     SVC   83                  ISSUE SVC
+         MEND
+

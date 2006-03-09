@@ -1,0 +1,106 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    TRNSLATE  &DCB,&TABLE,&AREA,&LENGTH
+.*                           OPERATION TYPE LA/LR
+         LCLC  &OP
+.*                           SWITCHES
+         LCLB  &DO
+         LCLB  &DS
+         LCLB  &TS
+         LCLB  &AS
+         LCLB  &LS
+         LCLC  &PRE
+.*
+&OP      SETC  'A'
+&NAME    DS    0H
+.*
+.D       AIF   (T'&DCB NE 'O').D1
+&DO      SETB  1
+         AGO   .T
+.D1      AIF   ('&DCB'(1,1) NE '(' OR '&DCB'(K'&DCB,1) NE ')').T
+&DS      SETB  1
+.*
+.T       AIF   (T'&TABLE EQ 'O').ERR1
+         AIF   ('&TABLE'(1,1) NE '(' OR '&TABLE'(K'&TABLE,1) NE ')').T1
+&TS      SETB  1
+         AGO   .A
+.T1      AIF   (K'&TABLE NE 4).A
+         AIF   ('&TABLE' EQ 'RC30').BTCD
+         AIF   ('&TABLE' EQ 'RC40').BTCD
+         AIF   ('&TABLE' EQ 'RF40').BTCD
+         AIF   ('&TABLE' EQ 'RC50').BTCD
+         AIF   ('&TABLE' EQ 'RF50').BTCD
+         AIF   ('&TABLE' EQ 'RC60').BTCD
+         AIF   ('&TABLE' EQ 'RSCI').BTCD    BRANCH IF TABLE IS BTAM
+         AIF   ('&TABLE' EQ 'RCT1').BTCD
+         AIF   ('&TABLE' EQ 'RCT2').BTCD    TRANSLATE TABLE CODE
+         AIF   ('&TABLE' EQ 'SD30').BTCD
+         AIF   ('&TABLE' EQ 'SD40').BTCD
+         AIF   ('&TABLE' EQ 'SD50').BTCD
+         AIF   ('&TABLE' EQ 'SD60').BTCD
+         AIF   ('&TABLE' EQ 'SSCI').BTCD
+         AIF   ('&TABLE' EQ 'SCT1').BTCD
+         AIF   ('&TABLE' EQ 'SCT2').BTCD
+         AIF   ('&TABLE' EQ 'RASA').BTCD
+         AIF   ('&TABLE' EQ 'RC80').BTCD
+         AIF   ('&TABLE' EQ 'SASA').BTCD
+         AIF   ('&TABLE' EQ 'SD80').BTCD
+         AIF   ('&TABLE' EQ 'SD41').BTCD
+         AIF   ('&TABLE' EQ 'SB40').BTCD
+         AIF   ('&TABLE' EQ 'RC41').BTCD
+         AIF   ('&TABLE' EQ 'RF41').BTCD
+         AIF   ('&TABLE' EQ 'RB40').BTCD
+         AIF   ('&TABLE' EQ 'RU40').BTCD
+         AIF   ('&TABLE' EQ 'RCTW').BTCD                           000G
+         AIF   ('&TABLE' EQ 'RCT3').BTCD                           000G
+         AIF   ('&TABLE' EQ 'SCTW').BTCD                           000G
+         AIF   ('&TABLE' EQ 'SCT3').BTCD                           000G
+         AGO   .A
+.BTCD    ANOP
+&PRE     SETC  'IECT'
+.*
+.A       AIF   ('&AREA'(1,1) NE '(' OR '&AREA'(K'&AREA,1) NE ')').L
+&AS      SETB  1
+.*
+.L       AIF   ('&LENGTH'(1,1)EQ'(' AND '&LENGTH'(K'&LENGTH,1)EQ')').L1
+         AIF   ('&LENGTH' NE '''S''').LOAD
+         LA    0,1                                               A38564
+         SLL   0,31                                              A38564
+         AGO   .PRMLST
+.L1      AIF   ('&LENGTH' EQ '(0)').PRMLST
+&OP      SETC  'R'
+&LS      SETB  1
+.LOAD    L&OP  1,&LENGTH(1)                                      A38564
+         LA    0,0(1)                                            A38564
+.*                           PARAMETER LIST
+.PRMLST  CNOP  0,4
+         BAL   1,*+16
+         AIF   (&DO OR &DS).P1
+         DC    A(&DCB(1))
+         AGO   .P2
+.P1      DC    A(0)
+.P2      AIF   (&TS).P3
+         DC    A(&PRE.&TABLE(1))
+         AGO   .P4
+.P3      DC    A(0)
+.P4      AIF   (&AS).P5
+         DC    A(&AREA(1))
+         AGO   .R
+.P5      DC    A(0)
+.R       AIF   (&DO).TT
+         AIF   (NOT &DS).TT
+         ST    &DCB(1),0(1)
+.TT      AIF   (NOT &TS).AT
+         ST    &TABLE(1),4(1)
+.AT      AIF   (NOT &AS).LINKAGE
+         ST    &AREA(1),8(1)
+.*                           CALL TRANSLATE ROUTINE
+.LINKAGE L     15,*+8
+         B     *+8
+         DC    V(IECTTRNS)
+         BALR  14,15
+         MEXIT
+.ERR1    MNOTE 12,'***  IHB001  TABLE OPERAND REQ''D-NOT SPECIFIED'
+.END     ANOP
+         MEND
+

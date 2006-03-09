@@ -1,0 +1,6 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SPH
+&NAME    DC    XL2'EE00'                SELECT M/P BY IP CODE
+         MEND
+

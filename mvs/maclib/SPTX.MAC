@@ -1,0 +1,30 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SPTX  &DL,&A                  SELECT M/P BY TABLE INDEX YM2513
+         GBLA  &DISP,&VAL3890(250)                             @ZA00766
+         GBLC  &LBL1,&DEF3890(250)                             @ZA00766
+         LCLA  &LD,&RL,&M                                      @ZA00766
+         LCLC &LABEL                                           @ZA00766
+&M       SETA  1                                               @ZA00766
+         AIF   (N'&DL EQ 1).SPX3
+         AIF   ('&DL(1)' LT '16').SPX1
+         MNOTE 12,'***  IHB349  DISPLACEMENT NOT 0-15 DIGITS'
+.SPX1    AIF   ('&DL(2)' NE '0' AND '&DL(2)' LT '5').SPX2
+         MNOTE 12,'***  IHB351  LENGTH NOT 1-4 DIGITS'
+.SPX2    ANOP
+&LD      SETA  16*&DL(1)+&DL(2)-1
+&NAME    DC    0H'0',X'EF',AL1(&LD),AL2(&A-&LBL1+&DISP)
+         AGO   .END
+.SPX3    ANOP
+.SPX7     AIF   (&M GT 250).SPX8                               @ZA00766
+&LABEL   SETC  '&DEF3890(&M)'                                  @ZA00766
+.SPX5     AIF   ('&DL'   EQ '&LABEL').SPX6                     @ZA00766
+&M       SETA  &M+1                                            @ZA00766
+         AGO   .SPX7                                           @ZA00766
+.SPX8     ANOP                                                 @ZA00766
+         MNOTE 12,'***   IHB425 &DL NOT EQUATED IN DWF MACRO'  @ZA00766
+.SPX6     ANOP                                                 @ZA00766
+&RL      SETA  &VAL3890(&M)                                    @ZA00766
+&NAME    DC    0H'0',X'EF',AL1(&RL),AL2(&A-&LBL1+&DISP)        @ZA00766
+.END     MEND
+

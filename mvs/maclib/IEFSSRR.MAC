@@ -1,0 +1,48 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSRRCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSRR
+.*/ %SSRRCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSRR                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = REQUEST/RETRUN JOB ID                @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSRRPLS;              /*                               @ZA34144
+*
+SSOBRQST EQU   20                 REQUEST JOB ID FUNCTION ID(SSOBFUNC)
+SSOBRTRN EQU   21                 RETURN  JOB ID FUNCTION ID(SSOBFUNC)
+*
+*    REQUEST/RETURN JOB ID RETURN CODES (SSOBRETN)
+*
+SSRROK   EQU   0                  REQUEST/RETURN SUCCESSFUL
+SSRRFAIL EQU   4                  REQUEST/RETURN UNSUCCESSFUL
+SSRRPERR EQU   36                 PROGRAM ERROR
+*
+         ORG   SSOBGN
+SSRRBGN  EQU   *
+SSRRLEN  DC    AL2(SSRRSIZE)      R/R EXTENSION LENGTH
+SSRRRSV0 DS    H                  RESERVED
+SSRRSECB DS    A                  REQUEST JOB ID STOP ECB POINTER
+*
+SSRRSIZE EQU   *-SSRRBGN          R/R EXTENSION LENGTH
+SSOBLENE EQU   SSOBHSIZ+SSRRSIZE
+         MEND                                                @ZA34144*/
+* %SSRRPLS:;                     /*                          @ZA34144*/
+*    /*                                                              */
+*    /*    FUNCTION IDS (SSOBFUNC)                                   */
+*  DCL SSOBRQST FIXED(15) CONSTANT(20); /* REQUEST JOB ID            */
+*  DCL SSOBRTRN FIXED(15) CONSTANT(21); /* RETURN JOB ID             */
+*    /*                                                              */
+*    /*    REQUEST/RETURN JOB ID RETURN CODES (SSOBRETN)             */
+*    /*                                                              */
+*  DCL SSRROK   FIXED(31) CONSTANT(0); /* REQUEST/RETURN SUCCESSFUL  */
+*  DCL SSRRFAIL FIXED(31) CONSTANT(4); /* REQUEST/RETURN UNSUCCESSFUL*/
+*  DCL SSRRPERR FIXED(31) CONSTANT(36);/* PROGRAM ERROR              */
+*    /*    S S R R                                                   */
+*  DCL
+*  1     SSRR       SSOBRR,
+*    2     SSRRLEN  FIXED(15),    /* LENGTH OF SSRR                  */
+*    2     *        FIXED(15),    /* RESERVED                        */
+*    2     SSRRSECB PTR(31);      /* REQUEST JOBID STOP ECB POINTER  */

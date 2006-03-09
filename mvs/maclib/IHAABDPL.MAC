@@ -1,0 +1,94 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO ABDPLS;  /*
+          MACRO
+          IHAABDPL &DSECT=YES                                        */
+*%ABDPLS: ;
+* /*******************************************************************/
+* /* MACMEAN ABDL MEANS ABDUMP PARAMETER LIST                        */
+* /* MACCOMP Y-1 SC1CM/PZD81                                         */
+* /* MACSTAT Y-1 72179/Y02705                                        */
+* /* UPDATED FOR SU 33 ON 3.7A BASE 9/15/76                  @G33SPHW*/
+* /*                                                                 */
+* /* IHAABDPL IS A MAP OF THE PARAMETER LIST USED BY THE SNAP        */
+* /* FORMATTERS.  THIS PARAMETER LIST IS PASSED AS INPUT TO ALL SNAP */
+* /* FORMATTERS.                                                     */
+* /*******************************************************************/
+*        %GOTO ABDPLPLS;  /*
+          AIF ('&DSECT' EQ 'YES').ABDPL00
+ABDPL     EQU    *
+          AGO    .ABDPL01
+.ABDPL00  ANOP
+ABDPL     DSECT
+.ABDPL01  SPACE 1
+ADPLTCB   DS    A                     TCB OF TASK BEING DISPLAYED
+ADPLASID  DS    H                     ADDRESS SPACE IDENTIFIER
+ADPLSBPL  DS    B                     SUBPOOL USED TO GET SAVE AREA
+*                                     BY COMPONENT ROUTINE
+ADPLFLAG  DS    B                     FLAG FIELD
+ADPLSNPR  EQU   X'80'                 0=MODULE LOADED BY SNAP
+*                                     1=MODULE LOADED BY PRDMP
+ADPLSYTM  EQU   X'40'                 0=SYSTEM IS OS/VS2
+*                                     1=SYSTEM IS OS/VS1
+ADPLDMGT  EQU   X'20'                 0=FORMAT DEB ONLY(SNAP CALLER)
+*                                                            @G33SPHW
+*                                     1=FORMAT DEB,DCB,IOB(SNAP CALLER)
+*                                                            @G33SPHW
+*                                     BITS 3-7 ARE RESERVED
+ADPLBUF   DS    A                     POINTER TO OUTPUT BUFFER
+ADPLPRNT  DS    A                     ADDRESS OF PRINT ROUTINE
+ADPLCVT   DS    A                     ADDRESS OF CVT
+ADPLMEMA  DS    A                     ADDRESS OF MEMORY ACCESS ROUTINE
+ADPLFRMT  DS    A                     ADDRESS OF FORMAT ROUTINE
+ADPLCOM1  DS    A                     RESERVED FOR COMPONENT USE
+ADPLCOM2  DS    A                     RESERVED FOR COMPONENT USE
+ADPLCOM3  DS    A                     RESERVED FOR COMPONENT USE
+ADPLCOM4  DS    A                     RESERVED FOR COMPONENT USE
+ADPLFMT1  DS    A                     RESERVED FOR FORMAT ROUTINE
+ADPLFMT2  DS    A                     RESERVED FOR FORMAT ROUTINE
+ADPLEXT   DS    A                     ADDRESS OF EXTENSION
+*                                     FOR PRDMP THE EXTENSION CONTAINS
+*                                     THE ADDRESS OF OPERAND FOR
+*                                     USER VERB. IF 0,DEFAULT SHOULD BE
+*                                     USED
+ADPLABDA  DS    A                     ADDRESS OF SNAP INTERNAL PARMLIST
+*                                                            @G33SPHW
+          MEND
+**/
+*%ABDPLPLS: ;
+*DECLARE
+*  1 ABDPL BASED(ABDPLPTR) BDY(DWORD),
+*   2 ADPLTCB  PTR(31),               /* TCB OF TASK BEING DISPLAYED */
+*   2 ADPLASID FIXED(15),             /* ADDRESS SPACE IDENTIFIER    */
+*   2 ADPLSBPL CHAR(1),               /* SUBPOOL USED TO GET SAVE
+*                                        AREA BY COMPONENT ROUTINE   */
+*   2 ADPLFLAG CHAR(1),               /* FLAG FIELD                  */
+*    3 ADPLSNPR BIT(1),               /* 0-MODULE LOADED BY SNAP
+*                                        1-MODULE LOADED BY PRDMP    */
+*    3 ADPLSYTM BIT(1),               /* 0-SYSTEM IS OS/VS2
+*                                        1-SYSTEM IS OS/VS1          */
+*    3 ADPLDMGT BIT(1),               /* FOR DATA MGMT. FORMATTER
+*                                        UNDER SNAP
+*                                        0-FORMAT DEB ONLY
+*                                        1-FORMAT DEB,DCB,IOB
+*                                                            @G33SPHW*/
+*    3 *        BIT(5),               /* RESERVED            @G33SPHW*/
+*   2 ADPLBUF  PTR(31),               /* POINTER TO OUTPUT BUFFER    */
+*   2 ADPLPRNT PTR(31),               /* ADDRESS OF PRINT ROUTINE    */
+*   2 ADPLCVT  PTR(31),               /* ADDRESS OF CVT              */
+*   2 ADPLMEMA PTR(31),               /* ADDRESS OF MEMORY ACCESS
+*                                        ROUTINE                     */
+*   2 ADPLFRMT PTR(31),               /* ADDRESS OF FORMAT ROUTINE   */
+*   2 ADPLCOM1 FIXED(31),             /* RESERVED FOR COMPONENT USE  */
+*   2 ADPLCOM2 FIXED(31),             /* RESERVED FOR COMPONENT USE  */
+*   2 ADPLCOM3 FIXED(31),             /* RESERVED FOR COMPONENT USE  */
+*   2 ADPLCOM4 FIXED(31),             /* RESERVED FOR COMPONENT USE  */
+*   2 ADPLFMT1 PTR(31),               /* RESERVED FOR FORMAT RTN     */
+*   2 ADPLFMT2 PTR(31),               /* RESERVED FOR FORMAT RTN     */
+*   2 ADPLEXT  PTR(31),               /* ADDRESS OF EXTENSION
+*                                        FOR PRDMP THE EXTENSION
+*                                        CONTAINS THE ADDRESS OF
+*                                        OPERAND FOR USER VERB. IF
+*                                        0, DEFAULT SHOULD BE USED   */
+*   2 ADPLABDA PTR(31);               /* ADDRESS OF SNAP INTERNAL
+*                                        PARMLIST            @G33SPHW*/
+

@@ -1,0 +1,399 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    DEFCCW &CINF,&LABP,&P1,&P2,&P3,&P4,&P5,&P6,&P7,&P8,&P9,&P10,&PX
+               11,&P12,&P13,&P14,&P15,&P16,&P17,&P18,&P19,&P20,&P21,&P2X
+               2,&P23,&P24,&P25,&P26,&P27,&P28,&P29,&P30,&P31,&P32,&P33X
+               ,&P34,&P35,&P36,&P37,&P38,&P39,&P40,&P41,&P42,&P43,&P44,X
+               &P45,&P46,&P47,&P48,&P49,&P50,&P51,&P52,&P53,&P54,&P55,&P
+               P56,&P57,&P58,&P59,&P60,&P61,&P62,&P63,&P64,&P65,&P66,&PX
+               67,&P68,&P69,&P70,&P71,&P72,&P73,&P74,&P75,&P76,&P77,&P7X
+               8,&P79,&P80,&P81,&P82,&P83,&P84,&P85,&P86,&P87,&P88,    X
+               &P89,&P90,&P91,&P92,&P93,&P94,&P95,&P96,&P97,&P98,&P99, X
+               &P100,&P101,&P102,&P103,&P104,&P105,&P106,&P107,&P108,&PX
+               109,&P110,&P111,&P112,&P113,&P114,&P115,&P116,&P117,&P11X
+               8,&P119,&P120,&P121,&P122,&P123,&P124,&P125,&P126,&P127,X
+               &P128,&P129,&P130,&P131,&P132,&P133,&P134,&P135,&P136,&P1
+               137,&P138,&P139,&P140,&P141,&P142,&P143,&P144,&P145,&P146
+               6,&P147,&P148,&P149,&P150,&P151,&P152,&P153,&P154,&P155,X
+               &P156,&P157,&P158,&P159,&P160,&P161,&P162,&P163,&P164,&PX
+               165,&P166,&P167,&P168,&P169,&P170,&P171,&P172,&P173,&P17X
+               4,&P175,&P176,&P177,&P178,&P179,&P180,&P181,&P182,&P183,&
+               &P184,&P185,&P186,&P187,&P188,&P189,&P190,&P191,&P192,&PX
+               193,&P194,&P195,&P196,&P197,&P198
+.*
+.* MODULE-NAME=DEFCCW(OS/VS2)MACRO                             @YM00638
+.*
+.* DESCRIPTIVE-NAME=DEFINE CHANNEL PROGRAM                     @YM00638
+.*
+.*
+         GBLA  &CNTS(2000)                                     @YA00405
+         LCLA  &A1,&B1,&CIC,&CTR,&FLDNM,&NX
+         LCLB  &CNCSW,&SLISW,&NOGEN,&UNFSW,&FORMSW,&RBF,&RB,&FT  A33937
+         LCLC  &RCCW,&ESDC,&RBCC,&FLEN
+.*A057000,086500-087500,125000,127000-129000,522300-523500,      A33937
+.*A582600,583200                                                 A33937
+.*C046000,100000,110000,130000,584000,588000                     A33937
+.*D128000,574000                                                 A33937
+.*A181000                                                        A39681
+&RCCW    SETC  'X''0C'''
+&RB      SETB  1
+&CNCSW   SETB  1
+&SLISW   SETB  1
+&FORMSW  SETB  1                                                 A33937
+         AIF   (T'&CINF NE 'O').DC000
+         IHBERMAC 214
+&NOGEN   SETB  1
+.DC000   AIF   ('&CINF'(1,1) LT '0').DC001
+         IHBERMAC 214
+&NOGEN   SETB  1
+.DC001   AIF   (T'&LABP NE 'O' AND K'&LABP LE 4).DC002
+         IHBERMAC 215
+&NOGEN   SETB  1
+.DC002   ANOP
+&A1      SETA  2
+         AIF   (T'&NAME EQ 'O').DC003
+&NAME    DS    0D
+.DC003   ANOP
+&A1      SETA  &A1+1
+.DC0031  ANOP                                                    A33937
+         AIF   (T'&SYSLIST(&A1) EQ 'O').DC054                    A33937
+&FT      SETB  0                                                 A33937
+         AIF   ('&SYSLIST(&A1)'(1,1) GE '0' AND '&SYSLIST(&A1)'(1,1) LEX
+               '9').DC006
+         AIF   ('&SYSLIST(&A1)' NE 'UNFORMAT').DC004
+&FORMSW  SETB  0
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC004   AIF   ('&SYSLIST(&A1)' NE 'REFMARK').DC007              A33937
+&A1      SETA  &A1+1
+         AIF   ('&SYSLIST(&A1)'(1,1) LT '0').DC005
+         IHBERMAC 228
+&NOGEN   SETB  1
+         AGO   .DC008                                            A33937
+.DC005   ANOP
+&FORMSW  SETB  1
+         CCW   X'53',&SYSLIST(&A1),X'40',4
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC006   IHBERMAC 216
+&FORMSW  SETB  1
+         AGO   .DC008                                            A33937
+.DC007   ANOP
+&FT      SETB  1                                                 A33937
+         AGO   .DC0081                                           A33937
+.DC008   AIF   (&FT EQ 1).DC0031                                 A33937
+.DC0081  AIF   (T'&SYSLIST(&A1) EQ 'O').DC054                    A33937
+         AIF   ('&SYSLIST(&A1)' NE 'DEFMODE').DC0083
+&A1      SETA  &A1+1
+         AIF   ('&SYSLIST(&A1)'(1,1) LT '0').DC0082
+         IHBERMAC 214
+&NOGEN   SETB  1
+         AGO   .DC008
+.DC0082  CCW   X'53',&SYSLIST(&A1),X'40',4
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC0083  ANOP
+         AIF   ('&SYSLIST(&A1)' NE 'SLION').DC009
+&SLISW   SETB  1
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC009   AIF   ('&SYSLIST(&A1)' NE 'SLIOFF').DC010
+&SLISW   SETB  0
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC010   AIF   ('&SYSLIST(&A1)' NE 'CHAIN').DC011
+&CNCSW   SETB  1
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC011   AIF   ('&SYSLIST(&A1)' NE 'NOCHAIN').DC012
+&CNCSW   SETB  0
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC012   AIF   ('&SYSLIST(&A1)' NE 'LABEL').DC014
+&A1      SETA  &A1+1
+         AIF   ('&SYSLIST(&A1)'(1,1) LT '0' AND T'&SYSLIST(&A1) NE 'O')C
+               .DC013
+         IHBERMAC 222
+&A1      SETA  &A1+1
+&NOGEN   SETB  1
+         AGO   .DC008
+.DC013   ANOP
+         DS    0D                                                A39681
+&SYSLIST(&A1) EQU *
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC014   AIF   ('&SYSLIST(&A1)' NE 'UNFORMAT').DC015
+         AIF   (&FORMSW EQ 1).DC0141
+&CIC     SETA  &CIC+4
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC0141  ANOP
+&FORMSW  SETB  0
+&B1      SETA  &A1
+.DC0142  ANOP
+&B1      SETA  &B1+1
+         AIF   ('&SYSLIST(&B1)'(1,1) LT '0').DC0142
+&CIC     SETA  &SYSLIST(&B1)*4-4
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC015   AIF   ('&SYSLIST(&A1)' NE 'RB').DC016
+&RB      SETB  1
+&RCCW    SETC  'X''0C'''
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC016   AIF   ('&SYSLIST(&A1)' NE 'RBDC').DC017
+&RB      SETB  1
+&RCCW    SETC  'X''2C'''
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC017   AIF   ('&SYSLIST(&A1)' NE 'RBOC').DC018
+&RB      SETB  1
+&RCCW    SETC  'X''4C'''
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC018   AIF   ('&SYSLIST(&A1)' NE 'RF').DC019
+&RB      SETB  0
+&RCCW    SETC  'X''12'''
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC019   AIF   ('&SYSLIST(&A1)' NE 'RFDC').DC020
+&RB      SETB  0
+&RCCW    SETC  'X''32'''
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC020   AIF   ('&SYSLIST(&A1)' NE 'RBDCOC').DC021
+&RB      SETB  1
+&RCCW    SETC  'X''6C'''
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC021   AIF   ('&SYSLIST(&A1)' NE 'COMPARE').DC025
+&A1      SETA  &A1+1
+         AIF   ('&SYSLIST(&A1)'(1,1) LT '0' AND T'&SYSLIST(&A1) NE 'O')X
+               .DC022
+         IHBERMAC 225
+&NOGEN   SETB  1
+         AGO   .DC008
+.DC022   ANOP
+&A1      SETA  &A1+1
+         AIF   ('&SYSLIST(&A1)'(1,1) LT '0' AND T'&SYSLIST(&A1) NE 'O')X
+               .DC023
+         IHBERMAC 225
+&NOGEN   SETB  1
+         AGO   .DC008
+.DC023   AIF   (&NOGEN EQ 0).DC024
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC024   ANOP
+&A1      SETA  &A1-1
+         CCW   X'5B',&SYSLIST(&A1),X'40',1
+&A1      SETA  &A1+1
+         CCW   X'08',&SYSLIST(&A1),X'00',1
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC025   AIF   ('&SYSLIST(&A1)' NE 'BRANCH').DC028
+&A1      SETA  &A1+1
+         AIF   ('&SYSLIST(&A1)'(1,1) LT '0' AND T'&SYSLIST(&A1) NE 'O')X
+               .DC026
+         IHBERMAC 226
+&NOGEN   SETB  1
+         AGO   .DC008
+.DC026   AIF   (&NOGEN EQ 0).DC027
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC027   CCW   X'08',&SYSLIST(&A1),X'00',1
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC028   AIF   ('&SYSLIST(&A1)' NE 'NOP').DC030
+         AIF   (&NOGEN EQ 0).DC029
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC029   CCW   X'03',1,B'0&CNCSW.000000',1
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC030   AIF   ('&SYSLIST(&A1)' NE 'REFMARK').DC033
+&A1      SETA  &A1+1
+         AIF   (&FORMSW EQ 1).DC0301
+         IHBERMAC 217
+&NOGEN   SETB  1
+.DC0301  ANOP
+         AIF   ('&SYSLIST(&A1)'(1,1) LT '0' AND T'&SYSLIST(&A1) NE 'O')X
+               .DC031
+         IHBERMAC 228
+         AGO   .DC008
+.DC031   AIF   (&NOGEN EQ 0).DC032
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC032   CCW   X'53',&SYSLIST(&A1),X'40',4
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC033   AIF   ('&SYSLIST(&A1)' NE 'ESD').DC039
+&A1      SETA  &A1+1
+         AIF   ('&SYSLIST(&A1)' GE '1' AND '&SYSLIST(&A1)' LE '4').DC03C
+               4
+         IHBERMAC 227
+&NOGEN   SETB  1
+         AGO   .DC008
+.DC034   AIF   (&NOGEN EQ 0).DC035
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC035   AIF   ('&SYSLIST(&A1)' GT '1').DC036
+&ESDC    SETC  'X''63'''
+         AGO   .DC038
+.DC036   AIF   ('&SYSLIST(&A1)' NE '3').DC037
+&ESDC    SETC  'X''73'''
+         AGO   .DC038
+.DC037   ANOP
+         AIF   ('&SYSLIST(&A1)' EQ '4').DC0375
+&ESDC    SETC  'X''6B'''
+         AGO   .DC038
+.DC0375  ANOP
+&ESDC    SETC  'X''7B'''
+.DC038   CCW   &ESDC,1,B'0&CNCSW.000000',1
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC039   AIF   ('&SYSLIST(&A1)' NE 'INC').DC041
+         AIF   (&NOGEN EQ 0).DC040
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC040   CCW   X'4B',1,B'0&CNCSW.000000',1
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC041   AIF   ('&SYSLIST(&A1)' NE 'RBT').DC042
+&RBCC    SETC  'X''1C'''
+&RBF     SETB  0
+         AGO   .DC047
+.DC042   AIF   ('&SYSLIST(&A1)' NE 'RBTDC').DC043
+&RBCC    SETC  'X''3C'''
+&RBF     SETB  0
+         AGO   .DC047
+.DC043   AIF   ('&SYSLIST(&A1)' NE 'RBTOC').DC044
+&RBCC    SETC  'X''5C'''
+&RBF     SETB  0
+         AGO   .DC047
+.DC044   AIF   ('&SYSLIST(&A1)' NE 'RBTDCOC').DC045
+&RBCC    SETC  'X''7C'''
+&RBF     SETB  0
+         AGO   .DC047
+.DC045   AIF   ('&SYSLIST(&A1)' NE 'RFT').DC046
+&RBCC    SETC  'X''92'''
+&RBF     SETB  1
+         AGO   .DC047
+.DC046   AIF   ('&SYSLIST(&A1)' NE 'RFTDC').DC053
+&RBCC    SETC  'X''B2'''                                       @YA00411
+&RBF     SETB  1
+.DC047   ANOP
+&A1      SETA  &A1+1
+         AIF   ('&SYSLIST(&A1)'(1,1) GE '0' AND '&SYSLIST(&A1)'(1,1) LEX
+                '9').DC048
+         IHBERMAC 223
+&NOGEN   SETB  1
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC048   ANOP
+         AIF   (&FT EQ 0).DC0481                                 A33937
+&FT      SETB  0                                                 A33937
+&FORMSW  SETB  1                                                 A33937
+         IHBERMAC 216                                            A33937
+.DC0481  ANOP                                                    A33937
+&A1      SETA  &A1+1
+         AIF   ('&SYSLIST(&A1)'(1,1) LT '0' AND T'&SYSLIST(&A1) NE 'O')C
+               .DC049
+         IHBERMAC 224
+&A1      SETA  &A1+1
+&NOGEN   SETB  1
+         AGO   .DC008
+.DC049   AIF   (&NOGEN EQ 0).DC050
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC050   ANOP
+&A1      SETA  &A1-1
+         AIF   (&FORMSW EQ 0).DC0501
+&CIC     SETA  &SYSLIST(&A1)*4-4
+.DC0501  CCW   X'53',&CINF.+&CIC,B'0&CNCSW.000000',4
+&NX      SETA  &SYSLIST(&A1)
+&FLEN    SETC  '&CNTS(&NX)'
+&NX      SETA  &FLEN
+         AIF   (&NX GT 256).DC0502
+&FLEN    SETC  'L''&LABP&SYSLIST(&A1)'
+.DC0502  AIF   (&RBF EQ 1).DC051
+         CCW   &RBCC,&LABP&SYSLIST(&A1).+&FLEN.-1,B'0&CNCSW&SLISW.00000C
+               ',&FLEN
+         AGO   .DC052
+.DC051   CCW   &RBCC,&LABP&SYSLIST(&A1),B'0&CNCSW&SLISW.00000',&FLEN
+.DC052   ANOP
+&A1      SETA  &A1+1
+         CCW   X'08',&SYSLIST(&A1),X'00',1
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC053   AIF   ('&SYSLIST(&A1)'(1,1) GE '0' AND '&SYSLIST(&A1)'(1,1) LEX
+                '9').DC057
+         AGO   .DC055
+.DC054   AIF   (&FT EQ 0).DC0541                                 A33937
+         IHBERMAC 216                                           &A33937
+.DC0541  AIF   (&CNCSW EQ 0).DC0542                              A33937
+         IHBERMAC 221
+.DC0542  MEXIT                                                   A33937
+.DC055   AIF   ('&SYSLIST(&A1)' NE 'THRU').DC056
+         IHBERMAC 218
+&NOGEN   SETB  1
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC056   IHBERMAC 210
+&NOGEN   SETB  1
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC057   ANOP
+         AIF   (&FORMSW EQ 0).DC0571
+&CIC     SETA  &SYSLIST(&A1)*4-4
+.DC0571  ANOP
+&FLDNM   SETA  &SYSLIST(&A1)
+         AIF   ('&SYSLIST(&A1+1)' EQ 'THRU').DC058
+&CTR     SETA  1
+         AGO   .DC060
+.DC058   AIF   ('&SYSLIST(&A1)'(1,1) GE '0' AND '(&SYSLIST(&A1)'(1,1) LX
+               E '9').DC059
+         IHBERMAC 218
+&NOGEN   SETB  1
+&A1      SETA  &A1+3
+         AGO   .DC008
+.DC059   ANOP
+         AIF   ('&SYSLIST(&A1+2)'(1,1) GE '0' AND '&SYSLIST(&A1+2)'(1,1?
+               ) LE '9').DC0591
+         IHBERMAC 219
+&NOGEN   SETB  1
+&A1      SETA  &A1+3
+         AGO   .DC008
+.DC0591  ANOP
+&CTR     SETA  &SYSLIST(&A1+2)-&SYSLIST(&A1)+1
+         AIF   (&CTR GE 0).DC060
+         IHBERMAC 220
+&NOGEN   SETB  1
+&A1      SETA  &A1+3
+         AGO   .DC008
+.DC060   AIF   (&NOGEN EQ 0).DC061
+&A1      SETA  &A1+3
+         AGO   .DC008
+.DC061   CCW   X'53',&CINF.+&CIC,X'40',4
+&FLEN    SETC '&CNTS(&FLDNM)'
+&NX      SETA  &FLEN
+         AIF   (&NX GT 256).DC0611
+&FLEN    SETC  'L''&LABP&FLDNM'
+.DC0611  AIF   (&RB EQ 1).DC062
+         CCW   &RCCW,&LABP&FLDNM,B'0&CNCSW&SLISW.00000',&FLEN
+         AGO   .DC063
+.DC062   CCW   &RCCW,&LABP&FLDNM.+&FLEN.-1,B'0&CNCSW&SLISW.00000',&FLEN
+.DC063   AIF   (&FORMSW EQ 0).DC064
+&CIC     SETA  &CIC+4
+.DC064   ANOP
+&CTR     SETA  &CTR-1
+         AIF   (&CTR GT 0).DC065
+         AIF   ('&SYSLIST(&A1+1)' EQ 'THRU').DC0641
+&A1      SETA  &A1+1
+         AGO   .DC008
+.DC0641  ANOP
+&A1      SETA  &A1+3
+         AGO   .DC008
+.DC065   ANOP
+&FLDNM   SETA  &FLDNM+1
+         AGO   .DC061
+         MEND

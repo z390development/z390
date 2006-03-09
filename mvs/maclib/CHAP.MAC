@@ -1,0 +1,40 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    CHAP  &VALUE,&TCB,&RELATED=
+         LCLA  &K                                                 MO19
+         LCLC  &NUM                                               MO19
+.*    001400,001800,002000,002400,002600                          MO19
+         AIF   ('&VALUE' EQ '').E1
+         AIF   ('&TCB' EQ '' OR '&TCB' EQ '''S''').SR
+&NAME    IHBINNRA &TCB
+.CONT    AIF   ('&VALUE'(1,1) EQ '(').REG
+         AIF   ('&VALUE'(1,1) EQ '+' OR '&VALUE'(1,1) EQ '-').SIGN
+         AIF   ('&VALUE'(1,1) GE '0' AND '&VALUE'(1,1) LE '9').NUM MO19
+         B     *+6
+         DC    AL2(&VALUE)                       DELTA VALUE
+         LH    0,*-2                             LOAD VALUE
+         AGO   .SVC                                                MO19
+.NUM     ANOP                                                      MO19
+         LA    0,&VALUE.(0,0)                    LOAD VALUE      YM1995
+         AGO   .SVC
+.SIGN    ANOP                                                     MO19
+&K       SETA  K'&VALUE-1                                         MO19
+&NUM     SETC  '&VALUE'(2,&K)                                     MO19
+         LA    0,&NUM.(0,0)                      LOAD VALUE      YM1995
+         AIF   ('&VALUE'(1,1) EQ '+').SVC                         MO19
+         LNR   0,0                               LOAD NEGATIVE VALUE
+         AGO   .SVC
+.REG     IHBINNRA ,&VALUE
+.SVC     SVC   44                                ISSUE CHAP SVC
+         MEXIT
+.SR      ANOP
+&NAME    SR    1,1                               NO SUBTASK TCBLOC
+         AGO   .CONT
+.E1      IHBERMAC 15,312
+         MEND
+**/
+*CHAP:   MACRO
+*        KEYS(RELATED);
+*        ANS('?'||MACLABEL||'CHAPP '||MACLIST||MACKEYS||';');
+*%END;

@@ -1,0 +1,26 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    PUT   &DCB,&AREA,&RPL=
+.*       CHANGE LEVEL = 06
+.*       DATE OF LAST CHANGE = 24 MARCH 72  ( 72*084 )
+         AIF   ('&DCB' NE '').NJES      NON-JES MACRO EXPANSION
+         AIF   ('&RPL' NE '').JES       JES MACRO EXPANSION
+         IHBERMAC 06
+         MEXIT
+.NJES    ANOP
+&NAME    IHBINNRA &DCB,&AREA
+         L     15,48(0,1)               LOAD PUT ROUTINE ADDR
+         BALR  14,15                    LINK TO PUT ROUTINE
+         MEXIT
+.JES     ANOP
+&NAME    DS    0H
+         AIF   ('&RPL'(1,1) EQ '(').RPLR
+         LA    1,&RPL                   LOAD RPL ADDR
+         AGO   .AREG
+.RPLR    LR    1,&RPL(1)                LOAD RPL ADDR VIA REG
+.AREG    LA    0,X'01'                  INDICATE PUT IN REG
+         L     15,24(1)                 LOAD ACB ADDR FROM RPL
+         L     15,8(15)                 LOAD JES INTERFACE MOD ADDR
+         BALR  14,15                    LINK TO INTERFACE ROUTINE
+         MEND
+

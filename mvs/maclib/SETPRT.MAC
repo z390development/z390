@@ -1,0 +1,1210 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO                                                 @Z40MSCD
+&ANYNAME SETPRT &DCB,&UCS=,&FCB=,&MF=,&OPTCD=,&COPIES=,&BURST=,&FLASH=,X
+               &MODIFY=,&CHARS=,&COPYNR=,&INIT=,&REXMIT=,      @G38ESMHX
+               &DISP=,&PRTMSG=,&MSGAREA=,&LIBDCB=              @G38ESMH
+.*                                                             @Z40MSCD
+.*   THE SETPRT MACRO FOR VS/2-4                               @Z40MSCD
+.*                                                             @Z40MSCD
+.* LAST CHANGE                                                 @ZA51640
+.* C422500,423500                                              @ZA51640
+.* C120708                                                     @ZA58194
+.*
+         LCLA  &SPPLEN                  LENGTH OF PARM LIST    @G38ESMH
+         LCLA  &NO                      BRACH INDEX NUMBER     @Z40MSCD
+         LCLA  &K                       LENG OF DCB PARM       @Z40MSCD
+         LCLC  &STRIP                   REMOVE 1ST 2 AND LAST CHAR
+         LCLB  &DCBNREG                 DCB IN REG SWITCH      @Z40MSCD
+         LCLB  &MSGANRG                 MSGAREA IN REG SWITCH  @G38ESMH
+         LCLB  &LDCBNRG                 LIBDCB IN REG SWITCH   @G38ESMH
+         LCLB  &FCBNCOR                 FCB IN STORAGE         @Z40MSCD
+         LCLB  &FCBNREG                 FCB IN REGISTER        @Z40MSCD
+         LCLB  &FCBILIB                 FCB ON SYS1.IMAGELIB   @Z40MSCD
+         LCLB  &MODNCOR                 MOD IN STORAGE         @Z40MSCD
+         LCLB  &MODNREG                 MOD IN REGISTER        @Z40MSCD
+         LCLB  &MODILIB                 MOD ON SYS1.IMAGELIB   @Z40MSCD
+         LCLB  &CH1NCOR                 CH1 IN STORAGE         @Z40MSCD
+         LCLB  &CH1NREG                 CH1 IN REGISTER        @Z40MSCD
+         LCLB  &CH1ILIB                 CH1 ON SYS1.IMAGELIB   @Z40MSCD
+         LCLB  &CH2NCOR                 CH2 IN STORAGE         @Z40MSCD
+         LCLB  &CH2NREG                 CH2 IN REGISTER        @Z40MSCD
+         LCLB  &CH2ILIB                 CH2 ON SYS1.IMAGELIB   @Z40MSCD
+         LCLB  &CH3NCOR                 CH3 IN STORAGE         @Z40MSCD
+         LCLB  &CH3NREG                 CH3 IN REGISTER        @Z40MSCD
+         LCLB  &CH3ILIB                 CH3 ON SYS1.IMAGELIB   @Z40MSCD
+         LCLB  &CH4NCOR                 CH4 IN STORAGE         @Z40MSCD
+         LCLB  &CH4NREG                 CH4 IN REGISTER        @Z40MSCD
+         LCLB  &CH4ILIB                 CH4 ON SYS1.IMAGELIB   @Z40MSCD
+         LCLC  &PAREN1                  1ST CHAR OF DCB PARM   @Z40MSCD
+         LCLC  &PAREN2                  LAST CHAR OF DCB PARM  @Z40MSCD
+         LCLC  &PAREN3                  1ST CHAR OF 2ND MF PARM
+         LCLC  &PAREN4                  LST CHAR OF 2ND MF PARM
+         LCLA  &TO                      TO MOVE ADDR - LIST    @Z40MSCD
+         LCLA  &FROM                    FROM MOVE ADDR - CODE  @Z40MSCD
+         LCLA  &LENG                    LENGTH OF MOVE         @Z40MSCD
+         LCLB  &DCSW                    MOVE SWITCH            @Z40MSCD
+         LCLB  &ERRSW                   AN ERROR WAS DETECTED  @Z40MSCD
+         LCLB  &SWDCBA                  MOVE DCB PARM          @Z40MSCD
+         LCLB  &SWUCS1                  MOVE UCS PARM 1        @Z40MSCD
+         LCLB  &SWUCS2                  MOVE UCS PARM 2        @Z40MSCD
+         LCLB  &SWUCS3                  MOVE UCS PARM 3        @Z40MSCD
+         LCLB  &SWOPTC                  MOVE OPTCD PARM        @Z40MSCD
+         LCLB  &SWFCB1                  MOVE FCB PARM 1        @Z40MSCD
+         LCLB  &SWFCB2                  MOVE FCB PARM 2        @Z40MSCD
+         LCLB  &SWFLG1                  MOVE FLAG 1            @Z40MSCD
+         LCLB  &SWFLG2                  MOVE FLAG 2            @Z40MSCD
+         LCLB  &SWCPYS                  MOVE COPIES PARM       @Z40MSCD
+         LCLB  &SWCPNR                  MOVE COPY NUMBER PARM  @Z40MSCD
+         LCLB  &SWLEN                   LENGTH BYTES           @G38ESMH
+         LCLB  &SWFLHC                  MOVE FLASH COUNT PARM  @Z40MSCD
+         LCLB  &SWTRCN                  MOVE MODIFY TRC PARM   @Z40MSCD
+         LCLB  &SWMODI                  MOVE MODIFY ID PARM    @Z40MSCD
+         LCLB  &SWFLSH                  MOVE FLASH ID PARM     @Z40MSCD
+         LCLB  &SWCHAR                  MOVE CHARS PARM        @Z40MSCD
+         LCLB  &SWMSGA                  MOVE MSGAREA PARM      @G38ESMH
+         LCLB  &SWLDCB                  MOVE LIBDCB PARM       @G38ESMH
+         LCLB  &BLKON                   SET BLOCK BIT          @G38ESMH
+         LCLB  &UBLKON                  SET UNBLOCK BIT        @G38ESMH
+         LCLB  &SCDON                   SET SCHEDULE BIT       @G38ESMH
+         LCLB  &NOSCDON                 SET NOSCHEDULE BIT     @G38ESMH
+         LCLB  &UFLDON                  SET UNFOLD BIT         @G38ESMH
+         LCLB  &FLDON                   SET FOLD BIT           @G38ESMH
+         LCLB  &RESVD                   RESERVED BIT           @G38ESMH
+         LCLB  &RESVDOF                 RESERVED BIT RESET     @G38ESMH
+         LCLB  &EXTLST                  EXTENDED PARM LIST     @G38ESMH
+         LCLB  &BLKOFF                  CLEAR BLOCK BIT        @G38ESMH
+         LCLB  &UBLKOFF                 CLEAR UNBLOCK BIT      @G38ESMH
+         LCLB  &SCDOFF                  CLEAR SCHEDULE BIT     @G38ESMH
+         LCLB  &NOSCDOF                 CLEAR NOSCHEDULE BIT   @G38ESMH
+         LCLB  &UFLDOFF                 CLEAR UNFOLD BIT       @G38ESMH
+         LCLB  &FLDOFF                  CLEAR FOLD BIT         @G38ESMH
+         LCLB  &BRSTON                  BRSTON ON              @Z40MSCD
+         LCLB  &RXMTON                  RXMTON ON              @Z40MSCD
+         LCLB  &INITON                  INITON ON              @Z40MSCD
+         LCLB  &NOPRTON                 SET NO PRTMSG BIT      @G38ESMH
+         LCLB  &BRSTOFF                 SET FLAG 1 NEG         @Z40MSCD
+         LCLB  &RXMTOFF                 SET FLAG 1 NEG         @Z40MSCD
+         LCLB  &INITOFF                 SET FLAG 1 NEG         @Z40MSCD
+         LCLB  &NOPRTOF                 CLEAR NO PRTMSG BIT    @G38ESMH
+&NO      SETA  &SYSNDX                  SET BRANCH INDEX NUMBER
+&SPPLEN  SETA  56                       LENGTH OF PARM LIST    @G38ESMH
+&RESVDOF SETB  1                        DO NOT CLEAR RESERVED  @G38ESMH
+&BLKOFF  SETB  1                        INIT OPTC-DISP FLAG NEG@G38ESMH
+&UBLKOFF SETB  1                        INIT OPTC-DISP FLAG NEG@G38ESMH
+&SCDOFF  SETB  1                        INIT OPTC-DISP FLAG NEG@G38ESMH
+&NOSCDOF SETB  1                        INIT OPTC-DISP FLAG NEG@G38ESMH
+&UFLDOFF SETB  1                        INIT OPTC-DISP FLAG NEG@G38ESMH
+&FLDOFF  SETB  1                        INIT OPTC-DISP FLAG NEG@G38ESMH
+&EXTLST  SETB  1                        INIT EXT. PARM LIST    @G38ESMH
+&BRSTOFF SETB  (1)                      INIT. FLAG 1 NEGS      @Z40MSCD
+&RXMTOFF SETB  (1)                      INIT FLAG 1 NEGS       @Z40MSCD
+&INITOFF SETB  (1)                      INIT. FLAG 1 NEGS      @Z40MSCD
+&NOPRTOF SETB  1                        INIT. FLAG 1 NEGS      @G38ESMH
+&FCBILIB SETB  (1)                      INIT FCB ON IMAGELIB   @Z40MSCD
+&MODILIB SETB  (1)                      INIT MOD ON IMAGELIB   @Z40MSCD
+&CH1ILIB SETB  (1)                      INIT CH1 ON IMAGELIB   @Z40MSCD
+&CH2ILIB SETB  (1)                      INIT CH2 ON IMAGELIB   @Z40MSCD
+&CH3ILIB SETB  (1)                      INIT CH3 IN IMAGELIB   @Z40MSCD
+&CH4ILIB SETB  (1)                      INIT CH4 IN IMAGELIB   @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* MF PARAMETER VERIFICATION                                   @Z40MSCD
+.* *********************                                       @Z40MSCD
+*
+         AIF   ('&MF' EQ '').TESTDCB    GO DCB IF MF MISSING   @Z40MSCD
+         AIF   ('&MF(1)' NE 'E' AND '&MF' NE 'L').ERROR03      @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND '&MF(2)' EQ '').ERROR03    @Z40MSCD
+         AIF   (N'&MF GT 2).ERROR03     ERR IF OVER 2 SUB PARMS
+         AIF   ('&MF(2)' EQ '').TESTDCB GO DCB IF MF2 MISSING  @Z40MSCD
+         AIF   ('&MF(2)' EQ '*').ERROR03 MF= CANNOT BE *       @Z40MSCD
+&K       SETA  K'&MF(2)                 LENGTH OF &MF(2)       @Z40MSCD
+&PAREN3  SETC  '&MF(2)'(1,1)            FIRST CHARACTER OF &MF(2)
+&PAREN4  SETC  '&MF(2)'(&K,1)           LAST CHARACTER OF &MF(2)
+         AIF   ('&PAREN3' EQ '(' AND '&PAREN4' EQ ')').MF2NREG @Z40MSCD
+         AIF   (K'&MF(2) GT 8).ERROR03  ERR IF MF2 OVER 8 CHARS
+         AGO   .TESTDCB                 GO DCB                 @Z40MSCD
+.MF2NREG ANOP                                                  @Z40MSCD
+         AIF   (K'&MF(2) LT 11 AND K'&MF(2) GT 2).TESTDCB      @Z40MSCD
+.ERROR03 IGGERMAC 3                     ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* DCB PARAMETER VERIFICATION                                  @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TESTDCB ANOP                                                  @Z40MSCD
+         AIF   ('&DCB' EQ '' AND '&MF' EQ '').ERROR01          @Z40MSCD
+         AIF   ('&DCB' EQ '').TESTUCS   GO UCS IF DCB MISSING  @Z40MSCD
+         AIF   ('&DCB' EQ '&MF(2)').ERROR01                    @Z40MSCD
+&K       SETA  K'&DCB                   STORE NO. OF CHARS IN DCB
+&PAREN1  SETC  '&DCB'(1,1)              FIRST CHARACTER OF &DCB
+&PAREN2  SETC  '&DCB'(&K,1)             LAST CHARACTER OF &DCB @Z40MSCD
+         AIF   ('&PAREN1' EQ '(' AND '&PAREN2' EQ ')').DCBNREG @Z40MSCD
+         AIF   ('&DCB' EQ '*').ERROR01  DCB CANNOT BE *        @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E').TESTUCS IF MF=E, GO ON        @Z40MSCD
+         AIF   (K'&DCB GT 8).ERROR01    TEST IF NAME GT 8      @Z40MSCD
+&DCSW    SETB  (1)                      SET DC SWITCH          @Z40MSCD
+         AGO   .TESTUCS                 GO UCS                 @Z40MSCD
+.DCBNREG ANOP                                                  @Z40MSCD
+         AIF   ('&DCB(1)' EQ '*').ERROR01  DCB CANNOT BE *     @Z40MSCD
+         AIF   ('&DCB' EQ '(1)' OR '&DCB' EQ '(0)').ERROR01    @Z40MSCD
+         AIF   ('&MF' EQ 'L').ERROR01   NO DCB IN REG FOR LIST @Z40MSCD
+         AIF   (K'&DCB(1) GT 8 AND K'&DCB(1) LT 1).ERROR01     @Z40MSCD
+         AIF   (N'&DCB GT 1).ERROR01    ONLY 1 DCB PARM ALLOWED
+&DCBNREG SETB  (1)                      SET DCB IN REG SW.     @Z40MSCD
+         AGO   .TESTUCS                 GO UCS                 @Z40MSCD
+.ERROR01 IGGERMAC 1                     ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* UCS PARAMETER VERIFICATION                                  @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TESTUCS AIF   (N'&UCS LT 1).TSTOPCD    TEST IF UCS PARMS PRESENT
+         AIF   (N'&UCS GT 3).ERROR02    ERR IF OVER 3 SUB PARMS
+         AIF   ('&UCS' EQ '*').ERROR02  UCS CANNOT BE *        @Z40MSCD
+         AIF   ('&UCS(1)' EQ '').ERROR02 TEST IF UCS-ID IS MISSING
+         AIF   (K'&UCS(1) GT 4).ERROR02 TEST IF UCS ID GT 4    @Z40MSCD
+         AIF   ('&UCS(1)' EQ '*').ERROR02  UCS CANNOT BE *     @Z40MSCD
+&DCSW    SETB  (1)                      SET DC SWITCH          @Z40MSCD
+         AIF   ('&UCS(2)' EQ '').TSTUCS3 GO UCS3 IF UCS2 MISSING
+         AIF   ('&UCS(2)' NE 'F' AND '&UCS(2)' NE 'FOLD').ERROR02
+.TSTUCS3 AIF   ('&UCS(3)' EQ '').TSTOPCD GO OPTCD IF UCS3 MISS.
+         AIF   ('&UCS(3)' EQ 'V' OR '&UCS(3)' EQ 'VERIFY').TSTOPCD
+.ERROR02 IGGERMAC 2                     ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* OPTCD PARAMETER VERIFICATION                                @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TSTOPCD AIF   ('&OPTCD' EQ '').TSTDISP TEST IF OPTCD PRESENT  @G38ESMH
+         AIF   (N'&OPTCD GT 2).ERROR04  TOO MANY PARMS         @ZA58194
+         AIF   ('&OPTCD(1)' NE 'B').UNBLOCK                    @G38ESMH
+&BLKON   SETB  (1)                      SET BLOCK BIT          @G38ESMH
+&UBLKOFF SETB  (0)                      CLEAR UNBLOCK BIT      @G38ESMH
+         AGO   .TSTFOLD                 TEST FOLD OPTION       @G38ESMH
+.UNBLOCK AIF   ('&OPTCD(1)' NE 'U').ERROR04                    @G38ESMH
+&UBLKON  SETB  (1)                      SET UNBLOCK BIT        @G38ESMH
+&BLKOFF  SETB  (0)                      CLEAR BLOCK BIT        @G38ESMH
+.TSTFOLD ANOP                                                  @G38ESMH
+&SWOPTC  SETB  (1)                      SET CHANGE SWITCH      @G38ESMH
+         AIF   (N'&OPTCD LT 2).TSTDISP  ONLY 1 PARM SPECIFIED  @G38ESMH
+         AIF   ('&OPTCD(2)' NE 'F' AND '&OPTCD(2)' NE 'FOLD').UNFOLD
+.*                                      FOLD OPTION ?          @G38ESMH
+&FLDON   SETB  (1)                      SET FOLD BIT           @G38ESMH
+&UFLDOFF SETB  (0)                      CLEAR UNFOLD BIT       @G38ESMH
+         AGO   .TSTDISP                 GO TEST DISP           @G38ESMH
+.UNFOLD  AIF   ('&OPTCD(2)' NE 'U' AND '&OPTCD(2)' NE 'UNFOLD').ERROR04
+.*                                      UNFOLD OPTION ?        @G38ESMH
+&UFLDON  SETB  (1)                      SET UNFOLD BIT         @G38ESMH
+&FLDOFF  SETB  (0)                      CLEAR FOLD BIT         @G38ESMH
+         AGO   .TSTDISP                 GO TEST DISP           @G38ESMH
+.ERROR04 IGGERMAC 4                     ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @G38ESMH
+.* DISP PARAMETER VERIFICATION                                 @G38ESMH
+.* *********************                                       @G38ESMH
+.TSTDISP AIF   ('&DISP' EQ '').TSTPMSG  TEST IF DISP PRESENT   @G38ESMH
+         AIF   ('&DISP' NE 'S' AND '&DISP' NE 'SCHEDULE').NOSCHED
+.*                                      SCHEDULE ?             @G38ESMH
+&SCDON   SETB  (1)                      SET SCHEDULE BIT       @G38ESMH
+&NOSCDOF SETB  (0)                      CLEAR NOSCHEDULE BIT   @G38ESMH
+         AGO   .CHFLG                   SET FLAG TO BE CHANGED @G38ESMH
+.NOSCHED AIF   ('&DISP' NE 'N' AND '&DISP' NE 'NOSCHEDULE').EXT
+.*                                      NOSCHEDULE ?           @G38ESMH
+&NOSCDON SETB  (1)                      SET NOSCHEDULE BIT     @G38ESMH
+&SCDOFF  SETB  (0)                      CLEAR SCHEDULE BIT     @G38ESMH
+         AGO   .CHFLG                                          @G38ESMH
+.EXT     AIF   ('&DISP' NE 'E' AND '&DISP' NE 'EXTERNAL').ERROR05
+.*                                      EXTERNAL ?             @G38ESMH
+&SCDOFF  SETB  (0)                      CLEAR SCHEDULE BIT     @G38ESMH
+&NOSCDOF SETB  (0)                      CLEAR NOSCHEDULE BIT   @G38ESMH
+.CHFLG   ANOP                                                  @G38ESMH
+&SWOPTC  SETB  (1)                      SET FLAG TO CHANGE BYTE@G38ESMH
+         AGO   .TSTPMSG                 GO TO PRTMSG VERIFY    @G38ESMH
+.ERROR05 IGGERMAC 5                     ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @G38ESMH
+.* *********************                                       @G38ESMH
+.* PRTMSG PARAMETER VERIFICATION                               @G38ESMH
+.* *********************                                       @G38ESMH
+.TSTPMSG AIF   ('&PRTMSG' EQ '').TSTFCB TEST IF PRTMSG PRESENT @G38ESMH
+         AIF   ('&PRTMSG' NE 'Y').NOPRT IF PRTMSG=Y THEN       @G38ESMH
+&NOPRTOF SETB  (0)                        CLEAR NO PRINT BIT   @G38ESMH
+         AGO   .CHFLAG1                                        @G38ESMH
+.NOPRT   AIF   ('&PRTMSG' NE 'N').ERROR15                      @G38ESMH
+&NOPRTON SETB  (1)                      SET NO PRINT BIT       @G38ESMH
+.CHFLAG1 ANOP                                                  @G38ESMH
+&SWFLG1  SETB  (1)                      FLAG 1 TO BE CHANGED   @G38ESMH
+         AGO   .TSTFCB                  GO FCB VERIFY          @G38ESMH
+.ERROR15 IGGERMAC 15                    ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @G38ESMH
+.* *********************                                       @Z40MSCD
+.* FCB PARAMETER VERIFICATION                                  @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TSTFCB  ANOP                                                  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND '&INIT' EQ 'Y' AND N'&FCB LT 1).RST*
+               FCB                      MUST SET FLAG 2        @Z40MSCD
+         AIF   (N'&FCB LT 1).TSTFLSH    TEST IF FCB PARMS PRES @Z40MSCD
+         AIF   ('&FCB' EQ '*' AND '&MF(1)' EQ 'E' AND '&INIT' EQ 'Y').T*
+               STFLSH                   SKIP IF '*'            @Z40MSCD
+         AIF   ('&FCB' EQ '*').ERROR06  NOT VALID              @Z40MSCD
+         AIF   ('&FCB(1)' EQ '').ERROR06 TEST IF FCB ID MISSING
+         AIF   ('&FCB(1)' EQ '*').ERROR06  NOT VALID           @Z40MSCD
+         AIF   (N'&FCB GT 2).ERROR06    ERR IF OVER 2 SUB PARMS
+&K       SETA  K'&FCB(1)                NO. CHARS IN FCB1      @Z40MSCD
+         AIF   ('&FCB(1)'(1,2) EQ 'A(' AND '&FCB(1)'(&K,1) EQ ')').FCBAX
+               DR                       GO SET ADDR SW.        @Z40MSCD
+         AIF   ('&FCB(1)'(1,2) NE 'R(' AND '&FCB(1)'(&K,1) NE ')').FCBIX
+               D                        GO ID PROCESSING       @Z40MSCD
+         AIF   ('&MF' EQ 'L').ERROR06   ERR IF IN REG AMD MF=L @Z40MSCD
+&FCBNREG SETB  (1)                      SET FCB IN REG         @Z40MSCD
+.FCBADR  ANOP                                                  @Z40MSCD
+&FCBNCOR SETB  (1)                      SET FCB IN STORAGE     @Z40MSCD
+.FCBID   ANOP                                                  @Z40MSCD
+&DCSW    SETB  (1)                      SET DC SWITCH          @Z40MSCD
+         AIF   (&FCBNCOR EQ (1)).FCBFG2 FCB IN STORAGE, SET FLG 2
+.RSTFCB  ANOP                                                  @Z40MSCD
+&FCBILIB SETB  (0)                      SET FCB ON IMAGELIB    @Z40MSCD
+.FCBFG2  ANOP                                                  @Z40MSCD
+&SWFLG2  SETB  (1)                      SET FLAG2 TO BE CHNGD  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND '&INIT' EQ 'Y' AND '&FCB' EQ '').TS*
+               TFLSH                    ALL DONE, GO FLASH     @Z40MSCD
+         AIF   (&FCBNCOR EQ (1) AND K'&FCB(1) GT 11).ERROR06   @Z40MSCD
+         AIF   (&FCBNCOR EQ (1) AND K'&FCB(1) LT 4).ERROR06    @Z40MSCD
+         AIF   (&FCBNCOR EQ (0) AND K'&FCB(1) GT 4).ERROR06    @Z40MSCD
+         AIF   ('&FCB(2)' EQ '' OR '&FCB(2)' EQ 'ALIGN' OR '&FCB(2)' EQX
+                'VERIFY' OR '&FCB(2)' EQ 'V' OR '&FCB(2)' EQ 'A').TSTFLX
+               SH                       VALIDATE FCB SUB PARMS @Z40MSCD
+.ERROR06 IGGERMAC 6                     ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* FLASH PARAMETER VERIFICATION                                @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TSTFLSH AIF   (N'&FLASH LT 1).TSTMOD   TEST IF FLASH PARM     @Z40MSCD
+         AIF   ('&FLASH' EQ '*' AND '&MF(1)' EQ 'E' AND '&INIT' EQ 'Y')*
+               .TSTMOD                  SKIP IF '*'            @Z40MSCD
+         AIF   ('&FLASH' EQ '*').ERROR09  NOT VALID            @Z40MSCD
+         AIF   (N'&FLASH GT 2).ERROR09  ERR IF OVER 2 SUB PARMS
+         AIF   ('&FLASH(1)' EQ '').FLSH2  IS FLASH ID PRESENT  @Z40MSCD
+         AIF   ('&FLASH(1)' EQ '*').ERROR09  NOT VALID         @Z40MSCD
+         AIF   (K'&FLASH(1) GT 4).ERROR09 IS FLASH(1) GT 4     @Z40MSCD
+.FLSH2   ANOP                                                  @Z40MSCD
+&DCSW    SETB  (1)                      SET DC SWITCH          @Z40MSCD
+         AIF   ('&FLASH(2)' EQ '').TSTMOD GO TEST MODIFY       @Z40MSCD
+         AIF   (T'&FLASH(2) NE 'N').ERROR09  IS RIGHT TYPE     @Z40MSCD
+         AIF   (&FLASH(2) LT 0 OR &FLASH(2) GT 255).ERROR09    @Z40MSCD
+         AGO   .TSTMOD                  GO MODIFY VERIFICATION @Z40MSCD
+.ERROR09 IGGERMAC 9                     ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* MODIFY PARAMETER VERIFICATION                               @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TSTMOD  ANOP                                                  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND '&INIT' EQ 'Y' AND N'&MODIFY LT 1).*
+               RSTMOD                   MUST SET FLAG 2        @Z40MSCD
+         AIF   (N'&MODIFY LT 1).TSTCHAR IS MODIFY ID PRESENT   @Z40MSCD
+         AIF   ('&MODIFY' EQ '*' AND '&MF(1)' EQ 'E' AND '&INIT' EQ 'Y'*
+               ).TSTCHAR                SKIP IF '*'            @Z40MSCD
+         AIF   ('&MODIFY' EQ '*').ERROR10 NOT VALID            @Z40MSCD
+         AIF   (N'&MODIFY GT 2).ERROR10 ERR IF OVER 2 SUB PARMS
+         AIF   ('&MODIFY(1)' EQ '').ERROR10  IS MODIFY ID PRES @Z40MSCD
+         AIF   ('&MODIFY(1)' EQ '*').ERROR10 NOT VALID         @Z40MSCD
+&K       SETA  K'&MODIFY(1)             NO. CHARS IN MODIFY1   @Z40MSCD
+         AIF   ('&MODIFY(1)'(1,2) EQ 'A(' AND '&MODIFY(1)'(&K,1) EQ ')'X
+               ).MODADR                 GO SET ADDR SW.        @Z40MSCD
+         AIF   ('&MODIFY(1)'(1,2) NE 'R(' AND '&MODIFY(1)'(&K,1) NE ')'X
+               ).MODYID                 GO ID PROCESSING       @Z40MSCD
+         AIF   ('&MF' EQ 'L').ERROR10   ERR IF IN REG AND MF=L @Z40MSCD
+&MODNREG SETB  (1)                      SET MODIFY IN REG      @Z40MSCD
+.MODADR  ANOP                                                  @Z40MSCD
+&MODNCOR SETB  (1)                      SET MODIFY IN STORAGE  @Z40MSCD
+.MODYID  ANOP                                                  @Z40MSCD
+&DCSW    SETB  (1)                      SET DC SWITCH          @Z40MSCD
+         AIF   (&MODNCOR EQ (1)).MODFG2 MOD IN STORAGE, SET FLG2
+.RSTMOD  ANOP                                                  @Z40MSCD
+&MODILIB SETB  (0)                      SET MODIFY ON IMAGELIB @Z40MSCD
+.MODFG2  ANOP                                                  @Z40MSCD
+&SWFLG2  SETB  (1)                      SET FLAG2 TO BE CHNGD  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND '&INIT' EQ 'Y' AND '&MODIFY' EQ '')*
+               .TSTCHAR                 ALL DONE,GO CHARS      @Z40MSCD
+         AIF   (&MODNCOR EQ (1) AND K'&MODIFY(1) GT 11).ERROR10
+         AIF   (&MODNCOR EQ (1) AND K'&MODIFY(1) LT 4).ERROR10 @Z40MSCD
+         AIF   (&MODNCOR EQ (0) AND K'&MODIFY(1) GT 4).ERROR10 @Z40MSCD
+         AIF   ('&MODIFY(2)' EQ '').TSTCHAR  GO TEST CHARS     @Z40MSCD
+         AIF   (T'&MODIFY(2) NE 'N').ERROR10  IS RIGHT TYPE    @Z40MSCD
+         AIF   (&MODIFY(2) LT 0 OR &MODIFY(2) GT 3).ERROR10    @Z40MSCD
+         AGO   .TSTCHAR                 GO CHARS PROCESSING    @Z40MSCD
+.ERROR10 IGGERMAC 10                    ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* CHARS PARAMETER VERIFICATION                                @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TSTCHAR ANOP                                                  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND '&INIT' EQ 'Y' AND N'&CHARS LT 1).R*
+               STCHR                    MUST SET FLAG 2        @Z40MSCD
+         AIF   (N'&CHARS LT 1).TSTCOPY  IS CHARS PARM PRESENT  @Z40MSCD
+         AIF   (N'&CHARS GT 4).ERROR11  CHARS ERROR            @Z40MSCD
+         AIF   ('&CHARS' EQ '*' AND '&MF(1)' EQ 'E' AND '&INIT' EQ 'Y')*
+               .TSTCOPY                 SKIP IF '*'            @Z40MSCD
+         AIF   ('&CHARS' EQ '*').ERROR11 NOT VALID             @Z40MSCD
+         AIF   ('&CHARS(1)' EQ '').ERROR11                     @Z40MSCD
+         AIF   ('&CHARS(1)' EQ '*').ERROR11 NOT VALID          @Z40MSCD
+&K       SETA  K'&CHARS(1)              NO. CHARS IN CHARS1    @Z40MSCD
+         AIF   ('&CHARS(1)'(1,2) EQ 'A(' AND '&CHARS(1)'(&K,1) EQ ')').X
+               CH1ADR                   GO SET ADDR SW.        @Z40MSCD
+         AIF   ('&CHARS(1)'(1,2) NE 'R(' AND '&CHARS(1)'(&K,1) NE ')').X
+               CH1ID                    GO ID PROCESSING       @Z40MSCD
+         AIF   ('&MF' EQ 'L').ERROR11   ERR IF IN REG AND MF=L @Z40MSCD
+&CH1NREG SETB  (1)                      SET CHARS1 IN REG      @Z40MSCD
+.CH1ADR  ANOP                                                  @Z40MSCD
+&CH1NCOR SETB  (1)                      SET CHARS 1 IN STORAGE @Z40MSCD
+         AIF   (&CH1NREG EQ (1)).CH1FG2 CHAR1 IN REG, SET FLG2 @Z40MSCD
+.CH1ID   ANOP                                                  @Z40MSCD
+&DCSW    SETB  (1)                      SET DC SWITCH          @Z40MSCD
+         AIF   (&CH1NCOR EQ (1)).CH1FG2 CHAR1 IN STORAGE, SET FLG2
+&CH1ILIB SETB  (0)                      SET CHARS 1 ON IMAGELIB
+.CH1FG2  ANOP                                                  @Z40MSCD
+&SWFLG2  SETB  (1)                      SET FLAGS2 TO BE CHNGD @Z40MSCD
+         AIF   (&CH1NCOR EQ (1) AND K'&CHARS(1) GT 11).ERROR11 @Z40MSCD
+         AIF   (&CH1NCOR EQ (1) AND K'&CHARS(1) LT 4).ERROR11  @Z40MSCD
+         AIF   (&CH1NCOR EQ (0) AND K'&CHARS(1) GT 4).ERROR11  @Z40MSCD
+         AIF   ('&CHARS(2)' EQ '' AND N'&CHARS GT 1).ERROR11   @Z40MSCD
+         AIF   ('&CHARS(2)' EQ '').LCHR1 CHAR2 MISS., SET NULL @Z40MSCD
+         AIF   ('&CHARS(2)' EQ '*').ERROR11 NOT VALID          @Z40MSCD
+&K       SETA  K'&CHARS(2)              SET NO. CHARS IN CHAR2 @Z40MSCD
+         AIF   ('&CHARS(2)'(1,2) EQ 'A(' AND '&CHARS(2)'(&K,1) EQ ')').X
+               CH2ADR                   CHK FOR ADDR SPEC.     @Z40MSCD
+         AIF   ('&CHARS(2)'(1,2) NE 'R(' AND '&CHARS(2)'(&K,1) NE ')').X
+               CH2ID                    CHK FOR ID SPEC.       @Z40MSCD
+         AIF   ('&MF' EQ 'L').ERROR11   MF=L AND REG INVALID   @Z40MSCD
+&CH2NREG SETB  (1)                      SET CHAR2 IN REG       @Z40MSCD
+.CH2ADR  ANOP                                                  @Z40MSCD
+&CH2NCOR SETB  (1)                      SET CHAR2 IN STORAGE   @Z40MSCD
+         AIF   (&CH2NREG EQ (1)).CH2FG2 CHAR2 IN REG, SET FLG2 @Z40MSCD
+.CH2ID   ANOP                                                  @Z40MSCD
+&DCSW    SETB  (1)                      SET DC SWITCH          @Z40MSCD
+         AIF   (&CH2NCOR EQ (1)).CH2FG2 CHAR2 IN STORAGE, SET FLG2
+&CH2ILIB SETB  (0)                      SET CHAR2 ON IMAGELIB  @Z40MSCD
+.CH2FG2  ANOP                                                  @Z40MSCD
+&SWFLG2  SETB  (1)                      SET FLG2 TO BE CHNGD   @Z40MSCD
+         AIF   (&CH2NCOR EQ (1) AND K'&CHARS(2) GT 11).ERROR11 @Z40MSCD
+         AIF   (&CH2NCOR EQ (1) AND K'&CHARS(2) LT 4).ERROR11  @Z40MSCD
+         AIF   (&CH2NCOR EQ (0) AND K'&CHARS(2) GT 4).ERROR11  @Z40MSCD
+         AIF   ('&CHARS(3)' EQ '' AND N'&CHARS GT 2).ERROR11   @Z40MSCD
+         AIF   ('&CHARS(3)' EQ '').LCHR2 CHAR3 MISS., SET NULL @Z40MSCD
+         AIF   ('&CHARS(3)' EQ '*').ERROR11 NOT VALID          @Z40MSCD
+&K       SETA  K'&CHARS(3)              SET NO. CHAR IN CHAR3  @Z40MSCD
+         AIF   ('&CHARS(3)'(1,2) EQ 'A(' AND '&CHARS(3)'(&K,1) EQ ')').X
+               CH3ADR                   CHK FOR ADDR SPEC.     @Z40MSCD
+         AIF   ('&CHARS(3)'(1,2) NE 'R(' AND '&CHARS(3)'(&K,1) NE ')').X
+               CH3ID                    CHK FOR ID SPEC.       @Z40MSCD
+         AIF   ('&MF' EQ 'L').ERROR11   MF=L AND REG INVALID   @Z40MSCD
+&CH3NREG SETB  (1)                      SET CHAR3 IN REGISTER  @Z40MSCD
+.CH3ADR  ANOP                                                  @Z40MSCD
+&CH3NCOR SETB  (1)                      SET CHAR3 IN STORAGE   @Z40MSCD
+         AIF   (&CH3NREG EQ (1)).CH3FG2 CHAR3 IN REG, SET FLG2 @Z40MSCD
+.CH3ID   ANOP                                                  @Z40MSCD
+&DCSW    SETB  (1)                      SET DC SWITCH          @Z40MSCD
+         AIF   (&CH3NCOR EQ (1)).CH3FG2 CHAR3 IN STORAGE, SET FLG2
+&CH3ILIB SETB  (0)                      SET CHAR3 ON IMAGELIB  @Z40MSCD
+.CH3FG2  ANOP                                                  @Z40MSCD
+&SWFLG2  SETB  (1)                      SET FLG2 TO BE CHANGED @Z40MSCD
+         AIF   (&CH3NCOR EQ (1) AND K'&CHARS(3) GT 11).ERROR11 @Z40MSCD
+         AIF   (&CH3NCOR EQ (1) AND K'&CHARS(3) LT 4).ERROR11  @Z40MSCD
+         AIF   (&CH3NCOR EQ (0) AND K'&CHARS(3) GT 4).ERROR11  @Z40MSCD
+         AIF   ('&CHARS(4)' EQ '' AND N'&CHARS GT 3).ERROR11   @Z40MSCD
+         AIF   ('&CHARS(4)' EQ '').LCHR3 CHAR4 MISS., SET NULL @Z40MSCD
+         AIF   ('&CHARS(4)' EQ '*').ERROR11 NOT VALID          @Z40MSCD
+&K       SETA  K'&CHARS(4)              SET NO. CHAR IN CHAR4  @Z40MSCD
+         AIF   ('&CHARS(4)'(1,2) EQ 'A(' AND '&CHARS(4)'(&K,1) EQ ')').X
+               CH4ADR                   CHK FOR ADDR SPEC.     @Z40MSCD
+         AIF   ('&CHARS(4)'(1,2) NE 'R(' AND '&CHARS(4)'(&K,1) NE ')').X
+               CH4ID                    CHK FOR ID SPEC.       @Z40MSCD
+         AIF   ('&MF' EQ 'L').ERROR11   MF=L AND REG INVALID   @Z40MSCD
+&CH4NREG SETB  (1)                      SET CHAR4 IN REGISTER  @Z40MSCD
+.CH4ADR  ANOP                                                  @Z40MSCD
+&CH4NCOR SETB  (1)                      SET CHAR4 IN STORAGE   @Z40MSCD
+         AIF   (&CH4NREG EQ (1)).CH4FG2 CHAR4 IN REG, SET FLG2 @Z40MSCD
+.CH4ID   ANOP                                                  @Z40MSCD
+&DCSW    SETB  (1)                      SET DC SWITCH          @Z40MSCD
+         AIF   (&CH4NCOR EQ (1)).CH4FG2 CHAR4 IN STORAGE, SET FLG2
+&CH4ILIB SETB  (0)                      SET CHAR4 ON IMAGELIB  @Z40MSCD
+.CH4FG2  ANOP                                                  @Z40MSCD
+&SWFLG2  SETB  (1)                      SET FLG2 TO BE CHANGED @Z40MSCD
+         AIF   (&CH4NCOR EQ (1) AND K'&CHARS(4) GT 11).ERROR11 @Z40MSCD
+         AIF   (&CH4NCOR EQ (1) AND K'&CHARS(4) LT 4).ERROR11  @Z40MSCD
+         AIF   (&CH4NCOR EQ (0) AND K'&CHARS(4) GT 4).ERROR11  @Z40MSCD
+         AGO   .TSTCOPY                 GO VERIFY COPIES       @Z40MSCD
+.RSTCHR  ANOP                                                  @Z40MSCD
+&CH1ILIB SETB  (0)                      SET CHAR1 ON IMAGELIB  @Z40MSCD
+.LCHR1   ANOP                                                  @Z40MSCD
+&CH2ILIB SETB (0)                       SET CHAR2 ON IMAGELIB  @Z40MSCD
+.LCHR2   ANOP                                                  @Z40MSCD
+&CH3ILIB SETB (0)                       SET CHAR3 ON IMAGELIB  @Z40MSCD
+.LCHR3   ANOP                                                  @Z40MSCD
+&CH4ILIB SETB (0)                       SET CHAR4 ON IMAGELIB  @Z40MSCD
+&SWFLG2  SETB  (1)                      SET FLG2 TO BE CHANGED @Z40MSCD
+         AGO   .TSTCOPY                 GO VERIFY COPIES       @Z40MSCD
+.ERROR11 IGGERMAC 11                    ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* COPIES PARAMETER VERIFICATION                               @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TSTCOPY AIF   ('&COPIES' EQ '').TSTBRST  IS COPIES PRESENT    @Z40MSCD
+         AIF   ('&COPIES' EQ '*' AND '&MF(1)' EQ 'E' AND '&INIT' EQ 'Y'*
+               ).TSTBRST                SKIP IF '*'            @Z40MSCD
+         AIF   (T'&COPIES NE 'N').SKIPCK1 CAN COPIES BE VERIF. @ZA45505
+         AIF   (&COPIES GT 255).ERROR07 MAX VALUE IS 255       @ZA45505
+.SKIPCK1 ANOP                                                  @ZA45505
+&DCSW    SETB  (1)                      SET DC SWITCH          @Z40MSCD
+         AGO   .TSTBRST                 GO VERIFY BURST        @Z40MSCD
+.ERROR07 IGGERMAC 7                     ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* BURST PARAMETER VERIFICATION                                @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TSTBRST AIF   ('&BURST' EQ '' AND '&INIT' EQ 'Y').SETBOFF     @Z40MSCD
+         AIF   ('&BURST' EQ '').TSTCPNR BURST MISS., GO COPYNR @Z40MSCD
+         AIF   ('&BURST' EQ '*' AND '&MF(1)' EQ 'E' AND '&INIT' EQ 'Y')*
+               .TSTCPNR                 SKIP IF '*'            @Z40MSCD
+         AIF   ('&BURST' EQ 'Y').SETBON BURST EQ YES           @Z40MSCD
+         AIF   ('&BURST' NE 'N').ERROR08 BURST NOT 'NO' INV.   @Z40MSCD
+.SETBOFF ANOP                                                  @Z40MSCD
+&BRSTOFF SETB  (0)                      SET BURST EQ NO        @Z40MSCD
+         AGO   .SETBON2                 GO SET FLG1 TO BE CHNGD
+.SETBON  ANOP                                                  @Z40MSCD
+&BRSTON  SETB  (1)                      SET BURST EQ YES       @Z40MSCD
+.SETBON2 ANOP                                                  @Z40MSCD
+&SWFLG1  SETB  (1)                      SET FLG1 TO BE CHANGED @Z40MSCD
+         AGO   .TSTCPNR                 GO VERIFY COPYNR       @Z40MSCD
+.ERROR08 IGGERMAC 8                     ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* COPYNR PARAMETER VERIFICATION                               @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TSTCPNR ANOP                                                  @Z40MSCD
+         AIF   ('&COPYNR' EQ '').TSTINIT COPYNR MISS., GO INIT @Z40MSCD
+         AIF   ('&COPYNR' EQ '*' AND '&MF(1)' EQ 'E' AND '&INIT' EQ 'Y'*
+               ).TSTINIT                SKIP IF '*'            @Z40MSCD
+         AIF   (T'&COPYNR NE 'N').SKIPCK2 CAN COPYNR BE VERIF. @ZA45505
+         AIF   (&COPYNR GT 255).ERROR12 MAX VALUE IS 255       @ZA45505
+.SKIPCK2 ANOP                                                  @ZA45505
+&DCSW    SETB  (1)                      SET DC SWITCH          @Z40MSCD
+         AGO   .TSTINIT                 GO VERIFY PRT INIT.    @Z40MSCD
+.ERROR12 IGGERMAC 12                    ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* INIT PARAMETER VERIFICATION                                 @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TSTINIT AIF   ('&INIT' EQ '').TSTRXMT  INIT MISS., GO REXMIT  @Z40MSCD
+         AIF   ('&INIT' EQ 'Y').SETEON  CHK FOR INIT=YES       @Z40MSCD
+         AIF   ('&INIT' NE 'N').ERROR13 INIT NOT EQ N INV.     @Z40MSCD
+&INITOFF SETB  (0)                      SET INIT EQ OFF        @Z40MSCD
+         AGO   .SETEON2                                        @Z40MSCD
+.SETEON  ANOP                                                  @Z40MSCD
+&INITON  SETB  (1)                      SET INIT EQ ON         @Z40MSCD
+.SETEON2 ANOP                                                  @Z40MSCD
+&SWFLG1  SETB  (1)                      SET FLG1 TO BE CHANGED @Z40MSCD
+         AGO   .TSTRXMT                 GO VERIFY REXMIT       @Z40MSCD
+.ERROR13 IGGERMAC 13                    ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* REXMIT PARAMETER VERIFICATION                               @Z40MSCD
+.* *********************                                       @Z40MSCD
+.TSTRXMT ANOP                                                  @Z40MSCD
+         AIF   ('&REXMIT' EQ '' AND '&INIT' EQ 'Y').SETROFF    @Z40MSCD
+         AIF   ('&REXMIT' EQ '').TSTMSGA GO TSTMSGA IF MISSING @G38ESMH
+         AIF   ('&REXMIT' EQ '*' AND '&MF(1)' EQ 'E' AND '&INIT' EQ 'Y'*
+               ).TSTMSGA                SKIP IF '*'            @G38ESMH
+         AIF   ('&REXMIT' EQ 'N').SETROFF CHK REXIT EQ N       @Z40MSCD
+         AIF   ('&REXMIT' NE 'Y').ERROR14 REXMIT NOT EQ Y INV. @Z40MSCD
+&RXMTON  SETB  (1)                      SET REXMIT FLAG ON     @Z40MSCD
+         AIF   ('&BURST' EQ '' AND '&FCB' EQ '' AND '&MODIFY' EQ '' AND*
+                '&OPTCD' EQ '' AND '&INIT' EQ '' AND '&CHARS' EQ '' AND*
+                '&UCS' EQ '').SETRON2   COPIES-COPYNR-FLASH    @Z40MSCD
+.WARN51  IGGERMAC 51                    ISSUE WARNING MNOTE    @G38ESJC
+.*       THIS IS ONLY A WARNING MNOTE, DO NOT SET ERROR SWITCH @Z40MSCD
+         AGO   .SETRON2                                        @Z40MSCD
+.SETROFF ANOP                                                  @Z40MSCD
+&RXMTOFF SETB  (0)                      SET REXMIT OFF         @Z40MSCD
+.SETRON2 ANOP                                                  @Z40MSCD
+&SWFLG1  SETB  (1)                      SET FLG1 TO BE CHANGED @Z40MSCD
+         AGO   .TSTMSGA                 GO MSGAREA VERIFY      @G38ESMH
+.ERROR14 IGGERMAC 14                    ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @Z40MSCD
+.* *********************                                       @G38ESMH
+.* MSGAREA PARAMETER VERIFICATION                              @G38ESMH
+.* *********************                                       @G38ESMH
+.TSTMSGA AIF   ('&MSGAREA' EQ '').TSTLDCB                      @G38ESMH
+&K       SETA  K'&MSGAREA               SET K TO # OF CHARS.   @G38ESMH
+         AIF   ('&MSGAREA'(1,1) NE '(' AND &K GT 8).ERROR16    @G38ESMH
+         AIF   ('&MSGAREA'(1,1) NE '(').SETMDC                 @G38ESMH
+         AIF   ('&MSGAREA'(&K,1) NE ')' OR &K GT 10 OR &K LT 3).ERROR16
+.*                                                             @G38ESMH
+&MSGANRG SETB  (1)                      SET IN REGISTER SWITCH @G38ESMH
+         AIF   ('&MF' EQ 'L').ERROR16   REG NOT VALID FOR MF=L @G38ESMH
+.SETMDC  ANOP                                                  @G38ESMH
+&DCSW    SETB  (1)                      SET DC SWITCH          @G38ESMH
+         AGO   .TSTLDCB                 GO LIBDCB VERIFY       @G38ESMH
+.ERROR16 IGGERMAC 16                    ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @G38ESMH
+.* *********************                                       @G38ESMH
+.* LIBDCB PARAMETER VERIFICATION                               @G38ESMH
+.* *********************                                       @G38ESMH
+.TSTLDCB AIF   ('&LIBDCB' EQ '').ENDTST                        @G38ESMH
+&K       SETA  K'&LIBDCB                SET K TO # OF CHARS.   @G38ESMH
+         AIF   ('&LIBDCB'(1,1) NE '(').SETLDC                  @G38ESMH
+         AIF   ('&LIBDCB'(&K,1) NE ')' OR &K GT 10 OR &K LT 3).ERROR17
+.*                                      VERIFY REGISTER SYNTAX @G38ESMH
+&LDCBNRG SETB  (1)                      SET IN-REGISTER SWITCH @G38ESMH
+         AIF   ('&MF' EQ 'L').ERROR17   REG NOT VALID FOR MF=L @G38ESMH
+.SETLDC  AIF   (&LDCBNRG NE (1) AND &K GT 8).ERROR17           @G38ESMH
+&DCSW    SETB  (1)                      SET DC SWITCH          @G38ESMH
+         AGO   .ENDTST                  GO TO END OF VERIFY    @G38ESMH
+.ERROR17 IGGERMAC 17                    ISSUE MNOTE            @G38ESJC
+&ERRSW   SETB  (1)                      SET ERROR SWITCH       @G38ESMH
+.* *********************                                       @Z40MSCD
+.* TEST TO SEE IF ERROR HAS OCCURRED AND TERMINATE             @Z40MSCD
+.* *********************                                       @Z40MSCD
+.ENDTST  ANOP                                                  @Z40MSCD
+         AIF   (&ERRSW EQ 1).EXIT       STOP HERE IF ERROR     @Z40MSCD
+.* *********************                                       @Z40MSCD
+.* ALL PARAMETERS ARE GOOD - BUILD LIST OR DEFINED CONSTANTS.  @Z40MSCD
+.* *********************                                       @Z40MSCD
+         AIF   ('&MF' EQ '').STNDRD     TEST IF STANDARD FORM  @G38ESMH
+         AIF   ('&MF(1)' EQ 'E').EXECUTE TEST IF EXECUTE FORM  @G38ESMH
+.LIST    ANOP                                                  @G38ESMH
+&ANYNAME DC    0F'0'                    ALIGN PARMLIST ON FULLWORD
+.*                                                             @G38ESMH
+         AGO   .COMMON                  GENERATE DC'S          @G38ESMH
+.* **********************                                      @Z40MSCD
+.* BEGIN BUILD FOR EXECUTE FORM OF MACRO                       @Z40MSCD
+.* **********************                                      @Z40MSCD
+.EXECUTE ANOP                                                  @G38ESMH
+         AIF   ('&ANYNAME' EQ '').SKPLBL                       @G38ESMH
+&ANYNAME DC    0H'0'
+.SKPLBL  ANOP                                                  @G38ESMH
+         AIF   ('&MF(2)' EQ '(1)').BLDB LIST ADDR IN REG 1     @Z40MSCD
+         AIF   ('&PAREN3' EQ '(' AND '&PAREN4' EQ ')').LOADREG @Z40MSCD
+         LA    1,&MF(2)                 LOAD PARAMETER LIST ADDR
+         AGO   .BLDB                    GO CHK FOR DC          @Z40MSCD
+.LOADREG ANOP                                                  @Z40MSCD
+&K       SETA  K'&MF(2)                 NO. CHAR IN LIST PARM  @Z40MSCD
+&STRIP   SETC  '&MF(2)'(2,&K-2)         REMOVE NAME FROM PARM  @Z40MSCD
+         LR    1,&STRIP                 LOAD SETPRT LIST ADDRESS
+.BLDB    ANOP                                                  @Z40MSCD
+         AIF   ('&DCB' EQ '' OR &DCBNREG EQ (1)).SKPLA         @Z40MSCD
+         LA    0,&DCB                   LOAD DCB ADDRESS
+         ST    0,0(0,1)                 STORE DCB ADDR IN PARM LIST
+.SKPLA   ANOP                                                  @Z40MSCD
+         AIF   (&DCSW EQ (0) AND &INITON EQ (0)).BLDFLAG       @G38ESMH
+         B     IHB&NO.B                 BRANCH AROUND CONSTANTS
+IHB&NO.A EQU   *
+         AGO   .COMMON                  GO COMMON PROCESSING   @Z40MSCD
+.* **********************                                      @Z40MSCD
+.* BEGIN BUILD FOR STANDARD FORM OF MACRO                      @Z40MSCD
+.* **********************                                      @Z40MSCD
+.STNDRD  ANOP                                                  @G38ESMH
+         CNOP  0,4                      ALIGN ON FULLWORD BOUNDARY
+.*                                                             @ZA51640
+&ANYNAME BAL   1,*+4+&SPPLEN            LOAD SETPRT LIST ADDRESS
+.*                                                             @ZA51640
+*                                         AND BRANCH OVER CONSTANTS
+.*                                                             @G38ESMH
+.* **********************                                      @Z40MSCD
+.* COMMON BUILD CODE                                           @Z40MSCD
+.* **********************                                      @Z40MSCD
+.COMMON  ANOP                                                  @Z40MSCD
+.*                                                             @G38ESMH
+.* *******************                                         @Z40MSCD
+.* DCB PARAMETER PROCESSING                                    @Z40MSCD
+.* *******************                                         @Z40MSCD
+         AIF   ('&DCB' EQ '' AND '&MF(1)' EQ 'E').PUCS         @Z40MSCD
+         AIF   (&DCBNREG EQ (1)).NODCB  DCB ADDR IN REGISTER   @Z40MSCD
+         AIF   ('&DCB' EQ '').NODCB     DCB MISSING            @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E').PUCS   IF ITS E FORM LA WAS DO@Z40MSCD
+         DC    AL4(&DCB)                DCB ADDRESS
+&SWDCBA  SETB  (1)                      DCB DC GENERATED       @Z40MSCD
+         AGO   .PUCS                    GO PROC. UCS           @Z40MSCD
+.NODCB   ANOP                                                  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E').PUCS   SKIP IF MF=E           @Z40MSCD
+         DC    AL4(0)                   DCB ADDRESS
+.* *******************                                         @Z40MSCD
+.* UCS PARAMETER PROCESSING                                    @Z40MSCD
+.* *******************                                         @Z40MSCD
+.PUCS    AIF   ('&UCS(1)' NE '').NONULL UCS NOT MISSING        @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E').CONTSKP SKIP IF MF=E          @Z40MSCD
+         DC    AL4(0)                   CHARACTER SET IMAGE ID
+         AGO   .CONTSKP                 GO PROC. UCS2          @Z40MSCD
+.NONULL  ANOP                                                  @Z40MSCD
+         DC    CL4'&UCS(1)'             CHARACTER SET IMAGE ID
+&SWUCS1  SETB  (1)                      UCS1 DC GENERATED      @Z40MSCD
+.CONTSKP ANOP                                                  @Z40MSCD
+         AIF   ('&UCS(2)' EQ 'F' OR '&UCS(2)' EQ 'FOLD').FOLD  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E').TSTVRFY SKIP IF MF=E          @Z40MSCD
+         DC    X'00'                    LOAD MODE = NO FOLD
+         AGO   .TSTVRFY                 GO PROC. UCS3          @Z40MSCD
+.FOLD    ANOP                           FOLD SPECIFIED         @Z40MSCD
+         DC    X'40'                    LOAD MODE = FOLD
+&SWUCS2  SETB  (1)                      UCS2 DC GENERATED      @Z40MSCD
+.TSTVRFY ANOP                           TEST IF VERIFY IS SPECIFIED
+         AIF   ('&UCS(3)' EQ 'V' OR '&UCS(3)' EQ 'VERIFY').VERIFY
+         AIF   ('&MF(1)' EQ 'E').OPTCD  SKIP IF MF=E           @Z40MSCD
+         DC    X'00'                    VERIFY = NO
+         AGO   .OPTCD                   GO PROC. OPTCD         @Z40MSCD
+.VERIFY  ANOP                           VERIFY SPECIFIED       @Z40MSCD
+         DC    X'10'                    VERIFY = YES
+&SWUCS3  SETB  (1)                      UCS3 DC GENERATED      @Z40MSCD
+.* *******************                                         @G38ESMH
+.* OPTCD-DISP PARAMETER PROCESSING                             @G38ESMH
+.* *******************                                         @G38ESMH
+.OPTCD   AIF   ('&MF(1)' EQ 'E').FCBPAR SKIP DC IF MF=E        @G38ESMH
+         DC    B'&BLKON&UBLKON&SCDON&NOSCDON&UFLDON&FLDON&RESVD&EXTLST'
+.*                                                             @G38ESMH
+.* *******************                                         @Z40MSCD
+.* FCB PARAMETER PROCESSING                                    @Z40MSCD
+.* *******************                                         @Z40MSCD
+.FCBPAR  ANOP                                                  @Z40MSCD
+         AIF   ('&FCB(1)' EQ '').FCBPAR1 NO FCB PARM           @Z40MSCD
+         AIF   ('&FCB' EQ '*').FLAGS1   IF * SKIP              @Z40MSCD
+         AIF   (&FCBNREG EQ (1) AND '&MF(1)' EQ 'E').FCBFLG    @Z40MSCD
+         AIF   (&FCBNREG EQ (1)).FCBPAR1 FCB ADDR IN REG       @Z40MSCD
+         AIF   (&FCBNCOR EQ (0)).FCBCL  FCB ID SPEC.           @Z40MSCD
+&K       SETA  K'&FCB(1)                NO. CHAR IN FCB        @Z40MSCD
+&STRIP   SETC  '&FCB(1)'(3,&K-3)        STRIP 1ST 2 AND LAST CHAR
+         DC    AL4(&STRIP)              FCB ADDRESS
+         AGO   .FCBPAR2                                        @Z40MSCD
+.FCBCL   ANOP                                                  @Z40MSCD
+         DC    CL4'&FCB(1)'             FCB IMAGE ID
+         AGO   .FCBPAR2                                        @Z40MSCD
+.FCBPAR1 ANOP                                                  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND &INITON EQ (0)).FLAGS1     @Z40MSCD
+         DC    AL4(0)                   NO FCB ID SPECIFIED
+.FCBPAR2 ANOP                                                  @Z40MSCD
+&SWFCB1  SETB  (1)                      FCB DC GENERATED       @Z40MSCD
+.* *******************                                         @Z40MSCD
+.* FCB FLAG PARAMETER PROCESSING
+.* *******************                                         @Z40MSCD
+.FCBFLG  ANOP                                                  @Z40MSCD
+         AIF   ('&FCB(2)' NE '').CKVFY  CK FOR VERIFY/ALIGN PARM
+         AIF   ('&FCB(1)' EQ '' AND '&MF(1)' EQ 'E' AND &INITON EQ (0))*
+               .FLAGS1                  DO NOT CREATE DEFLT    @Z40MSCD
+         DC    X'00'                    NO FCB OPTIONS
+         AGO   .FCBFLG2                 GO PROC. FLAG1         @Z40MSCD
+.CKVFY   AIF   ('&FCB(2)' EQ 'VERIFY' OR '&FCB(2)' EQ 'V').STVFY
+         DC    X'01'                    ALIGN FORMS
+         AGO   .FCBFLG2                 ALIGN FORMS SPECIFIED  @Z40MSCD
+.STVFY   ANOP                                                  @Z40MSCD
+         DC    X'80'                    VERIFY FCB SPECIFIED
+.FCBFLG2 ANOP                                                  @Z40MSCD
+&SWFCB2  SETB  (1)                      FCB2 DC GENERATED      @Z40MSCD
+.* *******************                                         @Z40MSCD
+.* FLAG 1 PARAMETER PROCESSING                                 @Z40MSCD
+.* *******************                                         @Z40MSCD
+.FLAGS1  ANOP                                                  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E').COPYS  SKIP IF MF=E           @Z40MSCD
+         DC    B'&BRSTON&RXMTON&INITON&NOPRTON.0000'
+.*                                                             @G38ESMH
+.* *******************                                         @Z40MSCD
+.* FLAG 2 PARAMETER PROCESSING                                 @Z40MSCD
+.* *******************                                         @Z40MSCD
+.FLAGS2  ANOP                                                  @Z40MSCD
+         DC    BL1'&MODNCOR&CH1NCOR&CH2NCOR&CH3NCOR&CH4NCOR&FCBNCOR.00'
+.* *******************                                         @Z40MSCD
+.* COPIES PARAMETER PROCESSING                                 @Z40MSCD
+.* *******************                                         @Z40MSCD
+.COPYS   ANOP                                                  @Z40MSCD
+         AIF   ('&COPIES' EQ '').COPY0  NO COPIES SPECIFIED    @ZA45505
+         AIF   ('&COPIES' EQ '*').STCPY LEAVE COPIES           @Z40MSCD
+         DC    AL1(&COPIES)             NUMBER OF COPIES REQ
+         AGO   .COPY2                   GO SET DC SWITCH       @ZA45505
+.COPY0   ANOP                           COPIES NOT SPECIFIED   @ZA45505
+         AIF   (&INITON EQ (1)).COPY1   ONE COPY FOR INIT=Y    @ZA45505
+         AIF   ('&MF(1)' EQ 'E').STCPY  LEAVE COPIES FOR MF=E  @ZA45505
+.*                                      COPIES=0 FOR NO SPEC.  @ZA45505
+         DC    X'00'                    COPIES=0
+         AGO   .COPY2                   GO SET DC SWITCH       @ZA45505
+.COPY1   ANOP                           DEFAULT TO 1 FOR INIT  @ZA45505
+         DC    X'01'                    ONE COPY IMPLIED
+.COPY2   ANOP                                                  @Z40MSCD
+&SWCPYS  SETB  (1)                      COPIES DC GENERATED    @Z40MSCD
+.* *******************                                         @Z40MSCD
+.* COPYNR PARAMETER PROCESSING                                 @Z40MSCD
+.* *******************                                         @Z40MSCD
+.STCPY   AIF   ('&COPYNR' EQ '').COPYNR0 COPYNR NOT SPECIFIED  @ZA45505
+         AIF   ('&COPYNR' EQ '*').SPPLEN  LEAVE COPYNR         @G38ESMH
+         DC    AL1(&COPYNR)             STARTING COPY NUMBER
+         AGO   .COPYNR2                 GO SET DC SWITCH       @ZA45505
+.COPYNR0 AIF   (&INITON EQ (1)).COPYNR1 COPYNR=1 FOR NO SPEC.  @ZA45505
+         AIF   ('&MF(1)' EQ 'E').SPPLEN LEAVE COPYNR FOR MF=E  @ZA45505
+         DC    X'00'                    COPYNR=0
+         AGO   .COPYNR2                 GO SET DC SWITCH       @ZA45505
+.COPYNR1 ANOP                           DEFAULT TO 1 FOR INIT  @ZA45505
+         DC    X'01'                    COPYNR ONE IMPLIED
+.COPYNR2 ANOP                                                  @Z40MSCD
+&SWCPNR  SETB  (1)                      COPYNR DC GENERATED    @Z40MSCD
+.* *******************                                         @G38ESMH
+.* LENGTH FIELD PROCESSING                                     @G38ESMH
+.* *******************                                         @G38ESMH
+.SPPLEN  AIF ('&MF(1)' EQ 'E').FLHCNT   SKIP DC IF EXECUTE FORM@G38ESMH
+         DC    AL2(&SPPLEN)             LENGTH OF PARMLIST
+.*                                                             @G38ESMH
+&SWLEN   SETB  (1)                      LENGTH DC GENERATED    @G38ESMH
+.* *******************                                         @Z40MSCD
+.* FLASH COUNT PARAMETER PROCESSING                            @Z40MSCD
+.* *******************                                         @Z40MSCD
+.FLHCNT  ANOP                                                  @Z40MSCD
+         AIF   ('&FLASH' EQ '*').MDFY   LEAVE FLASH            @Z40MSCD
+         AIF   ('&FLASH(2)' EQ '' AND '&FLASH(1)' NE '').DFTO1 @Z40MSCD
+         AIF   ('&FLASH(2)' EQ '').NOFLSH NO FLASH, DFT IT     @Z40MSCD
+         DC    AL1(&FLASH(2))           COPIES FORMS FLASHED
+         AGO   .FLSHFLG                 GO SET FLSH DC FLG     @Z40MSCD
+.DFTO1   ANOP                                                  @Z40MSCD
+         AIF   ('&COPIES' NE '').DFTCPC WAS COPIES SPEC.       @Z40MSCD
+         DC    X'01'                    DEFAULT FLASH = COPIES
+         AGO   .FLSHFLG                 GO SET FLSH DC FLG     @Z40MSCD
+.DFTCPC  ANOP                                                  @Z40MSCD
+         DC    AL1(&COPIES)             DEFAULT FLASH = COPIES
+         AGO   .FLSHFLG                 GO SET FLAG            @Z40MSCD
+.NOFLSH  ANOP                                                  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND &INITON EQ (0)).MDFY       @Z40MSCD
+         DC    X'00'                    FORMS NOT BEING FLASHED
+.FLSHFLG ANOP                                                  @Z40MSCD
+&SWFLHC  SETB  (1)                      FLASH COUNT DC GEN.    @Z40MSCD
+.* *******************                                         @Z40MSCD
+.* MODIFY TRC PARAMETER PROCESSING                             @Z40MSCD
+.* *******************                                         @Z40MSCD
+.MDFY    ANOP                                                  @Z40MSCD
+         AIF   ('&MODIFY' EQ '*').FLASH SKIP IF '*'            @Z40MSCD
+         AIF   ('&MODIFY(2)' NE '').TRC TRC SPECIFIED          @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND '&MODIFY(1)' EQ '' AND &INITON EQ (*
+               0)).FLASH                NO DEFAULTS            @Z40MSCD
+         DC    X'00'                    TABLE REF CHAR 0 IMPLIED
+         AGO   .TRC2                    GO SET TRC DC FLG      @Z40MSCD
+.TRC     ANOP                                                  @Z40MSCD
+         DC    AL1(&MODIFY(2))          TABLE REF CHAR REQUESTED
+.TRC2    ANOP                                                  @Z40MSCD
+&SWTRCN  SETB  (1)                      MODIFY TRC DC GEN.     @Z40MSCD
+.* *******************                                         @Z40MSCD
+.* MODIFY ID PARAMETER PROCESSING                              @Z40MSCD
+.* *******************                                         @Z40MSCD
+.MODPT   AIF   ('&MODIFY(1)' EQ '').MODPT1  COPY MOD SPECIFIED @Z40MSCD
+         AIF   ('&MODIFY' EQ '*').FLASH  LEAVE COPY MOD        @Z40MSCD
+         AIF   (&MODNREG EQ (1) AND '&MF(1)' EQ 'E').FLASH     @Z40MSCD
+         AIF   (&MODNREG EQ (1)).MODPT1 MODIFY ADDR IN REG     @Z40MSCD
+         AIF   (&MODNCOR EQ (0)).MODCL  MODIFY ID SPEC.        @Z40MSCD
+&K       SETA  K'&MODIFY(1)             NO.CHAR IN MODIFY LABEL
+&STRIP   SETC  '&MODIFY(1)'(3,&K-3)     STRIP 1ST 2 AND LAST CHAR
+         DC    AL4(&STRIP)              COPY MOD ADDRESS
+         AGO   .MODPT2                  GO PROC.FLASH ID       @Z40MSCD
+.MODCL   ANOP                                                  @Z40MSCD
+         DC    CL4'&MODIFY(1)'          COPY MOD ID
+         AGO   .MODPT2                  GO PROC.FLASH ID       @Z40MSCD
+.MODPT1  ANOP                                                  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND &INITON EQ (0)).FLASH      @Z40MSCD
+         DC    AL4(0)                   COPY MOD
+.MODPT2  ANOP                                                  @Z40MSCD
+&SWMODI  SETB  (1)                                             @Z40MSCD
+.* *******************                                         @Z40MSCD
+.* FLASH ID PARAMETER PROCESSING                               @Z40MSCD
+.* *******************                                         @Z40MSCD
+.FLASH   AIF   ('&FLASH(1)' EQ '').FLASH1  FLASH FORMS REQUEST @Z40MSCD
+         AIF   ('&FLASH' EQ '*').XLAT1  LEAVE FLASH            @Z40MSCD
+         DC    CL4'&FLASH(1)'           FLASH FORMS REQUESTED
+         AGO   .FLASH2                  GO TO XLAT1            @Z40MSCD
+.FLASH1  ANOP                                                  @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND &INITON EQ (0)).XLAT1      @Z40MSCD
+         DC    AL4(0)                   FLASH FORMS NOT REQUEST
+.FLASH2  ANOP                                                  @Z40MSCD
+&SWFLSH  SETB  (1)                      FLASH DC GENERATED     @Z40MSCD
+.* *******************                                         @Z40MSCD
+.* CHARS PARAMETER PROCESSING                                  @Z40MSCD
+.* *******************                                         @Z40MSCD
+.XLAT1   ANOP                                                  @Z40MSCD
+         AIF   ('&CHARS' EQ '*').MSGAREA SKIP IF '*'           @G38ESMH
+         AIF   ('&CHARS(1)' NE '').XLAT11 GO GEN CHAR 1 DC     @Z40MSCD
+         AIF   ('&MF(1)' EQ 'E' AND &INITON EQ (0)).MSGAREA    @G38ESMH
+         DC    4AL4(0)                  NO CHAR ARRANGEMENT TBLS REQ
+         AGO   .LISTDON                 GO SET CHAR DC FLG     @Z40MSCD
+.XLAT11  ANOP                                                  @Z40MSCD
+         AIF   (&CH1NREG EQ (1) AND &CH2NREG EQ (1) AND &CH3NREG EQ (1)X
+               AND &CH4NREG EQ (1) AND '&MF(1)' EQ 'E').MSGAREA
+.*                                                             @G38ESMH
+         AIF   (&CH1NREG EQ (1)).CH1RG  CHAR 1 IN REG          @Z40MSCD
+         AIF   (&CH1NCOR EQ (0)).CH1CL  CHAR 1 ID SPEC.        @Z40MSCD
+&K       SETA  K'&CHARS(1)              NO. CHAR IN CHAR1      @Z40MSCD
+&STRIP   SETC  '&CHARS(1)'(3,&K-3)      STRIP 1ST 2 AND LAST CHAR
+         DC    AL4(&STRIP)              CHAR ARRANGEMENT TBL 1 ADDR
+         AGO   .XLAT12                  GO PROCESS TABLE 2     @Z40MSCD
+.CH1RG   ANOP                                                  @Z40MSCD
+         DC    AL4(0)                   CHAR ARRANGEMENT TBL 1 ADDR
+         AGO   .XLAT12                  GO PROCESS TABLE 2     @Z40MSCD
+.CH1CL   ANOP                                                  @Z40MSCD
+         DC    CL4'&CHARS(1)'           CHAR ARRANGEMENT TBL 1 ID
+.XLAT12  ANOP                                                  @Z40MSCD
+         AIF   ('&CHARS(2)' NE '').XLAT2 GO GEN CHAR 2 DC      @Z40MSCD
+         DC    3AL4(0)                  NO MORE CHAR ARRANGEMENT TBLS
+         AGO   .LISTDON                 GO TO FINISH           @Z40MSCD
+.XLAT2   ANOP                                                  @Z40MSCD
+         AIF   (&CH2NREG EQ (1)).CH2RG  CHAR 2 IN REG          @Z40MSCD
+         AIF   (&CH2NCOR EQ (0)).CH2CL  CHAR2 SPEC. AS ID      @Z40MSCD
+&K       SETA  K'&CHARS(2)              NO. CHAR IN CHAR2      @Z40MSCD
+&STRIP   SETC  '&CHARS(2)'(3,&K-3)      STRIP 1ST 2 AND LAST CHAR
+         DC    AL4(&STRIP)              CHAR ARRANGEMENT TBL 2 ADDR
+         AGO   .XLAT22                  GO PROCESS TABLE 3     @Z40MSCD
+.CH2RG   ANOP                                                  @Z40MSCD
+         DC    AL4(0)                   CHAR ARRANGEMENT TBL 2 ADDR
+         AGO   .XLAT22                  GO PROCESS TABLE 3     @Z40MSCD
+.CH2CL   ANOP                                                  @Z40MSCD
+         DC    CL4'&CHARS(2)'           CHAR ARRANGEMENT TBL 2 ID
+.XLAT22  ANOP                                                  @Z40MSCD
+         AIF   ('&CHARS(3)' NE '').XLAT3 GO GEN CHAR3 DC       @Z40MSCD
+         DC    2AL4(0)                  NO MORE CHAR ARRANGEMENT TBLS
+         AGO   .LISTDON                 GO TO FINISH           @Z40MSCD
+.XLAT3   ANOP                                                  @Z40MSCD
+         AIF   (&CH3NREG EQ (1)).CH3RG  CHAR3 SPEC. IN REG     @Z40MSCD
+         AIF   (&CH3NCOR EQ (0)).CH3CL  CHAR3 SPEC. AS ID      @Z40MSCD
+&K       SETA  K'&CHARS(3)              NO. CHAR IN CHAR3      @Z40MSCD
+&STRIP   SETC  '&CHARS(3)'(3,&K-3)      STRIP 1ST 2 AND LAST CHAR
+         DC    AL4(&STRIP)              CHAR ARRANGEMENT TBL 3 ADDR
+         AGO   .XLAT32                  GO PROCESS TABLE 4     @Z40MSCD
+.CH3RG   ANOP                                                  @Z40MSCD
+         DC    AL4(0)                   CHAR ARRANGEMENT TBL 3 ADDR
+         AGO   .XLAT32                  GO PROCESS TABLE 4     @Z40MSCD
+.CH3CL   ANOP                                                  @Z40MSCD
+         DC    CL4'&CHARS(3)'           CHAR ARRANGEMENT TBL 3 ID
+.XLAT32  ANOP                                                  @Z40MSCD
+         AIF   ('&CHARS(4)' NE '').XLAT4 GO GEN CHAR4 DC       @Z40MSCD
+         DC    AL4(0)                   NO MORE CHAR ARRANGEMENT TBLS
+         AGO   .LISTDON                 GO TO FINISH           @Z40MSCD
+.XLAT4   ANOP                                                  @Z40MSCD
+         AIF   (&CH4NREG EQ (1)).CH4RG  CHAR4 SPEC. IN REG     @Z40MSCD
+         AIF   (&CH4NCOR EQ (0)).CH4CL  CHAR4 SPEC. AS ID      @Z40MSCD
+&K       SETA  K'&CHARS(4)              NO. CHAR IN CHAR4      @Z40MSCD
+&STRIP   SETC  '&CHARS(4)'(3,&K-3)      STRIP 1ST 2 AND LAST CHAR
+         DC    AL4(&STRIP)              CHAR ARRANGEMENT TBL 4 ADDR
+         AGO   .LISTDON                 GO SET CHARS FLAG      @Z40MSCD
+.CH4RG   ANOP                                                  @Z40MSCD
+         DC    AL4(0)                   CHAR ARRANGEMENT TBL 4 ADDR
+         AGO   .LISTDON                 GO SET CHARS FLAG      @Z40MSCD
+.CH4CL   ANOP                                                  @Z40MSCD
+         DC    CL4'&CHARS(4)'           CHAR ARRANGEMENT TBL 4 ID
+.LISTDON ANOP                           LIST FINISH            @Z40MSCD
+&SWCHAR  SETB  (1)                      CHARS DC GENERATED     @Z40MSCD
+.* *********************                                       @G38ESMH
+.* MSGAREA PARAMETER PROCESSING                                @G38ESMH
+.* *********************                                       @G38ESMH
+.MSGAREA AIF   ('&MSGAREA' EQ '' OR &MSGANRG).MSGA1            @G38ESMH
+         DC    AL4(&MSGAREA)            MSGAREA ADDRESS
+.*                                                             @G38ESMH
+         AGO   .MSGA2                   SET MOVE SWITCH        @G38ESMH
+.MSGA1   AIF   ('&MF(1)' EQ 'E').LIBDCB SKIP DC=0 FOR MF=E     @G38ESMH
+         DC    AL4(0)                   MSGAREA ADDRESS
+.*                                                             @G38ESMH
+.MSGA2   ANOP                                                  @G38ESMH
+&SWMSGA  SETB  (1)                      SET MOVE SWITCH        @G38ESMH
+.* *********************                                       @G38ESMH
+.* LIBDCB PARAMETER PROCESSING                                 @G38ESMH
+.* *********************                                       @G38ESMH
+.LIBDCB  AIF   ('&LIBDCB' EQ '' OR &LDCBNRG).LDCB1             @G38ESMH
+         DC    AL4(&LIBDCB)             LIBRARY DCB ADDRESS
+.*                                                             @G38ESMH
+         AGO   .LDCB2                   GO SET MOVE SWITCH     @G38ESMH
+.LDCB1   AIF   ('&MF(1)' EQ 'E').BEGIN  SKIP DC=0 FOR EXECUTE  @G38ESMH
+         DC    AL4(0)                   LIBRARY DCB ADDRESS
+.*                                                             @G38ESMH
+.LDCB2   ANOP                                                  @G38ESMH
+&SWLDCB  SETB  (1)                      SET MOVE SWITCH        @G38ESMH
+.* *********************                                       @Z40MSCD
+.* END OF DEFINE CONSTANTS PROCESSING                          @Z40MSCD
+.* *********************                                       @Z40MSCD
+         AIF   ('&MF' EQ 'L').EXIT      STOP HERE IF MF=L      @Z40MSCD
+         AIF   ('&MF' EQ '').STREGS     SKIP MVC PROC. IF STAN.
+.* *******************                                         @Z40MSCD
+.* BUILD MVC INSTRUCTIONS TO MOVE PARAMETERS INTO SETPRT LIST  @Z40MSCD
+.* *******************                                         @Z40MSCD
+.BEGIN   ANOP                                                  @Z40MSCD
+IHB&NO.B DS    0H
+.* *******************                                         @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR DCB    PARM MOVE           @Z40MSCD
+.* *******************                                         @Z40MSCD
+.BEGIN10 AIF   (&SWDCBA EQ (0)).TSWUCS1 SKIP IF NO DCB         @G38ESMH
+&TO      SETA  0                        MOVE TO LOCATION 0     @Z40MSCD
+&LENG    SETA  &LENG+4                  ADD 4 TO MOVE LENGTH   @Z40MSCD
+&SWDCBA  SETB  (0)                      RESET DCB MOVE SW.     @Z40MSCD
+.* *******************                                         @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR UCS PARM MOVE              @Z40MSCD
+.* *******************                                         @Z40MSCD
+.TSWUCS1 ANOP                                                  @Z40MSCD
+         AIF   (&SWUCS1 EQ (0) AND '&LENG' NE '0').MOVEIT      @Z40MSCD
+         AIF   (&SWUCS1 EQ (0)).TSWUCS2 SKIP IF NO UCS1        @Z40MSCD
+         AIF   ('&LENG' NE '0').UCS1D   IS TO LOCATION SET     @Z40MSCD
+&TO      SETA  4                        MOVE TO LOCATION 4     @Z40MSCD
+.UCS1D   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+4                  ADD 4 TO MOVE LENGTH   @Z40MSCD
+&SWUCS1  SETB  (0)                      RESET UCS1 MOVE SW.    @Z40MSCD
+.* *******************                                         @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR UCS    PARM MOVE           @Z40MSCD
+.* *******************                                         @Z40MSCD
+.TSWUCS2 ANOP                                                  @Z40MSCD
+         AIF   (&SWUCS2 EQ (0) AND '&LENG' NE '0').MOVEIT      @Z40MSCD
+         AIF   (&SWUCS2 EQ (0)).TSWUCS3 SKIP IF NO UCS2        @Z40MSCD
+         AIF   ('&LENG' NE '0').UCS2D   IS TO LOCATION SET     @Z40MSCD
+&TO      SETA  8                        MOVE TO LOCATION 8     @Z40MSCD
+.UCS2D   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+1                  ADD 1 TO MOVE LENGTH   @Z40MSCD
+&SWUCS2  SETB  (0)                      RESET UCS2 MOVE SW.    @Z40MSCD
+.* *******************                                         @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR UCS    PARM MOVE           @Z40MSCD
+.* *******************                                         @Z40MSCD
+.TSWUCS3 ANOP                                                  @Z40MSCD
+         AIF   (&SWUCS3 EQ (0) AND '&LENG' NE '0').MOVEIT      @Z40MSCD
+         AIF   (&SWUCS3 EQ (0)).TSWOPTC SKIP IF NO UCS3        @Z40MSCD
+         AIF   ('&LENG' NE '0').UCS3D   IS TO LOCATION SET     @Z40MSCD
+&TO      SETA  9                        MOVE TO LOCATION 9     @Z40MSCD
+.UCS3D   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+1                  ADD 1 TO MOVE LENGTH   @Z40MSCD
+&SWUCS3  SETB  (0)                      RESET UCS3 MOVE SW.    @Z40MSCD
+.* ********************                                        @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR OPTCD  PARM MOVE           @Z40MSCD
+.* ********************                                        @Z40MSCD
+.TSWOPTC AIF   ('&LENG' NE '0').MOVEIT  MOVE ANY PREVIOUS DCS  @G38ESMH
+.* ********************                                        @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR FCB 1  PARM MOVE           @Z40MSCD
+.* ********************                                        @Z40MSCD
+.TSWFCB1 AIF   (&SWFCB1 EQ (0)).TSWFCB2 SKIP IF NO FCB1        @G38ESMH
+&TO      SETA  11                       SET TO LOACTION FOR 11 @G38ESMH
+.FCB1D   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+4                  ADD 4 TO MOVE LENGTH   @Z40MSCD
+&SWFCB1  SETB  (0)                      RESET FCB1 MOVE SW.    @Z40MSCD
+.* ********************                                        @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR FCB 2  PARM MOVE           @Z40MSCD
+.* ********************                                        @Z40MSCD
+.TSWFCB2 ANOP                                                  @Z40MSCD
+         AIF   (&SWFCB2 EQ (0) AND '&LENG' NE '0').MOVEIT      @Z40MSCD
+         AIF   (&SWFCB2 EQ (0)).TSWFLG1 SKIP IF NO FCB2        @Z40MSCD
+         AIF   ('&LENG' NE '0').FCB2D   IS MOVE TO LOC. SET    @Z40MSCD
+&TO      SETA  15                       SET MOVE LOC. FOR 15   @Z40MSCD
+.FCB2D   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+1                  ADD 1 TO MOVE LENGTH   @Z40MSCD
+&SWFCB2  SETB  (0)                      RESET FCB2 MOVE SW.    @Z40MSCD
+.* ********************                                        @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR FLAG1  PARM MOVE           @Z40MSCD
+.* ********************                                        @Z40MSCD
+.TSWFLG1 ANOP                                                  @Z40MSCD
+         AIF   ('&LENG' NE '0').MOVEIT  DO MOVE IF PREVIOUS DC @Z40MSCD
+.* ********************                                        @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR COPIES PARM MOVE           @Z40MSCD
+.* ********************                                        @Z40MSCD
+.TSWCPYS AIF   (&SWCPYS EQ (0)).TSWCPNR SKIP IF NO COPIES      @G38ESMH
+&TO      SETA  18                       SET LOCATION TO 18     @G38ESMH
+.CPYSD   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+1                  ADD 1 TO MOVE LENGTH   @Z40MSCD
+&SWCPYS  SETB  (0)                      RESET COPIES MOVE SW.  @Z40MSCD
+.* ********************                                        @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR COPYNR PARM MOVE           @Z40MSCD
+.* ********************                                        @Z40MSCD
+.TSWCPNR ANOP                                                  @Z40MSCD
+         AIF   (&SWCPNR EQ (0) AND '&LENG' NE '0').MOVEIT      @Z40MSCD
+         AIF   (&SWCPNR EQ (0)).TSWLEN  SKIP IF NO COPYNR      @G38ESMH
+         AIF   ('&LENG' NE '0').CPNRD   IS LOCATION SET        @Z40MSCD
+&TO      SETA  19                       SET LOCATION TO 19     @Z40MSCD
+.CPNRD   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+1                  ADD 1 TO MOVE LENGTH   @Z40MSCD
+&SWCPNR  SETB  (0)                      RESET COPYNR MOVE SW.  @Z40MSCD
+.* ********************                                        @G38ESMH
+.*  CHECK FOR AND ALTER LENGTHS FOR LENGTH BYTES MOVE          @G38ESMH
+.* ********************                                        @G38ESMH
+.TSWLEN  AIF   (&SWLEN EQ (0) AND '&LENG' NE '0').MOVEIT       @G38ESMH
+         AIF   (&SWLEN EQ (0)).TSWFLHC SKIP IF NO LENGTH       @G38ESMH
+         AIF   ('&LENG' NE '0').LEN     IS LOCATION SET        @G38ESMH
+&TO      SETA  20                       SET LOCATION TO 20     @G38ESMH
+.LEN     ANOP                                                  @G38ESMH
+&LENG    SETA  &LENG+2                  ADD 2 TO MOVE LENGTH   @G38ESMH
+&SWLEN   SETB  (0)                      RESET LENGTH MOVE SW.  @G38ESMH
+.* ********************                                        @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR FLHCNT PARM MOVE           @Z40MSCD
+.* ********************                                        @Z40MSCD
+.TSWFLHC ANOP                                                  @Z40MSCD
+         AIF   (&SWFLHC EQ (0) AND '&LENG' NE '0').MOVEIT      @Z40MSCD
+         AIF   (&SWFLHC EQ (0)).TSWTRCN SKIP IF NO FLASH CNT   @Z40MSCD
+         AIF   ('&LENG' NE '0').FLHCD   IS LOCATION SET        @Z40MSCD
+&TO      SETA  22                       SET LOCATION TO 22     @Z40MSCD
+.FLHCD   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+1                  ADD 1 TO MOVE LENGTH   @Z40MSCD
+&SWFLHC  SETB  (0)                      RESET FLSH CNT MOVE SW.
+.* ********************                                        @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR TRC    PARM MOVE           @Z40MSCD
+.* ********************                                        @Z40MSCD
+.TSWTRCN ANOP                                                  @Z40MSCD
+         AIF   (&SWTRCN EQ (0) AND '&LENG' NE '0').MOVEIT      @Z40MSCD
+         AIF   (&SWTRCN EQ (0)).TSWMODI SKIP IF NO MODIFY TRC  @Z40MSCD
+         AIF   ('&LENG' NE '0').TRCND   IS LOCATION SET        @Z40MSCD
+&TO      SETA  23                       SET LOCATION TO 23     @Z40MSCD
+.TRCND   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+1                  ADD 1 TO MOVE LENGTH   @Z40MSCD
+&SWTRCN  SETB  (0)                      RESET MOD TRC MOVE SW. @Z40MSCD
+.* ********************                                        @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR MODIFY PARM MOVE           @Z40MSCD
+.* ********************                                        @Z40MSCD
+.TSWMODI ANOP                                                  @Z40MSCD
+         AIF   (&SWMODI EQ (0) AND '&LENG' NE '0').MOVEIT      @Z40MSCD
+         AIF   (&SWMODI EQ (0)).TSWFLSH SKIP IF NO MODIFY ID   @Z40MSCD
+         AIF   ('&LENG' NE '0').MODID   IS LOCATION SET        @Z40MSCD
+&TO      SETA  24                       SET LOCATION TO 24     @Z40MSCD
+.MODID   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+4                  ADD 4 TO MOVE LENGTH   @Z40MSCD
+&SWMODI  SETB  (0)                      RESET MOD ID MOVE SW.  @Z40MSCD
+.* ********************                                        @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR FLASH  PARM MOVE           @Z40MSCD
+.* ********************                                        @Z40MSCD
+.TSWFLSH ANOP                                                  @Z40MSCD
+         AIF   (&SWFLSH EQ (0) AND '&LENG' NE '0').MOVEIT      @Z40MSCD
+         AIF   (&SWFLSH EQ (0)).TSWCHR1 SKIP IF NO FLASH ID    @Z40MSCD
+         AIF   ('&LENG' NE '0').FLSHD   IS LOCATION SET        @Z40MSCD
+&TO      SETA  28                       SET LOCATION TO 28     @Z40MSCD
+.FLSHD   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+4                  ADD 4 TO MOVE LENGTH   @Z40MSCD
+&SWFLSH  SETB  (0)                      RESET FLASH ID MOVE SW.
+.* ********************                                        @Z40MSCD
+.*  CHECK FOR AND ALTER LENGTHS FOR CHARS  PARM MOVE           @Z40MSCD
+.* ********************                                        @Z40MSCD
+.TSWCHR1 ANOP                                                  @Z40MSCD
+         AIF   (&SWCHAR EQ (0) AND '&LENG' NE '0').MOVEIT      @Z40MSCD
+         AIF   (&SWCHAR EQ (0)).TSWMSGA SKIP IF NO CHARS       @G38ESMH
+         AIF   ('&LENG' NE '0').CHR1D   IS LOCATION SET        @Z40MSCD
+&TO      SETA  32                       SET LOCATION TO 32     @Z40MSCD
+.CHR1D   ANOP                                                  @Z40MSCD
+&LENG    SETA  &LENG+16                 ADD 16 TO MOVE LENGTH  @Z40MSCD
+&SWCHAR  SETB  (0)                      RESET CHARS MOVE SW.   @Z40MSCD
+.* **********************                                      @G38ESMH
+.* CHECK FOR AND ALTER LENGTHS FOR MSGAREA MOVE                @G38ESMH
+.* **********************                                      @G38ESMH
+.TSWMSGA AIF   (&SWMSGA EQ (0) AND &LENG NE 0).MOVEIT          @G38ESMH
+         AIF   (&SWMSGA EQ (0)).TSWLDCB IF NO MOVE NEEDED SKIP @G38ESMH
+         AIF   (&LENG NE 0).MSGA        IS THIS FIRST LOCATION @G38ESMH
+&TO      SETA  48                       SET BEGIN LOCATION     @G38ESMH
+.MSGA    ANOP                                                  @G38ESMH
+&LENG    SETA  &LENG+4                  INCREMENT LENGTH COUNT @G38ESMH
+&SWMSGA  SETB  (0)                      CLEAR MOVE SWITCH      @G38ESMH
+.* **********************                                      @G38ESMH
+.* CHECK FOR AND ALTER LENGTHS FOR LIBDCB MOVE                 @G38ESMH
+.* **********************                                      @G38ESMH
+.TSWLDCB AIF   (&SWLDCB EQ (0) AND &LENG NE 0).MOVEIT          @G38ESMH
+         AIF   (&SWLDCB EQ (0)).ENDMOVE IF NO MOVE NEEDED SKIP @G38ESMH
+         AIF   (&LENG NE 0).LDCB        IS THIS FIRST LOCATION @G38ESMH
+&TO      SETA  52                       SET STARTING LOCATION  @G38ESMH
+.LDCB    ANOP                                                  @G38ESMH
+&LENG    SETA  &LENG+4                  INCREMENT LENGTH       @G38ESMH
+&SWLDCB  SETB  (0)                      CLEAR MOVE SWITCH      @G38ESMH
+.* *********************                                       @G38ESMH
+.* END OF MOVES FOR EXECUTE FORM                               @G38ESMH
+.* *********************                                       @G38ESMH
+.ENDMOVE AIF   (&LENG NE 0).MOVEIT      MOVE LAST BLOCK OF DCS @G38ESMH
+.* *********************                                       @G38ESMH
+.* GENERATE CODE TO ALTER OPTCD-DISP FLAG                      @G38ESMH
+.* *********************                                       @G38ESMH
+.BLDFLAG AIF   (NOT &SWOPTC).BLDFLG1    ANY CHANGES TO FLAG?   @G38ESMH
+         AIF   (&BLKOFF AND &UBLKOFF AND &SCDOFF AND &NOSCDOF AND      X
+               &UFLDOFF AND &FLDOFF).NOAND0                    @G38ESMH
+         NI    10(1),B'&BLKOFF&UBLKOFF&SCDOFF&NOSCDOF&UFLDOFF&FLDOFF&REX
+               SVDOF&EXTLST'
+.*                                                             @G38ESMH
+.NOAND0  AIF   (NOT(&BLKON OR &UBLKON OR &SCDON OR &NOSCDON OR &UFLDON X
+               OR &FLDON)).BLDFLG1      ANY BITS TO SET?       @G38ESMH
+         OI    10(1),B'&BLKON&UBLKON&SCDON&NOSCDON&UFLDON&FLDON&RESVD&E*
+               XTLST'
+.*                                                             @G38ESMH
+.* **********************                                      @Z40MSCD
+.* GENERATE CODE TO ALTER FLAG1                                @Z40MSCD
+.* **********************                                      @Z40MSCD
+.BLDFLG1 AIF   (NOT &SWFLG1).BLDFLG2    SKIP IF NO CHANGES     @G38ESMH
+         AIF   (&BRSTOFF AND &RXMTOFF AND &INITOFF AND &NOPRTOF).NOAND
+.*                                                             @G38ESMH
+         NI    16(1),B'&BRSTOFF&RXMTOFF&INITOFF&NOPRTOF.1111'
+.*                                                             @G38ESMH
+.NOAND   AIF   (NOT(&BRSTON OR &RXMTON OR &INITON OR &NOPRTON)).BLDFLG2
+.*                                                             @G38ESMH
+         OI    16(1),B'&BRSTON&RXMTON&INITON&NOPRTON.0000'
+.*                                                             @G38ESMH
+.* **********************                                      @Z40MSCD
+.* GENERATE CODE TO ALTER FLAG2                                @Z40MSCD
+.* **********************                                      @Z40MSCD
+.BLDFLG2 ANOP                                                  @Z40MSCD
+         AIF   (&SWFLG2 EQ (0) AND '&INIT' EQ 'Y' AND '&MF(1)' EQ 'E').*
+               ANDOFF                   GO RESET ALLFLAG TWO   @Z40MSCD
+         AIF   (&SWFLG2 EQ (0)).STREGS  CHK FOR FLAG2 CHANGES  @Z40MSCD
+         AIF   (&MODILIB EQ (1) AND &CH1ILIB EQ (1) AND &CH2ILIB EQ (1)X
+                AND &CH3ILIB EQ (1) AND &CH4ILIB EQ (1) AND &FCBILIB EQX
+                (1)).NOAND2             IS AND NEEDED          @Z40MSCD
+         NI    17(1),B'&MODILIB&CH1ILIB&CH2ILIB&CH3ILIB&CH4ILIB&FCBILIBX
+               .11'
+.NOAND2  ANOP                                                  @Z40MSCD
+         AIF   (&MODNCOR EQ (0) AND &CH1NCOR EQ (0) AND &CH2NCOR EQ (0)X
+                AND &CH3NCOR EQ (0) AND &CH4NCOR EQ (0) AND &FCBNCOR EQX
+                (0)).STREGS             IS OR NEEDED           @Z40MSCD
+         OI    17(1),B'&MODNCOR&CH1NCOR&CH2NCOR&CH3NCOR&CH4NCOR&FCBNCORX
+               .00'
+         AGO   .STREGS                  GO SAVE REGS           @Z40MSCD
+.ANDOFF  ANOP                                                  @Z40MSCD
+         AIF   ('&MODIFY' EQ '*' AND '&CHARS' EQ '*' AND '&FCB' EQ '*')X
+               .STREGS                  SKIP IF ALL ARE '*'    @Z40MSCD
+         NI    17(1),B'00000011'        RESET FLAG I
+.* ***********************                                     @Z40MSCD
+.* STORE VALUES IN REGISTERS INTO SETPRT LIST                  @Z40MSCD
+.* ***********************                                     @Z40MSCD
+.STREGS   ANOP                                                 @Z40MSCD
+         AIF   (&DCBNREG EQ (0)).FCBREG TEST IF DCB=(R)        @Z40MSCD
+         ST    &DCB(1),0(0,1)           SET DCB ADDRESS
+.FCBREG  ANOP                                                  @Z40MSCD
+         AIF   (&FCBNREG EQ (0)).MODREG FCB NOT IN REG         @Z40MSCD
+&K       SETA  K'&FCB(1)                NO. CHAR IN FCB REGNAME
+&STRIP   SETC  '&FCB(1)'(3,&K-3)        REMOVE NAME FROM PARM  @Z40MSCD
+         ST    &STRIP,11(0,1)           SET FCB ADDRESS
+.MODREG  ANOP                                                  @Z40MSCD
+         AIF   (&MODNREG EQ (0)).CH1REG MODIFY NOT IN REG      @Z40MSCD
+&K       SETA  K'&MODIFY(1)             NO. CHAR IN MOD REGNAME
+&STRIP   SETC  '&MODIFY(1)'(3,&K-3)     REMOVE NAME FROM PARM  @Z40MSCD
+         ST    &STRIP,24(0,1)           SET MODIFY ADDRESS
+.CH1REG  ANOP                                                  @Z40MSCD
+         AIF   (&CH1NREG EQ (0)).CH2REG CHAR1 NOT IN REG       @Z40MSCD
+&K       SETA  K'&CHARS(1)              NO. CHAR IN CHAR1      @Z40MSCD
+&STRIP   SETC  '&CHARS(1)'(3,&K-3)      REMOVE REGNAM FROM PARM
+         ST    &STRIP,32(0,1)           SET CHAR ARRANGEMENT TBL 1 ADDR
+.CH2REG  ANOP                                                  @Z40MSCD
+         AIF   (&CH2NREG EQ (0)).CH3REG CHAR2 NOT IN REG       @Z40MSCD
+&K       SETA  K'&CHARS(2)              NO. CHAR IN CHAR2      @Z40MSCD
+&STRIP   SETC  '&CHARS(2)'(3,&K-3)      REMOVE REGNAM FROM PARM
+         ST    &STRIP,36(0,1)           SET CHAR ARRANGEMENT TBL 2 ADDR
+.CH3REG  ANOP                                                  @Z40MSCD
+         AIF   (&CH3NREG EQ (0)).CH4REG CHAR3 NOT IN REG       @Z40MSCD
+&K       SETA  K'&CHARS(3)              NO.CHAR IN CHARS3      @Z40MSCD
+&STRIP   SETC  '&CHARS(3)'(3,&K-3)      REMOVE REGNAME FROM PARM
+         ST    &STRIP,40(0,1)           SET CHAR ARRANGEMENT TBL 3 ADDR
+.CH4REG  ANOP                                                  @Z40MSCD
+         AIF   (&CH4NREG EQ (0)).MSGREG CHARS4 NOT IN REGISTER @G38ESMH
+&K       SETA  K'&CHARS(4)              NO. CHAR IN CHARS4     @Z40MSCD
+&STRIP   SETC  '&CHARS(4)'(3,&K-3)      REMOVE REGNAM FROM PARM
+         ST    &STRIP,44(0,1)           SET CHAR ARRANGEMENT TBL 4 ADDR
+.MSGREG  AIF   (NOT &MSGANRG).LDCBREG   MSGAREA NOT IN REGISTER@G38ESMH
+&STRIP   SETC  '&MSGAREA'(2,K'&MSGAREA-2) REMOVE REG. NAME     @G38ESMH
+         ST    &STRIP,48(0,1)           SET MSGAREA ADDRESS
+.*                                                             @G38ESMH
+.LDCBREG AIF   (NOT &LDCBNRG).SVC81     LIBDCB NOT IN REG.     @G38ESMH
+&STRIP   SETC  '&LIBDCB'(2,K'&LIBDCB-2)                        @G38ESMH
+         ST    &STRIP,52(0,1)           SET LIBDCB ADDRESS
+.*                                                             @G38ESMH
+.* ********************                                        @Z40MSCD
+.*  ISSUE SVC 81                                               @Z40MSCD
+.* ********************                                        @Z40MSCD
+.SVC81   ANOP                                                  @Z40MSCD
+*
+         SVC   81                       ISSUE SETPRT SVC
+.EXIT    ANOP                                                  @Z40MSCD
+*
+         MEXIT                                                 @Z40MSCD
+.* ********************                                        @Z40MSCD
+.*  MOVE FROM CODE GENERATED BY EXEC TO SETPRT PARM LIST       @Z40MSCD
+.* ********************                                        @Z40MSCD
+.MOVEIT  ANOP                                                  @Z40MSCD
+         MVC   &TO.(&LENG,1),IHB&NO.A+&FROM MOVE TO LIST
+&FROM    SETA  &FROM+&LENG              INCREMENT FROM PTR     @Z40MSCD
+&LENG    SETA  0                        RESET LENGTH           @Z40MSCD
+&TO      SETA  0                        RESET TO PTR           @Z40MSCD
+         AGO   .BEGIN10                 GO LOOK FOR DC         @Z40MSCD
+         MEND                                                  @Z40MSCD
+

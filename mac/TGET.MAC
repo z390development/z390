@@ -1,0 +1,88 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 11/30/05                                                 *
+.*********************************************************************
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.*********************************************************************
+.*
+.* TGET BUFFER,LBUFFER,OPTIONS
+.*
+.*     BUFFER  - RX or reg pointer to TN3290 data stream buffer
+.*     LBUFFER - absolute value or reg length of buffer
+.*     OPTIONS - the follwing options may be coded:                  
+.*                 EDIT   - read text (default)
+.*                 WAIT   - wait for input (default)
+.*                 NOWAIT - return with R15=4 if no response avail.
+.*                 ASIS   - read TN3270 data stream unedited  
+.*
+.* Register input:                                           
+.*
+.* R0HL = FLAGS
+.*           x'8000' - TGET
+.*           x'4000' - TPUT
+.*           x'2000' - WAIT/NOWAIT
+.*           x'1000' - EDIT/ASIS        
+.* R0LL = LBUFF
+.* R1   = A(BUFF)
+.*********************************************************************
+.* 12/11/05 RPI47 - add TGET/TPUT support for GUI window
+.*********************************************************************
+&N       TGET  &BUFF,&LBUFF  
+&TGET    SETB  1
+&TPUT    SETB  0
+&WAIT    SETB  1
+&EDIT    SETB  1
+.CHKOPT  ANOP
+&NP      SETA  N'&SYSLIST
+&I       SETA  2
+.OPTLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT &NP).OPTEND
+         AIF   (&SYSLIST(&I) EQ 'EDIT').EDIT
+         AIF   (&SYSLIST(&I) EQ 'NOEDIT').NOEDIT
+         AIF   (&SYSLIST(&I) EQ 'ASIS').NOEDIT
+         AIF   (&SYSLIST(&I) EQ 'WAIT').WAIT
+         AIF   (&SYSLIST(&I) EQ 'NOWAIT').NOWAIT
+         MNOTE 12,'TGET INVALID OPTION - &SYSLIST(&I)'
+         AGO   .OPTLOOP
+.EDIT    ANOP
+&EDIT    SETB  1
+         AGO   .OPTLOOP
+.NOEDIT  ANOP
+&EDIT    SETB  0
+         AGO   .OPTLOOP
+.WAIT    ANOP
+&WAIT    SETB  1
+         AGO   .OPTLOOP
+.NOWAIT  ANOP
+&WAIT    SETB  0
+         AGO   .OPTLOOP
+.OPTEND  ANOP
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   ('&BUFF'(1,1) EQ '(').RECREG
+         LA    1,&BUFF
+         AGO   .CHKLEN
+.RECREG  ANOP
+         AIF   (&LBUFF(1) EQ '1' OR &LBUFF(1) EQ 'R1').CHKLEN  RPI163
+         LR    1,&BUFF(1)
+.CHKLEN  ANOP
+         AIF   ('&LBUFF'(1,1) EQ '(').LENREG
+         LA    0,&LBUFF
+         AGO   .SVC
+.LENREG  ANOP
+         AIF   (&LBUFF(1) NE 1).LENREGOK
+         MNOTE 12,'TGET INVALID LENGTH REGISTER - &LBUFF(1)'
+.LENREGOK ANOP
+         AIF   (&LBUFF(1) EQ '0' OR &LBUFF(1) EQ 'R0').SVC  RPI163
+         LR    0,&LBUFF(1)
+.SVC     ANOP
+         IILH  0,B'&TGET&TPUT&WAIT&EDIT.000000000000'
+         SVC   93 R0LH=FLAGS,R0LL=LBUFF,R1=A(LBUFF)
+         MEND
+

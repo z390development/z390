@@ -1,0 +1,31 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /* MACCOMP Y-2 SC1CL/PZD81                                         */
+* /* MACSTAT Y-2 73269/015032,VS02296                                */
+         MACRO
+&NAME    ASCBCHAP  &POSIT,&POSIT2
+* /* MACDATE Y-2 73269                                               */
+         AIF   ('&POSIT' EQ '').ERR1
+         AIF   ('&POSIT2' NE '').ERR2
+         AIF   ( ('&POSIT' NE 'MOVE') AND ('&POSIT' NE 'ADD')          *
+               AND ('&POSIT' NE 'DELETE') ).ERR
+         AIF   ('&POSIT' NE 'MOVE').X1
+&NAME    SR    0,0                     ENTRY CODE FOR MOVE OPTION
+         AGO   .X3
+.X1      ANOP
+         AIF   ('&POSIT' NE 'ADD').X2
+&NAME    LA    0,1(0,0)                ENTRY CODE FOR ADD OPTIO@YM02296
+         AGO   .X3
+.X2      ANOP
+&NAME    LA    0,2(0,0)                CODE FOR DELETE OPTION  @YM02296
+.X3      ANOP
+         L     15,CVTPTR(0,0)          ADDRESS OF CVT          @YM02296
+         L     15,CVTVEAC0-CVTMAP(,15) ADDRESS OF ASCBCHAP ROUTINE
+         BALR  14,15                   INVOKE ASCBCHAP
+         MEXIT
+.ERR     IHBERMAC 1001,,&POSIT         ISSUE MNOTE, INVALID OPERAND
+         MEXIT
+.ERR1    IHBERMAC 1006,POSITIONAL      ISSUE MNOTE, MISSING OPERAND
+         MEXIT
+.ERR2    IHBERMAC 1001,,&POSIT2        ISSUE MNOTE, MORE THAN ONE OPRND
+         MEND
+

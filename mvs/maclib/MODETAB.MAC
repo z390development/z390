@@ -1,0 +1,19 @@
+.* MVS 3.8J PUBLIC DOMAIN
+          MACRO
+&NAME     MODETAB
+          GBLB  &ERRCK
+          GBLA  &ENTRYCT
+          AIF   ('&ERRCK' EQ '0').MODEHDR
+          MNOTE 0,'MODETAB MACRO ISSUED AGAIN - DISREGARDED'
+          AGO   .MODEND
+.MODEHDR  ANOP
+&NAME     CSECT
+          DC    X'C0'                  CONTROL BLOCK ID
+          DC    X'00'                  RESERVED
+          DC    XL2'00'                NO. OF TABLE ENTERIES
+          DC    XL4'00'                RESERVED
+&ENTRYCT  SETA  0
+&ERRCK    SETB  1
+.MODEND   ANOP
+          MEND
+

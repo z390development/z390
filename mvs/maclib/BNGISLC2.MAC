@@ -1,0 +1,116 @@
+.* MVS 3.8J PUBLIC DOMAIN
+***********************************************************************
+*                                                                     *
+* MODULE NAME = BNGISLC2                                              *
+*                                                                     *
+* DESCRIPTIVE NAME =  IMS DEMF 'LOCAL & REMOTE TEXT' SCREEN MODULE    *
+*                                                                     *
+*                                                                     *
+* STATUS = RELEASE 1, LEVEL 1                                         *
+*                                                                     *
+* FUNCTION = DEFINES THE FORMAT OF 'LOCAL & REMOTE TEXT' SCREEN USING *
+*            BOTH MESSAGE INPUT DESCRIPTOR (MID) AND MESSAGE OUTPUT   *
+*            DESCRIPTOR (MOD) FOR THE IMS APPLICATION PROGRAMS,       *
+*            BNGILOCL AND BNGIRMOT.                                   *
+*                                                                     *
+* NOTES = NONE                                                        *
+*                                                                     *
+*    DEPENDENCIES = NONE                                              *
+*                                                                     *
+*    RESTRICTIONS = NONE                                              *
+*                                                                     *
+*    REGISTER CONVENTIONS = NONE                                      *
+*                                                                     *
+*    PATCH LABEL = NONE                                               *
+*                                                                     *
+* MODULE TYPE = IMS SCREEN                                            *
+*                                                                     *
+*    PROCESSOR = ASSEMBLER H                                          *
+*                                                                     *
+*    MODULE SIZE =  846 DECIMAL BYTES (FOR 3277 MODEL 2)              *
+*                =  398 DECIMAL BYTES (FOR 3277 MODEL 1)              *
+*                                                                     *
+*    ATTRIBUTES = SERIALLY REUSABLE                                   *
+*                                                                     *
+* ENTRY POINT = BNGIL2                                                *
+*                                                                     *
+*    PURPOSE = SEE FUNCTION                                           *
+*                                                                     *
+*    LINKAGE = MESSAGE INPUT DESCRIPTOR (MID) NAME  : BNGIILC2        *
+*              MESSAGE OUTPUT DESCRIPTOR (MOD) NAME : BNGIOLC2        *
+*                                                                     *
+* EXIT-NORMAL = NONE                                                  *
+*                                                                     *
+* EXIT-ERROR  = NONE                                                  *
+*                                                                     *
+* EXTERNAL REFERENCE =  NONE                                          *
+*                                                                     *
+*    ROUTINES = NONE                                                  *
+*                                                                     *
+*    DATA AREAS = N/A                                                 *
+*                                                                     *
+*    CONTROL BLOCK = NONE                                             *
+*                                                                     *
+* TABLES = NONE                                                       *
+*                                                                     *
+* MACROS = PRINT, FMT, DIV, DPAGE, DFLD, DEV, FMTEND, MSG, SEG,       *
+*          MFLD, MSGEND                                               *
+*                                                                     *
+* CHANGE ACTIVITIES AS FOLLOWS:                                       *
+* CHANGE 01   11/15/77  PROLOGUE ADDED                                *
+* C043000-043500,052000                                        @OY21567
+* A040000                                                      @OY21567
+*DUMMY APAR TO CORRECT PREREQ STRINGS ON PREVIOUS PTF'S        @OZ36693
+* C043300,052100                                               @OZ37607
+*                                                                     *
+***********************************************************************
+         PRINT NOGEN
+BNGIL2   FMT
+         DEV   TYPE=(3270,2),FEAT=(IGNORE)
+         DIV   TYPE=INOUT
+         DPAGE FILL=PT,CURSOR=((6,21))
+FLD1     DFLD  POS=(6,22),LTH=11,ATTR=(MOD,PROT,HI,NUM)
+FLD2     DFLD  POS=(6,34),LTH=27,ATTR=(PROT,ALPHA,HI)
+FLD3     DFLD  POS=(8,22),LTH=7,ATTR=(PROT,NUM,HI)
+FLD7     DFLD  POS=(8,30),LTH=31,ATTR=(PROT,NUM)
+FLD11    DFLD  POS=(9,21),LTH=40,ATTR=(PROT,NUM)
+FLD15    DFLD  POS=(10,21),LTH=40,ATTR=(PROT,NUM)
+FLD19    DFLD  POS=(11,21),LTH=40,ATTR=(PROT,NUM)
+FLD23    DFLD  POS=(12,21),LTH=40,ATTR=(PROT,NUM)
+FLD27    DFLD  POS=(13,21),LTH=40,ATTR=(PROT,NUM)
+FLD31    DFLD  POS=(14,21),LTH=40,ATTR=(PROT,NUM)
+FLD35    DFLD  POS=(15,21),LTH=40,ATTR=(PROT,NUM)
+FLD39    DFLD  POS=(16,21),LTH=40,ATTR=(PROT,NUM)
+FLD43    DFLD  POS=(17,21),LTH=40,ATTR=(PROT,NUM)
+FLD47    DFLD  POS=(18,21),LTH=40,ATTR=(PROT,NUM)              @OY21567
+         DEV   TYPE=(3270,1),FEAT=(IGNORE)
+         DIV   TYPE=INOUT
+         DPAGE FILL=PT,CURSOR=((1,2))
+FLD1     DFLD  POS=(1,2),LTH=11,ATTR=(MOD,PROT,HI,NUM)
+FLD2     DFLD  POS=(1,14),LTH=27,ATTR=(PROT,ALPHA,HI)
+FLD3     DFLD  POS=(2,2),LTH=7,ATTR=(PROT,NUM,HI)              @OY21567
+FLD7SM   DFLD  POS=(2,10),LTH=431,ATTR=(PROT,NUM)              @OZ37607
+         FMTEND
+BNGIOLC2 MSG   TYPE=OUTPUT,OPT=1,NXT=BNGIILC2,SOR=(BNGIL2,IGNORE)
+SEG1     SEG
+         MFLD  FLD1,LTH=11
+         MFLD  FLD2,LTH=27
+         MFLD  FLD3,LTH=7
+         MFLD  FLD7,LTH=31
+         MFLD  FLD11,LTH=40
+         MFLD  FLD15,LTH=40
+         MFLD  FLD19,LTH=40
+         MFLD  FLD23,LTH=40
+         MFLD  FLD27,LTH=40
+         MFLD  FLD31,LTH=40
+         MFLD  FLD35,LTH=40
+         MFLD  FLD39,LTH=40
+         MFLD  FLD43,LTH=40
+         MFLD  FLD47,LTH=40                                    @OY21567
+         MFLD  FLD7SM,LTH=431                                  @OZ37607
+         MSGEND
+BNGIILC2 MSG TYPE=INPUT,OPT=1,SOR=BNGIL2
+SEG1     SEG
+         MFLD  FLD1,LTH=11,FILL=C' '
+         MSGEND
+         END

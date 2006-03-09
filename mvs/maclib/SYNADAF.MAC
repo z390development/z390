@@ -1,0 +1,53 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME   SYNADAF &ACSMETH=,&PARM1=,&PARM2=
+         LCLC  &CB1
+         AIF   (T'&ACSMETH EQ 'O').AMERR
+         AIF   ('&ACSMETH' EQ '(0)').AMERR
+&CB1     SETC  '&ACSMETH'(1,1)
+         AIF   ('&CB1' EQ '(').AMERR
+&CB1     SETC  '(0)'
+         AIF   ('&ACSMETH' EQ 'EXCP').AMCOM
+&CB1     SETC  '(1)'
+         AIF   ('&ACSMETH' EQ 'BPAM').AMCOM
+&CB1     SETC  '(2)'
+         AIF   ('&ACSMETH' EQ 'BSAM').AMCOM
+&CB1     SETC  '(3)'
+         AIF   ('&ACSMETH' EQ 'QSAM').AMCOM
+&CB1     SETC  '(4)'
+         AIF   ('&ACSMETH' EQ 'BDAM').AMCOM
+&CB1     SETC  '(5)'
+         AIF   ('&ACSMETH' EQ 'BISAM').AMCOM
+&CB1     SETC  '(6)'
+         AIF   ('&ACSMETH' EQ 'QISAM').AMCOM
+&CB1     SETC  '(7)'
+         AIF   ('&ACSMETH' EQ 'BTAM').AMCOM
+&CB1     SETC  '(8)'
+         AIF   ('&ACSMETH' EQ 'QTAM').AMCOM
+&CB1     SETC  '(9)'
+         AIF   ('&ACSMETH' EQ 'GAM').AMCOM
+.AMERR   MNOTE 8,' ERROR ** ACCESS METHOD NOT SPEC. OR ILLEGAL '  15138
+         MEXIT                                                    15138
+.AMCOM   ANOP                                                     15138
+&NAME    LA    15,0(0,15)              ZERO HIGH ORDER BYTE       15138
+         CNOP  0,4                                                15138
+         O     15,*+8         SET ACCESS METHOD IN REG. 15
+         BC    15,*+8         BRANCH AROUND LIST
+         DC    AL1&CB1        ACCESS METHOD CODE
+         DC    AL3(0)
+.PARMA   AIF   (T'&PARM1 EQ 'O').PARMB
+         AIF   ('&PARM1' EQ '(1)').PARMB
+&CB1     SETC  '&PARM1'(1,1)
+         AIF   (NOT ('&CB1' EQ '(')).SYMA
+         LR    1,&PARM1(1)    GET ADDRESS IN REG. 1
+         AGO   .PARMB
+.SYMA    LA    1,&PARM1       GET ADDRESS IN REG. 1
+.PARMB   AIF   (T'&PARM2 EQ 'O').COM
+         AIF   ('&PARM2' EQ '(0)').COM
+&CB1     SETC  '&PARM2'(1,1)
+         AIF   (NOT ('&CB1' EQ '(')).SYMB
+         LR    0,&PARM2(1)    SET PARAMETER IN REG. 0
+         AGO   .COM
+.SYMB    LA    0,&PARM2(1)    GET PARAMETER IN REG. 0
+.COM     SVC   68             ISSUE SVC
+         MEND

@@ -1,0 +1,251 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /* START OF SPECIFICATIONS****
+*01*  MODULE-NAME = EVENTS
+*01*  DESCRIPTIVE-NAME = FAST MULTIPLE WAIT USER MACRO
+*01*  PROCESSOR = ASSEM
+**** END OF SPECIFICATIONS ***/
+         MACRO
+&NAME    EVENTS  &ENTRIES=,&TABLE=,&WAIT=,&LAST=,&ECB=,&BRANCH=NO
+.*                                                             @Y30HPVA
+.*                                                             @X31ED32
+         LCLA  &X                                              @X31ED32
+         LCLB  &B(7)                                           @X30HPVA
+         LCLC  &C(7),&PCHAR                                    @X30HPVA
+.*                                                             @X31ED32
+&B(1)    SETB  (('&ENTRIES' NE '') AND ('&ENTRIES' NE 'DEL'))  @X31ED32
+&B(2)    SETB  ('&ENTRIES' EQ 'DEL')                           @X31ED32
+&B(3)    SETB  ('&WAIT' NE '')                                 @X31ED32
+&B(4)    SETB  ('&TABLE' NE '')                                @X31ED32
+&B(5)    SETB  ('&LAST' NE '')                                 @X31ED32
+&B(6)    SETB  ('&ECB' NE '')                                  @X31ED38
+&B(7)    SETB  ('&BRANCH' NE 'NO')                             @Y30HPVA
+.*                                                             @X31ED32
+&C(3)    SETC  'WAIT'                                          @X31ED32
+&C(4)    SETC  'TABLE'                                         @X31ED32
+&C(5)    SETC  'LAST'                                          @X31ED32
+&C(6)    SETC  'ECB'                                           @X31ED38
+&C(7)    SETC  'BRANCH=YES'                                    @Y30HPVA
+.*                                                             @X31ED32
+.************************************************************* @X31ED32
+.*                                                           * @X31ED32
+.****       CHECK FOR MUTUALLY EXCLUSIVE PARAMETERS        *** @X31ED32
+.*                                                           * @X31ED32
+.************************************************************* @X31ED32
+.*                                                             @X31ED32
+&X       SETA  3                                               @X31ED32
+.EVLOOP1 ANOP                                                  @X31ED32
+         AIF   (&B(1) AND &B(&X)).ERROR1                       @X31ED32
+&X       SETA  &X+1                                            @X31ED32
+         AIF   (&X LE 7).EVLOOP1                               @X30HPVA
+         AIF   (&B(2) AND &B(3)).ERROR2                        @X31ED32
+         AIF   (&B(2) AND &B(5)).ERROR3                        @X31ED32
+         AIF   (&B(2) AND &B(6)).ERROR8                        @X31ED38
+         AIF   (&B(2) AND &B(7)).ERROR10                       @Y30HPVA
+         AIF   (&B(5) AND &B(6)).ERROR7                        @X31ED38
+.*                                                             @X31ED32
+.************************************************************* @X31ED32
+.*                                                           * @X31ED32
+.****      CHECK FOR INCOMPLETE PARAMETER COMBINATIONS     *** @X31ED32
+.*                                                           * @X31ED32
+.************************************************************* @X31ED32
+.*                                                             @X31ED32
+         AIF   (&B(4) AND NOT(&B(2) OR &B(3) OR &B(6))).ERROR4 @X31ED38
+         AIF   (&B(3) AND NOT (&B(4))).ERROR4                  @X31ED38
+         AIF   (&B(5) AND NOT (&B(4))).ERROR4                  @X31ED38
+         AIF   (&B(6) AND NOT (&B(4))).ERROR4                  @X31ED38
+         AIF   (NOT(&B(1) OR &B(4))).ERROR4                    @X31ED38
+.*                                                             @X31ED32
+.************************************************************* @X31ED32
+.*                                                           * @X31ED32
+.****         CHECK FOR INVALID SINGLE PARAMETERS          *** @X31ED32
+.*                                                           * @X31ED32
+.************************************************************* @X31ED32
+.*                                                             @X31ED32
+         AIF   (T'&ENTRIES NE 'N').EV01                        @X31ED32
+         AIF   ('&ENTRIES'(1,1) EQ '(').EV01                   @X31ED32
+         AIF   ((&ENTRIES LT 1) OR (&ENTRIES GT 32767)).ERROR5 @X31ED38
+         AGO   .EV10                                           @X31ED32
+.EV01    ANOP                                                  @X31ED32
+         AIF   (&B(7) AND ('&BRANCH' NE 'YES')).ERROR9         @Y30HPVA
+         AIF   (NOT &B(3)).EV10                                @X31ED32
+         AIF   (('&WAIT' NE 'YES') AND ('&WAIT' NE 'NO')).ERR6 @X31ED32
+.*                                                             @X31ED32
+.EV10    ANOP                                                  @X31ED32
+&NAME    CNOP  0,4                                             @Y30HPVA
+         AIF   (&B(1)).EVCREAT         CHECK FOR CREATE REQUEST@X31ED32
+.*                                                             @X31ED32
+.************************************************************* @X31ED32
+.*                                                           * @X31ED32
+.****   GENERATE CODE TO INITIALIZE REG 1 WITH TABLE ADR   *** @X31ED32
+.*                                                           * @X31ED32
+.************************************************************* @X31ED32
+.*                                                             @X31ED32
+         AIF   ('&TABLE'(1,1) EQ '(').EV20                     @X31ED32
+         L     1,&TABLE                LOAD TABLE ADDRESS      @X31ED32
+         AGO   .EV25                                           @X31ED32
+.EV20    ANOP                                                  @X31ED32
+         AIF   ('&TABLE(1)' EQ '1').EV25                       @X31ED32
+         LR    1,&TABLE(1)             LOAD TABLE ADDRESS      @X31ED32
+.EV25    ANOP                                                  @X31ED32
+.*                                                             @X31ED32
+         AIF   (&B(2)).EVDELET         CHECK FOR DELETE REQUEST@X31ED32
+.*                                                             @X31ED32
+.************************************************************* @X31ED32
+.*                                                           * @X31ED32
+.****         GENERATE REG 0 INPUT FOR TYPE 1 SVC          *** @X31ED32
+.*                                                           * @X31ED32
+.************************************************************* @X31ED32
+.*                                                             @X31ED32
+         AIF   (&B(5)).EV30            CHECK FOR LAST SPECIFIED@X31ED32
+         AIF   (NOT &B(6)).EV29D       BRANCH IF NOT ECB       @X31ED38
+         AIF   ('&ECB'(1,1) EQ '(').EV29                       @X31ED38
+         L     0,&ECB                  LOAD ECB ADDR           @X31ED38
+         AGO   .EV29A                                          @X31ED38
+.EV29    ANOP                                                  @X31ED38
+         AIF   ('&ECB(1)' EQ '0').EV29A                        @X31ED38
+         LR    0,&ECB(1)               LOAD ECB ADDR           @X31ED38
+.EV29A   ANOP                                                  @X31ED38
+         AIF   ('&WAIT' EQ 'NO').EV29B                         @X31ED38
+         AIF   ('&WAIT' EQ 'YES').EV29C                        @X31ED38
+         B     *+6                     BRANCH AROUND CONSTANT  @X31ED38
+         DC    X'2000'                 ECB CONSTANT            @X31ED38
+         ICM   0,8,*-2                 INDICATE ECB            @X31ED38
+         AGO   .EVTYP1                                         @X31ED38
+.EV29B   ANOP                                                  @X31ED38
+         B     *+6                     BRANCH AROUND CONSTANT  @X31ED38
+         DC    X'6000'                 CONST FOR ECB, NO WAIT  @X31ED38
+         ICM   0,8,*-2                 INDICATE ECB, NO WAIT   @X31ED38
+         AGO   .EVTYP1                                         @X31ED38
+.EV29C   ANOP                                                  @X31ED38
+         B     *+6                     BRANCH AROUND CONSTANT  @X31ED38
+         DC    X'A000'                 CONSTANT FOR ECB, WAIT  @X31ED38
+         ICM   0,8,*-2                 INDICATE ECB, WAIT      @X31ED38
+         AGO   .EVTYP1                                         @X31ED38
+.EV29D   ANOP                                                  @X31ED38
+         AIF   ('&WAIT' EQ 'NO').EV28  CHECK FOR WAIT=NO       @X31ED32
+         LA    0,1(,0)                 INDICATE WAIT           @X31ED38
+         SLL   0,31(0)                                         @X31ED38
+         AGO   .EVTYP1                 GO TO ISSUE SVC         @X31ED32
+.*                                                             @X31ED32
+.EV28    ANOP                                                  @X31ED32
+         LA    0,1(,0)                                         @X31ED32
+         SLL   0,30(0)                 NO WAIT, NO LAST        @X31ED32
+         AGO   .EVTYP1                 GO TO ISSUE SVC         @X31ED32
+.*                                                             @X31ED32
+.EV30    ANOP                                                  @X31ED32
+         AIF   ('&LAST'(1,1) EQ '(').EV35                      @X31ED32
+         L     0,&LAST                 LOAD LAST ADDRESS       @X31ED32
+         AGO   .EV40                                           @X31ED32
+.EV35    ANOP                                                  @X31ED32
+         AIF   ('&LAST(1)' EQ '0').EV40  ALREADY IN REG 0      @X31ED32
+         LR    0,&LAST(1)              LOAD LAST ADDRESS       @X31ED32
+.EV40    ANOP                                                  @X31ED32
+         AIF   ('&WAIT' EQ 'NO').EV45                          @X31ED32
+         B     *+6                     BRANCH AROUND CONSTANT  @X31ED38
+         DC    X'8000'                 CONSTANT FOR WAIT       @X31ED38
+         ICM   0,8,*-2                 INDICATE WAIT           @X31ED38
+         AGO   .EVTYP1                 GO TO ISSUE SVC         @X31ED32
+.EV45    ANOP                                                  @X31ED32
+         B     *+6                     BRANCH AROUND CONSTANT  @X31ED32
+         DC    X'4000'                 NO WAIT CONSTANT        @X31ED32
+         ICM   0,8,*-2                 INDICATE NO WAIT        @X31ED32
+         AGO   .EVTYP1                                         @X31ED32
+.*                                                             @X31ED32
+.************************************************************* @X31ED32
+.*                                                           * @X31ED32
+.****    INITIALIZE REGS 0 AND 1 FOR ENTRIES=N REQUEST     *** @X31ED32
+.*                                                           * @X31ED32
+.************************************************************* @X31ED32
+.*                                                             @X31ED32
+.EVCREAT ANOP                                                  @X31ED32
+         AIF   ('&ENTRIES'(1,1) EQ '(').EV50                   @X31ED32
+         B     *+8                     BRANCH AROUND CONSTANT  @X31ED32
+         DC    X'80'                   CREATE INDICATOR        @X31ED32
+         DC    AL3(&ENTRIES)           NUMBER OF ENTRIES       @X31ED32
+         L     0,*-4                   LOAD FLAG AND NUMBER    @X31ED32
+         AGO   .EV60                                           @X31ED32
+.*                                                             @X31ED32
+.EV50    ANOP                                                  @X31ED32
+         AIF   ('&ENTRIES(1)' EQ '0').EV55                     @X31ED32
+         LR    0,&ENTRIES(1)           LOAD ENTRIES NUMBER     @X31ED32
+.EV55    ANOP                                                  @X31ED32
+         B     *+6                     BRANCH AROUND CONSTANT  @X31ED32
+         DC    X'8000'                 CREATE INDICATOR        @X31ED32
+         ICM   0,8,*-2                 LOAD ENTRIES INDICATOR  @X31ED32
+.*                                                             @X31ED32
+.EV60    ANOP                                                  @X31ED32
+         XR    1,1                     CLEAR REGISTER 1        @X31ED32
+         AGO   .EVTYP2                                         @X31ED32
+.*                                                             @X31ED32
+.************************************************************* @X31ED32
+.*                                                           * @X31ED32
+.****      INITIALIZE REG 0 FOR ENTRIES=DEL REQUEST        *** @X31ED32
+.*                                                           * @X31ED32
+.************************************************************* @X31ED32
+.*                                                             @X31ED32
+.EVDELET ANOP                                                  @X31ED32
+         XR    0,0                     CLEAR REGISTER 0        @X31ED32
+.*                                                             @X31ED32
+.************************************************************* @X31ED32
+.*                                                           * @X31ED32
+.****                      ISSUE SVC                       *** @X31ED32
+.*                                                           * @X31ED32
+.************************************************************* @X31ED32
+.*                                                             @X31ED32
+.EVTYP2  ANOP                                                  @X31ED32
+         LA    15,5(,0)                EXTENDED ROUTER NUMBER  @X31ED32
+         SVC   122                     ISSUE TYPE 2 ESR SVC    @X31ED32
+         MEXIT                                                 @X31ED32
+.EVTYP1  ANOP                                                  @X31ED32
+         AIF   (&B(7)).BRENTY                                  @Y30HPVA
+         XR    15,15                   CLEAR RESERVED REGISTER @X31ED32
+         SVC   125                     ISSUE TYPE 1 SVC        @X31ED32
+         MEXIT                                                 @X31ED32
+.BRENTY  ANOP                                                  @Y30HPVA
+         L     15,CVTPTR(0,0)          LOAD CVT POINTER        @Y30HPVA
+         L     15,CVTEVENT-CVTMAP(0,15) LOAD EVENTS ENTRY      @Y30HPVA
+*                                      POINT ADDRESS           @Y30HPVA
+         AIF   ('&WAIT' EQ 'YES').WAITYES                      @ZA03759
+         BALR  14,15                   CALL EVENTS             @Y30HPVA
+         MEXIT                                                 @Y30HPVA
+.WAITYES ANOP                                                  @Y30HPVA
+         BR    15                      GO TO EVENTS            @Y30HPVA
+         MEXIT                                                 @Y30HPVA
+.*                                                             @X31ED32
+.************************************************************* @X31ED32
+.*                                                           * @X31ED32
+.****                     ERROR EXITS                      *** @X31ED32
+.*                                                           * @X31ED32
+.************************************************************* @X31ED32
+.*                                                             @X31ED32
+.ERROR1  ANOP                                                  @X31ED32
+&PCHAR   SETC  'ENTRIES=&ENTRIES'                              @X31ED32
+         IHBERMAC  1020,&PCHAR,&C(&X)                          @X31ED32
+         MEXIT                                                 @X31ED32
+.ERROR2  ANOP                                                  @X31ED32
+         IHBERMAC  1020,ENTRIES,WAIT                           @X31ED32
+         MEXIT                                                 @X31ED32
+.ERROR3  ANOP                                                  @X31ED32
+         IHBERMAC  1020,ENTRIES,LAST                           @X31ED32
+         MEXIT                                                 @X31ED32
+.ERROR4  ANOP                                                  @X31ED32
+         IHBERMAC  24                                          @X31ED32
+         MEXIT                                                 @X31ED32
+.ERROR5  ANOP                                                  @X31ED32
+         IHBERMAC  1001,ENTRIES,&ENTRIES                       @X31ED32
+         MEXIT                                                 @X31ED32
+.ERR6    ANOP                                                  @X31ED32
+         IHBERMAC  1001,WAIT,&WAIT                             @X31ED32
+         MEXIT                                                 @X31ED38
+.ERROR7  ANOP                                                  @X31ED38
+         IHBERMAC 1020,LAST,ECB                                @X31ED38
+         MEXIT                                                 @X31ED38
+.ERROR8  ANOP                                                  @X31ED38
+         IHBERMAC 1020,ENTRIES,ECB                             @X31ED38
+         MEXIT                                                 @Y30HPVA
+.ERROR9  ANOP                                                  @Y30HPVA
+         IHBERMAC  1001,BRANCH,&BRANCH                         @Y30HPVA
+         MEXIT                                                 @Y30HPVA
+.ERROR10 ANOP                                                  @Y30HPVA
+         IHBERMAC  1020,ENTRIES,&C(7)                          @Y30HPVA
+         MEND                                                  @X31ED32

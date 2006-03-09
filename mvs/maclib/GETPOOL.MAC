@@ -1,0 +1,66 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GETPOOL &DCB,&NO,&LTH,&HIARCHY=
+         LCLA  &HX
+         AIF   ('&DCB' EQ '').E1
+         AIF   ('&NO' EQ '').E2
+         AIF   ('&HIARCHY' EQ '0' OR '&HIARCHY' EQ '1').HIARCHY
+         AIF   ('&HIARCHY' NE '').E4
+&HX      SETA  0                        NO HIARCHY SPEC'D.
+         AGO   .TESTNO
+.HIARCHY ANOP
+&HX      SETA  &HIARCHY+1    HX IS 0,1, OR 2 FOR HIARCHY NONE,0, OR 1.
+.TESTNO  ANOP
+&NAME    IHBINNRA &DCB                  LOAD DCB INTO REG 1
+         AIF   ('&NO' NE '(0)').LOADR
+         STH   &NO(1),24(0,1)                     STORE LENGTH IN DCB
+         SRL   &NO(1),16(0)                       MOVE BUFFER NUMBER
+         STH   &NO(1),22(0,1)                     STORE BUFFER NUMBER
+.LOADR   ANOP
+         IHBINNRA ,&HX                  LOAD HX INTO REG 0
+         AIF   ('&LTH' EQ '&LTH(1)' AND '&NO' EQ '&NO(1)').CONT
+         AIF   ('&NO' EQ '&NO(1)').NUMB
+         AIF   ('&NO' EQ '(0)').LINK
+         STH   &NO(1),22(0,1)                    STORE BUFFER NUMBER
+         AGO   .CHKLTH
+.NUMB    AIF   (T'&NO NE 'N').USEDC
+         AIF   (&NO GT 4095).USEDC
+         LA    14,&NO.(0,0)                      GET BUFFER NUMBER
+         STH   14,22(0,1)                        STORE INTO DCB
+         AGO   .CHKLTH
+.USEDC   B     *+6                               BRANCH AROUND VALUE
+         DC    AL2(&NO)                          NUMBER OF BUFFERS
+         MVC   22(2,1),*-2                       STORE INTO DCB
+.CHKLTH  AIF   ('&NO' EQ '(0)').LINK
+         AIF   ('&LTH' EQ '').E3
+         AIF   ('&LTH' EQ '&LTH(1)').NUMBL
+         STH   &LTH(1),24(0,1)                   STORE BUFFER LENGTH
+         AGO   .LINK
+.NUMBL   AIF   (T'&LTH NE 'N').USEDCL
+         AIF   (&LTH GT 4095).USEDCL
+         LA    14,&LTH.(0,0)                     GET BUFFER LENGTH
+         STH   14,24(0,1)                        STORE INTO DCB
+         AGO   .LINK
+.USEDCL  B     *+6                               BRANCH AROUND VALUE
+         DC    AL2(&LTH)                         LENGTH OF BUFFERS
+         MVC   24(2,1),*-2                       STORE INTO DCB
+         AGO   .LINK
+.CONT    AIF   ('&LTH' EQ '').E3
+         B     *+8                               BRANCH AROUND VALUES
+         DC    AL2(&NO)                          NUMBER OF BUFFERS
+         DC    AL2(&LTH)                         LENGTH OF BUFFERS
+         MVC   22(4,1),*-4                       MOVE INTO DCB
+.LINK    ANOP
+         LCR   1,1
+         LINK  EP=IECQBFG1
+         MEXIT
+.E1      IHBERMAC 6                     DCB MISSING
+         MEXIT
+.E2      IHBERMAC 3                     NO MISSING
+         MEXIT
+.E3      IHBERMAC 4                     LTH MISSING
+         MEXIT
+.E4      IHBERMAC  195
+&HX      SETA  1
+         AGO   .TESTNO
+         MEND

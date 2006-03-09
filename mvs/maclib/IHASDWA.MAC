@@ -1,0 +1,1345 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%       GOTO SDWABSL1;  /*
+         MACRO
+         IHASDWA &DSECT=YES
+.*A000000                                                        Y02704
+*                                                                    */
+*%SDWABSL1 : ;
+* /*******************************************************************/
+* /*                                                                 */
+* /* THE SDWA (SYSTEM DIAGNOSTIC WORK AREA) IS USED BY BOTH (E)STA   */
+* /* EXIT ROUTINES AND FRR ROUTINES AS THE COMMUNICATION AREA        */
+* /* BETWEEN THE RTM AND THE (E)STA OR FRR WHEN ERRORS OCCUR.        */
+* /* IT IS ALSO REFERRED TO AS THE RTCA (RECOVERY TERMINATION        */
+* /* COMMUNICATION AREA). IT CONTAINS DATA CONCERNING THE ORIGINAL   */
+* /* ERROR AND ALSO CONCERNING ACTIONS OF PREVIOUSLY ENTERED         */
+* /* RECOVERY ROUTINES.                                              */
+* /*                                                                 */
+* /* METHOD OF ACCESS                                                */
+* /* BAL                                                             */
+* /*             IHASDWA DSECT =  YES                                */
+* /*                              NO                                 */
+* /* DSECT = YES IS THE DEFAULT AND WILL PRODUCE THE SDWA            */
+* /*            AS A DSECT.                                          */
+* /* DSECT = NO WILL PRODUCE THE SDWA AS A CONTINUATION OF           */
+* /*            DEFINED STORAGE. (NO DSECT CARD PRODUCED)            */
+* /* PLS                                                             */
+* /*   IF MACRO VARIABLE %SDWA9999 IS NOT EQUAL TO ','               */
+* /*   AND %SDWALVL IS NULL, THE SDWA WILL BE INCLUDED               */
+* /*   AS A LEVEL 1 STRUCTURE BASED ON SDWAPTR.                      */
+* /*                                                                 */
+* /*   IF %SDWALVL IS SPECIFIED AS A NUMBER FROM 1 TO 4              */
+* /*   THE SDWA WILL BE A NON-BASED STRUCTURE WITH THE               */
+* /*   TOP LEVEL EQUAL TO %SDWALVL.                                  */
+* /*                                                                 */
+* /*   IF SDWA9999 IS EQUAL TO ',' THE SDWA WILL                     */
+* /*   TERMINATE WITH A COMMA RATHER THAN A                          */
+* /*   SEMI-COLON.                                                   */
+* /*                                                                 */
+* /*                                                                 */
+* /* MACMEAN SDWA MEANS SYSTEM DIAGNOSTIC WORK AREA                  */
+* /* MACCOMP Y-1 SC1C5/PZD81                                         */
+* /* MACSTAT Y-1 72318/Y02703,Y02704                                 */
+* /* UPDATED 9/23/76 SU33                                    @G33SPHW*/
+* /*                                                                 */
+* /*******************************************************************/
+*%       GOTO SDWABSL;  /*
+         AIF ('&DSECT' EQ 'YES').SDWA001
+SDWA     DS   0D -
+         AGO  .SDWA002
+.SDWA001 ANOP
+SDWA     DSECT ,       SDWAPTR
+.SDWA002 SPACE 2
+SDWAPARM DS    A -     PARAMETER LIST ADDRESS IF (E)STA MACRO
+*                      SPECIFIED PARAM OPTION OR 0. FOR FRRS THIS
+*                      IS THE ADDRESS OF THE 6 WORD PARM AREA
+*                      RETURNED BY THE SETFRR MACRO WHEN THE
+*                      PARMAD KEYWORD IS SPECIFIED ON THE SETFRR
+SDWAFIOB DS    0A -    ADDRESS OF PURGE I/O REQUEST LIST (PIRL)
+*                      OR 0 IF HALT I/O IS REQUESTED ON ENTRY TO
+*                      RETRY ROUTINE FOR (E)STA.
+SDWAABCC DS    0BL4 -  ABEND COMPLETION CODE ON ENTRY TO EXIT ROUTINE.
+SDWACMPF DS    B -     FLAG BITS IN COMPLETION CODE.
+SDWAREQ  EQU   X'80' - ON, DUMP TO BE GIVEN. SET IF DUMP
+*                      REQUESTED BY ABEND, CALLRTM OR SETRP MACRO.
+SDWASTEP EQU   X'40' - ON, JOBSTEP TO BE TERMINATED.
+*                      SET IF STEP OPTION SPECIFIED
+*                      ON ABEND MACRO.
+SDWASTCC EQU   X'10' - ON, DON'T STORE COMPLETION CODE.
+*                      NOT USED IN OS/VS2 R2.
+SDWACMPC DS    BL3 -   SYSTEM COMPLETION CODE (FIRST 12 BITS) AND
+*                      USER COMPLETION CODE (SECOND 12 BITS).
+SDWACTL1 DS    0CL8 -  BC MODE PSW AT TIME OF ERROR
+*                      NOT INITIALIZED FOR FRRS.
+SDWACMKA DS    B -     CHANNEL INTERRUPT MASKS.
+SDWAIOA  EQU   X'FE' - I/O INTERRUPTS (ALL ZEROS OR ALL ONES).
+SDWAEXTA EQU   X'01' - EXTERNAL INTERRUPT.
+SDWAMWPA DS    B -     PSW KEY AND 'M-W-P'.
+SDWAKEYA EQU   X'F0' - PSW KEY.
+SDWAMCKA EQU   X'04' - MACHINE CHECK INTERRUPT.
+SDWAWATA EQU   X'02' - WAIT STATE.
+SDWASPVA EQU   X'01' - SUPERVISOR/PROBLEM-PROGRAM MODE.
+SDWAINTA DS    CL2 -   INTERRUPT CODE (LAST 2 BYTES OF INTERRUPT
+*                      CODE IF I/O INTERRUPT).
+SDWAPMKA DS    B -     INSTRUCTION LENGTH CODE, CONDITION CODE,
+*                      AND PROGRAM MASKS.
+SDWAILA  EQU   X'C0' - INSTRUCTION LENGTH CODE.
+SDWACCA  EQU   X'30' - LAST CONDITION CODE.
+SDWAFPA  EQU   X'08' - FIXED-POINT OVERFLOW.
+SDWADOA  EQU   X'04' - DECIMAL OVERFLOW.
+SDWAEUA  EQU   X'02' - EXPONENT UNDERFLOW.
+SDWASGA  EQU   X'01' - SIGNIFICANCE.
+SDWANXTA DS    AL3 -   ADDRESS OF NEXT INSTRUCTION TO BE EXECUTED.
+*
+SDWACTL2 DS    0CL8 -  BC MODE PSW FROM LAST PRB ON RB CHAIN.
+*                      ZERO FOR FRRS.
+SDWACMKP DS    B -     CHANNEL INTERRUPT MASKS.
+SDWAIOP  EQU   X'FE' - I/O INTERRUPTS (ALL ZEROS OR ALL ONES).
+SDWAEXTP EQU   X'01' - EXTERNAL INTERRUPT.
+SDWAMWPP DS    B -     PSW KEY AND 'M-W-P'.
+SDWAKEYP EQU   X'F0' - PSW KEY.
+SDWAMCKP EQU   X'04' - MACHINE CHECK INTERRUPT.
+SDWAWATP EQU   X'02' - WAIT STATE.
+SDWASPVP EQU   X'01' - SUPERVISOR/PROBLEM-PROGRAM MODE.
+SDWAINTP DS    CL2 -   INTERRUPT CODE (LAST 2 BYTES OF INTERRUPT
+*                      CODE IF I/O INTERRUPT).
+SDWAPMKP DS    B -     INSTRUCTION LENGTH CODE, CONDITION CODE,
+*                      AND PROGRAM MASKS.
+SDWAILP  EQU   X'C0' - INSTRUCTION LENGTH CODE.
+SDWACCP  EQU   X'30' - LAST CONDITION CODE.
+SDWAFPP  EQU   X'08' - FIXED-POINT OVERFLOW.
+SDWADOP  EQU   X'04' - DECIMAL OVERFLOW.
+SDWAEUP  EQU   X'02' - EXPONENT UNDERFLOW.
+SDWASGP  EQU   X'01' - SIGNIFICANCE.
+SDWANXTP DS    AL3 -   ADDRESS OF NEXT INSTRUCTION TO BE EXECUTED.
+*
+SDWAGRSV DS    0CL64 - GENERAL PURPOSE REGISTERS AT TIME OF ERROR
+SDWAGR00 DS    F -     GPR 0.
+SDWAGR01 DS    F -     GPR 1.
+SDWAGR02 DS    F -     GPR 2.
+SDWAGR03 DS    F -     GPR 3.
+SDWAGR04 DS    F -     GPR 4.
+SDWAGR05 DS    F -     GPR 5.
+SDWAGR06 DS    F -     GPR 6.
+SDWAGR07 DS    F -     GPR 7.
+SDWAGR08 DS    F -     GPR 8.
+SDWAGR09 DS    F -     GPR 9.
+SDWAGR10 DS    F -     GPR 10.
+SDWAGR11 DS    F -     GPR 11.
+SDWAGR12 DS    F -     GPR 12.
+SDWAGR13 DS    F -     GPR 13.
+SDWAGR14 DS    F -     GPR 14.
+SDWAGR15 DS    F -     GPR 15.
+*
+SDWANAME DS    0CL8 -  IF PROBLEM PROGRAM MODE NAME
+*                      OF ABENDING PROGRAM, OR ZERO
+*                      IF NO NAME IS AVAILABLE.
+*                      ZERO IF NOT RUNNING UNDER AN RB
+SDWARBAD DS    A -     RB ADDRESS OF ABENDING PROGRAM (IF SUPERVISOR
+*                      MODE PROGRAM RUNNING UNDER AN RB)
+         DS    XL4 -   CONTAINS ZEROS IF SUPERVISOR MODE PROGRAM
+*                      RUNNING UNDER AN RB OR IF PROGRAM NOT
+*                      RUNNING UNDER AN RB
+SDWAEPA  DS    A -     ENTRY POINT ADDRESS OF ABENDING PROGRAM.
+*                      ZERO IF NOT RUNNING UNDER AN RB
+SDWAIOBR DS    A -     POINTER TO SDWAFIOB FIELD,
+*                      OR 0 IF NO RETRY, OR 0 IF HALT I/O
+*                      IS REQUESTED FOR (E)STA EXITS.
+*                      ZERO FOR FRRS                           ICB377
+SDWAEC1  DS    0CL8    EXTENDED CONTROL PSW AT TIME OF ERROR(ABEND)
+SDWAEMK1 DS    B       INTERRUPT INFORMATION MASKS
+SDWAPER1 EQU   X'40'   ON,PROGRAM EVENT RECORDING
+*                      INTERRUPTS CAN OCCUR
+*                      OFF, PROGRAM EVENT RECORDING
+*                      INTERRUPTS CANNOT OCCUR
+SDWATRM1 EQU   X'04'   ON,ADDRESS TRANSLATION ACTIVE
+SDWAIO1  EQU   X'02'   OFF,I/0 INTERRUPTION CAN NOT OCCUR
+*                      ON,I/0 INTERRUPTIONS CAN OCCUR SUBJECT TO
+*                      TO CHANNEL MASK BITS IN CONTROL REGS 2 AND 3
+SDWAEXT1 EQU   X'01'   OFF,EXTERNAL INTERRUPTION CANNOT OCCUR
+*                      ON,EXTERNAL INTERRUPTIONS CAN OCCUR SUBJECT TO
+*                      EXTERNAL SUBCLASS MASK BITS OF CONTROL REG 0
+SDWAMWP1 DS    B       PSW KEY AND 'M-W-P'
+SDWAKEY1 EQU   X'F0'   PSW KEY
+SDWAECT1 EQU   X'08'   EXTENDED CONTROL MODE BIT
+SDWAMCK1 EQU   X'04'   OFF,MACHINE CHECK CANNOT OCCUR
+*                      ON,MACHINE CHECK DUE TO SYSTEM DAMAGE AND
+*                      INSTRUCTION-PROCESSING DAMAGE CAN OCCUR
+*                      OTHER MACHINE CHECKS SUBJECT TO MASK BITS
+*                      IN CONTROL REGISTER 14
+SDWAWAT1 EQU   X'02'   ON,CPU IN WAIT STATE
+SDWAPGM1 EQU   X'01'   ON,PROBLEM STATE
+*                      OFF, SUPERVISOR STATE
+SDWAINT1 DS    B       CONDITION CODE AND PROGRAM MASK
+SDWACC1  EQU   X'30'   CONDITION CODE
+SDWAFPO1 EQU   X'08'   FIXED POINT OVERFLOW
+SDWADEC1 EQU   X'04'   DECIMAL OVERFLOW
+SDWAEXP1 EQU   X'02'   EXPONENT UNDERFLOW
+SDWASGN1 EQU   X'01'   SIGNIFICANCE
+         DS    B       RESERVED
+SDWANXT1 DS    0F      ADDRESS OF NEXT INSTRUCTION TO BE EXECUTED.
+         DS    CL1     RESERVED
+SDWAADD1 DS    CL3     INSTRUCTION ADDRESS
+SDWAAEC1 DS    0CL8    ADDITIONAL EC MODE INFORMATION
+         DS    CL1     RESERVED
+SDWAILC1 DS    B       INSTRUCTION LENGTH CODE FOR PSW DEFINED
+*                      BY SDWAEC1
+SDWAIL1  EQU   X'06'   ILC
+SDWAINC1 DS    0CL2    INTERRUPT CODE. IF PROGRAM CHECK OCCURRED
+*                      THE SUBFIELDS ARE FURTHER DIVIDED
+         DS    CL1     RESERVED FOR IMPRECISE INTERRUPTS
+*                      ON PROGRAM CHECK INTERRUPT
+SDWAICD1 DS    B       8 BIT INTERRUPT CODE
+*                      IF PROGRAM CHECK
+SDWAIPR1 EQU   X'80'   PER INTERRUPT OCCURRED
+SDWAIMC1 EQU   X'40'   MONITOR CALL INTERRUPT OCCURRED
+SDWAIPC1 EQU   X'3F'   AN UNSOLICITED PROGRAM CHECK
+*                      HAS OCCURRED
+SDWATRAN DS    A       VIRTUAL ADDRESS CAUSING TRANSLATION
+*                      EXCEPTION
+SDWAEC2  DS    0CL8    EXTENDED CONTROL PSW FROM THE RB
+*                      LEVEL WHICH CREATED THE
+*                      ESTAE EXIT AT THE TIME IT LAST
+*                      INCURRED AN INTERRUPT OR 0 FOR ESTAI.
+*                      OR PSW USED TO GIVE FRR CONTROL
+SDWAEMK2 DS    B       INTERRUPT INFORMATION MASKS
+SDWAPER2 EQU   X'40'   ON,PROGRAM EVENT RECORDING
+*                      INTERRUPTS CAN OCCUR
+*                      OFF,PROGRAM EVENT RECORDING
+*                      INTERRUPTS CANNOT OCCUR
+SDWATRM2 EQU   X'04'   ON,ADDRESS TRANSLATION ACTIVE
+SDWAIO2  EQU   X'02'   OFF,I/0 INTERRUPTION CANNOT OCCUR
+*                      ON,I/0 INTERRUPTIONS CAN OCCUR SUBJECT TO
+*                      TO CHANNEL MASK BITS IN CONTROL REGS 2 AND 3
+SDWAEXT2 EQU   X'01'   OFF,EXTERNAL INTERRUPTION CANNOT OCCUR
+*                      ON,EXTERNAL INTERRUPTIONS CAN OCCUR SUBJECT TO
+*                      EXTERNAL SUBCLASS MASK BITS OF CONTROL REG 0
+SDWAMWP2 DS    B       PSW KEY AND 'M-W-P'
+SDWAKEY2 EQU   X'F0'   PSW KEY
+SDWAECT2 EQU   X'08'   EXTENDED CONTROL MODE BIT
+SDWAMCK2 EQU   X'04'   OFF,MACHINE CHECK CANNOT OCCUR
+*                      ON,MACHINE CHECK DUE TO SYSTEM DAMAGE AND
+*                      INSTRUCTION-PROCESSING DAMAGE CAN OCCUR
+*                      OTHER MACHINE CHECKS SUBJECT TO MASK BITS
+*                      IN CONTROL REGISTER 14
+SDWAWAT2 EQU   X'02'   ON,CPU IN WAIT STATE
+SDWAPGM2 EQU   X'01'   ON,PROBLEM STATE
+*                      OFF, SUPERVISOR STATE
+SDWAINT2 DS    B       CONDITION CODE AND PROGRAM MASK
+SDWACC2  EQU   X'30'   CONDITION CODE
+SDWAFPO2 EQU   X'08'   FIXED POINT OVERFLOW
+SDWADEC2 EQU   X'04'   DECIMAL OVERFLOW
+SDWAEXP2 EQU   X'02'   EXPONENT UNDERFLOW
+SDWASGN2 EQU   X'01'   SIGNIFICANCE
+         DS    B       RESERVED
+SDWANXT2 DS    0F      ADDRESS OF NEXT INSTRUCTION TO BE
+*                      EXECUTED
+         DS    CL1     RESERVED
+SDWAADD2 DS    CL3     INSTRUCTION ADDRESS
+SDWAAEC2 DS    0CL8    ADDITIONAL EC MODE INFORMATION
+         DS    CL1     RESERVED
+SDWAILC2 DS    B       INSTRUCTION LENGTH CODE FOR PSW DEFINED
+*                      BY SDWAEC2
+SDWAIL2  EQU   X'06'   ILC
+SDWAINC2 DS    0CL2    INTERRUPT CODE. IF PROGRAM CHECK OCCURRED
+*                      THE SUBFIELDS ARE FURTHER DIVIDED
+         DS    CL1     RESERVED FOR IMPRECISE INTERRUPTS
+*                      ON PROGRAM CHECK INTERRUPT
+SDWAICD2 DS    B       8 BIT INTERRUPT CODE
+*                      IF PROGRAM CHECK
+SDWAIPR2 EQU   X'80'   PER INTERRUPT OCCURRED
+SDWAIMC2 EQU   X'40'   MONITOR CALL INTERRRUPT OCCURRED
+SDWAIPC2 EQU   X'3F'   AN UNSOLICITED PROGRAM CHECK
+*                      HAS OCCURRED
+SDWATRN2 DS    A       VIRTUAL ADDRESS CAUSING TRANSLATION
+*                      EXCEPTION
+SDWASRSV DS    0CL64   GENERAL PURPOSE REGISTERS OF THE RB LEVEL
+*                      WHICH CREATED THE ESTAE EXIT AT THE TIME
+*                      IT LAST INCURRED AN INTERRUPT OR 0 FOR ESTAI
+*                      FOR FRRS INITIALIZED TO REGISTERS
+*                      AT TIME OF ERROR.
+*                      THIS REGISTER AREA IS USED TO
+*                      UPDATE REGISTER CONTENTS FOR RETRY IF REQUESTED
+SDWASR00 DS    F       GPR 0.
+SDWASR01 DS    F       GPR 1.
+SDWASR02 DS    F       GPR 2.
+SDWASR03 DS    F       GPR 3.
+SDWASR04 DS    F       GPR 4.
+SDWASR05 DS    F       GPR 5.
+SDWASR06 DS    F       GPR 6.
+SDWASR07 DS    F       GPR 7.
+SDWASR08 DS    F       GPR 8.
+SDWASR09 DS    F       GPR 9.
+SDWASR10 DS    F       GPR 10.
+SDWASR11 DS    F       GPR 11.
+SDWASR12 DS    F       GPR 12.
+SDWASR13 DS    F       GPR 13.
+SDWASR14 DS    F       GPR 14.
+SDWASR15 DS    F       GPR 15.
+*
+SDWAIDNT DS    0CL4    SDWA IDENTIFICATION ATTRIBUTES
+SDWASPID DS    CL1     SUBPOOL ID OF STORAGE CONTAINING THIS SDWA
+SDWALNTH DS    CL3     LENGTH OF THIS SDWA IN BYTES
+SDWAMCH  DS    0CL28   CONTAINS MACHINE CHECK DATA
+*                      IF SDWAMCHK IS ON
+SDWASTCK DS    0CL8    BEGINNING AND ENDING STORAGE CHECK ADDRESSES.
+*                      FILLED IN DUE TO STORAGE ERROR (SDWASCK)
+*                      OR A KEY FAILURE (SDWASKYF).
+*                      THESE ADDRESSES ARE VALID ONLY IF
+*                      INDICATED BY THE SDWASRVL FLAG.
+SDWASCKB DS    A       BEGINNING VIRTUAL ADDRESS OF STORAGE CHECK
+SDWASCKE DS    A       ENDING VIRTUAL ADDRESS OF STORAGE CHECK
+*
+SDWAMCHI DS    0BL2    ADDITIONAL MCH INFORMATION FLAGS
+SDWAMCHS DS    B       MCH FLAG BYTE
+SDWASRVL EQU   X'80'   ON,STORAGE ADDRESSES SUPPLIED
+*                      (SDWASTCK, SDWARFSA) ARE VALID.
+SDWARCDF EQU   X'40'   ON,MACHINE CHECK RECORD NOT RECORDED
+SDWATSVL EQU   X'20'   ON,TIME STAMP IS VALID
+SDWAINVP EQU   X'10'   ON,STORAGE IS RECONFIGURED, PAGE IS INVALIDATED
+SDWARSRC EQU   X'08'   ON,STORAGE RECONFIGURATION (SDWARSR1,SDWARSR2)
+*                      STATUS AVAILABLE.
+SDWARSRF EQU   X'04'   ON,STORAGE RECONFIGURATION NOT ATTEMPTED.
+*                      (SDWARSR1 AND SDWARSR2 ARE INVALID)
+SDWAMCHD DS    B       INPUT INFORMATION TO RECOVERY ROUTINE CONCERNING
+*                      A MACHINE CHECK ERROR
+SDWASKYF EQU   X'80'   ON,STORAGE KEY FAILURE
+SDWAREGU EQU   X'40'   ON,GENERAL PURPOSE REGISTER CONTENTS AT TIME OF
+*                      MACHINE CHECK UNPREDICTABLE
+SDWAPSWU EQU   X'20'   ON,PSW AND/OR CONTROL REGISTERS AT TIME OF
+*                      MACHINE CHECK UNPREDICTABLE
+SDWASCK  EQU   X'10'   ON,INDICATES STORAGE DATA CHECK
+SDWAACR  EQU   X'08'   ON,INDICATES ACR REQUEST
+SDWAINSF EQU   X'04'   ON,INSTRUCTION FAILURE
+SDWAFPRX EQU   X'02'   ON,CONTENTS OF FLOATING POINT REGISTERS AT TIME
+*                      MACHINE CHECK ARE UNPREDICTABLE
+SDWATERR EQU   X'01'   ON,TIMER ERROR - CAUSES ENTRY TO
+*                      RECOVERY ROUTINES ONLY IF LOGOUT
+*                      FAILED.
+SDWACPID DS    CL2     ID OF OF FAILING CPU CAUSING ACR
+*
+SDWARSR1 DS    B       ADDITIONAL STORAGE FRAME ERROR INDICATORS
+*                      AS RETURNED FROM REAL STORAGE RECONFIGURATION.
+SDWAMSER EQU   X'02'   STORAGE ERROR ALREADY SET IN FRAME.
+SDWACHNG EQU   X'01'   CHANGE INDICATOR WAS ON IN FRAME.
+SDWARSR2 DS    B       ADDITIONAL STORAGE ERROR INDICATORS.
+SDWAOFLN EQU   X'80'   FRAME OFFLINE OR SCHEDULED TO GO OFFLINE
+*                      IF SDWAINTC IS ON
+SDWAINTC EQU   X'40'   INTERCEPT
+*                      THE FRAME IS SCHEDULED TO GO OFFLINE,
+*                                   OR
+*                      THE FRAME HAS INCURRED A STORAGE ERROR,
+*                      OR IS V=R
+SDWASPER EQU   X'20'   STORAGE ERROR PERMANENT ON FRAME.
+SDWANUCL EQU   X'10'   FRAME CONTAINS PERMANENT RESIDENT STORAGE,
+*                      I.E. NUCLEUS.
+SDWAFSQA EQU   X'08'   FRAME IN SQA
+SDWAFLSQ EQU   X'04'   FRAME IN LSQA
+SDWAPGFX EQU   X'02'   FRAME IS PAGE FIXED
+SDWAVEQR EQU   X'01'   FRAME IS VIRTUAL = REAL,OR SCHEDULED
+*                      FOR VIRTUAL = REAL IF SDWAINTC IS ON
+         DS    CL2     RESERVED
+SDWARFSA DS    A       REAL STORAGE FAILING ADDRESS  ( VALID ONLY IF
+*                      INDICATED BY SDWASRVL )
+SDWATIME DS    CL8     TIME STAMP OF ASSOCIATED MACHINE CHECK RECORD
+SDWAFLGS DS    0BL4    INPUT FLAGS DESCRIBING REASONS AND CONDITIONS
+*                      FOR ENTERING A RECOVERY EXIT ROUTINE.
+SDWAERRA DS    B       ERROR TYPE CAUSING ENTRY TO RECOVERY EXIT
+SDWAMCHK EQU   X'80'   ON INDICATES MACHINE CHECK
+SDWAPCHK EQU   X'40'   ON INDICATES PROGRAM CHECK
+SDWARKEY EQU   X'20'   ON INDICATES CONSOLE RESTART KEY WAS DEPRESSED
+SDWASVCD EQU   X'10'   ON INDICATES TASK ISSUED SVC 13
+SDWAABTM EQU   X'08'   ON INDICATES SYSTEM FORCED SVC 13(I.E.ABTERM)
+SDWASVCE EQU   X'04'   ON,INDICATES AN SVC WAS ISSUED BY
+*                      A LOCKED OR SRB ROUTINE
+SDWATEXC EQU   X'02'   ON,INDICATES AN UNRECOVERABLE TRANSLATION
+*                      FAILURE
+SDWAPGIO EQU   X'01'   ON,INDICATES A PAGE I/O ERROR
+SDWAERRB DS    B       ADDITIONAL ERROR ENTRY INFORMATION
+SDWATYP1 EQU   X'08'   ON TYPE 1 SVC IN CONTROL AT TIME OF ERROR
+SDWAENRB EQU   X'04'   ON ENABLED RB IN CONTROL AT TIME OF ERROR
+SDWALDIS EQU   X'02'   ON A LOGICALLY OR PHYSICALLY DISABLED ROUTINE
+*                      WAS IN CONTROL AT THE TIME OF ERROR.
+SDWASRBM EQU   X'01'   ON SYSTEM IN SRB MODE AT TIME OF ERROR
+SDWAERRC DS    B       ADDITIONAL ERROR ENTRY INFORMATION
+SDWASTAF EQU   X'80'   ON INDICATES A PREVIOUS (E)STA  OR FRR
+*                      EXIT FAILED.
+SDWASTAI EQU   X'40'   ON A (E)STAI EXIT PREVIOUSLY RECEIVED CONTROL
+SDWAIRB  EQU   X'20'   ON AN IRB PRECEDED THE RB THAT IS
+*                      ASSOCIATED WITH THIS EXIT
+SDWAPERC EQU   X'10'   ON THIS RECOVERY ROUTINE IS BEING PERCOLATED TO
+SDWAEAS  EQU   X'08'   ON INDICATES A LOWER LEVEL EXIT HAS RECOGNIZED
+*                      AN ERROR AND PROVIDED SERVICEABILITY INFORMATION
+SDWAERRD DS    B       ADDITIONAL ERROR ENTRY INFORMATION
+SDWACLUP EQU   X'80'   ON INDICATES RECOVERY EXIT ONLY TO CLEANUP AND
+*                      NOT RETRY (IF ESTA EXIT AND 33E COMPLETION CODE
+*                      THE DUMP IS TAKEN AFTER ENTRY TO THE RECOVERY
+*                      ROUTINE,IF THE COMPLETION CODE IS OTHER THAN
+*                      33E AND IT IS AN ESTA EXIT THE DUMP IS
+*                      TAKEN BEFORE ENTRY TO THE RECOVERY ROUTINE)
+SDWANRBE EQU   X'40'   ON RB ASSOCIATED WITH THIS ESTA EXIT WAS NOT
+*                      IN CONTROL AT TIME OF ERROR
+*                      NEVER ON FOR FRRS
+SDWASTAE EQU   X'20'   ON THIS ESTA EXIT HAS BEEN ENTERED FOR A
+*                      PREVIOUS ABEND
+*                      NEVER ON FOR FRRS
+SDWACTS  EQU   X'10'   ON,THIS TASK WAS NOT IN CONTROL AT TIME OF
+*                      ERROR BUT A TASK WITHIN THE SAME JOBSTEP TREE
+*                      REQUESTED A 'STEP' ABEND. ONLY 'ON' IF SDWACLUP
+*                      IS 'ON'
+SDWAMABD EQU   X'08'   ON,THIS TASK WAS NOT IN CONTROL AT TIME OF
+*                      ERROR BUT AN ANCESTOR OF THIS TASK HAS ABEND'ED
+*                      ONLY 'ON' IF SDWACLUP IS 'ON'.
+SDWARPIV EQU   X'04'   ON, THE REGISTERS AND PSW AT TIME OF
+*                      ERROR ARE UNAVAILABLE
+SDWAMCIV EQU   X'02'   ON,MACHINE CHECK ERROR INFORMATION
+*                      IS UNAVAILABLE.
+SDWAERFL EQU   X'01'   ON,ERRORID INFORMATION AVAILABLE       @G17EP5W
+SDWAFMID DS    CL2     ASID OF MEMORY IN WHICH ERROR OCCURRED.
+*                      =0, IF THE MEMORY IS CURRENT
+*                      NOT=0 IF  OTHER MEMORY IS CURRENT
+*                               FOR FRRS-
+*                      IF THE VALUE IS NON ZERO THE
+*                      FRR IS RECEIVING CONTROL IN THE
+*                      MASTER SCHEDULER ADDRESS SPACE AND CANNOT
+*                      ADDRESS THE PRIVATE AREA OF THE FAILING
+*                      ADDRESS SPACE.
+*                               FOR ESTA-
+*                      IF THE VALUE IS NON ZERO
+*                      ENTRY IS DUE TO CROSS MEMORY
+*                      ABTERM.
+SDWAIOFS DS    B       THIS IS THE CURRENT I/O STATUS (THE I/O
+*                      PROCESSING REQUESTED BY THE FIRST (E)STA
+*                      EXIT IS THE ONLY REQUEST HONORED )
+SDWAIOQR EQU   X'80'   ON,I/O FOR FAILING PROGRAM HAS BEEN QUIESCED AND
+*                      IS RESTOREABLE
+SDWAIOHT EQU   X'40'   ON,I/O FOR FAILING PROGRAM HAS BEEN HALTED AND
+*                      IS NOT RESTOREABLE
+SDWANOIO EQU   X'20'   ON,FAILING PROGRAM HAS NO I/O OUTSTANDING
+SDWANIOP EQU   X'10'   ON,USER REQUESTED NO I/O PROCESSING
+*
+SDWACPUI DS    CL1     ERRORID LOGICAL CPUID                  @G17EP5W
+SDWARTYA DS    A       ADDRESS OF RETRY ROUTINE
+SDWARECA DS    A       ADDRESS OF VARIABLE RECORDING AREA WITHIN SDWA
+SDWACPUA DS    0CL4    ADDRESS OF CPU HOLDING RESOURCE WHICH CAUSES
+*                      VALID SPIN ON CURRENT CPU - USED WITH RESTART
+*                      KEY ERROR TYPE.IF THIS FIELD IS VALIDLY FILLED
+*                      IN BY AN FRR THE FRRS MAINLINE PROGRAM WILL BE
+*                      RESUMED AT THE NEXT SEQUENTIAL INSTRUCTION.
+*                      NOT VALID FOR ESTAE EXITS.
+         DS    CL2     RESERVED
+SDWALCPU DS    H       LOGICAL ADDRESS OF CPU HOLDING RESOURCE
+SDWAPARQ DS    0BL4    FLAGS SET BY RECOVERY ROUTINE TO REQUEST FURTHER
+*                      PROCESSING ACTION
+SDWARCDE DS    B       RETURN CODE FROM RECOVERY ROUTINE TO INDICATE
+*                      RETRY OR TERMINATION
+SDWACWT  EQU   0       0 ,CONTINUE WITH TERMINATION. THIS INDICATION
+*                      IMPLIES PERCOLATION
+SDWARETY EQU   4       4 ,RETRY USING RETRY ADDRESS IN SDWARTYA FIELD
+SDWAPSTI EQU   16      16,PREVENT FURTHER (E)STAI PROCESSING
+SDWAACF2 DS    B       FLAGS TO INDICATE ADDITIONAL PROCESSING
+*                      REQUESTS
+SDWARCRD EQU   X'80'   ON,RECORDING REQUESTED
+SDWASPIN EQU   X'20'   ON,PROGRAM INTERRUPTED VIA  THE RESTART KEY WAS
+*                      IN A VALID SPIN(SET BY THE SETRP MACRO WHEN CPU
+*                      ADRESS IS SPECIFIED ALONG WITH THE CPU ADDRESS
+*                      IN SDWACPUA FIELD TO ALLOW RESTART OF THE
+*                      ALTERNATE CPU)
+SDWAUPRG EQU   X'08'   ON,UPDATED REGISTERS STARTING WITH SDWASR00 ARE
+*                      TO BE USED FOR RETRY
+SDWAFREE EQU   X'04'   ON,SDWA/RTCA TO BE FREED PRIOR TO RETRY.
+*                      ONLY VALID FOR ESTA EXITS
+SDWAACF3 DS    B       FLAGS INDICATING WHAT GLOBAL LOCKS ARE TO
+*                      BE FREED (KEY 0 SUPERVISOR ONLY)
+*                      ONLY VALID FOR FRRS.
+SDWADISP EQU   X'10'   ON,THE DISPATCHER LOCK
+SDWAASMP EQU   X'08'   ON,THE ASM CLASS LOCK                   Z40WPXH
+SDWASALL EQU   X'04'   ON, THE SALLOC LOCK
+SDWAIPRG EQU   X'02'   ON, THE IOSYNCH LOCK
+SDWAICAT EQU   X'01'   ON,THE IOSCAT LOCK
+SDWAACF4 DS    B       ADDITIONAL LOCKS TO BE FREED  FOR FRRS
+SDWAIUCB EQU   X'80'   ON, THE IOSUCB LOCK
+SDWAILCH EQU   X'40'   ON, THE IOSLCH LOCK
+SDWATNCB EQU   X'20'   RESERVED LOCK                           Z40WPXH
+SDWATDNB EQU   X'10'   RESERVED LOCK                           Z40WPXH
+SDWATADB EQU   X'08'   RESERVED LOCK                           Z40WPXH
+SDWAOPTM EQU   X'04'   ON,THE SYSTEM RESOURCES MGR(SRM) LOCK LOCK
+SDWACMS  EQU   X'02'   ON,THE CMS LOCK
+SDWAFLLK EQU   X'01'   ON,THE LOCAL LOCK
+*
+SDWALKWA DS    0CL32   LOCK AREA                              @ZA05516
+SDWALKWS DS    0CL32   LOCKWORDS REQUIRED TO FREE GLOBAL LOCKS
+*                      ONLY USED FOR FRRS
+SDWAICLW DS    A       LOCKWORD FOR THE IOSCAT LOCK
+SDWAIULW DS    A       LOCKWORD FOR THE IOSUCB LOCK
+SDWAILLW DS    A       LOCKWORD FOR THE IOSLCH LOCK
+SDWAIPLW DS    A       LOCKWORD FOR THE IOSYNCH LOCK
+SDWAAPLW DS    A       LOCKWORD FOR THE ASM CLASS LOCK         Z40WPXH
+SDWATNLW DS    A       LOCKWORD - RESERVED                     Z40WPXH
+SDWATDLW DS    A       LOCKWORD - RESERVED                     Z40WPXH
+SDWATALW DS    A       LOCKWORD - RESERVED                     Z40WPXH
+*
+SDWAASID DS    CL2     ASID FOR LOGREC DEBUGGING               @ZA05516
+SDWASEQ# DS    CL2     ERRORID SEQUENCE NUMBER                 @G17EP5W
+SDWARECP DS    0CL24   RECORDING PARAMETERS (MODULE,CSECT AND RECOVERY
+*                      ROUTINE NAMES-RESPECTIVELY)
+SDWAMODN DS   CL8      THE MODULE NAME INVOLVED IN THE ERROR
+*                      (SUPPLIED BY THE RECOVERY ROUTINE)
+SDWACSCT DS   CL8      THE CSECT NAME INVOLVED IN THE ERROR
+*                      (SUPPLIED BY THE RECOVERY ROUTINE)
+SDWAREXN DS   CL8      THE RECOVERY ROUTINE NAME HANDLING THE ERROR
+*
+SDWADPLA DS   A        POINTER TO DUMP PARAMETER LIST
+*                      RESIDING IN SDWA.
+SDWASNPA DS   0CL8     SNAP PARAMETER LIST FLAGS
+SDWADUMP DS   0CL4     DUMP CHARACTERISTICS
+SDWADPID DS   CL1      ID OF DUMP REQUESTED
+SDWADPFS DS   B        DUMP FLAGS
+SDWADPT  EQU  X'80'    ALWAYS OFF, INDICATES SNAP DUMP REQUEST
+SDWADLST EQU  X'40'    ALWAYS ON,INDICATES THAT OS/VS2 REL. 2 DUMP
+*                      PARAMETER LIST SUPPLIED
+*                      USED BY RTM TO INDICATE DUMP OPTIONS ARE
+*                      AVAILABLE IN THE SDWA
+SDWAENSN EQU  X'20'    ON,ENHANCED DUMP OPTIONS              @G33SPHW
+SDWASLST EQU  X'02'    ON,STORAGE LISTS SUPPLIED FOR DUMP
+         DS   CL2      RESERVED
+*
+SDWADDAT DS   0CL4     SDATA AND PDATA OPTIONS
+SDWASDAT DS   0CL2     SDATA OPTIONS                          @G33SPHW
+SDWASDA0 DS   BL1      SDATA OPTIONS FLAG ONE                 @G33SPHW
+SDWANUC  EQU  X'80'    DISPLAY NUCLEUS
+SDWASQA  EQU  X'40'    DISPLAY SQA
+SDWALSQA EQU  X'20'    DISPLAY LSQA
+SDWASWA  EQU  X'10'    DISPLAY SWA
+SDWAGTF  EQU  X'08'    DISPLAY GTF INCORE TRACE TABLE
+SDWACBS  EQU  X'04'    FORMAT AND DISPLAY CONTROL BLOCKS
+SDWAQQS  EQU  X'02'    FORMAT AND DISPLAY QCBS/QELS
+SDWADM   EQU  X'01'    FORMAT DATA MGT CONTROL BLOCKS        @G33SPHW
+SDWASDA1 DS   BL1      SDATA OPTIONS                         @G33SPHW
+SDWAIO   EQU  X'80'    FORMAT I/O SUPERVISOR CONTROL BLOCKS  @G33SPHW
+SDWAERR  EQU  X'40'    FORMAT ERROR CONTROL BLOCKS           @G33SPHW
+SDWAPDAT DS   BL1      PDATA OPTIONS
+SDWADSAS EQU  X'80'    DISPLAY SAVE AREAS
+SDWADSAH EQU  X'40'    DISPLAY SAVE AREA HEADER
+SDWADREG EQU  X'20'    DISPLAY REGISTERS
+SDWATLPA EQU  X'10'    DISPLAY LPA MODULES OF TASK
+SDWATJPA EQU  X'08'    DISPLAY JPA MODULES OF TASK
+SDWADPSW EQU  X'04'    DISPLAY PSW
+SDWAUSPL EQU  X'02'    DISPLAY USER SUBPOOLS
+         DS   B        RESERVED
+*
+SDWADPSA DS   0CL36    DUMP RANGES AREA
+SDWADPSL DS   0CL32    DUMP STORAGE LISTS (MAX 4 RANGES AVAILABLE)
+SDWAFRM1 DS   A        BEGINNING ADDRESS FOR STORAGE RANGE 1
+SDWATO1  DS   A        ENDING ADDRESS FOR STORAGE RANGE 1
+SDWAFRM2 DS   A        BEGINNING ADDRESS FOR STORAGE RANGE2
+SDWATO2  DS   A        ENDING ADDRESS FOR STORAGE RANGE 2
+SDWAFRM3 DS   A        BEGINNING ADDRESS FOR STORAGE RANGE 3
+SDWATO3  DS   A        ENDING ADDRESS FOR STORAGE RANGE 3
+SDWAFRM4 DS   A        BEGINNING ADDRESS FOR STORAGE RANGE 4
+SDWATO4  DS   A        ENDING ADDRESS FOR STORAGE RANGE 4
+         DS   A        RESERVED
+SDWARCPL DS   CL28     RESERVED FOR RTM USE.
+SDWACOMP DS   A        THIS WORD IS PROVIDED FOR COMMUNICATION OF
+*                      ADDITIONAL RECOVERY DATA ON A PER COMPONENT
+*                      BASIS (FOR OS/VS2 RELEASE 2 THIS FIELD IS ONLY
+*                      USED BY DATA MANAGER )
+SDWAERTM DS   CL4      ERRORID TIME STAMP                     @G17EP5W
+SDWARA   DS   0CL112   VARIABLE RECORDING AREA PREFIXED BY A TWO BYTE
+*                      LENGTH FIELD OF AREA AND A TWO BYTE
+*                      LENGTH FIELD OF USER SUPPLIED RECORDING DATA
+SDWAVRAL DS   CL2      LENGTH OF VARIABLE RECORDING AREA
+SDWADPVA DS    B       DEFINES DUMPING OF DATA IN VARIABLE AREA
+SDWAHEX  EQU   X'80'   DATA TO BE DUMPED BY EREP IN HEX.
+SDWAEBC  EQU   X'40'   DATA TO BE DUMPED BY EREP IN EBCDIC
+SDWAURAL DS   CL1      LENGTH OF USER SUPPLIED RECORDING DATA
+SDWAVRA  DS   CL108    VARIABLE RECORDING AREA
+SDWAEND  DS   0D       END OF SDWA FORCED TO DOUBLE WORD
+SDWALEN  EQU  SDWAEND-SDWA  LENGTH OF SDWA
+SDWAFLEN  EQU  SDWALEN+272  GETMAIN LENGTH FOR FRR SDWA
+         MEND  ,   */
+*%SDWABSL  :  ;
+*%IF SDWA9999 ^= ',' %THEN
+*  %SDWA9999 = ';';
+*%IF SDWALVL ^= '' %THEN
+*  %GOTO SDWABSL2;
+*DECLARE
+*  1 SDWA    BASED(SDWAPTR),
+*%GOTO SDWABSL3;
+*%SDWABSL2: ;
+*  SDWALVL SDWA,
+*%SDWABSL3: ;
+*   6 SDWAPARM    PTR(31),              /* PARAMETER LIST ADDRESS
+*                                          IF (E)STA MACRO
+*                                          SPECIFIED PARAM OPTION
+*                                          OR 0. FOR FRRS THIS IS THE
+*                                          ADDRESS OF THE 6 WORD PARM
+*                                          AREA RETURNED BY THE SETFRR
+*                                          MACRO WHEN THE PARMAD
+*                                          KEYWORD IS SPECIFIED ON THE
+*                                          ON THE SETFRR MACRO       */
+*   6 SDWAFIOB    PTR(31),              /* ADDRESS OF PURGE I/O
+*                                          REQUEST LIST (PIRL),
+*                                          OR 0 IF HALT I/O IS
+*                                          REQUESTED ON ENTRY TO
+*                                          RETRY ROUTINE FOR (E)STA. */
+*    7 SDWAABCC   CHAR(4),              /* ABEND COMPLETION CODE
+*                                          ON ENTRY TO EXIT ROUTINE  */
+*     8 SDWACMPF   CHAR(1),             /* FLAG BITS IN COMPLETION
+*                                          CODE.                     */
+*      9 SDWAREQ    BIT(1),             /* ON, DUMP TO BE GIVEN.
+*                                          SET IF DUMP REQUESTED
+*                                          BY ABEND, CALLRTM, OR
+*                                          SETRP MACRO.              */
+*      9 SDWASTEP   BIT(1),             /* ON, JOBSTEP TO BE
+*                                          TERMINATED.SET IF
+*                                          STEP OPTION SPECIFIED
+*                                          ON ABEND MACRO.           */
+*      9 *          BIT(1),             /* RESERVED                  */
+*      9 SDWASTCC   BIT(1),             /* ON, DON'T STORE
+*                                          COMPLETION CODE.
+*                                          NOT USED IN OS/VS2 REL. 2 */
+*      9 *          BIT(4),             /* RESERVED                  */
+*     8 SDWACMPC   CHAR(3),             /* SYSTEM COMPLETION CODE
+*                                          (FIRST 12 BITS) AND USER
+*                                          COMPLETION CODE (SECOND
+*                                          12 BITS).                 */
+*   6 SDWACTL1     CHAR(8) BDY(WORD),   /* BC MODE PSW AT TIME OF
+*                                          ERROR. NOT INITIALIZED
+*                                          FOR FRRS.                 */
+*    7 SDWACMKA     CHAR(1),            /* CHANNEL INTERRUPTS MASKS  */
+*     8 SDWAIOA     BIT(7),             /* I/O INTERRUPTS (ALL
+*                                          ZEROS OR ALL ONES).       */
+*     8 SDWAEXTA    BIT(1),             /* EXTERNAL INTERRUPT.       */
+*    7 SDWAMWPA    CHAR(1),             /* PSW KEY AND 'M-W-P'.      */
+*     8 SDWAKEYA    BIT(4),             /* PSW KEY                   */
+*     8 *           BIT(1),             /* RESERVED                  */
+*     8 SDWAMCKA    BIT(1),             /* MACHINE CHECK INTERRUPT   */
+*     8 SDWAWATA    BIT(1),             /* WAIT STATE.               */
+*     8 SDWASPVA    BIT(1),             /* SUPERVISOR/PROBLEM-
+*                                          PROGRAM MODE.             */
+*    7 SDWAINTA    CHAR(2),             /* INTERRUPT CODE (LAST 2
+*                                          BYTES OF INTERRUPT CODE
+*                                          IF I/O INTERRUPT).        */
+*    7 SDWAPMKA    CHAR(1),             /* INSTRUCTION LENGTH CODE,
+*                                          CONDITION CODE, AND
+*                                          PROGRAM MASKS.            */
+*     8 SDWAILA     BIT(2),             /* INSTRUCTION LENGTH CODE   */
+*     8 SDWACCA     BIT(2),             /* LAST CONDITION CODE       */
+*     8 SDWAFPA     BIT(1),             /* FIXED-POINT OVERFLOW      */
+*     8 SDWADOA     BIT(1),             /* DECIMAL OVERFLOW          */
+*     8 SDWAEUA     BIT(1),             /* EXPONENT UNDERFLOW        */
+*     8 SDWASGA     BIT(1),             /* SIGNIFANCE                */
+*    7 SDWANXTA    PTR(24),             /* ADDRESS OF NEXT
+*                                          INSTRUCTION
+*                                          TO BE EXECUTED            */
+*   6 SDWACTL2    CHAR(8) BDY(WORD),    /* BC MODE PSW FROM LAST
+*                                          PRB ON RB CHAIN.
+*                                          ZERO FOR FRRS.            */
+*    7 SDWACMKP    CHAR(1),             /* CHANNEL INTERRUPTS MASKS  */
+*     8 SDWAIOP     BIT(7),             /* I/O INTERRUPTS (ALL
+*                                          ZEROS OR ALL ONES).       */
+*     8 SDWAEXTP    BIT(1),             /* EXTERNAL INTERRUPT.       */
+*    7 SDWAMWPP    CHAR(1),             /* PSW KEY AND 'M-W-P'.      */
+*     8 SDWAKEYP    BIT(4),             /* PSW KEY                   */
+*     8 *           BIT(1),             /* RESERVED                  */
+*     8 SDWAMCKP    BIT(1),             /* MACHINE CHECK INTERRUPT   */
+*     8 SDWAWATP    BIT(1),             /* WAIT STATE.               */
+*     8 SDWASPVP    BIT(1),             /* SUPERVISOR/PROBLEM-
+*                                          PROGRAM MODE.             */
+*    7 SDWAINTP    CHAR(2),             /* INTERRUPT CODE (LAST 2
+*                                          BYTES OF INTERRUPT CODE
+*                                          IF I/O INTERRUPT).        */
+*    7 SDWAPMKP    CHAR(1),             /* INSTRUCTION LENGTH CODE,
+*                                          CONDITION CODE, AND
+*                                          PROGRAM MASKS.            */
+*     8 SDWAILP     BIT(2),             /* INSTRUCTION LENGTH CODE   */
+*     8 SDWACCP     BIT(2),             /* LAST CONDITION CODE       */
+*     8 SDWAFPP     BIT(1),             /* FIXED-POINT OVERFLOW      */
+*     8 SDWADOP     BIT(1),             /* DECIMAL OVERFLOW          */
+*     8 SDWAEUP     BIT(1),             /* EXPONENT UNDERFLOW        */
+*     8 SDWASGP     BIT(1),             /* SIGNIFICANCE              */
+*    7 SDWANXTP    PTR(24),             /* ADDRESS OF NEXT
+*                                          INSTRUCTION
+*                                          TO BE EXECUTED            */
+*   6 SDWAGRSV    CHAR(64) BDY(WORD),   /* GENERAL PURPOSE
+*                                          REGISTERS AT TIME OF
+*                                          ERROR                     */
+*    7 SDWAGR00    FIXED(31),           /* GPR 0.                    */
+*    7 SDWAGR01    FIXED(31),           /* GPR 1.                    */
+*    7 SDWAGR02    FIXED(31),           /* GPR 2.                    */
+*    7 SDWAGR03    FIXED(31),           /* GPR 3.                    */
+*    7 SDWAGR04    FIXED(31),           /* GPR 4.                    */
+*    7 SDWAGR05    FIXED(31),           /* GPR 5.                    */
+*    7 SDWAGR06    FIXED(31),           /* GPR 6.                    */
+*    7 SDWAGR07    FIXED(31),           /* GPR 7.                    */
+*    7 SDWAGR08    FIXED(31),           /* GPR 8.                    */
+*    7 SDWAGR09    FIXED(31),           /* GPR 9.                    */
+*    7 SDWAGR10    FIXED(31),           /* GPR 10.                   */
+*    7 SDWAGR11    FIXED(31),           /* GPR 11.                   */
+*    7 SDWAGR12    FIXED(31),           /* GPR 12.                   */
+*    7 SDWAGR13    FIXED(31),           /* GPR 13.                   */
+*    7 SDWAGR14    FIXED(31),           /* GPR 14.                   */
+*    7 SDWAGR15    FIXED(31),           /* GPR 15.                   */
+*   6 SDWANAME    CHAR(8) BDY(WORD),    /* IF PROBLEM PROGRAM MODE
+*                                          NAME OF ABENDING
+*                                          PROGRAM, OR ZERO IF NO
+*                                          NAME IS AVAILABLE.
+*                                          ZERO IF NOT RUNNING
+*                                          UNDER AN RB.              */
+*    7 SDWARBAD    PTR(31),             /* RB ADDRESS OF ABENDING
+*                                          PROGRAM. (IF SUPERVISOR
+*                                          MODE PROGRAM RUNNING UNDER
+*                                          AN RB)                    */
+*    7 *           CHAR(4),             /* CONTAINS ZEROS IF
+*                                          SUPERVISOR MODE PROGRAM
+*                                          RUNNING UNDER AN RB.
+*                                          OR IF PROGRAM NOT
+*                                          RUNNING UNDER AN RB.      */
+*   6 SDWAEPA    PTR(31),               /* ENTRY POINT ADDRESS OF
+*                                          ABENDING PROGRAM.
+*                                          ZERO IF NOT RUNNING
+*                                          UNDER AN RB.              */
+*   6 SDWAIOBR   PTR(31),               /* POINTER TO SDWAFIOB FIELD,
+*                                          OR 0 IF NO RETRY,
+*                                          OR 0 IF HALT I/O
+*                                          IS REQUESTED FOR (E)STA
+*                                          EXITS. ZERO FOR FRRS.
+*                                                           ICB3777  */
+*   6 SDWAEC1   CHAR(8) BDY(WORD),      /* EXTENDED CONTROL PSW  AT
+*                                          TIME OF ERROR(ABEND)      */
+*     7 SDWAEMK1    CHAR(1),            /* INTERRUPT INFORMATION
+*                                          MASKS                     */
+*       8 *         BIT(1),             /* RESERVED                  */
+*       8 SDWAPER1   BIT(1),            /* ON,PROGRAM EVENT RECORD-
+*                                          ING INTERRUPTS CAN OCCUR
+*                                          OFF,PROGRAM EVENT RECORD-
+*                                          ING INTERRUPTS CANNOT
+*                                          OCCUR                     */
+*       8 *           BIT(3),           /* RESERVED                  */
+*       8  SDWATRM1   BIT(1),           /* ON,ADDRESS TRANSLATION
+*                                          ACTIVE                    */
+*       8 SDWAIO1    BIT(1),            /* OFF,I/O INTERRUPTIONS
+*                                          CANNOT OCCUR
+*                                          ON,I/O INTERRUPTIONS CAN
+*                                          OCCUR SUBJECT TO CHANNEL
+*                                          MASK BITS IN CONTROL REGS
+*                                          2 AND 3                   */
+*       8 SDWAEXT1    BIT(1),           /* OFF,EXTERNAL INTERRUPTIONS
+*                                          CANNOT OCCUR
+*                                          ON,EXTERNAL INTERRUPTIONS
+*                                          CAN OCCUR SUBJECT TO
+*                                          EXTERNAL SUBCLASS MASK
+*                                          BITS OF CONTROL REGISTER 0*/
+*     7 SDWAMWP1    CHAR(1),            /* PSW KEY AND 'M-W-P'       */
+*       8 SDWAKEY1   BIT(4),            /* PSW KEY                   */
+*       8 SDWAECT1   BIT(1),            /* EXTENDED CONTROL MODE BIT */
+*       8 SDWAMCK1   BIT(1),            /* OFF,MACHINE CHECKS CANNOT
+*                                          OCCUR
+*                                          ON,MACHINE CHECKS DUE TO
+*                                          SYSTEM DAMAGE AND
+*                                          INSTRUCTION-PROCESSING
+*                                          DAMAGE CAN OCCUR.  OTHER
+*                                          MACHINE CHECKS SUBJECT TO
+*                                          MASK BITS IN CONTROL
+*                                          REGISTER 14               */
+*       8 SDWAWAT1     BIT(1),          /* ON,CPU IN WAIT STATE      */
+*       8 SDWAPGM1     BIT(1),          /* ON,PROBLEM STATE
+*                                          OFF,SUPERVISOR STATE      */
+*     7 SDWAINT1     CHAR(1),           /* CONDITION CODE AND
+*                                          PROGRAM MASK              */
+*       8 *           BIT(2),           /* RESERVED                  */
+*       8 SDWACC1     BIT(2),           /* CONDITION CODE            */
+*       8 SDWAFPO1    BIT(1),           /* FIXED POINT OVERFLOW      */
+*       8 SDWADEC1    BIT(1),           /* DECIMAL OVERFLOW          */
+*       8 SDWAEXP1    BIT(1),           /* EXPONENT UNDERFLOW        */
+*       8 SDWASGN1    BIT(1),           /* SIGNIFICANCE              */
+*     7 *            CHAR(1),           /* RESERVED                  */
+*     7 SDWANXT1     PTR(31),           /* ADDRESS OF NEXT
+*                                          INSTRUCTION TO BE
+*                                          EXECUTED                  */
+*       8 *             PTR(8),         /* RESERVED                  */
+*       8 SDWAADD1     PTR(24),         /* INSTRUCTION ADDRESS       */
+*   6 SDWAAEC1       CHAR(8) BDY(WORD), /* ADDITIONAL EC MODE
+*                                          INFORMATION               */
+*     7 *              CHAR(1),         /* RESERVED                  */
+*     7 SDWAILC1        PTR(8),         /* INSTRUCTION LENGTH CODE
+*                                          FOR PSW DEFINED BY SDWAEC1*/
+*       8 *             BIT(5),         /* RESERVED  ALWAYS ZERO     */
+*       8 SDWAIL1       BIT(2),         /* INSTRUCTION LENGTH CODE   */
+*       8 *             BIT(1),         /* RESERVED  ALWAYS ZERO     */
+*     7 SDWAINC1     FIXED(16),         /* INTERRUPT CODE. IF PROGRAM
+*                                          CHECK OCCURRED
+*                                          THE SUBFIELDS ARE
+*                                          FURTHER DIVIDED           */
+*       8 *            CHAR(1),         /* RESERVED FOR IMPRECISE
+*                                          INTERRUPTS
+*                                          IF PROGRAM CHECK          */
+*       8 SDWAICD1      PTR(8),         /* 8 BIT INTERRUPT CODE
+*                                          IF PROGRAM CHECK          */
+*         9 SDWAIPR1   BIT(1),          /* PER INTERRUPT OCCURRED    */
+*         9 SDWAIMC1   BIT(1),          /* MONITOR CALL INTERRUPT
+*                                          OCCURRED                  */
+*         9 SDWAIPC1   BIT(6),          /* AN UNSOLICITED PROGRAM
+*                                          CHECK HAS OCCURRED        */
+*     7 SDWATRAN   PTR(31),             /* VIRTUAL ADDRESS CAUSING
+*                                          TRANSLATION EXCEPTION     */
+*   6 SDWAEC2    CHAR(8) BDY(WORD),     /* EC MODE PSW OF THE RB
+*                                          WHICH CREATED THE ESTAE
+*                                          EXIT AT THE TIME IT LAST
+*                                          INCURRED AN INTERRUPT
+*                                          OR 0 FOR ESTAI.
+*                                          OR PSW USED TO GIVE FRR
+*                                          CONTROL                   */
+*     7 SDWAEMK2        CHAR(1),        /* INTERRUPT INFORMATION
+*                                          MASKS                     */
+*       8 *           BIT(1),           /* RESERVED                  */
+*       8 SDWAPER2    BIT(1),           /* ON,PROGRAM EVENT RECORD-
+*                                          ING INTERRUPTS CAN OCCUR
+*                                          OFF,PROGRAM EVENT RECORD-
+*                                          ING INTERRUPTS CANNOT
+*                                          OCCUR                     */
+*       8 *           BIT(3),           /* RESERVED                  */
+*       8 SDWATRM2    BIT(1),           /* ON,ADDRESS TRANSLATION
+*                                          ACTIVE                    */
+*       8 SDWAIO2     BIT(1),           /* OFF,I/O INTERRUPTIONS
+*                                          CANNOT OCCUR
+*                                          ON,I/O INTERRUPTIONS CAN
+*                                          OCCUR SUBJECT TO CHANNEL
+*                                          MASK BITS IN CONTROL REGS
+*                                          2 AND 3                   */
+*       8 SDWAEXT2    BIT(1),           /* OFF,EXTERNAL INTERRUPTIONS
+*                                          CANNOT OCCUR
+*                                          ON,EXTERNAL INTERRUPTIONS
+*                                          CAN OCCUR SUBJECT TO
+*                                          EXTERNAL SUBCLASS MASK
+*                                          BITS OF CONTROL REGISTER 0*/
+*     7 SDWAMWP2    CHAR(1),            /* PSW KEY AND 'M-W-P'       */
+*       8 SDWAKEY2   BIT(4),            /* PSW KEY                   */
+*       8 SDWAECT2   BIT(1),            /* EXTENDED CONTROL MODE BIT */
+*       8 SDWAMCK2   BIT(1),            /* OFF,MACHINE CHECKS CANNOT
+*                                          OCCUR
+*                                          ON,MACHINE CHECKS DUE TO
+*                                          SYSTEM DAMAGE AND
+*                                          INSTRUCTION-PROCESSING
+*                                          DAMAGE CAN OCCUR.  OTHER
+*                                          MACHINE CHECKS SUBJECT TO
+*                                          MASK BITS IN CONTROL
+*                                          REGISTER 14               */
+*       8 SDWAWAT2     BIT(1),          /* ON,CPU IN WAIT STATE      */
+*       8 SDWAPGM2     BIT(1),          /* ON,PROBLEM STATE
+*                                          OFF,SUPERVISOR STATE      */
+*     7 SDWAINT2     CHAR(1),           /* CONDITION CODE AND
+*                                          PROGRAM MASK              */
+*       8 *           BIT(2),           /* RESERVED                  */
+*       8 SDWACC2     BIT(2),           /* CONDITION CODE            */
+*       8 SDWAFPO2    BIT(1),           /* FIXED POINT OVERFLOW      */
+*       8 SDWADEC2    BIT(1),           /* DECIMAL OVERFLOW          */
+*       8 SDWAEXP2    BIT(1),           /* EXPONENT UNDERFLOW        */
+*       8 SDWASGN2    BIT(1),           /* SIGNIFICANCE              */
+*     7 *            CHAR(1),           /* RESERVED                  */
+*     7 SDWANXT2     PTR(31),           /* ADDRESS OF NEXT
+*                                          INSTRUCTION TO BE
+*                                          EXECUTED                  */
+*       8 *            PTR(8),          /* RESERVED                  */
+*       8 SDWAADD2    PTR(24),          /* INSTRUCTION ADDRESS       */
+*   6 SDWAAEC2     CHAR(8) BDY(WORD),   /* ADDITIONAL EC MODE
+*                                          INFORMATION               */
+*     7 *             CHAR(1),          /* RESERVED                  */
+*     7 SDWAILC2       CHAR(1),         /* INSTRUCTION LENGTH CODE
+*                                          FOR PSW DEFINED BY SDWAEC2*/
+*       8 *             BIT(5),         /* RESERVED ALWAYS ZERO      */
+*       8 SDWAIL2       BIT(2),         /* INSTRUCTION LENGTH CODE   */
+*       8 *             BIT(1),         /* RESERVED ALWAYS ZERO      */
+*     7 SDWAINC2  FIXED(16),            /* INTERRUPT CODE. IF PROGRAM
+*                                          CHECK OCCURRED
+*                                          THE SUBFIELDS ARE
+*                                          FURTHER DIVIDED           */
+*       8 *            CHAR(1),         /* RESERVED FOR IMPRECISE
+*                                          INTERRUPTS
+*                                          ON PROGRAM CHECK INTERRUPT*/
+*       8 SDWAICD2      PTR(8),         /* 8 BIT INTERRUPT CODE
+*                                          IF PROGRAM CHECK          */
+*         9 SDWAIPR2      BIT(1),       /* PER INTERRUPT OCCURRED    */
+*         9 SDWAIMC2      BIT(1),       /* MONITOR CALL INTERRUPT
+*                                          OCCURRED                  */
+*         9 SDWAIPC2      BIT(6),       /* AN UNSOLICITED PROGRAM
+*                                          CHECK OCCURRED            */
+*     7 SDWATRN2   PTR(31),             /* VIRTUAL ADDRESS CAUSING
+*                                          TRANSLATION EXCEPTION     */
+*   6 SDWASRSV  CHAR(64) BDY(WORD),     /* GENERAL PURPOSE
+*                                          REGISTERS OF THE RB
+*                                          LEVEL WHICH CREATED THE
+*                                          ESTAE EXIT AT THE TIME
+*                                          IT LAST INCURRED
+*                                          AN INTERRUPT
+*                                          OR 0 FOR ESTAI.
+*                                          FOR FRRS INITIALIZED TO
+*                                          REGISTERS AT TIME OF
+*                                          ERROR.  THIS
+*                                          REGISTER AREA IS USED TO
+*                                          UPDATE REGISTER CONTENTS
+*                                          FOR RETRY IF REQUESTED    */
+*     7 SDWASR00    FIXED(31),          /* GPR 0.                    */
+*     7 SDWASR01    FIXED(31),          /* GPR 1.                    */
+*     7 SDWASR02    FIXED(31),          /* GPR 2.                    */
+*     7 SDWASR03    FIXED(31),          /* GPR 3.                    */
+*     7 SDWASR04    FIXED(31),          /* GPR 4.                    */
+*     7 SDWASR05    FIXED(31),          /* GPR 5.                    */
+*     7 SDWASR06    FIXED(31),          /* GPR 6.                    */
+*     7 SDWASR07    FIXED(31),          /* GPR 7.                    */
+*     7 SDWASR08    FIXED(31),          /* GPR 8.                    */
+*     7 SDWASR09    FIXED(31),          /* GPR 9.                    */
+*     7 SDWASR10    FIXED(31),          /* GPR 10,                   */
+*     7 SDWASR11    FIXED(31),          /* GPR 11.                   */
+*     7 SDWASR12    FIXED(31),          /* GPR 12.                   */
+*     7 SDWASR13    FIXED(31),          /* GPR 13.                   */
+*     7 SDWASR14    FIXED(31),          /* GPR 14.                   */
+*     7 SDWASR15    FIXED(31),          /* GPR 15.                   */
+*   6 SDWAIDNT       CHAR(4),           /* SDWA IDENTIFICATION
+*                                          AND ATTRIBUTES            */
+*     7 SDWASPID     CHAR(1),           /* SUBPOOL ID OF STORAGE
+*                                          CONTAINING THIS SDWA      */
+*     7 SDWALNTH     CHAR(3),           /* LENGTH OF THIS SDWA IN
+*                                          BYTES                     */
+*   6 SDWAMCH        CHAR(28) BDY(WORD), /*CONTAINS MACHINE CHECK
+*                                          DATA IF SDWAMCHK IS ON    */
+*     7 SDWASTCK       CHAR(8) BDY(WORD),/*BEGINNING AND ENDING
+*                                          STORAGE CHECK ADDRESSES.
+*                                          FILLED IN DUE TO
+*                                          STORAGE ERROR (SDWASCK)
+*                                          OR A KEY FAILURE (SDWASKYF)
+*                                          THESE ADDRESSES ARE VALID
+*                                          ONLY IF INDICATED BY THE
+*                                          SDWASRVL FLAG.            */
+*       8 SDWASCKB      PTR(31),        /* BEGINNING VIRTUAL ADDRESS
+*                                          OF STORAGE CHECK          */
+*       8 SDWASCKE      PTR(31),        /* ENDING VIRTUAL ADDRESS
+*                                          OF STORAGE CHECK          */
+*     7 SDWAMCHI       CHAR(2),         /* ADDITIONAL MCH INFORMATION
+*                                          FLAGS                     */
+*       8 SDWAMCHS      CHAR(1),        /* MCH FLAG BYTE             */
+*         9 SDWASRVL     BIT(1),        /* ON,STORAGE ADDRESS
+*                                          SUPPLIED (SDWASTCK,
+*                                          SDWARFSA) ARE VALID.      */
+*         9 SDWARCDF     BIT(1),        /* ON,MACHINE CHECK RECORD
+*                                          NOT RECORDED              */
+*         9 SDWATSVL     BIT(1),        /* ON,TIME STAMP VALID       */
+*         9 SDWAINVP     BIT(1),        /* ON,STORAGE IS RECONFIGURED,
+*                                          PAGE IS INVALIDATED.      */
+*         9 SDWARSRC     BIT(1),        /* ON,STORAGE RECONFIGURATION
+*                                          STATUS AVAILABLE
+*                                          (SDWARSR1,SDWARSR2)       */
+*         9 SDWARSRF     BIT(1),        /* ON,STORAGE RECONFIGURATION
+*                                          NOT ATTEMPTED (SDWARSR1,
+*                                          SDWARSR2 ARE INVALID )    */
+*         9 *            BIT(2),        /* RESERVED                  */
+*       8 SDWAMCHD     CHAR(1),         /* INPUT INFORMATION
+*                                          TO RECOVERY ROUTINE CON-
+*                                          CERNING A MACHINE CHECK
+*                                          ERROR                     */
+*         9 SDWASKYF    BIT(1),         /* ON,STORAGE KEY FAILURE    */
+*         9 SDWAREGU    BIT(1),         /* ON,GENERAL PURPOSE REGISTER
+*                                          CONTENTS AT TIME OF MACHINE
+*                                          CHECK UNPREDICTABLE       */
+*         9 SDWAPSWU    BIT(1),         /* ON,PSW AND-OR CONTROL
+*                                          REGISTERS AT TIME OF MACHINE
+*                                          CHECK UNPREDICTABLE       */
+*         9 SDWASCK     BIT(1),         /* ON,STORAGE DATA CHECK     */
+*         9 SDWAACR     BIT(1),         /* ON,INDICATES ACR REQUEST  */
+*         9 SDWAINSF    BIT(1),         /* ON,INSTRUCTION FAILURE    */
+*         9 SDWAFPRX    BIT(1),         /* ON, CONTENTS OF FLOATING
+*                                          POINT REGISTERS
+*                                          AT TIME OF MACHINE CHECK
+*                                          ARE UNPREDICTABLE         */
+*         9 SDWATERR    BIT(1),         /* ON,TIMER ERROR - CAUSES
+*                                          ENTRY TO RECOVERY ROUTINES
+*                                          ONLY IF LOGOUT FAILED     */
+*     7 SDWACPID     CHAR(2),           /* ID OF FAILING CPU CAUSING
+*                                          ACR                       */
+*     7 SDWARSR1     CHAR(1),           /* ADDITIONAL STORAGE FRAME
+*                                          ERROR INDICATORS AS
+*                                          RETURNED FROM REAL STORAGE
+*                                          RECONFIGURATION           */
+*       8 *               BIT(6),       /* RESERVED                  */
+*       8 SDWAMSER        BIT(1),       /* STORAGE ERROR ALREADY
+*                                          SET IN FRAME              */
+*       8 SDWACHNG        BIT(1),       /* CHANGE INDICATOR WAS
+*                                          ON IN FRAME               */
+*     7 SDWARSR2        CHAR(1),        /* ADDITIONAL STORAGE
+*                                          ERROR INDICATORS.         */
+*       8 SDWAOFLN        BIT(1),       /* FRAME OFFLINE OR
+*                                          SCHEDULED TO GO OFFLINE
+*                                          IF SDWAINTC IS ON         */
+*       8 SDWAINTC        BIT(1),       /* INTERCEPT
+*                                          THE FRAME IS SCHEDULED
+*                                          TO GO OFFLINE
+*                                                OR
+*                                          THE FRAME HAS INCURRED
+*                                          A STORAGE ERROR
+*                                          OR IS V=R                 */
+*       8 SDWASPER        BIT(1),       /* STORAGE ERROR PERMANENT
+*                                          ON FRAME                  */
+*       8 SDWANUCL        BIT(1),       /* FRAME CONTAINS PERMANENT
+*                                          RESIDENT STORAGE,I.E.
+*                                          NUCLEUS.                  */
+*       8 SDWAFSQA        BIT(1),       /* FRAME IN SQA              */
+*       8 SDWAFLSQ        BIT(1),       /* FRAME IN LSQA             */
+*       8 SDWAPGFX        BIT(1),       /* FRAME IS PAGE FIXED       */
+*       8 SDWAVEQR        BIT(1),       /* FRAME IS VIRTUAL=REAL
+*                                          OR SCHEDULED FOR VIRTUAL=
+*                                          REAL. IF SDWAINTC IS ON   */
+*     7 *               CHAR(2),        /* RESERVED                  */
+*     7 SDWARFSA        PTR(31),        /* REAL STORAGE FAILING
+*                                          ADDRESS. ( VALID ONLY IF
+*                                          INDICATED BY SDWASRVL )   */
+*     7 SDWATIME        CHAR(8),        /* TIME STAMP OF ASSOCIATED
+*                                          MACHINE CHECK RECORD.     */
+*   6 SDWAFLGS        CHAR(4),          /* INPUT FLAGS DESCRIBING
+*                                          REASONS AND CONDITIONS
+*                                          FOR ENTERING A RECOVERY
+*                                          EXIT ROUTINE              */
+*     7 SDWAERRA     CHAR(1),           /* ERROR TYPE CAUSING ENTRY
+*                                          TO RECOVERY ROUTINE       */
+*       8 SDWAMCHK    BIT(1),           /* ON,MACHINE CHECK          */
+*       8 SDWAPCHK    BIT(1),           /* ON,PROGRAM CHECK          */
+*       8 SDWARKEY    BIT(1),           /* ON,INDICATES CONSOLE
+*                                          RESTART KEY DEPRESSED     */
+*       8 SDWASVCD    BIT(1),           /* ON,INDICATES TASK ISSUED
+*                                          SVC 13                    */
+*       8 SDWAABTM    BIT(1),           /* ON,INDICATES SYSTEM FORCED
+*                                          SVC 13(ABTERM)            */
+*       8 SDWASVCE    BIT(1),           /* ON,INDICATES AN SVC WAS
+*                                          ISSUED BY A LOCKED OR
+*                                          SRB ROUTINE               */
+*       8 SDWATEXC    BIT(1),           /* ON,INDICATES AN
+*                                          UNRECOVERABLE TRANSLATION
+*                                          FAILURE                   */
+*       8 SDWAPGIO    BIT(1),           /* ON,INDICATES A PAGE
+*                                          I/O ERROR                 */
+*     7 SDWAERRB     CHAR(1),           /* ADDITIONAL ERROR ENTRY
+*                                          INFORMATION               */
+*       8 *           BIT(4),           /* RESERVED                  */
+*       8 SDWATYP1    BIT(1),           /* ON,TYPE1 SVC IN CONTROL AT
+*                                          TIME OF ERROR             */
+*       8 SDWAENRB    BIT(1),           /* ON,ENABLED RB IN CONTROL
+*                                           AT TIME OF ERROR         */
+*       8 SDWALDIS    BIT(1),           /* ON,A LOGICALLY OR PHYSICALLY
+*                                          DISABLED ROUTINE WAS IN
+*                                          CONTROL AT TIME OF ERROR. */
+*       8 SDWASRBM   BIT(1),            /* SYSTEM IN SRB MODE AT TIME
+*                                          OF ERROR                  */
+*     7 SDWAERRC     CHAR(1),           /* ADDITIONAL ERROR ENTRY
+*                                          INFORMATION               */
+*       8 SDWASTAF    BIT(1),           /* ON,A PREVIOUS (E)STA EXIT
+*                                          OR FRR FAILED             */
+*       8 SDWASTAI    BIT(1),           /* ON, A (E)STAI EXIT
+*                                          PREVIOUSLY RECEIVED
+*                                          CONTROL                   */
+*       8 SDWAIRB    BIT(1),            /* ON,AN IRB PRECEDED THE RB
+*                                          THAT IS ASSOCIATED WITH
+*                                          THIS EXIT                 */
+*       8 SDWAPERC    BIT(1),           /* ON,THIS RECOVERY ROUTINE
+*                                          IS BEING PERCOLATED TO    */
+*       8 SDWAEAS    BIT(1),            /* ON INDICATES A LOWER LEVEL
+*                                          EXIT HAS RECOGNIZED AN
+*                                          ERROR AND PROVIDED SERVICE-
+*                                          ABILITY INFORMATION       */
+*       8 *           BIT(3),           /* RESERVED.                 */
+*     7 SDWAERRD     CHAR(1),           /* ADDITIONAL ERROR ENTRY
+*                                          INFORMATION.              */
+*       8 SDWACLUP    BIT(1),           /* ON,INDICATES RECOVERY
+*                                          ROUTINE ONLY TO CLEANUP
+*                                          AND NOT RETRY (IF ESTA
+*                                          EXIT AND 33E
+*                                          COMPLETION CODE THE DUMP
+*                                          IS TAKEN AFTER ENTRY TO
+*                                          THE RECOVERY ROUTINE,IF
+*                                          THE COMPLETION CODE IS OTHER
+*                                          THAN 33E AND IT IS AN
+*                                          ESTA EXIT THE
+*                                          DUMP IS TAKEN BEFORE
+*                                          ENTRY TO THE RECOVERY
+*                                          ROUTINE)                  */
+*       8 SDWANRBE    BIT(1),           /* ON,RB ASSOCIATED WITH THIS
+*                                          ESTA EXIT WAS NOT IN CONTROL
+*                                          AT TIME OF ERROR          */
+*       8 SDWASTAE    BIT(1),           /* ON,THIS ESTA EXIT HAS
+*                                          BEEN ENTERED FOR A PREVIOUS
+*                                          ABEND. NEVER ON FOR FRRS. */
+*       8 SDWACTS     BIT(1),           /* ON,THIS TASK WAS NOT IN
+*                                          CONTROL AT TIME OF ERROR
+*                                          BUT A TASK WITHIN THE SAME
+*                                          JOBSTEP TREE REQUESTED A
+*                                          'STEP' ABEND. ONLY 'ON'
+*                                          IF SDWACLUP IS 'ON'.      */
+*       8 SDWAMABD    BIT(1),           /* ON,THIS TASK WAS NOT IN
+*                                          CONTROL AT TIME OF ERROR
+*                                          BUT AN ANCESTOR OF THIS
+*                                          TASK HAS ABENDED. ONLY
+*                                          'ON' IF SDWACLUP IS 'ON'  */
+*       8 SDWARPIV    BIT(1),            /* ON, THE REGISTERS AND PSW
+*                                          AT TIME OF ERROR ARE
+*                                          UNAVAILABLE               */
+*       8 SDWAMCIV    BIT(1),           /* ON, MACHINE CHECK ERROR
+*                                          INFORMATION IS
+*                                          UNAVAILABLE.              */
+*       8 SDWAERFL    BIT(1),           /* ON, ERRORID INFORMATION
+*                                          IN SDWA           @G17EP5W*/
+*    6 SDWAFMID     CHAR(2),            /* ASID OF MEMORY IN WHICH
+*                                          ERROR OCCURRED
+*                                          =0, IF MEMORY IS CURRENT
+*                                          NOT=0, IF OTHER MEMORY
+*                                          IS CURRENT.
+*                                            FOR FRRS-
+*                                          IF THE VALUE IS NON ZERO
+*                                          THE FRR IS RECEIVING
+*                                          CONTROL IN THE MASTER
+*                                          SCHEDULER ADDRESS SPACE
+*                                          AND CANNOT ADDRESS THE
+*                                          PRIVATE AREA OF THE
+*                                          FAILING ADDRESS SPACE.
+*                                            FOR ESTA-
+*                                          IF THE VALUE IS NON ZERO
+*                                          ENTRY IS DUE TO CROSS
+*                                          MEMORY ABTERM.            */
+*    6 SDWAIOFS     CHAR(1),            /* THIS IS THE CURRENT I/O
+*                                          STATUS.(THE I/O
+*                                          PROCESSING REQUESTED BY
+*                                          THE FIRST (E)STA EXIT
+*                                          IS THE ONLY REQUEST
+*                                          HONORED )                 */
+*       8 SDWAIOQR    BIT(1),           /*  ON,I/O FOR FAILING
+*                                          PROGRAM HAS BEEN QUIESCED
+*                                          AND IS RESTOREABLE        */
+*       8 SDWAIOHT    BIT(1),           /* ON,I/O FOR FAILING
+*                                          PROGRAM IS HALTED AND IS
+*                                          NOT RESTOREABLE           */
+*       8 SDWANOIO    BIT(1),           /* ON,FAILING PROGRAM HAS NO
+*                                          I/O OUTSTANDING           */
+*       8 SDWANIOP    BIT(1),           /* ON,USER REQUESTED NO I/O
+*                                          PROCESSING                */
+*      8 *            BIT(4),           /* RESERVED                  */
+*   6 SDWACPUI        PTR(8),           /* ERRORID CPUID     @G17EP5W*/
+*   6 SDWARTYA        PTR(31),          /* ADDRESS OF RETRY ROUTINE  */
+*   6 SDWARECA        PTR(31),          /* ADDRESS OF VARIABLE
+*                                          RECORDING AREA WITHIN SDWA*/
+*   6 SDWACPUA        CHAR(4) BDY(WORD),/* ADDRESS OF CPU HOLDING
+*                                          RESOURCE WHICH CAUSES
+*                                          VALID SPIN ON CURRENT
+*                                          CPU-USED WITH RESTART KEY
+*                                          ERROR TYPE.IF THIS FIELD
+*                                          IS VALIDLY FILLED IN BY AN
+*                                          FRR THE FRRS MAINLINE
+*                                          PROGRAM WILL BE RESUMED AT
+*                                          THE NEXT SEQUENTIAL
+*                                          INSTRUCTION. NOT VALID FOR
+*                                          ESTAE EXITS.              */
+*     7 *             CHAR(2),          /* RESERVED                  */
+*     7 SDWALCPU     PTR(15) BDY(HWORD),/* LOGICAL ADDRESS OF CPU
+*                                          HOLDING RESOURCE          */
+*   6 SDWAPARQ        CHAR(4),          /* FLAGS SET BY RECOVERY
+*                                          ROUTINE TO REQUEST FUR-
+*                                          THEIR PROCESSING ACTION   */
+*     7  SDWARCDE     CHAR(1),          /* RETURN CODE FROM RECOVERY
+*                                          ROUTINE TO INDICATE RETRY
+*                                          OR TERMINATION ACTIONS :
+*                                          0, CONTINUE WITH TERMINATION
+*                                          THIS INDICATION IMPLIES
+*                                          PERCOLATION
+*                                          4, RETRY
+*                                          16, PREVENT FURTHER (E)STAI
+*                                              PROCESSING            */
+*     7 SDWAACF2      CHAR(1),          /* FLAGS TO INDICATE ADDITIO-
+*                                          NAL PROCESSING REQUESTS   */
+*       8 SDWARCRD     BIT(1),          /* ON,RECORDING REQUESTED    */
+*       8 *            BIT(1),          /* RESERVED                  */
+*       8 SDWASPIN     BIT(1),          /* ON,PROGRAM INTERRUPTED
+*                                          VIA THE RESTART KEY WAS
+*                                          IN A VALID SPIN(SET BY
+*                                          THE SETRP MACRO WHEN CPU
+*                                          ADDRESS IS SPECIFIED ALONG
+*                                          WITH CPU ADDRESS IN SDWACPUA
+*                                          FIELD TO ALLOW RESTART
+*                                          OF ALTERNATE CPU)         */
+*       8 *            BIT(1),          /* RESERVED                  */
+*       8 SDWAUPRG     BIT(1),          /* ON,UPDATED REGISTERS
+*                                          STARTING WITH SDWASR00
+*                                          ARE TO BE USED FOR RETRY  */
+*       8 SDWAFREE     BIT(1),          /* ON,SDWA/RTCA TO BE FREED
+*                                          PRIOR TO RETRY
+*                                          ONLY VALID FOR ESTA EXITS */
+*       8 *            BIT(2),          /* RESERVED                  */
+*     7 SDWAACF3      CHAR(1),          /* FLAGS INDICATING WHAT
+*                                          GLOBAL LOCKS ARE TO BE
+*                                          FREED (KEY 0 SUPERVISOR
+*                                          ONLY.)
+*                                          ONLY VALID FOR FRRS       */
+*       8 *           BIT(3),           /* RESERVED                  */
+*       8 SDWADISP    BIT(1),           /* ON THE DISPATCHER LOCK    */
+*       8 SDWAASMP    BIT(1),           /* ON, ASM CLASS LOCK@Z40WPXH*/
+*       8 SDWASALL    BIT(1),           /* ON, THE SALLOC LOCK       */
+*       8 SDWAIPRG    BIT(1),           /* ON, THE IOSYNCH LOCK      */
+*       8 SDWAICAT    BIT(1),           /* ON,THE IOSCAT LOCK        */
+*     7 SDWAACF4    CHAR(1),            /* ADDITIONAL LOCKS TO BE
+*                                          FREED                     */
+*       8 SDWAIUCB    BIT(1),           /* ON,THE IOSUCB LOCK        */
+*       8 SDWAILCH    BIT(1),           /* ON, THE IOSLCH LOCK       */
+*       8 SDWATNCB    BIT(1),           /* RESERVED LOCK     @Z40WPXH*/
+*       8 SDWATDNB    BIT(1),           /* RESERVED LOCK     @Z40WPXH*/
+*       8 SDWATADB    BIT(1),           /* RESERVED LOCK     @Z40WPXH*/
+*       8 SDWAOPTM    BIT(1),           /* ON,THE SYSTEM RESOURCE
+*                                          MGR(SRM) LOCK             */
+*       8 SDWACMS     BIT(1),           /* ON,THE CMS LOCK           */
+*       8 SDWAFLLK    BIT(1),           /* ON,THE LOCAL LOCK         */
+*   6 SDWALKWA    CHAR(32) BDY(WORD),   /* LOCK AREA         @ZA05516*/
+*     7 SDWALKWS    CHAR(32) BDY(WORD), /* LOCKWORDS REQUIRED TO FREE
+*                                          THE GLOBAL LOCKS
+*                                          ONLY USED FOR FRRS        */
+*       8 SDWAICLW     PTR(31),         /* LOCKWORD FOR THE IOSCAT
+*                                          LOCK                      */
+*       8 SDWAIULW      PTR(31),        /* LOCKWORD FOR THE IOSUCB
+*                                          LOCK                      */
+*       8 SDWAILLW      PTR(31),        /* LOCKWORD FOR THE IOSLCH
+*                                          LOCK                      */
+*       8 SDWAIPLW      PTR(31),        /* LOCKWORD FOR THE IOSYNCH
+*                                          LOCK                      */
+*       8 SDWAAPLW      PTR(31),        /* LOCKWORD FOR THE ASM CLASS
+*                                          LOCK              @Z40WPXH*/
+*       8 SDWATNLW      PTR(31),        /* LOCKWORD - RESERVED
+*                                          LOCK              @Z40WPXH*/
+*       8 SDWATDLW      PTR(31),        /* LOCKWORD - RESERVED
+                                           LOCK              @Z40WPXH*/
+*       8 SDWATALW      PTR(31),        /* LOCKWORD - RESERVED
+*                                          LOCK              @Z40WPXH*/
+*   6 SDWAASID        CHAR(2),          /* ASID FOR LOGREC DEBUGGING
+*                                                            @ZA05516*/
+*   6 SDWASEQ#        CHAR(2),          /* ERRORID SEQ NBR   @G17EP5W*/
+*   6 SDWARECP        CHAR(24),         /* RECORDING PARAMETERS
+*                                          (MODULE ,CSECT,AND RECOVERY
+*                                          ROUTINE NAME-RESPECTIVELY)*/
+*     7 SDWAMODN      CHAR(8),          /* THE MODULE NAME
+*                                          INVOLVED IN THE ERROR
+*                                          (SUPPLIED BY THE RECOVERY
+*                                          ROUTINE)                  */
+*     7 SDWACSCT      CHAR(8),          /* THE CSECT NAME INVOLVED
+*                                          IN THE ERROR(SUPPLIED
+*                                          BY THE RECOVERY ROUTINE)  */
+*     7 SDWAREXN      CHAR(8),          /* THE RECOVERY ROUTINE NAME
+*                                          HANDLING THE ERROR        */
+*   6 SDWADPLA        PTR(31),          /* POINTER TO DUMP
+*                                          PARAMETER LIST RESIDING
+*                                          IN SDWA.                  */
+*   6 SDWASNPA        CHAR(8),          /* SNAP PARAMETER LIST FLAGS */
+*     7 SDWADUMP        CHAR(4),        /* DUMP CHARACTERISTICS      */
+*       8 SDWADPID      CHAR(1),        /* ID OF DUMP REQUESTED      */
+*       8 SDWADPFS      CHAR(1),        /* DUMP FLAGS                */
+*         9 SDWADPT      BIT(1),        /* ALWAYS  OFF,INDICATES SNAP
+*                                          DUMP  REQUEST             */
+*         9 SDWADLST     BIT(1),        /* ALWAYS ON, INDICATES OS/VS2
+*                                          REL. 2 DUMP  PARAMETER LIST
+*                                          SUPPLIED. USED BY RTM TO
+*                                          INDICATE DUMP OPTIONS
+*                                          ARE AVAILABLE IN THE SDWA */
+*         9  SDWAENSN    BIT(1),        /* 1=ENHANCED DUMP OPTIONS
+*                                                            @G33SPHW*/
+*         9 *            BIT(3),        /* RESERVED.                 */
+*         9  SDWASLST    BIT(1),        /* ON,STORAGE LIST SUPPLIED
+*                                          FOR DUMP                  */
+*         9 *            BIT(1),        /* RESERVED                  */
+*       8 *             CHAR(2),        /* RESERVED                  */
+*     7 SDWADDAT        CHAR(4),        /* SDATA/PDATA OPTIONS       */
+*       8 SDWASDAT      CHAR(2),        /* SDATA OPTIONS             */
+*        9 SDWASDA0      CHAR(1),       /* SDATA OPTIONS FLAG ONE
+*                                                            @G33SPHW*/
+*        10 SDWANUC      BIT(1),        /* DISPLAY NUCLEUS           */
+*        10 SDWASQA      BIT(1),        /* DISPLAY SQA               */
+*        10 SDWALSQA     BIT(1),        /* DISPLAY LSQA              */
+*        10 SDWASWA      BIT(1),        /* DISPLAY SWA               */
+*        10 SDWAGTF      BIT(1),        /* DISPLAY GTF INCORE TRACE
+*                                          TABLE                     */
+*        10 SDWACBS      BIT(1),        /* FORMAT AND DISPLAY CONTROL
+*                                          BLOCKS                    */
+*        10 SDWAQQS      BIT(1),        /* FORMAT AND DISPLAY QCBS/
+*                                          QELS                      */
+*        10 SDWADM       BIT(1),        /* FORMAT DATA MGT CONTROL
+*                                          BLOCKS            @G33SPHW*/
+*       9 SDWASDA1      CHAR(1),        /* SDATA OPTIONS     @G33SPHW*/
+*        10 SDWAIO       BIT(1),        /* FORMAT IOS CONTROL BLOCKS
+*                                                            @G33SPHW*/
+*        10 SDWAERR      BIT(1),        /* FORMAT ERROR CONTROL
+*                                          BLOCKS            @G33SPHW*/
+*        10 *            BIT(6),        /* RESERVED          @G33SPHW*/
+*       8 SDWAPDAT      CHAR(1),        /* PDATA OPTIONS             */
+*         9 SDWADSAS     BIT(1),        /* DISPLAY SAVE AREAS        */
+*         9 SDWADSAH     BIT(1),        /* DISPLAY SAVE AREA HEADER  */
+*         9 SDWADREG     BIT(1),        /* DISPLAY REGISTERS         */
+*         9 SDWATLPA     BIT(1),        /* DISPLAY LPA MODULES OF
+*                                          TASK                      */
+*         9 SDWATJPA     BIT(1),        /* DISPLAY JPA MODULES OF
+*                                          TASK                      */
+*         9 SDWADPSW     BIT(1),        /* DISPLAY PSW               */
+*         9 SDWAUSPL     BIT(1),        /* DISPLAY USER SUBPOOLS     */
+*         9 *            BIT(1),        /* RESERVED                  */
+*       8 *             CHAR(1),        /* RESERVED                  */
+*   6 SDWADPSA     CHAR(36) BDY(WORD),  /* DUMP RANGES AREA          */
+*     7 SDWADPSL    CHAR(32) BDY(WORD), /* DUMP STORAGE LISTS(MAX 4
+*                                          RANGES AVAILABLE)         */
+*       8 SDWAFRM1      PTR(31),        /* BEGINNING ADDRESS FOR
+*                                          STORAGE RANGE 1           */
+*       8 SDWATO1       PTR(31),        /* ENDING ADDRESS FOR STORAGE
+*                                          RANGE 1                   */
+*       8 SDWAFRM2      PTR(31),        /* BEGINNING ADDRESS FOR
+*                                          STORAGE RANGE 2           */
+*       8 SDWATO2       PTR(31),        /* ENDING ADDRESS FOR STORAGE
+*                                          RANGE 2                   */
+*       8 SDWAFRM3      PTR(31),        /* BEGINNING ADDRESS FOR
+*                                          STORAGE RANGE 3           */
+*       8 SDWATO3       PTR(31),        /* ENDING ADDRESS FOR STORAGE
+*                                          RANGE 3                   */
+*       8 SDWAFRM4      PTR(31),        /* BEGINNING ADDRESS FOR
+*                                          STORAGE RANGE 4           */
+*       8 SDWATO4       PTR(31),        /* ENDING ADDRESS FOR STORAGE
+*                                          RANGE 4                   */
+*     7 *               PTR(31),        /* RESERVED                  */
+*   6 SDWARCPL    CHAR(28) BDY(WORD),   /* RESERVED FOR RTM USE      */
+*   6 SDWACOMP       PTR(31),           /* THIS WORD IS PROVIDED FOR
+*                                          COMMUNICATION OF ADDITIONAL
+*                                          RECOVERY DATA ON A PER
+*                                          COMPONENT BASIS (FOR
+*                                          OS/VS2 RELEASE 2 THIS
+*                                          FIELD IS ONLY USED BY
+*                                          DATA MANAGER).            */
+*   6 SDWAERTM       CHAR(4),           /* ERRORID TIME STAMP@G17EP5W*/
+*   6 SDWARA         CHAR(112),         /* VARIABLE RECORDING AREA
+*                                          PREFIXED BY TWO BYTE
+*                                          LENGTH FIELD OF AREA
+*                                          AND A TWO BYTE FIELD WITH
+*                                          LENGTH OF USER SUPPLIED
+*                                          INFORMATION               */
+*     7 SDWAVRAL      CHAR(2),          /* LENGTH OF VARIABLE RECORD-
+*                                          ING AREA                  */
+*     7 SDWADPVA      CHAR(1),          /* DEFINES DUMPING OF DATA IN
+*                                          VARIABLE AREA.            */
+*       8 SDWAHEX      BIT(1),          /* DATA TO BE DUMPED BY EREP
+*                                          IN HEX.                   */
+*       8 SDWAEBC      BIT(1),          /* DATA TO BE DUMPED BY EREP
+*                                          EBCDIC.                   */
+*        8 *           BIT(6),          /* RESERVED                  */
+*     7 SDWAURAL      CHAR(1),          /* LENGTH OF USER SUPPLIED
+*                                          INFORMATION               */
+*     7 SDWAVRA       CHAR(108),        /* VARIABLE RECORDING AREA   */
+*   6 *        CHAR(0) BDY(DWORD) SDWA9999 /*ROUND UP TO DOUBLE WORD */
+*/* THESE CONSTANTS MAP RETURN CODES FROM AN EXIT IN FIELD           */
+*/* SDWARCDE                                                         */
+*DECLARE
+*  SDWACWT  CONSTANT(0),                /* CONTINUE WITH TERMINATION.
+*                                          THIS INDICATION IMPLIES
+*                                          PERCOLATION               */
+*  SDWARETY CONSTANT(4),                /* RETRY USING RETRY ADDRESS
+*                                          IN SDWARTYA FIELD         */
+*  SDWAPSTI CONSTANT(16);               /* PREVENT FURTHER (E)STAI
+*                                          PROCESSING                */
+*%SDWALEN = 'LENGTH(SDWA)';             /* LENGTH OF SDWA            */
+*%SDWAFLEN = 'LENGTH(SDWA)+272';        /* GETMAIN LEN FOR FRR SDWA  */
+

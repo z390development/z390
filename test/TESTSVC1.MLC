@@ -1,0 +1,40 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 01/12/06 RPI 151 TEST NEW USER OPTION FOR FIRST LEVEL SVC HANDLER
+*********************************************************************
+TESTSVC1 SUBENTRY
+         LA    R1,MY_SVC_HANDLER
+         ST    R1,SVC_NEW+4       SET NEW SVC PSW ADDR
+         MVI   SVC_NEW,X'FF'      SET NEW SVC PSW MASK TO ENABLE
+         LA    R1,WTOMSG1         SET R1 T0 WTO MSG 1
+         SVC   201                ISSUE USER SVC 201 FOR HANDLER
+         LA    R1,WTOMSG2         SET R1 TO WTO MSG 2
+         SVC   201                ISSUE USER SVC 201 FOR HANDLER
+         SUBEXIT
+WTOMSG1  WTO   'HELLO FROM SVC 201 MSG 1',MF=L
+WTOMSG2  WTO   'HELLO FROM SVC 201 MSG 2',MF=L
+MY_SVC_HANDLER DS 0H
+         DROP
+         MVI   SVC_NEW,X'00' TURN OFF SVC HANDLER TO ISSUE NATIVE SVC
+         CLI   SVC_OLD+3,201
+         JNE   MY_SVC_HANDLER_CHK3
+         SVC   35
+         J     MY_SVC_HANDLER_EXIT
+MY_SVC_HANDLER_CHK3  CLI   SVC_OLD+3,3
+         JNE   MY_SVC_HANDLER_ERROR
+         SVC   3        EXITING PGM VIA NATIVE SVC 3
+MY_SVC_HANDLER_ERROR EQU *
+         WTO   'UNKNOWN SVC - ABORTING'
+         ABEND 111,DUMP
+MY_SVC_HANDLER_EXIT EQU *
+         MVI   SVC_NEW,X'FF' TURN OFF SVC HANDLER BACK ON
+         LPSW  SVC_OLD
+         EQUREGS
+SVC_OLD  EQU   X'20'
+SVC_NEW  EQU   X'60'
+         END

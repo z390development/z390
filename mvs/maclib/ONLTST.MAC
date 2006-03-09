@@ -1,0 +1,131 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    ONLTST &DECB=,&X=,&Y=,&DCB=,&AREA=,&TEXT=,&LENGTH=,&ENTRY=,   X
+               &RLN=
+         LCLB  &S1,&S2,&S3,&S4
+         AIF   ('&DECB' EQ '').MNOTE8
+         AIF   ('&X' EQ '' OR '&Y' EQ '').MNOTE1
+         AIF   ('&AREA' EQ '').MNOTE3
+         AIF   ('&Y'(1,1) EQ '(').CHKX
+         AIF   (&Y LT 1 OR &Y GT 99).MNOTE2
+.CHKX    AIF   ('&X'(1,1) EQ '(').CKTXT
+         AIF   (&X LT 0 OR &X GT 22).MNOTE2                        000L
+&S1      SETB  (&X EQ 0)
+&S2      SETB   (&X EQ 1)
+&S3      SETB  ('&TEXT' EQ '')
+&S4      SETB  ('&LENGTH' EQ '')
+         AIF   (&S1 AND (&S3 OR &S4)).MNOTE5
+         AIF   (&S2 AND (&S3 OR &S4)).MNOTE5
+         AIF   (NOT &S3 AND NOT (&S2 OR &S1)).MNOTE7
+         AIF   (NOT &S4 AND NOT (&S2 OR &S1)).MNOTE7
+         AIF   (NOT (&S1 OR &S2)).KEEPGO
+.CKTXT   ANOP
+         AIF   (&S3 AND NOT &S4).MNOTE6
+         AIF   (&S4 AND NOT &S3).MNOTE6
+.KEEPGO  AIF   ('&DECB'(1,1) EQ '(').DECBREG      FIND DECB ADDRESS
+&NAME    LA    1,&DECB
+         AGO   .NEXT
+.DECBREG AIF   ('&DECB' EQ '(1)').NAMEIT
+&NAME    LR    1,&DECB(1)
+         AGO   .NEXT
+.NAMEIT  AIF   ('&NAME' EQ '').NEXT
+&NAME    DS    0H                                 DUMMY STMT FOR NAME
+.NEXT    AIF   ('&X'(1,1) EQ '(').XREG
+         AIF   ('&X'(1,1) GE '0').LOADX
+         B     *+6
+         DC    AL2(&X)                            CREATE DC IF CHAR-EXP
+         MVC   4(1,1),*-1
+         AGO   .YNEXT
+.XREG    ANOP
+         STC   &X(1),4(1)                         STORE X INTO DECB
+         AGO   .YNEXT
+.LOADX   ANOP
+         MVI   4(1),&X                           GET ABSOLUTE VALUE &
+.YNEXT   AIF   ('&Y'(1,1) EQ '(').YREG            IS Y VALUE IN REG
+         AIF   ('&Y'(1,1) GE '0').LOADY
+         B     *+6
+         DC    AL2(&Y)
+         MVC   5(1,1),*-1                         MOVE Y INTO DECB
+         AGO   .DCB
+.YREG    ANOP
+         STC   &Y(1),5(1)                        STORE Y VALUE ON DECB
+         AGO   .DCB
+.LOADY   ANOP
+         MVI   5(1),&Y                           STORE Y VALUE IN DECB
+.DCB     ANOP
+         AIF   ('&DCB' EQ '').AREA                IS DCB PARAM OMITTED
+         AIF   ('&DCB'(1,1) EQ '(').DCBRG         IS DCB PARAM IN REG
+         LA    14,&DCB                            GET ADDRESS IN REG
+         ST    14,8(0,1)                            AND STORE IN DECB
+         AGO   .AREA
+.DCBRG   ANOP
+         ST    &DCB(1),8(0,1)                     STORE DCBADDR IN DECB
+.AREA    ANOP
+         AIF   ('&AREA'(1,1) EQ '(').AREAREG
+         LA    14,&AREA
+         ST    14,12(0,1)                           AND STORE IN DECB
+         AGO   .TEXT
+.AREAREG ANOP
+         ST    &AREA(1),12(0,1)                   STORE AREA IN DECB
+.TEXT    ANOP
+         AIF   ('&TEXT' EQ '').ENTRY              IS TEXT PARAM OMITTED
+         AIF   ('&TEXT'(1,1) EQ '(').TEXTREG      IS TEXT IN REGISTER
+         LA    14,&TEXT
+         ST    14,36(0,1)                           AND STORE IN DECB
+         AGO   .LENGTH
+.TEXTREG ANOP
+         ST    &TEXT(1),36(0,1)                   STORE TXTADDR IN DECB
+.LENGTH  ANOP
+         AIF   ('&LENGTH' EQ '').ENTRY
+         AIF   ('&LENGTH'(1,1) EQ '(').LNGREG     IS LENGTH IN REGISTER
+         AIF   ('&LENGTH'(1,1) GE '0').LOADLNG    IS LNGTH SELF-DEFINED
+         B     *+6
+         DC    AL2(&LENGTH)
+         MVC   6(2,1),*-2                           AND MOVE INTO DECB
+         AGO   .ENTRY
+.LNGREG  ANOP
+         STH   &LENGTH(1),6(1)                    STORE LENGTH VALUE
+         AGO   .ENTRY                               INTO DECB
+.LOADLNG ANOP
+         LA    14,&LENGTH                         GET LENGTH VALUE IN
+         STH   14,6(1)                              REG AND STORE
+.ENTRY   ANOP
+         AIF   ('&ENTRY' EQ '').RLN               ENTRY OPERAND OMITTED
+         AIF   ('&ENTRY'(1,1) EQ '(').ENTRYRG     ENTRY OPERAND IN REG
+         LA    14,&ENTRY
+         ST    14,20(1)                             AND STORE IN DECB
+         AGO   .RLN
+.ENTRYRG ANOP
+         ST    &ENTRY(1),20(1)                    STORE ENTRY INTO DECB
+.RLN     ANOP
+         AIF   ('&RLN' EQ '').NEAREND             IS RLN OMITTED
+         AIF   ('&RLN'(1,1) EQ '(').RLNREG        IS RLN IN REGISTER
+         MVI   25(1),&RLN                        STORE RLN IN DECB
+         AGO   .NEAREND
+.RLNREG  ANOP
+         STC   &RLN(1),25(1)                      STORE RLN IN DECB
+.NEAREND ANOP
+         CNOP  0,4
+         BAL   14,*+8
+         DC    V(IECTONLT)                        ADDR OF ONLTST LOGIC
+         L     15,0(14)
+         BALR  14,15                              GO TO ONLTST LOGIC
+         AGO   .END
+.MNOTE1  MNOTE 12,'*** IHB001  X AND/OR Y OPERAND REQ''D - NOT SPECIFIE*
+               D'
+         MEXIT
+.MNOTE2  MNOTE 12,'***  IHB100  X OR Y PARAMETER NOT WITHIN ALLOWABLE VX
+               ALUE RANGE'
+         MEXIT
+.MNOTE3  MNOTE 12,'***  IHB001  AREA OPERAND REQ''D - NOT SPECIFIED'
+         MEXIT
+.MNOTE5  MNOTE 12,'***  IHB103  TEXT OR LENGTH MISSING WHEN X=0 OR X=1'
+         MEXIT
+.MNOTE6  MNOTE 1,'***  IHB104  TEXT OR LENGTH MISSING'
+         AGO   .KEEPGO
+.MNOTE7  MNOTE 1,'***  IHB105  X GREATER THAN 1. TEXT AND LENGTH PARAMEX
+               TERS IGNORED'
+         AGO    .KEEPGO
+.MNOTE8  MNOTE 12,'***  IHB001  DECB OPERAND REQ''D - NOT SPECIFIED'
+         MEXIT
+.END     MEND

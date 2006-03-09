@@ -1,0 +1,52 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GO TO SSIBPLS;          /*
+         MACRO
+         IEFJSSIB
+*
+*  SUBSYSTEM IDENTIFICATION BLOCK (SSIB)
+*
+*        -IDENTIFIES THE SUBSYSTEM TO WHICH A REQUEST FOR SERVICES
+*         IS BEING MADE
+*
+*        -CONTAINS COMMON CONTROL INFORMATION PASSED BETWEEN THE
+*         REQUESTOR AND THE SUBSYSTEM
+*
+SSIB     DSECT
+SSIBEGIN EQU   *
+SSIBID   DC    CL4'SSIB'          CONTROL BLOCK IDENTIFIER
+SSIBLEN  DC    AL2(SSIBSIZE)      SSIB LENGTH
+SSIBFLG1 DS    B                  FLAGS
+SSIBPJES EQU   X'80'              THIS SSIB IS USED TO START THE
+*                                 JOB ENTRY SUBSYSTEM
+SSIBRESV DS    X                  RESERVED
+SSIBSSNM DS    CL4                SUBSYSTEM NAME
+SSIBJBID DS    CL8                JOB IDENTIFIER
+SSIBDEST DS    CL8                DEFAULT USERID FOR SYSOUT DESTINATION
+SSIBRSV1 DS    F                  RESERVED
+SSIBSUSE DS    F                  RESERVED FOR SUBSYSTEM USAGE
+SSIBSIZE EQU   *-SSIBEGIN         SSIB LENGTH
+         MEND                     */
+* %SSIBPLS:;
+*/*                                                                  */
+*/*  SUBSYSTEM IDENTIFICATION BLOCK (SSIB)                           */
+*/*                                                                  */
+*/*      -IDENTIFIES THE SUBSYSTEM TO WHICH A REQUEST FOR SERVICES   */
+*/*       IS BEING MADE                                              */
+*/*                                                                  */
+*/*      -CONTAINS COMMON CONTROL INFORMATION PASSED BETWEEN THE     */
+*/*       REQUESTOR AND THE SUBSYSTEM                                */
+*/*                                                                  */
+*  DCL 1 SSIB    BASED(SSIBPTR),
+*        2    SSIBID   CHAR(4),   /* CONTROL BLOCK ID='SSIB'         */
+*        2    SSIBLEN  FIXED(15), /* SSIB LENGTH                     */
+*        2    SSIBFLG1 BIT(8),    /* FLAGS                           */
+*          3    SSIBPJES  BIT(1), /* THIS SSIB IS USED TO START THE
+*                                    PRIMARY JOB ENTRY SUBSYSTEM     */
+*          3    *         BIT(7), /* RESERVED FLAGS                  */
+*        2    SSIBRESV CHAR(1),   /* RESERVED                        */
+*        2    SSIBSSNM CHAR(4),   /* SUBSYSTEM NAME                  */
+*        2    SSIBJBID CHAR(8),   /* JOB IDENTIFIER                  */
+*        2    SSIBDEST CHAR(8),   /* DEFAULT USERID FOR SYSOUT
+*                                    DESTINATION                     */
+*        2    SSIBRSV1 FIXED(31), /* RESERVED                        */
+*        2    SSIBSUSE PTR(31);   /* RESERVED FOR SUBSYSTEM USAGE    */

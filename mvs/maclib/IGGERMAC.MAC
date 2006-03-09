@@ -1,0 +1,93 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO                                                 @G38ESJC
+         IGGERMAC &A,&B,&D,&E,&F,&H                            @G38ESJC
+.*                                                             @G38ESJC
+.*       OS/VS2 RELEASE 3.8                                    @G38ESJC
+.*       3800 ENHANCEMENTS  ---  15 APRIL 79                   @G38ESJC
+.*                                                             @G38ESJC
+.*       THE MACRO CONTAINS MNOTES ISSUED BY GPD OWNED MACROS. @G38ESJC
+.*                                                             @G38ESJC
+.*       SOME OF THE MNOTES ISSUED BY THIS MACRO WERE          @G38ESJC
+.*       PREVIOUSLY ISSUED BY IHBERMAC.                        @G38ESJC
+.*                                                             @G38ESJC
+.*                                                             @G38ESJC
+         AIF   (&A LT 100).SETPRT                              @G38ESJC
+.*                                                             @G38ESJC
+.INVALID MNOTE 12,'IGG000 INVALID OPERAND &A PASSED TO SYSTEM MACRO IGGX
+               ERMAC.'                                         @G38ESJC
+         MEXIT                                                 @G38ESJC
+.*                                                             @G38ESJC
+.*                                                             @G38ESJC
+.SETPRT  ANOP                           SETPRT CODES ARE 1-99  @G38ESJC
+.*                                      1-50  ARE ERROR MSGS   @G38ESJC
+.*                                      51-99 ARE WARNING MSGS @G38ESJC
+         AIF   (&A GT 50).SETPRTW       GO TO WARNING MSGS     @G38ESJC
+.SETPR01 AIF   (&A NE 1).SETPR02                               @G38ESJC
+         MNOTE 12,'IGG001  DCB IS MISSING OR INVALID'          @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR02 AIF   (&A NE 2).SETPR03                               @G38ESJC
+         MNOTE 12,'IGG002  UCS SUBLIST IS INVALID'             @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR03 AIF   (&A NE 3).SETPR04                               @G38ESJC
+         MNOTE 12,'IGG003  MACRO-FORM IS INVALID'              @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR04 AIF   (&A NE 4).SETPR05                               @G38ESJC
+         MNOTE 12,'IGG004  OPTCD IS INVALID'                   @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR05 AIF   (&A NE 5).SETPR06                               @G38ESJC
+         MNOTE 12,'IGG005  DISP IS INVALID'                    @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR06 AIF   (&A NE 6).SETPR07                               @G38ESJC
+         MNOTE 12,'IGG006  FCB SUBLIST IS INVALID'             @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR07 AIF   (&A NE 7).SETPR08                               @G38ESJC
+         MNOTE 12,'IGG007  COPIES IS INVALID'                  @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR08 AIF   (&A NE 8).SETPR09                               @G38ESJC
+         MNOTE 12,'IGG008  BURST IS INVALID'                   @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR09 AIF   (&A NE 9).SETPR10                               @G38ESJC
+         MNOTE 12,'IGG009  FLASH SUBLIST IS INVALID'           @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR10 AIF   (&A NE 10).SETPR11                              @G38ESJC
+         MNOTE 12,'IGG010  MODIFY SUBLIST IS INVALID'          @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR11 AIF   (&A NE 11).SETPR12                              @G38ESJC
+         MNOTE 12,'IGG011  CHARS SUBLIST IS INVALID'           @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR12 AIF   (&A NE 12).SETPR13                              @G38ESJC
+         MNOTE 12,'IGG012  COPYNR IS INVALID'                  @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR13 AIF   (&A NE 13).SETPR14                              @G38ESJC
+         MNOTE 12,'IGG013  INIT IS INVALID'                    @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR14 AIF   (&A NE 14).SETPR15                              @G38ESJC
+         MNOTE 12,'IGG014  REXMIT IS INVALID'                  @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR15 AIF   (&A NE 15).SETPR16                              @G38ESJC
+         MNOTE 12,'IGG015  PRTMSG IS INVALID'                  @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR16 AIF   (&A NE 16).SETPR17                              @G38ESJC
+         MNOTE 12,'IGG016  MSGAREA IS INVALID'                 @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR17 AIF   (&A NE 17).SETPR18                              @G38ESJC
+         MNOTE 12,'IGG017  LIBDCB IS INVALID'                  @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR18 ANOP                                                  @G38ESJC
+         AGO   .INVALID                                        @G38ESJC
+.*                                                             @G38ESJC
+.*       SETPRT WARNING MESSAGES                               @G38ESJC
+.*                                                             @G38ESJC
+.SETPRTW AIF   (&A NE 51).SETPR52                              @G38ESJC
+         MNOTE *,'IGG051  ONLY COPIES, COPYNR AND FLASH KEYWORDS ARE PRX
+               OCESSED WITH REXMIT=Y'                          @G38ESJC
+         MEXIT                                                 @G38ESJC
+.SETPR52 ANOP                                                  @G38ESJC
+         AGO   .INVALID                                        @G38ESJC
+.************************************************************* @G38ESJC
+.*                                                             @G38ESJC
+.*       END OF SETPRT MNOTES                                  @G38ESJC
+.*                                                             @G38ESJC
+.************************************************************* @G38ESJC
+         MEND                                                  @G38ESJC
+

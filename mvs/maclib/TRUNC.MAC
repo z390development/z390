@@ -1,0 +1,11 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    TRUNC  &DCB,&DUMMY=
+         AIF   ('&DCB' EQ '').E1
+&NAME    IHBINNRA &DCB
+         L     15,48(0,1)                        LOAD REG 15 FROM DCB
+         BAL   14,8(0,15)                        LINK TO TRUNC ROUTINE
+         MEXIT
+.E1      IHBERMAC 6                     DCB MISSING
+         MEND
+

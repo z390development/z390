@@ -1,0 +1,182 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    IHBRDWRK &DECB,&TYPE,&DCB,&AREA,&LENGTH,&KEYADR,&RCDREF,&MF=I
+.*  THIS MACRO IS CALLED BY MACROS READ + WRITE WHEN THEIR SECOND
+.*  PARAMETER STARTS WITH A K.  (BISAM)
+         GBLB  &IHBWR,&IHBT(2),&IHBS(4)
+         LCLB  &B1,&B2,&B3,&B4,&B5,&B6,&B7,&ISW,&SWA
+         LCLA  &CTR,&CNT
+&SWA     SETB  ('&TYPE' EQ 'KN')
+&CNT     SETA  88+4*&SWA
+         AIF   ('&MF' EQ 'I').IROUT
+         AIF   ('&MF(1)' EQ 'E').EROUT
+         AIF   ('&MF' NE 'L').E4
+         AIF   ('&DECB'(1,1) EQ '(').E6
+         AIF   ('&NAME' EQ '').SETROUT  IF NAME NOT SPECIFIED
+&NAME    DS    0F
+.SETROUT ANOP
+&DECB    DC    A(0)                              EVENT CONTROL BLOCK
+&B1      SETB  ('&LENGTH' EQ '''S''')
+&B2      SETB  ('&AREA' EQ '''S''')
+         DC    BL1'&B1&B2'                       TYPE FIELD
+&B3   SETB     (('&TYPE' EQ 'K' OR '&TYPE' EQ 'KC') AND NOT &IHBWR)
+&B4      SETB  ('&TYPE' EQ 'KC' OR '&TYPE' EQ 'KUC'                    X
+               OR '&TYPE' EQ 'KNC')
+&B5   SETB     (('&TYPE' EQ 'KU' OR '&TYPE' EQ 'KUC') AND NOT &IHBWR)
+&B6   SETB     (('&TYPE' EQ 'K' OR '&TYPE' EQ 'KC') AND &IHBWR)
+&B7   SETB     (('&TYPE' EQ 'KN' OR '&TYPE' EQ 'KNC') AND &IHBWR)
+         AIF   (&B3+&B5+&B6+&B7 NE 1).E3
+         DC    BL1'&B3&B4&B5.0&B6&B7.00'         TYPE FIELD
+         AIF   (&ISW).IRETURN
+         AIF   ('&LENGTH' EQ '' OR &B1).NOLENG
+         AIF   ('&LENGTH'(1,1) EQ '(').E5
+         DC    AL2(&LENGTH)                      LENGTH
+         AGO   .CHKDCB
+.NOLENG  DC    AL2(0)                            LENGTH
+.CHKDCB  AIF   ('&DCB' EQ '').NODCB
+         AIF   ('&DCB'(1,1) EQ '(').E5
+         DC    A(&DCB)                           DCB ADDRESS
+         AGO   .CHKAREA
+.NODCB   DC    A(0)                              DCB ADDRESS
+.CHKAREA AIF   ('&AREA' EQ '' OR &B2).NOAREA
+         AIF   ('&AREA'(1,1) EQ '(').E5
+         DC    A(&AREA)                          AREA ADDRESS
+         AGO   .PTRWD
+.NOAREA  DC    A(0)                              AREA ADDRESS
+.PTRWD   DC    A(0)                              RECORD POINTER WORD
+         AIF   ('&KEYADR' EQ '').NOKEY
+         AIF   ('&KEYADR'(1,1) EQ '(').E5
+         DC    A(&KEYADR)                        KEY ADDRESS
+         AGO   .EXCD
+.NOKEY   DC    A(0)                              KEY ADDRESS
+.EXCD    DC    AL2(0)                            EXCEPTION OCDE
+         MEXIT
+.IROUT   AIF   ('&DECB'(1,1) EQ '(').E6
+         CNOP  0,4
+&NAME    BAL   1,*+30                            BRANCH AROUND DECB
+&ISW     SETB  1
+         AGO   .SETROUT
+.IRETURN AIF   ('&LENGTH' EQ '').ZLENGTH
+         AIF   ('&LENGTH'(1,1) EQ '(' OR &B1).ZLENGTH
+         DC    AL2(&LENGTH)                      LENGTH
+         AGO   .CKDCB
+.ZLENGTH DC    AL2(0)                            LENGTH
+.CKDCB   AIF   ('&DCB' EQ '').E8
+         AIF   ('&DCB'(1,1) EQ '(').ZDCB
+         DC    A(&DCB)                           DCB ADDRESS
+         AGO   .CKAREA
+.ZDCB    DC    A(0)                              DCB ADDRESS
+.CKAREA  AIF   ('&AREA' EQ '').E9
+         AIF   ('&AREA'(1,1) EQ '(' OR &B2).ZAREA
+         DC    A(&AREA)                          AREA ADDRESS
+         AGO   .ZPTRWD
+.ZAREA   DC    A(0)                              AREA ADDRESS
+.ZPTRWD  DC    A(0)                              RECORD POINTER WORD
+         AIF   ('&KEYADR' EQ '').E10
+         AIF   ('&KEYADR'(1,1) EQ '(').ZKEY
+         DC    A(&KEYADR)                        KEY ADDRESS
+         AGO   .EXCPCD                           KEY ADDRESS
+.ZKEY    DC    A(0)                              KEY ADDRESS
+.EXCPCD  DC    AL2(0)                            EXCEPTION CODE
+         AIF   ('&LENGTH' EQ '').TSTDCB
+         AIF   ('&LENGTH'(1,1) NE '(').TSTDCB
+         STH   &LENGTH(1),6(1,0)                 STORE LENGTH ADDRESS
+.TSTDCB  AIF   ('&DCB'(1,1) NE '(').TSTAREA
+         ST    &DCB(1),8(1,0)                    STORE DCB ADDRESS
+.TSTAREA AIF   ('&AREA'(1,1) NE '(').TSTKEY
+         ST    &AREA(1),12(1,0)                  STORE AREA ADDRESS
+.TSTKEY  AIF   ('&KEYADR'(1,1) NE '(').CONTA
+         ST    &KEYADR(1),20(1,0)                STORE KEY ADDRESS
+.CONTA   AIF   ('&DCB' EQ '').CONTAA
+         AIF   ('&DCB'(1,1) EQ '(').REGDCB
+&CTR     SETA  K'&DCB
+         AIF   ('&DCB'(&CTR,1) EQ ')').CONTAA
+         L     15,&DCB+&CNT                      LOAD RDWRT ROUT. ADDR.
+.FINISH  BALR  14,15                             LINK TO RDWRT ROUTINE
+         MEXIT
+.CONTAA  L     15,8(1,0)                         LOAD DCB ADDRESS
+         L     15,&CNT.(15,0)                    LOAD RDWRT ROUT. ADDR.
+         AGO   .FINISH
+.REGDCB  L     15,&CNT.(&DCB(1),0)               LOAD RDWRT ROUT. ADDR.
+         AGO   .FINISH
+.EROUT   AIF   ('&DECB'(1,1) EQ '(').DECBREG
+&NAME    LA    1,&DECB                           LOAD DECB ADDRESS
+         AGO   .CONTB
+.DECBREG AIF   ('&DECB' EQ '(1)').NAMEIT
+&NAME    LR    1,&DECB(1)                        LOAD DECB ADDRESS
+         AGO   .CONTB
+.NAMEIT  AIF   ('&NAME' EQ '').CONTB
+&NAME    DS    0H
+.CONTB   ANOP
+&B1      SETB  ('&LENGTH' EQ '''S''')
+&B2      SETB  ('&AREA' EQ '''S''')
+         AIF   ('&AREA' EQ '' OR '&LENGTH' EQ '').NOTHERE
+&CTR     SETA  &B2+2*&B1
+         MVI   4(1),&CTR                         SET TYPE FIELD
+         AGO   .SETYPE
+.NOTHERE AIF   ('&AREA' EQ '' AND '&LENGTH' EQ '').SETYPE
+         AIF   ('&LENGTH' EQ '').NIXLTH
+         AIF   (&B1).LENGTHS
+         NI    4(1),1                            MODIFY TYPE FIELD
+         AGO   .SETYPE
+.LENGTHS OI    4(1),2                            MODIFY TYPE FIELD
+         AGO   .SETYPE
+.NIXLTH  AIF   (&B2).AREAS
+         NI    4(1),2                            MODIFY TYPE FIELD
+         AGO   .SETYPE
+.AREAS   OI    4(1),1                            MODIFY TYPE FIELD
+.SETYPE  ANOP
+&B3   SETB     (('&TYPE' EQ 'K' OR '&TYPE' EQ 'KC') AND NOT &IHBWR)
+&B4      SETB  ('&TYPE' EQ 'KC' OR '&TYPE' EQ 'KUC'                    X
+               OR '&TYPE' EQ 'KNC')
+&B5   SETB     (('&TYPE' EQ 'KU' OR '&TYPE' EQ 'KUC') AND NOT &IHBWR)
+&B6   SETB     (('&TYPE' EQ 'K' OR '&TYPE' EQ 'KC') AND &IHBWR)
+&B7   SETB     (('&TYPE' EQ 'KN' OR '&TYPE' EQ 'KNC') AND &IHBWR)
+         AIF   (&B3+&B5+&B6+&B7 NE 1).E3
+&CTR     SETA  4*&B7+8*&B6+32*&B5+64*&B4+128*&B3
+         MVI   5(1),&CTR                         SET TYPE FIELD
+         AIF   ('&LENGTH' EQ '' OR &B1).XLENGTH
+         AIF   ('&LENGTH'(1,1) NE '(').NOREGA
+         STH   &LENGTH(1),6(1,0)                 STORE LENGTH
+         AGO   .XLENGTH
+.NOREGA  AIF   (NOT &IHBT(1)).LARGEL
+         AIF   (&LENGTH GT 4095).LARGEL
+         LA    14,&LENGTH.(0,0)                  PICK UP LENGTH
+         STH   14,6(1,0)                         STORE LENGTH
+         AGO   .XLENGTH
+.LARGEL  B     *+6                               BRANCH AROUND LENGTH
+         DC    AL2(&LENGTH)                      LENGTH
+         MVC   6(2,1),*-2                        MOVE IN LENGTH
+.XLENGTH AIF   ('&DCB' EQ '').XDCB
+         AIF   ('&DCB'(1,1) EQ '(').DCBRG
+         LA    14,&DCB                           PICK UP DCB ADDRESS
+         ST    14,8(1,0)                         STORE DCB ADDRESS
+         AGO   .XDCB
+.DCBRG   ST    &DCB(1),8(1,0)                    STORE DCB ADDRESS
+.XDCB    AIF   ('&AREA' EQ '' OR &B2).XAREA
+         AIF   ('&AREA'(1,1) EQ '(').AREARG
+         LA    14,&AREA                          PICK UP AREA ADDRESS
+         ST    14,12(1,0)                        STORE AREA ADDRESS
+         AGO   .XAREA
+.AREARG  ST    &AREA(1),12(1,0)                  STORE AREA ADDRESS
+.XAREA   AIF   ('&KEYADR' EQ '').CONTA
+         AIF   ('&KEYADR'(1,1) EQ '(').KEYREG
+         LA    14,&KEYADR                        PICK UP KEY ADDRESS
+         ST    14,20(1,0)                        STORE KEY ADDRESS
+         AGO   .CONTA
+.KEYREG  ST    &KEYADR(1),20(1,0)
+         AGO   .CONTA
+.E3      IHBERMAC 48,,&TYPE             INVALID TYPE OPERAND SPECIFIED
+         MEXIT
+.E4      IHBERMAC 35,,&MF               INVALID MF OPERAND SPECIFIED
+         MEXIT
+.E5      IHBERMAC 69                    INVALID REG NOTATION W/MF=L
+         MEXIT
+.E6      IHBERMAC 87                    DECB NOT SPECIFIED AS A SYMBOL
+         MEXIT
+.E8      IHBERMAC 6                     DCB OPERAND MISSING
+         MEXIT
+.E9      IHBERMAC 13                    AREA OPERAND MISSING
+         MEXIT
+.E10     IHBERMAC 8                     KEY OPERAND MISSING
+         MEND

@@ -1,0 +1,46 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    CHECK &DECB,&DSORG=,&RPL=
+.*       CHANGE LEVEL = 11
+.*       DATE OF LAST CHANGE = 24 MARCH 1972  ( 72*084 )
+         AIF   ('&RPL' NE '').JES
+         AIF   ('&DECB' EQ '').E1
+         AIF   ('&DSORG' EQ '').A1
+         AIF   ('&DSORG' EQ 'IS').A2
+         AIF   ('&DSORG' EQ 'ALL').A3
+         IHBERMAC 180,DSORG,ALL
+         AGO   .A3
+.A1      ANOP
+&NAME    IHBINNRA &DECB
+         L     14,8(0,1)                PICK UP DCB ADDR
+         L     15,52(0,14)              LOAD CHECK ROUTINE ADDR
+         BALR  14,15                    LINK TO CHECK ROUTINE
+         MEXIT
+.A2      ANOP
+&NAME    IHBINNRA &DECB
+         L     14,8(0,1)                PICK UP DCB ADDR
+         L     15,76(0,14)              LOAD CHECK RTN ADDR FOR ISAM
+         BALR  14,15                    LINK TO CHECK ROUT ADDR
+         MEXIT
+.A3      ANOP
+&NAME    IHBINNRA &DECB
+         L     14,8(0,1)                PICK UP DCB ADDR
+         L     15,76(0,14)              LOAD CHECK RTN ADDR FOR ISAM
+         TM    26(14),X'80'             CHECK ISAM
+         BO    *+8
+         L     15,52(0,14)              LOAD CHECK ROUTINE
+         BALR  14,15                    LINK TO CHECK ROUTINE ADDR
+         MEXIT
+.E1      IHBERMAC 7                     DECB OPERAND MISSING
+         MEXIT
+.JES     ANOP
+&NAME    DS    0H
+         AIF   ('&RPL'(1,1) EQ '(').RPLR
+         LA    1,&RPL                   LOAD RPL ADDR
+         AGO   .AREG
+.RPLR    LR    1,&RPL(1)                LOAD RPL ADDR VIA REG
+.AREG    LA    0,X'02'                  INDICATE CHECK IN REGISTER
+         L     15,24(1)                 LOAD ACB ADDR FROM RPL
+         L     15,8(15)                 LOAD JES INTERFACE MOD ADDR
+         BALR  14,15                    BRANCH TO INTERFACE ROUTINE
+         MEND

@@ -1,0 +1,87 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*  /******************************************************************/
+*  /*                                                               */
+*  /* $MAC(ICHPMDEL) COMP(SC1BN) PROD(RACF):                        */
+*  /*                                                               */
+*  /* DESCRIPTIVE NAME = DATA SET MODEL NAME TABLE DEFINITION       */
+*  /*                                                               */
+*  /*                                                               */
+*  /* STATUS = OS/VS2 EBB1102                                       */
+*  /*                                                               */
+*  /* METHOD OF ACCESS = %INCLUDE SYSLIB(ICHPMDEL) FOR PLS          */
+*  /*                                                               */
+*  /* FUNCTION = THE MDEL TABLE CONTAINS THE NAME OF THE USER'S     */
+*  /*            MODEL PROFILE NAME.                                */
+*  /*            THE TABLE IS BASED ON THE 'ACEEMDLS' ADDRESS IN    */
+*  /*            THE 'ACEE'.                                        */
+*  /*                                                               */
+*  /* CHANGE ACTIVITY =                                             */
+*  /*              $L0=HRF1402,RACF/140,810701,SJRDSD:              */
+*  /*              OZ67435                                  @ZA67435*/
+*  /*              UZ90283                                  @ZA90283*/
+*  /*              UZ90284                                  @ZA90284*/
+*  /*              UZ90285                                  @ZA90285*/
+*  /*                                                               */
+*  /******************************************************************/
+*%GOTO ICHPMDELLBL01; /* BILINGUAL HEADER
+         MACRO
+         ICHPMDEL
+MDEL     DSECT                     MODEL NAME TABLE
+MDELID   DS   CL4                  TABLE IDENTIFIER = MDEL
+MDELCORE DS   F                    MDEL SUBPOOL AND LENGTH.
+         ORG MDELCORE
+MDELSP   DS   AL1                  SUBPOOL NUMBER FOR TABLE.
+MDELLEN  DS   AL3                  LENGTH OF MDEL TABLE.
+MDELNUM  DS   H                    MAXIMUM NUMBER OF ENTRIES IN
+*                                   THIS TABLE.
+         DS   AL1                  RESERVED.
+MDELVRSN DS   AL1                  VERSION = 0.
+MDELNXT  DS   A                    ADDRESS OF NEXT MDEL TABLE OR
+*                                   ZERO IF NONE.
+MDELENT  DS   CL49                 MODEL NAME ENTRY.
+*
+* FOLLOWING DSECT DESCRIBES AN INDIVIDUAL MODEL NAME ENTRY.
+*
+MDELENTD DSECT                     DESCRIPTION OF INDIVIDUAL
+*                                   ENTRY.
+MDELIND  DS   X                    INDICATORS FOR THIS ENTRY.
+MDELABS  EQU  X'80'                MODEL PROFILE IS ABSENT.
+MDELUSR  EQU  X'40'                MODEL ENTRY FOR THE USER.
+MDELCHK  EQU  X'20'                MODEL HAS BEEN LOOKED FOR.
+MDELLOCK DS   X                    IN USE INDICATOR. WILL BE
+*                                   ZERO IF FREE AND X'FF' IF IN
+*                                   USE.
+         DS   AL2                  RESERVED.
+MDELQULL DS   AL1                  NONBLANK LENGTH OF QUALIFIER.
+MDELQUAL DS   CL8                  FIRST LEVEL QUALIFIER.
+MDELREML DS   AL1                  NONBLANK LENGTH OF REMAINDER
+*                                   OF MODEL NAME.
+MDELREM  DS   CL35                 RELATIVE MODEL NAME.
+         MEND
+*  TERMINATE PL/S COMMENT                                           */
+*  %ICHPMDELLBL01:;
+         DCL 1 MDEL BASED,          /* ACEE DS MODEL NAME TABLE.    */
+               2 MDELID CHAR(4),    /* TABLE ID.                    */
+               2 MDELCORE,          /* MDEL SUBPOOL AND LENGTH.     */
+                 3 MDELSP FIXED(8), /* SUBPOOL NUMBER.              */
+                 3 MDELLEN PTR(24), /* LENGTH OF MDEL.              */
+               2 MDELNUM FIXED(15), /* MAXIMUM ENTRIES IN TABLE.    */
+               2 *       FIXED(8),  /* RESERVED.                    */
+               2 MDELVRSN FIXED(8), /* VERSION = 0.                 */
+               2 MDELNXT PTR(31),   /* NEXT MDEL TABLE.             */
+               2 MDELENT(1),        /* MODEL NAME ENTRY.    @ZA67435*/
+                 3 MDELIND BIT(8),  /* INDICATORS FOR THIS ENT.     */
+                   4 MDELABS BIT(1),/* 1 - MODEL PROFILE ABSENT     */
+                   4 MDELUSR BIT(1),/* 1 - MODEL FOR USER           */
+                   4 MDELCHK BIT(1),/* 1 - MODEL LOOKED FOR.        */
+                 3 MDELLOCK CHAR(1),/* IN USE INDICATOR. WILL BE    */
+                                    /* ZERO IF FREE AND X'FF' IF    */
+                                    /* IN USE.                      */
+                 3 * CHAR(2),       /* RESERVED.                    */
+                 3 MDELQULL FIXED(8),/* NONBLANK LENGTH OF QUAL.    */
+                 3 MDELQUAL CHAR(8),/* FIRST LEVEL QUALIFIER.       */
+                 3 MDELREML FIXED(8),/* NONBLANK LENGTH OF REST.    */
+                 3 MDELREM CHAR(35),/* RELATIVE MODEL NAME.         */
+                 3 * CHAR(0);       /* END OF ENTRY.                */
+         DCL MDELTID CHAR(4) CONSTANT('MDEL');/* TABLE ID.          */
+

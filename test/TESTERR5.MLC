@@ -1,0 +1,44 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* MAINTENANCE
+* 11/03/05 TEST INVALID DCBDSNAM CAUSING ERROR AND S013 ABEND
+*********************************************************************
+TESTERR5 SUBENTRY
+         WTO   'TESTERR5 TEST INVALID DCBDSNAM USING SYNAD EXIT'
+         OPEN  (SYSUT1,(INPUT),SYSUT2,(OUTPUT),SYSOUT,(OUTPUT))
+LOOP     EQU   *
+         GET   SYSUT1
+         AP    PTOT,=P'1'
+         MVC   DTOT,=X'40202020'
+         ED    DTOT,PTOT
+         PUT   SYSOUT,MSG
+         PUT   SYSUT2
+         B     LOOP
+EOF      CLOSE (SYSUT1,,SYSUT2,,SYSOUT)
+         WTO   'TESTERR5 ENDED OK'
+         SUBEXIT
+MYSYNAD  EQU   *
+         WTO   'TESTERR5 ABORTING DUE TO SYSUT SYNAD EXIT'
+         SUBEXIT
+SYSUT1   DCB   RECFM=FT,LRECL=80,EODAD=EOF,MACRF=GM,                   X
+               RECORD=RECORD,DSNAME=DSN1,SYNAD=MYSYNAD
+SYSUT2   DCB   RECFM=FT,LRECL=80,MACRF=PM,                             X
+               RECORD=RECORD,DSNAME=DSN2
+SYSOUT   DCB   RECFM=FT,BLKSIZE=120,MACRF=PM,                          X
+               RECORD=RECORD,DSNAME=DSN3
+DSN1     DC    C'TESTERR5.XXX',X'00'
+DSN2     DC    C'TESTERR5.TF2',X'00'
+DSN3     DC    C'TESTERR5.TF3',X'00'
+PTOT     DC    PL2'0'
+MSG      DS    0CL120
+         DC    C'REC#='
+DTOT     DC    CL4' ',C' TEXT='
+RECORD   DC    CL80' '
+         DC    (MSG+120-*)C' '
+         DCBD
+         END

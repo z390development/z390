@@ -1,0 +1,83 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    RPL   &ACBDATA=,&AREA=0,&ARG=0,&NXTRPL=0,&KEYLEN=0,&ECB=,     C
+               &BUFL=,&LEN=,&MSGLEN=0,&ERRMSG=,                        C
+               &CCHAR=0,&OPTCD=,&NIB=,&BRANCH=,                        C
+               &ACB=,&AREALEN=,&MSGAREA=,&RECLEN=,                     C
+               &AM=,&AAREA=0,&AAREALN=0,&EXIT=,&ARECLEN=0,             C
+               &SEQNO=0,&USENSEO=0,&IBSQVAL=0,&OBSQVAL=0,              C
+               &POST=,&RESPOND=,&CHAIN=,&CONTROL=,&CHNGDIR=,           C
+               &BRACKET=,&SSENSMO=0,&TRANSID=0,                        C
+               &SSENSEO=,&RTYPE=,&STYPE=,&IBSQAC=,&OBSQAC=,            C
+               &SIGDATA=0,&CODESEL=,                                   C
+               &CRYPT=,                                                C
+               &PARMS=,&PARM2=,&PARM3=
+.*
+.*             CHANGE LEVEL = 0                                @ZA34940
+.*             DATE OF LAST CHANGE =  3  OCT   78 ( 78*276 )   @ZA34940
+.*
+.* FUNCTION-   THIS MACRO CONTAINS THE PROTOTYPE STATEMENT
+.*             FOR THE RPL MACRO.
+.*             THE FUNCTION OF THIS MACRO IS TO DETERMINE IF
+.*             THE PROGRAM ISSUING THE RPL MACRO IS A
+.*             VSAM USER OR A VTAM USER AND INVOKE MACRO
+.*             RPLVS FOR VSAM OR ISTRPL1 FOR VTAM.
+.*
+.* CHANGE ACTIVITY
+.*      CBMM SPLIT SUPPORT                                     @ZA34940
+.*
+         AIF   (N'&SYSLIST EQ 0).PASS   ANY POSITIONAL PARM?   @ZA39925
+         IDAVSERR 1                     YES, ISSUE MESSAGE     @ZA39925
+.PASS    ANOP                           NO, CONTINUE           @ZA39925
+         AIF   ('&AM' EQ 'VTAM').VTRPL  IS IT VTAM
+         AIF   ('&AM' EQ 'VSAM').VSRPL  IS IT VSAM
+         AIF   ('&AM' EQ '').VSRPL      IF NULL, DEFAULT VSAM
+.*
+         IDAVSERR  3,AM,&AM             ISSUE ERROR MSG
+         MEXIT
+.*
+.VTRPL   ANOP
+&NAME    ISTRPL1 ACBDATA=&ACBDATA,AREA=&AREA,ARG=&ARG,                 C
+               NXTRPL=&NXTRPL,KEYLEN=&KEYLEN,ECB=&ECB,                 C
+               BUFL=&BUFL,LEN=&LEN,MSGLEN=&MSGLEN,                     C
+               ERRMSG=&ERRMSG,CCHAR=&CCHAR,OPTCD=&OPTCD,               C
+               NIB=&NIB,BRANCH=&BRANCH,ACB=&ACB,                       C
+               AREALEN=&AREALEN,MSGAREA=&MSGAREA,                      C
+               RECLEN=&RECLEN,AM=&AM,AAREA=&AAREA,                     C
+               AAREALN=&AAREALN,EXIT=&EXIT,ARECLEN=&ARECLEN,           C
+               SEQNO=&SEQNO,USENSEO=&USENSEO,                          C
+               IBSQVAL=&IBSQVAL,OBSQVAL=&OBSQVAL,                      C
+               POST=&POST,RESPOND=&RESPOND,CHAIN=&CHAIN,               C
+               CONTROL=&CONTROL,CHNGDIR=&CHNGDIR,                      C
+               BRACKET=&BRACKET,SSENSMO=&SSENSMO,                      C
+               TRANSID=&TRANSID,SSENSEO=&SSENSEO,                      C
+               RTYPE=&RTYPE,STYPE=&STYPE,IBSQAC=&IBSQAC,               C
+               OBSQAC=&OBSQAC,SIGDATA=&SIGDATA,                        C
+               CODESEL=&CODESEL,CRYPT=&CRYPT,                          C
+               PARMS=&PARMS,PARM2=&PARM2,PARM3=&PARM3
+.*
+         MEXIT
+.*
+.*
+.VSRPL   ANOP
+&NAME    RPLVS ACBDATA=&ACBDATA,AREA=&AREA,ARG=&ARG,                   C
+               NXTRPL=&NXTRPL,KEYLEN=&KEYLEN,ECB=&ECB,                 C
+               BUFL=&BUFL,LEN=&LEN,MSGLEN=&MSGLEN,                     C
+               ERRMSG=&ERRMSG,CCHAR=&CCHAR,OPTCD=&OPTCD,               C
+               NIB=&NIB,BRANCH=&BRANCH,ACB=&ACB,                       C
+               AREALEN=&AREALEN,MSGAREA=&MSGAREA,                      C
+               RECLEN=&RECLEN,AM=&AM,AAREA=&AAREA,                     C
+               AAREALN=&AAREALN,EXIT=&EXIT,ARECLEN=&ARECLEN,           C
+               SEQNO=&SEQNO,USENSEO=&USENSEO,                          C
+               IBSQVAL=&IBSQVAL,OBSQVAL=&OBSQVAL,                      C
+               POST=&POST,RESPOND=&RESPOND,CHAIN=&CHAIN,               C
+               CONTROL=&CONTROL,CHNGDIR=&CHNGDIR,                      C
+               BRACKET=&BRACKET,SSENSMO=&SSENSMO,                      C
+               TRANSID=&TRANSID,SSENSEO=&SSENSEO,                      C
+               RTYPE=&RTYPE,STYPE=&STYPE,IBSQAC=&IBSQAC,               C
+               OBSQAC=&OBSQAC,SIGDATA=&SIGDATA,                        C
+               CODESEL=&CODESEL,CRYPT=&CRYPT,                          C
+               PARMS=&PARMS,PARM2=&PARM2,PARM3=&PARM3
+.*
+         MEND
+

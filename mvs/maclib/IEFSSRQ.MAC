@@ -1,0 +1,55 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSRQCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSRQ
+.*/ %SSRQCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSRQ                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = RE-ENQUEUE A JOB                     @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSRQPLS;              /*                               @ZA34144
+*
+SSOBRENQ EQU   13                 RE-ENQUEUE FUNCTION ID (SSOBFUNC)
+*
+*  JOB RE-ENQUEUE RETURN CODES (SSOBRETN)
+*
+SSRQPERR EQU   36                 PROGRAM ERROR
+*
+         ORG   SSOBGN
+SSRQBGN  EQU   *
+SSRQLEN  DC    AL2(SSRQSIZE)      RE-ENQUEUE EXTENSION LENGTH
+SSRQRESV DS    H                  RESERVED
+SSRQSTEP DS    H                  STEP NUMBER
+SSRQFLG1 DS    B                  REASON FOR REENQUEING FLAGS
+SSRQSTRS EQU   X'80'              STEP RESTART
+SSRQCHRS EQU   X'40'              CHECKPOINT RESTART
+SSRQCNRS EQU   X'20'              CONTINUE RESTART
+SSRQHOLD EQU   X'10'              HOLD THE JOB
+SSRQRSV1 EQU   X'0F'              RESERVED FLAGS
+SSRQRSV2 DS    X                  RESERVED
+*
+SSRQSIZE EQU   *-SSRQBGN          RE-ENQUEUE EXTENSION LENGTH
+SSOBLEN9 EQU   SSOBHSIZ+SSRQSIZE  TOTAL SSOB LENGTH
+         MEND                                                @ZA34144*/
+* %SSRQPLS:;                             /*                  @ZA34144*/
+*   DCL SSOBRENQ FIXED(15) CONSTANT(13); /* REENQUEUE A JOB FUNCTION
+*                                           ID (SSOBFUNC)            */
+*   /*                                                               */
+*   /*  JOB REENQUEUE RETURN CODES (SSOBRETN)                        */
+*   /*                                                               */
+*   DCL SSRQPERR FIXED(31) CONSTANT(36); /* PROGRAM ERROR            */
+*   /*   S S R Q                                                     */
+*DECLARE
+*   1       SSRQ          SSOBRQ,
+*     2       SSRQLEN     FIXED(15),/* LENGTH OF SSRQ                */
+*     2       *           FIXED(15),/* RESERVED                      */
+*     2       SSRQSTEP    FIXED(15),/* STEP NUMBER                   */
+*     2       SSRQFLG1    BIT(8),   /* REASON FOR RE-ENQUEING        */
+*       3       SSRQSTRS  BIT(1),   /* STEP RESTART                  */
+*       3       SSRQCHRS  BIT(1),   /* CHECKPOINT RESTART            */
+*       3       SSRQCNRS  BIT(1),   /* CONTINUE RESTART              */
+*       3       SSRQHOLD  BIT(1),   /* HOLD THE JOB                  */
+*       3       *         BIT(4),   /* RESERVED                      */
+*     2       *           CHAR(1);  /* RESERVED                      */

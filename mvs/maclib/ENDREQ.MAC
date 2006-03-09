@@ -1,0 +1,23 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /*                                                                 */
+* /* MACCOMP Y-2 SC1DE/SJD61                                         */
+* /* MACSTAT Y-2 73103/Y02113                                        */
+* /*                                                                 */
+         MACRO
+&NAME    ENDREQ &RPL=
+         AIF   ('&RPL' NE '').OKY
+         IHBERMAC 24
+         MEXIT
+.OKY     ANOP
+&NAME    DS    0H
+         AIF   ('&RPL'(1,1) EQ '(').RPLR
+         LA    1,&RPL                   LOAD RPL ADDR
+         AGO   .AREG
+.RPLR    AIF   ('&RPL' EQ '(1)').AREG   IF RPL=(1),SKIP LR INSTRUCTION
+         LR    1,&RPL(1)                LOAD RPL ADDR IN REG.1
+.AREG    LA    0,X'04'                  INDICATE ENDREQ IN REG
+         L     15,24(1)                 LOAD ACB ADDR FROM RPL
+         L     15,8(15)                 LOAD AM/0 INTERFACE RTN ADDR
+         BALR  14,15                    BRANCH TO INTERFACE ROUTINE
+         MEND
+

@@ -1,0 +1,37 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GDCDS &DCDS,&N,&GROUP
+         GBLA  &IHBBLC,&IHBBLIM,&IHBBLP
+         GBLC  &IHBINIT
+         LCLA  &WN
+         AIF   (T'&DCDS EQ 'O').ERR1    VALIDATE DCDS PARAMETER
+         AIF   ('&DCDS'(1,1) EQ 'C').CONST
+         AIF   ('&DCDS'(1,1) EQ 'S').SPACE
+.ERR1    IHBERMAC 2
+         MEXIT
+.SPACE   AIF   (T'&N EQ 'O').ERR2A VALIDATE NUMBER OF BYTES
+         AIF   (T'&N NE 'N').ERR2
+         AIF   (&N GT 32767).ERR2
+&NAME    DS    CL&N
+&IHBBLC    SETA  &IHBBLC+&N                 UPDATE BUFFER LOC COUNTER
+         AGO   .TEST
+.ERR2A   IHBERMAC  3
+         MEXIT
+.ERR2    IHBERMAC  37,,&N
+         MEXIT
+.CONST   AIF   (T'&N EQ 'O').ERR2A CHECK OMITTED CONSTANT
+&IHBBLC    SETA  &IHBBLC+2                  UPDATE BUFFER LOC COUNTER
+         AIF   ('&N'(1,1) EQ '+' OR '&N'(1,1) EQ '-').SIGNCON
+         AIF   (T'&N NE 'N').SYMAD
+.SIGNCON ANOP
+&NAME    DC    H'&N'
+         AGO   .TEST
+.SYMAD   AIF   (T'&GROUP NE 'O').GRSYM
+&NAME    DC    AL2(&N-&IHBINIT+&IHBBLP)
+         AGO   .TEST
+.GRSYM   ANOP
+&NAME    DC    AL2(&N-&GROUP+IHB&GROUP)
+.TEST    AIF   (&IHBBLIM GE &IHBBLC).OK
+         IHBERMAC 182
+.OK      MEND
+

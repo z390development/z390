@@ -1,0 +1,119 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO QELBSL;                                               /*
+         MACRO
+&NAME    IHAQEL
+QEL      DSECT
+*         *    QUEUE ELEMENT              *
+*******************************************
+* 0(NQEL)                                 *
+*          ADDRESS OF NEXT QEL            *
+*                                         *
+*******************************************
+* 4(PQEL)                                 *
+*         ADDRESS OF PREVIOUS QEL         *
+*                                         *
+*******************************************
+* 8(TCB/LQEL)                             *
+*  ADDRESS OF TCB OR ADDRESS OF LIST QEL  *
+*   (IF HIGH BIT ONE, LIST QEL  ADDRESS)  *
+*******************************************
+*12(QFLGS)*13(LFLGS)*14(ASID)             *
+* Q-FLAGS * L-FLAGS * ADDRESS SPACE I.D.  *
+*         *         *                     *
+*******************************************SIZE 1
+*16(SVRB/ECB)                             *
+*  ADDRESS OF SVRB OR ADDRESS OF ECB      *
+*  (IF HIGH BIT ONE, ECB ADDRESS)         *
+*******************************************
+*20(LCNT)           *22(WCNT)             *
+* LIST COUNT        * WAIT COUNT          *
+*                   *                     *
+*******************************************SIZE 2
+* NOTE: UCB WORD WILL BE ADDED TO QEL WHEN QELRESV=1
+*******************************************
+*++(UCB)                                  *
+*         UCB ADDRESS                     *
+*                                         *
+*******************************************
+QELNQEL  DS    A                   ADDR OF NEXT QEL OR IF LAST QEL,ZERO
+QELPQEL  DS    A                   ADDR OF PREVIOUS QEL OR ZERO
+*                                  IF THIS IS THE FIRST QEL
+QELTCB   DS    A                   ADDR OF TCB FOR WHICH ENQ WAS ISSUED
+QELLQEL  EQU   QELTCB              ADDR OF THE LIST QEL ADDR WHICH
+*                                  CONTAINS THE TCB ADDR
+QELXLIST EQU   X'80'               IF '0' , THIS IS THE TCB ADDR.
+*                                  IF '1' , THIS IS THE LIST QEL ADDR.
+QELQFLGS DS    X                   THESE FLAGS PERTAIN TO THE QEL
+QELSHARE EQU   X'80'               IF '1' , SHARE
+*                                  IF '0' , EXCLUSIVE
+QELMC    EQU   X'40'               IF '1' , THIS IS AN MC QEL
+QELLIST  EQU   X'20'               IF '1' , THIS IS A LIST QEL
+*                                  A SINGLE REQUEST HAS 1 LIST QEL
+QELRESV  EQU   X'10'               IF '1', THIS IS A RESERVE QEL
+QELAUTH  EQU   X'08'               IF '1', INVOKER WAS         @ZA17306
+*                                  AUTHORIZED                  @ZA17306
+QELTCBFA EQU   X'04'               IF '1', TCBFA WAS ON WHEN   @ZA32935
+*                                  THIS QEL WAS INITIALIZED    @ZA32935
+QELRMF   EQU   X'01'               IF '1' SIGNIFIES TO RMF     @ZA49034
+*                                  THAT SYSEVENT IS A RESULT   @ZA49034
+*                                  OF RESERVE PROCESSING       @ZA49034
+**********
+* THE FOLLOWING FIELDS PERTAIN TO A SINGLE OR LIST REQUEST.
+* QELLFLGS AND QELASID ARE PROPAGATED FOR EACH QEL OF THE LIST
+**********
+QELLFLGS DS    X                   THESE FLAGS PERTAIN TO THE REQUEST
+*                                  I.E. TO THE LIST IF A LIST REQUEST
+QELPOST  EQU   X'80'               THE ECB OR RB HAS BEEN POSTED
+QELECBF  EQU   X'40'               THIS IS AN ECB REQUEST
+QELASID  DS    H                   THIS REQUESTS ASID.
+QELSVRB  DS    A                   THIS IS THE ADDRESS OF THIS REQUESTS
+*                                  SVRB ADDRESS, THIS ADDRESS IS
+*                                  VALID WHEN THE QELWCNT IS NON-ZERO
+QELECB   EQU   QELSVRB             THIS IS THE ADDRESS OF THIS REQUESTS
+*                                  ECB ADDRESS, THIS ADDRESS IS
+*                                  VALID WHEN THE QELWTCNT IS NON-ZERO
+QELXECB  EQU   X'80'               IF '0' , THIS IS AN SVRB ADDR
+*                                  IF '1' , THIS IS AN ECB ADDR
+QELLCNT  DS    H                   THIS IS A COUNT OF THE NUMBER OF
+*                                  ACTIVE QELS LEFT FOR THIS REQUEST
+QELWCNT  DS    H                   THIS IS A COUNT OF THE NUMBER OF
+*                                  QELS 'WAITING'
+* NOTE: A SINGLE REQUEST IS CONSIDERED A LIST REQUEST OF ONE,
+*       WHEN QELRESV=1, QEL EXTENDED(WORD) TO CONTAIN UCB ADDR
+         MEND  ,                                                     */
+*%QELBSL  :  ;
+*DECLARE
+*  1 QEL  BASED,                   /* QUEUE ELEMENT                  */
+*   2 QELNQEL    PTR(31),          /* ADDRESS OF NEXT QEL OR ZERO    */
+*   2 QELPQEL    PTR(31),          /* ADDR OF PREVIOUS QEL OR MINOR  */
+*   2 QELTCB     PTR(31),          /* AD OF TCB OR AD OF LIST QEL    */
+*    3 QELLQEL   PTR(31),          /* DITTO                          */
+*     4 QELXLIST BIT(1),           /* IF '1', THIS AD IS LIST QEL AD */
+*   2 QELQFLGS   CHAR(1),          /* FLAGS PERTAINING TO THIS QEL   */
+*    3 QELSHARE  BIT(1),           /* IF '1', SHARE IF '0', EXCL     */
+*    3 QELMC     BIT(1),           /* IF '1', MC WAS REQUESTED       */
+*    3 QELLIST   BIT(1),           /* IF '1', THIS IS THE LIST QEL   */
+*    3 QELRESV   BIT(1),           /* IF '1', THIS IS A RESERVE QEL  */
+*    3 QELAUTH   BIT(1),           /* IF '1', INVOKER WAS AUTHORIZED
+                                                             @ZA17306*/
+*    3 QELTCBFA  BIT(1),           /* IF '1', TCBFA WAS ON WHEN THIS
+                                      QEL WAS INITIALIZED    @ZA32935*/
+*    3 *         BIT(1),           /* RESERVED                       */
+*    3 QELRMF    BIT(1),           /* IF '1' SIGNIFIES TO RMF THAT
+                                      SYSEVENT IS A RESULT OF RESERVE
+                                      PROCESSING             @ZA49034*/
+*   2 QELLFLGS   CHAR(1),          /* FLAGS PERTAINING TO THE LIST   */
+*    3 QELPOST   BIT(1),           /* THE ECB OR RB WAS POSTED       */
+*    3 QELECBF   BIT(1),           /* THIS IS AN ECB REQUEST         */
+*    3 *         BIT(1),           /* RESERVED                       */
+*    3 *         BIT(1),           /* RESERVED                       */
+*    3 *         BIT(1),           /* RESERVED                       */
+*    3 *         BIT(1),           /* RESERVED                       */
+*    3 *         BIT(1),           /* RESERVED                       */
+*    3 *         BIT(1),           /* RESERVED                       */
+*   2 QELASID    PTR(16),          /* THIS REQUESTS ASID             */
+*   2 QELSVRB    PTR(31),          /* SVRB AD OR ECB AD              */
+*    3 QELECB    PTR(31),          /* DITTO                          */
+*     4 QELXECB  BIT(1),           /* DUAL WORD, '1' ECB, '0' SVRB   */
+*   2 QELLCNT    PTR(16),          /* NUMBER OF ACTIVE QELS THIS LST */
+*   2 QELWCNT    PTR(16);          /* NUMBER OF QELS WAITING         */

@@ -1,0 +1,94 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    IHB03 &BACKUP,&BKUPDCB,&BRINGUP,                              X
+               &DDNAME,&DMPAUTO,&DUMPDCB,&EXLST,                       X
+               &IPLAUTO,&IPLTXID,&MACRF,&CKPTDCB
+.*
+.*  THIS MACRO WAS ADDED FOR TCAM/3705 SUPPORT
+.*  THE DCB MACRO INVOKES IHB03 AS AN INNER MACRO WHEN DSORG = TR
+.*
+.*********************************************************************
+.*
+.*   03/03/72          LEVEL=01
+.*
+.*********************************************************************
+         LCLB  &S0,&S1,&S2,&S5          BITS OF TRSTA STATUS FLAGS
+         AIF   ('&DDNAME' NE '0').DDNAME  IF DDNAME SPECIFIED
+         IHBERMAC 167                   DDNAME OMITTED
+.*
+.DDNAME  AIF   (K'&DDNAME LE 8).MACRF   IF DDNAME NOT OVER 8 CHARS
+         IHBERMAC 168                   DDNAME LONG-TRUNCATED TO 8 CHAR
+.*
+.MACRF   AIF   ('&MACRF' EQ '(G,P)').IPLTXID  IF MACRF=(G,P)
+         MNOTE 12,'***  IHB081  MACRF MUST BE (G,P) WHEN DSORG=TR'
+.*
+.IPLTXID AIF   (K'&IPLTXID LE 7).IPLAUTO  IF IPLTXID NOT OVER 7 CHARS
+         MNOTE 12,'***  IHB084  IPLTXID OPERAND EXCEEDS 7 CHARACTERS'
+.*
+.IPLAUTO ANOP
+&S0      SETB  ('&IPLAUTO' EQ 'YES')    SET IF IPLAUTO=YES
+         AIF   ('&IPLAUTO' EQ 'NO' OR &S0).DMPAUTO  IF IPLAUTO IS VALID
+         IHBERMAC 157,IPLAUTO,&IPLAUTO  XXX INVALID CODE FOR IPLAUTO
+.*
+.DMPAUTO AIF   ('&DMPAUTO' NE 'YES' OR '&DUMPDCB' NE '0').DMPAUT2
+         MNOTE 8,'***  IHB082  DMPAUTO=YES INVALID UNLESS DUMPDCB ALSO X
+                SPECIFIED'
+.*
+         AGO   .BRINGUP                 BR TO IGNORE DMPAUTO=YES
+.DMPAUT2 ANOP
+&S1      SETB  ('&DMPAUTO' EQ 'YES')    SET IF DMPAUTO=YES
+         AIF   ('&DMPAUTO' EQ 'NO' OR &S1).BRINGUP  IF DMPAUTO IS VALID
+         IHBERMAC 157,DMPAUTO,&DMPAUTO  XXX INVALID CODE FOR DMPAUTO
+.*
+.BRINGUP ANOP
+&S2      SETB  ('&BRINGUP' EQ 'YES')    SET IF BRINGUP=YES
+         AIF   ('&BRINGUP' EQ 'NO' OR &S2).BACKUP  IF BRINGUP IS VALID
+         IHBERMAC 157,BRINGUP,&BRINGUP  XXX INVALID CODE FOR BRINGUP
+.*
+.BACKUP  ANOP
+&S5      SETB  ('&BACKUP' EQ 'YES')     SET IF BACKUP=YES
+         AIF   ('&BACKUP' EQ 'NO' OR &S5).GENDCB  IF BACKUP IS VALID
+         IHBERMAC 157,BACKUP,&BACKUP    XXX INVALID CODE FOR BACKUP
+.*
+.GENDCB  SPACE 2
+*                       DATA CONTROL BLOCK
+         SPACE 1
+         ORG   *-8                      TO ELIMINATE UNUSED SPACE
+&NAME    DS    0F                       ORIGIN ON WORD BOUNDARY
+         ORG   *+8                      TO ORIGIN GENERATION
+         SPACE 1
+*                       3705 DEVICE INTERFACE
+         SPACE 1
+         DC    CL8'&IPLTXID '           IPLTXID
+         DC    XL1'0'                   RESERVED
+         DC    AL3(&BKUPDCB)            BKUPDCB
+         SPACE 1
+*                       COMMON ACCESS METHOD INTERFACE
+         SPACE 1
+         DC    XL1'0'                   DCBUNITN
+         DC    AL3(&DUMPDCB)            DUMPDCB
+         DC    XL1'0'                     RESERVED
+         DC    BL1'&S0&S1&S2.00&S5.00'  TRSTA
+         DC    BL2'0000000000000100'    DSORG
+         DC    A(IEDQAVT)               IEDQAVT ADDR
+         SPACE 1
+*                       FOUNDATION EXTENSION
+         SPACE 1
+         DC    A(&CKPTDCB)            CKPTDCB
+         DC    AL1(0)                   EIOBX
+         DC    AL3(&EXLST)              EXLST
+         SPACE 1
+*                       FOUNDATION BLOCK
+         SPACE 1
+         DC    CL8'&DDNAME'             DDNAME
+         DC    BL1'00000010'            OFLGS
+         DC    BL1'00000000'            IFLG
+         DC    BL2'0100000001000000'    MACR
+         SPACE 1
+*                       TCAM INTERFACE
+         SPACE 1
+         DC    XL1'0'                   RESERVED
+         DC    XL1'0'                   UNTCT
+         DC    H'0'                     BUFSIZE
+         MEND
+

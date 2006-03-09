@@ -1,0 +1,506 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IDAVSACB &AM=,&MF=,&CALLER=,                          @ZA34940C
+               &ACBLEN=,&ATRB=,&AVSPAC=,&BUFND=,   *** ACB KEYWORDS ***C
+               &BUFNI=,&BUFNO=,&BUFSP=,&CINV=,&DDNAME=,&ENDRBA=,       C
+               &ERROR=,&EXLST=,&FS=,&KEYLEN=,&LRECL=,                  C
+               &MACRF=,&NCIS=,&NDELR=,&NEXCP=,&NEXT=,&NINSR=,&NIXL=,   C
+               &NLOGR=,&NRETR=,&NSSS=,&NUPDR=,&OFLAGS=,&PASSWD=,&RKP=, C
+               &BSTRNO=,&CRA=,&OPENOBJ=,&AIXRKP=,               X04SVHSC
+               &MAREA=,&MLEN=,&JFCB=,                          @XM01140*
+               &USERPTR=,                                      @XM01129*
+               &STRNO=,&STMST=,&CATALOG=,&APPLID=
+.*
+.*       CHANGE LEVEL = 1                                      @ZA37504
+.*       DATE OF LAST CHANGE =  29 JAN 79 ( 79*029 )           @ZA37504
+.*
+.* FUNCTION    THIS MACRO ACTS AS A CONTROLLER FOR GENCB, MODCB, AND
+.*             TESTCB FOR PROCESSING AN ACB.
+.*             IT IS CALLED BY IDACB2 TO BUILD VARIOUS ARRAYS TO BE
+.*             USED BY IDACB2 TO BUILD A PARAMETER LIST OF ARGUMENT
+.*             CONTROL ENTRIES THAT WILL BE PASSED TO THE CONTROL
+.*             BLOCK MANIPULATION MODULE AT EXECUTE TIME.
+.*             FOR NON-BIT KEYWORDS, THIS MACRO CALLS IDAVSCB3 @ZA34940
+.*             WHICH ACTUALLY SETS VALUES INTO ALL THE ARRAYS  @ZA34940
+.*             THAT ARE REQUIRED.                              @ZA34940
+.*
+.*             FOR BIT KEYWORDS, IDAVSCB3 IS CALLED, BUT THIS  @ZA34940
+.*             MACRO SETS THE VALUE IN &IDAVALC ARRAY.         @ZA34940
+.*             IT ALSO VALIDITY CHECKS BIT OPTIONS AND IF MUTUALLY
+.*             EXCLUSIVE OPTIONS ARE SPECIFIED, AN ERROR MESSAGE IS
+.*             ISSUED.
+.*
+.*             IT IS ALSO CALLED BY THE ACB DECLARATIVE MACRO TO
+.*             PROCESS THE BIT KEYWORDS MACRF, CATALOG, AND CRA.
+.*             WHEN CALLED BY ACB, DIFFERENT GLOBALS ARE SET THAN
+.*             THOSE USED BY THE CBMM. THESE GLOBALS ARE SET IN SUCH
+.*             A MANNER TO ALLOW THE DECLARATIVE MACRO TO GENERATE
+.*             A 'DC' USING THE GLOBALS DIRECTLY.
+.*                                                             @ZA34940
+.* CHANGE ACTIVITY                                             @ZA34940
+.*      CBMM SPLIT SUPPORT                                     @ZA34940
+.*                                                             @ZA34940
+.* GLOBALS
+         GBLB  &IDACB01                ERROR INDICATOR
+         GBLA  &IDAENO                 NUMBER OF ELEMENTS
+         GBLA  &IDAELEN(50)            ELEMENT FIELD LENGTH ARRAY
+         GBLC  &IDAVALC(50)            ELEMENT CHARACTER VALUE ARRAY
+         GBLC  &IDAMAC1,&IDAMAC2,&IDAMAC3                       X04SVHS
+.*             MACRF VALUES FOR ACB DECLARATIVE MACRO           X04SVHS
+         GBLC  &IDAIFL1                 CATALOG/CRA VALUES FOR  X04SVHS
+.*                                      ACB DECLARATIVE MACRO   X04SVHS
+.* LOCALS
+         LCLA  &I,&A,&B,&C                       WORK VARIABLES
+         LCLB  &ESDS,&KSDS,&WCK,&SSWD,&REPL      ATRB CODES
+         LCLB  &RRDS,&SPAN,&UNQ                  ATRB CODES     X04SVHS
+         LCLB  &PATH,&BASE,&OAIX                 OPENOBJ CODES  X04SVHS
+         LCLB  &SCRA,&UCRA                       CRA CODES      X04SVHS
+         LCLB  &MKEY,&MADR,&MCNV,&MSEQ,&MSKP     MACRF CODES
+         LCLB  &MDIR,&IN,&OUT,&NUB,&UBF          MACRF CODES
+         LCLB  &LOGONF,&NLOGON                   MACRF CODES     X03004
+         LCLB  &NFX,&CFX,&RST,&NRS,&DDN,&DSN     MACRF CODES   @XM01125
+         LCLB  &NRM,&AIX,&NSR,&LSR,&GSR          MACRF CODES    X04SVHS
+         LCLB  &NCI,&ICI,&NDF,&DFR,&NIS,&SIS     MACRF CODES    X04SVHS
+         LCLB  &OPEN                             OFLAGS CODE    X04SVHS
+         LCLB  &VSAM,&VTAM                       AM CODES        X03004
+         LCLB  &YES,&NO                          CATALOG CODES  X04SVHS
+         LCLC  &Z16                     UNUSED PORTION OF BIT STRING
+.* INITIALIZATION
+&Z16     SETC  '0000000000000000'       SET TO 16 ZEROES
+.* SCAN ACB KEYWORDS **************************************************
+.*                                      BUFND
+         IDAVSCB3 ARG=&BUFND,ARGNAME=BUFND,KWTC=X'04',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      BUFNI                   X04SVHS
+         IDAVSCB3 ARG=&BUFNI,ARGNAME=BUFNI,KWTC=X'05',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      BUFSP                   X04SVHS
+         IDAVSCB3 ARG=&BUFSP,ARGNAME=BUFSP,KWTC=X'07',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      DDNAME
+         AIF   ('&DDNAME' EQ '').A000300  *** DDNAME ***
+         AIF   ('&DDNAME(1)' EQ '*').A000200
+.*             IF INDIRECT ADDRESS SPECIFIED, BYPASS VALIDITY CHECKS
+         AIF   (K'&DDNAME GT 8).A000100
+         AIF   (('&DDNAME'(1,1) LT 'A' OR '&DDNAME'(1,1) GT 'Z') AND   C
+               ('&DDNAME'(1,1) NE '#' AND '&DDNAME'(1,1) NE '@' AND    C
+               '&DDNAME'(1,1) NE '$')).A000100                 @ZA37504
+.*             DDNAME MUST BE 8 OR FEWER CHARS, AND FIRST CHAR MUST
+.*                                   BE ALPHABETIC OR NATIONAL@ZA37504
+         AGO   .A000200
+.A000100 IDAVSERR 3,DDNAME,&DDNAME      ISSUE ERROR MESSAGE    @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH
+         AGO   .A000300                 SKIP PROCESSING
+.A000200 ANOP
+         IDAVSCB3 ARG=&DDNAME,ARGNAME=DDNAME,KWTC=X'09',       @ZA34940*
+               MF=&MF,INDRECT=YES                              @ZA34940
+&IDAELEN(&IDAENO) SETA 8                ELEMENT LENGTH IS 8 BYTES
+.**********************************************************************
+.A000300 ANOP
+.*                                      EXLST
+         IDAVSCB3 ARG=&EXLST,ARGNAME=EXLST,KWTC=X'0C',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      JFCB                   @XM01140
+         IDAVSCB3 ARG=&JFCB,ARGNAME=JFCB,KWTC=X'8D',MF=&MF     @ZA34940
+.**********************************************************************
+.*                                      CATALOG
+         AIF   ('&CATALOG' EQ '').A000500 *** CATALOG ***
+         IDAVSCB3 ARG=&CATALOG,ARGNAME=CATALOG,KWTC=X'22',     @ZA34940*
+               MF=&MF,INDRECT=YES,BIT=YES                      @ZA34940
+         AIF   ('&CATALOG(1)' EQ '*').A000500                   X04SVHS
+.*             IF INDIRECT ADDRESS SPECIFIED, VALUE ARRAY(&IDAVALC)
+.*                                      WAS SET IN IDAVSCB3    @ZA34940
+&YES     SETB  ('&CATALOG' EQ 'YES')                            X04SVHS
+&NO      SETB  ('&CATALOG' EQ 'NO')                             X04SVHS
+         AIF   (&YES OR &NO).A000400                            X04SVHS
+         IDAVSERR 3,CATALOG,&CATALOG  ISSUE ERROR MESSAGE      @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.A000400 ANOP                                                   X04SVHS
+         AIF   ('&CALLER' EQ 'ACB').A000500                     X04SVHS
+.*             IF CALLER IS ACB, VALUE WILL BE SET IN CRA RTN   X04SVHS
+&IDAVALC(&IDAENO) SETC '&YES&NO.00000000000000&Z16'             X04SVHS
+.**********************************************************************
+.*                                      MACRF
+.A000500 AIF   ('&MACRF' EQ '').A001750   *** MACRF ***         X04SVHS
+         IDAVSCB3 ARG=&MACRF,ARGNAME=MACRF,KWTC=X'12',MF=&MF,  @ZA34940*
+               BIT=YES,INDRECT=YES                             @ZA34940
+         AIF   ('&MACRF(1)' EQ '*').A001800
+.*             IF INDIRECT ADDRESS SPECIFIED, VALUE ARRAY(&IDAVALC)
+.*                                      WAS SET IN IDAVSCB3    @ZA34940
+&I       SETA  0                        CLEAR                   X04SVHS
+&A       SETA  0                        WORK                    X04SVHS
+&B       SETA  0                        VARIABLES               X04SVHS
+&C       SETA  0                        ZERO ERROR COUNTER      X04SVHS
+.A000600 ANOP
+&I       SETA  &I+1                     BUMP INDEX INTO LIST    X04SVHS
+         AIF   (&I GT N'&MACRF).A000800 HAVE ALL OPTIONS BEEN CHECKED
+&MKEY    SETB  ('&MACRF(&I)' EQ 'KEY' OR &MKEY)                 X04SVHS
+&MADR    SETB  ('&MACRF(&I)' EQ 'ADR' OR &MADR)                 X04SVHS
+&MCNV    SETB  ('&MACRF(&I)' EQ 'CNV' OR &MCNV)                 X04SVHS
+&MSEQ    SETB  ('&MACRF(&I)' EQ 'SEQ' OR &MSEQ)                 X04SVHS
+&MSKP    SETB  ('&MACRF(&I)' EQ 'SKP' OR &MSKP)                 X04SVHS
+&MDIR    SETB  ('&MACRF(&I)' EQ 'DIR' OR &MDIR)                 X04SVHS
+&OUT     SETB  ('&MACRF(&I)' EQ 'OUT' OR &OUT)                  X04SVHS
+&IN      SETB  ('&MACRF(&I)' EQ 'IN' OR &IN)                    X04SVHS
+&NUB     SETB  ('&MACRF(&I)' EQ 'NUB' OR &NUB)                  X04SVHS
+&UBF     SETB  ('&MACRF(&I)' EQ 'UBF' OR &UBF)                  X04SVHS
+&NFX     SETB  ('&MACRF(&I)' EQ 'NFX' OR &NFX)                  X04SVHS
+&CFX     SETB  ('&MACRF(&I)' EQ 'CFX' OR &CFX)                  X04SVHS
+&DDN     SETB  ('&MACRF(&I)' EQ 'DDN' OR &DDN)                  X04SVHS
+&DSN     SETB  ('&MACRF(&I)' EQ 'DSN' OR &DSN)                  X04SVHS
+&NRM     SETB  ('&MACRF(&I)' EQ 'NRM' OR &NRM)                  X04SVHS
+&AIX     SETB  ('&MACRF(&I)' EQ 'AIX' OR &AIX)                  X04SVHS
+&NSR     SETB  ('&MACRF(&I)' EQ 'NSR' OR &NSR)                  X04SVHS
+&LSR     SETB  ('&MACRF(&I)' EQ 'LSR' OR &LSR)                  X04SVHS
+&GSR     SETB  ('&MACRF(&I)' EQ 'GSR' OR &GSR)                  X04SVHS
+&NCI     SETB  ('&MACRF(&I)' EQ 'NCI' OR &NCI)                  X04SVHS
+&ICI     SETB  ('&MACRF(&I)' EQ 'ICI' OR &ICI)                  X04SVHS
+&NDF     SETB  ('&MACRF(&I)' EQ 'NDF' OR &NDF)                  X04SVHS
+&DFR     SETB  ('&MACRF(&I)' EQ 'DFR' OR &DFR)                  X04SVHS
+&NIS     SETB  ('&MACRF(&I)' EQ 'NIS' OR &NIS)                  X04SVHS
+&SIS     SETB  ('&MACRF(&I)' EQ 'SIS' OR &SIS)                  X04SVHS
+&RST     SETB  ('&MACRF(&I)' EQ 'RST' OR &RST)                 @XM01125
+&NRS     SETB  ('&MACRF(&I)' EQ 'NRS' OR &NRS)                 @XM01125
+&A       SETA  &MKEY+&MADR+&MCNV+&MSEQ+&MSKP+&MDIR+&OUT+&IN+&NUB+&UBF+&*
+               NFX+&CFX+&DDN+&DSN+&NRM+&AIX+&NSR+&LSR+&GSR+&NCI+&ICI+&N*
+               DF+&DFR+&NIS+&SIS+&RST+&NRS                     @XM01125
+.*             &A CONTAINS THE NUMBER OF VSAM OPTIONS SPECIFIED
+.*             &B CONTAINS THE NUMBER OF VTAM OPTIONS SPECIFIED
+.*             &C CONTAINS THE NUMBER OF ERRORS
+.*             IF THEY EQUAL &I AT THIS POINT, THEN THE LAST
+.*             OPTION SPECIFIED WAS A VALID VSAM OPTION
+         AIF   (&A+&B+&C EQ &I).A000600 IF NEW VSAM BIT SET CHK X04SVHS
+.*                                      NEXT SUBPARAMETER
+.*                                      ELSE CHECK VTAM OPTIONS X04SVHS
+&LOGONF  SETB  ('&MACRF(&I)' EQ 'LOGON' OR &LOGONF)              X03004
+&NLOGON  SETB  ('&MACRF(&I)' EQ 'NLOGON' OR &NLOGON)             X03004
+&B       SETA  &LOGONF+&NLOGON                                  X04SVHS
+         AIF   (&A+&B+&C EQ &I).A000700 IF NEW VTAM BIT SET CHK X04SVHS
+.*                                      FOR AM=VTAM             X04SVHS
+.*             IF &A + &B + &C DO NOT EQUAL &I AT THIS POINT, THEN THE
+.*             LAST OPTION CHECKED WAS INVALID OR DUPLICATED A
+.*             PREVIOUSLY CHECKED OPTION
+         IDAVSERR 5,MACRF,&MACRF(&I)    ISSUE ERROR MESSAGE    @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+&C       SETA  &C+1                     BUMP ERROR COUNTER      X04SVHS
+         AGO   .A000600
+.A000700 AIF   ('&AM' EQ 'VTAM').A000600 IF VTAM NOT SPECIFIED,
+         IDAVSERR 20,&MACRF(&I),MACRF    ISSUE ERROR MESSAGE   @ZA34940
+&IDACB01 SETB  1                         SET ERROR SWITCH        X03004
+         AGO   .A000600                  CHECK NEXT OPTION      X04SVHS
+.*
+.*             THE FOLLOWING CODE CHECKS FOR MUTUALLY EXCLUSIVE
+.*             OPTIONS SPECIFIED,AND IF ANY ARE FOUND, AN ERROR
+.*             MESSAGE IS ISSUED AND THE ERROR SWITCH IS SET
+.A000800 AIF   (NOT(&UBF AND &NUB)).A000900                     X04SVHS
+         IDAVSERR 8,MACRF,UBF,NUB                              @ZA34940
+&IDACB01 SETB  1
+.A000900 AIF   (NOT(&LOGONF AND &NLOGON)).A001000               X04SVHS
+         IDAVSERR 8,MACRF,LOGON,NLOGON                         @ZA34940
+&IDACB01 SETB  1                                                 X03004
+.A000950 AIF   (NOT(&RST AND &NRS)).A001000                    @XM01125
+         IDAVSERR 8,MACRF,RST,NRS                              @ZA34940
+&IDACB01 SETB  1                        SET ERR SWITCH         @XM01125
+.A001000 AIF   (NOT(&NFX AND &CFX)).A001100                     X04SVHS
+         IDAVSERR 8,MACRF,NFX,CFX                              @ZA34940
+&IDACB01 SETB  1                        SET ERR SWITCH          X04SVHS
+.A001100 AIF   (NOT(&DDN AND &DSN)).A001200                     X04SVHS
+         IDAVSERR 8,MACRF,DDN,DSN                              @ZA34940
+&IDACB01 SETB  1                        SET ERR SWITCH          X04SVHS
+.A001200 AIF   (NOT(&NRM AND &AIX)).A001300                     X04SVHS
+         IDAVSERR 8,MACRF,NRM,AIX                              @ZA34940
+&IDACB01 SETB  1                        SET ERR SWITCH          X04SVHS
+.A001300 AIF   ((NOT(&NSR AND &GSR)) AND (NOT(&GSR AND &LSR)) AND      *
+               (NOT(&LSR AND &NSR))).A001400                    X04SVHS
+         IDAVSERR 25,MACRF,&NSR,&LSR,&GSR                      @ZA34940
+&IDACB01 SETB  1                        SET ERR SWITCH          X04SVHS
+.A001400 AIF   (NOT(&NCI AND &ICI)).A001500                     X04SVHS
+         IDAVSERR 8,MACRF,NCI,ICI                              @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.A001500 AIF   (NOT(&NDF AND &DFR)).A001600                     X04SVHS
+         IDAVSERR 8,MACRF,NDF,DFR                              @ZA34940
+&IDACB01 SETB  1                        SET ERR SWITCH          X04SVHS
+.A001600 AIF   (NOT(&NIS AND &SIS)).A001700                     X04SVHS
+         IDAVSERR 8,MACRF,NIS,SIS                              @ZA34940
+&IDACB01 SETB  1                        SET ERR SWITCH          X04SVHS
+.A001700 ANOP                                                   X04SVHS
+         AIF   ('&CALLER' EQ 'ACB').A001750                     X04SVHS
+.*             IF CALLED BY DECLARATIVE, BYPASS CBMM PROCESSING
+.*
+&IDAVALC(&IDAENO) SETC '&MKEY&MADR&MCNV&MSEQ&MSKP&MDIR&IN&OUT&NUB&UBF&L*
+               OGONF&NLOGON.0&DDN&DSN&NRM&AIX&NSR&LSR&GSR&NCI&ICI&NDF&D*
+               FR&NIS&SIS&NFX&CFX&RST&NRS.00'                  @XM01139
+.*             SET GLOBAL ARRAY TO BE USED BY IDACB2 TO BUILD
+.*             PARAMETER LIST
+         AGO   .A001800                 BYPASS DECLARATIVE PROC X04SVHS
+.A001750 ANOP                                                   X04SVHS
+         AIF   ('&CALLER' NE 'ACB').A001800                     X04SVHS
+.*             THE FOLLOWING CODE SETS DEFAULT VALUES FOR ACB
+.*             DECLARATIVE.  THE DEFAULTS FOR CBM WILL BE SET AT
+.*             EXECUTE TIME.
+.*
+&MKEY    SETB  (NOT(&MADR OR &MCNV) OR &MKEY)                   X04SVHS
+.*             MKEY IS DEFAULT IF MADR OR MCNV ARE NOT SPECIFIED
+&MSEQ    SETB  (NOT(&MSKP OR &MDIR) OR &MSEQ)                   X04SVHS
+.*             MSEQ IS DEFAULT IF MSKP OR MDIR ARE NOT SPECIFIED
+&IN      SETB  (NOT(&OUT) OR &IN)                               X04SVHS
+.*             IN IS DEFAULT IF OUT IS NOT SPECIFIED            X04SVHS
+.*
+.*             SET MACRF VALUES IN GLOBALS FOR ACB DECLARATIVE  X04SVHS
+&IDAMAC1 SETC  '&MKEY&MADR&MCNV&MSEQ&MDIR&IN&OUT&UBF'           X04SVHS
+&IDAMAC2 SETC  '000&MSKP&NLOGON&RST&DSN&AIX'                    X04SVHS
+&IDAMAC3 SETC  '0&LSR&GSR&ICI&DFR&SIS&CFX.0'                    X04SVHS
+         AGO   .A002200                 PROCESS CRA             X04SVHS
+.**********************************************************************
+.A001800 ANOP                                                   X04SVHS
+.*                                      PASSWD
+         IDAVSCB3 ARG=&PASSWD,ARGNAME=PASSWD,KWTC=X'1E',MF=&MF @ZA34940
+.**********************************************************************
+.*                                      STRNO
+         IDAVSCB3 ARG=&STRNO,ARGNAME=STRNO,KWTC=X'20',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      USERPTR                @XM01129
+         AIF ('&USERPTR' EQ '' OR '&USERPTR' EQ '0').A001850   @XM01129
+         IDAVSCB3 ARG=&USERPTR,ARGNAME=USERPTR,KWTC=X'8C',     @ZA34940X
+               MF=&MF                                          @ZA34940
+         AIF   ('&AM' NE 'VSAM' AND '&AM' NE '').A001825       @XM01129
+.*                                   IF AM NOT VSAM OR NULL, ERROR
+         AGO   .A001850                                        @XM01129
+.A001825 IDAVSERR 24,USERPTR                                   @ZA34940
+&IDACB01 SETB  1                                               @XM01129
+.**********************************************************************
+.A001850  ANOP
+.*                                      APPLID
+         IDAVSCB3 ARG=&APPLID,ARGNAME=APPLID,KWTC=X'41',       @ZA34940*
+               MF=&MF,CHKAM=VTAM,AM=&AM                        @ZA34940
+.**********************************************************************
+.*                                       AM
+         AIF   ('&AM' EQ '' OR '&CALLER' NE 'GEN').A002000      X04SVHS
+.*             ARGUMENT CONTROL ENTRY IS ONLY BUILT FOR GENCB FOR AM
+         IDAVSCB3 ARG=&AM,ARGNAME=AM,KWTC=X'40',BIT=YES        @ZA34940
+&VSAM    SETB  ('&AM' EQ 'VSAM')                                X04SVHS
+&VTAM    SETB  ('&AM' EQ 'VTAM')                                X04SVHS
+         AIF   (&VSAM OR &VTAM).A001900                         X04SVHS
+.*             CHECK FOR VALID OPTION                           X04SVHS
+         IDAVSERR 5,AM,&AM                                     @ZA34940
+&IDACB01 SETB  1                         SET ERROR SWITCH       X04SVHS
+.A001900    ANOP                                                X04SVHS
+&IDAVALC(&IDAENO) SETC '&VSAM&VTAM.00000000000000&Z16'          X04SVHS
+.**********************************************************************
+.A002000 ANOP                                                   X04SVHS
+.*                                      MAREA
+         IDAVSCB3 ARG=&MAREA,ARGNAME=MAREA,KWTC=X'0E',MF=&MF   @ZA34940
+         AIF   ('&AM' NE 'VSAM' AND '&AM' NE '' AND '&MAREA' NE        *
+               '').A002050                                      X04SVHS
+.*                                      IF AM NOT VSAM OR NULL  X04SVHS
+.*                                      ERROR                   X04SVHS
+         AGO   .A002100                                         X04SVHS
+.A002050 ANOP                                                   X04SVHS
+         IDAVSERR 24,MAREA                                     @ZA34940
+&IDACB01 SETB  1                        SET ERR SWITCH          X04SVHS
+.**********************************************************************
+.A002100 ANOP                                                   X04SVHS
+.*                                        MLEN                  X04SVHS
+         IDAVSCB3 ARG=&MLEN,ARGNAME=MLEN,KWTC=X'0F',MF=&MF     @ZA34940
+         AIF   ('&AM' NE 'VSAM' AND '&AM' NE '' AND '&MLEN' NE         *
+               '').A002150                                      X04SVHS
+.*                                      IF AM NOT EQUAL TO VSAM X04SVHS
+.*                                      OR NULL, ERROR          X04SVHS
+         AGO   .A002200                                         X04SVHS
+.A002150 ANOP                                                   X04SVHS
+         IDAVSERR 24,MLEN                                      @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.**********************************************************************
+.A002200 ANOP                                                   X04SVHS
+.*                                      CRA
+         AIF   ('&CRA' EQ '').A002350 *** CRA ***               X04SVHS
+.*             IF CRA IS NULL, CHECK FOR CALLER = ACB           X04SVHS
+&SCRA    SETB  ('&CRA' EQ 'SCRA')                              @XM07755
+&UCRA    SETB  ('&CRA' EQ 'UCRA')                              @XM07755
+         AIF   (&SCRA OR &UCRA).A002300 CHK FOR VALID OPTION    X04SVHS
+         IDAVSERR 5,CRA,&CRA            ISSUE ERROR MESSAGE    @ZA34940
+&IDACB01 SETB  1                        SET ERR SWITCH          X04SVHS
+         AGO   .A002400                 BYPASSING PROCESSING KEYWORD
+.*                                                              X04SVHS
+.A002300 ANOP                                                   X04SVHS
+         AIF   ('&CALLER' EQ 'ACB').A002375                     X04SVHS
+.*             IF CALLER IS ACB BYPASS CBM PROCESSING           X04SVHS
+         IDAVSCB3 ARG=&CRA,KWTC=X'59',BIT=YES                  @ZA34940
+&IDAVALC(&IDAENO) SETC '&SCRA&UCRA.00000000000000&Z16'          X04SVHS
+         AGO   .A002400                 BYPASS DECLARATIVE PROC X04SVHS
+.A002350 ANOP                                                   X04SVHS
+.*             AT THIS POINT, EITHER CRA IS NOT SPECIFIED, OR   X04SVHS
+.*             CALLER = ACB                                     X04SVHS
+         AIF   ('&CALLER' NE 'ACB').A002400                     X04SVHS
+.*             IF CALLER NOT ACB, BYPASS DECLARATIVE PROCESSING X04SVHS
+.A002375 ANOP                                                   X04SVHS
+&IDAIFL1 SETC  '000&YES&SCRA&UCRA.00'   SET ACB INFLGS BYTE 1   X04SVHS
+.*             ALL BIT KEYWORDS HAVE BEEN PROCESSED FOR DECLARATIVE
+         MEXIT                                                  X04SVHS
+.**********************************************************************
+.A002400 ANOP                                                   X04SVHS
+.*                                      BSTRNO
+         IDAVSCB3 ARG=&BSTRNO,ARGNAME=BSTRNO,KWTC=X'24',MF=&MF @ZA34940
+.**********************************************************************
+.*
+         AIF   ('&CALLER' NE 'TEST').A003800
+.*
+.*             THE FOLLOWING KEYWORDS ARE VALID FOR TESTCB ONLY
+.*
+.**********************************************************************
+.*                                      ATRB
+         AIF   ('&ATRB' EQ '').A002800    *** ATRB ***
+         IDAVSCB3 ARG=&ATRB,ARGNAME=ATRB,KWTC=X'01',MF=&MF,    @ZA34940*
+               INDRECT=YES,BIT=YES                             @ZA34940
+         AIF   ('&ATRB(1)' EQ '*').A002800                      X04SVHS
+.*             IF INDIRECT ADDRESS WAS SPECIFIED, VALUE ARRAY(&IDAVALC)
+.*             WAS SET IN IDAVSCB3                             @ZA34940
+&I       SETA  0                        ZERO INDEX INTO LIST
+&C       SETA  0                        ZERO ERROR COUNTER      X04SVHS
+.A002500 ANOP
+&I       SETA  &I+1                     BUMP INDEX INTO LIST
+         AIF   (&I GT N'&ATRB).A002600  HAVE ALL OPTIONS BEEN CHECKED
+&ESDS    SETB  ('&ATRB(&I)' EQ 'ESDS' OR &ESDS)                 X04SVHS
+&KSDS    SETB  ('&ATRB(&I)' EQ 'KSDS' OR &KSDS)                 X04SVHS
+&WCK     SETB  ('&ATRB(&I)' EQ 'WCK' OR &WCK)                   X04SVHS
+&SSWD    SETB  ('&ATRB(&I)' EQ 'SSWD' OR &SSWD)                 X04SVHS
+&REPL    SETB  ('&ATRB(&I)' EQ 'REPL' OR &REPL)                 X04SVHS
+&RRDS    SETB  ('&ATRB(&I)' EQ 'RRDS' OR &RRDS)                 X04SVHS
+&SPAN    SETB  ('&ATRB(&I)' EQ 'SPAN' OR &SPAN)                 X04SVHS
+&UNQ     SETB  ('&ATRB(&I)' EQ 'UNQ' OR &UNQ)                   X04SVHS
+         AIF   (&ESDS+&KSDS+&WCK+&SSWD+&REPL+&RRDS+&SPAN+&UNQ+&C EQ &I)*
+               .A002500                 CHK FOR VALID OPTION    X04SVHS
+.*             IF A NEW BIT WAS NOT SET, THEN LAST OPTION CHECKED
+.*             IS INVALID OR DUPLICATES A PREVIOUSLY SPEC OPTION
+         IDAVSERR 5,ATRB,&ATRB(&I)      ISSUE ERROR MESSAGE    @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+&C       SETA  &C+1                     BUMP ERROR COUNTER      X04SVHS
+         AGO   .A002500                                         X04SVHS
+.A002600 AIF   (NOT(&ESDS AND &KSDS)).A002700
+.*             CHECK FOR MUTUALLY EXCLUSIVE OPTIONS
+         IDAVSERR 8,ATRB,ESDS,KSDS      ISSUE ERROR MESSAGE    @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH
+.A002700 ANOP
+&IDAVALC(&IDAENO) SETC '&KSDS&ESDS&WCK&SSWD&REPL&RRDS&SPAN&UNQ.00000000*
+               &Z16'
+.**********************************************************************
+.A002800 ANOP
+.*                                      AVSPAC
+         IDAVSCB3 ARG=&AVSPAC,ARGNAME=AVSPAC,KWTC=X'02',MF=&MF @ZA34940
+.**********************************************************************
+.*                                      BUFNO
+         IDAVSCB3 ARG=&BUFNO,ARGNAME=BUFNO,KWTC=X'06',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      CINV
+         IDAVSCB3 ARG=&CINV,ARGNAME=CINV,KWTC=X'08',MF=&MF     @ZA34940
+.**********************************************************************
+.*                                      ENDRBA
+         IDAVSCB3 ARG=&ENDRBA,ARGNAME=ENDRBA,KWTC=X'0A',MF=&MF @ZA34940
+.**********************************************************************
+.*                                      ERROR
+         IDAVSCB3 ARG=&ERROR,ARGNAME=ERROR,KWTC=X'0B',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      FS
+         IDAVSCB3 ARG=&FS,ARGNAME=FS,KWTC=X'0D',MF=&MF         @ZA34940
+.**********************************************************************
+.*                                      KEYLEN
+         IDAVSCB3 ARG=&KEYLEN,ARGNAME=KEYLEN,KWTC=X'10',MF=&MF @ZA34940
+.**********************************************************************
+.*                                      LRECL
+         IDAVSCB3 ARG=&LRECL,ARGNAME=LRECL,KWTC=X'11',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      NCIS
+         IDAVSCB3 ARG=&NCIS,ARGNAME=NCIS,KWTC=X'13',MF=&MF     @ZA34940
+.**********************************************************************
+.*                                      NDELR
+         IDAVSCB3 ARG=&NDELR,ARGNAME=NDELR,KWTC=X'14',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      NEXCP
+         IDAVSCB3 ARG=&NEXCP,ARGNAME=NEXCP,KWTC=X'15',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      NEXT
+         IDAVSCB3 ARG=&NEXT,ARGNAME=NEXT,KWTC=X'16',MF=&MF     @ZA34940
+.**********************************************************************
+.*                                      NINSR
+         IDAVSCB3 ARG=&NINSR,ARGNAME=NINSR,KWTC=X'17',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      NIXL
+         IDAVSCB3 ARG=&NIXL,ARGNAME=NIXL,KWTC=X'18',MF=&MF     @ZA34940
+.**********************************************************************
+.*                                      &NLOGR
+         IDAVSCB3 ARG=&NLOGR,ARGNAME=NLOGR,KWTC=X'19',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      NRETR
+         IDAVSCB3 ARG=&NRETR,ARGNAME=NRETR,KWTC=X'1A',MF=&MF   @ZA34940
+.**********************************************************************
+.*                                      NSSS
+         IDAVSCB3 ARG=&NSSS,ARGNAME=NSSS,KWTC=X'1B',MF=&MF     @ZA34940
+.**********************************************************************
+.*                                      NUPDR
+         IDAVSCB3 ARG=&NUPDR,ARGNAME=NUPDR,KWTC=X'1C',MF=&MF   @ZA34940
+.**********************************************************************
+.*
+         AIF   ('&OFLAGS' EQ '').A003000 *** OFLAGS ***
+         IDAVSCB3 ARG=&OFLAGS,ARGNAME=OFLAGS,KWTC=X'1D',       @ZA34940*
+               MF=&MF,BIT=YES,INDRECT=YES                      @ZA34940
+         AIF   ('&OFLAGS(1)' EQ '*').A003000
+.*             IF INDIRECT ADDRESS WAS SPECIFIED, VALUE ARRAY(&IDAVALC)
+.*             WAS SET IN IDAVSCB3                             @ZA34940
+&OPEN    SETB  ('&OFLAGS' EQ 'OPEN')                            X04SVHS
+         AIF   (&OPEN).A002900                                  X04SVHS
+.*             CHECK FOR VALID OPTION SPECIFIED
+         IDAVSERR 3,OFLAGS,&OFLAGS                             @ZA34940
+&IDACB01 SETB  1
+.A002900 ANOP
+&IDAVALC(&IDAENO) SETC '&OPEN.000000000000000&Z16'              X04SVHS
+.**********************************************************************
+.A003000 ANOP                                                   X04SVHS
+.*                                      RKP
+         IDAVSCB3 ARG=&RKP,ARGNAME=RKP,KWTC=X'1F',MF=&MF       @ZA34940
+.**********************************************************************
+.*                                      AIXRKP
+         IDAVSCB3 ARG=&AIXRKP,ARGNAME=AIXRKP,KWTC=X'3C',MF=&MF @ZA34940
+.**********************************************************************
+.*                                      STMST
+         AIF   ('&STMST' EQ '').A003300  *** STMST ***
+         AIF   ('&STMST(1)' EQ '*').A003100
+.*                                      STMST MUST BE INDIRECT ADDRESS
+         IDAVSERR 3,STMST,&STMST        ELSE, ISSUE ERROR MSG  @ZA34940
+         AGO   .A003300
+.A003100 ANOP
+         IDAVSCB3 ARG=&STMST,ARGNAME=STMST,KWTC=X'23',MF=&MF, @ZA34940 *
+               INDRECT=YES                                    @ZA34940
+.*                                                              X04SVHS
+&IDAELEN(&IDAENO) SETA 8                                        X04SVHS
+.**********************************************************************
+.*                                      OPENOBJ
+.A003300 ANOP                                                   X04SVHS
+         AIF   ('&OPENOBJ' EQ '').A003800 *** OPENOBJ ***       X04SVHS
+&I       SETA  0                        CLEAR SUBPARM CTR       X04SVHS
+&C       SETA  0                        ZERO ERROR COUNTER      X04SVHS
+.A003400 ANOP                                                   X04SVHS
+&I       SETA  &I+1                     BUMP SUBPARM CTR        X04SVHS
+         AIF   (&I GT N'&OPENOBJ).A003500 CHK FOR END OF LIST   X04SVHS
+&PATH    SETB  ('&OPENOBJ(&I)' EQ 'PATH' OR &PATH)              X04SVHS
+&BASE    SETB  ('&OPENOBJ(&I)' EQ 'BASE' OR &BASE)              X04SVHS
+&AIX     SETB  ('&OPENOBJ(&I)' EQ 'AIX' OR &AIX)                X04SVHS
+         AIF   (&PATH+&BASE+&AIX+&C EQ &I).A003400              X04SVHS
+.*                                      CHK FOR NEW BIT SET     X04SVHS
+         IDAVSERR 5,OPENOBJ,&OPENOBJ(&I)                       @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+&C       SETA  &C+1                     BUMP ERROR COUNTER      X04SVHS
+         AGO   .A003400                                         X04SVHS
+.*             CHECK FOR MUTUALLY EXCLUSIVE OPTIONS             X04SVHS
+.A003500 AIF   (NOT(&PATH AND &BASE)).A003600                   X04SVHS
+         IDAVSERR 8,OPENOBJ,PATH,BASE                          @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.A003600 AIF   (NOT(&PATH AND &AIX)).A003700                    X04SVHS
+         IDAVSERR 8,OPENOBJ,PATH,AIX                           @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.A003700 ANOP                                                   X04SVHS
+         IDAVSCB3 ARG=&OPENOBJ,KWTC=X'21',BIT=YES              @ZA34940
+&IDAVALC(&IDAENO) SETC '&AIX&PATH&BASE.0000000000000&Z16'      @XM07772
+.**********************************************************************
+.A003800 ANOP                                                   X04SVHS
+         MEND
+

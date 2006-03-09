@@ -1,0 +1,161 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/* A 00000000-99999999                                      @Z40RSGD*/
+*/***************START OF SPECIFICATIONS******************************/
+*/*                                                                  */
+*/* $MAC(ICHRDDFL) COMP(SC1BN) PROD(RACF):                           */
+*/*                                                                  */
+*/* DESCRIPTIVE NAME = DYNAMIC DEFINITION INTERFACE                  */
+*/*                    RACDEF PARM LIST MAPPING MACRO        @PC002PY*/
+*/*                                                                  */
+*/*             G120-2083                                            */
+*/*                                                                  */
+*/* STATUS = OS/VS2 EBB1102                                          */
+*/*                                                                  */
+*/* METHOD OF ACCESS = ICHRDDFL MACRO IN BAL                         */
+*/*                    %INCLUDE SYSLIB(ICHRDDFL) IN PL/S             */
+*/*                                                                  */
+*/* FUNCTION = PROVIDES A MAPPING MACRO OF THE PARAMETER LIST FOR    */
+*/*            THE DYNAMIC DEFINITION MACRO, RACDEF          @PC002PY*/
+*/*                                                                  */
+*/* MACROS = NONE                                                    */
+*/*                                                                  */
+*/* CHANGE ACTIVITY =                                                */
+*/*         RACF VERSION 1, RELEASE 2                        @PC002PY*/
+*/*         RACF VERSION 1, RELEASE 3                        @PC003PY*/
+*/*         $L4=HRF1402,RACF/140,810701,SJRDSD:                  @L4A*/
+*/*         $T1=UZ90210,SAF/RF15,810817,CNTDSD:                  @T1A*/
+*/*         $L5=HRF1502,RACF/150,820223,CNTDSD:                  @L5A*/
+*/*         $L6=HRF1602,RACF/160,830302,CNTDSD:                  @L6A*/
+*/*         UZ90283                                          @ZA90283*/
+*/*         UZ90284                                          @ZA90284*/
+*/*         UZ90285                                          @ZA90285*/
+*/*                                                                  */
+*/************END OF SPECIFICATIONS***********************************/
+*%GOTO RDDFPLS;                        /* BILINGUAL HEADER
+         MACRO
+         ICHRDDFL &DSECT=YES
+         AIF   ('&DSECT' EQ 'NO').RDFL010
+RDDFLIST DSECT ,RDDFPTR
+         AGO   .RDFL020
+.RDFL010 ANOP
+         DS    0A         INSURE PROPER ALIGNMENT.               @L4A
+RDDFLIST DS    0CL48      RACDEF PARAMETER LIST
+.RDFL020 ANOP
+RDDFINSW DS    0A -        ADDRESS OF INSTALLATION DATA WORD
+RDDFLENG DS    AL1 -       LENGTH OF RACDEF PARAMETER LIST
+RDDFINST DS    AL3 -       ADDRESS OF INSTALLATION DATA
+RDDFENTW DS    0A          ENTITY ADDRESS WORD                 @PC002PY
+RDDFFLGS DS    X           FUNCTIONAL FLAGS
+RDDFTDEL EQU   X'80'           TYPE=DELETE SPECIFIED
+RDDFTADV EQU   X'40'           TYPE=ADDVOL SPECIFIED
+RDDFCHGV EQU   X'C0'           TYPE=CHGVOL SPECIFIED.            @L4A
+RDDFOLDV EQU   X'20'           OLD VOLSER ADDRESS SPECIFIED
+RDDFNEWN EQU   X'10'           NEW DSNAME SPECIFIED
+RDDF31IN EQU   X'08'           31-BIT ADDRESS LIST INDICATOR     @T1A
+RDDFDSTV EQU   X'04'           DSTYPE=V SPECIFIED
+RDDFMDEL EQU   X'02'           DSTYPE=M SPECIFIED.               @L4A
+RDDFSPEC EQU   X'01'           SPECIAL=YES SPECIFIED.            @L4A
+RDDFENT  DS    AL3         DSNAME ADDRESS
+RDDFOVOL DS    0A              OLD VOLSER ADDRESS
+RDDFNNAM DS    A               NEW DSNAME ADDRESS
+RDDFVSER DS    A           VOLSER ADDRESS
+RDDFCLNW DS    A           ENTITY CLASS NAME ADDRESS           @PC002PY
+RDDFMENT DS    A           MODEL ENTITY ADDRESS                @PC002PY
+RDDFMVOL DS    A           MODEL VOLSER ADDRESS                @PC002PY
+RDDFACEE DS    A           ACEE ADDRESS                        @PC003PY
+RDDFUNIT DS    A           UNIT INFORMATION ADDRESS.             @L4A
+RDDFUACC DS    AL1         UACC VALUE.                           @L4A
+RDDFALTR EQU   X'80'       ALTER AUTHORITY.                      @L4A
+RDDFCNTL EQU   X'40'       CONTROL AUTHORITY.                    @L4A
+RDDFUPD  EQU   X'20'       UPDATE AUTHORITY.                     @L4A
+RDDFREAD EQU   X'10'       READ AUTHORITY.                       @L4A
+*        EQU   X'0E'       RESERVED.                             @L4A
+RDDFNONE EQU   X'01'       NONE AUTHORITY.                       @L4A
+RDDFLVL  DS    AL1         LEVEL VALUE. 00 TO 99.                @L4A
+RDDFAUDT DS    AL1         AUDIT VALUE.                          @L4A
+RDDFALL  EQU   X'80'       AUDIT ALL ACCESSES.                   @L4A
+RDDFSUCC EQU   X'40'       AUDIT SUCCESSFUL ACCESSES.            @L4A
+RDDFFAIL EQU   X'20'       AUDIT ACCESS THAT FAIL.               @L4A
+RDDFANON EQU   X'10'       NO AUDITING.                          @L4A
+RDDFQS   EQU   X'0C'       SUCCESS QUALIFIER BITS                @L5A
+RDDFQF   EQU   X'03'       FAILURE QUALIFIER BITS                @L5A
+RDDFFLG2 DS    AL1         2ND FLAG BYTE                         @L5A
+RDDFRFI  EQU   X'80'       RACFIND PARAMETER CODED               @L5A
+RDDFRFIY EQU   X'40'       RACFIND=YES                           @L5A
+RDDFCHKA EQU   X'20'       CHKAUTH=YES                           @L5A
+*        EQU   X'10'       RESERVED                              @L6A
+*        EQU   X'08'       RESERVED                              @L6A
+*        EQU   X'04'       RESERVED                              @L6A
+RDDFWARN EQU   X'02'       WARNING=YES GIVEN                     @L6A
+RDDFGEN  EQU   X'01'       GENERIC=YES GIVEN                     @L6A
+RDDFOWNR DS    A           OWNER ADDRESS.                        @L4A
+RDDFDATA DS    A           INSTALLATION-DEFINED DATA ADDRESS.    @L4A
+RDDF31   DS    0CL8        31-BIT-ADDRESS SAF  EXTENSION         @T1A
+RDDFIN31 DS    A           31-BIT INSTALLATION DATA ADDRESS      @T1A
+RDDFEN31 DS    A           31-BIT ENTITY NAME ADDRESS            @T1A
+ADDFLEN  EQU   RDDF31-RDDFLIST  LENGTH OF V1.4 PARAMETER LIST    @T1A
+ADDF31LN EQU   *-RDDFLIST       LENGTH OF SAF  PARAMETER LIST    @T1A
+         MEND
+* TERMINATE PL/S COMMENT   */
+*%RDDFPLS:;
+    DECLARE 1 RDDFLIST BASED(RDDFPTR), /* RACDEF PARAMETER LIST      */
+              2 RDDFINSW PTR(31),   /* ADDRESS OF INSTALLATION DATA  */
+               3 RDDFLENG FIXED(8), /* LENGTH OF PARAMETER LIST      */
+               3 RDDFINST PTR(24),  /* INSTALLATION DATA             */
+              2 RDDFENTW FIXED(31), /* ENTITY NAME ADDRESS WORD      */
+                3 RDDFFLGS BIN(8),  /* FLAGS BYTE                    */
+                  4 RDDFCHGV BIT(2),/* TYPE=CHGVOL.              @L4A*/
+                    5 RDDFTDEL BIT(1),/* TYPE=DELETE                 */
+                    5 RDDFTADV BIT(1),/* TYPE=ADDVOL                 */
+                  4 RDDFOLDV BIT(1),/* OLDVOL SPECIFIED              */
+                  4 RDDFNEWN BIT(1),/* NEWNAME SPECIFIED             */
+                  4 RDDF31IN BIT(1),/* 31-BIT ADDRESS LIST INDICATOR
+                                                                 @T1A*/
+                  4 RDDFDSTV BIT(1),/* DSTYPE=V                      */
+                  4 RDDFMDEL BIT(1),/* DSTYPE=M                  @L4A*/
+                  4 RDDFSPEC BIT(1),/* SPECIAL=YES               @L4A*/
+                3 RDDFENT PTR(24),  /* ENTITY NAME ADDRESS           */
+              2 RDDFOVOL PTR(31),   /* OLD VOLSER ADDR               */
+                3 RDDFNNAM PTR(31), /* NEWNAME ADDRESS               */
+              2 RDDFVSER PTR(31),   /* NEW VOLSER ADDRESS            */
+              2 RDDFCLNW PTR(31),   /* CLASS NAME ADDRESS    @PC002PY*/
+              2 RDDFMENT PTR(31),   /* MODEL ENTITY ADDRESS  @PC002PY*/
+              2 RDDFMVOL PTR(31),   /* MODEL VOLSER ADDRESS  @PC002PY*/
+              2 RDDFACEE PTR(31),   /* ACEE ADDRESS          @PC003PY*/
+              2 RDDFUNIT PTR(31),   /* UNIT INFORMATION ADDRESS. @L4A*/
+              2 RDDFUACC BIT(8),    /* UACC FLAGS.               @L4A*/
+                3 RDDFALTR BIT(1),  /* ALTER AUTHORITY.          @L4A*/
+                3 RDDFCNTL BIT(1),  /* CONTROL AUTHORITY.        @L4A*/
+                3 RDDFUPD  BIT(1),  /* UPDATE AUTHORITY.         @L4A*/
+                3 RDDFREAD BIT(1),  /* READ AUTHORITY.           @L4A*/
+                3 * BIT(3),         /* RESERVED.                 @L4A*/
+                3 RDDFNONE BIT(1),  /* NONE AUTHORITY.           @L4A*/
+              2 RDDFLVL  FIXED(8),  /* LEVEL VALUE. 00 TO 99.    @L4A*/
+              2 RDDFAUDT BIT(8),    /* AUDIT FLAGS.              @L4A*/
+                3 RDDFALL  BIT(1),  /* AUDIT ALL ACCESSES.       @L4A*/
+                3 RDDFSUCC BIT(1),  /* AUDIT SUCCESSFUL ACCESS.  @L4A*/
+                3 RDDFFAIL BIT(1),  /* AUDIT ACCESSES THAT FAIL. @L4A*/
+                3 RDDFANON BIT(1),  /* NO AUDITING.              @L4A*/
+                3 RDDFQS BIT(2),    /* SUCCESS QUALIFIER         @L5A*/
+                3 RDDFQF BIT(2),    /* FAILURE QUALIFIER         @L5A*/
+              2 RDDFFLG2 BIT(8),    /* 2ND FLAG BYTE             @L5A*/
+                3 RDDFRFI BIT(1),   /* RACFIND PARAMETER GIVEN   @L5A*/
+                3 RDDFRFIY BIT(1),  /* RACFIND=YES               @L5A*/
+                3 RDDFCHKA BIT(1),  /* CHKAUTH=YES               @L5A*/
+                3 *       BIT(3),   /* RESERVED                  @L6A*/
+                3 RDDFWARN BIT(1),  /* WARNING=YES GIVEN         @L6A*/
+                3 RDDFGEN BIT(1),   /* GENERIC=YES GIVEN         @L6A*/
+              2 RDDFOWNR PTR(31),   /* OWNER ADDRESS.            @L4A*/
+              2 RDDFDATA PTR(31),   /* INSTALLATION DATA ADDRESS @L4A*/
+              2 RDDFEND CHAR(0),    /* END OF V1.4 LIST          @T1A*/
+             1 RDDF31 DEFINED(RDDFEND),/* 31-BIT-ADDRESS SAF
+                                       EXTENSION                 @T1A*/
+              2 RDDFIN31 PTR(31),   /* 31-BIT INSTALLATION DATA
+                                       ADDRESS                   @T1A*/
+              2 RDDFEN31 PTR(31);   /* 31-BIT ENTITY NAME
+                                       ADDRESS                   @T1A*/
+     %ADDFLEN='LENGTH(RDDFLIST)';  /* SETS LENGTH OF V1.4  PARAMETER
+                                       LIST                      @T1A*/
+     %ADDF31LN='LENGTH(RDDFLIST)+LENGTH(RDDF31)';/* SETS LENGTH OF
+                                       SAF  PARAMETER LIST       @T1A*/
+

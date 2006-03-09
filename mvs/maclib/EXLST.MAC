@@ -1,0 +1,59 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    EXLST &EODAD=,&SCIP=,&LERAD=,&AM=,                            C
+               &JRNAD=,&SYNAD=,&OPENAD=,&LOGON=,&RELREQ=,              C
+               &NSEXIT=,                                               C
+               &ATTN=,&TPEND=,&LOSTERM=,                               C
+               &DFASY=,&RESP=,&UPAD=,                                  C
+               &PARMS=,&PARM2=,&PARM3=
+.*
+.*             CHANGE LEVEL = 0                                @ZA34940
+.*             DATE OF LAST CHANGE =  3  OCT   78 ( 78*276 )   @ZA34940
+.*
+.* FUNCTION-   THIS MACRO CONTAINS THE PROTOTYPE STATEMENT
+.*             FOR THE EXLST MACRO.
+.*             THE FUNCTION OF THIS MACRO IS TO DETERMINE IF
+.*             THE PROGRAM ISSUING THE EXLST MACRO IS A VSAM
+.*             OR A VTAM USER AND TO INVOKE MACRO EXLVS FOR
+.*             VSAM OR ISTEXL1 FOR VTAM.
+.*
+.*             PARAMETERS ARE PASSED TO THE EXLST MACRO IN THE
+.*             FOLLOWING FORMS
+.*                      KEYWORD=ADDRESS
+.*                      KEYWORD=0
+.*                      KEYWORD=(ADDRESS,N,L,A)
+.*                      KEYWORD=(0,N,A,L)
+.*
+.* CHANGE ACTIVITY
+.*      CBMM SPLIT SUPPORT                                     @ZA34940
+.*
+         AIF   ('&AM' EQ 'VTAM').VTEXL  IS IT VTAM
+         AIF   ('&AM' EQ 'VSAM').VSEXL  IS IT VSAM
+         AIF   ('&AM' EQ '').VSEXL      IF NULL, DEFAULT VSAM
+.*
+         IDAVSERR 3,AM,&AM              ISSUE ERROR MSG
+         MEXIT
+.*
+.*
+.VTEXL   ANOP
+&NAME    ISTEXL1 EODAD=&EODAD,SCIP=&SCIP,LERAD=&LERAD,                 C
+               AM=&AM,JRNAD=&JRNAD,SYNAD=&SYNAD,                       C
+               OPENAD=&OPENAD,LOGON=&LOGON,RELREQ=&RELREQ,             C
+               NSEXIT=&NSEXIT,ATTN=&ATTN,TPEND=&TPEND,                 C
+               LOSTERM=&LOSTERM,DFASY=&DFASY,                          C
+               RESP=&RESP,UPAD=&UPAD,                                  C
+               PARMS=&PARMS,PARM2=&PARM2,PARM3=&PARM3
+.*
+         MEXIT
+.*
+.*
+.VSEXL   ANOP
+&NAME    EXLVS EODAD=&EODAD,SCIP=&SCIP,LERAD=&LERAD,                   C
+               AM=&AM,JRNAD=&JRNAD,SYNAD=&SYNAD,                       C
+               OPENAD=&OPENAD,LOGON=&LOGON,RELREQ=&RELREQ,             C
+               NSEXIT=&NSEXIT,ATTN=&ATTN,TPEND=&TPEND,                 C
+               LOSTERM=&LOSTERM,DFASY=&DFASY,                          C
+               RESP=&RESP,UPAD=&UPAD,                                  C
+               PARMS=&PARMS,PARM2=&PARM2,PARM3=&PARM3
+.*
+         MEND

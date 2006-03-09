@@ -1,0 +1,123 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    CHKPT &DCB,&ID,&LNG,&MF=S
+         LCLA  &A
+&A       SETA  N'&DCB+N'&ID+N'&LNG
+         AIF   (T'&DCB EQ 'O').E   CANCEL OPND CHECK- 1ST OPND, S FORM
+         AIF   ('&DCB' EQ 'CANCEL' AND '&MF' NE 'S').ERR5
+         AIF   ('&DCB' EQ 'CANCEL' AND &A GT 1).ERR5
+.E       AIF   ('&MF' EQ 'S').S1   STANDARD FORM
+         AIF   ('&MF' EQ 'L').L1        LIST FORM
+         AIF   ('&MF(1)' NE 'E' OR N'&MF NE 2).ERR1
+&NAME    IHBINNRA &MF(2)                EXECUTE FORM
+         AIF   (T'&DCB EQ 'O').E2
+         AIF   (&A NE 1).E1A    E FORM, MORE THAN 1 OPND
+         IC    15,0(0,1)
+.E1A     AIF   ('&DCB'(1,1) EQ '(').E1
+         LA    14,&DCB             LOAD DCB ADDRESS
+         ST    14,0(0,1)           STORE INTO PARAM. LIST
+         AGO   .E1B
+.E1      ST    &DCB,0(0,1)         STORE DCB ADDR INTO PARAM LIST
+.E1B     AIF   (&A NE 1).E2
+         STC   15,0(0,1)
+.E2      AIF   (T'&ID EQ 'O').E6
+         AIF   (T'&DCB NE 'O').E2A
+         MVI   0(1),0
+.E2A     AIF   (T'&LNG NE 'O').E3
+         IC    15,4(0,1)           SAVE LENGTH
+.E3      AIF   ('&ID'(1,1) EQ '(').E4
+         LA    14,&ID              LOAD CHECKID ADDRESS
+         ST    14,4(0,1)           STORE INTO PARAM. LIST
+         AGO   .E5
+.E4      ST    &ID,4(0,1)          STORE CHECKID ADDR INTO PARAM LIST
+.E5      AIF   (T'&LNG NE 'O').S13
+         STC   15,4(0,1)           RESTORE LENGTH
+         AGO   .E7
+.E6      AIF   (T'&LNG NE 'O').S13
+.E7      SVC   63
+         MEXIT
+.L1      AIF   (T'&DCB EQ 'O').L2
+         AIF   ('&DCB'(1,1) EQ '(').ERR2     L FORM, REG OPND
+.L2      AIF   (T'&ID  EQ 'O').L3
+         AIF   ('&ID'(1,1) EQ '(').ERR2      L FORM, REG OPND
+.L3      AIF   (T'&LNG EQ 'O').L4
+         AIF   ('&LNG'(1,1) EQ '(').ERR2     L FORM, REG OPND
+.L4      ANOP
+&NAME    DS    0F
+         AIF   (&A GT 1 OR T'&DCB EQ 'O').S5
+         DC    X'80'               INDICATE END OF LIST
+         DC    AL3(&DCB)           DCB ADDRESS
+         DC    A(0)                CHECKID ADDRESS
+         MEXIT
+.S1      AIF   (T'&DCB EQ 'O').ERR3   S FORM, DCB OPND CANT BE OMITTED
+         AIF   (&A GT 1).S4
+         AIF   ('&DCB' NE 'CANCEL').S2
+&NAME    XR    1,1
+         AGO   .S3
+.S2      CNOP  0,4
+&NAME    BAL   1,*+12
+         AIF   ('&DCB'(1,1) EQ '(').S22
+         DC    X'80'               INDICATE END OF LIST
+         DC    AL3(&DCB)           DCB ADDRESS
+         DC    A(0)                CHECKID ADDRESS
+.S3      SVC   63
+         MEXIT
+.S22     DC    A(0)
+         DC    A(0)
+         ST    &DCB,0(0,1)
+         MVI   0(1),X'80'
+         AGO   .S3
+.S4      AIF   (T'&ID  EQ 'O').ERR4     2ND OPND OMITTED
+         CNOP  0,4
+&NAME    BAL   1,*+12
+.S5      AIF   (T'&DCB EQ 'O').S6       LIST FORM
+         AIF   ('&DCB'(1,1) EQ '(').S6  STANDARD FORM
+         DC    A(&DCB)             DCB ADDRESS
+         AGO   .S6A
+.S6      DC    A(0)                DCB ADDRESS
+.S6A     AIF   ('&MF' EQ 'L').S7A
+.S7      AIF   ('&ID'(1,1) EQ '(').S12       S FORM, REG OPND
+.S7A     AIF   (T'&LNG EQ 'O').S8
+         AIF   ('&LNG' EQ '''S''').S10
+         AIF   ('&LNG'(1,1) EQ '(').S9
+         DC    AL1(&LNG)           CHECKID LENGTH
+         AGO   .S11
+.S8      DC    AL1(8)              CHECKID LENGTH
+         AGO   .S11
+.S9      DC    A(&ID)              CHECKID ADDRESS
+         AGO   .S15                GENERATE STC INSTR FOR REG FORM
+.S10     DC    AL1(255)            CHECKID LENGTH
+.S11     AIF   (T'&ID EQ 'O').S11A      L FORM
+         DC    AL3(&ID)            CHECKID ADDRESS
+         AIF   ('&MF' EQ 'S').S18       S FORM
+         MEXIT
+.S11A    DC    AL3(0)              CHECKID ADDRESS
+         MEXIT
+.S12     DC    A(0)                CHECKID ADDRESS
+         ST    &ID,4(0,1)          STORE CHECKID ADDRESS
+         AIF   (T'&LNG EQ 'O').S14
+.S13     AIF   ('&LNG'(1,1) EQ '(').S15      REGISTER FORM
+         AIF   ('&LNG' EQ '''S''').S16
+         MVI   4(1),&LNG           CHECKID LENGTH
+         AGO   .S17
+.S14     MVI   4(1),8              CHECKID LENGTH
+         AGO   .S17
+.S15     STC   &LNG,4(0,1)         CHECKID LENGTH
+         AGO   .S17
+.S16     MVI   4(1),255            CHECKID LENGTH
+.S17     AIF   ('&MF(1)' EQ 'E').S19
+.S18     AIF   ('&DCB'(1,1) NE '(').S19
+         ST    &DCB,0(0,1)         DCB ADDRESS
+.S19     SVC   63
+         MEXIT
+.ERR1    IHBERMAC   35,,&MF   INVALID MF OPND SPECIFIED
+         MEXIT
+.ERR2    IHBERMAC   69        INVALID REGISTER NOTATION WITH MF=L
+         MEXIT
+.ERR3    IHBERMAC   06        DCB OPRND NOT SPECIFIED
+         MEXIT
+.ERR4    IHBERMAC   03        SECOND OPRND NOT SPECIFIED (CHECKID)
+         MEXIT
+.ERR5    IHBERMAC   36,,&DCB       INVALID FIRST OPERAND
+         MEXIT
+         MEND

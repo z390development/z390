@@ -1,0 +1,11 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    OSI   &I                       OR TO POCKET STATS
+         LCLA  &V
+&V       SETA  &I
+         AIF   (&V LE 255).OS0
+         MNOTE 8,'***  IHB421 IMMEDIATE VALUE EXCEEDS ALLOWED MAXIMUM'
+.OS0     ANOP
+&NAME    DC    0H'0',X'AF',AL1(&I)
+         MEND
+

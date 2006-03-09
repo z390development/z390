@@ -1,0 +1,38 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    CA    &DL,&I
+         GBLC  &DEF3890(250)                                   @ZA00766
+         GBLA  &VAL3890(250)                                   @ZA00766
+         LCLA  &N,&NN,&M,&RL                                   @ZA00766
+         LCLC  &LABEL                                          @ZA00766
+&M       SETA  1                                               @ZA00766
+&N       SETA  &I
+&NN      SETA  &N-(&N/2)*2
+.CA1     AIF   (N'&DL EQ 1).CA6         DL WAS EQUID
+         AIF   ('&DL(1)' LT '16').CA2
+         MNOTE 12,'***  IHB349  DISPLACEMENT NOT 0-15 DIGITS'
+.CA2     AIF   ('&DL(2)' LT '17' AND '&DL(2)' NE '0').CA3
+         MNOTE 12,'***  IHB350  LENGTH NOT 1-16 DIGITS'
+.CA3     ANOP
+         AIF   (&NN NE 1 AND &N LE 510).CA4
+         MNOTE 12,'***  IHB353  SAVE AREA STORAGE VALUE IS NOT EVEN OR X
+                IS GREATER THEN 510'
+.CA4     ANOP
+&NAME    DC    0H'0',X'4B',AL1(16*&DL(1)+&DL(2)-1),AL2(&N)
+         AGO   .END
+.CA6     ANOP
+         AIF   (&NN NE 1 AND &N LE 510).CA7
+         MNOTE 12,'***  IHB353  SAVE AREA STORAGE VALUE IS NOT EVEN OR X
+                IS GREATER THEN 510'
+.CA7     AIF   (&M GT 250).CA8                                 @ZA00766
+&LABEL   SETC  '&DEF3890(&M)'                                  @ZA00766
+.CA9     AIF   ('&DL'   EQ '&LABEL').CA5                       @ZA00766
+&M       SETA  &M+1                                            @ZA00766
+         AGO   .CA7                                            @ZA00766
+.CA8     ANOP                                                  @ZA00766
+         MNOTE 12,'***   IHB425 &DL NOT EQUATED IN DWF MACRO'  @ZA00766
+.CA5     ANOP
+&RL      SETA  &VAL3890(&M)                                    @ZA00766
+&NAME    DC    0H'0',X'4B',AL1(&RL),AL2(&N)                    @ZA00766
+.END     MEND
+

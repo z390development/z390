@@ -1,0 +1,76 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/********************************************************************/
+*/*                                                                  */
+*/* MACRO NAME = SMWKRSCB                                            */
+*/*                                                                  */
+*/* MICROFICHE NAME = IHASDRSB                                       */
+*/*                                                                  */
+*/* DESCRIPTIVE NAME = SUMMARY DUMP REAL STORAGE CONTROL BLOCK       */
+*/*                                                                  */
+*/* STATUS = OS/VS2 RELEASE 3.7 PLUS SU33     2/10/77        @G33VPHD*/
+*/*                                                                  */
+*/* FUNCTION = IHASDRSB IS A MAPPING MACRO WHICH MAPS THE            */
+*/*     PART OF THE SUMMARY DUMP WORK AREA USED BY THE REAL          */
+*/*     STORAGE MANAGEMENT FUNCTION (RSM).  THE SMWKRSCB IS          */
+*/*     USED BY RSM DURING A SUMMARY SVC DUMP REQUEST TO             */
+*/*     CONTAIN IMPORTANT ADDRESSES AND COUNTERS WHICH               */
+*/*     DESCRIBE THE REAL STORAGE BUFFER OBTAINED BY RSM FOR         */
+*/*     SUMMARY DUMP USE. THIS MAPPING MAPS THE AREA NAMED           */
+*/*     SMWKRSM IN THE IHASMWK MAPPING MACRO FOR THE SUMMARY         */
+*/*     DUMP WORK AREA (SMWK).                                       */
+*/*                                                                  */
+*/* METHOD OF ACCESS=                                                */
+*/*   BAL  - DSECT IS ALWAYS PRODUCED.  USING ON SMWKRSCB            */
+*/*          GIVES ADDRESSABILITY TO ALL SYMBOLS.  CVTRTMCT          */
+*/*          POINTS TO THE RTCT.  RTCTSDSW POINTS TO THE SMWK.       */
+*/*          SMWKRSM IS MAPPED BY THIS MACRO.                        */
+*/*   PLS/2- INCLUDE IHASDRSB FROM SYSLIB. ALSO INCLUDE IHASMWK      */
+*/*          TO DEFINE SMWKRSM FIELD.  INCLUDE CVT AND IHARTCT       */
+*/*          TO DEFINES BASE FOR SMWK.  BASE SMWKRSCB ON THE         */
+*/*          ADDRESS OF SMWKRSM TO GET ADDRESSABILITY.               */
+*/*                                                                  */
+*/* NOTES = INCLUDE THIS MAPPING PRIOR TO INCLUDING IHASMWK          */
+*/*         SINCE IHASMWK USES THE LENGTH OF THIS MAPPING.           */
+*/*                                                                  */
+*/* SIZE = DECIMAL 416, X'1A0'                                       */
+*/*                                                                  */
+*/********************************************************************/
+*        %GOTO SDRSBPLS;          /* BILINGUAL MAPPING       @G33VPHD*/
+         MACRO
+         IHASDRSB
+SMWKRSCB DSECT ,                  BAL MAPPING OF SMWKRSCB
+         IEZBIT ,                 SYMBOLIC BIT NAMES
+*                                 SU 33                      @G33VPHD
+SMWKFLGA DS    B                  FLAGS FOR RSM INTERFACE
+SMWKEVRY EQU   BIT0               1=FREE THE WHOLE REAL STORAGE BUFFER
+SMWKFLGB DS    B                  RESERVED
+SMWKFRHD DS    H                  NUMBER OF REAL FRAMES REQUESTED/HELD
+SMWKFRPT DS    F                  REAL ADDRESS OF FRAME TO BE FREED
+SMWKTSDS DS    A                  ADDRESS OF SUM DUMP STEAL BACK
+SMWKPRSR DS    A                  ADDRESS OF RSM RETURN ROUTINE
+*    THE FOLLOWING TABLE IS COMPOSED OF 100 8-BYTE ENTRIES EACH ONE
+*    REPRESENTING 1 FRAME OF THE REAL STORAGE BUFFER
+*
+SMWKRSFM DS    0CL400            TABLE OF REAL STORAGE FRAMES
+SMWKFRMA DS    A                 REAL ADDRESS OF ONE FRAME
+SMWKENTL EQU   *-SMWKRSFM        DEFINE LENGTH OF ONE TABLE ENTRY
+         DS    CL392             REMAINING 99 TABLE ENTRIES
+*                                ***  END OF TABLE ********
+SMWKRSLN EQU   *-SMWKRSCB        TOTAL LENGTH OF REAL STORAGE CONTROL
+*                                                          AREA
+         MEND
+*%SDRSBPLS: ;
+*DECLARE
+*  1 SMWKRSCB  BASED,        /*REAL STORAGE BUFFER CONTROL AREA      */
+*    2 SMWKFLGA    BIT(8),   /*FLAGS FOR RSM INTERFACE               */
+*      3 SMWKEVRY  BIT(1),   /*1=FREE THE WHOLE REAL STORAGE BUFFER  */
+*      3 *         BIT(7),   /* RESERVED                             */
+*    2 SMWKFLGB    BIT(8),   /* RESERVED                             */
+*    2 SMWKFRHD    BIT(16),  /*NUMBER OF REAL STORAGE FRAMES HELD    */
+*    2 SMWKFRPT    PTR(31),  /*REAL ADDRESS OF FRAME TO BE FREED     */
+*    2 SMWKTSDS    PTR(31),  /*ADDRESS OF SUM DUMP STEAL BACK        */
+*    2 SMWKPRSR    PTR(31),  /*ADDRESS OF RSM FRAME RETURN ROUTINE   */
+*    2 SMWKRSFM,             /*TABLE OF REAL STORAGE FRAME ADDRESSES */
+*      3 SMWKFRMA(100) PTR(31); /*REAL ADDRESS OF EACH FRAME         */
+*
+

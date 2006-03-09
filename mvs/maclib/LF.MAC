@@ -1,0 +1,35 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    LF    &DL,&F                  LOAD WRK REG FROM ENTIRE FIELD
+         GBLC  &DEF3890(250)                                   @ZA00766
+         GBLA  &VAL3890(250)                                   @ZA00766
+         LCLC  &OP,&LABEL                                      @ZA00766
+         LCLA  &RL,&M                                          @ZA00766
+&M       SETA  1                                               @ZA00766
+         AIF   ('&F' LT '9').LF1       FIELD NOT 0-8
+         MNOTE 8,'***  IHB352  FIELD VALUE NOT 0-8; 0 ASSUMED'
+&OP      SETC  '30'
+         AGO   .LF2
+.LF1     ANOP
+&OP      SETC  '3&F'
+.LF2     AIF   (N'&DL EQ 1).LF5        DL WAS EQU'D
+         AIF   ('&DL(1)' LT '16').LF3
+         MNOTE 12,'***  IHB349  DISPLACEMENT NOT 0-15 DIGITS'
+.LF3     AIF   ('&DL(2)' NE '0' AND '&DL(2)' LT '17').LF4
+         MNOTE 12,'***  IHB350  LENGTH NOT 1-16 DIGITS'
+.LF4     ANOP
+&NAME    DC    0H'0',X'&OP',AL1(16*&DL(1)+&DL(2)-1)
+         AGO   .END
+.LF5     ANOP
+.LF7     AIF   (&M GT 250).LF8                                 @ZA00766
+&LABEL   SETC  '&DEF3890(&M)'                                  @ZA00766
+.LF9     AIF   ('&DL'   EQ '&LABEL').LF6                       @ZA00766
+&M       SETA  &M+1                                            @ZA00766
+         AGO   .LF7                                            @ZA00766
+.LF8     ANOP                                                  @ZA00766
+         MNOTE 12,'***   IHB425 &DL NOT EQUATED IN DWF MACRO'  @ZA00766
+.LF6     ANOP                                                  @ZA00766
+&RL      SETA  &VAL3890(&M)                                    @ZA00766
+&NAME    DC    X'&OP',AL1(&RL)                                 @ZA00766
+.END     MEND
+

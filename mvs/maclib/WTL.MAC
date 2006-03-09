@@ -1,0 +1,11 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    WTL   &MESG,&MF=I
+         GBLB  &IHBWTL
+&IHBWTL  SETB  1
+&NAME    WTO   &MESG,MF=&MF
+&IHBWTL  SETB  0
+         AIF   ('&MF' EQ 'L').END
+         SVC   36                                ISSUE WTL SVC
+.END     MEND
+

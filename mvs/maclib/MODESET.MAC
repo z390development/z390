@@ -1,0 +1,348 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+* /* MACCOMP Y-1 SC1CL/PZD81                                         */
+* /* MACSTAT Y-1 72273/DCR20593                                      */
+* /* MACSTAT Y-3 77277/OZ26071                               @ZA26071*/
+* /*
+         MACRO
+&NAME    MODESET  &KEY=,&MODE=,&ENABLE=,&SYSMASK=,&REG=,&MF=,          X
+               &EXTKEY=,&SAVEKEY=,&KEYADDR=,&WORKREG=,&RELATED=
+* /* MACDATE Y-3 77277                                       @ZA26071*/
+* /*
+         LCLA  &COUNT,&SAVE1,&SAVE2,&PSWKEY
+.* THE FOLLOWING ARE THE LOCAL SET SYMBOLS FOR THE 4 BYTE PARM LIST
+         LCLB  &B0,&B1,&B2,&B3,&B4,&B5,&B6,&B7
+         LCLB  &B8,&B9,&B10,&B11,&B12,&B13,&B14,&B15
+         LCLB  &B16,&B17,&B18,&B19,&B20,&B21,&B22,&B23
+         LCLB  &B24,&B25,&B26,&B27,&B28,&B29,&B30,&B31
+         AIF  ((T'&KEY EQ 'O') AND (T'&MODE EQ 'O') AND (T'&ENABLE EQ 'X
+               O') AND (T'&SYSMASK EQ 'O') AND (T'&MF EQ 'O') AND (T'&RX
+               EG EQ 'O')).PCK
+         AGO   .PCK1
+.PCK     AIF   ((T'&EXTKEY EQ 'O') AND (T'&SAVEKEY EQ 'O') AND         X
+               (T'&KEYADDR EQ 'O') AND (T'&WORKREG EQ 'O')).ERROR9
+.* @ZA00463
+.* TEST FOR PROTECTION KEY PARAMETERS
+.PCK1    AIF   ((T'&EXTKEY NE 'O') OR (T'&SAVEKEY NE 'O') OR           X
+               (T'&KEYADDR NE 'O') OR (T'&WORKREG NE 'O')).PROT
+         AIF   (T'&REG NE 'O').ERROR1  REG SPECIFIED             YM4244
+         AIF   ((T'&MF NE 'O') AND ('&MF' NE 'L')).MF
+         AIF   (T'&KEY EQ 'O').MDE     KEY NOT SPECIFIED
+         AIF   (('&KEY' NE 'ZERO') AND ('&KEY' NE 'NZERO')).ERROR2
+&B26     SETB  1
+&B27     SETB  ('&KEY' EQ 'ZERO')      SET 0 KEY IF ZERO SPECIFIED
+.MDE     ANOP
+         AIF   (T'&MODE EQ 'O').ENAB   MODE NOT SPECIFIED
+         AIF   (('&MODE' NE 'PROB') AND ('&MODE' NE 'SUP')).ERROR3
+&B29     SETB  1
+&B28     SETB  ('&MODE' EQ 'SUP')      INDICATE SUPV STATE IF SUP SPEC
+.ENAB    ANOP
+         AIF   (T'&ENABLE EQ 'O').SMSK ENABLE OPERAND NOT SPECIFIED
+         AGO   .ERROR10
+.SMSK    ANOP
+         AIF   (T'&SYSMASK EQ 'O').MF  SYSMASK NOT SPECIFIED
+         AGO   .ERROR5                                           YM4244
+.MF      ANOP
+         AIF   (T'&MF NE 'O').CK2      WAS MF OMITTED?
+         CNOP  0,4
+&NAME    BAL   1,*+8
+         AGO   .DC
+.CK2     ANOP
+         AIF   ('&MF' NE 'L').CK3      WAS MF=L SPECIFIED?
+&NAME    DS    0F
+.DC      ANOP
+         DC    B'&B0&B1&B2&B3&B4&B5&B6&B7&B8&B9&B10&B11&B12&B13&B14&B15X
+               &B16&B17&B18&B19&B20&B21&B22&B23&B24&B25&B26&B27&B28&B29X
+               &B30&B31'
+         AIF   (T'&MF EQ 'O').LD
+         MEXIT
+.LD      ANOP
+         L     1,0(0,1)                                          YM1995
+         AGO   .SVC
+.CK3     ANOP
+         AIF   ('&MF(1)' EQ 'E').CK4
+         AGO   .ERROR6
+.CK4     ANOP
+         AIF  ((T'&KEY NE 'O') OR (T'&MODE NE 'O') OR (T'&ENABLE NE 'O'X
+               ) OR (T'&SYSMASK NE 'O') OR (T'&REG NE 'O')).ERROR8
+.CK6     AIF   ('&MF(2)' NE '(1)').CK5
+&NAME    L     1,0(1,0)                                          YM1995
+         AGO   .SVC
+.CK5     ANOP
+         AIF   ('&MF(2)'(1,1) EQ '(').ERROR7
+         AIF   (T'&MF(2) EQ 'N').ERROR7
+&NAME    L     1,&MF(2)
+.SVC     ANOP
+         SVC   107
+         MEXIT
+.* TEST THAT THE PROTECTION KEY PARAMETERS ARE MUTUALLY EXCLUSIVE
+.* FROM OTHER MODESET PARAMETERS
+.PROT    AIF   ((T'&KEY NE 'O') OR (T'&MODE NE 'O') OR                 X
+               (T'&ENABLE NE 'O') OR (T'&SYSMASK NE 'O') OR            X
+               (T'&REG NE 'O') OR (T'&MF NE 'O')).ERROR11
+.EXTKEY  ANOP
+.* TEST IF EXTKEY PARAMETER SPECIFIED AND VALID
+         AIF   (T'&EXTKEY EQ 'O').KEYAD   TEST IF EXTKEY OMITTED
+         AIF   (T'&KEYADDR NE 'O').ERROR15   ERROR IF KEYADDR ALSO
+         AIF   ('&EXTKEY' EQ 'SCHED').SCHED       SCHEDULER KEY
+         AIF   (('&EXTKEY' EQ 'HASP') OR ('&EXTKEY' EQ 'JES')).JES
+.*                                                JES KEY
+         AIF   ('&EXTKEY' EQ 'RSM').RSM           RSM KEY
+         AIF   ('&EXTKEY' EQ 'VSM').VSM           VSM KEY
+         AIF   ('&EXTKEY' EQ 'SRM').SRM           SRM KEY
+         AIF   ('&EXTKEY' EQ 'SUPR').SUPR         SUPREVISOR KEY
+         AIF   ('&EXTKEY' EQ 'DATAMGT').DTMGT     DATA MGT KEY
+         AIF   ('&EXTKEY' EQ 'TCAM').TCAM         TCAM KEY
+         AIF   ('&EXTKEY' EQ 'VTAM').VTAM         VTAM KEY
+         AIF   (('&EXTKEY' EQ 'TCB') OR ('&EXTKEY' EQ 'RBT1') OR       X
+               ('&EXTKEY' EQ 'RBT234')).EXTKEY0
+         AIF   ('&EXTKEY' EQ 'ZERO').ZEROK
+         AGO   .ERROR16
+.EXTKEY0 AIF   (T'&WORKREG EQ 'O').ERROR14
+         AIF   ((&WORKREG LT 0) OR (&WORKREG GT 15)).ERROR12
+         AIF   (T'&SAVEKEY EQ 'O').EXTKEY1
+         AIF   ('&SAVEKEY' EQ '(2)').EXTKEY2
+         AIF   (&WORKREG EQ 2).WKREG2 SKIP REG SAVING IF REG2  @ZA26071
+&NAME    LR    &WORKREG,2          SAVE REGISTER 2
+         IPK   0(0)                SAVE CURRENT PSW KEY
+         STC   2,&SAVEKEY
+         LR    2,&WORKREG          RESTORE REGISTER 2
+         AGO   .EXTKEY1
+.WKREG2  ANOP                                                  @ZA26071
+&NAME    IPK   0(0)                SAVE CURRENT PSW KEY        @ZA26071
+         STC   2,&SAVEKEY                                      @ZA26071
+         AGO   .EXTKEY1                                        @ZA26071
+.EXTKEY2 ANOP
+&NAME    IPK   0(0)                SAVE CURRENT PSW KEY
+.EXTKEY1 ANOP
+         AIF   ('&EXTKEY' EQ 'TCB').TCB     KEY FROM TCB
+         AIF   ('&EXTKEY' EQ 'RBT1').RBT1   KEY FROM SVRB
+         AIF   ('&EXTKEY' EQ 'RBT234').RBT234  KEY FROM CALLERS RB
+.* SYMBOLIC VALUES
+.SCHED   ANOP
+&PSWKEY  SETA  X'10'          SCHEDULER KEY IS 1
+         AGO   .SETKEY
+.JES     ANOP
+&PSWKEY  SETA  X'10'          JES KEY IS 1
+         AGO   .SETKEY
+.RSM     ANOP
+&PSWKEY  SETA  0              RSM KEY IS 0
+         AGO   .SETKEY
+.VSM     ANOP
+&PSWKEY  SETA  0              VSM KEY IS 0
+         AGO   .SETKEY
+.SRM     ANOP
+&PSWKEY  SETA  0              SYSTEM RESOURCE MANAGER KEY IS 0
+         AGO   .SETKEY
+.SUPR    ANOP
+&PSWKEY  SETA  0              SUPERVISOR KEY IS 0
+         AGO   .SETKEY
+.DTMGT   ANOP
+&PSWKEY  SETA  X'50'          DATA MGT KEY IS 5
+         AGO   .SETKEY
+.TCAM    ANOP
+&PSWKEY  SETA  X'60'          TCAM KEY IS 6
+         AGO   .SETKEY
+.VTAM    ANOP
+&PSWKEY  SETA  X'60'          VTAM KEY IS 6
+         AGO   .SETKEY
+.ZEROK   ANOP
+&PSWKEY  SETA  0
+         AGO   .SETKEY
+.* GET KEY FROM TCB
+.TCB     ANOP
+         AIF   (T'&SAVEKEY NE 'O').TCB1
+&NAME    IC    &WORKREG,TCBPKF     GET KEY FROM TCB
+         AGO   .TCB2
+.TCB1    ANOP
+         IC    &WORKREG,TCBPKF     GET KEY FROM TCB
+.TCB2    ANOP
+         SPKA  0(&WORKREG)         SET PSW KEY
+         MEXIT
+.* GET KEY FROM SVRB
+.RBT1    ANOP
+         AIF   (T'&SAVEKEY NE 'O').RBT11
+&NAME    L     &WORKREG,TCBRBP     RB POINTER FROM TCB
+         AGO   .RBT12
+.RBT11   ANOP
+         L     &WORKREG,TCBRBP     RB POINTER FROM TCB
+.RBT12   ANOP
+         IC    &WORKREG,RBOPSW+1-RBBASIC(,&WORKREG)  KEY FROM RB OPSW
+         SPKA  0(&WORKREG)         SET PSW KEY
+         MEXIT
+.* GET KEY FROM CALLERS RB
+.RBT234  ANOP
+         AIF   (T'&SAVEKEY NE 'O').RBT2341
+&NAME    L     &WORKREG,TCBRBP     RB POINTER FROM TCB
+         AGO   .RBT2342
+.RBT2341 ANOP
+         L     &WORKREG,TCBRBP     RB POINTER FROM TCB
+.RBT2342 ANOP
+         L     &WORKREG,RBLINK-RBBASIC(,&WORKREG)  NEXT RB ADDRESS
+         IC    &WORKREG,RBOPSW+1-RBBASIC(,&WORKREG)  KEY FROM RB OPSW
+         SPKA  0(&WORKREG)         SET PSW KEY
+         MEXIT
+.* GENERATE SPKA INSTRUCTION
+.SETKEY  ANOP
+         AIF   (T'&SAVEKEY NE 'O').SETKEYA
+&NAME    SPKA  &PSWKEY.(0)         SET PSW KEY
+         MEXIT
+.SETKEYA ANOP
+         AIF   ('&SAVEKEY' EQ '(2)').SETKEYD
+         AIF   (T'&WORKREG EQ 'O').ERROR14  TEST FOR WORKREG OPERAND
+         AIF   ((&WORKREG LT 0) OR (&WORKREG GT 15)).ERROR12 VALID CHK
+         AIF   (&WORKREG EQ 2).SETKEYB  TEST IF REG 2 TO BE SAVED
+&NAME    LR    &WORKREG,2          SAVE REGISTER 2
+         IPK   0(0)                SAVE CURRENT PSW KEY
+         AGO   .SETKEYC
+.SETKEYB ANOP
+&NAME    IPK   0(0)               SAVE CURRENT PSW KEY
+.SETKEYC ANOP
+         SPKA  &PSWKEY.(0)         SET PSW KEY
+         STC   2,&SAVEKEY
+         AIF   (&WORKREG EQ 2).EXIT
+         LR    2,&WORKREG     RESTORE REGISTER 2
+         MEXIT
+.SETKEYD ANOP
+&NAME    IPK   0(0)               SAVE CURRENT PSW KEY
+         SPKA  &PSWKEY.(0)         SET PSW KEY
+         MEXIT
+.KEYAD   ANOP
+         AIF   (T'&KEYADDR EQ 'O').NKEYAD    TEST IF KEYADDR OMITTED
+         AIF   ('&KEYADDR' EQ '(2)').KEYAD10
+         AIF   (T'&WORKREG EQ 'O').ERROR14   TEST FOR WORKREG OPERAND
+         AIF   ((&WORKREG LT 0) OR (&WORKREG GT 15)).ERROR12 VALID CHK
+         AIF   (T'&SAVEKEY EQ 'O').KEYAD4
+         AIF   ('&SAVEKEY' EQ '(2)').KEYAD6
+         AIF   (&WORKREG EQ 2).KEYAD1   TEST IF REG 2 TO BE SAVED
+&NAME    LR    &WORKREG,2          SAVE REGISTER 2
+         IPK   0(0)                SAVE CURRENT PSW KEY
+         AGO   .KEYAD3
+.KEYAD1  ANOP
+&NAME    IPK   0(0)                SAVE CURRENT PSW KEY
+.KEYAD3  ANOP
+         STC   2,&SAVEKEY
+         AIF   (&WORKREG EQ 2).KEYAD2
+         LR    2,&WORKREG          RESTORE REGISTER 2
+.KEYAD2  ANOP
+         IC    &WORKREG,&KEYADDR   GET KEY FROM SAVE LOCATION
+         AGO   .KEYAD5
+.KEYAD4  ANOP
+&NAME    IC    &WORKREG,&KEYADDR   GET KEY FROM SAVE LOCATION
+.KEYAD5  ANOP
+         SPKA  0(&WORKREG)         SET PSW KEY
+         MEXIT
+.KEYAD6  ANOP
+&NAME    IPK   0(0)                SAVE CURRENT PSW KEY
+         AGO   .KEYAD2
+.KEYAD10 AIF   (T'&SAVEKEY EQ 'O').KEYAD11
+         AIF   ('&SAVEKEY' EQ '(2)').ERROR18
+         AIF   (T'&WORKREG EQ 'O').ERROR14
+         AIF   (&WORKREG EQ 2).ERROR18
+&NAME    LR    &WORKREG,2          SAVE REGISTER 2
+         IPK   0(0)                SAVE CURRENT PSW KEY
+         STC   2,&SAVEKEY
+         LR    2,&WORKREG          RESTORE REGISTER 2
+         SPKA  0(2)               SET PSW KEY
+         MEXIT
+.KEYAD11 ANOP
+&NAME    SPKA  0(2)                SET PSW KEY
+         MEXIT
+.NKEYAD  ANOP
+         AIF   (T'&SAVEKEY EQ 'O').ERROR13   WORKREG ONLY OPERAND
+         AIF   ('&SAVEKEY' EQ '(2)').NKEYAD4
+         AIF   (T'&WORKREG EQ 'O').ERROR14   TEST FOR WORKREG OPERAND
+         AIF   ((&WORKREG LT 0) OR (&WORKREG GT 15)).ERROR12 VALID CHK
+         AIF   (&WORKREG EQ 2).NKEYAD2  TEST IF REG 2 TO BE SAVED
+&NAME    LR    &WORKREG,2          SAVE REGISTER 2
+         IPK   0(0)                SAVE CURRENT PSW KEY
+         AGO   .NKEYAD3
+.NKEYAD2 ANOP
+&NAME    IPK   0(0)               SAVE CURRENT PSW KEY
+.NKEYAD3 ANOP
+         STC   2,&SAVEKEY
+         AIF   (&WORKREG EQ 2).EXIT
+         LR    2,&WORKREG          RESTORE REGISTER 2
+         MEXIT
+.NKEYAD4 ANOP
+&NAME    IPK   0(0)                SAVE CURRENT PSW KEY
+         MEXIT
+.EXIT    ANOP
+         MEXIT
+         MEXIT
+.ERROR1  ANOP
+         MNOTE 12,'REG FUNCTION NO LONGER SUPPORTED'             YM4244
+         MEXIT
+.ERROR2  ANOP
+         MNOTE 12,'INVALID KEY OPERAND SPECIFIED'
+         MEXIT
+.ERROR3  ANOP
+         MNOTE 12,'INVALID MODE OPERAND SPECIFIED'
+         MEXIT
+.ERROR5  ANOP
+         MNOTE 12,'SYSMASK FUNCTION NO LONGER SUPPORTED'         YM4244
+         MEXIT
+.ERROR6  ANOP
+         MNOTE 12,'INVALID MF OPERAND'
+         MEXIT
+.ERROR7  ANOP
+         MNOTE 12,'INVALID REGISTER SPECIFICATION'
+         MEXIT
+.ERROR8  ANOP
+         MNOTE 12,'MF=E SPECIFIED WITH OTHER OPERANDS'
+         AGO   .CK6
+.ERROR9  ANOP
+         MNOTE 12,'NO OPERANDS SPECIFIED'
+         MEXIT
+.ERROR10 ANOP
+         MNOTE 12,'ENABLE FUNCTION HAS BEEN REPLACED BY SETLOCK MACRO'
+         MEXIT
+.ERROR11 ANOP
+         MNOTE 12,'PSW KEY OPERANDS SPECIFIED WITH OTHER OPERANDS'
+         MEXIT
+.ERROR12 ANOP
+         MNOTE 12,'INVALID WORKREG PARAMETER'
+         MEXIT
+.ERROR13 ANOP
+         MNOTE 12,'WORKREG SPECIFIED ALONE'
+         MEXIT
+.ERROR14 ANOP
+         MNOTE 12,'WORKREG OPERAND MISSING'
+         MEXIT
+.ERROR15 ANOP
+         MNOTE 12,'EXTKEY AND KEYADDR MUST BE MUTUALLY EXCLUSIVE'
+         MEXIT
+.ERROR16 ANOP
+         MNOTE 12,'INVALID EXTKEY OPERAND'
+         MEXIT
+.ERROR18 ANOP
+         MNOTE  12,'REGISTER 2 USAGE CONFLICT'
+         MEND
+* */
+* MODESET:
+*/********************************************************************/
+*/* PL/S VERSION OF MODESET MACRO. WHEN ISSUED CAUSES A SUPERVISOR   */
+*/* ROUTINE TO ALTER THE SVC OLD PSW SO THAT THE DESIRED PSW WILL BE */
+*/* LOADED WHEN MODESET RETURNS TO THE USER.                         */
+*/********************************************************************/
+*  MACRO
+*    KEYS(KEY,                     /* KEY(NZERO OR ZERO)             */
+*         MODE,                    /* MODE(PROB OR SUP)              */
+*         SYSMASK,                 /* SYSMASK(RELOC,YES OR NO)       */
+*                                  /*  SYSMASK(IO,YES OR NO)         */
+*                                  /* SYSMASK(EXT,YES OR NO)         */
+*         MF,                      /* MF(L OR E,LIST NAME)           */
+*         REG,                     /* REG(VBL NAME)                  */
+*         RTCD,                    /* RTCD(VBL NAME)-SVC RETURN CODE */
+*         EXTKEY,                  /* EXTKEY(SCHED OR RSM OR VSM OR  */
+*                                  /*        OPTIMZER OR SUPR OR     */
+*                                  /*        DATAMGT OR TCAM OR ATCAM*/
+*                                  /*     OR HASP OR TCB OR RBT1 OR
+*                                            RBT234                  */
+*         KEYADDR,                 /* KEY CONTAINED IN A 1 BYTE LOC.
+*                                     WITHIN ROUTINES WORK STORAGE   */
+*         WORKREG,                 /* REGISTER INTO WHICH CONTENTS OF
+*                                     REGISTER 2 ARE SAVED           */
+*         SAVEKEY);                /* SAVEKEY(VBL NAME)              */
+*        ANS('?'||MACLABEL||'MODESETP '||MACLIST||MACKEYS||';');
+*%END;

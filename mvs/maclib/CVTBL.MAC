@@ -1,0 +1,113 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    CVTBL &B,&L,&S
+         LCLA  &BYTES                   NUMBER OF BYTES IN MASK
+         LCLA  &D(16)                   DIGIT TO ADD TO MASK
+         LCLA  &INC                     INCREMENT FOR NUM
+         LCLA  &INCR                    INCREMENT FOR OVERFLOW NUMBER
+         LCLA  &LF                      LEFT SIDE - OVERFLOW FIELD
+         LCLA  &LFQUO                   LEFT SIDE QUOTIENT
+         LCLA  &M(16)                   MASK
+         LCLA  &N                       SUBSCRIPT FOR D
+         LCLA  &NUM                     DECIMAL NUMBER TO CONVERT
+         LCLA  &QUO                     QUOTIENT
+         LCLA  &W                       CTR IN CONVERSION LOOP
+         LCLA  &X                       POINTER TO PARMS IN SKIP LIST
+         LCLA  &Y
+         LCLA  &Z                       NUMBER OF DIGITS CONVERTED
+&NAME    DS    0H                       TAB BEGINS ON EVEN BYTE BOUNDRY
+         AIF   ('&B' GE '10' AND '&B' LT '37').A
+         MNOTE 12,'***  IHB362 CONVERSION MUST BE FOR BASES 10-36'
+         AGO   .END
+.A       ANOP
+         DC    AL1(&B)                  NEW BASE
+         DC    XL1'0'                   UNUSED
+&X       SETA  &X+1
+&Y       SETA  1
+&INC     SETA  1
+&INCR    SETA  10
+.C       AIF   (N'&S LT &X).D
+         AIF   (&S(&X) NE &Y).D
+         DC    XL2'0'                   HEADER FOR SKIPPED POSITION
+&X       SETA  &X+1
+&Y       SETA  &Y+1
+         AGO   .C                       CHECK NEXT DIGIT
+.D       ANOP
+&W       SETA  &W+1                     INDICATE NUMBER OF TIMES IN RTN
+         AIF   (&W EQ 1).SETUP          SETUP HEADER & MASK
+*                       DECIMAL NUMBER IN NEW BASE PLUS CONSTANT
+         AIF   (&Z GT 8).OVRFLW         CONVERT 10 OR MORE DIGITS
+&NUM     SETA  (&W-1)*&INC              DEC. NUMBER TO CONVERT
+.E       ANOP
+&N       SETA  &N+1
+&QUO     SETA  &NUM/&B
+&D(&N)   SETA  &NUM-(&QUO*&B)           REMAINDER
+&NUM     SETA  &QUO
+         AIF   (&NUM NE 0).E            COMPLETE NUMBER CONVERTED?
+         AIF   (&N EQ &BYTES).F
+&N       SETA  &BYTES
+&D(&N)   SETA  0
+.F       ANOP
+         DC    AL1(&M(&N)+&D(&N))
+&N       SETA  &N-1
+         AIF   (&N NE 0).F
+         AIF   (&W NE 10).D             CONVERT 9 NUMBERS
+&Z       SETA  &Z+1                     NUMBER OF DIGITS CONVERTED
+         AIF   ((&BYTES-(&BYTES/2)*2) NE 1).B
+         DC    XL1'0'                   PADDING FOR ODD NO. OF BYTES
+.B       AIF   (&L EQ &Z).END
+&NUM     SETA  0
+&INC     SETA  &INC*10                  INCREMENT TO NEXT DIGIT POSITON
+&W       SETA  0
+&Y       SETA  &Y+1
+         AIF   (&Z LE 8).C
+&INC     SETA  0
+&INCR    SETA  &INCR*10
+         AGO   .C
+.SETUP   ANOP
+         AIF   (&Z GT 8).OVFLW          LARGEST OVERFLOW NUMBER
+&NUM     SETA  9*&INC                  LARGEST NUMBER FOR DEC. POSITION
+.H       ANOP
+&N       SETA  &N+1
+&QUO     SETA  &NUM/&B
+&NUM     SETA  &QUO                     NEW NUMBER
+         AIF   (&NUM NE 0).H
+         AIF   ((&N-(&N/2)*2) EQ 1).J   IS N ODD
+         DC    AL1(&N),AL1(&N*9)        HEADER FOR GROUP
+         AGO   .K
+.J       DC    AL1(&N),AL1(&N*9+1)      HEADER FOR GROUP
+.K       ANOP
+&BYTES   SETA  &N                       SAVE NUMBER OF BYTES
+.I       ANOP
+&M(&N)   SETA  256-&B                   CONSTANT TO ADD TO CONVERTED NO
+&N       SETA  &N-1
+         AIF   (&N NE 0).I
+         AGO   .D                       BUILD TABLE FOR DIGIT POSITION
+.OVFLW   ANOP
+&NUM     SETA  0000000
+&LF      SETA  9*&INCR                  LARGEST NUMBER FOR DEC.POSITION
+.M       ANOP
+&LFQUO   SETA  &LF/&B
+&LF      SETA  &LF-(&LFQUO*&B)
+&NUM     SETA  (&LF*10000000)+&NUM
+&QUO     SETA  &NUM/&B
+&N       SETA  &N+1
+&LF      SETA  &LFQUO
+&NUM     SETA  &QUO
+         AIF   (&LF NE 0).M             COMPLETE LEFT SIDE DIVIDE
+         AGO   .H
+.OVRFLW  ANOP                           CONVERT 10 OR MORE DIGITS
+&NUM     SETA  0000000                  RIGHT 7 DIGITS
+&LF      SETA  (&W-1)*&INCR             LEFT DIGITS
+.L       ANOP
+&LFQUO   SETA  &LF/&B                   LEFT QUOTIENT
+&LF      SETA  &LF-(&LFQUO*&B)
+&NUM     SETA  (&LF*10000000)+&NUM
+&QUO     SETA  &NUM/&B
+&N       SETA  &N+1
+&D(&N)   SETA  &NUM-(&QUO*&B)           REMAINDER
+&LF      SETA  &LFQUO
+&NUM     SETA  &QUO
+         AIF   (&LF NE 0).L             COMPLETE LEFT SIDE DIVIDE
+         AGO   .E                       CONVERT RIGHT SIDE
+.END     MEND

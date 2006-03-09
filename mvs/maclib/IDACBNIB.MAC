@@ -1,0 +1,203 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IDACBNIB &EXLST=,&MF=,&CALLER=,                               C
+               &NAME=,&USERFLD=,&MODE=,      *** NIB KEYWORDS ***X03004C
+               &LISTEND=,&CONDN=,&PROC=,&NIBLEN=,                X03004C
+               &CID=,&DEVCHAR=,&CON=,&RESPLIM=,&SDT=,           X3004BSC
+               &LOGMODE=,&BNDAREA=,                            @Z40BHUC*
+               &ENCR=                                          @G40AKSL
+.*
+.* FUNCTION    THIS MACRO ACTS AS A CONTROLLER FOR GENCB, MODCB, AND
+.*             TESTCB FOR PROCESSING A NIB.
+.*             IT IS CALLED BY IDACB2 TO BUILD VARIOUS ARRAYS TO BE
+.*             USED BY THAT MACRO TO BUILD A PARAMETER LIST OF ARGUMENT
+.*             CONTROL ENTRIES THAT WILL BE PASSED TO THE CONTROL
+.*             BLOCK MANIPULATION MODULE AT EXECUTE TIME.
+.*             FOR NON-BIT KEYWORDS, THIS MACRO CALLS IDACB3 WHICH
+.*             ACTUALLY SETS VALUES INTO ALL THE ARRAYS THAT ARE
+.*             REQUIRED.
+.*
+.*             FOR BIT KEYWORDS, IDACB3 IS CALLED, BUT THIS MACRO
+.*             SETS THE VALUE IN THE &IDAVALC ARRAY.
+.*             IT ALSO VALIDITY CHECKS BIT OPTIONS AND IF MUTUALLY
+.*             EXCLUSIVE OPTIONS ARE SPECIFIED, AN ERROR MESSAGE IS
+.*             ISSUED. THE ONE EXCEPTION IS PROC.
+.*             IDACBPRC IS ISSUED TO PROCESS PROC
+.*
+.* GLOBALS
+         GBLB  &IDACB01                ERROR INDICATOR
+         GBLA  &IDAENO                 NUMBER OF ELEMENTS
+         GBLA  &IDAELEN(50)            ELEMENT FIELD LENGTH ARRAY
+         GBLC  &IDAVALC(50)            ELEMENT CHARACTER VALUE ARRAY
+.* LOCALS
+         LCLA  &I                      WORK VARIABLE
+         LCLB  &SYSTEM,&APPL           SDT CODES                X3004BS
+         LCLB  &YES,&NO                LISTEND CODES
+         LCLB  &CONYES,&CONNO          CON CODES
+         LCLC  &LGMODE                 ALTER LOGMODE VALUE     @X50BHUC
+         LCLC  &Z16                    UNUSED PORTION OF BIT STRING
+         LCLB  &SEL,&NONE,&REQD        ENCRIPTION CODES        @G40AKSL
+.* INITIALIZATION
+&Z16     SETC  '0000000000000000'      INITIALIZE CONSTANT
+.* SCAN NIB KEYWORDS ******************************************* X03004
+.*                                      NAME
+         AIF   ('&NAME' EQ '').N000300 CHECK FOR NULL NAME      X04SVHS
+         AIF   ('&NAME(1)' EQ '*').N000200                      X04SVHS
+.*             IF INDIRECT ADDRESS WAS SPECIFIED, BYPASS
+.*             VALIDITY CHECK
+         AIF   (K'&NAME GT 8 OR '&NAME'(1,1) LT 'A' OR                 *
+               '&NAME'(1,1) GT 'Z').N000100                     X04SVHS
+.*             NAME MUST BE 8 OR FEWER CHARS AND THE FIRST CHAR
+.*             MUST BE ALPHABETIC
+         AGO   .N000200                                         X04SVHS
+.N000100 IDAERMAC 3,NAME,&NAME                                   X03004
+&IDACB01 SETB  1                   SET ERROR SWITCH              X03004
+         AGO   .N000300            BYPASS PROCESSING IF ERROR   X04SVHS
+.N000200 ANOP
+         IDACB3 ARG=&NAME,ARGNAME=NAME,KWTC=X'5B',MF=&MF,INDRECT=YES
+.*                                                              X04SVHS
+&IDAELEN(&IDAENO) SETA 8           SET ELEMENT LENGTH            X03004
+.N000300 ANOP
+.**********************************************************************
+.*                                      USERFLD
+         IDACB3 ARG=&USERFLD,ARGNAME=USERFLD,KWTC=X'51',MF=&MF  X04SVHS
+.**********************************************************************
+.*                                      EXLST
+         IDACB3 ARG=&EXLST,ARGNAME=EXLST,KWTC=X'82',MF=&MF      X04SVHS
+.**********************************************************************
+.*                                      RESPLIM
+         IDACB3 ARG=&RESPLIM,ARGNAME=RESPLIM,KWTC=X'83',MF=&MF  X04SVHS
+.**********************************************************************
+.*                                      MODE
+         AIF   ('&MODE' EQ '').N000600  CHECK FOR NULL MODE      X03004
+         AIF   ('&MODE(1)' EQ '*').N000500
+.*             IF INDIRECT ADDRESS WAS SPECIFIED, BYPASS
+.*             VALIDITY CHECK
+         AIF   (K'&MODE GT 8 OR '&MODE'(1,1) LT 'A' OR                 *
+               '&MODE'(1,1) GT 'Z').N000400                      X03004
+.*             MODE MUST BE 8 OR FEWER CHARS AND FIRST CHAR MUST
+.*             BE ALPHABETIC
+         AGO   .N000500                                         X04SVHS
+.N000400 IDAERMAC 3,MODE,&MODE                                   X03004
+&IDACB01 SETB  1                 SET ERROR SWITCH                X03004
+.N000500 ANOP
+         IDACB3 ARG=&MODE,ARGNAME=MODE,KWTC=X'54',MF=&MF,INDRECT=YES
+.*                                                              X04SVHS
+&IDAELEN(&IDAENO) SETA 8         SET ELEMENT LENGTH             X04SVHS
+.**********************************************************************
+.*                                      LISTEND
+.N000600 AIF   ('&LISTEND' EQ '').N000800 CHECK FOR NULL LISTEND X03004
+         IDACB3 ARG=&LISTEND,KWTC=X'52',BIT=YES                 X04SVHS
+&YES     SETB  ('&LISTEND' EQ 'YES')                            X04SVHS
+&NO      SETB  ('&LISTEND' EQ 'NO')                             X04SVHS
+         AIF   (&YES OR &NO).N000700    CHECK FOR VALID OPTION  X04SVHS
+         IDAERMAC 3,LISTEND,&LISTEND                             X03004
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+.N000700 ANOP                                                   X04SVHS
+&IDAVALC(&IDAENO) SETC '&YES&NO.00000000000000&Z16'              X03004
+.**********************************************************************
+.N000800 ANOP
+.*                                      CONDN
+         IDACB3 ARG=&CONDN,ARGNAME=CONDN,KWTC=X'55',MF=&MF      X04SVHS
+.**********************************************************************
+.*                                      PROC
+         AIF   ('&PROC' EQ '').N000900  CHECK FOR NULL PROC     X04SVHS
+         IDACBPRC PROC=&PROC,MF=&MF     PROCESS PROC KEYWORD    X04SVHS
+.**********************************************************************
+.*                                      LOGMODE                @Z40BHUC
+.N000900 AIF ('&LOGMODE' EQ '').N000942                        @G40AKSL
+         AIF ('&LOGMODE(1)' EQ '*').N000930                    @Z40BHUC
+.*             IF INDIRECT ADDRESS WAS SPECIFIED, BYPASS       @Z40BHUC
+.*             VALIDITY CHECK                                  @Z40BHUC
+         AIF ('&LOGMODE'(1,1) EQ '0').N000935  VALID IF ZERO   @ZA36268
+         AIF ('&LOGMODE'(2,2) EQ 'S,').N000910   GET ERROR IF  @ZA38191
+.*             VALUE OTHER THAN FIXED OR INDIRECT              @ZA38191
+         AIF  ('&LOGMODE' EQ 'C'''(1,2).' '.''''(1,1)).N000920 @Z40BHUC
+.*          SET ALL BLANKS IF C' ' IS SPECIFIED                @Z40BHUC
+         AIF (K'&LOGMODE LE 8 AND '&LOGMODE'(1,1) GE 'A' AND           *
+               '&LOGMODE'(1,1) LE 'Z').N000930                 @Z40BHUC
+.*  LOGMODE MUST BE <= 8 CHARS AND 1ST CHAR MUST BE ALPHABETIC @ZA36268
+.N000910 ANOP                    GET ERROR MESSAGE             @ZA32653
+         IDAERMAC 3,LOGMODE,&LOGMODE                           @Z40BHUC
+&IDACB01 SETB  1                 SET ERROR SWITCH              @Z40BHUC
+         AGO   .N000930
+.N000920 ANOP                    SET VALUE OF 8 BLANKS IF C' ' @Z40BHUC
+&LGMODE  SETC  '        '         SET EIGHT BLANKS             @X50BHUC
+         IDACB3 ARG=&LGMODE,ARGNAME=LOGMODE,KWTC=X'8E',MF=&MF,         *
+               INDRECT=YES                                     @X50BHUC
+         AGO   .N000940
+.N000930 ANOP                                                  @X50BHUC
+         IDACB3 ARG=&LOGMODE,ARGNAME=LOGMODE,KWTC=X'8E',MF=&MF,        *
+               INDRECT=YES                                     @X50BHUC
+         AGO   .N000940
+.N000935 ANOP                                                  @ZA07556
+         IDACB3 ARG=&LOGMODE,ARGNAME=LOGMODE,KWTC=X'8E',MF=&MF @ZA07556
+.*                                                             @Z40BHUC
+.N000940 ANOP
+&IDAELEN(&IDAENO) SETA 8         SET ELEMENT LENGTH            @Z40BHUC
+.**********************************************************************
+.*                                      ENCR                   @G40AKSL
+.N000942 ANOP                                                  @G40AKSL
+         AIF ('&ENCR' EQ '').N000950                           @G40AKSL
+&SEL     SETB ('&ENCR' EQ 'SEL')                               @G40AKSL
+&REQD    SETB ('&ENCR' EQ 'REQD')                              @G40AKSL
+&NONE    SETB ('&ENCR' EQ 'NONE')                              @G40AKSL
+         AIF (&SEL OR &REQD OR &NONE).N000948                  @G40AKSL
+         IDAERMAC 3,ENCR,&ENCR                                 @G40AKSL
+&IDACB01 SETB 1                                                @G40AKSL
+.N000948 ANOP                                                  @G40AKSL
+         IDACB3 ARG=&ENCR,ARGNAME=ENCR,KWTC=X'96',MF=&MF,BIT=YES
+&IDAVALC(&IDAENO) SETC '&SEL&REQD&NONE.0000000000000&Z16'      @G40AKSL
+.**********************************************************************
+.*                                      BNDAREA                @Z40BHUC
+.N000950 AIF ('&BNDAREA' EQ '').N000980                        @Z40BHUC
+         IDACB3 ARG=&BNDAREA,ARGNAME=BNDAREA,KWTC=X'8F',MF=&MF @Z40BHUC
+.**********************************************************************
+.*                                      SDT
+.N000980 AIF   ('&SDT' EQ '').N001100   CHECK FOR NULL SDT      X3004BS
+         IDACB3 ARG=&SDT,KWTC=X'84',BIT=YES                     X04SVHS
+&SYSTEM  SETB  ('&SDT' EQ 'SYSTEM')                             X04SVHS
+&APPL    SETB  ('&SDT' EQ 'APPL')                               X04SVHS
+         AIF   (&SYSTEM OR &APPL).N001000 CHECK FOR VALID OPTION
+.*                                                              X04SVHS
+         IDAERMAC 5,SDT,&SDT(&I)                                X3004BS
+&IDACB01 SETB  1                        SET ERROR SWITCH        X3004BS
+.N001000 ANOP                                                   X3004BS
+&IDAVALC(&IDAENO) SETC '&SYSTEM&APPL.00000000000000&Z16'        X3004BS
+.**********************************************************************
+.N001100 AIF   ('&CALLER' EQ 'GEN' OR '&CALLER' EQ 'MOD').N001500
+.*                                                              X04SVHS
+.*       THE FOLLOWING KEYWORDS ARE VALID ONLY FOR TESTCB OR SHOWCB
+.*
+.**********************************************************************
+.*                                      CID
+         IDACB3 ARG=&CID,ARGNAME=CID,KWTC=X'5A',MF=&MF          X04SVHS
+.**********************************************************************
+.*                                      DEVCHAR
+         AIF   ('&DEVCHAR' EQ '').N001300 CHECK FOR NULL DEVCHAR X03004
+         AIF   ('&DEVCHAR(1)' EQ '*').N001200                    X03004
+.*                                      DEVCHAR MUST SPECIFIED AS
+.*                                      INDIRECT ADDRESS
+         IDAERMAC 3,DEVCHAR,&DEVCHAR                             X03004
+&IDACB01 SETB  1                        SET ERR SWITCH          X04SVHS
+         AGO   .N001300                 BYPASS PROCESSING IF ERROR
+.*                                                              X04SVHS
+.N001200 ANOP
+         IDACB3 ARG=&DEVCHAR,ARGNAME=DEVCHAR,KWTC=X'56',MF=&MF,        *
+               INDRECT=YES                                      X04SVHS
+&IDAELEN(&IDAENO) SETA 8                SET ELEMENT LENGTH       X03004
+.**********************************************************************
+.*                                      CON
+.N001300 AIF   ('&CON' EQ '').N001500   CHECK FOR NULL CON      X04SVHS
+         IDACB3 ARG=&CON,KWTC=X'5C',BIT=YES                     X04SVHS
+&CONYES  SETB  ('&CON' EQ 'YES')                                X04SVHS
+&CONNO   SETB  ('&CON' EQ 'NO')                                 X04SVHS
+         AIF   (&CONYES OR &CONNO).N001400 CHECK FOR VALID OPTION
+.*                                                              X04SVHS
+         IDAERMAC 3,CON,&CON                                     X03004
+&IDACB01 SETB  1                        SET ERR SWITCH
+.N001400 ANOP                                                   X04SVHS
+&IDAVALC(&IDAENO) SETC '&CONYES&CONNO.00000000000000&Z16'        X03004
+.**********************************************************************
+.N001500 ANOP                                                   X04SVHS
+         MEND

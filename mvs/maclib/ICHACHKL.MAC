@@ -1,0 +1,163 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/* A 00000000-99999999                                      @Z40RSGD*/
+*/********************************************************************/
+*/*                                                                  */
+*/* $MAC(ICHACHKL) COMP(SC1BN) PROD(RACF):                           */
+*/*                                                                  */
+*/* DESCRIPTIVE NAME = AUTHORIZATION CHECKING INTERFACE              */
+*/*                    RACHECK PARM LIST MAPPING MACRO               */
+*/*                                                                  */
+*/*             G120-2083                                            */
+*/*                                                                  */
+*/* STATUS = OS/VS2 EBB1102                                          */
+*/*                                                                  */
+*/* METHOD OF ACCESS = ICHACHKL MACRO IN BAL                         */
+*/*                   %INCLUDE SYSLIB(ICHACHKL)  IN PLS              */
+*/*                                                                  */
+*/* FUNCTION = MAPS THE PARAMETER LIST PASSED TO THE AUTHORIZATION   */
+*/*            CHECKING ROUTINE, RACHECK                             */
+*/*                                                                  */
+*/* MACROS = NONE                                                    */
+*/*                                                                  */
+*/* CHANGE ACTIVITY =                                                */
+*/*         RACF VERSION 1, RELEASE 2                        @PC002PY*/
+*/*         $L4=HRF1402,RACF/140,810701,SJRDSD:                  @L4A*/
+*/*         @ZA60572                                         @ZA60572*/
+*/*         $T1=UZ90210,SAF/RF15,810817,CNTDSD:                  @T1A*/
+*/*         $L5=HRF1502,RACF/150,811218,CNTDSD:                  @L5A*/
+*/*         $L6=HRF1602,RACF/160,830302,CNTDSD:                  @L6A*/
+*/*         UZ90283                                          @ZA90283*/
+*/*         UZ90284                                          @ZA90284*/
+*/*         UZ90285                                          @ZA90285*/
+*/*                                                                  */
+*/********************************************************************/
+*%GOTO ACHKPLS;                      /* BILINGUAL HEADER
+         MACRO
+         ICHACHKL &DSECT=YES
+         AIF   ('&DSECT' EQ 'NO').ACHK010
+ACHKLIST DSECT ,ACHKPTR        RACHECK PARAMETER LIST MAP
+         AGO   .ACHK020
+.ACHK010 ANOP
+ACHKLIST DS    0F          RACHECK PARAMETER LIST
+.ACHK020 ANOP
+ACHKINSW DS    0A -           INSTALLATION DATA ADDRESS
+ACHKLENG DS    AL1 -          LENGTH OF PARAMETER LIST
+ACHKINST DS    AL3 -          INSTALLATION DATA ADDRESS
+ACHKENTW DS    0F -           ENTITY ADDRESS WORD
+ACHKFLG1 DS    X -            FIRST FLAGS BYTE
+ACHKRFI  EQU   X'80' -          RACFIND PARAMETER CODED          @L5A
+ACHKRFIY EQU   X'40' -          RACFIND=YES                      @L5A
+*        EQU   X'20' -          RESERVED
+ACHKDSTV EQU   X'10' -          DSTYPE=V
+ACHK31IN EQU   X'08' -          31-BIT ADDRESS LIST INDICATOR    @T1A
+ACHKLOGF EQU   X'04' -          LOG=NOFAIL
+ACHKLOGN EQU   X'02' -          LOG=NONE
+ACHKLOGS EQU   X'06' -          LOG=NOSTAT                   @ZA60572
+ACHKCSA  EQU   X'01' -          ENTITY=(--,CSA)
+ACHKPROF DS    0AL3 -         PROFILE ADDRESS
+ACHKENT  DS    AL3 -          ENTITY NAME ADDRESS
+ACHKCLNW DS    0F -           CLASS NAME ADDRESS WORD
+ACHKFLG2 DS    X -            SECOND FLAGS BYTE
+ACHKTALT EQU   X'80' -          ATTR=ALTER
+*        EQU   X'40' -               RESERVED
+*        EQU   X'20' -               RESERVED
+*        EQU   X'10' -               RESERVED
+ACHKTCTL EQU   X'08' -               CONTROL
+ACHKTUPD EQU   X'04' -               UPDATE
+ACHKTRD  EQU   X'02' -               READ
+*        EQU   X'01' -               RESERVED
+ACHKCLN  DS    AL3 -          ENTITY CLASS NAME ADDRESS
+ACHKVOLW DS   0F -            THIRD FLAGS BYTE
+ACHKFLG3 DS    X -            THIRD FLAGS BYTE
+*        EQU   X'80' -          RESERVED
+ACHKMDEL EQU   X'40' -          DSTYPE=M                         @L4A
+ACHKPRF  EQU   X'20' -          PROFILE ADDRESS GIVEN
+*        EQU   X'10' -          RESERVED
+ACHKVOL  EQU   X'08' -          VOLSER PARM SPECIFIED
+ACHKGEN  EQU   X'04' -          GENERIC=YES GIVEN                @L6A
+*        EQU   X'03' -          RESERVED BITS                    @L6A
+ACHKVOLS DS    AL3 -          VOLSER ADDRESS
+ACHKOVOL DS    A -            OLD VOLSER ADDRESS
+ACHKAPPL DS    A -            APPL NAME ADDRESS                @PC003PY
+ACHKACEE DS    A -            ACEE ADDRESS                     @PC003PY
+ACHKOWNR DS    A -            OWNER ADDRESS.                     @L4A
+ACHK31   DS    0CL16          31-BIT-ADDRESS SAF  EXTENSION      @T1A
+ACHKIN31 DS    A -            31-BIT INSTALLATION DATA ADDRESS   @T1A
+ACHKPR31 DS    0A -           31-BIT PROFILE ADDRESS             @T1A
+ACHKEN31 DS    A -            31-BIT ENTITY NAME/RESOURCE PROFILE
+*                             ADDRESS                            @T1A
+ACHKCL31 DS    A -            31-BIT CLASS NAME ADDRESS          @T1A
+ACHKVS31 DS    A -            31-BIT VOLSER ADDRESS              @T1A
+ACHK15   DS    0CL8 -         RACF 1.5 EXTENSION                 @L5A
+ACHKACC1 DS    A -            ACCLVL ADDRESS (1ST PART)          @L5A
+ACHKACC2 DS    A -            ACCLVL ADDRESS (2ND PART)          @L5A
+ACHKLEN  EQU   ACHK31-ACHKLIST LENGTH OF V1.4 PARAMETER LIST     @T1A
+ACHK31LN EQU   ACHK15-ACHKLIST LENGTH OF SAF  PARAMETER LIST     @L5A
+ACHKLN15 EQU   *-ACHKLIST -   LENGTH OF V1.5 PARAMETER LIST      @L5A
+         MEND
+* TERMINATE PLS COMMENT                                              */
+*%ACHKPLS:;
+    DECLARE 1 ACHKLIST BASED(ACHKPTR), /* RACHECK PARAMETER LIST     */
+              2 ACHKINSW PTR(31), /* ADDRESS INSTALLATION DATA       */
+                3 ACHKLENG FIXED(8), /* LENGTH OF PARAMETER LIST     */
+                3 ACHKINST PTR(24), /* ADDRESS INSTALLATION DATA     */
+              2 ACHKENTW FIXED(31), /* ENTITY ADDRESS WORD           */
+                3 ACHKFLG1 BIN(8),  /* FIRST FLAGS BYTE              */
+                  4 ACHKRFI BIT(1),/* RACFIND PARAMETER GIVEN    @L5A*/
+                  4 ACHKRFIY BIT(1),/* RACFIND=YES               @L5A*/
+                  4 *       BIT(1),/* RESERVED                       */
+                  4 ACHKDSTV BIT(1),/* DSTYPE=V                      */
+                  4 ACHK31IN BIT(1), /* 31-BIT-ADDRESS LIST
+                                        INDICATOR                @T1A*/
+                  4 ACHKLOGS BIT(2),/* LOG=NOSTAT (BOTH ON)  @ZA60572*/
+                    5 ACHKLOGF BIT(1),/* LOG=NOFAIL                  */
+                    5 ACHKLOGN BIT(1),/* LOG=NONE                    */
+                  4 ACHKCSA  BIT(1),/* ENTITY=(ADDR,CSA)             */
+                3 ACHKENT PTR(24),  /* ENTITY NAME ADDRESS           */
+              2 ACHKCLNW FIXED(31), /* CLASS NAME ADDRESS WORD       */
+                3 ACHKFLG2 BIN(8),  /* SECOND FLAGS BYTE             */
+                  4 ACHKTALT BIT(1),/* ATTR=ALTER                    */
+                  4 * BIT(3),       /* RESERVED                      */
+                  4 ACHKTCTL BIT(1),/* ATTR=CONTROL                  */
+                  4 ACHKTUPD BIT(1),/* ATTR=UPDATE                   */
+                  4 ACHKTRD  BIT(1),/* ATTR=READ                     */
+                  4 * BIT(1),       /* RESERVED                      */
+                3 ACHKCLN PTR(24),  /* CLASS NAME ADDRESS            */
+              2 ACHKVOLW FIXED(31), /* VOLSER ADDRESS WORD           */
+                3 ACHKFLG3 BIN(8),  /* THIRD FLAGS BYTE              */
+                  4 * BIT(1),       /* RESERVED                      */
+                  4 ACHKMDEL BIT(1),/* DSTYPE=M                  @L4A*/
+                  4 ACHKPRF BIT(1), /* PROFILE ADDR GIVEN            */
+                  4 * BIT(1),       /* RESERVED                      */
+                  4 ACHKVOL BIT(1), /* VOLSER PARM SPECIFIED         */
+                  4 ACHKGEN BIT(1), /* RESERVED                  @L6A*/
+                  4 * BIT(2),       /* RESERVED                  @L6A*/
+                3 ACHKVOLS PTR(24), /* VOLSER ADDRESS                */
+              2 ACHKOVOL PTR(31),   /* OLD VOLSER ADDRESS    @PC002PY*/
+              2 ACHKAPPL PTR(31),   /* APPL NAME ADDRESS     @PC003PY*/
+              2 ACHKACEE PTR(31),   /* ACEE ADDRESS          @PC003PY*/
+              2 ACHKOWNR PTR(31),   /* OWNER ADDRESS.            @L4A*/
+              2 ACHKEND CHAR(0),    /* END OF V1.4 LIST          @T1A*/
+             1 ACHK31 DEFINED(ACHKEND),/* 31-BIT-ADDRESS SAF
+                                       EXTENSION                 @T1A*/
+              2 ACHKIN31 PTR(31),   /* 31-BIT INSTALLATION DATA
+                                       ADDRESS                   @T1A*/
+              2 ACHKEN31 PTR(31),   /* ENTITY NAME/RESOURCE PROFILE
+                                       ADDRESS                   @T1A*/
+              2 ACHKCL31 PTR(31),   /* CLASS NAME ADDRESS        @T1A*/
+              2 ACHKVS31 PTR(31),   /* VOLSER ADDRESS            @T1A*/
+              2 ACHK31EN CHAR(0),   /* END OF SAF EXTENSION      @L5A*/
+             1 ACHK15 DEFINED(ACHK31EN),/* RACF 1.5 EXTENSION    @L5A*/
+              2 ACHKACC1 PTR(31),   /* ACCLVL ADDRESS (1ST PART) @L5A*/
+              2 ACHKACC2 PTR(31),   /* ACCLVL ADDRESS (2ND PART) @L5A*/
+              2 ACHK15EN CHAR(0),   /* END OF V1.5 EXTENSION     @L5A*/
+            ACHKPROF PTR(24) DEFINED(ACHKENT), /* PROFILE ADDRESS    */
+            ACHKPR31 PTR(31) DEFINED(ACHKEN31); /* 31-BIT PROFILE
+                                       ADDRESS.                  @T1A*/
+      %ACHKLEN='LENGTH(ACHKLIST)';  /* SET LENGTH OF V1.4 PARAMETER
+                                       LIST                      @T1A*/
+      %ACHK31LN='(ACHKLEN+LENGTH(ACHK31))';/* SET LENGTH OF
+                                       SAF  PARAMETER LIST       @T1A*/
+      %ACHK15LN='(ACHK31LN+LENGTH(ACHK15))';/* SET LENGTH OF V1.5
+                                       PARAMETER LIST            @L5A*/
+

@@ -1,0 +1,23 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    RELEX &TYPE,&DCB,&BLKREF
+.*   BDAM - &BLKREF, ISAM - &DECB
+         AIF   ('&DCB' EQ '').ERR1
+         AIF   ('&TYPE' EQ 'K').ISAM
+         AIF   ('&BLKREF' EQ '').ERR2
+         AIF   ('&TYPE' EQ 'D' OR T'&TYPE EQ 'O').GO
+         AGO   .ERR4
+.ISAM    AIF   ('&BLKREF' EQ '').ERR3
+.GO      ANOP
+&NAME    IHBINNRA &DCB,&BLKREF
+         SVC   53                                ISSUE RELEX SVC
+         MEXIT
+.ERR1    IHBERMAC 6
+         MEXIT
+.ERR2    IHBERMAC 12
+         MEXIT
+.ERR3    IHBERMAC 7
+         MEXIT
+.ERR4    IHBERMAC 48,,&TYPE
+         MEND
+

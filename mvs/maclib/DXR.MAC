@@ -1,0 +1,22 @@
+.* MVS 3.8J PUBLIC DOMAIN
+          MACRO
+&LABEL    DXR   &R1,&R2
+.*                        INSURE LABEL IS ON HALF WORD BOUNDARY
+          DS    0H
+.*                        GENERATE OPCODE FOR EXTENDED PRECISION DIVIDE
+&LABEL    DC    XL2'B22D'
+.*                        USE EXTENDED PRECISION MULTIPLY INSTRUCTION
+.*                         TO ALLOW THE ASSEMBLER TO DO THE REGISTER
+.*                         ANALYSIS
+          MXR   &R1,&R2
+.*                        MAKE THE THIRD BYTE OF THE INSTRUCTION BINARY
+.*                         ZERO, IE REMOVE MXR OP CODE.
+          ORG   *-2
+          DC    X'00'
+          ORG   *+1
+.*                        THE FINAL FORMAT OF THE EXTENDED PRECISION
+.*                         DIVIDE INSTRUCTION, BYTE BY BYTE, IS
+.*
+.*                             B2  2D  00  R1R2
+          MEND
+

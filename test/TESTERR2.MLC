@@ -1,9 +1,13 @@
-*********************************************************************
+********************************************************************
 * Copyright 2005 Automated Software Tools Corporation               *
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
+*********************************************************************
+* 11/08/05 RPI74 TEST RELATIVE OFFSET ERRORS
+* 11/08/05 RPI85 TEST MIN/MAX DC F AND H LIMIT ERRORS11
+* 01/06/06 RPI157 AND 159 OPERAND ERROR CHECKING
 *********************************************************************
          TITLE 'TESTERR2 - TEST AZ390 ERRORS'
 TESTERR2 CSECT
@@ -19,4 +23,36 @@ LABEL
         WTO  'HELLO
         WTO  HELLO'
         WTO  MF=(E,X
-        END 
+* TEST ERROR ON INVALID RELATIVE ADDRESSES
+        BRL  TESTERR2+1
+        BRCL 15,TESTERR2+1
+        LARL 15,TESTERR2+1
+TOOFAR  EQU  TESTERR2+X'100000'
+        BRL  TOOFAR
+* TEST MIN MAX FOR DC F AND H 
+         DC    H'32767'         OK
+         DC    H'32768'         BAD
+         DC    H'-32768'        OK
+         DC    H'-32769'        BAD
+         DC    FL1'127'         OK
+         DC    FL1'128'         BAD
+         DC    FL1'-128'        OK
+         DC    FL1'-129'        BAD
+         DC    FL2'X'7FFF''     OK
+         DC    FL2'X'8000''     BAD
+         DC    FL2'-X'8000''    OK
+         DC    FL2'-X'8001''    BAD
+         DC    FL3'X'7FFFFF''   OK
+         DC    FL3'X'800000''   BAD
+         DC    FL3'-X'800000''  OK
+         DC    FL3'-X'800001''  BAD
+* CHECK TOO MANY PARMS
+         OI    Y,3(1)
+         LR    1,2,3
+         L     1,2,3
+         MVC   Y,2,3
+         AP    Y,=P'1',3
+* CHECK LITERAL IN EXPRESSION
+         OI    Y,=X'FF'
+Y        DC    X'00'
+         END 

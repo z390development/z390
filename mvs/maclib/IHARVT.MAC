@@ -1,0 +1,144 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO RVT1;              /*  BILINGUAL MAPPING MACRO
+         MACRO
+         IHARVT  &DSECT=YES       */
+*%RVT1: ;
+*/*********************************************************************
+*
+*  RMS SECONDARY CVT
+*
+*  OS/VS2 RELEASE 2, 2/26/73
+*
+*  METHOD OF ACCESS:
+*                    BAL - DSECT IS PRODUCED UNLESS DSECT=NO IS
+*                          SPECIFIED.  USING ON 'RVT' ESTABLISHES
+*                          ADDRESSABILITY.
+*
+*                    PL/S - DCL RVTPTR PTR
+*
+*
+*  CHANGE-ACTIVITY
+*    A 021210-021270                                         @ZA34714
+*    A 041300-042800                                         @ZA34714
+*
+**********************************************************************/
+*%GOTO RVT2; /*
+         SPACE 1
+         AIF   ('&DSECT' EQ 'NO').RVT001
+RVT      DSECT
+         AGO  .RVT002
+.RVT001  ANOP
+RVT      DS    0F
+.RVT002  ANOP
+RVTPMCIH DC    V(IGFPMCIH) .       ADDRESS OF IGFPMCIH
+RVTPMRTM DC    V(IGFPMRTM) .       ADDRESS OF IGFPMRTM
+RVTPMFRS DC    V(IGFPMFRS) .       ADDRESS OF IGFPMFRS
+RVTPMHCA DC    V(IGFPMHCA) .       ADDRESS OF IGFPMHCA
+RVTPMSCA DC    V(IGFPMSCA) .       ADDRESS OF IGFPMSCA
+RVTPMPFX DC    V(IGFPMPFX) .       ADDRESS OF IGFPMPFX
+RVTPMTHA DC    V(IGFPMTHA) .       ADDRESS OF IGFPMTHA
+RVTPMMSG DC    V(IGFPMMSG) .       ADDRESS OF IGFPMMSG
+RVTPMKTA DC    V(IGFPMKTA) .       ADDRESS OF IGFPMKTA
+RVTPTERM DC    V(IGFPTERM) .       ADDRESS OF IGFPTERM
+RVTPTSIG DC    V(IGFPTSIG) .       ADDRESS OF IGFPTSIG
+RVTPTREC DC    V(IGFPTREC) .       ADDRESS OF IGFPTREC
+RVTPTCON DC    V(IGFPTCON) .       ADDRESS OF IGFPTCON
+RVTPTAIM DC    V(IGFPTAIM) .       ADDRESS OF IGFPTAIM
+RVTPXMFA DC    V(IGFPXMFA) .       ADDRESS OF IGFPXMFA
+RVTPBUCR DC    V(IGFPBUCR) .       ADDRESS OG IGFPBUCR
+RVTPKREF DC    V(IGFPKREF) .       ADDRESS OF IGFPKREF
+RVTPEXIT DC    V(IGFPEXIT) .       ADDRESS OF IGFPEXIT
+RVT00MMM DC    V(IGFPMCE2) .       ADDRESS OF IGFPMCE2 (OVERLAYED WITH
+*                                    ADDRESS OF IGF00MMM BY IGFPINIT IF
+*                                    BLDL AND LOAD SUCCEED)
+RVT01MMM DC    V(IGFPEXE2) .       ADDRESS OF IGFPEXE2 (OVERLAYED WITH
+*                                    ADDRESS OF IGF01MMM BY IGFPINIT IF
+*                                    BLDL AND LOAD SUCCEED)
+RVTRWAPT DC    V(IGFRWA) .         ADDRESS OF RECOVERY WORK AREA
+RVTLRBPT DC    A(0) .              ADDRESS OF SPARE LRB (INITIALIZED BY
+*                                    IGFPINIT)
+RVTMSGPT DC    A(0) .              ADDRESS OF MESSAGE BUFFER
+*                                    (INITIALIZED BY IGFPINIT)
+RVTMSGLN DC    F'0' .              LENGTH OF MESSAGE BUFFER (CHANGED
+*                                    TO 96 BYTES PER ONLINE CPU BY
+*                                    IGFPINIT)
+RVTCCHDA DC    V(IGFCHDA) .        ADDRESS OF IGFCHDA, THE CHH DATA
+*                                    AREA
+RVTCCHCR DC    V(IGFCCHCR) .       ADDRESS OF IGFCCHCR, THE CCH CENTRAL
+*                                    MODULE
+RVTMIH   DC    V(IGFTMC00) .       ADDRESS OF IGFTMC00, THE MIH I/O
+*                                    RESTART INTERFACE MODULE (EXTERNAL
+*                                    ADDRESS CONSTANT ASSEMBLED FOR
+*                                    IGFTMC00)
+*                                                                     *
+RVTMIH2  DC    V(IGFTMC01)  .       ADDRESS OF IGFTMC01, THE MIH CHECK
+*                                  UCB AND POST MSG ROUTINE  Z40WPWN
+RVTMIH3  DC    V(IGFINTVL) .       ADDRESS OF IGFINTVL WHEN IT IS
+*                                  MOVED TO THE NUCLEUS        @ZA34714
+RVTCCHED DC    V(IGFCCHED) .       ADDRESS OF IGFCCHED         @ZA34714
+RVTPNRFH DC    V(IGFPNRFH) .       ADDRESS OF IGFPNRFH         @ZA34714
+*                                                              @ZA34714
+         WXTRN IGFINTVL,IGFCCHED,IGFPNRFH    TO HAVE VCONS BE ZERO
+*                                  WHEN MODULE NOT IN SYSTEM   @ZA34714
+*                                                                     *
+*    END OF RMS SECONDARY CVT                                         *
+*                                                                     *
+         MEND
+*        */
+*%RVT2: ;
+*
+* DECLARE
+*  1 RVT BASED(RVTPTR) BDY(WORD),
+*   2 RVTPMCIH PTR(31),            /* ADDRESS OF IGFPMCIH            */
+*   2 RVTPMRTM PTR(31),            /* ADDRESS OF IGFPMRTM            */
+*   2 RVTPMFRS PTR(31),            /* ADDRESS OF IGFPMFRS            */
+*   2 RVTPMHCA PTR(31),            /* ADDRESS OF IGFPMHCA            */
+*   2 RVTPMSCA PTR(31),            /* ADDRESS OF IGFPMSCA            */
+*   2 RVTPMPFX PTR(31),            /* ADDRESS OF IGFPMPFX            */
+*   2 RVTPMTHA PTR(31),            /* ADDRESS OF IGFPMTHA            */
+*   2 RVTPMMSG PTR(31),            /* ADDRESS OF IGFPMMSG            */
+*   2 RVTPMKTA PTR(31),            /* ADDRESS OF IGFPMKTA            */
+*   2 RVTPTERM PTR(31),            /* ADDRESS OF IGFPTERM            */
+*   2 RVTPTSIG PTR(31),            /* ADDRESS OF IGFPTSIG            */
+*   2 RVTPTREC PTR(31),            /* ADDRESS OF IGFPTREC            */
+*   2 RVTPTCON PTR(31),            /* ADDRESS OF IGFPTCON            */
+*   2 RVTPTAIM PTR(31),            /* ADDRESS OF IGFPTAIM            */
+*   2 RVTPXMFA PTR(31),            /* ADDRESS OF IGFPXMFA            */
+*   2 RVTPBUCR PTR(31),            /* ADDRESS OF IGFPBUCR            */
+*   2 RVTPKREF PTR(31),            /* ADDRESS OF IGFPKREF            */
+*   2 RVTPEXIT PTR(31),            /* ADDRESS OF IGFPEXIT            */
+*   2 RVT00MMM PTR(31),            /* ADDRESS OF IGFPMCE2 (OVERLAYED
+*                                     WITH THE ADDRESS OF IGF00MMM BY
+*                                     IGFPINIT IF BLDL AND LOAD
+*                                     SUCCEED)                       */
+*   2 RVT01MMM PTR(31),            /* ADDRESS OF IGFPEXE2 (OVERLAYED
+*                                     WITH THE ADDRESS OF IGF01MMM BY
+*                                     IGFPINIT IF BLDL AND LOAD
+*                                     SUCCEED)                       */
+*   2 RVTRWAPT PTR(31),            /* ADDRESS OF RECOVERY WORK AREA  */
+*   2 RVTLRBPT PTR(31),            /* ADDRESS OF SPARE LRB (INITIALIZED
+*                                     BY IGFPINIT)                   */
+*   2 RVTMSGPT PTR(31),            /* ADDRESS OF MESSAGE BUFFER
+*                                     (INITIALIZED BY IGFPINIT)      */
+*   2 RVTMSGLN FIXED(31),          /* LENGTH OF MESSAGE BUFFER (INITIAL
+*                                     VALUE IS 0, CHANGED BY IGFPINIT
+*                                     TO 96 BYTES PER ONLINE CPU)    */
+*   2 RVTCCHDA PTR(31),            /* ADDRESS OF IGFCHDA, THE CCH DATA
+*                                     AREA                           */
+*   2 RVTCCHCR PTR(31),            /* ADDRESS OF IGFCCHCR, THE CCH
+*                                     CENTRAL MODULE                 */
+*   2 RVTMIH PTR(31),              /* ADDRESS OF IGFTMC00, THE MIH DIE
+*                                     ROUTINE (EXTERNAL ADDRESS
+*                                     CONSTANT ASSEMBLED FOR
+*                                     IGFTMC00)                      */
+*   2 RVTMIH2 PTR(31),             /* ADDRESS OF IGFTMC01, THE MIH
+*                                     CHECK UCB AND POST MSG ROUTINE
+*                                                        Z40WPWN  */
+*   2 RVTMIH3  PTR(31),            /* ADDRESS OF IGFINTVL WHEN IT IS
+*                                     MOVED TO THE NUCLEUS    @ZA34714*/
+*   2 RVTCCHED PTR(31),            /* ADDRESS OF IGFCCHED     @ZA34714*/
+*   2 RVTPNRFH PTR(31);            /* ADDRESS OF IGFPNRFH     @ZA34714*/
+*/*
+*  END OF RMS SECONDARY CVT
+**/
+

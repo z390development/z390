@@ -1,0 +1,19 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    BLDL  &DCB,&LIST,&DUMMY=
+.*      VS2 RELEASE 03 CHANGES/DELETIONS
+.*A001100-001140                                                ZA00734
+         AIF   ('&DCB' EQ '').E1
+         AIF   ('&LIST' EQ '').E2
+&NAME    IHBINNRA &DCB,&LIST              LOAD REG 1 AND REG 0
+         LA    1,0(1)                     CLEAR HIGH ORDER BYTE ZA00734
+.*  REGISTER 1 IS MADE POSITIVE SO THE SVC CODE WILL KNOW THIS  ZA00734
+.*  REQUEST IS FROM BLDL AND NOT THE FIND MACRO.                ZA00734
+         SVC   18                                LINK TO BLDL ROUTINE
+         MEXIT
+.E1      IHBERMAC 6                     DCB ADDR MISSING
+         AIF   ('&LIST' EQ '').E2
+         MEXIT
+.E2      IHBERMAC 34                    LIST ADDR MISSING
+         MEND
+

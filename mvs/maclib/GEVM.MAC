@@ -1,0 +1,22 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GEVM  &TYPE
+         GBLA  &IHBBLC,&IHBBLIM,&IHBCRSZ,&IHBVSP,&IHBMOD
+         IHBGAM3
+&IHBVSP      SETA  0
+&IHBBLC    SETA  &IHBBLC+2              UPDATE BUFFER-LOC COUNTER
+         AIF   (&IHBBLIM GE &IHBBLC).OK
+         IHBERMAC 182
+.OK      AIF   (T'&TYPE EQ 'O').ABSOL
+         AIF   ('&TYPE'(1,1) EQ 'A').ABSOL
+         AIF   ('&TYPE'(1,1) EQ 'R').RLTV
+         IHBERMAC  180,MODE,ABSOLUTE
+.ABSOL   ANOP
+&NAME  DC      H'10754'
+&IHBMOD   SETA  0                     SET MODE SWITCH TO ABS
+         MEXIT
+.RLTV    ANOP
+&NAME  DC      H'10755'
+&IHBMOD   SETA  1                        SET MODE SWITCH TO REL
+         MEND
+

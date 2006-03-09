@@ -1,0 +1,17 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    OHI   &H,&I                    OR TO HEADER FROM IMM.
+         LCLA  &V
+&V       SETA  &I
+         AIF   (&V LE 255).OH0
+         MNOTE 8,'***  IHB421 IMMEDIATE VALUE EXCEEDS ALLOWED MAXIMUM'
+.OH0     ANOP
+         AIF   ('&H' EQ '2' OR '&H' EQ '3' OR '&H' EQ '9').OH1
+         AIF   ('&H' EQ '5' OR '&H' EQ '6').OH1
+         MNOTE 8,'***  IHB403 HEADER BYTE NOT 2,3,5,6 OR 9;2 ASSUMED'
+&NAME    DC    0H'0',X'92',AL1(&I)
+         AGO   .END
+.OH1     ANOP
+&NAME    DC    0H'0',AL.4(9),AL.4(&H),AL1(&I)
+.END     MEND
+

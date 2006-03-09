@@ -1,0 +1,171 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* % GOTO DVAL1;                          /* BILINGUAL MAPPING        */
+         MACRO
+         IHADVA &DSECT=YES
+.* /* START OF SPECIFICATIONS ****
+.*
+.*01  MODULE-NAME = IHADVA
+.*
+.*
+.*01  STATUS = VS2 RELEASE 2 LEVEL 0
+.*
+.*01  DESCRIPTIVE-NAME = DEVTYPE PARAMETER AREA
+.*
+.*01  FUNCTION = TO MAP THE PARAMETER AREA RETURNED TO THE CALLER
+.*               BY THE DEVTYPE SVC.
+.*
+.*01  MODULE-TYPE = MACRO
+.*
+.*02    MACRO-SIZE = NA FOR MAPPING MACRO
+.*
+.*02    PARAMETER-RECEIVED = DSECT
+.*
+.*03     TYPE = CHARACTER STRING
+.*
+.*04       VALUE = YES OR NO
+.*
+.*01  TABLES = NONE
+.*
+.*01  INNER-MACROS = NONE
+.*
+.*01  SYSTEM-MACROS = NONE
+.*
+.*01  CHANGE-ACTIVITY = SEE BELOW
+.*    VS2 RELEASE 2
+.*       MACRO CREATED
+.*
+.*
+.**** END OF SPECIFICATIONS ***/
+* %DVAL1: ;
+* /* MACCOMP Y-2 SC1D0/SJD48                                         */
+* /* MACSTAT Y-2 73138/021160                                        */
+*/********************************************************************/
+*/*                 DEVTYPE PARAMETER AREA                           */
+*/*     THIS MACRO MAPS THE PARAMETER AREA RETURNED TO THE CALLER BY */
+*/*     THE DEVTYPE SVC.                                             */
+*/*     IN AN ASSEMBLER CALL DSECT=NO MAY BE CODED.                  */
+*/*                                                                  */
+*/*     IN A PLS INCLUDE, DVABASE MAY BE DECLARED AS DEF(LABEL)      */
+*/*     TO CAUSE IT TO BE USED IN A STRUCTURE. IF DVABASE IS         */
+*/*     OMITTED THE STRUCTURE IS DECLARED AS BASED.                  */
+*/*                                                                  */
+*/********************************************************************/
+* % GOTO DVAL2;
+         AIF   ('&DSECT' EQ 'NO').DVANOD
+DVAREA   DSECT                          OUTPUT AREA FROM DEVTYPE MACRO
+         AGO   .DVACONT
+.DVANOD  ANOP
+DVAREA   EQU   *
+.DVACONT ANOP
+*
+***********************************************************************
+*  THE FIRST TWO FULL WORDS OF THE OUTPUT AREA CONTAIN THE            *
+*  UCBTYPE FIELD AND MAXIMUM RECORD SIZE FOR ALL DEVICES.  THEY ARE   *
+*  FOLLOWED BY THE DEVICE TABLE ENTRY IF THE DEVICE IS DIRECT ACCESS  *
+*  AND IF KEYWORD DEVTAB WAS SPECIFIED.                               *
+***********************************************************************
+DVAPREFX DS    0CL8                     PREFIX WORDS OF DEVTYPE OUTPUT
+DVAUCBTY DS    0F                       UCBTYPE FIELD
+DVAOPTS  DS    XL2                      UCB OPTIONS
+DVACLASS DS    XL1                      DEVICE CLASS
+DVAUNIT  DS    XL1                      UNIT TYPE
+DVAMAXRC DS    F                        MAXIMUM RECORD SIZE
+DVADEVLG EQU   *-DVAREA                 LENGTH OF THE DEVTYPE OUTPUT
+*                                       PREFIX
+*
+***********************************************************************
+*                  DEVTAB SECTION FOR DASD DEVICES                    *
+***********************************************************************
+DVATAB   DS    0CL12
+DVACYL   DS    H                        PHYS NO CYL PER VOLUME
+DVATRK   DS    H                        NO TRACKS PER CYLINDER
+DVATRKLN DS    H                        NO. OF BYTES PER TRACK
+*
+DVAOVHD  DS    0H                       BLOCK OVERHEAD IF DVA2BOV=1
+*                                       ****************************
+*                                       * IF DVA2BOV=0 USE INSTEAD *
+*                                       * THE FOLLOWING TWO VALUES *
+*                                       ****************************
+DVAOVNLB DS    XL1                      OVERHEAD NOT LAST BLOCK
+DVAOVLB  DS    XL1                      OVERHEAD LAST BLOCK
+*
+DVAOVNK  DS    XL1                      OVERHEAD DECREMENT NOT KEYED
+*
+DVAFLAGS DS    BL1
+DVABDCYL EQU   X'80'                    IF 1, DVACYL IS INVALID YL02130
+DVA2BOV  EQU   X'08'                    IF 1, USE DVAOVHD
+*                                       IF 0, USE DVAOVNLB,DVAOVLB
+DVAFTOL  EQU   X'01'                    IF 1, APPLY TOLERANCE FACTOR
+*
+DVATOL   DS    H                        TOLERANCE FACTOR
+*                                 *************************************
+*                                 * APPLY TOLERANCE FACTOR AS FOLLOWS:*
+*                                 * 1. ADD BLOCKSIZE AND KEYLENGTH    *
+*                                 * 2. MULTIPLY BY DVATOL             *
+*                                 * 3. SHIFT RIGHT DVASHFT BITS       *
+*                                 * 4. ADD APPROPRIATE OVERHEADS      *
+*                                 *************************************
+DVASHFT  EQU   9                        SHIFT AMT TO DIVIDE BY 512
+*
+DVAENTLG EQU   *-DVATAB                 BASIC SIZE OF DEVICE TABLE
+*                                       ENTRY, NOT INCLUDING ADDITIONAL
+*                                       CHARACTERISTICS FOR RPS
+*
+**********************************************************************
+*              THE FOLLOWING SECTION OF THE TABLE IS PRESENT         *
+*              ONLY FOR RPS DEVICES--TEST UCBTBYT2 FOR UCB2OPT3      *
+**********************************************************************
+DVARPS   DS    0CL4                     RPS SECTION
+DVAOVR0  DS    H                        OVERHEAD BYTES FOR RECORD 0
+DVASECT  DS    XL1                      NR. SECTORS IN FULL TRACK
+DVASECTD DS    XL1                      NR. DATA SECTORS
+DVARPSLG EQU   *-DVARPS                 SIZE OF RPS SECTION
+*
+*              END OF DVA
+         MEND
+*% DVAL2: ;
+*        % IF DVABASE = ''
+*        %    THEN
+*        %      DVABASE = 'BASED';
+*DCL   1 DVAREA DVABASE,
+*        2 DVAPREFX,                    /* WORDS PREFIXED BY DEVTYPE */
+*          3 DVAUCBTY FIXED(32),  /* UCB TYPE FIELD                  */
+*            4 DVAOPTS BIT(16),   /* UCB OPTIONS                     */
+*            4 DVACLASS BIT(8),   /* DEVICE CLASS                    */
+*            4 DVAUNIT BIT(8),    /* UNIT TYPE                       */
+*          3 DVAMAXRC FIXED(31),  /* MAXIMUM RECORD SIZE             */
+*
+*        2 DVATAB,                /* SECTION INCLUDED BY DEVTAB      */
+*          3 DVACYL FIXED(15),    /* PHYS NUMBER CYL PER VOLUME      */
+*          3 DVATRK FIXED(15),    /* NR OF TRACKS PER CYL            */
+*          3 DVATRKLN FIXED(15),  /* TRACK LENGTH ( BYTES)           */
+*          3 DVAOVHD FIXED(15),   /* BLOCK OVERHEAD IF DVA2BOV IS ON */
+*                                 /***********************************/
+*                                 /* IF DVA2BOV IS OFF USE INSTEAD   */
+*                                 /* THE FOLLOWING TWO VALUES        */
+*            4 DVAOVNLB PTR(8),   /* OVERHEAD NOT LAST BLOCK         */
+*            4 DVAOVLB PTR(8),    /* OVERHEAD LAST BLOCK             */
+*                                 /***********************************/
+*          3 DVAOVNK PTR(8),      /* OVERHEAD DECR IF NOT KEYED      */
+*          3 DVAFLAGS BIT(8),     /* FLAG BYTE                       */
+*            4 DVABDCYL BIT(1),   /* IF 1, DVACYL IS INVALID YL02130 */
+*            4 * BIT(3),          /* RESERVED                        */
+*            4 DVA2BOV BIT(1),    /* IF ON, USE DVAOVHD              */
+*                                 /* ELSE USE DVAOVNLB & DVAOVLB     */
+*            4 * BIT(2),          /* RESERVED                        */
+*            4 DVAFTOL BIT(1),    /* IF ON, APPLY TOLERANCE FACTOR   */
+*
+*          3 DVATOL FIXED(15),    /* TOLERANCE FACTOR                */
+*                                 /***********************************/
+*                                 /* (BLKSI+KEYLE)*DVATOL/DVADVSR    */
+*                                 /* GIVES THE ADJUSTED BLOCK SIZE   */
+*                                 /* TO WHICH APPROPRIATE OVERHEADS  */
+*                                 /* ARE THEN ADDED.                 */
+*                                 /***********************************/
+*            % DVADVSR = '512';   /* FRACTION DENOMINATOR FOR DVATOL */
+*
+*        2 DVARPS,                /* RPS SECTION                     */
+*          3 DVAOVR0 FIXED(15),   /* OVERHEAD BYTES FOR RECORD 0     */
+*          3 DVASECT PTR(8),      /* NUMBER OF SECTORS IN FULL TRACK */
+*          3 DVASECTD PTR(8);     /* NUMBER OF DATA SECTORS          */
+

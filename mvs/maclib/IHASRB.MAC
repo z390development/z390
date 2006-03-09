@@ -1,0 +1,109 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO  PLSSRB1;           /*
+         MACRO
+         IHASRB
+**/
+*%PLSSRB1:;
+*/*********SERVICE REQUEST BLOCK*************************************/
+*/*  OS/VS2 RELEASE 2    12/8/72   LEVEL=1                          */
+*/*     BAL- DSECT  ALWAYS PRODUCED, PERFORM USING ON SRBSECT       */
+*/*                                                                 */
+*/*     PL/S  - SRBSECT WILL BE BASED(SRBPTR) .                     */
+*/*        1. IF YOU WISH TO APPEND THE SRB TO THE END OF           */
+*/*           ANOTHER CONTROL BLOCK, SET %SRBLEVEL='N'              */
+*/*           WHERE N IS AN INTEGER BETWEEN 2 AND 3,INCLUSIVE.      */
+*/*           SRBSECT WILL THEN BE AN UNBASED LEVEL N  VARIABLE.    */
+*/*        2. IF YOU WISH TO APPEND ANOTHER CONTROL BLOCK TO THE END */
+*/*           OF THE SRB, SET %SRB9999=',', AND THE SEMICOLON AT    */
+*/*           THE END OF THE SRB WILL BE REPLACED WITH A COMMA.     */
+*/*                                                                 */
+*/*      EXAMPLE OF PLACING SRB BETWEEN TWO OTHER BLOCKS:           */
+*/*         %SRBLEVEL='2'     ;                                     */
+*/*         %SRB9999=',' ;                                          */
+*/*     DECLARE  1 MYBLOCK,                                         */
+*/*         2 MYFIELD,                                              */
+*/*        %INCLUDE SYSLIB(IHASRB)  ;                               */
+*/*         2 MYFIELD2 ;                                            */
+*/*******************************************************************/
+*        %GOTO PLSSRB2;              /*
+SRBSECT  DSECT
+SRB      DS    0A
+SRBID    DS    CL4                      EBCDIC ACRONYM   FOR SRB
+SRBFLNK  DS    A                        FORWARD CHAIN FIELD
+SRBASCB  DS    A                        PTR TO ASCB OF ADDRESS SPACE
+*                                       SRB IS TO BE DISPATCHED TO
+SRBFLC   DS    0CL8                     SRB AREA MOVED TO LOW CORE
+SRBCPAFF DS    BL2                      CPU AFFINITY MASK
+SRBPASID DS    H                        PURGEDQ ASID IDENTIFIER
+SRBPTCB  DS    A                        PURGEDQ TCB IDENTIFIER
+SRBEP    DS    A                        ENTRY POINT OF ROUTINE
+SRBRMTR  DS    A                        ADDRESS OF RESOURCE MGR RTN
+SRBPARM  DS    A                        USER PARAMETER
+SRBSAVE  DS    A                        SAVE AREA POINTER
+SRBPKF   DS    B                        PROTECT KEY INDICATION
+SRBPRIOR DS    B                        PRIORITY LEVEL INDICATION
+SRBPSYS  EQU   0                        SYSTEM PRIORITY LEVEL
+SRBPNONQ EQU   4                        NON-QUIESCEABLE PRIORITY
+         DS    BL2                      RESERVED
+         DS    A                        RESERVED
+SRBEND   EQU   *                        END OF SRB
+SRBSIZE  EQU   SRBEND-SRBSECT           SIZE OF SRB
+         MEND
+* */
+*%PLSSRB2:;
+*
+* %IF  SRBLEVEL=''
+*   %THEN  SRBBASE='BASED(SRBPTR)' ;
+*   %ELSE  SRBBASE='' ;
+*
+* %IF SRBLEVEL=''
+*   %THEN  SRBLEVEL='DECLARE  1  '  ;
+*
+* %IF SRB9999^=','
+*   %THEN  SRB9999=';' ;
+*
+*   SRBLEVEL SRBSECT  SRBBASE BDY(WORD),
+*
+*      4  SRB ,
+*
+*        6 SRBID CHAR(4),               /*SRB EBCDIC ACRONYM        */
+*
+*        6 SRBFLNK  PTR(31),            /*FORWARD CHAIN FIELD       */
+*
+*        6 SRBASCB  PTR(31),            /*ADDRESS SPACE TO BE
+*                                         DISPATCHED                */
+*        6 SRBFLC BDY(WORD),            /*SRB AREA MOVED TO LOW CORE*/
+*
+*          8   SRBCPAFF  BIT(16),       /*CPU AFFINITY MASK         */
+*
+*          8   SRBPASID  FIXED(15),     /*PURGEDQ ASID              */
+*
+*          8   SRBPTCB   PTR(31),       /*PURGEDQ TCB ADDRESS       */
+*
+*        6 SRBEP  PTR(31),              /* ENTRY POINT ADDRESS OF
+*                                           ASYNCHRONOUS ROUTINE    */
+*
+*        6 SRBRMTR  PTR(31),            /*  ADDRESS OF RESOURCE MGR
+*                                            TERMINATION ROUTINE FOR
+*                                            PURGEDQ                */
+*
+*        6 SRBPARM  PTR(31),            /* USER PARAMETER           */
+*
+*        6 SRBSAVE  PTR(31),            /* SAVE AREA POINTER
+*                                          FOR REDISPATCH OF SUSPENDED S
+*                                          SRB.                     */
+*
+*        6 SRBPKF   BIT(8) ,            /* PROTECT KEY IN HIGH ORDER
+*                                          4 BITS, LOW ORDER BITS 0 */
+*
+*        6 SRBPRIOR PTR(8) ,            /* PRIORITY LEVEL           */
+* %DCL  SRBPNONQ FIXED;                /* NON-QUIESCEABLE PRIORITY */
+* %SRBPNONQ=4;
+* %DCL  SRBPSYS FIXED;                 /* SYSTEM PRIORITY          */
+* %SRBPSYS=0;
+*
+*        6 *   CHAR(2),                 /* RESERVED                 */
+*
+*        6 * PTR(31)                    /*  RESERVED                */
+*           SRB9999
+

@@ -1,0 +1,50 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GO TO ACBEXTXX;
+* /*                                                                */
+* /*     CHANGE LEVEL = 0                                   @ZA34940*/
+* /*     DATE OF LAST CHANGE = 14  NOV  78  ( 78*318 )      @ZA34940*/
+* /*                                                                */
+* /******************************************************************/
+* /*                                                                */
+* /*     ACB VSAM EXTENSION                                         */
+* /*                                                                */
+* /*     THE EXTENSION DESCRIBES ADDITIONAL VSAM CONTROL            */
+* /*     DATA. THE EXTENSION IS CALLED UNCONDITIONALLY              */
+* /*     BY IFGACB AND IS APPENDED TO THE ACB COMMON AREA.          */
+* /*                                                                */
+* /*     IN ADDITION, IFGACBVS INVOKES THE VTAM EXTENSION,          */
+* /*     ISTACBEX, UNDER THE FOLLOWING CONDITIONS:                  */
+* /*                                                                */
+* /*        PLS:  THE MODULE CONTAINING AN INCLUDE FOR IFGACB       */
+* /*              SETS THE MACRO VARIABLE 'ACBRPLXL' TO 'VTAM'      */
+* /*              PRIOR TO ISSUING THE INCLUDE.                     */
+* /*        BAL:  THE AM=VTAM PARAMETER IS CODED ON THE MACRO       */
+* /*              CALL.                                             */
+* /*                                                                */
+* /*                                                                */
+* /******************************************************************/
+* /*                                                                */
+* /*                  PL/S VSAM ACB EXTENSION                       */
+* /*                                                                */
+*%ACBEXTXX:;
+* /*                                                                */
+*     %IF ACBRPLXL ^= 'VTAM'                /* IS IT VTAM           */
+*         %THEN %GOTO VSAMACB;              /* NO, BYPASS           */
+*         %INCLUDE SYSLIB(ISTACBEX);        /* YES, GET EXTENSION   */
+*     %GOTO ACBEXEND;                       /* EXIT                 */
+*%VSAMACB: ;
+*         2 * CHAR(0);                      /* GENERATE END OF ACB  */
+*     %GOTO ACBEXEND;                       /* EXIT*/
+* /*                                                                */
+* /*                  ASSEMBLER VSAM ACB EXTENSION
+*
+         MACRO
+         IFGACBVS &AM=
+         AIF   ('&AM' NE 'VTAM').ENDACBX    IS IT VTAM
+         ISTACBEX                       YES, GET VTAM EXTENSION
+*
+.ENDACBX ANOP
+         MEND
+*              END OF VSAM ACB EXTENSION                            */
+*%ACBEXEND: ;
+*

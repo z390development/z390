@@ -1,0 +1,159 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IHBOPLST &NULL,&OPRNDS,&NAME,&MF=I
+         GBLB  &IHBSWA,&IHBSWB
+         GBLC  &IHBNO
+         LCLC  &GNAME,&AA,&BB
+         LCLA  &A,&B,&C,&D,&E,&ATTRN
+&ATTRN   SETA  N'&OPRNDS
+&GNAME   SETC  'IHB'.'&SYSNDX'
+         AIF   ('&MF' EQ 'L').CONTA
+         AIF   ('&MF' EQ 'I').IROUT
+         AGO   .EROUT
+.ERROR1  IHBERMAC 35,&IHBNO,&MF             MF PARAMETER BAD
+         MEXIT
+.ERROR2  IHBERMAC 69,&IHBNO                 REG. NOT. W/ MF=L
+         MEXIT
+.CONTA   AIF   ('&NAME' EQ '').NONAME
+&NAME    DS    0F
+.NONAME  ANOP
+         AIF   ('&OPRNDS'(1,1) NE '(').CONTXY
+         AIF   ('&OPRNDS'(2,1) EQ ',').SKIPC
+.CONTXY  AIF   (&ATTRN GT 1).LROUT
+&B       SETA  0-1
+         AGO   .NEAREND
+.LROUT   AIF   ('&OPRNDS(&B+1)' EQ '').SKIPC
+&AA      SETC  '&OPRNDS(&B+1)'
+         AIF   ('&AA'(1,1) EQ '(').ERROR2
+         DC    A(&OPRNDS(&B+1))      PROB.PROG.PARAMETER
+         AGO   .AROUND
+.SKIPC   DC    A(0)                              PROB. PROG. PARAMETER
+.AROUND  AIF   (&B+2 EQ &ATTRN).NEAREND
+&B       SETA  &B+1
+         AGO   .LROUT
+.NEAREND AIF   ('&OPRNDS(&B+2)' EQ '').SKIPD
+&AA      SETC  '&OPRNDS(&B+2)'
+         AIF   ('&AA'(1,1) EQ '(').ERROR2
+         DC    B'&IHBSWA.0000000'                SET VL SWITCH BIT
+         DC    AL3(&OPRNDS(&B+2))   PROB.PROG.PARAMETER
+         AGO   .END
+.SKIPD   DC    B'&IHBSWA.0000000'                SET VL SWITCH BIT
+         DC    AL3(0)                            PROB. PROG. PARAMETER
+         AGO   .END
+.IROUT   AIF   ('&OPRNDS'(1,1) NE '(').LOOPC
+         AIF   ('&OPRNDS'(2,1) EQ ',').SKIPA
+.LOOPC   AIF   ('&OPRNDS(&B+1)' EQ '').SKIPA
+&AA      SETC  '&OPRNDS(&B+1)'
+         AIF   ('&AA'(1,1) NE '(').SKIPA
+         ST    &OPRNDS(&B+1),&GNAME+&C           STORE INTO PARAM. LIST
+.SKIPA   AIF   (&B+1 EQ &ATTRN).THRU
+&B       SETA  &B+1
+&C       SETA  &C+4
+         AGO   .LOOPC
+.THRU    AIF   (NOT &IHBSWA).CONTON
+         AIF   ('&OPRNDS(&B+1)' EQ '').CONTON
+         AIF   ('&OPRNDS(&B+1)'(1,1) NE '(').CONTON
+         MVI   &GNAME+&C,X'80'                   SET LAST WORD BIT ON
+.CONTON  CNOP  0,4
+         BAL   1,&GNAME.A                        LOAD LIST ADDR IN REG1
+&GNAME   EQU   *
+         AIF   (&ATTRN GT 1).LOOP2
+&D       SETA  0-1
+         AGO   .NEARDON
+.LOOP2   AIF   ('&OPRNDS'(1,2) EQ '(,').SKIPB
+.LOOPD   AIF   ('&OPRNDS(&D+1)' EQ '').SKIPB
+&AA      SETC  '&OPRNDS(&D+1)'
+         AIF   ('&AA'(1,1) EQ '(').SKIPB
+         DC    A(&OPRNDS(&D+1))    PROB.PROG.PARAMETER
+         AGO   .NEXTSTP
+.SKIPB   DC    A(0)                              PROB. PROG. PARAMETER
+.NEXTSTP AIF   (&D+2 EQ &ATTRN).NEARDON
+&D       SETA  &D+1
+         AGO   .LOOPD
+.NEARDON AIF   ('&OPRNDS(&D+2)' EQ '').SKIPE
+         AIF   ('&OPRNDS(&D+2)'(1,1) EQ '(').SKIPF
+         DC    B'&IHBSWA.0000000'                SET VL SWITCH BIT
+         DC    AL3(&OPRNDS(&D+2))                PROB. PROG. PARAMETER
+         AGO   .ENDOF
+.SKIPE   DC    B'&IHBSWA.0000000'                SET VL SWITCH BIT
+         DC    AL3(0)                            PROB. PROG. PARAMETER
+         AGO   .ENDOF
+.SKIPF   DC    A(0)                              PROB. PROG. PARAMETER
+.ENDOF   ANOP
+&GNAME.A EQU   *
+         AGO   .END
+.EROUT   AIF   (N'&MF NE 2).ERROR1
+         AIF   ('&MF(1)' NE 'E').ERROR1
+         IHBINNRA &MF(2)                    LOAD REG 1 WITH LIST ADDR
+.CONTB   AIF   ('&OPRNDS' EQ '').END
+         AIF   (&IHBSWB).CONTC
+         AIF   ('&OPRNDS'(1,1) NE '(').LOOPA
+         AIF   ('&OPRNDS'(2,1) EQ ',').CONTD
+.LOOPA   AIF   ('&OPRNDS(&B+1)' EQ '').CONTD
+&AA      SETC  '&OPRNDS(&B+1)'
+         AIF   ('&AA'(1,1) EQ '(').ISREG
+&A       SETA  &C+14
+         LA    &A,&OPRNDS(&B+1)   PICKUP PARAMETER
+         AGO   .CONTE
+.ISREG   ANOP
+         AIF   (&C EQ 0).CONTQQ
+.GOBACK  ANOP
+&A       SETA  &C+14
+         LR    &A,&OPRNDS(&B+1)                  PICK UP PARAMETER
+.CONTE   AIF   (&B+1 EQ &ATTRN).ALLDUN
+         AIF   (&C EQ 0-14).CONTF
+         AIF   (&C EQ 1).CONTG
+&C       SETA  &C+1
+         AGO   .CONTH
+.CONTQQ  AIF   (&B+1 EQ &ATTRN).CONTXX
+         AIF   ('&OPRNDS(&B+2)' NE '').GOBACK
+.CONTXX  ANOP
+         ST    &OPRNDS(&B+1),&E.(0,1)            STORE INTO PARAM. LIST
+         AGO   .INCRMT
+.CONTG   ANOP
+&C       SETA  0-14
+.CONTH   ANOP
+&B       SETA  &B+1
+&D       SETA  &D+4
+         AGO   .LOOPA
+.CONTD   AIF   (&C EQ 0).INCRMT
+         AIF   (&C NE 1).PUTTWO
+         ST    14,&E.(0,1)                       STORE INTO PARAM. LIST
+         AGO   .INCRMT
+.PUTTWO  STM   14,15,&E.(1)                      STORE INTO PARAM. LIST
+         AGO   .INCRMT
+.CONTF   STM   14,0,&E.(1)                       STORE INTO PARAM. LIST
+.INCRMT  AIF   (&B+1 EQ &ATTRN).QUIT
+&C       SETA  0
+&B       SETA  &B+1
+&D       SETA  &D+4
+&E       SETA  &D
+         AGO   .LOOPA
+.ALLDUN  AIF   (&C NE 0).CONTJ
+         ST    14,&E.(0,1)                       STORE INTO PARAM. LIST
+         AGO   .QUIT
+.CONTJ   ANOP
+&A       SETA  &C+14
+         STM   14,&A,&E.(1)                      STORE INTO PARAM. LIST
+         AGO   .QUIT
+.CONTC   AIF   ('&OPRNDS'(1,1) NE '(').LOOPB
+         AIF   ('&OPRNDS'(2,1) EQ ',').CONTK
+.LOOPB   AIF   ('&OPRNDS(&B+1)' EQ '').CONTK
+&AA      SETC  '&OPRNDS(&B+1)'
+         AIF   ('&AA'(1,1) EQ '(').ISAREGA
+         LA    0,&OPRNDS(&B+1)    PICKUP  PARAMETER
+         ST    0,&D.(0,1)                        STORE INTO PARAM. LIST
+         AGO   .CONTK
+.ISAREGA ANOP
+         ST    &OPRNDS(&B+1),&D.(0,1)            STORE INTO PARAM. LIST
+.CONTK   AIF   (&B+1 EQ &ATTRN).QUIT
+&B       SETA  &B+1
+&D       SETA  &D+4
+         AGO   .LOOPB
+.QUIT    AIF   (NOT &IHBSWA).END
+&A       SETA  &ATTRN*4-4
+         MVI   &A.(1),X'80'                      SET LAST WORD BIT ON
+         AGO   .END
+.END     ANOP
+         MEND
+

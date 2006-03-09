@@ -1,0 +1,118 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 11/23/05                                                 *
+*********************************************************************
+* RUN BMKMVCL INSTRUCTION LOOP BENCHMARK TO MEASURE NVCL EXECUTION
+* SPEED - SEE STATISTICS GENERATED ON BMKINS.LOG.  PERFORAMCE LOG:
+*   10/23/05 Z390 V1.0.07 3.0 GHZ P4
+*             LM4   =  2007 NANOSECONDS
+*             LM4MV = 64450 NANOSECONDS ORIGINAL BYTE LOOP
+*   10/23/05 Z390 V1.0.07A3.0 GHZ P4
+*             LM4   =  1924 NANOSECONDS
+*             LM4MV =  4550 NANOSECONDS USING BLOCK COPY AND FILL
+*********************************************************************
+* 10/23/05 RPI 108 SPEED UP MVCL USING BULK COPY AND FILL
+*********************************************************************
+         MACRO
+&INS     BMKINS
+         MVC  DINSOP,=CL5'&INS' 
+&OPS     SETC &SYSLIST(1)
+&I       SETA 1
+.OPLOOP  ANOP
+&I       SETA &I+1
+         AIF  (&I GT N'&SYSLIST).OPEND
+&OPS     SETC '&OPS,&SYSLIST(&I)'
+         AGO  .OPLOOP
+.OPEND   ANOP
+         BAL  R12,BMKINIT
+&INS     &INS &OPS
+         BCT  R11,&INS
+         BAL  R12,BMKCALC
+         MEND
+BMKINS1  SUBENTRY
+         WTO  'BMKINS1 CALC Z390 INSTRUCTION SPEEDS'
+         L     R0,=A(REPS)
+         CVD   R0,PWORK
+         ED    DREPS,PWORK+4
+         WTO   MF=(E,WTOREPS)
+         BAL   R12,BMKINIT
+BCT      BCT   R11,BCT            CALC BCT ONLY
+         BAL   R12,BMKCALC
+         MVC   BCT_NS,INS_NS      SAVE BCT MICS FOR OTHER CALCS
+         SR    R3,R3
+         LA    R4,1
+ALCR     BMKINS R3,R4
+         SGR    R3,R3
+         LG     R4,=FL8'1'
+ALCGR    BMKINS R3,R4
+         SR    R3,R3
+         LA    R4,1
+SLBR     BMKINS R3,R4
+         SGR    R3,R3
+         LG     R4,=FL8'1'
+SLBGR    BMKINS R3,R4
+*
+* END OF MACROS
+*
+         WTO  'BMKINS1 ENDED OK'
+         SUBEXIT
+*
+* INIT - SET START TIME AND COUNT
+*
+BMKINIT  EQU  *                        TIME NS,TOD_NS_START
+         L    R11,=A(REPS)
+         SR   R0,R0
+         SPM  R0     SUPRESS OVERFLOW
+         BR   R12
+*
+* CALC AND DISPLAY INSTRUCTION RATE
+*
+BMKCALC  EQU  *
+         TIME NS,TOD_NS_END
+         LG   R1,TOD_NS_END
+         SG   R1,TOD_NS_START
+         DSGF R0,=A(REPS)
+         SG   R1,BCT_NS
+         STG  R1,INS_NS
+         CVDG R1,PWORK16
+         MVC  DRATE,MASK
+         ED   DRATE,PWORK16+13
+         WTO  MF=(E,WTORATE)
+         BR   R12
+*
+* COMMON DATA
+*
+         EQUREGS
+*
+* SET REPS TO MINIMUM VALUE REQUIRED TO GET WITHIN DESIRED ACCURACY
+*
+*   1.  Using original TIME MIC counter based on Java current time mics
+*       reguired 10 M reps to get within 5% accuracy
+*   2.  Using new TIME NS counter based on Java nanoTime only
+*       requires 1 M reps to get within 5% accuracy
+*
+REPS     EQU 2000000
+PWORK    DS   D  
+PWORK16  DS   DL16
+TOD_NS_START DS  D
+TOD_NS_END   DS  D
+INS_NS   DS  D
+BCT_NS   DS  FL8'0'
+WTOREPS  DC  AL2(REPEND-*,0)
+         DC  C'INSTRUCTION REPITITIONS = '
+DREPS    DC  X'4020202020202020'
+REPEND   EQU *         
+WTORATE  DC  AL2(RATEEND-*,0)
+         DC  C'INS '
+DINSOP   DC  CL5'BCT',C' ='
+DRATE    DC  CL6' ZZZZN'
+         DC  C' NANOSECONDS'
+RATEEND  EQU *         
+MASK     DC  X'402020202120'
+DATA1    DC   CL256' '
+DATA2    DC   CL256' ' 
+PDATA    DC   PL8'0'
+         END      

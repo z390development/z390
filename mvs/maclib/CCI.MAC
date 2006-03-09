@@ -1,0 +1,16 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    CCI   &C,&I                    COMPARE COUNTER TO IMMED.
+         LCLA  &CT,&V
+&V       SETA  &I
+         AIF   (&V LE 65535).CC0
+         MNOTE 8,'***  IHB421 IMMEDIATE VALUE EXCEEDS ALLOWED MAXIMUM'
+.CC0     ANOP
+&CT      SETA  16*&C
+         AIF   ('&C' LE '15').CC1
+         MNOTE 8,'***  IHB416  COUNTER VALUE MUST BE 0-15'
+&CT      SETA  0
+.CC1     ANOP
+&NAME    DC    0H'0',X'AC',AL1(&CT),AL2(&I)
+         MEND
+

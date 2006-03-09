@@ -1,0 +1,504 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    IHBRDWRT &DECB,&TYPE,&DCB,&AREA,&LENGTH,&KEYADR,&RCDREF,&MF=I
+         GBLB  &IHBWR,&IHBS(4),&IHBT(2)
+         LCLB  &TYPRR,&TYPL,&WRTSW,&SWONE,&SWTWO,&SWTHREE,&SWFOUR
+         LCLB  &S1,&S2,&S3,&ISW,&ESW
+         LCLB  &A1,&A2,&A3,&A4,&A5,&A6,&C1,&C2,&C3,&C4,&C5,&C6     000B
+         LCLB  &B1,&B2,&B3,&B4,&B5,&B6,&B7,&B8,&B9,&B10,&B11,&B12,&B13
+         LCLB  &B14,&B15,&B16,&B17,&B18,&B19,&B20,&B21,&B22,&B23
+         LCLB  &B24,&B25,&B26,&B27,&B28,&B29,&B30,&B31,&B32    @ZA41588
+         LCLB  &TSW                                                000B
+         LCLB  &CTR0SW                                          YA01248
+         LCLA  &CNT                                                000B
+         LCLC  &CHAR,&CHARS,&REG                                   000B
+         LCLA  &CTR
+&TYPRR   SETB  (&IHBT(2))
+&TYPL    SETB  (&IHBT(1))
+&WRTSW   SETB  (&IHBWR)
+&SWONE   SETB  (&IHBS(1))
+&SWTWO   SETB  (&IHBS(2))
+&SWTHREE SETB  (&IHBS(3))
+&SWFOUR  SETB  (&IHBS(4))
+&ESW     SETB  ('&MF(1)' EQ 'E')
+&ISW     SETB  ('&MF' EQ 'I')
+         AIF   ((N'&AREA NE 2 AND N'&LENGTH EQ 2) OR (N'&AREA EQ 2 AND C
+               N'&LENGTH NE 2)).E13                                000B
+&TSW     SETB  (N'&AREA EQ 2)                                      000B
+         AIF   ('&MF' EQ 'I').IROUT
+         AIF   ('&MF(1)' EQ 'E').EROUT
+         AIF   ('&MF' NE 'L').E1
+&NAME    DS    0F
+         AGO   .ILROUT
+.E2      IHBERMAC 87
+         MEXIT
+.E3      ANOP
+.E4      ANOP
+.E5      ANOP
+.E6      IHBERMAC 48,,&TYPE
+         MEXIT
+.E7      IHBERMAC 69
+         MEXIT
+.E13     IHBERMAC 47                                               000B
+         MEXIT                                                     000B
+.ILROUT  AIF   ('&DECB'(1,1) EQ '(').E2
+&DECB    DC    A(0)                              EVENT CONTROL BLOCK
+&S1      SETB  ('&KEYADR' EQ '''S''')
+&S2      SETB  ('&AREA(1)' EQ '''S''')                             000B
+&A2      SETB  ('&AREA' EQ '')                                     000B
+         AIF   (&A2).GNEXT                                         000B
+&A1      SETB  (N'&AREA NE 2)                                      000B
+         AIF   ('&AREA'(1,1) NE '(' OR &A1).GNEXT                  000B
+&A2      SETB  ('&AREA(1)' EQ '')                                  000B
+         AIF   (&A2).SKIPA                                         000B
+&A4      SETB  ('&AREA(1)'(1,1) EQ '(')                            000B
+.SKIPA   ANOP                                                      000B
+&A3      SETB  ('&AREA(2)' EQ '')                                  000B
+         AIF   (&A3).GNEXT                                         000B
+&A5      SETB  ('&AREA(2)'(1,1) EQ '(')                            000B
+&A6      SETB  ('&AREA(2)' EQ '''S''')                             000B
+.GNEXT   ANOP                                                      000B
+&S3      SETB  ('&LENGTH(1)' EQ '''S''')                           000B
+&C2      SETB  ('&LENGTH' EQ '')                                   000B
+         AIF   (&C2).GTNEXT                                        000B
+&C1      SETB  (N'&LENGTH NE 2)                                    000B
+         AIF   ('&LENGTH'(1,1) NE '(' OR &C1).GTNEXT               000B
+&C2      SETB  ('&LENGTH(1)' EQ '')                                000B
+         AIF   (&C2).SKIPC                                         000B
+&C4      SETB  ('&LENGTH(1)'(1,1) EQ '(')                          000B
+.SKIPC   ANOP                                                      000B
+&C3      SETB  ('&LENGTH(2)' EQ '')                                000B
+         AIF   (&C3).GTNEXT                                        000B
+&C5      SETB  ('&LENGTH(2)'(1,1) EQ '(')                          000B
+&C6      SETB  ('&LENGTH(2)' EQ '''S''')                           000B
+.GTNEXT  ANOP                                                      000B
+         DC    BL1'&S1&S2&S3'
+         AIF   (NOT &ISW AND &SWONE AND '&TYPE' EQ 'T').OUTQUIK
+.SHORTRT AIF   (&SWTWO+&SWTHREE+&SWFOUR NE 1).E3
+         AIF   (&SWFOUR).TXXX
+         AIF   (&SWTHREE).TXX
+.*
+.*      THIS TABLE FOR TWO CHARACTER                   OPER.  OPTYPE
+.*      OPERATION TYPES                                NAME  (DEC)
+.*
+&B1      SETB  ('&TYPE'(2,1) EQ 'B' AND (NOT &WRTSW))  RD TB    11
+&B2      SETB  ('&TYPE'(2,1) EQ 'B' AND &WRTSW)        WR TB    00
+&B3      SETB  ('&TYPE'(2,1) EQ 'I' AND (NOT &WRTSW))  RD TI    01
+&B4      SETB  ('&TYPE'(2,1) EQ 'I' AND &WRTSW)        WR TI    02
+&B5      SETB  ('&TYPE'(2,1) EQ 'T' AND (NOT &WRTSW))  RD TT    03
+&B6      SETB  ('&TYPE'(2,1) EQ 'T' AND &WRTSW)        WR TT    04
+&B7      SETB  ('&TYPE'(2,1) EQ 'V' AND (NOT &WRTSW))  RD TV    05
+&B8      SETB  ('&TYPE'(2,1) EQ 'V' AND &WRTSW)        WR TV    06
+&B9      SETB  ('&TYPE'(2,1) EQ 'P' AND (NOT &WRTSW))  RD TP    07
+&B10     SETB  ('&TYPE'(2,1) EQ 'A' AND &WRTSW)        WR TA    08
+&B11     SETB  ('&TYPE'(2,1) EQ 'S' AND (NOT &WRTSW))  RD TS    09
+&B12     SETB  ('&TYPE'(2,1) EQ 'S' AND &WRTSW)        WR TS    14
+&B13     SETB  ('&TYPE'(2,1) EQ 'N' AND &WRTSW)        WR TN    10
+&B14     SETB  ('&TYPE'(2,1) EQ 'R' AND &WRTSW)        WR TR    10
+&B15     SETB  ('&TYPE'(2,1) EQ 'L' AND &WRTSW)        WR TL    12
+&B16     SETB  ('&TYPE'(2,1) EQ 'D' AND &WRTSW)        WR TD    16
+&B17     SETB  ('&TYPE'(2,1) EQ 'Q' AND (NOT &WRTSW))  RD TQ    21
+&B18     SETB  ('&TYPE'(2,1) EQ 'Q' AND &WRTSW)        WR TQ    22
+&B19     SETB  ('&TYPE'(2,1) EQ 'W' AND &WRTSW)        WR TW    26
+&B20     SETB  ('&TYPE'(2,1) EQ 'C' AND (NOT &WRTSW))  RD TC    17
+&B21     SETB  ('&TYPE'(2,1) EQ 'C' AND &WRTSW)        WR TC    28
+&B22     SETB  ('&TYPE'(2,1) EQ 'E' AND (NOT &WRTSW))  RD TE    07
+&B23     SETB  ('&TYPE'(2,1) EQ 'M' AND (NOT &WRTSW))  RD TM    17
+         AIF   (&B1+&B2+&B3+&B4+&B5+&B6+&B7+&B8+&B9+&B10+&B11+&B12+&B13*
+               +&B14+&B15+&B16+&B17+&B18+&B19+&B20+&B21+&B22+&B23 NE 1)X
+               .E4
+&CTR     SETA  11*&B1+&B3+2*&B4+3*&B5+4*&B6+5*&B7+6*&B8+7*&B9+8*&B10
+&CTR     SETA  &CTR+9*&B11+14*&B12+10*&B13+10*&B14+12*&B15+16*&B16
+&CTR     SETA  &CTR+21*&B17+22*&B18+26*&B19+17*&B20+28*&B21+7*&B22
+&CTR     SETA  &CTR+17*&B23
+         AGO   .ALLDONE
+.*
+.*      THIS TABLE FOR THREE CHARACTER                 OPER.  OPTYPE
+.*      OPERATION TYPES                                NAME  (DEC)
+.*
+.TXX     ANOP
+&B1      SETB  ('&TYPE'(2,2) EQ 'IR' AND (NOT &WRTSW)) RD TIR  129
+&B2      SETB  ('&TYPE'(2,2) EQ 'IR' AND &WRTSW)       WR TIR  130
+&B3      SETB  ('&TYPE'(2,2) EQ 'TR' AND (NOT &WRTSW)) RD TTR  131
+&B4      SETB  ('&TYPE'(2,2) EQ 'TR' AND &WRTSW)       WR TTR  132
+&B5      SETB  ('&TYPE'(2,2) EQ 'VR' AND (NOT &WRTSW)) RD TVR  133
+&B6      SETB  ('&TYPE'(2,2) EQ 'VR' AND &WRTSW)       WR TVR  134
+&B7      SETB  ('&TYPE'(2,2) EQ 'PR' AND (NOT &WRTSW)) RD TPR  135
+&B8      SETB  ('&TYPE'(2,2) EQ 'TA' AND (NOT &WRTSW)) RD TTA   13
+&B9      SETB  ('&TYPE'(2,2) EQ 'LR' AND &WRTSW)       WR TLR  140
+&B10     SETB  ('&TYPE'(2,2) EQ 'IO' AND &WRTSW)       WR TIO   12
+&B11     SETB  ('&TYPE'(2,2) EQ 'IV' AND &WRTSW)       WR TIV   13
+&B12     SETB  ('&TYPE'(2,2) EQ 'CO' AND &WRTSW)       WR TCO   14
+&B13     SETB  ('&TYPE'(2,2) EQ 'TV' AND &WRTSW)       WR TTV   15
+&B14     SETB  ('&TYPE'(2,2) EQ 'US' AND &WRTSW)       WR TUS   18
+&B15     SETB  ('&TYPE'(2,2) EQ 'IX' AND &WRTSW)       WR TIX   18
+&B16     SETB  ('&TYPE'(2,2) EQ 'VO' AND &WRTSW)       WR TVO   18
+&B17     SETB  ('&TYPE'(2,2) EQ 'TL' AND (NOT &WRTSW)) RD TTL   19
+&B18     SETB  ('&TYPE'(2,2) EQ 'TX' AND &WRTSW)       WR TTX   20
+&B19     SETB  ('&TYPE'(2,2) EQ 'PL' AND (NOT &WRTSW)) RD TPL   23
+&B20     SETB  ('&TYPE'(2,2) EQ 'IQ' AND (NOT &WRTSW)) RD TIQ   25
+&B21     SETB  ('&TYPE'(2,2) EQ 'RV' AND (NOT &WRTSW)) RD TRV   27
+&B22     SETB  ('&TYPE'(2,2) EQ 'SR' AND &WRTSW)       WR TSR  142
+&B23     SETB  ('&TYPE'(2,2) EQ 'CW' AND (NOT &WRTSW)) RD TCW   30
+&B24     SETB  ('&TYPE'(2,2) EQ 'IE' AND &WRTSW)       WR TIE   12
+&B25     SETB  ('&TYPE'(2,2) EQ 'TE' AND &WRTSW)       WR TTE   14
+&B26     SETB  ('&TYPE'(2,2) EQ 'BR' AND (NOT &WRTSW)) RD TBR  139
+&B27     SETB  ('&TYPE'(2,2) EQ 'MP' AND (NOT &WRTSW)) RD TMP   25
+&B28     SETB  ('&TYPE'(2,2) EQ 'BP' AND (NOT &WRTSW)) RD TBP   19
+&B29     SETB  ('&TYPE'(2,2) EQ 'RM' AND &WRTSW)  WR TRM 11     YA01571
+&B30     SETB  ('&TYPE'(2,2) EQ 'QM' AND (NOT &WRTSW)) RD TQM09 YA01552
+&B31     SETB  ('&TYPE'(2,2) EQ 'SA' AND &WRTSW)      WRT SA 06 ZA25924
+&B32     SETB  ('&TYPE'(2,2) EQ 'SF' AND &WRTSW)               @ZA41588
+         AIF   (&B1+&B2+&B3+&B4+&B5+&B6+&B7+&B8+&B9+&B10+&B11+&B12+&B13*
+               +&B14+&B15+&B16+&B17+&B18+&B19+&B20+&B21+&B22+&B23+&B24+X
+               &B25+&B26+&B27+&B28+&B29+&B30+&B31+&B32 NE 1).E5 ZA99999
+&CTR     SETA  129*&B1+130*&B2+131*&B3+132*&B4+133*&B5+134*&B6
+&CTR     SETA  &CTR+135*&B7+13*&B8+140*&B9+12*&B10+13*&B11+14*&B12
+&CTR     SETA  &CTR+15*&B13+18*&B14+18*&B15+18*&B16+19*&B17+20*&B18
+&CTR     SETA  &CTR+23*&B19+25*&B20+27*&B21+142*&B22+30*&B23+12*&B24
+&CTR     SETA  &CTR+14*&B25+139*&B26+25*&B27+19*&B28             A41108
+&CTR     SETA  &CTR+11*&B29+9*&B30+6*&B31+8*&B32               @ZA41588
+         AGO   .ALLDONE
+.*
+.*      THIS TABLE FOR FOUR CHARACTER                  OPER.  OPTYPE
+.*      OPERATION TYPES                                NAME  (DEC)
+.*
+.TXXX    ANOP
+&B1      SETB  ('&TYPE'(2,3) EQ 'IVX' AND &WRTSW)      WR TIVX  29
+&B2      SETB  ('&TYPE'(2,3) EQ 'TVX' AND &WRTSW)      WR TTVX  31
+&B3      SETB  ('&TYPE'(2,3) EQ 'IXR' AND &WRTSW)      WR TIXR 146
+&B4      SETB  ('&TYPE'(2,3) EQ 'TXR' AND &WRTSW)      WR TTXR 148
+         AIF   (&B1+&B2+&B3+&B4 NE 1).E6
+&CTR     SETA  29*&B1+31*&B2+146*&B3+148*&B4
+.ALLDONE ANOP
+         AIF   (&ESW).ERETURN
+.OUTQUIK DC    AL1(&CTR)                         TYPE FIELD
+         AIF   (&ISW).IRETURN
+         AIF   (&C4 OR &C5 OR &C6).E13                             000B
+         AIF   ('&LENGTH' EQ '' OR &S3 OR &C2).NOLENG              000B
+         AIF   ('&LENGTH'(1,1) EQ '(' AND &C1).E13                 000B
+         DC    AL2(&LENGTH(1))                   LENGTH            000B
+         AGO   .CHKDCB
+.NOLENG  DC    AL2(0)                            LENGTH
+.CHKDCB  AIF   ('&DCB' EQ '').NODCB
+         AIF   ('&DCB'(1,1) EQ '(').E7
+         DC    A(&DCB)                           DCB ADDRESS
+         AGO   .CHKAREA
+.NODCB   DC    A(0)                              DCB ADDRESS
+.CHKAREA AIF   (&A4 OR &A5 OR &A6).E13                             000B
+         AIF   ('&AREA' EQ '' OR &S2 OR &A2).NOAREA                000B
+         AIF   ('&AREA'(1,1) EQ '(' AND &A1).E13                   000B
+         DC    A(&AREA(1))                       AREA ADDRESS      000B
+         AGO   .PTRWD
+.NOAREA  DC    A(0)                              AREA ADDRESS
+.PTRWD   DC    A(0)                              ERROR INFO. FIELD ADDR
+         AIF   (&S1 OR '&KEYADR' EQ '').NOKEY
+         AIF   ('&KEYADR'(1,1) EQ '(').E7
+         DC    A(&KEYADR)                        TERMINAL LIST ADDRESS
+         AGO   .CHKARG2
+.NOKEY   DC    A(0)                              TERMINAL LIST ADDRESS
+.CHKARG2 AIF   ('&RCDREF' EQ '').NOARG2
+         AIF   ('&RCDREF'(1,1) EQ '(').E7
+         DC    AL2(&RCDREF)                      LINE NUMBER
+         AGO   .RPFLD
+.NOARG2  DC    AL2(0)                            LINE NUMBER
+.RPFLD   DC    AL2(0)                            RESPONSE FIELD
+         DC    AL1(0)                   TP-OP CODE
+         DC    AL1(0)                   ERROR STATUS
+         DC    AL2(0)                   CSW STATUS
+         DC    AL4(0)                   CURRENT ADDR LIST PTR
+         DC    AL4(0)                   CURRENT ADDR POLL PTR
+         AIF   (NOT &TSW).END                                      000B
+         DC    AL2(0)                   RESERVED                   000B
+.CHKLN2  AIF   ('&LENGTH' EQ '').NOLEN2                            000B
+         AIF   ('&LENGTH'(1,1) NE '(').NOLEN2                      000B
+         AIF   (&C5 OR &C3).NOLEN2                                 000B
+         DC    AL2(&LENGTH(2))                   WLENGTH           000B
+         AGO   .CHKAR2                                             000B
+.NOLEN2  DC    AL2(0)                            WLENGTH           000B
+.CHKAR2  AIF   ('&AREA' EQ '').NOAREA2                             000B
+         AIF   ('&AREA'(1,1) NE '(').NOAREA2                       000B
+         AIF   (&A3).NOAREA2                                       000B
+         DC    A(&AREA(2))                       WRITE AREA ADDR   000B
+         AGO   .END                                                000B
+.NOAREA2 DC    A(0)                              WRITE AREA ADDR   000B
+         AGO   .END
+.IROUT   CNOP  0,4
+         AIF   (&TSW).LNGDECB                                      000B
+&NAME    BAL   1,*+44
+         AGO   .ILROUT                                             000B
+.LNGDECB ANOP                                                      000B
+&NAME    BAL   1,*+52                                              000B
+         AGO   .ILROUT
+.IRETURN ANOP
+         AIF   (&C6).E13                                           000B
+         AIF   ('&LENGTH' EQ '').ZLENGTH                           000B
+         AIF   ('&LENGTH'(1,1) EQ '(' AND N'&LENGTH EQ 1).ZLENGTH  000B
+         AIF   (&S3 OR &C2 OR &C4).ZLENGTH                         000B
+         DC    AL2(&LENGTH(1))                   LENGTH            000B
+         AGO   .CKDCB
+.ZLENGTH DC    AL2(0)                            LENGTH
+.CKDCB   AIF   ('&DCB' EQ '').E9
+         AIF   ('&DCB'(1,1) EQ '(').ZDCB
+         DC    A(&DCB)                           DCB ADDRESS
+         AGO   .CKAREA
+.ZDCB    DC    A(0)                              DCB ADDRESS
+.CKAREA  AIF   ('&AREA' EQ '').ZAREA                               000B
+         AIF   ('&AREA'(1,1) EQ '(' AND N'&AREA EQ 1).ZAREA        000B
+         AIF   (&S2 OR &A2 OR &A4).ZAREA                           000B
+         DC    A(&AREA(1))                       AREA ADDRESS      000B
+         AGO   .ZPTRWD
+.ZAREA   DC    A(0)                              AREA ADDRESS
+.ZPTRWD  DC    A(0)                              ERROR INFO. FIELD ADDR
+         AIF   ('&KEYADR' EQ '').ZKEY
+         AIF   (&S1 OR '&KEYADR'(1,1) EQ '(' OR '&KEYADR' EQ '').ZKEY
+         DC    A(&KEYADR)                        TERMINAL LIST ADDRESS
+         AGO   .CKARG2
+.ZKEY    DC    A(0)                              TERMINAL LIST ADDRESS
+.CKARG2  AIF   ('&RCDREF' EQ '').E12
+         AIF   ('&RCDREF'(1,1) EQ '(').ZARG2
+         DC    AL2(&RCDREF)                      LINE NUMBER
+         AGO   .EXCPCD
+.ZARG2   DC    AL2(0)                            LINE NUMBER
+.EXCPCD  DC    AL2(0)                            RESPONSE FIELD
+         DC    AL1(0)                   TP-OP CODE
+         DC    AL1(0)                   ERROR STATUS
+         DC    AL2(0)                   CSW STATUS
+         DC    AL4(0)                   CURRENT ADDR LIST PTR
+         DC    AL4(0)                   CURRENT ADDR POLL PTR
+         AIF   (NOT &TSW).TSTLNG                                   000B
+         DC    AL2(0)                   RESERVED                   000B
+         AIF   ('&LENGTH' EQ '').ZLEN2                             000B
+.CKLEN2  AIF   (('&LENGTH'(1,1) EQ '(' AND N'&LENGTH EQ 1) OR          C
+               '&LENGTH'(1,1) NE '(').ZLEN2                        000B
+         AIF   (&C3 OR &C5).ZLEN2                                  000B
+         DC    AL2(&LENGTH(2))                   WLENGTH           000B
+         AGO   .CKAREA2                                            000B
+.ZLEN2   DC    AL2(0)                            WLENGTH           000B
+.CKAREA2 AIF   ('&AREA' EQ '').ZAREA2                              000B
+         AIF   (('&AREA'(1,1) EQ '(' AND N'&AREA EQ 1) OR              C
+               '&AREA'(1,1) NE '(').ZAREA2                         000B
+         AIF   (&A3 OR &A5 OR &A6).ZAREA2                          000B
+         DC    A(&AREA(2))                       WRITE AREA ADDR   000B
+         AGO   .TSTLNG                                             000B
+.ZAREA2  DC    A(0)                              WRITE AREA ADDR   000B
+.TSTLNG  AIF   ('&LENGTH' EQ '').TSTDCB                            000B
+         AIF   ('&LENGTH'(1,1) NE '(' AND N'&LENGTH EQ 1).TSTDCB   000B
+         AIF   (N'&LENGTH EQ 2).LREGS                              000B
+         STH   &LENGTH(1),6(0,1)                 STORE LENGTH      000B
+         AGO   .TSTDCB                                             000B
+.LREGS   AIF   (NOT &C4).LCHK2                                     000B
+&CNT     SETA  K'&LENGTH(1)                                        000B
+&REG     SETC  '&LENGTH(1)'(2,&CNT-2)                              000B
+.OUT3    STH   &REG,6(0,1)                       STORE LENGTH      000B
+.LCHK2   AIF   (NOT (&C5 AND &TSW)).TSTDCB                         000B
+&CNT     SETA  K'&LENGTH(2)                                        000B
+&REG     SETC  '&LENGTH(2)'(2,&CNT-2)                              000B
+.OUT4    STH   &REG,42(0,1)                      STORE WLENGTH     000B
+.TSTDCB  AIF   ('&DCB'(1,1) NE '(').TSTAREA
+         ST    &DCB(1),8(0,1)                    STORE DCB ADDRESS
+.TSTAREA AIF   ('&AREA' EQ '').TSTKEY                              000B
+         AIF   ('&AREA'(1,1) NE '(' AND N'&AREA EQ 1).TSTKEY       000B
+         AIF   (N'&AREA EQ 2).REGS                                 000B
+         ST    &AREA(1),12(0,1)                  STORE AREA ADDR   000B
+         AGO   .TSTKEY                                             000B
+.REGS    AIF   (NOT &A4).CHK2                                      000B
+&CNT     SETA  K'&AREA(1)                                          000B
+&REG     SETC  '&AREA(1)'(2,&CNT-2)                                000B
+.OUT1    ST    &REG,12(0,1)                      STORE AREA ADDR   000B
+.CHK2    AIF   (NOT (&A5 AND &TSW)).TSTKEY                         000B
+&CNT     SETA  K'&AREA(2)                                          000B
+&REG     SETC  '&AREA(2)'(2,&CNT-2)                                000B
+.OUT2    ST    &REG,44(0,1)                      STORE WAREA ADDR  000B
+.TSTKEY  AIF   ('&KEYADR' EQ '').TSTARG2
+         AIF   ('&KEYADR'(1,1) NE '(').TSTARG2
+         ST    &KEYADR(1),20(0,1)                STORE TERM. LIST ADDR.
+.TSTARG2 AIF   ('&RCDREF'(1,1) NE '(').CONTA
+         STH   &RCDREF(1),24(0,1)                STORE LINE NUMBER
+.CONTA   AIF   ('&DCB' EQ '').CONTAA
+         AIF   ('&DCB'(1,1) EQ '(').REGDCB
+&CTR     SETA  K'&DCB
+         AIF   ('&DCB'(&CTR,1) EQ ')').CONTAA
+         L     15,&DCB+48                        LOAD RDWRT ROUT ADDR
+.FINISH  ANOP                                                    A38557
+         AIF   ('&AREA' EQ '' OR &A2).FINISH1                    A38557
+         AIF   ('&LENGTH' EQ '' OR &C2).FINISH1                  A38557
+         AIF   ('&TYPE' EQ 'T').WRTQCK                           A46830
+         AIF   ('&TYPE'(2,1) EQ 'Q' AND &WRTSW).WRTQCK           A46830
+.FINISH1 ANOP                                                   YA01248
+         AIF   (&CTR0SW).FINISH2                                YA01248
+         NI    4(1),X'F7'                                       YA01248
+.FINISH2 BALR  14,15                                             A38557
+         AGO   .END
+.CONTAA  L     15,8(0,1)
+         L     15,48(0,15)                       LOAD RDWR ROUT. ADDR.
+         AGO   .FINISH
+.REGDCB  L     15,48(0,&DCB(1))                  LOAD RDWR ROUT. ADDR.
+         AGO   .FINISH
+.WRTQCK  OI    4(1),X'08'                                        A38557
+         AGO   .FINISH2                                          A38557
+.EROUT   AIF   ('&DECB'(1,1) EQ '(').DECBREG
+&NAME    LA    1,&DECB                           LOAD DECB ADDRESS
+         AGO   .CONTB
+.DECBREG AIF   ('&DECB' EQ '(1)').NAMEIT
+&NAME    LR    1,&DECB(1)                        LOAD DECB ADDRESS
+         AGO   .CONTB
+.NAMEIT  AIF   ('&NAME' EQ '').CONTB
+&NAME    DS    0H
+.CONTB   ANOP
+&S1      SETB  ('&KEYADR' EQ '')
+&S2      SETB  ('&AREA(1)' EQ '')                                  000B
+&S3      SETB  ('&LENGTH(1)' EQ '')                                000B
+&CTR     SETA  4*&S1+2*&S2+&S3
+         AIF   (&CTR EQ 7).SETTYPE
+         AIF   (&CTR EQ 0).SETSW
+&S1      SETB  ('&KEYADR' EQ '''S''' OR '&KEYADR' EQ '')
+&S2      SETB  ('&AREA(1)' EQ '''S''' OR '&AREA(1)' EQ '')         000B
+&S3      SETB  ('&LENGTH(1)' EQ '''S''' OR '&LENGTH(1)' EQ '')     000B
+&CTR     SETA  4*&S1+2*&S2+&S3
+         AIF   (&CTR EQ 7).ORRT
+         NI    4(1),&CTR
+&CTR0SW  SETB  1                                                YA02145
+         AGO   .ORRT
+.SETSW   ANOP
+&B1      SETB  1
+.ORRT    ANOP
+&S1      SETB  ('&KEYADR' EQ '''S''')
+&S2      SETB  ('&AREA(1)' EQ '''S''')                             000B
+&S3      SETB  ('&LENGTH(1)' EQ '''S''')                           000B
+&CTR     SETA  4*&S1+2*&S2+&S3
+         AIF   (&B1).MVIRT
+         AIF   (&CTR EQ 0).SETTYPE
+         OI    4(1),&CTR
+         AGO   .SETTYPE
+.MVIRT   ANOP                                                   YA01248
+         MVI   4(1),&CTR                                        YA02145
+&CTR0SW  SETB  1                                                YA01248
+.SETTYPE ANOP                                                      000B
+&A2      SETB  ('&AREA' EQ '')                                     000B
+         AIF   (&A2).GMNEXT                                        000B
+&A1      SETB  (N'&AREA NE 2)                                      000B
+         AIF   ('&AREA'(1,1) NE '(' OR &A1).GMNEXT                 000B
+&A2      SETB  ('&AREA(1)' EQ '')                                  000B
+         AIF   (&A2).SKIPB                                         000B
+&A4      SETB  ('&AREA(1)'(1,1) EQ '(')                            000B
+.SKIPB   ANOP                                                      000B
+&A3      SETB  ('&AREA(2)' EQ '')                                  000B
+         AIF   (&A3).GMNEXT                                        000B
+&A5      SETB  ('&AREA(2)'(1,1) EQ '(')                            000B
+&A6      SETB  ('&AREA(2)' EQ '''S''')                             000B
+.GMNEXT  ANOP                                                      000B
+&C2      SETB  ('&LENGTH' EQ '')                                   000B
+         AIF   (&C2).GTTNEXT                                       000B
+&C1      SETB  (N'&LENGTH NE 2)                                    000B
+         AIF   ('&LENGTH'(1,1) NE '(' OR &C1).GTTNEXT              000B
+&C2      SETB  ('&LENGTH(1)' EQ '')                                000B
+         AIF   (&C2).SKIPD                                         000B
+&C4      SETB  ('&LENGTH(1)'(1,1) EQ '(')                          000B
+.SKIPD   ANOP                                                      000B
+&C3      SETB  ('&LENGTH(2)' EQ '')                                000B
+         AIF   (&C3).GTTNEXT                                       000B
+&C5      SETB  ('&LENGTH(2)'(1,1) EQ '(')                          000B
+&C6      SETB  ('&LENGTH(2)' EQ '''S''')                           000B
+.GTTNEXT ANOP                                                      000B
+         AIF   ('&TYPE' EQ 'T').LENTEST                            000B
+         AGO   .SHORTRT
+.ERETURN MVI   5(1),&CTR
+.LENTEST AIF   (&C6).E8                                            000B
+         AIF   ('&LENGTH' EQ '').XLENGTH                           000B
+         AIF   (&S3 OR &C2).OPER2                                  000B
+         AIF   ('&LENGTH'(1,1) EQ '(' AND N'&LENGTH EQ 1).ONREG    000B
+         AIF   ('&LENGTH'(1,1) NE '(' OR NOT &C4).OPERTYP          000B
+         AIF   (N'&LENGTH EQ 2).REG1                               000B
+.ONREG   STH   &LENGTH(1),6(0,1)                 STORE LENGTH      000B
+         AGO   .XLENGTH
+.REG1    ANOP                                                      000B
+&CNT     SETA  K'&LENGTH(1)                                        000B
+&REG     SETC  '&LENGTH(1)'(2,&CNT-2)                              000B
+.OUT5    STH   &REG,6(0,1)                       STORE LENGTH      000B
+         AGO   .TSTOP2                                             000B
+.OPERTYP AIF   (NOT (&TYPL AND NOT &C2)).MOVTYP                    000B
+         AIF   (&LENGTH(1) LE 4095).LASTR                          000B
+.MOVTYP  B     *+6                                                 000B
+         DC    AL2(&LENGTH(1))                                     000B
+         MVC   6(2,1),*-2                        MOVE IN LENGTH    000B
+         AGO   .NXTST                                              000B
+.LASTR   LA    14,&LENGTH(1).(0,0)                                 000B
+         STH   14,6(0,1)                         STORE LENGTH      000B
+.NXTST   AIF   (N'&LENGTH EQ 2).TSTOP2                             000B
+         AGO   .XLENGTH                                            000B
+.OPER2   AIF   (N'&LENGTH NE 2 OR &C3).XLENGTH                     000B
+.TSTOP2  AIF   (&C5).REG2                                          000B
+         AIF   (&C3).XLENGTH                                       000B
+         AIF   ('&LENGTH(2)'(1,1) LT '0').MOVTYP2                  000B
+         AIF   (&LENGTH(2) LE 4095).LASTR2                         000B
+.MOVTYP2 B     *+6                                                 000B
+         DC    AL2(&LENGTH(2))                                     000B
+         MVC   42(2,1),*-2                       MOVE IN WLENGTH   000B
+         AGO   .XLENGTH                                            000B
+.LASTR2  LA    14,&LENGTH(2).(0,0)                                 000B
+         STH   14,42(0,1)                        STORE WLENGTH     000B
+         AGO   .XLENGTH                                            000B
+.REG2    ANOP                                                      000B
+&CNT     SETA  K'&LENGTH(2)                                        000B
+&REG     SETC  '&LENGTH(2)'(2,&CNT-2)                              000B
+.OUT6    STH   &REG,42(0,1)                      STORE WLENGTH     000B
+.XLENGTH AIF   ('&DCB' EQ '').XDCB
+         AIF   ('&DCB'(1,1) EQ '(').DCBRG
+         LA    14,&DCB
+         ST    14,8(0,1)                         STORE DCB ADDRESS
+         AGO   .XDCB
+.DCBRG   ST    &DCB(1),8(0,1)                    STORE DCB ADDRESS
+.XDCB    AIF   ('&AREA' EQ '' OR &S2 OR &A2).XAREA                 000B
+         AIF   ('&AREA'(1,1) EQ '(' AND N'&AREA EQ 1).AREARG0      000B
+         AIF   (&A4).AREARG1                                       000B
+         LA    14,&AREA(1)                                         000B
+         ST    14,12(0,1)                        STORE AREA ADDR   000B
+         AGO   .XAREA                                              000B
+.AREARG0 ST    &AREA(1),12(0,1)                  STORE AREA ADDR   000B
+         AGO   .XAREA                                              000B
+.AREARG1 ANOP                                                      000B
+&CNT     SETA  K'&AREA(1)                                          000B
+&REG     SETC  '&AREA(1)'(2,&CNT-2)                                000B
+.OUT7    ST    &REG,12(0,1)                      STORE AREA ADDR   000B
+.XAREA   AIF   ('&AREA' EQ '' OR N'&AREA EQ 1 OR &A3 OR &A6).XAREA2 00B
+         AIF   (&A5).AREARG2                                       000B
+         LA    14,&AREA(2)                                         000B
+         ST    14,44(0,1)                        STORE WAREA ADDR  000B
+         AGO   .XAREA2                                             000B
+.AREARG2 ANOP                                                      000B
+&CNT     SETA  K'&AREA(2)                                          000B
+&REG     SETC  '&AREA(2)'(2,&CNT-2)                                000B
+.OUT8    ST    &REG,44(0,1)                      STORE WAREA ADDR  000B
+.XAREA2  AIF   ('&KEYADR' EQ '' OR &S1).XKEY                       000B
+         AIF   ('&KEYADR'(1,1) EQ '(').KEYRG
+         LA    14,&KEYADR
+         ST    14,20(0,1)                        STORE TERM. LIST ADDR.
+         AGO   .XKEY
+.KEYRG   ST    &KEYADR(1),20(0,1)                STORE TERM. LIST ADDR.
+.XKEY    AIF   ('&RCDREF' EQ '').CONTA
+         AIF   ('&RCDREF'(1,1) NE '(').NOREGB
+         STH   &RCDREF(1),24(0,1)                STORE LINE NUMBER
+         AGO   .CONTA
+.NOREGB  AIF   (NOT &TYPRR).LARGER
+         AIF   (&RCDREF GT 4095).LARGER
+         LA    14,&RCDREF.(0,0)
+         STH   14,24(0,1)                        STORE LINE NUMBER
+         AGO   .CONTA
+.LARGER  B     *+6
+         DC    AL2(&RCDREF)
+         MVC   24(2,1),*-2                       MOVE IN LINE NUMBER
+         AGO   .CONTA
+.E1      IHBERMAC 35,,&MF
+         MEXIT
+.E8      IHBERMAC 14
+         MEXIT
+.E9      IHBERMAC 6
+         MEXIT
+.E10     IHBERMAC 13
+         MEXIT
+.E11     IHBERMAC 32
+         MEXIT
+.E12     IHBERMAC 33
+.END     MEND
+

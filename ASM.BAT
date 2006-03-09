@@ -1,7 +1,10 @@
 rem asm run macro assembly to generate relocatible obj from mlc source 
-call mz390 %1 %2 %3 %4 %5 %6 %7 %8 %9 sysmac(mac) syscpy(mac)
+erase %1.bal
+erase %1.prn
+erase %1.obj
+call %~dps0mz390 %1  sysmac(%~dps0mac+.) syscpy(%~dps0mac+.) %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 1 goto mzerr
-call az390 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0az390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 1 goto azerr
 goto end
 :mzerr

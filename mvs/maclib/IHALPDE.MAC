@@ -1,0 +1,98 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO LPDEBSL;                                              /*
+         MACRO
+         IHALPDE
+LPDE     DSECT
+         SPACE 1
+***********************************************************************
+*              LINK PACK DIRECTORY ENTRY                              *
+*                                                                     *
+*            AOS/2 REL 2, 04/07/72, LEVEL=3                           *
+***********************************************************************
+         SPACE 1
+LPDECHN  DS    F -            ADDRESS OF NEXT LPDE IN CHAIN OF LPDE
+*                             SYNONYMS
+LPDERBP  DS    F -            RESERVED
+LPDENAME DS    CL8 -          EITHER MODULE NAME OR ALIAS NAME
+LPDENTP  DS    F -            RELOCATED ENTRY POINT ADDRESS
+LPDEXLP  DS    F -            RESERVED
+LPDEUSE  DS    H -            COUNT FIELD - COUNT EQUALS ONE
+LPDERES1 DS    H -            RESERVED FOR FUTURE USE
+LPDEATTR DS    B -            ATTRIBUTE FLAGS
+LPDENIP  EQU   X'80' -        MODULE LOADED BY NIP
+LPDEREN  EQU   X'20' -        MODULE IS REENTERABLE
+LPDESER  EQU   X'10' -        MODULE IS SERIALLY REUSABLE
+LPDEMIN  EQU   X'04' -        THIS IS A MINOR LPDE
+LPDENLR  EQU   X'01' -        NOT LOADABLE ONLY
+LPDEATT2 DS    B -            SECOND ATTRIBUTE FLAG BYTE
+LPDEXLE  EQU   X'20' -        EXTENT LIST BUILT - MAIN STORAGE
+*                             OCCUPIED BY MODULE IS DESCRIBED THEREIN
+LPDERLC  EQU   X'10' -        LPDE CONTAINS A RELOCATED ALIAS ENTRY
+*                             POINT ADDRESS
+LPDESYSL EQU   X'02' -        AUTHORIZED LIBRARY MODULE
+LPDEAUTH EQU   X'01' -        PROGRAM AUTHORIZATION FLAG         ICB360
+LPDEATT3 DS    H -            RESERVED
+LPDEMJNM DS    0CL8 -         MAJOR LPDE ENTRY POINT NAME WHEN
+*                             LPDEMIN=1 OR 8-BYTE EXTENT LIST IF
+*                             LPDEMIN=0
+LPDEXTLN DS    F -            LENGTH OF MAIN STORAGE BLOCK IN WHICH
+*                             MODULE RESIDES
+LPDEXTAD DS    A -            ADDRESS OF MAIN STORAGE BLOCK IN WHICH
+*                             MODULE RESIDES
+         MEND  , */
+*%LPDEBSL :  ;
+*
+* /* *************************************************************** */
+* /*           LINK PACK DIRECTORY ENTRY                             */
+* /*                                                                 */
+* /*         AOS/2 REL 2, 04/07/72, LEVEL=3                          */
+* /* *************************************************************** */
+*
+*DECLARE
+*  1 LPDE     BASED(LPDEPTR),
+*   2 LPDECHN     PTR(31),               /* ADDRESS OF NEXT LPDE IN
+*                                           CHAIN OF LPDE SYNONYMS   */
+*   2 LPDERBP     PTR(31),               /* RESERVED                 */
+*   2 LPDENAME    CHAR(8),               /* EITHER MODULE NAME OR
+*                                           ALIAS NAME               */
+*   2 LPDENTP      PTR(31),              /* RELOCATED ENTRY POINT
+*                                           ADDRESS                  */
+*   2 LPDEXLP     PTR(31),               /* RESERVED                 */
+*   2 LPDEUSE     PTR(15),               /* COUNT FIELD - COUNT IS 1 */
+*   2 *    PTR(15),                      /* RESERVED FOR FUTURE USE  */
+*   2 LPDEATTR    CHAR(1),               /* ATTRIBUTE FLAGS          */
+*     3 LPDENIP  BIT(1),                 /* MODULE LOADED BY NIP     */
+*     3 *        BIT(1),                 /* RESERVED                 */
+*     3 LPDEREN  BIT(1),                 /* MODULE IS REENTERABLE    */
+*     3 LPDESER  BIT(1),                 /* MODULE IS SERIALLY
+*                                           REUSABLE                 */
+*     3 *        BIT(1),                 /* RESERVED                 */
+*     3 LPDEMIN  BIT(1),                 /* THIS IS A MINOR LPDE     */
+*     3 *        BIT(1),                 /* RESERVED                 */
+*     3 LPDENLR  BIT(1),                 /* NOT LOADABLE ONLY        */
+*   2 LPDEATT2    CHAR(1),               /* SECOND ATTRIBUTE FLAG
+*                                           BYTE                     */
+*     3 *        BIT(2),                 /* RESERVED                 */
+*     3 LPDEXLE  BIT(1),                 /* EXTENT LIST BUILT -
+*                                           MAIN STORAGE OCCUPIED
+*                                           BY MODULE IS DESCRIBED
+*                                           THEREIN                  */
+*     3 LPDERLC  BIT(1),                 /* LPDE CONTAINS A RELOCATED
+*                                           ALIAS ENTRY POINT ADDRESS*/
+*     3 *        BIT(1),                 /* RESERVED                 */
+*     3 *        BIT(1),                 /* RESERVED                 */
+*     3 LPDESYSL BIT(1),                 /* AUTHORIZED LIBRARY MODULE*/
+*     3 LPDEAUTH BIT(1),                 /* PROGRAM AUTHORIZATION
+*                                           FLAG               ICB360*/
+*   2 LPDEATT3    FIXED(15),             /* RESERVED          VS02728*/
+*   2 LPDEMJNM    CHAR(8)  BDY(WORD),    /* MAJOR LPDE ENTRY POINT
+*                                           NAME WHEN LPDEMIN=1 OR
+*                                           8-BYTE EXTENT LIST IF
+*                                           LPDEMIN=0                */
+*    3 LPDEXTLN    FIXED(31),            /* LENGTH OF MAIN STORAGE
+*                                           BLOCK IN WHICH MODULE
+*                                           RESIDES                  */
+*    3 LPDEXTAD    PTR(31);              /* ADDRESS OF MAIN STORAGE
+*                                           BLOCK IN WHICH MODULE
+*                                           RESIDES                  */
+

@@ -1,0 +1,24 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    FREEPOOL &PAR,&DUMMY=
+.*         RELEASE 23 DELETIONS/CHANGES
+.*         RELEASE 22 DELETIONS/CHANGES
+.*         RELEASE 21 DELETIONS/CHANGES
+.*    001800-002800
+         AIF   ('&PAR' EQ '').E1
+&NAME    IHBINNRA &PAR
+         L     15,20(0,1)              LOAD BUFCB ADDRESS
+         OI    23(1),1                 INDICATE NO BUFCB ADDR
+         SR    14,14                   CLEAR REGISTER
+         IC    14,5(0,15)              COMPUTE SIZE
+         MH    14,6(0,15)              TO BE FREED
+         LA    0,8(0,14)               ACCOUNT FOR BCB
+         TM    4(15),X'40'             IS BUFCB 16 BYTES       @ZA19719
+         BNO   *+8                     BRANCH IF BUFCB = 8 BYTES
+         LA    0,16(0,14)              ADJUST SIZE PLUS 16
+         LA    1,0(0,15)               LOAD AREA ADDRESS
+         SVC   10                      ISSUE FREEMAIN SVC
+         MEXIT
+.E1      IHBERMAC 01
+         MEND
+

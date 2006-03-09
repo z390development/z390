@@ -1,0 +1,32 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&SYMBOL  SCHEDULE  &SRB=,&SCOPE=LOCAL
+&SYMBOL  DS    0H
+         AIF   ('&SRB' EQ '').ERROR2
+         AIF   ('&SRB' EQ '(1)').LOOP
+         AIF   ('&SRB'(1,1) EQ '(').REG
+         LA    1,&SRB                   GET ADDR OF SRB
+         AGO   .LOOP
+.REG     ANOP
+         LR    1,&SRB(1)                GET ADDR OF SRB
+.LOOP    ANOP
+         L     15,CVTPTR(0,0)           GET CVT ADDR
+         AIF   ('&SCOPE' EQ 'GLOBAL').GLBL
+         AIF   ('&SCOPE' EQ 'LOCAL').LCL
+         IHBERMAC  1001,SCOPE,&SCOPE
+         MEXIT
+.ERROR2  ANOP                           SRB REQ'D-NOT SPECIFIED
+         IHBERMAC 1006,SRB
+         MEXIT
+.GLBL    ANOP
+         L     15,CVTGSMQ-CVTMAP(0,15)  GET ADDR OF GSMQ
+         AGO   .LOOP2
+.LCL     ANOP
+         L     15,CVTLSMQ-CVTMAP(0,15)  GET ADDR OF LSMQ
+.LOOP2   ANOP
+         L     0,0(0,15)                GET CONTENTS HEADER
+         ST    0,SRBFLNK-SRBSECT(0,1)   STORE INTO SRB
+         CS    0,1,0(15)                PLACE SRB ON STACK
+         BNE   *-8                      LOOP IF HEADER CHANGED
+         MEND
+

@@ -1,0 +1,58 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 11/30/05                                                 *
+*********************************************************************
+*
+* RUN DEMOGUI4 WITH GUI OPTION TO DEMO GUI SCREEN TN3270 SUPPORT
+*
+* DEMOGUI4 DISPLAYS MESSAGES AT SPECIFIED ROW AND COLUMN USING
+* TN3270 SUPPORT FOR 3270 DATA STREAMS WHICH CAN BE READ AND
+* WRITTEN TO GUI SCREEN VIEW VIA TGET AND TPUT MACROS WITH ASIS
+* AND FULLSCR OPTIONS.
+*********************************************************************
+* 11/30/05 RPI47 ADD DEMO OF TN3270 TPUT AND TGET GUI SUPPORT
+* 02/16/06 RPI136 UPDATE TO CONFORM WITH TN3270 SPECS.
+*********************************************************************
+DEMOGUI4 SUBENTRY
+         GUAM  WINDOW,TITLE,'DEMOGUI4 TN3270 SUPPORT VIA TGET/TPUT'
+         TPUT  MSG1,MSG1L,FULLSCR
+LOOP     EQU   *
+         TPUT  MSG2,MSG2L,FULLSCR
+         TGET  INPUT,L'INPUT,ASIS,WAIT
+         CLI   INPUT,PF3     EXIT ON PF3
+         BE    EXIT
+         CLI   INPUT,ENTER   IGNORE IF NOT ENTRY WITH TEXT FIELD
+         BNE   LOOP
+         LA    R2,REPLY
+         LA    R3,REPLYL
+         LA    R4,INPUT+3+3  FIRST FIELD DATA AFTER (KEY,SBA,SF,SBA)
+         LR    R5,R1
+         AHI   R5,-6
+         ICM   R5,8,=C' '    PAD REPLY WITH SPACES
+         MVCL  R2,R4
+         TPUT  MSG3,MSG3L,FULLSCR
+         CLC   REPLY(3),=C'END'
+         BNE   LOOP          EXIT IF REPLY IS END
+EXIT     EQU   *
+         SUBEXIT
+INPUT    DS    XL100
+MSG1     TN3270 ESC,ERAWRT,WCC,(SBA,2,10),(SF,ATPRTEXT)
+         DC    C'DEMOGUI4 TEST TN3270 GUI INTERFACE'
+MSG1L    EQU   *-MSG1
+MSG2     TN3270 ESC,(SBA,4,10),(SF,ATPRTEXT)       
+         DC    C'TEXT OR END='
+         TN3270 (SF,ATUPTEXT)
+         DC    C'???'
+         TN3270 (SBA,4,24),IC
+MSG2L    EQU   *-MSG2
+MSG3     TN3270 ESC,(SBA,6,10),(SF,ATPRTEXT)       
+REPLY    DC    CL40' '
+REPLYL   EQU   *-REPLY
+MSG3L    EQU   *-MSG3
+         TN3270 SYMBOLS DEFINE TN3290 CONTROL AND ATTRIBUTE CODES
+         GUAM   SYMBOLS DEFINE GUI MCS, SCREEN, AND GRAPH CODES
+         EQUREGS
+         END

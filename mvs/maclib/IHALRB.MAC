@@ -1,0 +1,801 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*         %GOTO  LRB0;           /*  BILINGUAL LRB MACRO
+        MACRO
+        IHALRB   &LIST=NO
+              PUSH PRINT
+*            */
+*%LRB0: ;
+*/*********************************************************
+*
+*          R M S  L O G R E C  R E C O R D  M A C R O
+*
+*    STATUS
+*        OS/VS2 REL 2-LEVEL 2 - 8/6/73 (PTM-02577)
+*
+*    METHOD OF ACCESS
+*
+*        PL/S - DCL  LRBPTR  PTR
+*               IF CHANNEL CHECK HANDLER SECTION IS TO BE USED
+*               POINTER LRBCVPTR (NOTE: ANY NAME MAY BE USED, LRBCVPTR
+*               IS JUST AN EXAMPLE) MUST BE SET BY USER AS FOLLOWS:
+*               DCL LRBCVPTR PTR
+*               LRBCVPTR = ADDR(LRBCCLOG) + LRBCLOGL
+*               RESPECIFY LRBCVAR BASED (LRBCVPTR)
+*        BAL - IHALRB  (MARCO CALL)
+*              USING     LRB,REGA
+*              LOAD REGA WITH LRB ADDRESS
+*              IF CHANNEL CHECK HANDLER SECTION IS TO BE USED
+*              THE FOLLOWING MUST BE DONE BY THE USER
+*
+*              LA  REGB,LRBCCLOG      OBTAIN ADDRESS OF LRBCCLOG
+*              LH  REGC,LRBCLOGL      OBTAIN LENGTH OF LOGOUT
+*              AR  REGB,REGC          ADD LENGTH TO STARTING ADDRESS
+*              USING  LRBCFT,REGB
+*
+*              WHERE REGA AND REGB ARE ANY REGISTER OTHER THAN 0,
+*
+*    F.E.'S
+*        MICROFICHE LISTINGS - IHALRB
+*
+*    DEVELOPERS
+*        BAL LISTING  - SPECIFY LIST=YES ON MACRO CALL
+*        PL/S LISTING - SPECIFY %IHALIST='YES' BEFORE INCLUDE
+*
+*        FOR INTEGRATION, A LISTING MUST NOT BE REQUESTED UNLESS
+*        YOUR MODULE CREATES THE MACRO.
+*
+*
+*    CHANGE-ACTIVITY
+*      C033100-033000,066000,141500,152000,181300,184800       @ZA34554
+*      C206500,229600,245100-245300,310000,323000,345300       @ZA34554
+*      C350300,363000                                          @ZA34554
+*      A141680-142310,310100-310200                            @ZA34554
+*      C315570,315830,149600,149770                            @ZA34554
+*      C066000,151500,181300,206700                            @ZA36587
+*
+*************************************************************/
+*%GOTO LRB1;   /*
+          AIF ('&LIST' EQ 'YES').LRB1A
+          PRINT OFF
+.LRB1A    ANOP
+LRB      DSECT
+*
+*******************************************************************
+*                                                                 *
+*                 COMMON HEADER SECTION                           *
+*                                                                 *
+*******************************************************************
+*
+LRBHTYPE DS    X'0'          TYPE OF RECORD
+*     RECORD TYPE EQUATES
+LRBHREC  EQU   X'60'               DDR RECORD
+LRBHMDR  EQU   X'90'               MDR RECORD
+LRBHMIH  EQU   X'70'               MIH RECORD
+LRBHCCH  EQU   X'21'               CCH RECORD
+LRBHMCH  EQU   X'13'               MCH RECORD
+LRBHTER  EQU   X'81'         SYSTEM TERMINATION RECORD
+LRBHSRS  EQU   X'84'               SYSTEM RESTARTABLE WAIT     @ZA34554
+LRBHMCF  EQU   X'A0'               MCH FRAME RECORD            @ZA34554
+LRBHCCF  EQU   X'B0'               CCH FRAME RECORD            @ZA34554
+LRBHSFW  EQU   X'40'               4X TYPE RECORDS ARE SOFTWARE TYPE
+*                                  MAPPED BY IHAHDR            @ZA34554
+LRBHSFR  EQU   X'4F'               "                         " @ZA34554
+*
+LRBHREL  DS    X'0'          RELEASE NUMBER
+LRBHSYS  EQU   LRBHREL                 SYSTEM TYPE
+*     EQUATES FOR LRBHSYS
+LRBHOS   EQU   X'0'                 OS SYSTEM
+LRBHDOS   EQU   X'20'                DOS SYSTEM
+LRBHVS1   EQU   X'40'                OS/VS1 SYSTEM
+LRBHCP67  EQU   X'60'                CP67 SYSTEM
+LRBHVS2   EQU   X'80'                OS/VS2 SYSTEM
+*
+LRBHSW0  DS    X'0'          INDEPENDENT SWITCH BYTE
+*     EQUATES FOR LRBHSW0
+LRBHMORE EQU   X'80'               MULTIPLE RECORDS
+LRBHNS   EQU   X'40'               NS MACHINE
+LRBHTMC  EQU   X'08'               TIME MACRO USED
+*
+LRBHSW1  DS    X'0'          DEPENDENT SWITCH BYTE 0
+*  DDR EQUATES FOR LRBHSW1
+LRBRPRIM EQU   X'80'         DDR PRIMARY STORAGE RECONFIG
+LRBRSEC  EQU   X'40'         DDR SEC STORAGE RECONFIG
+LRBROPER EQU   X'20'         DDR OPERATOR REQUEST RECONFIG
+LRBRSYSI EQU   X'10'         DDR PERMANENT ERROR REQUEST
+*   CCH EQUATES FOR LRBHSW1
+LRBCMESG EQU   X'80'         MESSAGE REQUEST
+LRBCINCO EQU   X'40'         RECORD INCOMPLETE
+LRBCNOSP EQU   X'10'         CHANNEL NOT SUPPORTED
+LRBCICUA EQU   X'08'         ILLEGAL CUA
+LRBCDATA EQU   X'04'         DATA OVERLAYED
+LRBCERPP EQU   X'02'         ERP IN PROGRESS
+*   MCH EQUATES FOR LRBHSW1
+LRBMSYST EQU   X'20'         SYSTEM TERMINATED
+*
+LRBHSW2  DS    X'0'          DEPENDENT SWITCH BYTE 1
+LRBMACT  EQU   LRBHSW2       MCH BUFFER ACTIVE FLAG
+*    MIH  EQUATES FOR LRBHSW2
+LRBNCEM  EQU   X'80'         PENDING CHANNEL END
+LRBNDEM  EQU   X'40'         PENDING DEVICE END
+*
+*  MDR EQUATES FOR LRBHSW2
+LRBD3330 EQU   X'01'                3330 TYPE
+LRBD3211 EQU   X'04'                3211 TYPE
+LRBD3340 EQU   X'09'                3340 TYPE
+LRBDICE  EQU   X'07'                3330C TYPE
+LRBD2946 EQU   X'F0'                2946 TYPE
+LRBD2948 EQU   X'F1'                2948 TYPE
+LRBD1006 EQU   X'F2'                1006 TYPE
+LRBD2703 EQU   X'F3'                2703 TYPE
+LRBD2969 EQU   X'F4'                2969 TYPE
+*
+LRBHSW3  DS    X'0'          DEPENDENT SWITCH BYTE 2
+LRBMCLB  EQU   LRBHSW3       LOGREC CLOBBER FLAG (INDICATES LOGREC
+*                            BUFFER OVERLAYED)
+*
+LRBHCNT  DS    X'0'          PHYSICAL RECORDS PER LOGICAL REC CNT
+         DS    X'0'          RESERVED
+LRBHDATE DS    X'00000000'   DATE
+LRBHTIME DS    X'00000000'   TIME
+*
+         DS    0D
+LRBHCPID DS    0XL8 .        STIDP OPERAND FIELD
+         DS    XL1 .         RESERVED
+LRBHCSER DS    XL3 .         CPU SERIAL NUMBER
+LRBHMDL  DS    XL2 .         CPU MODEL NUMBER
+LRBHMCEL DS    XL2 .         MAXIMUM MCEL LENGTH
+*
+LRBBASE  DS    0C  .         END OF HEADER                     @ZA36587
+*
+*******************************************************************
+*                                                                 *
+*                 MACHINE CHECK HANDLER RECORD                    *
+*                                                                 *
+*******************************************************************
+*
+LRBMMCH  ORG   LRBBASE
+LRBMLNH  DS    F .           LENGTH OF LOGREC RECORD
+LRBMWSC  DS    XL4 .         WAIT STATE CODE
+*
+LRBMCEIA DS    0XL4 .        MACHINE CHECK ERROR INDICATOR AREA
+*
+LRBMTERM DS    XL1 .         TERMINAL ERROR FLAGS
+*
+*        EQU   X'80'         RESERVED
+*        EQU   X'40'         RESERVED
+LRBMTTHR EQU   X'20'         HARD ERROR THRESHOLD FLAG         @G55CP2P
+LRBMTSEC EQU   X'10' .       SECONDARY ERROR FLAG
+LRBMTCKS EQU   X'08' .       CHECK STOP FLAG
+LRBMTWRN EQU   X'04' .       POWER WARNING FLAG
+LRBMTDMG EQU   X'02' .       SYSTEM DAMAGE FLAG
+LRBMTINV EQU   X'01' .       INVALID LOGOUT FLAG (SET WHEN LRBMCIC=0 )
+*
+LRBMHARD DS    XL1 .         HARD MACHINE ERROR FLAGS
+*
+LRBMHHRD EQU   X'80' .       ASSUMED HARD ERROR FLAG
+*        EQU   X'40'         RESERVED
+*        EQU   X'20'         RESERVED
+LRBMHSD  EQU   X'10' .       SYSTEM DAMAGE FLAG                @G555P2M
+LRBMHINV EQU   X'08' .       REGISTER OR PSW INVALID FLAG
+LRBMHSTO EQU   X'04' .       HARD STORAGE FAILURE FLAG
+LRBMHSPF EQU   X'02' .       HARD PROTECTION KEY ERROR FLAG
+LRBMHIPD EQU   X'01' .       INSTRUCTION PROCESSING DAMAGE FLAG
+*
+LRBMINTM DS    XL1 .         INTERMEDIATE ERROR FLAGS
+*
+*        EQU   X'80'         RESERVED
+*        EQU   X'40'         RESERVED
+*        EQU   X'20'         RESERVED
+*        EQU   X'10'         RESERVED
+LRBMITOD EQU   X'08' .       TOD CLOCK ERROR FLAG
+LRBMICKC EQU   X'04' .       CLOCK COMPARATOR ERROR FLAG
+LRBMICTM EQU   X'02' .       CPU TIMER ERROR FLAG
+LRBMIL80 EQU   X'01' .       INTERVAL TIMER ERROR FLAG
+*
+LRBMSOFT DS    XL1 .         SOFT MACHINE ERROR FLAGS
+*
+LRBMSSFT EQU   X'80' .       ASSUMED SOFT ERROR FLAG
+*        EQU   X'40'         RESERVED
+*        EQU   X'20'         RESERVED
+*        EQU   X'10'         RESERVED
+LRBMSEXD EQU   X'08' .       EXTERNAL DAMAGE FLAG
+LRBMSECC EQU   X'04' .       ECC CORRECTED STORAGE ERROR FLAG
+LRBMSHIR EQU   X'02' .       HIR CORRECTED PROCESSOR ERROR FLAG
+LRBMSBUF EQU   X'01' .       BUFFER ERROR FLAG
+*
+LRBMPDAR DS    XL1 .         PDAR DATA (SUPPLIED BY RTM)
+*
+*        EQU   X'80'         RESERVED
+*        EQU   X'40'         RESERVED
+*        EQU   X'20'         RESERVED
+LRBMINVP EQU   X'10' .       STORAGE RECONFIGURED - PAGE INVALIDATED
+LRBMRSRC EQU   X'08' .       STORAGE RECONFIGURATION STATUS AVAILABLE
+*                              (FOLLOWING TWO BYTES ARE MEANINGFULL)
+LRBMRSRF EQU   X'04' .       STORAGE RECONFIGURATION NOT ATTEMPTED
+*        EQU   X'02'         RESERVED
+*        EQU   X'01'         RESERVED
+*
+LRBMRSR1 DS    XL1 .         STORAGE RECONFIGURATION STATUS BYTE 1
+*
+*        EQU   X'80'         RESERVED
+*        EQU   X'40'         RESERVED
+*        EQU   X'20'         RESERVED
+*        EQU   X'10'         RESERVED
+*        EQU   X'08'         RESERVED
+*        EQU   X'04'         RESERVED
+LRBMSER  EQU   X'02' .       STORAGE ERROR WAS ALREADY SET IN FRAME
+LRBMCHNG EQU   X'01' .       FRAME HAD CHANGE INDICATOR ON
+*
+LRBMRSR2 DS    XL1 .         STORAGE RECONFIGURATION STATUS BYTE 2
+*
+LRBMOFLN EQU   X'80' .       FRAME IS OFFLINE OR SCHEDULED TO GO
+*                              OFFLINE
+LRBMINTC EQU   X'40' .       INTERCEPT - FRAME IS SCHEDULED TO GO
+*                              OFFLINE, HAS A PERMANENT STORAGE ERROR,
+*                              OR IS SCHEDOLED FOR V=R STATUS
+LRBMSPER EQU   X'20' .       PERMANENT ERROR OCCURS IN FRAME
+LRBMNUCL EQU   X'10' .       FRAME CONTAINS PERMANENTLY RESIDENT
+*                              SYSTEM STORAGE
+LRBMFSQA EQU   X'08' .       FRAME IS IN USE FOR SQA
+LRBMLSQA EQU   X'04' .       FRAME IS IN USE FOR LSQA
+LRBMPGFX EQU   X'02' .       FRAME CONTAINS PAGE FIXED DATA
+LRBMVEQR EQU   X'01' .       FRAME IS IN USE FOR V=R OR IS SCHEDULED
+*                              FOR V=R
+*
+LRBMPWL  DS    XL1 .         PHYSICAL WORD LENGTH (CHECKING BLOCK SIZE)
+LRBMMOSW DS    XL8 .         MACHINE CHECK OLD PSW (FROM STORAGE
+*                              LOCATIONS 48-55)
+*
+LRBMFLO  DS    0XL280 .      MACHINE CHECK FIXED LOGOUT AREA (MOVED
+*                              FROM STORAGE LOCATIONS 232-511)
+*
+LRBMCIC  DS    0XL8 .        MACHINE CHECK INTERRUPT CODE (MOVED FROM
+*                              STORAGE LOCATIONS 232-239)
+*
+         DS    XL1 .         1ST BYTE OF LRBMCIC
+*
+LRBMFSD  EQU   X'80' .       SYSTEM DAMAGE
+LRBMFPD  EQU   X'40' .       PROCESSING DAMAGE
+LRBMFSR  EQU   X'20' .       SYSTEM RECOVERY
+LRBMFTD  EQU   X'10' .       TIMER DAMAGE
+LRBMFCD  EQU   X'08' .       CLOCK DAMAGE
+LRBMFED  EQU   X'04' .       EXTERNAL DAMAGE
+*        EQU   X'02'         RESERVED
+LRBMFDG  EQU   X'01' .       DEGRADATION
+*
+         DS    XL1 .         2ND BYTE OF LRBMCIC
+*
+LRBMFWN  EQU   X'80' .       POWER WARNING
+*        EQU   X'40'         RESERVED
+*        EQU   X'20'         RESERVED
+*        EQU   X'10'         RESERVED
+*        EQU   X'08'         RESERVED
+*        EQU   X'04'         RESERVED
+LRBMIBU  EQU   X'02' .       BACK UP INDICATOR
+LRBMIDY  EQU   X'01' .       DELAYED
+*
+         DS    XL1 .         3RD BYTE OF LRBMCIC
+*
+LRBMFSE  EQU   X'80' .       STORAGE ERROR
+LRBMFSC  EQU   X'40' .       STORAGE ERROR CORRECTED
+LRBMFKE  EQU   X'20' .       KEY ERROR
+*        EQU   X'10'         RESERVED
+LRBMVWP  EQU   X'08' .       PSW EMWP VALIDITY
+LRBMVMS  EQU   X'04' .       PSW MASKS AND KEY VALIDITY
+LRBMVPM  EQU   X'02' .       PROGRAM MASKS AND CONDITION CODE VALIDITY
+LRBMVIA  EQU   X'01' .       INSTRUCTION ADDRESS VALIDITY
+*
+         DS    XL1 .         4TH BYTE OF LRBMCIC
+*
+LRBMVFA  EQU   X'80' .       FAILING STORAGE ADDR VALIDITY
+LRBMVRC  EQU   X'40' .       REGION CODE VALIDITY
+LRBMVED  EQU   X'20' .       EXTERNAL DAMAGE VALIDITY        @G51BP2O
+LRBMVFP  EQU   X'10' .       FLOATING POINT REG VALIDITY
+LRBMVGR  EQU   X'08' .       GENERAL PURPOSE REG VALIDITY
+LRBMVCR  EQU   X'04' .       CONTROL REG VALIDITY
+LRBMVLG  EQU   X'02' .       LOGOUT (MCEL) VALIDITY
+LRBMVST  EQU   X'01' .       STORAGE LOGICAL VALIDITY
+*
+         DS    XL1 .         5TH BYTE OF LRBMCIC               @ZA34554
+*
+LRBMNVF  EQU   X'80' .       LRB MAY NOT BE VALID              @ZA34554
+*        EQU   X'40'         RESERVED                          @ZA34554
+*        EQU   X'20'         RESERVED                          @ZA34554
+*        EQU   X'10'         RESERVED                          @ZA34554
+*        EQU   X'08'         RESERVED                          @ZA34554
+*        EQU   X'04'         RESERVED                          @ZA34554
+*        EQU   X'02'         RESERVED                          @ZA34554
+*        EQU   X'01'         RESERVED                          @ZA34554
+*
+         DS    XL1 .         6TH BYTE OF LRBMCIC
+*
+*        EQU   X'80'         RESERVED
+*        EQU   X'40'         RESERVED
+*        EQU   X'20'         RESERVED
+*        EQU   X'10'         RESERVED
+*        EQU   X'08'         RESERVED
+*        EQU   X'04'         RESERVED
+LRBMVPT  EQU   X'02' .       PROCESSOR TIMER VALIDITY
+LRBMVCC  EQU   X'01' .       CLOCK COMPARATOR VALIDITY
+*
+LRBMCELL DS    XL2 .         MACHINE CHECK EXTENDED LOGOUT LENGTH
+*                              (ACTUAL LENGTH OF MCEL DATA STORED FOR
+*                              THIS MACHINE CHECK INTERRUPTION)
+         DS    XL4 .         DATA FROM 240-243              @G51BP2O
+LRBMEDC  DS    XL1 .         DATA FROM 244                  @G51BP2O
+*                            EXTERNAL DAMAGE CODE           @G51BP2O
+*        EQU   X'80' .       RESERVED                       @G51BP2O
+*        EQU   X'40' .       RESERVED                          @ZA34554
+LRBMEXSR EQU   X'20' .       EXTERNAL SECONDARY REPORT      @G51BP2O
+LRBMCNOP EQU   X'10' .       CHANNEL NOT OPERATIONAL        @G51BP2O
+LRBMCCF  EQU   X'08' .       CHANNEL CNTL FAILURE           @G51BP2O
+LRBMINST EQU   X'04' .       I/O INSTRUCTION TIMEOUT        @G51BP2O
+LRBMINTR EQU   X'02' .       I/O INTERRUPTION TIMEOUT       @G51BP2O
+*        EQU   X'01' .       RESERVED                          @ZA34554
+         DS    XL3 .         RESERVED ALWAYS ZERO           @G51BP2O
+LRBMFSA  DS    A .           FAILING STORAGE ADDRESS (MOVED FROM
+*                              STORAGE LOCATIONS 248-251)
+         DS    XL260 .       DATA MOVED FROM STORAGE LOCATIONS 252-511
+LRBMCEL  DS    0X .          MACHINE CHECK EXTENDED LOGOUT AREA
+*                              (LENGTH IS MODEL DEPENDENT AND VARIES
+*                              FROM MACHINE CHECK TO MACHINE CHECK FOR
+*                              A GIVEN MODEL - THE ACTUAL LENGTH IS
+*                              CONTAINED IN THE HALFWORD FIELD
+*                              'LRBMCELL', THE MAXIMUM LENGTH IS
+*                              CONTAINED IN THE HALFWORD FIELD
+*                              'LRBHMCEL', AND THE MINIMUM LENGTH IS
+*                              ZERO)                           @ZA36587
+*******************************************************************
+*                                                                 *
+*                     RECONFIGURATION (DDR) RECORD                *
+*                                                                 *
+*******************************************************************
+*
+LRBRDDR   ORG  LRBBASE      RECONFIGURATION RECORD
+LRBRJOB   DS   CL8          'FROM' DEVICE USER'S JOB NAME
+LRBRVOL1  DS   CL6           VOLUME MOUNTED ON 'FROM' DEVICE
+LRBRVOL2  DS   CL6           VOLUME MOUNTED ON 'TO' DEVICE
+LRBRPH1   DS   CL1          PHYSICAL ID OF DEVICE
+LRBRCUA1  DS   CL3          PRIMARY CUA OF 'FROM' DEVICE
+LRBRDEV1  DS   CL4          'FROM' DEVICE TYPE
+LRBRPH2   DS   CL1          PHYSICAL ID OF 'TO' DEVICE
+LRBRCUA2  DS   CL3          PRIMARY CUA OF 'TO' DEVICE
+LRBRDEV2  DS   CL4          'TO' DEVICE TYPE
+*******************************************************************
+*                                                                 *
+*                 CHANNEL CHECK HANDLER RECORD                    *
+*                                                                 *
+*******************************************************************
+*
+LRBCCCH  ORG   LRBBASE       CHANNEL CHECK HANDLER
+LRBCJOB  DS    CL8           JOBNAME OF JOB WHOSE I/O RESULTED IN A
+*                            CHANNEL ERROR
+LRBCAIO  DS    CL16          ADDRESS OF ACTIVE I/O (2 BYTES/CHANNEL)
+LRBCFCCW DS    CL8           FAILING CCW
+LRBCFCSW DS    CL8           CSW STORED AT FAILURE
+LRBCECSW DS    F             EXTENDED CSW
+LRBCDEVT DS    F             DEVICE TYPE (FROM UCB)
+LRBCCHID DS    CL1           ID OF FAILING CHANNEL
+*                            00 CHANNEL TYPE UNKNOWN
+*                            01 INTEGRATED MULTIPLEXOR
+*                            02 INTEGRATED SELECTOR
+*                            03 INTEGRATED BLOCK MULTIPLEXOR
+*                            04 RESERVED
+*                            05 2860 SELECTOR
+*                            06 2870 MULTIPLEXOR
+*                            07 2880 BLOCK MULTIPLEXOR
+*                            08 NS SELECTOR
+*                            09 RESERVED
+*                            0A INTEGRATED FILE ADAPTER
+*                            0B-FF RESERVED
+LRBCCUA  DS    CL1           3 BYTE ADDRESS OF CHANNEL AND UNIT IN USE
+*                            AT TIME OF FAILURE
+LRBCCUA2 DS    CL2           2 BYTE ADDRESS OF CHANNEL AND UNIT IN USE
+*                            AT TIME OF FAILURE
+LRBCHCUA DS    H             CHANNEL AND UNIT ADDRESS LOGGED BY
+*                            HARDWARE
+LRBCLOGL DS    H             LENGTH OF CHANNEL LOGOUT
+LRBCCLOG DS    0C            CHANNEL LOGOUT.  LENGTH DEPENDENT UPON
+*                            CHANNEL TYPE                      @ZA36587
+LRBCFT   DS    CL2           CCH FOOTPRINTS
+LRBCRESD DS    CL2           RESERVED
+LRBCMPF1 DS    CL1           MP INFORMATION FLAG BYTE 1 RESERVED
+LRBCMPF2 DS    CL1           MP INFORMATION FLAG BYTE 2 RESERVED
+LRBCMPNO DS    CL2           NUMBER OF ACTIVE PROCESSORS
+LRBCMP   DS    16XL4         MP CPU ID AND CHANNEL STATUS, (FOUR BYTES
+*                            PER CPU)                          @ZA34554
+LRBCMPAR ORG   LRBCMP        ARRAY CONSISTS OF CPU ID AND CHANNEL
+*                            STATUS FOR EACH CPU               @ZA34554
+LRBCMPPA DS    CL2           ADDRESS OF CPU WITH A CHANNEL DETECTED
+*                            ERROR
+LRBCMPCS DS    CL2           CHANNEL STATUS (ONLINE/OFFLINE). OFFLINE
+*                            =1, BIT 0 = CHANNEL 0 ETC.
+*
+*         END OF CHANNEL CHECK HANDLER RECORD
+*
+*
+*******************************************************************
+*                                                                 *
+*                 MISSING INTERRUPTION HANDLER RECORD             *
+*                                                                 *
+*******************************************************************
+*
+LRBNMIH  ORG   LRBBASE
+LRBNJOB  DS    CL8           JOBNAME OF JOB WHOSE I/O WAS PENDING
+LRBNCUA2 DS   CL3          CUA USED TO ADDRESS THE DEVICE
+LRBNCUA1 DS    CL3         PRIMARY CUA
+LRBNVOL  DS    CL6         VOLUME SERIAL NUMBER
+LRBNDEVT DS    F             DEVICE TYPE (FROM UCB)
+LRBNINT  DS    CL8         TIME INTERVAL
+*
+*****************************************************************
+*                                                               *
+*             MISCELLANEOUS DATA RECORDER RECORD                *
+*                                                               *
+*****************************************************************
+*
+LRBDMDR  ORG   LRBBASE
+LRBDCUA1 DS    CL2         PRIMARY CUA
+LRBDVOL  DS    CL6         VOLUME SERIAL NUMBER
+LRBDSENS DS    CL24        DEVICE SENSE DATA
+*
+****************************************************************
+*                                                              *
+*             SYSTEM TERMINATION RECORD                        *
+*                                                              *
+****************************************************************
+*
+LRBTTER  ORG   LRBBASE
+LRBTLNH  DS    F           LOGREC RECORD LENGTH
+LRBTWSC  DS    XL4         WAIT STATE CODE
+LRBTUSR  DS    0X          USER DATA FIELD-NOTE THE VALUE IN LRBTLNH
+*                          IS THE TOTAL LENGTH INCLUDING THE LRBTUSR,
+*                          EXCLUDING THE HEADER.               @ZA36587
+*
+      POP  PRINT
+        MEND
+        EJECT
+          */
+ %LRB1:  ;
+ %IHALPUSH='@LISTPUSH';                      /*YM02577 */
+ %IHALPOP='@LISTPOP';                      /*YM02577 */
+ %IHALOFF='@LISTOFF';                      /*YM02577 */
+ IHALPUSH;                               /*YM02577 */
+ %IF IHALIST='YES'  %THEN
+           %GOTO  LRB2;
+ IHALOFF;                               /*YM02577 */
+ %LRB2:   ;
+       /* COMMON  HEADER  SECTION        */
+     DCL 1 LRB BASED (LRBPTR) BDY (DWORD),
+           2 LRBHTYPE CHAR(1),     /*TYPE OF RECORD               */
+           2 LRBHREL FIXED(8),      /* RELEASE NUMBER   */
+             3 LRBHSYS CHAR(1),      /*  SYSTEM TYPE  */
+               4 LRBHSYSB BIT(3),     /* ACTUAL SYSTEM BITS */
+               4   *      BIT(5),     /* ACTUAL RELEASE BITS */
+           2 LRBHSW0 CHAR(1),      /*INDEPENDENT SWITCH BYTE      */
+             3 LRBHMORE BIT(1),           /* MULTIPLE RECORDS */
+             3 LRBHNS BIT(1),           /* NS MACHINE */
+             3 *      BIT(2),           /* RESERVED */
+             3 LRBHTMC BIT(1),           /* TIME MACRO USED */
+             3 *      BIT(3),           /* RESERVED */
+           2 LRBHSW1 CHAR(1),      /*DEPENDENT SWITCH BYTE 0      */
+            2 LRBHSW2 CHAR (1),    /* DEPENDENT SWITCH BYTE 1       */
+             3 LRBMACT CHAR(1),     /* MCH BUFFER ACTIVE FLAG     */
+                4 LRBNCEM BIT(1),  /*  PENDING CHANNEL END          */
+                4 LRBNDEM BIT(1),  /*  PENDING DEVICE END           */
+            2 LRBHSW3 CHAR(1),     /* DEPENDENT SWITCH BYTE 2   */
+              3 LRBMCLB CHAR(1),   /* LOGREC CLOBBER FLAG (INDICATES
+                                      LOGREC BUFFER OVERLAYED) */
+            2 LRBHCNT CHAR(1), /*PHYSICAL RECORDS PER LOGICAL REC CNT*/
+            2   *      CHAR(1),
+            2 LRBHDATE CHAR (4),     /* DATE              */
+            2 LRBHTIME CHAR (4),     /* TIME              */
+            2 LRBHCPID CHAR(8) BDY(DWORD),/* STIDP OPERAND FIELD */
+             3    *     CHAR(1),      /* RESERVED */
+             3 LRBHCSER CHAR(3),      /* CPU SERIAL NUMBER */
+             3 LRBHMDL  CHAR(2),      /* CPU MODEL NUMBER  */
+             3 LRBHMCEL FIXED (16) ,  /* MAXIMUM MCEL LENGTH   */
+            2 LRBBASE CHAR(0) BDY(WORD); /* DEPENDENT SECTION STARTS
+                                                             @ZA34554*/
+*/*                                                                  */
+*/*                SWITCH  BYTE 0 OVERLAYED (LRBHSW1)           */
+*/*                                                                  */
+   DCL 1  LRBHRSW1  DEF(LRBHSW1),
+          2 LRBRPRIM BIT(1),  /* DDR PRIMARY STORAGE RECONFIG  */
+          2 LRBRSEC BIT(1),   /* DDR SEC STORAGE RECONFIG      */
+          2 LRBROPER BIT(1),  /* DDR OPERATOR REQUEST RECONFIG */
+          2 LRBRSYSI BIT(1),  /* DDR PERMANENT ERROR REQUEST   */
+          2 *        BIT(4);  /*   RESERVED                    */
+   DCL 1  LRBHCSW1 DEF(LRBHSW1),
+          2 LRBCMESG BIT(1), /* MESSAGE REQUEST  */
+          2 LRBCINCO BIT(1), /* RECORD INCOMPLETE */
+          2  *       BIT(1),
+          2 LRBCNOSP BIT(1), /* CHANNEL NOT SUPPORTED */
+          2 LRBCICUA BIT(1), /* ILLEGAL CUA     */
+          2 LRBCDATA BIT(1), /* DATA OVERLAYED   */
+          2 LRBCERPP BIT(1), /* ERP IN PROGRESS  */
+          2 *        BIT(1);
+   DCL 1  LRBHMSW1 DEF(LRBHSW1),
+          2 *        BIT(2),  /* RESERVED */
+          2 LRBMSYST BIT(1),  /* SYSTEM TERMINATED */
+          2 *        BIT(5);  /* RESERVED */
+*/*                                            */
+*/*    RECORD TYPE EQUATES (LRBHTYPE)                 */
+*/*                                            */
+   DCL LRBHREC BIT (8) CONSTANT('60'X) ; /* DDR RECORD               */
+   DCL LRBHMDR BIT (8) CONSTANT('90'X) ; /* MDR RECORD               */
+   DCL LRBHMIH BIT (8) CONSTANT('70'X) ; /* MIH RECORD               */
+   DCL LRBHCCH BIT (8) CONSTANT('21'X) ; /* CCH RECORD               */
+   DCL LRBHMCH BIT (8) CONSTANT('13'X) ; /* MCH RECORD               */
+   DCL LRBHTER BIT (8) CONSTANT('81'X) ; /* SYSTEM TERMINATION RECORD*/
+   DCL LRBHSFW BIT (8) CONSTANT('40'X) ; /* 4X TYPE RECORDS ARE SOFT-
+                                            WARE TYPE MAPPED BY IHAHDR
+                                                             @ZA34554*/
+   DCL LRBHSFR BIT (8) CONSTANT('4F'X) ; /*                  @ZA34554*/
+   DCL LRBHSRS BIT (8) CONSTANT('84'X) ; /* SYSTEM RESTARTABLE WAIT
+                                                             @ZA34554*/
+   DCL LRBHMCF BIT (8) CONSTANT('A0'X) ; /* MCH FRAME RECORD @ZA34554*/
+   DCL LRBHCCF BIT (8) CONSTANT('B0'X) ; /* CCH FRAME RECORD @ZA34554*/
+ /*   SYSTEM TYPE EQUATES (LRBHSYS)  */
+    DCL  LRBHOS BIT(3) CONSTANT('000'B) ;   /* OS SYSTEM             */
+    DCL  LRBHDOS BIT(3) CONSTANT('001'B) ;  /* DOS SYSTEM            */
+    DCL  LRBHVS1 BIT(3) CONSTANT('010'B) ;  /* OS/VS1 SYSTEM         */
+    DCL  LRBHCP67 BIT(3) CONSTANT('011'B) ; /* CP67 SYSTEM           */
+    DCL  LRBHVS2 BIT(3) CONSTANT('100'B) ;  /* OS/VS2 SYSTEM         */
+*/*    MDR EQUATES FOR SWITCH BYTE 2 (LRBHSW2)  */
+   DCL LRBD3330 BIT (8) CONSTANT('01'X) ; /* 3330 TYPE               */
+   DCL LRBD3211 BIT (8) CONSTANT('04'X) ; /* 3211 TYPE               */
+   DCL LRBD3340 BIT (8) CONSTANT('09'X) ; /* 3340 TYPE               */
+   DCL LRBDICE BIT (8) CONSTANT('07'X) ;  /* 3330C TYPE              */
+   DCL LRBD2946 BIT (8) CONSTANT('F0'X) ; /* 2946 TYPE               */
+   DCL LRBD2948 BIT (8) CONSTANT('F1'X) ; /* 2948 TYPE               */
+   DCL LRBD1006 BIT (8) CONSTANT('F2'X) ; /* 1006 TYPE               */
+   DCL LRBD2703 BIT (8) CONSTANT('F3'X) ; /* 2703 TYPE               */
+   DCL LRBD2969 BIT (8) CONSTANT('F4'X) ; /* 2969 TYPE               */
+        /* MACHINE CHECK HANDLER RECORD   */
+    DCL 1 LRBMMCH DEF(LRBBASE) BDY(WORD),
+         2 LRBMLNH  FIXED(31),      /* LENGTH OF LOGREC RECORD       */
+         2 LRBMWSC  CHAR(4),        /* WAIT STATE CODE               */
+         2 LRBMCEIA CHAR(4),        /* MACHINE CHECK ERROR INDICATOR
+                                       AREA                          */
+          3 LRBMTERM CHAR(1),       /* TERMINAL ERROR FLAGS          */
+           4 *        BIT(2),       /* RESERVED                      */
+           4 LRBMTTHR BIT(1),       /* HARD ERROR
+                                       THRESHOLD FLAG        @G55CP2P*/
+           4 LRBMTSEC BIT(1),       /* SECONDARY ERROR FLAG          */
+           4 LRBMTCKS BIT(1),       /* CHECK STOP FLAG               */
+           4 LRBMTWRN BIT(1),       /* POWER WARNING FLAG            */
+           4 LRBMTDMG BIT(1),       /* SYSTEM DAMAGE FLAG            */
+           4 LRBMTINV BIT(1),       /* INVALID LOGOUT FLAG (SET WHEN
+                                       LRBMCIC = 0 )                 */
+          3 LRBMHARD CHAR(1),       /* HARD MACHINE ERROR FLAGS      */
+           4 LRBMHHRD BIT(1),       /* ASSUMED HARD ERROR FLAG       */
+           4 *        BIT(2),       /* RESERVED                      */
+           4 LRBMHSD BIT(1),        /* SYSTEM DAMAGE FLAG    @G555P2M*/
+           4 LRBMHINV BIT(1),       /* REGISTER OR PSW INVALID FLAG  */
+           4 LRBMHSTO BIT(1),       /* HARD STORAGE FAILURE FLAG     */
+           4 LRBMHSPF BIT(1),       /* HARD PROTECTION KEY ERROR FLAG*/
+           4 LRBMHIPD BIT(1),       /* INSTRUCTION PROCESSING DAMAGE
+                                       FLAG                          */
+          3 LRBMINTM CHAR(1),       /* INTERMEDIATE ERROR FLAGS      */
+           4 *        BIT(4),       /* RESERVED                      */
+           4 LRBMITOD BIT(1),       /* TOD CLOCK ERROR FLAG          */
+           4 LRBMICKC BIT(1),       /* CLOCK COMPARATOR ERROR FLAG   */
+           4 LRBMICTM BIT(1),       /* CPU TIMER ERROR FLAG          */
+           4 LRBMIL80 BIT(1),       /* INTERVAL TIMER ERROR FLAG     */
+          3 LRBMSOFT CHAR(1),       /* SOFT MACHINE ERROR FLAGS      */
+           4 LRBMSSFT BIT(1),       /* ASSUMED SOFT ERROR FLAG       */
+           4 *        BIT(3),       /* RESERVED                      */
+           4 LRBMSEXD BIT(1),       /* EXTERNAL DAMAGE FLAG          */
+           4 LRBMSECC BIT(1),       /* ECC CORRECTED STORAGE ERROR
+                                       FLAG                          */
+           4 LRBMSHIR BIT(1),       /* HIR CORRECTED PROCESSOR
+                                       ERROR FLAG                    */
+           4 LRBMSBUF BIT(1),       /* BUFFER ERROR FLAG             */
+         2 LRBMPDAR CHAR(1),        /* PDAR DATA (SUPPLIED BY RTM)   */
+          3 *        BIT(3),        /* RESERVED                      */
+          3 LRBMINVP BIT(1),        /* STORAGE RECONFIGURED - PAGE
+                                       INVALIDATED                   */
+          3 LRBMRSRC BIT(1),        /* STORAGE RECONFIGURATION STATUS
+                                       AVAILABLE (FOLLOWING TWO BYTES
+                                       ARE MEANINGFULL)              */
+          3 LRBMRSRF BIT(1),        /* STORAGE RECONFIGURATION NOT
+                                       ATTEMPTED                     */
+          3 *        BIT(2),        /* RESERVED                      */
+         2 LRBMRSR1 CHAR(1),        /* STORAGE RECONFIGURATION STATUS
+                                       BYTE 1                        */
+          3 *        BIT(6),        /* RESERVED                      */
+          3 LRBMSER  BIT(1),        /* STORAGE ERROR WAS ALREADY SET
+                                       IN FRAME                      */
+          3 LRBMCHNG BIT(1),        /* FRAME HAD CHANGE INDICATOR ON */
+         2 LRBMRSR2 CHAR(1),        /* STORAGE RECONFIGURATION STATUS
+                                       BYTE 2                        */
+          3 LRBMOFLN BIT(1),        /* FRAME IS OFFLINE OR SCHEDULED
+                                       TO GO OFFLINE                 */
+          3 LRBMINTC BIT(1),        /* INTERCEPT - FRAME IS SCHEDULED
+                                       TO GO OFFLINE, HAS A PERMANENT
+                                       STORAGE ERROR, OR IS SCHEDULED
+                                       FOR V=R STATUS                */
+          3 LRBMSPER BIT(1),        /* PERMANENT ERROR OCCURS IN
+                                       FRAME                         */
+          3 LRBMNUCL BIT(1),        /* FRAME CONTAINS PERMANENTLY
+                                       RESIDENT SYSTEM STORAGE       */
+          3 LRBMFSQA BIT(1),        /* FRAME IS IN USE FOR SQA       */
+          3 LRBMLSQA BIT(1),        /* FRAME IS IN USE FOR LSQA      */
+          3 LRBMPGFX BIT(1),        /* FRAME CONTAINS PAGE FIXED DATA*/
+          3 LRBMVEQR BIT(1),        /* FRAME IS IN USE FOR V=R OR IS
+                                       SCHEDULED FOR V=R             */
+         2 LRBMPWL  FIXED(8) UNSIGNED, /* PHYSICAL WORD LENGTH
+                                          (CHECKING BLOCK SIZE)      */
+         2 LRBMMOSW CHAR(8),        /* MACHINE CHECK OLD PSW (FROM
+                                       STORAGE LOCATIONS 48-55)      */
+         2 LRBMFLO  CHAR(280) BDY(WORD), /* MACHINE CHECK FIXED LOGOUT
+                                            AREA (MOVED FROM STORAGE
+                                            LOCATIONS 232-511)       */
+          3 LRBMCIC  CHAR(8) BDY(WORD), /* MACHINE CHECK INTERRUPT
+                                           CODE (MOVED FROM STORAGE
+                                           LOCATIONS 232-239)        */
+           4 *        CHAR(1),      /* 1ST BYTE OF LRBMCIC           */
+            5 LRBMFSD  BIT(1),      /* SYSTEM DAMAGE                 */
+            5 LRBMFPD  BIT(1),      /* PROCESSING DAMAGE             */
+            5 LRBMFSR  BIT(1),      /* SYSTEM RECOVERY               */
+            5 LRBMFTD  BIT(1),      /* TIMER DAMAGE                  */
+            5 LRBMFCD  BIT(1),      /* CLOCK DAMAGE                  */
+            5 LRBMFED  BIT(1),      /* EXTERNAL DAMAGE               */
+            5 *        BIT(1),      /* RESERVED                      */
+            5 LRBMFDG  BIT(1),      /* DEGRADATION                   */
+           4 *        CHAR(1),      /* 2ND BYTE OF LRBMCIC           */
+            5 LRBMFWN  BIT(1),      /* POWER WARNING                 */
+            5 *        BIT(5),      /* RESERVED                      */
+            5 LRBMIBU  BIT(1),      /* BACK UP INDICATOR             */
+            5 LRBMIDY  BIT(1),      /* DELAYED                       */
+           4 *        CHAR(1),      /* 3RD BYTE OF LRBMCIC           */
+            5 LRBMFSE  BIT(1),      /* STORAGE ERROR                 */
+            5 LRBMFSC  BIT(1),      /* STORAGE ERROR CORRECTED       */
+            5 LRBMFKE  BIT(1),      /* KEY ERROR                     */
+            5 *        BIT(1),      /* RESERVED                      */
+            5 LRBMVWP  BIT(1),      /* PSW EMWP VALIDITY             */
+            5 LRBMVMS  BIT(1),      /* PSW MASKS AND KEY VALIDITY    */
+            5 LRBMVPM  BIT(1),      /* PROGRAM MASKS AND CONDITION
+                                       CODE VALIDITY                 */
+            5 LRBMVIA  BIT(1),      /* INSTRUCTION ADDRESS VALIDITY  */
+           4 *        CHAR(1),      /* 4TH BYTE OF LRBMCIC           */
+            5 LRBMVFA  BIT(1),      /* FAILING STORAGE ADDR VALIDITY */
+            5 LRBMVRC  BIT(1),      /* REGION CODE VALIDITY          */
+            5 LRBMVED  BIT(1),      /* EXT DAMAGE VALIDITY  @G51BP2O */
+            5 LRBMVFP  BIT(1),      /* FLOATING POINT REG VALIDITY   */
+            5 LRBMVGR  BIT(1),      /* GENERAL PURPOSE REG VALIDITY  */
+            5 LRBMVCR  BIT(1),      /* CONTROL REG VALIDITY          */
+            5 LRBMVLG  BIT(1),      /* LOGOUT (MCEL) VALIDITY        */
+            5 LRBMVST  BIT(1),      /* STORAGE LOGICAL VALIDITY      */
+           4 *        CHAR(1),      /* 5TH BYTE OF LRBMCIC   @ZA34554*/
+            5 LRBMNVF  BIT(1),      /* LRB MAY NOT BE VALID  @ZA34554*/
+            5 *        BIT(7),      /* RESERVED              @ZA34554*/
+           4 *        CHAR(1),      /* 6TH BYTE OF LRBMCIC           */
+            5 *        BIT(6),      /* RESERVED                      */
+            5 LRBMVPT  BIT(1),      /* PROCESSOR TIMER VALIDITY      */
+            5 LRBMVCC  BIT(1),      /* CLOCK COMPARATOR VALIDITY     */
+           4 LRBMCELL FIXED(16) UNSIGNED, /* MACHINE CHECK EXTENDED
+                                             LOGOUT LENGTH (ACTUAL
+                                             LENGTH OF MCEL DATA STORED
+                                             FOR THIS MACHINE CHECK
+                                             INTERRUPTION)           */
+          3 *        CHAR(4),       /* DATA MOVED FROM STORAGE
+                                       LOCATIONS 240-243    @G51BP2O */
+          3 LRBMEDC  CHAR(1),       /* DATA FROM 244,
+                                       EXTERNAL DAMAGE CODE @G51BP2O */
+            4 *        BIT(1),      /* RESERVED             @G51BP2O */
+            4 *        BIT(1),      /* RESERVED             @ZA34554 */
+            4 LRBMEXSR BIT(1),      /* EXT SECONDARY REPORT @G51BP2O */
+            4 LRBMCNOP BIT(1),      /* CHANNEL NOT          @G51BP2O
+                                       OPERATIONAL          @G51BP2O */
+            4 LRBMCCF  BIT(1),      /* CHANNEL CNTL FAILURE @G51BP2O */
+            4 LRBMINST BIT(1),      /* I/O INSTRUCTION      @G51BP2O
+                                       TIMEOUT              @G51BP2O */
+            4 LRBMINTR BIT(1),      /* I/O INTERRUPTION     @G51BP2O
+                                       TIMEOUT              @G51BP2O */
+            4 *        BIT(1),      /* RESERVED             @ZA34554 */
+          3 *        CHAR(3),       /* ALWAYS ZERO          @G51BP2O */
+          3 LRBMFSA  PTR(31),       /* FAILING STORAGE ADDRESS (MOVED
+                                       FROM STORAGE LOCATIONS 248-251*/
+          3 *        CHAR(260),     /* DATA MOVED FROM STORAGE
+                                       LOCATIONS 252-511             */
+        2 *  CHAR(0),               /* MACHINE CHECK EXTENDED
+                                            LOGOUT           @ZA34554*/
+         3 LRBMCEL  CHAR(*);        /* MACHINE CHECK EXTENDED LOGOUT
+                                       AREA (LENGTH IS MODEL
+                                       DEPENDENT AND VARIES FROM
+                                       MACHINE CHECK TO MACHINE CHECK
+                                       FOR A GIVEN MODEL - THE ACTUAL
+                                       LENGTH IS CONTAINED IN THE
+                                       HALFWORD FIELD 'LRBMCELL', THE
+                                       MAXIMUM LENGTH IS CONTAINED IN
+                                       THE HALFWORD FIELD 'LRBHMCEL',
+                                       AND THE MINIMUM LENGTH IS
+                                       ZERO)                 @ZA34554*/
+       /* RECONFIGURATION (DDR) RECORD  */
+    DCL 1 LRBRDDR DEF(LRBBASE) BDY (WORD),
+          2 LRBRJOB CHAR(8),       /* 'FROM' DEVICE USER'S JOB NAME  */
+          2 LRBRVOL1 CHAR (6),   /* VOLUME MOUNTED ON 'FROM' DEVICE  */
+          2 LRBRVOL2 CHAR (6),   /* VOLUME MOUNTED ON 'TO' DEVICE */
+          2 LRBRPH1 CHAR(1),     /* PHYSICAL ID OF DEVICE  */
+          2 LRBRCUA1 CHAR(3),    /* PRIMARY CUA OF 'FROM'DEVICE */
+          2 LRBRDEV1 CHAR(4),    /* 'FROM' DEVICE TYPE   */
+          2 LRBRPH2 CHAR(1),     /* PHYSICAL ID OF 'TO' DEVICE */
+          2 LRBRCUA2 CHAR(3),    /* PRIMARY CUA OF 'TO' DEVICE */
+          2 LRBRDEV2 CHAR(4);    /* 'TO' DEVICE TYPE   */
+        /* CHANNEL CHECK HANDLER RECORD */
+    DCL 1 LRBCCCH DEF(LRBBASE) BDY(WORD),
+         2 LRBCJOB CHAR(8),         /* JOBNAME OF JOB WHOSE I/O
+                                       RESULTED IN A CHANNEL ERROR */
+         2 LRBCAIO (8) CHAR(2),     /* ADDRESSES OF ACTIVE I/O
+                                       (2 BYTES PER ADDRESS)       */
+         2 LRBCFCCW CHAR(8),        /* FAILING CCW                 */
+         2 LRBCFCSW CHAR(8),        /* CSW STORED AT FAILURE       */
+         2 LRBCECSW CHAR(4),        /* EXTENDED CSW                */
+         2 LRBCDEVT CHAR(4),        /* DEVICE TYPE (FROM UCB)      */
+         2 LRBCCHID CHAR(1),        /* ID OF FAILING CHANNEL         */
+  /*                                   00 UNKNOWN TYPE
+                                       01 INTEGRATED MULTIPLEXOR
+                                       02 INTEGRATED SELECTOR
+                                       03 INTEGRATED BLOCK
+                                          MULTIPLEXOR
+                                       04 RESERVED
+                                       05 2860 SELECTOR
+                                       06 2870 MULTIPLEXOR
+                                       07 2880 BLOCK MULTIPLEXOR
+                                       08 NS SELECTOR
+                                       09 RESERVED
+                                       0A INTEGRATED FILE ADAPTER
+                                       0B-FF RESERVED              */
+         2 LRBCCUA  CHAR(3),        /* ADDRESS OF CHANNEL AND UNIT
+                                       IN USE AT TIME OF FAILURE   */
+           3 * CHAR(1),
+           3 LRBCCUA2 CHAR(2),      /* 2 BYTE CHANNEL AND UNIT
+                                       ADDRESS AT TIME OF FAILURE  */
+         2 LRBCHCUA CHAR(2),        /* CHANNEL AND UNIT ADDRESS
+                                       LOGGED BY HARDWARE          */
+         2 LRBCLOGL CHAR(2),        /* LENGTH OF CHANNEL LOGOUT    */
+         2 *  CHAR(0),              /* CHANNEL LOGOUT LENGTH
+                                                             @ZA34554*/
+           3 LRBCCLOG CHAR(*);      /* CHANNEL LOGOUT LENGTH DEPENDENT
+                                       UPON CHANNEL TYPE     @ZA34554*/
+  DCL  1 LRBCVAR BASED,             /* CCH VARIABLE POSITION DATA  */
+         2 LRBCFT CHAR(2),          /* CCH FOOTPRINTS              */
+         2 LRBCRESD  CHAR(2),       /* RESERVED                    */
+         2 LRBCMPF1 CHAR(1),        /* MP INFORMATION FLAG BYTE
+                           ,           RESERVED                    */
+         2 LRBCMPF2 CHAR(1),        /* MP INFORMATION FLAG BYTE
+                           ,           RESERVED                    */
+         2 LRBCMPNO CHAR(2),        /* NUMBER OF ACTIVE PROCESSORS */
+         2 LRBCMP (16),             /* MP CPU ID AND CHANNEL STATUS
+                                       (FOUR BYTES PER CPU)  @ZA34554*/
+          3 LRBCMPPA CHAR(2),       /* ADDRESS OF CPU WITH A
+                                       CHANNEL DETECTED ERROR      */
+          3 LRBCMPCS CHAR(2);       /* CHANNEL STATUS (ONLINE OR
+                                       OFFLINE). OFFLINE=1, BIT 0
+                                       = CHANNEL 0 ETC.            */
+        /* MISCELLANEOUS DATA RECORDER (MDR) RECORD */
+    DCL 1 LRBDMDR DEF(LRBBASE) BDY (WORD),
+          2 LRBDCUA1 CHAR(2),       /* PRIMARY DEVICE CUA */
+          2 LRBDVOL CHAR(6),       /* VOLUME SERIAL NUMBER */
+          2 LRBDSENS CHAR(24);      /* DEVICE SENSE DATA */
+        /* MISSING INTERRUPTION HANDLER (MIH) RECORD */
+    DCL 1 LRBNMIH DEF(LRBBASE) BDY (WORD),
+          2 LRBNJOB CHAR(8),       /* I/O REQUEST PENDING JOBNAME  */
+          2 LRBNCUA2 CHAR(3),      /* DEVICE CUA */
+          2 LRBNCUA1 CHAR(3),      /* PRIMARY DEVICE CUA */
+          2 LRBNVOL CHAR(6),       /* VOLUME SERIAL NUMBER */
+          2 LRBNDEVT CHAR(4),      /* DEVICE UCB TYPE */
+          2 LRBNINT CHAR(8);       /* TIME INTERVAL */
+      /* SYSTEM TERMINATION RECORD */
+    DCL 1 LRBTTER DEF(LRBBASE) BDY (WORD),
+          2 LRBTLNH FIXED(31),    /* LOGREC RECORD LENGTH */
+          2 LRBTWSC CHAR(4),      /* WAIT STATE CODE */
+          2 *  CHAR(0),           /* USER DATA FIELD         @ZA34554*/
+            3 LRBTUSR CHAR(*);    /* USER DATA FIELD-NOTE THE VALUE
+                                     IN LRBTLNH IS THE TOTAL LENGTH
+                                     INCLUDING THE LRBTUSR EXCLUDING
+                                     THE HEADER              @ZA34554*/
+ IHALPOP;                                                  /*YM02577*/
+

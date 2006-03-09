@@ -1,0 +1,134 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* % IEFSSREQ:  MACRO;
+* /*******************************************************************/
+* /*                                                                 */
+* /*  MACRO NAME = IEFSSREQ                                          */
+* /*                                                                 */
+* /*  DESCRIPTIVE NAME = SUBSYSTEM INTERFACES CALL SSREQ             */
+* /*                     GENERATOR (PLS)                             */
+* /*                                                                 */
+* /*  FUNCTION = GENERATE CALL TO SUBSYSTEM INTERFACE REQUEST ROUTINE*/
+* /*                                                                 */
+* /*  OPERATION = BUILD MACRO CALL IMAGE AND COMMENT                 */
+* /*                                                                 */
+* /*            - CHECK FOR MORE THAN ONE POSITIONAL PARAMETER.  IF  */
+* /*              MORE THAN ONE -                                    */
+* /*                .BUILD ERROR MESSAGE                             */
+* /*                .ISSUE MACRO PHASE ERROR MESSAGE                 */
+* /*                .ISSUE COMPILE STAGE MACRO CALL IMAGE MESSAGE    */
+* /*                .ISSUE COMPILE STAGE ERROR MESSAGE               */
+* /*                                                                 */
+* /*            - IF NONE OR ONE POSITIONAL PARAMETER -              */
+* /*                .BUILD CALL STATEMENT (WITH SSOB AS ARGUMENT IF  */
+* /*                 SPECIFIED ON MACRO CALL)                        */
+* /*                .ISSUE COMPILE STAGE MACRO CALL IMAGE MESSAGE    */
+* /*                .ISSUE CALL TO SUBSYSTEM INTERFACE REQUEST RTN   */
+* /*                                                                 */
+* /*  INPUT = ? IEFSSREQ       - NO ARGUMENT SPECIFIED               */
+* /*        = ? IEFSSREQ(SSOB) - ARGUMENT SPECIFIED - SSOB IS NAME   */
+* /*                             OF STRUCTURE MAPPING THE SSOB.  ANY */
+* /*                             NAME MAY BE USED HERE.              */
+* /*                                                                 */
+* /*  EXIT-NORMAL                                                    */
+* /*    CONDITIONS = VALID MACRO CALL                                */
+* /*    OUTPUT = MACRO CALL IMAGE COMMENT                            */
+* /*             EXPLANATORY COMMENTS                                */
+* /*             CALL SSREQ       (NO ARGUMENT ON MACRO CALL)        */
+* /*             CALL SSREQ(SSOB) (ARGUMENT ON MACRO CALL)           */
+* /*                                                                 */
+* /*  EXIT-ERROR                                                     */
+* /*    CONDITIONS = MORE THAN ONE POSITIONAL PARAMETER ON MACRO CALL*/
+* /*    OUTPUT = MACRO CALL IMAGE COMMENT                            */
+* /*             MACRO AND COMPILE STAGE ERROR MESSAGE               */
+* /*                                                                 */
+* /*  CHANGE ACTIVITY = Y02668,YM02296                               */
+* /*                                                                 */
+* /*  MESSAGES = 'MORE THAN 1 POSITIONAL PARAMETER PRESENT'          */
+* /*                                                                 */
+* /*  SEVERITY CODES = NONE                                          */
+* /*                                                                 */
+* /*******************************************************************/
+* /*  ALL DECLARES ARE INTERNAL TO THIS MACRO DEFINITION             */
+* DCL MACALL   CHAR;              /* MACRO CALL IMAGE                */
+* DCL COMENT1  CHAR;              /* MACRO CALL IMAGE COMMENT        */
+* DCL NUMPARM  FIXED;             /* NUMBER OF POSITIONAL PARAMETERS
+*                                    SPECIFIED                       */
+* DCL ERRTEXT  CHAR;              /* ERROR MESSAGE TEXT              */
+* DCL COMENT2  CHAR;              /* ERROR MESSAGE COMMENT           */
+* DCL CALLSTMT CHAR;              /* CALL STATEMENT IMAGE            */
+* DCL LEFTMARG FIXED;             /* LEFT SOURCE MARGIN              */
+* DCL (CALLCOM1,CALLCOM2,CALLCOM3,CALLCOM4) CHAR;
+* DCL (CALLCOM5,CALLCOM6,CALLCOM7,CALLCOM8) CHAR;
+* DCL (COM1,COM2,COM3,COM4,COM5,COM6,COM7,COM8) CHAR;
+*
+*        NUMPARM=NUMBER(MACLIST); /* SET NUMBER OF POSITIONAL
+*                                    PARAMETERS SPECIFIED            */
+*        IF NUMPARM = 0 THEN      /* CHECK IF ANY POSITIONAL PARMS   */
+*        MACALL = ' ? IEFSSREQ;'; /* NONE - BUILD MACRO CALL IMAGE   */
+*              ELSE
+*        MACALL = ' ? IEFSSREQ  '||MACLIST||';'; /* BUILD MACRO CALL
+*                                 IMAGE - INCLUDE ARGUMENTS          */
+*        COMENT1=COMMENT(MACALL); /* SET UP COMMENT                  */
+*        IF NUMPARM>1 THEN        /* CHECK FOR MORE THAN ONE
+*                                    POSITIONAL PARAMETER            */
+*        DO;                      /* SET ERROR MESSAGE TEXT          */
+*          ERRTEXT = 'MORE THAN 1 POSITIONAL PARAMETER PRESENT';
+*          COMENT2 = COMMENT(ERRTEXT); /* SET UP COMMENT             */
+*          ANSWER MSG(ERRTEXT);   /* ISSUE MACRO PHASE ERROR MESSAGE */
+*          ANSWER (COMENT1) SKIP; /* ISSUE COMPILE STAGE MACRO CALL
+*                                    IMAGE MESSAGE                   */
+*          ANSWER (COMENT2) SKIP; /* ISSUE COMPILE STAGE ERROR MSG   */
+*        END;                     /* BYPASS CALL STATEMENT IF
+*                                    ERROR CONDITIONS                */
+*        ELSE
+*        DO;
+*          LEFTMARG = MACLMAR;    /* SET LEFT SOURCE MARGIN          */
+* /*  BUILD SUBSYSTEM INTERFACE REQUEST ROUTINE CALL STATEMENT       */
+*          CALLSTMT = 'CALL SSREQ'||MACLIST||';';
+*          ANSWER (COMENT1) SKIP;   /* ISSUE COMPILE STAGE MACRO CALL
+*                                      IMAGE                         */
+*          CALLCOM1='                                           ';
+*          CALLCOM2='  PASS CONTROL TO JOB ENTRY SUBSYSTEM TO   ';
+*          CALLCOM3='  PROCESS REQUEST -                        ';
+*          CALLCOM4='                                           ';
+*          CALLCOM5='    INPUT - REGISTER 1 POINTS TO A ONE-    ';
+*          CALLCOM6='            WORD PARAMETER LIST WHICH      ';
+*          CALLCOM7='            POINTS TO THE SSOB             ';
+*          CALLCOM8='                                           ';
+*          COM1 = COMMENT(CALLCOM1);
+*          COM2 = COMMENT(CALLCOM2);
+*          COM3 = COMMENT(CALLCOM3);
+*          COM4 = COMMENT(CALLCOM4);
+*          COM5 = COMMENT(CALLCOM5);
+*          COM6 = COMMENT(CALLCOM6);
+*          COM7 = COMMENT(CALLCOM7);
+*          COM8 = COMMENT(CALLCOM8);
+*          ANSWER (COM1) SKIP COLUMN(LEFTMARG);
+*          ANSWER (COM2) SKIP COLUMN(LEFTMARG);
+*          ANSWER (COM3) SKIP COLUMN(LEFTMARG);
+*          ANSWER (COM4) SKIP COLUMN(LEFTMARG);
+*          ANSWER (COM5) SKIP COLUMN(LEFTMARG);
+*          ANSWER (COM6) SKIP COLUMN(LEFTMARG);
+*          ANSWER (COM7) SKIP COLUMN(LEFTMARG);
+*          ANSWER (COM8) SKIP COLUMN(LEFTMARG);
+* /*  GENERATE CALL STATEMENT FOR SUBSYSTEM INTERFACE REQUEST        */
+*          ANSWER (CALLSTMT) SKIP COLUMN(LEFTMARG);
+*        END;
+* % END;
+         MACRO
+         IEFSSREQ
+*
+*  PASS CONTROL TO JOB ENTRY SUBSYSTEM TO PROCESS REQUEST -
+*
+*        INPUT - REGISTER 1 POINTS TO A ONE-WORD PARAMETER LIST
+*                WITH THE HIGH-ORDER BIT ON AND A POINTER
+*                TO AN SSOB IN THE LOW-ORDER 31 BITS.
+*
+         L     15,CVTPTR(0,0)     SET CVT                       YM02296
+         USING CVTMAP,15            ADDRESSABILITY
+         L     15,CVTJESCT        SET JESCT
+         USING JESCT,15             ADDRESSABILITY
+         L     15,JESSSREQ        SET SUBSYSTEM REQUEST ROUTINE ADDRESS
+         BALR  14,15              PROCESS SUBSYSTEM REQUEST
+         DROP  15
+         MEND                     */

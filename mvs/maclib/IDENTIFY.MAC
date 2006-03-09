@@ -1,0 +1,30 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    IDENTIFY &EP=,&EPLOC=,&ENTRY=,&MF=I                      20008
+         AIF   ('&MF(1)' EQ 'E').MAJOR                            20008
+         AIF   ('&ENTRY' EQ '').E2
+         AIF   ('&EP' NE '').PROCEP
+         AIF   ('&EPLOC' EQ '').E1
+&NAME    IHBINNRA &ENTRY,&EPLOC             LOAD REG1 AND REG0
+         AGO   .SVC
+.PROCEP  ANOP
+&NAME    BAL   0,*+12                            LOAD EP SYMBOL ADDR
+         DC    CL8'&EP'                          EP SYMBOL
+         IHBINNRA &ENTRY                    LOAD REG 0
+         AGO   .SVC                                               20008
+.MAJOR   ANOP                                                     20008
+&NAME    IHBINNRA &MF(2)     LOAD REG 1                           20008
+         SR    0,0           ZERO REG 0                           20008
+.SVC     SVC   41                                ISSUE IDENTIFY SVC
+         MEXIT
+.E1      IHBERMAC 01,339                    EP AND EPLOC MISSING
+         MEXIT
+.E2      IHBERMAC 27,339                    ENTRY PT. ADDR MISSING
+.END     MEND
+**/
+*IDENTIFY: MACRO
+*        KEYS(EP,ENTRY);
+*        ANS('?'||MACLABEL||'IDENTFYP '||MACLIST||MACKEYS||';');
+*%END;
+

@@ -1,0 +1,277 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%       GO TO IMDCOM;
+         MACRO
+         IMDMEDIT
+.*A000000-999999                                                 Y01014
+.*C061500,062500                                                 Y02014
+.*A010600-010996,028100-029194,C005500-010500,017500-028000      Y02014
+.*A017371-017704,039300-039848,061600-061992,063000              Y02014
+.*D011500-015500,029500-038000                                   Y02014
+.*A017708-017720,039850-039872,061993-061997                   @Y30AI3O
+.*A17727-17748,39870-39960,62000-182000,332000                 @OZ14118
+.*C17755,212000-302000                                         @OZ14118
+.*A00187700-00188700,01092500-01093500,01703900-01711900,      @G64RP2H
+.*A02861300-02865800,05660000-05680000,04760000-04780000       @G64RP2H
+.*C06650000                                                    @G64RP2H
+.*C01774500                                                    @ZA42206
+*%IMDCOM:;
+*/********************************************************************/
+*/*                                                                  */
+*/*                      IMDMEDIT MAPPING MACRO                      */
+*/*                                                                  */
+*/*  THE IMDMEDIT MACRO MAPS THE EID VALUES ASSOCIATED WITH IBM      */
+*/*  SYSTEM AND SUBSYSTEM EVENTS.  THE STORAGE FOR ANY OR ALL OF THE */
+*/*  MAPPED VALUES MUST BE CONTAINED IN THE MODULE REFERENCING THE   */
+*/*  DESIRED EIDS.  IMDMEDIT IS DESIGNED TO BE USED BY IBM-SUPPLIED  */
+*/*  FORMAT APPENDAGES, AND USER-SUPPLIED USER EXIT MODULES.  ALL    */
+*/*  LABELS THAT ARE NOT PREFIXED WITH IMD ARE USED BY THE OTHER     */
+*/*  COMPONENTS OF GTF AND CORRESPOND TO THE NAMES USED IN THE HOOK  */
+*/*  AND GTRACE MACROS.                                              */
+*/********************************************************************/
+*%       GO TO IMDLAB;
+IMDMPCI  EQU   X'2100'                  PCI I/O INTERRUPT
+IMDMSVC  EQU   X'1000'                  SVC INTERRUPT
+IMDMDSP  EQU   X'0003'                  DISPATCHER
+IMDMIO1  EQU   X'5201'                  I/O INTERRUPT
+IMDMIO2  EQU   X'5200'                  I/O INTERRUPT
+IMDMSIO  EQU   X'5100'                  SIO OPERATION
+IMDMSSM1 EQU   0                        SSM INTERRUPT
+IMDMSSM  EQU   0                        OS SSM FOR COMPATIBILITY
+IMDMPIPG EQU   0                        PAGE FAULT PROGRAM INTERRUPT
+IMDMPI   EQU   X'6101'                  PROGRAM INTERRUPT
+IMDMEXT  EQU   X'6201'                  EXTERNAL INTERRUPT
+IMDMTINT EQU   X'6200'                  PFLIH
+IMDMEOS  EQU   X'5101'                  IOS
+IMDMSTAE EQU   X'4002'                  RTM
+IMDMFRR  EQU   X'4003'                  RTM
+IMDMSLSD EQU   X'4004'                  RTM/SLIP STD           @G64RP2H
+IMDMSLSU EQU   X'4005'                  RTM/SLIP STD+USR       @G64RP2H
+IMDMSLUR EQU   X'4006'                  RTM/SLIP USR           @G64RP2H
+IMDMTP1  EQU   X'8100'                  TPIOS
+IMDMTP2  EQU   X'8200'                  TPIOS
+IMDMDSP1 EQU   X'0001'                  DISPATCHER
+IMDMDSP2 EQU   X'0002'                  DISPATCHER
+IMDMDSP3 EQU   X'0003'                  DISPATCHER
+IMDMDSP4 EQU   X'0004'                  SVC EXIT PROLOG DISPATCH
+IMDMSVCD EQU   X'F100'                  SVCDUMP
+IMDMSRM  EQU   X'4001'                  SRM
+IDAAM01  EQU   X'EFF5'                  VSAM
+IMDMDMA1 EQU   X'EFFF'                  OPEN/CLOSE/EOV
+IECPCI   EQU   IMDMPCI                  PCI I/O INTERRUPT
+IEASVCH  EQU   IMDMSVC                  SVC INTERRUPT
+IECIO1   EQU   IMDMIO1                  I/O INTERRUPT
+IECIO2   EQU   IMDMIO2                  I/O INTERRUPT
+IECSIO   EQU   IMDMSIO                  SIO OPERATION
+IEAPINT  EQU   IMDMPI                   PROGRAM INTERRUPT
+IEAEINT  EQU   IMDMEXT                  EXTERNAL INTERRUPT
+IEATINT  EQU   IMDMTINT                 PFLIH
+IECEOS   EQU   IMDMEOS                  IOS
+IEASTAE  EQU   IMDMSTAE                 RTM
+IEAFRR   EQU   IMDMFRR                  RTM
+IEAVSLSD EQU   IMDMSLSD                 RTM/SLIP STD           @G64RP2H
+IEAVSLSU EQU   IMDMSLSU                 RTM/SLIP STD+USR       @G64RP2H
+IEAVSLUR EQU   IMDMSLUR                 RTM/SLIP USR           @G64RP2H
+ISPTPIO1 EQU   IMDMTP1                  TPIOS
+ISPTPIO2 EQU   IMDMTP2                  TPIOS
+IEADISP1 EQU   IMDMDSP1                 DISPATCHER
+IEADISP2 EQU   IMDMDSP2                 DISPATCHER
+IEADISP3 EQU   IMDMDSP3                 DISPATCHER
+IEADISP4 EQU   IMDMDSP4                 EXIT PROLOG DISPATCH
+IEASVCD  EQU   IMDMSVCD                 SVCDUMP
+IRASRM   EQU   IMDMSRM                  SRM
+IEAABOF  EQU   X'F200'                  ABEND/SNAP-NOT USED BY EDIT
+IGGSP169 EQU   X'EFFE'                  SAM/PAM/DAM
+IGGSP451 EQU   X'EFFD'                  SAM/PAM/DAM
+IGGSP251 EQU   X'EFFC'                  SAM/PAM/DAM
+IGGSP145 EQU   X'EFFB'                  SAM/PAM/DAM
+IGGSP239 EQU   X'EFFA'                  SAM/PAM/DAM
+IGGSP235 EQU   X'EFF9'                  SAM/PAM/DAM
+IGGSP119 EQU   X'EFF8'                  SAM/PAM/DAM
+IGGSP215 EQU   X'EFF7'                  SAM/PAM/DAM
+IGGSP112 EQU   X'EFF6'                  SAM/PAM/DAM
+IGGSP008 EQU   X'EFF4'                  SAM/PAM/DAM
+IGGSP002 EQU   X'EFF3'                  SAM/PAM/DAM
+ISTLNEID EQU   X'EFF2'                  VTAM LINE TRACE        @Y30AI3O
+ISTCLEID EQU   X'EFF1'                  VTAM CONTROL LAYER     @Y30AI3O
+ISTRPEID EQU   X'EFF0'                  VTAM CONTROL LAYER     @Y30AI3O
+ISTTPEID EQU   X'EFEF'                  VTAM TPIOS BUFFER      @Y30AI3O
+ISTTDEID EQU   X'EFE4'                  VTAM RESERVED          @OZ14118
+ISTTREID EQU   X'EFE3'                  VTAM RESERVED          @ZA43387
+ISTTHEID EQU   X'EFE2'                  VTAM RESERVED          @OZ14118
+ISTVIEID EQU   X'EFE1'                  VTAM INTERNAL          @OZ14118
+         MEND                                                  @OZ14118
+*%IMDLAB:;
+*%       DCL PCI CHAR;                  /* PCI I/O INTERRUPT         */
+*%       PCI='''2100''X';               /* EID VALUE FOR PCI I/O INT */
+*%       DCL SVC CHAR;                  /* SVC INTERRUPT             */
+*%       SVC='''1000''X';               /* EID VALUE FOR SVC INT     */
+*%       DCL DSP CHAR;                  /* TASK SWITCH               */
+*%       DSP='''0003''X';               /* EID VALUE FOR TASK SWITCH */
+*%       DCL IO1 CHAR;                  /*I/O INTERRUPT              */
+*%       IO1='''5201''X';               /* EID VALUE FOR I/O INT     */
+*%       DCL IO2 CHAR;                  /* I/O INTERRUPT             */
+*%       IO2='''5200''X';               /* EID VALUE FOR I/O INT     */
+*%       DCL SIO CHAR;                  /* SIO OPERATION             */
+*%       SIO='''5100''X';               /* EID VALUE FOR SIO OPRTN   */
+*%       DCL SSM1 CHAR;                 /* SSM INTERRUPT             */
+*%       SSM1='''0000''X';              /* EID VALUE FOR SSM         */
+*%       DCL SSM CHAR;                  /* OS SSM FOR COMPATIBILITY  */
+*%       SSM='''0000''X';               /* OS SSM FOR COMPATIBILITY  */
+*%       DCL PIPG CHAR;                 /* PAGE FAULT INTERRUPT      */
+*%       PIPG='''0000''X';              /* EID FOR PI 17             */
+*%       DCL PI CHAR;                   /* PROGRAM INTERRUPT         */
+*%       PI='''6101''X';                /* EID VALUE FOR PGM INT     */
+*%       DCL EXT CHAR;                  /* EXTERNAL INTERRUPT        */
+*%       EXT='''6201''X';               /* EID VALUE FOR EXT INT     */
+*%       DCL TINT CHAR;                 /* PFLIH                     */
+*%       TINT='''6200''X';              /* EID VALUE FOR PFLIH       */
+*%       DCL EOS CHAR;                  /* IOS EOS INTERRUPT         */
+*%       EOS='''5101''X';               /* EID VALUE FOR IOS EOS     */
+*%       DCL STAE CHAR;                 /* RTM-STAE                  */
+*%       STAE='''4002''X';              /* EID VALUE FOR RTM-STAE    */
+*%       DCL FRR CHAR;                  /* RTM-FRR                   */
+*%       FRR='''4003''X';               /* EID VALUE FOR RTM-FRR     */
+*%       DCL SLSD CHAR;                 /* RTM/SLIP STD      @G64RP2H*/
+*%       SLSD='''4004''X';              /*EID VALUE FOR SLSD @G64RP2H*/
+*%       DCL SLSU CHAR;                 /* RTM/SLIP STD+USR  @G64RP2H*/
+*%       SLSU='''4005''X';              /*EID VALUE FOR SLSU @G64RP2H*/
+*%       DCL SLUR CHAR;                 /* RTM/SLIP USR      @G64RP2H*/
+*%       SLUR='''4006''X';              /*EID VALUE FOR SLUR @G64RP2H*/
+*%       DCL TP1 CHAR;                  /* TPIOS INTERRUPT           */
+*%       TP1='''8100''X';               /* EID VALUE FOR TPIOS       */
+*%       DCL TP2 CHAR;                  /* TPIOS INTERRUPT           */
+*%       TP2='''8200''X';               /* EID VALUE FOR TPIOS       */
+*%       DCL DSP1 CHAR;                 /* DISPATCHER                */
+*%       DSP1='''0001''X';              /* EID VALUE FOR DISPATCHER  */
+*%       DCL DSP2 CHAR;                 /* DISPATCHER                */
+*%       DSP2='''0002''X';              /* EID VALUE FOR DISPATCHER  */
+*%       DCL DSP3 CHAR;                 /* DISPATCHER                */
+*%       DSP3='''0003''X';              /* EID VALUE FOR DISPATCHER  */
+*%       DCL DSP4 CHAR;                 /* EID FOR EXIT PROLOG DISP  */
+*%       DSP4='''0004''X';              /* EXIT PROLOG DISPATCH      */
+*%       DCL SVCD CHAR;                 /* SVCDUMP                   */
+*%       SVCD='''F100''X';              /* EID VALUE FOR SVCDUMP     */
+*%       DCL SRM CHAR;                  /* SRM                       */
+*%       SRM='''4001''X';               /* EID VALUE FOR OPTIMIZER   */
+*%       DCL M01 CHAR;                  /* VSAM                      */
+*%       M01='''EFF5''X';               /* VSAM                      */
+*%       DCL DMA1 CHAR;                 /* OPEN/CLOSE/EOV            */
+*%       DMA1='''EFFF''X';              /* EID FOR OPEN/CLOSE/EOV    */
+*%       DCL BOF  CHAR;                 /* OPEN/CLOSE/EOV            */
+*%       BOF='''F200''X';               /* EID FOR ABEND/SNAP        */
+*%       DCL SPD169;                    /* SAM/PAM/DAM               */
+*%       SPD169='''EFFE''X';            /* EID FOR SAM/PAM/DAM       */
+*%       DCL SPD451;                    /* SAM/PAM/DAM               */
+*%       SPD451='''EFFD''X';            /* EID FOR SAM/PAM/DAM       */
+*%       DCL SPD251;                    /* SAM/PAM/DAM               */
+*%       SPD251='''EFFC''X';            /* EID FOR SAM/PAM/DAM       */
+*%       DCL SPD145;                    /* SAM/PAM/DAM               */
+*%       SPD145='''EFFB''X';            /* EID FOR SAM/PAM/DAM       */
+*%       DCL SPD239;                    /* SAM/PAM/DAM               */
+*%       SPD239='''EFFA''X';            /* EID FOR SAM/PAM/DAM       */
+*%       DCL SPD235;                    /* SAM/PAM/DAM               */
+*%       SPD235='''EFF9''X';            /* EID FOR SAM/PAM/DAM       */
+*%       DCL SPD119;                    /* SAM/PAM/DAM               */
+*%       SPD119='''EFF8''X';            /* EID FOR SAM/PAM/DAM       */
+*%       DCL SPD215;                    /* SAM/PAM/DAM               */
+*%       SPD215='''EFF7''X';            /* EID FOR SAM/PAM/DAM       */
+*%       DCL SPD112;                    /* SAM/PAM/DAM               */
+*%       SPD112='''EFF6''X';            /* EID FOR SAM/PAM/DAM       */
+*%       DCL SPD008;                    /* SAM/PAM/DAM               */
+*%       SPD008='''EFF4''X';            /* EID FOR SAM/PAM/DAM       */
+*%       DCL SPD002;                    /* SAM/PAM/DAM               */
+*%       SPD002='''EFF3''X';            /* EID FOR SAM/PAM/DAM       */
+*%       DCL LNEID;                     /* VTAM LINE TRACE   @Y30AI3O*/
+*%       LNEID='''EFF2''X';             /* LINE TRACE EID    @YM09152*/
+*%       DCL CLEID;                     /* VTAM CONTROL LAYR @Y30AI3O*/
+*%       CLEID='''EFF1''X';             /* CONTROL LAYER EID @YM09152*/
+*%       DCL RPEID;                     /* VTAM CONTROL LAYR @Y30AI3O*/
+*%       RPEID='''EFF0''X';             /* CONTROL LAYER EID @YM09152*/
+*%       DCL TPEID;                     /* VTAM TPIOS BUFFER @Y30AI3O*/
+*%       TPEID='''EFEF''X';             /* TPIOS BUFFER EID  @OZ14118*/
+*%       DCL APTD;                      /* VTAM RESERVED     @OZ14118*/
+*%       APTD='''EFE4''X';              /* VTAM RESERVED     @OZ14118*/
+*%       DCL APTR;                      /* VTAM RESERVED     @OZ14118*/
+*%       APTR='''EFE3''X';              /* VTAM RESERVED     @OZ14118*/
+*%       DCL APTH;                      /* VTAM RESERVED     @OZ14118*/
+*%       APTH='''EFE2''X';              /* VTAM RESERVED     @OZ14118*/
+*%       DCL INT1;                      /* VTAM INTERNAL     @OZ14118*/
+*%       INT1='''EFE1''X';              /* EID-VTAM INTERNAL @OZ14118*/
+*        DCL                            /*                   @OZ14118*/
+*        IMDMPCI BIT(16) CONSTANT(PCI), /* PCI I/O INTERRUPT         */
+*        IMDMSVC BIT(16) CONSTANT(SVC), /* SVC INTERRUPT             */
+*        IMDMDSP BIT(16) CONSTANT(DSP), /* DISPATCHER                */
+*        IMDMIO1 BIT(16) CONSTANT(IO1), /* I/O INTERRUPT             */
+*        IMDMIO2 BIT(16) CONSTANT(IO2), /* I/O INTERRUPT             */
+*        IMDMSIO BIT(16) CONSTANT(SIO), /* SIO OPERATION             */
+*        IMDMSSM1 BIT(16) CONSTANT(SSM1), /* SSM OPERATION           */
+*        IMDMSSM BIT(16) CONSTANT(SSM), /* OS SSM FOR COMPATIBILITY  */
+*        IMDMPIPG BIT(16) CONSTANT(PIPG), /* PAGE FAULT PROG INT     */
+*        IMDMPI  BIT(16) CONSTANT(PI), /* PROGRAM INTERRUPT          */
+*        IMDMEXT BIT(16) CONSTANT(EXT), /* EXTERNAL INTERRUPT        */
+*        IMDMTINT BIT(16) CONSTANT(TINT), /* PFLIH                   */
+*        IMDMEOS BIT(16) CONSTANT(EOS), /* IOS                       */
+*        IMDMSTAE BIT(16) CONSTANT(STAE), /* RTM                     */
+*        IMDMFRR BIT(16) CONSTANT(FRR), /* RTM                       */
+*        IMDMSLSD BIT(16) CONSTANT(SLSD),/* RTM/SLIP STD     @G64RP2H*/
+*        IMDMSLSU BIT(16) CONSTANT(SLSU),/* RTM/SLIP STD+USR @G64RP2H*/
+*        IMDMSLUR BIT(16) CONSTANT(SLUR),/* RTM/SLIP USR     @G64RP2H*/
+*        IMDMTP1 BIT(16) CONSTANT(TP1), /* TPIOS                     */
+*        IMDMTP2 BIT(16) CONSTANT(TP2), /* TPIOS                     */
+*        IMDMDSP1 BIT(16) CONSTANT(DSP1), /* DISPATCHER              */
+*        IMDMDSP2 BIT(16) CONSTANT(DSP2), /* DISPATCHER              */
+*        IMDMDSP3 BIT(16) CONSTANT(DSP3), /* DISPATCHER              */
+*        IMDMDSP4 BIT(16) CONSTANT(DSP4), /* EXIT PROLOG DISPATCH    */
+*        IMDMSVCD BIT(16) CONSTANT(SVCD), /* SVCDUMP                 */
+*        IMDMSRM BIT(16) CONSTANT(SRM), /* SRM                       */
+*        IDAAM01 BIT(16) CONSTANT(M01), /* VSAM                      */
+*        IMDMDMA1 BIT(16) CONSTANT(DMA1), /* OPEN/CLOSE/EOV          */
+*        IEATINT BIT(16) CONSTANT(TINT), /* PFLIH                    */
+*        IEAPINT BIT(16) CONSTANT(PI), /* PFLIH                      */
+*        IECSIO BIT(16) CONSTANT(SIO), /* IOS                        */
+*        IECEOS BIT(16) CONSTANT(EOS), /* IOS                        */
+*        IECIO2 BIT(16) CONSTANT(IO2), /* IOS                        */
+*        IECIO1 BIT(16) CONSTANT(IO1), /* IOS                        */
+*        IECPCI BIT(16) CONSTANT(PCI), /* IOS                        */
+*        IEASTAE BIT(16) CONSTANT(STAE), /* RTM                      */
+*        IEAFRR BIT(16) CONSTANT(FRR), /* RTM                        */
+*        IEAVSLSD BIT(16) CONSTANT(SLSD), /* RTM/SLIP STD    @G64RP2H*/
+*        IEAVSLSU BIT(16) CONSTANT(SLSU), /*RTM/SLIP STD+USR @G64RP2H*/
+*        IEAVSLUR BIT(16) CONSTANT(SLUR), /* RTM/SLIP USR    @G64RP2H*/
+*        IEADISP1 BIT(16) CONSTANT(DSP1), /* DISPATCHER              */
+*        IEADISP2 BIT(16) CONSTANT(DSP2), /* DISPATCHER              */
+*        IEADISP3 BIT(16) CONSTANT(DSP3), /* DISPATCHER              */
+*        IEADISP4 BIT(16) CONSTANT(DSP4), /* EXIT PROLOG DISPATCH    */
+*        IEASVCD BIT(16) CONSTANT(SVCD), /* SVCDUMP                  */
+*        IEAABOF BIT(16) CONSTANT(BOF), /* ABEND/SNAP                */
+*        IRASRM BIT(16) CONSTANT(SRM), /* SRM                        */
+*        ISPTPIO1 BIT(16) CONSTANT(TP1), /* TPIOS                    */
+*        ISPTPIO2 BIT(16) CONSTANT(TP2), /* TPIOS                    */
+*        IEASVCH BIT(16) CONSTANT(SVC), /*  SVC FLIH                 */
+*        IEAEINT BIT(16) CONSTANT(EXT), /* EXT FLIH                  */
+*        IGGSP169 BIT(16) CONSTANT(SPD169), /* SAM/PAM/DAM           */
+*        IGGSP451 BIT(16) CONSTANT(SPD451), /* SAM/PAM/DAM           */
+*        IGGSP251 BIT(16) CONSTANT(SPD251), /* SAM/PAM/DAM           */
+*        IGGSP145 BIT(16) CONSTANT(SPD145), /* SAM/PAM/DAM           */
+*        IGGSP239 BIT(16) CONSTANT(SPD239), /* SAM/PAM/DAM           */
+*        IGGSP235 BIT(16) CONSTANT(SPD235), /* SAM/PAM/DAM           */
+*        IGGSP119 BIT(16) CONSTANT(SPD119), /* SAM/PAM/DAM           */
+*        IGGSP215 BIT(16) CONSTANT(SPD215), /* SAM/PAM/DAM           */
+*        IGGSP112 BIT(16) CONSTANT(SPD112), /* SAM/PAM/DAM           */
+*        IGGSP008 BIT(16) CONSTANT(SPD008), /* SAM/PAM/DAM           */
+*        IGGSP002 BIT(16) CONSTANT(SPD002); /* SAM/PAM/DAM           */
+*        DCL                               /*                @Y30AI3O*/
+*        ISTLNEID BIT(16) CONSTANT(LNEID), /*VTAM LINE TRACE @Y30AI3O*/
+*        ISTCLEID BIT(16) CONSTANT(CLEID), /*VTAM CNTRL LAYR @Y30AI3O*/
+*        ISTRPEID BIT(16) CONSTANT(RPEID), /*VTAM CNTRL LAYR @Y30AI3O*/
+*        ISTTPEID BIT(16) CONSTANT(TPEID); /*VTAM TPIOS BUFR @Y30AI3O*/
+*        DCL                               /*                @OZ14118*/
+*        ISTTDEID BIT(16) CONSTANT(APTD),  /* VTAM RESERVED  @OZ14118*/
+*        ISTTREID BIT(16) CONSTANT(APTR),  /* VTAM RESERVED  @OZ14118*/
+*        ISTTHEID BIT(16) CONSTANT(APTH),  /* VTAM RESERVED  @OZ14118*/
+*        ISTVIEID BIT(16) CONSTANT(INT1);  /* VTAM INTERNAL  @OZ14118*/
+*%DEACTIVATE PCI,SVC,DSP,IO1,IO2,SIO,SSM1,SSM,PIPG,PI,EXT, /*@OZ14118*/
+*   EOS,STAE,FRR,TP1,TP2,DSP1,DSP2,DSP3,DSP4,SVCD,SRM,M01, /*@OZ14118*/
+*   DMA1,BOF,TINT,SPD169,SPD451,SPD251,SPD145,SPD239,      /*@OZ14118*/
+*   SPD235,SPD119,SPD215,SPD112,SPD008,SPD002,LNEID,CLEID, /*@OZ14118*/
+*   RPEID,TPEID,APTD,APTR,APTH,INT1,SLSD,SLSU,SLUR;        /*@G64RP2H*/

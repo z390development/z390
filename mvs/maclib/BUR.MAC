@@ -1,0 +1,11 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    BUR   &R                       BRANCH VIA LINK REG
+         AIF   (T'&R EQ 'N' AND '&R' LT '4').B3
+         MNOTE 8,'***  IHB355  LINK REGISTER MUST BE 0-3; 0 ASSUMED'
+&NAME    DC    0H'0',X'BE',X'0'
+         AGO   .END
+.B3      ANOP
+&NAME    DC    0H'0',X'BE',X'&R.0'
+.END     MEND
+

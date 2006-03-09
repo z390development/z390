@@ -1,0 +1,178 @@
+.* MVS 3.8J PUBLIC DOMAIN
+        MACRO
+&NAME    ISTACB1 &DDNAME=,&EXLST=0,&MACRF=,                    @ZA34940C
+               &JFCB=0,&BUFND=0,&BUFNI=0,&PASSWD=0,                    C
+               &BLKSIZE=0,&LRECL=0,&BUFSP=0,                           C
+               &CCTYPE=,&STRNO=1,&CATALOG=NO,                  @ZA07566C
+               &BSTRNO=0,&MAREA=0,&MLEN=0,&CRA=,                X04SVHSC
+               &AM=,&APPLID=0,&USERPTR=0,                      @ZA34940C
+               &PARMS=,&PARM2=,&PARM3=                         @ZA34940
+.*
+.*       CHANGE LEVEL = 0                                      @ZA34940
+.*       DATE OF LAST CHANGE =  4 OCT  78 ( 78*277 )           @ZA34940
+.*                                                             @ZA34940
+.* FUNCTION-   THE FUNCTION OF THIS MACRO IS TO BUILD,         @ZA34940
+.*             AT ASSEMBLY TIME, AN ACB FOR A VTAM USER.       @ZA34940
+.*             ISTACB1 IS INVOKED BY THE MACRO ACB WHEN        @ZA34940
+.*             A USER ISSUES AN ACB MACRO WITH 'AM=VTAM'       @ZA34940
+.*             SPECIFIED.                                      @ZA34940
+.*                                                             @ZA34940
+.* CHANGE ACTIVITY                                             @ZA34940
+.*      CBMM SPLIT SUPPORT                                     @ZA34940
+.*                                                             @ZA34940
+.* GLOBALS                                                      X04SVHS
+         GBLC  &IDAMAC1,&IDAMAC2,&IDAMAC3 MACRF CODES           X04SVHS
+         GBLC  &IDAIFL1                 CATALOG/CRA CODES       X04SVHS
+         GBLA  &IDAENO                  NUMBER OF ELEMENTS     @ZA06420
+.* LOCALS                                                       X04SVHS
+         LCLA  &VTMEXT                  LENGTH OF VTAM EXT     X03004HS
+         LCLA  &LEN                     SUBPARAMETER ACB LENGTH  X03004
+         LCLA  &STYPE                   ACCESS METHOD ID        X04SVHS
+         LCLB  &A,&M                    CCTYPE BITS
+.*
+.*             INITIALIZE GLOBALS TO ZERO
+&IDAMAC1 SETC  '00000000'                                       X04SVHS
+&IDAMAC2 SETC  '00000000'                                       X04SVHS
+&IDAMAC3 SETC  '00000000'                                       X04SVHS
+&IDAIFL1 SETC  '00000000'                                       X04SVHS
+&IDAENO  SETA  0                                               @ZA06420
+.*
+         ISTCBACB MACRF=&MACRF,CATALOG=&CATALOG,CRA=&CRA,      @ZA34940*
+               AM=&AM,CALLER=ACB        SET VALUES FOR BIT     @ZA34940
+.*                                      KEYWORDS IN GLOBALS     X04SVHS
+.*            ISTCBACB IS CALLED TO PROCESS BIT KEYWORDS MACRF,@ZA34940
+.*             CATALOG, AND CRA.  IT WILL VALIDITY CHECK OPTIONS
+.*             SPECIFIED, MUTUALLY EXCLUSIVE CHECK WHERE APPLICABLE,
+.*             AND SET GLOBALS WITH THE VALUES OF THE KEYWORDS.
+.*
+&LEN     SETA  76                       SET FOR COMMON LENGTH    X03004
+         AIF   ('&AM' EQ '').SETLEN     IF AM IS NULL           X04SVHS
+.*                                      DEFAULT LEN TO VSAM,    X04SVHS
+.*                                      AND SUBTYPE TO 0        X04SVHS
+.*
+&STYPE   SETA  X'10'                    SET VSAM SUBTYPE        X04SVHS
+         AIF   ('&AM' EQ 'VSAM').SETLEN IS IT VSAM              X04SVHS
+&VTMEXT  SETA  12                       NO, SET VTAM EXT LEN   X03004HS
+&STYPE   SETA  X'20'                    SET VTAM SUBTYPE        X04SVHS
+         AIF   ('&AM' EQ 'VTAM').SETLEN IF VTAM SET VTAM LEN    X04SVHS
+.*                                      AND SUBTYPE             X04SVHS
+.*                                      ELSE ERROR              X04SVHS
+&STYPE   SETA  0                        ZERO SUBTYPE            X04SVHS
+&VTMEXT  SETA  0                        GENERATE NORMAL LEN ACB X04SVHS
+         ISTERMAC 3,AM,&AM              ISSUE ERROR MSG        @ZA34940
+.SETLEN  ANOP                                                   X04SVHS
+&NAME    DS    0F
+         DC    X'A0' .                  ACB IDENTIFICATION
+         DC    AL1(&STYPE)              ACB SUBTYPE             X04SVHS
+.*             X'11' - X'1F' ARE RESERVED FOR VSAM              X04SVHS
+.*             X'21' - X'2F' ARE RESERVED FOR VTAM              X04SVHS
+         DC    AL2(&LEN+&VTMEXT) .      ACB LENGTH             X03004HS
+         DC    A(0) .                   AMB LIST POINTER
+         AIF   ('&AM' NE 'VTAM').SETIRR IF NOT VTAM ACBINRTN = ZERO
+.*                                                             X03004HS
+         DC    A(*+&LEN-8)  .           PTR TO VTAM EXTENSION  X03004HS
+         AGO   .MACRF1                                         X03004HS
+.SETIRR  ANOP
+         DC    A(0) .                   INTERFACE ROUTINE POINTER
+.*       MACRF PROCESSING
+.MACRF1  ANOP                                                   X04SVHS
+         DC    B'&IDAMAC1'              MACRF(1)                X04SVHS
+         DC    B'&IDAMAC2'              MACRF(2)                X04SVHS
+         DC    AL1(&BSTRNO) .           NO OF CONCURRENT        X04SVHS
+*                                       STRINGS FOR AIX PATH    X04SVHS
+         DC    AL1(&STRNO) .            NUMBER OF STRINGS       X04SVHS
+         DC    AL2(&BUFND) .            NUMBER OF DATA BUFFERS
+         DC    AL2(&BUFNI) .            NUMBER OF INDEX BUFFERS
+         DC    B'&IDAMAC3'              MACRF(3)                X04SVHS
+         DC    B'00000000' .            MACRF(4)                X04SVHS
+         DC    AL2(0) .                 JES BUFFER POOL/NUMBER  X04SVHS
+*                                       OF JOURNAL BUFFERS
+         DC    X'80' .                  RECFM=A
+         AIF   ('&CCTYPE' EQ '').CCSET
+&A       SETB  ('&CCTYPE' EQ 'A')
+&M       SETB  ('&CCTYPE' EQ 'M')
+         AIF   (&A OR &M).CCSET
+         ISTERMAC 5,CCTYPE,&CCTYPE                             @ZA34940
+.CCSET   DC    B'00000&A&M.0' .         CONTROL CHARACTER TYPE
+         DC    X'0008' .                DSORG=ACB
+         AIF   ('&MAREA' EQ '0').GENM0 IF &MAREA = 0 BYPASS     X04SVHS
+.*                                      CHKING FOR AM=VSAM      X04SVHS
+         AIF   ('&AM' EQ '' OR '&AM' EQ 'VSAM').GENMA           X04SVHS
+.*                                      IF NOT VSAM ACB, ERROR  X04SVHS
+         ISTERMAC 24,MAREA              ISSUE ERR MSG          @ZA34940
+         AGO   .GENM0                                           X04SVHS
+.GENMA   ANOP                                                   X04SVHS
+         DC    A(&MAREA)  .             MESSAGE AREA            X04SVHS
+         AGO   .GPSWD                                           X04SVHS
+.GENM0   ANOP                                                   X04SVHS
+         DC    A(0)                                             X04SVHS
+.GPSWD   ANOP                                                   X04SVHS
+         DC    A(&PASSWD) .             PASSWORD POINTER
+         DC    A(&EXLST) .              EXIT LIST POINTER
+         AIF   ('&DDNAME' NE '' AND '&AM' NE 'VTAM').DDNMCHK   @ZA31869
+         AIF   ('&DDNAME' EQ '').VTAM   NO DDNAME SPECIFIED?     X03004
+         ISTERMAC 24,DDNAME             NOT A VTAM KEYWORD     @ZA34940
+         AGO   .ACBB2                                            X03004
+.VTAM    ANOP                                                    X03004
+         AIF   ('&AM' NE 'VTAM').NONAME TRY LABEL IF NO VTAM     X03004
+         DC    X'FF' .                  INDICATE VTAM            X03004
+         DC    XL7'00' .                PAD WITH ZEROS           X03004
+         AGO   .ACBB3                                            X03004
+.NONAME  ANOP                                                    X03004
+         AIF   ('&NAME' EQ '').BLANK    IS THERE A LABEL
+         DC    CL8'&NAME' .             DDNAME
+         AGO   .ACBB3
+.BLANK   DC    CL8' ' .                 DDNAME
+         AGO   .ACBB3
+.DDNMCHK ANOP                                                  @ZA31869
+         AIF   (K'&DDNAME GT 8 OR '&DDNAME'(1,1) LT 'A' OR             C
+               '&DDNAME'(1,1) GT 'Z').DDNMERR  CHECK FOR VALID @ZA31869
+         AGO   .ACBB2                          DDNAME          @ZA31869
+.DDNMERR ISTERMAC 3,DDNAME,&DDNAME      INVALID DDNAME         @ZA34940
+.ACBB2   DC    CL8'&DDNAME' .           DDNAME
+.ACBB3   DC    X'02' .                  OFLAGS
+         DC    AL1(0) .                 ERFLAGS
+         DC    B'&IDAIFL1'              INFLGS(1)               X04SVHS
+         DC    B'00000000'              INFLGS(2)               X04SVHS
+         DC    A(&JFCB) .               OPENJ JFCB POINTER
+         DC    A(&BUFSP)                BUFFER SPACE
+         AIF   ('&BLKSIZE' EQ '0').CHKMLN                       X04SVHS
+         AIF   ('&MLEN' EQ '0').BLKSET                          X04SVHS
+.*             IF BLKSIZE AND MLEN ARE BOTH SPECIFIED           X04SVHS
+.*             IT IS AN ERROR                                   X04SVHS
+         ISTERMAC 19,BLKSIZE,MLEN                              @ZA34940
+.BLKSET  ANOP                                                   X04SVHS
+         DC    AL2(&BLKSIZE) .          BLOCK SIZE
+         AGO   .LRECLST                                         X04SVHS
+.CHKMLN  ANOP                                                   X04SVHS
+         AIF   ('&MLEN' EQ '0').BLKSET                          X04SVHS
+.*                                      IF MLEN IS SPEC,        X04SVHS
+.*                                      CHECK FOR VSAM ACB      X04SVHS
+         AIF   ('&AM' NE '' AND '&AM' NE 'VSAM').MLERR          X04SVHS
+.*                                      IF NOT VSAM ACB, ERROR  X04SVHS
+         DC    AL2(&MLEN)               MESSAGE LENGTH          X04SVHS
+         AGO   .LRECLST                                         X04SVHS
+.MLERR   ISTERMAC 24,MLEN               ISSUE ERR MSG          @ZA34940
+         AGO   .BLKSET                                          X04SVHS
+.LRECLST ANOP                                                   X04SVHS
+         DC    AL2(&LRECL) .            RECORD SIZE
+         AIF   ('&USERPTR' EQ '0').UPTR  NO USER PTR PROVIDED
+         DC    A(&USERPTR)              ADDRESS OF USER WORKAREA
+         AGO   .CBMWP
+.UPTR    DC    A(0) .                   USER WORKAREA POINTER
+.CBMWP   DC    A(0)                     CONTROL BLOCK MANIPULATION
+*                                       WORKAREA POINTER
+         AIF   ('&AM' EQ 'VTAM').SETAPP  WAS VTAM SPECIFIED      X03004
+         AIF   ('&APPLID' EQ '0').NONAPP  WAS APPLID SPECIFIED   X03004
+         ISTERMAC 18,APPLID                                    @ZA34940
+.NONAPP  ANOP                           IGNORE APPLID            X03004
+         DC    A(0) .                   PTR TO APPLICATION NAME  X03004
+         MEXIT                          END THE MACRO            X03004
+.SETAPP  ANOP                           VTAM SPECIFIED           X03004
+         DC    A(&APPLID) .             PTR TO APPLICATION NAME  X03004
+         LA    15,32                    SET RETURN CODE(VTAM)    X03004
+         BR    14                       RETURN TO CALLER(VTAM)   X03004
+         DC    H'0'                     RESERVED                 X03004
+         DC    F'0'                     RESERVED                 X03004
+.OUT     MEND
+

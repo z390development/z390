@@ -5,9 +5,10 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 11/02/05 RPI60 ADD MULT LOGICAL OPERATOR TESTS FOR AND OR NOT
+*********************************************************************
 TESTMAC2 SUBENTRY
          WTO   'TESTMAC2 - TEST CONDITIONAL COMPARES'
-         SUBEXIT
          MACRO
 &N       TEST  &P1
          MNOTE 'N=&N P1=&P1'
@@ -20,4 +21,27 @@ TESTMAC2 SUBENTRY
 A        TEST  P1
 B        TEST  P2
 XYZ      TEST  XYZ
+         AIF   (1 EQ 0 OR 1 EQ 1).OK1
+         AGO   .ERR
+.OK1     ANOP
+         MNOTE 'OK1'
+         AIF   (1 EQ 1 AND 1 EQ 0).ERR
+         AIF   (NOT 1 EQ 0).OK2
+         AGO   .ERR
+.OK2     ANOP
+         MNOTE 'OK2'
+         AIF   (1 EQ 0 OR NOT 1 EQ 0).OK3
+         AGO   .ERR
+.OK3     ANOP
+         MNOTE 'OK3'
+* TEST AGO AND AIF LABELS WITHOUT ANOP
+&I       SETA  3
+.TEST    AIF   (&I EQ 0).TESTEND
+&I       SETA  &I-1
+         AGO   .TEST
+.TESTEND WTO   'TESTEND I=&I'
+         SUBEXIT
+         AGO   .EXIT
+.ERR     MNOTE 12,'TESTMAC2 ERROR OCCURRED'
+.EXIT    ANOP
          END

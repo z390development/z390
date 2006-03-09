@@ -1,0 +1,271 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&LABEL   POST   &ECB,&CODE,&ASCB=,&ECBKEY=,&ERRET=,&MF=I,&RELATED=
+.*
+.*  DEFINE LOCAL VARIABLES
+.*
+         LCLA   &A                                               YM1995
+         LCLC   &LIST,&MASK,&NX,&LISTA,&SHIFT                    YM1995
+&LIST    SETC   'PST'.'&SYSNDX'
+&MASK    SETC   'POST'.'&SYSNDX'
+&SHIFT   SETC   '16*'                                          @ZA15373
+.*
+.*  LIST FORMAT DOES NOT ALLOW THE CODE PARAMETER
+         AIF    ('&MF' EQ 'L').LIST1
+.*
+.*  SORT OUT POSSIBLE CONDITION CODE FORMATS
+.*
+         AIF    ('&CODE' EQ '' OR '&CODE' EQ '0').C1
+         AIF    ('&CODE'(1,1) EQ '(').C2
+         AIF    (T'&CODE NE 'N').C3
+         AIF    (&CODE GT 4095).C4
+.*
+.*  ESTABLISH THE POST LABEL AND SET CONDITION CODE IN REG ZERO
+.*
+.* CODE IS NUMERIC, LESS THAN 4096
+&LABEL   LA    0,&CODE.(0,0)  . SET POST CODE REG ZERO           YM1995
+         AGO   .TYPE
+.*
+.* CODE IS BLANK OR ZERO, SET ZERO CONDITION CODE
+.C1      ANOP
+&LABEL   SR    0,0                    . SET POST CODE REG ZERO
+         AGO   .TYPE
+.*
+.* CODE IS IN A REGISTER
+.C2      AIF   (N'&CODE GT 1).ERR3
+         AIF   ('&CODE(1)' EQ '0').C2A
+&LABEL   LR    0,&CODE(1)             . SET POST CODE REG ZERO
+         AGO   .TYPE
+.C2A     AIF   ('&LABEL' EQ '').TYPE
+&LABEL   DS    0H
+         AGO   .TYPE
+.* CODE IS NON-NUMERIC, E.G., A LABEL
+.C3      ANOP
+&LABEL   LA    0,&CODE                 . SET POST CODE REG ZERO
+         AGO   .TYPE
+.* CODE IS A NUMBER GREATER THAN 4095
+.C4      CNOP  0,4
+&LABEL   B     *+8                     . BRANCH AROUND CONSTANT
+         DC    A(&CODE)                . FULLWORD CODE VALUE
+         L     0,*-4                   . LOAD POST CODE REG ZERO
+.*
+.*  DETERMINE MACRO FORM.
+.*
+.TYPE    AIF   ('&MF' NE 'I' OR '&ASCB' NE '').XMPOST
+         AIF   ('&ERRET' NE '').ERR7
+         AIF   ('&ECBKEY' NE '').ERR8                          @ZA15373
+.*
+.*  OLD FORM IN-LINE POST
+.*    R0 IS ALREADY SET WITH THE COMPLETION CODE
+.*    R1 NEEDS THE ECB ADDRESS
+         AIF   ('&ECB' EQ '').ERR2    . ECB MUST BE CODED
+         AIF   ('&ECB'(1,1) NE '(').S1 . LABEL
+         LA    1,0(0,&ECB(1))         . LOAD ECB REG 1, CLEAR HI BYTE
+         AGO   .SVC
+.S1      LA    1,&ECB                 . LOAD ECB ADDRESS IN REG 1
+         AGO   .SVC
+.*
+.*  XMPOST
+.*    R0  CONTAINS THE CONDITION CODEAND ECBKEY BIT IF OPTION REQ
+.*    R1  CONTAINS THE ADDRESS OF A LIST IN THE FORMAT:
+.*          WORD 1  ECB ADDRESS
+.*          WORD 2  ASCB ADDRESS
+.*          WORD 3  ERRET ADDRESS
+.*          WORD 4  ECBKEY IN BYTE 0 IF OPTION REQUESTED       @ZA15373
+.*         WITH THE HIGH ORDER BIT IN R1 ON TO INDICATE THE
+.*         REQUEST TYPE
+.*
+.XMPOST  AIF   (T'&ECB EQ 'O').XM1       SKIP SUBSTRING TEST
+         AIF   ('&ECB'(1,1) EQ '(' AND N'&ECB GT 1).ERR3
+.XM1     AIF   (T'&ASCB EQ 'O').XM2       SKIP SUBSTRING TEST
+         AIF   ('&ASCB'(1,1) EQ '(' AND N'&ASCB GT 1).ERR3
+.XM2     AIF   (T'&ERRET EQ 'O').XM3
+         AIF   ('&ERRET'(1,1) EQ '(' AND N'&ERRET GT 1).ERR3
+.XM3     AIF   (T'&ECBKEY EQ 'O').XM4                          @ZA15373
+         AIF   ('&ECBKEY'(1,1) EQ '(' AND N'&ECBKEY GT 1).ERR3 @ZA15373
+.XM4     AIF   ('&MF' NE 'I').EXECUTE
+.*
+.*  INTERREGIONAL IN-LINE POST
+.*
+.*   SET REGISTER INDICATED VALUES IN THE PARAMETER LIST
+         AIF   ('&ECB' EQ '').ERR2      ECB PARAMETER MUST BE CODED
+         AIF   (T'&ASCB EQ 'O' AND T'&ERRET NE 'O').ERR7
+         AIF   (T'&ERRET EQ 'O' AND T'&ASCB NE 'O').ERR1
+&A       SETA  12                       BASE LIST LENGTH       @ZA15373
+         AIF   ('&ECB'(1,1) NE '(').R1
+.*  SET ECB ADDRESS IN LIST                                    @ZA15373
+         ST    &ECB(1),&LIST          . SET THE ECB ADDRESS
+         AGO   .R1A
+.R1      LA    1,&ECB                 . ADDRESS THE ECB
+         ST    1,&LIST                . STORE IN PARM LIST
+.*  SET ASCB ADDRESS IN LIST+4                                 @ZA15373
+.R1A     AIF   (T'&ASCB EQ 'O').R3A
+         AIF   ('&ASCB'(1,1) NE '(').R2
+         ST    &ASCB(1),&LIST+4       . SET THE ASCB ADDRESS
+         AGO   .R2A
+.R2      LA    1,&ASCB                . ADDRESS THE ASCB WORD
+         ST    1,&LIST+4              . STORE IN PARM LIST
+.*  SET ERRET ADDRESS IN LIST+8                                @ZA15373
+.R2A     AIF   ('&ERRET'(1,1) NE '(').R3
+         ST    &ERRET(1),&LIST+8        . SET THE ERRET ADDRESS
+         AGO   .R3A
+.R3      LA    1,&ERRET                 .
+         ST    1,&LIST+8              . STORE IN PARM LIST
+.*  SET ECBKEY IN LIST+12                                      @ZA15373
+.R3A     AIF   (T'&ECBKEY EQ 'O').R5                           @ZA15373
+&A       SETA  &A+4                   ADD 4 BYTES FOR ECBKEY   @ZA15373
+         AIF   ('&ECBKEY'(1,1) EQ '(').R4                      @ZA15373
+         AIF   ('&ECBKEY' EQ 'YES').ERR9                       @ZA15373
+         AIF   (T'&ECBKEY NE 'N').R3B                          @ZA15373
+         AIF   (&ECBKEY GT 15).ERR9                            @ZA15373
+.R3B     ANOP                                                  @ZA15373
+         MVI   &LIST+12,&SHIFT&ECBKEY . SAVE ECBKEY IN LIST    @ZA15373
+         AGO   .R4A                                            @ZA15373
+.R4      STC   &ECBKEY(1),&LIST+12    . SAVE ECBKEY IN LIST    @ZA15373
+.R4A     ANOP                                                  @ZA15373
+         LA    1,X'800'(0,0)                                   @ZA15373
+         SLL   1,20(0)                                         @ZA15373
+         OR    0,1                    . SET ECBKEY BIT         @ZA15373
+.*
+.* ADDRESS AND DEFINE THE PARAMETER LIST
+.R5      CNOP  0,4
+         BAL   1,*+&A+4               . ADDRESS PARM LIST AND BYPASS IT
+&LIST    DC    A(0)                   . 1ST WORD - ECB ADDRESS
+         DC    A(0)                   . 2ND WORD - ASCB ADDRESS
+         DC    A(0)                   . 3RD WORD - ERRET ADDRESS
+         AIF   (T'&ECBKEY EQ 'O').SVC                          @ZA15373
+         DC    A(0)                   . 4TH WORD - BYTE0,ECBKEY@ZA15373
+         AGO   .SVC
+.*
+.*  INTERREGIONAL LIST FORM
+.*
+.LIST1   AIF   ('&CODE' NE '').ERR4     CC NOT ALLOWED IN LIST
+.L1A     AIF   (T'&ASCB EQ 'O').L1B
+         AIF   ('&ASCB'(1,1) EQ '(').ERR5
+.L1B     AIF   (T'&ERRET EQ 'O').L1C
+         AIF   ('&ERRET'(1,1) EQ '(').ERR5
+.L1C     AIF   (T'&ECBKEY EQ 'O').L1D                          @ZA15373
+         AIF   ('&ECBKEY'(1,1) EQ '(').ERR5                    @ZA15373
+.L1D     AIF   ('&ECB' EQ '').L2
+         AIF   ('&ECB'(1,1) EQ '(').ERR5
+&LABEL   DC    A(&ECB)                . 1ST WORD - ECB ADDRESS
+         AGO   .L3
+.L2      ANOP
+&LABEL   DC    A(0)                   . 1ST WORD - ECB ADDRESS
+.L3      AIF   ('&ASCB' EQ '').L4
+         DC    A(&ASCB)               . 2ND WORD - ASCB ADDRESS
+         AGO   .L5
+.L4      DC    A(0)                   . 2ND WORD - ASCB ADDRESS
+.L5      AIF   ('&ERRET' EQ '').L6
+         DC    A(&ERRET)              . 3RD WORD - ERRET ADDRESS
+         AGO   .L7
+.L6      DC    A(0)                   . 3RD WORD - ERRET ADDRESS
+.L7      AIF   ('&ECBKEY' NE '').L7A                           @ZA15373
+         MEXIT                                                 @ZA15373
+.L7A     AIF   ('&ECBKEY'(1,3) NE 'YES').ERR9                  @ZA15373
+         DC    A(0)                   . 4TH WORD - BYTE0,ECBKEY@ZA15373
+         MEXIT
+.*
+.*  INTERREGIONAL EXECUTE FORM
+.*
+.EXECUTE AIF   ('&MF'(1,1) NE '(').ERR6
+         AIF   ('&MF(1)' NE 'E').ERR6
+         AIF   (N'&MF NE 2).ERR6
+.*   LIST PARAMETER
+         AIF   ('&MF(2)'(1,1) EQ '(').X1   CHECK LIST IN A REG   YM1995
+&NX      SETC  '+'                             'PLUS' A LABEL
+&LISTA   SETC   '&MF(2)'                                         YM1995
+         AGO   .X2                                               YM1995
+.X1      ANOP                                                    YM1995
+&A       SETA  K'&MF-6                                           YM1995
+&LISTA   SETC  '&MF'(5,&A)                                       YM1995
+&LISTA   SETC  '(&LISTA)'                                      @ZA49183
+.*
+.*   ECB PARAMETER
+.X2      AIF   ('&ECB' EQ '').X4
+         AIF   ('&ECB'(1,1) EQ '(').X3
+         LA    15,&ECB               . ADDRESS OF ECB
+         ST    15,0&NX&LISTA         . STORE ECB ADDRESS         YM1995
+         AGO   .X4
+.X3      ST    &ECB(1),0&NX&LISTA    . STORE ECB ADDRESS         YM1995
+.*
+.*   ASCB AND ERRET PARAMETERS
+.X4      AIF   ('&ASCB' EQ '').X6
+         AIF   ('&ASCB'(1,1) EQ '(').X5
+         LA    15,&ASCB              . ADDRESS OF ASCB
+         ST    15,4&NX&LISTA         . STORE ASCB ADDRESS        YM1995
+         AGO   .X6
+.X5      ST    &ASCB(1),4&NX&LISTA   . STORE ASCB ADDRESS        YM1995
+.X6      AIF   ('&ERRET' EQ '').X8
+         AIF   ('&ERRET'(1,1) EQ '(').X7
+         LA    15,&ERRET               . ADDRESS OF ERRET
+         ST    15,8&NX&LISTA         . STORE ERRET ADDRESS       YM1995
+         AGO   .X8
+.X7      ST    &ERRET(1),8&NX&LISTA    . STORE ERRET ADDRESS     YM1995
+.*                                                             @ZA15373
+.*  ECBKEY PARAMETER                                           @ZA15373
+.X8      AIF   ('&ECBKEY' EQ '').X9                            @ZA15373
+         AIF   ('&ECBKEY'(1,1) EQ '(').X8B                     @ZA15373
+         AIF   ('&ECBKEY' EQ 'YES').ERR9                       @ZA15373
+         AIF   (T'&ECBKEY NE 'N').X8A                          @ZA15373
+         AIF   (&ECBKEY GT 15).ERR9                            @ZA15373
+.X8A     ANOP                                                  @ZA15373
+         MVI   12&NX&LISTA,&SHIFT&ECBKEY  .  STORE ECBKEY      @ZA15373
+         AGO   .X8C                                            @ZA15373
+.X8B     STC   &ECBKEY,12&NX&LISTA    . STORE ECBKEY           @ZA15373
+.X8C     O     0,&MASK                . SET ECBKEY BIT         @ZA15373
+.*
+.*  ADDRESS LIST AND SET ON HIGH ORDER BIT
+.X9      AIF   ('&MF(2)'(1,1) EQ '(').X9A
+         LA    1,&MF(2)               . ADDRESS LIST
+         AGO   .X10
+.X9A     IHBINNRA &MF(2)              . SET REG 1
+.X10     CNOP  0,4
+         O     1,&MASK                . SET LIST FORM INDICATOR
+         B     *+8                    . BRANCH AROUND MASK
+&MASK    DC    X'80000000'
+.*
+.*  THE SVC CALL
+.*
+.SVC     SVC   2                      . ISSUE THE POST SVC
+         MEXIT
+.*
+.*  ERROR EXITS
+.*
+.ERR1    ANOP
+         IHBERMAC  1010,ASCB,ERRET      ASCB OPERAND REQUIRES ERRET OP
+         MEXIT
+.ERR2    ANOP
+         IHBERMAC  11                   ECB MISSING
+         MEXIT
+.ERR3    ANOP
+         IHBERMAC  203                  REGISTER SPECIFICATION INVALID
+         MEXIT
+.ERR4    ANOP
+         IHBERMAC  1009                 NO CC ALLOWED IN LIST FORM
+         MEXIT
+.ERR5    ANOP
+         IHBERMAC  69                   INVALID REG SPEC WITH MF=L
+         MEXIT
+.ERR6    ANOP
+         IHBERMAC  35,,&MF              EXECUTE FORM MF= ERROR
+         MEXIT
+.ERR7    ANOP
+         IHBERMAC    1010,ERRET,ASCB    ERRET OPERAND REQUIRES ASCB
+         MEXIT                                                 @ZA15373
+.ERR8    IHBERMAC    1010,ECBKEY,ASCB   ECBKEY OP REQUIRES ASCB@ZA15373
+         MEXIT                                                 @ZA15373
+.ERR9    IHBERMAC    1007,ECBKEY        INVALID ECBKEY OPERAND @ZA15373
+         MEND
+**/
+* POST: /* PL/S VERSION OF POST MACRO                                */
+*/********************************************************************/
+*  MACRO
+*    KEYS(ASCB,                    /* ADDRESS OF ASCB                */
+*        ERRET,                    /* ADDRESS OF ERROR RETURN ENTRY  */
+*        ECBKEY,                   /* ECB STORAGE PROT KEY   @ZA15373*/
+*        RELATED,
+*        MF);  /* INTERREGIONAL POST REQUEST                         */
+*        ANS('?'||MACLABEL||'POSTP '||MACLIST||MACKEYS||';');
+*% END;

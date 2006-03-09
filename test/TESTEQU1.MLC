@@ -1,0 +1,14 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 12/08/05                                                 *
+*********************************************************************
+* 12/08/05 RPI119 ADD MZ390 ONLY TEST FOR EQUREG OPTIONS
+*********************************************************************
+         EQUREGS
+         EQUREGS REGS=FPR
+         EQUREGS TYPE=HEX
+         EQUREGS REGS=FPR,TYPE=HEX
+         END

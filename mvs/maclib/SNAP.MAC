@@ -1,0 +1,587 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /* MACCOMP Y-1 SC1C5/PZD81                                         */
+* /* MACSTAT Y-1 72179/Y02705,     G33SPHW                           */
+* /* APAR OZ51152 - A-TYPE ADDR NOT GENERATED FOR STRHDR WHEN LIST   */
+* /*                IS REG FORMAT  ZA51152                           */
+         MACRO
+&NAME    SNAP  &DCB=,&TCB=,&SDATA=,&PDATA=,&STORAGE=,&LIST=,&ID=,&MF=,&X
+               STRHDR=
+* /* MACDATE Y-1 72179  LAST UPDATED -02/03/81 EBB1102 - APAR OZ51152*/
+.*A016000,020000,022000,034000,060000,094000,104000,284000       Y02705
+.*A380000,490000,678000                                          Y02705
+.*D330000-378000,384000-386000,484000-488000,638000              Y02705
+.*C034000,276000-278000,320000,326000,392000,432000,438000       Y02705
+.*C574000,588000,594000,616000,620000,018000,420000,634000       Y02705
+         LCLC  &C1,&C2,&GNAME
+         LCLB  &B0,&B1,&B2,&B3,&B4,&B5,&B6,&B7,&B8,&B9,&B10,&B11,&B12,&X
+               B13,&B14,&B15,&B16                               G33SPHW
+         LCLB  &B17,&B18,&B19          SQA,LSQA,SWA              Y02705
+         LCLB  &B20,&B21,&B22,&B23,&B24,&B25
+         LCLB  &OSVS2R2           OSVS2R2 LEVEL OF PARAM LIST    Y02705
+         LCLB  &OSENVS2           OSVS2R2 ENHANCED SNAP         G33SPHW
+         LCLA  &FLAGS4,&CTR3,&CTR4,&CTR5,&CTR7,&CTR8,&CTRA,&CTRB
+         LCLC  &C3,&C4
+         LCLA  &FLAGS3                 FLAG FIELD                Y02705
+         LCLA   &FLAGS1,&FLAGS2,&CTR1,&CTR2,&DISP
+         ACTR   9000
+&B0      SETB  1                  INDICATES SNAP REQUEST         Y02705
+&OSVS2R2 SETB  1                  INDICATES AN OSVS2R2 LEVEL     Y02705
+&OSENVS2 SETB  1                  INDICATES A SNAP ENHANCED     G33SPHW
+         AIF   (T'&MF EQ 'O').STAND    STANDARD FORM             Y02705
+         AIF   ('&MF'(1,3) EQ '(E,' AND '&TCB' EQ '''S''').EXCUR Y02705
+.STAND   ANOP                                                    Y02705
+&B1      SETB  ('&TCB' NE '')
+.EXCUR   ANOP                                                    Y02705
+         AIF   ('&SDATA' EQ '').ABC7
+         AIF    ('&SDATA'(1,1) EQ '(').ABC2
+&B2      SETB  ('&SDATA' EQ 'ALL' OR '&SDATA' EQ 'CB')
+&B3      SETB  ('&SDATA' EQ 'ALL' OR '&SDATA' EQ 'TRT')
+&B4      SETB  ('&SDATA' EQ 'ALL' OR '&SDATA' EQ 'NUC')
+&B7      SETB  ('&SDATA' EQ 'ALL' OR '&SDATA' EQ 'Q')
+&B17     SETB  ('&SDATA' EQ 'ALL' OR '&SDATA' EQ 'SQA')          Y02705
+&B18     SETB  ('&SDATA' EQ 'ALL' OR '&SDATA' EQ 'LSQA')         Y02705
+&B19     SETB  ('&SDATA' EQ 'ALL' OR '&SDATA' EQ 'SWA')          Y02705
+&B20   SETB  ('&SDATA' EQ 'ALL' OR '&SDATA' EQ 'DM')            G33SPHW
+&B21   SETB  ('&SDATA' EQ 'ALL' OR '&SDATA' EQ 'IO')            G33SPHW
+&B22   SETB  ('&SDATA' EQ 'ALL' OR '&SDATA' EQ 'ERR')           G33SPHW
+&CTR1    SETA  &B2+&B3+&B4+&B17+&B18+&B19+&B7+&B20+&B21+&B22    G33SPHW
+         AIF   ('&CTR1' EQ '0').MSG2
+         AGO   .ABC7
+.ABC2    ANOP
+&CTR1    SETA  N'&SDATA
+&CTR2    SETA  0
+.LOOPA   ANOP
+&CTR2    SETA  &CTR2+1
+&C1      SETC  '&SDATA(&CTR2)'
+         AIF   ('&C1' EQ 'TRT').ABC4
+         AIF   ('&C1' EQ 'NUC').ABC5
+         AIF   ('&C1' EQ 'CB').ABC6
+         AIF   ('&C1' EQ 'Q').ABC67
+         AIF   ('&C1' EQ 'SQA').SETSQA      IS SQA SPECIFIED     Y02705
+         AIF   ('&C1' EQ 'LSQA').SETLSQA    IS LSQA SPECIFIED    Y02705
+         AIF   ('&C1' EQ 'SWA').SETSWA      IS SWA SPECIFIED     Y02705
+         AIF   ('&C1' EQ 'DM').SETDM        IS DM SPECIFIED     G33SPHW
+         AIF   ('&C1' EQ 'IO').SETIO        IS IO SPECIFIED     G33SPHW
+         AIF   ('&C1' EQ 'ERR').SETERR      IS ERR SPECIFIED    G33SPHW
+         AIF   ('&C1' EQ 'ALL').SETALL
+         AGO   .MSG2
+.ABC3    ANOP
+         AIF   ('&CTR2' NE '&CTR1').LOOPA
+         AGO   .ABC7
+.ABC4    ANOP
+&B3      SETB  1
+         AGO   .ABC3
+.ABC5    ANOP
+&B4      SETB  1
+         AGO   .ABC3
+.ABC6    ANOP
+&B2      SETB  1
+         AGO   .ABC3
+.ABC67   ANOP
+&B7      SETB  1
+         AGO   .ABC3
+.SETSQA  ANOP                          SQA SPECIFIED             Y02705
+&B17     SETB  1                       SET SQA INDICATOR         Y02705
+         AGO   .ABC3                   RETURN                    Y02705
+.SETLSQA ANOP                          LSQA SPECIFIED            Y02705
+&B18     SETB  1                       SET LSQA INDICATOR        Y02705
+         AGO   .ABC3                   RETURN                    Y02705
+.SETSWA  ANOP                          SWA SPECIFIED             Y02705
+&B19     SETB  1                       SET SWA INDICATOR         Y02705
+         AGO   .ABC3                   RETURN                    Y02705
+.SETDM   ANOP                                                   G33SPHW
+&B20     SETB  1                       DM SPECIFIED             G33SPHW
+         AGO .ABC3                     RETURN                   G33SPHW
+.SETIO   ANOP                          IO SPECIFIED             G33SPHW
+&B21     SETB  1                       SET IO INDICATOR         G33SPHW
+         AGO .ABC3                     RETURN                   G33SPHW
+.SETERR  ANOP                          ERR SPECIFIED            G33SPHW
+&B22     SETB  1                       SET ERR INDICATOR        G33SPHW
+         AGO .ABC3                     RETURN                   G33SPHW
+.SETALL  ANOP
+&B2      SETB  1
+&B3      SETB  1
+&B4      SETB  1
+&B7      SETB  1
+&B17     SETB  1                       SQA INDICATOR             Y02705
+&B18     SETB  1                       LSQA INDICATOR            Y02705
+&B19     SETB  1                       SWA  INDICATOR            Y02705
+&B20     SETB  1                       DM  INDICATOR            G33SPHW
+&B21     SETB  1                       IO  INDICATOR            G33SPHW
+&B22     SETB  1                       ERR INDICATOR            G33SPHW
+.ABC7    ANOP
+&B5      SETB  ('&STORAGE' NE '')
+&B16     SETB  ('&LIST' NE '')
+&B23    SETB   ('&STRHDR' NE '')       WAS STRHDR SPECIFIED     G33SPHW
+         AIF   ('&B5' EQ '1' AND '&B16' EQ '1').MSG4
+&B25     SETB  ('&B5' EQ '1' OR '&B16' EQ '1')                  G33SPHW
+         AIF   ('&B23' EQ '1' AND '&B25' EQ '0').MSG9           G33SPHW
+         AIF   ('&B23' NE '1').SKIPT                            G33SPHW
+&CTR4    SETA  N'&STRHDR                                        G33SPHW
+         AIF  (&CTR4 LT 1).MSG7                                 G33SPHW
+.SKIPT   ANOP                                                   G33SPHW
+         AIF   ('&B5' EQ '0').ABC7B
+&CTR1    SETA  N'&STORAGE
+         AIF   (&CTR1 LT 2).MSG4                               AS100400
+         AIF   ('&B23' EQ '0').NOSHA   STRHDR SPECIFIED         G33SPHW
+&CTR3    SETA  N'&STRHDR*2             GET NUMBER OF HEADER*2   G33SPHW
+         AIF  ( &CTR3 GT &CTR1).MSG8 TOO MANY HEADERS           G33SPHW
+.NOSHA   ANOP                                                   G33SPHW
+.ABC7A   ANOP
+&CTR1    SETA  &CTR1-2
+         AIF   (&CTR1 EQ 0).ABC7C                              AS100400
+         AIF   (&CTR1 LT 1).MSG4                          0880 AS100400
+         AGO   .ABC7A
+.ABC7B   ANOP
+         AIF   ('&B16' EQ '0').ABC7C
+         AIF   (N'&LIST NE 1).MSG4      LIST PARSM^=1
+         AIF   ('&B23' EQ '0').ABC7C    STRHDR SPECIFIED        G33SPHW
+         AIF   (N'&STRHDR NE 1).MSGA     LIST FORMAT            G33SPHW
+.ABC7C   ANOP
+&B6      SETB  ('&ID' NE '')
+         AIF   ('&PDATA' EQ '').ABC18
+         AIF   ('&PDATA'(1,1) EQ '(').ABC8
+&B8 SETB ('&PDATA' EQ 'SAH' OR '&PDATA' EQ 'SA' OR '&PDATA' EQ 'ALL')
+&B9      SETB  ('&PDATA' EQ 'SAH')
+&B10      SETB  ('&PDATA' EQ 'REGS' OR '&PDATA' EQ 'ALL')
+&B11 SETB ('&PDATA' EQ 'LPA' OR '&PDATA' EQ 'ALLPA' OR '&PDATA' EQ 'ALLX
+               ')
+&B12 SETB ('&PDATA' EQ 'JPA' OR '&PDATA' EQ 'ALLPA' OR '&PDATA' EQ 'ALLX
+               ')
+.PDATA1  ANOP
+&B13     SETB  ('&PDATA' EQ 'PSW' OR '&PDATA' EQ 'ALL')
+&B14     SETB  ('&PDATA' EQ 'SPLS' OR '&PDATA' EQ 'ALL')
+&CTR1    SETA  &B8+&B9+&B10+&B11+&B12+&B13+&B14
+         AIF   ('&CTR1' EQ '0').MSG3
+&B15     SETB  0
+         AGO   .ABC18
+.ABC8    ANOP
+&CTR1    SETA  N'&PDATA
+&CTR2    SETA  0
+.LOOPB   ANOP
+&CTR2    SETA  &CTR2+1
+&C1      SETC  '&PDATA(&CTR2)'
+         AIF   ('&C1' EQ 'SA').ABC10
+         AIF   ('&C1' EQ 'SAH').ABC11
+         AIF   ('&C1' EQ 'REGS').ABC12
+         AIF   ('&C1' EQ 'LPA').ABC13
+         AIF   ('&C1' EQ 'JPA').ABC14
+         AIF   ('&C1' EQ 'ALLPA').ABC15
+         AIF   ('&C1' EQ 'PSW').ABC16
+         AIF   ('&C1' EQ 'SPLS').ABC17
+         AIF   ('&C1' EQ 'ALL').ABC17A
+         AGO   .MSG3
+.ABC9    ANOP
+         AIF   ('&CTR2' NE '&CTR1').LOOPB
+         AGO   .ABC18
+.ABC10    ANOP
+&B8      SETB  1
+         AGO   .ABC9
+.ABC11   ANOP
+&B8      SETB    1
+&B9      SETB  1
+         AGO    .ABC9
+.ABC12    ANOP
+&B10     SETB  1
+         AGO   .ABC9
+.ABC13   ANOP
+&B11     SETB  1
+         AGO   .ABC9
+.ABC14   ANOP
+&B12     SETB   1
+         AGO   .ABC9
+.ABC15    ANOP
+&B11     SETB  1
+&B12     SETB  1
+         AGO   .ABC9
+.ABC16    ANOP
+&B13     SETB  1
+         AGO   .ABC9
+.ABC17    ANOP
+&B14     SETB   1
+         AGO   .ABC9
+.ABC17A  ANOP
+&B8      SETB  1
+&B10     SETB  1
+&B11     SETB  1
+&B12     SETB  1
+&B13     SETB  1
+&B14     SETB  1
+.ABC18    ANOP
+&FLAGS1  SETA  128*&B4+64*&B17+32*&B18+16*&B19+8*&B3+4*&B2+2*&B7+1*&B20
+&FLAGS2  SETA  128*&B8+64*&B9+32*&B10+16*&B11+8*&B12+4*&B13+2*&B14+1*&BX
+               15
+&FLAGS3  SETA  64*&OSVS2R2+32*&OSENVS2+16*&B0+8*&B6+4*&B1+2*&B5+2*&B16+X
+               1*&B23                                           G33SPHW
+&FLAGS4  SETA  128*&B21+64*&B22                                 G33SPHW
+         AIF   ('&DCB' EQ '' AND ('&MF' EQ '')).MSG1
+         AIF   ('&MF' EQ '').STYPE
+         AIF   ('&MF' EQ 'L').LTYPE
+         AIF   ('&MF'(1,3) NE '(E,').MSG5
+         AIF ('&NAME' EQ '').NONM
+&NAME    DS    0H                                                  0918
+.NONM    ANOP
+&C1      SETC  '&MF(2)'
+         AIF   ('&C1'(1,1) EQ '(').REG
+         LA    1,&MF(2)                                            0918
+         AGO   .CONT0
+.REG     ANOP
+         AIF   ('&C1' EQ '(1)').CONT0
+         LR    1,&C1         GET ADDR OF PARM LIST
+.CONT0   ANOP
+         AIF   ('&DCB' EQ '').NODCB
+         AIF   ('&DCB'(1,1) EQ '(').REGDCB
+         LA    0,&DCB               GET DCB ADDRESS
+         ST    0,8(0,1)             STORE INTO PARAMETER LIST    Y02705
+         AGO    .NODCB
+.REGDCB  ANOP
+         LA    &DCB,0&DCB    CLEAR HIGH ORDER BYTE OF DCB ADR  @ZA09196
+         ST    &DCB,8(0,1)   STORE DCB ADDR INTO PARAM LIST      Y02705
+.NODCB   ANOP
+         OI    1(1),&FLAGS3        SET OPTION FLAGS              Y02705
+         AIF   (T'&SDATA EQ 'O').CKPDATA    IS SDATA SPECIFIED   Y02705
+         MVI   4(1),&FLAGS1        SET OPTION FLAGS              Y02705
+         MVI   5(1),&FLAGS4        SET OPTIONS FLAGS            G33SPHW
+.CKPDATA AIF   (T'&PDATA EQ 'O').GO1        IS PDATA SPECIFIED   Y02705
+         MVI   6(1),&FLAGS2        SET OPTION FLAGS              Y02705
+.GO1     ANOP                                                    Y02705
+         AIF   ('&B1' EQ '0').NOTCB         IS TCB SPECIFIED     Y02705
+         AIF   ('&TCB'(1,1) EQ '(').REGTCB  IS TCB ADDR IN A REG Y02705
+         L     0,&TCB                       ADDRESS OF TCB       Y02705
+         ST    0,12(0,1)                    INTO PARAMETER LIST  YM1995
+         AGO   .GO2                         GO CHECK FOR STORAGE Y02705
+.NOTCB   AIF   ('&TCB' EQ '''S''').CURRTCB  CURRENT TCB REQUEST  YO2705
+         AGO   .GO2                         GO CHECK FOR STORAGE Y02705
+.CURRTCB NI    1(1),X'FB'                   CURRENT TCB REQUEST  Y02705
+         AGO   .GO2                         GO CHECK FOR STORAGE Y02705
+.REGTCB  ANOP                                                    Y02705
+         ST    &TCB,12(0,1)                 TCB ADDR INTO PARAM  YM1995
+.GO2     ANOP                                                    Y02705
+         AIF   ('&B5' EQ '0').NOSHOT
+&CTR1    SETA  N'&STORAGE
+         LA    0,24(0,1)           SET UP SNAPSHOT LIST ADDRESS G33SPHW
+         ST    0,16(0,1)           STORE INTO PARAMETER LIST     Y02705
+         AIF   ('&B23' EQ '0').NOHEAD   STRHDR SPECIFIED        G33SPHW
+&CTR4    SETA  N'&STRHDR                NUMBER OF HEADERS       G33SPHW
+&CTR8    SETA  &CTR1*4                  DISPLACEMENT            G33SPHW
+&CTR8    SETA  &CTR8+24                 SKIP LIST               G33SPHW
+         LA    0,&CTR8.(0,1)       SET UP HEADER ADDRESS        G33SPHW
+         ST    0,20(0,1)           STORE INTO PARMLIST          G33SPHW
+.NOHEAD  ANOP                      NOHEADERS SPECIFIED          G33SPHW
+.DPA1    ANOP
+&CTR2    SETA   0
+&DISP    SETA  20        DISPLACEMENT INTO STORAGE ADDRESS LIST  Y02705
+.LOOP1   ANOP
+&CTR2    SETA  &CTR2+1
+&DISP    SETA  &DISP+4
+&C1      SETC  '&STORAGE(&CTR2)'
+         AIF   ('&STORAGE(&CTR2)'(1,1) EQ '(').STOR1
+         AIF   ('&MF' EQ '').AIF1
+         LA    0,&STORAGE(&CTR2)   GET STARTING/ENDING ADDRESS     5139
+         ST    0,&DISP.(0,1)
+         AGO   .AIF1
+.STOR1   ANOP
+         ST    &C1,&DISP.(0,1)     GET STARTING/ENDING ADDRESS
+.AIF1    ANOP
+         AIF   ('&CTR2' NE '&CTR1').LOOP1
+         OI    &DISP.(1),X'80'     SET END OF LIST INDICATOR     Y02705
+         AGO   .DPA2                 CHECK HEADER               G33SPHW
+.DPA2    ANOP                        STRHDR PROCESS             G33SPHW
+         AIF   ('&B23' EQ '0').AIF3  NO STRHDR                  G33SPHW
+&CTR4    SETA  N'&STRHDR             NUMBER OF HEADERS          G33SPHW
+&CTR3    SETA  0                     COUNTER INITIALIZED        G33SPHW
+.LOOP6   ANOP                        LOOP THRU HEADERS          G33SPHW
+&CTR3    SETA  &CTR3+1               BUMP COUNTER               G33SPHW
+&DISP    SETA  &DISP+4               BUMP DISPLACEMENT          G33SPHW
+&C3      SETC  '&STRHDR(&CTR3)'      GET HEADER ADDRESS         G33SPHW
+         AIF   ('&STRHDR(&CTR3)' EQ '').COMA                    G33SPHW
+         AIF   ('&STRHDR(&CTR3)'(1,1) EQ '(').STOR3             G33SPHW
+         AIF   ('&MF' EQ '').CHKIF                              G33SPHW
+         LA    0,&STRHDR(&CTR3)    GET HEADER ADDRESS           G33SPHW
+         ST    0,&DISP.(0,1)       STORE IN PARMLIST            G33SPHW
+         AGO   .CHKIF                END OF HEADERS             G33SPHW
+.STOR3   ANOP                        STORE REG IN PARMLIST      G33SPHW
+         ST    &C3,&DISP.(0,1)     STORE HEADER ADDRESS         G33SPHW
+.CHKIF   ANOP                        CHECK END OF HEADERS       G33SPHW
+         AIF   ('&CTR3' NE '&CTR4').LOOP6 NOT END               G33SPHW
+         OI    &DISP.(1),X'80'     SET END OF HEADER INDICATOR  G33SPHW
+         AGO   .AIF3               HEADERS COMPLETE             G33SPHW
+.COMA    ANOP                                                   G33SPHW
+         AIF   ('&MF' EQ '').CHKIF                              G33SPHW
+         LA    0,&STRHDR(&CTR3)    GET HEADER ADDRESS           G33SPHW
+         ST    0,&DISP.(0,1)       STORE IN PARMLIST            G33SPHW
+         AGO  .CHKIF                                            G33SPHW
+.AIF3    ANOP                                                   G33SPHW
+         AIF   ('&MF' EQ '').HOCH
+.NOSHOT  ANOP
+         AIF   ('&B16' EQ '0').IDPREP
+         AIF   ('&LIST'(1,1) EQ '(').LL1
+         LA    0,&LIST             GET LIST ADDRESS             G33SPHW
+         ST    0,16(0,1)           STORE LIST ADDRESS IN PARM   G33SPHW
+         AGO   .CHKH               CHECK HEADER SPECIFIED       G33SPHW
+         OI    &DISP.(1),X'80'     SET END OF LIST INDICATOR    G33SPHW
+         AGO   .AIF3               HEADERS COMPLETE             G33SPHW
+         ST    0,16(0,1)     STORAGE IN PARAMETER LIST           Y02705
+         AIF   ('&MF' EQ '').CHKIF                              G33SPHW
+         LA    0,0                 ZERO ENTRY                   G33SPHW
+         ST    0,&DISP.(0,1)       STORE ZERO HEADER LIST       G33SPHW
+.LL1     ANOP
+         ST    &LIST,16(0,1) SNAPSHOT LIST ADDR INTO PARAM LIST  Y02705
+         AGO   .CHKH                                            G33SPHW
+.CHKH    ANOP                                                   G33SPHW
+         AIF   ('&B23' EQ '0').NOHD   NO STRHDR SPECIFIED       G33SPHW
+         AIF   ('&STRHDR'(1,1) EQ '(').STRHED                   G33SPHW
+         LA    0,&STRHDR     GET HEADER ADDRESS                 G33SPHW
+         ST    0,20(0,1)     STORE HEADER ADDRESS               G33SPHW
+.NOHD    ANOP                                                   G33SPHW
+         AGO   .IDPREP       PREPARE FOR ID                     G33SPHW
+.STRHED  ANOP                HEADER IN REGISTER                 G33SPHW
+         ST    &STRHDR,20(0,1) STORE HEADER ADDRESS             G33SPHW
+         AGO   .IDPREP       PREPARE FOR ID                     G33SPHW
+.IDPREP  ANOP
+         AIF   ('&B6' EQ '0').NOID
+         AIF   ('&ID'(1,1) EQ '(').IDPREP1
+         MVI   0(1),&ID            GET ID NUMBER
+         AGO    .NOID
+.IDPREP1  ANOP
+         STC   &ID,0(0,1)         GET ID NUMBER                  YM1995
+.NOID    ANOP
+         SVC   51
+         MEXIT
+.STYPE   ANOP
+&GNAME   SETC  'IHB'.'&SYSNDX'
+         CNOP  0,4
+&NAME    BAL   1,&GNAME            BRANCH AROUND PARAM LIST
+.LSTYPE  ANOP
+         AIF   ('&B6' EQ '0').NOIDS
+         AIF   ('&ID'(1,1) EQ '(').NOIDS
+         DC    AL1(&ID)            ID NUMBER
+         AGO   .CONT2
+.NOIDS   ANOP
+         DC    AL1(0)              ID NUMBER
+.CONT2   ANOP
+         DC    AL1(&FLAGS3)        OPTION FLAGS                  Y02705
+         DC    H'0'                RESERVED                      Y02705
+         DC    AL1(&FLAGS1)        SDATA FLAGS ONE               Y02705
+         DC    AL1(&FLAGS4)        SDATA FLAGS TWO              G33SPHW
+         DC    AL1(&FLAGS2)        PDATA FLAGS                   Y02705
+         DC    AL1(0)              RESERVED                      Y02705
+         AIF   ('&DCB' EQ '').DCBA0
+         AIF   ('&DCB'(1,1) EQ '(').DCBA0                          9943
+         DC    A(&DCB)             DCB ADDRESS
+         AGO   .DCBA1
+.DCBA0   ANOP
+         DC    A(0)                TCB ADDRESS
+.DCBA1    ANOP
+         DC    A(0)                TCB ADDRESS
+         AIF   ('&B5' EQ '0' AND '&B16' EQ '0').SS3
+         AIF   ('&B5' EQ '1').SS1
+         AIF   ('&LIST'(1,1) EQ '(').LISTRG                    @ZA51152
+         DC    A(&LIST)            ADDRESS OF SNAPSHOT LIST
+         AGO   .CHHDR                                          @ZA51152
+.LISTRG  ANOP                                                  @ZA51152
+         DC    A(0)                ADDRESS OF SNAP-SHOT LIST   @ZA51152
+.CHHDR   ANOP                                                  @ZA51152
+         AIF   ('&B23' EQ '1').HHHV    STRHDR SPECIFIED         G33SPHW
+         DC    A(0)                ADDRESS OF HEADER LIST       G33SPHW
+         AGO   .CONT8                                           G33SPHW
+.HHHV    ANOP                                                   G33SPHW
+         AIF   ('&STRHDR'(1,1) EQ '(').SSL                      G33SPHW
+         DC    A(&STRHDR)          ADDRESS OF HEADER LIST       G33SPHW
+         AGO   .CONT8                                           G33SPHW
+.SSL     ANOP                                                   G33SPHW
+         DC    A(0)                ADDRESS OF HEADER LIST       G33SPHW
+         AGO   .CONT8
+.SS1     ANOP
+&CTR1    SETA  N'&STORAGE
+         AGO   .SS2
+.SS3     ANOP
+         DC    A(0)                ADDRESS OF SNAP-SHOT LIST
+         DC    A(0)                ADDRESS OF HEADER LIST       G33SPHW
+         AGO   .CONT8
+.SS2     ANOP
+         DC    A(*+8)              ADDRESS OF SNAP-SHOT LIST
+         AIF   ('&B23' EQ '0').HHH4       STRHDR SPECIFIED      G33SPHW
+&CTR3    SETA  N'&STORAGE+1             NUMBER OF STORAGE ADDR  G33SPHW
+&CTR5    SETA  &CTR3*4                  DISP. FOR HEADER        G33SPHW
+         DC    A(*+&CTR5.)         ADDRESS OF HEADER LIST       G33SPHW
+         AGO   .HHH5                      AROUND DC             G33SPHW
+.HHH4    ANOP                                                   G33SPHW
+         DC    A(0)                ADDRESS OF HEADER LIST       G33SPHW
+.HHH5    ANOP
+&CTR2    SETA  0
+.LOOP3   ANOP
+&CTR2    SETA  &CTR2+1
+         AIF   ('&STORAGE(&CTR2)' EQ '').STYPE3
+         AIF   ('&STORAGE(&CTR2)'(1,1) EQ '(').STYPE2
+         DC    A(&STORAGE(&CTR2))  STARTING/ENDING ADDRESS
+         AIF   ('&CTR2' NE '&CTR1').LOOP3
+         AIF   ('&B23' EQ '1').HHHZ                             G33SPHW
+         AGO   .CONT8                                           G33SPHW
+.HHHZ    ANOP                                                   G33SPHW
+         AIF   ('&MF' NE 'L').ARND                              G33SPHW
+         AIF   ('&STORAGE' EQ '').ARND                          G33SPHW
+         ORG   *-4                                              G33SPHW
+         DC    X'80'               END  OF LIST                 G33SPHW
+         ORG   *+3                                              G33SPHW
+.ARND    ANOP                                                   G33SPHW
+&CTR3    SETA  N'&STRHDR                                        G33SPHW
+&CTRB    SETA  0                                                G33SPHW
+.LOOP9   ANOP                                                   G33SPHW
+&CTRB    SETA  &CTRB+1                                          G33SPHW
+         AIF   ('&STRHDR(&CTRB)' EQ '').HHHA                    G33SPHW
+         AIF   ('&STRHDR(&CTRB)'(1,1) EQ '(').HHHB              G33SPHW
+         DC    A(&STRHDR(&CTRB))   ADDRESS OF HEADER            G33SPHW
+.HHHD    ANOP                                                   G33SPHW
+         AIF   ('&CTR3' NE '&CTRB').LOOP9                       G33SPHW
+         AGO   .CONT8                                           G33SPHW
+.HHHA    ANOP                                                   G33SPHW
+         DC   A(0)                ADDRESS OF HEADER             G33SPHW
+         AGO  .HHHD                                             G33SPHW
+.HHHB    ANOP                                                   G33SPHW
+         AIF   ('&MF' EQ 'L').MSGB REG FORMAT WITH MF=L         G33SPHW
+         DC    A(0)               ADDRESS OF HEADER             G33SPHW
+         AGO   .HHHD                                            G33SPHW
+.STYPE1  ANOP
+         AIF   ('&CTR2' NE '&CTR1').LOOP3
+         AIF   ('&B23' EQ '1').HHHZ
+.CONT8   ANOP
+         AIF   ('&MF' EQ 'L').EXIT
+&GNAME   DS    0H
+         AIF   ('&B6' EQ '0').HOCH0
+         AIF   ('&ID'(1,1) NE '(').HOCH0
+         STC   &ID,0(0,1)       GET ID NUMBER                    YM1995
+.HOCH0   ANOP
+         AIF   ('&B5' EQ '0').HOCH1
+         AGO   .DPA1
+.LHDRS   ANOP                                                   G33SPHW
+         AIF  ('&B23' EQ '0').DPA1                              G33SPHW
+&CTRB    SETA   0                                               G33SPHW
+&CTR5    SETA   N'&STRHDR                                       G33SPHW
+.LOOP8   ANOP                                                   G33SPHW
+&CTRB    SETA  &CTRB+1                                          G33SPHW
+         AIF   ('&STRHDR(&CTRB)' EQ '').SKIPHD                  G33SPHW
+         AIF   ('&STRHDR(&CTRB)'(1,1) EQ '(').CHKL              G33SPHW
+         DC    A(&STRHDR(&CTRB))   ADDRESS OF HEADER            G33SPHW
+.CHKEND  ANOP                                                   G33SPHW
+         AIF   ('&CTRB' NE '&CTR5').LOOP8                       G33SPHW
+         AIF   ('&MF' EQ 'L').EXIT                              G33SPHW
+         DS   0H       ALLIGN ON WORD BDY
+         AGO  .DPA1                                             G33SPHW
+.SKIPHD  ANOP                                                   G33SPHW
+         DC   A(0)                 ADDRESS OF HEADER            G33SPHW
+         AGO   .CHKEND                                          G33SPHW
+.CHKL    ANOP                                                   G33SPHW
+         AIF   ('&MF' EQ 'L').MSGB                              G33SPHW
+         DC    A(0)                ADDRESS OF HEADER            G33SPHW
+         AGO     .CHKEND                                        G33SPHW
+.HOCH    ANOP
+         AIF   ('&B1' EQ '0').YYY                                  9943
+         AIF   ('&TCB'(1,1) EQ '(').XXX
+         L     0,&TCB        GET TCB ADDRESS
+         ST    0,12(0,1)     STORE IN PARAMETER LIST             Y02705
+         AGO   .YYY                                                9943
+.HOCH1   ANOP
+         AIF   ('&B16' EQ '0').HOCH
+         AIF   ('&LIST'(1,1) EQ '(').XXX2
+         AIF   ('&MF' EQ '').HHH1
+         LA    0,&LIST       GET ADDRESS OF SNAPSHOT LIST
+         ST    0,16(0,1)       STORE INTO PARAMETER LIST         Y02705
+.HHH1    ANOP                                                   G33SPHW
+         AIF   ('&B23' EQ '0').HOCH                             G33SPHW
+         AIF   ('&STRHDR'(1,1) EQ '(').HHH2  REG FORM ADDRESS   G33SPHW
+         AIF   ('&MF' EQ '').HOCH            STANDARD FORM      G33SPHW
+         LA    0,&STRHDR       GET ADDRESS OF HEADER LIST       G33SPHW
+         ST    0,20(0,1)       STORE HEADER ADDRESS             G33SPHW
+         AGO   .HOCH           RETURN                           G33SPHW
+.HHH2    ANOP                                                   G33SPHW
+         ST    &STRHDR,20(0,1) STORE INTO PARMLIST              G33SPHW
+         AGO  .HOCH
+         AGO   .HOCH
+.XXX2    ANOP
+         ST    &LIST,16(0,1)       STORE SNAPSHOT ADDR INTO PARM LIST
+         AGO   .HHH1
+.STYPE2  ANOP
+         AIF   ('&MF' EQ 'L').MSG4
+         DC    A(0)                STARTING/ENDING ADDRESS
+         AGO   .STYPE1
+.STYPE3  ANOP
+         AIF   ('&MF' EQ '').MSG4
+         DC    A(0)                STARTING/ENDING ADDRESS
+         AGO   .STYPE1
+.XXX     ANOP
+         ST    &TCB,12(0,1)        STORE ADDRESS OF TCB INTO PARM LIST
+.YYY     AIF   ('&DCB'(1,1) NE '(').SVC51                          9943
+         LA    &DCB,0&DCB    CLEAR HIGH ORDER BYTE OF DCB ADR  @ZA09196
+         ST    &DCB,8(0,1)   STORE DCB ADDRESS INTO PARM LIST   G33SPHW
+.SVC51   ANOP
+         SVC   51
+         AGO   .EXIT1
+.EXIT    ANOP
+         AIF   ('&STORAGE' EQ '').EXIT1
+         ORG   *-4
+         DC    X'80'                                             YM1577
+         ORG   *+3                                               YM1577
+.EXIT1   ANOP
+         MEXIT
+.LTYPE   ANOP
+         AIF   ('&TCB' NE '').MSG6                                 2607
+         AIF   ('&STORAGE' EQ '').LTYPE1
+         AIF   ('&STORAGE'(2,1) EQ '(').MSG4 NO STRHDR
+         AIF   ('&STRHDR' EQ '').SKIPL  ONE HEADER              G33SPHW
+         AIF   (N'&STRHDR EQ 1).HHHK    REG FORMAT W/MF=L       G33SPHW
+         AIF   ('&STRHDR'(2,1) EQ '(').MSGB                     G33SPHW
+.HHHK    ANOP                                                   G33SPHW
+.SKIPL   ANOP                                                   G33SPHW
+         AGO   .LTYPE2
+.LTYPE1  ANOP
+         AIF   ('&LIST' EQ '').LTYPE2
+         AIF   ('&LIST'(1,1) EQ '(').MSG4
+         AIF   ('&STRHDR' EQ '').SKIPM   NO STRHDR              G33SPHW
+         AIF   ('&STRHDR'(1,1) EQ '(').MSGB REG FORMAT W/MF=L   G33SPHW
+.SKIPM  ANOP
+.LTYPE2  ANOP
+&NAME    DS    0F
+         AGO   .LSTYPE
+.MSG1    IHBERMAC  6
+         MEXIT
+.MSG2    ANOP
+&B2      SETB  1
+&B3      SETB  0
+&B4      SETB  0
+&B7      SETB  0
+&B17     SETB  0                  NO SQA                         Y02705
+&B18     SETB  0                  NO LSQA                        YO2705
+&B19     SETB  0                  NO SWA                         Y02705
+&B20     SETB  0
+&B21     SETB  0
+&B22     SETB  0
+         IHBERMAC  183,&SDATA,CB
+         AGO   .ABC7
+.MSG4    IHBERMAC  189
+         MEXIT
+.MSG7   MNOTE 7,'STRHDR FORMAT INCORRECT'                       G33SPHW
+        MEXIT
+.MSG8   MNOTE 7,'NUMBER OF STRHDR ADDRESSES EXCEED STORAGE RANGES'
+        MEXIT
+.MSG9   MNOTE 7,'INVALID USE OF STRHDR NO STORAGE OR LIST SPECIFIED'
+        MEXIT
+.MSGA   MNOTE 8,'LIST FORMAT NOT SPECIFIED ON STRHDR REQ. ON LIST'
+        MEXIT
+.MSGB   MNOTE 8,'REGISTER FORMAT USED WITH MF=L'                G33SPHW
+        MEXIT
+.MSG3    ANOP
+&B8      SETB  1
+&B9      SETB    0
+&B10     SETB  1
+&B11     SETB  1
+&B12     SETB  1
+&B13     SETB  1
+&B14     SETB  1
+         IHBERMAC  183,&PDATA,ALL
+         AGO   .ABC18
+.MSG5    IHBERMAC  35,,&MF
+         MEXIT
+.MSG6    IHBERMAC   197                                            2607
+         MEND
+

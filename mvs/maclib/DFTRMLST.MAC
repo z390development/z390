@@ -1,0 +1,378 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    DFTRMLST  &TYPE,&PAR1,&PAR2,&PAR3,&PAR4,&PAR5,&PAR6,&PAR7 000H
+.*71660002010000,070000,115000,195000,205000-210000,290000,        000B
+.*71660002345000,490000-510000,585000-590000                       000B
+.*CC271800200000                                                   000G
+.**********************************************************************
+.*       THE FOLLOWING MAINTANCE HAS BEEN APPLIED
+.**********************************************************************
+.*       AZ03969 (09/22/75)                                    @ZA03969
+.*       AZ04661 (09/22/75)                                    @ZA04661
+.*       AZ04662 (09/22/75)                                    @ZA04662
+.*       AZ33834 (07/13/78)                                    @ZA33834
+.**********************************************************************
+         LCLA  &CTR,&SUM,&ID,&EOL,&K,&COUNT,&KPAR2                 000A
+         LCLA  &EN,&SL,&KX,&NSUB                                   000A
+         LCLA  &NZERO                                              000L
+         LCLA  &NLE                                                000L
+         LCLA  &USERLNG                                            000L
+         LCLA  &CNTLBYT                                            000L
+         LCLA  &RDINLNG                                            000L
+         LCLA  &KXX                                                000L
+         LCLA  &KPAR3,&KPAR5,&KPAR7,&OPS                           000L
+         LCLC  &SEQ                                                000L
+         LCLC  &GNAME,&CNT                                       A46821
+         LCLC  &DIGIT                                           YA01025
+.*
+         LCLA  &INDX                                               000A
+         LCLB  &W                                                  000A
+         LCLA  &NPC                                                000A
+         LCLA  &NNN                                                000A
+         LCLA  &ENT                                                000A
+         LCLB  &ANSR,&B1                                           000B
+         LCLB  &B2                                                 000G
+         LCLB  &B3                                                 000H
+         LCLB  &B4                                                 000H
+         LCLB  &B5                                                 000H
+.*
+&COUNT   SETA  1
+&CTR     SETA  1
+&ID      SETA  1
+&EOL     SETA  0
+&ANSR    SETB  ('&PAR1' NE '0')                                    000A
+&KPAR2   SETA  K'&PAR2*&ANSR                                       000A
+.*
+&B1      SETB  ('&TYPE' EQ 'BSCLST')                               000B
+&B2      SETB  ('&TYPE' EQ 'WTTALST')
+&B3      SETB  ('&TYPE' EQ 'WTLIST')                               000H
+.*      ONE LINE OG CODE FOR APAR ZA03969 DELETED BY ---->     @ZA04662
+         AIF   (N'&SYSLIST LT 2).ERR4                          @ZA04662
+         AIF   ('&TYPE' EQ 'SWLST').SWID                           000L
+         AIF   ('&TYPE' NE 'WTLIST').SKIP                          000H
+         AIF   ('&PAR1' NE '0').ER2                                000H
+&NAME    DC    XL1'80'                                             000H
+         AGO   .ANSD                                               000H
+.SKIP    AIF   ('&TYPE' EQ 'WTTALST').SKIP0                        000H
+         AIF   ('&TYPE' NE 'IDLST' AND NOT &B1).DIAL               000B
+.SKIP0   ANOP                                                      000G
+&NAME    DC    HL1'&KPAR2'              NO. OF DIAL DIGITS         000A
+         AIF   ('&PAR1' EQ '0').ANSD
+         AIF   (&PAR1 EQ K'&PAR2).P1OKD                            000A
+         MNOTE 4,'*** IHB107 DIALCOUNT AND DIALCHARS NOT IN AGREEMENT'
+.P1OKD   ANOP                                                      000A
+.ANS     ANOP
+&DIGIT   SETC  '&PAR2'(&COUNT,1)                                YA01025
+         DC    X'&DIGIT'           DIAL DIGIT                   YA01025
+         AIF   (&KPAR2 LE &COUNT).NOID                             000A
+         AIF   ('&PAR2'(&COUNT,1) EQ ')').ER1                    A46821
+&COUNT   SETA  &COUNT+1
+         AGO   .ANS
+.NOID    DC    HL1'&PAR3'     NO. OF ID CHARACTERS
+         DC    XL&PAR3'0'    ID FROM TERMINAL
+         DC    XL&PAR3'&PAR4'  TERMINAL IDENTIFICATION.
+         AIF   (NOT &B1).SKIP1                                     000B
+         DC    HL1'&PAR5'               NO. OF ID CHARACTERS       000B
+         DC    XL&PAR5'&PAR6'           ID TO TERMINAL             000B
+.SKIP1   AGO   .END                                                000B
+.ANSD    AIF   ('&PAR2' EQ '0' AND &B2).SKIP2A                     000G
+         DC    HL1'&PAR2'     NO. OF ID CHARACTERS                 000G
+         AIF   (&B2).SKIP1A
+         AIF   (NOT (&B1 OR &B3)).SKIP2                            000H
+.SKIP1A  ANOP                                                      000G
+         DC    XL&PAR2'0'    ID FROM TERMINAL                      000B
+.SKIP2   DC    XL&PAR2'&PAR3' TERMINAL IDENTIFICATION              000B
+         AIF   (&B2).SKIP2A                                        000G
+         AIF   (NOT (&B1 OR &B3)).SKIP3                            000H
+.SKIP2A  ANOP                                                      000G
+         DC    HL1'&PAR4'               NO. OF ID CHARACTERS       000B
+         DC    XL&PAR4'&PAR5'           ID TO TERMINAL             000B
+.SKIP3   AIF   (NOT&B3).END                                        000H
+&B4      SETB  ('&PAR6' EQ '')                                     000H
+&B5      SETB  ('&PAR7' EQ '')                                     000H
+         AIF   (&B4 AND &B5).END                                   000H
+         AIF   (&B4 AND NOT &B5).ER3                               000H
+         AIF   (&B5 AND NOT &B4).ER3                               000H
+         DC    AL2(&PAR6)                                          000H
+         DC    AL3(&PAR7)                                          000H
+         AGO   .END
+.*                                                                 000L
+.SWID    ANOP                                                      000L
+&KPAR3   SETA  K'&PAR3                                             000L
+&KPAR5   SETA  K'&PAR5                                             000L
+&KPAR7   SETA  K'&PAR7                                             000L
+         AIF   ('&PAR1' NE 'AN' AND '&PAR1' NE 'AD' AND '&PAR1' NE     C
+               'MD').ERR4                                          000L
+&NAME    DS    0F                       PUT ON FULL WORD BOUNDARY  000L
+         DC    XL1'FF'                  IDENTIFY AS SWLST          000L
+         DC    XL3'0'                   PTR TO MATCHING SEQUENCE   000L
+         AIF   ('&PAR1' EQ 'AD').NINE                              000L
+&EN      SETA  0                                                   000L
+         AGO   .LISTENT                                            000L
+.NINE    ANOP                                                      000L
+&EN      SETA  2                                                   000L
+.LISTENT ANOP                                                      000L
+&NLE     SETA  N'&SYSLIST               NO. OF OPS IN MACRO INSTRUC000L
+         AIF   ('&PAR1' EQ 'AD').EIGHT                             000L
+&NLE     SETA  N'&SYSLIST-6             SUBTRACT SIX OPERANDS      000L
+         AGO   .LENTRY                                             000L
+.EIGHT   ANOP                                                      000L
+&NLE     SETA  N'&SYSLIST-8             SUBTRACT EIGHT OPERANDS    000L
+.LENTRY  ANOP                                                      000L
+         DC    AL1(&NLE)                # OF LIST ENTRIES      @ZA33834
+&USERLNG SETA  4                        USERLENGTH                 000L
+&CNTLBYT SETA  1                        CONTROL BYTE               000L
+         AIF   ('&PAR1' EQ 'AD').ADLIST                            000L
+         DC    HL1'&PAR2'               ENTRY LENGTH               000L
+         AIF   (T'&PAR2 NE 'N').ERR9                               000L
+&RDINLNG SETA  &PAR2-&CNTLBYT           SUBTRACT CONTROL BYTE      000L
+         AIF   ('&PAR3' NE '4').RDIN                               000L
+&RDINLNG SETA  &RDINLNG-&USERLNG        SUBTRACT USERLENGTH        000L
+         AGO   .RDIN                                               000L
+.ADLIST  ANOP                                                      000L
+         DC    HL1'&PAR4'               ENTRY LENGTH FOR AD LIST   000L
+         AIF   (T'&PAR4 NE 'N').ERR9                               000L
+&RDINLNG SETA  &PAR4-&CNTLBYT           SUBTRACT CONTROL BYTE      000L
+         AIF   ('&PAR5' NE '4').RDIN                               000L
+&RDINLNG SETA  &RDINLNG-&USERLNG        SUBTRACT USERLENGTH        000L
+.RDIN    ANOP                                                      000L
+         AIF   ('&RDINLNG' GE '2').LNGOK                           000L
+&RDINLNG SETA  2                                                   000L
+.LNGOK   ANOP                                                      000L
+         DC    HL1'&RDINLNG'            READ-IN-AREA LENGTH        000L
+         AIF   ('&PAR1' EQ 'AD').ADLST                             000L
+         DC    HL1'0'                   NO. OF DIAL DIGITS         000L
+         AGO   .RDAREA                                             000L
+.ADLST   ANOP                                                      000L
+         AIF   ('&PAR2' EQ '0').ERR5                               000L
+         AIF   (T'&PAR2 NE 'N').ERR9                               000L
+         AIF   ('&PAR2' EQ '&KPAR3').DIALOK                        000L
+         AGO   .ERR6                                               000L
+.DIALOK ANOP                                                       000L
+         DC    HL1'&PAR2'               NO. OF DIAL DIGITS         000L
+.RDAREA  ANOP                                                      000L
+         DC    XL&RDINLNG'0'            READ-IN-AREA               000L
+         AIF   ('&PAR1' NE 'AD').IDCNT                             000L
+.DDIGIT  ANOP                                                      000L
+.*      ONE LINE OF CODE DELETED BY ---------------->          @ZA04661
+&DIGIT   SETC  '&PAR3'(&COUNT,1)                                YA01024
+         DC    X'&DIGIT'           DIAL DIGIT                   YA01025
+         AIF   ('&DIGIT' GT '9' OR '&DIGIT' LT '0').ERR9       @ZA04661
+         AIF   (&KPAR3 LE &COUNT).IDCOUNT                          000L
+&COUNT   SETA  &COUNT+1                                            000L
+         AGO   .DDIGIT                                             000L
+.IDCOUNT ANOP                                                      000L
+         AIF   (T'&PAR6 NE 'N').ERR9                               000L
+         AIF   (&PAR6*2 NE K'&PAR7).ERR7                           000L
+         AIF   ('&PAR6' GT '16').ERR8                              000L
+         DC    HL1'&PAR6'               IDCOUNT                    000L
+         DC    XL&PAR6'&PAR7'           IDSENT                     000L
+         AGO   .AUTHSEQ                                            000L
+.IDCNT   ANOP                                                      000L
+         AIF   (T'&PAR4 NE 'N').ERR9                               000L
+         AIF   (&PAR4*2 NE K'&PAR5).ERR7                           000L
+         AIF   ('&PAR1' EQ 'MD' AND '&PAR4' GT '16').ERR8          000L
+         AIF   ('&PAR4' GT '17').ERR8                              000L
+         DC    HL1'&PAR4'               IDCOUNT                    000L
+         DC    XL&PAR4'&PAR5'           IDSENT                     000L
+.AUTHSEQ ANOP                                                      000L
+         AIF   (T'&SYSLIST(&EN+7) NE 'O').NOTO                     000L
+         AIF   (T'&SYSLIST(&EN+7,2) NE 'O' OR T'&SYSLIST(&EN+7,3) NE   C
+               'O').ERR10                                          000L
+         AGO   .END                                                000L
+.NOTO    ANOP                                                      000L
+         AIF   ('&SYSLIST(&EN+7)'(1,1) NE '(').ERR11               000L
+         AIF   ('&SYSLIST(&EN+7)'(K'&SYSLIST(&EN+7),1) NE ')').ERR11
+&KXX     SETA  K'&SYSLIST(&EN+7,1)/2    NO. OF ID CHARACTERS       000L
+         DC    X'&SYSLIST(&EN+7,1)'     AUTHORIZED SEQUENCE        000L
+&NZERO   SETA  &RDINLNG-&KXX            NUMBER OF ZEROS            000L
+         AIF   ('&NZERO' LE '0').NOZ                               000L
+         DC    XL&NZERO'0'              ZEROS                      000L
+.NOZ     ANOP                                                      000L
+&NSUB    SETA  N'&SYSLIST(&EN+7)                                   000L
+         AIF   ('&NSUB' EQ '1').LOAD1                              000L
+         AIF   ('&NSUB' NE '2').LOAD3                              000L
+         AIF   ('&PAR1' EQ 'AD').CALL                              000L
+         AIF   ('&PAR3' NE '4').CONTL                              000L
+.FOUR    ANOP                                                      000L
+         DC    XL4'0'                   USER DATA AREA             000L
+.CONTL   ANOP                                                      000L
+         AIF   (T'&SYSLIST(&EN+7,2) NE 'N').ERR9                   000L
+         DC    YL1(&SYSLIST(&EN+7,2))   CONTROL BYTE               000L
+         AGO   .TEST                                               000L
+.CALL    ANOP                                                      000L
+         AIF   ('&PAR5' EQ '4').FOUR                               000L
+         AGO   .CONTL                                              000L
+.LOAD1   ANOP                                                      000L
+         AIF   ('&PAR1' EQ 'AD').CALLST                            000L
+         AIF   ('&PAR3' NE '4').NOT4                               000L
+.USER    ANOP                                                      000L
+         DC    XL4'0'                   USER DATA AREA             000L
+.NOT4    ANOP                                                      000L
+         DC    XL1'00'                  CONTROL BYTE VALUE OF 0    000L
+         AGO   .TEST                                               000L
+.CALLST  ANOP                                                      000L
+         AIF   ('&PAR5' NE '4').NOT4                               000L
+         AGO   .USER                                               000L
+.LOAD3   ANOP                                                      000L
+         AIF   (T'&SYSLIST(&EN+7,2) EQ 'O').LOAD4                  000L
+         DC    AL4(&SYSLIST(&EN+7,3))   USER DATA AREA             000L
+         AIF   (T'&SYSLIST(&EN+7,2) NE 'N').ERR9                   000L
+         DC    YL1(&SYSLIST(&EN+7,2))   CONTROL BYTE               000L
+         AGO   .TEST                                               000L
+.LOAD4   ANOP                                                      000L
+         DC    AL4(&SYSLIST(&EN+7,3))   USER DATA AREA             000L
+         DC    XL1'00'                  CONTROL BYTE               000L
+.TEST    ANOP                                                      000L
+&EN      SETA  &EN+1                                               000L
+&OPS     SETA  N'&SYSLIST               NO. OF OPERANDS            000L
+         AIF   (&EN+7 LE &OPS).AUTHSEQ                             000L
+         AGO   .END                                                000L
+.*
+.DIAL    AIF   ('&TYPE' NE 'DIALST').OPEN
+&SUM     SETA  N'&PAR3
+&NAME    DC    HL1'&KPAR2'              NO. OF DIAL DIGITS         000A
+         AIF   ('&PAR1' EQ '0').ANSDIAL
+         AIF   (&PAR1 EQ K'&PAR2).P1OKA                            000A
+         MNOTE 8,'THERE ARE NOT &PAR1 DIGITS IN &PAR2'             000A
+.P1OKA   ANOP                                                      000A
+.LST     ANOP
+&DIGIT   SETC  '&PAR2'(&COUNT,1)                                YA01025
+         DC    X'&DIGIT'           DIAL DIGIT                   YA01025
+         AIF   (&KPAR2 LE &COUNT).LOOP1                            000A
+         AIF   ('&PAR2'(&COUNT,1) EQ ')').ER1                    A46821
+&COUNT   SETA  &COUNT+1
+         AGO   .LST
+.LOOP1   AIF   (&SUM NE 0).CONT
+.END1    ANOP
+         DC    X'FE'
+         AGO   .END
+.CONT    ANOP
+         DC    X'&PAR3(&CTR)'          TERMINAL LIST ENTRY       A46821
+         AIF   ('&CTR' EQ '&SUM').LAST2
+         DC    AL1(&ID)      PROCEDURE FLAGS
+&ID      SETA  &ID+1
+&CTR     SETA  &CTR+1
+         AGO   .LOOP1
+&NAME    DS   0H
+.ANSDIAL ANOP
+&SUM     SETA  N'&PAR2
+.LOOP2   AIF   (&SUM EQ 0).END1
+         DC    X'&PAR2(&CTR)'          TERMINAL LIST ENTRY       A46821
+         AIF   ('&CTR' EQ '&SUM').LAST2
+         DC    AL1(&ID)      PROCEDURE FLAGS.
+&ID      SETA  &ID+1
+&CTR     SETA  &CTR+1
+         AGO   .LOOP2
+.*
+.OPEN    AIF   ('&TYPE' NE 'OPENLST' AND '&TYPE' NE 'WRAPLST').SSA 000A
+&NAME    DS    0X                                                A28630
+&SUM     SETA  N'&PAR1                  NUMBER OF ENTRIES
+&K       SETA  K'&PAR1(1)
+&EOL     SETA  &EOL+1+&K/2
+.LOOP    ANOP
+         DC    X'&PAR1(&CTR)'          TERMINAL LIST ENTRY       A46821
+         AIF   ('&CTR' EQ '&SUM').LAST
+         DC    AL1(&ID)            PROCEDURE FLAGS
+&ID      SETA  &ID+1
+&CTR     SETA  &CTR+1
+&EOL     SETA  &EOL+1+&K/2
+         AGO   .LOOP
+.*
+.LAST    AIF   ('&TYPE' EQ 'WRAPLST').WL
+&ID      SETA  &ID+128
+         DC    AL1(&ID)            PROCEDURE FLAGS
+         AGO   .END                                                000A
+.*                                                                 000A
+         AGO   .END
+.*
+.LAST2   ANOP
+&ID      SETA  &ID+128
+         DC    AL1(&ID)      PROCEDURE FLAGS
+         AGO   .END
+.WL      ANOP
+.*
+&ID      SETA  &ID+32
+         DC    AL1(&ID)            PROCEDURE FLAGS
+         DC    HL2'-&EOL'
+         AGO   .END
+.*                                                                 000A
+.*                                                                 000A
+.SSA     AIF   ('&TYPE' NE 'SSAWLST' AND '&TYPE' NE 'SSALST' AND       C
+               '&TYPE' NE 'AUTOWLST' AND '&TYPE' NE 'AUTOLST').ERR 000B
+&W       SETB  ('&TYPE'(4,1) EQ 'W' OR '&TYPE' EQ 'AUTOWLST')      000B
+&NPC     SETA  K'&SYSLIST(2,1)/2        NUMBER OF POLLING CHAR/ENTR000A
+&NNN     SETA  &NPC+1                   WIDTH OF ENTRY             000A
+&NSUB    SETA  N'&SYSLIST-1                                        000A
+&ENT     SETA  0                                                   000A
+&EN      SETA  1                                                   000A
+.ACMEN   ANOP                                                      000A
+&ENT     SETA  &ENT+N'&SYSLIST(&EN+1)                              000A
+&EN      SETA  &EN+1                                               000A
+         AIF   (&EN LE &NSUB).ACMEN                                000A
+.*                                                                 000A
+         DC    2YL1(&ENT)               TOTAL AND ACTIVE ENTRY COUN000A
+         DC    YL1(X'20'*&NNN+X'10'*&W) PACKED WIDTH AND WRAP BIT  000A
+&NAME    DS    0X                                                  000A
+&INDX    SETA  1                                                   000A
+&EN      SETA  1                                                   000A
+.*                                                                 000A
+.NXTENT  ANOP                                                      000A
+&SL      SETA  1                                                   000A
+.*                                                                 000A
+.ENTRY   ANOP                                                      000A
+&KX      SETA  K'&SYSLIST(1+&EN,&SL)                               000A
+         DC    XL&NPC'&SYSLIST(1+&EN,&SL)'                       A46821
+         AIF   (&KX EQ &NPC*2).TSTENT                              000A
+         MNOTE 8,'LENGTH OF POLLING CHARACTERS IS IMPROPER'        000A
+         MNOTE 4,'*** IHB109 LENGTH OF POLLING CHARACTERS PER ENTRY IS ?
+               IMPROPER'
+.TSTENT  ANOP                                                      000A
+&K       SETA  1                                                   000A
+.CHK     AIF   ('&SYSLIST(1+&EN,&SL)'(&K,2) EQ 'FE').CHER        A46821
+&K       SETA  &K+2                                                000A
+         AIF   (&K LT &KX).CHK                                     000A
+         DC    YL1(&INDX)                                          000A
+         AIF   (&INDX NE 254).STPSL                                000A
+         AGO   .CHER                                               000H
+.STPSL   ANOP                                                      000A
+&SL      SETA  &SL+1                                               000A
+&INDX    SETA  &INDX+1                                             000A
+         AIF   (&SL LE N'&SYSLIST(1+&EN)).ENTRY                    000A
+.*                                                                 000A
+&EN      SETA  &EN+1                                               000A
+         AIF   (&EN LE &NSUB).NXTENT                               000A
+         DC    X'FE'                    END OF LIST CHARACTER      000A
+         DC    YL2(&ENT*&NNN+4)         OFFSET                     000A
+         MEXIT                                                     000A
+.*                                                                 000A
+.ERR     MNOTE 12,'*** IHB002 INVALID TYPE OPERAND SPECIFIED-&TYPE' 00A
+         MEXIT                                                     000A
+.*                                                                 000A
+.ER1     MNOTE 12,'***  IHB002  INVALID THIRD OPERAND SPECIFIED-&PAR2'
+         MEXIT
+.ER2     MNOTE 12,'*** IHB110 DIAL CHARACTERS INVALID IN WTLIST'   000H
+         MEXIT
+.ER3     MNOTE 12,'*** IHB111 LENGTH OR ADDRESS OF ''TONE'' OMITTED'
+         MEXIT
+.*
+.CHER    MNOTE 12,'*** IHB108 POLLING CHARACTERS ARE IMPROPER'     000H
+         MEXIT                                                     000A
+.ERR4    MNOTE 12,'*** IHB002 INVALID OPERAND SPECIFIED-&PAR1'     000L
+         MEXIT                                                     000L
+.ERR5    MNOTE 12,'*** IHB110 INVALID DIAL CHARACTER'              000L
+         MEXIT                                                     000L
+.ERR6    MNOTE 12,'*** IHB107 DIALCOUNT AND DIALCHARS DO NOT AGREE' 00L
+         MEXIT                                                     000L
+.ERR7    MNOTE 12,'*** IHB113 IDCOUNT AND IDSENT DO NOT AGREE'     000L
+         MEXIT                                                     000L
+.ERR8    MNOTE 12,'*** IHB114 IDCOUNT IS TOO LARGE'                000L
+         MEXIT                                                     000L
+.ERR9    MNOTE 12,'*** IHB115 INVALID TYPE ATTRIBUTE'              000L
+         MEXIT                                                     000L
+.ERR10   MNOTE 12,'*** IHB116 AUTHORIZED SEQUENCE IS MISSING'      000L
+         MEXIT                                                     000L
+.ERR11   MNOTE 12,'*** IHB117 PARENTHESIS IS MISSING'              000L
+         MEXIT                                                     000L
+.END     MEND
+

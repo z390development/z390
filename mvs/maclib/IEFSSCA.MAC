@@ -1,0 +1,65 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSCACMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSCA
+.*/ %SSCACMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSCA                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = COMMON ALLOCATION/JES3 EXIT FUNCTION @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSCAPLS;              /*                               @ZA34144
+*
+SSOBCACD EQU   24            COMMON ALLOCATION FUNCTION ID(SSOBFUNC)
+*                                                              @Y02BPSD
+*
+*       COMMON ALLOCATION RETURN CODES (SSOBRETN)
+*
+SSCAALCA EQU   0                  ALLOC SELECT RETURN CODE     @Y02BPSD
+SSCAJESA EQU   4                  JES3 SELECT DEV RETURN CODE  @Y02BPSD
+*
+         ORG   SSOBGN             S S C A  START               @Y02BPSD
+SSCABGN  EQU   *                  COMMON ALLOCATION BEGINNING  @Y02BPSD
+SSCALEN  DC    AL2(SSCASIZE)      COMMON ALLOCATION EXTENSION  @Y02BPSD
+*                                 SIZE                         @Y02BPSD
+SSCARSV0 DS    H                  RESERVED                     @Y02BPSD
+SSCAPSTN DS    A                  POINTER TO STEP NUMBER       @Y02BPSD
+SSCAPDDN DS    A                  POINTER TO DDNAME            @Y02BPSD
+SSCAPDSN DS    A                  POINTER TO DSNAME            @Y02BPSD
+SSCAPRPN DS    A                  POINTER TO RELATIVE POSITION @Y02BPSD
+*                                 NUMBER                       @Y02BPSD
+SSCAPNUN DS    A                  POINTER TO NUMBER OF UNITS   @Y02BPSD
+*                                 REQUIRED                     @Y02BPSD
+SSCAPUAR DS    A                  POINTER TO UCB ADDRESS       @Y02BPSD
+*                                 RETURN AREA                  @Y02BPSD
+SSCAPFLG DS    A                  POINTER TO FLAG FIELD        @Y02BPSD
+*
+SSCASIZE EQU   *-SSCABGN          EXTENSION LENGTH             @Y02BPSD
+SSOBLN11 EQU   SSOBHSIZ+SSCASIZE  TOTAL SSOB LENGTH            @Y02BPSD
+         MEND                                                @ZA34144*/
+* %SSCAPLS:;                             /*                  @ZA34144*/
+*   /*    FUNCTION IDS (SSOBFUNC)                                    */
+*  DCL SSOBCACD FIXED(15) CONSTANT(24); /* COMMON ALLOCATION @Y02BPSD*/
+*   /*                                                               */
+*   /*  COMMON ALLOCATION RETURN CODES (SSOBRETN) -                  */
+*   DCL SSCAALCA FIXED(31) CONSTANT(0); /*ALLOC SELECT RETURN CODE
+*                                                            @Y02BPSD*/
+*   DCL SSCAJESA FIXED(31) CONSTANT(4); /*JES3 SELECT DEV RETURN
+*                                         CODE               @Y02BPSD*/
+*   /*    S S C A                                                    */
+*  DCL
+*  1     SSCA       SSOBCA,       /* BEGINNING COMMON ALLOCATION
+*                                    SSOB EXTENSION          @Y02BPSD*/
+*    2     SSCALEN  FIXED(15),    /* LENGTH OF SSCA          @Y02BPSD*/
+*    2     SSCARSV0 FIXED(15),    /* RESERVED                @Y02BPSD*/
+*    2     SSCAPSTN PTR(31),      /* PTR TO STEP NUMBER      @Y02BPSD*/
+*    2     SSCAPDDN PTR(31),      /* PTR TO DDNAME           @Y02BPSD*/
+*    2     SSCAPDSN PTR(31),      /* PTR TO DSNAME           @Y02BPSD*/
+*    2     SSCAPRPN PTR(31),      /* PTR TO RELATIVE POSITION NUMBER
+*                                                            @Y02BPSD*/
+*    2     SSCAPNUN PTR(31),      /* PTR TO NUMBER OF UNITS REQUIRED
+*                                                            @Y02BPSD*/
+*    2     SSCAPUAR PTR(31),      /* PTR TO UCB ADDRESS RETURN AREA
+*                                                            @Y02BPSD*/
+*    2     SSCAPFLG PTR(31);      /* PTR TO FLAG FIELD       @Y02BPSD*/

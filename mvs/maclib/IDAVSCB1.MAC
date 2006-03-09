@@ -1,0 +1,140 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IDAVSCB1 &ARG=,&ARGNAME=,&MF=,&TYPE=,&POS=1,&CALLER=  @ZA34940
+.*                                                             @ZA34940
+.*       CHANGE LEVEL = 0                                      @ZA34940
+.*       DATE OF LAST CHANGE =  5 OCT  78 ( 78*278 )           @ZA34940
+.*                                                             @ZA34940
+.* FUNCTION - DETERMINE OPERAND TYPE, VALIDITY CHECK, AND TRANSFORM
+.*            THE OPERAND PASSED BY &ARG.  OPERAND TYPES VN2 AND VN3
+.*            ARE NOT SUPPORTED.
+.*                                                             @ZA34940
+.* CHANGE ACTIVITY                                             @ZA34940
+.*      CBMM SPLIT SUPPORT                                     @ZA34940
+.*                                                             @ZA34940
+.* CALLERS  - GENCB,MODCB,SHOWCB,TESTCB,IDAVSCB1,IDACB2        @ZA34940
+.* GLOBALS
+         GBLB  &IDACB01                ERROR INDICATOR
+         GBLA  &IDACB11                OPERAND TYPE
+         GBLC  &IDACB12                EXIT LIST CODES
+         GBLC  &IDACB13                CHARACTER TRANSFORM
+.* LOCALS
+         LCLB  &A,&N,&L,&P,&E          EXIT LIST ATTRIBUTES     Y30ASHS
+         LCLB  &VTAMX                  VTAM EXIT SWITCH          X03004
+         LCLA  &BIT1,&BIT2             ARITHMETIC BIT VALUES
+         LCLA  &VN1,&AN1,&AN2,&AN3,&AN4  OPERAND TYPE CODES
+         LCLA  &I                      WORK VARIABLE
+         LCLC  &Z4                     BIT STRING PADDING
+.* INITIALIZATION
+&IDACB11 SETA  0
+&IDACB13 SETC  ''
+&VN1     SETA  1
+&AN1     SETA  4
+&AN2     SETA  5
+&AN3     SETA  6
+&AN4     SETA  7
+&I       SETA  K'&ARG
+         AIF   ('&ARG' EQ '').L150
+         AIF   ('&TYPE' NE '').L70     TEST FOR COMPLEX OPERAND
+.* ELEMENTARY OPERANDS
+         AIF   ('&ARG'(1,3) EQ '(S,').L10
+         AIF   ('&ARG'(1,3) EQ '(*,').L20
+.L05     AIF   ('&ARG'(1,1) NE '(').L50
+&IDACB11 SETA  &AN1                    *** AN1 ***
+&IDACB13 SETC  '&ARG'(2,&I-2)          REMOVE PARENS
+         AGO   .L40
+.L10     ANOP                          *** AN2 ***
+&IDACB11 SETA  &AN2
+         AGO   .L30
+.L20     ANOP                          *** AN3 ***
+&IDACB11 SETA  &AN3
+.L30     ANOP
+&IDACB13 SETC  '&ARG'(4,&I-4)          EXTRACT ADDRESS
+.L40     AIF   ('&MF' EQ 'L').L160
+         MEXIT
+.L50     ANOP                          *** VN1 OR AN4 ***
+&IDACB11 SETA  &AN4
+         AIF   (T'&ARG NE 'N').L60
+         AIF   (&ARG GT 4095).L60
+&IDACB11 SETA  &VN1
+.L60     ANOP
+&IDACB13 SETC  '&ARG'
+         MEXIT
+.* COMPLEX OPERANDS - NESTED SUBLISTS
+.L70     AIF   ('&TYPE' NE 'X').L80    TEST FOR EXIT LIST ENTRY
+&Z4      SETC  '0000'
+&IDACB12 SETC  '&Z4&Z4&Z4&Z4&Z4&Z4&Z4&Z4'
+&IDACB13 SETC  '0'
+         AIF   ('&ARG(1)' EQ '' OR '&ARG(1)' EQ '0').L90
+&P       SETB  1
+&IDACB12 SETC  '0001&Z4&Z4&Z4&Z4&Z4&Z4&Z4'
+         AIF   (N'&ARG EQ 1).L05
+         AIF   ('&ARG(1)' EQ 'S').L10
+         AIF   ('&ARG(1)' EQ '*').L20
+.L80     IDAVSCB1 ARG=&ARG(&POS),ARGNAME=&ARGNAME,MF=&MF       @ZA34940
+         AIF   ('&TYPE' EQ 'X').L90
+         MEXIT
+.L90     ANOP
+&VTAMX   SETB  ('&ARGNAME' EQ 'LOGON')                           X03004
+&VTAMX   SETB  (&VTAMX OR '&ARGNAME' EQ 'LOSTERM')               X03004
+&VTAMX   SETB  (&VTAMX OR '&ARGNAME' EQ 'RELREQ')                X03004
+&VTAMX   SETB  (&VTAMX OR '&ARGNAME' EQ 'ASYIP')                 X03004
+&VTAMX   SETB  (&VTAMX OR '&ARGNAME' EQ 'UNSIP')                 X03004
+&VTAMX   SETB  (&VTAMX OR '&ARGNAME' EQ 'ATTN')                  X03004
+&VTAMX   SETB  (&VTAMX OR '&ARGNAME' EQ 'TPEND')                 X03004
+&VTAMX   SETB  (&VTAMX OR '&ARGNAME' EQ 'NSEXIT')               G40AKCM
+&VTAMX   SETB  (&VTAMX OR '&ARGNAME' EQ 'SCIP')                 X999999
+&VTAMX   SETB  (&VTAMX OR '&ARGNAME' EQ 'DFASY')                X999999
+&VTAMX   SETB  (&VTAMX OR '&ARGNAME' EQ 'RESP')                 X999999
+&VTAMX   SETB  (&VTAMX OR '&ARGNAME' EQ 'DFSYN')                X999999
+&I       SETA  N'&ARG+1
+.L100    ANOP
+&I       SETA  &I-1
+         AIF   (&I LE 1).L140
+         AIF   ('&ARG(&I)' EQ 'A').L110
+         AIF   ('&ARG(&I)' EQ 'N').L120
+         AIF   ('&ARG(&I)' EQ 'L').L130
+         AIF   ('&ARG(&I)' EQ 'E').L131                          X03004
+         IDAVSERR 5,&ARGNAME,&ARG(&I)                          @ZA34940
+&IDACB01 SETB  1
+         AGO   .L100
+.L110    ANOP
+&A       SETB  1
+         AGO   .L100
+.L120    ANOP
+&N       SETB  1
+         AGO   .L100
+.L130    ANOP
+&L       SETB  1
+         AGO   .L100
+.L131    ANOP                                                    X03004
+&E       SETB  1                                                 X03004
+         AGO   .L100                                             X03004
+.L140    AIF   (NOT(&A AND &N)).L144                            Y30ASHS
+         IDAVSERR 8,&ARGNAME,A,N                               @ZA34940
+&IDACB01 SETB  1                                                 X03004
+.L144    AIF   (&VTAMX).L147                                     X03004
+         AIF   (NOT &E).L148                                    Y30ASHS
+         IDAVSERR 5,&ARGNAME,E                                 @ZA34940
+&IDACB01 SETB  1                                                 X03004
+         AGO   .L148                                             X03004
+.L147    AIF   (NOT &L).L148                                     X03004
+         IDAVSERR 5,&ARGNAME,L                                 @ZA34940
+&IDACB01 SETB  1                                                 X03004
+.L148    AIF   (NOT &P AND ('&CALLER' EQ 'GEN' OR ('&CALLER' EQ 'MOD'  C
+               AND (&L OR NOT (&A OR &N))))).L180                X03004
+&IDACB12 SETC  '&A&N&L&P&E.000&Z4&Z4&Z4&Z4&Z4&Z4'               Y30ASHS
+         MEXIT
+.* ERRORS
+.L150    IDAVSERR 7,IDACB1             LOGIC ERROR             @ZA34940
+         AGO   .L190
+.L160    IDAVSERR 6,&ARGNAME,&ARG      OPERAND INVALID FOR     @ZA34940
+.*                                     LIST FORM               @ZA34940
+         AGO   .L190
+.L170    IDAVSERR 8,&ARGNAME,A,N       INCOMPATIBLE SUBLIST    @ZA34940
+.*                                     ITEMS                   @ZA34940
+         AGO   .L190
+.L180    IDAVSERR 10,&ARGNAME          MISSING EXIT ADDRESS    @ZA34940
+.L190    ANOP
+&IDACB01 SETB  1
+         MEND

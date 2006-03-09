@@ -1,0 +1,45 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO LLEBSL;                                               /*
+         MACRO
+         IHALLE
+LLE      DSECT
+         SPACE 1
+***********************************************************************
+*              LOAD LIST ELEMENT                                      *
+*                                                                     *
+*             AOS/2 REL 2, 03/26/72, LEVEL=3                          *
+***********************************************************************
+         SPACE 1
+LLECHN   DS    F -            ADDRESS OF NEXT ELEMENT ON LOAD LIST
+LLECDPT  DS    F -            ADDRESS OF CDE FOR MODULE
+LLECOUNT DS    H -            RESPONSIBILITY COUNT.  THE TOTAL NUMBER
+*                             OF REQUESTS FOR THE MODULE VIA THE LOAD
+*                             MACRO INSTRUCTION.
+LLESYSCT DS    H -            SYSTEM RESPONSIBILITY COUNT. THE TOTAL
+*                             NUMBER OF SYSTEM REQUESTS FOR THE
+*                             MDOULE VIA THE LOAD MACRO INSTRUCTION.
+         MEND  , */
+*%LLEBSL  :  ;
+*
+* /* *************************************************************** */
+* /*           LOAD LIST ELEMENT                                     */
+* /*                                                                 */
+* /*         AOS/2 REL 2, 03/26/72, LEVEL=3                          */
+* /* *************************************************************** */
+*
+*DECLARE
+*  1 LLE      BASED(LLEPTR),
+*   2 LLECHN      PTR(31),               /* ADDRESS OF NEXT ELEMENT
+*                                           ON LOAD LIST             */
+*   2 LLECDPT     PTR(31),               /* ADDRESS OF CDE FOR
+*                                           MODULE                   */
+*   2 LLECOUNT    PTR(15),               /* RESPONSIBILITY COUNT.
+*                                           THE TOTAL NUMBER OF
+*                                           REQUESTS FOR THE MODULE
+*                                           VIA THE LOAD MACRO
+*                                           INSTRUCTION.             */
+*   2 LLESYSCT   PTR(15);                /* SYSTEM RESPONSIBILITY
+*                                           COUNT.  THE NUMBER OF
+*                                           REQUESTS FOR THE MODULE
+*                                           VIA THE LOAD MACRO
+*                                           INSTRUCTION.             */

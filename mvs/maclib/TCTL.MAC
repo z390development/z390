@@ -1,0 +1,35 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&LABEL   TCTL      &TCB=(4)
+.**********************************************************************
+.*       LOCAL VARIABLE DECLARES
+.**********************************************************************
+         LCLC      &OPERAND
+.**********************************************************************
+.*       VALIDITY CHECK PARAMETER
+.**********************************************************************
+         AIF (N'&TCB EQ 1).OK
+&OPERAND SETC  'TCB='
+         IHBERMAC   1014,&OPERAND
+         MEXIT
+.**********************************************************************
+.*       GENERATE BAL CODE
+.**********************************************************************
+.OK      ANOP
+&LABEL   DS    0H             TRANSFER CONTROL TO A TCB
+         AIF   ('&TCB' EQ '(4)').SKIP1
+         AIF   ('&TCB'(1,1) EQ '(').SKIP2
+.*
+         L     4,&TCB         LOAD TCB ADDRESS
+         AGO    .SKIP1
+.SKIP2   ANOP
+.*
+         LR    4,&TCB(1)      LOAD TCB ADDRESS
+.SKIP1   ANOP
+*                             REGISTER 4 HAS TCB ADDRESS
+         L     15,FLCCVT-FLC(0,0)    GET CVT POINTER
+         L     15,CVTTCTL-CVT(0,15)  LOAD ADDRESS OF TCTL ROUTINE
+         BR    15             EXIT FROM THIS CODE
+*                             ATTEMPT TO DISPATCH REQUESTED TCB
+         MEND
+

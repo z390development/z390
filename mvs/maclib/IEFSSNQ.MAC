@@ -1,0 +1,55 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSNQCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSNQ
+.*/ %SSNQCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSNQ                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = DYNAMIC ALLOCATION CHANGE ENQ        @ZA34144*/
+*/*                     USE ATTRIBUTE                        @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSNQPLS;              /*                               @ZA34144
+*
+SSOBNQCD EQU   27     CHANGE ENQ USE ATTRIBUTE FUNCTION ID(SSOBFUNC)
+*                                                              @Y02BPSD
+*     CHANGE ENQ USE ATTRIBUTE RETURN CODES (SSOBRETN)
+*
+SSOBNQOK EQU   0                  ALLRIGHT TO ENQ TO CHANGE    @Y02BPSD
+*                                 USE ATTRIBUTE                @Y02BPSD
+SSOBNQNO EQU   4                  NOT CURRENTLY POSSIBLE TO    @Y02BPSD
+*                                 CHANGE THE ENQ USE ATTRIBUTE @Y02BPSD
+*
+         ORG   SSOBGN             SSNQ START                   @Y02BPSD
+SSNQBGN  EQU   *                  CHANGE ENQ USE ATTRIBUTE     @Y02BPSD
+*                                 BEGINNING                    @Y02BPSD
+SSNQLEN  DC    AL2(SSNQSIZE)      SSNQ EXTENSION LENGTH        @Y02BPSD
+SSNQRSV0 DS    H                  RESERVED                     @Y02BPSD
+SSNQDSNP DS    A                  ADDR DSNAME BUFFER           @Y02BPSD
+SSNQFLGP DS    A                  ADDR FLAG FIELD              @Y02BPSD
+SSNQRSV1 DS    F                  RESERVED                     @Y02BPSD
+*
+SSNQSIZE EQU   *-SSNQBGN          EXTENSION LENGTH             @Y02BPSD
+SSOBLN14 EQU   SSOBHSIZ+SSNQSIZE  TOTAL SSOB LENGTH            @Y02BPSD
+         MEND                                                @ZA34144*/
+* %SSNQPLS:;                               /*                @ZA34144*/
+*   /*                                                               */
+*   /*    CHANGE ENQ USE ATTRIBUTE FUNCTION IDS (SSOBFUNC)           */
+*   DCL SSOBNQCD  FIXED(15) CONSTANT(27); /* CHANGE ENQ USE ATTRIBUTE
+*                                            FUNCTION ID     @Y02BPSD*/
+*   /*                                                               */
+*   /*  CHANGE ENQ USE ATTRIBUTE RETURN CODES (SSOBRETN)             */
+*   /*                                                               */
+*   DCL SSOBNQOK  FIXED(31) CONSTANT(0); /* ALLRIGHT TO ENQ TO CHANGE
+*                                           USE ATTRIBUTE    @Y02BPSD*/
+*   DCL SSOBNQNO  FIXED(31) CONSTANT(4); /* NOT CURRENTLY POSSIBLE TO
+*                               CHANGE THE ENQ USE ATTRIBUTE @Y02BPSD*/
+*   /*   S S N Q                                                     */
+*  DECLARE
+*   1       SSNQ          SSOBNQ,
+*     2       SSNQLEN     FIXED(15),/* LENGTH OF SSNQ        @Y02BPSD*/
+*     2       SSNQRSV0    FIXED(15),/* RESERVED              @Y02BPSD*/
+*     2       SSNQDSNP    PTR(31),  /* ADDR DSNAME BUFFER    @Y02BPSD*/
+*     2       SSNQFLGP    PTR(31),  /* ADDR FLAG FIELD       @Y02BPSD*/
+*     2       SSNQRSV1    FIXED(31);/* RESERVED              @Y02BPSD*/

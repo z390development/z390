@@ -1,0 +1,126 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%       GOTO  RMPLBSL1;  /*
+         MACRO
+         IHARMPL &DSECT=YES                                          */
+*%RMPLBSL1 : ;
+* /*******************************************************************/
+* /* MACMEAN RMPL MEANS RESOURCE MANAGER PARAMETER LIST              */
+* /* MACCOMP Y-1 SC1CM/PZD81                                         */
+* /* MACSTAT Y-1 72245/Y02702                                        */
+* /*  METHOD OF ACCESS                                               */
+* /*     BAL - DSECT IS PRODUCED UNLESS DSECT=NO IS SPECIFIED.       */
+* /*           USING ON RMPL GIVES ADDRESSABILITY TO ALL SYMBOLS.    */
+* /*     PLS - RMPL IS NOT BASED AND CAN BE USED AS A PARAMETER      */
+* /*           ON THE PROC OR ENTRY STATEMENT.  AN EXAMPLE OF        */
+* /*           THIS USE FOLLOWS:                                     */
+* /*             MGR: PROC(RMPL);                                    */
+* /*             %INCLUDE SYSLIB(IHARMPL);                           */
+* /*                                                                 */
+* /*         - IF RMPL IS TO BE USED AS A BASED STRUCTURE,           */
+* /*           CODE THE MACRO ASSIGNMENT %RMPLBASE='BASED( )'        */
+* /*           BEFORE INVOKING IHARMPL.  AN EXAMPLE OF THIS USE      */
+* /*           FOLLOWS:                                              */
+* /*             %RMPLBASE='BASED(RMPLPTR)';                         */
+* /*             %INCLUDE SYSLIB(IHARMPL);                           */
+* /*             DCL RMPLPTR PTR(31);                                */
+* /*                                                                 */
+* /*         - NOTE THAT CALLING SEQUENCE TO RESOURCE MANAGERS       */
+* /*           POINTS REGISTER 1 TO A FULL WORD WHICH CONTAINS THE   */
+* /*           ADDRESS OF THE RMPL.                                  */
+* /*                                                                 */
+* /*         - PLS MACRO VARIABLE 'RMPLWALN' MAY BE USED TO          */
+* /*           DETERMINE THE NUMBER OF FULLWORDS ALLOCATED FOR THE   */
+* /*           RESOURCE MANAGERS WORK AREA.                          */
+* /*******************************************************************/
+*/*A-000000-999999                                            @Y02702*/
+*%       GOTO  RMPLBSL;  /*
+         AIF  ('&DSECT' EQ 'YES').RMPL001
+RMPL     DS   0D -
+         AGO  .RMPL002
+.RMPL001 ANOP
+RMPL     DSECT ,        RMPLPTR
+.RMPL002 SPACE 2
+         IEZBITS
+RMPLFLG1 DS    B       FLAGS INDICATING TYPE OF TERMINATION
+RMPLTYPE EQU   BIT0    ON,INDICATES ABNORMAL TERMINATION
+*                      OFF,INDICATES NORMAL TERMINATION
+RMPLTERM EQU   BIT1    ON,INDICATES MEMORY TERMINATION
+*                      OFF,INDICATES TASK TERMINATION
+RMPLRBPP EQU   BIT2    ON,INDICATES RB RELATED PURGE
+RMPLIPUF EQU   BIT3    ON,INHIBITING PAGE UNFIXES
+RMPLRCOV EQU   BIT4    ON, INDICATES TASK RECOVERY PORTION OF RTM2 IS
+*                      THE CALLER
+RMPLJST  EQU   BIT5    ON, INDICATES THAT TERMINATING TASK IS
+*                      JOB STEP TCB
+RMPLWT1M EQU   BIT6    ON, INDICATES TYPE 1 MSG TABLE ENTRIES ARE
+*                      TO BE WRITTEN
+RMPLFLG2 DS    B       RESERVED
+RMPLASID DS    CL2     ASID ASSOCIATED WITH THE TERMINATING TASK OR
+*                      MEMORY
+RMPLASCB DS    A       ADDRESS OF ASCB ASSOCIATED WITH TERMINATING
+*                      TASK OR MEMORY
+RMPLTCBA DS    A       ADDRESS OF TERMINATING TCB(ZEROES IF MEMORY
+*                      TERMINATION)
+RMPLRBPA DS    A       ADDRESS OF TERMINATING RB
+RMPLRMWA DS    A       ADDRESS OF RESOURCE MANAGERS WORK AREA
+RMPLDCBL DS    A       ADDRESS OF DCB LIST USED BY DATA MGR
+*                      TASK CLOSE ROUTINE FOR RB RELATED PURGES
+RMPLWALN EQU   16      LENGTH IN FULLWORDS OF RESOURCE
+*                      MANAGERS WORK AREA
+         MEND  ,   */
+*%RMPLBSL : ;
+*  %IF RMPL9999^=',' %THEN
+*    %RMPL9999=';';
+*  %IF RMPLLVL^='' %THEN
+*    %GOTO RMPLBSL2;
+*  %IF RMPLBASE='' %THEN
+*    %RMPLBASE='';
+*DECLARE
+*   1 RMPL RMPLBASE,
+*  %GOTO RMPLBSL3;
+*%RMPLBSL2: ;
+*   RMPLLVL RMPL,
+*%RMPLBSL3:;
+*     4 RMPLFLG1   CHAR(1),             /* FLAGS INDICATING TYPE OF
+*                                          TERMINATION               */
+*      8 RMPLTYPE  BIT(1),             /* ON,INDICATES ABNORMAL
+*                                          TERMINATION               */
+*                                       /* OFF,INDICATES NORMAL
+*                                          TERMINATION               */
+*      8 RMPLTERM   BIT(1),             /* ON,INDICATES MEMORY
+*                                          TERMINATION
+*                                          OFF,INDICATES TASK
+*                                          TERMINATION               */
+*       8 RMPLRBPP   BIT(1),            /* ON,INDICATES RB RELATED
+*                                          PURGE                     */
+*       8 RMPLIPUF   BIT(1),            /* ON,INHIBITING PAGE
+*                                          UNFIXES                   */
+*       8 RMPLRCOV   BIT(1),            /* ON,INDICATES THAT TASK
+*                                          RECOVERY PORTION OF RTM2
+*                                          IS THE CALLER             */
+*       8 RMPLJST    BIT(1),            /* ON,INDICATES THAT TERM-
+*                                          INATING TASK IS A JOBSTEP */
+*       8 RMPLWT1M   BIT(1),            /* ON, INDICATES TYPE 1 MSG
+*                                          TABLE ENTRIES ARE TO
+*                                          BE WRITTEN                */
+*       8 *          BIT(1),            /* RESERVED                  */
+*     4 RMPLFLG2   CHAR(1),             /* RESERVED                  */
+*     4 RMPLASID   CHAR(2),             /* ASID ASSOCIATED WITH THE
+*                                          TERMINATING TASK OR MEMORY*/
+*     4 RMPLASCB   PTR(31),             /* ADDRESS OF ASCB ASSOCIATED
+*                                          WITH TERMINATING TASK OR
+*                                          MEMORY                    */
+*     4 RMPLTCBA    PTR(31) ,           /* ADDRESS OF TERMINATING
+*                                          TCB (ZEROES IF MEMORY
+*                                          TERMINATION)              */
+*     4 RMPLRBPA    PTR(31),            /* ADDRESS OF TERMINATING
+*                                          RB                        */
+*     4 RMPLRMWA    PTR(31),            /* ADDRESS OF RESOURCE
+*                                          MANAGERS WORK AREA        */
+*     4 RMPLDCBL    PTR(31) RMPL9999    /* ADDRESS OF DCB LIST USED
+*                                          BY DATA MGR TASK CLOSE
+*                                          FOR RB RELATED PURGES     */
+* %DCL RMPLWALN FIXED;
+* %RMPLWALN = 16;                          /* LENGTH IN FULLWORDS OF
+*                                          RESOURCE MANAGERS WORK
+*                                          AREA                      */

@@ -1,0 +1,36 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    OACB  &START,&LENGTH,&OVFLO
+         LCLA  &WITCH
+         AIF   ('&NAME' EQ '').NERR
+.GO1     AIF   (T'&START EQ 'O').ERR1
+         AIF   (T'&START EQ 'N').ERR1
+&NAME    DC    A(&START)                SLOA
+.GO2     AIF   (T'&LENGTH EQ 'O').ERR2
+         AIF   (T'&LENGTH NE 'N').ERR2
+         DC    A(&LENGTH)               LOA
+.GO3     AIF   (T'&OVFLO EQ 'O').ERR3
+         AIF   (T'&OVFLO EQ 'N').ERR3
+         DC    A(&OVFLO)                AORP
+.GO4     AIF   (&WITCH EQ 1).ERR4
+         DC    A(&START)                CRSA
+         DC    A(&START)                OLP
+         DC    F'0'                     BLP
+         MEXIT
+.NERR    IHBERMAC 157,(SYMBOL),WARNING
+         AGO   .GO1
+.ERR1    IHBERMAC 180,START,0
+&WITCH   SETA  1
+&NAME    DC    F'0'                     SLOA
+         AGO   .GO2
+.ERR2    IHBERMAC 180,LENGTH,0
+         DC    F'0'                     LOA
+         AGO   .GO3
+.ERR3    IHBERMAC 180,OVFLO,0
+         DC    F'0'                     AORP
+         AGO   .GO4
+.ERR4    DC    F'0'                     CRSA
+         DC    F'0'                     OLP
+         DC    F'0'                     BLP
+         MEND
+

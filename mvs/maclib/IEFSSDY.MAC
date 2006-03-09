@@ -1,0 +1,93 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSDYCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSDY
+.*/ %SSDYCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSDY                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = DYNAMIC ALLOCATION JES3              @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSDYPLS;              /*                               @ZA34144
+*
+SSOBDYCD EQU   23           DYNAMIC ALLOCATION FUNCTION ID (SSOBFUNC)
+*                                                              @Y02BPSD
+*
+*    DYNAMIC ALLOCATION RETURN CODES (SSOBRETN)
+*
+SSDYSUCC EQU   0                  SUCCESSFUL                   @Y02BPSD
+SSDYVNMT EQU   4                  REQUESTED VOLUME NOT MOUNTED @Y02BPSD
+*                                 (VOLUME MOUNTING NOT         @Y02BPSD
+*                                 ALLOWED)                     @Y02BPSD
+SSDYVBUS EQU   8                  VOLUME BUSY (WAITING FOR     @Y02BPSD
+*                                 VOLUME IS NOT ALLOWED)       @Y02BPSD
+SSDYUNAV EQU   12                 REQUESTED VOLUME UNAVAILABLE @Y02BPSD
+*                                 (VOLUME FOUND IN THE JES3    @Y02BPSD
+*                                 VOLUME UNAVAILABLE TABLE)    @Y02BPSD
+SSDYDBUS EQU   16                 REQUESTED DATA SET BUSY      @Y02BPSD
+*                                 (WAITING FOR DATASET NOT     @Y02BPSD
+*                                 ALLOWED)                     @Y02BPSD
+SSDYNUNT EQU   20                 REQUESTED UNIT(S) NOT        @Y02BPSD
+*                                 AVAILABLE (NO UNIT(S) OF     @Y02BPSD
+*                                 TYPE AVAILABLE FOR USE)      @Y02BPSD
+SSDYNEDP EQU   24                 NOT ENOUGH DEVICES OF TYPE   @Y02BPSD
+*                                 REQUESTED EXIST ON THE       @Y02BPSD
+*                                 PROCESSOR FROM WHICH THE     @Y02BPSD
+*                                 ALLOCATION REQUEST           @Y02BPSD
+*                                 ORIGINATED                   @Y02BPSD
+SSDYCNCL EQU   28                 REQUEST CANCELLED BY         @Y02BPSD
+*                                 OPERATOR                     @Y02BPSD
+*
+         ORG   SSOBGN             SSDY START                   @Y02BPSD
+SSDYBGN  EQU   *                  DYNAMIC ALLOCATION BEGINNING @Y02BPSD
+SSDYLEN  DC    AL2(SSDYSIZE)      DYNAMIC ALLOCATION EXTENSION @Y02BPSD
+*                                 LENGTH                       @Y02BPSD
+SSDYRSV0 DS    H                  RESERVED                     @Y02BPSD
+SSDYSIOT DS    A                  POINTER TO 1ST SIOT          @Y02BPSD
+SSDYPFLG DS    A                  POINTER TO FLAG FIELD        @Y02BPSD
+SSDYRSV1 DS    F                  RESERVED                     @Y02BPSD
+*
+SSDYSIZE EQU   *-SSDYBGN          EXTENSION LENGTH             @Y02BPSD
+SSOBLN10 EQU   SSOBHSIZ+SSDYSIZE  TOTAL SSOB LENGTH            @Y02BPSD
+         MEND                                                @ZA34144*/
+* %SSDYPLS:;                        /*                       @ZA34144*/
+*    /*    FUNCTION IDS (SSOBFUNC)                                   */
+*  DCL SSOBDYCD FIXED(15) CONSTANT(23); /*DYNAMIC ALLOCATION @Y02BPSD*/
+*   /*                                                               */
+*   /*  DYNAMIC ALLOCATION RETURN CODES (SSOBRETN) -                 */
+*  DCL SSDYSUCC FIXED(31) CONSTANT(0);  /* SUCCESSFUL        @Y02BPSD*/
+*  DCL SSDYVNMT FIXED(31) CONSTANT(4);  /* REQUESTED VOLUME NOT MOUNTED
+*                                          (VOLUME MOUNTING IS NOT
+*                                          ALLOWED)          @Y02BPSD*/
+*  DCL SSDYVBUS FIXED(31) CONSTANT(8);  /* VOLUME BUSY (WAITING FOR
+*                                          VOLUME IS NOT ALLOWED)
+*                                                            @Y02BPSD*/
+*  DCL SSDYUNAV FIXED(31) CONSTANT(12); /* REQUESTED VOLUME UNAVAILABLE
+*                                          (VOLUME FOUND IN THE JES3
+*                                          VOLUME UNAVAILABLE
+*                                          TABLE)            @Y02BPSD*/
+*  DCL SSDYDBUS FIXED(31) CONSTANT(16); /* REQUESTED DATA SET BUSY
+*                                          (WAITING FOR DATASET NOT
+*                                          ALLOWED)          @Y02BPSD*/
+*  DCL SSDYNUNT FIXED(31) CONSTANT(20); /* REQUESTED UNIT(S) NOT
+*                                          AVAILABLE (NO UNIT(S) OF
+*                                          TYPE REQUESTED AVAILABLE
+*                                          FOR USE)          @Y02BPSD*/
+*  DCL SSDYNEDP FIXED(31) CONSTANT(24); /* NOT ENOUGH DEVICES OF TYPE
+*                                          REQUESTED EXIST ON THE
+*                                          PROCESSOR FROM WHICH THE
+*                                          ALLOCATION REQUEST
+*                                          ORIGINATED        @Y02BPSD*/
+*  DCL SSDYCNCL FIXED(31) CONSTANT(28); /* REQUEST CANCELLED BY
+*                                          OPERATOR          @Y02BPSD*/
+*   /*   S S D Y                                                     */
+*  DCL
+*  1     SSDY       SSOBDY,       /* BEGINNING DYNAMIC ALLOCATION
+*                                    SSOB EXTENSION          @Y02BPSD*/
+*    2     SSDYLEN  FIXED(15),    /* LENGTH OF SSDY          @Y02BPSD*/
+*    2     SSDYRSV0 FIXED(15),    /* RESERVED                @Y02BPSD*/
+*    2     SSDYSIOT PTR(31),      /* PTR TO 1ST SIOT         @Y02BPSD*/
+*    2     SSDYPFLG PTR(31),      /* PTR TO FLAG FIELD       @Y02BPSD*/
+*    2     SSDYRSV1 FIXED(31);    /* RESERVED                @Y02BPSD*/
+

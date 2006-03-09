@@ -1,0 +1,49 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSDDCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSDD
+.*/ %SSDDCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSDD                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = CHANGE DDNAME JES3 EXIT              @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSDDPLS;              /*                               @ZA34144
+*
+SSOBDDCD EQU   26         CHANGE DDNAME FUNCTION ID(SSOBFUNC)  @Y02BPSD
+*
+*    CHANGE DDNAME RETURN CODES (SSOBRETN)
+*
+*      NO CHANGE DDNAME RETURN CODES CURRENTLY DEFINED
+*
+         ORG   SSOBGN             SSDD START                   @Y02BPSD
+SSDDBGN  EQU   *                  CHANGE DDNAME BEGINNING      @Y02BPSD
+SSDDLEN  DC    AL2(SSDDSIZE)      CHANGE DDNAME EXTENSION      @Y02BPSD
+*                                 LENGTH                       @Y02BPSD
+SSDDRSV0 DS    H                  RESERVED                     @Y02BPSD
+SSDDNUMB DS    F                  NUMBER OF CHANGED DDNAMES    @Y02BPSD
+SSDDNPTR DS    A                  POINTER TO DDNAME INFO       @Y02BPSD
+SSDDRSV1 DS    F                  RESERVED                     @Y02BPSD
+*
+SSDDSIZE EQU   *-SSDDBGN          EXTENSION LENGTH             @Y02BPSD
+SSOBLN13 EQU   SSOBHSIZ+SSDDSIZE  TOTAL SSOB LENGTH            @Y02BPSD
+         MEND                                                @ZA34144*/
+* %SSDDPLS:;                                 /*              @ZA34144*/
+*    /*    FUNCTION IDS (SSOBFUNC)                                   */
+*  DCL SSOBDDCD FIXED(15) CONSTANT(26); /* CHANGE DDNAME ID  @Y02BPSD*/
+*     /*                                                             */
+*     /*  CHANGE DDNAME RETURN CODES (SSOBRETN) -                    */
+* /*                                                                 */
+* /*    NO CHANGE DDNAME RETURN CODES CURRENTLY DEFINED              */
+* /*                                                                 */
+*   /*   S S D D                                                     */
+*  DCL
+*  1     SSDD       SSOBDD,       /* BEGINNING CHANGE DDNAME
+*                                    SSOB EXTENSION          @Y02BPSD*/
+*    2     SSDDLEN  FIXED(15),    /* LENGTH OF SSDD          @Y02BPSD*/
+*    2     SSDDRSV0 FIXED(15),    /* RESERVED                @Y02BPSD*/
+*    2     SSDDNUMB FIXED(31),    /* NUMBER OF CHANGED DDNAMES
+*                                                            @Y02BPSD*/
+*    2     SSDDNPTR PTR(31),      /* PTR TO DDNAME INFO      @Y02BPSD*/
+*    2     SSDDRSV1 FIXED(31);    /* RESERVED                @Y02BPSD*/

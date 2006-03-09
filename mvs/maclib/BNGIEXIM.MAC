@@ -1,0 +1,517 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         PRINT OFF
+         MACRO
+&NAME    BNGHJN &LABEL,&HJN
+         LCLA  &K
+         LCLC  &HJA,&HJB,&HJC
+&HJC     SETC  'PTF NO.'
+&K       SETA  K'&SYSPARM
+         AIF   (&K LT 4).CODE
+&HJA     SETC  '&SYSPARM'(1,4)
+         AIF   (&K LT 8).CODE
+&HJB     SETC  '&SYSPARM'(5,4)
+         AIF   (&K LT 15).CODE
+&HJC     SETC  '&SYSPARM'(9,7)
+.CODE    ANOP
+         AIF   ('&LABEL' EQ '').NOBRNCH
+         B     &LABEL .                 BR AROUND CONSTANTS
+         SPACE 2
+.NOBRNCH ANOP
+         AIF   ('&NAME' EQ '').NOLABEL
+         DC    C'&NAME' .              MODULE IDENTIFIER
+.NOLABEL ANOP
+         AIF   ('&HJA' EQ '').NEXT
+         DC    X'&HJA' .                DATE OF MODIFICATION
+.NEXT    ANOP
+         AIF   ('HJB' EQ '').DATE
+         AIF   ('&HJN' NE 'HJN').DATE
+         DC    X'&HJB' .                HJN OF MODIFICATION
+.DATE    ANOP
+         DC    C'&HJC' .                PTF LEVEL
+.NOPTF   ANOP
+         AIF   ('&LABEL' EQ '').NOLBL
+         SPACE 2
+&LABEL   DS    0H
+.NOLBL   ANOP
+         MEND
+         PRINT ON
+***********************************************************************
+*                                                                     *
+* MODULE NAME = BNGIEXIT                                              *
+*                                                                     *
+* DESCRIPTIVE NAME = IMS DEMF USER EXIT SYMBOLIC NAME CONVERSION      *
+*                    MODULE                                           *
+*                                                                     *
+*                                                                     *
+* STATUS = RELEASE 1, LEVEL 1                                         *
+*                                                                     *
+* FUNCTION = CONVERTS SYMBOLIC NAME TO EXPLICIT HARDWARE ADDRESSES    *
+*            IN THE FORM OF CONTROL/LINE/TERMINAL FOR REMOTE TERMINAL *
+*            SYMBOLIC NAME OR IN THE FORM OF TERMINAL ADDRESS ONLY    *
+*            FOR LOCAL TERMINAL SYMBOLIC NAME.                        *
+*                                                                     *
+* NOTES = NONE                                                        *
+*                                                                     *
+*    DEPENDENCIES =                                                   *
+*                                                                     *
+*    THE FOLLOWING ARE IMS CONTROL BLOCKS AND THEIR LABELS AS USED BY *
+*    DEMF IMS BNGIEXIT MODULE:                                        *
+*                                                                     *
+*    IMS                                                              *
+*    CONTROL BLOCKS                  LABELS USED                      *
+*    ----------------------------    -----------                      *
+*                                                                     *
+*    COMMUNICATION LINE BLOCK        CLBFLAG3                         *
+*    (CLB)                           CLB3DECB                         *
+*                                    CLB3CL40                         *
+*                                    CLBDCB                           *
+*                                                                     *
+*    COMMUNICATION NAME TABLE        CNTNAME1                         *
+*    (CNT)                           CNTCTBPT                         *
+*                                                                     *
+*    COMMUNICATION TERMINAL BLOCK    CTBCLB                           *
+*    (CTB)                           CTBTERM                          *
+*                                                                     *
+*    SYSTEM CONTENTS DIRECTORY       SCDCNT                           *
+*    (SCD)                           SCDCNTN                          *
+*                                    SCDCNTL                          *
+*                                                                     *
+*    RESTRICTIONS = NONE                                              *
+*                                                                     *
+*    REGISTER CONVENTIONS =  R7  ADDRESS OF COMM TERM BLOCK (CTB)     *
+*                            R9  ADDRESS OF COMM LINK BLOCK (CLB)     *
+*                            R10 ADDRESS OF COMM NAME TABLE (CNT)     *
+*                            R11 ADDRESS OF SYSTEM CONTENTS DIR (SCD) *
+*                                                                     *
+*    PATCH LABEL = BNGIPTCH                                           *
+*                                                                     *
+* MODULE TYPE =  IMS USER EXIT                                        *
+*                                                                     *
+*    PROCESSOR = ASSEMBLER H                                          *
+*                                                                     *
+*    MODULE SIZE = 1524 DECIMAL BYTES                                 *
+*                                                                     *
+*    ATTRIBUTES =  SERIALLY REUSABLE                                  *
+*                                                                     *
+* ENTRY POINT = BNGIEXIT                                              *
+*                                                                     *
+*    PURPOSE = SEE FUNCTION                                           *
+*                                                                     *
+*    LINKAGE = R1  LOADED WITH THE PARAM LIST POINTER                 *
+*              R14 LOADED WITH THE RETURN ADDR (USED BY SUBROUTINE)   *
+*              R15 LOADED WITH ENTRY POINT                            *
+*                                                                     *
+* INPUT = PARAM LIST ITEMS USED ARE :                                 *
+*                                                                     *
+* OUTPUT = PARAM LIST ITEMS USED ARE :                                *
+*                                                                     *
+* EXIT-NORMAL = REGISTER 15 RETURN CODE RETURNED TO CALLER :          *
+*               00 - OPERATION PERFORMED AS REQUESTED                 *
+*                                                                     *
+* EXIT-ERROR  = NONE                                                  *
+*                                                                     *
+* EXTERNAL REFERENCE = NONE                                           *
+*                                                                     *
+*    ROUTINES =                                                       *
+*                                                                     *
+*    DATA AREAS =                                                     *
+*                                                                     *
+*    CONTROL BLOCK = DCB                                              *
+*                                                                     *
+* TABLES = SEE DEPENDENCIES ABOVE                                     *
+*                                                                     *
+* MACROS = SAVE, RETURN                                               *
+*                                                                     *
+* CHANGE ACTIVITIES AS FOLLOWS:                                       *
+* CHANGE 01  11/15/77  PROLOGUE ADDED                                 *
+* CHANGE 02  02/22/78  BNGHJN MACRO ADDED                             *
+*D100750                                                       @OZ29911
+*A078000                                                       @OZ29911
+*A060000,061000,063000                                         @OZ30477
+*C103500,134500                                                @OZ30477
+*A165500                                                       @OY21683
+*DUMMY APAR ENTRY TO CORRECT CDS FOR DEMF/IMS                  @OZ36411
+* DUMMY APAR ENTRY TO CORRECT PREREQ STRINGS                   @OZ36693
+*C 202500,204500-205000                                        @AZ47407
+*D 203000-204000,214000-214500                                 @AZ47407
+*                                                                     *
+***********************************************************************
+BNGIEXIT  TITLE  'DEMF TRANSACTION INPUT EDIT USER EXIT FOR IMS 1.1.4'
+***********************************************************************
+*                                                                     *
+* SINCE AN IMS MESSAGE PROCESSING PROGRAM (BMP OR MPP) HAS NO ACCESS  *
+* TO IMS CONTROL BLOCKS AND ONE DESIRABLE FEATURE OF DEMF (DISPLAY    *
+* EXCEPTION MONITORING FACILITY) IS THE ABILITY TO DISPLAY A TERMINAL *
+* ERROR DATA WHEN ONLY ITS SYMBOLIC NAME IS KNOWN, OR NOTHING IS KNOWN*
+* EXCEPT THAT IT IS CONNECTED TO AN DEMF-SUPPORTING SOFTWARE PACKAGE, *
+* IMS BEING SUCH PACKAGE, SOME WAY NEEDED TO BE FOUND TO OBTAIN LINE, *
+* CONTROL UNIT, AND TERMINAL ADDRESSES, AVAILABLE ONLY IN THE IMS     *
+* CONTROL REGION, AND PASS THIS DATA TO THE DEMF TRANSACTION PROCESSOR,
+* EXECUTING IN ITS OWN SEPARATE REGION. DEMF DATA IS ACCESSED BY LINE,*
+* CONTROL UNIT AND TERMINAL ADDRESSES, NOT BY SYMBOLIC. THE EASIEST WAY
+* TO IMPLEMENT THIS FUNCTION IS BY IMS TRANSACTION INPUT EDIT USER EXIT
+* THIS PROGRAM BEING SUCH EXIT FOR DEMF TRANSACTIONS. IF OMITTED FROM *
+* THE IMS CONTROL REGION,THE ONLY EFFECT TO DEMF IS THAT EXCEPTION DATA
+* WILL BE AVAILABLE ONLY BY LINE, CONTROL UNIT AND TERMINAL ADDRESSES *
+* ENTERED BY THE OPERATOR.                                            *
+*                                                                     *
+* A SPECIAL OPERAND WILL BE ADDED TO DEMF TRANSACTION MESSAGES BY THIS*
+* PROGRAM TO INDICATE THE LINE, CONTROL UNIT AND TERMINAL ADDRESS OF  *
+* THE TERMINAL MAKING THE REQUEST & OF ANOTHER TERMINAL WHOSE SYMBOLIC*
+* NAME IS KNOW. TRANSACTIONS MODIFIED BY THIS PROGRAM AND THE RESULTS *
+* PASSED TO THE DEMF TRANSACTION PROCESSOR ARE AS FOLLOW:             *
+*                                                                     *
+*    TRANSACTION ENTERED:        TRANSACTION PASSED TO PROCESSOR:     *
+*        DEMF 3270                   DEMF 3270 X'FF'LLLCCTT - REMOTE  *
+*        DEMF 3270                   DEMF 3270 X'FF'TTT     - LOCAL   *
+*        DEMF 3270 (VTAM TERMINAL)   DEMF 3270 X'FE'VTAMNAME - @OZ30477
+*        DEMF 3270 SYMBNAME          DEMF 3270 SYMBNAME X'FF'LLLCCTT  *
+*        DEMF 3270 SYMBNAME          DEMF 3270 SYMBNAME X'FF'TTT      *
+* DEMF 3270 SYMBNAME(VTAM)    DEMF 3270 SYMBNAME X'FE'VTAMNAME @OZ30477
+*        DEMF 3270 N1 N2 ...         INPUT PASSED TO DISP UNCHANGED   *
+*        DEMF (29-BYTES) MENU (X'ED 3270 OPTION)                      *
+*                                    DEMF 3270 X'FF'LLLCCTT - REMOTE  *
+*                                    DEMF 3270 X'FF'TTT     - LOCAL   *
+*                                    DEMF 3270 X'FE'VTAMNAME - @OZ30477
+*                                                              @OZ30477
+* THE X'FE' IS A SPECIAL INDICATOR MEANING THAT THE FOLLOWING  @OZ30477
+* DATA IS:                                                     @OZ30477
+*                                                              @OZ30477
+*     VTAMNAME - VTAM NODE NAME                                @OZ30477
+*                                                              @OZ30477
+*     SINCE THERE IS NO WAY TO CONVERT AN IMS SYMBOLIC         @OZ30477
+*     TERMINAL NAME TO A HARDWARE ADDRESS UNDER VTAM, THE      @OZ30477
+*     VTAM NODE NAME ASSOCIATED WITH THE IMS SYMBOLIC NAME IS  @OZ30477
+*     PASSED INSTEAD OF THE HARDWARE ADDRESS.                  @OZ30477
+*                                                                     *
+* THE X'FF' IS A SPECIAL INDICATOR MEANING THAT THE FOLLOWING DATA IS:*
+*                                                                     *
+*     LLL     - THE CHANNEL AND UNIT LINE ADDRESS FROM THE O/S UCB    *
+*     CC & TT - THE CONTROL UNIT AND TERMINAL TP-LINE FOR REMOTE      *
+*               ADDRESSING CHARACTERS FROM THE IMS CTB.               *
+*                                                                     *
+*     TTT     - THE TERMINAL TP-LINE FOR LOCAL USING ADDRESSING       *
+*               CHARACTERS FROM THE O/S UCB.                          *
+*                                                                     *
+* THE SYMBOLIC DEVICE NAME MUST BE 1-8 CHARACTERS BUT IF THE NAME IS  *
+*    3 CHARACTERS OR LESS, AT LEAST ONE MUST NOT BE HEX-EQUAL(0-9,A-F)*
+*    OR THE USER MAY GET A SYMBOLIC CONVERSION WHEN HE MEANT TO       *
+*    ENTER A HARDWARE ADDRESS.                                        *
+*                                                                     *
+***********************************************************************
+         EJECT
+BNGIEXIT CSECT
+*        PRINT NOGEN
+         USING *,BASE1             PROGRAM BASE
+         USING IECTDECB,CLBREG     IMS COMMUNICATION LINE BLOCK
+         USING CNT,CNTREG          IMS COMMUNICATION NAME TABLE
+         USING CTB,CTBREG          IMS COMMUNICATION TERMINAL BLOCK
+         USING IHADCB,DCBREG       O/S DATA CONTROL BLOCK
+         USING DEB,DEBREG          O/S DATA EXTENT BLOCK
+         USING MSG,MSGREG          TRANSACTION MESSAGE SEGMENT BUFFER
+         USING SCD,SCDREG          IMS SYSTEM CONTENTS DIRECTORY
+         USING UCB,UCBREG          O/S UNIT CONTROL BLOCK
+         SAVE  (14,12),,BNGIEXIT.DEMF.TRANSACTION.INPUT.EDIT.USER.EXIT
+         LR    BASE1,R15           SET PROGRAM BASE
+BNGIEXIT BNGHJN SKIPID                                         @OZ29911
+*        L     SCDREG,=V(XXXISCD)   SET IMS SCDREG
+*        L     SCDREG,0(SCDREG)
+         L     MSGREG,DECAREA      SET MESSAGE SEGMENT BASE
+         LA    MSGREG,0(MSGREG)    INSURE TOP BYTE IS ZERO
+         XC    PARM1(40),PARM1     INSURE ALL PARMS ZEROS
+         CLI   MSGZ2,0             MSG EDITED BY MFS OR BASIC? 0=BASIC
+         BNE   MFSEDIT             BYPASS EXTENDING 10 BYTES IF MFS
+***********************************************************************
+*                                                                     *
+*        BASIC MSG EDIT PROCESSING                                    *
+*                                                                     *
+***********************************************************************
+         LA    DATAREG,MSGDATA     DATAREG = POINT TO INPUT DATA
+         LH    DATALOOP,MSGLL      LOAD MSG LENGTH
+         SH    DATALOOP,=H'5'      SUBTRACT (LLZZ) + (1 FOR TR)
+         EX    DATALOOP,TRNSLATE   CHANGE LOWER CASE TO UPPER CASE
+         LA    DATALOOP,5(DATALOOP)   RESTORE LENGTH OF MSG
+         AR    DATALOOP,MSGREG     POINT TO END OF MSG
+         BAL   LINKREG,EDITRTN     CALL EDIT ROUTINE
+         CLC   PARM2(5),=X'F3F2F7F000' IS 3270 REQUEST ?
+         BNE   RETURN              NO.
+         CLI   PARM3,X'00'         YES. IS SYMBOLIC NAME ENTERED ?
+         BE    G3270               NO. FIND HDWR ADDR FOR RQSD TERM
+         CLI   PARM4,X'00'         YES. ANY MORE PARMS ?
+         BNE   RETURN              YES. MUST BE HDWR ADDRESSES
+         L     CNTREG,SCDCNT       SET COMMUNICATION NAME TABLE
+         LH    R0,SCDCNTN            POOL ADDRESS AND CNT COUNT
+         OC    PARM3,=CL8' '       MASK TO BLANK ON BINARY ZEROS
+CKNXTCNT CLC   PARM3,CNTNAME1       IS CNTNAME1 = REQUEST ?
+         BE    CNTFOUND            SET CLB/CTB POINTERS IF EQUAL
+         AH    CNTREG,SCDCNTL      MOVE TO NEXT COMM. NAME TABLE ENTRY
+         BCT   R0,CKNXTCNT         KEEP CHECKING UNTILL ALL ARE CHECKED
+*
+RETURN   RETURN (14,12),T,RC=0          RETURN TO IMS WITH GOOD CODE
+*
+TRNSLATE TR    0(1,DATAREG),LOTOUP      TRANSLATE LOWER CASE TO UPPER
+*
+*
+***********************************************************************
+*                                                                     *
+*        BASIC EDIT PROCESSING FOR 3270 SYMBOLIC TERMINAL             *
+*                                                                     *
+***********************************************************************
+CNTFOUND L     CTBREG,CNTCTBPT     SET CTB ADDRESS FOR SYMBOLIC TERMNAL
+         L     CLBREG,CTBCLB       SET CLB ADDRESS FOR SYMBOLIC TERMNAL
+***********************************************************************
+*                                                                     *
+*        BASIC EDIT PROCESSING FOR 3270 DEFAULT TERMINAL              *
+*                                                                     *
+***********************************************************************
+G3270    OC    CLBDCB,CLBDCB       IS CLBDCB = ZEROS, THEN THIS@OZ30477
+*                                      IS VTAM TERMINAL REQUEST@OZ30477
+         BNZ   G3270AA             NO. A BTAM TERMINAL REQUEST.@OZ30477
+         LH    R1,MSGLL            LOAD MSG LENGTH             @OZ30477
+         AR    R1,MSGREG           R1=POINT TO END OF MSG      @OZ30477
+         MVI   0(R1),X'FE'        SET VTAM CONVERSION INDICATOR@OZ30477
+         MVC   1(8,R1),CLBNAME    MOVE VTAM NODE NAME TO OUTPUT@OZ30477
+         LH    R1,MSGLL            LOAD MSG LENGTH             @OZ30477
+         LA    R1,9(R1)            BUMP R1=NEW BASIC LENGTH    @OZ30477
+         STH   R1,MSGLL            STORE BACK NEW BASIC LENGTH @OZ30477
+         B     RETURN                                          @OZ30477
+G3270AA  BAL   LINKREG,CONVSYMN    CALL CONVERT SYMBOLIC RTN   @OZ30477
+         CLI   PARM4,X'00'         IS SYMBOLIC NAME CONVERTED?
+         BE    RETURN              NO
+         LH    R1,MSGLL            LOAD MSG LENGTH
+         AR    R1,MSGREG           R1=POINT TO END OF MSG
+         MVI   0(R1),X'FF'         SET SYMBOLIC CONVERSION INDICATOR
+         MVC   1(3,R1),PARM4       MOVE HWR LINE/TERM ADDR TO OUTPUT
+         UNPK  DBLWD,CTBTERM(3)    UNPACK 3 CNTRL & TERM ADDRESSES
+         MVC   4(4,R1),DBLWD+3     MOVE CNTRL & TERM ADDR TO OUTPUT
+         TR    4(4,R1),HXTOEB      CONVERT CNTRL & TERM ADDR TO EBCDIC
+         LH    R1,MSGLL            LOAD MSG LENGTH
+         LA    R1,8(R1)            BUMP R1=NEW BASIC LENGTH
+         STH   R1,MSGLL            STORE BACK NEW BASIC LENGTH
+         B     RETURN
+***********************************************************************
+*                                                                     *
+*        MFS MSG EDIT PROCESSING                                      *
+*                                                                     *
+***********************************************************************
+MFSEDIT  LA    DATAREG,MSGDATA        POINT TO KEY-IN AREA
+         LA    DATALOOP,33            TRANSLATE FROM 'DEMF' ON TO END
+*                                       OF 29-BYTE KEY-IN AREA
+         EX    DATALOOP,TRNSLATE      CHANGE LOWER CASE TO UPPER CASE
+         CLC   MSGKEYED,=CL29' '   WAS ANYTHING KEYED IN ?
+         BNE   MFS0002             YES. GO EDIT INPUT
+         CLC   MSGCMDCD,=C'MENU'   IS INPUT FROM MENU SCREEN ?
+         BNE   RETURN              NO. RETURN TO IMS
+         CLC   MSGDPRSS,=C'DEPRESS' IS THIS FROM MENU PAGE 1 ?
+         BNE   RETURN              NO. RETURN TO IMS
+         CLI   MSG3270,C' '        IS THIS 3270 REQUEST FROM MENU ?
+         BE    RETURN              NO. RETURN TO IMS
+         B     MFS3270             YES. GO FIND HARDWARE ADDRESS
+MFS0002  LA    DATAREG,MSGKEYED    POINT TO KEYED-IN DATA
+         LR    DATALOOP,DATAREG    SETUP DATA LOOP
+         LA    DATALOOP,29(DATALOOP) SET DATALOOP=END OF 29 BYTE AREA
+         BAL   LINKREG,EDITRTN     CALL EDIT ROUTINE
+         CLC   PARM1(5),=X'F3F2F7F000' IS 3270 REQUEST ?
+         BNE   RETURN              NO. RETURN TO IMS
+         CLI   PARM2,X'00'         YES. IS SYMBOLIC NAME ENTERED ?
+         BE    MFS3270             NO. FIND HDWR ADDR FOR RQSD TERM
+         CLI   PARM3,X'00'         YES. ANY MORE PARMS ?
+         BNE   RETURN              YES. MUST BE HDWR ADDRESSES
+         L     CNTREG,SCDCNT       SET COMMUNICATION NAME TABLE
+         LH    R0,SCDCNTN            POOL ADDRESS AND CNT COUNT
+         OC    PARM2,=CL8' '       MASK TO BLANK ON BINARY ZEROS
+MFS0004  CLC   PARM2,CNTNAME1      IS CNTNAME1= REQUEST ?
+         BE    MFS0006             SET CLB/CTB POINTERS IF EQUAL
+         AH    CNTREG,SCDCNTL      MOVE TO NEXT COMM. NAME TABLE ENTRY
+         BCT   R0,MFS0004          KEEP CHECKING UNTILL ALL ARE CHECKED
+         B     RETURN              NO MATCH TO IMS SYMBOLICS, SO RETURN
+***********************************************************************
+*                                                                     *
+*        MFS EDIT PROCESSING FOR 3270 SYMBOLIC TERMINAL               *
+*                                                                     *
+***********************************************************************
+MFS0006  L     CTBREG,CNTCTBPT     SET CTB ADDRESS FOR SYMBOLIC TERMNAL
+         L     CLBREG,CTBCLB       SET CLB ADDRESS FOR SYMBOLIC TERMNAL
+***********************************************************************
+*                                                                     *
+*        MFS EDIT PROCESSING FOR 3270 DEFAULT TERMINAL                *
+*                                                                     *
+***********************************************************************
+MFS3270  OC    CLBDCB,CLBDCB     IS CLBDCB = ZEROS, THEN THIS  @OZ30477
+*                                   IS A VTAM TERMINAL REQUEST.@OZ30477
+         BNZ   MFS0008             NO. A BTAM TERMINAL REQUSET.@OZ30477
+         LA    R1,MSGKEYED   SET R1=ADDR OF 29 BYTE KEY-IN AREA@OZ30477
+         MVC   MSGKEYED,=CL29' '   CLEAR KEY-IN AREA           @OZ30477
+         MVC   0(5,R1),=C'3270 '   MOVE '3270 ' TO 29 BYTE AREA@OZ30477
+         LA    R1,5(R1)            PRESET 'R1' PASS '3270 '    @OZ30477
+         CLI   PARM2,X'00'         IS SYMBOLIC NAME IN PARM2 ? @OZ30477
+         BE    MFS0005             NO. JUST ADD VTAM NAME      @OZ30477
+         MVC   5(8,R1),PARM2      YES. ADD SYMBOLIC NAME TO MSG@OZ30477
+         LA    R1,13(R1)        POINT PASS '3270 ' AND SYMBOLIC@OZ30477
+MFS0005  MVI   0(R1),X'FE'        SET VTAM CONVERSION INDICATOR@OZ30477
+         MVC   1(8,R1),CLBNAME    MOVE VTAM NODE NAME TO OUTPUT@OZ30477
+         B     RETURN                                          @OZ30477
+MFS0008  BAL   LINKREG,CONVSYMN   CALL CONVERT SYMBOLIC ROUTINE@OZ30477
+         CLI   PARM4,X'00'         IS SYMBOLIC NAME CONVERTED?
+         BE    RETURN              NO
+         LA    R1,MSGKEYED         SET R1=ADDR OF 29 BYTE KEY-IN AREA
+         MVC   MSGKEYED,=CL29' '   CLEAR KEY-IN AREA
+         MVC   0(5,R1),=C'3270 '    MOVE '3270 ' TO 29 BYTE AREA
+         LA    R1,5(R1)            PRESET 'R1' PASS '3270 '
+         CLI   PARM2,X'00'         IS SYMBOLIC NAME IN PARM2 ?
+         BE    MFS0010             NO. JUST ADD HARDWARE ADDRESSES
+         MVC   5(8,R1),PARM2       YES. ADD SYMBOLIC NAME TO MSG
+         LA    R1,13(R1)           POINT PASS '3270 ' AND SYMBOLICNAME
+MFS0010  MVI   0(R1),X'FF'         SET SYMBOLIC CONVERSION INDICATOR
+         MVC   1(3,R1),PARM4       MOVE HWR LINE/TERM ADDR TO OUTPUT
+         UNPK  DBLWD,CTBTERM(3)    UNPACK 3 CNTRL & TERM ADDRESSES
+         MVC   4(4,R1),DBLWD+3     MOVE CNTRL & TERM ADDR TO OUTPUT
+         TR    4(4,R1),HXTOEB      CONVERT CNTRL & TERM ADDR TO EBCDIC
+         B     RETURN
+*********************************************************************
+*                                                                   *
+*        INPUT EDITING SUBROUTINE FOR BOTH BASIC AND MFS MSG        *
+*                                                                   *
+*********************************************************************
+EDITRTN  LA    PARMREG,PARM1       POINT TO PARMS.
+         LR    R1,PARMREG
+         MVI   NEWPARM,C'1'        TURN ON 'NEW PARM' SWITCH.
+EDIT001  CLI   0(DATAREG),C'A'     IS IT AN 'A' OR HIGHER?
+         BL    EDIT004             NO. CHECK NEW PARM SWITCH.
+         MVI   NEWPARM,C'0'        YES. SET NEW PARM SWITCH OFF.
+         MVC   0(1,R1),0(DATAREG)  PUT THIS BYTE IN THIS PARM
+         CLI   PARM5,X'00'         ARE ALL PARMS USED UP?
+         BNER  LINKREG             YES. RETURN TO CALLER
+         LA    R1,1(R1)            BUMP PARM POINTER WORKREG.
+EDIT003  LA    DATAREG,1(DATAREG)  BUMP TIOA POINTER.
+         CR    DATAREG,DATALOOP    IS THERE MORE DATA IN TIOA?
+         BL    EDIT001             YES. GO PROCESS MORE DATA.
+         BR    LINKREG             NO. RETURN TO CALLER.
+EDIT004  CLI   NEWPARM,C'1'        IS NEW-PARM SWITCH ON?
+         BE    EDIT003             YES. CHECK FOR MORE DATA.
+         CLI   PARM5,X'00'         NO. ARE ALL PARMS USED UP?
+         BNER  LINKREG             YES. RETURN TO CALLER
+         LA    PARMREG,8(PARMREG)  NO. BUMP TO NEXT NEW PARM.
+         LR    R1,PARMREG          POINT WORK REG TO NEXT PARM.
+         MVI   NEWPARM,C'1'        TURN ON NEW-PARM SWICH.
+         B     EDIT003             GO CHECK FOR MORE DATA.
+***********************************************************************
+*        AT THIS POINT UP TO 5 PARMS HAVE BEEN EDITED AND             *
+*        ARE LEFT JUSTIFIED WITH TRAILING X'00'S                      *
+***********************************************************************
+***********************************************************************
+*                                                                     *
+*        SUBROUTINE TO CONVERT SYMBOLIC NAME TO HARDWARE DEVICE       *
+*                                                                     *
+********************************************************************* *
+CONVSYMN L     DCBREG,CLBDCB       GET LINE'S DCB ADDRESS      @AZ47407
+         TM    DCBOFLGS,DCBOFOPN   IS DCB OPEN?                @AZ47407
+         BZ    RETURN              LEAVE IF 'NOT AVAIL'
+         L     DEBREG,DCBDEBAD     GET LINE'S DEB ADDRESS IF OPEN
+         XR    R2,R2               PREPARE FOR CALCULATIONS:
+         IC    R2,DECRLN           GET ACCESS METHOD'S DD-CARD NUMBER
+         L     UCBREG,CTBCTT            GET CTT ADDRESS        @OY21683
+         CLI   0(UCBREG),X'0E'          TEST FOR LOCAL         @OY21683
+         BNE   NOLOCL                   NO                     @OY21683
+         LH    R2,CTBTRMNO              GET TERMNO FROM CTB    @OY21683
+NOLOCL   EQU   *                                               @OY21683
+         BCTR  R2,0                CHANGE TO RELATIVE DD # FROM DD 1
+         SLL   R2,2                MULTIPLY RELATIVE DD # BY FOUR
+         L     UCBREG,DEBUCBAD(R2) GET LINE'S UCB ADDRESS
+         LA    UCBREG,0(UCBREG)    DROP TOP BYTE OF UCBREG
+         CLI   UCBID,UCBSTND       MAKE ONE UCB ADDRESS VALIDITY CHECK
+         BNER  LINKREG             LEAVE 'NOT AVAIL', SOMETHING'S WRONG
+         MVC   PARM4(3),UCBNAME    ADD LINE'S ADDRESS TO SPECIAL OPRAND
+         BR    LINKREG             RETURN TO EDIT MAIN-LINE
+*
+         EJECT
+***********************************************************************
+BNGIPTCH DC    C'PATCH AREA S-CONS:',128S(*)
+***********************************************************************
+*
+COMMAREA DS    0D       MAP OF COMMUNICATION AREA
+PARM1    DS    D          1ST INPUT PARM - DEMF
+PARM2    DS    D          2ND INPUT PARM - 3270
+PARM3    DS    D          3RD INPUT PARM - LLL OR TTT
+PARM4    DS    D          4TH INPUT PARM - CC  OR NULLS
+PARM5    DS    D          5TH INPUT PARM - TT  OR NULLS
+DBLWD    DS    D          DOUBLEWORD WORK AREA
+NEWPARM  DS    C          SWITCH TO DETERMINE START OF NEW PARM
+HXTOEB   DS    0D
+         DC    4XL16'00',C' ',XL15'00',7XL16'00'  THIS TABLE CONVERTS
+         DC    X'F0F1F2F3F4F5F6F7F8F9C1C2C3C4C5C6'  HEX CHARS
+         DC    2XL16'00'                CHARS FA-THRU-FF BACK
+         DC    X'F0F1F2F3F4F5F6F7F8F9C1C2C3C4C5C6'  A THRU F
+*
+LOTOUP   DS    0F       LOWER CASE TO UPPER CASE TR TABLE
+         DC    X'000102030405060708090A0B0C0D0E0F'
+         DC    X'101112131415161718191A1B1C1D1E1F'
+         DC    X'202122232425262728292A2B2C2D2E2F'
+         DC    X'303132333435363738393A3B3C3D3E3F'
+         DC    X'404142434445464748494A4B4C4D4E4F'
+         DC    X'505152535455565758595A5B5C5D5E5F'
+         DC    X'606162636465666768696A6B6C6D6E6F'
+         DC    X'707172737475767778797A7B7C7D7E7F'
+         DC    X'80C1C2C3C4C5C6C7C8C98A8B8C8D8E8F'
+         DC    X'90D1D2D3D4D5D6D7D8D99A9B9C9D9E9F'
+         DC    X'A0A1E2E3E4E5E6E7E8E9AAABACADAEAF'
+         DC    X'F0F1F2F3F4F5F6F7F8F9BABBBCBDBEBF'
+         DC    X'C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF'
+         DC    X'D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF'
+         DC    X'E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF'
+         DC    X'F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF'
+         LTORG
+***********************************************************************
+*
+DEB      DSECT ,      O/S DATA EXTENT BLOCK MAP:
+         DS    XL32     BASIC SECTION - UN-REFERENCED
+DEBUCBAD DS    F        UCB ADDRESS OF FIRST LINE FOR THE CLB/DCB
+*
+MSGIN    DSECT ,      MAP OF TRANSACTION MESSAGE SEGMENT:
+MSG      DS    0F       START OF TRANSACTION MESSAGE SEGMENT
+MSGLL    DS    H        LENGTH OF MESSAGE (INCLUDING LL,Z1,Z2)
+MSGZ1    DS    X          UN-REFERENCED - SHOULD ALWAYS BE X'00'
+MSGZ2    DS    X        IMS EDIT INDICATOR - =0 BASIC EDIT
+*                                            >0 MFS EDIT
+TIOADBA  DS    0F       START OF MESSAGE DATA (INPUT AREA)
+MSGDATA  DS    0C       FIRST BYTE OF MESSAGE DATA POINTER
+MSGTXCD  DS    CL5      'DEMF ' AREA
+MSGKEYED DS    CL29     29 BYTES KEY-IN AREA
+MSGCMDCD DS    CL4      4 BYTES CMND CODE AREA
+MSGMENU  DS    0C       START OF MENU PAGE1 INPUT AREA FOR (X)
+MSGALL   DS    C          MENU PAGE1 1ST (X) INPUT AREA
+MSG3270  DS    C          MENU PAGE1 2ND (X) INPUT AREA
+MSGRMOT  DS    C          MENU PAGE1 3RD (X) INPUT AREA
+MSGLOCL  DS    C          MENU PAGE1 4TH (X) INPUT AREA
+MSGDPRSS DS    CL7        MENU PAGE1 5TH INPUT AREA (FOR ENTER KEY)
+*
+UCB      DSECT ,      O/S UNIT CONTROL BLOCK MAP:
+         DS    XL2        UN-REFERENCED
+UCBID    DS    X        UCB IDENTIFIER
+UCBSTND  EQU   X'FF'    UCB IDENTIFIER VALUE
+         ORG   UCB+13     UN-REFERENCED
+UCBNAME  DS    CL3      PRINTABLE LINE ADDRESS (CUU)
+         DCBD  DSORG=XE,DEVD=BS
+         ICLI  CLBBASE=0,CNTBASE=0,CTBBASE=0
+         ISCD  SECTYPE=DSECT,SCDBASE=0
+*
+R0       EQU   0
+R1       EQU   1
+R2       EQU   2
+DATAREG  EQU   2              POINTER TO DATA TO BE EDIT
+DCBREG   EQU   3
+DEBREG   EQU   4              O/S DATA EXTENTED BLOCK
+UCBREG   EQU   5              O/S UNIT CONTROL BLOCK
+MSGREG   EQU   6              POINTER TO INPUT MESSAGE
+CTBREG   EQU   7              COMMUNICATIONS TERMINAL BLOCK
+DATALOOP EQU   8              LENGTH OF DATA TO BE EDIT
+CLBREG   EQU   9              COMMUNICATIONS LINE BLOCK
+CNTREG   EQU   10             COMMUNICATIONS NAME TABLE
+SCDREG   EQU   11             SYSTEMS CONTENTS DIRECTORY
+BASE1    EQU   12             BASE REGISTER
+*UNUSED  EQU   13             POINTER TO IMS REGISTER SAVE AREA
+LINKREG  EQU   14             LINKAGE REGISTER
+PARMREG  EQU   15             POINTER TO PARAMETERS 1,2,3,4
+R15      EQU   15             ENTRY POINT TO THIS PROGRAM FROM IMS
+         END   BNGIEXIT
+

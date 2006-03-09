@@ -1,0 +1,51 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    TWAIT &RREG,&TERMTST,&ECBLIST=
+         LCLB  &TEST
+         LCLC  &X
+&X       SETC  '&SYSNDX'
+&NAME    DS    0H
+         AIF   ('&RREG'(1,1) NE '(').ERR1          RREG MUST BE A REG
+         AIF   ('&RREG'(K'&RREG,1) NE ')').ERR1    CHECK FOR FORM (XX)
+         AIF   (N'&TERMTST EQ 0).TWAIT1          IS TERMTST OMITED
+         AIF   ('&TERMTST' NE 'TERMTST').ERR2      IS TERMTST VALID
+.TWAIT1  AIF   (N'&ECBLIST NE 1).ERR3            IS AN ECBLIST GIVEN
+IECA&X   EQU   *
+         AIF   ('&ECBLIST'(1,1) NE '(').TWAIT3
+         AIF   ('&ECBLIST'(K'&ECBLIST,1) NE ')').ERR4
+         AIF   (T'&ECBLIST EQ 'U').TWAIT2                          000A
+         AIF  (NOT ('&ECBLIST(1)' GE '2' AND '&ECBLIST(1)' LE '12')).ERX
+               R4                                                  000A
+.*
+.TWAIT2  LA    1,0(&ECBLIST)                                       000A
+         AGO   .TWAIT4
+.TWAIT3  LA    1,&ECBLIST
+.TWAIT4  LR    0,1                 SAVE PARAMETER LIST ADDRESS.
+IECB&X   L     15,0(1)             LOAD ECB ADDRESS.
+         TM    0(15),X'40'         IS COMPLETE BIT ON?
+         BNZ   IECC&X
+         TM    0(1),X'80'          IF NOT, TEST FOR END OF LIST.
+         BO    IECD&X
+         LA    1,4(1)              STEP TO NEXT ENTRY IN LIST.
+         B     IECB&X
+.*
+IECD&X   LR    1,0                 RESTORE PARAMETER LIST REGISTER.
+         LA    0,1                 LOAD WAIT COUNT.
+         WAIT  (0),ECBLIST=(1)
+         B     IECA&X
+IECC&X   LA    &RREG,0(15)    IF ON, LOAD SPECIFIED REGISTER WITH
+*                             ADDRESS OF COMPLETED ECB
+         LR    15,1
+         SR    15,0
+         MEXIT
+.ERR1    MNOTE 12,'***  IHB079  FIRST OPERAND REGISTER NOTATION REQUIREX
+               D'
+         MEXIT
+.ERR2    MNOTE 8,'***  IHB002  INVALID SECOND OPERAND SPECIFIED-&TERMTSX
+               T'
+         AGO   .TWAIT1
+.ERR3    MNOTE 12,'***  IHB080  ONE ECBLIST OPERAND ONLY REQUIRED'
+         MEXIT
+.ERR4    MNOTE 12,'***  IHB078  ECBLIST OPERAND REGISTER NOTATION INVALX
+               ID-&ECBLIST'
+         MEND

@@ -5,9 +5,12 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 01/29/06 RPI193 test mz390 symbol lenght for implicit CPZ
+*********************************************************************
 TESTSYM1 SUBENTRY
          WTO   'TESTSYM1 - TEST SYMBOL T AND L OPERATORS'
          SUBEXIT
+* TEST DS/DC SYMBOL TYPE AND LENGTH
          MACRO
          TSYM  &SDS,&ST,&SL
 &T       SETC  T'&SDS
@@ -20,14 +23,76 @@ TESTSYM1 SUBENTRY
          MNOTE 12,'SYMBOL TYPE OR LENGTH ERROR'        
          MEND
          TSYM  SA,A,4
-         TSYM  SAL3,A,3
+         TSYM  SAL3,R,3
          TSYM  S2A,A,4
-         TSYM  SEAL3,A,3
+         TSYM  SEAL3,R,3
+         TSYM  SCL2,C,2
+         TSYM  SF,F,4
+         TSYM  SH,H,2
+         TSYM  SY,Y,2
+         TSYM  SF1,G,1
+         TSYM  SH2,G,2
+         TSYM  SY3,R,3
+         TSYM  SE,E,4
+         TSYM  SD,D,8
+         TSYM  SL,L,16
+         TSYM  SE1,K,1
+         TSYM  SD2,K,2
+         TSYM  SL3,K,3
          TSYM  SS,S,2
+         TSYM  SS1,R,1
+         TSYM  SP,P,1
+         TSYM  SP2,P,2
+         TSYM  SZ,Z,1
+         TSYM  SZ2,Z,2
+         TSYM  TESTSYM1,J,1
+         TSYM  LR,I,2
+         TSYM  ST,I,4
+         TSYM  MVC,I,6
+         TSYM  SCD2,C,2
+         TSYM  SPD2,P,2
+         TSYM  SZD2,Z,2
+* TEST NUMERIC AND OMITTED TYPES
+         MACRO 
+         TTYPE &P1,&P2
+&TYPE    SETC  T'&P1
+         MNOTE 'P1=&P1 T''P1 = &TYPE' 
+&TYPE    SETC  T'&P2
+         MNOTE 'P2=&P2 T''P2 = &TYPE' 
+         MEND
+         TTYPE A
+         TTYPE 
+         TTYPE ,B
+         TTYPE 0
+         TTYPE 9
 ADUP     EQU   3
 SA       DS    A
 SAL3     DS    AL3
 S2A      DS    2A
 SEAL3    DS    (ADUP)AL3
+SCL2     DS    CL2
+SCD2     DC    C'12'
+SF       DS    F
+SH       DS    H
+SY       DS    Y
+SF1      DS    FL1
+SH2      DS    HL2
+SY3      DS    YL3
 SS       DS    S
+SS1      DS    SL1
+SE       DS    E
+SD       DS    D
+SL       DS    L
+SE1      DS    EL1
+SD2      DS    DL2
+SL3      DS    LL3
+SP       DS    P
+SP2      DS    PL2
+SPD2     DC    P'123'
+SZ       DS    Z
+SZ2      DS    ZL2
+SZD2     DC    Z'12'
+LR       LR    1,1
+ST       ST    1,0(1)
+MVC      MVC   0(1,1),0(2)
          END

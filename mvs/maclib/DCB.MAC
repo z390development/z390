@@ -1,0 +1,1282 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    DCB   &DDNAME=0,&MACRF=,                      FOUNDATION BLOCK*
+               &BFTEK=,&BFALN=,&EODAD=1,&RECFM=,&EXLST=0,     EXTENSION*
+               &BUFNO=0,&BUFCB=1,&BUFL=0,&DSORG=,&IOBAD=1,       COMMON*
+               &IMSK=,&UMSK=,&EOEA=0,&PCIA=0,                 EXCP APP1*
+               &SIOA=0,&CENDA=0,&XENDA=0,&AERR=0,&PGFX=NO,    EXCP APP2*
+               &HIARCHY=,                                              *
+               &OPTCD=,&SYNAD=1,&BLKSIZE=0,&NCP=0,&LRECL=0,&EROPT=,    *
+               &BUFRQ=0,&CLPS=1,&INTVL=0,&CPRI=,             QTAM LINE1*
+               &THRESH=,&CPOLL=,&LCBAD=1,                     QTAMLINE2*
+               &TRMAD=1,&SOWA=0,                             QTAM QUEUE*
+               &MON=,&MONDLY=,&WRU=,&IAM=,&EOM=,&EOT=,   BTAM/QTAM WTTA*
+               &LIMCT=0,                                           BDAM*
+               &NTM=0,&CYLOFL=0,&RKP=0,&MSWA=1,                  ISAM 1*
+               &SMSI=0,&SMSW=0,&MSHI=1,&DBUFNO=0,                ISAM 2*
+               &IMGADR=0,&SSRTN=0,&DCBHDR=0,&IMGRTE=0,          YL03123,
+               &QSAMEX=0,                                      @Y30GS11,
+               &DEVD=,&KEYLEN=,&TRTCH=,&DEN=,&ERRCNT=0,&FRID=,  YL03127,
+               &PRTSP=,&CODE=,&MODE=,&STACK=,                          *
+               &GNCP=1,&POLST=0,&GTYPE=EXPRESS,&ERROPT=,&LERB=,   13549*
+               &BUFCT=255,&REPOS=N,&TRANS=,&SCT=,&INVLIST=,&BUFOUT=,   *
+               &MH=,&PCI=,&BUFMAX=,&BUFIN=,&BUFSIZE=,&RESERVE=,        *
+               &BACKUP=NO,&BKUPDCB=0,&BRINGUP=NO,&DMPAUTO=NO,    ICB447*
+               &DUMPDCB=0,&IPLAUTO=NO,&IPLTXID=,&CKPTDCB=0,      ICB447*
+               &FUNC=,                                                 *
+               &READYQ=,                                        YA02128*
+               &BUFOFF=,                                     ICBI DCB-3*
+               &STOP=                                        ICBI DCB-3
+.*
+.*                      SET SYMBOL DECLARATIONS
+.*
+         GBLA  &A0
+         GBLB  &DSORG0,&DSORG1,&DSORG2,&DSORG3,&DSORG4,&DSORG5,&DSORG6
+         GBLB  &MACRFD,&MACRFE,&MACRFF,&MAC5,&MAC6,&MAC7,&FXSW,&RECFM0
+         GBLB  &DSORG7,&MACRF0,&MACRF1,&MACRF2,&MACRF3,&MACRF4,&MACRF5
+         GBLB  &MACRF6,&MACRF7,&MACRF8,&MACRF9,&MACRFA,&MACRFB,&MACRFC
+         GBLB  &RECFM1,&RECFM2,&RECFM3,&RECFM4,&RECFM5,&RECFM6,&RECFM7
+         GBLB  &OPTCD0,&OPTCD1,&OPTCD2,&OPTCD3,&OPTCD4,&OPTCD6,&OPTCD7
+         GBLB  &DSORG9,&DSORGA
+         GBLB  &COMSW,&MAC4,&DSORG8,&OPTCD5                        RER1
+         LCLA  &A1,&A2,&B(4)                                      13549
+         LCLB  &IFLGS4,&IFLGS5,&IFLGS6,&IFLGS7
+         LCLB  &B0,&B1,&B2,&B3,&B4,&B5,&B6,&B7
+         LCLB  &WTTFLG2,&WTTFLG3
+         LCLC  &MTROFF,&EOMC,&EOTC
+         LCLC  &C0,&C1,&ERROPTN,&C2                               13549
+         LCLA  &BA1,&BA2
+         LCLB  &BS2,&BS3,&BS4,&BS5,&BS6,&BS7,&BS8
+         LCLB  &BI
+         LCLA  &A4
+.* TCAM SUPPORT OPERANDS
+         LCLA  &SCTAD,&ICDE,&INTFACE
+         LCLB  &SW
+         LCLC  &TRNTBL,&TRNNO
+         LCLA  &WRKA,&WRKB,&WRKC
+         LCLA  &LGTH,&INCR,&NUMENT
+         LCLA  &TC1
+         LCLC  &TC(4)
+.*
+.* FUNC SUPPORT OPERANDS
+         LCLA  &AFUNC,&AFUNC1,&AFUNC2,&AFUNC3,&AMODE
+         LCLC  &LFUNC
+.*
+.*         OS/VS2 RELEASE 03 DELETIONS/CHANGES
+.*0000104400,116100,117900,144900-145800,152100,156600-157500, @ZA02213
+.*0000162000-162900,197100,383400,471600-485100,546300,573300, @ZA02213
+.*0000657000-658800,693900,694800,711900-715500,767700-768600  @ZA02213
+.*0000587700                                                   @ZA10541
+.*A000       SYSROUTE FROM OY14164                             @ZA13469
+.*0000                                                         @ZA21103
+.*D229050                                                      @ZA41552
+.*C229050,D22950                                               @ZA43308
+.*         OS/VS2 RELEASE 02 DELETIONS/CHANGES
+.*0000                                                         @ZA00022
+.*0000                                                         @ZA00012
+.*0000                                                         @ZA01331
+.*0000286220,286240,286290                                     @Y30GS11
+.*         OS/VS2 RELEASE 01 DELETIONS/CHANGES
+.*                                                              YA02128
+.*         RELEASE 21 DELETIONS/CHANGES
+.*                                                               A42398
+.*0000833400                                                     A49372
+.*         RELEASE 20 DELETIONS/CHANGES
+.*  RESEQUENCED DCB IN RELEASE 20 TO ACCOMMODATE TCAM CHANGES    S20002
+.*                                                               S20038
+.*                                                               A34467
+.*                                                               M0621
+.*                                                               A33170
+.*                                                               M0624
+.*                                                               M0666
+.*
+         AIF   ('&DSORG' NE 'TR').IHB01  IF NOT DSORG = TR       ICB477
+&NAME    IHB03 &BACKUP,&BKUPDCB,&BRINGUP,           EXPAND DSORG=TR DCBX
+               &DDNAME,&DMPAUTO,&DUMPDCB,&EXLST,                       X
+               &IPLAUTO,&IPLTXID,&MACRF,&CKPTDCB                 ICB477
+         MEXIT
+.*
+.*             ANALYZE DSORG, MACRF, RECFM, OPTCD AND NEGATIVE OFFSET
+.*
+.IHB01   IHB01 &DSORG,&MACRF,&BFTEK,&BFALN,&EODAD,&RECFM,&EXLST,       *
+               &BUFCB,&BUFL,&IOBAD,&EOEA,&PCIA,&SIOA,&CENDA,&XENDA,    *
+               &AERR,&PGFX,&OPTCD,&BUFNO,&DEVD,&REPOS
+         AIF   (&MACRF0 OR &MACRF1 OR &MACRF2 OR &MACRF3 OR &MACRF4 OR *
+               &MACRF5 OR &MACRF6 OR &MACRF7 OR &MACRF8 OR &MACRF9 OR &*
+               MACRFA OR &MACRFB OR &MACRFC OR &MACRFD).DGN0
+         AIF   (&MACRFE OR &MACRFF).DGN0
+         IHBERMAC 171
+.* THE FOLLOWING LINE OF CODE PUTS THE NAME FOR THE DCB ON A FULL WORD
+.* BOUNDARY IN CASE THERE IS A SEVERE ERROR WHICH WOULD INHIBIT DCB
+.* EXPANSION.
+&NAME    DS    0F            GENERATED TO DEFINE NAME
+         MEXIT
+.*                      DIAGNOSE DEVICE SUB-PARAMETERS
+.*
+.DGN0    AIF   (NOT &DSORG8).DGN00
+&NAME    IHB02 &DSORG,&MACRF,&DDNAME,&EXLST,&GNCP,&POLST,&GTYPE
+         AIF   ( T'&HIARCHY EQ 'O').GEN7C
+         IHBERMAC 190,HIARCHY             ERROR
+         AGO   .GEN7C
+.DGN00   AIF   (T'&KEYLEN EQ 'O' OR &DSORG0 OR &DSORG2 OR (&A0 LE 4 AND*
+                '&DEVD' NE 'TA' AND (&DSORG1 OR &DSORG6 OR &MACRF0))).D*
+               GN1
+         IHBERMAC 100,KEYLEN
+.DGN1    AIF   (T'&CODE EQ 'O' OR '&DEVD' EQ 'PT').DGN2
+         AIF   ('&DEVD' EQ 'BS' AND &DSORG3).DGN2
+         IHBERMAC 101,CODE
+.DGN2    AIF   ('&DEVD' EQ 'PC' OR '&DEVD' EQ 'RD').DGN3
+         AIF   (T'&MODE EQ 'O').DGN2A
+         AIF   ('&DEVD' EQ 'BS' AND &DSORG3).DGN2A
+         IHBERMAC 102,MODE
+.DGN2A   AIF   (T'&STACK EQ 'O').DGN3
+         IHBERMAC 103,STACK
+.DGN3    AIF   (T'&PRTSP EQ 'O' OR '&DEVD' EQ 'PR').DGN4
+         IHBERMAC 104,PRTSP
+.DGN4    AIF   (T'&TRTCH EQ 'O' OR '&DEVD' EQ 'TA').DGN5
+         IHBERMAC 105,TRTCH
+.DGN5    AIF   (T'&DEN EQ 'O' OR '&DEVD' EQ 'TA').DGN6
+         IHBERMAC 106,DEN
+.*
+.*                      DIAGNOSE BTAM-QTAM OPERANDS
+.*
+.DGN6    AIF   ('&DEVD' EQ 'WT' AND &DSORG3).DGN61
+         AIF   (T'&MON EQ 'O').DGN601
+         IHBERMAC 107,MON
+.DGN601  AIF   (T'&MONDLY EQ 'O').DGN602
+         IHBERMAC 108,MONDLY
+.DGN602  AIF   (T'&WRU EQ 'O').DGN603
+         IHBERMAC 109,WRU
+.DGN603  AIF   (T'&IAM EQ 'O').DGN604
+         IHBERMAC 110,IAM
+.DGN604  AIF   (T'&EOM EQ 'O').DGN605
+         IHBERMAC 111,EOM
+.DGN605  AIF   (T'&EOT EQ 'O').DGN61
+         IHBERMAC 112,EOT
+.DGN61   ANOP
+         AIF   (&DSORG3 AND (&MACRF1 OR &MACRF9)).DGN6G
+         AIF   ('&BUFRQ' EQ '0').DGN6B                         @ZA02213
+         IHBERMAC 107,BUFRQ
+.DGN6B   AIF   ('&CLPS' EQ '1').DGN6C
+         IHBERMAC 109,CLPS
+.DGN6C   AIF   (&DSORG9 OR &DSORGA).DGN6D
+         AIF   ('&INTVL' EQ '0').DGN6D
+         IHBERMAC 110,INTVL
+.DGN6D   AIF   (&DSORG9 OR &DSORGA).DGN6E
+         AIF   (T'&CPRI EQ 'O').DGN6E
+         IHBERMAC 111,CPRI
+.DGN6E   ANOP
+.DGN6F   AIF   (T'&CPOLL EQ 'O').DGN6G
+         IHBERMAC 113,CPOLL
+.DGN6G   AIF   ('&SOWA' EQ '0').DGN6A                          @ZA02213
+         IHBERMAC 114,SOWA
+.DGN6A   AIF   ('&TRMAD' EQ '1').DGN6H                         @ZA02213
+         IHBERMAC 108,TRMAD                                       13549
+.DGN6H   ANOP                                                     13549
+.* THIS CODE IS INTENDED TO ALLOW BOTH 'ERROPT' AND 'EROPT' SPELLING
+.* FOR BTAM USERS.  ALL OTHER USERS WILL NOT BE PERMITTED TO USE
+.* THIS SPELLING.
+.* DELETION OF THIS CODE WILL DISALLOW THAT SPELLING.
+         AIF   (&DSORG3 AND (&MACRF2 OR &MACRFA)).ISBTAM          13549
+         AIF   (T'&ERROPT EQ 'O').DGN6I                           13549
+         IHBERMAC 54,,ERROPT
+         MEXIT                                                    13549
+.ISBTAM  AIF   (T'&ERROPT EQ 'O').CKEROPT                         13549
+&ERROPTN SETC  '&ERROPT'                                          13549
+&A2      SETA  K'&ERROPT                                          13549
+&C2      SETC  'ERROPT'                                           13549
+         AGO   .DGN6I                                             13549
+.CKEROPT ANOP                                                     13549
+.* END OF CODE DELETION REGARDING 'ERROPT' KEYWORD.               13549
+&C2      SETC  'EROPT'                                            13549
+         AIF   (T'&EROPT EQ 'O').OMITTED                          13549
+&ERROPTN SETC  '&EROPT'                                           13549
+&A2      SETA  K'&EROPT                                           13549
+         AGO   .DGN6I                                             13549
+.OMITTED ANOP                                                     13549
+&ERROPTN SETC  'E'                     ASSIGN BTAM STANDARD VALUE 13549
+&A2      SETA  1                                                  13549
+.DGN6I   ANOP                                                     13549
+.*
+.*                      DIAGNOSE COMMON OPERANDS
+.*
+.DGN7    AIF   (&COMSW AND NOT (&DSORG3 AND (&MACRF1 OR &MACRF9))).DGN7*
+               C                                               @ZA02213
+         AIF   ('&BUFNO' EQ '0').DGN7A
+         IHBERMAC 115,BUFNO
+.DGN7A   AIF   ('&BUFCB' EQ '1').DGN7B
+         IHBERMAC 116,BUFCB
+.DGN7B   AIF   ('&BUFL' EQ '0').DGN7C
+         IHBERMAC 117,BUFL
+.DGN7C   AIF   ('&IOBAD' EQ '1' OR &DSORG3 OR &MACRF0).DGN7D   @ZA02213
+         IHBERMAC 118,IOBAD
+.*
+.*                      DIAGNOSE EXTENSION OPERANDS
+.*
+.DGN7D   AIF   (&FXSW AND NOT (&DSORG3 AND (&MACRF1 OR &MACRF9))).DGN7I
+.*                                                             @ZA02213
+         AIF   (T'&BFTEK EQ 'O').DGN7E
+         IHBERMAC 119,BFTEK
+.DGN7E   AIF   (T'&BFALN EQ 'O').DGN7F
+         IHBERMAC 120,BFALN
+.DGN7F   AIF   ('&EODAD' EQ '1').DGN7G                         @ZA02213
+         IHBERMAC 121,EODAD
+.DGN7G   AIF   (T'&RECFM EQ 'O').DGN7H
+         IHBERMAC 122,RECFM
+.DGN7H   AIF   ('&EXLST' EQ '0' OR &DSORG3).DGN7I
+         IHBERMAC 123,EXLST
+.DGN7I   AIF   ('&DDNAME' NE '0').DGN7J
+         IHBERMAC 167
+         AGO   .DGN7L
+.DGN7J   AIF   (K'&DDNAME LE 8).DGN7K
+         IHBERMAC 168
+.DGN7K   ANOP                'DDNAME SHORT' MSG REMOVED            MCOK
+.*
+.*                      DIAGNOSE EXCP INTERFACE OPERANDS
+.*
+.DGN7L   AIF   (&MACRF0).DGN7T
+         AIF   (T'&IMSK EQ 'O').DGN7M
+         IHBERMAC 124,IMSK
+.DGN7M   AIF   (T'&UMSK EQ 'O').DGN7N
+         IHBERMAC 125,UMSK
+.DGN7N   AIF   ('&EOEA' EQ '0').DGN7O
+         IHBERMAC 126,EOEA
+.DGN7O   AIF   ('&PCIA' EQ '0').DGN7P
+         IHBERMAC 127,PCIA
+.DGN7P   AIF   ('&SIOA' EQ '0').DGN7Q
+         IHBERMAC 128,SIOA
+.DGN7Q   AIF   ('&CENDA' EQ '0').DGN7R
+         IHBERMAC 129,CENDA
+.DGN7R   AIF   ('&XENDA' EQ '0').DGN7S
+         IHBERMAC 130,XENDA
+.DGN7S   AIF   ('&AERR' EQ '0').DGN7T
+         IHBERMAC 131,AERR
+.DGN7T   AIF   (T'&UMSK EQ 'O' OR '&AERR' NE '0' OR NOT &MACRF0).DGN7U
+         IHBERMAC 175
+.DGN7U   AIF   ('&SIOA' NE '0' AND '&PGFX' NE 'YES').DGN8
+         AIF   ('&SIOA' EQ '0' AND '&PGFX' NE 'YES').DGN8
+         AIF   ('&SIOA' NE '0' AND '&PGFX' EQ 'YES').DGN8
+         IHBERMAC 128,PGFX
+.*
+.*                      DIAGNOSE ACCESS METHOD INTERFACE OPERANDS
+.*
+.DGN8    AIF   (NOT &MACRF0 AND (&DSORG0 OR &DSORG1 OR &DSORG6)).DGN8D
+         AIF   ('&SYNAD' EQ '1' OR &DSORG2).DGN8A              @ZA02213
+         IHBERMAC 132,SYNAD
+.DGN8A   AIF   ('&BLKSIZE' EQ '0' OR (&DSORG2 OR &DSORGA)).DGN8B
+.*                                                           ICBI DCB-9
+         IHBERMAC 133,BLKSIZE
+.DGN8B   AIF   ('&NCP' EQ '0').DGN8C
+         IHBERMAC 134,NCP
+.DGN8C   AIF   ('&LRECL' EQ '0').DGN8D
+         IHBERMAC 135,LRECL
+.DGN8D   AIF   (T'&EROPT EQ 'O' OR (&DSORG1 OR &DSORG3)).DGN8E    13549
+         IHBERMAC 136,EROPT
+.DGN8E   AIF   ('&LIMCT' EQ '0' OR &DSORG2).DGN8F
+         IHBERMAC 137,LIMCT
+.DGN8F   AIF   (&DSORG0).DGN9
+         AIF   ('&NTM' EQ '0').DGN8G
+         IHBERMAC 138,NTM
+.DGN8G   AIF   ('&CYLOFL' EQ '0').DGN8H
+         IHBERMAC 139,CYLOFL
+.DGN8H   AIF   ('&RKP' EQ '0').DGN8I
+         IHBERMAC 140,RKP
+.DGN8I   AIF   ('&MSWA' EQ '1').DGN8J
+         IHBERMAC 141,MSWA
+.DGN8J   AIF   ('&SMSI' EQ '0').DGN8K
+         IHBERMAC 142,SMSI
+.DGN8K   AIF   ('&SMSW' EQ '0').DGN8L
+         IHBERMAC 143,SMSW
+.DGN8L   AIF   ('&MSHI' EQ '1').DGN8M
+         IHBERMAC 144,MSHI
+.DGN8M   AIF   ('&DBUFNO' EQ '0').DGN9
+         IHBERMAC 145,DBUFNO
+.DGN9    ANOP
+.*
+.*             DIAGNOSE FUNC OPERAND
+.*
+&AFUNC   SETA  0
+         AIF   ('&FUNC' EQ '').DGN90Z
+&AFUNC1  SETA  K'&FUNC
+         AIF   ('&DEVD' EQ 'RD' OR '&DEVD' EQ 'PC').DGN90A     @ZA00022
+         IHBERMAC 100,FUNC   IHB050 FUNC INCONSISTENT--IGNORED @ZA00022
+.DGN90A  ANOP
+&AFUNC2  SETA  2
+&AFUNC3  SETA  7
+.DGN90C  AIF   ('&FUNC'(&AFUNC1,1) EQ 'IRPWDXT'(&AFUNC3,1)).DGN90E
+&AFUNC3  SETA  &AFUNC3-1
+&AFUNC2  SETA  &AFUNC2+&AFUNC2
+         AIF   (&AFUNC3 NE 0).DGN90C
+&LFUNC   SETC  '&FUNC'(&AFUNC1,1)
+         MNOTE 12,'IBH0132 INVALID CHARACTER IN FUNC OPERAND-&LFUNC'
+&AFUNC   SETA  0
+         AGO   .DGN90Z
+.DGN90E  ANOP
+&AFUNC   SETA  &AFUNC+&AFUNC2
+&AFUNC1  SETA  &AFUNC1-1
+         AIF   (&AFUNC1 NE 0).DGN90A
+         AIF   (&AFUNC EQ 128 OR &AFUNC EQ 64 OR &AFUNC EQ 32).DGN90Z
+         AIF   (&AFUNC EQ 16 OR &AFUNC EQ 18 OR &AFUNC EQ 22).DGN90Z
+         AIF   (&AFUNC EQ 96 OR &AFUNC EQ 104 OR &AFUNC EQ 80).DGN90Z
+         AIF   (&AFUNC EQ 82 OR &AFUNC EQ 86 OR &AFUNC EQ 48).DGN90Z
+         AIF   (&AFUNC EQ 52 OR &AFUNC EQ 54 OR &AFUNC EQ 112).DGN90Z
+         AIF   (&AFUNC EQ 116 OR &AFUNC EQ 118 OR &AFUNC EQ 120).DGN90Z
+         AIF   (&AFUNC EQ 20 OR &AFUNC EQ 84).DGN90Z
+         MNOTE 12,'IHB0131 INVALID COMBINATION OF CHARACTERS IN FUNC OP*
+               ERAND-&FUNC'
+&AFUNC   SETA  0
+.DGN90Z  ANOP
+.*
+.*                      GENERATE ORIGIN OF DCB
+.*
+         SPACE 2
+*                       DATA CONTROL BLOCK
+*
+.* THE FOLLOWING LINES OF CODE CHECK TO SEE WHETHER THE ORG VALUE
+.* CALCULATED BY IHB01 HAS A MEANING OTHER THAN ZERO.  IF THE VALUE
+.* IS ZERO, THE ORG WILL NOT BE PERFORMED.  THE DCB WILL BE ALIGNED
+.* TO A FULL WORD BOUNDARY.                           @ZA43308 @ZA41552
+         AIF   (&A0 NE 0).DGN9A
+&NAME    DC    0F'0'                   ORIGIN ON WORD BOUNDARY
+         SPACE 1
+         AGO   .DGN9B
+.DGN9A   ANOP
+.*       ORG   *-&A0                   TO ELIMINATE UNUSED SPACE
+&NAME    DS    0F'0'                    ORIGIN ON WORD BOUNDARY
+         ORG   *+&A0                   TO ORIGIN GENERATION
+         SPACE 1
+.DGN9B   ANOP
+         AIF   (&A0 EQ 40).GEN4A       IF NO COMMON OR EXTENSION
+.*
+.*                      GENERATE DEVICE DEPENDENCY INTERFACE
+.*
+         AIF   (&DSORG3 AND '&DEVD' EQ 'WT').GEN1Q
+         AIF   (&A0 GT 4).GEN10         IF NOT TA,DA,OR MR
+&A1      SETA  16-&A0
+         AIF   ('&DEVD' NE 'TA').GEN1D   IF NOT TA
+*                       MAGNETIC TAPE DEVICE INTERFACE
+         SPACE 1
+         DC    BL&A1.'0'                NERRS,NOISE,UERRS,BLKCT
+         AIF   (T'&TRTCH EQ 'O').TA1         IF TRTCH NOT SPECIFIED
+         AIF   ('&TRTCH' EQ 'E' OR '&TRTCH' EQ 'T' OR '&TRTCH' EQ 'C' O*
+               R '&TRTCH' EQ 'ET' OR '&TRTCH' EQ 'TE').TA1  IF VALID
+         IHBERMAC 150,TRTCH,&TRTCH
+.*
+.TA1     ANOP
+&B2      SETB  ('&TRTCH' EQ 'T' OR '&TRTCH' EQ 'E' OR '&TRTCH' EQ 'TE' *
+               OR '&TRTCH' EQ 'ET')
+&B3      SETB  ('&TRTCH' EQ 'C' OR '&TRTCH' EQ 'T')
+&B4      SETB  ('&TRTCH' EQ 'T' OR '&TRTCH' EQ 'TE' OR '&TRTCH' EQ 'ET'*
+               )
+&B6      SETB  (&B2 OR &B3 OR &B4)
+&B7      SETB  (&B2 OR &B3 OR &B4)
+         DC    BL1'00&B2&B3&B4.0&B6&B7'      TRTCH
+&B6      SETB  (T'&DEN NE 'O')         IF DEN SPECIFIED
+&B7      SETB  (T'&DEN NE 'O')
+         AIF   (NOT &B7).TA3                 IF DEN NOT SPECIFIED
+         AIF   ('&DEN' EQ '0' OR '&DEN' EQ '1' OR '&DEN' EQ '2' OR '&DEN
+               N' EQ '3' OR '&DEN' EQ '4').TA3                    99223
+         IHBERMAC 151,DEN,&DEN
+&B6      SETB  0                       ZERO FIELD
+&B7      SETB  0
+.TA3     ANOP
+&B0      SETB  ('&DEN' EQ '2' OR '&DEN' EQ '3' OR '&DEN' EQ '4')
+.*                                                             @ZA01331
+&B1      SETB  ('&DEN' EQ '1' OR '&DEN' EQ '3' OR '&DEN' EQ '4')
+.*                                                             @ZA01331
+&B3      SETB  ('&DEN' EQ '4')                                    99223
+         DC    BL3'00000000&B0&B1.0&B3.00&B6&B7.00000000'    DEVT,DEN
+         SPACE 1
+         AGO   .GEN2A                  SKIP TO COMMON INTERFACE
+.GEN10   AIF   (&DSORG0 OR &DSORG2).GEN1E  IF ISAM OR BDAM
+         AIF   (&DSORG1 OR &MACRF0).GEN1F
+         AGO   .GEN2A
+.GEN1D   AIF   ('&DEVD' EQ 'OR').GEN1OR IF OPTICAL READER
+         AIF   ('&DEVD' EQ 'MR').GENMR  IF MAG CHAR READER
+*                       DIRECT ACCESS DEVICE INTERFACE
+         SPACE 1
+         DC    BL&A1.'0'                FDAD,DVTBL
+.GEN1E   AIF   (T'&KEYLEN NE 'O').GEN1C
+         DC    A(0)                     KEYLE,DEVT,TRBAL
+         SPACE 1
+         AGO   .GEN2A                   SKIP TO COMMON INTERFACE
+.GEN1C   DC    AL1(&KEYLEN)            KEYLE
+&RECFM7  SETB  1                       PREVENT OPEN MERGE TO KEYLEN
+         DC    BL3'0'                   DEVT,TRBAL
+         SPACE 1
+         AGO   .GEN2A                  SKIP TO COMMON INTERFACE
+.GENMR   ANOP
+*                       MAGNETIC CHARACTER READER INTERFACE
+         SPACE 1
+         AIF   ('&SSRTN' EQ '0' AND '&IMGADR' EQ '0' AND               ,
+               '&DCBHDR' EQ '0' AND '&IMGRTE' EQ '0' AND               ,
+               '&QSAMEX' EQ '0').GENMR10                       @Y30GS11
+         AIF   (('&SSRTN' EQ '0' AND '&IMGADR' EQ '0') OR              ,
+               ('&DCBHDR' EQ '0' AND '&IMGRTE' EQ '0' AND              ,
+               '&QSAMEX' EQ '0')).GENMR20                      @Y30GS11
+         IHBERMAC 171                                           YL03123
+.GENMR10 DC    BL20'0'
+         AGO   .GENMR90                                         YL03123
+.GENMR20 AIF   ('&SSRTN' NE '0' OR '&IMGADR' NE '0').GENMR30    YL03123
+         DC    A(&QSAMEX)               QSAM EXIT ADDR
+         DC    A(&IMGRTE)               IMAGE PROC RTN ADDR
+         DC    BL4'0'
+         DC    A(&DCBHDR)               HEADER DATA AREA ADDR
+         DC    BL4'0'                   FLAG/DEVT
+         AGO   .GENMR90                                         YL03123
+.GENMR30 AIF   (K'&SSRTN LE 8).GENMR1                           YL03123
+         IHBERMAC  201                  SSRTN TOO LONG
+.GENMR1  ANOP
+         DC    CL8'&SSRTN'              STACKER SEL RTN ADDR
+         DC    A(&IMGADR)               IMAGE PROCESSING PARAM LIST
+         DC    A(0)                     ECB LIST ADDR
+         DC    BL4'0'                   MRFLG,DEVT,APPIN,RES
+&BI      SETB  1                        SET 1419 SWITCH         YL03123
+.GENMR90 SPACE 1                                                YL03123
+         AGO   .GEN2A                   SKIP TO COMMON INTERFACE
+.GEN1OR  ANOP
+*                       OPTICAL READER DEVICE INTERFACE
+         SPACE 1
+         AIF   ('&ERRCNT' EQ '0' AND '&FRID' EQ '').GENOR10     YL03127
+         AIF   ('&ERRCNT' EQ '0' OR  '&FRID' EQ '').GENOR20     YL03127
+         IHBERMAC 171                                           YL03127
+.GENOR10 DC    BL20'0'
+         AGO   .GENOR90                                         YL03127
+.GENOR20 AIF   ('&ERRCNT' NE '0').GENOR30
+         DC    BL4'0'
+         DC    X'00FF0000'              LINE NO./LINE FMT NO.
+         AIF   (K'&FRID LE 4).GENOR25                           YL03127
+         IHBERMAC 254,,&FRID                                    YL03127
+.GENOR25 DC    CL4'&FRID'               INITIAL FMT RECORD ID
+         DC    BL8'0'                   CURRENT FMT RCD ID/DEVT
+         AGO   .GENOR90                                         YL03127
+.GENOR30 DC    BL4'0'                   WTO ID NUMBER
+         DC    A(&ERRCNT)               ERROR COUNTERS
+         DC    BL12'0'                 DSPLY,RESCN/RDLNE,ORBYT,DEVT,EIB
+.GENOR90 SPACE 1                                                YL03127
+         AGO   .GEN2A
+.GEN1F   AIF   ('&DEVD' NE 'PT').GEN1M IF NOT PAPER TAPE
+*                      PAPER TAPE DEVICE INTERFACE
+         SPACE 1
+         DC    A(1)                    LCTBL
+         DC    A(1)                    TRTBL, UCTBL
+&B0      SETB  ('&CODE' EQ 'N')        IF NO CONVERSION
+&B1      SETB  ('&CODE' EQ 'I')        IF IBM BCD
+&B2      SETB  ('&CODE' EQ 'F')        IF FRIDEN
+&B3      SETB  ('&CODE' EQ 'B')        IF BURROUGHS
+&B4      SETB  ('&CODE' EQ 'C')        IF NCR
+&B5      SETB  ('&CODE' EQ 'A')        IF ASCII
+&B6      SETB  ('&CODE' EQ 'T')        IF TELETYPE
+         DC    BL1'&B0&B1&B2&B3&B4&B5&B6.0'  CODE
+         DC    BL3'0'                  DEVT
+         SPACE 1
+         AGO   .GEN2A                  SKIP TO COMMON INTERFACE
+.*
+.GEN1M   AIF   ('&DEVD' NE 'RD' AND '&DEVD' NE 'PC').GEN1N READER-PUNCH
+*                       READER/PUNCH DEVICE INTERFACE
+         SPACE 1
+&AMODE   SETA  K'&MODE
+&B0      SETB  0
+&B1      SETB  0
+&B2      SETB  0
+&B3      SETB  0
+.GEN1F1  AIF   (&AMODE EQ 0).GEN1F2
+&B0      SETB  ('&MODE'(&AMODE,1) EQ 'C' OR &B0)  IF COLUMN BINARY MODE
+&B1      SETB  ('&MODE'(&AMODE,1) EQ 'E' OR &B1)  IF EBCDIC MODE
+&B2      SETB  ('&MODE'(&AMODE,1) EQ 'O' OR &B2)
+&B3      SETB  ('&MODE'(&AMODE,1) EQ 'R' OR &B3)
+&AMODE   SETA  &AMODE-1
+         AGO   .GEN1F1
+.GEN1F2  ANOP
+&B6      SETB  ('&STACK' EQ '2')
+&B7      SETB  ('&STACK' EQ '1')
+         DC    BL2'&B0&B1&B2&B3.00&B6&B7.00000000'  MODE, STACK, DEVT
+         DC    X'00'
+         DC    AL1(&AFUNC)         FUNC
+         SPACE 1
+         AGO   .GEN2A                  SKIP TO COMMON INTERFACE
+.*
+.GEN1N   AIF   ('&DEVD' NE 'PR').GEN2A IF NOT PRINTER
+*                       PRINTER DEVICE INTERFACE
+         SPACE 1
+&B3      SETB  ('&PRTSP' EQ '2' OR '&PRTSP' EQ '3')
+&B4      SETB  ('&PRTSP' EQ '1' OR '&PRTSP' EQ '3')
+&B7      SETB  (&B3 OR &B4 OR '&PRTSP' EQ '0')
+         DC    BL2'000&B3&B4.00&B7.00000000' PRTSP,DEVT
+         DC    H'0'
+         SPACE 1
+         AGO   .GEN2A
+.*
+.GEN1Q   ANOP
+*           WORLD TRADE TELEGRAPH DEVICE INTERFACE
+         SPACE 1
+&MTROFF  SETC  '00'
+&EOMC    SETC  '32'
+&EOTC    SETC  '00'
+         AIF   ('&MON' EQ 'YES').DGNW30
+&MTROFF  SETC  '15'
+         AIF   ('&MON' EQ 'NO' OR T'&MON EQ 'O').DGNW20
+         IHBERMAC 180,MON,NO
+.DGNW20  AIF   (T'&MONDLY EQ 'O').DGNW30
+         AIF   (T'&MONDLY NE 'N' OR '&MONDLY' GT '20').DGNW22
+&MTROFF  SETC '&MONDLY'
+         AGO   .DGNW30
+.DGNW22  IHBERMAC 180,MONDLY,15
+.DGNW30  AIF   ('&WRU' NE 'YES').DGNW32
+&WTTFLG2 SETB  1
+&WTTFLG3 SETB  1
+         AGO   .DGNW50
+.DGNW32  AIF   ('&WRU' EQ 'NO' OR T'&WRU EQ 'O').DGNW40
+         IHBERMAC 180,WRU,NO
+.DGNW40  AIF   ('&IAM' EQ 'NO' OR T'&IAM EQ 'O').DGNW50
+         AIF   ('&IAM' NE 'YES').DGNW44
+&WTTFLG3 SETB  1
+         AGO   .DGNW50
+.DGNW44  IHBERMAC 180,IAM,NO
+.DGNW50  AIF   ('&EOM' EQ 'WRU' OR T'&EOM EQ 'O').DGNW60
+         AIF   (K'&EOM EQ 5).DGNW52
+         AIF   (K'&EOM NE 7 OR '&EOM'(5,3) NE '1F''').DGNW56
+.DGNW52  AIF   ('&EOM'(1,2) NE 'X''').DGNW56
+         AIF   ('&EOM'(3,1) NE '2' AND '&EOM'(3,1) NE '3').DGNW56
+&EOMC    SETC  '&EOM'(3,2)
+         AGO   .DGNW60
+.DGNW56  IHBERMAC 180,EOM,WRU
+.DGNW60  AIF   ('&EOT' EQ '2EOM' OR T'&EOT EQ 'O').DGNW7
+         AIF   (K'&EOT NE 7).DGNW64
+         AIF   ('&EOT'(1,2) NE 'X''' OR '&EOT'(5,3) NE '1F''').DGNW64
+         AIF   ('&EOT'(3,1) NE '2' AND '&EOT'(3,1) NE '3').DGNW64
+&EOTC    SETC  '&EOT'(3,2)
+         AGO   .DGNW7
+.DGNW64  IHBERMAC 180,EOT,2EOM
+.DGNW7   ANOP
+         DC    BL1'0&WTTFLG2&WTTFLG3.00000' WTTA FLAGS
+         DC    X'&EOMC' WTTA EOM CHARACTER
+         DC    X'&EOTC' WTTA EOT CHARACTER
+         DC    AL1(&MTROFF) WTTA PADDING
+         SPACE 1
+.GEN2A   AIF   (NOT &COMSW).GEN3A      IF NOT COMMON
+.*
+         AIF   (NOT &DSORG3 OR NOT (&MACRF1 OR &MACRF9)).GEN2AB
+.*                                                             @ZA02213
+*                       QTAM LINE GROUP INTERFACE
+         SPACE 1
+         DC    AL1(&BUFRQ)             BUFRQ
+         DC    AL3(&CLPS)              CLPS
+         DC    AL1(&INTVL)             INTVL
+         DC    AL1(0)
+         DC    BL2'0001000000000000'   DSORG
+         DC    A(&IOBAD)               IOBAD
+.TCAM2X  ANOP
+         AIF   ('&DEVD' NE 'WT' OR '&CPRI' NE 'R').QTAM1B0
+&B6      SETB  1
+         AGO   .QTAM1B
+.QTAM1B0 ANOP
+&B5      SETB  ('&CPRI' EQ 'R')
+&B6      SETB  ('&CPRI' EQ 'E')
+&B7      SETB  ('&CPRI' EQ 'S')
+         AIF   (&B5 OR &B6 OR &B7 OR T'&CPRI EQ 'O').QTAM1B
+         IHBERMAC 152,CPRI,&CPRI
+.QTAM1B  DC    BL1'00000&B5&B6&B7'     CPRI
+         AIF   (&DSORG9).TCAM2A
+.*
+         DC    AL3(1)                   LCBAD
+         AGO   .TCAM2B
+.TCAM2A  ANOP
+&SW      SETB  0
+&TRNTBL  SETC  '&TRANS'
+         AIF   (T'&TRANS NE 'O').IN
+         DC    AL3(1)                   TRANS
+         IHBERMAC   180,TRANS,1
+         AGO   .TCAM21
+.IN      ANOP
+&SCTAD   SETA  10
+         AIF   ('&TRNTBL' EQ '1030').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ '1050').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ '105F').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ '1060').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ '2260').SETUP
+         AIF   ('&TRNTBL' EQ '2265').SETUP                       A42398
+&SCTAD   SETA  &SCTAD+2                                          A42398
+         AIF   ('&TRNTBL' EQ '2740').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ '274F').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ 'ITA2').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ 'ZSC3').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ 'TTYA').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ 'TTYB').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ 'TTYC').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ '6BIT').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ 'ASCI').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ 'EBCD').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ 'BC41').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ 'EB41').SETUP
+&SCTAD   SETA  &SCTAD+1
+         AIF   ('&TRNTBL' EQ 'CR41').SETUP
+         AIF   (&SW).BADXIT
+         DC    AL3(&TRANS)              USER TRANSLATE TABLE
+.TCAM21  ANOP
+&SW      SETB  1
+&TRNTBL  SETC  '&SCT'
+         AGO   .TCAM2B
+.BADXIT  DC    XL1'00'                  UNTCT
+         IHBERMAC 157,SCT,&TRNTBL
+         AGO   .TCAM3B
+.SETUP   AIF   (&SW).SCTDC
+&TRNNO   SETC  '&SCTAD'
+         DC    VL3(IEDQ&TRNNO)          TRANS
+&TRNTBL  SETC  '&SCT'
+&SW      SETB  1
+         AIF   (T'&SCT NE 'O').TCAM2B
+         AIF   (T'&TRANS EQ 'O').BADEXIT
+&TRNTBL  SETC  '&TRANS'
+         AGO   .TCAM2B
+.SCTDC   DC    XL1'&SCTAD'              UNTCT
+         AGO   .TCAM3B
+.BADEXIT ANOP
+&TRNTBL  SETC  'ZERO'
+.TCAM2B  ANOP
+         DC    AL1(0)                   EIOBX
+         DC    AL3(&EXLST)              EXLST
+         SPACE 1
+         AGO   .GEN4A                  SKIP TO FOUNDATION GENERATION
+.*
+.GEN2AB  ANOP
+*                       COMMON ACCESS METHOD INTERFACE
+         SPACE 1
+         AIF   (&DSORG9).TCAM1
+         DC    AL1(&BUFNO)             BUFNO
+         AGO   .GEN9A
+.TCAM1   ANOP
+&WRKC    SETA  0
+         AIF   (T'&BUFIN EQ 'O' AND T'&BUFOUT EQ 'O' AND T'&BUFMAX EQ '*
+               O').TCAM1E
+         AIF   (T'&BUFIN EQ 'O' OR T'&BUFOUT EQ 'O' OR T'&BUFMAX EQ 'O'*
+               ).TCAM1D
+         AIF   (T'&BUFIN NE 'N' OR T'&BUFOUT NE 'N').TCAM1FA     M4043
+&WRKA    SETA  &BUFIN
+&WRKB    SETA  &BUFOUT
+         AIF   ('&BUFIN' GT '15' OR '&BUFIN' LT '1' OR '&BUFOUT' LT '2'*
+                OR '&BUFOUT' GT '15').TCAM1D
+         AIF   (T'&BUFMAX NE 'N').TCAMR                          M4043
+         AIF   ('&BUFMAX' GT '255' OR '&BUFMAX' LT '&BUFIN' OR '&BUFMAX*
+               ' LT '&BUFOUT').TCAM1D
+&WRKA    SETA  (&WRKA*16)
+&WRKA    SETA  (&WRKA+&WRKB)
+&WRKC    SETA  &BUFMAX
+         AGO   .TCAM1F
+.TCAM1D  IHBERMAC 180,BUFIN-BUFOUT-BUFMAX,0
+.TCAM1E  ANOP
+&WRKA    SETA  0
+.TCAM1F  DC    AL1(&WRKA)               BUFIN/BUFOUT
+         AGO   .TCAM1FB                                          M4043
+.TCAM1FA ANOP
+         DC    AL1((&BUFIN.*16)+(&BUFOUT)) BUFIN/BUFOUT
+.TCAM1FB ANOP                                                    M4043
+         AIF   (T'&MH EQ 'O').TCAM1G
+         DC    AL3(&MH)                 MH
+         AGO   .TCAM1H
+.TCAM1G  ANOP
+         DC    AL3(1)                   MH
+         IHBERMAC 24
+.TCAM1H  ANOP
+         AIF   (T'&INTVL NE 'N').TCAM1HA                         M4043
+         AIF   ('&INTVL' GT '255').TCAM1J                        M4043
+.TCAM1HA ANOP                                                    M4043
+         AIF   (T'&INTVL EQ 'O').TCAM1J
+         DC    AL1(&INTVL)              INTVL
+         AGO   .TCAM1K
+.TCAM1J  ANOP
+         IHBERMAC   180,INTVL,0
+         DC    AL1(0)                   INTVL
+.TCAM1K  ANOP
+         AIF   (T'&PCI(1) EQ 'O' AND T'&PCI(2) EQ 'O').TCAM1L
+&B2      SETB  ('&PCI(1)' EQ '')
+&B3      SETB  ('&PCI(2)' EQ '')
+&B4      SETB  ('&PCI(1)' EQ 'N')
+&B6      SETB  ('&PCI(1)' EQ 'R')
+&B2      SETB  ('&PCI(1)' EQ 'A')
+&B5      SETB  ('&PCI(2)' EQ 'N')
+&B7      SETB  ('&PCI(2)' EQ 'R')
+&B3      SETB  ('&PCI(2)' EQ 'A')
+&B0      SETB  ('&PCI(1)' EQ 'X')                            ICBI DCB-8
+&B1      SETB  ('&PCI(2)' EQ 'X')                            ICBI DCB-8
+         AIF   ((&B0 OR &B2 OR &B4 OR &B6) AND (&B1 OR &B3 OR &B5 OR   X
+               &B7)).TCAMP                                   ICBI DCB-8
+         IHBERMAC 180,PCI,0
+.TCAM1L  ANOP
+         DC    AL1(0)                   PCI
+         AGO   .TCAMQ
+.TCAMP   DC    BL1'&B0&B1&B2&B3&B4&B5&B6&B7'   PCI           ICBI DCB-8
+.TCAMQ   ANOP
+         DC    BL2'0000000001000000'    DSORG
+.TCAMR   ANOP                                                    M4043
+         AIF   (T'&BUFMAX EQ 'N' OR T'&BUFMAX EQ 'O').TCAMS      A39771
+         DC    AL1(&BUFMAX)             BUFMAX
+         AGO   .TCAMT                                            M4043
+.TCAMS   ANOP                                                    M4043
+         DC    AL1(&WRKC)               BUFMAX
+.TCAMT   ANOP
+         DC    AL3(IEDQAVT)
+         AGO   .TCAM2X
+.GEN9A   ANOP                                                  @ZA02213
+         DC    AL3(&BUFCB)             BUFCB
+         AIF   ('&BUFL' EQ '0' AND (&BI AND '&LRECL' EQ '0')).GMR2C
+         DC    AL2(&BUFL)         BUFL
+         AGO   .GEN2AB2
+.GMR2C   ANOP
+         DC    AL2(0)                   BUFL
+         AGO   .GEN2AB2
+.GEN2AB1 DC    AL3(TERMTBL)            BUFCB
+         DC    AL2(IECKBUFL)           BUFL
+.GEN2AB2 DC    BL2'&DSORG0&DSORG1&DSORG2&DSORG3&DSORG4&DSORG5&DSORG6&DS*
+               ORG7&DSORG8&DSORG9&DSORGA.00000'  DSORG
+         AIF   (NOT &DSORGA).TCAML5
+         DC    A(IEDQAVT)
+         SPACE 1
+         AGO   .GEN3A
+.TCAML5  DC    A(&IOBAD)                IOBAD
+         SPACE 1
+.GEN3A   AIF   (NOT &FXSW).GEN4A       IF EXTENSION NOT NEEDED
+*                       FOUNDATION EXTENSION
+&B0      SETB  0
+&B5      SETB  0
+         AIF   ( T'&HIARCHY EQ 'O').GEN3A4      NO PARA. PASS
+         AIF   ('&HIARCHY' EQ '0' OR '&HIARCHY' EQ '1').GEN3A2
+         IHBERMAC 195,HIARCHY
+         AGO   .GEN3A4
+.GEN3A2  ANOP
+         AIF   ( NOT(&DSORG3 OR &DSORG8)).GEN3A3               @ZA02213
+         IHBERMAC 195,HIARCHY
+         AGO   .GEN3A4
+.GEN3A3  ANOP
+&B0      SETB  ( '&HIARCHY' EQ '1' )     IF HIARCHY =1
+&B5      SETB   ( '&HIARCHY' EQ '0' )       IF  HIARCHY=0
+.GEN3A4  ANOP
+         SPACE 1
+&B1      SETB  ('&BFTEK' EQ 'S' OR '&BFTEK' EQ 'A')  SIMPLE BUFF
+&B2      SETB  ('&BFTEK' EQ 'A' OR '&BFTEK' EQ 'R')  SPANNED
+&B3      SETB  ('&BFTEK' EQ 'E')        IF EXCHANGE
+&B4      SETB  ('&BFTEK' EQ 'D')        IF DYNAMIC
+         AIF   (&B1 OR &B2 OR &B3 OR &B4 OR T'&BFTEK EQ 'O').GEN3A1
+.*             IF BFTEK IS SPECIFIED O.K.
+         IHBERMAC 153,BFTEK,&BFTEK
+.GEN3A1  ANOP
+&B6      SETB  ('&BFALN' EQ 'D')       IF DOUBLE WORD ALIGNMENT
+&B7      SETB  ('&BFALN' EQ 'F')       IF SINGLE WORD ALIGNMENT
+         AIF   (&B6 OR &B7 OR T'&BFALN EQ 'O').GEN3C
+         IHBERMAC 154,BFALN,&BFALN
+.GEN3C   AIF   (NOT &DSORGA).GEN3CY
+         AIF   (T'&THRESH EQ 'O').GEN3CV
+         AIF   (T'&THRESH NE 'N').GEN3CT                         M4043
+         AIF   ('&THRESH' GT '100').GEN3CW
+.GEN3CT  ANOP                                                    M4043
+         DC    AL1(&THRESH)             TCAM THRESH
+         AGO   .GEN3CZ
+.GEN3CW  IHBERMAC  180,THRESH,0
+.GEN3CV  DC    AL1(0)                   TCAM THRESH
+         AGO   .GEN3CZ
+.GEN3CY  DC    BL1'&B0&B1&B2&B3&B4&B5&B6&B7'  BFTEK,BFLN,HIARCHY
+.GEN3CZ  ANOP
+         AIF   (NOT &DSORG3 OR NOT (&MACRF2 OR &MACRFA)).NERROPT
+&B3      SETB  0
+&B4      SETB  0
+&B5      SETB  0
+&B6      SETB  0
+&B7      SETB  0
+         AIF   (&A2 LE 5).START                                   13549
+&A2      SETA  5                                                  13549
+.START   AIF   ('&ERROPTN'(&A2,1) NE 'N').R                       13549
+&B7      SETB  1
+         AGO   .LOOPCTL
+.R       AIF   ('&ERROPTN'(&A2,1) NE 'R').W                       13549
+&B6      SETB  1
+         AGO   .LOOPCTL
+.W       AIF   ('&ERROPTN'(&A2,1) NE 'W').C                       13549
+&B5      SETB  1
+         AGO   .LOOPCTL
+.C       AIF   ('&ERROPTN'(&A2,1) NE 'C').T                       13549
+&B4      SETB  1
+         AGO   .LOOPCTL
+.T       AIF   ('&ERROPTN'(&A2,1) NE 'T').LOOPCTL                 13549
+&B3      SETB  1
+.LOOPCTL AIF   (&A2 LE 1).SCANOK                                  13549
+&A2      SETA  &A2-1                                              13549
+         AGO   .START
+.SCANOK  AIF   ('&DEVD' NE 'BS').NOK
+         AIF   (NOT &B7).NOK
+&B7      SETB  0
+         MNOTE *,'*** IHB085  DEVD=BS       &C2.=N IGNORED'    @ZA21103
+.NOK     AIF   ('&DEVD' NE 'WT').NOK1
+         AIF   (NOT &B6).NOKA
+&B6      SETB  0
+         MNOTE *,'*** IHB085  DEVD=WT       ERROPT=R IGNORED'  @ZA21103
+.NOKA    AIF   (NOT &B5).NOKB
+&B5      SETB  0                                               @ZA13469
+         MNOTE *,'*** IHB085  DEVD=WT       ERROPT=W IGNORED'  @ZA21103
+.NOKB    AIF   (NOT &B3).NOK1                                  @ZA21103
+&B3      SETB  0
+         MNOTE *,'*** IHB085  DEVD=WT       ERROPT=T IGNORED'  @ZA21103
+.NOK1    AIF   ('&DEVD' NE 'LD').NOK2                          @ZA21103
+         AIF   (NOT &B4).NOKC                                  @ZA13469
+&B4      SETB  0                                               @ZA13469
+         MNOTE *,'*** IHB085  DEVD=LD         EROPT=C IGNORED' @ZA21103
+.NOKC    AIF   (NOT &B5).NOKD                                  @ZA13469
+&B5      SETB  0                                               @ZA13469
+         MNOTE *,'*** IHB085  DEVD=LD         EROPT=W IGNORED' @ZA21103
+.NOKD    AIF   (NOT &B6).NOK2                                  @ZA21103
+&B6      SETB  0                                               @ZA13469
+         MNOTE *,'*** IHB085  DEVD=LD         EROPT=R IGNORED' @ZA21103
+.NOK2    AIF   (NOT &B7).OUTPUT3                               @ZA13469
+&B4      SETB  0
+&B5      SETB  0
+&B6      SETB  0
+.OUTPUT3 AIF   (T'&LERB EQ 'O').OUTPUT1
+         AIF   (&B7).OUTPUT2                                   @ZA13469
+         AIF   (&B4).OUTPUT
+&B4      SETB  1
+         IHBERMAC 178,&C2,C            EROPT NOT SPEC'D,SET TO C. 13549
+         AGO   .OUTPUT
+.OUTPUT1 AIF   (NOT &B4).OUTPUT
+&B4      SETB  0
+         IHBERMAC 147,&C2              EROPT OPERAND INCONSISTENT 13549
+         AGO   .OUTPUT
+.OUTPUT2 ANOP
+         IHBERMAC 147,LERB
+.OUTPUT  DC    BL1'000&B3&B4&B5&B6&B7'  BTAM EROPT CODE
+         DC    AL1(&BUFCT)              BTAM BUFFER COUNT
+         DC    AL1(0)
+         AGO   .GEN3C2
+.NERROPT ANOP
+.GEN3C1  DC    AL3(&EODAD)             EODAD
+.GEN3C2  ANOP
+         DC    BL1'&RECFM0&RECFM1&RECFM2&RECFM3&RECFM4&RECFM5&RECFM6&RE*
+               CFM7'                   RECFM
+         DC    AL3(&EXLST)             EXLST
+         SPACE 1
+.*
+.GEN4A   ANOP
+*                       FOUNDATION BLOCK
+         SPACE 1
+         DC    CL8'&DDNAME'            DDNAME
+.*
+.*                      ANALYZE IMSK, AND UMSK
+.*
+&C0      SETC  'FFFFFFFF'               PRESET TO STANDARD VALUES
+&C1      SETC  '00000000'
+         AIF   (T'&IMSK EQ 'O' OR NOT &MACRF0).GEN4C
+&C0      SETC  '&IMSK'                  SET CODED VALUE
+.GEN4C   AIF   (T'&UMSK EQ 'O' OR NOT &MACRF0).GEN4E
+&C1      SETC  '&UMSK'                  SET CODED VALUE
+.GEN4E   ANOP
+&IFLGS4  SETB  ('&C0' EQ '00000000')   IF NEVER IBM ROUTINES
+&IFLGS5  SETB  ('&C0' NE 'FFFFFFFF')   IF NOT ALWAYS IBM ROUTINES
+&IFLGS6  SETB  ('&C1' EQ 'FFFFFFFF')   IF ALWAYS USER ROUTINES
+&IFLGS7  SETB  ('&C1' NE '00000000')   IF SOMETIMES USER ROUTINES
+         DC    BL1'00000010'           OFLGS
+         DC    BL1'0000&IFLGS4&IFLGS5&IFLGS6&IFLGS7'  IFLG
+         AIF   (&MACRF0 OR &MACRF4 OR NOT(&DSORG0 AND &MACRFD)).MACRF1
+         IHBERMAC 240,MACRF,&MACRF      INCONSISTANT (GM,PU)   @ZA00012
+         DC    BL2'0000000000000000'    MACRF
+         AGO   .MACRF2                                         @ZA00012
+.MACRF1  ANOP                                                  @ZA00012
+         DC    BL2'&MACRF0&MACRF1&MACRF2&MACRF3&MACRF4&MACRF5&MACRF6&MA*
+               CRF7&MACRF8&MACRF9&MACRFA&MACRFB&MACRFC&MACRFD&MACRFE&MA*
+               CRFF'                   MACR
+.MACRF2  ANOP                                                  @ZA00012
+.*
+         AIF   (NOT &DSORGA).TCAM3X
+         DC    BL1'&OPTCD0&OPTCD1&OPTCD2&OPTCD3&OPTCD4&OPTCD5&OPTCD6&OP*
+               TCD7'                    OPTCD
+         DC    AL3(0)
+         DC    F'0'                                          ICBI DCB-9
+         DC    H'0'                                          ICBI DCB-9
+         DC    AL2(&BLKSIZE)           BLKSIZE               ICBI DCB-9
+.TCAM3X  ANOP
+         AIF   (&DSORG9).TCAM3A
+         AIF   (NOT &MACRF0).QTAM1D    IF NOT EXCP ACCESS      @ZA02213
+         AIF   (NOT &MACRF2 AND T'&UMSK EQ 'O' AND T'&IMSK EQ 'O').GEN7*
+               C
+         SPACE 1
+*                       EXCP APPENDAGE LIST
+         SPACE 1
+         DC    BL1'00000&OPTCD5.00'                                RER1
+         DC    XL3'000000'                                         RER1
+         AIF   (NOT &MACRF2 AND T'&UMSK EQ 'O').GEN7C
+         DC    XL4'&C1'                UMSK
+         AIF   (NOT &MACRF2).GEN7C     IF NO APPENDAGES
+         AIF   ('&EOEA' EQ '0').EXCP2                            M0624
+         AIF   (K'&EOEA EQ 2).EXCP2                              M0624
+         AIF   (K'&EOEA LT 2).EXCP1                              M0624
+         IHBERMAC  176,EOEA,&EOEA                                M4043
+         AGO   .EXCP2                                            M0624
+.EXCP1   IHBERMAC  177,EOEA,&EOEA                                M4043
+.EXCP2   DC    CL2'&EOEA'               EOEA
+         AIF   ('&PCIA' EQ '0').EXCP4                            M0624
+         AIF   (K'&PCIA EQ 2).EXCP4                              M0624
+         AIF   (K'&PCIA LT 2).EXCP3                              M0624
+         IHBERMAC  176,PCIA,&PCIA                                M4043
+         AGO   .EXCP4                                            M0624
+.EXCP3   IHBERMAC  177,PCIA,&PCIA                                M4043
+.EXCP4   DC    CL2'&PCIA'               PCIA
+         AIF   ('&SIOA' EQ '0').EXCP6                            M0624
+         AIF   (K'&SIOA EQ 2).EXCP6                              M0624
+         AIF   (K'&SIOA LT 2).EXCP5                              M0624
+         IHBERMAC  176,SIOA,&SIOA                                M4043
+         AGO   .EXCP6                                            M0624
+.EXCP5   IHBERMAC  177,SIOA,&SIOA                                M4043
+.EXCP6   DC    CL2'&SIOA'               SIOA
+         AIF   ('&CENDA' EQ '0').EXCP8                           M0624
+         AIF   (K'&CENDA EQ 2).EXCP8                             M0624
+         AIF   (K'&CENDA LT 2).EXCP7                             M0624
+         IHBERMAC  176,CENDA,&CENDA                              M4043
+         AGO   .EXCP8                                            M0624
+.EXCP7   IHBERMAC  177,CENDA,&CENDA                              M4043
+.EXCP8   DC    CL2'&CENDA'              CENDA
+         AIF   ('&XENDA' EQ '0').EXCP10                          M0624
+         AIF   (K'&XENDA EQ 2).EXCP10                            M0624
+         AIF   (K'&XENDA LT 2).EXCP9                             M0624
+         IHBERMAC  176,XENDA,&XENDA                              M4043
+         AGO   .EXCP10                                           M0624
+.EXCP9   IHBERMAC  177,XENDA,&XENDA                              M4043
+.EXCP10  DC    CL2'&XENDA'              XENDA
+         AIF   ('&AERR' EQ '0').EXCP12                           M0624
+         AIF   (K'&AERR EQ 2).EXCP12                             M0624
+         AIF   (K'&AERR LT 2).EXCP11                             M0624
+         IHBERMAC  176,AERR,&AERR                                M4043
+         AGO   .EXCP12                                           M0624
+.EXCP11  IHBERMAC  177,AERR,&AERR                                M4043
+.EXCP12  DC    CL2'&AERR'               AERR
+         MEXIT
+.*
+.QTAM1D  AIF   (NOT (&DSORG3 AND (&MACRF1 OR &MACRF9))).QTAM1F
+&A1      SETA  1
+&B(1)    SETA  255
+&B(2)    SETA  10
+&B(3)    SETA  5
+&B(4)    SETA  5
+         SPACE 1
+.THRESH  ANOP
+         AIF   (N'&THRESH LT &A1).SVAL
+         AIF   ('&THRESH(&A1)' EQ '').SVAL
+&B(&A1)  SETA  &THRESH(&A1)
+.SVAL    ANOP
+         DC    AL1(&B(&A1))             KSTAT
+&A1      SETA  &A1+1
+         AIF   (&A1 LT 5).THRESH
+         SPACE 1
+.*
+.QTAM1F  AIF   (T'&CPOLL EQ 'O' OR NOT (&DSORG3 AND (&MACRF1 OR &MACRF9*
+               ))).GEN5B
+         SPACE 1
+*                       QTAM LINE GROUP POLLING LIST
+         SPACE 1
+&A0      SETA  1                       TO INDEX 1ST ITEM
+.QTAM1G  DC    A(&CPOLL(&A0))
+&A0      SETA  &A0+1                   STEP INDEX
+         AIF   (&A0 LE N'&CPOLL).QTAM1G  REPEAT LOOP FOR NEXT ITEM
+         MEXIT
+.GEN5B   AIF   (&DSORG3).GEN7B5         IF LINE GROUP
+.*
+         AIF   (NOT &DSORG1 AND NOT &DSORG6).GEN7A  IF NOT PHYSICAL SEQ
+         SPACE 1
+*                       BSAM-BPAM-QSAM INTERFACE
+         SPACE 1
+         DC    BL1'&OPTCD0&OPTCD1&OPTCD2&OPTCD3&OPTCD4&OPTCD5&OPTCD6&OP*
+               TCD7'                                               RER1
+         DC    AL3(1)                  CHECK, GERR, PERR
+         DC    A(&SYNAD)               SYNAD
+         AIF   (T'&STOP EQ 'O').GEN5B2                       ICBI DCB-3
+&B0      SETB  ('&STOP' EQ 'QUICK' OR '&STOP' EQ 'BOTH')     ICBI DCB-3
+&B1      SETB  ('&STOP' EQ 'FLUSH' OR '&STOP' EQ 'BOTH')     ICBI DCB-3
+         AIF   (NOT &B0 AND NOT &B1).GEN5B1                  ICBI DCB-3
+         DC    BL1'&B0&B1.000000'  CIND1                     ICBI DCB-3
+         DC    AL1(0)              CIND2                     ICBI DCB-3
+         AGO   .GEN5B3                                       ICBI DCB-3
+.GEN5B1  ANOP                                                ICBI DCB-3
+         IHBERMAC 153,STOP,&STOP                             ICBI DCB-3
+.GEN5B2  ANOP                                                ICBI DCB-3
+         DC    H'0'                    CIND1, CIND2
+.GEN5B3  ANOP                                                ICBI DCB-3
+.*  IF BUFL AND BLKSIZE ARE CODED FOR 1419 THEY MUST BE EQUAL   YL03123
+         AIF   (&BI).GENMRA             BR IF 1419              YL03123
+         DC    AL2(&BLKSIZE)           BLKSIZE
+         AGO   .GENMRC
+.GENMRA  AIF   ('&BUFL' EQ '&BLKSIZE').GENMRB
+         IHBERMAC  199                  BUFL NE BLKSIZE
+.GENMRB  ANOP
+         DC    AL2(&BUFL)               BLKSIZE
+.GENMRC  ANOP
+         DC    F'0'                    WCPO, WCPL, OFFSR, OFFSW
+         DC    A(1)                    IOBA
+         DC    AL1(&NCP)               NCP
+         DC    AL3(1)                  EOBR, EOBAD
+         SPACE 1
+         AIF   (&MACRF1 OR &MACRF9).GEN6E   IF GET/PUT
+*                         BSAM-BPAM INTERFACE
+         SPACE 1
+         DC    A(1)                    EOBW
+         AIF   (T'&BUFOFF EQ 'O').GEN5C9
+.GEN5C2A AIF   (&DSORG0 OR &DSORG2 OR &DSORG3 OR &DSORG6 OR &DSORG8).GE*
+               NER1                                            @ZA02213
+         AIF   ('&BUFOFF' EQ 'L' OR '&BUFOFF' EQ '(L)').GEN5C2
+&A4      SETA  &BUFOFF(1)
+         AIF   (&A4 GT 99).GENER3
+         DC    X'00',AL1(&BUFOFF)       USASCI,BUFOFF
+         AGO   .GENCR
+.GEN5C2  AIF   (&RECFM1 OR &RECFM0).GENER1
+         DC    X'4004'                  USASCI,BUFOFF
+         AGO   .GENCR
+.GENER1  IHBERMAC 147,BUFOFF  BUFOFF INVALID FOR RECFM OR DSORG
+         DC    H'0'
+         AGO   .GENCR
+.GENER3  IHBERMAC 47,,BUFOFF
+         MEXIT
+.GEN5C9  ANOP
+         DC    H'0'                    DIRCT
+         AGO   .GENCR
+.GEN5C   ANOP
+         DC    A(1)                    CNTRL, NOTE, POINT
+         AIF   (T'&EROPT EQ 'O').GEN7C
+         IHBERMAC 147,EROPT
+         MEXIT
+.*
+.GENCR   AIF   (&DSORG6).GEN6A         ( IF BPAM)
+         AIF   ('&LRECL' NE 'X').GEN6A
+         AIF    (NOT(&MACRF1 OR &MACRF9)).GEN6B     (IF BSAM)
+         AIF   (&MACRF4 OR &MACRFC).GEN6B          (IF  LOCATE MODE )
+         DC    X'0000'    LRECL
+         IHBERMAC  99,LRECL
+         AGO   .GEN6G
+.GEN6B   AIF   (T'&RECFM  NE 'O').GEN6C
+         DC    X'8000'    LRECL=X
+         MNOTE *,'***  IHB085A  LRECL IMPLIES VRE,RECFM OMITTED'
+         AGO   .GEN6F
+.GEN6C   AIF   (&RECFM1 AND &RECFM4  AND  NOT (&RECFM0)).GEN6D
+         DC    X'0000'    LRECL
+         IHBERMAC   99,LRECL
+         AGO   .GEN6F
+.GEN6D   ANOP
+         DC    X'8000'        LRECL=X
+         AGO   .GEN6F
+.GEN6A   ANOP
+         AIF   ('&LRECL' EQ '0' AND (&BI AND '&BUFL' EQ '0')).GMR1E
+         DC    AL2(&LRECL)    LRECL
+         AGO   .GEN6F
+.GMR1E   ANOP
+         DC    AL2(0)                   LRECL
+.GEN6F   AIF   (&MACRF1 OR &MACRF9).GEN6G          GO TO  QSAM
+         AGO   .GEN5C                              GO TO  BSAM
+.*
+.GEN6E   ANOP
+*                            QSAM INTERFACE
+         SPACE 1
+         DC    A(1)                     RECAD
+         AIF   (T'&BUFOFF NE 'O').GEN5C2A
+         DC    H'0'                    QSWS
+         AGO   .GENCR
+.GEN6G   ANOP
+&B0      SETB  ('&EROPT' EQ 'ACC')
+&B1      SETB  ('&EROPT' EQ 'SKP')
+&B2      SETB  ('&EROPT' EQ 'ABE')
+         AIF   (&B0 OR &B1 OR &B2 OR T'&EROPT EQ 'O').GEN6L
+         IHBERMAC 155,EROPT,&EROPT
+.GEN6L   DC    BL1'&B0&B1&B2.00000'    EROPT
+         DC    AL3(1)                  CNTRL
+         DC    F'0'                    PRECL
+         DC    A(1)                    EOB
+         MEXIT
+.GEN7A   AIF   (NOT &DSORG0).GEN7B     IF NOT INDEXED SEQUENTIAL
+         SPACE 1
+*                       BISAM-QISAM INTERFACE
+         SPACE 1
+         DC    BL1'&OPTCD0&OPTCD1&OPTCD2&OPTCD3&OPTCD4.0&OPTCD6&OPTCD7'
+         DC    BL1'0000&MAC4&MAC5&MAC6&MAC7'     MAC
+         DC    AL1(&NTM)               NTM
+         DC    AL1(&CYLOFL)            CYLOFL
+         DC    A(&SYNAD)               SYNAD
+         DC    AL2(&RKP)               RKP
+         DC    AL2(&BLKSIZE)           BLKSIZE
+         DC    A(&MSWA)                MSWA
+         DC    AL2(&SMSI)              SMSI
+         DC    AL2(&SMSW)              SMSW
+         DC    AL1(&NCP)               NCP
+         DC    AL3(&MSHI)              MSHI
+         DC    A(1)                    SETL
+         DC    H'0'                    EXCD1, EXCD2
+         DC    AL2(&LRECL)             LRECL
+         DC    A(1)                    ESETL
+         DC    A(1)                    LRAN
+         DC    A(1)                    LWKN
+         DC    A(1)                    RELSE
+         DC    A(1)                    PUTX
+         DC    A(1)                    RELEX
+         DC    A(1)                    FREED
+         DC    AL1(&DBUFNO)            DBUFNO
+         DC    BL31'0'
+         DC    BL32'0'
+         DC    BL32'0'
+         DC    BL20'0'
+         DC    A(1)                    WKPT1
+         DC    A(1)                    WKPT2
+         DC    A(1)                    WKPT3
+         DC    A(1)                    WKPT4
+         DC    A(1)                    WKPT5
+         DC    A(1)                    WKPT6
+         MEXIT
+.*
+.GEN7B   AIF   (NOT &DSORG2).GEN7C     IF NOT BDAM
+         SPACE 1
+*                       BDAM INTERFACE
+         SPACE 1
+         DC    BL1'&OPTCD0.0&OPTCD2&OPTCD3&OPTCD4.0&OPTCD6&OPTCD7'
+         DC    AL3(1)                  CHECK
+         DC    A(&SYNAD)               SYNAD
+         DC    H'0'
+         DC    AL2(&BLKSIZE)           BLKSIZE
+         DC    A(1)                    IOBSQ
+         DC    A(1)                    SQND
+         DC    A(1)                    IOBUQ
+         DC    A(1)                    UQND
+         DC    A(&LIMCT)               LIMCT
+         DC    F'1'                    XCNT,XARG
+         DC    A(1)                    DRDX
+         DC    A(1)                    DFOR
+         DC    A(1)                    DFBK
+         DC    A(1)                    DYNB
+         MEXIT                                                  YA02128
+.GEN7B5  AIF   (NOT (&MACRF2 OR &MACRFA)).GEN7C
+         AIF   ('&DEVD' NE 'BS' AND (T'&LERB EQ 'O' OR &B7) AND        *
+               ('&DEVD' EQ 'BS' OR '&DEVD' EQ 'WT' OR &B4 OR &B5 OR    *
+               &B6 OR &B7) AND NOT &B3 AND T'&READYQ EQ 'O').GEN7C
+*                                                              @ZA21103
+         SPACE 1
+*                       BTAM INTERFACE
+         SPACE 1
+         AIF   (T'&LERB EQ 'O' OR &B7).GEN7B7                   YA02128
+         DC    A(&LERB)                 LERB
+         AIF   (T'&READYQ EQ 'O').BYTE56                        YA02128
+         IHBERMAC 1016,LERB,READYQ IHB276 LERB INCOMP W READYQ  YA02128
+         AGO   .BYTE56
+.GEN7B7  AIF   (T'&READYQ EQ 'O').NOLERB                        YA02128
+         AIF   ('&DEVD' EQ 'BS' OR '&DEVD' EQ 'WT').GEN7B8     @ZA21103
+         DC    X'02',AL3(&READYQ)       READYQ
+         AGO   .BYTE56                                          YA02128
+.GEN7B8  IHBERMAC 1016,DEVD,READYQ IHB276 DEVD INCOMP W READYQ  YA02128
+.NOLERB  DC    A(0)                     LERB
+.BYTE56  AIF   ('&DEVD' NE 'BS').GEN7C                          YA02128
+&BA2     SETA  1
+&BS3     SETB  1
+         AIF   ('&MODE' EQ '').CHKCODE
+&BA1     SETA  (N'&MODE)
+&BS2     SETB  ('&MODE(&BA2)' EQ 'IBC')
+         AIF   ('&MODE(&BA2)' NE '' AND NOT &BS2).ERROR
+         AIF   (&BA2 EQ &BA1).CHKCODE
+&BA2     SETA  &BA2+1
+         AIF   ('&MODE(&BA2)' NE 'CNTRL').REMOTE
+&BS3     SETB  0
+.REMOTE  AIF   ('&MODE(&BA2)' NE '' AND &BS3).ERROR
+         AIF   (&BA2 EQ &BA1).CHKCODE
+&BA2     SETA  &BA2+1
+&BS4     SETB  ('&MODE(&BA2)' EQ 'B')
+         AIF   ('&MODE(&BA2)' NE 'A' AND '&MODE(&BA2)' NE ''           C
+               AND NOT &BS4).ERROR
+         AIF   (&BA2 EQ &BA1).CHKCODE
+&BA2     SETA  &BA2+1
+&BS5     SETB  ('&MODE(&BA2)' EQ 'B')
+         AIF   ('&MODE(&BA2)' NE 'A' AND '&MODE(&BA2)' NE ''           C
+               AND NOT &BS5).ERROR
+.CHKCODE ANOP
+&BS6     SETB  ('&CODE' EQ 'EBCDIC' OR '&CODE' EQ '')
+&BS7     SETB  ('&CODE' EQ 'USASCII')
+&BS8     SETB  ('&CODE' EQ 'TRANSC')
+         AIF   (NOT (&BS6 OR &BS7 OR &BS8)).ERROR2
+         DC    BL1'0&BS2&BS4.0&BS5.000'          MODE
+         DC    BL1'&BS3.0&BS8&BS7&BS8&BS7.00'    MAS,CODE
+         DC    XL26'0'                           CONTROL CHARS
+         DC    4F'0'                    RESERVED
+         SPACE 1
+         AGO   .GEN7C
+.ERROR   IHBERMAC 45,,&MODE(&BA2)
+         MEXIT
+.ERROR2  MNOTE 12,'***  IHB002  INVALID CODE OPERAND SPECIFIED-&CODE'
+.TCAM3A  ANOP
+&LGTH    SETA  0
+&INCR    SETA  1
+&NUMENT  SETA  N'&INVLIST
+&NUMENT  SETA  &NUMENT+2
+&NUMENT  SETA  &NUMENT/3
+         DC    AL1(&NUMENT)             ILCT
+         AGO   .IN
+.TCAM3B  ANOP
+         AIF   (T'&BUFSIZE EQ 'O').TCAM31
+         AIF   (T'&BUFSIZE NE 'N').TCAM3C                        M4043
+         AIF   ('&BUFSIZE' GT '35' AND '&BUFSIZE' LE '65535').TCAM3C
+         IHBERMAC 180,BUFSIZE,0
+.TCAM31  DC    AL2(0)                   BUFSIZE
+         AGO   .TCAM3CA
+.TCAM3C  DC    AL2(&BUFSIZE)            BUFSIZE
+.TCAM3CA ANOP
+&TC1     SETA  4
+.TCAM3C2 AIF   (&TC1 EQ 0).TCAM3D8
+       AIF (T'&RESERVE(&TC1) EQ 'O' OR T'&RESERVE(&TC1) EQ 'U').TCAM3D2
+         AIF   (&RESERVE(&TC1) LE 255).TCAM3D2
+         IHBERMAC 180,RESERVE,0
+.TCAM3D  DC    A(0)                     RESERVE
+         AGO   .LOOPA
+.TCAM3D2 AIF   (T'&RESERVE(&TC1) EQ 'O').TCAM3D4
+&TC(&TC1) SETC '&RESERVE(&TC1)'
+         AGO   .TCAM3D6
+.TCAM3D4 ANOP
+&TC(&TC1) SETC  '0'
+.TCAM3D6 ANOP
+&TC1     SETA  &TC1-1
+         AGO   .TCAM3C2
+.TCAM3D8 DC    AL1(&TC(1))         RESERVE
+         DC    AL1(&TC(2))         RESERVE
+         DC    AL1(&TC(3))         RESERVE
+         DC    AL1(&TC(4))         RESERVE
+.LOOPA   ANOP
+         AIF   (T'&INVLIST NE 'O').LOOP
+         DC    A(1)                     INVLIST
+         IHBERMAC 24
+         AGO   .GEN7C
+.LOOP    AIF   ('&LGTH' EQ '&NUMENT').GEN7C
+         AIF   ('&INVLIST(&INCR+1)' EQ 'B').SETFCE
+&INTFACE SETA  0
+         AIF   ('&INVLIST(&INCR+1)' EQ 'A' OR '&INVLIST(&INCR+1)' EQ ''*
+               ).ISA1
+         IHBERMAC  183,INTERFACE,A
+.ISA1    AIF   ('&INCR+1' LE '&LGTH').DCLR
+         AGO   .TSTCDE
+.SETFCE  ANOP
+&INTFACE SETA  20
+.TSTCDE  AIF   ('&INVLIST(&INCR+2)' EQ 'B').SETCDE
+         AIF   ('&INVLIST(&INCR+2)' EQ 'A' OR '&INVLIST(&INCR+2)' EQ ''*
+               ).ISA2
+         IHBERMAC   183,CODE,A
+.ISA2    ANOP
+&ICDE    SETA  &INTFACE
+         AGO   .DCLR
+.SETCDE  ANOP
+&ICDE    SETA  &INTFACE+8
+.DCLR    DC    XL1'&ICDE'
+         DC    AL3(&INVLIST(&INCR))
+&INCR    SETA  &INCR+3
+&LGTH    SETA  &LGTH+1
+         AGO   .LOOP
+.GEN7C   MEND
+

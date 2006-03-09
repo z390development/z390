@@ -1,0 +1,210 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    STAE  &EXIT,&TYPE,&PARAM=I,&XCTL=NO,&MF=I,&PURGE=,&ASYNCH=,   *
+               &TCB=,&RELATED=
+         LCLA  &LENGTH
+         LCLA  &FLAGS                                             20049
+         LCLA  &ANDOFF                                            20049
+         LCLA  &A                                                YM1995
+         LCLB  &ASY                                               20049
+         LCLB  &HALT                                              20049
+         LCLB  &NONE                                              20049
+         LCLB  &TCBON                                             20028
+         LCLB  &ASYOFF                                            20049
+         LCLB  &PRGOFF                                            20049
+         LCLC  &GNAME
+         LCLC  &LNAME                                             20049
+         LCLC  &EXITR                                            YM1995
+&ASY     SETB  ('&ASYNCH' EQ 'YES')                               20049
+&HALT    SETB  ('&PURGE' EQ 'HALT')                               20049
+&NONE    SETB  ('&PURGE' EQ 'NONE')                               20049
+&TCBON   SETB  ('&TCB' NE '')                                     20028
+&FLAGS   SETA  128*&TCBON+4*&ASY+2*&NONE+&HALT
+         AIF   ('&TCB' EQ '').NOSTAI                              20028
+&LENGTH  SETA  16                                                 20028
+         AIF   ('&XCTL' EQ 'NO').NIXXCTL
+         IHBERMAC 1020,XCTL,TCB
+         MEXIT
+.NIXXCTL ANOP
+         AIF   ('&EXIT' EQ '0').ER1
+         AIF   ('&TYPE' EQ 'OV').ER2
+         AIF   ('&EXIT' EQ '' AND '&MF(1)' EQ 'L').ER3
+         AGO   .STAI
+.ER1     ANOP
+         IHBERMAC 1020,EXIT/0,TCB
+         MEXIT
+.ER2     ANOP
+         IHBERMAC 1020,TYPE/OV,TCB
+         MEXIT
+.ER3     ANOP
+         IHBERMAC 1021,EXIT
+         MEXIT
+.NOSTAI  ANOP                                                     20028
+&LENGTH  SETA  12                                                 20028
+.STAI    ANOP                                                     20028
+         AIF   ('&ASYNCH' NE '' AND '&ASYNCH' NE 'NO' AND '&ASYNCH' NE C
+               'YES').ERRASY                                      20049
+         AIF   ('&PURGE' NE '' AND '&PURGE' NE 'HALT' AND '&PURGE' NE  C
+               'NONE' AND '&PURGE' NE 'QUIESCE').PURERR           20049
+         AIF   ('&MF(1)' EQ 'I').IROUT
+         AIF   ('&MF(1)' EQ 'L').LROUT
+         AIF   ('&MF(1)' EQ 'E').EROUTA
+         IHBERMAC 35,,&MF(1)            INVALID MF= OPERAND
+         MEXIT
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*  20049
+.*                                                                20049
+.*       EXECUTE ROUTE       MF=E                                 20049
+.*                                                                20049
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*  20049
+.EROUTA  AIF   (N'&MF GT 2).EXCESSA
+.EROUT   AIF   ('&MF(2)' NE '').EXEC
+.NOPARM  IHBERMAC 24                    REQ'D. PARMS. MISSING
+         MEXIT
+.EXEC    ANOP
+&ASYOFF  SETB  ('&ASYNCH' EQ 'NO')                                20049
+&PRGOFF  SETB  ('&PURGE' NE '')                                   20049
+&ANDOFF  SETA  255-(4*&ASYOFF+3*&PRGOFF)                          20049
+&NAME    IHBINNRA &MF(2)                LOAD LIST ADDR IN REG 1
+         AIF   ('&EXIT' EQ '').TSTPX
+         XC    1(3,1),1(1) .            CLEAR EXIT ADDR. IN LIST
+         AIF   ('&EXIT' EQ '0').TSTPX                             20049
+         AIF   ('&EXIT'(1,1) EQ '(').ST1
+         IHBINNRA ,&EXIT                LOAD NEW EXIT ADDR IN REG 0
+         O     0,0(1,0) .               OR EXIT ADDR. INTO LIST  YM1995
+         ST    0,0(1,0)                                          YM1995
+         AGO   .TSTPX
+.ST1     ANOP                                                     20049
+&A       SETA  K'&EXIT-2                                         YM1995
+&EXITR   SETC  '&EXIT'(2,&A)                                     YM1995
+         LA    &EXITR,0(&EXITR.,0) .    ADDR OF EXIT ROUTINE     YM1995
+         O     &EXITR,0(1,0) .          OR EXIT ADDR. INTO LIST  YM1995
+         ST    &EXITR,0(1,0)                                     YM1995
+.TSTPX   ANOP                                                     20049
+         AIF   (&ANDOFF EQ 255).TESTOR                            20049
+         NI    0(1),&ANDOFF .           TURN OFF FLAG BITS
+.TESTOR  ANOP                                                     20049
+         AIF   (&FLAGS EQ 0).TSTPX1                               20049
+         OI    0(1),&FLAGS .            FLAGS FOR TCB,
+*                                       PURGE AND ASYNCH
+.TSTPX1  ANOP                                                     20049
+         AIF   ('&PARAM' EQ 'I').ETSTTCB                          20028
+         AIF   ('&PARAM'(1,1) EQ '(').ST2
+         IHBINNRA ,&PARAM
+         ST    0,4(1,0) .         MODIFY REMOTE LIST - PARM ADDR YM1995
+         AGO   .ETSTTCB                                           20028
+.ST2     ST    &PARAM,4(1,0) .          MODIFY LIST - PARAM ADDR YM1995
+.ETSTTCB AIF   ('&TCB' EQ '').TSTOPT                              20028
+         AIF   ('&TCB'(1,1) EQ '(').ST3                           20028
+         IHBINNRA ,&TCB                                           20028
+         ST    0,8(1,0) .                MODIFY LIST - TCB ADDR. YM1995
+         AGO   .TSTOPT                                            20028
+.ST3     ST    &TCB,8(1,0)     .         MODIFY LIST - TCB ADDR  YM1995
+.TSTOPT  AIF   ('&EXIT' EQ '0').CANCEL
+         AGO   .OPTTST
+.EXCESSA MNOTE *,'***     EXCESS PARAMETERS W/MF=E IGNORED'
+         AGO   .EROUT
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*  20049
+.*                                                                20049
+.*       LIST ROUTE          MF=L                                 20049
+.*                                                                20049
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*  20049
+.LROUT   AIF   (N'&MF GT 1).EXCESS                                20028
+.LROUT1  ANOP                                                     20049
+         DS    0F
+&NAME    DC    AL1(&FLAGS) .        FLAGS FOR TCB,
+*                                   PURGE AND ASYNCH
+         AIF   ('&EXIT' NE '').LREGA                              20049
+         DC    AL3(0) .             EXIT ADDR. NOT SPECIFIED
+         AGO   .LREGB
+.LREGA   AIF   ('&EXIT'(1,1) EQ '(').LISTERR
+         DC    AL3(&EXIT) .         STAE EXIT ROUTINE ADDR.
+.LREGB   AIF   ('&PARAM' NE 'I').LREGC
+         DC    A(0) .                   PARM. LIST ADDR. NOT SPECIFIED
+         AGO   .LREGD                                             20028
+.LREGC   AIF   ('&PARAM'(1,1) EQ '(').LISTERR
+         DC    A(&PARAM) .              STAE EXIT PARM. LIST ADDR.
+.LREGD   AIF   ('&TCB' EQ '').LREGE                               20028
+         AIF   ('&TCB'(1,1) EQ '(').LISTERR                       20028
+         DC    A(&TCB)       . TCB ADDRESS
+         MEXIT
+.LREGE   DC    A(0) .                  TCB NOT SPECIFIED
+         MEXIT
+.EXCESS  MNOTE *,'***     EXCESS PARAMETERS W/MF=L IGNORED'
+         AGO   .LROUT1
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*  20049
+.*                                                                20049
+.*       REGULAR ROUTE       MF=I                                 20049
+.*                                                                20049
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*  20049
+.IROUT   AIF   ('&EXIT' EQ '').NOPARM
+         AIF   ('&EXIT' NE '0').STDA
+&NAME    DS    0H
+.CANCEL  LA    0,4(0,0)  .              INDICATE CANCEL OPTION   YM1995
+         AGO   .SVC1
+.STDA    CNOP  0,4 .                    ESTAB. FULL WD. BOUND. ALIGN.
+&LNAME   SETC  'IHB'.'&SYSNDX'                                    20049
+&NAME    BAL   1,*+&LENGTH . PUT LIST ADDR IN REG1 AND BR AROUND
+&LNAME   EQU   *
+         AIF   ('&EXIT'(1,1) EQ '(').EREG1
+         DC    AL1(&FLAGS) .           FLAGS FOR TCB,
+*                                      PURGE AND ASYNCH
+         DC    AL3(&EXIT)   .            STAE EXIT ROUTINE ADDR.
+         AGO   .STDB
+.EREG1   DC    A(0) .                  SPACE FOR STAE EXIT RTN ADDRESS
+.STDB    ANOP                                                     20049
+         AIF   ('&PARAM' EQ 'I' OR '&PARAM'(1,1) EQ '(').STDC1
+         DC    A(&PARAM) .              STAE EXIT PARM. LIST ADDR.
+         AGO   .TCBTST                                            20028
+.STDC1   DC    A(0) .                  SPACE FOR PARM LIST ADDR
+.TCBTST  AIF   ('&TCB' EQ '').TSTSW                               20028
+         AIF   ('&TCB'(1,1) EQ '(').TCBREG                        20028
+         DC    A(&TCB)      .                    TCB ADDR
+         AGO   .TSTSW                                             20028
+.TCBREG  DC    A(0) .                  SPACE FOR TCB ADDR
+         ST    &TCB,&LNAME+8       .  PUT TCB ADDR IN LIST
+.TSTSW   ANOP                                                     20049
+         AIF   ('&EXIT'(1,1) NE '(').CHKPARM                      20049
+         ST    &EXIT,&LNAME .          PUT EXIT ADDR. IN LIST
+         MVI   &LNAME,&FLAGS .         PUT IN FLAGS FOR TCB,
+*                                      PURGE AND ASYNCH
+.CHKPARM ANOP                                                     20049
+         AIF   ('&PARAM'(1,1) NE '(').OPTTST                      20028
+         ST    &PARAM,&LNAME+4 . PUT PARAM ADDR. IN LIST
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*  20049
+.*                                                                20049
+.*       COMMON TO E ROUTE AND I ROUTE                            20049
+.*                                                                20049
+.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*  20049
+.OPTTST  AIF   (('&TCB' NE '') AND ('&TYPE' EQ 'OV')).BADOPT      20028
+         AIF   (('&TYPE' EQ '') OR ('&TYPE' EQ 'CT')).CREATE      20028
+         AIF   ('&TYPE' EQ 'OV').OVRLAY
+.BADOPT  IHBERMAC  49,,&TYPE           INVALID OPTION-STD. FORM   20028
+         MEXIT
+.CREATE  ANOP                                                     20049
+         SR    0,0 .                   INDICATE CREATE OPTION
+         AGO   .SVC
+.OVRLAY  LA    0,8(0,0)  .             INDICATE OVERLAY OPTION   YM1995
+.SVC     AIF   ('&XCTL' EQ 'NO').NOXCTL
+         AIF   ('&XCTL' NE 'YES').BADXCTL
+         AIF   ('&TCB' NE '').SVC1                               YM2149
+&GNAME   SETC  'IHB'.'&SYSNDX'.'A'                                20049
+         CNOP  0,4 .                   FORCE FULL WORD ALIGNMENT
+         O     1,&GNAME .              XCTL=YES - MAKE REG 1 NEGATIVE
+         B     *+8 .                   BRANCH AROUND CONSTANT
+&GNAME   DC    X'80000000' .           MASK TO SET REG 1 NEGATIVE
+.SVC1    SVC   60 .                    ISSUE STAE SVC
+         MEXIT
+.NOXCTL  ANOP                                                     20049
+         AIF   ('&MF(1)' EQ 'E' AND 'MF(2)' NE '1').SVC1          20049
+         LA    1,0(1,0) .               MAKE REG1 POS.  XCTL=NO  YM1995
+         AGO   .SVC1
+.BADXCTL MNOTE 8,'***     XCTL=&XCTL - PARAMETER INVALID'
+         MEXIT
+.LISTERR IHBERMAC 69                    REG NOTE W/MF=L - INVALID
+         MEXIT                                                    20049
+.ERRASY  ANOP                                                     20049
+         IHBERMAC  54,,&ASYNCH                                    20049
+         MEXIT                                                    20049
+.PURERR  ANOP                                                     20049
+         IHBERMAC  54,,&PURGE                                     20049
+         MEND                                                     20049

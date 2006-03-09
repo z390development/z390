@@ -1,0 +1,140 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GOTO RRPPLS;                      /* BILINGUAL HEADER
+*/********************************************************************/
+*/*                                                                  */
+*/* $MAC(ICHRRPF) COMP(SC1BN) PROD(RACF):                            */
+*/*                                                                  */
+*/*                                                                  */
+*/* DESCRIPTIVE  NAME = RESIDENT PROFILE MAP                         */
+*/*                                                                  */
+*/* STATUS = OS/VS2 EBB1102                                          */
+*/*                                                                  */
+*/* METHOD OF ACCESS = %INCLUDE FOR PLS; ICHRRPF MACRO FOR BAL       */
+*/*                                                                  */
+*/* DESCRIPTION = MAPS THE RESOURCE PROFILE AREA BUILT AS A          */
+*/*               FUNCTION OF AUTHORIZATION CHECKING WHEN            */
+*/*               ENTITY=(ADDR,CSA) IS                               */
+*/*               SPECIFIED ON THE RACHECK MACRO. THE SEGMENT ALSO   */
+*/*               MAPS THE IN CORE MODEL BUILT BY RACDEF WHEN THE    */
+*/*               INSTALLATION SPECIFIES THIS MODELING FUNCTION.     */
+*/*                                                                  */
+*/*                                                                  */
+*/* CHANGE ACTIVITY =                                                */
+*/*                  OZ25837                                 @ZA25837*/
+*/*                  $L4=HRF1402,RACF/140,810701,SJRDSD:         @L4A*/
+*/*                  OZ54774                                 @ZA54774*/
+*/*                  $L6=HRF1602,RACF/160,830426,CNTDSD:         @L6A*/
+*/*                  UZ90283                                 @ZA90283*/
+*/*                  UZ90284                                 @ZA90284*/
+*/*                  UZ90285                                 @ZA90285*/
+*/*                                                                  */
+*/********************************************************************/
+         MACRO
+         ICHRRPF
+RRPF     DSECT
+DSPCORE  DS    0F                                            @ZA25837
+RRPSP    DS    X -                          AREA SUBPOOL NUMBER
+RRPLEN   DS    AL3 -                        TOTAL AREA LENGTH
+RRPVDATA DS    0C                           PROFILE DATA
+DSPSUB   DS    0C                                            @ZA25837
+DSPDSNM  DS    CL44                         RESOURCE NAME    @ZA25837
+DSPUACC  DS    B                            UNIVERSAL ACCESS @ZA25837
+DSPAUDIT DS    B                            AUDIT FLAGS      @ZA25837
+DSPTYPE  DS    B                            D.S. TYPE FLAGS  @ZA25837
+DSPTP    EQU   X'80'                        1 VSAM, 0 NON-VS @ZA25837
+DSPMDL   EQU   X'40'                        1 MODEL              @L4A
+*        EQU   X'20'                        RESERVED         @ZA25837
+*        EQU   X'10'                        RESERVED         @ZA25837
+*        EQU   X'08'                        RESERVED         @ZA25837
+*        EQU   X'04'                        RESERVED         @ZA25837
+*        EQU   X'02'                        RESERVED         @ZA25837
+*        EQU   X'01'                        RESERVED         @ZA25837
+DSPLEVEL DS    AL1                          RESOURCE LEVEL   @ZA25837
+DSPVOLOF DS    A                            OFFSET TO VOLSER
+*                                           LIST             @ZA25837
+DSPACCOF DS    A                            OFFSET TO ACCESS
+*                                           LIST             @ZA25837
+DSPCLASS DS    CL8                          RESOURCE CLASS   @ZA25837
+DSPGAUD  DS    B                            GLOBAL AUDIT FLG @ZA25837
+DSPVRSN  DS    AL1                          VERSION = 0.         @L4A
+DSPWARN  DS    BL1                          WARNING VALUE        @L6A
+DSPRSV1  DS    CL1                          RESERVED             @L6A
+DSPINST  DS    A                            OFFSET TO INSTALLATION
+*                                           DATA             @ZA25837
+DSPNEXTP DS    A                            ADDR NEXT MODEL  @ZA25837
+DSPFNF   DS    B                            MODEL FOUND INDICATOR
+*                                                            @ZA25837
+DSPRSV2  DS    AL3                          RESERVED         @ZA25837
+DSPOWNER DS    CL8                          MODEL OWNER      @ZA25837
+DSPVOLS  DSECT                                   VOLSER LIST@ZA25837
+DSPVOLCT DS    AL2                          NUMBER OF ENTRIES@ZA25837
+DSPVOLSR DS    C                           VOLSERS          @ZA25837
+DSPACCES DSECT                                   ACCESS LIST @ZA25837
+DSPACT   DS    AL2                          NUMBER OF ENTRIE @ZA25837
+DSPACCLE DS    0C                          ACCESS LIST ENTRIES
+*                                                            @ZA54774
+DSPAUSER DS    CL8                         USERID/GRPNAME    @ZA25837
+DSPACS   DS    B                           ACCESS AUTHORITY  @ZA25837
+DSPINSTD DSECT                                       INSTALLATION
+*                                            DATA            @ZA25837
+DSPLINST DS    AL2                          LENGTH OF INSTALLATION
+*                                            DATA            @ZA25837
+DSPIDATA DS    C                           INSTALLATION DATA@ZA25837
+         MEND
+*
+* TERMINATE PLS COMMENT                                              */
+*%RRPPLS:;
+*DECLARE 1 RRPF BASED(RRPFPTR) BDY(WORD), /* RESIDENT PROFILE MAP    */
+           2 DSPCORE FIXED(32),           /*                 @ZA25837*/
+             4 RRPSP BIN(8),              /* AREA SUBPOOL NUMBER     */
+             4 RRPLEN PTR(24),            /* TOTAL AREA LENGTH       */
+             2 RRPVDATA,                  /* PROFILE DATA            */
+               4 DSPSUB,                  /*                 @ZA25837*/
+                 6 DSPDSNM CHAR(44),      /* RESOURCE NAME   @ZA25837*/
+                 6 DSPUACC BIT(8),        /* UNIVERSAL ACCESS
+                                                             @ZA25837*/
+                 6 DSPAUDIT BIT(8),       /* AUDIT FLAGS     @ZA25837*/
+                 6 DSPTYPE BIT(8),        /* D.S. TYPE FLAGS @ZA25837*/
+                   10 DSPTP BIT(1),       /* 1 VSAM, 0 NON-VSAM
+                                                             @ZA25837*/
+                   10 DSPMDL BIT(1),      /* 1 - MODEL.          @L4A*/
+                   10 * BIT(6),           /* RESERVED        @ZA25837*/
+                 6 DSPLEVEL PTR(8),       /* RESOURCE LEVEL  @ZA25837*/
+                 6 DSPVOLOF FIXED(31),    /* OFFSET TO VOLSER
+                                             LIST            @ZA25837*/
+                 6 DSPACCOF FIXED(31),    /* OFFSET TO ACCESS
+                                             LIST            @ZA25837*/
+                 6 DSPCLASS CHAR(8),      /* RESOURCE CLASS  @ZA25837*/
+                 6 DSPGAUD BIT(8),        /* GLOBAL AUDIT FLAG
+                                                             @ZA25837*/
+                 6 DSPVRSN FIXED(8),      /* VERSION = 0         @L4A*/
+                 6 DSPWARN BIT(8),        /* WARNING VALUE       @L6A*/
+                 6 DSPRSV1 CHAR(1),       /* RESERVED            @L6A*/
+                 6 DSPINST FIXED(31),     /* OFFSET TO INSTALLATION
+                                             DATA            @ZA25837*/
+                 6 DSPNEXTP PTR(32),      /* ADDR NEXT MODEL @ZA25837*/
+                 6 DSPFNF BIT(8),         /* MODEL FOUND INDICATOR
+                                             0,FD    -1,NFD  @ZA25837*/
+                 6 DSPRSV2 PTR(24),       /* RESERVED        @ZA25837*/
+                 6 DSPOWNER CHAR(8),      /* RESOURCE OWNER  @ZA25837*/
+             1 DSPVOLS BASED(RRPFPTR+DSPVOLOF),/* VOLSER LIST
+                                                             @ZA25837*/
+                 2 DSPVOLCT FIXED(15),   /* NUMBER OF ENTRIES
+                                                             @ZA25837*/
+                 2 DSPVOLSR(*) CHAR(6),   /* VOLSERS         @ZA25837*/
+             1 DSPACCES BASED(RRPFPTR+DSPACCOF),/* ACCESS LIST
+                                                             @ZA25837*/
+                 2 DSPACT FIXED(15),     /* NUMBER OF ENTRIES
+                                                             @ZA25837*/
+                 2 DSPACCLE(*),          /* ACCESS LIST ENTRIES
+                                                             @ZA25837*/
+                    4 DSPAUSER CHAR(8),   /*USERID/GRPNAME   @ZA25837*/
+                    4 DSPACS BIT(8),      /* ACCESS AUTHORITY
+                                                             @ZA25837*/
+               1 DSPINSTD BASED (RRPFPTR+DSPINST), /* INSTALLATION
+                                             DATA            @ZA25837*/
+                 2 DSPLINST FIXED(15),    /* LENGTH OF INSTALLATION
+                                             DATA            @ZA25837*/
+                 2 DSPIDATA CHAR(*);      /*INSTALLATION DATA
+                                                             @ZA25837*/
+

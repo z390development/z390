@@ -1,0 +1,527 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GOTO   RPLFBPLS;
+* /*                                                                 */
+* /*     CHANGE LEVEL = 1                                            */
+* /*     DATE OF LAST CHANGE = 18 OCTOBER 1973 ( 73*291 )            */
+* /*                                                                 */
+* /*******************************************************************/
+* /*                                                                 */
+* /*     VTAM REQUEST PARAMETER LIST ( RPL ) FEEDBACK CODES          */
+* /*                                                                 */
+* /*     THIS MACRO WAS CREATED FOR RELEASE 3.1 OF VS/1 UNDER        */
+* /*     SUPPORT DEPENDENCY CODE X03004                              */
+* /*                                                                 */
+* /*     THE FOLLOWING CODES ARE STORED IN EITHER 'RPLFDB2' OR       */
+* /*     'RPLFDB3'. SEE INTRODUCTORY COMMENTS FOR EACH GROUP FOR     */
+* /*     FURTHER INFORMATION.                                        */
+* /*                                                                 */
+* /*******************************************************************/
+* /*                                                                 */
+*%RPLFBPLS: ;
+*%/*                                                                 */
+* /* REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'00'         */
+* /*                                                                 */
+*                         RPLAOK   = '''00''X'; /* OPERATION COMPLETED
+*                                                  SUCCESSFULLY      */
+*                       % RPLRCDPR = '''04''X'; /* RESET CONDITIONAL
+*                                                  SUCCESSFUL- READ-
+*                                                  AHEAD DATA PRESENT*/
+*%/*                                                                 */
+* /* NO REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'04'      */
+* /*                                                                 */
+* /* REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'08'         */
+* /*                                                                 */
+*                         RPLCBERR = '''01''X'; /* INVALID CONTROL
+*                                                  BLOCK             */
+*                       % RPLEXERR = '''02''X'; /* EXIT ADDRESS IS 0 OR
+*                                                  EXTERNAL ECB ADDRESS
+*                                                  IS 0              */
+*                       % RPLRNORT = '''02''X'; /* NORTYPE SPECIFIED*/
+*                       % RPLCLSIP = '''03''X'; /* CLSDST IN PROGRESS*/
+*                       % RPLSTERM = '''03''X'; /* SESSION TERMINATION
+*                                                  IN PROGRESS      */
+*                       % RPLCIDNG = '''05''X'; /* INVALID CID       */
+*                       % RPLILDOP = '''06''X'; /* BAD LDO OP CODE   */
+*                       % RPLILSEQ = '''07''X'; /* BAD LDO SEQUENCE  */
+*                       % RPLWANCR = '''08''X'; /* READ NOT CHAINED  */
+*                       % RPLSANOD = '''0C''X'; /* SOL ANY AND NO DEV
+*                                                  CONNECTED         */
+*                       % RPLSANDA = '''0D''X'; /* SOL ANY AND NO DEV
+*                                                  AVAILABLE         */
+*                       % RPLSTOOD = '''0E''X'; /* SOL TO OUTPUT ONLY*/
+*                       % RPLBUFTE = '''0F''X'; /* BUFFER THRESHOLD
+*                                                  EXCEEDED          */
+*                       % RPLSDE   = '''0F''X'; /* SOL & DATA ALREADY
+*                                                  EXPECTED          */
+*                       % RPLRTOOD = '''10''X'; /* READ TO  OUTPUT
+*                                                  ONLY              */
+*                       % RPLWTOI  = '''11''X'; /* WRITE TO  INPUT
+*                                                  ONLY              */
+*                       % RPLEWNS  = '''12''X'; /* ERASE TO NON-
+*                                                  2265/3270         */
+*                       % RPLEWAU3 = '''13''X'; /* EAU TO NON-3270   */
+*                       % RPLCWTOO = '''14''X'; /* WRITE CONV TO OUT-
+*                                                  PUT ONLY          */
+*                       % RPLCWB   = '''15''X'; /* ERASE AND CONV    */
+*                       % RPLCCCPY = '''16''X'; /* COPY LDO WITH CC
+*                                                  OR CD             */
+*                       % RPLIDA   = '''17''X'; /* INVALID DATE AREA
+*                                                  OR LENGTH         */
+*                       % RPLILDOA = '''18''X'; /* INVALID LDO ADDR  */
+*                       % RPLJTOJ  = '''19''X'; /* JUMP TO JUMP      */
+*                       % RPLM255  = '''1A''X'; /* OVER 100 LDOS     */
+*                       % RPLRILCP = '''1B''X'; /* RESET LDO AND
+*                                                  OTHER             */
+*                       % RPLCRIRT = '''1C''X'; /* INVALID REQUEST
+*                                                  TYPE              */
+*                       % RPLRIOCC = '''1D''X'; /* READ LDO W/CC     */
+*                       % RPLEWBLK = '''1E''X'; /* ERASE AND BLOCK   */
+*                       % RPLCRSDC = '''1F''X'; /* SOL LDO W/CD      */
+*                       % RPLDOFOD = '''20''X'; /* DEV OFFLNE/DISCONN*/
+*                       % RPLIREST = '''21''X'; /* INVALID RESET TYPE*/
+*                       % RPLINVAC = '''22''X'; /* INVALID ACB       */
+*                       % RPLINVEX = '''23''X'; /* INVALID EXLST     */
+*                       % RPLWBT32 = '''24''X'; /* WRITE BLOCK TO
+*                                                  3270              */
+*                       % RPLRMOBN = '''25''X'; /* READ MOD OR BUF
+*                                                  NON-3270          */
+*                       % RPLCTN32 = '''26''X'; /* COPY TO NON-3270R */
+*                       % RPLWCNVR = '''27''X'; /* INVALID READ MODE */
+*                       % RPLWCVDE = '''27''X'; /* WRITE CONV. ISSUED
+*                                                  AND DATA EXPECTED */
+*                       % RPLRNFT3 = '''28''X'; /* READ NOT FIRST
+*                                                  TO 3735           */
+*                       % RPLRCINV = '''29''X'; /* RESET CONDITION
+*                                                  ILLEGAL           */
+*                       % RPLINVRM = '''2A''X'; /* INVALID READ MODE */
+*                       % RPLATSFI = '''2B''X'; /* AREA TOO SMALL
+*                                                  FOR INQUIRY       */
+*                       % RPLIIINA = '''2C''X'; /* INQUIRY INFORMATION
+*                                                  NOT AVAILABLE     */
+*                       % RPLICNDN = '''2D''X'; /* INT COULD NOT NAME*/
+*                       % RPLILSIN = '''2E''X'; /* INVALID LOGON
+*                                                  SEQ INIT          */
+*                       % RPLIICBE = '''2F''X'; /* CB ERROR IN
+*                                                  INQ               */
+*                       % RPLOLIPT = '''30''X'; /* OVERLENGTH INPUT
+*                                                  (TRUNC)           */
+*                       % RPLINTNA = '''31''X'; /* INT INFO NOT
+*                                                  AVAILABLE         */
+*                       % RPLRCLCK = '''32''X'; /* RESET COND WITH
+*                                                  LOCK              */
+*                       % RPLSDEX  = '''33''X'; /* RESPOND=EX ALONE
+*                                                  IN RPL           */
+*                       % RPLSDNP  = '''34''X'; /* PREV POST=SCHED
+*                                                  NOT POSTED       */
+*                       % RPLSCEM  = '''35''X'; /* CHAIN ERROR,MIDDLE,
+*                                                  LAST REQUEST     */
+*                       % RPLSCEF  = '''36''X'; /* CHAIN ERROR,FIRST
+*                                                  OR ONLY REQUEST  */
+*                       % RPLSNQC  = '''37''X'; /* SEND CTL=QC,QUIESCE
+*                                                  NOT REQ          */
+*                       % RPLSINVC = '''38''X'; /* INVALID CTL=OPTION*/
+*                       % RPLSDFR  = '''39''X'; /* SEND IN DF RESET */
+*                       % RPLSNOS  = '''3A''X';/* SEND DF CTL INVALID*/
+*                       % RPLSNOUT = '''3B''X'; /* RESP WITH 0
+*                                                  OUTSTANDING      */
+*                       % RPLSNMC  = '''3C''X'; /* CHASE WHEN CANCEL
+*                                                  EXPECTED         */
+*                       % RPLVABND = '''3C''X'; /* TPIO REJECTED DUE
+*                                                  ABND IN PROGRESS */
+*                       % RPLSSEQ  = '''3D''X';/* SEQ NR NOT EXPECTED*/
+*                       % RPLSINVS = '''3E''X'; /* RESP=OPTION NOT
+*                                                  MATCH RESP       */
+*                       % RPLSINVR = '''3F''X'; /* INVALID RESP,
+*                                                  POST=RESP        */
+*                       % RPLOCE01 = '''40''X'; /* TYPE NOT SUPPORT
+*                                                  LIST              */
+*                       % RPLOCE02 = '''41''X'; /* TYPE INVALID      */
+*                       % RPLOCE03 = '''42''X'; /* ACQUIRE INVALID
+*                                                  PARM              */
+*                       % RPLOCE04 = '''43''X'; /* APPL NEVER ACCEPT*/
+*                       % RPLOCE05 = '''44''X'; /* NO PREEMPT
+*                                                  AUTHORIZATION     */
+*                       % RPLOCE06 = '''45''X';/* PREEMPT HAS INV OPT*/
+*                       % RPLOCE07 = '''46''X'; /* INVALID NIB OPTION*/
+*                       % RPLOCE08 = '''47''X'; /* DEST UNKNOWN      */
+*                       % RPLOCE09 = '''48''X'; /* DEST UNOPENABLE   */
+*                       % RPLOCE10 = '''49''X'; /* NOT AUTHORIZED TO
+*                                                  OPNDST OR INSTALLA-
+*                                                  TION PROVIDED SUBRTN
+*                                                  FAILED TO PROVIDE
+*                                                  APPLICATION NAME
+*                                                  TO INTRPRET       */
+*                       % RPLOCE11 = '''4A''X'; /* DEST UNAVAILABLE-
+*                                                  OFFLINE           */
+*                       % RPLOCE12 = '''4B''X'; /* DEST UNAVAILABLE-
+*                                                  IN USE            */
+*                       % RPLOCE13 = '''4C''X'; /* NO LOGON FOUND
+*                                                  ACCEPT            */
+*                       % RPLOCE14 = '''4D''X'; /* OPNDST CANCELED   */
+*                       % RPLOCE15 = '''4E''X'; /* DEVICE/MODE
+*                                                  INCOMPAT         */
+*                       % RPLOCE16 = '''4F''X'; /* INVALID MODE NAME */
+*                       % RPLOCE17 = '''50''X'; /* DEV/MODE INCOMPAT */
+*                       % RPLOCE18 = '''51''X'; /* BHSET NOT ON LOCAL*/
+*                       % RPLOCE19 = '''52''X'; /* MULTI BHSETS
+*                                                  SPECIFIED         */
+*                       % RPLOCE21 = '''54''X'; /* INVALID REQUEST
+*                                                  TYPE              */
+*                       % RPLOCE22 = '''55''X'; /* APPLICATION IS
+*                                                  QUIESING          */
+*                       % RPLOCE25 = '''58''X'; /* INVALID LOGON
+*                                                  ADDRESS OR LENGTH */
+*                       % RPLOCE26 = '''59''X'; /* BHSET ID REJECTED */
+*                       % RPLOCE27 = '''5A''X'; /* DUPLICATE NODES   */
+*                       % RPLOCE28 = '''5B''X'; /* VTAM IS HALTING   */
+*                       % RPLOCE29 = '''5C''X'; /* VTAM NOT ACTIVE   */
+*                       % RPLOCE30 = '''5D''X'; /* SRC ADDR OF CID   */
+*                       % RPLOCE31 = '''5E''X'; /* CID NOT RESOLUABLE*/
+*                       % RPLOCE32 = '''5F''X'; /* CID DST NOT OPENED*/
+*                       % RPLOCE33 = '''60''X'; /* NO AUTHORIZATION FOR
+*                                                  PASS              */
+*                       % RPLRNONA = '''6D''X'; /* APPLICATION NOT
+*                                                  AUTHORIZED,
+*                                                  POI INACTIVE      */
+*                       % RPLOCE34 = '''61''X'; /* PASSER NOT OWN
+*                                                  RESOURCE          */
+*                       % RPLOCE35 = '''62''X'; /* RESOURCE NOT OWNED*/
+*                       % RPLOCE36 = '''63''X'; /* PREEMPT UNOPENED
+*                                                  DEVICE            */
+*                       % RPLOCE37 = '''64''X'; /* RESTORE OF PREEMPT
+*                                                  FAILED            */
+*                       % RPLOCE38 = '''65''X'; /* BHSET ID REJECTED */
+*                       % RPLOCE39 = '''66''X'; /* INVALID SETLOGON  */
+*                       % RPLRNOEL = '''6C''X'; /* EXCEEDED LIMIT OF
+*                                                  OUTSTANDING
+*                                                  RCVCMD'S ALLOWED  */
+*                       % RPLOCE40 = '''67''X'; /* CHG INVL FOR SESSION
+*                                                  ,SENSE RETURNED  */
+*                       % RPLOCE41 = '''68''X';/* OPNDST FAIL,BIND FAIL
+*                                                  ,SENSE RETURNED  */
+*                       % RPLACINV = '''69''X'; /* INVALID ACTION    */
+*                       % RPLINVRT = '''6A''X'; /* INVALID RESP TYPE */
+*                       %RPLRNOSE  = '''6E''X';  /* REPLY REJECTED DUE
+*                                                    TO SYNTAX ERROR */
+*                       %RPLRNOIA  = '''6F''X'; /* PROGRAM OPERATOR
+*                                                 INTERFACE INACTIVE */
+*                       %RPLRNOCL  = '''70''X'; /* RCVCMD REJECTED
+*                                                  BECAUSE PROGRAM
+*                                                  OPERATOR APPLICATION
+*                                                  IS CLOSING        */
+*                       % RPLRNOCE = '''71''X'; /* PO-COMMAND REJECTD*/
+*                                               /* DUE TO SYNTAX ERR.*/
+*                       % RPLINVL  = '''80''X'; /* ASE INVL LCCW CODE*/
+*                       % RPLINVCF = '''81''X'; /* ASE INVALID
+*                                                  CHAINING IN LCCW  */
+*                       % RPLIECMD = '''87''X'; /* ASE INVALID
+*                                                  ESCAPE CMD        */
+*                       % RPLLGCNT = '''88''X'; /* LEADING GRAPHS OVER
+*                                                  FIFTEEN           */
+*                       % RPLESCNT = '''89''X'; /* ASE ESCAPE CMD
+*                                                  COUNT             */
+*                       % RPLCPCNT = '''8A''X'; /* COPY LCC COUNT
+*                                                  NE THREE          */
+*                       % RPLVTAME = '''A0''X'; /* ASE MISCELLANEOUS */
+*                       % RPLILRS  = '''A1''X'; /* INCOMPATABLE
+*                                                  SYSGEN            */
+*                       % RPLRDIP  = '''A2''X'; /* RESET IN PROGRESS */
+*                       % RPLUSELE = '''A3''X'; /* MISCELLANEOUS USER
+*                                                  ERROR             */
+*                       % RPLCTLCF = '''A4''X'; /* ASE CTL COMMAND   */
+*                       % RPLMOLTF = '''A5''X'; /* ASE OLTT FAILURE  */
+*                       % RPLCDITS = '''A6''X'; /* ASE CONFLICT DIALG*/
+*                       % RPLCRNF  = '''A7''X'; /* CONV REPLY NOT
+*                                                  POSSIBLE          */
+*                       % RPLNUTRM = '''A8''X'; /* ASE NO UTERM RDTE */
+*                       % RPLELNV  = '''A9''X'; /* ASE ESCAPE LCCW   */
+*                       % RPLNELNV = '''AA''X';/* ASE NON ESCAPE LCCW*/
+*                       % RPLLCH   = '''AB''X';/* ASE LCCW COUNT G255*/
+*                       % RPLNORD  = '''AC''X'; /* READ NOT FIRST TO
+*                                                  BSC DIAL IN       */
+*                       % RPLINVBS = '''AD''X'; /* ASE INVAL BTU RESP*/
+*                       % RPLSEQER = '''AE''X'; /* ASE RSP SEQ ERR   */
+*                       % RPLERNR  = '''AF''X'; /* ASE EXPECTED RESP
+*                                                  NOT RECEIVED      */
+*                       % RPLOLIPX = '''B0''X'; /* OVERLENGTH INPUT
+*                                                  (TRUNC)           */
+*                       % RPLCPYE2 = '''B1''X'; /* COPY WRONG CLUSTER*/
+*                       % RPLRELNP = '''B2''X'; /* RESET LOCK NOT
+*                                                  ALLOWED           */
+*                       % RPLCPYE1 = '''B3''X'; /* COPY UNOPENED FROM
+*                                                  DEVICE            */
+*                       % RPLDFIBH = '''B6''X'; /* DIALOGUE ENTRY
+*                                                  FAILED DUE TO
+*                                                  INVALID BHSET     */
+*                       % RPLDFIPO = '''B7''X'; /* DIALOGUE ENTRY
+*                                                  FAILED DUE TO
+*                                                  INVALID PROCESSING
+*                                                  OPTIONS           */
+*%/*                                                                 */
+* /* NO REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'0C'      */
+* /*                                                                 */
+* /* REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'10'         */
+* /*                                                                 */
+*                         RPLRCWNP = '''00''X'; /* RESET C WAS NOP   */
+*                       % RPLYTCTN = '''80''X'; /* YEILDED TO CON-
+*                                                  TENTION           */
+*                       % RPLYADIF = '''84''X'; /* YEILDED AND DIALOG
+*                                                  INIT FAILURE      */
+*%/*                                                                 */
+* /* REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'14'         */
+* /*                                                                 */
+*                         RPLSTALF = '''01''X'; /* STORAGE ALLOCATION
+*                                                  FAILURE           */
+*%/*                                                                 */
+* /* REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'18'         */
+* /*                                                                 */
+*                         RPLUSRES = '''00''X'; /* USER REST         */
+*                       % RPLRSTSR = '''00''X'; /* RESETSR          */
+*                       % RPLSSTRM = '''80''X'; /* SUCCESSFUL TRM
+*                                                  RESET             */
+*                       % RPLUNTRM = '''81''X'; /* UNSUCCESSFUL TRM
+*                                                  RESET             */
+*%/*                                                                 */
+* /* REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'1C'         */
+* /*                                                                 */
+*                         RPLNCPAO = '''01''X'; /* NCP ABEND RESRT OK*/
+*                       % RPLNCPAN = '''02''X'; /* NCP ABEND RESTART
+*                                                  NOK               */
+*                       % RPLPCF   = '''03''X'; /* PERM CHANNEL
+*                                                  FAILURE           */
+*                       % RPLANS   = '''04''X'; /* AUTO NETWORK
+*                                                  SHUTDOWN          */
+*                       % RPLAPPAB = '''05''X'; /* ASE APPL ABENDED  */
+*                       % RPLCLOCC = '''06''X'; /* CLSDST OCCURRED   */
+*                       % RPLVOFOC = '''07''X'; /* VARY OFFLINE
+*                                                  OCCURRED          */
+*                       % RPLDISCO = '''08''X'; /* DISCONNECT
+*                                                  OCCURRED          */
+*                       % RPLBTHEX = '''09''X'; /* BUFFER THRESHOLD
+*                                                  EXCEEDED          */
+*                       % RPLCLRED = '''0A''X'; /* REG CLEARED      */
+*%/*                                                                 */
+* /* NO REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'20'      */
+* /*                                                                 */
+* /* REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'24'         */
+* /*                                                                 */
+*                         RPLOCS01 = '''01''X'; /* ASE UNEXPECTED
+*                                                  ERROR             */
+*                       % RPLOCS02 = '''02''X'; /* ASE SRT NOT
+*                                                  PRESENT           */
+*                       % RPLOCS03 = '''03''X'; /* ASE CONTROLING NODE
+*                                                  OFFLINE           */
+*                       % RPLOCS04 = '''04''X'; /* ASE RDT ILLEGAL   */
+*                       % RPLOCS05 = '''05''X'; /* ASE NO PROCESS
+*                                                  LOCK              */
+*                       % RPLOCS06 = '''06''X'; /* ASE NO RDT LOCK   */
+*                       % RPLOCS07 = '''07''X'; /* ASE NO ALLOCATION
+*                                                  LOCK              */
+*                       % RPLOCS08 = '''08''X'; /* ASE NO DEVICE LOCK*/
+*                       % RPLOCS09 = '''09''X'; /* ASE COULD NOT
+*                                                  DISCONNECT        */
+*                       % RPLNFMLK = '''0A''X'; /* ASE, NO FM LOCK  */
+*                       % RPLOCS10 = '''10''X'; /* COULD NOT OBTAIN
+*                                                  EPT/DVT LOCK     */
+*                       % RPLOCS11 = '''11''X'; /* ASE, SDT FOR SESSION
+*                                                  FAILED, SENSE RTND*/
+*%/*                                                                 */
+* /* REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'28'         */
+* /*                                                                 */
+*                         RPLDIDOL = '''80''X'; /* DISCONNECT ON DIAL
+*                                                  OUT LINE          */
+*                       % RPLDIDIL = '''90''X'; /* DISCONNECT ON DIAL
+*                                                  IN LINE           */
+*%/*                                                                 */
+* /* EQUATES FOR RPLFDB3 ON RETURN FROM INQUIRE IF RPLRTNCD IS X'00' */
+* /*                                                                 */
+*                         RPLIACT  = '''00''X'; /* APPL ACTIVE       */
+*                       % RPLIINA  = '''04''X'; /* APPL INACTIVE     */
+*                       % RPLINA   = '''08''X'; /* APPL WILL NEVER
+*                                                  ACCEPT LOGONS     */
+*                       % RPLITNA  = '''0C''X'; /* APPLICATION TEMPOR-
+*                                                  ARILY NOT ACCEPTING
+*                                                  LOGONS            */
+*                       % RPLIQUIE = '''10''X'; /* APPL QUIESCING    */
+* /*                                                                 */
+*%GOTO   RPLFBEND;
+*/*
+         MACRO
+         ISTRPLFB
+*
+***********************************************************************
+*                                                                     *
+*        THE FOLLOWING CODES ARE STORED IN EITHER 'RPLFDB2' OR        *
+*        'RPLFDB3'. SEE INTRODUCTORY COMMENTS FOR EACH GROUP FOR      *
+*        FURTHER INFORMATION.                                         *
+*                                                                     *
+***********************************************************************
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'00'
+*
+RPLAOK   EQU   X'00'               OPERATION COMPLETED SUCCESSFULLY
+RPLRCDPR EQU   X'04'               RESET CONDITIONAL SUCCESSFUL-
+*                                  READ-AHEAD DATA PRESENT
+*
+*****    NO REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'04'
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'08'
+*
+RPLCBERR EQU   X'01'               INVALID CONTROL BLOCK
+RPLEXERR EQU   X'02'               EXIT ADDRESS IS 0 OR EXTERNAL ECB
+*                                  ADDRESS IS 0
+RPLCLSIP EQU   X'03'               CLSDST IN PROGRESS
+RPLCIDNG EQU   X'05'               INVALID CID
+RPLILDOP EQU   X'06'               BAD LDO OP CODE
+RPLWANCR EQU   X'08'               READ NOT CHAINED
+RPLSANOD EQU   X'0C'               SOL ANY AND NO DEV CONN
+RPLSANDA EQU   X'0D'               SOL ANY AND NO DEV AVAIL
+RPLSTOOD EQU   X'0E'               SOL TO OUTPUT ONLY
+RPLBUFTE EQU   X'0F'               BUFFER THRESHOLD EXCEEDED
+RPLRTOOD EQU   X'10'               READ TO OUTPUT ONLY
+RPLWTOI  EQU   X'11'               WRITE TO INPUT ONLY
+RPLEWNS  EQU   X'12'               ERASE TO NON 2265/3270
+RPLEWAU3 EQU   X'13'               EAU TO NON 3270
+RPLCWTOO EQU   X'14'               WRITE CONV TO OUTPUT ONLY
+RPLCWB   EQU   X'15'               ERASE AND CONV
+RPLCCCPY EQU   X'16'               COPY LDO W/CC OR CD
+RPLIDA   EQU   X'17'               INVALID DATE AREA OR LENGTH
+RPLILDOA EQU   X'18'               INVALID LDO ADDR
+RPLJTOJ  EQU   X'19'               JUMP TO JUMP
+RPLM255  EQU   X'1A'               OVER 100 LDOS
+RPLRILCP EQU   X'1B'               RESET LDO AND OTHER
+RPLCRIRT EQU   X'1C'               INVALID REQUEST TYPE
+RPLRIOCC EQU   X'1D'               READ LDO W/CC
+RPLEWBLK EQU   X'1E'               ERASE AND BLOCK
+RPLCRSDC EQU   X'1F'               SOL LDO W/CD
+RPLIREST EQU   X'21'               INVALID RESET TYPE
+RPLWBT32 EQU   X'24'               WRITE BLOCK TO 3270
+RPLRMOBN EQU   X'25'               READ MOD OR BUF NON 3270
+RPLCTN32 EQU   X'26'               COPY TO NON 3270R
+RPLWCVDE EQU   X'27'               WRITE CONV. ISSUED AND DATA EXPECTED
+RPLRNFT3 EQU   X'28'               READ NOT FIRST TO 3735
+RPLRCINV EQU   X'29'               RESET COND ILLEGAL
+RPLINVRM EQU   X'2A'               INVALID READ MODE
+RPLATSFI EQU   X'2B'               AREA TOO SMALL FOR INQ
+RPLIIINA EQU   X'2C'               INQ INFO NOT AVAIL
+RPLICNDN EQU   X'2D'               INT COULDNT DET NAME
+RPLILSIN EQU   X'2E'               INVALID LOGON SEQ INIT
+RPLIICBE EQU   X'2F'               CB ERROR IN I AND I
+RPLOLIPT EQU   X'30'               OVERLENGTH INPUT (TRUNC)
+RPLINTNA EQU   X'31'               INT INFO NOT AVAIL
+RPLRCLCK EQU   X'32'               RESET COND WITH LOCK
+RPLOCE01 EQU   X'40'               TYPE NOT SUPPORT LIST
+RPLOCE02 EQU   X'41'               TYPE INVLAID
+RPLOCE03 EQU   X'42'               ACQUIRE INVALID PARM
+RPLOCE05 EQU   X'44'               NO PREEMPT AUTH
+RPLOCE07 EQU   X'46'               INVLID NIB OPTION
+RPLOCE08 EQU   X'47'               DEST UNKNOWN
+RPLOCE09 EQU   X'48'               DEST UNOPENABLE
+RPLOCE10 EQU   X'49'               NOT AUTH TO OPNDST OR INSTALLATION
+*                                  PROVIDED SUBROUTINE FAILED TO
+*                                  PROVIDE APPL NAME TO INTRPRET
+RPLOCE11 EQU   X'4A'               DEST UNAVAIL OFFLINE
+RPLOCE12 EQU   X'4B'               DEST UNAVAIL IN USE
+RPLOCE13 EQU   X'4C'               NO LOGON FOUND ACCEPT
+RPLOCE14 EQU   X'4D'               OPNDST CANCELED
+RPLOCE16 EQU   X'4F'               INVALID MODE NAME
+RPLOCE19 EQU   X'52'               MULTI BH SETS SPECIFIED
+RPLOCE21 EQU   X'54'               INVALID REQUEST TYPE
+RPLOCE22 EQU   X'55'               APPL IS QUIESING
+RPLOCE25 EQU   X'58'               INVALID LOGON ADDR OR LEN
+RPLOCE27 EQU   X'5A'               DUPLICATE NODES
+RPLOCE28 EQU   X'5B'               VTAM IS HALTING
+RPLOCE29 EQU   X'5C'               VTAM NOT ACTIVE
+RPLOCE32 EQU   X'5F'               CID DST NOT OPENED
+RPLOCE33 EQU   X'60'               NO AUTH FOR PASS
+RPLRNONA EQU   X'6D'               APPLICATION NOT AUTHORIZED
+*                                  POI INACTIVE
+RPLOCE34 EQU   X'61'               PASSER NOT OWN RESOURCE
+RPLOCE35 EQU   X'62'               RESOURCE NOT OWNED
+RPLOCE36 EQU   X'63'               PREEMPT UNOPENED DEVICE
+RPLOCE37 EQU   X'64'               RESTORE OF PREEMPT FAILED
+RPLOCE39 EQU   X'66'               INVALID SETLOGON
+RPLRNOEL EQU   X'6C'               EXCEEDED LIMIT OF OUTSTANDING
+*                                  RCVCMD'S ALLOWED
+RPLRNOSE EQU   X'6E'               REPLY REJECTED DUE TO SYNTAX ERROR
+RPLRNOIA EQU   X'6F'               PROGRAM OPERATOR INTERFACE INACTIVE
+RPLRNOCL EQU   X'70'               RCVCMD REJECTED BECAUSE PROGRAM
+*                                  OPERATOR APPLICATION IS CLOSING
+RPLRNOCE EQU   X'71'               PO-COMMAND REJECTED
+*                                  DUE TO SYNTAX ERROR
+RPLLGCNT EQU   X'88'               LEADING GRAPHS OVER FIFTEEN
+RPLCPCNT EQU   X'8A'               COPY LCC COUNT NE THREE
+RPLILRS  EQU   X'A1'               INCOMPATABLE SYSGEN
+RPLUSELE EQU   X'A3'               MISCELLANEOUS USER ERROR
+RPLCRNF  EQU   X'A7'               CONV REPLY NOT POSSIBLE
+RPLNORD  EQU   X'AC'               READ NOT FIRST TO BSC DIAL-IN
+RPLOLIPX EQU   X'B0'               OVERLENGTH INPUT (TRUNC)
+RPLCPYE2 EQU   X'B1'               COPY WRONG CLUSTER
+RPLRELNP EQU   X'B2'               RESET LOCK NOT ALLOWED
+RPLCPYE1 EQU   X'B3'               COPY UNOPENED FROM DEVICE
+RPLDFIBH EQU   X'B6'               DIALOGUE ENTRY FAILED DUE TO INVALID
+*                                  BHSET
+RPLDFIPO EQU   X'B7'               DIALOGUE ENTRY FAILED DUE TO
+*                                  INVALID PROCESSING OPTIONS
+*
+*****    NO REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'0C'
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'10'
+*
+RPLRCWNP EQU   X'00'               RESET C WAS NOOP
+RPLYTCTN EQU   X'80'               YIELDED TO CONTENTION
+RPLYADIF EQU   X'84'               YIELDED AND DIALOG INIT FAILURE
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'14'
+*
+RPLSTALF EQU   X'01'               STORAGE ALLOCATION FAILURE
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'18'
+*
+RPLUSRES EQU   X'00'               USER RESET
+RPLSSTRM EQU   X'80'               SUCCESSFUL TERMINAL RESET
+RPLUNTRM EQU   X'81'               UNSUCCESSFUL TERMINAL RESET
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'1C'
+*
+RPLNCPAN EQU   X'02'               NCP ABEND RESTART NOT OK
+RPLPCF   EQU   X'03'               PERM CHANNEL FAILURE
+RPLANS   EQU   X'04'               AUTO NETWORK SHUTDOWN
+RPLCLOCC EQU   X'06'               CLSDST OCCURRED
+RPLVOFOC EQU   X'07'               VARY OFFLINE OCCURRED
+RPLDISCO EQU   X'08'               DISCONNECT OCCURRED
+RPLBTHEX EQU   X'09'               BUFFER THRESHOLD EXCEEDED
+*
+*****    NO REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'20'
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'24'
+*
+RPLOCS01 EQU   X'01'               ASE UNEXPECTED ERROR
+RPLOCS02 EQU   X'02'               ASE SRT NOT PRESENT
+RPLOCS03 EQU   X'03'               ASE CONTROLING NODE OFFLINE
+RPLOCS04 EQU   X'04'               ASE RDT ILLEGAL
+RPLOCS05 EQU   X'05'               ASE NO PROCESS LOCK
+RPLOCS06 EQU   X'06'               ASE NO RDT LOCK
+RPLOCS07 EQU   X'07'               ASE NO ALLOCATION LOCK
+RPLOCS08 EQU   X'08'               ASE NO DEVICE LOCK
+RPLOCS09 EQU   X'09'               ASE COULD NOT DISCONNECT
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUAL X'28'
+*
+RPLDIDOL EQU   X'80'               DISCONNECT ON DIAL OUT LINE
+RPLDIDIL EQU   X'90'               DISCONNECT ON DIAL IN LINE
+*
+*****    EQUATES FOR RPLFDB3 ON RETURN FROM INQUIRE IF
+*****    RPLRTNCD IS X'00'
+*
+RPLIACT  EQU   X'00'               APPLICATION IS ACTIVE
+RPLIINA  EQU   X'04'               APPLICATION IS INACTIVE
+RPLINA   EQU   X'08'               APPLICATION WILL NOT ACCEPT LOGONS
+RPLITNA  EQU   X'0C'               APPLICATION IS TEMPORARILY NOT
+*                                  ACCEPTING LOGONS
+RPLIQUIE EQU   X'10'               APPLICATION IS QUIESCING
+*
+         MEND
+*                                                                    */
+*%RPLFBEND: ;
+

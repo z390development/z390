@@ -1,0 +1,369 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*
+* $MAC(RACLIST) COMP(SC1BN) PROD(RACF):
+*
+* DESCRIPTIVE_NAME = AUTHORIZATION CHECKING INTERFACE
+*
+*
+* STATUS = OS/VS2 EBB1102
+*
+* FUNCTION = BUILDS IN-STORAGE PROFILES FOR RACF DEFINED RESOURCES.
+*            RACLIST PROCESSES ONLY THOSE RESOURCES DESCRIBED BY
+*            CLASS DESCRIPTORS..
+*
+* CHANGE ACTIVITY = A000000-999999                             @PC003PY
+*                   $T1=UZ90211,SAF/RF15,810702,CNTDSD:            @T1A
+*                   UZ90283                                    @ZA90283
+*                   UZ90284                                    @ZA90284
+*                   UZ90285                                    @ZA90285
+*
+         MACRO
+&SYMBOL  RACLIST &LIST=,&CLASS=,&ACEE=,&APPL=,&ENVIR=,&SUBPOOL=,       *
+               &MF=S,&INSTLN=,&OWNER=
+.******* DEFINE LOCAL SET SYMBOLS
+         LCLA  &BIT0,&BIT1,&BIT2
+         LCLA  &BIX0,&BIX1,&BIX2
+         LCLA  &OFFSET,&CLNGTH
+         LCLB  &MFFLAG
+         LCLC  &SUBSTR
+.******* DEFINE GLOBAL SET VARIABLES                               @T1A
+         GBLB  &ICHRAC              ICHRAC - A FLAG WHICH, WHEN    @T1A
+.*                                  ON, INDICATES THAT THIS MACRO  @T1A
+.*                                  IS BEING INVOKED INTERNALLY    @T1A
+.*                                  BY THE RACROUTE MACRO.         @T1A
+         GBLC  &ICHL                THIS IS USED TO COMMUNICATE    @T1A
+.*                                  TO THE RACROUTE MACRO THE      @T1A
+.*                                  ADDRESS OF THE PARAMETER LIST  @T1A
+.******* PERFORM PARAMETER DIAGNOSIS
+.******* VALIDATE MF PARAMETER
+         AIF   ('&MF' NE 'S' AND '&MF' NE 'L' AND '&MF'(1,2) NE        -
+               '(E').ERR06
+.ERTN06  ANOP
+.******* VALIDATE ENVIR PARAMETER
+         AIF   ('&ENVIR' EQ '').ERTN05
+         AIF   ('&ENVIR' NE 'CREATE' AND '&ENVIR' NE 'DELETE').ERR05
+.ERTN05  ANOP
+.******* VALIDATE OWNER PARAMETER
+         AIF   ('&OWNER' EQ '').ERTN04
+         AIF   ('&OWNER' NE 'NO' AND '&OWNER' NE 'YES').ERR04
+.ERTN04  ANOP
+.******* REGISTER SPECIFICATION OF ADDR TYPE PARAMETERS NOT ALLOWED
+.******* WITH LIST FORM
+         AIF   ('&MF' NE 'L').RLST070
+         AIF   ('&CLASS' EQ '').RLST010
+         AIF   ('&CLASS'(1,1) EQ '(').ERR07
+.RLST010 ANOP
+         AIF   ('&LIST' EQ '').RLST020
+         AIF   ('&LIST'(1,1) EQ '(').ERR07
+.RLST020 ANOP
+         AIF   ('&ACEE' EQ '').RLST030
+         AIF   ('&ACEE'(1,1) EQ '(').ERR07
+.RLST030 ANOP
+         AIF   ('&INSTLN(1)' NE '&INSTLN').ERR07
+.RLST040 ANOP
+         AIF   ('&APPL' EQ '').RLST050
+         AIF   ('&APPL'(1,1) EQ '(').ERR07
+.RLST050 ANOP
+         AIF   ('&SUBPOOL(1)' EQ '').RLST060
+         AIF   ('&SUBPOOL(1)'(1,1) EQ '(').ERR07
+.RLST060 ANOP
+         AIF   ('&SUBPOOL(2)' EQ '').RLST061
+         AIF   ('&SUBPOOL(2)'(1,1) EQ '(').ERR07
+.RLST061 ANOP
+.ERTN07  ANOP
+.RLST070 ANOP
+.******* PRODUCE LIST FORM IF REQUESTED
+         AIF   ('&MF' NE 'L').RLST430
+&SYMBOL  DS    0F
+.RLST100 ANOP
+ICH0&SYSNDX EQU *
+.******* PRODUCE BYTE INFORMATION
+         AIF   ('&SUBPOOL(1)' EQ '').RLST110
+         AIF   ('&SUBPOOL(1)'(1,1) EQ '(').RLST110
+&ICHL    DC    AL1(&SUBPOOL(1))        INDEX SUBPOOL NUMBER        @T1A
+         AGO   .RLST115
+.RLST110 ANOP
+&ICHL    DC    AL1(255)                INDEX SUBPOOL NUMBER        @T1A
+.RLST115 ANOP
+         AIF   ('&SUBPOOL(2)' EQ '').RLST120
+         AIF   ('&SUBPOOL(2)'(1,1) EQ '(').RLST120
+         DC    AL1(&SUBPOOL(2)) -      PROFILE SUBPOOL NUMBER
+         AGO   .RLST125
+.RLST120 ANOP
+         DC    AL1(255)         -      PROFILE SUBPOOL NUMBER
+.RLST125 ANOP
+         DC    AL1(2)           -      RACLIST ENTRY CODE
+.******* PRODUCE FLAG BYTE 1 FROM ENVIR/OWNER PARAMETER
+&BIT0    SETA  0
+&BIT1    SETA  0
+&BIT2    SETA  0
+         AIF   ('&ENVIR' EQ '' OR '&ENVIR' EQ 'CREATE').RLST130
+         AIF   ('&ENVIR' NE 'DELETE').RLST130
+&BIT0    SETA  1
+.RLST130 ANOP
+         AIF   ('&OWNER' EQ '' OR '&OWNER' EQ 'NO').RLST131
+         AIF   ('&OWNER' NE 'YES').RLST131
+&BIT2    SETA  1
+.RLST131 ANOP
+         DC    B'&BIT0&BIT1&BIT2.00000' -  ENVIR/OWNER FLAGS
+.******* PROCESS LIST PARMETER
+         AIF   ('&LIST' EQ '').RLST140
+         AIF   ('&LIST'(1,1) EQ '(').RLST140
+         DC    A(&LIST(1)) -           LIST ADDRESS
+         AGO   .RLST145
+.RLST140 ANOP
+         DC    A(0) -                  LIST ADDRESS
+.RLST145 ANOP
+.******* PROCESS ACEE PARAMETER
+         AIF   ('&ACEE' EQ '').RLST150
+         AIF   ('&ACEE'(1,1) EQ '(').RLST150
+         DC    A(&ACEE(1)) -           ACEE ADDRESS
+         AGO   .RLST155
+.RLST150 ANOP
+         DC    A(0) -                  ACEE ADDRESS
+.RLST155 ANOP
+.******* PROCESS INSTLN PARAMETER
+         AIF   ('&INSTLN' EQ '' OR                                     *
+               '&INSTLN(1)' NE '&INSTLN').RLST160
+         DC    A(&INSTLN) -             ADDRESS OF INSTALLATION DATA
+         AGO   .RLST165
+.RLST160 ANOP
+         DC    A(0) -                   ADDRESS OF INSTALLATION DATA
+.RLST165 ANOP
+.******* PROCESS APPL PARAMETER
+         AIF   ('&APPL' EQ '').RLST175
+         AIF   ('&APPL'(1,1) EQ '(').RLST175
+         AIF   ('&APPL'(1,1) EQ '''').RLST170
+         DC    A(&APPL) -               APPL ADDRESS
+         AGO   .RLST180
+.RLST170 ANOP
+         DC    A(ICH1&SYSNDX) -         APPL ADDRESS
+         AGO   .RLST180
+.RLST175 ANOP
+         DC    A(0) -                   APPL ADDRESS
+.RLST180 ANOP
+.******* PROCESS CLASSS PARAMETER
+         AIF   ('&CLASS' EQ '').RLST195
+         AIF   ('&CLASS'(1,1) EQ '(').RLST195
+         AIF   ('&CLASS'(1,1) EQ '''').RLST190
+         DC    A(&CLASS) -              CLASS ADDRESS
+         AGO   .RLST200
+.RLST190 ANOP
+         DC    A(ICH2&SYSNDX) -         CLASS ADDRESS
+         AGO   .RLST200
+.RLST195 ANOP
+         DC    A(0) -                  CLASS ADDRESS
+.RLST200 ANOP
+.******* IF APPL EXPLICITLY SPECIFIED, PRODUCE IT BELOW LIST
+         AIF   ('&APPL' EQ '').RLST210
+         AIF   ('&APPL'(1,1) NE '''').RLST210
+ICH1&SYSNDX DC   CL8&APPL -            APPL NAME
+.RLST210 ANOP
+.******* IF CLASS EXPLICITLY SPECIFIED, PRODUCE IT BELOW LIST
+         AIF   ('&CLASS' EQ '').RLST220
+         AIF   ('&CLASS'(1,1) NE '''').RLST220
+ICH2&SYSNDX DC    CL8&CLASS    -       CLASS NAME
+.RLST220 ANOP
+.******* LIST FORM COMPLETE - TEST FOR STANDARD FORM PASS
+.******* THROUGH LIST FORM
+         AIF   (&MFFLAG).RLST390
+         MEXIT
+.RLST430 ANOP
+         AIF   ('&MF(1)' EQ 'E').RLST500
+.******* STANDARD FORM REQUESTED
+&SYMBOL  DS    0H
+&MFFLAG  SETB  1              SET TRUE FOR PASS THROUGH LIST FORM
+.******* PROCESS SUBPOOL PARAMETER
+         AIF   ('&SUBPOOL(1)' EQ '').RLST300
+         AIF   ('&SUBPOOL(1)'(1,1) NE '(').RLST300
+         STC   &SUBPOOL(1),ICH0&SYSNDX -   STORE INDEX SUBPOOL
+.RLST300 ANOP
+         AIF   ('&SUBPOOL(2)' EQ '').RLST305
+         AIF   ('&SUBPOOL(2)'(1,1) NE '(').RLST305
+         STC    &SUBPOOL(2),ICH0&SYSNDX+1 - STORE PROFILE SUBPOOL
+.RLST305 ANOP
+.******* PROCESS LIST PARAMETER
+         AIF   ('&LIST' EQ '').RLST310
+         AIF   ('&LIST'(1,1) NE '(').RLST310
+         ST    &LIST(1),ICH0&SYSNDX+4 - STORE LIST ADDRESS
+.RLST310 ANOP
+.******* PROCESS ACEE PARAMETER
+         AIF   ('&ACEE' EQ '').RLST320
+         AIF   ('&ACEE'(1,1) NE '(').RLST320
+         ST    &ACEE(1),ICH0&SYSNDX+8 - STORE ACEE ADDRESS
+.RLST320 ANOP
+.******* PROCESS INSTLN PARAMETER
+         AIF   ('&INSTLN' EQ '' OR '&INSTLN(1)' EQ '&INSTLN').RLST330
+         ST    &INSTLN(1),ICH0&SYSNDX+12 - STORE INSTALLATION DATA ADDR
+.RLST330 ANOP
+.******* PROCESS APPL PARAMETER
+         AIF   ('&APPL' EQ '').RLST340
+         AIF   ('&APPL'(1,1) NE '(').RLST340
+         ST    &APPL(1),ICH0&SYSNDX+16 - STORE APPL NAME ADDRESS
+.RLST340 ANOP
+.******* PROCESS CLASS PARAMETER
+         AIF   ('&CLASS' EQ '').RLST350
+         AIF   ('&CLASS'(1,1) NE '(').RLST350
+         ST    &CLASS(1),ICH0&SYSNDX+20 - STORE CLASS NAME ADDRESS
+.RLST350 ANOP
+.******* LIST FORM MODIFICATION COMPLETE
+.******* - PRODUCE LIST FORM WITH BAL AROUND
+         CNOP  0,4
+&OFFSET  SETA  28
+         AIF   ('&APPL' EQ '').RLST380
+         AIF   ('&APPL'(1,1) NE '''').RLST380
+&OFFSET  SETA  &OFFSET+8
+.RLST380 ANOP
+         AIF   ('&CLASS' EQ '').RLST385
+         AIF   ('&CLASS'(1,1) NE '''').RLST385
+&OFFSET  SETA  &OFFSET+8
+.RLST385 ANOP
+         BAL   1,*+&OFFSET -  POINT REG 1 AT PARM LIST
+         AGO   .RLST100
+.RLST390 ANOP
+.***********************************************************       @T1A
+.* IF THIS MACRO WAS INVOKED INTERNALLY BY THE RACROUTE            @T1A
+.* MACRO, SIMPLY EXIT RATHER THAN GOING TO THE RACF ROUTINE.       @T1A
+.***********************************************************       @T1A
+         AIF   (&ICHRAC).RLST395                                   @T1A
+.******* RETURN FROM LIST FORM TO PRODUCE SVC
+         L     15,16(0,0)            GET CVT ADDRESS
+         L     15,X'3E0'(0,15)       GET RACF CVT ADDRESS
+         LTR   15,15                 RACF CVT EXIST
+         BZ    *+20                  NO, BRANCH TO SET NOT ACTIVE
+         TM    X'35'(15),X'80'       RACF ACTIVE (RCVTSTAT)
+         BO    *+20                  NO, BRANCH
+         CLI   X'AC'(15),X'02'       RACF FUNCTION SUPPORTED (RCVTVERS)
+         BNL   *+20                  YES, BRANCH
+         LA    15,28(0,0)            RACF FUNCTION NOT SUPPORTED
+         B     *+14                  SKIP CALL
+         LA    15,16(0,0)            RACF NOT ACTIVE RET CODE
+         B     *+6                   SKIP CALL
+         SVC   132                   INVOKE RACF SVC ROUTER
+.RLST395 ANOP                                                      @T1A
+         MEXIT
+.******* PRODUCE EXECUTE FORM OF MACRO
+.RLST500 ANOP
+         AIF   (&ICHRAC).RLST503                                   @T1A
+&SYMBOL  IHBINNRA &MF(2) -    POINT REG1 AT LIST FORM
+         AGO   .RLST505                                            @T1A
+.**************************************************************    @T1A
+.*  IF THIS MACRO WAS INVOKED INTERNALLY BY THE RACROUTE MACRO,    @T1A
+.*  PICK UP THE ADDRESS OF THE RACLIST PARAMETER LIST FROM THE     @T1A
+.*  RACROUTE PARAMETER LIST.                                       @T1A
+.**************************************************************    @T1A
+.RLST503 ANOP                                                      @T1A
+         A     1,36(1)           POINT REG 1 AT RACLIST LIST       @T1A
+.RLST505 ANOP                                                      @T1A
+.******* PRODUCE INSTRUCTIONS TO MODIFY LIST
+         AIF   ('&SUBPOOL(1)' EQ '').RLST515
+         AIF   ('&SUBPOOL(1)'(1,1) EQ '(').RLST510
+         MVI   0(1),&SUBPOOL(1) -      INDEX SUBPOOL NUMBER
+         AGO   .RLST515
+.RLST510 ANOP
+         STC   &SUBPOOL(1),0(1) -      INDEX SUBPOOL NUMBER
+.RLST515 ANOP
+         AIF   ('&SUBPOOL(2)' EQ '').RLST525
+         AIF   ('&SUBPOOL(2)'(1,1) EQ '(').RLST520
+         MVI   1(1),&SUBPOOL(2) -      PROFILE SUBPOOL NUMBER
+         AGO   .RLST525
+.RLST520 ANOP
+         STC   &SUBPOOL(2),1(1) -      PROFILE SUBPOOL NUMBER
+.RLST525 ANOP
+.******* PRODUCE FLAG BYTE WITH ENVIR FLAG
+         AIF   ('&ENVIR' EQ '' AND '&OWNER' EQ '').RLST535
+&BIT0    SETA  0
+&BIT1    SETA  0
+&BIT2    SETA  0
+&BIX0    SETA  1
+&BIX1    SETA  1
+&BIX2    SETA  1
+         AIF   ('&ENVIR' EQ '').RLST530
+&BIX0    SETA  0
+&BIX1    SETA  0
+         AIF   ('&ENVIR' EQ 'CREATE').RLST530
+         AIF   ('&ENVIR' NE 'DELETE').RLST530
+&BIT0    SETA  1
+.RLST530 ANOP
+         AIF   ('&OWNER' EQ '').RLST531
+&BIX2    SETA  0
+         AIF   ('&OWNER' EQ 'NO').RLST531
+         AIF   ('&OWNER' NE 'YES').RLST531
+&BIT2    SETA  1
+.RLST531 ANOP
+         NI    3(1),B'&BIX0&BIX1&BIX2.00000' -  ENVIR/OWNER FLAGS
+         OI    3(1),B'&BIT0&BIT1&BIT2.00000' -  ENVIR/OWNER FLAGS
+.RLST535 ANOP
+.******* PROCESS LIST PARAMETER
+         AIF   ('&LIST' EQ '').RLST545
+         AIF   ('&LIST'(1,1) NE '(').RLST540
+         ST    &LIST(1),4(1) -          STORE LIST ADDRESS
+         AGO   .RLST545
+.RLST540 ANOP
+         LA    0,&LIST(1) -             MOVE LIST ADDRESS
+         ST    0,4(1) -                 INTO PARM LIST
+.RLST545 ANOP
+.******* PROCESS ACEE PARAMETER
+         AIF   ('&ACEE' EQ '').RLST555
+         AIF   ('&ACEE'(1,1) NE '(').RLST550
+         ST    &ACEE(1),8(1) -          STORE ACEE ADDRESS
+         AGO   .RLST555
+.RLST550 ANOP
+         LA    0,&ACEE(1) -             MOVE ACEE ADDRESS
+         ST    0,8(1) -                 INTO PARM LIST
+.RLST555 ANOP
+.******* PRODUCE INSTALLATION DATA ADDRESS
+         AIF   ('&INSTLN' EQ '').RLST565
+         AIF   ('&INSTLN'(1,1) NE '(').RLST560
+         ST    &INSTLN(1),12(1) -       STORE INSTALLATION ADDR
+         AGO   .RLST565
+.RLST560 ANOP
+         LA    0,&INSTLN -              ADDRESS INSTALLATION DATA
+         ST    0,12(1) -                STORE INSTALLATION DATA ADDRESS
+.RLST565 ANOP
+.******* HANDLE APPL PARAMETER
+         AIF   ('&APPL' EQ '').RLST575
+         AIF   ('&APPL'(1,1) EQ '''').ERR10
+         AIF   ('&APPL'(1,1) NE '(').RLST570
+         ST    &APPL(1),16(1) -         STORE APPL NAME ADDRESS
+         AGO   .RLST575
+.RLST570 ANOP
+         LA    0,&APPL -                MOVE APPL NAME ADDRESS
+         ST    0,16(1) -                INTO PARM LIST
+.ERTN10  ANOP
+.RLST575 ANOP
+.******* HANDLE CLASS PARAMETER
+         AIF   ('&CLASS' EQ '').RLST585
+         AIF   ('&CLASS'(1,1) EQ '''').ERR09
+         AIF   ('&CLASS'(1,1) NE '(').RLST580
+         ST    &CLASS(1),20(1) -        STORE CLASS NAME ADDRESS
+         AGO   .RLST585
+.RLST580 ANOP
+         LA    0,&CLASS -               MOVE CLASS NAME ADDRESS
+         ST    0,20(1) -                INTO PARM LIST
+.ERTN09  ANOP
+.RLST585 ANOP
+.******* MODIFICATION COMPLETE - AGO ABOVE TO PRODUCE ENTRY LOGIC
+         AGO   .RLST390
+.******* DIAGNOSTICS
+.ERR04   ANOP
+         MNOTE 8,'*** INVALID OWNER PARAMETER SPECIFIED ***'
+         AGO   .ERTN04
+.ERR05   ANOP
+         MNOTE 8,'*** INVALID ENVIR PARAMETER SPECIFIED ***'
+         AGO   .ERTN05
+.ERR06   ANOP
+         MNOTE 8,'*** INVALID MF PARAMETER SPECIFIED ***'
+         AGO   .ERTN06
+.ERR07   ANOP
+         MNOTE 8,'*** REGISTER ADDRESS SPECIFICATION NOT ALLOWED WITH L-
+               IST FORM ***'
+         AGO   .ERTN07
+.ERR09   ANOP
+         MNOTE 8,'*** ''CLASSNAME'' FORM NOT ALLOWED WITH MF=E ***'
+         AGO   .ERTN09
+.ERR10   ANOP
+         MNOTE 8,'*** ''APPL'' FORM NOT ALLOWED WITH MF=E ***'
+         AGO   .ERTN10
+         MEND
+

@@ -1,0 +1,6 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    EXT
+&NAME    DC    XL2'FF00'                END ALGORITHM
+         MEND
+

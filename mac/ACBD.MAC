@@ -1,0 +1,29 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* MAINTENANCE
+.* 10/22/05 INITIAL CODING                    
+.*********************************************************************
+         ACBD   
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.*       ACCESS CONTROL BLOCK DSECT FOR VSAM
+.*
+IHAACB   DSECT
+ACBIOBAD DS    A              INPUT/OUTPUT BLOCK (TIOT TABLE INDEX)
+ACBDDNAM DS    CL8            DDNAME > ENV VAR > FILE NAME
+ACBDSNAM DS    A              ADDRESS OF USER SUPPLIED DSN FILE SPEC 
+ACBMACRF DS    H              MACRO REFERENCE ACCESS TYPE
+ACBMACRF_KEY EQU X'8000'         KEY ACCESS    
+ACBMACRF_SEQ EQU X'4000'         SEQUENTIAL ACCESS
+ACBMACRF_DIR EQU X'2000'         RANDOM ACCESS
+ACBMACRF_OUT EQU X'1000'         WRITE UPDATE
+ACBLEN   EQU   *-IHAACB
+         MEND

@@ -1,0 +1,58 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    CSTBL &N
+         LCLA  &X                       COUNTER OF TABLE ENTRIES
+         LCLA  &L                       LENGTH OF TABLE ENTRIES
+         LCLA  &L1
+         LCLA  &P                       MODULE/POCKET CODE
+         AIF   ('&SYSLIST(1)' EQ 'T').G
+&P       SETA  &SYSLIST(1)
+         AIF   ('&SYSLIST(2)' EQ 'T').F
+&X       SETA  2
+.A       AIF   ('&SYSLIST(&X)' EQ 'T').B
+         AIF   ('&SYSLIST(&X)' EQ '').B END OF ENTRIES
+&X       SETA  &X+1                     COUNTER
+         AGO   .A
+.B       ANOP
+&X       SETA  &X-2
+         AIF   ('&P' GE '11' AND '&P' LE '16' OR '&P' GE '21' AND '&P' X
+               LE '26' OR '&P' GE '31' AND '&P' LE '36' OR '&P' GE '41'X
+                AND '&P' LE '46' OR '&P' GE '51' AND '&P' LE '56').B1
+         AIF   ('&P' GE '61' AND '&P' LE '66').B1
+         MNOTE 12,'***  IHB356  INVALID MODULE POCKET  CODE;  MP11 IS  X
+               ASSUMED'
+&NAME    DC    AL1(&X),XL1'11'          NNMP HEADER - DEFAULT MP
+         AGO   .B2
+.B1      ANOP
+&NAME    DC    AL1(&X),XL1'&SYSLIST(1)'  NNMP HEADER
+.B2      ANOP
+&X       SETA  1
+&L       SETA  K'&SYSLIST(2)            LENGTH OF ENTRY
+         AIF   ((&L-(&L/2)*2) NE 1).C
+&L1      SETA  (&L+1)/2                 YES, MAKE EVEN
+         AGO   .D
+.C       ANOP
+&L1      SETA  &L/2                     NO
+.D       ANOP
+&X       SETA  &X+1
+         AIF   ('&SYSLIST(&X)' EQ 'T').G
+         AIF   ('&SYSLIST(&X)' EQ '').END
+         AIF   (K'&SYSLIST(&X) EQ &L).E
+         MNOTE 8,'***  IHB358  ALL TABLE ENTRIES MUST BE EQUAL LENGTH'
+.E       ANOP
+         DC    XL&L1'&SYSLIST(&X)'      TABLE ENTRY
+         AGO   .D
+.F       AIF   ('&P' GE '11' AND '&P' LE '16' OR '&P' GE '21' AND '&P' X
+               LE '26' OR '&P' GE '31' AND '&P' LE '36' OR '&P' GE '41'X
+                AND '&P' LE '46' OR '&P' GE '51' AND '&P' LE '56').F1
+         AIF   ('&P' GE '61' AND '&P' LE '66').F1
+         MNOTE 12,'***  IHB356  INVALID MODULE POCKET  CODE;  MP11 IS  X
+               ASSUMED'
+         DC    XL2'0011'
+         AGO   .END
+.F1      ANOP
+         DC    XL2'00&SYSLIST(1)'
+         AGO   .END
+.G       ANOP
+         DC    XL2'0'
+.END     MEND

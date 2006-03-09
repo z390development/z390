@@ -1,0 +1,210 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    IREC  &MP11=,&MP12=,&MP13=,&MP14=,&MP15=,&MP16=,&MP21=,       X
+               &MP22=,&MP23=,&MP24=,&MP25=,&MP26=,&MP31=,&MP32=,       X
+               &MP33=,&MP34=,&MP35=,&MP36=,&MP41=,&MP42=,&MP43=,       X
+               &MP44=,&MP45=,&MP46=,&MP51=,&MP52=,&MP53=,&MP54=,       X
+               &FLD1=,&FLD2=,&FLD3=,&FLD4=,&FLD5=,&FLD6=,&FLD7=,       X
+               &FLD8=,&RPNO=,&KPNO=,&ENDRS=,&MCF=,&VSYMB=,&ITNO=,      X
+               &HOZ=,&OPT=,                                            X
+               &MP55=,&MP56=,&MP61=,&MP62=,&MP63=,&MP64=,&MP65=,&MP66=
+         GBLA  &C(7),&DE(7),&L(8),&SUM
+         GBLB  &FT(7),&D(7),&IP(7),&FRP,&FR(7),&IMP,&M
+         GBLB  &CT(36),&K(36)
+         LCLA  &RCT,&KCT,&F1,&PP1,&PP2,&PP4,&RL,&POS,&IHOS,&MHOS
+.*                                                             @YM00641
+         LCLB  &CS,&RIP,&MCFS,&US,&BUG,&RJ,&RP,&MBM            @ZA04499
+         LCLB  &I1,&I2,&I3,&I4
+&IHOS    SETA  4                       ITNO DEFAULT SEGMENT LENGTH
+.*                                                             @YM00641
+&MHOS    SETA  4                       MCF DEFAULT SEGMENT LENGTH
+.*                                                             @YM00641
+&I3      SETB  0                       NON - USED FEATURE
+         FIELD &FLD1,&FLD2,&FLD3,&FLD4,&FLD5,&FLD6,&FLD7,&FLD8
+.P1      PCKT  &MP11,&MP12,&MP13,&MP14,&MP15,&MP16,&MP21,&MP22,&MP23,  X
+               &MP24,&MP25,&MP26,&MP31,&MP32,&MP33,&MP34,&MP35,&MP36,  X
+               &MP41,&MP42,&MP43,&MP44,&MP45,&MP46,&MP51,&MP52,&MP53,  X
+               &MP54,&MP55,&MP56,&MP61,&MP62,&MP63,&MP64,&MP65,&MP66,  X
+               &RPNO,&KPNO
+.PN1     AIF   ('&RPNO' EQ '').PN2      SET NUMBERS FOR POCKET COUNTERS
+         AIF   (T'&RPNO NE 'N').ERROR
+&RCT     SETA  &RPNO                    SET REHANDLE COUNTER
+         AIF   (&RCT LE 4095).PN2
+         MNOTE 4,'***  IHB408  RPNO OR KPNO EXCEEDS 4095'
+.PN2     AIF   ('&KPNO' EQ '').SF1
+         AIF   (T'&KPNO NE 'N').ERROR
+&KCT     SETA  &KPNO                    SET KILL COUNTER
+         AIF   (&KCT LE 4095).SF1
+         MNOTE 4,'***  IHB408  RPNO OR KPNO EXCEEDS 4095'
+         AGO   .SF1
+.ERROR   MNOTE 12,'***  IHB417 INVALID RPNO OR KPNO NUMBER'
+.SF1     AIF   ('&ITNO' EQ '').SF3      DEFINE SPECIAL FEATURES
+&I1      SETB  1                        ITEM NUMBERING
+         AIF   ('&ITNO(1)' EQ '').SF2
+&F1      SETA  &ITNO(1)                 INITIAL VALUE
+.SF2     AIF   ('&ITNO(2)' EQ '').SF25                         @YM00641
+&PP1     SETA  &ITNO(2)                 PRINT POSITION
+         AIF   (&PP1 GE 0 AND &PP1 LE 3).SF25                  @ZA04480
+         MNOTE 4,'***  IHB410  ITEM NUMBERING PRINT POSITION NOT 1-3'
+&PP1     SETA  1                        DEFAULT PRINT POSITIONS
+.SF25    AIF   ('&ITNO(3)' EQ '').SF3                          @YM00641
+&IHOS    SETA  &ITNO(3)                HIGH ORDER SEGMENT LENGTH
+.*                                                             @YM00641
+         AIF   (&IHOS GE 0 AND &IHOS LE 5).SF3                 @YM00641
+         MNOTE 4,'*** IHB422 ITNO HIGH ORDER SEGMENT NOT 0-5'  @YM00641
+&IHOS    SETA  4                       DEFAULT HIGH ORDER SEGMENT LEN
+.*                                                             @YM00641
+.SF3   AIF     ('&ENDRS' EQ '').MC1     ENDORSE
+&I2      SETB  1
+&PP2     SETA  &ENDRS                   PRINT POSITION
+         AIF   (&PP2 GE 0 AND &PP2 LE 3).MC1                   @ZA04480
+         MNOTE 4,'***  IHB409  ENDORSE PRINT POSITION NOT 1-3'
+&PP2     SETA  1                        DEFAULT PRINT POSITION
+.MC1     AIF   ('&MCF' EQ '').OPT        MICROFILM
+&I4      SETB  1
+         AIF   ('&MCF(2)' EQ '').MC3    MICROFILM FRONT AND BACK
+         AIF   ('&MCF(2)' EQ 'F').MC2
+         MNOTE 4,'***  IHB418  INVALID MCF OPERAND-FACE ONLY ASSUMED'
+.MC2     ANOP
+&MCFS    SETB  1                        MICROFILM FACE ONLY
+.MC3     ANOP
+         AIF   ('&MCF(3)' EQ '').MC4                           @YM00641
+&MHOS    SETA  &MCF(3)                 HIGH ORDER SEGMENT LENGTH
+.*                                                             @YM00641
+         AIF   (&MHOS GE 0 AND &MHOS LE 5).MC4                 @YM00641
+         MNOTE 4,'*** IHB423 MCF HIGH ORDER SEGMENT NOT 0-5'   @YM00641
+&MHOS    SETA  4                       DEFAULT SEGMENT LENGTH  @YM00641
+.MC4     ANOP                                                  @YM00641
+&PP4     SETA  &MCF(1)                  FRAME NUMBER
+.OPT     ANOP
+&POS     SETA  &POS+1
+&MBM     SETB  ('&OPT(&POS)' EQ 'MBM' OR &MBM) MRGE BEFOR MAIN @ZA04499
+&RIP     SETB  ('&OPT(&POS)' EQ 'PBF' OR &RIP)  PRIME BUFFERS
+&BUG     SETB  ('&OPT(&POS)' EQ 'DBG' OR &BUG)   DEBUG MODE
+&RJ      SETB  ('&OPT(&POS)' EQ 'BPO' OR &RJ)  BLK PHYSICAL OPERATION
+.*                                                             @ZA00770
+&US      SETB  ('&OPT(&POS)' EQ 'RUS' OR &US) RESET USER STATS
+&RP      SETB  ('&OPT(&POS)' EQ 'RPC' OR &RP) RESET POCKET CTRS
+         AIF   (&POS LT 6).OPT          CHECK FOR 6 VARIABLES  @ZA04499
+         AIF   (&BUG NE 1).OPT1
+         AIF   (&IMP EQ 1).OPT1
+         MNOTE 4,'***  IHB406  DEBUG MODE SPEC. WHEN NOT I.P.; DEFAULT=X
+                OFF'
+&BUG     SETB  0
+.OPT1    ANOP
+         AIF   (&RIP NE 1).VS
+         AIF   (&IMP EQ 1).VS
+         MNOTE 4,'***  IHB419 PRIME BUFFERS SPEC. WHEN NOT I.P.; DEFAULX
+               T=OFF'
+&RIP     SETB  0
+.VS      AIF   ('&VSYMB' EQ '').FR      VALID CLOSING SYMBOL-FIELD 3
+         AIF   ('&VSYMB' NE 'Y').VS2
+&CS      SETB  1                        ONLY SYMBOL 4 VALID
+         AGO   .FR
+.VS2     ANOP
+&CS      SETB  0                        SYMBOLS 4 OR 5 VALID
+.FR      AIF   ('&HOZ' EQ '').TAB       FIELD REPAIR
+         AIF   ('&HOZ' LE '15').SE1
+         MNOTE 8,'***  IHB365  ONLY 0-15 DIGITS CAN BE SPECIFIED  FOR  X
+               HOZ; 1 ASSUMED'
+&RL      SETA  1
+         AGO   .TAB
+.SE1     ANOP
+&RL      SETA  &HOZ
+*************************    128 BYTE INITIALIZATION TABLE **********
+.TAB     DS    0F             TABLE STARTS ON FULLWORD BOUNDRY
+*                            DEFINE FEATURE STATUS
+*        BYTE 0 SPECIFIES WHICH FEATURES ARE ACTIVATED                *
+*        BIT 0-ITEM NO.; BIT1-ENDORSE                                 *
+*        BIT 3-MICROFILM; BIT 4-RESET POCKET CTRS                     *
+*        BIT 5-RESET USER STATS; BIT 6-PRIME IMAGE BUFFER             *
+&NAME    DC    AL.1(&I1),AL.1(&I2),AL.1(&I3),AL.1(&I4),AL.1(&RP),AL.1(&X
+               US),AL.1(&RIP),AL.1(0)
+         DC    BL.1'0',AL.3(&IHOS),BL.2'00',AL.2(&PP1),XL4'&F1'
+*                                      ITEM NO-SEG;PP;VALUE/*@YM00641*/
+         DC    XL.6'0',AL.2(&PP2),XL4'0'  ENDORSE- PRINT POSITION
+         DC    XL5'0'                   FEATURE 3-RESERVED
+         DC    BL.1'0',AL.3(&MHOS),BL.2'00',BL.1'&I4',BL.1'&MCFS',XL4'&X
+               PP4'                    MICROFILM               @YM00641
+*        BYTE 21 SPECIFIES ADDITIONAL OPTIONS                         *
+*        BIT0 - MERGE BEFORE MAIN FEED                         @ZA04499
+*        BIT1 - MERGE DOCUMENTS; BIT2 - IMAGE PROCESS                 *
+*        BIT6 - BLOCK PHYSICAL OPERATION (FRJ);                       *
+*        BIT7 - DEBUG MODE                                            *
+         DC    AL.1(&MBM),AL.1(&M),AL.1(&IMP),AL.3(0),AL.1(&RJ),AL.1(&BX
+               UG)                                             @ZA04499
+*                            DEFINE FIELDS 1-8 & ATTRIBUTES
+*        BYTE 1: BIT 0 - ON=FIXED OR OFF=VARIABLE LENGTH FIELD        *
+*        BIT 1 - DASH TRANSMISSION                                    *
+*        BIT 2 - IMAGE PROCESS                                        *
+*        BIT 3-8 NUMBER OF DIGITS                                     *
+*        BYTE 2: BIT 0-3 - NUMBER OF ALLOWED DIGIT ERRORS             *
+*        BIT 4-7 - NUMBER OF BYTES                                    *
+         DC    AL.1(&FT(1)),AL.1(&D(1)),AL.1(&IP(1)),AL.5(&C(1))
+         DC    AL.4(&DE(1)),AL.4(&L(1))
+         DC    AL.1(&FT(2)),AL.1(&D(2)),AL.1(&IP(2)),AL.5(&C(2))
+         DC    AL.4(&DE(2)),AL.4(&L(2))
+         DC    AL.1(&FT(3)),AL.1(&D(3)),AL.1(&IP(3)),AL.5(&C(3))
+         DC    AL.4(&DE(3)),AL.4(&L(3))
+         DC    AL.1(&FT(4)),AL.1(&D(4)),AL.1(&IP(4)),AL.5(&C(4))
+         DC    AL.4(&DE(4)),AL.4(&L(4))
+         DC    AL.1(&FT(5)),AL.1(&D(5)),AL.1(&IP(5)),AL.5(&C(5))
+         DC    AL.4(&DE(5)),AL.4(&L(5))
+         DC    AL.1(&FT(6)),AL.1(&D(6)),AL.1(&IP(6)),AL.5(&C(6))
+         DC    AL.4(&DE(6)),AL.4(&L(6))
+         DC    AL.1(&FT(7)),AL.1(&D(7)),AL.1(&IP(7)),AL.5(&C(7))
+         DC    AL.4(&DE(7)),AL.4(&L(7))
+         DC    AL1(&L(8))               BYTE LENGTH - FIELD 8
+*                            DEFINE 1-36 POCKETS FOR DOC. SELECTION
+*        1ST  4 BITS - DEFINES ODD # POCKETS                          *
+*        2ND 4 BITS - DEFINES EVEN # POCKETS                          *
+*        BIT 2 & 6 - COUNT DOC.; BIT 3 & 7 -KILL OR REHANDLE POCKET
+         DC    AL.2(0),AL.1(&CT(1)),AL.1(&K(1)),AL.2(0),AL.1(&CT(2)),ALX
+               .1(&K(2))
+         DC    AL.2(0),AL.1(&CT(3)),AL.1(&K(3)),AL.2(0),AL.1(&CT(4)),ALX
+               .1(&K(4))
+         DC    AL.2(0),AL.1(&CT(5)),AL.1(&K(5)),AL.2(0),AL.1(&CT(6)),ALX
+               .1(&K(6))
+         DC    AL.2(0),AL.1(&CT(7)),AL.1(&K(7)),AL.2(0),AL.1(&CT(8)),ALX
+               .1(&K(8))
+         DC    AL.2(0),AL.1(&CT(9)),AL.1(&K(9)),AL.2(0),AL.1(&CT(10)),AX
+               L.1(&K(10))
+         DC    AL.2(0),AL.1(&CT(11)),AL.1(&K(11)),AL.2(0),AL.1(&CT(12))X
+               ,AL.1(&K(12))
+         DC    AL.2(0),AL.1(&CT(13)),AL.1(&K(13)),AL.2(0),AL.1(&CT(14))X
+               ,AL.1(&K(14))
+         DC    AL.2(0),AL.1(&CT(15)),AL.1(&K(15)),AL.2(0),AL.1(&CT(16))X
+               ,AL.1(&K(16))
+         DC    AL.2(0),AL.1(&CT(17)),AL.1(&K(17)),AL.2(0),AL.1(&CT(18))X
+               ,AL.1(&K(18))
+         DC    AL.2(0),AL.1(&CT(19)),AL.1(&K(19)),AL.2(0),AL.1(&CT(20))X
+               ,AL.1(&K(20))
+         DC    AL.2(0),AL.1(&CT(21)),AL.1(&K(21)),AL.2(0),AL.1(&CT(22))X
+               ,AL.1(&K(22))
+         DC    AL.2(0),AL.1(&CT(23)),AL.1(&K(23)),AL.2(0),AL.1(&CT(24))X
+               ,AL.1(&K(24))
+         DC    AL.2(0),AL.1(&CT(25)),AL.1(&K(25)),AL.2(0),AL.1(&CT(26))X
+               ,AL.1(&K(26))
+         DC    AL.2(0),AL.1(&CT(27)),AL.1(&K(27)),AL.2(0),AL.1(&CT(28))X
+               ,AL.1(&K(28))
+         DC    AL.2(0),AL.1(&CT(29)),AL.1(&K(29)),AL.2(0),AL.1(&CT(30))X
+               ,AL.1(&K(30))
+         DC    AL.2(0),AL.1(&CT(31)),AL.1(&K(31)),AL.2(0),AL.1(&CT(32))X
+               ,AL.1(&K(32))
+         DC    AL.2(0),AL.1(&CT(33)),AL.1(&K(33)),AL.2(0),AL.1(&CT(34))X
+               ,AL.1(&K(34))
+         DC    AL.2(0),AL.1(&CT(35)),AL.1(&K(35)),AL.2(0),AL.1(&CT(36))X
+               ,AL.1(&K(36))
+*                            DEFINE SYMBOL ERROR CORRECTION
+*        BIT 0 - ON= SYMBOL ERROR CORRECTION WILL BE PERFORMED        X
+*        BITS 1-7 OFF- CORRESPOND TO FIELDS 1-7 TO BE CORRECTED       X
+         DC    AL.1(&FRP),AL.1(&FR(1)),AL.1(&FR(2)),AL.1(&FR(3)),AL.1(&X
+               FR(4)),AL.1(&FR(5)),AL.1(&FR(6)),AL.1(&FR(7))  SEC
+         DC    AL.4(0),AL.12(&RCT)      # OF DOC TO REHANDLE POCKETS
+         DC    AL.4(0),AL.12(&KCT)      # OF DOCS TO KILL POCKETS
+         DC    AL.4(0),AL.4(&RL)        HOZ LIMIT
+         DC    XL3'0'                   RESERVED
+         DC    AL.1(&CS),AL.7(0)        FIELD 3 CLOSING SYMBOL
+         DC    XL63'0'                  RESERVED
+         DC    AL2(&SUM)   SUM OF FIELD LENGTHS-NOT LOADED INTO 3890
+.END     MEND

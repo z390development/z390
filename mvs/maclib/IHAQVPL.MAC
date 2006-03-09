@@ -1,0 +1,170 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO  PLSQVPL1;           /*
+         MACRO
+         IHAQVPL
+**/
+*%PLSQVPL1:;
+*/*********QUEUE VERIFICATION PARAMETER LIST*************************/
+*/*  OS/VS2 RELEASE 2    3/15/73   LEVEL=1                          */
+*/*     BAL- DSECT  ALWAYS PRODUCED, PERFORM USING ON QVPL          */
+*/*                                                                 */
+*/*     PL/S  - QVPL WILL BE BASED(QVPLPTR) .                       */
+*/*        1. IF YOU WISH TO APPEND THE QVPL TO THE END OF          */
+*/*           ANOTHER CONTROL BLOCK, SET %QVPLEVEL='N'              */
+*/*           WHERE N IS AN INTEGER BETWEEN 2 AND 4,INCLUSIVE.      */
+*/*           QVPL WILL THEN BE AN UNBASED LEVEL N  VARIABLE.       */
+*/*        2. IF YOU WISH TO APPEND ANOTHER CONTROL BLOCK TO THE END */
+*/*           OF THE QVPL, SET %QVPL9999=',', AND THE SEMICOLON AT  */
+*/*           THE END OF THE QVPL WILL BE REPLACED WITH A COMMA.    */
+*/*                                                                 */
+*/*      EXAMPLE OF PLACING QVPL BETWEEN TWO OTHER BLOCKS:          */
+*/*         %QVPLEVEL='2'     ;                                     */
+*/*         %QVPL9999=',' ;                                         */
+*/*     DECLARE  1 MYBLOCK,                                         */
+*/*         2 MYFIELD,                                              */
+*/*        %INCLUDE SYSLIB(IHAQVPL)  ;                              */
+*/*         2 MYFIELD2 ;                                            */
+*/*******************************************************************/
+*        %GOTO PLSQVPL2;              /*
+QVPL  DSECT
+QVPLTYP1 DS    0CL28               SINGLE-THREADED, HEADER QUEUE
+QVPLTYP2 DS    0CL33               SINGLE-THREADED, HDR & TRLR QUEUE
+QVPLTYP3 DS    0CL40               DOUBLE-THREADED, HDR & TRLR QUEUE
+***********************************************************************
+*                                                                     *
+*           TYPE ONE QUEUE -- SINGLE THREADED, HEADER QUEUE           *
+*                                                                     *
+***********************************************************************
+QVPLEVR  DS    A                   ADDR OF ELEMENT VERIFICATION ROUTINE
+QVPLODA  DS    A                   ADDR OF OUTPUT DATA AREA
+QVPLWKA  DS    A                   ADDR OF WORK AREA FOR QUEUE VERIFY
+QVPLWASZ EQU   40                  WORK AREA SIZE
+QVPLNOEL DS    CL4                 VALUE OF HDR WHEN NO ELTS ON QUEUE
+QVPLHDR  DS    A                   ADDR OF QUEUE HEADER
+QVPLHF   DS    0CL4                FORWARD POINTER DESCRIPTORS
+QVPLFLGH DS    CL1                 HEADER FLAG FIELD
+QVPLHD3  EQU   X'80'               IF 1, HEADER = 3 BYTE FIELD
+*                                      IF 0, HEADER = 4 BYTE FIELD
+QVPLRES1 EQU   X'7F'               REMAINDER OF BYTE IS RESERVED
+QVPLFLGF DS    CL1                 FORWARD PTR FLAG FIELD
+QVPLFP3  EQU   X'80'               IF 1, FWD PTR = 3 BYTE FIELD
+*                                      IF 0, FWD PTR = 4 BYTE FIELD
+QVPLRES2 EQU   X'7F'               REMAINDER OF BYTE IS RESERVED
+QVPLFPTR DS    H                   OFFSET IN BYTES OF FRWD CHAIN PTR
+QVPLLELM DS    A                   VALUE IN FRWD PTR OF LAST QUEUE ELM
+***********************************************************************
+*                                                                     *
+*            TYPE TWO QUEUE -- SINGLE THREADED, HDR & TRLR QUEUE      *
+*                                                                     *
+***********************************************************************
+QVPLTRLR DS    A                   ADDR OF QUEUE TRAILER
+QVPLTB   DS    0CL4                TRLR/BKWD PTR DESCRIPTORS
+QVPLFLGT DS    CL1                 TRAILER FLAG FIELD
+QVPLTR3  EQU   X'80'               IF 1, TRAILER = 3 BYTE FIELD
+*                                      IF 0, TRAILER = 4 BYTE FIELD
+QVPLRES3 EQU   X'7F'               REMAINDER OF BYTE IS RESERVED
+***********************************************************************
+*                                                                     *
+*            TYPE THREE QUEUE -- DOUBLE THREADED, HDR & TRLR QUEUE    *
+*                                                                     *
+***********************************************************************
+QVPLFLGB DS    CL1                 BACKWARD POINTER FLAG FIELD
+QVPLBP3  EQU   X'80'               IF 1, BKWD PTR = 3 BYTE FIELD
+*                                      IF 0, BKWD PTR = 4 BYTE FIELD
+QVPLRES4 EQU   X'7F'               REMAINDER OF BYTE IS RESERVED
+QVPLBPTR DS    H                   OFFSET IN BYTES OF BKWD CHAIN PTR
+QVPLFELM DS    CL4                 VALUE IN BKWD CHAIN OF FIRST ELM
+QVPLEND  EQU   *                   END OF QVPL
+QVPLSIZE EQU   QVPLEND-QVPL        SIZE OF QVPL
+         MEND
+* */
+*%PLSQVPL2:;
+*
+* %IF  QVPLEVEL=''
+*   %THEN  QVPLBASE='BASED(QVPLPTR)' ;
+*   %ELSE  QVPLBASE='' ;
+*
+* %IF QVPLEVEL=''
+*   %THEN  QVPLEVEL='DECLARE  1  '  ;
+*
+* %IF QVPL9999^=','
+*   %THEN  QVPL9999=';' ;
+*
+*   QVPLEVEL QVPL  QVPLBASE BDY(WORD),
+*
+*        5 QVPLTYP3 CHAR(40) BDY(WORD),
+*                                 /*DOUBLE-THREADED, HDR & TLR QUEUE */
+*        6 QVPLTYP2 CHAR(33) BDY(WORD),
+*                                 /*SINGLE-THREADED, HDR & TLR QUEUE */
+*        7 QVPLTYP1 CHAR(28) BDY(WORD),
+*                                 /*SINGLE-THREADED, HEADER QUEUE    */
+*/********************************************************************/
+*/*                                                                  */
+*/*        TYPE ONE QUEUE -- SINGLE THREADED, HEADER QUEUE           */
+*/*                                                                  */
+*/********************************************************************/
+*          8 QVPLEVR PTR(31),          /*ADDR OF ELEMENT VERIFY RTN  */
+*
+*          8 QVPLODA PTR(31),          /*ADDR OF OUTPUT DATA AREA    */
+*
+*          8 QVPLWKA PTR(31),          /*ADDR OF WORK AREA FOR QUEUE
+*                                               VERIFY               */
+*                                 /*NOTE:  THERE IS A COMPILE-TIME   */
+*                                      /*VARIABLE, QVPLWASZ, EQUATED */
+*                                      /*TO THE SIZE OF THE WORK AREA*/
+* %DCL  QVPLWASZ  FIXED;               /*COMPILE TIME VARIABLE EQUAL */
+* %QVPLWASZ=40;                       /*TO WORK AREA SIZE           */
+*          8 QVPLNOEL PTR(31),         /*VALUE IN HEADER WHEN NO ELTS
+*                                               ON QUEUE             */
+*          8 QVPLHDR PTR(31),          /*ADDRESS OF QUEUE HEADER     */
+*
+*          8 QVPLHF CHAR(4) BDY(WORD), /*FORWARD POINTER DESCRIPTORS */
+*
+*            9 QVPLFLGH CHAR(1),       /*HEADER FLAG FIELD           */
+*
+*              10 QVPLHD3 BIT(1),      /*IF 1, HEADER= 3 BYTE FIELD
+*                                             IF 0, HEADER = 4 BYTES */
+*              10 QVPLRES1 BIT(7),     /*REMAINDER OF BYTE RESERVED  */
+*
+*            9 QVPLFLGF CHAR(1),       /*FORWARD PTR FLAG FIELD      */
+*
+*              10 QVPLFP3 BIT(1),      /*IF 1, FWD PTR = 3 BYTE FIELD
+*                                             IF 0, FWD PTR = 4 BYTES*/
+*              10 QVPLRES2 BIT(7),     /*REMAINDER OF BYTE RESERVED  */
+*
+*            9 QVPLFPTR FIXED(15),     /*OFFSET IN BYTES OF FORWARD
+*                                             CHAIN POINTER          */
+*          8 QVPLLELM PTR(31),         /*VALUE IN FORWARD POINTER OF
+*                                            LAST ELEMENT            */
+*/********************************************************************/
+*/*                                                                  */
+*/*          TYPE TWO QUEUE -- SINGLE THREADED, HDR & TRLR QUEUE     */
+*/*                                                                  */
+*/********************************************************************/
+*          7 QVPLTRLR PTR(31),         /*ADDR OF QUEUE TRAILER       */
+*
+*          7 QVPLTB CHAR(4) BDY(WORD), /*TRLR & BKWD PTR DESCRIPTORS */
+*
+*            8 QVPLFLGT CHAR(1),       /*TRAILER FLAG FIELD          */
+*
+*               9 QVPLTR3 BIT(1),      /*IF 1, TRLR = 3 BYTE FIELD
+*                                              IF 0,TRLR = 4 BYTES   */
+*               9 QVPLRES3 BIT(7),     /*REMAINDER OF BYTE RESERVED  */
+*
+*/********************************************************************/
+*/*                                                                  */
+*/*         TYPE THREE QUEUE -- DOUBLE THREADED, HDR & TRLR QUEUE    */
+*/*                                                                  */
+*/********************************************************************/
+*            8 QVPLFLGB CHAR(1),       /*BACKWARD PTR FLAG FIELD     */
+*
+*               9 QVPLBP3 BIT(1),      /*IF 1,BKWD PTR=3 BYTE FIELD
+*                                              IF 0,BKWD PTR= 4 BYTES*/
+*               9 QVPLRES4 BIT(7),     /*REMAINDER OF BYTE RESERVED  */
+*
+*            8 QVPLBPTR FIXED(15),     /*OFFSET IN BYTES OF BACKWARD
+*                                          CHAIN POINTER             */
+*          7 QVPLFELM PTR(31)          /*VALUE IN BACKWARD CHAIN OF
+*                                              FIRST ELEMENT         */
+*           QVPL9999
+

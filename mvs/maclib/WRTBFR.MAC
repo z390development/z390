@@ -1,0 +1,104 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    WRTBFR &RPL=,&TYPE=
+         LCLA  &CODE                    CODE ACCUMULATOR
+         LCLA  &I                       WORK VARIABLE
+         LCLB  &LRU                     TYPE=LRU INDICATOR
+         LCLB  &ERR                     ERROR INDICATOR
+         LCLB  &LRUREG                  REGISTER FORM OF LRU
+         LCLB  &LRUR0                   PERCENT IS IN REG 0
+         LCLC  &LRUPCT                  LRU VALUE
+         AIF   (N'&SYSLIST EQ 0).NOPOS  GO IF NO POSITIONAL OPERANDS
+.POSLOOP ANOP
+&I       SETA  &I+1                     POINT TO NEXT POS OPERAND
+         IDAERMAC 1,&SYSLIST(&I)        ISSUE WARNING MNOTE
+         AIF   (&I LT N'&SYSLIST).POSLOOP  GO IF MORE POS OPERANDS
+.NOPOS   ANOP
+         AIF   ('&RPL' NE '').ROKY      GO IF RPL SPECIFIED
+         IDAERMAC 2,RPL                 ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+.ROKY    ANOP
+         AIF   ('&TYPE' NE '').TOKY     GO IF TYPE NOT SPECIFIED NULL
+         IDAERMAC 2,TYPE                ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+         AGO   .TYPEB                   GO AROUND TYPE ANALYSIS
+.TOKY    ANOP
+         AIF   ('&TYPE' NE 'DS').TDSB   GO IF NOT FOR DATA SET
+&CODE    SETA  0*256                    INDICATE DATA SET
+         AGO   .TYPEB                   GO AROUND TYPE ANALYSIS
+.TDSB    ANOP
+         AIF   (K'&TYPE LT 6).TLRUB     GO IF NOT AT LEAST 6 CHARS
+         AIF   ('&TYPE'(1,4) NE 'LRU(').TLRUB  GO IF NOT LEAST RCNT USD
+&I       SETA  K'&TYPE                  POINT TO LAST CHARACTER
+         AIF   ('&TYPE'(&I,1) NE ')').TLRUB  GO IF LAST CHAR NOT ')'
+         AIF   ('&TYPE'(5,1) NE '(').NOREG  GO IF NOT REG FORM
+         AIF   ('&TYPE'(6,1) NE '1').REGOK  OK IF NOT 1 OR 13
+         AIF   ('&TYPE'(7,1) EQ '3').TLRUB  ERROR IF REG 13
+         AIF   ('&TYPE'(7,1) EQ ')').TLRUB  ERROR IF REG 1
+.REGOK   ANOP
+         AIF   ('&TYPE'(6,1) NE '0').NOTR0  GO IF NOT REGISTER ZERO
+         AIF   ('&TYPE'(7,1) NE ')').NOTR0  GO IF NOT REGISTER ZERO
+&LRUR0   SETB  1                        INDICATE PERCENTAGE IS IN REG 0
+.NOTR0   ANOP
+&LRUREG  SETB  1                        INDICATE REGISTER FORM
+.NOREG   ANOP
+&LRU     SETB  1                        INDICATE LEAST
+&CODE    SETA  4*256                    ..RECENTLY USED
+         AIF   (&LRUREG).REGOK1         GO IF REGISTER FORM
+&I       SETA  K'&TYPE-5                CALC LENGTH OF N IN LRU(N)
+&LRUPCT  SETC  '&TYPE'(5,&I)            PICK UP PERCENT OF BUFFERS
+         AGO   .TYPEB                   GO AROUND TYPE ANALYSIS
+.REGOK1  ANOP
+&I       SETA  K'&TYPE-7                CALC LENGTH OF N IN LRU((N))
+&LRUPCT  SETC  '&TYPE'(6,&I)            PICK UP PERCENT OF BUFFERS
+         AGO   .TYPEB
+.TLRUB   ANOP
+         AIF   ('&TYPE' NE 'ALL').TALLB  GO IF NOT FOR ALL BUFFERS
+&CODE    SETA  8*256                    INDICATE ALL BUFFERS
+         AGO   .TYPEB                   GO AROUND TYPE ANALYSIS
+.TALLB   ANOP
+         AIF   ('&TYPE' NE 'TRN').TTRNB  GO IF NOT FOR TRANSACTION
+&CODE    SETA  12*256                   INDICATE TRANSACTION
+         AGO   .TYPEB                   GO AROUND TYPE ANALYSIS
+.TTRNB   ANOP
+         AIF   ('&TYPE' NE 'CHK').TCHKB  GO IF NOT FOR CHECK POINT
+&CODE    SETA  16*256                   INDICATE CHECK POINT
+         AGO   .TYPEB                   GO AROUND TYPE ANALYSIS
+.TCHKB   ANOP
+         IDAERMAC 3,TYPE,&TYPE          ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+.TYPEB   ANOP
+         AIF   (&ERR).END               GO IF ANY ERRORS
+         AIF   ('&NAME' EQ '').NAMEB    GO IF NO NAME
+&NAME    DS    0H
+.NAMEB   ANOP
+         AIF   ('&RPL'(1,1) EQ '(').RPLR  GO IF RPL SPECIFIED AS REG
+         LA    1,&RPL                   LOAD RPL ADDRESS
+         AGO   .AREG                    GO AROUND REG CODE
+.RPLR    ANOP
+         AIF   ('&RPL' EQ '(1)').AREG   GO IF RPL ADDRESS ALREADY IN 1
+         LR    1,&RPL(1)                LOAD RPL ADDRESS
+.AREG    ANOP
+         AIF   (NOT &LRU).LRUB          GO IF NOT LEAST RECENTLY USED
+         AIF   (&LRUREG).REG            BRANCH IF REGISTER FORM
+         LA    0,&LRUPCT                LOAD PERCENT OF BUFFERS
+         AGO   .LRUOK
+.REG     ANOP
+         AIF   (&LRUR0).LRUOK           GO IF ALREADY IN REG 0
+         LR    0,&LRUPCT                LOAD PERCENT OF BUFFERS
+.LRUOK   ANOP
+         SLL   0,16                     SHIFT TO HIGH ORDER
+         ICM   0,3,*+18                 INSERT WRITE BUFFER CODES
+         AGO   .NLRUB                   GO AROUND NOT LRU CODE
+.LRUB    ANOP
+         LH    0,*+18                   LOAD WRITE BUFFER CODES
+.NLRUB   ANOP
+         L     15,24(,1)                LOAD ACB ADDRESS FROM RPL
+         L     15,8(,15)                LOAD VSAM INTERFACE RTN ADDR
+         LA    14,*+8                   LOAD RETURN ADDRESS
+         BR    15                       BRANCH TO INTERFACE ROUTINE
+&CODE    SETA  &CODE+15                 INDICATE WRITE BUFFER
+         DC    AL2(&CODE)               WRITE BUFFER CODES
+.END     ANOP
+         MEND
+

@@ -1,0 +1,549 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         PRINT OFF
+         MACRO
+&NAME    BNGHJN &LABEL,&HJN
+         LCLA  &K
+         LCLC  &HJA,&HJB,&HJC
+&HJC     SETC  'PTF NO.'
+&K       SETA  K'&SYSPARM
+         AIF   (&K LT 4).CODE
+&HJA     SETC  '&SYSPARM'(1,4)
+         AIF   (&K LT 8).CODE
+&HJB     SETC  '&SYSPARM'(5,4)
+         AIF   (&K LT 15).CODE
+&HJC     SETC  '&SYSPARM'(9,7)
+.CODE    ANOP
+         AIF   ('&LABEL' EQ '').NOBRNCH
+         B     &LABEL .                 BR AROUND CONSTANTS
+         SPACE 2
+.NOBRNCH ANOP
+         AIF   ('&NAME' EQ '').NOLABEL
+         DC    C'&NAME' .              MODULE IDENTIFIER
+.NOLABEL ANOP
+         AIF   ('&HJA' EQ '').NEXT
+         DC    X'&HJA' .                DATE OF MODIFICATION
+.NEXT    ANOP
+         AIF   ('HJB' EQ '').DATE
+         AIF   ('&HJN' NE 'HJN').DATE
+         DC    X'&HJB' .                HJN OF MODIFICATION
+.DATE    ANOP
+         DC    C'&HJC' .                PTF LEVEL
+.NOPTF   ANOP
+         AIF   ('&LABEL' EQ '').NOLBL
+         SPACE 2
+&LABEL   DS    0H
+.NOLBL   ANOP
+         MEND
+         PRINT ON
+***********************************************************************
+*                                                                     *
+* MODULE NAME = BNGCLOCL                                              *
+*                                                                     *
+* DESCRIPTIVE NAME = CICS DEMF LOCAL TERMINAL ERROR INDEX & TEXT      *
+*                    DISPLAY MODULE                                   *
+*                                                                     *
+*                                                                     *
+* STATUS = RELEASE 1, LEVEL 1                                         *
+*                                                                     *
+* FUNCTION = 1) RECEIVES CONTROL FROM BNGCDISP;                       *
+*            2) DISPLAYS CANNED STATUS/SENSE TEXT OF ALL POSSIBLE     *
+*               LOCAL TERMINAL ERROR COMBINATIONS;                    *
+*            3) PROVIDES THE SELECTION DISPLAY OF EXPLANATION AND     *
+*               POSSIBLE CAUSES ON THE LOCAL TERMINAL STATUS/SENSE    *
+*               WHICH IS SELECTED BY DEMF USER;                       *
+*            4) RETURNS CONTROL TO CICS.                              *
+*                                                                     *
+* NOTES = NONE                                                        *
+*                                                                     *
+*    DEPENDENCIES =                                                   *
+*                                                                     *
+*    THE FOLLOWING ARE CICS TABLES/CONTROL BLOCKS AND THEIR LABELS    *
+*    USED BY DEMF CICS MODULES (BNGCDISP,BNGC3270,BNGCLOCL,BNGCRMOT   *
+*    BNGCMENU) :                                                      *
+*                                                                     *
+*    CICS TABLE AND                                                   *
+*    CONTROL BLOCKS                  LABELS USED                      *
+*    ----------------------          -----------                      *
+*                                                                     *
+*    COMMON SYSTEM AREA              CSATCTBA                         *
+*    (CSA)                                                            *
+*                                                                     *
+*    TERMINAL CONTROL TABLE          TCTTEDA                          *
+*    TERMINAL ENTRY (TCTTE)          TCTTETM                          *
+*                                    TCTTELT                          *
+*                                    TCTTETI                          *
+*                                    TCTTECLT                         *
+*                                    TCTTETEL                         *
+*                                    TCTTETT                          *
+*                                    TCTTEGU                          *
+*                                    TCTTETA                          *
+*                                                                     *
+*    TERMINAL CONTROL TABLE          TCTLELF                          *
+*    LINE ENTRY (TCTLE)              TCTLEFAA                         *
+*                                    TCTLEPI                          *
+*                                    TCTLEMFP                         *
+*                                    TCTLEPA                          *
+*                                    TCTLEDCB                         *
+*                                    TCTLERLN                         *
+*                                                                     *
+*    TERMINAL INPUT/OUTPUT AREA      TIOADBA                          *
+*    (TIOA)                          TIOATDL                          *
+*                                                                     *
+*    TASK CONTROL AREA               TCAFCAAA                         *
+*    (TCA)                           TCAFCAA                          *
+*                                    TCAPCPI                          *
+*                                    TCASCSA                          *
+*                                                                     *
+*    FILE INPUT/OUTPUT AREA          FIOADBA                          *
+*    (FIOA)                                                           *
+*                                                                     *
+*    RESTRICTIONS = NONE                                              *
+*                                                                     *
+*    REGISTER CONVENTIONS = R12 ADDRESS OF TCA                        *
+*                           R13 ADDRESS OF CSA                        *
+*                                                                     *
+*    PATCH LABEL = NONE                                               *
+*                                                                     *
+* MODULE TYPE =  CICS DISPLAY                                         *
+*                                                                     *
+*    PROCESSOR = ASSEMBLER H                                          *
+*                                                                     *
+*    MODULE SIZE = 6400 DECIMAL BYTES                                 *
+*                                                                     *
+*    ATTRIBUTES = QUASI-REENTRANT                                     *
+*                                                                     *
+* ENTRY POINT = BNGCLOCL                                              *
+*                                                                     *
+*    PURPOSE = SEE FUNCTION                                           *
+*                                                                     *
+*    LINKAGE = R14 LOADED WITH THE RETURN ADDR (USED BY SUBROUTINE)   *
+*                                                                     *
+* INPUT = PARAM LIST ITEMS USED ARE :  INPUT TIOA AT LABEL - B5       *
+*                                                                     *
+* OUTPUT = PARAM LIST ITEMS USED ARE : OUTPUT TIOA AT LABEL - GETTIOA *
+*                                                                     *
+* EXIT-NORMAL = REGISTER 15 RETURN CODE RETURNED TO CALLER :          *
+*               00 - OPERATION PERFORMED AS REQUESTED                 *
+*                                                                     *
+* EXIT-ERROR  = NONE                                                  *
+*                                                                     *
+* EXTERNAL REFERENCE = NONE                                           *
+*                                                                     *
+*    ROUTINES = NONE                                                  *
+*                                                                     *
+*    DATA AREAS = NONE                                                *
+*                                                                     *
+*    CONTROL BLOCK = DFHCSADS, DFHTCTTE, DFHTCADS, DFHTIOA            *
+*                                                                     *
+* TABLES = NONE                                                       *
+*                                                                     *
+* MACROS = DFHCOVER, DFHTC, DFHPC, DFHSC                              *
+*                                                                     *
+* CHANGE ACTIVITIES AS FOLLOWS:                                       *
+* CHANGE 01  11/15/77  PROLOGUE ADDED                                 *
+* CHANGE 02  02/22/78  BNGHJN MACRO ADDED                             *
+*C062000,074000-074500                                         @OZ29901
+*DUMMY APAR TO CORRECT PREREQ STRINGS ON PREVIOUS PTF'S        @OZ36693
+*                                                                     *
+***********************************************************************
+         TITLE 'DEMF LOCAL SRL TEXT MODULE'
+         DFHCOVER
+         COPY  DFHCSADS
+         EJECT
+         COPY  DFHTCTTE
+         EJECT
+         COPY  DFHTCADS
+SAVEREG  DS    F
+HALFWORD DS    H
+SBACTR   DS    PL1
+TEXTSW   DC    X'00'
+         EJECT
+         COPY  DFHTIOA
+         EJECT
+BNGCLOCL CSECT                                                 @OZ29901
+BASEREG  EQU   3
+TCTTEAR  EQU   5
+TIOABAR  EQU   6
+SBAREG   EQU   7
+OUTREG   EQU   8
+LINKREG  EQU   9
+MSGREG   EQU   10
+LIMITREG EQU   11
+NEXTREG  EQU   8
+LTHREG   EQU   7
+INREG    EQU   7
+L18P21   EQU   X'D5E4'   MOD2 SCREEN
+SML12P1  EQU   X'C6F8'   MOD1 SCREEN
+SBA      EQU   X'11'                        SET BUFFER ADDR COMMAND
+SF       EQU   X'1D'                        START FIELD COMMAND
+IC       EQU   X'13'                        INSERT CURSOR COMMAND
+UNA      EQU   X'40'     UNPROTECTED,NORMAL INTENSITY,ALPHAMERIC
+MNA      EQU   X'61'     MODIFIED,NORMAL INTENSITY,ALPHAMERIC
+MDA      EQU   X'E9'     PROT,MODIFIED,HIGH INTENSITY,ALPHAMERIC
+PDA      EQU   X'E8'     PROTECTED,HIGH INTENSITY,ALPHAMERIC
+PNA      EQU   X'60'     PROTECTED,NORMAL INTENSITY,ALPHAMERIC
+         BALR  BASEREG,0
+         USING *,BASEREG
+BNGCLOCL BNGHJN SKIPID                                         @OZ29901
+B5       L     TCTTEAR,TCAFCAAA
+         L     TIOABAR,TCTTEDA
+         MVI   INDEXSW,X'00'                SET INDEXSW = OFF
+         LA    INREG,TIOADBA                LOCATE INPUT DATA.
+         CLI   0(INREG),SBA
+         BNE   B12
+         LA    INREG,3(INREG)
+B12      CLC   15(3,INREG),=C'SS='          IS THIS A RQUEST FOR TEXT?
+         BE    D1                           YES. GO LOCATE IT.
+         MVI   INDEXSW,X'FF'                SET INDEXSW = ON
+B14      EQU   *                            NO. BUILD AN INDEX PAGE.
+         LA    LTHREG,IXHDRLTH+3+(44*(SSLTH+4))+(11*SBALTH)
+         BAL   LINKREG,GETTIOA              FREE INAREA & GET OUTAREA.
+         MVC   0(IXHDRLTH,OUTREG),IXHDR     MOVE INDEX HEADER LINE.
+         LA    OUTREG,IXHDRLTH(OUTREG)
+         LA    MSGREG,MSG1                  SETUP TO LOCATE ALL
+         L     LIMITREG,=A(LASTMSG)         'SS=????' FIELDS.
+         ZAP   SBACTR,=P'4'                 SETUP FOR 4 PER LINE.
+B22      CLC   0(3,MSGREG),=X'60E2E2'          IS THIS A SENSE/STATUS?
+         BE    C8                           YES. ADD IT TO OUTAREA.
+B24      LA    MSGREG,1(MSGREG)             NO. CONTINUE LOOKING.
+         CR    MSGREG,LIMITREG              ALL DONE?
+         BL    B22                          NO.
+         CLI   TCTTETM,C'2'                 IS THIS FOR MOD2 SCREEN?
+         BNE   C3                           NO.
+         LA    SBAREG,SBA192C               LOAD LAST SBA ATTR ADDR
+         MVC   0(5,OUTREG),0(SBAREG)        MOVE LAST PROTECTED ATTR
+         LA    OUTREG,5(OUTREG)             BUMP 5 BYTES
+C3       CLI   INDEXSW,X'FF'                IS INDEXSW ON ?
+         BNE   C6                           NO.
+         CLI   TCTTETM,X'F1'                IS THIS A 3277-1 ?
+         BE    C5                           YES.
+         MVC   0(HITMSGLL,OUTREG),HITMSGL   MOVE 'HIT CLEAR KEY' MSG
+         LA    OUTREG,HITMSGLL(OUTREG)      BUMP OUTPUT POINTER
+         B     C6
+C5       MVC   0(HITMSGSL,OUTREG),HITMSGS   MOVE 'HIT CLEAR KEY' MSG
+         LA    OUTREG,HITMSGSL(OUTREG)      BUMP OUTPUT POINTER
+C6       LA    1,TIOADBA                    YES.
+         SR    OUTREG,1                     COMPUTE FINAL
+         STH   OUTREG,TIOATDL               DATA LENGTH.
+         DFHTC TYPE=(WRITE,ERASE)
+         DFHPC TYPE=RETURN
+***********************************************************************
+*                                                                     *
+*        RETURN                                                       *
+*                                                                     *
+***********************************************************************
+C8       CP    SBACTR,=P'4'                 BEGINNING A NEW LINE?
+         BNE   C14                          NO.
+         CLI   TCTTETM,C'2'                 IS THIS FOR MOD2 DISPLAY?
+         BE    C12                          YES.
+C11      MVC   0(3,OUTREG),0(SBAREG) XXXX   NO. (MOD1) MOVE NEXT
+         LA    SBAREG,3(SBAREG) XXXX        SBA SEQUENCE
+         LA    OUTREG,3(OUTREG) XXXX        TO OUTPUT AREA.
+         B     C13
+C12      MVC   0(8,OUTREG),0(SBAREG) XXXX   YES. MOVE NEXT
+         LA    SBAREG,8(SBAREG) XXXX        SBA SEQUENCE
+         LA    OUTREG,8(OUTREG) XXXX        TO OUTPUT AREA.
+C13      ZAP   SBACTR,=P'0'
+C14      MVC   0(SSLTH,OUTREG),SSMSG        MOVE THIS ITEM
+         MVC   SSLTH(4,OUTREG),4(MSGREG)    TO OUTPUT AREA.
+         LA    OUTREG,(SSLTH+4)(OUTREG)
+         AP    SBACTR,=P'1'                 ADD 1 TO ITEMS THIS LINE.
+         B     B24
+D1       L     LIMITREG,=A(LASTMSG)         POINT TO LAST MSG.
+         LA    MSGREG,MSG1                  POINT TO 1ST MSG.
+         LR    NEXTREG,MSGREG
+D3       MVC   HALFWORD,0(MSGREG)
+         AH    NEXTREG,HALFWORD             POINT TO NEXT MSG.
+         ST    MSGREG,SAVEREG
+D4       CLC   0(7,MSGREG),15(INREG)        IS THIS THE DESIRED MSG?
+         BE    D12                          YES, MOVE IT TO OUTAREA.
+         LA    MSGREG,1(MSGREG)             NO. STILL IN THIS MSG?
+         CR    MSGREG,NEXTREG
+         BL    D4                           YES. KEEP LOOKING.
+         CR    MSGREG,LIMITREG              ALL MSGS LOOKED AT?
+         BL    D3                           NO. RESET ON NEXT MSG.
+         B     B14                          YES. BAD INPUT; SHOW INDEX.
+D12      L     MSGREG,SAVEREG               RESTORE START OF THIS MSG.
+         LA    LTHREG,PGHDRLTH+(12*SBALTH)
+         MVC   HALFWORD,0(MSGREG)
+         AH    LTHREG,HALFWORD              COMPUTE LTH THIS MSG & HDR.
+         MVI   TEXTSW,X'FF'                 SET GETTIOA SUBR SWT
+         BAL   LINKREG,GETTIOA              FREE INAREA & GET OUTAREA.
+         MVC   0(PGHDRLTH,OUTREG),PGHDR     MOVE PAGE HDR LINE.
+         LA    OUTREG,PGHDRLTH(OUTREG)
+         MVC   HALFWORD,0(MSGREG)
+         LH    1,HALFWORD                   GET TRUE LENGTH
+         SH    1,=H'2'                      OF THIS MSG.
+D20      CH    1,=H'40'                     ONE MORE FULL LINE TO DO?
+         BH    E2                           YES. MOVE IT.
+         MVC   0(3,OUTREG),0(SBAREG)        NO. MOVE THE
+         EX    1,MOVE                       REMAINDER AND
+         AR    OUTREG,1                     GET OUT.
+         LA    OUTREG,3(OUTREG)
+         B     C3
+E2       MVC   0(3,OUTREG),0(SBAREG)        MOVE NEXT SBA SEQUENCE.
+         LA    SBAREG,3(SBAREG)
+         CLI   2(MSGREG),SF       IF THIS IS A LINE
+         BNE   E5                 CONTAINING ATTRIBUTES,
+         MVC   3(2,OUTREG),2(MSGREG)   MOVE
+         LA    OUTREG,2(OUTREG)        TWO EXTRA
+         LA    MSGREG,2(MSGREG)        BYTES.
+         SH    1,=H'2'
+E5       MVC   3(40,OUTREG),2(MSGREG)       MOVE 40 CHARS OF TEXT.
+         LA    OUTREG,43(OUTREG)
+         LA    MSGREG,40(MSGREG)
+         SH    1,=H'40'                     DECREMENT RESIDUAL COUNT.
+         B     D20
+***********************************************************************
+*                                                                     *
+*        NEXT SEQUENCE OF INST CLEARS OUTPUT TIOA TO BLANKS           *
+*                                                                     *
+***********************************************************************
+GETTIOA  ST    TIOABAR,TCASCSA              FREE ORIGINAL
+         DFHSC TYPE=FREEMAIN                INPUT AREA.
+         STH   LTHREG,TCASCNB
+         DFHSC TYPE=GETMAIN,CLASS=TERM      GET NEW TIOA JUST
+         L     TIOABAR,TCASCSA              THE RIGHT SIZE.
+         ST    TIOABAR,TCTTEDA
+         LA    SBAREG,SBA1920
+         CLI   TCTTETM,C'2'                 SETUP ON LIST OF 12
+         BE    G11                          SBA SEQUENCES FOR
+G10      LA    SBAREG,SBA480 XXXX           APPROPRIATE TERM MODEL.
+G1A      MVC   TIOADBA(3),0(SBAREG) XXXX
+         LA    SBAREG,3(SBAREG) XXXX        PRIME OUTAREA FOR LINE 1
+         LA    OUTREG,TIOADBA+3 XXXX        AND SETUP OUTREG FOR
+         BR    LINKREG
+G11      CLI   TEXTSW,X'FF'                 IS TEXTSW ON?
+         BNE   G12                          NOT ON.
+         LA    SBAREG,SBATXT2               SET SBAREG = SBATXT2 PTR
+         B     G1A
+G12      LA    SBAREG,SBA192A
+         MVC   TIOADBA(5),0(SBAREG) XXXX
+         MVC   TIOADBA+5(5),5(SBAREG) XXXX
+         MVC   TIOADBA+10(3),10(SBAREG) XXXX
+         LA    SBAREG,13(SBAREG) XXXX       PRIME OUTAREA FOR LINE 1
+         LA    OUTREG,TIOADBA+13 XXXX       AND SETUP OUTREG FOR
+         BR    LINKREG                      REMAINING DATA.
+SBALTH   EQU   3
+SBA192A  DC    X'1140401D6C'       AL1(SBA),AL2(L1P1),AL1(SF,PIA)
+SBA1920  DC    X'11C7601D6C11C7F411C8F01D6C11C9C4114A401D6C114AD4'
+         DC    X'114B501D6C114BE4114C601D6C114CF4114DF01D6C114EC4'
+         DC    X'114F401D6C114FD41150501D6C1150E411D1601D6C11D1F4'
+         DC    X'11D2F01D6C11D3C411D4401D6C11D4D411D5501D6C11D5E4'
+SBA192C  DC    X'11D2C81D6C'       AL1(SBA),AL2(L15P41),AL1(SF,PIA)
+SBA480   DC    X'1140401140E811C15011C1F811C26011C3C8'
+         DC    X'11C3F011C4D811C54011C5E811C65011C6F8'
+SBATXT2  DC    X'11C7F411C9C4114AD4'
+         DC    X'114BE4114CF4114EC4'
+         DC    X'114FD41150E411D1F4'
+         DC    X'11D3C411D4D411D5E4'
+SSMSG    DC    AL1(SF,UNA),C'?SS='
+SSLTH    EQU   *-SSMSG
+IXHDR    DC    AL1(IC,SF,MNA),C'DEMF LOCAL '
+         DC    AL1(SF,PNA),C'STATUS INDEX,X OVER ?,ENTER'
+IXHDRLTH EQU   *-IXHDR
+PGHDR    DC    AL1(IC,SF,MNA),C'DEMF LOCAL '
+         DC    AL1(SF,PNA),C'HIT ENTER TO REFRESH INDEX'
+PGHDRLTH EQU   *-PGHDR
+HITMSGS  DC    AL1(SBA),AL2(SML12P1),AL1(SF,PNA)
+         DC    C'HIT CLEAR KEY TO EXIT DEMF'
+HITMSGSL EQU   *-HITMSGS
+HITMSGL  DC    AL1(SBA),AL2(L18P21),AL1(SF,PNA)
+         DC    C'HIT CLEAR KEY TO EXIT DEMF'
+HITMSGLL EQU   *-HITMSGL
+INDEXSW  DC    X'00'           INDEX SWITCH 00=OFF  FF=ON
+MOVE     MVC   3(1,OUTREG),2(MSGREG)
+         LTORG
+MSG1     DC    AL2(MSG2-*)
+         DC    AL1(SF,PNA),C'SS=0220',AL1(SF,PNA),C'  '
+         DC    CL29'UNIT CHECK,BUS OUT CHECK'
+         DC    C'A PARITY CHECK WAS DETECTED ON THE      '
+         DC    C'COMMAND BYTE                            '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=0240',AL1(SF,PNA),C'  '
+         DC    CL29'UNIT CHECK,INTERVENTION REQ''D'
+         DC    C'A COMMAND OTHER THAN SENSE WAS ADDRESSED'
+         DC    C'TO A DEVICE THAT THE 3272 HAS RECORDED  '
+         DC    C'AS UNAVAILABLE OR NOT READY             '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=0280',AL1(SF,PNA),C'  '
+         DC    CL29'UNIT CHECK,COMMAND REJECT'
+         DC    C'AN INVALID COMMAND WAS ISSUED TO 3272'
+MSG2     DC    AL2(MSG3-*)
+         DC    AL1(SF,PNA),C'SS=0500',AL1(SF,PNA),C'  '
+         DC    CL29'DEVICE END,UNIT EXCEPTION'
+         DC    C'3272 ATTEMPTED TO PERFORM A SELECT OR   '
+         DC    C'ERASE ALL UNPROTECTED COMMAND. AFTER RE-'
+         DC    C'TURNING INITIAL STATUS,FOUND ADDRESSED  '
+         DC    CL40'DEVICE BUSY'
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=0601',AL1(SF,PNA),C'  '
+         DC    CL29'DEVICE END,UNIT CHECK'
+         DC    CL11' ',CL29'OPERATION CHECK'
+         DC    C'A WRITE OR ERASE/WRT COMMAND,CONTAINING '
+         DC    C'A WCC WITH A START PRINT BIT,IS CHAINED '
+         DC    C'TO A SUBSEQUENT COMMAND'
+MSG3     DC    AL2(MSG4-*)
+         DC    AL1(SF,PNA),C'SS=0602',AL1(SF,PNA),C'  '
+         DC    CL29'DEVICE END,UNIT CK,CTRL CK'
+         DC    C'THE ADDRESSED DEVICE FAILED TO RESPOND  '
+         DC    C'IN A SPECIFIED PERIOD OF TIME TO A      '
+         DC    C'SELECT,WRITE,ERASE/WRT OR AN ERASE ALL  '
+         DC    C'UNPROTECTED COMMAND                     '
+         DC    AL1(SF,PNA),C'SS=0608',AL1(SF,PNA),C'  '
+         DC    CL29'DEVICE END,UNIT CK,DATA CK'
+         DC    C'3272 (1) DETECTED PARITY OR CURSOR ERROR'
+         DC    C'DURING A SELECT,WRITE OR ERASE/WRT CMD  '
+         DC    C'OR (2) DETECTED A PARITY CK ON DATA     '
+         DC    C'RECEIVED TO AN INTERNAL POLL'
+MSG4     DC    AL2(MSG5-*)
+         DC    AL1(SF,PNA),C'SS=060C',AL1(SF,PNA),C'  '
+         DC    CL29'DEVICE END,UNIT CHECK'
+         DC     CL11' ',CL29'DATA CHECK,UNIT SPECIFY'
+         DC    C'ADDRESSED DEVICE DETECTED PARITY CK OR  '
+         DC    C'CURSOR CK DURING A SELECT,WRITE,ERASE/- '
+         DC    C'WRT,OR ERASE ALL UNPROTECTED COMMAND    '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=0614',AL1(SF,PNA),C'  '
+         DC    CL29'DEVICE END,UNIT CHECK'
+         DC    CL11' ',CL29'EQUIPMENT CHECK,UNIT SPECIFY'
+         DC    C'A PRINTER CHARACTER GENERATOR ERROR     '
+         DC    C'OCCURED OR PRINTER BECAME MECHANICALLY  '
+         DC    C'DISABLED DURING PRINTOUT'
+MSG5     DC    AL2(MSG6-*)
+         DC    AL1(SF,PNA),C'SS=0640',AL1(SF,PNA),C'  '
+         DC    CL29'DEVICE END,UNIT CHECK'
+         DC    CL11' ',CL29'INTERVENTION REQUIRED'
+         DC    C'A COMMAND ATTEMPTING TO START A PRINTER '
+         DC    C'FOUND IT NOT READY                      '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=0654',AL1(SF,PNA),C'  '
+         DC    CL29'DEV END,UNIT CK,INTV REQUIRED'
+         DC    CL11' ',CL29'EQUIPMENT CHECK,UNIT SPECIFY'
+         DC    C'A COMMAND TO START PRINT OPERATION FOUND'
+         DC    C'PRINTER CARRIAGE MOTOR POWER OFF'
+MSG6     DC    AL2(MSG7-*)
+         DC    AL1(SF,PNA),C'SS=0E01',AL1(SF,PNA),C'  '
+         DC    CL29'CHANNEL END,DEVICE END'
+         DC    CL11' ',CL29'UNIT CHECK,OPERATION CHECK'
+         DC    C'ON A WRITE OR ERASE/WRT COMMAND,3272    '
+         DC    C'RECEIVED ILLEGAL BUFFER ADDRESS IN DATA-'
+         DC    C'STREAM,OR DATA ENDED BEFORE PROVIDING   '
+         DC    C'ALL CHARACTERS REQUIRED FOR SBA,RA,SF OR'
+         DC    C'EUA ORDERS'
+MSG7     DC    AL2(MSG8-*)
+         DC    AL1(SF,PNA),C'SS=0E02',AL1(SF,PNA),C'  '
+         DC    CL29'CHANNEL END,DEVICE END'
+         DC    CL11' ',CL29'UNIT CHECK,CONTROL CHECK'
+         DC    C'ADDRESSED DEVICE FAILED TO RESPOND IN   '
+         DC    C'TIME TO AN ERASE/WRT,UNCHAINED READ     '
+         DC    C'BUFFER,READ MODIFIED OR WRITE COMMAND   '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=0E08',AL1(SF,PNA),C'  '
+         DC    CL29'CHANNEL END,DEVICE END'
+         DC    CL11' ',CL29'UNIT CHECK,DATA CHECK'
+         DC    C'3272 DETECTED CURSOR OR PARITY CHECK ON '
+         DC    C'TRANSMISSION OF DATA ON A READ BUFFER OR'
+         DC    C'READ MODIFIED COMMAND'
+MSG8     DC    AL2(MSG9-*)
+         DC    AL1(SF,PNA),C'SS=0E0C',AL1(SF,PNA),C'  '
+         DC    CL29'CHANNEL END,DEVICE END'
+         DC    CL11' ',CL29'UNIT CK,DATA CK,UNIT SPECIFY'
+         DC    C'ADDRESSED DEVICE DETECTED PARITY OR     '
+         DC    C'CURSOR CHECK ON WRITE, READ BUFFER OR   '
+         DC    C'READ MODIFIED COMMAND                   '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=0E20',AL1(SF,PNA),C'  '
+         DC    CL29'CHANNEL END,DEVICE END'
+         DC    CL11' ',CL29'UNIT CHECK,BUS OUT CHECK'
+         DC    C'3272 DETECTED A PARITY ERROR ON A CHAR- '
+         DC    C'ACTER IN DATA-STREAM OF A WRITE OR ERASE'
+         DC    C'/WRITE COMMAND'
+MSG9     DC    AL2(MSG10-*)
+         DC    AL1(SF,PNA),C'SS=0D00',AL1(SF,PNA),C'  '
+         DC    CL29'CHANNEL END,DEVICE END'
+         DC    CL11' ',CL29'UNIT EXCEPTION'
+         DC    C'3272 ATTEMPTED A READ BUFFER,READ MOD-  '
+         DC    C'IFIED,WRITE OR ERASE/WRITE COMMAND BUT  '
+         DC    C'FOUND AFTER RETURNING INITIAL STATUS,   '
+         DC    C'THE ADDRESSED DEVICE WAS BUSY           '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=820C',AL1(SF,PNA),C'  '
+         DC    CL29'ATTENTION,UNIT CHECK'
+         DC    CL11' ',CL29'DATA CHECK,UNIT SPECIFY'
+         DC    C'AN IDLE DEVICE DETECTED A PARITY CHECK  '
+         DC    C'OR CURSOR CHECK IN ITS BUFFER'
+MSG10    DC    AL2(MSG11-*)
+         DC    AL1(SF,PNA),C'SS=8210',AL1(SF,PNA),C'  '
+         DC    CL29'ATTENTION,UNIT CHECK'
+         DC    CL11' ',CL29'EQUIPMENT CHECK'
+         DC    C'AN IDLE 3272 POLLED A DEVICE TWICE AND  '
+         DC    C'DETECTED A TRANSMIT PARITY CHECK EACH   '
+         DC    C'TIME ON THE DATA IN THE DEVICE REPLY    '
+         DC    AL1(SF,PNA),C'SS=860C',AL1(SF,PNA),C'  '
+         DC    CL29'ATTENTION,DEV END,UNIT CHECK'
+         DC    CL11' ',CL29'DATA CHECK,UNIT SPECIFY'
+         DC    C'A DEVICE CHANGED FROM NOT AVAILABLE TO  '
+         DC    C'AVAILABLE OR NOT READY TO READY AND DET-'
+         DC    C'ECTED A CURSOR CK IN ITS BUFFER OR A PRI'
+         DC    C'NTER DETECTED A PARITY CK WHILE PRINTING'
+MSG11    DC    AL2(MSG12-*)
+         DC    AL1(SF,PNA),C'SS=8640',AL1(SF,PNA),C'  '
+         DC    CL29'ATTN,DEVICE END,UNIT CK'
+         DC    CL11' ',CL29'INTERVENTION REQUIRED'
+         DC    C'THE ADDRESSED PRINTER BECAME NOT READY  '
+         DC    C'(OUT OF PAPER OR COVER OPEN)BEFORE PRINT'
+         DC    C'OPERATION WAS COMPLETED                 '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=8654',AL1(SF,PNA),C'  '
+         DC    CL29'ATTN,DEV END,UNIT CK,INTV REQ'
+         DC    CL11' ',CL29'EQUIPMENT CHECK,UNIT SPECIFY'
+         DC    C'A PRINTER BECAME MECHANICALLY DISABLED  '
+         DC    C'DURING A PRINTOUT AND AUTOMATIC RECOVERY'
+         DC    C'WAS NOT SUCCESSFUL'
+MSG12    DC    AL2(MSG13-*)
+         DC    AL1(SF,PNA),C'SS=0000',AL1(SF,PNA),C'  '
+         DC    CL29'ZERO STATUS     '
+         DC    C'NORMAL STATUS FOR ANY COMMAND OTHER THAN'
+         DC    C'NO-OP,SELECT,OR ERASE ALL UNPROTECTED   '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=0400',AL1(SF,PNA),C'  '
+         DC    CL29'DEVICE END          '
+         DC    C'DENOTES THE FOLLOWING CHANGE IN DEVICE  '
+         DC    C'STATUS--BUSY TO NOT BUSY,NOT AVAILABLE  '
+         DC    C'TO AVAILABLE,BUFFER TRANSFER COMPLETE,  '
+         DC    C'OR ON/OFF LINE SWITCH TO ONLINE'
+MSG13    DC    AL2(MSG14-*)
+         DC    AL1(SF,PNA),C'SS=0800',AL1(SF,PNA),C'  '
+         DC    CL29'CHANNEL END     '
+         DC    C'NORMAL STATUS FOR SELECT OR EAU         '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=0C00',AL1(SF,PNA),C'  '
+         DC    CL29'CHANNEL END,DEVICE END'
+         DC    C'NORMAL STATUS FOR A NO-OP COMMAND       '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=1000',AL1(SF,PNA),C'  '
+         DC    CL29'BUSY            '
+         DC    C'RESPONSE TO A COMMAND ADDRESSED TO A    '
+         DC    C'DEVICE SERVICING A PRIOR ISSUED COMMAND'
+MSG14    DC    AL2(MSG15-*)
+         DC    AL1(SF,PNA),C'SS=2000',AL1(SF,PNA),C'  '
+         DC    CL29'CONTROL UNIT END'
+         DC    C'3272 HAD BEEN ADDRESSED WHILE BUSY,BUT  '
+         DC    C'IS NOW NOT BUSY AND FREE TO ACCEPT A NEW'
+         DC    C'COMMAND                                 '
+         DC    C'                                        '
+         DC    AL1(SF,PNA),C'SS=5000',AL1(SF,PNA),C'  '
+         DC    CL29'STATUS MODIFIER,BUSY'
+         DC    C'RESPONSE TO A COMMAND ADDRESSED TO A    '
+         DC    C'DEVICE OTHER THAN DEVICE WHOSE STATUS IS'
+         DC    C'PENDING OR DEVICE BEING SERVICED BY 3272'
+MSG15    DC    AL2(LASTMSG-*)
+         DC    AL1(SF,PNA),C'SS=HELP',AL1(SF,PNA),C'  '
+         DC    CL29'LOCAL STATUS/SENSE HELPER.'
+         DC    CL40'FIELDS "SS=XXXX" REFER TO 1ST BYTE OF'
+         DC    CL40'CSW AND THE SENSE BYTE.  FOR INSTANCE,'
+         DC    CL40'IF ERROR DISPLAY SHOWED CSW=0E00 AND'
+         DC    CL40'SENSE=02, LOOK UP MSG FOR "SS=0E02"'
+LASTMSG  EQU   *
+         END   BNGCLOCL

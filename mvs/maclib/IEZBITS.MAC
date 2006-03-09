@@ -1,0 +1,20 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IEZBITS
+         GBLA  &IEZBITS
+         AIF   (&IEZBITS EQ 0).SETSW
+         MEXIT
+.SETSW   ANOP
+&IEZBITS SETA  1
+         SPACE 2
+BIT0     EQU   128
+BIT1     EQU   64
+BIT2     EQU   32
+BIT3     EQU   16
+BIT4     EQU   8
+BIT5     EQU   4
+BIT6     EQU   2
+BIT7     EQU   1
+         SPACE 2
+         MEND
+

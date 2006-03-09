@@ -1,0 +1,18 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IECTUCB  &IOBREG
+         LR    1,&IOBREG            GET ADDRESS OF IOB IN REG 1
+.UCB01   L     15,20(1)             GET ADDRESS OF DCB FROM IOB
+         L     14,44(15)            GET ADDRESS OF DEB FROM DCB
+         CLC   21(3,1),25(14)       DEB-DCB POINTER LOOP COMPLETE
+         BNE   *+24                 BRANCH IF NOT
+*
+         SR    15,15
+         IC    15,32(1)             GET UCB INDEX FROM IOB
+         SLA   15,2                 AND MULTIPLY BY 4
+         L     1,32(14,15)          GET ADDRESS OF UCB FROM DEB
+         B     *+6                  EXIT
+*
+         SR    1,1                  SET REG 1 = 0
+         MEND
+

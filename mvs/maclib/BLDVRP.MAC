@@ -1,0 +1,226 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    BLDVRP &TYPE=,&FIX=,&KEYLEN=,&STRNO=,&BUFFERS=,&MF=I
+         LCLA  &ORCODE                  CODES TO BE TURNED ON IN LIST
+         LCLA  &ANDCODE                 CODES TO BE TURNED OFF IN LIST
+         LCLA  &I,&J,&K,&L              WORK VARIABLES
+         LCLB  &MFE                     EXECUTE FORM INDICATOR
+         LCLB  &ERR                     ERROR INDICATOR
+         LCLB  &FIOB                    FIX IO RELATED BLOCKS IND
+         LCLB  &FBFR                    FIX BUFFERS INDICATOR
+         LCLB  &BFR                     BUFFER SPECIFIED INDICATOR
+         LCLC  &BUFRSZ(50)              BUFFER SIZE TABLE
+         LCLC  &BUFRCT(50)              BUFFER COUNT TABLE
+         LCLC  &EREG                    EXECUTE FORM LIST ADDR REG
+&ORCODE  SETA  128+64                   INDICATE DB/DC AND BLDVRP
+&ANDCODE SETA  255-32                   RESET DLVRP
+         AIF   (N'&SYSLIST EQ 0).NOPOS  GO IF NO POSITIONAL OPERANDS
+.POSLOOP ANOP
+&I       SETA  &I+1                     POINT TO NEXT POS OPERAND
+         IDAERMAC 1,&SYSLIST(&I)        ISSUE WARNING MNOTE
+         AIF   (&I LT N'&SYSLIST).POSLOOP  GO IF MORE POS OPERANDS
+.NOPOS   ANOP
+         AIF   ('&MF' EQ 'I').MFB       GO IF STANDARD FORM
+         AIF   ('&MF' EQ 'L').MFB       GO IF LIST FORM
+         AIF   (N'&MF LT 2).MFERR       GO IF NOT ENOUGH PARMS
+         AIF   ('&MF(1)' NE 'E').MFERR  GO IF NOT EXECUTE FORM
+&MFE     SETB  1                        INDICATE EXECUTE FORM
+         AGO   .MFB                     GO AROUND ERROR
+.MFERR   ANOP
+         IDAERMAC 3,MF,&MF              ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+.MFB     ANOP
+         AIF   ('&TYPE' NE '').TOKY     GO IF TYPE IS SPECIFIED
+         AIF   (&MFE).TYPEB             GO IF EXECUTE FORM
+         AGO   .TLSR                    GO TAKE DEFAULT
+.TOKY    ANOP
+         AIF   ('&TYPE' NE 'LSR').TLSRB  GO IF NOT LOCALLY SHARED
+.TLSR    ANOP
+&ORCODE  SETA  &ORCODE+16               INDICATE LOCALLY SHARED
+&ANDCODE SETA  &ANDCODE-8               RESET GLOBALLY SHARED
+         AGO   .TYPEB                   GO AROUND TYPE ANALYSIS
+.TLSRB   ANOP
+         AIF   ('&TYPE' NE 'GSR').TGSRB  GO IF NOT GLOBALLY SHARED
+&ORCODE  SETA  &ORCODE+8                INDICATE GLOBALLY SHARED
+&ANDCODE SETA  &ANDCODE-16              RESET LOCALLY SHARED
+         AGO   .TYPEB                   GO AROUND TYPE ANALYSIS
+.TGSRB   ANOP
+         IDAERMAC 3,TYPE,&TYPE          ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+.TYPEB   ANOP
+         AIF   ('&FIX' EQ '').FIXB      GO IF FIX NOT SPECIFIED
+&ANDCODE SETA  &ANDCODE-6               RESET FIX IO BLOCKS AND BUFFERS
+&I       SETA  0                        INIT FIX SUBLIST SUBSCRIPT
+.FIXL    ANOP
+&I       SETA  &I+1                     POINT TO NEXT ENTRY IN SUBLIST
+         AIF   (&I GT N'&FIX).FIXB      GO IF NO MORE ENTRIES
+         AIF   ('&FIX(&I)' EQ '').FIXL  GO IF NULL ENTRY
+         AIF   ('&FIX(&I)' NE 'IOB').FIOBB  GO IF NOT IO BLOCKS
+         AIF   (&FIOB).FERR             GO IF IO BLOCKS ALREADY SPECD
+&FIOB    SETB  1                        INDICATE FIX
+&ORCODE  SETA  &ORCODE+4                ..I/O BLOCKS SPECIFIED
+         AGO   .FIXL                    GO CHECK NEXT ENTRY
+.FIOBB   ANOP
+         AIF   ('&FIX(&I)' NE 'BFR').FBFRB  GO IF NOT BUFFERS
+         AIF   (NOT &FBFR).FERRB        GO IF BUFFERS NOT ALREADY SPECD
+.FERR    ANOP
+         IDAERMAC 8,FIX,&FIX(&I),&FIX(&I)  ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+         AGO   .FIXL                    GO CHECK NEXT ENTRY
+.FERRB   ANOP
+&FBFR    SETB  1                        INDICATE FIX
+&ORCODE  SETA  &ORCODE+2                ..BUFFERS SPECIFIED
+         AGO   .FIXL                    GO CHECK NEXT ENTRY
+.FBFRB   ANOP
+         IDAERMAC 3,FIX,&FIX(&I)        ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+         AGO   .FIXL                    GO CHECK NEXT ENTRY
+.FIXB    ANOP
+         AIF   ('&MF' NE 'I').STRNOB    GO IF NOT STANDARD FORM
+         AIF   ('&STRNO' NE '').STRNOB  GO IF STRNO SPECIFIED
+         IDAERMAC 2,STRNO               ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+.STRNOB  ANOP
+         AIF   (&MFE).BUFRO             GO IF EXECUTE FORM
+&J       SETA  0                        INIT BUFFER SIZE/CNT SUBSCRIPT
+         AIF   ('&BUFFERS' NE '').BOKY  GO IF BUFFERS SPECIFIED
+         IDAERMAC 2,BUFFERS             ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+         AGO   .BUFRB1                  GO AROUND BUFFERS ANALYSIS
+.BOKY    ANOP
+&I       SETA  0                        INIT BUFFERS SUBLIST SUBSCRIPT
+.BUFRL10 ANOP
+&J       SETA  &J+1                     POINT TO NEXT BUFFER SIZE/COUNT
+.BUFRL11 ANOP
+&I       SETA  &I+1                     POINT TO NEXT ENTRY IN SUBLIST
+         AIF   (&I GT N'&BUFFERS).BUFRB0  GO IF NO MORE ENTRIES
+         AIF   ('&BUFFERS(&I)' EQ '').BUFRL11  GO IF NULL ENTRY
+&BFR     SETB  1                        INDICATE BUFFER SPECIFIED
+         AIF   ('&BUFFERS(&I)'(1,1) EQ '(').BUFRER  GO IF 1ST CHAR IS (
+&K       SETA  1                        INIT CHARACTER POINTER
+.BUFRSL  ANOP
+&K       SETA  &K+1                     POINT TO NEXT CHARACTER
+         AIF   (&K GT K'&BUFFERS(&I)).BUFRER  GO IF NO MORE CHARACTERS
+         AIF   ('&BUFFERS(&I)'(&K,1) NE '(').BUFRSL  GO IF NOT TO ( YET
+&BUFRSZ(&J) SETC '&BUFFERS(&I)'(1,&K-1)  NUMBER IN FRONT OF ( IS SIZE
+&L       SETA  &K+1                     SAVE POINTER TO CHAR AFTER (
+         AIF   ('&BUFFERS(&I)'(&L,1) EQ ')').BUFRER  GO IF NO SIZE '()'
+&K       SETA  &L                       POINT TO CHARACTER AFTER (
+.BUFRCL  ANOP
+&K       SETA  &K+1                     POINT TO NEXT CHARACTER
+         AIF   (&K GT K'&BUFFERS(&I)).BUFRER  GO IF NO MORE CHARACTERS
+         AIF   ('&BUFFERS(&I)'(&K,1) NE ')').BUFRCL  GO IF NOT TO ) YET
+&BUFRCT(&J) SETC '&BUFFERS(&I)'(&L,&K-&L)  NUMBER BETWEEN () IS COUNT
+         AIF   ('&BUFRCT(&J)' LT '3').BUFRER  COUNT MUST BE AT LEAST 3
+         AIF   ('&BUFRCT(&J)' GT '32767').BUFRER  ..AND LESS THAN 32K
+&K       SETA  512                      START BUFFER SIZE AT 512
+.BUFRL12 ANOP
+         AIF   ('&BUFRSZ(&J)' EQ '&K').BUFRL10  GO IF VALID BUFFER SIZE
+         AIF   (&K GT 2048).BFRA4K      IF > 2K MUST BE MULTIPLE OF 4K
+&K       SETA  &K*2                     ..OTHERWISE MUST BE POWER OF 2
+         AGO   .BUFRL12                 GO TEST BUFFER SIZE
+.BFRA4K  ANOP
+         AIF   (&K GE 32768).BUFRER     GO IF INVALID BUFFER SIZE
+&K       SETA  &K+4096                  NEXT BUFFER SIZE VALUE
+         AGO   .BUFRL12                 GO TEST BUFFER SIZE
+.BUFRER  ANOP
+         IDAERMAC 3,BUFFERS,&BUFFERS(&I)  ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+         AGO   .BUFRL11                 GO TO NEXT ENTRY
+.BUFRB0  ANOP
+         AIF   (&BFR).BUFRB1            GO IF BUFFER SPECIFIED
+         IDAERMAC 3,BUFFERS,&BUFFERS    ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+         AGO   .BUFRB1                  GO AROUND BUFFERS ANALYSIS
+.BUFRO   ANOP
+         AIF   ('&BUFFERS' EQ '').BUFRB1  GO IF BUFFERS NOT SPECIFIED
+         IDAERMAC 4,BUFFERS             ISSUE WARNING MNOTE
+.BUFRB1  ANOP
+         AIF   (&ERR).END               GO IF ANY ERRORS
+         AIF   (&MFE).EXEC              GO IF EXECUTE FORM
+         AIF   ('&MF' EQ 'L').LIST      GO IF LIST FORM
+         AIF   ('&NAME' EQ '').NAMEB1   GO IF NO NAME
+&NAME    DS    0H
+.NAMEB1  ANOP
+         CNOP  0,4                      ALIGN ON WORD BOUNDARY
+&I       SETA  ((&J-1)*8)+60            CALC DISP TO SVC
+         BAL   1,*+&I                   PLACE LIST ADDRESS IN 1
+         AGO   .GENACB
+.LIST    ANOP
+&NAME    DS    0F                       ALIGN ON WORD BOUNDARY
+.GENACB  ANOP
+         DC    X'80'                    INDICATE END OF OPEN LIST
+         DC    AL3(*+3)                 ACB ADDRESS
+         DC    X'A011'                  ID AND SUBTYPE
+         DC    AL2(0)                   RESERVED
+         DC    A(*+48)                  BUFFER LIST ADDRESS
+         AIF   ('&KEYLEN' NE '').CHKKEYL  GO IF KEY LENGTH SPECIFIED
+         DC    AL1(255)                 KEY LENGTH
+         AGO   .AKEYLEN                 GO AROUND KEY LENGTH
+.CHKKEYL AIF   ('&KEYLEN' LT '256').GENKEYL GO IF KEY LENGTH NOT TO BIG
+         IDAERMAC 3,KEYLEN,&KEYLEN      ISSUE ERROR MESSAGE
+         AGO   .AKEYLEN                 GO AROUND KEY LENGTH
+.GENKEYL ANOP
+         AIF   ('&KEYLEN' GT '255').KEYLNER  GO IF KEYLEN GT 255
+         DC    AL1(&KEYLEN)             KEY LENGTH
+         AGO   .AKEYLEN                 GO AROUND ERROR MESSAGE
+.KEYLNER IDAERMAC 3,KEYLEN,&KEYLEN      ISSUE ERROR MNOTE
+.AKEYLEN ANOP
+         AIF   ('&STRNO' NE '').GENSTRN  GO IF STRING NUMBER SPECIFIED
+         DC    AL1(0)                   STRING NUMBER
+         AGO   .ASTRNO                  GO AROUND STRING NUMBER
+.GENSTRN ANOP
+         DC    AL1(&STRNO)              STRING NUMBER
+.ASTRNO  ANOP
+         DC    AL1(&ORCODE)             VRP CODES
+         DC    AL1(0)                   RESERVED
+         DC    3A(0)                    RESERVED
+         DC    XL3'0'                   RESERVED
+         DC    X'08'                    DSORG
+         DC    5A(0)                    RESERVED
+         DC    X'02'                    OFLAGS
+         DC    XL3'0'                   RESERVED
+&I       SETA  0                        INIT BUFFER SIZE/COUNT POINTER
+&K       SETA  &J-1                     POINT TO LAST BUFFER SIZE/COUNT
+.BUFRL2  ANOP
+&I       SETA  &I+1                     POINT TO NEXT BUFFER SIZE/COUNT
+         AIF   (&I GE &J).BUFRB2        GO IF NO MORE ENTRIES
+         DC    A(&BUFRSZ(&I))           BUFFER SIZE
+         AIF   (&I EQ &K).GENEND        GO IF LAST BUFFER SIZE/COUNT
+         DC    AL2(0)                   RESERVED
+         AGO   .AREND                   GO AROUND GEN OF END OF LIST
+.GENEND  ANOP
+         DC    X'80'                    INDICATE LAST LIST ENTRY
+         DC    AL1(0)                   RESERVED
+.AREND   ANOP
+         DC    AL2(&BUFRCT(&I))         BUFFER COUNT
+         AGO   .BUFRL2                  GO GEN NEXT ENTRY
+.BUFRB2  ANOP
+         AIF   ('&MF' NE 'L').ISUSVC    GO IF NOT LIST FORM
+         MEXIT
+.EXEC    ANOP
+         AIF   ('&NAME' EQ '').NAMEB2   GO IF NO NAME
+&NAME    DS    0H
+.NAMEB2  ANOP
+         AIF   ('&MF(2)'(1,1) EQ '(').EREG  GO IF LIST ADDRESS IN REG
+         LA    1,&MF(2)                 LOAD LIST ADDRESS
+         AGO   .AEREG                   GO AROUND REG CODE
+.EREG    ANOP
+         AIF   ('&MF(2)' EQ '(1)').AEREG  GO IF LIST ADDR ALREADY IN 1
+&I       SETA  K'&MF(2)-2               CALC LENGTH OF REG NAME
+&EREG    SETC  '&MF(2)'(2,&I)           PICK UP REG NAME
+         LR    1,&EREG                  LOAD LIST ADDRESS
+.AEREG   ANOP
+         AIF   ('&KEYLEN' EQ '').AEKEYL  GO IF NO KEY LENGTH
+         MVI   12(1),&KEYLEN            ALTER KEY LENGTH
+.AEKEYL  ANOP
+         AIF   ('&STRNO' EQ '').AESTRN  GO IF NO STRING NUMBER
+         MVI   13(1),&STRNO             ALTER STRING NUMBER
+.AESTRN  ANOP
+         NI    14(1),&ANDCODE           REMOVE OLD VRP CODES
+         OI    14(1),&ORCODE            INSERT NEW VRP CODES
+.ISUSVC  ANOP
+         SVC   19                       ISSUE OPEN SVC
+.END     ANOP
+         MEND
+

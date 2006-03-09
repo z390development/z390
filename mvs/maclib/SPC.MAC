@@ -1,0 +1,6 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SPC
+&NAME    DC    XL2'EC00'                SELECT M/P BY POCKET CTR
+         MEND
+

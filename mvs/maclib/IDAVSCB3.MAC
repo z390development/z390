@@ -1,0 +1,181 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IDAVSCB3 &ARG=,&ARGNAME=,&MF=,&KWTC=,&CALLER=,&TYPE=, @ZA34940*
+               &CHKAM=,&AM=,&BIT=NO,&INDRECT=NO                @ZA34940
+.*                                                             @ZA34940
+.*       CHANGE LEVEL = 0                                      @ZA34940
+.*       DATE OF LAST CHANGE =  5 OCT  78 ( 78*278 )           @ZA34940
+.*
+.* 1. FUNCTION - IT SETS VALUES IN THE VARIOUS ARRAYS USED BY IDACB2
+.*               TO BUILD THE PARAMETER LIST OF ARGUMENT CONTROL
+.*               ENTRIES TO BE PASSED TO THE CONTROL BLOCK
+.*               MANIPULATION MODULE FOR THE PURPOSE OF BUILDING,
+.*               MODIFYING, OR TESTING AN ACB, RPL, EXLST, OR NIB.
+.*
+.*               THE ARRAYS BUILT BY IDAVSCB3 ARE AS FOLLOWS:  @ZA34940
+.*
+.*               &IDAEID - THE ELEMENTS IN THIS ARRAY CONTAIN THE
+.*                         KEYWORD TYPE CODES FOR THE VARIOUS KEYWORDS
+.*                         SPECIFIED BY THE USER ON GENCB, MODCB,
+.*                         TESTCB, AND IN SOME CASES SHOWCB.
+.*
+.*               &IDAETYP - THE ELEMENTS IN THIS ARRAY CONTAIN A CODE
+.*                          INDICATING THE TYPE OF OPERAND.
+.*                          CODES SET BY IDAVSCB3 ARE          @ZA34940
+.*                          AS FOLLOWS:                        @ZA34940
+.*                          &VN2 - (2) BIT TYPE OPERAND
+.*                          &VN3 - (3) CHARACTER STRING
+.*                          &AN3 - (6) INDIRECT ADDRESS
+.*                          &IDACB11 - SET BY IDAVSCB1 FOR     @ZA34940
+.*                                     NON-BIT TYPE KEYWORDS   @ZA34940
+.*
+.*               &IDAVALC - THE ELEMENTS IN THIS ARRAY CONTAIN VALUES
+.*                          OF THE KEYWORDS.  IT IS SET IN THIS MACRO
+.*                          FOR NON-BIT KEYWORDS, AND BIT KEYWORDS
+.*                          WHEN INDIRECT ADDRESS IS SPECIFIED
+.*                          BY THE USER.  FOR OTHER BIT KEYWORDS,
+.*                          THE VALUE IN THIS ARRAY IS SET BY THE
+.*                          CALLER OF THIS MACRO.
+.*                          THE VALUE OF THE KEYWORDS IS SET   @ZA34940
+.*                          IN IDAVSCB1 AND PASSED TO IDAVSCB3 @ZA34940
+.*                          VIA THE GLOBAL VARIABLE &IDACB13.  @ZA34940
+.*
+.*               &IDAVALX - THE ELEMENTS IN THIS ARRAY CONTAIN CODES
+.*                          FOR EXLST KEYWORDS.  THESE CODES ARE SET
+.*                          IN IDAVSCB1 AND PASSED TO IDAVSCB3 @ZA34940
+.*                          VIA THE GLOBAL VARIABLE &IDACB12.  @ZA34940
+.*
+.* 2. CALLERS - IDACB2, IDAVSACB, IDAVSRPL, IDACBEXL, IDACBNIB,@ZA34940
+.*              IDAVSOPT, AND IDACBPRC.                        @ZA34940
+.*
+.* 3. KEYWORDS - &ARG= VALUE OF THE KEYWORD SPECIFIED BY THE USER ON
+.*                     GENCB, MODCB, TESTCB, AND SHOWCB.
+.*
+.*               &ARGNAME= NAME OF THE KEYWORD BEING PROCESSED.
+.*
+.*               &MF= MACRO FORMAT SET BY USER ON GENCB, MODCB, TESTCB,
+.*                    OR SHOWCB.  (USED BY IDAVSCB1)           @ZA34940
+.*
+.*               &KWTC= KEYWORD TYPE CODE OF KEYWORD BEING PROCESSED,
+.*                      SET BY CALLER
+.*
+.*               &CALLER= INDICATES WHETHER CALLER IS GENCB, MODCB,
+.*                        TESTCB, OR SHOWCB (USED BY IDAVSCB1) @ZA34940
+.*
+.*               &TYPE= THIS WILL BE NULL FOR ALL BUT EXLST KEYWORDS.
+.*                      FOR EXLST KEYWORDS IT WILL BE 'X'.
+.*                      (USED BY IDAVSCB1)                     @ZA34940
+.*
+.*               &AM= ACCESS METHOD SET BY USER ON GENCB, MODCB,
+.*                    TESTCB, OR SHOWCB
+.*
+.*               &CHKAM= CONTAINS ACCESS METHOD FOR WHICH THIS KEYWORD
+.*                       IS VALID. IF SPECIFIED, ITS VALUE IS COMPARED
+.*                       TO THAT OF &AM AND AN UNEQUAL COMPARE CAUSES
+.*                       AN ERROR MESSAGE TO BE ISSUED, AND THE
+.*                       KEYWORD IS IGNORED. IF NULL, NO COMPARE IS
+.*                       MADE AND THE KEYWORD IS PROCESSED NORMALLY.
+.*
+.*               &BIT= YES INDICATES A BIT KEYWORD IS BEING PROCESSED
+.*                     AND &IDAVALC IS SET BY THE CALLER.  DEFAULT IS
+.*                     NO
+.*
+.*               &INDRECT=  YES INDICATES THAT INDIRECT ADDRESS MAY
+.*                          HAVE BEEN SPECIFIED. THIS PARAMETER IS USED
+.*                          ONLY ON BIT KEYWORDS (OPTCD,MACRF,ETC) OR
+.*                          CHARACTER STRING KEYWORDS (DDNAME, ETC).
+.*                          OTHER KEYWORDS THAT HAVE INDIRECT ADDRESS
+.*                          ARE HANDLED BY IDAVSCB1. THE       @ZA34940
+.*                          DEFAULT IS NO.                     @ZA34940
+.*                                                             @ZA34940
+.* CHANGE ACTIVITY                                             @ZA34940
+.*      CBMM SPLIT SUPPORT                                     @ZA34940
+.*
+.* GLOBALS
+         GBLA  &IDAENO                  NUMBER OF ELEMENTS IN ARRAY
+         GBLA  &IDAEID(50)              ELEMENT KEYWORD TYPE CODE
+         GBLA  &IDAETYP(50)             ELEMENT TYPE ARRAY
+         GBLC  &IDAVALC(50)             ELEMENT CHARACTER VALUE ARRAY
+         GBLC  &IDAVALX(50)             ELEMENT ARITHMETIC VALUE ARRAY
+         GBLA  &IDACB11                 VALUE TYPE SET BY      @ZA34940
+.*                                      IDAVSCB1               @ZA34940
+         GBLB  &IDACB01                 ERROR SWITCH
+         GBLC  &IDACB12                 EXIT LIST CODES SET BY @ZA34940
+.*                                      IDAVSCB1               @ZA34940
+         GBLC  &IDACB13                 OPERAND VALUE SET BY   @ZA34940
+.*                                      IDAVSCB1               @ZA34940
+.* LOCALS
+         LCLA  &VN2                     BIT OPERAND TYPE CODE
+         LCLA  &VN3                     CHARACTER STRING OPERAND CODE
+         LCLA  &AN3                     INDIRECT ADDRESS OPERAND CODE
+.* INITIALIZATION
+&VN2     SETA  2                        INITIALIZE BIT OPERAND TYPE
+.*                                      CODE                    X04SVHS
+&VN3     SETA  3                        INITIALIZE CHARACTER STRING
+.*                                      OPERAND CODE            X04SVHS
+&AN3     SETA  6                        INITIALIZE INDIRECT ADDRESS
+.*                                      OPERAND CODE            X04SVHS
+         AIF   ('&ARG' EQ '').IDA5000   IF KEYWORD NOT SPECIFIED
+.*                                      EXIT FROM MACRO         X04SVHS
+&IDAENO  SETA  &IDAENO+1                BUMP INDEX INTO ARRAYS  X04SVHS
+&IDAEID(&IDAENO) SETA &KWTC             SET ELEMENT TYPE CODE   X04SVHS
+         AIF   ('&CHKAM' EQ '').IDA1000 DETERMINE IF AM SHOULD BE
+.*                                      CHECKED                 X04SVHS
+         AIF   ('&CHKAM' EQ '&AM').IDA1000                      X04SVHS
+.*                                      PROCESS KEYWORD IF AM IS
+.*                                      CORRECT
+         IDAVSERR 24,&ARG,&CHKAM        ISSUE ERROR MESSAGE    @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+         MEXIT                          EXIT FROM MACRO         X04SVHS
+.IDA1000 ANOP                                                   X04SVHS
+.* PROCESS KEYWORD
+         AIF   ('&INDRECT' NE 'YES').IDA3000                    X04SVHS
+.*                                      CHECK IF INDIRECT ADDR IS
+.*                                      VALID FOR THIS KEYWORD
+         AIF   ('&ARG(1)' NE '*').IDA2000 CHECK IF INDIRECT     X04SVHS
+.*                                      ADDRESS WAS SPECIFIED
+         AIF   ('&MF' NE 'L').IDA2500   INDIRECT ADDRESS NOT VALID
+.*                                      FOR LIST FORM OF MACRO  X04SVHS
+         IDAVSERR 6,&ARGNAME,&ARG       ISSUE ERROR MESSAGE    @ZA34940
+&IDACB01 SETB  1                        SET ERROR SWITCH        X04SVHS
+         MEXIT                          EXIT FROM MACRO         X04SVHS
+.IDA2000 ANOP                                                   X04SVHS
+.*             AT THIS POINT, INDRECT=YES WAS SPECIFIED, BUT THE USER
+.*             DID NOT SPECIFY INDIRECT ADDRESS
+         AIF   ('&BIT' EQ 'YES').IDA9000 IF BIT KEYWORD ONLY OPERAND
+.*                                      TYPE MUST BE SET        X04SVHS
+&IDAVALC(&IDAENO) SETC '&ARG'           SET OPERAND VALUE FOR NON-BIT
+.*                                      KEYWORDS                X04SVHS
+&IDAETYP(&IDAENO) SETA &VN3             SET OPERAND TYPE (CHAR STRING)
+.*                                                              X04SVHS
+         MEXIT                                                  X04SVHS
+.IDA2500 ANOP                                                   X04SVHS
+.*             AT THIS POINT INDRECT=YES WAS SPECIFIED AND THE
+.*             USER SPECIFIED AN INDIRECT ADDRESS.
+&IDAVALC(&IDAENO) SETC '&ARG(2)'        SET VALUE FOR INDIRECT ADDRESS
+.*                                                              X04SVHS
+&IDAETYP(&IDAENO) SETA &AN3             SET OPERAND TYPE (IND ADDR)
+.*                                                              X04SVHS
+         MEXIT                                                  X04SVHS
+.IDA3000 ANOP                                                   X04SVHS
+.*             AT THIS POINT INDRECT=NO
+         AIF   ('&BIT' EQ 'YES').IDA9000                        X04SVHS
+.*                                      CHECK FOR BIT STRING KEYWORD
+.*                                      IF YES, ONLY OPERAND TYPE
+.*                                      MUST BE SET.
+         IDAVSCB1 ARG=&ARG,ARGNAME=&ARGNAME,MF=&MF,            @ZA34940X
+               CALLER=&CALLER,TYPE=&TYPE                       @ZA34940
+.*             THE FOLLOWING VALUES (&IDACB11, &IDACB12, &IDACB13) ARE
+.*             SET IN IDAVSCB1                                 @ZA34940
+&IDAETYP(&IDAENO) SETA &IDACB11         SET ELEMENT TYPE        X04SVHS
+&IDAVALC(&IDAENO) SETC '&IDACB13'       SET CHARACTER VALUE OF ELEMENT
+.*                                                              X04SVHS
+         AIF   ('&TYPE' NE 'X').IDA5000 IF TYPE NOT X, NO       X04SVHS
+.*                                      EXLST VALUE TO BE SET
+&IDAVALX(&IDAENO) SETC '&IDACB12'       SET EXLST VALUE         X04SVHS
+.IDA5000 MEXIT                                                  X04SVHS
+.IDA9000 ANOP                                                   X04SVHS
+&IDAETYP(&IDAENO) SETA &VN2             SET BIT OPERAND TYPE CODE
+.*                                      VALUE OPERAND WILL BE SET
+.*                                      BY CALLER FOR BIT OPERANDS
+         MEND                                                   X04SVHS

@@ -1,0 +1,128 @@
+.* MVS 3.8J PUBLIC DOMAIN
+          MACRO
+&NAME    CALLRTM &TYPE=,&COMPCOD=,&ASID=,&TCB=0,&DUMP=YES,&STEP=NO,    C
+               &DUMPOPT=,&CCA=
+         LCLA  &CTR,&CTRLNK,&CTRACR
+         LCLB  &B(17)
+&NAME    DS    0H
+&B(1)    SETB  ('&DUMP' NE 'NO')
+&B(2)    SETB  ('&STEP' EQ 'YES')
+&B(3)    SETB  ('&DUMPOPT' NE '')
+&B(4)    SETB  ('&COMPCOD' EQ '')
+&B(5)    SETB  ('&ASID' NE '')
+&B(6)    SETB  ('&TYPE' EQ 'DATERR')
+&B(7)    SETB  ('&TYPE' EQ 'RESTART')
+&B(8)    SETB  ('&TYPE' EQ 'MACHCK')
+&B(9)    SETB  ('&TYPE' EQ 'SVCERR')
+&B(10)   SETB  ('&TYPE' EQ 'PGIOERR')
+&B(11)   SETB  ('&TYPE' EQ 'ABTERM' AND '&ASID' EQ '')
+&B(12)   SETB  ('&TYPE' EQ 'MEMTERM')
+&B(13)   SETB  ('&TYPE' EQ 'PROGCK')
+&B(14)   SETB  ('&TYPE' EQ 'ACR')
+&B(15)   SETB  ('&TYPE' EQ 'ACRDISP')
+&B(16)   SETB  ('&TYPE' EQ 'ACRLM')
+&B(17)   SETB  ('&TYPE' EQ 'ABTERM' AND '&ASID' NE '')
+&CTRLNK  SETA  4+4*&B(6)+8*&B(7)+12*&B(8)+16*&B(9)+20*&B(10)+24*&B(11)+C
+               28*&B(12)+32*&B(13)+36*&B(14)+36*&B(15)+36*&B(16)+40*&B(C
+               17)
+&CTRACR  SETA  8*&B(14)+2*&B(15)+4*&B(16)
+         AIF   (&CTRLNK EQ 4).ERR1
+         AIF   ('&TYPE' EQ 'MACHCK').LINKAGE
+         AIF   ('&TYPE' EQ 'ACR').LINKAGE
+         AIF   ('&TYPE' EQ 'ACRDISP').LINKAGE
+         AIF   ('&TYPE' EQ 'ACRLM').ACRLM
+         AIF   ('&TYPE' EQ 'ABTERM' AND &B(4)).ERR2
+         AIF   ('&TYPE' EQ 'MEMTERM' AND &B(4)).ERR2
+         AIF   ('&DUMP' NE 'YES' AND '&DUMP' NE 'NO').ERR8
+.STPCK   AIF   ('&STEP' NE 'YES' AND '&STEP' NE 'NO').ERR9
+.STPCTN  ANOP
+&CTR     SETA  128*&B(1)+64*&B(2)+32*&B(3)+16*&B(4)+8*&B(5)
+         AIF   (&B(4)).FLAGS
+         AIF   (T'&COMPCOD NE 'N').REGCC
+         AIF   ('&COMPCOD'(1,1) EQ '(').REGCC
+         AIF   (&COMPCOD GT 4095).ERR3
+.REGCC   ANOP
+         IHBINNRA  &COMPCOD         LOAD REG1 WITH CC
+         SLL   1,12(0)              COMPCODE IN POSITION
+         AIF   ('&COMPCOD'(1,1) NE '(').CC
+         LA    1,0(0,1)             CLEAR HIGH ORDER BYTE
+.CC      LA    0,&CTR.(,0)          DUMP/STEP/DUMPOPTS/ASID
+         SLL   0,24(0)              SHIFT TO HIGH ORDER BYTE
+         OR    1,0                  OR IN WITH COMPCODE
+         AGO   .CC1
+.FLAGS   ANOP
+         LA    1,&CTR.(,0)          DUMP/STEP/DUMPOPTS/ASID
+         SLL   1,24(0)              SHIFT TO HIGH ORDER BYTE
+.CC1     ANOP
+         AIF   ('&TYPE' NE 'MEMTERM' AND '&TYPE' NE 'ABTERM').DUMPOPT
+.TCB     AIF   ('&TYPE' NE 'ABTERM').ASID                      @ZA25000
+         AIF   ('&TCB' NE '0' AND '&TCB'(1,1) NE '(').ERR6     @ZA25000
+         AIF   ('&TCB' EQ '0').TCB0                            @ZA25000
+         IHBINNRA  ,&TCB                                       @ZA25000
+         AGO   .ASID                                           @ZA25000
+.TCB0    LA    0,0(,0)              LOAD REG0-TCB=0            @ZA25000
+.ASID    AIF   ('&ASID' EQ '(2)').DUMPOPT                      @ZA25000
+         AIF   ('&ASID' EQ '').DUMPOPT                         @ZA25000
+         AIF   ('&ASID'(1,1) NE '(').CKNUM
+         LR    2,&ASID(1)           LOAD REG2 WITH ASID
+         AGO   .DUMPOPT                                        @ZA25000
+.CKNUM   AIF   (T'&ASID NE 'N').ASYM
+         AIF   (&ASID GT 32765).ERR4
+.ASYM    CNOP  0,4
+         B     *+6                  BRANCH AROUND CONSTANTS
+         DC    AL2(&ASID)
+         LH    2,*-2                LOAD REG2 WITH ASID
+.DUMPOPT AIF   (NOT &B(3)).LINKAGE
+         AIF   ('&DUMPOPT'(1,1) NE '(').ERR7
+         AIF   ('&DUMPOPT' EQ '(3)').LINKAGE
+         LR    3,&DUMPOPT(1)        LOAD REG3 WITH DUMPOPTS
+.LINKAGE L     15,X'10'(,0)         GET CVT ADDRESS
+         L     15,CVTBTERM-CVTMAP(,15) ADDR OF CVTBTERM TABLE
+         L     15,&CTRLNK.(,15)     ADDRESS OF ENTRY POINT
+         AIF   (&CTRACR EQ 0).LNKCNT
+         LA    0,&CTRACR.(,0)       ACR TYPE IN REG 0
+.LNKCNT  AIF   ('&TYPE' NE 'ACR').NRMLNK
+         BR    15
+         AGO   .END
+.NRMLNK  BALR  14,15
+         AGO   .END
+.ACRLM   AIF   ('&CCA'(1,1) NE '(').ERR10
+         L     10,LCCACPUS-LCCA&CCA      POINTER TO LCCA SAVEAREAS
+         L     10,WSACACR-WSAC(,10)      POINTER TO ACR SAVEAREA
+         STD   0,0(,10)             STORE FLOATING POINT REGS
+         STD   2,8(,10)
+         STD   4,16(,10)
+         STD   6,24(,10)
+         STM   0,15,32(10)          STORE REGS 0-15
+         L     15,X'10'(,0)         GET CVT ADDRESS
+         L     15,CVTBTERM-CVTMAP(,15) ADDR OF CVTBTERM TABLE
+         L     15,&CTRLNK.(,15)     ADDRESS OF ENTRY POINT
+         LA    0,&CTRACR.(,0)
+         BALR  14,15
+         L     10,LCCACPUS-LCCA(,10)    POINTER TO LCCA SAVEAREAS
+         L     10,WSACACR-WSAC(,10)     POINTER TO ACR SAVEAREA
+         LD    0,0(,10)              RESTORE FLOATING POINT REGS
+         LD    2,8(,10)
+         LD    4,16(,10)
+         LD    6,24(,10)
+         LM    0,15,32(10)          RESTORE REGS 0-15
+         AGO   .END
+.ERR1    MNOTE 12,'TYPE OPERAND REQ-D-NOT SPECIFIED OR INVALID'
+         MEXIT
+.ERR2    MNOTE 12,'COMPCOD OPERAND REQ-D-NOT SPECIFIED'
+         MEXIT
+.ERR3    MNOTE 12,'COMPCOD OPERAND EXCEEDS SPECIFIED LIMITS'
+         MEXIT
+.ERR4    MNOTE 12,'ASID OPERAND EXCEEDS SPECIFIED LIMITS'
+         MEXIT
+.ERR6    MNOTE 12,'TCB OPERAND INVALID FORM'
+         MEXIT
+.ERR7    MNOTE 12,'DUMPOPT OPERAND INVALID'
+         MEXIT
+.ERR8    MNOTE *,'DUMP OPERAND INVALID - YES ASSUMED'
+         AGO   .STPCK
+.ERR9    MNOTE *,'STEP OPERAND INVALID - NO ASSUMED'
+         AGO   .STPCTN
+.ERR10   MNOTE 12,'CCA OPERAND INVALID FORM'
+         MEXIT
+.END     MEND

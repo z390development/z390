@@ -1,0 +1,27 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    RELBUF  &DCB,&BUFFER
+&NAME    DS    0H
+         AIF   (T'&DCB(1) EQ 'N').REG
+         AIF   (T'&DCB(1) EQ 'U').REG2
+.SYM     LA    1,&DCB
+         AGO   .W
+.REG2    AIF   ('&DCB'(1,1) NE '(').SYM
+         AIF   ('&DCB'(K'&DCB,1) NE ')').ER
+         AGO   .LDRG
+.REG     AIF   (&DCB(1) EQ 1).W
+         AIF   (&DCB(1) GT 12).ER
+.LDRG    ANOP
+         LR    1,&DCB(1)
+.W       AIF   (T'&BUFFER(1) NE 'N' AND T'&BUFFER(1) NE 'U').ER2
+         LA    0,0(&BUFFER(1))
+.W2      SVC   58
+         SRL   15,24
+         AGO   .END
+.ER      MNOTE 12,'***  IHB078  DCB OPERAND REGISTER NOTATION INVALID-&X
+               DCB'
+         MEXIT
+.ER2     MNOTE 12,'***  IHB078  BUFFER OPERAND REGISTER NOTATION INVALIX
+               D-&BUFFER'
+.END     MEND
+

@@ -1,0 +1,136 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*   %/*
+* /* MACCOMP Y-1 SC1C5/PZD81                                         */
+* /* MACSTAT Y-1 72237/015156                                        */
+* /* MACDATE Y-1 72237                                               */
+* /*
+         MACRO
+&NAME    WTOR  &MESG,&RYAD,&LENGTH,&ECB,&MF=I,&MSGTYP=,&ROUTCDE=,      X
+               &DESC=,&MCSFLAG=,&QID=                            X02050
+         GBLB  &IHBWTOR
+         LCLC  &GNAME
+&GNAME   SETC  'IHB'.'&SYSNDX'
+         AIF   (N'&SYSLIST(1) GT 1).ERROR7
+         AIF   ('&MF' EQ 'I').IROUT
+         AIF   ('&MF' EQ 'L').LROUT
+         AIF   (N'&MF LE 1).ERROR1
+         AIF   ('&MF(1)' NE 'E').ERROR1
+&NAME    IHBINNRA &MF(2)
+.CHKRYAD AIF   ('&RYAD' EQ '').NORYAD
+         AIF   ('&LENGTH' NE '').SKIP
+         IC    14,0(1,0)                         SAVE REPLY LENGTH
+.SKIP    AIF   ('&RYAD'(1,1) EQ '(').REGNOT
+         LA    15,&RYAD           LOAD REPLY ADDR                 M4520
+         ST    15,0(1,0)          STORE RPLY ADDR                 M4520
+         AGO   .CONT
+.ERROR1  IHBERMAC 35,,&MF
+         MEXIT
+.ERROR2  IHBERMAC 19
+         MEXIT
+.ERROR3  IHBERMAC 69
+         MEXIT
+.ERROR4  IHBERMAC 14
+         MEXIT
+.ERROR5  IHBERMAC 03
+         MEXIT
+.ERROR6  IHBERMAC 11
+         MEXIT
+.ERROR7  IHBERMAC 246
+         MEXIT
+.REGNOT  ST    &RYAD(1),0(1,0)                   STORE REPLY ADDR
+.CONT    AIF   ('&LENGTH' NE '').SKIPA
+         STC   14,0(1,0)                         RESTORE REPLY LENGTH
+         AGO   .CHKECB
+.SKIPA   AIF   ('&LENGTH'(1,1) EQ '(').REGPRES
+         MVI   0(1),&LENGTH                      MOVE IN REPLY LENGTH
+         AGO   .CHKECB
+.REGPRES STC   &LENGTH(1),0(1,0)                 STORE REPLY LENGTH
+         AGO   .CHKECB
+.NORYAD  AIF   ('&LENGTH' NE '').SKIPA
+.CHKECB  AIF   ('&ECB' EQ '').CHKQID                             X02050
+         AIF   ('&ECB'(1,1) EQ '(').ISREG
+         LA    14,&ECB                           LOAD ADDRESS OF ECB
+         ST    14,4(1,0)                         STORE ECB ADDRESS
+         AGO   .CHKQID                                           X02050
+.ISREG   ST    &ECB(1),4(1,0)                    STORE ECB ADDRESS
+.CHKQID  ANOP                                                    X02050
+         AIF   (T'&QID EQ 'O').S3                                X02050
+         LA    14,8(1,0)                                         YM1995
+         AH    14,0(14,0)                                        YM1995
+         AIF   ('&QID'(1,1) EQ '(').S2                           X02050
+         MVC   6(2,14),&QID                                      X02050
+         AGO   .S3                                               X02050
+.S2      ANOP                                                    X02050
+         MVC   6(2,14),0(&QID(1))                                X02050
+.S3      ANOP                                                    X02050
+.SVC     SVC   35                                ISSUE WTOR SVC
+          AGO  .END
+.LROUT   ANOP
+&NAME    DS    0F
+         AIF   ('&LENGTH' EQ '').PUTZERO
+         AIF   ('&LENGTH'(1,1) EQ '(').ERROR3
+         DC    AL1(&LENGTH)                      REPLY LENGTH
+         AGO   .CHKRY
+.PUTZERO DC    AL1(0)                            REPLY LENGTH
+.CHKRY   AIF   ('&RYAD' EQ '').PUTZER
+         AIF   ('&RYAD'(1,1) EQ '(').ERROR3
+         DC    AL3(&RYAD)                        REPLY ADDRESS
+         AGO   .CHKECBL
+.PUTZER  DC    AL3(0)                            REPLY ADDRESS
+.CHKECBL AIF   ('&ECB' EQ '').ZEROS
+         AIF   ('&ECB'(1,1) EQ '(').ERROR3
+         DC    A(&ECB)                           ECB ADDRESS
+         AGO   .MESGCK
+.ZEROS   DC    A(0)                              ECB ADDRESS
+.MESGCK  AIF   ('&MESG' EQ '').ERROR2
+&IHBWTOR SETB  1
+         WTO   &MESG,MF=&MF,MSGTYP=&MSGTYP,ROUTCDE=&ROUTCDE,DESC=&DESC,X
+               MCSFLAG=&MCSFLAG,QID=&QID                         X02050
+&IHBWTOR SETB  0
+         AIF   ('&MF' EQ 'I').IRETURN
+         AGO   .END
+.IROUT   CNOP  0,4
+&NAME    BAL   1,&GNAME.A                        BRANCH AROUND LIST
+         AIF   ('&LENGTH' EQ '').ERROR4
+         AIF   ('&LENGTH'(1,1) EQ '(').ZEROA
+         DC    AL1(&LENGTH)                      REPLY LENGTH
+         AGO   .CHKNEXT
+.ZEROA   DC    AL1(0)                            REPLY LENGTH
+.CHKNEXT AIF   ('&RYAD' EQ '').ERROR5
+         AIF   ('&RYAD'(1,1) EQ '(').ZEROB
+         DC    AL3(&RYAD)                        REPLY ADDRESS
+         AGO   .CHKECBI
+.ZEROB   DC    AL3(0)                            REPLY ADDRESS
+.CHKECBI AIF   ('&ECB' EQ '').ERROR6
+         AIF   ('&ECB'(1,1) EQ '(').ZEROC
+         DC    A(&ECB)                           ECB ADDRESS
+         AGO   .MESGCK
+.ZEROC   DC    A(0)                              ECB ADDRESS
+         AGO   .MESGCK
+.IRETURN ANOP
+&GNAME.A DS    0H
+         AIF   ('&RYAD'(1,1) NE '(').NOTRYAD
+         AIF   ('&LENGTH'(1,1) EQ '(').EASY
+         IC    14,0(1,0)                         SAVE REPLY LENGTH
+         ST    &RYAD(1),0(1,0)                   STORE REPLY ADDRESS
+         STC   14,0(1,0)                         RESTORE REPLY LENGTH
+         AGO   .CHKECBQ
+.EASY    ST    &RYAD(1),0(1,0)                   STORE REPLY ADDRESS
+.PUTLTH  STC   &LENGTH(1),0(1,0)                 STORE REPLY LENGTH
+         AGO   .CHKECBQ
+.NOTRYAD AIF   ('&LENGTH'(1,1) EQ '(').PUTLTH
+.CHKECBQ AIF   ('&ECB'(1,1) NE '(').SVC
+         ST    &ECB(1),4(1,0)                    STORE ECB ADDRESS
+         AGO   .SVC
+.END     MEND
+**/
+* WTOR: MACRO KEYS(
+*                   ROUTCDE,      /*ROUTING CODES FOR MESSAGE        */
+*                   DESC,         /*MESSAGE DESCRIPTOR CODES         */
+*                   MSGTYP,       /*ROUTE TO MESSAGE CONSOLES        */
+*                   MCSFLAG,      /*MESSAGE ATTRIBUTES               */
+*                   RTCD,         /*SVC RETURN CODE                  */
+*                   MF            /*LIST FORMAT                      */
+*                          );
+*    ANS('?'||MACLABEL||'WTORP '||MACLIST||MACKEYS||';');
+*%END WTOR;

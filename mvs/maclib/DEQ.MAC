@@ -1,0 +1,83 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    DEQ   &PARAM,&RMC=,&RET=,&UCB=,&TCB=,&GENERIC=NO,&MF=I, X02113X
+               &RELATED=
+         GBLB  &IHBDEQ                                             SDS1
+.*0460 000000-999999                                               SDS1
+&IHBDEQ  SETB  1                                                   SDS1
+         AIF   ('&TCB' NE '').DEQTCB                             X02113
+         AIF   ('&GENERIC' NE 'NO' AND '&RMC' NE '').ERR02       X02113
+         AIF   ('&RMC' EQ '' AND '&RET' EQ '' AND '&UCB' EQ '').DEQ010
+         AIF   ('&RMC' EQ '' AND '&RET' EQ '').DEQ020              SDS1
+         AIF   ('&RMC' EQ '' AND '&UCB' EQ '').DEQ030              SDS1
+         AIF   ('&RET' EQ '' AND '&UCB' EQ '').DEQ040              SDS1
+         AIF   ('&RMC' EQ '').DEQ050                               SDS1
+         AIF   ('&RET' EQ '').DEQ060                               SDS1
+         AIF   ('&UCB' EQ '').DEQ070                               SDS1
+&NAME    ENQ   &PARAM,SMC=&RMC,RET=&RET,UCB=&UCB,MF=&MF
+         AGO   .DEQ080                                             SDS1
+.DEQ010  ANOP                                                      SDS1
+&NAME    ENQ   &PARAM,GENERIC=&GENERIC,MF=&MF                    X02113
+         AGO   .DEQ080                                             SDS1
+.DEQ020  ANOP                                                      SDS1
+&NAME    ENQ   &PARAM,UCB=&UCB,GENERIC=&GENERIC,MF=&MF           X02113
+         AGO   .DEQ080                                             SDS1
+.DEQ030  ANOP                                                      SDS1
+&NAME    ENQ   &PARAM,RET=&RET,GENERIC=&GENERIC,MF=&MF           X02113
+         AGO   .DEQ080                                             SDS1
+.DEQ040  ANOP                                                      SDS1
+&NAME    ENQ   &PARAM,SMC=&RMC,MF=&MF
+         AGO   .DEQ080                                             SDS1
+.DEQ050  ANOP                                                      SDS1
+&NAME    ENQ   &PARAM,RET=&RET,UCB=&UCB,MF=&MF,GENERIC=&GENERIC
+         AGO   .DEQ080                                             SDS1
+.DEQ060  ANOP                                                      SDS1
+&NAME    ENQ   &PARAM,SMC=&RMC,UCB=&UCB,MF=&MF
+         AGO   .DEQ080                                             SDS1
+.DEQ070  ANOP                                                      SDS1
+&NAME    ENQ   &PARAM,SMC=&RMC,RET=&RET,MF=&MF
+         AGO   .DEQ080                                           X02113
+.DEQTCB  ANOP                                                    X02113
+         AIF   ('&RMC' NE '').ERR01    RMC WITH TCB INVALID      X02113
+         AIF   ('&RET' EQ '' AND '&UCB' EQ '').DEQ100            X02113
+         AIF   ('&RET' EQ '').DEQ110                             X02113
+         AIF   ('&UCB' EQ '').DEQ120                             X02113
+&NAME    ENQ   &PARAM,RET=&RET,UCB=&UCB,TCB=&TCB,GENERIC=&GENERIC,     X
+               MF=&MF                                            X02113
+         AGO   .DEQ080                                           X02113
+.DEQ100  ANOP                                                    X02113
+&NAME    ENQ   &PARAM,TCB=&TCB,MF=&MF,GENERIC=&GENERIC           X02113
+         AGO   .DEQ080                                           X02113
+.DEQ110 ANOP                                                     X02113
+&NAME    ENQ   &PARAM,UCB=&UCB,TCB=&TCB,MF=&MF,GENERIC=&GENERIC  X02113
+         AGO   .DEQ080                                           X02113
+.DEQ120  ANOP                                                    X02113
+&NAME    ENQ   &PARAM,RET=&RET,TCB=&TCB,MF=&MF,GENERIC=&GENERIC  X02113
+.DEQ080  AIF   (NOT(&IHBDEQ)).DEQ090                               SDS1
+&IHBDEQ  SETB  0                                                   SDS1
+         SVC   48                                                  SDS1
+         AGO   .DEQ090                                           X02113
+.ERR01   IHBERMAC 1020,RMC,TCB         RMC WITH TCB INVALID      X02113
+         AGO   .DEQ090                                           X02113
+.ERR02   IHBERMAC 1020,RMC,GENERIC     RMC WITH GENERIC INVALID  X02113
+.DEQ090  MEND
+**/
+* DEQ:
+*/********************************************************************/
+*/* PL/S VERSION OF DEQ MACRO. DEQ WHEN ISSUED CAUSES RELEASING BY   */
+*/* MAJOR(QNAME)NAME AND THE DIRECTION OF A DEQUE ON BEHALF OF       */
+*/* ANOTHER TASK.                                                    */
+*/********************************************************************/
+*        MACRO
+*          KEYS(LS,                    /* # OF RESOURCES             */
+*               MF,                    /*LIST/EXECUTE KEY            */
+*               GENERIC,
+*               RET,
+*               RMC,
+*               TCB,                   /* TCB ADDRESS                */
+*               UCB,                   /*POINTER TO ADDRESS OF UCB   */
+*               RELATED);
+*        ANS('?'||MACLABEL||'DEQP '||MACLIST||MACKEYS||';');
+*%END;
+

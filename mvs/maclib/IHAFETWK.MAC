@@ -1,0 +1,191 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    IHAFETWK
+WKAREA   DSECT
+WKFETCH  EQU   *                  FETCH WORKAREA
+*              THE FOLLOWING SEQMENT DESCRIBES THE STRUCTURE OF THE
+*              WORK AREA USED BY FETCH.
+*
+FTIOB    DS    8F                 IOB USED FOR EXCP REQUESTS
+FTIOBSK  DS    2F                 IOB SEEK ADDRESS
+*********************
+XAREA    DS    0F
+XKEY     DC    CL4'FTWA'          FETCH IDENTIFICATION KEY
+XFLAGS   DS    0XL4               FETCH CONTROL FLAGS
+XFLAG1   DS    X                  TRANSLATE/FIX CONTROL FLAGS
+* ---------- XFLAGS BIT DEFINITIONS
+NEWIOFLG EQU   X'80'              FRESH I/O REQUEST ISSUED
+ACTXTFLG EQU   X'40'              READ-TEXT CCW IS ACTIVE IN CURRENT CP
+SYNRDFLG EQU   X'20'              SYNC READ ISSUED (NO PCI)
+USDEBFLG EQU   X'10'              USERS DEB COPIED INTO GOTTON CORE
+TXTREAD  EQU   X'08'              SIO APPENDAGE TXT READ INDIC.  YM2867
+VAMDEV   EQU   X'04'              ** UCB INDICATES A VIRTUAL     Y02081
+*                           IF ON ** DEVICE IS BEING FETCHED     Y02081
+*                                 ** FROM (VAM DATA SET)         Y02081
+RPSDEV   EQU   X'02'              ** DEVICE BEING FETCHED FROM   Y02081
+*                           IF ON ** SUPPORTS ROTATIONAL         Y02081
+*                                 ** POSITION SENSING (RPS)      Y02081
+RELERR   EQU   X'01'              ** AN INVALID ADCON ADDRESS    Y02081
+*                           IF ON ** WAS ENCOUNTERED IN THE      Y02081
+*                                 ** DIE RELOCATE ROUTINE        Y02081
+* --------------
+XFLAG2   DS    X                  CONTROL FLAGS - BYTE 2         Y02081
+* ---------- XFLAG2 BIT DEFINITIONS                              Y02081
+BADREC   EQU   X'80'              ** AN INVALID RECORD           Y02081
+*                           IF ON ** TYPE WAS ENCOUNTERED        Y02081
+*                                 ** IN THE DIE ROUTINE          Y02081
+TXTFIX   EQU   X'40'              ** THE DIE ROUTINE FOUND THE   Y02081
+*                           IF ON ** NEXT TEXT RECORD TO BE      Y02081
+*                                 ** OUTSIDE THE PGFIX'D AREA    Y02081
+ONETXT   EQU   X'20'              ** THE MODULE BEING READ       Y02081
+*                           IF ON ** CONTAINS ONE TEXT RECORD    Y02081
+*                                 ** WITH NO RLD RECORDS         Y02081
+PRGFREE  EQU   X'10'              ** PURGE SUBROUTINE            Y02081
+*                           IF ON ** HAS ALREADY                 Y02081
+*                                 ** FREED RESOURCES.            Y02081
+ACRRELOC EQU   X'08'              ** WHEN WE BRANCH TO PCI APG   Y02081
+*                           IF ON ** AFTER COMMAND RETRY         Y02081
+*                                 ** RELOCATION IS REQD          Y02081
+CPLOOP   EQU   X'04'              ** CHANNEL PROGRAM LOOP HAS    Y02081
+*                           IF ON ** BEEN DETECTED BY POST       Y02081
+*                                 ** STATUS NORMAL EXIT RTN      Y02081
+CTLERR   EQU   X'02'              ** AN INVALID ADDRESS WAS      @M7587
+*                           IF ON ** FOUND IN A CONTROL RECORD   @M7587
+*                                 ** BY THE DIE ROUTINE          @M7587
+IOSBFREE EQU   X'01'              ** IOSB/SRB HAS BEEN          @YM8279
+*                           IF ON ** FREEMAINED IN TERMINATION  @YM8279
+* ----------                                                     Y02081
+         DS    2X                 -  RESERVED  -
+*********************
+FTSKBUF1 DS    2F                                                Y02081
+FTSKBUF2 DS    2F                                                Y02081
+FTSKBUT3 DS    2F                                                Y02081
+FTSKBUF4 DS    2F                                                Y02081
+FTCPSRCH DS    4D                 SERACH AND TIC CCWS            Y02081
+FTRBUF1  DS    32D                RLD BUFFER 1                   Y02081
+FTCP1    DS    6D                 CHAN PROG 1                    Y02081
+FTRBUF2  DS    32D                RLD BUFFER 2                   Y02081
+FTCP2    DS    6D                 CHAN PROG 2                    Y02081
+FTRBUF3  DS    32D                RLD BUFFER 3                   Y02081
+FTCP3    DS    6D                 CHAN PROG 3                    Y02081
+FTECB    DS    1F
+FTFXECB  DS    1F                 ECB FOR PGFIX REQUESTS         Y02081
+FTTBLPTR DS    1F                 POINTER TO CURRENT FTTBL ENTRY Y02081
+FTTBL    DS    9F                 BUFFER TABLE
+FTTBL2   EQU   FTTBL+12           2ND ENTRY IN BUFFER TABLE      Y02081
+FTTBL3   EQU   FTTBL+24           3RD ENTRY IN BUFFER TABLE      Y02081
+FTREGSV  DS    16F                REGISTER SAVE AREA
+FTRPTR   DS    1F                 ADDR OF R POINTER
+FTFLAGS  DS    0FL8               FETCH CONTROL FLAGS            Y02081
+FTFLG1   DS    XL1                FLAG BYTE 1                    Y02081
+FTFLG2   DS    XL1                FLAG BYTE 2                    Y02081
+FTFLG3   DS    XL1                FLAG BYTE 3                    Y02081
+FTFLG4   DS    XL1                FLAG BYTE 4                    Y02081
+FTRESTRT DS    1F                 ADDR OF PREVIOUS RBUF USED     Y02081
+*                                 IN THE DIE ROUTINE TO LOCATE   Y02081
+*                                 LAST TIC-TO ADDR TO SET UP     Y02081
+*                                 THE TIC IN THE SRCHID CP FOR   Y02081
+*                                 RESTART                        Y02081
+FTLASTBF DS    1F                 PTR TO PRIOR BUFR TABLE ENTRY
+*
+*              EXTENSION TO FETCH WORK AREA
+*
+XSOMAD   DS    F                  LOWER CORE LIMIT FOR LOAD MODULE
+XEOMAD   DS    F                  UPPER CORE LIMIT FOR LOAD MODULE
+XLOWFIX  DS    F                  LOWER BOUND FOR TEXT AREA FIX REQ
+XHIFIX   DS    F                  UPPER BOUND FOR TEXT AREA FIX REQ
+XNEXTLOC DS    F                  LOCATION OF NEXT TEXT BYTE READ
+XTRANTAB DS    0XL8               CCW TRANSLATE DATE-
+XCCWAD   DS    F                  POINTER TO CCW REQ TRANSLATION
+XTXTAD   DS    F                  VIRTUAL ADDRESS IN THE CCW
+XIDALP1  DS    AL4(XALAREA1)      POINTER TO IDAL BUILD AREA
+XIDALP2  DS    AL4(XALAREA2)      POINTER TO ALTERNATE IDAL AREA
+XALAREA1 DS    10F                IDAL AREA
+XALAREA2 DS    10F                IDAL AREA
+XGMLIST  DS    4F                 GETMAIN LIST AREA
+XORGDCB  DS    1F                 ORIGINAL LOAD DCB ADDRESS
+XIOSBAD  DS    1F                 ADDR OF IOSB/SRB TO BE FREED   Y02081
+XDEBLEN  DS    1F                 SIZE OF MS OBTAINED FOR DEB(INC SP)
+XRETSAV  DS    1F                 REGISTER 14 SAVE AREA          Y02081
+XREGSV3  DS    1F                 REGISTER 3 SAVE AREA           YM1070
+SREGSV6  DS    1F                 REGISTER 6 SAVE AREA           YM1070
+XSECTAD  DS    1X                 BUFFER FOR READ/SET            Y02081
+*                                 SECTOR COMMANDS WHEN           Y02081
+*                                 FETCHING FROM AN RPS DEVICE    Y02081
+         DS    3X                 -  RESERVED  -                 Y02081
+XFTCBAD  DS    1F                 ADDRESS OF TCB FETCH IS        Y02081
+*                                 RUNNING UNDER (SAVED FOR       Y02081
+*                                 USE BY PURGE SUBROUTINE)       Y02081
+*----PSEUDO DCB DEFINITION (USED WITH THE COPIED DEB).
+XDCBDEBO EQU   44                 OFFSET OF DEB ADDR IN DCB      Y02081
+         ORG   *-XDCBDEBO         ORG BACK OVER UNUSED FIELDS
+XDCBCOPY EQU   *                  STATR OF DCB
+         ORG   *+XDCBDEBO         RESTORE LOC COUNTER
+XDCBDEBA DS    1F                 PSEUDO 'DCBDEBAD' FIELD
+*----END OF PSEUDO DCB DEFINITION.
+XESTAEPT DS    1F                 ADDRESS SAVED IOSB/SDWA        Y02081
+XESTLIST DS    1F                 ESTAE MACRO PARAMETER LIST     Y02081
+XIOBSEK1 DS    XL5                IOBSEEK SAVE 1                 Y02081
+XIOBSEK2 DS    XL5                IOBSEEK SAVE 2                 Y02081
+         DS    2X                 -  RESERVED  -                 Y02081
+*--PSEUDO SVRB FETWK AREA PTR USED TO SET UP CORRECTLY IN ESTAE @YM8279
+*   WHEN WE HAVE AN OVERLAY SUPERVISOR REQUEST.  THE FOLLOWING  @YM8279
+*   WORD POINTS TO THE FETCH WORK AREA AND IS SET UP AT ESTAE   @YM8279
+*   MACRO TIME FOR AN OVERLAY SUPERVISOR REQUEST.THE ORG BEHIND @YM8279
+*   IT MAKES IT LOOK LIKE IT IS IN THE SVRB BY ORGING TO THE    @YM8279
+*   SAME OFFSET THE WORK AREA PTR IS STORED AT IN THE SVRB BY   @YM8279
+*   CONTENTS SUPERVISOR.                                        @YM8279
+XESTAWKA DS    1F                ESTAE PTR TO FETWK AREA        @YM8279
+XESTAORG EQU   XESTAWKA-X'74'    OVLY SUPVR ESTAE PTR           @YM8279
+         DS    84X                -  RESERVED FOR FUTURE USE --
+         SPACE
+*---------------MISC. EQUATES
+IDALNTRY EQU   4                  SIZE OF EACH IDAL ENTRY
+FIXLOENT EQU   0                  OFFSET TO LOW ENTRY PORTION
+FIXHIENT EQU   4                  OPPSET TO HIGH ENTRY PORTION
+FIXENTSZ EQU   8                  SIZE OF SIX-LIST ENTRY
+********************* PROGRAM MANAGER WORK AREA
+WKPGMMGR EQU   *                  PROGRAM MANAGER WORK AREA
+WKCDADDR DS    A                  ADDRESS OF CDE
+WKIOADDR DS    A                  ADDRESS OF AREA GETMAINED.  FETCH
+*                                 WILL DO I/O INTO THIS AREA
+WKFLAG   DS    C                  TASKLIB SEARCH INDICATOR
+FLAG     EQU   WKFLAG             USED FOR COMPATIBILITY
+WKFLG1   DS    C                  FLAGS FIELDS
+WKAUTH   EQU   X'80'              FETCH PLACES THE LIBRARY       Y02758
+*                                 AUTHORIZATION FORM THE DEB HERE
+WKSYSREQ EQU   X'40'              USER IS SYSTEM REQUEST
+WKFLGS2  DS    2C                 RESERVED
+WKREGIS  DS    4F                 USED TO SAVE REGISTERS ACROSS BLDL
+WKTCBSE  DS    A                  ADDRESS OF TCB CONTAINING LAST DCB
+WKDCBSE  DS    A                  ADDRESS OF LAST DCB SEARCH ARGUMENT
+********************* BLDL ENTRY AND MASK
+WKBLDE   EQU   *                  BLDL LIST
+WKPREFX  DS    4C                 MASK FOR BLDL REQUEST
+WKNAME   DS    8C                 THIS IS THE BASE
+WKTTRN   DS    4C                 AREA OF A
+WKZBYTE  DS    1C                 FORMAT 2 PDS
+WKCBYTE  DS    1C                 DIRECTORY ENTRY WITH
+WKTTESD  DS    8C                 2 BYTE MODIFIED
+WKATTR   DS    2C                 BY BLDL
+WKLNTH   DS    5C                       *
+WKENTPT  DS    3C                       *
+WKTXORG  DS    3C                       *
+WKAPFSSI DS    CL6                APF AND SSI INFO IF PRESENT
+         ORG   WKAPFSSI           OVERLAY FOR ALISA, NO SCATTER
+WKENTBK  DS    3C                 USED IF THE MODULE IS AN ALIAS
+WKNAMBK  DS    8C                 AND HAS RENT OR REUS ATTRIBUTES
+*                                 AND NO SCATTER
+         DS    CL6                APF AND SSI INFO IF PRESENT
+         ORG   WKAPFSSI           * OVERLAY FOR WKENTBK
+WKSCATR  DS    8C                 USED FOR MODULES
+WKSCAPSI DS    CL6                APF AND SSI IF SCATTER ONLY
+         ORG   WKSCAPSI           OVERLAY FOR SCATTER ALIAS
+WKENTSC  DS    3C                 WHICH ARE SCATTER LOADED
+WKNAMSC  DS    8C                 HAVE RENT OR REUS ATTRIBUTES
+         DS    CL6                APF AND SSI INFO IF PRESENT
+WKMAINEP DS    4C                 USED TO MAKE DSECT CONSISTANT
+WKMAINAM DS    8C                 REGARDLESS OF ATTRIBUTES
+WKEND    EQU   *                  END OF BLDL FETCH WORK AREA
+WKSIZE   EQU   WKEND-WKFETCH      SIZE OF WORK AREA
+         MEND

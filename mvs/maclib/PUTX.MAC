@@ -1,0 +1,11 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    PUTX  &DCB,&PARA,&DUMMY=
+         AIF   ('&DCB' EQ '').E1
+&NAME    IHBINNRA &DCB,&PARA
+         L     15,48(0,1)                        LOAD REG 15 FROM DCB
+         BAL   14,4(0,15)                        LINK TO PUTX ROUTINE
+         MEXIT
+.E1      IHBERMAC 6                     DCB MISSING
+         MEND
+

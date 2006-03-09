@@ -1,0 +1,22 @@
+.* MVS 3.8J PUBLIC DOMAIN
+  MACRO
+&NAME EXCPVR &IOB,&REQSTR
+ AIF ( '&IOB' EQ '' OR ( '&REQSTR' NE 'SUBSYS' AND '&REQSTR' NE        X
+               'PAGING' AND '&REQSTR' NE '')).E1                ZA04100
+&NAME IHBINNRA &IOB
+ AIF ('&REQSTR' EQ 'PAGING').PAGE
+         B     *+6
+         DC    X'F400'
+         ICM   1,B'1000',*-2
+  AGO .SVC
+.PAGE ANOP
+         B     *+6
+         DC    X'F800'
+         ICM   1,B'1000',*-2
+.SVC ANOP
+ SR 0,0
+ SVC 114
+ MEXIT
+.E1 IHBERMAC 01,039
+  MEND
+

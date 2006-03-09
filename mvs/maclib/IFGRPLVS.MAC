@@ -1,0 +1,52 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GO TO RPLEXTXX;
+* /*                                                                */
+* /*     CHANGE LEVEL = 0                                   @ZA34940*/
+* /*     DATE OF LAST CHANGE = 13  NOV   78 ( 78*317 )      @ZA34940*/
+* /*                                                                */
+* /******************************************************************/
+* /*                                                                */
+* /*     RPL VSAM EXTENSION                                         */
+* /*                                                                */
+* /*     THE EXTENSION DESCRIBES ADDITIONAL VSAM CONTROL            */
+* /*     DATA. THE EXTENSION IS CALLED UNCONDITIONALLY              */
+* /*     BY IFGRPL AND IS APPENDED TO THE RPL COMMON AREA.          */
+* /*                                                                */
+* /*     IN ADDITION, IFGRPLVS INVOKES THE VTAM EXTENSION,          */
+* /*     ISTRPLEX, UNDER THE FOLLOWING CONDITIONS:                  */
+* /*                                                                */
+* /*        PLS:  THE MODULE CONTAINING AN INCLUDE FOR IFGRPL SETS  */
+* /*              THE MACRO VARIABLE 'ACBRPLXL' TO 'VTAM' PRIOR     */
+* /*              TO ISSUING THE INCLUDE.                           */
+* /*        BAL:  THE AM=VTAM PARAMETER IS CODED ON THE MACRO       */
+* /*              CALL.                                             */
+* /*                                                                */
+* /* CHANGE ACTIVITY                                                */
+* /*      CBMM SPLIT ACTIVITY                               @ZA34940*/
+* /*                                                                */
+* /******************************************************************/
+* /*                                                                */
+* /*                  PL/S VSAM RPL EXTENSION                       */
+* /*                                                                */
+*%RPLEXTXX:;
+*     %IF ACBRPLXL ^= 'VTAM'                /* IS IT VTAM           */
+*         %THEN %GOTO VSAMRPL;              /* NO ,BYPASS           */
+*         %INCLUDE SYSLIB(ISTRPLEX);        /* YES, GET EXTENSION   */
+*     %GOTO RPLEXEND;                       /* EXIT                 */
+*%VSAMRPL: ;
+*         2 * CHAR(0);                      /* GENERATE END OF RPL  */
+*     %GOTO RPLEXEND;                       /* EXIT                 */
+* /*                                                                */
+* /*                                                                */
+* /*                  ASSEMBLER VSAM RPL EXTENSION
+*
+         MACRO
+         IFGRPLVS &AM=
+         AIF   ('&AM' NE 'VTAM').ENDRPLX    IS IT VTAM
+         ISTRPLEX                       YES, CALL VTAM EXTENSION
+*
+.ENDRPLX ANOP
+         MEND
+*              END OF VSAM RPL EXTENSION                            */
+*%RPLEXEND: ;
+*

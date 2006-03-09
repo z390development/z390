@@ -1,0 +1,103 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IECTDEBX
+IECTDEB  DSECT
+         SPACE 2
+*        +---------------------------------------+
+*        +                                       +
+*   -36  +    END OF EXTENT APPENDAGE ADDRESS    +
+*        +                                       +
+*        +---------------------------------------+
+*        +                                       +
+*   -32  +      START I/O APPENDAGE ADDRESS      +
+*        +                                       +
+*        +---------------------------------------+
+*        +                                       +
+*   -28  +        P C I APPENDAGE ADDRESS        +
+*        +                                       +
+*        +---------------------------------------+
+*        +                                       +
+*   -24  +     CHANNEL END APPENDAGE ADDRESS     +
+*        +                                       +
+*        +---------------------------------------+
+*        +                                       +
+*   -20  +     ABNORMAL END APPENDAGE ADDRESS    +
+*        +                                       +
+*        +---------------------------------------+
+*        +         +                             +
+*   -16  +WORK AREA+                             +
+*        +         +                             +
+*        +---------+       D S C B  ADDRESS      +
+*        +                                       +
+*   -12  +                    (BBCCHHR)          +
+*        +                                       +
+*        +---------------------------------------+
+*        +                                       +
+*   - 8  +         DCB MODIFICATION MASK         +
+*        +                                       +
+*        +---------------------------------------+
+*        +         +                             +
+*   - 4  +DEB LNGTH+          RESERVED           +
+*        +         +                             +
+*        +---------------------------------------+
+*        +NMBR RTNS+                             +
+*     0  +  LOADED +        TCB  ADDRESS         +
+*        + BY OPEN +                             +
+*        +---------------------------------------+
+*        +NMBR BYTE+                             +
+*     4  +ACSS METH+ ADDRESS OF NEXT DEB IN TASK +
+*        +DEP SECT +                             +
+*        +---------------------------------------+
+*        + DATA SET+                             +
+*     8  +  STATUS +        IRB ADDRESS          +
+*        +  FLAGS  +                             +
+*        +---------------------------------------+
+*        +I/O PROC +      ADDRESS FIRST IOB      +
+*    12  +METH, EOV+             IN              +
+*        + DISP    +      SYSTEM PURGE CHAIN     +
+*        +---------------------------------------+
+*        + NUMBER  +      ADDRESS FIRST IOB      +
+*    16  +XTNTS IN +             IN              +
+*        + DSCBS   +       USER PURGE CHAIN      +
+*        +---------------------------------------+
+*        +         +        SVC PURGE ECB        +
+*    20  +  ZERO   +                             +
+*        +         +   PARAMETER LIST ADDRESS    +
+*        +---------------------------------------+
+*        +    +    +                             +
+*    24  +RSV + ID +        DCB  ADDRESS         +
+*        +    +    +                             +
+*        +---------------------------------------+
+*        +  EXTENT +        I/O APPENDAGE        +
+*    28  +         +                             +
+*        +  SCALE  +    VECTOR TABLE ADDRESS     +
+*        +---------------------------------------+
+         EJECT
+DEBEOEA  DS    CL4
+DEBSIOA  DS    CL4
+DEBPCIA  DS    CL4
+DEBCEA   DS    CL4
+DEBXCEA  DS    CL4
+DEBWKARA DS    CL1
+DEBDSCBA DS    CL7
+DEBDCBMK DS    CL4
+DEBLNGTH DS    CL4
+DEBNMSUB DS    CL1
+DEBTCBAD DS    CL3
+DEBAMLNG DS    CL1
+DEBDEBAD DS    CL3
+DEBOFLGS DS    CL1
+DEBIRBAD DS    CL3
+DEBOPATB DS    CL1
+DEBSYSPG DS    CL3
+DEBNMEXT DS    CL1
+DEBUSRPG DS    CL3
+DEBPRIOR DS    CL1
+DEBECBAD DS    CL3
+DEBPROTG DS    CL1
+DEBDCBAD DS    CL3
+DEBEXSCL DS    CL1
+DEBAPPAD DS    CL3
+DEBUCBAD DS    CL4
+         MEND
+

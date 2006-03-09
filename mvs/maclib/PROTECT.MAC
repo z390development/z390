@@ -1,0 +1,18 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    PROTECT   &REG
+.*A 210500,211000                                                A43356
+.*C 280000                                                       A43356
+         AIF   ('&REG' EQ  '').ERR1
+         AIF   ('&NAME' EQ '').NLBL                              A43356
+&NAME    DS    0H                                                A43356
+.NLBL    AIF   ('&REG' EQ '(1)').GOEN                            A43356
+         AIF   ('&REG'(1,1) NE '(').GADD
+         LR    1,&REG(1)           LOAD PARAMETER REGISTER
+         AGO   .GOEN
+.GADD    LA    1,&REG              LOAD PARAMETER REGISTER
+.GOEN    SVC   98                  ISSUE PROTECT SVC
+         AGO   .END
+.ERR1    MNOTE 'PARAMETER NOT SPECIFIED'
+.END     MEND
+

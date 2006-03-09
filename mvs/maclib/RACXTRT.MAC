@@ -1,0 +1,275 @@
+.* MVS 3.8J PUBLIC DOMAIN
+********************************************************************
+*
+*  $MAC(RACXTRT) COMP(SC1BN) PROD(RACF):
+*
+*  DESCRIPTIVE NAME = INTERFACE TO RACF EXTRACT FUNCTION
+*
+*
+*  STATUS = OS/VS2 JBB1326
+*
+*  FUNCTION = THE RACXTRT MACRO PROVIDES A STANDARD INTERFACE TO
+*             THE RACF EXTRACT ROUTINE
+*             (MODULE NAME - ICHRXT00)
+*
+*  INVOCATION = THE RACF EXTRACT ROUTINE IS INVOKED BY THE RACXTRT
+*               MACRO VIA SVC 132.
+*
+*   REQUIREMENTS FOR USE - USER MUST BE AUTHORIZED
+*
+*  MODULE TYPE = MACRO
+*
+*  CHANGE ACTIVITY =
+*          $L0=HRF1602,RACF/160,830620,CNTDSD:
+*          UZ90283                                             @ZA90283
+*          UZ90284                                             @ZA90284
+*          UZ90285                                             @ZA90285
+*
+********************************************************************
+         MACRO
+&NAME    RACXTRT &ACEE=,                                               *
+               &ENCRYPT=,                                              *
+               &ENTITY=,                                               *
+               &FIELDS=,                                               *
+               &SUBPOOL=,                                              *
+               &TYPE=,                                                 *
+               &MF=S
+.*  DEFINE LOCAL VARIABLES
+         LCLA  &FN                 USED TO CONTAIN NUMERIC VALUE
+.*                                 FOR FUNCTION
+         LCLA  &ENC                USED TO CONTAIN ADDRESS OF DATA
+.*                                 TO BE ENCRYPTED
+         LCLA  &DFLTSP             USED TO SET DEFAULT SUBPOOL
+.*                                 WHEN ENTERED AS A STRING
+         LCLC  &METH               USED TO CONTAIN ENCRYPTION METHOD
+         LCLC  &SP                 USED TO CONTAIN SUBPOOL VALUE
+         LCLC  &NX                 USED TO CONTAIN SYSNDX FOR LABELS
+.*  DEFINE GLOBAL VARIABLES
+         GBLC  &ICHL               USED FOR ADDRESS OF EXTRACT PARM
+         GBLA  &ICHCT              ICHCT - A COUNTER USED TO KEEP
+.*                                 TRACK OF WHERE IN THE PARAMETER
+.*                                 LIST THE PARAMETER IS TO BE
+.*                                 PLACED. ICHCT IS INITIALIZED TO
+.*                                 THE FIRST FULLWORD IN THE LIST
+.*                                 TO BE FILLED IN BY ICHMM,
+.*                                 AND INCREMENTED BY THE INNER
+.*                                 MACRO (ICHMM).
+         GBLB  &ICHRAC             ICHRAC - A FLAG WHICH IS
+.*                                 INITIALIZED IN THE RACROUTE MACRO
+.*                                 TO COMMUNICATE TO RACXTRT THAT IT
+.*                                 IS BEING INVOKED AS AN INNER MACRO
+.*                                 TO THE RACROUTE MACRO.
+         GBLB  &ICHLIST            ICHLIST - A FLAG WHICH IS SET TO
+.*                                 INDICATE THE FORMAT OF THE MACRO.
+.*                                 FOR LIST FORMAT, ICHLIST IS ON
+.*                                 FOR EXECUTE FORMAT, ICHLIST IS
+.*                                 OFF. FOR STANDARD FORMAT, THERE
+.*                                 ARE TWO PASSES DONE BY THE MACRO
+.*                                 A LIST PASS AND AN EXECUTE PASS.
+.*                                 INITIALLY, FOR STANDARD, THE
+.*                                 FLAG  IS ON - FOR THE LIST PASS.
+.*                                 IT IS THEN TURNED OFF FOR THE
+.*                                 EXECUTE PASS.
+         GBLB  &ICHNTFY            ICHNTFY - A GLOBAL INDICATOR
+.*                                 WHICH IS USED TO COMMUNICATE WITH
+.*                                 ICHMM - THE INNER MACRO. IF ICHNTFY
+.*                                 IS ON, THE INNER MACRO WILL NOT
+.*                                 ISSUE ITS OWN MNOTE IF IT FINDS AN
+.*                                 ERROR-IT WILL MERELY TURN ON THE
+.*                                 ICHINER FLAG AS NOTIFICATION TO THE
+.*                                 OUTER MACRO, WHICH WILL TAKE THE
+.*                                 APPROPRIATE ACTION.
+.*                                 IF ICHNTFY IS OFF, THE INNER MACRO
+.*                                 WILL TAKE ACTION ON ITS OWN,
+.*                                 IE. ISSUE AN MNOTE WITH A SEVERITY
+.*                                 CODE OF ITS CHOOSING.
+         GBLB  &ICHINER            ICHINER - A GLOBAL INDICATOR
+.*                                 WHICH IS USED BY ICHMM - AN INNER
+.*                                 MACRO - TO TELL THE OUTER MACRO IF
+.*                                 AN ERROR HAS BEEN DETECTED IN A
+.*                                 PARAMETER.  IF ICHINER IS ON, AN
+.*                                 ERROR HAS BEEN DETECTED.
+         GBLC  &ICHMF              ICHMF - AN INDICATOR OF THE
+.*                                 FORMAT - L, E, OR S.
+.************************
+.*   INITIALIZE VARIABLES
+.************************
+&NX      SETC  '&SYSNDX'
+&DFLTSP  SETA  229                 DEFAULT SUBPOOL
+&ICHNTFY SETB  0                   WANT ICHMM TO ISSUE ERROR MSGS
+&ICHINER SETB  0                   INITIALIZE ICHINER TO 0
+.***********************************
+.*   SET UP INDICATORS FOR MF FORMAT
+.***********************************
+.*  VALIDATE MF PARAMETER
+         AIF   ('&MF' NE 'L' AND '&MF' NE 'S' AND '&MF(1)' NE          *
+               'E').ERR01
+&ICHMF   SETC  '&MF(1)'        SET MF TYPE
+         AIF   ('&MF(1)' EQ 'E').EXT0030
+&ICHLIST SETB  1               MF LIST OR STANDARD
+         AGO   .CONT01
+.EXT0030 ANOP
+         AIF   ('&MF(2)' EQ '' OR N'&MF NE 2).ERR01
+&ICHLIST SETB  0               MF EXECUTE
+.****************************************************
+.*  DETERMINE WHETHER FUNCTION IS EXTRACT OR ENCRYPT
+.****************************************************
+.CONT01  ANOP
+         AIF   ('&TYPE' EQ '').ERR07     REQUIRED PARAMETER
+         AIF   ('&TYPE' EQ 'ENCRYPT').EXT0100
+         AIF   ('&TYPE' NE 'EXTRACT').ERR05
+.****************************************************
+.*   VALIDATE PARAMETERS ALLOWABLE WITH
+.*   TYPE=EXTRACT
+.****************************************************
+&FN      SETA  1
+         AIF   ('&ENCRYPT' NE '').ERR03
+         AIF   ('&SUBPOOL' EQ '').CONT01A
+         AIF   (T'&SUBPOOL NE 'N').ERR09  SUBPOOL NON-NUMERIC
+         AIF   (&SUBPOOL LT 0 OR &SUBPOOL GT 255).ERR09 INV. SUBPOOL
+&SP      SETC  '&SUBPOOL'          COPY SUBPOOL VALUE TO LOCAL AREA
+         AGO   .CONT02
+.CONT01A ANOP  ,
+         AIF   ('&ICHMF' EQ 'E').CONT02
+&SP      SETC  '&DFLTSP'           SET DEFAULT SUBPOOL IN LOCAL AREA
+         AGO   .CONT02
+.****************************************************
+.*   VALIDATE PARAMETERS ALLOWABLE WITH
+.*   TYPE=ENCRYPT
+.****************************************************
+.EXT0100 ANOP
+&FN      SETA  2
+         AIF   ('&FIELDS&SUBPOOL' NE '').ERR03
+         AIF   ('&ENCRYPT' EQ '').ERR10
+         AIF   ('&ENCRYPT(2)' NE '' AND '&ENCRYPT(2)' NE 'DES' AND     X
+               '&ENCRYPT(2)' NE 'HASH' AND                             X
+               '&ENCRYPT(2)' NE 'INST').ERR06 INVALID ENCR. METHOD
+         AIF   (N'&ENCRYPT GT 2).ERR04  TOO MANY SUBPARAMETERS
+         AIF   ('&ICHMF' NE 'S').CONT02
+         AIF   ('&ENCRYPT(1)' EQ '' OR '&ENCRYPT(2)' EQ '').ERR08
+.**************************************************************
+.*  BEGIN THE PARAMETER LIST AND ESTABLISH ADDRESSABILITY TO IT
+.**************************************************************
+.CONT02  ANOP
+         AIF   ('&ICHMF' NE 'E').EXT0215
+.* MF=E
+         AIF   (&ICHRAC).EXT0212
+&NAME    IHBINNRA &MF(2)          POINT R1 AT PARAMETER LIST
+         AGO   .CONT03
+.EXT0212 ANOP
+&NAME    A     1,36(1)            POINT R1 AT PARAMETER LIST
+         AGO   .CONT03
+.EXT0215 ANOP
+.* MF=L/S
+         AIF   ('&NAME' EQ '').EXT0220
+&NAME    DS    0F
+.EXT0220 ANOP
+         AIF   (NOT &ICHRAC).EXT0222  INVOKER NOT RACROUTE
+&ICHL    DS    0F
+.EXT0222 ANOP
+         AIF   ('&MF' EQ 'L').EXT0224
+.* MF=S
+         CNOP  0,4
+         BAL   1,ICH&NX.C         POINT R1 AT PARAMETER LIST
+.EXT0224 ANOP
+.* MF=L/S
+ICH&NX.A DS    0F
+         DC    AL2(ICH&NX.C-ICH&NX.A) LENGTH OF LIST IN BYTES
+         DC    XL1'82'            FUNCTION CODE FOR ICHRSV00
+         DC    AL1(&FN)           REQUEST TYPE
+         DC    AL1(0)             VERSION NUMBER
+         DC    AL1(0)             RESERVED
+         DC    AL2(ICH&NX.B-ICH&NX.A) OFFSET TO VARIABLE PART OF LIST
+.CONT03  ANOP
+&ICHCT   SETA  2               INITIALIZE PARAMETER COUNTER
+         ICHMM &ENTITY
+         AIF   (NOT &ICHLIST).EXT0231
+ICH&NX.B EQU   *                  END OF FIXED PART
+.EXT0231 ANOP  ,
+         AIF   (&FN EQ 2).EXT0310   REQUEST IS ENCRYPT
+.***************************
+.* GENERATE LIST FOR
+.* TYPE=EXTRACT
+.***************************
+         ICHMM ,               RESERVED
+         ICHMM &SP             SUBPOOL NUMBER
+         ICHMM &FIELDS         ADDRESS OF VARIABLE EXTRACT FIELDS
+         AGO   .CONT04
+.************************************
+.* GENERATE LIST FOR
+.* TYPE=ENCRYPT
+.************************************
+.EXT0310 ANOP
+         ICHMM &ENCRYPT(1)   ADDRESS OF DATA TO BE ENCRYPTED
+         AIF   ('&ENCRYPT(2)' EQ '').EXT0340
+         AIF   ('&ENCRYPT(2)' NE 'DES').EXT0330
+&METH    SETC  '1'           DES ENCRYPTION METHOD
+         AGO   .EXT0340
+.EXT0330 ANOP  ,
+         AIF   ('&ENCRYPT(2)' NE 'HASH').EXT0334
+&METH    SETC  '2'           HASHING ENCRYPTION METHOD
+         AGO   .EXT0340
+.EXT0334 ANOP  ,
+&METH    SETC  '3'           INSTALLATION-DEFINED METHOD
+.EXT0340 ANOP  ,
+         ICHMM  &METH        ENCRYPTION METHOD
+.***************************************************************
+.*  AT THIS POINT, THE LIST AND EXECUTE FORMS ARE COMPLETED.  IF
+.*  THE LIST PASS OF THE STANDARD FORM HAS JUST BEEN COMPLETED,
+.*  RETURN FOR AN EXECUTE PASS.
+.***************************************************************
+.CONT04  ANOP
+         AIF   (NOT &ICHLIST).CONT05  SKIP END-OF-LIST LABEL
+ICH&NX.C DS    0H                 END OF PARM LIST
+.CONT05  ANOP
+         AIF   ('&ICHMF' NE 'S' OR NOT &ICHLIST).CONT06
+&ICHLIST SETB  0
+         AGO   .CONT03           DO EXECUTE PATH OF STANDARD FORM
+.*****************************************************
+.*  THE SVC INSTRUCTION IS GENERATED IF RACXTRT IS
+.*  NOT INVOKED FROM THE RACROUTE MACRO OR IF THIS
+.*  IS NOT A LIST PASS.
+.*****************************************************
+.CONT06  ANOP
+         AIF   (&ICHRAC OR &ICHLIST).EROUTE
+         SVC   132                INVOKE EXTRACT ROUTINE
+         AGO   .EROUTE
+.*****************
+.*  ERROR MESSAGES
+.*****************
+.ERR01   ANOP
+         MNOTE 12,'*** INVALID VALUE FOR ''MF'' PARAMETER'
+         AGO   .EROUTE
+.ERR03   ANOP
+         MNOTE 12,'*** EXTRANEOUS PARAMETERS SPECIFIED FOR ''TYPE=&TYPEX
+               '''
+         AGO   .EROUTE
+.ERR04   ANOP
+         MNOTE 12,'*** TOO MANY PARAMETERS SPECIFIED FOR ''ENCRYPT'' PAX
+               RAMETER'
+         AGO   .EROUTE
+.ERR05   ANOP
+         MNOTE 12,'*** INVALID VALUE FOR ''TYPE'' PARAMETER'
+         AGO   .EROUTE
+.ERR06   ANOP
+         MNOTE 12,'*** INVALID METHOD SPECIFIED FOR ''ENCRYPT'' PARAMETX
+               ER'
+         AGO   .EROUTE
+.ERR07   ANOP
+         MNOTE 12,'*** REQUIRED PARAMETER ''TYPE'' NOT SPECIFIED'
+         AGO   .EROUTE
+.ERR08   ANOP
+         MNOTE 12,'*** BOTH SUBPARAMETERS MUST BE SPECIFIED FOR ''ENCRYX
+               PT'' PARAMETER'
+         AGO   .EROUTE
+.ERR09   ANOP
+         MNOTE 12,'*** INVALID VALUE FOR ''SUBPOOL'' PARAMETER'
+         AGO   .EROUTE
+.ERR10   ANOP
+         MNOTE 12,'*** ''ENCRYPT'' PARAMETER REQUIRED WITH ''TYPE=ENCRYX
+               PT'''
+         AGO   .EROUTE
+.EROUTE  ANOP
+.* RESET GLOBALS
+&ICHL    SETC  ''
+         MEND

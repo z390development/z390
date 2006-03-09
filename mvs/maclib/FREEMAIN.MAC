@@ -1,0 +1,396 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %/*
+         MACRO
+&NAME    FREEMAIN &MODE,&LV=,&LA=,&A=,&SP=,&BRANCH=,&KEY=,&MF=I,       *
+               &RELATED=
+*      OS/VS2 RELEASE 3 VERSION  -- 10/25/74
+         LCLC  &GNAME
+         LCLB  &AA,&B,&C,&D,&M(3),&GLBR,&BR,&UNCND,&SPREG,&KEYRG,&LVREG
+         LCLA  &CTR,&SVCN,&PRG,&CND
+&PRG     SETA  15             DEFAULT PARM REG FOR RC AND RU FORMS
+&GNAME   SETC  'IHB'.'&SYSNDX'
+         AIF   ('&KEY' EQ '').SKIP
+         AIF   ('&MODE' NE 'RC' AND '&MODE' NE 'RU').ERRORA
+         AIF   ('&BRANCH' EQ '').ERRORE ERROR, BRANCH=YES MISSING
+         AIF   ('&BRANCH' NE 'YES' AND '&BRANCH'(1,1) NE '(').ERRORE
+         AIF   ('&BRANCH(1)' NE 'YES').ERRORE
+&KEYRG   SETB  ('&KEY'(1,1) EQ '(')     KEY IS IN A REGISTER
+         AIF   (&KEYRG).SKIP   REGISTER VALUE CANNOT BE CHECKED
+         AIF   (T'&KEY NE 'N').SKIP     EQUATED KEYS CANNOT BE CHECKED
+         AIF   (&KEY GT 15).ERRORB
+.SKIP    AIF   ('&MF' EQ 'L' AND '&BRANCH' NE '').ERRORC
+         AIF   ('&BRANCH' EQ '').BRCNT
+         AIF   ('&BRANCH'(1,1) NE '(').BRSNG
+       AIF   ('&BRANCH(1)' NE 'YES' OR '&BRANCH(2)' NE 'GLOBAL').ERRORD
+         AIF   ('&BRANCH(2)' EQ 'GLOBAL' AND '&MODE' NE 'RC' AND       *
+               '&MODE' NE 'RU').ERRORF
+&GLBR    SETB  1
+&BR      SETB  1
+         AGO   .BRCNT
+.BRSNG   AIF   ('&BRANCH' NE 'YES').ERRORD
+&BR      SETB  1
+.BRCNT   ANOP
+&SVCN    SETA  5
+         AIF   (K'&MODE LT 2).SKPC
+         AIF   ('&MODE'(2,1) NE 'C').SKPC
+&CND     SETA  32
+.SKPC    AIF   ('&MODE' EQ '' AND '&MF' EQ 'I').ERROR1
+         AIF   ('&LV' NE '' AND '&LA' NE '').ERROR5
+         AIF   ('&MODE' EQ '').CONTA
+         AIF   ('&MODE'(1,1) EQ 'E' AND '&LA' NE '').ERROR6
+         AIF   ('&MODE'(1,1) EQ 'R' AND '&LA' NE '').ERROR6
+         AIF   ('&MODE'(1,1) EQ 'L' AND '&LV' NE '').ERROR4
+         AIF   ('&MODE'(1,1) EQ 'V' AND '&LV' NE '').ERROR4
+         AIF   ('&MODE'(1,1) EQ 'V' AND '&LA' NE '').ERROR6
+.CONTA   AIF   ('&MF' NE 'I').CONTB
+         AIF   ('&MODE'(1,1) EQ 'E' AND '&LV' EQ '').ERROR8
+         AIF   ('&MODE'(1,1) EQ 'L' AND '&LA' EQ '').ERROR8
+         AIF   ('&MODE'(1,1) NE 'R' AND '&A' EQ '').ERROR8
+.CONTB   AIF   ('&MF' EQ 'L').LROUT
+         AIF   ('&MF' EQ 'I').IROUT
+         AIF   (N'&MF LE 1).ERROR2
+         AIF   ('&MF(1)' NE 'E').ERROR2
+&NAME    IHBINNRA &MF(2)
+.CONTC   AIF   ('&MODE' EQ '').CONTD
+&M(1)    SETB  ('&MODE'(1,1) EQ 'E')
+&M(2)    SETB  ('&MODE'(1,1) EQ 'L')
+&M(3)    SETB  ('&MODE'(1,1) EQ 'V')
+         AIF   (&M(1)+&M(2)+&M(3) NE 1).ERROR7
+&CTR     SETA  128*&M(2)+192*&M(3)+&CND
+         MVI   8(1),&CTR                         MOVE MODE BYTE TO LIST
+.CONTD   AIF   ('&LV' EQ '').CONTG
+         AIF   ('&LV'(1,1) EQ '(').ISAREGA
+         AIF   (T'&LV EQ 'N').CONTAA
+.CONTBB  ANOP
+         B     *+8                               BRANCH AROUND LENGTH
+         DC    AL4(&LV)                          LENGTH
+         MVC   0(4,1),*-4                        MOVE LENGTH INTO LIST
+         AGO   .CONTG
+.CONTAA  AIF   (&LV GT 4095).CONTBB
+         LA    14,&LV.(0,0)                      PICK UP LENGTH
+         ST    14,0(0,1)                         STORE LENGTH INTO LIST
+         AGO   .CONTG
+.ISAREGA ST    &LV(1),0(0,1)                     STORE LENGTH INTO LIST
+.CONTG   AIF   ('&LA' EQ '').CONTH
+         AIF   ('&LA'(1,1) EQ '(').ISAREGB
+         LA    14,&LA                            PICK UP LIST ADDRESS
+         ST    14,0(0,1)                         STORE LA INTO LIST
+         AGO   .CONTH
+.ISAREGB ST    &LA(1),0(0,1)                     STORE LA INTO LIST
+.CONTH   AIF   ('&A' EQ '').CONTI
+         AIF   ('&A'(1,1) EQ '(').ISAREGC
+         LA    14,&A                             PICK UP AREA LIST ADDR
+         ST    14,4(0,1)                         STORE INTO LIST
+         AGO   .CONTI
+.ISAREGC ST    &A(1),4(0,1)                      STORE A-ADDR INTO LIST
+.CONTI   AIF   ('&SP' EQ '').FINI
+         AIF   ('&SP'(1,1) EQ '(').ISAREGD
+         MVI   9(1),&SP                          MOVE SUBPOOL INTO LIST
+         AGO   .FINI
+.ISAREGD STC   &SP(1),9(0,1)                     STORE SUBPOOL IN LIST
+         AGO   .FINI
+.LROUT   AIF   ('&LV' EQ '').CONTJ
+         AIF   ('&LV'(1,1) EQ '(').ERROR3
+&NAME    DC    A(&LV)                            LENGTH
+         AGO   .CONTL
+.CONTJ   AIF   ('&LA' EQ '').CONTK
+         AIF   ('&LA'(1,1) EQ '(').ERROR3
+&NAME    DC    A(&LA)                            LIST ADDRESS
+         AGO   .CONTL
+.CONTK   ANOP
+&NAME    DC    F'0'
+.CONTL   AIF   ('&A' EQ '').CONTM
+         AIF   ('&A'(1,1) EQ '(').ERROR3
+         DC    A(&A)                             AREA LIST ADDRESS
+         AGO   .CONTN
+.CONTM   DC    F'0'                              AREA LIST ADDRESS
+.CONTN   AIF   ('&MODE' EQ '').CONTO
+&M(1)    SETB  ('&MODE'(1,1) EQ 'E')
+&M(2)    SETB  ('&MODE'(1,1) EQ 'L')
+&M(3)    SETB  ('&MODE'(1,1) EQ 'V')
+         AIF   (&M(1)+&M(2)+&M(3) NE 1).ERROR7
+&CTR     SETA  128*&M(2)+192*&M(3)+&CND
+         DC    AL1(&CTR)                         MODE BYTE
+         AGO   .CONTSP
+.CONTO   DC    AL1(0)                            MODE BYTE
+.CONTSP  AIF   ('&SP' EQ '').CONTU
+         AIF   ('&SP'(1,1) EQ '(').ERROR3
+         DC    AL1(&SP)                          SUBPOOL VALUE
+         AGO   .FINISH
+.CONTU   DC    AL1(0)                            SUBPOOL VALUE
+.FINISH  MEXIT
+.IROUT   AIF   ('&MODE'(1,1) EQ 'R').RROUT
+         AIF   ('&MODE'(1,1) EQ 'P').PROUT                     @Z30EN9G
+         CNOP  0,4
+&NAME    BAL   1,*+14                            BRANCH AROUND LIST
+         AIF   ('&LV' EQ '').CNTA
+         AIF   ('&LV'(1,1) EQ '(').CNTB
+         DC    A(&LV)                            LENGTH
+         AGO   .CNTC
+.CNTB    DC    A(0)                              LENGTH
+&AA      SETB  1
+         AGO   .CNTC
+.CNTA    AIF   ('&LA' EQ '').CNTDD
+         AIF   ('&LA'(1,1) EQ '(').CNTD
+         DC    A(&LA)                            LIST ADDRESS
+         AGO   .CNTC
+.CNTD    ANOP
+&B       SETB  1
+.CNTDD   DC    A(0)
+.CNTC    AIF   ('&A'(1,1) EQ '(').CNTE
+         DC    A(&A)                             AREA LIST ADDRESS
+         AGO   .CNTF
+.CNTE    DC    A(0)                              AREA LIST ADDRESS
+&C       SETB  1
+.CNTF    ANOP
+&M(1)    SETB  ('&MODE'(1,1) EQ 'E')
+&M(2)    SETB  ('&MODE'(1,1) EQ 'L')
+&M(3)    SETB  ('&MODE'(1,1) EQ 'V')
+         AIF   (&M(1)+&M(2)+&M(3) NE 1).ERROR7
+&CTR     SETA  128*&M(2)+192*&M(3)+&CND
+         DC    AL1(&CTR)                         MODE BYTE
+.CNTSP   AIF   ('&SP' EQ '').CNTL
+         AIF   ('&SP'(1,1) EQ '(').ISAREGQ
+         DC    AL1(&SP)                          SUBPOOL VALUE
+         AGO   .CNTM
+.ISAREGQ DC    AL1(0)                            SUBPOOL VALUE
+         STC   &SP(1),9(0,1)                     STORE SUBPOOL
+         AGO   .CNTM
+.CNTL    DC    AL1(0)                            SUBPOOL VALUE
+.CNTM    AIF   (NOT &AA).CNTN
+         ST    &LV(1),0(0,1)                     STORE LENGTH IN LIST
+         AGO   .CNTO
+.CNTN    AIF   (NOT &B).CNTO
+         ST    &LA(1),0(0,1)                     STORE LA INTO LIST
+.CNTO    AIF   (NOT &C).FINI
+         ST    &A(1),4(0,1)                      STORE A-ADDR INTO LIST
+         AGO   .FINI
+.RROUT   AIF   (K'&MODE EQ 2).NREGM
+&SVCN    SETA  10
+         AIF   ('&LV' EQ '' AND '&A' EQ '').SPROUT
+         AIF   ('&LV' EQ '' OR '&A' EQ '').ERROR8
+         AIF   ('&LV' EQ '(0)' AND '&SP' NE '').ERROR9
+         AIF   ('&LV'(1,1) EQ '(').ISARGA
+         AIF   ('&SP' EQ '').CTUA
+&D       SETB 1
+         AIF   ('&SP'(1,1) EQ '(').ISARGB
+.CMNB    CNOP  0,4
+&NAME    B     *+8                               BRANCH AROUND LENGTH
+         AIF   (NOT &D).NSPS
+         DC    AL1(&SP)                          SUBPOOL VALUE
+         DC    AL3(&LV)                          LENGTH
+         AGO   .CMNA
+.NSPS    DC    A(&LV)                            LENGTH
+.CMNA    L     0,*-4                             LOAD SP AND LV
+.CTUD    AIF   ('&A'(1,1) EQ '(').ISARGD
+         L     1,&A                              LOAD AREA ADDRESS
+.CTUC    LA    1,0(0,1)                          CLEAR HI ORDER BYTE
+         AGO   .FINI
+.CTUA    AIF   (T'&LV NE 'N').CMNB
+         AIF   (&LV GT 4095).CMNB
+&NAME    LA    0,&LV.(0,0)                       LOAD LENGTH
+         AGO   .CTUD
+.ISARGD  AIF   ('&A(1)' EQ '1').CTUC
+         LA    1,0(0,&A(1))                      LOAD AREA ADDRESS
+         AGO   .FINI
+.PROUT   ANOP                                                  @Z30EN9G
+         AIF   ('&BRANCH' EQ '').ERROR8                        @Z30EN9G
+         AIF   ('&A'(1,1) EQ '(').PROUTR                       @Z30EN9G
+&NAME    L     1,&A                        LOAD AREA ADDRESS   @Z30EN9G
+         AGO   .CTUC                                           @Z30EN9G
+.PROUTR  ANOP                                                  @Z30EN9G
+&NAME    LA    1,0(0,&A(1))                LOAD AREA ADDRESS   @Z30EN9G
+         AGO   .FINI                                           @Z30EN9G
+.ISARGB  AIF   (T'&LV NE 'N').CONTFF
+         AIF   (&LV GT 4095).CONTFF
+&NAME    LR    0,&SP(1)                          PICK UP SUBPOOL
+         SLL   0,24(0)                           SHIFT TO HI-ORDER BYTE
+         LA    14,&LV.(0,0)                      PICK UP LENGTH
+         OR    0,14                              PACK SP AND LV
+         AGO   .CTUD
+.CONTFF  CNOP  0,4
+&NAME    B     *+8                               BRANCH AROUND LENGTH
+         DC    A(&LV)                            LENGTH
+         LR    0,&SP(1)                          PICK UP SUBPOOL
+         SLL   0,24(0)                           SHIFT TO HI-ORDER BYTE
+         O     0,*-10                            PACK SP AND LV
+         AGO   .CTUD
+.ISARGA  AIF   ('&NAME' EQ '').UNNAMED
+&NAME    DS    0H
+.UNNAMED AIF   ('&LV(1)' EQ '0').CTUD
+         AIF   ('&SP' NE '').CTUG
+         LR    0,&LV(1)                          LOAD LENGTH
+         AGO   .CTUD
+.CTUG    AIF   ('&SP'(1,1) EQ '(').CTUGP
+         LA    0,&SP.(0,0)                       LOAD SUBPOOL
+         AGO   .CTUGPP
+.CTUGP   LR    0,&SP(1)                          LOAD SUBPOOL
+.CTUGPP  SLL   0,24(0)                           SHIFT TO HI-ORDER BYTE
+         OR    0,&LV(1)                          PACK SP AND LV
+         AGO   .CTUD
+.SPROUT  AIF   ('&SP' EQ '').ERROR8
+         AIF   ('&SP'(1,1) EQ '(').ISARGQ
+&NAME    LA    0,&SP.(0,0)                       LOAD SUBPOOL
+.CTUX    SLL   0,24(0)                           SHIFT TO HI-ORDER BYTE
+.CTUXX   SR    1,1                               INDICATE SP RELEASE
+         AGO   .FINI
+.ISARGQ  AIF   ('&NAME' EQ '').NONE
+&NAME    DS    0H
+.NONE    AIF   ('&SP(1)' EQ '0').CTUXX
+         LR    0,&SP(1)                          LOAD SUBPOOL
+         AGO   .CTUX
+.NREGM   ANOP      REGISTER (RC AND RU) FORMS OF FREEMAIN
+&PRG     SETA  &PRG-12*&BR     CHANGE PARM REG FOR BRANCH ENTRY
+&SVCN    SETA  120
+&UNCND   SETB  ('&MODE' EQ 'RU')
+         AIF   ('&SP' EQ '').CONT1
+&SPREG   SETB  ('&SP'(1,1) EQ '(')
+.CONT1   ANOP
+&B       SETB  (&SPREG AND &KEYRG)
+         AIF   ('&LV' EQ '' AND '&A' EQ '').NSPFM
+         AIF   ('&LV' EQ '' OR '&A' EQ '').ERROR8
+&LVREG   SETB  ('&LV'(1,1) EQ '(')
+         CNOP  0,4
+&NAME    B     *+12-4*&LVREG-2*&B                BRANCH AROUND DATA
+         AIF   (&LVREG OR '&LV' EQ '').CONT10
+         DC    A(&LV)                            LENGTH
+.CONT10  ANOP
+&GNAME.F DC    AL1(0)                            RESERVED
+         AIF   ('&KEY' EQ '').CONT1A    KEY PARM PRESENT?
+         AIF   (&KEYRG).CONT1B
+         DC    AL1(&KEY*16)                      STORAGE KEY
+         AGO   .CONT1B
+.CONT1A  DC    AL1(0)                            RESERVED
+.CONT1B  AIF   (&SPREG).CONT1C                   SUBPOOL IN REGISTER?
+         AIF   ('&SP' EQ '').CONT1E
+         DC    AL1(&SP)                          SUBPOOL NUMBER
+         AGO   .CONT1C
+.CONT1E  DC    AL1(0)                            SUBPOOL NUMBER
+.CONT1C  DC    BL1'000000&UNCND.1'               MODE BYTE
+         AIF   (&LVREG OR '&LV' EQ '').LVCHK
+         L     0,*-8+2*&B                        LOAD LENGTH
+         AGO   .NCT1
+.LVCHK   AIF   (&D).CONT1D
+         AIF   (NOT &LVREG).NCT1
+.CNT1    AIF   ('&LV(1)' EQ '0').NCT1
+         LR    0,&LV(1)                          LOAD LENGTH
+.NCT1    AIF   ('&A'(1,1) EQ '(').NREGA
+         L     1,&A                              LOAD AREA ADDRESS
+         AGO   .CONT1D
+.NREGA   AIF   ('&A(1)' EQ '1').CONT1D
+         LR    1,&A(1)                           LOAD AREA ADDRESS
+.CONT1D  AIF   (&KEYRG OR &SPREG).KORSREG
+.*       NEITHER KEY NOR SP IS IN A REGISTER
+         L     &PRG.,&GNAME.F                    LOAD PARAMETERS
+         AGO   .FINI
+.*       EITHER KEY OR SP IS A REGISTER
+.KORSREG AIF   (&B).BOTHREG
+.*       ONLY ONE OF KEY OR SP IS IN A REGISTER
+         AIF   (NOT &SPREG).KEYREG
+.*       ONLY SP IS A REGISTER
+         AIF   ('&SP(1)' EQ '&PRG').SPINPRG
+.*       SP IS NOT IN THE PREFERRED PARAMETER REGISTER.
+         LR    &PRG.,&SP(1)                      INSERT SUBPOOL ID
+.SPINPRG SLL   &PRG.,8(0)                     SHIFT SP TO BYTE 2 YM1995
+         ICM   &PRG.,13,&GNAME.F                 INSERT REST OF PARMS
+         AGO   .FINI
+.*       ONLY KEY IS IN A REGISTER
+.KEYREG  AIF   ('&KEY(1)' EQ '&PRG').KYINPRG
+.*       KEY IS NOT IN THE PREFERRED PARAMETER REGISTER
+         LR    &PRG.,&KEY(1)                     OBTAIN STORAGE KEY
+.KYINPRG SLL   &PRG.,16(0)                   SHIFT KEY TO BYTE 1 YM1995
+         ICM   &PRG.,11,&GNAME.F                 ADD REST OF PARMS
+         AGO   .FINI
+.*       BOTH SP AND KEY ARE IN REGISTERS
+.BOTHREG AIF   ('&KEY(1)' NE '&SP(1)').NOTSAME
+.*       BOTH KEY AND SP ARE THE SAME REGISTER
+         AIF   ('&KEY(1)' EQ '&PRG').BOTHPRG
+.*       THE COMMON REGISTER IS NOT THE PREFERRED PARM REGISTER
+         LR    &PRG.,&KEY(1)                     GET KEY & SUBPOOL ID
+.BOTHPRG ICM   &PRG.,9,&GNAME.F                  ADD REST OF PARAMETERS
+         AGO   .FINI
+.*       BOTH KEY AND SP ARE REGS, BUT THEY ARE DIFFERENT REGISTERS.
+.NOTSAME AIF   ('&KEY(1)' EQ '&PRG' OR '&SP(1)' EQ '&PRG').PRGIS1
+.*       NEITHER REGISTER IS THE PREFERRED PARAMETER REGISTER
+         LR    &PRG.,&KEY(1)                     INSERT KEY
+.ADDSP   SLL   &PRG.,8(0)                  SHIFT KEY INTO BYTE 2 YM1995
+         OR    &PRG.,&SP(1)                      ADD SUBPOOL NUMBER
+         SLL   &PRG.,8(0)                   SHIFT TO BYTES 1 & 2 YM1995
+         AGO   .BOTHPRG
+.PRGIS1  AIF   ('&KEY(1)' EQ '&PRG').ADDSP
+.*       SP IS THE PREFERRED PARM REGISTER, KEY IS IN ANOTHER REG.
+         SLL   &PRG.,8(0)                 MOVE SUBPOOL TO BYTE 2 YM1995
+         SLL   &KEY(1),16(0)                 SHIFT KEY TO BYTE 1 YM1995
+         OR    &PRG.,&KEY(1)                     COMBINE KEY & SUBPOOL
+         AGO   .BOTHPRG
+.*       SUBPOOL FREEMAIN
+.NSPFM   AIF   ('&SP' EQ '').ERROR8
+         CNOP  0,4
+&NAME    SR    0,0                               ZERO LENGTH
+         SR    1,1                               INDICATE SP RELEASE
+         B     *+8-2*&B                          BRANCH AROUND VALUES
+&D       SETB  1
+         AGO   .CONT10
+.FINI    AIF   (&BR).SETBE
+         SVC   &SVCN                             ISSUE FREEMAIN SVC
+         MEXIT
+.SETBE   L     15,CVTPTR(0,0)                    LOAD THE CVT ADDRESS
+         AIF   ('&MODE' EQ 'P').CBBE                           @Z30EN9G
+         AIF   (&SVCN EQ 120).CRBE
+         AIF   (&SVCN EQ 10).RMBE
+         L     15,CVTLFRM-CVTMAP(0,15)           FREEMAIN ENTRY ADDRESS
+         AGO   .SBE
+.CBBE    L     15,CVTCBBR-CVTMAP(0,15)  FREEMAIN ENTRY ADDRESS @Z30EN9G
+         AGO   .SBE                                            @Z30EN9G
+.RMBE    L     15,CVTRMBR-CVTMAP(0,15)           FREEMAIN ENTRY ADDRESS
+         AGO   .SBE
+.CRBE    AIF   (&GLBR).GLBE   GLOBAL BRANCH ENTRY?
+         L     15,CVTCRMN-CVTMAP(0,15)           FREEMAIN ENTRY ADDRESS
+         AGO   .SBE
+.GLBE    L     4,CVTSPSA-CVTMAP(0,15)            SAVE AREA VECTOR
+         L     4,WSAGGMFM-WSAG(0,4)              GLOBAL SAVE AREA ADDR
+         L     15,CVTGLMN-CVTMAP(0,15)           GLBRANCH ENTRY ADDR
+.SBE     BALR  14,15                             BRANCH TO FREEMAIN
+         MEXIT
+.ERROR1  IHBERMAC 17
+         MEXIT
+.ERROR2  IHBERMAC 1001,MF,&MF INVALID MF OPERAND -- &MF
+         MEXIT
+.ERROR3  IHBERMAC 69
+         MEXIT
+.ERROR4  IHBERMAC 89
+         MEXIT
+.ERROR5  IHBERMAC 91
+         MEXIT
+.ERROR6  IHBERMAC 90
+         MEXIT
+.ERROR7  IHBERMAC 1001,MODE,&MODE      INVALID MODE OPERAND &MODE
+         MEXIT
+.ERROR8  IHBERMAC 01
+         MEXIT
+.ERROR9  IHBERMAC 92
+         MEXIT
+.ERRORA  IHBERMAC 1020,KEY,&MODE
+         MEXIT
+.ERRORB  IHBERMAC 1001,KEY,&KEY
+         MEXIT
+.ERRORC  IHBERMAC 1020,BRANCH,''MF=L''
+         MEXIT
+.ERRORD  IHBERMAC 1001,BRANCH,&BRANCH
+         MEXIT
+.ERRORE  IHBERMAC 1020,KEY,''BRANCH=''&BRANCH
+         MEXIT
+.ERRORF  IHBERMAC 1020,&BRANCH(2),&MODE
+         MEND
+* */
+* FREEMAIN:  MACRO KEYS(LV,
+*            LA,
+*            A,
+*            SP,
+*            BRANCH,
+*            KEY,
+*            RTCD,
+*            RELATED,
+*            MF);
+*     ANS('?'||MACLABEL||'FREEMANP '||MACLIST||MACKEYS||';');
+*%       END FREEMAIN;

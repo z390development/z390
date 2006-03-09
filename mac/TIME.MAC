@@ -6,11 +6,22 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-&N       TIME  &TYPE,&ADDR,&LINKAGE=SVC,&DATETYPE=YYYYDDD
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 11/02/05 RPI68 - add SVC CLOCK options for STCK, STCKE, and JAVA  
+.* 11/15/05 RPI94 - add SVC NS option for nano-second interval timer  
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 01/16/06 RPI175 ADD CHECK FOR MISSING ADDR PARM
+.*********************************************************************
+&N       TIME  &TYPE,&ADDR,&LINKAGE=SVC,&DATETYPE=YYYYDDD,&CLOCKTYPE=
+         AIF   (N'&SYSLIST LE 2).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+.NPOK    ANOP
 .*
 .* RETURN TIME AND DATE IN REQUESTED FORMAT
 .*
+         AIF   (&N EQ '').SKIPDS
 &N       DS    0H
+.SKIPDS  ANOP
          AIF   (&LINKAGE EQ 'SVC').SVCLINK
          AIF   (&LINKAGE EQ 'SYSTEM').SYSLINK
          MNOTE 12,'INVALID LINKAGE TYPE - &LINKAGE'
@@ -25,6 +36,8 @@
          AIF   (&TYPE EQ 'TU').SVCTU
          AIF   (&TYPE EQ 'MIC').SVCMIC
          AIF   (&TYPE EQ 'STCK').SVCSTCK
+         AIF   (&TYPE EQ 'CLOCK').SVCCLOCK
+         AIF   (&TYPE EQ 'NS').SVCNS
          MNOTE 12,'INVALID SVC LINKAGE TYPE - &TYPE'
          MEXIT
 .SVCDEC  ANOP             R1 = HEX CCYYDDDF
@@ -40,16 +53,35 @@
          LA    0,3   MIC  0(8,R1) = DOUBLE WORD MICROSECONDS
          AGO   .SVCADDR
 .SVCSTCK ANOP
-         LA    0,4   STCK 0(8,R1) = DOUBLE WORD CLOCK (BIT 51=MIC)
+         LA    0,4   STCK 0(8,R1) = TOD DOUBLE WORD (BIT 51=MIC)
 .SVCADDR ANOP
+         AIF   (&ADDR EQ '').ERR1
          AIF   ('&ADDR'(1,1) EQ '(').SVCAREG
          LA    1,&ADDR
          AGO   .SVCSVC
 .SVCAREG ANOP
+         AIF   (&ADDR(1) EQ '1' OR &ADDR(1) EQ 'R1').SVCSVC  RPI163
          LR    1,&ADDR(1)
 .SVCSVC  ANOP
          SVC   11 TIME AND DATE
          MEXIT
+.SVCCLOCK ANOP
+         AIF   ('&CLOCKTYPE' EQ 'STCK').CLOCK_STCK
+         AIF   ('&CLOCKTYPE' EQ 'STCKE').CLOCK_STCKE
+         AIF   ('&CLOCKTYPE' EQ 'JAVA').CLOCK_JAVA
+         MNOTE 12,'INVALID SVC CLOCK TYPE - &TYPE'
+.CLOCK_STCK ANOP
+         LA    0,5 CLOCK STCK - DOUBLE WORD BIT 51 MICS FROM 1900
+         AGO   .SVCADDR
+.CLOCK_STCKE ANOP
+         LA    0,6 CLOCK STCKE - 2 DOUBLE WORDS BIT 59 MICS FROM 1900
+         AGO   .SVCADDR
+.CLOCK_JAVA  ANOP
+         LA    0,7 CLOCK JAVA - DOUBLE WORD BIT 63 MILL-SEC FROM 1970
+         AGO   .SVCADDR
+.SVCNS   ANOP
+         LA    0,8 NANOSECONDS - DOUBLE WORD BIT 63 NANO-SEC COUNTER
+         AGO   .SVCADDR
 .*
 .* LINKAGE=SYSTEM 
 .*
@@ -77,10 +109,12 @@
 .SYSSTCKE ANOP
          LA    0,15   SKCKE 0(16,R1) = ECLOCK (BIT 59 = MIC)
 .SYSADDR ANOP
+         AIF   (&ADDR EQ '').ERR1
          AIF   ('&ADDR'(1,1) EQ '(').SYSAREG
          LA    1,&ADDR
          AGO   .SYSDATE
 .SYSAREG ANOP
+         AIF   (&ADDR(1) EQ '1' OR &ADDR(1) EQ 'R1').SYSDATE  RPI163
          LR    1,&ADDR(1)
 .SYSDATE ANOP
          AIF   (&TYPE EQ 'STCKE').SYSSVC NO DATE
@@ -103,4 +137,6 @@
          IILH  0,4      8(4,R1) = HEX YYYYMMDD
 .SYSSVC  ANOP
          SVC   11 TIME AND DATE
+         MEXIT
+.ERR1    MNOTE 12,'TIME MISSING POSITIONAL ADDRESS PARM'
          MEND

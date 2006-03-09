@@ -1,0 +1,32 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GET   &CB,&AREA,&RPL=,&TYPE=                           XL03123
+.*       CHANGE LEVEL = 07
+.*       DATE OF LAST CHANGE = 24 MARCH 72  ( 72*084 )
+         AIF   ('&CB' NE '').NJES       NON JES EXPANSION       XL03123
+         AIF   ('&RPL' NE '').JES       JES MACRO EXPANSION
+         IHBERMAC 02                                            XL03123
+         MEXIT
+.NJES    ANOP
+&NAME    IHBINNRA &CB,&AREA                                     XL03123
+         AIF   ('&TYPE' EQ '').GET40                            XL03123
+         AIF   ('&TYPE' NE 'P').E2                              XL03123
+         L     15,4(0,1)                LOAD PARALLEL GET RTN ADDR
+         AGO   .GET45                                           XL03123
+.GET40   L     15,48(0,1)               LOAD GET ROUTINE ADDR
+.GET45   BALR  14,15                    LINK TO GET ROUTINE
+         MEXIT
+.JES     ANOP
+&NAME    DS    0H
+         AIF   ('&RPL'(1,1) EQ '(').RPLR
+         LA    1,&RPL                   LOAD RPL ADDR
+         AGO   .AREG
+.RPLR    LR    1,&RPL(1)                LOAD RPL ADDR VIA REG
+.AREG    LA    0,X'00'                  INDICATE GET IN REG
+         L     15,24(1)                 LOAD ACB ADDR FROM RPL
+         L     15,8(15)                 LOAD JES INTERFACE MOD ADDR
+         BALR  14,15                    LINK TO INTERFACE ROUTINE
+         MEXIT                                                  XL03123
+.E2      IHBERMAC 48,,&TYPE             INVALID TYPE OPND       XL03123
+         MEND
+

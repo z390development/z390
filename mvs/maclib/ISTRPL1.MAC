@@ -1,0 +1,300 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    ISTRPL1 &ACBDATA=,&AREA=0,&ARG=0,&NXTRPL=0,&KEYLEN=0, @ZA34940C
+               &ECB=,&BUFL=,&LEN=,&MSGLEN=0,&ERRMSG=,          @ZA34940C
+               &CCHAR=0,&OPTCD=,&NIB=,&BRANCH=,                  X03004C
+               &ACB=,&AREALEN=,&MSGAREA=,&RECLEN=,               X03004C
+               &AM=,&AAREA=0,&AAREALN=0,&EXIT=,&ARECLEN=0,       X03004C
+               &SEQNO=0,&USENSEO=0,&IBSQVAL=0,&OBSQVAL=0,       X3004BHC
+               &POST=,&RESPOND=,&CHAIN=,&CONTROL=,&CHNGDIR=,    X3004BHC
+               &BRACKET=,&SSENSMO=0,&TRANSID=0,                X03004JSC
+               &SSENSEO=,&RTYPE=,&STYPE=,&IBSQAC=,&OBSQAC=,     X04SVHSC
+               &SIGDATA=0,&CODESEL=,                           @Z40BHUCC
+               &CRYPT=,                                        @ZA34940C
+               &PARMS=,&PARM2=,&PARM3=                         @ZA34940
+.*
+.*             CHANGE LEVEL = 0                                @ZA34940
+.*             DATE OF LAST CHANGE = 4  OCT   78 ( 78*277 )    @ZA34940
+.*
+.* FUNCTION-   THE FUNCTION OF THIS MACRO IS TO BUILD,         @ZA34940
+.*             AT ASSEMBLY TIME, AN EXIT LIST FOR              @ZA34940
+.*             A VTAM USER.                                    @ZA34940
+.*             ISTRPL1 IS INVOKED BY THE MACRO RPL WHEN A      @ZA34940
+.*             USER ISSUES AN EXLST MACRO WITH 'AM=VTAM'       @ZA34940
+.*             SPECIFIED.                                      @ZA34940
+.*                                                             @ZA34940
+.* CHANGE ACTIVITY                                             @ZA34940
+.*      CBMM SPLIT SUPPORT                                     @ZA34940
+.*                                                             @ZA34940
+.*             THE FOLLOWING GLOBALS ARE SET IN ISTCBOPT WITH  @ZA34940
+.*             THE VALUES OF THE VARIOUS OPTCD BYTES           @ZA34940
+         GBLC  &IDAOP1,&IDAOP2,&IDAOP5,&IDAOP6,&IDAOP7,&IDAOP8  X04SVHS
+         GBLC  &IDAOP9,&IDAOPA,&IDAOPB,&IDAOPC  OPTCD CODES     X04SVHS
+         GBLC  &IDABRCH                 BRANCH CODE             X04SVHS
+         GBLC  &IDASNSO                 SSENSEO CODES           X04SVHS
+         GBLC  &IDACRYP                 ENCRIPTION CODE        @G40AKCM
+         GBLC  &IDARH3                 CHNGDIR/BRACKET/CODESEL @Z40BHUC
+         GBLC  &IDASRTY                 STYPE, RTYPE CODES      X04SVHS
+         GBLC  &IDACHN                  CHAIN CODES             X04SVHS
+         GBLC  &IDAPORE                 POST RESPOND CODES      X04SVHS
+         GBLC  &IDACON1,&IDACON2,&IDACON3 CONTROL CODES         X04SVHS
+         GBLC  &IDAOBQC                 OBSQAC CODES            X04SVHS
+         GBLC  &IDAIBQC                 IBSQAC CODES            X04SVHS
+         GBLA  &IDAENO                  NUMBER OF ELEMENTS     @ZA06420
+.* LOCALS
+         LCLA  &LENG                    SUBPARAMETER RPL LENGTH  X03004
+         LCLA  &SUBTYPE                 SUBTYPE CODE            X04SVHS
+         LCLB  &ECBX                                            X04SVHS
+         LCLB  &EXITB,&NOEXIT,&NIBD                             X04SVHS
+.*             INITIALIZE GLOBAL VARIABLES
+&IDAOP1  SETC  '0000000'                                        X04SVHS
+&IDAOP2  SETC  '00000000'                                       X04SVHS
+&IDAOP5  SETC  '00000000'                                       X04SVHS
+&IDAOP6  SETC  '00000000'                                       X04SVHS
+&IDAOP7  SETC  '00000000'                                       X04SVHS
+&IDAOP8  SETC  '00000000'                                       X04SVHS
+&IDAOP9  SETC  '00000000'                                       X04SVHS
+&IDAOPA  SETC  '00000000'                                       X04SVHS
+&IDAOPB  SETC  '00000000'                                       X04SVHS
+&IDAOPC  SETC  '00000000'                                       X04SVHS
+&IDABRCH SETC  '0'                                              X04SVHS
+&IDASNSO SETC  '00000000'                                       X04SVHS
+&IDARH3  SETC  '00000000'                                       X04SVHS
+&IDASRTY SETC  '00000000'                                       X04SVHS
+&IDACRYP SETC  '0'                                             @G40AKCM
+&IDACHN  SETC  '00000000'                                       X04SVHS
+&IDAPORE SETC  '00000000'                                       X04SVHS
+&IDACON1 SETC  '00000000'                                       X04SVHS
+&IDACON2 SETC  '00000000'                                       X04SVHS
+&IDACON3 SETC  '00000000'                                       X04SVHS
+&IDAOBQC SETC  '00000000'                                       X04SVHS
+&IDAIBQC SETC  '00000000'                                       X04SVHS
+&IDAENO  SETA  0                                               @ZA06420
+.*
+&LENG    SETA  76                       SET NON VTAM LENGTH      X03004
+         AIF   ('&AM' NE 'VTAM').SETLEN  WAS VTAM SPECIFIED      X03004
+&LENG    SETA  112                      YES; SET VTAM LENGTH   @Z40BHUC
+.SETLEN  ANOP                           NO; USE NON VTAM LENGTH  X03004
+&NAME    DS    0F
+         DC    AL1(0)                   RPL IDENTIFICATION
+&SUBTYPE SETA  X'10'                    SET VSAM SUBTYPE        X04SVHS
+         AIF   ('&AM' EQ 'VSAM').SSTYPE CHK FOR AM = VSAM
+         AIF   ('&AM' EQ '').SSTYPE     DEFAULT AM = VSAM
+&SUBTYPE SETA  X'20'                    SET VTAM SUBTYPE        X04SVHS
+         AIF   ('&AM' EQ 'VTAM').SSTYPE CHK FOR AM = VTAM       X04SVHS
+.*                                      IF NOT ERROR            X04SVHS
+&SUBTYPE SETA  0                        SET SUBTYPE TO ZERO     X04SVHS
+         ISTERMAC 3,AM,&AM              ISSUE ERROR MSG        @ZA34940
+.SSTYPE  ANOP                                                   X04SVHS
+         DC    AL1(&SUBTYPE)            RPL SUBTYPE             X04SVHS
+         DC    AL1(0)                   RPL REQUEST TYPE
+         DC    AL1(&LENG)               RPL LENGTH               X03004
+         ISTCBRPL OPTCD=&OPTCD,BRANCH=&BRANCH,POST=&POST,      @ZA34940*
+               RESPOND=&RESPOND,CHAIN=&CHAIN,CONTROL=&CONTROL,         *
+               CHNGDIR=&CHNGDIR,BRACKET=&BRACKET,SSENSEO=&SSENSEO,     *
+               CODESEL=&CODESEL,                               @Z40BHUC*
+               RTYPE=&RTYPE,STYPE=&STYPE,IBSQAC=&IBSQAC,               *
+               OBSQAC=&OBSQAC,CALLER=RPL,AM=&AM,                X04SVHSC
+               CRYPT=&CRYPT                                    @G40AKCM
+.*
+.*             ISTCBRPL IS CALLED TO PROCESS BIT KEYWORDS      @ZA34940
+.*             OPTCD,                                          @ZA34940
+.*             BRANCH, POST, RESPOND, CHAIN, CONTROL, CHNGDIR, BRACKET,
+.*             CODESEL, SSENSEO, RTYPE, STYPE, IBSQAC, AND OBSQAC.
+.*             IT WILL VALIDITY CHECK THE OPTIONS SPECIFIED, MUTUALLY
+.*             EXCLUSIVE CHECK WHERE APPLICABLE, AND SET GLOBALS
+.*             WITH THE VALUES OF THE KEYWORDS.
+.*
+         DC    A(0) .                   POINTER TO PLACEHOLDER
+         AIF   ('&ECB' EQ '' AND '&EXIT' EQ '').DEFAULT         X04SVHS
+         AIF   ('&ECB' EQ '').EXIT      TRY EXIT IF NOT ECB      X03004
+         DC    A(&ECB) .                POINTER TO ECB
+         AIF   ('&EXIT' EQ '').NOEXTSP                          X04SVHS
+         ISTERMAC 19,ECB,EXIT           ISSUE ERROR MSG        @ZA34940
+         AGO   .NOEXTSP                                          X03004
+.EXIT    AIF   ('&EXIT' EQ '').DEFAULT  DEFAULT IF NOT EXIT     X04SVHS
+         AIF   ('&AM' EQ 'VTAM').SETEXIT  WAS VTAM SPECIFIED     X03004
+         ISTERMAC 18,EXIT               ISSUE ERROR MSG        @ZA34940
+         AGO   .DEFAULT                 DO NOT SET ASYNCH EXIT   X03004
+.SETEXIT ANOP                           SET ASYNCH EXIT          X03004
+         DC    A(&EXIT) .               POINTER TO ASYNCH EXIT   X03004
+&EXITB   SETB  1                                                 X03004
+         AGO   .ENDEXIT                                          X03004
+.DEFAULT ANOP                                                    X03004
+         DC    A(0) .                   ECB
+.NOEXTSP ANOP                                                    X03004
+&NOEXIT  SETB  1                                                 X03004
+.ENDEXIT ANOP                                                    X03004
+         DC    BL1'0' .                 STATUS BYTE
+         DC    XL3'0'                   FEEDBACK CODES
+.*                                                              X3004BH
+.* IF AM=VTAM, A VTAM SECTION OVERLAYS THE TWO WORDS CONTAINING X3004BH
+.* KEYLEN,STRING ID AND CONTROL CHARACTER POINTER.  IF NOT      X3004BH
+.* VTAM, ALL VTAM KEYWORDS FOR THIS AREA ARE INVALID.           X3004BH
+.*                                                              X3004BH
+         AIF   ('&AM' EQ 'VTAM').OVLY16 IF VTAM GO TO OVERLAY   X3004BH
+         DC    AL2(&KEYLEN) .           KEY LENGTH
+         DC    AL2(&TRANSID) .          TRANSID                 X04SVHS
+         DC    A(&CCHAR)                POINTER TO CONTROL CHARACTER
+.*
+.*             THE ACB ADDRESS CAN BE SPECIFIED BY ACB= OR ACBDATA=
+.ACB     ANOP                                                   X3004BH
+         AIF   ('&ACBDATA' EQ '').TRYACB CHECK FOR ACB= IF NOT ACBDATA
+         DC    A(&ACBDATA) .            POINTER TO DATA ACB
+         AGO   .ACBEND
+.TRYACB  ANOP
+         AIF   ('&ACB' EQ '').NOACB      WAS ACB= SPECIFIED
+         DC    A(&ACB) .                POINTER TO ACB
+         AGO   .ACBEND
+.NOACB   ANOP
+         DC    A(0) .                   RESERVED FOR ACB POINTER
+.ACBEND  ANOP
+         DC    A(0) .                   POINTER TO TCB
+         DC    A(&AREA) .               POINTER TO RECORD AREA
+.NIBARG  AIF   ('&NIB' EQ '').NONIB     BR IF NIB NOT SPECIFIED  X03004
+         AIF   ('&ARG' EQ '0').NIB      BR IF ARG NOT SPECIFIED  X03004
+         ISTERMAC 19,NIB,ARG            ISSUE ERROR MSG        @ZA34940
+         DC    A(0)                     POINTER TO ARGUMENT      X03004
+         AGO   .OPTCD                                           X3004BH
+.NIB     ANOP                           NIB CHECK                X03004
+         AIF   ('&AM' EQ 'VTAM').SETNIB WAS VTAM SPECIFIED       X03004
+         ISTERMAC 18,NIB                ISSUE ERROR MSG        @ZA34940
+         AGO   .NONIB                   SKIP NIB SETUP           X03004
+.SETNIB  ANOP                           SET NIB                  X03004
+         DC    A(&NIB)                  POINTER TO NIB           X03004
+&NIBD    SETB  1                        INDICATE NIB SPECIFIED   X03004
+         AGO   .OPTCD                                           X3004BH
+.NONIB   ANOP                                                    X03004
+         DC    A(&ARG) .                POINTER TO ARGUMENT
+.OPTCD   ANOP                                                   X3004BH
+&ECBX    SETB  ('&ECB' NE '' AND '&ECB' NE '0')                @XM01126
+         DC    B'&IDAOP1&ECBX' .        OPTCD BYTE 1
+         DC    B'&IDAOP2' .            OPTCD BYTE 2
+         DC    AL1(0) .                 OPTCD BYTE 3            X04SVHS
+         DC    AL1(0) .                 OPTCD BYTE 4            X04SVHS
+         DC    A(&NXTRPL) .             POINTER TO NEXT RPL
+.*             THE LRECL SIZE CAN BE SPECIFIED BY LEN= OR RECLEN=
+         AIF   ('&LEN' EQ '').TRYLREC CHECK FOR RECLEN= IF NOT LEN
+         DC    A(&LEN) .                LOGICAL RECORD LENGTH
+         AGO   .LENEND
+.TRYLREC ANOP
+         AIF   ('&RECLEN' EQ '').NOLEN  WAS RECLEN= SPECIFIED
+         DC    A(&RECLEN) .             LOGICAL RECORD LENGTH
+         AGO   .LENEND
+.NOLEN   ANOP
+         DC    A(0) .                   RESERVED FOR LOGICAL REC LEN
+.LENEND  ANOP
+.*             THE BUFFER SIZE CAN BE SPECIFIED BY BUFL= OR AREALEN=
+         AIF   ('&BUFL' EQ '').TRYALEN CHECK FOR AREALEN= IF NOT BUFL
+         DC    A(&BUFL) .               BUFFER LENGTH
+         AGO   .ALENEND
+.TRYALEN ANOP
+         AIF   ('&AREALEN' EQ '').NOALEN  WAS AREALEN= SPECIFIED
+         DC    A(&AREALEN) .            BUFFER LENGTH
+         AGO   .ALENEND
+.NOALEN  ANOP
+         DC    A(0) .                   RESERVED FOR BUFFER LENGTH
+.ALENEND ANOP
+*                                       OPTCD BYTES 5-8          X03004
+         DC    B'&IDAOP5' .            BYTE 5                  X04SVHS
+         DC    B'&IDAOP6' .            BYTE 6                  X04SVHS
+         DC    B'&IDAOP7' .            BYTE 7                  X04SVHS
+         DC    B'&IDAOP8' .            BYTE 8                  X04SVHS
+.*                                                              X3004BH
+.* IF AM=VTAM, A VTAM SECTION OVERLAYS THE TWO RBA WORDS.  IF   X3004BH
+.* NOT VTAM, ALL VTAM KEYWORDS FOR THIS AREA ARE INVALID.       X3004BH
+.*                                                              X3004BH
+         AIF   ('&AM' EQ 'VTAM').OVLY60 IF VTAM GO TO OVERLAY   X3004BH
+         AIF   ('&OBSQVAL' EQ '0').TSTIVL BRANCH IF NOT OBSQVAL X3004BH
+         ISTERMAC 18,OBSQVAL            ISSUE ERROR MSG        @ZA34940
+.TSTIVL  AIF   ('&IBSQVAL' EQ '0').TSTSEQ  BRANCH IF NOT IBSQVALX3004BH
+         ISTERMAC 18,IBSQVAL            ISSUE ERROR MSG        @ZA34940
+.TSTSEQ  AIF   ('&SEQNO' EQ '0').DEF60    BRANCH IF NOT SEQNO   X3004BH
+         ISTERMAC 18,SEQNO              ISSUE ERROR MS         @ZA34940
+.DEF60   ANOP                                                   X3004BH
+         DC    XL8'0' .                 RBA
+.TSTBRCH ANOP                                                   X3004BH
+         DC    B'0&NOEXIT&EXITB.0&IDACRYP&NIBD&IDABRCH.0'      @G40AKSL
+         DC    AL1(0)                   ACTIVE INDICATOR
+         DC    AL2(&MSGLEN) .           MAXIMUM ERROR MSG LENGTH
+.*             THE MSGAREA CAN BE SPECIFIED BY ERRMSG OR MSGAREA
+         AIF   ('&ERRMSG' EQ '').TRYMA CHECK FOR MSGAREA= IF NOT ERRMSG
+         DC    A(&ERRMSG) .             POINTER TO ERROR MSG AREA
+         AGO   .MAEND
+.TRYMA   ANOP
+         AIF   ('&MSGAREA' EQ '').NOMA  WAS MSGAREA= SPECIFIED
+         DC    A(&MSGAREA) .            POINTER TO MESSAGE AREA
+         AGO   .MAEND
+.NOMA    ANOP
+         DC    A(0) .                   RESERVED FOR MESSAGE AREA PTR
+.MAEND   ANOP                                                    X03004
+         AIF   ('&AM' EQ 'VTAM').VTAMEXT  WAS VTAM SPECIFIED     X03004
+         AIF   ('&AAREA' EQ '0').NOAAREA  WAS AAREA SPECIFIED    X03004
+         ISTERMAC 18,AAREA              ISSUE ERROR MSG        @ZA34940
+.NOAAREA ANOP                           CHECK FOR AAREALN        X03004
+         AIF   ('&AAREALN' EQ '0').NOARELN  AAREALN SPECIFIED    X03004
+         ISTERMAC 18,AAREALN            ISSUE ERROR MSG        @ZA34940
+.NOARELN ANOP                           CHECK FOR ARECLEN        X03004
+         AIF   ('&ARECLEN' EQ '0').NOARCLN WAS ARECLEN SPECIFIED X03004
+         ISTERMAC 18,ARECLEN            ISSUE ERROR MSG        @ZA34940
+.NOARCLN ANOP                           CHECK FOR USENSEO       X3004BH
+         AIF   ('&USENSEO' EQ '0').NOUSNSO WAS USENSEO SPECIFIEDX3004BH
+         ISTERMAC 18,USENSEO            ISSUE ERROR MSG        @ZA34940
+.NOUSNSO ANOP                                                   X3004BH
+         AIF   ('&SSENSMO' EQ '0').NOSSNMO WAS SSENSMO SPEC    X03004JS
+         ISTERMAC 18,SSENSMO            ISSUE ERROR MSG        @ZA34940
+.NOSSNMO ANOP                           CHECK FOR SIGDATA      @Z40BHUC
+         AIF   ('&SIGDATA' EQ '0').NOSIGDA WAS SIGDATA SPEC    @Z40BHUC
+         ISTERMAC 18,SIGDATA            ISSUE ERROR MSG        @ZA34940
+.NOSIGDA ANOP                           END OF CHECK           @Z40BHUC
+         MEXIT                          NOT VTAM - END MACRO    X3004BH
+.VTAMEXT ANOP                           SET VTAM PARAMETERS      X03004
+         DC    A(&AAREA) .              ADDITIONAL DATA AREA PTR X03004
+         DC    A(&AAREALN) .            ADDITIONAL AREA LENGTH   X03004
+         DC    A(&ARECLEN) .            ADDITIONAL RECORD LENGTH X03004
+         DC    XL4'0'                   FEEDBACK AREA            X03004
+         DC    XL4'0'                   USER FIELD               X03004
+         DC    B'&IDAOP9' .            OPTCD BYTE 9            X04SVHS
+         DC    B'&IDAOPA' .            OPTCD BYTE 10           X04SVHS
+         DC    B'&IDAOPB' .            OPTCD BYTE 11           X04SVHS
+         DC    B'&IDAOPC' .            OPTCD BYTE 12           X04SVHS
+         DC    B'&IDASNSO'              SYSTEM SENSE OUTPUT     X04SVHS
+*                                       DATA                   X03004JS
+         DC    AL1(&SSENSMO)            SYSTEM SENSE MODIFIER
+*                                       OUTPUT                 X03004JS
+         DC    AL2(&USENSEO)            USER SENSE OUTPUT       X3004BH
+         DC    A(0)                     SAVE AREA OF FAST PATH @Z40BHUC
+         DC    A(&SIGDATA)              SIGNAL DATA FIELD      @Z40BHUC
+*
+         MEXIT                          END OF VTAM EXTENSION   X3004BH
+.*                                                              X3004BH
+.* PROCESSING FOR VTAM FIELDS WHICH START AT OFFSET 16          X3004BH
+.*                                                              X3004BH
+.OVLY16  ANOP                                                   X3004BH
+         DC    B'&IDARH3'               THIRD REQUEST HEADER
+*                                                BYTE           X04SVHS
+.*                                                              X3004BH
+.* STYPE/RTYPE                                                  X3004BH
+         DC    B'&IDASRTY'              SEND/RECEIVE TYPE       X04SVHS
+         DC    B'&IDACHN'               REQUEST UNIT CHAIN POSITION
+.*                                                              X04SVHS
+         DC    X'00'                             VTAM FLAGS     X3004BH
+         DC    B'&IDAPORE'              POST/RESPOND FLAGS      X04SVHS
+         DC    B'&IDACON1'              DATA CONTROL            X04SVHS
+         DC    B'&IDACON2'              DATA CONTROL            X04SVHS
+         DC    B'&IDACON3'              SESSION CONTROL         X04SVHS
+         AGO   .ACB                                             X3004BH
+.*                                                              X3004BH
+.* PROCESSING FOR VTAM FIELDS WHICH START AT OFFSET 60          X3004BH
+.*                                                              X3004BH
+.OVLY60  ANOP                                                   X3004BH
+         DC    AL2(&OBSQVAL)            STSN OUTBOUND SEQ NO    X3004BH
+         DC    AL2(&IBSQVAL)            STSN INBOUND SEQ NO     X3004BH
+         DC    B'&IDAOBQC'              STSN OUTBOUND ACTION CODES
+.*                                                              X04SVHS
+         DC    B'&IDAIBQC'              STSN INBOUND ACTION CODES
+.*                                                              X04SVHS
+         DC    AL2(&SEQNO)              SEQUENCE NUMBER         X3004BH
+         AGO   .TSTBRCH                                         X3004BH
+         MEND
+

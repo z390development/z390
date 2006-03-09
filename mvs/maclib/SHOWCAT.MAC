@@ -1,0 +1,147 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&LABEL   SHOWCAT &NAME=,&CI=,&AREA=,&ACB=,&MF=    VSAM CATALOG MACRO
+         LCLC  &BRPT                    BRANCH POINT
+         AIF   ('&MF' EQ '').MFS        BRANCH IF STANDARD FORM
+         AIF   ('&MF' EQ 'L').MFL       BRANCH IF LIST FORM
+         AIF   (N'&MF NE 2).ERR1        CHECK EXEC FORM HAS SUBLIST
+         AIF   ('&MF(1)' EQ 'E').MFE    BRANCH IF EXEC FORM
+         AIF   ('&MF(1)' EQ 'B').MFE    BRANCH IF EXEC/BUILD FORM
+         AGO   .ERR1                    FIRST OP OF EXEC FORM BAD
+.MFS     ANOP                           STANDARD FORM OF SHOWCAT
+&BRPT    SETC  'IGG'.'&SYSNDX'          INITLZ BRANCH POINT
+         AIF   ('&AREA' EQ '').ERR2     CHECK AREA PARM SPECIFIED
+         AIF   ('&NAME' EQ '').S1       BRANCH IF NO NAME PARM
+         AIF   ('&CI' NE '').ERR4       BOTH NAME AND CI PARMS, ERROR
+.*                                      NAME PARM IS GIVEN
+         CNOP  0,4                      SHOWCAT MACRO ALIGNMENT
+&LABEL   BAL   1,&BRPT                  BRANCH AROUND PARM LIST
+         DC    X'80'                    SHOW CAT FLAGS
+         DC    X'000000'                RESERVED
+         AIF   ('&NAME'(1,1) EQ '(').S5 BRANCH IF REG FORM
+         DC    A(&NAME)                 NAME ADDRESS
+         AGO   .S4                      CONTINUE
+.S5      DC    A(0)                     NAME ADDRESS
+         AGO   .S4                      CONTINUE
+.S1      AIF   ('&CI' EQ '').ERR3       AND ALSO NO CI PARM, ERROR
+.*                                      CI PARM IS GIVEN
+         CNOP  0,4                      SHOWCAT MACRO ALIGNMENT
+&LABEL   BAL   1,&BRPT                  BRANCH AROUND PARM LIST
+         DC    X'00'                    SHOW CAT FLAGS
+         DC    X'000000'                RESERVED
+         AIF   ('&CI'(1,1) EQ '(').S3   BRANCH IF REG FORM
+         DC    A(&CI)                   CI ADDRESS
+         AGO   .S4                      CONTINUE
+.S3      DC    A(0)                     CI ADDRESS
+.S4      AIF   ('&ACB' EQ '').S7        SEE IF NO ACB ADDRESS
+         AIF   ('&ACB'(1,1) EQ '(').S7  BRANCH IF REG FORM
+         DC    A(&ACB)                  ACB ADDRESS
+         AGO   .S6                      CONTINUE
+.S7      DC    A(0)                     ACB ADDRESS
+.S6      AIF   ('&AREA'(1,1) EQ '(').S8 BRANCH IF REG FORM
+         DC    A(&AREA)                 RETURN AREA ADDRESS
+         AGO   .S9                      CONTINUE
+.S8      DC    A(0)                     RETURN AREA ADDRESS
+.S9      ANOP                           CONTINUE
+&BRPT    DS    0H                       END OF PARM LIST
+         AIF   ('&NAME' EQ '').S10      BRANCH IF NO NAME GIVEN
+         AIF   ('&NAME'(1,1) NE '(').S11 BRANCH IF NOT REG FORM
+         ST    &NAME,4(0,1)             PUT NAME ADDR IN PARM LIST
+         AGO   .S11                     CONTINUE
+.S10     AIF   ('&CI'(1,1) NE '(').S11  BRANCH IF NOT REG FORM
+         ST    &CI,4(0,1)               PUT CI ADDR IN PARM LIST
+.S11     AIF   ('&ACB' EQ '').S12       BRANCH IF NO ACB PARM
+         AIF   ('&ACB'(1,1) NE '(').S12  BRANCH IF NOT REG FORM
+         ST    &ACB,8(0,1)              PUT ACB ADDR IN PARM LIST
+.S12     AIF   ('&AREA'(1,1) NE '(').S13 BRANCH IF NOT REG FORM
+         ST    &AREA,12(0,1)            PUT AREA ADDR IN PARM LIST
+.S13     ANOP                           CONTINUE
+         LINK  EP=IGG0CLA0              PASS CONTROL TO SHOWCAT MODULE
+         MEXIT                          STANDARD FORM PROCESSED
+.MFL     ANOP                           LIST FORM OF SHOWCAT MACRO
+&LABEL   DS    0F                       SHOWCAT MACRO ALIGNMENT
+         AIF   ('&NAME' EQ '').L1       BRANCH IF NO NAME PARM
+         AIF   ('&CI' NE '').ERR4       BOTH NAME AND CI PARMS, ERROR
+.*                                      NAME PARM IS GIVEN
+         DC    X'80'                    SHOWCAT FLAGS
+         DC    X'000000'                RESERVED
+         DC    A(&NAME)                 NAME ADDRESS
+         AGO   .L3                      CONTINUE
+.L1      AIF   ('&CI' EQ '').L2         BRANCH IF NO CI PARM
+         DC    X'00'                    SHOWCAT FLAGS
+         DC    X'000000'                RESERVED
+         DC    A(&CI)                   CI ADDRESS
+         AGO   .L3                      CONTINUE
+.L2      DC    X'00'                    SHOWCAT FLAGS
+         DC    X'000000'                RESERVED
+         DC    A(0)                     NAME/CI ADDRESS
+.L3      AIF   ('&ACB' EQ '').L4        BRANCH IF NO ACB ADDRESS
+         DC    A(&ACB)                  ACB ADDRESS
+         AGO   .L5                      CONTINUE
+.L4      DC    A(0)                     ACB ADDRESS
+.L5      AIF   ('&AREA' EQ '').L6       BRANCH IF NO AREA ADDRESS
+         DC    A(&AREA)                 AREA ADDRESS
+         AGO   .L7                      CONTINUE
+.L6      DC    A(0)                     AREA ADDRESS
+.L7      ANOP                           CONTINUE
+         MEXIT                          LIST FORM PROCESSED
+.MFE     ANOP                           EXECUTE FORM OF SHOWCAT
+&LABEL   DS    0H                       SHOWCAT MACRO
+         AIF   ('&MF(2)'(1,1) EQ '(').E1 BRANCH IF REG SPECIFIED
+         LA    1,&MF(2)                 GET REMOTE PARM LIST ADDR
+         AGO   .E2                      ADDRESSABILITY ESTABLISHED
+.E1      ANOP                           REG ADDR FOR PARM LIST
+         AIF   ('&MF(2)' EQ '(1)').E2   BRANCH IF REG 1 SPECIFIED
+         LR    1,&MF(2)                 GET REMOTE PARM LIST ADDR
+.E2      ANOP                           ADDRESSABILITY ESTABLISHED
+         AIF   ('&NAME' EQ '').E3       BRANCH IF NO NAME PARM
+         AIF   ('&CI'   NE '').ERR4     BOTH CI AND NAME PARM SPECIFIED
+.*                                      NAME PARM SPECIFIED
+         AIF   ('&NAME'(1,1) EQ '(').E4 BRANCH IF REG FORM SPECIFIED
+         LA    0,&NAME                  GET NAME ADDRESS
+         ST    0,4(0,1)                 PUT NAME ADDR INTO PARM LIST
+         OI    0(1),X'80'               INDICATE NAME PARM SPECIFIED
+         AGO   .E5                      CONTINUE
+.E4      ST    &NAME,4(0,1)             PUT NAME ADDR INTO PARM LIST
+         OI    0(1),X'80'               INDICATE NAME PARM SPECIFIED
+         AGO   .E5                      CONTINUE
+.E3      AIF   ('&CI' EQ '').E5         BRANCH IF NO CI PARM
+         AIF   ('&CI'(1,1) EQ '(').E6   BRANCH IF REG FORM SPECIFIED
+         LA    0,&CI                    GET CI ADDRESS
+         ST    0,4(0,1)                 PUT CI ADDRESS INTO PARM LIST
+         NI    0(1),X'7F'               INDICATE CI PARM SPECIFIED
+         AGO   .E5                      CONTINUE
+.E6      ST    &CI,4(0,1)               PUT CI ADDR INTO PARM LIST
+         NI    0(1),X'7F'               INDICATE CI PARM SPECIFIED
+.E5      AIF   ('&ACB' EQ '').E7        BRANCH IF NO ACB ADDR
+         AIF   ('&ACB'(1,1) EQ '(').E8  BRANCH IF REG FORM
+         LA    0,&ACB                   GET ACB ADDRESS
+         ST    0,8(0,1)                 PUT ACB ADDRESS INTO PARM LIST
+         AGO   .E7                      CONTINUE
+.E8      ST    &ACB,8(0,1)              PUT ACB ADDRESS INTO PARM LIST
+.E7      AIF   ('&AREA' EQ '').E9       BRANCH IF NO AREA ADDR
+         AIF   ('&AREA'(1,1) EQ '(').E10 BRANCH IF REG FORM
+         LA    0,&AREA                  GET AREA ADDRESS
+         ST    0,12(0,1)                PUT AREA ADDR INTO PARM LIST
+         AGO   .E9                      AREA PARM PROCESSED
+.E10     ST    &AREA,12(0,1)            PUT AREA ADDR INTO PARM LIST
+.E9      AIF   ('&NAME' NE '').E11      BRANCH IF NAME SPECIFIED
+         AIF   ('&CI'   NE '').E11      BRANCH IF CI   SPECIFIED
+         AIF   ('&ACB'  NE '').E11      BRANCH IF ACB  SPECIFIED
+         AIF   ('&AREA' NE '').E11      BRANCH IF AREA SPECIFIED
+         AIF   ('&MF(1)' NE 'B').E11    BRANCH IF NOT BUILD/EXEC FORM
+         XC    0(16,1),0(1)             CLEAR SHOWCAT PARM LIST
+.E11     AIF   ('&MF(1)' EQ 'B').E12    BRANCH IF BUILD/EXEC FORM
+         LINK  EP=IGG0CLA0              PASS CONTROL TO SHOWCAT MODULE
+.E12     ANOP                           LINK WAS NOT REQUESTED
+         MEXIT                          STANDARD FORM PROCESSED
+.ERR1    MNOTE 12,'*** SYNTAX ERROR IN MF OPERAND'
+         MEXIT                          ERROR EXIT
+.ERR2    MNOTE 12,'*** AREA PARM NOT SPECIFIED'
+         MEXIT                          ERROR EXIT
+.ERR3    MNOTE 12,'*** NEITHER NAME NOR CI SPECIFIED'
+         MEXIT                          ERROR EXIT
+.ERR4    MNOTE 12,'*** BOTH NAME AND CI SPECIFIED'
+         MEXIT                          ERROR EXIT
+         MEND
+

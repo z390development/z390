@@ -1,0 +1,34 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    TI    &DL,&I              TEST WR FROM IMMEDIATE DATA
+         GBLC  &DEF3890(250)                                   @ZA00766
+         GBLA  &VAL3890(250)                                   @ZA00766
+         LCLA  &LD,&V,&RL,&M                                   @ZA00766
+         LCLC  &LABEL                                          @ZA00766
+&M       SETA  1                                               @ZA00766
+&V       SETA  &I
+         AIF   (&V LE 65535).TI0
+         MNOTE 8,'***  IHB421 IMMEDIATE VALUE EXCEEDS ALLOWED MAXIMUM'
+.TI0     ANOP
+         AIF   (N'&DL EQ 1).TI3    DL WAS EQU'D
+         AIF   ('&DL(1)' LT '16').TI1
+         MNOTE 12,'***  IHB349  DISPLACEMENT NOT 0-15 DIGITS'
+.TI1     AIF   ('&DL(2)' NE '0' AND '&DL(2)' LT '5').TI2
+         MNOTE 12,'***  IHB351  LENGTH NOT 1-4 DIGITS'
+.TI2     ANOP
+&LD      SETA  16*&DL(1)+&DL(2)-1
+&NAME    DC    0H'0',X'46',AL1(&LD),AL2(&I)
+         AGO   .END
+.TI3     ANOP
+.CI7     AIF   (&M GT 250).CI8                                 @ZA00766
+&LABEL   SETC  '&DEF3890(&M)'                                  @ZA00766
+.CI5     AIF   ('&DL'   EQ '&LABEL').CI6                       @ZA00766
+&M       SETA  &M+1                                            @ZA00766
+         AGO   .CI7                                            @ZA00766
+.CI8     ANOP                                                  @ZA00766
+         MNOTE 12,'***   IHB425 &DL NOT EQUATED IN DWF MACRO'  @ZA00766
+.CI6     ANOP                                                  @ZA00766
+&RL      SETA  &VAL3890(&M)                                    @ZA00766
+&NAME    DC    0H'0',X'46',AL1(&RL),AL2(&I)                    @ZA00766
+.END     MEND
+

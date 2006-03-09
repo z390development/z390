@@ -1,0 +1,26 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 02/08/06 RPI198 TEST PARM(...) USING SYSPARM(...) TO COMPARE 
+*********************************************************************
+&PARM    SETC  &SYSPARM
+         AIF   ('&PARM'(1,1) NE '''').SKP1
+&PARM    SETC  '&PARM'(2,K'&PARM-2)
+.SKP1    ANOP
+&LPARM   SETA  K'&PARM
+TESTPRM4 SUBENTRY
+         LR    R4,R1  SAVE PARM
+         WTO   'TESTPRM4 TEST PARM(&PARM) MAPPED TO JCL EXEC PARM=&PARMX
+               '
+         CLC   0(2,R4),=H'&LPARM'
+         BNE   1
+         CLC   2(&LPARM,R4),=C'&PARM'
+         BNE   1
+         WTO   'TESTPRM4 ENDED OK' 
+         SUBEXIT
+         EQUREGS
+         END

@@ -1,0 +1,24 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO PLSCDAL;                                              /*
+         MACRO
+         CDAL
+CDAL     DSECT
+CDALDSP  DS    0F                       CDAL DISPATCHER ADDRESS FOR
+*                                       THIS CPU
+CDALDSP1 DS    B                        RESERVED DISPATCHER BYTE 1
+CDALDSP2 DS    B                        RESERVED DISPATCHER BYTE 2
+CDALDSP3 DS    B                        RESERVED DISPATCHER BYTE 3
+CDALDSP4 DS    B                        DISPATCHER BYTE 4
+CDALTCTL EQU   X'01'                    TCTL IN CONTROL
+         MEND  ,                                                     */
+*%PLSCDAL : ;
+*DECLARE                                /* CDAL TABLE ENTRY          */
+*  1 CDAL BASED,
+*    3 CDALDSP  FIXED(32),              /* DISPATCHER CONTROL ENTRY  */
+*      5  CDALDSP1 BIT(8),              /* RESERVED                  */
+*      5  CDALDSP2 BIT(8),              /* RESERVED                  */
+*      5  CDALDSP3 BIT(8),              /* RESERVED                  */
+*      5  CDALDSP4 BIT(8),              /* DISPATCHER CONTROL WORD   */
+*         7  *  BIT(7),                 /* RESERVED                  */
+*         7  CDALTCTL BIT(1);           /* TCTL IN CONTROL           */
+

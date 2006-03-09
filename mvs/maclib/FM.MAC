@@ -1,0 +1,6 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    FM
+&NAME    DC    XL2'FC00'                FEED FROM MERGE
+         MEND
+

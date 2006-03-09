@@ -1,0 +1,88 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 11/16/05 RPI89 ADD TEST OF LINK AND LOAD DSNAME AND DDNAME OPTIONS
+*********************************************************************
+         TITLE 'TESTLOD1 TEST LOAD DDNAME AND DSNAME OPTIONS'
+TESTLOD1 RT1  MAIN
+         EQUREGS
+DSNFSUB1 DC   C'TEST\TESTSUB1.390',X'00'    NULL TERM DSNAME FILE
+DSNDSUB1 DC   C'TEST',X'00'                 NULL TERM DSNAME DIR
+DSNFDEMO DC   C'"DEMO\DEMO.390"'            ".." FILE
+DSNDDEMO DC   C'"DEMO"'                     ".." DIR
+DSNMDEMO DC   C'"TEST;DEMO"'                     ".." MULT DIR LIST
+PGMNAME  DC   CL8'TESTSUB1'
+ABORT    WTO  'TESTLOD1 ABORTING DUE TO ERROR'
+         ABEND 111,DUMP
+         RT1  START
+         LOAD EP=TESTSUB1
+         LTR  R15,R15
+         BNZ  ABORT
+         LR   R15,R0
+         BALR R14,R15
+         DELETE EP=TESTSUB1
+         LTR  R15,R15
+         BNZ  ABORT
+         MVC  PGMNAME,=CL8'TESTSUB1'
+         LOAD EPLOC=PGMNAME
+         LTR  R15,R15
+         BNZ  ABORT
+         LR   R15,R0
+         BALR R14,R15
+         DELETE EP=TESTSUB1
+         LTR  R15,R15
+         BNZ  ABORT
+         LOAD EP=TESTSUBX,DSNAME=DSNFSUB1  FILE NAME OVERRIDES EP
+         LTR  R15,R15
+         BNZ  ABORT
+         LR   R15,R0
+         BALR R14,R15
+         DELETE EP=TESTSUB1
+         LTR  R15,R15
+         BNZ  ABORT
+         LOAD EP=TESTSUB1,DSNAME=DSNDSUB1  DIR
+         LTR  R15,R15
+         BNZ  ABORT
+         LR   R15,R0
+         BALR R14,R15
+         DELETE EP=TESTSUB1
+         LTR  R15,R15
+         BNZ  ABORT
+         LOAD EP=XXXX,DSNAME=DSNFDEMO      FILE NAME OVERRIDES EP
+         LTR  R15,R15
+         BNZ  ABORT
+         LR   R15,R0
+         BALR R14,R15
+         DELETE EP=DEMO    
+         LTR  R15,R15
+         BNZ  ABORT
+         LOAD EP=DEMO,DSNAME=DSNDDEMO      DIR
+         LTR  R15,R15
+         BNZ  ABORT
+         LR   R15,R0
+         BALR R14,R15
+         DELETE EP=DEMO     
+         LTR  R15,R15
+         BNZ  ABORT
+         LOAD EP=DEMO,DSNAME=DSNMDEMO      MULT DIR LIST (DEMO IN 2ND)
+         LTR  R15,R15
+         BNZ  ABORT
+         LR   R15,R0
+         BALR R14,R15
+         DELETE EP=DEMO    
+         LTR  R15,R15
+         BNZ  ABORT
+         LOAD EP=XXXX,DDNAME=DDTODEMO
+         LTR  R15,R15
+         BNZ  ABORT
+         LR   R15,R0
+         BALR R14,R15
+         DELETE EP=DEMO
+         LTR  R15,R15
+         BNZ  ABORT
+         RT1  END
+         END

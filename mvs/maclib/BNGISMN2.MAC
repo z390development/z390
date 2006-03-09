@@ -1,0 +1,138 @@
+.* MVS 3.8J PUBLIC DOMAIN
+***********************************************************************
+*                                                                     *
+* MODULE NAME = BNGISMN2                                              *
+*                                                                     *
+* DESCRIPTIVE NAME =  IMS DEMF 'PAGE 2 MENU' SCREEN FORMAT MODULE     *
+*                                                                     *
+*                                                                     *
+* STATUS = RELEASE 1, LEVEL 1                                         *
+*                                                                     *
+* FUNCTION = DEFINES THE FORMAT OF 'PAGE 2 MENU' DISPLAY SCREEN USING *
+*            BOTH MESSAGE INPUT DESCRIPTOR (MID) AND MESSAGE OUTPUT   *
+*            DESCRIPTOR (MOD) FOR THE IMS APPLICATION PROGRAM,        *
+*            BNGIMENU.                                                *
+*                                                                     *
+* NOTES = NONE                                                        *
+*                                                                     *
+*    DEPENDENCIES = NONE                                              *
+*                                                                     *
+*    RESTRICTIONS = NONE                                              *
+*                                                                     *
+*    REGISTER CONVENTIONS = NONE                                      *
+*                                                                     *
+*    PATCH LABEL = NONE                                               *
+*                                                                     *
+* MODULE TYPE = IMS SCREEN                                            *
+*                                                                     *
+*    PROCESSOR = ASSEMBLER H                                          *
+*                                                                     *
+*    MODULE SIZE = 1277 DECIMAL BYTES (FOR 3277 MODEL 2)              *
+*                =  920 DECIMAL BYTES (FOR 3277 MODEL 1)              *
+*                                                                     *
+*    ATTRIBUTES = SERIALLY REUSABLE                                   *
+*                                                                     *
+* ENTRY POINT = BNGIM2                                                *
+*                                                                     *
+*    PURPOSE = SEE FUNCTION                                           *
+*                                                                     *
+*    LINKAGE = MESSAGE INPUT DESCRIPTOR (MID) NAME  : BNGIIMN2        *
+*              MESSAGE OUTPUT DESCRIPTOR (MOD) NAME : BNGIOMN2        *
+*                                                                     *
+* EXIT-NORMAL = NONE                                                  *
+*                                                                     *
+* EXIT-ERROR  = NONE                                                  *
+*                                                                     *
+* EXTERNAL REFERENCE =  NONE                                          *
+*                                                                     *
+*    ROUTINES = NONE                                                  *
+*                                                                     *
+*    DATA AREAS = N/A                                                 *
+*                                                                     *
+*    CONTROL BLOCK = NONE                                             *
+*                                                                     *
+* TABLES = NONE                                                       *
+*                                                                     *
+* MACROS = PRINT, FMT, DIV, DPAGE, DFLD, DEV, FMTEND, MSG, SEG,       *
+*          MFLD, MSGEND                                               *
+*                                                                     *
+* CHANGE ACTIVITIES AS FOLLOWS:                                       *
+* CHANGE 01   11/15/77  PROLOGUE ADDED                                *
+*                                                                     *
+***********************************************************************
+         PRINT NOGEN
+BNGIM2   FMT
+         DEV   TYPE=(3270,2),FEAT=(IGNORE)
+         DIV   TYPE=INOUT
+         DPAGE FILL=NONE,CURSOR=((1,7))
+FLD1     DFLD  POS=(1,2),LTH=4,ATTR=(MOD,PROT,NUM)
+FLD2     DFLD  POS=(1,7),LTH=29
+FLD3     DFLD  POS=(1,37),LTH=4,ATTR=(PROT,NUM,MOD)
+         DFLD  'IMS VERSION',POS=(2,1),ATTR=(PROT,ALPHA)
+         DFLD  'PAGE 2 OF 2',POS=(2,70),ATTR=(PROT,ALPHA)
+         DFLD  'KEY IN:',POS=(3,3),ATTR=(PROT,ALPHA)
+         DFLD  'YOU WILL SEE:',POS=(3,25),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF LINE LLL',POS=(4,1),ATTR=(PROT,ALPHA)
+         DFLD  'ERRS BY CONTROL UNIT ON SELECTED LINE LLL',            *
+               POS=(4,23),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF CTRL LLL CC',POS=(5,1),ATTR=(PROT,ALPHA)
+         DFLD  'ERRS BY TERMINAL ON REMOTE CONTROL UNIT LLL CC',       *
+               POS=(5,23),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF CTRL CCC',POS=(6,1),ATTR=(PROT,ALPHA)
+         DFLD  'ERRS BY TERMINAL ON LOCAL CONTROL UNIT CCC',           *
+               POS=(6,23),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF 3270 LLL CC TT   ERR DESCRIPTIVE DATA OF REMOTE TE*
+               RMINAL LLL CC TT',POS=(7,1),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF 3270 TTT',POS=(8,1),ATTR=(PROT,ALPHA)
+         DFLD  'ERR DESCRIPTIVE DATA OF LOCAL TERMINAL TTT',           *
+               POS=(8,23),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF 3270 SYMBNAME    ERR DESCRIPTIVE DATA OF LOCAL OR *
+               REMOTE TERMINAL',POS=(9,1),ATTR=(PROT,ALPHA)
+         DFLD  'WITH IMS NAME',POS=(10,23),ATTR=(PROT,ALPHA)
+         DFLD  'TYPE X IN PLACE OF ? ON ALL DISPLAYS TO PAGE OR VIEW LO*
+               WER LEVEL OF DETAIL',POS=(11,1),ATTR=(PROT,ALPHA)
+         DEV   TYPE=(3270,1),FEAT=(IGNORE)
+         DIV   TYPE=INOUT
+         DPAGE FILL=NONE,CURSOR=((1,7))
+FLD1     DFLD  POS=(1,2),LTH=4,ATTR=(MOD,PROT,NUM)
+FLD2     DFLD  POS=(1,7),LTH=29
+FLD3     DFLD  POS=(1,37),LTH=4,ATTR=(PROT,NUM,MOD)
+         DFLD  'IMS VERSION',POS=(2,2),ATTR=(PROT,ALPHA)
+         DFLD  'PAGE 2 OF 2',POS=(2,30),ATTR=(PROT,ALPHA)
+         DFLD  'KEY IN:',POS=(3,3),ATTR=(PROT,ALPHA)
+         DFLD  'YOU WILL SEE:',POS=(3,25),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF LINE LLL',POS=(4,1),ATTR=(PROT,ALPHA)
+         DFLD  'ERRS BY CONTRL UNIT',                                  *
+               POS=(4,21),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF CTRL LLL CC',POS=(5,1),ATTR=(PROT,ALPHA)
+         DFLD  'ERRS BY REMOTE TERM',                                  *
+               POS=(5,21),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF CTRL CCC',POS=(6,1),ATTR=(PROT,ALPHA)
+         DFLD  'ERRS BY LOCAL TERML',                                  *
+               POS=(6,21),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF 3270 LLL CC TT STATUS OF RMOT TERM',              *
+               POS=(7,1),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF 3270 TTT',POS=(8,1),ATTR=(PROT,ALPHA)
+         DFLD  'STATUS OF LOCL TERM',                                  *
+               POS=(8,21),ATTR=(PROT,ALPHA)
+         DFLD  'DEMF 3270 SYMBNAME  STATUS OF RMT OR LOC',             *
+               POS=(9,1),ATTR=(PROT,ALPHA)
+         DFLD  'WITH IMS NAME',POS=(10,21),ATTR=(PROT,ALPHA)
+         DFLD  'TYPE X IN PLACE OF ? ON ALL DISPLAYS TO',              *
+               POS=(11,1),ATTR=(PROT,ALPHA)
+         DFLD  'PAGE OR VIEW LOWER LEVEL OR DETAIL',                   *
+               POS=(12,1),ATTR=(PROT,ALPHA)
+         FMTEND
+BNGIOMN2 MSG   TYPE=OUTPUT,OPT=1,NXT=BNGIIMN2,SOR=(BNGIM2,IGNORE),     *
+               FILL=C' '
+SEG1     SEG
+         MFLD  (FLD1,'DEMF')
+         MFLD  (FLD3,'MENU')
+         MSGEND
+BNGIIMN2 MSG    TYPE=INPUT,OPT=1,SOR=BNGIM2
+SEG1     SEG
+         MFLD  FLD1,LTH=5,FILL=C' '
+         MFLD  FLD2,LTH=29,FILL=C' '
+         MFLD  FLD3,LTH=4,FILL=C' '
+         MSGEND
+         END

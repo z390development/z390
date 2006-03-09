@@ -1,0 +1,8 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GEVI2
+         GBLA  &IHBMOD
+&NAME    IHBGAM2 10757
+&IHBMOD  SETA  2
+         MEND
+

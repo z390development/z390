@@ -1,0 +1,180 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GTRACE &MF=,&ID=,&DATA=,&LNG=,&FID=00,&PAGEIN=NO
+         GBLB  &IHLMGT
+         LCLC  &R
+.*A000000-999999                                                 Y01014
+.*C074333,A073600-074166                                         Y02014
+.*D060000                                                      @ZA06040
+.* TEST TO SEE IF THE MAPPING IS ALREADY EXPANDED
+         AIF   (&IHLMGT).XPNDED
+         IHLMGTRC
+.XPNDED  ANOP
+         CNOP  0,4
+         AIF     ('&NAME' EQ '').GO
+&NAME    EQU   *
+.*
+.* IS THIS THE STANDARD FORM
+.*
+.GO      AIF   ('&MF' EQ '').STAND
+.*
+.* IF NOT THEN IS IT THE LIST FORM
+.*
+         AIF   ('&MF' EQ 'L').LIST
+.*
+.* IF NOT THEN IS IT THE EXECUTE FORM
+.*
+         AIF   ('&MF(1)' EQ 'E').EXEC
+.*
+.* IF NOT THEN STOP EVERYTHING
+.*
+         MNOTE 8,'AHL040  NOT A LEGAL FORM OF THE MACRO. CHECK THE MF='
+.******* NO CODE GENERATED SO THAT PGM MAY EXECUTE.
+         MEXIT
+.*
+.*
+.* THE STANDARD FORM
+.*
+.STAND   ANOP
+.*
+.* FIRST SET UP THE PARMLIST & HAVE REG 1 POINT TO IT
+.*
+         BAL   1,*+12      PUT ADD OF PARMLIST IN REG
+         AIF   ('&LNG' NE '').SLNN
+         MNOTE 12,'AHL041  LNG= KEYWORD MISSING.'
+         MEXIT
+.SLNN    AIF   ('&LNG'(1,1) EQ '(').SREGL
+         DC    AL2(&LNG)   LENGTH
+         AGO   .SNUML
+.SREGL   ANOP
+         DC    AL2(0)     LENGTH
+.SNUML   AIF   ('&FID'(1,1) EQ '(').SREGF
+         DC    AL2(&FID)   FID CODE
+         AGO   .SNUMF
+.SREGF   ANOP
+         DC    AL2(0)  FID
+.SNUMF   AIF   ('&DATA' NE '').DATAOK
+         MNOTE 12,'AHL044  DATA= KEYWORD MISSING.'
+         MEXIT
+.DATAOK  ANOP
+         DC    AL4(0)   DATA AREA ADDRESS
+.*
+.* STORE INTO PARMLIST ANY PARAMETERS IN REGS
+.*
+         AIF   ('&LNG'(1,1) NE '(').SLNR
+&R       SETC  '&LNG'(2,K'&LNG-2)
+         STH   &R,0(1)   PUT THE LENGTH IN PARMLIST
+.SLNR    AIF   ('&FID'(1,1) NE '(').SFNR
+&R       SETC  '&FID'(2,K'&FID-2)
+         STH   &R,2(1)   PUT THE FID IN PARMLIST
+.*
+.* GO TO THE EXECUTE FORM FOR THE DATA & ID OPERANDS
+.*
+.SFNR    AGO   .DATASET
+.*
+.*
+.* THE LIST FORM
+.*
+.LIST    ANOP
+.FIDOKS  AIF   ('&LNG' EQ '').LLNGN
+         DC    AL2(&LNG)   LENGTH
+         AGO   .SKIP3
+.LLNGN   ANOP
+         DC    AL2(0)  LENGTH
+.SKIP3   ANOP
+         DC    AL2(&FID)   FID CODE
+         AIF   ('&DATA' EQ '').LDATAN
+         DC    AL4(&DATA)   DATA ADDRESS
+         MEXIT
+.LDATAN  ANOP
+         DC    AL4(0)  DATA ADDRESS
+         MEXIT
+.*
+.*
+.* THE EXECUTE FORM
+.*
+.* DETERMINE HOW THE PARAMETER LIST IN THE MF= OPERAND IS INDICATED
+.*
+.EXEC    AIF   ('&MF(2)' EQ '(1)').EREGM
+         AIF   ('&MF(2)' NE '').EMFOK
+         MNOTE 12,'AHL045  MF=(E, PARAMETER SPECIFICATION MISSING.'
+         MEXIT
+.EMFOK   ANOP
+         AIF   ('&MF(2)'(1,1) EQ '(').EMFR
+         LA    1,&MF(2)   PUT PARMLIST ADDRESS IN REG(1)
+         AGO   .EREGM
+.EMFR    ANOP
+         LA    1,0&MF(2)
+.*
+.* IS THE LNG SPECIFIED
+.*
+.EREGM   AIF   ('&LNG' EQ '').ENULL
+         AIF   ('&LNG'(1,1) EQ '(').EREGL
+         LA    15,&LNG
+         STH   15,0(1)   STORE THE LENGTH IN THE PARMLIST
+         AGO   .ENULL
+.EREGL   ANOP
+&R       SETC  '&LNG'(2,K'&LNG-2)
+         STH   &R,0(1)   STORE LNG INTO PARMLIST
+.*
+.* HOW IS THE FID SPECIFIED
+.*
+.ENULL   AIF   ('&MF(1)'(1,2) NE 'E').ENULL1
+         AIF   ('&FID'(1,2) NE '00').ENULL2
+*                          FID IS DEFAULTED FROM REMOTE LIST.@ZA52286
+         AGO   .SKIP6
+.ENULL2  ANOP
+.ENULL1  AIF   ('&FID'(1,1) EQ '(').EREGF
+         LA    15,&FID
+         STH   15,2(1)   STORE THE FID INTO THE PARMLIST
+         AGO   .SKIP6
+.EREGF   ANOP
+&R       SETC  '&FID'(2,K'&FID-2)
+         STH   &R,2(1)   STORE FID INTO PARMLIST
+.*
+.* IS THE DATA ADDRESS SPECIFIED
+.*
+.SKIP6   AIF   ('&DATA' EQ '').ENULD
+.DATASET AIF   ('&DATA'(1,1) EQ '(').EREGD
+         LA    15,&DATA
+         ST    15,4(1)   STORE DATA ADDRESS INTO PARMLIST
+         AGO   .ENULD
+.EREGD   ANOP
+&R       SETC  '&DATA'(2,K'&DATA-2)
+         ST    &R,4(1)   STORE DATA ADDRESS INTO PARMLIST
+.ENULD   ANOP
+         AIF   ('&PAGEIN' EQ 'YES').CODE0   @ZA50668
+         LA    15,4   PUT GTF NOT ACTIVE CODE IN REG(15)
+.CODE0   ANOP
+.*
+.*  IS THE ID SPECIFIED
+.*
+         AIF   ('&ID' EQ '').NOEID
+.*
+*                        SET UP HOOK
+.*
+         AIF   ('&PAGEIN' EQ 'YES').CODE1   @ZA50668
+         MC    &ID,X'0E'             MC INSTRUCTION
+.CODE1   ANOP
+.*
+.*              PAGE FAULT HANDLING CODE
+.*
+         AIF   ('&PAGEIN' EQ 'YES').CODE
+         AIF   ('&PAGEIN' EQ 'NO').EXIT
+         MNOTE 12,'AHL042  PAGEIN=KEYWORD MISSPECIFIED.'
+         MEXIT
+.CODE    ANOP
+         L    15,4(1)             LOCATE DATA
+         TM   0(15),X'FF'         REFERENCE FIRST BYTE
+         AH   15,0(1)             POINT TO END OF DATA
+         BCTR 15,0                POINT TO LAST BYTE
+         TM   0(15),X'FF'         REFERENCE LAST BYTE
+         B    *+6                 REISSUE MC           @ZA50668
+         DC   H'32'               PAGE FAULT RETURN CODE
+         LA   15,4                PUT GTF NOT ACTIVE   @ZA50668
+         MC    &ID,X'0E'             MC INSTRUCTION    @ZA50668
+         CH   15,*-10             PAGE FAULT OCCURRED  @ZA50668
+         BC   8,*-36              YES RETRY            @ZA50668
+.EXIT    MEXIT
+.NOEID   MNOTE 12,'AHL048  ID= KEYWORD MISSING'
+         MEND

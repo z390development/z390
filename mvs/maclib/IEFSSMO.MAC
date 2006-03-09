@@ -1,0 +1,87 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSMOCMT;              /*                               @ZA34144
+         MACRO                                                 @ZA34144
+         IEFSSMO
+.*/ %SSMOCMT:;                /*                             @ZA34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSMO                              @ZA34144*/
+*/*  DESCRIPTIVE NAME = MSS VOLUME CONTROL JES3 EXIT         @ZA34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB               @ZA34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @ZA34144*/
+*/********************************************************************/
+* %GOTO SSMOPLS;              /*                               @ZA34144
+*
+SSOBMSVC EQU   35             MSS VOLUME CONTROL FUNCTION      @G18MP21
+*                             ID(SSOBFUNC)                     @G18MP21
+*
+SSOBOEOV EQU   37             OPEN/EOV FUNCTION                @G18MP21
+*                             ID(SSOBFUNC)                     @G18MP21
+*
+*    MSS VOLUME CONTROL RETURN CODES                           @G18MP21
+SSMOVOLA EQU   0              VOLUME AVAILABLE RETURN CODE     @G18MP21
+*
+SSMOVOLB EQU   4              VOLUME BUSY RETURN CODE          @G18MP21
+*
+         ORG   SSOBGN         SSMO START                       @G18MP21
+SSMOBGN  EQU   *              MSS VOLUME CONTROL BEGINNING     @G18MP21
+SSMOLEN  DC    AL2(SSMOSIZE)  MSS VOL CNTR EXTENSION SIZE      @G18MP21
+SSMOFLG1 DS    X              SSMO FLAG BYTE                   @G18MP21
+SSMOOPEN EQU   X'80'          SSI INVOKED BY OPEN              @G18MP21
+SSMOFINL EQU   X'40'          FINAL CALL FROM OPEN/EOV         @G18MP21
+SSMOSCR  EQU   X'20'          DADSM SCRATCH IF ON              @G18MP21
+SSMORUSE EQU   X'10'          JES3 SHOULD TRY FOR VOLUME REUSE @G18MP21
+*                             AND SWITCH SGD'S IF NEEDED       @G18MP21
+SSMOMNTD EQU   X'08'          MSVC SHOWS VOLUME MOUNTED        @G18MP21
+*                             TO ANY HOST                      @G18MP21
+SSMORSV0 DS    X              RESERVED                         @G18MP21
+SSMOPNAM DS    A              POINTER TO JOBNAME               @G18MP21
+SSMOPSTN DS    A              POINTER TO STEP NUMBER           @G18MP21
+SSMOPUAD DS    A              POINTER TO UNIT ADDRESS          @G18MP21
+SSMOPVOL DS    A              POINTER TO VOLUME SERIAL         @G18MP21
+SSMOPDDN DS    A              POINTER TO DDNAME                @G18MP21
+SSMOPRPN DS    A              POINTER TO RELATIVE POS NUMBER   @G18MP21
+SSMOSIZE EQU   *-SSMOBGN      EXTENSION LENGTH                 @G18MP21
+SSOBLN17 EQU   SSOBHSIZ+SSMOSIZE TOTAL SSOB LENGTH             @G18MP21
+         MEND                                                @ZA34144*/
+* %SSMOPLS:;                            /*                   @ZA34144*/
+*    /*    FUNCTION IDS (SSOBFUNC)                                   */
+*  DCL SSOBMSVC FIXED(15) CONSTANT(35); /* MSS VOLUME CONTROL
+*                                                            @G18MP21*/
+*  DCL SSOBOEOV FIXED(15) CONSTANT(37); /* OPEN/EOV JES3 EXIT
+*                                                            @G18MP21*/
+*   /*  MSS VOLUME CONTROL RETURN CODES                              */
+*   /*                                                               */
+*   DCL SSMOVOLA FIXED(31) CONSTANT(0); /* VOLUME AVAILABLE RETURN
+*                                          CODE              @G18MP21*/
+*   DCL SSMOVOLB FIXED(31) CONSTANT(4); /* VOLUME BUSY RETURN
+*                                          CODE              @G18MP21*/
+*  /*   S S M O                                                      */
+*  DECLARE
+*   1    SSMO   SSOBMO,                /* BEGINNING          @G18MP21*/
+*     2  SSMOLEN FIXED(15),            /* LENGTH OF SSMO     @G18MP21*/
+*     2  SSMOFLG1 BIT(8),              /* SSMO FLAG BYTE     @G18MP21*/
+*      3 SSMOOPEN BIT(1),              /* SSI INVOKED BY OPEN@G18MP21*/
+*      3 SSMOFINL BIT(1),              /* FINAL CALL FROM
+*                                         OPEN/EOV           @G18MP21*/
+*      3 SSMOSCR  BIT(1),              /* DADSM SCRATCH IF ON
+*                                                            @G18MP21*/
+*      3 SSMORUSE BIT(1),              /* JES3 SHOULD TRY FOR VOLUME
+*                                         REUSE AND SWITCH SDG'S IF
+*                                         NEEDED             @G18MP21*/
+*      3 SSMOMNTD BIT(1),              /* MSVC SHOWS VOLUME MOUNTED
+*                                         TO ANY HOST        @G18MP21*/
+*      3 SSMODYAL BIT(1),              /* MSS DYNAMIC ALLOC INTERFACE
+*                                         FOR JES3           @ZA33767*/
+*      3 *        BIT(2),              /* RESERVED           @ZA33767*/
+*     2  SSMORSV0 PTR(8),              /* RESERVED           @G18MP21*/
+*     2  SSMOPNAM PTR(31),             /* POINTER TO JOBNAME @G18MP21*/
+*     2  SSMOPSTN PTR(31),             /* POINTER TO STEP
+*                                         NUMBER             @G18MP21*/
+*     2  SSMOPUAD PTR(31),             /* POINTER TO UNIT
+*                                         ADDRESS            @G18MP21*/
+*     2  SSMOPVOL PTR(31),             /* POINTER TO VOLUME
+*                                         SERIAL             @G18MP21*/
+*     2  SSMOPDDN PTR(31),             /* POINTER TO DDNAME  @G18MP21*/
+*     2  SSMOPRPN PTR(31);             /* POINTER TO RELATIVE POSI-
+*                                         TION NUMBER        @G18MP21*/
+

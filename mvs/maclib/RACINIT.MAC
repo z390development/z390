@@ -1,0 +1,715 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/*  A 00000000-99999999                                     @PC001PY*/
+*/********START OF SPECIFICATIONS*************************************/
+*/*                                                                  */
+*/* $MAC(RACINIT) COMP(SC1BN) PROD(RACF):                            */
+*/*                                                                  */
+*/* DESCRIPTIVE NAME = RACF USER INITIALIZATION INTERFACE            */
+*/*                                                                  */
+*/*                                                                  */
+*/* STATUS = OS/VS2 EBB1102                                          */
+*/*                                                                  */
+*/* FUNCTIONAL DESCRIPTION = THIS MACRO PROVIDES THE INTERFACE TO THE*/
+*/*         RACF USER INITIALIZATION SVC ROUTINE, IGC00131.  IT IS   */
+*/*         USABLE ONLY BY AUTHORIZED PROGRAMS AND MAY BE ISSUED BOTH*/
+*/*         IN BAL AND PL/S.                                         */
+*/*                                                                  */
+*/*         INPUT TO THE RACINIT SVC ROUTINE PROVIDED BY THIS MACRO  */
+*/*         CONSISTS OF THE ADDRESS OF A PARAMETER LIST IN REGISTER  */
+*/*         ONE.  OUTPUT CONSISTS OF A RETURN CODE IN  REG 15.       */
+*/*                                                                  */
+*/*         NOTE: THE STAT AND ENVIR=VERIFY KEYWORDS ARE AVAILABLE   */
+*/*         ONLY WHEN THE RACINIT MACRO IS INVOKED BY THE RACROUTE   */
+*/*         MACRO.  OTHERWISE, USE OF THESE KEYWORDS PRODUCES AN     */
+*/*         MNOTE.                                               @L6A*/
+*/*                                                                  */
+*/* MACROS = IHBINNRA                                                */
+*/*                                                                  */
+*/* CHANGE ACTIVITY = RACF VERSION 1 RELEASE 3               @PC003PY*/
+*/*                   OZ57241                                @ZA57241*/
+*/*                   $T1=UZ90211,SAF/RF15,810702,CNTDSD:        @T1A*/
+*/*                   $L6=HRF1602,RACF/160,830307,CNTDSD:        @L6A*/
+*/*                   UZ90283                                @ZA90283*/
+*/*                   UZ90284                                @ZA90284*/
+*/*                   UZ90285                                @ZA90285*/
+*/*                                                                  */
+*/*************END OF SPECIFICATIONS**********************************/
+*%/* BILINGUAL HEADER
+         MACRO
+&SYMBOL  RACINIT &USERID=,&START=,&PASSWRD=,&GROUP=,&INSTLN=,          *
+               &NEWPASS=,&ENVIR=,&MF=S,&PGMNAME=,&ACTINFO=,            *
+               &OIDCARD=,&TERMID=,&JOBNAME=,                           *
+               &APPL=,&ACEE=,&SMC=,&SUBPOOL=,&PASSCHK=,            @L6A*
+               &ENCRYPT=,&STAT=                                    @L6A
+         LCLA  &BIT0,&BIT1,&BIT2,&BIT3,&BIT4,&BIT5,&BIT6,&BIT7     @L6A
+         LCLA  &BIX0,&BIX1,&BIX2,&BIX3,&BIX4,&BIX5,&BIX6,&BIX7     @L6A
+         LCLB  &MFFLAG
+         LCLC  &NAME,&NAME2
+.* DEFINE GLOBAL SET SYMBOLS                                       @T1A
+         GBLB  &ICHRAC               ICHRAC - A FLAG WHICH, WHEN   @T1A
+.*                                   ON, INDICATES THAT THIS MACRO @T1A
+.*                                   IS BEING INVOKED INTERNALLY   @T1A
+.*                                   BY THE RACROUTE MACRO.        @T1A
+         GBLC  &ICHL                 SETS ADDRESSABILITY TO THE    @T1A
+.*                                   PARAMETER LIST FOR THE        @T1A
+.*                                   RACROUTE MACRO.               @T1A
+&NAME    SETC  'ICH0&SYSNDX'
+.* PERFORM PARAMETER ANALYSIS AND DIAGNOSIS
+.* VALIDATE ENVIR PARAMETER
+         AIF   ('&ENVIR' NE 'DELETE' AND '&ENVIR' NE '' AND            *
+               '&ENVIR' NE 'CREATE' AND '&ENVIR' NE 'CHANGE' AND       *
+               '&ENVIR' NE 'VERIFY').ERR002                        @L6A
+.ERTN002 ANOP
+.*  VERIFY ALLOWED ONLY IF RACINIT INVOKED FROM RACROUTE           @L6A
+         AIF   ('&ENVIR' EQ 'VERIFY' AND NOT &ICHRAC).ERR07        @L6A
+.ERTN07 ANOP   ,                                                   @L6A
+         AIF   ('&SMC' NE 'YES' AND '&SMC' NE 'NO' AND                 *
+                '&SMC' NE '').ERR003                           @PC003PY
+.ERTN003 ANOP                                                  @PC003PY
+         AIF   ('&PASSCHK' NE 'YES' AND '&PASSCHK' NE 'NO' AND         *
+                '&PASSCHK' NE '').ERR004                       @PC003PY
+.* VALIDATE STAT PARAMETER
+.ERTN004 ANOP                                                  @PC003PY
+         AIF   ('&STAT' NE '' AND NOT &ICHRAC).ERR08               @L6A
+.ERTN08  ANOP  ,                                                   @L6A
+         AIF   ('&STAT' NE 'ASIS' AND '&STAT' NE 'NO' AND              *
+               '&STAT' NE '').ERR005                               @L6A
+.* VALIDATE ENCRYPT PARAMETER
+.ERTN005 ANOP  ,                                                   @L6A
+         AIF   ('&ENCRYPT' NE 'YES' AND                                *
+               '&ENCRYPT' NE '' AND                                    *
+               '&ENCRYPT' NE 'NO').ERR006                          @L6A
+.ERTN006 ANOP  ,                                                   @L6A
+.* REGISTER FORM OF ADDRESS PARAMETER NOT VALID WITH LIST FORM
+         AIF   ('&MF' NE 'L').ERTN01
+         AIF   ('&USERID' EQ '').RINT010
+         AIF   ('&USERID'(1,1) EQ '(').ERR01
+.RINT010 ANOP
+         AIF   ('&START' EQ '').RINT020
+         AIF   ('&START'(1,1) EQ '(').ERR01
+.RINT020 ANOP
+         AIF   ('&PASSWRD' EQ '').RINT028
+         AIF   ('&PASSWRD'(1,1) EQ '(').ERR01
+.RINT028 ANOP
+         AIF   ('&INSTLN' EQ '').RINT030
+         AIF   ('&INSTLN'(1,1) EQ '(').ERR01
+.RINT030 ANOP
+         AIF   ('&GROUP' EQ '').RINT031
+         AIF   ('&GROUP'(1,1) EQ '(').ERR01
+.RINT031 ANOP
+         AIF   ('&NEWPASS' EQ '').RINT032
+         AIF   ('&NEWPASS'(1,1) EQ '(').ERR01
+.RINT032 ANOP
+         AIF   ('&PGMNAME' EQ '').RINT033
+         AIF   ('&PGMNAME'(1,1) EQ '(').ERR01
+.RINT033 ANOP
+         AIF   ('&ACTINFO' EQ '').RINT034                      @PC002PY
+         AIF   ('&ACTINFO'(1,1) EQ '(').ERR01                  @PC002PY
+.RINT034 ANOP                                                  @PC002PY
+         AIF   ('&OIDCARD' EQ '').RINT035                      @PC002PY
+         AIF   ('&OIDCARD'(1,1) EQ '(').ERR01                  @PC002PY
+.RINT035 ANOP                                                  @PC002PY
+         AIF   ('&TERMID' EQ '').RINT036                       @PC002PY
+         AIF   ('&TERMID'(1,1) EQ '(').ERR01                   @PC002PY
+.RINT036 ANOP                                                  @PC002PY
+         AIF   ('&JOBNAME' EQ '').RINT037                      @PM44591
+         AIF   ('&JOBNAME'(1,1) EQ '(').ERR01                  @PM44591
+.RINT037 ANOP                                                  @PM44591
+         AIF   ('&APPL' EQ '').RINT038                         @PC003PY
+         AIF   ('&APPL'(1,1) EQ '(').ERR01                     @PC003PY
+.RINT038 ANOP                                                  @PC003PY
+         AIF   ('&ACEE' EQ '').RINT039                         @PC003PY
+         AIF   ('&ACEE'(1,1) EQ '(').ERR01                     @PC003PY
+.RINT039 ANOP                                                  @PC003PY
+         AIF   ('&SUBPOOL' EQ '').RINT03D                      @PC003PY
+         AIF   ('&SUBPOOL'(1,1) EQ '(').ERR01                  @PC003PY
+.RINT03D ANOP                                                  @PC003PY
+.ERTN01  ANOP
+.* IF REGS SPECIFIED ON ADDRESS PARAMETER, MUST BE REGS 2-12
+         AIF   ('&USERID' EQ '').RINT040
+         AIF   (T'&USERID(1) NE 'N').RINT040
+         AIF   ('&USERID'(1,1) EQ '(' AND ('&USERID(1)' LT '2' OR      -
+               '&USERID(1)' GT '12')).ERR02
+.RINT040 ANOP
+         AIF   ('&START' EQ '').RINT050
+         AIF   (T'&START(1) NE 'N').RINT050
+         AIF   ('&START'(1,1) EQ '(' AND ('&START(1)' LT '2' OR        -
+               '&START(1)' GT '12')).ERR02
+.RINT050 ANOP
+         AIF   ('&PASSWRD' EQ '').RINT060
+         AIF   (T'&PASSWRD(1) NE 'N').RINT060
+         AIF   ('&PASSWRD'(1,1) EQ '(' AND ('&PASSWRD(1)' LT '2' OR    *
+               '&PASSWRD(1)' GT '12')).ERR02
+.RINT060 ANOP
+         AIF   ('&INSTLN' EQ '').RINT061
+         AIF   (T'&INSTLN(1) NE 'N').RINT061
+         AIF   ('&INSTLN'(1,1) EQ '(' AND ('&INSTLN(1)' LT '2' OR      *
+               '&INSTLN(1)' GT '12')).ERR02
+.RINT061 ANOP
+         AIF   ('&GROUP' EQ '').RINT062
+         AIF   (T'&GROUP(1) NE 'N').RINT062
+         AIF   ('&GROUP'(1,1) EQ '(' AND ('&GROUP(1)' LT '2' OR        *
+               '&GROUP(1)' GT '12')).ERR02
+.RINT062 ANOP
+         AIF   ('&NEWPASS' EQ '').RINT063
+         AIF   (T'&NEWPASS(1) NE 'N').RINT063
+         AIF   ('&NEWPASS'(1,1) EQ '(' AND('&NEWPASS(1)' LT '2' OR     *
+               '&NEWPASS(1)' GT '12')).ERR02
+.RINT063 ANOP
+         AIF   ('&PGMNAME' EQ '').RINT064                      @PC002PY
+         AIF   (T'&PGMNAME(1) NE 'N').RINT064                  @PC002PY
+         AIF   ('&PGMNAME'(1,1) EQ '(' AND('&PGMNAME(1)' LT            *
+               '2' OR '&PGMNAME(1)' GT '12')).ERR02            @PC002PY
+.RINT064 ANOP                                                  @PC002PY
+         AIF   ('&ACTINFO' EQ '').RINT065                      @PC002PY
+         AIF   (T'&ACTINFO(1) NE 'N').RINT065                  @PC002PY
+         AIF   ('&ACTINFO'(1,1) EQ '(' AND('&ACTINFO(1)' LT            *
+               '2' OR '&ACTINFO(1)' GT '12')).ERR02            @PC002PY
+.RINT065 ANOP                                                  @PC002PY
+         AIF   ('&OIDCARD' EQ '').RINT066                      @PC002PY
+         AIF   (T'&OIDCARD(1) NE 'N').RINT066                  @PC002PY
+         AIF   ('&OIDCARD'(1,1) EQ '(' AND('&OIDCARD(1)' LT '2' OR     *
+               '&OIDCARD(1)' GT '12')).ERR02                   @PC002PY
+.RINT066 ANOP                                                  @PC002PY
+         AIF   ('&TERMID' EQ '').RINT067                       @PC002PY
+         AIF   (T'&TERMID(1) NE 'N').RINT067                   @PC002PY
+         AIF   ('&TERMID'(1,1) EQ '(' AND('&TERMID(1)' LT '2' OR       *
+               '&TERMID(1)' GT '12')).ERR02                    @PC002PY
+.RINT067 ANOP                                                  @PC002PY
+         AIF   ('&JOBNAME' EQ '').RINT068                      @PM44591
+         AIF   (T'&JOBNAME(1) NE 'N').RINT068                  @PM44591
+         AIF   ('&JOBNAME'(1,1) EQ '(' AND('&JOBNAME(1)' LT '2' OR     *
+               '&JOBNAME(1)' GT '12')).ERR02                   @PM44591
+.RINT068 ANOP                                                  @PM44591
+         AIF   ('&APPL' EQ '').RINT069                         @PC003PY
+         AIF   (T'&APPL(1) NE 'N').RINT069                     @PC003PY
+         AIF   ('&APPL'(1,1) EQ '(' AND('&APPL(1)' LT '2' OR           *
+               '&APPL(1)' GT '12')).ERR02                      @PC003PY
+.RINT069 ANOP                                                  @PC003PY
+         AIF   ('&ACEE' EQ '').RINT070                         @PC003PY
+         AIF   (T'&ACEE(1) NE 'N').RINT070                     @PC003PY
+         AIF   ('&ACEE'(1,1) EQ '(' AND('&ACEE(1)' LT '2' OR           *
+               '&ACEE(1)' GT '12')).ERR02                      @PC003PY
+.RINT070 ANOP                                                  @PC003PY
+         AIF   ('&SUBPOOL' EQ '').RINT071                      @PC003PY
+         AIF   (T'&SUBPOOL(1) NE 'N').RINT071                  @PC003PY
+         AIF   ('&SUBPOOL'(1,1) EQ '(' AND('&SUBPOOL(1)' LT '2' OR     *
+               '&SUBPOOL(1)' GT '12')).ERR02                   @PC003PY
+.RINT071 ANOP                                                  @PC003PY
+.ERTN02  ANOP
+.* CHECK FOR INVALID COMBINATIONS OF ENVIR PARAMETER
+         AIF   ('&ENVIR' EQ '' OR '&ENVIR' EQ 'CREATE').RINT080
+         AIF   ('&ENVIR' NE 'VERIFY').RINT072                      @L6A
+&NAME2   SETC  'ACEE'                                              @L6A
+         AIF   ('&ACEE' NE '').ERR05                               @L6A
+         AGO   .RINT080                                            @L6A
+.RINT072 ANOP  ,                                                   @L6A
+&NAME2   SETC  'USERID'
+         AIF   ('&USERID' NE '').ERR05
+&NAME2   SETC  'PASSWRD'
+         AIF   ('&PASSWRD' NE '').ERR05
+&NAME2   SETC  'START'
+         AIF   ('&START' NE '').ERR05
+&NAME2   SETC  'NEWPASS'
+         AIF   ('&NEWPASS' NE '').ERR05
+&NAME2   SETC  'PGMNAME'                                       @PC002PY
+         AIF   ('&PGMNAME' NE '').ERR05                        @PC002PY
+&NAME2   SETC  'ACTINFO'                                       @PC002PY
+         AIF   ('&ACTINFO' NE '').ERR05                        @PC002PY
+&NAME2   SETC  'OIDCARD'                                       @PC002PY
+         AIF   ('&OIDCARD' NE '').ERR05                        @PC002PY
+&NAME2   SETC  'TERMID'                                        @PC002PY
+         AIF   ('&TERMID' NE '').ERR05                         @PC002PY
+&NAME2   SETC  'JOBNAME'                                       @PM44591
+         AIF   ('&JOBNAME' NE '').ERR05                        @PM44591
+&NAME2   SETC  'GROUP'
+         AIF   ('&ENVIR' EQ 'CHANGE').RINT080
+         AIF   ('&GROUP' NE '').ERR05
+.RINT080 ANOP
+.ERTN05  ANOP
+.* PRODUCE LIST FORM IF REQUESTED
+         AIF   ('&MF' NE 'L').RINT175
+&SYMBOL  DS    0F
+&NAME    EQU   *
+.RINT090 ANOP
+.* PRODUCE LIST FORM
+&ICHL    DC    AL1(56)          LIST LENGTH                        @T1A
+         AIF   ('&SUBPOOL' EQ '').RINT091                      @PC003PY
+         AIF   ('&SUBPOOL'(1,1) EQ '(').RINT091                @PC003PY
+         DC    AL1(&SUBPOOL)  - SUBPOOL NUMBER                 @PC003PY
+&BIT3    SETA  1                SUBPOOL SPECIFIED              @PC003PY
+         AGO   .RINT092                                        @PC003PY
+.RINT091 ANOP                                                  @PC003PY
+         DC    AL1(0)           NO SUBPOOL SPECIFIED           @PC003PY
+&BIT3    SETA  0                SUBPOOL NOT SPECIFIED          @PC003PY
+.RINT092 ANOP                                                  @PC003PY
+         DC    B'00000000'      RESERVED
+.* PRODUCE FLAG BYTE 1 FROM ENVIR PARAMETER
+&BIT0    SETA  0
+&BIT1    SETA  0
+&BIT2    SETA  0                                               @PC003PY
+&BIT4    SETA  0                                               @PC003PY
+&BIT5    SETA  0                                                   @L6A
+&BIT6    SETA  0                                                   @L6A
+&BIT7    SETA  0                                                   @L6A
+         AIF   ('&ENVIR' EQ '' OR '&ENVIR' EQ 'CREATE').RINT101
+&BIT1    SETA  1
+         AIF   ('&ENVIR' EQ 'CHANGE').RINT101
+&BIT0    SETA  1
+         AIF   ('&ENVIR' EQ 'VERIFY').RINT101                      @L6A
+&BIT1    SETA  0
+         AIF   ('&ENVIR' EQ 'DELETE').RINT101
+&BIT0    SETA  0
+.RINT101 ANOP
+         AIF   ('&SMC' NE 'NO').RINT102                        @PC003PY
+&BIT2    SETA  1                                               @PC003PY
+.RINT102 ANOP                                                  @PC003PY
+         AIF   ('&PASSCHK' NE 'NO').RINT103                    @PC003PY
+&BIT4    SETA  1                                               @PC003PY
+.RINT103 ANOP                                                  @PC003PY
+         AIF   ('&STAT' NE 'NO').RINT104                           @L6A
+&BIT5    SETA  1         STAT=NO SPECIFIED                         @L6A
+.RINT104 ANOP  ,                                                   @L6A
+         AIF   ('&ENCRYPT' NE 'NO').RINT105                        @L6A
+&BIT7    SETA  1         ENCRYPT=NO SPECIFIED                      @L6A
+.RINT105 ANOP  ,                                                   @L6A
+         DC    B'&BIT0&BIT1&BIT2&BIT3&BIT4&BIT5&BIT6&BIT7'         @L6A
+.* PRODUCE USERID ADDRESS
+         AIF   ('&USERID' EQ '').RINT110
+         AIF   ('&USERID'(1,1) EQ '(').RINT110
+         DC    A(&USERID) -        USERID ADDRESS FIELD
+         AGO   .RINT120
+.RINT110 ANOP
+         DC    A(0) -              USERID ADDRESS FIELD
+.RINT120 ANOP
+.* PRODUCE PASSWORD  ADDRESS
+         AIF   ('&PASSWRD' EQ '').RINT130
+         AIF   ('&PASSWRD'(1,1) EQ '(').RINT130
+         DC    A(&PASSWRD) -      PASSWORD ADDRESS FIELD
+         AGO   .RINT140
+.RINT130 ANOP
+         DC    A(0) -             PASSWORD ADDRESS FIELD
+.RINT140 ANOP
+.* PRODUCE START ADDRESS
+         AIF   ('&START' EQ '').RINT150
+         AIF   ('&START'(1,1) EQ '(').RINT150
+         DC    A(&START) -        PROCEDURE NAME ADDR FIELD
+         AGO   .RINT160
+.RINT150 ANOP
+         DC    A(0) -             PROCEDURE NAME ADDR FIELD
+.RINT160 ANOP
+         AIF   ('&INSTLN' EQ '').RINT161
+         AIF   ('&INSTLN'(1,1) EQ '(').RINT161
+         DC    A(&INSTLN) -       INSTALLATION PARAMETERS ADDRESS
+         AGO   .RINT162
+.RINT161 ANOP
+         DC    A(0) -             INSTALLATION PARAMETERS ADDRESS
+.RINT162 ANOP
+         AIF   ('&GROUP' EQ '').RINT163
+         AIF   ('&GROUP'(1,1) EQ '(').RINT163
+         DC    A(&GROUP) -        GROUP ADDRESS FIELD
+         AGO   .RINT164
+.RINT163 ANOP
+         DC    A(0) -             GROUP ADDRESS FIELD
+.RINT164 ANOP
+         AIF   ('&NEWPASS' EQ '').RINT165
+         AIF   ('&NEWPASS'(1,1) EQ '(').RINT165
+         DC    A(&NEWPASS) -      NEW PASSWORD ADDRESS FIELD
+         AGO   .RINT166
+.RINT165 ANOP
+         DC    A(0) -             NEW PASSWORD ADDRESS FIELD
+.RINT166 ANOP
+         AIF   ('&PGMNAME' EQ '').RINT167                      @PC002PY
+         AIF   ('&PGMNAME'(1,1) EQ '(').RINT167                @PC002PY
+         DC    A(&PGMNAME) -      PGMNAME ADDRESS FIELD        @PC002PY
+         AGO   .RINT168                                        @PC002PY
+.RINT167 ANOP                                                  @PC002PY
+         DC    A(0) -             PGMNAME ADDRESS FIELD        @PC002PY
+.RINT168 ANOP                                                  @PC002PY
+         AIF   ('&ACTINFO' EQ '').RINT169                      @PC002PY
+         AIF   ('&ACTINFO'(1,1) EQ '(').RINT169                @PC002PY
+         DC    A(&ACTINFO) -      ACTINFO ADDRESS FIELD        @PC002PY
+         AGO   .RINT170                                        @PC002PY
+.RINT169 ANOP                                                  @PC002PY
+         DC    A(0) -             ACTINFO ADDRESS FIELD        @PC002PY
+.RINT170 ANOP                                                  @PC002PY
+         AIF   ('&OIDCARD' EQ '').RINT171                      @PC002PY
+         AIF   ('&OIDCARD'(1,1) EQ '(').RINT171                @PC002PY
+         DC    A(&OIDCARD) -      OIDCARD ADDRESS FIELD        @PC002PY
+         AGO   .RINT172                                        @PC002PY
+.RINT171 ANOP                                                  @PC002PY
+         DC    A(0) -             OIDCARD ADDRESS FIELD        @PC002PY
+.RINT172 ANOP                                                  @PC002PY
+         AIF   ('&TERMID' EQ '').RINT173                       @PC002PY
+         AIF   ('&TERMID'(1,1) EQ '(').RINT173                 @PC002PY
+         DC    A(&TERMID) -       TERMID ADDRESS FIELD         @PC002PY
+         AGO   .RINT174                                        @PC002PY
+.RINT173 ANOP                                                  @PC002PY
+         DC    A(0) -             TERMID ADDRESS FIELD         @PC002PY
+.RINT174 ANOP                                                  @PC002PY
+         AIF   ('&JOBNAME' EQ '').RINT17A                      @PM44591
+         AIF   ('&JOBNAME'(1,1) EQ '(').RINT17A                @PM44591
+         DC    A(&JOBNAME) -      JOBNAME ADDRESS FIELD        @PM44591
+         AGO   .RINT17B                                        @PM44591
+.RINT17A ANOP                                                  @PM44591
+         DC    A(0) -             JOBNAME ADDRESS FIELD        @PM44591
+.RINT17B ANOP                                                  @PM44591
+         AIF   ('&APPL' EQ '').RINT17C                         @PC003PY
+         AIF   ('&APPL'(1,1) EQ '(').RINT17C                   @PC003PY
+         AIF   ('&APPL'(1,1) EQ '''').RINT17G                  @PC003PY
+         DC    A(&APPL) -         APPL ADDRESS FIELD           @PC003PY
+         AGO   .RINT17D                                        @PC003PY
+.RINT17G ANOP                                                  @PC003PY
+         DC    A(ICH1&SYSNDX)     APPL NAME ADDRESS            @PC003PY
+         AGO   .RINT17D                                        @PC003PY
+.RINT17C ANOP                                                  @PC003PY
+         DC    A(0) -             APPL ADDRESS FIELD           @PC003PY
+.RINT17D ANOP                                                  @PC003PY
+         AIF   ('&ACEE' EQ '').RINT17E                         @PC003PY
+         AIF   ('&ACEE'(1,1) EQ '(').RINT17E                   @PC003PY
+         DC    A(&ACEE) -         ACEE ADDRESS FIELD           @PC003PY
+         AGO   .RINT17F                                        @PC003PY
+.RINT17E ANOP                                                  @PC003PY
+         DC    A(0) -             ACEE ADDRESS FIELD           @PC003PY
+.RINT17F ANOP                                                  @PC003PY
+.* IF APPL NAME SPECIFIED EXPLICITLY, PRODUCE IT BELOW LIST    @PC003PY
+         AIF   ('&APPL' EQ '').RINT17H                         @PC003PY
+         AIF   ('&APPL'(1,1) NE '''').RINT17H                  @PC003PY
+ICH1&SYSNDX DC    CL8&APPL
+.RINT17H ANOP
+         AIF   (&MFFLAG).RINT221
+         MEXIT
+.RINT175 ANOP
+.* TEST FOR OTHER MACRO FORMS
+         AIF   ('&MF' EQ 'S').RINT180
+         AIF   ('&MF(1)' EQ 'E').RINT230
+         AGO   .ERR04
+.ERTN04  ANOP
+.RINT180 ANOP
+.* PRODUCE STANDARD FORM
+&MFFLAG  SETB  1     SET TRUE FOR MF=S PASS THROUGH LIST CODE
+&SYMBOL  DS    0H
+.* PRODUCE CODE TO MODIFY INLINE LIST FORM
+         AIF   ('&SUBPOOL' EQ '').RINT189
+         AIF   ('&SUBPOOL'(1,1) NE '(').RINT189
+         STC   &SUBPOOL(1),&NAME+1 -   STORE SUBPOOL NUMBER
+.RINT189 ANOP
+         AIF   ('&USERID' EQ '').RINT190
+         AIF   ('&USERID'(1,1) NE '(').RINT190
+         ST    &USERID(1),&NAME+4 -    STORE USERID ADDRESS
+.RINT190 ANOP
+         AIF   ('&PASSWRD' EQ '').RINT200
+         AIF   ('&PASSWRD'(1,1) NE '(').RINT200
+         ST    &PASSWRD(1),&NAME+8 -    STORE PASSWORD ADDRESS
+.RINT200 ANOP
+         AIF   ('&START' EQ '').RINT210
+         AIF   ('&START'(1,1) NE '(').RINT210
+         ST    &START(1),&NAME+12 -    STORE PROC ADDRESS
+.RINT210 ANOP
+         AIF   ('&INSTLN' EQ '').RINT215
+         AIF   ('&INSTLN'(1,1) NE '(').RINT215
+         ST    &INSTLN(1),&NAME+16 -  STORE INSTALLATION PARM ADDRESS
+.RINT215 ANOP
+         AIF   ('&GROUP' EQ '').RINT216
+         AIF   ('&GROUP'(1,1) NE '(').RINT216
+         ST    &GROUP(1),&NAME+20 -  STORE GROUP ADDRESS
+.RINT216 ANOP
+         AIF   ('&NEWPASS' EQ '').RINT217
+         AIF   ('&NEWPASS'(1,1) NE '(').RINT217
+         ST    &NEWPASS(1),&NAME+24 - STORE NEW PASSWORD ADDRESS
+.RINT217 ANOP
+         AIF   ('&PGMNAME' EQ '').RINT218                      @PC002PY
+         AIF   ('&PGMNAME'(1,1) NE '(').RINT218                @PC002PY
+         ST    &PGMNAME(1),&NAME+28 - STORE PGMNAME ADDRESS    @PC002PY
+.RINT218 ANOP                                                  @PC002PY
+         AIF   ('&ACTINFO' EQ '').RINT219                      @PC002PY
+         AIF   ('&ACTINFO'(1,1) NE '(').RINT219                @PC002PY
+         ST    &ACTINFO(1),&NAME+32 - STORE ACTINFO ADDRESS    @PC002PY
+.RINT219 ANOP                                                  @PC002PY
+         AIF   ('&OIDCARD' EQ '').RINT220                      @PC002PY
+         AIF   ('&OIDCARD'(1,1) NE '(').RINT220                @PC002PY
+         ST    &OIDCARD(1),&NAME+36 - STORE OIDCARD ADDRESS    @PC002PY
+.RINT220 ANOP                                                  @PC002PY
+         AIF   ('&TERMID' EQ '').RINT22A                       @PC002PY
+         AIF   ('&TERMID'(1,1) NE '(').RINT22A                 @PC002PY
+         ST    &TERMID(1),&NAME+40 - STORE TERMID ADDRESS      @PC002PY
+.RINT22A ANOP                                                  @PC002PY
+         AIF   ('&JOBNAME' EQ '').RINT22B                      @PM44591
+         AIF   ('&JOBNAME'(1,1) NE '(').RINT22B                @PM44591
+         ST    &JOBNAME(1),&NAME+44 - STORE JOBNAME ADDRESS    @PM44591
+.RINT22B ANOP                                                  @PM44591
+         AIF   ('&APPL' EQ '').RINT22C                         @PC003PY
+         AIF   ('&APPL'(1,1) NE '(').RINT22C                   @PC003PY
+         ST    &APPL(1),&NAME+48 - STORE APPL ADDRESS          @PC003PY
+.RINT22C ANOP                                                  @PC003PY
+         AIF   ('&ACEE' EQ '').RINT22D                         @PC003PY
+         AIF   ('&ACEE'(1,1) NE '(').RINT22D                   @PC003PY
+         ST    &ACEE(1),&NAME+52 - STORE ACEE ADDRESS          @PC003PY
+.RINT22D ANOP                                                  @PC003PY
+.* LIST FORM MODIFICATION COMPLETE -PRODUCE LIST FORM WITH BAL AROUND
+         CNOP  0,4            ALIGN LIST FORM
+         AIF   ('&APPL' EQ '').RINT22E                         @PC003PY
+         AIF   ('&APPL'(1,1) NE '''').RINT22E                  @PC003PY
+         BAL   1,*+68         POINT REG 1 AT LIST FORM         @PC003PY
+&NAME    EQU   *
+         AGO   .RINT090  PRODUCE LIST FORM                     @PC003PY
+.RINT22E ANOP                                                  @PC003PY
+         BAL   1,*+60         POINT REG 1 AT LIST FORM         @PC003PY
+&NAME    EQU   *
+         AGO   .RINT090   PRODUCE LIST FORM AND RETURN VIA MFFLAG
+.RINT221 ANOP
+.***********************************************************       @T1A
+.* IF THIS MACRO WAS INVOKED INTERNALLY BY THE RACROUTE            @T1A
+.* MACRO, SIMPLY EXIT RATHER THAN GOING TO THE RACF ROUTINE.       @T1A
+.***********************************************************       @T1A
+         AIF   (&ICHRAC).RINT225                                   @T1A
+         L     15,16(0,0)            GET CVT ADDRESS
+         L     15,X'3E0'(0,15)       GET RACF CVT ADDRESS
+         LTR   15,15                 RACF CVT EXIST
+         BZ    *+12                  NO, BRANCH TO SET RC
+         TM    X'35'(15),X'80'       RACF ACTIVE
+         BNO   *+12                  YES, BRANCH
+         LA    15,32(0,0)            RACF NOT ACTIVE RET CODE
+         B     *+6                   SKIP SVC
+         SVC   131                   ISSUE RACINIT SVC
+.RINT225 ANOP                                                      @T1A
+         MEXIT
+.* STANDARD FORM COMPLETE- PRODUCE EXECUTE FORM IF REQUESTED
+.RINT230 ANOP
+         AIF   (&ICHRAC).RINT23A                                   @T1A
+&SYMBOL  IHBINNRA &MF(2)   LOAD REG1 WITH LIST ADDRESS
+         AGO   .RINT23B                                            @T1A
+.**************************************************************    @T1A
+.*  IF THIS MACRO WAS INVOKED INTERNALLY BY THE RACROUTE MACRO,    @T1A
+.*  PICK UP THE ADDRESS OF THE RACINIT  PARAMETER LIST FROM THE    @T1A
+.*  RACROUTE PARAMETER LIST.                                       @T1A
+.**************************************************************    @T1A
+.RINT23A ANOP                                                      @T1A
+         A     1,36(1)               POINT REG1 AT RACINIT LIST    @T1A
+.RINT23B ANOP                                                      @T1A
+         AIF   ('&SUBPOOL' EQ '').RINT232                      @PC003PY
+         AIF   ('&SUBPOOL'(1,1) EQ '(').RINT231                @PC003PY
+         MVI   1(1),&SUBPOOL       - SET SUBPOOL NUMBER        @PC003PY
+         AGO   .RINT232                                        @PC003PY
+.RINT231 ANOP                                                  @PC003PY
+         STC   &SUBPOOL(1),1(1) -   STORE SUBPOOL NUMBER       @PC003PY
+.RINT232 ANOP                                                  @PC003PY
+.* MODIFY LIST FLAG FIELD AS REQUESTED
+&BIT0    SETA  0                     ENVIR FLAG
+&BIT1    SETA  0                     ENVIR FLAG
+&BIT2    SETA  0                     SMC FLAG                  @PC003PY
+&BIT3    SETA  0                     SUBPOOL FLAG              @PC003PY
+&BIT4    SETA  0                     PASSCHK FLAG              @PC003PY
+&BIT5    SETA  0                     STAT FLAG                     @L6A
+&BIT6    SETA  0                     RESERVED                      @L6A
+&BIT7    SETA  0                     ENCRYPT FLAG                  @L6A
+&BIX0    SETA  1                     ENVIR FLAG                @PC003PY
+&BIX1    SETA  1                     ENVIR FLAG                @PC003PY
+&BIX2    SETA  1                     NEGATIVE SMC FLAG         @PC003PY
+&BIX3    SETA  1                     NEGATIVE SUBPOOL FLAG     @PC003PY
+&BIX4    SETA  1                     NEGATIVE PASSCHK FLAG     @PC003PY
+&BIX5    SETA  1                     NEGATIVE STAT FLAG            @L6A
+&BIX6    SETA  1                     RESERVED                      @L6A
+&BIX7    SETA  1                     NEGATIVE ENCRYPT FLAG         @L6A
+         AIF   ('&ENVIR' EQ '' AND '&SMC' EQ '' AND                    *
+               '&SUBPOOL' EQ '' AND '&PASSCHK' EQ '' AND               *
+               '&STAT' EQ '' AND '&ENCRYPT' EQ '').RINT257         @L6A
+         AIF   ('&ENVIR' EQ '').RINT251
+&BIX0    SETA  0                     NEGATIVE ENVIR FLAG       @PC003PY
+&BIX1    SETA  0                     NEGATIVE ENVIR FLAG       @PC003PY
+         AIF   ('&ENVIR' EQ 'CREATE').RINT251                  @PC003PY
+&BIT1    SETA  1                                               @PC003PY
+         AIF   ('&ENVIR' EQ 'CHANGE').RINT251                  @PC003PY
+&BIT0    SETA  1                                               @PC003PY
+         AIF   ('&ENVIR' EQ 'VERIFY').RINT251                      @L6A
+&BIT1    SETA  0                                               @PC003PY
+         AIF   ('&ENVIR' EQ 'DELETE').RINT251                  @PC003PY
+&BIT0    SETA  0                                               @PC003PY
+.RINT251 ANOP                                                  @PC003PY
+         AIF   ('&SMC' EQ '').RINT252                          @PC003PY
+&BIX2    SETA  0                                               @PC003PY
+         AIF   ('&SMC' NE 'NO').RINT252                        @PC003PY
+&BIT2    SETA  1                     SMC FLAG                  @PC003PY
+.RINT252 ANOP                                                  @PC003PY
+         AIF   ('&SUBPOOL' EQ '').RINT253                      @PC003PY
+&BIT3    SETA  1                     SMC FLAG                  @PC003PY
+&BIX3    SETA  0                                               @PC003PY
+.RINT253 ANOP                                                  @PC003PY
+         AIF   ('&PASSCHK' EQ '').RINT254                      @PC003PY
+&BIX4    SETA  0                                               @PC003PY
+         AIF   ('&PASSCHK' NE 'NO').RINT254                    @PC003PY
+&BIT4    SETA  1                     PASSCHK FLAG              @PC003PY
+.RINT254 ANOP                                                  @PC003PY
+         AIF   ('&STAT' EQ '').RINT255                             @L6A
+&BIX5    SETA  0                                                   @L6A
+         AIF   ('&STAT' NE 'NO').RINT255                           @L6A
+&BIT5    SETA  1          STAT=NO SPECIFIED                        @L6A
+.RINT255 ANOP
+         AIF   ('&ENCRYPT' EQ '').RINT256                          @L6A
+&BIX7    SETA  0                                                   @L6A
+         AIF   ('&ENCRYPT' NE 'NO').RINT256                        @L6A
+&BIT7    SETA  1          ENCRYPT=NO SPECIFIED                     @L6A
+.RINT256 ANOP  ,                                                   @L6A
+         NI    3(1),B'&BIX0&BIX1&BIX2&BIX3&BIX4&BIX5&BIX6&BIX7'    @L6A
+         OI    3(1),B'&BIT0&BIT1&BIT2&BIT3&BIT4&BIT5&BIT6&BIT7'    @L6A
+.RINT257 ANOP  ,                                                   @L6A
+.* MODIFY ADDRESS PARAMETERS AS REQUIRED
+         AIF   ('&USERID' EQ '').RINT270
+         AIF   ('&USERID'(1,1) NE '(').RINT260
+         ST    &USERID(1),4(1) -   STORE USERID ADDRESS
+         AGO   .RINT270
+.RINT260 ANOP
+         LA    0,&USERID         MOVE USERID ADDRESS INTO
+         ST    0,4(1) -             PARM LIST
+.RINT270 ANOP
+         AIF   ('&PASSWRD' EQ '').RINT290
+         AIF   ('&PASSWRD'(1,1) NE '(').RINT280
+         ST    &PASSWRD(1),8(1) -     STORE PASSWORD ADDRESS
+         AGO   .RINT290
+.RINT280 ANOP
+         LA    0,&PASSWRD            MOVE PASSWORD ADDRESS
+         ST    0,8(1) -        INTO PARM LIST
+.RINT290 ANOP
+         AIF   ('&START' EQ '').RINT310
+         AIF   ('&START'(1,1) NE '(').RINT300
+         ST    &START(1),12(1) -    STORE PROC NAME ADDRESS
+         AGO   .RINT310
+.RINT300 ANOP
+         LA    0,&START            MOVE PROCNAME ADDRESS INTO
+         ST    0,12(1) -        INTO PARM LIST
+.RINT310 ANOP
+         AIF   ('&INSTLN' EQ '').RINT330
+         AIF   ('&INSTLN'(1,1) NE '(').RINT320
+         ST    &INSTLN(1),16(1)  -    SET INSTALLATION PARM ADDRESS
+         AGO   .RINT330
+.RINT320 ANOP
+         LA    0,&INSTLN           MOVE INSTALLATION ADDRESS
+         ST    0,16(1)              INTO PARM LIST
+.RINT330 ANOP
+         AIF   ('&GROUP' EQ '').RINT332
+         AIF   ('&GROUP'(1,1) NE '(').RINT331
+         ST    &GROUP(1),20(1)    SET GROUP PARM ADDRESS
+         AGO   .RINT332
+.RINT331 ANOP
+         LA    0,&GROUP           MOVE GROUP ADDRESS
+         ST    0,20(1)            INTO PARM LIST
+.RINT332 ANOP
+         AIF   ('&NEWPASS' EQ '').RINT334
+         AIF   ('&NEWPASS'(1,1) NE '(').RINT333
+         ST    &NEWPASS(1),24(1)  SET NEW PASSWORD ADDRESS
+         AGO   .RINT334
+.RINT333 ANOP
+         LA    0,&NEWPASS         MOVE NEW PASSWORD ADDRESS
+         ST    0,24(1)            INTO PARM LIST
+.RINT334 ANOP
+         AIF   ('&PGMNAME' EQ '').RINT336                      @PC002PY
+         AIF   ('&PGMNAME'(1,1) NE '(').RINT335                @PC002PY
+         ST    &PGMNAME(1),28(1)  SET PGMNAME ADDRESS          @PC002PY
+         AGO   .RINT336                                        @PC002PY
+.RINT335 ANOP                                                  @PC002PY
+         LA    0,&PGMNAME         MOVE PGMNAME ADDRESS         @PC002PY
+         ST    0,28(1)            INTO PARM LIST               @PC002PY
+.RINT336 ANOP                                                  @PC002PY
+         AIF   ('&ACTINFO' EQ '').RINT338                      @PC002PY
+         AIF   ('&ACTINFO'(1,1) NE '(').RINT337                @PC002PY
+         ST    &ACTINFO(1),32(1)  SET ACTINFO ADDRESS          @PC002PY
+         AGO   .RINT338                                        @PC002PY
+.RINT337 ANOP                                                  @PC002PY
+         LA    0,&ACTINFO         MOVE ACTINFO ADDRESS         @PC002PY
+         ST    0,32(1)            INTO PARM LIST               @PC002PY
+.RINT338 ANOP                                                  @PC002PY
+         AIF   ('&OIDCARD' EQ '').RINT340                      @PC002PY
+         AIF   ('&OIDCARD'(1,1) NE '(').RINT339                @PC002PY
+         ST    &OIDCARD(1),36(1) SET OIDCARD ADDRESS           @PC002PY
+         AGO   .RINT340                                        @PC002PY
+.RINT339 ANOP                                                  @PC002PY
+         LA    0,&OIDCARD     MOVE OIDCARD ADDRESS             @PC002PY
+         ST    0,36(1)            INTO PARM LIST               @PC002PY
+.RINT340 ANOP                                                  @PC002PY
+         AIF   ('&TERMID' EQ '').RINT342                       @PC002PY
+         AIF   ('&TERMID'(1,1) NE '(').RINT341                 @PC002PY
+         ST    &TERMID(1),40(1) SET TERMID ADDRESS             @PC002PY
+         AGO   .RINT342                                        @PC002PY
+.RINT341 ANOP                                                  @PC002PY
+         LA    0,&TERMID      MOVE TERMID ADDRESS              @PC002PY
+         ST    0,40(1)            INTO PARM LIST               @PC002PY
+.RINT342 ANOP                                                  @PC002PY
+         AIF   ('&JOBNAME' EQ '').RINT344                      @PM44591
+         AIF   ('&JOBNAME'(1,1) NE '(').RINT343                @PM44591
+         ST    &JOBNAME(1),44(1) SET JOBNAME ADDRESS           @PM44591
+         AGO   .RINT344                                        @PM44591
+.RINT343 ANOP                                                  @PM44591
+         LA    0,&JOBNAME     MOVE JOBNAME ADDRESS             @PM44591
+         ST    0,44(1)            INTO PARM LIST               @PM44591
+.RINT344 ANOP                                                  @PM44591
+         AIF   ('&APPL' EQ '').RINT346                         @PC003PY
+         AIF   ('&APPL'(1,1) EQ '''').ERR06                    @PC003PY
+         AIF   ('&APPL'(1,1) NE '(').RINT345                   @PC003PY
+         ST    &APPL(1),48(1) SET APPL ADDRESS                 @PC003PY
+         AGO   .RINT346                                        @PC003PY
+.RINT345 ANOP                                                  @PC003PY
+         LA    0,&APPL        MOVE APPL ADDRESS                @PC003PY
+         ST    0,48(1)            INTO PARM LIST               @PC003PY
+.ERTN06  ANOP                                                  @PC003PY
+.RINT346 ANOP                                                  @PC003PY
+         AIF   ('&ACEE' EQ '').RINT348                         @PC003PY
+         AIF   ('&ACEE'(1,1) NE '(').RINT347                   @PC003PY
+         ST    &ACEE(1),52(1) SET ACEE ADDRESS                 @PC003PY
+         AGO   .RINT348                                        @PC003PY
+.RINT347 ANOP                                                  @PC003PY
+         LA    0,&ACEE        MOVE ACEE ADDRESS                @PC003PY
+         ST    0,52(1)            INTO PARM LIST               @PC003PY
+.RINT348 ANOP                                                  @PC003PY
+.* PRODUCE SVC ENTRY CODE AND EXIT -LIST MODIFICATION DONE
+         AGO   .RINT221
+.* DIAGNOSTICS   *.
+.ERR002  ANOP
+         MNOTE 8,'*** INVALID ENVIR PARAMETER ***'
+         AGO   .ERTN002
+.ERR003  ANOP                                                  @PC003PY
+         MNOTE 8,'*** INVALID SMC PARAMETER ***'               @PC003PY
+         AGO   .ERTN003                                        @PC003PY
+.ERR004  ANOP                                                  @PC003PY
+         MNOTE 8,'*** INVALID PASSCHK PARAMETER ***'           @PC003PY
+         AGO   .ERTN004                                        @PC003PY
+.ERR005  ANOP                                                      @L6A
+         MNOTE 8,'*** INVALID STAT PARAMETER ***'                  @L6A
+         AGO   .ERTN005                                            @L6A
+.ERR006  ANOP                                                      @L6A
+         MNOTE 8,'*** INVALID ENCRYPT PARAMETER ***'               @L6A
+         AGO   .ERTN006                                            @L6A
+.ERR01   ANOP
+         MNOTE 8,'*** REGISTER FORM OF ADDRESS PARAMETER NOT VALID WITH-
+                LIST FORM***'
+         AGO   .ERTN01
+.ERR02   ANOP
+         MNOTE 8,'*** ONLY REGS 2-12 VALID FOR ADDRESSES***'
+         AGO   .ERTN02
+.ERR04   ANOP
+         MNOTE 8,'*** INVALID MACRO FORM PARAMETER ***'
+         AGO   .ERTN04
+.ERR05   ANOP
+         MNOTE 8,'*** ENVIR INVALID WITH &NAME2 ***'
+         AGO   .ERTN05
+.ERR06   ANOP
+         MNOTE 8,'*** ''APPL'' FORM NOT ALLOWED WITH MF=E ***' @PC003PY
+         AGO   .ERTN06
+.ERR07   ANOP
+         MNOTE 8,'*** ''VERIFY'' ALLOWED ONLY IF RACINIT IS INVOKED  FR*
+               OM THE RACROUTE MACRO ***'                      @L6A
+         AGO   .ERTN07
+.ERR08   ANOP
+         MNOTE 8,'*** ''STAT'' ALLOWED ONLY IF RACINIT IS INVOKED FROM *
+               THE RACROUTE MACRO ***'                         @L6A
+         AGO   .ERTN08
+         MEND
+**/
+*   RACINIT :
+* MACRO
+*   KEYS(USERID,PASSWRD,NEWPASS,START,GROUP,INSTLN,ENVIR,MF,
+*        PGMNAME,ACTINFO,OIDCARD,TERMID,JOBNAME,
+*        APPL,ACEE,SMC,SUBPOOL,PASSCHK,
+*        STAT,ENCRYPT);      /*                                  @L6A*/
+*        ANS('?'||MACLABEL||'RACINITP '||MACLIST||MACKEYS||';');
+*%END;
+

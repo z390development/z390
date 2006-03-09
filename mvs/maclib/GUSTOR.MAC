@@ -1,0 +1,37 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GUSTOR &OACB,&LABEL,&N         UNCONDITIONAL STORE
+         LCLA  &X                       LOCAL VARIABLE FOR N
+         AIF   (T'&OACB EQ 'O').ERR1
+         AIF   (T'&LABEL EQ 'O').ERR2
+         AIF   (T'&LABEL EQ 'N').ERR
+         AIF   (T'&N EQ 'O').ERRN
+         AIF   (T'&N NE 'N').ERRN
+         AIF   (&N NE 2 AND &N NE 4).ERRN
+&X       SETA  &N
+.TSTOACB AIF   ('&OACB'(1,1) EQ '(').REG
+         CNOP  0,4
+&NAME    L     15,&OACB+16
+         MVC   0(&X,15),&LABEL
+         LA    15,&X.(15,0)
+         ST    15,&OACB+16
+         MEXIT
+.ERRN    IHBERMAC 180,BYTE-CNT,4
+&X       SETA  4
+         AGO   .TSTOACB
+.REG     AIF   ('&OACB' NE '(1)').ERRREG
+.REG1    CNOP  0,4
+&NAME    L     15,16(1,0)
+         MVC   0(&X,15),&LABEL
+         LA    15,&X.(15,0)
+         ST    15,16(1,0)
+         MEXIT
+.ERRREG  IHBERMAC  36,,&OACB
+         MEXIT
+.ERR1    IHBERMAC 2
+         MEXIT
+.ERR2    IHBERMAC 3
+         MEXIT
+.ERR     IHBERMAC 37,,LABEL
+         MEND
+

@@ -1,0 +1,412 @@
+Program services
+================
+
+Savearea and linkage conventions
+--------------------------------
+Standard save area is defined as follows:
+   DS  0CL72
+   DS  F        + 0  reserved
+   DS  F        + 4  address of callers savearea
+   DS  F        + 8  address of our savearea
+   DS  15F      +12  callers GR14 through GR12
+
+A program is invoked with entrypoint in GR15 and return address in GR14.
+GR15 is expected to contain a return code upon exit by convention.
+GR13 conventionally points to our savearea.
+
+Register usage
+--------------
+These macros may use the following general registers:
+
+GR 0, 14
+GR 1   parameter list
+GR 15  return code
+
+--SVC--   FUNCTION
+DEC HEX
+  6  06   LINK
+  7  07   XCTL
+  8  08   LOAD
+  9  09   DELETE
+ 13  0D   ABEND
+ 51  33   SNAP
+ 60  3C   ESTAE
+109  6D   ESPIE
+
+Supporting Macros
+-----------------
+CVTD      DSECT for CVT fields.
+EQUREGS   Creates the standard equates for general and floating point
+          registers.
+
+SUBENTRY  Creates savearea, standard linkage and sets base register 13.
+SUBEXIT   Returns using standard linkage.
+
+CALL      Call a sub-program.
+SAVE      Save registers in savearea.
+RETURN    Restore callers registers and return with return code.
+
+RESTORE   Restore callers registers.
+
+Documentation
+-------------
+1) LOAD, DELETE, LINK, XCTL and RESTORE
+
+   name  LOAD   EP=,EPLOC=,DDNAME=,DSNAME=
+      Load a program or module.
+      The address of the loaded module is returned in GR 0.
+
+      GR 1 returns the length as follows:
+      a) For a program, the number of doublewords (8-byte units).
+      b) For other modules, the length rounded up to the next
+         doubleword boundary.
+
+      GR 15 has a return code:
+         0  Load ok
+         4  Load failed and abend S806 will occur
+
+   name DELETE EP=,EPLOC=,DDNAME=,DSNAME=
+      Delete a program or module.
+
+   name LINK   EP=,EPLOC=,DDNAME=,DSNAME=,PARAM=,VL=
+      Load and pass control to another program.
+      Return to 'linker'.
+
+   name XCTL   (fromreg,toreg),EP=,EPLOC=,DDNAME=,DSNAME=,PARAM=,VL=
+      Load and pass control to another program.
+      Return to last 'linker' or terminate.
+
+      (fromreg,toreg)
+         Optional.
+         Restores the specified register range from the savearea
+         pointed to by GR13. The registers are restored from their
+         conventional positions. The range must not specify or
+         include the following general registers: 0, 1, 13, 15
+
+   When a program is loaded (with suffix .390) then relocation takes
+   place.
+
+   EP, EPLOC, DDNAME and DSNAME are used to locate the program or module.
+   EP and EPLOC cannot both be present.
+   DDNAME and DSNAME cannot both be present.
+
+   Various combinations are available:
+   EP=program
+      Specify the program name, maximum 8 bytes.
+
+   EPLOC=label or EPLOC=(reg)
+      The label or the register must point to an 8-byte field
+      containing the program name.
+
+   In both the above cases as neither DDNAME nor DSNAME are specified,
+   then the Z390 search path is used. This may be overidden by the CALL
+   EZ390 parameter SYS390.
+
+   EP/EPLOC and DDNAME=name
+   EP/EPLOC and DDNAME=(reg)
+      DDNAME has or points to the name of a SET variable.
+
+      This variable (see examples below) may contain:
+      a) The complete path and filename.
+         In this case EP and EPLOC are ignored.
+
+      b) A single path.
+         Only this path will be searched.
+
+      c) Multiple paths separated by plus signs.
+         All paths will be searched in the order specified.
+
+      eg.
+      LINK  EP=MYLINK,DDNAME=MYPATH ...
+
+      For execution, set up a .BATÿ(Batch) file...
+      SET MYPATH=drive:\path\file          program specified, EP ignored
+       --or--
+      SET MYPATH=drive:\path               single search path
+       --or--
+      SET MYPATH=drive:\path1+drive:\path2 multiple search paths
+
+      CALL EZ390 drive:\path\program parms
+
+   EP/EPLOC and DSNAME=name
+   EP/EPLOC and DSNAME=(reg)
+      DSNAME is or points to a label defined in the program which
+      has the file spec.
+      The file spec must terminate with X'00' or be defined as a
+      double-quoted string within the standard C-type constant.
+
+      Either constant may contain:
+      a) The complete path and filename.
+         In this case EP and EPLOC are ignored.
+
+      b) A single path.
+         Only this path will be searched.
+
+      c) Multiple paths separated by semicolons or plus signs.
+         All paths will be searched in the order specified.
+
+      eg.
+      LINK  EP=MYLINK,DSNAME=MYPATH ...
+             ...
+      MYPATH DC   C'drive:\path\file',X'00'
+       --or--
+      MYPATH DC   C'"drive:\path1;drive:\path2"'
+
+   Note:
+   In the above cases where the filename is specified in the SET
+   variable or the DC constant, then the .390 suffix should be
+   omitted.
+
+   The exceptions to this are LOAD and DELETE, which may be used to
+   load or delete a non-program module and may have any suffix appended.
+
+   PARAM= and VL=
+      Only available on LINK and XCTL.
+      Used for passing a fixed or variable parameter list to a program.
+
+   PARAM=(parm1,parm2,...)
+      The parameters can be anything that is permitted in an A-type
+      constant.
+      See 'Advanced topic' below for special considerations.
+
+   VL=0 or VL=1 (default)
+      If the receiving program can accept a variable parameter list,
+      then VL=1 will turn on the senior bit (bit 0) of the last
+      parameter.
+
+   name RESTORE (fromreg,toreg)
+      Restores the specified register range from the savearea pointed
+      to by GR13. The registers are restored from their conventional
+      positions.
+
+   Advanced topic:
+      Use counts and parameter passing.
+      On the first invocation and after a LOAD, LINK or XCTL, the
+      program receiving control has its use count incremented.
+
+      When a program is DELETEd, it terminates or loses comtrol
+      via an XCTL then the use count is decremented.
+
+      When the use count is zero, the storage for that program is
+      freed. When passing parameters it is important to consider
+      whether those parameters are in a program whose storage may
+      be reused. If in doubt, place parameters for passing on, in
+      a separate GETMAINed area.
+
+2) SNAP and ABEND
+
+   name SNAP STORAGE=(from,to),PDATA=(options, ... ),ID=,TEXT=
+      Produces a component dump on the Z390 console without terminating
+      the program.
+
+      STORAGE=(from,to)
+      STORAGE=((reg1),(reg2))
+         Optional parameter to dump some storage.
+         Either 'from' or 'to' can be labels or register pointers.
+         The first byte displayed is 'from' and the last is 'to'-1.
+
+      PDATA=(options ... )
+         Optional parameter to display registers and/or control blocks.
+         Default is PDATA=ALL.
+
+         ALL   Display all registers and control blocks.
+
+         REGS  Display all general and floating point registers.
+         GPR   Display only general registers.
+         FPR   Display only floating point registers.
+
+         CDE   Display information related to loaded programs or modules.
+         DCB   Display information related to opened and closed files.
+
+      ID=
+         Numeric identifier.
+         Specify values 0-32767, higher values are negative.
+
+      TEXT=
+         Character identifier.
+         Specify either a string without blanks or a string constant
+         enclosed by single quotes.
+         Either is limited to 60 bytes.
+
+         eg. TEXT=MYSNAP1 or TEXT='My SNAP No. 1'
+
+   name ABEND id,DUMP
+      Terminate the program.
+
+      id     Optional numeric identifier.
+             Values from 0 to 4095.
+             Displayed as abend Unnnn.
+
+      DUMP   A dump is always produced, overrides the NODUMP parm on
+             CALL EZ390.
+
+3) ESTAE and ESPIE
+
+   name ESTAE label
+   name ESTAE (reg)
+   name ESTAE 0
+      When a program abends, control is given to the label or address
+      specified. ESTAE 0 is used to cancel any previously established
+      ESTAE routine.
+
+      Note: In the Z390 environment the abend code 0C5 may be caused
+      by an internal error as well as a genuine addressing exception.
+
+   name ESPIE SET,addr,list
+   name ESPIE SET,(reg),list
+   name ESPIE RESET
+      When a program interruption occurs eg. fixed point overflow,
+      control is given to the label or address specified.
+      ESPIE RESET will reset any previous ESPIE settings.
+
+   list
+      Syntax:
+         ESPIE SET,label,8               Single code
+         ESPIE SET,label,(1,4,6)         Multiple codes
+         ESPIE SET,label,((2,6))         Range of codes: 2 through 6
+         ESPIE SET,label,(3,5,(7,9),14)  Mixed codes: 3,5,7,8,9,14
+
+      If any of the codes 8, 10, 13 or 14 are specified, then the
+      appropriate bit is set on in the PSW using the SPM instruction.
+
+      The following interruption codes can appear in the list.
+          1 - operation
+          2 - privilege
+          3 - execute
+          4 - protection
+          5 - addressing
+          6 - specification
+          7 - data exception
+          8 - fixed point overflow   (SPM mask bit X'8')
+          9 - fixed point divide
+         10 - decimal overflow       (SPM mask bit X'4')
+         11 - decimal divide
+         12 - HFP exponent overflow
+         13 - HFP exponent underflow (SPM mask bit X'2')
+         14 - HFP significance       (SPM mask bit X'1')
+         15 - HFP divide
+
+      Note: In the Z390 environment, interruption code 5 may be caused
+      by an internal error as well as a genuine addressing exception.
+
+4) SUBENTRY and SUBEXIT
+
+   name SUBENTRY
+   name SUBENTRY NOCSECT
+      Provides a standard entry for programs.
+      name CSECT establishes the program start (see NOCSECT later).
+      A standard savearea is built, and GR13 is set as the base
+      register.
+      After SUBENTRY, GR13 will point to the program's savearea to
+      facilitate further linkage.
+
+      The parameter NOCSECT generates name DS 0D
+      This is useful for setting up sub-programs within the main
+      program that are invoked by the CALL macro.
+
+      Although name is optional, care needs to be taken if it is
+      omitted. A CSECT or sub-program should be named.
+
+   name SUBEXIT RC=returncode
+   name SUBEXIT RC=(reg)
+      Provides a standard exit for programs.
+      name is optional.
+      RC will return the value in GR15, zero is the default.
+
+5) CALL, SAVE and RETURN
+
+   name CALL routine,(parm1,parm2,...),vl
+   name CALL (reg),(parm1,parm2,...),vl
+      Provides a standard internal or external subroutine call.
+      Parameters are addressed by GR1 and linkage by GR14.
+
+      routine
+         If a label, it can be internal (resolved at assembly time)
+         or external (loaded and resolved by the linkage editor).
+         If the routine is in register notation, it can be internal
+         or separately loaded.
+
+      (parm1,parm2,...)
+         Optional.
+         Pass a fixed or variable parameter list to the called program.
+
+         The parameters can be anything that is permitted in an A-type
+         constant.
+
+      vl
+         If the receiving program can accept a variable parameter list,
+         then VL will turn on the senior bit (bit 0) of the last
+         parameter.
+
+   eg.
+      Call subroutine MYSUBR, pass two parameters and mark the last
+      parameter.
+      MYCALL CALL MYSUBR,(8,MYDATA),VL
+
+   name SAVE (fromreg,toreg)
+      Saves the specified register range in the savearea pointed to
+      by GR13. The registers are saved in their conventional positions.
+
+   name RETURN (fromreg,toreg),flag,RC=
+      Restores the specified register range from the savearea pointed
+      to by GR13. The registers are restored from their conventional
+      positions.
+
+      Return is by the restored GR14.
+
+      flag
+         Optional.
+         T specifies that the byte at savearea+15 has the junior bit
+         (bit 7) turned on to indicate a return to a called program.
+         This bit (rightmost bit of saved GR14) is set after GR14 has
+         been loaded with the return address.
+
+      RC=returncode
+         Optional.
+         GR15 is loaded with this return code before returning via GR14.
+
+   eg.
+   MYRET RETURN (14,12),T,RC=12
+   Restore registers 14 through 12. After the register restore, flag
+   the savearea to indicate return to caller and set return code to 12.
+
+6) Other macros
+
+   CVTD
+      Provides a DSECT for the limited fields available in the Common
+      Vector Table. This may be addressed as follows:
+
+      L     reg,X'10'
+      USING IHACVT,reg
+       ...
+      CVTD
+
+   EQUREGS REGS=option,TYPE=option
+      Generates standard equates for the general or floating point
+      registers.
+
+      eg.
+      EQUREGS (defaults to REGS=GPR,TYPE=DEC)
+      R0  EQU 0
+       ...
+      R15 EQU 15
+
+      EQUREGS TYPE=HEX
+      R0  EQU 0
+       ...
+      RF  EQU 15
+
+      EQUREGS REGS=FPR
+      F0  EQU 0
+       ...
+      F15 EQU 15
+
+      EQUREGS REGS=FPR,TYPE=HEX
+      F0  EQU 0
+       ...
+      FF  EQU 15
+
+Author: Melvyn Maltz
+Publication date: Jan 16, 2006
+Z390 version: V1.0.09a
+

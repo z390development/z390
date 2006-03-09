@@ -1,0 +1,99 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IECTDECB
+IECTDECB DSECT          DECB DUMMY SECTION
+*        ------------------------------------------
+*        +                                        +
+*     0  +      STANDARD EVENT CONTROL BLOCK      +
+*        +                                        +
+*        +----------------------------------------+
+*        +                   +                    +
+*     4  +  OPERATION TYPE   +    AREA LENGTH     +
+*        +                   +                    +
+*        +----------------------------------------+
+*        + ON-LINE +                              +
+*     8  +TERMINAL +        ADDRESS OF DCB        +
+*        +  TEST   +                              +
+*        +----------------------------------------+
+*        +         +                              +
+*    12  +RESERVED +        ADDRESS OF AREA       +
+*        +         +                              +
+*        +----------------------------------------+
+*        +                   +                    +
+*    16  +    SENSE BYTES    +   RESIDUAL COUNT   +
+*        +    1    &    2    +                    +
+*        +----------------------------------------+
+*        +         +                              +
+*    20  + COMMAND |   ADDRESS OF TERMINAL LIST   +
+*        +   CODE  +                              +
+*        +----------------------------------------+
+*        +         + RELATIVE+         +          +
+*    24  +  STATUS +   LINE  + ADDRESS + VRC/LRC  +
+*        +  FLAGS  +  NUMBER + RESPONSE+ RESPONSE +
+*        +----------------------------------------+
+*        +         +         +                    +
+*    28  +  TP-OP  +  ERROR  +     CSW STATUS     +
+*        +   CODE  +  STATUS +                    +
+*        +----------------------------------------+
+*        +         +                              +
+*    32  +RESERVED +      ADDRESS OF CURRENT      +
+*        +         +       ADDRESSING ENTRY       +
+*        +----------------------------------------+
+*        +         +                              +
+*    36  +RESERVED +      ADDRESS OF CURRENT      +
+*        +         +        POLLING ENTRY         +
+*        +----------------------------------------+
+*        +         +         +                    +
+*    40  +RESERVED +RESERVED +  WRITE AREA LENGTH +
+*        +         +         +                    +
+*        +----------------------------------------+
+*        +         +                              +
+*    44  +RESERVED +   ADDRESS OF WRITE AREA      +
+*        +         +                              +
+*        ------------------------------------------
+         EJECT
+DECSDECB DS    1F   STATUS FLAG + ADDRESS OF THE TCB
+         SPACE
+DECTYPE  DS    1H   OPERATION TYPE
+         SPACE
+DECLNGTH DS    1H   AREA LENGTH
+         SPACE
+DECONLTT DS    0CL1 RESERVED FOR ON-LINE TERMINAL TEST
+DECDCBAD DS    1F   ADDRESS OF DCB
+         SPACE
+DECAREA  DS    1F   ADDRESS OF AREA
+         SPACE
+DECSENS0 DS    1C   1ST SENSE BYTE
+         SPACE
+DECSENS1 DS    1C   2ND SENSE BYTE
+         SPACE
+DECCOUNT DS    1H   RESIDUAL COUNT
+         SPACE
+DECCMCOD DS    0CL1 COMMAND CODE
+DECENTRY DS    1F   ADDRESS OF TERMINAL LIST
+         SPACE
+         SPACE
+DECFLAGS DS    1C   STATUS FLAGS
+         SPACE
+DECRLN   DS    1C   RELATIVE LINE NUMBER
+         SPACE
+DECRESPN DS    1H   RESPONSE FIELDS
+         SPACE
+DECTPCOD DS    1C   TP-OP CODE
+         SPACE
+DECERRST DS    1C   ERROR STATUS
+         SPACE
+DECCSWST DS    1H   CSW STATUS
+         SPACE
+DECADRPT DS    1F   ADDRESS OF CURRENT ADDRESSING ENTRY
+         SPACE
+DECPOLPT DS    1F   ADDRESS OF CURRENT POLLING ENTRY
+         SPACE
+         DS    2C    RESERVED
+         SPACE
+DECWLNG  DS    1H   WRITE AREA LENGTH
+         SPACE
+DECWAREA DS    1F   ADDRESS OF WRITE AREA
+         SPACE
+         MEND
+

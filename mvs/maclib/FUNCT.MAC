@@ -1,0 +1,319 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*       INCLUDES ZTR 00624
+* /* START OF SPECIFICATIONS ****
+*
+*01*  MODULE-NAME = FUNCT
+*
+*01*  DESCRIPTIVE-NAME = USER MACRO TO GENERATE DVT FUNCTIONS
+*
+*
+*01*  STATUS = RELEASE 1
+*
+*01*  FUNCTION = USER INVOKES IN FOLLOWING MANNER
+*          FUNCT  PROC=NAME,COND=,DIST=,DVC=,EXCEPT=,ATTACH=,CU=,LINE=
+*
+*              PROC=NAME           REQUIRED
+*              COND ='PATTERN'  - 2 BYTE HEX CODE
+*              DIST=OUTMOST/INMOST  -  INMOST IS DEFAULT
+*              DVC=NAME - 4 BYTE DEVICE NAME
+*              EXCEPT=NAME - 4 BYTE DEVICE NAME
+*              ATTACH=L/R - LOCAL OR REMOTE FLAG
+*              CU=(SA,CLUS,CLCM,MCOMP) - STAND ALONE,CLUSTER CONTROL,
+*                                        CLUSTER COMPONENT OR
+*                                        MULTI COMPONENT FLAGS
+*              LINE=(S/NS,PP/MP,SS/BSC/DLC) - SWITCH/NON-SWITCHED
+*                                         POINT - POINT/MULTI-POINT
+*                                         STOP-START/BSC/DLC FLAGS
+*01*  NOTES =
+*
+*  GENERAL CODE GENERATED IS AS FOLLOWS
+*        DC    CL8'NAME'           PROC NAME
+*        DC    XL1'PATTERN'        0 UNLESS COND SPECIFIED
+*        DC    AL3(0)              RESERVED BYTES
+*        DC    AL1(OPT)            WHERE OPT IS AS FOLLOWS
+*                                  128 = '80' UNCONDITIONAL
+*                                   64 = '40' CONDITIONAL
+*                                   32 = '20' EXCEPT SPECIFIED
+*                                   16 = '10' QUALIFIED
+*                                    8 = '08' DIST=INMOST
+*                                    4 = '04' DIST=OUTMOST
+*                                    2 = '02' RESERVED
+*                                    1 = '01' RESERVED
+*        DC    AL3(0)              RESERVED BYTES
+*        DC    CL4'NAME'           4 CHARACTER DEVICE NAME
+*        DC    H'0'                RESERVED BYTES
+*        DC    AL1(CUATT)          WHERE CUATT IS
+*                                  128 = '80' LOCAL FLAG
+*                                   64 = '40' REMOTE FLAG
+*                                   32 = '20' STAND ALONE FLAG
+*                                   16 = '10' MULTI-COMPONENT
+*                                    8 = '08' CLUSTER CONTROL
+*                                    4 = '04' CLUSTER COMPONENT
+*                                    2 = '02' RESERVED
+*                                    1 = '01' RESERVED
+*        DC    AL1(LINET)          WHERE LINET IS
+*                                  128 = '80' NON-SWITCHED
+*                                   64 = '40' SWITCHED
+*                                   32 = '20' POINT-POINT
+*                                   16 = '10' MULTIPOINT
+*                                    8 = '08' START-STOP
+*                                    4 = '04' BSC
+*                                    2 = '02' DLC
+*                                    1 = '01' RESERVED
+*
+*    FOLLOWING IS LIST OF MNOTES USED:
+*         MNOTE 8,'DVT MACRO NOT ISSUED PRIOR TO FUNCT MACRO'
+*         MNOTE *,'COND PATTERN HAS ZERO INSERTED ON LEFT'
+*         MNOTE 8,'INVALID COND PATTERN SUPPLIED'
+*         MNOTE 8,'DVC NAME MUST BE LESS THAN 5 CHARACTERS'
+*         MONTE 8,'EXCEPT NAME MUST BE LESS TAHN 5 CHARACTERS'
+*         MNOTE 8,'ATTACH SPECIFICATION MUST BE L OR R'
+*         MNOTE 8,'CU SA SPECIFICATION IS INCORRECT'
+*         MNOTE 8,'CU CLUS SPECIFICATION IS INCORRECT'
+*         MNOTE 8,'CU CLCM SPECIFICATION IS INCORRECT'
+*         MNOTE 8,'CU MCOMP SPECIFICATION IS INCORRECT'
+*         MNOTE 8,'LINE S/NS SPECIFICATION IS INCORRECT'
+*         MNOTE 8,'LINE PP/MP SPECIFICATION IS INCORRECT'
+*         MNOTE 8,'LINE SS/BSC/DLC SPECIFICATION IS INCORRECT'
+*         MNOTE 8,'INVALID DIST PARAMETER SPECIFIED'
+*         MNOTE 8,'PROCESS NAME MUST BE LESS THAN 9 CHARACTERS'
+*         MNOTE 8,'PROCESS NAME NOT SPECIFIED'
+*
+*02*    CHARACTER-CODE-DEPENDENCIES = NONE
+*
+*02*    DEPENDENCIES = STRTMODE & DVT MACROS, SKELETEL DVT READ MODULE
+*       (ISTOCCSD)
+*
+*02*    RESTRICTIONS = NONE
+*
+*02*    REGISTER-CONVENTIONS = NONE
+*
+*02*    PATCH-LABEL = NONE
+*
+*01*  MODULE-TYPE = MACRO
+*
+*02*    PROCESSOR = ASSEMBLER
+*
+*02*    MACRO-SIZE = 189 STATEMENTS
+*
+*02*    ATTRIBUTES = LIST
+*
+*01*  ENTRY-POINT = NA
+*
+*01*  EXIT-NORMAL = NA
+*
+*01*  EXIT-ERROR = NA
+*
+*01*  EXTERNAL-REFERENCES = NONE
+*
+*02*    DATA-SETS = NONE
+*
+*02*    DATA-AREA = NONE
+*
+*02*    CONTROL-BLOCKS-SYSTEM = NONE
+*
+*02*    CONTROL-BLOCKS-ATCAM = NONE
+*
+*01*  TABLES = NONE
+*
+*01*  INNER-MACROS = NONE
+*
+*01*  SYSTEM-MACROS = NONE
+*
+*01*  CHANGE-ACTIVITY = DCR'S 1K0266,K3079
+*
+**** END OF SPECIFICATIONS ***/
+          MACRO
+          FUNCT &PROC=,&COND=,&DIST=INMOST,&DVC=,&EXCEPT=,&ATTACH=,    *
+               &CU=,&LINE=
+         GBLA  &CNT                   FUNCTION COUNTER
+          GBLB  &B,&C                 DVT AND FUNCT USED
+          LCLB  &A                    ERROR FLAG BIT
+          LCLA  &D,&E,&F,&I           CODE GENERATION LOCALS
+         LCLA  &P,&L,&M,&DD
+         LCLC  &N
+          LCLC  &G,&H
+&N       SETC  '    '
+&G       SETC  '00'
+&A        SETB  1                     SET ERROR FLAG OFF
+          AIF   (&B EQ 1).A4          DVT USAGE SET
+          MNOTE 8,'DVT MACRO NOT ISSUED PRIOR TO FUNCT MACRO'
+&A        SETB  0                     SET ERROR FLAG ON
+.A4       AIF   ('&COND' EQ '').A7
+          AIF   (K'&COND GT 4).A5
+         AIF   ('&COND'(1,1) NE '''').A5
+&I       SETA  (K'&COND)
+         AIF   ('&COND'(&I,1) NE '''').A5
+&I       SETA  &I-2
+         AIF   (&I EQ 2).A45
+          MNOTE *,'COND PATTERN HAS ZERO INSERTED ON LEFT'
+.A45      ANOP
+&D        SETA  64                    SET TYPE = COND  ('40')
+&G        SETC  '&COND'(2,&I)         SET PATTERN
+          AGO   .A7
+.A5       MNOTE 8,'INVALID COND PATTERN SUPPLIED'
+&A        SETB  0                     SET ERROR FLAG ON
+          AGO   .A7
+.A7      ANOP
+.* IF NO DVC SPECIFIED SKIP TO EXCEPT CHECK
+         AIF   ('&DVC' EQ '' ).FJR1
+.* IF DEVICE NAME NOT LESS THAN 5 CHARS GIVE ERROR MSG
+         AIF   (K'&DVC GT 4  ).ERRF1
+&N       SETC  '&DVC'                  SET DEVICE TYPE
+         AGO   .FJR2                   CONTINUE WITH ATTACH CHECK
+.ERRF1   MNOTE 8,'DVC NAME MUST BE LESS THAN 5 CHARACTERS'
+&A       SETB  0                       INDICATE ERROR
+         AGO   .FJR2                   CONTINUE WITH ATTACH CHECK
+.* IF NO EXCEPT SPECIFIED, SKIP TO ATTACH PARM
+.FJR1    AIF   ('&EXCEPT' EQ '' ).FJR2
+.* IF EXCEPT NAME NOT LESS THAN 5 CHARS GIVE ERROR MSG
+         AIF   (K'&EXCEPT GT 4 ).ERRF2
+&N       SETC  '&EXCEPT'               SET NAME OF DEVICE TYPE
+&P       SETA  32                      SET EXCEPT FLAG
+         AGO   .FJR2                   CONTINUE WITH ATTACH PARM
+.ERRF2   MNOTE 8,'EXCEPT NAME MUST BE LESS THAN 5 CHARACTERS'
+&A       SETB  0
+.* CHECK FOR VALID ATTACH PARM. MUST BE NULL, 'L' OR 'R'
+.FJR2    AIF   ('&ATTACH' EQ '' ).FJR4X
+         AIF   ('&ATTACH' NE 'R' ).FJR3
+&L       SETA  &L+64                   SET REMOTE FLAG
+         AGO   .FJR4                   CONTINUE WITHCU PARM
+.FJR3    AIF   ('&ATTACH' NE 'L' ).ERRF3
+&L       SETA  &L+128                  SET LOCAL FLAG
+         AGO   .FJR4                   CONTINUE WITH CU PARM
+.FJR4X   ANOP                          SET DEFAULT TO BITS ON
+&L       SETA  &L+128+64
+         AGO   .FJR4
+.ERRF3   MNOTE 8,'ATTACH SPECIFICATION MUST BE L OR R'
+&A       SETB  0                       SET ERROR FLAG
+.* CU MUST BE (SA,CLUS,CLCM,MCOMP) OR NULL
+.FJR4    AIF   ('&CU' EQ '' ).FJR7X
+         AIF   ('&CU(1)' EQ '' ).FJR5
+         AIF   ('&CU(1)' NE 'SA' ).ERRF4A
+&L       SETA  &L+32
+         AGO   .FJR5
+.ERRF4A  MNOTE 8,'CU SA SPECIFICATION IS INCORRECT'
+&A       SETB  0
+.FJR5    AIF   ('&CU(2)' EQ '' ).FJR6
+         AIF   ('&CU(2)' NE 'CLUS' ).ERRF4B
+&L       SETA  &L+8
+         AGO   .FJR6
+.ERRF4B  MNOTE 8,'CU CLUS SPECIFICATION IS INCORRECT'
+&A       SETB  0
+.FJR6    AIF   ('&CU(3)' EQ '' ).FJR7
+         AIF   ('&CU(3)' NE 'CLCM' ).ERRF4C
+&L       SETA  &L+4
+         AGO   .FJR7
+.ERRF4C  MNOTE 8,'CU CLCM SPECIFICATION IS INCORRECT'
+&A       SETB  0
+.FJR7    AIF   ('&CU(4)' EQ '' ).FJR8
+         AIF   ('&CU(4)' NE 'MCOMP' ).ERRF4D
+&L       SETA  &L+16
+         AGO   .FJR8
+.FJR7X   ANOP             SET DEFAULT BITS ON
+&L       SETA  &L+32+16+8+4
+         AGO   .FJR8
+.ERRF4D  MNOTE 8,'CU MCOMP SPECIFICATION IS INCORRECT'
+&A       SETB  0
+.* LINE PARAMETER MUST BE NULL, OR (S/NS,PP/MP,SS/BSC/DLC)
+.FJR8    AIF   ('&LINE' EQ '' ).FJR16X
+         AIF   ('&LINE(1)' EQ '' ).FJR10X
+         AIF   ('&LINE(1)' NE 'S' ).FJR9
+&M       SETA  &M+64                   SET SWITCHED LINE FLAG
+         AGO   .FJR10                  CONTINUE WITH PP/MP TEST
+.FJR9    AIF   ('&LINE(1)' NE 'NS' ).ERRF5
+&M       SETA  &M+128                  SET NON-SWITHED LINE FLAG
+         AGO   .FJR10                  CONTINUE WITH PP/MP TEST
+.FJR10X  ANOP
+&M       SETA  &M+128+64
+         AGO   .FJR10
+.ERRF5   MNOTE 8,'LINE S/NS SPECIFICATION IS INCORRECT'
+&A       SETB  0                       SET ERROR FLAG
+.FJR10   AIF   ('&LINE(2)' EQ '' ).FJR13X
+         AIF   ('&LINE(2)' NE 'PP' ).FJR11
+&M       SETA  &M+32                   SET POINT TO POINT FLAG
+         AGO   .FJR13                  GO TO SS/BSC TEST
+.FJR11   AIF   ('&LINE(2)' NE 'MP' ).ERRF6
+&M       SETA  &M+16                   SET MULTIPOINT FLAG
+         AGO   .FJR13                  GO TO SS/BSC TEST
+.FJR13X  ANOP
+&M       SETA  &M+32+16
+         AGO   .FJR13
+.ERRF6   MNOTE 8,'LINE PP/MP SPECIFICATION IS INCORRECT'
+&A       SETB  0                       SET ERROR FLAG
+.FJR13   AIF   ('&LINE(3)' EQ '' ).FJR16Y
+         AIF   ('&LINE(3)' NE 'SS' ).FJR14
+&M       SETA  &M+8                    SET START STOP LINE FLAG
+         AGO   .FJR16                  CONTINUE WITH TYPE TESTS
+.FJR14   AIF   ('&LINE(3)' NE 'BSC' ).FJR16Z
+&M       SETA  &M+4                    SET BSC LINE FLAG
+         AGO   .FJR16                  CONTINUE WITH TYPE TESTS
+.FJR16Z  AIF   ('&LINE(3)' NE 'DLC' ).ERRF7
+&M       SETA  &M+2                    SET DLC LINE FLAG
+         AGO   .FJR16                  GO TO TYPE TESTS
+.FJR16X  ANOP
+&M       SETA  &M+128+64+32+16
+.FJR16Y  ANOP
+&M       SETA  &M+8+4+2
+         AGO   .FJR16
+.ERRF7   MNOTE 8,'LINE SS/BSC/DLC SPECIFICATION IS INCORRECT'
+&A       SETB  0                       SET ERROR FLAG
+.* QUALIFIED TYPE FLAG IS SET IF ANY OF FOLLOWING WAS SPECIFIED
+.*        DVC,EXCEPT,ATTACH,CU, OR LINE
+.* UNCONDITIONAL TYPE FLAG IS SET IF NONE OF THE FOLLOWING IS SET:
+.*        DVC,EXCEPT,ATTACH,CU, LINE, OR COND
+.* COND TYPE IS SET IF COND WAS SPECIFIED
+.FJR16   AIF   ('&DVC' NE '' ).FJR17
+         AIF   ('&EXCEPT' NE '' ).FJR17
+         AIF   ('&ATTACH' NE '' ).FJR17
+         AIF   ('&CU' NE '' ).FJR17
+         AIF   ('&LINE' NE '' ).FJR17
+         AIF   ('&COND' EQ '' ).FJR18
+&D       SETA  64                      SET CONDITIONAL TYPE FLAG
+         AGO   .FJR19                  CONTINUE WITH INMOST/OUTMOST
+.FJR17   ANOP
+&DD      SETA  16                      SET QUALIFIED TYPE FLAG
+         AIF   ('&COND' EQ '' ).FJR19
+&D       SETA  64
+         AGO   .FJR19                  CONTINUE WITH INMOST/OUTMOST
+.FJR18   ANOP
+&D       SETA  128                     SET UNCONDITIONAL TYPE FLAG
+.FJR19   ANOP
+          AIF   ('&DIST' EQ 'OUTMOST').A9
+          AIF   ('&DIST' EQ 'INMOST').A8
+          MNOTE 8,'INVALID DIST PARAMETER SPECIFIED'
+&A        SETB  0                     SET ERROR FLAG ON
+          AGO   .A10
+.A8       ANOP
+&E        SETA  8                     SET DIST = INMOST ('08')
+          AGO   .A10
+.A9       ANOP
+&E        SETA  4                     SET DIST = OUTMOST ('04')
+.A10      AIF   ('&PROC' EQ '').A12
+          AIF   (K'&PROC GT 8).A11
+&H        SETC  '&PROC'
+          AGO   .A13
+.A11     MNOTE 8,'PROCESS NAME MUST BE LESS THAN 9 CHARACTERS'
+&A        SETB  0                     SET ERROR FLAG ON
+          AGO   .A13
+.A12     MNOTE 8,'PROCESS NAME NOT SPECIFIED'
+&A        SETB  0                     SET ERROR FLAG ON
+.A13      AIF   (&A EQ 0).A14         ERROR FLAG ON
+&C        SETB  1                     SET FUNCT ON
+&CNT     SETA  &CNT+1
+&F       SETA  &D+&E+&P+&DD                SET SDVPARM VALUE
+         DC    CL8'&H' SDVNAME FIELD
+         DC    XL1'&G'   SDVOPTNS FIELD
+         DC    XL1'0'
+         DC    H'0'
+         DC    H'&F'   SDVID FIELD
+         DC    XL2'00'
+         DC    CL4'&N' SDVTTYPE FIELD
+         DC    H'0'    SDVFEAT FIELD
+         DC    AL1(&L) SDVCUATT FIELD
+         DC    AL1(&M) SDVLINET FIELD
+         DC    F'0'                        FOR DCR 3440.1
+          MEXIT
+.A14      ANOP
+          MEND
+

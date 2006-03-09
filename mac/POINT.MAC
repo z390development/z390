@@ -6,7 +6,14 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 11/26/05 RPI111- add missing AGO      
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.*********************************************************************
 &N       POINT &DCB,&REL,&RBA=
+         AIF   (N'&SYSLIST LE 2).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+.NPOK    ANOP
 .*
 .* SET FILE POINTER FOR READ/WRITE RANDOM ACCESS
 .*   DCB  - REQUIRED WITH DCBBLKSI DEFINED 
@@ -15,11 +22,14 @@
 .*
 .*   NOTE RBA= IS EXTENSION OF POINT FOR UP TO 2 GB RANDOM ACCESS
 .*
+         AIF   (&N EQ '').SKIPDS
 &N       DS    0H
+.SKIPDS  ANOP
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          LA    1,&DCB
          AGO   .CHKRBA
 .DCBREG  ANOP
+         AIF   (&DCB(1) EQ '1' OR &DCB(1) EQ 'R1').CHKRBA  RPI163
          LR    1,&DCB(1)
 .CHKRBA  ANOP
          AIF   (&RBA EQ '').CHKREL
@@ -28,6 +38,7 @@
          AGO   .SVC
 .RBAREG  ANOP
          LG    0,0(&RBA(1))
+         AGO   .SVC            RPI111
 .CHKREL  ANOP
          AIF   ('&REL'(1,1) EQ '(').RELREG
          LGF   0,&REL

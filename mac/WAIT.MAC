@@ -1,0 +1,37 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 11/28/05                                                 *
+.*********************************************************************
+.*
+.*  WAIT ECB=ecb
+.* 
+.*                                                      
+.*********************************************************************
+.* 10/20/05 RP47 - add WTOR as part of first GUAM release in v1008  
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.*********************************************************************
+&N       WAIT   &NUM,&ECB=
+         AIF   (N'&SYSLIST LE 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+         MEXIT
+.NPOK    ANOP
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&NUM EQ '' OR &NUM EQ 1).CHKECB
+         MNOTE 12,'WAIT COUNT INVALID - ONLY 1 SUPPORTED - &NUM'
+.CHKECB  ANOP
+         AIF   ('&ECB'(1,1) EQ '(').ECBREG
+         LA    1,&ECB
+         AGO   .SVC
+.ECBREG  ANOP
+         AIF   (&ECB(1) EQ '1' OR &ECB(1) EQ 'R1').SVC  RPI163
+         LR    1,&ECB(1)
+.SVC     ANOP
+         SVC   1
+         MEND
+

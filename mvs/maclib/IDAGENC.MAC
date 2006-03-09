@@ -1,0 +1,70 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /*                                                                 */
+* /* MACCOMP Y-2 SC1DE/SJD61                                         */
+* /* MACSTAT Y-2 73103/Y02113                                        */
+* /*                                                                 */
+*        %GO TO GENPLS1;
+*/*      GENCB HEADER ARGUMENT CONTROL ENTRY DECLARATION             */
+*/*      CREATED BY USER WITH GENCB MACRO                            */
+*/*                                                                  */
+*/*                                                                  */
+*/*    0 ___________________________________________________         */
+*/*      |            |           |                        |         */
+*/*      |   GENBTC   |  GENFTC   |         GENCOP         |         */
+*/*      |____________|___________|________________________|         */
+*/*      |                                                 |         */
+*/*      |                     GENUSA                      |         */
+*/*    8 |_________________________________________________|         */
+*/*      |                        |                        |         */
+*/*      |         GENUSL         |           *            |         */
+*/*      |________________________|________________________|         */
+*%GENPLS1 :;
+*        %IF GENEND ^= ','                  /* IF LAST BLOCK         */
+*          %THEN %GENEND = ';';             /*   THEN CLOSE DCL STMT */
+*        %IF GENLVL ^= ''                   /* IF BLOCK CONCATENATED */
+*          %THEN %GO TO GENPLS2;            /*   THEN BYPASS DECLARE */
+*        DCL 1 GENC BASED                   /* LEVEL ONE DECLARE     */
+*        %GO TO GENPLS3;                    /* SKIP MINOR LEVEL DCL  */
+*%GENPLS2 : GENDUM =GENLVL || ' GENC';      /* SET MINOR LEVEL NUMBER*/
+*          GENDUM                           /* MINOR STRUCTURE       */
+*%GENPLS3 :;
+*              BDY(WORD),
+*              /******************************************************/
+*              /*                                                    */
+*              /*     GENCB HEADER ARGUMENT CONTROL ENTRY            */
+*              /*                                                    */
+*              /******************************************************/
+*
+*              5 GENBTC BIT(8),             /* BLOCK TYPE CODE       */
+*              %GENACB = '''A0''X';         /* ACB BLOCK TYPE CODE   */
+*              %GENXLST = '''B0''X';        /* EXLST BLOCK TYPE CODE */
+*              %GENRPL = '''C0''X';         /* RPL BLOCK TYPE CODE   */
+*              5 GENFTC BIT(8),             /* FUNCTION TYPE CODE    */
+*              %GENFTYP = '''01''X';        /* GENCB FUNCT TYPE CODE */
+*              5 GENCOP FIXED(15),          /* NUMBER OF COPIES      */
+*              5 GENUSA PTR(31),            /* USER AREA ADDRESS     */
+*              5 GENUSL FIXED(15),          /* USER AREA LENGTH      */
+*              5 * FIXED(15)GENEND          /* RESERVED              */
+*        %GENLEN = 'LENGTH(GENC)';          /* LENGTH OF THIS BLOCK  */
+*        %GO TO GENPLS4;
+         MACRO
+         IDAGENC &DSECT=YES
+         AIF   ('&DSECT' EQ 'YES').GEN1
+GENC     DS    0F                      GENCB HEADER ARG CONTROL ENTRY
+         AGO   .GEN2
+.GEN1    ANOP
+GENC     DSECT                         GENCB HEADER ARG CONTROL ENTRY
+.GEN2    ANOP
+GENBTC   DS    B                       BLOCK TYPE CODE
+GENACB   EQU   X'A0'                   ACB BLOCK TYPE CODE
+GENXLST  EQU   X'B0'                   EXLST BLOCK TYPE CODE
+GENRPL   EQU   X'C0'                   RPL BLOCK TYPE CODE
+GENFTC   DS    B                       FUNCTION TYPE CODE
+GENFTYP  EQU   1                       GENCB FUNCTION TYPE CODE
+GENCOP   DS    H                       NUMBER OF COPIES
+GENUSA   DS    A                       USER AREA ADDRESS
+GENUSL   DS    H                       USER AREA LENGTH
+         DS    H                       RESERVED
+GENLEN   EQU   *-GENC                  LENGTH OF THIS BLOCK
+         MEND
+*%GENPLS4 :;

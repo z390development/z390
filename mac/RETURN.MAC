@@ -1,0 +1,26 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands     
+.*********************************************************************
+&N       RETURN &REGS,&SETFLAG,&RC=
+         AIF   (N'&SYSLIST LE 2).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+.NPOK    ANOP
+&N       RESTORE &REGS
+         AIF   (&SETFLAG NE 'T').SETRC
+         OI    15(13),1 
+.SETRC   ANOP
+         AIF   (&RC EQ '').EXIT
+         LA    15,&RC
+.EXIT    ANOP
+         BR    14
+         MEXIT
+.ERR     ANOP
+         MNOTE 8,'MZ390E 1003 RETURN RANGE INVALID (&R1,&R2)'
+         MEND

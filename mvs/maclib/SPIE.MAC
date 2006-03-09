@@ -1,0 +1,193 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    SPIE  &EXIT,&INTS,&MF=I
+.*                                                                  S
+.*  DEFINE LOCAL VARIABLES                                          S
+.*                                                                  S
+         LCLA  &DNO,&ENO,&A,&AA,&B                               YM1995
+         LCLB  &BIT(17)                                             S
+         LCLC  &INDEX,&PM,&PMA,&M1,&M1A,&M2,&M2A,&M3,&M3A,&C,&D,&E
+         LCLC  &FIRST,&N1,&N2,&CC,&PICAR,&PICARX,&PICARS         YM1995
+.*
+.*  SCAN THE INTERRUPT BITS
+.*
+         AIF   ('&INTS' EQ '').SORTMF
+&A       SETA  1                  INDEX THE FIRST INTERRUPT SUB-PARM
+.MAIN    AIF   ('&INTS(&A)' EQ '').BUMP  BLANK OPERANDS IGNORED
+&C       SETC  '&INTS(&A)'        A MORE WORKABLE FORM
+         AIF   ('&C'(1,1) EQ '(').SERIES  IN PARENS MEANS FROM X TO Y
+         AIF   (T'&INTS(&A) NE 'N').ERROR2  MUST BE A NUMBER
+         AIF   (&INTS(&A) LT 1 OR &INTS(&A) GT 17 OR &INTS(&A) EQ 16).EX
+               RROR2              RANGE OF POSSIBILITY              S
+&BIT(&C) SETB  1                  SET APPROPRIATE MASK BIT
+.BUMP    AIF   (&A EQ N'&INTS).DONE  ALL CHECKED
+&A       SETA  &A+1               BUMP INDEX
+  AGO    .MAIN     GET NEXT
+.*
+.*  SET A SERIES OF BITS
+.SERIES  AIF   ('&C'(3,1) EQ ',').SHORT  ONE DIGIT NUMBER TO START
+.* START WITH A TWO DIGIT NUMBER
+&D       SETC  '&C'(2,2)          START OF THE SEQUENCE
+         AIF   ('&C'(4,1) NE ',' OR '&C'(7,1) NE ')').ERROR2  EXPECTED
+&E       SETC  '&C'(5,2)          END OF SEQUENCE
+         AGO   .SETSER            GO TO SET THE BITS
+.* START WITH A ONE DIGIT NUMBER
+.SHORT   ANOP
+&D       SETC  '&C'(2,1)          START OF THE SEQUENCE
+         AIF   ('&C'(5,1) EQ ')').SHORT2   CHECK 2ND LENGTH OF 1
+         AIF   ('&C'(6,1) NE ')').ERROR2 TOO MANY OR TOO LONG
+&E       SETC  '&C'(4,2)          END OF THE SEQUENCE
+         AGO   .SETSER
+.SHORT2  ANOP
+&E       SETC  '&C'(4,1)          END OF THE SEQUENCE
+.* SET ON THE SERIES
+.SETSER  ANOP
+&DNO     SETA  &D                 GET THE ALGEBRAIC EQUIVALENT
+&ENO     SETA  &E                 GET THE ALGEBRAIC EQUIVALENT
+         AIF   (&DNO GT &ENO OR &DNO LT 1 OR &ENO GT 17).ERROR2     S
+         AIF   (&ENO EQ 17 AND &DNO NE 17).ERROR2                    S
+.INNER   ANOP
+&BIT(&DNO)  SETB  1               INDEX AND SET ON THE BIT
+         AIF   (&DNO EQ &ENO).BUMP DONE, GET NEXT SUB OPERAND
+&DNO     SETA  &DNO+1             GET NEXT IN SERIES
+         AGO   .INNER             SET IT ON
+.DONE    AIF    (NOT &BIT(17)).SORTMF     IF 17, EXTENDED PICA
+&BIT(16) SETB  1
+.*
+.*  SORT THE FORM OF MACRO REQUESTED
+.*
+.SORTMF  AIF   ('&MF'(1,1) EQ '(').EXECUTE  EXECUTE FORM            S
+         CNOP  0,4                ALIGN PICA TO FULLWORD BOUNDARY   S
+&FIRST   SETC  '&NAME'            TO SET THE LABEL ON THE FIRST LINES
+         AIF   ('&MF' EQ 'I').INLINE        EXPAND IN LINE          S
+         AIF   ('&MF' NE 'L').ERROR3        ONLY CORRECT THING IS LIST
+.*
+.*  CREATE THE PICA WITHOUT ISSUING THE SVC CALL
+.*
+  AIF    (T'&EXIT EQ 'O').DEF
+         AIF   ('&EXIT'(1,1) EQ '(').ERROR1  REG VALUES NOT ALLOWED S
+         AGO   .DEF               DEFINE THE PICA                   S
+.*
+.*  CREATE AND ADDRESS THE PICA AND ISSUE THE SVC                   S
+.*
+.INLINE  AIF  (T'&EXIT EQ 'O').BAL
+         AIF   ('&EXIT'(1,1) NE '(').BAL  EXIT DEFINED BY 'DC'      S
+&FIRST   STCM  &EXIT(1),7,*+9     SET THE EXIT ADDRESS              S
+&FIRST   SETC  ''                 NAME SET, NOW BLANK IT            S
+.BAL     AIF   (&BIT(16)).BALEXT  EXTENDED PICA                     S
+&FIRST   BAL   1,*+10             ADDRESS AND BYPASS THE PICA       S
+         AGO   .BLNKNAM           BLANK THE NAME                    S
+.BALEXT  ANOP
+&FIRST   BAL   1,*+12             BRANCH AROUND ADDRESS THE PICA    S
+.BLNKNAM ANOP
+&FIRST   SETC  ''                 NAME SET, BLANK IT                S
+.*
+.*  DEFINE THE PICA
+.*
+.DEF     ANOP
+&FIRST   DC    BL1'0000&BIT(8)&BIT(10)&BIT(13)&BIT(14)' PROGRAM MASKS
+         AIF   ('&EXIT' EQ '').EXAD0
+         AIF   ('&EXIT'(1,1) EQ '(').EXAD0
+         DC    AL3(&EXIT)         EXIT ROUTINE ADDRESS              S
+         AGO   .DEFINT            TO DEFINE THE INTERRUPT TYPES     S
+.EXAD0   DC    AL3(0)             EXIT ROUTINE ADDRESS LOC
+.DEFINT  DC    BL2'&BIT(16)&BIT(1)&BIT(2)&BIT(3)&BIT(4)&BIT(5)&BIT(6)&BX
+               IT(7)&BIT(8)&BIT(9)&BIT(10)&BIT(11)&BIT(12)&BIT(13)&BIT(X
+               14)&BIT(15)'       THE INTERRUPT MASK BYTES 1 AND 2
+         AIF   (NOT &BIT(16)).TESTX  DONE IF NO EXTENTION           S
+         DC    BL2'0&BIT(17).00000000000000' HANDLE OWN PAGE FAULTS S
+.*
+.TESTX   AIF   ('&MF' EQ 'I').SVC   FOR INLINE, GO TO ISSUE THE SVC  S
+         MEXIT                      FOR LIST, ALL DONE
+.*
+.*
+.* EXECUTE FORM:  THIS ONE GETS CONFUSING.  LET'S PRAY IT ISN'T MUCH
+.*                                USED.
+.*
+.EXECUTE AIF   ('&MF(1)' NE 'E').ERROR1  CHECK THE DISTINCTIVE 'E'  S
+         AIF   ('&MF(2)'(1,1) EQ '(').MFR  PICA AD IN A  REG     YM1995
+&INDEX   SETC  '+'                DISPLACEMENT 'PLUS A LABEL'
+&PICARX  SETC  '&MF(2)'                                          YM1995
+&PICARS  SETC  '&MF(2)'                                          YM1995
+         AGO   .CKINTS                                           YM1995
+.MFR     ANOP                     DISPLACEMENT IS NULL           YM1995
+&B       SETA  K'&MF-6            TO GET REGISTER                YM1995
+&PICAR   SETC  '&MF'(5,&B)                                       YM1995
+&PICARX  SETC  '(&PICAR,0)'                                      YM1995
+&PICARS  SETC  '(&PICAR)'                                        YM1995
+.CKINTS  AIF   ('&INTS' EQ '').SAVEINT  SAVE THE OLD INTERRUPT MASK S
+.*
+.*  DEFINE THE MASKS FOR BINARY MVI'S
+&PM      SETC  'B''0000'                             PROGRAM MASK
+&PMA     SETC  '&BIT(8)&BIT(10)&BIT(13)&BIT(14)'''
+&M1      SETC  'B''&BIT(16)&BIT(1)&BIT(2)&BIT(3)'    BYTE ONE OF
+&M1A     SETC  '&BIT(4)&BIT(5)&BIT(6)&BIT(7)'''      INTERRUPT MASK
+&M2      SETC  'B''&BIT(8)&BIT(9)&BIT(10)&BIT(11)'   BYTE TWO
+&M2A     SETC  '&BIT(12)&BIT(13)&BIT(14)&BIT(15)'''
+&M3      SETC  'B''0&BIT(17)00'
+&M3A     SETC  '0000'''
+.*
+.* SET THE EXIT ADDRESS
+         AIF   ('&EXIT' EQ '').SETMASK      OLD EXIT ADDR OK        S
+         AIF   ('&EXIT'(1,1) EQ '(').XREGAD EXIT ADDR IN A REG      S
+&NAME    LA    15,&EXIT                     ADDRESS THE EXIT        S
+         ST    15,0&INDEX&PICARX            SET ADDR IN THE PICA YM1995
+         AGO   .SETMASK                     SET THE MASKS           S
+.XREGAD  ANOP
+&NAME    ST    &EXIT(1),0&INDEX&PICARX      SET EXIT ADDR IN PICAYM1995
+.*
+.*  MOVE THE PROGRAM AND INTERRUPT MASKS TO THE EXECUTED PICA
+.SETMASK MVI   0&INDEX&PICARS,&PM&PMA  STORE THE PROGRAM MASK    YM1995
+         MVI   4&INDEX&PICARS,&M1&M1A FIRST BYTE IN INTERRUPT MSKYM1995
+         MVI   5&INDEX&PICARS,&M2&M2A  SECOND BYTE               YM1995
+         AIF   (NOT &BIT(16)).SETR1         NOT AN EXTENDED PICA
+         MVI   6&INDEX&PICARS,&M3&M3A  THIRD BYTE                YM1995
+         AGO   .SETR1                        ADDRESS PICA
+.*
+.*  DO NOT DISTURB THE PRESENT MASKS; SET EXIT ADDRESS IF NECESSARY
+.*  AND EXECUTE  THE SVC
+.*
+.SAVEINT AIF   ('&EXIT' EQ '').SVCONLY      JUST ADDRESS IT AND LEAVE
+         AIF   ('&EXIT'(1,1) EQ '(').STCMR  REG SPECIFIED,JUST STORE IT
+&NAME    LA    15,&EXIT(1)        ADDR THE EXIT ROUTINE
+         STCM  15,7,1&INDEX&PICARS  SET ONLY THE ADDRESS BYTES   YM1995
+         AGO   .SETR1             GO TO ADDRESS THE PICA
+.STCMR   ANOP                     REGISTER SPECIFIED
+&NAME    STCM  &EXIT(1),7,1&INDEX&PICARS SET ONLY THE ADDR BYTES YM1995
+         AGO   .SETR1             GO TO ADDRESS THE PICA
+.*
+.* IF NO INTERRUPT MASK OR NEW EXIT ADDRESS WERE SPECIFIED THE NAME
+.*  MUST YET BE DEFINED
+.*
+.SVCONLY ANOP
+&N1      SETC  '&NAME'           SET NAME ON LOAD R1 OR SVC INSTR.
+.*
+.*  SET THE PICA ADDRESS IN REGISTER 1
+.SETR1   AIF   ('&MF(2)'(1,1) EQ '(').AREG
+&N1      LA    1,&MF(2)           ADDRESS THE PICA
+         AGO   .SVC
+.AREG    AIF   ('&MF(2)' EQ '(1)').INSURE  NO NEED TO SET IF REG 1
+&N1      IHBINNRA &MF(2)           LOAD REG 1 WITH PICA ADDRESS
+         AGO   .SVC
+.INSURE  ANOP
+&N2      SETC  '&N1'  IF NO PARAM AND REG1 SPEC'D, THERE IS YET NO NAME
+.*
+.*  THE SVC CALL
+.*
+.SVC     ANOP
+&N2      SVC   14                 ISSUE THE SPIE SVC
+         MEXIT
+.*
+.*  ERROR EXITS
+.*
+.ERROR1  IHBERMAC  69
+         MEXIT
+.ERROR2  IHBERMAC  37,,&INTS    INVALID SECOND OPERAND  (X,X,X,)
+         MEXIT
+.ERROR3  IHBERMAC 35,,&MF       INVALID MF OPERAND  MF=XXX
+         MEND
+**/
+* SPIE:  MACRO KEYS(MF);
+*        ANS('?'||MACLABEL||'SPIEP '||MACLIST||MACKEYS||';');
+*%END;

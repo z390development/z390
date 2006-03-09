@@ -1,0 +1,284 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/* A 000000-999999                                          @PC001PY*/
+*/*                                                          @PC002PY*/
+*/* C-ACEEAMP                                                @ZA25840*/
+*/*************START OF SPECIFICATIONS********************************/
+*/*                                                                  */
+*/*                                                                  */
+*/* $MAC(IHAACEE) COMP(SC1BN) PROD(RACF):                            */
+*/*                                                                  */
+*/* DESCRIPTIVE NAME = ACESSOR ENVIRONMENT ELEMENT                   */
+*/*                                                                  */
+*/*                                                                  */
+*/* STATUS = OS/VS2 EBB1102                                      @L4A*/
+*/*                                                                  */
+*/* METHOD OF ACCESS = %INCLUDE SYSLIB(IHAACEE) FOR PL/S             */
+*/*            ISSUE THE IHAACEE MACRO IN BAL                        */
+*/*                                                                  */
+*/* FUNCTION = THIS MAPPING MACRO MAPS THE RACF ACCESSOR ENVIRON-    */
+*/*            MENT ELEMENT.  THIS CONTROL BLOCK REPRESENTS THE      */
+*/*            AUTHORITIES OF A SINGLE ACCESSOR IN THE ADDRESS       */
+*/*            SPACE.                                                */
+*/*                                                                  */
+*/* MACROS = NONE                                                    */
+*/*                                                                  */
+*/* CHANGE ACTIVITY =                                                */
+*/*        RACF VERSION 1,RELEASE 2                          @PC002PY*/
+*/*        @ZA25840                                                  */
+*/*        RACF VERSION 1, RELEASE 3                         @PC003PY*/
+*/*        $L4=HRF1402,RACF/140,810701,SJRDSD:                   @L4A*/
+*/*        @ZA60739                                          @ZA60739*/
+*/*        $L5=HRF1502,RACF/150,811015,CNTDSD:                   @L5A*/
+*/*        $L6=HRF1602,RACF/160,830207,CNTDSD:                   @L6A*/
+*/*        UZ90283                                           @ZA90283*/
+*/*        UZ90284                                           @ZA90284*/
+*/*        UZ90285                                           @ZA90285*/
+*/*                                                                  */
+*/**************END OF SPECIFICATIONS*********************************/
+*%GOTO ACEEPLS;                     /* BILINGUAL HEADER
+         MACRO
+         IHAACEE
+ACEE     DSECT  ,ACEEPTR            ACCESSOR ENVIRONMENT ELEMENT
+ACEEACEE DS    CL4                  ACRONYM IN EBCDIC -ACEE-
+ACEECORE DS    0F                   ACEE SUBPOOL AND LENGTH
+ACEESP   DS    AL1                  ACEE SUBPOOL NUMBER
+ACEELEN  DS    AL3                  LENGTH OF ACEE
+ACEEVRSN DS    AL1                  ACEE VERSION NUMBER = 1.     @L4A
+         DS    CL3                  RESERVED
+ACEEIEP  DS    A                    RESERVED FOR INSTALLATION
+ACEEINST DS    A                    ADDRESS OF INSTALLATION SUPPLIED
+*                                   USER DATA - FROM USER ENTRY
+ACEEUSER DS    0CL9                 USERID INFORMATION
+ACEEUSRL DS    AL1                  USERID LENGTH
+ACEEUSRI DS    CL8                  USERID
+ACEEGRP  DS    0CL9                 GROUP NAME INFORMATION
+ACEEGRPL DS    AL1                  GROUP NAME LENGTH
+ACEEGRPN DS    CL8                  CONNECT GROUP NAME
+ACEEFLG1 DS    B                    USER FLAGS
+ACEESPEC EQU   X'80'                1 - SPECIAL ATTRIBUTE
+ACEEADSP EQU   X'40'                1 - AUTOMATIC DATA SECURITY
+*                                   PROTECTION                 @PC002PY
+ACEEOPER EQU   X'20'                1 - OPERATIONS ATTRIBUTE
+ACEEAUDT EQU   X'10'                1 - AUDITOR ATTRIBUTE      @PC002PY
+ACEELOGU EQU   X'08'                1 - USER IS TO HAVE MOST RACF
+*                                       FUNCTIONS LOGGED       @PC002PY
+*        EQU   X'04'                RESERVED
+ACEEPRIV EQU   X'02'                1 - USER IS A STARTED PROCEDURE
+*                                   WITH THE PRIVELEGED ATTRIBUTE @L6A
+ACEERACF EQU   X'01'                1 - RACF DEFINED USER
+ACEEFLG2 DS    B                    DEFAULT UNIVERSAL ACCESS
+ACEEALTR EQU   X'80'                1 - ALTER AUTORITY TO
+*                                       RESOURCE               @PC002PY
+ACEECNTL EQU   X'40'                1 - CONTROL AUTHORITY TO
+*                                       RESOURCE               @PC002PY
+ACEEUPDT EQU   X'20'                1 - UPDATE AUTHORITY TO
+*                                       RESOURCE               @PC002PY
+ACEEREAD EQU   X'10'                1 - READ AUTHORITY TO
+*                                       RESOURCE               @PC002PY
+*        EQU   X'08'                RESERVED
+*        EQU   X'04'                RESERVED
+*        EQU   X'02'                RESERVED
+ACEENONE EQU   X'01'                1 - NO AUTHORITY TO
+*                                       RESOURCE               @PC002PY
+ACEEFLG3 DS    B                    MISCELLANEOUS FLAGS
+ACEEGRPA EQU   X'80'                ACCESS LIST OF GROUP DS
+*                                   TO CONTAIN
+*                                   0 - USERID
+*                                   1 - GROUP NAME AND USERID
+*        EQU   X'40'                RESERVED
+*        EQU   X'20'                RESERVED
+*        EQU   X'10'                RESERVED
+*        EQU   X'08'                RESERVED
+*        EQU   X'04'                RESERVED
+*        EQU   X'02'                RESERVED
+*        EQU   X'01'                RESERVED
+ACEEDATE DS    CL3                  DATE OF RACINIT
+ACEEPROC DS    CL8                  NAME OF STARTED PROC OR BLANKS
+*                                   IF NOT A STARTED PROC
+ACEETRMP DS    A                    ADDRESS OF TERMINAL RELATED
+*                                   INFORMATION. ZERO FOR NON-
+*                                   TERMINAL USERS             @PC002PY
+ACEEFLG4 DS    XL2                  MISCELLANEOUS FLAGS 2      @PC002PY
+*        EQU   X'80'                RESERVED                   @PC002PY
+*        EQU   X'40'                RESERVED                   @PC002PY
+ACEEUATH EQU   X'20'                1 - USER IS AUTHORIZED TO DEFINE
+*                                       OTHER USERS            @PC002PY
+*        EQU   X'10'                RESERVED                   @PC002PY
+ACEEDASD EQU   X'08'                1 - USER IS AUTHORIZED TO PROTECT
+*                                       DASD VOLUMES           @PC002PY
+ACEETAPE EQU   X'04'                1 - USER IS AUTHORIZED TO PROTECT
+*                                       TAPE VOLUMES           @PC002PY
+ACEETERM EQU   X'02'                1 - USER IS AUTHORIZED TO PROTECT
+*                                       TERMINALS              @PC002PY
+ACEEAPLV DS    AL1                  APPLICTAION LEVEL NUMBER   @PC003PY
+ACEETRLV DS    AL1                  TERMINAL LEVEL NUMBER      @PC002PY
+ACEETRDA DS    A                    ADDRESS OF INSTALLATION SUPPLIED
+*                                   DATA FROM TERMINAL ENTRY   @PC002PY
+ACEETRID DS    CL8                  TERMINAL ID                @PC002PY
+ACEEAMP  DS    A                    ADDRESS 1ST ANCHORED MODEL @ZA25840
+ACEECLTH DS    BL4                  USER CLASS AUTHORIZATIONS -
+*                                   THESE BIT POSITIONS ARE MAPPED
+*                                   BY THE CLASS DESCRIPTOR ENTRIES
+*                                   ANCHORED OFF THE RACF CVT  @PC003PY
+ACEECLCP DS    A                    ANCHOR FOR INSTORAGE PROFILE
+*                                   TREES BUILT BY THE RACLIST
+*                                   FUNCTION                   @PC003PY
+ACEEAPTR DS    A                    ADDRESS FIELD RESERVED FOR
+*                                   APPLICATION USAGE          @PC----
+ACEEAPLN DS    CL8                  NAME OF APPLICATION TO WHICH
+*                                   USER IS CONNECTED OR BLANKS
+*                                   IF NO APPLICATION SPECIFIED
+*                                                              @PC003PY
+ACEEAPDA DS    A                    ADDRESS INSTALLATION SUPPLIED
+*                                   DATA FROM APPLICATION ENTRY
+*                                                              @PC003PY
+ACEEUNAM DS    A                    ADDRESS OF USER NAME STRING.   @L4A
+*                                   ZERO, IF NO NAME PRESENT.      @L4A
+*                                   IF PRESENT, THE FIRST BYTE IS  @L4A
+*                                   A LENGTH FIELD FOLLOWED BY THE @L4A
+*                                   NAME STRING.                   @L4A
+*                                                                  @L4A
+ACEEMDLS DS    A                    ADDRESS OF THE MODEL NAME      @L4A
+*                                   ARRAY. ZERO, IF ARRAY NOT      @L4A
+*                                   OBTAINED BY RACINIT.           @L4A
+*                                                                  @L4A
+ACEECGRP DS    A                    ADDRESS OF TABLE CONTAINING    @L4A
+*                                   THE LIST OF GROUPS THIS        @L4A
+*                                   USERID IS A MEMBER OF.         @L4A
+ACEEGATA DS    A                    ADDRESS OF THE GENERIC
+*                                   ANCHOR TABLE                   @L5A
+ACEEFCGP DS    A                    ADDRESS OF LIST OF GROUPS USER
+*                                   IS A MEMBER OF, BUILT BY RACINIT,
+*                                   USED BY FRACHECK, IT IS NOT
+*                                   AUTOMATICALLY REFRESHED    @ZA60739
+         DS    6A                   RESERVED.                      @L6A
+         MEND
+* TERMINATE PL/S COMMENT                                             */
+*%ACEEPLS:;                         /* PLS ACEE STRUCTURE            */
+    DECLARE 1 ACEE BASED(ACEEPTR),  /* ACCESSOR ENVIRONMENT ELEMENT  */
+              2 ACEEACEE CHAR(4),   /* ACRONYM IN EBCDIC -ACEE-      */
+              2 ACEECORE PTR(31),   /* ACEE SUBPOOL AND LENGTH       */
+                3 ACEESP   PTR(8),  /* ACEE SUBPOOL NUMBER           */
+                3 ACEELEN  PTR(24), /* LENGTH OF ACEE                */
+              2 ACEEVRSN   FIXED(8),/* VERSION = 1.              @L4A*/
+              2 *          CHAR(3), /* RESERVED                      */
+              2 ACEEIEP    PTR(31), /* RESERVED FOR INSTALLATION     */
+              2 ACEEINST   PTR(31), /* ADDRESS OF INSTALLTION SUPPLIED
+                                       USER DATA - FROM USER ENTRY   */
+              2 ACEEUSER,           /* USERID INFORMATION            */
+                3 ACEEUSRL PTR(8),  /* USERID LENGTH                 */
+                3 ACEEUSRI CHAR(8), /* USERID                        */
+              2 ACEEGRP,            /* GROUP NAME INFORMATION        */
+                3 ACEEGRPL PTR(8),  /* GROUP NAME LENGTH             */
+                3 ACEEGRPN CHAR(8), /* CONNECT GROUP NAME            */
+              2 ACEEFLG1   BIT(8),  /* USER FLAGS                    */
+                3 ACEESPEC BIT(1),  /* 1 - SPECIAL ATTRIBUTE         */
+                3 ACEEADSP BIT(1),  /* 1 - AUTOMATIC DATA SECURITY
+                                           PROTECTION        @PC002PY*/
+                3 ACEEOPER BIT(1),  /* 1 - OPERATIONS ATTRIBUTE      */
+                3 ACEEAUDT BIT(1),  /* 1 - AUDITOR ATTRIBUTE @PC002PY*/
+                3 ACEELOGU BIT(1),  /* 1 - USER IS TO HAVE MOST RACF
+                                           FUNCTIONS LOGGED  @PC002PY*/
+                3 *        BIT(1),  /* RESERVED                      */
+                3 ACEEPRIV BIT(1),  /* 1 - USER IS A STARTED PROCEDURE
+                                       WITH THE PRIVELEGED ATTRIBUTE
+                                                                 @L6A*/
+                3 ACEERACF BIT(1),  /* 1 - RACF DEFINED USER         */
+              2 ACEEFLG2   BIT(8),  /* DEFAULT UNIVERSAL ACCESS      */
+                3 ACEEALTR BIT(1),  /* 1 - ALTER AUTHORITY TO
+                                           RESOURCE          @PC002PY*/
+                3 ACEECNTL BIT(1),  /* 1 - CONTROL AUTHORITY TO
+                                           RESOURCE          @PC002PY*/
+                3 ACEEUPDT BIT(1),  /* 1 - UPDATE AUTHORITY TO
+                                           RESOURCE          @PC002PY*/
+                3 ACEEREAD BIT(1),  /* 1 - READ AUTHORITY TO
+                                           RESOURCE          @PC002PY*/
+                3 *        BIT(1),  /* RESERVED                      */
+                3 *        BIT(1),  /* RESERVED                      */
+                3 *        BIT(1),  /* RESERVED                      */
+                3 ACEENONE BIT(1),  /* 1 - NO AUTHORITY TO
+                                           RESOURCE          @PC002PY*/
+              2 ACEEFLG3   BIT(8),  /* MISCELLANEOUS FLAGS           */
+                3 ACEEGRPA BIT(1),  /* ACCESS LIST OF GROUP DS
+                                       TO CONTAIN
+                                       0 - USERID
+                                       1 - GROUP NAME AND USERID     */
+                3 *        BIT(1),  /* RESERVED                      */
+                3 *        BIT(1),  /* RESERVED                      */
+                3 *        BIT(1),  /* RESERVED                      */
+                3 *        BIT(1),  /* RESERVED                      */
+                3 *        BIT(1),  /* RESERVED                      */
+                3 *        BIT(1),  /* RESERVED                      */
+                3 *        BIT(1),  /* RESERVED                      */
+              2 ACEEDATE CHAR(3),   /* DATE OF RACINIT               */
+              2 ACEEPROC CHAR(8),   /* NAME OF STARTED PROC OR
+                                       BLANKS IF NOT STARTED PROC    */
+              2 ACEETRMP PTR(31),   /* ADDRESS OF TERMINAL RELATED
+                                       INFORMATION. ZERO FOR NON-
+                                       TERMINAL USERS        @PC002PY*/
+              2 ACEEFLG4   BIT(16), /* MISCELLANEOUS FLAGS 2 @PC002PY*/
+                3 *        BIT(1),  /* RESERVED              @PC002PY*/
+                3 *        BIT(1),  /* RESERVED              @PC002PY*/
+                3 ACEEUATH BIT(1),  /* 1 - USER IS AUTHORIZED TO
+                                           DEFINE OTHER USERS
+                                                             @PC003PY*/
+                3 *        BIT(1),  /* RESERVED              @PC002PY*/
+                3 ACEEDASD BIT(1),  /* 1 - USER IS AUTHORIZED TO
+                                           PROTECT DASD VOLUMES
+                                                             @PC002PY*/
+                3 ACEETAPE BIT(1),  /* 1 - USER IS AUTHORIZED TO
+                                           PROTECT TAPE VOLUMES
+                                                             @PC002PY*/
+                3 ACEETERM BIT(1),  /* 1 - USER IS AUTHORIZED TO
+                                           PROTECT TERMINALS @PC002PY*/
+                3 *        BIT(9),  /* RESERVED              @PC002PY*/
+              2 ACEEAPLV PTR(8),    /* APPLICATION LEVEL NUMBER
+                                                             @PC003PY*/
+              2 ACEETRLV PTR(8),    /* TERMINAL LEVEL NUMBER @PC002PY*/
+              2 ACEETRDA   PTR(31), /* ADDRESS OF INSTALLATION SUPPLIED
+                                       DATA FROM TERMINAL ENTRY
+                                                             @PC002PY*/
+              2 ACEETRID  CHAR(8),  /* TERMINAL ID           @PC002PY*/
+              2 ACEEAMP PTR(31),    /* ADDRESS FIRST ANCHORED
+                                       MODEL                 @ZA25840*/
+              2 ACEECLTH BIT(32),   /* USER CLASS AUTHORIZATIONS -
+                                       THESE BIT POSITIONS ARE MAPPED
+                                       BY THE CLASS DESCRIPTOR ENTRIES
+                                       ANCHORED OFF THE RACF CVT
+                                                             @PC003PY*/
+              2 ACEECLCP PTR(31),   /* ANCHOR FOR INSTORAGE PROFILE
+                                       TREES BUILT BY THE RACLIST
+                                       FUNCTION              @PC003PY*/
+              2 ACEEAPTR PTR(31),   /* ADDRESS FIELD RESERVED FOR
+                                       APPLICATION USAGE     @PC003PY*/
+              2 ACEEAPLN CHAR(8),   /* NAME OF APPLICATION TO WHICH
+                                       USER IS CONNECTED OR BLANKS
+                                       IF NO APPLICATION SPECIFIED
+                                                             @PC003PY*/
+              2 ACEEAPDA PTR(31),   /* ADDRESS INSTALLATION SUPPLIED
+                                       DATA FROM APPLICATION ENTRY   */
+              2 ACEEUNAM PTR(31),   /* ADDRESS OF USER NAME STRING.
+                                       ZERO, IF NO NAME PRESENT.
+                                       IF PRESENT, THE FIRST BYTE
+                                       IS A LENGTH FIELD FOLLOWED
+                                       BY THE NAME STRING.       @L4A*/
+              2 ACEEMDLS PTR(31),   /* ADDRESS OF THE DATA SET
+                                       MODEL NAME ARRAY. ZERO,
+                                       IF ARRAY NOT OBTAINED BY
+                                       RACINT.                   @L4A*/
+              2 ACEECGRP PTR(31),   /* ADDRESS OF TABLE
+                                       CONTAINING THE LIST OF
+                                       GROUPS THIS USERID IS A
+                                       MEMBER OF.                @L4A*/
+              2 ACEEGATA PTR(31),   /* ADDRESS OF THE GENERIC
+                                       ANCHOR TABLE              @L5A*/
+              2 ACEEFCGP PTR(31),   /* ADDRESS OF TABLE CONTAINING THE
+                                       LIST OF GROUPS THIS USERID IS A
+                                       MEMBER OF, BUILT BY RACINIT,
+                                       USED BY FRACHECK, IT IS NOT
+                                       AUTOMATICALLY REFRESHED
+                                                             @ZA60739*/
+              2 *(6) PTR(31);       /* RESERVED.                 @L6A*/
+ /*                                                                  */
+ /**************** END OF ACEE DEFINITION ****************************/
+

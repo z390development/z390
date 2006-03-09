@@ -1,0 +1,287 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/********************************************************************/
+*/*                                                                  */
+*/*   MACRO NAME = IDARMRCD                                          */
+*/*                                                                  */
+*/*   DESCRIPTIVE NAME = VSAM RECORD MANAGEMENT RETURN CODES         */
+*/*                                                                  */
+*/*   FUNCTION = DECLARES POSSIBLE VALUES FOR IFGRPL FIELDS,         */
+*/*              RPLERREG, RPLCMPON, AND RPLERRCD.                   */
+*/*                                                                  */
+*/*   INCLUDED MACROS = NONE                                         */
+*/*                                                                  */
+*/*   METHOD OF ACCESS = PL/S - NO DECLARES NECESSARY                */
+*/*                                                                  */
+*/*   STATUS = VS/1 RELEASE 4  (CHANGE FLAG @X04SVXX)                */
+*/*                                                                  */
+*/*   DATE OF LAST CHANGE = 9 AUG 74                                 */
+*/*                        25 JAN 78                         @ZA31009*/
+*/********************************************************************/
+*  /*                                                                */
+*  /*    THE FOLLOWING CODE MAY BE SET WHEN (REGISTER 15 = 0).       */
+*  DCL   RPLDVOL   PTR(8)    CONSTANT(4);  /* EOV CALLED             */
+*  DCL   RPLMOKEY  PTR(8)    CONSTANT(8);  /* DUPLICATE KEY FOLLOWS
+*                                                            @X04SVLC*/
+*  DCL   RPLWTBFR  PTR(8)    CONSTANT(12); /* WRITE BUFFER IS SUGGESTED
+*                                                            @X04SVMR*/
+*  DCL   RPLIXEND  PTR(8)    CONSTANT(16); /* NEW CONTROL AREA--SEQ SET
+*                                             RCD TOO SHORT  @ZA31009*/
+*  DCL   RPLCIWNG  PTR(8)    CONSTANT(28); /* A CI SPLIT BUSY CONDITION
+*                                             HAS BEEN DETECTED FOR
+*                                             READ-ONLY ADDRESSED
+*                                             ACCESS.        @ZA31009*/
+*  /*                                                                */
+*  /*    THE FOLLOWING CODES MAY BE SET WHEN (REGISTER 15 = 8).      */
+*  /*                    LOGICAL ERROR CODES                         */
+*  DCL   RPLEODER  PTR(8)    CONSTANT(4);  /* END OF DATA DETECTED   */
+*  DCL   RPLDUP    PTR(8)    CONSTANT(8);  /* DUPLICATE RECORD       */
+*                                   /* OR DUP RCD FOR AIX WITH UNIQUE
+*                                      KEY OPTION            @X04SVLC*/
+*  DCL   RPLSEQCK  PTR(8)    CONSTANT(12); /* KEY SEQUENCE ERROR     */
+*  DCL   RPLNOREC  PTR(8)    CONSTANT(16); /* NO RECORD FOUND        */
+*  DCL   RPLEXCL   PTR(8)    CONSTANT(20); /* CONTROL INTERVAL       */
+*                                          /* EXCLUSIVE USE CONFLICT */
+*  DCL   RPLNOMNT  PTR(8)    CONSTANT(24); /* RECORD ON NONMOUNTABLE */
+*                                          /* VOLUME                 */
+*  DCL   RPLNOEXT  PTR(8)    CONSTANT(28); /* NOT ABLE TO EXTEND     */
+*                                          /* DATA SET               */
+*  DCL   RPLINRBA  PTR(8)    CONSTANT(32); /* INVALID RBA            */
+*  DCL   RPLNOKR   PTR(8)    CONSTANT(36); /* NO KEY RANGE DEFINED   */
+*                                          /* FOR PUT RECORD         */
+*  DCL   RPLNOVRT  PTR(8)    CONSTANT(40); /* VIRTUAL STORAGE NOT    */
+*                                          /* AVAILABLE              */
+*  DCL   RPLINBUF  PTR(8)    CONSTANT(44); /* RECORD AREA TOO SMALL  */
+*  DCL   RPLNOPLH  PTR(8)    CONSTANT(64); /* PLACEHOLDER NOT AVAIL. */
+*  DCL   RPLINACC  PTR(8)    CONSTANT(68); /* ACCESS TYPE NOT ALLOWED*/
+*                                          /* BY MACRF OR PASSWORD   */
+*  DCL   RPLINKEY  PTR(8)    CONSTANT(72); /* KEYED REQUEST FOR ESDS
+*                                   GETIX/PUTIX TO ESDS/RRDS @X04SVMR*/
+*  DCL   RPLINADR  PTR(8)    CONSTANT(76);/* ADR OR CI INSERT FOR A
+*                                      KSDS                  @X04SVLC*/
+*  DCL   RPLERSER  PTR(8)    CONSTANT(80); /* INVALID ERASE REQUEST  */
+*                                   /* ERASE VIA PATH FOR ESDS
+*                                                            @X04SVLC*/
+*  DCL   RPLINLOC  PTR(8)    CONSTANT(84); /* INV. LOCATE MODE REQ.  */
+*  DCL   RPLNOPTR  PTR(8)    CONSTANT(88); /* NO POSITION PTR AVAIL. */
+*                                   /* OR NO POSITIONING FOR SEQ PUT
+*                                      INSERT FOR RRDS. OR ILLEGAL
+*                                      SWITCH BETWEEN FWD AND BWD
+*                                      PROCESSING            @X04SVLC*/
+*  DCL   RPLINUPD  PTR(8)    CONSTANT(92); /* UPD/ERASE--NO GET UPD  */
+*                                   /* OR PUTIX WITHOUT PRECEDING
+*                                       GETIX                @X04SVLC*/
+*  DCL   RPLKEYCH  PTR(8)    CONSTANT(96); /* KEY CHANGE ATTEMPTED   */
+*  DCL   RPLDLCER  PTR(8)    CONSTANT(100);/* RECORD LENGTH CHANGE   */
+*                                          /* ON ADDRESSED UPDATE
+*                                                            @X04SVLC*/
+*  DCL   RPLINVP   PTR(8)    CONSTANT(104);/* INVALID RPL OPTIONS    */
+*                                   /* KEY, ADR OR CNV NOT SPECIFIED
+*                                      SKP WITHOUT KEYED ACCESS
+*                                                            @X04SVLC*/
+*                                   /* SKP WITH OPTCD=BWD    @X04SVLC*/
+*                                   /* CNV WITH OPTCD=BWD    @X04SVLC*/
+*                                   /* LRD WITH OPTCD=FWD    @X04SVLC*/
+*                                   /* WRTBFR, MRKBFR, OR SCHBFR
+*                                      WITH TRANSID>31 OR WITHOUT
+*                                      DB/DC OPTION          @X04SVLC*/
+*  DCL   RPLINLEN  PTR(8)    CONSTANT(108);/* RECORD LENGTH TOO LARGE*/
+*                                          /* OR TOO SMALL           */
+*                                   /* OR RECLEN NOT EQUAL TO RECORD
+*                                      (SLOT) SIZE SPEC FOR RRDS
+*                                                            @X04SVLC*/
+*  DCL   RPLKEYLC  PTR(8)    CONSTANT(112);/* GENERIC KEY LENGTH TOO */
+*                                          /* LARGE OR 0             */
+*  DCL   RPLINLRQ  PTR(8)    CONSTANT(116);/* INVALID REQUEST TYPE   */
+*                                          /* OR OPTION DURING LOAD  */
+*                                   /* OR REQUEST OTHER THAN PUT INSERT
+*                                       FOR RRDS LOADING     @X04SVLC*/
+*  DCL   RPLINTCB  PTR(8)    CONSTANT(120);/* CURRENT JOB STEP TCB IS
+*                                        NOT CORRECT ONE     @X04SVMR*/
+*  DCL   RPLSRLOC  PTR(8)    CONSTANT(132);/* ATTEMPT TO READ SPANNED
+*                                        RCD IN LOCATE MODE  @X04SVLC*/
+*  DCL   RPLARSRK  PTR(8)    CONSTANT(136);/* ADDR RETRIEVAL SPANNED
+*                                      RCD OF KSDS ATTEMPTED @X04SVLC*/
+*  DCL   RPLSRISG  PTR(8)    CONSTANT(140);/* INCONSISTANT SPANNED RCD
+*                                                            @X04SVLC*/
+*  DCL   RPLNBRCD  PTR(8)    CONSTANT(144);/* PTR IN AIX WITH NO BASE
+*                                       RECORD               @X04SVLC*/
+*  DCL   RPLNXPTR  PTR(8)    CONSTANT(148);/* MAX NBR OF AIX RCD PTRS
+*                                       EXCEEDED             @X04SVLC*/
+*  DCL   RPLNOBFR  PTR(8)    CONSTANT(152); /* NO BUFFERS    @X04SVMR*/
+*  DCL   RPLINCNV  PTR(8)    CONSTANT(156); /* INVALID DATA CONTROL
+*                                              INTERVAL OR CI SPLIT BUS
+*                                              AND ADDRESSED ACCESS FOR
+*                                              OUTPUT        @ZA31009*/
+*  DCL   RPLIRRNO  PTR(8)    CONSTANT(192);/* INVALID RELATIVE RCD
+*                                       NUMBER               @X04SVLC*/
+*  DCL   RPLRRADR  PTR(8)    CONSTANT(196);/* ADDRESSED REQ FOR RRDS
+*                                                            @X04SVLC*/
+*  DCL   RPLPAACI  PTR(8)    CONSTANT(200);/* ADDR OR CNV ACCESS THRU
+*                                       PATH ATTEMPTED       @X04SVLC*/
+*  DCL   RPLPUTBK  PTR(8)    CONSTANT(204);/* PUT INSERT NOT ALLOWED
+*                                       IN BACKWARD MODE     @X04SVLC*/
+*  DCL   RPLINVEQ  PTR(8)    CONSTANT(208);/* INVALID ENDREQ ISSUED
+*                                       (301 PREVENTED)      @OZ02513*/
+*  /*                                                                */
+*  /*    THE FOLLOWING CODE VALUES ARE NOT ASSIGNED                  */
+*  /*               48,52,56,60                                      */
+*  /*                                                                */
+*  /*    THE FOLLOWING CODES MAY BE SET WHEN (REGISTER 15 = 12)      */
+*  /*                    PHYSICAL ERROR CODES                        */
+*  DCL   RPLRDERD  PTR(8)    CONSTANT(4);  /* DATA  READ ERROR       */
+*  DCL   RPLRDERI  PTR(8)    CONSTANT(8);  /* INDEX READ ERROR       */
+*  DCL   RPLRDERS  PTR(8)    CONSTANT(12); /* SEQUENCE SET READ ERROR*/
+*  DCL   RPLWTERD  PTR(8)    CONSTANT(16); /* DATA WRITE ERROR       */
+*  DCL   RPLWTERI  PTR(8)    CONSTANT(20); /* INDEX WRITE ERROR      */
+*  DCL   RPLWTERS  PTR(8)    CONSTANT(24); /* SEQUENCE SET WRITE ERR.*/
+*/*      THE FOLLOWING CODES ARE SET IN RPLCMPON WHENEVER
+*        RPLERREG IS NON-ZERO                                @X04SVLC*/
+*  DCL RPLBASER PTR(8) CONSTANT(0);/* ERROR ACCESSING BASE DS-
+*                                     UPGRADE IS OK          @X04SVLC*/
+*  DCL RPLBASUM PTR(8) CONSTANT(1);/* ERROR ACCESSING BASE-UPGRADE
+*                                     MAY BE BAD             @X04SVLC*/
+*  DCL RPLAIXER PTR(8) CONSTANT(2);/* ERROR ACCESSING AIX OVER
+*                                     BASE-UPGRADE IS OK     @X04SVLC*/
+*  DCL RPLAIXUM PTR(8) CONSTANT(3);/* ERROR ACCESSING AIX- UPGRADE
+*                                     MAY BE BAD             @X04SVLC*/
+*  DCL RPLUPGER PTR(8) CONSTANT(4);/* ERROR DURING AIX UPGRADE-
+*                                     UPGRADE IS OK          @X04SVLC*/
+*  DCL RPLUPGUM PTR(8) CONSTANT(5);/* ERROR DURING UPGRADE - UPGRADE
+*                                     MAY BE BAD             @X04SVLC*/
+*%GOTO RMRCPLS1;
+         MACRO
+         IDARMRCD
+*        THE RETURN CODE VALUES ARE SET IN RPLERRCD IN THE RPL
+*
+*        THE FOLLOWING CODE MAY BE SET WHEN REGISTER 15 = 0
+RPLDVOL  EQU   4                        EOV CALLED
+RPLMOKEY EQU   8                        DUPLICATE KEY FOLLOWS  @X04SVLC
+RPLWTBFR EQU   12                       WRITE BUFFER IS SUGGESTED
+*                                                              @X04SVLC
+RPLIXEND EQU   16                       NEW CONTROL AREA--SEQ SET
+*                                             RCD TOO SHORT  @ZA31009
+RPLCIWNG EQU   28                       A CI SPLIT BUSY CONDITION
+*                                             HAS BEEN DETECTED FOR
+*                                             READ-ONLY ADDRESSED
+*                                             ACCESS.        @ZA31009
+*
+*        THE FOLLOWING CODES MAY BE SET WHEN REGISTER 15 = 8
+*                        LOGICAL ERROR CODES
+RPLEODER EQU   4                        END OF DATA DETECTED
+RPLDUP   EQU   8                        DUPLICATE RECORD
+*                                       OR DUP RCD FOR AIX WITH UNIQUE
+*                                         KEY OPTION         @X04SVLC
+RPLSEQCK EQU   12                       KEY SEQUENCE ERROR
+RPLNOREC EQU   16                       NO RECORD FOUND
+RPLEXCL  EQU   20                       CONTROL INTERVAL EXCLUSIVE
+*                                       USE CONFLICT
+RPLNOMNT EQU   24                       RECORD ON NONMOUNTABLE VOLUME
+RPLNOEXT EQU   28                       NOT ABLE TO EXTEND DATA SET
+RPLINRBA EQU   32                       INVALID RBA
+RPLNOKR  EQU   36                       NO KEY RANGE DEFINED FOR
+*                                       PUT RECORD
+RPLNOVRT EQU   40                       VIRTUAL STORAGE NOT AVAILABLE
+RPLINBUF EQU   44                       RECORD AREA TOO SMALL
+RPLNOPLH EQU   64                       PLACEHOLDER NOT AVAILABLE
+RPLINACC EQU   68                       ACCESS TYPE NOT ALLOWED BY
+*                                       MACRF OR PASSWORD
+RPLINKEY EQU   72                       KEYED REQUEST FOR ESDS
+*                                       GETIX/PUTIX TO ESDS/RRDS
+*                                                            @X04SVLC
+RPLINADR EQU   76                       ADD/CNV PUT ADD TO KSDS
+*                                       KSDS OR CI INSERT FOR A RRDS
+*                                                            @X04SVLC
+RPLERSER EQU   80                       INVALID ERASE REQUEST
+*                                       ERASE VIA PATH FOR ESDS
+*                                                            @X04SVLC
+RPLINLOC EQU   84                       INVALID LOCATE MODE REQUEST
+RPLNOPTR EQU   88                       NO POSITION POINTER AVAILABLE
+*                                       OR NO POSITIONING FOR SEQ PUT
+*                                       INSERT FOR RRDS. OR ILLEGAL
+*                                       SWITCH BETWEEN FWD AND BWD
+*                                       PROCESSING           @X04SVLC
+RPLINUPD EQU   92                       UPD/ERASE--NO GET FOR UPDATE
+*                                       PUTIX WITHOUT PRECEDING
+*                                       GETIX                @X04SVLC
+RPLKEYCH EQU   96                       KEY CHANGE ATTEMPTED
+RPLDLCER EQU   100                      RECORD LENGTH CHANGE ON
+*                                       ADDRESSED UPDATE
+*                                       OR ON RRDS UPD        @X04SVLC
+RPLINVP  EQU   104                      INVALID RPL OPTIONS
+*                                       KEY, ADR OR CNV NOT SPECIFIED
+*                                       SKP WITHOUT KEYED ACCESS
+*                                       SKP WITH OPTCD=BWD    @X04SVLC
+*                                       CNV WITH OPTCD=BWD    @X04SVLC
+*                                       LRD WITH OPTCD=FWD    @X04SVLC
+*                                       WRTBFR, MRKBFR, OR SCHBFR
+*                                       WITH TRANSID>31 OR WITHOUT
+*                                       DB/DC OPTION          @X04SVLC
+RPLINLEN EQU   108                      RECORD LENGTH TOO LARGE OR
+*                                       TOO SMALL
+*                                       OR RECLEN NOT EQUAL TO RECORD
+*                                       (SLOT) SIZE SPEC FOR RRDS
+*                                                            @X04SVLC
+RPLKEYLC EQU   112                      GENERIC KEY LENGTH TOO LARGE
+*                                       OR ZERO
+RPLINLRQ EQU   116                      INVALID REQUEST TYPE OR
+*                                       OPTION DURING LOAD
+*                                      OR REQUEST OTHER THAN PUT INSERT
+*                                       FOR RRDS LOADING     @X04SVLC
+RPLINTCB  EQU  120                     INVALID TCB           @X04SVMR
+RPLSRLOC EQU   132                      ATTEMPT TO READ SPANNED
+*                                        RCD IN LOCATE MODE  @X04SVLC
+RPLARSRK EQU   136                      ADDR RETRIEVAL SPANNED RCD
+*                                        OF KSDS ATTEMPTED   @X04SVLC
+RPLSRISG EQU   140                      INCONSISTANT SPANNED RCD
+*                                                            @X04SVLC
+RPLNBRCD EQU   144                      PTR IN AIX WITH NO BASE
+*                                       RECORD               @X04SVLC
+RPLNXPTR EQU   148                      MAX NBR OF AIX RCD PTRS
+*                                       EXCEEDED             @X04SVLC
+RPLNOBFR EQU   152                       NO BUFFERS          @X04SVLC
+*
+RPLINCNV EQU   156                      INVALID DATA CONTROL
+*                                              INTERVAL OR CI SPLIT BUS
+*                                              AND ADDRESSED ACCESS FOR
+*                                              OUTPUT        @ZA31009
+RPLIRRNO EQU   192                       INVALID RELATIVE RCD
+*                                       NUMBER               @X04SVLC
+RPLRRADR EQU   196                       ADDRESSED REQ FOR RRDS
+*                                                            @X04SVLC
+RPLPAACI EQU   200                       ADDR OR CNV ACCESS THRU
+*                                       PATH ATTEMPTED       @X04SVLC
+RPLPUTBK EQU   204                       PUT INSERT NOT ALLOWED
+*                                       IN BACKWARD MODE     @X04SVLC
+RPLINVEQ EQU   208                       INVALID ENDREQ ISSUED
+*                                       (301 PREVENTED)      @OZ02513
+RPLINVPS EQU   248                      INVALID PAGE SPACE REQUEST
+*                                                            @X04SVLC
+*
+*        THE FOLLOWING CODE VALUES ARE NOT ASSIGNED - 48, 52, 56, 60
+*
+*        THE FOLLOWING CODES MAY BE SET WHEN REGISTER 15 = 12
+*                        PHYSICAL ERROR CODES
+RPLRDERD EQU   4                        DATA READ ERROR
+RPLRDERI EQU   8                        INDEX READ ERROR
+RPLRDERS EQU   12                       SEQUENCE SET READ ERROR
+RPLWTERD EQU   16                       DATA WRITE ERROR
+RPLWTERI EQU   20                       INDEX WRITE ERROR
+RPLWTERS EQU   24                       SEQUENCE SET WRITE ERROR
+*/*      THE FOLLOWING CODES ARE SET IN RPLCMPON WHENEVER
+*        RPLERREG IS NON-ZERO                                @X04SVLC
+RPLBASER EQU   0                       ERROR ACCESSING BASE DS-
+*                                     UPGRADE IS OK          @X04SVLC
+RPLBASUM EQU   1                       ERROR ACCESSING BASE-UPGRADE
+*                                     MAY BE BAD             @X04SVLC
+RPLAIXER EQU   2                       ERROR ACCESSING AIX OVER
+*                                     BASE-UPGRADE IS OK     @X04SVLC
+RPLAIXUM EQU   3                       ERROR ACCESSING AIX- UPGRADE
+*                                     MAY BE BAD             @X04SVLC
+RPLUPGER EQU   4                       ERROR DURING AIX UPGRADE-
+*                                     UPGRADE IS OK          @X04SVLC
+RPLUPGUM EQU   5                       ERROR DURING UPGRADE - UPGRADE
+*                                     MAY BE BAD             @X04SVLC
+         MEND
+*                                                                    */
+*%RMRCPLS1: ;
+

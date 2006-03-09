@@ -1,0 +1,426 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*/*                                                                  */
+*/********************************************************************/
+*/*                                                                  */
+*/*   $MAC(ICHPRCVT) COMP(SC1BN) PROD(RACF):                         */
+*/*                                                                  */
+*/*                                                                  */
+*/*   STATUS = OS/VS2 EBB1102                                    @L6A*/
+*/*                                                                  */
+*/*   DESCRIPTIVE NAME = RACF CVT                                    */
+*/*                                                                  */
+*/*   FUNCTION = THIS PROVIDES A COMMUNICATION AREA FOR INFORMATION  */
+*/*              GLOBAL TO THE VARIOUS RACF FUNCTIONS                */
+*/*                                                                  */
+*/*   NOTES = NONE                                                   */
+*/*                                                                  */
+*/*   CONTROL BLOCK STRUCTURE = THIS COMMUNICATION AREA IS BASED     */
+*/*                             ON 'CVTRAC' IN THE CVT               */
+*/*                                                                  */
+*/*   CHANGE ACTIVITY                                                */
+*/*       A-0000000-9999999                                  @PC0012B*/
+*/*       RACF VERSION 1 RELEASE 2                           @PC0022B*/
+*/*       @PM44287                                           @PC002HT*/
+*/*       @ZA20369                                           @PC0029T*/
+*/*       @ZA25267                                           @PC002PY*/
+*/*       C-RCVTNCX,RCVTNCDX                                 @ZA25840*/
+*/*       RACF VERSION 1, RELEASE 3                          @PC003PY*/
+*/*       $L1=UZ90071,RACF/130,790323,PDPD:                      @L1A*/
+*/*       $L4=HRF1402,RACF/140,810701,SJRDSD:                    @L4A*/
+*/*       $L5=HRF1502,RACF/150,820310,CNTDSD:                    @L5A*/
+*/*       $L6=HRF1602,RACF/160,830429,CNTDSD:                    @L6A*/
+*/*       UZ90283                                            @ZA90283*/
+*/*       UZ90284                                            @ZA90284*/
+*/*       UZ90285                                            @ZA90285*/
+*/*                                                                  */
+*/*   CREATED BY = ICHSEC00                                          */
+*/*                                                                  */
+*/*                                                                  */
+*/********************************************************************/
+*/*                                                                  */
+*        %GOTO RCVTPLS  ;   /*  BILINGUAL HEADER
+         MACRO
+         ICHPRCVT
+RCVT     DSECT     ,CVTRAC
+RCVTID   DS    XL4                   EBCDIC ID
+RCVTDCB  DS    A                     PTR DCB OF RACF DATA SET
+RCVTDEB  DS    A                     PTR DEB OF RACF DATA SET
+RCVTINDX DS    A                     PTR RACF RESIDENT INDEX TABLE
+*                                 OR ZERO IF NO INDEX BLOCKS
+*                                 RESIDENT
+RCVTTEMP DS    A                     PTR RACF INCORE TEMPLATE TABLE
+RCVTHDR  DS    A                     PTR RACF INCORE DS HEADER RECORD
+*                                 OR ZERO IF RACF DATA SET IS ON
+*                                 A SHARED DEVICE
+RCVTRIX  DS    A                     PTR RACINIT INSTALL. EXIT RTN
+RCVTRCX  DS    A                     PTR RACCHK  INSTALL. EXIT RTN
+RCVTRDX  DS    A                     PTR RACDEF  INSTALL. EXIT RTN
+RCVTRUCB DS    A                     PTR UCB OF RACF DATA SET
+RCVTXLEN DS    F                     LENGTH OF INCORE INDEX RELATED
+*                                    CONTROL BLOCKS @PM43143
+RCVTBAM  DS    A                     LOCATES INCORE BAM INFORMATION
+RCVTISTL DS    A                     RESERVED FOR INSTALLATION
+RCVTDSNL DS    XL1                   LENGTH OF RACF DATA SET NAME
+RCVTSTAT DS    B                     STATUS
+RCVTRNA  EQU   X'80'                 RACF NOT ACTIVE
+RCVTNLS  EQU   X'40'                 BYPASS RACINIT STATISTICS
+RCVTNDSS EQU   X'20'                 BYPASS DATA SET STATISTICS
+*                                                              @PC0022B
+RCVTNTVS EQU   X'10'                 NO TAPE VOLUME STATISTICS @PC0022B
+RCVTNDVS EQU   X'08'                 NO DIRECT ACCESS VOLUME
+*                                    STATISTICS                @PC0022B
+RCVTNTMS EQU   X'04'                 NO TERMINAL STATISTICS    @PC0022B
+RCVTNADS EQU   X'02'                 NO ADSP PROTECTION            @L5A
+RCVTNREC DS    H                     # RECORDS PER TRACK  -RACF DS
+RCVTDSN  DS    CL44                  DSN OF RACF DATA SET
+RCVTUADS DS    CL44                  DSN OF UADS DATA SET OR ZERO
+RCVTUVOL DS    CL6                   VOLID OF UADS DATA SET OR ZERO
+RCVTSTA1 DS    B                     STATUS                    @PC0022B
+RCVTTAPE EQU   X'80'                 TAPE VOLUME PROTECTION
+*                                    IN EFFECT                 @PC0022B
+RCVTDASD EQU   X'40'                 DASD VOLME PROTECTION
+*                                    IN EFFECT                 @ZA25267
+RCVTDGEN EQU   X'20'                 GENERIC PROFILE CHECKING FOR
+*                                    DATASET CLASS IN EFFECT       @L5A
+RCVTDGCM EQU   X'10'                 GENERIC COMMAND PROCESSING FOR
+*                                    DATASET CLASS IN EFFECT       @L5A
+RCVTRDSN EQU   X'08'                 INPUT DATA SET NAME WILL BE USED
+*                                    FOR LOGGING AND MESSAGES      @L6A
+RCVTJXAL EQU   X'04'                 JES-XBMALLRACF IS IN EFFECT   @L6A
+RCVTJCHK EQU   X'02'                 JES-EARLYVERIFY IS IN EFFECT  @L6A
+RCVTJALL EQU   X'01'                 JES-BATCHALLRACF IS IN EFFECT @L6A
+RCVTAUOP DS    XL1                   AUDIT    OPTIONS          @PC0022B
+RCVTAGRO EQU   X'40'                 AUDIT GROUP CLASS         @PC0022B
+RCVTAUSE EQU   X'20'                 AUDIT USER CLASS          @PC0022B
+RCVTADAT EQU   X'10'                 AUDIT DATASET CLASS       @PC0022B
+RCVTADAS EQU   X'08'                 AUDIT DASDVOL CLASS       @PC0022B
+RCVTATAP EQU   X'04'                 AUDIT TAPEVOL CLASS       @PC0022B
+RCVTATER EQU   X'02'                 AUDIT TERMINAL CLASS      @PC0022B
+RCVTAXTA DS    XL1                   RESERVED                  @PC0022B
+RCVTFLGS DS    XL1                   STATUS FLAGS              @PC0022B
+RCVTROFF EQU   X'80'                 RACF HAS BEEN DEACTIVATED BY THE
+*                                    RVARY COMMAND             @PC0022B
+RCVTRDHD EQU   X'40'                 RACF HAS BEEN RE-ACTIVATED BY
+*                                    RVARY AND REFRESH OF THE RESIDENT
+*                                    ICB IS NECESSARY          @PC0022B
+RCVTSHR  EQU   X'20'                 THE RACF DATA SET AT SOME POINT
+*                                    DURING THIS IPL, WAS ON A SHARED
+*                                    DASD DEVICE               @PC0022B
+RCVTNDUP EQU   X'10'                 NO DUPLICATE DATA SET NAMES
+*                                    TO BE DEFINED             @ZA20369
+RCVTEROP DS    B                     TERMINAL VERIFICATION
+*                                    OPTIONS                   @PC0022B
+RCVTTERP EQU   X'80'                 TERMINAL AUTHORIZATION
+*                                    CHECKING                  @PC0022B
+RCVTTUAC EQU   X'40'                 DEFAULT UACC FOR TERMINALS
+*                                    NOT DEFINED TO RACF
+*                                    IF ON - UACC = NONE
+*                                    IF OFF- UACC = READ       @PC0022B
+RCVTAVIO EQU   X'20'                 DO NOT CREATE LOG RECORD FOR
+*                                    COMMAND VIOLATIONS ONLY   @PC0022B
+RCVTSAUD EQU   X'10'                 DO NOT AUDIT SPECIAL USER @PC0022B
+RCVTPINV DS    B                     GLOBAL MAX PASSWORD
+*                                    INTERNAL VALUE
+*                                    VALID RANGE 1 - 254       @PC0022B
+RCVTRAU0 DS    A                     PTR TO AUDITING MODULE    @PC0022B
+RCVTRIXP DS    A                     PTR TO RACINIT POST PROCESSING
+*                                    INSTALLATION EXIT RTN     @PC0022B
+RCVTRCXP DS    A                     PTR TO RACCHK POST PROCESSING
+*                                    INSTALLATION EXIT RTN     @PC0022B
+RCVTRID0 DS    A                     PTR TO MSC VERIFY RTN     @PC0022B
+RCVTVERS DS    XL1                   VERSION INDICATOR
+*                                    0 - VERSION 1, RELEASE 1  @PC003PY
+*                                    1 - VERSION 1, RELEASE 2  @PC003PY
+*                                    2 - VERSION 1, RELEASE 3  @PC003PY
+*                                    4 - VERSION 1, RELEASE 4      @L4A
+*                                    5 - VERSION 1, RELEASE 5      @L5A
+*                                    6 - VERSION 1, RELEASE 6      @L6A
+RCVTEXTA DS    CL3                   RESERVED                  @ZA25840
+RCVTAPTR DS    A                     ADDRESS FIELD RESERVED FOR
+*                                    APPLICATION USE           @PC003PY
+RCVTNCX  DS    A                     PTR NAMING CONVENTION EXIT
+*                                                              @ZA25840
+RCVTNCDX DS    A                     PTR NAMING CONVENTION EXIT FOR
+*                                    DELETE FUNCTION           @ZA25840
+RCVTCDTP DS    A                     PTR TO CLASS DESC TABLE   @PC003PY
+RCVTREXP DS    A                     PTR TO RACSTAT MODULE     @PC003PY
+RCVTFRCP DS    A                     PTR TO FRACHECK MODULE    @PC003PY
+RCVTFRXP DS    A                     PTR TO FRACHECK EXIT RTN  @PC003PY
+RCVTRLX  DS    A                     PTR TO RACLIST PRE-EXIT   @PC003PY
+RCVTRLXP DS    A                     PTR TO RACLIST SELECTION EXIT     *
+                                                               @PC003PY
+RCVTCSTA DS    BL4                   CLASS STATISTICS OPTIONS  @PC003PY
+RCVTCAUD DS    BL4                   CLASS AUDITING OPTIONS    @PC003PY
+RCVTCPRO DS    BL4                   CLASS PROTECTION OPTIONS  @PC003PY
+RCVTDSDT DS    A                     PTR TO DS DESCIPTOR TAB   @PC0036U
+RCVTRNGP DS    A                     PTR TO RANGE TABLE        @PC0036U
+RCVTAUTP DS    A                     PTR TO RACF AUTHORIZED CALLER
+*                                      TABLE ICHAUTAB              @LA1
+RCVTPWDX DS    A                     PTR TO RACF PASSWORD EXIT.   @L4A
+RCVTHIST DS    AL1                   NUMBER OF PASSWORD GENERATIONS
+*                                     TO MAINTAIN AND CHECK AGAINST.
+RCVTRVOK DS    AL1                   NUMBER OF CONSECUTIVE
+*                                     UNSUCCESSFUL ATTEMPTS BEFORE
+*                                     REVOKING A USERID.           @L4A
+RCVTWARN DS    AL1                   NUMBER OF DAYS REMAINING IN
+*                                     A PASSWORD INTERVAL AFTER
+*                                     WHICH WARNING MESSAGES WILL
+*                                     BE ISSUED.                   @L4A
+RCVTINAC DS    AL1                   INACTIVATE INTERVAL.          @L4A
+RCVTSNTX DS    80X                   NEW PASSWORD SYNTAX RULES.    @L4A
+*                                                                  @L4A
+* FOLLOWING DSECT DESCRIBES AN INDIVIDUAL PASSWORD SYNTAX RULE.    @L4A
+*  THERE CAN BE A MAXIMUM OF EIGHT RULES.                          @L4A
+*                                                                  @L4A
+RCVTSNTD DSECT ,                                                   @L4A
+RCVTSLEN DS    AL1                   STARTING LENGTH VALUE.        @L4A
+RCVTELEN DS    AL1                   ENDING LENGTH VALUE.          @L4A
+RCVTRUL1 DS    AL1                   CONTENT RULE.                 @L4A
+RCVTRUL2 DS    AL1                   CONTENT RULE.                 @L4A
+RCVTRUL3 DS    AL1                   CONTENT RULE.                 @L4A
+RCVTRUL4 DS    AL1                   CONTENT RULE.                 @L4A
+RCVTRUL5 DS    AL1                   CONTENT RULE.                 @L4A
+RCVTRUL6 DS    AL1                   CONTENT RULE.                 @L4A
+RCVTRUL7 DS    AL1                   CONTENT RULE.                 @L4A
+RCVTRUL8 DS    AL1                   CONTENT RULE.                 @L4A
+RCVT     DSECT ,                                                   @L4A
+RCVTMDEL DS    AL4                   MODEL OPTIONS.                @L4A
+         ORG   RCVTMDEL                                            @L4A
+RCVTMGDG EQU   X'80'                 MODEL-GDG IN EFFECT.          @L4A
+RCVTMUSR EQU   X'40'                 MODEL-USER IN EFFECT.         @L4A
+RCVTMGRP EQU   X'20'                 MODEL-GROUP IN EFFECT.        @L4A
+         ORG   RCVTMDEL+1                                          @L4A
+         DS    AL3                   RESERVED.                     @L4A
+RCVTWCNT DS    AL1                   NUMBER OF VSL ENTRIES.        @L4A
+RCVTOPTX DS    AL1                   OPTIONS.                      @L4A
+RCVTLGRP EQU   X'80'                 LIST OF GROUP CHKING ACTIVE.  @L4A
+         DS    CL6                   RESERVED.                     @L4A
+RCVTVSL  DS    4D                    VSL ENTRIES.                  @L4A
+RCVTCGSN DS    F                     NUMBER OF CONNECT-REMOVE
+*                                     COMMANDS ISSUED THAT ALTERED
+*                                     A USERS AUTHORITY.           @L4A
+RCVTCGEN DS    BL4                   CLASS MASK FOR GENERIC
+*                                     PROFILE CHECKING             @L5A
+RCVTCGCM DS    BL4                   CLASS MASK FOR GENERIC
+*                                     COMMAND PROCESSING           @L5A
+RCVTRDXP DS    A                     PTR TO RACDEF POST PROCESSING
+*                                     INSTALLATION EXIT- ICHRDX02  @L5A
+RCVTFPB  DS    A                     BASE FOR FASTPATH TABLE.      @L5A
+RCVTFPTH DS    CL4                   CLASS FASTPATH OPTIONS.       @L5A
+RCVTFLG1 DS    CL4                   MISC. OPTIONS.                @L5A
+RCVTFPDS EQU   X'80'                 FASTPATH FOR DATASET CLASS.   @L5A
+         DS    AL3                   RESERVED                      @L5A
+RCVTQLLN DS    AL1                   LENGTH OF SINGLE LEVEL DATASET
+*                                    NAME PREFIX                   @L5A
+RCVTQUAL DS    CL9                   INSTALLATION CONTROLLED PREFIX
+*                                    FOR SINGLE LEVEL DATASET NAMES,
+*                                    PLUS PERIOD FOR LEVEL         @L5A
+         DS    CL3                   RESERVED.                     @L5A
+RCVTSPT  DS    A                     POINTER TO THE STARTED PROCEDURES
+*                                    TABLE (ICHRIN03)              @L6A
+RCVTDESX DS    A                     POINTER TO THE PASSWORD ENCRYP-
+*                                    TION INSTALLATION EXIT (ICHDEX01)
+*                                                                  @L6A
+RCVTNTAB DS    A                     POINTER TO THE NAMING CONVENTION
+*                                    TABLE (ICHNCV00)              @L6A
+RCVTNRTN DS    A                     POINTER TO THE NAMING CONVENTION
+*                                    ROUTINE (ICHNRT00)            @L6A
+RCVTFRX2 DS    A                     ADDRESS OF FRACHECK
+*                                    POST-PROCESSING INSTALLATION
+*                                    EXIT (ICHRFX02)               @L6A
+         DS    20A                   RESERVED.                     @L6A
+RCVTVERN EQU   X'06'                 VERSION NUMBER VALUE          @L6A
+* TERMINATE PLS COMMENT                                              */
+         MEND
+*        %RCVTPLS : ;
+ DCL
+  1 RCVT     BASED(CVTRAC),       /* LOCATED THROUGH CVT             */
+   2 RCVTID    CHAR(4),           /* EBCDIC ID                       */
+   2 RCVTDCB   PTR(31),           /* PTR DCB OF RACF DATA SET        */
+   2 RCVTDEB   PTR(31),           /* PTR DEB OF RACF DATA SET        */
+   2 RCVTINDX  PTR(31),           /* PTR RACF RESIDENT INDEX TABLE
+                                  OR ZERO IF NO INDEX BLOCKS
+                                  RESIDENT                           */
+   2 RCVTTEMP  PTR(31),           /* PTR RACF INCORE TEMPLATE TABLE  */
+   2 RCVTHDR   PTR(31),           /* PTR RACF INCORE DS HEADER RECORD
+                                  OR ZERO IF RACF DATA SET IS ON
+                                  A SHARED DEVICE                    */
+   2 RCVTRIX   PTR(31),           /* PTR RACINIT INSTALL. EXIT RTN   */
+   2 RCVTRCX   PTR(31),           /* PTR RACCHK  INSTALL. EXIT RTN   */
+   2 RCVTRDX   PTR(31),           /* PTR RACDEF  INSTALL. EXIT RTN   */
+   2 RCVTRUCB  PTR(31),           /* PTR UCB OF RACF DATA SET        */
+   2 RCVTXLEN  FIXED(31),         /* LENGTH OF INCORE INDEX RELATED
+                                  CONTROL BLOCKS                     */
+   2 RCVTBAM   PTR(31),           /* LOCATES INCORE BAM INFORMATION  */
+   2 RCVTISTL  PTR(31),           /* RESERVED FOR INSTALLATION       */
+   2 RCVTDSNL  PTR(8),            /* LENGTH OF RAC DATA SET NAME     */
+   2 RCVTSTAT  BIT(8),            /* STATUS                          */
+    3 RCVTRNA  BIT(1),            /* RACF NOT ACTIVE                 */
+    3 RCVTNLS  BIT(1),             /* BYPASS RACINIT STATISTICS      */
+    3 RCVTNDSS BIT(1),             /* BYPASS DATA SET STATISTICS   */
+    3 RCVTNTVS BIT(1),            /* NO TAPE VOLUME
+                                  STATISTICS                 @PC0022B*/
+    3 RCVTNDVS BIT(1),            /* NO DIRECT ACCESS VOLUME
+                                  STATISTICS                 @PC0022B*/
+    3 RCVTNTMS BIT(1),            /* NO TERMINAL STATISTICS  @PC0022B*/
+    3 RCVTNADS BIT(1),            /* NO ADSP PROTECTION          @L5A*/
+    3 *        BIT(1),            /* RESERVED                    @L5A*/
+   2 RCVTNREC  FIXED(15),         /* # RECORDS PER TRACK  -RACF DS   */
+   2 RCVTDSN   CHAR(44),          /* DSN OF RACF DATA SET            */
+   2 RCVTUADS  CHAR(44),          /* DSN OF UADS DATA SET OR ZERO    */
+   2 RCVTUVOL  CHAR(6),           /* VOLID OF UADS DATA SET OR ZERO  */
+   2 RCVTSTA1 BIT(8),             /*                         @PC0022B*/
+    3 RCVTTAPE BIT(1),            /* TAPE VOLUME PROTECTION IN
+                                  EFFECT                     @PC0022B*/
+    3 RCVTDASD BIT(1),            /* DASD VOLUME PROTECTION IN
+                                     EFFECT                  @ZA25267*/
+    3 RCVTDGEN BIT(1),            /* GENERIC PROFILE CHECKING IN
+                                     EFFECT FOR DATASET CLASS    @L5A*/
+    3 RCVTDGCM BIT(1),            /* GENERIC COMMAND PROCESSING IN
+                                     EFFECT FOR DATASET CLASS    @L5A*/
+    3 RCVTRDSN BIT(1),            /* INPUT DATA SET NAME WILL BE USED
+                                     FOR LOGGING AND MESSAGES    @L6A*/
+    3 RCVTJXAL BIT(1),            /* JES-XBMALLRACF IN EFFECT    @L6A*/
+    3 RCVTJCHK BIT(1),            /* JES-EARLYVERIFY IN EFFECT   @L6A*/
+    3 RCVTJALL BIT(1),            /* JES-BATCHALLRACF IN EFFECT  @L6A*/
+   2 RCVTAUOP,                    /* RACF AUDIT OPTIONS      @PC0022B*/
+    3 *        BIT(1),            /* RESERVED                @PC0022B*/
+    3 RCVTAGRO BIT(1),            /* AUDIT GROUP CLASS       @PC0022B*/
+    3 RCVTAUSE BIT(1),            /* AUDIT USER CLASS        @PC0022B*/
+    3 RCVTADAT BIT(1),            /* AUDIT DATASET CLASS     @PC0022B*/
+    3 RCVTADAS BIT(1),            /* AUDIT DASDVOL CLASS     @PC0022B*/
+    3 RCVTATAP BIT(1),            /* AUDIT TAPEVOL CLASS     @PC0022B*/
+    3 RCVTATER BIT(1),            /* AUDIT TERMINAL CLASS    @PC0022B*/
+   2 RCVTAXTA BIT(8),             /* RESERVED                @PC0022B*/
+   2 RCVTFLGS BIT(8),             /* STATUS FLAGS            @PC0022B*/
+    3 RCVTROFF BIT(1),            /* RACF HAS BEEN DEACTIVATED BY THE
+                                  RVARY COMMAND              @PC0022B*/
+    3 RCVTRDHD BIT(1),            /* RACF HAS BEEN RE-ACTIVATED BY
+                                  RVARY AND REFRESH OF THE RESIDENT
+                                  ICB IS NECESSARY           @PC0022B*/
+    3 RCVTSHR  BIT(1),            /* THE RACF DATA SET AT SOME POINT
+                                  DURING THIS IPL, WAS ON A SHARED
+                                  DASD DEVICE                @PC0022B*/
+    3 RCVTNDUP BIT(1),            /* NO DUPLICATE DATA SET NAMES
+                                     TO BE DEFINED           @PM44287*/
+   2 RCVTEROP,                    /* RACF TERMINAL OPTIONS   @PC0022B*/
+    3 RCVTTERP BIT(1),            /* TERMINAL AUTHORIZATION
+                                  CHECKING                   @PC0022B*/
+    3 RCVTTUAC BIT(1),            /* DEFAULT UACC FOR TERMINALS NOT
+                                  DEFINED TO RACF
+                                  IF ON - UACC = NONE
+                                  IF OFF- UACC = READ        @PC0022B*/
+    3 RCVTAVIO BIT(1),            /* DO NOT CREATE LOG RECORD FOR
+                                  COMMAND VIOLATIONS ONLY    @PC0022B*/
+    3 RCVTSAUD BIT(1),            /* DO NOT AUDIT SPECIAL USER
+                                                             @PC0022B*/
+    3 *        BIT(4),            /* RESERVED                @PC0022B*/
+   2 RCVTPINV  PTR(8),            /* GLOBAL MAX PASSWORD INTERVAL
+                                  VALUE - VALID RANGE 1-254  @PC0022B*/
+   2 RCVTRAU0  PTR(31),           /* PTR TO AUDITING MODULE  @PC0022B*/
+   2 RCVTRIXP  PTR(31),           /* PTR TO RACINIT POST PROCESSING
+                                  INSTALLATION EXIT          @PC0022B*/
+   2 RCVTRCXP  PTR(31),           /* PTR TO RACCHK POST PROCESSING
+                                  INSTALLATION EXIT          @PC0022B*/
+   2 RCVTRID0  PTR(31),           /* PTR TO MSC VERIFY RTN   @PC0022B*/
+   2 RCVTVERS  PTR(8),            /* VERSION INDICATOR:
+                                     0 - VERSION 1 RELEASE 1,
+                                     1 - VERSION 1 RELEASE 2,
+                                     2 - VERSION 1 RELEASE 3,
+                                     4 - VERSION 1 RELEASE 4,
+                                     5 - VERSION 1 RELEASE 5
+                                     6 - VERSION 1 RELEASE 6     @L6A*/
+   2 RCVTEXTA  CHAR(3),           /* RESERVED                @ZA25840*/
+   2 RCVTAPTR PTR(31),            /* ADDRESS FIELD RESERVED FOR
+                                     APPLICATION USE         @PC003PY*/
+   2 RCVTNCX   PTR(31),           /* PTR NAMING CONVENTION EXIT
+                                                             @ZA25840*/
+   2 RCVTNCDX  PTR(31),           /* PTR NAMING CONVENTION EXIT FOR
+                                     DELETE FUNCTION         @ZA25840*/
+   2 RCVTCDTP  PTR(31),           /* PTR TO CLASS DESC TABLE @PC003PY*/
+   2 RCVTREXP  PTR(31),           /* PTR TO RACSTAT MODULE   @PC003PY*/
+   2 RCVTFRCP  PTR(31),           /* PTR TO FRACHECK MODULE  @PC003PY*/
+   2 RCVTFRXP  PTR(31),           /* PTR TO FRACHECK EXIT    @PC003PY*/
+   2 RCVTRLX   PTR(31),           /* PTR TO RACLIST PRE-EXIT @PC003PY*/
+   2 RCVTRLXP  PTR(31),           /* PTR TO RACLIST SELECTION EXIT
+                                                             @PC003PY*/
+   2 RCVTCSTA  BIT(32),           /* CLASS STATISTICS OPTION @PC003PY*/
+   2 RCVTCAUD  BIT(32),           /* CLASS AUDITING OPTIONS  @PC003PY*/
+   2 RCVTCPRO  BIT(32),           /* CLASS PROTECTION OPTION @PC003PY*/
+   2 RCVTDSDT PTR(31),            /* PTR TO DATA SET DESCRIPTOR
+                                     TABLE                   @PC0036U*/
+   2 RCVTRNGP PTR(31),            /* PTR TO RANGE TABLE      @PC0036U*/
+   2 RCVTAUTP PTR(31),            /* PTR TO RACF AUTHORIZED CALLER
+                                     TABLE ICHAUTAB              @L1A*/
+   2 RCVTPWDX PTR(31),            /* PTR TO RACF PASSWORD EXIT.  @L4A*/
+   2 RCVTHIST FIXED(8),           /* NUMBER OF PASSWORD GENERATIONS
+                                     TO MAINTAIN AND CHECK AGAINST.
+                                                                 @L4A*/
+   2 RCVTRVOK FIXED(8),           /* NUMBER OF CONSECUTIVE
+                                     UNSUCCESSFUL ATTEMPTS BEFORE
+                                     REVOKING A USERID.          @L4A*/
+   2 RCVTWARN FIXED(8),           /* PASSWORD WARNING VALUE.     @L4A*/
+   2 RCVTINAC FIXED(8),           /* INACTIVATE INTERVAL.        @L4A*/
+   2 RCVTSNTX(8),                 /* PASSWORD SYNTAX RULES.      @L4A*/
+     3 RCVTSLEN FIXED(8),         /* STARTING LENGTH VALUE.      @L4A*/
+     3 RCVTELEN FIXED(8),         /* ENDING LENGTH VALUE.        @L4A*/
+     3 RCVTRULS,                  /* CONTENT RULES.              @L4A*/
+       4 RCVTRUL1 CHAR(1),        /* CONTENT RULE.               @L4A*/
+       4 RCVTRUL2 CHAR(1),        /* CONTENT RULE.               @L4A*/
+       4 RCVTRUL3 CHAR(1),        /* CONTENT RULE.               @L4A*/
+       4 RCVTRUL4 CHAR(1),        /* CONTENT RULE.               @L4A*/
+       4 RCVTRUL5 CHAR(1),        /* CONTENT RULE.               @L4A*/
+       4 RCVTRUL6 CHAR(1),        /* CONTENT RULE.               @L4A*/
+       4 RCVTRUL7 CHAR(1),        /* CONTENT RULE.               @L4A*/
+       4 RCVTRUL8 CHAR(1),        /* CONTENT RULE.               @L4A*/
+   2 RCVTMDEL,                    /* MODEL OPTIONS.              @L4A*/
+    3 * BIT(8),                   /* OPTIONS.                    @L4A*/
+     4 RCVTMGDG BIT(1),           /* MODEL-GDG IN EFFECT.        @L4A*/
+     4 RCVTMUSR BIT(1),           /* MODEL-USER IN EFFECT.       @L4A*/
+     4 RCVTMGRP BIT(1),           /* MODEL-GROUP IN EFFECT.      @L4A*/
+    3 * BIT(8),                   /* RESERVED.                   @L4A*/
+    3 * BIT(8),                   /* RESERVED.                   @L4A*/
+    3 * BIT(8),                   /* RESERVED.                   @L4A*/
+   2 RCVTWCNT FIXED(8),           /* NUMBER OF VSL ENTRIES.      @L4A*/
+   2 RCVTOPTX BIT(8),             /* OPTIONS.                    @L4A*/
+    3 RCVTLGRP BIT(1),            /* LIST-OF-GRPS CHKING ACTIVE. @L4A*/
+   2 *(6) CHAR(1),                /* RESERVED.                   @L4A*/
+   2 RCVTVSL(4) CHAR(8) BDY(DWORD),/* VSL ENTRIES.               @L4A*/
+   2 RCVTCGSN FIXED(31),          /* NUMBER OF CONNECT-REMOVE
+                                     COMMANDS ISSUED THAT
+                                     ALTERED A USER'S AUTHORITY. @L4A*/
+   2 RCVTCGEN BIT(32),            /* CLASS MASK FOR GENERIC PROFILE
+                                     CHECKING                    @L5A*/
+   2 RCVTCGCM BIT(32),            /* CLASS MASK FOR GENERIC COMMAND
+                                     PROCESSING                  @L5A*/
+   2 RCVTRDXP PTR(31),            /* PTR TO RACDEF POST PROCESSING
+                                     INSTALLATION EXIT- ICHRDX02 @L5A*/
+   2 RCVTFPB PTR(31),             /* BASE FOR FASTPATH TABLE.    @L5A*/
+   2 RCVTFPTH BIT(32),            /* CLASS FASTPATH OPTIONS.     @L5A*/
+   2 RCVTFLG1 BIT(32),            /* MISC. OPTIONS.              @L5A*/
+     3 RCVTFPDS BIT(1),           /* FASTPATH FOR DATASET CLASS  @L5A*/
+     3 * BIT(31),                 /* RESERVED.                   @L5A*/
+   2 * CHAR(3),                   /* RESERVED                    @L5A*/
+   2 RCVTQLLN FIXED(8),           /* LENGTH OF SINGLE LEVEL DATASET
+                                     NAME PREFIX                 @L5A*/
+   2 RCVTQUAL CHAR(9),            /* INSTALLATION CONTROLLED PREFIX
+                                     FOR SINGLE LEVEL DATASET NAMES,
+                                     PLUS PERIOD FOR LEVEL       @L5A*/
+   2 *   CHAR(3),                 /* RESERVED.                   @L5A*/
+   2 RCVTSPT PTR(31),             /* POINTER TO THE STARTED PROCEDURES
+                                     TABLE (ICHRIN03)            @L6A*/
+   2 RCVTDESX PTR(31),            /* POINTER TO THE PASSWORD ENCRYP-
+                                     TION INSTALLATION EXIT (ICHDEX01)
+                                                                 @L6A*/
+   2 RCVTNTAB PTR(31),            /* POINTER TO THE NAMING CONVENTION
+                                     TABLE (ICHNCV00)            @L6A*/
+   2 RCVTNRTN PTR(31),            /* POINTER TO THE NAMING CONVENTION
+                                     ROUTINE (ICHNRT00)          @L6A*/
+   2 RCVTFRX2 PTR(31),            /* ADDRESS OF THE FRACHECK POST-
+                                     PROCESSING INSTALLATION EXIT
+                                     (ICHRFX02)                  @L6A*/
+   2 *(20)  PTR(31),              /* RESERVED.                   @L6A*/
+   2 * CHAR(0);                   /* END OF RCVT             @PC0036U*/
+ DCL
+   RCVTVERN CONSTANT(6) PTR(8);   /* VERSION NUMBER VALUE        @L6A*/
+

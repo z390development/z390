@@ -6,20 +6,39 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* MAINTENANCE
+.* 10/12/05 ADD USE OF DCBREC IF RECORD NOT SPECIFIED
+.* 10/20/05 RPI27 - issue error for any undefined operands
+.* 10/20/05 RPI38 - check for register conflicts     
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.*********************************************************************
 &N       PUT   &DCB,&REC
+         AIF   (N'&SYSLIST LE 2).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+.NPOK    ANOP
+         AIF   (&N EQ '').SKIPDS
 &N       DS    0H
+.SKIPDS  ANOP
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          LA    1,&DCB
          AGO   .CHKREC
 .DCBREG  ANOP
+         AIF   (&DCB(1) EQ '1' OR &DCB(1) EQ 'R1').CHKREC  RPI163
          LR    1,&DCB(1)
 .CHKREC  ANOP
-         AIF   (&REC EQ '').SVC
+         AIF   (&REC EQ '').RECDEF
          AIF   ('&REC'(1,1) EQ '(').RECREG
          LA    0,&REC
          AGO   .SVC
 .RECREG  ANOP
+         AIF   (&REC(1) EQ 1 OR &REC(1) EQ 'R1').ERR1
+         AIF   (&REC(1) EQ '0' OR &REC(1) EQ 'R0').SVC  RPI163
          LR    0,&REC(1)
+         AGO   .SVC
+.RECDEF  ANOP
+         L     0,DCBREC-IHADCB(1)
 .SVC     ANOP
          SVC  152 
+         MEXIT
+.ERR1    MNOTE 12,'PUT RECORD REG INVALID - &REC(1)'
          MEND

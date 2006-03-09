@@ -1,0 +1,84 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    DLVRP &TYPE=,&MF=I
+         LCLA  &ORCODE                  CODES TO BE TURNED ON IN LIST
+         LCLA  &ANDCODE                 CODES TO BE TURNED OFF IN LIST
+         LCLA  &I                       WORK VARIABLE
+         LCLB  &MFE                     EXECUTE FORM INDICATOR
+         LCLB  &ERR                     ERROR INDICATOR
+         LCLC  &EREG                    EXECUTE FORM LIST ADDR REG
+&ORCODE  SETA  128+32                   INDICATE DB/DC AND DLVRP
+&ANDCODE SETA  255-64                   RESET BLDVRP
+         AIF   (N'&SYSLIST EQ 0).NOPOS  GO IF NO POSITIONAL OPERANDS
+.POSLOOP ANOP
+&I       SETA  &I+1                     POINT TO NEXT POS OPERAND
+         IDAERMAC 1,&SYSLIST(&I)        ISSUE WARNING MNOTE
+         AIF   (&I LT N'&SYSLIST).POSLOOP  GO IF MORE POS OPERANDS
+.NOPOS   ANOP
+         AIF   ('&MF' EQ 'I').MFB       GO IF STANDARD FORM
+         AIF   (N'&MF LT 2).MFERR       GO IF NOT ENOUGH PARMS
+         AIF   ('&MF(1)' NE 'E').MFERR  GO IF NOT EXECUTE FORM
+&MFE     SETB  1                        INDICATE EXECUTE FORM
+         AGO   .MFB                     GO AROUND ERROR
+.MFERR   ANOP
+         IDAERMAC 3,MF,&MF              ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+.MFB     ANOP
+         AIF   ('&TYPE' NE '').TOKY     GO IF TYPE IS SPECIFIED
+         AIF   (&MFE).TYPEB             GO IF EXECUTE FORM
+         AGO   .TLSR                    GO TAKE DEFAULT
+.TOKY    ANOP
+         AIF   ('&TYPE' NE 'LSR').TLSRB  GO IF NOT LOCALLY SHARED
+.TLSR    ANOP
+&ORCODE  SETA  &ORCODE+16               INDICATE LOCALLY SHARED
+&ANDCODE SETA  &ANDCODE-8               RESET GLOBALLY SHARED
+         AGO   .TYPEB                   GO AROUND TYPE ANALYSIS
+.TLSRB   ANOP
+         AIF   ('&TYPE' NE 'GSR').TGSRB  GO IF NOT GLOBALLY SHARED
+&ORCODE  SETA  &ORCODE+8                INDICATE GLOBALLY SHARED
+&ANDCODE SETA  &ANDCODE-16              RESET LOCALLY SHARED
+         AGO   .TYPEB                   GO AROUND TYPE ANALYSIS
+.TGSRB   ANOP
+         IDAERMAC 3,TYPE,&TYPE          ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+.TYPEB   ANOP
+         AIF   (&ERR).END               GO IF ANY ERRORS
+         AIF   ('&NAME' EQ '').NAMEB    GO IF NO NAME
+&NAME    DS    0H
+.NAMEB   ANOP
+         AIF   (&MFE).EXEC              GO IF EXECUTE FORM
+         CNOP  0,4                      ALIGN ON A WORD BOUNDARY
+         BAL   1,*+60                   PLACE LIST ADDRESS IN 1
+         DC    X'80'                    INDICATE END OF OPEN LIST
+         DC    AL3(*+3)                 ACB ADDRESS
+         DC    X'A011'                  ID AND SUBTYPE
+         DC    AL2(0)                   RESERVED
+         DC    A(0)                     BUFFER LIST ADDRESS
+         DC    AL1(0)                   KEY LENGTH
+         DC    AL1(0)                   STRING NUMBER
+         DC    AL1(&ORCODE)             VRP CODES
+         DC    AL1(0)                   RESERVED
+         DC    3A(0)                    RESERVED
+         DC    XL3'0'                   RESERVED
+         DC    X'08'                    DSORG
+         DC    5A(0)                    RESERVED
+         DC    X'02'                    OFLAGS
+         DC    XL3'0'                   RESERVED
+         AGO   .ISUSVC                  GO TO ISSUE OPEN SVC
+.EXEC    ANOP
+         AIF   ('&MF(2)'(1,1) EQ '(').EREG  GO IF LIST ADDRESS IN REG
+         LA    1,&MF(2)                 LOAD LIST ADDRESS
+         AGO   .AEREG                   GO AROUND REG CODE
+.EREG    ANOP
+         AIF   ('&MF(2)' EQ '(1)').AEREG  GO IF LIST ADDR ALREADY IN 1
+&I       SETA  K'&MF(2)-2               CALC LENGTH OF REG NAME
+&EREG    SETC  '&MF(2)'(2,&I)           PICK UP REG NAME
+         LR    1,&EREG                  LOAD LIST ADDRESS
+.AEREG   ANOP
+         NI    14(1),&ANDCODE           REMOVE OLD VRP CODES
+         OI    14(1),&ORCODE            INSERT NEW VRP CODES
+.ISUSVC  ANOP
+         SVC   19                       ISSUE OPEN SVC
+.END     ANOP
+         MEND
+

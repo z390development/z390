@@ -1,0 +1,560 @@
+.* MVS 3.8J PUBLIC DOMAIN
+***********************************************************************
+*                                                                     *
+* MODULE NAME = BNGISALL                                              *
+*                                                                     *
+* DESCRIPTIVE NAME =  IMS DEMF SCREEN FORMAT MODULE FOR ALL,LINE &    *
+*                     CTRL DISPLAYS                                   *
+*                                                                     *
+*                                                                     *
+* STATUS = RELEASE 1, LEVEL 1                                         *
+*                                                                     *
+* FUNCTION = DEFINES THE FORMAT OF 'ALL,LINE & CTRL' DISPLAY SCREENS  *
+*            USING BOTH MESSAGE INPUT DESCRIPTOR (MID) AND MESSAGE    *
+*            OUTPUT DESCRIPTOR (MOD) FOR THE IMS APPLICATION PROGRAM  *
+*            (BNGIDISP).                                              *
+*                                                                     *
+* NOTES = NONE                                                        *
+*                                                                     *
+*    DEPENDENCIES = NONE                                              *
+*                                                                     *
+*    RESTRICTIONS = NONE                                              *
+*                                                                     *
+*    REGISTER CONVENTIONS = NONE                                      *
+*                                                                     *
+*    PATCH LABEL = NONE                                               *
+*                                                                     *
+* MODULE TYPE = IMS SCREEN                                            *
+*                                                                     *
+*    PROCESSOR = ASSEMBLER H                                          *
+*                                                                     *
+*    MODULE SIZE = 8542 DECIMAL BYTES (FOR 3277 MODEL 2)              *
+*                = 4385 DECIMAL BYTES (FOR 3277 MODEL 1)              *
+*                                                                     *
+*    ATTRIBUTES = SERIALLY REUSABLE                                   *
+*                                                                     *
+* ENTRY POINT = BNGIAL                                                *
+*                                                                     *
+*    PURPOSE = SEE FUNCTION                                           *
+*                                                                     *
+*    LINKAGE = MESSAGE INPUT DESCRIPTOR (MID) NAME  : BNGIIALL        *
+*              MESSAGE OUTPUT DESCRIPTOR (MOD) NAME : BNGIOALL        *
+*                                                                     *
+* EXIT-NORMAL = NONE                                                  *
+*                                                                     *
+* EXIT-ERROR  = NONE                                                  *
+*                                                                     *
+* EXTERNAL REFERENCE =  NONE                                          *
+*                                                                     *
+*    ROUTINES = NONE                                                  *
+*                                                                     *
+*    DATA AREAS = N/A                                                 *
+*                                                                     *
+*    CONTROL BLOCK = NONE                                             *
+*                                                                     *
+* TABLES = NONE                                                       *
+*                                                                     *
+* MACROS = PRINT, FMT, DIV, DPAGE, DFLD, DEV, FMTEND, MSG, SEG,       *
+*          MFLD, MSGEND                                               *
+*                                                                     *
+* CHANGE ACTIVITIES AS FOLLOWS:                                       *
+* CHANGE 01   11/15/77  PROLOGUE ADDED                                *
+*                                                                     *
+***********************************************************************
+         PRINT NOGEN
+BNGIAL   FMT
+         DEV   TYPE=(3270,2),FEAT=(IGNORE),DSCA=X'0020'
+         DIV   TYPE=INOUT
+         DPAGE FILL=PT,CURSOR=((1,7))
+FLD1     DFLD  POS=(1,2),LTH=4,ATTR=(MOD,NUM,PROT)
+FLD2     DFLD  POS=(1,7),LTH=29
+FLD3     DFLD  POS=(1,37),LTH=4,ATTR=(MOD,NUM,PROT)
+D2       DFLD  POS=(1,42),LTH=39,ATTR=(PROT,NUM)
+FLD4     DFLD  POS=(2,2),LTH=1,ATTR=(PROT,NUM)
+FLD5     DFLD  POS=(2,4),LTH=1
+FLD6     DFLD  POS=(2,6),LTH=14,ATTR=(PROT,NUM)
+FLD6A    DFLD  POS=(2,21),LTH=20,ATTR=(PROT,NUM)
+FLD7     DFLD  POS=(2,42),LTH=1,ATTR=(PROT,NUM)
+FLD8     DFLD  POS=(2,44),LTH=1
+FLD9     DFLD  POS=(2,46),LTH=14,ATTR=(PROT,NUM)
+FLD10LG  DFLD  POS=(2,61),LTH=15,ATTR=(MOD,PROT,NUM,NODISP)
+D4       DFLD  POS=(2,77),LTH=4,ATTR=(PROT,NUM)
+FLD11    DFLD  POS=(3,2),LTH=39,ATTR=(PROT,NUM)
+D5       DFLD  POS=(3,42),LTH=39,ATTR=(PROT,NUM)
+FLD12    DFLD  POS=(4,2),LTH=39,ATTR=(PROT,NUM)
+FLD13    DFLD  POS=(4,42),LTH=41,ATTR=(PROT,NUM)
+FLD14    DFLD  POS=(5,4),LTH=12
+FLD15    DFLD  POS=(5,17),LTH=6,ATTR=(PROT,NUM)
+FLD16    DFLD  POS=(5,24),LTH=12
+FLD17    DFLD  POS=(5,37),LTH=6,ATTR=(PROT,NUM)
+FLD18    DFLD  POS=(5,44),LTH=12
+FLD19    DFLD  POS=(5,57),LTH=6,ATTR=(PROT,NUM)
+FLD20    DFLD  POS=(5,64),LTH=12
+FLD21    DFLD  POS=(5,77),LTH=6,ATTR=(PROT,NUM)
+FLD22    DFLD  POS=(6,4),LTH=12
+FLD23    DFLD  POS=(6,17),LTH=6,ATTR=(PROT,NUM)
+FLD24    DFLD  POS=(6,24),LTH=12
+FLD25    DFLD  POS=(6,37),LTH=6,ATTR=(PROT,NUM)
+FLD26    DFLD  POS=(6,44),LTH=12
+FLD27    DFLD  POS=(6,57),LTH=6,ATTR=(PROT,NUM)
+FLD28    DFLD  POS=(6,64),LTH=12
+FLD29    DFLD  POS=(6,77),LTH=6,ATTR=(PROT,NUM)
+FLD30    DFLD  POS=(7,4),LTH=12
+FLD31    DFLD  POS=(7,17),LTH=6,ATTR=(PROT,NUM)
+FLD32    DFLD  POS=(7,24),LTH=12
+FLD33    DFLD  POS=(7,37),LTH=6,ATTR=(PROT,NUM)
+FLD34    DFLD  POS=(7,44),LTH=12
+FLD35    DFLD  POS=(7,57),LTH=6,ATTR=(PROT,NUM)
+FLD36    DFLD  POS=(7,64),LTH=12
+FLD37    DFLD  POS=(7,77),LTH=6,ATTR=(PROT,NUM)
+FLD38    DFLD  POS=(8,4),LTH=12
+FLD39    DFLD  POS=(8,17),LTH=6,ATTR=(PROT,NUM)
+FLD40    DFLD  POS=(8,24),LTH=12
+FLD41LG  DFLD  POS=(8,37),LTH=6,ATTR=(PROT,NUM)
+FLD42    DFLD  POS=(8,44),LTH=12
+FLD43    DFLD  POS=(8,57),LTH=6,ATTR=(PROT,NUM)
+FLD44    DFLD  POS=(8,64),LTH=12
+FLD45    DFLD  POS=(8,77),LTH=6,ATTR=(PROT,NUM)
+FLD46    DFLD  POS=(9,4),LTH=12
+FLD47    DFLD  POS=(9,17),LTH=6,ATTR=(PROT,NUM)
+FLD48    DFLD  POS=(9,24),LTH=12
+FLD49    DFLD  POS=(9,37),LTH=6,ATTR=(PROT,NUM)
+FLD50    DFLD  POS=(9,44),LTH=12
+FLD51    DFLD  POS=(9,57),LTH=6,ATTR=(PROT,NUM)
+FLD52    DFLD  POS=(9,64),LTH=12
+FLD53    DFLD  POS=(9,77),LTH=6,ATTR=(PROT,NUM)
+FLD54    DFLD  POS=(10,4),LTH=12
+FLD55    DFLD  POS=(10,17),LTH=6,ATTR=(PROT,NUM)
+FLD56    DFLD  POS=(10,24),LTH=12
+FLD57    DFLD  POS=(10,37),LTH=6,ATTR=(PROT,NUM)
+FLD58    DFLD  POS=(10,44),LTH=12
+FLD59    DFLD  POS=(10,57),LTH=6,ATTR=(PROT,NUM)
+FLD60    DFLD  POS=(10,64),LTH=12
+FLD61    DFLD  POS=(10,77),LTH=6,ATTR=(PROT,NUM)
+FLD62    DFLD  POS=(11,4),LTH=12
+FLD63    DFLD  POS=(11,17),LTH=6,ATTR=(PROT,NUM)
+FLD64    DFLD  POS=(11,24),LTH=12
+FLD65    DFLD  POS=(11,37),LTH=6,ATTR=(PROT,NUM)
+FLD66    DFLD  POS=(11,44),LTH=12
+FLD67    DFLD  POS=(11,57),LTH=6,ATTR=(PROT,NUM)
+FLD68    DFLD  POS=(11,64),LTH=12
+FLD69    DFLD  POS=(11,77),LTH=6,ATTR=(PROT,NUM)
+FLD70    DFLD  POS=(12,4),LTH=12
+FLD71    DFLD  POS=(12,17),LTH=6,ATTR=(PROT,NUM)
+FLD72    DFLD  POS=(12,24),LTH=12
+FLD73    DFLD  POS=(12,37),LTH=6,ATTR=(PROT,NUM)
+FLD74    DFLD  POS=(12,44),LTH=12
+FLD75    DFLD  POS=(12,57),LTH=6,ATTR=(PROT,NUM)
+FLD76    DFLD  POS=(12,64),LTH=12
+FLD77    DFLD  POS=(12,77),LTH=6,ATTR=(PROT,NUM)
+FLD78    DFLD  POS=(13,4),LTH=12
+FLD79    DFLD  POS=(13,17),LTH=6,ATTR=(PROT,NUM)
+FLD80    DFLD  POS=(13,24),LTH=12
+FLD81    DFLD  POS=(13,37),LTH=6,ATTR=(PROT,NUM)
+FLD82    DFLD  POS=(13,44),LTH=12
+FLD83    DFLD  POS=(13,57),LTH=6,ATTR=(PROT,NUM)
+FLD84    DFLD  POS=(13,64),LTH=12
+FLD85    DFLD  POS=(13,77),LTH=6,ATTR=(PROT,NUM)
+FLD86    DFLD  POS=(14,4),LTH=12
+FLD87    DFLD  POS=(14,17),LTH=6,ATTR=(PROT,NUM)
+FLD88    DFLD  POS=(14,24),LTH=12
+FLD89    DFLD  POS=(14,37),LTH=6,ATTR=(PROT,NUM)
+FLD90    DFLD  POS=(14,44),LTH=12
+FLD91    DFLD  POS=(14,57),LTH=6,ATTR=(PROT,NUM)
+FLD92    DFLD  POS=(14,64),LTH=12
+FLD93    DFLD  POS=(14,77),LTH=6,ATTR=(PROT,NUM)
+FLD94    DFLD  POS=(15,4),LTH=12
+FLD95    DFLD  POS=(15,17),LTH=6,ATTR=(PROT,NUM)
+FLD96    DFLD  POS=(15,24),LTH=12
+FLD97    DFLD  POS=(15,37),LTH=6,ATTR=(PROT,NUM)
+FLD98    DFLD  POS=(15,44),LTH=12
+FLD99    DFLD  POS=(15,57),LTH=6,ATTR=(PROT,NUM)
+FLD100   DFLD  POS=(15,64),LTH=12
+FLD101   DFLD  POS=(15,77),LTH=6,ATTR=(PROT,NUM)
+FLD102   DFLD  POS=(16,4),LTH=12
+FLD103   DFLD  POS=(16,17),LTH=6,ATTR=(PROT,NUM)
+FLD104   DFLD  POS=(16,24),LTH=12
+FLD105   DFLD  POS=(16,37),LTH=6,ATTR=(PROT,NUM)
+FLD106   DFLD  POS=(16,44),LTH=12
+FLD107   DFLD  POS=(16,57),LTH=6,ATTR=(PROT,NUM)
+FLD108   DFLD  POS=(16,64),LTH=12
+FLD109   DFLD  POS=(16,77),LTH=6,ATTR=(PROT,NUM)
+FLD110   DFLD  POS=(17,4),LTH=12
+FLD111   DFLD  POS=(17,17),LTH=6,ATTR=(PROT,NUM)
+FLD112   DFLD  POS=(17,24),LTH=12
+FLD113   DFLD  POS=(17,37),LTH=6,ATTR=(PROT,NUM)
+FLD114   DFLD  POS=(17,44),LTH=12
+FLD115   DFLD  POS=(17,57),LTH=6,ATTR=(PROT,NUM)
+FLD116   DFLD  POS=(17,64),LTH=12
+FLD117   DFLD  POS=(17,77),LTH=6,ATTR=(PROT,NUM)
+FLD118   DFLD  POS=(18,4),LTH=12
+FLD119   DFLD  POS=(18,17),LTH=6,ATTR=(PROT,NUM)
+FLD120   DFLD  POS=(18,24),LTH=12
+FLD121   DFLD  POS=(18,37),LTH=6,ATTR=(PROT,NUM)
+FLD122   DFLD  POS=(18,44),LTH=12
+FLD123   DFLD  POS=(18,57),LTH=6,ATTR=(PROT,NUM)
+FLD124   DFLD  POS=(18,64),LTH=12
+FLD125   DFLD  POS=(18,77),LTH=6,ATTR=(PROT,NUM)
+FLD126   DFLD  POS=(19,4),LTH=12
+FLD127   DFLD  POS=(19,17),LTH=6,ATTR=(PROT,NUM)
+FLD128   DFLD  POS=(19,24),LTH=12
+FLD129   DFLD  POS=(19,37),LTH=6,ATTR=(PROT,NUM)
+FLD130   DFLD  POS=(19,44),LTH=12
+FLD131   DFLD  POS=(19,57),LTH=6,ATTR=(PROT,NUM)
+FLD132   DFLD  POS=(19,64),LTH=12
+FLD133   DFLD  POS=(19,77),LTH=6,ATTR=(PROT,NUM)
+FLD134   DFLD  POS=(20,4),LTH=12
+FLD135   DFLD  POS=(20,17),LTH=6,ATTR=(PROT,NUM)
+FLD136   DFLD  POS=(20,24),LTH=12
+FLD137   DFLD  POS=(20,37),LTH=6,ATTR=(PROT,NUM)
+FLD138   DFLD  POS=(20,44),LTH=12
+FLD139   DFLD  POS=(20,57),LTH=6,ATTR=(PROT,NUM)
+FLD140   DFLD  POS=(20,64),LTH=12
+FLD141   DFLD  POS=(20,77),LTH=6,ATTR=(PROT,NUM)
+FLD142   DFLD  POS=(21,4),LTH=12
+FLD143   DFLD  POS=(21,17),LTH=6,ATTR=(PROT,NUM)
+FLD144   DFLD  POS=(21,24),LTH=12
+FLD145   DFLD  POS=(21,37),LTH=6,ATTR=(PROT,NUM)
+FLD146   DFLD  POS=(21,44),LTH=12
+FLD147   DFLD  POS=(21,57),LTH=6,ATTR=(PROT,NUM)
+FLD148   DFLD  POS=(21,64),LTH=12
+FLD149   DFLD  POS=(21,77),LTH=6,ATTR=(PROT,NUM)
+FLD150   DFLD  POS=(22,4),LTH=12
+FLD151   DFLD  POS=(22,17),LTH=6,ATTR=(PROT,NUM)
+FLD152   DFLD  POS=(22,24),LTH=12
+FLD153   DFLD  POS=(22,37),LTH=6,ATTR=(PROT,NUM)
+FLD154   DFLD  POS=(22,44),LTH=12
+FLD155   DFLD  POS=(22,57),LTH=6,ATTR=(PROT,NUM)
+FLD156   DFLD  POS=(22,64),LTH=12
+FLD157   DFLD  POS=(22,77),LTH=6,ATTR=(PROT,NUM)
+FLD158   DFLD  POS=(23,4),LTH=12
+FLD159   DFLD  POS=(23,17),LTH=6,ATTR=(PROT,NUM)
+FLD160   DFLD  POS=(23,24),LTH=12
+FLD161   DFLD  POS=(23,37),LTH=6,ATTR=(PROT,NUM)
+FLD162   DFLD  POS=(23,44),LTH=12
+FLD163   DFLD  POS=(23,57),LTH=6,ATTR=(PROT,NUM)
+FLD164   DFLD  POS=(23,64),LTH=12
+FLD165   DFLD  POS=(23,77),LTH=6,ATTR=(PROT,NUM)
+FLD166   DFLD  POS=(24,4),LTH=12
+FLD167   DFLD  POS=(24,17),LTH=6,ATTR=(PROT,NUM)
+FLD168   DFLD  POS=(24,24),LTH=12
+FLD169   DFLD  POS=(24,37),LTH=6,ATTR=(PROT,NUM)
+FLD170   DFLD  POS=(24,44),LTH=12
+FLD171   DFLD  POS=(24,57),LTH=6,ATTR=(PROT,NUM)
+FLD172   DFLD  POS=(24,64),LTH=12
+FLD173   DFLD  POS=(24,77),LTH=4,ATTR=(PROT,NUM)
+         DEV   TYPE=(3270,1),FEAT=(IGNORE),DSCA=X'0020'
+         DIV   TYPE=INOUT
+         DPAGE FILL=PT,CURSOR=((1,7))
+FLD1     DFLD  POS=(1,2),LTH=4,ATTR=(MOD,NUM,PROT)
+FLD2     DFLD  POS=(1,7),LTH=29
+FLD3     DFLD  POS=(1,37),LTH=4,ATTR=(MOD,NUM,PROT)
+FLD4     DFLD  POS=(2,2),LTH=1,ATTR=(PROT,NUM)
+FLD5     DFLD  POS=(2,4),LTH=1
+FLD6     DFLD  POS=(2,6),LTH=14,ATTR=(PROT,NUM)
+FLD6A    DFLD  POS=(2,21),LTH=20,ATTR=(PROT,NUM)
+FLD7     DFLD  POS=(3,2),LTH=1,ATTR=(PROT,NUM)
+FLD8     DFLD  POS=(3,4),LTH=1
+FLD9     DFLD  POS=(3,6),LTH=14,ATTR=(PROT,NUM)
+FLD10SM  DFLD  POS=(3,21),LTH=15,ATTR=(MOD,PROT,NUM,NODISP)
+D4       DFLD  POS=(3,37),LTH=4,ATTR=(PROT,NUM)
+FLD11    DFLD  POS=(4,2),LTH=39,ATTR=(PROT,NUM)
+FLD13    DFLD  POS=(5,2),LTH=41,ATTR=(PROT,NUM)
+FLD14    DFLD  POS=(6,4),LTH=12
+FLD15    DFLD  POS=(6,17),LTH=6,ATTR=(PROT,NUM)
+FLD16    DFLD  POS=(6,24),LTH=12
+FLD17    DFLD  POS=(6,37),LTH=6,ATTR=(PROT,NUM)
+FLD18    DFLD  POS=(7,4),LTH=12
+FLD19    DFLD  POS=(7,17),LTH=6,ATTR=(PROT,NUM)
+FLD20    DFLD  POS=(7,24),LTH=12
+FLD21    DFLD  POS=(7,37),LTH=6,ATTR=(PROT,NUM)
+FLD22    DFLD  POS=(8,4),LTH=12
+FLD23    DFLD  POS=(8,17),LTH=6,ATTR=(PROT,NUM)
+FLD24    DFLD  POS=(8,24),LTH=12
+FLD25    DFLD  POS=(8,37),LTH=6,ATTR=(PROT,NUM)
+FLD26    DFLD  POS=(9,4),LTH=12
+FLD27    DFLD  POS=(9,17),LTH=6,ATTR=(PROT,NUM)
+FLD28    DFLD  POS=(9,24),LTH=12
+FLD29    DFLD  POS=(9,37),LTH=6,ATTR=(PROT,NUM)
+FLD30    DFLD  POS=(10,4),LTH=12
+FLD31    DFLD  POS=(10,17),LTH=6,ATTR=(PROT,NUM)
+FLD32    DFLD  POS=(10,24),LTH=12
+FLD33    DFLD  POS=(10,37),LTH=6,ATTR=(PROT,NUM)
+FLD34    DFLD  POS=(11,4),LTH=12
+FLD35    DFLD  POS=(11,17),LTH=6,ATTR=(PROT,NUM)
+FLD36    DFLD  POS=(11,24),LTH=12
+FLD37    DFLD  POS=(11,37),LTH=6,ATTR=(PROT,NUM)
+FLD38    DFLD  POS=(12,4),LTH=12
+FLD39    DFLD  POS=(12,17),LTH=6,ATTR=(PROT,NUM)
+FLD40    DFLD  POS=(12,24),LTH=12
+FLD41SM  DFLD  POS=(12,37),LTH=4,ATTR=(PROT,NUM)
+         FMTEND
+BNGIOALL MSG   TYPE=OUTPUT,OPT=1,NXT=BNGIIALL,SOR=(BNGIAL,IGNORE)
+SEG1     SEG
+         MFLD  (FLD1,'DEMF')
+         MFLD  FLD3,LTH=4
+         MFLD  FLD4,LTH=1
+         MFLD  FLD5,LTH=1
+         MFLD  FLD6,LTH=14
+         MFLD  FLD7,LTH=1
+         MFLD  FLD8,LTH=1
+         MFLD  FLD9,LTH=14
+         MFLD  FLD10LG,LTH=15
+         MFLD  FLD10SM,LTH=15
+         MFLD  FLD11,LTH=39
+         MFLD  FLD12,LTH=39
+         MFLD  FLD13,LTH=41
+         MFLD  FLD14,LTH=12
+         MFLD  FLD15,LTH=6
+         MFLD  FLD16,LTH=12
+         MFLD  FLD17,LTH=6
+         MFLD  FLD18,LTH=12
+         MFLD  FLD19,LTH=6
+         MFLD  FLD20,LTH=12
+         MFLD  FLD21,LTH=6
+         MFLD  FLD22,LTH=12
+         MFLD  FLD23,LTH=6
+         MFLD  FLD24,LTH=12
+         MFLD  FLD25,LTH=6
+         MFLD  FLD26,LTH=12
+         MFLD  FLD27,LTH=6
+         MFLD  FLD28,LTH=12
+         MFLD  FLD29,LTH=6
+         MFLD  FLD30,LTH=12
+         MFLD  FLD31,LTH=6
+         MFLD  FLD32,LTH=12
+         MFLD  FLD33,LTH=6
+         MFLD  FLD34,LTH=12
+         MFLD  FLD35,LTH=6
+         MFLD  FLD36,LTH=12
+         MFLD  FLD37,LTH=6
+         MFLD  FLD38,LTH=12
+         MFLD  FLD39,LTH=6
+         MFLD  FLD40,LTH=12
+         MFLD  FLD41LG,LTH=6
+         MFLD  FLD42,LTH=12
+         MFLD  FLD43,LTH=6
+         MFLD  FLD44,LTH=12
+         MFLD  FLD45,LTH=6
+         MFLD  FLD46,LTH=12
+         MFLD  FLD47,LTH=6
+         MFLD  FLD48,LTH=12
+         MFLD  FLD49,LTH=6
+         MFLD  FLD50,LTH=12
+         MFLD  FLD51,LTH=6
+         MFLD  FLD52,LTH=12
+         MFLD  FLD53,LTH=6
+         MFLD  FLD54,LTH=12
+         MFLD  FLD55,LTH=6
+         MFLD  FLD56,LTH=12
+         MFLD  FLD57,LTH=6
+         MFLD  FLD58,LTH=12
+         MFLD  FLD59,LTH=6
+         MFLD  FLD60,LTH=12
+         MFLD  FLD61,LTH=6
+         MFLD  FLD62,LTH=12
+         MFLD  FLD63,LTH=6
+         MFLD  FLD64,LTH=12
+         MFLD  FLD65,LTH=6
+         MFLD  FLD66,LTH=12
+         MFLD  FLD67,LTH=6
+         MFLD  FLD68,LTH=12
+         MFLD  FLD69,LTH=6
+         MFLD  FLD70,LTH=12
+         MFLD  FLD71,LTH=6
+         MFLD  FLD72,LTH=12
+         MFLD  FLD73,LTH=6
+         MFLD  FLD74,LTH=12
+         MFLD  FLD75,LTH=6
+         MFLD  FLD76,LTH=12
+         MFLD  FLD77,LTH=6
+         MFLD  FLD78,LTH=12
+         MFLD  FLD79,LTH=6
+         MFLD  FLD80,LTH=12
+         MFLD  FLD81,LTH=6
+         MFLD  FLD82,LTH=12
+         MFLD  FLD83,LTH=6
+         MFLD  FLD84,LTH=12
+         MFLD  FLD85,LTH=6
+         MFLD  FLD86,LTH=12
+         MFLD  FLD87,LTH=6
+         MFLD  FLD88,LTH=12
+         MFLD  FLD89,LTH=6
+         MFLD  FLD90,LTH=12
+         MFLD  FLD91,LTH=6
+         MFLD  FLD92,LTH=12
+         MFLD  FLD93,LTH=6
+         MFLD  FLD94,LTH=12
+         MFLD  FLD95,LTH=6
+         MFLD  FLD96,LTH=12
+         MFLD  FLD97,LTH=6
+         MFLD  FLD98,LTH=12
+         MFLD  FLD99,LTH=6
+         MFLD  FLD100,LTH=12
+         MFLD  FLD101,LTH=6
+         MFLD  FLD102,LTH=12
+         MFLD  FLD103,LTH=6
+         MFLD  FLD104,LTH=12
+         MFLD  FLD105,LTH=6
+         MFLD  FLD106,LTH=12
+         MFLD  FLD107,LTH=6
+         MFLD  FLD108,LTH=12
+         MFLD  FLD109,LTH=6
+         MFLD  FLD110,LTH=12
+         MFLD  FLD111,LTH=6
+         MFLD  FLD112,LTH=12
+         MFLD  FLD113,LTH=6
+         MFLD  FLD114,LTH=12
+         MFLD  FLD115,LTH=6
+         MFLD  FLD116,LTH=12
+         MFLD  FLD117,LTH=6
+         MFLD  FLD118,LTH=12
+         MFLD  FLD119,LTH=6
+         MFLD  FLD120,LTH=12
+         MFLD  FLD121,LTH=6
+         MFLD  FLD122,LTH=12
+         MFLD  FLD123,LTH=6
+         MFLD  FLD124,LTH=12
+         MFLD  FLD125,LTH=6
+         MFLD  FLD126,LTH=12
+         MFLD  FLD127,LTH=6
+         MFLD  FLD128,LTH=12
+         MFLD  FLD129,LTH=6
+         MFLD  FLD130,LTH=12
+         MFLD  FLD131,LTH=6
+         MFLD  FLD132,LTH=12
+         MFLD  FLD133,LTH=6
+         MFLD  FLD134,LTH=12
+         MFLD  FLD135,LTH=6
+         MFLD  FLD136,LTH=12
+         MFLD  FLD137,LTH=6
+         MFLD  FLD138,LTH=12
+         MFLD  FLD139,LTH=6
+         MFLD  FLD140,LTH=12
+         MFLD  FLD141,LTH=6
+         MFLD  FLD142,LTH=12
+         MFLD  FLD143,LTH=6
+         MFLD  FLD144,LTH=12
+         MFLD  FLD145,LTH=6
+         MFLD  FLD146,LTH=12
+         MFLD  FLD147,LTH=6
+         MFLD  FLD148,LTH=12
+         MFLD  FLD149,LTH=6
+         MFLD  FLD150,LTH=12
+         MFLD  FLD151,LTH=6
+         MFLD  FLD152,LTH=12
+         MFLD  FLD153,LTH=6
+         MFLD  FLD154,LTH=12
+         MFLD  FLD155,LTH=6
+         MFLD  FLD156,LTH=12
+         MFLD  FLD157,LTH=6
+         MFLD  FLD158,LTH=12
+         MFLD  FLD159,LTH=6
+         MFLD  FLD160,LTH=12
+         MFLD  FLD161,LTH=6
+         MFLD  FLD162,LTH=12
+         MFLD  FLD163,LTH=6
+         MFLD  FLD164,LTH=12
+         MFLD  FLD165,LTH=6
+         MFLD  FLD166,LTH=12
+         MFLD  FLD167,LTH=6
+         MFLD  FLD168,LTH=12
+         MFLD  FLD169,LTH=6
+         MFLD  FLD170,LTH=12
+         MFLD  FLD171,LTH=6
+         MFLD  FLD172,LTH=12
+         MFLD  FLD173,LTH=4
+         MFLD  FLD41SM,LTH=4
+         MSGEND
+BNGIIALL MSG    TYPE=INPUT,OPT=1,SOR=BNGIAL
+SEG1     SEG
+         MFLD  FLD1,LTH=5,FILL=C' '
+         MFLD  FLD2,LTH=29,FILL=C' '
+         MFLD  FLD3,LTH=4,FILL=C' '
+         MFLD  FLD5,LTH=1,FILL=C' '
+         MFLD  FLD6A,LTH=20,FILL=C' '
+         MFLD  FLD8,LTH=1,FILL=C' '
+         MFLD  FLD10LG,LTH=15,FILL=NULL
+         MFLD  FLD10SM,LTH=15,FILL=NULL
+         MFLD  FLD14,LTH=12,FILL=NULL
+         MFLD  FLD16,LTH=12,FILL=NULL
+         MFLD  FLD18,LTH=12,FILL=NULL
+         MFLD  FLD20,LTH=12,FILL=NULL
+         MFLD  FLD22,LTH=12,FILL=NULL
+         MFLD  FLD24,LTH=12,FILL=NULL
+         MFLD  FLD26,LTH=12,FILL=NULL
+         MFLD  FLD28,LTH=12,FILL=NULL
+         MFLD  FLD30,LTH=12,FILL=NULL
+         MFLD  FLD32,LTH=12,FILL=NULL
+         MFLD  FLD34,LTH=12,FILL=NULL
+         MFLD  FLD36,LTH=12,FILL=NULL
+         MFLD  FLD38,LTH=12,FILL=NULL
+         MFLD  FLD40,LTH=12,FILL=NULL
+         MFLD  FLD42,LTH=12,FILL=NULL
+         MFLD  FLD44,LTH=12,FILL=NULL
+         MFLD  FLD46,LTH=12,FILL=NULL
+         MFLD  FLD48,LTH=12,FILL=NULL
+         MFLD  FLD50,LTH=12,FILL=NULL
+         MFLD  FLD52,LTH=12,FILL=NULL
+         MFLD  FLD54,LTH=12,FILL=NULL
+         MFLD  FLD56,LTH=12,FILL=NULL
+         MFLD  FLD58,LTH=12,FILL=NULL
+         MFLD  FLD60,LTH=12,FILL=NULL
+         MFLD  FLD62,LTH=12,FILL=NULL
+         MFLD  FLD64,LTH=12,FILL=NULL
+         MFLD  FLD66,LTH=12,FILL=NULL
+         MFLD  FLD68,LTH=12,FILL=NULL
+         MFLD  FLD70,LTH=12,FILL=NULL
+         MFLD  FLD72,LTH=12,FILL=NULL
+         MFLD  FLD74,LTH=12,FILL=NULL
+         MFLD  FLD76,LTH=12,FILL=NULL
+         MFLD  FLD78,LTH=12,FILL=NULL
+         MFLD  FLD80,LTH=12,FILL=NULL
+         MFLD  FLD82,LTH=12,FILL=NULL
+         MFLD  FLD84,LTH=12,FILL=NULL
+         MFLD  FLD86,LTH=12,FILL=NULL
+         MFLD  FLD88,LTH=12,FILL=NULL
+         MFLD  FLD90,LTH=12,FILL=NULL
+         MFLD  FLD92,LTH=12,FILL=NULL
+         MFLD  FLD94,LTH=12,FILL=NULL
+         MFLD  FLD96,LTH=12,FILL=NULL
+         MFLD  FLD98,LTH=12,FILL=NULL
+         MFLD  FLD100,LTH=12,FILL=NULL
+         MFLD  FLD102,LTH=12,FILL=NULL
+         MFLD  FLD104,LTH=12,FILL=NULL
+         MFLD  FLD106,LTH=12,FILL=NULL
+         MFLD  FLD108,LTH=12,FILL=NULL
+         MFLD  FLD110,LTH=12,FILL=NULL
+         MFLD  FLD112,LTH=12,FILL=NULL
+         MFLD  FLD114,LTH=12,FILL=NULL
+         MFLD  FLD116,LTH=12,FILL=NULL
+         MFLD  FLD118,LTH=12,FILL=NULL
+         MFLD  FLD120,LTH=12,FILL=NULL
+         MFLD  FLD122,LTH=12,FILL=NULL
+         MFLD  FLD124,LTH=12,FILL=NULL
+         MFLD  FLD126,LTH=12,FILL=NULL
+         MFLD  FLD128,LTH=12,FILL=NULL
+         MFLD  FLD130,LTH=12,FILL=NULL
+         MFLD  FLD132,LTH=12,FILL=NULL
+         MFLD  FLD134,LTH=12,FILL=NULL
+         MFLD  FLD136,LTH=12,FILL=NULL
+         MFLD  FLD138,LTH=12,FILL=NULL
+         MFLD  FLD140,LTH=12,FILL=NULL
+         MFLD  FLD142,LTH=12,FILL=NULL
+         MFLD  FLD144,LTH=12,FILL=NULL
+         MFLD  FLD146,LTH=12,FILL=NULL
+         MFLD  FLD148,LTH=12,FILL=NULL
+         MFLD  FLD150,LTH=12,FILL=NULL
+         MFLD  FLD152,LTH=12,FILL=NULL
+         MFLD  FLD154,LTH=12,FILL=NULL
+         MFLD  FLD156,LTH=12,FILL=NULL
+         MFLD  FLD158,LTH=12,FILL=NULL
+         MFLD  FLD160,LTH=12,FILL=NULL
+         MFLD  FLD162,LTH=12,FILL=NULL
+         MFLD  FLD164,LTH=12,FILL=NULL
+         MFLD  FLD166,LTH=12,FILL=NULL
+         MFLD  FLD168,LTH=12,FILL=NULL
+         MFLD  FLD170,LTH=12,FILL=NULL
+         MFLD  FLD172,LTH=12,FILL=NULL
+         MSGEND
+         END

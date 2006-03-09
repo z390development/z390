@@ -1,0 +1,144 @@
+.* MVS 3.8J PUBLIC DOMAIN
+***********************************************************************
+*                                                                     *
+* MODULE NAME = BNGISBIT                                              *
+*                                                                     *
+* DESCRIPTIVE NAME =  IMS DEMF SCREEN FORMAT MODULE FOR BITS PROMPTER *
+*                     DISPLAY                                         *
+*                                                                     *
+*                                                                     *
+* STATUS = RELEASE 1, LEVEL 1                                         *
+*                                                                     *
+* FUNCTION = DEFINES THE FORMAT OF 'BITS PROMPTER' DISPLAY SCREEN     *
+*            USING BOTH MESSAGE INPUT DESCRIPTOR (MID) AND MESSAGE    *
+*            OUTPUT DESCRIPTOR (MOD) FOR THE IMS APPLICATION PROGRAM  *
+*            (BNGI3270).                                              *
+*                                                                     *
+* NOTES = NONE                                                        *
+*                                                                     *
+*    DEPENDENCIES = NONE                                              *
+*                                                                     *
+*    RESTRICTIONS = NONE                                              *
+*                                                                     *
+*    REGISTER CONVENTIONS = NONE                                      *
+*                                                                     *
+*    PATCH LABEL = NONE                                               *
+*                                                                     *
+* MODULE TYPE = IMS SCREEN                                            *
+*                                                                     *
+*    PROCESSOR = ASSEMBLER H                                          *
+*                                                                     *
+*    MODULE SIZE = 1249 DECIMAL BYTES (FOR 3277 MODEL 2)              *
+*                =  979 DECIMAL BYTES (FOR 3277 MODEL 1)              *
+*                                                                     *
+*    ATTRIBUTES = SERIALLY REUSABLE                                   *
+*                                                                     *
+* ENTRY POINT = BNGIBT                                                *
+*                                                                     *
+*    PURPOSE = SEE FUNCTION                                           *
+*                                                                     *
+*    LINKAGE = MESSAGE INPUT DESCRIPTOR (MID) NAME  : BNGIIBIT        *
+*              MESSAGE OUTPUT DESCRIPTOR (MOD) NAME : BNGIOBIT        *
+*                                                                     *
+* EXIT-NORMAL = NONE                                                  *
+*                                                                     *
+* EXIT-ERROR  = NONE                                                  *
+*                                                                     *
+* EXTERNAL REFERENCE =  NONE                                          *
+*                                                                     *
+*    ROUTINES = NONE                                                  *
+*                                                                     *
+*    DATA AREAS = N/A                                                 *
+*                                                                     *
+*    CONTROL BLOCK = NONE                                             *
+*                                                                     *
+* TABLES = NONE                                                       *
+*                                                                     *
+* MACROS = PRINT, FMT, DIV, DPAGE, DFLD, DEV, FMTEND, MSG, SEG,       *
+*          MFLD, MSGEND                                               *
+*                                                                     *
+* CHANGE ACTIVITIES AS FOLLOWS:                                       *
+* CHANGE 01   11/15/77  PROLOGUE ADDED                                *
+*                                                                     *
+***********************************************************************
+         PRINT NOGEN
+BNGIBT   FMT
+         DEV   TYPE=(3270,2),FEAT=(IGNORE),DSCA=X'0020'
+         DIV   TYPE=INOUT
+         DPAGE FILL=PT,CURSOR=((1,7))
+FLD1     DFLD  POS=(1,2),LTH=4,ATTR=(MOD,NUM,PROT)
+FLD2     DFLD  POS=(1,7),LTH=29
+FLD3     DFLD  POS=(1,37),LTH=4,ATTR=(MOD,NUM,PROT)
+FLD4     DFLD  POS=(2,2),LTH=1,ATTR=(PROT,NUM)
+FLD5     DFLD  POS=(2,4),LTH=1
+FLD6     DFLD  POS=(2,6),LTH=14,ATTR=(PROT,NUM)
+FLD6A    DFLD  POS=(2,21),LTH=20,ATTR=(PROT,MOD,NUM)
+FLD7     DFLD  POS=(2,42),LTH=1,ATTR=(PROT,NUM)
+FLD8     DFLD  POS=(2,44),LTH=1
+FLD9     DFLD  POS=(2,46),LTH=14,ATTR=(PROT,NUM)
+FLD9A    DFLD  POS=(2,61),LTH=15,ATTR=(MOD,PROT,NUM,NODISP)
+FLD9B    DFLD  POS=(2,77),LTH=4,ATTR=(MOD,PROT,ALPHA,NODISP)
+FLD10    DFLD  POS=(3,2),LTH=38,ATTR=(PROT,NUM)
+FLD11    DFLD  POS=(4,1),LTH=40,ATTR=(PROT,NUM)
+FLD12    DFLD  POS=(5,1),LTH=40,ATTR=(PROT,NUM)
+FLD13    DFLD  POS=(6,1),LTH=40,ATTR=(PROT,NUM)
+FLD14    DFLD  POS=(7,1),LTH=40,ATTR=(PROT,NUM)
+FLD15    DFLD  POS=(8,1),LTH=40,ATTR=(PROT,NUM)
+FLD16    DFLD  POS=(9,1),LTH=40,ATTR=(PROT,NUM)
+FLD17    DFLD  POS=(10,1),LTH=40,ATTR=(PROT,NUM)
+FLD18    DFLD  POS=(11,1),LTH=40,ATTR=(PROT,NUM)
+         DEV   TYPE=(3270,1),FEAT=(IGNORE),DSCA=X'0020'
+         DIV   TYPE=INOUT
+         DPAGE FILL=PT,CURSOR=((1,7))
+FLD1     DFLD  POS=(1,2),LTH=4,ATTR=(MOD,NUM,PROT)
+FLD2     DFLD  POS=(1,7),LTH=29
+FLD3     DFLD  POS=(1,37),LTH=4,ATTR=(MOD,NUM,PROT)
+FLD4     DFLD  POS=(2,2),LTH=1,ATTR=(PROT,NUM)
+FLD5     DFLD  POS=(2,4),LTH=1
+FLD6     DFLD  POS=(2,6),LTH=14,ATTR=(PROT,NUM)
+FLD6A    DFLD  POS=(2,21),LTH=20,ATTR=(PROT,MOD,NUM)
+FLD7     DFLD  POS=(3,2),LTH=1,ATTR=(PROT,NUM)
+FLD8     DFLD  POS=(3,4),LTH=1
+FLD9     DFLD  POS=(3,6),LTH=14,ATTR=(PROT,NUM)
+FLD9A    DFLD  POS=(3,21),LTH=15,ATTR=(MOD,PROT,NUM,NODISP)
+FLD9B    DFLD  POS=(3,37),LTH=4,ATTR=(MOD,PROT,ALPHA,NODISP)
+FLD10    DFLD  POS=(4,2),LTH=38,ATTR=(PROT,NUM)
+FLD11SM  DFLD  POS=(5,1),LTH=320,ATTR=(PROT,NUM)
+         FMTEND
+BNGIOBIT MSG   TYPE=OUTPUT,OPT=1,NXT=BNGIIBIT,SOR=(BNGIBT,IGNORE)
+SEG1     SEG
+         MFLD  (FLD1,'DEMF')
+         MFLD  (FLD3,'3270')
+         MFLD  (FLD4,'(')
+         MFLD  (FLD5,'?')
+         MFLD  (FLD6,') PAGE FORWARD')
+         MFLD  FLD6A,LTH=20
+         MFLD  (FLD7,'(')
+         MFLD  (FLD8,'?')
+         MFLD  (FLD9,') PAGE BACKWRD')
+         MFLD  FLD9A,LTH=15
+         MFLD  (FLD9B,'BITS')
+         MFLD  FLD10,LTH=38
+         MFLD  FLD11,LTH=40
+         MFLD  FLD12,LTH=40
+         MFLD  FLD13,LTH=40
+         MFLD  FLD14,LTH=40
+         MFLD  FLD15,LTH=40
+         MFLD  FLD16,LTH=40
+         MFLD  FLD17,LTH=40
+         MFLD  FLD18,LTH=40
+         MFLD  FLD11SM,LTH=320
+         MSGEND
+BNGIIBIT MSG   TYPE=INPUT,OPT=1,SOR=(BNGIBT,IGNORE)
+SEG1     SEG
+         MFLD  FLD1,LTH=5,FILL=C' '
+         MFLD  FLD2,LTH=29,FILL=C' '
+         MFLD  FLD3,LTH=4,FILL=C' '
+         MFLD  FLD5,LTH=1,FILL=C' '
+         MFLD  FLD6A,LTH=20,FILL=C' '
+         MFLD  FLD8,LTH=1,FILL=C' '
+         MFLD  FLD9A,LTH=15,FILL=C' '
+         MFLD  FLD9B,LTH=4,FILL=C' '
+         MSGEND
+         END
+

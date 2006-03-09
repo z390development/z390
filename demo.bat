@@ -1,2 +1,2 @@
 rem demo hello world demo
-asmlg demo\demo 
+call %~dps0asmlg %~dps0demo\demo %1 %2 %3 %4 %5 %6 %7 %8 %9

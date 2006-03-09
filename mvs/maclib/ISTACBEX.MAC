@@ -1,0 +1,159 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GOTO   ACBEXTPL;                          /* SKIP THE COMMENTS    */
+* /*                                                                */
+* /*     CHANGE LEVEL = 0                                   @ZA34940*/
+* /*     DATE OF LAST CHANGE = 13  NOV   78  ( 78*317 )     @ZA34940*/
+* /*                                                                */
+* /******************************************************************/
+* /*                                                                */
+* /*     ACB VTAM EXTENSION                                         */
+* /*                                                                */
+* /*     THE EXTENSION DESCRIBES CONTROL DATA THAT ONLY VTAM USES.  */
+* /*     THE EXTENSION IS CALLED BY THE VSAM EXTENSION,     @ZA34940*/
+* /*     IFGACBVS, UNDER THE FOLLOWING CONDITI0NS:          @ZA34940*/
+* /*                                                                */
+* /*        PLS:  THE MODULE CONTAINING AN  INCLUDE FOR IFGACB      */
+* /*              SETS THE MACRO VARIABLE 'ACBRPLXL' TO 'VTAM'      */
+* /*              PRIOR TO ISSUING THE INCLUDE.                     */
+* /*        BAL:  THE AM=VTAM PARAMETER IS CODED ON THE IFGACB      */
+* /*              MACRO CALL.                                       */
+* /*                                                                */
+* /* CHANGE ACTIVITY                                        @ZA34940*/
+* /*      CBMM SPLIT SUPPORT                                @ZA34940*/
+* /*                                                        @ZA34940*/
+* /******************************************************************/
+* /*                                                                */
+*%ACBEXTPL: ;                               /* START OF PLS MAPPING */
+*             2 ACBVTEXT,                   /* OF VTAM EXTENSION    */
+*              3 ACBRTN      CHAR(6),       /* LA 15,32
+*                                              BR 14  (VTAM)  X03004*/
+*              3 *           FIXED(15),     /* RESERVED       X03004*/
+*              3 *           PTR(31);       /* RESERVED       X03004*/
+*     DCL      ISTACB BASED(ADDR(IFGACB))   /* ISTACB LENGTH  X03004*/
+*                           CHAR(LENGTH(IFGACB));
+*%/* VTAM ACBERFLG CODES                                      X03004*/
+*                  ACBNORM  = '''00''X';    /* NORMAL END    @Z40BHUC*/
+*                % ACBONVRT = '''14''X';    /* NO VIRTUAL MEMORY FOR
+*                                              CONTROL BLOCKS OR WORK
+*                                              AREAS(VTAM)    X03004*/
+*                % ACBCAQNR = '''40''X';    /* OUTSTANDING ACQUIRES
+*                                              NOT RELEASED(VTAM)
+*                                                             X03004*/
+*                % ACBCDSNR = '''42''X';    /* DESTINATIONS NOT
+*                                              RELEASED(VTAM) X03004*/
+*                % ACBRNOCF = '''4C''X';    /* CLOSE FAILED, POI QUEUE
+*                                              NOT EMPTY OR REPLIES
+*                                              OUTSTANDING   @Z40BHUC*/
+*                % ACBOANAT = '''50''X';    /* VTAM NOT ACTIVE
+*                                                             X03004*/
+*                % ACBOAHLT = '''52''X';    /* VTAM ACTIVE BUT
+*                                              HALTING        X03004*/
+*                % ACBOAVFY = '''54''X';    /* APPLICATION VERIFICA-
+*                                              TION FAILED(VTAM)
+*                                                             X03004*/
+*                % ACBOANSN = '''56''X';    /* NON-APPLICATION ID
+*                                              NAME SPECIFIED(VTAM)
+*                                                             X03004*/
+*                % ACBOAPAA = '''58''X';    /* APPLICATION ACTIVE
+*                                              ALREADY(VTAM)  X03004*/
+*                % ACBOAPNM = '''5A''X';    /* NO MATCHING APPLICA-
+*                                              TION ID ENTRY(VTAM)
+*                                                             X03004*/
+*                % ACBOVINA = '''5C''X';    /* VTAM IN SYSTEM BUT
+*                                              NOT ACTIVE     X03004*/
+*                % ACBOAPSE = '''5E''X';    /* APPLICATION ID NOT IN
+*                                              REQUESTOR'S SPACE
+*                                              (VTAM)         X03004*/
+*                % ACBOUNDF = '''60''X';    /* INTERMITTENT
+*                                              ERROR(VTAM)    X03004*/
+*                % ACBOAPLE = '''62''X';    /* APPLICATION ID LENGTH
+*                                              NOT VALID(VTAM)X03004*/
+*                % ACBOPWSE = '''64''X';    /* PASSWORD NOT IN RE-
+*                                              QUESTOR SPACE(VTAM)
+*                                                             X03004*/
+*                % ACBOPWLE = '''66''X';    /* PASSWORD LENGTH
+*                                              INVALID(VTAM)  X03004*/
+*                % ACBRNOOF = '''68''X';    /* OPEN FAILS BECAUSE A
+*                                              PRIMARY POA ISSUED AN
+*                                              OPEN ACB BUT ANOTHER
+*                                              PRIMARY POA IS CURRENTLY
+*                                              ACTIVE       @Z40BHUC*/
+*                % ACBTVTCL = '''70''X';    /* VTAM CLEANUP IN PROCESS
+*                                              FOR REQUESTED APPLID
+*                                                           @Z40BHUC*/
+*                % ACBOACT  = '''BC''X';    /* ACB ACTIVE     X03004*/
+*                % ACBCBUSY = '''BC''X';    /* ACB BUSY       X03004*/
+*        %GOTO ACBEND;                      /* GO TO END OF MACRO   */
+* /*
+*                    ASSEMBLER DSECT FOR ACB VTAM EXTENSION
+*                                                                   *
+         MACRO
+         ISTACBEX
+ACBRTN   DS    XL6                             IF VTAM IS INACTIVE,
+*                                              ACBINRTN CONTAINS A
+*                                              POINTER TO ACBRTN AT
+*                                              OFFSET 76(X'4C') TO SET
+*                                              A RETURN CODE AND RETURN
+*                                              TO THE CALLER. THE
+*                                              FIRST FOUR BYTES CONTAIN
+*                                              X'41F00020' (LA 15,32);
+*                                              THE LAST TWO BYTES
+*                                              CONTAIN X'07FE' (BR 14)
+*                                                                X03004
+         DS    XL2                             RESERVED          X03004
+         DS    A                               RESERVED
+*              ACBERFLG ERROR CODES SPECIFIC TO VTAM             X03004
+ACBNORM  EQU   X'00'                           NORMAL END      @Z40BHUC
+ACBONVRT EQU   X'14'                           NO VIRTUAL MEMORY FOR
+*                                              CONTROL BLOCKS OR WORK
+*                                              AREAS(VTAM)       X03004
+ACBCAQNR EQU   X'40'                           OUTSTANDING ACQUIRES ARE
+*                                              NOT RELEASED(VTAM)X03004
+ACBCDSNR EQU   X'42'                           DESTINATIONS ARE NOT
+*                                              RELEASED(VTAM)    X03004
+ACBRNOCF EQU   X'4C'                           CLOSE FAILED, POI QUEUE
+*                                              NOT EMPTY OR REPLIES
+*                                              OUTSTANDING     @Z40BHUC
+ACBOANAT EQU   X'50'                           VTAM IS NOT ACTIVEX03004
+ACBOAHLT EQU   X'52'                           VTAM IS ACTIVE BUT
+*                                              HALTING           X03004
+ACBOAVFY EQU   X'54'                           APPLICATION VERIFICATION
+*                                              FAILED(VTAM)      X03004
+ACBOANSN EQU   X'56'                           A NON-APPLICATION ID
+*                                              NAME WAS SPECIFIED(VTAM)
+*                                                                X03004
+ACBOAPAA EQU   X'58'                           THE APPLICATION IS
+*                                              ACTIVE ALREADY(VTAM)
+*                                                                X03004
+ACBOAPNM EQU   X'5A'                           NO MATCHING APPLICATION
+*                                              ID ENTRY EXISTS(VTAM)
+*                                                                X03004
+ACBOVINA EQU   X'5C'                           VTAM IS IN THE SYSTEM
+*                                              BUT NOT ACTIVE    X03004
+ACVOAPSE EQU   X'5E'                           THE APPLICATION ID IS
+*                                              NOT IN REQUESTOR'S
+*                                              SPACE(VTAM)       X03004
+ACBOUNDF EQU   X'60'                           INTERMITTENT ERROR(VTAM)
+*                                                                X03004
+ACBOAPLE EQU   X'62'                           THE APPLICATION ID
+*                                              LENGTH IS NOT
+*                                              VALID(VTAM)       X03004
+ACBOPWSE EQU   X'64'                           THE PASSWORD IS NOT IN
+*                                              REQUESTOR'S SPACE(VTAM)
+*                                                                X03004
+ACBOPWLE EQU   X'66'                           THE PASSWORD LENGTH IS
+*                                              INVALID(VTAM)     X03004
+ACBRNOOF EQU   X'68'                           OPEN FAILS BECAUSE A
+*                                              PRIMARY POA ISSUED AN
+*                                              OPEN ACB BUT ANOTHER
+*                                              PRIMARY POA IS CURRENTLY
+*                                              ACTIVE          @Z40BHUC
+ACBTVTCL EQU   X'70'                           VTAM CLEANUP IN PROCESS
+*                                              FOR REQUESTED APPLIED
+*                                                             @Z40BHUC
+ACBOACT  EQU   X'BC'                           THE ACB IS ACTIVE X03004
+ACBCBUSY EQU   X'BC'                           THE ACB IS BUSY   X03004
+         MEND
+*        END OF ACB VTAM EXTENSION                                  */
+*%ACBEND: ;
+

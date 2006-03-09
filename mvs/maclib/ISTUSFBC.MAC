@@ -1,0 +1,517 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%GOTO FBCPLS;
+*/*
+         MACRO
+         ISTUSFBC
+         AGO   .FBCBAL
+*                                                                    */
+*%FBCPLS:;
+*/*                                                                  */
+*/********************************************************************/
+*/*   ISTUSFBC                                                       */
+*/*      THE FOLLOWING CODES ARE STORED IN EITHER ''RPLRTNCD'', OR   */
+*/*      ''RPLFDB2'' OR ''RPLFDB3''.  SEE THE INTRODUCTORY COMMENTS  */
+*/*      FOR EACH GROUP FOR FURTHER INFORMATION.                     */
+*/*                                                                  */
+*/*            RPL FIELD NAME           OPERAND OF MANIPULATIVE MACRO*/
+*/*                                                                  */
+*/*            RPLRTNCD                 RTNCD     (FEEDBACK CODE)    */
+*/*            RPLFDB2                  FDBK2     (REASON CODE)      */
+*/*            RPLFDB3                  FDBK      (DATA FLAGS)       */
+*/*                                                                  */
+*/********************************************************************/
+*/*                                                                  */
+*/*                                                                  */
+*/***    RPLRTNCD        CONTAINS A FEEDBACK CODE.  IF THE RPL    ****/
+*/*                      REQUEST IS UNSUCCESSFUL THEN REGISTER       */
+*/*                      ZERO WILL ALSO CONTAIN THIS CODE. FOR A     */
+*/*                      CERTAIN GROUP OF ERRORS, ONLY REGISTER      */
+*/*                      ZERO WILL CONTAIN THE FEEDBACK CODE AND     */
+*/*                      NO FEEDBACK INFORMATION WILL BE PLACED IN   */
+*/*                      THE RPL.                                    */
+*/*                                                                  */
+*/*                      THE FEEDBACK CODE EQUATES ARE AS FOLLOWS:   */
+*DECLARE
+*USFAOK   BIT(8) CONSTANT('00'X),   /* NORMAL COMPLETION/COND COMP   */
+*USFXORDC BIT(8) CONSTANT('04'X),   /* EXTRAORDINARY COMPLETION      */
+*USFRESSU BIT(8) CONSTANT('08'X),   /* REISSUE THIS REQUEST          */
+*USFDAMGE BIT(8) CONSTANT('0C'X),   /* DAMAGE - INTEGRITY OF REQ/DEV */
+*USFENVER BIT(8) CONSTANT('10'X),   /* ENVIRONMENT ERROR             */
+*USFLOGIC BIT(8) CONSTANT('14'X),   /* USER LOGIC ERROR              */
+*USFRLGIC BIT(8) CONSTANT('18'X);   /* USER LOGIC ERROR              */
+*                                   /* - SETONLY IN REG ZERO         */
+*/*                                                                  */
+*/*                                                                  */
+*/********************************************************************/
+*/*                                                                  */
+*/*      RPLFDB2         CONTAINS A REASON CODE.  THIS REASON CODE   */
+*/*                      INDICATES ADDITIONAL INFORMATION ABOUT THE  */
+*/*                      FEEDBACK CODE.                              */
+*/*                                                                  */
+*/***    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'00' ****/
+*/*                                                                  */
+*DECLARE
+*USFAOOK  BIT(8) CONSTANT('00'X),   /* OPERATION SUCCESSFULLY COMP   */
+*USFRCWNP BIT(8) CONSTANT('01'X),   /* RESET COND WAS NO-OPED        */
+*USFRCDPR BIT(8) CONSTANT('02'X),   /* RESET CONDITIONAL SUCCESSFUL -*/
+*                                   /* READ-AHEAD DATA PRESENT       */
+*USFYTCTN BIT(8) CONSTANT('03'X),   /* YIELDED TO CONTENTION         */
+*USFYTCTL BIT(8) CONSTANT('04'X),   /* YIELDED TO CONT., ER LK SET   */
+*USFATSFI BIT(8) CONSTANT('05'X),   /* AREA TOO SMALL FOR INQ/INTRP  */
+*USFNOIN  BIT(8) CONSTANT('06'X),   /* NO INPUT AVAILABLE            */
+*USFIIINA BIT(8) CONSTANT('07'X),   /* INQUIRE INFORMATION NOT AVAIL */
+*USFDSTIU BIT(8) CONSTANT('08'X),   /* DESTINATION IN USE            */
+*USFNLGFA BIT(8) CONSTANT('09'X);   /* NO LOGON FND FOR ACCEPT MATCH */
+*/*      IF, FOLLOWING A SYNCHRONOUS RPL REQUEST MACRO OR CHECK      */
+*/*      MACRO, REGISTER 15 CONTAINS X'00' THEN REGISTER ZERO WILL   */
+*/*      CONTAIN ONE OF THE ABOVE REASON CODE VALUES                 */
+*/*                                                                  */
+*/*                                                                  */
+*/***    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'04' ****/
+*/*                                                                  */
+*DECLARE
+*USFRVIRC BIT(8) CONSTANT('00'X),   /* RVI RECEIVED, ERROR LOCK SET  */
+*USFATNRC BIT(8) CONSTANT('01'X),   /* ATTN RECEIVED, ERROR LOCK SET */
+*USFBSCSM BIT(8) CONSTANT('02'X),   /* BSC STATUS MSG RECEIVED       */
+*USFEXRQ  BIT(8) CONSTANT('03'X),   /* EXCEPTION REQUEST RECEIVED    */
+*USFEXRS  BIT(8) CONSTANT('04'X);   /* EXCEPTION RESPONSE RECEIVED   */
+*/*                                                                  */
+*/*                                                                  */
+*/***    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'08' ****/
+*/*                                                                  */
+*DECLARE
+*USFSTALF BIT(8) CONSTANT('00'X);   /* TEMPORARY OUT OF STORAGE      */
+*                                   /* SITUATION EXISTS, RPL         */
+*                                   /* ECB/EXIT NOT POSTED/INVOKED   */
+*/*                                                                  */
+*/*                                                                  */
+*/***    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'0C' ****/
+*/*                                                                  */
+*DECLARE
+*USFIOEDU BIT(8) CONSTANT('00'X),   /* I/O ERROR, DEVICE STILL USABLE*/
+*                                   /* ERROR LOCK SET                */
+*USFDVUNS BIT(8) CONSTANT('01'X),   /* I/O ERROR, DEVICE NOT USABLE  */
+*                                   /* ERROR LOCK SET                */
+*USFUNTRM BIT(8) CONSTANT('02'X),   /* REQUEST RESET BY TEST REQ MSG */
+*USFBTHEX BIT(8) CONSTANT('03'X),   /* BUFFER THRESHOLD EXCEEDED     */
+*USFBTEOR BIT(8) CONSTANT('04'X),   /* BUF THRESHOLD EXCEEDED,       */
+*                                   /* ONLY READS ALLOW              */
+*USFNCPAO BIT(8) CONSTANT('05'X),   /* NCP ABENDED, RESTART O.K.     */
+*USFLIORP BIT(8) CONSTANT('06'X),   /* LAST I/O REQUEST PURGED       */
+*USFRECIP BIT(8) CONSTANT('07'X),   /* RECOVERY IN PROGRESS          */
+*USFRTRAF BIT(8) CONSTANT('08'X),   /* RECORD TERM RESTRTD AFTER FAIL*/
+*USFQOPDC BIT(8) CONSTANT('09'X),   /* Q'ED OPNDST CANCELED BY CLSDST*/
+*USFUSRES BIT(8) CONSTANT('0A'X),   /* REQUEST RESET BY THE USER     */
+*USFCLOCC BIT(8) CONSTANT('0B'X),   /* CLSDST OCCURED                */
+*USFCLRED BIT(8) CONSTANT('0C'X),   /* REQUEST WAS CLEAR''ED         */
+*USFPREXC BIT(8) CONSTANT('0D'X);   /* SEND CANCELLED DUE TO         */
+*                                   /* PRIOR EXCEPTION CONDITION     */
+*/*                                                                  */
+*/*                                                                  */
+*/***    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'10' ****/
+*/*                                                                  */
+*DECLARE
+*USFTANAV BIT(8) CONSTANT('00'X),   /* TERMINAL OR APPL NOT AVAILABLE*/
+*USFSBFAL BIT(8) CONSTANT('01'X),   /* SESSION BIND FAILED           */
+*USFTAPUA BIT(8) CONSTANT('02'X),   /* TARGET APPL UNACCEPTABLE      */
+*USFVTHAL BIT(8) CONSTANT('03'X),   /* VTAM IS HALTING               */
+*USFILRS  BIT(8) CONSTANT('04'X),   /* INCOMPATIBLE DEFINATION       */
+*USFPCF   BIT(8) CONSTANT('05'X),   /* PERMANENT FAILURE IN PATH     */
+*USFANS   BIT(8) CONSTANT('06'X),   /* AUTO NETWORK SHUTDOWN         */
+*USFVOFOC BIT(8) CONSTANT('07'X),   /* VARY DEACT IMMEDIATE OCCURED  */
+*USFDISCO BIT(8) CONSTANT('08'X),   /* DISCONNECT OCCURED            */
+*USFUTSCR BIT(8) CONSTANT('09'X),   /* UNCONDITIONAL TERMINATE       */
+*                                   /* SELF COMMAND RECEIVED         */
+*USFSYERR BIT(8) CONSTANT('0A'X),   /* APPARENT VTAM ERROR           */
+*USFDIDOL BIT(8) CONSTANT('0B'X),   /* DISCONNECT ON DIAL-OUT LINE   */
+*USFDIDIL BIT(8) CONSTANT('0C'X),   /* DISCONNECT ON DIAL-IN LINE    */
+*USFVTMNA BIT(8) CONSTANT('0D'X),   /* VTAM INACTIVE FOR THAT APPL   */
+*USFABNDO BIT(8) CONSTANT('0E'X),   /* ABEND CONDITION HAS OCCURED   */
+*USFVTBFO BIT(8) CONSTANT('0F'X),   /* VTAM BUFFER OVERFLOW          */
+*USFCTERM BIT(8) CONSTANT('10'X),   /* CONDITIONAL TERM,SELF @ZA17016*/
+*USFOSDTF BIT(8) CONSTANT('11'X);   /* SDT FAILURE ON OPNDST @ZA17016*/
+*/*         X'0D' AND X'0E' - RPL ECB/EXIT NOT POSTED/INVOKED        */
+*/*                                                                  */
+*/*                                                                  */
+*/***    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'14' ****/
+*/*                                                                  */
+*DECLARE
+*USFNONVR BIT(8) CONSTANT('00'X),   /* RPL CONT A NON-VTAM REQ CODE  */
+*                                   /* RPL ECB/EXIT NOT POSTED/INVOKD*/
+*USFNOTAS BIT(8) CONSTANT('01'X),   /* NOT ASSIGNED                  */
+*USFEXTAZ BIT(8) CONSTANT('02'X),   /* RPL IND EXIT, EXIT ADDR IS 0  */
+*                                   /* RPL ECB/EXIT NOT POSTED/INVOKD*/
+*USFEXTEZ BIT(8) CONSTANT('03'X),   /* RPL IND EXT ECB, ECB ADDR IS 0*/
+*                                   /* RPL ECB/EXIT NOT POSTED/INVOKD*/
+*USFCRPLN BIT(8) CONSTANT('04'X),   /* CHECKED RPL IS NOT ACTIVE     */
+*                                   /* ONLY OCCURS FOLLOWING         */
+*                                   /* A CHECK MACRO REQUEST         */
+*USFCBERR BIT(8) CONSTANT('10'X),   /* RPL POINTS TO INVALID ACB     */
+*USFRNORT BIT(8) CONSTANT('11'X),   /* NO RTYPE SPECIFIED            */
+*USFCLSIP BIT(8) CONSTANT('12'X),   /* CLSDST IN PROGRESS            */
+*USFCIDNG BIT(8) CONSTANT('13'X),   /* CID IS INVALID                */
+*USFILDOP BIT(8) CONSTANT('14'X),   /* LDO COMMAND FIELD IS INVALID  */
+*USFWANCR BIT(8) CONSTANT('15'X),   /* READ NOT CHAINED              */
+*USFSTOOD BIT(8) CONSTANT('16'X),   /* SOLICIT SPECIFIC TO           */
+*                                   /* OUTPUT ONLY DEVICE            */
+*USFRTOOD BIT(8) CONSTANT('17'X),   /* READ TO OUTPUT ONLY DEVICE    */
+*USFWTOI  BIT(8) CONSTANT('18'X),   /* WRITE TO INPUT ONLY DEVICE    */
+*USFEWNS  BIT(8) CONSTANT('19'X),   /* ERASE TO INVALID DEVICE       */
+*USFEWAU3 BIT(8) CONSTANT('1A'X),   /* WRITE EAU TO NON-3270         */
+*USFCWTOO BIT(8) CONSTANT('1B'X),   /* WRITE CONV TO OUTPUT ONLY     */
+*USFCWB   BIT(8) CONSTANT('1C'X),   /* WRITE WITH ERASE AND CONV SPEC*/
+*USFCCCPY BIT(8) CONSTANT('1D'X),   /* CHAINED COPY LDO              */
+*USFIDA   BIT(8) CONSTANT('1E'X),   /* INVALID DATA AREA OR LENGTH   */
+*USFILDOA BIT(8) CONSTANT('1F'X),   /* INVALID LDO ADDRESS           */
+*USFJTOJ  BIT(8) CONSTANT('20'X),   /* JUMP LDO TO JUMP              */
+*USFMT100 BIT(8) CONSTANT('21'X),   /* MORE THAN 100 LDOS            */
+*USFRILCP BIT(8) CONSTANT('22'X),   /* RESET LDO IS NOT ALONE        */
+*USFCRIRT BIT(8) CONSTANT('23'X),   /* INVALID MACRO REQUEST TYPE    */
+*USFRIOCC BIT(8) CONSTANT('24'X),   /* READ LDO WITH COMMAND CHAINING*/
+*USFEWBLK BIT(8) CONSTANT('25'X),   /* WRITE ERASE BLOCK             */
+*USFCRSDC BIT(8) CONSTANT('26'X),   /* SOLICIT LDO WITH DATA CHAINING*/
+*USFIREST BIT(8) CONSTANT('27'X),   /* RESET OPTION CODE INVALID     */
+*USFWBT32 BIT(8) CONSTANT('28'X),   /* WRITE BLOCK TO 3270 DEVICE    */
+*USFRMD32 BIT(8) CONSTANT('29'X),   /* READ MODIFIED TO NON-3270 DEV */
+*USFCTN32 BIT(8) CONSTANT('2A'X),   /* COPY TO NON-3270 DEVICE       */
+*USFWCNVR BIT(8) CONSTANT('2B'X),   /* WRITE CONV ISSUED             */
+*                                   /* WHEN DATA EXPECTED            */
+*USFRNFT3 BIT(8) CONSTANT('2C'X),   /* OUTPUT NOT PRECEDED BY INPUT  */
+*USFRCINV BIT(8) CONSTANT('2D'X),   /* RESET CONDITIONAL ILLEGAL     */
+*USFINVRM BIT(8) CONSTANT('2E'X),   /* INVALID READ MODE             */
+*USFLGCNT BIT(8) CONSTANT('2F'X),   /* EXCESSIVE LEADING GRAPHICS,   */
+*                                   /* ERROR LOCK SET                */
+*USFCPCNT BIT(8) CONSTANT('30'X),   /* COPY COUNT ERROR              */
+*USFIDAEL BIT(8) CONSTANT('31'X),   /* INVALID DATA AREA OR LENGTH,  */
+*                                   /* ERROR LOCK SET                */
+*USFUSELE BIT(8) CONSTANT('32'X),   /* REQUEST INVALID FOR DEVICE,   */
+*                                   /* ERROR LOCK SET                */
+*USFCRNF  BIT(8) CONSTANT('33'X),   /* CONV. REPLY NOT POSSIBLE,     */
+*                                   /* ERROR LOCK SET                */
+*USFNORD  BIT(8) CONSTANT('34'X),   /* NO READ WHERE REQUIRED,       */
+*                                   /* ERROR LOCK SET                */
+*USFCPYE2 BIT(8) CONSTANT('35'X),   /* COPY WRONG CLUSTER,           */
+*                                   /* ERROR LOCK SET                */
+*USFRELNP BIT(8) CONSTANT('36'X),   /* REQUEST LOCK NOT ALLOWED,     */
+*                                   /* ERROR LOCK SET                */
+*USFCPYE1 BIT(8) CONSTANT('37'X),   /* COPY UNOPENED DEVICE,         */
+*                                   /* ERROR LOCK SET                */
+*USFDFIBH BIT(8) CONSTANT('38'X),   /* FIRST I/O FAILED INVAL. BHSET,*/
+*                                   /* ERROR LOCK SET                */
+*USFDFIPO BIT(8) CONSTANT('39'X),   /* FIRST I/O FAILED INVALID PROC,*/
+*                                   /* ERROR LOCK SET                */
+*USFQSCIE BIT(8) CONSTANT('3A'X),   /* QUIESCE IN EFFECT             */
+*USFREXAL BIT(8) CONSTANT('3B'X),   /* RESPOND = EX ALONE IN RPL     */
+*USFSDNP  BIT(8) CONSTANT('3C'X),   /* POST = SCHED STILL OUTSTANDING*/
+*USFSCEM  BIT(8) CONSTANT('3D'X),   /* CHN ERR: MID OR LAST REQUIRED */
+*USFSCEF  BIT(8) CONSTANT('3E'X),   /* CHN ERR: FIRST OR ONLY REQUIRE*/
+*USFSNQC  BIT(8) CONSTANT('3F'X),   /* QUIESCE COMP RESP NOT REQUEST */
+*USFSINVC BIT(8) CONSTANT('40'X),   /* INVALID CONTROL = OPTION      */
+*USFSDFR  BIT(8) CONSTANT('41'X),   /* NO STRT DATA TRAFFIC IN EFFECT*/
+*USFSNOS  BIT(8) CONSTANT('42'X),   /* CONTROL RESPONSE INVALID      */
+*USFSNOUT BIT(8) CONSTANT('43'X),   /* SEND RESPONSE NOT REQUESTED   */
+*USFLIMEX BIT(8) CONSTANT('44'X),   /* NIB RESPLIM EXCEEDED          */
+*USFSSEQ  BIT(8) CONSTANT('45'X),   /* SEQUENCE NUMBER ERROR         */
+*USFSINVS BIT(8) CONSTANT('46'X),   /* RESPOND = OPTION MISMATCH     */
+*USFSINVR BIT(8) CONSTANT('47'X),   /* RESP=OPT INVAL FOR POST=RESP  */
+*USFINVRT BIT(8) CONSTANT('48'X),   /* PROTOCOL VIOLATION            */
+*USFACINV BIT(8) CONSTANT('49'X),   /* INVALID ACTION TYPE           */
+*USFICNDN BIT(8) CONSTANT('4A'X),   /* NAME NOT DETERMINABLE         */
+*USFILSIN BIT(8) CONSTANT('4B'X),   /* INVALID LOGON SEQUENCE        */
+*USFIICBE BIT(8) CONSTANT('4C'X),   /* INVALID REQUEST FOR RESOURCE  */
+*USFINTNA BIT(8) CONSTANT('4D'X),   /* NO INTERPRET TABLE            */
+*USFILNBL BIT(8) CONSTANT('4E'X),   /* ILLEGAL USE OF NIB LIST       */
+*USFINVOT BIT(8) CONSTANT('4F'X),   /* INVALID OPNDST TYPE           */
+*USFINVAP BIT(8) CONSTANT('50'X),   /* INVALID AQUIRE PARAMETER      */
+*USFAPNAC BIT(8) CONSTANT('51'X),   /* APPLICATION NEVER ACCEPTS     */
+*USFINVNB BIT(8) CONSTANT('52'X),   /* INVALID NIB                   */
+*USFSYMNU BIT(8) CONSTANT('53'X),   /* SYMBOLIC NAME UNKNOWN         */
+*USFDSTUO BIT(8) CONSTANT('54'X),   /* DESTINATION UNOPENABLE        */
+*USFNOPAU BIT(8) CONSTANT('55'X),   /* NO OPNDST AUTHORIZATION       */
+*USFMDINC BIT(8) CONSTANT('56'X),   /* MODE - DEVICE INCOMPAT        */
+*USFINVMD BIT(8) CONSTANT('57'X),   /* INVALID MODE                  */
+*USFBHSUN BIT(8) CONSTANT('58'X),   /* BHSET NAME UNKNOWN            */
+*USFMDNAU BIT(8) CONSTANT('59'X),   /* MODE NAME AUTHORIZED          */
+*USFMBHSS BIT(8) CONSTANT('5A'X),   /* MULTIPLE BHSETS SPECIFIED     */
+*USFINVLA BIT(8) CONSTANT('5B'X),   /* INVALID LOGON DATA AREA       */
+*USFDUPND BIT(8) CONSTANT('5C'X),   /* DUPLICATE NODES               */
+*USFDSTNO BIT(8) CONSTANT('5D'X),   /* DESTINATION NOT OPENED        */
+*USFNPSAU BIT(8) CONSTANT('5E'X),   /* NO PASS AUTHORIZATION         */
+*USFRSCNO BIT(8) CONSTANT('5F'X),   /* RESOURCE NOT OWNED            */
+*USFRSCNC BIT(8) CONSTANT('60'X),   /* RESOURCE NOT CLOSEABLE        */
+*USFINVSL BIT(8) CONSTANT('61'X),   /* INVALID SETLOGON              */
+*USFMCNVD BIT(8) CONSTANT('62'X),   /* MACRO NOT VALID FOR SPEC DEV  */
+*USFRNOEL BIT(8) CONSTANT('6C'X),   /* PROGRAM OPERATOR APPLICATION  */
+*                                   /* EXCEEDED LIMIT OF OUTSTANDING */
+*                                   /* RCVCMDS                       */
+*USFRNONA BIT(8) CONSTANT('6D'X),   /* APPLICATION NOT AUTHORIZED TO */
+*                                   /* BE PROGRAM OPERATOR APPL      */
+*USFRNOSE BIT(8) CONSTANT('6E'X),   /* REPLY, SENT BY PROGRAM OPER   */
+*                                   /* REJECTED DUE TO SYNTAX ERROR  */
+*USFRNOIA BIT(8) CONSTANT('6F'X),   /* PROGRAM OPERATOR INTERFACE    */
+*                                   /* INACTIVE                      */
+*USFRNOCL BIT(8) CONSTANT('70'X),   /* RCVCMD REJECTED BECAUSE PROG  */
+*                                   /* OPERATOR APPK IS CLOSING      */
+*USFRNOCE BIT(8) CONSTANT('71'X);   /* V,D,F, SENT BY PROG OPERATOR, */
+*                                   /* REJECTED DUE TO SYNTAX ERROR  */
+*/*                                                                  */
+*/*                                                                  */
+*/***    NO REASON CODE EQUATES EXIST FOR RPLRTNCD EQUALS X'18'   ****/
+*/*                                                                  */
+*/*                                                                  */
+*/***    EQUATES FOR RPLFDB3 ON RETURN FROM INQUIRE IF            ****/
+*/***    RPLRTNCD IS X'00'                                        ****/
+*/*                                                                  */
+*DECLARE
+*USFIACT  BIT(8) CONSTANT('00'X),   /* APPLICATION IS ACTIVE         */
+*USFIINA  BIT(8) CONSTANT('04'X),   /* APPLICATION IS INACTIVE       */
+*USFINA   BIT(8) CONSTANT('08'X),   /* APPL WILL NOT ACCEPT LOGONS   */
+*USFITNA  BIT(8) CONSTANT('0C'X),   /* APPLICATION IS TEMPORARILY    */
+*                                   /* NOT CCEPTING LOGONS           */
+*USFIQUIE BIT(8) CONSTANT('10'X);   /* APPLICATION IS QUIESCING      */
+*/*                                                                  */
+*/*                                                                  */
+*%GOTO FBCEND;
+.FBCBAL  ANOP
+ISTUSFBC DSECT
+*
+***********************************************************************
+*                                                                     *
+*        THE FOLLOWING CODES ARE STORED IN EITHER ''RPLRTNCD'', OR    *
+*        ''RPLFDB2'' OR ''RPLFDB3''.  SEE THE INTRODUCTORY COMMENTS   *
+*        FOR EACH GROUP FOR FURTHER INFORMATION.                      *
+*                                                                     *
+*              RPL FIELD NAME           OPERAND OF MANIPULATIVE MACRO *
+*                                                                     *
+*              RPLRTNCD                 RTNCD     (FEEDBACK CODE)     *
+*              RPLFDB2                  FDBK2     (REASON CODE)       *
+*              RPLFDB3                  FDBK      (DATA FLAGS)        *
+*                                                                     *
+***********************************************************************
+*
+*
+*****    RPLRTNCD        CONTAINS A FEEDBACK CODE.  IF THE RPL    *****
+*                        REQUEST IS UNSUCCESSFUL THEN REGISTER        *
+*                        ZERO WILL ALSO CONTAIN THIS CODE. FOR A      *
+*                        CERTAIN GROUP OF ERRORS, ONLY REGISTER       *
+*                        ZERO WILL CONTAIN THE FEEDBACK CODE AND      *
+*                        NO FEEDBACK INFORMATION WILL BE PLACED IN    *
+*                        THE RPL.                                     *
+*                                                                     *
+*                        THE FEEDBACK CODE EQUATES ARE AS FOLLOWS:    *
+USFAOK   EQU   X'00'          NORMAL COMPLETION/CONDITIONAL COMPLETION
+USFXORDC EQU   X'04'          EXTRAORDINARY COMPLETION
+USFRESSU EQU   X'08'          REISSUE THIS REQUEST
+USFDAMGE EQU   X'0C'          DAMAGE - INTEGRITY OF REQUEST/DEVICE
+USFENVER EQU   X'10'          ENVIRONMENT ERROR
+USFLOGIC EQU   X'14'          USER LOGIC ERROR
+USFRLGIC EQU   X'18'          USER LOGIC ERROR - SETONLY IN REG ZERO
+*
+         EJECT
+*
+***********************************************************************
+*                                                                     *
+*        RPLFDB2         CONTAINS A REASON CODE.  THIS REASON CODE    *
+*                        INDICATES ADDITIONAL INFORMATION ABOUT THE   *
+*                        FEEDBACK CODE.                               *
+*                                                                     *
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'00' *****
+*                                                                     *
+USFAOOK  EQU   X'00'          OPERATION SUCCESSFULLY COMPLETED
+USFRCWNP EQU   X'01'          RESET CONDITIONAL WAS NO-OPED
+USFRCDPR EQU   X'02'          RESET CONDITIONAL SUCCESSFUL -
+*                             READ-AHEAD DATA PRESENT
+USFYTCTN EQU   X'03'          YIELDED TO CONTENTION
+USFYTCTL EQU   X'04'          YIELDED TO CONTENTION, ERROR LOCK SET
+USFATSFI EQU   X'05'          AREA TOO SMALL FOR INQUIRE/INTERPRET
+USFNOIN  EQU   X'06'          NO INPUT AVAILABLE
+USFIIINA EQU   X'07'          INQUIRE INFORMATION NOT AVAILABLE
+USFDSTIU EQU   X'08'          DESTINATION IN USE
+USFNLGFA EQU   X'09'          NO LOGON FOUND FOR ACCEPT MATCH
+*        IF, FOLLOWING A SYNCHRONOUS RPL REQUEST MACRO OR CHECK       *
+*        MACRO, REGISTER 15 CONTAINS X'00' THEN REGISTER ZERO WILL    *
+*        CONTAIN ONE OF THE ABOVE REASON CODE VALUES                  *
+*                                                                     *
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'04' *****
+*
+USFRVIRC EQU   X'00'          RVI RECEIVED, ERROR LOCK SET
+USFATNRC EQU   X'01'          ATTENTION RECEIVED, ERROR LOCK SET
+USFBSCSM EQU   X'02'          BSC STATUS MSG RECEIVED
+USFEXRQ  EQU   X'03'          EXCEPTION REQUEST RECEIVED
+USFEXRS  EQU   X'04'          EXCEPTION RESPONSE RECEIVED
+*
+         EJECT
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'08' *****
+*
+USFSTALF EQU   X'00'          TEMPORARY OUT OF STORAGE SITUATION EXISTS
+*                             RPL ECB/EXIT NOT POSTED/INVOKED         *
+*
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'0C' *****
+*
+USFIOEDU EQU   X'00'          I/O ERROR, DEVICE STILL USABLE ER LK SET
+USFDVUNS EQU   X'01'          I/O ERROR, DEVICE NOT USABLE ER LCK SET
+USFUNTRM EQU   X'02'          REQUEST RESET BY TEST REQUEST MESSAGE
+USFBTHEX EQU   X'03'          BUFFER THRESHOLD EXCEEDED
+USFBTEOR EQU   X'04'          BUF THRESHOLD EXCEEDED, ONLY READS ALLOW
+USFNCPAO EQU   X'05'          NCP ABENDED, RESTART O.K.
+USFLIORP EQU   X'06'          LAST I/O REQUEST PURGED
+USFRECIP EQU   X'07'          RECOVERY IN PROGRESS
+USFRTRAF EQU   X'08'          RECORD TERMINAL RESTARTED AFTER FAILURE
+USFQOPDC EQU   X'09'          QUEUED OPNDST CANCELLED BY CLSDST
+USFUSRES EQU   X'0A'          REQUEST RESET BY THE USER
+USFCLOCC EQU   X'0B'          CLSDST OCCURED
+USFCLRED EQU   X'0C'          REQUEST WAS CLEAR''ED
+USFPREXC EQU   X'0D'          SEND CANCELLED DUE PRIOR EXCEPTION COND.
+*
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'10' *****
+*
+USFTANAV EQU   X'00'          TERMINAL OR APPLICATION NOT AVAILABLE
+USFSBFAL EQU   X'01'          SESSION BIND FAILED
+USFTAPUA EQU   X'02'          TARGET APPLICATION UNACCEPTABLE
+USFVTHAL EQU   X'03'          VTAM IS HALTING
+USFILRS  EQU   X'04'          INCOMPATIBLE DEFINATION
+USFPCF   EQU   X'05'          PERMANENT FAILURE IN PATH
+USFANS   EQU   X'06'          AUTO NETWORK SHUTDOWN
+USFVOFOC EQU   X'07'          VARY DEACTIVATE IMMEDIATE OCCURED
+USFDISCO EQU   X'08'          DISCONNECT OCCURED
+USFUTSCR EQU   X'09'          UNCONDITIONAL TERMINATE SELF CMD RECEIVED
+USFSYERR EQU   X'0A'          APPARENT VTAM ERROR
+USFDIDOL EQU   X'0B'          DISCONNECT ON DIAL-OUT LINE
+USFDIDIL EQU   X'0C'          DISCONNECT ON DIAL-IN LINE
+USFVTMNA EQU   X'0D'          VTAM INACTIVE FOR THAT APPLICATION
+USFABNDO EQU   X'0E'          ABEND CONDITION HAS OCCURED
+USFVTBFO EQU   X'0F'          VTAM BUFFER OVERFLOW
+USFCTERM EQU   X'10'          CONDITIONAL TERMINATE, SELF     @ZA17016
+USFOSDTF EQU   X'11'          SDT FAILURE ON OPNDST           @ZA17016
+*           X'0D' AND X'0E' - RPL ECB/EXIT NOT POSTED/INVOKED         *
+*
+         EJECT
+*
+*****    REASON CODE EQUATES FOR RPLFDB2 IF RPLRTNCD EQUALS X'14' *****
+*
+USFNONVR EQU   X'00'          RPL CONTAINS A NON-VTAM REQUEST CODE
+*                             RPL ECB/EXIT NOT POSTED/INVOKED         *
+USFNOTAS EQU   X'01'     NOT ASSIGNED
+USFEXTAZ EQU   X'02'          RPL INDICATES EXIT, EXIT ADDR IS ZERO
+*                             RPL ECB/EXIT NOT POSTED/INVOKED         *
+USFEXTEZ EQU   X'03'          RPL IND EXTERNAL ECB, ECB ADDR IS ZERO
+*                             RPL ECB/EXIT NOT POSTED/INVOKED         *
+USFCRPLN EQU   X'04'          CHECKED RPL IS NOT ACTIVE
+*                        ONLY OCCURS FOLLOWING A CHECK MACRO REQUEST  *
+USFCBERR EQU   X'10'          RPL POINTS TO INVALID ACB
+USFRNORT EQU   X'11'          NO RTYPE SPECIFIED
+USFCLSIP EQU   X'12'          CLSDST IN PROGRESS
+USFCIDNG EQU   X'13'          CID IS INVALID
+USFILDOP EQU   X'14'          LDO COMMAND FIELD IS INVALID
+USFWANCR EQU   X'15'          READ NOT CHAINED
+USFSTOOD EQU   X'16'          SOLICIT SPECIFIC TO OUTPUT ONLY DEVICE
+USFRTOOD EQU   X'17'          READ TO OUTPUT ONLY DEVICE
+USFWTOI  EQU   X'18'          WRITE TO INPUT ONLY DEVICE
+USFEWNS  EQU   X'19'          ERASE TO INVALID DEVICE
+USFEWAU3 EQU   X'1A'          WRITE EAU TO NON-3270
+USFCWTOO EQU   X'1B'          WRITE CONV TO OUTPUT ONLY
+USFCWB   EQU   X'1C'          WRITE WITH ERASE AND CONV SPECIFIED
+USFCCCPY EQU   X'1D'          CHAINED COPY LDO
+USFIDA   EQU   X'1E'          INVALID DATA AREA OR LENGTH
+USFILDOA EQU   X'1F'          INVALID LDO ADDRESS
+USFJTOJ  EQU   X'20'          JUMP LDO TO JUMP
+USFMT100 EQU   X'21'          MORE THAN 100 LDOS
+USFRILCP EQU   X'22'          RESET LDO IS NOT ALONE
+USFCRIRT EQU   X'23'          INVALID MACRO REQUEST TYPE
+USFRIOCC EQU   X'24'          READ LDO WITH COMMAND CHAINING
+USFEWBLK EQU   X'25'          WRITE ERASE BLOCK
+USFCRSDC EQU   X'26'          SOLICIT LDO WITH DATA CHAINING
+USFIREST EQU   X'27'          RESET OPTION CODE INVALID
+USFWBT32 EQU   X'28'          WRITE BLOCK TO 3270 DEVICE
+USFRMD32 EQU   X'29'          READ MODIFIED TO NON-3270 DEVICE
+USFCTN32 EQU   X'2A'          COPY TO NON-3270 DEVICE
+USFWCNVR EQU   X'2B'          WRITE CONV ISSUED WHEN DATA EXPECTED
+USFRNFT3 EQU   X'2C'          OUTPUT NOT PRECEDED BY INPUT
+USFRCINV EQU   X'2D'          RESET CONDITIONAL ILLEGAL
+USFINVRM EQU   X'2E'          INVALID READ MODE
+USFLGCNT EQU   X'2F'          EXCESSIVE LEADING GRAPHICS, ERROR LK SET
+USFCPCNT EQU   X'30'          COPY COUNT ERROR
+USFIDAEL EQU   X'31'          INVALID DATA AREA OR LENGTH, ERROR LK SET
+USFUSELE EQU   X'32'          REQUEST INVALID FOR DEVICE, ERROR LK SET
+USFCRNF  EQU   X'33'          CONV. REPLY NOT POSSIBLE, ERROR LOCK SET
+USFNORD  EQU   X'34'          NO READ WHERE REQUIRED, ERROR LOCK SET
+USFCPYE2 EQU   X'35'          COPY WRONG CLUSTER, ERROR LOCK SET
+USFRELNP EQU   X'36'          REQUEST LOCK NOT ALLOWED, ERROR LOCK SET
+USFCPYE1 EQU   X'37'          COPY UNOPENED DEVICE, ERROR LOCK SET
+USFDFIBH EQU   X'38'          FIRST I/O FAILED INVALID BHSET, ER LK SET
+USFDFIPO EQU   X'39'          FIRST I/O FAILED INVALID PROC, ER LK SET
+USFQSCIE EQU   X'3A'          QUIESCE IN EFFECT
+USFREXAL EQU   X'3B'          RESPOND = EX ALONE IN RPL
+USFSDNP  EQU   X'3C'          POST = SCHED STILL OUTSTANDING
+USFSCEM  EQU   X'3D'          CHAINING ERROR: MIDDLE OR LAST REQUIRED
+USFSCEF  EQU   X'3E'          CHAINING ERROR: FIRST OR ONLY REQUIRED
+USFSNQC  EQU   X'3F'          QUIESCE COMPLETE RESPONSE NOT REQUESTED
+USFSINVC EQU   X'40'          INVALID CONTROL = OPTION
+USFSDFR  EQU   X'41'          NO START DATA TRAFFIC IN EFFECT
+USFSNOS  EQU   X'42'          CONTROL RESPONSE INVALID
+USFSNOUT EQU   X'43'          SEND RESPONSE NOT REQUESTED
+USFLIMEX EQU   X'44'          NIB RESPLIM EXCEEDED
+USFSSEQ  EQU   X'45'          SEQUENCE NUMBER ERROR
+USFSINVS EQU   X'46'          RESPOND = OPTION MISMATCH
+USFSINVR EQU   X'47'          RESP = OPTION INVALID FOR POST = RESP
+USFINVRT EQU   X'48'          PROTOCOL VIOLATION
+USFACINV EQU   X'49'          INVALID ACTION TYPE
+USFICNDN EQU   X'4A'          NAME NOT DETERMINABLE
+USFILSIN EQU   X'4B'          INVALID LOGON SEQUENCE
+USFIICBE EQU   X'4C'          INVALID REQUEST FOR RESOURCE
+USFINTNA EQU   X'4D'          NO INTERPRET TABLE
+USFILNBL EQU   X'4E'          ILLEGAL USE OF NIB LIST
+USFINVOT EQU   X'4F'          INVALID OPNDST TYPE
+USFINVAP EQU   X'50'          INVALID AQUIRE PARAMETER
+USFAPNAC EQU   X'51'          APPLICATION NEVER ACCEPTS
+USFINVNB EQU   X'52'          INVALID NIB
+USFSYMNU EQU   X'53'          SYMBOLIC NAME UNKNOWN
+USFDSTUO EQU   X'54'          DESTINATION UNOPENABLE
+USFNOPAU EQU   X'55'          NO OPNDST AUTHORIZATION
+USFMDINC EQU   X'56'          MODE - DEVICE INCOMPAT
+USFINVMD EQU   X'57'          INVALID MODE
+USFBHSUN EQU   X'58'          BHSET NAME UNKNOWN
+USFMDNAU EQU   X'59'          MODE NAME AUTHORIZED
+USFMBHSS EQU   X'5A'          MULTIPLE BHSETS SPECIFIED
+USFINVLA EQU   X'5B'          INVALID LOGON DATA AREA
+USFDUPND EQU   X'5C'          DUPLICATE NODES
+USFDSTNO EQU   X'5D'          DESTINATION NOT OPENED
+USFNPSAU EQU   X'5E'          NO PASS AUTHORIZATION
+USFRSCNO EQU   X'5F'          RESOURCE NOT OWNED
+USFRSCNC EQU   X'60'          RESOURCE NOT CLOSEABLE
+USFINVSL EQU   X'61'          INVALID SETLOGON
+USFMCNVD EQU   X'62'          MACRO NOT VALID FOR SPECIFIED DEVICE
+USFRNOEL EQU   X'6C'          PROGRAM OPERATOR APPLICATION EXCEEDED
+*                             LIMIT OF OUTSTANDING RCVCMDS
+USFRNONA EQU   X'6D'          APPLICATION NOT AUTHORIZED TO BE
+*                             PROGRAM OPERATOR APPLICATION
+USFRNOSE EQU   X'6E'          REPLY, SENT BY PROGRAM OPERATOR,
+*                             REJECTED DUE TO SYNTAX ERROR
+USFRNOIA EQU   X'6F'          PROGRAM OPERATOR INTERFACE INACTIVE
+USFRNOCL EQU   X'70'          RCVCMD REJECTED BECAUSE PROGRAM
+*                             OPERATOR APPLICATION IS CLOSING
+USFRNOCE EQU   X'71'          V,D,F, SENT BY PROGRAM OPERATOR
+*                             REJECTED DUE TO SYNTAX ERROR
+*
+*                                                                     *
+*****    NO REASON CODE EQUATES EXIST FOR RPLRTNCD EQUALS X'18'   *****
+*                                                                     *
+*
+*****    EQUATES FOR RPLFDB3 ON RETURN FROM INQUIRE IF            *****
+*****    RPLRTNCD IS X'00'                                        *****
+*
+USFIACT  EQU   X'00'          APPLICATION IS ACTIVE
+USFIINA  EQU   X'04'          APPLICATION IS INACTIVE
+USFINA   EQU   X'08'          APPLICATION WILL NOT ACCEPT LOGONS
+USFITNA  EQU   X'0C'          APPLICATION IS TEMPORARILY NOT
+*                             ACCEPTING LOGONS
+USFIQUIE EQU   X'10'          APPLICATION IS QUIESCING
+*
+*
+         MEND
+*%FBCEND:;
+

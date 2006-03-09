@@ -1,0 +1,500 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /* START OF SPECIFICATIONS ****
+*
+*01*  MODULE-NAME = NIB
+*
+*01*  DESCRIPTIVE-NAME = NODE INFORMATION BLOCK
+*
+*
+*01*  STATUS = RELEASE 1
+*
+*01*  FUNCTION = THE NIB MACRO PROVIDES CONTROL BLOCKS THAT ARE USED TO
+*     INDICATE TO VTAM WHICH NODE OR NODES ARE TO BE THE OBJECT OF ANY
+*     GIVEN CONNECTION OR I/O REQUEST
+*
+*01*  NOTES = EACH NIB MACRO GENERATES ONE CONTROL BLOCK, CALLED A NODE
+*     ENTRY.
+*
+*02*    CHARACTER-CODE-DEPENDENCIES = NONE
+*
+*02*    DEPENDENCIES = NONE
+*
+*02*    RESTRICTIONS = NONE
+*
+*02*    REGISTER-CONVENTIONS = NONE
+*
+*02*    PATCH-LABEL = NONE
+*
+*01*  MODULE-TYPE = MACRO
+*
+*02*    PROCESSOR = ASSEM-370R
+*
+*02*    MACRO-SIZE = 75 STATEMENTS
+*
+*02*    ATTRIBUTES = LIST-EXEC
+*
+*01*  ENTRY-POINT = NA
+*
+*01*  EXIT-NORMAL = NA
+*
+*01*  EXIT-ERROR = NA
+*
+*01*  EXTERNAL-REFERENCES = NONE
+*
+*01*  TABLES = NONE
+*
+*01*  INNER-MACROS = NONE
+*
+*01*  SYSTEM-MACROS = NONE
+*
+*01*  CHANGE-ACTIVITY = AS-FOLLOWS
+*                       NEW MACRO - FIRST RELEASE   31  DOS/VS
+*                                                   03  OS/VS1
+*                                                   03  OS/VS2
+*            APAR OZ31003                                    @ZA31003
+**** END OF SPECIFICATIONS ***/
+*
+*  /* IBM OPERATING SYSTEM  */
+*  /*    VTAM-5741-SCVTM    */
+         MACRO
+&LBL     NIB   &NAME=,&MODE=,&USERFLD=,&CONDN=X'0',&PROC=,&LISTEND=YES,*
+               &SDT=SYSTEM,&EXLST=0,&RESPLIM=1,&LOGMODE=0,&BNDAREA=0
+.*A-000000-999999                                              @DL03HLQ
+         LCLC  &CHAR1,&CHAR2,&CHAR3,&CHAR4,&SRCH
+         LCLC  &SYMCHAR
+         LCLA  &NIBFXD,&DBI,&VALUE,&OFS,&BYTE(4),&INDEX,&KEYI,&T2
+         LCLA  &SYMLEN,&SYMADCD,&SYMRC,&SYMCTR
+         LCLB  &DBIT(24)                                     @ZA31003
+&BYTE(1) SETA  0
+&BYTE(2) SETA  0
+&BYTE(3) SETA  0
+&BYTE(4) SETA  0
+.*
+.* **************** ENTER NIB IDENTIFIER AND SUBTYPE ****************
+.*
+&LBL     DS    0F             ALIGN TO FULLWORD BOUNDARY
+         DC    X'D0',X'00'            ID,SUBTYPE
+.*
+.* *********************** TEST CONDN OPERAND ***********************
+.*
+         AIF   (K'&CONDN EQ 0).NIBOUT1
+&CHAR1   SETC  '&CONDN'(1,2)
+&NIBFXD  SETA  K'&CONDN
+&CHAR2   SETC  '&CONDN'(&NIBFXD,1)
+         AIF   ('&CHAR1' EQ 'C''').NIBCKQ1
+         AIF   ('&CHAR1' EQ 'X''').NIBCKQ1
+         AIF   ('&CHAR1' EQ 'F''').NIBCKQ1
+         AIF   ('&CHAR1' EQ 'H''').NIBCKQ1
+         AIF   ('&CHAR1' EQ 'A(').NIBCKP1
+         AIF   ('&CHAR1' EQ 'Y(').NIBCKP1
+         AIF   ('&CHAR1' LT '0').NIBERU1
+         AIF   ('&CHAR1' LE '9').NIBNUM1
+         AIF   ('&CHAR1' LT '00').NIBERU1
+.NIBNUM1 ANOP
+         DC    AL1(&CONDN)    COND. FIELD SPECIFIED AS NUMERIC
+         AGO   .NIBSYM1
+.NIBERU1 MNOTE 12,'INVALID KEYWORD VALUE CONDN=&CONDN'
+.NIBOUT1 DC    AL1(0)         COND FIELD DEFAULTED
+         AGO   .NIBSYM1
+.NIBCKP1 AIF   ('&CHAR2' EQ ')').NIBGOP1
+         AGO   .NIBERQ1
+.NIBCKQ1 AIF   ('&CHAR2' EQ '''').NIBGOP1
+.NIBERQ1 MNOTE 12,'INVALID KEYWORD VALUE CONDN=&CONDN'
+         MNOTE 0,'CHECK FOR UNBALANCED PARENTHESES OR APOSTROPHES'
+         AGO   .NIBOUT1
+.NIBGOP1 ANOP
+&NIBFXD  SETA  K'&CONDN
+&CHAR3   SETC  '&CONDN'(3,&NIBFXD-3)
+&CHAR4   SETC  '&CHAR1'(2,1)
+&CHAR1   SETC  '&CHAR1'(1,1)
+         DC    &CHAR1.L1&CHAR4&CHAR3&CHAR2 COND FIELD GIVEN/DEFAULT
+.*
+.* ************** ENTER NIB LENGTH AND COMMUNICATION ID *************
+.*
+.NIBSYM1 ANOP
+         DC    FL1'64'                LENGTH OF BLOCK
+         DC    F'0'                   CID - FILLED IN
+.*
+.* ********************** TEST USERFLD OPERAND ***********************
+.*
+         AIF   (K'&USERFLD EQ 0).NIBOUT
+&CHAR1   SETC  '&USERFLD'(1,2)
+&NIBFXD  SETA  K'&USERFLD
+&CHAR2   SETC  '&USERFLD'(&NIBFXD,1)
+         AIF   ('&CHAR1' EQ 'C''').NIBCKQ
+         AIF   ('&CHAR1' EQ 'X''').NIBCKQ
+         AIF   ('&CHAR1' EQ 'F''').NIBCKQ
+         AIF   ('&CHAR1' EQ 'A(').NIBCKP
+         AIF   ('&CHAR1' EQ 'V(').NIBCKP
+         AIF   ('&CHAR1' LT '0').NIBERU
+         AIF   ('&CHAR1' LE '9').NIBNUM
+         AIF   ('&CHAR1' LT '00').NIBERU                    @ZTR6505
+.NIBNUM  ANOP
+         DC    A(&USERFLD)            USER FIELD SPECIFIED AS NUMERIC
+         AGO   .NIBSYM
+.NIBERU  MNOTE 12,'INVALID KEYWORD VALUE USERFLD=&USERFLD'
+.NIBOUT  DC    A(0)                   USER FIELD DEFAULTED
+         AGO   .NIBSYM
+.NIBCKP  AIF   ('&CHAR2' EQ ')').NIBGOP
+         AGO   .NIBERQ
+.NIBCKQ  AIF   ('&CHAR2' EQ '''').NIBGOP
+.NIBERQ  MNOTE 12,'INVALID KEYWORD VALUE USERFLD=&USERFLD'
+         MNOTE 0,'CHECK FOR UNBALANCED PARENTHESES OR APOSTROPHES'
+         AGO   .NIBOUT
+.NIBGOP  ANOP
+&NIBFXD  SETA  K'&USERFLD
+&CHAR3   SETC  '&USERFLD'(3,&NIBFXD-3)
+&CHAR4   SETC  '&CHAR1'(2,1)
+&CHAR1   SETC  '&CHAR1'(1,1)
+         DC    &CHAR1.L4&CHAR4&CHAR3&CHAR2 USER FIELD GIVEN
+.*
+.* ************************ TEST NAME OPERAND ************************
+.*
+.NIBSYM  AIF   (K'&NAME EQ 0).NIBNMB  IS NAME SUPPLIED?
+         DC    CL8'&NAME'             NAME OPERAND SUPPLIED
+         AGO   .NIBCK2                CONTINUE
+.NIBNMB  ANOP
+         DC    CL8' '                 NAME OPERAND DEFAULTED
+.*
+.* ************************ TEST MODE OPERAND ************************
+.*
+.NIBCK2  ANOP
+.NIBMOD  AIF   (K'&MODE EQ 0).NIBDFM     BRANCH IF MODE DEFAULTED
+         DC    CL8'&MODE'             MODE OPERAND SPECIFIED
+         AGO   .NIBPRC1              CONTINUE
+.NIBDFM  ANOP
+         DC    CL8' '                 MODE OPERAND DEFAULTED
+.*
+.* ************ SET DEVICE CHARACTERISTICS AREA TO ZEROES ************
+.*
+.NIBPRC1 ANOP
+         DC    XL8'00'                DEVICE CHARACTERISTICS AREA
+.*
+.* ***************** TEST PROC(ESSING OPTION) OPERAND *****************
+.*
+         AIF   (K'&PROC EQ 0).NIBGNP     DO PROCESS OPERAND IF GIVEN
+&INDEX   SETA  1              INITIALIZE SUBSCRIPT
+&NIBFXD  SETA  N'&PROC     INITIALIZE LIMIT OF OPERANDS
+.NPRCLP  ANOP
+&SRCH    SETC  '&PROC(&INDEX)'
+         AIF   ('&SRCH' NE 'MSG').NEQU001
+         AIF   (&DBIT(1)).NPRCERR
+&DBIT(1) SETB  1
+&BYTE(4) SETA  &BYTE(4)+4
+         AGO   .NPRCUP
+.NPRCERR MNOTE 4,'DUPLICATE PROCESS OPTION-&SRCH'
+.NPRCUP  ANOP
+&INDEX   SETA  &INDEX+1
+         AIF   (&INDEX LE &NIBFXD).NPRCLP
+         AGO   .NPRCGEN
+.NEQU001 AIF   ('&SRCH' NE 'TRANS').NEQU002
+         AIF   (&DBIT(1)).NPRCERR
+&DBIT(1) SETB  1
+&BYTE(4) SETA  &BYTE(4)+2
+         AGO   .NPRCUP
+.NEQU002 AIF   ('&SRCH' NE 'CONT').NEQU003
+         AIF   (&DBIT(1)).NPRCERR
+&DBIT(1) SETB  1
+&BYTE(4) SETA  &BYTE(4)+1
+         AGO   .NPRCUP
+.NEQU003 AIF   ('&SRCH' NE 'BLOCK').NEQU004
+         AIF   (&DBIT(1)).NPRCERR
+&DBIT(1) SETB  1
+&BYTE(4) SETA  &BYTE(4)+8
+         AGO   .NPRCUP
+.NEQU004 ANOP
+         AIF   ('&SRCH' NE 'TRUNC').NEQU005
+         AIF   (&DBIT(2)).NPRCERR
+&DBIT(2) SETB  1
+&BYTE(1) SETA  &BYTE(1)+64
+         AGO   .NPRCUP
+.NEQU005 ANOP
+         AIF   ('&SRCH' NE 'KEEP').NEQU006
+         AIF   (&DBIT(2)).NPRCERR
+&DBIT(2) SETB  1
+         AGO   .NPRCUP
+.NEQU006 AIF   ('&SRCH' NE 'LGOUT').NEQU007
+         AIF   (&DBIT(3)).NPRCERR
+&DBIT(3) SETB  1
+         AGO   .NPRCUP
+.NEQU007 AIF   ('&SRCH' NE 'NLGOUT').NEQU008
+         AIF   (&DBIT(3)).NPRCERR
+&DBIT(3) SETB  1
+&BYTE(2) SETA  &BYTE(2)+32
+         AGO   .NPRCUP
+.NEQU008 AIF   ('&SRCH' NE 'CONFTXT').NEQU009
+         AIF   (&DBIT(4)).NPRCERR
+&DBIT(4) SETB  1
+&BYTE(2) SETA  &BYTE(2)+1
+         AGO   .NPRCUP
+.NEQU009 AIF   ('&SRCH' NE 'NCONFTXT').NEQU010
+         AIF   (&DBIT(4)).NPRCERR
+&DBIT(4) SETB  1
+         AGO   .NPRCUP
+.NEQU010 AIF   ('&SRCH' NE 'TMFLL').NEQU011
+         AIF   (&DBIT(5)).NPRCERR
+&DBIT(5) SETB  1
+         AGO   .NPRCUP
+.NEQU011 AIF   ('&SRCH' NE 'NTMFLL').NEQU012
+         AIF   (&DBIT(5)).NPRCERR
+&DBIT(5) SETB  1
+&BYTE(2) SETA  &BYTE(2)+4
+         AGO   .NPRCUP
+.NEQU012 AIF   ('&SRCH' NE 'ERPIN').NEQU013
+         AIF   (&DBIT(6)).NPRCERR
+&DBIT(6) SETB  1
+         AGO   .NPRCUP
+.NEQU013 AIF   ('&SRCH' NE 'NERPIN').NEQU014
+         AIF   (&DBIT(6)).NPRCERR
+&DBIT(6) SETB  1
+&BYTE(3) SETA  &BYTE(3)+64
+         AGO   .NPRCUP
+.NEQU014 AIF   ('&SRCH' NE 'ERPOUT').NEQU015
+         AIF   (&DBIT(7)).NPRCERR
+&DBIT(7) SETB  1
+         AGO   .NPRCUP
+.NEQU015 AIF   ('&SRCH' NE 'NERPOUT').NEQU016
+         AIF   (&DBIT(7)).NPRCERR
+&DBIT(7) SETB  1
+&BYTE(2) SETA  &BYTE(2)+64
+         AGO   .NPRCUP
+.NEQU016 AIF   ('&SRCH' NE 'MONITOR').NEQU017
+         AIF   (&DBIT(8)).NPRCERR
+&DBIT(8) SETB  1
+&BYTE(3) SETA  &BYTE(3)+4
+         AGO   .NPRCUP
+.NEQU017 AIF   ('&SRCH' NE 'NMONITOR').NEQU018
+         AIF   (&DBIT(8)).NPRCERR
+&DBIT(8) SETB  1
+         AGO   .NPRCUP
+.NEQU018 AIF   ('&SRCH' NE 'ELC').NEQU019
+         AIF   (&DBIT(9)).NPRCERR
+&DBIT(9) SETB  1
+&BYTE(2) SETA  &BYTE(2)+2
+         AGO   .NPRCUP
+.NEQU019 AIF   ('&SRCH' NE 'NELC').NEQU020
+         AIF   (&DBIT(9)).NPRCERR
+&DBIT(9) SETB  1
+         AGO   .NPRCUP
+.NEQU020 AIF   ('&SRCH' NE 'NEIB').NEQU021
+         AIF   (&DBIT(10)).NPRCERR
+&DBIT(10) SETB  1
+         AGO   .NPRCUP
+.NEQU021 AIF   ('&SRCH' NE 'EIB').NEQU022
+         AIF   (&DBIT(10)).NPRCERR
+&DBIT(10) SETB 1
+&BYTE(4) SETA  &BYTE(4)+128
+         AGO   .NPRCUP
+.NEQU022 AIF   ('&SRCH' NE 'CA').NEQU023
+         AIF   (&DBIT(11)).NPRCERR
+&DBIT(11) SETB 1
+&BYTE(1) SETA  &BYTE(1)+4
+         AGO   .NPRCUP
+.NEQU023 AIF   ('&SRCH' NE 'CS').NEQU024
+         AIF   (&DBIT(11)).NPRCERR
+&DBIT(11) SETB 1
+&BYTE(1) SETA  &BYTE(1)+2
+         AGO   .NPRCUP
+.NEQU024 AIF   ('&SRCH' NE 'RPLC').NEQU025
+         AIF   (&DBIT(11)).NPRCERR
+&DBIT(11) SETB 1
+&BYTE(1) SETA  &BYTE(1)+1
+         AGO   .NPRCUP
+.NEQU025 AIF   ('&SRCH' NE 'LGIN').NEQU026
+         AIF   (&DBIT(12)).NPRCERR
+&DBIT(12) SETB 1
+         AGO   .NPRCUP
+.NEQU026 AIF   ('&SRCH' NE 'NLGIN').NEQU027
+         AIF   (&DBIT(12)).NPRCERR
+&DBIT(12) SETB 1
+&BYTE(3) SETA  &BYTE(3)+32
+         AGO   .NPRCUP
+.NEQU027 AIF   ('&SRCH' NE 'TIMEOUT').NEQU028
+         AIF   (&DBIT(13)).NPRCERR
+&DBIT(13) SETB 1
+         AGO   .NPRCUP
+.NEQU028 AIF   ('&SRCH' NE 'NTIMEOUT').NEQU029
+         AIF   (&DBIT(13)).NPRCERR
+&DBIT(13) SETB 1
+&BYTE(3) SETA  &BYTE(3)+16
+         AGO   .NPRCUP
+.NEQU029 AIF   ('&SRCH' NE 'NBINARY').NEQU030
+         AIF   (&DBIT(14)).NPRCERR
+&DBIT(14) SETB 1
+         AGO   .NPRCUP
+.NEQU030  AIF  ('&SRCH' NE 'BINARY').NEQU031
+         AIF   (&DBIT(14)).NPRCERR
+&DBIT(14) SETB 1
+&BYTE(1) SETA  &BYTE(1)+32
+         AGO   .NPRCUP
+.NEQU031 AIF   ('&SRCH' NE 'NDFASYX').NEQU032
+         AIF   (&DBIT(15)).NPRCERR
+&DBIT(15) SETB  1
+         AGO   .NPRCUP
+.NEQU032 AIF   ('&SRCH' NE 'DFASYX').NEQU033
+         AIF   (&DBIT(15)).NPRCERR
+&DBIT(15) SETB  1
+&BYTE(1) SETA  &BYTE(1)+16
+         AGO   .NPRCUP
+.NEQU033 AIF   ('&SRCH' NE 'NRESPX').NEQU034
+         AIF   (&DBIT(16)).NPRCERR
+&DBIT(16) SETB  1
+         AGO   .NPRCUP
+.NEQU034 AIF   ('&SRCH' NE 'RESPX').NEQU035
+         AIF   (&DBIT(16)).NPRCERR
+&DBIT(16) SETB  1
+&BYTE(1) SETA  &BYTE(1)+8
+          AGO   .NPRCUP
+.NEQU035  AIF   ('&SRCH' NE 'CPUID').NEQU036                 @ZA31003
+          AIF   (&DBIT(17)).NPRCERR                          @ZA31003
+&DBIT(17) SETB  1                                            @ZA31003
+          AGO   .NPRCUP                                      @ZA31003
+.NEQU036  AIF   ('&SRCH' NE 'NCPUID').NEQU099                @ZA31003
+          AIF   (&DBIT(17)).NPRCERR                          @ZA31003
+&DBIT(17) SETB  1                                            @ZA31003
+&BYTE(3)  SETA  &BYTE(3)+128                                 @ZA31003
+          AGO   .NPRCUP                                      @ZA31003
+.NEQU099  ANOP
+          MNOTE  12,'INVALID PROCESS OPTION-&SRCH'
+         AGO   .NPRCUP             RETURN TO VALIDATE PARMS @ZTR6505
+.NPRCGEN ANOP
+         AIF   (&DBIT(1)).NPRCGN2
+&DBIT(1) SETB  1
+&BYTE(4) SETA  &BYTE(4)+2
+.NPRCGN2 ANOP
+         AIF   (&DBIT(11)).NPRCGN3
+&DBIT(11) SETB  1
+&BYTE(1) SETA  &BYTE(1)+1
+.NPRCGN3 ANOP
+         DC    AL1(&BYTE(1),&BYTE(2),&BYTE(3),&BYTE(4)) PROCESS OPTIONS
+         AGO   .NIBFLGS
+.NIBGNP  ANOP                 NO PROCESS OPERAND GIVEN. GEN ONE.
+         DC    AL1(1,0,0,2)     PROCESS OPTIONS DEFAULTED.
+.*
+.* *********************** TEST LISTEND OPERAND ***********************
+.*
+.NIBFLGS AIF   ('&LISTEND' EQ 'YES').NIBLSY
+         AIF   ('&LISTEND' EQ 'NO').NIBLSN
+         MNOTE 12,'INVALID KEYWORD VALUE FOR LISTEND=&LISTEND'
+.NIBLSN  ANOP
+&BYTE(1) SETA  X'80'               MORE NIBS TO FOLLOW
+         AGO   .NIBSDT
+.NIBLSY  ANOP
+&BYTE(1) SETA  0                   END OF NIB LIST
+.*
+.* ************************ TEST SDT OPERAND ************************
+.*
+.NIBSDT  ANOP
+         AIF   ('&SDT' EQ 'SYSTEM').NIBSYS
+         AIF   ('&SDT' EQ 'APPL').NIBAPPL
+         MNOTE 12,'INVALID KEYWORD VALUE FOR SDT=&SDT'
+.NIBAPPL ANOP
+&BYTE(1) SETA  &BYTE(1)+32         APPLICATION MUST ISSUE SDT MACRO
+.NIBSYS  ANOP
+         DC    AL1(&BYTE(1))          NIBLIST STATUS, SDT MACRO STATUS
+.*
+.* *********************** ENTER RESERVED BYTE ***********************
+.*
+.NIBCMN  ANOP
+         DC    X'00'                  RESERVED FOR VTAM
+.*
+.* ********************** TEST RESPLIM OPERAND **********************
+.*
+.NRSPLIM ANOP
+         AIF   ('&RESPLIM' EQ '1').NIBOUT2
+&CHAR1   SETC  '&RESPLIM'(1,2)
+&NIBFXD  SETA  K'&RESPLIM
+&CHAR2   SETC  '&RESPLIM'(&NIBFXD,1)
+         AIF   ('&CHAR1' EQ 'C''').NIBCKQ2
+         AIF   ('&CHAR1' EQ 'X''').NIBCKQ2
+         AIF   ('&CHAR1' EQ 'H''').NIBCKQ2
+         AIF   ('&CHAR1' EQ 'F''').NIBCKQ2
+         AIF   ('&CHAR1' EQ 'A(').NIBCKP2
+         AIF   ('&CHAR1' EQ 'Y(').NIBCKP2
+         AIF   ('&CHAR1' EQ 'S(').NIBCKP2
+         AIF   ('&CHAR1' LT '0').NIBERU2
+         AIF   ('&CHAR1' LE '9').NIBNUM2
+         AIF   ('&CHAR1' LT '00').NIBERU2
+.NIBNUM2 ANOP
+         DC    AL2(&RESPLIM)          LIMIT SPECIFIED AS NUMERIC
+         AGO   .NEXLST
+.NIBERU2 MNOTE 12,'INVALID KEYWORD VALUE RESPLIM=&RESPLIM'
+.NIBOUT2 DC    AL2(1)                 LIMIT FIELD DEFAULTED
+         AGO   .NEXLST
+.NIBCKP2 AIF   ('&CHAR2' EQ ')').NIBGOP2
+         AGO   .NIBERQ2
+.NIBCKQ2 AIF   ('&CHAR2' EQ '''').NIBGOP2
+.NIBERQ2 MNOTE 12,'INVALID KEYWORD VALUE RESPLIM=&RESPLIM'
+         MNOTE 0,'CHECK FOR UNBALANCED PARENTHESES OR APOSTROPHES'
+         AGO   .NIBOUT2
+.NIBGOP2  ANOP
+&NIBFXD  SETA  K'&RESPLIM
+&CHAR3   SETC  '&RESPLIM'(3,&NIBFXD-3)
+&CHAR4   SETC  '&CHAR1'(2,1)
+&CHAR1   SETC  '&CHAR1'(1,1)
+         DC    &CHAR1.L2&CHAR4&CHAR3&CHAR2 LIMIT FIELD
+.*
+.* ************************ TEST EXLST OPERAND **********************
+.*
+.NEXLST  ANOP
+         AIF   ('&EXLST' EQ '0').NIBOUT3
+&CHAR1   SETC  '&EXLST'(1,2)
+&NIBFXD  SETA  K'&EXLST
+&CHAR2   SETC  '&EXLST'(&NIBFXD,1)
+         AIF   ('&CHAR1' EQ 'C''').NIBCKQ3
+         AIF   ('&CHAR1' EQ 'X''').NIBCKQ3
+         AIF   ('&CHAR1' EQ 'F''').NIBCKQ3
+         AIF   ('&CHAR1' EQ 'A(').NIBCKP3
+         AIF   ('&CHAR1' EQ 'V(').NIBCKP3
+&CHAR1   SETC  '&CHAR1'(1,1)                                   @DM9414
+         AIF   ('&CHAR1' LT 'A').NIBERU3                       @DM9414
+         AIF   ('&CHAR1' LE 'I').NIBNUM3                       @DM9414
+         AIF   ('&CHAR1' LT 'J').NIBERU3                       @DM9414
+         AIF   ('&CHAR1' LE 'R').NIBNUM3                       @DM9414
+         AIF   ('&CHAR1' LT 'S').NIBERU3                       @DM9414
+         AIF   ('&CHAR1' LE 'Z').NIBNUM3                       @DM9414
+         AIF   ('&CHAR1' LT '0').NIBERU3                       @DM9414
+         AIF   ('&CHAR1' GT '9').NIBERU3                       @DM9414
+.NIBNUM3 ANOP
+         DC    AL4(&EXLST)            EXLST SPECIFIED AS 0 OR ADDRESS
+         AGO   .NIBSYM3
+.NIBERU3 MNOTE 12,'INVALID KEYWORD VALUE EXLST=&EXLST'
+.NIBOUT3 DC    AL4(0)                 EXLST FIELD DEFAULTED
+         AGO   .NIBSYM3
+.NIBCKP3 AIF   ('&CHAR2' EQ ')').NIBGOP3
+         AGO   .NIBERQ3
+.NIBCKQ3 AIF   ('&CHAR2' EQ '''').NIBGOP3
+.NIBERQ3  MNOTE 12,'INVALID KEYWORD VALUE EXLST=&EXLST'
+          MNOTE 0,'CHECK FOR UNBALANCED PARENTHESES OR APOSTROPHES'
+         AGO   .NIBOUT3
+.NIBGOP3  ANOP
+&NIBFXD  SETA  K'&EXLST
+&CHAR3   SETC  '&EXLST'(3,&NIBFXD-3)
+&CHAR4   SETC  '&CHAR1'(2,1)
+&CHAR1   SETC  '&CHAR1'(1,1)
+         DC    &CHAR1.L4&CHAR4&CHAR3&CHAR2 EXIT FIELD
+.*
+.* ************************ TEST LOGMODE OPERAND ********************
+.*
+.NIBSYM3 ANOP
+         AIF    ('&LOGMODE' NE '0').NIBLMCH
+         DC     XL8'0'            LOGMODE
+         AGO   .NIBLMEN
+.NIBLMCH AIF   ('&LOGMODE' NE 'C'' ''').NIBLMSY
+         DC    CL8' '             LOGMODE
+         AGO   .NIBLMEN
+.NIBLMSY ANOP
+         DC    CL8'&LOGMODE'      LOGMODE
+         AGO   .NIBLMEN
+.NIBLMER MNOTE 12,'INVALID KEYWORD SYNTAX LOGMODE=&LOGMODE'
+.NIBLMEN ANOP
+.*
+.* ************************ BNDAREA OPERAND ********************
+.*
+         DC    A(&BNDAREA)        BNDAREA
+.*
+.* ************************ RESERVED AREA ********************
+.*
+         DC    A(0)               RESERVED
+         MEND
+

@@ -1,0 +1,2606 @@
+INSTTIME SUBENTRY
+*
+* AUTHOR:       MELVYN MALTZ
+* Z390 VERSION: V1.00.09B
+* INSTTIME VERSION: 3
+*
+* ASSEMBLE WITH OPTION: ASCII
+* EXECUTE WITH OPTIONS: ASCII NOTIME MEM(5)
+*
+* 1ST UPDATE
+*    ADDED: SRP TS BC=B BAL BAS BCR BALR BCTR BASR
+*           MVCL CLCL STM LM
+*           MVCL AND CLCL: ANY LENGTHS 1-999999
+*           LM AND STM   : ANY NO. OF REGISTERS
+*
+*    DUMP DEC FIELD 1ST OPERAND FOR OUTPUT INTEGRITY
+*    ADDED SPIN=NNNNNNN TO ADJUST SPIN COUNT, ALWAYS 7 DIGITS
+*       THE ADJUSTED SPIN OCCURS AFTER THE BCT TIME IS DONE
+*       THE BCT SPIN DEFAULTS TO 1000000, BUT I MIGHT VARY IT
+*       THE BCT SPIN TIME IS SCALED TO THE SPIN TIME
+*
+* 2ND UPDATE
+*    ADDED BCTS=NNNNNNN TO ADJUST BCT SPIN COUNT, ALWAYS 7 DIGITS
+*       THE BCT TIME IS RECALCULATED AND SCALED TO THE SPIN TIME
+*    RECONSTRUCTED CODE SO THAT EACH FORMAT IS ISOLATED
+*    ADDED STATS ON/OFF AND MEAN, TO CALCULATE MEAN OF ANY SET
+*       OF CONTIGUOUS TIMINGS
+*    STORE TYPES ARE MARKED AND STORE TO HARMLESS AREA
+*    ADDED: BXH BXLE
+*           SRL SLL SRA SLA SRDL SLDL SRDA SLDA
+*           CLM ICM STCM
+*           IIHH IIHL IILH IILL
+*           NIHH NIHL NILH NILL
+*           OIHH OIHL OILH OILL
+*           LLIHH LLIHL LLILH LLILL
+*           TMLH TMH TMLL TML TMHH TMHL
+*           LHI LGHI AHI AGHI MHI MGHI CHI CGHI
+*           MSR LPGR LNGR LTGR LCGR LGR AGR SGR ALGR SLGR MSGR DSGR
+*           LRVGR LPGFR LNGFR LTGFR LCGFR LGFR LLGFR LLGTR AGFR SGFR
+*           ALGFR SLGFR MSGFR DSGFR LRVR CGR CLGR CGFR CLGFR
+*           NGR OGR XGR MLGR DLGR ALCGR SLBGR MLR DLR ALCR SLBR
+*           LG CVBY AG SG ALG SLG MSG DSG CVBG LRVG LGF LGH LLGF LLGT
+*           AGF SGF ALGF SLGF MSGF DSGF LRV LRVH CG CLG STG CVDY CVDG
+*           STRVG CGF CLGF STRV STRVH STY MSY NY CLY OY XY LY CY AY SY
+*           ALY SLY STHY LAY STCY ICY LB LGB LHY CHY AHY SHY NG OG XG
+*           MLG DLG ALCG SLBG STPQ LPQ LLGC LLGH ML DL ALC SLB
+*
+* 3RD UPDATE
+*    ADDED VARIANCE TO STATS
+*    ADDED: LMG STMG STMH STMY LMH LMY   : ANY NO. OF REGISTERS
+*           CLMH CLMY STCMH STCMY ICMH ICMY
+*           BXHG BXLEG BRXH BRXLE
+*           SRAG SLAG SRLG SLLG RLLG RLL
+*           TMY MVIY NIY CLIY OIY XIY
+*           SCKPF TAM SAM24 SAM31 SAM64
+*           SPM BSM BASSM EX
+*           BRC=J=BRU BRAS BRCT BRCTG
+*           BCT (4 FORMS)
+*           LARL BRCL=JLU BRASL
+*
+* TO DO
+*    CS CDS
+*    MOVE FORMAT OUT OF TXT/INS AND IN HERE
+*    CREATE A 'STANDARD' SET OF INSTS FOR RELEASE COMPARISON
+*
+* COMPLETED INSTRUCTIONS:
+*    01 SET
+*      07, 0B-0E
+*    04-07, 0B-0F
+*    10-1F
+*    40-4F
+*    50, 54-5F
+*    84-8F
+*    90-98
+*    A50-A5F
+*    A70-A7F
+*    B252
+*    B9 SET
+*      00-04, 08-0D, 0F-1D, 1F-21
+*      30-31, 80-82, 86-89, 96-99
+*    BD-BF
+*    C00, C04-C05
+*    D1-D7, DC-DF
+*    E3 SET
+*       04, 06, 08-0F, 14-21, 24, 26
+*       2E-31, 3E-3F, 50-51, 54-5B
+*       5E-5F, 70-73, 76-7B, 80-82
+*       86-89, 8E-8F, 90-91, 96-99
+*    E8
+*    EB SET
+*       04, 0A-0D, 1C-1D, 20-21, 24, 26, 2C-2D,
+*       44-45, 51-52, 54-57, 80-81, 96, 98
+*    F0-F3, F8-FD
+*
+         LARL  R3,PARMSIN         ADDRESS PARM I/O AREA
+         USING INSTDSCT,R3
+         LARL  R8,RESULTS         ADDRESS RESULT I/O AREA
+         USING RSLTDSCT,R8
+*
+         OPEN  (PARMS,INPUT,TEXTOUT,OUTPUT)
+         MVC   RSLTTITL(16),VER   MARK RELEASE CHECKED
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+* TIME A BCT
+* THE SETUP OF THE 2ND TIME MACRO AND SOME OF THE SVC IS INCLUDED.
+*
+* TURN FIXED POINT AND DECIMAL OVERFLOW OFF
+         LA    R7,B'00000011'     CC=0,MASK=0011=NO FP OR DEC OFLO
+         SLL   R7,24              SHIFT TO TOP
+         SPM   R7                 SET IT
+* DEFAULT BCT TIMING (5000000)
+         L     R7,BCTSPIN         LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+BCTTIMER BCT   R7,BCTTIMER        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         STG   R7,TIMEBCT         SAVE IT FOR USE
+         STG   R7,ORIGBCT         SAVE IT FOR SCALING
+* SCALE THE BCT TIME ACCORDINGLY
+         SGR   R10,R10            CLEAR R10
+         LG    R11,ORIGBCT        ORIGINAL BCT TIME
+         MSGF  R11,SPINCNT        * NEW SPIN COUNT
+         DSGF  R10,BCTSPIN        / OLD SPIN COUNT
+         STG   R11,TIMEBCT        SAVE NEW VALUE
+         MVC   RSLTOPCD(9),=C'BCT TIMER' DUMMY THE BCT
+         LA    R4,4               INST LENGTH
+         LA    R5,BCTTIMER        INST ADDRESS
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         MVI   BCT1OFF+1,X'00'    BYPASS -BCT TIMING
+* GETMAIN FOR STATS OPTION
+* HOLDING PL6 PER TIME, 500 SLOTS, CAN EXTEND IF NEEDED
+* IF SLOTS MORE THAN 999, CHANGE MEAN SUBROUTINE
+         L     R1,=F'3000'        GETMAIN LENGTH
+         GETMAIN R,LV=(1)         TIMES COLLECTION AREA
+         ST    R0,STATADDR        SAVE STATS ORIGIN
+         ST    R0,STATNEXT        SAVE STATS NEXT SLOT
+GET      EQU   *
+         GET   PARMS              GET PARM
+         CLI   INSTFMAT,C'*'      COMMENT ?
+         BE    GET                YES, MISS IT
+         CLC   INSTFMAT(4),=C'MEAN' CALC MEAN ?
+         BNE   NOTMEAN            EXIT IF NOT
+         BAL   R14,MEAN           DO IT
+         B     GET                GET ANOTHER PARM
+*
+NOTMEAN  EQU   *
+         CLC   INSTFMAT(8),=C'VARIANCE' CALC VARIANCE ?
+         BNE   NOTVAR             EXIT IF NOT
+         BAL   R14,MEAN           DO IT
+         BAL   R14,VARIANCE       DO IT
+         B     GET                GET ANOTHER PARM
+*
+NOTVAR   EQU   *
+         CLC   INSTFMAT(8),=C'STATS ON' START STATS COLLECTION ?
+         BNE   NOTSTTON           EXIT IF NOT
+         MVI   STATSIND,X'FF'     SET STATS INDICATOR
+         MVC   RSLTTITL(8),INSTFMAT MOVE STAT PARM
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                GET ANOTHER PARM
+*
+NOTSTTON EQU   *
+         CLC   INSTFMAT(9),=C'STATS OFF' END STATS COLLECTION ?
+         BNE   NOTSTTOF           EXIT IF NOT
+         MVI   STATSIND,X'00'     RESET STATS INDICATOR
+         MVC   STATNEXT,STATADDR  RESET NEXT SLOT ADDRESS
+         XC    STATCNT,STATCNT    CLEAR STAT COUNT
+         MVC   RSLTTITL(9),INSTFMAT MOVE STAT PARM
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                GET ANOTHER PARM
+*
+NOTSTTOF EQU   *
+         CLC   INSTFMAT(5),=C'BCTS=' ADJUST BCT SPIN COUNT ?
+         BNE   NOTBCTS            EXIT IF NOT
+* PROCESS BCTS=
+         PACK  DEC+8(8),INSTFMAT+5(7) PACK SPIN COUNT
+         CVB   R7,DEC+8           CONVERT TO BINARY
+         ST    R7,BCTSPIN         SAVE IN HEX
+         MVC   BCTSDEC,DEC+8      AND DECIMAL
+* RETIME THE BCT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+BCTRETIM BCT   R7,BCTRETIM        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         STG   R7,ORIGBCT         SAVE IT FOR SCALING
+* RESCALE THE BCT TIME
+         SGR   R10,R10            CLEAR R10
+         LGR   R11,R7             ORIGINAL BCT TIME
+         MSGF  R11,SPINCNT        * NEW SPIN COUNT
+         DSGF  R10,BCTSPIN        / OLD SPIN COUNT
+         STG   R11,TIMEBCT        SAVE NEW VALUE
+*
+         MVC   RSLTTITL(12),INSTFMAT MOVE SPIN PARM
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         MVC   RSLTOPCD(3),=C'BCT' DUMMY THE BCT
+         LA    R4,4               INST LENGTH
+         LA    R5,BCTRETIM        INST ADDRESS
+         MVI   BCT1OFF+1,X'F0'    SET BYPASS OF -BCT TIMING
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         MVI   BCT1OFF+1,X'00'    ONE OFF BYPASS OF -BCT TIMING
+         B     GET                GET ANOTHER PARM
+*
+NOTBCTS  EQU   *
+         CLC   INSTFMAT(5),=C'SPIN=' ADJUST SPIN COUNT ?
+         BNE   NOTSPIN            EXIT IF NOT
+* PROCESS SPIN=
+         PACK  DEC+8(8),INSTFMAT+5(7) PACK SPIN COUNT
+         CVB   R7,DEC+8           CONVERT TO BINARY
+         ST    R7,SPINCNT         SAVE IN HEX
+         MVC   SPINDEC,DEC+8      AND DECIMAL
+* SCALE THE BCT TIME ACCORDINGLY
+         SGR   R10,R10            CLEAR R10
+         LG    R11,ORIGBCT        ORIGINAL BCT TIME
+         MSGF  R11,SPINCNT        * NEW SPIN COUNT
+         DSGF  R10,BCTSPIN        / OLD SPIN COUNT
+         STG   R11,TIMEBCT        SAVE NEW VALUE
+         MVC   RSLTTITL(12),INSTFMAT MOVE SPIN PARM
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                GET ANOTHER PARM
+*
+NOTSPIN  EQU   *
+* MUST BE AN INSTRUCTION
+         LARL  R2,TYPETABL        ADDRESS TABLE
+         USING TYPEDSCT,R2
+TYPELOOP EQU   *
+         CLC   TYPEFMAT,INSTFMAT  MATCHED FORMAT ?
+         BE    FMTOK              YES, GO DO IT
+         AHI   R2,8               BUMP TABLE ENTRY
+         CLI   TYPEFMAT,X'FF'     END OF TABLE ?
+         BNE   TYPELOOP           LOOP IF NOT
+         MVC   RSLTTITL(12),INSTFMAT MOVE PART OF INPUT
+         MVC   RSLTMICS(12),=C'FORMAT ERROR'
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+FMTOK    EQU   *
+         L     R12,TYPEPROC       LOAD PROCESSING ROUTIME ADDRESS
+         BR    R12                AND GO THERE
+*
+EOPARMS  EQU   *
+* END OF INPUT
+         CLOSE (PARMS,,TEXTOUT)   CLOSE
+         SUBEXIT
+VER      DC    C'VER='
+         DC    CL12'&SYSVER'
+         LTORG
+***************
+* SUBROUTINES *
+***************
+SRCHOPCD DS    0F
+         MVC   RSLTOPCD,INSTOPCD  MOVE THE OPCODE TO OUTPUT
+         MVC   RSLTTYPE,INSTTYPE  MOVE THE TYPE TO OUTPUT
+         MVC   RSLTSTOR,INSTSTOR  MOVE THE STORE INDICATOR TO OUTPUT
+* SEARCH SINGLE BYTE TABLE
+         LARL  R7,OPCD1TAB        ADDRESS SINGLE OPCODE TABLE
+SRCHLOP1 EQU   *
+         CLC   0(6,R7),INSTOPCD   MATCH ?
+         BER   R14                YES, RETURN
+         AHI   R7,7               BUMP
+         CLI   0(R7),X'FF'        END OF TABLE ?
+         BNE   SRCHLOP1           LOOP IF NOT
+* SEARCH DOUBLE BYTE TABLE
+         LARL  R7,OPCD2TAB        ADDRESS DOUBLE OPCODE TABLE
+SRCHLOP2 EQU   *
+         CLC   0(6,R7),INSTOPCD   MATCH ?
+         BER   R14                YES, RETURN
+         AHI   R7,8               BUMP
+         CLI   0(R7),X'FF'        END OF TABLE ?
+         BNE   SRCHLOP2           LOOP IF NOT
+         MVC   RSLTMICS(12),=C'OPCODE ERROR'
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+OUTPUT   DS    0F
+* INPUT: R2=INSTRUCTION FORMAT
+*        R4=INSTRUCTION LENGTH
+*        R5=ADDRESS OF INSTRUCTION
+*        R6=FOR TYPE=P POINTS TO PACKED FIELD
+*        R7=GENERAL WORK
+*        R10-11=DUMP CONTENTS FOR SOME INST TYPES
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+BCT1OFF  B     DONTBCT            BYPASS FOR BCT TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         SG    R7,TIMEXTRA                 - SPECIAL TIME
+         XC    TIMEXTRA,TIMEXTRA  CLEAR SPECIAL TIME
+DONTBCT  EQU   *
+         CVDG  R7,DEC             INTO DECIMAL
+         SRP   DEC,3,0            GET 5.6 DECIMAL
+         CLI   BCT1OFF+1,X'F0'    BCT SPIN MODE ?
+         BNE   INSMODE            EXIT IF NOT
+         DP    DEC,BCTSDEC+4(4)   QQQQQQQQQQQQRRRR
+         B     OUTGO              EXIT
+INSMODE  EQU   *
+         DP    DEC,SPINDEC+4(4)   QQQQQQQQQQQQRRRR
+OUTGO    EQU   *
+         CLI   STATSIND,X'FF'     IS STATS ON ?
+         BNE   OUTNOST            EXIT IF NOT
+* STATS MODE
+         L     R7,STATNEXT        R7=NEXT STATS SLOT
+         MVC   0(6,R7),DEC+6      SAVE IN NEXT SLOT
+         AHI   R7,6               BUMP SLOT
+         ST    R7,STATNEXT        SAVE NEXT SLOT ADDRESS
+         L     R7,STATCNT         CURRENT STAT COUNT
+         AHI   R7,1               +1
+         ST    R7,STATCNT         SAVE STAT COUNT
+OUTNOST  EQU   *
+         MVC   RSLTMICS,=X'4020202021204B202020202020'
+         ED    RSLTMICS,DEC+6     EDIT uS
+         UNPK  WORK,0(7,R5)       UNPACK INST
+         TR    WORK(12),TABLE-C'0' TRANSLATE TO ASCII HEX
+         AR    R4,R4              LENGTH DOUBLED
+         BCTR  R4,0               -1 FOR EXECUTE
+         EX    R4,OUTINST         MOVE THE INST TO RESULT
+*
+         CLC   INSTFMAT(2),=C'RI' IS IT RI/RIL ?
+         BE    OUTREG64           EXIT IF IT IS
+         CLC   INSTFMAT(3),=C'RRE' IS IT RRE ?
+         BE    OUTREG64           EXIT IF IT IS
+         CLC   INSTFMAT(3),=C'RSY' IS IT RSY ?
+         BE    OUTREG64           EXIT IF IT IS
+         CLC   INSTFMAT(3),=C'RXY' IS IT RXY ?
+         BNE   NOT64R             EXIT IF NOT
+OUTREG64 EQU   *
+* 64-BIT REG, DUMP R10,R11
+         STG   R10,REGSAVE        SAVE R10
+         UNPK  WORK(9),REGSAVE(5) UNPACK R10 HI
+         TR    WORK(8),TABLE-C'0' TRANSLATE TO ASCII HEX
+         MVC   RSLTR10G(8),WORK   MOVE TO OUTPUT AREA
+         UNPK  WORK(9),REGSAVE+4(5) UNPACK R10 LO
+         TR    WORK(8),TABLE-C'0' TRANSLATE TO ASCII HEX
+         MVC   RSLTR10G+8(8),WORK MOVE TO OUTPUT AREA
+         STG   R11,REGSAVE        SAVE R11
+         UNPK  WORK(9),REGSAVE(5) UNPACK R11
+         TR    WORK(8),TABLE-C'0' TRANSLATE TO ASCII HEX
+         MVC   RSLTR11G(8),WORK   MOVE TO OUTPUT AREA
+         UNPK  WORK(9),REGSAVE+4(5) UNPACK R11 LO
+         TR    WORK(8),TABLE-C'0' TRANSLATE TO ASCII HEX
+         MVC   RSLTR11G+8(8),WORK MOVE TO OUTPUT AREA
+         B     OUTMSG             EXIT
+*
+NOT64R   EQU   *
+         CLI   INSTFMAT,C'R'      IS IT RR/RX ?
+         BNE   NOTREG             EXIT IF NOT
+* 32-BIT REG, DUMP R10,R11
+         ST    R10,REGSAVE        SAVE R10
+         UNPK  WORK(9),REGSAVE(5) UNPACK R10
+         TR    WORK(8),TABLE-C'0' TRANSLATE TO ASCII HEX
+         MVC   RSLTR10,WORK       MOVE TO OUTPUT AREA
+         ST    R11,REGSAVE        SAVE R11
+         UNPK  WORK(9),REGSAVE(5) UNPACK R11
+         TR    WORK(8),TABLE-C'0' TRANSLATE TO ASCII HEX
+         MVC   RSLTR11,WORK       MOVE TO OUTPUT AREA
+         B     OUTMSG             EXIT
+*
+NOTREG   EQU   *
+         CLC   INSTTYPE(2),=C'P ' SS PACKED ?
+         BNE   OUTMSG             EXIT IF NOT
+* R6 POINTS TO OPERAND 1
+         UNPK  WORK(9),0(5,R6)    UNPACK PACKED FIELD PART 1
+         TR    WORK(8),TABLE-C'0' TRANSLATE TO ASCII HEX
+         MVC   RSLTPAK1,WORK      MOVE TO OUTPUT AREA
+         UNPK  WORK(9),4(5,R6)    UNPACK PACKED FIELD PART 2
+         TR    WORK(8),TABLE-C'0' TRANSLATE TO ASCII HEX
+         MVC   RSLTPAK2,WORK      MOVE TO OUTPUT AREA
+         UNPK  WORK(9),8(5,R6)    UNPACK PACKED FIELD PART 3
+         TR    WORK(8),TABLE-C'0' TRANSLATE TO ASCII HEX
+         MVC   RSLTPAK3,WORK      MOVE TO OUTPUT AREA
+         UNPK  WORK(9),12(5,R6)   UNPACK PACKED FIELD PART 4
+         TR    WORK(8),TABLE-C'0' TRANSLATE TO ASCII HEX
+         MVC   RSLTPAK4,WORK      MOVE TO OUTPUT AREA
+OUTMSG   EQU   *
+         PUT   TEXTOUT            WRITE OUTPUT RECORD
+         MVI   RESULTS,C' '       BLANK FOR PROPAGATING
+         MVC   RESULTS+1(79),RESULTS TRAILING BLANKS ARE STRIPPED
+         BR    R14                RETURN
+OUTINST  MVC   RSLTOPER(0),WORK
+TABLE    DC    C'0123456789ABCDEF'
+REGSAVE  DS    D
+*
+MEAN     DS    0H
+* CALCULATE MEAN FROM CURRENT STORED VALUES
+         ST    R14,MEANR14        STORE OUR R14
+         ZAP   DEC,=P'0'          CLEAR DEC
+         ZAP   STATDEC1,=P'0'     CLEAR STATDEC1
+         MVC   RSLTTITL(4),=C'MEAN' TITLE
+         L     R7,STATADDR        START ADDRESS OF VALUES
+         ICM   R10,15,STATCNT     LOAD LOOP COUNT
+         BZ    MEANERR
+MEANLOOP EQU   *
+         AP    STATDEC1,0(6,R7)   SUM THE VALUES
+         AHI   R7,6               INCREMENT
+         BCT   R10,MEANLOOP       LOOP
+*
+         L     R10,STATCNT        NO. OF VALUES
+         CVD   R10,DEC+8          IN DECIMAL
+         DP    STATDEC1,DEC+14(2) QQQQQQQQQQQQQQRR
+         MVC   RSLTTITL+10(13),=X'4020202021204B202020202020'
+         ED    RSLTTITL+10(13),STATDEC1+8 EDIT MEAN uS
+         BAL   R14,OUTMSG         PRINT AND CLEAR
+         B     MEANEND            EXIT
+*
+MEANERR  EQU   *
+         MVC   RSLTTITL+5(16),=C'ERROR, NO VALUES'
+         BAL   R14,OUTMSG         PRINT AND CLEAR
+MEANEND  EQU   *
+         L     R14,MEANR14        RESTORE OUR R14
+         BR    R14                RETURN
+MEANR14  DS    F
+*
+VARIANCE DS    0H
+* CALCULATE VARIANCE FROM CURRENT STORED VALUES
+* NO. OF VALUES IN DEC+14(2)
+* MEAN IS IN STATDEC1(14)
+         ST    R14,VARCR14        STORE OUR R14
+         ZAP   STATDEC3,=P'0'     CLEAR STATDEC3
+         MVC   RSLTTITL(8),=C'VARIANCE' TITLE
+         L     R7,STATADDR        START ADDRESS OF VALUES
+         ICM   R10,15,STATCNT     LOAD LOOP COUNT
+         BZ    VARCERR
+VARCLOOP EQU   *
+         ZAP   STATDEC2,0(6,R7)   MOVE THE VALUE
+         SP    STATDEC2,STATDEC1(14) VALUE-MEAN
+         MP    STATDEC2,STATDEC2  (VALUE-MEAN)ý
+         AP    STATDEC3,STATDEC2  SUM (VALUE-MEAN)ý
+         AHI   R7,6               INCREMENT
+         BCT   R10,VARCLOOP       LOOP
+*
+         L     R10,STATCNT        NO. OF VALUES
+         BCTR  R10,0              NO. OF VALUES-1
+         CVD   R10,DEC+8          IN DECIMAL
+         DP    STATDEC3,DEC+14(2) QQQQQQQQQQQQQQRR
+         SRP   STATDEC3(14),64-6,5 ADJUST
+         MVC   RSLTTITL+10(13),=X'4020202021204B202020202020'
+         ED    RSLTTITL+10(13),STATDEC3+8 EDIT VARIANCE uS
+         BAL   R14,OUTMSG         PRINT AND CLEAR
+         B     VARCEND            EXIT
+*
+VARCERR  EQU   *
+         MVC   RSLTTITL+5(16),=C'ERROR, NO VALUES'
+         BAL   R14,OUTMSG         PRINT AND CLEAR
+VARCEND  EQU   *
+         L     R14,VARCR14        RESTORE OUR R14
+         BR    R14                RETURN
+VARCR14  DS    F
+*
+         DS    0H
+PARMSIN  DC    CL80' '            PARMS I/O AREA
+RESULTS  DC    CL80' '            RESULTS I/O AREA
+*
+WORK     DS    CL13
+SPINCNT  DC    F'0100000'         DEFAULT SPIN COUNT
+SPINDEC  DC    PL8'0100000'       DEFAULT SPIN COUNT AS DECIMAL
+BCTSPIN  DC    F'5000000'         DEFAULT BCT SPIN COUNT
+BCTSDEC  DC    PL8'5000000'       DEFAULT BCT SPIN COUNT AS DECIMAL
+TIMEBEF  DS    D                  TIME BEFORE
+TIMEAFT  DS    D                  TIME AFTER
+TIMEBCT  DS    D                  TIME FOR SPINCNT BCT--ADJUST BY SPIN=
+ORIGBCT  DS    D                  TIME FOR SPINCNT BCT
+TIMEXTRA DC    FL8'0'             TIME FOR SPINCNT EXTRA INSTS
+DEC      DC    PL16'0'
+STATDEC1 DC    PL16'0'
+STATDEC2 DC    PL16'0'
+STATDEC3 DC    PL16'0'
+*
+* STATS FIELDS
+STATADDR DS    F                  TIMES SAVE AREA ADDRESS
+STATNEXT DS    F                  NEXT TIME SLOT
+STATCNT  DS    F                  COUNT OF SAVED ENTRIES
+STATSIND DC    X'00'              FF=STATS ON  00=STATS OFF
+*
+PARMS    DCB   DSNAME=INPUT,      DDNAME                               X
+               DSORG=PS,          SEQUENTIAL                           X
+               RECFM=FT,          FIXED                                X
+               MACRF=GM,          GET                                  X
+               EODAD=EOPARMS,                                          X
+               LRECL=80,                                               X
+               BLKSIZE=80,                                             X
+               RECORD=PARMSIN
+*
+TEXTOUT  DCB   DSNAME=RESULT,     DDNAME                               X
+               DSORG=PS,          SEQUENTIAL                           X
+               MACRF=PM,          PUT                                  X
+               RECFM=FT,          FIXED,XLATE                          X
+               LRECL=80,                                               X
+               BLKSIZE=80,                                             X
+               RECORD=RESULTS
+*
+INPUT    DC    C"BMK\INSTTIME.TXT",X'00'
+RESULT   DC    C"BMK\INSTTIME.OUT",X'00'
+*
+         LTORG
+*
+* LIMIT OF BASE R13
+*
+**********
+* TABLES *
+**********
+TYPETABL DS    0H
+         DC    CL4'E  ',A(E)      E
+         DC    CL4'RI ',A(RI)     RI
+         DC    CL4'RIL',A(RIL)    RIL
+         DC    CL4'RR ',A(RR)     RR
+         DC    CL4'RRE',A(RRE)    RRE
+         DC    CL4'RS ',A(RS)     RS
+         DC    CL4'RSI',A(RSI)    RSI
+         DC    CL4'RSY',A(RSY)    RSY
+         DC    CL4'RX ',A(RX)     RX
+         DC    CL4'RXY',A(RXY)    RXY
+         DC    CL4'SI ',A(SI)     SI
+         DC    CL4'SIY',A(SIY)    SIY
+         DC    CL4'SS1',A(SS1)    SS WITH 1 LENGTH
+         DC    CL4'SS2',A(SS2)    SS WITH 2 LENGTHS
+         DC    X'FF'              STOPPER
+*
+OPCD1TAB DS    0H
+* SINGLE BYTE OPCODE TABLE
+         DC    CL6'SPM ',X'04'     RR
+         DC    CL6'BALR',X'05'     RR
+         DC    CL6'BCTR',X'06'     RR
+         DC    CL6'BCR ',X'07'     RR
+         DC    CL6'BSM ',X'0B'     RR
+         DC    CL6'BASSM',X'0C'    RR
+         DC    CL6'BASR',X'0D'     RR
+         DC    CL6'MVCL',X'0E'     RR
+         DC    CL6'CLCL',X'0F'     RR
+         DC    CL6'LPR ',X'10'     RR
+         DC    CL6'LNR ',X'11'     RR
+         DC    CL6'LTR ',X'12'     RR
+         DC    CL6'LCR ',X'13'     RR
+         DC    CL6'NR  ',X'14'     RR
+         DC    CL6'CLR ',X'15'     RR
+         DC    CL6'OR  ',X'16'     RR
+         DC    CL6'XR  ',X'17'     RR
+         DC    CL6'LR  ',X'18'     RR
+         DC    CL6'CR  ',X'19'     RR
+         DC    CL6'AR  ',X'1A'     RR
+         DC    CL6'SR  ',X'1B'     RR
+         DC    CL6'MR  ',X'1C'     RR
+         DC    CL6'DR  ',X'1D'     RR
+         DC    CL6'ALR ',X'1E'     RR
+         DC    CL6'SLR ',X'1F'     RR
+         DC    CL6'STH ',X'40'     RX
+         DC    CL6'LA  ',X'41'     RX
+         DC    CL6'STC ',X'42'     RX
+         DC    CL6'IC  ',X'43'     RX
+         DC    CL6'EX  ',X'44'     RX
+         DC    CL6'BAL ',X'45'     RX
+         DC    CL6'BCT ',X'46'     RX
+         DC    CL6'BC  ',X'47'     RX
+         DC    CL6'B   ',X'47'     RX--SYNONYM
+         DC    CL6'LH  ',X'48'     RX
+         DC    CL6'CH  ',X'49'     RX
+         DC    CL6'AH  ',X'4A'     RX
+         DC    CL6'SH  ',X'4B'     RX
+         DC    CL6'MH  ',X'4C'     RX
+         DC    CL6'BAS ',X'4D'     RX
+         DC    CL6'CVD ',X'4E'     RX
+         DC    CL6'CVB ',X'4F'     RX
+         DC    CL6'ST  ',X'50'     RX
+         DC    CL6'N   ',X'54'     RX
+         DC    CL6'CL  ',X'55'     RX
+         DC    CL6'O   ',X'56'     RX
+         DC    CL6'X   ',X'57'     RX
+         DC    CL6'L   ',X'58'     RX
+         DC    CL6'C   ',X'59'     RX
+         DC    CL6'A   ',X'5A'     RX
+         DC    CL6'S   ',X'5B'     RX
+         DC    CL6'M   ',X'5C'     RX
+         DC    CL6'D   ',X'5D'     RX
+         DC    CL6'AL  ',X'5E'     RX
+         DC    CL6'SL  ',X'5F'     RX
+         DC    CL6'BRXH',X'84'     RSI
+         DC    CL6'BRXLE',X'85'    RSI
+         DC    CL6'BXH ',X'86'     RS
+         DC    CL6'BXLE',X'87'     RS
+         DC    CL6'SRL ',X'88'     RS
+         DC    CL6'SLL ',X'89'     RS
+         DC    CL6'SRA ',X'8A'     RS
+         DC    CL6'SLA ',X'8B'     RS
+         DC    CL6'SRDL',X'8C'     RS
+         DC    CL6'SLDL',X'8D'     RS
+         DC    CL6'SRDA',X'8E'     RS
+         DC    CL6'SLDA',X'8F'     RS
+         DC    CL6'STM ',X'90'     RS
+         DC    CL6'TM  ',X'91'     SI
+         DC    CL6'MVI ',X'92'     SI
+         DC    CL6'TS  ',X'93'     SI
+         DC    CL6'NI  ',X'94'     SI
+         DC    CL6'CLI ',X'95'     SI
+         DC    CL6'OI  ',X'96'     SI
+         DC    CL6'XI  ',X'97'     SI
+         DC    CL6'LM  ',X'98'     RS
+         DC    CL6'CLM ',X'BD'     RS
+         DC    CL6'STCM',X'BE'     RS
+         DC    CL6'ICM ',X'BF'     RS
+         DC    CL6'MVN  ',X'D1'   SS1
+         DC    CL6'MVC  ',X'D2'   SS1
+         DC    CL6'MVZ  ',X'D3'   SS1
+         DC    CL6'NC   ',X'D4'   SS1
+         DC    CL6'CLC  ',X'D5'   SS1
+         DC    CL6'OC   ',X'D6'   SS1
+         DC    CL6'XC   ',X'D7'   SS1
+         DC    CL6'TR   ',X'DC'   SS1
+         DC    CL6'TRT  ',X'DD'   SS1
+         DC    CL6'ED   ',X'DE'   SS1
+         DC    CL6'EDMK ',X'DF'   SS1
+         DC    CL6'MVCIN',X'E8'   SS1
+         DC    CL6'SRP  ',X'F0'   SS2
+         DC    CL6'MVO  ',X'F1'   SS2
+         DC    CL6'PACK ',X'F2'   SS2
+         DC    CL6'UNPK ',X'F3'   SS2
+         DC    CL6'ZAP  ',X'F8'   SS2
+         DC    CL6'CP   ',X'F9'   SS2
+         DC    CL6'AP   ',X'FA'   SS2
+         DC    CL6'SP   ',X'FB'   SS2
+         DC    CL6'MP   ',X'FC'   SS2
+         DC    CL6'DP   ',X'FD'   SS2
+         DC    X'FF'              STOPPER
+*
+OPCD2TAB DS    0H
+* DOUBLE BYTE OPCODE TABLE
+* THE SECOND BYTE MAYBE A BYTE OR A NIBBLE
+         DC    CL6'SCKPF',X'01',X'07'   E
+         DC    CL6'TAM  ',X'01',X'0B'   E
+         DC    CL6'SAM24',X'01',X'0C'   E
+         DC    CL6'SAM31',X'01',X'0D'   E
+         DC    CL6'SAM64',X'01',X'0E'   E
+         DC    CL6'IIHH ',X'A5',X'00'   RI
+         DC    CL6'IIHL ',X'A5',X'01'   RI
+         DC    CL6'IILH ',X'A5',X'02'   RI
+         DC    CL6'IILL ',X'A5',X'03'   RI
+         DC    CL6'NIHH ',X'A5',X'04'   RI
+         DC    CL6'NIHL ',X'A5',X'05'   RI
+         DC    CL6'NILH ',X'A5',X'06'   RI
+         DC    CL6'NILL ',X'A5',X'07'   RI
+         DC    CL6'OIHH ',X'A5',X'08'   RI
+         DC    CL6'OIHL ',X'A5',X'09'   RI
+         DC    CL6'OILH ',X'A5',X'0A'   RI
+         DC    CL6'OILL ',X'A5',X'0B'   RI
+         DC    CL6'LLIHH',X'A5',X'0C'   RI
+         DC    CL6'LLIHL',X'A5',X'0D'   RI
+         DC    CL6'LLILH',X'A5',X'0E'   RI
+         DC    CL6'LLILL',X'A5',X'0F'   RI
+*
+         DC    CL6'TMLH ',X'A7',X'00'   RI
+         DC    CL6'TMH  ',X'A7',X'00'   RI--SYNONYM
+         DC    CL6'TMLL ',X'A7',X'01'   RI
+         DC    CL6'TML  ',X'A7',X'01'   RI--SYNONYM
+         DC    CL6'TMHH ',X'A7',X'02'   RI
+         DC    CL6'TMHL ',X'A7',X'03'   RI
+         DC    CL6'BRC  ',X'A7',X'04'   RI
+         DC    CL6'J    ',X'A7',X'04'   RI--SYNONYM
+         DC    CL6'BRU  ',X'A7',X'04'   RI--SYNONYM
+         DC    CL6'BRAS ',X'A7',X'05'   RI
+         DC    CL6'BRCT ',X'A7',X'06'   RI
+         DC    CL6'BRCTG',X'A7',X'07'   RI
+         DC    CL6'LHI  ',X'A7',X'08'   RI
+         DC    CL6'LGHI ',X'A7',X'09'   RI
+         DC    CL6'AHI  ',X'A7',X'0A'   RI
+         DC    CL6'AGHI ',X'A7',X'0B'   RI
+         DC    CL6'MHI  ',X'A7',X'0C'   RI
+         DC    CL6'MGHI ',X'A7',X'0D'   RI
+         DC    CL6'CHI  ',X'A7',X'0E'   RI
+         DC    CL6'CGHI ',X'A7',X'0F'   RI
+*
+         DC    CL6'MSR  ',X'B2',X'52'   RRE
+*
+         DC    CL6'LPGR ',X'B9',X'00'   RRE
+         DC    CL6'LNGR ',X'B9',X'01'   RRE
+         DC    CL6'LTGR ',X'B9',X'02'   RRE
+         DC    CL6'LCGR ',X'B9',X'03'   RRE
+         DC    CL6'LGR  ',X'B9',X'04'   RRE
+         DC    CL6'AGR  ',X'B9',X'08'   RRE
+         DC    CL6'SGR  ',X'B9',X'09'   RRE
+         DC    CL6'ALGR ',X'B9',X'0A'   RRE
+         DC    CL6'SLGR ',X'B9',X'0B'   RRE
+         DC    CL6'MSGR ',X'B9',X'0C'   RRE
+         DC    CL6'DSGR ',X'B9',X'0D'   RRE
+         DC    CL6'LRVGR',X'B9',X'0F'   RRE
+         DC    CL6'LPGFR',X'B9',X'10'   RRE
+         DC    CL6'LNGFR',X'B9',X'11'   RRE
+         DC    CL6'LTGFR',X'B9',X'12'   RRE
+         DC    CL6'LCGFR',X'B9',X'13'   RRE
+         DC    CL6'LGFR ',X'B9',X'14'   RRE
+         DC    CL6'LLGFR',X'B9',X'16'   RRE
+         DC    CL6'LLGTR',X'B9',X'17'   RRE
+         DC    CL6'AGFR ',X'B9',X'18'   RRE
+         DC    CL6'SGFR ',X'B9',X'19'   RRE
+         DC    CL6'ALGFR',X'B9',X'1A'   RRE
+         DC    CL6'SLGFR',X'B9',X'1B'   RRE
+         DC    CL6'MSGFR',X'B9',X'1C'   RRE
+         DC    CL6'DSGFR',X'B9',X'1D'   RRE
+         DC    CL6'LRVR ',X'B9',X'1F'   RRE
+         DC    CL6'CGR  ',X'B9',X'20'   RRE
+         DC    CL6'CLGR ',X'B9',X'21'   RRE
+         DC    CL6'CGFR ',X'B9',X'30'   RRE
+         DC    CL6'CLGFR',X'B9',X'31'   RRE
+         DC    CL6'NGR  ',X'B9',X'80'   RRE
+         DC    CL6'OGR  ',X'B9',X'81'   RRE
+         DC    CL6'XGR  ',X'B9',X'82'   RRE
+         DC    CL6'MLGR ',X'B9',X'86'   RRE
+         DC    CL6'DLGR ',X'B9',X'87'   RRE
+         DC    CL6'ALCGR',X'B9',X'88'   RRE
+         DC    CL6'SLBGR',X'B9',X'89'   RRE
+         DC    CL6'MLR  ',X'B9',X'96'   RRE
+         DC    CL6'DLR  ',X'B9',X'97'   RRE
+         DC    CL6'ALCR ',X'B9',X'98'   RRE
+         DC    CL6'SLBR ',X'B9',X'99'   RRE
+*
+         DC    CL6'LARL ',X'C0',X'00'   RIL
+         DC    CL6'BRCL ',X'C0',X'04'   RIL
+         DC    CL6'JLU  ',X'C0',X'04'   RIL--SYNONYM
+         DC    CL6'BRASL',X'C0',X'05'   RIL
+*
+         DC    CL6'LG   ',X'E3',X'04'   RXY
+         DC    CL6'CVBY ',X'E3',X'06'   RXY
+         DC    CL6'AG   ',X'E3',X'08'   RXY
+         DC    CL6'SG   ',X'E3',X'09'   RXY
+         DC    CL6'ALG  ',X'E3',X'0A'   RXY
+         DC    CL6'SLG  ',X'E3',X'0B'   RXY
+         DC    CL6'MSG  ',X'E3',X'0C'   RXY
+         DC    CL6'DSG  ',X'E3',X'0D'   RXY
+         DC    CL6'CVBG ',X'E3',X'0E'   RXY
+         DC    CL6'LRVG ',X'E3',X'0F'   RXY
+         DC    CL6'LGF  ',X'E3',X'14'   RXY
+         DC    CL6'LGH  ',X'E3',X'15'   RXY
+         DC    CL6'LLGF ',X'E3',X'16'   RXY
+         DC    CL6'LLGT ',X'E3',X'17'   RXY
+         DC    CL6'AGF  ',X'E3',X'18'   RXY
+         DC    CL6'SGF  ',X'E3',X'19'   RXY
+         DC    CL6'ALGF ',X'E3',X'1A'   RXY
+         DC    CL6'SLGF ',X'E3',X'1B'   RXY
+         DC    CL6'MSGF ',X'E3',X'1C'   RXY
+         DC    CL6'DSGF ',X'E3',X'1D'   RXY
+         DC    CL6'LRV  ',X'E3',X'1E'   RXY
+         DC    CL6'LRVH ',X'E3',X'1F'   RXY
+         DC    CL6'CG   ',X'E3',X'20'   RXY
+         DC    CL6'CLG  ',X'E3',X'21'   RXY
+         DC    CL6'STG  ',X'E3',X'24'   RXY
+         DC    CL6'CVDY ',X'E3',X'26'   RXY
+         DC    CL6'CVDG ',X'E3',X'2E'   RXY
+         DC    CL6'STRVG',X'E3',X'2F'   RXY
+         DC    CL6'CGF  ',X'E3',X'30'   RXY
+         DC    CL6'CLGF ',X'E3',X'31'   RXY
+         DC    CL6'STRV ',X'E3',X'3E'   RXY
+         DC    CL6'STRVH',X'E3',X'3F'   RXY
+         DC    CL6'STY  ',X'E3',X'50'   RXY
+         DC    CL6'MSY  ',X'E3',X'51'   RXY
+         DC    CL6'NY   ',X'E3',X'54'   RXY
+         DC    CL6'CLY  ',X'E3',X'55'   RXY
+         DC    CL6'OY   ',X'E3',X'56'   RXY
+         DC    CL6'XY   ',X'E3',X'57'   RXY
+         DC    CL6'LY   ',X'E3',X'58'   RXY
+         DC    CL6'CY   ',X'E3',X'59'   RXY
+         DC    CL6'AY   ',X'E3',X'5A'   RXY
+         DC    CL6'SY   ',X'E3',X'5B'   RXY
+         DC    CL6'ALY  ',X'E3',X'5E'   RXY
+         DC    CL6'SLY  ',X'E3',X'5F'   RXY
+         DC    CL6'STHY ',X'E3',X'70'   RXY
+         DC    CL6'LAY  ',X'E3',X'71'   RXY
+         DC    CL6'STCY ',X'E3',X'72'   RXY
+         DC    CL6'ICY  ',X'E3',X'73'   RXY
+         DC    CL6'LB   ',X'E3',X'76'   RXY
+         DC    CL6'LGB  ',X'E3',X'77'   RXY
+         DC    CL6'LHY  ',X'E3',X'78'   RXY
+         DC    CL6'CHY  ',X'E3',X'79'   RXY
+         DC    CL6'AHY  ',X'E3',X'7A'   RXY
+         DC    CL6'SHY  ',X'E3',X'7B'   RXY
+         DC    CL6'NG   ',X'E3',X'80'   RXY
+         DC    CL6'OG   ',X'E3',X'81'   RXY
+         DC    CL6'XG   ',X'E3',X'82'   RXY
+         DC    CL6'MLG  ',X'E3',X'86'   RXY
+         DC    CL6'DLG  ',X'E3',X'87'   RXY
+         DC    CL6'ALCG ',X'E3',X'88'   RXY
+         DC    CL6'SLBG ',X'E3',X'89'   RXY
+         DC    CL6'STPQ ',X'E3',X'8E'   RXY
+         DC    CL6'LPQ  ',X'E3',X'8F'   RXY
+         DC    CL6'LLGC ',X'E3',X'90'   RXY
+         DC    CL6'LLGH ',X'E3',X'91'   RXY
+         DC    CL6'ML   ',X'E3',X'96'   RXY
+         DC    CL6'DL   ',X'E3',X'97'   RXY
+         DC    CL6'ALC  ',X'E3',X'98'   RXY
+         DC    CL6'SLB  ',X'E3',X'99'   RXY
+*
+         DC    CL6'LMG  ',X'EB',X'04'   RSY
+         DC    CL6'SRAG ',X'EB',X'0A'   RSY
+         DC    CL6'SLAG ',X'EB',X'0B'   RSY
+         DC    CL6'SRLG ',X'EB',X'0C'   RSY
+         DC    CL6'SLLG ',X'EB',X'0D'   RSY
+         DC    CL6'RLLG ',X'EB',X'1C'   RSY
+         DC    CL6'RLL  ',X'EB',X'1D'   RSY
+         DC    CL6'CLMH ',X'EB',X'20'   RSY
+         DC    CL6'CLMY ',X'EB',X'21'   RSY
+         DC    CL6'STMG ',X'EB',X'24'   RSY
+         DC    CL6'STMH ',X'EB',X'26'   RSY
+         DC    CL6'STCMH',X'EB',X'2C'   RSY
+         DC    CL6'STCMY',X'EB',X'2D'   RSY
+         DC    CL6'BXHG ',X'EB',X'44'   RSY
+         DC    CL6'BXLEG',X'EB',X'45'   RSY
+         DC    CL6'TMY  ',X'EB',X'51'   SIY
+         DC    CL6'MVIY ',X'EB',X'52'   SIY
+         DC    CL6'NIY  ',X'EB',X'54'   SIY
+         DC    CL6'CLIY ',X'EB',X'55'   SIY
+         DC    CL6'OIY  ',X'EB',X'56'   SIY
+         DC    CL6'XIY  ',X'EB',X'57'   SIY
+         DC    CL6'ICMH ',X'EB',X'80'   RSY
+         DC    CL6'ICMY ',X'EB',X'81'   RSY
+         DC    CL6'STMY ',X'EB',X'90'   RSY
+         DC    CL6'LMH  ',X'EB',X'96'   RSY
+         DC    CL6'LMY  ',X'EB',X'98'   RSY
+*
+         DC    X'FF'                    STOPPER
+********************************
+* ISOLATED PROCESSING ROUTINES *
+********************************
+E        DS    0H
+* DOUBLE BYTE OPCODE
+* SCKPF TAM SAM24 SAM31 SAM64
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   EINST(2),6(R7)     SET THE INST DOUBLE OPCODE
+         SAM24                    MAKE SURE WE ARE IN 24-BIT MODE
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+EINST    SAM24                    TESTED INST
+         BCT   R7,EINST           DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,EINST           INST ADDRESS
+         LA    R4,2               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         B     GET                EXIT TO GET ANOTHER TEST
+         LTORG
+*
+RR       DS    0H
+* SINGLE BYTE OPCODE
+* SPM BALR BCTR BCR BSM BASSM BASR MVCL CLCL ALR AR CLR CR DR
+* LCR LNR LPR LR LTR MR NR OR SLR SR XR
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   RRSAVE,RRBCR       SAVE MODIFIED BYTES
+         MVC   RRINST(1),6(R7)    SET THE INST
+         CLI   RRINST,MVCL        IS IT MVCL ?
+         BE    RRMVCL             EXIT IF IT IS
+         CLI   RRINST,CLCL        IS IT CLCL ?
+         BE    RRMVCL             EXIT IF IT IS
+         CLI   RRINST,SPM         IS IT SPM ?
+         BE    RRSPM              EXIT IF IT IS
+         CLI   INSTTYPE,C'B'      BRANCH TYPE ?
+         BE    RRBRANCH           EXIT IF IT IS
+         SR    R10,R10            PREPARE FOR MULTIPLY/DIVIDE
+         LA    R11,1              JUST SO I KNOW
+         LA    R6,1               JUST SO I KNOW
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RRINST   LR    R10,R6             TESTED INST
+         BCT   R7,RRINST          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         B     RRDONE             EXIT
+*
+RRBRANCH EQU   *
+         MVC   RRBCR(1),6(R7)     SET THE INST--BRANCH
+         LA    R10,RRBCRBCT       R2-FIELD
+         CLI   INSTTYPE+1,C'0'    CONVERT TO NOP OR ZERO R2-FIELD ?
+         BNE   RRNOTB0            EXIT IF NOT
+         MVC   RSLTMICS(10),=C'TYPE ERROR' PRESET ERROR MSG
+         CLI   RRBCR,BCR          IS IT BCR ?
+         BNE   RRNOTBCR           EXIT IF NOT
+* BRANCH TO NOPR FOR BCR
+         NI    RRBCR+1,X'0F'      MAKE IT NOPR
+         MVC   RSLTOPCD(4),=C'NOPR' MAKE IT NOPR
+         B     RRNOTB0            EXIT
+RRNOTBCR EQU   *
+         CLI   RRBCR,BALR         IS IT BALR ?
+         BE    RRNOR2             EXIT IF IT IS
+         CLI   RRBCR,BCTR         IS IT BCTR ?
+         BE    RRNOR2             EXIT IF IT IS
+         CLI   RRBCR,BSM          IS IT BSM ?
+         BE    RRNOR2             EXIT IF IT IS
+         CLI   RRBCR,BASSM        IS IT BASSM ?
+         BE    RRNOR2             EXIT IF IT IS
+         CLI   RRBCR,BASR         IS IT BASR ?
+         BNE   RRTYPERR           ERROR IF NOT
+RRNOR2   EQU   *
+* ZERO R2-FIELD FOR BALR BCTR BSM BASSM BASR
+         NI    RRBCR+1,X'F0'      MAKE IT OPCD R15,0
+RRNOTB0  EQU   *
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+* CAN FORM THE FOLLOWING BRANCH TYPES:
+*   BR    R10
+*   NOPR  R10
+*   BALR  R15,R10
+*   BALR  R15,0
+*   BCTR  R15,R10
+*   BCTR  R15,0
+*   BSM   R15,R10
+*   BSM   R15,0
+*   BASSM R15,R10
+*   BASSM R15,0
+*   BASR  R15,R10
+*   BASR  R15,0
+RRBCR    BR    R10                TESTED INST
+RRBCRBCT BCT   R7,RRBCR           DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RRBCR           INST ADDRESS
+         B     RRDONE2            EXIT
+*
+RRTYPERR EQU   *
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     RRDONE3            EXIT
+*
+RRMVCL   EQU   *
+* SPECIAL PROCESS FOR MVCL CLCL
+         MVC   RRLONG(1),6(R7)    SET THE INST--LONG
+         MVC   RSLTLEN,INSTLL     MOVE LENGTH TO OUTPUT
+         ZAP   RRDEC,=P'0'        CLEAR RRDEC
+         PACK  RRDEC+12(4),INSTLL-1(7) DECIMAL LENGTH
+         CVBG  R1,RRDEC           CONVERT TO HEX
+         LR    R5,R1              SET FOR MVCL/CLCL
+* VALIDATE LEN
+         LTR   R11,R1             SET FOR MVCL/CLCL
+         BZ    RRLENERR           EXIT IF IT IS
+         L     R1,=F'1000000'     GETMAIN LENGTH
+         GETMAIN R,LV=(1)         'FROM' ADDRESS
+         LR    R10,R0             SET FOR MVCL/CLCL
+         GETMAIN R,LV=(1)         'TO' ADDRESS
+         LR    R4,R0              SET FOR MVCL/CLCL
+         STM   R4,R5,RRGET1       SAVE 'TO' REGS
+         STM   R10,R11,RRGET2     SAVE 'FROM' REGS
+* TIME A 2-REG LM
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RRLM     LM    R4,R5,RRGET1       SPECIAL INST
+         BCT   R7,RRLM            DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         AGR   R7,R7              DOUBLE IT (NEED 2 LM'S)
+         STG   R7,TIMEXTRA        SAVE IT
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RRXTRA   LM    R4,R5,RRGET1       SPECIAL INST
+         LM    R10,R11,RRGET2     SPECIAL INST
+* CAN FORM THE FOLLOWING INSTS:
+*   MVCL R4,R10
+*   CLCL R4,R10
+RRLONG   MVCL  R4,R10             TESTED INST
+         BCT   R7,RRXTRA          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         L     R1,=F'1000000'     GETMAIN LENGTH
+         L     R0,RRGET1          GETMAIN 1
+         FREEMAIN LV=(1)
+         L     R0,RRGET2          GETMAIN 2
+         FREEMAIN LV=(1)
+         LA    R5,RRLONG          INST ADDRESS
+         B     RRDONE2            EXIT
+*
+RRSPM    EQU   *
+         LA    R10,B'00000011'    CC=0,MASK=0011=NO FP OR DEC OFLO
+         SLL   R10,24             SHIFT TO TOP
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RRSPMGO  SPM   R10                TESTED INST
+         BCT   R7,RRSPMGO         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RRSPMGO         INST ADDRESS
+         B     RRDONE2            EXIT
+*
+RRLENERR EQU   *
+         MVC   RSLTMICS(12),=C'LENGTH ERROR'
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RRDONE   EQU   *
+         LA    R5,RRINST          INST ADDRESS
+RRDONE2  EQU   *
+         LA    R4,2               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+RRDONE3  EQU   *
+         MVC   RRBCR,RRSAVE       RESTORE MODIFIED BYTES
+         B     GET                EXIT TO GET ANOTHER TEST
+RRDEC    DC    PL16'0'
+RRGET1   DS    2F                 SAVE 'TO' REGS
+RRGET2   DS    2F                 SAVE 'FROM' REGS
+RRSAVE   DS    H
+         LTORG
+*
+SI       DS    0H
+* SINGLE BYTE OPCODE
+* TM MVI TS NI CLI OI XI
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   SIINST(1),6(R7)    SET THE INST
+         LA    R6,SIBYTE          DOESN'T MATTER WHAT WE DO TO THIS
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SIINST   CLI   0(R6),X'99'        TESTED INST
+         BCT   R7,SIINST          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R4,4               INST LENGTH
+         LA    R5,SIINST          INST ADDRESS
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         B     GET                EXIT TO GET ANOTHER TEST
+SIBYTE   DC    X'00'              SI BYTE
+         LTORG
+*
+RS       DS    0H
+* SINGLE BYTE OPCODE
+*
+* L1 IS NO. OF REGISTERS
+*    STM LM
+* ALLOW 0B AND 00
+*    SRL SLL SRA SLA SRDL SLDL SRDA SLDA
+* SPECIALS
+*    BXH BXLE
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   RSSAV1,RSSTM       SAVE ORIG INST
+         MVC   RSSAV2,RSSTMX      SAVE ORIG INST
+         MVC   RSSAV3,RSXTRA      SAVE ORIG INST
+         MVC   RSSAV4,RSLM        SAVE ORIG INST
+         MVC   RSSAV5,RSINSFT+2   SAVE MODIFIED BYTES
+* 86-87
+         CLI   6(R7),BXH          BXH ?
+         BE    RSBX               EXIT IF IT IS
+         CLI   6(R7),BXLE         BXLE ?
+         BE    RSBX               EXIT IF IT IS
+* 90 OR 98
+         CLI   6(R7),LM           LM ?
+         BE    RSLMSTM            EXIT IF IT IS
+         CLI   6(R7),STM          STM ?
+         BE    RSLMSTM            EXIT IF IT IS
+* 88-8F
+         CLI   6(R7),SRL          SHIFT ?
+         BL    RSABEND            ABEND IF NOT
+         CLI   6(R7),SLDA         SHIFT ?
+         BNH   RSSHIFT            EXIT IF IT IS
+* BD-BF
+         CLI   6(R7),CLM          CLM, STCM, ICM ?
+         BL    RSABEND            ABEND IF NOT
+         CLI   6(R7),ICM          CLM, STCM, ICM ?
+         BNH   RSMASK             EXIT IF IT IS
+RSABEND  EQU   *
+         ABEND X'222'             SHOULD NOT OCCUR--BUT HAS !
+*
+RSLMSTM  EQU   *
+* LM OR STM
+         MVC   RSLTLL1,INSTLL1    MOVE LENGTH 1 TO OUTPUT
+* PROCESS LENGTH 1
+         ZAP   RSDEC,=P'0'        CLEAR RSDEC
+         PACK  RSDEC+14(2),INSTLL1-1(3) DECIMAL LENGTH 1
+         CVBG  R10,RSDEC          CONVERT TO HEX
+         LTR   R10,R10            IS IT ZERO ?
+         BZ    RSERROR            EXIT IF IT IS
+         C     R10,=F'16'         GT THAN 16 ?
+         BH    RSERROR            EXIT IF IT IS
+         BCTR  R10,0              -1 FOR END REGISTER
+         EX    R10,RSOI1          PUT END REG INTO INST
+         EX    R10,RSOI2          PUT END REG INTO INST--EXTRA
+         EX    R10,RSOI3          PUT END REG INTO INST--STM
+         EX    R10,RSOI4          PUT END REG INTO INST--LM
+         CLI   6(R7),LM           IS IT LM ?
+         BE    RSLMGO             EXIT IF IT IS
+* ONLY STM GETS HERE
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+*              R1 R3 D(B)    900?BDDD
+RSSTM    STM   R0,R0,RSOP1        TESTED INST
+         BCT   R7,RSSTM           DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+         LA    R5,RSSTM           INST ADDRESS
+         B     RSDONE             EXIT
+*
+RSLMGO   EQU   *
+* ONLY LM GETS HERE
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+* TIME THE STM
+*              R1 R3 D(B)    900?BDDD
+RSSTMX   STM   R0,R0,RSOP1        SPECIAL INST
+         BCT   R7,RSSTMX          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RSXTRA   STM   R0,R0,RSOP1        EXTRA INST
+*              R1 R3 D(B)    980?BDDD
+RSLM     LM    R0,R0,RSOP1        TESTED INST
+         BCT   R7,RSXTRA          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RSLM            INST ADDRESS
+         B     RSDONE             EXIT
+*
+RSOI1    OI    RSSTM+1,X'00'      EXECUTED INST
+RSOI2    OI    RSSTMX+1,X'00'     EXECUTED INST
+RSOI3    OI    RSXTRA+1,X'00'     EXECUTED INST
+RSOI4    OI    RSLM+1,X'00'       EXECUTED INST
+*
+RSSHIFT  EQU   *
+* PROCESS THE 8 SHIFT INSTS
+         MVC   RSINSFT(1),6(R7)   SET THE INST--SHIFT
+         MVC   RSLTLEN(2),INSTXB  MOVE THE XB TO OUTPUT
+* USE OF INDEX ALWAYS INVALID
+         CLC   INSTXB,=C'XB'      VALIDATE ?
+         BE    RSXBERR            EXIT IF ERROR
+         CLC   INSTXB,=C'X0'      VALIDATE ?
+         BE    RSXBERR            EXIT IF ERROR
+* XB INPUT VALID: 0B OR 00
+         CLI   INSTXB+1,C'0'      IS BASE ZERO ?
+         BNE   RSXB1              EXIT IF NOT
+         NI    RSINSFT+2,X'0F'    KNOCK OUT THE BASE
+RSXB1    EQU   *
+         L     R10,=X'FFFFFFFF'   GIVE IT SOMETHING
+         LR    R11,R10                              TO SHIFT
+         LA    R6,1               WITH BASE SHIFT 2, ELSE 1
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RSINSFT  SRL   R10,1(,R6)         TESTED INST
+         BCT   R7,RSINSFT         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RSINSFT         INST ADDRESS
+         B     RSDONE             EXIT
+*
+RSMASK   EQU   *
+* PROCESS CLM STCM ICM
+         MVC   RSINMSK(1),6(R7)   SET THE INST--MASK TYPE
+         L     R10,=X'FFFFFFFF'   GIVE IT SOMETHING TO DO
+         MVC   RSICM,=X'0123'     SHOWS ICM WORKING
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RSINMSK  CLM   R10,9,RSICM        TESTED INST
+         BCT   R7,RSINMSK         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RSINMSK         INST ADDRESS
+         B     RSDONE             EXIT
+RSICM    DS    H
+*
+RSBX     EQU   *
+* BXH OR BXLE
+         MVC   RSINBX(1),6(R7)    SET THE INST
+         CLI   RSINBX,BXH         BXH ?
+         BNE   RSBXLE             EXIT IF NOT
+* BXH
+         L     R10,RSBXHGO        LOAD INDEX REGISTER--ALWAYS BRANCH
+         CLI   INSTTYPE+1,C'0'    NOP REQUESTED ?
+         BNE   RSBXGO             EXIT IF NOT
+         L     R10,RSBXHNOP       LOAD INDEX REGISTER--NEVER BRANCH
+         B     RSBXGO             EXIT
+RSBXLE   EQU   *
+* BXLE
+         L     R10,RSBXLEGO       LOAD INDEX REGISTER--ALWAYS BRANCH
+         CLI   INSTTYPE+1,C'0'    NOP REQUESTED ?
+         BNE   RSBXGO             EXIT IF NOT
+         L     R10,RSBXLENP       LOAD INDEX REGISTER--NEVER BRANCH
+*
+RSBXGO   EQU   *
+         LA    R11,1              SET INCREMENT AND COMPARE
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RSINBX   BXH   R10,R11,RSBXBCT    TESTED INST
+RSBXBCT  BCT   R7,RSINBX          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RSINBX          INST ADDRESS
+         B     RSDONE             EXIT
+RSBXHGO  DC    F'1'               BXH AND BRANCH
+RSBXHNOP DC    X'80000000'        BXH AND NO BRANCH
+RSBXLEGO DC    X'80000000'        BXLE AND BRANCH
+RSBXLENP DC    F'1'               BXLE AND NO BRANCH
+*
+RSDONE   EQU   *
+         LA    R4,4               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         MVC   RSSTM(2),RSSAV1    RESTORE ORIG INST
+         MVC   RSSTMX(2),RSSAV2   RESTORE ORIG INST
+         MVC   RSXTRA(2),RSSAV3   RESTORE ORIG INST
+         MVC   RSLM(2),RSSAV4     RESTORE ORIG INST
+         MVC   RSINSFT+2(2),RSSAV5 RESTORE MODIFIED BYTES
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RSXBERR  EQU   *
+* XB FIELD INVALID FOR INSTRUCTION
+         MVC   RSLTMICS(8),=C'XB ERROR' ERROR MSG
+         B     RSERROR2           EXIT TO GET ANOTHER TEST
+*
+RSERROR  EQU   *
+         MVC   RSLTMICS(12),=C'LENGTH ERROR'
+RSERROR2 EQU   *
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RSSAV1   DS    H
+RSSAV2   DS    H
+RSSAV3   DS    H
+RSSAV4   DS    H
+RSSAV5   DS    H
+RSDEC    DC    PL16'0'
+RSOP1    DS    16CL4
+         LTORG
+*
+RX       DS    0H
+* SINGLE BYTE OPCODE
+* LA STC IC EX BAL BCT B=BC LH CH SH AH MH BAS CVD CVB ST
+* N CL O X L C A S M D AL SL
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   RSLTLEN(2),INSTXB  MOVE THE XB TO OUTPUT
+         MVC   RXINST(1),6(R7)    SET THE INST
+         MVC   RXBR(1),6(R7)      SET THE INST--BRANCH
+* USE OF BASE ALWAYS VALID
+         CLC   INSTXB,=C'XB'      VALIDATE ?
+         BE    RXXBOK             EXIT IF IT IS
+         CLC   INSTXB,=C'0B'      VALIDATE ?
+         BE    RXXBOK             EXIT IF IT IS
+         CLC   INSTXB,=C'X0'      VALIDATE ?
+         BE    RXNOBASE           EXIT IF IT IS
+         CLC   INSTXB,=C'00'      VALIDATE ?
+         BNE   RXXBERR            ERROR IF NOT
+RXNOBASE EQU   *
+* X0 OR 00
+* SOME INSTS REQUIRE FORMAT
+         CLI   RXINST,CVB         IS IT CVB ?
+         BE    RXXBERR            ERROR IF IT IS
+* STORE INSTS MUST NOT STORE INTO LOW STORAGE
+         CLI   INSTSTOR,C'S'      IS IT STORE TYPE ?
+         BE    RXXBERR            ERROR IF IT IS
+* DIVIDES MUST NOT ACCESS LOW STORAGE
+         CLI   RXINST,D           IS IT D   ?
+         BE    RXXBERR            ERROR IF IT IS
+* NEED BASE FOR BRANCHES
+         CLI   RXINST,BC          IS IT BC ?
+         BE    RXXBERR            ERROR IF IT IS
+         CLI   RXINST,BAL         IS IT BAL ?
+         BE    RXXBERR            ERROR IF IT IS
+         CLI   RXINST,BCT         IS IT BCT ?
+         BE    RXXBERR            ERROR IF IT IS
+         CLI   RXINST,BAS         IS IT BAS ?
+         BE    RXXBERR            ERROR IF IT IS
+* SPECIAL
+         CLI   RXINST,EX          IS IT EX ?
+         BE    RXXBERR            ERROR IF IT IS
+         B     RXXBOK             EXIT
+*
+RXXBERR  EQU   *
+* XB FIELD INVALID FOR INSTRUCTION
+         MVC   RSLTMICS(8),=C'XB ERROR' ERROR MSG
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RXXBOK   EQU   *
+* XB INPUT VALID
+         MVC   RXSAVE,RXINST+1    SAVE MODIFIED BYTES
+         MVC   RXSAVB,RXBR+1      SAVE MODIFIED BYTES--BRANCH
+         MVC   RXSAVX,RXEX+1      SAVE MODIFIED BYTES--EXECUTE
+         MVC   RXSAVC,RXBCTGO+1   SAVE MODIFIED BYTES--BCT
+         CLI   INSTXB,C'0'        IS INDEX ZERO ?
+         BNE   RXXB1              EXIT IF NOT
+         NI    RXINST+1,X'F0'     KNOCK OUT THE INDEX
+         NI    RXBR+1,X'F0'       KNOCK OUT THE INDEX--BRANCH
+         NI    RXEX+1,X'F0'       KNOCK OUT THE INDEX--EXECUTE
+         NI    RXBCTGO+1,X'F0'    KNOCK OUT THE INDEX--BCT
+RXXB1    EQU   *
+         CLI   INSTXB+1,C'0'      IS BASE ZERO ?
+         BNE   RXXB2              EXIT IF NOT
+         NI    RXINST+2,X'0F'     KNOCK OUT THE BASE
+RXXB2    EQU   *
+         CLI   RXINST,EX          IS IT EX ?
+         BE    RXEXECUT           EXIT IF IT IS
+         CLI   INSTTYPE,C'B'      BRANCH INST ?
+         BE    RXBRANCH           EXIT IF IT IS
+         LA    R10,99             SET RX R1-FIELD
+         LR    R11,R10            SET RX R1+1-FIELD
+* SET H, TEST H
+         LA    R5,RXBASEH         SET RX BASE
+         LA    R6,2               SET RX INDEX
+         MVI   RXINST+3,X'02'     SET RX DISPLACEMENT
+         CLI   INSTTYPE,C'H'      HALFWORD INST ?
+         BE    RXSET              EXIT IF IT IS
+* SET F, TEST F
+         LA    R5,RXBASEF         SET RX BASE
+         LA    R6,4               SET RX INDEX
+         MVI   RXINST+3,X'04'     SET RX DISPLACEMENT
+         CLI   INSTTYPE,C'F'      FULLWORD INST ?
+         BE    RXSET              EXIT IF IT IS
+* SET P8, TEST P8
+         LA    R5,RXBASEP8        SET RX BASE
+         LA    R6,8               SET RX INDEX
+         MVI   RXINST+3,X'08'     SET RX DISPLACEMENT
+         CLC   INSTTYPE(2),=C'P8' PL8 INST ?
+         BE    RXSET              EXIT IF IT IS
+         ABEND X'111'             ERROR IN TABLE
+RXSET    EQU   *
+         CLI   INSTSTOR,C'S'      IS IT STORE TYPE ?
+         BNE   RXNTSTOR           EXIT IF NOT
+* STORE TYPE, USE SPECIAL AREA
+         LA    R5,RXSTORE         COMMON AREA FOR ALL STORE TYPES
+RXNTSTOR EQU   *
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+*              R1  D X2 B2   41A65002
+RXINST   LA    R10,2(R6,R5)       TESTED INST
+         BCT   R7,RXINST          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         B     RXDONE             EXIT
+*
+RXBRANCH EQU   *
+* BRANCH TYPE
+         CLI   RXINST,BCT         IS IT BCT ?
+         BE    RXBCT              EXIT IF IT IS
+         CLI   INSTTYPE+1,C'0'    CONVERT TO NOP ?
+         BNE   RXBRNTNP           EXIT IF NOT
+* NOP REQUIRED
+         MVC   RSLTMICS(10),=C'TYPE ERROR' PRESET ERROR MSG
+         CLI   RXINST,BAL         IS IT BAL ?
+         BE    RXTYPERR           ERROR IF IT IS
+         CLI   RXINST,BAS         IS IT BAS ?
+         BNE   RXNTBAL            EXIT IF NOT
+RXTYPERR EQU   *
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     RXDONE3            EXIT
+RXNTBAL  EQU   *
+         NI    RXBR+1,X'0F'       KILL THE MASK
+         MVC   RSLTOPCD(3),=C'NOP' MAKE IT NOP
+RXBRNTNP EQU   *
+         LA    R6,RXBCT2-RXBCT1   R6=BR TO RXBCT2 IF INDEXED
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+* CAN FORM THE FOLLOWING BRANCH TYPES:
+*   B   LABEL
+*   B   LABEL(R6)
+*   NOP LABEL      ) THE
+*   NOP LABEL(R6)  )     SAME
+*   BAL R15,LABEL
+*   BAL R15,LABEL(R6)
+*   BAS R15,LABEL
+*   BAS R15,LABEL(R6)
+RXBR     BC    15,RXBCT1(R6)      TESTED INST
+RXBCT1   BCT   R7,RXBR            DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         B     RXBRDUN            EXIT
+* INDEXED BRANCH
+RXBCT2   BCT   R7,RXBR            DO IT (INDEXED)
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+RXBRDUN  EQU   *
+         LA    R5,RXBR            INST ADDRESS
+         B     RXDONE2            EXIT
+*
+RXEXECUT EQU   *
+* PROCESS EXECUTE
+* TIME THE TARGET
+* TIME THE EXECUTED TARGET
+* SUBTRACT GIVES OVERHEAD OF EXECUTE
+* I PICK A 10-BYTE MVC AS TARGET FOR NO GOOD REASON
+         CLI   INSTTYPE+1,C'0'    NO R1-FIELD ?
+         BNE   RXEXR1             EXIT IF NOT
+         NI    RXEX+1,X'0F'       KILL R1-FIELD
+RXEXR1   EQU   *
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+* TIME THE TARGET
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RXEXTRA  MVC   RXSTORE(10),RXSTORE+10 10-BYTE MVC
+         BCT   R7,RXEXTRA         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+*
+         LA    R5,RXEXMVC         SET RX BASE
+         LA    R6,6               SET RX INDEX
+         LA    R10,9              SET EX OR FOR 10-BYTE MVC
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+*              R1  D X2 B2   44A65000
+RXEX     EX    R10,0(R6,R5)       TESTED INST
+         BCT   R7,RXEX            DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RXEX            INST ADDRESS
+         B     RXDONE2            EXIT
+*
+RXBCT    EQU   *
+* BCT
+         SR    R11,R11            R11=0  INDEX TO NON-BRANCH DATA
+* TIME AN L
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RXXTRA   L     R10,RXBCTD1(R11)   SPECIAL INST
+         BCT   R7,RXXTRA          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+*
+         CLI   INSTTYPE+1,C'0'    NON-BRANCH TYPE ?
+         BE    RXBCTNOB           EXIT IF IT IS
+         LA    R11,4              R11=4  INDEX TO BRANCH DATA
+RXBCTNOB EQU   *
+         LA    R6,RXBCTBC2-RXBCTBC1 R6=BR TO RXBCTBC2 IF INDEXED
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+* CAN FORM THE FOLLOWING BRANCH TYPES:
+*   BCT  10,LABEL       BRANCH
+*   BCT  10,LABEL       NO BRANCH
+*   BCT  10,LABEL(R6)   BRANCH
+*   BCT  10,LABEL(R6)   NO BRANCH
+RXBCTEX  L     R10,RXBCTD1(R11)   R10=1 FOR NO BRANCH, BIG FOR BRANCH
+RXBCTGO  BCT   R10,RXBCTBC1(R6)   TESTED INST
+RXBCTBC1 BCT   R7,RXBCTEX         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         B     RXBCTDUN           EXIT
+* INDEXED BRANCH
+RXBCTBC2 BCT   R7,RXBCTEX         DO IT (INDEXED)
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+RXBCTDUN EQU   *
+         LA    R5,RXBCTGO         INST ADDRESS
+         B     RXDONE2            EXIT
+*
+RXDONE   EQU   *
+         LA    R5,RXINST          INST ADDRESS
+RXDONE2  EQU   *
+         LA    R4,4               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+RXDONE3  EQU   *
+         MVC   RXINST+1(2),RXSAVE RESTORE MODIFIED BYTES
+         MVC   RXBR+1(2),RXSAVB   RESTORE MODIFIED BYTES--BRANCH
+         MVC   RXEX+1(2),RXSAVX   RESTORE MODIFIED BYTES--EXECUTE
+         MVC   RXBCTGO+1(2),RXSAVC RESTORE MODIFIED BYTES--BCT
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RXSAVE   DS    H
+RXSAVB   DS    H
+RXSAVC   DS    H
+RXSAVX   DS    H
+RXBASEH  DC    H'10'              BASE
+         DC    H'20'              BASE+DISP OR INDEX+DISP
+         DC    H'30'              BASE+INDEX+DISP
+RXBASEF  DC    F'10'              BASE
+         DC    F'20'              BASE+DISP OR INDEX+DISP
+         DC    F'30'              BASE+INDEX+DISP
+RXBASEP8 DC    PL8'1000'          BASE
+         DC    PL8'2000'          BASE+DISP OR INDEX+DISP
+         DC    PL8'3000'          BASE+INDEX+DISP
+RXBCTD1  DC    F'1'               BCT NON-BRANCH
+         DC    X'7FFFFFFF'        BCT BRANCH
+RXSTORE  DS    CL24               ALL STORE TYPES
+RXEXMVC  MVC   RXSTORE(0),RXSTORE+10 EXECUTED 10-BYTE MVC BASE
+         MVC   RXSTORE(0),RXSTORE+10 EXECUTED 10-BYTE MVC BASE+INDEX
+         LTORG
+*
+SS1      DS    0H
+* SINGLE BYTE OPCODE
+* SS WITH SINGLE LENGTH
+* SOME NEED SPECIAL HANDLING
+* -- AN MVC OF THE SAME LENGTH MUST BE TIMED FIRST
+* ORDINARY: MVN MVC MVZ NC CLC OC XC TR TRT MVCIN
+* SPECIALS: ED EDMK
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   SS1INST(1),6(R7)   SET THE ORDINARY INST
+         MVC   SS1SPEC(1),6(R7)   SET THE SPECIAL INST
+         MVC   RSLTLEN,INSTLL     MOVE LENGTH TO OUTPUT
+         ZAP   SS1DEC,=P'0'       CLEAR SS1DEC
+         PACK  SS1DEC+12(4),INSTLL-1(7) DECIMAL LENGTH
+         CVBG  R4,SS1DEC          CONVERT TO HEX
+* VALIDATE LEN
+         LTR   R4,R4              IS IT ZERO ?
+         BZ    SS1ERROR           EXIT IF IT IS
+         C     R4,=F'256'         GT THAN 256 ?
+         BH    SS1ERROR           EXIT IF IT IS
+         BCTR  R4,0               -1 FOR INST LENGTH
+         STC   R4,SS1INST+1       SAVE LEN IN INST
+         CLI   SS1INST,ED         IS IT ED ?
+         BE    SS1SPECL           EXIT IF IT IS
+         CLI   SS1INST,EDMK       IS IT EDMK ?
+         BNE   SS1NTSPC           EXIT IF NOT
+SS1SPECL EQU   *
+* SPECIAL PROCESSING
+         STC   R4,SS1MVC+1        SAVE LEN IN INST
+         STC   R4,SS1XTRA+1       SAVE LEN IN INST
+         STC   R4,SS1SPEC+1       SAVE LEN IN INST
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+* TIME THE MVC
+SS1MVC   MVC   SS1OP1(0),SS1OP2   SPECIAL INST
+         BCT   R7,SS1MVC          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+         MVC   SS1OP2(4),=X'12345678' PRIME 2ND OP
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SS1XTRA  MVC   SS1OP1(0),SS1MASK  SPECIAL INST
+SS1SPEC  MVC   SS1OP1(0),SS1OP2   SPECIAL PROCESS
+         BCT   R7,SS1XTRA         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,SS1SPEC         INST ADDRESS
+         B     SS1PROC            EXIT
+*
+SS1NTSPC EQU   *
+* ORDINARY
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SS1INST  MVC   SS1OP1(0),SS1OP2   TESTED INST
+         BCT   R7,SS1INST         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,SS1INST         INST ADDRESS
+SS1PROC  EQU   *
+         LA    R4,6               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+SS1ERROR EQU   *
+         MVC   RSLTMICS(12),=C'LENGTH ERROR'
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+SS1MASK  DC    X'4021',254X'20'
+SS1DEC   DC   PL16'0'
+SS1OP1   DC    CL256' '           SS1 1ST OP
+SS1OP2   DC    CL256' '           SS1 2ND OP
+         LTORG
+*
+SS2      DS    0H
+* SINGLE BYTE OPCODE
+* SS WITH TWO LENGTHS, DECIMALS HAVE TYPE=P
+* DP SRP NEED SPECIAL HANDLING
+*
+* ORDINARY: MVO PACK UNPK
+* DECIMALS: ZAP CP AP SP MP
+* SPECIALS: SRP DP
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   SS2INST(1),6(R7)   SET THE ORDINARY INST
+         MVC   RSLTLL1,INSTLL1    MOVE LENGTH 1 TO OUTPUT
+         MVC   RSLTLL2,INSTLL2    MOVE LENGTH 2 TO OUTPUT
+* PROCESS LENGTH 1
+         ZAP   SS2DEC,=P'0'       CLEAR SS2DEC
+         PACK  SS2DEC+14(2),INSTLL1-1(3) DECIMAL LENGTH 1
+         CVBG  R7,SS2DEC          CONVERT TO HEX
+         LTR   R7,R7              IS IT ZERO ?
+         BZ    SS2ERROR           EXIT IF IT IS
+         C     R7,=F'16'          GT THAN 16 ?
+         BH    SS2ERROR           EXIT IF IT IS
+         BCTR  R7,0               -1 FOR INST LENGTH
+         STC   R7,SS2MVC+1        SAVE LEN IN SPECIAL MVC
+         STC   R7,SS2XTRA1+1      SAVE LEN IN SPECIAL MVC
+         STC   R7,SS2XTRA2+1      SAVE LEN IN SPECIAL MVC
+         CLI   INSTTYPE,C'P'      PACKED FIELD ?
+         BNE   SS2NOTP1           EXIT IF NOT
+         XC    SS2OP1(16),SS2OP1  CLEAR MAXIMUM AREA
+         LA    R5,SS2OP1(R7)      POINT TO LAST BYTE
+         MVI   0(R5),X'2C'        MAKE IT A P'2'
+SS2NOTP1 EQU   *
+         CLI   SS2INST,SRP        IS IT SRP ?
+         BE    SS2DOSRP           YES, NO LENGTH 2
+* PROCESS LENGTH 2
+         ZAP   SS2DEC,=P'0'       CLEAR SS2DEC
+         PACK  SS2DEC+14(2),INSTLL2-1(3) DECIMAL LENGTH 2
+         CVBG  R4,SS2DEC          CONVERT TO HEX
+         LTR   R4,R4              IS IT ZERO ?
+         BZ    SS2ERROR           EXIT IF IT IS
+         C     R4,=F'16'          GT THAN 16 ?
+         BH    SS2ERROR           EXIT IF IT IS
+         BCTR  R4,0               -1 FOR INST LENGTH
+         CLI   INSTTYPE,C'P'      PACKED FIELD ?
+         BNE   SS2NOTP2           EXIT IF NOT
+         XC    SS2OP2(16),SS2OP2  CLEAR MAXIMUM AREA
+         LA    R5,SS2OP2(R4)      POINT TO LAST BYTE
+         MVI   0(R5),X'2C'        MAKE IT A P'2'
+SS2NOTP2 EQU   *
+         CLI   SS2INST,DP         IS IT DP ?
+         BNE   SS2NTDP            EXIT IF NOT
+* EXTRA INTEGRITY CHECKS FOR DP
+         C     R4,=F'7'           L2<8 ?
+         BNL   SS2ERROR           ERROR IF NOT
+         CR    R7,R4              L1>L2 ?
+         BNH   SS2ERROR           ERROR IF NOT
+         B     SS2NTDP            EXIT
+SS2DOSRP EQU   *
+* SPECIAL PROCESSING FOR SRP
+         SLL   R7,4               POSITION FOR LEN 1
+         LA    R7,5(R7)           ADD THE ROUND
+         MVC   SS2OP1SV,SS2OP1    SAVE ORIG DEC
+         STC   R7,SS2SRP+1        SAVE LEN/ROUND IN INST
+         LA    R5,2               SET THE SHIFT
+*
+         BAL   R14,SS2TMMVC       TIME THE MVC
+*
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SS2XTRA1 MVC   SS2OP1(0),SS2OP1SV SPECIAL INST
+SS2SRP   SRP   SS2OP1(0),2(R5),5  TESTED INST
+         BCT   R7,SS2XTRA1        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,SS2SRP          INST ADDRESS
+         B     SS2PROC            EXIT
+*
+SS2NTDP  EQU   *
+         SLL   R7,4               POSITION FOR LEN 1
+         OR    R7,R4              FORM DOUBLE LENGTH
+         STC   R7,SS2INST+1       SAVE IN ORDINARY INST
+         CLI   SS2INST,DP         IS IT DP ?
+         BNE   SS2NTSPC           EXIT IF NOT
+* SPECIAL PROCESSING FOR DP
+         MVC   SS2OP1SV,SS2OP1    SAVE ORIG DEC
+         STC   R7,SS2DP+1         SAVE LEN IN INST
+*
+         BAL   R14,SS2TMMVC       TIME THE MVC
+*
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SS2XTRA2 MVC   SS2OP1(0),SS2OP1SV SPECIAL INST
+SS2DP    DP    SS2OP1(0),SS2OP2(0) TESTED INST
+         BCT   R7,SS2XTRA2        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,SS2DP           INST ADDRESS
+         B     SS2PROC            EXIT
+*
+SS2NTSPC EQU   *
+* ORDINARY
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SS2INST  UNPK  SS2OP1(0),SS2OP2(0) TESTED INST
+         BCT   R7,SS2INST         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,SS2INST         INST ADDRESS
+SS2PROC  EQU   *
+         LA    R4,6               INST LENGTH
+         LA    R6,SS2OP1          INST OPERAND 2
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+SS2ERROR EQU   *
+         MVC   RSLTMICS(12),=C'LENGTH ERROR'
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+SS2TMMVC EQU   *
+* TIME THE MVC
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SS2MVC   MVC   SS2OP1(0),SS2OP2   SPECIAL INST
+         BCT   R7,SS2MVC          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+         BR    R14                RETURN
+*
+SS2DEC   DC    PL16'0'
+SS2OP1SV DS    CL16
+SS2OP1   DC    CL256' '           SS2 1ST OP
+SS2OP2   DC    CL256' '           SS2 2ND OP
+         LTORG
+*
+RI       DS    0H
+* SINGLE BYTE OPCODE AND NIBBLE OPCODE 2
+*
+* STANDARD
+* IIHH IIHL IILH IILL
+* NIHH NIHL NILH NILL
+* OIHH OIHL OILH OILL
+* LLIHH LLIHL LLILH LLILL
+* TMLH TMH TMLL TML TMHH TMHL
+* LHI LGHI AHI AGHI MHI MGHI CHI CGHI
+*
+* BRANCHES
+* BRC J BRU BRAS BRCT BRCTG
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         CLI   INSTTYPE,C'B'      BRANCH TYPE ?
+         BE    RIBRANCH           EXIT IF IT IS
+         MVC   RISAVE,RIINST      SAVE MODIFIED BYTES
+         MVC   RIINST(1),6(R7)    SET THE INST
+         OC    RIINST+1(1),7(R7)  OR IN THE 2ND OPCODE
+         LG    R10,=X'789ABC012DEF3456' SO I KNOW
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RIINST   IIHH  R10,X'0123'        TESTED INST
+         BCT   R7,RIINST          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         B     RIDONE             EXIT
+*
+RIBRANCH EQU   *
+* BRANCH TYPE
+         MVC   RISAVB,RIBR        SAVE MODIFIED BYTES--BRANCH
+         CLC   6(2,R7),=X'A705'   IS IT BRAS ?
+         BE    RIBRNTNP           EXIT IF IT IS
+         CLC   6(2,R7),=X'A706'   IS IT BRCT ?
+         BE    RIBRCT             EXIT IF IT IS
+         CLC   6(2,R7),=X'A707'   IS IT BRCTG ?
+         BE    RIBRCT             EXIT IF IT IS
+         CLI   INSTTYPE+1,C'0'    CONVERT TO JNOP ?
+         BNE   RIBRNTNP           EXIT IF NOT
+         NI    RIBR+1,X'0F'       KILL THE MASK
+         MVC   RSLTOPCD(4),=C'JNOP' MAKE IT JNOP
+RIBRNTNP EQU   *
+         MVC   RIBR(1),6(R7)      SET THE INST
+         OC    RIBR+1(1),7(R7)    OR IN THE 2ND OPCODE
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+* CAN FORM THE FOLLOWING BRANCH TYPES:
+*   BRC   LABEL
+*   JNOP  LABEL
+*   BRAS  15,LABEL
+RIBR     B     2                  X'47F00002' >> X'A7F40002'=J *+4
+         BCT   R7,RIBR            DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RIBR            INST ADDRESS
+         B     RIDONE2            EXIT
+*
+RIBRCT   EQU   *
+* BRCT BRCTG
+         MVC   RISAVC,RIBRCTGO    SAVE MODIFIED BYTES--BRCT/BRCTG
+         MVC   RIBRCTGO(1),6(R7)  SET THE INST
+         OC    RIBRCTGO+1(1),7(R7) OR IN THE 2ND OPCODE
+         SGR   R11,R11            CLEAR INDEX REG
+* TIME AN LG
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RIXTRA   LG    R10,RIBCT(R11)     SPECIAL INST
+         BCT   R7,RIXTRA          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+*
+         CLI   INSTTYPE+1,C'0'    NON-BRANCH TYPE ?
+         BNE   RIBCTNOB           EXIT IF NOT
+         LA    R11,8              INDEX TO FL8'1'
+RIBCTNOB EQU   *
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+* CAN FORM THE FOLLOWING BRANCH TYPES:
+*   BRCT  10,LABEL
+*   BRCTG 10,LABEL
+RIBRCTEX LG    R10,RIBCT(R11)     R10=1 FOR NO BRANCH, BIG FOR BRANCH
+RIBRCTGO BCT   R10,2              X'46A00002' >> X'A7A60002'=BRCT *+4
+         BCT   R7,RIBRCTEX        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RIBRCTGO        INST ADDRESS
+         B     RIDONE2            EXIT
+*
+RIDONE   EQU   *
+         LA    R5,RIINST          INST ADDRESS
+RIDONE2  EQU   *
+         LA    R4,4               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         MVC   RIINST(2),RISAVE   RESTORE MODIFIED BYTES
+         MVC   RIBR(2),RISAVB     RESTORE MODIFIED BYTES
+         MVC   RIBRCTGO(2),RISAVC RESTORE MODIFIED BYTES
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RISAVE   DS    H
+RISAVB   DS    H
+RISAVC   DS    H
+RIBCT    DC    X'000000007FFFFFFF'
+         DC    FL8'1'
+         LTORG
+*
+RIL      DS    0H
+* SINGLE BYTE OPCODE AND NIBBLE OPCODE 2
+*
+* STANDARD
+* LARL
+*
+* BRANCHES
+* BRCL BRASL
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         CLI   INSTTYPE,C'B'      BRANCH TYPE ?
+         BE    RILBRNCH           EXIT IF IT IS
+         MVC   RILSAVE,RILINST    SAVE MODIFIED BYTES
+         MVC   RILINST(1),6(R7)   SET THE INST
+         OC    RILINST+1(1),7(R7) OR IN THE 2ND OPCODE
+         LG    R10,=X'789ABC012DEF3456' SO I KNOW
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RILINST  LARL  R10,RILBCT         TESTED INST
+RILBCT   BCT   R7,RILINST         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         B     RILDONE            EXIT
+*
+RILBRNCH EQU   *
+* BRANCH TYPE
+* BRCL=JLU BRASL
+         MVC   RILSAVB,RILBR      SAVE MODIFIED BYTES--BRANCH
+         CLC   6(2,R7),=X'C005'   IS IT BRASL ?
+         BE    RILBRNTP           EXIT IF IT IS
+* BRCL=JLU
+         CLI   INSTTYPE+1,C'0'    CONVERT TO JLNOP ?
+         BNE   RILBRNTP           EXIT IF NOT
+         NI    RILBR+1,X'0F'      KILL THE MASK
+         MVC   RSLTOPCD(5),=C'JLNOP' MAKE IT JLNOP
+RILBRNTP EQU   *
+         MVC   RILBR(1),6(R7)     SET THE INST
+         OC    RILBR+1(1),7(R7)   OR IN THE 2ND OPCODE
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+* CAN FORM THE FOLLOWING BRANCH TYPES:
+*   BRCL  15,LABEL
+*   JLU   15,LABEL
+*   BRASL 15,LABEL
+RILBR    LARL  R15,RILBCT1        X'C0F000000003'
+RILBCT1  BCT   R7,RILBR           DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RILBR           INST ADDRESS
+         B     RILDONE2           EXIT
+*
+*ILBRCT  EQU   *
+**BRCT*BRCTG
+*        MVC   RILSAVC,RILBRCTGO  SAVE MODIFIED BYTES--BRCT/BRCTG
+*        MVC   RILBRCTGO(1),6(R7) SET THE INST
+*        OC    RILBRCTGO+1(1),7(R7) OR IN THE 2ND OPCODE
+*        SGR   R11,R11            CLEAR INDEX REG
+* TIME AN LG
+*        L     R7,SPINCNT         SET LOOP LIMIT
+*
+*        TIME  NS,TIMEBEF         BEFORE TIME IN nS
+*ILXTRA  LG    R10,RILBCT(R11)    SPECIAL INST
+*        BCT   R7,RILXTRA         DO IT
+*        TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+*        LG    R7,TIMEAFT         END TIME
+*        SG    R7,TIMEBEF                  - BEG TIME
+*        SG    R7,TIMEBCT                  - BCT TIME
+*        STG   R7,TIMEXTRA        SAVE IT
+*
+*        CLI   INSTTYPE+1,C'0'    NON-BRANCH TYPE ?
+*        BNE   RILBCTNB           EXIT IF NOT
+*        LA    R11,8              INDEX TO FL8'1'
+*ILBCTNB EQU   *
+*        L     R7,SPINCNT         SET LOOP LIMIT
+*
+*        TIME  NS,TIMEBEF         BEFORE TIME IN nS
+* CAN FORM THE FOLLOWING BRANCH TYPES:
+*   BRCT  10,LABEL
+*   BRCTG 10,LABEL
+*ILBRCTX LG    R10,RILBCT(R11)    R10=1 FOR NO BRANCH, BIG FOR BRANCH
+*ILBRCTG BCT   R10,2              X'46A00002' >> X'A7A60002'=BRCT *+4
+*        BCT   R7,RILBRCTX        DO IT
+*        TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+*        LA    R5,RILBRCTGO       INST ADDRESS
+*        B     RILDONE2           EXIT
+*
+RILDONE  EQU   *
+         LA    R5,RILINST         INST ADDRESS
+RILDONE2 EQU   *
+         LA    R4,6               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         MVC   RILINST(2),RILSAVE RESTORE MODIFIED BYTES
+         MVC   RILBR(2),RILSAVB   RESTORE MODIFIED BYTES
+*        MVC   RILBRCTG(2),RILSAVC RESTORE MODIFIED BYTES
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RILSAVE  DS    H
+RILSAVB  DS    H
+*ILSAVC  DS    H
+*ILBCT   DC    X'000000007FFFFFFF'
+*        DC    FL8'1'
+         LTORG
+*
+RRE      DS    0H
+* DOUBLE BYTE OPCODE
+* MSR LPGR LNGR LTGR LCGR LGR AGR SGR ALGR SLGR MSGR DSGR
+* LRVGR LPGFR LNGFR LTGFR LCGFR LGFR LLGFR LLGTR AGFR SGFR
+* ALGFR SLGFR MSGFR DSGFR LRVR CGR CLGR CGFR CLGFR
+* NGR OGR XGR MLGR DLGR ALCGR SLBGR MLR DLR ALCR SLBR
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   RREINST(2),6(R7)   SET THE INST DOUBLE OPCODE
+         LG    R10,=X'0000000000001234' SO I KNOW
+         LG    R11,=X'0000000000000005' SO I KNOW
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RREINST  NGR   R10,R11            TESTED INST
+         BCT   R7,RREINST         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RREINST         INST ADDRESS
+         LA    R4,4               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         B     GET                EXIT TO GET ANOTHER TEST
+         LTORG
+*
+RXY      DS    0H
+* DOUBLE BYTE OPCODE, 2ND BYTE AT END
+* LG CVBY AG SG ALG SLG MSG DSG CVBG LRVG LGF LGH LLGF LLGT
+* AGF SGF ALGF SLGF MSGF DSGF LRV LRVH CG CLG STG CVDY CVDG
+* STRVG CGF CLGF STRV STRVH STY MSY NY CLY OY XY LY CY AY SY
+* ALY SLY STHY LAY STCY ICY LB LGB LHY CHY AHY SHY NG OG XG
+* MLG DLG ALCG SLBG STPQ LPQ LLGC LLGH ML DL ALC SLB
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   RSLTLEN(2),INSTXB  MOVE THE XB TO OUTPUT
+         MVC   RXYINST(1),6(R7)   SET THE INST
+         MVC   RXYINST+5(1),7(R7) SET THE INST 2ND OPCODE
+*        MVC   RXYBR(1),6(R7)     SET THE INST--BRANCH
+* USE OF BASE ALWAYS VALID
+         CLC   INSTXB,=C'XB'      VALIDATE ?
+         BE    RXYXBOK            EXIT IF IT IS
+         CLC   INSTXB,=C'0B'      VALIDATE ?
+         BE    RXYXBOK            EXIT IF IT IS
+         CLC   INSTXB,=C'X0'      VALIDATE ?
+         BE    RXYNOBAS           EXIT IF IT IS
+         CLC   INSTXB,=C'00'      VALIDATE ?
+         BNE   RXYXBERR           ERROR IF NOT
+RXYNOBAS EQU *
+* X0 OR 00
+* SOME INSTS REQUIRE FORMAT
+         CLC   6(2,R7),=X'E306'   IS IT CVBY ?
+         BE    RXYXBERR           ERROR IF IT IS
+         CLC   6(2,R7),=X'E30E'   IS IT CVBG ?
+         BE    RXYXBERR           ERROR IF IT IS
+* STORE INSTS MUST NOT STORE INTO LOW STORAGE
+         CLI   INSTSTOR,C'S'      IS IT STORE TYPE ?
+         BE    RXYXBERR           ERROR IF IT IS
+* DIVIDES MUST NOT ACCESS LOW STORAGE
+         CLC   6(2,R7),=X'E30D'   IS IT DSG ?
+         BE    RXYXBERR           ERROR IF IT IS
+         CLC   6(2,R7),=X'E31D'   IS IT DSGF ?
+         BE    RXYXBERR           ERROR IF IT IS
+         CLC   6(2,R7),=X'E387'   IS IT DLG ?
+         BE    RXYXBERR           ERROR IF IT IS
+         CLC   6(2,R7),=X'E397'   IS IT DL ?
+         BE    RXYXBERR           ERROR IF IT IS
+* NEED BASE FOR BRANCHES
+*        CLI   RXYINST,BC         IS IT BC ?
+*        BE    RXYXBERR           ERROR IF IT IS
+*        CLI   RXYINST,BAL        IS IT BAL ?
+*        BE    RXYXBERR           ERROR IF IT IS
+*        CLI   RXYINST,BAS        IS IT BAS ?
+*        BE    RXYXBERR           ERROR IF IT IS
+         B     RXYXBOK            EXIT
+*
+RXYXBERR EQU   *
+* XB FIELD INVALID FOR INSTRUCTION
+         MVC   RSLTMICS(8),=C'XB ERROR' ERROR MSG
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RXYXBOK  EQU   *
+* XB INPUT VALID
+         MVC   RXYSAVE,RXYINST+1  SAVE MODIFIED BYTES
+*        MVC   RXYSAVB,RXYBR+1    SAVE MODIFIED BYTES--BRANCH
+         CLI   INSTXB,C'0'        IS INDEX ZERO ?
+         BNE   RXYXB1             EXIT IF NOT
+         NI    RXYINST+1,X'F0'    KNOCK OUT THE INDEX
+*        NI    RXYBR+1,X'F0'      KNOCK OUT THE INDEX--BRANCH
+RXYXB1   EQU   *
+         CLI   INSTXB+1,C'0'      IS BASE ZERO ?
+         BNE   RXYXB2             EXIT IF NOT
+         NI    RXYINST+2,X'0F'    KNOCK OUT THE BASE
+RXYXB2   EQU   *
+         LG    R10,=FL8'99'       SET RXY R1-FIELD
+         LGR   R11,R10            SET RXY R1+1-FIELD
+*        CLI   INSTTYPE,C'B'      BRANCH INST ?
+*        BE    RXYBRNCH           EXIT IF IT IS
+* SET S, TEST S (SINGLE BYTE)
+         LA    R5,RXYBASES        SET RXY BASE
+         LA    R6,1               SET RXY INDEX
+         MVI   RXYINST+3,X'01'    SET RXY DISPLACEMENT
+         CLI   INSTTYPE,C'S'      SINGLE BYTE INST ?
+         BE    RXYSET             EXIT IF IT IS
+* SET H, TEST H
+         LA    R5,RXYBASEH        SET RXY BASE
+         LA    R6,2               SET RXY INDEX
+         MVI   RXYINST+3,X'02'    SET RXY DISPLACEMENT
+         CLI   INSTTYPE,C'H'      HALFWORD INST ?
+         BE    RXYSET             EXIT IF IT IS
+* SET F, TEST F
+         LA    R5,RXYBASEF        SET RXY BASE
+         LA    R6,4               SET RXY INDEX
+         MVI   RXYINST+3,X'04'    SET RXY DISPLACEMENT
+         CLI   INSTTYPE,C'F'      FULLWORD INST ?
+         BE    RXYSET             EXIT IF IT IS
+* SET D, TEST D
+         LA    R5,RXYBASED        SET RXY BASE
+         LA    R6,8               SET RXY INDEX
+         MVI   RXYINST+3,X'08'    SET RXY DISPLACEMENT
+         CLI   INSTTYPE,C'D'      DOUBLEWORD INST ?
+         BE    RXYSET             EXIT IF IT IS
+* SET Q, TEST Q
+         LA    R5,RXYBASEQ        SET RXY BASE
+         LA    R6,16              SET RXY INDEX
+         MVI   RXYINST+3,X'10'    SET RXY DISPLACEMENT
+         CLI   INSTTYPE,C'Q'      QUADWORD INST ?
+         BE    RXYSET             EXIT IF IT IS
+* SET P8, TEST P8
+         LA    R5,RXYBASP8        SET RX BASE
+         LA    R6,8               SET RX INDEX
+         MVI   RXYINST+3,X'08'    SET RX DISPLACEMENT
+         CLC   INSTTYPE(2),=C'P8' PL8 INST ?
+         BE    RXYSET             EXIT IF IT IS
+* SET P16, TEST P16
+         LA    R5,RXYBSP16        SET RX BASE
+         LA    R6,16              SET RX INDEX
+         MVI   RXYINST+3,X'10'    SET RX DISPLACEMENT
+         CLC   INSTTYPE(3),=C'P16' PL16 INST ?
+         BE    RXYSET             EXIT IF IT IS
+         ABEND X'111'             ERROR IN TABLE
+*
+RXYSET   EQU   *
+         CLI   INSTSTOR,C'S'      IS IT STORE TYPE ?
+         BNE   RXYNTSTR           EXIT IF NOT
+* STORE TYPE, USE SPECIAL AREA
+         LA    R5,RXYSTORE        COMMON AREA FOR ALL STORE TYPES
+RXYNTSTR EQU   *
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+*              R1  D X2 B2   E8A65008005A
+RXYINST  AY    R10,8(R6,R5)       TESTED INST
+         BCT   R7,RXYINST         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         B     RXYDONE            EXIT
+*
+*XYBRNCH EQU   *
+* BRANCH TYPE
+*        CLI   INSTTYPE+1,C'0'    CONVERT TO NOP ?
+*        BNE   RXYBNTNP           EXIT IF NOT
+* NOP REQUIRED
+*        MVC   RSLTMICS(10),=C'TYPE ERROR' PRESET ERROR MSG
+*        CLI   RXYINST,BAL        IS IT BAL ?
+*        BE    RXYTYPER           ERROR IF IT IS
+*        CLI   RXYINST,BAS        IS IT BAS ?
+*        BNE   RXYNTBAL           EXIT IF NOT
+*XYTYPER EQU   *
+*        BAL   R14,OUTMSG         WRITE AND CLEAR
+*        B     RXYDONE3           EXIT
+*XYNTBAL EQU   *
+*        NI    RXYBR+1,X'0F'      KILL THE MASK
+*        MVC   RSLTOPCD(3),=C'NOP' MAKE IT NOP
+*XYBNTNP EQU   *
+*        LA    R6,RXYBCT2-RXYBCT1 R6=BR TO RXYBCT2 IF INDEXED
+*        L     R7,SPINCNT         SET LOOP LIMIT
+*
+*        TIME  NS,TIMEBEF         BEFORE TIME IN nS
+* CAN FORM THE FOLLOWING BRANCH TYPES:
+*   B   LABEL
+*   B   LABEL(R6)
+*   NOP LABEL      ) THE
+*   NOP LABEL(R6)  )     SAME
+*   BAL R15,LABEL
+*   BAL R15,LABEL(R6)
+*   BAS R15,LABEL
+*   BAS R15,LABEL(R6)
+*XYBR    BC    15,RXYBCT1(R6)     TESTED INST
+*XYBCT1  BCT   R7,RXYBR           DO IT
+*        TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+*        B     RXYBRDUN           EXIT
+* INDEXED BRANCH
+*XYBCT2  BCT   R7,RXYBR           DO IT (INDEXED)
+*        TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+*XYBRDUN EQU   *
+*        LA    R5,RXYBR           INST ADDRESS
+*        B     RXYDONE2           EXIT
+*
+RXYDONE  EQU   *
+         LA    R5,RXYINST         INST ADDRESS
+*XYDONE2 EQU   *
+         LA    R4,6               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+RXYDONE3 EQU   *
+         MVC   RXYINST+1(2),RXYSAVE RESTORE MODIFIED BYTES
+*        MVC   RXYBR+1(2),RXYSAVB RESTORE MODIFIED BYTES--BRANCH
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RXYSAVE  DS    H
+*XYSAVB  DS    H
+RXYBASES DC    X'10'              RXY BASE
+         DC    X'80'              RXY BASE+DISP OR INDEX+DISP
+         DC    X'99'              RXY BASE+INDEX+DISP
+RXYBASEH DC    H'10'              RXY BASE
+         DC    H'20'              RXY BASE+DISP OR INDEX+DISP
+         DC    H'30'              RXY BASE+INDEX+DISP
+RXYBASEF DC    F'10'              RXY BASE
+         DC    F'20'              RXY BASE+DISP OR INDEX+DISP
+         DC    F'30'              RXY BASE+INDEX+DISP
+RXYBASED DC    FL8'10'            RXY BASE
+         DC    FL8'20'            RXY BASE+DISP OR INDEX+DISP
+         DC    FL8'30'            RXY BASE+INDEX+DISP
+RXYBASEQ DC    2FL8'10'           RXY BASE
+         DC    2FL8'20'           RXY BASE+DISP OR INDEX+DISP
+         DC    2FL8'30'           RXY BASE+INDEX+DISP
+RXYBASP8 DC    PL8'1000'          RXY BASE
+         DC    PL8'2000'          RXY BASE+DISP OR INDEX+DISP
+         DC    PL8'3000'          RXY BASE+INDEX+DISP
+RXYBSP16 DC    PL16'1000'         RXY BASE
+         DC    PL16'2000'         RXY BASE+DISP OR INDEX+DISP
+         DC    PL16'3000'         RXY BASE+INDEX+DISP
+RXYSTORE DS    CL48               RXY ALL STORE TYPES
+         LTORG
+*
+RSY      DS    0H
+* DOUBLE BYTE OPCODE, 2ND BYTE AT END
+* LMG STMG STMH STMY LMH LMY
+* CLMH CLMY STCMH STCMY ICMH ICMY
+* BXHG BXLEG
+* SRAG SLAG SRLG SLLG RLLG RLL
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+* LMG STMG STMH STMY LMH LMY
+         CLC   6(2,R7),=X'EB04'   IS IT LMG ?
+         BE    RSYLMSTM           EXIT IF IT IS
+         CLC   6(2,R7),=X'EB24'   IS IT STMG ?
+         BE    RSYLMSTM           EXIT IF IT IS
+         CLC   6(2,R7),=X'EB26'   IS IT STMH ?
+         BE    RSYLMSTM           EXIT IF IT IS
+         CLC   6(2,R7),=X'EB90'   IS IT STMY ?
+         BE    RSYLMSTM           EXIT IF IT IS
+         CLC   6(2,R7),=X'EB96'   IS IT LMH ?
+         BE    RSYLMSTM           EXIT IF IT IS
+         CLC   6(2,R7),=X'EB98'   IS IT LMY ?
+         BE    RSYLMSTM           EXIT IF IT IS
+*
+         CLC   6(2,R7),=X'EB20'   IS IT CLMH ?
+         BE    RSYMASK            EXIT IF IT IS
+         CLC   6(2,R7),=X'EB21'   IS IT CLMY ?
+         BE    RSYMASK            EXIT IF IT IS
+         CLC   6(2,R7),=X'EB2C'   IS IT STCMH ?
+         BE    RSYMASK            EXIT IF IT IS
+         CLC   6(2,R7),=X'EB2D'   IS IT STCMY ?
+         BE    RSYMASK            EXIT IF IT IS
+         CLC   6(2,R7),=X'EB80'   IS IT ICMH ?
+         BE    RSYMASK            EXIT IF IT IS
+         CLC   6(2,R7),=X'EB81'   IS IT ICMY ?
+         BE    RSYMASK            EXIT IF IT IS
+*
+         CLC   6(2,R7),=X'EB44'   IS IT BXHG ?
+         BE    RSYBX              EXIT IF IT IS
+         CLC   6(2,R7),=X'EB45'   IS IT BXLEG ?
+         BE    RSYBX              EXIT IF IT IS
+*
+         CLC   6(2,R7),=X'EB0A'   IS IT SHIFT ?
+         BL    RSYABEND           ABEND IF NOT
+         CLC   6(2,R7),=X'EB0D'   IS IT SHIFT ?
+         BNH   RSYSHIFT           EXIT IF IT IS
+         CLC   6(2,R7),=X'EB1C'   IS IT SHIFT (RLLG) ?
+         BE    RSYSHIFT           EXIT IF IT IS
+         CLC   6(2,R7),=X'EB1D'   IS IT SHIFT (RLL) ?
+         BE    RSYSHIFT           EXIT IF IT IS
+*
+RSYABEND EQU   *
+         ABEND X'222'
+*
+RSYLMSTM EQU   *
+* LMG STMG STMH STMY LMH LMY
+         MVC   RSYSAV1,RSYSTM     SAVE ORIG INST
+         MVC   RSYSAV2,RSYSTMX    SAVE ORIG INST
+         MVC   RSYSAV3,RSYXTRA    SAVE ORIG INST
+         MVC   RSYSAV4,RSYLM      SAVE ORIG INST
+         MVC   RSLTLL1,INSTLL1    MOVE LENGTH 1 TO OUTPUT
+* PROCESS LENGTH 1
+         ZAP   RSYDEC,=P'0'       CLEAR RSYDEC
+         PACK  RSYDEC+14(2),INSTLL1-1(3) DECIMAL LENGTH 1
+         CVBG  R10,RSYDEC         CONVERT TO HEX
+         LTR   R10,R10            IS IT ZERO ?
+         BZ    RSYERROR           EXIT IF IT IS
+         C     R10,=F'16'         GT THAN 16 ?
+         BH    RSYERROR           EXIT IF IT IS
+         BCTR  R10,0              -1 FOR END REGISTER
+         EX    R10,RSYOI1         PUT END REG INTO INST
+         EX    R10,RSYOI2         PUT END REG INTO INST--EXTRA
+         EX    R10,RSYOI3         PUT END REG INTO INST--STMY
+         EX    R10,RSYOI4         PUT END REG INTO INST--LMY
+         CLC   6(2,R7),=X'EB04'   IS IT LMG ?
+         BE    RSYLMGO            EXIT IF IT IS
+         CLC   6(2,R7),=X'EB96'   IS IT LMH ?
+         BE    RSYLMGO            EXIT IF IT IS
+         CLC   6(2,R7),=X'EB98'   IS IT LMY ?
+         BE    RSYLMGO            EXIT IF IT IS
+* ONLY STMG,STMH,STMY GETS HERE
+         MVC   RSYSTM(1),6(R7)    SET THE INST
+         MVC   RSYSTM+5(1),7(R7)  SET THE INST 2ND OPCODE
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+*              R1 R3 D(B)    EB0?BDDDDD??
+RSYSTM   STMY  R0,R0,RSYOP1       TESTED INST
+         BCT   R7,RSYSTM          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+         LA    R5,RSYSTM          INST ADDRESS
+         B     RSYDONE            EXIT
+*
+RSYLMGO  EQU   *
+* ONLY LMG,LMH,LMY GETS HERE
+* MAKE SURE THE RIGHT FLAVOUR OF STM MATCHES THE LM
+         MVC   RSYLM(1),6(R7)     SET THE INST
+         MVC   RSYLM+5(1),7(R7)   SET THE INST 2ND OPCODE
+         MVC   RSYSTMX(1),6(R7)   SET THE INST
+         MVC   RSYXTRA(1),6(R7)   SET THE INST
+         MVI   RSYSTMX+5,X'24'    ASSUME STMG
+         MVI   RSYXTRA+5,X'24'    ASSUME STMG
+         CLI   7(R7),X'04'        LMG ?
+         BE    RSYLMOK            EXIT IF IT IS
+         MVI   RSYSTMX+5,X'26'    ASSUME STMH
+         MVI   RSYXTRA+5,X'26'    ASSUME STMH
+         CLI   7(R7),X'96'        LMH ?
+         BE    RSYLMOK            EXIT IF IT IS
+         MVI   RSYSTMX+5,X'90'    ASSUME STMY
+         MVI   RSYXTRA+5,X'90'    ASSUME STMY
+         CLI   7(R7),X'98'        LMY ?
+         BE    RSYLMOK            EXIT IF IT IS
+         ABEND X'111'
+RSYLMOK  EQU   *
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+* TIME THE STMG,STMH,STMY
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+*              R1 R3 D(B)    EB0?BDDDDD??
+RSYSTMX  STMY  R0,R0,RSYOP1       SPECIAL INST
+         BCT   R7,RSYSTMX         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+*
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RSYXTRA  STMY  R0,R0,RSYOP1       EXTRA INST
+*              R1 R3 D(B)    EB0?BDDDDD??
+RSYLM    LMY   R0,R0,RSYOP1       TESTED INST
+         BCT   R7,RSYXTRA         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RSYLM           INST ADDRESS
+         B     RSYDONE            EXIT
+*
+RSYERROR EQU   *
+         MVC   RSLTMICS(12),=C'LENGTH ERROR'
+*SYERR2  EQU   *
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RSYOI1   OI    RSYSTM+1,X'00'     EXECUTED INST
+RSYOI2   OI    RSYSTMX+1,X'00'    EXECUTED INST
+RSYOI3   OI    RSYXTRA+1,X'00'    EXECUTED INST
+RSYOI4   OI    RSYLM+1,X'00'      EXECUTED INST
+RSYOP1   DS    16CL8
+*
+RSYMASK  EQU   *
+* PROCESS CLMH CLMY STCMH STCMY ICMH ICMY
+         MVC   RSYINMSK(1),6(R7)  SET THE INST--MASK TYPE
+         MVC   RSYINMSK+5(1),7(R7) SET THE INST 2ND OPCODE
+         LG    R10,=8X'FF'        GIVE IT SOMETHING TO DO
+         MVC   RSYICM,=X'0123'    SHOWS ICM WORKING
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RSYINMSK CLMH  R10,9,RSYICM       TESTED INST
+         BCT   R7,RSYINMSK        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RSYINMSK        INST ADDRESS
+         B     RSYDONE            EXIT
+RSYICM   DS    H
+*
+RSYBX    EQU   *
+* BXHG OR BXLEG
+         MVC   RSYINBX(1),6(R7)   SET THE INST
+         MVC   RSYINBX+5(1),7(R7) SET THE INST 2ND OPCODE
+         CLI   RSYINBX+5,X'44'    BXHG ?
+         BNE   RSYBXLE            EXIT IF NOT
+* BXHG
+         LG    R10,RSYBXHGO       LOAD INDEX REGISTER--ALWAYS BRANCH
+         CLI   INSTTYPE+1,C'0'    NOP REQUESTED ?
+         BNE   RSYBXGO            EXIT IF NOT
+         LG    R10,RSYBXHNP       LOAD INDEX REGISTER--NEVER BRANCH
+         B     RSYBXGO            EXIT
+RSYBXLE  EQU   *
+* BXLEG
+         LG    R10,RSYBXLGO       LOAD INDEX REGISTER--ALWAYS BRANCH
+         CLI   INSTTYPE+1,C'0'    NOP REQUESTED ?
+         BNE   RSYBXGO            EXIT IF NOT
+         LG    R10,RSYBXLNP       LOAD INDEX REGISTER--NEVER BRANCH
+*
+RSYBXGO  EQU   *
+         LAY   R11,1              SET INCREMENT AND COMPARE
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RSYINBX  BXHG  R10,R11,RSYBXBCT   TESTED INST
+RSYBXBCT BCT   R7,RSYINBX         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RSYINBX         INST ADDRESS
+         B     RSYDONE            EXIT
+RSYBXHGO DC    FL8'1'             BXHG AND BRANCH
+RSYBXHNP DC    X'80',7X'00'       BXHG AND NO BRANCH
+RSYBXLGO DC    X'80',7X'00'       BXLEG AND BRANCH
+RSYBXLNP DC    FL8'1'             BXLEG AND NO BRANCH
+*
+RSYSHIFT EQU   *
+* SRAG SLAG SRLG SLLG RLLG RLL
+         MVC   RSYSAV5,RSYINSFT+1 SAVE MODIFIED BYTES
+         MVC   RSYINSFT(1),6(R7)  SET THE INST--SHIFT
+         MVC   RSYINSFT+5(1),7(R7) SET THE INST 2ND OPCODE
+         MVC   RSLTLEN(2),INSTXB  MOVE THE XB TO OUTPUT
+         CLI   INSTXB+1,C'0'      IS BASE ZERO ?
+         BNE   RSYXB1             EXIT IF NOT
+         NI    RSYINSFT+2,X'0F'   KNOCK OUT THE BASE
+RSYXB1   EQU   *
+         LG    R11,=X'8000000001234567' GIVE IT SOMETHING TO SHIFT
+         LA    R6,1               WITH BASE SHIFT 2, ELSE 1
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RSYINSFT SRAG  R10,R11,1(R6)      TESTED INST
+         BCT   R7,RSYINSFT        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RSYINSFT        INST ADDRESS
+         B     RSYDONE            EXIT
+*
+RSYDONE  EQU   *
+         LA    R4,6               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         MVC   RSYSTM(2),RSYSAV1  RESTORE ORIG INST
+         MVC   RSYSTMX(2),RSYSAV2 RESTORE ORIG INST
+         MVC   RSYXTRA(2),RSYSAV3 RESTORE ORIG INST
+         MVC   RSYLM(2),RSYSAV4   RESTORE ORIG INST
+         MVC   RSYINSFT+1(2),RSYSAV5 RESTORE MODIFIED BYTES
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RSYSAV1  DS    H
+RSYSAV2  DS    H
+RSYSAV3  DS    H
+RSYSAV4  DS    H
+RSYSAV5  DS    H
+RSYDEC   DC    PL16'0'
+         LTORG
+*
+SIY      DS    0H
+* DOUBLE BYTE OPCODE, 2ND BYTE AT END
+* TMY MVIY NIY CLIY OIY XIY
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   SIYINST(1),6(R7)   SET THE INST
+         MVC   SIYINST+5(1),7(R7) SET THE INST 2ND OPCODE
+         LA    R6,SIYBYTE         DOESN'T MATTER WHAT WE DO TO THIS
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SIYINST  TMY   0(R6),X'99'        TESTED INST
+         BCT   R7,SIYINST         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R4,6               INST LENGTH
+         LA    R5,SIYINST         INST ADDRESS
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         B     GET                EXIT TO GET ANOTHER TEST
+SIYBYTE  DC    X'00'              SIY BYTE
+         LTORG
+*
+RSI      DS    0H
+* SINGLE BYTE OPCODE
+* BRXH BRXLE
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   RSIINBX(1),6(R7)   SET THE INST
+         CLI   RSIINBX,BRXH       BRXH ?
+         BNE   RSIBXLE            EXIT IF NOT
+* BRXH
+         L     R10,RSIBXHGO       LOAD INDEX REGISTER--ALWAYS BRANCH
+         CLI   INSTTYPE+1,C'0'    NOP REQUESTED ?
+         BNE   RSIBXGO            EXIT IF NOT
+         L     R10,RSIBXHNP       LOAD INDEX REGISTER--NEVER BRANCH
+         B     RSIBXGO            EXIT
+RSIBXLE  EQU   *
+* BRXLE
+         L     R10,RSIBXLEG       LOAD INDEX REGISTER--ALWAYS BRANCH
+         CLI   INSTTYPE+1,C'0'    NOP REQUESTED ?
+         BNE   RSIBXGO            EXIT IF NOT
+         L     R10,RSIBXLEN       LOAD INDEX REGISTER--NEVER BRANCH
+*
+RSIBXGO  EQU   *
+         LA    R11,1              SET INCREMENT AND COMPARE
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RSIINBX  BRXH  R10,R11,RSIBXBCT   TESTED INST
+RSIBXBCT BCT   R7,RSIINBX         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R4,4               INST LENGTH
+         LA    R5,RSIINBX         INST ADDRESS
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         B     GET                EXIT TO GET ANOTHER TEST
+RSIBXHGO DC    F'1'               BRXH AND BRANCH
+RSIBXHNP DC    X'80000000'        BRXH AND NO BRANCH
+RSIBXLEG DC    X'80000000'        BRXLE AND BRANCH
+RSIBXLEN DC    F'1'               BRXLE AND NO BRANCH
+         LTORG
+*
+**********
+* DSECTS *
+**********
+INSTDSCT DSECT
+INSTFMAT DS    CL4                FORMAT
+* FOR FORMATS SUPPORTED, SEE TYPETABL
+         DS    CL2
+INSTOPCD DS    CL6                OPCODE
+         DS    CL2
+INSTTYPE DS    CL3
+*                                 B    BRANCH
+*                                 B0   BRANCH AS NOP
+*                                      FOR BALR/BCTR/BASR R2=0
+*                                      FOR BXH/BXLE/BCT BRANCH OR NOT
+*                                 S    SINGLE BYTE
+*                                 H    HALFWORD
+*                                 F    FULLWORD
+*                                 D    DOUBLEWORD  (64 BIT BINARY)
+*                                 Q    QUADWORD   (128 BIT BINARY)
+*                                 P    VARIABLE LENGTH DECIMAL
+*                                 P8   8-BYTE DECIMAL
+*                                 P16  16-BYTE DECIMAL
+*                                 R0   NO 'OR' REG FOR EXECUTE
+         DS    CL2
+INSTLL   DS    CL6                LENGTH
+         ORG   INSTLL
+INSTLL1  DS    CL2                LENGTH 1
+         DS    CL2
+INSTLL2  DS    CL2                LENGTH 2
+         ORG   INSTLL
+INSTXB   DS    CL2                XB FIELDS
+*                                 00  NO INDEX, NO BASE
+*                                 0B     INDEX, NO BASE
+*                                 X0  NO INDEX,    BASE
+*                                 XB     INDEX,    BASE
+INSTSTOR DS    C                  S   STORE OR FORMAT TYPE
+         DS    CL3
+*
+TYPEDSCT DSECT
+TYPEFMAT DS    CL4                TABLE FORMAT
+TYPEPROC DS    AL4                TABLE PROCESSING ROUTINE
+*
+RSLTDSCT DSECT
+RSLTTITL DS    0CL8               HEADER
+RSLTOPCD DS    CL6                OPCODE
+         DS    C
+RSLTTYPE DS    CL3                TYPE
+         DS    C
+RSLTLEN  DS    CL6                LENGTH
+         ORG   RSLTLEN
+RSLTLL1  DS    CL2                LENGTH 1
+RSLTSTOR DS    C                  STORE TYPE
+         DS    C
+RSLTLL2  DS    CL2                LENGTH 2
+RSLTMICS DS    CL13               00000.000000 uS
+         DS    C
+RSLTOPER DS    CL12               RESULT INST
+         DS    C
+RSLTR10  DS    CL8                RESULT R10 (32)
+         DS    C
+RSLTR11  DS    CL8                RESULT R11 (32)
+         DS    CL18
+         ORG   RSLTR10
+RSLTR10G DS    CL16               RESULT R10 (64)
+         DS    C
+RSLTR11G DS    CL16               RESULT R11 (64)
+         DS    CL2
+         ORG   RSLTR10
+RSLTPAK1 DS    CL8                RESULT PACKED PART 1
+         DS    C
+RSLTPAK2 DS    CL8                RESULT PACKED PART 2
+         DS    C
+RSLTPAK3 DS    CL8                RESULT PACKED PART 3
+         DS    C
+RSLTPAK4 DS    CL8                RESULT PACKED PART 4
+*
+         DCBD
+* OPCODE EQUATES
+SPM      EQU   X'04'
+BALR     EQU   X'05'
+BCTR     EQU   X'06'
+BCR      EQU   X'07'
+BSM      EQU   X'0B'
+BASSM    EQU   X'0C'
+BASR     EQU   X'0D'
+MVCL     EQU   X'0E'
+CLCL     EQU   X'0F'
+EX       EQU   X'44'
+BAL      EQU   X'45'
+BCT      EQU   X'46'
+BC       EQU   X'47'
+BAS      EQU   X'4D'
+CVB      EQU   X'4F'
+D        EQU   X'5D'
+BRXH     EQU   X'84'
+BXH      EQU   X'86'
+BXLE     EQU   X'87'
+SRL      EQU   X'88'
+SLDA     EQU   X'8F'
+STM      EQU   X'90'
+LM       EQU   X'98'
+CLM      EQU   X'BD'
+ICM      EQU   X'BF'
+ED       EQU   X'DE'
+EDMK     EQU   X'DF'
+SRP      EQU   X'F0'
+DP       EQU   X'FD'
+* GENERAL REGISTER EQUATES
+R0       EQU   0
+R1       EQU   1
+R2       EQU   2                  FORMAT TABLE
+R3       EQU   3                  PARMS BASE
+R4       EQU   4                  ) INSTRUCTION
+R5       EQU   5                  )             USE
+R6       EQU   6                  )
+R7       EQU   7                  WORK AND SPIN COUNT
+R8       EQU   8                  RESULT BASE
+R9       EQU   9
+R10      EQU   10                 ) EVEN/ODD
+R11      EQU   11                 )          REG USE
+R12      EQU   12                 BASE 2
+R13      EQU   13                 BASE 1
+R14      EQU   14                 LINK REG
+R15      EQU   15                 RETURN CODE
+         END

@@ -1,0 +1,16 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IECTRDTI  &IOBREG
+         IECTUCB  &IOBREG
+         LTR   1,1                  UCB ADDRESS RETURNED
+         BZ    *+14                 NO, GIVE RC = 8
+         SR    0,0                  CLEAR REG 0
+         SR    15,15                AND REG 15 (ROUTING CODE = 0)
+*
+         SVC   116                  INVOKE LTA FOR LINK TO SVC LOGIC
+         B     *+8                  EXIT
+*
+         LA    15,8                 LOAD RC OF 8
+*                                   RETURN TO MAINLINE
+         MEND
+

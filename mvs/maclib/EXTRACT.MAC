@@ -1,0 +1,130 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+         MACRO
+&NAME    EXTRACT &LIST,&TBLOC,&FIELDS=O,&MF=I
+         LCLA  &I1,&I2,&NOFLDS,&LGTH,&SUM,&SUM2                   20021
+         LCLB  &ISW,&LSW,&B(12),&BSET                             *****
+         LCLC  &T(12),&PARA                                       *****
+&NOFLDS  SETA  N'&FIELDS
+         AIF   (&NOFLDS GT 12).E1                                 *****
+&T(1)    SETC  'GRS'
+&T(2)    SETC  'FRS'
+&T(3)    SETC  'TAX'
+&T(4)    SETC  'AETX'
+&T(5)    SETC  'PRI'
+&T(6)    SETC  'CMC'
+&T(7)    SETC  'TIOT'
+&T(8)    SETC  'COMM'                                              I272
+&T(9)    SETC  'TSO'                                              20021
+&T(10)   SETC  'PSB'                                              20021
+&T(11)   SETC  'TJID'                                             20021
+&T(12)   SETC  'ASID'                                             *****
+&I1      SETA  1
+         AIF   ('&MF' EQ 'L').LROUT
+         AIF   ('&MF' EQ 'I').IROUT
+         AIF   (N'&MF NE 2).E2
+         AIF   ('&MF(1)' NE 'E').E2
+&NAME    IHBINNRA &MF(2)
+.CONTA   AIF   ('&LIST' EQ '').CHKTBK
+         AIF   ('&LIST'(1,1) EQ '(').REGLIST
+         LA    14,&LIST                          PICK UP LIST ADDRESS
+         ST    14,0(1,0)                         STORE INTO PARAM. LIST
+         AGO   .CHKTBK
+.REGLIST ST    &LIST(1),0(1,0)                   STORE LIST ADDRESS
+.CHKTBK  AIF   ('&TBLOC' EQ '').CHKFLD
+         AIF   ('&TBLOC' EQ '''S''').STBLOC
+         AIF   ('&TBLOC'(1,1) EQ '(').REGTBK
+         LA    14,&TBLOC                         PICK UP TCB ADDRESS
+         ST    14,4(1,0)                         STORE INTO PARAM. LIST
+         AGO   .CHKFLD
+.REGTBK  ST    &TBLOC(1),4(1,0)                  STORE TCB ADDRESS
+         AGO   .CHKFLD
+.STBLOC  SR    14,14                             INDICATE ISSUING TASK
+         ST    14,4(1,0)                         TCB TO BE USED
+.CHKFLD  AIF   ('&FIELDS' EQ 'O').ISVC
+.LOOP    ANOP
+&I2      SETA  1
+&BSET    SETB  0                                                   I272
+.TEST    AIF   (('&FIELDS(&I1)' NE '&T(&I2)') AND                      *
+               ('&FIELDS(&I1)' NE 'ALL' OR &I2 GT 7)).INCR         I272
+&B(&I2)  SETB  1                                                   I272
+&BSET    SETB  1                                                   I272
+.INCR    AIF   (&I2 GT 7 AND &BSET).INCR2                         20021
+         AIF   (&I2 GT 12).E3                                     *****
+&I2      SETA  &I2+1
+         AGO   .TEST
+.INCR2   AIF   (&I1 EQ &NOFLDS).SUMUP
+&I1      SETA  &I1+1
+         AGO   .LOOP
+.SUMUP   ANOP
+&SUM     SETA  &B(7)*2+&B(6)*4+&B(5)*8+&B(4)*16+&B(3)*32+&B(2)*64+&B(1)X
+               *128+&B(8)*1                                        I272
+&SUM2    SETA  &B(9)*128+&B(10)*64+&B(11)*32+&B(12)*16            *****
+.GOOUT   AIF   (&ISW).IRETURN
+         AIF   (&LSW).LRETURN
+         MVI   8(1),&SUM                         MOVE IN FIELDS BYTE
+         MVI   9(1),&SUM2    .         MOVE IN FIELD BYTE 2       20021
+.ISVC    SVC   40                                ISSUE EXTRACT SVC
+         AGO   .END
+.IROUT   CNOP  0,4
+&NAME    BAL   1,*+16                            BRANCH AROUND LIST
+         AIF   ('&LIST' EQ '').E4
+         AIF   ('&LIST'(1,1) EQ '(').ZLIST
+         DC    A(&LIST)                          LIST ADDRESS
+         AGO   .CKTBK
+.ZLIST   DC    A(0)                              LIST ADDRESS
+.CKTBK   AIF   ('&TBLOC' EQ '' OR '&TBLOC' EQ '''S''').ZTBL
+         AIF   ('&TBLOC'(1,1) EQ '(').ZTBL
+         DC    A(&TBLOC)                         TCB ADDRESS
+         AGO   .CKFLD
+.ZTBL    DC    A(0)                              TCB ADDRESS
+.CKFLD   AIF   ('&FIELDS' EQ 'O').E5
+&ISW     SETB  1
+         AGO   .LOOP
+.IRETURN DC    AL1(&SUM)                         FIELD BYTE
+         DC    AL1(&SUM2)    .         FIELD BYTE 2               20021
+         DC    AL2(0) .                                           20021
+         AIF   ('&LIST'(1,1) NE '(').TSTTBLK
+         ST    &LIST(1),0(1,0)                   STORE LIST ADDRESS
+.TSTTBLK AIF   ('&TBLOC' EQ '').ISVC
+         AIF   ('&TBLOC'(1,1) NE '(').ISVC
+         ST    &TBLOC(1),4(1,0)                  STORE TCB ADDRESS
+         AGO   .ISVC
+.LROUT   DS    0F
+         AIF   ('&LIST' EQ '').NOLIST
+         AIF   ('&LIST'(1,1) EQ '(').E6
+&NAME    DC    A(&LIST)                          LIST ADDRESS
+         AGO   .TESTTBK
+.NOLIST  ANOP
+&NAME    DC    A(0)                              LIST ADDRESS
+.TESTTBK AIF   ('&TBLOC' EQ '' OR '&TBLOC' EQ '''S''').NOTBLK
+         AIF   ('&TBLOC'(1,1) EQ '(').E6
+         DC    A(&TBLOC)                         TCB ADDRESS
+         AGO   .TESTFLD
+.NOTBLK  DC    A(0)                              TCB ADDRESS
+.TESTFLD AIF   ('&FIELDS' EQ 'O').NOFIELD
+&LSW     SETB  1
+         AGO   .LOOP
+.NOFIELD DC A(0)
+         AGO   .END
+.LRETURN DC    AL1(&SUM)                         FIELD BYTE
+         DC    AL1(&SUM2)    .         FIELD BYTE 2               20021
+         DC    AL2(0) .                                           20021
+         AGO   .END
+.E1      IHBERMAC 94               MORE THAN MAX VAL IN FIELDS OP *****
+         MEXIT
+.E2      IHBERMAC 35,,&MF          INVALID MF OPERAND SPECIFIED   *****
+         MEXIT
+.E3      IHBERMAC 67,,&FIELDS(&I1) INVALID FIELDS OP SPECIFIED-   *****
+         MEXIT
+.E4      IHBERMAC 34               LIST OP REQ'D-NOT SPECIFIED    *****
+         MEXIT
+.E5      IHBERMAC 23               FIELDS OP REQ'D-NOT SPECIFIED  *****
+         MEXIT
+.E6      IHBERMAC 69               INVALID REG NOTATION W/ MF=L   *****
+.END     MEND
+**/
+*EXTRACT: MACRO
+*        KEYS(FIELDS,MF);
+*        ANS('?'||MACLABEL||'EXTRACTP '||MACLIST||MACKEYS||';');
+*%END;

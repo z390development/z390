@@ -1,0 +1,153 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO                           HEADER STATEMENT
+&NAME    BUFINQ  &DCB,&TBL,&SIZE,&MF=    PROTOTYPE STATEMENT
+         LCLC  &PAREN,&ALPHA             LOCALS DEFINED
+         LCLA  &ADCB,&ATBL,&ASIZE  DEFINE LOCALS
+.*0050,003400,005800,008400,009200                                 1813
+         AIF   (T'&MF EQ 'O').SFORM      S-FORM ASSUMED IF MF OMITTED
+         AIF   (N'&MF EQ 2).EFORM            CHECK FOR 2 OPERANDS
+         AIF   ('&MF(1)' EQ 'L').LFORM       POSITIVE CHECK FOR 6
+         AGO   .ERREMF
+.EFORM   AIF   ('&MF(1)' NE 'E').ERREMF      POSITIVE CHECK FOR E
+         AIF   ('&MF(2)'(1,1) EQ '(').REGMF  CHECK NOTATION
+&NAME    LA    1,&MF(2)                  PUT LSTADDR IN REG 1
+.CHECK   AIF   (T'&DCB EQ 'O' AND T'&TBL EQ 'O' AND T'&SIZE EQ 'O').END
+         AIF   (T'&DCB NE 'O').CHANGE1   IF DCBADDR GIVEN
+         AIF   (T'&TBL NE 'O').TABAD
+.TABSIZE AIF   ('&SIZE'(1,1) EQ '(').REGSZE
+         LA    0,&SIZE                 PUT SIZE IN PARAM LIST
+         ST    0,8(1)                   PUT SIZE IN PARAM LIST     1813
+.END     MVI   0(1),X'10'          REINSTATE BUFINQ REQUEST CODE
+         SVC   71                  SVC TO BFR MGT CONTROL SECTION
+         MEXIT   BRANCH OUT OF MACRO DEFINITION
+.CHANGE1 AIF   ('&DCB'(1,1) EQ '(').REGDCB  WITH NEW DCB ADDR
+         LA    0,&DCB                  PUT DCBADDR IN PARAM LIST
+         ST    0,0(1)                  PUT DCBADDR IN PARAM LIST
+.GOON    AIF   (T'&TBL NE 'O').TABAD
+         AIF   (T'&SIZE EQ 'O').END
+         AGO   .TABSIZE
+.TABAD   AIF   ('&TBL'(1,1) EQ '(').REGTAB  CHECK NOTATION
+         LA    0,&TBL                  PUT TABADDR IN PARAM LIST
+         ST    0,4(1)                   PUT TABADDR IN PARAM LIST  1813
+.CONTINU AIF   (T'&SIZE EQ 'O').END
+         AGO   .TABSIZE
+.REGMF   ANOP
+&PAREN   SETC  '&MF(2)'(2,K'&MF(2)-2)  ISOLATE REGISTER NUMBER
+&NAME    LR    1,&PAREN                  PUT LIST ADDR IN REG 1
+         AGO   .CHECK
+.REGDCB  ANOP
+&PAREN   SETC  '&DCB'(2,K'&DCB-2)        ISOLATE REGISTER NUMBER
+         ST    &PAREN,0(1)               PUT  DCBADR IN PARAM LIST
+         AGO   .GOON
+.REGTAB  ANOP
+&PAREN   SETC  '&TBL'(2,K'&TBL-2)        ISOLATE REG NUMBER
+         ST    &PAREN,4(1)              PUT TBL ADDR IN PARAM LIST 1813
+         AGO   .CONTINU
+.REGSZE  ANOP
+&PAREN   SETC  '&SIZE'(2,K'&SIZE-2)
+         ST    &PAREN,8(1)              PUT SIZE IN PARAM LIST     1813
+         AGO   .END
+.SFORM   ANOP
+&NAME    LA    1,A&SYSNDX              LOAD ADR OF PARAM LST
+         AIF   (T'&DCB EQ 'O').NODCB
+&PAREN   SETC  '&DCB'(1,1)
+         AIF   ('&PAREN' EQ '(').REGSDCB
+         AIF   ('&PAREN' LT 'A').ERRDCB  CHECK FOR SYMBOLIC FORMAT
+         AIF   ('&PAREN' GT 'Z').ERRDCB  CHECK FOR SYMBOLIC FORMAT
+&ADCB    SETA  1
+.AHEAD   AIF   (T'&TBL EQ 'O').NOTAB     GROSS ERROR IF OMITTED
+&PAREN   SETC  '&TBL'(1,1)
+         AIF   ('&PAREN' EQ '(').REGSTAB
+         AIF   ('&PAREN' LT 'A' OR '&PAREN' GT 'Z').ERRTAB
+&ATBL    SETA  1
+.OK1     AIF   (T'&SIZE EQ 'O').NOSIZE   GROSS ERROR IF OMITTED
+.FORWARD AIF   ('&SIZE'(1,1) EQ '(').REGSSZE
+&ASIZE   SETA  1
+.ONWARD  CNOP  2,4                       CODING TO BE GENERATED
+         SVC   71                  SVC TO BFR MGT CONTROL SECTION
+         B     A&SYSNDX+12         BRANCH AROUND PARAMETER LIST
+         AIF   (&ADCB EQ 1).SYM1     IF 1 GO TO SYM1
+A&SYSNDX DC    A(0)                DCB-ADR AND CODE
+.CHK1    AIF   (&ATBL EQ 1).SYM2
+         DC    AL4(0)                  TABLE-ADR
+.CHK2    AIF   (&ASIZE EQ 1).SYM3
+         DC    AL4(0)                  SIZE
+         MEXIT                           BRANCH OUT OF MACRO DEFN
+.SYM1    ANOP
+A&SYSNDX DC    AL1(16)             CODE
+         DC    AL3(&DCB)          DCB-ADR
+         AGO   .CHK1
+.SYM2    DC    A(&TBL)             TABLE ADR
+         AGO   .CHK2
+.SYM3    DC    A(&SIZE)            SIZE OF TABLE
+         MEXIT
+.*REGISTER NOTATION
+.REGSDCB ANOP
+&PAREN   SETC  '&DCB'(2,K'&DCB-2)        ISOLATE REGISTER NUMBER
+         ST    &PAREN,A&SYSNDX           PUT DCB ADDR IN PARAM LIST
+         MVI   A&SYSNDX,X'10'      REINSTATE REQUEST CODE
+         AGO   .AHEAD
+.REGSTAB ANOP
+&PAREN   SETC  '&TBL'(2,K'&TBL-2)        ISOLATE REGISTER NUMBER
+         ST    &PAREN,A&SYSNDX+4       PUT TBL-ADR IN PARAM LIST
+         AGO   .OK1
+.REGSSZE ANOP
+&PAREN   SETC  '&SIZE'(2,K'&SIZE-2)
+         ST    &PAREN,A&SYSNDX+8       PUT SIZE IN PARAM LIST
+         AGO   .ONWARD
+.LFORM   AIF  (T'&DCB EQ 'O' AND T'&TBL EQ 'O' AND T'&SIZE EQ 'O').FINI
+         AIF   (T'&DCB NE 'O').CHK
+         AIF   (T'&TBL NE 'O').CHKTAB
+.SIZE    ANOP
+&PAREN   SETC  '&SIZE'(1,1)
+         AIF   ('&PAREN' LT '0' OR '&PAREN' GT '9').ERRSZE
+&ASIZE   SETA  1
+.FINI    DS    0F                        GENERATED CODING
+&NAME    DC    AL1(16)             REQUEST CODE
+         AIF   (&ADCB EQ 1).FILL1
+         DC    AL3(0)              DCB-ADR
+.CHK3    AIF   (&ATBL EQ 1).FILL2
+         DC    A(0)                     TBLADR
+.CHK4    AIF   (&ASIZE EQ 1).FILL3
+         DC    A(0)                     TABLE SIZE
+         MEXIT    BRANCH OUT OF MACRO DEFINITION
+.CHK     ANOP
+&PAREN   SETC  '&DCB'(1,1)
+         AIF   ('&PAREN' LT 'A' OR '&PAREN' GT 'Z').ERLDCB
+&ADCB    SETA  1
+.OK2     AIF   (T'&TBL NE 'O').CHKTAB
+         AIF   (T'&SIZE EQ 'O').FINI
+         AGO   .SIZE
+.CHKTAB  ANOP
+&PAREN   SETC  '&TBL'(1,1)
+         AIF   ('&PAREN' LT 'A' OR '&PAREN' GT 'Z').ERLTAB
+&ATBL    SETA  1
+.OK3     AIF   (T'&SIZE EQ 'O').FINI
+         AGO   .SIZE
+.FILL1   ANOP
+         DC    AL3(&DCB)           DCB-ADR
+         AGO   .CHK3
+.FILL2   DC    A(&TBL)                  TBLADR
+         AGO   .CHK4
+.FILL3   DC    A(&SIZE)                 TABLE SIZE
+         MEXIT
+.ERREMF  IHBERMAC  35,,&MF         ERROR MSG FOR INVALID MF
+         MEXIT
+.ERRDCB  IHBERMAC  36,,DCBADDR
+         AGO   .AHEAD
+.ERLDCB  IHBERMAC  36,,DCBADR
+         AGO   .OK2
+.NODCB   IHBERMAC  6
+         AGO   .AHEAD
+.ERRTAB  IHBERMAC  37,,TABADDR
+         AGO   .OK1
+.ERLTAB  IHBERMAC  37,,TBLADR
+         AGO   .OK3
+.NOTAB   IHBERMAC  3
+         AGO   .OK1
+.NOSIZE  IHBERMAC  4
+         AGO   .ONWARD
+.ERRSZE  IHBERMAC  38,,TBLSIZE
+         AGO   .FINI
+         MEND
+

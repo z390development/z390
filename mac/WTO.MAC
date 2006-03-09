@@ -6,14 +6,45 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
+.* 10/20/05 RPI27 - issue error for any undefined operands  
+.* 10/21/05 RPI41  - add MF=L support   
+.* 11/05/05 RPI80  - add missing .ERR1 label   
+.* 12/02/05 RPI114 - fix to use more unique labels to avoid dup labels
+.* 12/20/05 RPI143 - allow no pos parms for MF=                        
+.* 01/05/06 RPI153 - remove duplicate label for MF=L                   
+.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 01/12/06 RPI151 CHANGE BAL TO BRAS FOR USE WITHOUT BASE REG
+.*********************************************************************
 &N       WTO   &MSG,&MF=
+         AIF   (N'&SYSLIST LE 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
          AIF   (&MF NE '').MF
-&N       BAL   1,WTO&SYSNDX
-         DC    AL2(WTOEND&SYSNDX-*,0),C&MSG
-WTOEND&SYSNDX EQU *
-WTO&SYSNDX SVC   35
-         MEXIT
-.MF      LA    1,&MF(2)
+         BRAS  1,*+(WTO#&SYSNDX._EOT-*+1)/2*2
+         DC    AL2(WTO#&SYSNDX._EOT-*,0),C&MSG
+WTO#&SYSNDX._EOT EQU *
          SVC   35
+         MEXIT
+.MF      ANOP
+         AIF   (&MF EQ 'L').MFL
+         AIF   (&MF(1) NE 'E').ERR1
+         AIF   (&MF(2) EQ '').SVC
+         AIF   ('&MF(2)'(1,1) EQ '(').MFEREG
+         LA    1,&MF(2)
+         AGO   .SVC
+.MFEREG  ANOP
+         AIF   (&MF(2) EQ '1' OR &MF(2) EQ 'R1').SVC  RPI163
+         LR    1,&MF(2)
+.SVC     ANOP
+         SVC   35
+         MEXIT
+.MFL     ANOP
+         DC    AL2(WTO#&SYSNDX._EOT-*,0),C&MSG
+WTO#&SYSNDX._EOT EQU *
+         MEXIT
+.ERR1    MNOTE 8,'WTO UNDEFINED TYPE - &MF'
          MEND
 

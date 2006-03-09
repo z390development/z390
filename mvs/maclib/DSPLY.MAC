@@ -1,0 +1,63 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    DSPLY &DCB,&PARM1,&PARM2
+.*
+.* MODULE-NAME=DSPLY(OS/VS2)MACRO                              @YM00638
+.*
+.* DESCRIPTIVE-NAME=DISPLAY FIELD & ALLOW KEYBOARD CORRECTION  @YM00638
+.*
+.*
+         LCLA  &NOGEN
+         LCLC  &REG1,&REG2
+         AIF   (T'&DCB NE 'O').DS002
+.DS001   IHBERMAC 202
+&NOGEN   SETA  &NOGEN+1
+         AGO   .DS008
+.DS002   AIF   (T'&NAME EQ 'O').DS003
+&NAME    EQU   *
+.DS003   AIF   ('&DCB'(1,1) NE '(').DS007
+         AIF   ('&DCB'(K'&DCB,1) NE ')').DS001
+         AIF   (K'&DCB EQ 4).DS004
+&REG1    SETC  '&DCB'(2,1)
+         AIF   ('&REG1' EQ '1').DS008
+         AIF   ('&REG1' GE '2' AND '&REG1' LE '9').DS006
+         AGO   .DS001
+.DS004   AIF   ('&DCB'(2,1) NE '1').DS001
+         AIF   ('&DCB'(3,1) GE '0' AND '&DCB'(3,1) LE '2').DS005
+         AGO   .DS001
+.DS005   ANOP
+&REG1    SETC  '&DCB'(2,1)
+&REG2    SETC  '&DCB'(3,1)
+.DS006   LR    1,&REG1&REG2 GET DCB ADDRESS
+         AGO   .DS008
+.DS007   LA    1,&DCB GET DCB ADDRESS
+.DS008   AIF   (T'&PARM1 EQ 'O' AND T'&PARM2 EQ 'O').DS012
+         AIF   (T'&PARM1 EQ 'O').DS009
+         AIF   (T'&PARM2 EQ 'O').DS009
+         AIF   ('&PARM1'(1,1) NE '(' OR '&PARM1'(K'&PARM1,1) NE ')').DSX
+               011
+         AIF   ('&PARM2'(1,1) NE '(' OR '&PARM2'(K'&PARM2,1) NE ')').DSX
+               011
+         AIF   (K'&PARM1 EQ 4).DS0081
+         AIF   ('&PARM1'(2,1) LE '1' OR '&PARM1'(2,1) GT '9').DS011
+         AGO   .DS0082
+.DS0081  AIF   ('&PARM1'(2,2) LT '10' OR '&PARM1'(2,2) GT '12').DS011
+.DS0082  AIF   (K'&PARM2 EQ 4).DS0083
+         AIF   ('&PARM2'(2,1) LE '1' OR '&PARM2'(2,1) GT '9').DS011
+         AGO   .DS0084
+.DS0083  AIF   ('&PARM2'(2,2) LT '10' OR '&PARM2'(2,2) GT '12').DS011
+.DS0084  ANOP
+         AIF   (&NOGEN NE 0).DS010
+         L     15,68(1) GET IOB ADDRESS
+         MVC   48(16,15),0&PARM1
+         MVC       40(8,15),0&PARM2
+         AGO   .DS012
+.DS009   IHBERMAC 204
+.DS010   MEXIT
+.DS011   IHBERMAC 203
+         MEXIT
+.DS012   AIF   (&NOGEN EQ 0).DS013
+         MEXIT
+.DS013   L     15,8(1) GET ADDRESS OF DSPLY MODULE
+         BALR  14,15 LINK TO DSPLY MODULE
+         MEND

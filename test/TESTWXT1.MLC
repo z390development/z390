@@ -1,0 +1,32 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+TESTWXT1 SUBENTRY
+         WTO 'TESTWXT1 TEST WXTRN STATIC LINK'
+         L    15,=V(TESTSUB1)  FORCE LOADING OF TESTSUB1
+         LTR  15,15
+         BZ   ERR              VERIFY FIRST EXTRN FOUND
+         BALR 14,15
+         WXTRN TESTSUB2
+         L    15,=A(TESTSUB2)
+         LTR  15,15
+         BZ   ERR             VERIFY SECOND WXTRN FOUND IN TESTSUB1
+         BALR 14,15
+         WXTRN TESTSUB3
+         L    15,=A(TESTSUB3)
+         LTR  15,15
+         BZ   ERR             VERIFY THIRD WXTRN FOUND IN TESTSUB1
+         BALR 14,15
+         WXTRN TESTSUBX
+         L    15,=A(TESTSUBX)
+         LTR  15,15
+         BNZ  ERR             VERIFY LAST WXTRN NOT FOUND
+         WTO  'TESTWXT1 ENDED OK'
+         SUBEXIT
+ERR      WTO  'TESTWXT1 ERROR ABORTING'
+         SUBEXIT RC=16
+         END

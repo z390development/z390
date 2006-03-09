@@ -1,0 +1,6 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    INDEX &LIST,&DUMMY=
+&NAME    LOCATE &LIST                   EXPAND USING LOCATE
+         MEND
+

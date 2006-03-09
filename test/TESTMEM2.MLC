@@ -1,0 +1,42 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 01/09/06 RPI 162 TEST EXTENSIONS LV=NNNK AND LV=NNNM
+*********************************************************************
+         TITLE 'TESTMEM2 TEST GETMAIN EXTENSIONS'
+TESTMEM2 RT1   MAIN
+         EQUREGS
+         RT1   START
+         GETMAIN R,LV=1K     GET 1K
+         LTR   R15,R15
+         RT1   CCE                 VERIFY R15 = 0
+         LR    R2,R0
+         LR    R4,R2
+         L     R5,=A(1024)
+         SR    R0,R0
+         L     R1,=X'EE000000'
+         MVCL  R4,R0               FILL 1K WITH X'EE'
+         LR    R4,R2
+         L     R5,=A(1024)
+         CLCL  R5,R0               VERIFY FILL
+         RT1   CCE
+         GETMAIN R,LV=1M     GET 1M
+         LTR   R15,R15
+         RT1   CCE                 VERIFY R15 = 0
+         LR    R2,R0
+         LR    R4,R2
+         L     R5,=A(1024*1024)
+         SR    R0,R0
+         L     R1,=X'EE000000'
+         MVCL  R4,R0               FILL 1M WITH X'EE'
+         LR    R4,R2
+         L     R5,=A(1024*1024)
+         CLCL  R5,R0               VERIFY FILL
+         RT1   CCE
+         RT1   END
+         CVTD
+         END

@@ -1,0 +1,32 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 11/30/05                                                 *
+*********************************************************************
+* RUN DEMOGUI5 WITH GUI OPTION TO DEMO GUI GPRAHIC VIEW
+*********************************************************************
+* 12/02/05 RPI47  ADD DEMO OF GUI GRAPHIC DISPLAY COMMANDS     
+* 02/21/06 RPI206 CHANGE NAME FROM GUI TO GUAM
+*********************************************************************
+DEMOGUI5 SUBENTRY
+         WTO   'DEMOGUI5 GRAPHICS DEMO - THIS IS MSG FOR MCS LOG'
+         TPUT  'DEMOGUI5 GRAPHICS DEMO - THIS IS MSG FOR TN3270 SCREEN'
+         GUAM  WINDOW,TITLE,'DEMOGUI5 GUI GRAPHIC DISPLAY DEMO'
+         GUAM  WINDOW,VIEW,GRAPH,800,600,BLUE    BACKGROUND
+         GUAM  GRAPH,TEXT,100,100,'HELLO FROM GUI GRAPHIC DISPLAY',RED
+         GUAM  GRAPH,LINE,200,200,200,400,WHITE  DRAW A BOX
+         GUAM  GRAPH,LINE,200,400,400,400,WHITE
+         GUAM  GRAPH,LINE,400,400,200,400,WHITE
+         GUAM  GRAPH,LINE,200,400,200,200,WHITE
+         GUAM  GRAPH,FILL,205,205,395,395,RED    DRAW RED BOX INSIDE
+         GUAM  KEYBOARD,READ,MODE,CHAR,WAIT  HIT ANY KEY TO EXIT
+         SUBEXIT
+         GUAM  SYMBOLS
+MODE     DC    F'0'
+CHAR     DC    X'00'
+RED      GUAM  COLOR,RED
+WHITE    GUAM  COLOR,WHITE
+BLUE     GUAM  COLOR,BLUE
+         END

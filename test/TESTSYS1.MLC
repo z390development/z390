@@ -1,0 +1,70 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 01/27/06 RPI192 test correctly handling of && in strings
+*********************************************************************
+TESTSYS1 SUBENTRY 
+         WTO   'TESTSYS1 STARTED'  
+         MNOTE '&&SYSASM=&SYSASM'
+         MNOTE '&&SYSCLOCK=&SYSCLOCK'
+         MNOTE '&&SYSDATC=&SYSDATC'
+         MNOTE '&&SYSDATE=&SYSDATE'
+         MNOTE '&&SYSPARM=&SYSPARM'
+         MNOTE '&&SYSTEM_ID=&SYSTEM_ID'
+         MNOTE '&&SYSTEM_JAVA=&SYSTEM_JAVA'
+         MNOTE '&&SYSTIME=&SYSTIME'
+         MNOTE '&&SYSVER=&SYSVER'
+         MACRO
+         TEST
+         MNOTE '&&SYSECT=&SYSECT'
+         MNOTE '&&SYSLOC=&SYSLOC'
+         MNOTE '&&SYSSTYP=&SYSSTYP'
+         MNOTE '&&SYSNDX=&SYSNDX'
+         MNOTE '&&SYSNEST=&SYSNEST'
+         MEND
+         TEST
+TESTD    DSECT
+         TEST
+TESTDLOC LOCTR
+         TEST
+TESTSYS1 CSECT
+         TEST
+         MNOTE '&&SYSCLOCK=&SYSCLOCK'
+&COUNT   SETA  10000
+         MNOTE 'COUNT TO &COUNT'
+         ACTR  &COUNT
+.LOOP    ANOP           LOOP TO CHANGE SYSCLOCK IF TIMING ON
+&COUNT   SETA  &COUNT-1
+         AIF   (&COUNT GT 0).LOOP
+         MNOTE '&&SYSCLOCK=&SYSCLOCK'
+* TEST SYSMAC
+         MNOTE '&&SYSMAC=&SYSMAC'
+         MNOTE '&&SYSMAC(0)=&SYSMAC(0)'
+         MNOTE '&&SYSMAC(1)=&SYSMAC(1)'
+         MNOTE '&&SYSMAC(2)=&SYSMAC(2)'
+         MNOTE '&&SYSMAC(3)=&SYSMAC(3)'
+         MNOTE '&&SYSNEST=&SYSNEST SYSMAC(SYSNEST)=&SYSMAC(&SYSNEST)'
+         MACRO
+         TESTA
+         MNOTE 'EXECUTING TESTA'
+         MNOTE '&&SYSMAC=&SYSMAC'
+         MNOTE '&&SYSMAC(0)=&SYSMAC(0)'
+         MNOTE '&&SYSMAC(1)=&SYSMAC(1)'
+         MNOTE '&&SYSMAC(2)=&SYSMAC(2)'
+         MNOTE '&&SYSMAC(3)=&SYSMAC(3)'
+         MNOTE '&&SYSNEST=&SYSNEST &&SYSMAC(SYSNEST)=&SYSMAC(&SYSNEST)'     
+         MEND
+         MACRO
+         TESTB
+         MNOTE 'EXECUTING TESTB'
+         TESTA
+         MEND
+         TESTA
+         TESTB
+         WTO   'TESTSYS1 ENDED OK'       
+         SUBEXIT                 
+         END                        

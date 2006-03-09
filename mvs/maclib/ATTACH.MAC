@@ -1,0 +1,781 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%/*
+* /* MACCOMP Y-1 SC1CL/PZD81                                         */
+* /* MACSTAT Y-1 72271/015032                                        */
+* /*
+         MACRO
+&NAME    ATTACH &EP=,&EPLOC=,&DE=,&DCB=,&PARAM=,&VL=,&ECB=,        I270X
+               &GSPV=,&KEY=PROP,&GSPL=,&SHSPL=,&ETXR=,&LPMOD=,     I270X
+               &DPMOD=,&MF=I,&SF=I,&SHSPV=,&SM=PROB,&SZERO=YES,    I270X
+               &JSTCB=NO,&SVAREA=YES,&ROLL=(YES,NO),&HIARCHY=,     I270X
+               &JSCB=,&GIVEJPQ=NO,&TASKLIB=,&TSLOGON=NO,          20021X
+               &STAI=,&PURGE=,&ASYNCH=,                          Y02752X
+               &ESTAI=,&TERM=NO,&NSHSPL=,&NSHSPV=,&RSAPF=NO,   @Z40RP9BX
+               &RELATED=,                                              X
+               &LSQA=0,&DISP=YES,&TID=0,&TQE=,&FPREGSA=          X02050
+         GBLB  &IHBSWA,&IHBSWB
+         GBLC  &IHBNO
+         LCLA  &A,&E,&F,&G,&L,&K,&X,&NUMB
+         LCLA  &NUMB1,&NUMB2,&NUMB3,&NUMB4                       Y02752
+         LCLB  &SWSTAI,&SWESTAI                                  Y02752
+         LCLC  &STAITYP,&STXADDR,&STPADDR                        Y02752
+         LCLC  &H,&CHAR,&PARA,&FUDGE,&GNAME
+* /* MACDATE Y-1 72271                                               */
+* /*
+&SWSTAI  SETB  ('&STAI(1)' NE '' )   SWITCH VALUE 1 IF STAI      Y02752
+&SWESTAI SETB  ('&ESTAI(1)' NE '' )  SWITCH VALUE 1 IF ESTAI     Y02752
+         AIF   (&SWSTAI AND &SWESTAI).ERSTAI                     Y02752
+         AIF   (NOT &SWESTAI).STTYP1                             Y02752
+         AIF   (N'&ESTAI GT 2).ERROR                             Y02752
+&STXADDR SETC  '&ESTAI(1)'        EXIT RTN ADDR                  Y02752
+&STPADDR SETC  '&ESTAI(2)'        PARM LIST FOR EXIT RTN         Y02752
+&STAITYP SETC  'ESTAI'                                           Y02752
+         AGO   .STTYP2                                           Y02752
+.STTYP1  AIF   (NOT &SWSTAI).STTYP2                              Y02752
+         AIF   (N'&STAI GT 2).ERROR                              Y02752
+&STXADDR SETC  '&STAI(1)'         EXIT RTN ADDR                  Y02752
+&STPADDR SETC  '&STAI(2)'         PARM LIST FOR EXIT RTN         Y02752
+&STAITYP SETC  'STAI'                                            Y02752
+.STTYP2  ANOP                                                    Y02752
+&IHBNO   SETC  '306'
+ AIF ('&HIARCHY' NE '' AND '&HIARCHY' NE '0'                           *
+               AND '&HIARCHY' NE '1').ERRHID                       LCS1
+         AIF   ('&MF' EQ 'L' OR('&SF' EQ 'L' AND '&MF(1)' EQ 'E')).E1
+         AIF   ('&SF' EQ 'L' AND '&PARAM' NE '').ERROR2
+         AIF   ('&EP' NE '' AND '&EPLOC' NE '').ERROR4
+         AIF   ('&EP' NE '' AND '&DE' NE '').ERROR4
+         AIF   ('&DE' NE '' AND '&EPLOC' NE '').ERROR4
+         AIF   ('&LPMOD' EQ '').CONTAAA
+         AIF   ('&LPMOD'(1,1) EQ '-').ERROR7
+.CONTAAA ANOP
+         AIF   ('&DISP' NE 'YES' AND '&DISP' NE 'NO').ERDISP
+         AIF   ('&LSQA' NE '0' AND (&SWSTAI OR &SWESTAI)).E2     Y02752
+         AIF   ('&LSQA' NE '0' AND '&PURGE' NE '' ).E3           Y02752
+         AIF   ('&LSQA' NE '0' AND '&ASYNCH' NE '' ).E4          Y02752
+         AIF   ('&LSQA' NE '0' AND ('&SZERO' NE 'NO')).E5
+         AIF   ('&GIVEJPQ' NE 'NO' AND '&LSQA' NE '0').E6
+         AIF   ('&LSQA' NE '0' AND '&GSPV' NE '').E7
+         AIF   ('&LSQA' NE '0' AND '&GSPL' NE '').E8
+         AIF   ('&LSQA' NE '0' AND '&SHSPV' NE '').E9
+         AIF   ('&LSQA' NE '0' AND '&SHSPL' NE '').E10
+         AIF   ('&TQE' NE 'YES' AND '&TQE' NE 'NO' AND '&TQE' NE '').ERX
+               TQE                                               X02050
+         AIF   ('&FPREGSA' NE 'YES' AND '&FPREGSA' NE 'NO' AND '&FPREGSX
+               A' NE '').ERFP                                    X02050
+         AIF   ('&NSHSPL' NE '' AND '&NSHSPV' NE '').ERNSHSP     Y02752
+         AIF   ('&TERM' NE 'YES' AND '&TERM' NE 'NO').ERTERM     Y02752
+.* HERE INITIALIZE VARIABLES &NUMB,&NUMB1,&NUMB2,&NUMB3,&NUMB4   Y02752
+.* THESE MUST NOT BE ALTERED ONCE SET.                           Y02752
+.* BYTE AT OFFSET DECIMAL 27 IS DEFINED BY &NUMB                 Y02752
+         AIF   ('&DISP' EQ 'YES').NUMBX1                         Y02752
+&NUMB    SETA  (&NUMB+128)        DISP=NO FLAG SET TO 1          Y02752
+.NUMBX1  ANOP                                                    Y02752
+         AIF   ('&JSCB' EQ '').NUMBX2                            Y02752
+&NUMB    SETA  (&NUMB+64)         JSCB ADDRESS SPECIFIED FLAG    Y02752
+.NUMBX2  ANOP                                                    Y02752
+         AIF   ('&GIVEJPQ' EQ 'NO').NUMBX3                       Y02752
+&NUMB    SETA  (&NUMB+32)         GIVEJPQ=YES FLAG SET TO 1      Y02752
+.NUMBX3  ANOP                                                    Y02752
+         AIF   ('&KEY' EQ 'PROP').NUMBX4                         Y02752
+&NUMB    SETA  (&NUMB+16)         KEY=ZERO FLAG ON               Y02752
+.NUMBX4  ANOP                                                    Y02752
+         AIF   ('&SZERO' EQ 'YES').NUMBX5                        Y02752
+&NUMB    SETA  (&NUMB+8)          SZERO=NO FLAG SET TO 1         Y02752
+.NUMBX5  ANOP                                                    Y02752
+         AIF   ('&SVAREA' EQ 'YES').NUMBX6                       Y02752
+&NUMB    SETA  (&NUMB+4)          SVAREA=NO FLAG SET TO 1        Y02752
+.NUMBX6  ANOP                                                    Y02752
+         AIF   ('&JSTCB' NE 'YES').NUMBX7                        Y02752
+&NUMB    SETA  (&NUMB+2)          JSTCB=YES FLAG SET TO 1        Y02752
+.NUMBX7  ANOP                                                    Y02752
+         AIF   ('&SM' NE 'SUPV').NUMBX8                          Y02752
+&NUMB    SETA  (&NUMB+1)          SM=SUPV FLAG ON                Y02752
+.NUMBX8  ANOP                     BYTE IS COMPLETE               Y02752
+.* BYTE AT OFFSET DECIMAL 8 IS DEFINED BY &NUMB1                 Y02752
+&NUMB1   SETA  8                  OS/VS2 REL 2 EXTNDED PARM LIST Y02752
+         AIF   ('&TSLOGON' NE 'YES').NUMB1X1                     Y02752
+&NUMB1   SETA  (&NUMB1+4)         TSLOGON=YES FLAG ON            Y02752
+.NUMB1X1 ANOP                                                    Y02752
+         AIF   ('&TASKLIB' EQ '').NUMB1X2                        Y02752
+&NUMB1   SETA  (&NUMB1+2)         TASKLIB ADDRESS SPECIFIED FLAG Y02752
+.NUMB1X2 ANOP                                                    Y02752
+         AIF   (NOT (&SWSTAI OR &SWESTAI) ).NUMB1X3              Y02752
+&NUMB1   SETA  (&NUMB1+1)         FLAG FOR STAI OR ESTAI         Y02752
+.NUMB1X3 ANOP                     BYTE IS COMPLETE               Y02752
+.* BYTE AT OFFSET DECIMAL 20 IS DEFINED BY &NUMB2                Y02752
+         AIF   ('&TQE' NE 'NO').NUMB2X1                          Y02752
+&NUMB2   SETA  (&NUMB2+128)       BIT0=1 FOR TQE=NO, OS/VS1 ONLY Y02752
+         AGO   .NUMB2X3                                          Y02752
+.NUMB2X1 ANOP                                                    Y02752
+         AIF   ('&TQE' NE 'YES').NUMB2X3                         Y02752
+&NUMB4   SETA  128                FOR TQE BIT OFF                Y02752
+.NUMB2X3 ANOP                                                    Y02752
+         AIF   ('&FPREGSA' NE 'NO').NUMB2X2                      Y02752
+&NUMB2   SETA  (&NUMB2+64)        BIT1=1, FPREGSA=NO,OS/VS1 ONLY Y02752
+         AGO   .NUMB2X4                                          Y02752
+.NUMB2X2 ANOP                                                    Y02752
+         AIF   ('&FPREGSA' NE 'YES').NUMB2X4                     Y02752
+&NUMB4   SETA  (&NUMB4+64)        FOR FPREGSA BIT OFF            Y02752
+.NUMB2X4 ANOP                                                    Y02752
+&NUMB2   SETA  (&NUMB2+32)        BIT2=1 FOR OS/VS2 REL 1 LIST   Y02752
+&NUMB4   SETA  (255-&NUMB4)       FOR RESETTING TQE,FPREGSA BITS Y02752
+.* BYTE AT OFFSET DECIMAL 44 IS DEFINED BY &NUMB3                Y02752
+         AIF   (NOT (&SWSTAI OR &SWESTAI)  ).NUMB3X1             Y02752
+.* PURGE BITS (BITS 6 AND 7) ARE 00, CORRECT FOR PURGE=QUIESCE   Y02752
+         AIF   ('&PURGE' EQ '').NOPRGE                           Y02752
+         AIF   ('&PURGE' EQ 'QUIESCE').PRGEOK                    Y02752
+&NUMB3   SETA  1                  SET TO PURGE=HALT FLAGS        Y02752
+         AIF   ('&PURGE' EQ 'HALT').PRGEOK                       Y02752
+&NUMB3   SETA  2                  SET TO PURGE=NONE FLAGS        Y02752
+         AIF   ('&PURGE' EQ 'NONE').PRGEOK                       Y02752
+         AGO   .ERROZ             INVALED PURGE OPERAND          Y02752
+.NOPRGE  ANOP                     &NUMB3 IS SET TO QUIESCE       Y02752
+         AIF   (&SWSTAI).PRGEOK   CORRECT DEFAULT FOR STAI       Y02752
+&NUMB3   SETA  2                  SET TO NONE, DEFAULT FOR ESTAI Y02752
+.PRGEOK  ANOP                     PURGE BITS ARE SET CORRECTLY   Y02752
+         AIF   ('&ASYNCH' EQ '').NOASYNC                         Y02752
+         AIF   ('&ASYNCH' EQ 'NO').ASYNCOK                       Y02752
+&NUMB3   SETA  (&NUMB3+4)         SET ASYNCH=YES FLAG            Y02752
+         AIF   ('&ASYNCH' EQ 'YES').ASYNCOK                      Y02752
+         AGO   .ERROZ             INVALID ASYNCH OPERAND         Y02752
+.NOASYNC ANOP                     CHECK DEFAULTS                 Y02752
+         AIF   (&SWSTAI).ASYNCOK  ASYNCH=NO IS STAI DEFAULT      Y02752
+&NUMB3   SETA  (&NUMB3+4)         ASYNCH=YES IS ESTAI DEFAULT    Y02752
+.ASYNCOK ANOP                     ASYNCH BIT IS SET CORRECTLY    Y02752
+         AIF   (&SWSTAI).NUMB3X1  TERM AND ESTAI FLAGS NOT SET   Y02752
+&NUMB3   SETA  (&NUMB3+8)         BIT4=1 FOR ESTAI               Y02752
+         AIF   ('&TERM' EQ 'NO').NUMB3X1                         Y02752
+&NUMB3   SETA  (&NUMB3+16)        BIT3=1 FOR TERM=YES            Y02752
+.NUMB3X1 ANOP                     BYTE IS COMPLETE               Y02752
+&GNAME   SETC  'IHB'.'&SYSNDX'
+&IHBSWA  SETB  ('&VL' EQ '1')
+&IHBSWB  SETB  ('&SF' EQ '(E,(15))')
+         AIF   ('&NAME' EQ '' OR '&SF' EQ 'L').CONTAA
+&NAME    DS    0H
+.CONTAA  AIF   ('&PARAM' EQ '' AND '&MF(1)' NE 'E').CONTA
+         IHBOPLST ,&PARAM,MF=&MF
+.CONTA   AIF   ('&SF' EQ 'I').IROUT
+         AIF   ('&SF' EQ 'L').LROUT
+         AIF   (N'&SF NE 2).ERROR3
+         AIF   ('&SF(1)' NE 'E').ERROR3
+         AIF   ('&SF'(4,1) EQ '(').ISAREG
+         LA    15,&SF(2)                         LOAD LIST ADDR INTO 15
+         AGO   .CONTB
+.E1      IHBERMAC 35,&IHBNO,&MF,,,0                              Y02752
+         MEXIT
+.ERROR2  IHBERMAC 71,&IHBNO,&PARAM
+         MEXIT
+.ERROR3  IHBERMAC 41,&IHBNO,&SF,,,0                              Y02752
+         MEXIT
+.ERROR4  IHBERMAC 88,&IHBNO
+         MEXIT
+.ERROR5  IHBERMAC 72,&IHBNO
+         MEXIT
+.ERROR6  IHBERMAC 31,&IHBNO
+         MEXIT
+.ERROR7  IHBERMAC 240,,LPMOD
+         MEXIT
+.ERRHID IHBERMAC 195
+         MEXIT
+.ISAREG  AIF   ('&SF(2)' EQ '(15)').CONTB
+&A       SETA  K'&SF-6
+&H       SETC  '&SF'(5,&A)
+         LR    15,&H                             LOAD LIST ADDR INTO 15
+.CONTB   ANOP
+.* E FORM MUST ALLOW SETTING OF ALL FIELDS, SO THAT A LIST FORM  Y02752
+.* OF ALL ZEROS IS ACCEPTABLE. EXTENDED PARM LIST BITS AND       Y02752
+.* LENGTH FIELD MUST BE SET.                                     Y02752
+         AIF   ('&EP' EQ '').CONTC
+         LA    14,28(15,0)                       PICK UP EP ADDRESS
+         ST    14,0(15,0)                        INSERT EP ADDR IN LIST
+         MVC   28(8,15),*+10                     MOVE EP SYMB INTO LIST
+         B     *+12                              BRANCH AROUND EP SYMB.
+         DC    CL8'&EP'                          EP SYMBOL
+         AGO   .CONTE
+.CONTC   AIF   ('&EPLOC' EQ '').CONTD
+         AIF   ('&EPLOC'(1,1) EQ '(').ISAREGA
+         LA    14,&EPLOC                         PICK UP EPLOC ADDRESS
+         ST    14,0(15,0)                        INSERT EPLOC INTO LIST
+         AGO   .CONTE
+.ISAREGA ST    &EPLOC(1),0(15,0)                 INSERT EPLOC INTO LIST
+         AGO   .CONTE
+.CONTD   AIF   ('&DE' EQ '').CONTE
+         AIF   ('&DE'(1,1) EQ '(').ISAREGB
+         LA    14,&DE                            PICK UP DE ADDRESS
+         ST    14,0(15,0)                        INSERT DE INTO LIST
+         MVI   0(15),X'80'                       SET BIT INDICATING DE
+         AGO   .CONTE
+.ISAREGB ST    &DE(1),0(15,0)                    INSERT DE INTO LIST
+         MVI   0(15),X'80'                       SET BIT INDICATING DE
+.CONTE   AIF   ('&DCB' EQ '').CONHID
+         AIF   ('&DCB'(1,1) EQ '(').ISAREGC
+         LA    14,&DCB             PICK UP DCB ADDRESS
+         STCM  14,7,5(15)          STORE DCB INTO LIST
+         AGO   .CONHID
+.ISAREGC STCM  &DCB(1),7,5(15)     STORE INTO LIST
+.* BITS 6 AND 7 OF BYTE 4 PREVIOUSLY DEFINED FOR HIARCHY PARM    Y02752
+.CONHID  ANOP                                                    Y02752
+.CONTF   AIF   ('&ECB' EQ '').CONTG
+         AIF   ('&ECB'(1,1) EQ '(').ISAREGD
+         LA    14,&ECB                           PICK UP ECB ADDRESS
+         STCM  14,7,9(15)                        INSERT ECB INTO LIST
+         AGO   .CONTG
+.ISAREGD STCM  &ECB(1),7,9(15)                 INSERT ECB INTO LIST
+.CONTG   ANOP                                                    Y02752
+         OI    8(15),&NUMB1       SET FLAG BYTE                  Y02752
+         AIF   ('&GSPV' EQ '').CONTH
+         AIF   ('&GSPV'(1,1) EQ '(').ISAREGE
+         LA    14,&GSPV.(0,0)                    PICK UP GSPV VALUE
+         ST    14,12(15,0)                       INSERT GSPV INTO LIST
+         AGO   .CONTI
+.ISAREGE ST    &GSPV(1),12(15,0)                 INSERT GSPV INTO LIST
+         AGO   .CONTI
+.CONTH   AIF   ('&GSPL' EQ '').CONTI
+         AIF   ('&GSPL'(1,1) EQ '(').ISAREGF
+         LA    14,&GSPL                          PICK UP GSPL ADDRESS
+         ST    14,12(15,0)                       INSERT GSPL INTO LIST
+         MVI   12(15),X'01'                      SET LIST BIT ON
+         AGO   .CONTI
+.ISAREGF ST    &GSPL(1),12(15,0)                 INSERT GSPL INTO LIST
+         MVI   12(15),X'01'                      SET LIST BIT ON
+.CONTI   AIF   ('&SHSPV' EQ '').CONTK
+         AIF   ('&SHSPV'(1,1) EQ '(').ISAREGG
+         LA    14,&SHSPV.(0,0)                   PICK UP SHSPV VALUE
+         ST    14,16(15,0)                       INSERT SHSPV INTO LIST
+         AGO   .CONTL
+.ISAREGG ST    &SHSPV(1),16(15,0)                INSERT SHSPV INTO LIST
+         AGO   .CONTL
+.CONTK   AIF   ('&SHSPL' EQ '').CONTL
+         AIF   ('&SHSPL'(1,1) EQ '(').ISAREGH
+         LA    14,&SHSPL                         PICK UP SHSPL ADDRESS
+         ST    14,16(15,0)                       INSERT SHSPL INTO LIST
+         MVI   16(15),X'01'                      SET LIST BIT ON
+         AGO   .CONTL
+.ISAREGH ST    &SHSPL(1),16(15,0)                INSERT SHSPL INTO LIST
+         MVI   16(15),X'01'                      SET LIST BIT ON
+.CONTL   AIF   ('&ETXR' EQ '').CONTN
+         AIF   ('&ETXR'(1,1) EQ '(').ISAREGI
+         LA    14,&ETXR                          PICK UP ETXR ADDRESS
+         STCM  14,7,21(15)             INSERT ETXR IN LIST
+         AGO   .CONTN
+.ISAREGI STCM  &ETXR(1),7,21(15)       INSERT ETXR IN LIST
+.CONTN   ANOP
+.CONTN0  AIF   ('&DPMOD' EQ '').CONTO                              RORI
+         AIF   ('&DPMOD'(1,1) EQ '(').ISAREGJ
+         B     *+6                               BRANCH AROUND DPMOD
+         AIF   ('&DPMOD'(1,1) EQ '+' OR '&DPMOD'(1,1) EQ '-').SIGNA
+         DC    AL2(&DPMOD)                       DPMOD VALUE
+         MVC   24(2,15),*-2                      INSERT DPMOD IN LIST
+         AGO   .CONTO
+.SIGNA   DC    AL2(0&DPMOD)                      DPMOD VALUE
+         MVC   24(2,15),*-2                      INSERT DPMOD IN LIST
+         AGO   .CONTO
+.ISAREGJ STH   &DPMOD(1),24(15,0)                INSERT DPMOD IN LIST
+.CONTO   AIF   ('&LPMOD' EQ '').CONTP
+         AIF   ('&LPMOD'(1,1) EQ '(').ISAREGK
+         MVI   26(15),&LPMOD                     INSERT LPMOD IN LIST
+         AGO   .CONTP
+.ISAREGK STC   &LPMOD(1),26(15,0)                INSERT LPMOD IN LIST
+.CONTP   ANOP                                                      I270
+.* BITS 6 AND 7 OF BYTE 20 PREVIOUSLY DEFINED FOR ROLL PARMS     Y02752
+         AIF   (&NUMB4 EQ 255).TQEFPR1                           Y02752
+         NI    20(15),&NUMB4      SET TQE AND/OR FPREGSA OFF     Y02752
+.TQEFPR1 ANOP                                                    X02050
+         OI    20(15),&NUMB2      OS/VS2 LIST, TQE,FPREGSA       Y02752
+         AIF   (&NUMB EQ 0).LSQA1
+         OI    27(15),&NUMB
+.LSQA1   AIF   ('&LSQA' EQ '0').JSCB1
+         AIF   ('&LSQA'(1,1) EQ '(').ISAREGL
+         MVI   36(15),&LSQA        INSERT LSQA IN LIST
+         AGO   .JSCB1
+.ISAREGL STC   &LSQA(1),36(15,0)   INSERT LSQA IN LIST           YM1995
+.JSCB1   AIF   ('&JSCB' EQ '').CONTQ5
+         AIF   ('&JSCB'(1,1) EQ '(').ISAREG1
+         LA    14,&JSCB           PICK UP JSCB ADDRESS
+         STCM  14,7,37(15)        INSERT JSCB INTO LIST
+         AGO   .CONTQ5                                            20028
+.ISAREG1 STCM  &JSCB(1),7,37(15)  INSERT JSCB INTO LIST
+.CONTQ5  ANOP                                                     20028
+         AIF   ( NOT (&SWSTAI OR &SWESTAI) ).TTID  NEITHER GIVEN Y02752
+.* IF EITHER STAI OR ESTAI GIVEN, OVERRIDE BYTES DEC 41 - 47     Y02752
+.STAIRB  AIF   ('&STXADDR'(1,1) EQ '(' ).REG1                    Y02752
+         LA    14,&STXADDR        GET STAI/ESTAI EXIT ADDR       Y02752
+         ST    14,44(,15)         STAI/ESTAI EXIT ADDR INTO LIST Y02752
+         AGO   .STAI2                                             20028
+.REG1    ST    &STXADDR,44(,15)   STAI/ESTAI EXIT ADDR INTO LIST Y02752
+.STAI2   ANOP                                                    Y02752
+         AIF   (&NUMB3 EQ 0).STAZ  NO FLAGS TO BE SET            Y02752
+         MVI   44(15),&NUMB3      SET STAI/ESTAI FLAGS           Y02752
+.STAZ    ANOP                                                    Y02752
+         AIF   ('&STPADDR' NE '').STY                            Y02752
+         SR    14,14                                             Y02752
+         STCM  14,7,41(15)        NO STAI/ESTAI PARM LIST ADDR   Y02752
+         AGO   .TTID                                             Y02752
+.STY     ANOP                                                    Y02752
+         AIF   ('&STPADDR'(1,1) EQ '(').REG2                     Y02752
+         LA    14,&STPADDR        GET STAI/ESTAI PARM LIST ADDR  Y02752
+         STCM  14,7,41(15)        STAI/ESTAI PARM LIST ADDR      Y02752
+         AGO   .TTID
+.REG2    STCM  &STPADDR,7,41(15)  STAI/ESTAI PARM LIST ADDR      Y02752
+.TTID    AIF   ('&TID' EQ '0').TLIBE
+         AIF   ('&TID'(1,1) EQ '(').REGTID
+         MVI   40(15),&TID         INSERT TID IN LIST
+         AGO   .TLIBE
+.REGTID  STC   &TID(1),40(15,0)    INSERT TID IN LIST            YM1995
+.TLIBE   AIF   ('&TASKLIB' EQ '').NSHSP1                         Y02752
+.TLIBEA  AIF   ('&TASKLIB'(1,1) EQ '(').TREGE                     20021
+         LA    14,&TASKLIB(1) GET TASKLIB DCB ADDR.               20021
+         ST    14,48(,15)    .PUT TASKLIB DCB ADDR. IN LIST.      20021
+         AGO   .NSHSP1                                           Y02752
+.TREGE   ST    &TASKLIB(1),48(,15) TASKLIB DCB ADDR. IN LIST.     20021
+.NSHSP1  ANOP                                                    Y02752
+         MVI   55(15),60          SET LENGTH OF THIS PARM LIST   Y02752
+         AIF   ('&NSHSPL' EQ '').NSHSP2                          Y02752
+         AIF   ('&RSAPF' EQ 'YES').NSHSP6   RSAPF ALSO ON      @Z40RP9B
+         OI    52(15),X'80'       NEXT WORD HAS SP LIST ADDR     Y02752
+.NSHSP7  ANOP                                                  @Z40RP9B
+         AIF   ('&NSHSPL'(1,1) EQ '(' ).NSHSP3                   Y02752
+         LA    14,&NSHSPL         GET SP LIST ADDR               Y02752
+         ST    14,56(,15)         NSHSPL ADDR INTO PARM LIST     Y02752
+         AGO   .SVC                                               20021
+.NSHSP3  ANOP                                                    Y02752
+         ST    &NSHSPL(1),56(,15) NSHSPL ADDR INTO PARM LIST     Y02752
+         AGO   .SVC                                              Y02752
+.NSHSP2  ANOP                                                    Y02752
+         AIF   ('&NSHSPV' EQ '').NSHSP8                        @Z40RP9B
+         NI    52(15),X'7F'       NEXT WORD CONTAINS SP VALUE    Y02752
+         AIF   ('&RSAPF' NE 'YES').NSHSP5                      @Z40RP9B
+         OI    52(15),X'40'        SET APF FLAG ON             @Z40RP9B
+.NSHSP5  ANOP                                                  @Z40RP9B
+         AIF   ('&NSHSPV'(1,1) EQ '(' ).NSHSP4                   Y02752
+         LA    14,&NSHSPV.(0,0)   SP VALUE FOR NSHSPV            YM1995
+         ST    14,56(,15)          PARM INTO LIST                Y02752
+         AGO   .SVC                                              Y02752
+.NSHSP4  ANOP                                                    Y02752
+         ST    &NSHSPV(1),56(,15) SET SP VALUE FOR NSHSPV        Y02752
+         AGO   .SVC                                              Y02752
+.NSHSP6  OI    52(15),X'C0'      SET NSHSPL AND RSAPF FLAGS    @Z40RP9B
+         AGO   .NSHSP7                                         @Z40RP9B
+.NSHSP8  ANOP                                                  @Z40RP9B
+         AIF   ('&RSAPF' NE 'YES').SVC NO FLGS ON              @Z40RP9B
+         OI    52(15),X'40'      SET APF FLAG ON               @Z40RP9B
+         AGO   .SVC                                            @Z40RP9B
+.LROUT   ANOP
+.* L FORM MUST ACCEPT ALL PARAMETERS POSSIBLE. A LIST OF ALL     Y02752
+.* ZEROS MUST BE ACCEPTABLE AS AN L FORM.
+&NAME    DS    0F
+         AIF   ('&EP' EQ '').CONTLA
+         AIF   ('&EP'(1,1) EQ '(').ERROR5
+         DC    A(*+28)                           POINTER TO SYMB NAME
+         AGO   .COHID                                              LCS1
+.CONTLA  AIF   ('&EPLOC' EQ '').CONTLB
+         AIF   ('&EPLOC'(1,1) EQ '(').ERROR5
+         DC    A(&EPLOC)                         POINTER TO SYMB NAME
+         AGO   .COHID                                              LCS1
+.CONTLB  AIF   ('&DE' EQ '').CONTLLA
+         AIF   ('&DE'(1,1) EQ '(').ERROR5
+         DC    X'80'                             SET BIT TO INDICATE DE
+         DC    AL3(&DE)                          DIRECTORY ENTRY POINTR
+         AGO   .COHID                                              LCS1
+.CONTLLA DC    A(0)                              DE OR EPLOC ADDRESS
+.COHID   ANOP                                                    Y02752
+.* BITS 6 AND 7 OF BYTE 4 PREVIOUSLY DEFINED FOR HIARCHY PARM    Y02752
+.CHID    DC    AL1(0)
+.CONTLC  AIF   ('&DCB' EQ '').CONTLD
+         AIF   ('&DCB'(1,1) EQ '(').ERROR5
+         DC    AL3(&DCB)                                           LCS1
+         AGO   .CONTLSE                                           20028
+.CONTLD  DC    AL3(0)                  DCB ADDRESS                 LCS1
+.CONTLSE ANOP                                                    Y02572
+         AIF   (&NUMB1 EQ 8).NOTSOLW DO NOT SET EXTND LIST ALONE Y02752
+         DC    AL1(&NUMB1)        FLAGS                          Y02752
+         AGO   .NOTSOLX                                          Y02752
+.NOTSOLW ANOP                                                     20021
+         DC    AL1(0)                                             20021
+.NOTSOLX ANOP                                                     20021
+.CONTLE  AIF   ('&ECB' EQ '').CONTLF
+         AIF   ('&ECB'(1,1) EQ '(').ERROR5
+         DC    AL3(&ECB)                         ECB ADDRESS      20028
+         AGO   .CONTLG
+.CONTLF  DC    AL3(0)                            ECB ADDRESS      20028
+.CONTLG  AIF   ('&GSPV' EQ '').CONTLH
+         AIF   ('&GSPV'(1,1) EQ '(').ERROR5
+         DC    A(&GSPV)                          GSPV VALUE
+         AGO   .CONTLI
+.CONTLH  AIF   ('&GSPL' EQ '').CONTLJ
+         AIF   ('&GSPL'(1,1) EQ '(').ERROR5
+         DC    AL1(1)                            SET LIST BIT ON
+         DC    AL3(&GSPL)                        GSPL ADDRESS
+         AGO   .CONTLI
+.CONTLJ  DC    A(0)                              GSPL OR GSPV
+.CONTLI  AIF   ('&SHSPV' EQ '').CONTLK
+         AIF   ('&SHSPV'(1,1) EQ '(').ERROR5
+         DC    A(&SHSPV)                         SHSPV VALUE
+         AGO   .CONTLL
+.CONTLK  AIF   ('&SHSPL' EQ '').CONTLM
+         AIF   ('&SHSPL'(1,1) EQ '(').ERROR5
+         DC    AL1(1)                            SET LIST BIT ON
+         DC    AL3(&SHSPL)                       SHSPL ADDRESS
+         AGO   .CONTLL
+.CONTLM  DC    A(0)                              SHSPV OR SHSPL
+.CONTLL  ANOP
+.* BITS 6 AND 7 OF BYTE 20 PREVIOUSLY DEFINED FOR ROLL PARMS     Y02752
+         AIF   (&NUMB2 EQ 32).BYT20Z DO NOT SET EXT PARM ALONE   Y02752
+         DC    AL1(&NUMB2)        FLAGS                          Y02752
+         AGO   .BYT20C                                           Y02752
+.BYT20Z  ANOP                                                    Y02752
+         DC    AL1(0)                                            Y02752
+.BYT20C  ANOP                                                    Y02752
+         AIF   ('&ETXR' EQ '').CONTLN                              RORI
+         AIF   ('&ETXR'(1,1) EQ '(').ERROR5
+         DC    AL3(&ETXR)                    EXIT ROUT. ADDRESS    RORI
+         AGO   .CONTLO
+.CONTLN  DC    AL3(0)                        EXIT ROUT. ADDRESS    RORI
+.CONTLO  AIF   ('&DPMOD' EQ '').CONTLP
+         AIF   ('&DPMOD'(1,1) EQ '(').ERROR5
+         AIF   ('&DPMOD'(1,1) EQ '+' OR '&DPMOD'(1,1) EQ '-').SIGNB
+         DC    AL2(&DPMOD)                       DPMOD VALUE
+         AGO   .CONTLQ
+.SIGNB   DC    AL2(0&DPMOD)                      DPMOD VALUE
+         AGO   .CONTLQ
+.CONTLP  DC    AL2(0)                            DPMOD VALUE
+.CONTLQ  AIF   ('&LPMOD' EQ '').CONTLR
+         AIF   ('&LPMOD'(1,1) EQ '(').ERROR5
+         DC    AL1(&LPMOD)                       LPMOD VALUE
+         AGO   .CONTLS6
+.CONTLR  DC    AL1(0)                            LPMOD VALUE
+.CONTLS6 ANOP                                                    Y02752
+.CONTLU  DC    AL1(&NUMB)
+         AIF   ('&EP' EQ '').CONTLV
+         DC    CL8'&EP'                          EP SYMBOL
+         AGO   .CONTLV1                                            1270
+.* SET EP NAME SPACE TO ZEROS TO ALLOW ALL ZERO LIST FORM        Y02752
+.CONTLV  DC    2A(0)              EP NAME SPACE                  Y02752
+.CONTLV1 AIF   ('&LSQA' EQ '0').NOLSQA
+         AIF   ('&LSQA'(1,1) EQ '(').ERROR5
+         DC    AL1(&LSQA)          LSQA VALUE
+         AGO   .CONTLV2
+.NOLSQA  DC    AL1(0)              NO LSQA
+.CONTLV2 AIF   ('&JSCB' EQ '').NOJSCB                             20021
+         AIF   ('&JSCB'(1,1) EQ '(').ERROR5                        I270
+         DC    AL3(&JSCB)          ADDRESS OF JSCB
+         AGO   .LTID
+.NOJSCB  ANOP                                                     20028
+         DC    AL3(0)    .
+.LTID    AIF   ('&TID' EQ '0').NOTID
+         AIF   ('&TID'(1,1) EQ '(').ERROR5
+         DC    AL1(&TID)           TID VALUE
+         AGO   .CONTLW
+.NOTID   DC    AL1(0)              .NO TID
+.CONTLW  AIF   (&SWSTAI OR &SWESTAI).CONTLX                      Y02752
+         DC    AL3(0)             STAI/ESTAI PARM LIST           Y02752
+         DC    A(0)                .EXIT ADDRESS
+         AGO   .TLCONT                                            20021
+.CONTLX  ANOP                                                    Y02752
+         AIF   ('&STXADDR'(1,1) EQ '(' ).ERROR5                  Y02752
+         AIF   ('&STPADDR' EQ '').CONTLY                          20028
+         AIF   ('&STPADDR'(1,1) EQ '(' ).ERROR5                  Y02752
+         DC    AL3(&STPADDR)      STAI/ESTAI PARM LIST ADDR      Y02752
+         AGO   .TLCX                                              20021
+.CONTLY  DC    AL3(0)             STAI/ESTAI PARAMETER LIST      Y02752
+.TLCX    ANOP                                                    Y02752
+         DC    AL1(&NUMB3)        STAI/ESTAI FLAGS               Y02752
+.TLCZ    DC    AL3(&STXADDR)      STAI/ESTAI EXIT ROUTINE ADDR   Y02752
+.TLCONT  AIF   ('&TASKLIB' NE '').TLCONTA                         20021
+         DC    A(0)                     .TASKLIB.                 20021
+         AGO   .LNSHSP1                                          Y02752
+.TLCONTA ANOP                                                     20021
+         AIF   ('&TASKLIB'(1,1) EQ '(' ).ERROR5                  Y02752
+         DC    A(&TASKLIB)   .TASKLIB DCB ADDRESS.                20021
+.* ATTACH PARM LIST LENGTH IS NOT SET IN LIST FORM, MUST BE SET  Y02752
+.* IN EXECUTE FORM. ALSO EXTENDED PARM LIST FLAGS MUST BE SET    Y02752
+.* IN E FORM TO INSURE SERVICE RTN RECEIVES A COMPLETE PARM LIST Y02752
+.LNSHSP1 ANOP                                                    Y02752
+         AIF   ('&NSHSPL' EQ '').LNSHSP2                         Y02752
+         AIF   ('&NSHSPL'(1,1) EQ '(' ).ERROR5                   Y02752
+         AIF   ('&RSAPF' EQ 'YES').LNSHSP6                     @Z40RP9B
+         DC    AL1(128)           SP LIST ADDR IN FOLLOWING WORD Y02752
+.LNSHSP4 ANOP                                                  @Z40RP9B
+         DC    AL3(0)             PARM LIST LENGTH FIELD         Y02752
+         DC    A(&NSHSPL)         NSHSPL ADDRESS                 Y02752
+         AGO   .END                                               20021
+.LNSHSP2 ANOP                                                    Y02752
+         AIF   ('&RSAPF' EQ 'YES').LNSHSP7                     @Z40RP9B
+         DC    A(0)               FLAGS AND PARM LIST LENGTH     Y02752
+.LNSHSP5 ANOP                                                  @Z40RP9B
+         AIF   ('&NSHSPV' EQ '').LNSHSP3                         Y02752
+         AIF   ('&NSHSPV'(1,1) EQ '(' ).ERROR5                   Y02752
+         DC    AL3(0)             NSHSPV                         Y02752
+         DC    AL1(&NSHSPV)        VALUE                         Y02752
+         AGO   .END                                              Y02752
+.LNSHSP3 ANOP                                                    Y02752
+         DC    A(0)               NO NSHSPV OR NSHSPL PARM       Y02752
+         AGO   .END                                              Y02752
+.LNSHSP6 DC    AL1(192)         NSHSPL AND RSAPF FLGS ON       @Z40RP9B
+         AGO   .LNSHSP4                                        @Z40RP9B
+.LNSHSP7 DC    AL1(64)          NSHSPV AND RSAPF FLGS ON       @Z40RP9B
+         DC    AL3(0)           PARM LIST LENGTH FIELD         @Z40RP9B
+         AGO   .LNSHSP5                                        @Z40RP9B
+.IROUT   ANOP
+.* NORMAL FORM. IN-LINE LIST.                                    Y02752
+         LA    15,&GNAME                         LOAD 15 WITH LIST ADDR
+         AIF   ('&EPLOC' EQ '').ICONTA
+         AIF   ('&EPLOC'(1,1) NE '(').ICONTB
+         ST    &EPLOC(1),0(0,15)                 STORE EPLOC INTO LIST
+         AGO   .ICONTB
+.ICONTA  AIF   ('&DE' EQ '').ICONTB
+         AIF   ('&DE'(1,1) NE '(').ICONTB
+         ST    &DE(1),0(0,15)                    STORE  DE INTO LIST
+         MVI   0(15),X'80'                       SET DE BIT ON
+.ICONTB  AIF   ('&DCB' EQ '').ICOHID                               LCS1
+         AIF   ('&DCB'(1,1) NE '(').ICOHID                         LCS1
+         STCM  &DCB(1),7,5(15)     STORE DCB INTO LIST
+.* BITS 6 AND 7 OF BYTE 4 PREVIOUSLY DEFINED FOR HIARCHY         Y02752
+.ICOHID  ANOP                                                      LCS1
+.ICONTC  AIF   ('&ECB' EQ '').ICONTD
+         AIF   ('&ECB'(1,1) NE '(').ICONTD
+         STCM  &ECB(1),7,9(15)         STORE ECB INTO LIST
+.ICONTD  AIF   ('&GSPV' EQ '').ICONTE
+         AIF   ('&GSPV'(1,1) NE '(').ICONTF
+         ST    &GSPV(1),12(0,15)    STORE GSPV INTO LIST
+         AGO   .ICONTF
+.ICONTE  AIF   ('&GSPL' EQ '').ICONTF
+         AIF   ('&GSPL'(1,1) NE '(').ICONTF
+         ST    &GSPL(1),12(0,15)                 STORE GSPL INTO LIST
+         MVI   12(15),X'01'                      SET LIST BIT ON
+.ICONTF  AIF   ('&SHSPV' EQ '').ICONTG
+         AIF   ('&SHSPV'(1,1) NE '(').ICONTH
+         ST    &SHSPV(1),16(0,15)                STORE SHSPV INTO LIST
+         AGO   .ICONTH
+.ICONTG  AIF   ('&SHSPL' EQ '').ICONTH
+         AIF   ('&SHSPL'(1,1) NE '(').ICONTH
+         ST    &SHSPL(1),16(0,15)                STORE SHSPL INTO LIST
+         MVI   16(15),X'01'                      SET LIST BIT ON
+.ICONTH  AIF   ('&ETXR' EQ '').ICONTI
+         AIF   ('&ETXR'(1,1) NE '(').ICONTI
+         STCM  &ETXR(1),7,21(15)       STORE ETXR INTO LIST
+.ICONTI  AIF   ('&DPMOD' EQ '').ICONTJ
+         AIF   ('&DPMOD'(1,1) NE '(').ICONTJ
+         STH   &DPMOD(1),24(15,0)                STORE DPMOD INTO LIST
+.ICONTJ  AIF   ('&LPMOD' EQ '').ICONTJ0
+         AIF   ('&LPMOD'(1,1) NE '(').ICONTJ0
+         STC   &LPMOD(1),26(15,0)                STORE LPMOD INTO LIST
+.ICONTJ0 AIF   ('&LSQA' EQ '0').ICONTK
+         AIF   ('&LSQA'(1,1) NE '(').ICONTK
+         STC   &LSQA(1),36(15,0)   INSERT LSQA INTO LIST         YM1995
+.ICONTK  AIF   ('&JSCB' EQ '').ICONTL0                            20028
+         AIF   ('&JSCB'(1,1) NE '(').ICONTL0                      20028
+         STCM  &JSCB(1),7,37(15)    INSERT JSCB INTO LIST
+.ICONTL0 ANOP
+         AIF   ('&TID' EQ '0').ICONTL1
+         AIF   ('&TID'(1,1) NE '(').ICONTL1
+         STC   &TID(1),40(15,0)    INSERT TID INTO LIST          YM1995
+.ICONTL1 ANOP
+         AIF   (NOT (&SWSTAI OR &SWESTAI) ).ICONTO               Y02572
+         AIF   ('&STXADDR'(1,1) NE '(' ).ICZ                     Y02572
+         STCM  &STXADDR,7,45(15)   SET STAI/ESTAI EXIT ADDR      Y02572
+.ICZ     AIF   ('&STPADDR' EQ '').ICONTO                         Y02752
+         AIF   ('&STPADDR'(1,1) NE '(' ).ICONTO                  Y02752
+         STCM  &STPADDR,7,41(15)  STAI/ESTAI PARM LIST ADDR      Y02752
+.ICONTO  AIF   ('&TASKLIB' EQ '').ICONTP                          20021
+.ICONTQ  AIF   ('&TASKLIB'(1,1) NE '(').ICONTP                    20021
+         ST    &TASKLIB(1),48(,15)  .PUT TASKLIB DCB ADDR. IN LIST.
+.ICONTP  ANOP                                                    Y02752
+         AIF   ('&NSHSPL' EQ '').ICONTP0                         Y02752
+         AIF   ('&NSHSPL'(1,1) NE '(' ).ICONTP1                  Y02752
+         ST    &NSHSPL(1),56(,15) NSHSPL ADDR INTO LIST          Y02752
+         AGO   .ICONTP1                                          Y02752
+.ICONTP0 ANOP                                                    Y02752
+         AIF   ('&NSHSPV' EQ '').ICONTP1                         Y02752
+         AIF   ('&NSHSPV'(1,1) NE '(' ).ICONTP1                  Y02752
+         STC   &NSHSPV(1),59(,15) NSHSPV VALUE INTO LIST         Y02752
+.ICONTP1 ANOP                                                    Y02752
+         B     60(,15)            BRANCH AROUND LIST             Y02752
+&GNAME   DS    0F                                SUP. PARAM. LIST
+         AIF   ('&EP' EQ '').CNTA
+         DC    A(*+28)                           ADDRESS OF SYMB NAME
+         AGO   .CCHID                                              LCS1
+.CNTA    AIF   ('&EPLOC' EQ '').CNTC
+         AIF   ('&EPLOC'(1,1) EQ '(').CNTD
+         DC    A(&EPLOC)                         ADDRESS OF SYMB NAME
+         AGO   .CCHID                                              LCS1
+.CNTC    AIF   ('&DE' EQ '').ERROR6
+         AIF   ('&DE'(1,1) EQ '(').CNTD
+         DC    X'80'                             SET BIT TO INDICATE DE
+         DC    AL3(&DE)                          DE ADDRESS
+         AGO   .CCHID                                              LCS1
+.CNTD    DC    A(0)                              DE OR EPLOC ADDRESS
+.CCHID   ANOP                                                    Y02752
+.* BITS 6 AND 7 OF BYTE 4 PREVIOUSLY DEFINED FOR HIARCHY PARM    Y02752
+.CCCHID  DC    AL1(0)
+.CNTB    AIF   ('&DCB' EQ '').CNTE
+         AIF   ('&DCB'(1,1) EQ '(').CNTE
+         DC    AL3(&DCB)               DCB ADDRESS                 LCS1
+         AGO   .CNTF
+.CNTE    DC    AL3(0)                  DCB ADDRESS                 LCS1
+.CNTF    ANOP
+         DC    AL1(&NUMB1)        FLAGS                          Y02752
+         AIF   ('&ECB' EQ '').CNTG                               Y02752
+         AIF   ('&ECB'(1,1) EQ '(').CNTG
+         DC    AL3(&ECB)          ECB ADDRESS                    Y02752
+         AGO   .CNTH
+.CNTG    DC    AL3(0)             ECB ADDRESS                    Y02752
+.CNTH    AIF   ('&GSPV' EQ '').CNTI
+         AIF   ('&GSPV'(1,1) EQ '(').CNTJ
+         DC    A(&GSPV)                          GSPV VALUE
+         AGO   .CNTK
+.CNTI    AIF   ('&GSPL' EQ '').CNTJ
+         AIF   ('&GSPL'(1,1) EQ '(').CNTJ
+         DC    AL1(1)                            SET LIST BIT ON
+         DC    AL3(&GSPL)                        GSPL ADDRESS
+         AGO   .CNTK
+.CNTJ    DC    A(0)                              GSPV VALUE OR GSPL ADR
+.CNTK    AIF   ('&SHSPV' EQ '').CNTL
+         AIF   ('&SHSPV'(1,1) EQ '(').CNTM
+         DC    A(&SHSPV)                         SHSPV VALUE
+         AGO   .CNTN
+.CNTL   AIF   ('&SHSPL' EQ '').CNTM
+         AIF   ('&SHSPL'(1,1) EQ '(').CNTM
+         DC    AL1(1)                            SET LIST BIT ON
+         DC    AL3(&SHSPL)                       SHSPL ADDRESS
+         AGO   .CNTN
+.CNTM    DC    A(0)                              SHSPL OR SHSPV
+.CNTN    ANOP
+.* BITS 6 AND 7 OF BYTE 20 PREVIOUSLY DEFINED FOR ROLL PARM      Y02752
+         DC    AL1(&NUMB2)        FLAGS                          Y02752
+         AIF   ('&ETXR' EQ '').CNTO                                RORI
+         AIF   ('&ETXR'(1,1) EQ '(').CNTO
+         DC    AL3(&ETXR)                    EXIT ROUT. ADDRESS    RORI
+         AGO   .CNTP
+.CNTO    DC    AL3(0)                        ETXR ROUT. ADDRESS    RORI
+.CNTP    AIF   ('&DPMOD' EQ '').CNTQ
+         AIF   ('&DPMOD'(1,1) EQ '(').CNTQ
+         AIF   ('&DPMOD'(1,1) EQ '+' OR '&DPMOD'(1,1) EQ '-').SIGNC
+         DC    AL2(&DPMOD)                       DPMOD VALUE
+         AGO   .CNTR
+.SIGNC   DC    AL2(0&DPMOD)                      DPMOD VALUE
+         AGO   .CNTR
+.CNTQ    DC    AL2(0)                            DPMOD VALUE
+.CNTR    AIF   ('&LPMOD' EQ '').CNTS
+         AIF   ('&LPMOD'(1,1) EQ '(').CNTS
+         DC    AL1(&LPMOD)                       LPMOD VALUE
+         AGO   .CNTT0C
+.CNTS    DC    AL1(0)                            LPMOD VALUE
+.CNTT0C  ANOP                                                    Y02752
+.CNTV    DC    AL1(&NUMB)
+         AIF   ('&EP' EQ '').CNTW
+         DC    CL8'&EP'            EP SYMBOL
+         AGO   .CNTXX                                              I270
+.CNTW    DC    CL8' '                                              I270
+.CNTXX   AIF   ('&LSQA' EQ '0').CNTXX1
+         AIF   ('&LSQA'(1,1) EQ '(').CNTXX1
+         DC    AL1(&LSQA)          LSQA
+         AGO   .CNTX
+.CNTXX1  DC    AL1(0)              LSQA=0
+.CNTX    AIF   ('&JSCB' EQ '').CONTQ6                             20028
+         AIF   ('&JSCB'(1,1) EQ '(').CONTQ6                        I270
+         DC    AL3(&JSCB)          ADDRESS OF JSCB
+         AGO   .CNTYY
+.CONTQ6  DC    AL3(0)              ADDRESS OF JSCB
+.CNTYY   AIF   ('&TID' EQ '0').CNTYY1
+         AIF   ('&TID'(1,1) EQ '(').CNTYY1
+         DC    AL1(&TID)           TID
+         AGO   .CNTY
+.CNTYY1  DC    AL1(0)              TID=0
+.CNTY    AIF   (NOT (&SWSTAI OR &SWESTAI) ).TLICN                Y02752
+         AIF   ('&STPADDR' EQ '').CREG2                          Y02752
+         AIF   ('&STPADDR'(1,1) EQ '(' ).CREG2                   Y02752
+         DC    AL3(&STPADDR)      STAI/ESTAI PARM LIST ADDR      Y02752
+         AGO   .CKREG1                                            20028
+.CREG2   DC    AL3(0)             STAI/ESTAI PARM LIST ADDR      Y02752
+.CKREG1  ANOP                                                    Y02752
+         DC    AL1(&NUMB3)        STAI/ESTAI FLAGS               Y02752
+         AIF   ('&STXADDR'(1,1) EQ '(' ).CREG1                   Y02752
+         DC    AL3(&STXADDR)      STAI/ESTAI EXIT RTN ADDRESS    Y02752
+         AGO   .TLICNA                                            20021
+.CREG1   DC    AL3(0)             STAI/ESTAI EXIT RTN ADDRESS    Y02752
+         AGO   .TLICNA
+.TLICN   DC    AL3(0)             NO STAI/ESTAI PARM LIST ADDR   Y02752
+         DC    A(0)                .NO EXIT ADDR
+.TLICNA  ANOP                                                    Y02752
+         AIF   ('&TASKLIB' EQ '').TLICNC                         Y02752
+         AIF   ('&TASKLIB'(1,1) EQ '(' ).TLICNC                  Y02752
+         DC    A(&TASKLIB)   .TASKLIB DCB ADDRESS.                20021
+         AGO   .INSHSP1                                          Y02752
+.TLICNC  DC    A(0)          .TASKLIB DCB ADDRESS.                20021
+.INSHSP1 ANOP                                                    Y02752
+         AIF   ('&NSHSPL' EQ '').INSHSP2                         Y02752
+         AIF   ('&RSAPF' EQ 'YES').C0  APF NSHSPL ON           @Z40RP9B
+         DC    X'80'              NSHSPL FLAG                    Y02752
+.T1      ANOP                                                  @Z40RP9B
+         DC    AL3(60)            LENGTH OF THIS PARAMETER LIST  Y02752
+         AIF   ('&NSHSPL'(1,1) EQ '(' ).INSHSP3                  Y02752
+         DC    A(&NSHSPL)         NSHSPL ADDRESS                 Y02752
+         AGO   .SVC                                              Y02752
+.INSHSP2 ANOP                                                    Y02752
+         AIF   ('&RSAPF' EQ 'YES').FOUR0   APF FLAG ON ONLY    @Z40RP9B
+         DC    X'00'                       NO FLAGS ON         @Z40RP9B
+.T2      ANOP                                                  @Z40RP9B
+         DC    AL3(60)            LENGTH OF THIS PARM LIST     @Z40RP9B
+         AIF   ('&NSHSPV' EQ '').INSHSP3                         Y02752
+         AIF   ('&NSHSPV'(1,1) EQ '(' ).INSHSP3                  Y02752
+         DC    A(&NSHSPV)         NSHSPV VALUE                   Y02752
+         AGO   .SVC                                              Y02752
+.C0      ANOP                                                  @Z40RP9B
+         DC    X'C0'             NSHSPL AND APF FLAGS ON       @Z40RP9B
+         AGO   .T1                                             @Z40RP9B
+.FOUR0   ANOP
+         DC    X'40'             APF FLAG ON ONLY
+         AGO   .T2                                             @Z40RP9B
+.INSHSP3 ANOP                                                    Y02752
+         DC    A(0)               NSHSPV VALUE OR NSHSPL ADDR    Y02752
+.SVC     SVC   42                                ISSUE ATTACH SVC
+         MEXIT                                                    20028
+.ERROZ   IHBERMAC 1003,PURGE,ASYNCH                               20021
+         MEXIT                                                   Y02752
+.ERROR   IHBERMAC 1004,&STAITYP                                  Y02752
+         MEXIT                                                   Y02752
+.E2      IHBERMAC 1005,&STAITYP                                  Y02752
+         MEXIT
+.E3      IHBERMAC 1005,PURGE
+         MEXIT
+.E4      IHBERMAC 1005,ASYNCH
+         MEXIT
+.E5      IHBERMAC 1005,SZERO,YES
+         MEXIT
+.E6      IHBERMAC 1005,GIVEJPQ
+         MEXIT
+.E7      IHBERMAC 1005,GSPV
+         MEXIT
+.E8      IHBERMAC 1005,GSPL
+         MEXIT
+.E9      IHBERMAC 1005,SHSPV
+         MEXIT
+.E10     IHBERMAC 1005,SHSPL
+         MEXIT
+.ERDISP  IHBERMAC 1001,DISP,&DISP
+         MEXIT                                                   X02050
+.ERTQE   IHBERMAC 1001,TQE,&TQE                                  X02050
+         MEXIT                                                   X02050
+.ERFP    IHBERMAC 1001,FPREGSA,&FPREGSA                          X02050
+         MEXIT                                                   Y02752
+.ERTERM  IHBERMAC 1001,TERM,&TERM                                Y02752
+         MEXIT                                                   Y02752
+.ERNSHSP IHBERMAC 1020,NSHSPV,NSHSPL                             Y02752
+         MEXIT                                                   Y02752
+.ERSTAI  IHBERMAC 1020,STAI,ESTAI                                Y02752
+.END     MEND
+**/
+*  ATTACH :        /**************************************************/
+*/********************************************************************/
+*/**************** PL/S VERSION OF THE ATTACH MACRO ******************/
+*/********************************************************************/
+* MACRO
+*   KEYS( ASYNCH, DCB, DE, DPMOD, ECB, EP, ESTAI, ETXR, GIVEJPQ, GSPL,
+*         GSPV, JSCB, JSTCB, KEYZERO, LPMOD, MF, NOASYNCH, NODISP,
+*         NOSVAREA, NOSZERO, NSHSPL, NSHSPV, PARAM, PURGE, RTCD, SF,
+*         SHSPL, SHSPV, SM, STAI, TASKLIB, TCB, TERM, TID, VL,
+*         RELATED, RSAPF);
+*        ANS('?'||MACLABEL||'ATTACHP '||MACLIST||MACKEYS||';');
+*%END;
+

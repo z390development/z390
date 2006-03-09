@@ -1,0 +1,100 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*        %GOTO SSWAPLS; /*
+         MACRO
+&NAME    IEFJSSWA
+SSWA     DSECT
+***********************************************************************
+*                                                              @G29AN2F
+*        MACMEAN  SSWA MEANS SUBSYSTEM SCHEDULER WORK AREA     @G16APPK
+*        MACCOMP  SC1B6/PZD02                                  @G16APPK
+*        MACSTAT  76322/G16APPK                                @G16APPK
+*                                                              @G29AN2F
+*        FUNCTION - THIS SWA BLOCK CONTAINS THE USER SPECIFIED @G29AN2F
+*          SUBSYSTEM PARAMETERS FROM A SUBSYS DD CARD OR A     @G29AN2F
+*          DYNAMIC ALLOCATION REQUEST (KEYS DALSSNM AND        @G29AN2F
+*          DALSSPRM).  THIS CONTROL BLOCK IS PASSED TO THE     @G29AN2F
+*          SUBSYSTEM AS PART OF THE SUBSYSTEM ALLOCATION       @G29AN2F
+*          REQUEST PROCESSING BY MODULE IEFAB427.              @G29AN2F
+*                                                              @G29AN2F
+* STATUS - VS2 SU16 - IN THIS MACRO, SU 16 SUPPORTS            @G16APPK
+*          VPSS SUPPORT (SU 29 - @G29AN2F).                    @G16APPK
+*          MERGE SU 4,10,16 CODE TO REL 37 BASE PTF            @ZA28624
+*                                                                     *
+***********************************************************************
+SSWAHDR  DS    0CL8      FIXED LENGTH HEADER                   @G29AN2F
+SSWATYPE DS    CL2       TYPE FIELD                            @G29AN2F
+SSWASYST EQU   X'01'     SYSTEM CREATED SSWA                   @G29AN2F
+SSWASSNM DS    CL4       SUBSYSTEM NAME                        @G29AN2F
+SSWAPRNO DS    CL2       NO OF LEN-PARM PAIRS                  @G29AN2F
+SSWAHDRL EQU   *-SSWAHDR LENGTH OF HEADER                      @G29AN2F
+*                                                              @G29AN2F
+SSWAPREN DS    0C        FIRST LEN-PARM ENTRY                  @G29AN2F
+SSWAPLEN DS    CL1       LENGTH OF FIRST (OR ONLY) PARAMETER   @G29AN2F
+SSWAPVAL DS    0C        VALUE OF FIRST (OR ONLY) PARAMETER    @G29AN2F
+*                                                              @G29AN2F
+*        THE FOLLOWING DSECT IS PROVIDED FOR USE WITH          @G29AN2F
+*        MULTIPLE LENGTH/PARAMETER ENTRIES TO ALLOW ZERO       @G29AN2F
+*        DISPLACEMENT TO THE LENGTH FIELD.                     @G29AN2F
+*                                                              @G29AN2F
+SSWAIFLD DSECT           INDIVIDUAL LEN-PARM PAIR MAP          @G29AN2F
+SSWAILEN DS    CL1       LEN OF PARM ITEM                      @G29AN2F
+SSWAIPRM DS    0C        VALUE OF PARM ITEM                    @G29AN2F
+*                                                              @G29AN2F
+*                                                              @G29AN2F
+SSWAID   EQU   X'31'     SWA MGR ID VALUE                      @G29AN2F
+*                                                              @G29AN2F
+***********************************************************************
+         MEND   */
+*        %SSWAPLS:  ;
+*/********************************************************************/
+*/*                                                          @G29AN2F*/
+*/* NAME - IEFJSSWA                                          @G29AN2F*/
+*/*                                                          @G29AN2F*/
+*/* DESCRIPTIVE NAME - SUBSYSTEM SCHEDULER WORK AREA (SSWA)  @G29AN2F*/
+*/*                                                          @G29AN2F*/
+*/* STATUS - VS2 SU16 - IN THIS MACRO, SU 16 SUPPORTS        @G16APPK*/
+*/*          VPSS SUPPORT (SU 29 - @G29AN2F).                @G16APPK*/
+*/*          MERGE SU4,10,16 CODE BACK TO REL 3.7 BASE PTF   @ZA28624*/
+*/*                                                          @G29AN2F*/
+*/* FUNCTION -                                               @G29AN2F*/
+*/*   THIS SWA BLOCK CONTAINS THE USER SPECIFIED SUBSYSTEM   @G29AN2F*/
+*/*   PARAMETERS FROM A SUBSYS DD CARD OR A DYNAMIC          @G29AN2F*/
+*/*   ALLOCATION REQUEST (KEYS DALSSNM AND DALSSPRM). THIS   @G29AN2F*/
+*/*   CONTROL BLOCK IS PASSED TO THE SUBSYSTEM AS PART OF    @G29AN2F*/
+*/*   THE SUBSYSTEM ALLOCATION REQUEST PROCESSING BY         @G29AN2F*/
+*/*   MODULE IEFAB427                                        @G29AN2F*/
+*/*                                                          @G29AN2F*/
+*/* METHOD OF ACCESS                                         @G29AN2F*/
+*/*   PL/S - DCL SSWAPTR PTR(31)                             @G29AN2F*/
+*/*                                                          @G29AN2F*/
+*/********************************************************************/
+*DCL
+*  1 SSWA BASED(SSWAPTR),              /*SUBSYSTEM SCHEDULER
+*                                         WORK AREA          @G29AN2F*/
+*    2 SSWAHDR,                        /*FIXED LENGTH HEADER @G29AN2F*/
+*      3 SSWATYPE FIXED(15),           /*TYPE FIELD          @G29AN2F*/
+*      3 SSWASSNM CHAR(4),             /*SUBSYSTEM NAME      @G29AN2F*/
+*      3 SSWAPRNO FIXED(15),           /*NO OF LEN-PARM PAIRS@G29AN2F*/
+*    2 SSWAPREN,                       /*FIRST LEN-PARM ENTRY@G29AN2F*/
+*      3 SSWAPLEN FIXED(8),            /*LENGTH OF FIRST (OR
+*                                        ONLY) PARAMETER     @G29AN2F*/
+*      3 SSWAPVAL CHAR(*);             /*VALUE OF FIRST (OR
+*                                        ONLY) PARAMETER     @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* /*  THE FOLLOWING DECLARE IS PROVIDED FOR USE WITH         @G29AN2F*/
+* /*  MULTIPLE LENGTH/PARAMETER ENTRIES TO ALLOW ZERO        @G29AN2F*/
+* /*  DISPLACEMENT TO THE LENGTH FIELD.                      @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* DCL
+*   1 SSWAIFLD BASED,                  /*INDIVIDUAL LEN-PARM
+*                                        PAIR MAP            @G29AN2F*/
+*     2 SSWAILEN FIXED(8),             /*LEN OF PARM ITEM    @G29AN2F*/
+*     2 SSWAIPRM CHAR(*);              /*VALUE OF PARM ITEM  @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* /*  THE FOLLOWING DECLARE DEFINES THE VALUE OF THE TYPE    @G29AN2F*/
+* /*  FIELD(SSWTYPE) FOR A SYSTEM GENERATED SSWA             @G29AN2F*/
+* /*                                                         @G29AN2F*/
+* DCL  SSWASYST FIXED(15) CONSTANT(1); /*SYSTEM CREATED SSWA @G29AN2F*/
+* %DECLARE SSWAID CHAR;                /*SWA MGR ID          @G29AN2F*/
+* %SSWAID ='''31''X';                  /*VALUE ='31'X        @G29AN2F*/
+

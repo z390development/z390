@@ -1,0 +1,16 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SPI   &MP                      SELECT M/P CODE
+         AIF   ('&MP' GE '11' AND '&MP' LE '16' OR '&MP' GE '21' AND '&X
+               MP' LE '26' OR '&MP' GE '31' AND '&MP' LE '36' OR '&MP' X
+               GE '41' AND '&MP' LE '46').SP1
+         AIF   ('&MP' GE '51' AND '&MP' LE '56' OR '&MP' GE '61' AND '&X
+               MP' LE '66').SP1
+         MNOTE 12,'***  IHB356  INVALID MODULE POCKET  CODE;  MP11 IS  X
+               ASSUMED'
+&NAME    DC    0H'0',X'E9',X'11'
+         AGO   .END
+.SP1     ANOP
+&NAME    DC    0H'0',X'E9',X'&MP'
+.END     MEND
+

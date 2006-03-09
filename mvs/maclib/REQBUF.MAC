@@ -1,0 +1,45 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    REQBUF  &DCB,&BUFFER,&COUNT
+&NAME    DS    0H
+         AIF   (T'&DCB(1) EQ 'N').REG
+         AIF   (T'&DCB(1) EQ 'U').REG2
+.SYM     LA    1,&DCB
+         AGO   .T
+.REG2    AIF   ('&DCB'(1,1) NE '(').SYM
+         AIF   ('&DCB'(K'&DCB,1) NE ')').ER
+         AGO   .LDRG
+.REG     AIF   (&DCB(1) EQ 1).T
+         AIF   (&DCB(1) GT 12).ER
+.LDRG    ANOP
+         LR    1,&DCB(1)
+.T       AIF   (T'&BUFFER(1) NE 'N' AND T'&BUFFER(1) NE 'U').ER2
+         AIF   (T'&COUNT EQ 'O').ONE
+.T8      AIF   ('&COUNT'(1,1) NE '(').CSYM
+         AIF   ('&COUNT'(K'&COUNT,1) NE ')').ER3
+         AIF   (T'&COUNT EQ 'U').CLRG
+         AIF   (T'&COUNT NE 'N').ER3
+.T7      AIF   (&COUNT(1) GT 12).ER3
+         AIF   (&COUNT(1) EQ 0).T2
+         AIF   (&COUNT(1) LT 2).ER3
+.CLRG    ANOP
+         LR    0,&COUNT(1)    PLACE COUNT IN
+         AGO   .T1
+.CSYM    ANOP
+         LA    0,&COUNT       PLACE COUNT IN
+.T1      SLL   0,24           BYTE 0 OF REG 0.
+.T2      SVC   58
+         LA    &BUFFER(1),0(15)  PASS BUFFER ADDRESS.
+         SRL   15,24          PLACE RETURN CODE IN BYTE 4.
+         AGO   .END
+.ONE     LA    0,1            PLACE COUNT IN
+         AGO   .T1
+.ER      MNOTE 12,'***  IHB078  DCB OPERAND REGISTER NOTATION INVALID-&X
+               DCB'
+         MEXIT
+.ER2     MNOTE 12,'***  IHB078  BUFFER OPERAND REGISTER NOTATION INVALIX
+               D-&BUFFER'
+         MEXIT
+.ER3     MNOTE 12,'***  IHB078  COUNT OPERAND REGISTER NOTATION INVALIDX
+               -&COUNT'
+.END     MEND

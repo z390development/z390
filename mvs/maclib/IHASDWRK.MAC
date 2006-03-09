@@ -1,0 +1,206 @@
+.* MVS 3.8J PUBLIC DOMAIN
+ /********************************************************************/
+ /*                                                                  */
+ /* MACRO NAME = SDWORK                                              */
+ /*                                                                  */
+ /* MICROFICHE NAME = IHASDWRK                                       */
+ /*                                                                  */
+ /* DESCRIPTIVE NAME = SVC DUMP WORK AREA                            */
+ /*                                                                  */
+ /* STATUS = OS/VS2 RELEASE 3.7 PLUS SU 64        11/02/78   @ZM49564*/
+ /*                                                          @G64MPHD*/
+ /*                                                                  */
+ /* FUNCTION = THE SVC DUMP WORK AREA IS USED BY SVC DUMP DURING     */
+ /*    ITS PROCESSING TO CONTAIN POINTERS, COUNTERS AND AN OUTPUT    */
+ /*    BUFFER.  IT CONTAINS THE FRR/ESTAE WORK AREA USED BY SVC      */
+ /*    DUMP.  IT IS OBTAINED BY MODULE IEAVTSDI (SVC DUMP NIP RIM)   */
+ /*    FROM CSA SUBPOOL 231. THIS MAPPING IS ALSO USED BY    @G64LPHD*/
+ /*    IEAVTABD, TO OBTAIN THE LENGTH OF THE INTERFACE WORK  @G64LPHD*/
+ /*    AREAS FOR SYSMDUMP REQUESTS.                          @G64LPHD*/
+ /*                                                                  */
+ /* SERIALIZATION - RTCTSDPL FIELD (ONE ACCESS AT A TIME)            */
+ /*                                                                  */
+ /* METHOD OF ACCESS = RTCTSDWK POINTS TO THIS AREA AFTER IPL.       */
+ /*        THE CVT POINTS TO THE RTCT (CVTRTMCT).            @G64MPHD*/
+ /*                                                                  */
+ /* TOTAL SIZE = DECIMAL 4656, X'1230'                       @G64MPHD*/
+ /*                                                                  */
+ /* CHANGE ACTIVITY =                                        @G64LPHD*/
+ /*                   - SU64 DEVICE INDEPENDENCE RESTRUCTURE @G64LPHD*/
+ /*                   - SU64 MASTER TRACE DUMP EXIT SUPPORT  @G64MPHD*/
+ /*                   - OZ43713                              @ZA43713*/
+ /*      OZ43713 CHANGED A RESERVED FIELD FIXED(31)          @ZA43713*/
+ /*              TO M994REQ CHAR(1),RESERVED CHAR(3)         @ZA43713*/
+ /*      OZ53292 - USE RESERVED FIELD TO PROVIDE A BIT       @ZA53292*/
+ /*              TO INDICATE THAT DOM IS REQUIRED.           @ZA53292*/
+ /*              USED BY IEAVTSDC AND IEAVTSDH.              @ZA53292*/
+ /********************************************************************/
+   DCL 1 SDWORK BASED BDY(DWORD),      /*SVC DUMP WORK AREA          */
+         2 SDCNTRL,                    /*SVC DUMP CONTROL SECTION OF
+                                               THE WORK AREA @G33VPHD*/
+           3 SDECB    FIXED(32),       /*ECB WAITED ON - EXCP, GTF
+                                       READ, PAGE FIX/FREE         */
+           3 SDIOB    CHAR(40),        /*IOB, I/O BY EXCP            */
+           3 LSTESTAE CHAR(16),        /*LIST FORM OF ESTAE MACRO    */
+           3 SDDSCHAR CHAR(4) BDY(WORD), /*DUMP DATASET CHARACTERISTICS
+                                                             @G64LPHD*/
+             4 SDRCTMAX FIXED(15) UNSIGNED,  /*MAX RECORDS PER TRACK
+                                                             @G64LPHD*/
+             4 SDTRCMAX FIXED(15) UNSIGNED,  /*MAX TRACKS PER CYLINDER
+                                                             @G64LPHD*/
+           3 NUCADDR  PTR(31),         /*ADDR OF NUCLEUS SEC OF TABLE*/
+           3 LOCALADR PTR(31),         /*ADDR OF LOCAL SEC OF TABLE  */
+           3 GLOBADDR PTR(31),         /*ADDR OF GLOBAL SEC OF TABLE */
+           3 RANGEPTR PTR(31),         /*ADDR OF CURRENT ADDR RANGE  */
+           3 ENDADRNT PTR(31),         /*END OF ADDRESS RANGE TABLE  */
+           3 SVCDSRBA PTR(31),       /*SRB BLOCK ADDR IN SDX @G33VPHD*/
+           3 SDSRBADR PTR(31),   /*SRB ROUTINE ADDRESS FROM MODULE
+                                                    IEAVTSDX @G33VPHD*/
+           3 SDSRBBAS PTR(31),  /*SRB ROUTINE BASE REGISTER FROM
+                                             MODULE IEAVTSDX @G33VPHD*/
+           3 SDWSDPL PTR(31),         /*ADDR SDUMP PARM LIST @G33SPHD*/
+           3 SVCDOPTS BIT(16),         /*DUMP OPTIONS FOR THIS DUMP  */
+             4 SVCDOPT1 CHAR(1),       /*FIRST BYTE OF OPTIONS       */
+               5 SVCDAPSA BIT(1),      /*DUMP ALL PSA IN SYSTEM      */
+               5 SVCDPSA  BIT(1),      /*DUMP PSA FOR CURRENT CPU    */
+               5 SVCDNUC  BIT(1),      /*DUMP THE NUCLEUS            */
+               5 SVCDSQA  BIT(1),      /*DUMP SQA                    */
+               5 SVCDLSQA BIT(1),      /*DUMP LSQA                   */
+               5 SVCDRGN  BIT(1),      /*DUMP RGN(PRIVATE AREA)      */
+               5 SVCDLPA  BIT(1),      /*DUMP MODS, SVCS IN LPA      */
+               5 SVCDTRT  BIT(1),      /*DUMP SUP TRT OR GTF TRT     */
+             4 SVCDOPT2 CHAR(1),       /*SECOND BYTE OF OPTIONS      */
+               5 SVCDCSA  BIT(1),      /*DUMP CSA                    */
+               5 SVCDSWA  BIT(1),      /*DUMP SWA                    */
+               5 SVCDSMDP BIT(1),      /*DUMP SUMMARY DUMP   @G33VPHD*/
+               5 SVCDNSMD BIT(1),      /*NO SUMMARY DUMP     @G33VPHD*/
+               5 SVCDNAPA BIT(1),      /*NO ALL PSA DUMP     @G33VPHD*/
+               5 SVCDNSQA BIT(1),      /*NO SQA DUMP         @G33VPHD*/
+           3 FLAGSONE BIT(8),          /*FLAG BYTE                   */
+             4 FLGRTFUL BIT(1),        /*IND ADDR RANGE TABLE FULL   */
+             4 FLGTAPEE BIT(1),        /*IND END OF VOL ON TAPE      */
+             4 FLGFLAST BIT(1),        /*IND LAST FREE DUMP DS FOUND
+                                                             @G33VPHD*/
+             4 SDWPAGOT BIT(1),    /*INDICATE PAGE FAULT POSSIBLE
+                                                             @ZM45207*/
+             4 SVCDMTRC BIT(1),    /*INDICATE MASTER TRACE TO BE DUMPED
+                                                             @ZM49564*/
+           3 FLAGSTWO BIT(8),          /*FLAG BYTE                   */
+           3 ERRORWK  CHAR(24),        /*ERR WKAREA WHEN ESTAE ACTIVE*/
+           3 SVCDMPNM CHAR(8),         /*NAME SVC DUMP CSECT IN CONTROL
+                                                             @G33VPHD*/
+           3 SVCDLPST CHAR(12),        /*LIST FORM OF POST   @G33VPHD*/
+           3 SDIORETA PTR(31),         /*RET ADDR FROM SDIO          */
+           3 DISPRETA PTR(31),         /*RET ADDR FROM SETSDISP      */
+           3 CDERETA  PTR(31),         /*RET ADDR FROM LPACDE        */
+           3 LPDERETA PTR(31),         /*RET ADDR FROM LPALPDE       */
+           3 FREERETA PTR(31),         /*RETURN ADDRESS FROM SDFREE  */
+           3 AFFNSAV  BIT(16),    /*SAVE CPU AFFINITY VALUE  @G33VPHD*/
+           3 SDWKEY   BIT(8),      /*SAVE PROTECT KEY FOR SYSMDUMP
+                                                             @G33VPHD*/
+           3 SDFLAGS  BIT(8),          /*USED TO DOM MSG     @ZA53292*/
+             4 *      BIT(3),          /*RESERVED            @ZA53292*/
+             4 SDDOMMSG BIT(1),        /*IF ONE THEN DOM MSG @ZA53292*/
+             4 *      BIT(4),          /*RESERVED            @ZA53292*/
+           3 SPQERETA PTR(31),         /*RETURN ADDRESS FROM SDSPQE  */
+           3 PGFRRETA PTR(31),         /*RETURN ADDR FROM SDPGFREE   */
+           3 USERRETA PTR(31),         /*RETURN ADDR FROM USERNGES   */
+           3 SPQEADDR PTR(31),         /*ADDRESS OF SPQE FOR SDSPQE  */
+           3 USESTART PTR(31),         /*START ADDRESS FOR INCLUDING
+                                         USER STORAGE ADDRESSES IN A
+                                         PART OF THE ADDR RANGE TABLE*/
+           3 USEEND PTR(31),           /*END ADDR FOR USER STOR ADDR */
+           3 ADDADRWA PTR(31),         /*SAVE WORKA IN SDADDADR RTN  */
+           3 ADDADRWB PTR(31),         /*SAVE WORKB IN SDADDADR RTN  */
+           3 ADDADRWC PTR(31),         /*SAVE WORKC IN SDADDADR RTN  */
+           3 ADDADRWD PTR(31),         /*SAVE WORKD IN SDADDADR RTN  */
+           3 SDRETCOD PTR(31),         /*RETURN CODE FROM DUMP RTN   */
+           3 SDWRGSV1 CHAR(72),        /*REGISTER SAVE AREA  @G33VPHD*/
+           3 SDWRGSV2 CHAR(72),        /*REGISTER SAVE AREA  @G33VPHD*/
+           3 DSTINDEX FIXED(31),       /*INDEX TO CURR DS IN DUMP DS
+                                        TABLE(RTMCT), FOR MSG DS NAM*/
+           3 TIMCNT FIXED(15),         /*LOOP COUNTER        @G17EP5W*/
+           3 CHCNT FIXED(15),          /*LOOP COUNTER        @G17EP5W*/
+           3 CVRT11 CHAR(8) BDY(DWORD), /*AREA FOR CVD       @G17EP5W*/
+             4 * CHAR(4),              /*NOT USED FOR UNPK   @G17EP5W*/
+             4 CVRT1 CHAR(4),          /*USED FOR UNPACK     @G17EP5W*/
+               5 *  CHAR(2),           /*UNUSED FOR UNPACK   @G33VPHD*/
+               5 SDCVRT1 CHAR(2),    /*USED FOR ASID UNPACK  @G33VPHD*/
+           3 CVRT2 CHAR(8) BDY(DWORD), /*AREA FOR UNPACK     @G17EP5W*/
+             4 * CHAR(2),              /*UNPACK CHARACTERS   @G33VPHD*/
+             4 SDCVRT4 CHAR(6),     /*UNPACK CHARACTERS ASID @G33VPHD*/
+               5 * CHAR(5),            /*UNUSED FOR UNPACK   @G33VPHD*/
+               5 CVRT2SGN CHAR(1),   /*SIGN POSITION         @G33VPHD*/
+           3 SVC994ID FIXED(31),     /*MESG ID OF OUTSTANDING IEA994A
+                                      MESSAGE OR ZERO IF NO MESSAGE
+                                           IS OUTSTANDING    @G33VPHD*/
+           3 M994REQ CHAR(1),          /*'00'X PRIOR TO      @ZA43713*/
+                                       /*      IEAVTSDH OR   @ZA43713*/
+                                       /*     AFTER IEAVTSDC @ZA43713*/
+                                       /* 'Y'C IF IEAVTSDH   @ZA43713*/
+                                       /*      REQUESTS      @ZA43713*/
+                                       /*      IEAVTSDC TO   @ZA43713*/
+                                       /*      PUT OUT MSG.  @ZA43713*/
+                                       /* 'N'C IF IEAVTSDH   @ZA43713*/
+                                       /*      INDICATES     @ZA43713*/
+                                       /*      IEAVTSDC NOT  @ZA43713*/
+                                       /*      TO ISSUE MSG. @ZA43713*/
+           3 *    CHAR(3),             /*RESERVED            @ZA43713*/
+           3 SVCNAME CHAR(8) BDY(DWORD),    /*NAME FOR PROGRAM MANAGER
+                                                  SUBROUTINE @G33VPHD*/
+             4 SVCNM1T5    CHAR(5),    /*FIRST 5 CHAR NAME(STD=IGC00)*/
+               5 SVCNM1T4  CHAR(4),    /*FIRST 4 CHAR NAME(STD=IGC0) */
+             4 SVCNM6T8    CHAR(3),    /*LAST 3 CHAR NAME            */
+               5 SVCNM6    CHAR(1),    /*6TH CHAR IN NAME(0)         */
+               5 SVCNM7T8  CHAR(2),    /*LAST 3 CHAR NAME(-RBINTCOD) */
+                 6 SVCNM7  CHAR(1),    /*7TH CHAR IN NAME            */
+                 6 SVCNM8  CHAR(1),    /*8TH(LAST) CHAR IN NAME      */
+           3 CCWCHAIN BDY(DWORD),      /*START OF CCW CHAIN FOR EXCP */
+             4 CCW1,                   /*FIRST CCW                   */
+               5 CMDCODE1 CHAR(1),     /*COMMAND CODE                */
+               5 DATAADR1 PTR(24),     /*DATA ADDRESS                */
+               5 FLAGS1 CHAR(1),       /*FLAGS                       */
+                 6 CD1  BIT(1),        /*DATA CHAINNING              */
+                 6 CMDC1 BIT(1),       /*COMMAND CHAINNING           */
+                 6 SLI1 BIT(1),        /*SUPPRESS INCORRECT LEN IND  */
+                 6 SKIP1 BIT(1),       /*SUPPRESS DATA TRANSFER      */
+                 6 PCI1 BIT(1),        /*PROGRAM CONTROLLED INTERRUPT*/
+               5 *      CHAR(1),       /*NOT USED                    */
+               5 BYTECNT1 FIXED(16),   /*COUNT OF BYTES TO TRANSFER  */
+             4 CCW2,                   /*SECOND CCW                  */
+               5 CMDCODE2 CHAR(1),     /*COMMAND CODE                */
+               5 DATAADR2 PTR(24),     /*DATA ADDRESS                */
+               5 FLAGS2 CHAR(1),       /*FLAGS                       */
+                 6 CD2  BIT(1),        /*DATA CHAINNING              */
+                 6 CC2  BIT(1),        /*COMMAND CHAINNING           */
+                 6 SLI2 BIT(1),        /*SUPPRESS INCORRECT LEN IND  */
+                 6 SKIP2 BIT(1),       /*SUPPRESS DATA TRANSFER      */
+                 6 PCI2 BIT(1),        /*PROGRAM CONTROLLED INTERRUPT*/
+               5 *      CHAR(1),       /*NOT USED                    */
+               5 BYTECNT2 FIXED(16),   /*COUNT OF BYTES TO TRANSFER  */
+             4 CCW3,                   /*THIRD CCW                   */
+               5 CMDCODE3 CHAR(1),     /*COMMAND CODE                */
+               5 DATAADR3 PTR(24),     /*DATA ADDRESS                */
+               5 FLAGS3 CHAR(1),       /*FLAGS                       */
+                 6 CD3  BIT(1),        /*DATA CHAINNING              */
+                 6 CC3  BIT(1),        /*COMMAND CHAINNING           */
+                 6 SLI3 BIT(1),        /*SUPPRESS INCORRECT LEN IND  */
+                 6 SKIP3 BIT(1),       /*SUPPRESS DATA TRANSFER      */
+                 6 PCI3 BIT(1),        /*PROGRAM CONTROLLED INTERRUPT*/
+               5 *      CHAR(1),       /*NOT USED                    */
+               5 BYTECNT3 FIXED(16),   /*COUNT OF BYTES TO TRANSFER  */
+             3 SDSMBUFF PTR(31),   /*ADDRESS OF THE 4104 BYTE OUTPUT
+                                                      BUFFER @G33VPHD*/
+             3 SDSMDECB PTR(31),   /*ADDRESS OF DECB FOR SYSMDUMP
+                                                             @G33VPHD*/
+           2 SDOUTBUF BDY(DWORD),      /*SDUMP OUTPUT BUFFER STARTS
+                                                       HERE  @G64MPHD*/
+             3 RCDCCHH CHAR(4),        /*CYL CYL HEAD HEAD-COUNT FLD */
+               4 RCDCC CHAR(2),        /*CYL CYL - COUNT FIELD       */
+               4 RCDHH CHAR(2),        /*HEAD HEAD - COUNT FIELD     */
+             3 RECORDNO CHAR(1),       /*RECORD NUMBER - COUNT FIELD */
+             3 KEYLEN FIXED(8),        /*KEY LENGTH - COUNT FIELD    */
+             3 DATALEN FIXED(16),      /*DATA LENGTH - COUNT FIELD   */
+           2 SDBUFFER CHAR(4104),  /*REST OF OUTPUT BUFFER   @G33VPHD*/
+           2 SDCOMWRK CHAR(120);   /*SDUMP COMMON WORK AREA USED BY
+                                                    IEAVTSDU @G64MPHD*/

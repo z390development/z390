@@ -1,0 +1,81 @@
+.* MVS 3.8J PUBLIC DOMAIN
+*%       GOTO FRRSPLS1;  /*
+         MACRO
+         IHAFRRS &DSECT=YES                                          */
+*%FRRSPLS1 : ;
+* /* MACMEAN FRRS MEANS FUNCTIONAL RECOVERY ROUTINE STACK            */
+* /* MACCOMP Y-1 SC1C5/PZD81                                         */
+* /* MACSTAT Y-1 72137/DCR20412                                      */
+*%       GOTO FRRSPLS;  /*
+         AIF ('&DSECT' EQ 'YES').FRRS001
+FRRS     DS   0D -
+         AGO  .FRRS002
+.FRRS001 ANOP
+FRRS     DSECT ,       FRRSPTR
+.FRRS002 SPACE 2
+FRRSHEAD DS     0CL16         THE HEADER OF THE FRR STACK
+FRRSEMP  DS     A             ADDRESS WHICH INDICATES AN EMPTY STACK
+FRRSLAST DS     A             ADDRESS OF LAST ENTRY IN THE STACK
+FRRSELEN DS     F             LENGTH OF EACH FRR ENTRY IN THE STACK
+FRRSCURR DS     A             ADDRESS OF CURRENT FRR ENTRY IN THE STACK
+FRRSRTMW DS     CL68          THE RTM1 WORK AREA PORTION OF THE FRR
+*                             STACK
+FRRSENTS DS     CL512         THE FRR ENTRIES IN THE STACK    @ZM02352
+FRRSENTR DSECT     ,  FRREPTR THE MAPPING OF A FRR ENTRY
+FRRSFRRA DS     A             THE ADDRESS OF THE FRR
+FRRSFLGS DS     0CL4          FLAGS USED BY RTM DURING FRR PROCESSING
+FRRSFLG1 DS     B             RECURSION FLAGS USED BY RTM
+FRRSRCUR EQU    X'80'         RECURSION FLAG USED WHEN GIVING CONTROL
+*                             TO FRR AND WHEN RECEIVING CONTROL BACK
+*                             FROM FRR
+FRRSNEST EQU    X'40'         FLAG INDICATING A NESTED FRR ENTRY
+         DS     BL3           RESERVED
+FRRSPARM DS     CL24          PARAMETER AREA PASSED TO FRR
+FRRSESZE EQU    32            LENGTH OF EACH FRR ENTRY
+FRRSFENT EQU    84            DISPLACEMENT INTO FRR STACK OF FIRST
+*                             FRR ENTRY
+FRRSNENT EQU    16            NUMBER OF FRR ENTRIES IN STACK  @ZM02352
+FRRSTLEN EQU    596           TOTAL LENGTH OF NORMAL FRR STACK@ZM02352
+         MEND         */
+*%FRRSPLS: ;
+*DECLARE
+*  1 FRRS    BASED(FRRSPTR),
+*    2 FRRSHEAD   CHAR(16) BDY(WORD),  /* THE HEADER OF THE FRR
+*                                         STACK                      */
+*      3 FRRSEMP     PTR(31),          /* ADDRESS WHICH INDICATES AN
+*                                         EMPTY  STACK               */
+*      3 FRRSLAST    PTR(31),          /* ADDRESS OF LAST ENTRY IN
+*                                         STACK                      */
+*      3 FRRSELEN   FIXED(31),         /* LENGTH OF EACH ENTRY IN
+*                                         THE STACK                  */
+*      3 FRRSCURR    PTR(31),          /* ADDRESS OF CURRENT FRR
+*                                         ENTRY IN THE STACK         */
+*    2 FRRSRTMW    CHAR(68) BDY(WORD), /* THE RTM1 WORK AREA
+*                                         PORTION OF THE FRR STACK   */
+*    2 FRRSENTS    CHAR(512);          /* THE FRR ENTRIES IN
+*                                         THE STACK          @ZM02352*/
+*DECLARE
+*  1 FRRSENTR    BASED(FRREPTR),       /* THE MAPPING OF A FRR
+*                                         ENTRY                      */
+*    2 FRRSFRRA    PTR(31),            /* THE ADDRESS OF THE FRR     */
+*    2 FRRSFLGS    CHAR(4),            /* FLAGS USED BY RTM DURING
+*                                         FRR PROCESSING             */
+*      3 FRRSFLG1  CHAR(1),            /* RECURSION USED BY RTM      */
+*        4 FRRSRCUR  BIT(1),           /* RECURSION FLAG USED WHEN
+*                                         GIVING CONTROL TO FRR
+*                                         AND WHEN RECEIVING CONTROL
+*                                         BACK FROM FRR              */
+*        4 FRRSNEST  BIT(1),           /* FLAG INDICATING A NESTED
+                                          FRR ENTRY                  */
+*        4 *         BIT(6),           /* RESERVED                   */
+*      3 *         CHAR(3),            /* RESERVED                   */
+*    2 FRRSPARM     CHAR(24);          /* PARAMETER AREA PASSED TO
+*                                         FRR                        */
+* DCL FRRSESZE FIXED(31) CONSTANT(32); /* LENGTH OF EACH FRR ENTRY   */
+* DCL FRRSFENT FIXED(31) CONSTANT(84); /* DISPLACEMENT INTO FRR
+*                                         STACK OF FIRST FRR ENTRY   */
+* DCL FRRSNENT FIXED(31) CONSTANT(16); /* NUMBER OF FRR ENTRIES IN
+*                                         THE STACK          @ZM02352*/
+* DCL FRRSTLEN FIXED(31) CONSTANT(596); /*TOTAL LENGTH OF NORMAL FRR
+*                                         STACK              @ZM02352*/
+

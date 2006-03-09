@@ -1,0 +1,56 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IEFVTIOT
+.*
+.*   TIOT  MACRO
+.*   STRUCTURE  OF  TIOT  FOR  MASTER  SCHEDULER  AND  INTERPRETER
+.*
+*                  ****************************
+*                  *                          *
+*                  *                          *
+*                  *       VTIOT  MACRO       *
+*                  *                          *
+*                  *                          *
+*                  ****************************
+VTIOT    DS    0D
+         DC    CL8'MASTER'              JOB NAME
+         DC    CL16'SCHEDULR'
+.*
+.*   TIOT  ENTRY  OF  INPUT  READER
+*
+VRENTRY  DC    XL1'14'                  TIOT ENTRY LENGTH
+         DC    XL1'00'                  STATUS A
+         DC    XL2'0000'                REL. LOC OF POOL
+VRDNAME  DC    CL8'IEFRDER'             READER DDNAME
+VRJFCBT  DC    F'0'                     DISK ADDR OF JFCB AND STATUS C
+VRUCBPT  DC    X'80000000'              STATUS B AND UCB POINTER
+.*
+.*   TIOT  ENTRY  OF  SYSTEM  INPUT  DATA
+*
+VDENTRY  DC    XL1'14'                  TIOT ENTRY LENGTH
+         DC    XL1'00'                  STATUS A
+         DC    XL2'0000'                REL. LOC OF POOL
+VDDNAME  DC    CL8'IEFDATA'             SYSIN DATA DDNAME
+VDJFCBT  DC    F'0'                     DISK ADDR OF JFCB AND STATUS C
+VDUCBPT  DC    X'80000000'              STATUS B AND UCB POINTER
+.*
+.*   TIOT  ENTRY  OF  PROCEDURE  LIBRARY
+*
+VPENTRY  DC    XL1'14'                  TIOT ENTRY LENGTH
+         DC    XL1'00'                  STATUS A
+         DC    XL2'0000'                REL. LOC OF POOL
+VPDNAME  DC    CL8'IEFPDSI'             PROCEDURE LIBRARY DDNAME
+VPJFCBT  DC    F'0'                     DISK ADDR OF JFCB AND STATUS C
+VPUCBPT  DC    X'80000000'              STATUS B AND UCB POINTER
+.*
+.*   TIOT  ENTRY  OF  SYSTEM  JOB  QUEUE
+*
+VJENTRY  DC    XL1'14'                  TIOT ENTRY LENGTH
+         DC    XL1'00'                  STATUS A
+         DC    XL2'0000'                REL. LOC OF POOL
+VJDNAME  DC    CL8'SYSJOBQE'            SYSTEM JOB QUEUE DDNAME
+VJJFCBT  DC    F'0'                     DISK ADDR OF JFCB AND STATUS C
+VJUCBPT  DC    X'80000000'              STATUS B AND UCB POINTER
+.*
+VTIOTEND DC    F'0'                     FINAL END
+         MEND

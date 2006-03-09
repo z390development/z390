@@ -1,0 +1,42 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME  GCNL  &N               NEW LINE CHAR
+         GBLA  &IHBCRSZ,&IHBBPX,&IHBBPY,&IHBBLC,&IHBBLIM
+         LCLA  &INC,&COUNT,&FIRST
+&FIRST   SETA  1
+&NAME    DC    X'15'
+         AIF   (T'&N EQ 'O').ONE
+         AIF   (T'&N NE 'N').ERN
+         AIF   (&N EQ 0).ERN
+&COUNT   SETA  &N
+.FAR     AIF   (&IHBCRSZ EQ 2).BIG        DETERMINE CHARACTER SIZE
+         AIF   ('&IHBCRSZ' EQ '0').SMALL
+&INC     SETA  80
+.ANOTH   AIF   (&FIRST EQ 1).NEXT
+         DC    X'15'
+.NEXT    ANOP
+&FIRST   SETA  0
+&IHBBPX    SETA  0
+&IHBBPY    SETA  &IHBBPY-&INC
+         AIF   (&IHBBPY LT 0).GORND
+.THE     ANOP
+&IHBBLC    SETA  &IHBBLC+1              UPDATE BUFFER-LOC COUNTER
+&COUNT   SETA  &COUNT-1
+         AIF   (&COUNT EQ 0).ALL        TEST FOR END OF GENERATION
+         AGO   .ANOTH                   GO TO GENERATE NEW LINE CHAR
+.ERN     IHBERMAC 180,N,1
+.ONE     ANOP
+&COUNT   SETA  1                        ONE NEW LINE CHAR GENERATED
+         AGO   .FAR
+.GORND   IHBERMAC 181
+&IHBBPY    SETA  4095
+         AGO   .THE
+.BIG     ANOP
+&INC     SETA  120                      LARGE CHAR SIZE
+         AGO   .ANOTH
+.SMALL   ANOP
+&INC     SETA  27                       SMALL CHAR SIZE
+         AGO   .ANOTH
+.ALL     AIF   (&IHBBLIM GE &IHBBLC).OK
+         IHBERMAC 182
+.OK      MEND

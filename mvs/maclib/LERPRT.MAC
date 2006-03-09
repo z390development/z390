@@ -1,0 +1,92 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    LERPRT &DCB,&RLN,&CID,&CLEAR=YES                        A29589
+.*
+.*********************************************************************
+.*       THE FOLLOWING MANTANCE HAS BEEN APPLIED
+.*********************************************************************
+.*       AZ04663  (09/23/75)
+.*********************************************************************
+         LCLA  &A1
+         LCLA  &A2                                               A29589
+         LCLC  &Y                                                A29589
+         AIF   ('&DCB' EQ '').E1
+         CNOP  0,4
+&NAME    BAL   15,*+8
+         DC    V(IECTLERP)                                       A27630
+         AIF   ('&DCB'(1,1) EQ '(').REGTST
+         LA    1,&DCB
+         AGO   .RLNTST
+.REGTST  ANOP
+&A1      SETA  K'&DCB
+         AIF   (&A1 LT 3).E2
+         AIF   ('&DCB'(&A1,1) NE ')').E2
+         AIF   (&A1 GT 3).REGTST1
+         AIF   ('&DCB'(2,1) NE '1').REGTST1
+         AGO   .RLNTST
+.REGTST1 ANOP
+         LR    1,&DCB
+.RLNTST  AIF   ('&RLN' EQ '').RLNTST1
+         AIF   ('&RLN'(1,1) EQ '(').RLNTST2
+         AIF   ('&RLN' EQ '0').E3
+         AIF   ('&RLN' GT '255').E3
+         LA    0,&RLN
+         AGO   .CLRTST
+.RLNTST1 ANOP
+         SR    0,0
+         AGO   .CLRTST
+.RLNTST2 ANOP
+&A1      SETA  K'&RLN
+         AIF   (&A1 LT 3).E3
+         AIF   ('&RLN'(&A1,1) NE ')').E4
+         AIF   (&A1 GT 3).RLNTST3
+         AIF   ('&RLN'(2,1) NE '0').RLNTST3                    @ZA04663
+         AGO   .CLRTST
+.RLNTST3 ANOP
+         LR    0,&RLN
+.CLRTST  ANOP
+         LA    1,0(1)                                            A27630
+         AIF   ('&CID' EQ '').NOCID                              A29589
+         AIF   ('&CID'(1,1) EQ '(').REGCID                       A29589
+         LA    14,&CID                                           A29589
+         AGO   .OK                                               A29589
+.REGCID  ANOP                                                    A29589
+&A2      SETA  K'&CID                                            A29589
+         AIF   ('&CID'(&A2,1) NE ')' OR &A2 LT 3).E6             A29589
+         AIF   (&A2 NE 4).LCID                                   A29589
+         AIF   ('&CID'(2,1) EQ '1' AND '&CID'(3,1) EQ '4').OK    A29589
+.LCID    ANOP                                                    A29589
+&Y       SETC  '&CID'(2,&A2-2)                                   A29589
+         LR    14,&Y                                             A29589
+.OK      ANOP                                                    A29589
+         TM    0(14),X'F0'             TEST FOR VALID CID        A29589
+         BNZ   *+14                    NO, DON'T PASS CID IN R1  A29589
+         IC    14,0(14)                GET CID                   A29589
+         SLL   14,24                                             A29589
+         OR    1,14                    PUT CID IN HIGH ORDER BYTEA29589
+.NOCID   ANOP                                                    A29589
+         AIF   ('&CLEAR' EQ '').CLRTST1                          A27630
+&A1      SETA  K'&CLEAR                                          A27630
+         AIF   (&A1 GT 3 OR &A1 LT 2).E5                         A27630
+         AIF   ('&CLEAR'(1,&A1) EQ 'NO').CLREND                  A27630
+         AIF   ('&CLEAR'(1,&A1) NE 'YES').E5                     A27630
+.CLRTST1 ANOP                                                    A27630
+         LCR   1,1                                               A27630
+.CLREND  ANOP                                                    A27630
+         L     15,0(15)
+         BALR  14,15
+         AGO   .FINI
+.E1      MNOTE 12,'***  IHB001  DCB OPERAND REQ''D-NOT SPECIFIED'
+         MEXIT
+.E2      MNOTE 12,'***  IHB002  INVALID DCB OPERAND SPECIFIED-&DCB'
+         MEXIT
+.E3      MNOTE 12,'***  IHB002  INVALID RLN OPERAND SPECIFIED-&RLN'
+         MEXIT
+.E4      MNOTE 12,'***  IHB002  INVALID RLN OPERAND SPECIFIED-&RLN'
+         MEXIT
+.E5      MNOTE 12,'***  IHB002  INVALID CLEAR OPERAND SPECIFIED-&CLEAR'
+         MEXIT
+.E6      MNOTE 12,'***  IHB002  INVALID CID OPERAND SPECIFIED-&CID' 589
+         MEXIT                                                   A29589
+.FINI    MEND
+

@@ -1,0 +1,6 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME  GNOP2
+&NAME    IHBGAM2 10880
+         MEND
+

@@ -1,0 +1,67 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    PRTOV &DCB,&NO,&EXIT
+         LCLA  &CTR
+         LCLB  &SWA,&SWB,&ERR
+         AIF   ('&DCB' EQ '').E1             TEST FOR DCB ADDR MISSING
+.D1      AIF   ('&NO' EQ '').E3
+         AIF   ('&NO' NE '9' AND '&NO' NE '12').E2 TEST FOR INVALID NO.
+         AIF   (&ERR).END
+         AIF   ('&EXIT' EQ '').NOEXIT        IF NO EXIT TAKE BRANCH
+&SWA     SETB  ('&DCB'(1,1) NE '(')
+&SWB     SETB  ('&EXIT'(1,1) NE '(')
+         AIF   ('&DCB'(1,1) EQ '(').REGDCB   TEST FOR DCB REG
+&NAME    LA    14,&DCB                           LOAD  DCB ADDR
+         AGO   .CONTA
+.REGDCB  ANOP
+&NAME    LR    14,&DCB(1)              LOAD DCB ADDR
+.CONTA   ANOP
+&CTR     SETA  52+2*&SWA+2*&SWB
+         TM    17(14),X'48'            IS DEVICE A PRINTER
+         BC    14,*+&CTR               IF NOT BRANCH AROUND
+&CTR     SETA  &CTR-8
+         TM    17(14),X'B0'            FURTHER TESTING FOR PRINTER
+         BNZ   *+&CTR                  IF NOT PRINTER BRANCH AROUND
+         L     1,68(0,14)                    LOAD IOB ADDR FROM DCB
+         L     1,12(0,1)                     LOAD ECB ADDR FROM IOB
+         TM    0(1),X'40'                        TEST  COMPLETION BIT
+         BO    *+10                              BRANCH  IF BIT ON
+         LA    0,1                           SET WAIT COUNT TO ONE
+         SVC   1                                 ISSUE  WAIT SVC
+         AIF   ('&DCB'(1,1) EQ '(').DCBREG   TEST FOR DCB REG
+         LA    1,&DCB                            LOAD  DCB ADDR
+         AGO   .CONTB
+.DCBREG  LR    1,&DCB(1)                         LOAD  DCB ADDR
+.CONTB   ANOP
+&CTR     SETA  80-((&NO/3)*16)               COMPUTE MASK FOR TM
+         TM    44(1),&CTR                        TEST BIT FOR OVERFLOW
+&CTR     SETA  255-&CTR
+         AIF   ('&EXIT'(1,1) EQ '(').REGEX
+         BZ    *+14                              IF OFF BRANCH AROUND
+         NI    44(1),&CTR                        IF ON TURN OFF AND
+         LA    15,&EXIT                      LOAD ADDR OF USER RTN
+         AGO   .FINISH
+.REGEX   BZ    *+12                              IF OFF BRANCH AROUND
+         NI    44(1),&CTR                        IF ON TURN OFF AND
+         LR    15,&EXIT(1)                   LOAD ADDR OF USER RTN
+.FINISH  BALR  14,15                             AND LINK TO IT
+         AGO   .END
+.NOEXIT  AIF   ('&DCB'(1,1) EQ '(').DCBRG    TEST FOR DCB REG
+&NAME    LA    1,&DCB                            LOAD DCB ADDR
+         AGO   .CONTC
+.DCBRG   ANOP
+&NAME    LR    1,&DCB(1)                         LOAD DCB ADDR
+.CONTC   TM    17(1),X'48'                       IS DEVICE A PRINTER
+         BC    14,*+16                       IF NOT BRANCH AROUND
+         TM    17(1),X'B0'            FURTHER TESTING FOR PRINTER
+         BNZ   *+8                    IF NOT BR AROUND
+&CTR     SETA  80-((&NO/3)*16)               COMPUTE MASK FOR OI
+         OI    18(1),&CTR                        SET BIT ON IN DCB
+         MEXIT
+.E1      IHBERMAC 6                     &DCB MISSING
+&ERR     SETB  1                        INDICATE ERROR
+         AGO   .D1                      AND CONTINUE DIAGNOSIS
+.E2      IHBERMAC 37,,&NO               &NO INVALID
+         MEXIT
+.E3      IHBERMAC 3                     &NO MISSING
+.END     MEND

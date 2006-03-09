@@ -1,0 +1,11 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 11/08/05                                                 *
+*********************************************************************
+TESTDMP2 SUBENTRY
+         WTO   'TESTDMP2 FORCE 0C1 ABEND TO TEST DUMP OPTION'
+         B     1
+         END

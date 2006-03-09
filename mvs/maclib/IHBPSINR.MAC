@@ -1,0 +1,269 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME IHBPSINR &FORM,&TYPE=,&LA=,&A=,&ECB=,&LONG=,&RELEASE=,     Y02752X
+               &RSAOPT=,&EA=,&KEEPREL=,&SUSPEND=                 Y02752
+.******* DEFINE LOCAL SET SYMBOLS
+         LCLA  &INDEX,&INDEX2
+         LCLB  &LFORM,&RFORM,&FX(1),&FR(1),&LD(1),&P(4),&OU(1)   Y02752
+         LCLB  &ECBISAD,&ECBINR0,&ECBNULL,&ECBISRG,&KR           Y02752
+         LCLB  &ADRISAD,&ADRISRG,&ADRINR1
+         LCLB  &EAISAD,&EAINR15,&EAICM,&EAISRG,&EALAST,&EAL,&HW  Y02752
+         LCLC  &COLFIX                                           Y02752
+.******* TEST FOR IRRECOVERABLE ERRORS
+         AIF   ('&FORM' NE '').G1
+      IHBERMAC 1006,MODE           MODE OPERAND REQ'D-NOT SPEC.  Y02752
+         MEXIT
+.G1      AIF   ('&FORM' EQ 'L' OR '&FORM' EQ 'R').G2
+      IHBERMAC 1001,MODE,&FORM     INVALID MODE OPERAND SPECIF'D Y02752
+         MEXIT
+.G2      ANOP                      MODE OPERAND PRESENT -- EQ R OR L
+&RFORM   SETB  ('&FORM' EQ 'R')
+         AIF   (&RFORM).RF1        BRANCH FOR REGISTER-FORM PROCESSING
+.LF1     AIF   ('&LA' NE '').LF2   BEGIN LIST-FORM MAJOR ERROR TEST
+      IHBERMAC 1006,LA             LA= OPERAND REQ'D-NOT SPEC    Y02752
+         MEXIT
+.LF2     AIF   ('&A' EQ '').LF3
+      IHBERMAC 1020,''A='',L    OPERAND NOT ALLOWED WITH L MODE  Y02752
+         MEXIT
+.LF3     AIF   ('&EA' EQ '').LF4                                 Y02752
+      IHBERMAC 1020,''EA='',L   OPERAND NOT ALLOWED WITH L MODE  Y02752
+         MEXIT                                                   Y02752
+.LF4     ANOP                                                    Y02752
+&LFORM   SETB  1
+&ADRISAD SETB  ('&LA'(1,1) NE '(')
+&ADRINR1 SETB  ('&LA(1)' EQ '1')
+         AGO   .G3                 END OF LIST-FORM MAJOR ERROR TEST
+.RF1     AIF   ('&A' NE '').RF2    REGISTER-FORM MAJOR ERROR TESTS
+      IHBERMAC 1006,''A=''         A= OPERAND REQ'D-NOT SPEC.    Y02752
+         MEXIT
+.RF2     AIF   ('&LA' EQ '').RF3
+      IHBERMAC 1020,''LA='',R      LA= NOT ALLOWED WITH R MODE   Y02752
+         MEXIT
+.RF3     AIF   ('&EA' EQ '').RF4                                 Y02752
+&EAISAD  SETB  ('&EA'(1,1) NE '(')                               Y02752
+&EAINR15 SETB  ('&EA(1)' EQ '15')                                Y02752
+.RF4     ANOP             END OF REG-FORM MAJOR ERROR TESTS      Y02752
+&ADRISAD SETB  ('&A'(1,1) NE '(')
+&ADRINR1 SETB  ('&A(1)' EQ '1')
+.G3      ANOP                                                    Y02752
+&ECBNULL SETB  (T'&ECB EQ 'O')                                   Y02752
+         AIF   ('&TYPE' NE 'FIX').G4                             Y02752
+         AIF   (NOT &ECBNULL).G4                                 Y02752
+      IHBERMAC 1006,ECB       ECB OPERAND REQ'D-NOT SPECIFIED    Y02752
+         MEXIT
+.******* END OF TESTS FOR IRRECOVERABLE ERRORS
+.G4      ANOP                      BEGIN RECOVERABLE ERROR TESTS
+&FX(1)   SETB  ('&TYPE' EQ 'FIX')
+&FR(1)   SETB  ('&TYPE' EQ 'FREE')
+&LD(1)   SETB  ('&TYPE' EQ 'LOAD' OR '&TYPE' EQ 'FIX')
+&OU(1)   SETB  ('&TYPE' EQ 'OUT')                                Y02752
+         AIF   ('&TYPE' NE 'OUT').NOUT                           Y02752
+         AIF   ('&KEEPREL' EQ '').KROK                           Y02752
+         AIF   ('&KEEPREL' EQ 'Y' OR '&KEEPREL' EQ 'N').KROK     Y02752
+      IHBERMAC 1015,&KEEPREL,KEEPREL,N V INVALID FOR KEEPREL     Y02752
+.KROK    ANOP                                                    Y02752
+&KR      SETB  ('&KEEPREL' EQ 'Y')                               Y02752
+.NOUT    AIF   ('&TYPE' EQ 'LOAD').REL1                          Y02752
+         AIF   (&FR(1)).RSA1
+.LNG1    AIF   ('&LONG' EQ 'Y' OR '&LONG' EQ 'N' OR '&LONG' EQ '').LNG2
+      IHBERMAC 1015,&LONG,LONG,Y   V INVALID FOR LONG KWD, Y ASSUMED
+.LNG2    ANOP
+.SUS1    AIF   ('&SUSPEND' EQ '').RSA1
+         AIF   (&LFORM OR '&SUSPEND' EQ 'N').SUS2
+      IHBERMAC 1016,SUSPEND,R     INCOMP. WITH R MODE-IGNORED
+         AGO   .RSA1
+.SUS2    AIF   ('&SUSPEND' EQ 'Y' OR '&SUSPEND' EQ 'N').SUS3
+      IHBERMAC 1015,&SUSPEND,SUSPEND,N V INVALID FOR SUSPEND, N ASSUMED
+.SUS3    ANOP
+&P(2)    SETB  ('&SUSPEND' EQ 'Y')
+&P(1)    SETB  ('&LONG' NE 'N')
+.RSA1    AIF   ('&RSAOPT' EQ '').REL1
+         AIF   (&LFORM).RSA2
+      IHBERMAC 1016,RSAOPT,R            INCOMP. WITH R MODE-IGNORED
+         AGO   .REL1
+.RSA2    AIF   ('&RSAOPT' EQ 'Y' OR '&RSAOPT' EQ 'N').RSA3
+      IHBERMAC 1015,&RSAOPT,RSAOPT,N    V INV FOR RSAOPT, N ASSUMED
+.RSA3    ANOP
+&P(3)    SETB  ('&RSAOPT' EQ 'Y')
+.REL1    AIF   ('&RELEASE' EQ '').G5
+         AIF   (&LFORM OR '&EA' NE '' OR '&RELEASE' EQ 'N').REL2 Y02752
+      IHBERMAC 1016,''RELEASE=Y'',''R-FORM''  INCOMP. W/R FORMAT Y02752
+         AGO   .G5
+.REL2    AIF   ('&RELEASE' EQ 'Y' OR '&RELEASE' EQ 'N').REL3
+      IHBERMAC 1015,&RELEASE,RELEASE,N  V INV FOR RELEASE, N ASSUMED
+.REL3    ANOP
+&P(4)    SETB  ('&RELEASE' EQ 'Y')
+         AIF   (NOT(&P(3) AND &P(4))).G5
+&P(4)    SETB  0
+      IHBERMAC 1016,''RELEASE=Y'',''RSAOPT=Y'' REL INCOMP W/ RSA Y02752
+.******* ERROR TEST END, PARMS VALID -- START MACRO EXPANSION
+.G5      ANOP
+&ADRISRG SETB  (NOT &ADRISAD)
+         AIF   (&ECBNULL).G5C                                    Y02752
+&ECBISAD SETB  ('&ECB'(1,1) NE '(')
+&ECBISRG SETB  (NOT &ECBISAD)                                    Y02752
+         AIF   (&ECBISAD).G5C
+&ECBINR0 SETB  ('&ECB(1)' EQ '0')
+         AGO   .G5C
+.******* FORCE ALIGNMENT, INSERT LABELED HEADER, BRANCH PAST CONSTANTS
+.G5C     AIF   (NOT(&ECBISAD OR &ADRISAD OR &EAISAD)).G6         Y02752
+.* * * * CNOP FOR ALIGNMENT IF LOAD TO BE PERFORMED
+         CNOP  0,4
+.G6      AIF   ('&NAME' EQ '').G6A
+.* * * * HEADER IF USER MACRO CALL LABELED
+&NAME    DS    0H
+.G6A     AIF   (&RFORM).REXP                                     Y02752
+&INDEX   SETA  (4+4*&ECBISAD+4*&ADRISAD+2*&ADRISRG)              Y02752
+.* * * * BRANCH TO FIRST EXECUTABLE INSTRUCTION
+         B     *+&INDEX  BRANCH AROUND INPUT PARMS
+.******* GENERATE ADDRESS CONSTANTS AND MODE FLAG OR FUNCTION BYTE
+         AIF   (NOT &ECBISAD).G7                                 Y02752
+.* * * * ECB ADCON IF ECB=ADDR
+         DC    A(&ECB)      FIRST INPUT PARM                     Y02752
+.* * * * HIGH-ORDER REG 1 FLAG                                   Y02752
+.G7      DC    X'80'     L-MODE FLAG                             Y02752
+         AIF   (&ADRISRG).G10                                    Y02752
+.* * * * LIST OR VIRTUAL ADDRESS ADCON IF LA=ADDR OR A=ADDR
+         DC    AL3(&LA)       SECOND INPUT PARM                  Y02752
+         AGO   .G11
+.* * * * FILLER IF NO LIST OR VIRTUAL ADDRESS ADCON PRESENT
+.G10     DC    X'00'     (TO MAINTAIN ALIGNMENT)
+.******* INITIALIZE REGISTER 0 -- ECB ADDRESS
+.G11     AIF   (NOT(&ADRISAD AND &ECBISAD )).G12                 Y02752
+.* * * * LOAD MULTIPLE IF BOTH ADCON'S HAVE BEEN CREATED
+         LM    0,1,*-8    INITIALIZE PARM REGS                   Y02752
+         AGO   .G18
+.G12     AIF   (&ECBINR0).G15
+         AIF   (&ECBNULL).G14
+         AIF   (&ECBISAD).G13
+.* * * * LOAD FROM REGISTER IF ECB ADDR NOT AN ADCON
+         LR    0,&ECB(1)     INITIALIZE PARM REG 0               Y02752
+         AGO   .G15
+.* * * * LOAD FROM PARM LIST IF ECB ADDR IS AN ADCON
+.G13     L     0,*-6     INITIALIZE PARM REG 0
+         AGO   .G15
+.* * * * CLEAR REG 0 IF ECB OMITTED (PGFREE ONLY)
+.G14     SR    0,0       INDICATE NO PURGE ECB SPECIFIED
+.******* REGISTER 0 INITIALIZATION COMPLETE -- START REG 1
+.G15     AIF   (&ADRINR1).G17
+         AIF   (&ADRISAD).G16
+.* * * * LOAD FROM REGISTER IF LIST ADDR NOT AN ADCON            Y02752
+         LR    1,&LA(1)        INITIALIZE PARM REG 1             Y02752
+         AGO   .G17
+.G16     ANOP
+&INDEX2  SETA  (6-2*&ECBINR0)
+.* * * * LOAD FROM PARM LIST IF LIST/VIRTUAL ADDR IS AN ADCON
+         L     1,*-&INDEX2         INITIALIZE PARM REG 1
+.G17     AIF   (&ADRISAD).G18
+&INDEX2  SETA  (6+2*&ECBISAD-2*&ECBINR0-2*&ADRINR1)
+.* * * * SET REG 1 BYTE 0 (MODE OR FUNCTIONS) UNLESS ALREADY LOADED
+         ICM   1,8,*-&INDEX2     SET HIGH-ORDER BYTE
+.******* REGISTER INITIALIZATION COMPLETE --                     Y02752
+.* * * *  SET PARM LIST BYTES 0 AND 4                            Y02752
+.G18     NI    0(1),X'80' CLEAR PARM LIST BYTE 0 FUNCTION BITS   Y02752
+         OI    0(1),B'0&FX(1)&FR(1)&LD(1)&P(4)0&P(1)0' AND RESET
+         NI    4(1),X'C0' CLEAR PARM LIST BYTE 4 FUNCTION BITS
+         OI    4(1),B'00&P(3)0&P(2)&OU(1)&KR.0' AND RESET        Y02752
+.* * * * PARAMETER LIST COMPLETE -- ISSUE SUPERVISOR CALL
+         AGO   .REND                                             Y02752
+.********************* EXTENSION FOR R FORMAT ****************   Y02752
+.REXP    ANOP                                                    Y02752
+&EAISRG  SETB  ((NOT &EAISAD) AND '&EA' NE '')                   Y02752
+&EAL     SETB  (&EAISAD OR (&ADRISAD AND NOT &EAISRG))           Y02752
+.*&INDEX   SETA  (4+4*&ECBISAD+4*&ADRISAD+2*&ADRISRG+4*&EAL)     Y02752
+.* * * * BRANCH TO FIRST EXECUTABLE INSTRUCTION                  Y02752
+         B     IHB&SYSNDX.B BRANCH AROUND INPUT PARMS            Y02752
+.******* GENERATE ADDRESS CONSTANTS AND MODE FLAG OR FLAG BYTE   Y02752
+&EAICM   SETB  (NOT &EAL)                                        Y02752
+         AIF   (NOT &EAL).R6C                                    Y02752
+&COLFIX  SETC  'IHB'.'&SYSNDX'.'F'                               Y02752
+&COLFIX  DC    B'00&P(3)00&OU(1)&KR.0'   PGFLGS2                 Y02752
+         AIF   (NOT &EAISAD).R6B                                 Y02752
+         DC    AL3(&EA)           VSL ADDRESS                    Y02752
+         AGO   .R6C                                              Y02752
+.R6B     DC    AL3(&A+1)             VSL ADDRESS OMITTED         Y02752
+.R6C     AIF   (NOT &ECBISAD).R7                                 Y02752
+.* * * * ECB ADCON IF ECB=ADDR                                   Y02752
+&COLFIX  SETC  'IHB'.'&SYSNDX'.'0'                               Y02752
+&COLFIX  DC    A(&ECB)      FIRST INPUT PARM                     Y02752
+.* * * * HIGH-ORDER REG 1 FUNCTION BITS                          Y02752
+.R7      ANOP                                                    Y02752
+&COLFIX  SETC  'IHB'.'&SYSNDX'.'1'                               Y02752
+&COLFIX  DC    B'0&FX(1)&FR(1)&LD(1)&P(4)0&P(1)0'  FLAG BYTE     Y02752
+.R9      AIF   (&ADRISRG).R10                                    Y02752
+.* * * * VIRTUAL ADDRESS ADCON IF A=ADDR                         Y02752
+         DC    AL3(&A)        SECOND INPUT PARM                  Y02752
+         AIF   (NOT &EAICM).R11                                  Y02752
+.* * * * FILLER IF NO VIRTUAL ADDRESS ADCON PRESENT              Y02752
+.R10     ANOP                                                    Y02752
+&HW      SETB  1                                                 Y02752
+         AIF   (NOT &EAICM).R10C                                 Y02752
+&COLFIX  SETC  'IHB'.'&SYSNDX'.'F'                               Y02752
+&COLFIX  DC    B'00&P(3)00&OU(1)&KR.0'      PGFLGS2              Y02752
+         AIF   (&ADRISRG).R11                                    Y02752
+.R10C    DC    X'00'     (TO MAINTAIN ALIGNMENT)                 Y02752
+.******* INITIALIZE REGISTER 0 -- ECB ADDRESS                    Y02752
+.R11     ANOP                                                    Y02752
+&COLFIX  SETC  'IHB'.'&SYSNDX'.'B'                               Y02752
+&COLFIX  DS    0H                                                Y02752
+         AIF   (NOT(&ADRISAD AND &ECBISAD AND &EAL)).R11A        Y02752
+.* * * * LOAD MULTIPLE IF THREE ADCON'S HAVE BEEN CREATED        Y02752
+         LM    15,1,IHB&SYSNDX.F   INITIALIZE PARM REGS          Y02752
+         AGO   .R18                                              Y02752
+.* * * * LOAD MULTIPLE IF TWO ADCONS GENERATED WITH EA OMITTED   Y02752
+.*       OR IN A REGISTER                                        Y02752
+.R11A    AIF   (NOT(&ADRISAD AND &ECBISAD)).R12                  Y02752
+         LM    0,1,IHB&SYSNDX.0           INITIALIZE PARM REGS   Y02752
+         AIF   (&EAINR15).R11C                                   Y02752
+         LR    15,&EA(1)          LOAD VSL ADDRESS               Y02752
+.R11C    ICM   15,8,IHB&SYSNDX.F                                 Y02752
+         AGO   .REND                                             Y02752
+.* EITHER ECB OR A IS NOT AN ADDRESS                             Y02752
+.*   IF EA IS AN ADDRESS OR EA IS OMITTED AND A IS AN ADDRESS,   Y02752
+.*   GENERATE A LOAD OF REG 15 FROM THE ADCON                    Y02752
+.R12    AIF   (NOT (&EAISAD OR (&ADRISAD AND '&EA' EQ ''))).R12A Y02752
+         L     15,IHB&SYSNDX.F      LOAD VSL ADDRESS             Y02752
+         AGO   .R12X                                             Y02752
+.* EA IS OMITTED OR IS A REGISTER                                Y02752
+.*  IF EA IS OMITTED, IT MUST BE CREATED AFTER REG 1 IS LOADED,  Y02752
+.*  SINCE A IS A REGISTER.                                       Y02752
+.R12A    AIF   (&EAISRG).R12B                                    Y02752
+&EALAST  SETB  1                                                 Y02752
+         AGO   .R12X                                             Y02752
+.* EA IS A REGISTER, GENERATE THE LR IF NECESSARY (EA NE 15)     Y02752
+.R12B    AIF   (&EAINR15).R12C                                   Y02752
+         LR    15,&EA(1)          LOAD VSL ADDRESS               Y02752
+.R12C    ICM   15,8,IHB&SYSNDX.F  SET PGFLGS2 BYTE               Y02752
+.R12X    AIF   (&ECBINR0).R15                                    Y02752
+         AIF   (&ECBNULL).R14                                    Y02752
+         AIF   (&ECBISAD).R13                                    Y02752
+.* * * * LOAD FROM REGISTER IF ECB ADDR NOT AN ADCON             Y02752
+         LR    0,&ECB(1)     INITIALIZE PARM REG 0               Y02752
+         AGO   .R15                                              Y02752
+.* * * * LOAD FROM PARM LIST IF ECB ADDR IS AN ADCON             Y02752
+.R13     L     0,IHB&SYSNDX.0     SET ECB ADDRESS                Y02752
+         AGO   .R15                                              Y02752
+.* * * * CLEAR REG 0 IF ECB OMITTED (PGFREE ONLY)                Y02752
+.R14     SR    0,0       INDICATE NO PURGE ECB SPECIFIED         Y02752
+.******* REGISTER 0 INITIALIZATION COMPLETE -- START REG 1       Y02752
+.R15     ANOP                                                    Y02752
+.*&INDEX2  SETA  (2*&EAISAD+2*&EAINR15+2*&ECBISRG+2*&ECBINR0)    Y02752
+         AIF   (&ADRINR1).R17                                    Y02752
+         AIF   (&ADRISAD).R16                                    Y02752
+.* * * * LOAD FROM REGISTER IF VIRTUAL ADDR NOT AN ADCON         Y02752
+         LR    1,&A(1)        INITIALIZE PARM REG 1              Y02752
+         AGO   .R17                                              Y02752
+.* * * * LOAD FROM PARM LIST IF LIST/VIRTUAL ADDR IS AN ADCON    Y02752
+.R16     L     1,IHB&SYSNDX.1         INITIALIZE PARM REG 1      Y02752
+.R17     AIF   (&ADRISAD).R18                                    Y02752
+.* * * * SET REG 1 BYTE 0 (MODE OR FUNCTIONS) UNLESS LOADED      Y02752
+         ICM   1,8,IHB&SYSNDX.1 SET FLAG BYTE                    Y02752
+.******* REGISTER INITIALIZATION COMPLETE -- INIT. LIST IF REQ'D Y02752
+.R18     AIF   (NOT &EALAST).REND                                Y02752
+.*&INDEX2  SETA  (2*&ECBISRG+2*&ECBINR0+2*&ADRISAD+2*&ADRINR1)   Y02752
+.* INITIALIZE REG. 15 FROM CONTENTS OF REG. 1                    Y02752
+         LA    15,1(1,0)          SET EA EQUAL TO A+1            YM1995
+         ICM   15,8,IHB&SYSNDX.F  SET PGFLGS2 BYTE               Y02752
+.* * * * PARAMETER LIST COMPLETE -- ISSUE SUPERVISOR CALL        Y02752
+.REND    SVC   113  INVOKE SERVICE ROUTINE                       Y02752
+         MEND

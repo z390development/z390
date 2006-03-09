@@ -1,0 +1,67 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* /* MACCOMP Y-1 SC1C5/PZD81                                         */
+* /* MACSTAT Y-1 72277                                               */
+         MACRO
+&NAME    STIMER &TYPE,&EXIT,&DINTVL=,&BINTVL=,&TUINTVL=,&TOD=,&MICVL=,&*
+               GMT=,&ERRET=
+* /* MACDATE Y-1 72277                                               */
+         LCLB  &B(9)
+         LCLA  &SUM
+         AIF   ('&TYPE' EQ '' OR '&DINTVL&BINTVL&TUINTVL&TOD&MICVL&GMT'*
+                EQ '').E2
+         AIF   ('&EXIT' NE '' AND '&TYPE' EQ 'WAIT').NMNOTE      A26596
+&B(1)    SETB  ('&TYPE' EQ 'TASK')
+&B(2)    SETB  ('&TYPE' EQ 'REAL')
+&B(3)    SETB  ('&TYPE' EQ 'WAIT')
+&B(4)    SETB  ('&DINTVL' NE '')
+&B(5)    SETB  ('&BINTVL' NE '')
+&B(6)    SETB  ('&TUINTVL' NE '')
+&B(7)    SETB  ('&TOD' NE '')
+&B(8)    SETB  ('&MICVL' NE '')
+&B(9)    SETB  ('&GMT' NE '')
+         AIF   (&B(1)+&B(2)+&B(3) NE 1).E1
+         AIF   (&B(1) AND (&B(7) OR &B(9))).E3
+&NAME    IHBINNRA &DINTVL&BINTVL&TUINTVL&TOD&MICVL&GMT,&EXIT
+         AIF   ('&ERRET' EQ '').NORET
+&SUM     SETA  8                                  RETURN CODE FLAG
+.NORET   AIF   ('&EXIT' NE '').CONTA
+         AIF   (&B(1) AND &B(6)).SRSVC
+&SUM     SETA  &SUM+&B(3)+3*&B(2)+16*&B(5)+48*&B(4)+112*&B(7)+32*&B(8)+*
+               96*&B(9)
+.LC      LA    0,&SUM.(0,0)                       LOAD FLAG BYTE
+.ZSHIFT  SLL   0,24(0)                           SHIFT TO HI-ORDER BYTE
+         AGO   .SVC
+.SRSVC   AIF   (&SUM NE 0).LC                     TEST FOR RC REQUESTED
+         SR    0,0                                INDICATE TASK,TUINTVL
+         AGO   .SVC
+.SPZRT   LA    0,48+&SUM.(0,0)                    LOAD FLAG BYTE
+         AGO   .ZSHIFT
+.CONTA   AIF   (&B(1) AND &B(6)).RETCK
+&SUM     SETA  &SUM+3*&B(2)+16*&B(5)+48*&B(4)+112*&B(7)+32*&B(8)+96*&B(*
+               9)
+.LCEX    LA    14,&SUM.(0,0)
+.SHIFT   SLL   14,24(0)                          SHIFT TO HI-ORDER BYTE
+         OR    0,14                              AND PACK WITHEXIT ADDR
+         AGO   .SVC
+.RETCK   AIF   (&SUM NE 0).LCEX                   TEST FOR RC REQUESTED
+.SVC     SVC   47                                ISSUE STIMER SVC
+         AIF   ('&ERRET' EQ '').DONE
+         LTR   15,15                   ANY RETURN CODE
+         AIF   ('&ERRET'(1,1) EQ '(').BCR
+         BNZ   &ERRET                  YES. BR TO USER EXIT
+         AGO   .DONE
+.BCR     BCR   7,&ERRET(1)
+.DONE    MEXIT
+.SPECRT  LA    14,48+&SUM.(0,0)                   LOAD FLAG BYTE
+         AGO   .SHIFT
+.NMNOTE  ANOP                                                    A26596
+         MNOTE 12,'WAIT AND EXIT ADDRESS INVALID'                A26596
+         MEXIT
+.E3      ANOP
+         MNOTE 16,'TASK WITH GMT OR TOD INVALID'
+         MEXIT
+.E1      IHBERMAC 36,,&TYPE,,,0
+         MEXIT
+.E2      IHBERMAC 01
+         MEXIT
+         MEND

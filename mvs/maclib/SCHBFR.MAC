@@ -1,0 +1,54 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    SCHBFR &RPL=,&BFRNO=1
+         LCLA  &I                       WORK VARIABLE
+         LCLB  &ERR                     ERROR INDICATOR
+         AIF   (N'&SYSLIST EQ 0).NOPOS  GO IF NO POSITIONAL OPERANDS
+.POSLOOP ANOP
+&I       SETA  &I+1                     POINT TO NEXT POS OPERAND
+         IDAERMAC 1,&SYSLIST(&I)        ISSUE WARNING MNOTE
+         AIF   (&I LT N'&SYSLIST).POSLOOP  GO IF MORE POS OPERANDS
+.NOPOS   ANOP
+         AIF   ('&RPL' NE '').ROKY      GO IF RPL IS SPECIFIED
+         IDAERMAC 2,RPL                 ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+.ROKY    ANOP
+         AIF   ('&BFRNO' NE '').BOKY    GO IF BFRNO NOT SPECIFIED NULL
+         IDAERMAC 2,BFRNO               ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+         AGO   .BFRNOB                  GO AROUND BUFFER NO ANALYSIS
+.BOKY    ANOP
+         AIF   ('&BFRNO' EQ '(1)').BFRNOE  GO IF BUFFER NO IN REG 1
+         AIF   ('&BFRNO' EQ '0').BFRNOE  GO IF BUFFER NO EQ ZERO
+         AIF   ('&BFRNO' NE '(13)').BFRNOB  GO IF BUFFER NO NOT IN 13
+.BFRNOE  ANOP
+         IDAERMAC 3,BFRNO,&BFRNO        ISSUE ERROR MNOTE
+&ERR     SETB  1                        INDICATE ERROR
+.BFRNOB  ANOP
+         AIF   (&ERR).END               GO IF ANY ERRORS
+         AIF   ('&NAME' EQ '').NAMEB    GO IF NO NAME
+&NAME    DS    0H
+.NAMEB   ANOP
+         AIF   ('&RPL'(1,1) EQ '(').RPLR  GO IF RPL SPECIFIED AS REG
+         LA    1,&RPL                   LOAD RPL ADDRESS
+         AGO   .ARREG                   GO AROUND RPL REG CODE
+.RPLR    ANOP
+         AIF   ('&RPL' EQ '(1)').ARREG  GO IF RPL ADDRESS ALREADY IN 1
+         LR    1,&RPL(1)                LOAD RPL ADDRESS
+.ARREG   ANOP
+         AIF   ('&BFRNO'(1,1) EQ '(').BFRNR  GO IF BFRNO SPECD AS REG
+         LA    0,&BFRNO                 LOAD BUFFER NUMBER
+         AGO   .ABREG                   GO AROUND BFRNO REG CODE
+.BFRNR   ANOP
+         AIF   ('&BFRNO' EQ '(0)').ABREG  GO IF BUFFER NO ALREADY IN 0
+         LR    0,&BFRNO(1)              LOAD BUFFER NUMBER
+.ABREG   ANOP
+         SLL   0,8                      SHIFT BUFFER NUMBER
+         IC    0,*+19                   INDICATE SEARCH BUFFER
+         L     15,24(,1)                LOAD ACB ADDRESS FROM RPL
+         L     15,8(,15)                LOAD VSAM INTERFACE RTN ADDR
+         LA    14,*+8                   LOAD RETURN ADDRESS
+         BR    15                       BRANCH TO INTERFACE ROUTINE
+         DC    H'13'                    SEARCH BUFFER CODE
+.END     ANOP
+         MEND

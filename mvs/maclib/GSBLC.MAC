@@ -1,0 +1,12 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+&NAME    GSBLC &ADDR
+         GBLA  &IHBBLC
+         AIF   (T'&ADDR EQ 'O').OPRMSG
+         ORG   &ADDR
+         DC    H'&IHBBLC'
+         ORG
+         MEXIT
+.OPRMSG  IHBERMAC  1
+         MEND
+

@@ -1,0 +1,76 @@
+.* MVS 3.8J PUBLIC DOMAIN
+* %GOTO SSOBHCMT;         /*                                   @OZ34144
+         MACRO                                                 @OZ34144
+         IEFSSOBH
+.*/ %SSOBHCMT:;           /*                                 @OZ34144*/
+*/********************************************************************/
+*/*  MACRO NAME =       IEFSSOBH                             @OZ34144*/
+*/*  DESCRIPTIVE NAME = COMMON  SSOB HEADER                  @OZ34144*/
+*/*  STATUS =           SPLITOUT FROM IEFJSSOB MACRO         @OZ34144*/
+*/*  ACCESS METHOD =    INVOKED VIA IEFJSSOB MACRO           @OZ34144*/
+*/********************************************************************/
+*   %GOTO SSHDPLS;        /*                                   @OZ34144
+*
+SSOB     DSECT
+SSOBEGIN EQU   *
+SSOBID   DC    CL4'SSOB'          CONTROL BLOCK IDENTIFIER
+SSOBLEN  DC    AL2(SSOBHSIZ)      LENGTH OF SSOB HEADER
+SSOBFUNC DS    H                  FUNCTION ID
+SSOBSSIB DS    A                  ADDRESS OF SSIB OR ZERO
+SSOBRETN DS    F                  RETURN CODE FROM SUBSYSTEM
+*
+*  THE FOLLOWING RETURN CODES WILL BE RETURNED IN REGISTER 15
+*  TO THE ISSUER OF THE IEFSSREQ MACRO -
+*
+*  SSOBRETN CONTAINS FUNCTION-RELATED RETURN CODES
+*    (DEFINED IN EACH FUNCTION EXTENSION)
+*
+SSRTOK   EQU   0                  SUCCESSFUL COMPLETION - REQUEST WENT
+*                                 TO A SUBSYSTEM.
+SSRTNSUP EQU   4                  SUBSYSTEM DOES NOT SUPPORT THIS
+*                                 FUNCTION
+SSRTNTUP EQU   8                  SUBSYSTEM EXISTS, BUT IS NOT UP
+SSRTNOSS EQU   12                 SUBSYSTEM DOES NOT EXIST
+SSRTDIST EQU   16                 FUNCTION NOT COMPLETED-DISASTROUS
+*                                 ERROR
+SSRTLERR EQU   20                 LOGICAL ERROR (BAD SSOB FORMAT,
+*                                 INCORRECT LENGTH,...)
+*
+SSOBINDV DS    F                  FUNCTION DEPENDENT AREA POINTER
+SSOBHSIZ EQU   *-SSOBEGIN         SSOB HEADER LENGTH
+         MEND                                                @OZ34144*/
+* %SSHDPLS:;                  /*                             @OZ34144*/
+*  DECLARE
+*   1       SSOB          SSOBSSOB, /* SSOB FIXED-LENGTH HEADER      */
+*     2       SSOBID      CHAR(4),  /* 'SSOB' = CNTL BLOCK IDENT.    */
+*     2       SSOBLEN     FIXED(15),/* LENGTH OF SSOB HEADER         */
+*     2       SSOBFUNC    FIXED(15),/* FUNCTION ID - SEE PLS
+*                                      CONSTANTS FOR THESE VALUES    */
+*     2       SSOBSSIB    PTR(31),  /* ADDRESS OF SSIB, WHICH CONTAINS
+*                                      SUBSYSTEM NAME, OR ZERO       */
+*     2       SSOBRETN    PTR(31),  /* RETURN CODE FROM SUBSYSTEM    */
+*     2       SSOBINDV    PTR(31);  /* POINTER TO INDIVIDUAL FUNCTIONAL
+*                                      DEPENDENT AREA                */
+*
+*/********************************************************************/
+*/*                                                                  */
+*/*  THE FOLLOWING RETURN CODES WILL BE RETURNED IN REGISTER 15      */
+*/*  TO THE ISSUER OF THE IEFSSREQ MACRO -                           */
+*/*                                                                  */
+*/*  SSOBRETN CONTAINS FUNCTION-RELATED RETURN CODES                 */
+*/*    (DEFINED IN EACH FUNCTION EXTENSION)                          */
+*/*                                                                  */
+*/********************************************************************/
+*  DCL SSRTOK   FIXED(31) CONSTANT(0);  /* SUCCESSFUL COMPLETION -
+*                                        REQUEST WENT TO A SUBSYSTEM */
+*  DCL SSRTNSUP FIXED(31) CONSTANT(4);  /* SUBSYSTEM DOES NOT SUPPORT
+*                                          THIS FUNCTION             */
+*  DCL SSRTNTUP FIXED(31) CONSTANT(8);  /* SUBSYSTEM EXISTS, BUT IS
+*                                         NOT UP                     */
+*  DCL SSRTNOSS FIXED(31) CONSTANT(12); /* SUBSYSTEM DOES NOT EXIST  */
+*  DCL SSRTDIST FIXED(31) CONSTANT(16); /* FUNCTION NOT COMPLETED -
+*                                          DISASTROUS ERROR          */
+*  DCL SSRTLERR FIXED(31) CONSTANT(20); /* LOGICAL ERROR (I.E. BAD
+*                                          SSOB FORMAT, LENGTH...    */
+*
+

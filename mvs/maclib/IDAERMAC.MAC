@@ -1,0 +1,74 @@
+.* MVS 3.8J PUBLIC DOMAIN
+         MACRO
+         IDAERMAC &A,&B,&C,&D,&E                                X04SVHS
+.*  CHANGE ACTIVITY
+.*   D826000                                                   @XM07073
+         AIF   (&A EQ 1).L1
+         AIF   (&A EQ 2).L2
+         AIF   (&A EQ 3).L3
+         AIF   (&A EQ 4).L4
+         AIF   (&A EQ 5).L5
+         AIF   (&A EQ 6).L6
+         AIF   (&A EQ 7).L7
+         AIF   (&A EQ 8).L8
+         AIF   (&A EQ 9).L9
+         AIF   (&A EQ 10).L10
+         AIF   (&A EQ 11).L11
+         AIF   (&A EQ 18).L18                                    X03004
+         AIF   (&A EQ 19).L19                                    X03004
+         AIF   (&A EQ 20).L20                                    X03004
+         AIF   (&A EQ 21).L21                                  @XA02684
+         AIF   (&A EQ 22).L22                                   X3004BS
+         AIF   (&A EQ 24).L24                                   X04SVHS
+         AIF   (&A EQ 25).L25                                   X04SVHS
+         MNOTE 12,'***IDA999 INVALID MESSAGE CODE, &A'
+         MEXIT
+.L1      MNOTE 4,'***IDA001 INVALID POSITIONAL PARAMETER, &B - IGNORED'
+         MEXIT
+.L2      MNOTE 12,'***IDA002 &B KEYWORD REQUIRED - NOT SPECIFIED'
+         MEXIT
+.L3      MNOTE 12,'***IDA003 INVALID VALUE, &C, SPECIFIED FOR &B KEYWOR*
+               D'
+         MEXIT
+.L4      MNOTE 4,'***IDA004 &B KEYWORD NOT VALID FOR EXECUTE FORM - IGN*
+               ORED'
+         MEXIT
+.L5      MNOTE 8,'***IDA005 INVALID OR DUPLICATE SUBLIST ITEM FOR &B KE*
+               YWORD, &C'                                       X04SVHS
+         MEXIT
+.L6      MNOTE 8,'***IDA006 &B VALUE, &C, NOT VALID FOR LIST FORM'
+         MEXIT
+.L7      MNOTE 12,'***IDA007 LOGIC ERROR IN MACRO &B'
+         MEXIT
+.L8      MNOTE 12,'***IDA008 INCOMPATIBLE SUBLIST ITEMS, &C AND &D, FOR*
+                &B KEYWORD'
+         MEXIT
+.L9      MNOTE 12,'***IDA009 &B CONTROL BLOCK KEYWORDS SPECIFIED - ONLY*
+                ONE ALLOWED'
+         MEXIT
+.L10     MNOTE 8,'***IDA010 EXIT ADDRESS REQUIRED FOR &B KEYWORD - NOT *
+               SPECIFIED'
+         MEXIT
+.L11     MNOTE 4,'***IDA011 &B IS NOT A VALID &C KEYWORD - IGNORED'
+         MEXIT                                                   X03004
+.L18     MNOTE 12,'***IDA018 VTAM KEYWORD, &B, SPECIFIED WITHOUT SPECIF*
+               YING AM=VTAM'                                     X03004
+         MEXIT                                                   X03004
+.L19     MNOTE 8,'***IDA019 KEYWORDS &B AND &C ARE INCOMPATIBLE' X03004
+         MEXIT                                                   X03004
+.L20     MNOTE 12,'***IDA020 VTAM SUBLIST ITEM, &B, SPECIFIED FOR &C KE*
+               YWORD WITHOUT SPECIFYING AM=VTAM'                 X03004
+         MEXIT                                                 @XA02684
+.L21     MNOTE 8,'***IDA021 &B AND &C KEYWORDS MUST BE SPECIFIED TOGETH*
+               ER BUT ONE IS MISSING'                          @XA02684
+         MEXIT                                                  X3004BS
+.L22     MNOTE 12,'***IDA022 CONFLICTING SUBLIST ITEMS WERE SPECIFIED F*
+               0R &B KEYWORD'                                   X3004BS
+         MEXIT                                                  X04SVHS
+.L24     MNOTE 12,'***IDA024 &B, A VSAM KEYWORD SPECIFIED FOR A NON-VSA*
+               M CONTROL BLOCK'                                 X04SVHS
+         MEXIT                                                  X04SVHS
+.L25     MNOTE 12,'***IDA025 &C, &D, &E CONFLICTING SUBPARAMETERS IN &B*
+                KEYWORD, &C ASSUMED'                            X04SVHS
+         MEND
+
