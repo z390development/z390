@@ -137,6 +137,9 @@ public  class  az390 {
     *          b) case 15 - MA?R, MS?R, MY?R = r1,r3,r2    > 1032 
     *          c) case 34 - CG?R, CF?R, FI?R, IDTE, TB?R > r1,m3,r2 > 3012
     * 02/21/06 RPI 208 use tz390.z390_abort flag
+    * 03/16/06 RPI 230 add COM, RSECT, START limited support
+    * 03/16/06 RPI 238 MNOTE error if level > 4
+    * 03/17/06 RPI 233 support macro call/exit level of nesting
     ********************************************************
     * Global variables
     *****************************************************/
@@ -199,6 +202,8 @@ public  class  az390 {
     int     next_time_ins   = 0x1000;
     int     next_time_check = next_time_ins;
     int tot_bal_line = 0;
+    int tot_mnote = 0;
+    int max_mnote_level = 0;
     String[]  bal_name_line = new String[max_bal_line]; //logical bal line from 1 or more physical lines
     int[]     bal_line_num = (int[])Array.newInstance(int.class,max_bal_line); //starting physical line #
     boolean bal_line_gen = true;
@@ -1024,13 +1029,15 @@ private void process_bal_op(){
 	switch (tz390.op_type[bal_op_index]){ 
 	case 0:  // * comments 
 		bal_op_ok = true;
-    	if (gen_obj_code && bal_line.length() > 9){
+    	if (gen_obj_code 
+    		&& bal_line.length() > 9){
        		if (bal_line.substring(0,9).equals("*MCALL #=")){
-       			hex_bddd2_loc = bal_line.substring(19,25);   //put mlc line # in data area
-       			bal_line = bal_line.substring(26); //strip * call prefix
+       			hex_bddd2_loc = bal_line.substring(23,29);   //put mlc line # in data area
+       			bal_line = bal_line.substring(30); //strip * call prefix and level RPI 233
        			if (mac_call_level == 0){
        				mac_call_first = true; // delay setting level to print call if nogen
        			} else {
+       				list_bal_line = false;
        				mac_call_level++;
        			}
        		} else if (bal_line.substring(0,9).equals("*MEXIT #=")){
@@ -1575,6 +1582,9 @@ private void process_bal_op(){
     case 108:  // CATTR 0 
     	break;
     case 109:  // COM 0 
+    	bal_op_ok = true;
+    	process_sect(sym_cst,bal_label);  // RPI 230
+    	if (first_cst_esd == 0)first_cst_esd = cur_esd;
     	break;
     case 110:  // CSECT 0 
     	bal_op_ok = true;
@@ -1605,8 +1615,14 @@ private void process_bal_op(){
     	bal_op_ok = true; //RPI122 IGNORE
     	break;
     case 118:  // RSECT 0
+    	bal_op_ok = true;
+    	process_sect(sym_cst,bal_label);  // RPI 230
+    	if (first_cst_esd == 0)first_cst_esd = cur_esd;
     	break;
     case 119:  // START 0
+    	bal_op_ok = true;
+    	process_sect(sym_cst,bal_label);  // RPI 230
+    	if (first_cst_esd == 0)first_cst_esd = cur_esd;
     	break;
     case 120:  // WXTRN 0
     	bal_op_ok = true;
@@ -1769,6 +1785,24 @@ private void process_bal_op(){
     	break;
     case 214:  // MNOTE 0
     	bal_op_ok = true;  // pass true from mz390
+    	if (cur_pass == 1){
+    		tot_mnote++;
+    	}
+    	if (bal_parms.length() > 0 
+        		&& bal_parms.charAt(0) != '\''
+        	  	&& bal_parms.charAt(0) != ','
+        		&& bal_parms.charAt(0) != '*'){
+    		    exp_text = bal_parms;
+    		    exp_index = 0;
+    		    exp_val = 0;
+        		if (calc_abs_exp() && exp_val > 4){
+       				az390_rc = exp_val;
+        			log_error(110,bal_line);
+        		} 
+        		if (exp_val > max_mnote_level){
+        			max_mnote_level = exp_val;
+        		}
+        	}
     	break;
     case 215:  // SETA 0
     	break;
@@ -3265,6 +3299,7 @@ private void put_stats(){
 	      put_log("Stats total seconds         = " + tot_sec);
 	   }
 	}
+	put_log("AZ390I total mnotes          = " + tot_mnote + "  max level= " + max_mnote_level);
 	put_log("AZ390I total errors          = " + az390_errors);
 	put_log("AZ390I return code           = " + az390_rc);
 }

@@ -1,6 +1,12 @@
 TESTCVTX CSECT
+*********************************************************************
+* 03/14/06 RPI 223 ADD IEAQTE00 AND IEAQTD00 REQUIRED AFTER FIX TO
+*          CORRECT HANDLING OF &OPTIONS=(X,INTERVAL,Y) TYPE PARMS
+*********************************************************************
          SR    15,15
          BR    14
+         ENTRY IEAQTE00  RPI 223
+         ENTRY IEAQTD00  RPI 223
          ENTRY IEATCBP     
          ENTRY IEA0EF00    
          ENTRY IEFLINK     
@@ -126,6 +132,8 @@ TESTCVTX CSECT
          ENTRY IEEVDCCR    
          ENTRY IQADSV00    
          ENTRY IFGDEBVR    
+IEAQTE00    DS A  RPI 223
+IEAQTD00    DS A  RPI 223
 IEATCBP     DS A
 IEA0EF00    DS A
 IEFLINK     DS A

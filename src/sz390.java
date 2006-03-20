@@ -54,6 +54,10 @@ import javax.swing.Timer;
     * 02/17/06 RPI 136 add gz390_abort support to close down
     *          correctly with log support.
     * 02/21/06 RPI 208 set tz390.z390_abort to sync term.
+    * 03/02/06 RPI 220 close down normally after tz390.z390_abort set
+    * 03/03/06 RPI 209 show current date/time with stats if opt_timing
+    * 03/04/06 RPI 221 set R15 return code for TGET/TPUT from tpg_rc
+    * 03/13/06 RPI 229 correct flush of FPR's for dump
     ********************************************************
     * Global variables
     *****************************************************/
@@ -120,7 +124,22 @@ import javax.swing.Timer;
     int[] gui_mouse   = null; // gui_mouse_read returns x,y,left,right
     int gui_left      = 0;    // gui mouse left button addr (1=pressed)
     int gui_right     = 0;    // gui_mouse right button addr (1 = pressed)
-    int gui_wait      = 0x2000; // wait for input
+    boolean gui_wait  = true; // wait for input
+    /*
+     * global tget and tput data
+     */
+	int tpg_flags      = 0;    // TGET/TPUT options from high byte R1
+	int tpg_op_mask    = 0x80; // 1=TGET, 0=TPUT
+	int tpg_op_tget    = 0x80;
+	int tpg_op_tput    = 0x00;
+	int tpg_wait_mask  = 0x10; // 1=NOWAIT, 0=WAIT
+	int tpg_wait       = 0x00;
+	int tpg_nowait     = 0x10;
+	int tpg_type_mask  = 0x03; // 00=EDIT 01=ASIS 10=CONTROL 11=FULLSCR
+    int tpg_type_edit  = 0x00;
+    int tpg_type_asis  = 0x01;
+    int tpg_type_control = 0x02;
+    int tpg_type_fullscr = 0x03;
     byte[] tget_byte = null;
     ByteBuffer tget_buff = null;
     byte[] tput_byte = new byte[max_gui_buff];
@@ -459,6 +478,9 @@ public void svc(int svc_id){
         wto_len = pz390.mem.getShort(wto_fld);
 		wto_msg("",wto_fld+4,wto_len-4);  //RPI190 remove "WTO  MSG"
 		break;
+	case 0x2f:  //STIMER r0 flags, r1=rx storage arg.
+		svc_stimer();
+		break;
 	case 0x33:  // SNAP r0hh=flags,r0ll=id,r14-15 storage
         svc_snap();
         break;
@@ -550,11 +572,6 @@ public void abort_error(int error,String msg){
 	 * inc error total
 	 */
 	  ez390_errors++;
-	  if (tz390.z390_abort){
-		 System.out.println("ez390 aborting due to recursive abort for " + msg);
-	  	 close_z390_gui();
-		 System.exit(16);
-	  }
 	  if (ez390_rc == 0){
 	  	 ez390_rc = 16;
 	  }
@@ -605,7 +622,9 @@ private void put_stats(){
 			put_log("Stats Key max comps         = " + tz390.max_key_comp);
 		}
 		if (tz390.opt_timing){ // display instr rate
-			pz390.cur_date = new Date();
+		   	pz390.cur_date = new Date();
+		   	put_log("Stats current date " + cur_date_MMddyy.format(pz390.cur_date)
+		   			+ " time " + cur_tod_hhmmss.format(pz390.cur_date)); // RPI 209
 			tod_end_pgm = pz390.cur_date.getTime();
 			tot_sec = (tod_end_pgm - tod_start_pgm)/1000;
 			put_log("Stats total seconds         = " + tot_sec);
@@ -1549,6 +1568,30 @@ private void svc_time(){
     }
     pz390.reg.putInt(pz390.r15,0);
 }
+private void svc_stimer(){
+	/*
+	 * wait for specified interval
+	 */
+	int flags = pz390.reg.get(pz390.r0) & 0xff;
+	int addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	long wait_mics = 0;
+	switch (flags){
+	case 0x11: // STIMER WAIT,BINTVL=RX FWORD 0.01 SEC
+		wait_mics = (long)pz390.mem.getInt(addr) * 10000;
+		sleep_now(wait_mics/1000);
+;		break;
+	case 0x21: // STIMER WAIT,MICVL=RX DWORD MICS
+		wait_mics = pz390.mem.getLong(addr);
+		sleep_now(wait_mics/1000);
+		break;
+	case 0x18: // STIMER WAIT,TUINTVL=RX DWORD 26.04166 MICS
+        wait_mics = (long)(Double.valueOf(pz390.mem.getLong(addr)) * 26.04166);
+        sleep_now(wait_mics/1000);
+		break;
+	default:
+		pz390.set_psw_check(pz390.psw_pic_spec);
+	}
+}
 private int get_ccyydddf(){
 	/* 
 	 * return ccyydddf for r1 linkage=svc calls
@@ -1621,7 +1664,7 @@ public void dump_fpr(int reg_offset){
 	 */
 	if (reg_offset < 0 || reg_offset > pz390.r15){
 		int reg_off = 0;
-		while (reg_off < 16){
+		while (reg_off < pz390.max_reg_off){  // RPI 229
 			pz390.fp_store_reg(pz390.trace_reg,reg_off);
 			reg_off = reg_off + 8;
 		}
@@ -2458,7 +2501,7 @@ private void svc_cmd(){
 					&& cmd_proc_running[cmd_id]
 					&& cmd_proc_rc(cmd_id) == -1
 					&& cmd_read_ms < cmd_read_wait){
-				sleep_now();
+				sleep_now(tz390.monitor_wait);
 				cmd_read_ms = System.currentTimeMillis() - cmd_proc_start[cmd_id];
 				cmd_read_line = cmd_get_queue(cmd_id);
 			}
@@ -2557,10 +2600,10 @@ public int cmd_proc_start(int cmd_id,String[] exec_cmd){
 	    cmd_proc_thread[cmd_id].start();
 	    cmd_error_thread[cmd_id].start();
 	    cmd_output_thread[cmd_id].start();
-	    sleep_now(); // wait for first io
+	    sleep_now(tz390.monitor_wait); // wait for first io
 	    int wait_count = 5;
 	    while (cmd_proc_io[cmd_id] == 0 && wait_count > 0){
-	    	sleep_now();
+	    	sleep_now(tz390.monitor_wait);
 	    	wait_count--;
 	    }
 	    return 0;
@@ -2720,33 +2763,27 @@ private void svc_tget_tput(){
 	/*
 	 * Read or write to TN3270 terminal
 	 * Notes:
-	 *   1.  If GUI interface available, read or write
-	 *       to the TN3270 view screen.
-	 *   2.  If no GUI interface and EDIT mode use
+	 *   1.  If GUAM GUI Access Method enabled,
+	 *       read or write to the GUAM GUI dialog.
+	 *   2.  If no GUAM interface and EDIT mode use
 	 *       WTO/WTOR to MCS console, else error.
-	 *   3.  GUI will block at end of screen waiting
-	 *       for enter before wrapping screen in edit mode.
 	 */
-	int flags = pz390.reg.getShort(pz390.r0) & 0xffff;
-	int tget_flag_mask = 0x8000;
-	int tput_flag_mask = 0x4000;
-	int wait_flag_mask = 0x2000;
-	int edit_flag_mask = 0x1000;
+	tpg_flags = pz390.reg.get(pz390.r1) & 0xff;
+	gz390.tpg_flags = tpg_flags;
+	gz390.tpg_type  = tpg_flags & tpg_type_mask;
 	int buff_len   = pz390.reg.getShort(pz390.r0+2);
-	int buff_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	int buff_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode24;
 	String wto_msg = null;
 	if (tz390.opt_guam){
-		if ((flags & tput_flag_mask) > 0){
+		if ((tpg_flags & tpg_op_mask) == tpg_op_tput){
             gz390.tput_len = buff_len;
-            gz390.tput_flags = flags;
 			gz390.tput_buff.position(0);
 			gz390.tput_buff.put(pz390.mem_byte,buff_addr,buff_len);
 			gz390.gui_tput();
 			if (tz390.z390_abort){
-				abort_error(59,"guam gui tget/tput abort");
+				abort_error(59,"guam gui tput abort");
 			}
-		} else if ((flags & tget_flag_mask) > 0){
-			gz390.tget_flags = flags;
+		} else {
 			gz390.tget_len = buff_len;
 			gz390.gui_tget();
 			if (tz390.z390_abort){
@@ -2757,12 +2794,16 @@ private void svc_tget_tput(){
 			pz390.mem.put(gz390.tget_byte,0,gz390.tget_len);
 		    pz390.reg.putInt(pz390.r1,gz390.tget_len); 
 		}
+		pz390.reg.putInt(pz390.r15,gz390.tpg_rc); // RPI 221 set retrun code
 	} else {
-		if ((flags & edit_flag_mask) > 0){
-			if ((flags & tput_flag_mask) > 0){
+		switch (tpg_flags & tpg_type_mask){
+		case 0x00: // EDIT type
+		case 0x01: // ASIS type
+			if ((tpg_flags & tpg_op_mask) == tpg_op_tput){ // TPUT
 				wto_msg = get_ascii_string(buff_addr,buff_len);
 				put_log("TPUT MSG = " + wto_msg);
-			} else if ((flags & tget_flag_mask) > 0){
+				pz390.reg.putInt(pz390.r15,0); // RPI 221 set retrun code
+			} else { // TGET
 				if (!wtor_reply_pending){					
 					wtor_reply_addr = buff_addr;
 					wtor_reply_len  = buff_len;
@@ -2772,9 +2813,9 @@ private void svc_tget_tput(){
 					wtor_reply_string  = null;
 					wtor_reply_pending = true;
 				}
-				while ((flags & wait_flag_mask) > 0 
+				while ((tpg_flags & tpg_wait_mask) == tpg_wait
 						&& (pz390.mem.getInt(wtor_ecb_addr) & ecb_waiting) == ecb_waiting){
-					sleep_now();
+					sleep_now(tz390.monitor_wait);
 				}
 				if (wtor_reply_string != null){
 					pz390.reg.putInt(pz390.r15,0);
@@ -2782,6 +2823,13 @@ private void svc_tget_tput(){
 					pz390.reg.putInt(pz390.r15,4);
 				}
 			}
+			break;
+		case 0x10: // CONTROL
+			// ignore for now
+			break;
+		case 0x11: // FULLSCR
+			abort_error(108,"tget/tput fullscr type requires GUAM option");
+			pz390.reg.putInt(pz390.r15,8); // RPI 221 set retrun code
 		}
 	}
 }
@@ -2845,7 +2893,7 @@ private void svc_gui(){
 		case 1: // READ,buff,lbuff,WAIT/NOWAIT
 			gui_abuff  = pz390.mem.getInt(gui_args);
 			gui_lbuff = pz390.mem.getInt(gui_args+4);
-			gui_wait  = pz390.mem.getInt(gui_args+8);
+			gui_wait  = pz390.mem.getInt(gui_args+8) == 1;
 			pz390.mem.position(gui_abuff);
 			pz390.mem.put(gz390.gui_screen_read(gui_lbuff,gui_wait));
 			break;
@@ -2920,7 +2968,7 @@ private void svc_gui(){
 		case 1: // READ,mod,char,WAIT/NOWAIT
 			gui_key_amod = pz390.mem.getInt(gui_args);
 			gui_key_achar = pz390.mem.getInt(gui_args+4);
-			gui_wait = pz390.mem.getInt(gui_args+8);
+			gui_wait = pz390.mem.getInt(gui_args+8) == 1;
 			gui_key = gz390.gui_keyboard_read(gui_wait);
 			if (gui_key != -1){
 				pz390.mem.putInt(gui_key_amod,gui_key >> 8);
@@ -3127,17 +3175,17 @@ private void svc_wait(){
 	int ecb_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	int ecb_code = pz390.mem.getInt(ecb_addr);
 	while ((ecb_code & ecb_waiting) == ecb_waiting){
-		sleep_now();
+		sleep_now(tz390.monitor_wait);
 		ecb_code = pz390.mem.getInt(ecb_addr);
 	}
 	pz390.reg.putInt(pz390.r15,0);
 }
-private void sleep_now(){
+public void sleep_now(long mills){
 	/*
 	 * sleep for 1 monitor wait interval
 	 */
 	try {
-		Thread.sleep(tz390.monitor_wait);
+		Thread.sleep(mills);
 	} catch (Exception e){
 		log_error(92,"thread sleep error - " + e.toString());
 	}
@@ -3519,7 +3567,7 @@ private void exec_test_cmd(){
 	    put_log("  B=addr      set base for rel addr (ie B=15r% sets base to (r15) 24 bit");
 	    put_log("  D           display DCB file status, DDNAME, and DSNAME information");
 	    put_log("  F nn        display specified floating point registers else all F0-FF");
-	    put_log("  G nn/opcode go exec n instr. or until next opcode/reg/mem break");
+	    put_log("  G nn/opcode exec n instr. or until next break without trace");
 	    put_log("  H           list help command summary");
 	    put_log("  J addr      jump to new addr and trace instruction");
 	    put_log("  L           list all regs and trace current instruction");

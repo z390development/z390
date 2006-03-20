@@ -1,0 +1,41 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/14/06                                                 *
+.*********************************************************************
+.* 03/14/06 RPI1 210 ADD STORAGE MACRO
+.*********************************************************************
+&N       STORAGE &TYPE,&LENGTH=,&ADDR=,&LOC=,&COND=NO
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+.NPOK    ANOP
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&TYPE EQ 'OBTAIN').OBTAIN
+         AIF   (&TYPE EQ 'RELEASE').RELEASE
+         MNOTE 12,'STORAGE INVALID TYPE - &TYPE'
+         MEXIT
+.OBTAIN  ANOP
+         AIF   (&COND EQ 'YES').GMRC
+.GMR     ANOP
+         GETMAIN R,LV=&LENGTH,LOC=&LOC
+         AGO     .STORE
+.GMRC    ANOP
+         GETMAIN RC,LV=&LENGTH,LOC=&LOC
+.STORE   ANOP
+         AIF   (&ADDR EQ '').EXIT
+         AIF   ('&ADDR'(1,1) EQ '(').STOREREG
+         ST    0,&ADDR
+         AGO   .EXIT
+.STOREREG ANOP
+         LR    &ADDR(1),0
+.EXIT    ANOP
+         MEXIT
+.RELEASE ANOP
+         FREEMAIN R,A=&ADDR,LV=&LENGTH
+         MEXIT
+         MEND

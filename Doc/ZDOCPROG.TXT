@@ -48,8 +48,41 @@ RETURN    Restore callers registers and return with return code.
 
 RESTORE   Restore callers registers.
 
-Documentation
--------------
+Passing parameters to the initial program
+-----------------------------------------
+
+There are two methods of doing this, via SYSPARM on CALL MZ390
+or PARM on CALL EZ390.
+
+In either case enclose the entire parm to be passed in double quotes.
+The double quotes are required to handle commas and spaces that otherwise
+cause Windows BAT parser to split the parm. The double quotes are not 
+required if there are no commas or spaces in the text.  If single quotes
+are included in text, they are passed on to &SYSPARM.
+There is a limit of 32767 bytes for the text.
+
+SYSPARM will be transferred to the Macro variable &SYSPARM.
+
+eg. CALL MZ390 ... "SYSPARM(HELLO WORLD)"
+Access the text by coding (eg)...
+label  DC  C'&SYSPARM'
+
+Which will become...
+label  DC  C'HELLO WORLD'
+
+PARM can be accessed via GR1 at program entry and consists of
+a halfword length followed by the text.
+
+eg. CALL EZ390 ... "PARM(HELLO WORLD)"
+GR1 points to DC H'11',C'HELLO WORLD'
+
+If single quotes are included around text in PARM they are removed so
+CALL EZ390 .... "PARM('HELLO WORLD')" will also result in
+GR1 points to DC H'11',C'HELLO WORLD'
+
+Macro Documentation
+-------------------
+
 1) LOAD, DELETE, LINK, XCTL and RESTORE
 
    name  LOAD   EP=,EPLOC=,DDNAME=,DSNAME=
@@ -407,6 +440,8 @@ Documentation
       FF  EQU 15
 
 Author: Melvyn Maltz
-Publication date: Jan 16, 2006
-Z390 version: V1.0.09a
+Publication date: Feb 24, 2006
+Z390 version: V1.0.12
+
+The section on SYSPARM and PARM formats updated by Don Higgins 03/13/06
 

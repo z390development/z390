@@ -148,6 +148,8 @@ import javax.swing.Timer;
     * 01/24/06 RPI190 remove WTO and WTOR prefixes
     * 01/26/06 RPI191 set R15 for unconditional getmain
     * 02/04/06 RPI197 remove test_or_trace interrupts
+    * 02/24/06 RPI218 increase performance using sleep_now
+    * 03/02/06 RPI 220 detect tz390.z390_abort and close down
     ********************************************************
     * Global variables
     *****************************************************/
@@ -289,13 +291,13 @@ private void exec_pz390(){
 	try {
 		if (tz390.opt_guam){
 			while (!tz390.z390_abort && pz390_running){
-				Thread.yield();
+				sz390.sleep_now(tz390.monitor_wait);  // RPI 218
 			}
 		} else {
 			pz390_thread.join(); // faster with no spurious interrupts
 		}
 	} catch (Exception e){
-		sz390.abort_error(108,"pz390 processor error " + e.toString());
+		sz390.abort_error(202,"pz390 processor error " + e.toString());
 	}
 }
 private void init_ez390(String[] args, JTextArea log_text, JTextField command_text){
@@ -416,6 +418,9 @@ private void monitor_update(){
 			sz390.wtor_reply_pending = false;
 		}
 	}
+	if (tz390.z390_abort){  // RPI 220 shut down due to external request
+		sz390.abort_error(203,"ex390 aborting due to external exror");
+	}
 	monitor_last_cmd_mode = sz390.cmd_proc_running[cmd_id];
 	monitor_last_time = monitor_next_time;
 	monitor_last_ins_count  = monitor_next_ins_count;
@@ -425,6 +430,7 @@ public void run() {
 	if (pz390_thread == Thread.currentThread()){
 		pz390.exec_pz390();
 		pz390_running = false;
+		return;
 	}
 	int cmd_id = 0;
 	while (cmd_id < sz390.tot_cmd){
@@ -434,7 +440,7 @@ public void run() {
 			try {
 				sz390.cmd_proc[cmd_id].waitFor();
 			} catch (Exception e){
-				sz390.abort_error(79,"cmd proc wait error " + e.toString());
+				sz390.abort_error(201,"cmd proc wait error " + e.toString());
 			}
 			return;
 		} else if (sz390.cmd_output_thread[cmd_id] == Thread.currentThread()) {

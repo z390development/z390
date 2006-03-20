@@ -3,6 +3,7 @@ rem note testdc1.mlc  > testasc1.mlc for ascii test
 rem note testsdt1.mlc > testasc2.mlc for ascii test
 rem note testins2.mlc > testasc3.mlc for ascii test
 rem note testtst1.mlc > testasc4.mlc for ascii test
+rem note testmac7 and testasm2 must be edited with notepad for tabs
 rem
 rem dynamic linked subroutines used in testlnk1
 rem
@@ -19,6 +20,9 @@ call rt1 %~dps0test\testprm3 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testmac1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testmac2 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testmac3 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testmac4 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testmac5 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testmac6 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testopr1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testset1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testset2 %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -50,6 +54,7 @@ call rt1 %~dps0test\testsdt1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy %~dps0test\testsdt1.mlc %~dps0test\testasc2.mlc
 call rt1 %~dps0test\testasc2 ascii %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testasm1 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testasm2 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt4 %~dps0test\testerr2 %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem lz390 linker
@@ -60,17 +65,17 @@ call rt1 %~dps0test\testext2 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testwxt1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testobj1 objhex %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testobj2 objhex mem(49) rmode31 trace %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0test\testprm4 "parm('a,b')" "sysparm('a,b')" trace %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testprm4 "parm('a, b')" "sysparm(a, b)" trace %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem ez390 emulator
 rem
 call rt1 %~dps0test\testerr4 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testerr5 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testerr6 %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0test\testins2 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testins2 trace %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy %~dps0test\testins2.mlc %~dps0test\testasc3.mlc
-call rt1 %~dps0test\testasc3 ascii %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0test\testfp1  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testasc3 ascii trace %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testfp1  trace %1 %2 %3 %4 %5 %6 %7 %8 %9
 set DDTODEMO=DEMO\DEMO.390
 call rt1 %~dps0test\testcal1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testcal2 %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -101,8 +106,10 @@ call rt5 %~dps0test\testdcbd %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt5 %~dps0test\testdcbe ascii %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt5 %~dps0test\testeof1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testtim1 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testtim2 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testmem1 mem(32)      %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testmem2 mem(2)       %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testmem3 mem(32)      %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt5 %~dps0test\testtst1 test(sysut1) %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy %~dps0test\testtst1.mlc %~dps0test\testasc4.mlc
 call rt5 %~dps0test\testasc4 test(sysut1) ascii %1 %2 %3 %4 %5 %6 %7 %8 %9

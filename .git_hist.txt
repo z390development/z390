@@ -394,6 +394,68 @@ git commit -m "Reconstructed version v1.0.12 of z390 committed on behalf of Don 
 git tag -a v1.0.12 -m "Reconstructed version v1.0.12 of z390 committed on behalf of Don Higgins"
 git gc --aggressive
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.0.13
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.0.13
+git add Doc/ZDOCFILE.TXT
+git add Doc/ZDOCPROG.TXT
+git add Doc/readme.rtf
+git add Doc/readme.txt
+git add RTTEST.BAT
+git add bmk/INSTTIME.INS
+git add bmk/INSTTIME.MLC
+git add demo/DEMOGUI4.MLC
+git add demo/DEMOGUI5.MLC
+git add mac/CVTD.MAC
+git add mac/FREEMAIN.MAC
+git add mac/GETMAIN.MAC
+git add mac/GUAM.MAC
+git add mac/TGET.MAC
+git add mac/TN3270.MAC
+git add mac/TPUT.MAC
+git add mvs/test/testcvtx.MLC
+git add src/az390.java
+git add src/ez390.java
+git add src/gz390.java
+git add src/lz390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add test/TESTASM1.MLC
+git add test/TESTERR2.MLC
+git add test/TESTFP1.MLC
+git rm  test/testtasc4.mlc
+git add Doc/ZDOCSERV.TXT
+git add demo/DEMOGUI6.MLC
+git add mac/STIMER.MAC
+git add mac/STORAGE.MAC
+git add test/TESTMAC4.MLC
+git add test/TESTMAC5.MLC
+git add test/TESTMAC6.MLC
+git add test/TESTMAC7.MLC
+git add test/TESTMEM3.MLC
+git add test/TESTTIM2.MLC
+git add test/testasm2.mlc
+
+==> Create commit for V1.0.13
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2006-03-20 07:35:00 -0500
+set GIT_COMMITTER_DATE=2021-03-20 12:00:00 +0100
+git commit -m "Reconstructed version v1.0.13 of z390 committed on behalf of Don Higgins"
+git tag -a v1.0.13 -m "Reconstructed version v1.0.13 of z390 committed on behalf of Don Higgins"
+
+
+
+
+
+
+
 
 
 

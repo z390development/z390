@@ -149,6 +149,10 @@ RX    SL      F    00
 RX    SL      F    0B
 RX    SL      F    X0
 RX    SL      F    XB
+RX    MS      F    00
+RX    MS      F    0B
+RX    MS      F    X0
+RX    MS      F    XB
 *
 RSI   BRXH                   BRANCH
 RSI   BRXH    B0             NO BRANCH
@@ -240,6 +244,27 @@ RI    MGHI
 RI    CHI
 RI    CGHI
 *
+RS    MVCLE             1
+RS    MVCLE            10
+RS    MVCLE            50
+RS    MVCLE           100
+RS    MVCLE           500
+RS    MVCLE          1000
+RS    MVCLE          5000
+RS    MVCLE         10000
+RS    CLCLE             1
+RS    CLCLE            10
+RS    CLCLE            50
+RS    CLCLE           100
+*
+S     STIDP
+S     STCK
+*S     STCKC                 not supported
+*S     STPT                  not supported
+*S     STPX                  not supported
+*S     STAP                  not supported
+S     STCKE
+S     STCKF
 RRE   MSR
 *
 RRE   LPGR
@@ -247,6 +272,8 @@ RRE   LNGR
 RRE   LTGR
 RRE   LCGR
 RRE   LGR
+RRE   LGBR
+RRE   LGHR
 RRE   AGR
 RRE   SGR
 RRE   ALGR
@@ -270,30 +297,67 @@ RRE   DSGFR
 RRE   LRVR
 RRE   CGR
 RRE   CLGR
+RRE   LBR
+RRE   LHR
 RRE   CGFR
 RRE   CLGFR
+RRE   BCTGR   B              BCTGR R1,R2
+RRE   BCTGR   B0             BCTGR R1,0
+RRE   BCTGR   B              BCTGR R1,R2
+RRE   BCTGR   B0             BCTGR R1,0
 RRE   NGR
 RRE   OGR
 RRE   XGR
+RRE   FLOGR
+RRE   LLGCR
+RRE   LLGHR
 RRE   MLGR
 RRE   DLGR
 RRE   ALCGR
 RRE   SLBGR
+RRE   LLCR
+RRE   LLHR
 RRE   MLR
 RRE   DLR
 RRE   ALCR
 RRE   SLBR
 *
+RS    CS      E
+RS    CS      N
+RS    CDS     E
+RS    CDS     N
 RS    CLM
 RS    STCM
 RS    ICM
 *
 RIL   LARL
+RIL   LGFI
 RIL   BRCL    B
 RIL   BRCL    B0
 RIL   JLU     B              SYNONYM
 RIL   JLU     B0             SYNONYM
 RIL   BRASL   B
+RIL   XIHF
+RIL   XILF
+RIL   IIHF
+RIL   IILF
+RIL   NIHF
+RIL   NILF
+RIL   OIHF
+RIL   OILF
+RIL   LLIHF
+RIL   LLILF
+*
+RIL   SLGFI
+RIL   SLFI
+RIL   AGFI
+RIL   AFI
+RIL   ALGFI
+RIL   ALFI
+RIL   CGFI
+RIL   CFI
+RIL   CLGFI
+RIL   CLFI
 *
 SS1   MVN               1
 SS1   MVN               8
@@ -373,6 +437,10 @@ SS1   EDMK             64
 SS1   EDMK            128
 SS1   EDMK            256
 *
+RXY   LTG     D    00
+RXY   LTG     D    0B
+RXY   LTG     D    X0
+RXY   LTG     D    XB
 RXY   LG      D    00
 RXY   LG      D    0B
 RXY   LG      D    X0
@@ -407,6 +475,10 @@ RXY   LRVG    D    00
 RXY   LRVG    D    0B
 RXY   LRVG    D    X0
 RXY   LRVG    D    XB
+RXY   LT      F    00
+RXY   LT      F    0B
+RXY   LT      F    X0
+RXY   LT      F    XB
 RXY   LGF     F    00
 RXY   LGF     F    0B
 RXY   LGF     F    X0
@@ -481,6 +553,10 @@ RXY   STRV    F    0BS
 RXY   STRV    F    XBS
 RXY   STRVH   H    0BS
 RXY   STRVH   H    XBS
+RXY   BCTG    B    0B        BRANCH, NO INDEX
+RXY   BCTG    B0   0B        NO BRANCH, NO INDEX
+RXY   BCTG    B    XB        BRANCH, INDEX
+RXY   BCTG    B0   XB        NO BRANCH, INDEX
 RXY   STY     F    0BS
 RXY   STY     F    XBS
 RXY   MSY     F    00
@@ -603,6 +679,14 @@ RXY   LLGH    H    00
 RXY   LLGH    H    0B
 RXY   LLGH    H    X0
 RXY   LLGH    H    XB
+RXY   LLC     S    00
+RXY   LLC     S    0B
+RXY   LLC     S    X0
+RXY   LLC     S    XB
+RXY   LLH     H    00
+RXY   LLH     H    0B
+RXY   LLH     H    X0
+RXY   LLH     H    XB
 RXY   ML      F    00
 RXY   ML      F    0B
 RXY   ML      F    X0
@@ -640,6 +724,8 @@ RSY   SRLG
 RSY   SRLG         00        NO BASE
 RSY   SLLG
 RSY   SLLG         00        NO BASE
+RSY   CSY     E
+RSY   CSY     N
 RSY   RLLG
 RSY   RLLG         00        NO BASE
 RSY   RLL
@@ -662,6 +748,12 @@ RSY   STMH         16        L1=NO. OF REGISTERS
 *
 RSY   STCMH
 RSY   STCMY
+RSY   CSG     E
+RSY   CSG     N
+RSY   CDSY    E
+RSY   CDSY    N
+RSY   CDSG    E
+RSY   CDSG    N
 *
 RSY   BXHG                   BRANCH
 RSY   BXHG    B0             NO BRANCH
@@ -695,6 +787,11 @@ RSY   LMY          04        L1=NO. OF REGISTERS
 RSY   LMY          08        L1=NO. OF REGISTERS
 RSY   LMY          12        L1=NO. OF REGISTERS
 RSY   LMY          16        L1=NO. OF REGISTERS
+*
+RIE   BRXHG                  BRANCH
+RIE   BRXHG   B0             NO BRANCH
+RIE   BRXLG                  BRANCH
+RIE   BRXLG   B0             NO BRANCH
 *
 SS2   SRP     P    01
 SS2   SRP     P    04
@@ -833,4 +930,5 @@ SS2   DP      P    08  01
 SS2   DP      P    16  01
 SS2   DP      P    08  04
 SS2   DP      P    16  04
+SS2   DP      P    16  08
 

@@ -1,0 +1,389 @@
+Other services
+==============
+
+--SVC--   FUNCTION
+DEC HEX
+  1  01   WAIT
+ 11  0B   TIME (and date)
+ 52  34   CMDPROC
+ 53  35   WTO
+103  67   XLATE
+160  A0   WTOR
+
+Time periods
+------------
+mS   milliseconds  0.001 seconds (one thousandth)
+uS   microseconds  0.000001 seconds (one millionth)
+nS   nanoseconds   0.000000001 seconds (one billionth)
+
+Register usage
+--------------
+These macros may use the following general registers:
+
+GR 0, 1, 2, 3, 14, 15
+
+Documentation
+-------------
+1) TIME (and date)
+
+   name TIME   type,addr,LINKAGE=,DATETYPE=,CLOCKTYPE=
+      Obtain the time and/or date in various formats.
+
+   Formats--part 1...LINKAGE=SVC (default)
+      name TIME
+       --or--
+      name TIME DEC
+      Returns: Time in GR0 as HHMMSSTH
+                  Hours, mins and secs to 2 decimal places.
+                  The values are unsigned packed decimal:
+                     eg. X'21420654' = 21:42:06.54
+                  The MVO instruction can be used after storing
+                  the register to convert it to standard packed
+                  decimal format.
+
+               Date in GR1 as CCYYDDDF
+                  Century, year, day number and sign
+                  The values are signed decimal:
+                     CC  is (almost) the century number.
+                     YY  the year number.
+                     DDD the day number within the year.
+                     F   the positive sign.
+
+                     eg. X'0106003F' = 3rd January 2006
+                  After storing, AP  DATE,=P'1900000' can be used to
+                  convert to a 4-digit year.
+
+      name TIME BIN
+      Returns: Time in GR0 in hundredths of a second since midnight
+               in binary.
+
+               Date in GR1 as above.
+
+      name TIME TU
+      Returns: Time in GR0 in timer units of 26.04166uS since midnight
+               in binary.
+
+               Date in GR1 as above.
+
+      name TIME MIC,label
+       --or--
+      name TIME MIC,(reg)
+      Returns: Time in units of 1uS in binary since midnight.
+               The time is stored at the 8 bytes specified.
+
+               Date in GR1 as above.
+
+      name TIME NS,label
+       --or--
+      name TIME NS,(reg)
+      Returns: Time in units of 1nS in binary since midnight.
+               The time is stored at the 8 bytes specified.
+
+      name TIME STCK,label
+       --or--
+      name TIME STCK,(reg)
+      Returns: Time in units of 1uS in binary since midnight.
+               The time is stored at the 8 bytes specified and
+               uses only bits 0-51 of the 8-byte field.
+
+               Date in GR1 as above.
+
+      name TIME CLOCK,label,CLOCKTYPE=STCK
+       --or--
+      name TIME CLOCK,(reg),CLOCKTYPE=STCK
+      Returns: Time in units of 1uS in binary since 1st January 1900.
+               The time is stored at the 8 bytes specified and
+               uses only bits 0-51 of the 8-byte field.
+
+      name TIME CLOCK,label,CLOCKTYPE=STCKE
+       --or--
+      name TIME CLOCK,(reg),CLOCKTYPE=STCKE
+      Returns: Time in units of 1uS in binary since 1st January 1900.
+               The time is stored at the 16 bytes specified:
+                  Byte  0     : Zero
+                  Bytes 1-13  : The time
+                  Bytes 14-15 : Programmable field set by the SCKPF
+                                instruction and not currently
+                                implemented.
+
+               The time uses only bits 8-111 of the 16-byte field
+               with bits 8-59 being the value in microseconds.
+
+      name TIME CLOCK,label,CLOCKTYPE=JAVA
+       --or--
+      name TIME CLOCK,(reg),CLOCKTYPE=JAVA
+      Returns: Time in units of 1mS in binary since 1st January 1970.
+               The time is stored at the 8 bytes specified.
+
+   Formats--part 2...LINKAGE=SYSTEM,DATETYPE=
+
+      DATETYPE can be set for any of the formats below.
+      All the formats are 4 bytes and the values are unsigned packed
+      decimal.
+      The MVO instruction can be used to convert it to standard
+      packed decimal format.
+         YYYY  the year number.
+         DDD   the day number within the year.
+         DD    the day number within the month.
+         MM    the month number.
+
+         YYYYDDD  (default) stored as 0YYYYDDD
+         MMDDYYYY
+         DDMMYYYY
+         YYYYMMDD
+
+      name TIME ,label,LINKAGE=SYSTEM
+       --or--
+      name TIME ,(reg),LINKAGE=SYSTEM
+       --or--
+      name TIME DEC,label,LINKAGE=SYSTEM
+       --or--
+      name TIME DEC,(reg),LINKAGE=SYSTEM
+      Returns: Time as HHMMSSTH
+               The time is stored at the 4 bytes specified.
+                  Hours, mins and secs to 2 decimal places.
+                  The values are unsigned packed decimal:
+                     eg. X'21420654' = 21:42:06.54
+                  The MVO instruction can be used to convert
+                  it to standard packed decimal format.
+
+               The date is stored at label+8 or 8(reg).
+
+      name TIME BIN,label,LINKAGE=SYSTEM
+       --or--
+      name TIME BIN,(reg),LINKAGE=SYSTEM
+      Returns: The time is stored at the 4 bytes specified
+               in hundredths of a second since midnight
+
+               The date is stored at label+8 or 8(reg).
+
+      name TIME MIC,label,LINKAGE=SYSTEM
+       --or--
+      name TIME MIC,(reg),LINKAGE=SYSTEM
+      Returns: Time in units of 1uS in binary since midnight.
+               The time is stored at the 8 bytes specified.
+
+               The date is stored at label+8 or 8(reg).
+
+      name TIME STCK,label.LINKAGE=SYSTEM
+       --or--
+      name TIME STCK,(reg),LINKAGE=SYSTEM
+      Returns: Time in units of 1uS in binary since midnight.
+               The time is stored at the 8 bytes specified and
+               uses only bits 0-51 of the 8-byte field.
+
+               The date is stored at label+8 or 8(reg).
+
+      name TIME STCKE,label.LINKAGE=SYSTEM
+       --or--
+      name TIME STCKE,(reg),LINKAGE=SYSTEM
+      Returns: Time in units of 1uS in binary since midnight.
+               The time is stored at the 16 bytes specified:
+                  Byte  0     : Zero
+                  Bytes 1-13  : The time
+                  Bytes 14-15 : Programmable field set by the SCKPF
+                                instruction and not currently
+                                implemented.
+
+               The time uses only bits 8-111 of the 16-byte field
+               with bits 8-59 being the value in microseconds.
+
+               Note: The DATETYPE parameter is ignored.
+
+2) CMDPROC
+   Open, close, read and write from a command processor.
+
+   The command processor has also been called a DOS window or
+   Command Prompt.
+
+   With the CMDPROC macro, you can issue commands like CD or DIR,
+   receive the replies from those commands line by line and start
+   other programs.
+
+   There is a limit of 10 command processors that can be open at
+   any time. The limit is only to protect the operating system
+   (eg. Windows) from storage depletion.
+
+   name CMDPROC START,ID=
+      Open a command processor and assign an identifier.
+      ID may range from 0 (default) to 255.
+
+   name CMDPROC STOP,ID=
+      Close a previously opened command processor.
+
+   name CMDPROC WRITE,label,ID=
+       --or--
+   name CMDPROC WRITE,literal,ID=
+       --or--
+   name CMDPROC WRITE,(reg),ID=
+      Send a command to a previously opened command processor.
+
+      label or (reg) points to a constant which terminates with X'00'
+      or be defined as a double-quoted string within a standard
+      C-type constant.
+
+      literal is a double-quoted string within a standard C-type
+      constant preceded by an equals sign.
+
+      eg. using label
+      name   CMDPROC WRITE,CMD1,ID=5
+             ...
+      CMD1   DC   C'DIR /X',X'00'
+       --or--
+      CMD1   DC   C'"DIR /X"'
+
+      eg. using literal
+      name   CMDPROC WRITE,=C'"DIR /X"',ID=5
+
+   name CMDPROC READ,label,len,ID=,WAIT=
+      Obtain the output, a line at a time, from the result of
+      a command issued by CMDPROC WRITE from a previously
+      opened command processor.
+
+      label is the receiving area and may be specified as (reg).
+      Registers listed at the beginning of this document should be
+      avoided.
+
+      If len is specified it determines the maximum length that
+      is passed to your program. The default is the implied length
+      of the receiving field. Maximum value is 4095 bytes.
+
+      len may be specified as (reg).
+      Registers listed at the beginning of this document should be
+      avoided. Maximum value is 2G bytes.
+
+      If label is specified as (reg), then len is mandatory.
+
+      WAIT (default 500) is the time in milliseconds before the
+      READ will terminate if no output from the command processor
+      is available to be read. Maximum value is 4095 (4 seconds).
+
+      WAIT may be specified as (reg).
+      Registers listed at the beginning of this document should be
+      avoided. Maximum value is X'7FFFFFFF' (about 24 days).
+
+   Return codes in GR15:
+       0 = Operation successful
+       4 = READ terminated as WAIT time has expired
+       8 = READ terminated because the command processor has ended
+      12 = Command Processor abnormally ended (see log message)
+
+3) WTO
+   Display a message on the GUI console.
+
+   The record decriptor word (RDW) defines the variable length
+   text message generated by the WTO macro.
+   eg.
+      DC AL2(len,0),C'text'
+   len includes the 4 bytes for the RDW.
+
+   Formats:
+      name WTO 'text'
+       --or--
+      name WTO "text"
+      The text appears on the console as WTO  MSG = text
+      The RDW that describes the message is generated internally.
+
+      name WTO 'text',MF=L   (list form)
+       --or--
+      name WTO "text",MF=L   (list form)
+      No text is written to the console, only the RDW is generated.
+      This allows a 'collection' of messages to be constructed
+      which can be used by the execute form.
+
+      name WTO  MF=E          (execute form 1)
+      GR1 must be preloaded with the address of an RDW previously
+      generated with the list form of WTO.
+      The text appears on the console as WTO  MSG = text
+
+      name WTO  MF=(E,label)  (execute form 2)
+       --or--
+      name WTO  MF=(E,(reg))  (execute form 2)
+      label or (reg) points to an RDW previously generated with
+      the list form of the WTO.
+      The text appears on the console as WTO  MSG = text
+
+4) XLATE
+   Translates data to EBCDIC or ASCII.
+
+   name XLATE area,len,TO=
+
+   area may be specified as label or (reg).
+
+   len may be specified as a number or (reg).
+      Maximum numeric value is 4095 bytes.
+      Maximum register value is 2G bytes.
+
+   TO=A  convert area to ASCII.
+   TO=E  convert area to EBCDIC.
+
+5) WTOR and WAIT
+   Display a message on the GUI console and receive a response.
+
+   name WTOR 'text',reply,len,ecb
+       --or--
+   name WTOR "text",reply,len,ecb
+      The text appears on the console as WTOR MSG = text
+      The RDW (see WTO) that describes the message is generated
+      internally.
+
+      reply
+         specified as label or (reg), is the field into which the
+         reply is put.
+         The reply appears on the console as wtor reply = reply
+
+      len
+         Maximum length of reply.
+         If reply is specified as (reg) then len is mandatory.
+         If len is omitted, then the implied length of reply is used.
+
+      ecb
+         specified as label or (reg), by convention defined as DC F'0'.
+         Only the first byte is used at present.
+
+         After the WTOR macro, instruction execution can proceed until
+         the reply is completed by the user (commonly the Return key).
+
+         The first byte of the ECB (Event Control Block) is flagged
+         as follows:
+            X'80'  WTOR has been issued, no reply received
+            X'40'  Reply has been received.
+
+         Two programming techniques can be employed to test for
+         completion...
+         a) a bit test using (eg.) TM to periodically test the ECB.
+         b) use the WAIT macro (qv) to wait for the reply to be received.
+
+   name WAIT ECB=ecb
+      Wait for WTOR reply.
+
+      ecb
+         specified as label or (reg).
+         The same ecb location as defined on a WTOR macro.
+
+   Example 1:
+      Implied length, named ECB, wait for reply immediately...
+
+      WTOR 'Enter your name',NAME,,MYECB
+      WAIT ECB=MYECB
+      ...
+NAME  DC   CL40' '
+MYECB DC   F'0'
+
+   Example 2:
+      Register notation, maximum length, no wait for reply...
+
+      LA   R5,NAME
+      LA   R6,MYECB
+      WTOR 'Enter your name',(R5),40,(R6)
+      ... other processing
+      TM   MYECB,X'40'
+      BO   GOTREPLY
+      ...
+NAME  DC   CL40' '
+MYECB DC   F'0'
+
+Author: Melvyn Maltz
+Publication date: Feb 1, 2006
+Z390 version: V1.0.11
+

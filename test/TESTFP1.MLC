@@ -16,18 +16,19 @@
 *********************************************************************
 * 11/20/05 RPI106 CORRECT MASK ALIGNMENT FOR SPM
 * 02/08/06 RPI185 ADD MAYR, MYR, MAY, MY 
+* 03/15/06 RPI 229 CORRECT EXTENDED FP REGISTER PAIR USAGE 
 *********************************************************************
          MACRO
 &N       LX    &R1,&S2   LOAD  LH/LB
          LA    15,&S2
          LD    &R1,0(15)
-         LD    &R1+1,8(15)
+         LD    &R1+2,8(15)  RPI 229
          MEND
          MACRO
 &N       STX   &R1,&S2   STORE LH/LB
          LA    15,&S2
          STD   &R1,0(15)
-         STD   &R1+1,8(15)
+         STD   &R1+2,8(15)  RPI 229
          MEND
 TESTFP1  RT1   MAIN
          EQUREGS
@@ -166,46 +167,46 @@ LHMAX    DC    LH'7.2E+75'
          CDR   R0,R2
          RT1   CCE
 * 25   LDXR
-         LX    R2,=LH'123'
-         LDXR  R0,R2
+         LX    R1,=LH'123'
+         LDXR  R0,R1
          CD    R0,=DH'123'
          RT1   CCE
 * 26   MXR
          LX    R0,=LH'20'
-         LX    R2,=LH'30'
+         LX    R1,=LH'30'
          LX    R4,=LH'600'
-         MXR   R0,R2
+         MXR   R0,R1
          CXR   R0,R4
          RT1   CCE
          LX    R0,=LH'10'
-         LX    R2,=LH'-20'
+         LX    R1,=LH'-20'
          LX    R4,=LH'-200'
-         MXR   R0,R2
+         MXR   R0,R1
          CXR   R0,R4
          RT1   CCE
          LX    R0,=LH'-0.5'
-         LX    R2,=LH'-0.5'
+         LX    R1,=LH'-0.5'
          LX    R4,=LH'.25'
-         MXR   R0,R2
+         MXR   R0,R1
          CXR   R0,R4
          RT1   CCE
 * 27   MXDR
          LD    R0,=DH'20'
-         LD    R2,=DH'30'
+         LD    R1,=DH'30'
          LX    R4,=LH'600'
-         MXDR  R0,R2
+         MXDR  R0,R1
          CXR   R0,R4
          RT1   CCE
          LD    R0,=DH'10'
-         LD    R2,=DH'-20'
+         LD    R1,=DH'-20'
          LX    R4,=LH'-200'
-         MXDR  R0,R2
+         MXDR  R0,R1
          CXR   R0,R4
          RT1   CCE
          LD    R0,=DH'-0.5'
-         LD    R2,=DH'-0.5'
+         LD    R1,=DH'-0.5'
          LX    R4,=LH'.25'
-         MXDR  R0,R2
+         MXDR  R0,R1
          CXR   R0,R4
          RT1   CCE
 * 28   LDR
@@ -413,45 +414,45 @@ DDR1     ESPIE RESET
          RT1   CCE
 * 36   AXR
          LX    R0,=LH'1'
-         LX    R2,=LH'2'
+         LX    R1,=LH'2'
          LX    R4,=LH'3'
-         AXR   R0,R2
+         AXR   R0,R1
          RT1   CCH
          CXR   R0,R4
          RT1   CCE
          LX    R0,=LH'1'
-         LX    R2,=LH'-2'
+         LX    R1,=LH'-2'
          LX    R4,=LH'-1'
-         AXR   R0,R2
+         AXR   R0,R1
          RT1   CCL
          CXR   R0,R4
          RT1   CCE
          LX    R0,=LH'-1'
-         LX    R2,=LH'1'
+         LX    R1,=LH'1'
          LX    R4,=LH'0'
-         AXR   R0,R2
+         AXR   R0,R1
          RT1   CCE
          CXR   R0,R4
          RT1   CCE
 * 37   SXR
          LX    R0,=LH'1'
-         LX    R2,=LH'-2'
+         LX    R1,=LH'-2'
          LX    R4,=LH'3'
-         SXR   R0,R2
+         SXR   R0,R1
          RT1   CCH
          CXR   R0,R4
          RT1   CCE
          LX    R0,=LH'1'
-         LX    R2,=LH'2'
+         LX    R1,=LH'2'
          LX    R4,=LH'-1'
-         SXR   R0,R2
+         SXR   R0,R1
          RT1   CCL
          CXR   R0,R4
          RT1   CCE
          LX    R0,=LH'1'
-         LX    R2,=LH'1'
+         LX    R1,=LH'1'
          LX    R4,=LH'0'
-         SXR   R0,R2
+         SXR   R0,R1
          RT1   CCE
          CXR   R0,R4
          RT1   CCE
@@ -575,8 +576,8 @@ DER1     ESPIE RESET
 * 67   MXD
          LD    R0,=DH'2'
          MXD   R0,=DH'3'
-         LX    R2,=LH'6'
-         CXR   R0,R2
+         LX    R1,=LH'6'
+         CXR   R0,R1
          RT1   CCE
 * 68   LD
          LD    R0,=DH'1'
@@ -802,27 +803,27 @@ DE1      ESPIE RESET
          RT1   CCE
 * B22D DXR
          LX    R0,=LH'6'
-         LX    R2,=LH'2'
+         LX    R1,=LH'2'
          LX    R4,=LH'3'
-         DXR   R0,R2
+         DXR   R0,R1
          CXR   R0,R4
          RT1   CCE
          LX    R0,=LH'1'
-         LX    R2,=LH'-2'
+         LX    R1,=LH'-2'
          LX    R4,=LH'-0.5'
-         DXR   R0,R2
+         DXR   R0,R1
          CXR   R0,R4
          RT1   CCE
          LX    R0,=LH'-1'
-         LX    R2,=LH'-0.5'
+         LX    R1,=LH'-0.5'
          LX    R4,=LH'2'
-         DXR   R0,R2
+         DXR   R0,R1
          CXR   R0,R4
          RT1   CCE
          ESPIE SET,DXR1,15 HFP DIVIDE
          LX    R0,=LH'1'
-         LX    R2,=LH'0'
-         DXR   R0,R2
+         LX    R1,=LH'0'
+         DXR   R0,R1
          RT1   ABORT
 DXR1     ESPIE RESET
 * B244 SQDR
@@ -909,35 +910,35 @@ DXR1     ESPIE RESET
          RT1   CCE
 * B305 LXDBR
          LX    R0,=LB'0'
-         LD    R2,=DB'1'
-         LXDBR R0,R2
+         LD    R1,=DB'1'
+         LXDBR R0,R1
          LX    R4,=LB'1'
          CXBR  R0,R4
          RT1   CCE
 * B306 LXEBR
          LX    R0,=LB'0'
-         LE    R2,=EB'1'
-         LXEBR R0,R2
+         LE    R1,=EB'1'
+         LXEBR R0,R1
          LX    R4,=LB'1'
          CXBR  R0,R4
          RT1   CCE
 * B307 MXDBR
          LD    R0,=DB'20'
-         LD    R2,=DB'30'
+         LD    R1,=DB'30'
          LX    R4,=LB'600'
-         MXDBR R0,R2
+         MXDBR R0,R1
          CXBR  R0,R4
          RT1   CCE
          LD    R0,=DB'10'
-         LD    R2,=DB'-20'
+         LD    R1,=DB'-20'
          LX    R4,=LB'-200'
-         MXDBR R0,R2
+         MXDBR R0,R1
          CXBR  R0,R4
          RT1   CCE
          LD    R0,=DB'-0.5'
-         LD    R2,=DB'-0.5'
+         LD    R1,=DB'-0.5'
          LX    R4,=LB'.25'
-         MXDBR R0,R2
+         MXDBR R0,R1
          CXBR  R0,R4
          RT1   CCE
 * B308 KEBR
@@ -1169,15 +1170,15 @@ DEBR1    ESPIE RESET
          CEB   R0,=EB'2'
          RT1   CCE
 * B316 SQXBR
-         LX    R2,=LB'4'
-         SQXBR R0,R2
+         LX    R1,=LB'4'
+         SQXBR R0,R1
          LX    R4,=LB'2'
          CXBR  R0,R4
          RT1   CCE
-         LX    R2,=LB'2'
-         SQXBR R0,R2
+         LX    R1,=LB'2'
+         SQXBR R0,R1
          MXBR  R0,R0
-         SXBR  R0,R2
+         SXBR  R0,R1
          LPXBR R0,R0
          LX    R4,=LB'1E-34'
          CXBR  R0,R4
@@ -1349,14 +1350,14 @@ DDBR1    ESPIE RESET
          CD    R0,=DH'1'
          RT1   CCE
 * B325 LXDR
-         LD    R2,=DH'1'
-         LXDR  R0,R2
+         LD    R1,=DH'1'
+         LXDR  R0,R1
          LX    R4,=LH'1'
          CXR   R0,R4
          RT1   CCE
 * B326 LXER
-         LE    R2,=EH'123'
-         LXER  R0,R2
+         LE    R1,=EH'123'
+         LXER  R0,R1
          LX    R4,=LH'123'
          CXR   R0,R4
          RT1   CCE
@@ -1375,15 +1376,15 @@ DDBR1    ESPIE RESET
          CE    R0,=EH'-5'
          RT1   CCE
 * B336 SQXR
-         LX    R2,=LH'4'
-         SQXR  R0,R2
+         LX    R1,=LH'4'
+         SQXR  R0,R1
          LX    R4,=LH'2'
          CXR   R0,R4
          RT1   CCE
-         LX    R2,=LH'2'
-         SQXR  R0,R2
+         LX    R1,=LH'2'
+         SQXR  R0,R1
          MXR   R0,R0
-         SXR   R0,R2
+         SXR   R0,R1
          LPXR  R0,R0
          LX    R4,=LH'1E-34'
          CXR   R0,R4
@@ -1424,66 +1425,66 @@ DDBR1    ESPIE RESET
          CD    R0,=DH'-5'
          RT1   CCE
 * B340 LPXBR
-         LX    R2,=LB'-1'
+         LX    R1,=LB'-1'
          LX    R4,=LB'1'
-         LPXBR R0,R2
+         LPXBR R0,R1
          RT1   CCH
          CXBR  R0,R4
          RT1   CCE
-         LX    R2,=LB'0'
+         LX    R1,=LB'0'
          LX    R4,=LB'0'
-         LPXBR R0,R2
+         LPXBR R0,R1
          RT1   CCE
          CXBR  R0,R4
          RT1   CCE
 * B341 LNXBR
-         LX    R2,=LB'1'
+         LX    R1,=LB'1'
          LX    R4,=LB'-1'
-         LNXBR R0,R2
+         LNXBR R0,R1
          RT1   CCL
          CXBR  R0,R4
          RT1   CCE
-         LX    R2,=LB'0'
+         LX    R1,=LB'0'
          LX    R4,=LB'0'
-         LNXBR R0,R2
+         LNXBR R0,R1
          RT1   CCE
          CXBR  R0,R4
          RT1   CCE
 * B342 LTXBR
-         LX    R2,=LB'1'
+         LX    R1,=LB'1'
          LX    R4,=LB'1'
-         LTXBR R0,R2
+         LTXBR R0,R1
          RT1   CCH
          CXBR  R0,R4
          RT1   CCE
-         LX    R2,=LB'0'
+         LX    R1,=LB'0'
          LX    R4,=LB'0'
-         LTXBR R0,R2
+         LTXBR R0,R1
          RT1   CCE
          CXBR  R0,R4
          RT1   CCE
-         LX    R2,=LB'-1'
+         LX    R1,=LB'-1'
          LX    R4,=LB'-1'
-         LTXBR R0,R2
+         LTXBR R0,R1
          RT1   CCL
          CXBR  R0,R4
          RT1   CCE
 * B343 LCXBR
-         LX    R2,=LB'-1'
+         LX    R1,=LB'-1'
          LX    R4,=LB'1'
-         LCXBR R0,R2
+         LCXBR R0,R1
          RT1   CCH
          CXBR  R0,R4
          RT1   CCE
-         LX    R2,=LB'0'
+         LX    R1,=LB'0'
          LX    R4,=LB'0'
-         LCXBR R0,R2
+         LCXBR R0,R1
          RT1   CCE
          CXBR  R0,R4
          RT1   CCE
-         LX    R2,=LB'1'
+         LX    R1,=LB'1'
          LX    R4,=LB'-1'
-         LCXBR R0,R2
+         LCXBR R0,R1
          RT1   CCL
          CXBR  R0,R4
          RT1   CCE
@@ -1493,38 +1494,38 @@ DDBR1    ESPIE RESET
          CEB   R0,=EB'123'
          RT1   CCE
 * B345 LDXBR
-         LX    R2,=LB'123'
-         LDXBR R0,R2
+         LX    R1,=LB'123'
+         LDXBR R0,R1
          CDB   R0,=DB'123'
          RT1   CCE
 * B346 LEXBR
-         LX    R2,=LB'123'
-         LEXBR R0,R2
+         LX    R1,=LB'123'
+         LEXBR R0,R1
          CEB   R0,=EB'123'
          RT1   CCE
 * B347 FIXBR
-         LX    R2,=LB'1.5'
-         FIXBR R0,0,R2
+         LX    R1,=LB'1.5'
+         FIXBR R0,0,R1
          LX    R4,=LB'1.0'
          CXBR  R0,R4
          RT1   CCE
 * B348 KXBR
          LX    R0,=LB'-1'
-         LX    R2,=LB'1'
-         KXBR  R0,R2
+         LX    R1,=LB'1'
+         KXBR  R0,R1
          RT1   CCL
          LX    R0,=LB'1'
-         LX    R2,=LB'1'
-         KXBR  R0,R2
+         LX    R1,=LB'1'
+         KXBR  R0,R1
          RT1   CCE
          LX    R0,=LB'1'
-         LX    R2,=LB'-1'
-         KXBR  R0,R2
+         LX    R1,=LB'-1'
+         KXBR  R0,R1
          RT1   CCH
          ESPIE SET,KXBR1,7  BFP OVERFLOW FPCDXC=20               
          LX    R0,=LB'1'
-         LX    R2,LBMAX
-         KXBR  R0,R2 
+         LX    R1,LBMAX
+         KXBR  R0,R1 
          RT1   ABORT
 KXBR1    ESPIE RESET
          STFPC FPCREG
@@ -1532,8 +1533,8 @@ KXBR1    ESPIE RESET
          RT1   CCE
          ESPIE SET,KXBR2,7  BFP UNDERFLOW FPCDXC=10               
          LX    R0,LBMIN
-         LX    R2,=LB'1'
-         KXBR  R0,R2 
+         LX    R1,=LB'1'
+         KXBR  R0,R1 
          RT1   ABORT
 KXBR2    ESPIE RESET
          STFPC FPCREG
@@ -1541,43 +1542,43 @@ KXBR2    ESPIE RESET
          RT1   CCE
 * B349 CXBR
          LX    R0,=LB'-1'
-         LX    R2,=LB'1'
-         CXBR  R0,R2
+         LX    R1,=LB'1'
+         CXBR  R0,R1
          RT1   CCL
          LX    R0,=LB'1'
-         LX    R2,=LB'1'
-         CXBR  R0,R2
+         LX    R1,=LB'1'
+         CXBR  R0,R1
          RT1   CCE
          LX    R0,=LB'1'
-         LX    R2,=LB'-1'
-         CXBR  R0,R2
+         LX    R1,=LB'-1'
+         CXBR  R0,R1
          RT1   CCH
 * B34A AXBR
          LX    R0,=LB'3'
-         LX    R2,=LB'2'
-         AXBR  R0,R2
+         LX    R1,=LB'2'
+         AXBR  R0,R1
          RT1   CCH
-         LX    R2,=LB'5'
-         CXBR  R0,R2
+         LX    R1,=LB'5'
+         CXBR  R0,R1
          RT1   CCE
          LX    R0,=LB'1'
-         LX    R2,=LB'-2'
-         AXBR  R0,R2
+         LX    R1,=LB'-2'
+         AXBR  R0,R1
          RT1   CCL
-         LX    R2,=LB'-1'
-         CXBR  R0,R2      
+         LX    R1,=LB'-1'
+         CXBR  R0,R1      
          RT1   CCE
          LX    R0,=LB'1'
-         LX    R2,=LB'-1'
-         AXBR  R0,R2
+         LX    R1,=LB'-1'
+         AXBR  R0,R1
          RT1   CCE
-         LX    R2,=LB'0'
-         CXBR  R0,R2      
+         LX    R1,=LB'0'
+         CXBR  R0,R1      
          RT1   CCE
          ESPIE SET,AXBR1,7  BFP OVERFLOW FPCDXC=20               
          LX    R0,LBMAX
-         LX    R2,LBMAX
-         AXBR  R0,R2 
+         LX    R1,LBMAX
+         AXBR  R0,R1 
          RT1   ABORT
 AXBR1    ESPIE RESET
          STFPC FPCREG
@@ -1586,31 +1587,31 @@ AXBR1    ESPIE RESET
          WTO   'ESPIE BFP LB OVERFLOW OK'
 * B34B SXBR
          LX    R0,=LB'3'
-         LX    R2,=LB'2'
-         SXBR  R0,R2
+         LX    R1,=LB'2'
+         SXBR  R0,R1
          RT1   CCH
-         LX    R2,=LB'1'
-         CXBR  R0,R2    
+         LX    R1,=LB'1'
+         CXBR  R0,R1    
          RT1   CCE
          LX    R0,=LB'1'
-         LX    R2,=LB'2'
-         SXBR  R0,R2
+         LX    R1,=LB'2'
+         SXBR  R0,R1
          RT1   CCL
-         LX    R2,=LB'-1'
-         CXBR  R0,R2       
+         LX    R1,=LB'-1'
+         CXBR  R0,R1       
          RT1   CCE
          LX    R0,=LB'1'
-         LX    R2,=LB'1'
-         SXBR  R0,R2
+         LX    R1,=LB'1'
+         SXBR  R0,R1
          RT1   CCE
-         LX    R2,=LB'0'
-         CXBR  R0,R2    
+         LX    R1,=LB'0'
+         CXBR  R0,R1    
          RT1   CCE
          ESPIE SET,SXBR1,7  BFP UNDERFLOW FPCDXC=10               
          LX    R0,LBMIN
-         LX    R2,LBMIN
-         AXBR  R0,R2 
-         SXBR  R0,R2
+         LX    R1,LBMIN
+         AXBR  R0,R1 
+         SXBR  R0,R1
          RT1   ABORT
 SXBR1    ESPIE RESET
          STFPC FPCREG
@@ -1622,8 +1623,8 @@ SXBR1    ESPIE RESET
          LFPC  FPCREG
          ESPIE SET,SXBR2,7  BFP SIGNIFICANCE FPCDXC=08               
          LX    R0,LBMIN
-         LX    R2,LBMIN
-         SXBR  R0,R2
+         LX    R1,LBMIN
+         SXBR  R0,R1
          RT1   ABORT
 SXBR2    ESPIE RESET
          STFPC FPCREG
@@ -1634,22 +1635,22 @@ SXBR2    ESPIE RESET
          LFPC  FPCREG
 * B34C MXBR
          LX    R0,=LB'2'
-         LX    R2,=LB'3'
-         MXBR  R0,R2
-         LX    R2,=LB'6'
-         CXBR  R0,R2     
+         LX    R1,=LB'3'
+         MXBR  R0,R1
+         LX    R1,=LB'6'
+         CXBR  R0,R1     
          RT1   CCE
 * B34D DXBR
          LX    R0,=LB'3'
-         LX    R2,=LB'2'
-         DXBR  R0,R2
-         LX    R2,=LB'1.5'
-         CXBR  R0,R2
+         LX    R1,=LB'2'
+         DXBR  R0,R1
+         LX    R1,=LB'1.5'
+         CXBR  R0,R1
          RT1   CCE
          ESPIE SET,DXBR1,7  BFP DIVIDE FPCDXC=40                   
          LX    R0,=LB'1'
-         LX    R2,=LB'0'
-         DXBR  R0,R2
+         LX    R1,=LB'0'
+         DXBR  R0,R1
          RT1   ABORT
 DXBR1    ESPIE RESET
          STFPC FPCREG
@@ -1703,82 +1704,82 @@ DXBR1    ESPIE RESET
          FIDBR R1,0,R2
          CDB   R1,=DB'1.0'
 * B360 LPXR
-         LX    R2,=LH'-1'
+         LX    R1,=LH'-1'
          LX    R4,=LH'1'
-         LPXR  R0,R2
+         LPXR  R0,R1
          RT1   CCH
          CXR   R0,R4
          RT1   CCE
-         LX    R2,=LH'0'
+         LX    R1,=LH'0'
          LX    R4,=LH'0'
-         LPXR  R0,R2
+         LPXR  R0,R1
          RT1   CCE
          CXR   R0,R4
          RT1   CCE
 * B361 LNXR
-         LX    R2,=LH'1'
+         LX    R1,=LH'1'
          LX    R4,=LH'-1'
-         LNXR  R0,R2
+         LNXR  R0,R1
          RT1   CCL
          CXR   R0,R4
          RT1   CCE
-         LX    R2,=LH'0'
+         LX    R1,=LH'0'
          LX    R4,=LH'0'
-         LNXR  R0,R2
+         LNXR  R0,R1
          RT1   CCE
          CXR   R0,R4
          RT1   CCE
 * B362 LTXR
-         LX    R2,=LH'1'
+         LX    R1,=LH'1'
          LX    R4,=LH'1'
-         LTXR  R0,R2
+         LTXR  R0,R1
          RT1   CCH
          CXR   R0,R4
          RT1   CCE
-         LX    R2,=LH'0'
+         LX    R1,=LH'0'
          LX    R4,=LH'0'
-         LTXR  R0,R2
+         LTXR  R0,R1
          RT1   CCE
          CXR   R0,R4
          RT1   CCE
-         LX    R2,=LH'-1'
+         LX    R1,=LH'-1'
          LX    R4,=LH'-1'
-         LTXR  R0,R2
+         LTXR  R0,R1
          RT1   CCL
          CXR   R0,R4
          RT1   CCE
 * B363 LCXR
-         LX    R2,=LH'-1'
+         LX    R1,=LH'-1'
          LX    R4,=LH'1'
-         LCXR  R0,R2
+         LCXR  R0,R1
          RT1   CCH
          CXR   R0,R4
          RT1   CCE
-         LX    R2,=LH'0'
+         LX    R1,=LH'0'
          LX    R4,=LH'0'
-         LCXR  R0,R2
+         LCXR  R0,R1
          RT1   CCE
          CXR   R0,R4
          RT1   CCE
-         LX    R2,=LH'1'
+         LX    R1,=LH'1'
          LX    R4,=LH'-1'
-         LCXR  R0,R2
+         LCXR  R0,R1
          RT1   CCL
          CXR   R0,R4
          RT1   CCE
 * B365 LXR
-         LX    R2,=LH'123'
-         LXR   R0,R2
-         CXR   R0,R2       
+         LX    R1,=LH'123'
+         LXR   R0,R1
+         CXR   R0,R1       
          RT1   CCE
 * B366 LEXR
-         LX    R2,=LH'123'
-         LEXR  R0,R2
+         LX    R1,=LH'123'
+         LEXR  R0,R1
          CE    R0,=EH'123'
          RT1   CCE
 * B367 FIXR
-         LX    R2,=LH'1.5'
-         FIXR  R0,R2
+         LX    R1,=LH'1.5'
+         FIXR  R0,R1
          LX    R4,=LH'1.0'
          CXR   R0,R4
          RT1   CCE
@@ -1787,16 +1788,16 @@ DXBR1    ESPIE RESET
          STX   R0,LWORK
          CLC   LWORK,=X'41100000000000004000000000000000'
          RT1   CCE
-         LX    R2,=X'41100000000000004000000000000000'
-         CXR   R0,R2
+         LX    R1,=X'41100000000000004000000000000000'
+         CXR   R0,R1
          RT1   CCE
          LX    R0,=LH'1'
-         LX    R2,=LH'2'
-         CXR   R0,R2
+         LX    R1,=LH'2'
+         CXR   R0,R1
          RT1   CCL
          LX    R0,=LH'2'
-         LX    R2,=LH'1'
-         CXR   R0,R2
+         LX    R1,=LH'1'
+         CXR   R0,R1
          RT1   CCH
 * B374 LZER
          LE    R1,=EH'1'
@@ -1809,10 +1810,10 @@ DXBR1    ESPIE RESET
          CD    R1,=DH'0'
          RT1   CCE
 * B376 LZXR
-         LX    R2,=LH'1'
-         LZXR  R2
+         LX    R0,=LH'1'
+         LZXR  R0
          LX    R4,=LH'0'
-         CXR   R2,R4    
+         CXR   R0,R4    
          RT1   CCE
 * B377 FIER
          LE    R2,=EH'1.5'
@@ -1851,8 +1852,8 @@ DXBR1    ESPIE RESET
          C     R0,=F'123'
          RT1   CCE
 * B39A CFXBR
-         LX    R2,=LB'123'
-         CFXBR R0,0,R2
+         LX    R1,=LB'123'
+         CFXBR R0,0,R1
          C     R0,=F'123'   
          RT1   CCE
 * B3A4 CEGBR
@@ -1882,8 +1883,8 @@ DXBR1    ESPIE RESET
          CG    R0,=FL8'123'
          RT1   CCE
 * B3AA CGXBR
-         LX    R2,=LB'123'
-         CGXBR R0,0,R2
+         LX    R1,=LB'123'
+         CGXBR R0,0,R1
          CG    R0,=FL8'123'   
          RT1   CCE
 * B3B4 CEFR
@@ -1913,8 +1914,8 @@ DXBR1    ESPIE RESET
          C     R0,=F'123'
          RT1   CCE
 * B3BA CFXR
-         LX    R2,=LH'123'
-         CFXR  R0,0,R2
+         LX    R1,=LH'123'
+         CFXR  R0,0,R1
          C     R0,=F'123'   
          RT1   CCE
 * B3C4 CEGR
@@ -1944,23 +1945,20 @@ DXBR1    ESPIE RESET
          CG    R0,=FL8'123'
          RT1   CCE
 * B3CA CGXR
-         LX    R2,=LH'123'
-         CGXR  R0,0,R2
+         LX    R1,=LH'123'
+         CGXR  R0,0,R1
          CG    R0,=FL8'123'   
          RT1   CCE
 * ED04 LDEB
-         LE    R0,=EB'0'
          LDEB  R0,=EB'1'
          CDB   R0,=DB'1'
          RT1   CCE
 * ED05 LXDB 
-         LX    R0,=LB'0'
          LXDB  R0,=DB'1'
          LX    R4,=LB'1'
          CXBR  R0,R4
          RT1   CCE
 * ED06 LXEB 
-         LX    R0,=LB'0'
          LXEB  R0,=EB'1'
          LX    R4,=LB'1'
          CXBR  R0,R4
@@ -2223,14 +2221,14 @@ KDB2     ESPIE RESET
          RT1   CCE
 * ED3A MAY Z9 MULTIPLY AND ADD L > E
          LX    R0,=L'10'
-         LD    R3,=D'3'
-         MAY   R0,R3,=D'2'
+         LD    R1,=D'3'
+         MAY   R0,R1,=D'2'
          LX    R4,=LH'16'
          CXR   R0,R4
          RT1   CCE
 * ED3B MY Z9 MULTIPLY L > E
-         LD    R3,=D'3'
-         MY    R0,R3,=D'2'
+         LD    R1,=D'3'
+         MY    R0,R1,=D'2'
          LX    R4,=LH'6'
          CXR   R0,R4
          RT1   CCE

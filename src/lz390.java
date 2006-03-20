@@ -58,6 +58,7 @@ public  class  lz390 {
     * 01/26/06 RPI191 correct setting of RMODE/AMODE
     * 01/26/06 RPI 172 move options to tz390
     * 02/21/06 RPI 208 use tz390.z390_abort to term
+    * 03/16/06 RPI 240 correct rld loc for mult csect rlds
     ********************************************************
     * Global variables
     *****************************************************/
@@ -475,7 +476,7 @@ private boolean load_obj_file(boolean esds_only){
 			int rld_off = 0;
 			int rld_fld = 0;
 			if (tot_rld < max_rld){
-				rld_loc[tot_rld] = obj_rld_loc;
+				rld_loc[tot_rld] = obj_rld_loc  + gbl_esd_loc[obj_gbl_esd[obj_rld_esd]]; //RPI 240
 				if (obj_rld_sgn == '+'){
 					rld_len[tot_rld] = obj_rld_len;
 				} else {

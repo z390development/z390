@@ -13,7 +13,8 @@
 .* 12/01/05 RPI47 ADD GUI USER INTERFACE SUPPORT
 .* 12/16/05 RPI47 ADD GUI COLOR DEFINITIONS      
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
-.* 02/21/06 RPI205 RENAME GUI MACRO TO GUAM TO REDUCE CONFUSION 
+.* 02/21/06 RPI205 RENAME GUI MACRO TO GUAM TO REDUCE CONFUSION
+.* 02/24/06 RPI217 CORRECT GRAPH,TEXT COMMAND TO SET TEXT LENGTH 
 .*********************************************************************
 &N       GUAM  &MAJOR,&MINOR
          AIF   (&N EQ '').SKIPDS
@@ -226,10 +227,10 @@
         ST     &SYSLIST(4,1),16(1)
 .SKP27  ANOP
         AGO    .SVC
-.GRAPH_TEXT ANOP R1=A(X,Y,'text',color)
+.GRAPH_TEXT ANOP R1=A(X,Y,'text',text_length,color)
         LA     0,GUI_GRAPH_TEXT
-        LA     1,=A(&SYSLIST(3),&SYSLIST(4),*-*,&SYSLIST(6))           X
-               R1=A(X,Y,'text',COLOR)
+        LA     1,=A(&SYSLIST(3),&SYSLIST(4),*-*,*-*,&SYSLIST(7))       X
+               R1=A(X,Y,'text',text_length,COLOR)   RPI217
         AIF    ('&SYSLIST(3)'(1,1) NE '(').SKP28
         ST     &SYSLIST(3,1),0(1)
 .SKP28  ANOP
@@ -243,8 +244,11 @@
         AGO    .SVC
 .GRAPH_TEXT_LIT ANOP
 &TEXT   SETC   '&SYSLIST(5)'(2,K'&SYSLIST(5)-2)
-        LA     15,=C'"&TEXT"' 
-        ST     15,8(1)  
+        LA     15,=C'&TEXT' 
+        ST     15,8(1)
+&LTEXT  SETA   K'&TEXT  
+        LA     15,&LTEXT RPI217
+        ST     15,12(1)
         AGO    .SVC
 .GRAPH_TEXT_REG ANOP   
         ST     &SYSLIST(3,1),8(1)
@@ -314,8 +318,8 @@ GUI_WINDOW_VIEW_SCREEN EQU 2       GUI WINDOW,VIEW,SCREEN,row,col,color
 GUI_WINDOW_VIEW_GRAPH  EQU 3       GUI WINDOW,VIEW,GRAPH,x,y,color
 GUI_WINDOW_GETVIEW     EQU X'0106' GUI WINDOW,GETVIEW return view 0-3
 GUI_SCREEN_READ        EQU X'0201' GUI SCREEN,READ,b,lb,WAIT/NOWAIT 
-GUI_WAIT               EQU X'2000' GUI WAIT FOR INPUT (TGET WAIT FLAG)
-GUI_NOWAIT             EQU X'0000' GUI NOWAIT RETURN R15=4 IF NO INPUT
+GUI_WAIT               EQU 1       GUI WAIT FOR KEYBOARD INPUT         
+GUI_NOWAIT             EQU 0       GUI NOWAIT RETURN R15=4 IF NO INPUT
 GUI_SCREEN_WRITE       EQU X'0202' GUI SCREEN,WRITE,row,col,b,lb,color
 GUI_SCREEN_FIELD       EQU X'0203' GUI SCREEN,FIELD,row,col,length
 GUI_SCREEN_CURSOR      EQU X'0204' GUI SCREEN,CURSOR,row,col,type 

@@ -1,0 +1,59 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 03/03/06 RPI 209 ADD STIMER WAIT INTERVAL SUPPORT
+.*********************************************************************
+.*
+.*  STIMER WAIT,BINTVL=s  -  where S is RX type label of full 
+.*                           word containing 0.01 seconds to wait
+.*
+.*  STIMER WAIT,MICVL=s   -  where S is RX type label of doubleword
+.*                           containing microseconds to wait
+.*
+.*  STIMER WAIT,TUINTVL=s -  where S is RX type label of doubleword
+.*                           containing timer unit 26.04166 sec ms 
+.*
+.*  REGISTER INPUT
+.*    R0 - HIGH BYTE BINTVL  = X'11'
+.*    R0 - HIGH BYTE MICVL   = X'21'
+.*    R0 - HIGH BYTE TUINTVL = X'18'
+.*
+.*    R1 = ADDRESS OF WORD OR DOUBLEWORD ARGUMENT
+.*
+.*********************************************************************
+&N      STIMER &TYPE,      WAIT REAL OR TASK (ONLY WAIT CURRENTLY)     X
+               &EXIT,      EXIT ADDRESS        (NOT YET)               X
+               &BINTVL=,   FULL WORD 0.01 SECONDS                      X
+               &MICVL=,    DOUBLE WORD MICROSECONDS                    X
+               &TUINTVL=   DOUBLE WORD TIMER UNTIS 26.04166 MICROSEC  
+        AIF   (&N EQ '').SKPLAB
+&N      DS    0H
+.SKPLAB ANOP
+        AIF   (&TYPE EQ 'WAIT').WAIT
+        MNOTE 12,'STIMER - ONLY WAIT TYPE SUPPORTED CURRENTLY'
+        MEXIT
+.REAL   ANOP  NOT SUPPORTED YET
+.TASK   ANOP  NOT SUPPORTED YET
+.WAIT   ANOP
+        AIF   (&BINTVL EQ '').CHK_MICVL
+        IILF  0,X'11000000'
+        LA    1,&BINTVL
+        AGO   .SVC
+.CHK_MICVL ANOP
+        AIF   (&MICVL EQ '').CHK_TUINTVL
+        IILF  0,X'21000000'
+        LA    1,&MICVL
+        AGO   .SVC
+.CHK_TUINTVL ANOP
+        AIF   (&TUINTVL EQ '').CHK_TUINTVL
+        IILF  0,X'18000000'
+        LA    1,&TUINTVL
+        AGO   .SVC
+.SVC    ANOP
+        SVC   X'2F' STIMER R0=HIGH BYTE FLAGS, R1=STORAGE ADDR
+        MEND

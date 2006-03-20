@@ -119,6 +119,13 @@ public  class  mz390 {
     *          and fix PUNCH to handle '', &&, and trim
     * 02/02/06 RPI 196 add UPPER and LOWER operators
     * 02/21/06 RPI 208 use tz390.z390_abort to term.
+    * 02/22/06 RPI 213 support label on MEND for file and inline
+    * 02/23/06 RPI 214 support * as last oper in first substr exp.
+    *          and allow '...'(e1,e2)'...' without concat dot
+    * 03/13/06 RPI 223 correct parsing of keyword value in (..)
+    * 03/16/06 RPI 238 mnote total and no errors
+    * 03/16/06 RPI 239 treat any white space char as space
+    * 03/17/06 RPI 233 add macro call/exit level of nesting
     ********************************************************
     * Global variables
     *****************************************************/
@@ -134,6 +141,8 @@ public  class  mz390 {
     long ins_rate    = 0;
     boolean log_to_bal = false;
     int tot_bal_line = 0;
+    int tot_mnote = 0;
+    int max_mnote_level = 0;
 	String bal_text = null;     // curr bal_line text
     int    bal_text_index0 = 0; // end of prev. parm
     int    bal_text_index1 = 0; // start of cur parm
@@ -394,6 +403,7 @@ public  class  mz390 {
      * set expression global variables
      * including polish notation var and op stacks
      */
+    char    asc_space_char = ' '; // white space <= asc_space_char
     String  exp_text  = null;
     int     exp_text_len = 0;
     int     exp_level = 0;
@@ -422,9 +432,10 @@ public  class  mz390 {
     String  exp_setc = "";
     String  exp_token = null;
     String  exp_prev_op = "" + exp_start_op;
+    boolean exp_prev_substring = false;
     char    exp_prev_first = exp_start_op;
     byte    exp_prev_class = 0;
-    char    exp_next_first = ' ';
+    char    exp_next_first = asc_space_char;
     byte    exp_next_class = 0;
     int     exp_var_index = -1;  // lcl set index
     boolean exp_var_pushed = false;  // var pushed since last reset
@@ -473,7 +484,7 @@ public  class  mz390 {
           int tot_classes = 15;
           int[] exp_action = {  
            1, 3, 3, 1, 0, 1, 1, 8, 1, 3, 1, 1, 1, 1, 3, // 1 +-  prev add/sub
-           2, 2, 3, 2, 0, 2, 2, 8, 0, 3, 2, 2, 2, 2, 3, // 2 * / prev mpy/div
+           2, 2, 3, 2, 0, 2, 2, 8, 2, 3, 2, 2, 2, 2, 3, // 2 * / prev mpy/div  RPI 214
            3, 3, 3, 4, 3, 0, 3, 8, 0, 3, 3, 3, 3, 3, 3, // 3 (   prev open (...)
            3, 3, 3,11, 0, 0, 0, 8,11, 0, 3, 3, 3, 3, 0, // 4 )   prev var subscript
 		   0, 0, 3, 5, 5, 5, 5, 8, 0, 3, 0, 0, 0, 0, 3, // 5 .   prev concat
@@ -516,15 +527,6 @@ public  class  mz390 {
     String setc_value2 = "";
     int    var_type1 = 0;
     int    var_type2 = 0;
-    /*
-     * current directory global variables
-     */ 
-    int ascii_lf = 10;
-    int ascii_cr = 13;
-    int ascii_period =  (int)'.';
-    int ascii_space = (int) ' ';
-    int ebcdic_period = 75;
-    int ebcdic_space = 64;
   /* 
    * end of global mz390 class data and start of procs
    */
@@ -636,14 +638,27 @@ private void init_mz390(String[] args, JTextArea log_text){
         *   4.  xxx    no spaces or commas in xxx ('s ok)
         *   5.  ,      return commas for detecting null pos
         *   6.  space  return space for detecting  comments
+        *   7.  return ( and ) to parse kw parm value (a,b)  RPI 223
         * */
        	try {
        	    proto_pattern = Pattern.compile(
-       			"([&][a-zA-Z$@#][a-zA-Z0-9$@#_]*[=])"
-       		  +	"|([c|C']([^']|(['][']))*['])" 
-       		  + "|([']([^']|(['][']))*['])"   
-   			  + "|([^\\s,]+)" //RPI181 not white space or commas          
-       	      + "|([\\s,])"   //RPI181 white space or comma             
+        			"([&][&])"
+          	      + "|([&][(])"
+          	      + "|([&][a-zA-Z$@#][a-zA-Z0-9$@#_]*[=]*)" // &var or &var= for keyword
+				  + "|([0-9]+)"                        // number
+	       		  + "|([']([^']|(['][']))*['])"        // parm in quotes
+				  + "|([\\s/()',\\.\\+\\-\\*=])"       // operators and white space RPI181 (\\ for reg exp. opers)
+				  + "|([kK]['])"                       // K' character length of var
+				  + "|([l|L]['])"                      // L' length attribute of symbol
+				  + "|([n|N]['])"                      // N' number of parm subparms (n1,n2,n3)
+				  + "|([t|T]['])"                      // T' type attribute of symbol
+  		    	  + "|([bB]['][0|1]+['])"              // B'0110' binary self def. term
+  		    	  +	"|([cC][']([^']|(['][']))*['])"    // C'ABCD' ebcdic or ascii self def. term
+  		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"    // C"ABCD" ascii self def. term   RPI73
+  		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"        // C"ABCD" ebcdic self def. term  RPI84
+	    		  +	"|([xX]['][0-9a-fA-F]+['])"        // X'0F'   hex self defining term
+				  + "|([a-zA-Z$@#][a-zA-Z0-9$@#_]*)"   // symbol or logical operator (AND, OR, XOR, NOT, GT, LT etc.)
+				  + "|([^',\\s]+)"   // RPI 223                   // any other text
    			  );
        	} catch (Exception e){
        		  abort_error(2,"proto pattern errror - " + e.toString());
@@ -745,8 +760,10 @@ private void process_mac(){
 		         if  (tz390.opt_listcall){
 		         	 if  (mac_call_level > 0){
 		           	     String sysndx = "    " + get_set_string("&SYSNDX",1);
-				 	     sysndx = sysndx.substring(sysndx.length() - 4);
-		   	 	         put_bal_line("*MEXIT #=" + sysndx + " " + mac_name[mac_call_name_index[mac_call_level]]);
+				 	     sysndx = sysndx.substring(sysndx.length() - 4);				 	     
+					 	 String sysnest = "  " + mac_call_level;
+					 	 sysnest = sysnest.substring(sysnest.length() - 2);
+		   	 	         put_bal_line("*MEXIT #=" + sysndx + " LV=" + sysnest + " " + mac_name[mac_call_name_index[mac_call_level]]);
 		         	 }
 		   	     }
 		         mac_call_level--;
@@ -906,8 +923,9 @@ private int load_mac(String file_name){
 		    if  (mac_label != null && mac_label.length() > 1
 				&& mac_label.charAt(0) == '.'){
 		    	if (mac_label.charAt(1) != '*'){
-		    	  if (mac_mend_level == 0
-		    	  	  || (mac_mend_level == 1 && tot_mac_name > 1)){
+		    	  // RPI 213 to remove mac lab at wrong level and add to correct level
+		    	  if ((mac_mend_level == 0 && tot_mac_name == 1 && !mac_op.equals("MEND"))    
+		    	  	  || (mac_mend_level <= 1 && tot_mac_name > 1)){                       
 		            label_match = label_pattern.matcher(mac_label);
 		            if (label_match.find()){
                        add_mac_label(mac_name_index
@@ -1033,15 +1051,23 @@ private void load_inline_mac(){
 			} else {
 			    if (mac_op.equals("MACRO")){
 				   mac_mend_level++;
-			    } else if (mac_op.equals("MEND")){
-				   mac_mend_level--;
-				   if (mac_mend_level == 0){
-					  mac_name_line_end[new_mac_name_index] = mac_line_index;
-					  mac_name_lab_end[new_mac_name_index]  = tot_mac_lab;
-					  check_undefined_labs(new_mac_name_index);
-					  return;
-				   }
 				} else if (mac_mend_level == 1){
+			        if  (mac_label.length() > 1
+					     && mac_label.charAt(0) == '.'){
+				     	if (mac_label.charAt(1) != '*'){
+				     		if (mac_mend_level == 1){ // don't def nested inline macro labs yet
+				     			label_match = label_pattern.matcher(mac_label);
+				     			if (label_match.find()){
+				     				add_mac_label(new_mac_name_index
+			                      		       ,label_match.group().toUpperCase()
+			                       		       ,mac_line_index -1);
+				     				mac_label = null;
+			    	 			} else {
+			    	 				log_error(40,"invalid macro label - " + mac_label);
+			    	 			}
+			    	 		}
+			    	 	}
+		        	}
 					if (mac_op.equals("AGO")){
 						label_match = label_pattern.matcher(mac_parms);
 						if (label_match.find()){
@@ -1067,23 +1093,16 @@ private void load_inline_mac(){
 						}
 					}
 				}
+		        if (mac_op.equals("MEND")){  // RPI 213 move after label process
+				   mac_mend_level--;
+				   if (mac_mend_level == 0){
+					  mac_name_line_end[new_mac_name_index] = mac_line_index;
+					  mac_name_lab_end[new_mac_name_index]  = tot_mac_lab;
+					  check_undefined_labs(new_mac_name_index);
+					  return;
+				   }
+		        }
 			}
-	        if  (mac_label.length() > 1
-			     && mac_label.charAt(0) == '.'){
-	    	     if (mac_label.charAt(1) != '*'){
-	    	        if (mac_mend_level == 1){ // don't def nested inline macro labs yet
-	    		       label_match = label_pattern.matcher(mac_label);
-	                   if (label_match.find()){
-                          add_mac_label(new_mac_name_index
-                        		       ,label_match.group().toUpperCase()
-                        		       ,mac_line_index -1);
-                          mac_label = null;
-	                   } else {
-	            	      log_error(40,"invalid macro label - " + mac_label);
-	                   }
-	    	       }
-	             }
-	        }
 		}
         mac_line_index++;
 	}
@@ -1173,15 +1192,15 @@ private void get_mac_line(){
     	if  (temp_line == null){
     			mac_line = null;
    		} else if (temp_line.length() < 72
-   				   || temp_line.charAt(71) <= ' '){ //RPI181
+   				   || temp_line.charAt(71) <= asc_space_char){ //RPI181
    			mac_line = trim_line(temp_line);  //RPI124
    		} else {
    		    mac_line = temp_line.substring(0,71);
    		    mac_line = trim_continue(mac_line);
             while (temp_line.length() > 71
-            		&& temp_line.charAt(71) > ' '){ //RPI181
+            		&& temp_line.charAt(71) > asc_space_char){ //RPI181
             	    temp_line = mac_file_buff[cur_mac_file].readLine();
-            	    if (temp_line.length() < 72 || temp_line.charAt(71) <= ' '){ //RPI181
+            	    if (temp_line.length() < 72 || temp_line.charAt(71) <= asc_space_char){ //RPI181
             	    	temp_line = trim_line(temp_line); //RPI124
             	    }
             	    cur_mac_line_num++;
@@ -1340,9 +1359,7 @@ private void put_bal_line(String bal_line){
 private void parse_bal_line(){
 	/*
 	 * 1.  Substitute any macro variables found
-	 * 2.  Set bal_label and bal_op
-	 * 3.  If macro label .xxx add definition and
-	 *     then remove label from source
+	 * 2.  Set bal_label and bal_o
 	 */
 	if (tz390.opt_tracem){
 		put_log("TRACE BAL PARSING  " + bal_line);
@@ -1604,7 +1621,7 @@ private String trim_continue(String line){
 				if (!single_quote 
 						&& index > 0 
 						&& line.length() > index+1
-						&& line.charAt(index+1) <= ' '){  //RPI181
+						&& line.charAt(index+1) <= asc_space_char){  //RPI181
 					return line.substring(0,index+1);
 				}
 				break;
@@ -1742,23 +1759,21 @@ private void exec_mac_op(){
     	break;
     case 213:  // MHELP 
     	break;
-    case 214:  // MNOTE 
+    case 214:  // MNOTE  RPI 238
        	bal_op_ok = true;
+   		tot_mnote++;
     	bal_line = replace_vars(bal_line,false);
+        int mnote_level = 0;
     	if (bal_parms.length() > 0 
-    		&& bal_parms.charAt(0) != '\''
-    	  	&& bal_parms.charAt(0) != ','
-    		&& bal_parms.charAt(0) != '*'){
-    		seta_value1 = calc_seta_exp(bal_parms,0);
-    		if (seta_value1 > 0){
-    			mz390_rc = seta_value1;
-    			log_error(93,bal_line);
-    		} else {
-    	    	put_bal_line(bal_line);
-    		}    		
-    	} else {
-    		put_bal_line(bal_line);
+            && bal_parms.charAt(0) != '\''
+            && bal_parms.charAt(0) != ','
+            && bal_parms.charAt(0) != '*'){
+            mnote_level = calc_seta_exp(bal_parms,0);
     	}
+    	if (mnote_level > max_mnote_level){
+    		max_mnote_level = mnote_level;
+    	}
+    	put_bal_line(bal_line);
     	break;
     case 215:  // SETA 
        	bal_op_ok = true;
@@ -1872,7 +1887,7 @@ private void alloc_set(){
     int index = 0;
     while (!mac_abort
     		&& index < text.length()
-    		&& text.charAt(index) > ' '){  // RPI 139
+    		&& text.charAt(index) > asc_space_char){  // RPI 139
     	if (text.charAt(index) == ','){
     		index++;
     	}
@@ -2305,7 +2320,8 @@ private boolean calc_exp(String text,int text_index){
        exp_ok  = false;
    	   exp_var_pushed = false;     // reset var pused for unary 
        var_subscript_calc = false; // reset explicit subscript
-   	   exp_set_prev_op();
+   	   exp_prev_substring = false;
+       exp_set_prev_op();
        exp_set_next_op();
        while (!exp_end && !mac_abort){ 
        	    exp_check_prev_op = false;
@@ -2483,7 +2499,7 @@ private void exp_set_next_token(){
 	       case '.':
 	       	exp_next_class = exp_class_str_op;
 	       	break;
-	       case ' ':   //space
+	       case ' ':   //asc_space_char
 	       case '\t':  //tab
 	       case '\r':  //cr
 	       case '\n':  //lf
@@ -2661,6 +2677,9 @@ private void exp_perform_op(){
 	 * perform next exp action based
 	 * on precedence of exp_next_op and
 	 * exp_prev_op
+	 * Notes:
+	 *   1.  If substring set prev_substring else
+	 *       reset after operation.  Used by exp_substring. RPI 214
 	 */
     if (tz390.opt_traceall){
 	        put_log("TRACE EXP OPS=" + tot_exp_stk_op + " VARS=" + tot_exp_stk_var + " PREV OP = " + exp_prev_op +  " NEXT OP = " + exp_token);
@@ -2733,7 +2752,10 @@ private void exp_perform_op(){
     case  8: // '...'(s1,s2) start/end substring text
        /*
         * if prev op not ' then
-        *    put ' op and null string on stacks
+        *    put ' op
+        *    if not prev_substring then  RPI 214
+        *       put null string on stack
+        *    reset prev_substring
         * else
         *   if next op is not ( then
         *       remove ' op leaving setc string
@@ -2752,7 +2774,6 @@ private void exp_perform_op(){
     case 10: // ,e2) substring e2
        /*
         * replace string with substring
-        * and remove , op and e1,e2
         */
     	exp_substring();
     	break;
@@ -2863,6 +2884,11 @@ private void exp_perform_op(){
     	break;
     default:
 	    log_error(38,"invalid sequence - prev=" + exp_prev_first + " next=" + exp_next_first);
+    }
+    if (action == 10){
+    	exp_prev_substring = true;
+    } else {
+    	exp_prev_substring = false;
     }
 }
 private void exp_unary_op(){
@@ -3322,11 +3348,16 @@ private void exp_string_quote(){
 	/*
 	 * start or end string or substring
 	 * defining setc value for exp_stack
+	 * Note:
+	 *   1. if exp_prev_substring_op set then 
+	 *      don't put null string on stack
 	 */
 	 if (exp_prev_first != exp_string_op){
         exp_level++;         // add substring extra level to handel spaces
         exp_push_op();       // push exp_string_op
-	 	exp_push_string(""); // push empty string val
+        if (!exp_prev_substring){    // RPI 214
+        	exp_push_string(""); // push empty string val
+        }
 	 } else {   // we are in string mode
 	 	if (exp_next_char() == exp_string_op){
 	 		/* 
@@ -4190,8 +4221,11 @@ private int get_sym_char_data_len(String data){
 	 */
 	int chars = 0;
     char eod_char = data.charAt(0);
+    if (eod_char <= asc_space_char){  // RPI 239
+    	return 1;
+    }
     int data_len = data.length();
-    char data_char = ' ';
+    char data_char = asc_space_char;
 	int index = 1;
 	while (index < data.length()){
 		data_char = data.charAt(index);
@@ -4792,7 +4826,7 @@ private int get_label_index(String label_source){
 	 * find macro label and return line index
 	 * else abort
 	 */
-	label_match = label_pattern.matcher(label_source);
+	label_match = label_pattern.matcher(label_source); 
 	String label_name = label_source;
     if (label_match.find()){
 	   label_name = label_match.group().toUpperCase();
@@ -4902,10 +4936,12 @@ private void call_mac(){
 		 	 }
 		 	 String sysndx = "    " + lcl_sysndx;
 		 	 sysndx = sysndx.substring(sysndx.length() - 4);
+		 	 String sysnest = "  " + mac_call_level;
+		 	 sysnest = sysnest.substring(sysnest.length() - 2);
 		 	 if (call_parms == null)call_parms = "";
 		 	 String call_line = "      " + mac_file_line_num[save_mac_line_index];
 		 	 call_line = call_line.substring(call_line.length() - 6);
-		 	 put_bal_line("*MCALL #=" + sysndx + " LINE=" + call_line + " " + call_label + " " + call_op + " " + call_parms);
+		 	 put_bal_line("*MCALL #=" + sysndx + " LV=" +  sysnest + " LN=" + call_line + " " + call_label + " " + call_op + " " + call_parms);
 		 }
 		 /*
 		  * 1.  parse proto-type and add initial
@@ -5047,6 +5083,7 @@ private void init_call_parms(){
     if  (proto_parms.length() > 0){
 	    String key_name = null;
 	    String key_value = null;
+	    int key_value_level = 0;
 	    proto_match = proto_pattern.matcher(proto_parms);
         byte state = 1;
  	    while (proto_match.find()){
@@ -5055,12 +5092,13 @@ private void init_call_parms(){
 			   case 1: // new parm
  	               if  (parm_value.equals(",")){
        	               init_pos_parm(""); 
- 	               } else if (parm_value.equals(" ")){
+ 	               } else if (parm_value.charAt(0) <= asc_space_char){ // RPI 239
  	               	   state = 4;
  	               } else {
  	       	  	       if  (parm_value.charAt(parm_value.length()-1) == '='){
  	       	  	   	       key_name  = parm_value.substring(0,parm_value.length()-1);
                            key_value = "";
+                           key_value_level = 0;
                            state = 2; // possible key
  	       	  	       } else {
  	       	  	           init_pos_parm(parm_value);
@@ -5068,20 +5106,26 @@ private void init_call_parms(){
  	       	  	       }
  	               }
  	               break;
- 	           case 2:
- 	       	       if  (parm_value.equals(",")
- 	       	       		|| parm_value.equals(" ")){
+ 	           case 2: // possible keyword parm initial value text
+ 	       	       if  (key_value_level == 0 //RPI 223
+ 	       	    		&& (parm_value.equals(",")
+ 	       	       		    || parm_value.charAt(0) <= asc_space_char)){ // RPI 239
  	       			   init_key_parm(key_name,key_value);
  	       	   	       state = 1;
  	       	       } else {
+ 	       	    	   if (parm_value.equals("(")){ //RPI 223
+ 	       	    		   key_value_level++;
+ 	       	    	   } else if (parm_value.equals(")")){
+ 	       	    		   key_value_level--;
+ 	       	    	   }
  	       	   	       key_value = key_value.concat(parm_value);
  	       	       }
  	       	       break;
- 	           case 3:
+ 	           case 3:  // ignore comma before next parm
  	       	       if (parm_value.equals(",")){
- 	       	   	      state = 1;
- 	       	       } else if (parm_value.equals(" ")){
- 	       	       	  state = 4;
+ 	       	   	      state = 1; // start next parm
+ 	       	       } else if (parm_value.charAt(0) <= asc_space_char){ // RPI 239
+ 	       	       	  state = 4; // switch to flush comments
  	       	       } else {
  	       	   	      log_error(31,"unexpected parm value after pos parm value");
  	       	       }
@@ -5126,7 +5170,7 @@ private void set_call_parm_values(){
 			       	   parm_value = "";
     	               if  (token_first == ','){
           	               set_pos_parm(""); 
-    	               } else if (token_first <= ' '){ //RPI181
+    	               } else if (token_first <= asc_space_char){ //RPI181
     	               	   state = 4;
     	               } else {
     	                   state = 2; 
@@ -5144,7 +5188,7 @@ private void set_call_parm_values(){
     	               }
     	               break;
     	           case 2: // build simple or sublist parm
-    	       	       if (token_first <= ' ' //RPI181  
+    	       	       if (token_first <= asc_space_char //RPI181  
     	       	       		|| (token_first == ','
     	       	       		    && level == 0)){
     	       	       	  if   (key_name == null){
@@ -5154,7 +5198,7 @@ private void set_call_parm_values(){
     	    	       	  	       set_pos_parm(key_name + "=" + parm_value);
     	    	       		   }
     	       	       	  }
-    	       	       	  if (token_first > ' '){  //RPI181
+    	       	       	  if (token_first > asc_space_char){  //RPI181
 	       	   	             state = 1;
     	       	       	  } else {
     	       	       	  	 state = 4;
@@ -5328,6 +5372,7 @@ private void put_stats(){
 	      	 }
 	      }
 	}
+	put_log("MZ390I total mnotes          = " + tot_mnote + "  max level= " + max_mnote_level);
 	put_log("MZ390I total errors          = " + mz390_errors);
 	put_log("MZ390I return code           = " + mz390_rc);
 	log_to_bal = false;

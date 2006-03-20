@@ -1,7 +1,5 @@
-Draft 2: Nov 23, 2005: Not for publication...yet
-
-File input and output services
-==============================
+File services
+=============
 
 Acronyms
 --------
@@ -10,7 +8,7 @@ BDW -- Block Descriptor Word
    A 4-byte field of the form H'blocklength',H'0'
    The blocklength includes the length of the BDW.
 
-BDW -- Record Descriptor Word
+RDW -- Record Descriptor Word
    Used for all variable files.
    A 4-byte field of the form H'recordlength',H'0'
    The recordlength includes the length of the RDW.
@@ -58,14 +56,14 @@ Z390 supports sequential and random access to files.
 
 To access a file, a data control block (DCB) must be defined.
 
-Any program that uses the DCB macro must include the DCBD DSECT,
+All programs that use the File I/O macros must include the DCBD DSECT,
 so a typical program end might be:
 
          DCBD
          EQUREGS
          END
 
-Add the DECBD DSECT if you are using READ, WRITE or CHECK.
+Add the DECBD DSECT if you are using READ or WRITE.
 
 DCB Macro
 ---------
@@ -120,10 +118,10 @@ MACRF       DSECT=DCBMACRF  Coded     Default=GM
    Can this be set in the DCB prior to OPEN: Yes, but not recommended
    Can this be set in the DCB after OPEN   : No
 
-   MACRF=GM  Get Mode, use the GET macro to read a record
+   MACRF=GM  Get Move, use the GET macro to read a record
              Use for standard (QSAM) file read
 
-   MACRF=PM  Put Mode, use the PUT macro to write a record
+   MACRF=PM  Put Move, use the PUT macro to write a record
              Use for standard (QSAM) file write
 
    MACRF=R   Read Mode.
@@ -161,12 +159,18 @@ RECFM       DSECT=DCBRECFM  Coded     Default=FB
    RECFM=FB  Fixed Blocked
              Translation: None
 
-             Input:
+             Input and MACRF=GM:
                 Records are read LRECL at a time out of BLKSIZE.
 
-             Output:
+             Input and MACRF=R or RW:
+                The whole block is read.
+
+             Output and MACRF=PM:
                 Records are written LRECL at a time into BLKSIZE.
                 CLOSE may write a short block.
+
+             Output and MACRF=W or RW:
+                The whole block is written.
 
    RECFM=V   Variable
              Translation: None
@@ -174,7 +178,8 @@ RECFM       DSECT=DCBRECFM  Coded     Default=FB
              Input:
                 Each record is prefixed by the RDW.
                 The receiving area must be big enough for the largest
-                RDW+record and must be larger or equal to LRECL or
+                RDW+record.
+                If the RDW indicates a record size larger than LRECL,
                 abend S013 will occur.
 
              Output:
@@ -183,17 +188,28 @@ RECFM       DSECT=DCBRECFM  Coded     Default=FB
    RECFM=VB  Variable Blocked
              Translation: None
 
-             Input:
+             Input and MACRF=GM:
                 Each record is prefixed by the RDW.
                 The receiving area must be big enough for the largest
-                RDW+record and must be larger or equal to LRECL or
+                RDW+record.
+                If the RDW indicates a record size larger than LRECL,
                 abend S013 will occur.
 
-             Output:
-                Each record is prefixed by the RDW.
+             Input and MACRF=R or RW:
+                The whole block is read, prefixed by the BDW.
+                The receiving area must be big enough for the largest
+                BDW+block.
+                If the BDW indicates a block size larger than BLKSIZE,
+                abend S013 will occur.
+
+             Output and MACRF=PM:
+                Each record must be prefixed by the RDW.
                 CLOSE will write the last block.
                 Each block written will have the BDW automatically
                 inserted at the start.
+
+             Output and MACRF=W or RW:
+                Each block must be prefixed by the BDW.
 
    RECFM=FT  Fixed ASCII text
              Translation: In ASCII mode: None
@@ -236,7 +252,8 @@ RECFM       DSECT=DCBRECFM  Coded     Default=FB
                 Each record is prefixed with the RDW.
                 EODAD is invoked when all bytes have been read.
                 The receiving area must be big enough for the largest
-                RDW+record and must be larger or equal to LRECL or
+                RDW+record.
+                If the RDW indicates a record size larger than LRECL,
                 abend S013 will occur.
 
              Output:
@@ -245,7 +262,7 @@ RECFM       DSECT=DCBRECFM  Coded     Default=FB
                 trailing blanks are stripped.
                 Note: The RDW is not written.
 
-RECORD      DSECT=DCBREC    Type=A    No default
+RECORD      DSECT=DCBREC    Type=A    Default=0 (undefined)
    Can this be set in the DCB prior to OPEN: Yes
    Can this be set in the DCB after OPEN   : Yes
 
@@ -280,7 +297,7 @@ BLKSIZE     DSECT=DCBBLKSI  Type=H    Default=0
    For RECFM=VB, BLKSIZE must be at least 4 greater than LRECL.
    For all other RECFM, sets the maximum block size.
 
-EODAD       DSECT=DCBEODAD  Type=A    No default
+EODAD       DSECT=DCBEODAD  Type=A    Default=0 (undefined)
    Can this be set in the DCB prior to OPEN: Yes
    Can this be set in the DCB after OPEN   : Yes
 
@@ -289,7 +306,7 @@ EODAD       DSECT=DCBEODAD  Type=A    No default
    If a further GET is done after end-of-file, then the program
    is terminated.
 
-SYNAD       DSECT=DCBSYNAD  Type=A    No default
+SYNAD       DSECT=DCBSYNAD  Type=A    Default=0 (undefined)
    Can this be set in the DCB prior to OPEN: Yes
    Can this be set in the DCB after OPEN   : Yes
 
@@ -335,7 +352,7 @@ CLOSE
       CLOSE (dcbname1,,dcbname2)
 
    The same, using register notation
-      CLOSE (reg)
+      CLOSE ((reg))
       CLOSE ((reg1),,(reg2))
 
 GET
@@ -367,7 +384,7 @@ PUT
       PUT  (reg1),(reg2)
 
 READ
-   Read a record from a file.
+   Read a block from a file.
 
    Notes:
       1) If EODAD or SYNAD result from the READ, they will only be
@@ -378,11 +395,11 @@ READ
          responsibilty to create and address the 16-byte DECB.
 
    Syntax:
-   Read a record using an internal DECB, into an I/O area
+   Read a block using an internal DECB, into an I/O area
    supplied on the DCB RECORD=ioarea
       READ  decbname,,dcbname
 
-   Read a record using an internal DECB into an I/O area.
+   Read a block using an internal DECB into an I/O area.
    The I/O area must be at least as large as DCB BLKSIZE
       READ  decbname,,dcbname,ioarea
 
@@ -391,7 +408,7 @@ READ
       READ  (reg1),,(reg2),(reg3)
 
 WRITE
-   Write a record to a file.
+   Write a block to a file.
 
    Notes:
       1) If SYNAD results from the WRITE, it will only be processed
@@ -402,11 +419,11 @@ WRITE
          responsibilty to create and address the 16-byte DECB.
 
    Syntax:
-   Write a record using an internal DECB, from an I/O area
+   Write a block using an internal DECB, from an I/O area
    supplied on the DCB RECORD=ioarea
       WRITE decbname,,dcbname
 
-   Write a record using an internal DECB from an I/O area
+   Write a block using an internal DECB from an I/O area
       WRITE decbname,,dcbname,ioarea
 
    The same, using register notation
@@ -440,11 +457,13 @@ POINT
       POINT dcbname,rel
 
    Point to a record using relative byte address
-      POINT dcbname,RBA=rba
+      POINT dcbname,,RBA=rba
 
    The same, using register notation
       POINT (reg1),(reg2)
-      POINT (reg1),RBA=(reg2)
+      POINT (reg1),,RBA=(reg2)
 
 Author: Melvyn Maltz
+Publication date: Nov 27, 2005
+Z390 version: V1.0.07a
 

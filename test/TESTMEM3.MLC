@@ -1,0 +1,78 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+         MACRO
+         TESTGM &TYPE,&LV,&LOC,&HL,&REG
+&RES     SETC  'BELOW' 
+         AIF    (&TYPE EQ 'R').OBTAIN
+&RES     SETC  'ABOVE'
+         AIF   (&LOC EQ '').OBTAIN
+&RES     SETC  &LOC
+.OBTAIN  ANOP
+         STORAGE OBTAIN,LENGTH=&LV,LOC=&RES
+         CL    R0,=A(LINE)
+         RT1   CC&HL
+         LR    &REG,R0
+         LR    R14,R0
+         LA    R15,GMLEN
+         L     R1,=X'EE000000'
+         MVCL  R14,R0
+         MEND
+         TITLE 'TESTMEM3 REGRSSION TEST STORAGE OBTAIN/RELEASE'
+TESTMEM3 RT1   MAIN
+         EQUREGS
+FQE24A   DC    A(0)
+FQE24    DC    AL8(0)
+FQE31A   DC    A(0)
+FQE31    DC    AL8(0)
+LINE     EQU   X'1000000'
+GMLEN    EQU   100
+         RT1   START
+         L     R2,16
+         USING IHACVT,R2
+         L     R3,CVTFQ24
+         ST    R3,FQE24A    SAVE 24 BIT FQE ADDR
+         MVC   FQE24,0(R3)  SAVE 24 BIT FQE
+         L     R3,CVTFQ31
+         ST    R3,FQE31A    SAVE 31 BIT FQE ADDR
+         MVC   FQE31,0(R3)  SAVE 31 BIT FQE
+         DROP  R2
+         L     R2,=A(GMLEN)
+         TESTGM R,GMLEN,,L,R3         BELOW R  DEF
+         TESTGM R,GMLEN,,L,R4         BELOW R  DEF
+         TESTGM R,GMLEN,,L,R5         BELOW R  DEF
+         TESTGM RC,(R2),24,L,R6       BELOW EXPLICIT
+         TESTGM RC,(R2),,H,R7         ABOVE RC DEF
+         TESTGM RC,(R2),,H,R8         ABOVE RC DEF
+         TESTGM RU,(R2),31,H,R9       ABOVE EXPLICIT
+         STORAGE  RELEASE,ADDR=(R9),LENGTH=(R2)
+         STORAGE  RELEASE,ADDR=(R3),LENGTH=(R2)
+         STORAGE  RELEASE,ADDR=(R5),LENGTH=(R2)
+         STORAGE  RELEASE,ADDR=(R4),LENGTH=(R2)
+         STORAGE  RELEASE,ADDR=(R7),LENGTH=(R2)
+         STORAGE  RELEASE,ADDR=(R6),LENGTH=(R2)
+         STORAGE  RELEASE,ADDR=(R8),LENGTH=(R2)
+         L     R2,16
+         USING IHACVT,R2
+         L     R3,CVTFQ24
+         CL    R3,FQE24A    VER  24 BIT FQE ADDR
+         RT1   CCE
+         CLC   FQE24(4),0(R3)  VER  24 BIT FQE PTR
+         RT1   CCE
+         CLC   FQE24+4(4),4(R3)  VER  24 BIT FQE LEN
+         RT1   CCE
+         L     R3,CVTFQ31
+         CL    R3,FQE31A    VER  31 BIT FQE ADDR
+         RT1   CCE
+         CLC   FQE31(4),0(R3)  VER  31 BIT FQE PTR
+         RT1   CCE
+         CLC   FQE31+4(4),4(R3)  VER  31 BIT FQE LEN
+         RT1   CCE
+         WTO   'TESTMEM3 ENDED OK'
+         RT1   END
+         CVTD
+         END

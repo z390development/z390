@@ -11,7 +11,15 @@
 * 11/13/05 RPI87  TEST ORG PRECEEDED BY ABS VALUE CALC
 * 11/13/05 RPI90  TEST SINGLE CHARACTER B,C,X SYMBOLS
 * 01/13/06 RPI171 TEST UNARY OPERATORS                 
+* 03/16/06 RPI230 TEST COM, RSECT, START LIMITED SUPPORT
+* 03/17/06 RPI228 TEST CVTDCB OS FLAG INDICATING 31 BIT AND MVS+
 *********************************************************************
+MYSTART  START , RPI 230 TEST START CSECT
+         USING *,R15
+         L     R15,=A(TESTASM1)
+         BR    R15
+         DROP  R15
+         LTORG
 TESTASM1 RT1   MAIN
          EQUREGS
 F1       DC    A(0)
@@ -71,5 +79,22 @@ X2       MVC   F1(L'F2),F2
          RT1   CCE
          CLC   =A(+1*(+1+2)),=A(3)
          RT1   CCE
+         L     R1,=A(MYCOM)
+         CALL  MYRSECT
          RT1   END
+         LTORG
+MYCOM    COM   , RPI 230 TEST COM SECTION (NO LINKER SUPPORT YET)
+MYCOM1   DC    F'123'
+MYCOM2   DC    F'456'
+MYRSECT  RSECT , RPI 230 TEST RSECT (NO WARNINGS YET)
+         USING *,R15
+         CLC   0(8,R1),=F'123,456'
+         BNE   1
+         L     R1,16
+         USING IHACVT,R1
+         CLI   CVTDCB,X'9B'  VERIFY X'80' 31 BIT AND X'13' MVS+ SUPPORT
+         BNE   1
+         BR    14
+         LTORG
+         CVTD
          END         

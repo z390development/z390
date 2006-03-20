@@ -1,0 +1,26 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 03/13/06 RPI223 SUPPORT KEYWORD PARM VALUES OF THE FORM (A,B) ETC.
+*********************************************************************
+TESTMAC6 SUBENTRY 
+         WTO   'TESTMAC6 TEST RPI 223 SUPPORT OF COMPLEX KEY VALUES'
+         MACRO
+&NA      TEST  &K1=,&K2=1234,&K3=(A,B,C),                              X
+               &K4='A B',&K5=('A, B'),&K6=' '
+         MNOTE  'K1=&K1'
+         MNOTE  'K2=&K2'
+         MNOTE  'K3=&K3'
+         MNOTE  'K4=&K4'
+         MNOTE  'K5=&K5'
+         MNOTE  'K6=&K6'
+         MEND
+         TEST
+         TEST  K3=(D,E,F),K4='C D'
+         WTO   'TESTMAC6 ENDED OK'
+         SUBEXIT   
+         END                        

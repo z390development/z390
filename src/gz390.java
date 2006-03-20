@@ -85,6 +85,22 @@ public  class  gz390
 	 * 12/15/05 RPI135 use tz390 shared tables
 	 * 02/21/06 RPI156 add basic TN3270 support
 	 * 02/21/06 RPI208 set tz390.z390_abort to abort
+	 * 02/23/06 RPI216 replace SHFT-PF?? with ALT-FP??
+	 * 02/27/06 RPI219 require WCC for FULLSCR and ASIS,
+	 *          require WRITE,WCC for TPUT ASIS,
+	 *          correct multiple field support.
+	 * 03/02/06 RPI 220 overwrite prior field text and
+	 *          set tz390.abort_error and wait for ez390 to close
+	 *          add beep support for WCC bit x'04'
+	 * 03/04/06 RPI 221 reset keyboard lock for TGET,
+	 *          return R15=0 ok, 4 for NOWAIT and no input,
+	 *          or 8 for any other error. 
+	 * 03/06/06 RPI 222 ignore WCC x'40' reset and 
+	 *          fix RA command to translate char and stop after
+	 *          updated address matches 
+	 * 03/15/06 RPI 224 convert nulls to spaces and do not 
+	 *          send as input characters, remove field context,
+	 *          add arrow key support       
 	 ********************************************************
      * Global variables
      *****************************************************
@@ -104,6 +120,7 @@ public  class  gz390
         /*
          * shared z390 library classes
          */
+        Toolkit my_toolkit = null;
         tz390 tz390 = null; // shared tables
 	    String startup_cmd_file = null;
 	    int first_user_parm = 0;
@@ -137,7 +154,7 @@ public  class  gz390
         int     start_cmd_io_count;
         long    start_cmd_time;
         Timer   monitor_timer = null;
-        int     monitor_wait = 300;
+        int     monitor_wait = 100; // RPI 224 
         int     monitor_timeout_limit = 0 * 1000;
         long    monitor_cmd_time_total = 0;
 	    long    monitor_last_time = 0;
@@ -164,8 +181,6 @@ public  class  gz390
         int[] gui_key_code_char = new int[max_keys];
         int gui_cur_row = 1;
         int gui_cur_col = 1;
-        static int gui_wait = 0x2000;
-        static int gui_edit = 0x1000;
     /*
      *  status interval display variables
      */    
@@ -192,18 +207,29 @@ public  class  gz390
     /*
      * global TGET/TPUT TN3290 objects
      */
-    int tget_wait = 0x2000;
-    int tget_edit = 0x1000;
-    byte[] tget_byte = new byte[max_buff];
+    int tpg_rc         = 0;    // return code
+	int tpg_flags      = 0;    // from high byte R1
+	int tpg_op_mask    = 0x80; // 1=TGET, 0=TPUT
+	int tpg_op_tget    = 0x80;
+	int tpg_op_tput    = 0x00;
+	int tpg_wait_mask  = 0x10; // 1=NOWAIT, 0=WAIT
+	int tpg_wait       = 0x00; // 0=WAIT
+	int tpg_nowait     = 0x10;
+	int tpg_type         = 0;
+	int tpg_type_mask    = 0x03; // 00=EDIT 01=ASIS 10=CONTROL 11=FULLSCR
+    int tpg_type_edit    = 0x00;
+    int tpg_type_asis    = 0x01;
+    int tpg_type_control = 0x02;
+    int tpg_type_fullscr = 0x03;
+	byte[] tget_byte = new byte[max_buff];
     ByteBuffer tget_buff = ByteBuffer.wrap(tget_byte);
     int tget_index = 0;
-    int tget_len = 0;
-    int tget_flags = 0;
+    int tget_len   = 0;
     byte[] tput_byte = new byte[max_buff];
     ByteBuffer tput_buff = ByteBuffer.wrap(tput_byte);
     int tput_index = 0;
     int tput_len = 0;
-    int tput_flags = 0;
+    int tput_buff_byte = 0;
     /*
      * global tn3270 data
      */
@@ -218,32 +244,40 @@ public  class  gz390
     byte tn3270_sa_cmd  = 0x28; // eds set attribute
     byte tn3270_sfe_cmd = 0x29; // eds start field
     boolean tn3270_cursor = false;
+    boolean tn3270_cursor_alt = false;
     int tn3270_cursor_scn_addr = 0;
     int tn3270_cursor_text_addr = 0;
     int tn3270_cursor_count = 1;
     int tn3270_cursor_wait_int = 2;
-    char tn3270_cursor_char = ' ';
     char tn3270_cursor_sym = '_';
-    boolean tn3270_full_screen = false; 
-    boolean tn3270_scn_update = false;
-    int tn3270_field_attr   = 0;
+    boolean tn3270_full_screen = false;
+    byte tn3270_field = 1;
     int tn3270_field_highlight = 0; // eds sfe highlight
     int tn3270_field_color     = 0; // eds sfe color
     int tn3270_protect_mask = 0x20; // mask for protected field attribute bit 
+    int tn3270_numeric_mask = 0x10; // numeric field
     int tn3270_mdt_mask     = 0x01; // mask for modified data attribute bit  
     int tn3270_mdt_off      = 0xfe; // turn off mdt
-    int tn3270_aid = 0;            // set from PF key or enter if unlocked
-    int tn3270_esc = 0x27;         // tput tso escape
-    int tn3270_erase_write = 0xF5; // tput tso erase write
+    int tn3270_noaid = 0x60;       // no aid available
+    int tn3270_aid = 0x60;         // set from PF key or enter if unlocked
+    int tn3270_esc = 0x27;         // tput tso escape followed by write cmd and wcc
+    int tn3270_bell = 0x07;        // ascii bell char forsystem.out alarm
+    int tn3270_write_cmd    = 0;   // vtam write command after escape
     int tn3270_write = 0xF1;       // tput tso write screen
+    int tn3270_erase_write = 0xF5; // tput tso erase write
+    int tn3270_write_alt = 0xF1;       // tput tso write screen
     byte tn3270_attr_prot_text = 0x30; // protected unmodified text 
-    boolean tn3270_kb_lock = true;
+    boolean tn3270_kb_lock = true; 
     boolean tn3270_attn = false;
-    int fud_tot = 0;
-    int fud_cur = 0;
-    int[]  fud_addr = new int[max_fud];
-    int[]  fud_attr = new int[max_fud];
-    int [] scn_fud = new int[max_addr];
+    int cur_fld_addr = 0;
+    int cur_fld_attr = 0;
+    int fld_tot;            // protected and unprotected
+    int fld_input_tot = 0;  // unprotected fields
+    int[]  fld_addr       = new int[max_addr];
+    int[]  fld_input_addr = new int[max_addr];
+    byte[] scn_fld  = new byte[max_addr];
+    int[]  scn_attr = new int[max_addr];
+    byte[] scn_byte = new byte[max_addr];
     char[] scn_char = new char[max_addr];
     int scn_addr = 0;
     int[] sba_to_ebc = {
@@ -296,20 +330,21 @@ public  class  gz390
     int ascii_lf = 10;
     int ascii_cr = 13;
     int ebcdic_space = 0x40;
+    boolean refresh_wait    = false;
     boolean refresh_request = false;
  	boolean main_status  = true;
         boolean main_view_changed = false;
         JFrame main_frame    = null;
-        int main_width  = 625;
-        int main_height = 400;
+        int main_width  = 650;
+        int main_height = 550;
         int main_width_max = 800;
         int main_height_max = 600;
         int main_width_min  = 150;
         int main_height_min = 150;
         int main_border = 2;
         int start_bar_height = 36; //windows start bar
-        int main_loc_x = 70;
-        int main_loc_y = 70;
+        int main_loc_x = 20;
+        int main_loc_y = 20;
         int scrollbar_width = 15;
         int font_space = 10;
 	int font_size = 12;       //see FONT command
@@ -518,6 +553,8 @@ public  class  gz390
 		}
 		private void abort_error(int error,String msg){
 			gz390_errors++;
+			tpg_rc = 8;
+			status_line.setText(msg);
 			msg = "GZ390E " + error + " " + msg;
 			gui_put_log(msg);
  		    System.out.println(msg);
@@ -534,8 +571,14 @@ public  class  gz390
 		 */
 			if  (!tz390.z390_abort){
 				abort_error(58,"guam gui window closed");
-			    return;
+				int count = 5;
+				while (count > 0){
+					sleep_now(); // RPI 220 wait for ez390 to term
+				    count--;
+				}
+				return;
 			}
+			tz390.z390_abort = true; // force ez390/pz390 shutdown
 			if  (monitor_timer != null){
 			    monitor_timer.stop();
 			}
@@ -834,6 +877,7 @@ public  class  gz390
 	    * 
 	    * 2.  reset focus to gz390_cmd_line after wto
 	    */
+		    refresh_wait = false;  // reset main_view wait
 	        monitor_next_time = System.currentTimeMillis();
 	        monitor_next_ins_count = ins_count;
 	        monitor_next_io_count = io_count;
@@ -1294,14 +1338,49 @@ public  class  gz390
            int keyCode = e.getKeyCode();
            int keyMods = e.getModifiers();
            if  (e.isActionKey()){
-           	   if (keyCode == KeyEvent.VK_UP){
-           	   		get_prev_cmd();
-           	   		return;
-           	   }
-          	   if (keyCode == KeyEvent.VK_DOWN){
-          	   	   get_next_cmd();
-          	   	   return;
-          	   }
+        	   if (tn3270_kb_lock){
+        		   if (keyCode == KeyEvent.VK_UP){
+           	   			get_prev_cmd();
+           	   			return;
+        		   }
+        		   if (keyCode == KeyEvent.VK_DOWN){
+          	   	   		get_next_cmd();
+          	   	   		return;
+        		   }
+        	   } else {
+        		   if (keyCode == KeyEvent.VK_UP){
+          	   			scn_addr = scn_addr - max_cols;
+          	   			if (scn_addr < 0){
+          	   				scn_addr = scn_addr + max_addr;
+          	   			}
+      	   				tn3270_update_cursor();
+          	   			return;
+        		   }
+        		   if (keyCode == KeyEvent.VK_DOWN){
+            		    scn_addr = scn_addr + max_cols;
+            		    if (scn_addr >= max_addr){
+             	   			scn_addr = scn_addr - max_addr;
+             	   		}
+         	   			tn3270_update_cursor();
+         	   	   		return;
+        		   }
+        		   if (keyCode == KeyEvent.VK_LEFT){
+        			   scn_addr--;
+        			   if (scn_addr < 0){
+        				   scn_addr = scn_addr + max_addr;
+        			   }
+    				   tn3270_update_cursor();
+        			   return;
+        		   }
+        		   if (keyCode == KeyEvent.VK_RIGHT){
+        			   	scn_addr++;
+           		    	if (scn_addr == max_addr){
+            	   			scn_addr = 0;
+            	   		}
+        	   			tn3270_update_cursor();
+        	   	   		return;
+        		   }
+        	   }
           	   if (keyMods == KeyEvent.CTRL_MASK){
               	   if (keyCode == KeyEvent.VK_F1){   // F1 help
                	   	  if (!tn3270_kb_lock){
@@ -1327,7 +1406,7 @@ public  class  gz390
              	   }
                	   return;
           	   }
-          	   if (keyMods == KeyEvent.SHIFT_MASK){
+          	   if (keyMods == (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK)){ // RPI 216
        		     if (keyCode >= KeyEvent.VK_F1
           			   && keyCode <= KeyEvent.VK_F9){
             	   	  if (!tn3270_kb_lock){
@@ -1420,6 +1499,16 @@ public  class  gz390
         			   tn3270_aid = tn3270_enter_code;
         		   }
         	   }
+        	   if (keyCode == KeyEvent.VK_BACK_SPACE){
+        		   if (!tn3270_kb_lock){
+                       if (scn_addr > 0){
+                    	   scn_addr--;
+                       } else {
+                    	   scn_addr = max_addr - 1;
+                       }
+                       tn3270_update_cursor();
+        		   }
+        	   }
            }
      	   if (keyCode == KeyEvent.VK_CLEAR
      			   || (keyCode == KeyEvent.VK_C && keyMods == KeyEvent.CTRL_MASK)){
@@ -1454,23 +1543,36 @@ public  class  gz390
       		   }
       		   return;
       	   }
-           if (gui_tot_key < max_keys){
-        	   if (!tn3270_kb_lock 
-        		   && scn_addr < max_addr
-        		   && (fud_attr[scn_fud[scn_addr]] & tn3270_protect_mask) == 0){
-        		   // turn on field modified data bit
-        		   fud_attr[scn_fud[scn_addr]] = fud_attr[scn_fud[scn_addr]] | tn3270_mdt_mask;
-        		   // update screen field character
-        		   scn_char[scn_addr] = e.getKeyChar();
-        		   scn_addr++;
-        		   if (tn3270_cursor){
-        			   tn3270_update_cursor();
+      	   if (!tn3270_kb_lock 
+      			   && e.getKeyChar() != KeyEvent.VK_ENTER
+      			   && e.getKeyChar() != KeyEvent.VK_BACK_SPACE
+      			   && (e.getModifiers() & KeyEvent.CTRL_MASK) == 0){
+             if (gui_tot_key < max_keys){        	   
+        	   if (tn3270_input_field()){
+        		   if ((scn_attr[cur_fld_addr] & tn3270_numeric_mask) == tn3270_numeric_mask
+        				&& (e.getKeyChar() < '0'
+        						|| e.getKeyChar() > '9')){
+        			   scn_addr--;
+        			   sound_alarm();
+        			   status_line.setText("Alarm - invalid key for numeric field");
+        		   } else {
+            		   tn3270_modify_field();
+            		   scn_byte[scn_addr] = (byte)e.getKeyChar();
+            		   scn_char[scn_addr] = e.getKeyChar();
         		   }
-        		   tn3270_scn_update = true;
+        		   tn3270_update_screen(scn_addr);
+        		   tn3270_next_input_addr();
+        		   tn3270_update_cursor();
+        	   } else {
+    			   scn_addr--;
+    			   sound_alarm();
+    			   status_line.setText("Alarm - invalid key for protected field");
         	   }
-        	   gui_key_code_char[gui_tot_key] = e.getKeyCode() << 16 | (int)e.getKeyChar();
-        	   gui_tot_key++;
-           }
+             }
+    	   } else {
+    		   gui_key_code_char[gui_tot_key] = e.getKeyCode() << 16 | (int)e.getKeyChar();
+    		   gui_tot_key++;
+    	   }
        }
        public void keyReleased(KeyEvent e) {
        /* 
@@ -1538,7 +1640,7 @@ public  class  gz390
      * Popup edit menu on right mouse ck
      */	
     	   check_main_view();
-           if (e.getButton() == MouseEvent.BUTTON3){	
+             if (e.getButton() == MouseEvent.BUTTON3){	
               if (popup_edit_menu == null){
                  popup_edit_menu = new JPopupMenu();
                  JMenuItem popup_edit_menu_cut      = new JMenuItem("Cut");
@@ -1620,27 +1722,28 @@ public  class  gz390
 	            return null;
 	        }
 	    }
-	    private void check_main_view(){
+	    private synchronized void check_main_view(){
 	    /*
 	     * if main window size has changed due to
 	     * user streching without window event handler
 	     * triggering update, do it now.
 	     */
-    		if (tn3270_scn_update){
-    			tn3270_scn_update = false;
-    			update_tn3270_screen_text();
-    			refresh_request = true;
-    		}
+	    	char alt_char = ' ';
     		if (tn3270_cursor){ 
     			tn3270_cursor_count--;
     			if (tn3270_cursor_count <= 0){
     				tn3270_cursor_count = tn3270_cursor_wait_int;
-    				if (tn3270_cursor_char == scn_char[tn3270_cursor_scn_addr]){
-    					tn3270_cursor_char = tn3270_cursor_sym;
-    					scn_text.replaceRange("" + tn3270_cursor_sym,tn3270_cursor_text_addr,tn3270_cursor_text_addr+1);
+    				if (!tn3270_cursor_alt){
+    					tn3270_cursor_alt = true;
+    					if (scn_char[tn3270_cursor_scn_addr] != tn3270_cursor_sym){
+    						alt_char = tn3270_cursor_sym;
+    					} else {
+    						alt_char = '?'; // blink ? for underline
+    					}
+    					tn3270_update_screen_char(alt_char,tn3270_cursor_text_addr);
     				} else {
-    					tn3270_cursor_char = scn_char[tn3270_cursor_scn_addr];
-    					scn_text.replaceRange("" + scn_char[tn3270_cursor_scn_addr],tn3270_cursor_text_addr,tn3270_cursor_text_addr+1);
+    					tn3270_cursor_alt = false;
+    					tn3270_update_screen_char(scn_char[tn3270_cursor_scn_addr],tn3270_cursor_text_addr);
     				}
     				refresh_request = true;
     			}
@@ -1662,6 +1765,11 @@ public  class  gz390
          *   1.  Change in window size
          *   2.  Change in font size
          */	
+        	if (refresh_wait){
+        		refresh_request = true;
+        		return; // wait for next monitor interal
+        	}
+ 	        refresh_wait = true;
        		log_height = main_height - title_height - menu_height - command_height - status_height - applet_status_height;
        		log_width  = main_width - scrollbar_width - 4 * main_border;
             main_panel.setSize(main_width - 4 * main_border,main_height - title_height - menu_height - main_border);
@@ -1670,7 +1778,6 @@ public  class  gz390
        		new Dimension(log_width, log_height));
    	        rebuild_main_panel();
        		main_frame.setVisible(true);
-       		refresh_request = true;
         }
         private void set_view_mcs(){
         	/*
@@ -1696,18 +1803,12 @@ public  class  gz390
        	  *       new main_view
        	  *   2.  Turn off focus subsystem to see tab key
        	  */
-        Arrays.fill(scn_char,0,max_addr,' ');
        	if (scn_text == null){ // init first time
        		scn_text = new JTextArea();
-   	        scn_text.setFont(new Font("Courier",Font.BOLD,font_size));
-            int index = 0;
-            String text = "";
-            while (index < max_rows){
-            	text = text + String.valueOf(scn_char,0,max_cols) + "\r\n";
-                index++;
-            }
-            scn_text.setText(text);
-       		scn_text.addMouseListener(this);
+       		scn_text.setFont(new Font("Courier",Font.BOLD,font_size));
+            scn_text.addMouseListener(this);
+            tn3270_clear_screen();
+            tn3270_update_screen_char(' ',0);
        	}
         set_main_view(scn_text);
        	gui_view = gui_view_screen;
@@ -1794,7 +1895,7 @@ public  class  gz390
             }
     		command_columns = (log_width - label_width)/(gz390_cmd_line.getPreferredSize().width/gz390_cmd_line.getColumns()) - 1;
             gz390_cmd_line.setColumns(command_columns);
-            // disable focus subsystem to see tab
+            // disable focus subsystem to process tab key
             gz390_cmd_line.setFocusTraversalKeysEnabled(false); 
             main_panel.add(gz390_cmd_line);
             if  (status_visible){
@@ -1847,6 +1948,7 @@ private void tput_edit_buffer(byte[] buff, int lbuff){
 	String text = get_ascii_string(buff,lbuff);
 	int text_start = 0;
 	int text_end   = 0;
+	gui_cur_col = 1;
 	while (text_start < text.length()){
 		if (gui_cur_row == 1){
 			scn_addr = 0;
@@ -1863,74 +1965,108 @@ private void tput_edit_buffer(byte[] buff, int lbuff){
 	}
 	update_main_view();
 }
-private void tput_tn3270_buffer(){
+private void tn3270_tput_buffer(){
 	/*
 	 * update screen from tn3270 data stream buffer
 	 */
 	tput_index = 0;
-	if (tput_index < tput_len 
-		&& (tput_byte[tput_index] & 0xff) == tn3270_esc){
-		tput_index++;
-		if ((tput_byte[tput_index] & 0xff) == tn3270_erase_write){
-			tput_index++;
+	switch (tpg_type){
+	case 0x01: // asis and noedit  RPI 219
+		tn3270_get_tput_byte(); // first byte always write
+		if (tput_buff_byte == tn3270_erase_write){
 			tn3270_clear_screen();
-		} else if ((tput_byte[tput_index] & 0xff) == tn3270_write){
-			tput_index++;
 		}
-	}
-	boolean tn3270_first_op = true;
+		tn3270_get_tput_byte(); // second byte always wcc
+		tn3270_write_control_char();
+		break;
+	case 0x03: // fullscr
+		tn3270_get_tput_byte(); // first byte esc or wcc
+		if (tput_buff_byte == tn3270_esc){
+		    tn3270_get_tput_byte(); // wrt,wcc follows esc
+			if (tput_buff_byte == tn3270_erase_write){
+				tn3270_clear_screen();
+			}
+			tn3270_get_tput_byte(); // wcc following esc,wrt
+		}
+		tn3270_write_control_char();
+	    break;
+	}   
 	while (tput_index < tput_len){
-		int cur_op = tput_byte[tput_index] & 0xff;
-		tput_index++;
-		switch (cur_op){
+		tn3270_get_tput_byte();
+		switch (tput_buff_byte){
 		case 0x05: // PT  program tab
-			tn3270_first_op = false;
 			tn3270_tab();
 			break;
 		case 0x11: // SBA set buffer address
-			tn3270_first_op = false;
 			scn_addr = tn3270_get_buff_addr();
 			break;
 		case 0x12: // EUA erase unprotected to address
-			tn3270_first_op = false;
             tn3270_eua();
 			break;
 		case 0x13: // IC insert cursor
-			tn3270_first_op = false;
 			tn3270_cursor = true;
 			tn3270_update_cursor();
 			break;
 		case 0x1d: // SF start new field
-			tn3270_first_op = false;
 			tn3270_start_field();
 			break;
 		case 0x28: // SA  set extended attribute within field
 			tn3270_eds_set_field_attribute();
 			break;
-		case 0x29: // SFE entended data stream field start
-			tn3270_first_op = false;
+		case 0x29: //SFE extended data stream field start
 			tn3270_eds_start_field();
 			break;
 		case 0x3C: // RA repeat to address
-			tn3270_first_op = false;
             tn3270_ra();
 			break;
-		default: // WCC if first else EBCDIC data
-			if (tn3270_first_op){
-				tn3270_write_control_char(cur_op);
-			} else {
-				if (scn_addr >= max_addr){
-					scn_addr = 0;
-				}
-				scn_fud[scn_addr]  = fud_cur;
-				scn_char[scn_addr] = (char)tz390.ebcdic_to_ascii[cur_op];
-				scn_addr++;
+		default: // write data in next input field postion
+			if (scn_fld[scn_addr] == tn3270_field){
+				tn3270_drop_field(scn_addr);
 			}
-			tn3270_first_op = false;
+			if (tput_buff_byte == 0){
+ 		    	scn_byte[scn_addr] = 0;
+ 		    	scn_char[scn_addr] = ' ';
+ 		    } else {
+ 		    	scn_byte[scn_addr] = (byte)tz390.ebcdic_to_ascii[tput_buff_byte];
+ 		        scn_char[scn_addr] = (char)scn_byte[scn_addr];
+ 		    }
+			tn3270_update_screen(scn_addr);
+			tn3270_next_field_addr();
 		}
 	}
-	update_tn3270_screen_text();
-	update_main_view();
+}
+private void tn3270_get_tput_byte(){
+	/*
+	 * get next tput buffer byte
+	 * in tput_buff_byte else abort
+	 */
+	if (tput_index < tput_len){
+		tput_buff_byte = tput_byte[tput_index] & 0xff;
+		tput_index++;
+	} else {
+		abort_error(105,"tput read past end of buffer");
+	}
+}
+private void tn3270_next_field_addr(){
+	/*
+	 * incr scn_addr and wrap if at end of screen
+	 */
+	scn_addr++;
+	if (scn_addr >= max_addr){
+		scn_addr = 0;
+	}
+}
+private void tn3270_next_input_addr(){
+	/*
+	 * incr scn_addr to next input field addr
+	 */
+	scn_addr++;
+	if (scn_addr >= max_addr){
+		scn_addr = 0;
+	}
+	if  ((scn_attr[scn_addr] & tn3270_protect_mask) == tn3270_protect_mask){
+		tn3270_next_input_field();
+	} 
 }
 private void tn3270_eua(){
 	/*
@@ -1940,11 +2076,12 @@ private void tn3270_eua(){
 	int sba_end = tn3270_get_buff_addr();
 	int sba = scn_addr;
 	while (sba != sba_end){
-		if (scn_fud[sba] > 0 
-			&& (fud_attr[scn_fud[sba]] & tn3270_protect_mask) == 0){ 
+		if ((scn_attr[sba] & tn3270_protect_mask) == 0){ 
 			// erase and reset mdt in unprotected fields
+			scn_byte[sba] = 0;
 			scn_char[sba] = ' ';
-			fud_attr[scn_fud[sba]] = fud_attr[scn_fud[sba]] & tn3270_mdt_off;
+ 		    tn3270_update_screen(sba);
+			scn_attr[sba] = scn_attr[sba] & tn3270_mdt_off;
 		}
 	}
 }
@@ -1957,63 +2094,140 @@ private void tn3270_ra(){
 		abort_error(103,"tn3270 ra addr error");
 	    return;
 	}
-	char ra_char = (char)tget_buff.get(tput_index);
+	byte ra_byte = tput_byte[tput_index];
 	tput_index++;
 	int sba = scn_addr;
-	while (sba != sba_end){
-		scn_char[sba] = ra_char;
+	boolean ra_done = false;
+	while (!ra_done){
+		if (scn_fld[sba] == tn3270_field){
+			tn3270_drop_field(sba);
+		}
+		if (ra_byte == 0){
+			scn_byte[sba] = 0;
+		    scn_char[sba] = ' ';
+		} else {
+			scn_byte[sba] = ra_byte;
+			scn_char[sba] = (char)tz390.ebcdic_to_ascii[ra_byte & 0xff];
+		}
+		tn3270_update_screen(sba);
 		sba++;
 		if (sba >= max_addr){
 			sba = 0;
 		}
+		if (sba == sba_end)ra_done = true;
 	}
 }
 private void tn3270_tab(){
 	/*
 	 * tab to next input field from current field
 	 */
-	int fud_index = 0;
-	while (fud_index < fud_tot){
-		if (fud_addr[fud_index] > scn_addr){
-			scn_addr = fud_addr[fud_index];
-			if (tn3270_cursor){
-				tn3270_update_cursor();
-				return;
-			}
-		}
-		fud_index++;
+     tn3270_next_input_field();
+     tn3270_update_cursor();
+}
+private void tn3270_next_input_field(){
+	/*
+	 * find next input field starting at scn_addr
+	 * with wrap and set scn_addr and cursor if on.
+	 */
+    int index = 0;
+    int sba_first = scn_addr;
+    int sba_next = max_addr;
+    while (index < fld_input_tot){
+    	cur_fld_addr = fld_input_addr[index];
+    	if (cur_fld_addr > scn_addr
+    		&& cur_fld_addr < sba_next){
+    		sba_next = cur_fld_addr; 
+    	} else if (cur_fld_addr < sba_first){
+    		sba_first = cur_fld_addr;
+    	}
+    	index++;
+    }
+    if (sba_next != max_addr){
+    	scn_addr = sba_next+1;
+    	if (scn_addr == max_addr){
+    		scn_addr = 0;
+    	}
+    	tn3270_update_cursor();
+    } else if (sba_first != scn_addr){
+    	scn_addr = sba_first + 1;
+    	if (scn_addr == max_addr){
+    		scn_addr = 0;
+    	}
+    	tn3270_update_cursor();
+    }
+}
+private boolean tn3270_input_field(){
+	/*
+	 * return true if scn_addr is in unprotected
+	 * input field and set fld_addr
+	 * Note:
+	 *  1. True also returned if no fields
+	 *     and fld_addr set to -1 indicating none
+	 */
+	cur_fld_addr = -1;
+	if (fld_tot == 0){
+		return true;
 	}
-	if (fud_tot > 0){
-		scn_addr = fud_addr[0];
-		if (tn3270_cursor){
-			tn3270_update_cursor();
-		}
+	cur_fld_addr = fld_addr[fld_tot-1];
+    int index = 0;
+	while (index < fld_tot 
+			&& fld_addr[index] < scn_addr){
+		cur_fld_addr = fld_addr[index];
+		index++;
+	}
+	if ((scn_attr[cur_fld_addr] & tn3270_protect_mask) == 0){
+		return true;
+	} else {
+		return false;
 	}
 }
-
+private void tn3270_modify_field(){
+	/*
+	 * update modified field attribute 
+	 * bit at fld_addr if any input fields
+	 * Note:
+	 *   1.  fld_addr must be set by tn3270_input
+	 */
+	if (fld_input_tot > 0){
+		scn_attr[cur_fld_addr] = scn_attr[cur_fld_addr] 
+		                     | tn3270_mdt_mask;
+	}
+}
 private void tn3270_update_cursor(){
 	/*
 	 * update cursor for IC command or change
-	 * in focus due to screen input or tab
+	 * in focus due to screen input or tab.
+	 * 1.  Update scn_addr to next input field
+	 *     position or turn off cursor if none
+	 *     found.
+	 * 2.  Turn on blinking cursor at position found
 	 */
+	if (!tn3270_cursor){
+		return;
+	}
+	if (scn_addr != tn3270_cursor_scn_addr){ // put char back at prev cursor position
+		tn3270_update_screen_char(scn_char[tn3270_cursor_scn_addr],tn3270_cursor_text_addr);
+	}
 	tn3270_cursor_scn_addr = scn_addr;
-	tn3270_cursor_char = scn_char[scn_addr];
 	int temp_row = scn_addr/max_cols;
 	tn3270_cursor_text_addr = temp_row * (max_cols+2) + (scn_addr - temp_row * max_cols);
-    refresh_request = true;
+	refresh_request = true;
 }
-private void update_tn3270_screen_text(){
+private void tn3270_update_screen(int sba){
 	/*
 	 * update scn_text jtextarea from scn_byte
 	 * for tn3270 edit and fullscn modes
 	 */
-	int row_addr = 0;
-	int scn_addr = 0;
-	while (scn_addr < max_addr){
-		scn_text.replaceRange(String.valueOf(scn_char,scn_addr,max_cols),row_addr,row_addr + max_cols);
-	    scn_addr = scn_addr + max_cols;
-	    row_addr = row_addr + max_cols + 2;
-	}
+	int row = sba / max_cols;
+	int col = sba - row * max_cols;
+	int screen_addr = row * (max_cols +2) + col;
+	tn3270_update_screen_char(scn_char[sba],screen_addr);
+}
+private void tn3270_update_screen_char(char screen_char,int screen_addr){
+	/*
+	 * update jtextarea screen character
+	 */
+	scn_text.replaceRange("" + screen_char,screen_addr,screen_addr + 1);
 }
 private void tn3270_get_screen_input(){
 	/*
@@ -2021,7 +2235,9 @@ private void tn3270_get_screen_input(){
 	 *   1, action key  = enter, PF, PA, or clear key)
 	 *   2, sba of cursor
 	 *   3. sba code x'11', sba addr, modified data bytes
-	 *      for each unprotected field 
+	 *      for each unprotected field else
+	 *   4. Modified data bytes for unformated
+	 *      screen with no input fields 
 	 */
 	tget_byte[0] = (byte) tn3270_aid;
 	tget_byte[1] = (byte)sba_to_ebc[scn_addr >> 6];
@@ -2030,40 +2246,68 @@ private void tn3270_get_screen_input(){
 		tget_len = 3; // return aid with sba for cursor
 		return;
 	}
-	// return unprotected modified fields
-	// preceeded with sba code x'11' and sba addr
-	int buff_index = 3; // returned byte index
-	int scn_index = 0;  // index input fields
-	int fud_index = 1;  // index unprotected fields
-	while (fud_index < fud_tot){
-		if ((fud_attr[fud_index] & tn3270_mdt_mask) != 0){
-			tget_byte[buff_index] = tn3270_sba_cmd;
-			tget_byte[buff_index+1] = (byte)sba_to_ebc[scn_index >> 6];
-			tget_byte[buff_index+1] = (byte)sba_to_ebc[scn_index & 0x3f];
-		    buff_index = buff_index +3;
-            scn_index = fud_addr[fud_index];
-			while (scn_index < max_addr && scn_fud[scn_index] == fud_index){
-				if (buff_index < tget_len){
-					if (tz390.opt_ascii){
-						tget_byte[buff_index] = (byte)scn_char[scn_index];
-					} else {
-						tget_byte[buff_index] = tz390.ascii_to_ebcdic[(byte)scn_char[scn_index] & 0xff];
-					}
-					buff_index++;
-				} else {
-					abort_error(104,"tget input buffer overrun");
-				    return;
-				}
-				scn_index++;
-			}
-		}
-		fud_index++;
-	}
-	if (buff_index < tget_len){
-		tget_len = buff_index; // set actual length
+	if (fld_input_tot == 0){
+		tn3270_unformatted_input();
+	} else {
+		tn3270_formatted_input();
 	}
 }
-private void tn3270_write_control_char(int wcc){
+private void tn3270_unformatted_input(){
+	/*
+	 * return non-null data bytes
+	 */
+}
+private void tn3270_formatted_input(){
+	/*
+	 * return modified input fields
+	 * preceeded with sba code x'11' and sba addr
+	 */
+	tget_index = 3;             
+	int index = 0;
+	while (index < fld_input_tot){
+		cur_fld_addr = fld_input_addr[index];
+	    if ((scn_attr[cur_fld_addr] & tn3270_mdt_mask)
+		     == tn3270_mdt_mask){
+		    if (tget_index + 3 <= tget_len){
+		    	tget_byte[tget_index] = tn3270_sba_cmd;
+		    	tget_byte[tget_index+1] = (byte)sba_to_ebc[(cur_fld_addr+1) >> 6];
+		    	tget_byte[tget_index+2] = (byte)sba_to_ebc[(cur_fld_addr+1) & 0x3f];
+		    	tget_index = tget_index +3;
+		    } else {
+				abort_error(104,"tget input buffer overrun");
+			    return;
+		    }
+            int sba = cur_fld_addr + 1;
+            if (sba == max_addr){
+            	sba = 0;
+            }
+            while (scn_fld[sba] != tn3270_field){
+            	if (scn_byte[sba] != 0){
+            		if (tget_index < tget_len){
+            			if (tz390.opt_ascii){
+            				tget_byte[tget_index] = (byte)scn_char[sba];
+            			} else {
+            				tget_byte[tget_index] = tz390.ascii_to_ebcdic[(byte)scn_char[sba] & 0xff];
+            			}
+            			tget_index++;
+            		} else {
+            			abort_error(113,"tget input buffer overrun");
+            			return;
+            		}
+            	}
+            	sba++;
+            	if (sba == max_addr){
+            		sba = 0;
+            	}
+            }
+	    }
+	    index++;
+	}
+	if (tget_index < tget_len){
+		tget_len = tget_index; // set actual length
+	}
+}
+private void tn3270_write_control_char(){
 	/*
 	 * execute wcc from next byte in buffer
      * WWC 0xC3 = clear screen, reset KB and MDT's
@@ -2075,47 +2319,74 @@ private void tn3270_write_control_char(int wcc){
      * bit 6   - keyboard restore
      * bit 7   - reset modify data tags (MDT)
 	 */
-	if ((wcc & 0x40) != 0){ // reset screen
-        tn3270_clear_screen();
+	if ((tput_buff_byte & 0x40) != 0){ // reset screen
+        // RPI 222 removed tn3270_clear_screen()
 	}
-	if  ((wcc & 0x04) != 0){ // sound alarm	
-		// future enhancement
+	if  ((tput_buff_byte & 0x04) != 0){ // sound alarm	
+		sound_alarm();
+		status_line.setText("Alarm message");
 	}
-	if  ((wcc & 0x02) != 0){ // reset keyboard
+	if  ((tput_buff_byte & 0x02) != 0){ // reset keyboard
 	    tn3270_kb_lock = false; // allows kb input
 	} else {
 		tn3270_kb_lock = true;
+		status_line.setText("Display only with keyboard locked");
+		
 	}
-	if ((wcc & 0x01) != 0){  // reset mult data tags
+	if ((tput_buff_byte & tn3270_mdt_mask) == tn3270_mdt_mask){  // reset mult data tags
 		tn3270_reset_mdt();
 	}
+}
+private void sound_alarm(){
+	/*
+	 * sound alarm by sending ascii bell x'07' 
+	 * to System.out
+	 * Notes:
+	 *   1.  Tried Toolkit.getToolkitDefault().beep();
+	 *       and it didn't work
+	 *   2.  To get bell to work, I had to go to 
+	 *       Windows XP Control Panel, select Sounds,
+	 *       and assign the Windows default for "Alert"
+	 *       sound to "Windows XP error" sound (it was none)
+	 */
+	System.out.print((char) tn3270_bell); // RPI 220 use ascii bell x'07'
 }
 private void tn3270_clear_screen(){
 	/*
 	 * clear screen and reset fields
 	 */
-	Arrays.fill(scn_char,0,max_addr,' ');
-	Arrays.fill(scn_fud,0,max_addr,0);
-    scn_addr = 0;
-    fud_tot = 1;
-    fud_attr[0] = tn3270_protect_mask; // default field protected
-    tn3270_cursor = false;
-    tn3270_field_attr = tn3270_protect_mask;
+	  	Arrays.fill(scn_char,0,max_addr,' ');
+		Arrays.fill(scn_byte,0,max_addr,(byte)0);
+		Arrays.fill(scn_fld,0,max_addr,(byte)0);
+		Arrays.fill(scn_attr,0,max_addr,0);
+		fld_tot = 0;
+		fld_input_tot = 0;
+	    scn_addr = 0;
+	    tn3270_cursor = false;
+	    int index = 0;
+	    String text = "";
+	    while (index < max_rows){
+	    	text = text + String.valueOf(scn_char,0,max_cols) + "\r\n";
+	    	index++;
+	    }
+	    scn_text.setText(text);
 }
 private void tn3270_reset_mdt(){
 	/*
 	 * reset all mdt bits so only changes will 
 	 * be input.
 	 */
-	int fud_index = 1;
-	while (fud_index < fud_tot){
-		fud_attr[fud_index] = fud_attr[fud_index] & tn3270_mdt_off;
-		fud_index++;
+	int index = 0;
+	while (index < fld_input_tot){
+	    scn_attr[fld_input_addr[index]] = scn_attr[fld_input_addr[index]] & tn3270_mdt_off;
+	    index++;
 	}
 }
 private int tn3270_get_buff_addr(){
 	/*
 	 * return buffer address from next 2 bytes
+	 * Notes:
+	 *   1.  Wrap screen if sba > max_addr
 	 */
 	int sba = -1;
 	if (tput_index < tput_len -2){
@@ -2124,8 +2395,7 @@ private int tn3270_get_buff_addr(){
 		tput_index = tput_index+2;
 		sba = (high_bits << 6) | low_bits;
 		if (sba >= max_addr){
-			abort_error(105,"invalid sba address " + scn_addr);
-		    return -1;
+			return sba - (sba/max_addr)*max_addr;
 		}
 	} else {
 		abort_error(106,"tn3270 command buffer overrun");
@@ -2154,13 +2424,95 @@ private void tn3270_start_field(){
 	 * bit  6   - reserved
 	 * bit  7   - modified data tag
 	 */
-	 tn3270_field_attr = tput_byte[tput_index] & 0xff;
+	 scn_fld[scn_addr] = tn3270_field;
+	 cur_fld_attr = tput_byte[tput_index] & 0xff;
+	 scn_attr[scn_addr] = cur_fld_attr;
 	 tput_index++;
-	 scn_char[scn_addr] = ' ';
-	 scn_addr++;
-	 if ((tn3270_field_attr & tn3270_protect_mask) == 0){
-		 add_unprotected_field();
+	 tn3270_add_field_addr(); 
+	 if ((cur_fld_attr & tn3270_protect_mask) == 0){
+		 tn3270_add_input_field_addr();
 	 }
+	 scn_char[scn_addr] = ' ';
+	 tn3270_update_screen(scn_addr);
+	 tn3270_next_field_addr();
+}
+private void tn3270_add_field_addr(){
+	/*
+	 * add scn_addr to fld_addr array if new
+	 * and sort after new add.
+	 */
+	 int index = 0;
+	 while (index < fld_tot){
+		 if (scn_addr == fld_addr[index]){
+			 return;
+		 }
+		 index++;
+	 }
+	 fld_addr[fld_tot] = scn_addr;
+	 fld_tot++;
+	 if (fld_tot > 1){
+			// sort all field addresses for use in search
+		    Arrays.sort(fld_addr,0,fld_tot);
+	 }
+}
+private void tn3270_add_input_field_addr(){
+	/*
+	 * add scn_addr to fld_input_addr array
+	 * if new and sort after new add.
+	 */
+	 int index = 0;
+	 while (index < fld_input_tot){
+		 if (scn_addr == fld_input_addr[index]){
+			 return;
+		 }
+		 index++;
+	 }
+	 fld_input_addr[fld_input_tot] = scn_addr;
+	 fld_input_tot++;
+	 if (fld_input_tot > 1){
+		// sort input field addresses for use in search
+	    Arrays.sort(fld_input_addr,0,fld_input_tot);
+	 }
+}
+private void tn3270_drop_field(int sba){
+	/*
+	 * remove field definition at sba
+	 */
+	scn_fld[sba] = 0;
+	int index = 0;
+	while (index < fld_tot){
+		if (fld_addr[index] == sba){
+			index++;
+			while (index < fld_tot){
+				fld_addr[index-1] = fld_addr[index];
+				index++;
+			}
+			fld_tot--;
+			if ((scn_attr[sba] & tn3270_protect_mask) == 0){
+				tn3270_drop_input_field(sba);
+			}
+			return;
+		}
+		index++;
+	}
+}
+private void tn3270_drop_input_field(int sba){
+	/*
+	 * remove input field
+	 */
+	int index = 0;
+	while (index < fld_input_tot){
+		if (fld_input_addr[index] == sba){
+			index++;
+			while (index < fld_input_tot){
+				fld_input_addr[index-1] = fld_input_addr[index];
+				index++;
+			}
+			fld_input_tot--;
+			return;
+		}
+		index++;
+	}
 }
 private void tn3270_eds_start_field(){
 	/* 
@@ -2216,12 +2568,9 @@ private void tn3270_eds_start_field(){
 	 while (count > 0){
          tn3270_eds_set_field_attribute();
 		 count--;
-	 }		 
-	 scn_char[scn_addr] = ' ';
-	 scn_addr++;
-	 if ((tn3270_field_attr & tn3270_protect_mask) == 0){
-		 add_unprotected_field();
-	 }
+	 }	
+	 tn3270_update_screen(scn_addr);
+	 tn3270_next_field_addr();
 }
 private void tn3270_eds_set_field_attribute(){
 	/*
@@ -2247,46 +2596,6 @@ private void tn3270_eds_set_field_attribute(){
          return;
 	 }
 }
-private void add_unprotected_field(){
-	/*
-	 * add unprotected field in ascending order
-	 */
-	 if (fud_tot < max_fud && scn_addr < max_addr){
-		 fud_addr[fud_tot] = scn_addr;
-		 fud_attr[fud_tot] = tn3270_field_attr;
-		 fud_cur = fud_tot;
-		 fud_tot++;
-	 } else {
-		 abort_error(107,"tn3270 maximum unprotected fields exceeded");
-	     return;
-	 }
-	 // sort fud entries in ascending address order
-	 int index1 = 1;
-	 int index2 = 2;
-	 while (index2 < fud_tot){
-		 if (fud_addr[index1] >= fud_addr[index2]){
-			 if (fud_addr[index1] == fud_addr[index2]){
-                 //	replace dup field attr
-				 fud_attr[index1] = fud_attr[index2];
-				 fud_cur = index1;  // use matching fud
-				 index2++;
-			 } else {
-				 // sort in ascending order
-				 int temp_addr = fud_addr[index1];
-				 int temp_attr = fud_attr[index1];
-				 fud_addr[index1] = fud_addr[index2];
-				 fud_attr[index1] = fud_attr[index2];
-				 fud_addr[index2] = temp_addr;
-				 fud_attr[index2] = temp_attr;
-			 }
-		 }
-		 index1++;
-		 index2++;
-	 }
-	 if (index1 < index2 -1){
-		 fud_tot--; // remove dup entry
-	 }
-}
 private void keyboard_readline(){
 	/*
 	 * 1.  Read keyboard text into tget_buff until
@@ -2297,7 +2606,7 @@ private void keyboard_readline(){
 	int keychar = 0;
 	int index = 0;
 	while (index < tget_len){
-		key = gui_keyboard_read(tget_wait);
+		key = gui_keyboard_read((tpg_flags & tpg_wait_mask) == tpg_wait);
 	    keychar = key & 0xffff;
 	    if (keychar == KeyEvent.VK_ENTER){
             tget_len = index;
@@ -2328,8 +2637,9 @@ private void scn_write_char(char key){
 	/*
 	 * write 1 character at current screen location
 	 */
-    scn_addr = (gui_cur_row-1)*(max_cols+2) + (gui_cur_col-1);
+    scn_addr = (gui_cur_row-1)*max_cols + (gui_cur_col-1);
     scn_char[scn_addr] = key;
+	tn3270_update_screen(scn_addr);
     gui_cur_col++;
     if (gui_cur_col > max_cols){
 		scn_next_line();
@@ -2345,9 +2655,8 @@ private void scn_next_line(){
 	gui_cur_row++;
 	if (gui_cur_row > max_rows){
 		status_line.setText("Press enter for next screen");
-		update_tn3270_screen_text();
 		update_main_view();
-		gui_keyboard_read(tget_wait);
+		gui_keyboard_read((tpg_flags & tpg_wait_mask) == tpg_wait);
 		tn3270_clear_screen();
 		status_line.setText("");
 		gui_cur_row = 1;
@@ -2384,6 +2693,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 		  * return quam_cmd_line and reset
 		  */
 		 if (!wtor_running){
+		    gz390_cmd_line.requestFocus();
 			wtor_ecb_addr = ecb_addr;
 			wtor_reply_string = null;
        		wtor_running = true; // turn on monitor update of wtor_reply_string
@@ -2419,7 +2729,8 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 		 String[] dummy_args = new String[0];
 		 set_main_mode(dummy_args);
 		 init_gz390(dummy_args);
-		 gui_window_title(title);		 
+		 gui_window_title(title);
+		 refresh_request = true;
 	 }
 	 public void gui_window_title(String title){
 		 /*
@@ -2544,7 +2855,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         	 * using color
         	 */
         }
-        public ByteBuffer gui_screen_read(int lbuff,int wait){
+        public ByteBuffer gui_screen_read(int lbuff,boolean wait){
         	/*
         	 * return ByteBuffer of lenght lbuff
         	 * from TN3270 screen.  If wait = 1 
@@ -2553,7 +2864,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         	 */
         	byte[] temp_byte = new byte[lbuff];
         	ByteBuffer temp_buff = ByteBuffer.wrap(temp_byte,0,lbuff);
-        	while (wait == tget_wait && gui_tot_key == 0){
+        	while (gui_tot_key == 0 && wait){
                 sleep_now();
         	}
         	return temp_buff;
@@ -2598,14 +2909,14 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         	 * draw characters at x,y 
         	 */
         }
-        public int gui_keyboard_read(int wait){
+        public int gui_keyboard_read(boolean wait){
         	/*
         	 * read next keyboard keycode and keychar
         	 * and return as int (code high 16, char low 16).
         	 * If none ready and no wait return -1
         	 * else wait for next input key
         	 */
-        	while (gui_tot_key == 0 && wait == tget_wait){
+        	while (gui_tot_key == 0 && wait){
         		try {
         			Thread.sleep(monitor_wait);
         		} catch (Exception e){
@@ -2647,43 +2958,57 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
     	 *     control characters and translate to
     	 *     EBCDIC unless ASCII mode.
     	 * 2.  If none, and option wait then wait
-    	 *     else return null indicating not avail.
+    	 *     else return R15=4 indicating not avail.
     	 * 3.  Set tget_len to actual bytes returns if
     	 *     less than requested length.
+    	 * 4.  Set R1=length of data buffer returned
+    	 *     and R15=0 or 4 if none and NOWAIT
     	 */
+    	tpg_rc = 0; // assume rc = 0
     	if (gui_view != gui_view_screen){
     		set_view_screen();
     	}
-    	if ((tget_flags & tget_edit) == 0){
-    		if (!tn3270_kb_lock && (tget_flags & tget_wait) != 0){
+    	if ((tpg_flags & tpg_type_mask) == tpg_type_asis){
+        	if (!tn3270_attn){
+        		tn3270_kb_lock = false;
+        		status_line.setText("Ready for input");
+        	}
+    		if ((tpg_flags & tpg_wait_mask) == tpg_wait){
     			while (!tz390.z390_abort && !tn3270_attn){
     				sleep_now();
     			}
+    		} else if (!tn3270_attn){
+    			tpg_rc = 4; // RPI 221 return 4 if NOWAIT and no data 
+    			return;
     		}
     	    if (tn3270_attn){
-    	    	tn3270_attn = false;
+    	    	status_line.setText("Processing keyboard input");
     	    	tn3270_get_screen_input();
+    	    	tn3270_attn = false;
+    	    	tn3270_aid = tn3270_noaid;
+    	    	tn3270_kb_lock = true;
     	    }
      	} else {
             keyboard_readline();
     	}
-    	return;
     }
     public void gui_tput(){
     	/*
     	 * 1.  Display TN3290 data stream buffer on
     	 *     GUI 3270 screen and return true of ok.
     	 */
+    	tpg_rc = 0; // RPI 221 assume ok
     	if (gui_view != gui_view_screen){
     		set_view_screen();
     	}
-        if ((tput_flags & tget_edit) == 0){
+        if ((tpg_flags & tpg_type_mask) == tpg_type_fullscr
+        	|| (tpg_flags & tpg_type_mask) == tpg_type_asis){
         	tn3270_full_screen = true;
-         	tput_tn3270_buffer();	
+         	tn3270_tput_buffer();	
      	} else { 
      		tn3270_full_screen = false;
      		tput_edit_buffer(tput_byte,tput_len);
     	}
-        return;
+        gz390_cmd_line.requestFocus();
 	}
 }

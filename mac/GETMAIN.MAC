@@ -12,6 +12,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 01/21/06 RPI187 CORRECT FREEMAIN and GETMAIN comments, LA/L length,
 .*          limit check length, correct K/M support
+.* 03/14/06 RPI 210 ALLOW LOC=24,(24),31,(31),(24,31)
 .*********************************************************************
 &N       GETMAIN &TYPE,&LV=,&LOC=
          AIF   (N'&SYSLIST EQ 1).NPOK
@@ -88,6 +89,11 @@
          AIF  (&LOC EQ '').OPTIONS
          AIF  (&LOC EQ 'ABOVE').SETABOVE
          AIF  (&LOC EQ 'BELOW').SETBELOW
+         AIF  (&LOC EQ '31').SETABOVE           RPI 210
+         AIF  (&LOC EQ '(31)').SETABOVE         RPI 210
+         AIF  (&LOC EQ '24').SETBELOW           RPI 210
+         AIF  (&LOC EQ '(24)').SETBELOW         RPI 210
+         AIF  (&LOC EQ '(24,31)').SETABOVE      RPI 210
          MNOTE 12,'GETMAIN INVALID LOC - &LOC'
          MEXIT
 .SETABOVE ANOP

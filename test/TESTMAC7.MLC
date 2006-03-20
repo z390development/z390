@@ -1,0 +1,22 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 03/17/06 RPI 239 TEST TAB VERSUS SPACE BEFORE COMMENTS
+*********************************************************************
+*
+*  NOTE THIS SOURCE MUST BE EDITED BY NOTEPAD TO KEEP TAB ON X
+* 
+*********************************************************************
+TESTMAC7 SUBENTRY
+         WTO   'TESTMAC7 - TEST TAB VERSUS SPACE USING NOTEPAD'
+         MVI   X,C'X'
+         CLI   X,C'X'
+         BNE   1
+         WTO   'TESTMAC7 ENDED OK'
+         SUBEXIT
+X	DS	C	TEST TAB BEFORE THIS COMMENT ********	
+         END

@@ -11,16 +11,19 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 01/21/06 RPI187 CORRECT FREEMAIN and GETMAIN comments, LA/L length,
 .*          limit check length, correct K/M support
+.* 03/14/06 RPI 210 allow positional type operand and support LA=
 .*********************************************************************
-&N       FREEMAIN &LV=,&A=
-         AIF   (N'&SYSLIST EQ 0).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+&N       FREEMAIN &LV=,&A=,&LA=         RPI 210
+         AIF   (N'&SYSLIST LE 1).NPOK   RPI 210
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
 .NPOK    ANOP
 .*
 .* FREEMAIN - RELEASE MEMORY FROM ABOVE OR BELOW 16MB LINE
 .*
 .*  LENGTH LV= 
 .*    ABSOLUTE LENGTH OR (REG) 
+.*  LENGTH LA=
+.*    ADDRESS OF FULL WORD LENGTH OR (REG)
 .*  ADDRESS A= 
 .*    RX OF FULLWORD OR (REG) WITH DEFAULT REG 0
 .* OUTPUT
@@ -29,6 +32,14 @@
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+.LA      ANOP                 RPI 210
+         AIF  (&LA EQ '').LV
+         AIF  ('&LA'(1,1) EQ '(').LAREG
+         L    1,&LA
+         AGO  .A
+.LAREG   ANOP
+         L    1,0(&LA(1))
+         AGO  .A 
 .LV      ANOP
          AIF  (&LV NE '').CHKLV
          MNOTE 12,'FREEMAIN LV= MISSING'

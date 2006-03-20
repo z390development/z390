@@ -49,6 +49,7 @@ public  class  tz390 {
     *          and strip single quotes from "parm('...')"
     * 02/18/06 RPI 206 add RRF3 format type
     * 02/21/06 RPI 208 use z390_abort to sync term.
+    * 03/13/06 RPI 226 fix options in double quotes
     ********************************************************
     * Shared z390 tables
     *****************************************************/
@@ -57,7 +58,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.0.12";  //dsh
+    String version    = "V1.0.13";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -2911,145 +2912,146 @@ public void init_options(String[] args,String pgm_type){
     } else {
 	    abort_options("missing file option");
     }
-    String[] tokens = cmd_parms.split("\\s+");
-    int index1 = 0;
-    while (index1 < tokens.length){
-    	if (tokens[index1].length() > 2 //RPI201
-    		&& tokens[index1].charAt(0) == '"'
-    		&& tokens[index1].charAt(tokens[index1].length()-1) == '"'){
-    		tokens[index1] = tokens[index1].substring(1,tokens[index1].length()-1);
+    String token = null;
+    int index1 = 1;
+    while (index1 < args.length){
+    	token = args[index1];
+    	if (token.length() > 2 //RPI201
+    		&& token.charAt(0) == '"'
+    		&& token.charAt(token.length()-1) == '"'){
+    		token = token.substring(1,token.length()-1);
     	}
-    	if (tokens[index1].toUpperCase().equals("AMODE24")){
+    	if (token.toUpperCase().equals("AMODE24")){
     		opt_amode24 = true;
     		opt_amode31 = false;
     		z390_amode31 = 'F';
     		z390_rmode31 = 'F';
-    	} else if (tokens[index1].toUpperCase().equals("AMODE31")){
+    	} else if (token.toUpperCase().equals("AMODE31")){
     		opt_amode24 = false;
     		opt_amode31 = true;
     		z390_amode31 = 'T';
-    	} else if (tokens[index1].toUpperCase().equals("ASCII")){
+    	} else if (token.toUpperCase().equals("ASCII")){
     		opt_ascii = true;        		
-    	} else if (tokens[index1].toUpperCase().equals("CON")){
+    	} else if (token.toUpperCase().equals("CON")){
            	opt_con = true;
-        } else if (tokens[index1].toUpperCase().equals("DUMP")){
+        } else if (token.toUpperCase().equals("DUMP")){
            	opt_dump = true;
-        } else if (tokens[index1].length() > 4
-        	&& tokens[index1].substring(0,4).toUpperCase().equals("ERR(")){
+        } else if (token.length() > 4
+        	&& token.substring(0,4).toUpperCase().equals("ERR(")){
            	try {
-           		max_errors = Integer.valueOf(tokens[index1].substring(4,tokens[index1].length()-1)).intValue();
+           		max_errors = Integer.valueOf(token.substring(4,token.length()-1)).intValue();
           	} catch (Exception e){
-           		abort_options("invalid error limit - " + tokens[index1]);
+           		abort_options("invalid error limit - " + token);
            	}
-        } else if (tokens[index1].toUpperCase().equals("GUAM")){
+        } else if (token.toUpperCase().equals("GUAM")){
            	opt_guam = true;
-        } else if (tokens[index1].length() > 8
-        	&& tokens[index1].substring(0,8).toUpperCase().equals("MAXFILE(")){
+        } else if (token.length() > 8
+        	&& token.substring(0,8).toUpperCase().equals("MAXFILE(")){
            	try {
-           		max_file = Long.valueOf(tokens[index1].substring(8,tokens[index1].length()-1)).longValue() << 20;;
+           		max_file = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20;;
            	} catch (Exception e){
-           		abort_options("invalid maxfile limit (mb) - " + tokens[index1]);
+           		abort_options("invalid maxfile limit (mb) - " + token);
            	}
-        } else if (tokens[index1].length() > 5
-        	&& tokens[index1].substring(0,4).toUpperCase().equals("MEM(")){
+        } else if (token.length() > 5
+        	&& token.substring(0,4).toUpperCase().equals("MEM(")){
            	try {
-           	    max_mem = Integer.valueOf(tokens[index1].substring(4,tokens[index1].length()-1)).intValue();
+           	    max_mem = Integer.valueOf(token.substring(4,token.length()-1)).intValue();
            	} catch (Exception e){
-           		abort_options("invalid memory option " + tokens[index1]);
+           		abort_options("invalid memory option " + token);
            	}
-        } else if (tokens[index1].toUpperCase().equals("NOCON")){
+        } else if (token.toUpperCase().equals("NOCON")){
            	opt_con = false;
-        } else if (tokens[index1].toUpperCase().equals("NOLIST")){
+        } else if (token.toUpperCase().equals("NOLIST")){
            	opt_list = false;
-        } else if (tokens[index1].toUpperCase().equals("NOLISTCALL")){
+        } else if (token.toUpperCase().equals("NOLISTCALL")){
            	opt_listcall = false;
-        } else if (tokens[index1].equals("NOLISTFILE")){
+        } else if (token.equals("NOLISTFILE")){
            	opt_listfile = false;
-         } else if (tokens[index1].toUpperCase().equals("NOMFC")){
+         } else if (token.toUpperCase().equals("NOMFC")){
            	opt_mfc = false;
-         } else if (tokens[index1].toUpperCase().equals("NOSTATS")){
+         } else if (token.toUpperCase().equals("NOSTATS")){
            	opt_stats = false;
-         } else if (tokens[index1].toUpperCase().equals("NOTIME")){
+         } else if (token.toUpperCase().equals("NOTIME")){
           	opt_time = false; // no time limit
-         } else if (tokens[index1].toUpperCase().equals("NOTIMING")){
+         } else if (token.toUpperCase().equals("NOTIMING")){
           	opt_timing = false; // no date/time changes
           	opt_time   = false;
-         } else if (tokens[index1].toUpperCase().equals("NOTRAP")){
+         } else if (token.toUpperCase().equals("NOTRAP")){
            	opt_trap = false;
-         } else if (tokens[index1].toUpperCase().equals("NOXREF")){
+         } else if (token.toUpperCase().equals("NOXREF")){
            	opt_xref = false;
-         } else if (tokens[index1].toUpperCase().equals("OBJHEX")){
+         } else if (token.toUpperCase().equals("OBJHEX")){
            	opt_objhex = true;
-         } else if (tokens[index1].length() > 5
-           		&& tokens[index1].substring(0,5).toUpperCase().equals("PARM(")){
-            	opt_parm = tokens[index1].substring(5,tokens[index1].length()-1);
+         } else if (token.length() > 5
+           		&& token.substring(0,5).toUpperCase().equals("PARM(")){
+            	opt_parm = token.substring(5,token.length()-1);
             	if (opt_parm.length() > 2 
             		&& opt_parm.charAt(0) == '\''
             		&& opt_parm.charAt(opt_parm.length()-1) == '\''){
             		opt_parm = opt_parm.substring(1,opt_parm.length()-1);          		
             	}
-         } else if (tokens[index1].toUpperCase().equals("REGS")){
+         } else if (token.toUpperCase().equals("REGS")){
            	opt_regs = true;
            	opt_list  = true;
-         } else if (tokens[index1].toUpperCase().equals("RMODE24")){
+         } else if (token.toUpperCase().equals("RMODE24")){
            	opt_rmode24 = true;
            	opt_rmode31 = false;
            	z390_rmode31 = 'F';
-         } else if (tokens[index1].toUpperCase().equals("RMODE31")){
+         } else if (token.toUpperCase().equals("RMODE31")){
            	opt_rmode24 = false;
           	opt_rmode31 = true;
            	z390_rmode31 = 'T';
-         } else if (tokens[index1].length() > 7
-           		&& tokens[index1].substring(0,7).toUpperCase().equals("SYS390(")){
-           	dir_390 = tokens[index1].substring(7,tokens[index1].length()-1) + File.separator;	
-         } else if (tokens[index1].length() > 7 
-           		&& tokens[index1].substring(0,7).toUpperCase().equals("SYSBAL(")){
-          	dir_bal = tokens[index1].substring(7,tokens[index1].length()-1) + File.separator; 
-         } else if (tokens[index1].length() > 7 
-          		&& tokens[index1].substring(0,7).toUpperCase().equals("SYSCPY(")){
-           	dir_cpy = tokens[index1].substring(7,tokens[index1].length()-1); 
-         } else if (tokens[index1].length() > 7 
-          		&& tokens[index1].substring(0,7).toUpperCase().equals("SYSDAT(")){
-           	dir_dat = tokens[index1].substring(7,tokens[index1].length()-1) + File.separator; 
-         } else if (tokens[index1].length() > 7
-          		&& tokens[index1].substring(0,7).toUpperCase().equals("SYSLOG(")){
-           	dir_log = tokens[index1].substring(7,tokens[index1].length()-1) + File.separator;
-         } else if (tokens[index1].length() > 7 
-           		&& tokens[index1].substring(0,7).toUpperCase().equals("SYSMAC(")){
-           	dir_mac = tokens[index1].substring(7,tokens[index1].length()-1); 
-         } else if (tokens[index1].length() > 7 
-           		&& tokens[index1].substring(0,7).toUpperCase().equals("SYSMLC(")){
-          	dir_mlc = get_short_file_name(tokens[index1].substring(7,tokens[index1].length()-1) + File.separator); 
-         } else if (tokens[index1].length() > 7 
-           		&& tokens[index1].substring(0,7).toUpperCase().equals("SYSOBJ(")){
-           	dir_obj = tokens[index1].substring(7,tokens[index1].length()-1) + File.separator; 
-         } else if (tokens[index1].length() > 8
-         		&& tokens[index1].substring(0,8).toUpperCase().equals("SYSPARM(")){
-        	opt_sysparm = tokens[index1].substring(8,tokens[index1].length()-1);
-         } else if (tokens[index1].length() > 7 
-           		&& tokens[index1].substring(0,7).toUpperCase().equals("SYSPCH(")){
-          	dir_pch = get_short_file_name(tokens[index1].substring(7,tokens[index1].length()-1) + File.separator); 
-         } else if (tokens[index1].length() > 7 
-          		&& tokens[index1].substring(0,7).toUpperCase().equals("SYSPRN(")){
-          	dir_prn = tokens[index1].substring(7,tokens[index1].length()-1) + File.separator; 	
-         } else if (tokens[index1].length() > 5
-          		&& tokens[index1].substring(0,5).toUpperCase().equals("TIME(")){
-           	max_time_seconds = Long.valueOf(tokens[index1].substring(5,tokens[index1].length()-1)).longValue();
-         } else if (tokens[index1].toUpperCase().equals("TEST")){
+         } else if (token.length() > 7
+           		&& token.substring(0,7).toUpperCase().equals("SYS390(")){
+           	dir_390 = token.substring(7,token.length()-1) + File.separator;	
+         } else if (token.length() > 7 
+           		&& token.substring(0,7).toUpperCase().equals("SYSBAL(")){
+          	dir_bal = token.substring(7,token.length()-1) + File.separator; 
+         } else if (token.length() > 7 
+          		&& token.substring(0,7).toUpperCase().equals("SYSCPY(")){
+           	dir_cpy = token.substring(7,token.length()-1); 
+         } else if (token.length() > 7 
+          		&& token.substring(0,7).toUpperCase().equals("SYSDAT(")){
+           	dir_dat = token.substring(7,token.length()-1) + File.separator; 
+         } else if (token.length() > 7
+          		&& token.substring(0,7).toUpperCase().equals("SYSLOG(")){
+           	dir_log = token.substring(7,token.length()-1) + File.separator;
+         } else if (token.length() > 7 
+           		&& token.substring(0,7).toUpperCase().equals("SYSMAC(")){
+           	dir_mac = token.substring(7,token.length()-1); 
+         } else if (token.length() > 7 
+           		&& token.substring(0,7).toUpperCase().equals("SYSMLC(")){
+          	dir_mlc = get_short_file_name(token.substring(7,token.length()-1) + File.separator); 
+         } else if (token.length() > 7 
+           		&& token.substring(0,7).toUpperCase().equals("SYSOBJ(")){
+           	dir_obj = token.substring(7,token.length()-1) + File.separator; 
+         } else if (token.length() > 8
+         		&& token.substring(0,8).toUpperCase().equals("SYSPARM(")){
+        	opt_sysparm = token.substring(8,token.length()-1);
+         } else if (token.length() > 7 
+           		&& token.substring(0,7).toUpperCase().equals("SYSPCH(")){
+          	dir_pch = get_short_file_name(token.substring(7,token.length()-1) + File.separator); 
+         } else if (token.length() > 7 
+          		&& token.substring(0,7).toUpperCase().equals("SYSPRN(")){
+          	dir_prn = token.substring(7,token.length()-1) + File.separator; 	
+         } else if (token.length() > 5
+          		&& token.substring(0,5).toUpperCase().equals("TIME(")){
+           	max_time_seconds = Long.valueOf(token.substring(5,token.length()-1)).longValue();
+         } else if (token.toUpperCase().equals("TEST")){
            	opt_test = true;
            	opt_time = false;
-         } else if (tokens[index1].length() > 5
-          		&& tokens[index1].substring(0,5).toUpperCase().equals("TEST(")){
-           	test_ddname = tokens[index1].substring(5,tokens[index1].length()-1);	
+         } else if (token.length() > 5
+          		&& token.substring(0,5).toUpperCase().equals("TEST(")){
+           	test_ddname = token.substring(5,token.length()-1);	
            	opt_test = true;
-         } else if (tokens[index1].toUpperCase().equals("TRACE")){
+         } else if (token.toUpperCase().equals("TRACE")){
            	opt_trace = true;
            	opt_list   = true;
            	opt_con   = false;
-         } else if (tokens[index1].toUpperCase().equals("TRACEA")){
+         } else if (token.toUpperCase().equals("TRACEA")){
            	opt_tracea = true;
            	opt_list = true;	
-         } else if (tokens[index1].toUpperCase().equals("TRACEALL")){
+         } else if (token.toUpperCase().equals("TRACEALL")){
            	opt_traceall = true;
            	opt_trace    = true;
            	opt_tracem   = true;
@@ -3058,9 +3060,9 @@ public void init_options(String[] args,String pgm_type){
            	opt_tracemem = true;
            	opt_list     = true;
            	opt_con   = false;
-         } else if (tokens[index1].toUpperCase().equals("TRACEL")){
+         } else if (token.toUpperCase().equals("TRACEL")){
            	opt_tracel = true;
-         } else if (tokens[index1].toUpperCase().equals("TRACEMEM")){
+         } else if (token.toUpperCase().equals("TRACEMEM")){
            	opt_tracemem = true;
          }
          index1++;
