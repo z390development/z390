@@ -450,7 +450,24 @@ set GIT_COMMITTER_DATE=2021-03-20 12:00:00 +0100
 git commit -m "Reconstructed version v1.0.13 of z390 committed on behalf of Don Higgins"
 git tag -a v1.0.13 -m "Reconstructed version v1.0.13 of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.0.13a
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.0.13a
+git add test/TESTSDT1.MLC
+git add test/TESTSET1.MLC
+git add z390_v1013a_ptf.txt
+
+==> Create commit for V1.0.13a
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2006-03-20 16:05:00 -0500
+set GIT_COMMITTER_DATE=2021-03-20 12:05:00 +0100
+git commit -m "Reconstructed version v1.0.13a of z390 committed on behalf of Don Higgins"
+git tag -a v1.0.13a -m "Reconstructed version v1.0.13a of z390 committed on behalf of Don Higgins"
 
 
 

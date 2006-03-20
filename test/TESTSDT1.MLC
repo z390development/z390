@@ -7,6 +7,7 @@
 *********************************************************************
 * MAINTENANCE.
 * 10/05/05 RPI5 - ADD ASCII MODE SUPPORT (SEE TESTASC2.MLC TEST ALSO)    
+* 03/20/06 RPI 232 - TEST INTEGER WITH EXPONENT 1E3 = 1000    
 *********************************************************************
 TESTSDT1 RT1   MAIN
          RT1   START
@@ -91,5 +92,8 @@ TESTSDT1 RT1   MAIN
          RT1 CCE,=AL1(B'11'),=AL1(X'3')
          RT1 CCE,=A(X'100'),=A(256)
          RT1 CCE,=F'-1',=A(X'FFFFFFFF')
+* TEST EXPONENTS IN INTS
+         RT1 CCE,=A(1E3),=F'1000'
+         RT1 CCE,=H'1E3',=H'1000'
          RT1 END
          END         
