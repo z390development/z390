@@ -13,8 +13,9 @@
 * 01/13/06 RPI171 TEST UNARY OPERATORS                 
 * 03/16/06 RPI230 TEST COM, RSECT, START LIMITED SUPPORT
 * 03/17/06 RPI228 TEST CVTDCB OS FLAG INDICATING 31 BIT AND MVS+
+* 03/21/06 RPI258 TEST ORG , DELIMITER                                 
 *********************************************************************
-MYSTART  START , RPI 230 TEST START CSECT
+         START , RPI 230 TEST START CSECT
          USING *,R15
          L     R15,=A(TESTASM1)
          BR    R15
@@ -36,6 +37,9 @@ ABS1     EQU   0
          DC    C'XX'
 ABS2     EQU   0
          ORG 
+* TEST ORG COMMA DELIMITER
+         ORG    *-16   BACKUP  16
+         ORG    ,      FORWARD 16 AGAIN 
 * TEST B,C,X SYMBOLS
 B        DC    C'B'
 C        DC    C'C'

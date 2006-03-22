@@ -33,7 +33,7 @@ C:\z390\test
 C:\z390\VDIFF.BAT
 C:\z390\Z390.BAT
 C:\z390\z390.jar
-C:\z390\z390_v1013a_ptf.txt
+C:\z390\z390_v1013b_ptf.txt
 C:\z390\bmk\BMKALCG.390
 C:\z390\bmk\BMKALCG.BAL
 C:\z390\bmk\BMKALCG.LOG

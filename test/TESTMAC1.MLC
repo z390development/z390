@@ -5,6 +5,9 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 03/21/06 RPI 253 add test for macro labels starting with ._
+* 03/21/06 RPI 257 add test for * as second operand              
+*********************************************************************
 TESTMAC1 SUBENTRY
          WTO   'TESTMAC1 TEST SUBSTRINGS, '''' (DOUBLE QUOTES), AND &&'
          SUBEXIT
@@ -50,4 +53,13 @@ TESTMAC1 SUBENTRY
          TESTI ABC,ABCD
          TESTI ABC,
          TESTI ,ABC
+* TEST MACRO LABELS STARTING WITH ._
+         AIF   (1 EQ 1)._OK
+         MNOTE 12,'AIF BRANCH TO ._OK FAILED'
+         MEXIT
+._OK     ANOP
+         MNOTE 'BRANCH TO ._OK IS OK'
+* TEST * AS SECOND OPERAND
+&BC      SETC   'ABC'(2,*)
+         MNOTE 'BC=&BC'
          END

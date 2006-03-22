@@ -74,8 +74,8 @@ s 400.=c'a''b'
 l 400. 40.
 * reset reg and memory breaks
 s
-* go find next bras (branch relative and save) instruction
-G bras
+* trace to CGXR instruction
+t cgxr
 h
 *
 * test 0c1 return to test
@@ -96,5 +96,8 @@ l +1+2 2
 l *+1+2 1
 j 300.+1+2
 t 1
+* return to cgxr instr in r12 and trace to wto svc
+j 12r%
+t svc
 * zoom to end of normal execution
 z

@@ -5,10 +5,12 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-* 11/08/05 RPI74 TEST RELATIVE OFFSET ERRORS
-* 11/08/05 RPI85 TEST MIN/MAX DC F AND H LIMIT ERRORS11
-* 01/06/06 RPI157 AND 159 OPERAND ERROR CHECKING
-* 03/16/06 RPI238 MNOTE error if level > 4       
+* 11/08/05 RPI  74 TEST RELATIVE OFFSET ERRORS
+* 11/08/05 RPI  85 TEST MIN/MAX DC F AND H LIMIT ERRORS11
+* 01/06/06 RPI 157 AND 159 OPERAND ERROR CHECKING
+* 03/16/06 RPI 238 MNOTE error if level > 4       
+* 03/21/06 RPI 253 ISSUE ERROR FOR INVALID LABELS SUCH AS _^A
+* 03/22/06 RPI 260 test expression parsing errors
 *********************************************************************
          TITLE 'TESTERR2 - TEST AZ390 ERRORS'
 TESTERR2 CSECT
@@ -59,4 +61,10 @@ Y        DC    X'00'
 * TEST MNOTE ERROR LEVELS
          MNOTE 4,'TEST MNOTE 1'
          MNOTE 8,'TEST MNOTE 2'
+* TEST INVALID LABEL
+_A       DS    0H OK
+_^A      DS    0H NOT OK
+* TEST EXPRESSION PARSING ERRORS
+EXP1     EQU   1+
+EXP2     EQU   1//
          END 

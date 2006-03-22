@@ -5,6 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 03/22/06 RPI 237 test drop using with comments, mult labels
+*********************************************************************
 TESTUSE1 SUBENTRY
          WTO   'TESTUSE1 TEST LABELD AND DEPENDANT USING'
 *
@@ -55,7 +57,7 @@ DCB2     USING IHADCB,SYSUT2
          BNE   ERR
          CLC   DCB2.DCBLRECL,=H'120'
          BNE   ERR
-         DROP  DCB1,DCB2
+         DROP  DCB1,DCB2 TEST COMMENT FOR RPI 237
          WTO   'TESTUSE1 ENDED OK'
          SUBEXIT
 ERR      WTO   'TESTUSE1 ABORTING WITH ERROR'
