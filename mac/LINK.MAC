@@ -13,6 +13,7 @@
 .* 11/19/05 RPI102 - allow DDNAME or DSNAME to replace EP or EPLOC
 .* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 03/28/06 RPI266 CORRECT MISSING .DSNERR LABEL (WAS .DSHERR)
 .*********************************************************************
 .* LOAD AND EXEC PGM VIA SVC 6
 .*   R0  = ADDR PGM NAME (8 BYTES SPACE FILLED)
@@ -77,7 +78,7 @@
          AIF   (&DSNAME(1) EQ '15' OR &DSNAME(1) EQ 'R15').SVC  RPI163
          LR    15,&DSNAME(1)
          AGO   .SVC
-.DSHERR  ANOP
+.DSNERR  ANOP
          MNOTE 12,'LINK INVALID DSNAME REG'
          MEXIT
 .CHKDD   ANOP

@@ -1,4 +1,4 @@
-z390 v1.0.13b PTF 03/22/06
+z390 v1.0.13c PTF 04/06/06
 Copyright 2006 Automated Software Tools Corporation
 
 
@@ -41,12 +41,42 @@ See updated TESTASM1.
 add documentation to user guide on how expressions are parsed using 
 variable stack and operator stack.  See updated TESTERR2.
 
-To install this PTF follow these steps.
+13. RPI 235 - fix z390 CD command path display and support CD commands
+    without requiring space separator like Windons (i.e. CD..)
+
+14. RPI 264 - improve error handling as followsL
+    a) Abort with error if source files contain non-ascii characters
+    b) If not TEXT option, abort if source line > 80
+    c) Allow up to 3 passes in az390 to reduce errors
+    
+15. RPI 265 - Correct az390 to support DC fields with no data for 
+    alignment.  See updated TESTDC1. 
+
+16. RPI 266 - Correct mz380 to support inline macros within macro files
+    as well as open code.  See new TESTMAC8.
+
+17. RPI 267 - Correct pz390 to only flush extended floating point cache
+    registers if both registers have not been changed and prevent TEST
+    mode trap when tracing to invalid instruction causing 0C1.
+
+18. RPI 268 - Add option TEXT to enable mz390 to read and write text
+    files with any line length without continuation formatting.  Also
+    add DSNAME= as well as DDNAME= extentions to AREAD and PUNCH to 
+    enable reading and writing multiple source files in one 
+    execution.  See new TESTTXT1 which creates 2 HTML text files
+    from sinle eecution of testTXT1.MLC with option TEXT. 
+
+
+To install PTF follow these steps.
 
 1.  Copy the z390.jar file into install directory for z390
     replacing existing copy of z390.jar.
 
-2.  Copy the following updated macros:
+2.  Copy the updated macro directory mac to z390\mac directory.
+
+3.  If you need to change Java source for this PTF version, all
+    the Java source is in src directory and can be copied to 
+    z390\src directory.
 
 none
 
@@ -55,12 +85,16 @@ none
 
 TESTASM1.MLC - test blank sections, labels starting with _, ORG , 
 TESTERR2.MLC - test invalid label errors
+TESTDC1.MLC  - test DC support of fields without data for alignment
 TESTMAC1.MLC - test macro labels starting with _  and * as substring len
 TESTMAC6.MLC - test updated to test keyword with spec. characters
+TESTMAC8.MLC - test inline macros in open source and macro files
+TESTMAC8.MAC - test inline macros in macro files
 TESTSDT1.MLC - test updated to test integer constants with exponents
 TESTSET1.MLC - test updated to test LCLA and GBLC init error
 TESTTST1.TF1 - test the interactive TEST mode using batch driver file 
 TESTTST1.MLC - test the interactive TEST mode using batch driver file 
+TESTTXT1.MLC - test TEXT option to create 2 HTML souce files
 TESTUSE1.MLC - test USING and DROP
 
 Visit www.z390.org for more information on latest updates.

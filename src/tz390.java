@@ -50,6 +50,9 @@ public  class  tz390 {
     * 02/18/06 RPI 206 add RRF3 format type
     * 02/21/06 RPI 208 use z390_abort to sync term.
     * 03/13/06 RPI 226 fix options in double quotes
+    * 03/28/06 fix TRACEM not being set
+    * 04/02/06 RPI 264 mz390 and az390 use verify_ascii_source()
+    *          and option TEXT for free form text I/O in mz390
     ********************************************************
     * Shared z390 tables
     *****************************************************/
@@ -58,7 +61,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.0.13";  //dsh
+    String version    = "V1.0.13c";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -82,6 +85,7 @@ public  class  tz390 {
     boolean opt_stats    = true;  // show statistics on LOG file
     String  opt_sysparm  = "";    // user parm string for mz390
     boolean opt_test     = false; // invoke interactive test cmds
+    boolean opt_text     = false; // free form text I/O for mz390
     boolean opt_time     = true;  // abend 422 if out of time TIME (sec)
     boolean opt_timing   = true;  // display current date, time, rate
     boolean opt_trace    = false; // trace pz390 instructions to LOG
@@ -100,7 +104,8 @@ public  class  tz390 {
 	 * global limits with option overrides
 	 */
 	int    max_errors        = 100;     // ERR(100) max errors before abort
-	long   max_file = 50 << 20;         // max file output 
+    int    max_line_len = 80;           // opt_mlc max line length RPI 264
+	long   max_file_size = 50 << 20;    // max file output 
 	long   max_time_seconds  = 15;      // TIME(15)max elapsed time - override time(sec)
     int    monitor_wait = 300;          // fix interval in milliseconds
     int    max_mem           = 1;       // MEM(1)  MB memory default (see mem(mb) override)
@@ -1973,7 +1978,8 @@ public  class  tz390 {
 		       220,  // 7790  "MACRO"  166
 		       221,  // 7800  "MEND"  167
 		       222   // 7810  "MEXIT"  168		       
-  	           };  	
+  	           }; 
+  	  int        op_code_index = -1;
       String[]   op_code = {
     		   "??",    // 00 comments
 		       "0101",  // 10 "0101" "PR" "E" 1
@@ -2948,7 +2954,7 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.length() > 8
         	&& token.substring(0,8).toUpperCase().equals("MAXFILE(")){
            	try {
-           		max_file = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20;;
+           		max_file_size = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20;;
            	} catch (Exception e){
            		abort_options("invalid maxfile limit (mb) - " + token);
            	}
@@ -3044,6 +3050,9 @@ public void init_options(String[] args,String pgm_type){
           		&& token.substring(0,5).toUpperCase().equals("TEST(")){
            	test_ddname = token.substring(5,token.length()-1);	
            	opt_test = true;
+         } else if (token.toUpperCase().equals("TEXT")){
+            	opt_text = true;
+            	opt_mfc = false;
          } else if (token.toUpperCase().equals("TRACE")){
            	opt_trace = true;
            	opt_list   = true;
@@ -3062,6 +3071,10 @@ public void init_options(String[] args,String pgm_type){
            	opt_con   = false;
          } else if (token.toUpperCase().equals("TRACEL")){
            	opt_tracel = true;
+           	opt_list = true;
+         } else if (token.toUpperCase().equals("TRACEM")){
+            	opt_tracem = true;
+            	opt_list = true;
          } else if (token.toUpperCase().equals("TRACEMEM")){
            	opt_tracemem = true;
          }
@@ -3460,5 +3473,28 @@ public boolean get_sdt_char_int(String sdt){
 	       index++;
 	   }
 	   return true;
+}
+public boolean verify_ascii_source(String temp_line){
+	/*
+	 * 1.  Verify ascii source code
+	 * 2.  If opt_mlc verify length <= 80
+	 *
+	 */
+	if (!opt_text && temp_line.length() > max_line_len){
+		return false; 
+	}
+	int index = 0;
+    while (index < temp_line.length()){
+    	int next_char = temp_line.charAt(0) & 0xff;
+        if ((next_char < 0x20 
+        		&& next_char != 9)
+        	|| (next_char != '.' 
+        		&& ascii_table.charAt(next_char) == '.')       	    
+        	){
+        	return false;
+        }
+        index++;
+    }
+    return true;
 }
 }

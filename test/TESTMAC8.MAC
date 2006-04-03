@@ -1,0 +1,32 @@
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 03/28/06 RPI 266 CREATE TESTMAC8.MLC AND TESTMAC8.MAC TEST INLINES
+.*********************************************************************
+         MACRO
+&L       TESTMAC8 &P,&K=
+.LOOP    ANOP
+&A       SETA  &A+1
+         AIF   (&A LT 3).LOOP
+         MNOTE 'TESTMAC8 L=&L P=&P K=&K A=&A'
+         MACRO
+&L       ILM4  &P,&K=
+.LOOP    ANOP
+&A       SETA  &A+1
+         AIF   (&A LT 3).LOOP
+         MNOTE 'ILM4 L=&L P=&P K=&K A=&A'
+         MACRO
+&L       ILM5  &P,&K=
+.LOOP    ANOP
+&A       SETA  &A+1
+         AIF   (&A LT 3).LOOP
+         MNOTE 'ILM5 L=&L P=&P K=&K A=&A'
+         MEND
+L5       ILM5  P5,K=K5             
+         MEND
+L4       ILM4  P4,K=K4
+         MEND

@@ -423,6 +423,8 @@ public  class  pz390 {
     ByteBuffer fp_reg = ByteBuffer.wrap(fp_reg_byte,0,16*8);  
     byte[]     trace_reg_byte = (byte[])Array.newInstance(byte.class,16*8);
     ByteBuffer trace_reg = ByteBuffer.wrap(trace_reg_byte,0,16*8);  
+    byte[]     fp_work_reg_byte = (byte[])Array.newInstance(byte.class,17); // 1 extra guard byte ignored
+    ByteBuffer fp_work_reg = ByteBuffer.wrap(fp_work_reg_byte,0,17);  
     static byte  fp_ctl_ld = 0;
     static byte  fp_ctl_eb = 1;
     static byte  fp_ctl_db = 2;
@@ -586,7 +588,6 @@ public  class  pz390 {
     */
     int[] op_type_offset = new int[256];
     int[] op_type_mask   = new int[256];
-    int[] opcode1_type   = new int[256];
     int[] opcode2_offset = new int[256];
     int[] opcode2_mask   = new int[256];
     /*
@@ -1062,7 +1063,7 @@ public void exec_pz390(){
 		 case 0x25:  // 560 "25" "LDXR" "RR"
 	     	 psw_check = false;
 	         ins_setup_rr();
-	         fp_load_reg(fp_dh_type,fp_reg,rf2,fp_lh_type);
+	         fp_load_reg(rf1,fp_dh_type,fp_reg,rf2,fp_lh_type);
 		     break;
 		 case 0x26:  // 580 "26" "MXR" "RR"
 	     	 psw_check = false;
@@ -1085,7 +1086,7 @@ public void exec_pz390(){
 		 case 0x28:  // 600 "28" "LDR" "RR"
 		 	 psw_check = false;
 		 	 ins_setup_rr();
-             fp_load_reg(fp_dh_type,fp_reg,rf2,fp_dh_type);
+             fp_load_reg(rf1,fp_dh_type,fp_reg,rf2,fp_dh_type);
 		     break;
 		 case 0x29:  // 610 "29" "CDR" "RR"
 	     	 psw_check = false;
@@ -1184,7 +1185,7 @@ public void exec_pz390(){
 		 case 0x35:  // 730 "35" "LEDR" "RR"
 	     	 psw_check = false;
 	         ins_setup_rr();
-	         fp_load_reg(fp_eh_type,fp_reg,rf2,fp_dh_type);
+	         fp_load_reg(rf1,fp_eh_type,fp_reg,rf2,fp_dh_type);
 		     break;
 		 case 0x36:  // 750 "36" "AXR" "RR"
 	     	 psw_check = false;
@@ -1205,7 +1206,7 @@ public void exec_pz390(){
 		 case 0x38:  // 770 "38" "LER" "RR"
 		 	 psw_check = false;
 		 	 ins_setup_rr();
-             fp_load_reg(fp_eh_type,fp_reg,rf2,fp_eh_type);
+             fp_load_reg(rf1,fp_eh_type,fp_reg,rf2,fp_eh_type);
 		     break;
 		 case 0x39:  // 780 "39" "CER" "RR"
 	     	 psw_check = false;
@@ -1533,8 +1534,8 @@ public void exec_pz390(){
 		 case 0x68:  // 1340 "68" "LD" "RX"
 		 	 psw_check = false;
 		 	 ins_setup_rx();
-             fp_load_reg(fp_dh_type,mem,xbd2_loc,fp_dh_type);
-		     break;
+             fp_load_reg(rf1,fp_dh_type,mem,xbd2_loc,fp_dh_type);
+             break;
 		 case 0x69:  // 1350 "69" "CD" "RX"
 		 	 psw_check = false;
 		     ins_setup_rx();
@@ -1608,7 +1609,7 @@ public void exec_pz390(){
 		 case 0x78:  // 1440 "78" "LE" "RX"
 		 	 psw_check = false;
 		 	 ins_setup_rx();
-             fp_load_reg(fp_eh_type,mem,xbd2_loc,fp_eh_type);
+             fp_load_reg(rf1,fp_eh_type,mem,xbd2_loc,fp_eh_type);
 		     break;
 		 case 0x79:  // 1450 "79" "CE" "RX"
 		 	 psw_check = false;
@@ -2905,17 +2906,17 @@ public void exec_pz390(){
 		     case 0x24:  // 3730 "B324" "LDER" "RRE"
 		     	 psw_check = false;
 		         ins_setup_rre();
-		         fp_load_reg(fp_dh_type,fp_reg,rf2,fp_eh_type);
+		         fp_load_reg(rf1,fp_dh_type,fp_reg,rf2,fp_eh_type);
 		         break;
 		     case 0x25:  // 3740 "B325" "LXDR" "RRE"
 		     	 psw_check = false;
 		         ins_setup_rre();
-		         fp_load_reg(fp_lh_type,fp_reg,rf2,fp_dh_type);
+		         fp_load_reg(rf1,fp_lh_type,fp_reg,rf2,fp_dh_type);
 		         break;
 		     case 0x26:  // 3750 "B326" "LXER" "RRE"
 		     	 psw_check = false;
 		         ins_setup_rre();
-		         fp_load_reg(fp_lh_type,fp_reg,rf2,fp_eh_type);
+		         fp_load_reg(rf1,fp_lh_type,fp_reg,rf2,fp_eh_type);
 		         break;
 		     case 0x2E:  // 3760 "B32E" "MAER" "RRF"
 		     	 psw_check = false;
@@ -3030,17 +3031,17 @@ public void exec_pz390(){
 		     case 0x44:  // 3860 "B344" "LEDBR" "RRE"
 		     	 psw_check = false;
 		         ins_setup_rre();
-		         fp_load_reg(fp_eb_type,fp_reg,rf2,fp_db_type);
+		         fp_load_reg(rf1,fp_eb_type,fp_reg,rf2,fp_db_type);
 		         break;
 		     case 0x45:  // 3870 "B345" "LDXBR" "RRE"
 		     	 psw_check = false;
 		         ins_setup_rre();
-		         fp_load_reg(fp_db_type,fp_reg,rf2,fp_lb_type);
+		         fp_load_reg(rf1,fp_db_type,fp_reg,rf2,fp_lb_type);
 		         break;
 		     case 0x46:  // 3880 "B346" "LEXBR" "RRE"
 		     	 psw_check = false;
 		         ins_setup_rre();
-		         fp_load_reg(fp_eb_type,fp_reg,rf2,fp_lb_type);
+		         fp_load_reg(rf1,fp_eb_type,fp_reg,rf2,fp_lb_type);
 		         break;
 		     case 0x47:  // 3890 "B347" "FIXBR" "RRF"
 			 	 psw_check = false;
@@ -3211,12 +3212,12 @@ public void exec_pz390(){
 		     case 0x65:  // 4080 "B365" "LXR" "RRE"
 			 	 psw_check = false;
 			 	 ins_setup_rre();
-	             fp_load_reg(fp_lh_type,fp_reg,rf2,fp_lh_type);
+	             fp_load_reg(rf1,fp_lh_type,fp_reg,rf2,fp_lh_type);
 		         break;
 		     case 0x66:  // 4090 "B366" "LEXR" "RRE"
 			 	 psw_check = false;
 			 	 ins_setup_rre();
-	             fp_load_reg(fp_eh_type,fp_reg,rf2,fp_lh_type);
+	             fp_load_reg(rf1,fp_eh_type,fp_reg,rf2,fp_lh_type);
 		         break;
 		     case 0x67:  // 4100 "B367" "FIXR" "RRE"
 			 	 psw_check = false;
@@ -5818,17 +5819,17 @@ public void exec_pz390(){
 		     case 0x24:  // 6880 "ED24" "LDE" "RXE"
 		     	 psw_check = false;
 		         ins_setup_rxe();
-		         fp_load_reg(fp_dh_type,mem,xbd2_loc,fp_eh_type);
+		         fp_load_reg(rf1,fp_dh_type,mem,xbd2_loc,fp_eh_type);
 		         break;
 		     case 0x25:  // 6890 "ED25" "LXD" "RXE"
 		     	 psw_check = false;
 		         ins_setup_rxe();
-		         fp_load_reg(fp_lh_type,mem,xbd2_loc,fp_dh_type);
+		         fp_load_reg(rf1,fp_lh_type,mem,xbd2_loc,fp_lh_type);
 		         break;
 		     case 0x26:  // 6900 "ED26" "LXE" "RXE"
 		     	 psw_check = false;
 		         ins_setup_rxe();
-		         fp_load_reg(fp_lh_type,mem,xbd2_loc,fp_eh_type);
+		         fp_load_reg(rf1,fp_lh_type,mem,xbd2_loc,fp_eh_type);
 		         break;
 		     case 0x2E:  // 6910 "ED2E" "MAE" "RXF"
 		     	 psw_check = false;
@@ -5920,12 +5921,12 @@ public void exec_pz390(){
 		     case 0x64:  // 6980 "ED64" "LEY" "RXY"
 		     	 psw_check = false;
 		         ins_setup_rxy();
-		         fp_load_reg(fp_eh_type,mem,xbd2_loc,fp_eh_type);
+		         fp_load_reg(rf1,fp_eh_type,mem,xbd2_loc,fp_eh_type);
 		         break;
 		     case 0x65:  // 6990 "ED65" "LDY" "RXY"
 		     	 psw_check = false;
 		         ins_setup_rxy();
-		         fp_load_reg(fp_dh_type,mem,xbd2_loc,fp_dh_type);
+		         fp_load_reg(rf1,fp_dh_type,mem,xbd2_loc,fp_dh_type);
 		         break;
 		     case 0x66:  // 7000 "ED66" "STEY" "RXY"
 			 	 psw_check = false;
@@ -6994,6 +6995,7 @@ public String get_ins_name(int ins_loc){
 	/*
 	 * return opcode or ????? for given op1 and op2
 	 */
+	tz390.op_code_index = -1; // assume not found RPI 251
 	ins_loc = ins_loc & psw_amode;
 	if (ins_loc > tot_mem){
 		return "?????";
@@ -7043,9 +7045,9 @@ public String get_ins_name(int ins_loc){
 	} else {
 	    hex_key = hex_op1 + hex_op2;
 	}
-	int index = tz390.find_key_index("H:" + hex_key);
-	if (index != -1){
-		ins_name = tz390.op_name[index];
+	tz390.op_code_index = tz390.find_key_index("H:" + hex_key);
+	if (tz390.op_code_index != -1){
+		ins_name = tz390.op_name[tz390.op_code_index];
 		if (ins_name.length() < 5){
 			ins_name = (ins_name + "     ").substring(0,5);
 		}
@@ -7823,14 +7825,16 @@ public void trace_psw(){
 	int     save_psw_loc   = psw_loc;
 	tz390.opt_trace = true;
 	opcode1 = mem_byte[psw_loc] & 0xff;
-	int index = opcode2_offset[opcode1];
-	if (index > 0){
-		opcode2 = mem_byte[psw_loc+index] & opcode2_mask[opcode1];
-	} else {
-		opcode2 = 0;
+	opcode2 = opcode2_offset[opcode1];
+	if (opcode2 > 0){
+		opcode2 = mem_byte[psw_loc+opcode2] & opcode2_mask[opcode1];
 	}
-	index = opcode1_type[opcode1];
-    switch (index){
+	get_ins_name(psw_loc); // set op_code_index for RPI 251
+    if (tz390.op_code_index < 0){
+    	put_ins_trace("");
+    	return;
+    }
+	switch (tz390.op_type[tz390.op_code_index]){ // RPI 251
     case 1:	// "E" 8 PR oooo
         ins_setup_e();    
         break;
@@ -8620,18 +8624,9 @@ private float fp_get_eb_from_eb(ByteBuffer fp_buff,int fp_index){
 	 *   2.  EH is supported using double since
 	 *       exponent (4*0x7f) exceeds EB (0xff).
 	 */
-	 if (fp_buff == fp_reg){
-	 	int fp_ctl_index = fp_index >> 3;
-		if (fp_reg_ctl[fp_ctl_index] != fp_ctl_eb){
-            if (fp_reg_ctl[fp_ctl_index] == fp_ctl_ld){ // set by LE/LD
-				fp_reg_type[fp_ctl_index] = fp_eb_type;
-				fp_reg_ctl[fp_ctl_index]  = fp_ctl_eb;
-				fp_reg_eb[fp_ctl_index]   = fp_buff.getFloat(fp_index);
-            } else {
-            	set_psw_check(psw_pic_spec);
-			}
-		}
-		return fp_reg_eb[fp_ctl_index];
+ 	 int fp_ctl_index = fp_index >> 3;
+	 if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
+        return cvt_fp_ctl_reg_to_eb(fp_ctl_index);
 	} else {
 		return fp_buff.getFloat(fp_index);
 	}
@@ -8643,40 +8638,22 @@ private double fp_get_db_from_eh(ByteBuffer fp_buff,int fp_index){
 	 *   1.  If fp_reg, then check for float co-reg
 	 *       to avoid conversion
 	 */
-	 if (fp_buff == fp_reg){
-	 	int fp_ctl_index = fp_index >> 3;
-		if (fp_reg_ctl[fp_ctl_index] != fp_ctl_db){
-			if (fp_reg_ctl[fp_ctl_index] == fp_ctl_ld){ // set by LE/LD
-				fp_reg_type[fp_ctl_index] = fp_eh_type;
-				fp_reg_ctl[fp_ctl_index]  = fp_ctl_db;
-				fp_reg_db[fp_ctl_index]   = cvt_eh_to_db(fp_buff.getInt(fp_index));
-			} else {
-				set_psw_check(psw_pic_spec);
-			}
-		}
-		return fp_reg_db[fp_ctl_index];
+ 	 int fp_ctl_index = fp_index >> 3;
+	 if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
+        return cvt_fp_ctl_reg_to_db(fp_ctl_index);
 	} else {
 		return cvt_eh_to_db(fp_buff.getInt(fp_index));
 	}
 }
-private float fp_get_db_from_eb(ByteBuffer fp_buff,int fp_index){
+private double fp_get_db_from_eb(ByteBuffer fp_buff,int fp_index){
 	/*
 	 * get float from EB short binary fp_reg or mem
 	 *   1.  If fp_reg, then check for float co-reg
 	 *       to avoid conversion
 	 */
-	if (fp_buff == fp_reg){
-		int fp_ctl_index = fp_index >> 3;
-		if (fp_reg_ctl[fp_ctl_index] != fp_ctl_eb){
-			if (fp_reg_ctl[fp_ctl_index] == fp_ctl_ld){ // set by LE/LD
-				fp_reg_type[fp_ctl_index] = fp_eb_type;
-				fp_reg_ctl[fp_ctl_index]  = fp_ctl_eb;
-				fp_reg_eb[fp_ctl_index]   = fp_buff.getFloat(fp_index);
-			} else {
-				set_psw_check(psw_pic_spec);
-			}
-		}
-		return fp_reg_eb[fp_ctl_index];
+	int fp_ctl_index = fp_index >> 3;
+	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
+        return cvt_fp_ctl_reg_to_db(fp_ctl_index);
 	} else {
 		return fp_buff.getFloat(fp_index);
 	}
@@ -8687,18 +8664,9 @@ private double fp_get_db_from_dh(ByteBuffer fp_buff,int fp_index){
 	 *   1.  If fp_reg, then check for float co-reg
 	 *       to avoid conversion
 	 */
-	if (fp_buff == fp_reg){
-		int fp_ctl_index = fp_index >> 3;
-		if (fp_reg_ctl[fp_ctl_index] != fp_ctl_db){
-			if (fp_reg_ctl[fp_ctl_index] == fp_ctl_ld){ // set by LE/LD
-				fp_reg_type[fp_ctl_index] = fp_dh_type;
-				fp_reg_ctl[fp_ctl_index]  = fp_ctl_db;
-				fp_reg_db[fp_ctl_index]   = cvt_dh_to_db(fp_buff.getLong(fp_index));
-			} else {
-				set_psw_check(psw_pic_spec);
-			}
-		}
-		return fp_reg_db[fp_ctl_index];
+	int fp_ctl_index = fp_index >> 3;
+	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
+        return cvt_fp_ctl_reg_to_db(fp_ctl_index);
 	} else {
 		return cvt_dh_to_db(fp_buff.getLong(fp_index));
 	}
@@ -8709,18 +8677,9 @@ private double fp_get_db_from_db(ByteBuffer fp_buff,int fp_index){
 	 *   1.  If fp_reg, then check for float co-reg
 	 *       to avoid conversion
 	 */
-	if (fp_buff == fp_reg){
-		int fp_ctl_index = fp_index >> 3;
-		if (fp_reg_ctl[fp_ctl_index] != fp_ctl_db){
-			if (fp_reg_ctl[fp_ctl_index] == fp_ctl_ld){ // set by LE/LD
-				fp_reg_type[fp_ctl_index] = fp_db_type;
-				fp_reg_ctl[fp_ctl_index]  = fp_ctl_db;
-				fp_reg_db[fp_ctl_index]   = fp_buff.getDouble(fp_index);
-			} else {
-				set_psw_check(psw_pic_spec);
-			}
-		}
-		return fp_reg_db[fp_ctl_index];
+	int fp_ctl_index = fp_index >> 3;
+	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
+        return cvt_fp_ctl_reg_to_db(fp_ctl_index);
 	} else {
 		return fp_buff.getDouble(fp_index);
 	}
@@ -8731,20 +8690,9 @@ private double fp_get_db_from_lh(ByteBuffer fp_buff,int fp_index){
 	 *   1.  If fp_reg, then check for bd co-reg
 	 *       to avoid external conversion
 	 */
-	if (fp_buff == fp_reg){
-		int fp_ctl_index = fp_index >> 3;
-		if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd1){
-			if (fp_pair[fp_ctl_index]
-			    && fp_reg_ctl[fp_ctl_index] == fp_ctl_ld){ // set by LE/LD
-				fp_reg_type[fp_ctl_index] = fp_lh_type;
-				fp_reg_ctl[fp_ctl_index]  = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index+2]= fp_ctl_bd2; // RPI 229
-				fp_reg_bd[fp_ctl_index]   = cvt_lh_to_bd(fp_buff,fp_index);	
-			} else {
-				set_psw_check(psw_pic_spec);
-			}
-		}
-		return fp_reg_bd[fp_ctl_index].doubleValue();
+	int fp_ctl_index = fp_index >> 3;
+	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
+        return cvt_fp_ctl_reg_to_db(fp_ctl_index);		
 	} else {
 		return cvt_lh_to_bd(fp_buff,fp_index).doubleValue();
 	}
@@ -8804,20 +8752,9 @@ private BigDecimal fp_get_bd_from_lh(ByteBuffer fp_buff,int fp_index){
 	 *   1.  If fp_reg, then check for big dec co-reg
 	 *       to avoid conversion
 	 */
-	if (fp_buff == fp_reg){
-		int fp_ctl_index = fp_index >> 3;
-		if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd1){
-			if (fp_pair[fp_ctl_index] 
-			    && fp_reg_ctl[fp_ctl_index] == fp_ctl_ld){ // set by LE/LD
-				fp_reg_type[fp_ctl_index] = fp_lh_type;
-				fp_reg_ctl[fp_ctl_index]  = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index+2]= fp_ctl_bd2; // RPI 229
-				fp_reg_bd[fp_ctl_index]   = cvt_lh_to_bd(fp_buff,fp_index);
-			} else {
-				set_psw_check(psw_pic_spec);
-			}
-		}
-		return fp_reg_bd[fp_ctl_index];
+	int fp_ctl_index = fp_index >> 3;
+	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
+        return cvt_fp_ctl_reg_to_bd(fp_ctl_index);
 	} else {
 		return cvt_lh_to_bd(fp_buff,fp_index);
 	}
@@ -8828,23 +8765,60 @@ private BigDecimal fp_get_bd_from_lb(ByteBuffer fp_buff,int fp_index){
 	 *   1.  If fp_reg, then check for big dec co-reg
 	 *       to avoid conversion
 	 */
-	if (fp_buff == fp_reg){
-		int fp_ctl_index = fp_index >> 3;
-		if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd1){
-			if (fp_pair[fp_ctl_index] 
-			    && fp_reg_ctl[fp_ctl_index] == fp_ctl_ld){ // set by LE/LD
-				fp_reg_type[fp_ctl_index] = fp_lb_type;
-				fp_reg_ctl[fp_ctl_index]  = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index+2]= fp_ctl_bd2; // RPI 229
-				fp_reg_bd[fp_ctl_index]   = cvt_lb_to_bd(fp_buff,fp_index);
-			} else {
-				set_psw_check(psw_pic_spec);
-			}
-		}
-		return fp_reg_bd[fp_ctl_index];
+	int fp_ctl_index = fp_index >> 3;
+	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
+        return cvt_fp_ctl_reg_to_bd(fp_ctl_index);
 	} else {
 		return cvt_lb_to_bd(fp_buff,fp_index);
 	}
+}
+private Float cvt_fp_ctl_reg_to_eb(int fp_ctl_index){
+	/*
+	 * return float from fp_reg 
+	 */
+    switch (fp_reg_ctl[fp_ctl_index]){
+    case 1: // fp_ctl_eb
+    	return fp_reg_eb[fp_ctl_index];
+    case 2: // fp_ctl_db
+    	return (float) fp_reg_db[fp_ctl_index];
+    case 3: // fp_ctl_bd
+    	return fp_reg_bd[fp_ctl_index].floatValue();
+    default:
+    	set_psw_check(psw_pic_spec);
+        return (float)0;
+    }
+}
+private Double cvt_fp_ctl_reg_to_db(int fp_ctl_index){
+	/*
+	 * return double from fp_reg 
+	 */
+    switch (fp_reg_ctl[fp_ctl_index]){
+    case 1: // fp_ctl_eb
+    	return (double) fp_reg_eb[fp_ctl_index];
+    case 2: // fp_ctl_db
+    	return fp_reg_db[fp_ctl_index];
+    case 3: // fp_ctl_bd
+    	return fp_reg_bd[fp_ctl_index].doubleValue();
+    default:
+    	set_psw_check(psw_pic_spec);
+        return (double)0;
+    }
+}
+private BigDecimal cvt_fp_ctl_reg_to_bd(int fp_ctl_index){
+	/*
+	 * return BigDecimal from fp_reg cache
+	 */
+    switch (fp_reg_ctl[fp_ctl_index]){
+    case 1: // fp_ctl_eb
+    	return BigDecimal.valueOf(fp_reg_eb[fp_ctl_index]);
+    case 2: // fp_ctl_db
+    	return BigDecimal.valueOf(fp_reg_db[fp_ctl_index]);
+    case 3: // fp_ctl_bd
+    	return fp_reg_bd[fp_ctl_index];
+    default:
+    	set_psw_check(psw_pic_spec);
+        return BigDecimal.ZERO;
+    }
 }
 private BigDecimal fp_get_bd_from_dh(ByteBuffer fp_buff,int fp_index){
 	/*
@@ -8852,21 +8826,9 @@ private BigDecimal fp_get_bd_from_dh(ByteBuffer fp_buff,int fp_index){
 	 *   1.  If fp_reg, then check for big dec co-reg
 	 *       to avoid conversion
 	 */
-	if (fp_buff == fp_reg){
-		int fp_ctl_index = fp_index >> 3;
-		if (fp_reg_ctl[fp_ctl_index] != fp_ctl_db){ // RPI 229
-			if (fp_reg_ctl[fp_ctl_index] == fp_ctl_ld){ // set by LE/LD
-				fp_reg_type[fp_ctl_index] = fp_dh_type; 
-				fp_reg_ctl[fp_ctl_index]  = fp_ctl_db; 
-				fp_reg_db[fp_ctl_index]   = cvt_dh_to_db(fp_buff.getLong(fp_index));
-				return BigDecimal.valueOf(fp_reg_db[fp_ctl_index]);
-			} else {
-				set_psw_check(psw_pic_spec);
-			    return BigDecimal.ZERO;
-			}
-		} else {
-			return BigDecimal.valueOf(fp_reg_db[fp_ctl_index]);
-		}
+	int fp_ctl_index = fp_index >> 3;
+	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
+        return cvt_fp_ctl_reg_to_bd(fp_ctl_index);
 	} else {
 		return cvt_dh_to_bd(fp_buff,fp_index);
 	}
@@ -8893,25 +8855,9 @@ private BigDecimal fp_get_bd_from_eh(ByteBuffer fp_buff,int fp_index){
 	 *   1.  If fp_reg, then check for big dec co-reg
 	 *       to avoid conversion
 	 */
-	if (fp_buff == fp_reg){
-		int fp_ctl_index = fp_index >> 3;
-		if (fp_reg_ctl[fp_ctl_index] != fp_ctl_bd1){
-			if (fp_reg_ctl[fp_ctl_index] == fp_ctl_ld){ // set by LE/LD
-				fp_reg_type[fp_ctl_index] = fp_lh_type;
-				fp_reg_ctl[fp_ctl_index]  = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index+2]= fp_ctl_bd2; // RPI 229
-				fp_reg_bd[fp_ctl_index]   = cvt_eh_to_bd(fp_buff,fp_index);
-			} else if (fp_pair[fp_ctl_index] 
-			           && fp_reg_ctl[fp_ctl_index] == fp_ctl_db){
-				fp_reg_type[fp_ctl_index] = fp_lh_type;
-				fp_reg_ctl[fp_ctl_index]  = fp_ctl_bd1;
-				fp_reg_ctl[fp_ctl_index+2]= fp_ctl_bd2; // RPI 229
-				fp_reg_bd[fp_ctl_index]   = new BigDecimal(fp_reg_db[fp_ctl_index],fp_e_context);
-			} else {
-				set_psw_check(psw_pic_spec);
-			}
-		}
-		return fp_reg_bd[fp_ctl_index];
+	int fp_ctl_index = fp_index >> 3;
+	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
+		return cvt_fp_ctl_reg_to_bd(fp_ctl_index);
 	} else {
 		return cvt_eh_to_bd(fp_buff,fp_index);
 	}
@@ -8943,272 +8889,335 @@ private void fp_put_bd(int fp_index,byte reg_type,BigDecimal reg_value){
 	fp_reset_reg(fp_ctl_index,fp_ctl_bd1,reg_type);
 	fp_reg_bd[fp_ctl_index]   = reg_value;
 }
-private void fp_load_reg(byte reg_type1,ByteBuffer reg_buff2,int reg_buff_index2,byte reg_type2){
+private void fp_load_reg(int reg_buff_index1, byte reg_type1,ByteBuffer reg_buff2,int reg_buff_index2,byte reg_type2){
 	/*
-	 * convert reg_buff2,ref_buff_index2,reg_type2
-	 * to rf1,reg_type1 using co-reg if possible
-	 * else using source conversion routines as required
+	 * Load fp_ctl from fp_reg or fp_ctl
+	 * Load fp_reg from memory with no conversion
+	 * 
 	 * Notes:
 	 *   1.  bd1/bd2 co-reg pair being partially
 	 *       replaced is discarded without conversion.
+	 *   2.  This function is called recursively when
+	 *       two co-registers of different types are
+	 *       involved.
 	 */
-     fp_reset_reg(mf1,fp_ctl_ld,reg_type1);
+	 int fp_ctl_index1 = reg_buff_index1 >>> 3;
+	 int fp_ctl_index2 = -1;
+	 int fp_reg_ctl2   = fp_ctl_ld;
+	 byte fp_reg_type2  = reg_type2;
 	 if (reg_buff2 == fp_reg){
-	    int fp_ctl_index2 = reg_buff_index2 >>> 3;
-	    switch (fp_reg_ctl[fp_ctl_index2]){
-        case 0: // fp_ctl_ld
-        	break; // exit and use memory cvt rtns
-     	case 1: // fp_ctl_eb
+		 fp_ctl_index2 = reg_buff_index2 >>> 3;
+		 if (fp_reg_ctl[fp_ctl_index2] != fp_ctl_ld){
+			 // save ctl type before reset incase reg1 = reg2
+			 fp_reg_ctl2 = fp_reg_ctl[fp_ctl_index2];
+             fp_reg_type2 = fp_reg_type[fp_ctl_index2];
+		 }
+	 }
+     fp_reset_reg(fp_ctl_index1,fp_ctl_ld,reg_type1);
+	 if (reg_buff2 == fp_reg){
+		 // load fp_ctl reg from fp_reg or other fp_ctl reg
+		 fp_load_ctl(fp_ctl_index1,reg_type1,fp_reg_ctl2,reg_buff_index2,fp_reg_type2);
+	 } else {
+		 // load fp_reg from memory without conv.
+	     fp_load_mem(reg_buff_index1,reg_type1,reg_buff_index2,reg_type2);
+	 }
+}
+private void fp_load_mem(int reg_buff_index1,byte reg_type1,int mem_index2,byte mem_type2){
+	/*
+	 * load fp_reg memory without conversion
+	 */
+	fp_reg_ctl[reg_buff_index1 >>> 3] = fp_ctl_ld;
+	switch (mem_type2){
+		case 0: // fp_db_type
+		case 1: // fp_dh_type
+			fp_reg.putLong(reg_buff_index1,mem.getLong(mem_index2));   
+			break;
+        case 2: // fp_eb_type
+		case 3: // fp_eh_type
+			fp_reg.putLong(reg_buff_index1,(long)mem.getInt(mem_index2) << 32);
+            break;
+		case 5: // fp_lh_type
+			fp_reg.putLong(reg_buff_index1,mem.getLong(mem_index2));
+			if (reg_type1 == fp_lh_type){
+				fp_reg.putLong(reg_buff_index1+16,long_dh_zero);
+			}
+            break;
+        default: 
+        	set_psw_check(psw_pic_spec);
+	}
+}
+private void fp_load_ctl(int fp_ctl_index1,byte reg_type1,int fp_ctl_type2,int fp_buff_index2,byte reg_type2){
+	/*
+	 * load fp control register from register memory
+	 * or other fp control register
+	 */
+	    int fp_ctl_index2 = fp_buff_index2 >>> 3;
+	    switch (fp_ctl_type2){
+	    case 0: // from fp_ctl_ld
+	    	fp_load_ctl_from_ext_reg(fp_ctl_index1,reg_type1,fp_reg,fp_buff_index2,reg_type2);
+     	    return;
+	    case 1: // fp_ctl_eb
      		switch (reg_type1){
       		case 0: // fp_db_type
-    			fp_reg_db[mf1] = fp_reg_eb[fp_ctl_index2];
-                fp_reg_ctl[mf1] = fp_ctl_db;
+    			fp_reg_db[fp_ctl_index1] = fp_reg_eb[fp_ctl_index2];
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
                 return;
     		case 1: // fp_dh_type
-    			fp_reg_db[mf1] = fp_reg_eb[fp_ctl_index2];
-                fp_reg_ctl[mf1] = fp_ctl_db;
+    			fp_reg_db[fp_ctl_index1] = fp_reg_eb[fp_ctl_index2];
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
                 return;
             case 2: // fp_eb_type
-    			fp_reg_eb[mf1] = fp_reg_eb[fp_ctl_index2];
-                fp_reg_ctl[mf1] = fp_ctl_eb;
+    			fp_reg_eb[fp_ctl_index1] = fp_reg_eb[fp_ctl_index2];
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
                 return;
     		case 3: // fp_eh_type
-    			fp_reg_db[mf1] = fp_reg_eb[fp_ctl_index2];
-                fp_reg_ctl[mf1] = fp_ctl_db;
+    			fp_reg_db[fp_ctl_index1] = fp_reg_eb[fp_ctl_index2];
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
                 return;
      		case 4: // fp_lb_type
-    			fp_reg_bd[mf1] = BigDecimal.valueOf(fp_reg_eb[fp_ctl_index2]);
-                fp_reg_ctl[mf1] = fp_ctl_bd1;
+    			fp_reg_bd[fp_ctl_index1] = BigDecimal.valueOf(fp_reg_eb[fp_ctl_index2]);
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
                 return;
      		case 5: // fp_lh_type
-    			fp_reg_bd[mf1] = BigDecimal.valueOf(fp_reg_eb[fp_ctl_index2]);
-                fp_reg_ctl[mf1] = fp_ctl_bd1;
+    			fp_reg_bd[fp_ctl_index1] = BigDecimal.valueOf(fp_reg_eb[fp_ctl_index2]);
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
                 return;
     		}
     		break;
     	case 2: // fp_ctl_db
      		switch (reg_type1){
       		case 0: // fp_db_type
-    			fp_reg_db[mf1] = fp_reg_db[fp_ctl_index2];
-                fp_reg_ctl[mf1] = fp_ctl_db;
+    			fp_reg_db[fp_ctl_index1] = fp_reg_db[fp_ctl_index2];
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
                 return;
     		case 1: // fp_dh_type
-    			fp_reg_db[mf1] = fp_reg_db[fp_ctl_index2];
-                fp_reg_ctl[mf1] = fp_ctl_db;
+    			fp_reg_db[fp_ctl_index1] = fp_reg_db[fp_ctl_index2];
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
                 return;
             case 2: // fp_eb_type
-    			fp_reg_eb[mf1] = (float) fp_reg_db[fp_ctl_index2];
-                fp_reg_ctl[mf1] = fp_ctl_eb;
+    			fp_reg_eb[fp_ctl_index1] = (float) fp_reg_db[fp_ctl_index2];
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
                 return;
     		case 3: // fp_eh_type
-    			fp_reg_db[mf1] = fp_reg_db[fp_ctl_index2];
-                fp_reg_ctl[mf1] = fp_ctl_db;
+    			fp_reg_db[fp_ctl_index1] = fp_reg_db[fp_ctl_index2];
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
                 return;
      		case 4: // fp_lb_type
-    			fp_reg_bd[mf1] = BigDecimal.valueOf(fp_reg_db[fp_ctl_index2]);
-                fp_reg_ctl[mf1] = fp_ctl_bd1;
+    			fp_reg_bd[fp_ctl_index1] = BigDecimal.valueOf(fp_reg_db[fp_ctl_index2]);
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
                 return;
      		case 5: // fp_lh_type
-    			fp_reg_bd[mf1] = BigDecimal.valueOf(fp_reg_db[fp_ctl_index2]);
-                fp_reg_ctl[mf1] = fp_ctl_bd1;
+    			fp_reg_bd[fp_ctl_index1] = BigDecimal.valueOf(fp_reg_db[fp_ctl_index2]);
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
                 return;
     		}
     		break;
     	case 3: // fp_ctl_bd1
      		switch (reg_type1){
       		case 0: // fp_db_type
-    			fp_reg_db[mf1] = fp_reg_bd[fp_ctl_index2].doubleValue();
-                fp_reg_ctl[mf1] = fp_ctl_db;
+    			fp_reg_db[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2].doubleValue();
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
                 return;
     		case 1: // fp_dh_type
-    			fp_reg_db[mf1] = fp_reg_bd[fp_ctl_index2].doubleValue();
-                fp_reg_ctl[mf1] = fp_ctl_db;
+    			fp_reg_db[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2].doubleValue();
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
                 return;
             case 2: // fp_eb_type
-    			fp_reg_eb[mf1] = fp_reg_bd[fp_ctl_index2].floatValue();
-                fp_reg_ctl[mf1] = fp_ctl_eb;
+    			fp_reg_eb[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2].floatValue();
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
                 return;
     		case 3: // fp_eh_type
-    			fp_reg_db[mf1] = fp_reg_bd[fp_ctl_index2].floatValue();
-                fp_reg_ctl[mf1] = fp_ctl_db;
+    			fp_reg_db[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2].floatValue();
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
                 return;
      		case 4: // fp_lb_type
-    			fp_reg_bd[mf1] = fp_reg_bd[fp_ctl_index2];
-                fp_reg_ctl[mf1] = fp_ctl_bd1;
+    			fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
                 return;
      		case 5: // fp_lh_type
-    			fp_reg_bd[mf1] = fp_reg_bd[fp_ctl_index2];
-                fp_reg_ctl[mf1] = fp_ctl_bd1;
+    			fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
+                fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
                 return;
     		}
      		break;
         case 4: // fp_ctl_bd2
             set_psw_check(psw_pic_spec); // invalid LH/LB reg ref.
-     		break;
-    	}
-	 }
+     		return;
+        default: // invalid type
+            set_psw_check(psw_pic_spec); // invalid LH/LB reg ref.
+ 		    return;
+	    }
+}
+private void fp_load_ctl_from_ext_reg(int fp_ctl_index1, byte reg_type1,ByteBuffer reg_buff2, int reg_buff_index2, byte reg_type2){
+	 /*
+	  * load fp_ctl reg1 from fp_reg2 external format
+	  */
 	 switch (reg_type2){
-	 case 0: // fp_db_type
+	 case 0: // from fp_db_type
  		switch (reg_type1){
-  		case 0: // fp_db_type
-  		 	fp_reg.putLong(rf1,reg_buff2.getLong(reg_buff_index2));
+  		case 0: // to fp_db_type
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_db(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
 		case 1: // fp_dh_type
-			fp_reg_db[mf1] = fp_get_db_from_db(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_dh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
         case 2: // fp_eb_type
-			fp_reg_eb[mf1] = (float) fp_get_db_from_db(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_eb;
+			fp_reg_eb[fp_ctl_index1] = (float) fp_get_db_from_db(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
             return;
 		case 3: // fp_eh_type
-			fp_reg_db[mf1] = fp_get_db_from_db(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_db(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
  		case 4: // fp_lb_type
-			fp_reg_bd[mf1] = fp_get_bd_from_db(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_bd1;
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_db(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
  		case 5: // fp_lh_type
-			fp_reg_bd[mf1] = fp_get_bd_from_db(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_bd1;
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_db(reg_buff2,reg_buff_index2); 
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
 		}
  		break;
 	 case 1: // fp_dh_type
  		switch (reg_type1){
   		case 0: // fp_db_type
-			fp_reg_db[mf1] = fp_get_db_from_dh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_dh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
 		case 1: // fp_dh_type
-  		 	fp_reg.putLong(rf1,reg_buff2.getLong(reg_buff_index2));
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_dh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
         case 2: // fp_eb_type
-			fp_reg_eb[mf1] = (float) fp_get_db_from_dh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_eb;
+			fp_reg_eb[fp_ctl_index1] = (float) fp_get_db_from_dh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
             return;
 		case 3: // fp_eh_type
-			fp_reg_db[mf1] = fp_get_db_from_dh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_dh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
  		case 4: // fp_lb_type
-			fp_reg_bd[mf1] = fp_get_bd_from_dh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_bd1;
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
  		case 5: // fp_lh_type
-			fp_reg_bd[mf1] = fp_get_bd_from_dh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_bd1;
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_dh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
 		}
  		break;
 	 case 2: // fp_eb_type
  		switch (reg_type1){
   		case 0: // fp_db_type
-			fp_reg_db[mf1] = fp_get_db_from_eb(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_eb(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
 		case 1: // fp_dh_type
-			fp_reg_db[mf1] = fp_get_db_from_eb(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_eb(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
         case 2: // fp_eb_type
-    	 	fp_reg.putInt(rf1,reg_buff2.getInt(reg_buff_index2));
+			fp_reg_eb[fp_ctl_index1] =  fp_get_eb_from_eb(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
             return;
 		case 3: // fp_eh_type
-			fp_reg_db[mf1] = fp_get_db_from_eb(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_eb(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
  		case 4: // fp_lb_type
-			fp_reg_bd[mf1] = fp_get_bd_from_eb(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_bd1;
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eb(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
  		case 5: // fp_lh_type
-			fp_reg_bd[mf1] = fp_get_bd_from_eb(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_bd1;
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eb(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
 		}
  		break;
 	 case 3: // fp_eh_type
  		switch (reg_type1){
   		case 0: // fp_db_type
-			fp_reg_db[mf1] = fp_get_db_from_eh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_eh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
 		case 1: // fp_dh_type
-			fp_reg_db[mf1] = fp_get_db_from_eh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_eh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
         case 2: // fp_eb_type
-			fp_reg_eb[mf1] = (float) fp_get_db_from_eh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_eb;
+			fp_reg_eb[fp_ctl_index1] = (float) fp_get_db_from_eh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
             return;
 		case 3: // fp_eh_type
-		 	fp_reg.putInt(rf1,reg_buff2.getInt(reg_buff_index2));
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_eh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
  		case 4: // fp_lb_type
-			fp_reg_bd[mf1] = fp_get_bd_from_eh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_bd1;
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
  		case 5: // fp_lh_type
-			fp_reg_bd[mf1] = fp_get_bd_from_eh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_bd1;
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_eh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
 		}
  		break;
 	 case 4: // fp_lb_type
  		switch (reg_type1){
   		case 0: // fp_db_type
-			fp_reg_db[mf1] = fp_get_bd_from_lb(reg_buff2,reg_buff_index2).doubleValue();
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,reg_buff_index2).doubleValue();
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
 		case 1: // fp_dh_type
-			fp_reg_db[mf1] = fp_get_bd_from_lb(reg_buff2,reg_buff_index2).doubleValue();
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,reg_buff_index2).doubleValue();
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
         case 2: // fp_eb_type
-			fp_reg_eb[mf1] =  fp_get_bd_from_lb(reg_buff2,reg_buff_index2).floatValue();
-            fp_reg_ctl[mf1] = fp_ctl_eb;
+			fp_reg_eb[fp_ctl_index1] =  fp_get_bd_from_lb(reg_buff2,reg_buff_index2).floatValue();
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
             return;
 		case 3: // fp_eh_type
-			fp_reg_db[mf1] = fp_get_bd_from_lb(reg_buff2,reg_buff_index2).doubleValue();
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,reg_buff_index2).doubleValue();
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
  		case 4: // fp_lb_type
- 		 	fp_reg.putLong(rf1,reg_buff2.getLong(reg_buff_index2));
- 		 	fp_reg.putLong(rf1+16,reg_buff2.getLong(reg_buff_index2+8));
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lb(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
  		case 5: // fp_lh_type
-			fp_reg_bd[mf1] = fp_get_bd_from_lh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_bd1;
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
 		}
  		break;
 	 case 5: // fp_lh_type
  		switch (reg_type1){
   		case 0: // fp_db_type
-			fp_reg_db[mf1] = fp_get_db_from_lh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_lh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
 		case 1: // fp_dh_type
-			fp_reg_db[mf1] = fp_get_db_from_lh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_lh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
         case 2: // fp_eb_type
-			fp_reg_eb[mf1] = (float) fp_get_db_from_lh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_eb;
+			fp_reg_eb[fp_ctl_index1] = (float) fp_get_db_from_lh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_eb;
             return;
 		case 3: // fp_eh_type
-			fp_reg_db[mf1] = fp_get_db_from_lh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_db;
+			fp_reg_db[fp_ctl_index1] = fp_get_db_from_lh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_db;
             return;
  		case 4: // fp_lb_type
-			fp_reg_bd[mf1] = fp_get_bd_from_lh(reg_buff2,reg_buff_index2);
-            fp_reg_ctl[mf1] = fp_ctl_bd1;
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
  		case 5: // fp_lh_type
- 		 	fp_reg.putLong(rf1,reg_buff2.getLong(reg_buff_index2));
- 		 	fp_reg.putLong(rf1+16,reg_buff2.getLong(reg_buff_index2+16)); // RPI 229
+			fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,reg_buff_index2);
+            fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
             return;
 		}
 	 	break;
@@ -9217,7 +9226,7 @@ private void fp_load_reg(byte reg_type1,ByteBuffer reg_buff2,int reg_buff_index2
 }
 private void fp_reset_reg(int reg_ctl_index,byte ctl_type,byte reg_type){
 	/*
-	 * reset mf1 register and co-reg to specified type
+	 * reset register and co-reg to specified type
 	 */
 	 if (fp_reg_ctl[reg_ctl_index] == fp_ctl_bd1){ // RPI 229
 		fp_reg_ctl[reg_ctl_index+2] = fp_ctl_ld; // cancel replaced bd
@@ -9241,7 +9250,7 @@ public void fp_store_reg(ByteBuffer reg_buff,int reg_index){
 	 * fp_reg, copy fp_reg to byte buffer if needed
 	 * for use in non destructive trace out of regs.
 	 */
-	int fp_ctl_index = reg_index >> 3;
+	int fp_ctl_index = reg_index >> 3;  
 	switch (fp_reg_ctl[fp_ctl_index]){
 	case 0: // fp_ctl_ld
 		if (reg_buff != fp_reg){
@@ -9267,20 +9276,32 @@ public void fp_store_reg(ByteBuffer reg_buff,int reg_index){
 	case 3: // fp_ctl_bd1
  		switch (fp_reg_type[fp_ctl_index]){
  		case 4: // fp_lb_type
- 		 	cvt_bd(reg_buff,reg_index,fp_lb_type,fp_reg_bd[fp_ctl_index]);
+ 			if (fp_reg_ctl[fp_ctl_index+2] == fp_ctl_bd2){
+ 				cvt_bd(fp_lb_type,fp_reg_bd[fp_ctl_index]);
+ 				reg_buff.putLong(reg_index,fp_work_reg.getLong(0));
+ 			}
 		    break;
  		case 5: // fp_lh_type
- 		 	cvt_bd(reg_buff,reg_index,fp_lh_type,fp_reg_bd[fp_ctl_index]);
+ 			if (fp_reg_ctl[fp_ctl_index+2] == fp_ctl_bd2){
+ 				cvt_bd(fp_lh_type,fp_reg_bd[fp_ctl_index]);
+ 				reg_buff.putLong(reg_index,fp_work_reg.getLong(0));
+ 			}   
  		 	break;
  		}
  		break;
     case 4: // fp_ctl_bd2
  		switch (fp_reg_type[fp_ctl_index-2]){ // RPI 229
  		case 4: // fp_lb_type
- 		 	cvt_bd(reg_buff,reg_index-16,fp_lb_type,fp_reg_bd[fp_ctl_index-1]);  // RPI 229
-		    break;
- 		case 5: // fp_lh_type
- 		 	cvt_bd(reg_buff,reg_index-16,fp_lh_type,fp_reg_bd[fp_ctl_index-1]); // RPI 229
+ 			if (fp_reg_ctl[fp_ctl_index-2] == fp_ctl_bd1){
+ 				cvt_bd(fp_lb_type,fp_reg_bd[fp_ctl_index-2]);  // RPI 229
+ 				reg_buff.putLong(reg_index,fp_work_reg.getLong(8));
+ 			}
+ 		 	break;
+ 		case 5: // fp_lh_type     
+ 			if (fp_reg_ctl[fp_ctl_index-2] == fp_ctl_bd1){
+ 				cvt_bd(fp_lh_type,fp_reg_bd[fp_ctl_index-2]); // RPI 229
+ 				reg_buff.putLong(reg_index,fp_work_reg.getLong(8));
+ 			}  
  		 	break;
  		}
  		break;
@@ -9513,7 +9534,7 @@ private BigDecimal cvt_lb_to_bd(ByteBuffer lb1_buff, int lb1_index){
 		return work_fp_bd1.negate();
 	}
 }
-private void cvt_bd(ByteBuffer fp_buff,int fp_index,int fp_type,BigDecimal fp_bd){
+private void cvt_bd(int fp_type,BigDecimal fp_bd){
 	/*
 	 * store 16 byte LH or LB floating point field
 	 * from big decimal
@@ -9526,16 +9547,12 @@ private void cvt_bd(ByteBuffer fp_buff,int fp_index,int fp_type,BigDecimal fp_bd
 	} else {
 		switch (fp_type){  // gen zero hex for fp_type
 		case 4: // fp_lb_type s1,e15,m112 with assumed 1
-			fp_buff.position(fp_index);
-			fp_buff.put(fp_lb_zero,0,8);
-			fp_buff.position(fp_index+16);
-			fp_buff.put(fp_lb_zero,8,8);
+			fp_work_reg.position(0);
+			fp_work_reg.put(fp_lb_zero);
 			return;
 		case 5: // fp_lh_type s1,e7,m112 with split hex	
-			fp_buff.position(fp_index);
-			fp_buff.put(fp_lh_zero,0,8);
-			fp_buff.position(fp_index+16);
-			fp_buff.put(fp_lh_zero,8,8);
+			fp_work_reg.position(0);
+			fp_work_reg.put(fp_lh_zero);
 			return;
 		}
 	}
@@ -9610,13 +9627,13 @@ private void cvt_bd(ByteBuffer fp_buff,int fp_index,int fp_type,BigDecimal fp_bd
 		}
 		fp_exp = fp_exp + fp_exp_bias[fp_type];
 		if (fp_exp >= 0 && fp_exp <= fp_exp_max[fp_type]){
-			fp_buff.position(fp_index+1);
-			fp_buff.put(fp_big_int1.toByteArray());
-			fp_buff.putShort(0,(short)(fp_sign | fp_exp));
+			fp_work_reg.position(0+1);
+			fp_work_reg.put(fp_big_int1.toByteArray());
+			fp_work_reg.putShort(0,(short)(fp_sign | fp_exp));
 		} else {
             set_psw_check(psw_pic_fp_sig);
-			fp_buff.position(fp_index);
-			fp_buff.put(fp_lh_zero);
+			fp_work_reg.position(0);
+			fp_work_reg.put(fp_lh_zero);
 		}
 	    break;
 	case 5: // fp_lh_type s1,e7,m112 with split hex
@@ -9637,19 +9654,19 @@ private void cvt_bd(ByteBuffer fp_buff,int fp_index,int fp_type,BigDecimal fp_bd
 		}
 		fp_exp = (fp_exp >> 2) + fp_exp_bias[fp_type];
 		if (fp_exp >= 0 && fp_exp <= fp_exp_max[fp_type]){
-			fp_buff.put(fp_index,(byte)(fp_sign | fp_exp));
-			fp_buff.position(fp_index+2);
-			fp_buff.put(fp_big_int1.toByteArray());
-            fp_buff.putLong(fp_index+1,fp_buff.getLong(fp_index+2));
-            if ((fp_buff.getLong(fp_index+8) & long_dh_man_bits) != 0){
-			   fp_buff.put(fp_index+8,(byte)(fp_sign | (fp_exp - 14)));
+			fp_work_reg.put(0,(byte)(fp_sign | fp_exp));
+			fp_work_reg.position(0+2);
+			fp_work_reg.put(fp_big_int1.toByteArray());
+            fp_work_reg.putLong(0+1,fp_work_reg.getLong(0+2));
+            if ((fp_work_reg.getLong(0+8) & long_dh_man_bits) != 0){
+            	fp_work_reg.put(0+8,(byte)(fp_sign | (fp_exp - 14)));
             } else {
-            	fp_buff.put(fp_index+8,(byte)0x40);
+            	fp_work_reg.put(0+8,(byte)0x40);
             }
 		} else {
 			set_psw_check(psw_pic_fp_sig);
-			fp_buff.position(fp_index);
-			fp_buff.put(fp_lh_zero);
+			fp_work_reg.position(0);
+			fp_work_reg.put(fp_lh_zero);
 		}
 	    break;
 	}
@@ -9994,7 +10011,7 @@ private void init_opcode_keys(){
 	   op_type_offset[25] =  5; // RXF MAE   oorxbdddr0oo
 	   op_type_offset[30] =  1; // RRF3 DIEBR  oooo3412
 	   op_type_offset[32] =  1; // SSF  MVCOS  oor0bdddbddd
-	   op_type_offset[34] =  1; // rrf3 FIEBR  oooo
+	   op_type_offset[34] =  1; // RRF2 FIEBR  ooooM012
 	   op_type_mask[1 ] =  0xff; // E   PR    oooo
 	   op_type_mask[7] =   0xff; // S   SSM   oooobddd
        op_type_mask[12] =  0x0f; // RI  IIHH  ooroiiii
@@ -10018,9 +10035,6 @@ private void init_opcode_keys(){
     index = 1;  // skip 0 comment code entry
     while (index < tz390.op_code.length){
 		int op1 = Integer.valueOf(tz390.op_code[index].substring(0,2),16).intValue();
-		if (opcode1_type[op1] == 0){
-		    opcode1_type[op1] = tz390.op_type[index]; //RPI92 //RPI135
-		}
     	if (tz390.op_code[index].length() > 2){
     		opcode2_offset[op1] = op_type_offset[tz390.op_type[index]]; //RPI92//RPI135
    		    opcode2_mask[op1]   = op_type_mask[tz390.op_type[index]];   //RPI92//RPI135

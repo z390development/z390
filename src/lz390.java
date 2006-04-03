@@ -362,7 +362,7 @@ private void put_copyright(){
 	   	   if (tz390.opt_list || tz390.opt_tracel){
 	   	      try {
 	   	          lst_file_buff.write(msg + "\r\n");
-	   	          if (lst_file.length() > tz390.max_file){
+	   	          if (lst_file.length() > tz390.max_file_size){
 	   	        	  abort_error(34,"maximum lst file size exceeded");
 	   	          }
 	   	      } catch (Exception e){
@@ -823,7 +823,7 @@ private void gen_load_module(){
 	 * output 390 load module in binary format
 	 * skipping rlds for unresolved wxtrn's 
 	 */
-    if (loc_ctr > tz390.max_file){
+    if (loc_ctr > tz390.max_file_size){
     	abort_error(32,"maximum 390 file size exceeded");
     }
 	try {
@@ -841,7 +841,7 @@ private void gen_load_module(){
         while (cur_rld < tot_rld){
         	z390_file.writeInt(rld_loc[cur_rld]);
         	z390_file.write(rld_len[cur_rld]);
-            if (z390_file.length() > tz390.max_file){
+            if (z390_file.length() > tz390.max_file_size){
             	abort_error(33,"maximum 390 file size exceeded");
             }
         	cur_rld++;

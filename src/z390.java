@@ -92,22 +92,24 @@ public  class  z390 extends JApplet
 	 * ***************************************************
 	 * 03/05/05 copied from superzap, update menus, cmds
 	 * 09/26/05 replace z390 dialog with batch_cmds and options
-	 * 10/02/05 RPI8 fix "compatible java" in about desc. 
+	 * 10/02/05 RPI   8 fix "compatible java" in about desc. 
 	 * 10/03/05 change minimum J2RE release to 1.5
-	 * 10/04/05 RPI5 - option ASCII use ASCII vs EBCDIC
-     * 10/04/05 RPI6 - option ERR nn limit errors
+	 * 10/04/05 RPI   5 - option ASCII use ASCII vs EBCDIC
+     * 10/04/05 RPI   6 - option ERR nn limit errors
      * 10/04/05 trap any command errors and issue 51
-     * 10/09/05 RPI16 remove TEST and TRACE dependency bug
-     * 10/12/05 RPI15 & 17 fix CMD processing and status line
-     * 10/18/05 RPI29 use Z390E and Z390I prefixes 
-     * 10/27/05 RPI55 change /SC to execute GUI commands
+     * 10/09/05 RPI  16 - remove TEST and TRACE dependency bug
+     * 10/12/05 RPI  15 & 17 - fix CMD processing and status line
+     * 10/18/05 RPI  29 - use Z390E and Z390I prefixes 
+     * 10/27/05 RPI  55 - change /SC to execute GUI commands
      *          which may include batch commands CMD.
-     * 11/03/05 RPI62 remove extra space added to test commands
-     * 11/12/05 RPI81 change menu item font_size
-     * 11/18/05 RPI98 add ASCII and DUMP to options
+     * 11/03/05 RPI  62 - remove extra space added to test commands
+     * 11/12/05 RPI  81 - change menu item font_size
+     * 11/18/05 RPI  98 - add ASCII and DUMP to options
      *          and add cr,lf around exit
-     * 12/15/05 RPI135 use tz390 shared file routines
-     * 02/21/06 RPI208 use tz390.z390_abort to term.
+     * 12/15/05 RPI 135 - use tz390 shared file routines
+     * 02/21/06 RPI 208 - use tz390.z390_abort to term.
+     * 03/19/06 RPI 236 - if install directory read-only, turn off log,
+     *          and send msg to console saying use log command
 	 ********************************************************
      * Global variables
      *****************************************************
@@ -613,7 +615,8 @@ public  class  z390 extends JApplet
 		          put_copyright();
 		 	   	  put_log("Log file = " + log_file_name);
 		      } catch (Exception e){
-		      	  abort_error(1,"log file open - " + e.toString());
+		    	  log_file = null;  // RPI 236
+		      	  System.out.println("z390 log file I/O error - use LOG command to open new log " + e.toString());
 		      }
 	       } else {
 	       	  put_copyright();
@@ -625,7 +628,7 @@ public  class  z390 extends JApplet
 		/*
 		 * Close log file
 		 */
-			if (log_file != null){
+			if (log_file != null){  // RPI 236
 			   try {
 	               log_file.close();
 			       log_file = null;
@@ -813,6 +816,9 @@ public  class  z390 extends JApplet
             String cmd_parm1 = null;
             String cmd_parm2 = null;
 	   	    boolean cmd_opcode_ok = false;
+	   	    if (cmd_line.length() > 2 && cmd_line.substring(0,2).toUpperCase().equals("CD")){
+	   	    	cmd_line = "CD " + cmd_line.substring(2); // RPI 235
+	   	    }
             StringTokenizer st = new StringTokenizer(cmd_line," ,\'\"",true);
             String next_token;
             cmd_opcode = get_next_parm(st,true).toUpperCase();
@@ -2959,7 +2965,10 @@ public  class  z390 extends JApplet
 		       	        String new_dir = tz390.get_file_name(tz390.dir_cur,cmd_parm1,"");              		
 		       	        File new_dir_file = new File(new_dir);
 				  	    if  (new_dir_file.isDirectory()){
-				  	    	tz390.dir_cur = new_dir;
+				  	    	try {
+				  	    		new_dir = new_dir_file.getCanonicalPath(); // RPI 235
+				  	    	} catch (Exception e){}
+				  	    	tz390.dir_cur = new_dir; 
 							dir_cur_file = new File(new_dir);
 				  	        System.setProperty("user.dir",tz390.dir_cur);
 				  	        if (cmd_mode){

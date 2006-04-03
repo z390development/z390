@@ -140,7 +140,16 @@ public  class  az390 {
     * 03/16/06 RPI 230 add COM, RSECT, START limited support
     * 03/16/06 RPI 238 MNOTE error if level > 4
     * 03/17/06 RPI 233 support macro call/exit level of nesting
-    ********************************************************
+    * 03/19/06 RPI 232 support integers with exponents in expressions and DC's
+    * 03/21/06 RPI 253 allow _ to start symbols
+    * 03/21/06 RPI 258 allow , delimiter on ORG
+    * 03/22/06 RPI 254 allow blank section reference to private
+    * 03/22/06 RPI 260 improve error messages for parsing errors
+    * 03/22/06 RPI 237 fix DROP to handle comments and use parm_pat
+    * 04/01/06 RPI 265 support alignment within DS/DC
+    * 04/02/06 RPI 264 repeat passes at least twice to
+    *          try and resolve errors even if at max.
+    *****************************************************
     * Global variables
     *****************************************************/
 	tz390 tz390 = null;
@@ -183,7 +192,6 @@ public  class  az390 {
     static int max_push   = 100;
     static int max_pass = 4;
     static int max_bal_line = 200000;
-    static int max_line_len = 80;
     static int max_sym = 20000;
     static int max_lit = 20000;
     int sort_index_bias = 100000; // must be > max_sym and max_lit
@@ -601,7 +609,7 @@ private void compile_patterns(){
      */
     	try {
     	    label_pattern = Pattern.compile(
-    			"([a-zA-Z$@#][a-zA-Z0-9$@#_]*)"           
+    			"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"   // RPI 253        
 			  );
     	} catch (Exception e){
     		  abort_error(1,"label pattern errror - " + e.toString());
@@ -611,7 +619,7 @@ private void compile_patterns(){
          */
         	try {
         	    extrn_pattern = Pattern.compile(
-        			"([a-zA-Z$@#][a-zA-Z0-9$@#_]*)"
+        			"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)" // RPI 253
         	      +"|([,\\s])" //RPI181
     			  );
         	} catch (Exception e){
@@ -632,9 +640,9 @@ private void compile_patterns(){
   		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"  // ascii  always
 	    		  +	"|([xX]['][0-9a-fA-F]+['])" 
         		  + "|([lL]['])"                           // length op  RPI9
-        		  +	"|([a-zA-Z$@#][a-zA-Z0-9$@#_]*[\\.])" // labeled using 
-        		  +	"|([a-zA-Z$@#][a-zA-Z0-9$@#_]*)"      // symbol
-				  + "|([0-9]+)"                           // number
+        		  +	"|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[\\.])" // labeled using  RPI 253
+        		  +	"|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"      // symbol         RPI 253
+				  + "|([0-9]+([.][0-9]*)*([eE]([\\+]|[\\-])*[0-9]+)*)" // RPI 232 fp/int
  		          + "|([\\s,'\\+\\-\\*\\/\\(\\)=])"  // RPI 159, RPI181
         	    );
         	} catch (Exception e){
@@ -670,7 +678,7 @@ private void compile_patterns(){
               * */
          	try {
          	    parm_pattern = Pattern.compile(
-         			"([a-zA-Z$@#][a-zA-Z0-9$@#_]*[=])"
+         			"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[=])" // RPI 253
          		  +	"|([cC][']([^']|(['][']))*['])" 
          		  +	"|([cC][!]([^!]|([!][!]))*[!])" 
          		  + "|([cC][\"]([^\"]|([\"][\"]))*[\"])" 
@@ -776,7 +784,11 @@ private void resolve_symbols(){
     	 int prev_az390_errors = az390_errors + 1;
     	 while (cur_pass < max_pass 
     	 		&& az390_errors !=0
-    	 		&& (sect_change || az390_errors < prev_az390_errors)){
+    	 		&& (sect_change 
+    	 			|| az390_errors < prev_az390_errors
+    	 			|| cur_pass <= 2  // RPI 264
+    	 			)
+    	 		){
     	 	 prev_az390_errors = az390_errors;
     	 	 az390_errors = 0;
     	 	 cur_pass++;
@@ -1023,6 +1035,7 @@ private void process_bal_op(){
 		list_bal_line = false;
 	}
 	loc_start = loc_ctr;
+	list_obj_loc = loc_start; // RPI 265
     dc_lit_ref = false;  // RPI12
     dc_lit_gen = false;
 	bal_op_ok = false;
@@ -1827,9 +1840,11 @@ private void process_bal_op(){
 	if (!bal_op_ok){
    	   log_error(62,"undefined operation");
 	}
-    list_bal_line();
 	if (bal_label != null){
        update_label();
+	}
+	if (!bal_abort){
+	    list_bal_line();
 	}
 	loc_ctr = loc_ctr + loc_len;
 }
@@ -2016,7 +2031,7 @@ private void gen_sym_list(){
         		int sym_xref_num = sym_xref_it.next();
         		if (sym_xref_num != bal_line_num[sym_def[index]]){
         			sym_line = sym_line + sym_xref_num + " ";
-        			if (sym_line.length() > max_line_len){
+        			if (sym_line.length() > tz390.max_line_len){
         				put_prn_line(sym_line);
         				sym_line = "  ";
         			}
@@ -2062,7 +2077,7 @@ private void gen_lit_xref_list(){
 		    while (lit_xref_it.hasNext()){
 		    	int lit_xref_num = lit_xref_it.next();
 		    	lit_line = lit_line + lit_xref_num + " ";
-		    	if (lit_line.length() > max_line_len){
+		    	if (lit_line.length() > tz390.max_line_len){
 		    		put_prn_line(lit_line);
 		    		lit_line = "  ";
 		    	}
@@ -2130,15 +2145,26 @@ private void get_bal_line(){
         cur_line_num++;
     	if  (temp_line == null){
     			bal_line = null;
-   		} else if (temp_line.length() < 72
+   		} else if (tz390.opt_text // RPI 264 
+   				   || temp_line.length() < 72
    				   || temp_line.charAt(71) <= ' '){  //RPI181
    			bal_line = trim_line(temp_line);  //RPI124
+    	    if (!tz390.verify_ascii_source(bal_line)){
+    	    	abort_error(116,"invalid ascii source line " + cur_line_num + " in " + bal_file.getPath());
+    	    }
    		} else {
    		    bal_line = temp_line.substring(0,71);
    		    bal_line = trim_continue(bal_line);
             while (temp_line.length() > 71
             		&& temp_line.charAt(71) > ' '){  //RPI181
             	    temp_line = bal_file_buff.readLine();
+            	    if (temp_line == null){
+            	    	abort_error(117,"missing continue source line " + cur_line_num + " in " + bal_file.getPath());
+            	    }
+            	    temp_line = trim_line(temp_line);
+            	    if (!tz390.verify_ascii_source(temp_line)){
+            	    	abort_error(118,"invalid ascii source line " + cur_line_num + " in " + bal_file.getPath());
+            	    }
             	    if (temp_line.length() < 72 || temp_line.charAt(71) <= ' '){ //RPI181
             	    	temp_line = trim_line(temp_line); //RPI124
             	    }
@@ -2317,18 +2343,20 @@ private void process_sect(byte sect_type,String sect_name){
 	 * Steps:
 	 *   1.  Update previous section if any with 
 	 *       max length and any loctr pointers
-	 *   2.  Add new section if not found or external
+	 *   2.  If name omitted used private cst/dst  RPI 254
+	 *   3.  Add new section if not found or external
 	 *       reference found as local label.
-	 *   3.  Reset location counter to end of 
+	 *   4.  Reset location counter to end of 
 	 *       current section.
-	 *   4.  Update prev section type and sid for
+	 *   5.  Update prev section type and sid for
 	 *       use in processing sym_lct sections.
 	 */
-	if (sect_name.length() == 0){
-		sect_name = "$PRIVATE";  // private code
-	}
 	if (cur_esd_sid > 0){
 		update_sect_len();
+	}
+	if (sect_name == null 
+		|| sect_name.length() == 0){
+		sect_name = "$PRIVATE";  // private code
 	}
 	cur_esd_sid = find_sym(sect_name);
 	if (cur_esd_sid < 1){
@@ -2404,6 +2432,12 @@ private void update_label(){
 	 * add or update relative labels
 	 * and exclude CST, DST, EQU, USING symbols
 	 */
+	label_match = label_pattern.matcher(bal_label);  // RPI 253
+	if (!label_match.find()
+	   || !label_match.group().equals(bal_label)){
+	   log_error(141,"invalid symbol - " + bal_label);
+	   return;
+	}
 	cur_sid = find_sym(bal_label);
 	if (cur_sid < 1){
 	   if (bal_op.equals("USING")){
@@ -2489,7 +2523,8 @@ private void process_dc(int request_type){
 	         if (bal_op.equals("DC")
 	 	         && gen_obj_code
 		         && sym_type[cur_esd_sid] == sym_cst){
-			 	 if (gen_obj_code && sym_type[cur_esd_sid] == sym_cst){
+			 	 if (gen_obj_code 
+			 		 && sym_type[cur_esd_sid] == sym_cst){
 			 	 	dc_op = true;
 			 	 } else { 
 			 	 	dc_op = false;
@@ -2514,7 +2549,8 @@ private void process_dc(int request_type){
 		 	 list_obj_code = "";
 		 	 dc_lit_ref = false;
 		 	 dc_lit_gen = true;
-		 	 if (gen_obj_code && sym_type[cur_esd_sid] == sym_cst){
+		 	 if (gen_obj_code 
+		 		 && sym_type[cur_esd_sid] == sym_cst){
 		 	 	dc_op = true;
 		 	 } else { 
 		 	 	dc_op = false;
@@ -2601,13 +2637,9 @@ private void process_dc(int request_type){
    	  	       	     log_error(44,"invalid dc type delimiter");
    	  	       	     break;
 	           }
-	       } else {
-	       	   if (!dc_op && !dc_lit_ref){
-	       	   	  loc_ctr = loc_ctr + dc_dup * dc_len;
-	       	   	  dc_len = 0;
-	       	   } else {
-	       	   	  log_error(46,"missing dc type delimiter");
-	       	   }
+	       } else { 
+                dc_align(dc_dup * dc_len); // RPI 265 align within ds/dc
+	    	    dc_len = 0;
 	       }
 	       dc_first_field = false;
 	       if (dc_lit_ref || dc_lit_gen){
@@ -2947,7 +2979,7 @@ private void proc_exp_op(){
   	   check_prev_op = false;
   	   break;
     default:
-    	log_error(13,"invalid operation sequence");
+    	log_error(13,"expression parsing error"); // RPI 260
     }
 }
 private void exp_add(){
@@ -3077,7 +3109,7 @@ private void get_stk_sym(){
 	    	sym_type2 = sym_sdt;
 	    }
 	} else {
-		log_error(17,"stack get error");
+		log_error(17,"expression parsing error"); // RPI 260
 	}
 }
 private void put_stk_sym(){
@@ -3093,7 +3125,7 @@ private void put_stk_sym(){
 	    exp_stk_sym_esd[tot_exp_stk_sym - 1] = sym_esd1;
 		exp_stk_sym_val[tot_exp_stk_sym - 1] = sym_val1;
 	} else {
-		log_error(18,"stack put error");
+		log_error(18,"expression parsing error");
 	}
 	exp_sym_last = true;
 }
@@ -3119,7 +3151,7 @@ private void exp_pop_op(){
 	 */
       tot_exp_stk_op--;
       if (tot_exp_stk_op < 0){
-      	 log_error(21,"stack pop operation error");
+      	 log_error(21,"expression parsing error"); // RPI 260
       }
 }
 private void exp_term(){
@@ -3153,7 +3185,7 @@ private void exp_term(){
             exp_type = sym_rel;
         }
 	} else {
-		log_error(35,"invalid expression result");
+		log_error(35,"expression parsing error"); // RPI 260
 	}
 }
 private void push_exp_sym(){
@@ -3214,7 +3246,7 @@ private void push_exp_sdt(String sdt){
            	   exp_stk_sym_val[tot_exp_stk_sym-1] = Long.valueOf(sdt.substring(2,sdt.length()-1),16).intValue();
            	   break;
            default:
-               exp_stk_sym_val[tot_exp_stk_sym-1] = Integer.valueOf(sdt).intValue();
+               exp_stk_sym_val[tot_exp_stk_sym-1] = Double.valueOf(sdt).intValue();  // RPI 232
                break;
            }
 	   }
@@ -3411,7 +3443,7 @@ private void put_copyright(){
 	   		   }
 	   	      try {
 	   	          prn_file_buff.write(msg + "\r\n");
-	   	          if (prn_file.length() > tz390.max_file){
+	   	          if (prn_file.length() > tz390.max_file_size){
 	   	        	  abort_error(118,"maximum prn file size exceeded");
 	   	          }
 	   	          int index = 16;
@@ -3425,7 +3457,7 @@ private void put_copyright(){
 	   	        	  }
 	   	        	  String data_line = tz390.get_hex(list_obj_loc,6) + " " + temp_hex;
 	   	        	  prn_file_buff.write(data_line + "\r\n");
-		   	          if (prn_file.length() > tz390.max_file){
+		   	          if (prn_file.length() > tz390.max_file_size){
 		   	        	  abort_error(118,"maximum prn file size exceeded");
 		   	          }
 	   	        	  index = index + 16;
@@ -3458,7 +3490,7 @@ private void put_copyright(){
 		   			cvt_obj_hex_to_bin(msg);
 		   			obj_file.write(bin_byte);
 		   		}
-		   		if (obj_file.length() > tz390.max_file){
+		   		if (obj_file.length() > tz390.max_file_size){
 	   	       	  abort_error(119,"maximum obj file size exceeded");
 		   		}
 		   	} catch (Exception e){
@@ -3859,9 +3891,9 @@ private void drop_using(){
 	/*
 	 * drop one or more using registers or labeled using
 	 */
-	String cur_drop_parms = bal_parms;
-	if  (cur_drop_parms == null || cur_drop_parms.length() == 0
-			|| cur_drop_parms.charAt(0) == ','){
+	if  (bal_parms == null 
+			|| bal_parms.length() == 0
+			|| bal_parms.charAt(0) == ','){
 		if (tz390.opt_tracea){
 			int index = cur_use_start;
 			while (index < cur_use_end){
@@ -3872,26 +3904,26 @@ private void drop_using(){
 		cur_use_end = cur_use_start;  // drop all using
 		return;
 	}
-	while (cur_drop_parms != null && cur_drop_parms.length() > 0){
-		int next_comma = cur_drop_parms.indexOf(",");
-    	if (next_comma != -1){
-			cur_use_lab = cur_drop_parms.substring(0,next_comma);
-			cur_drop_parms = cur_drop_parms.substring(next_comma+1);
-		} else {
-			cur_use_lab = cur_drop_parms;
-			cur_drop_parms = "";
-		}
-		if (tz390.find_key_index("U:" + cur_use_lab) != -1){
-			drop_cur_use_label();
-		} else {
-			exp_text = cur_use_lab;
-			exp_index = 0;
-			if (calc_abs_exp()){ 
-			   cur_use_reg = exp_val;
-			   drop_cur_use_reg();
-			} else {
-				log_error(101,"invalid register expression - " + exp_text);
-			}
+	parm_match = parm_pattern.matcher(bal_parms);
+	while (parm_match.find()){
+		String cur_use_lab = parm_match.group();
+		if (cur_use_lab.charAt(0) != ','){
+           if (cur_use_lab.charAt(0) > ' '){
+   		      if (tz390.find_key_index("U:" + cur_use_lab) != -1){
+			      drop_cur_use_label();
+   		      } else {
+   		    	  exp_text = cur_use_lab;
+   		    	  exp_index = 0;
+   		    	  if (calc_abs_exp()){ 
+   		    		  cur_use_reg = exp_val;
+   		    		  drop_cur_use_reg();
+   		    	  } else {
+   		    		  log_error(101,"invalid register expression - " + exp_text);
+   		    	  }
+   		      }
+           } else {
+        	   return; // end of parms at white space
+           }
 		}
 	}
 }
@@ -4481,8 +4513,8 @@ private void get_dc_field_len(){
 /*
  * 1. set dc_len based on either explicit length
  *    or default for type.
- * 2. Align if required for first field if
- *    not literal reference and not explicit len
+ * 2. Align if not literal reference 
+ *    and not explicit len
  * 3. Set loc_start of first operand for listing 
  */
  if (dc_type_index != -1){
@@ -4507,14 +4539,27 @@ private void get_dc_field_len(){
  	} else {
         dc_len = get_dc_int(dc_index+1);
  	}
- } 
+ }
+ if (!dc_lit_ref && !dc_len_explicit){ // RPI 265 align within DS/DC
+	 dc_align((loc_ctr + dc_len -1)/dc_len*dc_len - loc_ctr);
+ }
  if (dc_first_field){
  	dc_first_len = dc_len; // may be overridden by non-explicit data length
- 	if (!dc_lit_ref && !dc_len_explicit){
- 		loc_ctr = (loc_ctr + dc_len -1)/dc_len*dc_len;
- 	}
  	loc_start = loc_ctr;
  }
+}
+private void dc_align(int align_bytes){
+	/*
+	 * align ds/dc by specified & bytes
+	 */
+	  int prev_loc_ctr = loc_ctr;
+	  loc_ctr = loc_ctr + align_bytes;
+	  if (!dc_first_field && dc_op){
+		  while (prev_loc_ctr < loc_ctr){
+			  list_obj_code = list_obj_code + "00"; // RPI 265;
+			  prev_loc_ctr++; 
+		  }
+	  }
 }
 private void process_dca_data(){
 	/*
@@ -4525,7 +4570,7 @@ private void process_dca_data(){
 	exp_text = dc_field;
 	dc_index++;   // start inside (,,,)
 	dc_data_start = dc_index; 
-	if (dc_op && !dc_lit_ref && (dc_len == 3 || dc_len == 4)){  //RPI182
+	if (dc_op && (dc_len == 3 || dc_len == 4)){  //RPI182
 		exp_rld_len = (byte) dc_len;
 	} else {
 		exp_rld_len = 0;
@@ -4535,11 +4580,7 @@ private void process_dca_data(){
 		while (!dc_eod && !bal_abort){
 		    if  (calc_dca_exp()){
 			    dc_index = exp_index;
-			    if (gen_obj_code
-			    	&& !dc_lit_ref
-                    && sym_type[cur_esd_sid] == sym_cst
-					&& dc_dup > 0
-					&& dc_op){
+			    if (dc_op && dc_dup > 0){
 			    	if (dc_len <= 4 || exp_val >= 0){
 				        obj_code = obj_code + tz390.get_hex(exp_val,2*dc_len);
 			    	} else {
@@ -4649,11 +4690,7 @@ private void process_dcb_data(){
 			dc_first_len = dc_len;
 			dc_first_field = false;
 		}
-		if (gen_obj_code
-		   	&& !dc_lit_ref
-            && sym_type[cur_esd_sid] == sym_cst
-		    && dc_dup > 0
-			&& dc_op){
+		if (dc_op && dc_dup > 0){
 			obj_code = obj_code + dc_hex;
 			put_obj_text();
 		}
@@ -4742,10 +4779,7 @@ private void process_dcc_data(){
 	}
 	while (!bal_abort
 		&& dc_dup > 0){
-		if (gen_obj_code
-			&& !dc_lit_ref
-		    && sym_type[cur_esd_sid] == sym_cst
-			&& dc_op){
+		if (dc_op){
 			 boolean ascii_req = (tz390.opt_ascii && dcc_quote == '\'')
 			 | dcc_quote == '"';  //RPI5 and RPI73
  	         obj_code = obj_code + string_to_hex(dcc_text,ascii_req);
@@ -4774,11 +4808,7 @@ private void process_dc_fp_data(){
 		while (!dc_eod && !bal_abort 
 				&& dc_field.charAt(dc_index) != '\''){
 			dc_hex = get_dc_fp_hex(dc_field,dc_index);
-			if (gen_obj_code
-			    	&& !dc_lit_ref
-                    && sym_type[cur_esd_sid] == sym_cst
-					&& dc_dup > 0
-					&& dc_op){
+			if (dc_op && dc_dup > 0){
 				obj_code = obj_code + dc_hex;
 				put_obj_text();
 			}
@@ -4838,11 +4868,7 @@ private void process_dcf_data(){
 		    if  (calc_abs_exp()){
 		    	check_dc_value();
 			    dc_index = exp_index;
-			    if (gen_obj_code
-			    	&& !dc_lit_ref
-                    && sym_type[cur_esd_sid] == sym_cst
-					&& dc_dup > 0
-					&& dc_op){
+			    if (dc_op && dc_dup > 0){
 			    	if (dc_len <= 4 || exp_val >= 0){
 				        obj_code = obj_code + tz390.get_hex(exp_val,2*dc_len);
 			    	} else {
@@ -4891,11 +4917,7 @@ private void process_dch_data(){
 		    if  (calc_abs_exp()){
 		    	check_dc_value();
 			    dc_index = exp_index;
-			    if (gen_obj_code
-			    	&& !dc_lit_ref
-                    && sym_type[cur_esd_sid] == sym_cst
-					&& dc_dup > 0
-					&& dc_op){
+			    if (dc_op && dc_dup > 0){
 			    	if (dc_len <= 4 || exp_val >= 0){
 				        obj_code = obj_code + tz390.get_hex(exp_val,2*dc_len);
 			    	} else {
@@ -4986,11 +5008,7 @@ private void process_dcp_data(){
 				}
 			    if (dc_len > 16){
 			       log_error(68,"P type field too long - " + dc_field);
-			    } else if (gen_obj_code
-			    	&& !dc_lit_ref
-                    && sym_type[cur_esd_sid] == sym_cst
-					&& dc_dup > 0
-					&& dc_op){
+			    } else if (dc_op && dc_dup > 0){
 			    	obj_code = dcp_text;
 					put_obj_text();
 			    }
@@ -5028,11 +5046,7 @@ private void process_dcs_data(){
 		while (!dc_eod && !bal_abort){
 		    if  (calc_exp()){
 			    dc_index = exp_index;
-			    if (gen_obj_code
-			    	&& !dc_lit_ref
-                    && sym_type[cur_esd_sid] == sym_cst
-					&& dc_dup > 0
-					&& dc_op){
+			    if (dc_op && dc_dup > 0){
 			    	if  (dc_len == 2){
 		    		    obj_code = obj_code + get_exp_bddd();
 			    	} else {
@@ -5120,11 +5134,7 @@ private void process_dcx_data(){
 			dc_first_len = dc_len;
 			dc_first_field = false;
 		}
-		if (gen_obj_code
-		   	&& !dc_lit_ref
-            && sym_type[cur_esd_sid] == sym_cst
-		    && dc_dup > 0
-			&& dc_op){
+		if (dc_op && dc_dup > 0){
 			obj_code = obj_code + dc_hex;
 			put_obj_text();
 		}
@@ -5239,7 +5249,9 @@ private void process_org(){
 	 * reset current location in same csect
 	 */
 	loc_start = loc_ctr;
-	if (bal_parms == null || bal_parms.length() == 0){
+	if (bal_parms == null 
+		|| bal_parms.length() == 0
+		|| bal_parms.charAt(0) == ','){  // RPI 258
 		if (cur_esd > 0){  //RPI10, RPI87
 			loc_ctr = sym_loc[esd_sid[cur_esd]] + sym_len[esd_sid[cur_esd]];
 			loc_start = loc_ctr;

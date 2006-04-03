@@ -12,6 +12,7 @@
 .* 11/19/05 RPI102 - allow DDNAME/DSNAME to replace EP/EPLOC   
 .* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 03/28/06 RPI266 CORRECT MISSING .SKP1 TO .SKPLR1
 .*********************************************************************
 .* LOAD PGM VIA SVC 8
 .*
@@ -84,7 +85,7 @@
          AGO   .SVC
 .DDREG   ANOP
          AIF   (&DDNAME(1) EQ 0).DDERR
-         AIF   (&DDNAME(1) EQ '15' OR &DDNAME(1) EQ 'R15').SKP1 RPI163
+         AIF   (&DDNAME(1) EQ '15' OR &DDNAME(1) EQ 'R15').SKPLR1 
          LR    15,&DDNAME(1)
 .SKPLR1  ANOP
          OILH  15,X'8000' DD VS DSN

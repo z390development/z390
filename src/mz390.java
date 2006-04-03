@@ -126,6 +126,17 @@ public  class  mz390 {
     * 03/16/06 RPI 238 mnote total and no errors
     * 03/16/06 RPI 239 treat any white space char as space
     * 03/17/06 RPI 233 add macro call/exit level of nesting
+    * 03/20/06 RPI 242 fix LCLC and GBLC init errors
+    * 03/20/06 RPI 250 fix keyword parser to handle special characters in ()
+    * 03/21/06 RPI 253 allow _ to start symbols
+    * 03/21/06 RPI 257 allow * for substring 2nd oper
+    * 03/22/06 RPI 260 improve error msg for parsing errors
+    * 03/25/06 RPI 266 fix loading inline macros within macro
+    *          and correct line #'s and drop ANOP except in inlines
+    * 04/02/06 RPI 264 verify ascii source and allow long lines
+    *          if option text.
+    * 04/03/06 RPI 268 support AREAD and PUNCH DSNAME=&var
+    *          and correct expression parser to stop on &
     ********************************************************
     * Global variables
     *****************************************************/
@@ -194,6 +205,7 @@ public  class  mz390 {
     static int max_gbl_set  = 100000;
     static int max_exp_stk = 500;
     long max_time_seconds = 15;     // max elapsed time
+    String max_substring_len = "100000";
     /*
      * macro execution global data
      */
@@ -224,18 +236,29 @@ public  class  mz390 {
      */
     int mac_name_index = 0; //current mlc or macro
     int mac_last_find_index = -1;
-    int find_mac_name_index = 0;  //call macro or -1
     int tot_ins = 0; // count instr/cntl for MFC option
     int tot_mac_name = 0;      // next avail name
+    int load_macro_mend_level = 0;
+    boolean load_proto_type = false;
+    int load_mac_inline_end = 0;
+    int find_mac_name_index = 0;
+    int load_mac_name_index = 0;
+    byte     load_type       = 0;
+    byte     load_mlc_file   = 0; // no MACRO, no prototype, stop on END
+    byte     load_mac_file   = 1; // MACRO, prototype, MEND, read file and verify name = prototype
+    byte     load_mac_inline = 2; // MACRO, prototype, MEND, read in memory source
+    int      load_proto_index = 0; // line index of proto_type statement
+    String   load_macro_name = null;
+    String   load_file_name = null;
     String[] mac_name = new String[max_mac_name];
-   	int[]    mac_name_line_start =(int[])Array.newInstance(int.class, max_mac_name);
+    int[]    mac_name_line_start =(int[])Array.newInstance(int.class, max_mac_name);
    	int[]    mac_name_line_end   =(int[])Array.newInstance(int.class, max_mac_name);
     int[]    mac_name_lab_start = (int[])Array.newInstance(int.class,max_mac_name);
     int[]    mac_name_lab_end   = (int[])Array.newInstance(int.class,max_mac_name);
     /*
      * macro bal line tables
      */
-    int old_mac_line_index = 0; // prev for ago/aif error
+    int old_mac_line_index = 0; //prev    mac_line_index
     int mac_line_index = 0;     //current mac line index
     int tot_mac_line = 0;       // next avail line
     String[] mac_file_line   = new String[max_mac_line];
@@ -249,13 +272,13 @@ public  class  mz390 {
     int tot_mac_lab = 0;
     String[] mac_lab_name  = new String[max_mac_lab]; 
     int[]    mac_lab_index = (int[])Array.newInstance(int.class,max_mac_lab);
+    int[]    mac_lab_num   = (int[])Array.newInstance(int.class,max_mac_lab); // RPI 266
     /*
      * macro call stack variables
      */
     int tot_expand = 0;
     int expand_inc = 100;        //macro array expansion
-    int mac_mend_level = 0;      //macro/mend level
-    int mac_call_level = 0; //level of macro nesting
+    int mac_call_level = 0;      //level of macro nesting during loading
     int[]    mac_call_name_index = (int[])Array.newInstance(int.class,max_mac_call_level);
     int[]    mac_call_return = (int[])Array.newInstance(int.class,max_mac_call_level);
     int[]    mac_call_actr   = (int[])Array.newInstance(int.class,max_mac_call_level);
@@ -383,7 +406,6 @@ public  class  mz390 {
      * macro operation global variables
      */
     int mac_op_index = 0;
-    int mac_op_nosub_start = 224;
     static int max_lcl_key_root = 13;
     int max_lcl_key_tab = max_mac_call_level * max_lcl_key_root + max_lcl_set + max_pos_parm + max_kwd_parm;
     int tot_lcl_key_tab  = max_lcl_key_root+1;
@@ -551,8 +573,10 @@ public int process_mz390(String[] args,JTextArea log_text){
     */
 	    z390_log_text = log_text;
 	    init_mz390(args,log_text);
-    	load_mac(tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
-  		mlc_line_end = tot_mac_line;
+	    load_type = load_mlc_file;
+    	load_file_name = tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type;
+  		load_mac();
+    	mlc_line_end = tot_mac_line;
     	loading_mlc = false;
     	init_lcl_sys();
     	if (tz390.opt_trap){
@@ -601,7 +625,7 @@ private void init_mz390(String[] args, JTextArea log_text){
     	    	  "([&][&])"	   //RPI192
     	        + "|([']['])"      //RPI192
     			+ "|([&][\\(])"
-    			+ "|([&][a-zA-Z$@#][a-zA-Z0-9$@#_]*)" 
+    			+ "|([&][a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"  // RPI 253 
     			+ "|([&])"         //RPI192
     			);
         } catch (Exception e){
@@ -621,7 +645,7 @@ private void init_mz390(String[] args, JTextArea log_text){
          * */
     	try {
     	    parm_pattern = Pattern.compile(
-        		   	"([a-zA-Z$@#][a-zA-Z0-9$@#_]*[=])"
+        		   	"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[=])"    // RPI 253
     	    		  +	"|([c|C][']([^']|(['][']))*['])" 
     	  	          + "|([']([^']|(['][']))*['])" 
     	    		  + "|([^\\s',()]+)"  //RPI181
@@ -644,7 +668,7 @@ private void init_mz390(String[] args, JTextArea log_text){
        	    proto_pattern = Pattern.compile(
         			"([&][&])"
           	      + "|([&][(])"
-          	      + "|([&][a-zA-Z$@#][a-zA-Z0-9$@#_]*[=]*)" // &var or &var= for keyword
+          	      + "|([&][a-zA-Z$@#_][a-zA-Z0-9$@#_]*[=]*)" // &var or &var= for keyword  RPI 253
 				  + "|([0-9]+)"                        // number
 	       		  + "|([']([^']|(['][']))*['])"        // parm in quotes
 				  + "|([\\s/()',\\.\\+\\-\\*=])"       // operators and white space RPI181 (\\ for reg exp. opers)
@@ -657,8 +681,8 @@ private void init_mz390(String[] args, JTextArea log_text){
   		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"    // C"ABCD" ascii self def. term   RPI73
   		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"        // C"ABCD" ebcdic self def. term  RPI84
 	    		  +	"|([xX]['][0-9a-fA-F]+['])"        // X'0F'   hex self defining term
-				  + "|([a-zA-Z$@#][a-zA-Z0-9$@#_]*)"   // symbol or logical operator (AND, OR, XOR, NOT, GT, LT etc.)
-				  + "|([^',\\s]+)"   // RPI 223                   // any other text
+				  + "|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"   // symbol or logical operator (AND, OR, XOR, NOT, GT, LT etc.) // RPI 253
+				  + "|([^',()\\s]+)"   // RPI 223, RPI 250                  // any other text
    			  );
        	} catch (Exception e){
        		  abort_error(2,"proto pattern errror - " + e.toString());
@@ -668,7 +692,7 @@ private void init_mz390(String[] args, JTextArea log_text){
          */
         	try {
         	    label_pattern = Pattern.compile(
-        			"([.][a-zA-Z$@#][a-zA-Z0-9$@#_]*)"           
+        			"([.][a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"  // RPI 253         
     			  );
         	} catch (Exception e){
         		  abort_error(3,"label pattern errror - " + e.toString());
@@ -701,20 +725,20 @@ private void init_mz390(String[] args, JTextArea log_text){
             	    exp_pattern = Pattern.compile(
             			"([&][&])"
             	      + "|([&][(])"
-            	      + "|([&][a-zA-Z$@#][a-zA-Z0-9$@#_]*)" // &var
-					  + "|([0-9]+)"                        // number
-					  + "|([\\s/()',\\.\\+\\-\\*=])"        // operators and white space RPI181 (\\ for reg exp. opers)
-					  + "|([kK]['])"                       // K' character length of var
-					  + "|([l|L]['])"                      // L' length attribute of symbol
-					  + "|([n|N]['])"                      // N' number of parm subparms (n1,n2,n3)
-					  + "|([t|T]['])"                      // T' type attribute of symbol
-	  		    	  + "|([bB]['][0|1]+['])"              // B'0110' binary self def. term
-	  		    	  +	"|([cC][']([^']|(['][']))*['])"    // C'ABCD' ebcdic or ascii self def. term
+            	      + "|([&][a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"    // &var  RPI 253
+					  + "|([0-9]+)"                             // number
+					  + "|([\\s&/()',\\.\\+\\-\\*=])"           // operators and white space RPI181 (\\ for reg exp. opers)
+					  + "|([kK]['])"                            // K' character length of var
+					  + "|([l|L]['])"                           // L' length attribute of symbol
+					  + "|([n|N]['])"                           // N' number of parm subparms (n1,n2,n3)
+					  + "|([t|T]['])"                           // T' type attribute of symbol
+	  		    	  + "|([bB]['][0|1]+['])"                   // B'0110' binary self def. term
+	  		    	  +	"|([cC][']([^']|(['][']))*['])"         // C'ABCD' ebcdic or ascii self def. term
 	  		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"    // C"ABCD" ascii self def. term   RPI73
-	  		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"        // C"ABCD" ebcdic self def. term  RPI84
-		    		  +	"|([xX]['][0-9a-fA-F]+['])"        // X'0F'   hex self defining term
-					  + "|([a-zA-Z$@#][a-zA-Z0-9$@#_]*)"   // symbol or logical operator (AND, OR, XOR, NOT, GT, LT etc.)
-					  + "|([^']+)"                        // string text
+	  		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"         // C"ABCD" ebcdic self def. term  RPI84
+		    		  +	"|([xX]['][0-9a-fA-F]+['])"             // X'0F'   hex self defining term
+					  + "|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"       // symbol or logical operator (AND, OR, XOR, NOT, GT, LT etc.)
+					  + "|([^'&]+)"  // RPI 268                            // string text
             	    );
             	} catch (Exception e){
             		  abort_error(4,"expression pattern errror - " + e.toString());
@@ -753,7 +777,7 @@ private void process_mac(){
 	    	 */
 	     	  mac_abort = false;
 	     	  tot_mac_ins++;
-		      if  (mac_line_index == mac_name_line_end[mac_call_name_index[mac_call_level]]){
+		      if  (mac_line_index >= mac_name_line_end[mac_call_name_index[mac_call_level]]){
 	             if (tz390.opt_tracem){ 
 	           	  	   put_log("TRACE MACRO CALL END " + mac_name[mac_call_name_index[mac_call_level]]);
 	           	 }
@@ -784,6 +808,9 @@ private void process_mac(){
 		         }
 		         bal_line = null;
 		      } else {
+		    	   if (mac_line_index >= tot_mac_line || mac_line_index < 0){
+		    		   abort_error(137,"macro source index error - " + mac_line_index);
+		    	   }
 	               bal_line = mac_file_line[mac_line_index];
 	               parse_bal_line();
 	               mac_op_index = find_mac_op();
@@ -795,10 +822,10 @@ private void process_mac(){
 	           	      if (find_mac_name_index == -1){
              	      	 cur_mac_file_name = tz390.find_file_name(tz390.dir_mac,bal_op,mac_type,tz390.dir_cur);
            	      		 if (cur_mac_file_name != null){
-           	      			 find_mac_name_index = load_mac(cur_mac_file_name);
-           	      			 if (mac_label != null){
-           	      				 set_sym_type_len(mac_label,"MACRO","");
-           	      			 }
+           	      			 load_type = load_mac_file;
+           	      			 load_file_name = cur_mac_file_name;
+           	      			 load_mac();
+           	      			 find_mac_name_index = load_mac_name_index;
            	      		 } else { // add dummy mac to prevent search
            	      		     tz390.find_key_index("M:" + bal_op);
            	      		     if (!tz390.add_key_index(-2)){
@@ -834,141 +861,274 @@ private void process_mac(){
 				}
 	     }
 }
-private int load_mac(String file_name){
+private void load_mac(){
 	/*
-	 * load macro from file (may be MLC or MAC)
+	 * load macro from file or inline and 
+	 * set load_mac_name_index else 
+     * abort with error
 	 * 
-	 * 1.  Abort if macro file not found
+	 * load type 0 = MLC file
+	 *   no MACRO, no proto-type, end on END
+	 * load type 1 = MAC file
+	 *   MACRO, MEND, and verify proto-type name = file name
+	 * load type 2 = inline macro
+	 *   MACRO, MEND, and proto-type defines macro name
+	 *   
+	 * 1.  Return -2 if file not found
 	 * 2.  Concatentate any continuations indicated
 	 *     by non-blank in position 72.  Each 
 	 *     continuation must start at position 16.
 	 * 3.  Ignore .* macro comments
-	 * 4.  Define any macro labels .xxx 
+	 * 4.  Define any macro labels .xxx and check
+	 *     references.
 	 * 5.  if continue char in 72, delimit at first
 	 *     ", " after 16.
 	 * 6.  initial program MLC loads as 0 mac name entry
+	 * 7.  Load inline macros without processing labels etc.
+	 *     and includes are not expanded until inline load
 	 */
+	tot_mac_load++;
 	cur_mac_file = 0;
 	cur_mac_line_num = 0;
-	mac_file[cur_mac_file] = new File(file_name);
-	String new_mac_name = mac_file[cur_mac_file].getName().toUpperCase();
-    if (tot_mac_name > 0){ // RPI127 leave suffix on main pgm loaded as macro
-    	int index = new_mac_name.indexOf('.');
-    	if (index > 0){
-    		new_mac_name = new_mac_name.substring(0,index);
-    	}
-    }
+	load_macro_mend_level = 0;
+	load_proto_index = 0;
+	load_macro_name = "";
 	int save_mac_name_index = mac_name_index;
-    add_mac(new_mac_name);
-	if (mac_file[cur_mac_file].isFile()){
-		try {
-			cur_mac_file = 0;
-		    mac_file_buff[cur_mac_file] = new BufferedReader(new FileReader(mac_file[cur_mac_file]));
-		    set_mac_file_num();
-		} catch (IOException e){
-			abort_error(26,"I/O error opening file - " + e.toString());
-		}
-		if (tz390.opt_tracem){
-			put_log("TRACE LOADING " + file_name);
-		}
-		tot_mac_load++;
-		int mac_proto_index = 0;
-		get_mac_line();
-		while (mac_line != null
-				&& tot_mac_line < max_mac_line){
-			mac_file_line[tot_mac_line]     = mac_line;
-			mac_file_name_num[tot_mac_line] = cur_mac_file_num;
-			mac_file_line_num[tot_mac_line] = cur_mac_line_num;
-			if (mac_op != null && mac_op.length() > 0){
-				if (tot_mac_name > 0 
-					&& mac_op.equals(new_mac_name)
-					&& mac_proto_index == 0){
-				   mac_proto_index = tot_mac_line;
-				   mac_name_line_start[mac_name_index] = tot_mac_line;
-				} else if (mac_op.equals("MACRO")){
-					mac_mend_level++;
-				} else if (mac_op.equals("MEND")){
-					mac_mend_level--;
-					if (mac_mend_level == 0
-						&& tot_mac_name > 1){
-						mac_line = null;
-					}
-				} else if (mac_mend_level == 0 
-						   && mac_op.equals("AGO")){
-		            label_match = label_pattern.matcher(mac_parms);
-		            if (label_match.find()){
-                       add_mac_label(mac_name_index
-                    		        ,label_match.group().toUpperCase()
-                    		        ,-(tot_mac_line-1));
-		            } else {
-		            	log_error(112,mac_name[mac_name_index] + " invalid AGO label - " + mac_parms);
-		            }
-				} else if (mac_mend_level == 0 
-						   && mac_op.equals("AIF")){
-					int lab_index = mac_parms.lastIndexOf(").");
-					if (lab_index > 0){
-						label_match = label_pattern.matcher(mac_parms.substring(lab_index+1));
-						if (label_match.find()){
-							add_mac_label(mac_name_index
-									     ,label_match.group().toUpperCase()
-									     ,-(tot_mac_line-1));
-						} else {
-							log_error(113,mac_name[mac_name_index] + " invalid AIF label - " + mac_parms);
-						}
-					} else {
-						log_error(114,mac_name[mac_name_index] + " invalid AIF label - " + mac_parms);
-					}
-				}
+	int save_mac_line_index = mac_line_index;
+    switch (load_type){
+    case 0: // MLC
+    	load_open_macro_file();
+    	load_macro_mend_level = 1; // no macro statement
+    	mac_line_index = tot_mac_line;
+    	break;
+    case 1: // macro file
+    	load_open_macro_file();
+    	load_macro_mend_level = 0; // read macro from file
+    	mac_line_index = tot_mac_line;
+    	break;
+    case 2: // macro inline
+    	mac_line_index++; // skip macro statement
+    	if (tz390.opt_tracem){
+    		put_log("TRACE LOADING INLINE MACRO");
+    	}
+    	load_macro_mend_level = 1; // macro statment read inline
+    	load_mac_inline_end = mac_name_line_end[mac_name_index];
+    	break;
+    }
+	load_get_mac_line();
+	while (mac_line != null
+			&& mac_line_index < max_mac_line){
+		if  (mac_line != null){
+			if (load_type != load_mac_inline
+			    && (mac_line.length() < 2
+				    || !mac_line.substring(0,2).equals(".*"))
+				){
+				mac_file_line[mac_line_index]     = mac_line;
+				mac_file_name_num[mac_line_index] = cur_mac_file_num;
+				mac_file_line_num[mac_line_index] = cur_mac_line_num;
 			}
-		    if  (mac_label != null && mac_label.length() > 1
-				&& mac_label.charAt(0) == '.'){
-		    	if (mac_label.charAt(1) != '*'){
-		    	  // RPI 213 to remove mac lab at wrong level and add to correct level
-		    	  if ((mac_mend_level == 0 && tot_mac_name == 1 && !mac_op.equals("MEND"))    
-		    	  	  || (mac_mend_level <= 1 && tot_mac_name > 1)){                       
-		            label_match = label_pattern.matcher(mac_label);
-		            if (label_match.find()){
-                       add_mac_label(mac_name_index
-                    		        ,label_match.group().toUpperCase()
-                    		        ,tot_mac_line-1);  
-                       mac_label = null;
-		            } else {
-		            	log_error(40,"invalid macro label - " + mac_label);
-		            }
-		    	  }
-		    	} else {
-		    		tot_mac_line--;  // remove .*
-		        }
-		    } else if (mac_label != null 
-		    		   && mac_label.length() > 0
-		    		   && mac_label.charAt(0) != '*'  // RPI 140
-		    		   && mac_label.charAt(0) != '&'){
-		    	set_sym_type_len(mac_label,mac_op,mac_parms);
+		}
+		load_proto_type = false;
+		if (mac_op != null && mac_op.length() > 0){
+			load_macro_mend_proto_type();
+		    if (load_macro_mend_level == 1){ 
+                  load_macro_ago_aif_refs();
 		    }
-			if  (mac_line != null){
-				if (!(mac_line.length() > 1 && mac_line.substring(0,2).equals(".*"))){
-					tot_mac_line++;
-				}
-	            get_mac_line();
+		}
+	    if  (load_macro_mend_level <= 1
+		    	&& !load_proto_type // skip prototype
+		    	&& mac_label != null
+		    	&& mac_label.length() > 0){
+		    	load_macro_label_sym();
+		}
+   	    if (load_macro_mend_level == 0
+      		&& load_type != load_mlc_file
+      		&& load_proto_index != 0){
+     		 mac_line = null; // eof at level 0 for macro
+     	}
+		if  (mac_line != null){
+			if (load_type == load_mac_inline
+				|| !(mac_line.length() > 1
+				     && (mac_line.substring(0,2).equals(".*")
+				         || (mac_op != null 
+				        	 && mac_op.equals("ANOP")
+				     	     && load_macro_mend_level == 1
+				    	    )
+				        )
+		            )
+				){    
+				mac_line_index++;
 			}
+			load_get_mac_line();
 		}
-		if (tot_mac_line >= max_mac_line){
-			abort_error(87,"maximum source lines exceeded");
-		}
-		mac_name_line_end[mac_name_index] = tot_mac_line;
-		mac_name_lab_end[mac_name_index]  = tot_mac_lab;
-		check_undefined_labs(mac_name_index);
-		mac_name_index = save_mac_name_index;
-	    return tot_mac_name - 1;
-	} else {
-		abort_error(39,"macro file not found - " + file_name); //RPI169
 	}
+	if (mac_line_index >= max_mac_line){
+		abort_error(87,"maximum source lines exceeded");
+	}
+	switch (load_type){
+	case 0: // MLC file 
+	    if (load_macro_mend_level != 1){
+	    	log_error(133,"unbalanced macro mend in " + load_macro_name);
+	    }
+		tot_mac_line = mac_line_index;
+		mac_name_line_end[mac_name_index] = tot_mac_line;
+		mac_line_index = save_mac_line_index;
+		break;
+	case 1: // macro file
+	    if (load_macro_mend_level != 0){
+			log_error(134,"unbalanced macro mend in " + load_macro_name);
+		}
+		tot_mac_line = mac_line_index;
+		mac_name_line_end[mac_name_index] = tot_mac_line;
+		mac_line_index = save_mac_line_index;
+		break;
+	case 2: // inline macro file
+	    if (load_macro_mend_level != 0){
+			log_error(135,"unbalanced macro mend in " + load_macro_name);
+		}
+		mac_name_line_end[mac_name_index] = mac_line_index;
+	}
+	mac_name_lab_end[mac_name_index] = tot_mac_lab;
+	check_undefined_labs(mac_name_index);
+	load_mac_name_index = mac_name_index;
 	mac_name_index = save_mac_name_index;
-	return -2;
+}
+private void load_open_macro_file(){
+	/*
+	 * open file for MLC or macro file
+	 * else abort with error
+	 */	
+	mac_file[cur_mac_file] = new File(load_file_name);
+	if (!mac_file[cur_mac_file].isFile()){
+		abort_error(39,"macro file not found - " + load_file_name); //RPI169
+	}
+	load_macro_name = mac_file[cur_mac_file].getName().toUpperCase();
+	if (tot_mac_name > 0){ // RPI127 leave suffix on main pgm loaded as macro
+		int index = load_macro_name.indexOf('.');
+		if (index > 0){
+			load_macro_name = load_macro_name.substring(0,index);
+		}
+	}
+	add_mac(load_macro_name);
+	try {
+		cur_mac_file = 0;
+		mac_file_buff[cur_mac_file] = new BufferedReader(new FileReader(mac_file[cur_mac_file]));
+		set_mac_file_num();
+	} catch (IOException e){
+		abort_error(26,"I/O error opening file - " + e.toString());
+	}
+	if (tz390.opt_tracem){
+		put_log("TRACE LOADING " + load_file_name);
+	}
+}
+private void load_macro_mend_proto_type(){
+	/* 
+	 * process macro, mend, and proto-type
+	 * during loading of MLC or macro
+	 */
+     if (mac_op.equals("MACRO")){
+    	 load_macro_mend_level++;
+     } else if (mac_op.equals("MEND")){
+    	 load_macro_mend_level--;
+     } else if (load_type != load_mlc_file 
+		 	   && load_proto_index == 0
+    		   && load_macro_mend_level == 1
+    		   && mac_op != null
+               ){ // process proto-type
+    	 load_proto_type = true;
+		 load_proto_index = mac_line_index;
+		 mac_name_line_start[mac_name_index] = mac_line_index;
+    	 if (load_type == load_mac_file){
+			 if (!mac_op.equals(load_macro_name)){
+				 log_error(132,"macro proto-type name " + mac_op + " not = file name " + load_macro_name);
+			 }
+		 } else {  // define inline macro
+			 load_macro_name = mac_op;
+			 load_proto_index = mac_line_index;
+			 mac_name_index = find_mac(load_macro_name);
+			 if (mac_name_index < 0){
+				   if (tot_mac_name < max_mac_name){
+				    	mac_name_index = tot_mac_name;
+					    if (tz390.find_key_index("M:" + mac_op) == -2){
+					    	tz390.update_key_index(mac_name_index);
+					    } else {
+					    	if (!tz390.add_key_index(mac_name_index)){
+					    		abort_error(87,"key search table exceeded");
+					    	}
+					    }
+			   	    	tot_mac_name++;
+			       } else {
+			   	      	abort_error(60,"maximum macros exceeded for - " + mac_op);
+			   	      	return;
+			       }
+			   }
+			   mac_name[mac_name_index] = mac_op;
+			   mac_name_line_start[mac_name_index] = load_proto_index;
+			   mac_name_lab_start[mac_name_index] = tot_mac_lab;
+		 }
+	 }
+}
+private void load_macro_ago_aif_refs(){
+	/*
+	 * check ago and aif references during loading
+	 */
+	if (mac_op.equals("AGO")){
+        label_match = label_pattern.matcher(mac_parms);
+        if (label_match.find()){
+           add_mac_label(mac_name_index
+        		        ,label_match.group().toUpperCase()
+        		        ,-mac_line_index);
+        } else {
+        	log_error(112,mac_name[mac_name_index] + " invalid AGO label - " + mac_parms);
+        }
+	} else if (load_macro_mend_level == 1 
+			   && mac_op.equals("AIF")){
+		int lab_index = mac_parms.lastIndexOf(").");
+		if (lab_index > 0){
+			label_match = label_pattern.matcher(mac_parms.substring(lab_index+1));
+			if (label_match.find()){
+				add_mac_label(mac_name_index
+						     ,label_match.group().toUpperCase()
+						     ,-mac_line_index);
+			} else {
+				log_error(113,mac_name[mac_name_index] + " invalid AIF label - " + mac_parms);
+			}
+		} else {
+			log_error(114,mac_name[mac_name_index] + " invalid AIF label - " + mac_parms);
+		}
+	}
+}
+private void load_macro_label_sym(){
+	/*
+	 * check macro labels and symbol labels
+	 * during macro loading
+	 * 1.  remove .*
+	 * 2.  add macro labels
+	 * 3.  add symbol and length
+	 */
+	if (mac_label.length() > 1
+		&& mac_label.charAt(0) == '.'
+		&& mac_label.charAt(1) != '*'){
+		label_match = label_pattern.matcher(mac_label);
+		if (label_match.find()){
+			add_mac_label(mac_name_index
+        	     ,label_match.group().toUpperCase()
+        	     ,mac_line_index);
+			mac_label = null;
+		} else {
+			log_error(40,"invalid macro label - " + mac_label);
+		}
+	} else if (mac_label.length() > 0
+				&& mac_label.charAt(0) != '*'  // RPI 140
+				&& mac_label.charAt(0) != '&'){
+		set_sym_type_len(mac_label,mac_op,mac_parms);
+	}
+
 }
 private void add_mac(String macro_name){
 	/*
-	 * add macro file entry or abort
+	 * add macro file entry and 
+	 * set mac_name_index else abort
 	 */
 	if (tot_mac_name < max_mac_name){
 		mac_name_index = tot_mac_name;
@@ -982,7 +1142,7 @@ private void add_mac(String macro_name){
 		}
 		tot_mac_name++;
 		mac_name[mac_name_index] = macro_name.toUpperCase();
-		mac_name_line_start[mac_name_index] = tot_mac_line;
+		mac_name_line_start[mac_name_index] = mac_line_index; 
 		mac_name_lab_start[mac_name_index]  = tot_mac_lab;
 	} else {
 		abort_error(27,"max macros exceeded");
@@ -1007,109 +1167,6 @@ private void set_mac_file_num(){
 	}
 	mac_file_name_num[cur_mac_file] = cur_mac_file_num;
 }
-private void load_inline_mac(){
-	/*
-	 * load inline macro replacing existing macro
-	 * if found
-	 * 
-	 * 1.  Define any macro labels .xxx 
-	 */
-	if (tz390.opt_tracem){
-		put_log("TRACE LOADING INLINE MACRO");
-	}
-	int new_mac_name_index = -1;
-	mac_mend_level++; // load thru matching macro/mend
-	int mac_proto_index = 0;
-	mac_line_index++; // skip the macro statement
-	while (mac_mend_level > 0
-		&& mac_line_index < mac_name_line_end[mac_call_level]){ 
-		mac_line = mac_file_line[mac_line_index];
-		parse_mac_line();
-		if (mac_op != null && mac_op.length() > 0){
-			if (mac_proto_index == 0){
-			   mac_proto_index = mac_line_index;
-			   new_mac_name_index = find_mac(mac_op);
-			   if (new_mac_name_index < 0){
-				   if (tot_mac_name < max_mac_name){
-				    	new_mac_name_index = tot_mac_name;
-					    if (tz390.find_key_index("M:" + mac_op) == -2){
-					    	tz390.update_key_index(new_mac_name_index);
-					    } else {
-					    	if (!tz390.add_key_index(new_mac_name_index)){
-					    		abort_error(87,"key search table exceeded");
-					    	}
-					    }
-			   	    	tot_mac_name++;
-			       } else {
-			   	      	abort_error(60,"maximum macros exceeded for - " + bal_op);
-			   	      	return;
-			       }
-			   }
-			   mac_name[new_mac_name_index] = mac_op;
-			   mac_name_line_start[new_mac_name_index] = mac_proto_index;
-			   mac_name_lab_start[new_mac_name_index] = tot_mac_lab;
-			} else {
-			    if (mac_op.equals("MACRO")){
-				   mac_mend_level++;
-				} else if (mac_mend_level == 1){
-			        if  (mac_label.length() > 1
-					     && mac_label.charAt(0) == '.'){
-				     	if (mac_label.charAt(1) != '*'){
-				     		if (mac_mend_level == 1){ // don't def nested inline macro labs yet
-				     			label_match = label_pattern.matcher(mac_label);
-				     			if (label_match.find()){
-				     				add_mac_label(new_mac_name_index
-			                      		       ,label_match.group().toUpperCase()
-			                       		       ,mac_line_index -1);
-				     				mac_label = null;
-			    	 			} else {
-			    	 				log_error(40,"invalid macro label - " + mac_label);
-			    	 			}
-			    	 		}
-			    	 	}
-		        	}
-					if (mac_op.equals("AGO")){
-						label_match = label_pattern.matcher(mac_parms);
-						if (label_match.find()){
-							add_mac_label(new_mac_name_index
-								,label_match.group().toUpperCase()
-                    		    ,-(mac_line_index-1));
-						} else {
-							log_error(112,"invalid AGO macro label - " + mac_parms);
-						}
-					} else if (mac_op.equals("AIF")){
-						int lab_index = mac_parms.lastIndexOf(").");
-						if (lab_index > 0){
-							label_match = label_pattern.matcher(mac_parms.substring(lab_index+1));
-							if (label_match.find()){
-								add_mac_label(new_mac_name_index
-									 ,label_match.group().toUpperCase()
-								     ,-(mac_line_index-1));
-							} else {
-								log_error(113,"invalid AIF macro label - " + mac_parms);
-							}
-						} else {
-							log_error(114,"invalid AIF macro label syntax");
-						}
-					}
-				}
-		        if (mac_op.equals("MEND")){  // RPI 213 move after label process
-				   mac_mend_level--;
-				   if (mac_mend_level == 0){
-					  mac_name_line_end[new_mac_name_index] = mac_line_index;
-					  mac_name_lab_end[new_mac_name_index]  = tot_mac_lab;
-					  check_undefined_labs(new_mac_name_index);
-					  return;
-				   }
-		        }
-			}
-		}
-        mac_line_index++;
-	}
-	mac_line = "";
-	mac_line_index--;
-    abort_error(61,"ending mend for inline macro not found");
-}
 private void add_mac_label(int mac_index
 		,String mac_label, int lab_line){
 	/*
@@ -1118,27 +1175,25 @@ private void add_mac_label(int mac_index
 	int index = mac_name_lab_start[mac_index];
 	while (index < tot_mac_lab){
 		if (mac_label.equals(mac_lab_name[index])){
-			if (mac_lab_index[index] <= 0){ // found forward ref
+			if (mac_lab_index[index] <= 0){ 
+				// found forward ref - set lab line/num
 				if (lab_line > 0){
 					mac_lab_index[index] = lab_line;
+					mac_lab_num[index] = mac_file_line_num[lab_line];
 				}
-			} else if (lab_line > 0){	
-				int save_mac_line_index = mac_line_index;
-				mac_line_index = lab_line;
-				log_error(111,mac_name[mac_index] + " duplicate " + mac_label + " at " + mac_file_line_num[mac_lab_index[index]]);
-			    mac_line_index = save_mac_line_index;
+			} else if (lab_line > 0){
+				log_error(111,(mac_name[mac_index]) + " duplicate " + mac_label + " at " + mac_lab_num[index]);
 			}
 		    return;
 		}
 		index++;
 	}
+	// add new unreferenced label
 	if (tot_mac_lab < max_mac_lab){
 		String label_name = label_match.group().toUpperCase();
 		mac_lab_name[tot_mac_lab] = label_name;
 		mac_lab_index[tot_mac_lab] = lab_line;
-		if (mac_op.equals("ANOP")){
-			mac_lab_index[tot_mac_lab]++;
-		}
+		mac_lab_num[tot_mac_lab] = mac_file_line_num[mac_line_index];
 		tot_mac_lab++;
 	} else {
 		abort_error(110,mac_name[mac_index] + " maximum macro labels exceeded");
@@ -1153,28 +1208,39 @@ private void check_undefined_labs(int mac_index){
 	while (index < mac_name_lab_end[mac_index]){
 		if (mac_lab_index[index] <= 0){
 			mac_abort = false;
-			int save_mac_line_index = mac_line_index;
+			int old_mac_line_index = mac_line_index;
 			mac_line_index = -mac_lab_index[index];
 			log_error(115,mac_name[mac_index] + " undefined " + mac_lab_name[index]);
-		    mac_line_index = save_mac_line_index;
+		    mac_line_index = old_mac_line_index;
 		}
 		index++;
 	}
 }
-private void get_mac_line(){
+private void load_get_mac_line(){
 	/*
-	 * get next mac line from mlc file
+	 * get next mac line from file or inline
 	 *   1.  Concatenating continuation lines
 	 *       and parse mac line
 	 *   2.  Truncate continued lines at first ", "
 	 *   2.  Read nested copy files
 	 */
+	if (load_type == load_mac_inline){
+		if (load_macro_mend_level > 0 
+			&& mac_line_index < load_mac_inline_end){ 
+			mac_line = mac_file_line[mac_line_index];
+			parse_mac_line();
+		} else {
+			mac_line = null;
+		}
+		return;
+	}
 	String temp_line = null;
     try {
     	boolean retry = true;
     	while (retry){
-    		retry = false;
-            temp_line = mac_file_buff[cur_mac_file].readLine();
+    		retry = false;  
+    		temp_line = mac_file_buff[cur_mac_file].readLine();
+            cur_mac_line_num++;
             if (temp_line == null){
             	mac_file_buff[cur_mac_file].close();
             	cur_mac_file--;
@@ -1186,13 +1252,19 @@ private void get_mac_line(){
             		    put_bal_line("* END OF COPY");
             		}
             	}
+            } else {
+            	temp_line = trim_line(temp_line);
+                if (!tz390.verify_ascii_source(temp_line)){
+                	abort_error(138,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
+                }
             }
     	}
-        cur_mac_line_num++;
     	if  (temp_line == null){
     			mac_line = null;
-   		} else if (temp_line.length() < 72
-   				   || temp_line.charAt(71) <= asc_space_char){ //RPI181
+   		} else if (tz390.opt_text  // RPI 264 
+   				   || temp_line.length() < 72
+   				   || temp_line.charAt(71) <= asc_space_char
+   				  ){ //RPI181
    			mac_line = trim_line(temp_line);  //RPI124
    		} else {
    		    mac_line = temp_line.substring(0,71);
@@ -1200,10 +1272,17 @@ private void get_mac_line(){
             while (temp_line.length() > 71
             		&& temp_line.charAt(71) > asc_space_char){ //RPI181
             	    temp_line = mac_file_buff[cur_mac_file].readLine();
+                    cur_mac_line_num++;
+            	    if (temp_line == null){
+            	    	abort_error(139,"missing continuation line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
+            	    }
+            	    temp_line = trim_line(temp_line);
+            	    if (!tz390.verify_ascii_source(temp_line)){
+            	    	abort_error(140,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
+            	    }
             	    if (temp_line.length() < 72 || temp_line.charAt(71) <= asc_space_char){ //RPI181
             	    	temp_line = trim_line(temp_line); //RPI124
             	    }
-            	    cur_mac_line_num++;
             	    if  (temp_line.length() >= 16
             	    		&& temp_line.substring(0,15).equals("               ")){  // RPI167
             	    	int temp_end = temp_line.length();
@@ -1326,7 +1405,7 @@ private void put_bal_line(String bal_line){
 	   }
 	}
 	try {
-		if  (bal_line.length() < 72){
+		if  (tz390.opt_text || bal_line.length() < 72){ // RPI 264
 	        bal_file_buff.write(bal_line + "\r\n");
 	        tot_bal_line++;
 		} else {
@@ -1348,7 +1427,7 @@ private void put_bal_line(String bal_line){
 				}
 			}
 		}
-        if (bal_file.length() > tz390.max_file){
+        if (bal_file.length() > tz390.max_file_size){
         	abort_error(119,"maximum bal file size exceeded");
         }
 	} catch (Exception e){    //RPI1
@@ -1377,8 +1456,7 @@ private void parse_bal_line(){
 	}
 	split_bal_line();
 	int index = find_mac_op();
-    if  (index == -1 ||index >= mac_op_nosub_start){ 
-         // RPI150 not mac opr or copy or opsyn
+    if  (index == -1){ 
     	bal_line = replace_vars(bal_line,true);
     	if (exp_var_replacement_change){
     		split_bal_line();
@@ -1840,7 +1918,8 @@ private void exec_mac_op(){
     case 219:  // SETCF
     	break;
     case 220:  // MACRO
-    	load_inline_mac();
+    	load_type = load_mac_inline;
+    	load_mac();
     	bal_op_ok = true;
     	break;
     case 221:  // MEND
@@ -1873,7 +1952,7 @@ private void exec_mac_op(){
 	}
 	if (!bal_op_ok){
 		put_bal_line(bal_line);
-		log_error(47,"macro operation not supported - " + bal_op);
+		abort_error(47,"macro operation not supported - " + bal_op);
 	}
 }
 private void alloc_set(){
@@ -2149,12 +2228,24 @@ private String get_aread_string(){
 	 * 1.  DDNAME= is extention to HLL assembler
 	 *     where external variable defines file to
 	 *     read for AREAD.
+	 * 2.  DSNAME= is extention to HLL assembler
+	 *     where macro variable defines file
+	 *     to read for AREAD.
+	 * Notes:
+	 *   1.  Only DDNAME or DSNAME can be coded
 	 */
-	if (bal_parms.length() > 6
-		&& bal_parms.substring(0,7).toUpperCase().equals("DDNAME=")){
-		String ddname = bal_parms.substring(7);
-		String file_name = get_ddname_file_name(ddname);
-		file_name = tz390.get_file_name(tz390.dir_dat,file_name,".DAT");
+	String file_name = null;
+	if (bal_parms.length() > 6){ 
+		// read from file using DDNAME= or DSNAME=
+		bal_parms = replace_vars(bal_parms,false); // support DSNAME=&var etc.
+		if (bal_parms.substring(0,7).toUpperCase().equals("DDNAME=")){
+	    	String ddname = bal_parms.substring(7);
+	    	file_name = get_ddname_file_name(ddname);
+	    	file_name = tz390.get_file_name(tz390.dir_dat,file_name,".DAT");
+	    } else if (bal_parms.substring(0,7).toUpperCase().equals("DSNAME=")){
+	    	file_name = bal_parms.substring(7);
+	    	file_name = tz390.get_file_name(tz390.dir_dat,file_name,".DAT");
+	    }
 		if (dat_file_name == null 				
 				|| dat_file == null
 				|| !dat_file_name.equals(file_name)
@@ -2178,11 +2269,15 @@ private String get_aread_string(){
 		}
 		try {
 			String text = dat_file_buff.readLine();
-			if (text == null || text.length() == 0){
+			if (text == null){
 				dat_file_buff.close();
 				dat_file = null;
 				return "";
 			} else {
+				text = trim_line(text);
+				if (!tz390.verify_ascii_source(text)){
+					abort_error(141,"invalid ascii source line " + cur_mac_line_num + " in " + dat_file.getPath());
+				}
 				return text;
 			}
 		} catch (IOException e){
@@ -2221,7 +2316,12 @@ private void put_pch_line(String pch_parms){
 	 * 1.  If ,DDNAME= follows 'text' write to
 	 *     specified file instead of default
 	 *     filename.pch
+	 * 2.  If ,DSNAME= follows 'text' write to
+	 *     specified file instead of default 
+	 *     filename.pch
+	 *     
 	 */
+	String file_name = null;
 	String pch_text = "";
 	String token = null;
     pch_match = pch_pattern.matcher(pch_parms.substring(1));
@@ -2242,11 +2342,15 @@ private void put_pch_line(String pch_parms){
 		log_error(73,"invalid punch parm " + pch_parms);
 	} else {
 		int index = pch_match.end()+1;
-		if (pch_parms.substring(index).length() > 8
-		    && pch_parms.substring(index,index+8).toUpperCase().equals(",DDNAME=")){
-		   String ddname = pch_parms.substring(index+8);
-		   String file_name = get_ddname_file_name(ddname);
-		   file_name = tz390.get_file_name(tz390.dir_pch,file_name,".PCH");
+		if (pch_parms.substring(index).length() > 8){
+		   if (pch_parms.substring(index,index+8).toUpperCase().equals(",DDNAME=")){
+			   String ddname = pch_parms.substring(index+8);
+			   file_name = get_ddname_file_name(ddname);
+			   file_name = tz390.get_file_name(tz390.dir_pch,file_name,".PCH");
+		   } else if (pch_parms.substring(index,index+8).toUpperCase().equals(",DSNAME=")){
+			    file_name = bal_parms.substring(index+8);
+			    file_name = tz390.get_file_name(tz390.dir_pch,file_name,".PCH");
+		   }
 		   if  (pch_file_name == null 				
 				|| pch_file == null
 				|| !pch_file_name.equals(file_name)
@@ -2271,7 +2375,7 @@ private void put_pch_line(String pch_parms){
 	    try {
 	       pch_text = ("X" + pch_text).trim().substring(1); //RPI 195
 		   pch_file_buff.write(pch_text + "\r\n");
-	       if (pch_file.length() > tz390.max_file){
+	       if (pch_file.length() > tz390.max_file_size){
 	    	   abort_error(120,"maximum pch file size exceeded");
 	       }
 		} catch (IOException e){
@@ -2363,7 +2467,7 @@ private void exp_set_next_op(){
 	 * Notes:
 	 * 1.  push zero for unary +- based on
 	 *     previous setting of exp_last_var.
-	 * 2.  push ordinary symbols starting with A-Z$@#
+	 * 2.  push ordinary symbols starting with A-Z$@#_
 	 *     as SDT string assuming there preceding T' type oper
 	 */
     exp_var_last  = true; // force first try
@@ -2397,8 +2501,9 @@ private void exp_set_next_op(){
 	     		} else {
 	                exp_push_var();
 	     		}
-	     	} else if (exp_prev_first == exp_string_op
-	     			   || exp_prev_first == exp_create_set_op){
+	     	} else if (exp_token.equals("&&") 
+	     			   && (exp_prev_first == exp_string_op
+	     			       || exp_prev_first == exp_create_set_op)){
 	     		// RPI192 substitute & for && in setc strings
 	     		exp_stk_setc[tot_exp_stk_var - 1] = exp_stk_setc[tot_exp_stk_var - 1].concat("&");
 	     		if (exp_next_char() == '.'){
@@ -2770,6 +2875,10 @@ private void exp_perform_op(){
         * and return to case 10 for substring calc
         * substring setc and e1 now on stack
         */
+    	if (exp_next_char() == '*'){  // RPI 257
+    		exp_push_sdt(max_substring_len);
+    		skip_next_token();
+    	}
        break;
     case 10: // ,e2) substring e2
        /*
@@ -2883,7 +2992,7 @@ private void exp_perform_op(){
     	}
     	break;
     default:
-	    log_error(38,"invalid sequence - prev=" + exp_prev_first + " next=" + exp_next_first);
+	    log_error(38,"expression parsing error - prev op =" + exp_prev_first + " next op =" + exp_next_first); // RPI 260
     }
     if (action == 10){
     	exp_prev_substring = true;
@@ -3886,7 +3995,7 @@ private void exp_term(){
       exp_end = true;
       exp_ok  = true;
 	} else {
-	  log_error(35,"exp term stack error  vars=" + tot_exp_stk_var + "  ops=" + tot_exp_stk_op);
+	  log_error(35,"expression parsing error - total stack values=" + tot_exp_stk_var + "  total ops=" + tot_exp_stk_op); // RPI 260
 	}
 }
 private int get_int_from_string(String number,int base){
@@ -4330,7 +4439,7 @@ private void add_lcl_set(String new_name,byte new_type,int new_size){
 	   	  tot_lcl_setc = tot_lcl_setc + new_size;
 	   	  lcl_set_end[var_name_index]   = tot_lcl_setc;
 	   	  setc_value = "";
-	   	  while (setc_index <tot_lcl_seta){
+	   	  while (setc_index <tot_lcl_setc){  // RPI 242
 	   	        lcl_setc[setc_index] = setc_value;
 	   	        setc_index++;
 	   	  }
@@ -4587,7 +4696,7 @@ private void expand_lcl_seta(){  //RPI179
      adjust_expand_inc(lcl_loc); // grow to reduce repeats
      int index = lcl_set_end[var_name_index];
      while (index < tot_lcl_seta){
-    	 lcl_setc[index] = ""; // clear expanded elements
+    	 lcl_seta[index] = 0; // clear expanded elements  // RPI 242
     	 index++;
      }
      lcl_set_end[var_name_index] = tot_lcl_seta;
@@ -4690,6 +4799,7 @@ private void expand_gbl_seta(){
      // expand array to include set_sub + expand_inc
      tot_gbl_seta = gbl_set_start[var_name_index] + set_sub + expand_inc;
      adjust_expand_inc(gbl_loc); // grow to reduce repeats
+     // note no need to clear new gbl_seta
      gbl_set_end[var_name_index] = tot_gbl_seta;
      seta_index = gbl_set_start[var_name_index] + set_sub - 1;
 }
@@ -4720,6 +4830,7 @@ private void expand_gbl_setb(){
      // expand array to include set_sub + expand_inc
      tot_gbl_setb = gbl_set_start[var_name_index] + set_sub + expand_inc;
      adjust_expand_inc(gbl_loc); // grow to reduce repeats
+     // note no need to clear new gbl_setb
      gbl_set_end[var_name_index] = tot_gbl_setb;
      setb_index = gbl_set_start[var_name_index] + set_sub - 1;
 }
@@ -4750,6 +4861,11 @@ private void expand_gbl_setc(){
 	 // expand array to include set_sub + expand_inc
 	 tot_gbl_setc = gbl_set_start[var_name_index] + set_sub + expand_inc;
 	 adjust_expand_inc(gbl_loc); // grow to reduce repeats
+     int index = gbl_set_end[var_name_index];
+     while (index < tot_gbl_setc){
+    	 gbl_setc[index] = ""; // clear expanded elements  // RPI 242
+    	 index++;
+     }
 	 gbl_set_end[var_name_index] = tot_gbl_setc;
 	 setc_index = lcl_set_start[var_name_index] + set_sub - 1;
 } 
@@ -4823,7 +4939,7 @@ private void get_gbl_set_value(){
 }
 private int get_label_index(String label_source){
 	/*
-	 * find macro label and return line index
+	 * find macro label and return line index-1
 	 * else abort
 	 */
 	label_match = label_pattern.matcher(label_source); 
@@ -4836,7 +4952,7 @@ private int get_label_index(String label_source){
        	     if (tz390.opt_tracem){
        	    	put_log("TRACE BRANCH " + label_name);
        	     }
-       	  	 return mac_lab_index[label_name_index];
+       	  	 return mac_lab_index[label_name_index]-1; // -1 req'd for following ++ cycle
        	  } else {
        	  	 label_name_index++;
        	  }
@@ -5335,7 +5451,7 @@ private void put_stats(){
 	   	  }
   	   	  put_log("MZ390I program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 	   	  put_log("MZ390I options = " + tz390.cmd_parms);
-	      put_log("Stats total MLC source      = " + tot_mac_line);
+	      put_log("Stats total MLC/MAC loaded  = " + tot_mac_line);
 	      put_log("Stats total BAL output      = " + tot_bal_line);
 	      put_log("Stats total instructions    = " + tot_ins);
 	      put_log("Stats total macros          = " + tot_mac_name);

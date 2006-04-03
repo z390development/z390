@@ -546,7 +546,7 @@ private void put_log_line(String msg){
 	   	   if (tz390.opt_list && log_file_buff != null){
 	   	      try {
 	   	          log_file_buff.write(msg + "\r\n");
-	                if (log_file.length() > tz390.max_file){
+	                if (log_file.length() > tz390.max_file_size){
 	                	abort_error(107,"maximum log file size exceeded");
 	                }
 	   	      } catch (Exception e){
@@ -2044,7 +2044,7 @@ private void svc_put_move(){
 				}
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl);
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl;
-                if (tiot_file[cur_tiot_index].length() > tz390.max_file){
+                if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(101,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
                 }
 	        } catch (Exception e){
@@ -2064,7 +2064,7 @@ private void svc_put_move(){
                 }
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_vrec_lrecl);
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_vrec_lrecl;
-                if (tiot_file[cur_tiot_index].length() > tz390.max_file){
+                if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(102,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
                 }
 	        } catch (Exception e){
@@ -2097,7 +2097,7 @@ private void svc_put_move(){
                 	tiot_vrec_blksi[cur_tiot_index] = cur_vrec_lrecl;
                 }
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_vrec_lrecl);
-                if (tiot_file[cur_tiot_index].length() > tz390.max_file){
+                if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(103,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
                 }
 	        } catch (Exception e){
@@ -2118,7 +2118,7 @@ private void svc_put_move(){
                 cur_rec_text = get_ascii_string(cur_dcb_area+4,cur_rec_len);
                 tiot_file[cur_tiot_index].writeBytes(cur_rec_text + '\r' + '\n');
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
-                if (tiot_file[cur_tiot_index].length() > tz390.max_file){
+                if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(104,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
                 }
 	        } catch (Exception e){
@@ -2133,7 +2133,7 @@ private void svc_put_move(){
 				}
                 cur_rec_text = get_ascii_string(cur_dcb_area,cur_dcb_lrecl);
                 tiot_file[cur_tiot_index].writeBytes(cur_rec_text + '\r' + '\n');
-                if (tiot_file[cur_tiot_index].length() > tz390.max_file){
+                if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(105,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
                 }
 			} catch (Exception e){
@@ -2207,7 +2207,7 @@ private void svc_write(){
 			}
             tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl);
             tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl;
-            if (tiot_file[cur_tiot_index].length() > tz390.max_file){
+            if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
             	abort_error(106,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
             }
         } catch (Exception e){
@@ -3816,7 +3816,7 @@ private void set_test_break_op(){
 		test_break_op1 = Integer.valueOf(tz390.op_code[index].substring(0,2),16).byteValue() & 0xff;
 		test_break_op2_index = pz390.opcode2_offset[test_break_op1];
 		if (tz390.op_code[index].length() == 4){
-			test_break_op2 = Integer.valueOf(tz390.op_code[index].substring(2,4),16).byteValue();
+			test_break_op2 = Integer.valueOf(tz390.op_code[index].substring(2,4),16).byteValue() & 0xff;
 			test_break_op2_mask = 0xff;
 		} else if (tz390.op_code[index].length() == 3){
 			if (pz390.opcode2_mask[test_break_op1] == 0xf0){

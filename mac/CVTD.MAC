@@ -7,7 +7,8 @@
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
 .* 10/20/05 RPI27 - issue error for any undefined operands     
-,* 03/14/06 RPI 228 - ADD CVTDCB AND ALSO CVTECB, CVTPARM
+.* 03/14/06 RPI 228 - ADD CVTDCB AND ALSO CVTECB, CVTPARM
+.* 03/28/06 RPI 266 - CORRECT ,* VS .* ON ABOVE LINE      
 .*********************************************************************
          CVTD
          AIF   (N'&SYSLIST EQ 0).NPOK
