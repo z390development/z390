@@ -59,6 +59,7 @@ public  class  lz390 {
     * 01/26/06 RPI 172 move options to tz390
     * 02/21/06 RPI 208 use tz390.z390_abort to term
     * 03/16/06 RPI 240 correct rld loc for mult csect rlds
+    * 04/05/06 RPI 270 support RLD length of 8
     ********************************************************
     * Global variables
     *****************************************************/
@@ -483,10 +484,10 @@ private boolean load_obj_file(boolean esds_only){
 					rld_len[tot_rld] = (byte)- obj_rld_len;
 				}
 				if (gbl_esd_type[obj_gbl_esd[obj_rld_xesd]] == gbl_esd_ent){ //RPI182
+			    	rld_off = gbl_esd_loc[obj_gbl_esd[obj_rld_esd]] + obj_rld_loc;
+			    	rld_fld = z390_code_buff.getInt(rld_off);
 					switch (obj_rld_len){
 					    case 3:
-					    	rld_off = gbl_esd_loc[obj_gbl_esd[obj_rld_esd]] + obj_rld_loc;
-					    	rld_fld = z390_code_buff.getInt(rld_off);
 					        int rld_save_byte = rld_fld & 0xff;
 					    	rld_fld = rld_fld/256;
 					    	if (obj_rld_sgn == '+'){
@@ -498,7 +499,18 @@ private boolean load_obj_file(boolean esds_only){
 					    	z390_code_buff.putInt(rld_off,rld_fld);
 					    	break;
 					    case 4:
-					    	rld_off = gbl_esd_loc[obj_gbl_esd[obj_rld_esd]] + obj_rld_loc;
+					    	if (obj_rld_sgn == '+'){
+					    	    rld_fld = rld_fld + gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]];
+					    	} else {
+						    	rld_fld = rld_fld - gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]];
+					    	}
+					    	z390_code_buff.putInt(rld_off,rld_fld);
+					    	break;
+					    case 8:  // RPI 270
+					    	if (rld_fld != 0){ // verify first half of 8 byte rld field is 0
+					    		log_error(28,"invalid 8 byte RLD field at offset " + obj_line);
+					    	}
+					    	rld_off = rld_off+4;
 					    	rld_fld = z390_code_buff.getInt(rld_off);
 					    	if (obj_rld_sgn == '+'){
 					    	    rld_fld = rld_fld + gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]];
@@ -632,6 +644,9 @@ private String cvt_obj_bin_to_hex(){
 		String xesd_id  = tz390.get_hex(bin_byte_buff.getShort(16),4);;  // XESD ID number ref or RLD
 		esd_id   = tz390.get_hex(bin_byte_buff.getShort(18),4);          // ESD ID number SD with RLD
 		String esd_rld_len = tz390.get_hex((bin_byte[20] >> 2)+1,1);
+		if (esd_rld_len.charAt(0) == '2'){
+			esd_rld_len = "8"; // RPI 270
+		}
     	String esd_rld_sign = "+";
     	if ((bin_byte[20] & 0x02) != 0){
 	    	esd_rld_sign = "-";

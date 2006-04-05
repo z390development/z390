@@ -58,6 +58,8 @@ import javax.swing.Timer;
     * 03/03/06 RPI 209 show current date/time with stats if opt_timing
     * 03/04/06 RPI 221 set R15 return code for TGET/TPUT from tpg_rc
     * 03/13/06 RPI 229 correct flush of FPR's for dump
+    * 04/03/06 RPI 271 pad hex and text for dump_mem
+    * 04/05/06 RPI 270 support 8 byte RLD's
     ********************************************************
     * Global variables
     *****************************************************/
@@ -916,22 +918,36 @@ private void svc_load_rlds(){
 	 * read and apply rld records at end
 	 * of 390 file.
 	 */
+	int rld_field = 0;
 	try {
 	    int cur_rld = 0;
 	    while (cur_rld < load_code_rlds){
 	    	rld_loc = z390_file.readInt();
 	    	rld_len = z390_file.readByte();
-	    	pz390.mem.position(load_code_load + rld_loc);
-	    	int rld_field = pz390.mem.getInt();
-	    	if (rld_len == 4){
-	    		rld_field = rld_field + load_code_load;
-	    		pz390.mem.position(load_code_load + rld_loc);
-	        	pz390.mem.putInt(rld_field);
-	    	} else if (rld_len == 3){  //RPI71
+	    	switch (rld_len){
+	    	case 3: //RPI71
+		    	pz390.mem.position(load_code_load + rld_loc);
+		    	rld_field = pz390.mem.getInt();
 	    		rld_field = (rld_field >>> 8) + load_code_load;
 	    		pz390.mem.position(load_code_load + rld_loc);
 	        	pz390.mem.putShort((short)(rld_field >>> 8));
 	        	pz390.mem.put((byte)(rld_field & 0xff));
+	        	break;
+	    	case 4:
+		    	pz390.mem.position(load_code_load + rld_loc);
+		    	rld_field = pz390.mem.getInt();
+	    		rld_field = rld_field + load_code_load;
+	    		pz390.mem.position(load_code_load + rld_loc);
+	        	pz390.mem.putInt(rld_field);
+	        	break;	
+	    	case 8: // RPI 270
+	    		rld_loc = rld_loc + 4;
+		    	pz390.mem.position(load_code_load + rld_loc);
+		    	rld_field = pz390.mem.getInt();
+	    		rld_field = rld_field + load_code_load;
+	    		pz390.mem.position(load_code_load + rld_loc);
+	        	pz390.mem.putInt(rld_field);
+	        	break;	
 	        }
 	    	cur_rld++;
 	    }
@@ -1702,8 +1718,15 @@ private void dump_mem(int mem_addr,int mem_len){
 			}
 			index++;
 		}
+		while (dump_text.length() < 16){ // RPI 271
+			dump_text = dump_text + " ";
+		}
+		String dump_hex = pz390.bytes_to_hex(pz390.mem_byte,mem_addr,dump_len,4); 
+        while (dump_hex.length() < 35){ // RPI 271
+        	dump_hex = dump_hex + " ";
+        }
 		put_log(" " +tz390.get_hex(mem_addr,8) 
-			  + " *"  + pz390.bytes_to_hex(pz390.mem_byte,mem_addr,dump_len,4)
+			  + " *"  + dump_hex
 			  + "* *" + dump_text + "*"
 		);
         mem_addr = mem_addr + 16;

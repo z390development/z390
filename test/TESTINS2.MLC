@@ -19,7 +19,7 @@
 * 11/20/05 RPI106 UPDATE TESTS FOR SPM, IPM, NR, OR, XR, AND PC/PR     
 * 11/23/05 RPI109 ADD PD TESTS FOR OPTIMIZED PD USING INT VS BIGINT     
 * 12/08/05 RPI120 ADD SRP TEST OF EXPLICIT BDDD2                        
-* 01/07/06 RPI158 - CLEAR REMAINING BITS IN LLIHH LLIHL LLILH LLILL                        
+* 01/07/06 RPI158 - CLEAR REMAINING BITS IN LLIHH LLIHL LLILH LLILL
 * 01/08/06 RPI160 - CORRECT LLGT WHICH WAS LOADING FROM LOC+4                              
 * 01/11/06 RPI166 TEST SRAG 1,2,3(4) AND TMY 1(2),3 USING BASE REG
 * 01/15/06 RPI173 ADD LRV, STPQ, and LPQ                                            
@@ -33,7 +33,9 @@
 *          LLIHF, LLILF, SLGFI, SLFI
 *          AGFI, AFI, ALGFI, ALFI, CGFI, CFI, CLGFI, CLFI
 *          LTG, LT, LLC, LLH
-* 92/10/06 RPI199 ADD EXTENDED BRANCH BRCL INSTRUCTIONS
+* 02/10/06 RPI199 ADD EXTENDED BRANCH BRCL INSTRUCTIONS
+* 04/01/06 ADD 32 * 32 = 64 BIT TEST OF MR                
+* 04/05/06 ADD 32 * 32 = 64 BIT TEST OF MR AND VERIFY R1 IGNORED                
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -526,13 +528,20 @@ SR1      ESPIE RESET
          RT1   ABORT
 SR2      ESTAE 0
 * 1C   MR  
-         LA    R0,0
+         LA    R0,1        RPI 272
          LA    R1,2
          LA    R2,5
          MR    R0,R2
          CL    R0,=F'0'
          RT1   CCE
          CL    R1,=F'10'
+         RT1   CCE
+         LA    R14,2
+         LA    R15,3
+         MR    R14,R14
+         CL    R14,=F'0'  RPI 272
+         RT1   CCE
+         CL    R15,=F'6'
          RT1   CCE
 * 1D   DR
          LA    R0,0

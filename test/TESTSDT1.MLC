@@ -8,6 +8,7 @@
 * MAINTENANCE.
 * 10/05/05 RPI5 - ADD ASCII MODE SUPPORT (SEE TESTASC2.MLC TEST ALSO)    
 * 03/20/06 RPI 232 - TEST INTEGER WITH EXPONENT 1E3 = 1000    
+* 04/05/06 RPI 270 - TEST CA'...' AND CE'...'  MZ390 AND AZ390 SDTS               
 *********************************************************************
 TESTSDT1 RT1   MAIN
          RT1   START
@@ -52,6 +53,19 @@ TESTSDT1 RT1   MAIN
          RT1 CCE,=A(&N1),=A(&N2)
          RT1   CCE,=A(C'1''2'),=A(X'F17DF2')
          RT1   CCE,=A(C"1""2"),=A(X'312232')
+* TEST CA/CE SDT'S
+&CA1     SETA  CA'1'
+&CE2     SETA  CE'22'
+&CA3     SETA  ca'333'
+&CE4     SETA  ce'4444'
+         RT1   CCE,=AL1(&CA1),=X'31'
+         RT1   CCE,=AL1(&CE2),=X'F2F2'
+         RT1   CCE,=AL1(&ca3),=X'333333'
+         RT1   CCE,=AL1(&ce4),=X'F4F4F4F4'
+         RT1   CCE,=AL1(CA'1'),=X'31'
+         RT1   CCE,=AL1(CE'22'),=X'F2F2'
+         RT1   CCE,=AL1(ca'333'),=X'333333'
+         RT1   CCE,=AL1(ce'4444'),=X'F4F4F4F4'
          AGO   .END_CHAR_TEST
 .ASCII_CHAR_TEST ANOP
          RT1   CCH,=C'A',=C'1'   ASCII LETTERS > DIGITS
@@ -79,6 +93,19 @@ TESTSDT1 RT1   MAIN
          RT1 CCE,=A(&N1),=A(&N2)
          RT1   CCE,=A(C'1''2'),=A(X'312732')
          RT1   CCE,=A(C"1""2"),=A(X'312232')
+* TEST CA/CE SDT'S
+&CA1     SETA  CA'1'
+&CE2     SETA  CE'22'
+&CA3     SETA  ca'333'
+&CE4     SETA  ce'4444'
+         RT1   CCE,=AL1(&CA1),=X'31'
+         RT1   CCE,=AL1(&CE2),=X'F2F2'
+         RT1   CCE,=AL1(&ca3),=X'333333'
+         RT1   CCE,=AL1(&ce4),=X'F4F4F4F4'
+         RT1   CCE,=AL1(CA'1'),=X'31'
+         RT1   CCE,=AL1(CE'22'),=X'F2F2'
+         RT1   CCE,=AL1(ca'333'),=X'333333'
+         RT1   CCE,=AL1(ce'4444'),=X'F4F4F4F4'
 .END_CHAR_TEST ANOP
 &N1      SETA  X'100'              
 &N2      SETA  256

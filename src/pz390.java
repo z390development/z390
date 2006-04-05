@@ -157,6 +157,7 @@ public  class  pz390 {
     * 02/18/06 RPI 206 support 3 flavors of RRF format
     * 03/14/06 RPI 228 add CVTDCB OS flags
     * 03/15/06 RPI 229 verify correct even/odd fp pairs
+    * 04/05/06 RPI 272 correct MR to only use low 32 bits of r1+1
     ********************************************************
     * Global variables
     *****************************************************/
@@ -977,11 +978,9 @@ public void exec_pz390(){
 		 case 0x1C:  // 470 "1C" "MR" "RR"
 			 psw_check = false;
 		     ins_setup_rr();
-		     work_reg.putInt(0,reg.getInt(rf1+4));
-		     work_reg.putInt(4,reg.getInt(rf1+12));
-		     work_reg.putLong(0,work_reg.getLong(0) * reg.getInt(rf2+4));
-		     reg.putInt(rf1+4,work_reg.getInt(0));
-		     reg.putInt(rf1+12,work_reg.getInt(4));
+		     rlv1 = (long)reg.getInt(rf1+12) * (long)reg.getInt(rf2+4); // RPI 272
+		     reg.putInt(rf1+4,(int)(rlv1 >> 32));
+		     reg.putInt(rf1+12,(int)(rlv1 & long_low32_bits));
 		     break;
 		 case 0x1D:  // 480 "1D" "DR" "RR"
 			 psw_check = false;

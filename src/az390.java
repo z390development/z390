@@ -149,6 +149,7 @@ public  class  az390 {
     * 04/01/06 RPI 265 support alignment within DS/DC
     * 04/02/06 RPI 264 repeat passes at least twice to
     *          try and resolve errors even if at max.
+    * 04/04/06 RPI 270 support DS/DC/SDT CA, CB, AD, FD, VD
     *****************************************************
     * Global variables
     *****************************************************/
@@ -635,7 +636,7 @@ private void compile_patterns(){
         	try {
         	    exp_pattern = Pattern.compile(
   		    	    "([bB]['][0|1]+['])" 
-  		    	  +	"|([cC][']([^']|(['][']))*['])"       // ebcdic/ascii mode
+  		    	  +	"|([cC][aAeE]*[']([^']|(['][']))*['])" // ebcdic/ascii mode //RPI 270
   		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"       // ebcdic always
   		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"  // ascii  always
 	    		  +	"|([xX]['][0-9a-fA-F]+['])" 
@@ -678,8 +679,8 @@ private void compile_patterns(){
               * */
          	try {
          	    parm_pattern = Pattern.compile(
-         			"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[=])" // RPI 253
-         		  +	"|([cC][']([^']|(['][']))*['])" 
+         			"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[=])"     // RPI 253
+         		  +	"|([cC][aAeE]*[']([^']|(['][']))*['])"  //RPI 270
          		  +	"|([cC][!]([^!]|([!][!]))*[!])" 
          		  + "|([cC][\"]([^\"]|([\"][\"]))*[\"])" 
          		  + "|([']([^']|(['][']))*['])"
@@ -2805,7 +2806,7 @@ private void proc_exp_token(){
 	        	proc_exp_op();
 	            break;
 	        case 'B':
-	        	if (exp_token.length() > 2 && exp_token.charAt(1) == '\''){
+	        	if (exp_token.length() > 2 && exp_token.charAt(exp_token.length()-1) == '\''){ // RPI 270
 	        	   proc_exp_sdt();
 	        	} else {
 	        	   proc_exp_sym();
@@ -2813,9 +2814,9 @@ private void proc_exp_token(){
 	            break;
 	        case 'C':
 	        	if (exp_token.length() > 1 
-	        		&& (exp_token.charAt(1) == '\''
-	        			|| exp_token.charAt(1) == '"'    //RPI5
-	        		    || exp_token.charAt(1) == '!')){ //RPI73,RPI90
+	        		&& (exp_token.charAt(exp_token.length()-1) == '\''      //RPI 270
+	        			|| exp_token.charAt(exp_token.length()-1) == '"'    //RPI5
+	        		    || exp_token.charAt(exp_token.length()-1) == '!')){ //RPI73,RPI90
 	        	   proc_exp_sdt();
 	        	} else {
 	        	   proc_exp_sym();
@@ -2838,7 +2839,7 @@ private void proc_exp_token(){
 		        	}
 		        	break;
 	        case 'X':
-	        	if (exp_token.length() > 1 && exp_token.charAt(1) == '\''){
+	        	if (exp_token.length() > 1 && exp_token.charAt(exp_token.length()-1) == '\''){ //RPI 270
 	        	   proc_exp_sdt();
 	        	} else {
 	        	   proc_exp_sym();
@@ -2901,11 +2902,13 @@ private void proc_exp_op(){
 	}
 	int last_op_class = exp_op_class[exp_prev_op.charAt(0)];
 	if  (last_op_class == 0){
-		log_error(11,"invalid operator class for - " + exp_op);
+		log_error(11,"invalid operator class for - " + exp_prev_op);
+		return;
 	} 
 	int next_op_class = exp_op_class[exp_op.charAt(0)];
 	if  (next_op_class == 0){
 		log_error(12,"invalid operator class - " + exp_op);
+	    return;
 	}
     int action = exp_action[tot_classes*(last_op_class-1)+next_op_class-1];
     switch (action){
@@ -3140,7 +3143,7 @@ private void exp_push_op(){
    	if (tot_exp_stk_op > max_exp_stk){
    		abort_error(20,"stack operation size exceeded");
    	}
-   	exp_stk_op[tot_exp_stk_op] = exp_token;
+   	exp_stk_op[tot_exp_stk_op] = exp_op; // RPI 270 was exp_token with lc l'
    	tot_exp_stk_op++;
    	exp_sym_pushed = false;
    	exp_sym_last = false;
@@ -3627,7 +3630,10 @@ private void put_copyright(){
 				bin_byte[19] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
                                          // 20 flags TTTTLLSN
 				int  rld_len =  Integer.valueOf(hex_rcd.substring(31,32),16).intValue()
-				             - 1; // rld field len -1
+				             - 1; // rld field len -1  4=3, 3=2, 8=1 RPI 270
+				if (rld_len == 7){
+					rld_len = 1;  // RPI 280
+				}
 				char rld_sign = hex_rcd.charAt(38);
 				if (rld_sign == '+'){
 					bin_byte[20] = (byte)(rld_len << 2); // pos rld
@@ -4462,7 +4468,9 @@ private void get_dc_field_type(){
 	/* 
 	 * 1.  set dc_type and dc_type_index 
 	 *     and verify else abort
-	 * 2,  if DEF check for B/H and set fp_type
+	 * 2.  if DEF check for B/H and set fp_type
+	 * 3.  if C check for A/E and set dc_type_sfx  // RPI 270
+	 * 4.  if AFV check for D and set dc_type_sfx  // RPI 270
 	 */
       dc_type = dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0);
       dc_index++;
@@ -4473,6 +4481,20 @@ private void get_dc_field_type(){
       	 if (dc_index < dc_field.length()){
       	 	dc_type_sfx = dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0);
       	 	switch (dc_type){
+      	 	case 'A': // RPI 270
+      	 		if (dc_type_sfx == 'D'){
+      	 			dc_index++;
+      	 		}
+      	 		break;
+      	 	case 'C': // RPI 270
+      	 		if (dc_type_sfx == 'A'){ 
+      	 		    dc_index++;
+      	 		} else {
+      	 			if (dc_type_sfx == 'E'){
+      	 				dc_index++;
+      	 			}
+      	 		}
+      	 		break;
       	 	case 'D':
       	 		if (dc_type_sfx == 'B'){
       	 			fp_type = fp_db_type;
@@ -4495,6 +4517,11 @@ private void get_dc_field_type(){
        	 			}
       	 		}
       	 		break;
+      	 	case 'F': // RPI 270
+      	 		if (dc_type_sfx == 'D'){
+      	 			dc_index++;
+      	 		}
+      	 		break;
       	    case 'L':
       	 		if (dc_type_sfx == 'B'){
       	 			fp_type = fp_lb_type;
@@ -4505,6 +4532,12 @@ private void get_dc_field_type(){
        	 			   dc_index++;
        	 			}
       	 		}
+      	 		break;
+      	 	case 'V': // RPI 270
+      	 		if (dc_type_sfx == 'D'){
+      	 			dc_index++;
+      	 		}
+      	 		break;	
       	 	}
       	 }
       }
@@ -4512,13 +4545,17 @@ private void get_dc_field_type(){
 private void get_dc_field_len(){
 /*
  * 1. set dc_len based on either explicit length
- *    or default for type.
+ *    or default for type.  If AD, FD, or VD
+ *    change default to 8 
  * 2. Align if not literal reference 
  *    and not explicit len
  * 3. Set loc_start of first operand for listing 
  */
  if (dc_type_index != -1){
     dc_len = tz390.dc_type_len[dc_type_index];
+    if (dc_len == 4 && dc_type_sfx == 'D'){
+    	dc_len = 8; // RPI 270
+    }
  } else {
  	dc_len = 1;
  }
@@ -4563,14 +4600,16 @@ private void dc_align(int align_bytes){
 }
 private void process_dca_data(){
 	/*
-	 * alloc or gen DS/DC A type parms using prev.
+	 * alloc or gen DS/DC A/V/Y type parms using prev.
 	 * settings for dc_dup and dc_len.  Also save
 	 * first field dc_type, dc_len
 	 */
 	exp_text = dc_field;
 	dc_index++;   // start inside (,,,)
 	dc_data_start = dc_index; 
-	if (dc_op && (dc_len == 3 || dc_len == 4)){  //RPI182
+	if (dc_op && (dc_len == 3 
+			      || dc_len == 4
+			      || dc_len == 8)){  //RPI182 RPI 270
 		exp_rld_len = (byte) dc_len;
 	} else {
 		exp_rld_len = 0;
@@ -4581,7 +4620,7 @@ private void process_dca_data(){
 		    if  (calc_dca_exp()){
 			    dc_index = exp_index;
 			    if (dc_op && dc_dup > 0){
-			    	if (dc_len <= 4 || exp_val >= 0){
+			    	if (exp_val >= 0 || dc_len <= 4){
 				        obj_code = obj_code + tz390.get_hex(exp_val,2*dc_len);
 			    	} else {
 				        obj_code = obj_code + ("FFFFFFFF").substring(0,2*dc_len-8) + tz390.get_hex(exp_val,8);
@@ -4727,6 +4766,8 @@ private void process_dcc_data(){
 	 *   2.  C".." always ASCII regardless of option
 	 *   3.  C!..! always EBCDIC regardless of option
 	 *   4.  ''|""|!! or && replaced with single '|"|! or &
+	 *   5.  CA'...' always ASCII   RPI 270
+	 *   6.  CE'...' always EBCDIC  RPi 270
 	 */
 	String dcc_text = "";
 	String token = null;
@@ -4780,8 +4821,15 @@ private void process_dcc_data(){
 	while (!bal_abort
 		&& dc_dup > 0){
 		if (dc_op){
-			 boolean ascii_req = (tz390.opt_ascii && dcc_quote == '\'')
-			 | dcc_quote == '"';  //RPI5 and RPI73
+			 boolean ascii_req = 
+				 (dcc_quote == '\'' 
+					 && (    (tz390.opt_ascii 
+						      && dc_type_sfx != 'E'
+						     )
+						  || dc_type_sfx == 'A'
+						)
+		         )
+			     | dcc_quote == '"';  //RPI5 and RPI73
  	         obj_code = obj_code + string_to_hex(dcc_text,ascii_req);
   		     put_obj_text();
 		}

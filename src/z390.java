@@ -110,6 +110,7 @@ public  class  z390 extends JApplet
      * 02/21/06 RPI 208 - use tz390.z390_abort to term.
      * 03/19/06 RPI 236 - if install directory read-only, turn off log,
      *          and send msg to console saying use log command
+     * 04/03/06 RPI 235 correct CD path display and suport cd.. etc
 	 ********************************************************
      * Global variables
      *****************************************************

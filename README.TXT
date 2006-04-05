@@ -1,8 +1,8 @@
-z390 v1.0.13c PTF 04/06/06
+z390 v1.0.13d PTF 04/05/06
 Copyright 2006 Automated Software Tools Corporation
 
 
-The enclosed z390.jar contains the following test RPI fixes for v1.0.14:
+The enclosed z390.jar contains following cumulative fixes for v1.0.13:
 
 1. RPI 232 - support integer constants with exponents such as 1E3 = 1000
 
@@ -66,6 +66,14 @@ variable stack and operator stack.  See updated TESTERR2.
     execution.  See new TESTTXT1 which creates 2 HTML text files
     from sinle eecution of testTXT1.MLC with option TEXT. 
 
+19. RPI 270 add extended DS/DC types CA/CE/AD/FD/VD and 8 byte RLD 
+support.
+
+20. RPI 271 correct interactive TEST dump format for last line.
+
+21. RPI 272 correct MR instruction to only use low 32 bits of r1+1
+and r2 to form 64 bit product stored in r1 and r1+1.  It was using
+all 64 bits of r1 and r1+1.
 
 To install PTF follow these steps.
 
@@ -86,6 +94,7 @@ none
 TESTASM1.MLC - test blank sections, labels starting with _, ORG , 
 TESTERR2.MLC - test invalid label errors
 TESTDC1.MLC  - test DC support of fields without data for alignment
+TESTINS2.MLC - test instructions
 TESTMAC1.MLC - test macro labels starting with _  and * as substring len
 TESTMAC6.MLC - test updated to test keyword with spec. characters
 TESTMAC8.MLC - test inline macros in open source and macro files

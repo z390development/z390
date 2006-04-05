@@ -53,6 +53,7 @@ public  class  tz390 {
     * 03/28/06 fix TRACEM not being set
     * 04/02/06 RPI 264 mz390 and az390 use verify_ascii_source()
     *          and option TEXT for free form text I/O in mz390
+    * 04/04/06 RPI 270 support CA'ASCII' or CE'EBCDIC' SDT's
     ********************************************************
     * Shared z390 tables
     *****************************************************/
@@ -61,7 +62,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.0.13c";  //dsh
+    String version    = "V1.0.13d";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -3444,10 +3445,35 @@ public boolean get_sdt_char_int(String sdt){
 	    *  C'....' EBCDIC/ASCII (rep ''|&& with'|&)
 	    *  C"...." ASCII        (rep ""|''|&& with "|'|&)
 	    *  C!....! EBCDIC       (rep !!|''|&& with !|'|&) 
+	    *  CA'...' ASCII
+	    *  CE'...' EBCDIC
 	    */
+	   boolean ebcdic = true;
 	   int index = 2;
 	   sdt_char_int = 0;
-	   char sdt_quote = sdt.charAt(1);
+	   char sdt_quote = '\'';
+	   char char_type = sdt.substring(1,2).toUpperCase().charAt(0);
+	   switch (char_type){
+	   case 'A': // ASCII
+		   index = 3;
+		   ebcdic = false;
+		   break;
+	   case 'E': // EBCDIC
+		   index = 3;
+		   break;
+	   case '\'': // ASCII or EBCDIC based on opt_ASCII
+	       if (opt_ascii){
+	    	   ebcdic = false;
+	       }
+	       break;
+	   case '"': // ASCII
+		   sdt_quote = '"';
+		   ebcdic = false;
+		   break;
+	   case '!': // EBCDIC
+		   sdt_quote = '!';
+		   break;
+	   }
 	   while (index < sdt.length()-1){
 		   if (sdt.charAt(index) == sdt_quote
 				|| sdt.charAt(index) == '\''
@@ -3460,8 +3486,7 @@ public boolean get_sdt_char_int(String sdt){
 				   }
 			   }
 		   }
-		   if ((opt_ascii && sdt_quote == '\'') //RPI73 
-				|| sdt_quote == '"'){           //RPI5
+		   if (!ebcdic){ //RPI5  RPI 270
 			   sdt_char_int = (sdt_char_int << 8) + (sdt.charAt(index) & 0xff);
 		   } else {
 			   sdt_char_int = (sdt_char_int << 8) + (ascii_to_ebcdic[sdt.charAt(index)] & 0xff);

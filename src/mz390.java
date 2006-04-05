@@ -137,6 +137,7 @@ public  class  mz390 {
     *          if option text.
     * 04/03/06 RPI 268 support AREAD and PUNCH DSNAME=&var
     *          and correct expression parser to stop on &
+    * 04/04/06 RPI 270 support DS/DC/SDT CA and CE
     ********************************************************
     * Global variables
     *****************************************************/
@@ -401,6 +402,7 @@ public  class  mz390 {
     int cur_sym = 0;
     String[] sym_name = new String[max_sym]; 
     char[]   sym_type = (char[])Array.newInstance(char.class,max_sym);
+    char[]   sym_etype = (char[])Array.newInstance(char.class,max_sym); // RPI 270
     int[]    sym_len  = (int[])Array.newInstance(int.class,max_sym);
     /*
      * macro operation global variables
@@ -677,7 +679,7 @@ private void init_mz390(String[] args, JTextArea log_text){
 				  + "|([n|N]['])"                      // N' number of parm subparms (n1,n2,n3)
 				  + "|([t|T]['])"                      // T' type attribute of symbol
   		    	  + "|([bB]['][0|1]+['])"              // B'0110' binary self def. term
-  		    	  +	"|([cC][']([^']|(['][']))*['])"    // C'ABCD' ebcdic or ascii self def. term
+  		    	  +	"|([cC][aAeE]*[']([^']|(['][']))*['])"    // C'ABCD' ebcdic or ascii self def. term // RPI 270
   		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"    // C"ABCD" ascii self def. term   RPI73
   		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"        // C"ABCD" ebcdic self def. term  RPI84
 	    		  +	"|([xX]['][0-9a-fA-F]+['])"        // X'0F'   hex self defining term
@@ -733,7 +735,7 @@ private void init_mz390(String[] args, JTextArea log_text){
 					  + "|([n|N]['])"                           // N' number of parm subparms (n1,n2,n3)
 					  + "|([t|T]['])"                           // T' type attribute of symbol
 	  		    	  + "|([bB]['][0|1]+['])"                   // B'0110' binary self def. term
-	  		    	  +	"|([cC][']([^']|(['][']))*['])"         // C'ABCD' ebcdic or ascii self def. term
+	  		    	  +	"|([cC][aAeE]*[']([^']|(['][']))*['])"         // C'ABCD' ebcdic or ascii self def. term // RPI 270
 	  		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"    // C"ABCD" ascii self def. term   RPI73
 	  		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"         // C"ABCD" ebcdic self def. term  RPI84
 		    		  +	"|([xX]['][0-9a-fA-F]+['])"             // X'0F'   hex self defining term
@@ -2635,7 +2637,7 @@ private void exp_set_next_token(){
 	    	 	}
 	    	 	break;
 	    	 case 'B':
-	   	 	    if (exp_next_op.length() > 2 && exp_next_op.charAt(1) == '\''){
+	   	 	    if (exp_next_op.length() > 2 && exp_next_op.charAt(exp_next_op.length()-1) == '\''){
 	   	            exp_push_sdt(exp_token);
 	   	            exp_var_last = true;
 	    	    } else {
@@ -2645,9 +2647,9 @@ private void exp_set_next_token(){
 	    	 	break;
 	    	 case 'C':
 	    	 	if (exp_next_op.length() > 2 
-	    	 		&& (exp_next_op.charAt(1) == '\''
-	    	 			|| exp_next_op.charAt(1) == '"'    //RPI5
-    	 			    || exp_next_op.charAt(1) == '!')){ //RPI84
+	    	 		&& (exp_next_op.charAt(exp_next_op.length()-1) == '\''      //RPI 270 CA'..' or CE'..'
+	    	 			|| exp_next_op.charAt(exp_next_op.length()-1) == '"'    //RPI5
+    	 			    || exp_next_op.charAt(exp_next_op.length()-1) == '!')){ //RPI84
 	   	            exp_push_sdt(exp_token);
 	   	            exp_var_last = true;
 	    	 	} else {
@@ -4125,9 +4127,9 @@ private void exp_push_sdt(String sdt){
 	    }
 		if (inc_tot_exp_stk_var()
 		    && ((sdt.length() > 1
-		    	 && (sdt.charAt(1) == '\''
-			   	    || sdt.charAt(1) == '"'   //RPI5
-	    		    || sdt.charAt(1) == '!')
+		    	 && (sdt.charAt(sdt.length()-1) == '\'' // RPI 270
+			   	    || sdt.charAt(sdt.length()-1) == '"'   //RPI5
+	    		    || sdt.charAt(sdt.length()-1) == '!')
 	    		 )  //RP84		    	  
 	    		 ||   (sdt.charAt(0) <= '9'
 		        	  && sdt.charAt(0) >= '0')
@@ -4208,6 +4210,13 @@ private void set_sym_type_len(String sym_lab,String sym_op,String sym_parms){
         		 && (parm_char < '0'
         		     || parm_char > '9')){
                  sym_type[cur_sym] = parm_char;
+                 sym_etype[cur_sym] = ' ';
+                 if (parm_index < parm_len -1){
+                	 sym_etype[cur_sym] = get_sym_etype(sym_parms.charAt(parm_index+1));
+                	 if (sym_etype[cur_sym] != ' '){
+                		 parm_index++;
+                	 }
+                 }
                  if (parm_index < parm_len -2
         		      && sym_parms.charAt(parm_index +1) == 'L'){
                 	  // explicit length
@@ -4301,6 +4310,20 @@ private char get_sym_type(String symbol){
 			return 'U';
 		}
 	}
+}
+private char get_sym_etype(char etype){
+	/*
+	 * if etype is AE return it else space
+	 */
+	switch (etype){
+	case 'a':
+	case 'A':
+		return 'A';
+	case 'e':
+	case 'E':
+		return 'E';
+	}
+	return ' ';
 }
 private int get_sym_num_data_len(String data){
 	/*
