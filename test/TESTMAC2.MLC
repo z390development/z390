@@ -5,7 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-* 11/02/05 RPI60 ADD MULT LOGICAL OPERATOR TESTS FOR AND OR NOT
+* 11/02/05 RPI  60 ADD MULT LOGICAL OPERATOR TESTS FOR AND OR NOT
+* 04/07/06 RPI 274 ADD TEST FOR AIF ('A' EQ 'B' AND ('C' EQ 'D')).ERR       
 *********************************************************************
 TESTMAC2 SUBENTRY
          WTO   'TESTMAC2 - TEST CONDITIONAL COMPARES'
@@ -40,6 +41,18 @@ XYZ      TEST  XYZ
 &I       SETA  &I-1
          AGO   .TEST
 .TESTEND WTO   'TESTEND I=&I'
+* TEST COMPLEX AIF
+         MACRO
+         TEST  &MF=I,&SF=I                                               
+         AIF   (&MF EQ 'L' OR('&SF' EQ 'L' AND '&MF(1)' EQ 'E')).ERR         
+         MNOTE 'AIF NO BRANCH OK - MF=&MF SF=&SF'
+         AGO   .SKPERR
+.ERR     MNOTE 12,'AIF BRANCDED TO ERR'
+         SUBEXIT RC=12
+.SKPERR   ANOP
+         MEND
+         TEST
+         WTO   'TESTMAC2 ENDED OK'
          SUBEXIT
          AGO   .EXIT
 .ERR     MNOTE 12,'TESTMAC2 ERROR OCCURRED'

@@ -7,6 +7,7 @@
 *********************************************************************
 * 03/21/06 RPI 253 add test for macro labels starting with ._
 * 03/21/06 RPI 257 add test for * as second operand              
+* 04/07/06 RPI 274 add test for 'c''...''' sdt within strings    
 *********************************************************************
 TESTMAC1 SUBENTRY
          WTO   'TESTMAC1 TEST SUBSTRINGS, '''' (DOUBLE QUOTES), AND &&'
@@ -62,4 +63,7 @@ TESTMAC1 SUBENTRY
 * TEST * AS SECOND OPERAND
 &BC      SETC   'ABC'(2,*)
          MNOTE 'BC=&BC'
+* TEST SDT WITHIN STRING
+&SDT     SETC   'C''X'''
+         MNOTE  'SDT=&SDT'
          END

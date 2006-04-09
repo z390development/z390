@@ -54,6 +54,8 @@ public  class  tz390 {
     * 04/02/06 RPI 264 mz390 and az390 use verify_ascii_source()
     *          and option TEXT for free form text I/O in mz390
     * 04/04/06 RPI 270 support CA'ASCII' or CE'EBCDIC' SDT's
+    * 04/07/06 RPI 274 correct C'.''..' sdt with double quotes
+    *          correct reset of new opsyn's
     ********************************************************
     * Shared z390 tables
     *****************************************************/
@@ -62,7 +64,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.0.13d";  //dsh
+    String version    = "V1.0.13e";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -128,8 +130,11 @@ public  class  tz390 {
     String dir_pch = null; // SYSPCH() mz390 punch output dir
     String dir_prn = null; // SYSPRN() az390 listing
     String dir_obj = null; // SYSOBJ() lz390 object lib
-    boolean opsyn_name_change = false;
-	/*
+    int max_opsyn = 1000;
+    int tot_opsyn = 0;
+    int[]     opsyn_key_index = (int[])Array.newInstance(int.class,max_opsyn);   // opcode key_index
+    int[]     opsyn_reset_value = (int[])Array.newInstance(int.class,max_opsyn); // opcode reset pointer
+    /*
      * ASCII and EBCDIC printable character tables
      */
         int sdt_char_int = 0; // RPI 192 shared character sdt
@@ -3151,6 +3156,7 @@ public int find_key_index(String user_key){
 	 *       b.  "H:BR:" - branch opocodes by hex key
 	 *       c.  "O:" - opcodes by name (init_opcode_name_keys)
 	 *       d.  "P:" - CDE program name lookup
+	 *       e.  "R:" - OPSYN- reset op  RPI 274
 	 */
 	tot_key_search++;
 	key_text = user_key;
@@ -3225,16 +3231,14 @@ public boolean update_key_index(int user_key){
 	key_tab_index[key_index] = user_key;
 	return true;
 }
-public void reset_op_name_index(){
+public void reset_opsyn(){
 	/*
-	 * reset op_code table index if changed
-	 * by opsyn during previous pass.
+	 * reset op_code key table indexes changed
+	 * by opsyn during previous pass if any.
 	 */
 	int index = 0;
-	while (index < op_name.length){
-		if (find_key_index("O:" + op_name[index]) != -1){
-			update_key_index(index); 
-		}
+	while (index < tot_opsyn){
+		key_tab_index[opsyn_key_index[index]] = opsyn_reset_value[index];
 		index++;
 	}
 }
@@ -3399,31 +3403,76 @@ private void set_dir_cur(){  //RPI168
 	 */
 	dir_cur = System.getProperty("user.dir").toUpperCase() + File.separator;
 }
-public boolean opsyn_opcode_update(String new_op,String old_op){
+public boolean update_opsyn(String new_op,String old_op){
 	/*
-	 * update O: opcode index table defining
-	 * new_op as old_op
+	 * update opcode key index table as follows:
+	 * 1.  Add new O:opcode entry if not found
+	 *     and add R: entry indicating it has
+	 *     been added to OPSYN reset list.
+	 * 2.  Add R: entry for existing O: entry
+	 *    op if not found and add to OPSYN list
+	 *
 	 */
+	int op_key_index = 0;    // O: key table index
+	int op_table_index = 0;  // op_code table index or 0
 	int new_index = -1;
 	int old_index = -1;
-	if (old_op != null && old_op.length() > 0){
+	if (old_op != null 
+		&& old_op.length() > 0
+		&& old_op.charAt(0) != ','){
 		old_index = find_key_index("O:" + old_op.toUpperCase());
 	}
 	if (new_op != null && new_op.length() > 0){
 		new_index = find_key_index("O:" + new_op.toUpperCase());
 	} else {
-		return false; // no new op to change
+        // syntax error - no new op to change
+		return false; 
 	}
-	if (new_index > 0){
-		update_key_index(old_index); // replace opcode
-		opsyn_name_change = true;
-		return true;
+	if (new_index >= 0){ // RPI 274
+		// existing O:opcode found
+		if (last_key_op != key_found){
+			return false; // internal key table error
+		}
+		op_key_index = key_index;
+		op_table_index = key_tab_index[key_index];
+		if (old_index == -1){
+			old_index = -2; // indicate cancelled opcode
+		}
+        // replace new opcode key pointer
+		update_key_index(old_index); 
+		// add OPSYN reset table entry
+		return add_opsyn(new_op,op_key_index,op_table_index);
 	} else {
-		if (add_key_index(old_index)){ // add new opcode
-			return true;
+		if (old_index == -1){
+			old_index = -2; // indicate cancelled opcode
+		}
+        // add new O:opcode pointing to old_op
+		if (add_key_index(old_index)){
+            op_key_index = key_index;
+            // add new R: and OPYSN reset list entry
+            return add_opsyn(new_op,op_key_index,0);
 		} else {
 			return false;  // add failed
 		}
+	}
+}
+private boolean add_opsyn(String new_op, int op_key_index,int op_table_index){
+	/*
+	 * add new R: key index and
+	 * OPYSN reset list entry for opcode
+	 */
+	int reset_key_index = find_key_index("R:" + new_op.toUpperCase());
+	if (reset_key_index != -1   
+		|| !add_key_index(0)){
+		return false;  // R: key entry add failed
+	}
+	if (tot_opsyn < max_opsyn){
+		opsyn_key_index[tot_opsyn] = op_key_index;
+		opsyn_reset_value[tot_opsyn] = op_table_index;  
+		tot_opsyn++;
+		return true;
+	} else {
+		return false;
 	}
 }
 public String get_hex(int work_int,int field_length) {
@@ -3477,13 +3526,10 @@ public boolean get_sdt_char_int(String sdt){
 	   while (index < sdt.length()-1){
 		   if (sdt.charAt(index) == sdt_quote
 				|| sdt.charAt(index) == '\''
-				|| sdt.charAt(index) == '&'){
-			   if (index + 1 < sdt.length()-1){
-				   if (sdt.charAt(index+1) == sdt.charAt(index)){
-					   index++;
-				   } else {
-					   return false;
-				   }
+				|| sdt.charAt(index) == '&'){  // RPI 274
+			   if (index + 1 < sdt.length()-1
+				   && sdt.charAt(index+1) == sdt.charAt(index)){
+				   index++;
 			   }
 		   }
 		   if (!ebcdic){ //RPI5  RPI 270

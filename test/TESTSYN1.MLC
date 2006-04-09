@@ -5,6 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 04/07/06 RPI 274 TEST VARIABLE SUBSTITUTION ON OPSYN
+*********************************************************************
 TESTSYN1 SUBENTRY 
          WTO   'TESTSYN1 STARTED'  
 * REPLACE LR X'18' WITH SR X'1B'
@@ -20,6 +22,14 @@ SUBR     OPSYN SR
 SUBR     SUBR  1,2 
          CLI   SUBR,X'1B'
          BNE   ERR
+         MACRO 
+         NEWOP &OLD,&NEW
+&NEW     OPSYN &OLD
+&OLD     OPSYN ,
+         MEND
+         NEWOP AR,ADDREG
+         ADDREG 1,2                
+         LR     3,4
          WTO   'TESTSYN1 ENDED OK'       
          SUBEXIT  
 ERR      ABEND 111,DUMP               

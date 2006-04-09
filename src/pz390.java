@@ -158,6 +158,7 @@ public  class  pz390 {
     * 03/14/06 RPI 228 add CVTDCB OS flags
     * 03/15/06 RPI 229 verify correct even/odd fp pairs
     * 04/05/06 RPI 272 correct MR to only use low 32 bits of r1+1
+    * 04/07/06 RPI 275 correct MLR and ML to only use low 32 bits of r1+1
     ********************************************************
     * Global variables
     *****************************************************/
@@ -3925,7 +3926,7 @@ public void exec_pz390(){
 		     case 0x96:  // 4980 "B996" "MLR" "RRE"
 		     	 psw_check = false;
 		         ins_setup_rre();
-		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1+4,4));
+		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1+12,4)); // RPI 275
 		         big_int2 = new BigInteger(get_log_bytes(reg_byte,rf2+4,4));
 		         big_int1 = big_int1.multiply(big_int2);
                  cvt_big_int_to_work_reg(big_int1,8);
@@ -5091,7 +5092,7 @@ public void exec_pz390(){
 		     case 0x96:  // 6080 "E396" "ML" "RXY"
 		     	 psw_check = false;
 		         ins_setup_rxy();
-		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1+4,4));
+		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1+12,4)); // RPI 275
 		         big_int2 = new BigInteger(get_log_bytes(mem_byte,xbd2_loc,4));
 		         big_int1 = big_int1.multiply(big_int2);
                  cvt_big_int_to_work_reg(big_int1,8);

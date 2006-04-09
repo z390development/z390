@@ -6,6 +6,7 @@
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
 .* 03/28/06 RPI 266 CREATE TESTMAC8.MLC AND TESTMAC8.MAC TEST INLINES
+.* 04/09/06 RPI 274 TEST .EXIT ON NESTED MEND                           
 .*********************************************************************
          MACRO
 &L       TESTMAC8 &P,&K=
@@ -25,8 +26,14 @@
 &A       SETA  &A+1
          AIF   (&A LT 3).LOOP
          MNOTE 'ILM5 L=&L P=&P K=&K A=&A'
-         MEND
+         MNOTE 'TEST .EXIT FOR TESTMAC8 ILM5'
+         AGO   .EXIT
+.EXIT    MEND
 L5       ILM5  P5,K=K5             
-         MEND
+         MNOTE 'TEST .EXIT FOR TESTMAC8 ILM4'
+         AGO   .EXIT
+.EXIT    MEND
 L4       ILM4  P4,K=K4
-         MEND
+         MNOTE 'TEST .EXIT FOR TESTMAC8 MACRO'
+         AGO   .EXIT
+.EXIT    MEND

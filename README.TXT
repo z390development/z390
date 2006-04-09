@@ -1,4 +1,4 @@
-z390 v1.0.13d PTF 04/05/06
+z390 v1.0.13e PTF 04/09/06
 Copyright 2006 Automated Software Tools Corporation
 
 
@@ -75,6 +75,21 @@ support.
 and r2 to form 64 bit product stored in r1 and r1+1.  It was using
 all 64 bits of r1 and r1+1.
 
+
+22. RPI 259 add remaining &SYS global and local system variables for
+compatiblity. See TESTSYS1.
+
+23. RPI 273 correct BAL line number references in error messages.
+See updated TESTERR1.
+
+24. RPI 274 correct macro labels on MEND, C type self defining terms 
+with embedded quotes, cumplex AIF expression with OR(' sequence, 
+non specific USING reference to prior labeled USING, and OPSYN , error.
+See TESTMAC8, TESTMAC1, TESTMAC2, TESTUSE1, and TESTSYN1.
+
+25, RPI 275 correct ML and MLR to only use low 32 bits of r1+1.
+See updated TESTINS2.
+ 
 To install PTF follow these steps.
 
 1.  Copy the z390.jar file into install directory for z390
@@ -96,6 +111,7 @@ TESTERR2.MLC - test invalid label errors
 TESTDC1.MLC  - test DC support of fields without data for alignment
 TESTINS2.MLC - test instructions
 TESTMAC1.MLC - test macro labels starting with _  and * as substring len
+TESTMAC2.MLC - test complex AIF expression with OR(' sequence
 TESTMAC6.MLC - test updated to test keyword with spec. characters
 TESTMAC8.MLC - test inline macros in open source and macro files
 TESTMAC8.MAC - test inline macros in macro files
@@ -105,5 +121,6 @@ TESTTST1.TF1 - test the interactive TEST mode using batch driver file
 TESTTST1.MLC - test the interactive TEST mode using batch driver file 
 TESTTXT1.MLC - test TEXT option to create 2 HTML souce files
 TESTUSE1.MLC - test USING and DROP
+TESTSYN1.MLC - test OPSYN with , to cancel opcode
 
 Visit www.z390.org for more information on latest updates.

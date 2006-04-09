@@ -6,6 +6,7 @@
 * Date   - 09/30/05                                                 *
 *********************************************************************
 * 01/27/06 RPI192 test correctly handling of && in strings
+* 04/06/06 RPI259 add remaining HLASM system variables for compat.
 *********************************************************************
 TESTSYS1 SUBENTRY 
          WTO   'TESTSYS1 STARTED'  
@@ -65,6 +66,38 @@ TESTSYS1 CSECT
          MEND
          TESTA
          TESTB
+* TEST REMAINING SYSTEM VARIABLES ADDED FOR COMPATIBLITY
+           MNOTE '&&SYSADATA_DSN=&SYSADATA_DSN' 
+           MNOTE '&&SYSADATA_MEMBER=&SYSADATA_MEMBER'
+           MNOTE '&&SYSADATA_VOLUME=&SYSADATA_VOLUME'
+           MNOTE '&&SYSIN_DSN=&SYSIN_DSN' 
+           MNOTE '&&SYSIN_MEMBER=&SYSIN_MEMBER'
+           MNOTE '&&SYSIN_VOLUME=&SYSIN_VOLUME'
+           MNOTE '&&SYSJOB=&SYSJOB'
+           MNOTE '&&SYSLIB_DSN=&SYSLIB_DSN'
+           MNOTE '&&SYSLIB_MEMBER=&SYSLIB_MEMBER' 
+           MNOTE '&&SYSLIB_VOLUME=&SYSLIB_VOLUME' 
+           MNOTE '&&SYSLIN_DSN=&SYSLIN_DSN'
+           MNOTE '&&SYSLIN_MEMBER=&SYSLIN_MEMBER' 
+           MNOTE '&&SYSLIN_VOLUME=&SYSLIN_VOLUME' 
+           MNOTE '&&SYSM_HSEV=&SYSM_HSEV'
+           MNOTE '&&SYSM_SEV=&SYSM_SEV'
+           MNOTE '&&SYSOPT_DBCS=&SYSOPT_DBCS'
+           MNOTE '&&SYSOPT_OPTABLE=&SYSOPT_OPTABLE'
+           MNOTE '&&SYSOPT_RENT=&SYSOPT_RENT'
+           MNOTE '&&SYSOPT_XOBJECT=&SYSOPT_XOBJECT'
+           MNOTE '&&SYSPRINT_DSN=&SYSPRINT_DSN'
+           MNOTE '&&SYSPRINT_MEMBER=&SYSPRINT_MEMBER' 
+           MNOTE '&&SYSPRINT_VOLUME=&SYSPRINT_VOLUME' 
+           MNOTE '&&SYSPUNCH_DSN=&SYSPUNCH_DSN'
+           MNOTE '&&SYSPUNCH_MEMBER=&SYSPUNCH_MEMBER' 
+           MNOTE '&&SYSPUNCH_VOLUME=&SYSPUNCH_VOLUME' 
+           MNOTE '&&SYSSEQF=&SYSSEQF'
+           MNOTE '&&SYSSTEP=&SYSSTEP'
+           MNOTE '&&SYSSTMT=&SYSSTMT'
+           MNOTE '&&SYSTERM_DSN=&SYSTERM_DSN'
+           MNOTE '&&SYSTERM_MEMBER=&SYSTERM_MEMBER'
+           MNOTE '&&SYSTERM_VOLUME=&SYSTERM_VOLUME'
          WTO   'TESTSYS1 ENDED OK'       
          SUBEXIT                 
          END                        

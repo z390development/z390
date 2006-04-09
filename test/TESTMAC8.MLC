@@ -6,6 +6,7 @@
 * Date   - 09/30/05                                                 *
 *********************************************************************
 * 03/28/06 RPI 266 CREATE TESTMAC8.MLC AND TESTMAC8.MAC TEST INLINES
+* 04/09/06 RPI 274 TEST .EXIT ON NESTED MENDS/END                    
 *********************************************************************
 TESTMAC8 SUBENTRY
          WTO   'TESTMAC8 - TEST INLINE MACROS WITHIN MACROS'
@@ -21,11 +22,16 @@ TESTMAC8 SUBENTRY
 &A       SETA  &A+1
          AIF   (&A LT 3).LOOP
          MNOTE 'ILM2 L=&L P=&P K=&K A=&A'
-         MEND
+         MNOTE 'TEST .EXIT FOR ILM2'
+         AGO   .EXIT
+.EXIT    MEND
 L2       ILM2  P2,K=K2             
-         MEND
+         MNOTE 'TEST .EXIT FOR ILM1'
+         AGO   .EXIT
+.EXIT    MEND
 L1       ILM1  P1,K=K1
 L3       TESTMAC8 P3,K=K3 TEST EXTERNAL MACRO WITH INLINE MACROS
          WTO   'TESTMAC8 ENDED OK'
          SUBEXIT
-         END
+         MNOTE 'TEST .EXIT FOR MLC ON END'
+.EXIT    END

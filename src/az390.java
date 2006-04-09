@@ -150,6 +150,7 @@ public  class  az390 {
     * 04/02/06 RPI 264 repeat passes at least twice to
     *          try and resolve errors even if at max.
     * 04/04/06 RPI 270 support DS/DC/SDT CA, CB, AD, FD, VD
+    * 04/06/06 RPI 274 support dependent USING ref to DSECT base
     *****************************************************
     * Global variables
     *****************************************************/
@@ -778,9 +779,7 @@ private void resolve_symbols(){
 	 * passes are reached.
 	 */
 	reset_lits();
-	if (tz390.opsyn_name_change){
-		tz390.reset_op_name_index();
-	}
+	tz390.reset_opsyn();
     if  (az390_errors > 0){
     	 int prev_az390_errors = az390_errors + 1;
     	 while (cur_pass < max_pass 
@@ -795,12 +794,7 @@ private void resolve_symbols(){
     	 	 cur_pass++;
     	     update_symbols();
     		 reset_lits();
-    		 if (tz390.opsyn_name_change){
-    			tz390.reset_op_name_index();
-    		 }
-             if (tz390.opt_tracea){
-             	put_log("TRACE SYMBOL UPDATE PASS " + cur_pass + " TOTAL ERRORS = " + az390_errors);
-             }
+    		 tz390.reset_opsyn();
          }
     	 az390_errors = 0;
     }
@@ -825,7 +819,7 @@ private void update_symbols(){
 	               bal_line = bal_name_line[bal_line_index];
 	               parse_bal_line();
 	               bal_op_index = find_bal_op();
-	               if (bal_op_index != -1){
+	               if (bal_op_index > -1){  // RPI 274
 	           	      process_bal_op();    
 	               }
 			       bal_line_index++;
@@ -1002,7 +996,7 @@ private void gen_obj_text(){
               bal_line = bal_name_line[bal_line_index];
               parse_bal_line();
               bal_op_index = find_bal_op();
-              if (bal_op_index != -1){
+              if (bal_op_index > -1){  // RPI 274 OPYSN cancel -2
           	     process_bal_op();    
               }
 		       bal_line_index++;
@@ -1695,7 +1689,10 @@ private void process_bal_op(){
     	bal_op_ok = true;
     	opsyn_label = bal_label;  // save opsyn target
     	bal_label = null;         // reset to avoid dup. label
-    	tz390.opsyn_opcode_update(opsyn_label,bal_parms);
+    	if (tz390.opt_traceall){
+    		put_log("TRACE OPSYN NEW=" + opsyn_label + " OLD=" + bal_parms);
+    	}
+    	tz390.update_opsyn(opsyn_label,bal_parms);
     	break;
     case 135:  // END 0 
     	bal_op_ok = true;
@@ -2110,12 +2107,10 @@ private void load_bal(){
 		get_bal_line();
 		while (!bal_eof && bal_line != null
 				&& tot_bal_line < max_bal_line){
-			bal_line_index = tot_bal_line;
-			bal_name_line[tot_bal_line] = bal_line;
-			bal_line_num[tot_bal_line] = cur_line_num;
+            save_bal_line();
 			parse_bal_line();
             bal_op_index = find_bal_op();
-            if (bal_op_index != -1){
+            if (bal_op_index > -1){ // RPI 274 OPSYN cancel
 	           	process_bal_op();    
 	        }
 			if  (bal_line != null){
@@ -2144,6 +2139,7 @@ private void get_bal_line(){
     try {
         temp_line = bal_file_buff.readLine();
         cur_line_num++;
+        save_bal_line(); // RPI 274
     	if  (temp_line == null){
     			bal_line = null;
    		} else if (tz390.opt_text // RPI 264 
@@ -2170,6 +2166,7 @@ private void get_bal_line(){
             	    	temp_line = trim_line(temp_line); //RPI124
             	    }
             	    cur_line_num++;
+            	    save_bal_line(); // RPI 274
             	    if  (temp_line.length() >= 16
             	    	&& temp_line.substring(0,15).equals("               ")){ // RPI167
             	    	int temp_end = temp_line.length();
@@ -2184,6 +2181,14 @@ private void get_bal_line(){
     } catch (IOException e){
        	abort_error(9,"I/O error on file read " + e.toString());
     }
+}
+private void save_bal_line(){
+	/* 
+	 * save bal line during loading for log_error use
+	 */
+	bal_line_index = tot_bal_line;
+	bal_name_line[tot_bal_line] = bal_line;
+	bal_line_num[tot_bal_line] = cur_line_num;
 }
 private void parse_bal_line(){
 	/*
@@ -2236,6 +2241,7 @@ private int find_bal_op(){
 	/*
 	 * return index of bal operation 
 	 * or return -1 if undefined operation
+	 * or return -2 if cancelled OPSYN
 	 * 
 	 * return 0 for comments
 	 */
@@ -2243,7 +2249,7 @@ private int find_bal_op(){
 	if  (bal_op != null 
 		 && bal_op.length() > 0){
 		index = tz390.find_key_index("O:" + bal_op);
-		if (index != -1){
+		if (index > -1){ // RPI 274 OPYSN cancel
 			return index;
 		}
 	    log_error(29,"undefined operation code - " + bal_op);
@@ -3884,7 +3890,8 @@ private void get_use_domain(){
 			if (exp_type == sym_sdt){
 				cur_use_reg = exp_val;
 			} else if (exp_type == sym_rel
-					   || exp_type == sym_cst){
+					   || exp_type == sym_cst
+					   || exp_type == sym_dst){ // RPI 274
 				cur_use_depend =true;
 				hex_bddd = get_exp_bddd();
 			}
@@ -4420,11 +4427,8 @@ private String get_exp_bddd(){
 	int index = cur_use_start;
 	while (index < cur_use_end){
 		if (use_base_esd[index] == exp_esd
-			&& ((exp_use_lab == null 
-				 && use_lab[index].length() == 0)
-				||(exp_use_lab != null 
-				   && use_lab[index].equals(exp_use_lab))
-				)
+			&& (exp_use_lab == null 
+				|| use_lab[index].equals(exp_use_lab))  // RPI 274
 			){
 			test_offset = exp_val - use_base_loc[index];
 			if (test_offset < cur_use_reg_loc

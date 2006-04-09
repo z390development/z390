@@ -138,6 +138,12 @@ public  class  mz390 {
     * 04/03/06 RPI 268 support AREAD and PUNCH DSNAME=&var
     *          and correct expression parser to stop on &
     * 04/04/06 RPI 270 support DS/DC/SDT CA and CE
+    * 04/06/06 RPI 259 add remaining &SYS variables for compatiblity
+    * 04/07/06 RPI 274 correct exp_pat for C'..' in quotes
+    *          and correct ?' parsing within string.  Also 
+    *          correct precedence for (' operator from 8 to 3
+    *          correct variable substitution on OPSYN
+    *          correct support for macro labels on nested MEND
     ********************************************************
     * Global variables
     *****************************************************/
@@ -381,9 +387,18 @@ public  class  mz390 {
      * define global gbla, gblb, gblc, and system
      * predefined globals
      */
-    int gbl_sysclock_index = 0; // YYYY-MM-DD HH:MM:SS.mmmmmm
-    int gbl_sysmac_index = 0;   // macro name at specified level
+    int    gbl_sysclock_index = 0; // YYYY-MM-DD HH:MM:SS.mmmmmm
+    int    gbl_sysmac_index = 0;   // macro name at specified level
     String gbl_sysmac  = "";
+    int    gbl_syslib_index = 0;  // syslib current macro dsn, mem=+1, vol=+2
+    int    gbl_sysm_hsev_index = 0;  // highest mnote severity code      
+    int    gbl_sysm_sev_index = 0;   // highest mnote severity in last macro     
+    int    gbl_sysstmt_index = 0;    // next MLC statement number
+    File sys_file = null; // RPI 259
+    String sys_job = null; // set to MLC filename without suffix
+    String sys_dsn = null; // full path, file name, and suffix
+    String sys_mem = null; // file name and suffix
+    String sys_vol = null; // drive letter
     int tot_gbl_name = 0;
     int tot_gbl_seta = 0;
     int tot_gbl_setb = 0;
@@ -509,7 +524,7 @@ public  class  mz390 {
           int[] exp_action = {  
            1, 3, 3, 1, 0, 1, 1, 8, 1, 3, 1, 1, 1, 1, 3, // 1 +-  prev add/sub
            2, 2, 3, 2, 0, 2, 2, 8, 2, 3, 2, 2, 2, 2, 3, // 2 * / prev mpy/div  RPI 214
-           3, 3, 3, 4, 3, 0, 3, 8, 0, 3, 3, 3, 3, 3, 3, // 3 (   prev open (...)
+           3, 3, 3, 4, 3, 0, 3, 3, 0, 3, 3, 3, 3, 3, 3, // 3 (   prev open (...) RPI 274
            3, 3, 3,11, 0, 0, 0, 8,11, 0, 3, 3, 3, 3, 0, // 4 )   prev var subscript
 		   0, 0, 3, 5, 5, 5, 5, 8, 0, 3, 0, 0, 0, 0, 3, // 5 .   prev concat
            3, 3, 3, 6, 3, 6, 3, 8, 3, 3, 3, 3, 3, 3, 3, // 6 ~   prev terminator
@@ -616,8 +631,18 @@ private void init_mz390(String[] args, JTextArea log_text){
         if (!tz390.init_opcode_name_keys()){
         	abort_error(118,"opcode key table error - aborting");
         }
-        init_gbl_sys();
+		open_files();
+        compile_patterns();
         tod_time_limit = max_time_seconds * 1000 + tod_start;
+		put_copyright();
+        init_gbl_sys();
+}
+private void compile_patterns(){
+	/*
+	 * init regular expression patterns
+	 * and issue error if failure
+	 * 
+	 */
         /*
          * var_pattern used for finding and replacing       
          * scalar, subscripted, and crated &variables
@@ -679,9 +704,9 @@ private void init_mz390(String[] args, JTextArea log_text){
 				  + "|([n|N]['])"                      // N' number of parm subparms (n1,n2,n3)
 				  + "|([t|T]['])"                      // T' type attribute of symbol
   		    	  + "|([bB]['][0|1]+['])"              // B'0110' binary self def. term
-  		    	  +	"|([cC][aAeE]*[']([^']|(['][']))*['])"    // C'ABCD' ebcdic or ascii self def. term // RPI 270
-  		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"    // C"ABCD" ascii self def. term   RPI73
-  		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"        // C"ABCD" ebcdic self def. term  RPI84
+  		    	  +	"|([cC][aAeE]*[']([^']|(['][']))+['])"    // C'ABCD' ebcdic or ascii self def. term // RPI 270, 274
+  		    	  +	"|([cC][\"]([^\"]|([\"][\"]))+[\"])"    // C"ABCD" ascii self def. term   RPI73, 274
+  		    	  +	"|([cC][!]([^!]|([!][!]))+[!])"        // C"ABCD" ebcdic self def. term  RPI84, 274
 	    		  +	"|([xX]['][0-9a-fA-F]+['])"        // X'0F'   hex self defining term
 				  + "|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"   // symbol or logical operator (AND, OR, XOR, NOT, GT, LT etc.) // RPI 253
 				  + "|([^',()\\s]+)"   // RPI 223, RPI 250                  // any other text
@@ -735,9 +760,9 @@ private void init_mz390(String[] args, JTextArea log_text){
 					  + "|([n|N]['])"                           // N' number of parm subparms (n1,n2,n3)
 					  + "|([t|T]['])"                           // T' type attribute of symbol
 	  		    	  + "|([bB]['][0|1]+['])"                   // B'0110' binary self def. term
-	  		    	  +	"|([cC][aAeE]*[']([^']|(['][']))*['])"         // C'ABCD' ebcdic or ascii self def. term // RPI 270
-	  		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"    // C"ABCD" ascii self def. term   RPI73
-	  		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"         // C"ABCD" ebcdic self def. term  RPI84
+	  		    	  +	"|([cC][aAeE]*[']([^']|(['][']))+['])"         // C'ABCD' ebcdic or ascii self def. term // RPI 270, 274
+	  		    	  +	"|([cC][\"]([^\"]|([\"][\"]))+[\"])"    // C"ABCD" ascii self def. term   RPI73, 274
+	  		    	  +	"|([cC][!]([^!]|([!][!]))+[!])"         // C"ABCD" ebcdic self def. term  RPI84, 274
 		    		  +	"|([xX]['][0-9a-fA-F]+['])"             // X'0F'   hex self defining term
 					  + "|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"       // symbol or logical operator (AND, OR, XOR, NOT, GT, LT etc.)
 					  + "|([^'&]+)"  // RPI 268                            // string text
@@ -749,8 +774,6 @@ private void init_mz390(String[] args, JTextArea log_text){
                /*
                 * open MLC and BAL files
                 */
-		 open_files();
-		 put_copyright();
 }
 private void open_files(){
 	/*
@@ -796,6 +819,7 @@ private void process_mac(){
 		         if (mac_call_level >= 0){
 		         	  mac_name_index = mac_call_name_index[mac_call_level];
 		           	  mac_line_index = mac_call_return[mac_call_level];
+		           	  update_sysstmt();
 		           	  actr_count     = mac_call_actr[mac_call_level];
 		              tot_pos_parm = mac_call_pos_start[mac_call_level + 1];
 		              tot_kwd_parm = mac_call_kwd_start[mac_call_level + 1];
@@ -816,7 +840,7 @@ private void process_mac(){
 	               bal_line = mac_file_line[mac_line_index];
 	               parse_bal_line();
 	               mac_op_index = find_mac_op();
-	               if (mac_op_index != -1){
+	               if (mac_op_index > -1){  // RPI 274 -2 for OPSYN cancel
 	           	      exec_mac_op();      // execute macro operation
        		          bal_line = null;    // force macro execution cycle
 	               } else if (bal_op != null) {
@@ -842,6 +866,7 @@ private void process_mac(){
 	           	      }
 	               }		   
 			       mac_line_index++;
+			       update_sysstmt();
 	          }
 		      if   (bal_line != null){
 		    	   if (tz390.opt_tracem){
@@ -891,7 +916,6 @@ private void load_mac(){
 	 */
 	tot_mac_load++;
 	cur_mac_file = 0;
-	cur_mac_line_num = 0;
 	load_macro_mend_level = 0;
 	load_proto_index = 0;
 	load_macro_name = "";
@@ -899,23 +923,32 @@ private void load_mac(){
 	int save_mac_line_index = mac_line_index;
     switch (load_type){
     case 0: // MLC
+    	cur_mac_line_num = 0;
     	load_open_macro_file();
     	load_macro_mend_level = 1; // no macro statement
     	mac_line_index = tot_mac_line;
     	break;
     case 1: // macro file
+    	cur_mac_line_num = 0;
     	load_open_macro_file();
     	load_macro_mend_level = 0; // read macro from file
     	mac_line_index = tot_mac_line;
     	break;
     case 2: // macro inline
     	mac_line_index++; // skip macro statement
+    	update_sysstmt();
+    	cur_mac_line_num = mac_file_line_num[mac_line_index];
     	if (tz390.opt_tracem){
     		put_log("TRACE LOADING INLINE MACRO");
     	}
     	load_macro_mend_level = 1; // macro statment read inline
     	load_mac_inline_end = mac_name_line_end[mac_name_index];
     	break;
+    }
+    if (load_type != load_mlc_file){
+    	load_proto_type = false;
+    } else {
+    	load_proto_type = true; // none for mlc
     }
 	load_get_mac_line();
 	while (mac_line != null
@@ -925,28 +958,29 @@ private void load_mac(){
 			    && (mac_line.length() < 2
 				    || !mac_line.substring(0,2).equals(".*"))
 				){
-				mac_file_line[mac_line_index]     = mac_line;
-				mac_file_name_num[mac_line_index] = cur_mac_file_num;
-				mac_file_line_num[mac_line_index] = cur_mac_line_num;
+				store_mac_line(); // RPI 273 update now for any cont. error
 			}
-		}
-		load_proto_type = false;
-		if (mac_op != null && mac_op.length() > 0){
-			load_macro_mend_proto_type();
-		    if (load_macro_mend_level == 1){ 
-                  load_macro_ago_aif_refs();
-		    }
-		}
-	    if  (load_macro_mend_level <= 1
-		    	&& !load_proto_type // skip prototype
-		    	&& mac_label != null
-		    	&& mac_label.length() > 0){
-		    	load_macro_label_sym();
-		}
-   	    if (load_macro_mend_level == 0
-      		&& load_type != load_mlc_file
-      		&& load_proto_index != 0){
-     		 mac_line = null; // eof at level 0 for macro
+			if (mac_op != null && mac_op.length() > 0){
+				if (mac_op.equals("MACRO")){
+					load_macro_mend_level++;
+				} else {
+					if (load_macro_mend_level == 1){
+						if (!load_proto_type){
+							load_proto_type();
+						} else {	
+							load_macro_ago_aif_refs();
+							load_macro_label_sym();
+						}
+					}
+					if (mac_op.equals("MEND")){
+						load_macro_mend_level--;
+					}
+			        if (load_macro_mend_level == 0
+			        	&& load_type != load_mlc_file){
+			        	mac_line = null; // eof at level 0 for macro
+			        }
+			    }
+			}
      	}
 		if  (mac_line != null){
 			if (load_type == load_mac_inline
@@ -960,6 +994,7 @@ private void load_mac(){
 		            )
 				){    
 				mac_line_index++;
+				update_sysstmt();
 			}
 			load_get_mac_line();
 		}
@@ -975,6 +1010,7 @@ private void load_mac(){
 		tot_mac_line = mac_line_index;
 		mac_name_line_end[mac_name_index] = tot_mac_line;
 		mac_line_index = save_mac_line_index;
+		update_sysstmt();
 		break;
 	case 1: // macro file
 	    if (load_macro_mend_level != 0){
@@ -983,6 +1019,7 @@ private void load_mac(){
 		tot_mac_line = mac_line_index;
 		mac_name_line_end[mac_name_index] = tot_mac_line;
 		mac_line_index = save_mac_line_index;
+		update_sysstmt();
 		break;
 	case 2: // inline macro file
 	    if (load_macro_mend_level != 0){
@@ -1023,21 +1060,12 @@ private void load_open_macro_file(){
 		put_log("TRACE LOADING " + load_file_name);
 	}
 }
-private void load_macro_mend_proto_type(){
+private void load_proto_type(){
 	/* 
-	 * process macro, mend, and proto-type
+	 * process proto-type
 	 * during loading of MLC or macro
 	 */
-     if (mac_op.equals("MACRO")){
-    	 load_macro_mend_level++;
-     } else if (mac_op.equals("MEND")){
-    	 load_macro_mend_level--;
-     } else if (load_type != load_mlc_file 
-		 	   && load_proto_index == 0
-    		   && load_macro_mend_level == 1
-    		   && mac_op != null
-               ){ // process proto-type
-    	 load_proto_type = true;
+     	 load_proto_type = true;
 		 load_proto_index = mac_line_index;
 		 mac_name_line_start[mac_name_index] = mac_line_index;
     	 if (load_type == load_mac_file){
@@ -1068,7 +1096,6 @@ private void load_macro_mend_proto_type(){
 			   mac_name_line_start[mac_name_index] = load_proto_index;
 			   mac_name_lab_start[mac_name_index] = tot_mac_lab;
 		 }
-	 }
 }
 private void load_macro_ago_aif_refs(){
 	/*
@@ -1243,6 +1270,7 @@ private void load_get_mac_line(){
     		retry = false;  
     		temp_line = mac_file_buff[cur_mac_file].readLine();
             cur_mac_line_num++;
+            store_mac_line(); // RPI 273 update now for any cont. error
             if (temp_line == null){
             	mac_file_buff[cur_mac_file].close();
             	cur_mac_file--;
@@ -1275,6 +1303,7 @@ private void load_get_mac_line(){
             		&& temp_line.charAt(71) > asc_space_char){ //RPI181
             	    temp_line = mac_file_buff[cur_mac_file].readLine();
                     cur_mac_line_num++;
+                    store_mac_line(); // RPI 273 update now for any cont. error
             	    if (temp_line == null){
             	    	abort_error(139,"missing continuation line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
             	    }
@@ -1300,6 +1329,25 @@ private void load_get_mac_line(){
        	abort_error(29,"I/O error on file read " + e.toString());
     }
     parse_mac_line();
+}
+private void store_mac_line(){   // RPI 274
+	/* 
+	 * save mac_line during input log_error use
+	 * and update &SYSSTMT
+	 */
+	mac_file_line[mac_line_index]     = mac_line;
+	mac_file_name_num[mac_line_index] = cur_mac_file_num;
+	mac_file_line_num[mac_line_index] = cur_mac_line_num;
+	update_sysstmt();
+}
+private void update_sysstmt(){
+	/*
+	 * update current macro statement line
+	 * system variable &sysstmt after
+	 * each line change during loading
+	 * and execution.
+	 */
+	gbl_seta[gbl_sysstmt_index] = mac_file_line_num[mac_line_index];
 }
 private void parse_mac_line(){
 	/*
@@ -1351,7 +1399,11 @@ private void open_mac_copy_file(){
 		try {
 			if (loading_mlc){
 		       mac_file_buff[cur_mac_file] = new BufferedReader(new FileReader(mac_file[cur_mac_file]));
-			   set_mac_file_num();
+		       set_sys_dsn_mem_vol(mac_file[cur_mac_file].getCanonicalPath()); // RPI 259
+		       gbl_setc[gbl_syslib_index] = sys_dsn;
+		       gbl_setc[gbl_syslib_index+1] = sys_mem;
+		       gbl_setc[gbl_syslib_index+2] = sys_vol;
+		       set_mac_file_num();
 			   mac_file_cur_line_num[cur_mac_file - 1] = cur_mac_line_num;
 			   cur_mac_line_num = 0;
 			} else {
@@ -1458,7 +1510,7 @@ private void parse_bal_line(){
 	}
 	split_bal_line();
 	int index = find_mac_op();
-    if  (index == -1){ 
+    if  (index <= -1){  // RPI 274 OPSYN cancel -2 
     	bal_line = replace_vars(bal_line,true);
     	if (exp_var_replacement_change){
     		split_bal_line();
@@ -1743,6 +1795,8 @@ private int find_mac_op(){
 	 * Notes:
 	 *   1.  tz390 opcode table used to find
 	 *       mz390 opcodes over 200.
+	 *   2.  Return 0 for comment 
+	 *   3.  Return -2 for OPSYN cancel
 	 */
 	if (bal_op == null || bal_op.length() == 0){
 		return -1;
@@ -1776,6 +1830,7 @@ private void exec_mac_op(){
     		mac_line_index = old_mac_line_index;
     		abort_error(16,mac_name[mac_name_index] + " undefined " + bal_parms);
     	}
+    	update_sysstmt();
     	break;
     case 203:  // AIF  
        	bal_op_ok = true;
@@ -1783,10 +1838,18 @@ private void exec_mac_op(){
 		    actr_count--;
 		    old_mac_line_index = mac_line_index;
     		mac_line_index = get_label_index(bal_parms.substring(exp_next_index));
-        	if (mac_line_index <= 0){
+    		if (mac_line_index <= 0){
         		mac_line_index = old_mac_line_index;
         		abort_error(16,"macro label not found - " + bal_parms.substring(exp_next_index));
         	}
+    		if (tz390.opt_traceall){
+    		   put_log("TRACE AIF BRANCH");
+    		}
+    		update_sysstmt();
+    	} else {
+       		if (tz390.opt_traceall){
+     		   put_log("TRACE AIF  NO BRANCH");
+     		}
     	}
     	break;
     case 204:  // AINSERT
@@ -1850,8 +1913,11 @@ private void exec_mac_op(){
             && bal_parms.charAt(0) != '*'){
             mnote_level = calc_seta_exp(bal_parms,0);
     	}
-    	if (mnote_level > max_mnote_level){
-    		max_mnote_level = mnote_level;
+    	if (mnote_level > gbl_seta[gbl_sysm_hsev_index]){
+    		gbl_seta[gbl_sysm_hsev_index] = mnote_level;
+    	}
+    	if (mnote_level > gbl_seta[gbl_sysm_sev_index]){
+    		gbl_seta[gbl_sysm_sev_index] = mnote_level;
     	}
     	put_bal_line(bal_line);
     	break;
@@ -1928,6 +1994,7 @@ private void exec_mac_op(){
     	break;
     case 222:  // MEXIT 
     	mac_line_index = mac_name_line_end[mac_call_name_index[mac_call_level]] - 1;
+    	
     	bal_op_ok = true;
     	break;
     case 223:  // PUNCH
@@ -1946,8 +2013,9 @@ private void exec_mac_op(){
     	break;
     case 225:  // OPSYN
     	bal_op_ok = true;
+    	bal_line = replace_vars(bal_line,false); // RPI 274
     	put_bal_line(bal_line);
-    	tz390.opsyn_opcode_update(bal_label,bal_parms);
+    	tz390.update_opsyn(bal_label,bal_parms);
     	break;
 	default: 
 	  	 abort_error(68,"invalid case index - " + mac_op_index);
@@ -2532,11 +2600,9 @@ private void exp_set_next_op(){
             //	if ?' then split into last char and end quote
 	    	if (exp_token.length() >= 2 && exp_token.charAt(1) == '\''){ 
 	    		exp_stk_setc[tot_exp_stk_var - 1] = exp_stk_setc[tot_exp_stk_var - 1].concat(exp_token.substring(0,1));
-	    		exp_next_class = exp_class_str_sub1;
-	    		if (exp_token.length() > 2){  //RPI129
-	    			exp_start_index = exp_start_index + exp_next_index - exp_token.length() + 2;
-	    			exp_match = exp_pattern.matcher(exp_text.substring(exp_start_index));
-	    		}
+    			exp_start_index = exp_next_index - exp_token.length() + 1;  // RPI 274
+    			exp_match = exp_pattern.matcher(exp_text.substring(exp_start_index));
+    			exp_var_last = true;
 	    	} else { // concatenate token string chars
 	    	    exp_stk_setc[tot_exp_stk_var - 1] = exp_stk_setc[tot_exp_stk_var - 1].concat(exp_token);
 	    	    exp_var_last = true;
@@ -2610,7 +2676,7 @@ private void exp_set_next_token(){
 	       case '\t':  //tab
 	       case '\r':  //cr
 	       case '\n':  //lf
-	       	exp_next_index--; //RPI181 backup to space
+	    	   exp_next_index--; //RPI181 backup to space
 	       case '~':
 	        if (exp_level == 0){ // not string or subscript
                exp_set_term_op();
@@ -2708,7 +2774,7 @@ private void exp_set_next_token(){
 	    	 	}
 	    	 	break;
 	    	 case 'L':
-	    	 	if (exp_next_op.equals("LE")){
+	            if (exp_next_op.equals("LE")){
 	    	 		exp_next_class = exp_class_comp;
 	    	 	} else if (exp_next_op.equals("LT")){
 	    	 		exp_next_class = exp_class_comp;
@@ -2894,6 +2960,9 @@ private void exp_perform_op(){
     	break;
     case 12: // prefix operator ?'
     	exp_pop_op();
+		   if (tz390.opt_traceall){
+			   put_log("TRACE PREFIX OP=" + exp_prev_op);
+		   }
     	switch (exp_prev_first){
     	case 'D': // DOUBLE
     		if (tot_exp_stk_var > 0){
@@ -3036,6 +3105,9 @@ private void exp_add(){
 	 * and pop the top stack value off
 	 */
 	get_seta_stack_values();
+	if (tz390.opt_traceall){
+		put_log("TRACE ADD " + seta_value1 + " + " + seta_value2);
+	}
 	seta_value1 = seta_value1 + seta_value2;
 	put_seta_stack_var();
 }
@@ -3044,6 +3116,9 @@ private void exp_sub(){
 	 * and pop the top stack value off
 	 */
 	get_seta_stack_values();
+	if (tz390.opt_traceall){
+		put_log("TRACE SUB " + seta_value1 + " - " + seta_value2);
+	}
 	seta_value1 = seta_value1 - seta_value2;
 	put_seta_stack_var();
 }
@@ -3052,6 +3127,9 @@ private void exp_mpy(){
 	 * and pop the top stack value off
 	 */
 	get_seta_stack_values();
+	if (tz390.opt_traceall){
+		put_log("TRACE MPY " + seta_value1 + " * " + seta_value2);
+	}
 	seta_value1 = seta_value1 * seta_value2;
 	put_seta_stack_var();
 }
@@ -3060,6 +3138,9 @@ private void exp_div(){
 	 * and pop the top stack value off
 	 */
 	get_seta_stack_values();
+	if (tz390.opt_traceall){
+		put_log("TRACE DIV " + seta_value1 + " / " + seta_value2);
+	}
 	if (seta_value2 != 0){
 	    seta_value1 = seta_value1 / seta_value2;
 	} else {
@@ -3084,6 +3165,9 @@ private void exp_str_index(){
 	 * second string within the first string
 	 */
 	get_setc_stack_values();
+	if (tz390.opt_traceall){
+		put_log("TRACE INDEX " + setc_value1 + " IN " + setc_value2);
+	}
 	int str1_len = setc_value1.length();
 	int str2_len = setc_value2.length();
 	seta_value1 = 0;
@@ -3112,6 +3196,9 @@ private void exp_str_find(){
 	 * in str2 found in str1
 	 */
 	get_setc_stack_values();
+	if (tz390.opt_traceall){
+		put_log("TRACE FIND " + setc_value1 + " IN " + setc_value2);
+	}
 	int str1_len = setc_value1.length();
 	int str2_len = setc_value2.length();
 	seta_value1 = 0;
@@ -3359,6 +3446,9 @@ private void exp_not(){
 	/*
 	 * perform logical not operation on stk var
 	 */
+	   if (tz390.opt_traceall){
+		   put_log("TRACE NOT");
+	   }
 	if (tot_exp_stk_var > 0){
 	   switch (exp_stk_type[tot_exp_stk_var - 1]){
 	   case 1: // not seta
@@ -3385,10 +3475,12 @@ private void exp_and(){
 	/*
 	 * perform logical and operation on stk vars
 	 */
-
 	if (tot_exp_stk_var > 1){
 	   seta_value1 = get_seta_stack_value(-2);
 	   seta_value2 = get_seta_stack_value(-1);
+	   if (tz390.opt_traceall){
+		   put_log("TRACE AND '" + seta_value1 + "' AND '" + seta_value2 + "'");
+	   }
 	   switch (exp_stk_type[tot_exp_stk_var - 2]){
 	   case 1: // and seta
 	   	  exp_stk_seta[tot_exp_stk_var - 2] = seta_value1 & seta_value2; 
@@ -3413,7 +3505,10 @@ private void exp_or(){
 	if (tot_exp_stk_var > 0){
 		seta_value1 = get_seta_stack_value(-2);
 		seta_value2 = get_seta_stack_value(-1);
-	    switch (exp_stk_type[tot_exp_stk_var - 2]){
+		if (tz390.opt_traceall){
+		   put_log("TRACE OR '" + seta_value1 + "' OR '" + seta_value2 + "'");
+		}
+		switch (exp_stk_type[tot_exp_stk_var - 2]){
 	    case 1: // or seta
 	   	  exp_stk_seta[tot_exp_stk_var - 2] = seta_value1 | seta_value2; 
 	      break;
@@ -3434,11 +3529,13 @@ private void exp_xor(){
 	/*
 	 * perform logical xor operation on stk vars
 	 */
-
 	if (tot_exp_stk_var > 0){
 		seta_value1 = get_seta_stack_value(-2);
 		seta_value2 = get_seta_stack_value(-1);
-	    switch (exp_stk_type[tot_exp_stk_var - 2]){
+		if (tz390.opt_traceall){
+			   put_log("TRACE XOR '" + seta_value1 + "' XOR '" + seta_value2 + "'");
+			}
+		switch (exp_stk_type[tot_exp_stk_var - 2]){
 	    case 1: // xor seta
 	   	  exp_stk_seta[tot_exp_stk_var - 2] = seta_value1 ^ seta_value2; 
 	      break;
@@ -3500,6 +3597,9 @@ private void exp_substring(){
 		exp_check_prev_op = false;
 	    exp_level--;   // remove substring extra level
 	    get_seta_stack_values();
+	    if (tz390.opt_traceall){
+	    	put_log("TRACE SUBSTRING " + exp_stk_setc[tot_exp_stk_var - 1] + "(" + seta_value1 + "," + seta_value2 + ")");
+	    }
 	    setc_len = exp_stk_setc[tot_exp_stk_var - 1].length();
         if (seta_value1 >= 0 && seta_value2 >= 0){
        	  if (seta_value1 <= setc_len && seta_value2 > 0){
@@ -3544,15 +3644,24 @@ private void exp_var_subscript(){
                case 1: 
            	       exp_stk_type[tot_exp_stk_var - 1] = var_seta_type;
            	       exp_stk_seta[tot_exp_stk_var - 1] = lcl_seta[seta_index];
-                   break;
+           	       if (tz390.opt_traceall){
+           	    	   put_log("TRACE LCLA " + lcl_set_name[var_name_index] + "(" + seta_index + ")=" + lcl_seta[seta_index]);
+           	       }
+           	       break;
                case 2: 
         	       exp_stk_type[tot_exp_stk_var - 1] = var_setb_type;
         	       exp_stk_setb[tot_exp_stk_var - 1] = lcl_setb[setb_index];
-                   break;
+           	       if (tz390.opt_traceall){
+           	    	   put_log("TRACE LCLB " + lcl_set_name[var_name_index] + "(" + setb_index + ")=" + lcl_setb[setb_index]);
+           	       }
+        	       break;
                case 3: 
         	       exp_stk_type[tot_exp_stk_var - 1] = var_setc_type;
         	       exp_stk_setc[tot_exp_stk_var - 1] = lcl_setc[setc_index];
-		           break;
+           	       if (tz390.opt_traceall){
+           	    	   put_log("TRACE LCLC " + lcl_set_name[var_name_index] + "(" + setc_index + ")=" + lcl_setc[setc_index]);
+           	       }
+        	       break;
      		   default: 
    		  	       abort_error(68,"invalid case index");
                }
@@ -3575,15 +3684,24 @@ private void exp_var_subscript(){
 	           case 1: 
 	           	   exp_stk_type[tot_exp_stk_var - 1] = var_seta_type;
 	           	   exp_stk_seta[tot_exp_stk_var - 1] = gbl_seta[seta_index];
-	               break;
+           	       if (tz390.opt_traceall){
+           	    	   put_log("TRACE GBLA " + gbl_set_name[var_name_index] + "(" + seta_index + ")=" + gbl_seta[seta_index]);
+           	       }
+	           	   break;
 	           case 2: 
 	        	   exp_stk_type[tot_exp_stk_var - 1] = var_setb_type;
 	        	   exp_stk_setb[tot_exp_stk_var - 1] = gbl_setb[setb_index];
-	               break;
+           	       if (tz390.opt_traceall){
+           	    	   put_log("TRACE GBLB " + gbl_set_name[var_name_index] + "(" + setb_index + ")=" + gbl_setb[setb_index]);
+           	       }
+	        	   break;
 	           case 3: 
 	        	   exp_stk_type[tot_exp_stk_var - 1] = var_setc_type;
 	        	   exp_stk_setc[tot_exp_stk_var - 1] = gbl_setc[setc_index];
-			       break;
+           	       if (tz390.opt_traceall){
+           	    	   put_log("TRACE GBLC " + gbl_set_name[var_name_index] + "(" + setc_index + ")=" + gbl_setc[setc_index]);
+           	       }
+	        	   break;
 	 		   default: 
 			  	 abort_error(68,"invalid case index");
 		       }
@@ -3609,6 +3727,13 @@ private void exp_var_subscript(){
 			   	   exp_check_prev_op = false;
 			   	   exp_stk_type[tot_exp_stk_var - 1] = var_setc_type;
 			   	   exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
+           	       if (tz390.opt_traceall){
+           	    	   if (var_loc == pos_loc){
+           	    		   put_log("TRACE POS PARM " + mac_call_pos_name[var_name_index] + "=" + setc_value);
+           	    	   } else {
+           	    		   put_log("TRACE KEY PARM " + mac_call_kwd_name[var_name_index] + "=" + setc_value);
+           	    	   }
+           	       }
 		   		   if (tot_exp_stk_op >= 1
 						&& (exp_stk_op[tot_exp_stk_op - 1].charAt(0) == exp_string_op
 							|| exp_stk_op[tot_exp_stk_op - 1].charAt(0) == exp_create_set_op)){
@@ -3627,12 +3752,18 @@ private void exp_var_subscript(){
 	    	   	  	 } else {
 	    	   	  	 	setc_value = "";
 	    	   	  	 }
+					 if (tz390.opt_traceall){
+						 put_log("TRACE SYSLIST PARM(" + var_name_index + ")=" + setc_value);
+					 }
 	    	   	  } else {
 	    	   	  	 log_error(66,"syslist reference only allowed in macro");
 	    	   	  }
 	    	   } else {
 				   setc_value = exp_stk_setc[tot_exp_stk_var - 1]; // get prev syslist(sub) value
 				   setc_value = get_sublist(setc_value,set_sub);
+				   if (tz390.opt_traceall){
+					   put_log("TRACE SUBLIST PARM=" + setc_value);
+				   }
 	    	   }
 			   if  (exp_next_first == ')'){
 			   	   exp_level--;
@@ -3656,6 +3787,9 @@ private void exp_var_subscript(){
 		   tot_exp_stk_var--;
 		   setc_value = exp_stk_setc[tot_exp_stk_var - 1]; // get parm value set by find_var
 		   setc_value = get_sublist(setc_value,set_sub);
+		   if (tz390.opt_traceall){
+			   put_log("TRACE SUBLIST PARM=" + setc_value);
+		   }
 		   if  (exp_next_first == ')'){
 		   	   exp_level--;
 		   	   exp_pop_op();
@@ -3726,8 +3860,8 @@ private void set_compare(boolean compare_result){
         } else {
            exp_stk_setb[tot_exp_stk_var - 1] = 0;
         }
-        if (tz390.opt_traceall){
-        	put_log("TRACE LOGICAL COMPARE = " + exp_stk_setb[tot_exp_stk_var -1]);
+    	if (tz390.opt_traceall){
+    		put_log("TRACE COMPARE '" + setc_value1 + "' "+ exp_prev_op  + " '" + setc_value2 + "' = " + exp_stk_setb[tot_exp_stk_var -1]);
         }
 	} else {
 		log_error(36,"expression compare error");
@@ -3795,6 +3929,8 @@ private void get_seta_stack_values(){
 	if (tot_exp_stk_var >= 2){
 		seta_value1 = get_seta_stack_value(-2);
         seta_value2 = get_seta_stack_value(-1);
+        setc_value1 = "" + seta_value1; // for RPI 274 trace
+        setc_value2 = "" + seta_value2; // for RPI 274 trace
 	} else {
 		log_error(18,"expression missing value error");
 		tot_exp_stk_var = 2;
@@ -3869,6 +4005,8 @@ private void get_setb_stack_values(){
 		default: 
 		  	 abort_error(68,"invalid case index");
 	    }
+        setc_value1 = "" + setb_value1; // for RPI 274 trace
+        setc_value2 = "" + setb_value2; // for RPI 274 trace
 		tot_exp_stk_var = tot_exp_stk_var - 2;
 	} else {
 		log_error(18,"expression error");
@@ -3916,7 +4054,7 @@ private void exp_push_op(){
 		  return;
 	  }
 	  if (tz390.opt_traceall){
-		  put_log("TRACE PUSHING OP - " + exp_token);
+		  put_log("TRACE PUSHING OP - " + exp_token + " FROM=" + exp_text.substring(exp_next_index-exp_token.length()));
 	  }
       exp_stk_op[tot_exp_stk_op] = exp_token.toUpperCase();
       exp_stk_op_class[tot_exp_stk_op] = exp_next_class;
@@ -3928,6 +4066,9 @@ private void exp_pop_op(){
 	 * pop current op on stack
 	 */
       tot_exp_stk_op--;
+  	  if (tz390.opt_traceall){
+  		  put_log("TRACE POP OP=" + exp_stk_op[tot_exp_stk_op]);
+	  }
       if (tot_exp_stk_op < 0){
       	 log_error(23,"expression error");
       } else {
@@ -4040,7 +4181,7 @@ private void exp_push_var(){
 	 * 
 	 */
 	if (tz390.opt_traceall){
-		put_log("TRACE PUSHING VAR - " + exp_token);
+		put_log("TRACE PUSHING VAR - " + exp_token+ " FROM=" + exp_text.substring(exp_next_index-exp_token.length()));
 	}
     if (find_var(exp_token)){  // find set or parm var
        if (exp_next_char() == '('
@@ -4062,9 +4203,6 @@ private void exp_push_var(){
        } else {
        	  if (exp_prev_first == exp_string_op
        		  || exp_prev_first == exp_create_set_op){
-       		  if (tz390.opt_traceall){
-       			  put_log("TRACE STRING CONCAT - " + exp_token);
-       		  }
        		  switch (var_type){
 	          case 1: // seta
 	   	          exp_stk_setc[tot_exp_stk_var - 1] = exp_stk_setc[tot_exp_stk_var - 1].concat("" + seta_value);
@@ -4080,7 +4218,10 @@ private void exp_push_var(){
 	   	          break;
 			  default: 
 			  	 abort_error(68,"invalid case index");
-	          } 
+	          }
+       		  if (tz390.opt_traceall){
+       			  put_log("TRACE STRING CONCAT - " + exp_token + " = " + exp_stk_setc[tot_exp_stk_var-1]+ " FROM=" + exp_text.substring(exp_next_index-exp_token.length()));
+       		  }
        	  } else if (inc_tot_exp_stk_var()){
 	          switch (var_type){
 	          case 1:
@@ -5027,6 +5168,7 @@ private void call_mac(){
 	 * 
 	 */
 	 tot_mac_call++;
+	 gbl_seta[gbl_sysm_sev_index] = 0;
 	 mac_name_index = find_mac_name_index;
 	 int save_mac_line_index = mac_line_index;
 	 mac_call_return[mac_call_level] = mac_line_index + 1;
@@ -5034,7 +5176,6 @@ private void call_mac(){
 	 actr_count = actr_limit;
 	 if  (mac_call_level < max_mac_call_level){
 	 	 mac_call_level++;
-	 	 mac_line_index = mac_name_line_start[mac_name_index];
 	 	 mac_call_name_index[mac_call_level] = mac_name_index;
 	 	 mac_call_return[mac_call_level] = -1;
 	 	 mac_call_return[mac_call_level] = actr_limit;
@@ -5093,6 +5234,7 @@ private void call_mac(){
 		 cur_pos_parm = mac_call_pos_start[mac_call_level];
 		 set_call_parm_values();
 		 mac_line_index = mac_name_line_start[mac_name_index];
+		 update_sysstmt();
 	 } else {
 	 	 abort_error(30,"max level of nested macros exceeded");
 	 }
@@ -5101,6 +5243,13 @@ private void init_gbl_sys(){
 	/*
 	 * add global system variables
 	 */
+	add_gbl_sys("&SYSADATA_DSN",var_setc_type); // full path and file name if any RPI 259
+    set_sys_dsn_mem_vol(tz390.dir_mlc + tz390.pgm_name + ".ADA");
+	gbl_setc[tot_gbl_setc-1] = sys_dsn;
+	add_gbl_sys("&SYSADATA_MEMBER",var_setc_type); // current macro name if any
+	gbl_setc[tot_gbl_setc-1] = sys_mem;
+	add_gbl_sys("&SYSADATA_VOLUME",var_setc_type); // drive letter if any
+	gbl_setc[tot_gbl_setc-1] = sys_vol;
 	add_gbl_sys("&SYSASM",var_setc_type);
 	gbl_setc[tot_gbl_setc-1] = "z390";
 	add_gbl_sys("&SYSCLOCK",var_setc_type);
@@ -5109,14 +5258,77 @@ private void init_gbl_sys(){
 	gbl_setc[tot_gbl_setc-1] = sdf_sysdatc.format(cur_date);
 	add_gbl_sys("&SYSDATE",var_setc_type);
 	gbl_setc[tot_gbl_setc-1] = sdf_sysdate.format(cur_date);
+	add_gbl_sys("&SYSIN_DSN",var_setc_type); // MLC full path and file name  RPI 259
+    set_sys_dsn_mem_vol(tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
+	gbl_setc[tot_gbl_setc-1] = sys_dsn;
+	add_gbl_sys("&SYSIN_MEMBER",var_setc_type); // MLC file name without suffix
+	gbl_setc[tot_gbl_setc-1] = sys_mem;
+	add_gbl_sys("&SYSIN_VOLUME",var_setc_type); // MLC drive letter
+	gbl_setc[tot_gbl_setc-1] = sys_vol;
+	add_gbl_sys("&SYSJOB",var_setc_type); // current job = MLC file name without suffix
+    sys_job = sys_mem;
+	int index = sys_job.indexOf('.');
+	if (index > 0){
+		sys_job = sys_mem.substring(0,index);
+	}
+	gbl_setc[tot_gbl_setc-1] = sys_job;
+	add_gbl_sys("&SYSLIB_DSN",var_setc_type); // MAC full path and file name if any
+	gbl_syslib_index = tot_gbl_setc-1;
+	gbl_setc[tot_gbl_setc-1] = sys_dsn;
+	add_gbl_sys("&SYSLIB_MEMBER",var_setc_type); // MAC file name without suffix
+	gbl_setc[tot_gbl_setc-1] = sys_mem;
+	add_gbl_sys("&SYSLIB_VOLUME",var_setc_type); // MAC drive letter if any
+	gbl_setc[tot_gbl_setc-1] = sys_vol;
+	add_gbl_sys("&SYSLIN_DSN",var_setc_type); // OBJ full path and file name
+    set_sys_dsn_mem_vol(tz390.dir_mlc + tz390.pgm_name + ".OBJ");
+	gbl_setc[tot_gbl_setc-1] = sys_dsn;
+	add_gbl_sys("&SYSLIN_MEMBER",var_setc_type); // OBJ file name without suffix
+	gbl_setc[tot_gbl_setc-1] = sys_mem;
+	add_gbl_sys("&SYSLIN_VOLUME",var_setc_type); //OBJ drive letter
+	gbl_setc[tot_gbl_setc-1] = sys_vol;
 	add_gbl_sys("&SYSMAC",var_setc_type);
 	gbl_sysmac_index = tot_gbl_setc-1;
+	add_gbl_sys("&SYSM_HSEV",var_seta_type); // highest MNOTE error level
+	gbl_sysm_hsev_index = tot_gbl_seta-1;
+	add_gbl_sys("&SYSM_SEV",var_seta_type); // highest MNOTE level in last macro
+	gbl_sysm_hsev_index = tot_gbl_seta-1;
+	add_gbl_sys("&SYSOPT_DBCS",var_setb_type); // set false indicating no DBCS support
+	add_gbl_sys("&SYSOPT_OPTABLE",var_setc_type); // "z390" opcode table name
+	gbl_setc[tot_gbl_setc-1] = "z390";
+;	add_gbl_sys("&SYSOPT_RENT",var_setb_type); // set true if RENT option specified
+	add_gbl_sys("&SYSOPT_XOBJECT",var_setb_type); //set true if GOFF or XOBJECT
 	add_gbl_sys("&SYSPARM",var_setc_type);
 	gbl_setc[tot_gbl_setc-1] = tz390.opt_sysparm;
+	add_gbl_sys("&SYSPRINT_DSN",var_setc_type); // PRN full path and file name
+    set_sys_dsn_mem_vol(tz390.dir_mlc + tz390.pgm_name + ".PRN");
+	gbl_setc[tot_gbl_setc-1] = sys_dsn;
+	add_gbl_sys("&SYSPRINT_MEMBER",var_setc_type); // PRN file name without type
+	gbl_setc[tot_gbl_setc-1] = sys_mem;
+	add_gbl_sys("&SYSPRINT_VOLUME",var_setc_type); // PRN drive letter
+	gbl_setc[tot_gbl_setc-1] = sys_vol;
+	add_gbl_sys("&SYSPUNCH_DSN",var_setc_type); // PCH full path and file name
+    set_sys_dsn_mem_vol(tz390.dir_mlc + tz390.pgm_name + ".PCH");
+	gbl_setc[tot_gbl_setc-1] = sys_dsn;
+	add_gbl_sys("&SYSPUNCH_MEMBER",var_setc_type); //PCH file name without type
+	gbl_setc[tot_gbl_setc-1] = sys_mem;
+	add_gbl_sys("&SYSPUNCH_VOLUME",var_setc_type); //PCH drive letter
+	gbl_setc[tot_gbl_setc-1] = sys_vol;
+	add_gbl_sys("&SYSSEQF",var_setc_type); // source sequence field set to 0 length string
+	add_gbl_sys("&SYSSTEP",var_setc_type); // current step = MLC file name
+	gbl_setc[tot_gbl_setc-1] = sys_job;
+	add_gbl_sys("&SYSSTMT",var_seta_type); // next MLC statement number
+	gbl_sysstmt_index = tot_gbl_seta-1;
 	add_gbl_sys("&SYSTEM_ID",var_setc_type);
 	gbl_setc[tot_gbl_setc-1] = 
 		System.getProperty("os.name") 
 		+ " " + System.getProperty("os.version");
+	add_gbl_sys("&SYSTERM_DSN",var_setc_type); // ERR full path and file name
+    set_sys_dsn_mem_vol(tz390.dir_mlc + tz390.pgm_name + ".ERR");
+	gbl_setc[tot_gbl_setc-1] = sys_dsn;
+	add_gbl_sys("&SYSTERM_MEMBER",var_setc_type); // ERR file name without type
+	gbl_setc[tot_gbl_setc-1] = sys_mem;
+	add_gbl_sys("&SYSTERM_VOLUME",var_setc_type); // ERR file drive letter
+	gbl_setc[tot_gbl_setc-1] = sys_vol;
 	add_gbl_sys("&SYSTEM_JAVA",var_setc_type);
 	gbl_setc[tot_gbl_setc-1] = 
 		System.getProperty("java.vendor") 
@@ -5125,6 +5337,21 @@ private void init_gbl_sys(){
 	gbl_setc[tot_gbl_setc-1] = sdf_systime.format(cur_date);
 	add_gbl_sys("&SYSVER",var_setc_type);
 	gbl_setc[tot_gbl_setc-1] = tz390.version;
+}
+private void set_sys_dsn_mem_vol(String file_name){
+	/*
+	 * set sys_dsn, sys__mem, and sys_vol
+	 * from file name
+	 */
+	sys_dsn = "";
+	sys_mem = "";
+	sys_vol = "";
+	sys_file = new File(file_name.toUpperCase());
+	try {
+		sys_dsn = sys_file.getCanonicalPath();
+		sys_mem = sys_file.getName();
+		sys_vol = sys_dsn.substring(0,1);
+	} catch (Exception e){}
 }
 private void add_gbl_sys(String sys_name,byte sys_type){
 	/*
@@ -5511,7 +5738,7 @@ private void put_stats(){
 	      	 }
 	      }
 	}
-	put_log("MZ390I total mnotes          = " + tot_mnote + "  max level= " + max_mnote_level);
+	put_log("MZ390I total mnotes          = " + tot_mnote + "  max level= " + gbl_seta[gbl_sysm_hsev_index]);
 	put_log("MZ390I total errors          = " + mz390_errors);
 	put_log("MZ390I return code           = " + mz390_rc);
 	log_to_bal = false;
