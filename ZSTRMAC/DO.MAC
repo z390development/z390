@@ -1,0 +1,80 @@
+         MACRO                                                             
+         DO    &END,&WHILE=,&UNTIL=                                                            
+         GBLA  &ZSTR_DO(10),&ZSTR_DOSEQ(10),&ZSTR_DOLVL,&ZSTR_DOLAB                            
+         GBLA  &ZSTR_ELSE(10),&ZSTR_SEQ(10),&ZSTR_LEVEL,&ZSTR_LAB                              
+         LCLA  &N,&M,&S,&ZSTR_LAB1,&L,&I                                        
+         LCLA  &UNTIL_LAB                                                      
+         LCLC  &OP,&OPR                                                    
+.********************************************************************
+.*             AUTHOR.   DON HIGGINS.                                      
+.*             DATE.     03/27/74.                                         
+.*             REMARKS.  MACRO TO ALLOW STRUCTURED PROGRAMMING USING       
+.*                       IF, THEN, ELSE, AND DO UP TO TEN LEVELS DEEP      
+.*                       AND NO BRANCH INSTRUCTIONS. SEE IF MACRO.         
+.********************************************************************
+.* 05/14/06 DSH Z390 RPI 316 UPDATED FOR COMPAT.
+.********************************************************************
+         AIF   (&ZSTR_DOLVL EQ 10).ERR1                                         
+         AIF   (&WHILE NE '').WHILE
+         AIF   (&UNTIL NE '').UNTIL
+         AIF   (&END EQ 'END').END
+         AGO   .ERR3
+.UNTIL   ANOP       
+&NP      SETA  N'&UNTIL                                              
+&OP      SETC  &UNTIL(1)
+         AIF   (&NP NE 4).ERR3
+&BC      SETC  &UNTIL(3)
+&OPR     SETC  '&UNTIL(2),&UNTIL(4)'
+&ZSTR_DOLVL   SETA  &ZSTR_DOLVL+1                                                    
+&UNTIL_LAB  SETA  &ZSTR_DOLAB+1                                                    
+&ZSTR_DOLAB   SETA  &ZSTR_DOLAB+2                                                    
+         B     ZSTR_DO_&UNTIL_LAB                                                    
+         AGO   .COMM                                                       
+.WHILE   ANOP        
+&NP      SETA  N'&WHILE                                              
+&OP      SETC  &WHILE(1)
+         AIF   (&NP NE 4).ERR3
+&BC      SETC  &WHILE(3)
+&OPR     SETC  '&WHILE(2),&WHILE(4)'
+&ZSTR_DOLVL   SETA  &ZSTR_DOLVL+1                                                    
+&ZSTR_DOLAB   SETA  &ZSTR_DOLAB+1                                                    
+.COMM    ANOP                                                              
+&ZSTR_DOSEQ(&ZSTR_DOLVL) SETA 1                                                      
+&ZSTR_DO(&ZSTR_DOLVL) SETA &ZSTR_DOLAB                                                    
+ZSTR_DO_&ZSTR_DOLAB EQU   *                                                           
+         AIF   (&ZSTR_LEVEL EQ 10).ERR1                                         
+&ZSTR_LEVEL   SETA  &ZSTR_LEVEL+1                                                    
+&ZSTR_SEQ(&ZSTR_LEVEL) SETA 1                                                        
+&ZSTR_LAB     SETA  &ZSTR_LAB+1                                                      
+&ZSTR_ELSE(&ZSTR_LEVEL) SETA &ZSTR_LAB                                                    
+&S       SETA  0                                                           
+.NEXTAND ANOP                                                              
+         &OP   &OPR                                                        
+         BC    15-&BC,ZSTR_IF_&ZSTR_LAB                                  
+.CHKUNTL ANOP                                                              
+         AIF   (&UNTIL_LAB EQ 0).EXIT                                          
+&ZSTR_LAB     SETA  &ZSTR_LAB+1                                                      
+         B     ZSTR_IF_&ZSTR_LAB                                                     
+ZSTR_IF_&ZSTR_ELSE(&ZSTR_LEVEL) EQU *                                                     
+&ZSTR_ELSE(&ZSTR_LEVEL) SETA &ZSTR_LAB                                                    
+ZSTR_DO_&UNTIL_LAB EQU *                                                             
+         AGO   .EXIT                                                       
+.END     ANOP                                                              
+         AIF   (&N GT 1).ERR3                                              
+         AIF   (&ZSTR_DOLVL EQ 0).ERR4                                          
+         AIF   (&ZSTR_DOSEQ(&ZSTR_DOLVL) NE 1).ERR4                                  
+&ZSTR_DOSEQ(&ZSTR_DOLVL) SETA 0                                                      
+         B     ZSTR_DO_&ZSTR_DO(&ZSTR_DOLVL)                                               
+&ZSTR_DOLVL   SETA  &ZSTR_DOLVL-1                                                    
+ZSTR_IF_&ZSTR_ELSE(&ZSTR_LEVEL) EQU *                                                     
+&ZSTR_LEVEL   SETA  &ZSTR_LEVEL-1                                                    
+         AGO   .EXIT                                                       
+.ERR1    MNOTE 8,'DO - LEVEL OVERFLOW'                                     
+         AGO   .EXIT                                                       
+.ERR2    MNOTE 8,'DO - MISSING OPERAND'                                    
+         AGO   .EXIT                                                       
+.ERR3    MNOTE 8,'DO - INVALID OPERAND - &PARM'                                    
+         AGO   .EXIT                                                       
+.ERR4    MNOTE 8,'DO - END OUT OF SEQUENCE'                                
+.EXIT    ANOP                                                              
+         MEND

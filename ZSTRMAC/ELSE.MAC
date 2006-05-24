@@ -1,0 +1,48 @@
+         MACRO                                                             
+         ELSE  &OPT                                                        
+         GBLA  &ZSTR_ELSE(10),&ZSTR_SEQ(10),&ZSTR_LEVEL,&ZSTR_LAB                              
+         GBLA  &ZSTR_ELSEIF(10)                                                 
+.********************************************************************
+.*             AUTHOR.   DON HIGGINS.                                      
+.*             DATE.     03/27/74.                                         
+.*             REMARKS.  MACRO TO ALLOW STRUCTURED PROGRAMMING USING       
+.*                       IF, THEN, ELSE, AND DO UP TO TEN LEVELS DEEP      
+.*                       AND NO BRANCH INSTRUCTIONS. SEE IF MACRO.         
+.********************************************************************
+.* 05/23/76 DSH - SUPPORT ELSEIF                          
+.* 05/15/06 DSH - Z390 RPI 315 UPDATE FOR COMPAT.         
+.********************************************************************
+         AIF   (&ZSTR_LEVEL EQ 0).ERR0                                          
+         AIF   (T'&OPT EQ 'O').BEGIN                                       
+         AIF   ('&OPT' EQ 'BEGIN').BEGIN                                   
+         AIF   ('&OPT' EQ 'END').END                                       
+         AIF   ('&OPT' EQ 'CONTINUE').CONT                                 
+         MNOTE 8,'ELSE - INVALID OPERAND'                                  
+         AGO   .EXIT                                                       
+.BEGIN   ANOP                                                              
+         AIF   (&ZSTR_SEQ(&ZSTR_LEVEL) GT 3).ERR1                                    
+&ZSTR_LAB     SETA  &ZSTR_LAB+1                                                      
+         B     ZSTR_IF_&ZSTR_LAB                                                     
+ZSTR_IF_&ZSTR_ELSE(&ZSTR_LEVEL) EQU *                                                     
+&ZSTR_ELSE(&ZSTR_LEVEL) SETA &ZSTR_LAB                                                    
+&ZSTR_SEQ(&ZSTR_LEVEL) SETA 4                                                        
+         AGO .EXIT                                                         
+.END     ANOP                                                              
+         AIF   (&ZSTR_SEQ(&ZSTR_LEVEL) NE 4).ERR2                                    
+.DEQUE   ANOP                                                              
+ZSTR_IF_&ZSTR_ELSE(&ZSTR_LEVEL) EQU *                                                     
+&ZSTR_LEVEL   SETA &ZSTR_LEVEL-1                                                     
+         AIF   (&ZSTR_ELSEIF(&ZSTR_LEVEL+1) EQ 1).DEQUE                              
+         AGO   .EXIT                                                       
+.CONT    ANOP                                                              
+         AIF   (&ZSTR_SEQ(&ZSTR_LEVEL) GT 3).ERR3                                    
+         AGO   .DEQUE                                                      
+.ERR0    MNOTE 8,'ELSE - MISSING IF'                                       
+         AGO   .EXIT                                                       
+.ERR1    MNOTE 8,'ELSE BEGIN - OUT OF SEQUENCE'                            
+         AGO   .EXIT                                                       
+.ERR2    MNOTE 8,'ELSE END - OUT OF SEQUENCE'                              
+         AGO   .EXIT                                                       
+.ERR3    MNOTE 8,'ELSE CONTINUE - OUT OF SEQUENCE'                         
+.EXIT    ANOP                                                              
+         MEND

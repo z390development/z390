@@ -17,6 +17,7 @@
 * 04/12/06 RPI278 TEST PUSH, POP NOPRINT                               
 * 04/24/06 RPI291 TEST ENQ/DEQ                                         
 * 04/28/06 RPI304 TEST PRINT DATA,NOPRINT                              
+* 05/12/06 RPI313 ADD UNARY OP TEST AND L'OP IN CONTINUED STMT TEST    
 *********************************************************************
          START , RPI 230 TEST START CSECT
          USING *,R15
@@ -88,6 +89,12 @@ X2       MVC   F1(L'F2),F2
          CLC   =A(+1*+1),=A(1)
          RT1   CCE
          CLC   =A(+1*(+1+2)),=A(3)
+         RT1   CCE
+         CLC   =A(-(2-1)),=A(-1)     RPI 313
+         RT1   CCE
+         LA    L'X,                  RPI 313 TEST L' IN COMMA CONT.    X
+               2
+         CL    1,=A(2)
          RT1   CCE
          L     R1,=A(MYCOM)
          CALL  MYRSECT

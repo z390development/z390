@@ -223,8 +223,6 @@ public  class  z390 extends JApplet
         JFrame main_frame    = null;
         int main_width  = 625;
         int main_height = 400;
-        int main_width_max = 800;
-        int main_height_max = 600;
         int main_width_min  = 150;
         int main_height_min = 150;
         int main_border = 2;
@@ -1726,8 +1724,8 @@ public  class  z390 extends JApplet
             main_frame = new JFrame();
             title_update();
             try {
-                main_height_max = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getHeight() - start_bar_height;
-                main_width_max = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getWidth();
+                tz390.max_main_height = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getHeight() - start_bar_height;
+                tz390.max_main_width = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getWidth();
             } catch (Exception e){
 
             }
@@ -2705,24 +2703,24 @@ public  class  z390 extends JApplet
         		if  (x < 0){
         			x = 0;
         		} else {
-        			if (x + main_width > main_width_max){
-        				if  (x + main_width_min > main_width_max){
-        					x = main_width_max - main_width_min;
+        			if (x + main_width > tz390.max_main_width){
+        				if  (x + main_width_min > tz390.max_main_width){
+        					x = tz390.max_main_width - main_width_min;
         					main_width = main_width_min;
         				} else {
-        				    main_width = main_width_max - x;
+        				    main_width = tz390.max_main_width - x;
         				}
         			}
         		}
         		if  (y < 0){
         			y = 0;
         		} else {
-        			if (y + main_height > main_height_max){
-                        if  (y + main_height_min > main_height_max){
-                        	y = main_height_max - main_height_min;
+        			if (y + main_height > tz390.max_main_height){
+                        if  (y + main_height_min > tz390.max_main_height){
+                        	y = tz390.max_main_height - main_height_min;
                         	main_height = main_height_min;
                         } else {
-        				    main_height = main_height_max - y;
+        				    main_height = tz390.max_main_height - y;
                         }
         			}
         		}
@@ -2751,15 +2749,15 @@ public  class  z390 extends JApplet
 	    		if  (x < main_width_min){
 	    			x = main_width_min;
 	    		} else {
-	    			if (x > main_width_max - main_loc_x){
-	    				x = main_width_max - main_loc_x;
+	    			if (x > tz390.max_main_width - main_loc_x){
+	    				x = tz390.max_main_width - main_loc_x;
 	    			}
 	    		}
 	    		if  (y < main_height_min){
 	    			y = main_height_min;
 	    		} else {
-	    			if (y > main_height_max - main_loc_y){
-	    				y = main_height_max - main_loc_y;
+	    			if (y > tz390.max_main_height - main_loc_y){
+	    				y = tz390.max_main_height - main_loc_y;
 	    			}
 	    		}
 	    		main_width  = x;

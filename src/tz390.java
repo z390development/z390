@@ -7,6 +7,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public  class  tz390 {
@@ -72,6 +74,17 @@ public  class  tz390 {
     * 05/03/06 RPI 243 add option SYSTERM(..) support to log
     *          start/stop stats and errors on .ERR mod file
     * 05/05/06 RPI 308 add options CICS, PROLOG, and EPILOG
+    * 05/12/06 RPI 313 1)share trim_continue, trim_trailing_
+    *          and split_line between mz390 and az390
+    *          2) Fix parsing for comma continuation to
+    *          support prefix operators L' etc.
+    *          3) Improve preformance replacing .split with
+    *             find_parm_pattern precompiled rex parser
+    * 05/13/06 RPI 314 add AGOB and AIFB    
+    * 05/13/06 RPI 315 allow ,space within (...) for
+    *          macro ops prior to ,space continuation
+    *          add option REFORMAT with default false   
+    * 05/24/06 RPI 227 add shared alarm_bell for System.out     
     ********************************************************
     * Shared z390 tables
     *****************************************************/
@@ -80,7 +93,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.1.00";  //dsh
+    String version    = "V1.1.00c";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -93,6 +106,7 @@ public  class  tz390 {
     boolean opt_con      = true;  // log msgs to console
     boolean opt_dump     = false; // only indicative dump on abend unless on
     boolean opt_epilog   = true;  // if cics, insert DFHEIRET
+    boolean opt_reformat = false; // reformat BAL statements
     boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
     String  opt_ipl      = "";    // program to execute at startup
     boolean opt_list     = true;  // generate LOG file
@@ -137,8 +151,11 @@ public  class  tz390 {
     /*
 	 * global limits with option overrides
 	 */
+    char   alarm_bell = 0x07;          // ascii bell char for system.out alarm
 	int    max_errors        = 100;     // ERR(100) max errors before abort
-    int    max_line_len = 80;           // opt_mlc max line length RPI 264
+    int    max_main_width = 800;
+    int    max_main_height = 600;
+	int    max_line_len = 80;           // opt_mlc max line length RPI 264
 	long   max_file_size = 50 << 20;    // max file output 
 	long   max_time_seconds  = 15;      // TIME(15)max elapsed time - override time(sec)
     int    monitor_wait = 300;          // fix interval in milliseconds
@@ -181,6 +198,26 @@ public  class  tz390 {
     String systerm_prefix = null; // pgm_name plus space
     int    systerm_io     = 0;    // total file io count
     int    systerm_ins    = 0;    // ez390 instruction count
+    /*
+     * shared parm parsing for comma delimited continue
+     * statement parsing to find comma used by 
+     * both mz390 and az390.
+     */
+    Pattern find_parm_pattern = null;
+    Matcher find_parm_match = null;
+    Pattern parm_pattern = null;
+    Matcher parm_match = null;
+    boolean split_first = true; // first line of statement
+    boolean split_cont  = false; // continuation line of statement
+    boolean split_comment = false;
+    String  split_label = null;
+    String  split_op    = null;
+    int     split_op_index = -1; // opcode index else -1
+    int     split_op_type  = -1; // opcode type index else -1
+    String  split_parms = null;
+    int     split_parms_index = -1;  // line index to parms else -1
+    int     split_level = 0;
+    boolean split_quote = true;
     /*
      * ASCII and EBCDIC printable character tables
      */
@@ -1087,41 +1124,43 @@ public  class  tz390 {
 		       "TITLE",    // 7440  "TITLE"  131
 		       "ADATA",    // 7450  "ADATA"  132
 		       "CNOP",     // 7460  "CNOP"  133
-		       "COPY",     // 7470  "COPY"  134
+		       "COPY",     // 7470  "COPY"  224
 		       "END",      // 7480  "END"  135
 		       "EQU",      // 7490  "EQU"  136
 		       "EXITCTL",  // 7500  "EXITCTL"  137
 		       "ICTL",     // 7510  "ICTL"  138
 		       "ISEQ",     // 7520  "ISEQ"  139
 		       "LTORG",    // 7530  "LTORG"  140
-		       "OPSYN",    // 7540  "OPSYN"  141
+		       "OPSYN",    // 7540  "OPSYN"  225
 		       "ORG",      // 7550  "ORG"  142
 		       "POP",      // 7560  "POP"  143
-		       "PUNCH",    // 7570  "PUNCH"  144
+		       "PUNCH",    // 7570  "PUNCH"  223
 		       "PUSH",     // 7580  "PUSH"  145
 		       "REPRO",    // 7590  "REPRO"  146
-		       "ACTR",     // 7600  "ACTR"  147
-		       "AGO",      // 7610  "AGO"  148
-		       "AIF",      // 7620  "AIF"  149
-		       "AINSERT",  // 7630  "AINSERT"  150
-		       "ANOP",     // 7640  "ANOP"  151
-		       "AREAD",    // 7650  "AREAD"  152
-		       "GBLA",     // 7660  "GBLA"  153
-		       "GBLB",     // 7670  "GBLB"  154
-		       "GBLC",     // 7680  "GBLC"  155
-		       "LCLA",     // 7690  "LCLA"  156
-		       "LCLB",     // 7700  "LCLB"  157
-		       "LCLC",     // 7710  "LCLC"  158
-		       "MHELP",    // 7720  "MHELP"  159
-		       "MNOTE",    // 7730  "MNOTE"  160
-		       "SETA",     // 7740  "SETA"  161
-		       "SETAF",    // 7750  "SETAF"  162
-		       "SETB",     // 7760  "SETB"  163
-		       "SETC",     // 7770  "SETC"  164
-		       "SETCF",    // 7780  "SETCF"  165
-		       "MACRO",    // 7790  "MACRO"  166
-		       "MEND",     // 7800  "MEND"  167
-		       "MEXIT"    // 7810  "MEXIT"  168
+		       "ACTR",     // 7600  "ACTR"  201
+		       "AGO",      // 7610  "AGO"  202
+		       "AIF",      // 7620  "AIF"  203
+		       "AINSERT",  // 7630  "AINSERT"  204
+		       "ANOP",     // 7640  "ANOP"  205
+		       "AREAD",    // 7650  "AREAD"  206
+		       "GBLA",     // 7660  "GBLA"  207
+		       "GBLB",     // 7670  "GBLB"  208
+		       "GBLC",     // 7680  "GBLC"  209
+		       "LCLA",     // 7690  "LCLA"  210
+		       "LCLB",     // 7700  "LCLB"  211
+		       "LCLC",     // 7710  "LCLC"  212
+		       "MHELP",    // 7720  "MHELP"  213
+		       "MNOTE",    // 7730  "MNOTE"  214
+		       "SETA",     // 7740  "SETA"  215
+		       "SETAF",    // 7750  "SETAF"  216
+		       "SETB",     // 7760  "SETB"  217
+		       "SETC",     // 7770  "SETC"  218
+		       "SETCF",    // 7780  "SETCF"  219
+		       "MACRO",    // 7790  "MACRO"  220
+		       "MEND",     // 7800  "MEND"  221
+		       "MEXIT",   // 7810  "MEXIT"  222
+		       "AGOB",    // 7820  "AGOB"   226
+		       "AIFB",    // 7830  "AIFB"   227
 	       
       };
     int[]    op_type_len = {
@@ -1162,6 +1201,7 @@ public  class  tz390 {
          6  //34 "RRF2" FIXBR oooom0rr (r1,m3,r2 maps to m3,r1,r2)
          };
 	int    max_op_type_offset = 34; // see changes required
+    int    max_machine_op = 200;    // RPI 315 max machine vs macro opcode
 	//  When adding new opcode case:
 	//  1.  Increase the above max.
 	//  2.  Change above op_type_len table which must match
@@ -1996,41 +2036,43 @@ public  class  tz390 {
 		       131,  // 7440  "TITLE"  131
 		       132,  // 7450  "ADATA"  132
 		       133,  // 7460  "CNOP"  133
-		       224,  // 7470  "COPY"  134
+		       224,  // 7470  "COPY"  224
 		       135,  // 7480  "END"  135
 		       136,  // 7490  "EQU"  136
 		       137,  // 7500  "EXITCTL"  137
 		       138,  // 7510  "ICTL"  138
 		       139,  // 7520  "ISEQ"  139
 		       140,  // 7530  "LTORG"  140
-		       225,  // 7540  "OPSYN"  141 //RPI150
+		       225,  // 7540  "OPSYN"  225 //RPI150
 		       142,  // 7550  "ORG"  142
 		       143,  // 7560  "POP"  143
-		       223,  // 7570  "PUNCH"  144
+		       223,  // 7570  "PUNCH"  223
 		       145,  // 7580  "PUSH"  145
 		       146,  // 7590  "REPRO"  146
-		       201,  // 7600  "ACTR"  147
-		       202,  // 7610  "AGO"  148
-		       203,  // 7620  "AIF"  149
-		       204,  // 7630  "AINSERT"  150
-		       205,  // 7640  "ANOP"  151
-		       206,  // 7650  "AREAD"  152
-		       207,  // 7660  "GBLA"  153
-		       208,  // 7670  "GBLB"  154
-		       209,  // 7680  "GBLC"  155
-		       210,  // 7690  "LCLA"  156
-		       211,  // 7700  "LCLB"  157
-		       212,  // 7710  "LCLC"  158
-		       213,  // 7720  "MHELP"  159
-		       214,  // 7730  "MNOTE"  160
-		       215,  // 7740  "SETA"  161
-		       216,  // 7750  "SETAF"  162
-		       217,  // 7760  "SETB"  163
-		       218,  // 7770  "SETC"  164
-		       219,  // 7780  "SETCF"  165
-		       220,  // 7790  "MACRO"  166
-		       221,  // 7800  "MEND"  167
-		       222   // 7810  "MEXIT"  168		       
+		       201,  // 7600  "ACTR"   
+		       202,  // 7610  "AGO"  
+		       203,  // 7625  "AIF"  
+		       204,  // 7630  "AINSERT"  
+		       205,  // 7640  "ANOP"  
+		       206,  // 7650  "AREAD" 
+		       207,  // 7660  "GBLA"  
+		       208,  // 7670  "GBLB"  
+		       209,  // 7680  "GBLC"  
+		       210,  // 7690  "LCLA"  
+		       211,  // 7700  "LCLB"  
+		       212,  // 7710  "LCLC"  
+		       213,  // 7720  "MHELP"  
+		       214,  // 7730  "MNOTE"  
+		       215,  // 7740  "SETA"  
+		       216,  // 7750  "SETAF"  
+		       217,  // 7760  "SETB"  
+		       218,  // 7770  "SETC"  
+		       219,  // 7780  "SETCF"  
+		       220,  // 7790  "MACRO"  
+		       221,  // 7800  "MEND"  
+		       222,  // 7810  "MEXIT"  	
+		       226,  // 7820  "AGOB"  
+		       227,  // 7830  "AIFB"  
   	           }; 
   	  int        op_code_index = -1;
       String[]   op_code = {
@@ -2934,6 +2976,44 @@ public void init_tables(){
 	if (ins_count != op_code.length){
 		abort_error(3,"opcode total out of sync - aborting");
 	}
+    /*
+     * find_parm_pattern tokens:
+     * skip while space and return next non-white space token
+     * */
+	try {
+	    find_parm_pattern = Pattern.compile(
+	    		  "([^\\s]+)"  //RPI 313	    	      
+				  );
+	} catch (Exception e){
+		  abort_error(13,"find parm pattern errror - " + e.toString());
+	}
+    /*
+     * parm_pattern tokens:
+     *   1.  ?'     operators such as L', T', etc.
+     *   2.  ppp=   parm followed by = for detecting key vs pos
+     *   3.  C'xxx' spaces, commas, and '' ok in xxx
+     *   4.  'xxx' spaces, commas, and '' ok in xxx
+     *   5.  xxx    no spaces or commas in xxx ('s ok)
+     *   6.  ,      return to parse sublist and null parms
+     *   7.  (      return to parse sublist parm
+     *   8.  )      return to parse sublist parm
+     *   8.  '      single quotes appended to parm text
+     *   9.  space - detect end of parms and comments
+     * */
+	try {
+	    parm_pattern = Pattern.compile(
+    		   	    "([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[=])"    // RPI 253
+         		  +	"|([cC][aAeE]*[']([^']|(['][']))*['])"  //RPI 270
+         		  +	"|([cC][!]([^!]|([!][!]))*[!])" 
+         		  + "|([cC][\"]([^\"]|([\"][\"]))*[\"])"
+	  	          + "|([']([^']|(['][']))*['])" 
+	  	          + "|([diklnstDIKLNST]['])"  // RPI 313 single quote ?' operators
+	    		  + "|([^\\s',()]+)"  //RPI181
+	    	      + "|([\\s',()])"    //RPI181
+				  );
+	} catch (Exception e){
+		  abort_error(14,"parm pattern errror - " + e.toString());
+	}
 }
 public void init_options(String[] args,String pgm_type){
 	/*
@@ -3094,6 +3174,8 @@ public void init_options(String[] args,String pgm_type){
          } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("PROFILE(")){
          	opt_profile = token.substring(8,token.length()-1);
+         } else if (token.toUpperCase().equals("REFORMAT")){
+            	opt_reformat = true; 
          } else if (token.toUpperCase().equals("REGS")){
            	opt_regs = true;
            	opt_list  = true;
@@ -3224,7 +3306,7 @@ public  void put_systerm(String msg){
 			systerm_io++;
 			systerm_file.writeBytes(systerm_time + systerm_prefix + msg + "\r\n");
 		} catch (Exception e){
-	        abort_error(11,"I/O error on systerm file " + e.toString());
+	        abort_error(12,"I/O error on systerm file " + e.toString());
 		}
 	}
 }
@@ -3713,5 +3795,142 @@ public String get_padded_name(){
 	 * return 8 character name string
 	 */
 	return (pgm_name + "        ").substring(0,8);
+}
+public String trim_trailing_spaces(String line){
+	/*
+	 * remove trailing spaces from non-continued
+	 * source line
+	 */
+	if (line.length() > 72){
+	    return ("X" + line.substring(0,72)).trim().substring(1);  //RPI124
+	} else {
+		return ("X" + line).trim().substring(1);
+	}
+}
+public String trim_continue(String line, boolean first_line){
+	/*
+	 * use parm parser to find ", " on
+	 * continued line and trim to comma.
+	 * Notes:
+	 *   1.  Allows ", " to appear in quotes
+	 *       which may be split across lines.
+	 *   2.  Allow spaces within (...) on macro
+	 *       statements but not opcodes.    
+	 */
+	int eol_index = line.length();
+	if (eol_index >= 72){
+		eol_index = 71; // RPI 315
+	}
+	if (first_line){
+		split_level = 0;
+		split_quote = false; // RPI115
+		if (line.charAt(0) == '*'){
+			split_comment = true;
+			return line.substring(0,eol_index); // RPI 313 don't look in comments
+		} else {
+			split_comment = false;
+		}
+		split_line(line);
+		if (split_op != null){
+			split_op_index = find_key_index("O:" + split_op.toUpperCase());
+		    if (split_op_index >= 0){
+		    	split_op_type = op_type[split_op_index];
+		    } else {
+		    	split_op_type = -1;
+		    }
+		} else {
+			split_op_index = -1;
+			split_op_type  = -1;
+		}
+	} else {
+		if (split_comment){
+			return line.substring(0,eol_index);
+		}
+		if (line.length() >= 16){
+			split_parms_index = 15;
+		} else {
+			split_parms_index = -1;		
+		}
+	}
+	if (split_parms_index == -1){
+		return line.substring(0,eol_index); // return line if no parms
+	}
+	parm_match = parm_pattern.matcher(line.substring(split_parms_index));
+	int index = 0;
+	boolean split_parm_end = false;
+	while (!split_parm_end && parm_match.find()){
+		String parm = parm_match.group();
+		index = parm_match.start();
+		switch (parm.charAt(0)){
+			case ',':
+				if ((split_op_type < max_machine_op 
+						|| split_level == 0) // RPI 315 allow ,space within (...) for mac ops 
+					&& !split_quote 
+					&& line.length() > split_parms_index + index+1
+					&& line.charAt(split_parms_index + index+1) <= ' '){  //RPI181
+					// truncate line to , delimter found
+					eol_index = split_parms_index + index +1;
+					return line.substring(0,eol_index); // RPI 313
+				}
+				break;
+			case '\'': // single quote found 
+				if (index > 0 && parm.length() == 1){
+					if (!split_quote){
+						split_quote = true;
+						split_parm_end = true;
+					} else {
+						split_quote = false;
+					}
+				}
+				break;
+			case '(': // RPI 315
+				if (!split_quote)split_level++;
+				break;
+			case ')': // RPI 315
+				if (!split_quote)split_level--;
+				break;
+			default: // check for ending white space
+				if (parm.charAt(0) <= ' '
+					&& !split_quote
+					&& (split_op_type < max_machine_op 
+						|| split_level == 0) // RPI 315 allow ,space within (...) for mac ops 	
+				   ){
+					split_parm_end = true; // force end
+				}
+		}
+	}
+	return line.substring(0,eol_index); // return line with no comma,space
+}
+public void split_line(String line){  // RPI 313
+	/*
+	 * split line into three strings:
+	 *   split_label
+	 *   split_op
+	 *   split_parms 
+	 * using precompiled patterm  RPI 313
+	 * 
+	 * 3 fields are null if none and 
+	 * there may be trailing comment on parms
+	 */
+	find_parm_match = find_parm_pattern.matcher(line);
+	if (line.charAt(0) > ' '){
+		find_parm_match.find();
+		split_label = find_parm_match.group();
+	} else {
+		split_label = null;
+	}
+	if (find_parm_match.find()){
+		split_op = find_parm_match.group();
+		if (find_parm_match.find()){
+			split_parms = line.substring(find_parm_match.start());
+			split_parms_index = find_parm_match.start();
+		} else {
+			split_parms = null;
+			split_parms_index = -1;
+		}
+	} else {
+		split_op = null;
+		split_parms = null;
+	}
 }
 }

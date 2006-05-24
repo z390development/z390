@@ -19,6 +19,7 @@ C:\z390\mac
 C:\z390\MAC.BAT
 C:\z390\mvs
 C:\z390\MZ390.BAT
+C:\z390\README.TXT
 C:\z390\RT.BAT
 C:\z390\RT1.BAT
 C:\z390\RT2.BAT
@@ -38,6 +39,7 @@ C:\z390\test
 C:\z390\VDIFF.BAT
 C:\z390\Z390.BAT
 C:\z390\z390.jar
+C:\z390\ZSTRMAC
 C:\z390\bmk\BMKALCG.390
 C:\z390\bmk\BMKALCG.BAL
 C:\z390\bmk\BMKALCG.LOG
@@ -221,6 +223,7 @@ C:\z390\demo\DEMO.svg
 C:\z390\demo\DEMO.svl
 C:\z390\demo\demo.svo
 C:\z390\demo\DEMO.svp
+C:\z390\demo\DEMOAPL1.MLC
 C:\z390\demo\DEMOBMK1.390
 C:\z390\demo\DEMOBMK1.BAL
 C:\z390\demo\DEMOBMK1.LOG
@@ -367,6 +370,7 @@ C:\z390\demo\demonum2.svg
 C:\z390\demo\demonum2.svl
 C:\z390\demo\demonum2.svo
 C:\z390\demo\demonum2.svp
+C:\z390\demo\DEMOSTR1.MLC
 C:\z390\demo\DEMOWTO1.390
 C:\z390\demo\DEMOWTO1.BAL
 C:\z390\demo\DEMOWTO1.LOG
@@ -417,6 +421,7 @@ C:\z390\Doc\z390_User_Guide.pdf
 C:\z390\mac\ABEND.MAC
 C:\z390\mac\ACB.MAC
 C:\z390\mac\ACBD.MAC
+C:\z390\mac\ASMMSP.CPY
 C:\z390\mac\BLDL.MAC
 C:\z390\mac\CALL.MAC
 C:\z390\mac\CHECK.MAC
@@ -2212,11 +2217,13 @@ C:\z390\mvs\test\testmvs1.svp
 C:\z390\src\az390.java
 C:\z390\src\ez390.java
 C:\z390\src\gz390.java
+C:\z390\src\gz390_screen.java
 C:\z390\src\lz390.java
 C:\z390\src\MessageBox.java
 C:\z390\src\mz390.java
 C:\z390\src\pz390.java
 C:\z390\src\sz390.java
+C:\z390\src\test_screen.java
 C:\z390\src\tz390.java
 C:\z390\src\z390.java
 C:\z390\test\AICPAKDF
@@ -3779,3 +3786,11 @@ C:\z390\test\TESTZCV1.svl
 C:\z390\test\TESTZCV1.svo
 C:\z390\test\TESTZCV1.svp
 C:\z390\test\wto.mcr
+C:\z390\ZSTRMAC\DO.MAC
+C:\z390\ZSTRMAC\ELSE.MAC
+C:\z390\ZSTRMAC\ELSEIF.MAC
+C:\z390\ZSTRMAC\ENDDO.MAC
+C:\z390\ZSTRMAC\ENDIF.MAC
+C:\z390\ZSTRMAC\IF.MAC
+C:\z390\ZSTRMAC\ZSTREQU.CPY
+C:\z390\ZSTRMAC\ZSTRMAC.CPY

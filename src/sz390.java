@@ -135,6 +135,8 @@ import javax.swing.Timer;
     int guam_height= 0;
     int guam_row = 0;
     int guam_col = 0;
+    int guam_bg_rgb = 0;
+    int guam_text_rgb = 0;
     int guam_lfield = 0;
     int guam_cursor_type = 0;
     int guam_font      = 0;
@@ -3211,6 +3213,11 @@ private void svc_guam(){
 			guam_cursor_type  = pz390.mem.getInt(guam_args+8);
 			gz390.guam_screen_cursor(guam_row,guam_col,guam_cursor_type);
 			break;
+		case 5: // COLOR,background rgb, text rgb
+			guam_bg_rgb = pz390.mem.getInt(pz390.mem.getInt(guam_args) & pz390.psw_amode);
+			guam_text_rgb = pz390.mem.getInt(pz390.mem.getInt(guam_args+4) & pz390.psw_amode);
+			gz390.guam_screen_color(guam_bg_rgb,guam_text_rgb);
+		    break;
 		default:
 			log_error(95,"undefined GUI Screen command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);

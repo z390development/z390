@@ -163,6 +163,9 @@ public  class  az390 {
     * 04/28/06 RPI 304 add NOPRINT support for PRINT
     * 04/30/06 RPI 306 update OPSYN support, supress copy stmt
     * 05/09/06 RPI 312 add name to return code message
+    * 05/11/06 RPI 313 change MNOTE to set max return code 
+    *          but do not issue error and fix exp parser
+    *          to handle -(...) unary +- before (.
     *****************************************************
     * Global variables
     *****************************************************/
@@ -227,8 +230,6 @@ public  class  az390 {
     int bal_line_index = 0; //current mac line index
     Pattern exp_pattern = null;
     Matcher exp_match   = null;
-    Pattern parm_pattern = null;
-    Matcher parm_match   = null;
     Pattern label_pattern = null;
     Matcher label_match   = null;
     Pattern extrn_pattern = null;
@@ -396,7 +397,7 @@ public  class  az390 {
      * define exp actions based on last and
      * next operator class
      *    1 2 3 4 5 6
-     *   +-* /( ) L'~             col = next_op
+     *   +-* /( ) ?'~             col = next_op
      *                            row = prev_op
      */ 
           int tot_classes = 6;
@@ -405,7 +406,7 @@ public  class  az390 {
           2,2,3,2,3,2,   // 2 * / prev mpy/div
           3,3,3,4,3,0,   // 3 (   prev open
           0,0,0,0,3,0,   // 4 )   prev close
-		  5,5,0,5,5,5,   // 5 L'  prev length attr
+		  5,5,3,5,5,5,   // 5 ?'  prev pfx oper L' U+/= RPI 313
           3,3,7,6,3,6,   // 6 ~   prev terminator
 		  };
      /* action code routines:
@@ -734,31 +735,6 @@ private void compile_patterns(){
              exp_op_class[' '] = 6;
              exp_op_class[','] = 6;
              exp_op_class['~'] = 6;
-             /*
-              * parm_pattern tokens:
-              *   1.  ppp=   parm followed by = for detecting key vs pos
-              *   2.  C'xxx' spaces, commas, and '' ok in xxx
-              *   3.  'xxx' spaces, commas, and '' ok in xxx
-              *   4.  xxx    no spaces or commas in xxx ('s ok)
-              *   5.  ,      return to parse sublist and null parms
-              *   6.  (      return to parse sublist parm
-              *   7.  )      return to parse sublist parm
-              *   8.  '      single quotes appended to parm text
-              *   9.  space - detect end of parms and comments
-              * */
-         	try {
-         	    parm_pattern = Pattern.compile(
-         			"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[=])"     // RPI 253
-         		  +	"|([cC][aAeE]*[']([^']|(['][']))*['])"  //RPI 270
-         		  +	"|([cC][!]([^!]|([!][!]))*[!])" 
-         		  + "|([cC][\"]([^\"]|([\"][\"]))*[\"])" 
-         		  + "|([']([^']|(['][']))*['])"
-      			  + "|([^\\s',()]+)"  // any chars except white space or "',()"  RPI181       
-         	      + "|([\\s',()])" // white space char or ";,()"                 RPI181
-     			  );
-         	} catch (Exception e){
-         		  abort_error(1,"parm pattern errror - " + e.toString());
-         	}
              /*
               * dcc_sq_pattern for quoted string:
               *   1.  '...''...'
@@ -1880,9 +1856,8 @@ private void process_bal_op(){
     		    exp_text = bal_parms;
     		    exp_index = 0;
     		    exp_val = 0;
-        		if (calc_abs_exp() && exp_val > 4){
+        		if (calc_abs_exp() && exp_val > az390_rc){  // RPI 313
        				az390_rc = exp_val;
-        			log_error(110,bal_line);
         		} 
         		if (exp_val > max_mnote_level){
         			max_mnote_level = exp_val;
@@ -2145,7 +2120,7 @@ private void gen_lit_xref_list(){
 		                + " ESD=" + tz390.get_hex(lit_esd[cur_lit],4) 
 		                + " POOL=" + tz390.get_hex(lit_pool[cur_lit],4)
 		                ;
-        if (tz390.opt_xref  && lit_xref[cur_lit] != null){  //dshx
+        if (tz390.opt_xref  && lit_xref[cur_lit] != null){  
 		    lit_line = lit_line + " XREF=";
 		    Iterator<Integer> lit_xref_it = lit_xref[cur_lit].iterator();
 		    while (lit_xref_it.hasNext()){
@@ -2225,35 +2200,34 @@ private void get_bal_line(){
    		} else if (tz390.opt_text // RPI 264 
    				   || temp_line.length() < 72
    				   || temp_line.charAt(71) <= ' '){  //RPI181
-   			bal_line = trim_line(temp_line);  //RPI124
+   			bal_line = tz390.trim_trailing_spaces(temp_line);  //RPI124
     	    if (!tz390.verify_ascii_source(bal_line)){
     	    	abort_error(116,"invalid ascii source line " + cur_line_num + " in " + bal_file.getPath());
     	    }
    		} else {
    		    bal_line = temp_line.substring(0,71);
-   		    bal_line = trim_continue(bal_line);
-            while (temp_line.length() > 71
-            		&& temp_line.charAt(71) > ' '){  //RPI181
+   		    bal_line = tz390.trim_continue(bal_line,tz390.split_first);
+            boolean bal_cont = true;
+   		    while (bal_cont){  //RPI181  // RPI 315
             	    tz390.systerm_io++;
             	    temp_line = bal_file_buff.readLine();
             	    if (temp_line == null){
             	    	abort_error(117,"missing continue source line " + cur_line_num + " in " + bal_file.getPath());
             	    }
-            	    temp_line = trim_line(temp_line);
+            	    temp_line = tz390.trim_trailing_spaces(temp_line);
             	    if (!tz390.verify_ascii_source(temp_line)){
             	    	abort_error(118,"invalid ascii source line " + cur_line_num + " in " + bal_file.getPath());
             	    }
             	    if (temp_line.length() < 72 || temp_line.charAt(71) <= ' '){ //RPI181
-            	    	temp_line = trim_line(temp_line); //RPI124
+            	    	bal_cont = false; // RPI 315
+            	    	temp_line = tz390.trim_trailing_spaces(temp_line); //RPI124
             	    }
             	    cur_line_num++;
             	    save_bal_line(); // RPI 274
             	    if  (temp_line.length() >= 16
             	    	&& temp_line.substring(0,15).equals("               ")){ // RPI167
-            	    	int temp_end = temp_line.length();
-            	    	if (temp_end > 71)temp_end = 71;  
-            	    	bal_line = bal_line.concat(temp_line.substring(15,temp_end));
-               		    bal_line = trim_continue(bal_line);
+               		    temp_line = tz390.trim_continue(temp_line,tz390.split_cont); // RPI 315
+            	    	bal_line = bal_line.concat(temp_line.substring(15));
             	    } else { 
             	    	log_error(8,"continuation line < 16 characters - " + temp_line);
             	    }
@@ -2287,36 +2261,14 @@ private void parse_bal_line(){
 		 || bal_line.charAt(0) == '*'){
 		return;
 	} 
-    String[] tokens = split_line(bal_line);
-    bal_label = tokens[0];
-    if (tokens[1] != null){
-    	bal_op    = tokens[1].toUpperCase();
+    tz390.split_line(bal_line);
+    bal_label = tz390.split_label;
+    if (tz390.split_op != null){
+    	bal_op = tz390.split_op.toUpperCase();
     } else {
     	bal_op = null;
     }
-    bal_parms = tokens[2];
-}
-private String[] split_line(String line){
-	/*
-	 * split line into label, opcode, parms 
-	 * 
-	 * 3 fields are null if none and 
-	 * there may be trailing comment on parms
-	 */
-	String[] tokens = line.split("\\s+",3);
-	String[] return_tokens = new String[3];
-    if (tokens.length > 0){
-       if  (line.charAt(0) > ' '){ //RPI181
-           return_tokens[0] = tokens[0];  //label with substitiution
-       }
-       if  (tokens.length > 1){
-       	   return_tokens[1] = tokens[1]; // opcode with substitution
-       }
-       if  (tokens.length > 2){
-    	   return_tokens[2] = tokens[2]; // parms with substitution
-       }
-    }
-    return return_tokens;
+    bal_parms = tz390.split_parms;
 }
 private int find_bal_op(){
 	/*
@@ -2993,8 +2945,11 @@ private void proc_exp_op(){
 	} else {
 		exp_prev_op = exp_start_op;
 	}
-	int last_op_class = exp_op_class[exp_prev_op.charAt(0)];
-	if  (last_op_class == 0){
+    if (tz390.opt_traceall){
+        put_log("TRACE EXP OPS=" + tot_exp_stk_op + " VARS=" + tot_exp_stk_sym + " PREV OP = " + exp_prev_op +  " NEXT OP = " + exp_token);
+    }
+	int prev_op_class = exp_op_class[exp_prev_op.charAt(0)];
+	if  (prev_op_class == 0){
 		log_error(11,"invalid operator class for - " + exp_prev_op);
 		return;
 	} 
@@ -3003,7 +2958,10 @@ private void proc_exp_op(){
 		log_error(12,"invalid operator class - " + exp_op);
 	    return;
 	}
-    int action = exp_action[tot_classes*(last_op_class-1)+next_op_class-1];
+    int action = exp_action[tot_classes*(prev_op_class-1)+next_op_class-1];
+    if (tz390.opt_traceall){
+    	put_log("TRACE EXP OPS=" + tot_exp_stk_op + " VARS=" + tot_exp_stk_sym + " ACTION = " + action + " PREV CLASS = " + prev_op_class + " NEXT CLASS = " + next_op_class);
+    }
     switch (action){
     case 1: // add/sub
        if (exp_prev_op.equals("+")){
@@ -3347,46 +3305,7 @@ private void push_exp_sdt(String sdt){
            }
 	   }
 }
-private String trim_line(String line){
-	/*
-	 * remove trailing spaces from non-continued
-	 * source line
-	 */
-	if (line.length() > 72){
-	    return ("X" + line.substring(0,72)).trim().substring(1);  //RPI124
-	} else {
-		return ("X" + line).trim().substring(1);
-	}
-}
-private String trim_continue(String line){
-	/*
-	 * use parm parser to find ", " on continued
-	 * line and trim to comma.  This allows ", "
-	 * to appear in recognized quoted parms
-	 */
-	parm_match = parm_pattern.matcher(line);
-	int index = 0;
-	boolean single_quote = false; // RPI115
-	while (parm_match.find()){
-		switch (parm_match.group().charAt(0)){
-			case ',':
-				index = parm_match.start();
-				if (!single_quote 
-						&& index > 0 
-						&& line.length() > index+1
-						&& line.charAt(index+1) <= ' '){  //RPI181
-					return line.substring(0,index+1);
-				}
-				break;
-			case '\'': // single quote found 
-				index = parm_match.start();
-				if (index > 0){
-	                single_quote = true;
-				}
-		}
-	}
-	return line;
-}
+
 private void exit_az390(){
 	/*
 	 * display total errors
@@ -4031,9 +3950,9 @@ private void drop_using(){
 		cur_use_end = cur_use_start;  // drop all using
 		return;
 	}
-	parm_match = parm_pattern.matcher(bal_parms);
-	while (parm_match.find()){
-		String cur_use_lab = parm_match.group();
+	tz390.parm_match = tz390.parm_pattern.matcher(bal_parms);
+	while (tz390.parm_match.find()){
+		String cur_use_lab = tz390.parm_match.group();
 		if (cur_use_lab.charAt(0) != ','){
            if (cur_use_lab.charAt(0) > ' '){
    		      if (tz390.find_key_index("U:" + cur_use_lab) != -1){
@@ -5571,25 +5490,25 @@ private void process_print(){
 }
 private void init_get_next_parm(String parms){
 	/*
-	 * use parm_match to find and return next parm
+	 * use tz390.parm_match to find and return next parm
 	 * separated by commas else return null.
 	 * 
 	 */
 	if (parms != null && parms.length() > 0){
-		parm_match = parm_pattern.matcher(parms);
+		tz390.parm_match = tz390.parm_pattern.matcher(parms);
 	} else {
-		parm_match = null;
+		tz390.parm_match = null;
 	}
 }
 private String get_next_parm(){
 	/*
-	 * use parm_match to find and return next parm
+	 * use tz390.parm_match to find and return next parm
 	 * in upper case else return null.
 	 * 
 	 */
-	if (parm_match != null){
-		while (parm_match.find()){
-			String parm = parm_match.group().toUpperCase();
+	if (tz390.parm_match != null){
+		while (tz390.parm_match.find()){
+			String parm = tz390.parm_match.group().toUpperCase();
 			if (parm.charAt(0) <= ' '){
 				return null;
 			}

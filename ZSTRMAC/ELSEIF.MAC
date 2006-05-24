@@ -1,0 +1,74 @@
+         MACRO                                                             
+         ELSEIF                                                            
+         GBLA  &ZSTR_ELSE(10),&ZSTR_SEQ(10),&ZSTR_LEVEL,&ZSTR_LAB                              
+         GBLA  &ZSTR_ELSEIF(10)                                                 
+         LCLA  &N,&M,&S,&ZSTR_LAB1,&L,&I                                        
+         LCLC  &OP,&OPR                                                    
+         LCLB  &TESTSW                                                     
+.********************************************************************
+.*             AUTHOR.   DON HIGGINS.                                      
+.*             DATE.     05/23/76.                                         
+.*             REMARKS.  CONTROL STRUCTURE FOR CONDITIONAL EXECUTION.      
+.********************************************************************
+.* 05/12/06 Z390 RPI 316 UPDATE FOR COMPAT.
+.********************************************************************
+         AIF   (&ZSTR_LEVEL EQ 10).ERR1                                         
+         ELSE                                                              
+&ZSTR_LEVEL   SETA  &ZSTR_LEVEL+1                                                    
+&ZSTR_ELSEIF(&ZSTR_LEVEL) SETA 1                                                     
+&ZSTR_SEQ(&ZSTR_LEVEL) SETA 1                                                        
+&ZSTR_LAB     SETA  &ZSTR_LAB+1                                                      
+&ZSTR_ELSE(&ZSTR_LEVEL) SETA &ZSTR_LAB                                                    
+&N       SETA N'&SYSLIST                                                   
+.NEXTAND ANOP                                                              
+&TESTSW  SETB  0                                                           
+.TEST    ANOP                                                              
+&S       SETA  &S+1                                                        
+         AIF   (&S GT &N).ERR2                                             
+&SN      SETA  N'&SYSLIST(&S)                                              
+&OP      SETC  &SYSLIST(&S,1)
+         AIF   (&SN EQ 4).OPRM4
+         AIF   (&SN NE 1).ERR3
+.OPRM1   ANOP
+&BC      SETC  &SYSLIST(&S+2)
+         AIF   (&N LT &S+3).ERR3
+&OPR     SETC  '&SYSLIST(&S+1),&SYSLIST(&S+3)'
+&S       SETA  &S+4
+         AGO   .TESTGEN
+.OPRM4   ANOP
+&BC      SETC  &SYSLIST(&S,3)
+&OPR     SETC  '&SYSLIST(&S,2),&SYSLIST(&S,4)'
+.TESTGEN ANOP         
+         &OP   &OPR                                                        
+.TESTEND ANOP                                                              
+         AIF   (&TESTSW EQ 1).ORBC                                         
+.AMBC    ANOP                                                              
+         BC    15-&BC,ZSTR_IF_&ZSTR_LAB                                  
+         AGO   .CONNECT
+.ORBC    ANOP                                                              
+         BC    15-&SYSLIST(&S,&M),ZSTR_IF_&ZSTR_LAB                                  
+ZSTR_IF_&ZSTR_LAB1 EQU *                                                             
+.CONNECT ANOP                                                              
+&S       SETA  &S+1                                                        
+         AIF   (&S GT &N).EXIT                                             
+&M       SETA  N'&SYSLIST(&S)                                              
+         AIF   (&M NE 1).ERR4  BAD CONNECTOR                               
+         AIF   ('&SYSLIST(&S)' EQ 'AND').NEXTAND                           
+         AIF   ('&SYSLIST(&S)' NE 'OR').ERR4  BAD CONNECTOR                
+.NEXTOR   ANOP                                                             
+&ZSTR_LAB1    SETA  &ZSTR_LAB+1                                                      
+         B     ZSTR_IF_&ZSTR_LAB1  SKIP TEST IF LAST ONE TRUE                        
+ZSTR_IF_&ZSTR_LAB   EQU *          DO TEST IF LAST ONE FALSE                         
+&ZSTR_LAB     SETA  &ZSTR_LAB+2                                                      
+&ZSTR_ELSE(&ZSTR_LEVEL) SETA &ZSTR_LAB                                                    
+&TESTSW  SETB  1                                                           
+         AGO   .TEST                                                       
+.ERR1    MNOTE 8,'IF - LEVEL OVERFLOW'                                     
+         AGO   .EXIT                                                       
+.ERR2    MNOTE 8,'IF - MISSING TEST LIST'                                  
+         AGO   .EXIT                                                       
+.ERR3    MNOTE 8,'IF - TEST SUBLIST LENGTH INVALID - &SYSLIST(&S)'                                
+         AGO   .EXIT                                                       
+.ERR4    MNOTE 8,'IF - INVALID CONNECTOR'                                  
+.EXIT    ANOP                                                              
+         MEND

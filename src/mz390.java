@@ -154,6 +154,11 @@ public  class  mz390 {
     * 05/05/06 RPI 308 support CICS PROLOG and EPILOG inserts
     * 05/09/06 RPI 310 issue error for stmt before MACRO
     * 05/09/06 RPI 312 add pgm name to return code msg
+    * 05/11/06 RPI 313 correct handling of ?' type operators
+    *          appearing in comma delimited contination lines
+    *          and return no pos parms for " , " parm
+    * 05/13/06 RPI 314 add AGOB and AIFB
+    * 05/15/06 RPI 315 add option REFORMAT default false        
     ********************************************************
     * Global variables
     *****************************************************/
@@ -190,6 +195,7 @@ public  class  mz390 {
     String bal_line = null;
     String bal_label = null;
     String bal_op = null;
+    boolean aif_op = false;
     boolean bal_op_ok = false;
     String bal_parms = null;
     boolean mlc_eof = false;
@@ -283,6 +289,7 @@ public  class  mz390 {
     int tot_expand = 0;
     int expand_inc = 100;        //macro array expansion
     int mac_call_level = 0;      //level of macro nesting during loading
+    String   save_op = null;
     int[]    mac_call_name_index = null;
     int[]    mac_call_return     = null;
     int[]    mac_call_actr       = null;
@@ -300,8 +307,6 @@ public  class  mz390 {
       */
     Pattern var_pattern = null;
     Matcher var_match   = null;
-    Pattern parm_pattern = null;
-    Matcher parm_match   = null;
     Pattern proto_pattern = null;
     Matcher proto_match   = null;
     Pattern exp_pattern = null;
@@ -312,6 +317,7 @@ public  class  mz390 {
     Matcher label_match   = null;
     Pattern exec_pattern = null;
     Matcher exec_match   = null;
+    int label_comma_index = 0; // parm into to comma after macro label else -1
     int sublist_index = 0;
     int sublist_count = 0;
     int tot_pos_parm = 0; // cur pos parms on stack
@@ -427,7 +433,7 @@ public  class  mz390 {
      * macro operation global variables
      */
     int mac_op_index = 0;
-    int max_lcl_key_root = 13;
+    int max_lcl_key_root = 47;
     int max_lcl_key_tab = 0;
     int tot_lcl_key_tab  = max_lcl_key_root+1;
     int cur_lcl_key_root = 1;
@@ -658,29 +664,6 @@ private void compile_patterns(){
         } catch (Exception e){
   		     abort_error(1,"var pattern errror - " + e.toString());
         }
-        /*
-         * parm_pattern tokens:
-         *   1.  ppp=   parm followed by = for detecting key vs pos
-         *   2.  C'xxx' spaces, commas, and '' ok in xxx
-         *   3.  'xxx' spaces, commas, and '' ok in xxx
-         *   4.  xxx    no spaces or commas in xxx ('s ok)
-         *   5.  ,      return to parse sublist and null parms
-         *   6.  (      return to parse sublist parm
-         *   7.  )      return to parse sublist parm
-         *   8.  '      single quotes appended to parm text
-         *   9.  space - detect end of parms and comments
-         * */
-    	try {
-    	    parm_pattern = Pattern.compile(
-        		   	"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[=])"    // RPI 253
-    	    		  +	"|([c|C][']([^']|(['][']))*['])" 
-    	  	          + "|([']([^']|(['][']))*['])" 
-    	    		  + "|([^\\s',()]+)"  //RPI181
-    	    	      + "|([\\s',()])"    //RPI181
-    				  );
-    	} catch (Exception e){
-    		  abort_error(1,"parm pattern errror - " + e.toString());
-    	}
        /*
         * proto_pattern is any one of 6 choices:
         *   1.  &vvv=  var followed by = for detecting key vs pos
@@ -1159,29 +1142,57 @@ private void load_macro_ago_aif_refs(){
 	/*
 	 * check ago and aif references during loading
 	 */
-	if (mac_op.equals("AGO")){
+	int lab_index = 0;
+	if (load_macro_mend_level == 1 
+		&& (mac_op.equals("AGO") 
+			|| mac_op.equals("AGOB"))){
         label_match = label_pattern.matcher(mac_parms);
         if (label_match.find()){
            add_mac_label(mac_name_index
         		        ,label_match.group().toUpperCase()
         		        ,-mac_line_index);
+           if (mac_parms.charAt(0) == '('){
+        	   while (label_match.end() < mac_parms.length()
+        			   && mac_parms.charAt(label_match.end()) == ','){ 
+        		       lab_index = label_match.end()+1;
+        			   if (label_match.find()){
+        				   add_mac_label(mac_name_index
+           		                ,label_match.group().toUpperCase()
+           		                ,-mac_line_index);
+        			   } else {
+        		        	log_error(151," invalid AGO label - " + mac_parms.substring(lab_index));
+        			   }
+        	   }
+           }
         } else {
         	log_error(112,mac_name[mac_name_index] + " invalid AGO label - " + mac_parms);
         }
 	} else if (load_macro_mend_level == 1 
-			   && mac_op.equals("AIF")){
-		int lab_index = mac_parms.lastIndexOf(").");
-		if (lab_index > 0){
-			label_match = label_pattern.matcher(mac_parms.substring(lab_index+1));
-			if (label_match.find()){
-				add_mac_label(mac_name_index
+			   && (mac_op.equals("AIF") 
+					|| mac_op.equals("AIFB"))){
+		int aif_test_index = 0;
+		while (aif_test_index >= 0){
+			lab_index = mac_parms.substring(aif_test_index).indexOf(").");
+			if (lab_index > 0){
+				label_match = label_pattern.matcher(mac_parms.substring(aif_test_index+lab_index+1));
+				if (label_match.find()){
+					add_mac_label(mac_name_index
 						     ,label_match.group().toUpperCase()
 						     ,-mac_line_index);
+					aif_test_index = aif_test_index + lab_index + label_match.end()+2;
+					if (mac_parms.length() <= aif_test_index
+						|| mac_parms.charAt(aif_test_index-1) != ','){
+						aif_test_index = -1;
+					}
+				} else {
+					log_error(113,mac_name[mac_name_index] + " invalid AIF label - " + mac_parms);
+				}
 			} else {
-				log_error(113,mac_name[mac_name_index] + " invalid AIF label - " + mac_parms);
+				if (aif_test_index == 0){
+					log_error(114,mac_name[mac_name_index] + " invalid AIF label - " + mac_parms);
+				}
+				aif_test_index = -1;
 			}
-		} else {
-			log_error(114,mac_name[mac_name_index] + " invalid AIF label - " + mac_parms);
 		}
 	}
 }
@@ -1258,6 +1269,7 @@ private void add_mac_label(int mac_index
 		,String mac_label, int lab_line){
 	/*
 	 * add macro label and check for duplicates
+	 * during macro loading
 	 */
 	int index = mac_name_lab_start[mac_index];
 	while (index < tot_mac_lab){
@@ -1342,7 +1354,7 @@ private void load_get_mac_line(){
             		}
             	}
             } else {
-            	temp_line = trim_line(temp_line);
+            	temp_line = tz390.trim_trailing_spaces(temp_line);
                 if (!tz390.verify_ascii_source(temp_line)){
                 	abort_error(138,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
                 }
@@ -1354,12 +1366,12 @@ private void load_get_mac_line(){
    				   || temp_line.length() < 72
    				   || temp_line.charAt(71) <= asc_space_char
    				  ){ //RPI181
-   			mac_line = trim_line(temp_line);  //RPI124
+   			mac_line = tz390.trim_trailing_spaces(temp_line);  //RPI124
    		} else {
    		    mac_line = temp_line.substring(0,71);
-   		    mac_line = trim_continue(mac_line);
-            while (temp_line.length() > 71
-            		&& temp_line.charAt(71) > asc_space_char){ //RPI181
+   		    mac_line = tz390.trim_continue(mac_line,tz390.split_first); // first line
+            boolean mac_cont = true;
+   		    while (mac_cont){ //RPI181 //RPI 215
             	    tz390.systerm_io++;
             	    temp_line = mac_file_buff[cur_mac_file].readLine();
                     cur_mac_line_num++;
@@ -1367,19 +1379,18 @@ private void load_get_mac_line(){
             	    if (temp_line == null){
             	    	abort_error(139,"missing continuation line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
             	    }
-            	    temp_line = trim_line(temp_line);
+            	    temp_line = tz390.trim_trailing_spaces(temp_line);
             	    if (!tz390.verify_ascii_source(temp_line)){
             	    	abort_error(140,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
             	    }
             	    if (temp_line.length() < 72 || temp_line.charAt(71) <= asc_space_char){ //RPI181
-            	    	temp_line = trim_line(temp_line); //RPI124
+            	    	mac_cont = false;
+            	    	temp_line = tz390.trim_trailing_spaces(temp_line); //RPI124
             	    }
             	    if  (temp_line.length() >= 16
-            	    		&& temp_line.substring(0,15).equals("               ")){  // RPI167
-            	    	int temp_end = temp_line.length();
-            	    	if (temp_end > 71)temp_end = 71; 
-            	    	mac_line = mac_line.concat(temp_line.substring(15,temp_end));
-               		    mac_line = trim_continue(mac_line);
+            	    		&& temp_line.substring(0,15).equals("               ")){ // RPI 167
+            	    	temp_line = tz390.trim_continue(temp_line,tz390.split_cont); // RPI 315
+            	    	mac_line = mac_line.concat(temp_line.substring(15));         // RPI 315
             	    } else { 
             	    	log_error(11,"continuation line < 16 characters - " + temp_line);
             	    }
@@ -1435,11 +1446,22 @@ private void parse_mac_line(){
     if (tz390.opt_tracem){
     	put_log("TRACE MAC LINE " + mac_line);
     }
-    String[] tokens = split_line(mac_line);
-    mac_label = tokens[0];
-    mac_op    = tokens[1];
-    mac_parms = tokens[2];
-    if (mac_op != null)mac_op = mac_op.toUpperCase();  // RPI 141
+    tz390.split_line(mac_line);
+    if (tz390.split_label != null){
+    	mac_label = tz390.split_label;
+    } else {
+    	mac_label = "";
+    }
+    if (tz390.split_op != null){
+    	mac_op    = tz390.split_op.toUpperCase();
+    } else {
+    	mac_op = "";
+    }
+    if (tz390.split_parms != null){
+    	mac_parms = tz390.split_parms;
+    } else {
+    	mac_parms = "";
+    }
     if (mac_op.equals("COPY")){ // RPI 300
        open_mac_copy_file();
        return;
@@ -1485,8 +1507,9 @@ private void open_mac_copy_file(){
 		abort_error(100,"maximum nested copy files exceeded");
 		return;
 	}
-	String[] tokens = mac_parms.split("\\s+",2); //RPI84
-	new_mac_name = tz390.find_file_name(tz390.dir_cpy,tokens[0],".CPY",tz390.dir_cur);
+	tz390.split_line(mac_parms); //RPI84
+	if (tz390.split_label == null)tz390.split_label = "";
+	new_mac_name = tz390.find_file_name(tz390.dir_cpy,tz390.split_label,".CPY",tz390.dir_cur);
 	if (new_mac_name == null){
 		cur_mac_file--;
 	    if (load_type != load_mlc_file){ // RPI 300 
@@ -1521,7 +1544,7 @@ private void open_mac_copy_file(){
 private void put_bal_line(String bal_line){
 	/*
 	 * write bal_line to bal file
-	 * after reformating:
+	 * after optional reformating:
 	 * 
 	 * 1.  Strip off macro labels .xxx
 	 * 2.  align opcode to postion 10
@@ -1533,27 +1556,35 @@ private void put_bal_line(String bal_line){
 	}
 	if (bal_line.length() > 0 && bal_line.charAt(0) != '*'){
 	   boolean reformat = false;
-	   String tokens[] = split_line(bal_line);
-	   if (tokens[0].length() > 0 && tokens[0].charAt(0) == '.'){
-		   tokens[0] = "";
+	   tz390.split_line(bal_line);
+	   if (tz390.split_label == null){
+		   tz390.split_label = ""; // RPI 313
+	   } else if (tz390.split_label.length() > 0
+			&& tz390.split_label.charAt(0) == '.'){
+	       reformat = true; // force reformat to remove mac label
+		   tz390.split_label = "";
 	   }
-	   if  (tz390.opt_mfc && tokens[0].length() > 0){
-           set_sym_type_len(tokens[0].toUpperCase(),tokens[1].toUpperCase(),tokens[2].toUpperCase());
+	   if (tz390.split_op == null)tz390.split_op = "";
+	   if (tz390.split_parms == null)tz390.split_parms = "";
+	   if  (tz390.opt_mfc && tz390.split_label.length() > 0){
+           set_sym_type_len(tz390.split_label.toUpperCase(),tz390.split_op.toUpperCase(),tz390.split_parms.toUpperCase());
 	   }
-	   if  (tokens[0].length() == 0 && tokens[1].length() > 0){
-	   	   reformat = true;
-	   	   tokens[0] = "        ";
-	   } else if (tokens[0].length() < 8){
-	   	   reformat = true;
-	   	   tokens[0] = tokens[0].concat("        ").substring(0,8);   
-	   }
-	   if  (tokens[1].length() > 0 && tokens[0].length() + tokens[1].length() < 14){
-	   	   reformat = true;
-	   	   tokens[1] = tokens[1].concat("    ").substring(0,13 - tokens[0].length());
-	   }
-	   if  (reformat){
-	   	   if (tokens[2] == null)tokens[2] = "";
-	       bal_line = tokens[0] + " " + tokens[1] + " " +tokens[2];
+	   if  (tz390.opt_reformat || reformat){
+		   if  (tz390.split_label.length() == 0 
+				   && tz390.split_op.length() > 0){
+			   reformat = true;
+			   tz390.split_label = "        ";
+		   } else if (tz390.split_label.length() < 8){
+			   reformat = true;
+			   tz390.split_label = tz390.split_label.concat("        ").substring(0,8);   
+		   }
+		   if  (tz390.split_op.length() > 0 && tz390.split_label.length() + tz390.split_op.length() < 14){
+			   reformat = true;
+			   tz390.split_op = tz390.split_op.concat("    ").substring(0,13 - tz390.split_label.length());
+		   }
+		   if  (reformat){	   	   
+			   bal_line = tz390.split_label + " " + tz390.split_op + " " + tz390.split_parms;
+		   }
 	   }
 	}
 	try {
@@ -1619,6 +1650,7 @@ private void parse_bal_line(){
     		split_bal_line();
     	}
     }
+    save_op = bal_op;
     if (bal_op != null && bal_op.length() > 0){
     	String opsyn_key   = bal_op.toUpperCase();
 		int    opsyn_index = tz390.find_key_index("R:" + opsyn_key);
@@ -1632,10 +1664,22 @@ private void split_bal_line(){
 	 * split bal_line into bal_label, bal_op,
 	 * and bal_parms
 	 */
-    String[] tokens = split_line(bal_line);
-    bal_label = tokens[0];
-    bal_op    = tokens[1];
-    bal_parms = tokens[2];
+    tz390.split_line(bal_line);
+    if (tz390.split_label != null){
+    	bal_label = tz390.split_label;
+    } else {
+    	bal_label = "";
+    }
+    if (tz390.split_op != null){
+    	bal_op = tz390.split_op;
+    } else {
+    	bal_op = "";
+    }
+    if (tz390.split_parms != null){
+    	bal_parms = tz390.split_parms;
+    } else {
+    	bal_parms = "";
+    }
 }
 private String replace_vars(String text,boolean bal_source){
 	/* 
@@ -1698,35 +1742,6 @@ private String replace_vars(String text,boolean bal_source){
    }
    exp_var_replacement_mode = false;
    return text;
-}
-private String[] split_line(String line){
-	/*
-	 * split line into label, opcode, parms 
-	 * 
-	 * 3 fields are non-null but may have 0 length 
-	 * and there may be trailing comment on parms
-	 */
-	String[] tokens = line.split("\\s+",3);
-	String[] split_tokens = new String[3];
-	if (tokens.length > 0){
-		split_tokens[0] = tokens[0];
-		if (tokens.length > 1){
-			split_tokens[1] = tokens[1];
-			if (tokens.length > 2){
-				split_tokens[2] = tokens[2];
-			} else {
-				split_tokens[2] = "";
-			}
-		} else {
-			split_tokens[1] = "";
-			split_tokens[2] = "";
-		}
-	} else {
-		split_tokens[0] = "";
-		split_tokens[1] = "";
-		split_tokens[2] = "";
-	}
-    return split_tokens;
 }
 private boolean find_var(String var_name){
 	/*
@@ -1805,12 +1820,12 @@ private String get_sublist(String list,int sublist_index){
 			return "";
 		}
 	}
-	parm_match = parm_pattern.matcher(list.substring(1));
+	tz390.parm_match = tz390.parm_pattern.matcher(list.substring(1));
 	int index = 1;
 	int level = 1;
 	String sublist = "";
-	while (parm_match.find()){
-		String token = parm_match.group();
+	while (tz390.parm_match.find()){
+		String token = tz390.parm_match.group();
 		switch (token.charAt(0)){
 		case ',':
 			if (level == 1){
@@ -1846,45 +1861,6 @@ private String get_sublist(String list,int sublist_index){
 	} else {
 	    return "";
 	}
-}
-private String trim_line(String line){
-	/*
-	 * remove trailing spaces from non-continued
-	 * source line
-	 */
-	if (line.length() > 72){
-	    return ("X" + line.substring(0,72)).trim().substring(1);  //RPI124
-	} else {
-		return ("X" + line).trim().substring(1);
-	}
-}
-private String trim_continue(String line){
-	/*
-	 * use parm parser to find ", " on continued
-	 * line and trim to comma.  This allows ", "
-	 * to appear in recognized quoted parms
-	 */
-	parm_match = parm_pattern.matcher(line);
-	int index = 0;
-	boolean single_quote = false;  // RPI115
-	while (parm_match.find()){
-		switch (parm_match.group().charAt(0)){
-			case ',':
-				index = parm_match.start();
-				if (!single_quote 
-						&& index > 0 
-						&& line.length() > index+1
-						&& line.charAt(index+1) <= asc_space_char){  //RPI181
-					return line.substring(0,index+1);
-				}
-				break;
-			case '\'': // single quote found 
-				if (parm_match.group().length() == 1){
-	                single_quote = true;
-				}
-		}
-	}
-	return line;
 }
 private String get_set_string(String name,int sub){
 	/*
@@ -1929,6 +1905,93 @@ private int find_mac_op(){
     	return -1;
     }
 }
+private void exec_ago(){
+	/*
+	 * branch to mac label or computed mac label
+	 */
+    old_mac_line_index = mac_line_index;
+    if (bal_parms != null && bal_parms.length() > 1){
+    	if (bal_parms.charAt(0) != '('){
+            exec_ago_branch(0);
+            return;
+    	} else {
+    		int ago_index = calc_seta_exp(bal_parms,1);
+    		if (ago_index >= 1){
+    			int lab_index = exp_next_index;
+    		    int index = 0;
+    			while (lab_index < bal_parms.length()){
+    		    	index++;
+    		    	label_match = label_pattern.matcher(bal_parms.substring(lab_index));
+    		    	if (label_match.find()){
+    		    		if (index == ago_index){
+    		    			exec_ago_branch(lab_index);
+    		    			return;
+    		    		} else {
+    		    			lab_index = lab_index + label_match.end()+1;
+    		    		    if (lab_index >= bal_parms.length() 
+    		    		    	|| bal_parms.charAt(lab_index-1) != ','){
+    		    		    	// force exit with no branch 
+    		    		    	lab_index = bal_parms.length();
+    		    		    }
+    		    		}
+    		    	} else {
+    		    		abort_error(150,"AGO invald macro label operand - " + bal_parms.substring(lab_index));
+    		    	}
+    		    }
+    		}
+    	}
+   	} else {
+   		abort_error(149,"AGO missing macro label operand");
+    }
+}
+private void exec_ago_branch(int lab_index){
+	/*
+	 * branch to ago target label
+	 */
+    actr_count--;
+    old_mac_line_index = mac_line_index;
+	mac_line_index = get_label_index(bal_parms.substring(lab_index));
+	if (mac_line_index < mac_name_line_start[mac_name_index] 
+        || mac_line_index >= mac_name_line_end[mac_name_index]){
+		mac_line_index = old_mac_line_index;
+		abort_error(16,mac_name[mac_name_index] + " undefined " + bal_parms.substring(lab_index));
+	}
+	update_sysstmt();
+}
+private void exec_aif(){
+	/*
+	 * execute 1 or more AIF/AIFB tests
+	 * and branch if true.
+	 */
+	int aif_test_index = 0; // start of next aif test (...).lab
+	while (aif_test_index >= 0){
+    	if (calc_setb_exp(bal_parms.substring(aif_test_index),0) != 0){
+		    actr_count--;
+		    old_mac_line_index = mac_line_index;
+    		mac_line_index = get_label_index(bal_parms.substring(aif_test_index+exp_next_index));
+        	if (mac_line_index < mac_name_line_start[mac_name_index]
+                || mac_line_index >= mac_name_line_end[mac_name_index]){
+               	mac_line_index = old_mac_line_index;
+               	abort_error(142,"AIF macro label not found - " + bal_parms.substring(aif_test_index+exp_next_index));
+            }
+        	aif_test_index = -1;
+    		if (tz390.opt_traceall){
+    		   put_log("TRACE AIF BRANCH");
+    		}
+    		update_sysstmt();
+    	} else {
+    		int label_comma_index = get_label_comma_index(bal_parms.substring(exp_next_index));
+    		if (label_comma_index != -1){
+    			aif_test_index = aif_test_index+exp_next_index+label_comma_index+1;
+    		} else {
+    			aif_test_index = -1;
+    			if (tz390.opt_traceall){
+    				put_log("TRACE AIF  NO BRANCH");
+    			}
+    		}
+    	}
+	}
+}
 private void exec_mac_op(){
 	/*
 	 * execute macro operation (set,aif, ago, etc.)
@@ -1943,37 +2006,16 @@ private void exec_mac_op(){
 		actr_count = calc_seta_exp(bal_parms,0);
 		break;
     case 202:  // AGO 
+    case 226:  // AGOB
        	bal_op_ok = true;
-	    actr_count--;
-	    old_mac_line_index = mac_line_index;
-    	mac_line_index = get_label_index(bal_parms);
-    	if (mac_line_index < mac_name_line_start[mac_name_index] 
-            || mac_line_index >= mac_name_line_end[mac_name_index]){
-    		mac_line_index = old_mac_line_index;
-    		abort_error(16,mac_name[mac_name_index] + " undefined " + bal_parms);
-    	}
-    	update_sysstmt();
+       	exec_ago();
     	break;
-    case 203:  // AIF  
+    case 203:  // AIF 
+    case 227:  // AIFB
        	bal_op_ok = true;
-    	if (calc_setb_exp(bal_parms,0) != 0){
-		    actr_count--;
-		    old_mac_line_index = mac_line_index;
-    		mac_line_index = get_label_index(bal_parms.substring(exp_next_index));
-        	if (mac_line_index < mac_name_line_start[mac_name_index]
-                || mac_line_index >= mac_name_line_end[mac_name_index]){
-               	mac_line_index = old_mac_line_index;
-               	abort_error(142,"macro label not found - " + bal_parms.substring(exp_next_index));
-            }
-    		if (tz390.opt_traceall){
-    		   put_log("TRACE AIF BRANCH");
-    		}
-    		update_sysstmt();
-    	} else {
-       		if (tz390.opt_traceall){
-     		   put_log("TRACE AIF  NO BRANCH");
-     		}
-    	}
+       	aif_op = true;
+       	exec_aif();
+    	aif_op = false;
     	break;
     case 204:  // AINSERT
     	break;
@@ -2117,8 +2159,7 @@ private void exec_mac_op(){
     	break;
     case 222:  // MEXIT 
     	mac_line_index = mac_name_line_end[mac_call_name_index[mac_call_level]] - 1;
-    	
-    	bal_op_ok = true;
+     	bal_op_ok = true;
     	break;
     case 223:  // PUNCH
     	bal_op_ok = true;
@@ -2129,7 +2170,7 @@ private void exec_mac_op(){
     case 224:  // COPY (copy to bal and issue error if not found) RPI 300
     	bal_op_ok = true;
     	bal_parms = replace_vars(bal_parms,false);
-   	    put_bal_line(bal_line);
+  	    put_bal_line(bal_line);
     	mac_parms = bal_parms;
     	load_type = load_mac_exec;
     	open_mac_copy_file(); // issue error if not found
@@ -2469,7 +2510,7 @@ private String get_aread_string(){
 				dat_file = null;
 				return "";
 			} else {
-				text = trim_line(text);
+				text = tz390.trim_trailing_spaces(text);
 				if (!tz390.verify_ascii_source(text)){
 					abort_error(141,"invalid ascii source line " + cur_mac_line_num + " in " + dat_file.getPath());
 				}
@@ -3023,7 +3064,7 @@ private void exp_perform_op(){
     case  4: // )
   	   exp_pop_op();
   	   exp_level--;
-  	   if (exp_level == 0 && bal_op.toUpperCase().equals("AIF")){
+  	   if (exp_level == 0 && aif_op){  // RPI 314
           exp_set_term_op();
      	  exp_term(); 
   	   } else {
@@ -4562,7 +4603,7 @@ private char get_sym_type(String symbol){
 	/*
 	 * return type for string:
 	 *   1. If symbol found, return type.
-	 *   2. If null or length return 'O'
+	 *   2. If null or length 0 return 'O'
 	 *   3. If numeric return 'N'
 	 *   4. Else return 'N'
 	 */
@@ -4890,7 +4931,7 @@ private boolean find_set(String var_name,int var_sub){
 }
 private boolean find_lcl_set(String var_name,int var_sub){
 	/*
-	 * find lcl set variable else false
+	 * find lcl variable or label else false
 	 * also set var_name_index = -1 if not found
 	 * set following globals if found
 	 * 1.  var_loc   = lcl_loc or gbl_loc
@@ -4898,10 +4939,16 @@ private boolean find_lcl_set(String var_name,int var_sub){
 	 * 3.  var_name_index = for lcl/gbl seta, setb, setc array 
 	 * 4.  set_sub = subscript
 	 * 5.  seta_value|setb_value|setc_value
-	 * 6.  seta_index|setb_index|setc_index 
+	 * 6.  seta_index|setb_index|setc_index
+	 * 
+	 *  lcl key types are:
+	 *     K: - key word macro parm
+	 *     L: - local macro label
+	 *     P: - postional macro parm
+	 *     S: = local set variable
      */
 	set_sub = var_sub;
-	var_name_index = find_lcl_key_index("L:" + var_name);
+	var_name_index = find_lcl_key_index("S:" + var_name);
     if (var_name_index != -1){
 		var_loc = lcl_loc;
 		var_type = lcl_set_type[var_name_index];
@@ -5251,19 +5298,39 @@ private int get_label_index(String label_source){
 	String label_name = label_source;
     if (label_match.find()){
 	   label_name = label_match.group().toUpperCase();
-       int    label_name_index = mac_name_lab_start[mac_name_index];
-       while (label_name_index < mac_name_lab_end[mac_name_index]){
-       	  if (mac_lab_name[label_name_index].equals(label_name)){
-       	     if (tz390.opt_tracem){
-       	    	put_log("TRACE BRANCH " + label_name);
-       	     }
-       	  	 return mac_lab_index[label_name_index]-1; // -1 req'd for following ++ cycle
-       	  } else {
-       	  	 label_name_index++;
-       	  }
-       }
+	   int    label_name_index = find_lcl_key_index("L:" + label_name);
+	   if (label_name_index != -1){
+		   return mac_lab_index[label_name_index]-1; // -1 req'd for following ++ cycle
+	   }
+	   label_name_index = mac_name_lab_start[mac_name_index];
+	   while (label_name_index < mac_name_lab_end[mac_name_index]){
+		   if (mac_lab_name[label_name_index].equals(label_name)){
+			   if (tz390.opt_tracem){
+				   put_log("TRACE BRANCH " + label_name);
+			   }
+			   add_lcl_key_index(label_name_index);
+			   return mac_lab_index[label_name_index]-1; // -1 req'd for following ++ cycle
+		   } else {
+			   label_name_index++;
+		   }
+	   }
+    }
+	abort_error(25,"macro label not found - " + label_name);
+    return -1;
+}
+private int get_label_comma_index(String label_source){
+	/*
+	 * find and return index to comma after
+	 * macro label else return -1
+	 */
+	label_match = label_pattern.matcher(label_source); 
+    if (label_match.find()){
+       int index = label_match.end();
+	   if (index < label_source.length()
+		   && label_source.charAt(index) == ','){
+		   return index;
+	   }
 	}
-    abort_error(25,"macro label not found - " + label_name);
     return -1;
 }
 private int find_mac_entry(String macro_name){
@@ -5351,7 +5418,7 @@ private void call_mac(){
 		 	 if (call_label.length() < 8){
 		 	       call_label = call_label.concat("        ").substring(0,8);
 		 	 }
-		 	 String call_op = bal_op;
+		 	 String call_op = save_op;
 		 	 if (call_op.length() < 5){
 		 	 	call_op = call_op.concat("     ").substring(0,5);
 		 	 }
@@ -5360,9 +5427,15 @@ private void call_mac(){
 		 	 String sysnest = "  " + mac_call_level;
 		 	 sysnest = sysnest.substring(sysnest.length() - 2);
 		 	 if (call_parms == null)call_parms = "";
-		 	 String call_line = "      " + mac_file_line_num[save_mac_line_index];
-		 	 call_line = call_line.substring(call_line.length() - 6);
-		 	 put_bal_line("*MCALL #=" + sysndx + " LV=" +  sysnest + " LN=" + call_line + " " + call_label + " " + call_op + " " + call_parms);
+		 	 String call_line_no = "      " + mac_file_line_num[save_mac_line_index];
+		 	 call_line_no = call_line_no.substring(call_line_no.length() - 6);
+		 	 String call_line = null;
+		 	 if (tz390.opt_reformat){
+		 		call_line = call_label + " " + call_op + " " + call_parms;
+		 	 } else { 
+		 		call_line = bal_line;
+		 	 }
+		 	 put_bal_line("*MCALL #=" + sysndx + " LV=" +  sysnest + " LN=" + call_line_no + " " + call_line);
 		 }
 		 /*
 		  * 1.  parse proto-type and add initial
@@ -5372,7 +5445,6 @@ private void call_mac(){
 		  * 
 		  */
 		 init_call_parms();
-		 cur_pos_parm = mac_call_pos_start[mac_call_level];
 		 set_call_parm_values();
 		 mac_line_index = mac_name_line_start[mac_name_index];
 		 update_sysstmt();
@@ -5607,9 +5679,9 @@ private void init_lcl_sys(){
 }
 private void add_lcl_sys(String sys_name,byte sys_type){
 	/*
-	 * add local system variable
+	 * add local set variable
 	 */
-	 if (find_lcl_key_index("L:" + sys_name) == -1){
+	 if (find_lcl_key_index("S:" + sys_name) == -1){
 		 add_lcl_set(sys_name,sys_type,1);
 	 } else {
 		 abort_error(122,"duplicate lcl system variable - " + sys_name);
@@ -5662,14 +5734,27 @@ private void init_call_parms(){
 	 * parse proto-type to set pos and key
 	 * parm initial values
 	 */
+	cur_pos_parm = mac_call_pos_start[mac_call_level];  // rpi 313
     String proto_type_line = mac_file_line[mac_name_line_start[mac_name_index]];
     proto_label = null;
     proto_op    = null;
     proto_parms = null;
-    String[] tokens = split_line(proto_type_line);
-    proto_label = tokens[0];
-    proto_op    = tokens[1];
-    proto_parms = tokens[2];
+    tz390.split_line(proto_type_line);
+    if (tz390.split_label != null){
+    	proto_label = tz390.split_label;
+    } else {
+    	proto_label = "";
+    }
+    if (tz390.split_op != null){
+    	proto_op = tz390.split_op;
+    } else {
+    	proto_op = "";
+    }
+    if (tz390.split_parms != null){
+    	proto_parms = tz390.split_parms;
+    } else {
+    	proto_parms = "";
+    }
     if  (proto_label.length() > 0){
         init_pos_parm(proto_label);  // set syslist(0) label
     } else {
@@ -5681,12 +5766,19 @@ private void init_call_parms(){
 	    int key_value_level = 0;
 	    proto_match = proto_pattern.matcher(proto_parms);
         byte state = 1;
+        int first_pos_parm = tot_pos_parm;  // RPI 313
  	    while (proto_match.find()){
  	       parm_value = proto_match.group();
  	       switch (state){
 			   case 1: // new parm
  	               if  (parm_value.equals(",")){
-       	               init_pos_parm(""); 
+	            	   if (tot_pos_parm == first_pos_parm
+   	            			&& (proto_parms.length() == 1
+   	            				|| proto_parms.charAt(1) <= ' ')){
+   	            		   state = 4;  // RPI 313
+   	            	   } else {
+   	            		   set_pos_parm("");
+   	            	   }
  	               } else if (parm_value.charAt(0) <= asc_space_char){ // RPI 239
  	               	   state = 4;
  	               } else {
@@ -5743,6 +5835,7 @@ private void set_call_parm_values(){
      * 
      * Note mult commas force null pos parms
      */
+	   cur_pos_parm = mac_call_pos_start[mac_call_level]; // rpi 313
        if  (bal_label.length() > 0){
            set_pos_parm(bal_label);  // set syslist(0) label
        } else {
@@ -5750,21 +5843,28 @@ private void set_call_parm_values(){
        }
        if  (bal_parms.length() > 0){
    	       String key_name = null;
-   	       parm_match = parm_pattern.matcher(bal_parms);
+   	       tz390.parm_match = tz390.parm_pattern.matcher(bal_parms);
            byte state = 1;
            String token = null;
            char   token_first = '?';
            int    token_len   = 0;
            int level = 0;
-    	   while (parm_match.find()){
-    	       token = parm_match.group();
+           int first_pos_parm = tot_pos_parm;
+    	   while (tz390.parm_match.find()){
+    	       token = tz390.parm_match.group();
     	       token_first = token.charAt(0);
     	       token_len   = token.length();
     	       switch (state){
 			       case 1: // new parm
 			       	   parm_value = "";
     	               if  (token_first == ','){
-          	               set_pos_parm(""); 
+    	            	   if (tot_pos_parm == first_pos_parm
+    	            			&& (bal_parms.length() == 1
+    	            				|| bal_parms.charAt(1) <= ' ')){
+    	            		   state = 4;  // RPI 313
+    	            	   } else {
+    	            		   set_pos_parm("");
+    	            	   }
     	               } else if (token_first <= asc_space_char){ //RPI181
     	               	   state = 4;
     	               } else {

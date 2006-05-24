@@ -1,0 +1,15 @@
+         MACRO                                                             
+&N       ENDIF
+.********************************************************************
+.* ENDIF - END OF ALTERATE SELECTION                                                                
+.********************************************************************                                                                
+.* 05/14/06 DSH Z390 RPI 316 UPDATE FOR COMPAT.
+.********************************************************************                                                                
+         GBLA  &ZSTR_ELSE(10),&ZSTR_SEQ(10),&ZSTR_LEVEL,&ZSTR_LAB                              
+         GBLA  &ZSTR_ELSEIF(10)                                                 
+         AIF   (&ZSTR_SEQ(&ZSTR_LEVEL) NE 4).CONT                                    
+&N       ELSE  END                                                         
+         MEXIT                                                             
+.CONT    ANOP                                                              
+&N       ELSE  CONTINUE                                                    
+         MEND
