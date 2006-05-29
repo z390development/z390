@@ -6,18 +6,38 @@
 .* Author - Don Higgins                                              *
 .* Date   - 03/14/06                                                 *
 .*********************************************************************
-.* 03/14/06 RPI1 210 ADD STORAGE MACRO
+.* 03/14/06 RPI 210 ADD STORAGE MACRO
+.* 04/11/06 RPI 244 UPDATE KW PARMS, SUPPORT LOC=ANY
 .*********************************************************************
-&N       STORAGE &TYPE,&LENGTH=,&ADDR=,&LOC=,&COND=NO
-         AIF   (N'&SYSLIST EQ 1).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
-.NPOK    ANOP
+&N       STORAGE &TYPE,      OBTAIN/RELEASE                            X
+               &ADDR=,       ADDRESS TO STORE ALLOC STORAGE            X
+               &BNDRY=,      IGNORE                                    X
+               &CALLRKY=,    IGNORE                                    X
+               &CHECKZERO=,  IGNORE                                    X
+               &COND=NO,     CONDITIONAL NO/YES                        X
+               &CONTBDY=,    IGNORED                                   X
+               &INADDR=,     NOT SUPPORTED                             X
+               &KEY=,        IGNORE                                    X
+               &LENGTH=,     LENGTH OF REQUEST                         X
+               &LOC=,        24,31,ANY,ABOVE,BELOW                     X
+               &MF=,         NOT SUPPORTED                             X
+               &RELATED=,    IGNORE                                    X
+               &RTCD=,       NOT SUPPORTED                             X
+               &SP=,         IGNORE                                    X
+               &STARTBDY=    IGNORE
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+         MEXIT
+.NPOK    ANOP
+         AIF   (&INADDR NE '').ERR1
+         AIF   (&RTCD   NE '').ERR2
+         AIF   (&MF     NE '').ERR3
          AIF   (&TYPE EQ 'OBTAIN').OBTAIN
          AIF   (&TYPE EQ 'RELEASE').RELEASE
-         MNOTE 12,'STORAGE INVALID TYPE - &TYPE'
+         MNOTE 12,'STORAGE TYPE NOT OBTAIN/RELEASE - &TYPE'
          MEXIT
 .OBTAIN  ANOP
          AIF   (&COND EQ 'YES').GMRC
@@ -37,5 +57,11 @@
          MEXIT
 .RELEASE ANOP
          FREEMAIN R,A=&ADDR,LV=&LENGTH
+         MEXIT
+.ERR1    MNOTE 12,'STORAGE INADDR= NOT SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'STORAGE RTCD= NOT SUPPORTED'
+         MEXIT
+.ERR3    MNOTE 12,'STORAGE MF= NOT SUPPORTED'
          MEXIT
          MEND

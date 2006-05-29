@@ -1,0 +1,22 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/28/06                                                 *
+*********************************************************************
+* 04/28/06 RPI301 TEST MULTIPLE LOCTRS AND USING                       
+*********************************************************************
+         TITLE 'TESTLOC1 - TEST MULIPLE LOCTRS'
+TESTLOC1 SUBENTRY
+INS      LOCTR
+         WTO   'TESTLOC1 STARTED'
+DATA     LOCTR
+X        DS    X
+INS      LOCTR
+         LA    1,X
+         CL    1,=A(X)
+         BNE   1
+         WTO   'TESTLOC1 ENDED OK'
+         SUBEXIT     
+         END         

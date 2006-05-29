@@ -8,13 +8,17 @@
 .*********************************************************************
 .* 10/20/05 RPI27 - issue error for any undefined operands     
 .*********************************************************************
-&N       SAVE  &REGS
-         AIF   (N'&SYSLIST LE 3).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
-.NPOK    ANOP
+&N       SAVE  &REGS,   (REGS TO SAVE)                                 X
+               &T,      IGNORED                                        X
+               &ID,     IGNORED                                        X
+               &MF=     NOT SUPPORTED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (&MF NE '').ERR1
+         AIF   (N'&SYSLIST LE 3).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
+.NPOK    ANOP
 &R1      SETA  &REGS(1)
 &R2      SETA  &REGS(2)
          AIF   (&R1 LT 0 OR &R1 GT 15).ERR
@@ -32,4 +36,6 @@
 .ERR     ANOP
          MNOTE 8,'MZ390E 1002 SAVE RANGE INVALID (&R1,&R2)'
 .EXIT    ANOP
+         MEXIT
+.ERR1    MNOTE 12,'SAVE MF= NOT SUPPORTED'
          MEND

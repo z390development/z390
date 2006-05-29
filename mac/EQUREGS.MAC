@@ -25,7 +25,7 @@
         LCLC   &HEX(16)
 &HEX(1) SETC   '0','1','2','3','4','5','6','7',                        X
                '8','9','A','B','C','D','E','F'
-        AIF   (N'&SYSLIST EQ 0).NPOK
+        AIF   (&SYSLIST(1) EQ '').NPOK
         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
 .NPOK   ANOP
 &I      SETA   -1

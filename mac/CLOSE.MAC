@@ -10,27 +10,40 @@
 .* 11/13/05 RPI88 - correct error in checking for DCB register parm
 .* 11/26/05 RPI112- check for invalid DCB RX form (reg) vs ((reg)) 
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/10/06 RPI244 support (reg) and ignore other keywords
 .*********************************************************************
-&N       CLOSE
-         AIF   (N'&SYSLIST EQ 1).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
-.NPOK    ANOP
-.*
-.* CLOSE 1 OR MORE FILES DEFINED BY DCB'S 
-.*
+&N       CLOSE &DCBLIST, ((DCB,OPT),(DCB2,OPT2)..) OR (DCB) OR DCB     X
+               &MODE=,   IGNORED AS IT WORKS IN EITHER MODE            X
+               &MF=,     NOT SUPPORTED                                 X
+               &TYPE=    IGNORED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-&NP      SETA  N'&SYSLIST(1)
+         AIF   (&MF NE '').ERR1
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+         MEXIT
+.NPOK    ANOP
+.*
+.* CLOSE 1 OR MORE FILES DEFINED IN DCBLIST 
+.*
+&NP      SETA  N'&DCBLIST
 &I       SETA  -1
 .LOOP    ANOP
 &I       SETA   &I+2
          AIF   (&I GT &NP).EXIT
+         AIF   (&NP GT 1 OR '&DCBLIST'(1,1) NE '('                     X
+               OR '&DCBLIST'(1,2) NE '(').SUBLISTS
+&DCB     SETC  &DCBLIST
+&OPTION  SETC  ''
+         AGO   .DCBREG
+.SUBLISTS ANOP
 &DCB     SETC  &SYSLIST(1,&I)
 &OPTION  SETC  &SYSLIST(1,&I+1,1)
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          AIF   ('&DCB'(1,1) GT '9' OR '&DCB'(1,1) LT '0').RXOK
          MNOTE 12,'INVALID DCB RX ADDRESS - &DCB'
+         MEXIT
 .RXOK    ANOP
          LA    1,&DCB
          AGO   .CHKOPT
@@ -42,7 +55,9 @@
          MNOTE 12,'CLOSE OPTION NOT SUPPORTED - &OPTION'
          MEXIT
 .SVC     ANOP
-         SVC   20
+         SVC   20 CLOSE R1=DCB
          AGO   .LOOP
 .EXIT    ANOP
+         MEXIT
+.ERR1    MNOTE 12,'CLOSE MF= NOT SUPPORTED'
          MEND

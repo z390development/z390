@@ -70,7 +70,7 @@ public  class  z390 extends JApplet
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2005 Automated Software Tools Corporation
+    Copyright 2006 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -111,6 +111,7 @@ public  class  z390 extends JApplet
      * 03/19/06 RPI 236 - if install directory read-only, turn off log,
      *          and send msg to console saying use log command
      * 04/03/06 RPI 235 correct CD path display and suport cd.. etc
+     * 05/05/06 RPI 309 retain last directory on file select
 	 ********************************************************
      * Global variables
      *****************************************************
@@ -720,7 +721,7 @@ public  class  z390 extends JApplet
 	    * display z390 version and copyright
 	    */
 	   	put_log("Z390I " + tz390.version);
-	   	put_log("Copyright 2005 Automated Software Tools Corporation");
+	   	put_log("Copyright 2006 Automated Software Tools Corporation");
 	   	put_log("z390 is licensed under GNU General Public License");
 	   	if  (mode_msg1 != null){
 	   		put_log(mode_msg1);
@@ -1713,6 +1714,7 @@ public  class  z390 extends JApplet
 	    */
 	   tz390 = new tz390();
 	   tz390.init_tables();
+	   dir_cur_file = new File(tz390.dir_cur); // RPI 309
        main_title = "Z390 " + tz390.version;
        /*
         * set runtime cancel hooks
@@ -3082,6 +3084,7 @@ public  class  z390 extends JApplet
 			   if (perm_select){
 			       final JFileChooser select_file_chooser = new
 		           JFileChooser();
+			     if (select_file_frame == null){  // RPI 309  
 			       select_file_chooser.resetChoosableFileFilters();
 		    	   select_file_chooser.setAcceptAllFileFilterUsed(true);
 			       if (select_file_type.length() > 0){
@@ -3091,15 +3094,16 @@ public  class  z390 extends JApplet
 			    	   select_file_type = "ALL";
 			       }
 		    	   create_select_file(select_file_chooser);
-	               if (main_gui){
-	             	   main_frame.setVisible(false);
-	               }
-	               select_file_frame.setLocation(100,100);
-	               select_file_frame.setVisible(true); 
+			     }
+		    	 if (main_gui){
+	                main_frame.setVisible(false);
+	             } 
+	             select_file_frame.setLocation(100,100);
+	             select_file_frame.setVisible(true);
 			   } else {
 			   	 log_error(39,"Permission for file selection denied");
 			   }
-		      } 
+		} 
 		private void create_select_file(final JFileChooser select_file_chooser){
 			/*
 			 * create select file frame with chooser

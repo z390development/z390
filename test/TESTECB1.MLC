@@ -1,0 +1,35 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 05/05/06 RPI 280 test ECBLIST using 2 command processes                                 
+*********************************************************************
+         TITLE 'TESTECB1 TEST WAIT ECBLIST USING STIMER EXIT'
+TESTECB1 SUBENTRY
+         WTO   'TESTECB1 STARTED'
+         STIMER REAL,SEXIT,BINTVL==F'200'
+         WAIT  2,ECBLIST==A(ECB1,ECB2+X'80000000')
+         WTO   'TESTECB1 ENDED OK'
+         SUBEXIT
+SEXIT    EQU   *            STIMER EXIT ROUTINE
+         USING *,15
+         CLI   ECB1,X'80'   ARE WE WAITING FOR ECB1 POST
+         BNE   POST2        NO GO CHECK ECB2
+POST1    EQU   *
+         POST  ECB1,0                      
+         STIMER REAL,SEXIT,BINTVL==F'200'  RESTART STIMER AGAIN
+         BR    14
+POST2    EQU   *
+         CLI   ECB2,X'80'   ARE WE WAITING FOR ECB2 POST
+         BNE   ABORT
+         POST  ECB2,0 
+         BR    14
+ABORT    WTO   'TESTECB1 SEXIT POST ERROR ABORTING'
+         ABEND 111,DUMP
+         DROP  15
+ECB1     DC    F'0'
+ECB2     DC    F'0'
+         EQUREGS
+         END

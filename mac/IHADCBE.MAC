@@ -1,0 +1,16 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/05/06 RPI 281 ADD DCBE SUPPORT FOR EODAD= AND SYNAD=
+.*********************************************************************
+.* See DCB DCBE= and DCBD  DCBDCBE field
+.*********************************************************************
+         MACRO
+         IHADCBE
+IHADCBE  DSECT
+DCBEEODA DS    A                          
+DCBESYNA DS    A                         
+         MEND

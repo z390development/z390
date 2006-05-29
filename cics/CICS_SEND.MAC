@@ -1,0 +1,40 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/05/06 RPI 308 CICS RETURN CALLED FROM EXEC     
+.*********************************************************************
+         MACRO
+         CICS_SEND 
+         LCLB &TEXT
+         LCLC &FROM,&LENGTH
+&NP      SETA N'&SYSLIST
+&IP      SETA 0
+.PLOOP   ANOP
+&IP      SETA &IP+1
+         AIF  (&IP GT &NP).ELOOP
+&PARM    SETC &SYSLIST(&IP)
+         AIF  (&PARM EQ 'TEXT').TEXT
+         AIF  ('&PARM'(1,5) EQ 'FROM(').FROM
+         AIF  ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AGO  .PLOOP
+.TEXT    ANOP
+&TEXT    SETB 1
+         AGO  .PLOOP
+.FROM    ANOP
+&FROM    SETC '&PARM'(6,K'&PARM-6)
+         AGO  .PLOOP
+.LENGTH  ANOP
+&LENGTH  SETC '&PARM'(8,K'&PARM-8)
+         AGO  .PLOOP
+.ELOOP   ANOP
+         AIF  (&TEXT).SENDTEXT
+.SEND3270 ANOP
+         TPUT &FROM,&LENGTH,FULLSCR  SEND TN3270 DATA STREAM          
+         MEXIT
+.SENDTEXT ANOP
+         TPUT &FROM+4,&LENGTH-4,EDIT  SEND TEXT WITOUT 4 BYTE TERM ID
+         MEXIT
+         MEND

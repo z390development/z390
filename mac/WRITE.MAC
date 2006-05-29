@@ -12,11 +12,21 @@
 .* 10/20/05 RPI38 - check for register conflicts
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 01/11/06 RPI170 ALLOW 'S' AS FIFTH PARM  
+.* 04/25/06 RPI290 ALWAYS DEFINE LABEL IF ANY, CHECK MF=
 .*********************************************************************
-&N       WRITE  &DECB,&TYPE,&DCB,&AREA,&LENGTH
+&N       WRITE &DECB,                                                  X
+               &TYPE,                                                  X
+               &DCB,                                                   X
+               &AREA,                                                  X
+               &LENGTH,                                                X
+               &MF=       NOT SUPPORTED
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&MF NE '').ERR3
          AIF   (N'&SYSLIST LT 5).NPOK
          AIF   (N'&SYSLIST EQ 5 AND &SYSLIST(5) EQ '''S''').NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
+         MNOTE 12,'WRITE UNSUPPORTED OPERANDS - &SYSLIST(5)'
 .NPOK    ANOP
 .*
 .*       SEQUENTIALLY WRITE BLOCK AT CURRENT FILE POSITION
@@ -29,9 +39,6 @@
 .*       DCB  -  DATA CONTROL BLOCK OPENED WITH RW MACRF
 .*       AREA -  AREA TO RECEIVE BLOCK (MUST BE >= DCBBLKSI)
 .*
-         AIF   (&N EQ '').SKIPDS
-&N       DS    0H
-.SKIPDS  ANOP
          AIF   ('&DECB'(1,1) EQ '(').DECBREG
          CNOP  0,4
          BAL   1,&DECB+DECBL
@@ -73,4 +80,6 @@
 .ERR1    MNOTE 12,'WRITE INVALID DCB REGISTER - &DCB(1)'
          MEXIT
 .ERR2    MNOTE 12,'WRITE INVALID AREA REGISTER - &AREA(1)'
+         MEXIT
+.ERR3    MNOTE 12,'WRITE MF= NOT SUPPORTED'
          MEND

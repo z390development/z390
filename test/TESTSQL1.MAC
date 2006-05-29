@@ -1,0 +1,4 @@
+         MACRO
+         TESTSQL1
+         WTO 'TESTSQL1 INCLUDED CODE FROM TESTSQL1.MAC'
+         MEND

@@ -1,0 +1,17 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR DFHEAI0 COMMAREA ALLOC     
+.*********************************************************************
+         MACRO
+         DFHEICAD
+.*
+.* DEFINE COMM AREA DSECT  (SEE DFHEAI0 INIT OF ZCVTCAP AND DFHEICAP)
+.*
+DFHEICAD DSECT
+         DS    XL(5000)     GLOBAL SHARED COMMON AREA 
+DFHEICAL EQU   *-DFHEICAD
+         MEND

@@ -1,0 +1,8 @@
+         MACRO
+         TESTMAC9
+         COPY TESTMAC9
+         AIF  (&TESTMAC9 NE 'TESTMAC9').ERR
+         WTO  'TESTMAC9 VAR FROM COPY OK'
+         MEXIT
+.ERR     WTO  'TESTMAC9 VAR NOT FOUND ERROR'
+         MEND

@@ -120,4 +120,5 @@ zcobol/test/z390/
 !**/[A-Z][A-Z][A-Z][A-Z][A-Z][A-Z][A-Z][A-Z]/
 **/* - Copy.*
 **/[cC][iI][cC][sS]
+!**/[cC][iI][cC][sS]/
 zpar/*.[dD][aA][tT]

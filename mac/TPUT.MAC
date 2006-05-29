@@ -10,6 +10,7 @@
 .* 12/16/05 RPI47 - add TGET/TPUT extension for literal edit msg    
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 02/21/06 RPI211 MAKE TGET/TPUT MAINFRAME COMPATIBLE AT SVC LEVEL
+.* 05/05/06 RPI308 CORRECT BUT IN .ASIS CODE FOUND DEBUGGING TESTCIC1
 .*********************************************************************
 .*
 .* TPUT BUFFER,LBUFFER,OPTIONS
@@ -46,10 +47,13 @@
 .*           X'04' - 1=BREAKIN 0=NOBREAKIN
 .*           X'03' - 00=EDIT, 01=ASIS, 10=CONTROL, 11=FULLSCR 
 .*********************************************************************
-&N       TPUT  &BUFF,&LBUFF  
+&N       TPUT  &BUFF,                                                  X
+               &LBUFF,                                                 X
+               &MF=      NOT SUPPORTED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (&MF NE '').ERR1
          AIF   ('&BUFF'(1,1) EQ '(').RECREG
          LA    1,&BUFF
          AGO   .CHKLEN
@@ -99,7 +103,7 @@
          AGO   .OPTLOOP
 .NOEDIT  ANOP  SAME AS ASIS 
 .ASIS    ANOP
-&TYPE    SETC  '01'X'03'  01=ASIS
+&TYPE    SETC  '01' X'03'  01=ASIS  RPI 308
          AGO   .OPTLOOP
 .WAIT    ANOP
 &WAIT    SETC  '0' X'10'  0=WAIT 
@@ -129,4 +133,6 @@
          ICM   1,8,=B'&OP&USERID&LOWP&WAIT&HOLD&BREAKIN&TYPE'
 .SVC     ANOP
          SVC   93 R0=(ASID,LENGTH) R1=(FLAGS,ADDR)
+         MEXIT
+.ERR1    MNOTE 12,'TPUT MF= NOT SUPPORTED'
          MEND

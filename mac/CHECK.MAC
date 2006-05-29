@@ -8,8 +8,15 @@
 .*********************************************************************
 .* 10/20/05 RPI27 - issue error for any undefined operands     
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI244 IGNORE DSORG=                  
 .*********************************************************************
-&N       CHECK  &DECB
+&N       CHECK &DECB,                                                  X
+               &DSORG=ALL,                                             X
+               &MF=         NOT SUPPORTED                  
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&MF NE '').ERR1
          AIF   (N'&SYSLIST EQ 1).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
 .NPOK    ANOP
@@ -21,9 +28,6 @@
 .*          ELSE IF ECB = X'41' TAKE SYNAD EXIT
 .*          ELSE    EXIT NORMALLY
 .*
-         AIF   (&N EQ '').SKIPDS
-&N       DS    0H
-.SKIPDS  ANOP
          AIF   ('&DECB'(1,1) EQ '(').DECBREG
          LA    1,&DECB
          AGO   .SVC
@@ -32,4 +36,6 @@
          LR    1,&DECB(1)
 .SVC     ANOP
          SVC   155 CHECK R1=DECB
+         MEXIT
+.ERR1    MNOTE 12,'CHECK MF= NOT SUPPORTED'
          MEND

@@ -14,6 +14,8 @@
 * 10/20/05 RPI34  - full ASCII and EBCDIC translation test
 * 01/06/06 RPI157 - correct operand errors caught by this fix
 * 01/06/06 RPI192 - test && and '' in setc, sdt, and models   
+* 04/02/06 RPI265 - test alignment within DS/DC fields     
+* 04/05/06 RPI270 - test DS/DC CA/CE/AD/FD/VD (SEE TESTSDT1 CA/CE) 
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -28,7 +30,11 @@ M3       DC    S(1),S(2),X'FF'
 V3       DC    X'00010002FF'
 M4       DC    V(TESTDC1),2V(TESTDC1),X'FF'
 V4       DC    3A(TESTDC1),X'FF'
+         DS    0F
+V5       DC    X'AA',0H,X'BBCC' FORCE 1 ALIGNMENT BYTE WITHIN DC
          RT1   START
+* verify ds/dc alignment between fields
+         RT1   CCE,V5,=X'AA00BBCC'
 * verify dc field continuations
          AIF   (C'A' EQ X'41').TEST1_ASCII
 .TEST1_EBCDIC ANOP
@@ -235,6 +241,14 @@ V4       DC    3A(TESTDC1),X'FF'
          RT1   CCE
          CLI   =C'"',C!"!
          RT1   CCE
+* TEST CA/CE/AD/FD/VD
+         RT1   CCE,=CA'1',=X'31'
+         RT1   CCE,=CE'1',=X'F1'
+         RT1   CCE,=ca'1',=X'31'
+         RT1   CCE,=ce'1',=X'F1'
+         RT1   CCE,=AD(123),=FL8'123'
+         RT1   CCE,=FD'123',=FL8'123'
+VDX      RT1   CCE,=VD(VDX),=AL8(VDX)
          AGO   .TEST5_END
 .TEST5_ASCII ANOP
          CLC   =C'&AMP&AMP',=X'26'
@@ -257,6 +271,14 @@ V4       DC    3A(TESTDC1),X'FF'
          RT1   CCE
          CLI   =C'"',C""""
          RT1   CCE
+* TEST CA/CE/AD/FD/VD
+         RT1   CCE,=CA'1',=X'31'
+         RT1   CCE,=CE'1',=X'F1'
+         RT1   CCE,=ca'1',=X'31'
+         RT1   CCE,=ce'1',=X'F1'
+         RT1   CCE,=AD(123),=FL8'123'
+         RT1   CCE,=FD'123',=FL8'123'
+VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
 .TEST5_END ANOP
          RT1   END
          END         

@@ -10,10 +10,21 @@
 .* 11/20/05 RPI106 - correct alignment for SPM mask             
 .* 12/12/05 RPI132 - correct to support range within list (5,7,(9,11))
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI244 SUPPORT PARAM=             
+.* 04/29/06 RPI305 CORRECT REGISTER FORM OF PARAM= (AIR TO AIF)
 .*********************************************************************
-&N       ESPIE &OP,&ADDR,&LIST
+&N       ESPIE &OP,     SET/RESET                                      X
+               &ADDR,   EXIT ADDRESS                                   X
+               &LIST,   INTERRUPTION LIST (1,2...15)                   X
+               &MF=,    NOT SUPPORTED                                  X
+               &PARAM=  OPTIONAL PARM TO PASS TO EXIT
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&MF NE '').ERR1
          AIF   (N'&SYSLIST LE 3).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
+         MNOTE 12,'ESPIE UNSUPPORTED OPERANDS - &SYSLIST(4)'
+         MEXIT
 .NPOK    ANOP
 .*
 .* Set or reset program interruption exit
@@ -60,9 +71,17 @@
 .*      or ESTAE user defined exit will result in 0Cx abend.
 .*
         LCLA   B(31)
-         AIF   (&N EQ '').SKIPDS
-&N       DS    0H
-.SKIPDS  ANOP
+        AIF    (&PARAM EQ '').ZPARM
+        AIF    ('&PARAM'(1,1) EQ '(').REGPARM
+        LA     15,&PARAM
+        AGO    .ENDPARM
+.REGPARM ANOP
+        AIF    (&PARAM(1) EQ '0' OR &PARAM(1) EQ 'R0').ENDPARM
+        LR     15,&PARAM(1)
+        AGO    .ENDPARM
+.ZPARM  ANOP
+        SR     15,15
+.ENDPARM ANOP
         AIF    (&OP EQ 'SET').SET
         AIF    (&OP EQ 'RESET').RESET
         MNOTE  8,'ESPIE INVALID OPERATION - SET/RESET - &OP'
@@ -126,5 +145,7 @@
 .RESET  ANOP
         SR     1,1
 .SVC    ANOP
-        SVC    X'6D' ESPIE
+        SVC    X'6D' ESPIE R0=INT BITS R1=EXIT R15=PARAM
+        MEXIT
+.ERR1   MNOTE 12,'ESPIE MF= NOT SUPPORTED'
         MEND

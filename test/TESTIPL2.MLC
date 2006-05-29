@@ -1,0 +1,30 @@
+         TITLE 'TESTIPL2 - TEST DISPLAY OF CVTDATE SET BY TESTIPL1'
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 04/10/06 RPI 276 TEST DISPLAY OF IPL DATE SET BY IPL(TESTIPL1)
+*********************************************************************
+TESTIPL2 SUBENTRY
+         WTO   'TESTIPL2 STARTING TO DISPLAY CVTDATE IPL DATE'                            
+         L     R1,16
+         USING IHACVT,R1 
+         CLI   CVTDATE,X'01'        VERIFY CENTURY CODE IS X'01'
+         BNE   ABORT        
+         UNPK  YYDDD,CVTDATE+1(3) 
+         OI    YYDDD+5,C'0'
+         WTO   MF=(E,WTODATE)
+         WTO   'TESTIPL2 ENDED OK'
+         SUBEXIT
+ABORT    WTO   'TESTIPL2 ABORTING DUE TO INVALID CVTDATE'
+         ABEND  111,DUMP
+         EQUREGS
+WTODATE  DC    AL2(WTOEND-*,0),C'TESTIPL2 IPL DATE = '
+CC       DC    CL2'20'
+YYDDD    DS    CL5'YYDDD'
+WTOEND   EQU   *
+         CVTD
+         END         

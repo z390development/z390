@@ -13,8 +13,8 @@
 *********************************************************************
 TESTMAC7 SUBENTRY
          WTO   'TESTMAC7 - TEST TAB VERSUS SPACE USING NOTEPAD'
-         MVI   X,C'X'
-         CLI   X,C'X'
+	MVI   X,C'X'    TEST TAB BEFORE MVI
+         CLI	X,C'X'  TEST TAB AFTER CLI
          BNE   1
          WTO   'TESTMAC7 ENDED OK'
          SUBEXIT

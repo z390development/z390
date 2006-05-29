@@ -1,0 +1,4 @@
+         MACRO
+         TESTSYN2 &P1
+         WTO      'WTO FROM TESTSYN2 WITH P1=&P1'
+         MEND

@@ -1,0 +1,19 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR EXIT FROM PROGRAM
+.*********************************************************************
+.*  exit from EXEC CICS assembler program   
+.*  Notes:
+.*   1.  DFHEIRET called from CICS_RETURN and DFHEIEND.  Note DFHEIEND
+.*       inserted at END statement if CICS and EPILOG options on.
+.*   2.  DFHEIRET calls DFHEAI1 to free DSA and exit    
+.*                                                   
+.*********************************************************************
+         MACRO
+&N       DFHEIRET       
+&N       CALL    DFHEAI1
+         MEND

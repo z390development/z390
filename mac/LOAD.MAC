@@ -13,6 +13,7 @@
 .* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 03/28/06 RPI266 CORRECT MISSING .SKP1 TO .SKPLR1
+.* 04/11/06 RPI244 ERROR ON UNSUPPORTED KEYWORDS, SUPPORT DE=,LOADPT=
 .*********************************************************************
 .* LOAD PGM VIA SVC 8
 .*
@@ -31,32 +32,55 @@
 .*   1.  DSNAME OR DDNAME MAY BE 1 OR MORE DIRECTORY PATHS TO SEARCH
 .*       OR THEY MAY BE PATH AND FILE NAME WHICH OVERRIDES EP/EPLOC
 .*********************************************************************
-&N       LOAD  &EP=,      1 TO 8 CHARACTER PROGRAM NAME                X
-               &EPLOC=,   RX LABEL OR (REG) > OF 8 BYTE PGM NAME       X
+&N       LOAD  &DCB=,     IGNORED                                      X
                &DDNAME=,  1 TO 8 CHARACTER DDNAME                      X
-               &DSNAME=   RX LABEL OR (REG) > NULL OR ".." DIR/DSN SPEC
-         AIF   (N'&SYSLIST EQ 0).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
-.NPOK    ANOP
+               &DE=,      BLDL ENTRY                                   X
+               &DSNAME=,  RX LABEL OR (REG) > NULL OR ".." DIR/DSN     X
+               &EP=,      1 TO 8 CHARACTER PROGRAM NAME                X
+               &EPLOC=,   RX LABEL OR (REG) > OF 8 BYTE PGM NAME       X
+               &ERRET=,   NOT UNSUPPORTED                              X
+               &EXTINFO=, IGNORED                                      X
+               &LSEARCH=, IGNORED                                      X
+               &LOADPT=,  STORE LOAD ADDRESS                           X
+               &MF=,      NOT SUPPORTED                                X
+               &RELATED=  IGNORED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (&MF NE '').ERR2
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'LOAD UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+         AIF   (&DE NE '').DE
+         AIF   (&ERRET NE '').ERR1
          AIF   (&EP NE '').EP
          AIF   (&EPLOC NE '').EPLOC
          SR    0,0
          AIF   (&DDNAME NE '' OR &DSNAME NE '').CHKDSN
-         MNOTE 12,'LOAD REQUIRES EP, EPLOC, DDNAME, OR DSNAME'
+         MNOTE 12,'LOAD REQUIRES DE, EP, EPLOC, DDNAME, OR DSNAME'
+         MEXIT
+.DE      ANOP
+         AIF   ('&DE'(1,1) EQ '(').DEREG
+         LA    0,&DE
+         AGO   .DEADD
+.DEREG ANOP
+         AIF   (&DE(1) EQ '0' OR &DE(1) EQ 'R0').DEADD
+         LR    0,&DE(1)
+.DEADD   ANOP
+         AHI   0,2
+         AIF   (&EP EQ '' AND &EPLOC EQ '').CHKDSN
+         MNOTE 12,'LOAD DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
          MEXIT
 .EP      ANOP
          LA    0,=CL8'&EP'
-         AIF   (&EPLOC EQ '').CHKDSN
-         MNOTE 12,'EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
+         AIF   (&DE EQ '' AND &EPLOC EQ '').CHKDSN
+         MNOTE 12,'LOAD DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
          MEXIT
 .EPLOC   ANOP
          AIF   ('&EPLOC'(1,1) EQ '(').EPLOCREG
          LA    0,&EPLOC
-         AIF   (&EP EQ '').CHKDSN
-         MNOTE 12,'EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
+         AIF   (&DE EQ '' AND &EP EQ '').CHKDSN
+         MNOTE 12,'LOAD DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
          MEXIT
 .EPLOCREG ANOP
          AIF   (&EPLOC(1) EQ '0' OR &EPLOC(1) EQ 'R0').CHKDSN  RPI163
@@ -64,7 +88,8 @@
 .CHKDSN  ANOP
          AIF   (&DSNAME EQ '').CHKDD
          AIF   (&DDNAME EQ '').DSNOK
-         MNOTE 12,'DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
+         MNOTE 12,'LOAD DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
+         MEXIT
 .DSNOK   ANOP
          AIF   ('&DSNAME'(1,1) EQ '(').DSNREG
          LA    15,&DSNAME
@@ -97,4 +122,15 @@
          SR    15,15 USE DEFAULT SYS390 SEARCH
 .SVC     ANOP
          SVC   8 LOAD R0=A(NAME) R15=DDNAME/DSNAME ADDR OR 0
+         AIF   (&LOADPT EQ '').EXIT
+         AIF   ('&LOADPT'(1,1) EQ '(').PTREC
+         ST    0,&LOADPT
+         MEXIT
+.PTREC   ANOP
+         ST    0,0(&LOADPT(1))
+.EXIT    MEXIT
+.ERR1    MNOTE 12,'LOAD ERRET= NOT SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'LOAD MF= NOT SUPPORTED'
+         MEXIT
          MEND

@@ -28,12 +28,12 @@
 .*   12 - PROCESS ERROR OCCURRED - SEE ERROR MESSAGE ON LOG 
 .*********************************************************************
 &N       CMDPROC &OP,&REC,&LEN,&ID=0,&WAIT=500
-         AIF   (N'&SYSLIST LE 3).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
-.NPOK    ANOP
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (N'&SYSLIST LE 3).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
+.NPOK    ANOP
          AIF   (&OP EQ 'START').START
          AIF   (&OP EQ 'STOP').STOP
          AIF   (&OP EQ 'WRITE').WRITE

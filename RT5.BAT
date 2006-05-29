@@ -1,4 +1,5 @@
 REM test and verify file i/o from sysut1=%1.tf1 and sysut2=%2.tf2
+erase %1.err
 set sysut1=%1.tf1
 set sysut2=%1.tf2
 set sysout=%1.tf3
@@ -11,7 +12,7 @@ copy %~dps0test\junk.txt %1.lst
 copy %~dps0test\junk.txt %1.390
 copy %~dps0test\junk.txt %1.log
 copy %~dps0test\junk.txt %1.pch
-call %~dps0asmlg %1 notiming %2 %3 %4 %5
+call %~dps0asmlg %1 notiming %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0vdiff %1.bal %1.svb  %1.dib 
 call %~dps0vdiff %1.obj %1.svo  %1.dio 
 call %~dps0vdiff %1.prn %1.svp  %1.dip 

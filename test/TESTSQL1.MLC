@@ -1,0 +1,23 @@
+         TITLE 'TESTSQL1 - TEST EXEC SQL INCLUDE SUPPORT'
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/26/06                                                 *
+*********************************************************************
+* 04/26/06 RPI 293 TEST EXEC SQL INCLUDE SUPPORT                                         
+*********************************************************************
+*
+* mz390 parses space delimited EXEC SQL/CICS/DLI statements into
+* exec macro call statements with comma delimited parms
+*
+* 1. EXEC SQL INCLUDE member - invokes call to macro named member
+*
+*********************************************************************
+TESTSQL1 SUBENTRY
+         WTO   'TESTSQL1 - TEST EXEC SQL INCLUDE TESTSQL1'
+         EXEC SQL INCLUDE TESTSQL1
+         WTO   'TESTSQL1 ENDED OK'
+         SUBEXIT
+         END         

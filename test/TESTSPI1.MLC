@@ -1,0 +1,25 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 05/01/06 RPI305 TEST ESPIE EXIT WITH PARM AND RESTART                
+*********************************************************************
+         TITLE 'TESTSPI1 - TEST ESPIE'
+TESTSPI1 SUBENTRY
+         WTO   'TESTSPI1 TEST ESPIE STARTED'
+         ESPIE SET,EXIT,1,PARAM=RESTART
+         DC    X'0000' CAUSE 0C1
+RESTART  WTO   'TESTSPI1 RESTART SUCCESSFUL'
+         WTO   'TESTSPI1 ENDED OK'
+         SUBEXIT
+         DROP
+EXIT     DS    0H
+         USING *,15
+         USING IHAEPIE,1
+         L     0,EPIEPARM
+         ST    0,EPIEPSW+4
+         BR    14
+         EPIED
+         END         

@@ -12,13 +12,16 @@
 .* 10/20/05 RPI38 - check for register conflicts     
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .*********************************************************************
-&N       PUT   &DCB,&REC
-         AIF   (N'&SYSLIST LE 2).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
-.NPOK    ANOP
+&N       PUT   &DCB,                                                   X
+               &REC,                                                   X
+               &MF=   NOT SUPPORTED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (&MF NE '').ERR2
+         AIF   (N'&SYSLIST LE 2).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+.NPOK    ANOP
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          LA    1,&DCB
          AGO   .CHKREC
@@ -38,7 +41,10 @@
 .RECDEF  ANOP
          L     0,DCBREC-IHADCB(1)
 .SVC     ANOP
-         SVC  152 
+         SVC  152 PUT R0=REC, R1=DCB 
          MEXIT
 .ERR1    MNOTE 12,'PUT RECORD REG INVALID - &REC(1)'
+         MEXIT
+.ERR2    MNOTE 12,'PUT MF= NOT SUPPORTED'
+         MEXIT
          MEND

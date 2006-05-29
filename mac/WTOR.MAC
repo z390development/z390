@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 01/21/06 RPI188 REQUIRE LENGTH IF REPLY REG FORM  
+.* 04/12/06 RPI244 IGNORE UNUSED KW PARMS, MNOTE ERROR FOR TEXT=
 .*********************************************************************
 .*
 .*  WTOR - write to operator with reply (routed to GUAM window if 
@@ -31,12 +32,34 @@
 .*********************************************************************
 .* 10/20/05 RPI47  - add WTOR as part of first GUAM release in v1008  
 .* 12/02/05 RPI114 - make wto label more unique to avoid duplicates   
+.* 04/25/06 RPI290 ALWAYS GEN LABEL IF ANY, CHECK MF=
 .*********************************************************************
-&N       WTOR  &MSG,&REPLY,&REPLYLEN,&ECB
+&N       WTOR  &MSG,         PROMPT MSG FOR REPLY                      X
+               &REPLY,       REPLY ADDRESS                             X
+               &REPLYLEN,    REPLY LENGTH                              X
+               &ECB,         ECB POSTED WHEN REPLY READY               X
+               &TEXT=,       NOT SUPPORTED                             X
+               &MF=,         NOT SUPPORTED                             X
+               &CART=,       IGNORED                                   X
+               &CONSID=,     IGNORED                                   X
+               &CONSNAME=,   IGNORED                                   X
+               &DESC=,       IGNORED                                   X
+               &KEY=,        IGNORED                                   X
+               &MCSFLAG=,    IGNORED                                   X
+               &MSGTYPE=,    IGNORED                                   X
+               &RPLYISUR=,   IGNORED                                   X
+               &ROUTCDE=,    IGNORED                                   X
+               &TOKEN=       IGNORED                                           
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
          AIF   (N'&SYSLIST LE 4).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
+         MEXIT
 .NPOK    ANOP
-&N       BAL   1,*+(WTOR#&SYSNDX._EOT-*+1)/2*2
+         AIF   (&TEXT NE '').ERR1
+         AIF   (&MF   NE '').ERR2
+         BAL   1,*+(WTOR#&SYSNDX._EOT-*+1)/2*2
          DC    AL2(WTOR#&SYSNDX._EOT-*,0),C&MSG
 WTOR#&SYSNDX._EOT EQU *
          AIF   ('&REPLY'(1,1) EQ  '(').REPLY_REG
@@ -55,7 +78,7 @@ WTOR#&SYSNDX._EOT EQU *
          LA    14,&REPLYLEN
          AGO   .CHKECB
 .LEN_REG ANOP
-         AIF   (&REPLYLEN(1) EQ '0' OR &REPLYLEN(1) EQ 'R0').ERR1
+         AIF   (&REPLYLEN(1) EQ '0' OR &REPLYLEN(1) EQ 'R0').ERR3
          LR    14,&REPLYLEN(1)
          AGO   .CHKECB
 .DEFLEN  ANOP
@@ -70,6 +93,11 @@ WTOR#&SYSNDX._EOT EQU *
 .SVC     ANOP
          SVC   160
          MEXIT
-.ERR1    MNOTE 12,'WTOR REPLY LENGTH REGISTER 0 NOT ALLOWED'
+.ERR1    MNOTE 12,'WTOR TEXT= NOT SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'WTOR MF=E/L ENOT SUPPORTED'
+         MEXIT
+.ERR3    MNOTE 12,'WTOR REPLY LENGTH REGISTER 0 NOT ALLOWED'
+         MEXIT
          MEND
 

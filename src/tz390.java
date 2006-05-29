@@ -1,5 +1,11 @@
 import java.io.File;
+import java.io.RandomAccessFile;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
 import java.lang.reflect.Array;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 
@@ -8,7 +14,7 @@ public  class  tz390 {
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2005 Automated Software Tools Corporation
+    Copyright 2006 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -56,6 +62,16 @@ public  class  tz390 {
     * 04/04/06 RPI 270 support CA'ASCII' or CE'EBCDIC' SDT's
     * 04/07/06 RPI 274 correct C'.''..' sdt with double quotes
     *          correct reset of new opsyn's
+    * 04/09/06 RPI 276 add mz390 option PROFILE(copybook)
+    *          and ez390 option IPL(IPLPGM) options
+    * 04/12/06 RPI 279 use correct version of max_time_seconds
+    * 04/17/06 RPI 284 and opt_max???? for init_arryas()
+    * 04/28/06 RPI 302 allow tabs everywhere
+    * 04/28/06 RPI 298 correct opcode for MY and MYH
+    * 04/30/06 RPI 306 update shared OPSYN to handle macros
+    * 05/03/06 RPI 243 add option SYSTERM(..) support to log
+    *          start/stop stats and errors on .ERR mod file
+    * 05/05/06 RPI 308 add options CICS, PROLOG, and EPILOG
     ********************************************************
     * Shared z390 tables
     *****************************************************/
@@ -64,7 +80,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.0.13e";  //dsh
+    String version    = "V1.1.00";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -73,20 +89,26 @@ public  class  tz390 {
     boolean opt_amode24  = false;  // link to run amode24
     boolean opt_amode31  = true;   // link to run amode31
     boolean opt_ascii    = false; // use ascii vs ebcdic
+    boolean opt_cics     = false; // exec cics program honoring prolog,epilog
     boolean opt_con      = true;  // log msgs to console
     boolean opt_dump     = false; // only indicative dump on abend unless on
-    boolean opt_guam     = false;  // use gz390 GUAM GUI access method interface
-    boolean opt_objhex   = false;  // generate ascii hex obj records (lz390 accepts bin or hex)
-    boolean opt_list     = true; // generate LOG file
+    boolean opt_epilog   = true;  // if cics, insert DFHEIRET
+    boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
+    String  opt_ipl      = "";    // program to execute at startup
+    boolean opt_list     = true;  // generate LOG file
     boolean opt_listcall = true;  // list macro calls
     boolean opt_listfile = true;  // list each file path
-    boolean opt_mfc      = true;   // mainframe compatiblity
-    String  opt_parm     = "";      // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
+    boolean opt_mfc      = true;  // mainframe compatiblity
+    boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
+    String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
+    String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
+    boolean opt_prolog   = true;  // if cics, insert DFHEIBLK and DFHEIENT
     boolean opt_regs     = false; // show registers on trace
-    boolean opt_rmode24  = true;   // link to load below line
-    boolean opt_rmode31  = false;  // link to load above line
+    boolean opt_rmode24  = true;  // link to load below line
+    boolean opt_rmode31  = false; // link to load above line
     boolean opt_stats    = true;  // show statistics on LOG file
-    String  opt_sysparm  = "";    // user parm string for mz390
+    String  opt_sysparm  = "";    // user parm string for mz390  
+    String  opt_systerm  = "";    // mod error file name
     boolean opt_test     = false; // invoke interactive test cmds
     boolean opt_text     = false; // free form text I/O for mz390
     boolean opt_time     = true;  // abend 422 if out of time TIME (sec)
@@ -103,6 +125,15 @@ public  class  tz390 {
     String  test_ddname = null;
     char    z390_amode31 = 'T';
     char    z390_rmode31 = 'F';
+    int opt_maxcall  = 50;
+    int opt_maxesd   = 1000;
+    int opt_maxfile = 10000;
+    int opt_maxgbl  = 100000;   // RPI 284
+    int opt_maxlcl  = 100000;
+    int opt_maxline = 200000;
+    int opt_maxparm = 10000;
+    int opt_maxrld  = 10000;
+    int opt_maxsym  = 50000;
     /*
 	 * global limits with option overrides
 	 */
@@ -112,6 +143,11 @@ public  class  tz390 {
 	long   max_time_seconds  = 15;      // TIME(15)max elapsed time - override time(sec)
     int    monitor_wait = 300;          // fix interval in milliseconds
     int    max_mem           = 1;       // MEM(1)  MB memory default (see mem(mb) override)
+    /*
+     * shared date and time formats
+     */
+	SimpleDateFormat sdf_mmddyy = new SimpleDateFormat("MM/dd/yy");
+	SimpleDateFormat sdf_hhmmss = new SimpleDateFormat("HH:mm:ss");
     /*
 	 * shared pgm dir, name, type and associated dirs
 	 */
@@ -123,7 +159,8 @@ public  class  tz390 {
     String dir_bal = null; // SYSBAL() az390 source input
     String dir_cpy = null; // SYSCPY() mz390 copybook lib
     String dir_dat = null; // SYSDAT() mz390 AREAD extended option
-    String dir_log = null; // SYSLOG() ez390 log
+    String dir_err = null; // SYSERR() ?z390 systerm error file directory
+    String dir_log = null; // SYSLOG() ez390 log // RPI 243
     String dir_lst = null; // SYSLST() lz390 listing 
     String dir_mac = null; // SYSMAC() mz390 macro lib
     String dir_mlc = null; // SYSMLC() mz390 source input
@@ -132,8 +169,18 @@ public  class  tz390 {
     String dir_obj = null; // SYSOBJ() lz390 object lib
     int max_opsyn = 1000;
     int tot_opsyn = 0;
-    int[]     opsyn_key_index = (int[])Array.newInstance(int.class,max_opsyn);   // opcode key_index
-    int[]     opsyn_reset_value = (int[])Array.newInstance(int.class,max_opsyn); // opcode reset pointer
+    String[]  opsyn_name = new String[max_opsyn];
+    /*
+     * shared SYSTERM error file
+     */
+    long   systerm_start = 0; // start time
+    String systerm_sec   = ""; // systerm elapsed seconds
+    String systerm_file_name      = null;
+    RandomAccessFile systerm_file = null;
+	String systerm_time = "";     // hh:mm:ss if opt_timing
+    String systerm_prefix = null; // pgm_name plus space
+    int    systerm_io     = 0;    // total file io count
+    int    systerm_ins    = 0;    // ez390 instruction count
     /*
      * ASCII and EBCDIC printable character tables
      */
@@ -986,9 +1033,9 @@ public  class  tz390 {
 		       "MAYL",     //      "ED38" "MAYL" "RXF" 25 Z9-46
 		       "MYL",      //      "ED39" "MYL" "RXF" 25 Z9-47
 		       "MAY",      //      "ED3A" "MAY" "RXF" 25 Z9-48
-		       "MY",       //      "EDEB" "MY" "RXF" 25 Z9-49
+		       "MY",       //      "ED3B" "MY" "RXF" 25 Z9-49 RPI 298
 		       "MAYH",     //      "ED3C" "MAYH" "RXF" 25 Z9-50
-		       "MYH",      //      "EDED" "MYH" "RXF" 25 Z9-51
+		       "MYH",      //      "ED3D" "MYH" "RXF" 25 Z9-51 RPI 298
 		       "MAD",      // 6960 "ED3E" "MAD" "RXF" 25
 		       "MSD",      // 6970 "ED3F" "MSD" "RXF" 25
 		       "LEY",      // 6980 "ED64" "LEY" "RXY" 18
@@ -1895,9 +1942,9 @@ public  class  tz390 {
 		       25,  //      "ED38" "MAYL" "RXF" 25 Z9-46
 		       25,  //      "ED39" "MYL" "RXF" 25 Z9-47
 		       25,  //      "ED3A" "MAY" "RXF" 25 Z9-48
-		       25,  //      "EDEB" "MY" "RXF" 25 Z9-49
+		       25,  //      "ED3B" "MY" "RXF" 25 Z9-49 RPI 298
 		       25,  //      "ED3C" "MAYH" "RXF" 25 Z9-50
-		       25,  //      "EDED" "MYH" "RXF" 25 Z9-51
+		       25,  //      "ED3D" "MYH" "RXF" 25 Z9-51 RPI 298
 		       25,  // 6960 "ED3E" "MAD" "RXF" 25
 		       25,  // 6970 "ED3F" "MSD" "RXF" 25
 		       18,  // 6980 "ED64" "LEY" "RXY" 18
@@ -2760,9 +2807,9 @@ public  class  tz390 {
 		       "ED38",  //      "ED38" "MAYL" "RXF" 25 Z9-46
 		       "ED39",  //      "ED39" "MYL" "RXF" 25 Z9-47
 		       "ED3A",  //      "ED3A" "MAY" "RXF" 25 Z9-48
-		       "EDEB",  //      "EDEB" "MY" "RXF" 25 Z9-49
+		       "ED3B",  //      "ED3B" "MY" "RXF" 25 Z9-49  RPI 298
 		       "ED3C",  //      "ED3C" "MAYH" "RXF" 25 Z9-50
-		       "EDED",  //      "EDED" "MYH" "RXF" 25 Z9-51
+		       "ED3D",  //      "ED3D" "MYH" "RXF" 25 Z9-51  RPI 298
 		       "ED3E",  // 6960 "ED3E" "MAD" "RXF" 25
 		       "ED3F",  // 6970 "ED3F" "MSD" "RXF" 25
 		       "ED64",  // 6980 "ED64" "LEY" "RXY" 18
@@ -2839,9 +2886,9 @@ public  class  tz390 {
        * key search table data
        */
       int last_key_op = 0;
-      static int key_not_found = 1;
-      static int key_found = 2;
-      static int max_key_root = 4000;
+      int key_not_found = 1;
+      int key_found = 2;
+      int max_key_root = 4000;
       int max_key_tab = 50000;
       int tot_key_tab = max_key_root+1;
       int tot_key = 0;
@@ -2867,7 +2914,7 @@ public void init_tables(){
 	set_dir_cur();  //RPI168
 	init_ascii_ebcdic();
 	if (op_name.length != op_type.length){
-		abort_options("opcode tables out of sync - aborting");
+		abort_error(1,"opcode tables out of sync - aborting");
 	}
 	int index = 0;
 	int max_type = 0;
@@ -2882,10 +2929,10 @@ public void init_tables(){
 		index++;
 	}
 	if (max_type != max_op_type_offset){
-		abort_options("opcode max type out of sync - " + max_type + " vs " + max_op_type_offset);
+		abort_error(2,"opcode max type out of sync - " + max_type + " vs " + max_op_type_offset);
 	}
 	if (ins_count != op_code.length){
-		abort_options("opcode total out of sync - aborting");
+		abort_error(3,"opcode total out of sync - aborting");
 	}
 }
 public void init_options(String[] args,String pgm_type){
@@ -2895,17 +2942,19 @@ public void init_options(String[] args,String pgm_type){
 	 *   1.  These use () vs = because bat removes =
 	 *        syslog(ddname)
 	 *        sys390(ddname)
+	 *        systerm(filename)
 	 *        test(ddname)
 	 *        time(seconds)
 	 */
     if  (args.length >= 1){
     	if (!set_pgm_dir_name_type(args[0],pgm_type)){
-    		abort_options("invalid input file option - " + args[0]);
+    		abort_error(4,"invalid input file option - " + args[0]);
     	}
     	dir_390 = pgm_dir;
     	dir_bal = pgm_dir;
     	dir_cpy = pgm_dir;
         dir_dat = pgm_dir;
+        dir_err = pgm_dir;
         dir_log = pgm_dir;
         dir_lst = pgm_dir;
         dir_mac = pgm_dir;
@@ -2922,7 +2971,7 @@ public void init_options(String[] args,String pgm_type){
            }
         }
     } else {
-	    abort_options("missing file option");
+	    abort_error(5,"missing file option");
     }
     String token = null;
     int index1 = 1;
@@ -2943,7 +2992,9 @@ public void init_options(String[] args,String pgm_type){
     		opt_amode31 = true;
     		z390_amode31 = 'T';
     	} else if (token.toUpperCase().equals("ASCII")){
-    		opt_ascii = true;        		
+    		opt_ascii = true; 
+    	} else if (token.toUpperCase().equals("CICS")){
+           	opt_cics = true;
     	} else if (token.toUpperCase().equals("CON")){
            	opt_con = true;
         } else if (token.toUpperCase().equals("DUMP")){
@@ -2953,26 +3004,62 @@ public void init_options(String[] args,String pgm_type){
            	try {
            		max_errors = Integer.valueOf(token.substring(4,token.length()-1)).intValue();
           	} catch (Exception e){
-           		abort_options("invalid error limit - " + token);
+           		abort_error(6,"invalid error limit - " + token);
            	}
         } else if (token.toUpperCase().equals("GUAM")){
            	opt_guam = true;
+        } else if (token.length() > 4
+         		&& token.substring(0,4).toUpperCase().equals("IPL(")){
+        	opt_ipl = token.substring(4,token.length()-1);
+        } else if (token.length() > 8
+          		&& token.substring(0,8).toUpperCase().equals("MAXCALL(")){
+           	opt_maxcall = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
+        } else if (token.length() > 7
+          		&& token.substring(0,7).toUpperCase().equals("MAXESD(")){
+           	opt_maxesd = Integer.valueOf(token.substring(7,token.length()-1)).intValue();   	
         } else if (token.length() > 8
         	&& token.substring(0,8).toUpperCase().equals("MAXFILE(")){
            	try {
-           		max_file_size = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20;;
+           		opt_maxfile = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
            	} catch (Exception e){
-           		abort_options("invalid maxfile limit (mb) - " + token);
+           		abort_error(7,"invalid maxfile limit (mb) - " + token);
            	}
+        } else if (token.length() > 7
+          		&& token.substring(0,7).toUpperCase().equals("MAXGBL(")){
+           	opt_maxgbl = Integer.valueOf(token.substring(7,token.length()-1)).intValue();
+        } else if (token.length() > 7
+          		&& token.substring(0,7).toUpperCase().equals("MAXLCL(")){
+           	opt_maxlcl = Integer.valueOf(token.substring(7,token.length()-1)).intValue();
+        } else if (token.length() > 8
+          		&& token.substring(0,8).toUpperCase().equals("MAXLINE(")){
+           	opt_maxline = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
+        } else if (token.length() > 8
+          		&& token.substring(0,8).toUpperCase().equals("MAXPARM(")){
+           	opt_maxparm = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
+        } else if (token.length() > 7
+          		&& token.substring(0,7).toUpperCase().equals("MAXRLD(")){
+           	opt_maxrld = Integer.valueOf(token.substring(7,token.length()-1)).intValue();  
+        } else if (token.length() > 8
+            	&& token.substring(0,8).toUpperCase().equals("MAXSIZE(")){
+               	try {
+               		max_file_size = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20;;
+               	} catch (Exception e){
+               		abort_error(8,"invalid maxsize limit (mb) - " + token);
+               	}
+        } else if (token.length() > 7
+          		&& token.substring(0,7).toUpperCase().equals("MAXSYM(")){
+           	opt_maxsym = Integer.valueOf(token.substring(7,token.length()-1)).intValue();
         } else if (token.length() > 5
         	&& token.substring(0,4).toUpperCase().equals("MEM(")){
            	try {
            	    max_mem = Integer.valueOf(token.substring(4,token.length()-1)).intValue();
            	} catch (Exception e){
-           		abort_options("invalid memory option " + token);
+           		abort_error(9,"invalid memory option " + token);
            	}
         } else if (token.toUpperCase().equals("NOCON")){
            	opt_con = false;
+        } else if (token.toUpperCase().equals("NOEPILOG")){
+           	opt_epilog = false;   	
         } else if (token.toUpperCase().equals("NOLIST")){
            	opt_list = false;
         } else if (token.toUpperCase().equals("NOLISTCALL")){
@@ -2981,6 +3068,8 @@ public void init_options(String[] args,String pgm_type){
            	opt_listfile = false;
          } else if (token.toUpperCase().equals("NOMFC")){
            	opt_mfc = false;
+         } else if (token.toUpperCase().equals("NOPROLOG")){
+            opt_prolog = false;
          } else if (token.toUpperCase().equals("NOSTATS")){
            	opt_stats = false;
          } else if (token.toUpperCase().equals("NOTIME")){
@@ -3002,6 +3091,9 @@ public void init_options(String[] args,String pgm_type){
             		&& opt_parm.charAt(opt_parm.length()-1) == '\''){
             		opt_parm = opt_parm.substring(1,opt_parm.length()-1);          		
             	}
+         } else if (token.length() > 8
+          		&& token.substring(0,8).toUpperCase().equals("PROFILE(")){
+         	opt_profile = token.substring(8,token.length()-1);
          } else if (token.toUpperCase().equals("REGS")){
            	opt_regs = true;
            	opt_list  = true;
@@ -3026,6 +3118,9 @@ public void init_options(String[] args,String pgm_type){
           		&& token.substring(0,7).toUpperCase().equals("SYSDAT(")){
            	dir_dat = token.substring(7,token.length()-1) + File.separator; 
          } else if (token.length() > 7
+           		&& token.substring(0,7).toUpperCase().equals("SYSERR(")){
+            	dir_err = token.substring(7,token.length()-1) + File.separator; // RPI 243
+         } else if (token.length() > 7
           		&& token.substring(0,7).toUpperCase().equals("SYSLOG(")){
            	dir_log = token.substring(7,token.length()-1) + File.separator;
          } else if (token.length() > 7 
@@ -3046,6 +3141,9 @@ public void init_options(String[] args,String pgm_type){
          } else if (token.length() > 7 
           		&& token.substring(0,7).toUpperCase().equals("SYSPRN(")){
           	dir_prn = token.substring(7,token.length()-1) + File.separator; 	
+         } else if (token.length() > 8
+          		&& token.substring(0,8).toUpperCase().equals("SYSTERM(")){
+         	opt_systerm = token.substring(8,token.length()-1);
          } else if (token.length() > 5
           		&& token.substring(0,5).toUpperCase().equals("TIME(")){
            	max_time_seconds = Long.valueOf(token.substring(5,token.length()-1)).longValue();
@@ -3086,6 +3184,96 @@ public void init_options(String[] args,String pgm_type){
          }
          index1++;
     }
+    if (opt_systerm.length() == 0){
+    	opt_systerm = pgm_name;
+    }
+}
+public void open_systerm(String z390_pgm){
+	/*
+	 * open systerm file else set null
+	 */
+	systerm_prefix = pgm_name + " " + z390_pgm + " ";
+    systerm_file_name = dir_err + opt_systerm + ".ERR";
+    try {
+        systerm_file = new RandomAccessFile(systerm_file_name,"rw");
+        systerm_file.seek(systerm_file.length());
+    } catch (Exception e){
+    	systerm_file = null;
+    	abort_error(10,"systerm file open error " + e.toString());
+    }
+	if (opt_timing){
+		systerm_start = System.currentTimeMillis();
+        systerm_time = sdf_hhmmss.format(new Date()) + " ";;
+	}
+	try {
+		systerm_io++;
+		systerm_file.writeBytes(systerm_time + systerm_prefix + "STARTED\r\n");
+	} catch (Exception e){
+        abort_error(11,"I/O error on systerm file " + e.toString());
+	}
+}
+public  void put_systerm(String msg){
+	/*
+	 * log error to systerm file
+	 */
+	if (opt_timing){
+           systerm_time = sdf_hhmmss.format(new Date()) + " ";;
+	}
+	if (systerm_file != null){
+		try {
+			systerm_io++;
+			systerm_file.writeBytes(systerm_time + systerm_prefix + msg + "\r\n");
+		} catch (Exception e){
+	        abort_error(11,"I/O error on systerm file " + e.toString());
+		}
+	}
+}
+public void close_systerm(int rc){
+	/*
+	 * close systerm error file if open
+	 */
+     if (systerm_file != null){
+     	 if (opt_timing){
+     		systerm_sec  = " SEC=" + get_int_string((int)((System.currentTimeMillis()-systerm_start)/1000),2);
+    	    systerm_time = sdf_hhmmss.format(new Date()) + " ";;
+    	 }
+    	 try {
+    		 systerm_io++;
+    		 String systerm_ins_text = "";
+    		 if (systerm_ins > 0){
+    			 systerm_ins_text = " INS=" + systerm_ins;
+    		 }
+    		 systerm_file.writeBytes(systerm_time + systerm_prefix + "ENDED   RC=" + get_int_string(rc,2) + systerm_sec + " MEM(MB)=" + get_int_string(get_mem_usage(),3) + " IO=" + systerm_io + systerm_ins_text + "\r\n");
+    	 } catch (Exception e){
+    	 }
+    	 try {
+    		 systerm_file.close();
+    	 } catch (Exception e){
+    		 System.out.println("TZ390E systerm file close error - " + e.toString());
+    	 }
+     }
+}
+private int get_mem_usage(){
+	/*
+	 * return max memory usage by J2SE in MB
+	 */
+	long mem_tot = 0;
+    List<MemoryPoolMXBean> pools = ManagementFactory.getMemoryPoolMXBeans();
+    for (MemoryPoolMXBean p: pools) {
+    	 mem_tot = mem_tot + p.getPeakUsage().getUsed();
+    }
+    return (int)(mem_tot >> 20);
+}
+private String get_int_string(int num,int min_len){
+	/*
+	 * return string value of integer with
+	 * minimum length by adding leading spaces
+	 */
+	String num_string = "" + num;
+	while (num_string.length() < min_len){
+		num_string = " " + num_string;
+	}
+	return num_string;
 }
 private String get_short_file_name(String file_name){
 	/*
@@ -3106,12 +3294,13 @@ private String get_short_file_name(String file_name){
 	}
 	return file_name;
 }
-private void abort_options(String msg){
+private void abort_error(int error,String msg){
 	/*
 	 * display options error on system out
 	 * and exit with rc 16.
 	 */
-	System.out.println("TZ390E set options error - " + msg);
+	System.out.println("TZ390E abort error " + error + " - " + msg);
+    close_systerm(16);
 	System.exit(16);
 }
 
@@ -3142,13 +3331,15 @@ public int find_key_index(String user_key){
 	 *       e.  "M:" - loaded macros
 	 *       f.  "O:" - opcode table (init_opcode_name_keys)
 	 *       g.  "P:" - macro positional parm names
-	 *       h.  "S:" - ordinary symbols
-	 *       i.  "X:" - executable macro command
+	 *       h.  "R:" - opcode and macro opsyn
+	 *       i.  "S:" - ordinary symbols
+	 *       j.  "X:" - executable macro command
 	 *   2.  Usage by az390
 	 *       a.  "L:" - literals
 	 *       b.  "O:" - opcode table (init_opcode_name_keys)
-	 *       c.  "S:" - ordinary symbols
-	 *       d.  "U:" - USING labels
+	 *       c.  "R:" - opcode opsyn
+	 *       d.  "S:" - ordinary symbols
+	 *       e.  "U:" - USING labels
 	 *   3.  Usage by lz390
 	 *       a.  "G:" - global ESD's
 	 *   4.  Usage by ez390
@@ -3156,7 +3347,7 @@ public int find_key_index(String user_key){
 	 *       b.  "H:BR:" - branch opocodes by hex key
 	 *       c.  "O:" - opcodes by name (init_opcode_name_keys)
 	 *       d.  "P:" - CDE program name lookup
-	 *       e.  "R:" - OPSYN- reset op  RPI 274
+	 *       e.  "R:" - OPSYN opcode/macro substitution
 	 */
 	tot_key_search++;
 	key_text = user_key;
@@ -3207,7 +3398,7 @@ public boolean add_key_index(int user_index){
 			key_index = tot_key_tab;
 			tot_key_tab++;
 		} else {
-			return false;
+			return false;  // table size exceeded
 		}
 		if (key_hash < key_tab_hash[key_index_last]){
 		    key_tab_low[key_index_last] = key_index;
@@ -3238,7 +3429,7 @@ public void reset_opsyn(){
 	 */
 	int index = 0;
 	while (index < tot_opsyn){
-		key_tab_index[opsyn_key_index[index]] = opsyn_reset_value[index];
+		opsyn_name[index] = null;
 		index++;
 	}
 }
@@ -3403,77 +3594,27 @@ private void set_dir_cur(){  //RPI168
 	 */
 	dir_cur = System.getProperty("user.dir").toUpperCase() + File.separator;
 }
-public boolean update_opsyn(String new_op,String old_op){
+public boolean update_opsyn(String new_name,String old_name){
 	/*
-	 * update opcode key index table as follows:
-	 * 1.  Add new O:opcode entry if not found
-	 *     and add R: entry indicating it has
-	 *     been added to OPSYN reset list.
-	 * 2.  Add R: entry for existing O: entry
-	 *    op if not found and add to OPSYN list
-	 *
+	 * Add new alias name or add entry
+	 * to cancel opcode name.  // RPI 306
 	 */
-	int op_key_index = 0;    // O: key table index
-	int op_table_index = 0;  // op_code table index or 0
-	int new_index = -1;
-	int old_index = -1;
-	if (old_op != null 
-		&& old_op.length() > 0
-		&& old_op.charAt(0) != ','){
-		old_index = find_key_index("O:" + old_op.toUpperCase());
+	int index = old_name.indexOf(" ");
+	if (index > 0){  // RPI 306 remove comments
+		old_name = old_name.substring(0,index);
 	}
-	if (new_op != null && new_op.length() > 0){
-		new_index = find_key_index("O:" + new_op.toUpperCase());
-	} else {
-        // syntax error - no new op to change
-		return false; 
-	}
-	if (new_index >= 0){ // RPI 274
-		// existing O:opcode found
-		if (last_key_op != key_found){
-			return false; // internal key table error
-		}
-		op_key_index = key_index;
-		op_table_index = key_tab_index[key_index];
-		if (old_index == -1){
-			old_index = -2; // indicate cancelled opcode
-		}
-        // replace new opcode key pointer
-		update_key_index(old_index); 
-		// add OPSYN reset table entry
-		return add_opsyn(new_op,op_key_index,op_table_index);
-	} else {
-		if (old_index == -1){
-			old_index = -2; // indicate cancelled opcode
-		}
-        // add new O:opcode pointing to old_op
-		if (add_key_index(old_index)){
-            op_key_index = key_index;
-            // add new R: and OPYSN reset list entry
-            return add_opsyn(new_op,op_key_index,0);
+	index = find_key_index("R:" + new_name.toUpperCase());
+	if (index == -1){
+		if (tot_opsyn < max_opsyn){
+			index = tot_opsyn;
+			tot_opsyn++;
+			add_key_index(index);
 		} else {
-			return false;  // add failed
+			return false;
 		}
 	}
-}
-private boolean add_opsyn(String new_op, int op_key_index,int op_table_index){
-	/*
-	 * add new R: key index and
-	 * OPYSN reset list entry for opcode
-	 */
-	int reset_key_index = find_key_index("R:" + new_op.toUpperCase());
-	if (reset_key_index != -1   
-		|| !add_key_index(0)){
-		return false;  // R: key entry add failed
-	}
-	if (tot_opsyn < max_opsyn){
-		opsyn_key_index[tot_opsyn] = op_key_index;
-		opsyn_reset_value[tot_opsyn] = op_table_index;  
-		tot_opsyn++;
-		return true;
-	} else {
-		return false;
-	}
+	opsyn_name[index] = old_name.toUpperCase();
+	return true;
 }
 public String get_hex(int work_int,int field_length) {
    	/*
@@ -3557,15 +3698,20 @@ public boolean verify_ascii_source(String temp_line){
 	int index = 0;
     while (index < temp_line.length()){
     	int next_char = temp_line.charAt(0) & 0xff;
-        if ((next_char < 0x20 
-        		&& next_char != 9)
-        	|| (next_char != '.' 
-        		&& ascii_table.charAt(next_char) == '.')       	    
+        if (next_char != 9  // RPI 302
+        	&& next_char != '.' 
+        	&& ascii_table.charAt(next_char) == '.'
         	){
         	return false;
         }
         index++;
     }
     return true;
+}
+public String get_padded_name(){
+	/*
+	 * return 8 character name string
+	 */
+	return (pgm_name + "        ").substring(0,8);
 }
 }

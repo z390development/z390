@@ -1,0 +1,46 @@
+DFHEISTG DSECT       DSA STORAGE (EXEC CICS PROLOG DFHEISTG TRIGGER)                                              
+SENDBUFF DS   0H     SEND MESSAGE BUFFER
+SENDTERM DS   CL4    TERM ID (IGNORED)
+SENDMSG  DS   CL2000 MESSAGE BUFFER
+ADDRCIC2 DS   A      ADDRESS OF TESTCIC2 LOADED PROGRAM
+TESTCIC1 CSECT       PROGRAM CSECT (EXEC CICS PROLOG DFHEIENT TRIGGER)
+*
+* SEND MSG1 TO GUAM TN3270 TERMINAL AND WAIT FOR AID TO PROCEED
+*
+         MVC   SENDTERM,=C'3270'                                                    
+         MVC   SENDMSG(L'MSG1),MSG1                                     
+         EXEC  CICS SEND TEXT FROM(SENDBUFF)                           X
+               LENGTH(L'MSG1+4) FREEKB ERASE 
+         EXEC  CICS RECEIVE                                         
+*
+* SEND MSG2 TO GUAM TN3270 TERMINAL AND WAIT FOR AID TO PROCEED
+*
+         EXEC  CICS LOAD PROGRAM(TESTCIC2) ENTRY(ADDRCIC2)
+         MVC   SENDMSG(L'MSG2),MSG2                                     
+         EXEC  CICS SEND TEXT FROM(SENDBUFF)                           X
+               LENGTH(L'MSG2+4) FREEKB ERASE 
+         EXEC  CICS RECEIVE
+*
+* CALL TESTCIC2 LOADED PROGRAM USING ENTRY SAVED BY EXEC CICS LOAD
+*
+         L     15,ADDRCIC2
+         BALR  14,15                                         
+*
+* SEND MSG2 TO GUAM TN3270 TERMINAL AND WAIT FOR AID TO PROCEED
+*
+REQUEST_PF3 EQU *
+         MVC   SENDMSG(L'MSG3),MSG3                                     
+         EXEC  CICS SEND TEXT FROM(SENDBUFF)                           X
+               LENGTH(L'MSG2+4) FREEKB ERASE 
+         EXEC  CICS RECEIVE
+         CLI   EIBAID,PF3
+         BNE   REQUEST_PF3
+*
+* EXIT PROGRAM
+*
+         EXEC  CICS RETURN                                          
+MSG1     DC    C'TESTCIC1 PRESS ENTER TO LOAD TESTCIC2'          
+MSG2     DC    C'TESTCIC1 PRESS ENTER TO CALL TESTCIC2'          
+MSG3     DC    C'TESTCIC1 PRESS PF3 TO END  TESTCIC1'                 
+         TN3270 SYMBOLS
+         END   ,    END PROGRAM (EXEC CICS EPILOG DFHEIEND TRIGGER)

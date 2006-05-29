@@ -9,10 +9,20 @@
 .* 10/20/05 RPI27 - issue error for any undefined operands     
 .* 11/26/05 RPI111- add missing AGO      
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI244 SUPPORT TYPE=REL         
 .*********************************************************************
-&N       POINT &DCB,&REL,&RBA=
+&N       POINT &DCB,         DCB                                       X
+               &REL,         RELATIVE BLOCK                            X
+               &MF=,         NOT SUPPORTED                             X
+               &RBA=,        EXTENSION RELATIVE BYTE ADDR              X
+               &TYPE=REL     REL (ABS NOT SUPPORTED)
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&MF NE '').ERR2
          AIF   (N'&SYSLIST LE 2).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+         MEXIT
 .NPOK    ANOP
 .*
 .* SET FILE POINTER FOR READ/WRITE RANDOM ACCESS
@@ -22,9 +32,7 @@
 .*
 .*   NOTE RBA= IS EXTENSION OF POINT FOR UP TO 2 GB RANDOM ACCESS
 .*
-         AIF   (&N EQ '').SKIPDS
-&N       DS    0H
-.SKIPDS  ANOP
+         AIF   (&TYPE NE 'REL').ERR1
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          LA    1,&DCB
          AGO   .CHKRBA
@@ -50,4 +58,9 @@
          MSGFR 0,15
 .SVC     ANOP
          SVC   156 POINT R1=DCB R0=(64 BIT RBA)
+         MEXIT
+.ERR1    MNOTE 12,'POINT ONLY TYPE=REL SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'POINT MF= NOT SUPPORTED'
+         MEXIT
          MEND

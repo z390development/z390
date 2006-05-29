@@ -1,0 +1,21 @@
+         TITLE 'TESTIPL1 - IPL TEST PGM TO SET CVTDATE'
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 04/10/06 RPI 276 TEST EZ390 OPTION IPL(TESTIPL1) TO SET CVTDATE
+*********************************************************************
+TESTIPL1 SUBENTRY
+         WTO   'TESTIPL1 IPL STARTING'                             
+         L     R4,16
+         USING IHACVT,R4
+         TIME  DEC
+         ST    R1,CVTDATE
+         WTO   'TESTIPL1 IPL COMPLETE'
+         SUBEXIT
+         EQUREGS
+         CVTD
+         END         

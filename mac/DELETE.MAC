@@ -11,29 +11,49 @@
 .* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .*********************************************************************
-&N       DELETE &EP=,&EPLOC=,&DDNAME=,&DSNAME=
-         AIF   (N'&SYSLIST EQ 0).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
-.NPOK    ANOP
+&N       DELETE &DE=,      BLDL ENTRY                                  X
+               &EP=,      PROGRAM NAME                                 X
+               &EPLOC=,   ADDR OF PROGRAM NAME                         X
+               &DDNAME=,  1-9 CHARACTER DDNAME                         X
+               &DSNAME=,  RX ADDR OF DSN WITH PATH                     X
+               &MF=,      NOT SUPPORTED                                X
+               &RELATED   IGNORED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (&MF NE '').ERR1
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+         AIF   (&DE NE '').DE
          AIF   (&EP NE '').EP
          AIF   (&EPLOC NE '').EPLOC
          SR    0,0
          AIF   (&DDNAME NE '' OR &DSNAME NE '').CHKDSN
          MNOTE 12,'DELETE REQUIRES EP, EPLOC, DDNAME, OR DSNAME'
          MEXIT
+.DE      ANOP
+         AIF   ('&DE'(1,1) EQ '(').DEREG
+         LA    0,&DE
+         AGO   .DEADD
+.DEREG ANOP
+         AIF   (&DE(1) EQ '0' OR &DE(1) EQ 'R0').DEADD
+         LR    0,&DE(1)
+.DEADD   ANOP
+         AHI   0,2
+         AIF   (&EP EQ '' AND &EPLOC EQ '').CHKDSN
+         MNOTE 12,'DELETE DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
+         MEXIT
 .EP      ANOP
          LA    0,=CL8'&EP'
-         AIF   (&EPLOC EQ '').CHKDSN
-         MNOTE 12,'EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
+         AIF   (&DE EQ '' AND &EPLOC EQ '').CHKDSN
+         MNOTE 12,'DELETE DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
          MEXIT
 .EPLOC   ANOP
          AIF   ('&EPLOC'(1,1) EQ '(').EPLOCREG
          LA    0,&EPLOC
-         AIF   (&EP EQ '').CHKDSN
-         MNOTE 12,'EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
+         AIF   (&DE EQ '' AND &EP EQ '').CHKDSN
+         MNOTE 12,'DELETE DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
          MEXIT
 .EPLOCREG ANOP
          AIF   (&EPLOC(1) EQ '0' OR &EPLOC(1) EQ 'R0').CHKDSN  RPI163
@@ -41,7 +61,7 @@
 .CHKDSN  ANOP
          AIF   (&DSNAME EQ '').CHKDD
          AIF   (&DDNAME EQ '').DSNOK
-         MNOTE 12,'DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
+         MNOTE 12,'DELETE DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
 .DSNOK   ANOP
          AIF   ('&DSNAME'(1,1) EQ '(').DSNREG
          LA    15,&DSNAME
@@ -74,4 +94,6 @@
          SR    15,15 USE DEFAULT SYS390 SEARCH
 .SVC     ANOP
          SVC   9 DELETE R0=A(NAME) R15=DSNAME/DDNAME ADDR OR 0
+         MEXIT
+.ERR1    MNOTE 12,'DELETE MF= NOT SUPPORTED'
          MEND

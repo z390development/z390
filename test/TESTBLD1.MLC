@@ -1,0 +1,64 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 04/12/06 RPI 244 TEST BLDL SUPPORT                                   
+* 05/07/06 RPI 311 CORRECT BLDL ENTRY LEN TO EXCLUDE LEN FIELD AND     
+*          CORRECT NAMES TO BE IN ALPHA SEQ ELSE RC=8
+*********************************************************************
+         TITLE 'TESTBLD1 TEST BLDL SUPPORT'                   
+TESTBLD1 RT1  MAIN
+         EQUREGS
+BLDL     DC   H'4' COUNT OF 4 BLDL LIST ENTRIES
+BLDLE1   DC   H'14',C'DEMO    ',XL6'00' NAME,TTRKZC  R=1 Z=1 IN DEMO\
+BLDLE2   DC   H'14',C'JUNK    ',XL6'00' NAME,TTRKZC  R=0 NOT FOUND
+BLDLE3   DC   H'14',C'TESTBLD1',XL6'00' NAME,TTRKZC  R=1 Z=1 IN MEMORY
+BLDLE4   DC   H'14',C'TESTSUB1',XL6'00' NAME,TTRKZC  R=1 Z=0 IN TEST\
+ABORT    WTO  'TESTBLD1 ABORTING DUE TO ERROR'
+         ABEND 111,DUMP
+         RT1  START
+         BLDL 0,BLDL
+         CL   R15,=F'4'     1 OR MORE NOT FOUND
+         RT1  CCE
+         CLI  BLDLE1+2+10,1 DEMO     R=1 FOUND
+         RT1  CCE
+         CLI  BLDLE1+2+12,0 DEMO     Z=0 FOUND IN SYS390 DIR DEMO\
+         RT1  CCE 
+         CLI  BLDLE2+2+10,0 JUNK     R=0 NOT FOUND
+         RT1  CCE
+         CLI  BLDLE3+2+10,1 TESTBLD1 R=1 FOUND
+         RT1  CCE
+         CLI  BLDLE3+2+12,1 TESTBLD1 Z=1 FOUND IN MEMORY
+         RT1  CCE 
+         CLI  BLDLE4+2+10,1 TESTSUB1 R=1 FOUND
+         RT1  CCE
+         CLI  BLDLE4+2+12,0 TESTSUB1 Z=0 FOUND IN SYS390 DIR TEST\
+         RT1  CCE 
+         LOAD DE=BLDLE4 LOAD TESTSUB1
+         LTR  R15,R15
+         BNZ  ABORT
+         LR   R15,R0      CALL TESTSUB1
+         BALR R14,R15
+         DELETE DE=BLDLE4 DELETE TESTSUB1
+         LTR  R15,R15
+         BNZ  ABORT
+         LOAD DE=BLDLE1   LOAD DEMO
+         LTR  R15,R15
+         BNZ  ABORT
+         LR   R15,R0      CALL DEMO
+         BALR R14,R15
+         DELETE DE=BLDLE1 DELETE DEMO    
+         LTR  R15,R15
+         BNZ  ABORT
+         MVC  BLDL,=H'1' CHANGE COUNT TO 1 FOR BLDL AND VER DEMO           
+         BLDL 0,BLDL
+         CL   R15,=F'0'     ALL ENTRIES FOUND   
+         RT1  CCE
+         CLI  BLDLE1+2+10,1 DEMO     R=1 FOUND
+         RT1  CCE
+         CLI  BLDLE1+2+12,0 DEMO     Z=0 FOUND IN SYS390 DIR DEMO\
+         RT1  CCE 
+         RT1  END
+         END

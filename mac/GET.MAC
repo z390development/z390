@@ -11,14 +11,21 @@
 .* 10/20/05 RPI27 - issue error for any undefined operands     
 .* 10/20/05 RPI38 - check for register conflicts     
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI163 ISSUE MNOTE ERROR FOR TYPE=P
 .*********************************************************************
-&N       GET   &DCB,&REC
-         AIF   (N'&SYSLIST LE 2).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
-.NPOK    ANOP
+&N       GET   &DCB,    DCB                                            X
+               &REC,    RECORD                                         X
+               &MF=,    NOT SUPPORTED                                  X
+               &TYPE=   TYPE=P NOT SUPPORTED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (&MF NE '').ERR3
+         AIF   (N'&SYSLIST LE 2).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+         MEXIT
+.NPOK    ANOP
+         AIF   (&TYPE NE '').ERR1
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          LA    1,&DCB
          AGO   .CHKREC
@@ -31,7 +38,7 @@
          LA    0,&REC
          AGO   .SVC
 .RECREG  ANOP
-         AIF   (&REC(1) EQ 1 OR &REC(1) EQ 'R1').ERR1
+         AIF   (&REC(1) EQ 1 OR &REC(1) EQ 'R1').ERR2
          AIF   (&REC(1) EQ '0' OR &REC(1) EQ 'R0').SVC  RPI163
          LR    0,&REC(1)
          AGO   .SVC
@@ -40,5 +47,10 @@
 .SVC     ANOP
          SVC  151 
          MEXIT
-.ERR1    MNOTE 12,'GET RECORD REG INVALID - &REC(1)'
+.ERR1    MNOTE 12,'GET TYPE=P NOT SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'GET RECORD REG INVALID - &REC(1)'
+         MEXIT
+.ERR3    MNOTE 12,'GET MF= NOT SUPPORTED'
+         MEXIT
          MEND

@@ -8,11 +8,18 @@
 .*********************************************************************
 .* 10/20/05 RPI27 - issue error for any undefined operands     
 .*********************************************************************
-&N       RETURN &REGS,&SETFLAG,&RC=
+&N       RETURN &REGS,                                                 X
+               &SETFLAG,                                               X
+               &MF=,       NOT SUPPORTED                               X
+               &RC=
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&MF NE '').ERR1
          AIF   (N'&SYSLIST LE 2).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
 .NPOK    ANOP
-&N       RESTORE &REGS
+         RESTORE &REGS
          AIF   (&SETFLAG NE 'T').SETRC
          OI    15(13),1 
 .SETRC   ANOP
@@ -22,5 +29,7 @@
          BR    14
          MEXIT
 .ERR     ANOP
-         MNOTE 8,'MZ390E 1003 RETURN RANGE INVALID (&R1,&R2)'
+         MNOTE 12,'RETURN RANGE INVALID (&R1,&R2)'
+         MEXIT
+.ERR1    MNOTE 12,'RETURN MF= NOT SUPPORTED'
          MEND

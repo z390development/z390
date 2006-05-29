@@ -1,0 +1,19 @@
+DFHEISTG DSECT       DSA STORAGE (EXEC CICS PROLOG DFHEISTG TRIGGER)                                              
+SENDBUFF DS   0H     SEND MESSAGE BUFFER
+SENDTERM DS   CL4    TERM ID (IGNORED)
+SENDMSG  DS   CL2000 MESSAGE BUFFER
+TESTCIC2 CSECT       PROGRAM CSECT (EXEC CICS PROLOG DFHEIENT TRIGGER)
+*
+* SEND MSG1 TO GUAM TN3270 TERMINAL AND WAIT FOR AID TO PROCEED
+*
+         MVC   SENDTERM,=C'3270'                                                    
+         MVC   SENDMSG(L'MSG1),MSG1                                     
+         EXEC  CICS SEND TEXT FROM(SENDBUFF)                           X
+               LENGTH(L'MSG1+4) FREEKB ERASE 
+         EXEC  CICS RECEIVE                                         
+*
+* EXIT PROGRAM
+*
+         EXEC  CICS RETURN                                          
+MSG1     DC    C'TESTCIC2 HELLO - PRESS ENTER TO EXIT'          
+         END   ,    END PROGRAM (EXEC CICS EPILOG DFHEIEND TRIGGER)

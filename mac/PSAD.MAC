@@ -1,0 +1,23 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/23/06                                                 *
+.*********************************************************************
+.* 04/23/06 RPI 286 - DEFINE 8K PSA WITH SUPPORTED FIELDS            
+.*********************************************************************
+         PSAD
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'PSAD UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.* PSA FIELDS IN FIRST 8K OF MEMORY
+.*
+IHAPSA   DSECT
+         ORG    IHAPSA+X'10'
+PSACVT   DS     A     LOW MEMORY POINTER TO OS CVT
+         ORG    IHAPSA+X'4C'
+PSACVT2  DS     A     LOW MEMORY POINTER TO OS CVT
+         MEND

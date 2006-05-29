@@ -1,0 +1,30 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/05/06 RPI 308 ADD EXEC CICS LOAD     
+.*********************************************************************
+         MACRO
+         CICS_LOAD 
+         LCLC &PROGRAM,&ENTRY
+&NP      SETA N'&SYSLIST
+&IP      SETA 0
+.PLOOP   ANOP
+&IP      SETA &IP+1
+         AIF  (&IP GT &NP).ELOOP
+&PARM    SETC &SYSLIST(&IP)
+         AIF  ('&PARM'(1,8) EQ 'PROGRAM(').PROGRAM
+         AIF  ('&PARM'(1,6) EQ 'ENTRY(').ENTRY
+         AGO  .PLOOP
+.PROGRAM ANOP
+&PROGRAM SETC '&PARM'(9,K'&PARM-9)
+         AGO  .PLOOP
+.ENTRY   ANOP
+&ENTRY   SETC '&PARM'(7,K'&PARM-7)
+         AGO  .PLOOP
+.ELOOP   ANOP
+         LOAD  EP=&PROGRAM
+         ST    0,&ENTRY
+         MEND

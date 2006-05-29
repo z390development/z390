@@ -13,8 +13,26 @@
 .* 01/21/06 RPI187 CORRECT FREEMAIN and GETMAIN comments, LA/L length,
 .*          limit check length, correct K/M support
 .* 03/14/06 RPI 210 ALLOW LOC=24,(24),31,(31),(24,31)
+.* 04/11/06 RPI 244 ISSUE ERROR FOR UNSUPPORTED KW OPERANDS
 .*********************************************************************
-&N       GETMAIN &TYPE,&LV=,&LOC=
+&N       GETMAIN &TYPE,     TYPE OF REQUEST R,RC,RU ELSE UNSUPP ERROR  X
+               &A=,         ADDR TO STORE ADDR                         X
+               &BNDRY=,     IGNORED                                    X
+               &CHECKZERO=, IGNORED                                    X
+               &CONTBDY,    IGNORED                                    X
+               &INADDR=,    UNSUPPORTED ERROR                          X
+               &KEY=,       IGNORED                                    X
+               &LA=,        ADDR OF LENGTH                             X
+               &LV=,        LENGTH VALUE                               X
+               &LOC=,       BELOW/RES=24, ABOVE,ANY/64=31              X
+               &MF=,        NOT SUPPORTED                              X
+               &RELATED=,   IGNORED                                    X
+               &SP=,        UNSUPPORTED ERROR                          X
+               &STARTBDY=   IGNORED
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&MF NE '').ERR4
          AIF   (N'&SYSLIST EQ 1).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
 .NPOK    ANOP
@@ -25,11 +43,11 @@
 .*    R   - UNCONDITIONAL (DEFAULT IS BELOW THE LINE)
 .*    RC  - CONDITIONAL (DEFAULT IS ABOVE THE LINE)
 .*    RU  - UNCONDITIONAL (DEFAULT IS ABOVE THE LINE)
-.*  LENGTH LV= 
-.*    ABSOLUTE LENGTH OR (REG) 
-.*  LOCCATION LOC=
-.*    ABOVE - ALLOCATE MEMORY ABOVE 16M LINE
-.*    BELOW - ALLOCATE MEMORY BELOW 16M LINE
+.*  LENGHT LA= ADDR OF LENGTH OR (REG)
+.*  LENGTH LV= ABSOLUTE LENGTH OR (REG) 
+.*  LOCATION LOC=
+.*    BELOW, RES = 24
+.*    ABOVE, ANY = 31                             
 .*  INPUT TO SVC 4
 .*    R0 OPTION BITS
 .*        BIT 0 - AMODE 31 ALLOCATION ABOVE LINE
@@ -41,9 +59,8 @@
 .*         0 - OK
 .*         4 - REQUEST FAILED OR ABEND 80A IF UNCONDITIONAL
 .*
-         AIF   (&N EQ '').SKIPDS
-&N       DS    0H
-.SKIPDS  ANOP
+         AIF   (&INADDR NE '').ERR2
+         AIF   (&SP     NE '').ERR3
          AIF   (&TYPE EQ 'R').R
          AIF   (&TYPE EQ 'RC').RC
          AIF   (&TYPE EQ 'RU').RU
@@ -87,13 +104,11 @@
          LR   1,&LV(1)
 .LOC     ANOP
          AIF  (&LOC EQ '').OPTIONS
+         AIF  (&LOC EQ 'ANY').SETABOVE
          AIF  (&LOC EQ 'ABOVE').SETABOVE
          AIF  (&LOC EQ 'BELOW').SETBELOW
-         AIF  (&LOC EQ '31').SETABOVE           RPI 210
-         AIF  (&LOC EQ '(31)').SETABOVE         RPI 210
-         AIF  (&LOC EQ '24').SETBELOW           RPI 210
-         AIF  (&LOC EQ '(24)').SETBELOW         RPI 210
-         AIF  (&LOC EQ '(24,31)').SETABOVE      RPI 210
+         AIF  (&LOC(1) EQ '31' OR &LOC(2) EQ '31').SETABOVE 
+         AIF  (&LOC(1) EQ '24' OR &LOC(2) EQ '24').SETBELOW 
          MNOTE 12,'GETMAIN INVALID LOC - &LOC'
          MEXIT
 .SETABOVE ANOP
@@ -104,6 +119,18 @@
 .OPTIONS ANOP
          LA    0,B'&ABOVE&COND'
          SVC   4 GETMAIN R0=(X'02'=AMODE31,X'01'=COND), R1=LEN
+         AIF   (&A EQ '').EXIT
+         AIF   ('&A'(1,1) EQ '(').AREG
+         ST    1,&A
+         MEXIT
+.AREG    ST    1,0(&A(1))
          MEXIT
 .ERR1    MNOTE 12,'GETMAIN LENGTH TOO LONG - &LV'
-         MEND
+         MEXIT
+.ERR2    MNOTE 12,'GETMAIN INADDR= NOT SUPPORTED'
+         MEXIT
+.ERR3    MNOTE 12,'GETMAIN LENGTH TOO LONG - &LV'
+         MEXIT
+.ERR4    MNOTE 12,'GETMAIN MF= NOT SUPPORTED'
+         MEXIT
+.EXIT    MEND

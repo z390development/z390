@@ -12,19 +12,28 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 01/16/06 RPI175 ADD CHECK FOR MISSING ADDR PARM
 .*********************************************************************
-&N       TIME  &TYPE,&ADDR,&LINKAGE=SVC,&DATETYPE=YYYYDDD,&CLOCKTYPE=
+&N       TIME  &TYPE,               DEC,BIN,MIC,STCK,STCKE             X
+               &ADDR,               STORE RESULT ADDR                  X
+               &CLOCKTYPE=,         STCK/STCKE(1900),EXT JAVA (1970)   X
+               &DATETYPE=YYYYDDD,   SYSTEM DATE FORMATS                X
+               &LINKAGE=SVC,        SVC/SYSTEM                         X
+               &MF=,                NOT SUPPORTED                      X
+               &ZONE=LT             LOCAL TIME (GMT/UTC NOT SUPPORTED)
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
          AIF   (N'&SYSLIST LE 2).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+         MNOTE 12,'TIME UNSUPPORTED OPERANDS - &SYSLIST(3)'
+         MEXIT
 .NPOK    ANOP
 .*
 .* RETURN TIME AND DATE IN REQUESTED FORMAT
 .*
-         AIF   (&N EQ '').SKIPDS
-&N       DS    0H
-.SKIPDS  ANOP
+         AIF   (&MF NE '').ERR3
+         AIF   (&ZONE NE 'LT').ERR2
          AIF   (&LINKAGE EQ 'SVC').SVCLINK
          AIF   (&LINKAGE EQ 'SYSTEM').SYSLINK
-         MNOTE 12,'INVALID LINKAGE TYPE - &LINKAGE'
+         MNOTE 12,'TIME INVALID LINKAGE TYPE - &LINKAGE'
          MEXIT
 .*
 .* LINKAGE=SVC DEFAULT
@@ -38,7 +47,7 @@
          AIF   (&TYPE EQ 'STCK').SVCSTCK
          AIF   (&TYPE EQ 'CLOCK').SVCCLOCK
          AIF   (&TYPE EQ 'NS').SVCNS
-         MNOTE 12,'INVALID SVC LINKAGE TYPE - &TYPE'
+         MNOTE 12,'TIME INVALID SVC LINKAGE TYPE - &TYPE'
          MEXIT
 .SVCDEC  ANOP             R1 = HEX CCYYDDDF
          LA    0,0   DEC  R0 = HEX HHMMSSTH
@@ -69,7 +78,7 @@
          AIF   ('&CLOCKTYPE' EQ 'STCK').CLOCK_STCK
          AIF   ('&CLOCKTYPE' EQ 'STCKE').CLOCK_STCKE
          AIF   ('&CLOCKTYPE' EQ 'JAVA').CLOCK_JAVA
-         MNOTE 12,'INVALID SVC CLOCK TYPE - &TYPE'
+         MNOTE 12,'TIME INVALID SVC CLOCK TYPE - &TYPE'
 .CLOCK_STCK ANOP
          LA    0,5 CLOCK STCK - DOUBLE WORD BIT 51 MICS FROM 1900
          AGO   .SVCADDR
@@ -92,7 +101,7 @@
          AIF   (&TYPE EQ 'MIC').SYSMIC
          AIF   (&TYPE EQ 'STCK').SYSSTCK
          AIF   (&TYPE EQ 'STCKE').SYSSTCKE
-         MNOTE 12,'INVALID SYS LINKAGE TYPE - &TYPE'
+         MNOTE 12,'TIME INVALID SYS LINKAGE TYPE - &TYPE'
          MEXIT
 .SYSDEC  ANOP
          LA    0,10   DEC   0(4,R1) = HHMMSSTH
@@ -122,7 +131,7 @@
          AIF   (&DATETYPE EQ 'MMDDYYYY').SYSMMDDYYYY
          AIF   (&DATETYPE EQ 'DDMMYYYY').SYSDDMMYYYY
          AIF   (&DATETYPE EQ 'YYYYMMDD').SYSYYYYMMDD
-         MNOTE 12,'INVALID SYS LINKAGE DATEYYPE - &DATETYPE'
+         MNOTE 12,'TIME INVALID SYS LINKAGE DATETYPE - &DATETYPE'
          MEXIT
 .SYSYYYYDDD ANOP
          IILH  0,1      8(4,R1) = HEX 0YYYYDDD
@@ -139,4 +148,8 @@
          SVC   11 TIME AND DATE
          MEXIT
 .ERR1    MNOTE 12,'TIME MISSING POSITIONAL ADDRESS PARM'
+         MEXIT
+.ERR2    MNOTE 12,'TIME ZONE ONLY SUPPORTS LT'
+         MEXIT
+.ERR3    MNOTE 12,'TIME MF= NOT SUPPORTED'
          MEND

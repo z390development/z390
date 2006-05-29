@@ -60,7 +60,7 @@ public  class  gz390
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2005 Automated Software Tools Corporation
+    Copyright 2006 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -100,7 +100,9 @@ public  class  gz390
 	 *          updated address matches 
 	 * 03/15/06 RPI 224 convert nulls to spaces and do not 
 	 *          send as input characters, remove field context,
-	 *          add arrow key support       
+	 *          add arrow key support 
+	 * 05/08/06 RPI 308 fix GUAM WINDOW,VIEW to support
+	 *          CICS.MLC switching between MCS/SCREEN views      
 	 ********************************************************
      * Global variables
      *****************************************************
@@ -172,15 +174,15 @@ public  class  gz390
      * GUI screen view variables
      */
 
-        static int gui_view_mcs    = 1;
-        static int gui_view_screen = 2;
-        static int gui_view_graph  = 3;
-        int     gui_view = gui_view_mcs;
-        int   gui_tot_key  = 0;
-        int   gui_next_key = 0;
-        int[] gui_key_code_char = new int[max_keys];
-        int gui_cur_row = 1;
-        int gui_cur_col = 1;
+        int guam_view_mcs    = 1;
+        int guam_view_screen = 2;
+        int guam_view_graph  = 3;
+        int     guam_view = guam_view_mcs;
+        int   guam_tot_key  = 0;
+        int   guam_next_key = 0;
+        int[] guam_key_code_char = new int[max_keys];
+        int guam_cur_row = 1;
+        int guam_cur_col = 1;
     /*
      *  status interval display variables
      */    
@@ -373,6 +375,7 @@ public  class  gz390
         JTextField  gz390_cmd_line = null;
         JLabel status_line_label = null;
         JTextField  status_line = null;
+        String status_line_view = "MCS View";
         int cur_cmd = 0;
         int last_cmd = 0;
         int view_cmd = -1;
@@ -546,7 +549,7 @@ public  class  gz390
 			gz390_errors++;
 			cmd_error = true;
 			msg = "GZ390E error " + error + " " + msg;
-			gui_put_log(msg);
+			guam_put_log(msg);
 			if  (max_errors != 0 && gz390_errors > max_errors){
 		        abort_error(101,"maximum errors exceeded");
             }
@@ -554,9 +557,9 @@ public  class  gz390
 		private void abort_error(int error,String msg){
 			gz390_errors++;
 			tpg_rc = 8;
-			status_line.setText(msg);
+			status_line.setText(status_line_view + " " + msg);
 			msg = "GZ390E " + error + " " + msg;
-			gui_put_log(msg);
+			guam_put_log(msg);
  		    System.out.println(msg);
  		    if (tz390.z390_abort){
  		    	exit_main(16); // exit now to prevent loop
@@ -570,7 +573,7 @@ public  class  gz390
 		 * (turn off runtime shutdown exit
 		 */
 			if  (!tz390.z390_abort){
-				abort_error(58,"guam gui window closed");
+				abort_error(58,"GUAM gui window closed");
 				int count = 5;
 				while (count > 0){
 					sleep_now(); // RPI 220 wait for ez390 to term
@@ -787,13 +790,13 @@ public  class  gz390
 	   	return parm_string;
 	   }
 	   private void about_command(){
-		    gui_put_log("\nz390 GUI gz390 Graphical User Access Method "
+		    guam_put_log("\nz390 GUI gz390 Graphical User Access Method "
 				  + tz390.version); 
- 	   	    gui_put_log("Copyright 2005 Automated Software Tools Corporation");
-			gui_put_log("z390 is licensed under GNU General Public License");
-	   	    gui_put_log("gz390 supports MCS, TN3270, and Graphic panel views");
-	   	    gui_put_log("gz390 J2SE Java source is distributed as part of z390");
-	   	    gui_put_log("Visit www.z390.org for additional information and support");
+ 	   	    guam_put_log("Copyright 2006 Automated Software Tools Corporation");
+			guam_put_log("z390 is licensed under GNU General Public License");
+	   	    guam_put_log("gz390 supports MCS, TN3270, and Graphic panel views");
+	   	    guam_put_log("gz390 J2SE Java source is distributed as part of z390");
+	   	    guam_put_log("Visit www.z390.org for additional information and support");
 	   }
 	   private void font_command(int new_font_size){
 	   /* 
@@ -803,7 +806,7 @@ public  class  gz390
    	    		log_error(8,"font outside New Courier fixed width font limits");
    	    	} else {
    	    		font_size = new_font_size;
-   	    		set_gui_size();
+   	    		set_guam_size();
                 set_text_font();
                 set_tooltips();
                 refresh_request = true;
@@ -842,11 +845,11 @@ public  class  gz390
 	   	/*
 	   	 * log summary list of commands and help reference
 	   	 */
-	   	gui_put_log("\nz390 GUI z390 Graphical User Access Method Help");
-	   	gui_put_log("View menu MCS     - Display WTO and WTOR scrolling window (default)");
-	   	gui_put_log("View menu TN3270  - Display TPUT and TGET TN3270 window");
-	   	gui_put_log("View menu Graph   - Display graph drawn by gz390 GKS commands");
-        gui_put_log("Help menu Support - Link to www.z390.org"); 
+	   	guam_put_log("\nz390 GUI z390 Graphical User Access Method Help");
+	   	guam_put_log("View menu MCS     - Display WTO and WTOR scrolling window (default)");
+	   	guam_put_log("View menu TN3270  - Display TPUT and TGET TN3270 window");
+	   	guam_put_log("View menu Graph   - Display graph drawn by gz390 GKS commands");
+        guam_put_log("Help menu Support - Link to www.z390.org"); 
 	   }
 	   private void monitor_startup(){
 	   /*
@@ -925,7 +928,7 @@ public  class  gz390
    	        main_panel = new JPanel();
    	        main_panel.setBorder(BorderFactory.createEmptyBorder(0,main_border,main_border,main_border));
             main_panel.setLayout(new FlowLayout(FlowLayout.LEFT)); 
-            set_gui_size();
+            set_guam_size();
             build_menu_items();
             set_tooltips();
             build_log_view();
@@ -953,7 +956,7 @@ public  class  gz390
         private void exit_main(int rc){
 	        shut_down(rc);
         }
-     private void set_gui_size(){
+     private void set_guam_size(){
     	 /* 
     	  * calculate gui object sizes based on
     	  * sreen size and font size
@@ -1140,7 +1143,7 @@ public  class  gz390
   	    		 wtor_reply_string = cmd_line;
   	    		 wtor_running = false;
    	  	     } else {
-   	  	          exec_gui_command();
+   	  	          exec_guam_command();
    	  	     }
 	         return;
    	  	}
@@ -1189,7 +1192,7 @@ public  class  gz390
    	  case 'G':
    		if (event_name.equals("GRAPH")){
    			if (!opt_graph){
-   				set_view_graph();
+   				set_view_graph(0,0,0);
    			}
    	    }  
    	    break;
@@ -1223,9 +1226,9 @@ public  class  gz390
 	  	if (event_name.equals("PASTE")){
 	  		   event_ok = true;
 	   	       if  (log_text == focus_comp){
-                    gui_put_log("PASTE from clipboard starting " + time_stamp());
-	   	       	    gui_put_log(getClipboard()); // append to log
-	   	            gui_put_log("PASTE from clipboard ending   " + time_stamp());
+                    guam_put_log("PASTE from clipboard starting " + time_stamp());
+	   	       	    guam_put_log(getClipboard()); // append to log
+	   	            guam_put_log("PASTE from clipboard ending   " + time_stamp());
 	   	       }
 		   	   if  (gz390_cmd_line ==  focus_comp){
 	               gz390_cmd_line.paste();
@@ -1252,7 +1255,7 @@ public  class  gz390
       case 'T':
       	 if (event_name.equals("TN3270")){
       	    if (!opt_tn3270){
-        	   	set_view_screen();
+        	   	set_view_screen(0,0,0);
             }
       	 } 
       	 break;
@@ -1264,7 +1267,7 @@ public  class  gz390
    	  	 */
    	  	if (event_ok == false) {
   			cmd_line = gz390_cmd_line.getText();
-  			exec_gui_command();
+  			exec_guam_command();
 	  		reset_gz390_cmd();}	        
    	  	}
 	   private String time_stamp(){
@@ -1275,7 +1278,7 @@ public  class  gz390
         return mmddyy.format(temp_date)
        + " " + hhmmss.format(temp_date);
 	   }
-   	  private void exec_gui_command(){
+   	  private void exec_guam_command(){
    	  /*
    	   * exec command 
    	   */  	   
@@ -1523,7 +1526,8 @@ public  class  gz390
         * cancel cmd, or gui cmd in response to
         * F3 or CTRL-BREAK
         */	
-   	      abort_error(102,"Aborting due to external shutdown request");
+   	      abort_error(102,"GUAM GUI terminating due to external shutdown request");
+   	      
        }
        public void keyTyped(KeyEvent e) {
        /*
@@ -1547,14 +1551,14 @@ public  class  gz390
       			   && e.getKeyChar() != KeyEvent.VK_ENTER
       			   && e.getKeyChar() != KeyEvent.VK_BACK_SPACE
       			   && (e.getModifiers() & KeyEvent.CTRL_MASK) == 0){
-             if (gui_tot_key < max_keys){        	   
+             if (guam_tot_key < max_keys){        	   
         	   if (tn3270_input_field()){
         		   if ((scn_attr[cur_fld_addr] & tn3270_numeric_mask) == tn3270_numeric_mask
         				&& (e.getKeyChar() < '0'
         						|| e.getKeyChar() > '9')){
         			   scn_addr--;
         			   sound_alarm();
-        			   status_line.setText("Alarm - invalid key for numeric field");
+        			   status_line.setText(status_line_view + " Alarm - invalid key for numeric field");
         		   } else {
             		   tn3270_modify_field();
             		   scn_byte[scn_addr] = (byte)e.getKeyChar();
@@ -1566,12 +1570,12 @@ public  class  gz390
         	   } else {
     			   scn_addr--;
     			   sound_alarm();
-    			   status_line.setText("Alarm - invalid key for protected field");
+    			   status_line.setText(status_line_view + " Alarm - invalid key for protected field");
         	   }
              }
     	   } else {
-    		   gui_key_code_char[gui_tot_key] = e.getKeyCode() << 16 | (int)e.getKeyChar();
-    		   gui_tot_key++;
+    		   guam_key_code_char[guam_tot_key] = e.getKeyCode() << 16 | (int)e.getKeyChar();
+    		   guam_tot_key++;
     	   }
        }
        public void keyReleased(KeyEvent e) {
@@ -1784,17 +1788,21 @@ public  class  gz390
         	 * display mcs scrolling wto/wtor panel
         	 */
             set_main_view(log_text);
-        	gui_view = gui_view_mcs;
+        	guam_view = guam_view_mcs;
    	    	opt_mcs   = true;
    	    	opt_tn3270  = false;
    	    	opt_graph = false;
+   	    	tn3270_kb_lock = true; // RPI 308 text entry
+   	    	guam_tot_key = 0;     // RPI 308 clear queue
    	    	view_menu_mcs.setSelected(true);
    	    	view_menu_tn3270.setSelected(false);
    	    	view_menu_graph.setSelected(false);
-   			update_main_view();
+   	   	    status_line_view = "MCS View";
+   	   	    status_line.setText(status_line_view);
+   	    	update_main_view();
       		refresh_request = true;
         }
-        private void set_view_screen(){
+        private void set_view_screen(int rows,int cols,int color){
        	 /*
        	  * build screen view based on
        	  * current screen and font size
@@ -1802,8 +1810,14 @@ public  class  gz390
        	  *   1.  Purge and redefine main_panel with 
        	  *       new main_view
        	  *   2.  Turn off focus subsystem to see tab key
+       	  *   3.  Display "Screen View on status line.
        	  */
-       	if (scn_text == null){ // init first time
+        if (rows > 0){
+    		max_cols = cols;
+    		max_rows = rows;
+        }
+       	if (scn_text == null || rows != 0){ 
+            // init first time or if rows spec. RPI 308
        		scn_text = new JTextArea();
        		scn_text.setFont(new Font("Courier",Font.BOLD,font_size));
             scn_text.addMouseListener(this);
@@ -1811,17 +1825,21 @@ public  class  gz390
             tn3270_update_screen_char(' ',0);
        	}
         set_main_view(scn_text);
-       	gui_view = gui_view_screen;
+       	guam_view = guam_view_screen;
 	    opt_mcs    = false;
    	    opt_tn3270   = true;
    	    opt_graph  = false;
+   	    guam_cur_row = 1; // RPI 308 reset for text output
+	    guam_tot_key = 0; // RPI 308 clear queue
    	    view_menu_mcs.setSelected(false);
    	    view_menu_tn3270.setSelected(true);
    	    view_menu_graph.setSelected(false);
+   	    status_line_view = "Screen View";
+   	    status_line.setText(status_line_view);
 		update_main_view();
    	    refresh_request = true;
         }
-        private void set_view_graph(){
+        private void set_view_graph(int x,int y,int color){
         	/*
         	 * display graph for QUAM GKS commands
         	 */
@@ -1837,13 +1855,15 @@ public  class  gz390
            		graph_grid.addMouseListener(this);
            	}
             set_main_view(graph_grid);
-        	gui_view = gui_view_graph;
+        	guam_view = guam_view_graph;
 			opt_mcs   = false;
    			opt_tn3270  = false;
    			opt_graph = true;
    			view_menu_mcs.setSelected(false);
    			view_menu_tn3270.setSelected(false);
    			view_menu_graph.setSelected(true);
+   	   	    status_line_view = "Graph View";
+   	   	    status_line.setText(status_line_view);
    			update_main_view();
    			refresh_request = true;
         }
@@ -1948,12 +1968,12 @@ private void tput_edit_buffer(byte[] buff, int lbuff){
 	String text = get_ascii_string(buff,lbuff);
 	int text_start = 0;
 	int text_end   = 0;
-	gui_cur_col = 1;
+	guam_cur_col = 1;
 	while (text_start < text.length()){
-		if (gui_cur_row == 1){
+		if (guam_cur_row == 1){
 			scn_addr = 0;
 		} else {
-			scn_addr = (gui_cur_row-1)*(max_cols+2);
+			scn_addr = (guam_cur_row-1)*(max_cols+2);
 		}
 		text_end = text_start + max_cols;
         if (text_end > text.length()){
@@ -2324,13 +2344,13 @@ private void tn3270_write_control_char(){
 	}
 	if  ((tput_buff_byte & 0x04) != 0){ // sound alarm	
 		sound_alarm();
-		status_line.setText("Alarm message");
+		status_line.setText(status_line_view + " Alarm message");
 	}
 	if  ((tput_buff_byte & 0x02) != 0){ // reset keyboard
 	    tn3270_kb_lock = false; // allows kb input
 	} else {
 		tn3270_kb_lock = true;
-		status_line.setText("Display only with keyboard locked");
+		status_line.setText(status_line_view + " Display only with keyboard locked");
 		
 	}
 	if ((tput_buff_byte & tn3270_mdt_mask) == tn3270_mdt_mask){  // reset mult data tags
@@ -2606,7 +2626,7 @@ private void keyboard_readline(){
 	int keychar = 0;
 	int index = 0;
 	while (index < tget_len){
-		key = gui_keyboard_read((tpg_flags & tpg_wait_mask) == tpg_wait);
+		key = guam_keyboard_read((tpg_flags & tpg_wait_mask) == tpg_wait);
 	    keychar = key & 0xffff;
 	    if (keychar == KeyEvent.VK_ENTER){
             tget_len = index;
@@ -2614,10 +2634,10 @@ private void keyboard_readline(){
 	    } else if (keychar == KeyEvent.VK_BACK_SPACE){
 	    	if (index > 0){
 	    		index--;
-	    		if (gui_cur_col > 1){
-	    			gui_cur_col--;
+	    		if (guam_cur_col > 1){
+	    			guam_cur_col--;
 	    			scn_write_char(' ');
-	    			gui_cur_col--;
+	    			guam_cur_col--;
 	    		}
 	    	}
     	} else if (index < tget_len){
@@ -2637,11 +2657,11 @@ private void scn_write_char(char key){
 	/*
 	 * write 1 character at current screen location
 	 */
-    scn_addr = (gui_cur_row-1)*max_cols + (gui_cur_col-1);
+    scn_addr = (guam_cur_row-1)*max_cols + (guam_cur_col-1);
     scn_char[scn_addr] = key;
 	tn3270_update_screen(scn_addr);
-    gui_cur_col++;
-    if (gui_cur_col > max_cols){
+    guam_cur_col++;
+    if (guam_cur_col > max_cols){
 		scn_next_line();
 	}
 }
@@ -2651,15 +2671,15 @@ private void scn_next_line(){
 	 * status line prompt before wrapping screen
 	 * to position back to line 1
 	 */
-	gui_cur_col = 1;
-	gui_cur_row++;
-	if (gui_cur_row > max_rows){
-		status_line.setText("Press enter for next screen");
+	guam_cur_col = 1;
+	guam_cur_row++;
+	if (guam_cur_row > max_rows){
+		status_line.setText(status_line_view + " Press enter for next screen");
 		update_main_view();
-		gui_keyboard_read((tpg_flags & tpg_wait_mask) == tpg_wait);
+		guam_keyboard_read((tpg_flags & tpg_wait_mask) == tpg_wait);
 		tn3270_clear_screen();
-		status_line.setText("");
-		gui_cur_row = 1;
+		status_line.setText(status_line_view);
+		guam_cur_row = 1;
 	}
 }
 private String get_ascii_string(byte[] text_byte,int lbuff){
@@ -2719,7 +2739,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 		 }
 		 return null;
 	 }
-	 public void start_gui(String title,tz390 shared_tz390){
+	 public void start_guam(String title,tz390 shared_tz390){
 		 /*
 		  * startup gz390 gui window with title
 		  * in default mcs mode for wto/wtor
@@ -2729,10 +2749,10 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 		 String[] dummy_args = new String[0];
 		 set_main_mode(dummy_args);
 		 init_gz390(dummy_args);
-		 gui_window_title(title);
+		 guam_window_title(title);
 		 refresh_request = true;
 	 }
-	 public void gui_window_title(String title){
+	 public void guam_window_title(String title){
 		 /*
 		  * set gz390 gui window title 
 		  * 
@@ -2742,7 +2762,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 		  */
 		 main_title = title;
 	   }
-	   public synchronized void gui_put_log(String msg) {
+	   public synchronized void guam_put_log(String msg) {
 		   	/*
 		   	 * Write message to log file and to console
 		   	 * if console mode or console option on.
@@ -2754,7 +2774,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
   	        	log_text.append(msg + "\n");
    	        	main_view_changed = true;
 		   }
-       public void gui_window_loc(int x,int y){
+       public void guam_window_loc(int x,int y){
            /*
             * set location of main window x, y
             */
@@ -2788,7 +2808,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
           		main_frame.setSize(main_width,main_height);
               	refresh_request = true;
            }
-   	    public void gui_window_size(int x,int y){
+   	    public void guam_window_size(int x,int y){
    	    /*
    	     * resize main window
    	     */	
@@ -2813,13 +2833,13 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
    	    		main_frame.setSize(main_width,main_height);
    	    		refresh_request = true;
     	    }
-        public void gui_window_font(int font){
+        public void guam_window_font(int font){
         	/*
         	 * set font size 
         	 */
         	font_command(font);
         }
-        public void gui_window_view(int view,int x,int y,int color){
+        public void guam_window_view(int view,int x,int y,int color){
         	/*
         	 * set window view  
         	 *   1 = MCS console view
@@ -2831,31 +2851,29 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         		set_view_mcs();
         		break;
         	case 2: // TN3270 screen view
-        		max_cols = y;
-        		max_rows = x;
-        		set_view_screen();
+        		set_view_screen(x,y,color);
         		break;
         	case 3: // graphics view
-        		set_view_graph();
+        		set_view_graph(x,y,color);
         		break;
         	}
         }
-        public int gui_window_getview(){
+        public int guam_window_getview(){
         	/*
         	 * return current window view
         	 *   1 = MCS console view
         	 *   2 = TN3270 screen view
         	 *   3 = graphics view
         	 */
-        	return gui_view;
+        	return guam_view;
         }
-        public void gui_screen_write(int row, int col, ByteBuffer buff,int lbuff, int color){
+        public void guam_screen_write(int row, int col, ByteBuffer buff,int lbuff, int color){
         	/*
         	 * write text at row,col from buff for lbuff
         	 * using color
         	 */
         }
-        public ByteBuffer gui_screen_read(int lbuff,boolean wait){
+        public ByteBuffer guam_screen_read(int lbuff,boolean wait){
         	/*
         	 * return ByteBuffer of lenght lbuff
         	 * from TN3270 screen.  If wait = 1 
@@ -2864,7 +2882,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         	 */
         	byte[] temp_byte = new byte[lbuff];
         	ByteBuffer temp_buff = ByteBuffer.wrap(temp_byte,0,lbuff);
-        	while (gui_tot_key == 0 && wait){
+        	while (guam_tot_key == 0 && wait){
                 sleep_now();
         	}
         	return temp_buff;
@@ -2879,44 +2897,44 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
     			abort_error(109,"GUI Screen read wait exception -" + e.toString());
     		}
         }
-        public void gui_screen_field(int row, int col, int lfield){
+        public void guam_screen_field(int row, int col, int lfield){
         	/*
         	 * define field for input from screen
         	 */
         }
-        public void gui_screen_cursor(int row, int col, int type){
+        public void guam_screen_cursor(int row, int col, int type){
         	/*
         	 * set cursor type at row, col
         	 */
         }
-        public void gui_graph_point(int x, int y, int color){
+        public void guam_graph_point(int x, int y, int color){
         	/*
         	 * draw point at x,y 
         	 */
         }
-        public void gui_graph_line(int x1, int y1, int x2, int y2, int color){
+        public void guam_graph_line(int x1, int y1, int x2, int y2, int color){
         	/*
         	 * draw point at x,y 
         	 */
         }
-        public void gui_graph_fill(int x1, int y1, int x2, int y2, int color){
+        public void guam_graph_fill(int x1, int y1, int x2, int y2, int color){
         	/*
         	 * fill area at x1,y1 to x2,y2 
         	 */
         }
-        public void gui_graph_text(int x1, int y1, String text, int color){
+        public void guam_graph_text(int x1, int y1, String text, int color){
         	/*
         	 * draw characters at x,y 
         	 */
         }
-        public int gui_keyboard_read(boolean wait){
+        public int guam_keyboard_read(boolean wait){
         	/*
         	 * read next keyboard keycode and keychar
         	 * and return as int (code high 16, char low 16).
         	 * If none ready and no wait return -1
         	 * else wait for next input key
         	 */
-        	while (gui_tot_key == 0 && wait){
+        	while (guam_tot_key == 0 && wait){
         		try {
         			Thread.sleep(monitor_wait);
         		} catch (Exception e){
@@ -2924,33 +2942,33 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         		    return -1;
         		}
         	}
-        	if (gui_tot_key > 0){
+        	if (guam_tot_key > 0){
         		
-        		int key = gui_key_code_char[gui_next_key];
-        		gui_next_key++;
-        		if (gui_next_key >= gui_tot_key){
-        			gui_tot_key = 0;
-        			gui_next_key = 0;
+        		int key = guam_key_code_char[guam_next_key];
+        		guam_next_key++;
+        		if (guam_next_key >= guam_tot_key){
+        			guam_tot_key = 0;
+        			guam_next_key = 0;
         		}
                 return key;
         	} else {
         		return -1;
         	}
         }
-        public int[] gui_mouse_read(){
+        public int[] guam_mouse_read(){
         	/*
         	 * return int[4] with x,y,left,right
         	 */
         	int[] mouse = new int[4];
         	return mouse;
         }
-        public void gui_sound_play(String wav_file){
+        public void guam_sound_play(String wav_file){
         	/*
         	 * play wav_file
         	 */
 
         }
-    public void gui_tget(){
+    public void guam_tget(){
     	/*
     	 * 1.  Return last tn3270 data stream input
     	 *     if available following keyboard enter
@@ -2965,13 +2983,13 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
     	 *     and R15=0 or 4 if none and NOWAIT
     	 */
     	tpg_rc = 0; // assume rc = 0
-    	if (gui_view != gui_view_screen){
-    		set_view_screen();
+    	if (guam_view != guam_view_screen){
+    		set_view_screen(0,0,0);
     	}
     	if ((tpg_flags & tpg_type_mask) == tpg_type_asis){
         	if (!tn3270_attn){
         		tn3270_kb_lock = false;
-        		status_line.setText("Ready for input");
+        		status_line.setText(status_line_view + " Ready for input");
         	}
     		if ((tpg_flags & tpg_wait_mask) == tpg_wait){
     			while (!tz390.z390_abort && !tn3270_attn){
@@ -2982,7 +3000,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
     			return;
     		}
     	    if (tn3270_attn){
-    	    	status_line.setText("Processing keyboard input");
+    	    	status_line.setText(status_line_view + " Processing keyboard input");
     	    	tn3270_get_screen_input();
     	    	tn3270_attn = false;
     	    	tn3270_aid = tn3270_noaid;
@@ -2992,14 +3010,14 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
             keyboard_readline();
     	}
     }
-    public void gui_tput(){
+    public void guam_tput(){
     	/*
     	 * 1.  Display TN3290 data stream buffer on
     	 *     GUI 3270 screen and return true of ok.
     	 */
     	tpg_rc = 0; // RPI 221 assume ok
-    	if (gui_view != gui_view_screen){
-    		set_view_screen();
+    	if (guam_view != guam_view_screen){
+    		set_view_screen(0,0,0);
     	}
         if ((tpg_flags & tpg_type_mask) == tpg_type_fullscr
         	|| (tpg_flags & tpg_type_mask) == tpg_type_asis){

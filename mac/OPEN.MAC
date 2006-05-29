@@ -10,8 +10,16 @@
 .* 11/13/05 RPI88 - correct test for DCB register parm  
 .* 11/13/05 RPI96 - add additional validity checking for parms
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/10/06 RPI244 IGNORE OR ISSUE UNSUPPORTED ERROR, SUPPORT (REG)
 .*********************************************************************
-&N       OPEN
+&N       OPEN  &DCBLIST,   ((DCB,OPT),(DCB,OPT),,) OR DCB OR (REG)     X
+               &MF=,       NOT SUPPORTED                               X
+               &MODE=31,   IGNORED AS IT WORKS IN BOTH                 X
+               &TYPE=      FLAG TYPE J AS UNSUPPORTED               
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&MF NE '').ERR1
          AIF   (N'&SYSLIST EQ 1).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
 .NPOK    ANOP
@@ -19,19 +27,27 @@
 .* OPEN 1 OR MORE FILES DEFINED BY DCB'S WITH INPUT, OUTPUT, UPDATE
 .* OPTIONS
 .*
-         AIF   (&N EQ '').SKIPDS
-&N       DS    0H
-.SKIPDS  ANOP
+         AIF   (&TYPE EQ '').NOTYPE
+         MNOTE 12,'OPEN TYPE= NOT SUPPORTED'
+         MEXIT
+.NOTYPE  ANOP
 &NP      SETA  N'&SYSLIST(1)
 &I       SETA  -1
 .LOOP    ANOP
 &I       SETA   &I+2
          AIF   (&I GT &NP).EXIT
+         AIF   (&NP GT 1 OR '&DCBLIST'(1,1) NE '('                     X
+               OR '&DCBLIST'(1,2) NE '(').SUBLISTS
+&DCB     SETC  &DCBLIST
+&OPTION  SETC  ''
+         AGO   .DCBREG
+.SUBLISTS ANOP
 &DCB     SETC  &SYSLIST(1,&I)
 &OPTION  SETC  &SYSLIST(1,&I+1,1)
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          AIF   ('&DCB'(1,1) GT '9' OR '&DCB'(1,1) LT '0').RXOK
          MNOTE 12,'INVALID DCB RX ADDRESS - &DCB'
+         MEXIT
 .RXOK    ANOP
          LA    1,&DCB
          AGO   .CHKOPT
@@ -54,7 +70,9 @@
 .UPDATE  ANOP
          LA    0,DCBOFLGS_RW   READ AND WRITE
 .SVC     ANOP
-         SVC   19
+         SVC   19 OPEN R0=TYPE,R1=DCB
          AGO   .LOOP
 .EXIT    ANOP
+         MEXIT
+.ERR1    MNOTE 12,'OPEN MF= NOT SUPPORTED'
          MEND

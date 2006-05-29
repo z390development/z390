@@ -1,0 +1,28 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 05/03/06 RPI 268 ADD OPTION TEXT AND DSNAME= EXTENTIONS FOR 
+*          AREAD AND PUNCH TO SUPPORT FREE FORM TEXT I/O
+*********************************************************************
+* TESTTXT1 IS A DEMO OF MACRO CODE USED WITH OPTION TEXT TO
+* GENERATE 2 HTML FILES AS FOLLOWS:
+*   TEST\TESTTXT1A.HTML HELLO WORLD 1
+*   TEST\TESTTXT1B.HTML HELLO WORLD 2
+*********************************************************************
+&TITLE   SETC 'TEST MZ390 OPTION TEXT AND MULTIPLE FILE OUTPUT'
+&HEADING SETC '<HEAD><TITLE>&TITLE</TITLE></HEAD>'
+&MSG     SETC 'HELLO FROM TEST\TESTTXT1A.HTML'
+&HTML    SETC '<HTML>&HEADING<BODY>&MSG</BODY></HTML>'
+&FILE    SETC 'TEST\TESTTXT1A.HTML'
+         PUNCH '&HTML',DSNAME=&FILE
+&TITLE   SETC 'TEST MZ390 OPTION TEXT AND MULTIPLE FILE OUTPUT'
+&HEADING SETC '<HEAD><TITLE>&TITLE</TITLE></HEAD>'
+&MSG     SETC 'HELLO FROM TEST\TESTTXT1B.HTML'
+&HTML    SETC '<HTML>&HEADING<BODY>&MSG</BODY></HTML>'
+&FILE    SETC 'TEST\TESTTXT1B.HTML'
+         PUNCH '&HTML',DSNAME=&FILE
+         END    

@@ -582,7 +582,154 @@ set GIT_COMMITTER_DATE=2021-03-20 13:48:00 +0100
 git commit -m "Reconstructed version v1.0.13e of z390 committed on behalf of Don Higgins"
 git tag -a v1.0.13e -m "Reconstructed version v1.0.13e of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.1.00
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Modify .gitignore to inculde cics directory
+**/[cC][iI][cC][sS]
+!**/[cC][iI][cC][sS]/
+
+==> Stage files for V1.1.00
+git add ASM.BAT
+git add ASML.BAT
+git add ASMLG.BAT
+git rm  Doc/ZDOCFILE.TXT
+git rm  Doc/ZDOCPROG.TXT
+git rm  Doc/ZDOCSERV.TXT
+git rm  Doc/ZDOCSTOR.TXT
+git add Doc/readme.rtf
+git add Doc/readme.txt
+git add EXEC.BAT
+git add LINK.BAT
+git add MAC.BAT
+git rm  README.TXT
+git add RT.BAT
+git add RT1.BAT
+git add RT2.BAT
+git add RT3.BAT
+git add RT4.BAT
+git add RT5.BAT
+git add RT6.BAT
+git add RTDEMO.BAT
+git add RTMVS.BAT
+git add RTTEST.BAT
+git add demo/DEMOGUI6.MLC
+git add mac/ABEND.MAC
+git add mac/CALL.MAC
+git add mac/CHECK.MAC
+git add mac/CLOSE.MAC
+git add mac/CMDPROC.MAC
+git add mac/CVTD.MAC
+git add mac/DCB.MAC
+git add mac/DCBD.MAC
+git add mac/DELETE.MAC
+git add mac/EQUREGS.MAC
+git add mac/ESPIE.MAC
+git add mac/ESTAE.MAC
+git add mac/FREEMAIN.MAC
+git add mac/GET.MAC
+git add mac/GETMAIN.MAC
+git add mac/GUAM.MAC
+git add mac/LINK.MAC
+git add mac/LOAD.MAC
+git add mac/LX.MAC
+git add mac/OPEN.MAC
+git add mac/POINT.MAC
+git add mac/PUT.MAC
+git add mac/READ.MAC
+git add mac/RESTORE.MAC
+git add mac/RETURN.MAC
+git add mac/SAVE.MAC
+git add mac/SNAP.MAC
+git add mac/STIMER.MAC
+git add mac/STORAGE.MAC
+git add mac/TGET.MAC
+git add mac/TIME.MAC
+git add mac/TN3270.MAC
+git add mac/TPUT.MAC
+git add mac/WAIT.MAC
+git add mac/WRITE.MAC
+git add mac/WTO.MAC
+git add mac/WTOR.MAC
+git add mac/XCTL.MAC
+git add src/MessageBox.java
+git add src/az390.java
+git add src/ez390.java
+git add src/gz390.java
+git add src/lz390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add src/z390.java
+git add test/TESTASC1.MLC
+git add test/TESTASC2.MLC
+git add test/TESTASC3.MLC
+git add test/TESTASC4.MLC
+git add test/TESTASM1.MLC
+git add test/TESTDCB2.MLC
+git add test/TESTFP1.MLC
+git add test/TESTINS1.MLC
+git add test/TESTINS2.MLC
+git add test/TESTMAC7.MLC
+git add test/TESTMEM1.MLC
+git add test/TESTMEM2.MLC
+git add test/TESTMEM3.MLC
+git add test/TESTTIM2.MLC
+git add test/testasc4.tf1
+git add CICS.BAT
+git add RTC4.BAT
+git add RTC6.BAT
+git add RTCICS.BAT
+git add cics/
+git add mac/BLDL.MAC
+git add mac/DCBE.MAC
+git add mac/DEQ.MAC
+git add mac/ENQ.MAC
+git add mac/EPIED.MAC
+git add mac/ESTAD.MAC
+git add mac/ESTAEX.MAC
+git add mac/EXEC.MAC
+git add mac/EXIT.MAC
+git add mac/IHADCBE.MAC
+git add mac/POST.MAC
+git add mac/PSAD.MAC
+git add mac/SQL_INCLUDE.MAC
+git add mac/TTIMER.MAC
+git add mac/ZCVTD.MAC
+git add test/TESTBLD1.MLC
+git add test/TESTECB1.MLC
+git add test/TESTENT1.MLC
+git add test/TESTIPL1.MLC
+git add test/TESTIPL2.MLC
+git add test/TESTLOC1.MLC
+git add test/TESTMAC9.CPY
+git add test/TESTMAC9.MAC
+git add test/TESTMAC9.MLC
+git add test/TESTPRO1.CPY
+git add test/TESTPRO1.MLC
+git add test/TESTPROS.MAC
+git add test/TESTPROT.MAC
+git add test/TESTSPI1.MLC
+git add test/TESTSQL1.MAC
+git add test/TESTSQL1.MLC
+git add test/TESTSTA1.MLC
+git add test/TESTSYN2.MAC
+git add test/TESTSYN2.MLC
+git add test/TESTTXT1.MLC
+git add test/TESTZCV1.MLC
+
+==> Create commit for V1.1.00
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2006-05-29 15:20:00 -0500
+set GIT_COMMITTER_DATE=2021-03-20 13:58:00 +0100
+git commit -m "Reconstructed version v1.1.00 of z390 committed on behalf of Don Higgins"
+git tag -a v1.1.00 -m "Reconstructed version v1.1.00 of z390 committed on behalf of Don Higgins"
+git gc --aggressive
 
 
 

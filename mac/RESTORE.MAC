@@ -9,13 +9,13 @@
 .* 12/06/05 RPI118- use RESTORE in RETURN and XCTL to restore regs
 .*********************************************************************
 &N       RESTORE &REGS
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
          AIF   (N'&SYSLIST EQ 1).NPOK
          MNOTE 12,'RESTORE REQUIRES SINGLE REGISTER SUBLIST OPERAND'
          MEXIT
 .NPOK    ANOP
-         AIF   (&N EQ '').SKIPDS
-&N       DS    0H
-.SKIPDS  ANOP
 &R1      SETA  &REGS(1)
 &R2      SETA  &R1
          AIF   (&REGS(2) EQ '').R2OK
@@ -33,5 +33,5 @@
          AIF   (&R2 EQ 14 AND &R1 EQ 15).ERR OVERLAPS 13
          LM    &R1,&R2,12+4*(&R1-14)(13)
          MEXIT
-.ERR     MNOTE 8,'MZ390E 1003 RESTORE RANGE INVALID (&R1,&R2)'
+.ERR     MNOTE 8,'RESTORE RANGE INVALID (&R1,&R2)'
          MEND

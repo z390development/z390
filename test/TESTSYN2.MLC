@@ -1,0 +1,16 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/30/06                                                 *
+*********************************************************************
+* 04/30/06 RPI306 TEST OPSYN FOR MACRO VS OPCODE                       
+*********************************************************************
+TESTSYN2 SUBENTRY 
+         WTO   'TESTSYN2 STARTED'
+TESTSYNX OPSYN TESTSYN2
+         TESTSYNX ABC
+         WTO   'TESTSYN2 ENDED'
+         SUBEXIT
+         END                        

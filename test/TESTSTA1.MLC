@@ -1,0 +1,25 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 05/01/06 RPI305 TEST ESTAE EXIT WITH PARM AND RESTART                
+*********************************************************************
+         TITLE 'TESTSTA1 - TEST ESTAE'
+TESTSTA1 SUBENTRY
+         WTO   'TESTSTA1 TEST ESTAE STARTED'
+         ESTAE EXIT,PARAM=RESTART
+         DC    X'0000' CAUSE 0C1
+RESTART  WTO   'TESTSTA1 RESTART SUCCESSFUL'
+         WTO   'TESTSTA1 ENDED OK'
+         SUBEXIT
+         DROP
+EXIT     DS    0H
+         USING *,15
+         USING IHAESTA,1
+         L     0,ESTAPARM
+         ST    0,ESTAPSW+4
+         BR    14
+         ESTAD
+         END         

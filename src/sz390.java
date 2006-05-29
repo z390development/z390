@@ -26,7 +26,7 @@ import javax.swing.Timer;
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2005 Automated Software Tools Corporation
+    Copyright 2006 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -60,20 +60,32 @@ import javax.swing.Timer;
     * 03/13/06 RPI 229 correct flush of FPR's for dump
     * 04/03/06 RPI 271 pad hex and text for dump_mem
     * 04/05/06 RPI 270 support 8 byte RLD's
+    * 04/11/06 RPI 244 change FREEMAIN to R0=LEN, R1=ADDR
+    *          support ESPIE and ESTAE PARAM, plus CT,OV
+    * 04/23/06 RPI 279 add STIMER REAL, TTIMER support
+    * 05/01/06 RPI 305 add ESPIE stack for SET/RESET
+    *          check for ESTAE recursive abort
+    * 05/05/06 RPI 280 add WAIT ECBLIST support
+    * 05/05/06 RPI 281 add DCBE support for EODAD and SYNAD
+    * 05/06/06 RPI 243 reset errors and rc for TEST z command.
+    * 05/07/06 RPI 311 correct BLDL entry length to not include 
+    *          length and check entries in ascending order
+    * 05/09/06 RPI 312 add pgm name to return code msg and
+    *          add svc extended trace information
     ********************************************************
     * Global variables
     *****************************************************/
     /*
      * static limits
      */
-    static int    max_tiot_files    = 100;        // max open files
-    static int    max_cde_pgms      = 500;        // max loaded 390 pgms
-    static int    max_link_stk      = 50;         // max nested links
-    static int max_cmd_out        = 10000;        // cmd output character buffer 
-    static int max_cmd_proc       = 10;           // max cmd processes ID=0-9
-   static int max_lsn_spec       = 265;
-   static int max_dir_list       = 512;
-   static int max_gui_buff       = 3000;
+    int    max_tiot_files    = 100;        // max open files
+    int    max_cde_pgms      = 500;        // max loaded 390 pgms
+    int    max_link_stk      = 50;         // max nested links
+    int max_cmd_out        = 10000;        // cmd output character buffer 
+    int max_cmd_proc       = 10;           // max cmd processes ID=0-9
+   int max_lsn_spec       = 265;
+   int max_dir_list       = 512;
+   int max_guam_buff       = 3000;
    /* 
     * shared global variables
     */
@@ -95,38 +107,46 @@ import javax.swing.Timer;
     boolean user_abend   = false;
     boolean svc_abend_type   = system_abend;
     boolean svc_req_dump     = false; // request dump
+    long stimer_exit_time = 0;  // set by STIMER for update+monitor to check
+    int  stimer_exit_addr = 0;  // exit when STIMER tod reached
+    boolean stimer_exit_request = false; // set when time expired
+    boolean stimer_exit_running = false; // set while in stimer exit
+    int  stimer_save_r13 = 0; // save r13 during exit
+    int  stimer_save_r14 = 0; // save r14 during exit
+    int  stimer_save_r15 = 0; // save r15 during exit
+    int  stimer_save_psw = 0; // save psw at time of exit
     /*
      * gz390 graphical user access method variables
      */
     gz390 gz390 = null;
-    int gui_major = 0;  // major function from r0+2
-    int gui_minor = 0;  // minor function from r0+3
-    int gui_args  = 0;  // arg list addr from r1
-    static int gui_view_mcs    = 1;
-    static int gui_view_tn3270 = 2;
-    static int gui_view_graph  = 3;
-    int gui_view  = 0;  // 1=MCS, 2=TN3270, 3=graphics
-    int gui_x     = 0;  // x pixels (rows for set screen view)
-    int gui_y     = 0;  // y pixels (cols for set screen view)
-    int gui_x2    = 0;
-    int gui_y2    = 0;
-    int gui_color = 0;
-    int gui_width = 0;
-    int gui_height= 0;
-    int gui_row = 0;
-    int gui_col = 0;
-    int gui_lfield = 0;
-    int gui_cursor_type = 0;
-    int gui_font      = 0;
-    int gui_abuff     = 0; // addr buff
-    int gui_lbuff     = 0; // length buff
-    int gui_key_amod  = 0; // addr key mod
-    int gui_key_achar = 0; // addr key char
-    int gui_key       = 0; // mod and char from keyboard
-    int[] gui_mouse   = null; // gui_mouse_read returns x,y,left,right
-    int gui_left      = 0;    // gui mouse left button addr (1=pressed)
-    int gui_right     = 0;    // gui_mouse right button addr (1 = pressed)
-    boolean gui_wait  = true; // wait for input
+    int guam_major = 0;  // major function from r0+2
+    int guam_minor = 0;  // minor function from r0+3
+    int guam_args  = 0;  // arg list addr from r1
+    int guam_view_mcs    = 1;
+    int guam_view_tn3270 = 2;
+    int guam_view_graph  = 3;
+    int guam_view  = 0;  // 1=MCS, 2=TN3270, 3=graphics
+    int guam_x     = 0;  // x pixels (rows for set screen view)
+    int guam_y     = 0;  // y pixels (cols for set screen view)
+    int guam_x2    = 0;
+    int guam_y2    = 0;
+    int guam_color = 0;
+    int guam_width = 0;
+    int guam_height= 0;
+    int guam_row = 0;
+    int guam_col = 0;
+    int guam_lfield = 0;
+    int guam_cursor_type = 0;
+    int guam_font      = 0;
+    int guam_abuff     = 0; // addr buff
+    int guam_lbuff     = 0; // length buff
+    int guam_key_amod  = 0; // addr key mod
+    int guam_key_achar = 0; // addr key char
+    int guam_key       = 0; // mod and char from keyboard
+    int[] guam_mouse   = null; // guam_mouse_read returns x,y,left,right
+    int guam_left      = 0;    // gui mouse left button addr (1=pressed)
+    int guam_right     = 0;    // guam_mouse right button addr (1 = pressed)
+    boolean guam_wait  = true; // wait for input
     /*
      * global tget and tput data
      */
@@ -144,9 +164,9 @@ import javax.swing.Timer;
     int tpg_type_fullscr = 0x03;
     byte[] tget_byte = null;
     ByteBuffer tget_buff = null;
-    byte[] tput_byte = new byte[max_gui_buff];
-    ByteBuffer tput_buff = ByteBuffer.wrap(tput_byte,0,max_gui_buff);
-    String gui_text = null;
+    byte[] tput_byte = new byte[max_guam_buff];
+    ByteBuffer tput_buff = ByteBuffer.wrap(tput_byte,0,max_guam_buff);
+    String guam_text = null;
     /*
      * Monitor variables
      */   
@@ -173,7 +193,12 @@ import javax.swing.Timer;
         int wtor_reply_len  = 0;
         int wtor_ecb_addr   = -1;
         int ecb_waiting = 0x80000000;
-        int ecb_post_ok = 0x40000000;
+        int ecb_posted  = 0x40000000;
+    /*
+     *  svc wait variables 
+     */
+        int wait_count = 0;  // 0 for ECB= else ECBLIST wait count
+        int wait_addr  = 0;  // ECB= or ECBLIST= addr
     /*
      * cmd processor variables
      */
@@ -211,8 +236,8 @@ import javax.swing.Timer;
     int test_next_addr = 0;
     String test_sdt = null;
     byte test_addr_type = 0;
-    static byte test_addr_mem = 0;
-    static byte test_addr_reg = 1;
+    byte test_addr_mem = 0;
+    byte test_addr_reg = 1;
     byte test_compare = 0;
     int test_base_addr = -1;
     int test_mem_loc = 0;
@@ -294,8 +319,8 @@ import javax.swing.Timer;
     */ 
     char[] load_code_ver  = new char[4];
     char[] z390_flags     = new char[4];
-    static int z390_flags_amode31 = 0;
-    static int z390_flags_rmode31 = 1;
+    int z390_flags_amode31 = 0;
+    int z390_flags_rmode31 = 1;
     String load_dsn       = null;
     int    load_dsn_addr  = 0;
     String load_pgm_dir   = null;
@@ -340,12 +365,13 @@ import javax.swing.Timer;
      int    cur_tiot_index = 0;
      int    cur_decb_addr  = 0;
      int    cur_ecb        = 0;
-     static int decb_ecb   = 0;
-     static int decb_type  = 4;
-     static int decb_dcb   = 8;
-     static int decb_area  = 12;
+     int decb_ecb   = 0;
+     int decb_type  = 4;
+     int decb_dcb   = 8;
+     int decb_area  = 12;
      long   cur_rba        = 0;
      int    cur_dcb_addr   = 0;     // mem offset to dcb from r1
+     int    cur_dcbe_addr  = 0;     // dcb extension
      String cur_dcb_ddnam = null;  // ascii ddname from dcb ebcdic
      String cur_dcb_file_name = null;
      int    cur_dcb_oflgs  = 0;
@@ -359,34 +385,37 @@ import javax.swing.Timer;
      int    cur_vrec_lrecl  = 0;
      String cur_rec_text  = null;
      int    cur_rec_len   = 0;
-     static int dcb_dsorg  = 0x1a;
-     static int dcb_dsorg_ps = 0x40; // physical sequential (GM or PM) 
-     static int dcb_dsorg_da = 0x20; // direct access(R/W)
-     static int dcb_iobad  = 0x1c;      // has tiot_index +1 while open else 0
-     static int dcb_eodad  = 0x20;      // end of data exit
-     static int dcb_recfm  = 0x24;      // record format
-     static int dcb_recfm_f = 0x80;     // fixed
-     static int dcb_recfm_v = 0x40;     // variable
-     static int dcb_recfm_fb = 0x90;    // fixed blocked
-     static int dcb_recfm_vb = 0x50;    // variable blocked
-     static int dcb_recfm_ft = 0xa0;    // fixed to/from ascii text
-     static int dcb_recfm_vt = 0x60;    // variable to/from ascii text
-     static int dcb_ddnam  = 0x28;      // ddname
-     static int dcb_id     = 0x00;      // id = EBCDIC or ASCII C'DCB1' RPI88
-     static int dcb_oflgs  = 0x30;      // open flags
-     static int dcb_oflgs_open = 0x80;  // file open
-     static int dcb_oflgs_gm   = 0x40;  // read allowed
-     static int dcb_oflgs_pm   = 0x20;  // write allowed
-     static int dcb_oflgs_rw   = 0x60;  // read and write allowed
-     static int dcb_macrf  = 0x32;      // macro access type
-     static int dcb_macrf_gm = 0x5000;  // get move
-     static int dcb_macrf_pm = 0x0050;  // put move
-     static int dcb_macrf_rw = 0x2020;  // read/write random
-     static int dcb_synad = 0x38;       // synchronous error exit
-     static int dcb_blksi = 0x3e;       // blocksize
-     static int dcb_lrecl = 0x52;       // record length
-     static int dcb_rec   = 0x58;       // record area
-     static int dcb_dsnam = 0x5c;       // ascii file spec override ddname
+     int dcb_dsorg  = 0x1a;
+     int dcb_dsorg_ps = 0x40; // physical sequential (GM or PM) 
+     int dcb_dsorg_da = 0x20; // direct access(R/W)
+     int dcb_iobad  = 0x1c;      // has tiot_index +1 while open else 0
+     int dcb_eodad  = 0x20;      // end of data exit
+     int dcb_recfm  = 0x24;      // record format
+     int dcb_recfm_f = 0x80;     // fixed
+     int dcb_recfm_v = 0x40;     // variable
+     int dcb_recfm_fb = 0x90;    // fixed blocked
+     int dcb_recfm_vb = 0x50;    // variable blocked
+     int dcb_recfm_ft = 0xa0;    // fixed to/from ascii text
+     int dcb_recfm_vt = 0x60;    // variable to/from ascii text
+     int dcb_ddnam  = 0x28;      // ddname
+     int dcb_id     = 0x00;      // id = EBCDIC or ASCII C'DCB1' RPI88
+     int dcb_oflgs  = 0x30;      // open flags
+     int dcb_oflgs_open = 0x80;  // file open
+     int dcb_oflgs_gm   = 0x40;  // read allowed
+     int dcb_oflgs_pm   = 0x20;  // write allowed
+     int dcb_oflgs_rw   = 0x60;  // read and write allowed
+     int dcb_macrf  = 0x32;      // macro access type
+     int dcb_macrf_gm = 0x5000;  // get move
+     int dcb_macrf_pm = 0x0050;  // put move
+     int dcb_macrf_rw = 0x2020;  // read/write random
+     int dcb_synad = 0x38;       // synchronous error exit
+     int dcb_blksi = 0x3e;       // blocksize
+     int dcb_lrecl = 0x52;       // record length
+     int dcb_rec   = 0x58;       // record area
+     int dcb_dsnam = 0x5c;       // ascii file spec override ddname
+     int dcb_dcbe  = 0x60; // dcbe extention for eodad and synad
+     int dcbe_eodad = 0;  
+     int dcbe_synad = 4;
      boolean[]          tiot_dcb_open   = (boolean[])Array.newInstance(boolean.class,max_tiot_files);
      String[]           tiot_ddnam      = new String[max_tiot_files];
      String[]           tiot_dsn        = new String[max_tiot_files];
@@ -413,8 +442,8 @@ import javax.swing.Timer;
   int prev_fqe = 0;
   int next_fqe = 0;
   int next_fqe_len = 0;
-  static int opt_getmain_amode31 = 0x02;
-  static int opt_getmain_cond    = 0x01;
+  int opt_getmain_amode31 = 0x02;
+  int opt_getmain_cond    = 0x01;
   /*
    * end of global ez390 class data and start of procs
    */
@@ -427,13 +456,16 @@ public void svc(int svc_id){
 	case 0x01:  // WAIT
 		svc_wait();
 		break;
+	case 0x02:  // POST 
+		svc_post();
+		break;
 	case 0x03:  // EXIT  
 		svc_exit();
 		break;
 	case 0x04: // GETMAIN R0_BIT0=AMODE31, R0_BIT1=COND, R1=length
 		svc_getmain();
 		break;
-	case 0x05: // FREEMAIN R0=addr, R1=length
+	case 0x05: // FREEMAIN R0=LEN, R1=ADDR RPI 244
 		svc_freemain();
 		break;
 	case 0x06:  // LINK  R15=PGMID, R1=PARMS
@@ -460,6 +492,9 @@ public void svc(int svc_id){
 		}
         svc_abend(pz390.psw_pic & 0xfff,user_abend,svc_req_dump);
 	    break;
+	case 0x12:  // BLDL FIND PGMS IN SYS390 
+		svc_bldl();
+		break;
 	case 0x13:  // OPEN DCB R0=(x'40' input,x'20' output) R1=DCB
 		svc_open();
 		break;
@@ -480,7 +515,10 @@ public void svc(int svc_id){
         wto_len = pz390.mem.getShort(wto_fld);
 		wto_msg("",wto_fld+4,wto_len-4);  //RPI190 remove "WTO  MSG"
 		break;
-	case 0x2f:  //STIMER r0 flags, r1=rx storage arg.
+	case 0x2e:  //TTIMER r0=function, r1=mic addr
+		svc_ttimer();
+		break;
+	case 0x2f:  //STIMER r0=flags, r1=rx storage arg.
 		svc_stimer();
 		break;
 	case 0x33:  // SNAP r0hh=flags,r0ll=id,r14-15 storage
@@ -496,7 +534,7 @@ public void svc(int svc_id){
 		svc_espie();  // set program check exit R0=types, R1=addr
 		break;
 	case 84:  // gui application window I/O
-		svc_gui();
+		svc_guam();
 		break;
 	case 93:  // TGET/TPUT TN3290 data stream for GUI
 		svc_tget_tput();
@@ -547,6 +585,7 @@ private void put_log_line(String msg){
 	    */
 	   	   if (tz390.opt_list && log_file_buff != null){
 	   	      try {
+	   	    	  tz390.systerm_io++;
 	   	          log_file_buff.write(msg + "\r\n");
 	                if (log_file.length() > tz390.max_file_size){
 	                	abort_error(107,"maximum log file size exceeded");
@@ -562,7 +601,9 @@ public void log_error(int error,String msg){
 	 * inc error total
 	 * 1.  supress if not gen_obj and not trace
 	 */
-      put_log("EZ390E error " + error + " " + msg);
+	  String error_msg = "EZ390E error " + error + " " + msg;
+      put_log(error_msg);
+      tz390.put_systerm(error_msg);
 	  ez390_errors++;
 	  if (tz390.max_errors != 0 && ez390_errors > tz390.max_errors){
 	  	 abort_error(5,"max errors exceeded");	 
@@ -577,7 +618,9 @@ public void abort_error(int error,String msg){
 	  if (ez390_rc == 0){
 	  	 ez390_rc = 16;
 	  }
-	  put_log("EZ390E error " + error + " " + msg);
+	  String error_msg = "EZ390E error " + error + " " + msg;
+	  put_log(error_msg);
+	  tz390.put_systerm(error_msg);
       exit_ez390();
 }
 public void exit_ez390(){
@@ -585,18 +628,20 @@ public void exit_ez390(){
 	 * display total errors
 	 * close files and exit
 	 */
-	  ez390_rc = pz390.reg.getInt(pz390.r15); //RPI39
-	  if    (ez390_rc == 0 && tz390.opt_timing
-			  && (ez390_errors > 0 || tz390.z390_abort)){
-    	ez390_rc = 16;
+	  int r15_rc = pz390.reg.getInt(pz390.r15); //RPI39
+	  if (r15_rc > ez390_rc){
+		  ez390_rc = r15_rc;
+	  }
+	  if  (ez390_errors > 0 || tz390.z390_abort){
+		  ez390_rc = 16;
       }
   	  put_stats();
       close_files();
       close_cmd();  //RPI76
-      close_z390_gui();
+      close_z390_guam();
       System.exit(ez390_rc); //RPI39
 }
-private void close_z390_gui(){
+private void close_z390_guam(){
 	/*
 	 * if exit request, send shutdown request
 	 * to z390 gui via the sysout queue
@@ -613,7 +658,7 @@ private void put_stats(){
 	 * display statistics as comments at end of bal
 	 */
 	if (tz390.opt_stats){
-		put_log("Stats total instructions    = " + pz390.tot_ins);
+		put_log("Stats total instructions    = " + tz390.systerm_ins);
 		if (tz390.opt_trace){
 			put_log("Stats Keys                  = " + tz390.tot_key);
 			put_log("Stats Key searches          = " + tz390.tot_key_search);
@@ -630,14 +675,17 @@ private void put_stats(){
 			tod_end_pgm = pz390.cur_date.getTime();
 			tot_sec = (tod_end_pgm - tod_start_pgm)/1000;
 			put_log("Stats total seconds         = " + tot_sec);
-			long ins_rate = ((long) pz390.tot_ins)*1000/(tod_end_pgm - tod_start_pgm + 1);
+			long ins_rate = ((long) tz390.systerm_ins)*1000/(tod_end_pgm - tod_start_pgm + 1);
 			put_log("Stats instructions/sec      = " + ins_rate);
 		}
 	}
-	put_log("EZ390I total errors          = " + ez390_errors);
-	put_log("EZ390I return code           = " + ez390_rc);
+	put_log("EZ390I total errors         = " + ez390_errors);
+	put_log("EZ390I return code(" + tz390.get_padded_name() + ")= " + ez390_rc); // RPI 312
 }
 private void close_files(){
+	/*
+	 * close log, systerm
+	 */
 	  if (log_file != null && log_file.isFile()){
 	  	  try {
 	  	  	  log_file_buff.close();
@@ -645,15 +693,7 @@ private void close_files(){
 	  	  	  abort_error(3,"I/O error on log file close - " + e.toString());
 	  	  }
 	  }
-	  if  (tz390.opt_list){
-		  if (log_file != null && log_file.isFile()){
-		  	  try {
-		  	  	  log_file_buff.close();
-		  	  } catch (IOException e){
-		  	  	  abort_error(4,"I/O error on log file close - " + e.toString());
-		  	  }
-		  }
-	  }
+	  tz390.close_systerm(ez390_rc);
 }
 private void close_cmd(){
 	/*
@@ -782,8 +822,46 @@ public void open_files(){
 }
  private void svc_exit(){
  	/*
- 	 * exit to prev link return address or exit ez390
+ 	 * 1.  If stimer_exit_running then restore
+ 	 *     r13-r15 and exit to saved psw
+ 	 * 2.  If stae exit running, restore
+ 	 *     psw and regs from zcvt_stae.
+ 	 * 3.  If spie exit running, restore
+ 	 *     psw and regs from zcvt_epie    
+ 	 * 4.  exit to prev link return address
+ 	 *     or exit ez390 if none.
  	 */
+	if (stimer_exit_running){
+		stimer_exit_running = false;
+		pz390.reg.putInt(pz390.r13,stimer_save_r13);
+		pz390.reg.putInt(pz390.r14,stimer_save_r14);
+		pz390.reg.putInt(pz390.r15,stimer_save_r15);
+		pz390.set_psw_loc(stimer_save_psw); 
+	    if (tz390.opt_trace){
+	    	put_log("TRACE STIMER EXIT ENDING");
+	    }
+		return;
+	} else if (pz390.estae_exit_running){
+		pz390.estae_last_ins = tz390.systerm_ins;
+		pz390.estae_exit_running = false;
+		pz390.reg.position(0);
+		pz390.reg.put(pz390.mem_byte,pz390.esta_gpr,128);
+		pz390.set_psw_loc(pz390.mem.getInt(pz390.esta_psw+4));
+	    if (tz390.opt_trace){
+	    	put_log("TRACE ESTAE EXIT ENDING");
+	    }
+		return;
+	} else if (pz390.espie_exit_running){
+		pz390.espie_last_ins = tz390.systerm_ins;
+		pz390.espie_exit_running = false;
+		pz390.reg.position(0);
+		pz390.reg.put(pz390.mem_byte,pz390.epie_gpr,128);
+		pz390.set_psw_loc(pz390.mem.getInt(pz390.epie_psw+4));
+	    if (tz390.opt_trace){
+	    	put_log("TRACE ESPIE EXIT ENDING");
+	    }
+		return;
+	}
  	if (tot_link_stk == 1){
 	    pz390.set_psw_check(pz390.psw_pic_exit);  // exit ez390
  	} else {
@@ -827,7 +905,7 @@ private void svc_load(){
 	 *       existing load address.
 	 */
 	load_dsn_addr = pz390.reg.getInt(pz390.r15);
-	load_pgm_dir =  tz390.pgm_dir;
+	load_pgm_dir =  tz390.dir_390; // RPI 244
 	load_pgm_type = tz390.pgm_type;
 	if (load_dsn_addr == 0){
 		load_pgm_name = get_ascii_string(pz390.reg.getInt(pz390.r0),8);
@@ -844,7 +922,7 @@ private void svc_load(){
         svc_load_set_regs();
 		return;
 	}
-	load_file_name = tz390.find_file_name(load_pgm_dir,load_pgm_name,load_pgm_type,tz390.dir_cur);
+	load_file_name = tz390.find_file_name(load_pgm_dir,load_pgm_name,load_pgm_type,tz390.dir_cur); 
 	if (load_file_name == null){
 		pz390.reg.putInt(pz390.r1,0); // RPI102
         pz390.reg.putInt(pz390.r15,4);
@@ -887,6 +965,7 @@ private void svc_load_390(){
     load_code_len    = z390_file.readInt();
     load_code_ent    = z390_file.readInt();
     load_code_rlds   = z390_file.readInt();
+    tz390.systerm_io = tz390.systerm_io + 11;
     if (z390_flags[z390_flags_rmode31] == 'T'){
     	pz390.reg.putInt(pz390.r0,opt_getmain_amode31); // getmain above line
     }else {
@@ -896,6 +975,7 @@ private void svc_load_390(){
     svc_getmain();
     if (pz390.reg.getInt(pz390.r15) == 0){
        load_code_load = pz390.reg.getInt(pz390.r0);
+	   tz390.systerm_io++;
        z390_file.read(pz390.mem_byte,load_code_load,load_code_len);
        load_code_ent = load_code_ent + load_code_load; 
     } else {
@@ -922,7 +1002,9 @@ private void svc_load_rlds(){
 	try {
 	    int cur_rld = 0;
 	    while (cur_rld < load_code_rlds){
+	    	tz390.systerm_io++;
 	    	rld_loc = z390_file.readInt();
+	    	tz390.systerm_io++;
 	    	rld_len = z390_file.readByte();
 	    	switch (rld_len){
 	    	case 3: //RPI71
@@ -982,6 +1064,7 @@ private void svc_load_file(){
     if (pz390.reg.getInt(pz390.r15) == 0){
        load_code_load = pz390.reg.getInt(pz390.r0);
        load_code_ent  = -1; // no entry for files;
+       tz390.systerm_io++;
        z390_file.read(pz390.mem_byte,load_code_load,load_code_len);
        if (pz390.psw_amode == pz390.psw_amode31){
            load_code_load = load_code_load | pz390.psw_amode31_bit;
@@ -1012,7 +1095,7 @@ private void svc_xctl(){
 	 */
 	svc_load();
 	if (pz390.reg.getInt(pz390.r15) != 0){
-		if (pz390.estae_exit == 0){
+		if (pz390.tot_estae == 0){
 			log_error(102,"xctl program not found - " + load_pgm_name);
 		}
 		pz390.set_psw_check(pz390.psw_pic_link_err); // link failed
@@ -1024,7 +1107,7 @@ private void svc_xctl(){
 		cur_cde = link_stk_cde[cur_link_stk];
 		delete_cur_cde();
 		link_stk_cde[cur_link_stk] = save_new_cde;
-		pz390.reg.putInt(pz390.r14,pz390.cvt_exit);
+		pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);
 		pz390.reg.putInt(pz390.r15,link_addr);
 		pz390.set_psw_loc(link_addr);
         if ((link_addr & pz390.psw_amode31_bit) != 0){
@@ -1037,7 +1120,7 @@ private void svc_xctl(){
 private boolean get_load_dsn(){
 	/*
 	 * 1. Set following from ddname/dsname
-	 *    load_pgm_dir
+	 *    load_pgm_dir (overrides dir_390 default) RPI 244
 	 *    load_pgm_name
 	 *    load_pgm_type
 	 * 2. Return true if ok else false.
@@ -1160,8 +1243,8 @@ private boolean delete_cur_cde(){
 	if (cur_cde != -1 && cde_loc[cur_cde] != 0){
 		cde_use[cur_cde]--;
         if  (cde_use[cur_cde] < 1){
-        	pz390.reg.putInt(pz390.r0,cde_loc[cur_cde]);
-        	pz390.reg.putInt(pz390.r1,cde_len[cur_cde]);
+        	pz390.reg.putInt(pz390.r1,cde_loc[cur_cde]); // RPI 244
+        	pz390.reg.putInt(pz390.r0,cde_len[cur_cde]); // RPI 244
         	svc_freemain();
         	cde_loc[cur_cde] = 0;
         }
@@ -1215,7 +1298,7 @@ public void svc_link(){
 	svc_load();
 	pz390.reg.putInt(pz390.r1,save_r1);
 	if (pz390.reg.getInt(pz390.r15) != 0){
-		if (pz390.estae_exit == 0){
+		if (pz390.tot_estae == 0){
 			log_error(103,"LINK program not found - " + load_pgm_name);
 		}
 		pz390.set_psw_check(pz390.psw_pic_link_err); // link failed
@@ -1225,7 +1308,7 @@ public void svc_link(){
 		ez390_pgm = load_pgm_name; // save first pgm
         if (tz390.opt_guam){
            	gz390 = new gz390();
-        	gz390.start_gui(ez390_pgm,tz390);
+        	gz390.start_guam(ez390_pgm,tz390);
 			if (tz390.z390_abort){
 				abort_error(58,"guam gui startup abort");
 			}
@@ -1239,7 +1322,7 @@ public void svc_link(){
 			link_stk_cde[cur_link_stk] = cur_cde; // set by load
 			link_stk_ret[cur_link_stk] = pz390.psw_loc | pz390.psw_amode_bit;
 		}
-		pz390.reg.putInt(pz390.r14,pz390.cvt_exit);
+		pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);
 		pz390.reg.putInt(pz390.r15,link_addr);
 		pz390.set_psw_loc(link_addr);
         if ((link_addr & pz390.psw_amode31_bit) != 0){
@@ -1273,11 +1356,11 @@ private void svc_getmain(){
 	req_opt = pz390.reg.getInt(pz390.r0);
 	if ((req_opt & opt_getmain_amode31) != 0
 		&& pz390.dsa31_start != 0){
-		cur_fqe = pz390.mem.getInt(pz390.cvt_fqe31);
-		prev_fqe = pz390.cvt_fqe31;
+		cur_fqe = pz390.mem.getInt(pz390.zcvt_fqe31);
+		prev_fqe = pz390.zcvt_fqe31;
 	} else {
-		cur_fqe = pz390.mem.getInt(pz390.cvt_fqe24);
-		prev_fqe = pz390.cvt_fqe24;
+		cur_fqe = pz390.mem.getInt(pz390.zcvt_fqe24);
+		prev_fqe = pz390.zcvt_fqe24;
 	}
 	while (cur_fqe > 0){
 		cur_fqe_len = pz390.mem.getInt(cur_fqe+4);
@@ -1318,14 +1401,14 @@ private void svc_getmain(){
 private void svc_freemain(){
 	/*
 	 * Input
-	 *   1.  r0 = addr to return to free queue
-	 *   2.  r1 = length to return
+	 *   1.  r0 = length  to return  RPI 244
+	 *   2.  r1 = address to return  RPI 244
 	 *   
 	 * Output:    
 	 *   1.  set r15 to 0 of ok, else abort
 	 */
-	req_addr = pz390.reg.getInt(pz390.r0) & pz390.psw_amode31;
-	req_len = pz390.reg.getInt(pz390.r1);	
+	req_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode31; // RPI 244
+	req_len = pz390.reg.getInt(pz390.r0);	// RPI 244
 	req_len = (req_len + 7)/8*8; // round to 8
 	if (req_addr < pz390.dsa24_end){
 		if (req_len <= 0
@@ -1336,8 +1419,8 @@ private void svc_freemain(){
 			pz390.set_psw_check(pz390.psw_pic_fm_err);
 			return;
 		}
-		cur_fqe = pz390.mem.getInt(pz390.cvt_fqe24);
-		prev_fqe = pz390.cvt_fqe24;
+		cur_fqe = pz390.mem.getInt(pz390.zcvt_fqe24);
+		prev_fqe = pz390.zcvt_fqe24;
 	} else {
 		if (req_len <= 0
 			|| (req_addr & 0x7) != 0
@@ -1347,8 +1430,8 @@ private void svc_freemain(){
 			pz390.set_psw_check(pz390.psw_pic_fm_err);
 			return;
 		}
-		cur_fqe = pz390.mem.getInt(pz390.cvt_fqe31);
-		prev_fqe = pz390.cvt_fqe31;
+		cur_fqe = pz390.mem.getInt(pz390.zcvt_fqe31);
+		prev_fqe = pz390.zcvt_fqe31;
 	}
 	while (cur_fqe > 0){
 		next_fqe    = pz390.mem.getInt(cur_fqe);
@@ -1584,29 +1667,116 @@ private void svc_time(){
     }
     pz390.reg.putInt(pz390.r15,0);
 }
+private void svc_ttimer(){
+	/*
+	 * process TTIMER cancel, tu, or mic request
+	 */
+	int index = pz390.reg.getInt(pz390.r0);
+	long mics_remaining = 1000 * (stimer_exit_time - System.currentTimeMillis()) ;
+	switch (index){
+	case 1: // CANCEL
+		stimer_exit_addr = 0;
+		pz390.reg.putInt(pz390.r15,0);
+		break;
+	case 2: // return TU remaining in r0
+		if (mics_remaining < 0){
+			pz390.reg.putInt(pz390.r0,0);
+			pz390.reg.putInt(pz390.r15,0);
+		} else {
+			long tu = (long)(mics_remaining/26.0144);
+			if ((tu >> 32) == 0){
+				pz390.reg.putInt(pz390.r0,(int)tu);
+				pz390.reg.putInt(pz390.r15,0);
+			} else {
+				pz390.reg.putInt(pz390.r15,4);
+			}
+		}
+		break;
+	case 3: // return mic remaining at r1 addr
+		if (mics_remaining < 0){
+            mics_remaining = 0;
+		}
+		int addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+		pz390.mem.putLong(addr,mics_remaining << 12);
+		pz390.reg.putInt(pz390.r15,0);
+		break;
+	default: 
+		pz390.set_psw_check(pz390.psw_pic_spec);
+        return;
+	}
+}
 private void svc_stimer(){
 	/*
-	 * wait for specified interval
+	 * process timer interval request
 	 */
-	int flags = pz390.reg.get(pz390.r0) & 0xff;
-	int addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
-	long wait_mics = 0;
-	switch (flags){
-	case 0x11: // STIMER WAIT,BINTVL=RX FWORD 0.01 SEC
-		wait_mics = (long)pz390.mem.getInt(addr) * 10000;
-		sleep_now(wait_mics/1000);
+	byte req_type   = pz390.reg.get(0);
+	byte intvl_type = pz390.reg.get(1);
+	int  intvl_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	long intvl_mics = 0;
+	/*
+	 * set intvl_mics interval in microseconds
+	 */
+	switch (intvl_type){
+	case 1: // BINTVL=RX FWORD 0.01 SEC
+		intvl_mics = (long)pz390.mem.getInt(intvl_addr) * 10000;
 ;		break;
-	case 0x21: // STIMER WAIT,MICVL=RX DWORD MICS
-		wait_mics = pz390.mem.getLong(addr);
-		sleep_now(wait_mics/1000);
+	case 2: // DINTVL=RX DWORD PL8'HHMMSSTH'
+		long hhmmssth = pz390.mem.getLong(intvl_addr) >>> 4;
+		int hh = (int)((hhmmssth >> 28)*10+((hhmmssth & 0x0f000000) >> 24));
+		int mm = (int)(((hhmmssth & 0x00f00000) >> 20)*10+((hhmmssth & 0x000f0000) >> 16));
+		int ss = (int)(((hhmmssth & 0x0000f000) >> 12)*10+((hhmmssth & 0x00000f00) >> 8));
+		int th = (int)(((hhmmssth & 0x000000f0) >> 4)*10+(hhmmssth & 0xf));
+		intvl_mics = 10000 * (th + 100 * (ss + 60 * (mm + 60 * hh)));
 		break;
-	case 0x18: // STIMER WAIT,TUINTVL=RX DWORD 26.04166 MICS
-        wait_mics = (long)(Double.valueOf(pz390.mem.getLong(addr)) * 26.04166);
-        sleep_now(wait_mics/1000);
+	case 3: // MICVL=RX DWORD MICS
+		intvl_mics = pz390.mem.getLong(intvl_addr);
+		break;
+	case 4: // TUINTVL=RX DWORD 26.04166 MICS
+        intvl_mics = Double.valueOf(pz390.mem.getInt(intvl_addr) * 26.04166).longValue();
 		break;
 	default:
-		pz390.set_psw_check(pz390.psw_pic_spec);
+    	pz390.set_psw_check(pz390.psw_pic_spec);
+	    break;
 	}
+	/*
+	 * process request by type
+	 */
+	switch (req_type){
+	case 1: // WAIT
+		sleep_now(intvl_mics/1000);
+		break;
+    case 2: // REAL/TASK
+    	stimer_exit_addr  = pz390.reg.getInt(pz390.r0) & pz390.psw_amode;
+    	if (stimer_exit_addr == 0){
+    		pz390.set_psw_check(pz390.psw_pic_spec);
+    	    return;
+    	}
+    	stimer_exit_time = System.currentTimeMillis() + intvl_mics/1000;
+		break;
+    default:
+    	pz390.set_psw_check(pz390.psw_pic_spec);
+    	break;
+	}	
+}
+public void start_stimer_exit(){
+	/*
+	 * Start stimer exit when stimer_exit_request
+	 * found true by instruction loop or wait loop
+	 */
+	stimer_save_r13 = pz390.reg.getInt(pz390.r13);
+	stimer_save_r14 = pz390.reg.getInt(pz390.r14);
+	stimer_save_r15 = pz390.reg.getInt(pz390.r15);
+	stimer_save_psw = pz390.psw_loc;
+	pz390.reg.putInt(pz390.r13,pz390.zcvt_stimer_save);
+	pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);
+	pz390.reg.putInt(pz390.r15,stimer_exit_addr);
+	stimer_exit_request = false; // request stimer exit
+	stimer_exit_running = true;  // reset psw
+	pz390.psw_loc = stimer_exit_addr;
+	stimer_exit_addr = 0;        // turn off stimer
+    if (tz390.opt_trace){
+    	put_log("TRACE STIMER EXIT STARTING");
+    }
 }
 private int get_ccyydddf(){
 	/* 
@@ -1616,6 +1786,65 @@ private int get_ccyydddf(){
     return (cc << 24) 
            | ((Integer.valueOf(cur_date_yyddd.format(pz390.cur_date),16)) << 4)  
            | 0xf;
+}
+private void svc_bldl(){
+	/*
+	 * search for members specified in BLDL
+	 * list passed in R1 using SYS390 direcotory list
+	 * and set return code:
+	 *   0 - all members found
+	 *   4 - one or more not found 
+	 *       entry field R (offset  if all found else 4 if not.
+	 *   8 - invalid entry count or entry length
+	 * The R field in entries found is set to 1
+	 * and set to 0 if not found.
+	 * If entry length >= 13 then set Z to 1 if found in memory
+	 * else 0.
+	 */
+	int bldl_list_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	int bldl_list_count = pz390.mem.getShort(bldl_list_addr);
+	if (bldl_list_count < 1){
+		pz390.reg.putInt(pz390.r15,8);
+		return;
+	}
+	String bldl_last_name = "";
+	int bldl_entry_addr = bldl_list_addr+2;
+	int bldl_rc = 0;
+	int bldl_entry_len = 0;
+	while (bldl_list_count > 0){
+		bldl_entry_len = pz390.mem.getShort(bldl_entry_addr);
+		if (bldl_entry_len < 12){  // RPI 311
+			pz390.reg.putInt(pz390.r15,8);
+			return;
+		}
+		String bldl_member_name = get_ascii_string(bldl_entry_addr+2,8);
+		if (bldl_member_name.compareTo(bldl_last_name) <= 0){
+			pz390.reg.putInt(pz390.r15,8);
+			return;
+		}
+		bldl_last_name = bldl_member_name;
+		cur_cde = tz390.find_key_index("P:" + bldl_member_name + ".390");
+		if (cur_cde != -1 && cde_loc[cur_cde] != 0){
+            pz390.mem.put(bldl_entry_addr+2+10,(byte)1); // R=1 entry found
+            if (bldl_entry_len >= 13){  // RPI 311
+            	pz390.mem.put(bldl_entry_addr+2+12,(byte)1); // Z=1 entry found in memory
+            }
+		} else {
+			String bldl_member_file_name = tz390.find_file_name(tz390.dir_390,bldl_member_name,".390",tz390.dir_cur);
+			if (bldl_member_file_name != null){
+				pz390.mem.put(bldl_entry_addr+2+10,(byte)1); // R=1 entry found
+				if (bldl_entry_len >= 13){  // RPI 311
+					pz390.mem.put(bldl_entry_addr+2+12,(byte)0); // Z=0 entry found in sys390 dir
+				}
+			} else {
+				pz390.mem.put(bldl_entry_addr+2+10,(byte)0); // R=1 entry not found
+				bldl_rc = 4;
+			}
+		}
+		bldl_entry_addr = bldl_entry_addr +2 + bldl_entry_len;  // RPI 311
+		bldl_list_count--;
+	}
+	pz390.reg.putInt(pz390.r15,bldl_rc);
 }
 public void svc_abend(int pic, boolean type, boolean req_dump){
 	/*
@@ -1857,6 +2086,7 @@ private void svc_close(){
 	    try {
             if (tiot_vrec_blksi[cur_tiot_index] > 0){
             	tiot_file[cur_tiot_index].seek(tiot_cur_rba[cur_tiot_index]);
+            	tz390.systerm_io++;
             	tiot_file[cur_tiot_index].writeInt((tiot_vrec_blksi[cur_tiot_index]+4) << 16);
             }
             tiot_file[cur_tiot_index].close();
@@ -1896,6 +2126,7 @@ private void svc_get_move(){
 			    	&& tiot_cur_rba[cur_tiot_index]
 			    	   == tiot_eof_rba[cur_tiot_index] -1){
 			try {  //RPI63
+				tz390.systerm_io++;
                 byte eof_byte = tiot_file[cur_tiot_index].readByte();
                 if (eof_byte == 0x1a){
         			dcb_eodad_exit();
@@ -1914,6 +2145,7 @@ private void svc_get_move(){
 				if (cur_dcb_lrecl == 0){
 					cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
 				}
+				tz390.systerm_io++;
                 cur_vrec_lrecl = tiot_file[cur_tiot_index].readInt();
                 pz390.mem.putInt(cur_dcb_area,cur_vrec_lrecl);
                 cur_vrec_lrecl = cur_vrec_lrecl >>> 16;
@@ -1921,6 +2153,7 @@ private void svc_get_move(){
                 	dcb_synad_error(28,"invalid variable record length - " + cur_vrec_lrecl);
                 	return;
             	}
+                tz390.systerm_io++;
                 tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area + 4,cur_vrec_lrecl - 4);
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
 	        } catch (Exception e){
@@ -1934,12 +2167,14 @@ private void svc_get_move(){
 					cur_dcb_lrecl = cur_dcb_blksi - 4; // use blksi if no lrecl
 				}
 				if (tiot_vrec_blksi[cur_tiot_index] == 0){
+					tz390.systerm_io++;
 					tiot_vrec_blksi[cur_tiot_index] = (tiot_file[cur_tiot_index].readInt() >>> 16)-4;
                     if (tiot_vrec_blksi[cur_tiot_index] < 5 || tiot_vrec_blksi[cur_tiot_index] > cur_dcb_blksi-4){
                     	dcb_synad_error(30,"invalid variable block size - " + tiot_vrec_blksi[cur_tiot_index]);
                     	return;
                     }
 				}
+				tz390.systerm_io++;
                 cur_vrec_lrecl = tiot_file[cur_tiot_index].readInt();
                 pz390.mem.putInt(cur_dcb_area,cur_vrec_lrecl);
                 cur_vrec_lrecl = cur_vrec_lrecl >>> 16;
@@ -1947,6 +2182,7 @@ private void svc_get_move(){
                 	dcb_synad_error(28,"invalid variable record length - " + cur_vrec_lrecl);
                 	return;
                 }
+                tz390.systerm_io++;
                 tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area + 4,cur_vrec_lrecl - 4);
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
                 tiot_vrec_blksi[cur_tiot_index] = tiot_vrec_blksi[cur_tiot_index] - cur_vrec_lrecl;
@@ -1964,6 +2200,7 @@ private void svc_get_move(){
 				if (cur_dcb_lrecl == 0){
 					cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
 				}
+				tz390.systerm_io++;
                 cur_rec_text = tiot_file[cur_tiot_index].readLine();
                 cur_rec_len  = cur_rec_text.length();
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
@@ -1992,6 +2229,7 @@ private void svc_get_move(){
 				if (cur_dcb_lrecl == 0){
 					cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
 				}
+				tz390.systerm_io++;
                 tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl);
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl;
 	        } catch (Exception e){
@@ -2004,6 +2242,7 @@ private void svc_get_move(){
 				if (cur_dcb_lrecl == 0){
 					cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
 				}
+				tz390.systerm_io++;
                 cur_rec_text = tiot_file[cur_tiot_index].readLine();
                 cur_rec_len  = cur_rec_text.length();
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
@@ -2065,6 +2304,7 @@ private void svc_put_move(){
 				if (cur_dcb_lrecl == 0){
 					cur_dcb_lrecl = cur_dcb_blksi;
 				}
+				tz390.systerm_io++;
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl);
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl;
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
@@ -2085,6 +2325,7 @@ private void svc_put_move(){
     	            dcb_synad_error(35,"invalid variable record length - " + cur_vrec_lrecl);
                     return;
                 }
+                tz390.systerm_io++;
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_vrec_lrecl);
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_vrec_lrecl;
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
@@ -2102,6 +2343,7 @@ private void svc_put_move(){
 				}
 				if (tiot_vrec_blksi[cur_tiot_index] == 0){
 					tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
+					tz390.systerm_io++;
 					tiot_file[cur_tiot_index].writeInt(-1); // place holder for vb LLZZ
 				}
 				cur_vrec_lrecl = pz390.mem.getInt(cur_dcb_area) >>> 16;
@@ -2113,12 +2355,15 @@ private void svc_put_move(){
                 if (tiot_vrec_blksi[cur_tiot_index] > cur_dcb_blksi - 4){
                 	tiot_vrec_blksi[cur_tiot_index] = tiot_vrec_blksi[cur_tiot_index] - cur_vrec_lrecl;
                 	tiot_file[cur_tiot_index].seek(tiot_cur_rba[cur_tiot_index]);
+                	tz390.systerm_io++;
                 	tiot_file[cur_tiot_index].writeInt((tiot_vrec_blksi[cur_tiot_index]+4) << 16);
                 	tiot_file[cur_tiot_index].seek(tiot_cur_rba[cur_tiot_index] + tiot_vrec_blksi[cur_tiot_index]+4);
                 	tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
-					tiot_file[cur_tiot_index].writeInt(-1); // place holder for vb LLZZ
+                	tz390.systerm_io++;
+                	tiot_file[cur_tiot_index].writeInt(-1); // place holder for vb LLZZ
                 	tiot_vrec_blksi[cur_tiot_index] = cur_vrec_lrecl;
                 }
+                tz390.systerm_io++;
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_vrec_lrecl);
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(103,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
@@ -2139,6 +2384,7 @@ private void svc_put_move(){
                 	return;
                 }
                 cur_rec_text = get_ascii_string(cur_dcb_area+4,cur_rec_len);
+                tz390.systerm_io++;
                 tiot_file[cur_tiot_index].writeBytes(cur_rec_text + '\r' + '\n');
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
@@ -2155,6 +2401,7 @@ private void svc_put_move(){
 					cur_dcb_lrecl = cur_dcb_blksi;
 				}
                 cur_rec_text = get_ascii_string(cur_dcb_area,cur_dcb_lrecl);
+                tz390.systerm_io++;
                 tiot_file[cur_tiot_index].writeBytes(cur_rec_text + '\r' + '\n');
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(105,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
@@ -2197,6 +2444,7 @@ private void svc_read(){
 			if (cur_dcb_lrecl == 0){
 				cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
 			}
+			tz390.systerm_io++;
             tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl);
             tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl;
         } catch (Exception e){
@@ -2228,7 +2476,8 @@ private void svc_write(){
 			if (cur_dcb_lrecl == 0){
 				cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
 			}
-            tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl);
+			tz390.systerm_io++;
+			tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl);
             tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl;
             if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
             	abort_error(106,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
@@ -2292,7 +2541,12 @@ private void dcb_synad_error(int error_num,String error_msg){
 	 * error message and issue pgm check
 	 */
 	pz390.mem.putInt(pz390.r15,error_num);  //RPI53
-	cur_dcb_synad = pz390.mem.getInt(cur_dcb_addr + dcb_synad) & pz390.psw_amode;
+	cur_dcbe_addr = pz390.mem.getInt(cur_dcb_addr + dcb_dcbe) & pz390.psw_amode;
+	if (cur_dcbe_addr != 0){  // RPI 281
+		cur_dcb_synad = pz390.mem.getInt(cur_dcbe_addr + dcbe_synad) & pz390.psw_amode;
+	} else {
+		cur_dcb_synad = pz390.mem.getInt(cur_dcb_addr + dcb_synad) & pz390.psw_amode;
+	}
 	if (cur_dcb_synad == 0){
 		String cur_ddnam = get_ascii_string(cur_dcb_addr + dcb_ddnam,8);
 		String cur_file  = get_dcb_file_name();
@@ -2310,7 +2564,12 @@ private void dcb_eodad_exit(){
 	 * take eodad exit if defined else issue
 	 * error message and abort
 	 */
-	cur_dcb_eodad = pz390.mem.getInt(cur_dcb_addr + dcb_eodad) & pz390.psw_amode;
+	cur_dcbe_addr = pz390.mem.getInt(cur_dcb_addr + dcb_dcbe) & pz390.psw_amode;
+	if (cur_dcbe_addr != 0){  // RPI 281
+		cur_dcb_eodad = pz390.mem.getInt(cur_dcbe_addr + dcbe_eodad) & pz390.psw_amode;
+	} else {
+		cur_dcb_eodad = pz390.mem.getInt(cur_dcb_addr + dcb_eodad) & pz390.psw_amode;
+	}
 	if (cur_dcb_eodad == 0){
 		abort_error(31,"read at end of file and no EODAD for " + tiot_ddnam[cur_tiot_index]);
 	} else {
@@ -2415,7 +2674,7 @@ private String get_ascii_var_string(int mem_addr,int max_len){
 	}
     return text.trim();  //RPI111
 }
-private String get_ascii_string(int mem_addr,int mem_len){
+public String get_ascii_string(int mem_addr,int mem_len){
 	/*
 	 * get ascii string with no trailing spaces from
 	 * memory address and length
@@ -2646,6 +2905,7 @@ private void cmd_input(int cmd_id,String cmd_line){
     	cmd_line = cmd_line + "\r\n";
     }
     try {
+    	tz390.systerm_io++;
     	cmd_input_writer[cmd_id].write(cmd_line.getBytes());
     	cmd_io_total++;
     	cmd_proc_io[cmd_id]++;
@@ -2715,6 +2975,7 @@ public void copy_cmd_output_to_queue(int cmd_id){
 	 * copy cmd output lines to output queue
 	 */	
 	try {
+		tz390.systerm_io++;
 		int next_int = cmd_output_reader[cmd_id].read();
 		while (next_int != -1){
 			if  (next_int == ascii_lf){
@@ -2727,6 +2988,7 @@ public void copy_cmd_output_to_queue(int cmd_id){
 			} else if (next_int != ascii_cr){
 				cmd_output_msg[cmd_id] = cmd_output_msg[cmd_id].concat(String.valueOf((char) next_int));
 			}
+			tz390.systerm_io++;
 			next_int = cmd_output_reader[cmd_id].read();
 		}
 	} catch (Exception e) {
@@ -2739,6 +3001,7 @@ public void copy_cmd_error_to_queue(int cmd_id){
 	 * copy cmd error lines to output queue
 	 */	
 	try {
+		tz390.systerm_io++;
 		int next_int = cmd_error_reader[cmd_id].read();
 		while (next_int != -1){
 		   if  (next_int == ascii_lf){
@@ -2750,6 +3013,7 @@ public void copy_cmd_error_to_queue(int cmd_id){
 		   } else if (next_int != ascii_cr){
 				cmd_error_msg[cmd_id] = cmd_error_msg[cmd_id].concat(String.valueOf((char) next_int));
 		   }
+		   tz390.systerm_io++;
 		   next_int = cmd_error_reader[cmd_id].read();
 		}
 	} catch (Exception ex) {
@@ -2802,13 +3066,13 @@ private void svc_tget_tput(){
             gz390.tput_len = buff_len;
 			gz390.tput_buff.position(0);
 			gz390.tput_buff.put(pz390.mem_byte,buff_addr,buff_len);
-			gz390.gui_tput();
+			gz390.guam_tput();
 			if (tz390.z390_abort){
 				abort_error(59,"guam gui tput abort");
 			}
 		} else {
 			gz390.tget_len = buff_len;
-			gz390.gui_tget();
+			gz390.guam_tget();
 			if (tz390.z390_abort){
 				abort_error(60,"guam gui tget abort");
 			}
@@ -2830,7 +3094,7 @@ private void svc_tget_tput(){
 				if (!wtor_reply_pending){					
 					wtor_reply_addr = buff_addr;
 					wtor_reply_len  = buff_len;
-					wtor_ecb_addr = pz390.cvt_tget_ecb;
+					wtor_ecb_addr = pz390.zcvt_tget_ecb;
 					wto_msg("TGET ENTER",0,0);
 					pz390.mem.putInt(wtor_ecb_addr,ecb_waiting); // ecb waiting for post by montior wtorit
 					wtor_reply_string  = null;
@@ -2856,181 +3120,186 @@ private void svc_tget_tput(){
 		}
 	}
 }
-private void svc_gui(){
+private void svc_guam(){
 	/*
-	 * GUI Access Method for user I/O
+	 * GUAN Graphical User Access Method
+	 * for user I/O vua GUI dialog window
+	 * with 3 views:
+	 *   1.  MCS - view for WTO and WTOR I/O
+	 *   2.  SCREEN - view for TPUT and TGET I/0
+	 *   3.  GRAPH - view for graphics
 	 * r1 = major/minor opcode bytes
 	 */
 	if (!tz390.opt_guam){
 		abort_error(104,"GUI option not specified - aborting");
 	}
-	gui_major = pz390.reg_byte[pz390.r0+2];
-	gui_minor = pz390.reg_byte[pz390.r0+3];
-	gui_args = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	guam_major = pz390.reg_byte[pz390.r0+2];
+	guam_minor = pz390.reg_byte[pz390.r0+3];
+	guam_args = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	pz390.reg.putInt(pz390.r15,0);
-	switch (gui_major){
+	switch (guam_major){
 	case 1: // WINDOW
-		switch (gui_minor){
+		switch (guam_minor){
 		case 1: // TITLE,"text" 
-			gui_text = get_ascii_var_string(pz390.mem.getInt(gui_args),256);
-			gz390.gui_window_title(gui_text);
+			guam_text = get_ascii_var_string(pz390.mem.getInt(guam_args),256);
+			gz390.guam_window_title(guam_text);
 			break;
 		case 2: // LOC,x,y
-            gui_x = pz390.mem.getInt(gui_args);
-            gui_y = pz390.mem.getInt(gui_args+4);
-			gz390.gui_window_loc(gui_x,gui_y);
+            guam_x = pz390.mem.getInt(guam_args);
+            guam_y = pz390.mem.getInt(guam_args+4);
+			gz390.guam_window_loc(guam_x,guam_y);
 			break;
 		case 3: // SIZE,width,height
-			gui_width = pz390.mem.getInt(gui_args);
-			gui_height = pz390.mem.getInt(gui_args+4);
-			gz390.gui_window_size(gui_width,gui_height);
+			guam_width = pz390.mem.getInt(guam_args);
+			guam_height = pz390.mem.getInt(guam_args+4);
+			gz390.guam_window_size(guam_width,guam_height);
 			break;
 		case 4: // FONT,size
-			gui_font = pz390.mem.getInt(gui_args);
-			gz390.gui_window_font(gui_font);
+			guam_font = pz390.mem.getInt(guam_args);
+			gz390.guam_window_font(guam_font);
 			break;
 		case 5: // VIEW,mode,x,y,color
-			gui_view = pz390.mem.getInt(gui_args);
-			if (gui_view != 1){
-				gui_x = pz390.mem.getInt(pz390.mem.getInt(gui_args+4) & pz390.psw_amode);
-				gui_y = pz390.mem.getInt(pz390.mem.getInt(gui_args+8) & pz390.psw_amode);
-				gui_color = pz390.mem.getInt(pz390.mem.getInt(gui_args+12) & pz390.psw_amode);
+			guam_view = pz390.mem.getInt(guam_args);
+			if (guam_view != 1){
+				guam_x = pz390.mem.getInt(pz390.mem.getInt(guam_args+4) & pz390.psw_amode);
+				guam_y = pz390.mem.getInt(pz390.mem.getInt(guam_args+8) & pz390.psw_amode);
+				guam_color = pz390.mem.getInt(pz390.mem.getInt(guam_args+12) & pz390.psw_amode);
 			}
-			gz390.gui_window_view(gui_view,gui_x,gui_y,gui_color);
+			gz390.guam_window_view(guam_view,guam_x,guam_y,guam_color);
 			break;
 		case 6: // GETVIEW - return current view
 			if (tz390.opt_guam){
-				gui_view = gz390.gui_window_getview();
+				guam_view = gz390.guam_window_getview();
 			} else {
-				gui_view = 0;
+				guam_view = 0;
 			}
-			pz390.reg.putInt(pz390.r0,gui_view);
+			pz390.reg.putInt(pz390.r0,guam_view);
 			break;
 		default:
-			log_error(94,"undefined GUI Window command - " + gui_minor);
+			log_error(94,"undefined GUI Window command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 		break;
 	case 2: // SCREEN
-		switch (gui_minor){
+		switch (guam_minor){
 		case 1: // READ,buff,lbuff,WAIT/NOWAIT
-			gui_abuff  = pz390.mem.getInt(gui_args);
-			gui_lbuff = pz390.mem.getInt(gui_args+4);
-			gui_wait  = pz390.mem.getInt(gui_args+8) == 1;
-			pz390.mem.position(gui_abuff);
-			pz390.mem.put(gz390.gui_screen_read(gui_lbuff,gui_wait));
+			guam_abuff  = pz390.mem.getInt(guam_args);
+			guam_lbuff = pz390.mem.getInt(guam_args+4);
+			guam_wait  = pz390.mem.getInt(guam_args+8) == 1;
+			pz390.mem.position(guam_abuff);
+			pz390.mem.put(gz390.guam_screen_read(guam_lbuff,guam_wait));
 			break;
 		case 2: // WRITE,row,col,buff,lbuff,color
-			gui_row   = pz390.mem.getInt(gui_args);
-			gui_col   = pz390.mem.getInt(gui_args+4);
-			gui_abuff  = pz390.mem.getInt(gui_args+8);
-			gui_lbuff = pz390.mem.getInt(gui_args+12);
-			gui_color = pz390.mem.getInt(gui_args+16);
+			guam_row   = pz390.mem.getInt(guam_args);
+			guam_col   = pz390.mem.getInt(guam_args+4);
+			guam_abuff  = pz390.mem.getInt(guam_args+8);
+			guam_lbuff = pz390.mem.getInt(guam_args+12);
+			guam_color = pz390.mem.getInt(guam_args+16);
 			tput_buff.position(0);
-			tput_buff.put(pz390.mem_byte,gui_abuff,gui_abuff+gui_lbuff);
-			gz390.gui_screen_write(gui_row,gui_col,tput_buff,gui_lbuff,gui_color);
+			tput_buff.put(pz390.mem_byte,guam_abuff,guam_abuff+guam_lbuff);
+			gz390.guam_screen_write(guam_row,guam_col,tput_buff,guam_lbuff,guam_color);
 			break;
 		case 3: // FIELD,row,col,length
-			gui_row   = pz390.mem.getInt(gui_args);
-			gui_col   = pz390.mem.getInt(gui_args+4);
-			gui_lfield  = pz390.mem.getInt(gui_args+8);
-			gz390.gui_screen_field(gui_row,gui_col,gui_lfield);
+			guam_row   = pz390.mem.getInt(guam_args);
+			guam_col   = pz390.mem.getInt(guam_args+4);
+			guam_lfield  = pz390.mem.getInt(guam_args+8);
+			gz390.guam_screen_field(guam_row,guam_col,guam_lfield);
 			break;
 		case 4: // CURSOR,row,col,type
-			gui_row   = pz390.mem.getInt(gui_args);
-			gui_col   = pz390.mem.getInt(gui_args+4);
-			gui_cursor_type  = pz390.mem.getInt(gui_args+8);
-			gz390.gui_screen_cursor(gui_row,gui_col,gui_cursor_type);
+			guam_row   = pz390.mem.getInt(guam_args);
+			guam_col   = pz390.mem.getInt(guam_args+4);
+			guam_cursor_type  = pz390.mem.getInt(guam_args+8);
+			gz390.guam_screen_cursor(guam_row,guam_col,guam_cursor_type);
 			break;
 		default:
-			log_error(95,"undefined GUI Screen command - " + gui_minor);
+			log_error(95,"undefined GUI Screen command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 		break;
 	case 3: // GRAPH
-		switch (gui_minor){
+		switch (guam_minor){
 		case 1: // POINT,x,y,color
-			gui_x     = pz390.mem.getInt(gui_args);
-			gui_y     = pz390.mem.getInt(gui_args+4);
-			gui_color = pz390.mem.getInt(gui_args+8);
-			gz390.gui_graph_point(gui_x,gui_y,gui_color);
+			guam_x     = pz390.mem.getInt(guam_args);
+			guam_y     = pz390.mem.getInt(guam_args+4);
+			guam_color = pz390.mem.getInt(guam_args+8);
+			gz390.guam_graph_point(guam_x,guam_y,guam_color);
 			break;
 		case 2: // LINE,x1,y1,x2,y2,color
-			gui_x     = pz390.mem.getInt(gui_args);
-			gui_y     = pz390.mem.getInt(gui_args+4);
-			gui_x2     = pz390.mem.getInt(gui_args+8);
-			gui_y2     = pz390.mem.getInt(gui_args+12);
-			gui_color = pz390.mem.getInt(gui_args+16);
-			gz390.gui_graph_line(gui_x,gui_y,gui_x2,gui_x2,gui_color);
+			guam_x     = pz390.mem.getInt(guam_args);
+			guam_y     = pz390.mem.getInt(guam_args+4);
+			guam_x2     = pz390.mem.getInt(guam_args+8);
+			guam_y2     = pz390.mem.getInt(guam_args+12);
+			guam_color = pz390.mem.getInt(guam_args+16);
+			gz390.guam_graph_line(guam_x,guam_y,guam_x2,guam_x2,guam_color);
 			break;
 		case 3: // FILL,x1,y1,x2,y2,color
-			gui_x     = pz390.mem.getInt(gui_args);
-			gui_y     = pz390.mem.getInt(gui_args+4);
-			gui_x2     = pz390.mem.getInt(gui_args+8);
-			gui_y2     = pz390.mem.getInt(gui_args+12);
-			gui_color = pz390.mem.getInt(gui_args+16);
-			gz390.gui_graph_fill(gui_x,gui_y,gui_x2,gui_y2,gui_color);
+			guam_x     = pz390.mem.getInt(guam_args);
+			guam_y     = pz390.mem.getInt(guam_args+4);
+			guam_x2     = pz390.mem.getInt(guam_args+8);
+			guam_y2     = pz390.mem.getInt(guam_args+12);
+			guam_color = pz390.mem.getInt(guam_args+16);
+			gz390.guam_graph_fill(guam_x,guam_y,guam_x2,guam_y2,guam_color);
 			break;
 		case 4: // TEXT,x,y,buff,lbuff,color
-			gui_row   = pz390.mem.getInt(gui_args);
-			gui_col   = pz390.mem.getInt(gui_args+4);
-			gui_abuff = pz390.mem.getInt(gui_args+8);
-			gui_lbuff = pz390.mem.getInt(gui_args+12);
-			gui_color = pz390.mem.getInt(gui_args+16);
+			guam_row   = pz390.mem.getInt(guam_args);
+			guam_col   = pz390.mem.getInt(guam_args+4);
+			guam_abuff = pz390.mem.getInt(guam_args+8);
+			guam_lbuff = pz390.mem.getInt(guam_args+12);
+			guam_color = pz390.mem.getInt(guam_args+16);
 			tput_buff.position(0);
-			tput_buff.put(pz390.mem_byte,gui_abuff,gui_lbuff);
-			gz390.gui_screen_write(gui_row,gui_col,tput_buff,gui_lbuff,gui_color);
+			tput_buff.put(pz390.mem_byte,guam_abuff,guam_lbuff);
+			gz390.guam_screen_write(guam_row,guam_col,tput_buff,guam_lbuff,guam_color);
 			break;
 		default:
-			log_error(96,"undefined GUI Graph command - " + gui_minor);
+			log_error(96,"undefined GUI Graph command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 		break;
 	case 4: // KEYBOARD
-		switch (gui_minor){
+		switch (guam_minor){
 		case 1: // READ,mod,char,WAIT/NOWAIT
-			gui_key_amod = pz390.mem.getInt(gui_args);
-			gui_key_achar = pz390.mem.getInt(gui_args+4);
-			gui_wait = pz390.mem.getInt(gui_args+8) == 1;
-			gui_key = gz390.gui_keyboard_read(gui_wait);
-			if (gui_key != -1){
-				pz390.mem.putInt(gui_key_amod,gui_key >> 8);
-				pz390.mem.putInt(gui_key_achar,gui_key & 0xff);
+			guam_key_amod = pz390.mem.getInt(guam_args);
+			guam_key_achar = pz390.mem.getInt(guam_args+4);
+			guam_wait = pz390.mem.getInt(guam_args+8) == 1;
+			guam_key = gz390.guam_keyboard_read(guam_wait);
+			if (guam_key != -1){
+				pz390.mem.putInt(guam_key_amod,guam_key >> 8);
+				pz390.mem.putInt(guam_key_achar,guam_key & 0xff);
 			} else {
 				pz390.reg.putInt(pz390.r15,4);
 			}
 			break;
 		default:
-			log_error(97,"undefined GUI Keyboard command - " + gui_minor);
+			log_error(97,"undefined GUI Keyboard command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 		break;
 	case 5: // MOUSE
-		switch (gui_minor){
+		switch (guam_minor){
 		case 1: // READ,x,y,left,right
-			gui_x     = pz390.mem.getInt(gui_args);
-			gui_y     = pz390.mem.getInt(gui_args+4);
-			gui_left  = pz390.mem.getInt(gui_args+8);
-			gui_right = pz390.mem.getInt(gui_args+12);
-			gui_mouse = gz390.gui_mouse_read();
-			pz390.mem.putInt(gui_x,gui_mouse[0]);
-			pz390.mem.putInt(gui_x,gui_mouse[1]);
-			pz390.mem.putInt(gui_left,gui_mouse[2]);
-			pz390.mem.putInt(gui_right,gui_mouse[3]);
+			guam_x     = pz390.mem.getInt(guam_args);
+			guam_y     = pz390.mem.getInt(guam_args+4);
+			guam_left  = pz390.mem.getInt(guam_args+8);
+			guam_right = pz390.mem.getInt(guam_args+12);
+			guam_mouse = gz390.guam_mouse_read();
+			pz390.mem.putInt(guam_x,guam_mouse[0]);
+			pz390.mem.putInt(guam_x,guam_mouse[1]);
+			pz390.mem.putInt(guam_left,guam_mouse[2]);
+			pz390.mem.putInt(guam_right,guam_mouse[3]);
 			break;
 		default:
-			log_error(98,"undefined GUI Mouse command - " + gui_minor);
+			log_error(98,"undefined GUI Mouse command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 	case 6: // SOUND
-		switch (gui_minor){
+		switch (guam_minor){
 		case 1: // PLAY,"wav_file"
-			gui_abuff = pz390.mem.getInt(gui_args);
-			gui_text = get_ascii_var_string(gui_abuff,max_lsn_spec);
-			gz390.gui_sound_play(gui_text);
+			guam_abuff = pz390.mem.getInt(guam_args);
+			guam_text = get_ascii_var_string(guam_abuff,max_lsn_spec);
+			gz390.guam_sound_play(guam_text);
 			break;
 		default:
-			log_error(99,"undefined GUI Sound command - " + gui_minor);
+			log_error(99,"undefined GUI Sound command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 		if (tz390.z390_abort){
@@ -3171,7 +3440,7 @@ private void wto_msg(String wto_pfx,int msg_addr,int msg_len){
 	}
 	put_log(wto_pfx + wto_msg);
 	if (tz390.opt_guam){
-		gz390.gui_put_log(wto_msg);
+		gz390.guam_put_log(wto_msg);
 		if (tz390.z390_abort){
 			abort_error(62,"guam gui put_log abort");
 		}
@@ -3180,8 +3449,10 @@ private void wto_msg(String wto_pfx,int msg_addr,int msg_len){
 }
 private void svc_wait(){
 	/*
-	 * check for ecb posting and return when
-	 * posted else repeat check after short sleep.
+	 * wait for ecb posting or 
+     * stimer exit request.  Retry the
+     * wait after stimer exit assuming r1
+     * restored to wait ecb parm.
 	 * 
 	 * Notes:
 	 *   1.  WTOR ecb's are posted by 
@@ -3189,19 +3460,88 @@ private void svc_wait(){
 	 *       reply is fetched and stored.
 	 *   2.  Don't wait on a user defined ecb
 	 *       unless another process will post it
-	 *       otherwise it will be permanent wait.     
-	 * sleep for wait_interval and repeat
-	 * until posting or abort.  This assumes
-	 * the ECB being waited on will be posted
-	 * by check_wtor_reply or other 
+	 *       or an stimer exit will post it.
+	 */
+	wait_count = pz390.reg.getInt(pz390.r0);
+	wait_addr    = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	// backup for stimer exit retry
+	pz390.psw_loc = pz390.psw_loc - 2;
+	tz390.systerm_ins--;
+    while (!check_wait_ecbs()  // RPI 280
+    	&& !stimer_exit_request){
+		sleep_now(tz390.monitor_wait);
+    }
+	if (!stimer_exit_request){
+		pz390.psw_loc = pz390.psw_loc + 2;
+		tz390.systerm_ins++;
+		pz390.reg.putInt(pz390.r15,0);
+	    if (wait_count > 0){
+	    	reset_wait_list();
+	    }
+	}
+}
+private boolean check_wait_ecbs(){
+	/*
+	 * check wait ecbs and return true if 
+	 * required # of ecbs have been posted
+	 */
+	int ecb_code  = 0;
+	if (wait_count == 0){
+		ecb_code = pz390.mem.getInt(wait_addr);
+		if ((ecb_code & ecb_posted) == 0){
+			// if not posted set waiting bit
+			pz390.mem.putInt(wait_addr,ecb_code | ecb_waiting);
+		    return false;
+		} else {
+			return true;
+		}
+	}
+	int ecb_count     = wait_count;
+	int ecb_list_addr = wait_addr;
+	int ecb_addr = pz390.mem.getInt(ecb_list_addr);
+	while (ecb_count > 0){
+		ecb_code = pz390.mem.getInt(ecb_addr & 0x7fffffff);
+		if ((ecb_code & ecb_posted) == 0){
+			// if not posted set waiting bit
+			pz390.mem.putInt(ecb_addr & 0x7fffffff,ecb_code | ecb_waiting);
+		} else {
+			ecb_count--;
+			if (ecb_count == 0){
+				return true;
+			}
+		}
+		if (ecb_addr < 0){
+			return false;
+		}
+		ecb_list_addr = ecb_list_addr + 4;
+		ecb_addr = pz390.mem.getInt(ecb_list_addr);
+	}
+    return true;
+}
+private void reset_wait_list(){
+	/*
+	 * reset wait bit in ecblist
+	 */
+	int ecb_list_addr = wait_addr;
+	int ecb_addr = pz390.mem.getInt(ecb_list_addr);
+	while (ecb_addr != 0){
+		// turn off ecb waiting bit
+		int ecb_code = pz390.mem.getInt(ecb_addr & 0x7fffffff);
+		pz390.mem.putInt(ecb_addr & 0x7fffffff,ecb_code & 0x7fffffff);
+		if (ecb_addr < 0){
+			return;
+		}
+		ecb_list_addr = ecb_list_addr + 4;
+		ecb_addr = pz390.mem.getInt(ecb_list_addr);
+	}
+}
+private void svc_post(){  // RPI 279
+	/*
+	 * post ecb complete
 	 */
 	int ecb_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
-	int ecb_code = pz390.mem.getInt(ecb_addr);
-	while ((ecb_code & ecb_waiting) == ecb_waiting){
-		sleep_now(tz390.monitor_wait);
-		ecb_code = pz390.mem.getInt(ecb_addr);
-	}
-	pz390.reg.putInt(pz390.r15,0);
+	int ecb_code = pz390.reg.getInt(pz390.r0) & pz390.max_pos_int;
+	pz390.mem.putInt(ecb_addr,(ecb_code | ecb_posted));
 }
 public void sleep_now(long mills){
 	/*
@@ -3243,17 +3583,66 @@ private void svc_wtor(){
 private void svc_espie(){
 	/*
 	 * set/reset program interruption exit
+	 *  1.  if r0=0 cancel last espie added
+	 *      else add new espie exit  RPI 305
+	 *  2.  if r0 negative replace exit else add RPI 305
+	 *  3.  if r1 not zero, save parm address  RPI 305
 	 */
-	pz390.espie_pie  = pz390.reg.getInt(pz390.r0); // save pz390.psw_pic bit mask
-	pz390.espie_exit = pz390.reg.getInt(pz390.r1) & pz390.psw_amode; // save exit psw addr
-	pz390.reg.putInt(pz390.r15,0);
+	int espie_pie   = pz390.reg.getInt(pz390.r0); // save pz390.psw_pic bit mask
+	int espie_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode; // save exit psw addr
+	int espie_param = pz390.reg.getInt(pz390.r15) & pz390.psw_amode; // save exit psw addr
+	if (espie_addr == 0){
+		if (pz390.tot_espie > 0){
+			pz390.tot_espie--;
+		}
+		pz390.reg.putInt(pz390.r15,0);
+	} else if (pz390.tot_espie < pz390.max_espie){
+		if (espie_addr < 0){
+			if (pz390.tot_espie == 0){
+				pz390.tot_espie++;
+			}
+			espie_addr = espie_addr & 0x7fffffff;
+		} else {
+			pz390.tot_espie++;
+		}
+		pz390.espie_pie[pz390.tot_espie-1]  = espie_pie;
+		pz390.espie_exit[pz390.tot_espie-1] = espie_addr;
+		pz390.espie_parm[pz390.tot_espie-1] = espie_param;
+		pz390.reg.putInt(pz390.r15,0);
+	} else {
+		pz390.set_psw_check(pz390.psw_pic_error);
+	}
 }
 private void svc_estae(){
 	/*
 	 * set/reset task abend exit
+	 *  1.  if r0=0 cancel last estae added
+	 *      else add new estae exit  RPI 244
+	 *  2.  if r0 negative replace exit else add RPI 244
+	 *  3.  if r1 not zero, save parm address  RPI 244
 	 */
-	pz390.estae_exit = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
-	pz390.reg.putInt(pz390.r15,0);
+	int estae_addr = pz390.reg.getInt(pz390.r0) & pz390.psw_amode;
+	int estae_param = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	if (estae_addr == 0){
+		if (pz390.tot_estae > 0){
+			pz390.tot_estae--;
+		}
+		pz390.reg.putInt(pz390.r15,0);
+	} else if (pz390.tot_estae < pz390.max_estae){
+		if (estae_addr < 0){
+			if (pz390.tot_estae == 0){
+				pz390.tot_estae++;
+			}
+			estae_addr = estae_addr & 0x7fffffff;
+		} else {
+			pz390.tot_estae++;
+		}
+		pz390.estae_exit[pz390.tot_estae-1] = estae_addr;
+		pz390.estae_parm[pz390.tot_estae-1] = estae_param;
+		pz390.reg.putInt(pz390.r15,0);
+	} else {
+		pz390.set_psw_check(pz390.psw_pic_error);
+	}
 }
 private void svc_xlate(){
 	/*
@@ -3305,7 +3694,7 @@ public void process_test_cmd(){
     if (test_break_mem_mode){
        check_test_break_mem();
     }
-    if (test_break_op_mode && test_break_op_ins < pz390.tot_ins){
+    if (test_break_op_mode && test_break_op_ins < tz390.systerm_ins){
     	check_test_break_op();
     }
     if (pz390.test_trace_count > 0){
@@ -3351,6 +3740,7 @@ private void get_test_cmd(){
 				&& test_loop_count == 0){ // RPI 98
 				put_log("test enter command or h for help");
 			}
+			tz390.systerm_io++;
 			test_cmd = test_cmd_file.readLine();
 			if (tz390.test_ddname != null && test_cmd == null){
 				test_cmd = "Q";
@@ -3724,7 +4114,9 @@ private void exec_test_cmd(){
         tz390.opt_trace = false;
         tz390.opt_test  = false;     //RPI186
         pz390.test_trace_count = -1; //RPI186
-	    break;
+	    ez390_errors = 0;  // RPI 243
+	    ez390_rc = 0;
+        break;
 	default:
 		test_error("undefined test command - " + test_opcode);
 	}
@@ -3834,7 +4226,7 @@ private void set_test_break_op(){
 	int index = tz390.find_key_index("O:" + test_token.toUpperCase());
 	if (index != -1){
 		test_break_op_mode = true;
-		test_break_op_ins  = pz390.tot_ins;
+		test_break_op_ins  = tz390.systerm_ins;
 		test_break_op_cmd  = test_cmd;
 		test_break_op1 = Integer.valueOf(tz390.op_code[index].substring(0,2),16).byteValue() & 0xff;
 		test_break_op2_index = pz390.opcode2_offset[test_break_op1];

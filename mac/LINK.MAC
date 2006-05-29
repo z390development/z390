@@ -14,6 +14,7 @@
 .* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 03/28/06 RPI266 CORRECT MISSING .DSNERR LABEL (WAS .DSHERR)
+.* 04/11/06 RPI244 SUPPORT DE=, UNSUPPORTED ERRET=                         
 .*********************************************************************
 .* LOAD AND EXEC PGM VIA SVC 6
 .*   R0  = ADDR PGM NAME (8 BYTES SPACE FILLED)
@@ -26,29 +27,51 @@
 .*   2.  RETURN CODE SET BY CALLED PGM IF SUCCESSFUL
 .*   3.  ABEND WITH S806
 .*********************************************************************
-&N       LINK  &EP=,          PGMNAME 1-8 CHAR                         X
-               &EPLOC=,       RX LABEL OR (REG) POINTER TO PGM FIELD   X
-               &PARAM=,       PARAMETER LIST                           X
-               &VL=1,         SET HIGH BIT IN LAST PARM ADDR           X
+&N       LINK  &DCB=,         IGNORED                                  X
                &DDNAME=,      LOAD FROM DIR OR FILE DEFINED IN ENV.VAR X
-               &DSNAME=       LOAD FROM RX OR (REG) FILE SPEC          
-         AIF   (N'&SYSLIST LE 0).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
-.NPOK    ANOP
+               &DE=,          BLDL DIRECTORY ENTRY                     X
+               &DSNAME=,      LOAD FROM RX OR (REG) FILE SPEC          X
+               &EP=,          PGMNAME 1-8 CHAR                         X
+               &EPLOC=,       RX LABEL OR (REG) POINTER TO PGM FIELD   X
+               &ERRET=,       ERROR EXIT NOT SUPPORTED                 X
+               &ID=,          IGNORED                                  X
+               &LSEARCH=,     IGNORED                                  X
+               &MF=,          NOT SUPPORTED                            X
+               &PARAM=,       PARAMETER LIST                           X
+               &VL=1          SET HIGH BIT IN LAST PARM ADDR           
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (&MF NE '').ERR2
+         AIF   (N'&SYSLIST LE 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+         MEXIT
+.NPOK    ANOP
+         AIF    (&ERRET NE '').ERR1
          AIF    (&PARAM EQ '').ENDPARM
          LA     1,=A&PARAM
          AIF    (&VL NE 1).ENDPARM
 &OFF     SETA   N'&PARAM*4-4
          OI     &OFF.(1),X'80'
 .ENDPARM ANOP
+         AIF   (&DE    NE '').DE   
          AIF   (&EP NE '').EP
          AIF   (&EPLOC NE '').EPLOC
          SR    0,0
          AIF   (&DDNAME NE '' OR &DSNAME NE '').CHKDSN
          MNOTE 12,'LINK REQUIRES EP, EPLOC, DDNAME, OR DSNAME'
+         MEXIT
+.DE      ANOP
+         AIF   ('&DE'(1,1) EQ '(').DEREG
+         LA    0,&DE
+         AGO   .DEADD
+.DEREG ANOP
+         AIF   (&DE(1) EQ '0' OR &DE(1) EQ 'R0').DEADD
+         LR    0,&DE(1)
+.DEADD   ANOP
+         AHI   0,2
+         AIF   (&EP EQ '' AND &EPLOC EQ '').CHKDSN
+         MNOTE 12,'LINK DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
          MEXIT
 .EP      ANOP
          LA    0,=CL8'&EP'
@@ -68,7 +91,8 @@
 .CHKDSN  ANOP
          AIF   (&DSNAME EQ '').CHKDD
          AIF   (&DDNAME EQ '').DSNOK
-         MNOTE 12,'DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
+         MNOTE 12,'LINK DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
+         MEXIT
 .DSNOK   ANOP
          AIF   ('&DSNAME'(1,1) EQ '(').DSNREG
          LA    15,&DSNAME
@@ -101,4 +125,9 @@
          SR    15,15 USE DEFAULT SYS390 SEARCH
 .SVC     ANOP
          SVC    6 LINK R0=A(PGM) R1-PARMS R15=DDNAME/DSNAME ADDR OR 0
+         MEXIT
+.ERR1    MNOTE 12,'LINK ERRET= UNSUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'LINK MF= UNSUPPORTED'
+         MEXIT
          MEND

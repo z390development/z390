@@ -15,7 +15,7 @@ public  class  lz390 {
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2005 Automated Software Tools Corporation
+    Copyright 2006 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -60,6 +60,9 @@ public  class  lz390 {
     * 02/21/06 RPI 208 use tz390.z390_abort to term
     * 03/16/06 RPI 240 correct rld loc for mult csect rlds
     * 04/05/06 RPI 270 support RLD length of 8
+    * 04/12/06 RPI 244 correct to use first dir on SYS390 for output
+    * 04/28/06 RPI 301 validate obj esd's
+    * 05/09/06 RPI 312 add pgm name to return code msg
     ********************************************************
     * Global variables
     *****************************************************/
@@ -72,7 +75,8 @@ public  class  lz390 {
     long tot_sec = 0;
     int tot_obj_bytes = 0;
     int tot_find_gbl_esd = 0;
-    static boolean load_esds_only = true;
+    boolean load_esds_only = true;
+    int max_obj_esd = 0;
     String obj_file_name = null;
     boolean obj_file_bin = false;
     byte    obj_bin_id   = 0x02;
@@ -88,13 +92,6 @@ public  class  lz390 {
     boolean log_tod = true; 
     JTextArea z390_log_text = null;
     /*
-     * static limits
-     */
-    static int max_gbl_esd = 10000;
-    static int max_obj_files = 1000;
-    static int max_obj_esd = 1000;
-    static int max_rld = 100000;
-    /*
      * global ESD tables
      */
     long    tod_time_limit = 0;
@@ -106,19 +103,19 @@ public  class  lz390 {
     int tot_gbl_esd = 0;
     int cur_gbl_esd = 0;
     int cur_gbl_ext = 0;
-    String[]  gbl_esd_name = new String[max_gbl_esd];
-    int[]     gbl_esd_loc  = (int[])Array.newInstance(int.class,max_gbl_esd);
-    byte[]    gbl_esd_type = (byte[])Array.newInstance(byte.class,max_gbl_esd);
-    static byte gbl_esd_ext = 0; // undefined ext
-    static byte gbl_esd_ent = 1; // found cst/ent
-    static byte gbl_esd_wxt = 2; // undefined wxt
+    String[]  gbl_esd_name = null;
+    int[]     gbl_esd_loc  = null;
+    byte[]    gbl_esd_type = null;
+    byte gbl_esd_ext = 0; // undefined ext
+    byte gbl_esd_ent = 1; // found cst/ent
+    byte gbl_esd_wxt = 2; // undefined wxt
     int loc_ctr = 0;
     /*
      * object files loaded
      */
     int tot_obj_files = 0;
     int cur_obj_file = 0;
-    String[]  obj_file_names = new String[max_obj_files];
+    String[]  obj_file_names = null;
     /*
      * binary object file data
      */
@@ -130,15 +127,15 @@ public  class  lz390 {
     boolean ext_found = false;
     int tot_obj_esd = 0;
     int cur_obj_esd = 0;
-    int[]     obj_esd      = (int[])Array.newInstance(int.class,max_obj_esd);
-    String[]  obj_esd_name = new String[max_obj_esd];
-    int[]     obj_esd_loc  = (int[])Array.newInstance(int.class,max_obj_esd);
-    int[]     obj_esd_len  = (int[])Array.newInstance(int.class,max_obj_esd);
-    String[]  obj_esd_type = new String[max_obj_esd];
+    int[]     obj_esd      = null;
+    String[]  obj_esd_name = null;
+    int[]     obj_esd_loc  = null;
+    int[]     obj_esd_len  = null;
+    String[]  obj_esd_type = null;
   /*
    * current obj esd to gbl_esd_loc index table
    */
-    int[]    obj_gbl_esd = (int[])Array.newInstance(int.class,max_obj_esd);
+    int[]    obj_gbl_esd = null;
   
   /*
    * load module header, code, and rld variables
@@ -174,8 +171,8 @@ public  class  lz390 {
    * z390 load module rld table
    */  
     int tot_rld = 0;
-    int[]     rld_loc = (int[])Array.newInstance(int.class,max_rld);
-    byte[]    rld_len = (byte[])Array.newInstance(byte.class,max_rld);
+    int[]     rld_loc = null;
+    byte[]    rld_len = null;
   /*
    * end of global lz390class data and start of procs
    */
@@ -231,43 +228,69 @@ private void init_lz390(String[] args, JTextArea log_text){
 	    tz390 = new tz390();
 	    tz390.init_tables();
         tz390.init_options(args,".OBJ");
-		open_files();
+		tz390.open_systerm("LZ390");
+        open_files();
         put_copyright();
+        init_arrays();
         tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
+}
+private void init_arrays(){
+	/*
+	 * initialize arrays using opt_max??? limits
+	 */
+	/*
+	 * opt_maxesd - external symbol definitions
+	 */
+    obj_esd      = (int[])Array.newInstance(int.class,tz390.opt_maxesd);
+    obj_esd_name = new String[tz390.opt_maxesd];
+    obj_esd_loc  = (int[])Array.newInstance(int.class,tz390.opt_maxesd);
+    obj_esd_len  = (int[])Array.newInstance(int.class,tz390.opt_maxesd);
+    obj_esd_type = new String[tz390.opt_maxesd];
+    obj_gbl_esd = (int[])Array.newInstance(int.class,tz390.opt_maxesd);
+    gbl_esd_name = new String[tz390.opt_maxesd];
+    gbl_esd_loc  = (int[])Array.newInstance(int.class,tz390.opt_maxesd);
+    gbl_esd_type = (byte[])Array.newInstance(byte.class,tz390.opt_maxesd);
+    /*
+	 * opt_maxfile - totoal object files
+	 */
+    obj_file_names = new String[tz390.opt_maxfile];
+    /*
+	 * opt_maxrld - relocation definitions
+	 */
+    rld_loc = (int[])Array.newInstance(int.class,tz390.opt_maxrld);
+    rld_len = (byte[])Array.newInstance(byte.class,tz390.opt_maxrld);
 }
 private void exit_lz390(){
 	/*
 	 * display total errors
 	 * close files and exit
 	 */
-	  if  (lz390_rc == 0 && lz390_errors > 0){
+	  if  (lz390_errors > 0 || tz390.z390_abort){
     	  lz390_rc = 16;
       }
   	  put_stats();
       close_files();
-	  if    (tz390.z390_abort){
-	    	System.exit(lz390_rc);
-	  }
+   	  System.exit(lz390_rc);
 }
 private void put_stats(){
 	/*
 	 * display statistics as comments at end of bal
 	 */
 	if (tz390.opt_stats){
-	   put_log("Stats total obj files = " + tot_obj_files);
-	   put_log("Stats total esds      = " + tot_gbl_esd);
-	   put_log("Stats total csects    = " + tot_csect);
-	   put_log("Stats total entries   = " + tot_entry);
-	   put_log("Stats missing wxtrn's = " + tot_missing_wxtrn);
-	   put_log("Stats Keys            = " + tz390.tot_key);
-	   put_log("Stats Key searches    = " + tz390.tot_key_search);
+	   put_log("Stats total obj files       = " + tot_obj_files);
+	   put_log("Stats total esds            = " + tot_gbl_esd);
+	   put_log("Stats total csects          = " + tot_csect);
+	   put_log("Stats total entries         = " + tot_entry);
+	   put_log("Stats missing wxtrn's       = " + tot_missing_wxtrn);
+	   put_log("Stats Keys                  = " + tz390.tot_key);
+	   put_log("Stats Key searches          = " + tz390.tot_key_search);
 	   if (tz390.tot_key_search > 0){
 	       tz390.avg_key_comp = tz390.tot_key_comp/tz390.tot_key_search;
 	   }
-	   put_log("Stats Key avg comps   = " + tz390.avg_key_comp);
-	   put_log("Stats Key max comps   = " + tz390.max_key_comp);
-	   put_log("Stats total obj bytes = " + tot_obj_bytes);
-	   put_log("Stats total obj rlds  = " + tot_rld);
+	   put_log("Stats Key avg comps         = " + tz390.avg_key_comp);
+	   put_log("Stats Key max comps         = " + tz390.max_key_comp);
+	   put_log("Stats total obj bytes       = " + tot_obj_bytes);
+	   put_log("Stats total obj rlds        = " + tot_rld);
 	   if (tz390.opt_timing){
 	      cur_date = new Date();
 	      tod_end = cur_date.getTime();
@@ -275,10 +298,13 @@ private void put_stats(){
 	      put_log("Stats total seconds         = " + tot_sec);
 	   }
 	}
-	put_log("LZ390I total errors          = " + lz390_errors);
-	put_log("LZ390I return code           = " + lz390_rc);
+	put_log("LZ390I total errors         = " + lz390_errors);
+	put_log("LZ390I return code(" + tz390.get_padded_name() + ")= " + lz390_rc); // RPI 312
 }
 private void close_files(){
+	  /*
+	   * close obj, lst, err
+	   */
 	  if (obj_file != null){
 	  	  try {
 	  	  	  obj_file.close();
@@ -295,6 +321,7 @@ private void close_files(){
 		  	  }
 		  }
 	  }
+	  tz390.close_systerm(lz390_rc);
 }
 private void log_error(int error,String msg){
 	/*
@@ -302,8 +329,10 @@ private void log_error(int error,String msg){
 	 * inc error total
 	 * 1.  supress if not gen_obj and not trace
 	 */
-      put_log("LZ390E error " + error + " " + msg);
-	  lz390_errors++;
+	  String error_msg = "LZ390E error " + error + " " + msg;
+      put_log(error_msg);
+	  tz390.put_systerm(error_msg);
+      lz390_errors++;
 	  if (tz390.max_errors != 0 && lz390_errors > tz390.max_errors){
 	  	 abort_error(5,"max errors exceeded");	 
 	  }
@@ -313,13 +342,18 @@ private void abort_error(int error,String msg){
 	 * issue error msg to log with prefix and
 	 * inc error total
 	 */
+	  String error_msg = null;
 	  lz390_errors++;
 	  if (tz390.z390_abort){
-		 System.out.println("lz390 aborting due to recursive abort for " + msg);
-	  	 System.exit(16);
+		 error_msg = "lz390 aborting due to recursive abort for " + msg;
+		 System.out.println(error_msg);
+	  	 tz390.close_systerm(16);
+		 System.exit(16);
 	  }
 	  tz390.z390_abort = true;
-	  put_log("LZ390E error " + error + " " + msg);
+	  error_msg = "LZ390E error " + error + " " + msg;
+	  put_log(error_msg);
+	  tz390.put_systerm(error_msg);
       exit_lz390();
 }
 private void put_copyright(){
@@ -336,7 +370,7 @@ private void put_copyright(){
 	   	    put_log("LZ390I " + tz390.version);
 	   	}
 	   	if  (z390_log_text == null){
-	   	    put_log("Copyright 2005 Automated Software Tools Corporation");
+	   	    put_log("Copyright 2006 Automated Software Tools Corporation");
 	   	    put_log("z390 is licensed under GNU General Public License");
 	   	}
 	   	put_log("LZ390I program = " + tz390.dir_obj + tz390.pgm_name + tz390.pgm_type);
@@ -362,6 +396,7 @@ private void put_copyright(){
 	    */
 	   	   if (tz390.opt_list || tz390.opt_tracel){
 	   	      try {
+	   	    	  tz390.systerm_io++;
 	   	          lst_file_buff.write(msg + "\r\n");
 	   	          if (lst_file.length() > tz390.max_file_size){
 	   	        	  abort_error(34,"maximum lst file size exceeded");
@@ -429,8 +464,9 @@ private boolean load_obj_file(boolean esds_only){
 	if (esds_only && !obj_line.substring(0,4).equals(".ESD")){
 		obj_eod = true;
 	}
+	int max_obj_esd = 0;
 	while (!obj_eod
-			&& tot_obj_esd < max_obj_esd){
+			&& tot_obj_esd < tz390.opt_maxesd){
 		if (tz390.opt_tracel){
 			put_log("  LOADING " + obj_line);
 		}
@@ -439,6 +475,9 @@ private boolean load_obj_file(boolean esds_only){
 		} else if (obj_line.substring(0,4).equals(".ESD")){
 			tot_obj_esd++;
 			obj_esd[tot_obj_esd] = Integer.valueOf(obj_line.substring(9,13),16).intValue();
+			if (obj_esd[tot_obj_esd] > max_obj_esd){
+				max_obj_esd = obj_esd[tot_obj_esd];
+			}
 			obj_esd_name[tot_obj_esd] = obj_line.substring(54);
 			obj_esd_loc[tot_obj_esd]  = Integer.valueOf(obj_line.substring(18,26),16).intValue();
 			obj_esd_len[tot_obj_esd]  = Integer.valueOf(obj_line.substring(31,39),16).intValue();
@@ -453,6 +492,10 @@ private boolean load_obj_file(boolean esds_only){
 			}
 		} else if (obj_line.substring(0,4).equals(".TXT")){
 			int    obj_text_esd = Integer.valueOf(obj_line.substring(9,13),16).intValue();
+			if (obj_text_esd < 1 || obj_text_esd > max_obj_esd){
+				abort_error(29,"invalid object text esd - " + obj_text_esd);
+				return false;  // RPI 301
+			}
 			int    obj_text_loc = Integer.valueOf(obj_line.substring(18,26),16).intValue();
 			int    obj_text_len = Integer.valueOf(obj_line.substring(31,33),16).intValue();
 			String obj_text = obj_line.substring(34,34 + 2 * obj_text_len);
@@ -470,13 +513,17 @@ private boolean load_obj_file(boolean esds_only){
 			tot_obj_bytes = tot_obj_bytes + obj_text_len;
 		} else if (obj_line.substring(0,4).equals(".RLD")){
 			int  obj_rld_esd = Integer.valueOf(obj_line.substring(9,13),16).intValue();
+			if (obj_rld_esd < 1 || obj_rld_esd > max_obj_esd){
+				abort_error(30,"invalid rld esd - " + obj_rld_esd);
+				return false;  // RPI 301
+			}
 			int  obj_rld_loc = Integer.valueOf(obj_line.substring(18,26),16).intValue();
 			byte obj_rld_len = (byte) Integer.valueOf(obj_line.substring(31,32),16).intValue();
 			char obj_rld_sgn = obj_line.charAt(38);
 			int  obj_rld_xesd = Integer.valueOf(obj_line.substring(45,49),16).intValue();
 			int rld_off = 0;
 			int rld_fld = 0;
-			if (tot_rld < max_rld){
+			if (tot_rld < tz390.opt_maxrld){
 				rld_loc[tot_rld] = obj_rld_loc  + gbl_esd_loc[obj_gbl_esd[obj_rld_esd]]; //RPI 240
 				if (obj_rld_sgn == '+'){
 					rld_len[tot_rld] = obj_rld_len;
@@ -536,7 +583,7 @@ private boolean load_obj_file(boolean esds_only){
 	}
 	try {
 	    obj_file.close();
-	    if (tot_obj_files < max_obj_files){
+	    if (tot_obj_files < tz390.opt_maxfile){
 	    	if (esds_only){
 	    	   obj_file_names[tot_obj_files] = obj_file_name;
 	    	   tot_obj_files++;
@@ -557,12 +604,14 @@ private void get_obj_line(){
 	 */
 	try {
 		if (obj_file_bin){
+			tz390.systerm_io++;
 			if (obj_file.read(bin_byte,0,80) == 80){
 				obj_line = cvt_obj_bin_to_hex();
 			} else {
 			    obj_line = null;
 			}
 		} else {
+			tz390.systerm_io++;
 			obj_line = obj_file.readLine();
 		}
 	} catch (IOException e){
@@ -667,7 +716,7 @@ private void add_gbl_esds(){
 	 */
 	int obj_index1 = 1;
 	while (obj_index1 <= tot_obj_esd){
-		if (tot_gbl_esd >= max_gbl_esd){
+		if (tot_gbl_esd >= tz390.opt_maxesd){
 			abort_error(15,"maximum global ESDS exceeded");
 		}
 		if (obj_esd_type[obj_index1].equals("CST")){
@@ -801,7 +850,8 @@ private boolean open_obj_file(String file){
 	 */
 	try {
 		obj_file = new RandomAccessFile(file,"r");
-    	int test_byte = obj_file.read();
+		tz390.systerm_io++;
+		int test_byte = obj_file.read();
     	if (test_byte == obj_bin_id){
     		obj_file_bin = true;
     	} else if (test_byte == '.') {
@@ -842,9 +892,22 @@ private void gen_load_module(){
     	abort_error(32,"maximum 390 file size exceeded");
     }
 	try {
-        z390_file = new RandomAccessFile(tz390.dir_390 + tz390.pgm_name + ".390","rw");
+		String output_390_dir = tz390.dir_390;
+		int index = output_390_dir.indexOf('+');
+		if (index == 0){
+			index = output_390_dir.indexOf(';');
+		}
+		if (index > 0){
+			if (output_390_dir.substring(index,index+1).equals(File.separator)){
+				output_390_dir = tz390.dir_390.substring(0,index);
+			} else {
+				output_390_dir = tz390.dir_390.substring(0,index) + File.separator;
+			}
+		}
+        z390_file = new RandomAccessFile(output_390_dir + tz390.pgm_name + ".390","rw");
         z390_file.setLength(0);
         z390_file.seek(0);
+        tz390.systerm_io = tz390.systerm_io + 6;
         z390_file.writeBytes(z390_code_ver);
         z390_flags = "" + tz390.z390_amode31 + tz390.z390_rmode31 + "??";
         z390_file.writeBytes(z390_flags);  // z390_flags
@@ -854,7 +917,9 @@ private void gen_load_module(){
         z390_file.write(z390_code,0,loc_ctr);
         int cur_rld = 0;
         while (cur_rld < tot_rld){
+        	tz390.systerm_io++;
         	z390_file.writeInt(rld_loc[cur_rld]);
+        	tz390.systerm_io++;
         	z390_file.write(rld_len[cur_rld]);
             if (z390_file.length() > tz390.max_file_size){
             	abort_error(33,"maximum 390 file size exceeded");

@@ -8,26 +8,47 @@
 .*********************************************************************
 .* 10/20/05 RPI27 - issue error for any undefined operands     
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/11/06 RPI244 IGNORE UNUSED KEYWORDS, SUPPORT CV,CT,PARAM=       
 .*********************************************************************
-&N      ESTAE &ADDR
-         AIF   (N'&SYSLIST EQ 1).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
-.NPOK    ANOP
-.*
-.* Set or reset program interruption exit
-.*    ESTAE ADDR  (0 CANCELS ESTAE)
-.* Notes:
-.*  1.  Currently its all or nothing versus list of selected codes
-.*
+&N      ESTAE  &ADDR,          ADDRESS OF ABEND RECOVERY EXIT          X
+               &TYPE,          OV=REPLACE EXIT, CT=ADD NEW EXIT        X
+               &ASYNCH=NO,     IGNORE                                  X
+               &MF=,           NOT SUPPORTED                           X
+               &PARAM=,        ADDRESS PASSED IN R1 IF SPECIFIED       X
+               &PURGE=NONE,    IGNORE                                  X
+               &RELATED=,      IGNORE                                  X
+               &SDWALOC31=NO,  IGNORE                                  X
+               &TERM=NO,       IGNORE                                  X
+               &XCTL=NO        IGNORE
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (&MF NE '').ERR1
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+.NPOK    ANOP
         AIF    ('&ADDR'(1,1) EQ '(').AREG
-        LA     1,&ADDR
-        AGO    .SVC
+        LA     0,&ADDR
+        AGO    .CHKP
 .AREG   ANOP
-        AIF    (&ADDR(1) EQ '1' OR &ADDR(1) EQ 'R1').SVC  RPI163
-        LR     1,&ADDR(1)
+        AIF    (&ADDR(1) EQ '0' OR &ADDR(1) EQ 'R0').CHKP        
+        LR     0,&ADDR(1)
+.CHKP   ANOP
+        AIF    (&PARAM EQ '').ZPARM
+        AIF    ('&PARAM'(1,1) EQ '(').PREG
+        LA     1,&PARAM
+        AGO    .CHKTYPE
+.PREG   ANOP
+        AIF    (&PARAM(1) EQ '1' OR &PARAM(1) EQ 'R1').CHKTYPE
+        LR     1,&PARAM(1)
+        AGO    .CHKTYPE
+.ZPARM  ANOP
+        SR     1,1
+.CHKTYPE ANOP
+        AIF    (&TYPE NE 'OV').SVC
+        OILH   0,X'8000' 
 .SVC    ANOP
-        SVC    X'3C' ESTAE
+        SVC    X'3C' ESTAE R0=EXIT, R0+=CT, R0-=OV,R1=PARAM OR 0
+        MEXIT
+.ERR1   MNOTE  12,'ESTAE MF= NOT SUPPORTED'
         MEND

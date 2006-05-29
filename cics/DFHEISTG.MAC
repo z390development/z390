@@ -1,0 +1,29 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR DSA DSECT MAP
+.*********************************************************************
+         MACRO
+         DFHEISTG
+.*
+.*       DEFINE EXEC CICS DYNAMIC STORAGE AREA DSECT
+.*                          
+.*       THIS MACRO CALL IS INSERTED AFTER FIRST DFHEISTG DSECT  
+.*       OF MLC SOURCE CODE IF CICS OPTION AND PROLOG OPTIONS ON
+.*
+.*       USER FIELDS IN DSA SHOULD FOLLOW DFHEISTG DSECT STATEMENT
+.*
+.*       NOTE EPILOG OPTION INSERTS DHFEIEND AT END WHICH CALLS
+.*       DFHEIRET AND DEFINES DFHEIEND LABEL AT END OF DSA.
+.*
+DFHEISTG DSECT
+DFHSA    DS    18F  SAVE AREA
+DFHEIBP  DS    A    INTERFACE BLOCK POINTER FROM ZCVTEIBP BY DFHEAI0
+DFHEICAP DS    A    COMMON AREA POINTER FROM ZCVTCAP BY DFHEAI0
+DFHEIPL  DS    64F  PARM AREA
+DFHEILEN DS    A    LENGTH OF DSA SET BY DFHEAI0 AND USED BY DFHEAI1
+DFHEIUSR DS    0D   USER PROGRAM STORAGE (SEE DFHEIEND FOR END)
+         MEND

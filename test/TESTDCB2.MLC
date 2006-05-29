@@ -1,9 +1,10 @@
 *********************************************************************
-* Copyright 2005 Automated Software Tools Corporation               *
+* Copyright 2006 Automated Software Tools Corporation               *
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
-* Date   - 09/30/05                                                 *
+*********************************************************************
+* 05/05/06 RPI 281 ADD DCBE TEST OF EODAD
 *********************************************************************
 TESTDCB2 SUBENTRY
          WTO   'TESTDCB2 COPY SYSUT1 ASCII TEXT FILE TO SYSUT2 FIXED'
@@ -19,7 +20,8 @@ LOOP     EQU   *
 EOF      CLOSE (SYSUT1,,SYSUT2,,SYSOUT)
          WTO   'TESTDCB2 ENDED OK'
          SUBEXIT
-SYSUT1   DCB   DDNAME=SYSUT1,RECFM=FT,LRECL=80,EODAD=EOF,MACRF=GM
+SYSUT1   DCB   DDNAME=SYSUT1,RECFM=FT,LRECL=80,DCBE=DCBE1,MACRF=GM
+DCBE1    DCBE  EODAD=EOF
 SYSUT2   DCB   DDNAME=SYSUT2,RECFM=FB,LRECL=80,BLKSIZE=8000,MACRF=PM
 SYSOUT   DCB   DDNAME=SYSOUT,RECFM=FT,BLKSIZE=120,MACRF=PM
 PTOT     DC    PL2'0'

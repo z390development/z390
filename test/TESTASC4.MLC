@@ -5,12 +5,22 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-         TITLE 'TESTTST1 TEST INTERACTIVE DEBUG COMMANDS'
+* 03/22/06 RPI 251 ADD TEST BREAK ON CGXR AND VERIFY TRACE
+*********************************************************************
 *
 * THIS EZ390 REGRESSION TEST PROGRAM REQUIRES THAT THE TEST REMOTE
 * INPUT DDNAME BE SET TO TESTTST1.TF1 FILE WHICH CONTAINS TEST
 * COMMANDS WHICH ARE VALIDATED BY THE CODE IN THIS PROGRAM
 *
+* TEST SEQUENCE:
+*   1.  TEST REG MODIFY CMDS AT FIRST INSTR.
+*   2.  TEST G AND T FOR UP TO LR INSTR.
+*   3.  TEST MODIFY MEMORY AT 300. AND THEN RUN TO CGXR TO VERIFY
+*   4.  TEST JUMP AND OC1 AT BAD OPCODE AND THEN RETURN VIA J 12R%
+*   5.  ZOOM TO END WHICH INCLUDES VERIFY OF CGXR AT RESUME POINT
+*
+*********************************************************************
+         TITLE 'TESTTST1 TEST INTERACTIVE DEBUG COMMANDS'
 TESTTST1 RT1  MAIN
          EQUREGS
 MEMDATA  DS   0D
@@ -27,5 +37,11 @@ LMEMDATA EQU  *-MEMDATA
          RT1  CCE
          CL   R4,=F'123'
          RT1  CCE                     VER R4 REG CHANGE
+         LA   R12,RESUME AFTER J 12R AT CGXR BREAK
+         LX   R8,=LH'1'
+RESUME   EQU  *
+         CGXR  7,0,8
+         CL   7,=F'1'
+         RT1  CCE
          RT1  END
          END

@@ -41,11 +41,16 @@
 .*           X'08' - 1=HOLD 0=NOHOLD
 .*           X'04' - 1=BREAKIN 0=NOBREAKIN
 .*           X'03' - 00=EDIT, 01=ASIS, 10=CONTROL, 11=FULLSCR 
+.* Register output:
+.* R1    = bytes acutally read
 .*********************************************************************
-&N       TGET  &BUFF,&LBUFF  
+&N       TGET  &BUFF,                                                  X
+               &LBUFF,                                                 X
+               &MF=  
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (&MF NE '').ERR1
          AIF   ('&BUFF'(1,1) EQ '(').RECREG
          LA    1,&BUFF
          AGO   .CHKLEN
@@ -99,5 +104,7 @@
          ICM   1,8,=B'&OP&USERID&LOWP&WAIT&HOLD&BREAKIN&TYPE'
 .SVC     ANOP
          SVC   93 R0=(ASID,LENGTH) R1=(FLAGS,ADDR)
+         MEXIT
+.ERR1    MNOTE 12,'TGET MF= NOT SUPPORTED'
          MEND
 

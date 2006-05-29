@@ -6,53 +6,151 @@
 * Date   - 09/30/05                                                 *
 *********************************************************************
 * 03/03/06 RPI 209 TEST STIMER WAIT                                 
+* 04/22/06 RPI 279 ADD STIMER REAL,EXIT AND TTIMER TESTS                                 
 *********************************************************************
-         TITLE 'TESTTIM1 REGRSSION TEST TIME MACRO FUNCTIONS'
-*
-* NOTE THIS REGRESSION TEST REQUIRES EZ390 BE RUN WITH NOTIMING
-* OPTION IN ORDER FOR TIMESTAMP TO BE FORCED TO 22:33:44:567 2005.002
-*
+         TITLE 'TESTTIM1 REGRSSION TEST STIMER, TIMIER FUNCTIONS'
 TESTIM2  RT1   MAIN
-BINTVL   DC    F'300'           300 * 0.01
-MICVL    DC    FL8'3000000'     3   * 1000000 
-TUINTVL  DC    FL8'0'           3000000 / 26.04166
+BINTVL   DC    F'200'           200 * 0.01
+DINTVL   DC    PL8'200'         HHMMSSTH
+MICVL    DC    FL8'2000000'     2   * 1000000 
+TUINTVL  DC    F'0'             2000000 / 26.04166
 STARTED  DC    FL8'0'
 ENDED    DC    FL8'0'
+MICS_REMAINING DS D             MICS REMAINING IN STIMER INTERVAL
+MICS_SAVE      DS D             
+SEXIT    EQU   *         STIMER EXIT ROUTINE
+         USING *,15
+         POST  ECB,0 POST ECB WITH X'40000000'
+         BR    14
+         DROP  15
+ECB      DC    F'0'
          EQUREGS
          RT1   START
+* STIMER WAIT TEST
+         WTO    'TEST STIMER WAIT 2 SEC BINTVL'
          TIME   NS,STARTED
          STIMER WAIT,BINTVL=BINTVL 
          TIME   NS,ENDED
          LG     R3,ENDED
          SG     R3,STARTED
          DSG    R2,=FL8'1000000'
-         CLG    R3,=FL8'2500'
+         CLG    R3,=FL8'1500'
          RT1    CCH
-         CLG    R3,=FL8'3500'
+         CLG    R3,=FL8'2500'
          RT1    CCL
+         WTO    'TEST STIMER WAIT 2 SEC DINTVL'
+         TIME   NS,STARTED
+         STIMER WAIT,DINTVL=DINTVL 
+         TIME   NS,ENDED
+         LG     R3,ENDED
+         SG     R3,STARTED
+         DSG    R2,=FL8'1000000'
+         CLG    R3,=FL8'1500'
+         RT1    CCH
+         CLG    R3,=FL8'2500'
+         RT1    CCL
+         WTO    'TEST STIMER WAIT 2 SEC MICVL'
          TIME   NS,STARTED
          STIMER WAIT,MICVL=MICVL 
          TIME   NS,ENDED
          LG     R3,ENDED
          SG     R3,STARTED
          DSG    R2,=FL8'1000000'
-         CLG    R3,=FL8'2500'
+         CLG    R3,=FL8'1500'
          RT1    CCH
-         CLG    R0,=FL8'3500'
+         CLG    R3,=FL8'2500'
          RT1    CCL
-         LG     R1,=FL8'3000000' R0 = 3 SEC IN MICROSECONDS
+         LG     R1,=FL8'2000000' R0 = 2 SEC IN MICROSECONDS
          MSG    R1,=FL8'100000'  SCALE UP 5 DECIMAL PLACES
          DSG    R0,=FL8'2604166'  DIVIDE BY TIMER UNITS WITH 5 DEC
-         STG    R1,TUINTVL        R0=REMAINDER, R1=QUOTENT
+         ST     R1,TUINTVL        R0=REMAINDER, R1=QUOTENT
+         WTO    'TEST STIMER WAIT 2 SEC TUINTVL'
          TIME   NS,STARTED
          STIMER WAIT,TUINTVL=TUINTVL 
          TIME   NS,ENDED
          LG     R3,ENDED
          SG     R3,STARTED
          DSG    R2,=FL8'1000000'
-         CLG    R3,=FL8'2500'
+         CLG    R3,=FL8'1500'
          RT1    CCH
-         CLG    R0,=FL8'3500'
+         CLG    R3,=FL8'2500'
+         RT1    CCL
+* STIMER REAL,EXIT TEST USING WAIT AND POST
+         TIME   NS,STARTED
+         MVC    ECB,=X'00000000' CLEAR ECB WAITING
+         STIMER REAL,SEXIT,BINTVL==F'200' EXIT TO SEXIT IN 2 SEC
+         WTO    'STIMER REAL INTERVAL SET FOR WAIT AND POST TEST'
+         WAIT   ECB=ECB    WAIT FOR STIMER EXIT TO POST ECB
+         TIME   NS,ENDED
+         LG     R3,ENDED
+         SG     R3,STARTED
+         DSG    R2,=FL8'1000000'
+         CLG    R3,=FL8'1500'
+         RT1    CCH
+         CLG    R3,=FL8'3500' ALLOW EXTRA SEC FOR END OF WAIT   
+         RT1    CCL
+* STIMER REAL,EXIT TEST USING WAIT AND CPU LOOP
+         MVC    ECB,=X'00000000' CLEAR ECB WAITING
+         TIME   NS,STARTED
+         STIMER REAL,SEXIT,BINTVL==F'200' EXIT TO SEXIT IN 2 SEC
+         WTO    'STIMER REAL INTERVAL SET FOR CPU LOOP TEST'
+LOOP     CLI    ECB,X'40' LOOP UNTIL STIMER EXIT POSTS ECB
+         BNE    LOOP
+         TIME   NS,ENDED
+         LG     R3,ENDED
+         SG     R3,STARTED
+         DSG    R2,=FL8'1000000'
+         CLG    R3,=FL8'1500'
+         RT1    CCH
+         CLG    R3,=FL8'2500'           
+         RT1    CCL
+* STIMER REAL,EXIT TEST TIMER TU AND MIC
+         MVC    ECB,=X'00000000' CLEAR ECB WAITING
+         TIME   NS,STARTED
+         STIMER REAL,SEXIT,BINTVL==F'200' EXIT TO SEXIT IN 2 SEC
+         TTIMER ,TU
+         LTR    R15,R15
+         RT1    CCE
+         LR     R3,R0
+         WTO    'STIMER REAL INTERVAL SET FOR TTIMER ,TU TEST'
+         STIMER WAIT,TUINTVL==F'50'
+         TTIMER ,TU
+         LTR    R15,R15
+         RT1    CCE
+         CLR    R0,R3
+         RT1    CCL
+         TTIMER ,MIC,MICS_REMAINING
+         LTR    R15,R15
+         RT1    CCE
+         MVC    MICS_SAVE,MICS_REMAINING
+         WTO    'STIMER REAL INTERVAL SET FOR TTIMER ,MIC,ADDR'
+         STIMER WAIT,TUINTVL==F'50'
+         TTIMER ,MIC,MICS_REMAINING
+         LTR    R15,R15
+         RT1    CCE
+         CLC    MICS_REMAINING,MICS_SAVE
+         RT1    CCL
+         WAIT   ECB=ECB    WAIT FOR STIMER EXIT TO POST ECB
+         TIME   NS,ENDED
+         LG     R3,ENDED
+         SG     R3,STARTED
+         DSG    R2,=FL8'1000000'
+         CLG    R3,=FL8'1500'
+         RT1    CCH
+         CLG    R3,=FL8'2500'    
+         RT1    CCL
+* STIMER REAL,EXIT TEST STIMER AND TTIMER CANCEL
+         MVC    ECB,=X'00000000' CLEAR ECB WAITING
+         TIME   NS,STARTED
+         STIMER REAL,SEXIT,BINTVL==F'200' EXIT TO SEXIT IN 2 SEC
+         WTO    'STIMER REAL INTERVAL SET AND THEN CANCELLED'
+         STIMER WAIT,TUINTVL==F'50'
+         TTIMER CANCEL
+         TIME   NS,ENDED
+         LG     R3,ENDED
+         SG     R3,STARTED
+         DSG    R2,=FL8'1000000'
+         CLG    R3,=FL8'1500'
          RT1    CCL
          WTO   'TESTTIM2 ENDED OK'
          RT1   END

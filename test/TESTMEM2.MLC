@@ -38,5 +38,4 @@ TESTMEM2 RT1   MAIN
          CLCL  R5,R0               VERIFY FILL
          RT1   CCE
          RT1   END
-         CVTD
          END

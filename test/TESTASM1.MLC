@@ -14,9 +14,15 @@
 * 03/16/06 RPI230 TEST COM, RSECT, START LIMITED SUPPORT
 * 03/17/06 RPI228 TEST CVTDCB OS FLAG INDICATING 31 BIT AND MVS+
 * 03/21/06 RPI258 TEST ORG , DELIMITER                                 
+* 04/12/06 RPI278 TEST PUSH, POP NOPRINT                               
+* 04/24/06 RPI291 TEST ENQ/DEQ                                         
+* 04/28/06 RPI304 TEST PRINT DATA,NOPRINT                              
 *********************************************************************
          START , RPI 230 TEST START CSECT
          USING *,R15
+         PUSH  USING,NOPRINT
+         POP   USING,NOPRINT
+         PRINT DATA,NOPRINT
          L     R15,=A(TESTASM1)
          BR    R15
          DROP  R15
@@ -98,7 +104,11 @@ MYRSECT  RSECT , RPI 230 TEST RSECT (NO WARNINGS YET)
          USING IHACVT,R1
          CLI   CVTDCB,X'9B'  VERIFY X'80' 31 BIT AND X'13' MVS+ SUPPORT
          BNE   1
+         ENQ   (QN,RN)
+         DEQ   (QN,RN)
          BR    14
+QN       DC    CL8'IEAXXXXX'
+RN       DC    CL8'STEPNAME'
          LTORG
          CVTD
          END         

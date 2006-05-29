@@ -10,27 +10,70 @@
 .* 10/21/05 RPI41 - add VL positional parm support
 .* 12/12/05 RPI18 - correct VL bit OI instrcution (missing .)
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI244 IGNORE NON CRITICAL KW PARMS
 .*********************************************************************
-&N      CALL   &NAME,&PARMS,&VL
-         AIF   (N'&SYSLIST LE 3).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
-.NPOK    ANOP
+&N      CALL   &NAME,                                                  X
+               &PARMS,                                                 X
+               &VL,            SET END OF LIST HIGH BIT                X                 X
+               &ID=,           IGNORE                                  X
+               &LINKINST=BALR,                                         X
+               &MF=            S/L/E FORMS SUPPORTED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-&NPARMS SETA   N'&PARMS
-        AIF    (&NPARMS EQ 0).ENDPARM
-        LA     1,=A&PARMS
-        AIF    (&VL NE 'VL').ENDPARM
+         AIF   (N'&SYSLIST LE 3).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
+.NPOK    ANOP
+         AIF   (&MF EQ 'L').LIST
+         AIF   (&MF(1) EQ 'E').EXEC
+.STD     ANOP
+&NPARMS  SETA   N'&PARMS
+         AIF    (&NPARMS EQ 0).ENDPARM
+         LA     1,=A&PARMS
+         AIF    (&VL NE 'VL').ENDPARM
 &OFF     SETA   N'&PARMS*4-4
          OI     &OFF.(1),X'80'
 .ENDPARM ANOP
-        AIF    ('&NAME'(1,1) EQ '(').REG
-        L      15,=V(&NAME)
-        AGO    .BALR
-.REG    ANOP
-        AIF    (&NAME(1) EQ '15' OR &NAME(1) EQ 'R15').BALR  RPI163
-        LR     15,&NAME(1)
-.BALR   ANOP
-        BALR   14,15
-        MEND
+         AIF   (&NAME EQ '').BALR
+         AIF    ('&NAME'(1,1) EQ '(').REG
+         L      15,=V(&NAME)
+         AGO    .BALR
+.REG     ANOP
+         AIF    (&NAME(1) EQ '15' OR &NAME(1) EQ 'R15').BALR  RPI163
+         LR     15,&NAME(1)
+.BALR    ANOP
+         &LINKINST 14,15
+         MEXIT
+.LIST    ANOP
+         DC    A&PARMS
+         MEXIT
+.EXEC    ANO
+         AIF    ('&MF(2)' EQ '(').REGPARM
+         LA     1,&MF(2)
+         AGO    .EXEC2
+.REGPARM ANOP
+         AIF    (&MF(2,1) EQ 1 OR &MF(2,1) EQ 'R1').EXEC2
+         LR     1,&MF(2,1)
+.EXEC2   ANOP
+&NPARMS  SETA   N'&PARMS
+         AIF    (&NPARMS EQ 0).ENDPARM
+&EXOFF   SETA   0
+&I       SETA   0
+.EXLOOP  ANOP
+&I       SETA   &I+1
+         AIF    (&I GT &NPARMS).EXLEND
+&EXPARM  SETC   &PARMS(&I)     
+         AIF    ('&EXPARM'(1,1) EQ '(').EXREGP
+         LA     0,&EXPARM
+         ST     0,&EXOFF.(1)
+         AGO    .EXNEXTP
+.EXREGP  ANOP
+         ST     &EXPARM,EXOFF.(1)
+.EXNEXTP ANOP
+&EXOFF   SETA   &EXOFF+4
+         AGO    .EXLOOP
+.EXLEND  ANOP    
+         AIF    (&VL NE 'VL').BALR
+         OI     &EXOFF-4(1),X'80'
+         AGO    .BALR
+         MEND

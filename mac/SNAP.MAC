@@ -10,6 +10,8 @@
 .* 01/06/06 RPI154 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
 .* 01/08/06 RPI154 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 04/11/06 RPI244 UPDATE KW PARMS, SUPPORT PDATA=PSW
+.* 04/25/06 RPI297 USE L VS LA FOR STOARGE PARMS        
 .*********************************************************************
 .* SNAP WILL GENERATE DUMP ON LOG FILE BASED ON THESE PARMS:
 .*  1. PDATA= (DEFAULT IS ALL)
@@ -30,10 +32,28 @@
 .*   R0  BIT 3 = CDE LOADED 390 PROGRAMS AND FILES
 .*   R0  BIT 4 = DCBS WITH DDNAME AND DSNAME
 .*********************************************************************
-&N       SNAP  &STORAGE=,&PDATA=ALL,&ID=0,&TEXT=
+&N       SNAP  &DCB=,        IGNORED                                   X
+               &ID=0,        SHOW ID ON DUMP                           X
+               &LIST=,       NOT SUPPORTED                             X
+               &MF=,         NOT SUPPORTED                             X
+               &PDATA=ALL,   ALL, REGS, GPR, FPR, CDE, DCB, PSW        X
+               &SDATA=,      IGNORED                                   X
+               &STORAGE=,    STORAGE ADDRESS RANGE                     X
+               &STRHDR=,     NOT SUPPORTED                             X
+               &SUBPLST=,    NOT SUPPORTED                             X
+               &TCB=,        IGNORED                                   X
+               &TEXT=        EXTENSION TEXT TO DISPLAY                 
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
          AIF   (N'&SYSLIST EQ 0).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'                 
+         MEXIT
 .NPOK    ANOP
+         AIF   (&LIST    NE '').ERR2
+         AIF   (&STRHDR  NE '').ERR3
+         AIF   (&SUBPLST NE '').ERR4
+         AIF   (&MF      NE '').ERR5
 &FLAGS   SETA  0
 &NP      SETA  N'&PDATA+1
 .NPLOOP  ANOP
@@ -45,6 +65,7 @@
          AIF   (&PDATA(&NP) EQ 'FPR').FPR
          AIF   (&PDATA(&NP) EQ 'CDE').CDE
          AIF   (&PDATA(&NP) EQ 'DCB').DCB 
+         AIF   (&PDATA(&NP) EQ 'PSW').PSW 
          MNOTE 8,'SNAP UNSUPPORTED PARM - &PDATA(&NP)'
          AGO   .NPLOOP
 .ALL     ANOP
@@ -65,10 +86,9 @@
 .DCB     ANOP
 &FLAGS   SETA  &FLAGS+X'0800'
          AGO   .NPLOOP 
+.PSW     ANOP   PSW INCLUDED BY DEFAULT
+         AGO   .NPLOOP
 .NPOK2   ANOP
-         AIF   (&N EQ '').SKIPDS
-&N       DS    0H
-.SKIPDS  ANOP
 .*
 .* SNAP A MEMORY DUMP OF SPECIFIED AREA
 .*
@@ -77,7 +97,7 @@
          AIF   (N'&STORAGE NE 2).ERR1
 &FLAGS   SETA  &FLAGS+X'8000'           RPI110 
          AIF   ('&STORAGE(1)'(1,1) EQ '(').ADDR1_REG
-         LA    14,&STORAGE(1)
+         L     14,=A(&STORAGE(1))
          AGO   .ADDR2_CHK
 .ADDR1_REG ANOP
          AIF   (&STORAGE(1,1) EQ '14' OR &STORAGE(1,1) EQ 'R14').ADDR2_X
@@ -85,7 +105,7 @@
          LR    14,&STORAGE(1,1)
 .ADDR2_CHK ANOP
          AIF   ('&STORAGE(2)'(1,1) EQ '(').ADDR2_REG
-         LA    15,&STORAGE(2)
+         L     15,=A(&STORAGE(2))
          AGO   .SETUP
 .ADDR2_REG ANOP
          AIF   (&STORAGE(2,1) EQ 14).ERR1
@@ -108,4 +128,13 @@
          SVC   51
          MEXIT
 .ERR1    MNOTE 12,'SNAP INVALID STORAGE=(ADDR1,ADDR2) - &STORAGE'
+         MEXIT
+.ERR2    MNOTE 12,'SNAP LIST= NOT SUPPORTED'
+         MEXIT
+.ERR3    MNOTE 12,'SNAP STRHDR= NOT SUPPORTED'
+         MEXIT
+.ERR4    MNOTE 12,'SNAP SUBPLST NOT SUPPORTED'
+         MEXIT
+.ERR5    MNOTE 12,'SNAP MF= NOT SUPPORTED'
+         MEXIT
          MEND

@@ -1,0 +1,16 @@
+         TITLE 'TESTPRO1 - TEST PROFILE(TESTPRO1.CPY) INIT/TERM MACS'
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 04/10/06 RPI 276 TEST OPTION PROFILE TO INSERT COPY STATEMENT
+*********************************************************************
+TESTPRO1 SUBENTRY
+         WTO   'TESTPRO1 TEST PROFILE(TESTPRO1.CPY)'
+         WTO   '  1.  EXECUTE MACRO TESTPROS.MAC AT START'
+         WTO   '  2.  EXECUTE MACRO TESTPOST.MAC AT TERMINATION'
+         WTO   'TESTPRO1 ENDED OK' 
+         SUBEXIT
+         END         

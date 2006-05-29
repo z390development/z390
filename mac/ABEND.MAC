@@ -8,17 +8,40 @@
 .*********************************************************************
 .* 10/20/05 RPI27 - issue error for any undefined operands     
 .* 10/27/05 RPI56 - correct OIHH to OILH to set dump bit       
+.* 04/10/06 RPI 244 - update parm support                        
 .*********************************************************************
-&N       ABEND &ID,&DUMP
-         AIF   (N'&SYSLIST LE 2).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+&N       ABEND &COMP,      COMPLETION CODE NNN OR (REG)                X
+               &DUMP,      DUMP ALLOCATED PROGRAM STORAGE              X
+               &STEP,      IGNORED                                     X
+               &TYPE,      IGNORED                                     X
+               &MF=,       NOT SUPPORTED                               X
+               &REASON=,   IGNORED                                     X
+               &DUMPOPT=,  IGNORED                                     X
+               &DUMPOPX=   IGNORED                                     
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&MF NE '').ERR1
+         AIF   (N'&SYSLIST GE 1).CHKHIGH
+         MNOTE 12,'ABEND COMPLETION CODE REQUIRED'
+         MEXIT
+.CHKHIGH AIF   (N'&SYSLIST LE 4).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
+         MEXIT
 .NPOK    ANOP
 .*
 .* ABORT TASK WITH OPTIONAL DUMP
 .*
-&N       LA   1,&ID
+         AIF  ('&COMP'(1,1) EQ '(').REGCOMP
+         LA   1,&COMP
+         AGO  .CHKDUMP
+.REGCOMP ANOP
+         LR   1,&COMP(1)
+.CHKDUMP ANOP
          AIF  (&DUMP EQ '').SKIPDUMP
          OILH 1,X'8000'
 .SKIPDUMP ANOP  
-         SVC  13
+         SVC  13 ABEND R1=COMP CODE AND HIGH BIT = DUMP PGM STORAGE
+         MEXIT
+.ERR1    MNOTE 12,'ABEND MF= NOT SUPPORTED'
          MEND

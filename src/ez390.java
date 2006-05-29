@@ -12,7 +12,7 @@ import javax.swing.Timer;
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2005 Automated Software Tools Corporation
+    Copyright 2006 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ import javax.swing.Timer;
     * 09/27/05 add MEM(MB) option and reduce default to MEM(1)
     * 09/27/05 fix 0C5 at end of mem using work_mem
     * 10/04/05 RPI5 - option ASCII use ASCII vs EBCDIC
-    *                   pz390.cvt_ipl_pgm = ascii name
+    *                   pz390.zcvt_ipl_pgm = ascii name
     *                   DCB DDNAME field ascii
     *                   DCB FT RCDS = ascii
     *                   SVC LOAD, LINK, DELETE EP/EPLOC ASCII
@@ -150,6 +150,8 @@ import javax.swing.Timer;
     * 02/04/06 RPI197 remove test_or_trace interrupts
     * 02/24/06 RPI218 increase performance using sleep_now
     * 03/02/06 RPI 220 detect tz390.z390_abort and close down
+    * 04/10/06 RPI 276 support IPL(pgm) option
+    * 04/22/06 RPI 279 request stimer exit when time expires
     ********************************************************
     * Global variables
     *****************************************************/
@@ -161,8 +163,6 @@ import javax.swing.Timer;
 	sz390 sz390 = null;
 	Thread  pz390_thread = null;
 	boolean pz390_running = false;
-	int ez390_rc = 0;
-    int ez390_errors = 0;
     String load_file_name = null;
     boolean exit_request = false;
     /*
@@ -233,7 +233,7 @@ public static void main(String[] args) {
       ez390 pgm = new ez390();
       pgm.process_ez390(args,null,null);
 }
-public int process_ez390(String[] args,JTextArea log_text,JTextField command_text){
+public void process_ez390(String[] args,JTextArea log_text,JTextField command_text){
    /*
     *  execute 390 load module file passed as first arg
     *
@@ -244,10 +244,23 @@ public int process_ez390(String[] args,JTextArea log_text,JTextField command_tex
     *  of the z390 log window.
     */
 	init_ez390(args,log_text,command_text);
-	pz390.reg.putInt(pz390.r13,pz390.cvt_save);
-	pz390.reg.putInt(pz390.r14,pz390.cvt_exit);
-	pz390.reg.putInt(pz390.r0,pz390.cvt_ipl_pgm);
-	pz390.reg.putInt(pz390.r1,pz390.cvt_exec_parm);
+    if (tz390.opt_ipl.length() > 0){
+    	run_pgm(pz390.zcvt_ipl_pgm);
+    	sz390.ez390_pgm = null;
+    	sz390.cur_link_stk = 0;
+    	sz390.tot_link_stk = 0;
+    }
+    run_pgm(pz390.zcvt_user_pgm);
+	sz390.exit_ez390();
+}
+private void run_pgm(int zcvt_pgm_addr){
+	/*
+	 * execute IPL pgm and/or application pgm
+	 */
+	pz390.reg.putInt(pz390.r13,pz390.zcvt_save);
+	pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);
+	pz390.reg.putInt(pz390.r0,zcvt_pgm_addr);
+	pz390.reg.putInt(pz390.r1,pz390.zcvt_exec_parm);
 	sz390.svc_link();  
    	if (tz390.opt_trap){
    	    pz390.psw_check = false;
@@ -265,11 +278,6 @@ public int process_ez390(String[] args,JTextArea log_text,JTextField command_tex
     if (pz390.psw_check && pz390.psw_pic != pz390.psw_pic_exit){
        	sz390.svc_abend(pz390.psw_pic,sz390.svc_abend_type,sz390.svc_req_dump);
     }
-	sz390.exit_ez390();
-	if (log_text == null){
-	   System.exit(ez390_rc);
-	}
-	return ez390_rc;
 }
 private void exec_pz390(){
 	/* 
@@ -324,7 +332,8 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
 	    sz390 = new sz390();
 	    tz390.init_tables();
         tz390.init_options(args,".390");
-	    sz390.init_sz390(tz390,pz390);
+	    tz390.open_systerm("EZ390");
+        sz390.init_sz390(tz390,pz390);
 	    pz390.init_pz390(tz390,sz390);
         sz390.init_time();
         sz390.init_test();
@@ -366,6 +375,12 @@ private void monitor_update(){
 	 *     terminate.
 	 * 4.  If WTOR pending, check for reply and post
 	 *     ecb.
+	 * 5.  If stimer_exit_addr set, check for stimer_Exit_tod
+	 *     passed and take exit if tod passed:
+	 *     a.  Save r13-r15 and PSW for restore at end of exit
+	 *     b.  Set r13 to save, r14 to svc 3 instr, and r15 to exit
+	 *     c.  Set stimer_exit_pending for svc 3
+	 *     d.  change PSW to r15 exit addr
 	 * 
 	 */
 	monitor_next_time = System.currentTimeMillis();
@@ -414,12 +429,17 @@ private void monitor_update(){
 		if (sz390.wtor_reply_string != null){
 			sz390.put_log("" + sz390.wtor_reply_string);  //RPI190 remove "WTOR REPLY MSG"
 			sz390.put_ascii_string(sz390.wtor_reply_string,sz390.wtor_reply_addr,sz390.wtor_reply_len);
-			sz390.pz390.mem.putInt(sz390.wtor_ecb_addr,sz390.ecb_post_ok); // post ecb for any wait
+			sz390.pz390.mem.putInt(sz390.wtor_ecb_addr,sz390.ecb_posted); // post ecb for any wait
 			sz390.wtor_reply_pending = false;
 		}
 	}
+	if (!sz390.stimer_exit_running
+		&& sz390.stimer_exit_addr != 0
+		&& sz390.stimer_exit_time <= monitor_next_time){
+        sz390.stimer_exit_request = true; // request exit
+	}
 	if (tz390.z390_abort){  // RPI 220 shut down due to external request
-		sz390.abort_error(203,"ex390 aborting due to external exror");
+		sz390.abort_error(203,"ex390 terminating due to external shutdown request");
 	}
 	monitor_last_cmd_mode = sz390.cmd_proc_running[cmd_id];
 	monitor_last_time = monitor_next_time;
@@ -467,7 +487,7 @@ private void put_copyright(){
 	   		sz390.put_log("EZ390I " + tz390.version);
 	   	}
 	   	if  (z390_log_text == null){
-	   		sz390.put_log("Copyright 2005 Automated Software Tools Corporation");
+	   		sz390.put_log("Copyright 2006 Automated Software Tools Corporation");
 	   		sz390.put_log("z390 is licensed under GNU General Public License");
 	   	}
 	   	sz390.put_log("EZ390I program = " + tz390.pgm_name);

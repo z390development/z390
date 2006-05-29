@@ -1,0 +1,46 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 04/23/06                                                 *
+.*********************************************************************
+.* 04/23/06 RPI 286 - DEFINE ZCVT FOR Z390 CVT AT X'2000' IN MEMORY   
+.* 05/02/06 RPI 305 - ADD ZCVTEPIE AND ZCVTESTA CONTROL BLOCK AREAS   
+.* 05/05/06 RPI 308 - ADD ZCVTEIBP AND ZCVTCAP FOR CICS SUPPORT       
+.*********************************************************************
+         ZCVTD
+.*
+.* EZ390 ZCVT DSECT - LOCATED AT X'2000' FOLLOWING PSA IN MEMORY
+.*
+ZCVT     EQU    X'2000'  ABS ADDR ZCVT
+IHAZCVT  DSECT
+         ORG    IHAZCVT+X'00'
+ZCVTUPGM DS     CL8   390 USER PROGRAM NAME LOADED AT IPL
+         ORG    IHAZCVT+X'08'
+ZCVTIPLP DS     CL8   390 IPL PROGRAM SPECIFIED IN IPL(PGM) OPTION
+         ORG    IHAZCVT+X'10'
+ZCVTFQ24 DS     A     ADDRESS OF FIRST FQE FOR 24 BIT MEM AT X'10000'
+         ORG    IHAZCVT+X'14'
+ZCVTFQ31 DS     A     ADDRESS OF FIRST FQE FOR 31 BIT MEM AT X'1000000'
+         ORG    IHAZCVT+X'18'
+ZCVTEXIT DS     XL2   SVC 3 EXIT USED AS R14 EXIT AND STIMER EXIT
+         ORG    IHAZCVT+X'1C'
+ZCVTGECB DS     F     TGET ECB 
+         ORG    IHAZCVT+X'20'
+ZCVTEIBP DS     A     CICS INTERFACE CONTROL BLOCK POINTER > DFHEIBLK
+         ORG    IHAZCVT+X'24'
+ZCVTCAP  DS     A     CICS COMMON AREA POINTER
+         ORG    IHAZCVT+X'100'
+ZCVTSAVE DS     18F   SAVE AREA USED TO INIT USER PGM R13                
+         ORG    IHAZCVT+X'200'
+ZCVTSAV2 DS     18F   SAVE AREA FOR STIMER EXIT R13
+         ORG    IHAZCVT+X'300'
+ZCVTPARM DS     XL256 PARM AREA USED TO SET USER R1
+         ORG    IHAZCVT+X'400'
+ZCVTEPIE DS     XL256 RESERVED FOR ESPIE EPIE CB (SEE EPIED MACRO)
+         ORG    IHAZCVT+X'500'
+ZCVTESTA DS     XL256 RESERVED FOR ESTAE ESTA CB (SEE ESTAD MACRO)
+ZCVTEND  ORG    IHAZCVT+(X'A000'-X'2000')  RESERVE UP TO CVT
+         MEND

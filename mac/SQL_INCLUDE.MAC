@@ -1,0 +1,12 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/05/06 RPI 308 SQL INCLUDE CMD CALLED FROM EXEC     
+.*********************************************************************
+         MACRO
+         SQL_INCLUDE &MEMBER
+         &MEMBER
+         MEND

@@ -36,6 +36,10 @@
 * 02/10/06 RPI199 ADD EXTENDED BRANCH BRCL INSTRUCTIONS
 * 04/01/06 ADD 32 * 32 = 64 BIT TEST OF MR                
 * 04/05/06 ADD 32 * 32 = 64 BIT TEST OF MR AND VERIFY R1 IGNORED                
+* 04/07/06 ADD 32 * 32 = 64 BIT TEST OF MLR AND ML                
+* 04/23/06 RPI 295 ADD ADDITIONAL TESTS FOR ICM AND OIHL          
+* 04/28/06 RPI 303 ADD ADDITIONAL TESTS FOR ICM TO SET HIGH IF POS          
+* 05/02/06 RPI 305 USE NEW ESPIE AND ESTAE CONTROL BLOCKS                   
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -49,6 +53,20 @@
 *********************************************************************
 TESTINS2 RT1   MAIN
          EQUREGS
+ESPIE_EXIT DS  0H
+         USING *,R15
+         USING IHAEPIE,R1
+         L     R0,EPIEPARM
+         ST    R0,EPIEPSW+4
+         BR    R14
+         DROP  R15,R1
+ESTAE_EXIT DS  0H
+         USING *,R15
+         USING IHAESTA,R1
+         L     R0,ESTAPARM
+         ST    R0,ESTAPSW+4
+         BR    R14
+         DROP  R15,R1
 PWORK    DS    D
 PWORK16  DS    XL16
 PL1      DS    PL1
@@ -494,14 +512,14 @@ BASR3    EQU   *
          RT1   CCH
          CL    R0,=F'3'
          RT1   CCE
-         ESPIE SET,AR1,8
+         ESPIE SET,ESPIE_EXIT,8,PARAM=AR1
          L     R0,=X'7FFFFFFF'
          LA    R1,1
          AR    R0,R1
          RT1   ABORT
 AR1      ESPIE RESET
          WTO   'ESPIE FOR FIXED POINT OVERFLOW OK'
-         ESTAE AR2
+         ESTAE ESTAE_EXIT,PARAM=AR2
          L     R0,=X'80000000'
          L     R1,=F'-1'
          AR    R0,R1
@@ -515,13 +533,13 @@ AR2      ESTAE 0
          RT1   CCL
          CL    R0,=F'-1'
          RT1   CCE
-         ESPIE SET,SR1,8
+         ESPIE SET,ESPIE_EXIT,8,PARAM=SR1
          L     R0,=X'7FFFFFFF'
          L     R1,=F'-1'
          SR    R0,R1
          RT1   ABORT
 SR1      ESPIE RESET
-         ESTAE SR2
+         ESTAE ESTAE_EXIT,PARAM=SR2
          L     R0,=X'80000000'
          L     R1,=F'1'
          SR    R0,R1
@@ -552,7 +570,7 @@ SR2      ESTAE 0
          RT1   CCE
          CL    R1,=F'3'
          RT1   CCE
-         ESPIE SET,DR1,9
+         ESPIE SET,ESPIE_EXIT,9,PARAM=DR1
          LA    R2,0
          DR    R0,R2
          RT1   ABORT
@@ -1282,6 +1300,7 @@ BXLE3    EQU   *
          RT1   CCE
 * A54  NIHH
          ICMH  R1,15,=X'12345678'
+         SR    R0,R0
          NIHH  R1,X'1030'
          RT1   CCL
          STG   R1,PWORK
@@ -1291,6 +1310,7 @@ BXLE3    EQU   *
          RT1   CCE
 * A55  NIHL
          ICMH  R1,15,=X'12345678'
+         SR    R0,R0
          NIHL  R1,X'5070'
          RT1   CCL
          CLMH  R1,15,=X'12345070'
@@ -1309,24 +1329,28 @@ BXLE3    EQU   *
          RT1   CCE
 * A58  OIHH
          ICMH  R1,15,=X'12345678'
+         SR    R0,R0
          OIHH  R1,X'1111'
          RT1   CCL
          CLMH  R1,15,=X'13355678'
          RT1   CCE
 * A59  OIHL
          ICMH  R1,15,=X'12345678'
+         SR    R0,R0
          OIHL  R1,X'1111'
          RT1   CCL
          CLMH  R1,15,=X'12345779'
          RT1   CCE
 * A5A  OILH
          L     R1,=X'12345678'
+         SR    R0,R0
          OILH  R1,X'1111'
          RT1   CCL
          CLM   R1,15,=X'13355678'
          RT1   CCE
 * A5B  OILL
          L     R1,=X'12345678'
+         SR    R0,R0
          OILL  R1,X'1111'
          RT1   CCL
          CLM   R1,15,=X'12345779'
@@ -1756,7 +1780,7 @@ BAKR2    EQU   *
          RT1   CCE
          OI    FPCREG,X'08' TURN ON BFP SIGNIFICANCE MASK IN FPC REG
          LFPC  FPCREG       RELOAD FPC
-         ESPIE SET,SEBR1,7  BFP SIGNIFICANCE FPCDXC=08               
+         ESPIE SET,ESPIE_EXIT,7,PARAM=SEBR1  BFP SIG FPCDXC=08
          LE    R0,EBMIN
          LE    R1,EBMIN
          SEBR  R0,R1
@@ -1786,7 +1810,7 @@ SEBR1    ESPIE RESET
          RT1   CCE
          OILH  R0,X'0800'   TURN ON BFP SIGNIFICANCE MASK IN FPC REG
          SFPC  R0           RELOAD FPC
-         ESPIE SET,SEBR2,7  BFP SIGNIFICANCE FPCDXC=08               
+         ESPIE SET,ESPIE_EXIT,7,PARAM=SEBR2  BFP SIG FPCDXC=08
          LE    R0,EBMIN
          LE    R1,EBMIN
          SEBR  R0,R1
@@ -1858,13 +1882,13 @@ SEBR2    ESPIE RESET
          RT1   CCH
          CG    R0,=FL8'4'
          RT1   CCE
-         ESPIE SET,AGR1,8
+         ESPIE SET,ESPIE_EXIT,8,PARAM=AGR1
          LG     R0,=X'7FFFFFFFFFFFFFFF'
          LG    R1,=FL8'1'
          AGR   R0,R1
          RT1   ABORT
 AGR1     ESPIE RESET
-         ESTAE AGR2
+         ESTAE ESTAE_EXIT,PARAM=AGR2
          LG    R0,=X'8000000000000000'
          LG    R1,=FL8'-1'
          AGR   R0,R1
@@ -1877,13 +1901,13 @@ AGR2     ESTAE 0
          RT1   CCL
          CG    R0,=FL8'-2'
          RT1   CCE
-         ESPIE SET,SGR1,8
+         ESPIE SET,ESPIE_EXIT,8,PARAM=SGR1
          LG     R0,=X'7FFFFFFFFFFFFFFF'
          LG    R1,=FL8'-1'
          SGR   R0,R1
          RT1   ABORT
 SGR1     ESPIE RESET
-         ESTAE SGR2
+         ESTAE ESTAE_EXIT,PARAM=SGR2
          LG    R0,=X'8000000000000000'
          LG    R1,=FL8'1'
          SGR   R0,R1
@@ -2416,15 +2440,17 @@ SGR2     ESTAE 0
          CL    R0,=A(X'FFFF')
          RT1   CCE
 * B996 MLR
-         L     R0,=F'3'
+         L     R0,=F'-1' JUNK
+         L     R1,=F'3'
          L     R2,=F'2'
          MLR   R0,R2
          CL    R0,=F'0'
          RT1   CCE
          CL    R1,=F'6'
          RT1   CCE
-         L     R0,=X'80000000'
+         L     R1,=X'80000000'
          L     R2,=X'80000000'
+         L     R0,=F'-1' JUNK
          MLR   R0,R2
          CL    R0,=X'40000000'
          RT1   CCE
@@ -2628,6 +2654,48 @@ SGR2     ESTAE 0
          ICM   R1,9,=X'0000'
          RT1   CCE
          CL    R1,=X'00F2F300'
+         RT1   CCE
+         ICM   R1,15,=X'12345678'
+         RT1   CCH                 RPI 295 TEST
+         CL    R1,=X'12345678'
+         RT1   CCE
+         ICM   R1,3,=X'FFFF'
+         RT1   CCL                 RPI 295 TEST
+         CL    R1,=X'1234FFFF'
+         RT1   CCE
+         ICM   R1,15,=X'FFFFFFFF'  RPI 303 TESTS
+         RT1   CCL
+         ICM   R1,15,=X'00FFFFFF'
+         RT1   CCH
+         ICM   R1,15,=X'7FFFFFFF'
+         RT1   CCH
+         ICM   R1,15,=X'00000000'
+         RT1   CCE
+         ICM   R1,0,=X'FFFFFFFF'
+         RT1   CCE
+         ICM   R1,7,=X'FFFFFF'
+         RT1   CCL
+         ICM   R1,7,=X'00FFFF'
+         RT1   CCH
+         ICM   R1,7,=X'7FFFFF'
+         RT1   CCH
+         ICM   R1,7,=X'000000'
+         RT1   CCE
+         ICM   R1,3,=X'FFFF'
+         RT1   CCL
+         ICM   R1,3,=X'00FF'
+         RT1   CCH
+         ICM   R1,3,=X'7FFF'
+         RT1   CCH
+         ICM   R1,3,=X'0000'
+         RT1   CCE
+         ICM   R1,1,=X'FF'
+         RT1   CCL
+         ICM   R1,1,=X'01'
+         RT1   CCH
+         ICM   R1,1,=X'7F'
+         RT1   CCH
+         ICM   R1,1,=X'00'
          RT1   CCE
 * C00  LARL
          LARL  R1,3
@@ -3655,13 +3723,15 @@ BCTG1    LA    R2,1(R2)
          CL    R0,=A(X'FFFF')
          RT1   CCE
 * E396 ML 
-         L     R0,=F'3'
+         L     R0,=F'-1' JUNK
+         L     R1,=F'3'
          ML    R0,=F'2'
          CL    R0,=F'0'
          RT1   CCE
          CL    R1,=F'6'
          RT1   CCE
-         L     R0,=X'80000000'
+         L     R0,=F'-1' JUNK
+         L     R1,=X'80000000'
          ML    R0,=X'80000000'
          CL    R0,=X'40000000'
          RT1   CCE
@@ -4132,14 +4202,16 @@ BXLEG3   EQU   *
          RT1   CCE
 * EB80 ICMH
          SGR   R0,R0                       
-         ICMH  R0,15,=X'123456780'
-         RT1   CCL
-         CLMH  R0,15,=X'123456780'
+         ICMH  R0,15,=X'12345678'
+         RT1   CCH                  RPI 295 FIX
+         CLMH  R0,15,=X'12345678'
          RT1   CCE
          ICMH  R0,15,=X'00000000'
          RT1   CCE
          CLMH  R0,15,=X'00000000'
          RT1   CCE
+         ICMH  R0,3,=X'FFFF'
+         RT1   CCL                  RPI 295 TEST
 * EB81 ICMY
          L     R1,=X'F1F2F3F4'
          ICMY  R1,9,=X'CACD'
@@ -4150,6 +4222,8 @@ BXLEG3   EQU   *
          RT1   CCE
          CL    R1,=X'00F2F300'
          RT1   CCE
+         ICMY  R0,3,=X'FFFF'
+         RT1   CCL                  RPI 295 TEST
 * EB90 STMY
          LA    R1,1
          LA    R2,2
@@ -4246,7 +4320,7 @@ BRXLG3   EQU   *
          RT1   CCH
          CP    PWORK+5(3),=P'123'
          RT1   CCE
-         ESPIE SET,SRP1,7
+         ESPIE SET,ESPIE_EXIT,7,PARAM=SRP1
          ZAP   PWORK,=X'40'
          RT1   ABORT
 SRP1     ESPIE RESET
@@ -4329,7 +4403,7 @@ SRP1     ESPIE RESET
          RT1   CCH
          ZAP   PWORK,=P'-1'
          RT1   CCL
-         ESPIE SET,ZAP1,7
+         ESPIE SET,ESPIE_EXIT,7,PARAM=ZAP1
          ZAP   PWORK,=X'00'
          RT1   ABORT
 ZAP1     ESPIE RESET
@@ -4364,7 +4438,7 @@ ZAP1     ESPIE RESET
          CP    PWORK16,=PL16'1234567891123456789112345678912'
          RT1   CCE
          ZAP   PWORK,=X'999999999999999C'
-         ESPIE SET,AP1,10
+         ESPIE SET,ESPIE_EXIT,10,PARAM=AP1
          AP    PWORK,=P'1'
          RT1   ABORT
 AP1      ESPIE RESET
@@ -4380,7 +4454,7 @@ AP1      ESPIE RESET
          CLC   PWORK,=A(0,X'1C')
          RT1   CCE
          ZAP   PWORK,=X'999999999999999D'
-         ESPIE SET,SP1,10
+         ESPIE SET,ESPIE_EXIT,10,PARAM=SP1
          SP    PWORK,=P'1'
          RT1   ABORT
 SP1      ESPIE RESET
@@ -4400,7 +4474,7 @@ SP1      ESPIE RESET
          RT1   CCE
          CP    PWORK+6(2),=P'1'
          RT1   CCE
-         ESPIE SET,DP1,11
+         ESPIE SET,ESPIE_EXIT,11,PARAM=DP1
          ZAP   PWORK,=P'1'
          DP    PWORK,=P'0'
          RT1   ABORT
@@ -4408,5 +4482,7 @@ DP1      ESPIE RESET
          WTO   'ESPIE FOR PACKED DIVIDE OK'
 * END
          RT1   END
+         EPIED
+         ESTAD
          END         
 

@@ -1,0 +1,23 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR EIB DSECT MAP
+.*********************************************************************
+         MACRO
+         DFHEIBLK
+.*
+.* DEFINE INTERFACE CONTROL BLOCK  (CICS SETS ZCVTEIBP AND DFHEIBP)
+.*
+DFHEIBLK DSECT
+EIBTIME  DS    PL4  0HHMMSS
+EIBDATE  DS    PL4  0CYYDDD
+EIBTRN   DS    0CL8 TRANSACTION PROGRAM NAME
+EIBSYSID DS    CL4  FIRST 4 CHARACTERS = SYSTEM ID
+EIBTRNID DS    CL4  LAST  4 CHARACTERS = TRAN   ID 
+EIBCALEN DS    H    COMMON AREA LENGTH
+EIBAID   DS    X    ATTENTION CODE FROM EXEC CICS RECEIVE
+EIBLENG  EQU   *-DFHEIBLK
+         MEND

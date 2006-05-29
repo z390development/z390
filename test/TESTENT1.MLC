@@ -1,0 +1,18 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 04/21/06 RPI 288 - test ENTRY defined as both CSECT and label
+*********************************************************************
+TESTENT1 SUBENTRY
+         WTO 'TESTENT1 STARTED'
+         CALL ENTRY2
+         WTO  'TESTENT1 ENDED OK'
+         SUBEXIT
+ENTRY2   CSECT
+         ENTRY ENTRY2
+ENTRY2   DS    0H         
+         BR    14
+         END

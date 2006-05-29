@@ -1,0 +1,20 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/05/06 RPI 281 ADD DCBE SUPPORT FOR EODAD= AND SYNAD=
+.*********************************************************************
+.*
+.* If the DCBDCBE field in DCB is not zero then the EODAD and SYNAD
+.* exit addresses will be fetched from DCDE block when required.    
+.* See IHADCBE for IHADCBE DSECT with DCBEEODA and DCBESYNA fields
+.*********************************************************************
+         MACRO
+&N       DCBE  &EODAD=0,      END OF FILE EXIT ADDRESS                 X
+               &SYNAD=0       I/O ERROR EXIT ADDRESS
+&N       DS    0F
+         DC    A(&EODAD)      DCBEEODA
+         DC    A(&SYNAD)      DCBESYNA
+         MEND
