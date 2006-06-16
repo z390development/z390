@@ -6,11 +6,12 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-.* 10/20/05 RPI27 - issue error for any undefined operands     
-.* 10/21/05 RPI41 - add VL positional parm support
-.* 12/12/05 RPI18 - correct VL bit OI instrcution (missing .)
-.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
-.* 04/12/06 RPI244 IGNORE NON CRITICAL KW PARMS
+.* 10/20/05 RPI  27 - issue error for any undefined operands     
+.* 10/21/05 RPI  41 - add VL positional parm support
+.* 12/12/05 RPI  18 - correct VL bit OI instrcution (missing .)
+.* 01/09/06 RPI 163 - SKIP LR FOR SAME REGISTER
+.* 04/12/06 RPI 244 - IGNORE NON CRITICAL KW PARMS
+.* 04/12/06 RPI 322 - support VL option with MF=L 
 .*********************************************************************
 &N      CALL   &NAME,                                                  X
                &PARMS,                                                 X
@@ -24,15 +25,16 @@
          AIF   (N'&SYSLIST LE 3).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
 .NPOK    ANOP
+&NPARMS  SETA   N'&PARMS
          AIF   (&MF EQ 'L').LIST
          AIF   (&MF(1) EQ 'E').EXEC
 .STD     ANOP
-&NPARMS  SETA   N'&PARMS
          AIF    (&NPARMS EQ 0).ENDPARM
          LA     1,=A&PARMS
-         AIF    (&VL NE 'VL').ENDPARM
+         AIF    (&VL NE 'VL').SKIPVL1 
 &OFF     SETA   N'&PARMS*4-4
          OI     &OFF.(1),X'80'
+.SKIPVL1 ANOP
 .ENDPARM ANOP
          AIF   (&NAME EQ '').BALR
          AIF    ('&NAME'(1,1) EQ '(').REG
@@ -45,7 +47,18 @@
          &LINKINST 14,15
          MEXIT
 .LIST    ANOP
+         AIF    (&VL EQ 'VL').VLLIST    
          DC    A&PARMS
+         MEXIT       
+.VLLIST  ANOP
+&I       SETA  0
+.VLLOOP  ANOP
+&I       SETA  &I+1
+         AIF   (&I GE &NPARMS).VLLAST
+         DC    A(&PARMS(&I))
+         AGO   .VLLOOP
+.VLLAST  ANOP
+         DC    A(&PARMS(&I)+X'80000000')
          MEXIT
 .EXEC    ANO
          AIF    ('&MF(2)' EQ '(').REGPARM

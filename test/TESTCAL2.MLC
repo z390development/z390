@@ -5,12 +5,17 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 06/16/06 DSH RPI 322 ADD TEST FOR CALL MF=L
+*********************************************************************
 TESTCAL2 SUBENTRY
          WTO 'TESTCAL1 TEST STATIC LINK CALLS WITH EXTRN AND ENTRY'
          CALL MYSUB,(PARM1),VL         TEST CVT EXTRN TO CSECT
          CALL MYENT,(PARM1,PARM2),VL   TEST CVT EXTRN TO LOCAL LABEL
+         LA   R1,MYLIST
+         CALL MYENT
          WTO  'TESTEXT2 ENDED OK'
          SUBEXIT
+MYLIST   CALL ,(PARM1,PARM2),VL,MF=L
 PARM1    DC   CL20'PARM1 MSG'
 PARM2    DC   CL20'PARM2 MSG'
 MYSUB    SUBENTRY

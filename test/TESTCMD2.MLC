@@ -20,7 +20,11 @@ CMDREAD1 EQU   *
          MVI   WTOCMD_ID,C'0'
          WTO   MF=(E,WTOCMD)
          CLC   MSG(8),=C'>REM END'
+         BNE   SKIPEND1
+         CLI   EOF2,C'T'
          BE    CMDEND
+         MVI   EOF1,C'T'
+SKIPEND1 EQU   *
          LA    4,10
 CMDREAD2 EQU   *
          AHI   4,-1
@@ -32,6 +36,12 @@ CMDREAD2 EQU   *
          BE    ERROR2
          MVI   WTOCMD_ID,C'1'
          WTO   MF=(E,WTOCMD)
+         CLC   MSG(8),=C'>REM END'
+         BNE   SKIPEND2
+         CLI   EOF1,C'T'
+         BE    CMDEND
+         MVI   EOF2,C'T'
+SKIPEND2 EQU   *
          B     CMDLOOP
 CMDEND   EQU   *
          CMDPROC STOP,ID=0
@@ -47,4 +57,6 @@ WTOCMD   DC    AL2(WTOEND-*,0)
 WTOCMD_ID DC   C' ='
 MSG      DC    CL80' '
 WTOEND   EQU   *
+EOF1     DC    C'F'
+EOF2     DC    C'F'
          END

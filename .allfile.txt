@@ -39,7 +39,6 @@ C:\z390\test
 C:\z390\VDIFF.BAT
 C:\z390\Z390.BAT
 C:\z390\z390.jar
-C:\z390\ZSTRMAC
 C:\z390\bmk\BMKALCG.390
 C:\z390\bmk\BMKALCG.BAL
 C:\z390\bmk\BMKALCG.LOG
@@ -105,6 +104,7 @@ C:\z390\bmk\INSTTIME.OUT
 C:\z390\bmk\INSTTIME.pdf
 C:\z390\bmk\INSTTIME.PRN
 C:\z390\bmk\INSTTIME.TXT
+C:\z390\cics\cics
 C:\z390\cics\CICS.390
 C:\z390\cics\CICS.BAL
 C:\z390\cics\CICS.LOG
@@ -434,6 +434,11 @@ C:\z390\mac\DCBE.MAC
 C:\z390\mac\DECBD.MAC
 C:\z390\mac\DELETE.MAC
 C:\z390\mac\DEQ.MAC
+C:\z390\mac\DO.MAC
+C:\z390\mac\ELSE.MAC
+C:\z390\mac\ELSEIF.MAC
+C:\z390\mac\ENDDO.MAC
+C:\z390\mac\ENDIF.MAC
 C:\z390\mac\ENQ.MAC
 C:\z390\mac\EPIED.MAC
 C:\z390\mac\EQUREGS.MAC
@@ -447,6 +452,7 @@ C:\z390\mac\FREEMAIN.MAC
 C:\z390\mac\GET.MAC
 C:\z390\mac\GETMAIN.MAC
 C:\z390\mac\GUAM.MAC
+C:\z390\mac\IF.MAC
 C:\z390\mac\IHADCBE.MAC
 C:\z390\mac\LINK.MAC
 C:\z390\mac\LOAD.MAC
@@ -491,6 +497,8 @@ C:\z390\mac\XCTL.MAC
 C:\z390\mac\XLATE.MAC
 C:\z390\mac\YREGS.MAC
 C:\z390\mac\ZCVTD.MAC
+C:\z390\mac\ZSTREQU.CPY
+C:\z390\mac\ZSTRMAC.CPY
 C:\z390\mvs\demo
 C:\z390\mvs\maclib
 C:\z390\mvs\test
@@ -2218,6 +2226,7 @@ C:\z390\src\az390.java
 C:\z390\src\ez390.java
 C:\z390\src\gz390.java
 C:\z390\src\gz390_screen.java
+C:\z390\src\HELLO.java
 C:\z390\src\lz390.java
 C:\z390\src\MessageBox.java
 C:\z390\src\mz390.java
@@ -3786,11 +3795,3 @@ C:\z390\test\TESTZCV1.svl
 C:\z390\test\TESTZCV1.svo
 C:\z390\test\TESTZCV1.svp
 C:\z390\test\wto.mcr
-C:\z390\ZSTRMAC\DO.MAC
-C:\z390\ZSTRMAC\ELSE.MAC
-C:\z390\ZSTRMAC\ELSEIF.MAC
-C:\z390\ZSTRMAC\ENDDO.MAC
-C:\z390\ZSTRMAC\ENDIF.MAC
-C:\z390\ZSTRMAC\IF.MAC
-C:\z390\ZSTRMAC\ZSTREQU.CPY
-C:\z390\ZSTRMAC\ZSTRMAC.CPY

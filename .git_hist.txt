@@ -764,7 +764,50 @@ set GIT_COMMITTER_DATE=2021-03-20 14:05:00 +0100
 git commit -m "Reconstructed version v1.1.00c of z390 committed on behalf of Don Higgins"
 git tag -a v1.1.00c -m "Reconstructed version v1.1.00c of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.1.00d
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.1.00d
+git add README.TXT
+git rm  ZSTRMAC/DO.MAC
+git rm  ZSTRMAC/ELSE.MAC
+git rm  ZSTRMAC/ELSEIF.MAC
+git rm  ZSTRMAC/ENDDO.MAC
+git rm  ZSTRMAC/ENDIF.MAC
+git rm  ZSTRMAC/IF.MAC
+git rm  ZSTRMAC/ZSTREQU.CPY
+git rm  ZSTRMAC/ZSTRMAC.CPY
+git add mac/CALL.MAC
+git add mac/ESPIE.MAC
+git add mac/ESTAE.MAC
+git add mac/GETMAIN.MAC
+git add mac/STORAGE.MAC
+git add src/az390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/tz390.java
+git add test/TESTCAL2.MLC
+git add test/TESTCMD2.MLC
+git add mac/DO.MAC
+git add mac/ELSE.MAC
+git add mac/ELSEIF.MAC
+git add mac/ENDDO.MAC
+git add mac/ENDIF.MAC
+git add mac/IF.MAC
+git add mac/ZSTREQU.CPY
+git add mac/ZSTRMAC.CPY
+git add src/HELLO.java
+
+==> Create commit for V1.1.00d
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2006-06-16 12:46:00 -0500
+set GIT_COMMITTER_DATE=2021-03-20 14:10:00 +0100
+git commit -m "Reconstructed version v1.1.00d of z390 committed on behalf of Don Higgins"
+git tag -a v1.1.00d -m "Reconstructed version v1.1.00d of z390 committed on behalf of Don Higgins"
 
 
 

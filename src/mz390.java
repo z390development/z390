@@ -158,7 +158,13 @@ public  class  mz390 {
     *          appearing in comma delimited contination lines
     *          and return no pos parms for " , " parm
     * 05/13/06 RPI 314 add AGOB and AIFB
-    * 05/15/06 RPI 315 add option REFORMAT default false        
+    * 05/15/06 RPI 315 add option REFORMAT default false  
+    * 06/04/06 RPI 331 expand macro for cancelled OPSYN 
+    * 06/06/06 RPI 336 correct parsing for D' operator 
+    * 06/08/06 RPI 338 add support for sting dup (..)'..' 
+    * 06/08/06 RPI 329 remove file suffix from &SYS.._MEMBER 
+    * 06/09/06 RPI 330 add MNOTE's with level > 0 to ERR log
+    * 06/09/06 RPI 343 support N'&array returning highest store  
     ********************************************************
     * Global variables
     *****************************************************/
@@ -174,7 +180,7 @@ public  class  mz390 {
     long ins_rate    = 0;
     boolean log_to_bal = false;
     int tot_bal_line = 0;
-    int tot_mnote = 0;
+    int tot_mnote_err   = 0;
     int max_mnote_level = 0;
 	String bal_text = null;     // curr bal_line text
     int    bal_text_index0 = 0; // end of prev. parm
@@ -195,6 +201,8 @@ public  class  mz390 {
     String bal_line = null;
     String bal_label = null;
     String bal_op = null;
+    String   save_bal_op = null; // original bal_op
+    int      save_opsyn_index = -1; // opsyn index of orig. bal_op
     boolean aif_op = false;
     boolean bal_op_ok = false;
     String bal_parms = null;
@@ -248,6 +256,7 @@ public  class  mz390 {
     int tot_ins = 0; // count instr/cntl for MFC option
     int tot_mac_name = 0;      // next avail name
     int load_macro_mend_level = 0;
+    boolean loading_mac = false;
     boolean load_proto_type = false;
     int load_mac_inline_end = 0;
     int find_mac_name_index = 0;
@@ -289,7 +298,6 @@ public  class  mz390 {
     int tot_expand = 0;
     int expand_inc = 100;        //macro array expansion
     int mac_call_level = 0;      //level of macro nesting during loading
-    String   save_op = null;
     int[]    mac_call_name_index = null;
     int[]    mac_call_return     = null;
     int[]    mac_call_actr       = null;
@@ -360,6 +368,7 @@ public  class  mz390 {
     String[] lcl_set_name  = null; 
     byte[]   lcl_set_type  = null;
     int[]    lcl_set_start = null;
+    int[]    lcl_set_high  = null;
     int[]    lcl_set_end   = null;
     int[]    lcl_seta      = null;
     byte[]   lcl_setb      = null;
@@ -375,9 +384,11 @@ public  class  mz390 {
     int    seta_index = 0;
     int    setb_index = 0;
     int    setc_index = 0;
+    String store_name = null;
     int    store_name_index = 0;
     byte   store_loc   = lcl_loc;
     byte   store_type = var_seta_type;
+    int    store_sub        = 0;
     int    store_max_index  = 0; // array max index+1
     int    store_min_index  = 0; // array min index  
     int    store_seta_index = 0;
@@ -416,6 +427,7 @@ public  class  mz390 {
     String[] gbl_set_name  = null; 
     byte[]   gbl_set_type  = null;
     int[]    gbl_set_start = null;
+    int[]    gbl_set_high  = null; // RPI 342 highest subscript 
     int[]    gbl_set_end   = null;
     int[]    gbl_seta      = null;
     byte[]   gbl_setb      = null;
@@ -424,11 +436,13 @@ public  class  mz390 {
      * ordinary symbol table for use by T' L' D'
      */
     int tot_sym = 0;
-    int cur_sym = 0;
+    boolean sym_calc = false; // surpress sym attr/len errors during loading
     String[] sym_name  = null; 
-    char[]   sym_type  = null;
-    char[]   sym_etype = null; // RPI 270
+    char[]   sym_attr  = null;
+    char[]   sym_etype = null; // RPI 270 A or E type C symbol
+    int[]    sym_val   = null;
     int[]    sym_len   = null;
+    int[]    sym_def   = null;
     /*
      * macro operation global variables
      */
@@ -464,8 +478,8 @@ public  class  mz390 {
     char    exp_create_set_op = '&'; // created set &(...) oper
     boolean exp_var_replacement_mode = false; // for repace_vars()
     boolean exp_var_replacement_change = false; // set if replacements made
-    boolean exp_parse_set_mode = false;  // for set target and lcl/gbl alloc
     boolean exp_alloc_set_mode = false;  // for lcl/gbl alloc
+    boolean exp_parse_set_mode = false;  // for set target and lcl/gbl alloc
     byte    exp_parse_set_type = 0;
     byte    exp_parse_set_loc  = 0;
     String  exp_parse_set_name = null;
@@ -491,6 +505,7 @@ public  class  mz390 {
     boolean exp_var_last = false;
     int tot_exp_stk_var = 0;
     int tot_exp_stk_op  = 0;
+    int exp_first_sym_index = -1;
     /*
      * set or sdt variable stack
      */
@@ -682,10 +697,11 @@ private void compile_patterns(){
 				  + "|([0-9]+)"                        // number
 	       		  + "|([']([^']|(['][']))*['])"        // parm in quotes
 				  + "|([\\s/()',\\.\\+\\-\\*=])"       // operators and white space RPI181 (\\ for reg exp. opers)
+				  + "|([dD]['])"                       // D' defined symbol test 0 or 1  RPI 336
 				  + "|([kK]['])"                       // K' character length of var
-				  + "|([l|L]['])"                      // L' length attribute of symbol
-				  + "|([n|N]['])"                      // N' number of parm subparms (n1,n2,n3)
-				  + "|([t|T]['])"                      // T' type attribute of symbol
+				  + "|([lL]['])"                       // L' length attribute of symbol
+				  + "|([nN]['])"                       // N' number of parm subparms (n1,n2,n3)
+				  + "|([tT]['])"                       // T' type attribute of symbol
   		    	  + "|([bB]['][0|1]+['])"              // B'0110' binary self def. term
   		    	  +	"|([cC][aAeE]*[']([^']|(['][']))+['])"    // C'ABCD' ebcdic or ascii self def. term // RPI 270, 274
   		    	  +	"|([cC][\"]([^\"]|([\"][\"]))+[\"])"    // C"ABCD" ascii self def. term   RPI73, 274
@@ -738,10 +754,11 @@ private void compile_patterns(){
             	      + "|([&][a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"    // &var  RPI 253
 					  + "|([0-9]+)"                             // number
 					  + "|([\\s&/()',\\.\\+\\-\\*=])"           // operators and white space RPI181 (\\ for reg exp. opers)
+					  + "|([dD]['])"                            // D' defined symbol test 0 or 1  RPI 336
 					  + "|([kK]['])"                            // K' character length of var
-					  + "|([l|L]['])"                           // L' length attribute of symbol
-					  + "|([n|N]['])"                           // N' number of parm subparms (n1,n2,n3)
-					  + "|([t|T]['])"                           // T' type attribute of symbol
+					  + "|([lL]['])"                            // L' length attribute of symbol
+					  + "|([nN]['])"                            // N' number of parm subparms (n1,n2,n3)
+					  + "|([tT]['])"                            // T' type attribute of symbol
 	  		    	  + "|([bB]['][0|1]+['])"                   // B'0110' binary self def. term
 	  		    	  +	"|([cC][aAeE]*[']([^']|(['][']))+['])"         // C'ABCD' ebcdic or ascii self def. term // RPI 270, 274
 	  		    	  +	"|([cC][\"]([^\"]|([\"][\"]))+[\"])"    // C"ABCD" ascii self def. term   RPI73, 274
@@ -794,7 +811,7 @@ private void process_mac(){
 	     	  tot_mac_ins++;
 		      if  (mac_line_index >= mac_name_line_end[mac_call_name_index[mac_call_level]]){
 	             if (tz390.opt_tracem){ 
-	           	  	   put_log("TRACE MACRO CALL END " + mac_name[mac_call_name_index[mac_call_level]]);
+	           	  	   put_trace("MACRO CALL END " + mac_name[mac_call_name_index[mac_call_level]]);
 	           	 }
 		         if  (tz390.opt_listcall){
 		         	 if (mac_call_level > 0){
@@ -831,7 +848,18 @@ private void process_mac(){
 	           	      exec_mac_op();      // execute macro operation
        		          bal_line = null;    // force macro execution cycle
 	               } else if (bal_op != null) {
-	           	      find_mac_name_index = find_mac_entry(bal_op);
+	            	  if ((save_opsyn_index == -1 
+	            		    || tz390.opsyn_name[save_opsyn_index] == null
+	            		  )
+	            		  ||
+	            		  (!tz390.opt_mfc
+	            			 || tz390.find_key_index("O:" + bal_op) < 0
+	            		  )
+	            		  ){
+	            		  find_mac_name_index = find_mac_entry(bal_op);
+	            	  } else { 
+	            		  find_mac_name_index = -2; // RPI 331 don't search for opsyn rep.
+	            	  }
 	           	      if (find_mac_name_index == -1){
                           find_and_load_mac_file();
 	           	      }
@@ -845,7 +873,7 @@ private void process_mac(){
 	          }
 		      if   (bal_line != null){
 		    	   if (tz390.opt_tracem){
-		    		   put_log("TRACE BAL OUTPUT - " + bal_line);
+		    		   put_trace("BAL OUTPUT - " + bal_line);
 		    	   }
 		      	   put_bal_line(bal_line);
 	          }
@@ -913,6 +941,7 @@ private void load_mac(){
 	 * 8.  Insert MLC copy profile copybook if option 
 	 *     PROFILE(copybook) specified.
 	 */
+	loading_mac = true;
 	tot_mac_load++;
 	cur_mac_file = 0;
 	load_macro_mend_level = 0;
@@ -936,6 +965,9 @@ private void load_mac(){
     		mac_file_line[mac_line_index] = mac_line;
     		mac_line_index++;
     		parse_mac_line();  // open copy
+    	    if (tz390.opt_tracem){
+    	    	put_trace("PROFILE " + mac_line);
+    	    }
     	}
     	load_proto_type = true;
     	break;
@@ -951,7 +983,7 @@ private void load_mac(){
     	update_sysstmt();
     	cur_mac_line_num = mac_file_line_num[mac_line_index];
     	if (tz390.opt_tracem){
-    		put_log("TRACE LOADING INLINE MACRO");
+    		put_trace("LOADING INLINE MACRO");
     	}
     	load_macro_mend_level = 1; // macro statment read inline
     	load_mac_inline_end = mac_name_line_end[mac_name_index];
@@ -961,7 +993,7 @@ private void load_mac(){
 	load_get_mac_line();
 	while (mac_line != null
 			&& mac_line_index < tz390.opt_maxline){
-		if  (mac_line != null){
+		    parse_mac_line();
 			if (load_type != load_mac_inline
 			    && (mac_line.length() < 2
 				    || !mac_line.substring(0,2).equals(".*"))
@@ -993,7 +1025,6 @@ private void load_mac(){
 			        	mac_line = null; // eof at level 0 for macro
 			        }
 			    }
-			}
      	}
 		if  (mac_line != null){
 			if (load_type == load_mac_inline
@@ -1037,13 +1068,14 @@ private void load_mac(){
 	case 2: // inline macro file
 	    if (load_macro_mend_level != 0){
 			log_error(135,"unbalanced macro mend in " + load_macro_name);
-		}
+	    }
 		mac_name_line_end[mac_name_index] = mac_line_index;
 	}
 	mac_name_lab_end[mac_name_index] = tot_mac_lab;
 	check_undefined_labs(mac_name_index);
 	load_mac_name_index = mac_name_index;
 	mac_name_index = save_mac_name_index;
+	loading_mac = false;
 }
 private void load_open_macro_file(){
 	/*
@@ -1070,7 +1102,7 @@ private void load_open_macro_file(){
 		abort_error(26,"I/O error opening file - " + e.toString());
 	}
 	if (tz390.opt_tracem){
-		put_log("TRACE LOADING " + load_file_name);
+		put_trace("LOADING FILE " + load_file_name);
 	}
 }
 private void load_proto_type(){
@@ -1080,8 +1112,8 @@ private void load_proto_type(){
 	 */
      	 load_proto_type = true;
 		 load_proto_index = mac_line_index;
-		 mac_name_line_start[mac_name_index] = mac_line_index;
     	 if (load_type == load_mac_file){
+             mac_name_line_start[mac_name_index] = mac_line_index; // RPI 331 
 			 if (!mac_op.equals(load_macro_name)){
 				 log_error(132,"macro proto-type name " + mac_op + " not = file name " + load_macro_name);
 			 }
@@ -1202,7 +1234,7 @@ private void load_macro_label_sym(){
 	 * during macro loading
 	 * 1.  remove .*
 	 * 2.  add macro labels
-	 * 3.  add symbol and length
+	 * 3.  add symbol and length if MLC
 	 */
 	if (mac_label.length() > 1
 		&& mac_label.charAt(0) == '.'
@@ -1216,10 +1248,11 @@ private void load_macro_label_sym(){
 		} else {
 			log_error(40,"invalid macro label - " + mac_label);
 		}
-	} else if (mac_label.length() > 0
+	} else if (load_type == load_mlc_file  // RPI 340 
+			    && mac_label.length() > 0
 				&& mac_label.charAt(0) != '*'  // RPI 140
 				&& mac_label.charAt(0) != '&'){
-		set_sym_type_len(mac_label,mac_op,mac_parms);
+		set_sym_attr_len(mac_label,mac_op,mac_parms);
 	}
 
 }
@@ -1309,7 +1342,7 @@ private void check_undefined_labs(int mac_index){
 			mac_abort = false;
 			int old_mac_line_index = mac_line_index;
 			mac_line_index = -mac_lab_index[index];
-			log_error(115,mac_name[mac_index] + " undefined " + mac_lab_name[index]);
+			create_mnote(4,mac_name[mac_index] + " undefined " + mac_lab_name[index] + " at " + mac_file_line_num[mac_line_index]);
 		    mac_line_index = old_mac_line_index;
 		}
 		index++;
@@ -1327,7 +1360,6 @@ private void load_get_mac_line(){
 		if (load_macro_mend_level > 0 
 			&& mac_line_index < load_mac_inline_end){ 
 			mac_line = mac_file_line[mac_line_index];
-			parse_mac_line();
 		} else {
 			mac_line = null;
 		}
@@ -1399,7 +1431,6 @@ private void load_get_mac_line(){
     } catch (IOException e){
        	abort_error(29,"I/O error on file read " + e.toString());
     }
-    parse_mac_line();
 }
 private void store_mac_line(){   // RPI 274
 	/* 
@@ -1442,9 +1473,6 @@ private void parse_mac_line(){
     } else if (mac_line.charAt(0) == '*'){
     	mac_label = "*";
     	return;
-    }
-    if (tz390.opt_tracem){
-    	put_log("TRACE MAC LINE " + mac_line);
     }
     tz390.split_line(mac_line);
     if (tz390.split_label != null){
@@ -1567,7 +1595,7 @@ private void put_bal_line(String bal_line){
 	   if (tz390.split_op == null)tz390.split_op = "";
 	   if (tz390.split_parms == null)tz390.split_parms = "";
 	   if  (tz390.opt_mfc && tz390.split_label.length() > 0){
-           set_sym_type_len(tz390.split_label.toUpperCase(),tz390.split_op.toUpperCase(),tz390.split_parms.toUpperCase());
+           set_sym_attr_len(tz390.split_label.toUpperCase(),tz390.split_op.toUpperCase(),tz390.split_parms); // RPI 340
 	   }
 	   if  (tz390.opt_reformat || reformat){
 		   if  (tz390.split_label.length() == 0 
@@ -1628,7 +1656,7 @@ private void parse_bal_line(){
 	 * 2.  Set bal_label and bal_o
 	 */
 	if (tz390.opt_tracem){
-		put_log("TRACE BAL PARSING  " + bal_line);
+		put_trace("BAL PARSING  " + bal_line);
 	}
 	bal_label = null;
 	bal_op    = null;
@@ -1650,12 +1678,12 @@ private void parse_bal_line(){
     		split_bal_line();
     	}
     }
-    save_op = bal_op;
+    save_bal_op = bal_op;    
     if (bal_op != null && bal_op.length() > 0){
     	String opsyn_key   = bal_op.toUpperCase();
-		int    opsyn_index = tz390.find_key_index("R:" + opsyn_key);
-		if (opsyn_index >= 0 && tz390.opsyn_name[opsyn_index] != null){
-			bal_op = tz390.opsyn_name[opsyn_index];  /// RPI 306
+		save_opsyn_index = tz390.find_key_index("R:" + opsyn_key);
+		if (save_opsyn_index >= 0 && tz390.opsyn_name[save_opsyn_index] != null){
+			bal_op = tz390.opsyn_name[save_opsyn_index];  /// RPI 306
 		}
 	}
 }
@@ -1880,10 +1908,16 @@ private String get_set_string(String name,int sub){
 		      return setc_value;
 	   	   }
 	   default: 
-	  	 abort_error(68,"invalid case index");
+	       abort_case();
        }
 	}
 	return null;
+}
+private void abort_case(){
+	/*
+	 * abort case with invalide index
+	 */
+	abort_error(68,"internal error - invalid case index");
 }
 private int find_mac_op(){
 	/*
@@ -1976,7 +2010,7 @@ private void exec_aif(){
             }
         	aif_test_index = -1;
     		if (tz390.opt_traceall){
-    		   put_log("TRACE AIF BRANCH");
+    		   put_trace("AIF BRANCH");
     		}
     		update_sysstmt();
     	} else {
@@ -1986,7 +2020,7 @@ private void exec_aif(){
     		} else {
     			aif_test_index = -1;
     			if (tz390.opt_traceall){
-    				put_log("TRACE AIF  NO BRANCH");
+    				put_trace("AIF  NO BRANCH");
     			}
     		}
     	}
@@ -2024,53 +2058,45 @@ private void exec_mac_op(){
     	break;
     case 206:  // AREAD
     	bal_op_ok = true;
-    	if (get_setc_target()){
+    	if (get_set_target(var_setc_type)){
+    		if (store_loc == lcl_loc){
+    			store_setc_index = lcl_set_start[store_name_index]+store_sub-1;
+    		} else {
+    			store_setc_index = gbl_set_start[store_name_index]+store_sub-1;
+    		}
     		String dat_line = get_aread_string();
     		put_setc_string(dat_line);
     	}
     	break;
     case 207:  // GBLA 
        	bal_op_ok = true;
-    	exp_parse_set_loc = gbl_loc;
-    	exp_parse_set_type = var_seta_type;
-    	alloc_set();
+    	alloc_set(var_seta_type,gbl_loc);
     	break;
     case 208:  // GBLB 
        	bal_op_ok = true;
-    	exp_parse_set_loc = gbl_loc;
-    	exp_parse_set_type = var_setb_type;
-    	alloc_set();
+    	alloc_set(var_setb_type,gbl_loc);
     	break;
     case 209:  // GBLC
        	bal_op_ok = true;
-    	exp_parse_set_loc = gbl_loc;
-    	exp_parse_set_type = var_setc_type;
-    	alloc_set();
+    	alloc_set(var_setc_type,gbl_loc);
     	break;
     case 210:  // LCLA
        	bal_op_ok = true;
-    	exp_parse_set_loc = lcl_loc;
-    	exp_parse_set_type = var_seta_type;
-    	alloc_set();
+    	alloc_set(var_seta_type,lcl_loc);
     	break;
     case 211:  // LCLB
        	bal_op_ok = true;
-    	exp_parse_set_loc = lcl_loc;
-    	exp_parse_set_type = var_setb_type;
-    	alloc_set();
+    	alloc_set(var_setb_type,lcl_loc);
     	break;
     case 212:  // LCLC
        	bal_op_ok = true;
-    	exp_parse_set_loc = lcl_loc;
-    	exp_parse_set_type = var_setc_type;
-    	alloc_set();
+    	alloc_set(var_setc_type,lcl_loc);
     	break;
     case 213:  // MHELP 
     	break;
     case 214:  // MNOTE  RPI 238
        	bal_op_ok = true;
-   		tot_mnote++;
-    	bal_line = replace_vars(bal_line,false);
+    	bal_parms = replace_vars(bal_parms,false);
         int mnote_level = 0;
     	if (bal_parms.length() > 0 
             && bal_parms.charAt(0) != '\''
@@ -2078,18 +2104,16 @@ private void exec_mac_op(){
             && bal_parms.charAt(0) != '*'){
             mnote_level = calc_seta_exp(bal_parms,0);
     	}
-    	if (mnote_level > gbl_seta[gbl_sysm_hsev_index]){
-    		gbl_seta[gbl_sysm_hsev_index] = mnote_level;
-    	}
-    	if (mnote_level > gbl_seta[gbl_sysm_sev_index]){
-    		gbl_seta[gbl_sysm_sev_index] = mnote_level;
-    	}
-    	put_bal_line(bal_line);
+    	process_mnote(mnote_level,bal_parms);
     	break;
     case 215:  // SETA 
        	bal_op_ok = true;
-       	exp_parse_set_type = var_seta_type;
-       	if (get_seta_target()){
+       	if (get_set_target(var_seta_type)){
+    		if (store_loc == lcl_loc){
+    			store_seta_index = lcl_set_start[store_name_index]+store_sub-1;
+    		} else {
+    			store_seta_index = gbl_set_start[store_name_index]+store_sub-1;
+    		}
        		while (bal_parms != null){
        			store_seta_value = calc_seta_exp(bal_parms,0);
        			put_seta_value(store_seta_value);
@@ -2098,7 +2122,7 @@ private void exec_mac_op(){
        				bal_parms = bal_parms.substring(exp_next_index);
        				store_seta_index++;
        				if (store_seta_index >= store_max_index){
-                        log_error(118,"seta multiple values beyond linit");
+                        log_error(118,"seta multiple values beyond limit");
        				} 
        			} else {
        				bal_parms = null;
@@ -2110,8 +2134,12 @@ private void exec_mac_op(){
     	break;
     case 217:  // SETB 
        	bal_op_ok = true;
-       	exp_parse_set_type = var_setb_type;
-       	if (get_setb_target()){
+       	if (get_set_target(var_setb_type)){
+    		if (store_loc == lcl_loc){
+    			store_setb_index = lcl_set_start[store_name_index]+store_sub-1;
+    		} else {
+    			store_setb_index = gbl_set_start[store_name_index]+store_sub-1;
+    		}
        		while (bal_parms != null){
        			store_setb_value = calc_setb_exp(bal_parms,0);
        			put_setb_value(store_setb_value);
@@ -2130,10 +2158,14 @@ private void exec_mac_op(){
     	break;
     case 218:  // SETC  
        	bal_op_ok = true;
-       	exp_parse_set_type = var_setc_type;
-       	if (get_setc_target()){
+       	if (get_set_target(var_setc_type)){
+    		if (store_loc == lcl_loc){
+    			store_setc_index = lcl_set_start[store_name_index]+store_sub-1;
+    		} else {
+    			store_setc_index = gbl_set_start[store_name_index]+store_sub-1;
+    		}
        		while (!mac_abort && bal_parms != null){
-       			String setc_string = calc_setc_exp(bal_parms,0);
+       			String setc_string = calc_setc_exp(bal_parms,0); 
        			put_setc_string(setc_string);
                 if  (bal_parms.length() >= exp_next_index
                 	&& bal_parms.charAt(exp_next_index-1) == ','){
@@ -2144,7 +2176,7 @@ private void exec_mac_op(){
            			} 
            		} else {
            			bal_parms = null;
-           		}
+           		}                
        		}
        	}
     	break;
@@ -2183,18 +2215,24 @@ private void exec_mac_op(){
     	tz390.update_opsyn(bal_label,bal_parms);
     	break;
 	default: 
-	  	 abort_error(68,"invalid case index - " + mac_op_index);
+		abort_case();
 	}
 	if (!bal_op_ok){
 		put_bal_line(bal_line);
 		abort_error(47,"macro operation not supported - " + bal_op);
 	}
 }
-private void alloc_set(){
+private void alloc_set(byte alloc_set_type,int alloc_set_loc){
 	/*
-	 * parse set scalar,array, created set variables
-	 * exp_parse_set_loc = lcl_set | gbl_set
-	 * exp_parse_set_type = var_seta_type| var_setb_type | var_setc_type
+	 * allocate set scalar,array, or created set
+	 * variables on first occurance.
+	 * 
+	 * alloc_set_loc = lcl_set | gbl_set
+	 * alloc_set_type = var_seta_type| var_setb_type | var_setc_type
+	 *
+	 * Notes:
+	 *   1.  Duplicates ignored and expand used to 
+	 *       handle any subscript beyond first alloc.
 	 */
 	exp_alloc_set_mode = true; //RPI126
 	String text = bal_parms;
@@ -2213,18 +2251,13 @@ private void alloc_set(){
     	}
     	index = 0;
    		if (!parse_set_var(text,index) 
-   			|| (exp_parse_set_loc == lcl_loc
-   				&& var_loc == gbl_loc)){  //RPI178
+   			|| (alloc_set_loc == lcl_loc
+   				&& exp_parse_set_loc == gbl_loc)){  //RPI178
    			if (exp_parse_set_name != null){
-   				if (exp_next_index < text.length() 
-   					&& text.charAt(exp_next_index) == '('){
-   					exp_parse_set_sub = calc_seta_exp(text,exp_next_index + 1);
-   					exp_next_index++;  // skip subscript )
-   				}
-   				if (exp_parse_set_loc == lcl_loc){
-   					add_lcl_set(exp_parse_set_name,exp_parse_set_type,exp_parse_set_sub);
+   				if (alloc_set_loc == lcl_loc){
+   					add_lcl_set(exp_parse_set_name,alloc_set_type,exp_parse_set_sub);
    				} else {
-   					add_gbl_set(exp_parse_set_name,exp_parse_set_type,exp_parse_set_sub);
+   					add_gbl_set(exp_parse_set_name,alloc_set_type,exp_parse_set_sub);
    				}
    			} else {
    				log_error(105,"syntax error at " + text.substring(index));
@@ -2233,6 +2266,10 @@ private void alloc_set(){
    			log_error(106,"set local/global conflict for - " + text.substring(index));
    		} else if (exp_parse_set_type != var_type){  //RPI178
    			log_error(107,"set type conflict for - " + text.substring(index));
+   		} else {
+   			if (tz390.opt_traceall){
+   				put_trace(exp_parse_set_name + " already defined");
+   			}
    		}
    		index = exp_next_index;
     }
@@ -2256,7 +2293,7 @@ private int calc_seta_exp(String text,int text_index){
        case 3:
        	  return get_int_from_string(exp_setc,10);
 	   default: 
-		  abort_error(68,"invalid case index");
+		   abort_case();
 	}
 	return -1;
 }
@@ -2279,7 +2316,7 @@ private byte calc_setb_exp(String text,int text_index){
        	  	 return 0;
        	  }
 	   default: 
-		  abort_error(68,"invalid case index");
+		   abort_case();
 	}
 	return 0;
 }
@@ -2301,107 +2338,45 @@ private String calc_setc_exp(String text,int text_index){
        case 3:
        	  return exp_setc;
 	   default: 
-		  	 abort_error(68,"invalid case index");
+		   abort_case();
 	}
 	return "";
 }
-private boolean get_seta_target(){
+private boolean get_set_target(byte alloc_set_type){
 	/*
-	 * set seta store info form bal_label
+	 * set set store info form bal_label
 	 * and return true if ok else false
 	 */
+    store_type = alloc_set_type;
 	if (parse_set_var(bal_label,0)){
-    	if (var_type != var_seta_type){
+    	if (exp_parse_set_type != store_type){
         	log_error(17,"invalid set variable type for - " + bal_label);
         	return false;
     	}
-	    store_loc = var_loc;
-	    store_name_index = var_name_index;
-	    store_seta_index = seta_index;
-	    if (var_loc == lcl_loc){
-	    	store_min_index = lcl_set_start[var_name_index];
-	    	store_max_index = lcl_set_end[var_name_index];
-	    } else {
-	    	store_min_index = gbl_set_start[var_name_index];
-	    	store_max_index = gbl_set_end[var_name_index];
-	    }
+	    store_loc = exp_parse_set_loc;
+	    store_name_index = exp_parse_set_name_index;
+	    store_sub  = exp_parse_set_sub;
 	} else { 
-  		if (set_sub != 1){
-			log_error(64,"subscripted seta not defined - " + set_name);
+    	if (exp_parse_set_name == null){
+        	log_error(161,"invalid set variable name - " + bal_label);
+        	return false;
+    	}
+    	store_name = exp_parse_set_name;
+  		if (exp_parse_set_sub != 1){
+			log_error(64,"set array not allocated for " + store_name + "(" + store_sub + ")");
 			return false;
 		} 
-        add_lcl_set(exp_parse_set_name,var_seta_type,1);
 		store_loc = lcl_loc;
-		store_name_index = var_name_index;
-		store_seta_index = seta_index;
-		store_max_index = seta_index+1;
+  		store_sub = 1;
+        store_name_index = add_lcl_set(store_name,store_type,store_sub);
 	}
-	return true;
-}
-private boolean get_setb_target(){
-	/*
-	 * set setb store info form bal_label
-	 * and return true if ok else false
-	 */
-	if (parse_set_var(bal_label,0)){
-   	    if (var_type != var_setb_type){
-       		log_error(17,"invalid setb variable type for - " + bal_label);
-       		return false;
-   		}
-	    store_loc = var_loc;
-	    store_name_index = var_name_index;
-	    store_setb_index = setb_index;
-	    if (var_loc == lcl_loc){
-	    	store_max_index = lcl_set_end[var_name_index];
-	    } else {
-	    	store_max_index = gbl_set_end[var_name_index];
-	    }
-	} else {
-		if (set_sub != 1){
-			log_error(64,"subscripted setc not defined - " + set_name);
-			return false;
-		}
-        add_lcl_set(exp_parse_set_name,var_setb_type,1);
-		store_loc = lcl_loc;
-		store_name_index = var_name_index;
-		store_setb_index = setb_index;
-		store_min_index = setb_index;
-		store_max_index = setb_index+1;
-	}
-	return true;
-}
-private boolean get_setc_target(){
-	/*
-	 * set setc store info from bal_label
-	 * and return true if ok else false
-	 */
-	if (parse_set_var(bal_label,0)){
-		if (var_type != var_setc_type){
-	    	log_error(17,"invalid set variable type for - " + bal_label);
-	    	return false;
-		}
-	    store_loc = var_loc;
-	    store_name_index = var_name_index;
-	    store_setc_index = setc_index;
-	    if (var_loc == lcl_loc){
-	    	store_min_index = lcl_set_start[var_name_index];
-	    	store_max_index = lcl_set_end[var_name_index];
-	    } else {
-	    	store_min_index = gbl_set_start[var_name_index];
-	    	store_max_index = gbl_set_end[var_name_index];
-	    }
-	} else {
-		if (set_sub != 1){
-			log_error(64,"subscripted set not defined - " + set_name);
-			return false;
-		}
-        add_lcl_set(exp_parse_set_name,var_setc_type,1);
-		store_loc = lcl_loc;
-		store_name_index = var_name_index;
-		store_setc_index = setc_index;
-		store_min_index = setc_index;
-		store_max_index = setc_index+1;
-	}
+    if (store_loc == lcl_loc){
+    	store_min_index = lcl_set_start[store_name_index];
+    	store_max_index = lcl_set_end[store_name_index];
+    } else {
+    	store_min_index = gbl_set_start[store_name_index];
+    	store_max_index = gbl_set_end[store_name_index];
+    }
 	return true;
 }
 private void put_seta_value(int seta_value){
@@ -2410,14 +2385,32 @@ private void put_seta_value(int seta_value){
 	 * get_setc_target
 	 */
 	if  (store_loc == lcl_loc){
+		if (store_seta_index < store_min_index){
+	   		log_error(153,"lcla subscript < 1 = " + lcl_set_name[store_name_index] + "(" + (store_seta_index-lcl_set_start[store_name_index]+1) + ")" );
+	   	    store_seta_index = store_min_index;
+		} else if (store_seta_index >= store_max_index){
+			store_seta_index = expand_set(store_name_index,var_seta_type,lcl_loc,store_sub);			
+		}
    	    lcl_seta[store_seta_index] = seta_value;
+   	    if (store_seta_index > lcl_set_high[store_name_index]){
+   	    	lcl_set_high[store_name_index] = store_seta_index;
+   	    }
    	    if (tz390.opt_tracem){
-   	    	put_log("TRACE SETA " + lcl_set_name[store_name_index] + "(" + (store_seta_index - store_min_index + 1) + ")= " + lcl_seta[store_seta_index]);
+   	    	put_trace("SETA LCLA " + lcl_set_name[store_name_index] + "(" + (store_seta_index - store_min_index + 1) + ")= " + lcl_seta[store_seta_index]);
    	    }
 	} else {
+		if (store_seta_index < store_min_index){
+	   		log_error(154,"gbla subscript < 1 = " + gbl_set_name[store_name_index] + "(" + (store_seta_index-gbl_set_start[store_name_index]+1) + ")" );
+	   	    store_seta_index = store_min_index;
+		} else if (store_seta_index >= store_max_index) {
+			store_seta_index = expand_set(store_name_index,var_seta_type,gbl_loc,store_sub);	
+		}
 	    gbl_seta[store_seta_index] = seta_value;
-   	    if (tz390.opt_tracem){
-   	    	put_log("TRACE SETA " + gbl_set_name[store_name_index] + "(" + (store_seta_index - store_min_index + 1) + ")= " + gbl_seta[store_seta_index]);
+   	    if (store_seta_index > gbl_set_high[store_name_index]){
+   	    	gbl_set_high[store_name_index] = store_seta_index;
+   	    }
+	    if (tz390.opt_tracem){
+   	    	put_log(" TRACE SETA GBLA " + gbl_set_name[store_name_index] + "(" + (store_seta_index - store_min_index + 1) + ")= " + gbl_seta[store_seta_index]);
    	    }
 	}
 }
@@ -2426,14 +2419,32 @@ private void put_setb_value(int setb_value){
 	 * 
 	 */
     if  (store_loc == lcl_loc){
+		if (store_setb_index < store_min_index){
+	   		log_error(155,"lclb subscript < 1 = " + lcl_set_name[store_name_index] + "(" + (store_setb_index-lcl_set_start[store_name_index]+1) + ")" );
+	   	    store_setb_index = store_min_index;
+		} else if (store_setb_index >= store_max_index) {
+			store_setb_index = expand_set(store_name_index,var_setb_type,lcl_loc,store_sub);	
+		}
    	    lcl_setb[store_setb_index] = store_setb_value;
+   	    if (store_setb_index > lcl_set_high[store_name_index]){
+   	    	lcl_set_high[store_name_index] = store_setb_index;
+   	    }
    	    if (tz390.opt_tracem){
-   	    	put_log("TRACE SETB " + lcl_set_name[store_name_index] + "(" + (store_setb_index - store_min_index + 1) + ")= " + lcl_setb[store_setb_index]);
+   	    	put_trace("SETB LCLB " + lcl_set_name[store_name_index] + "(" + (store_setb_index - store_min_index + 1) + ")= " + lcl_setb[store_setb_index]);
    	    }
     } else {
+		if (store_setb_index < store_min_index){
+	   		log_error(156,"gblb subscript < 1 = " + gbl_set_name[store_name_index] + "(" + (store_setb_index-gbl_set_start[store_name_index]+1) + ")" );
+	   	    store_setb_index = store_min_index;
+		} else if (store_setb_index >= store_max_index) {
+			store_setb_index = expand_set(store_name_index,var_setb_type,gbl_loc,store_sub);	
+		}
 	    gbl_setb[store_setb_index] = store_setb_value;
-   	    if (tz390.opt_tracem){
-   	    	put_log("TRACE SETB " + gbl_set_name[store_name_index] + "(" + (store_setb_index - store_min_index + 1) + ")= " + gbl_setb[store_setb_index]);
+   	    if (store_setb_index > gbl_set_high[store_name_index]){
+   	    	gbl_set_high[store_name_index] = store_setb_index;
+   	    }
+	    if (tz390.opt_tracem){
+   	    	put_trace("SETB GBLB " + gbl_set_name[store_name_index] + "(" + (store_setb_index - store_min_index + 1) + ")= " + gbl_setb[store_setb_index]);
    	    }
     }
 }
@@ -2443,16 +2454,33 @@ private void put_setc_string(String setc_string){
 	 * get_setc_target
 	 * (used by setc and aread)
 	 */
-
 	if  (store_loc == lcl_loc){
+		if (store_setc_index < store_min_index){
+	   		log_error(157,"lclc subscript < 1 = " + lcl_set_name[store_name_index] + "(" + (store_setc_index-lcl_set_start[store_name_index]+1) + ")" );
+	   	    store_setc_index = store_min_index;
+		} else if (store_setc_index >= store_max_index) {
+			store_setc_index = expand_set(store_name_index,var_setc_type,lcl_loc,store_sub);	
+		}
    	    lcl_setc[store_setc_index] = setc_string;
+   	    if (store_setc_index > lcl_set_high[store_name_index]){
+   	    	lcl_set_high[store_name_index] = store_setc_index;
+   	    }
    	    if (tz390.opt_tracem){
-   	    	put_log("TRACE SETC " + lcl_set_name[store_name_index] + "(" + (store_setc_index - store_min_index + 1) + ")= " + lcl_setc[store_setc_index]);
+   	    	put_trace("SETC LCLC " + lcl_set_name[store_name_index] + "(" + (store_setc_index - store_min_index + 1) + ")= " + lcl_setc[store_setc_index]);
    	    }
 	} else {
+		if (store_setc_index < store_min_index){
+	   		log_error(158,"gblc subscript < 1 = " + gbl_set_name[store_name_index] + "(" + (store_setc_index-gbl_set_start[store_name_index]+1) + ")" );
+	   	    store_setc_index = store_min_index;
+		} else if (store_setc_index >= store_max_index) {
+			store_setc_index = expand_set(store_name_index,var_setc_type,gbl_loc,store_sub);	
+		}
 	    gbl_setc[store_setc_index] = setc_string;
-   	    if (tz390.opt_tracem){
-   	    	put_log("TRACE SETC " + gbl_set_name[store_name_index] + "(" + (store_setc_index - store_min_index + 1) + ")= " + gbl_setc[store_setc_index]);
+   	    if (store_setc_index > gbl_set_high[store_name_index]){
+   	    	gbl_set_high[store_name_index] = store_setc_index;
+   	    }
+	    if (tz390.opt_tracem){
+   	    	put_trace("SETC GBLC " + gbl_set_name[store_name_index] + "(" + (store_setc_index - store_min_index + 1) + ")= " + gbl_setc[store_setc_index]);
    	    }
     }
 }
@@ -2663,6 +2691,7 @@ private boolean calc_exp(String text,int text_index){
    	   exp_var_pushed = false;     // reset var pused for unary 
        var_subscript_calc = false; // reset explicit subscript
    	   exp_prev_substring = false;
+   	   exp_first_sym_index = -1;
        exp_set_prev_op();
        exp_set_next_op();
        while (!exp_end && !mac_abort){ 
@@ -2823,6 +2852,13 @@ private void exp_set_next_token(){
 	       	}
 	       	break;
 	       case '*':
+	    	if (exp_var_pushed){
+	    	    exp_next_class = exp_class_mpy_div;
+	    	} else {
+	    		exp_push_sdt("0");  // RPI 340
+		        exp_var_last   = true;
+	    	}
+	    	break;
 	       case '/':
 	       	exp_next_class = exp_class_mpy_div;
 	       	break;
@@ -2892,7 +2928,9 @@ private void exp_set_next_token(){
 	    	 	}
 	    	 	break;
 	    	 case 'D':
-	    	 	if (exp_next_op.equals("DOUBLE")){
+	 	        if (exp_next_op.equals("D'")){ // RPI 336
+	 	        	exp_next_class = exp_class_oper; 
+	 	        } else if (exp_next_op.equals("DOUBLE")){
 	    	 		exp_next_class = exp_class_oper;
 	    	 	} else {
 	    	 		push_sym();
@@ -3001,16 +3039,11 @@ private void exp_set_next_token(){
 	    	 		push_sym();
 	    	 		exp_var_last = true;
 	    	 	}
-	    	 	break;
-	    	 case '$':
-	    	 case '@':
-	    	 case '#':
+	    	 	break;  // RPI 340
+             default: // RPI 347
 	    	 	push_sym();
 	    	 	exp_var_last = true;
 	    		break;
-	    	 default:
-	    	 	exp_next_class = 0;
-	    	 break;
 	 }
 }
 private void exp_perform_op(){
@@ -3023,17 +3056,17 @@ private void exp_perform_op(){
 	 *       reset after operation.  Used by exp_substring. RPI 214
 	 */
     if (tz390.opt_traceall){
-	        put_log("TRACE EXP OPS=" + tot_exp_stk_op + " VARS=" + tot_exp_stk_var + " PREV OP = " + exp_prev_op +  " NEXT OP = " + exp_token);
+	        put_trace("EXP OPS=" + tot_exp_stk_op + " VARS=" + tot_exp_stk_var + " PREV OP = " + exp_prev_op +  " NEXT OP = " + exp_token);
     }
 	if  (exp_prev_class == 0){
-		log_error(37,"invalid expression operator class for - " + exp_token);
+		log_error(162,"invalid expression operator class for - " + exp_token);
 	}
 	if  (exp_next_class == 0){
-		log_error(37,"invalid expression operator class - " + exp_token);
+		log_error(163,"invalid expression operator class - " + exp_token);
 	}
     int action = exp_action[tot_classes*(exp_prev_class-1)+exp_next_class-1];
     if (tz390.opt_traceall){
-    	put_log("TRACE EXP OPS=" + tot_exp_stk_op + " VARS=" + tot_exp_stk_var + " ACTION = " + action + " PREV CLASS = " + exp_prev_class + " NEXT CLASS = " + exp_next_class);
+    	put_trace("EXP OPS=" + tot_exp_stk_op + " VARS=" + tot_exp_stk_var + " ACTION = " + action + " PREV CLASS = " + exp_prev_class + " NEXT CLASS = " + exp_next_class);
     }
     switch (action){
     case  1: // + or - add/sub
@@ -3069,6 +3102,12 @@ private void exp_perform_op(){
      	  exp_term(); 
   	   } else {
    	      exp_check_prev_op = false;
+   	      if (exp_next_index < exp_text_len
+   		 	  && exp_text.charAt(exp_next_index) == '\''){;
+   	    	  exp_token = "DUP"; // RPI 338
+   	    	  exp_next_class = exp_class_oper;
+   		 	  exp_push_op();
+   	      }
   	   }
        break;
     case  5: // . concatentate
@@ -3129,15 +3168,39 @@ private void exp_perform_op(){
     case 12: // prefix operator ?'
     	exp_pop_op();
 		   if (tz390.opt_traceall){
-			   put_log("TRACE PREFIX OP=" + exp_prev_op);
+			   put_trace(" PREFIX OP=" + exp_prev_op);
 		   }
     	switch (exp_prev_first){
-    	case 'D': // DOUBLE
-    		if (tot_exp_stk_var > 0){
-    			setc_value = get_setc_stack_value().replaceAll("\\'","\\'\\'").replaceAll("\\&","\\&\\&"); //RPI195
-    			put_setc_stack_var();
-    		} else {
-    			log_error(95,"missing variable for DOUBLE operator");
+    	case 'D': 
+    		if (exp_stk_op[tot_exp_stk_op].equals("D'")){// RPI 336
+    			if (tot_exp_stk_var > 0){
+    				setc_value = get_setc_stack_value();
+    				seta_value1 = get_sym_def(setc_value);
+    				put_seta_stack_var();
+    			} else {
+    				log_error(152,"missing variable for D' operator");
+    			}
+    		} else if (exp_stk_op[tot_exp_stk_op].equals("DUP")){// RPI 338
+    			if (tot_exp_stk_var > 1){
+    				setc_value1 = get_setc_stack_value();
+    				seta_value1 = get_seta_stack_value(-1);
+    				tot_exp_stk_var--;
+    				setc_value = setc_value1;
+    				while (seta_value1 > 1){
+    					setc_value = setc_value.concat(setc_value1);
+    					seta_value1--;
+    				}
+    				put_setc_stack_var();
+    			} else {
+    				log_error(152,"missing variable for D' operator");
+    			}	
+    		} else { // assume DOUBLE
+    			if (tot_exp_stk_var > 0){
+    				setc_value = get_setc_stack_value().replaceAll("\\'","\\'\\'").replaceAll("\\&","\\&\\&"); //RPI195
+    				put_setc_stack_var();
+    			} else {
+    				log_error(95,"missing variable for DOUBLE operator");
+    			}
     		}
     		break;
     	case 'K': // K'var returns character count
@@ -3164,29 +3227,73 @@ private void exp_perform_op(){
    				put_setc_stack_var();
    			}
     		break;
-    	case 'N': // N'var returns sublist count
+    	case 'N': // N'var returns sublist count or max arrray store subscript
     		if (tot_exp_stk_var > 0){
-    			if (exp_stk_type[tot_exp_stk_var - 1] == var_sublist_type
-    					&& exp_stk_setb[tot_exp_stk_var - 1] == syslist_loc
+    			switch (exp_stk_type[tot_exp_stk_var - 1]){
+    			case 1: // seta
+    			case 2: // setb
+    			case 3: // setc
+    				if (var_loc == lcl_loc){
+    					if (lcl_set_end[var_name_index] - lcl_set_start[var_name_index] > 1){
+    						seta_value1 = lcl_set_high[var_name_index] - lcl_set_start[var_name_index]+1;
+    					} else {
+    						seta_value1 = 0;
+    					}
+        				tot_exp_stk_var--;
+    				} else if (var_loc == gbl_loc){
+    					if (gbl_set_end[var_name_index] - gbl_set_start[var_name_index] > 1
+    						&& gbl_set_high[var_name_index] > 0){
+    						seta_value1 = gbl_set_high[var_name_index]-gbl_set_start[var_name_index]+1;
+    					} else {
+    						seta_value1 = 0;
+    					}
+        				tot_exp_stk_var--;
+    				} else {
+                        setc_value = get_setc_stack_value();
+                        seta_value1 = get_sublist_count(setc_value);
+    				}
+        			put_seta_stack_var();
+    				break;
+    			case 4: // parm var_parm_type
+    			case 5: // subscript var_subscript type
+    			case 6: // sublist var_sublist_type
+    			    if (exp_stk_setb[tot_exp_stk_var - 1] == syslist_loc
 						&& exp_stk_seta[tot_exp_stk_var - 1] == -1
 						&& mac_call_level > 0){
-    				seta_value1 = mac_call_pos_tot[mac_call_level];
-    				tot_exp_stk_var--; // remove syslist var
-    				put_seta_stack_var();
-    			} else {
-    				setc_value = get_setc_stack_value();
-    				seta_value1 = get_sublist_count(setc_value);
-    				put_seta_stack_var();
+    			    	seta_value1 = mac_call_pos_tot[mac_call_level];
+    			    	tot_exp_stk_var--; // remove syslist var
+    			    	put_seta_stack_var();
+                    } else {
+                        setc_value = get_setc_stack_value();
+                        seta_value1 = get_sublist_count(setc_value);
+    			    }
+    			    break;
+                default: 
+                	log_error(159,"invalid argument for N'");
     			}
     			exp_var_pushed = true; // prevent unary minus
     		} else {
     			log_error(67,"missing variable for N' operator");
     		}
     		break;
-    	case 'T': // T'sym returns type attribute
+    	case 'T': // T'sym returns type attribute as setc
     		if (tot_exp_stk_var > 0){
     			setc_value = get_setc_stack_value();
-    			setc_value = "" + get_sym_type(setc_value);
+    			int cur_sym = find_sym(setc_value);
+    			if (cur_sym >= 0){
+    			    setc_value = "" + sym_attr[cur_sym];
+    			} else {
+    				if (setc_value.length() > 0){
+    					if  (setc_value.charAt(0) >= '0' 
+    				 		&& setc_value.charAt(0) <= '9'){ //RPI180
+    						setc_value  = "N";
+    					} else {
+    						setc_value = "U";
+    					}
+    				} else {
+    					setc_value = "O";;
+    				}
+    			}
     			put_setc_stack_var();
     		} else {
     			log_error(67,"missing variable for L' operator");
@@ -3274,7 +3381,7 @@ private void exp_add(){
 	 */
 	get_seta_stack_values();
 	if (tz390.opt_traceall){
-		put_log("TRACE ADD " + seta_value1 + " + " + seta_value2);
+		put_trace("ADD " + seta_value1 + " + " + seta_value2);
 	}
 	seta_value1 = seta_value1 + seta_value2;
 	put_seta_stack_var();
@@ -3285,7 +3392,7 @@ private void exp_sub(){
 	 */
 	get_seta_stack_values();
 	if (tz390.opt_traceall){
-		put_log("TRACE SUB " + seta_value1 + " - " + seta_value2);
+		put_trace("SUB " + seta_value1 + " - " + seta_value2);
 	}
 	seta_value1 = seta_value1 - seta_value2;
 	put_seta_stack_var();
@@ -3296,7 +3403,7 @@ private void exp_mpy(){
 	 */
 	get_seta_stack_values();
 	if (tz390.opt_traceall){
-		put_log("TRACE MPY " + seta_value1 + " * " + seta_value2);
+		put_trace("MPY " + seta_value1 + " * " + seta_value2);
 	}
 	seta_value1 = seta_value1 * seta_value2;
 	put_seta_stack_var();
@@ -3307,7 +3414,7 @@ private void exp_div(){
 	 */
 	get_seta_stack_values();
 	if (tz390.opt_traceall){
-		put_log("TRACE DIV " + seta_value1 + " / " + seta_value2);
+		put_trace("DIV " + seta_value1 + " / " + seta_value2);
 	}
 	if (seta_value2 != 0){
 	    seta_value1 = seta_value1 / seta_value2;
@@ -3334,7 +3441,7 @@ private void exp_str_index(){
 	 */
 	get_setc_stack_values();
 	if (tz390.opt_traceall){
-		put_log("TRACE INDEX " + setc_value1 + " IN " + setc_value2);
+		put_trace("INDEX " + setc_value1 + " IN " + setc_value2);
 	}
 	int str1_len = setc_value1.length();
 	int str2_len = setc_value2.length();
@@ -3365,7 +3472,7 @@ private void exp_str_find(){
 	 */
 	get_setc_stack_values();
 	if (tz390.opt_traceall){
-		put_log("TRACE FIND " + setc_value1 + " IN " + setc_value2);
+		put_trace("FIND " + setc_value1 + " IN " + setc_value2);
 	}
 	int str1_len = setc_value1.length();
 	int str2_len = setc_value2.length();
@@ -3424,7 +3531,7 @@ private void exp_compare(){
 		   	  }
 		   	  break;
 		  default: 
-			  abort_error(68,"invalid case index");
+			  abort_case();
 		}
 	} else if  (exp_prev_op.equals("GE")){
 		switch (var_type1){
@@ -3450,7 +3557,7 @@ private void exp_compare(){
 		   	  }
 		   	  break;
 		  default: 
-			  	 abort_error(68,"invalid case index");
+			  abort_case();
 		}
 	} else if  (exp_prev_op.equals("GT")){
 		switch (var_type1){
@@ -3476,7 +3583,7 @@ private void exp_compare(){
 		   	  }
 		   	  break;
 			default: 
-			  	 abort_error(68,"invalid case index");
+				abort_case();
 		}
 	} else if  (exp_prev_op.equals("LE")){
 		switch (var_type1){
@@ -3502,7 +3609,7 @@ private void exp_compare(){
 		   	  }
 		   	  break;
 			default: 
-			  	 abort_error(68,"invalid case index");
+				abort_case();
 		}
 	} else if  (exp_prev_op.equals("LT")){
 		switch (var_type1){
@@ -3528,7 +3635,7 @@ private void exp_compare(){
 		   	  }
 		   	  break;
 			default: 
-			  	 abort_error(68,"invalid case index");
+				abort_case();
 		}
 	} else if  (exp_prev_op.equals("NE")){
 		switch (var_type1){
@@ -3554,7 +3661,7 @@ private void exp_compare(){
 		   	  }
 		   	  break;
 			default: 
-			  	 abort_error(68,"invalid case index");
+				abort_case();
 		}
 	}
 }
@@ -3615,7 +3722,7 @@ private void exp_not(){
 	 * perform logical not operation on stk var
 	 */
 	   if (tz390.opt_traceall){
-		   put_log("TRACE NOT");
+		   put_trace("NOT");
 	   }
 	if (tot_exp_stk_var > 0){
 	   switch (exp_stk_type[tot_exp_stk_var - 1]){
@@ -3647,7 +3754,7 @@ private void exp_and(){
 	   seta_value1 = get_seta_stack_value(-2);
 	   seta_value2 = get_seta_stack_value(-1);
 	   if (tz390.opt_traceall){
-		   put_log("TRACE AND '" + seta_value1 + "' AND '" + seta_value2 + "'");
+		   put_trace("AND '" + seta_value1 + "' AND '" + seta_value2 + "'");
 	   }
 	   switch (exp_stk_type[tot_exp_stk_var - 2]){
 	   case 1: // and seta
@@ -3674,7 +3781,7 @@ private void exp_or(){
 		seta_value1 = get_seta_stack_value(-2);
 		seta_value2 = get_seta_stack_value(-1);
 		if (tz390.opt_traceall){
-		   put_log("TRACE OR '" + seta_value1 + "' OR '" + seta_value2 + "'");
+		   put_trace("OR '" + seta_value1 + "' OR '" + seta_value2 + "'");
 		}
 		switch (exp_stk_type[tot_exp_stk_var - 2]){
 	    case 1: // or seta
@@ -3701,7 +3808,7 @@ private void exp_xor(){
 		seta_value1 = get_seta_stack_value(-2);
 		seta_value2 = get_seta_stack_value(-1);
 		if (tz390.opt_traceall){
-			   put_log("TRACE XOR '" + seta_value1 + "' XOR '" + seta_value2 + "'");
+			   put_trace("XOR '" + seta_value1 + "' XOR '" + seta_value2 + "'");
 			}
 		switch (exp_stk_type[tot_exp_stk_var - 2]){
 	    case 1: // xor seta
@@ -3766,7 +3873,7 @@ private void exp_substring(){
 	    exp_level--;   // remove substring extra level
 	    get_seta_stack_values();
 	    if (tz390.opt_traceall){
-	    	put_log("TRACE SUBSTRING " + exp_stk_setc[tot_exp_stk_var - 1] + "(" + seta_value1 + "," + seta_value2 + ")");
+	    	put_trace("SUBSTRING " + exp_stk_setc[tot_exp_stk_var - 1] + "(" + seta_value1 + "," + seta_value2 + ")");
 	    }
 	    setc_len = exp_stk_setc[tot_exp_stk_var - 1].length();
         if (seta_value1 >= 0 && seta_value2 >= 0){
@@ -3813,25 +3920,25 @@ private void exp_var_subscript(){
            	       exp_stk_type[tot_exp_stk_var - 1] = var_seta_type;
            	       exp_stk_seta[tot_exp_stk_var - 1] = lcl_seta[seta_index];
            	       if (tz390.opt_traceall){
-           	    	   put_log("TRACE LCLA " + lcl_set_name[var_name_index] + "(" + seta_index + ")=" + lcl_seta[seta_index]);
+           	    	   put_trace("STK LCLA " + lcl_set_name[var_name_index] + "(" + (seta_index-lcl_set_start[var_name_index]+1) + ")=" + lcl_seta[seta_index]);
            	       }
            	       break;
                case 2: 
         	       exp_stk_type[tot_exp_stk_var - 1] = var_setb_type;
         	       exp_stk_setb[tot_exp_stk_var - 1] = lcl_setb[setb_index];
            	       if (tz390.opt_traceall){
-           	    	   put_log("TRACE LCLB " + lcl_set_name[var_name_index] + "(" + setb_index + ")=" + lcl_setb[setb_index]);
+           	    	   put_trace("STK SETB = " + lcl_set_name[var_name_index] + "(" + setb_index + ")=" + lcl_setb[setb_index]);
            	       }
         	       break;
                case 3: 
         	       exp_stk_type[tot_exp_stk_var - 1] = var_setc_type;
         	       exp_stk_setc[tot_exp_stk_var - 1] = lcl_setc[setc_index];
            	       if (tz390.opt_traceall){
-           	    	   put_log("TRACE LCLC " + lcl_set_name[var_name_index] + "(" + setc_index + ")=" + lcl_setc[setc_index]);
+           	    	   put_trace("STK SETC = " + lcl_set_name[var_name_index] + "(" + setc_index + ")=" + lcl_setc[setc_index]);
            	       }
         	       break;
      		   default: 
-   		  	       abort_error(68,"invalid case index");
+     			  abort_case();
                }
                exp_level--;
 	           exp_pop_op();
@@ -3853,25 +3960,25 @@ private void exp_var_subscript(){
 	           	   exp_stk_type[tot_exp_stk_var - 1] = var_seta_type;
 	           	   exp_stk_seta[tot_exp_stk_var - 1] = gbl_seta[seta_index];
            	       if (tz390.opt_traceall){
-           	    	   put_log("TRACE GBLA " + gbl_set_name[var_name_index] + "(" + seta_index + ")=" + gbl_seta[seta_index]);
+           	    	   put_trace("STK SETA =  " + gbl_seta[seta_index]);
            	       }
 	           	   break;
 	           case 2: 
 	        	   exp_stk_type[tot_exp_stk_var - 1] = var_setb_type;
 	        	   exp_stk_setb[tot_exp_stk_var - 1] = gbl_setb[setb_index];
            	       if (tz390.opt_traceall){
-           	    	   put_log("TRACE GBLB " + gbl_set_name[var_name_index] + "(" + setb_index + ")=" + gbl_setb[setb_index]);
+           	    	   put_trace("STK SETB = " + gbl_setb[setb_index]);
            	       }
 	        	   break;
 	           case 3: 
 	        	   exp_stk_type[tot_exp_stk_var - 1] = var_setc_type;
 	        	   exp_stk_setc[tot_exp_stk_var - 1] = gbl_setc[setc_index];
            	       if (tz390.opt_traceall){
-           	    	   put_log("TRACE GBLC " + gbl_set_name[var_name_index] + "(" + setc_index + ")=" + gbl_setc[setc_index]);
+           	    	   put_trace("STK SETC = " + gbl_setc[setc_index]);
            	       }
 	        	   break;
 	 		   default: 
-			  	 abort_error(68,"invalid case index");
+	 			  abort_case();
 		       }
 	           exp_level--;
 	           exp_pop_op();
@@ -3897,9 +4004,9 @@ private void exp_var_subscript(){
 			   	   exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
            	       if (tz390.opt_traceall){
            	    	   if (var_loc == pos_loc){
-           	    		   put_log("TRACE POS PARM " + mac_call_pos_name[var_name_index] + "=" + setc_value);
+           	    		   put_trace("POS PARM " + mac_call_pos_name[var_name_index] + "=" + setc_value);
            	    	   } else {
-           	    		   put_log("TRACE KEY PARM " + mac_call_kwd_name[var_name_index] + "=" + setc_value);
+           	    		   put_trace("KEY PARM " + mac_call_kwd_name[var_name_index] + "=" + setc_value);
            	    	   }
            	       }
 		   		   if (tot_exp_stk_op >= 1
@@ -3921,7 +4028,7 @@ private void exp_var_subscript(){
 	    	   	  	 	setc_value = "";
 	    	   	  	 }
 					 if (tz390.opt_traceall){
-						 put_log("TRACE SYSLIST PARM(" + var_name_index + ")=" + setc_value);
+						 put_trace("SYSLIST PARM(" + var_name_index + ")=" + setc_value);
 					 }
 	    	   	  } else {
 	    	   	  	 log_error(66,"syslist reference only allowed in macro");
@@ -3930,7 +4037,7 @@ private void exp_var_subscript(){
 				   setc_value = exp_stk_setc[tot_exp_stk_var - 1]; // get prev syslist(sub) value
 				   setc_value = get_sublist(setc_value,set_sub);
 				   if (tz390.opt_traceall){
-					   put_log("TRACE SUBLIST PARM=" + setc_value);
+					   put_trace("SUBLIST PARM=" + setc_value);
 				   }
 	    	   }
 			   if  (exp_next_first == ')'){
@@ -3948,7 +4055,9 @@ private void exp_var_subscript(){
 			   	   exp_stk_seta[tot_exp_stk_var - 1] = var_name_index;
 			   	   exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
 			   }
-	    	   break;
+			   break;
+	    default:
+	    	abort_case();
 		}
 	  } else if (exp_stk_type[tot_exp_stk_var - 2] == var_sublist_type){
 		   set_sub = get_seta_stack_value(-1);
@@ -3956,7 +4065,7 @@ private void exp_var_subscript(){
 		   setc_value = exp_stk_setc[tot_exp_stk_var - 1]; // get parm value set by find_var
 		   setc_value = get_sublist(setc_value,set_sub);
 		   if (tz390.opt_traceall){
-			   put_log("TRACE SUBLIST PARM=" + setc_value);
+			   put_trace("SUBLIST PARM=" + setc_value);
 		   }
 		   if  (exp_next_first == ')'){
 		   	   exp_level--;
@@ -3993,7 +4102,7 @@ private void exp_append_string(){
     	   exp_stk_setc[tot_exp_stk_var - 2] = exp_stk_setc[tot_exp_stk_var - 2].concat(exp_stk_setc[tot_exp_stk_var - 1]);
 	       break;
 	default: 
-	  	 abort_error(68,"invalid case index");
+		abort_case();
     }
     tot_exp_stk_var--;
 }
@@ -4028,8 +4137,8 @@ private void set_compare(boolean compare_result){
         } else {
            exp_stk_setb[tot_exp_stk_var - 1] = 0;
         }
-    	if (tz390.opt_traceall){
-    		put_log("TRACE COMPARE '" + setc_value1 + "' "+ exp_prev_op  + " '" + setc_value2 + "' = " + exp_stk_setb[tot_exp_stk_var -1]);
+    	if (tz390.opt_tracem){
+    		put_trace("COMPARE '" + setc_value1 + "' "+ exp_prev_op  + " '" + setc_value2 + "' = " + exp_stk_setb[tot_exp_stk_var -1]);
         }
 	} else {
 		log_error(36,"expression compare error");
@@ -4081,7 +4190,7 @@ private void get_compare_stack_values(){
 	        	}
 		    	break;
 			default: 
-			  	 abort_error(68,"invalid case index");
+				abort_case();
 		}
 	} else {
 		log_error(63,"expression compare error");
@@ -4158,7 +4267,7 @@ private void get_setb_stack_values(){
 		    	setb_value1 = (byte) get_int_from_string(exp_stk_setc[tot_exp_stk_var - 2],10);
 		    	break;
 			default: 
-			  	 abort_error(68,"invalid case index");
+			  	 abort_case();
 		}
 		switch (exp_stk_type[tot_exp_stk_var - 1]){
 	    case 1:
@@ -4171,7 +4280,7 @@ private void get_setb_stack_values(){
 	    	setb_value2 = (byte) get_int_from_string(exp_stk_setc[tot_exp_stk_var - 1],10);
 	    	break;
 		default: 
-		  	 abort_error(68,"invalid case index");
+		  	 abort_case();
 	    }
         setc_value1 = "" + setb_value1; // for RPI 274 trace
         setc_value2 = "" + setb_value2; // for RPI 274 trace
@@ -4205,7 +4314,7 @@ private String get_setc_stack_value(){
 		    case 3:
 		    	return exp_stk_setc[tot_exp_stk_var];
 			default: 
-			  	 abort_error(68,"invalid case index");
+				abort_case();
 		}
 	}
 	log_error(20,"expression error");
@@ -4222,7 +4331,7 @@ private void exp_push_op(){
 		  return;
 	  }
 	  if (tz390.opt_traceall){
-		  put_log("TRACE PUSHING OP - " + exp_token + " FROM=" + exp_text.substring(exp_next_index-1));
+		  put_trace("PUSHING OP - " + exp_token + " FROM=" + exp_text.substring(exp_next_index-1));
 	  }
       exp_stk_op[tot_exp_stk_op] = exp_token.toUpperCase();
       exp_stk_op_class[tot_exp_stk_op] = exp_next_class;
@@ -4235,7 +4344,7 @@ private void exp_pop_op(){
 	 */
       tot_exp_stk_op--;
   	  if (tz390.opt_traceall){
-  		  put_log("TRACE POP OP=" + exp_stk_op[tot_exp_stk_op]);
+  		  put_trace("POP OP=" + exp_stk_op[tot_exp_stk_op]);
 	  }
       if (tot_exp_stk_op < 0){
       	 log_error(23,"expression error");
@@ -4251,6 +4360,7 @@ private void exp_term(){
 	 *   1.  Don't return value if parse_mode
 	 */
 	if (exp_parse_set_mode){
+		  exp_parse_set_mode = false;
 	      exp_end = true;
 	      exp_ok  = true;
 	      return;
@@ -4269,7 +4379,7 @@ private void exp_term(){
           	    	exp_seta = get_int_from_string(exp_stk_setc[0],10);
           	    	break;
       		    default: 
-   		  	        abort_error(68,"invalid case index");
+      		    	abort_case();
           	}
           	break;
           case 2:
@@ -4284,7 +4394,7 @@ private void exp_term(){
           	    	exp_setb = (byte) get_int_from_string(exp_stk_setc[0],10);
           	    	break;
       		    default: 
-   		  	        abort_error(68,"invalid case index");
+      		    	abort_case();
           	}
           	break;
           case 3:
@@ -4299,7 +4409,7 @@ private void exp_term(){
           	    	exp_setc = exp_stk_setc[0];
           	    	break;
       		    default: 
-   		  	        abort_error(68,"invalid case index");
+      		    	abort_case();
           	}
           	break;
       }
@@ -4346,13 +4456,23 @@ private void exp_push_var(){
 	 * else
 	 *    push unscripted var value on value stack
 	 *    and skip trailing . if any 
-	 * 
+	 * 	Notes:
+	 *    1.  If exp_parse_set_mode, set exp_parse_set_name and exit.
 	 */
+	int index2 = 0;
 	if (tz390.opt_traceall){
-		put_log("TRACE PUSHING VAR - " + exp_token+ " FROM=" + exp_text.substring(exp_next_index-exp_token.length()));
+		index2 = exp_next_index-exp_token.length();
+		if (index2 < 0)index2 = 0;
+		put_trace("PUSHING VAR - " + exp_token+ " FROM=" + exp_text.substring(index2));
 	}
     if (find_var(exp_token)){  // find set or parm var
-       if (exp_next_char() == '('
+    	if (exp_parse_set_mode && exp_level == 0){  // RPI 345
+    		exp_parse_set_mode = false;
+    		exp_end = true;
+    		exp_ok = true;
+    	    return;
+    	}
+        if (exp_next_char() == '('
     	   && inc_tot_exp_stk_var()){
        	  if (var_type == var_parm_type){
               exp_stk_type[tot_exp_stk_var - 1] = var_sublist_type;
@@ -4385,10 +4505,12 @@ private void exp_push_var(){
 	   	          exp_stk_setc[tot_exp_stk_var - 1] = exp_stk_setc[tot_exp_stk_var - 1].concat(setc_value);
 	   	          break;
 			  default: 
-			  	 abort_error(68,"invalid case index");
+				  abort_case();
 	          }
        		  if (tz390.opt_traceall){
-       			  put_log("TRACE STRING CONCAT - " + exp_token + " = " + exp_stk_setc[tot_exp_stk_var-1]+ " FROM=" + exp_text.substring(exp_next_index-exp_token.length()));
+       			  index2 = exp_next_index-exp_token.length();
+       			  if (index2 < 0)index2 = 0;
+       			  put_trace("STRING CONCAT - " + exp_token + " = " + exp_stk_setc[tot_exp_stk_var-1]+ " FROM=" + exp_text.substring(index2));
        		  }
        	  } else if (inc_tot_exp_stk_var()){
 	          switch (var_type){
@@ -4408,7 +4530,7 @@ private void exp_push_var(){
 	   	      	  exp_stk_seta[tot_exp_stk_var - 1] = var_name_index;
 	   	      	  break;
 			  default: 
-			  	 abort_error(68,"invalid case index");
+				  abort_case();
 	          }
 	          exp_stk_type[tot_exp_stk_var - 1] = var_type;
        	  }
@@ -4417,11 +4539,11 @@ private void exp_push_var(){
        	  }
 	   }
     } else {
-    	if (exp_parse_set_mode){
-		    exp_end = true;
-    	} else {
-    	    log_error(24,"undefined macro variable - " + exp_token);
+    	if (exp_parse_set_mode){  // RPI 345
+    	    exp_end = true;
+    	    return;
     	}
+   	    log_error(24,"undefined macro variable - " + exp_token);
     }
 }
 private void exp_push_sdt(String sdt){
@@ -4432,7 +4554,7 @@ private void exp_push_sdt(String sdt){
 	 *       for use by prefix operators T', L'.
 	 */
 	    if (tz390.opt_traceall){
-		   put_log("TRACE PUSHING SDT - " + sdt);
+		   put_trace("PUSHING SDT - " + sdt);
 	    }
 		if (inc_tot_exp_stk_var()
 		    && ((sdt.length() > 1
@@ -4471,16 +4593,69 @@ private void push_sym(){
 	/*
 	 * push current exp_token symbol  on stack
 	 * as setc for use by prefix operators T', L'
+	 * else get sym_val else 0.
+	 * 
 	 */
-	exp_push_string(exp_token);
+	if (exp_prev_class == exp_class_oper){
+		exp_push_string(exp_token);
+	} else {
+		int index = find_sym(exp_token);
+		if (index >= 0){
+			seta_value1 = sym_val[index];
+			put_seta_stack_var();
+		} else {
+			exp_push_string(exp_token);
+		}
+	}
 }
-private void set_sym_type_len(String sym_lab,String sym_op,String sym_parms){
+private int find_sym(String symbol){
+	/*
+	 * find ordinary symbol and 
+	 * return index else -1.
+	 */
+    return tz390.find_key_index("S:" + symbol);
+}
+private int  add_sym(String sym_lab){
+	/*
+	 * add symbol and set sym_attr = 'U'
+	 * and sym_def = 0
+	 * 
+	 */
+	if (tot_sym >= tz390.opt_maxsym){
+		abort_error(143,"symbol table exceeded");
+	    return -1;
+	}
+	int index = tot_sym;
+	tot_sym++;
+	if (!tz390.add_key_index(index)){
+		abort_error(87,"key search table exceeded");
+	    return -1;
+	}
+	sym_name[index] = sym_lab;
+	sym_attr[index] = 'U';
+	sym_len[index]  = 1;
+    return index;
+}
+private void set_sym_macro_attr(String sym_lab){
+	/*
+	 * set macro call label ordinary symbol type
+	 * to 'M' if currently undefined
+	 */
+	int index = find_sym(sym_lab);
+	if (index == -1){
+		index = add_sym(sym_lab);
+	}
+	if (index >= 0 && sym_attr[index] == 'U'){
+		sym_attr[index] = 'M';
+	}
+}
+private void set_sym_attr_len(String sym_lab,String sym_op,String sym_parms){
 	/*
 	 * set symbol type and length 
 	 * Notes:
 	 *   1.  Called during macro load to define all
-	 *       symbols in open code allowing forward
-	 *       reference during macro execution.
+	 *       ordinary symbols in open code allowing forward
+	 *       reference during macro execution.  
 	 *   2.  Called again during BAL output to define
 	 *       generated symbols and to correctly 
 	 *       resolve variable symbol substitution
@@ -4489,25 +4664,30 @@ private void set_sym_type_len(String sym_lab,String sym_op,String sym_parms){
 	 *       case these cannot be forward referenced.
 	 * 
 	 * Notes:
-	 *   1.  If no type found, ignore symbol.
+	 *   1.  sym_attr = 'U' and sym_def = 0 at create.
+	 *   2.  If loading MLC or final BAL output,
+	 *       set sym_def = 1 and set sym_attr if
+	 *       DS/DC/EQU opcode.
+	 *   3.  Note load_mac changes 
+	 *       sym_attr of label to 'M'
 	 */
 	 int parm_len = sym_parms.length();
      int parm_index = 0;
      int parm_level = 0;
      char parm_char = 'U';
-     cur_sym = tz390.find_key_index("S:" + sym_lab);
-     if (cur_sym < 0){
-         if (cur_sym != -1 || tot_sym >= tz390.opt_maxsym){
-        	 abort_error(143,"symbol table exceeded");
-         }
-		 cur_sym = tot_sym;
-		 tot_sym++;
-		 if (!tz390.add_key_index(cur_sym)){
-			abort_error(87,"key search table exceeded");
-		 }
-         sym_name[cur_sym] = sym_lab;
-         sym_type[cur_sym] = 'U';
-         sym_len[cur_sym]  = 1;
+     int cur_sym = find_sym(sym_lab);
+     if (cur_sym == -1){
+         cur_sym = add_sym(sym_lab);
+     }
+     if (cur_sym >= 0){
+    	 sym_def[cur_sym]  = 1; // RPI 336
+	 } else {
+		 return;
+	 }
+     sym_calc = true;
+     int index = tz390.find_key_index("R:" + sym_op.toUpperCase());
+     if (index >= 0 && tz390.opsyn_name[index] != null){
+    	 sym_op = tz390.opsyn_name[index];  
      }
 	 if (sym_op.toUpperCase().equals("DC")
    		 || sym_op.toUpperCase().equals("DS")){
@@ -4520,7 +4700,7 @@ private void set_sym_type_len(String sym_lab,String sym_op,String sym_parms){
              } else if (parm_level == 0 
         		 && (parm_char < '0'
         		     || parm_char > '9')){
-                 sym_type[cur_sym] = parm_char;
+                 sym_attr[cur_sym] = parm_char;
                  sym_etype[cur_sym] = ' ';
                  if (parm_index < parm_len -1){
                 	 sym_etype[cur_sym] = get_sym_etype(sym_parms.charAt(parm_index+1));
@@ -4541,9 +4721,9 @@ private void set_sym_type_len(String sym_lab,String sym_op,String sym_parms){
         				  parm_index++;
         			  }
         			  sym_len[cur_sym] = temp_len;
-        			  parm_index = tz390.dc_valid_types.indexOf(sym_type[cur_sym]);
+        			  parm_index = tz390.dc_valid_types.indexOf(sym_attr[cur_sym]);
         			  if (parm_index != -1){
-        				  sym_type[cur_sym] = tz390.dc_type_explicit.charAt(parm_index);
+        				  sym_attr[cur_sym] = tz390.dc_type_explicit.charAt(parm_index);
         			  }
         		  } else if (parm_index == sym_parms.length() - 1
         				     || sym_parms.charAt(parm_index + 1) == ','
@@ -4551,11 +4731,11 @@ private void set_sym_type_len(String sym_lab,String sym_op,String sym_parms){
         				    	 && parm_char != 'P'
         				    	 && parm_char != 'Z')){
         			  // no data so use default length
-        			  parm_index = tz390.dc_valid_types.indexOf(sym_type[cur_sym]);
+        			  parm_index = tz390.dc_valid_types.indexOf(sym_attr[cur_sym]);
         			  if (parm_index != -1){
         				  sym_len[cur_sym] = tz390.dc_type_len[parm_index];
         			  } else {
-        				  sym_type[cur_sym] = 'U';
+        				  sym_attr[cur_sym] = 'U';
         				  sym_len[cur_sym] = 1;
         			  }
         		  } else {
@@ -4582,44 +4762,67 @@ private void set_sym_type_len(String sym_lab,String sym_op,String sym_parms){
        		  }
        		  parm_index++;	  
        	}
-	 } else {  // not DS/DC so check if instr
+	 } else if (sym_op.toUpperCase().equals("EQU")){
+		exp_next_index = 0;
+		if (exp_next_index < sym_parms.length()
+			&& sym_parms.charAt(exp_next_index) != ','){
+			// set sym value using sym values
+			sym_val[cur_sym] = calc_seta_exp(sym_parms,exp_next_index);
+		    if (exp_first_sym_index >= 0){
+		    	sym_len[cur_sym]  = sym_len[exp_first_sym_index];
+		    	sym_attr[cur_sym] = sym_attr[exp_first_sym_index];
+		    }
+		}
+		if (exp_next_index < sym_parms.length() 
+			&& sym_parms.charAt(exp_next_index) > ' '){
+            if (exp_next_index < sym_parms.length()
+				&& sym_parms.charAt(exp_next_index) != ','){
+            	sym_len[cur_sym] = calc_seta_exp(sym_parms,exp_next_index); // RPI 340
+            } else {
+            	exp_next_index++; // skip equ length
+            }
+			if (exp_next_index < sym_parms.length() 
+				&& sym_parms.charAt(exp_next_index) > ' '){
+				if (sym_parms.charAt(exp_next_index) == 'T'){
+					exp_type = var_setc_type;
+				} else {
+					exp_type = var_seta_type;
+				}
+				if (calc_exp(sym_parms,exp_next_index)){
+                    set_sym_attr_from_exp(cur_sym);
+				}
+			}
+		}
+	 } else {  // not DS/DC or EQU so check if instr
 		 int op_index = tz390.find_key_index("O:" + sym_op);
 		 if (op_index != -1){
 			 int op_type = tz390.op_type[op_index];
 			 if (op_type <= tz390.max_op_type_offset){
-			     sym_type[cur_sym] = 'I';
+			     sym_attr[cur_sym] = 'I';
 			     sym_len[cur_sym] = tz390.op_type_len[op_type];
-			 } else {
-				 if (sym_op.equals("MACRO")){
-					 sym_type[cur_sym] = 'M';
-			     } else if (sym_op.equals("CSECT")){
-					 sym_type[cur_sym] = 'J';
-				 }
+			 } else if (sym_op.equals("CSECT")
+			    		    || sym_op.equals("DSECT")
+			    		    || sym_op.equals("LOCTR")){
+			     sym_attr[cur_sym] = 'J';
 			 }
 		 }
 	 }
+	 sym_calc = false;
 }
-private char get_sym_type(String symbol){
+private void set_sym_attr_from_exp(int cur_sym){
 	/*
-	 * return type for string:
-	 *   1. If symbol found, return type.
-	 *   2. If null or length 0 return 'O'
-	 *   3. If numeric return 'N'
-	 *   4. Else return 'N'
+	 * set sym_attr char from result of calc_exp
 	 */
-	if (symbol == null || symbol.length() == 0){
-		return 'O';  // omitted
-	}
-	int cur_sym = tz390.find_key_index("S:" + symbol);
-	if (cur_sym != -1){
-		return sym_type[cur_sym];
-	} else {
-		if (symbol.charAt(0) >= '0' 
-			&& symbol.charAt(0) <= '9'){ //RPI180
-			return 'N';
-		} else {
-			return 'U';
-		}
+	switch (exp_type){
+	case 1:
+		sym_attr[cur_sym] = (char)tz390.ebcdic_to_ascii[exp_seta & 0xff];
+        break;
+	case 2:
+		sym_attr[cur_sym] = (char)tz390.ebcdic_to_ascii[exp_setb & 0xff];
+        break;    
+	case 3:
+		sym_attr[cur_sym] = exp_setc.charAt(0);
+		break;
 	}
 }
 private char get_sym_etype(char etype){
@@ -4696,30 +4899,44 @@ private int get_sym_len(String symbol){
 	 * return length for ordinary symbol if found
 	 * else return 1
 	 */
-	int cur_sym = tz390.find_key_index("S:" + symbol);
+	int cur_sym = find_sym(symbol);
 	if (cur_sym != -1){
 		return sym_len[cur_sym];
 	} else {
 		return 1;
 	}
 }
+private int get_sym_def(String symbol){
+	/*
+	 * return 1 if symbol defined else 0
+	 */
+	int cur_sym = find_sym(symbol);
+	if (cur_sym != -1){
+		return sym_def[cur_sym];
+	} else {
+		return 0;
+	}
+}
 private void exp_push_string(String value){
 	/*
 	 * push string on stack as setc
 	 */
+	if (exp_first_sym_index == -1){
+		exp_first_sym_index = find_sym(value);
+	}
 	if (inc_tot_exp_stk_var()){
        exp_stk_type[tot_exp_stk_var-1] = var_setc_type;
        exp_stk_setc[tot_exp_stk_var-1] = value;
 	}
 }
-private void add_lcl_set(String new_name,byte new_type,int new_size){
+private int add_lcl_set(String new_name,byte new_type,int new_size){
 	/*
 	 * add lcl set variable not found by find_set
 	 * 
 	 */
 	if (tot_lcl_name >= tz390.opt_maxsym){
 		abort_error(43,"maximum local variables exceeded");
-		return;
+		return -1;
 	}
 	var_name_index = tot_lcl_name;
 	add_lcl_key_index(tot_lcl_name);
@@ -4732,11 +4949,13 @@ private void add_lcl_set(String new_name,byte new_type,int new_size){
 	set_name  = new_name.toUpperCase();
 	lcl_set_name[var_name_index] = set_name;
 	lcl_set_type[var_name_index] = var_type;
+ 	lcl_set_high[var_name_index] = 0; // RPI 343
 	switch (var_type){
 	   case 1:  // lcl seta
-	   	  if (tot_lcl_seta + new_size >= tz390.opt_maxlcl){
-	   	  	 abort_error(44,"maximum local seta exceeded");
-	   	  	 return;
+	   	  if (new_size < 1 
+	   		  || tot_lcl_seta + new_size >= tz390.opt_maxlcl){
+	   	  	 abort_error(44,"lcla size out of range " + set_name + "(" + new_size + ")");
+	   	  	 return -1;
 	   	  }
 	   	  lcl_set_start[var_name_index] = tot_lcl_seta;
 	   	  seta_index = tot_lcl_seta;
@@ -4751,11 +4970,15 @@ private void add_lcl_set(String new_name,byte new_type,int new_size){
 	   	        seta_index++;
 	   	  }
 	   	  seta_index = lcl_set_start[var_name_index];
+	   	  if (tz390.opt_traceall){
+		   	   	put_trace("LCLA " + lcl_set_name[var_name_index] + "(" + new_size + ")");
+		  }
 	   	  break;
 	   case 2:  // lcl setb
-	   	  if (tot_lcl_setb + new_size >= tz390.opt_maxlcl){
-	   	  	 abort_error(45,"maximum local setb exceeded");
-	   	  	 return;
+	   	  if (new_size < 1 
+	   		  || tot_lcl_setb + new_size >= tz390.opt_maxlcl){
+	   	  	 abort_error(45,"lclb size out of range " + set_name + "(" + new_size + ")");
+	   	  	 return -1;
 	   	  }
 	   	  lcl_set_start[var_name_index] = tot_lcl_setb;
 	   	  setb_index = tot_lcl_setb;
@@ -4770,11 +4993,15 @@ private void add_lcl_set(String new_name,byte new_type,int new_size){
 	   	        setb_index++;
 	   	  }
 	   	  setb_index = lcl_set_start[var_name_index];
+	   	  if (tz390.opt_traceall){
+		   	   	put_trace("LCLB " + lcl_set_name[var_name_index] + "(" + new_size + ")");
+		  }
 	   	  break;
 	   case 3:  // lcl setc
-	   	  if (tot_lcl_setc + new_size >= tz390.opt_maxlcl){
-	   	  	 abort_error(46,"maximum local setc exceeded");
-	   	  	 return;
+	   	  if (new_size < 1 
+	   		  || tot_lcl_setc + new_size >= tz390.opt_maxlcl){
+	   	  	 abort_error(46,"lclc size out of range " + set_name + "(" + new_size + ")");
+	   	  	 return -1;
 	   	  }
 	   	  lcl_set_start[var_name_index] = tot_lcl_setc;
 	   	  setc_index = tot_lcl_setc;
@@ -4789,10 +5016,15 @@ private void add_lcl_set(String new_name,byte new_type,int new_size){
 	   	        setc_index++;
 	   	  }
 	   	  setc_index = lcl_set_start[var_name_index];
+	   	  if (tz390.opt_traceall){
+		   	   	put_trace("LCLC " + lcl_set_name[var_name_index] + "(" + new_size + ")");
+		  }
 	   	  break;
 	default: 
-		  abort_error(68,"invalid case index");
+		abort_case();
+	    return -1;
 	}
+	return var_name_index;
 }
 private void add_gbl_set(String new_name,byte new_type,int new_size){
 	/*
@@ -4813,10 +5045,12 @@ private void add_gbl_set(String new_name,byte new_type,int new_size){
     set_name  = new_name.toUpperCase();
 	gbl_set_name[var_name_index] = set_name;
 	gbl_set_type[var_name_index] = var_type;
+	gbl_set_high[var_name_index] = 0;
 	switch (var_type){
 	   case 1:  // gbl seta
-	   	  if (tot_gbl_seta + new_size >= tz390.opt_maxgbl){
-	   	  	 abort_error(56,"maximum global seta exceeded");
+	   	  if (new_size < 1 
+	   		  || tot_gbl_seta + new_size >= tz390.opt_maxgbl){
+	   	  	 abort_error(56,"gbla size out of range " + set_name + "(" + new_size + ")");
 	   	  	 return;
 	   	  }
 	   	  gbl_set_start[var_name_index] = tot_gbl_seta;
@@ -4829,10 +5063,14 @@ private void add_gbl_set(String new_name,byte new_type,int new_size){
 	   	        seta_index++;
 	   	  }
 	   	  seta_index = gbl_set_start[var_name_index];
+	   	  if (tz390.opt_traceall){
+	   	   	put_trace("GBLA " + gbl_set_name[var_name_index] + "(" + new_size + ")");
+	   	  }
 	   	  break;
 	   case 2:  // gbl setb
-	   	  if (tot_gbl_setb + new_size >= tz390.opt_maxgbl){
-	   	  	 abort_error(57,"maximum global setb exceeded");
+	   	  if (new_size < 1 
+	   		  || tot_gbl_setb + new_size >= tz390.opt_maxgbl){
+	   	  	 abort_error(57,"gblb size out of range " + set_name + "(" + new_size + ")");
 	   	  	 return;
 	   	  }
 	   	  gbl_set_start[var_name_index] = tot_gbl_setb;
@@ -4845,10 +5083,14 @@ private void add_gbl_set(String new_name,byte new_type,int new_size){
 	   	        setb_index++;
 	   	  }
 	   	  setb_index = gbl_set_start[var_name_index];
+	   	  if (tz390.opt_traceall){
+		   	   	put_trace("GBLB " + gbl_set_name[var_name_index] + "(" + new_size + ")");
+		  }
 	   	  break;
 	   case 3:  // gbl setc
-	   	  if (tot_gbl_setc + new_size >= tz390.opt_maxgbl){
-	   	  	 abort_error(58,"maximum global setc exceeded");
+	   	  if (new_size < 1 
+	   		  || tot_gbl_setc + new_size >= tz390.opt_maxgbl){
+	   	  	 abort_error(58,"gblc size out of range " + set_name + "(" + new_size + ")");
 	   	  	 return;
 	   	  }
 	   	  gbl_set_start[var_name_index] = tot_gbl_setc;
@@ -4861,9 +5103,12 @@ private void add_gbl_set(String new_name,byte new_type,int new_size){
 	   	        setc_index++;
 	   	  }
 	   	  setc_index = gbl_set_start[var_name_index];
+	   	  if (tz390.opt_traceall){
+		   	   	put_trace("GBLC " + gbl_set_name[var_name_index] + "(" + new_size + ")");
+		  }
 	   	  break;
 	default: 
-	  	 abort_error(68,"invalid case index");
+	  	 abort_case();
 	}
 }
 private boolean parse_set_var(String text,int text_index){
@@ -4873,7 +5118,10 @@ private boolean parse_set_var(String text,int text_index){
 	 * expression parser in parse_set_var_mode
 	 * to set:
 	 *  1.  exp_parse_set_name
-	 *  2.  exp_parse_set_sub
+	 *  2.  exp_parse_set_name_index
+	 *  3.  exp_parse_set_type (seta/setb/setc)
+	 *  4.  exp_parse_set_loc  (lcl/gbl)
+	 *  5.  exp_parse_set_sub 
 	 * and return true if it exists or false if not.
 	 * Notes:
 	 *  1. If var found but exp_parse_set_name
@@ -4882,10 +5130,19 @@ private boolean parse_set_var(String text,int text_index){
 	 */
 	exp_parse_set_mode = true;
 	exp_parse_set_name = null;
-	exp_parse_set_sub  = 0;
 	exp_parse_set_name_index = -1;
+	exp_parse_set_loc  = 0;
+	exp_parse_set_type = 0;
     calc_exp(text,text_index);
-    if (exp_ok){
+    boolean save_exp_ok = exp_ok;
+	if (exp_next_index < text.length() 
+		&& text.charAt(exp_next_index) == '('){
+		exp_parse_set_sub = calc_seta_exp(text,exp_next_index + 1);
+		exp_next_index++;  // skip subscript )
+	} else {
+		exp_parse_set_sub = 1;
+	}
+    if (save_exp_ok){
     	if (exp_parse_set_name == null){	
     		log_error(104,"set/parm variable conflict - " + text.substring(text_index));
     	}
@@ -4911,18 +5168,21 @@ private boolean find_set(String var_name,int var_sub){
      */
 	if (exp_parse_set_mode 
 			&& exp_level == 0){
-			exp_parse_set_name = var_name;
-			exp_parse_set_sub  = var_sub;
+		exp_parse_set_name = var_name;
 	}
 	if (find_lcl_set(var_name,var_sub)){
-		if (exp_parse_set_name_index == -1){
+		if (exp_parse_set_name_index == -1 && exp_level == 0){ // RPI 345
 			exp_parse_set_name_index = var_name_index;
+			exp_parse_set_loc = lcl_loc;
+			exp_parse_set_type = lcl_set_type[var_name_index];
 		}
 		return true;
 	}
 	if (find_gbl_set(var_name,var_sub)){
-		if (exp_parse_set_name_index == -1){
+		if (exp_parse_set_name_index == -1 && exp_level == 0){ // RPI 345
 			exp_parse_set_name_index = var_name_index;
+			exp_parse_set_loc = gbl_loc;
+			exp_parse_set_type = gbl_set_type[var_name_index];
 		}
 		return true;
 	}
@@ -4941,14 +5201,9 @@ private boolean find_lcl_set(String var_name,int var_sub){
 	 * 5.  seta_value|setb_value|setc_value
 	 * 6.  seta_index|setb_index|setc_index
 	 * 
-	 *  lcl key types are:
-	 *     K: - key word macro parm
-	 *     L: - local macro label
-	 *     P: - postional macro parm
-	 *     S: = local set variable
      */
 	set_sub = var_sub;
-	var_name_index = find_lcl_key_index("S:" + var_name);
+	var_name_index = find_lcl_key_index("L:" + var_name);
     if (var_name_index != -1){
 		var_loc = lcl_loc;
 		var_type = lcl_set_type[var_name_index];
@@ -4993,246 +5248,269 @@ private void get_lcl_set_value(){
 	switch (var_type){
     case 1:
     	 seta_index = lcl_set_start[var_name_index] + set_sub - 1;
-    	 if (seta_index >= lcl_set_end[var_name_index]
-             || seta_index < lcl_set_start[var_name_index]){
-       		 expand_lcl_seta(); //RPI179
-       	 }
+    	 if (seta_index >= lcl_set_end[var_name_index]){
+       		 seta_index = expand_set(var_name_index,var_seta_type,lcl_loc,set_sub);
+       	 } else if (seta_index < lcl_set_start[var_name_index]){
+     		abort_error(164,"lcla subscript < 1 = " + lcl_set_name[var_name_index]
+                    + "(" + (seta_index-lcl_set_start[var_name_index]+1) + ")" );
+    	 }
     	 seta_value = lcl_seta[seta_index];
     	 break;
     case 2:
     	 setb_index = lcl_set_start[var_name_index] + set_sub - 1;
-    	 if (setb_index >= lcl_set_end[var_name_index]
-    	     || setb_index < lcl_set_start[var_name_index]){
-    		 expand_lcl_setb(); //RPI179
-    	 }
-    	 setb_value = lcl_setb[setb_index];
+    	 if (setb_index >= lcl_set_end[var_name_index]){
+    		 setb_index = expand_set(var_name_index,var_setb_type,lcl_loc,set_sub);
+       	 } else if (setb_index < lcl_set_start[var_name_index]){
+      		abort_error(165,"lclb subscript < 1 = " + lcl_set_name[var_name_index]
+                     + "(" + (setb_index-lcl_set_start[var_name_index]+1) + ")" );
+     	 }
+         setb_value = lcl_setb[setb_index];
     	 break;
     case 3:
     	 setc_index = lcl_set_start[var_name_index] + set_sub - 1;
-    	 if (setc_index >= lcl_set_end[var_name_index]
-           	|| setc_index < lcl_set_start[var_name_index]){
-     		 expand_lcl_setc(); //RPI179
-      	 }
+    	 if (setc_index >= lcl_set_end[var_name_index]){
+    		 setc_index = expand_set(var_name_index,var_setc_type,lcl_loc,set_sub);
+       	 } else if (setc_index < lcl_set_start[var_name_index]){
+      		abort_error(166,"lclc subscript < 1 = " + lcl_set_name[var_name_index]
+                     + "(" + (setc_index-lcl_set_start[var_name_index]+1) + ")" );
+     	 }
     	 setc_value = lcl_setc[setc_index];
     	 break;
 	 default: 
-	  	 abort_error(68,"invalid case index");
+	  	 abort_case();
 	}
 }
-private void expand_lcl_seta(){  //RPI179
+private int expand_set(int expand_name_index,byte expand_type,byte expand_loc,int expand_sub){
 	/*
-	 * expand local seta array else
-	 * issue error and set setb_index to last
-	 * element
+	 * expand set array
 	 */
-	 tot_expand++;
-     if (set_sub < 1
-    	 || tot_lcl_seta + set_sub + expand_inc > tz390.opt_maxlcl){
-		log_error(48,"lcl seta sub out of range - " + lcl_set_name[var_name_index] + "(" + set_sub +")");
-		seta_index = lcl_set_end[var_name_index];
-		return;
-     }
-     // move existing elements to end if not already there
-     if (lcl_set_end[var_name_index] != tot_lcl_seta){
-    	 int index = lcl_set_start[var_name_index];
-    	 lcl_set_start[var_name_index] = tot_lcl_seta;
-    	 while (index < lcl_set_end[var_name_index]){
-    		 lcl_seta[tot_lcl_seta] = lcl_seta[index];
-    		 index++;
-    		 tot_lcl_seta++;
-    	 }
-    	 lcl_set_end[var_name_index] = tot_lcl_seta; 
-     }
-     // expand array to include set_sub + expand_inc
-     tot_lcl_seta = lcl_set_start[var_name_index] + set_sub + expand_inc;
-     adjust_expand_inc(lcl_loc); // grow to reduce repeats
-     int index = lcl_set_end[var_name_index];
-     while (index < tot_lcl_seta){
-    	 lcl_seta[index] = 0; // clear expanded elements  // RPI 242
-    	 index++;
-     }
-     lcl_set_end[var_name_index] = tot_lcl_seta;
-     seta_index = lcl_set_start[var_name_index] + set_sub - 1;
+	tot_expand++;
+	if (expand_loc == lcl_loc){
+		switch (expand_type){
+		case 1:
+		     if (tot_lcl_seta + expand_sub + expand_inc > tz390.opt_maxlcl){
+				abort_error(48,"lcl seta sub out of range - " + lcl_set_name[expand_name_index] + "(" + expand_sub +")");
+				return -1;
+		     }
+		     // move existing elements to end if not already there
+		     if (lcl_set_end[expand_name_index] != tot_lcl_seta){
+		    	 int index = lcl_set_start[expand_name_index];
+		    	 lcl_set_start[expand_name_index] = tot_lcl_seta;
+		    	 if (lcl_set_high[expand_name_index] > 0){
+		    		 lcl_set_high[expand_name_index] = 
+		    			 lcl_set_high[expand_name_index] 
+		    		     + tot_lcl_seta - index;
+		    	 }
+		    	 while (index < lcl_set_end[expand_name_index]){
+		    		 lcl_seta[tot_lcl_seta] = lcl_seta[index];
+		    		 index++;
+		    		 tot_lcl_seta++;
+		    	 }
+		    	 lcl_set_end[expand_name_index] = tot_lcl_seta; 
+		     }
+		     // expand array to include set_sub + expand_inc
+		     tot_lcl_seta = lcl_set_start[expand_name_index] + expand_sub + expand_inc;
+		     adjust_expand_inc(lcl_loc); // grow to reduce repeats
+		     int index = lcl_set_end[expand_name_index];
+		     while (index < tot_lcl_seta){
+		    	 lcl_seta[index] = 0; // clear expanded elements  // RPI 242
+		    	 index++;
+		     }
+		     lcl_set_end[expand_name_index] = tot_lcl_seta;
+		     return lcl_set_start[expand_name_index] 
+		                + expand_sub - 1;
+		case 2:
+		     if (tot_lcl_setb + expand_sub + expand_inc > tz390.opt_maxlcl){
+					abort_error(49,"lcl setb sub out of range - " 
+							+ lcl_set_name[expand_name_index] 
+							+ "(" + expand_sub +")");
+					return -1;
+			     }
+			     // move existing elements to end if not already there
+			     if (lcl_set_end[expand_name_index] != tot_lcl_setb){
+			    	 index = lcl_set_start[expand_name_index];
+			    	 lcl_set_start[expand_name_index] = tot_lcl_setb;
+			    	 if (lcl_set_high[expand_name_index] > 0){
+			    		 lcl_set_high[expand_name_index] = 
+			    			 lcl_set_high[expand_name_index] 
+			    		     + tot_lcl_setb - index;
+			    	 }
+			    	 while (index < lcl_set_end[expand_name_index]){
+			    		 lcl_setb[tot_lcl_seta] = lcl_setb[index];
+			    		 index++;
+			    		 tot_lcl_setb++;
+			    	 }
+			    	 lcl_set_end[expand_name_index] = tot_lcl_setb; 
+			     }
+			     // expand array to include set_sub + expand_inc
+			     tot_lcl_setb = lcl_set_start[expand_name_index] + expand_sub + expand_inc;
+			     adjust_expand_inc(lcl_loc); // grow to reduce repeats
+			     index = lcl_set_end[expand_name_index];
+			     while (index < tot_lcl_setb){
+			    	 lcl_setb[index] = 0; // clear expanded elements  // RPI 242
+			    	 index++;
+			     }
+			     lcl_set_end[expand_name_index] = tot_lcl_setb;
+			     return lcl_set_start[expand_name_index] 
+			                + expand_sub - 1;
+		case 3:
+		     if (tot_lcl_setc + expand_sub + expand_inc > tz390.opt_maxlcl){
+					abort_error(50,"lcl setc sub out of range - " 
+							+ lcl_set_name[expand_name_index] 
+							+ "(" + expand_sub +")");
+					return -1;
+			     }
+			     // move existing elements to end if not already there
+			     if (lcl_set_end[expand_name_index] != tot_lcl_setc){
+			    	 index = lcl_set_start[expand_name_index];
+			    	 lcl_set_start[expand_name_index] = tot_lcl_setc;
+			    	 if (lcl_set_high[expand_name_index] > 0){
+			    		 lcl_set_high[expand_name_index] = 
+			    			 lcl_set_high[expand_name_index] 
+			    		     + tot_lcl_setc - index;
+			    	 }
+			    	 while (index < lcl_set_end[expand_name_index]){
+			    		 lcl_setc[tot_lcl_setc] = lcl_setc[index];
+			    		 index++;
+			    		 tot_lcl_setc++;
+			    	 }
+			    	 lcl_set_end[expand_name_index] = tot_lcl_setc; 
+			     }
+			     // expand array to include set_sub + expand_inc
+			     tot_lcl_setc = lcl_set_start[expand_name_index] + expand_sub + expand_inc;
+			     adjust_expand_inc(lcl_loc); // grow to reduce repeats
+			     index = lcl_set_end[expand_name_index];
+			     while (index < tot_lcl_setc){
+			    	 lcl_setc[index] = ""; // clear expanded elements  // RPI 242
+			    	 index++;
+			     }
+			     lcl_set_end[expand_name_index] = tot_lcl_setc;
+			     return lcl_set_start[expand_name_index] 
+			                + expand_sub - 1;
+		default:
+			abort_case();
+		    return -1;
+		}
+	} else {
+		switch (expand_type){
+		case 1:
+		     if (tot_gbl_seta + expand_sub + expand_inc > tz390.opt_maxgbl){
+				abort_error(59,"gbl seta sub out of range - " + gbl_set_name[expand_name_index] + "(" + expand_sub +")");
+				return -1;
+		     }
+		     // move existing elements to end if not already there
+		     if (gbl_set_end[expand_name_index] != tot_gbl_seta){
+		    	 int index = gbl_set_start[expand_name_index];
+		    	 gbl_set_start[expand_name_index] = tot_gbl_seta;
+		    	 if (gbl_set_high[expand_name_index] > 0){
+		    		 gbl_set_high[expand_name_index] = 
+		    			 gbl_set_high[expand_name_index] 
+		    		     + tot_gbl_seta - index;
+		    	 }
+		    	 while (index < gbl_set_end[expand_name_index]){
+		    		 gbl_seta[tot_gbl_seta] = gbl_seta[index];
+		    		 index++;
+		    		 tot_gbl_seta++;
+		    	 }
+		    	 gbl_set_end[expand_name_index] = tot_gbl_seta; 
+		     }
+		     // expand array to include set_sub + expand_inc
+		     tot_gbl_seta = gbl_set_start[expand_name_index] + expand_sub + expand_inc;
+		     adjust_expand_inc(gbl_loc); // grow to reduce repeats
+		     int index = gbl_set_end[expand_name_index];
+		     while (index < tot_gbl_seta){
+		    	 gbl_seta[index] = 0; // clear expanded elements  // RPI 242
+		    	 index++;
+		     }
+		     gbl_set_end[expand_name_index] = tot_gbl_seta;
+		     return gbl_set_start[expand_name_index] 
+		                + expand_sub - 1;
+		case 2:
+		     if (tot_gbl_setb + expand_sub + expand_inc > tz390.opt_maxgbl){
+					abort_error(61,"gbl setb sub out of range - " 
+							+ gbl_set_name[expand_name_index] 
+							+ "(" + expand_sub +")");
+					return -1;
+			     }
+			     // move existing elements to end if not already there
+			     if (gbl_set_end[expand_name_index] != tot_gbl_setb){
+			    	 index = gbl_set_start[expand_name_index];
+			    	 gbl_set_start[expand_name_index] = tot_gbl_setb;
+			    	 if (gbl_set_high[expand_name_index] > 0){
+			    		 gbl_set_high[expand_name_index] = 
+			    			 gbl_set_high[expand_name_index] 
+			    		     + tot_gbl_setb - index;
+			    	 }
+			    	 while (index < gbl_set_end[expand_name_index]){
+			    		 gbl_setb[tot_gbl_setb] = gbl_setb[index];
+			    		 index++;
+			    		 tot_gbl_setb++;
+			    	 }
+			    	 gbl_set_end[expand_name_index] = tot_gbl_setb; 
+			     }
+			     // expand array to include set_sub + expand_inc
+			     tot_gbl_setb = gbl_set_start[expand_name_index] + expand_sub + expand_inc;
+			     adjust_expand_inc(gbl_loc); // grow to reduce repeats
+			     index = gbl_set_end[expand_name_index];
+			     while (index < tot_gbl_setb){
+			    	 gbl_setb[index] = 0; // clear expanded elements  // RPI 242
+			    	 index++;
+			     }
+			     gbl_set_end[expand_name_index] = tot_gbl_setb;
+			     return gbl_set_start[expand_name_index] 
+			                + expand_sub - 1;
+		case 3:
+		     if (tot_gbl_setc + expand_sub + expand_inc > tz390.opt_maxgbl){
+					abort_error(65,"gbl setc sub out of range - " 
+							+ gbl_set_name[expand_name_index] 
+							+ "(" + expand_sub +")");
+					return -1;
+			     }
+			     // move existing elements to end if not already there
+			     if (gbl_set_end[expand_name_index] != tot_gbl_setc){
+			    	 index = gbl_set_start[expand_name_index];
+			    	 gbl_set_start[expand_name_index] = tot_gbl_setc;
+			    	 if (gbl_set_high[expand_name_index] > 0){
+			    		 gbl_set_high[expand_name_index] = 
+			    			 gbl_set_high[expand_name_index] 
+			    		     + tot_gbl_setb - index;
+			    	 }
+			    	 while (index < gbl_set_end[expand_name_index]){
+			    		 gbl_setc[tot_gbl_setc] = gbl_setc[index];
+			    		 index++;
+			    		 tot_gbl_setc++;
+			    	 }
+			    	 gbl_set_end[expand_name_index] = tot_gbl_setc; 
+			     }
+			     // expand array to include set_sub + expand_inc
+			     tot_gbl_setc = gbl_set_start[expand_name_index] + expand_sub + expand_inc;
+			     adjust_expand_inc(gbl_loc); // grow to reduce repeats
+			     index = gbl_set_end[expand_name_index];
+			     while (index < tot_gbl_setc){
+			    	 gbl_setc[index] = ""; // clear expanded elements  // RPI 242
+			    	 index++;
+			     }
+			     gbl_set_end[expand_name_index] = tot_gbl_setc;
+			     return gbl_set_start[expand_name_index] 
+			                + expand_sub - 1;
+		default:
+			abort_case();
+		    return -1;
+		}
+	}
 }
-private void expand_lcl_setb(){  //RPI179
-	/*
-	 * expand local setb array else
-	 * issue error and set setb_index to last
-	 * element
-	 */
-	 tot_expand++;
-     if (set_sub < 1
-    	 || tot_lcl_setb + set_sub + expand_inc > tz390.opt_maxlcl){
-		log_error(49,"lcl setb sub out of range - " + lcl_set_name[var_name_index] + "(" + set_sub +")");
-		setb_index = lcl_set_end[var_name_index];
-		return;
-     }
-     // move existing elements to end if not already there
-     if (lcl_set_end[var_name_index] != tot_lcl_setb){
-    	 int index = lcl_set_start[var_name_index];
-    	 lcl_set_start[var_name_index] = tot_lcl_setb;
-    	 while (index < lcl_set_end[var_name_index]){
-    		 lcl_setb[tot_lcl_setb] = lcl_setb[index];
-    		 index++;
-    		 tot_lcl_setb++;
-    	 }
-    	 lcl_set_end[var_name_index] = tot_lcl_setb; 
-     }
-     // expand array to include set_sub + expand_inc
-     tot_lcl_setb = lcl_set_start[var_name_index] + set_sub + expand_inc;
-     adjust_expand_inc(lcl_loc); // grow to reduce repeats
-     int index = lcl_set_end[var_name_index];
-     while (index < tot_lcl_setb){
-    	 lcl_setb[index] = 0; // clear expanded elements
-    	 index++;
-     }
-     lcl_set_end[var_name_index] = tot_lcl_setb;
-     setb_index = lcl_set_start[var_name_index] + set_sub - 1;
-}
-private void expand_lcl_setc(){ //RPI179
-    /*
-     * expand local setc array else
-     * issue error and set setb_index to last
-     * element
-     */
-	 tot_expand++;
-	 if (set_sub < 1
-			 || tot_lcl_setc + set_sub + expand_inc > tz390.opt_maxlcl){
-		 log_error(50,"lcl setc sub out of range - " + lcl_set_name[var_name_index] + "(" + set_sub +")");
-		 setc_index = lcl_set_end[var_name_index];
-		 return;
-	 }
-	 // move existing elements to end if not already there
-	 if (lcl_set_end[var_name_index] != tot_lcl_setc){
-		 int index = lcl_set_start[var_name_index];
-		 lcl_set_start[var_name_index] = tot_lcl_setc;
-		 while (index < lcl_set_end[var_name_index]){
-			 lcl_setc[tot_lcl_setc] = lcl_setc[index];
-			 index++;
-			 tot_lcl_setc++;
-		 }
-		 lcl_set_end[var_name_index] = tot_lcl_setc; 
-	 }
-	 // expand array to include set_sub + expand_inc
-	 tot_lcl_setc = lcl_set_start[var_name_index] + set_sub + expand_inc;
-	 adjust_expand_inc(lcl_loc); // grow to reduce repeats
-	 int index = lcl_set_end[var_name_index];
-	 while (index < tot_lcl_setc){
-		 lcl_setc[index] = ""; // clear expanded elements
-		 index++;
-	 }
-	 lcl_set_end[var_name_index] = tot_lcl_setc;
-	 setc_index = lcl_set_start[var_name_index] + set_sub - 1;
-} 
-private void expand_gbl_seta(){
-	/*
-	 * expand global seta array else
-	 * issue error and set setb_index to last
-	 * element
-	 */
-	 tot_expand++;
-     if (set_sub < 1
-    	 || tot_gbl_seta + set_sub + expand_inc > tz390.opt_maxgbl){
-		log_error(125,"gbl seta sub out of range - " + gbl_set_name[var_name_index] + "(" + set_sub +")");
-		seta_index = gbl_set_end[var_name_index];
-		return;
-     }
-     // move existing elements to end if not already there
-     if (gbl_set_end[var_name_index] != tot_gbl_seta){
-    	 int index = gbl_set_start[var_name_index];
-    	 gbl_set_start[var_name_index] = tot_gbl_seta;
-    	 while (index < gbl_set_end[var_name_index]){
-    		 gbl_seta[tot_gbl_seta] = gbl_seta[index];
-    		 index++;
-    		 tot_gbl_seta++;
-    	 }
-    	 gbl_set_end[var_name_index] = tot_gbl_seta; 
-     }
-     // expand array to include set_sub + expand_inc
-     tot_gbl_seta = gbl_set_start[var_name_index] + set_sub + expand_inc;
-     adjust_expand_inc(gbl_loc); // grow to reduce repeats
-     // note no need to clear new gbl_seta
-     gbl_set_end[var_name_index] = tot_gbl_seta;
-     seta_index = gbl_set_start[var_name_index] + set_sub - 1;
-}
-private void expand_gbl_setb(){
-	/*
-	 * expand global setb array else
-	 * issue error and set setb_index to last
-	 * element
-	 */
-	 tot_expand++;
-     if (set_sub < 1
-    	 || tot_gbl_setb + set_sub + expand_inc > tz390.opt_maxgbl){
-		log_error(126,"gbl setb sub out of range - " + gbl_set_name[var_name_index] + "(" + set_sub +")");
-		setb_index = gbl_set_end[var_name_index];
-		return;
-     }
-     // move existing elements to end if not already there
-     if (gbl_set_end[var_name_index] != tot_gbl_setb){
-    	 int index = gbl_set_start[var_name_index];
-    	 gbl_set_start[var_name_index] = tot_gbl_setb;
-    	 while (index < gbl_set_end[var_name_index]){
-    		 gbl_setb[tot_gbl_setb] = gbl_setb[index];
-    		 index++;
-    		 tot_gbl_setb++;
-    	 }
-    	 gbl_set_end[var_name_index] = tot_gbl_setb; 
-     }
-     // expand array to include set_sub + expand_inc
-     tot_gbl_setb = gbl_set_start[var_name_index] + set_sub + expand_inc;
-     adjust_expand_inc(gbl_loc); // grow to reduce repeats
-     // note no need to clear new gbl_setb
-     gbl_set_end[var_name_index] = tot_gbl_setb;
-     setb_index = gbl_set_start[var_name_index] + set_sub - 1;
-}
-private void expand_gbl_setc(){
-    		/*
-    		 * expand global setc array else
-    		 * issue error and set setb_index to last
-    		 * element
-    		 */
-	 tot_expand++;
-	 if (set_sub < 1
-			 || tot_gbl_setc + set_sub + expand_inc > tz390.opt_maxgbl){
-		 log_error(127,"gbl setc sub out of range - " + gbl_set_name[var_name_index] + "(" + set_sub +")");
-		 setc_index = gbl_set_end[var_name_index];
-		 return;
-	 }
-	 // move existing elements to end if not already there
-	 if (gbl_set_end[var_name_index] != tot_gbl_setc){
-		 int index = gbl_set_start[var_name_index];
-		 gbl_set_start[var_name_index] = tot_gbl_setc;
-		 while (index < gbl_set_end[var_name_index]){
-			 gbl_setc[tot_gbl_setc] = gbl_setc[index];
-			 index++;
-			 tot_gbl_setc++;
-		 }
-		 gbl_set_end[var_name_index] = tot_gbl_setc; 
-	 }
-	 // expand array to include set_sub + expand_inc
-	 tot_gbl_setc = gbl_set_start[var_name_index] + set_sub + expand_inc;
-	 adjust_expand_inc(gbl_loc); // grow to reduce repeats
-     int index = gbl_set_end[var_name_index];
-     while (index < tot_gbl_setc){
-    	 gbl_setc[index] = ""; // clear expanded elements  // RPI 242
-    	 index++;
-     }
-	 gbl_set_end[var_name_index] = tot_gbl_setc;
-	 setc_index = lcl_set_start[var_name_index] + set_sub - 1;
-} 
 private void adjust_expand_inc(int var_loc){
 	/*
 	 * increase expansion increment to reduce
 	 * overhead of repeated expansions.  This
 	 * is a trade-off with running out of memory
 	 */
-	expand_inc = expand_inc * 2;
+	expand_inc = 10; 
 	if (tz390.opt_traceall){
 		if (var_loc == lcl_loc){
-			put_log("TRACEALL EXPANSION OF LCL " + lcl_set_name[var_name_index] + "(" + (lcl_set_end[var_name_index]-lcl_set_start[var_name_index]) + ") INC=" + expand_inc);
+			put_trace("EXPANSION OF LCL " + lcl_set_name[var_name_index] + "(" + (lcl_set_end[var_name_index]-lcl_set_start[var_name_index]) + ") INC=" + expand_inc);
 		} else {
-			put_log("TRACEALL EXPANSION OF GBL " + gbl_set_name[var_name_index] + "(" + (gbl_set_end[var_name_index]-gbl_set_start[var_name_index]) + ") INC=" + expand_inc);
+			put_trace("EXPANSION OF GBL " + gbl_set_name[var_name_index] + "(" + (gbl_set_end[var_name_index]-gbl_set_start[var_name_index]) + ") INC=" + expand_inc);
 		}
 	}
 }
@@ -5244,18 +5522,22 @@ private void get_gbl_set_value(){
 	switch (var_type){
     case 1:
     	 seta_index = gbl_set_start[var_name_index] + set_sub - 1;
-    	 if (seta_index >= gbl_set_end[var_name_index]
-    	     || seta_index < gbl_set_start[var_name_index]){
-    	     expand_gbl_seta();
-    	 }
+    	 if (seta_index >= gbl_set_end[var_name_index]){
+    		 seta_index = expand_set(var_name_index,var_seta_type,gbl_loc,set_sub);
+       	 } else if (seta_index < gbl_set_start[var_name_index]){
+      		abort_error(167,"gbla subscript < 1 = " + gbl_set_name[var_name_index]
+                     + "(" + (seta_index-gbl_set_start[var_name_index]+1) + ")" );
+     	 }
     	 seta_value = gbl_seta[seta_index];
     	 break;
     case 2:
     	 setb_index = gbl_set_start[var_name_index] + set_sub - 1;
-    	 if (setb_index >= gbl_set_end[var_name_index]
-    	     || setb_index < gbl_set_start[var_name_index]){
-    	     expand_gbl_setb();
-    	 }
+    	 if (setb_index >= gbl_set_end[var_name_index]){
+    		 setb_index = expand_set(var_name_index,var_setb_type,gbl_loc,set_sub);
+       	 } else if (setb_index < gbl_set_start[var_name_index]){
+       		abort_error(168,"gblb subscript < 1 = " + gbl_set_name[var_name_index]
+                      + "(" + (setb_index-gbl_set_start[var_name_index]+1) + ")" );
+      	 }
     	 setb_value = gbl_setb[setb_index];
     	 break;
     case 3:
@@ -5273,10 +5555,12 @@ private void get_gbl_set_value(){
     		 break;
     	 }
     	 setc_index = gbl_set_start[var_name_index] + set_sub - 1;
-    	 if (setc_index >= gbl_set_end[var_name_index]
-    	     || setc_index < gbl_set_start[var_name_index]){
-    	     expand_gbl_setc();
-    	 }
+    	 if (setc_index >= gbl_set_end[var_name_index]){
+    		 setc_index = expand_set(var_name_index,var_setc_type,gbl_loc,set_sub);
+       	 } else if (setc_index < gbl_set_start[var_name_index]){
+       		abort_error(169,"gblc subscript < 1 = " + gbl_set_name[var_name_index]
+                      + "(" + (setc_index-gbl_set_start[var_name_index]+1) + ")" );
+      	 }
    		 if (setc_index == gbl_sysclock_index){
    			 if (tz390.opt_timing){
    				 cur_date = new Date();
@@ -5286,7 +5570,7 @@ private void get_gbl_set_value(){
     	 setc_value = gbl_setc[setc_index];
     	 break;
 	  default: 
-	  	 abort_error(68,"invalid case index");
+	  	 abort_case();
 	}
 }
 private int get_label_index(String label_source){
@@ -5298,7 +5582,7 @@ private int get_label_index(String label_source){
 	String label_name = label_source;
     if (label_match.find()){
 	   label_name = label_match.group().toUpperCase();
-	   int    label_name_index = find_lcl_key_index("L:" + label_name);
+	   int    label_name_index = find_lcl_key_index("B:" + label_name);
 	   if (label_name_index != -1){
 		   return mac_lab_index[label_name_index]-1; // -1 req'd for following ++ cycle
 	   }
@@ -5306,7 +5590,7 @@ private int get_label_index(String label_source){
 	   while (label_name_index < mac_name_lab_end[mac_name_index]){
 		   if (mac_lab_name[label_name_index].equals(label_name)){
 			   if (tz390.opt_tracem){
-				   put_log("TRACE BRANCH " + label_name);
+				   put_trace("BRANCH " + label_name);
 			   }
 			   add_lcl_key_index(label_name_index);
 			   return mac_lab_index[label_name_index]-1; // -1 req'd for following ++ cycle
@@ -5355,9 +5639,14 @@ private int find_mac_entry(String macro_name){
         return index;
 	}
 	if (tz390.opt_mfc){
-		index = tz390.find_key_index("O:" + macro_name.toUpperCase());
+		String temp_name = macro_name.toUpperCase();
+		if (save_opsyn_index == -1 || tz390.opsyn_name[save_opsyn_index] != null){
+			index = tz390.find_key_index("O:" + temp_name);
+		} else {
+			index = -1; // RPI 331
+		}
 		if (index != -1){
-			if (tz390.find_key_index("M:" + macro_name.toUpperCase()) == -1){
+			if (tz390.find_key_index("M:" + temp_name) == -1){
 				tz390.add_key_index(-2); // prevent repeat searches
 				tot_ins++;
 			}
@@ -5373,7 +5662,8 @@ private void call_mac(){
 	 * 2. If listcall option, add comment to bal
 	 * 2. process proto-type and set parms
 	 * 3. init mac_line_index to first macro statement
-	 * 
+	 * 4. Set macro label ordinary symbol type
+	 *    to 'M' if 'U'.
 	 */
 	 tot_mac_call++;
 	 gbl_seta[gbl_sysm_sev_index] = 0;
@@ -5418,7 +5708,7 @@ private void call_mac(){
 		 	 if (call_label.length() < 8){
 		 	       call_label = call_label.concat("        ").substring(0,8);
 		 	 }
-		 	 String call_op = save_op;
+		 	 String call_op = save_bal_op;
 		 	 if (call_op.length() < 5){
 		 	 	call_op = call_op.concat("     ").substring(0,5);
 		 	 }
@@ -5499,6 +5789,7 @@ private void init_arrays(){
     gbl_set_name  = new String[tz390.opt_maxgbl]; 
     gbl_set_type  = (byte[])Array.newInstance(byte.class,tz390.opt_maxgbl);
     gbl_set_start = (int[])Array.newInstance(int.class,tz390.opt_maxgbl);
+    gbl_set_high = (int[])Array.newInstance(int.class,tz390.opt_maxgbl);
     gbl_set_end   = (int[])Array.newInstance(int.class,tz390.opt_maxgbl);
     gbl_seta      = (int[])Array.newInstance(int.class,tz390.opt_maxgbl);
     gbl_setb      = (byte[])Array.newInstance(byte.class,tz390.opt_maxgbl);
@@ -5518,6 +5809,7 @@ private void init_arrays(){
     lcl_set_name  = new String[tz390.opt_maxlcl]; 
     lcl_set_type  = (byte[])Array.newInstance(byte.class,tz390.opt_maxlcl);
     lcl_set_start = (int[])Array.newInstance(int.class,tz390.opt_maxlcl);
+    lcl_set_high  = (int[])Array.newInstance(int.class,tz390.opt_maxlcl);
     lcl_set_end   = (int[])Array.newInstance(int.class,tz390.opt_maxlcl);
     lcl_seta      = (int[])Array.newInstance(int.class,tz390.opt_maxlcl);
     lcl_setb      = (byte[])Array.newInstance(byte.class,tz390.opt_maxlcl);
@@ -5536,9 +5828,11 @@ private void init_arrays(){
     mac_lab_index = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
     mac_lab_num   = (int[])Array.newInstance(int.class,tz390.opt_maxsym); // RPI 266
     sym_name      = new String[tz390.opt_maxsym]; 
-    sym_type      = (char[])Array.newInstance(char.class,tz390.opt_maxsym);
+    sym_attr      = (char[])Array.newInstance(char.class,tz390.opt_maxsym);
     sym_etype     = (char[])Array.newInstance(char.class,tz390.opt_maxsym); // RPI 270
+    sym_val       = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
     sym_len       = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
+    sym_def       = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
 }
 private void init_gbl_sys(){
 	/*
@@ -5651,6 +5945,10 @@ private void set_sys_dsn_mem_vol(String file_name){
 	try {
 		sys_dsn = sys_file.getCanonicalPath();
 		sys_mem = sys_file.getName();
+		int index = sys_mem.indexOf(".");
+		if (index > 0){ // RPI 329
+			sys_mem = sys_mem.substring(0,index);
+		}
 		sys_vol = sys_dsn.substring(0,1);
 	} catch (Exception e){}
 }
@@ -5658,8 +5956,11 @@ private void add_gbl_sys(String sys_name,byte sys_type){
 	/*
 	 * add global system variables
 	 */
-	tz390.find_key_index("G:" + sys_name);
-	add_gbl_set(sys_name,sys_type,1);
+	if (tz390.find_key_index("G:" + sys_name) == -1){
+		add_gbl_set(sys_name,sys_type,1);
+	} else {
+		abort_error(160,"add global var failed - " + sys_name);
+	}
 }
 private void init_lcl_sys(){
 	/*
@@ -5681,7 +5982,7 @@ private void add_lcl_sys(String sys_name,byte sys_type){
 	/*
 	 * add local set variable
 	 */
-	 if (find_lcl_key_index("S:" + sys_name) == -1){
+	 if (find_lcl_key_index("L:" + sys_name) == -1){
 		 add_lcl_set(sys_name,sys_type,1);
 	 } else {
 		 abort_error(122,"duplicate lcl system variable - " + sys_name);
@@ -5820,7 +6121,7 @@ private void init_call_parms(){
  	       	  case 4: // ignore spaces and comments
  	       	  	   break;
  			  default: 
- 			  	 abort_error(68,"invalid case index");
+ 			  	 abort_case();
  	       }
  	   }
  	   if (state == 2){
@@ -5837,6 +6138,7 @@ private void set_call_parm_values(){
      */
 	   cur_pos_parm = mac_call_pos_start[mac_call_level]; // rpi 313
        if  (bal_label.length() > 0){
+           set_sym_macro_attr(bal_label);
            set_pos_parm(bal_label);  // set syslist(0) label
        } else {
        	   set_pos_parm(""); // syslist(0) null
@@ -5909,7 +6211,7 @@ private void set_call_parm_values(){
     	       	  case 4:  // ignore spaces and comments
     	       	  	break;
     	 		  default: 
-    			  	 abort_error(68,"invalid case index");
+    			  	 abort_case();
     	       }
     	   }
     	   if (state == 2){
@@ -6078,7 +6380,7 @@ private void put_stats(){
 	      	 }
 	      }
 	}
-	put_log("MZ390I total mnotes         = " + tot_mnote + "  max level= " + gbl_seta[gbl_sysm_hsev_index]);
+	put_log("MZ390I total mnote errors   = " + tot_mnote_err + "  max level= " + gbl_seta[gbl_sysm_hsev_index]);
 	put_log("MZ390I total errors         = " + mz390_errors);
 	put_log("MZ390I return code(" + tz390.get_padded_name() + ")= " + mz390_rc); // RPI 312
 	log_to_bal = false;
@@ -6103,6 +6405,28 @@ private void close_files(){
 	  }
 	  tz390.close_systerm(mz390_rc);
 }
+private void create_mnote(int level,String text){
+	/*
+	 * create mnote on BAL and ERR
+	 */
+	process_mnote(level,"" + level + ",'" + text + "'");
+}
+private void process_mnote(int level,String msg){
+	/*
+	 * put mnote message on BAL and ERR files
+	 */
+     if (level > 0){
+       	tot_mnote_err++;
+   	    tz390.put_systerm("MNOTE " + msg); // RPI 330
+ 	}
+ 	if (level > gbl_seta[gbl_sysm_hsev_index]){
+ 		gbl_seta[gbl_sysm_hsev_index] = level;
+ 	}
+ 	if (level > gbl_seta[gbl_sysm_sev_index]){
+ 		gbl_seta[gbl_sysm_sev_index] = level;
+ 	}
+ 	put_bal_line("         MNOTE " + msg);
+}
 private void log_error(int error,String msg){
 	/*
 	 * issue error msg to log with prefix and
@@ -6112,6 +6436,7 @@ private void log_error(int error,String msg){
 	 *       ignore and return setc_value = null
 	 */
 	  if (mac_abort)return;
+	  if (sym_calc && loading_mac)return;
 	  exp_end = true;
 	  if (exp_var_replacement_mode){ // RPI 241
 		  exp_setc = null;
@@ -6119,10 +6444,12 @@ private void log_error(int error,String msg){
 	  }
 	  mac_abort = true;
 	  log_to_bal = true;
-	  put_log("MZ390E error " + error
-	  		         + " file=" + (mac_file_name_num[mac_line_index]+1)
-					 + " line=" + mac_file_line_num[mac_line_index]
-	  		           + " " + msg);
+	  String error_msg = "MZ390E error " + error
+        + " file=" + (mac_file_name_num[mac_line_index]+1)
+		 + " line=" + mac_file_line_num[mac_line_index]
+	           + " " + msg;
+	  put_log(error_msg);
+	  tz390.put_systerm(error_msg);
 	  mz390_errors++;
 	  if (max_errors != 0 && mz390_errors > max_errors){
 	  	 abort_error(83,"maximum errors exceeded");
@@ -6176,6 +6503,13 @@ private void put_copyright(){
 	   	put_log("MZ390I program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 	   	put_log("MZ390I options = " + tz390.cmd_parms);
 	   }
+       private void put_trace(String msg){
+    	   /*
+    	    * put trace to log with prefix info
+    	    */
+    	   log_to_bal = true; 
+    	   put_log("TRACE " + mac_name[mac_call_name_index[mac_call_level]] + " " + msg);
+       }
 	   private synchronized void put_log(String msg) {
 	   	/*
 	   	 * Write message to z390_log_text or console
@@ -6183,7 +6517,6 @@ private void put_copyright(){
 	   	 * 
 	   	 */
 	   	    if  (tz390.opt_tracem
-	   	    		|| tz390.opt_traceall 
 	   	    		|| log_to_bal){
 	   	    	put_bal_line("* " + msg);
 	   	    }
@@ -6201,6 +6534,15 @@ private void put_copyright(){
 		 *    1.  lcl_key_text = user_key
 		 *    2.  lcl_key_hash = hash code for key
 		 *    3.  lcl_key_index_last = last search entry
+		 *
+		 *  lcl key types are:
+	     *     K: - key word macro parm
+	     *     B: - local macro label
+	     *     P: - postional macro parm
+	     *     L: = local set variable
+	     *
+	     *     See tz390 with global find_key_index
+	     *     types FGMORSX
 		 */
 		tz390.tot_key_search++;
 		lcl_key_text = user_key;

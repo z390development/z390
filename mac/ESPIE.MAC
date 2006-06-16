@@ -12,6 +12,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/12/06 RPI244 SUPPORT PARAM=             
 .* 04/29/06 RPI305 CORRECT REGISTER FORM OF PARAM= (AIR TO AIF)
+.* 06/03/06 RPI321 CORRECT MNOTE MSG TO INCLUDE MACRO NAME            
 .*********************************************************************
 &N       ESPIE &OP,     SET/RESET                                      X
                &ADDR,   EXIT ADDRESS                                   X

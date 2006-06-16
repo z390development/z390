@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 03/14/06 RPI 210 ADD STORAGE MACRO
 .* 04/11/06 RPI 244 UPDATE KW PARMS, SUPPORT LOC=ANY
+.* 06/03/06 RPI 324 CORRECT ADDR=(REG) TO STORE R0 AT 0(REG)
 .*********************************************************************
 &N       STORAGE &TYPE,      OBTAIN/RELEASE                            X
                &ADDR=,       ADDRESS TO STORE ALLOC STORAGE            X
@@ -52,7 +53,7 @@
          ST    0,&ADDR
          AGO   .EXIT
 .STOREREG ANOP
-         LR    &ADDR(1),0
+         ST    0,0(&ADDR(1)) RPI 324
 .EXIT    ANOP
          MEXIT
 .RELEASE ANOP

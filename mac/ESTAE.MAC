@@ -9,6 +9,7 @@
 .* 10/20/05 RPI27 - issue error for any undefined operands     
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/11/06 RPI244 IGNORE UNUSED KEYWORDS, SUPPORT CV,CT,PARAM=       
+.* 06/03/06 RPI321 CORRECT MNOTE MSG TO INCLUDE MACRO NAME            
 .*********************************************************************
 &N      ESTAE  &ADDR,          ADDRESS OF ABEND RECOVERY EXIT          X
                &TYPE,          OV=REPLACE EXIT, CT=ADD NEW EXIT        X
@@ -25,7 +26,7 @@
 .SKIPDS  ANOP
          AIF   (&MF NE '').ERR1
          AIF   (N'&SYSLIST EQ 1).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
+         MNOTE 12,'ESTAE UNSUPPORTED OPERANDS - &SYSLIST(2)'
 .NPOK    ANOP
         AIF    ('&ADDR'(1,1) EQ '(').AREG
         LA     0,&ADDR

@@ -14,6 +14,7 @@
 .*          limit check length, correct K/M support
 .* 03/14/06 RPI 210 ALLOW LOC=24,(24),31,(31),(24,31)
 .* 04/11/06 RPI 244 ISSUE ERROR FOR UNSUPPORTED KW OPERANDS
+.* 06/03/06 RPI 324 correct register 0 versus 1 for A= store                
 .*********************************************************************
 &N       GETMAIN &TYPE,     TYPE OF REQUEST R,RC,RU ELSE UNSUPP ERROR  X
                &A=,         ADDR TO STORE ADDR                         X
@@ -121,9 +122,9 @@
          SVC   4 GETMAIN R0=(X'02'=AMODE31,X'01'=COND), R1=LEN
          AIF   (&A EQ '').EXIT
          AIF   ('&A'(1,1) EQ '(').AREG
-         ST    1,&A
+         ST    0,&A RPI 324
          MEXIT
-.AREG    ST    1,0(&A(1))
+.AREG    ST    0,0(&A(1)) RPI 324
          MEXIT
 .ERR1    MNOTE 12,'GETMAIN LENGTH TOO LONG - &LV'
          MEXIT

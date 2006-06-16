@@ -84,7 +84,9 @@ public  class  tz390 {
     * 05/13/06 RPI 315 allow ,space within (...) for
     *          macro ops prior to ,space continuation
     *          add option REFORMAT with default false   
-    * 05/24/06 RPI 227 add shared alarm_bell for System.out     
+    * 05/24/06 RPI 227 add shared alarm_bell for System.out  
+    * 06/04/06 RPI 331 set opsyn_name to null for cancel
+    * 06/09/06 RPI 342 correct parsing of parms with exp ?' operators 
     ********************************************************
     * Shared z390 tables
     *****************************************************/
@@ -93,7 +95,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.1.00c";  //dsh
+    String version    = "V1.1.00d";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -1201,7 +1203,9 @@ public  class  tz390 {
          6  //34 "RRF2" FIXBR oooom0rr (r1,m3,r2 maps to m3,r1,r2)
          };
 	int    max_op_type_offset = 34; // see changes required
-    int    max_machine_op = 200;    // RPI 315 max machine vs macro opcode
+    int    max_ins_op = 100;    // RPI 315 
+    int    max_asm_op = 200;
+    int    max_mac_op = 300;
 	//  When adding new opcode case:
 	//  1.  Increase the above max.
 	//  2.  Change above op_type_len table which must match
@@ -3008,8 +3012,8 @@ public void init_tables(){
          		  + "|([cC][\"]([^\"]|([\"][\"]))*[\"])"
 	  	          + "|([']([^']|(['][']))*['])" 
 	  	          + "|([diklnstDIKLNST]['])"  // RPI 313 single quote ?' operators
-	    		  + "|([^\\s',()]+)"  //RPI181
-	    	      + "|([\\s',()])"    //RPI181
+	    		  + "|([^\\s',()+*-/]+)"  //RPI181,342
+	    	      + "|([\\s',()+*-/])"    //RPI181,342
 				  );
 	} catch (Exception e){
 		  abort_error(14,"parm pattern errror - " + e.toString());
@@ -3408,11 +3412,8 @@ public int find_key_index(String user_key){
 	 *   1.  Usage my mz390
 	 *       a.  "F:" - macro and copybook files
 	 *       b.  "G:" - global set variables
-	 *       c.  "K:" - macro keyword parm names
-	 *       d.  "L:" - local set variable
 	 *       e.  "M:" - loaded macros
 	 *       f.  "O:" - opcode table (init_opcode_name_keys)
-	 *       g.  "P:" - macro positional parm names
 	 *       h.  "R:" - opcode and macro opsyn
 	 *       i.  "S:" - ordinary symbols
 	 *       j.  "X:" - executable macro command
@@ -3430,6 +3431,9 @@ public int find_key_index(String user_key){
 	 *       c.  "O:" - opcodes by name (init_opcode_name_keys)
 	 *       d.  "P:" - CDE program name lookup
 	 *       e.  "R:" - OPSYN opcode/macro substitution
+	 * Notes:
+	 *   1.  See find_lcl_key_index in mz390 with
+	 *       local key types KBPL
 	 */
 	tot_key_search++;
 	key_text = user_key;
@@ -3681,9 +3685,15 @@ public boolean update_opsyn(String new_name,String old_name){
 	 * Add new alias name or add entry
 	 * to cancel opcode name.  // RPI 306
 	 */
-	int index = old_name.indexOf(" ");
-	if (index > 0){  // RPI 306 remove comments
-		old_name = old_name.substring(0,index);
+	int index = -1;
+	if (old_name != null){
+		index = old_name.indexOf(" ");
+		if (index > 0){  // RPI 306 remove comments
+			old_name = old_name.substring(0,index);
+		}
+		if (old_name.length() == 0 || old_name.charAt(0) == ','){
+			old_name = null;
+		}
 	}
 	index = find_key_index("R:" + new_name.toUpperCase());
 	if (index == -1){
@@ -3695,7 +3705,11 @@ public boolean update_opsyn(String new_name,String old_name){
 			return false;
 		}
 	}
-	opsyn_name[index] = old_name.toUpperCase();
+	if (old_name != null){
+		opsyn_name[index] = old_name.toUpperCase();
+	} else {
+		opsyn_name[index] = null; // RPI 331
+	}
 	return true;
 }
 public String get_hex(int work_int,int field_length) {
@@ -3863,7 +3877,7 @@ public String trim_continue(String line, boolean first_line){
 		index = parm_match.start();
 		switch (parm.charAt(0)){
 			case ',':
-				if ((split_op_type < max_machine_op 
+				if ((split_op_type < max_asm_op 
 						|| split_level == 0) // RPI 315 allow ,space within (...) for mac ops 
 					&& !split_quote 
 					&& line.length() > split_parms_index + index+1
@@ -3892,7 +3906,7 @@ public String trim_continue(String line, boolean first_line){
 			default: // check for ending white space
 				if (parm.charAt(0) <= ' '
 					&& !split_quote
-					&& (split_op_type < max_machine_op 
+					&& (split_op_type < max_asm_op 
 						|| split_level == 0) // RPI 315 allow ,space within (...) for mac ops 	
 				   ){
 					split_parm_end = true; // force end

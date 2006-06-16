@@ -175,6 +175,7 @@ public  class  pz390 {
     * 05/02/06 RPI 307 correct MAYL and MAYLR to remove duplicate
     *          setup call corrupting next instruction, and correct
     *          IPM trace format.
+    * 06/03/06 RPI 323 allow opcode break on first stimer exit instr.
     ********************************************************
     * Global variables
     *****************************************************/
@@ -654,14 +655,14 @@ public void exec_pz390(){
 	 */
 	psw_check = false;
 	while (!tz390.z390_abort && !psw_check){ // RPI208 run until check or abort
+	    if (sz390.stimer_exit_request){ // RPI 323 allow opcode break on first stimer exit opcode
+	    	sz390.start_stimer_exit();
+	    }
 		if (tz390.opt_test){
 	    	sz390.process_test_cmd();
 	    }
 	    if  (tz390.opt_regs){
 	    	sz390.dump_gpr(-1);
-	    }
-	    if (sz390.stimer_exit_request){
-	    	sz390.start_stimer_exit();
 	    }
 		tz390.systerm_ins++;
 		opcode1 = mem_byte[psw_loc] & 0xff;
@@ -5816,7 +5817,46 @@ public void exec_pz390(){
 		         check_eb_mpy();
 		         break;
 		     case 0x10:  // 6740 "ED10" "TCEB" "RXE"
-		         ins_setup_rxe();
+		     	 psw_check = false;
+		    	 ins_setup_rxe();
+		    	 fp_rev1 = fp_get_eb_from_eb(fp_reg,rf1);
+		         psw_cc = psw_cc0;
+		         if ((xbd2_loc & 0x800) != 0 && fp_rev1 == 0){
+		        	 psw_cc = psw_cc1; //+0
+		         }
+		         if ((xbd2_loc & 0x400) != 0 && fp_rev1 == 0){
+		        	 psw_cc = psw_cc1; //-0
+		         }
+		         if ((xbd2_loc & 0x200) != 0){
+		        	 psw_cc = psw_cc1; //+normalized
+		         }
+		         if ((xbd2_loc & 0x100) != 0){
+		        	 psw_cc = psw_cc1; //-normalized
+		         }
+		         if ((xbd2_loc & 0x080) != 0){
+		        	 // psw_cc = psw_cc1; //+denormalized (never)
+		         }
+		         if ((xbd2_loc & 0x040) != 0){
+		        	 // psw_cc = psw_cc1; //-denormalized (never)
+		         }
+		         if ((xbd2_loc & 0x020) != 0){
+		        	 // psw_cc = psw_cc1; //+infinity
+		         }
+		         if ((xbd2_loc & 0x010) != 0){
+		        	 // psw_cc = psw_cc1; //-infinity
+		         }
+		         if ((xbd2_loc & 0x008) != 0){
+		        	 // psw_cc = psw_cc1; //+quiet nan
+		         }
+		         if ((xbd2_loc & 0x004) != 0){
+		        	 // psw_cc = psw_cc1; //-quiet nan
+		         }
+		         if ((xbd2_loc & 0x002) != 0){
+		        	 // psw_cc = psw_cc1; //+signaling nan
+		         }
+		         if ((xbd2_loc & 0x001) != 0){
+		        	 // psw_cc = psw_cc1; //-signaling nan
+		         }
 		         break;
 		     case 0x11:  // 6750 "ED11" "TCDB" "RXE"
 		         ins_setup_rxe();
@@ -8615,8 +8655,10 @@ private int fp_get_eb_comp_cc(float eb1, float eb2){
 			|| Math.abs(eb2) >= fp_eb_max){
 		    fp_dxc = fp_dxc_oe;
 	 		set_psw_check(psw_pic_data);
-		} else if (Math.abs(eb1) <= fp_eb_min
-				   || Math.abs(eb2) <= fp_eb_min){
+		} else if ((Math.abs(eb1) <= fp_eb_min
+				    && eb1 != 0.)  // RPI 325
+				   || (Math.abs(eb2) <= fp_eb_min
+					   && eb2 != 0.)){
 		    fp_dxc = fp_dxc_ue;
 	 		set_psw_check(psw_pic_data);
 	 	}      
@@ -8672,8 +8714,10 @@ private int fp_get_db_comp_cc(double db1, double db2){
 			|| Math.abs(db2) >= fp_db_max){
 		    fp_dxc = fp_dxc_oe;
  			set_psw_check(psw_pic_data);
-		} else if (Math.abs(db1) <= fp_db_min
-				   || Math.abs(db2) <= fp_db_min){
+		} else if ((Math.abs(db1) <= fp_db_min
+				    && db1 != 0.) // RPI 235
+				   || (Math.abs(db2) <= fp_db_min
+					   && db2 != 0.)){
 		    fp_dxc = fp_dxc_ue;
  			set_psw_check(psw_pic_data);
  		}
@@ -8955,7 +8999,7 @@ private float fp_get_eb_from_eb(ByteBuffer fp_buff,int fp_index){
 	 */
  	 int fp_ctl_index = fp_index >> 3;
 	 if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
-        return zcvt_fp_ctl_reg_to_eb(fp_ctl_index);
+        return fp_ctl_reg_to_eb(fp_ctl_index);
 	} else {
 		return fp_buff.getFloat(fp_index);
 	}
@@ -8969,7 +9013,7 @@ private double fp_get_db_from_eh(ByteBuffer fp_buff,int fp_index){
 	 */
  	 int fp_ctl_index = fp_index >> 3;
 	 if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
-        return zcvt_fp_ctl_reg_to_db(fp_ctl_index);
+        return fp_ctl_reg_to_db(fp_ctl_index);
 	} else {
 		return zcvt_eh_to_db(fp_buff.getInt(fp_index));
 	}
@@ -8982,7 +9026,7 @@ private double fp_get_db_from_eb(ByteBuffer fp_buff,int fp_index){
 	 */
 	int fp_ctl_index = fp_index >> 3;
 	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
-        return zcvt_fp_ctl_reg_to_db(fp_ctl_index);
+        return fp_ctl_reg_to_db(fp_ctl_index);
 	} else {
 		return fp_buff.getFloat(fp_index);
 	}
@@ -8995,7 +9039,7 @@ private double fp_get_db_from_dh(ByteBuffer fp_buff,int fp_index){
 	 */
 	int fp_ctl_index = fp_index >> 3;
 	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
-        return zcvt_fp_ctl_reg_to_db(fp_ctl_index);
+        return fp_ctl_reg_to_db(fp_ctl_index);
 	} else {
 		return zcvt_dh_to_db(fp_buff.getLong(fp_index));
 	}
@@ -9008,7 +9052,7 @@ private double fp_get_db_from_db(ByteBuffer fp_buff,int fp_index){
 	 */
 	int fp_ctl_index = fp_index >> 3;
 	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
-        return zcvt_fp_ctl_reg_to_db(fp_ctl_index);
+        return fp_ctl_reg_to_db(fp_ctl_index);
 	} else {
 		return fp_buff.getDouble(fp_index);
 	}
@@ -9021,7 +9065,7 @@ private double fp_get_db_from_lh(ByteBuffer fp_buff,int fp_index){
 	 */
 	int fp_ctl_index = fp_index >> 3;
 	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
-        return zcvt_fp_ctl_reg_to_db(fp_ctl_index);		
+        return fp_ctl_reg_to_db(fp_ctl_index);		
 	} else {
 		return zcvt_lh_to_bd(fp_buff,fp_index).doubleValue();
 	}
@@ -9083,7 +9127,7 @@ private BigDecimal fp_get_bd_from_lh(ByteBuffer fp_buff,int fp_index){
 	 */
 	int fp_ctl_index = fp_index >> 3;
 	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
-        return zcvt_fp_ctl_reg_to_bd(fp_ctl_index);
+        return fp_ctl_reg_to_bd(fp_ctl_index);
 	} else {
 		return zcvt_lh_to_bd(fp_buff,fp_index);
 	}
@@ -9096,12 +9140,12 @@ private BigDecimal fp_get_bd_from_lb(ByteBuffer fp_buff,int fp_index){
 	 */
 	int fp_ctl_index = fp_index >> 3;
 	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
-        return zcvt_fp_ctl_reg_to_bd(fp_ctl_index);
+        return fp_ctl_reg_to_bd(fp_ctl_index);
 	} else {
 		return zcvt_lb_to_bd(fp_buff,fp_index);
 	}
 }
-private Float zcvt_fp_ctl_reg_to_eb(int fp_ctl_index){
+private Float fp_ctl_reg_to_eb(int fp_ctl_index){
 	/*
 	 * return float from fp_reg 
 	 */
@@ -9117,7 +9161,7 @@ private Float zcvt_fp_ctl_reg_to_eb(int fp_ctl_index){
         return (float)0;
     }
 }
-private Double zcvt_fp_ctl_reg_to_db(int fp_ctl_index){
+private Double fp_ctl_reg_to_db(int fp_ctl_index){
 	/*
 	 * return double from fp_reg 
 	 */
@@ -9133,7 +9177,7 @@ private Double zcvt_fp_ctl_reg_to_db(int fp_ctl_index){
         return (double)0;
     }
 }
-private BigDecimal zcvt_fp_ctl_reg_to_bd(int fp_ctl_index){
+private BigDecimal fp_ctl_reg_to_bd(int fp_ctl_index){
 	/*
 	 * return BigDecimal from fp_reg cache
 	 */
@@ -9157,7 +9201,7 @@ private BigDecimal fp_get_bd_from_dh(ByteBuffer fp_buff,int fp_index){
 	 */
 	int fp_ctl_index = fp_index >> 3;
 	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
-        return zcvt_fp_ctl_reg_to_bd(fp_ctl_index);
+        return fp_ctl_reg_to_bd(fp_ctl_index);
 	} else {
 		return zcvt_dh_to_bd(fp_buff,fp_index);
 	}
@@ -9186,7 +9230,7 @@ private BigDecimal fp_get_bd_from_eh(ByteBuffer fp_buff,int fp_index){
 	 */
 	int fp_ctl_index = fp_index >> 3;
 	if (fp_buff == fp_reg && fp_reg_ctl[fp_ctl_index] != fp_ctl_ld){
-		return zcvt_fp_ctl_reg_to_bd(fp_ctl_index);
+		return fp_ctl_reg_to_bd(fp_ctl_index);
 	} else {
 		return zcvt_eh_to_bd(fp_buff,fp_index);
 	}
