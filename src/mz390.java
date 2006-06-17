@@ -165,6 +165,8 @@ public  class  mz390 {
     * 06/08/06 RPI 329 remove file suffix from &SYS.._MEMBER 
     * 06/09/06 RPI 330 add MNOTE's with level > 0 to ERR log
     * 06/09/06 RPI 343 support N'&array returning highest store  
+    * 06/16/06 RPI 340 multiple fixes for EQU symbol support
+    * 06/16/06 RPI 349 fix to prevent loop on EQU error during loading
     ********************************************************
     * Global variables
     *****************************************************/
@@ -656,6 +658,7 @@ private void init_mz390(String[] args, JTextArea log_text){
         tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
 		put_copyright();
 		init_arrays();
+		mac_name[0] = "OPEN CODE"; // for trace
         init_gbl_sys();
 }
 private void compile_patterns(){
@@ -953,7 +956,7 @@ private void load_mac(){
     case 0: // MLC
     	cur_mac_line_num = 0;
     	load_open_macro_file();
-    	load_macro_mend_level = 1; // no macro statement
+		load_macro_mend_level = 1; // no macro statement
     	mac_line_index = tot_mac_line;
     	if (tz390.opt_cics && tz390.opt_prolog){  // RPI 308
     		mac_line = " DFHEIGBL";
@@ -993,6 +996,9 @@ private void load_mac(){
 	load_get_mac_line();
 	while (mac_line != null
 			&& mac_line_index < tz390.opt_maxline){
+	    	if (tz390.opt_traceall){
+	    		put_trace("LOADING MAC LINE " + mac_line);
+	    	}
 		    parse_mac_line();
 			if (load_type != load_mac_inline
 			    && (mac_line.length() < 2
@@ -1269,7 +1275,7 @@ private void add_mac(String macro_name){
 				abort_error(87,"key search table exceeded");
 			}
 		} else {
-			macro_name = "OPEN CODE";
+			macro_name = "OPEN CODE";	
 		}
 		tot_mac_name++;
 		mac_name[mac_name_index] = macro_name.toUpperCase();
@@ -6436,13 +6442,13 @@ private void log_error(int error,String msg){
 	 *       ignore and return setc_value = null
 	 */
 	  if (mac_abort)return;
-	  if (sym_calc && loading_mac)return;
+	  mac_abort = true;
 	  exp_end = true;
+	  if (sym_calc && loading_mac)return; // RPI 349
 	  if (exp_var_replacement_mode){ // RPI 241
 		  exp_setc = null;
 		  return;
 	  }
-	  mac_abort = true;
 	  log_to_bal = true;
 	  String error_msg = "MZ390E error " + error
         + " file=" + (mac_file_name_num[mac_line_index]+1)

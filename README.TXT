@@ -1,4 +1,4 @@
-z390 v1.1.00d PTF 06/16/06
+z390 v1.1.00e PTF 06/16/06
 Copyright 2006 Automated Software Tools Corporation
 
 
@@ -100,7 +100,13 @@ command and also set display title text color to blue using SFE command.
    
 27.RPI 346 correct mz390 to evaluate self defining character constant
    in either lower or upper case.  Unlike az390, it was forcing upper 
-   case.        
+   case.     
+   
+28.RPI 349 correct loop in mz390 when EQU has expression error.
+
+29.RPI 350 change TRACEALL to show source during loading. Note
+   TRACEM does not show source during loading and only shows result
+   of set statements.
       
 To install PTF follow these steps.
 
