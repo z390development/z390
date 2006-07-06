@@ -72,6 +72,8 @@ import javax.swing.Timer;
     *          length and check entries in ascending order
     * 05/09/06 RPI 312 add pgm name to return code msg and
     *          add svc extended trace information
+    * 07/01/06 RPI 352 relax align of DCB to 4 bytes
+    * 07/05/06 RPI 347 add test address stop break
     ********************************************************
     * Global variables
     *****************************************************/
@@ -250,26 +252,29 @@ import javax.swing.Timer;
     /*
      * test reg and mem break on change variables
      */
-    boolean test_break_reg_mode = false;
-    boolean test_break_mem_mode = false;
-    boolean test_break_op_mode = false;
-    int     test_break_op_ins  = 0;
-    String  test_break_reg_cmd = null;
-    String  test_break_mem_cmd = null;
-    String  test_break_op_cmd  = null;
-    boolean test_break_reg = false;
-    boolean test_break_mem = false;
-    int     test_break_reg_loc = 0;
+    boolean test_break_addr_mode = false;
+    boolean test_break_reg_mode  = false;
+    boolean test_break_mem_mode  = false;
+    boolean test_break_op_mode   = false;
+    int     test_break_addr      = 0;
+    int     test_break_op_ins    = 0;
+    String  test_break_addr_cmd  = null;
+    String  test_break_reg_cmd   = null;
+    String  test_break_mem_cmd   = null;
+    String  test_break_op_cmd    = null;
+    boolean test_break_reg       = false;
+    boolean test_break_mem       = false;
+    int     test_break_reg_loc   = 0;
     int     test_break_reg_compare = 0;
-    long    test_break_reg_val = 0;
-    long    test_break_reg_sdt = 0;
-    int     test_break_mem_loc = 0;
-    byte    test_break_mem_byte = 0;
+    long    test_break_reg_val   = 0;
+    long    test_break_reg_sdt   = 0;
+    int     test_break_mem_loc   = 0;
+    byte    test_break_mem_byte  = 0;
     int     test_break_mem_compare = 0;
     int     test_break_mem_equal = 0;
-    byte[]  test_break_mem_sdt  = null;
-    int     test_break_op1 = 0;
-    int     test_break_op2 = 0;
+    byte[]  test_break_mem_sdt   = null;
+    int     test_break_op1       = 0;
+    int     test_break_op2       = 0;
     int     test_break_op2_index = 0;
     int     test_break_op2_mask  = 0;
     /*
@@ -2581,11 +2586,11 @@ private void dcb_eodad_exit(){
 private void check_dcb_addr(){
 	/*
 	 * validate that cur_dcb_addr is
-	 * on double word bound and that
+	 * on full word bound and that
 	 * DCBID = EBCDIC or ASCII C'DCB1'
 	 * else abort
 	 */
-	if (cur_dcb_addr/8*8 != cur_dcb_addr
+	if (cur_dcb_addr/4*4 != cur_dcb_addr  // RPI 152
 		|| !get_ascii_string(cur_dcb_addr + dcb_id,8).equals(tz390.dcb_id_ver)){
 		abort_error(80,"invalid DCB address or ID at DCB=(" 
 			+ tz390.get_hex(cur_dcb_addr,8) 
@@ -3695,6 +3700,9 @@ public void process_test_cmd(){
 	 *       option test(ddname)..
 	 *  
 	 */
+	if (test_break_addr_mode){
+		check_test_break_addr();
+	}
 	if (test_break_reg_mode){
        check_test_break_reg();
 	}
@@ -3757,6 +3765,16 @@ private void get_test_cmd(){
 			test_cmd = "Q";  // quit now
 		}
 	}
+}
+private void check_test_break_addr(){
+	/*
+	 * check for psw = break addr
+	 */
+    if (pz390.psw_loc == test_break_addr){
+    	pz390.test_trace_count = 0;
+    	put_log("test break on " + test_break_addr_cmd);
+    	pz390.trace_psw();
+    }
 }
 private void check_test_break_reg(){
 	/*
@@ -3898,17 +3916,17 @@ private void exec_test_cmd(){
 	}
 	test_opcode = test_token.toUpperCase().charAt(0);
 	switch (test_opcode){
-	case '+':
+	case '+': // relative base replacement +nn=
 		test_token = get_next_test_token();
 		test_addr = test_base_addr + get_next_test_addr();
 		test_opcode = '=';
 		break;
-	case '-':
+	case '-': // relative base replacement -nn=
 		test_token = get_next_test_token();
 		test_addr = test_base_addr - get_next_test_addr();
 		test_opcode = '=';
 		break;
-	case 'E':
+	case 'E': // no preprocessing for exit request
 		break;
 	default:
 		test_addr = 0;
@@ -3950,6 +3968,10 @@ private void exec_test_cmd(){
 			}
 		}
 		break;
+	case 'A':  // set address stop
+		test_token = get_next_test_token();
+		set_test_break_addr(get_next_test_addr());
+		break;
 	case 'B':  // set base for rel addr of memory
 		test_token = get_next_test_token();
 		if (test_token != null && test_token.charAt(0) == '='){
@@ -3962,13 +3984,13 @@ private void exec_test_cmd(){
 		} 
 		test_error("invalide B=addr");
 		break;
-	case 'D':
+	case 'D': // dump tiot
     	dump_tiot();
         break;
 	case 'E':  // capture exit request from batch and exit when done
 	    exit_request = true;
 	    break;
-	case 'F':
+	case 'F': // dump fp regs
 		test_token = get_next_test_token();
 		if (test_token == null){
 			dump_fpr(-1);
@@ -3976,39 +3998,36 @@ private void exec_test_cmd(){
 			dump_fpr(Integer.valueOf(test_token).intValue() * 8);
 		}
 		break;
-	case 'G':  // go nn ins or until reg/mem/op break
+	case 'G':  // go nn instrs, to hex addr, or until reg/mem/op/addr break
        	tz390.opt_trace = false;
 		go_test();
 	    break;
 	case 'H':  // help
-	    put_log("test command help summary");
+	    put_log("z390 test command help summary (Visit www.z390.org for more information)");
 	    put_log("  addr=sdt    set memory value  (ie 1r?=x'80' changes mem at (r1) 31 bit");
 	    put_log("  reg=sdt     set register value (ie 15r=8 changes reg 15 to 8)");
+	    put_log("  A=addr      set address stop (ie A FF348. or A *+4 etc.)");
 	    put_log("  B=addr      set base for rel addr (ie B=15r% sets base to (r15) 24 bit");
 	    put_log("  D           display DCB file status, DDNAME, and DSNAME information");
 	    put_log("  F nn        display specified floating point registers else all F0-FF");
-	    put_log("  G nn/opcode exec n instr. or until next break without trace");
-	    put_log("  H           list help command summary");
+	    put_log("  G nn/adr/op exec n instr. or to hex addr or until next break without trace");
 	    put_log("  J addr      jump to new addr and trace instruction");
-	    put_log("  L           list all regs and trace current instruction");
 	    put_log("  L reg       list contents of register (ie l 1r dumps register 1");
 	    put_log("  L addr len  list contents of memory area (ie l 10. 4 dumps cvt addr");
 	    put_log("  M           display memory total allocated and free");
 	    put_log("  P           display program information from CDE");
-	    put_log("  Q           quit execution now");
 	    put_log("  R nn        display specified general purpose register else all R0-RF");
-	    put_log("  S           clear register and memory breaks");
+	    put_log("  S           clear all breaks");
 	    put_log("  S reg??sdt  set break on register change");
 	    put_log("  S addr??sdt set break on memory change");
-	    put_log("  T nn/opcode trace n instr. or until next opcode/reg/mem break");
-	    put_log("  Z    = zoom to normal end with no trace or test breaks");
+	    put_log("  T nn/adr/op exec n instr. or to hex addr or until next break with trace");
+	    put_log("  Z or Q      Z to zoom to normal end or Q to quit now");
 	    put_log("* addr = [hex.|*|dec|nnr%(24)|nnr?(31)][+-addr]");
 	    put_log("* reg  = nnr where nn = 0-15");
 	    put_log("* sdt  = self defining term (b'01',c'ab',f'1',h'2',x'ff')");
 	    put_log("* ??   = break compare operator (=,!=,<,<=,>,>=)");
-	    put_log("for more information visit www.z390.org");
         break;
-	case 'J':
+	case 'J': // jump to address
 		test_token = get_next_test_token();
 		if (test_token != null){
 			test_addr = get_next_test_addr();
@@ -4075,16 +4094,16 @@ private void exec_test_cmd(){
 			}
 		}
         break;
-	case 'M':
+	case 'M': // show getmain/freemain memory stats
 		dump_mem_stat();
 		break;
-	case 'P':
+	case 'P': // show CDE program info.
 		dump_cde();
 		break;
-	case 'Q':
+	case 'Q': // quit test mode
 		abort_error(101,"quitting test mode"); //RPI121
 		break;
-	case 'R':  // reg set
+	case 'R':  // dump gpr regs
 		test_token = get_next_test_token();
 		if (test_token == null){
 			dump_gpr(-1);
@@ -4099,6 +4118,7 @@ private void exec_test_cmd(){
 			test_break_reg_mode = false;
 			test_break_mem_mode = false;
 			test_break_op_mode = false;
+			test_break_addr_mode = false;
 		} else {
 			test_addr    = get_next_test_addr();
 			test_compare = get_test_compare(test_token);
@@ -4187,15 +4207,35 @@ private void go_test(){
 	 */
 	test_token = get_next_test_token();
 	if (test_token != null){
-		try {
-			pz390.test_trace_count = Integer.valueOf(test_token);
-		} catch (Exception e){
-			set_test_break_op();
+		if (test_cmd.indexOf('*') >= 0
+			|| test_cmd.indexOf('+') >= 0
+			|| test_cmd.indexOf('-') >= 0
+			|| (test_token.length() > 1 
+				&& test_token.charAt(test_token.length()-1) == '.')
+			){
+			set_test_break_addr(get_next_test_addr());
 			pz390.test_trace_count = -1; // go until break
+		} else {
+			try {
+				pz390.test_trace_count = Integer.valueOf(test_token);
+			} catch (Exception e){
+				set_test_break_op();
+				pz390.test_trace_count = -1; // go until break
+			}
 		}
 	} else {
 		pz390.test_trace_count = -1; // go until break or exit
 	}
+}
+private void set_test_break_addr(int addr){
+	/*
+	 * set break on specified instruction 
+	 * address
+	 */
+	test_break_addr_mode = true;
+	test_break_addr_cmd  = test_cmd;
+	test_break_addr = addr;
+	dump_mem(test_break_addr,16);
 }
 private void set_test_break_reg(){
 	/*

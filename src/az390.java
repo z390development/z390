@@ -169,6 +169,7 @@ public  class  az390 {
     * 06/04/06 RPI 327 issue error if dup < 0
     * 06/08/06 RPI 338 ignore unsupported options on PRINT
     * 06/09/06 RPI 330 add MNOTE's with level > 0 to error log
+    * 07/05/06 RPI 356 prevent trap in calc_exp with null parsm
     *****************************************************
     * Global variables
     *****************************************************/
@@ -2784,7 +2785,8 @@ private boolean calc_exp(){
 	 * which can be end of string, or (),
 	 */
 	   if (exp_text == null || exp_index > exp_text.length()){
-	   	  return false;
+	   	   exp_text = ""; // RPI 356
+		   return false;
 	   }
        exp_match = exp_pattern.matcher(exp_text.substring(exp_index));
        exp_state = 1;
@@ -4170,7 +4172,7 @@ private void skip_comma(){
 	/*
 	 * verify and skip comma
 	 */
-	 if (exp_index < exp_text.length() && exp_text.charAt(exp_index) == ','){
+	 if (!bal_abort && exp_index < exp_text.length() && exp_text.charAt(exp_index) == ','){
 	 	exp_index++;
 	 } else {
 	 	log_error(50,"missing operand comma - " + exp_text.substring(0,exp_index));

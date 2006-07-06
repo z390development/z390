@@ -1,4 +1,4 @@
-z390 v1.1.00e PTF 06/16/06
+z390 v1.1.00f PTF 07/06/06
 Copyright 2006 Automated Software Tools Corporation
 
 
@@ -107,7 +107,30 @@ command and also set display title text color to blue using SFE command.
 29.RPI 350 change TRACEALL to show source during loading. Note
    TRACEM does not show source during loading and only shows result
    of set statements.
+   
+30.RPI 325 Correct KEB and KED instrucutions to allow exact zero.
+
+31.RPI 326 Add support for TCEB, TCDB, and TCXB data class instr.
+
+33.RPI 333 Add SRNM and correct rounding mode instructions.
+
+34.RPI 335 Correct mask trace for RRF2 type instructions.
       
+35.RPI 347 Add TEST mode address stop break support using A addr,
+T addr, or G addr to set and S command to clear all breaks.
+
+36.RPI 348 correct trace to only show 2 bytes for half word instr.
+add add blank line to trace after each successful branch.
+
+37.RPI 351 correct OPSYN support to replace opcodes used previously.
+
+38.RPI 352 correct DCB support to allow 4 byte alignment versus 8.
+
+39.RPI 353 correct mz390 expression parser to support prefix operator
+such as UPPER followed by (...) type expression.
+ 
+40.RPI 356 correct az390 to prevent trap on CVD with no operands.
+
 To install PTF follow these steps.
 
 1.  Copy the z390.jar file into install directory for z390

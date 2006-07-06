@@ -167,6 +167,8 @@ public  class  mz390 {
     * 06/09/06 RPI 343 support N'&array returning highest store  
     * 06/16/06 RPI 340 multiple fixes for EQU symbol support
     * 06/16/06 RPI 349 fix to prevent loop on EQU error during loading
+    * 07/01/06 RPI 351 fix opsyn cancel for previously used opcode
+    * 07/03/06 RPI 353 fix UPPER(...) expression error
     ********************************************************
     * Global variables
     *****************************************************/
@@ -558,7 +560,7 @@ public  class  mz390 {
 		   3, 3, 3, 7, 3, 7, 7, 8, 0, 3, 7, 7, 7, 7, 3, // 7 LL  logical compares //RPI144 (was 1,2 now 3,3)
 		   3, 3, 3, 0, 0, 0, 0, 8, 0, 3, 0, 0, 0, 0, 3, // 8 '   string '....'
 		   3, 3, 3,10, 0, 0, 0, 0, 9, 3, 0, 0, 0, 0, 3, // 9 ,   substring '...'(e1,e2)
-		  12,12,12,12,12,12,12, 3,12,12,12,12,12,12, 3, //10 ?'  prefix operator  //RPI145, RPI196
+		  12,12, 3,12,12,12,12, 3,12,12,12,12,12,12, 3, //10 ?'  prefix operator  //RPI145, RPI196, RPI 353
 		   3, 3, 3,13, 3, 0, 3, 3, 0, 3,13,13,13,13, 3, //11 NOT logical
 		   3, 3, 3,14, 3, 0, 3, 3, 0, 3, 3,14,14,14, 3, //11 AND logical
 		   3, 3, 3,15, 3, 0, 3, 3, 0, 3, 3, 3,15,15, 3, //11 OR  logical
@@ -851,15 +853,17 @@ private void process_mac(){
 	           	      exec_mac_op();      // execute macro operation
        		          bal_line = null;    // force macro execution cycle
 	               } else if (bal_op != null) {
-	            	  if ((save_opsyn_index == -1 
-	            		    || tz390.opsyn_name[save_opsyn_index] == null
-	            		  )
-	            		  ||
-	            		  (!tz390.opt_mfc
-	            			 || tz390.find_key_index("O:" + bal_op) < 0
-	            		  )
+	            	  if (save_opsyn_index == -1 
+	            		  || tz390.opsyn_name[save_opsyn_index] == null
+	            		  || !tz390.opt_mfc
+	            		  || tz390.find_key_index("O:" + bal_op) < 0
 	            		  ){
 	            		  find_mac_name_index = find_mac_entry(bal_op);
+	            		  if (find_mac_name_index == -2  // RPI 351
+	            			  && save_opsyn_index >= 0
+	            			  && tz390.opsyn_name[save_opsyn_index] == null){
+	            			  find_mac_name_index = -1; // search again for opsyn cancel
+	            		  }
 	            	  } else { 
 	            		  find_mac_name_index = -2; // RPI 331 don't search for opsyn rep.
 	            	  }
@@ -1130,13 +1134,7 @@ private void load_proto_type(){
 			 if (mac_name_index < 0){
 				   if (tot_mac_name < tz390.opt_maxsym){
 				    	mac_name_index = tot_mac_name;
-					    if (tz390.find_key_index("M:" + mac_op) == -2){
-					    	tz390.update_key_index(mac_name_index);
-					    } else {
-					    	if (!tz390.add_key_index(mac_name_index)){
-					    		abort_error(87,"key search table exceeded");
-					    	}
-					    }
+                        update_mac_key_index(mac_name_index,mac_op);
 			   	    	tot_mac_name++;
 			       } else {
 			   	      	abort_error(60,"maximum macros exceeded for - " + mac_op);
@@ -1270,10 +1268,7 @@ private void add_mac(String macro_name){
 	if (tot_mac_name < tz390.opt_maxfile){ // RPI 284
 		mac_name_index = tot_mac_name;
 		if (tot_mac_name > 0){  // RPI127 skip main pgm to allow macro later
-			tz390.find_key_index("M:" + macro_name);
-			if (!tz390.add_key_index(mac_name_index)){
-				abort_error(87,"key search table exceeded");
-			}
+            update_mac_key_index(mac_name_index,macro_name);
 		} else {
 			macro_name = "OPEN CODE";	
 		}
@@ -1284,6 +1279,19 @@ private void add_mac(String macro_name){
 	} else {
 		abort_error(27,"max macros exceeded");
 	}
+}
+private void update_mac_key_index(int index,String name){
+	/*
+	 * add or update macro key index
+	 * 
+	 */
+    if (tz390.find_key_index("M:" + name) != -1){ // RPI 351
+    	tz390.update_key_index(index);
+    } else {
+    	if (!tz390.add_key_index(index)){
+    		abort_error(170,"key search table exceeded adding " + name);
+    	}
+    }
 }
 private void set_mac_file_num(){
 	/*
@@ -1297,7 +1305,7 @@ private void set_mac_file_num(){
 			cur_mac_file_num = tot_mac_file_name;
 			tot_mac_file_name++;
 			if (!tz390.add_key_index(cur_mac_file_num)){
-				abort_error(87,"key search table exceeded");
+				abort_error(172,"key search table exceeded adding " + mac_file_key);
 			}
 			mac_file_name[cur_mac_file_num] = mac_file_key;
 		}
@@ -4628,13 +4636,13 @@ private int  add_sym(String sym_lab){
 	 * 
 	 */
 	if (tot_sym >= tz390.opt_maxsym){
-		abort_error(143,"symbol table exceeded");
+		abort_error(143,"symbol table exceeded adding " + sym_lab);
 	    return -1;
 	}
 	int index = tot_sym;
 	tot_sym++;
 	if (!tz390.add_key_index(index)){
-		abort_error(87,"key search table exceeded");
+		abort_error(173,"key search table exceeded");
 	    return -1;
 	}
 	sym_name[index] = sym_lab;
@@ -5042,7 +5050,7 @@ private void add_gbl_set(String new_name,byte new_type,int new_size){
 	}
 	var_name_index = tot_gbl_name;
 	if (!tz390.add_key_index(var_name_index)){
-		abort_error(87,"key search table exceeded");
+		abort_error(174,"key search table exceeded adding " + new_name);
 	}
    	tot_gbl_name++;
    	tot_gbl_set = tot_gbl_set + new_size; // RPI 284
