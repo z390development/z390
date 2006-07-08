@@ -1,0 +1,46 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* DEMO DISPLAY OF APL GRAPHICS UNICODE CHARACTERS USING GE GRAPHIC
+* ESCAPE X'08' FOLLOWED BY BYTE INDEX TO APL CODE TABLE.           
+*********************************************************************
+* 05/17/06 DSH RPI 227 ADD GUAM TN3270 GE GRAPHIC ESCAPE ORDER SUPP.    
+* 05/24/06 DSH RPI 227 ADD GUAM SCREEN,COLOR,BG,TEXT                    
+*********************************************************************
+DEMOAPL1 SUBENTRY
+         GUAM  WINDOW,TITLE,'DEMOAPL1 SHOWING APL CHARACTERS'
+         GUAM  SCREEN,COLOR,GREEN,BLACK
+         TPUT  STREAM,LSTREAM,FULLSCR
+         TGET  INBUF,LINBUF,ASIS
+         SUBEXIT
+         TN3270 SYMBOLS DEFINE TN3290 CONTROL AND ATTRIBUTE CODES
+STREAM   TN3270 ESC,WRT_EW,WCC_KD
+         TN3270 (SBA,3,10)
+         TN3270 (SFE,2,SFE_BFA,ATT_PA,SFE_COLOR,SFE_BLUE)
+         TN3270 C'DEMOAPL1 SHOW TN3270 APL CODES'
+&I       SETA   0
+&ROW     SETA   0
+.NEXTROW ANOP
+&ROW     SETA  &ROW+1
+         AIF   (&ROW GT 16).ENDROWS
+&TROW    SETA  &ROW+5
+         TN3270 (SBA,&TROW,10),(SF,ATT_PA),CL10' ROW &ROW',C'='
+&J       SETA  0
+.NEXTAPL ANOP
+&J       SETA  &J+1
+         AIF   (&J GT 16).NEXTROW 
+         TN3270 (GE,&I)  
+&I       SETA  &I+1
+         AGO   .NEXTAPL
+.ENDROWS ANOP
+LSTREAM  EQU   *-STREAM
+INBUF    DS    X
+LINBUF   EQU   *-INBUF
+GREEN    GUAM  COLOR,GREEN
+BLACK    GUAM  COLOR,BLACK
+         GUAM  SYMBOLS
+         END  
+ 

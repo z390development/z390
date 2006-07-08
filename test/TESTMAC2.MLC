@@ -7,6 +7,8 @@
 *********************************************************************
 * 11/02/05 RPI  60 ADD MULT LOGICAL OPERATOR TESTS FOR AND OR NOT
 * 04/07/06 RPI 274 ADD TEST FOR AIF ('A' EQ 'B' AND ('C' EQ 'D')).ERR       
+* 05/13/06 RPI 314 ADD AIFB and AGOB ALIAS TESTS                            
+* 05/14/06 RPI 315 ADD AIF alternate fomrat and computed ago                
 *********************************************************************
 TESTMAC2 SUBENTRY
          WTO   'TESTMAC2 - TEST CONDITIONAL COMPARES'
@@ -52,6 +54,31 @@ XYZ      TEST  XYZ
 .SKPERR   ANOP
          MEND
          TEST
+* TEST AIFB AND AGOB
+         AIFB  (1 EQ 0).ERR
+         AIFB  (1 EQ 1).AIFBOK
+         AGOB  .ERR
+.AIFBOK  ANOP
+         AGOB  .AGOBOK
+         AGO   .ERR
+.AGOBOK  ANOP
+* TEST ALTERNATE AIF FORMAT COMPOUND TESTS
+         AIF   ('A' EQ 'B').TOK1,                                      X
+               ('C' EQ 'C').TOK2
+         MNOTE 'AIF FAILED'
+.TOK1    MNOTE 'TOK1'
+.TOK2    MNOTE 'TOK2' 
+* TEST COMPUTED AGO
+&I       SETA  2
+.T1      AGO   (&I).T11,.T12,.T13
+         MNOTE 'AGO NO BRANCH'
+         AGO    .E1
+.T11     MNOTE '.T11'
+         AGO   .E1
+.T12     MNOTE '.T12'
+         AGO   .E1
+.T13     MNOTE '.T13'
+.E1      ANOP
          WTO   'TESTMAC2 ENDED OK'
          SUBEXIT
          AGO   .EXIT

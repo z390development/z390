@@ -1,4 +1,4 @@
-z390 V1.1.00 Portable Mainframe Assembler
+z390 V1.1.01 Portable Mainframe Assembler
 Copyright 2006 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
@@ -25,6 +25,8 @@ z390 is a portable mainframe assembler, linker, and emulator utility for Windows
 
 A WTO macro based demo “Hello World” program demo.mlc is included which can be expanded, assembled, linked, and executed with the command “ASMLG DEMO\DEMO” issued from GUI command line or via point and click using the z390 GUI file menu ASMLG selection.
 
+Structured programming macros IF, ELSEIF, ELSE, ENDIF, DO, and ENDDO are included along with demo program DEMO\DEMOSTR1.
+
 A TPUT and TGET macro based demo TN3270 application to update and display name, address, and numeric zip fields on screen can be assembled and executed with the command “ASMLG DEMO\DEMOGUI6 GUAM”.  Use PF1 for help screen and PF3 for exit.  The arrow, backspace, and tab keys can be used to control blinking cursor.  An alarm and status line error is issued if attempt is made to modify protected field or enter alpha data in numeric field.
 
 An EXEC CICS compatible assembler application to update and display name, address, and numeric zip fields on screen can be assembled, linked, and executed.  Use the command RTCICS.BAT to assemble and link all the required EXEC CICS programs.  Use the command CICS PARM(GUI6) to start the z390 EXEC CICS assembler command processor and execute the transaction program TESTGUI6 as the first transaction.  The first GUI window to come up will be the TESTGUI6 application screen.  After exiting the application via PF3, the window will switch from screen view to MCS console view and prompt for the next EXEC CICS transaction or PF3 to exit CICS.
@@ -38,7 +40,7 @@ z390 Windows installation instructions:
 1. Download latest z390_setup.exe file from www.z390.org 
 2. Run z390_setup.exe to install it on Windows XP or 2000
 3. Download and install Java 1.5.0 runtime update 5+ from: 
-    http://java.sun.com/j2se/
+    http://java.sun.com/j2se/  (update 7 is now recommended)
 4. Double click on the z390 desktop icon to start z390 GUI
     a. Enter the command “ASMLG DEMO” to run demo
     b. Scroll the output log to see output of each step

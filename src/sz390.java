@@ -74,6 +74,7 @@ import javax.swing.Timer;
     *          add svc extended trace information
     * 07/01/06 RPI 352 relax align of DCB to 4 bytes
     * 07/05/06 RPI 347 add test address stop break
+    * 07/07/06 RPI 358 prevent trap on invalid S command
     ********************************************************
     * Global variables
     *****************************************************/
@@ -1901,10 +1902,10 @@ public void dump_gpr(int reg_offset){
 	 * dump specified register or all if -1
 	 */
 	if (reg_offset <= 0 || reg_offset >= pz390.r15){
-		put_log(" R0-R3 " + pz390.bytes_to_hex(pz390.reg_byte,0,32,8));
-		put_log(" R4-R7 " + pz390.bytes_to_hex(pz390.reg_byte,32,32,8));
-		put_log(" R8-RB " + pz390.bytes_to_hex(pz390.reg_byte,64,32,8));
-		put_log(" RC-RF " + pz390.bytes_to_hex(pz390.reg_byte,96,32,8));
+		put_log(" R0-R3 " + pz390.bytes_to_hex(pz390.reg,0,32,8));
+		put_log(" R4-R7 " + pz390.bytes_to_hex(pz390.reg,32,32,8));
+		put_log(" R8-RB " + pz390.bytes_to_hex(pz390.reg,64,32,8));
+		put_log(" RC-RF " + pz390.bytes_to_hex(pz390.reg,96,32,8));
 	} else {
 		int reg_num = reg_offset/8;
 		put_log(" r" + reg_num + "=" + pz390.get_long_hex(pz390.reg.getLong(reg_offset)));
@@ -1920,10 +1921,10 @@ public void dump_fpr(int reg_offset){
 			pz390.fp_store_reg(pz390.trace_reg,reg_off);
 			reg_off = reg_off + 8;
 		}
-		put_log(" F0-F3 " + pz390.bytes_to_hex(pz390.trace_reg_byte,0,32,8));
-		put_log(" F4-F7 " + pz390.bytes_to_hex(pz390.trace_reg_byte,32,32,8));
-		put_log(" F8-FB " + pz390.bytes_to_hex(pz390.trace_reg_byte,64,32,8));
-		put_log(" FC-FF " + pz390.bytes_to_hex(pz390.trace_reg_byte,96,32,8));
+		put_log(" F0-F3 " + pz390.bytes_to_hex(pz390.trace_reg,0,32,8));
+		put_log(" F4-F7 " + pz390.bytes_to_hex(pz390.trace_reg,32,32,8));
+		put_log(" F8-FB " + pz390.bytes_to_hex(pz390.trace_reg,64,32,8));
+		put_log(" FC-FF " + pz390.bytes_to_hex(pz390.trace_reg,96,32,8));
 	} else {
 		int reg_num = reg_offset/8;
 		pz390.fp_store_reg(pz390.trace_reg,reg_offset);
@@ -1957,7 +1958,7 @@ private void dump_mem(int mem_addr,int mem_len){
 		while (dump_text.length() < 16){ // RPI 271
 			dump_text = dump_text + " ";
 		}
-		String dump_hex = pz390.bytes_to_hex(pz390.mem_byte,mem_addr,dump_len,4); 
+		String dump_hex = pz390.bytes_to_hex(pz390.mem,mem_addr,dump_len,4); 
         while (dump_hex.length() < 35){ // RPI 271
         	dump_hex = dump_hex + " ";
         }
@@ -2594,7 +2595,7 @@ private void check_dcb_addr(){
 		|| !get_ascii_string(cur_dcb_addr + dcb_id,8).equals(tz390.dcb_id_ver)){
 		abort_error(80,"invalid DCB address or ID at DCB=(" 
 			+ tz390.get_hex(cur_dcb_addr,8) 
-			+ ")=" + pz390.bytes_to_hex(pz390.mem_byte,cur_dcb_addr + dcb_id,8,0));
+			+ ")=" + pz390.bytes_to_hex(pz390.mem,cur_dcb_addr + dcb_id,8,0));
 	}
 }
 private void get_cur_tiot_index(){
@@ -2743,8 +2744,8 @@ private void svc_cmd(){
 	 *   r0+3 = cmd operation type
 	 */
 	String svc_cmd_text = "";
-	int cmd_id = pz390.reg_byte[pz390.r0+2];
-	int cur_cmd_op = pz390.reg_byte[pz390.r0+3];
+	int cmd_id = pz390.reg.get(pz390.r0+2);
+	int cur_cmd_op = pz390.reg.get(pz390.r0+3);
 	switch (cur_cmd_op){
 	case 0: // start command process at R1
 		if (cmd_proc_running[cmd_id]){
@@ -3140,8 +3141,8 @@ private void svc_guam(){
 	if (!tz390.opt_guam){
 		abort_error(104,"GUI option not specified - aborting");
 	}
-	guam_major = pz390.reg_byte[pz390.r0+2];
-	guam_minor = pz390.reg_byte[pz390.r0+3];
+	guam_major = pz390.reg.get(pz390.r0+2);
+	guam_minor = pz390.reg.get(pz390.r0+3);
 	guam_args = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	pz390.reg.putInt(pz390.r15,0);
 	switch (guam_major){
@@ -4354,22 +4355,24 @@ private byte get_test_compare(String compare){
 	 *  4 - <
 	 *  5 - <=
 	 */
-	if (compare.equals("=")){
-		return 0;
-	} else if (compare.equals("!=")){
-		return 1;
-	} else if (compare.equals("!=")){
-		return 1;
-	} else if (compare.equals(">")){
-		return 2;
-	} else if (compare.equals(">=")){
-		return 3;
-	} else if (compare.equals("<")){
-		return 4;
-	} else if (compare.equals("<=")){
-		return 5;
+	if (compare != null){
+		if (compare.equals("=")){
+			return 0;
+		} else if (compare.equals("!=")){
+			return 1;
+		} else if (compare.equals("!=")){
+			return 1;
+		} else if (compare.equals(">")){
+			return 2;
+		} else if (compare.equals(">=")){
+			return 3;
+		} else if (compare.equals("<")){
+			return 4;
+		} else if (compare.equals("<=")){
+			return 5;
+		}
 	}
-	test_error("invalid break compare - " + compare);
+	test_error("invalid break compare operator - " + test_cmd);
 	test_cmd_abort = true;
 	return -1;
 }

@@ -6,6 +6,7 @@
 .* Date     05/04/06                                                 *
 .*********************************************************************
 .* 05/05/06 RPI 308 - ADD SUPPORT FOR FIRST EXEC CICS PGM TESTCIC1    
+.* 05/25/06 RPI 317 - EXIT IF NO DSA FOR NON CICS PGM                 
 .*********************************************************************
 .* DFHEAI0 IS DYNAMICALLY LINKED FROM DFHEIENT AT FIRST CSECT
 .* IN EXEC CICS PROGRAM.  DFHEIENT IS INSERTED IF CICS AND PROLOG
@@ -18,7 +19,8 @@ DFHEAI0  CSECT
 *
 * GET DSA AND CHAIN OLD SAVE AREA TO DSA IN R13
 * 
-         LR    2,0            R2 = CALLER DSA LENGTH PASSED IN R0
+         LTR   2,0            R2 = CALLER DSA LENGTH PASSED IN R0
+         BZ    RETURN         RESTORE AND EXIT IF NO DSA (NOT CICS PGM)
          GETMAIN RC,LV=(2) 
          LTR   15,15
          BNZ   ERR_DSA        ERROR DSA GETMAIN FAILED
@@ -50,6 +52,12 @@ DFHEAI0  CSECT
          SR    15,15
          BR    14                RETURN TO DFHEIENT CALLER
 *
+* NO DSA EXIT TO NON CICS PGM
+*
+RETURN   EQU   *
+         LM    2,12,28(15)       RESTORE 2-12 REGS
+         B     6(14)             RETURN TO R14+6 TO SKIP L,BALR
+*
 * INIT CICS IF R1 NOT SET TO ZCVTEIBP OR ZCVTEIPB/ZCVTCAP ZERO
 *
 INITCICS EQU   *
@@ -59,14 +67,14 @@ INITCICS EQU   *
 *
 * EXIT TO PREV LINK CALLER (CICS OR EZ390)
 *
-EXIT     EXIT                     EXIT TO EZ390 NOW INSTEAD OF TRAN
+SVCEXIT  EXIT                     EXIT TO EZ390 NOW INSTEAD OF TRAN
 *
 * ISSUE ERROR MESSAGE WTO AND ABORT TRANSACTION WITH RC=16
 *
 ERR_DSA  WTO   'DFHEAI0 DSA GETMAIN FAILED - INCREASE MEM(MB) OPTION'
          WTO   'DFHEAI0 TERMINATING WITH RC=16 NOW'
          LA    15,16
-         B     EXIT                 EXIT TO EZ390 NOW INSTEAD OF TRAN
+         B     SVCEXIT              EXIT TO EZ390 NOW INSTEAD OF TRAN
 *
 * DSECTS  
 *

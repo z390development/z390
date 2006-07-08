@@ -1,23 +1,23 @@
 INSTTIME SUBENTRY
 *
 * AUTHOR:       MELVYN MALTZ
-* Z390 VERSION: V1.00.12
-* INSTTIME VERSION: 4
+* Z390 VERSION: V1.00.14d
+* INSTTIME VERSION: 5
 *
+* CALL MZ390 MUST HAVE "SYSPARM(drive:\pathname)"
 * ASSEMBLE WITH OPTION: ASCII
 * EXECUTE WITH OPTIONS: ASCII NOTIME MEM(5)
 *
 * 1ST UPDATE
-*    ADDED: SRP TS BC=B BAL BAS BCR BALR BCTR BASR
-*           MVCL CLCL STM LM
-*           MVCL AND CLCL: ANY LENGTHS 1-999999
-*           LM AND STM   : ANY NO. OF REGISTERS
-*
 *    DUMP DEC FIELD 1ST OPERAND FOR OUTPUT INTEGRITY
 *    ADDED SPIN=NNNNNNN TO ADJUST SPIN COUNT, ALWAYS 7 DIGITS
 *       THE ADJUSTED SPIN OCCURS AFTER THE BCT TIME IS DONE
 *       THE BCT SPIN DEFAULTS TO 1000000, BUT I MIGHT VARY IT
 *       THE BCT SPIN TIME IS SCALED TO THE SPIN TIME
+*
+*    ADDED: SRP TS BC=B BAL BAS BCR BALR BCTR BASR
+*           MVCL CLCL
+*           STM LM (14)
 *
 * 2ND UPDATE
 *    ADDED BCTS=NNNNNNN TO ADJUST BCT SPIN COUNT, ALWAYS 7 DIGITS
@@ -43,7 +43,7 @@ INSTTIME SUBENTRY
 *           AGF SGF ALGF SLGF MSGF DSGF LRV LRVH CG CLG STG CVDY CVDG
 *           STRVG CGF CLGF STRV STRVH STY MSY NY CLY OY XY LY CY AY SY
 *           ALY SLY STHY LAY STCY ICY LB LGB LHY CHY AHY SHY NG OG XG
-*           MLG DLG ALCG SLBG STPQ LPQ LLGC LLGH ML DL ALC SLB
+*           MLG DLG ALCG SLBG STPQ LPQ LLGC LLGH ML DL ALC SLB (154)
 *
 * 3RD UPDATE
 *    ADDED VARIANCE TO STATS
@@ -55,8 +55,7 @@ INSTTIME SUBENTRY
 *           SCKPF TAM SAM24 SAM31 SAM64
 *           SPM BSM BASSM EX
 *           BRC=J=BRU BRAS BRCT BRCTG
-*           BCT (4 FORMS)
-*           LARL BRCL=JLU BRASL
+*           BCT LARL BRCL=JLU BRASL (48)
 *
 * 4TH UPDATE
 *    REPLACED MEAN/VARIANCE WITH STATS PRINT
@@ -73,26 +72,49 @@ INSTTIME SUBENTRY
 *           SLGFI SLFI AGFI AFI ALGFI ALFI CGFI CFI CLGFI CLFI
 *           LGBR LGHR LBR LHR FLOGR LLGCR LLGHR LLCR LLHR
 *           LGFI XIHF XILF IIHF IILF NIHF NILF OIHF OILF LLIHF LLILF
-*           LTG LT LLC LLH
+*           LTG LT LLC LLH (55)
+*
+* 5TH UPDATE
+*    MOVED DRIVE:PATH TO &SYSPARM, NO NEED TO ASSEMBLE INSTTIME NOW
+*
+*    ADDED: LPDR LNDR LTDR LCDR HDR LDXR=LRDR MXR MXDR LDR CDR ADR SDR
+*           MDR DDR AWR SWR LPER LNER LTER LCER HER LEDR=LRER AXR SXR
+*           LER CER AER SER MDER=MER DER AUR SUR
+*           STD MXD LD CD AD SD MD DD AW SW
+*           STE LE CE AE SE MDE=ME DE AU SU
+*           DXR SQDR SQER STFPC LFPC LDER LXDR LXER MAER MSER SQXR MEER
+*           MAYLR MYLR MAYR MYR MAYHR MYHR MADR MSDR THDER THDR LPXR
+*           LNXR LTXR LCXR LXR LEXR FIXR CXR LZER LZDR LZXR FIER FIDR
+*           SFPC EFPC CEFR CDFR CXFR CFER CFDR CFXR CEGR CDGR CXGR CGER
+*           CGDR CGXR LDE LXD LXE MAE MSE SQE SQD MEE MAYL MYL MAY MY
+*           MAYH MYH MAD MSD LEY LDY STEY STDY (124)
 *
 * TO DO
-*    FLOATING POINT
+*    CC TESTING
+*    BFP FLOATING POINT
+*    ANY MISSING OPCODES
 *
 * COMPLETED INSTRUCTIONS:
 *    01 SET
 *      07, 0B-0E
 *    04-07, 0B-0F
 *    10-1F
+*    20-2F
+*    30-3F
 *    40-4F
 *    50, 54-5F
-*    71
+*    60, 67-6F
+*    70-71, 78-7F
 *    84-8F
 *    90-98
 *    A50-A5F
 *    A70-A7F
 *    A8-A9
 *    B2 SET
-*      02, 05, 07, 11-12, 52, 78, 7C
+*      02, 05, 07, 11-12, 2D, 44-45, 52, 78, 7C, 9C-9D
+*    B3 SET
+*      24-26, 2E-2F, 36-3F, 58-59, 60-63, 65-67, 69, 74-77, 7F
+*      84, 8C, B4-B6, B8-BA, C4-C6, C8-CA
 *    B9 SET
 *      00-04, 06-0D, 0F-1D, 1F-21, 26-27
 *      30-31, 46, 80-89, 94-99
@@ -107,10 +129,12 @@ INSTTIME SUBENTRY
 *       86-89, 8E-8F, 90-91, 94-99
 *    E8
 *    EB SET
-*       04, 0A-0D, 14, 1C-1D, 20-21, 24, 26, 2C-2D,
+*       04, 0A-0D, 14, 1C-1D, 20-21, 24, 26, 2C-2D
 *       30-31, 3E, 44-45, 51-52, 54-57, 80-81, 96, 98
 *    EC SET
 *       44-45
+*    ED SET
+*       24-26, 2E-2F, 34-35, 37-3F, 64-67
 *    F0-F3, F8-FD
 *
          LARL  R3,PARMSIN         ADDRESS PARM I/O AREA
@@ -164,6 +188,9 @@ BCTTIMER BCT   R7,BCTTIMER        DO IT
          GETMAIN R,LV=(1)         LENGTHS COLLECTION AREA
          ST    R0,STATADR2        SAVE STATS ORIGIN
          ST    R0,STATNXT2        SAVE STATS NEXT SLOT
+*        LARL  R1,INSTABND        ABEND INTERCEPT ADDRESS
+*        ESTAE (1)
+*
 GET      EQU   *
          GET   PARMS              GET PARM
          CLI   INSTFMAT,C'*'      COMMENT ?
@@ -315,6 +342,7 @@ OUTPUT   DS    0F
 *        R6=FOR TYPE=P POINTS TO PACKED FIELD
 *        R7=GENERAL WORK
 *        R10-11=DUMP CONTENTS FOR SOME INST TYPES
+*        F0-F1 =DUMP CONTENTS IN DECIMAL FOR FLOATING POINT
          LG    R7,TIMEAFT         END TIME
          SG    R7,TIMEBEF                  - BEG TIME
 BCT1OFF  B     DONTBCT            BYPASS FOR BCT TIME
@@ -354,15 +382,15 @@ OUTGO    EQU   *
          CLC   INSTFMAT(3),=C'SS2' SS2 TYPE ?
          BNE   OUTTRYL2           EXIT IF NOT
 OUTLL1   EQU   *
-         PACK  STATDEC1,INSTLL1   PACK L1
-         MVC   0(4,R7),STATDEC1+12 SAVE IN NEXT SLOT
+         PACK  DEC2,INSTLL1       PACK L1
+         MVC   0(4,R7),DEC2+12    SAVE IN NEXT SLOT
 OUTTRYL2 EQU   *
          CLC   INSTFMAT(3),=C'SS2' SS2 TYPE ?
          BNE   OUTTRYLL           EXIT IF NOT
          CLC   INSTOPCD(3),=C'SRP' SRP INST ?
          BE    OUTLENOK           EXIT IF IT IS
-         PACK  STATDEC1,INSTLL2   PACK L2
-         MVC   4(4,R7),STATDEC1+12 SAVE IN NEXT SLOT
+         PACK  DEC2,INSTLL2       PACK L2
+         MVC   4(4,R7),DEC2+12    SAVE IN NEXT SLOT
          B     OUTLENOK           EXIT
 OUTTRYLL EQU   *
          CLC   INSTOPCD(3),=C'MVC' MVC INSTS ?
@@ -372,8 +400,8 @@ OUTTRYLL EQU   *
          CLC   INSTFMAT(3),=C'SS1' SS1 TYPE ?
          BNE   OUTLENOK           EXIT IF NOT
 OUTLL2   EQU   *
-         PACK  STATDEC1,INSTLL    PACK LL
-         MVC   0(4,R7),STATDEC1+12 SAVE IN NEXT SLOT
+         PACK  DEC2,INSTLL        PACK LL
+         MVC   0(4,R7),DEC2+12    SAVE IN NEXT SLOT
 OUTLENOK EQU   *
          AHI   R7,8               BUMP SLOT
          ST    R7,STATNXT2        SAVE NEXT LENGTHS SLOT ADDRESS
@@ -386,9 +414,13 @@ OUTNOST  EQU   *
          BCTR  R4,0               -1 FOR EXECUTE
          EX    R4,OUTINST         MOVE THE INST TO RESULT
 *
+         CLI   INSTTYPE+1,C'P'    FLOATING POINT ?
+         BE    OUTFP              EXIT IF IT IS
          CLC   INSTFMAT(2),=C'RI' IS IT RI/RIL ?
          BE    OUTREG64           EXIT IF IT IS
          CLC   INSTFMAT(3),=C'RRE' IS IT RRE ?
+         BE    OUTREG64           EXIT IF IT IS
+         CLC   INSTFMAT(3),=C'RRF' IS IT RRF ?
          BE    OUTREG64           EXIT IF IT IS
          CLC   INSTFMAT(3),=C'RSY' IS IT RSY ?
          BE    OUTREG64           EXIT IF IT IS
@@ -442,6 +474,76 @@ NOTREG   EQU   *
          UNPK  WORK(9),12(5,R6)   UNPACK PACKED FIELD PART 4
          TR    WORK(8),TABLE-C'0' TRANSLATE TO ASCII HEX
          MVC   RSLTPAK4,WORK      MOVE TO OUTPUT AREA
+         B     OUTMSG             EXIT
+*
+OUTFP    EQU   *
+* DUMP F0 AND F1 IN DECIMAL
+* CATER FOR SHORT, LONG, EXTENDED AND HFP, BFP
+* SOME INSTS LIKE HALVE AND SQRT MAY RESULT IN DEC POS
+         CLI   INSTTYPE+2,C'H'    HFP ?
+         BNE   OUTABORT           EXIT IF NOT
+* FP HFP
+         CLI   INSTTYPE,C'E'      SHORT ?
+         BNE   OUTFPL             EXIT IF NOT
+* FP HFP SHORT
+         CLI   INSTSTOR,C'F'      DISPLAY WITH DEC POS ?
+         BE    OUTFPLGO           EXIT IF IT IS
+* FP HFP SHORT NO DEC POS
+         CGER  R10,0,F0           F0 TO BINARY -- SHORT
+         CGER  R11,0,F1           F1 TO BINARY -- SHORT
+         B     OUTFPGO            EXIT
+*
+OUTFPL   EQU   *
+         CLI   INSTTYPE,C'D'      LONG ?
+         BNE   OUTFPX             EXIT IF NOT
+* FP HFP LONG
+         CLI   INSTSTOR,C'F'      DISPLAY WITH DEC POS ?
+         BE    OUTFPLGO           EXIT IF IT IS
+* FP HFP LONG NO DEC POS
+         CGDR  R10,0,F0           F0 TO BINARY -- LONG
+         CGDR  R11,0,F1           F1 TO BINARY -- LONG
+         B     OUTFPGO            EXIT
+*
+OUTFPX   EQU   *
+         CLI   INSTTYPE,C'X'      EXTENDED ?
+         BNE   OUTABORT           ERROR IF NOT
+* FP HFP EXTENDED
+         CLI   INSTSTOR,C'F'      DISPLAY WITH DEC POS ?
+         BE    OUTFPLGO           EXIT IF IT IS
+* FP HFP EXTENDED NO DEC POS
+         CGXR  R10,0,F0           F0/F2 TO BINARY -- EXTENDED
+         CGXR  R11,0,F1           F1/F3 TO BINARY -- EXTENDED
+         B     OUTFPGO            EXIT
+*
+OUTFPLGO EQU   *
+* FP HFP DEC POS
+         MXD   F0,=DH'10000000000000' 13 DEC POS
+         CGXR  R10,0,F0           F0/F2 TO BINARY
+         CGXR  R11,0,F1           F1/F3 TO BINARY
+*
+OUTFPGO  EQU   *
+         CVDG  R10,DEC            F0 TO DECIMAL
+         CVDG  R11,DEC2           F1 TO DECIMAL
+         CLI   INSTSTOR,C'F'      DISPLAY WITH DEC POS ?
+         BNE   OUTNODP1           EXIT IF NOT
+         MVC   RSLTR10G-1(17),=X'4020214B20202020202020202020202020'
+         ED    RSLTR10G-1(17),DEC+8 EDIT F0
+         B     OUTMIN1
+OUTNODP1 EQU   *
+         MVC   RSLTR10G(16),=X'40202020202020202020202020202120'
+         ED    RSLTR10G(16),DEC+8 EDIT F0
+OUTMIN1  EQU   *
+         TM    DEC+15,X'01'       NEGATIVE ?
+         BNO   OUTF1              EXIT IF NOT
+         MVI   RSLTR10G+16,C'-'   SHOW MINUS
+OUTF1    EQU   *
+         MVC   RSLTR11G(16),=X'40202020202020202020202020202120'
+         ED    RSLTR11G(16),DEC2+8 EDIT F1
+         TM    DEC+15,X'01'       NEGATIVE ?
+         BNO   OUTMSG             EXIT IF NOT
+         MVI   RSLTR11G+16,C'-'   SHOW MINUS
+         B     OUTMSG             EXIT
+OUTABORT ABEND 246
 OUTMSG   EQU   *
          PUT   TEXTOUT            WRITE OUTPUT RECORD
          MVI   RESULTS,C' '       BLANK FOR PROPAGATING
@@ -495,7 +597,7 @@ MVSDLOOP EQU   *
          BCTR  R10,0              NO. OF VALUES-1
          CDGR  F1,R10             TO LONG FP
          DDR   F0,F1              CALC VARIANCE
-         DD    F0,=D'1000000'     REDUCE TO 6 DEC POS
+         DD    F0,=DH'1000000'    REDUCE TO 6 DEC POS
          LDR   F2,F0              SAVE FOR STD. DEV.
          CGDR  R0,0,F0            TO BINARY
          CVDG  R0,DEC             TO DECIMAL
@@ -503,9 +605,9 @@ MVSDLOOP EQU   *
          MVC   RSLTTITL+10(11),=X'402021204B202020202020'
          ED    RSLTTITL+10(11),DEC+11 EDIT VARIANCE uS
          BAL   R14,OUTMSG         PRINT AND CLEAR
-         DD    F2,=D'1000000'     REDUCE TO ACTUAL VALUE
+         DD    F2,=DH'1000000'    REDUCE TO ACTUAL VALUE
          SQDR  F0,F2              CALC STD. DEV.
-         MD    F0,=D'1000000'     MAKE 6 DEC POS
+         MD    F0,=DH'1000000'    MAKE 6 DEC POS
          CGDR  R0,0,F0            TO BINARY
          CVDG  R0,DEC             TO DECIMAL
          MVC   RSLTTITL(9),=C'STD. DEV.' TITLE
@@ -553,7 +655,7 @@ LINRMEAN EQU   *
          ZAP   DEC,0(6,R7)        VALUE IN DEC
          CVBG  R11,DEC            TO BINARY
          CDGR  F1,R11             TO LONG FP
-         DD    F1,=D'1000000'     CORRECT VALUE
+         DD    F1,=DH'1000000'    CORRECT VALUE
          ADR   F0,F1              SUM(Y)
          CLI   INSTFMAT+8,C'1'    USE 1ST ENTRY ?
          BE    LINR1L1            EXIT IF IT IS
@@ -583,7 +685,7 @@ LINRPHS1 EQU   *
          ZAP   DEC,0(6,R7)        VALUE IN DEC
          CVBG  R11,DEC            TO BINARY
          CDGR  F3,R11             TO LONG FP
-         DD    F3,=D'1000000'     CORRECT VALUE
+         DD    F3,=DH'1000000'    CORRECT VALUE
          LDR   F4,F3              F4=Y
          SDR   F4,F0              F4=y=Y-MEAN(Y)
          CLI   INSTFMAT+8,C'1'    USE 1ST ENTRY ?
@@ -624,8 +726,8 @@ LINRNXT2 EQU   *
          LCDR  F3,F3              F3=-b*MEAN(X)
          LDR   F4,F0              F4=MEAN(Y)
          ADR   F4,F3              F4=a
-         MD    F1,=D'10000000000' ADJUST FOR DEC POS
-         MD    F4,=D'100000000'   ADJUST FOR DEC POS
+         MD    F1,=DH'10000000000' ADJUST FOR DEC POS
+         MD    F4,=DH'100000000'  ADJUST FOR DEC POS
          CGDR  R0,0,F1            TO BINARY
          CVDG  R0,DEC             TO DECIMAL
          MVC   RSLTTITL(LINRMSLN),LINRMSG MOVE MESSAGE
@@ -649,7 +751,7 @@ LINRPOS  EQU   *
          MDR   F9,F10             SUM(yý) * SUM(xý)
          SQDR  F0,F9              ROOT( SUM(yý) * SUM(xý) )
          DDR   F8,F0              SUM(xy) / ROOT( SUM(yý) * SUM(xý) )
-         MD    F8,=D'1000000'     ADJUST FOR DEC POS
+         MD    F8,=DH'1000000'    ADJUST FOR DEC POS
          CGDR  R0,0,F8            TO BINARY
          CVDG  R0,DEC             TO DECIMAL
          MVC   RSLTTITL(21),LINRCC MOVE MESSAGE
@@ -689,7 +791,7 @@ TIMEBCT  DS    D                  TIME FOR SPINCNT BCT--ADJUST BY SPIN=
 ORIGBCT  DS    D                  TIME FOR SPINCNT BCT
 TIMEXTRA DC    FL8'0'             TIME FOR SPINCNT EXTRA INSTS
 DEC      DC    PL16'0'
-STATDEC1 DC    PL16'0'
+DEC2     DC    PL16'0'
 *
 * STATS FIELDS
 STATADR1 DS    F                  TIMES SAVE AREA ADDRESS
@@ -716,8 +818,8 @@ TEXTOUT  DCB   DSNAME=RESULT,     DDNAME                               X
                BLKSIZE=80,                                             X
                RECORD=RESULTS
 *
-INPUT    DC    C"BMK\INSTTIME.TXT",X'00'
-RESULT   DC    C"BMK\INSTTIME.OUT",X'00'
+INPUT    DC    C"&SYSPARM\INSTTIME.TXT",X'00'
+RESULT   DC    C"&SYSPARM\INSTTIME.OUT",X'00'
 *
          LTORG
 *
@@ -733,10 +835,13 @@ TYPETABL DS    0H
          DC    CL4'RIL',A(RIL)    RIL
          DC    CL4'RR ',A(RR)     RR
          DC    CL4'RRE',A(RRE)    RRE
+         DC    CL4'RRF',A(RRF)    RRF
          DC    CL4'RS ',A(RS)     RS
          DC    CL4'RSI',A(RSI)    RSI
          DC    CL4'RSY',A(RSY)    RSY
          DC    CL4'RX ',A(RX)     RX
+         DC    CL4'RXE',A(RXE)    RXE
+         DC    CL4'RXF',A(RXF)    RXF
          DC    CL4'RXY',A(RXY)    RXY
          DC    CL4'S  ',A(S)      S
          DC    CL4'SI ',A(SI)     SI
@@ -772,6 +877,41 @@ OPCD1TAB DS    0H
          DC    CL6'DR  ',X'1D'     RR
          DC    CL6'ALR ',X'1E'     RR
          DC    CL6'SLR ',X'1F'     RR
+         DC    CL6'LPDR',X'20'     RR--FP
+         DC    CL6'LNDR',X'21'     RR--FP
+         DC    CL6'LTDR',X'22'     RR--FP
+         DC    CL6'LCDR',X'23'     RR--FP
+         DC    CL6'HDR ',X'24'     RR--FP
+         DC    CL6'LDXR',X'25'     RR--FP
+         DC    CL6'LRDR',X'25'     RR--FP--SYNONYM
+         DC    CL6'MXR ',X'26'     RR--FP
+         DC    CL6'MXDR',X'27'     RR--FP
+         DC    CL6'LDR ',X'28'     RR--FP
+         DC    CL6'CDR ',X'29'     RR--FP
+         DC    CL6'ADR ',X'2A'     RR--FP
+         DC    CL6'SDR ',X'2B'     RR--FP
+         DC    CL6'MDR ',X'2C'     RR--FP
+         DC    CL6'DDR ',X'2D'     RR--FP
+         DC    CL6'AWR ',X'2E'     RR--FP
+         DC    CL6'SWR ',X'2F'     RR--FP
+         DC    CL6'LPER',X'30'     RR--FP
+         DC    CL6'LNER',X'31'     RR--FP
+         DC    CL6'LTER',X'32'     RR--FP
+         DC    CL6'LCER',X'33'     RR--FP
+         DC    CL6'HER ',X'34'     RR--FP
+         DC    CL6'LEDR',X'35'     RR--FP
+         DC    CL6'LRER',X'35'     RR--FP--SYNONYM
+         DC    CL6'AXR ',X'36'     RR--FP
+         DC    CL6'SXR ',X'37'     RR--FP
+         DC    CL6'LER ',X'38'     RR--FP
+         DC    CL6'CER ',X'39'     RR--FP
+         DC    CL6'AER ',X'3A'     RR--FP
+         DC    CL6'SER ',X'3B'     RR--FP
+         DC    CL6'MDER',X'3C'     RR--FP
+         DC    CL6'MER ',X'3C'     RR--FP--SYNONYM
+         DC    CL6'DER ',X'3D'     RR--FP
+         DC    CL6'AUR ',X'3E'     RR--FP
+         DC    CL6'SUR ',X'3F'     RR--FP
          DC    CL6'STH ',X'40'     RX
          DC    CL6'LA  ',X'41'     RX
          DC    CL6'STC ',X'42'     RX
@@ -802,7 +942,27 @@ OPCD1TAB DS    0H
          DC    CL6'D   ',X'5D'     RX
          DC    CL6'AL  ',X'5E'     RX
          DC    CL6'SL  ',X'5F'     RX
+         DC    CL6'STD ',X'60'     RX--FP
+         DC    CL6'MXD ',X'67'     RX--FP
+         DC    CL6'LD  ',X'68'     RX--FP
+         DC    CL6'CD  ',X'69'     RX--FP
+         DC    CL6'AD  ',X'6A'     RX--FP
+         DC    CL6'SD  ',X'6B'     RX--FP
+         DC    CL6'MD  ',X'6C'     RX--FP
+         DC    CL6'DD  ',X'6D'     RX--FP
+         DC    CL6'AW  ',X'6E'     RX--FP
+         DC    CL6'SW  ',X'6F'     RX--FP
+         DC    CL6'STE ',X'70'     RX--FP
          DC    CL6'MS  ',X'71'     RX
+         DC    CL6'LE  ',X'78'     RX--FP
+         DC    CL6'CE  ',X'79'     RX--FP
+         DC    CL6'AE  ',X'7A'     RX--FP
+         DC    CL6'SE  ',X'7B'     RX--FP
+         DC    CL6'MDE ',X'7C'     RX--FP
+         DC    CL6'ME  ',X'7C'     RX--FP--SYNONYM
+         DC    CL6'DE  ',X'7D'     RX--FP
+         DC    CL6'AU  ',X'7E'     RX--FP
+         DC    CL6'SU  ',X'7F'     RX--FP
          DC    CL6'BRXH',X'84'     RSI
          DC    CL6'BRXLE',X'85'    RSI
          DC    CL6'BXH ',X'86'     RS
@@ -907,9 +1067,59 @@ OPCD2TAB DS    0H
          DC    CL6'STPT ',X'B2',X'09'   S
          DC    CL6'STPX ',X'B2',X'11'   S
          DC    CL6'STAP ',X'B2',X'12'   S
+         DC    CL6'DXR  ',X'B2',X'2D'   RRE
+         DC    CL6'SQDR ',X'B2',X'44'   RRE
+         DC    CL6'SQER ',X'B2',X'45'   RRE
          DC    CL6'MSR  ',X'B2',X'52'   RRE
          DC    CL6'STCKE',X'B2',X'78'   S
          DC    CL6'STCKF',X'B2',X'7C'   S
+         DC    CL6'STFPC',X'B2',X'9C'   S
+         DC    CL6'LFPC ',X'B2',X'9D'   S
+*
+         DC    CL6'LDER ',X'B3',X'24'   RRE
+         DC    CL6'LXDR ',X'B3',X'25'   RRE
+         DC    CL6'LXER ',X'B3',X'26'   RRE
+         DC    CL6'MAER ',X'B3',X'2E'   RRF
+         DC    CL6'MSER ',X'B3',X'2F'   RRF
+         DC    CL6'SQXR ',X'B3',X'36'   RRE
+         DC    CL6'MEER ',X'B3',X'37'   RRE
+         DC    CL6'MAYLR',X'B3',X'38'   RRF
+         DC    CL6'MYLR ',X'B3',X'39'   RRF
+         DC    CL6'MAYR ',X'B3',X'3A'   RRF
+         DC    CL6'MYR  ',X'B3',X'3B'   RRF
+         DC    CL6'MAYHR',X'B3',X'3C'   RRF
+         DC    CL6'MYHR ',X'B3',X'3D'   RRF
+         DC    CL6'MADR ',X'B3',X'3E'   RRF
+         DC    CL6'MSDR ',X'B3',X'3F'   RRF
+         DC    CL6'THDER',X'B3',X'58'   RRE
+         DC    CL6'THDR ',X'B3',X'59'   RRE
+         DC    CL6'LPXR ',X'B3',X'60'   RRE
+         DC    CL6'LNXR ',X'B3',X'61'   RRE
+         DC    CL6'LTXR ',X'B3',X'62'   RRE
+         DC    CL6'LCXR ',X'B3',X'63'   RRE
+         DC    CL6'LXR  ',X'B3',X'65'   RRE
+         DC    CL6'LEXR ',X'B3',X'66'   RRE
+         DC    CL6'FIXR ',X'B3',X'67'   RRE
+         DC    CL6'CXR  ',X'B3',X'69'   RRE
+         DC    CL6'LZER ',X'B3',X'74'   RRE
+         DC    CL6'LZDR ',X'B3',X'75'   RRE
+         DC    CL6'LZXR ',X'B3',X'76'   RRE
+         DC    CL6'FIER ',X'B3',X'77'   RRE
+         DC    CL6'FIDR ',X'B3',X'7F'   RRE
+         DC    CL6'SFPC ',X'B3',X'84'   RRE
+         DC    CL6'EFPC ',X'B3',X'8C'   RRE
+         DC    CL6'CEFR ',X'B3',X'B4'   RRE
+         DC    CL6'CDFR ',X'B3',X'B5'   RRE
+         DC    CL6'CXFR ',X'B3',X'B6'   RRE
+         DC    CL6'CFER ',X'B3',X'B8'   RRF
+         DC    CL6'CFDR ',X'B3',X'B9'   RRF
+         DC    CL6'CFXR ',X'B3',X'BA'   RRF
+         DC    CL6'CEGR ',X'B3',X'C4'   RRE
+         DC    CL6'CDGR ',X'B3',X'C5'   RRE
+         DC    CL6'CXGR ',X'B3',X'C6'   RRE
+         DC    CL6'CGER ',X'B3',X'C8'   RRF
+         DC    CL6'CGDR ',X'B3',X'C9'   RRF
+         DC    CL6'CGXR ',X'B3',X'CA'   RRF
 *
          DC    CL6'LPGR ',X'B9',X'00'   RRE
          DC    CL6'LNGR ',X'B9',X'01'   RRE
@@ -1099,6 +1309,27 @@ OPCD2TAB DS    0H
          DC    CL6'BRXHG',X'EC',X'44'   RIE
          DC    CL6'BRXLG',X'EC',X'45'   RIE
 *
+         DC    CL6'LDE  ',X'ED',X'24'   RXE
+         DC    CL6'LXD  ',X'ED',X'25'   RXE
+         DC    CL6'LXE  ',X'ED',X'26'   RXE
+         DC    CL6'MAE  ',X'ED',X'2E'   RXF
+         DC    CL6'MSE  ',X'ED',X'2F'   RXF
+         DC    CL6'SQE  ',X'ED',X'34'   RXE
+         DC    CL6'SQD  ',X'ED',X'35'   RXE
+         DC    CL6'MEE  ',X'ED',X'37'   RXE
+         DC    CL6'MAYL ',X'ED',X'38'   RXF
+         DC    CL6'MYL  ',X'ED',X'39'   RXF
+         DC    CL6'MAY  ',X'ED',X'3A'   RXF
+         DC    CL6'MY   ',X'ED',X'3B'   RXF
+         DC    CL6'MAYH ',X'ED',X'3C'   RXF
+         DC    CL6'MYH  ',X'ED',X'3D'   RXF
+         DC    CL6'MAD  ',X'ED',X'3E'   RXF
+         DC    CL6'MSD  ',X'ED',X'3F'   RXF
+         DC    CL6'LEY  ',X'ED',X'64'   RXY
+         DC    CL6'LDY  ',X'ED',X'65'   RXY
+         DC    CL6'STEY ',X'ED',X'66'   RXY
+         DC    CL6'STDY ',X'ED',X'67'   RXY
+*
          DC    X'FF'                    STOPPER
 ********************************
 * ISOLATED PROCESSING ROUTINES *
@@ -1126,13 +1357,22 @@ EINST    SAM24                    TESTED INST
 RR       DS    0H
 * SINGLE BYTE OPCODE
 * ALR AR CLR CR DR LCR LNR LPR LR LTR MR NR OR SLR SR XR
+*
+* FLOATING POINT
+* LPDR LNDR LTDR LCDR HDR LDXR=LRDR MXR MXDR LDR CDR ADR SDR MDR DDR
+* AWR SWR LPER LNER LTER LCER HER LEDR=LRER AXR SXR LER CER AER SER
+* MDER=MER DER AUR SUR
+*
 * BRANCHES
 * BALR BCTR BCR BSM BASSM BASR
+*
 * SPECIALS
 * SPM MVCL CLCL
          USING *,R12
          BAL   R14,SRCHOPCD       SET UP OPCODE
          MVC   RRSAVE,RRBCR       SAVE MODIFIED BYTES
+         CLI   INSTTYPE+1,C'P'    FLOATING POINT ?
+         BE    RRFP               EXIT IF IT IS
          MVC   RRINST(1),6(R7)    SET THE INST
          CLI   RRINST,MVCL        IS IT MVCL ?
          BE    RRMVCL             EXIT IF IT IS
@@ -1252,11 +1492,13 @@ RRLONG   MVCL  R4,R10             TESTED INST
          BCT   R7,RRXTRA          DO IT
          TIME  NS,TIMEAFT         AFTER TIME IN nS
 *
-         L     R1,=F'1000000'     GETMAIN LENGTH
-         L     R0,RRGET1          GETMAIN 1
-         FREEMAIN LV=(1)
-         L     R0,RRGET2          GETMAIN 2
-         FREEMAIN LV=(1)
+*        L     R1,=F'1000000'     GETMAIN LENGTH
+*        L     R0,RRGET1          GETMAIN 1
+*        FREEMAIN LV=(1)
+         FREEMAIN LV=1000000,A=RRGET1
+*        L     R0,RRGET2          GETMAIN 2
+*        FREEMAIN LV=(1)
+         FREEMAIN LV=1000000,A=RRGET2
          LA    R5,RRLONG          INST ADDRESS
          B     RRDONE2            EXIT
 *
@@ -1271,6 +1513,75 @@ RRSPMGO  SPM   R10                TESTED INST
          TIME  NS,TIMEAFT         AFTER TIME IN nS
 *
          LA    R5,RRSPMGO         INST ADDRESS
+         B     RRDONE2            EXIT
+*
+RRFP     EQU   *
+* FLOATING POINT
+* LPDR LNDR LTDR LCDR HDR LDXR=LRDR LDR CDR ADR SDR AWR SWR LPER LNER
+* LTER LCER HER LEDR=LRER AXR SXR LER CER AER SER AUR SUR
+*
+* SPECIAL PROCESSING
+* MXR MXDR
+* MDR DDR MDER=MER DER
+         LZXR  F0                 F0/F2=0
+         LZXR  F1                 F1/F3=0
+* R0=TRUE ZERO (SHORT OR LONG), F2=ALL ZERO
+* R1=TRUE ZERO (SHORT OR LONG), F3=ALL ZERO
+         CLI   6(R7),MXR          IS IT MXR ?
+         BE    RRFPSPEC           EXIT IF IT IS
+         CLI   6(R7),MXDR         IS IT MXDR ?
+         BE    RRFPSPEC           EXIT IF IT IS
+         CLI   6(R7),MDR          IS IT MDR ?
+         BE    RRFPSPEC           EXIT IF IT IS
+         CLI   6(R7),MDER         IS IT MDER ?
+         BE    RRFPSPEC           EXIT IF IT IS
+         CLI   6(R7),MER          IS IT MER ?
+         BE    RRFPSPEC           EXIT IF IT IS
+         CLI   6(R7),DDR          IS IT DDR ?
+         BE    RRFPSPEC           EXIT IF IT IS
+         CLI   6(R7),DER          IS IT DER ?
+         BE    RRFPSPEC           EXIT IF IT IS
+         MVC   RRFPINS(1),6(R7)   SET THE INST
+* LOADED VALUES ARE EXACT IN ALL SIZES
+         LD    F0,=DH'1'          SET F0
+         LD    F1,=DH'99'         SET F1
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RRFPINS  LPDR  F0,F1              TESTED INST
+         BCT   R7,RRFPINS         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RRFPINS         INST ADDRESS
+         B     RRDONE2            EXIT
+*
+RRFPSPEC EQU   *
+* MXR MXDR
+* MDR DDR MER=MDER DER
+         MVC   RRFPIN2(1),6(R7)   SET THE INST
+* LOADED VALUES ARE EXACT IN ALL SIZES
+         LD    F1,=DH'99'         SET F1
+* TIME AN LD
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RRLD     LD    F0,=DH'1000'       SPECIAL INST
+         BCT   R7,RRLD            DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RRFPSPC  LD    F0,=DH'1000'       SPECIAL INST
+RRFPIN2  MDR   F0,F1              TESTED INST
+         BCT   R7,RRFPSPC         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RRFPIN2         INST ADDRESS
          B     RRDONE2            EXIT
 *
 RRLENERR EQU   *
@@ -1294,11 +1605,12 @@ RRSAVE   DS    H
 *
 S        DS    0H
 * DOUBLE BYTE OPCODE
-* STIDP STCK STCKC STPT STPX STAP STCKE STCKF
+* STIDP STCK STCKC STPT STPX STAP STCKE STCKF STFPC LFPC
          USING *,R12
          BAL   R14,SRCHOPCD       SET UP OPCODE
          MVC   SINST(2),6(R7)     SET THE INST DOUBLE OPCODE
          LA    R6,SSTORE          DOESN'T MATTER WHAT WE DO TO THIS
+         STFPC SSTORE             SET UP FOR LFPC
          L     R7,SPINCNT         SET LOOP LIMIT
 *
          TIME  NS,TIMEBEF         BEFORE TIME IN nS
@@ -1570,11 +1882,13 @@ RSLONG   MVCLE R4,R10,C' '        TESTED INST
          BCT   R7,RSXTRAMV        DO IT
          TIME  NS,TIMEAFT         AFTER TIME IN nS
 *
-         L     R1,=F'1000000'     GETMAIN LENGTH
-         L     R0,RSGET1          GETMAIN 1
-         FREEMAIN LV=(1)
-         L     R0,RSGET2          GETMAIN 2
-         FREEMAIN LV=(1)
+*        L     R1,=F'1000000'     GETMAIN LENGTH
+*        L     R0,RSGET1          GETMAIN 1
+*        FREEMAIN LV=(1)
+         FREEMAIN LV=1000000,A=RSGET1
+*        L     R0,RSGET2          GETMAIN 2
+*        FREEMAIN LV=(1)
+         FREEMAIN LV=1000000,A=RSGET2
          LA    R5,RSLONG          INST ADDRESS
          B     RSDONE             EXIT
 *
@@ -1653,11 +1967,14 @@ RX       DS    0H
 * SINGLE BYTE OPCODE
 * LA STC IC EX BAL BCT B=BC LH CH SH AH MH BAS CVD CVB ST
 * N CL O X L C A S M D AL SL MS
+*
+* FLOATING POINT
+* STD MXD LD CD AD SD MD DD AW SW
+* STE LE CE AE SE MDE=ME DE AU SU
          USING *,R12
          BAL   R14,SRCHOPCD       SET UP OPCODE
          MVC   RSLTLEN(2),INSTXB  MOVE THE XB TO OUTPUT
          MVC   RXINST(1),6(R7)    SET THE INST
-         MVC   RXBR(1),6(R7)      SET THE INST--BRANCH
 * USE OF BASE ALWAYS VALID
          CLC   INSTXB,=C'XB'      VALIDATE ?
          BE    RXXBOK             EXIT IF IT IS
@@ -1676,7 +1993,11 @@ RXNOBASE EQU   *
          CLI   INSTSTOR,C'S'      IS IT STORE TYPE ?
          BE    RXXBERR            ERROR IF IT IS
 * DIVIDES MUST NOT ACCESS LOW STORAGE
-         CLI   RXINST,D           IS IT D   ?
+         CLI   RXINST,D           IS IT D ?
+         BE    RXXBERR            ERROR IF IT IS
+         CLI   RXINST,DD          IS IT DD ?
+         BE    RXXBERR            ERROR IF IT IS
+         CLI   RXINST,DE          IS IT DE ?
          BE    RXXBERR            ERROR IF IT IS
 * NEED BASE FOR BRANCHES
          CLI   RXINST,BC          IS IT BC ?
@@ -1689,6 +2010,9 @@ RXNOBASE EQU   *
          BE    RXXBERR            ERROR IF IT IS
 * SPECIAL
          CLI   RXINST,EX          IS IT EX ?
+         BE    RXXBERR            ERROR IF IT IS
+* NEVER HAVE FLOATING POINT VALUES IN LOW STORAGE
+         CLI   INSTTYPE+1,C'P'    FLOATING POINT ?
          BE    RXXBERR            ERROR IF IT IS
          B     RXXBOK             EXIT
 *
@@ -1704,16 +2028,19 @@ RXXBOK   EQU   *
          MVC   RXSAVB,RXBR+1      SAVE MODIFIED BYTES--BRANCH
          MVC   RXSAVX,RXEX+1      SAVE MODIFIED BYTES--EXECUTE
          MVC   RXSAVC,RXBCTGO+1   SAVE MODIFIED BYTES--BCT
+         MVC   RXSAVP,RXFPINS+1   SAVE MODIFIED BYTES--FP
          CLI   INSTXB,C'0'        IS INDEX ZERO ?
          BNE   RXXB1              EXIT IF NOT
          NI    RXINST+1,X'F0'     KNOCK OUT THE INDEX
          NI    RXBR+1,X'F0'       KNOCK OUT THE INDEX--BRANCH
          NI    RXEX+1,X'F0'       KNOCK OUT THE INDEX--EXECUTE
          NI    RXBCTGO+1,X'F0'    KNOCK OUT THE INDEX--BCT
+         NI    RXFPINS+1,X'F0'    KNOCK OUT THE INDEX--FP
 RXXB1    EQU   *
          CLI   INSTXB+1,C'0'      IS BASE ZERO ?
          BNE   RXXB2              EXIT IF NOT
          NI    RXINST+2,X'0F'     KNOCK OUT THE BASE
+         NI    RXFPINS+2,X'0F'    KNOCK OUT THE BASE--FP
 RXXB2    EQU   *
          CLI   RXINST,EX          IS IT EX ?
          BE    RXEXECUT           EXIT IF IT IS
@@ -1733,6 +2060,42 @@ RXXB2    EQU   *
          MVI   RXINST+3,X'04'     SET RX DISPLACEMENT
          CLI   INSTTYPE,C'F'      FULLWORD INST ?
          BE    RXSET              EXIT IF IT IS
+* SET D, TEST D
+         LA    R5,RXBASED         SET RX BASE
+         LA    R6,8               SET RX INDEX
+         MVI   RXINST+3,X'08'     SET RX DISPLACEMENT
+         MVI   RXFPINS+3,X'08'    SET RX DISPLACEMENT--SPECIAL
+         CLI   INSTTYPE,C'X'      LONG FP INST, BUT EXTENDED RESULT ?
+         BE    RXLIKED            EXIT IF NOT
+         CLI   INSTTYPE,C'D'      LONG FP INST ?
+         BNE   RXTRYE             EXIT IF NOT
+RXLIKED  EQU   *
+* RX FP MUST USE F0, ALWAYS IS FOR SPECIALS
+         NI    RXINST+1,X'0F'     MAKE R1=0 (F0)
+         LZXR  F0                 CLEAR F0/F2
+         B     RXSET              EXIT
+*
+RXTRYE   EQU   *
+* SET E, TEST E
+         LA    R5,RXBASEE         SET RX BASE
+         LA    R6,4               SET RX INDEX
+         MVI   RXINST+3,X'04'     SET RX DISPLACEMENT
+         MVI   RXFPINS+3,X'04'    SET RX DISPLACEMENT--SPECIAL
+         CLI   INSTTYPE,C'E'      SHORT FP INST ?
+         BNE   RXTRYP8            EXIT IF NOT
+* MDE=ME IS A SPECIAL CASE
+         CLI   RXINST,MDE         IS IT MDE ?
+         BE    RXMDE              EXIT IF IT IS
+         CLI   RXINST,ME          IS IT ME ?
+         BNE   RXNTMDE            EXIT IF NOT
+RXMDE    EQU   *
+         MVI   INSTTYPE,C'D'      CHANGE TO LONG RESULT
+RXNTMDE  EQU   *
+* RX FP MUST USE F0, ALWAYS IS FOR SPECIALS
+         NI    RXINST+1,X'0F'     MAKE R1=0 (F0)
+         LZDR  F0                 CLEAR F0
+         B     RXSET              EXIT
+RXTRYP8  EQU   *
 * SET P8, TEST P8
          LA    R5,RXBASEP8        SET RX BASE
          LA    R6,8               SET RX INDEX
@@ -1741,6 +2104,19 @@ RXXB2    EQU   *
          BE    RXSET              EXIT IF IT IS
          ABEND X'111'             ERROR IN TABLE
 RXSET    EQU   *
+* FP MULTIPLY/DIVIDE ARE SPECIAL
+         CLI   RXINST,MXD         IS IT MXD ?
+         BE    RXFP               EXIT IF IT IS
+         CLI   RXINST,MD          IS IT MD ?
+         BE    RXFP               EXIT IF IT IS
+         CLI   RXINST,DD          IS IT DD ?
+         BE    RXFP               EXIT IF IT IS
+         CLI   RXINST,MDE         IS IT MDE ?
+         BE    RXFP               EXIT IF IT IS
+         CLI   RXINST,ME          IS IT ME ?
+         BE    RXFP               EXIT IF IT IS
+         CLI   RXINST,DE          IS IT DE ?
+         BE    RXFP               EXIT IF IT IS
          CLI   INSTSTOR,C'S'      IS IT STORE TYPE ?
          BNE   RXNTSTOR           EXIT IF NOT
 * STORE TYPE, USE SPECIAL AREA
@@ -1758,15 +2134,16 @@ RXINST   LA    R10,2(R6,R5)       TESTED INST
 *
 RXBRANCH EQU   *
 * BRANCH TYPE
-         CLI   RXINST,BCT         IS IT BCT ?
+         MVC   RXBR(1),6(R7)      SET THE INST--BRANCH
+         CLI   RXBR,BCT           IS IT BCT ?
          BE    RXBCT              EXIT IF IT IS
          CLI   INSTTYPE+1,C'0'    CONVERT TO NOP ?
          BNE   RXBRNTNP           EXIT IF NOT
 * NOP REQUIRED
          MVC   RSLTMICS(10),=C'TYPE ERROR' PRESET ERROR MSG
-         CLI   RXINST,BAL         IS IT BAL ?
+         CLI   RXBR,BAL           IS IT BAL ?
          BE    RXTYPERR           ERROR IF IT IS
-         CLI   RXINST,BAS         IS IT BAS ?
+         CLI   RXBR,BAS           IS IT BAS ?
          BNE   RXNTBAL            EXIT IF NOT
 RXTYPERR EQU   *
          BAL   R14,OUTMSG         WRITE AND CLEAR
@@ -1881,6 +2258,34 @@ RXBCTDUN EQU   *
          LA    R5,RXBCTGO         INST ADDRESS
          B     RXDONE2            EXIT
 *
+RXFP     EQU   *
+* FP MULTIPLY AND DIVIDES
+* MXD MD DD MDE=ME DE
+         MVC   RXFPINS(1),6(R7)   SET THE INST--FP
+* TIME AN LD
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RXLD     LD    F0,=DH'1000'       SPECIAL INST
+         BCT   R7,RXLD            DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RXFPSPC  LD    F0,=DH'1000'       SPECIAL INST
+*              R1 D X2 B2   6C065000
+RXFPINS  MD    F0,0(R6,R5)        TESTED INST
+         BCT   R7,RXFPSPC         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RXFPINS         INST ADDRESS
+         B     RXDONE2            EXIT
+*
 RXDONE   EQU   *
          LA    R5,RXINST          INST ADDRESS
 RXDONE2  EQU   *
@@ -1891,26 +2296,157 @@ RXDONE3  EQU   *
          MVC   RXBR+1(2),RXSAVB   RESTORE MODIFIED BYTES--BRANCH
          MVC   RXEX+1(2),RXSAVX   RESTORE MODIFIED BYTES--EXECUTE
          MVC   RXBCTGO+1(2),RXSAVC RESTORE MODIFIED BYTES--BCT
+         MVC   RXFPINS+1(2),RXSAVP RESTORE MODIFIED BYTES--FP
          B     GET                EXIT TO GET ANOTHER TEST
 *
 RXSAVE   DS    H
 RXSAVB   DS    H
 RXSAVC   DS    H
 RXSAVX   DS    H
+RXSAVP   DS    H
 RXBASEH  DC    H'10'              BASE
-         DC    H'20'              BASE+DISP OR INDEX+DISP
+         DC    H'20'              BASE+DISP
          DC    H'30'              BASE+INDEX+DISP
 RXBASEF  DC    F'10'              BASE
-         DC    F'20'              BASE+DISP OR INDEX+DISP
+         DC    F'20'              BASE+DISP
          DC    F'30'              BASE+INDEX+DISP
+RXBASEE  DC    EH'10'             BASE
+         DC    EH'20'             BASE+DISP
+         DC    EH'30'             BASE+INDEX+DISP
+RXBASED  DC    DH'10'             BASE
+         DC    DH'20'             BASE+DISP
+         DC    DH'30'             BASE+INDEX+DISP
 RXBASEP8 DC    PL8'1000'          BASE
-         DC    PL8'2000'          BASE+DISP OR INDEX+DISP
+         DC    PL8'2000'          BASE+DISP
          DC    PL8'3000'          BASE+INDEX+DISP
 RXBCTD1  DC    F'1'               BCT NON-BRANCH
          DC    X'7FFFFFFF'        BCT BRANCH
 RXSTORE  DS    CL24               ALL STORE TYPES
 RXEXMVC  MVC   RXSTORE(0),RXSTORE+10 EXECUTED 10-BYTE MVC BASE
          MVC   RXSTORE(0),RXSTORE+10 EXECUTED 10-BYTE MVC BASE+INDEX
+         LTORG
+*
+RXE      DS    0H
+* DOUBLE BYTE OPCODE, 2ND BYTE AT END
+* LDE LXD LXE SQE SQD
+*
+* SPECIAL
+* MEE
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   RSLTLEN(2),INSTXB  MOVE THE XB TO OUTPUT
+         MVC   RXEINST(1),6(R7)   SET THE INST
+         MVC   RXEINST+5(1),7(R7) SET THE INST 2ND OPCODE
+         MVC   RXESAVE,RXEINST+1  SAVE MODIFIED BYTES
+         MVC   RXESAVM,RXEFPINS+1 SAVE MODIFIED BYTES
+         LZXR  F0                 F0/F2=0
+         LE    F0,=EH'3'          FOR MEE
+* USE OF BASE ALWAYS VALID
+         CLC   INSTXB,=C'XB'      VALIDATE ?
+         BE    RXEXBOK            EXIT IF IT IS
+         CLC   INSTXB,=C'0B'      VALIDATE ?
+         BE    RXEXBOK            EXIT IF IT IS
+         CLC   INSTXB,=C'X0'      VALIDATE ?
+         BE    RXENOBAS           EXIT IF IT IS
+         CLC   INSTXB,=C'00'      VALIDATE ?
+         BNE   RXEXBERR           ERROR IF NOT
+RXENOBAS EQU *
+* X0 OR 00
+* NEVER HAVE FLOATING POINT VALUES IN LOW STORAGE
+         CLI   INSTTYPE+1,C'P'    FLOATING POINT ?
+         BE    RXEXBERR           ERROR IF IT IS
+         B     RXEXBOK            EXIT
+*
+RXEXBERR EQU   *
+* XB FIELD INVALID FOR INSTRUCTION
+         MVC   RSLTMICS(8),=C'XB ERROR' ERROR MSG
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RXEXBOK  EQU   *
+* XB INPUT VALID
+         CLI   INSTXB,C'0'        IS INDEX ZERO ?
+         BNE   RXEXB1             EXIT IF NOT
+         NI    RXEINST+1,X'F0'    KNOCK OUT THE INDEX
+         NI    RXEFPINS+1,X'F0'   KNOCK OUT THE INDEX
+RXEXB1   EQU   *
+         CLI   INSTXB+1,C'0'      IS BASE ZERO ?
+         BNE   RXEXB2             EXIT IF NOT
+         NI    RXEINST+2,X'0F'    KNOCK OUT THE BASE
+         NI    RXEFPINS+2,X'0F'   KNOCK OUT THE BASE
+RXEXB2   EQU   *
+         CLC   6(2,R7),=X'ED25'   IS IT LXD ?
+         BE    RXELONG            EXIT IF IT IS
+         CLC   6(2,R7),=X'ED35'   IS IT SQD ?
+         BE    RXELONG            EXIT IF IT IS
+* SHORT OPERAND 2
+         LA    R5,RXEBASEE        SET RXE BASE
+         LA    R6,4               SET RXE INDEX
+         MVI   RXEINST+3,X'04'    SET RXE DISPLACEMENT
+         MVI   RXEFPINS+3,X'04'   SET RXE DISPLACEMENT
+         B     RXESET             EXIT
+RXELONG  EQU   *
+* LONG OPERAND 2
+         LA    R5,RXEBASED        SET RXE BASE
+         LA    R6,8               SET RXE INDEX
+         MVI   RXEINST+3,X'08'    SET RXE DISPLACEMENT
+*
+RXESET   EQU   *
+         CLC   6(2,R7),=X'ED37'   IS IT MEE ?
+         BE    RXESPEC            EXIT IF IT IS
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+*              R1 D X2 B2   EDA650080024
+RXEINST  LDE   F0,8(R6,R5)        TESTED INST
+         BCT   R7,RXEINST         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+         B     RXEDONE1           EXIT
+*
+RXESPEC  EQU   *
+         MVC   RXEFPINS(1),6(R7)  SET THE INST
+         MVC   RXEFPINS+5(1),7(R7) SET THE INST 2ND OPCODE
+* TIME AN LE
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RXELE    LE    F0,=EH'1000'       SPECIAL INST
+         BCT   R7,RXELE           DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RXEFPSPC LE    F0,=EH'1000'       SPECIAL INST
+*              R1 D X2 B2   EDA650080037
+RXEFPINS MEE   F0,8(R6,R5)        TESTED INST
+         BCT   R7,RXEFPSPC        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RXEFPINS        INST ADDRESS
+         B     RXEDONE2           EXIT
+*
+RXEDONE1 EQU   *
+         LA    R5,RXEINST         INST ADDRESS
+RXEDONE2 EQU   *
+         LA    R4,6               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         MVC   RXEINST+1(2),RXESAVE RESTORE MODIFIED BYTES
+         MVC   RXEFPINS+1(2),RXESAVM RESTORE MODIFIED BYTES
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RXEBASEE DC    EH'36'             RXE BASE
+         DC    EH'37'             RXE BASE+DISP
+         DC    EH'38'             RXE BASE+INDEX+DISP
+RXEBASED DC    DH'46'             RXE BASE
+         DC    DH'47'             RXE BASE+DISP
+         DC    DH'48'             RXE BASE+INDEX+DISP
+RXESAVE  DS    H
+RXESAVM  DS    H
          LTORG
 *
 SS1      DS    0H
@@ -2394,14 +2930,33 @@ RRE      DS    0H
 * ALGFR SLGFR MSGFR DSGFR LRVR CGR CLGR CGFR CLGFR
 * NGR OGR XGR MLGR DLGR ALCGR SLBGR MLR DLR ALCR SLBR
 * BCTGR LGBR LGHR LBR LHR FLOGR LLGCR LLGHR LLCR LLHR
+*
+* SPECIALS
+* THDER THDR
+*
+* FLOATING POINT
+* DXR SQDR SQER LDER LXDR LXER SQXR MEER LPXR LNXR LTXR LCXR LXR
+* LEXR FIXR CXR LZER LZDR LZXR FIER FIDR SFPC EFPC
+* CEFR CDFR CXFR CEGR CDGR CXGR
          USING *,R12
          BAL   R14,SRCHOPCD       SET UP OPCODE
-         MVC   RREINST(2),6(R7)   SET THE INST DOUBLE OPCODE
          MVC   RRESAVE,RREBCTR+2  SAVE MODIFIED BYTES
+* CONVERT-TO-FIXED AND CONVERT-TO-HFP ARE SPECIAL
+         CLC   6(2,R7),=X'B358'   IS IT CONVERT TO HFP ?
+         BE    RRECTH             EXIT IF IT IS
+         CLC   6(2,R7),=X'B359'   IS IT CONVERT TO HFP ?
+         BE    RRECTH             EXIT IF IT IS
          CLI   INSTTYPE,C'B'      BRANCH TYPE ?
          BE    RREBRNCH           EXIT IF IT IS
+         CLI   INSTTYPE+1,C'P'    FLOATING POINT ?
+         BE    RREFP              EXIT IF IT IS
+         MVC   RREINST(2),6(R7)   SET THE INST DOUBLE OPCODE
          LG    R10,=X'0000000000001234' SO I KNOW
          LG    R11,=X'0000000000000005' SO I KNOW
+         CLC   6(2,R7),=X'B384'   IS IT SFPC ?
+         BNE   RRETSFPC           EXIT IF NOT
+         EFPC  R10                SET UP FOR SFPC
+RRETSFPC EQU   *
          L     R7,SPINCNT         SET LOOP LIMIT
 *
          TIME  NS,TIMEBEF         BEFORE TIME IN nS
@@ -2432,6 +2987,58 @@ RREBCTRC BCT   R7,RREBCTR         DO IT
          LA    R5,RREBCTR         INST ADDRESS
          B     RREDONE2           EXIT
 *
+RREFP    EQU   *
+* F1 CANNOT BE USED HERE, CONVERTS WOULD USE GR1 WHICH IS DESTROYED
+* BY THE TIME MACRO.
+*
+* FLOATING POINT
+* DXR SQDR SQER LDER LXDR LXER SQXR MEER LPXR LNXR LTXR LCXR LXR
+* LEXR FIXR CXR LZER LZDR LZXR FIER FIDR
+* CEFR CDFR CXFR CEGR CDGR CXGR
+         MVC   RREFPINS(2),6(R7)  SET THE INST DOUBLE OPCODE
+         LZXR  F0                 F0/F2=0
+* LOADED VALUES ARE EXACT IN ALL SIZES
+         LXD   F5,=DH'3'          SET F5/F7
+         LG    R5,=FL8'99'        SET R5 FOR CONVERTS
+* TIME AN LD
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RRELD    LD    F0,=DH'10'         SPECIAL INST
+         BCT   R7,RRELD           DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RREFPSPC LD    F0,=DH'10'         SPECIAL INST
+RREFPINS DXR   F0,F5              TESTED INST, CAN BE F0,R5
+         BCT   R7,RREFPSPC        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+         LXR   F1,F5              TRANSFER TO F1 FOR DISPLAY
+         LA    R5,RREFPINS        INST ADDRESS
+         B     RREDONE2           EXIT
+*
+RRECTH   EQU   *
+* SPECIALS
+* THDER THDR
+         MVC   RREFPCTH(2),6(R7)  SET THE INST DOUBLE OPCODE
+         LZXR  F0                 F0/F2=0
+         LD    F1,=DH'99'         SET F1
+         TBDR  F1,0,F1            CONVERT TO BFP
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RREFPCTH THDER F0,F1              TESTED INST
+         BCT   R7,RREFPCTH        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+         LA    R5,RREFPCTH        INST ADDRESS
+         B     RREDONE2           EXIT
+*
 RREDONE  EQU   *
          LA    R5,RREINST         INST ADDRESS
 RREDONE2 EQU   *
@@ -2443,6 +3050,154 @@ RREDONE2 EQU   *
 RRESAVE  DS    H
          LTORG
 *
+RRF      DS    0H
+* DOUBLE BYTE OPCODE
+* FLOATING POINT
+* MAER MSER MAYLR MYLR MAYR MYR MAYHR MYHR MADR MSDR
+*
+* SPECIALS
+* CFER CFDR CFXR CGER CGDR CGXR
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   RRFINST(2),6(R7)   SET THE INST DOUBLE OPCODE
+         CLC   6(2,R7),=X'B3B8'   IS IT CONVERT TO FIXED ?
+         BL    RRFNTCTF           EXIT IF NOT
+         CLC   6(2,R7),=X'B3BA'   IS IT CONVERT TO FIXED ?
+         BNH   RRFCTF             EXIT IF IT IS
+         CLC   6(2,R7),=X'B3C8'   IS IT CONVERT TO FIXED ?
+         BL    RRFNTCTF           EXIT IF NOT
+         CLC   6(2,R7),=X'B3CA'   IS IT CONVERT TO FIXED ?
+         BNH   RRFCTF             EXIT IF IT IS
+RRFNTCTF EQU   *
+         LXD   F0,=DH'1'          SO I KNOW F0/F2
+         LD    F1,=DH'2'          SO I KNOW
+         LD    F3,=DH'3'          SO I KNOW
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RRFINST  MAER  F0,F1,F3           TESTED INST
+         BCT   R7,RRFINST         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+         B     RRFDONE            EXIT
+*
+RRFCTF   EQU   *
+* SPECIALS
+* CFER CFDR CFXR CGER CGDR CGXR
+         MVC   RRFFPCTF(2),6(R7)  SET THE INST DOUBLE OPCODE
+         LXD   F0,=DH'99'         SET F0/F2
+         SGR   R10,R10            R10=0
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+RRFFPCTF CFER  R10,0,F0           TESTED INST
+         BCT   R7,RRFFPCTF        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+         LA    R5,RRFFPCTF        INST ADDRESS
+         B     RRFDONE2           EXIT
+*
+RRFDONE  EQU   *
+         LA    R5,RRFINST         INST ADDRESS
+RRFDONE2 EQU   *
+         LA    R4,4               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+         LTORG
+*
+RXF      DS    0H
+* DOUBLE BYTE OPCODE, 2ND BYTE AT END
+* FLOATING POINT
+* MAE MSE MAYL MYL MAY MY MAYH MYH MAD MSD
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   RSLTLEN(2),INSTXB  MOVE THE XB TO OUTPUT
+         MVC   RXFINST(1),6(R7)   SET THE INST
+         MVC   RXFINST+5(1),7(R7) SET THE INST 2ND OPCODE
+* USE OF BASE ALWAYS VALID
+         CLC   INSTXB,=C'XB'      VALIDATE ?
+         BE    RXFXBOK            EXIT IF IT IS
+         CLC   INSTXB,=C'0B'      VALIDATE ?
+         BE    RXFXBOK            EXIT IF IT IS
+         CLC   INSTXB,=C'X0'      VALIDATE ?
+         BE    RXFNOBAS           EXIT IF IT IS
+         CLC   INSTXB,=C'00'      VALIDATE ?
+         BNE   RXFXBERR           ERROR IF NOT
+RXFNOBAS EQU *
+* X0 OR 00
+* NEVER HAVE FLOATING POINT VALUES IN LOW STORAGE
+         CLI   INSTTYPE+1,C'P'    FLOATING POINT ?
+         BE    RXFXBERR           ERROR IF IT IS
+         B     RXFXBOK            EXIT
+*
+RXFXBERR EQU   *
+* XB FIELD INVALID FOR INSTRUCTION
+         MVC   RSLTMICS(8),=C'XB ERROR' ERROR MSG
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RXFXBOK  EQU   *
+* XB INPUT VALID
+         MVC   RXFSAVE,RXFINST+1  SAVE MODIFIED BYTES
+         CLI   INSTXB,C'0'        IS INDEX ZERO ?
+         BNE   RXFXB1             EXIT IF NOT
+         NI    RXFINST+1,X'F0'    KNOCK OUT THE INDEX
+RXFXB1   EQU   *
+         CLI   INSTXB+1,C'0'      IS BASE ZERO ?
+         BNE   RXFXB2             EXIT IF NOT
+         NI    RXFINST+2,X'0F'    KNOCK OUT THE BASE
+RXFXB2   EQU   *
+* SPECIAL TEST, ALWAYS LONG OPERANDS, EXTENDED RESULTS, ED38-D
+         CLC   6(2,R7),=X'ED38'   IS IT SPECIAL ?
+         BL    RXFNTSPC           EXIT IF NOT
+         CLC   6(2,R7),=X'ED3D'   IS IT SPECIAL ?
+         BH    RXFNTSPC           EXIT IF NOT
+         MVI   INSTTYPE,C'D'      FAKE LONG FP
+         B     RXFD               EXIT
+*
+RXFNTSPC EQU   *
+* SET E, TEST E
+         LA    R5,RXFBASEE        SET RXF BASE
+         LA    R6,4               SET RXF INDEX
+         MVI   RXFINST+3,X'04'    SET RXF DISPLACEMENT
+         CLI   INSTTYPE,C'E'      SHORT FP ?
+         BE    RXFSET             EXIT IF IT IS
+RXFD     EQU   *
+* SET D, TEST D
+         LA    R5,RXFBASED        SET RXF BASE
+         LA    R6,8               SET RXF INDEX
+         MVI   RXFINST+3,X'08'    SET RXF DISPLACEMENT
+         CLI   INSTTYPE,C'D'      LONG FP ?
+         BE    RXFSET             EXIT IF IT IS
+         ABEND 789
+*
+RXFSET   EQU   *
+         LXD   F0,=DH'1'          SO I KNOW F0/F2
+         LD    F1,=DH'2'          SO I KNOW
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+*              R1 R3 D X2 B2   ED165008002E
+RXFINST  MAE   F0,F1,8(R6,R5)     TESTED INST
+         BCT   R7,RXFINST         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+         B     RXFDONE            EXIT
+*
+RXFDONE  EQU   *
+         LA    R5,RXFINST         INST ADDRESS
+         LA    R4,6               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         MVC   RXFINST+1(2),RXFSAVE RESTORE MODIFIED BYTES
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+RXFSAVE  DS    H
+RXFBASEE DC    EH'10'             RXF BASE
+         DC    EH'20'             RXF BASE+DISP
+         DC    EH'30'             RXF BASE+INDEX+DISP
+RXFBASED DC    DH'10'             RXF BASE
+         DC    DH'20'             RXF BASE+DISP
+         DC    DH'30'             RXF BASE+INDEX+DISP
+         LTORG
+*
 RXY      DS    0H
 * DOUBLE BYTE OPCODE, 2ND BYTE AT END
 * LG CVBY AG SG ALG SLG MSG DSG CVBG LRVG LGF LGH LLGF LLGT
@@ -2451,6 +3206,9 @@ RXY      DS    0H
 * ALY SLY STHY LAY STCY ICY LB LGB LHY CHY AHY SHY NG OG XG
 * MLG DLG ALCG SLBG STPQ LPQ LLGC LLGH ML DL ALC SLB
 * BCTG LTG LT LLC LLH
+*
+* FLOATING POINT
+* LEY LDY STEY STDY
          USING *,R12
          BAL   R14,SRCHOPCD       SET UP OPCODE
          MVC   RSLTLEN(2),INSTXB  MOVE THE XB TO OUTPUT
@@ -2487,6 +3245,9 @@ RXYNOBAS EQU *
 * NEED BASE FOR BRANCHES
          CLC   6(2,R7),=X'E346'   IS IT BCTG ?
          BE    RXYXBERR           ERROR IF IT IS
+* NEVER HAVE FLOATING POINT VALUES IN LOW STORAGE
+         CLI   INSTTYPE+1,C'P'    FLOATING POINT ?
+         BE    RXYXBERR           ERROR IF IT IS
          B     RXYXBOK            EXIT
 *
 RXYXBERR EQU   *
@@ -2499,15 +3260,19 @@ RXYXBOK  EQU   *
 * XB INPUT VALID
          MVC   RXYSAVE,RXYINST+1  SAVE MODIFIED BYTES
          MVC   RXYSAVB,RXYBCTGO+1 SAVE MODIFIED BYTES--BRANCH
+         MVC   RXYSAVP,RXYINSFP+1 SAVE MODIFIED BYTES--FP
          CLI   INSTXB,C'0'        IS INDEX ZERO ?
          BNE   RXYXB1             EXIT IF NOT
          NI    RXYINST+1,X'F0'    KNOCK OUT THE INDEX
          NI    RXYBCTGO+1,X'F0'   KNOCK OUT THE INDEX--BRANCH
+         NI    RXYINSFP+1,X'F0'   KNOCK OUT THE INDEX--FP
 RXYXB1   EQU   *
          CLI   INSTXB+1,C'0'      IS BASE ZERO ?
          BNE   RXYXB2             EXIT IF NOT
          NI    RXYINST+2,X'0F'    KNOCK OUT THE BASE
 RXYXB2   EQU   *
+         CLI   INSTTYPE+1,C'P'    FLOATING POINT ?
+         BE    RXYFP              EXIT IF IT IS
          LG    R10,=FL8'99'       SET RXY R1-FIELD
          LGR   R11,R10            SET RXY R1+1-FIELD
          CLI   INSTTYPE,C'B'      BRANCH INST ?
@@ -2621,6 +3386,46 @@ RXYBCTDN EQU   *
          LA    R5,RXYBCTGO        INST ADDRESS
          B     RXYDONE2           EXIT
 *
+RXYFP    EQU   *
+* FLOATING POINT
+* LEY LDY STEY STDY
+*
+         MVC   RXYINSFP(1),6(R7)  SET THE INST
+         MVC   RXYINSFP+5(1),7(R7) SET THE INST 2ND OPCODE
+* SET EH, TEST EH
+         LA    R5,RXYBASPE        SET RXY BASE
+         LA    R6,4               SET RXY INDEX
+         MVI   RXYINSFP+3,X'04'   SET RXY DISPLACEMENT
+         CLI   INSTTYPE,C'E'      SHORT FP ?
+         BE    RXYFPSET           EXIT IF IT IS
+* SET DH, TEST DH
+         LA    R5,RXYBASPD        SET RXY BASE
+         LA    R6,8               SET RXY INDEX
+         MVI   RXYINSFP+3,X'08'   SET RXY DISPLACEMENT
+         CLI   INSTTYPE,C'D'      LONG FP ?
+         BE    RXYFPSET           EXIT IF IT IS
+         ABEND 864                INVALID PARMS
+*
+RXYFPSET EQU   *
+         CLI   INSTSTOR,C'S'      IS IT STORE TYPE ?
+         BNE   RXYFPGO            EXIT IF NOT
+* STORE TYPE, USE SPECIAL AREA
+         LD    F0,=DH'98'         SO I KNOW
+         LA    R5,RXYSTORE        COMMON AREA FOR ALL STORE TYPES
+*
+RXYFPGO  EQU   *
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+*              R1 D X2 B2   EDA650080064
+RXYINSFP LEY   F0,8(R6,R5)        TESTED INST
+         BCT   R7,RXYINSFP        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LA    R5,RXYINSFP        INST ADDRESS
+         B     RXYDONE2           EXIT
+*
+
 RXYDONE  EQU   *
          LA    R5,RXYINST         INST ADDRESS
 RXYDONE2 EQU   *
@@ -2628,30 +3433,38 @@ RXYDONE2 EQU   *
          BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
          MVC   RXYINST+1(2),RXYSAVE RESTORE MODIFIED BYTES
          MVC   RXYBCTGO+1(2),RXYSAVB RESTORE MODIFIED BYTES--BRANCH
+         MVC   RXYINSFP+1(2),RXYSAVP RESTORE MODIFIED BYTES--FP
          B     GET                EXIT TO GET ANOTHER TEST
 *
 RXYSAVE  DS    H
 RXYSAVB  DS    H
+RXYSAVP  DS    H
 RXYBASES DC    X'10'              RXY BASE
-         DC    X'80'              RXY BASE+DISP OR INDEX+DISP
+         DC    X'80'              RXY BASE+DISP
          DC    X'99'              RXY BASE+INDEX+DISP
 RXYBASEH DC    H'10'              RXY BASE
-         DC    H'20'              RXY BASE+DISP OR INDEX+DISP
+         DC    H'20'              RXY BASE+DISP
          DC    H'30'              RXY BASE+INDEX+DISP
+RXYBASPE DC    EH'10'             RXY BASE
+         DC    EH'20'             RXY BASE+DISP
+         DC    EH'30'             RXY BASE+INDEX+DISP
 RXYBASEF DC    F'10'              RXY BASE
-         DC    F'20'              RXY BASE+DISP OR INDEX+DISP
+         DC    F'20'              RXY BASE+DISP
          DC    F'30'              RXY BASE+INDEX+DISP
 RXYBASED DC    FL8'10'            RXY BASE
-         DC    FL8'20'            RXY BASE+DISP OR INDEX+DISP
+         DC    FL8'20'            RXY BASE+DISP
          DC    FL8'30'            RXY BASE+INDEX+DISP
+RXYBASPD DC    DH'10'             RXY BASE
+         DC    DH'20'             RXY BASE+DISP
+         DC    DH'30'             RXY BASE+INDEX+DISP
 RXYBASEQ DC    2FL8'10'           RXY BASE
-         DC    2FL8'20'           RXY BASE+DISP OR INDEX+DISP
+         DC    2FL8'20'           RXY BASE+DISP
          DC    2FL8'30'           RXY BASE+INDEX+DISP
 RXYBASP8 DC    PL8'1000'          RXY BASE
-         DC    PL8'2000'          RXY BASE+DISP OR INDEX+DISP
+         DC    PL8'2000'          RXY BASE+DISP
          DC    PL8'3000'          RXY BASE+INDEX+DISP
 RXYBSP16 DC    PL16'1000'         RXY BASE
-         DC    PL16'2000'         RXY BASE+DISP OR INDEX+DISP
+         DC    PL16'2000'         RXY BASE+DISP
          DC    PL16'3000'         RXY BASE+INDEX+DISP
 RXYSTORE DS    CL48               RXY ALL STORE TYPES
 RXYBCTD1 DC    FL8'1'             BCTG NON-BRANCH
@@ -3025,6 +3838,12 @@ RSIBXLEG DC    X'80000000'        BRXLE AND BRANCH
 RSIBXLEN DC    F'1'               BRXLE AND NO BRANCH
          LTORG
 *
+INSTABND EQU   *
+         BALR  R12,0
+         USING *,R12
+         MVC   RSLTMICS+1(7),=C'ABENDED'
+         BAL   R14,OUTMSG         WRITE AND CLEAR
+         J     GET                EXIT TO GET ANOTHER TEST
 **********
 * DSECTS *
 **********
@@ -3050,6 +3869,14 @@ INSTTYPE DS    CL3
 *                                 R0   NO 'OR' REG FOR EXECUTE
 *                                 E    CS-OPCODES, EQUAL
 *                                 N    CS-OPCODES, UNEQUAL
+*
+*                                 .P   FLOATING POINT
+*                                 E    SHORT
+*                                 D    LONG
+*                                 X    EXTENDED
+*                                 ..H  HFP
+*                                 ..B  BFP
+*                           EG.   DPH  LONG HFP
          DS    CL2
 INSTLL   DS    CL6                LENGTH
          ORG   INSTLL
@@ -3063,6 +3890,7 @@ INSTXB   DS    CL2                XB FIELDS
 *                                 X0  NO INDEX,    BASE
 *                                 XB     INDEX,    BASE
 INSTSTOR DS    C                  S   STORE OR FORMAT TYPE
+*                                 F   FP DISPLAY WITH DEC POS
          DS    CL3
 *
 TYPEDSCT DSECT
@@ -3114,6 +3942,13 @@ BASSM    EQU   X'0C'
 BASR     EQU   X'0D'
 MVCL     EQU   X'0E'
 CLCL     EQU   X'0F'
+MXR      EQU   X'26'
+MXDR     EQU   X'27'
+MDR      EQU   X'2C'
+DDR      EQU   X'2D'
+MDER     EQU   X'3C'
+MER      EQU   X'3C'
+DER      EQU   X'3D'
 EX       EQU   X'44'
 BAL      EQU   X'45'
 BCT      EQU   X'46'
@@ -3121,6 +3956,12 @@ BC       EQU   X'47'
 BAS      EQU   X'4D'
 CVB      EQU   X'4F'
 D        EQU   X'5D'
+MXD      EQU   X'67'
+MD       EQU   X'6C'
+DD       EQU   X'6D'
+MDE      EQU   X'7C'
+ME       EQU   X'7C'
+DE       EQU   X'7D'
 BRXH     EQU   X'84'
 BXH      EQU   X'86'
 BXLE     EQU   X'87'
@@ -3158,3 +3999,4 @@ R15      EQU   15                 RETURN CODE
 *
          EQUREGS REGS=FPR
          END
+

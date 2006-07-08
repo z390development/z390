@@ -182,7 +182,8 @@ public  class  pz390 {
     * 07/03/06 RPI 333 add SRNM and support rounding modes
     * 07/05/06 RPI 335 correct TBEDR and other users of RRF2 setup
     *          to caculate rf3 and mf3 correctly
-    * 07/05/06 RPI 348 only show 2 bytes for halfword instr.         
+    * 07/05/06 RPI 348 only show 2 bytes for halfword instr.
+    * 07/06/06 RPI 357 impove speed using short, int, and long buffers         
     ********************************************************
     * Global variables
     *****************************************************/
@@ -212,7 +213,11 @@ public  class  pz390 {
     int     test_trace_count = 0;
     String ins_trace_line = null;
     long   cpu_id = 0x390;
-    int psw_loc    = 0;
+    int   psw_loc    = 0;
+    int   psw_short  = 0;
+    short ins_short0 = 0;
+    short ins_short1 = 0;
+    short ins_short2 = 0;
     long long_high_bit = ((long)-1) << 63;
     int  int_high_bit  = 0x80000000;
     int  max_pos_int  = 0x7fffffff;
@@ -425,8 +430,9 @@ public  class  pz390 {
     /*
      * 16 gpr registers
      */
-    byte[]     reg_byte = (byte[])Array.newInstance(byte.class,16*8);
-    ByteBuffer reg      = ByteBuffer.wrap(reg_byte,0,16*8);  
+    byte[]      reg_byte  = (byte[])Array.newInstance(byte.class,16*8);
+    ByteBuffer  reg       = ByteBuffer.wrap(reg_byte,0,16*8);  
+    int         reg_len   = 128;
     byte[]     work_reg_byte = (byte[])Array.newInstance(byte.class,16);
     ByteBuffer work_reg      = ByteBuffer.wrap(work_reg_byte,0,16);
     byte[]     log_reg_byte  = new byte[9];
@@ -612,8 +618,8 @@ public  class  pz390 {
      */
     int cur_pc_stk = 0;
     int cur_pc_stk_reg = 0;
-    byte[]     pc_stk_reg_byte = (byte[])Array.newInstance(byte.class,max_pc_stk*reg_byte.length);
-    ByteBuffer pc_stk_reg      = ByteBuffer.wrap(pc_stk_reg_byte,0,max_pc_stk * reg_byte.length);  
+    byte[]     pc_stk_reg_byte = (byte[])Array.newInstance(byte.class,max_pc_stk * reg_len);
+    ByteBuffer pc_stk_reg      = ByteBuffer.wrap(pc_stk_reg_byte,0,max_pc_stk * reg_len);  
     int[]      pc_stk_psw_loc  = (int[])Array.newInstance(int.class,max_pc_stk);
     int[]      pc_stk_psw_cc   = (int[])Array.newInstance(int.class,max_pc_stk);
     /*
@@ -622,8 +628,8 @@ public  class  pz390 {
      */
     int mem24_start = 0x10000;    // RPI 276 start at 32k
     int mem24_line  = 0x1000000;  // start at 1MB if avail.
-    byte[] mem_byte = null; // see init_mem
-    ByteBuffer mem = null;  // see init_mem
+    byte[]      mem_byte  = null; // see init_mem
+    ByteBuffer  mem       = null;  // see init_mem
     int dsa24_start = 0;
     int dsa24_end   = 0;
     int dsa31_start = 0;
@@ -702,7 +708,32 @@ public void exec_pz390(){
 		opcode2 = -1;
 		psw_check = true;
 		psw_pic   = psw_pic_oper;
-		switch (opcode1){
+		if (opcode1 < 0x80){
+			if (opcode1 < 0x40){
+				ins_lt_40();
+			} else {
+				ins_lt_80();
+			}
+		} else {
+			if (opcode1 < 0xc0){
+				ins_lt_c0();
+			} else {
+				ins_lt_ff();
+			}
+		}
+        if (psw_check && psw_pic != 0){  // RPI 301
+			 set_psw_check(psw_pic_oper);
+        }
+		if (ex_mode && (opcode1 != ex_opcode)){
+	 	    set_psw_loc(ex_psw_return);
+		}
+	}
+}
+private void ins_lt_40(){
+	/*
+	 * exec opcodes < x'40'
+	 */
+		 switch (opcode1){
 		 case 0x01:  
 		     opcode2 = mem_byte[psw_loc+opcode2_offset_e] & 0xff;
 		     switch (opcode2){
@@ -862,7 +893,7 @@ public void exec_pz390(){
 		     	psw_cc = psw_cc2;
 		     	data_len = rflen2;
 		     	pad_len  = rflen1 - rflen2;
-			    fill_char = reg_byte[rf2+12];
+			    fill_char = reg.get(rf2+12);
 		     }
 		     if (data_len > 0
 		     	&& bd1_loc > bd2_loc
@@ -886,7 +917,7 @@ public void exec_pz390(){
 		 case 0x0F:  // 340 "0F" "CLCL" "RR"
 		 	 psw_check = false;
 		     ins_setup_rr();
-		     fill_char = reg_byte[rf2+12];
+		     fill_char = reg.get(rf2+12);
 		     bd1_loc = reg.getInt(rf1+4) & psw_amode;
 		     bd2_loc = reg.getInt(rf2+4) & psw_amode;
 		     bd1_start = bd1_loc;
@@ -1354,6 +1385,13 @@ public void exec_pz390(){
 		     fp_put_db(rf1,fp_eh_type,fp_rdv1);
 		     psw_cc = fp_get_eh_add_sub_cc();
 		     break;
+		 }
+}
+private void ins_lt_80(){
+	/*
+	 * excute instr < x'80'
+	 */
+	switch (opcode1){
 		 case 0x40:  // 860 "40" "STH" "RX"
 		 	 psw_check = false;
 		     ins_setup_rx();
@@ -1367,12 +1405,12 @@ public void exec_pz390(){
 		 case 0x42:  // 880 "42" "STC" "RX"
 		 	 psw_check = false;
 		     ins_setup_rx();
-		     mem_byte[xbd2_loc] = reg_byte[rf1+4+3];
+		     mem_byte[xbd2_loc] = reg.get(rf1+4+3);
 		     break;
 		 case 0x43:  // 890 "43" "IC" "RX"
 		 	 psw_check = false;
 		     ins_setup_rx();
-		     reg_byte[rf1+7] = mem_byte[xbd2_loc];
+		     reg.put(rf1+7,mem_byte[xbd2_loc]);
 		     break;
 		 case 0x44:  // 900 "44" "EX" "RX"
 		 	 psw_check = false;
@@ -1383,7 +1421,7 @@ public void exec_pz390(){
 		         ex_mode = true;
 		         ex_mod_byte   = mem_byte[psw_loc+1];
 		         if (rf1 != 0){
-		         	mem_byte[psw_loc+1] = (byte)(ex_mod_byte | reg_byte[rf1+7]);
+		         	mem_byte[psw_loc+1] = (byte)(ex_mod_byte | reg.get(rf1+7));
 		         }
 		     } else {
 		     	set_psw_check(psw_pic_exec);
@@ -1759,7 +1797,14 @@ public void exec_pz390(){
 		     fp_put_db(rf1,fp_eh_type,fp_rdv1);
 		     psw_cc = fp_get_eh_comp_cc(fp_rdv1,0);
 		     break;
-		 case 0x80:  // 1530 "8000" "SSM" "S"
+		 }
+}
+private void ins_lt_c0(){
+	/*
+	 * execute opcodes >= x'80'
+	 */
+	 switch (opcode1){
+         case 0x80:  // 1530 "8000" "SSM" "S"
 		     ins_setup_s();
 		     break;
 		 case 0x82:  // 1540 "8200" "LPSW" "S"
@@ -1882,7 +1927,7 @@ public void exec_pz390(){
 		     psw_check = false;
 		     ins_setup_rs();
 		     if (rf1 > rf3){
-		     	while (rf1 < reg_byte.length){
+		     	while (rf1 < reg_len){
 		     		mem.putInt(bd2_loc,reg.getInt(rf1+4));
 		     		bd2_loc = bd2_loc+4;
 		     		rf1 = rf1 + 8;
@@ -1967,7 +2012,7 @@ public void exec_pz390(){
 		     psw_check = false;
 		     ins_setup_rs();
 		     if (rf1 > rf3){
-		     	while (rf1 < reg_byte.length){
+		     	while (rf1 < reg_len){
 		     		reg.putInt(rf1+4,mem.getInt(bd2_loc));
 		     		bd2_loc = bd2_loc+4;
 		     		rf1 = rf1 + 8;
@@ -2160,11 +2205,11 @@ public void exec_pz390(){
 		         break;
 		     case 0x6:  // 2380 "A76" "BRCT" "RI"
 				 psw_check = false;
-			     ins_setup_ri();
+				 ins_setup_ri();
 				 rv1 = reg.getInt(rf1+4)-1;
 				 reg.putInt(rf1+4,rv1);
 				 if (rv1 != 0){
-					set_psw_loc(psw_loc - 4 + 2*if2);
+					 set_psw_loc(psw_loc - 4 + if2 + if2); // RPI 357
 				 }
 		         break;
 		     case 0x7:  // 2400 "A77" "BRCTG" "RI"
@@ -2582,9 +2627,9 @@ public void exec_pz390(){
 		         	set_psw_check(psw_pic_stkerr);
 		         	return;
 		         }
-		         int pc_stk_reg_base = cur_pc_stk_reg - reg_byte.length;
+		         int pc_stk_reg_base = cur_pc_stk_reg - reg_len;
 			     if (rf1 > rf3){
-			     	while (rf1 < reg_byte.length){
+			     	while (rf1 < reg_len){
 			     		reg.putInt(rf1+4,pc_stk_reg.getInt(pc_stk_reg_base + rf1 + 4));
 			     		rf1 = rf1 + 8;
 			     	}
@@ -3704,9 +3749,9 @@ public void exec_pz390(){
 		         	set_psw_check(psw_pic_stkerr);
 		         	return;
 		         }
-		         int pc_stk_reg_base = cur_pc_stk_reg - reg_byte.length;
+		         int pc_stk_reg_base = cur_pc_stk_reg - reg_len;
 			     if (rf1 > rf3){
-			     	while (rf1 < reg_byte.length){
+			     	while (rf1 < reg_len){
 			     		reg.putLong(rf1,pc_stk_reg.getLong(pc_stk_reg_base + rf1));
 			     		rf1 = rf1 + 8;
 			     	}
@@ -3722,7 +3767,7 @@ public void exec_pz390(){
 		         ins_setup_rre();
 		         rflen = 7;
 		         while (rflen >= 0){
-		         	reg_byte[rf1 + rflen] = reg_byte[rf2 + 7 - rflen];
+		         	reg.put(rf1 + rflen,reg.get(rf2 + 7 - rflen));
 		         	rflen--;
 		         }
 		         break;
@@ -3840,7 +3885,7 @@ public void exec_pz390(){
 		         ins_setup_rre();
 		         rflen = 3;
 		         while (rflen >= 0){
-		         	reg_byte[rf1 + 4 + rflen] = reg_byte[rf2 + 7 - rflen];
+		         	reg.put(rf1 + 4 + rflen,reg.get(rf2 + 7 - rflen));
 		         	rflen--;
 		         }
 		         break;
@@ -3964,8 +4009,8 @@ public void exec_pz390(){
 		     case 0x86:  // 4870 "B986" "MLGR" "RRE"
 		     	 psw_check = false;
 		         ins_setup_rre();
-		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1,8));
-		         big_int2 = new BigInteger(get_log_bytes(reg_byte,rf2,8));
+		         big_int1 = new BigInteger(get_log_bytes(reg,rf1,8));
+		         big_int2 = new BigInteger(get_log_bytes(reg,rf2,8));
 		         big_int1 = big_int1.multiply(big_int2);
                  zcvt_big_int_to_work_reg(big_int1,16);
 		         reg.putLong(rf1,work_reg.getLong(0));
@@ -3976,8 +4021,8 @@ public void exec_pz390(){
 		         ins_setup_rre();
 		         work_reg.putLong(0,reg.getLong(rf1));
 		         work_reg.putLong(8,reg.getLong(rf1+8));
-		         big_int1 = new BigInteger(get_log_bytes(work_reg_byte,0,16));
-		         big_int2 = new BigInteger(get_log_bytes(reg_byte,rf2,8));
+		         big_int1 = new BigInteger(get_log_bytes(work_reg,0,16));
+		         big_int2 = new BigInteger(get_log_bytes(reg,rf2,8));
 			     if (big_int2.compareTo(BigInteger.ZERO) != 0){
 			     	rv1  = (int) rlv1 / rv2;
 			     } else {
@@ -4044,8 +4089,8 @@ public void exec_pz390(){
 		     case 0x96:  // 4980 "B996" "MLR" "RRE"
 		     	 psw_check = false;
 		         ins_setup_rre();
-		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1+12,4)); // RPI 275
-		         big_int2 = new BigInteger(get_log_bytes(reg_byte,rf2+4,4));
+		         big_int1 = new BigInteger(get_log_bytes(reg,rf1+12,4)); // RPI 275
+		         big_int2 = new BigInteger(get_log_bytes(reg,rf2+4,4));
 		         big_int1 = big_int1.multiply(big_int2);
                  zcvt_big_int_to_work_reg(big_int1,8);
 		         reg.putInt(rf1+4,work_reg.getInt(0));
@@ -4056,8 +4101,8 @@ public void exec_pz390(){
 		         ins_setup_rre();
 		         work_reg.putInt(0,reg.getInt(rf1+4));
 		         work_reg.putInt(4,reg.getInt(rf1+12));
-		         big_int1 = new BigInteger(get_log_bytes(work_reg_byte,0,8));
-		         big_int2 = new BigInteger(get_log_bytes(reg_byte,rf2+4,4));
+		         big_int1 = new BigInteger(get_log_bytes(work_reg,0,8));
+		         big_int2 = new BigInteger(get_log_bytes(reg,rf2+4,4));
 			     if (big_int2.compareTo(BigInteger.ZERO) != 0){
 			     	rv1  = (int) rlv1 / rv2;
 			     } else {
@@ -4169,6 +4214,13 @@ public void exec_pz390(){
 	     	 exec_icm();
 	     	 reg.putInt(rf1+4,rv1);
 		     break;
+	 }
+}
+private void ins_lt_ff(){
+	/*
+	 * exec instr. <= x'ff'
+	 */
+	switch (opcode1){
 		 case 0xC0:  
 		     opcode2 = mem_byte[psw_loc+opcode2_offset_ril] &0x0f;
 		     switch (opcode2){
@@ -4362,7 +4414,7 @@ public void exec_pz390(){
              		    	psw_cc = psw_cc1;
              		    }
              		    reg.putInt(r1,(reg.getInt(r1+4) & psw_amode_high_bits) | bd1_loc);
-             		    reg_byte[r2+3] = mem_byte[bd2_loc + (mem_byte[bd1_loc] & 0xff)];
+             		    reg.put(r2+3,mem_byte[bd2_loc + (mem_byte[bd1_loc] & 0xff)]);
              	}
              	bd1_loc--;
              }
@@ -4613,7 +4665,7 @@ public void exec_pz390(){
              		    	psw_cc = psw_cc1;
              		    }
              		    reg.putInt(r1,(reg.getInt(r1+4) & psw_amode_high_bits) | bd1_loc);
-             		    reg_byte[r2+3] = mem_byte[bd2_loc + (mem_byte[bd1_loc] & 0xff)];
+             		    reg.put(r2+3,mem_byte[bd2_loc + (mem_byte[bd1_loc] & 0xff)]);
              	}
              	bd1_loc++;
              }
@@ -4746,7 +4798,7 @@ public void exec_pz390(){
 		         ins_setup_rxy();
 		         rflen = 7;
 		         while (rflen >= 0){
-		         	reg_byte[rf1 + rflen] = mem_byte[xbd2_loc + 7 - rflen];
+		         	reg.put(rf1 + rflen,mem_byte[xbd2_loc + 7 - rflen]);
 		         	rflen--;
 		         }
 		         break;
@@ -4841,7 +4893,7 @@ public void exec_pz390(){
 	             ins_setup_rxy();
 		    	 rflen = 3;
 		         while (rflen >= 0){
-		         	reg_byte[rf1 + 4 + rflen] = mem_byte[xbd2_loc + 3 - rflen];
+		         	reg.put(rf1 + 4 + rflen,mem_byte[xbd2_loc + 3 - rflen]);
 		         	rflen--;
 		         }	         
 		         break;
@@ -4850,7 +4902,7 @@ public void exec_pz390(){
 		         ins_setup_rxy();
 		         rflen = 1;
 		         while (rflen >= 0){
-		         	reg_byte[rf1 + 6 + rflen] = mem_byte[xbd2_loc + 1 - rflen];
+		         	reg.put(rf1 + 6 + rflen,mem_byte[xbd2_loc + 1 - rflen]);
 		         	rflen--;
 		         }
 		         break;
@@ -4894,7 +4946,7 @@ public void exec_pz390(){
 		         ins_setup_rxy();
 		         rflen = 7;
 		         while (rflen >= 0){
-		         	mem_byte[xbd2_loc + rflen] = reg_byte[rf1 + 7 - rflen];
+		         	mem_byte[xbd2_loc + rflen] = reg.get(rf1 + 7 - rflen);
 		         	rflen--;
 		         }
 		         break;
@@ -4917,7 +4969,7 @@ public void exec_pz390(){
 		         ins_setup_rxy();
 		         rflen = 3;
 		         while (rflen >= 0){
-		         	mem_byte[xbd2_loc + rflen] = reg_byte[rf1 + 7 - rflen];
+		         	mem_byte[xbd2_loc + rflen] = reg.get(rf1 + 7 - rflen);
 		         	rflen--;
 		         }
 		         break;
@@ -4926,7 +4978,7 @@ public void exec_pz390(){
 		         ins_setup_rxy();
 		         rflen = 1;
 		         while (rflen >= 0){
-		         	mem_byte[xbd2_loc + rflen] = reg_byte[rf1 + 7 - rflen];
+		         	mem_byte[xbd2_loc + rflen] = reg.get(rf1 + 7 - rflen);
 		         	rflen--;
 		         }
 		         break;
@@ -5050,12 +5102,12 @@ public void exec_pz390(){
 		     case 0x72:  // 5890 "E372" "STCY" "RXY"
 			 	 psw_check = false;
 			     ins_setup_rxy();
-			     mem_byte[xbd2_loc] = reg_byte[rf1+4+3];
+			     mem_byte[xbd2_loc] = reg.get(rf1+4+3);
 		         break;
 		     case 0x73:  // 5900 "E373" "ICY" "RXY"
 			 	 psw_check = false;
 			     ins_setup_rxy();
-			     reg_byte[rf1+7] = mem_byte[xbd2_loc];
+			     reg.put(rf1+7,mem_byte[xbd2_loc]);
 		         break;
 		     case 0x76:  // 5910 "E376" "LB" "RXY"
 		     	 psw_check = false;
@@ -5133,8 +5185,8 @@ public void exec_pz390(){
 		     case 0x86:  // 6000 "E386" "MLG" "RXY"
 		     	 psw_check = false;
 		         ins_setup_rxy();
-		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1,8));
-		         big_int2 = new BigInteger(get_log_bytes(mem_byte,xbd2_loc,8));
+		         big_int1 = new BigInteger(get_log_bytes(reg,rf1,8));
+		         big_int2 = new BigInteger(get_log_bytes(mem,xbd2_loc,8));
 		         big_int1 = big_int1.multiply(big_int2);
                  zcvt_big_int_to_work_reg(big_int1,16);
 		         reg.putLong(rf1,work_reg.getLong(0));
@@ -5145,8 +5197,8 @@ public void exec_pz390(){
 		         ins_setup_rxy();
 		         work_reg.putLong(0,reg.getLong(rf1));
 		         work_reg.putLong(8,reg.getLong(rf1+8));
-		         big_int1 = new BigInteger(get_log_bytes(work_reg_byte,0,16));
-		         big_int2 = new BigInteger(get_log_bytes(mem_byte,xbd2_loc,8));
+		         big_int1 = new BigInteger(get_log_bytes(work_reg,0,16));
+		         big_int2 = new BigInteger(get_log_bytes(mem,xbd2_loc,8));
 			     if (big_int2.compareTo(BigInteger.ZERO) != 0){
 			     	rv1  = (int) rlv1 / rv2;
 			     } else {
@@ -5214,8 +5266,8 @@ public void exec_pz390(){
 		     case 0x96:  // 6080 "E396" "ML" "RXY"
 		     	 psw_check = false;
 		         ins_setup_rxy();
-		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1+12,4)); // RPI 275
-		         big_int2 = new BigInteger(get_log_bytes(mem_byte,xbd2_loc,4));
+		         big_int1 = new BigInteger(get_log_bytes(reg,rf1+12,4)); // RPI 275
+		         big_int2 = new BigInteger(get_log_bytes(mem,xbd2_loc,4));
 		         big_int1 = big_int1.multiply(big_int2);
                  zcvt_big_int_to_work_reg(big_int1,8);
 		         reg.putInt(rf1+4,work_reg.getInt(0));
@@ -5226,8 +5278,8 @@ public void exec_pz390(){
 		         ins_setup_rxy();
 		         work_reg.putInt(0,reg.getInt(rf1+4));
 		         work_reg.putInt(4,reg.getInt(rf1+12));
-		         big_int1 = new BigInteger(get_log_bytes(work_reg_byte,0,8));
-		         big_int2 = new BigInteger(get_log_bytes(mem_byte,xbd2_loc,4));
+		         big_int1 = new BigInteger(get_log_bytes(work_reg,0,8));
+		         big_int2 = new BigInteger(get_log_bytes(mem,xbd2_loc,4));
 			     if (big_int2.compareTo(BigInteger.ZERO) != 0){
 			     	rv1  = (int) rlv1 / rv2;
 			     } else {
@@ -5383,7 +5435,7 @@ public void exec_pz390(){
 			     psw_check = false;
 			     ins_setup_rsy();
 			     if (rf1 > rf3){
-			     	while (rf1 < reg_byte.length){
+			     	while (rf1 < reg_len){
 			     		reg.putLong(rf1,mem.getLong(bd2_loc));
 			     		bd2_loc = bd2_loc+8;
 			     		rf1 = rf1 + 8;
@@ -5433,7 +5485,7 @@ public void exec_pz390(){
 		     case 0x1C:  // 6270 "EB1C" "RLLG" "RSY"
 		     	 psw_check = false;
 		         ins_setup_rsy();
-		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf3,8));
+		         big_int1 = new BigInteger(get_log_bytes(reg,rf3,8));
 		         big_int1 = big_int1.multiply(BigInteger.valueOf(2).pow(bd2_loc & 0x3f));
                  zcvt_big_int_to_work_reg(big_int1,16);
 		         reg.putLong(rf1,work_reg.getLong(8) | work_reg.getLong(0));
@@ -5460,7 +5512,7 @@ public void exec_pz390(){
 			     psw_check = false;
 			     ins_setup_rsy();
 			     if (rf1 > rf3){
-			     	while (rf1 < reg_byte.length){
+			     	while (rf1 < reg_len){
 			     		mem.putLong(bd2_loc,reg.getLong(rf1));
 			     		bd2_loc = bd2_loc+8;
 			     		rf1 = rf1 + 8;
@@ -5480,7 +5532,7 @@ public void exec_pz390(){
 			     psw_check = false;
 			     ins_setup_rsy();
 			     if (rf1 > rf3){
-			     	while (rf1 < reg_byte.length){
+			     	while (rf1 < reg_len){
 			     		mem.putInt(bd2_loc,reg.getInt(rf1));
 			     		bd2_loc = bd2_loc+4;
 			     		rf1 = rf1 + 8;
@@ -5655,7 +5707,7 @@ public void exec_pz390(){
 			     psw_check = false;
 			     ins_setup_rsy();
 			     if (rf1 > rf3){
-			     	while (rf1 < reg_byte.length){
+			     	while (rf1 < reg_len){
 			     		mem.putInt(bd2_loc,reg.getInt(rf1+4));
 			     		bd2_loc = bd2_loc+4;
 			     		rf1 = rf1 + 8;
@@ -5672,7 +5724,7 @@ public void exec_pz390(){
 			     psw_check = false;
 			     ins_setup_rsy();
 			     if (rf1 > rf3){
-			     	while (rf1 < reg_byte.length){
+			     	while (rf1 < reg_len){
 			     		reg.putInt(rf1,mem.getInt(bd2_loc));
 			     		bd2_loc = bd2_loc+4;
 			     		rf1 = rf1 + 8;
@@ -5689,7 +5741,7 @@ public void exec_pz390(){
 			     psw_check = false;
 			     ins_setup_rsy();
 			     if (rf1 > rf3){
-			     	while (rf1 < reg_byte.length){
+			     	while (rf1 < reg_len){
 			     		reg.putInt(rf1+4,mem.getInt(bd2_loc));
 			     		bd2_loc = bd2_loc+4;
 			     		rf1 = rf1 + 8;
@@ -6220,7 +6272,7 @@ public void exec_pz390(){
 		     rf1 = ((rflen-1) & 0xf0) >> 1;
 		     rf3 = ((rflen-1) & 0xf) << 3;
 		     if (rf1 > rf3){
-		     	while (rf1 < reg_byte.length){
+		     	while (rf1 < reg_len){
 		     		reg.putInt(rf1,mem.getInt(bd1_loc));
 		     		reg.putInt(rf1+4,mem.getInt(bd2_loc));
 		     		bd1_loc = bd1_loc+4;
@@ -6444,13 +6496,6 @@ public void exec_pz390(){
 	         }
 		     break;
 		 }
-         if (psw_check && psw_pic != 0){  // RPI 301
-			 set_psw_check(psw_pic_oper);
-         }
-		 if (ex_mode && (opcode1 != ex_opcode)){
-	 	    set_psw_loc(ex_psw_return);
-		 }
-	  }
 }
 /*
  *  end of ez390 emulator while switch code
@@ -6498,8 +6543,7 @@ private void ins_setup_ri(){  // "RI" 37 IIHH  ooroiiii
 	/*
 	 * fetch rf1 and if2
 	 */
-	rf2 = mem_byte[psw_loc + 1] & 0xff;
-	rf1 = (rf2 & 0xf0) >> 1;
+	rf1 = (mem_byte[psw_loc + 1] & 0xf0) >> 1;
 	mf1 = rf1 >> 3;
 	if2 = mem.getShort(psw_loc+2);
 	psw_ins_len = 4;
@@ -6805,7 +6849,7 @@ private void ins_setup_rs(){  // "RS" 25  oorrbddd
           		  " R" + tz390.get_hex(mf1,1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8)
 	                + " M3=" + tz390.get_hex(mf3,1)
 					+ " S2(" + tz390.get_hex(bd2_loc,8)
-					+ ")=" + bytes_to_hex(mem_byte,bd2_loc,mask_bits[mf3],0)
+					+ ")=" + bytes_to_hex(mem,bd2_loc,mask_bits[mf3],0)
 					);
     	} else if (opcode1 >= 0x88 && opcode1 <= 0x8f){
             put_ins_trace(
@@ -6818,7 +6862,7 @@ private void ins_setup_rs(){  // "RS" 25  oorrbddd
         		  " R" + tz390.get_hex(mf1,1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8)
                 + " R" + tz390.get_hex(mf3,1) + "=" + tz390.get_hex(reg.getInt(rf3+4),8)
 				+ " S2(" + tz390.get_hex(bd2_loc,8)
-				+ ")="   + bytes_to_hex(mem_byte,bd2_loc,4,0)
+				+ ")="   + bytes_to_hex(mem,bd2_loc,4,0)
 				);
     	}
     }
@@ -6875,7 +6919,7 @@ private void ins_setup_rsl(){  // "RSL" 1  TP  oor0bddd00oo
     if  (tz390.opt_trace){
         put_ins_trace(
 			   " S1(" + tz390.get_hex(bd1_loc,8)
-             + ")=" + bytes_to_hex(mem_byte,bd1_loc,rflen1,0)
+             + ")=" + bytes_to_hex(mem,bd1_loc,rflen1,0)
 			 );
     }
 	if (ex_mode){
@@ -6907,7 +6951,7 @@ private void ins_setup_rsy(){  // "RSY" 31  LMG  oorrbdddhhoo
               	  " R" + tz390.get_hex(mf1,1) + "=" + get_long_hex(reg.getLong(rf1))
   		        + " M3=" + tz390.get_hex(mf3,1)
   				+ " S2(" + tz390.get_hex(bd2_loc,8)
-				+ ")="   + bytes_to_hex(mem_byte,bd2_loc,mask_bits[mf3],0)
+				+ ")="   + bytes_to_hex(mem,bd2_loc,mask_bits[mf3],0)
   				);
     	} else if (opcode2 >= 0x21         // CLMY
            			|| opcode2 == 0x2D     // STCY 
@@ -6916,7 +6960,7 @@ private void ins_setup_rsy(){  // "RSY" 31  LMG  oorrbdddhhoo
             	  " R" + tz390.get_hex(mf1,1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8)
 		        + " M3=" + tz390.get_hex(mf3,1)
 				+ " S2(" + tz390.get_hex(bd2_loc,8)
-				+ ")=" + bytes_to_hex(mem_byte,bd2_loc,mask_bits[mf3],0)
+				+ ")=" + bytes_to_hex(mem,bd2_loc,mask_bits[mf3],0)
 				);
     	} else if (opcode2 == 0x1c || opcode2 == 0x1d){
     		put_ins_trace(
@@ -6930,7 +6974,7 @@ private void ins_setup_rsy(){  // "RSY" 31  LMG  oorrbdddhhoo
 				  " R" + tz390.get_hex(mf1,1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8)
                 + " R" + tz390.get_hex(mf3,1) + "=" + tz390.get_hex(reg.getInt(rf3+4),8)
 				+ " S2(" + tz390.get_hex(bd2_loc,8)
-				+ ")="   + bytes_to_hex(mem_byte,bd2_loc,4,0)
+				+ ")="   + bytes_to_hex(mem,bd2_loc,4,0)
 				);
     	}
     }
@@ -6985,13 +7029,13 @@ private void ins_setup_rx(){  // "RX" 52  L  oorxbddd
    	        put_ins_trace(
   				  " R" + tz390.get_hex(mf1,1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8)
   				+ " S2(" + tz390.get_hex(xbd2_loc & psw_amode,8)
-                + ")=" + bytes_to_hex(mem_byte,xbd2_loc,2,0)
+                + ")=" + bytes_to_hex(mem,xbd2_loc,2,0)
   				);
     	} else if (opcode1 >= 0x60 && opcode1 <= 0x7f){
    	        put_ins_trace(
   				  " F" + tz390.get_hex(mf1,1) + "=" + get_fp_long_hex(rf1)
   				+ " S2(" + tz390.get_hex(xbd2_loc,8)
-                  + ")=" + bytes_to_hex(mem_byte,xbd2_loc,4,0)
+                  + ")=" + bytes_to_hex(mem,xbd2_loc,4,0)
   				);
     	} else if (opcode1 == 0x5D        //divide
     			   || opcode1 == 0x5C){   //mult.
@@ -6999,13 +7043,13 @@ private void ins_setup_rx(){  // "RX" 52  L  oorxbddd
   				  " R" + tz390.get_hex(mf1,1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8)
   				+ " R" + tz390.get_hex(mf1+1,1) + "=" + tz390.get_hex(reg.getInt(rf1+12),8)
   				+ " S2(" + tz390.get_hex(xbd2_loc,8)
-                  + ")=" + bytes_to_hex(mem_byte,xbd2_loc,4,0)
+                  + ")=" + bytes_to_hex(mem,xbd2_loc,4,0)
 				);
     	} else {
    	        put_ins_trace(
 				  " R" + tz390.get_hex(mf1,1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8)
 				+ " S2(" + tz390.get_hex(xbd2_loc,8)
-                + ")=" + bytes_to_hex(mem_byte,xbd2_loc,4,0)
+                + ")=" + bytes_to_hex(mem,xbd2_loc,4,0)
 				);
     	}
     }
@@ -7043,7 +7087,7 @@ private void ins_setup_rxf(){  // "RXF" 8   MAE  oorxbdddr0oo (note r3 before r1
       		      " F" + tz390.get_hex(mf1,1) + "=" + get_fp_long_hex(rf1)
                 + " F" + tz390.get_hex(mf3,1) + "=" + get_fp_long_hex(rf3)
 				+ " S2(" + tz390.get_hex(bd2_loc,8)
-				+ ")="   + bytes_to_hex(mem_byte,bd2_loc,4,0)
+				+ ")="   + bytes_to_hex(mem,bd2_loc,4,0)
 				);
     }
 	if (ex_mode){
@@ -7075,7 +7119,7 @@ private void ins_setup_rxe(){  // "RXE" 28  ADB oorxbddd00oo
         put_ins_trace(
 				      " F" + tz390.get_hex(mf1,1) + "=" + get_fp_long_hex(rf1)
 					+ " S2(" + tz390.get_hex(xbd2_loc,8)
-	                + ")=" + bytes_to_hex(mem_byte,xbd2_loc,8,0)
+	                + ")=" + bytes_to_hex(mem,xbd2_loc,8,0)
 					);
         		
     }
@@ -7121,20 +7165,20 @@ private void ins_setup_rxy(){ // "RXY" 76 MLG oorxbdddhhoo
        	        put_ins_trace(
       				  " R" + tz390.get_hex(mf1,1) + "=" + get_long_hex(reg.getLong(rf1))
       			    + " S2(" + tz390.get_hex(xbd2_loc,8)
-                      + ")=" + bytes_to_hex(mem_byte,xbd2_loc,4,0)
+                      + ")=" + bytes_to_hex(mem,xbd2_loc,4,0)
       				);
     		} else if (opcode1 == 0xe3 // RPI 348
         			&& (opcode2 >= 0x78 && opcode2 <= 0x7b)){
                	        put_ins_trace(
               				  " R" + tz390.get_hex(mf1,1) + "=" + tz390.get_hex(reg.getInt(rf1),8)
               			    + " S2(" + tz390.get_hex(xbd2_loc,8)
-                              + ")=" + bytes_to_hex(mem_byte,xbd2_loc,2,0)
+                              + ")=" + bytes_to_hex(mem,xbd2_loc,2,0)
               				);
     		} else {
     			put_ins_trace(
 				  " R" + tz390.get_hex(mf1,1) + "=" + get_long_hex(reg.getLong(rf1))
 			    + " S2(" + tz390.get_hex(xbd2_loc,8)
-                + ")=" + bytes_to_hex(mem_byte,xbd2_loc,8,0)
+                + ")=" + bytes_to_hex(mem,xbd2_loc,8,0)
 				);
     	    }
     	}
@@ -7160,7 +7204,7 @@ private void ins_setup_s(){  // "S" 43 SPM oo00bddd
     if  (tz390.opt_trace){
         put_ins_trace(
                   " S2(" + tz390.get_hex(bd2_loc,8)
-                + ")=" + bytes_to_hex(mem_byte,bd2_loc,8,0)
+                + ")=" + bytes_to_hex(mem,bd2_loc,8,0)
 				);
     }
 	if (ex_mode){
@@ -7188,7 +7232,7 @@ private void ins_setup_si(){  // "SI" 9 CLI  ooiibddd
     if  (tz390.opt_trace){
         put_ins_trace(
                   " S2(" + tz390.get_hex(bd1_loc,8)
-                + ")=" + bytes_to_hex(mem_byte,bd1_loc,1,0)
+                + ")=" + bytes_to_hex(mem,bd1_loc,1,0)
 				+ " I2=" + tz390.get_hex(if2,2)
 				);
     }
@@ -7214,7 +7258,7 @@ private void ins_setup_siy(){  // "SIY" 6  TMY  ooiibdddhhoo
     if  (tz390.opt_trace){
         put_ins_trace(
                   " S2(" + tz390.get_hex(bd1_loc,8)
-                + ")=" + bytes_to_hex(mem_byte,bd1_loc,1,0)
+                + ")=" + bytes_to_hex(mem,bd1_loc,1,0)
 				+ " I2=" + tz390.get_hex(if2,2)
 				);
     }
@@ -7258,9 +7302,9 @@ private void ins_setup_ssp(){   // AP SS2  oollbdddbddd
 	    	if (maxlen2 > 4)maxlen2 =4;
 	        put_ins_trace(
 	        		       " S1(" + tz390.get_hex(bd1_loc,8)
-						+  ")=" + bytes_to_hex(mem_byte,bd1_loc,maxlen1,0)
+						+  ")=" + bytes_to_hex(mem,bd1_loc,maxlen1,0)
 		        		+  " S2(" + tz390.get_hex(bd2_loc,8)
-		                +  ")=" + bytes_to_hex(mem_byte,bd2_loc,maxlen2,0)
+		                +  ")=" + bytes_to_hex(mem,bd2_loc,maxlen2,0)
 					);
 	    }
 		if (ex_mode){
@@ -7299,9 +7343,9 @@ private void ins_setup_ss(){  // "SS" 32  MVC oollbdddbddd
     	if (maxlen > 4)maxlen = 4;
         put_ins_trace(
         		   " S1(" + tz390.get_hex(bd1_loc,8)
-				+  ")=" + bytes_to_hex(mem_byte,bd1_loc,maxlen,0)
+				+  ")=" + bytes_to_hex(mem,bd1_loc,maxlen,0)
         		+  " S2(" + tz390.get_hex(bd2_loc,8)
-                +  ")=" + bytes_to_hex(mem_byte,bd2_loc,maxlen,0)
+                +  ")=" + bytes_to_hex(mem,bd2_loc,maxlen,0)
 				);
     }
 	if (ex_mode){
@@ -7334,9 +7378,9 @@ private void ins_setup_sse(){  // "SSE" 5  LASP  oooobdddbddd
     if  (tz390.opt_trace){
         put_ins_trace(
      		      " S1(" + tz390.get_hex(bd1_loc,8)
-			   +  ")=" + bytes_to_hex(mem_byte,bd1_loc,4,0)
+			   +  ")=" + bytes_to_hex(mem,bd1_loc,4,0)
        		   +  " S2(" + tz390.get_hex(bd2_loc,8)
-               +  ")=" + bytes_to_hex(mem_byte,bd2_loc,4,0)
+               +  ")=" + bytes_to_hex(mem,bd2_loc,4,0)
 					);
     }
 	if (ex_mode){
@@ -7593,7 +7637,8 @@ private void setup_espie_exit(){
         mem.putInt(epie_psw,psw_pic);    // intterrupt
         mem.putInt(epie_psw+4,psw_loc);  // psw addr
         mem.position(epie_gpr);        // gpr64 r0-r15
-        mem.put(reg_byte,0,128);
+        reg.position(0); // RPI 357
+        mem.put(reg);
         reg.putInt(r1,zcvt_epie);        // r1 = epie
 	    reg.putInt(r14,zcvt_exit);       // r14 = exit
         reg.putInt(r15,espie_exit[tot_espie-1]);
@@ -7614,7 +7659,8 @@ private void setup_estae_exit(){
         mem.putInt(esta_psw,psw_pic);    // intterrupt
         mem.putInt(esta_psw+4,psw_loc);  // psw addr
         mem.position(esta_gpr);        // gpr64 r0-r15
-        mem.put(reg_byte,0,128);
+        reg.position(0); // RPI 357
+        mem.put(reg);
         reg.putInt(r1,zcvt_esta);        // r1 = epie
 	    reg.putInt(r14,zcvt_exit);       // r14 = exit
         reg.putInt(r15,estae_exit[tot_estae-1]);
@@ -7871,7 +7917,7 @@ private int get_long_log_sub_cc(){
 		}	
 	}
 }
-private byte[] get_log_bytes(byte[] data_byte,int data_offset,int data_len){
+private byte[] get_log_bytes(ByteBuffer data_byte,int data_offset,int data_len){
 	/*
 	 * return byte array with leading 0 byte followed
 	 * by data bytes.  This array format is used to 
@@ -7880,7 +7926,7 @@ private byte[] get_log_bytes(byte[] data_byte,int data_offset,int data_len){
 	byte[] new_byte = new byte[data_len+1];
 	while (data_len > 0){
 		data_len--;
-		new_byte[data_len+1] = data_byte[data_offset + data_len];
+		new_byte[data_len+1] = data_byte.get(data_offset + data_len);
 	}
 	return new_byte;
 }
@@ -7967,7 +8013,7 @@ private void exec_clst(){
 	 *   r0 - ending byte
 	 *   rf1,rf2 - string addresses
 	 */
-	byte str_end_byte = reg_byte[r0+3];
+	byte str_end_byte = reg.get(r0+3);
 	int  str1_loc     = reg.getInt(rf1+4) & psw_amode;
 	int  str2_loc     = reg.getInt(rf2+4) & psw_amode;
 	int  index = 0;
@@ -8009,7 +8055,7 @@ private void exec_cuse(){
 	 *   cc3 - search incomplete retry 
 	 */
     int  key_len  = reg.getInt(r0);
-    byte str_pad  = reg_byte[r1+3];
+    byte str_pad  = reg.get(r1+3);
     int  str1_loc = reg.getInt(rf1+4) & psw_amode;
     int  str1_len = reg.getInt(rf1+12);
     int  str2_loc = reg.getInt(rf2+4) & psw_amode;
@@ -8069,7 +8115,7 @@ private void exec_srst(){
 	 *  cc 2 = char not found, no update
 	 *  cc 3 = instruction incomplete retry
 	 */
-	byte key_byte = reg_byte[r0+3];
+	byte key_byte = reg.get(r0+3);
 	int  str_loc  = reg.getInt(rf2+4) & psw_amode;
 	int  str_end  = reg.getInt(rf1+4) & psw_amode;
 	psw_cc = psw_cc2;
@@ -8180,9 +8226,10 @@ private void push_pc_stack(int link_addr){
 		pc_stk_psw_loc[cur_pc_stk] = link_addr;
 		pc_stk_psw_cc[cur_pc_stk]  = psw_cc;
 		pc_stk_reg.position(cur_pc_stk_reg);
-		pc_stk_reg.put(reg_byte,0,reg_byte.length);
+        reg.position(0); // RPI 357
+		pc_stk_reg.put(reg);
 		cur_pc_stk++;
-		cur_pc_stk_reg = cur_pc_stk_reg + reg_byte.length;
+		cur_pc_stk_reg = cur_pc_stk_reg + reg_len;
 	} else {
 		set_psw_check(psw_pic_stkerr);
 	}
@@ -8193,11 +8240,11 @@ private void pop_pc_stack(){
 	 */
 	if (cur_pc_stk > 0){
 		cur_pc_stk--;
-		cur_pc_stk_reg = cur_pc_stk_reg - reg_byte.length;
+		cur_pc_stk_reg = cur_pc_stk_reg - reg_len;
 		set_psw_loc(pc_stk_psw_loc[cur_pc_stk]);
 		psw_cc  = pc_stk_psw_cc[cur_pc_stk];
 		reg.position(8);
-		reg.put(pc_stk_reg_byte,cur_pc_stk_reg+8,reg_byte.length-16);
+		reg.put(pc_stk_reg_byte,cur_pc_stk_reg+8,reg_len-16);
 	} else {
 		set_psw_check(psw_pic_stkerr);
 	}
@@ -8220,11 +8267,11 @@ public String get_ins_hex(int ins_loc){
 	}
 	int ins_op = mem_byte[ins_loc] & 0xff;
 	if (ins_op < 0x40){
-	    hex = bytes_to_hex(mem_byte,ins_loc,2,0) + "        ";
+	    hex = bytes_to_hex(mem,ins_loc,2,0) + "        ";
 	} else if (ins_op < 0xc0){
-	    hex = bytes_to_hex(mem_byte,ins_loc,4,0) + "    ";
+	    hex = bytes_to_hex(mem,ins_loc,4,0) + "    ";
 	} else {
-	    hex = bytes_to_hex(mem_byte,ins_loc,6,0);
+	    hex = bytes_to_hex(mem,ins_loc,6,0);
 	}
 	return hex;
 }
@@ -10504,7 +10551,7 @@ private void ex_restore(){
 	 */
 	mem_byte[psw_loc+1] = ex_mod_byte;
 }
-public String bytes_to_hex(byte[] bytes,int byte_start,int byte_length,int chunk){
+public String bytes_to_hex(ByteBuffer bytes,int byte_start,int byte_length,int chunk){
    	/*
    	 * Format bytes into hex string
    	 */
@@ -10512,11 +10559,11 @@ public String bytes_to_hex(byte[] bytes,int byte_start,int byte_length,int chunk
         int index1 = 0;
         int hex_bytes = 0;
         byte_start = byte_start & psw_amode;
-        if (byte_start + byte_length > bytes.length){
-        	byte_length = bytes.length - byte_start;
+        if (byte_start + byte_length > bytes.capacity()){
+        	byte_length = bytes.capacity() - byte_start;
         }
         while (index1 < byte_length){
-        	int work_int = bytes[byte_start + index1] & 0xff;
+        	int work_int = bytes.get(byte_start + index1) & 0xff;
 			String temp_string = Integer.toHexString(work_int);
             if  (temp_string.length() == 1){
             	hex.append("0" + temp_string);
@@ -10683,11 +10730,11 @@ private void init_mem(){
 	 */
 	tot_mem = tz390.max_mem << 20; // cvt MB to bytes
 	try {
-    mem_byte = new byte[tot_mem+8]; 
-   	} catch (Exception e){
-   		set_psw_check(psw_pic_memerr);
+        mem_byte = new byte[tot_mem+8]; 
+       	mem = ByteBuffer.wrap(mem_byte,0,tot_mem+6);
+	} catch (Exception e){
+   	  	set_psw_check(psw_pic_memerr);
    	}
-	mem = ByteBuffer.wrap(mem_byte,0,tot_mem+6);
     /*
      * init 24 bit free memory queue element
      */

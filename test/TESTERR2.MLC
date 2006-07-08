@@ -11,6 +11,7 @@
 * 03/16/06 RPI 238 MNOTE error if level > 4       
 * 03/21/06 RPI 253 ISSUE ERROR FOR INVALID LABELS SUCH AS _^A
 * 03/22/06 RPI 260 test expression parsing errors
+* 07/06/06 RPI 356 test error for instruction CVD with no args.
 *********************************************************************
          TITLE 'TESTERR2 - TEST AZ390 ERRORS'
 TESTERR2 CSECT
@@ -67,4 +68,6 @@ _^A      DS    0H NOT OK
 * TEST EXPRESSION PARSING ERRORS
 EXP1     EQU   1+
 EXP2     EQU   1//
+* TEST INSTRUCTION WITH NO ARGS CAUSING TRAP
+         CVD
          END 

@@ -20,6 +20,9 @@
 * 05/02/06 RPI 305 UPDATE ESPIE EXIT SUPPORT         
 * 05/02/06 RPI 298 ADD TESTS FOR MAYLR, MYLR, MAYHR, MYHR, MAYL,
 *          MYL, MAYH, MYH
+* 07/03/06 RPI 325 ADD TESTS FOR KEB, KDB errors on exact zero   
+* 07/03/06 RPI 326 ADD TESTS FOR TCEB, TCDB, and TCXB            
+* 07/04/06 RPI 333 ADD TESTS SRNM and FIEBR, FIDBR, and FIXBR    
 *********************************************************************
          PRINT DATA
          MACRO
@@ -63,6 +66,18 @@ DHMIN    DC    DH'5.4E-79'
 DHMAX    DC    DH'7.2E+75'
 LHMIN    DC    LH'5.4E-79'
 LHMAX    DC    LH'7.2E+75'
+TDCPZ    EQU   X'800' TEST FP DATA CLASS PLUS  ZERO
+TDCMZ    EQU   X'400' TEST FP DATA CLASS MINUS ZERO
+TDCPN    EQU   X'200' TEST FP DATA CLASS PLUS  NORMALIZED
+TDCMN    EQU   X'100' TEST FP DATA CLASS MINUS NORMALIZED
+TDCPD    EQU   X'080' TEST FP DATA CLASS PLUS  DENORMALIZED
+TDCMD    EQU   X'040' TEST FP DATA CLASS MINUS DENORMALIZED
+TDCPI    EQU   X'020' TEST FP DATA CLASS PLUS  INFINITY
+TDCMI    EQU   X'010' TEST FP DATA CLASS MINUS INFINITY
+TDCPQ    EQU   X'008' TEST FP DATA CLASS PLUS  QUIET NAN
+TDCMQ    EQU   X'004' TEST FP DATA CLASS MINUS QUIET NAN
+TDCPS    EQU   X'002' TEST FP DATA CLASS PLUS  SIGNAL NAN
+TDCMS    EQU   X'001' TEST FP DATA CLASS MINUS SIGNAL NAN
          RT1   START
          RT1   CCE,=DB'0',=X'0000000000000000'  
          RT1   CCE,=DB'1',=X'3FF0000000000000'
@@ -847,6 +862,52 @@ DXR1     ESPIE RESET
          SQER  R0,R1
          CE    R0,=EH'2'
          RT1   CCE
+* B299 SRNM   
+         SRNM  0  DEFAULT ROUND TO NEAREST WITH HALF EVEN
+         LE    R1,=EB'2.5'
+         FIEBR R0,0,R1
+         CEB   R0,=EB'2'
+         RT1   CCE
+         LE    R1,=EB'3.5'
+         FIEBR R0,0,R1
+         CEB   R0,=EB'4'
+         RT1   CCE
+         SRNM  1  ROUND TOWARD ZERO
+         LE    R1,=EB'2.5'
+         FIEBR R0,0,R1
+         CEB   R0,=EB'2'
+         RT1   CCE
+         LE    R1,=EB'3.5'
+         FIEBR R0,0,R1
+         CEB   R0,=EB'3'
+         RT1   CCE
+         SRNM  2  ROUND TOWARD PLUS INFINITY
+         LE    R1,=EB'2.5'
+         FIEBR R0,0,R1
+         CEB   R0,=EB'3'
+         RT1   CCE
+         LE    R1,=EB'3.5'
+         FIEBR R0,0,R1
+         CEB   R0,=EB'4'
+         RT1   CCE
+         SRNM  3  ROUND TOWARD NEG  INFINITY
+         LE    R1,=EB'2.5'
+         FIEBR R0,0,R1
+         CEB   R0,=EB'2'
+         RT1   CCE
+         LE    R1,=EB'3.5'
+         FIEBR R0,0,R1
+         CEB   R0,=EB'3'
+         RT1   CCE
+         SRNM  0  DEFAULT ROUND TO NEAREST WITH HALF EVEN RESET
+         LE    R1,=EB'2.5'
+         FIEBR R0,0,R1
+         CEB   R0,=EB'2'
+         RT1   CCE
+         LE    R1,=EB'3.5'
+         FIEBR R0,0,R1
+         CEB   R0,=EB'4'
+         RT1   CCE
 * B300 LPEBR
          LE    R1,=EB'-1'
          LE    R2,=EB'1'
@@ -959,6 +1020,10 @@ DXR1     ESPIE RESET
          RT1   CCL
          LE    R0,=EB'1'
          LE    R1,=EB'1'
+         KEBR  R0,R1
+         RT1   CCE
+         LE    R0,=EB'0'  RPI 325
+         LE    R1,=EB'0'
          KEBR  R0,R1
          RT1   CCE
          LE    R0,=EB'1'
@@ -1207,6 +1272,10 @@ DEBR1    ESPIE RESET
          RT1   CCL
          LD    R0,=DB'1'
          LD    R1,=DB'1'
+         KDBR  R0,R1
+         RT1   CCE
+         LD    R0,=DB'0'  RPI 325
+         LD    R1,=DB'0'
          KDBR  R0,R1
          RT1   CCE
          LD    R0,=DB'1'
@@ -1545,10 +1614,30 @@ DDBR1    ESPIE RESET
          CEB   R0,=EB'123'
          RT1   CCE
 * B347 FIXBR
-         LX    R1,=LB'1.5'
-         FIXBR R0,0,R1
+         LX    R2,=LB'1.1'
+         FIXBR R1,0,R2
          LX    R4,=LB'1.0'
-         CXBR  R0,R4
+         CXBR  R1,R4
+         RT1   CCE
+         LX    R2,=LB'1.5'
+         FIXBR R1,0,R2
+         LX    R4,=LB'2.0'
+         CXBR  R1,R4
+         RT1   CCE
+         LX    R2,=LB'2.5'
+         FIXBR R1,0,R2
+         LX    R4,=LB'2.0'
+         CXBR  R1,R4       
+         RT1   CCE
+         LX    R2,=LB'-1.5'
+         FIXBR R1,0,R2
+         LX    R4,=LB'-2.0'
+         CXBR  R1,R4        
+         RT1   CCE
+         LX    R2,=LB'-2.5'
+         FIXBR R1,0,R2
+         LX    R4,=LB'-2.0'
+         CXBR  R1,R4         
          RT1   CCE
 * B348 KXBR
          LX    R0,=LB'-1'
@@ -1718,9 +1807,26 @@ DXBR1    ESPIE RESET
          CEB   R3,=EB'3'
          RT1   CCE
 * B357 FIEBR
-         LE    R2,=EB'1.5'
+         LE    R2,=EB'1.1'
          FIEBR R1,0,R2
          CEB   R1,=EB'1.0'
+         RT1   CCE
+         LE    R2,=EB'1.5'
+         FIEBR R1,0,R2
+         CEB   R1,=EB'2.0'
+         RT1   CCE
+         LE    R2,=EB'2.5'
+         FIEBR R1,0,R2
+         CEB   R1,=EB'2.0'
+         RT1   CCE
+         LE    R2,=EB'-1.5'
+         FIEBR R1,0,R2
+         CEB   R1,=EB'-2.0'
+         RT1   CCE
+         LE    R2,=EB'-2.5'
+         FIEBR R1,0,R2
+         CEB   R1,=EB'-2.0'
+         RT1   CCE
 * B358 THDER
          LD    R1,=EB'123'
          THDER R0,R1
@@ -1741,9 +1847,26 @@ DXBR1    ESPIE RESET
          CDB   R3,=DB'3'
          RT1   CCE
 * B35F FIDBR
-         LD    R2,=DB'1.5'
+         LD    R2,=DB'1.1'
          FIDBR R1,0,R2
          CDB   R1,=DB'1.0'
+         RT1   CCE
+         LD    R2,=DB'1.5'
+         FIDBR R1,0,R2
+         CDB   R1,=DB'2.0'
+         RT1   CCE
+         LD    R2,=DB'2.5'
+         FIDBR R1,0,R2
+         CDB   R1,=DB'2.0'
+         RT1   CCE
+         LD    R2,=DB'-1.5'
+         FIDBR R1,0,R2
+         CDB   R1,=DB'-2.0'
+         RT1   CCE
+         LD    R2,=DB'-2.5'
+         FIDBR R1,0,R2
+         CDB   R1,=DB'-2.0'
+         RT1   CCE
 * B360 LPXR
          LX    R1,=LH'-1'
          LX    R4,=LH'1'
@@ -2027,6 +2150,9 @@ DXBR1    ESPIE RESET
          LE    R0,=EB'1'
          KEB   R0,=EB'1'
          RT1   CCE
+         LE    R0,=EB'0' RPI 325
+         KEB   R0,=EB'0'
+         RT1   CCE
          LE    R0,=EB'1'
          KEB   R0,=EB'-1'
          RT1   CCH
@@ -2118,6 +2244,54 @@ DEB1     ESPIE RESET
          MSEB  R0,R1,=EB'3'
          CEB   R0,=EB'-5'
          RT1   CCE
+* ED10 TCEB
+         LE    R0,=EB'0'
+         TCEB  R0,TDCPZ
+         RT1   CC1
+         TCEB  R0,TDCMZ
+         RT1   CC1
+         LE    R0,=EB'1'
+         TCEB  R0,TDCPN
+         RT1   CC1
+         TCEB  R0,TDCMN
+         RT1   CC0
+         LE    R0,=EB'-1'
+         TCEB  R0,TDCPN
+         RT1   CC0
+         TCEB  R0,TDCMN
+         RT1   CC1
+* ED11 TCDB
+         LD    R0,=DB'0'
+         TCDB  R0,TDCPZ
+         RT1   CC1
+         TCDB  R0,TDCMZ
+         RT1   CC1
+         LD    R0,=DB'1'
+         TCDB  R0,TDCPN
+         RT1   CC1
+         TCDB  R0,TDCMN
+         RT1   CC0
+         LD    R0,=DB'-1'
+         TCDB  R0,TDCPN
+         RT1   CC0
+         TCDB  R0,TDCMN
+         RT1   CC1
+* ED12 TCXB
+         LX    R0,=LB'0'
+         TCXB  R0,TDCPZ
+         RT1   CC1
+         TCXB  R0,TDCMZ
+         RT1   CC1
+         LX    R0,=LB'1'
+         TCXB  R0,TDCPN
+         RT1   CC1
+         TCXB  R0,TDCMN
+         RT1   CC0
+         LX    R0,=LB'-1'
+         TCXB  R0,TDCPN
+         RT1   CC0
+         TCXB  R0,TDCMN
+         RT1   CC1
 * ED14 SQEB
          SQEB  R0,=EB'4'
          CEB   R0,=EB'2'
@@ -2137,6 +2311,9 @@ DEB1     ESPIE RESET
          RT1   CCL
          LD    R0,=DB'1'
          KDB   R0,=DB'1'
+         RT1   CCE
+         LD    R0,=DB'0'  RPI 325
+         KDB   R0,=DB'0'
          RT1   CCE
          LD    R0,=DB'1'
          KDB   R0,=DB'-1'

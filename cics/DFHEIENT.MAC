@@ -24,10 +24,12 @@
          L     0,=A(DFHEIEND-DFHEISTG)    R0 = DSA LENGTH
          CALL  DFHEAI0                    INITIALIZE R13 > DSA
          USING DFHEISTG,13                R13      > DSA
-         BALR  &CODEBASE,0                
-         USING *,&CODEBASE                CODEBASE > USER CODE
          L     &EIBREG,DFHEIBP
          USING DFHEIBLK,&EIBREG           EIBREG   > EIB
+         BALR  &CODEBASE,0                
+         USING *,&CODEBASE                CODEBASE > USER CODE
+* NOTE DFHEAI0 EXITS TO R14+6 IF NO DSA FOR NON CICS PGM TO SKIP EIB L
+         CNOP  0,4                        REALIGN FOR NON CICS SUBENTRY
          MEND
 
 

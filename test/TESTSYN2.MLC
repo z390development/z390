@@ -6,9 +6,14 @@
 * Date   - 04/30/06                                                 *
 *********************************************************************
 * 04/30/06 RPI306 TEST OPSYN FOR MACRO VS OPCODE                       
+* 07/03/06 RPI352 TEST OPSYN REDEFINE OF MAC OP
 *********************************************************************
 TESTSYN2 SUBENTRY 
          WTO   'TESTSYN2 STARTED'
+         PUSH  PRINT
+_PUSH    OPSYN PUSH
+PUSH     OPSYN TESTSYN2
+         PUSH  123
 TESTSYNX OPSYN TESTSYN2
          TESTSYNX ABC
          WTO   'TESTSYN2 ENDED'

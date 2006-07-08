@@ -8,6 +8,10 @@
 * 03/21/06 RPI 253 add test for macro labels starting with ._
 * 03/21/06 RPI 257 add test for * as second operand              
 * 04/07/06 RPI 274 add test for 'c''...''' sdt within strings    
+* 07/03/06 RPI 336 add test for D' operator    
+* 07/03/06 RPI 338 add test for 'c''...''' sdt within strings    
+* 07/03/06 RPI 340 test T' for EQU with 3rd operand plus mult. types
+* 07/03/06 RPI 353 test prefix operator followed by (...)            
 *********************************************************************
 TESTMAC1 SUBENTRY
          WTO   'TESTMAC1 TEST SUBSTRINGS, '''' (DOUBLE QUOTES), AND &&'
@@ -66,4 +70,34 @@ TESTMAC1 SUBENTRY
 * TEST SDT WITHIN STRING
 &SDT     SETC   'C''X'''
          MNOTE  'SDT=&SDT'
+* TEST DUPLICATION OF STRING OPERATOR (...)'...'
+&LBL     SETC  (4)'X'
+.* &LBL     SETC  '&LBL'.(8-K'&LBL)' '    * Fill up to 8 chars             00770000
+         MNOTE 'LBL=&LBL'
+* TEST D' OPERATOR
+&V       SETC  'X'
+         AIF   (NOT D'&V).OK1
+         MNOTE 'X DEFINED ERROR'
+.OK1     MNOTE 'X NOT DEFINED OK'
+X        EQU   1
+         AIF   (D'&V).OK2
+         MNOTE 'X NOT DEFINED ERROR'
+.OK2     MNOTE 'X DEFINED OK'
+* TEST T' FOR EQU WITH THIRD OPERAND
+X2       EQU   X'80',X'80',C'b'
+&TX2     SETC T'X2
+         MNOTE 'TX2=&TX2'
+         MACRO 
+         TESTTM
+         MEND
+TM       TESTTM
+&TTM     SETC   T'TM
+         MNOTE  'TTM=&TTM'
+X3       EQU    1,2,C'X'
+Y3       EQU    X3
+&TY3     SETC   T'Y3
+         MNOTE  'T''Y3=&TY3'
+* TEST PREFIX OPERATOR FOLLOWED BY (..)
+&X4      SETC  UPPER('abc')
+         DC    C'&X4'
          END

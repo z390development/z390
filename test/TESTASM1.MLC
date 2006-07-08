@@ -18,6 +18,7 @@
 * 04/24/06 RPI291 TEST ENQ/DEQ                                         
 * 04/28/06 RPI304 TEST PRINT DATA,NOPRINT                              
 * 05/12/06 RPI313 ADD UNARY OP TEST AND L'OP IN CONTINUED STMT TEST    
+* 07/03/06 RPI342 TEST OPERANDS WITH L' OPERATORS                      
 *********************************************************************
          START , RPI 230 TEST START CSECT
          USING *,R15
@@ -51,6 +52,9 @@ ABS2     EQU   0
 B        DC    C'B'
 C        DC    C'C'
 X        DC    C'X'
+X3       DS    0CL10
+Y3       DC    CL2'12'
+         DC    CL8'34567890'
          RT1   START
 * TEST ALIGNMENT OPERATOR
          CNOP  0,4
@@ -92,6 +96,13 @@ X2       MVC   F1(L'F2),F2
          RT1   CCE
          CLC   =A(-(2-1)),=A(-1)     RPI 313
          RT1   CCE
+* TEST L' IN OPERANDS
+         MACRO
+         TEST  &A,&B
+         MVC   &A(1).(&A(2)),&B
+         MEND
+         TEST  (X3+L'Y3,L'X3-L'Y3),=8C'X'
+         RT1   CCE,X3,=C'12XXXXXXXX'
          LA    L'X,                  RPI 313 TEST L' IN COMMA CONT.    X
                2
          CL    1,=A(2)

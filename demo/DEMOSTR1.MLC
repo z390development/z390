@@ -18,7 +18,7 @@ DEMOSTR1 SUBENTRY
          ZAP   PCOUNT,=P'0'
          DO    UNTIL=(CP,PCOUNT,EQ,=P'3')
                AP    PCOUNT,=P'1'
-               WTO '  WHILE LOOP THREE TIMES'
+               WTO '  UNTIL LOOP THREE TIMES'
          ENDDO
          IF    CP,PCOUNT,EQ,=P'3'
                WTO '  IF PCOUNT = 3'

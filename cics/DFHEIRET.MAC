@@ -5,6 +5,7 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR EXIT FROM PROGRAM
+.* 05/25/06 RPI 317 - PASS DSA LEN IN R0 SO DFHEAI1 CAN INGNORE IF 0
 .*********************************************************************
 .*  exit from EXEC CICS assembler program   
 .*  Notes:
@@ -15,5 +16,6 @@
 .*********************************************************************
          MACRO
 &N       DFHEIRET       
-&N       CALL    DFHEAI1
+         L     0,=A(DFHEIEND-DFHEISTG)    R0 = DSA LENGTH
+&N       CALL  DFHEAI1
          MEND

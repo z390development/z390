@@ -1356,7 +1356,7 @@ private void check_undefined_labs(int mac_index){
 			mac_abort = false;
 			int old_mac_line_index = mac_line_index;
 			mac_line_index = -mac_lab_index[index];
-			create_mnote(4,mac_name[mac_index] + " undefined " + mac_lab_name[index] + " at " + mac_file_line_num[mac_line_index]);
+			create_mnote(4,"Macro " + mac_name[mac_index] + " undefined " + mac_lab_name[index] + " at line " + mac_file_line_num[mac_line_index]);
 		    mac_line_index = old_mac_line_index;
 		}
 		index++;

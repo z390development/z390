@@ -6,6 +6,7 @@
 .* Date     05/04/06                                                 *
 .*********************************************************************
 .* 05/05/06 RPI 308 - ADD SUPPORT FOR FIRST EXEC CICS PGM TESTCIC1    
+.* 05/25/06 RPI 317 - IF DSA LENGTH 0, EXIT NON CICS PGM              
 .*********************************************************************
 .* DFHEAI1 IS CALLED FROM CICS_RETURN IN EXEC CICS PROGRAM.
 .* DFHEIEND ALSO CALLS CICS_RETURN.  
@@ -14,19 +15,20 @@
 DFHEAI1  CSECT
          USING *,12
          LR    12,15
+         LTR   0,0             IS DSA LENGTH IN R0 = ZERO
+         BZ    EXIT            YES, EXIT NON CICS PGM
 *
 * FREE DSA
 * 
          LR    1,13            R1  > DSA
          L     13,4(13)        R13 > PRIOR SAVE
-         USING DFHEISTG,1
-         L     0,DFHEILEN      R0 = DSA LENGTH
          FREEMAIN R,A=(1),LV=(0) 
          LTR   15,15
          BNZ   ERR_DSA
 *
 * EXIT TO PRIOR SAVE AREA CALLER
 *
+EXIT     EQU    *
          RETURN (14,12)
 ERR_DSA  WTO   'DFHEAI1 - FREEMAIN FOR DSA FAILED - ABORTING'
          ABEND 104

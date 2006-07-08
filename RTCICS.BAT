@@ -18,3 +18,4 @@ call rtc6 %~dps0cics\testcic1 cics sysmac(cics+mac) systerm(rtcics) %1 %2 %3 %4 
 call rtc6 %~dps0cics\testcic2 cics sysmac(cics+mac) systerm(rtcics) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rtc6 %~dps0cics\testgui4 cics sysmac(cics+mac) systerm(rtcics) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rtc6 %~dps0cics\testgui6 cics sysmac(cics+mac) systerm(rtcics) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rtc6 %~dps0cics\testapl1 cics sysmac(cics+mac) systerm(rtcics) %1 %2 %3 %4 %5 %6 %7 %8 %9
