@@ -554,7 +554,7 @@ public  class  pz390 {
      *        as it is used for rounding 
      *        during conversions between types.
      */
-    int[]  fp_precision = {18,18,8,8,36,36};
+    int[]  fp_precision = {18,18,8,8,36,36}; 
     MathContext fp_bd_context = new MathContext(fp_precision[fp_lb_type]);  
     MathContext fp_db_context = new MathContext(fp_precision[fp_db_type]);
     MathContext fp_eb_context = new MathContext(fp_precision[fp_eb_type]);
@@ -2602,7 +2602,7 @@ private void ins_lt_c0(){
 		     case 0x44:  // 3030 "B244" "SQDR" "RRE"
 			 	 psw_check = false;
 			     ins_setup_rre();
-			     fp_rdv1 = Math.sqrt(fp_get_db_from_dh(fp_reg,rf2)); 
+			     fp_rdv1 = Math.sqrt(fp_get_db_from_dh(fp_reg,rf2)); //RPI 364
 			     fp_put_db(rf1,fp_dh_type,fp_rdv1);
 		         break;
 		     case 0x45:  // 3040 "B245" "SQER" "RRE"
@@ -6030,7 +6030,7 @@ private void ins_lt_ff(){
 		     case 0x15:  // 6780 "ED15" "SQDB" "RXE"
 			 	 psw_check = false;
 			     ins_setup_rxe();
-			     fp_rdv1 = (float) Math.sqrt(fp_get_db_from_db(mem,xbd2_loc)); 
+			     fp_rdv1 = Math.sqrt(fp_get_db_from_db(mem,xbd2_loc)); 
 			     fp_put_db(rf1,fp_db_type,fp_rdv1);
 		         break;
 		     case 0x17:  // 6790 "ED17" "MEEB" "RXE"
@@ -9189,7 +9189,7 @@ private int get_long_log_comp_cc(long long1,long long2){
         }
      }
 }
-private float fp_get_eb_from_eb(ByteBuffer fp_buff,int fp_index){
+public float fp_get_eb_from_eb(ByteBuffer fp_buff,int fp_index){
 	/*
 	 * get float for EB from fp_reg or mem
 	 *   1.  If fp_reg then check for co-reg
@@ -9207,7 +9207,7 @@ private float fp_get_eb_from_eb(ByteBuffer fp_buff,int fp_index){
 	}
 }
 
-private double fp_get_db_from_eh(ByteBuffer fp_buff,int fp_index){
+public double fp_get_db_from_eh(ByteBuffer fp_buff,int fp_index){
 	/*
 	 * get double from EH short hex in fp_reg or mem
 	 *   1.  If fp_reg, then check for float co-reg
@@ -9233,7 +9233,7 @@ private double fp_get_db_from_eb(ByteBuffer fp_buff,int fp_index){
 		return fp_buff.getFloat(fp_index);
 	}
 }
-private double fp_get_db_from_dh(ByteBuffer fp_buff,int fp_index){
+public double fp_get_db_from_dh(ByteBuffer fp_buff,int fp_index){
 	/*
 	 * get double from DH long hex in fp_reg or mem
 	 *   1.  If fp_reg, then check for float co-reg
@@ -9246,7 +9246,7 @@ private double fp_get_db_from_dh(ByteBuffer fp_buff,int fp_index){
 		return zcvt_dh_to_db(fp_buff.getLong(fp_index));
 	}
 }
-private double fp_get_db_from_db(ByteBuffer fp_buff,int fp_index){
+public double fp_get_db_from_db(ByteBuffer fp_buff,int fp_index){
 	/*
 	 * get double from DB Long binary in fp_reg or mem
 	 *   1.  If fp_reg, then check for float co-reg
@@ -9321,7 +9321,7 @@ private void fp_get_bd_sqrt(){
     }
     fp_rbdv1 = fp_rbdv1.scaleByPowerOfTen(-fp_bd_sqrt_scale / 2).round(fp_x_context);
 }
-private BigDecimal fp_get_bd_from_lh(ByteBuffer fp_buff,int fp_index){
+public BigDecimal fp_get_bd_from_lh(ByteBuffer fp_buff,int fp_index){
 	/*
 	 * get big decimal from LH extended hex in fp_reg or mem
 	 *   1.  If fp_reg, then check for big dec co-reg
@@ -9334,7 +9334,7 @@ private BigDecimal fp_get_bd_from_lh(ByteBuffer fp_buff,int fp_index){
 		return zcvt_lh_to_bd(fp_buff,fp_index);
 	}
 }
-private BigDecimal fp_get_bd_from_lb(ByteBuffer fp_buff,int fp_index){
+public BigDecimal fp_get_bd_from_lb(ByteBuffer fp_buff,int fp_index){
 	/*
 	 * get big decimal from LH extended binary in fp_reg or mem
 	 *   1.  If fp_reg, then check for big dec co-reg

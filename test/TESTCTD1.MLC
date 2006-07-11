@@ -1,0 +1,71 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 07/10/06                                                 *
+*********************************************************************
+TESTCTD1 SUBENTRY
+         WTO   'TEST CTD CONVERT TO DISPLAY MACRO AND SVC 170 SERVICE'
+         MVC   DTYPE,=CL20'128 BIT INTEGER'
+         CTD   CTD_INT128,INT128,D40
+         WTO   MF=(E,WTOMSG)
+         SQE   F0,EH_2
+         STE   F0,EH_SQRT2
+         CTD   CTD_EH,EH_SQRT2,D40
+         MVC   DTYPE,=CL20'EH SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         SQEB  F0,EB_2
+         STE   F0,EB_SQRT2
+         CTD   CTD_EB,EB_SQRT2,D40
+         MVC   DTYPE,=CL20'EB SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         SQD   F0,DH_2
+         STD   F0,DH_SQRT2
+         CTD   CTD_DH,DH_SQRT2,D40
+         MVC   DTYPE,=CL20'DH SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         SQDB  F0,DB_2
+         STD   F0,DB_SQRT2
+         CTD   CTD_DB,DB_SQRT2,D40
+         MVC   DTYPE,=CL20'DB SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         LD    F1,LH_2
+         LD    F3,LH_2+8
+         SQXR  F0,F1
+         STD   F0,LH_SQRT2
+         STD   F2,LH_SQRT2+8
+         CTD   CTD_LH,LH_SQRT2,D40
+         MVC   DTYPE,=CL20'LH SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         LD    F1,LB_2
+         LD    F3,LB_2+8
+         SQXBR F0,F1
+         STD   F0,LB_SQRT2
+         STD   F2,LB_SQRT2+8
+         CTD   CTD_LB,LB_SQRT2,D40
+         MVC   DTYPE,=CL20'LB SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         WTO   'TESTCTD1 ENDED OK'
+         SUBEXIT
+INT128   DC    0XL16,X'80',15X'00'
+EH_2     DC    EH'2'
+EB_2     DC    EB'2'
+DH_2     DC    DH'2'
+DB_2     DC    DB'2'
+LH_2     DC    LH'2'
+LB_2     DC    LB'2'
+EH_SQRT2 DC    EH'0'
+EB_SQRT2 DC    EB'0'
+DH_SQRT2 DC    DH'0'
+DB_SQRT2 DC    DB'0'
+LH_SQRT2 DC    LH'0'
+LB_SQRT2 DC    LB'0'
+WTOMSG   DC    AL2(WTOEND-*,0)       WTO MESSAGE LENGTH AND FLAGS
+DTYPE    DC    CL20' ',C' = '        DISPLAY DESCRIPTIONS
+D40      DC    CL40' '               DISPLAY VALUE                  
+WTOEND   EQU   *
+         LTORG                       FORCE LITERALS IN POWERS CSECT
+         EQUREGS REGS=GPR
+         EQUREGS REGS=FPR
+         END

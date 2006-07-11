@@ -62,10 +62,12 @@
 **/*.[hH][tT][mM]
 **/*.[hH][tT][mM][lL]
 **/*.[oO][tT][1-9]
-**/*.[rR][lLuU][eEgE]
+# *.RLE / *.RLG / *.RUE / *.RUG
+**/*.[rR][lLuU][eEgG]
 **/*.[uU][lL][dD]
 **/*.[uU][rR][fF]
 **/*.[vV][eE][sS]
+# *.VX0 / *.VXN
 **/*.[vV][xX][0nN]
 linklib/RTGENCMP.[dD][aA][tT]
 linklib/ZAPDEMO1.[dD][aA][tT]

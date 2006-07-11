@@ -8,7 +8,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -367,6 +370,16 @@ import javax.swing.Timer;
      int  rld_loc = 0;
      byte rld_len = 0;
     /*
+     * convert to display variables
+     */
+    NumberFormat ctd_nfe = NumberFormat.getInstance();
+    float      ctd_e;
+    double     ctd_d;
+ 	byte[]     ctd_byte = new byte[16];
+	BigInteger ctd_bi;
+	BigDecimal ctd_bd;
+	String     ctd_text;
+    /*
      * DCB sequential and random file I/O tables
      */
      int    tot_tiot_files = 0;
@@ -567,6 +580,9 @@ public void svc(int svc_id){
 		break;
 	case 160: // wtor 
 		svc_wtor();
+		break;
+	case 170: // ctd - convert to display format r1=a(type,in,out)
+		svc_ctd(); 
 		break;
 	default:
 		abort_error(23,"undefined svc - " + svc_id);
@@ -3683,6 +3699,72 @@ private void svc_xlate(){
 		}
 	}
 }
+private void svc_ctd(){
+	/*
+	 * convert to display - r1=a(type,in,out)
+	 *   conversion type code:
+	 *     1 128 bit integer to 40 byte decimal  display
+     *     2 EH short    to 40 byte scientific notation
+     *     3 EB short    to 40 byte scientific notation
+     *     4 DH long     to 40 byte scientific notation
+     *     5 DB long     to 40 byte scientific notation
+     *     6 LH extended to 40 byte scientific notation
+     *     7 LB extended to 40 byte scientific notation
+	 */
+
+	int addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	byte type = pz390.mem.get(addr+3);
+	int addr_in  = pz390.mem.getInt(addr+4);
+	int addr_out = pz390.mem.getInt(addr+8);
+	switch (type){
+	case 1: // 128 bit int to display
+		pz390.mem.position(addr_in);
+		pz390.mem.get(ctd_byte,0,16);
+		ctd_bi = new BigInteger(ctd_byte);
+		ctd_text = ctd_bi.toString();
+		break;
+	case 2: // eh 
+		ctd_d = pz390.fp_get_db_from_eh(pz390.mem,addr_in); 
+		ctd_text = ctd_nfe.format(ctd_d);
+		break;
+	case 3: // eb
+		ctd_e = pz390.fp_get_eb_from_eb(pz390.mem,addr_in); 
+        ctd_text = Float.toString(ctd_e);
+		break;
+	case 4: // dh 
+		ctd_d = pz390.fp_get_db_from_dh(pz390.mem,addr_in); 
+        ctd_text = Double.toString(ctd_d);
+        break;
+	case 5: // db
+		ctd_d = pz390.fp_get_db_from_db(pz390.mem,addr_in); 
+        ctd_text = Double.toString(ctd_d);
+		break;	
+	case 6: // lh 
+		ctd_bd = pz390.fp_get_bd_from_lh(pz390.mem,addr_in); 
+        ctd_text = ctd_bd.toString();
+        break;
+	case 7: // lb
+		ctd_bd = pz390.fp_get_bd_from_lb(pz390.mem,addr_in); 
+        ctd_text = ctd_bd.toString();
+		break;	
+	default:
+		pz390.reg.putInt(pz390.r15,12);
+	    return;
+	}
+	int index = 0;
+	while (index < 40 - ctd_text.length()){
+		pz390.mem.put(addr_out,(byte)ebcdic_space);
+		index++;
+		addr_out++;
+	}
+	index = 0;
+	while (index < ctd_text.length()){
+		pz390.mem.put(addr_out,tz390.ascii_to_ebcdic[ctd_text.charAt(index)]);
+		index++;
+		addr_out++;
+	}
+	pz390.reg.putInt(pz390.r15,0);
+}
 public void process_test_cmd(){
 	/*
 	 * process test option interactive debug commands
@@ -4548,6 +4630,7 @@ public void init_sz390(tz390 shared_tz390,pz390 shared_pz390){
 	 */
 	tz390 = shared_tz390;
 	pz390 = shared_pz390;
+	ctd_nfe.setMaximumFractionDigits(7); // limit precison for eh stored as d for exp. range
 }
 public long get_feature_bits(){
 	/*

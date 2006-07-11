@@ -169,6 +169,7 @@ public  class  mz390 {
     * 06/16/06 RPI 349 fix to prevent loop on EQU error during loading
     * 07/01/06 RPI 351 fix opsyn cancel for previously used opcode
     * 07/03/06 RPI 353 fix UPPER(...) expression error
+    * 07/08/06 RPI 359 fix support for mixed case macro parms
     ********************************************************
     * Global variables
     *****************************************************/
@@ -6098,7 +6099,7 @@ private void init_call_parms(){
  	               	   state = 4;
  	               } else {
  	       	  	       if  (parm_value.charAt(parm_value.length()-1) == '='){
- 	       	  	   	       key_name  = parm_value.substring(0,parm_value.length()-1);
+ 	       	  	   	       key_name  = parm_value.substring(0,parm_value.length()-1).toUpperCase();  // RPI 359
                            key_value = "";
                            key_value_level = 0;
                            state = 2; // possible key

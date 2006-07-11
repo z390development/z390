@@ -19,6 +19,7 @@ C:\z390\mac
 C:\z390\MAC.BAT
 C:\z390\mvs
 C:\z390\MZ390.BAT
+C:\z390\README.TXT
 C:\z390\RT.BAT
 C:\z390\RT1.BAT
 C:\z390\RT2.BAT
@@ -26,6 +27,7 @@ C:\z390\RT3.BAT
 C:\z390\RT4.BAT
 C:\z390\RT5.BAT
 C:\z390\RT6.BAT
+C:\z390\RT7.BAT
 C:\z390\RTC4.BAT
 C:\z390\RTC6.BAT
 C:\z390\RTCICS.BAT
@@ -112,6 +114,7 @@ C:\z390\bmk\INSTTIME.OUT
 C:\z390\bmk\INSTTIME.pdf
 C:\z390\bmk\INSTTIME.PRN
 C:\z390\bmk\INSTTIME.TXT
+C:\z390\cics\cics
 C:\z390\cics\CICS.390
 C:\z390\cics\CICS.BAK
 C:\z390\cics\CICS.BAL
@@ -554,6 +557,7 @@ C:\z390\demo\DMEOGUI2.svb
 C:\z390\demo\rtdemo.die
 C:\z390\demo\rtdemo.ERR
 C:\z390\demo\rtdemo.sve
+C:\z390\demo\SQRT2.MLC
 C:\z390\demo\temp.txt
 C:\z390\Doc\OSI_GPL_License_Agreement.rtf
 C:\z390\Doc\OSI_GPL_License_Agreement.txt
@@ -593,6 +597,7 @@ C:\z390\mac\CLOSE.BAK
 C:\z390\mac\CLOSE.MAC
 C:\z390\mac\CMDPROC.BAK
 C:\z390\mac\CMDPROC.MAC
+C:\z390\mac\CTD.MAC
 C:\z390\mac\CVTD.BAK
 C:\z390\mac\CVTD.MAC
 C:\z390\mac\DCB.BAK
@@ -2507,6 +2512,7 @@ C:\z390\src\az390.java
 C:\z390\src\ez390.java
 C:\z390\src\gz390.java
 C:\z390\src\gz390_screen.java
+C:\z390\src\HELLO.java
 C:\z390\src\lz390.java
 C:\z390\src\MessageBox.java
 C:\z390\src\mz390.java
@@ -2823,6 +2829,7 @@ C:\z390\test\testcpy1.tf2
 C:\z390\test\testcpy1.tf3
 C:\z390\test\testCST1.svb
 C:\z390\test\TESTCST1.svp
+C:\z390\test\TESTCTD1.MLC
 C:\z390\test\TESTDC1.390
 C:\z390\test\TESTDC1.BAK
 C:\z390\test\TESTDC1.BAL

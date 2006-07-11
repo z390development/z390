@@ -12,6 +12,7 @@
 * 07/03/06 RPI 338 add test for 'c''...''' sdt within strings    
 * 07/03/06 RPI 340 test T' for EQU with 3rd operand plus mult. types
 * 07/03/06 RPI 353 test prefix operator followed by (...)            
+* 07/08/06 RPI 359 test keyword parm with mixed case                 
 *********************************************************************
 TESTMAC1 SUBENTRY
          WTO   'TESTMAC1 TEST SUBSTRINGS, '''' (DOUBLE QUOTES), AND &&'
@@ -100,4 +101,11 @@ Y3       EQU    X3
 * TEST PREFIX OPERATOR FOLLOWED BY (..)
 &X4      SETC  UPPER('abc')
          DC    C'&X4'
+* TEST MACRO WITH MIXED CASE KEYWORD
+         MACRO
+         TESTMC &ARmode=X
+         MNOTE 'TESTMC ARmode=&ARMODE'
+         MEND
+         TESTMC  
+         TESTMC ARMODE=Y
          END
