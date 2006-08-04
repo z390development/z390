@@ -11,7 +11,6 @@ import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -78,6 +77,8 @@ import javax.swing.Timer;
     * 07/01/06 RPI 352 relax align of DCB to 4 bytes
     * 07/05/06 RPI 347 add test address stop break
     * 07/07/06 RPI 358 prevent trap on invalid S command
+    * 07/17/06 RPI 360 and 370 add CFD and CTD conversion svcs
+    * 07/20/06 RPI 377 prevent DCB SYNAD recursion on missing file
     ********************************************************
     * Global variables
     *****************************************************/
@@ -372,13 +373,19 @@ import javax.swing.Timer;
     /*
      * convert to display variables
      */
-    NumberFormat ctd_nfe = NumberFormat.getInstance();
+    int        ctd_display_len = 45; // CTD and CFD display field
     float      ctd_e;
     double     ctd_d;
  	byte[]     ctd_byte = new byte[16];
 	BigInteger ctd_bi;
 	BigDecimal ctd_bd;
 	String     ctd_text;
+    float      cfd_e;
+    double     cfd_d;
+ 	byte[]     cfd_byte;
+	BigInteger cfd_bi;
+	BigDecimal cfd_bd;
+	String     cfd_text;
     /*
      * DCB sequential and random file I/O tables
      */
@@ -437,6 +444,7 @@ import javax.swing.Timer;
      int dcb_dcbe  = 0x60; // dcbe extention for eodad and synad
      int dcbe_eodad = 0;  
      int dcbe_synad = 4;
+     boolean dcb_synad_recur = false; // RPI 377
      boolean[]          tiot_dcb_open   = (boolean[])Array.newInstance(boolean.class,max_tiot_files);
      String[]           tiot_ddnam      = new String[max_tiot_files];
      String[]           tiot_dsn        = new String[max_tiot_files];
@@ -582,7 +590,10 @@ public void svc(int svc_id){
 		svc_wtor();
 		break;
 	case 170: // ctd - convert to display format r1=a(type,in,out)
-		svc_ctd(); 
+		svc_ctd(); // RPI 360
+		break;
+	case 171: // cfd - convert from display format r1=a(type,in,out)
+		svc_cfd(); // RPI 370
 		break;
 	default:
 		abort_error(23,"undefined svc - " + svc_id);
@@ -704,7 +715,7 @@ private void put_stats(){
 		}
 	}
 	put_log("EZ390I total errors         = " + ez390_errors);
-	put_log("EZ390I return code(" + tz390.get_padded_name() + ")= " + ez390_rc); // RPI 312
+	put_log("EZ390I return code(" + tz390.get_padded_name(tz390.pgm_name) + ")= " + ez390_rc); // RPI 312
 }
 private void close_files(){
 	/*
@@ -2564,6 +2575,8 @@ private void dcb_synad_error(int error_num,String error_msg){
 	 * take synad exit if defined else issue
 	 * error message and issue pgm check
 	 */
+	if (dcb_synad_recur)return; // RPI 377
+	dcb_synad_recur = true;
 	pz390.mem.putInt(pz390.r15,error_num);  //RPI53
 	cur_dcbe_addr = pz390.mem.getInt(cur_dcb_addr + dcb_dcbe) & pz390.psw_amode;
 	if (cur_dcbe_addr != 0){  // RPI 281
@@ -2582,6 +2595,7 @@ private void dcb_synad_error(int error_num,String error_msg){
 	} else {
 		pz390.set_psw_loc(cur_dcb_synad);
 	}
+	dcb_synad_recur = false; // RPI 377
 }
 private void dcb_eodad_exit(){
 	/*
@@ -2606,7 +2620,10 @@ private void check_dcb_addr(){
 	 * on full word bound and that
 	 * DCBID = EBCDIC or ASCII C'DCB1'
 	 * else abort
+	 * Notes:
+	 *   1.  Also reset dcb_synad_recur
 	 */
+	dcb_synad_recur = false; // RPI 377
 	if (cur_dcb_addr/4*4 != cur_dcb_addr  // RPI 152
 		|| !get_ascii_string(cur_dcb_addr + dcb_id,8).equals(tz390.dcb_id_ver)){
 		abort_error(80,"invalid DCB address or ID at DCB=(" 
@@ -2676,7 +2693,7 @@ private String get_ascii_var_string(int mem_addr,int max_len){
 	 */
 	String text = "";
 	int index = 0;
-	while (index < mem_addr + max_len){
+	while (index < max_len){
 		byte data_byte = pz390.mem_byte[mem_addr+index];
 		char data_char;
 		if (tz390.opt_ascii){
@@ -2919,7 +2936,7 @@ public int cmd_proc_start(int cmd_id,String[] exec_cmd){
         return -1;
     }
 }
-private void cmd_input(int cmd_id,String cmd_line){
+private synchronized void cmd_input(int cmd_id,String cmd_line){
     /*
      * send input to exec command in process
      */
@@ -3703,15 +3720,14 @@ private void svc_ctd(){
 	/*
 	 * convert to display - r1=a(type,in,out)
 	 *   conversion type code:
-	 *     1 128 bit integer to 40 byte decimal  display
-     *     2 EH short    to 40 byte scientific notation
-     *     3 EB short    to 40 byte scientific notation
-     *     4 DH long     to 40 byte scientific notation
-     *     5 DB long     to 40 byte scientific notation
-     *     6 LH extended to 40 byte scientific notation
-     *     7 LB extended to 40 byte scientific notation
+	 *     1 128 bit integer to 45 byte decimal  display
+     *     2 EH short    to 45 byte scientific notation
+     *     3 EB short    to 45 byte scientific notation
+     *     4 DH long     to 45 byte scientific notation
+     *     5 DB long     to 45 byte scientific notation
+     *     6 LH extended to 45 byte scientific notation
+     *     7 LB extended to 45 byte scientific notation
 	 */
-
 	int addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	byte type = pz390.mem.get(addr+3);
 	int addr_in  = pz390.mem.getInt(addr+4);
@@ -3725,43 +3741,148 @@ private void svc_ctd(){
 		break;
 	case 2: // eh 
 		ctd_d = pz390.fp_get_db_from_eh(pz390.mem,addr_in); 
-		ctd_text = ctd_nfe.format(ctd_d);
-		break;
+        ctd_text = Double.toString(ctd_d);
+        ctd_trunc(pz390.fp_eh_digits); 
+        break;
 	case 3: // eb
 		ctd_e = pz390.fp_get_eb_from_eb(pz390.mem,addr_in); 
         ctd_text = Float.toString(ctd_e);
+        ctd_trunc(pz390.fp_eb_digits); 
 		break;
 	case 4: // dh 
 		ctd_d = pz390.fp_get_db_from_dh(pz390.mem,addr_in); 
         ctd_text = Double.toString(ctd_d);
+        ctd_trunc(pz390.fp_dh_digits); 
         break;
 	case 5: // db
 		ctd_d = pz390.fp_get_db_from_db(pz390.mem,addr_in); 
         ctd_text = Double.toString(ctd_d);
-		break;	
+        ctd_trunc(pz390.fp_db_digits); 
+        break;	
 	case 6: // lh 
 		ctd_bd = pz390.fp_get_bd_from_lh(pz390.mem,addr_in); 
         ctd_text = ctd_bd.toString();
+        ctd_trunc(pz390.fp_lh_digits); 
         break;
 	case 7: // lb
 		ctd_bd = pz390.fp_get_bd_from_lb(pz390.mem,addr_in); 
         ctd_text = ctd_bd.toString();
-		break;	
+        ctd_trunc(pz390.fp_lb_digits); 
+        break;	
 	default:
 		pz390.reg.putInt(pz390.r15,12);
 	    return;
 	}
 	int index = 0;
-	while (index < 40 - ctd_text.length()){
-		pz390.mem.put(addr_out,(byte)ebcdic_space);
-		index++;
-		addr_out++;
-	}
-	index = 0;
 	while (index < ctd_text.length()){
 		pz390.mem.put(addr_out,tz390.ascii_to_ebcdic[ctd_text.charAt(index)]);
 		index++;
 		addr_out++;
+	}
+	while (index < ctd_display_len){
+		pz390.mem.put(addr_out,(byte)ebcdic_space);
+		index++;
+		addr_out++;
+	}
+	pz390.reg.putInt(pz390.r15,0);
+}
+private void ctd_trunc(byte max_digits){
+	/*
+	 * trunc to max digits plus exponent
+	 * and strip trailing zeros on fraction
+	 */
+    int d_index = ctd_text.indexOf(".");
+    int e_index = ctd_text.indexOf("E");
+    String e_text = "";
+    if (d_index >= 0){
+    	if (e_index > d_index){
+        	if (ctd_text.charAt(e_index+1) == '+'){
+        		e_text = "E" + ctd_text.substring(e_index+2);
+        	} else {
+        		e_text = ctd_text.substring(e_index);
+        	}
+    		d_index = e_index;
+            if (d_index > max_digits+1){
+               d_index = max_digits;  // last sig. digit offset
+            } else {
+               d_index = e_index-1;
+            }
+    	} else {
+    		d_index = ctd_text.length()-1;
+    	}
+    	while (ctd_text.charAt(d_index) == '0'){
+    		d_index--;
+    	}
+    	if (ctd_text.charAt(d_index) == '.'){
+    		d_index--;
+    	}
+   		ctd_text = ctd_text.substring(0,d_index+1) + e_text;
+    }
+}
+private void svc_cfd(){
+	/*
+	 * convert from display - r1=a(type,out,in)
+	 *   conversion type code:
+	 *     1 128 bit integer from 45 byte decimal  display
+     *     2 EH short    from 45 byte scientific notation
+     *     3 EB short    from 45 byte scientific notation
+     *     4 DH long     from 45 byte scientific notation
+     *     5 DB long     from 45 byte scientific notation
+     *     6 LH extended from 45 byte scientific notation
+     *     7 LB extended from 45 byte scientific notation
+	 */
+	int addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	byte type = pz390.mem.get(addr+3);
+	int addr_out  = pz390.mem.getInt(addr+4);
+	int addr_in = pz390.mem.getInt(addr+8);
+	String cfd_text = get_ascii_var_string(addr_in,ctd_display_len).trim();  
+	switch (type){
+	case 21: // 128 bit int from display
+		cfd_bi = new BigInteger(cfd_text);
+		cfd_byte = cfd_bi.toByteArray();
+		pz390.mem.position(addr_out);
+		int index = 16-cfd_byte.length;
+        byte fill_byte = 0;
+		if (cfd_byte[0] < 0){
+			fill_byte = -1;
+		}
+		while (index > 0){
+			pz390.mem.put(fill_byte);
+			index--;
+		}
+		pz390.mem.put(cfd_byte);
+		break;
+	case 22: // eh 
+		cfd_d = Double.valueOf(cfd_text); 
+		pz390.mem.putInt(addr_out,pz390.zcvt_db_to_eh(cfd_d));
+		break;
+	case 23: // eb
+		cfd_e = Float.valueOf(cfd_text); 
+		pz390.mem.putFloat(addr_out,cfd_e);
+		break;
+	case 24: // dh 
+		cfd_d = Double.valueOf(cfd_text); 
+		pz390.mem.putLong(addr_out,pz390.zcvt_db_to_dh(cfd_d));
+        break;
+	case 25: // db
+		cfd_d = Double.valueOf(cfd_text); 
+		pz390.mem.putDouble(addr_out,cfd_d);
+		break;	
+	case 26: // lh 
+		cfd_bd = new BigDecimal(cfd_text,pz390.fp_bd_context); 
+		pz390.zcvt_bd(pz390.fp_lh_type,cfd_bd);
+		pz390.mem.position(addr_out);
+		pz390.mem.put(pz390.fp_work_reg_byte,0,16);
+        break;
+	case 27: // lb
+		cfd_bd = new BigDecimal(cfd_text,pz390.fp_bd_context); 
+		pz390.zcvt_bd(pz390.fp_lb_type,cfd_bd);
+		pz390.mem.position(addr_out);
+		pz390.mem.put(pz390.fp_work_reg_byte,0,16);
+		break;	
+	default:
+		pz390.reg.putInt(pz390.r15,12);
+	    return;
 	}
 	pz390.reg.putInt(pz390.r15,0);
 }
@@ -4630,7 +4751,6 @@ public void init_sz390(tz390 shared_tz390,pz390 shared_pz390){
 	 */
 	tz390 = shared_tz390;
 	pz390 = shared_pz390;
-	ctd_nfe.setMaximumFractionDigits(7); // limit precison for eh stored as d for exp. range
 }
 public long get_feature_bits(){
 	/*

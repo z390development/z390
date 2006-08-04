@@ -1,0 +1,62 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/17/06                                                 *
+.*********************************************************************
+.*
+.*  CONVERT FROM EBCDIC DECIMAL FIELD TO BINARY FIELD FORMAT
+.*    TYPE    OUTPUT               INPUT 
+.*     21       128 BIT INTEGER      45 BYTE DECIMAL (SIGN+39 DIGITS)
+.*     22       FP SHORT EH          45 BYTE SCIENTIFIC (N.N(7)+EE)
+.*     23       FP SHORT EB          45 BYTE SCIENTIFIC (N.N(7)+EE)
+.*     24       FP SHORT DH          45 BYTE SCIENTIFIC (N.N(14)+EEE)
+.*     25       FP SHORT DB          45 BYTE SCIENTIFIC (N.N(14)+EEE)
+.*     26       FP SHORT LH          45 BYTE SCIENTIFIC (N.N(34)+EEEE)
+.*     27       FP SHORT LB          45 BYTE SCIENTIFIC (N.N(34)+EEEE)
+.*
+.* IF LINKAGE=SVC
+.*   USE CFD Z390 SVC 171 R1=A(TYPE,OUT,IN)
+.* ELSE
+.*   USE CFD MAINFRAME SERVICE ROUTINE MFCONMFS(TYPE,OUT,IN)
+.* ENDIF
+.*
+.* R15 RETURN CODE
+.*    0 OK
+.*   12 INVALID REQUEST
+.*
+.*********************************************************************
+         CFD   &TYPE,         SEE 7 CONVERSION TYPES BELOW             X
+               &OUT,          TARGET FIELD                             X
+               &IN,           SOURCE FIELD                             X
+               &LINKAGE=SVC   SVC= Z390 171, MF=CALL TO FPCONMFC          
+         GBLB  &CFD_EQUS
+         AIF   (&CFD_EQUS).SKIP_CFD_EQUS
+&CFD_EQUS SETB 1
+CFD_INT128 EQU 21 CONVERT TO 128 BIT INTEGER FROM 45 BYTE SN(39) 
+CFD_EH   EQU   22 CONVERT TO FP SHORT EH     FROM 45 BYTE SN.N(7)+EE
+CFD_EB   EQU   23 CONVERT TO FP SHORT EB     FROM 45 BYTE SN.N(7)+EE
+CFD_DH   EQU   24 CONVERT TO FP SHORT DH     FROM 45 BYTE SN.N(14)+EEE
+CFD_DB   EQU   25 CONVERT TO FP SHORT DB     FROM 45 BYTE SN.N(14)+EEE
+CFD_LH   EQU   26 CONVERT TO FP SHORT LH     FROM 45 BYTE SN.N(34)+EEEE
+CFD_LB   EQU   27 CONVERT TO FP SHORT LB     FROM 45 BYTE SN.N(34)+EEEE
+.SKIP_CFD_EQUS ANOP
+         LA    1,=A(&TYPE,&OUT,&IN)
+         AIF   ('&TYPE'(1,1) NE '(').CHKIN
+         ST    &TYPE(1),0(1)
+.CHKIN   ANOP
+         AIF   ('&IN'(1,1) NE '(').CHKOUT
+         ST    &IN(1),4(1)
+.CHKOUT  ANOP
+         AIF   ('&OUT'(1,1) NE '(').SVC
+         ST    &OUT(1),8(1)
+.SVC     ANOP
+         AIF   (&LINKAGE NE 'SVC').CALL
+         SVC   171 CFD Z390 SVC R1=A(TYPE,OUT,IN)
+         MEXIT
+.CALL    ANOP
+         L     15,=V(FPCONMFC) CFD MAINFRAME CALL ROUTINE
+         BASR  14,15 CALL FPCONMFC,(TYPE,OUT,IN)
+         MEND               

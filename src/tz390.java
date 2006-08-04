@@ -87,6 +87,8 @@ public  class  tz390 {
     * 05/24/06 RPI 227 add shared alarm_bell for System.out  
     * 06/04/06 RPI 331 set opsyn_name to null for cancel
     * 06/09/06 RPI 342 correct parsing of parms with exp ?' operators 
+    * 07/15/06 RPI 368 add ACONTROL opcode 147
+    * 07/20/06 RPI 378 correct to use first SYSOBJ file dir
     ********************************************************
     * Shared z390 tables
     *****************************************************/
@@ -95,7 +97,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.1.01a";  //dsh
+    String version    = "V1.1.01b";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -528,7 +530,7 @@ public  class  tz390 {
 		       "JNH",      // 2250 "A74D" "JNH" "BRC" 13
 		       "JNL",      // 2260 "A74B" "JNL" "BRC" 13
 		       "JNE",      // 2270 "A747" "JNE" "BRC" 13
-		       "JP",       // 2280 "A742" "JP" "BRC" 13
+		       "JP",       // 2280 "A742" "JP" "BRC" 13  
 		       "JM",       // 2290 "A744" "JM" "BRC" 13
 		       "JZ",       // 2300 "A748" "JZ" "BRC" 13
 		       "JO",       // 2310 "A741" "JO" "BRC" 13
@@ -1139,6 +1141,7 @@ public  class  tz390 {
 		       "PUNCH",    // 7570  "PUNCH"  223
 		       "PUSH",     // 7580  "PUSH"  145
 		       "REPRO",    // 7590  "REPRO"  146
+		       "ACONTROL", // 7595  "ACONTROL" 147 /RPI 368
 		       "ACTR",     // 7600  "ACTR"  201
 		       "AGO",      // 7610  "AGO"  202
 		       "AIF",      // 7620  "AIF"  203
@@ -1442,7 +1445,7 @@ public  class  tz390 {
 		       13,  // 2250 "A74D" "JNH" "BRC" 13
 		       13,  // 2260 "A74B" "JNL" "BRC" 13
 		       13,  // 2270 "A747" "JNE" "BRC" 13
-		       13,  // 2280 "A742" "JP" "BRC" 13
+		       13,  // 2280 "A742" "JP" "BRC" 13 
 		       13,  // 2290 "A744" "JM" "BRC" 13
 		       13,  // 2300 "A748" "JZ" "BRC" 13
 		       13,  // 2310 "A741" "JO" "BRC" 13
@@ -2053,6 +2056,7 @@ public  class  tz390 {
 		       223,  // 7570  "PUNCH"  223
 		       145,  // 7580  "PUSH"  145
 		       146,  // 7590  "REPRO"  146
+		       147,  // 7595  "ACONTROL" 147 // RPI 368
 		       201,  // 7600  "ACTR"   
 		       202,  // 7610  "AGO"  
 		       203,  // 7625  "AIF"  
@@ -2309,7 +2313,7 @@ public  class  tz390 {
 		       "A74D",  // 2250 "A74D" "JNH" "BRC" 13
 		       "A74B",  // 2260 "A74B" "JNL" "BRC" 13
 		       "A747",  // 2270 "A747" "JNE" "BRC" 13
-		       "A742",  // 2280 "A742" "JP" "BRC" 13
+		       "A742",  // 2280 "A742" "JP" "BRC" 13 
 		       "A744",  // 2290 "A744" "JM" "BRC" 13
 		       "A748",  // 2300 "A748" "JZ" "BRC" 13
 		       "A741",  // 2310 "A741" "JO" "BRC" 13
@@ -3712,17 +3716,30 @@ public boolean update_opsyn(String new_name,String old_name){
 	}
 	return true;
 }
-public String get_hex(int work_int,int field_length) {
+public String get_hex(int work_int,int req_hex_digits) {
    	/*
-   	 * Format int into 1-16 byte hex string
+   	 * Format int into 1-16 hex digit string
    	 */
    	    String work_hex = Integer.toHexString(work_int);
-   	    if (work_hex.length() >= field_length){
-   	    	return work_hex.substring(work_hex.length() - field_length).toUpperCase();
+   	    if (req_hex_digits <= 8 || (work_int >= 0 && req_hex_digits <= 16)){
+   			return ("0000000000000000" + work_hex).substring(work_hex.length() + 16 - req_hex_digits).toUpperCase();
+   	    } else if (req_hex_digits >= 16 && work_int < 0){
+   	    	return ("FFFFFFFFFFFFFFFF" + work_hex).substring(work_hex.length() + 16 - req_hex_digits).toUpperCase();
    	    } else {
-   			return ("0000000000000000" + work_hex).substring(16 - field_length + work_hex.length()).toUpperCase();
+   	    	return null; // force error
    	    }
-   }
+}
+public String get_long_hex(long work_long,int req_hex_digits) {
+   	/*
+   	 * Format long into 1-16 hex digit string
+   	 */
+   	    String work_hex = Long.toHexString(work_long);
+   	    if (req_hex_digits <= 16) {
+   			return ("0000000000000000" + work_hex).substring(work_hex.length() + 16 - req_hex_digits).toUpperCase();
+   	    } else {
+   	    	return null; // force error
+   	    }
+}
 public boolean get_sdt_char_int(String sdt){
 	   /*
 	    *  set sdt_char_int to
@@ -3804,11 +3821,11 @@ public boolean verify_ascii_source(String temp_line){
     }
     return true;
 }
-public String get_padded_name(){
+public String get_padded_name(String name){
 	/*
 	 * return 8 character name string
 	 */
-	return (pgm_name + "        ").substring(0,8);
+	return (name + "        ").substring(0,8);
 }
 public String trim_trailing_spaces(String line){
 	/*
@@ -3946,5 +3963,24 @@ public void split_line(String line){  // RPI 313
 		split_op = null;
 		split_parms = null;
 	}
+}
+public String get_first_dir(String dirs){
+	/*
+	 * return first directory in list
+	 */
+	    String first_dir;
+		int index_first = dirs.indexOf("+");
+   		if (index_first == -1){
+   			index_first = dirs.indexOf(";");   			
+   		}
+   		if (index_first != -1){ // RPI 378
+   			first_dir = dirs.substring(0,index_first);
+   		} else {
+   			first_dir = dirs;
+   		}
+   		if (first_dir.charAt(first_dir.length()-1) != File.separator.charAt(0)){
+   			first_dir = first_dir + File.separator;
+   		}
+   		return first_dir;
 }
 }

@@ -1,0 +1,435 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 07/17/07                                                 *
+*********************************************************************
+* FPCONMFC IS LINKAGE=MF INTERFACE CALLED BY CTD AND CFD MACROS TO
+* TO CALL FPCONVRT TO PERFORM FP CONVERSIONS USING MAINFRAME 
+* INSTRUCTIONS VERSUS Z390 SVC 170 AND 170 FOR LINKAGE=SVC DEFAULT.
+*
+* NOTE THE ARCHLVL 1-5 ON THE FPCONVRT MACRO IN THIS PROGRAM USED
+* TO DEFINE FPCON CONTROL BLOCK MUST MATCH THE ARCHLVL 2-5 IN 
+* FPCONVRT.MLC USED TO ASSEMBLE THE CODE.  BOTH THIS FPCONMFC.MLC   
+* DRIVER PROGRAM AND FPCONVRT.MLC USED TO ASSEMBLE FPCONVRT USE 
+* SHARED MACRO ARCHLVL TO SET GBLA &ARCHLVL SETTING FOR FPCONVRT 
+* GENERATION MACRO CALL.  THE &ARCHLVL IS ALSO USED TO SWITCH 
+* BETWEEN 31 BIT AND 64 BIT SAVE AREA AND PARM ADDRESS FIELDS.
+*
+*********************************************************************
+* 07/17/07 RPI 374 - add FPCONMFC interface to FPCONVRT routines
+* 07/21/07 RPI 379 - use compound DO conditions in (...)        
+*********************************************************************
+         PRINT DATA
+         COPY  ASMMSP       STRUCTURED PROGRAM MACROS AND EQUS
+         ARCHLVL            GET SHARED &ARCHLVL=1-5 (SEE FPCONVRT.MAC)
+         GBLA  &ARCHLVL     LEVEL 1-5 FROM ARCHLVL
+         GBLC  &ARCHSFX     SUFFIX NULL FOR 32 OR G FOR 64 BIT LINKAGE
+         MACRO
+         FPCON_CALL
+         AIF   (&ARCHLVL GT 2).ZOS_CALL
+.OS_CALL ANOP
+         LA    R1,=A(FPCON)      R1 > 32 BIT ADDR
+         L     R15,=V(FPCONVRT)
+         BASR  R14,R15           CALL USING STD SUBENTRY SAVE
+         AGO   .END_CALL
+.ZOS_CALL ANOP
+         LA    R1,=AD(FPCON)     R1 > 64 BIT ADDR
+         LG    R15,=VD(FPCONVRT)
+         ST    R13,MYSAVE        SAVE CALLERS 18F SAVE AREA
+         LA    R13,BIGSAVE       FORMAT 4 - 18FD SAVE AREA
+         BASR  R14,R15           CALL USING BIG SAVE AREA
+         L     R13,MYSAVE-*(R14) RESTORE CALLERS SAVE AREA
+.END_CALL ANOP
+         MEND
+FPCONMFC SUBENTRY
+         LM    R3,R5,0(R1)  R3=TYPE, R4=ARG2, R5=ARG3
+         STC   R3,TYPE
+         IF    (CLI,TYPE,GT,7)
+               BAS   R12,CFD_RTNS
+         ELSE
+               BAS   R12,CTD_RTNS
+         ENDIF
+         SUBEXIT RC=(R15)
+*********************************************************************
+* Level 1 support routines using R12
+*********************************************************************
+*
+* CONVERT FROM DECIMAL R4=A(OUT), R5=A(IN) 
+*
+CFD_RTNS EQU   *
+         LM    R14,R1,=A(Fpcon,FpconLength,0,0)
+         MVCL  R14,R0
+         LA    R15,0
+         IF     (CLI,TYPE,EQ,21) CFD INT128 FROM D40
+               BAS   R11,CFD_GET_INT128
+         ELSEIF (CLI,TYPE,EQ,22) CFD EH     FROM D40
+               MVI   FpconValueLen,FpconValueLenE
+               MVI   FpconBase,FpconBase16     
+               BAS   R11,CFD_CALL
+               LE    F0,FpconValueE  F0 =  EH
+               STE   F0,0(R4)        STORE EH
+         ELSEIF (CLI,TYPE,EQ,23) CFD EB     FROM D40
+               MVI   FpconValueLen,FpconValueLenE
+               MVI   FpconBase,FpconBase2     
+               BAS   R11,CFD_CALL
+               LE    F0,FpconValueE  F0 =  EB
+               STE   F0,0(R4)        STORE EB
+         ELSEIF (CLI,TYPE,EQ,24) CFD DH     FROM D40
+               MVI   FpconValueLen,FpconValueLenD
+               MVI   FpconBase,FpconBase16     
+               BAS   R11,CFD_CALL
+               LD    F0,FpconValueD  F0 =  DH
+               STD   F0,0(R4)        STORE DH
+         ELSEIF (CLI,TYPE,EQ,25) CFD DB     FROM D40
+               MVI   FpconValueLen,FpconValueLenD
+               MVI   FpconBase,FpconBase2     
+               BAS   R11,CFD_CALL
+               LD    F0,FpconValueD  F0 =  DB
+               STD   F0,0(R4)        STORE DB
+         ELSEIF (CLI,TYPE,EQ,26) CFD LH     FROM D40
+               MVI   FpconValueLen,FpconValueLenL
+               MVI   FpconBase,FpconBase16    
+               BAS   R11,CFD_CALL
+               LD    F0,FpconValueL    F0 =  LH1
+               LD    F2,FpconValueL+8  F2 =  LH2
+               STD   F0,0(R4)        STORE   LB1
+               STD   F2,8(R4)        STORE   LB2
+         ELSEIF (CLI,TYPE,EQ,27) CFD LB     FROM D40
+               MVI   FpconValueLen,FpconValueLenL
+               MVI   FpconBase,FpconBase2    
+               BAS   R11,CFD_CALL
+               LD    F0,FpconValueL    F0 =  LB1
+               LD    F2,FpconValueL+8  F2 =  LB2
+               STD   F0,0(R4)        STORE   LB1
+               STD   F2,8(R4)        STORE   LB2
+         ELSE
+               LA   R15,12
+         ENDIF
+         BR    R12
+*
+* CONVERT TO DECIMAL
+*
+CTD_RTNS EQU   *
+         LM    R14,R1,=A(Fpcon,FpconLength,0,0) ZERO FPCON
+         MVCL  R14,R0
+         MVC   0(LBUFF,R5),=(LBUFF)C' '         CLEAR OUTPUT
+         LA    R15,0
+         IF     (CLI,TYPE,EQ,1) CFD INT128 TO   D40
+               BAL   R11,CTD_PUT_INT128
+         ELSEIF (CLI,TYPE,EQ,2) CFD EH     TO   D40
+               MVI   FpconValueLen,FpconValueLenE
+               MVI   FpconBase,FpconBase16
+               MVC   FpconMaxLeading,=H'7'
+               MVC   FpconMinDecimal,=H'-1'
+               LE    F0,0(R4)        F0 =  EH
+               STE   F0,FpconValueE store  EH
+               BAS   R11,CTD_CALL
+         ELSEIF (CLI,TYPE,EQ,3) CFD EB     TO   D40
+               MVI   FpconValueLen,FpconValueLenE
+               MVI   FpconBase,FpconBase2      
+               MVC   FpconMaxLeading,=H'7'
+               MVC   FpconMinDecimal,=H'-1'
+               LE    F0,0(R4)        F0 =  EB
+               STE   F0,FpconValueE store  EB
+               BAS   R11,CTD_CALL
+         ELSEIF (CLI,TYPE,EQ,4) CFD DH     TO   D40
+               MVI   FpconValueLen,FpconValueLenD
+               MVI   FpconBase,FpconBase16
+               MVC   FpconMaxLeading,=H'15'
+               MVC   FpconMinDecimal,=H'-1'
+               LD    F0,0(R4)        F0 =  DH
+               STD   F0,FpconValueD store  DH
+               BAS   R11,CTD_CALL
+         ELSEIF (CLI,TYPE,EQ,5) CFD DB     TO   D40
+               MVI   FpconValueLen,FpconValueLenD
+               MVI   FpconBase,FpconBase2      
+               MVC   FpconMaxLeading,=H'15'
+               MVC   FpconMinDecimal,=H'-1'
+               LD    F0,0(R4)        F0 =  DB
+               STD   F0,FpconValueD store  DB
+               BAS   R11,CTD_CALL
+         ELSEIF (CLI,TYPE,EQ,6) CFD LH     TO   D40
+               MVI   FpconValueLen,FpconValueLenL
+               MVI   FpconBase,FpconBase16
+               MVC   FpconMaxLeading,=H'34'
+               MVC   FpconMinDecimal,=H'-1'
+               LD    F0,0(R4)        F0 =  LH1
+               LD    F2,8(R4)        F2 =  LH2
+               STD   F0,FpconValueD   store  LH1
+               STD   F2,FpconValueD+8 store  LH2
+               BAS   R11,CTD_CALL
+         ELSEIF (CLI,TYPE,EQ,7) CFD LB     TO   D40
+               MVI   FpconValueLen,FpconValueLenL
+               MVI   FpconBase,FpconBase2      
+               MVC   FpconMaxLeading,=H'34'
+               MVC   FpconMinDecimal,=H'-1'
+               LD    F0,0(R4)        F0 =  LB1
+               LD    F2,8(R4)        F2 =  LB2
+               STD   F0,FpconValueD   store  LB1
+               STD   F2,FpconValueD+8 store  LB2
+               BAS   R11,CTD_CALL
+         ELSE
+               LA   R15,12
+               BR   R12
+         ENDIF
+         BR    R12
+*********************************************************************
+* Level 2 support routines using R11
+*********************************************************************
+*
+* CFD GET 128 BIT INTEGER FROM DECIMAL 
+*
+CFD_GET_INT128 EQU *
+         MVI   SIGN,C'+'
+         IF    (TRT,0(LBUFF,R5),NZ,TRTTAB_MINUS)
+               MVI SIGN,C'-'
+         ENDIF
+         IF    (TRT,0(LBUFF,R5),NZ,TRTTAB_DIGITS)
+               LR  R7,R1   R7 = ADDR FIRST DIGIT
+               LA  R1,LBUFF(R5)
+               SR  R1,R7
+               BCTR R1,0
+               IF  (EX,R1,EQ,TRTSP)
+                   LA   R1,LBUFF(R5)
+               ENDIF
+               SR   R1,R7  
+               LR   R2,R1           R2 = #DIGITS
+               IF   (CHI,R2,GT,13)
+                    AHI   R2,-13
+                    LA    R1,0(R2,R7)
+                    PACK  PWORK,0(13,R1)
+                    SGR   R8,R8
+                    CVBG  R9,PWORK  R8-R9 = LAST 13 DIGITS
+                    IF    (CHI,R2,GT,13)
+                          AHI   R2,-13
+                          LA    R1,0(R2,R7)
+                          PACK  PWORK,0(13,R1)
+                          CVBG  R1,PWORK
+                          MLG   R0,=FL8'1E13' 
+                          ALGR  R9,R1
+                          ALCGR R8,R0 R8-R9 = LAST 26 DIGITS
+                          BCTR  R2,0
+                          EX    R2,PACK
+                          CVBG  R1,PWORK  R1  = FIRST 1-13 DIGITS
+                          LGR   R14,R1    SAVE  FIRST 1-13 DIGITS
+                          MLG   R0,INT_1E26+8 R0:R1 = X * LOW 10**26
+                          ALGR  R9,R1
+                          ALCGR R8,R0     R8:R9 27-39 DIGIT INT128
+                          LGR   R1,R14
+                          MLG   R0,INT_1E26   R0:R1 = X * HIGH 10**26
+                          ALGR  R8,R1          ADD R1 TO UPPER HALF
+                    ELSE
+                          BCTR  R2,0
+                          EX    R2,PACK     
+                          CVBG  R1,PWORK
+                          MLG   R0,=FL8'1E13' 
+                          ALGR  R9,R1
+                          ALCGR R8,R0 R8-R9 = 14-26 DIGIT INT128
+                    ENDIF
+               ELSE
+                    BCTR  R2,0
+                    EX    R2,PACK     
+                    SGR   R8,R8
+                    CVBG  R9,PWORK     R8:R9 = 1-13 DIGIT INT128
+               ENDIF
+         ELSE
+               LA   R15,12      NO DIGITS FOUND
+               BR   R11
+         ENDIF
+         IF    (CLI,SIGN,EQ,C'-')
+               BAS  R10,COMP128 COMPLIMENT 128 BIT INT IN R8:R9
+         ENDIF
+         STG   R8,0(R4)
+         STG   R9,8(R4)
+         LA    R15,0
+         BR    R11
+PACK     PACK  PWORK,0(0,R7)   PACK FIRST 13 OR LESS
+TRTSP    TRT   0(0,R7),TRTTAB_SPACE
+*
+* CTD PUT INT128
+*
+CTD_PUT_INT128 EQU *
+         MVC   0(LBUFF,R5),=(LBUFF)C' ' CLEAR DECIMAL OUTPUT
+         MVC   POWER,=(LBUFF)C' '
+         MVI   POWER+LBUFF-1,C'1'    INIT DECIMAL POWER TO 1
+         MVI   SIGN,C'+'
+         LG    R8,0(R4)
+         LG    R9,8(R4)        R8-R9 = INT128
+         IF    (LTGR,R8,M,R8)
+               MVI   SIGN,C'-'
+               BAL   R10,COMP128   COMPLIMENT 128 BIT INT IN R8:R9
+         ENDIF
+         IF  (LTGR,R8,Z,R8),AND,(LTGR,R9,NM,R9)
+*
+*              USE PACKED DECIMAL IF LESS THAN 64 BITS
+*
+               CVDG R9,PWORK
+               MVC  DWORK,DMASK
+               SR   R1,R1
+               EDMK DWORK,PWORK
+               IF   (CLI,SIGN,EQ,C'-'),AND,(LTR,R1,NZ,R1)
+                    BCTR R1,0
+                    MVI  0(R1),C'-'
+               ENDIF
+               MVC  LBUFF-32(L'DWORK,R5),DWORK
+         ELSE
+*
+*             SHIFT ALL 64 TO 128 BITS OUT AND ADD POWER
+*             OF 2 TO DECIMAL COUNTER WHEN BIT IS ONE
+*
+              DO   WHILE=((LTGR,R8,NZ,R8),OR,(LTGR,R9,NZ,R9))
+                  IF (TMLL,R9,NZ,1)
+                     LA   R6,LBUFF-1(R5)
+                     BAS  R10,CTD_ADD_POWER
+                     ST   R6,ASIGN   ADDR TO SET SIGN IF NEG
+                  ENDIF
+                  LA   R6,POWER+LBUFF-1
+                  BAL  R10,CTD_ADD_POWER
+                  IF   (TMLL,R8,NZ,1)    SHIFT R8:R9 BY 1 BIT
+                       SRLG R8,R8,1
+                       SRLG R9,R9,1
+                       OIHH R9,X'8000'
+                  ELSE
+                       SRLG R8,R8,1
+                       SRLG R9,R9,1
+                  ENDIF
+              ENDDO
+              IF  (CLI,SIGN,EQ,C'-'),AND,(CLC,ASIGN,P,=F'0')
+                  L    R1,ASIGN 
+                  MVI 0(R1),C'-'
+              ENDIF
+         ENDIF
+         OI   LBUFF-1(R5),X'F0'
+         IF   (TRT,0(LBUFF,R5),NZ,TRTTAB_NOT_SPACE)
+              LR  R8,R1
+              LA  R9,LBUFF(R5)
+              SR  R9,R8
+              ICM R9,8,=C' '
+              LR  R0,R5
+              LA  R1,LBUFF
+              MVCL R0,R8 MOVE DISPLAY TO FRONT AND PAD WITH SPACES
+         ENDIF
+         BR   R11
+* 
+* CFD CALL INTERFACE TO FPCONVRT
+*
+CFD_CALL EQU *
+*
+*     SET STRING ADDR, SIZE, AND LENGTH PLUS FLAGS AND BASE
+*
+         LA    R6,LBUFF(R5)
+         DO    WHILE=((CLR,R5,LT,R6),AND,(CLI,0(R5),EQ,C' '))
+               LA   R5,1(R5)
+         ENDDO
+         ST&ARCHSFX  R5,FpconStringAddr SET FPCON 32/64 BIT ADDR 
+         SR    R0,R0
+         DO    WHILE=((CLR,R5,LT,R6),AND,(CLI,0(R5),GT,C' '))
+               AHI  R5,1
+               AHI  R0,1     
+         ENDDO
+         STC   R0,FpconStringSize+1
+         MVC   FpconStringLen,FpconStringSize
+         MVI   FpconFlags,FpconToValue
+*
+*   CALL FPCONVRT TO CONVERT DECIMAL STRING TO FP FORMAT
+*
+         FPCON_CALL
+         BR    R11
+*
+* CTD CALL INTERFACE TO FPCONVRT
+*
+CTD_CALL EQU *
+*
+*     SET STRING ADDR, SIZE, AND LENGTH PLUS FLAGS AND BASE
+*
+         ST&ARCHSFX  R5,FpconStringAddr  SET FPCON STRING ADDR 32/64
+         MVI   FpconStringSize+1,LBUFF
+         MVC   FpconStringLen,FpconStringSize
+         MVI   FpconFlags,FpconToValue-FpconToValue  to decimal
+*
+*   CALL FPCONVRT TO CONVERT DECIMAL STRING TO BFP FORMAT
+*
+         FPCON_CALL
+         BR    R11
+*********************************************************************
+* Level 3 support routines using R10
+*********************************************************************
+*
+* ADD DECIMAL POWER OF 2 TO DECIMAL FIELD WITH AT R6
+*
+CTD_ADD_POWER EQU *
+         LA    R7,POWER+LBUFF-1
+         SR    R3,R3                      R3=CARRY IF ANY
+         DO    UNTIL=((CLI,0(R7),EQ,C' '),AND,(LTR,R3,Z,R3)) 
+               IC    R0,0(R6)
+               NILF  R0,X'0000000F'
+               IC    R1,0(R7)
+               NILF  R1,X'0000000F'
+               AR    R0,R1
+               AR    R0,R3
+               IF    (CHI,R0,GT,9)
+                     LA   R3,1           CARRY
+                     AHI  R0,-10
+               ELSE
+                     LA   R3,0           NO CARRY
+               ENDIF
+               OILL R0,X'F0'
+               STC  R0,0(R6)
+               BCTR R6,0
+               BCTR R7,0
+         ENDDO
+         BR    R10
+*
+* COMPLIMENT 128 BIT INT IN R8:R9
+*
+COMP128  EQU   *
+         LG    R7,=FL8'-1'
+         XGR   R8,R7
+         XGR   R9,R7
+         ALGF  R9,=F'1'
+         ALCG  R8,=FL8'0'  R8-R9 = ABS NUM
+         BR    R10
+*********************************************************************
+* Shared data
+*********************************************************************
+*
+* SHARED DATA
+*
+MYSAVE   DC    A(0)
+BIGSAVE  DC    18D'0' FOR ARCH=5 GREG SAVE AREA
+LBUFF    EQU    45 CONSTANT PER CFD AND CTD MACRO DEFINITIONS
+INT_1E26 DC    FL16'1E26' MULTIPLIER FOR FIRST 1-13 DIGITS
+         LTORG
+         EQUREGS REGS=GPR
+         EQUREGS REGS=FPR
+TYPE     DC    X'00' CTD/CFD OPERATION TYPE
+SIGN     DC    C'+'  SIGN OF DECIMAL NUMBER
+PWORK    DC    PL16'0'
+DWORK    DC    CL32' '
+DMASK    DC    C' ',31X'20'
+POWER    DC    CL(LBUFF)' '
+ASIGN    DC    A(0)
+TRTTAB_DIGITS DC 256X'00'
+         ORG   TRTTAB_DIGITS+C'0'
+         DC    10X'FF'
+         ORG
+TRTTAB_MINUS  DC 256X'00'
+         ORG TRTTAB_MINUS+C'-'
+         DC  X'FF'
+         ORG
+TRTTAB_SPACE DC  256X'00'
+         ORG TRTTAB_SPACE+C' '
+         DC  X'FF'
+         ORG   
+TRTTAB_NOT_SPACE DC  256X'FF'
+         ORG TRTTAB_NOT_SPACE+C' '
+         DC  X'00'
+         ORG   
+*
+* ASSEMBLE INLINE FPCONVRT INTERFACE BLOCK PASSED VIA R1
+*
+ADRCHK   DC    A(FPCON)          
+         FPCONVRT Type=InLine,Archlvl=&ARCHLVL MUST MATCH FPCONVRT.MLC
+         END         

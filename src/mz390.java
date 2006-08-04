@@ -170,6 +170,8 @@ public  class  mz390 {
     * 07/01/06 RPI 351 fix opsyn cancel for previously used opcode
     * 07/03/06 RPI 353 fix UPPER(...) expression error
     * 07/08/06 RPI 359 fix support for mixed case macro parms
+    * 07/13/06 RPI 366 support mixed case keyword override values
+    * 07/14/06 RPI 369 skip null 3rd EQU parm and ignore 4th and 5th
     ********************************************************
     * Global variables
     *****************************************************/
@@ -4790,22 +4792,25 @@ private void set_sym_attr_len(String sym_lab,String sym_op,String sym_parms){
 		}
 		if (exp_next_index < sym_parms.length() 
 			&& sym_parms.charAt(exp_next_index) > ' '){
-            if (exp_next_index < sym_parms.length()
-				&& sym_parms.charAt(exp_next_index) != ','){
+            if (sym_parms.charAt(exp_next_index) != ','){
             	sym_len[cur_sym] = calc_seta_exp(sym_parms,exp_next_index); // RPI 340
             } else {
             	exp_next_index++; // skip equ length
             }
 			if (exp_next_index < sym_parms.length() 
 				&& sym_parms.charAt(exp_next_index) > ' '){
-				if (sym_parms.charAt(exp_next_index) == 'T'){
-					exp_type = var_setc_type;
-				} else {
-					exp_type = var_seta_type;
-				}
-				if (calc_exp(sym_parms,exp_next_index)){
-                    set_sym_attr_from_exp(cur_sym);
-				}
+	            if (sym_parms.charAt(exp_next_index) != ','){
+	            	if (sym_parms.charAt(exp_next_index) == 'T'){
+	            		exp_type = var_setc_type;
+	            	} else {
+	            		exp_type = var_seta_type;
+	            	}
+	            	if (calc_exp(sym_parms,exp_next_index)){
+	            		set_sym_attr_from_exp(cur_sym);
+	            	}
+	            } else {
+	            	exp_next_index++; // skip null 3rd parm RPI 369
+	            }
 			}
 		}
 	 } else {  // not DS/DC or EQU so check if instr
@@ -6188,7 +6193,7 @@ private void set_call_parm_values(){
     	                   state = 2; 
                            level = 0;
     	       	  	       if  (token_len >=2 && token.charAt(token_len-1) == '='){
-    	       	  	   	       key_name  = token.substring(0,token_len-1); 
+    	       	  	   	       key_name  = token.substring(0,token_len-1).toUpperCase();  // RPI 366 
     	       	  	   	       parm_value = "";
     	       	  	       } else {
 	       	  	       	   	   key_name = null;
@@ -6251,6 +6256,7 @@ private void init_pos_parm(String pos_parm_name){
 	/*
 	 * init positional parm
 	 */
+	pos_parm_name = pos_parm_name.toUpperCase(); // RPI 366
 	if (tot_pos_parm +1 > tz390.opt_maxparm){
 		abort_error(144,"maximum positional parms exceeded");
 	}
@@ -6397,7 +6403,7 @@ private void put_stats(){
 	}
 	put_log("MZ390I total mnote errors   = " + tot_mnote_err + "  max level= " + gbl_seta[gbl_sysm_hsev_index]);
 	put_log("MZ390I total errors         = " + mz390_errors);
-	put_log("MZ390I return code(" + tz390.get_padded_name() + ")= " + mz390_rc); // RPI 312
+	put_log("MZ390I return code(" + tz390.get_padded_name(tz390.pgm_name) + ")= " + mz390_rc); // RPI 312
 	log_to_bal = false;
 }
 private void close_files(){

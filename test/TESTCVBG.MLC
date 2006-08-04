@@ -1,0 +1,109 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 08/03/06                                                 *
+*********************************************************************
+* 08/04/06 DSH RPI 389 EXPAND TESTS OF CVBG AND CVDG
+*********************************************************************
+         MACRO
+         TEST &P
+         LARL R0,1
+         ZAP  PWORK16,=P'0'
+         CVBG R0,&P
+         CVDG R0,PWORK16
+         CP   PWORK16,&P
+         RT1  CCE
+         MEND
+TESTCVBG RT1  MAIN
+PWORK16  DC   PL16'0'
+         EQUREGS 
+         RT1  START   
+         TEST =PL16'0'                       
+         TEST =PL16'1'                       
+         TEST =PL16'12'                       
+         TEST =PL16'123'                       
+         TEST =PL16'1234'                      
+         TEST =PL16'12345'                     
+         TEST =PL16'123456'                    
+         TEST =PL16'1234567'                   
+         TEST =PL16'12345678'                  
+         TEST =PL16'123456789'                 
+         TEST =PL16'500000000'                       
+         TEST =PL16'1000000000'       
+         TEST =PL16'1234567890'                
+         TEST =PL16'2000000000'         
+         TEST =PL16'2147483647'  
+         TEST =PL16'1234567890'                 
+         TEST =PL16'12345678901'                 
+         TEST =PL16'123456789012'                 
+         TEST =PL16'123456789013'                 
+         TEST =PL16'1234567890134'                 
+         TEST =PL16'12345678901345'                 
+         TEST =PL16'123456789013456'                 
+         TEST =PL16'1234567890134567'                 
+         TEST =PL16'12345678901345678'                 
+         TEST =PL16'123456789013456789'                 
+         TEST =PL16'1234567890134567890'                 
+         TEST =PL16'9223372036854775807'                 
+         TEST =PL16'-0'                       
+         TEST =PL16'-1'                       
+         TEST =PL16'-12'                       
+         TEST =PL16'-123'                       
+         TEST =PL16'-1234'                      
+         TEST =PL16'-12345'                     
+         TEST =PL16'-123456'                    
+         TEST =PL16'-1234567'                   
+         TEST =PL16'-12345678'                  
+         TEST =PL16'-123456789'                 
+         TEST =PL16'-500000000'                       
+         TEST =PL16'-1234567890'                
+         TEST =PL16'-1000000000'       
+         TEST =PL16'-2147483647'  
+         TEST =PL16'-2147483648'  
+         TEST =PL16'-12345678901'                 
+         TEST =PL16'-123456789012'                 
+         TEST =PL16'-123456789013'                 
+         TEST =PL16'-1234567890134'                 
+         TEST =PL16'-12345678901345'                 
+         TEST =PL16'-123456789013456'                 
+         TEST =PL16'-1234567890134567'                 
+         TEST =PL16'-12345678901345678'                 
+         TEST =PL16'-123456789013456789'                 
+         TEST =PL16'-1234567890134567890'                 
+         TEST =PL16'-9223372036854775808'                 
+         ESPIE SET,ESPIE_EXIT,9,PARAM=SPI1
+         TEST =PL16'9223372036854775808'                 
+         ABEND 101
+SPI1     ESPIE RESET
+         BASR  R11,0
+         USING *,R11
+         ESPIE SET,ESPIE_EXIT,9,PARAM=SPI2
+         TEST =PL16'-9223372036854775809'                 
+         ABEND 102
+SPI2     ESPIE RESET
+         BASR  R11,0
+         USING *,R11
+         ESPIE SET,ESPIE_EXIT,9,PARAM=SPI3
+         TEST =PL16'1234567890123456789012345678901' 
+         ABEND 103
+SPI3     ESPIE RESET
+         BASR  R11,0
+         USING *,R11
+         ESPIE SET,ESPIE_EXIT,9,PARAM=SPI4
+         TEST =PL16'-1234567890123456789012345678901' 
+         ABEND 104
+SPI4     ESPIE RESET
+         BASR  R11,0
+         USING *,R11
+         RT1  END  
+ESPIE_EXIT DS  0H
+         USING *,R15
+         USING IHAEPIE,R1
+         L     R0,EPIEPARM
+         ST    R0,EPIEPSW+4
+         BR    R14
+         DROP  R15,R1
+         EPIED
+         END
