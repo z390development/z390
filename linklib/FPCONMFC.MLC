@@ -20,6 +20,7 @@
 *********************************************************************
 * 07/17/07 RPI 374 - add FPCONMFC interface to FPCONVRT routines
 * 07/21/07 RPI 379 - use compound DO conditions in (...)        
+* 08/04/07 RPI 391 - replace trailing output nulls with spaces  
 *********************************************************************
          PRINT DATA
          COPY  ASMMSP       STRUCTURED PROGRAM MACROS AND EQUS
@@ -352,6 +353,7 @@ CTD_CALL EQU *
 *   CALL FPCONVRT TO CONVERT DECIMAL STRING TO BFP FORMAT
 *
          FPCON_CALL
+         TR    0(LBUFF,R5),TRTAB_NULL_SPACE OUTPUT NULLS > SPACES
          BR    R11
 *********************************************************************
 * Level 3 support routines using R10
@@ -427,6 +429,10 @@ TRTTAB_NOT_SPACE DC  256X'FF'
          ORG TRTTAB_NOT_SPACE+C' '
          DC  X'00'
          ORG   
+TRTAB_NULL_SPACE DC 256AL1(*-TRTAB_NULL_SPACE)
+         ORG TRTAB_NULL_SPACE+X'00'
+         DC  C' '
+         ORG
 *
 * ASSEMBLE INLINE FPCONVRT INTERFACE BLOCK PASSED VIA R1
 *

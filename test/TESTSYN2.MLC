@@ -7,9 +7,13 @@
 *********************************************************************
 * 04/30/06 RPI306 TEST OPSYN FOR MACRO VS OPCODE                       
 * 07/03/06 RPI352 TEST OPSYN REDEFINE OF MAC OP
+* 08/07/06 RPI403 TEST OPCODE USED BEFORE FIRST AND AFTER LAST RESTORE
 *********************************************************************
 TESTSYN2 SUBENTRY 
          WTO   'TESTSYN2 STARTED'
+         B     SKIPDC
+         DC    C'DC BEFORE FIRST OPSYN'
+SKIPDC   DS    0H
          PUSH  PRINT
 _PUSH    OPSYN PUSH
 PUSH     OPSYN TESTSYN2
@@ -18,4 +22,10 @@ TESTSYNX OPSYN TESTSYN2
          TESTSYNX ABC
          WTO   'TESTSYN2 ENDED'
          SUBEXIT
+* TEST DC AFTER
+DCX      OPSYN DC
+DC       OPSYN MNOTE
+         DC    'DC MNOTE'
+DC       OPSYN DCX
+         DC    C'DC AFTER OPSYN RESTORE'
          END                        

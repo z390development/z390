@@ -836,7 +836,7 @@ private boolean find_gbl_esd(String esd_name){
                abort_error(24,"time limit exceeded");
 			}
 		}
-	    cur_gbl_esd = tz390.find_key_index("G:" + esd_name);
+	    cur_gbl_esd = tz390.find_key_index('G',esd_name);
 	    if (cur_gbl_esd != -1){
 	    	return true;
 	    } else {

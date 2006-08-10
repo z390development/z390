@@ -1,4 +1,4 @@
-z390 v1.1.01b PTF 08/04/06
+z390 v1.1.01c PTF 08/10/06
 Copyright 2006 Automated Software Tools Corporation
 
 
@@ -103,6 +103,55 @@ The enclosed z390.jar contains following cumulative fixes for v1.1.01:
 30. RPI 389 correct pz390 to correctly handle full range of values for
     CVB, CVBY, CVBG, CVD, CVDY, nd CVDG.  See TESTCVB1 and TESTCVBG.
 
+31. RPI 390 and RPI 405 correct mz390 to support O'opcode operator
+    which is used in updated LINKLIB\FPCONVRT.MAC contributed by
+    David Bond which now has support for ED, DD, and LD decimal
+    floating point constants. 
+
+32. RPI 391 correct LINKLIB\FPCONMFC to remove trailing nulls in
+    decimal string output from FPCONVRT.
+
+33. RPI 393 issue SF05 abend if WAIT count exceeds list ECB count.
+
+34. RPI 394 correct GETMAIN to ignore SP= per documentation.  All
+    getmains are in same pool and therefore purge subpool is not 
+    supported yet.
+
+35. RPI 396 change TESTTIM2 to allow up to 15 seconds to get 2 seconds
+    of real cpu time in STIMER test.  This allows test to run ok when
+    Windows background tasks take up 50%+ of cpu time.
+
+36. RPI 397 issue S0C5 on all memory access violations within pz390.
+    Previously some where only trapped by ez390 causing synchronization
+    problem with log.
+
+37. RPI 398 fix D and DR instructions to handle case where R1 and R1+1 
+    are not zero.  Also speed up D, DR, SLDL, SLDA, SRLD, and SRDA by 
+    using long shift and or versus byte buffer to build 64 bit operation
+    from disjoint register storage.
+
+38. RPI 401 fix mz390 to expand arrays as required to satisfy multiple 
+    store values on SET statements.  Prevously only declaraction or 
+    first subscript could trigger expansion.
+
+39. RPI 402 change mz390 to report MNOTE total warnings 1-4 level.
+
+40. RPI 403 fix az390 to correctly restore original opcode usage 
+    after OPSYN temporary cancel after saving original for restore.
+
+41. RPI 404 add mz390 missing operator functions including conversions
+    such ?2?, DCLEN, DCVAL, DCEQUOTE, ISBIN, ISDEC, ISHEX, ISSYM, SLA
+    SLL, SRA, SRL, SIGNED, SYSATTRP, SYSATTRA.
+
+42. RPI 408 expand gz390 TN3290 default screen size to include extra
+    5 pixels in both directions to avoid cutting off edges.  Also
+    fix abend occurring in DEMOGUI5 due to missing graphics support 
+    pending.
+
+43. RPI 409 improve overall performance of mz390 and az390 by 10%+
+    by eliminating extra string concatenation for every find_key_index
+    call which is the most commonly used function in z390.
+
 To install PTF follow these steps.
 
 1.  Copy the z390.jar file into install directory for z390
@@ -143,6 +192,10 @@ TESTASM1.MLC - test L'lit expression
 TESTDC1.MLC  - test duplicate E, D, L
 TESTERR7.MLC - test DCB missing DDNAME
 TESTRLD1.MLC - test new lz390 listing
+TESTOPR1.MLC - test new operator functions added such as A2D, SLA, etc.
+TESTINS2.MLC - test D, DR and optimize SLDL etc.
+TESTSYN2.MLC - test OPSYN restore
+TESTSET2.MLC - test array expansion with multiple values
 
 6.  Copy updated commands to the z390 root directory
 

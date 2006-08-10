@@ -50,6 +50,7 @@ scn_update is set true.
  *          gz390 with this new Graphics2D 
  *          panel in gz390_screen class with
  *          method to set screen size
+ * 08/10/06 RPI 408 add 5 pixels to graphic screen size
  ********************************************************
  */
 public class gz390_screen extends JPanel implements Runnable {
@@ -148,8 +149,8 @@ public class gz390_screen extends JPanel implements Runnable {
             scn_char_rect = scn_layout.getBlackBoxBounds(0,1).getBounds();
             scn_char_height  = (int) scn_char_rect.getWidth()+3;
         	scn_char_width   = (int) scn_char_rect.getHeight();
-        	scn_height = scn_rows * scn_char_height;
-        	scn_width  = scn_cols * scn_char_width;
+        	scn_height = scn_rows * scn_char_height + 5; // RPI 408 + 5
+        	scn_width  = scn_cols * scn_char_width + 5;  // RPI 408 + 5
             scn_size     = new Dimension(scn_width,scn_height);
         	scn_image    = new BufferedImage(scn_width,scn_height,BufferedImage.TYPE_INT_ARGB);
         	scn_grid     = scn_image.createGraphics();

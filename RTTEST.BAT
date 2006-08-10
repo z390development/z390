@@ -15,6 +15,7 @@ rem mz390 macro processor
 rem
 call rt1 %~dps0test\testsys1 sysparm(12345) systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testsyn1 systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testsyn2 sysmac(mac+test) systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testprm1 systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testprm2 systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testprm3 systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -83,6 +84,7 @@ rem
 call rt7 %~dps0test\testerr4 systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testerr5 systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt7 %~dps0test\testerr6 systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt7 %~dps0test\testerr7 systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testins2 trace systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy %~dps0test\testins2.mlc %~dps0test\testasc3.mlc
 call rt1 %~dps0test\testasc3 ascii trace systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -141,5 +143,9 @@ call rt1 %~dps0test\testipl2 ipl(testipl1) sys390(test) systerm(rttest) %1 %2 %3
 call rt1 %~dps0test\testzcv1 systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\testspi1 trace systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0test\teststa1 trace systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testctd1 systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testcfd1 systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testcvb1 trace systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0test\testcvbg trace systerm(rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vdiff %~dps0test\rttest.err %~dps0test\rttest.sve %~dps0test\rttest.die
 rem end of rttest

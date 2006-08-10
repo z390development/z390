@@ -358,8 +358,8 @@ public  class  gz390
  	boolean main_status  = true;
     boolean main_view_changed = false;
     JFrame main_frame    = null;
-    int main_width  = 650;
-    int main_height = 550;
+    int main_width  = 650;  
+    int main_height = 550;  
     int main_width_max = 800;
     int main_height_max = 600;
     int main_width_min  = 150;
@@ -1994,12 +1994,13 @@ public  class  gz390
             	main_view.setPreferredSize(   	        		
                			new Dimension(tn_scn.scn_width,tn_scn.scn_height)
         			);
-        	} else if (guam_view == guam_view_graph){
+        	} else if (guam_view == guam_view_graph 
+        		&& graph_scn != null){ // RPI 408
         		main_height = graph_scn.scn_height + title_height + menu_height + command_height + status_height;
         		main_width  = graph_scn.scn_width + scrollbar_width + 4 * main_border;
             	main_view.setPreferredSize(   	        		
                			new Dimension(graph_scn.scn_width,graph_scn.scn_height)
-        			);
+        		);
         	}
         	if (main_height > tz390.max_main_height){
 	        	main_height = tz390.max_main_height;

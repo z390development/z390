@@ -33,6 +33,7 @@ C:\z390\RTC4.BAT
 C:\z390\RTC6.BAT
 C:\z390\RTCICS.BAT
 C:\z390\RTDEMO.BAT
+C:\z390\RTLINK.BAT
 C:\z390\RTMVS.BAT
 C:\z390\RTTEST.BAT
 C:\z390\src
@@ -557,7 +558,6 @@ C:\z390\demo\DMEOGUI2.svb
 C:\z390\demo\rtdemo.die
 C:\z390\demo\rtdemo.ERR
 C:\z390\demo\rtdemo.sve
-C:\z390\demo\SQRT2.MLC
 C:\z390\demo\temp.txt
 C:\z390\Doc\OSI_GPL_License_Agreement.rtf
 C:\z390\Doc\OSI_GPL_License_Agreement.txt
@@ -595,6 +595,7 @@ C:\z390\linklib\CVTTOHEX.svl
 C:\z390\linklib\CVTTOHEX.svo
 C:\z390\linklib\CVTTOHEX.svp
 C:\z390\linklib\FPCONMFC.390
+C:\z390\linklib\FPCONMFC.BAK
 C:\z390\linklib\FPCONMFC.BAL
 C:\z390\linklib\FPCONMFC.di3
 C:\z390\linklib\FPCONMFC.dib
@@ -615,6 +616,7 @@ C:\z390\linklib\fpconmfc.svl
 C:\z390\linklib\fpconmfc.svo
 C:\z390\linklib\fpconmfc.svp
 C:\z390\linklib\FPCONVRT.390
+C:\z390\linklib\FPCONVRT.BAK
 C:\z390\linklib\FPCONVRT.BAL
 C:\z390\linklib\fpconvrt.di3
 C:\z390\linklib\fpconvrt.dib

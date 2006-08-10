@@ -1,22 +1,210 @@
 *********************************************************************
-* Copyright 2005 Automated Software Tools Corporation               *
+* Copyright 2006 Automated Software Tools Corporation               *
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
-* Date   - 09/30/05                                                 *
+* Date   - 08/08/06                                                 *
+*********************************************************************
+* 08/09/06 DSH RPI 404 TEST B2A C2A D2A DCLEN SLA SLL SRA SRL X2A
+* 08/09/06 DSH RPI 405 TEST O'OPCODE
 *********************************************************************
 TESTMAC4 SUBENTRY
          WTO   'TESTMAC4 TEST OPERATORS UPPER, LOWER, ETC.'
          SUBEXIT
+         MNOTE 'TESTING UPPER AND LOWER'
 &LC      SETC  'abc'
-         AIF   (&LC NE 'abc').ERR 
+         AIF   (&LC NE 'abc').LCERR 
 &UC      SETC  (UPPER &LC)
-         AIF   (&UC NE 'ABC').ERR
+         AIF   (&UC NE 'ABC').UCERR
 &UC      SETC  'ABC'
-         AIF   (&UC NE 'ABC').ERR
+         AIF   (&UC NE 'ABC').UCERR
 &LC      SETC  (LOWER &UC)
-         AIF   (&LC NE 'abc').ERR
+         AIF   (&LC NE 'abc').LCERR
+         MNOTE 'TESTING ?2? PREFIX OPERATORS
+&A2B     SETC  (A2B(4))
+         MNOTE 'A2B(4)=&A2B'
+         AIF   (&A2B NE '00000100').A2ERR
+&A2C     SETC  (A2C(241))
+         MNOTE 'A2C(241)=&A2C'
+         AIF   ('&A2C'(4,1) NE '1').A2ERR
+&A2D     SETC  (A2D(-241))
+         MNOTE 'A2D(-241)=&A2D'
+         AIF   (&A2D NE '241').A2ERR
+&A2X     SETC  (A2X(241))
+         MNOTE 'A2X(241)=&A2X'
+         AIF   (&A2X NE '000000F1').A2ERR
+&B2A     SETA  (B2A('100'))
+         MNOTE 'B2A(''100'')=&B2A'
+         AIF   (&B2A NE 4).B2ERR
+&B2C     SETC  (B2C('11110001'))
+         MNOTE 'B2C(''11110001'')=&B2C'
+         AIF   ('&B2C'(4,1) NE '1').B2ERR
+&B2D     SETC  (B2D('100'))
+         MNOTE 'B2D(''100'')=&B2D'
+         AIF   (&B2D NE 4).B2ERR
+&B2X     SETC  (B2X('11110001'))
+         MNOTE 'B2X(''11110001'')=&B2X'
+         AIF   (&B2X NE '000000F1').B2ERR
+&C2A     SETA  (C2A('1'))
+         MNOTE 'C2A(''1'')=&C2A'
+         AIF   (&C2A NE 241).C2ERR
+&C2B     SETC  (C2B('1'))
+         MNOTE 'C2B(''1'')=&C2B'
+         AIF   ('&C2B' NE '11110001').C2ERR
+&C2D     SETC  (C2D('1'))
+         MNOTE 'C2D(''1'')=&C2D'
+         AIF   (&C2D NE '241').C2ERR
+&C2X     SETC  (C2X('1'))
+         MNOTE 'C2X(''1'')=&C2X'
+         AIF   (&C2X NE '000000F1').C2ERR
+&D2A     SETA  (D2A('-1'))
+         MNOTE 'D2A(''-1'')=&D2A'
+         AIF   (&D2A NE -1).D2ERR
+&D2B     SETC  (D2B('241'))
+         MNOTE 'D2B(''1'')=&D2B'
+         AIF   ('&D2B' NE '11110001').D2ERR
+&D2C     SETC  (D2C('241'))
+         MNOTE 'D2C(''1'')=&D2C'
+         AIF   ('&D2C'(4,1) NE '1').D2ERR
+&D2X     SETC  (D2X('241'))
+         MNOTE 'D2X(''241'')=&D2X'
+         AIF   (&D2X NE '000000F1').D2ERR
+&X2A     SETA  (X2A('F1'))
+         MNOTE 'X2A(''F1'')=&X2A'
+         AIF   (&X2A NE 241).X2ERR
+&X2B     SETC  (X2B('1F'))
+         MNOTE 'X2B(''1F'')=&X2B'
+         AIF   ('&X2B' NE '00011111').X2ERR
+&X2C     SETC  (X2C('F1'))
+         MNOTE 'X2C(''F1'')=&X2C'
+         AIF   ('&X2C'(4,1) NE '1').X2ERR
+&X2D     SETC  (X2D('F1'))
+         MNOTE 'X2D(''F1'')=&X2D'
+         AIF   (&X2D NE '241').X2ERR
+         MNOTE 'TESTING DCLEN, DCVAL, DCEQUOTE
+&DCLSTR  SETC  'C''''&&&&1'''''
+&DCLEN   SETA  (DCLEN(&DCLSTR))
+         MNOTE 'DCLEN(&DCLSTR)=&DCLEN'
+         AIF   (&DCLEN NE 5).DCLERR
+&DCVSTR  SETC  'C''''&&&&1'''''
+&DCVAL   SETC  (DCVAL(&DCVSTR))
+         MNOTE 'DCVAL(&DCVSTR)=&DCVAL'
+         AIF   (&DCVAL NE 'C''&&1''').DCVERR
+&DCESTR  SETC  '''ABC'''
+&DCEQUOTE SETC  (DCEQUOTE(&DCESTR))
+         MNOTE 'DCQUOTE(&DCESTR)=&DCEQUOTE'
+         AIF   (&DCEQUOTE NE 'ABC').DCEERR
+         MNOTE 'TESTING ISBIN, ISDEC, ISHEX, ISSYM'
+&ISBIN   SETC  (ISBIN('100'))
+         MNOTE 'ISBIN(''100'')=&ISBIN'
+         AIF   ('&ISBIN' NE 1).ISERR
+&ISBIN   SETC  (ISBIN('123'))
+         MNOTE 'ISBIN(''123'')=&ISBIN'
+         AIF   ('&ISBIN' NE 0).ISERR
+&ISDEC   SETC  (ISDEC('123'))
+         MNOTE 'ISDEC(''123'')=&ISDEC'
+         AIF   ('&ISDEC' NE 1).ISERR
+&ISDEC   SETC  (ISDEC('F1'))
+         MNOTE 'ISDEC(''F1'')=&ISDEC'
+         AIF   ('&ISDEC' NE 0).ISERR
+&ISHEX   SETC  (ISHEX('F1'))
+         MNOTE 'ISHEX(''F1'')=&ISHEX'
+         AIF   ('&ISHEX' NE 1).ISERR
+&ISHEX   SETC  (ISHEX('FG'))
+         MNOTE 'ISHEX(''FG'')=&ISHEX'
+         AIF   ('&ISHEX' NE 0).ISERR
+&ISSYM   SETC  (ISSYM('AZ09@#$_'))
+         MNOTE 'ISSYM(''AZ09@#$_'')=&ISSYM'
+         AIF   ('&ISSYM' NE 1).ISERR
+&ISSYM   SETC  (ISSYM('AZ09@#$_**'))
+         MNOTE 'ISSYM(''AZ09@#$_**'')=&ISSYM'
+         AIF   ('&ISSYM' NE 0).ISERR
+         MNOTE 'TESTING SIGNED, SYSATTRA, SYSATTRP'
+&SIGNED  SETC  (SIGNED(-241))
+         MNOTE 'SIGNED(-241)=&SIGNED'
+         AIF   (&SIGNED NE '-241').SIGNERR
+SYM      EQU   1,2,C'3',C'PGMA',C'ASMA'
+&SYSATTRP SETC  (SYSATTRP(SYM))
+         MNOTE 'SYSATTRP(SYM)=&SYSATTRP'
+         AIF   (&SYSATTRP NE 'PGMA').SYERR
+&SYSATTRA SETC  (SYSATTRA(SYM))
+         MNOTE 'SYSATTRA(SYM)=&SYSATTRA'
+         AIF   (&SYSATTRA NE 'ASMA').SYERR
+         MNOTE 'TESTING SLA, SLL, SRA, SRL'
+&SLA     SETA  (1 SLA 2)
+         MNOTE '1 SLA 2 = &SLA'
+         AIF   (&SLA NE 4).SLAERR
+&SLA     SETA  (X'7FFFFFFF' SLA 1)
+         MNOTE 'X''7FFFFFFF'' SLA 1 = &SLA'
+         AIF   (&SLA NE X'7FFFFFFE').SLAERR
+&SLL     SETA  (1 SLL 2)
+         MNOTE '1 SLL 2 = &SLL'
+         AIF   (&SLL NE 4).SLLERR
+&SLL     SETA  (X'7FFFFFFF' SLL 1)
+         MNOTE 'X''7FFFFFFF'' SLL 1 = &SLL'
+         AIF   (&SLL NE X'FFFFFFFE').SLLERR
+&SRA     SETA  (4 SRA 2)
+         MNOTE '4 SLA 2 = &SRA'
+         AIF   (&SRA NE 1).SRAERR
+&SRA     SETA  (X'FFFFFFFE' SRA 1)
+         MNOTE 'X''FFFFFFFF'' SRA 1 = &SRA'
+         AIF   (&SRA NE X'FFFFFFFF').SRAERR
+&SRL     SETA  (4 SRL 2)
+         MNOTE '4 SRL 2 = &SRL'
+         AIF   (&SRL NE 1).SRLERR
+&SRL     SETA  (X'FFFFFFFE' SRL 1)
+         MNOTE 'X''7FFFFFFF'' SRL 1 = &SRL'
+         AIF   (&SRL NE X'7FFFFFFF').SRLERR
+         MNOTE 'TESTING OPERATOR TYPES A,E,M,O,S,U'
+         AIF   (O'PUSH      NE 'A').OTERR  ASSEMBLER  CODE
+         AIF   (O'BER       NE 'E').OTERR  EXTENDED MNEMONIC CODE
+         AIF   (O'BE        NE 'E').OTERR  EXTENDED MNEMONIC CODE
+         AIF   (O'BER       NE 'E').OTERR  EXTENDED MNEMONIC CODE
+         AIF   (O'JE        NE 'E').OTERR  EXTENDED MNEMONIC CODE
+         AIF   (O'SUBENTRY  NE 'M').OTERR  LOADED MACRO
+         AIF   (O'SRNM      NE 'O').OTERR  MACHIVE CODE
+         AIF   (O'BCR       NE 'O').OTERR  MACHIVE CODE
+         AIF   (O'BC        NE 'O').OTERR  MACHIVE CODE
+         AIF   (O'BRC       NE 'O').OTERR  MACHIVE CODE
+         AIF   (O'SAVE      NE 'S').OTERR  LIBRARY MACRO FOUND
+         AIF   (O'SRNMT     NE 'U').OTERR  UNDEFINED
+         MNOTE 'TESTOPR1 ENDED OK'
          AGO   .EXIT
-.ERR     MNOTE 12,'UPPER/LOWER ERROR'
+.LCERR   MNOTE 12,'LOWER CASE TEST ERROR'
+         MEXIT
+.UCERR   MNOTE 12,'UPPER CASE TEST ERROR'
+         MEXIT
+.A2ERR   MNOTE 12,'A2 OPERATOR ERROR'
+         MEXIT
+.B2ERR   MNOTE 12,'B2 OPERATOR ERROR'
+         MEXIT
+.C2ERR   MNOTE 12,'C2 OPERATOR ERROR'
+         MEXIT
+.D2ERR   MNOTE 12,'D2 OPERATOR ERROR'
+         MEXIT
+.X2ERR   MNOTE 12,'X2 OPERATOR ERROR'
+         MEXIT
+.DCLERR  MNOTE 12,'DCLEN OPERATOR ERROR'
+         MEXIT
+.DCVERR  MNOTE 12,'DCVAL OPERATOR ERROR'
+         MEXIT
+.DCEERR  MNOTE 12,'DCEQUOTE OPERATOR ERROR'
+         MEXIT
+.ISERR   MNOTE 12,'IS??? OPERATOR ERROR'
+         MEXIT
+.SIGNERR MNOTE 12,'SIGNED OPERATOR ERROR'
+         MEXIT
+.SYERR   MNOTE 12,'SYSATTR A/P OPERATOR ERROR'
+         MEXIT
+.SLAERR  MNOTE 12,'SLA OPERATOR ERROR'
+         MEXIT
+.SLLERR  MNOTE 12,'SLL OPERATOR ERROR'
+         MEXIT
+.SRAERR  MNOTE 12,'SRA OPERATOR ERROR'
+         MEXIT
+.SRLERR  MNOTE 12,'SRL OPERATOR ERROR'
+         MEXIT
+.OTERR   MNOTE 12,'OPERATION TYPE TEST ERROR'
+         MEXIT
 .EXIT    ANOP
          END

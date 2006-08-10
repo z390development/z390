@@ -1141,7 +1141,7 @@ private void process_bal_op(){
     dc_lit_gen = false;
 	bal_op_ok = false;
 	int index = tz390.op_type[bal_op_index];
-	if (index < tz390.max_ins_op){ // RPI 340
+	if (index < tz390.max_ins_type){ // RPI 340
 		bal_lab_attr = 'I'; 
 	} else {
 		bal_lab_attr = 'U';
@@ -1321,7 +1321,7 @@ private void process_bal_op(){
     	check_end_parms();
     	put_obj_text();
     	break;
-    case 13:  // "BRC" 31 BRE  oomoiiii
+    case 13:  // "BRCX" 31 BRE  oomoiiii
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;
     	loc_start = loc_ctr;
@@ -1836,10 +1836,10 @@ private void process_bal_op(){
     	bal_op_ok = true;
     	opsyn_label = bal_label;  // save opsyn target
     	bal_label = null;         // reset to avoid dup. label
-    	if (tz390.opt_traceall){
-    		put_log("TRACE OPSYN NEW=" + opsyn_label + " OLD=" + bal_parms);
-    	}
     	tz390.update_opsyn(opsyn_label,bal_parms);
+    	if (tz390.opt_traceall){ // RPI 403
+    		put_log("TRACE OPSYN(" + tz390.opsyn_index + ") NEW=" + opsyn_label + " OLD=" + bal_parms);
+    	}
     	break;
     case 135:  // END 0 
     	bal_op_ok = true;
@@ -2359,11 +2359,11 @@ private int find_bal_op(){
 	if  (bal_op != null 
 		 && bal_op.length() > 0){
 		String key = bal_op;
-		index = tz390.find_key_index("R:" + key);
-		if (index >= 0 && tz390.opsyn_name[index] != null){
-			key = tz390.opsyn_name[index];  /// RPI 306
+		index = tz390.find_key_index('R',key);
+		if (index >= 0 && tz390.opsyn_old_name[index] != null){
+			key = tz390.opsyn_old_name[index];  /// RPI 306
 		}
-		index = tz390.find_key_index("O:" + key);
+		index = tz390.find_key_index('O',key);
 		if (index > -1){ // RPI 274 OPYSN cancel
 			return index;
 		}
@@ -2545,7 +2545,7 @@ private int find_sym(String name){
            abort_error(80,"time limit exceeded");
 		}
 	}
-	int index = tz390.find_key_index("S:" + name);
+	int index = tz390.find_key_index('S',name);
 	if (index != -1){
         add_sym_xref(index);
 		return index;
@@ -4088,7 +4088,7 @@ private void drop_using(){
 		String cur_use_lab = tz390.parm_match.group();
 		if (cur_use_lab.charAt(0) != ','){
            if (cur_use_lab.charAt(0) > ' '){
-   		      if (tz390.find_key_index("U:" + cur_use_lab) != -1){
+   		      if (tz390.find_key_index('U',cur_use_lab) != -1){
 			      drop_cur_use_label();
    		      } else {
    		    	  exp_text = cur_use_lab;
@@ -4184,7 +4184,7 @@ private void add_use_entry(){
 		cur_use_end++;
 		use_lab[cur_use] = cur_use_lab;
 		if (cur_use_lab.length() > 0 
-			&& tz390.find_key_index("U:" + cur_use_lab) == -1){
+			&& tz390.find_key_index('U',cur_use_lab) == -1){
 			// create key to indicate using label
 			if (!tz390.add_key_index(0)){
 			    abort_error(87,"key search table exceeded");
@@ -5915,11 +5915,11 @@ private void get_lit_addr(){
 	process_dc(2);
 	if (!bal_abort){
 		if (lit_loc_ref){
-			lit_key = "L:" + cur_lit_pool + ":" +bal_line_index + dc_field.substring(dc_lit_index_start,dc_index);
+			lit_key = cur_lit_pool + ":" +bal_line_index + dc_field.substring(dc_lit_index_start,dc_index);
 		} else {
-			lit_key = "L:" + cur_lit_pool + dc_field.substring(dc_lit_index_start,dc_index);
+			lit_key = cur_lit_pool + dc_field.substring(dc_lit_index_start,dc_index);
 		}
-		cur_lit = tz390.find_key_index(lit_key);
+		cur_lit = tz390.find_key_index('L',lit_key);
 		if (cur_lit != -1){
 			add_lit_xref(cur_lit);
 			if (lit_loc_ref){

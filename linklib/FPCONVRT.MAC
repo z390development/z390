@@ -25,14 +25,6 @@
 * SOFTWARE.                                                           *
 *                                                                     *
 ***********************************************************************
-* Changes by Don Higgins Automated Software Tools - don@higgins.net
-***********************************************************************
-* 07/27/06 DSH 3 CORRECTIONS IN ORDER TO GET TESTFPC1.MLC RUNNING OK
-*          1.  DSH1 - use SR vs SLR so JNP not taken in error  
-*          2.  DSH2 - set  HFP to exact zero if no digits
-*          3.  DSH3 - move HFP exponent to R0 before substract x'40'
-*          4.  DSH4 - use AGR vs ALGR to avoid erroneous bit 31 bit 
-***********************************************************************
 *                                                                     *
 *        FPCONVERT Macro operands:                                    *
 *                                                                     *
@@ -43,7 +35,7 @@
 *            TYPE=DSECT  generates a DSECT for the FPCON Request Block*
 *            TYPE=CSECT  generates the FPCONVRT routine in a CSECT    *
 *            TYPE=RSECT  generates the FPCONVRT routine in a RSECT    *
-*        ARCHLVL=0|1|2|3|4                                            *
+*        ARCHLVL=0|1|2|3|4|5                                          *
 *            ARCHLVL=0 generates for S/370 (AMODE 24 only)            *
 *            ARCHLVL=1 generates for 370/XA (AMODE 24/31)             *
 *            ARCHLVL=2 generates for ESA/390 (AMODE 24/31)            *
@@ -65,6 +57,13 @@
 *        When calling FPCONVRT using LINKAGE=OS, register 1 must      *
 *        point to a word containing the address of this area.         *
 *                                                                     *
+***********************************************************************
+* Changes:                                                            *
+*    2006/08/05:                                                      *
+*        Corrected errors found by Don Higgins.                       *
+*        Corrected hexadecimal constant for DD'(MAX)'.                *
+*        H, B and D suffixes on floating point constants are only     *
+*        generated if the assembler supports them.                    *
 ***********************************************************************
          MACRO
 &lbl     FPCONVRT &PFX=Fpcon,&TYPE=DSECT,&ARCHLVL=2,&LINKAGE=OS,       +
@@ -104,12 +103,12 @@
 .linkok  anop
 &equ     setc  ''
          aif   ('EQU' eq (upper '&REGS')).regsok
-&equ     setc  ',,,,&REGS'  
+&equ     setc  ',,,,&REGS'
          aif   ('GR' eq (upper '&REGS')).regsok
          mnote 12,'REQS=&REGS is invalid, must be EQU or GR'
          mexit
 .regsok  anop
-        aif   ('INLINE' eq (upper '&TYPE')).inline
+         aif   ('INLINE' eq (upper '&TYPE')).inline
          aif   ('DSECT' eq (upper '&TYPE')).dsect
          aif   ('CSECT' ne (upper '&TYPE') and 'RSECT' ne (upper '&TYPE+
                ')).badtype
@@ -204,7 +203,7 @@
 &PFX.Base2     Equ 2                   Binary IEEE-754 (default)
 &PFX.Base10    Equ 10                  Decimal (IEEE-754r)
 &PFX.Base16    Equ 16                  Hexadecimal S/360
-&PFX.Flags      Ds X               Flags
+&PFX.Flags      Ds X               Flags (in)
 &PFX.ToValue   Equ X'40'               Convert string to value
 *                                      (otherwise convert to string)
 &PFX.ValuePlus Equ X'20'               If leading mantissa plus sign
@@ -627,11 +626,9 @@ ToString Loctr ,
          &J.E  ToString0600            yes: branch
          CLI   &PFX.Base,&PFX.Base2 Binary floating point?
          &J.E  ToString0100            yes: branch
-         IC    R1,&PFX.ValueE      Get the base-16 exponent
-         NILF  R1,127                  *
-* DSH3 07/28/06 move R1 to R0 before exponent subtract DSH3
-         LR    R0,R1                                   DSH3
-         AHI   R0,-64                  *             
+         IC    R0,&PFX.ValueE      Get the base-16 exponent
+         NILF  R0,127                  *
+         AHI   R0,-64                  *
          LA    R11,&PFX.Work       Get address of work area
          CLI   &PFX.ValueLen,&PFX.ValueLenE Short value?
          &J.E  ToString0010            yes: branch
@@ -799,7 +796,7 @@ ToString0190 dc 0h'0'
 ToString0200 dc 0h'0'
          LT&GF.R R3,R0             Greater than 1?
          &J.NP ToString0300            no: branch
-         AL&G.R R3,R11             Decimal point within number?       
+         AL&G.R R3,R11             Decimal point within number?
          L&G.R R1,R3                   *
          S&G.R R3,R14                  *
          &J.NP ToString0210            yes: branch
@@ -892,9 +889,7 @@ ToString0300 dc 0h'0'
          LA    R11,&PFX.Work+2064  Set R11 to decimal point position
          LA    R14,&PFX.Work+2064(R14) and R14 to last digit
          LA    R5,&PFX.Work+2064       and R5 to first non-zero
-* DSH4 08/03/06 change ALGR to AGR to avoid erroneous bit 31    DSH4      
-*        AL&GF.R R11,R0                *                        DSH4
-         A&GF.R R11,R0                 *                        DSH4
+         A&GF.R R11,R0                 *
          L&G.R R0,R11              Clear digits between
          MVCL  R0,R2                   decimal point and number
 ToString0310 dc 0h'0'              Until carry:
@@ -1748,9 +1743,7 @@ ToValue0040 dc 0h'0'               Skip any leading zeros
          LA    R1,1(,R1)               *
          CL&G.R R1,R0                  *
          &J.L  ToValue0040             *
-* DSH2 07/27/06 CHANGE TO BRANCH TO EXACT 0 WHEN DIGITS ZERO  DSH2
-*        &J    ToValue0200             all zero: branch       DSH2 
-         &J    ToValueZero                                    DSH2 
+         &J    ToValue0200             all zero: branch
          space 1
 ToValue0050 dc 0h'0'               Convert the digits to binary:
          CLC   &PFX.Decimal,0(R1)      decimal point?
@@ -2457,9 +2450,7 @@ ToValue1180 dc 0h'0'                   *
          space 1
 ToValue1200 dc 0h'0'
          LA    R11,1(,R11)         Skip X'01' byte
-* DSH1 07/27/06 CHANGE SLR TO SR TO SET CORRECT CC FOR JNP    DSH1
-*        SL&G.R R14,R11           Copy the mantissa           DSH1
-         S&G.R R14,R11            Copy the mantissa           DSH1
+         S&G.R R14,R11             Copy the mantissa
          &J.NP ToValue1220             *
          CR    R14,R5                  *
          &J.L  ToValue1210             *
@@ -2737,6 +2728,23 @@ ToValue1810 dc 0h'0'                   *
 *        return with the appropriate return code.                     *
 ***********************************************************************
 ToValueOverflow dc 0h'0'
+&lhmax   setc  'LH''(MAX)'''
+&lbmax   setc  'LB''(MAX)'''
+&dbmax   setc  'DB''(MAX)'''
+&ebmax   setc  'EB''(MAX)'''
+&ldmax   setc  'LD''(MAX)'''
+&ddmax   setc  'DD''(MAX)'''
+&edmax   setc  'ED''(MAX)'''
+         aif   ('O' eq O'SRNMT).maxok
+&ldmax   setc  'X''77FFCFF3 FCFF3FCF F3FCFF3F CFF3FCFF'''
+&ddmax   setc  'X''77FCFF3F CFF3FCFF'''
+&edmax   setc  'X''77F3FCFF'''
+         aif   ('O' eq O'SRNM).maxok
+&lhmax   setc  'X''7FFFFFFF FFFFFFFF 71FFFFFF FFFFFFFF'''
+&lbmax   setc  'X''7FFEFFFF FFFFFFFF FFFFFFFF FFFFFFFF'''
+&dbmax   setc  'X''7FEFFFFF FFFFFFFF'''
+&ebmax   setc  'X''7F7FFFFF'''
+.maxok   anop
          CLI   &PFX.Base,&PFX.Base2 Binary format?
          &J.E  ToValueOverflowB        yes: branch
          CLI   &PFX.Base,&PFX.Base10 Decimal format?
@@ -2746,42 +2754,39 @@ ToValueOverflow dc 0h'0'
          CLI   &PFX.ValueLen,&PFX.ValueLenD Long?
          &J.E  ToValueOverflowDH       yes: branch
          MVC   &PFX.ValueL+8(1),&PFX.ValueL Copy sign to second half
-         OC    &PFX.ValueL,=LH'(MAX)' Set to extended maximum value
+         OC    &PFX.ValueL,=&lhmax    Set to extended maximum value
          &J    ReturnOverflow
 ToValueOverflowEH dc 0h'0'
-         OC    &PFX.ValueE,=LH'(MAX)' Set to short maximum value
+         OC    &PFX.ValueE,=&lhmax    Set to short maximum value
          &J    ReturnOverflow
 ToValueOverflowDH dc 0h'0'
-         OC    &PFX.ValueD,=LH'(MAX)' Set to long maximum value
+         OC    &PFX.ValueD,=&lhmax    Set to long maximum value
          &J    ReturnOverflow
 ToValueOverflowB dc 0h'0'
          CLI   &PFX.ValueLen,&PFX.ValueLenE Short binary?
          &J.E  ToValueOverflowEB       yes: branch
          CLI   &PFX.ValueLen,&PFX.ValueLenD Long binary?
          &J.E  ToValueOverflowDB       yes: branch
-         OC    &PFX.ValueL,=LB'(MAX)' Set to extended maxiumum
+         OC    &PFX.ValueL,=&lbmax    Set to extended maxiumum value
          &J    ReturnOverflow
 ToValueOverflowEB dc 0h'0'
-         OC    &PFX.ValueE,=EB'(MAX)' Set to short maximum
+         OC    &PFX.ValueE,=&ebmax    Set to short maximum value
          &J    ReturnOverflow
 ToValueOverflowDB dc 0h'0'
-         OC    &PFX.ValueD,=DB'(MAX)' Set to long maximum
+         OC    &PFX.ValueD,=&dbmax    Set to long maximum value
          &J    ReturnOverflow
 ToValueOverflowD dc 0h'0'
          CLI   &PFX.ValueLen,&PFX.ValueLenE Short decimal?
          &J.E  ToValueOverflowED       yes: branch
          CLI   &PFX.ValueLen,&PFX.ValueLenD Long decimal?
          &J.E  ToValueOverflowDD       yes: branch
-.******* OC    &PFX.ValueL,=LD'(MAX)' Set to extended maxiumum
-         OC    &PFX.ValueL,=X'77FCFFF3 FCFF3FCF F3FCFF3F CFF3FCFF'
+         OC    &PFX.ValueL,=&ldmax    Set to extended maxiumum value
          &J    ReturnOverflow
 ToValueOverflowED dc 0h'0'
-.******* OC    &PFX.ValueE,=ED'(MAX)' Set to short maximum
-         OC    &PFX.ValueE,=X'77F3FCFF'
+         OC    &PFX.ValueE,=&edmax    Set to short maximum value
          &J    ReturnOverflow
 ToValueOverflowDD dc 0h'0'
-.******* OC    &PFX.ValueD,=DD'(MAX)' Set to long maximum
-         OC    &PFX.ValueD,=X'77FCFF3F CFF3FCFF'
+         OC    &PFX.ValueD,=&ddmax    Set to long maximum value
          &J    ReturnOverflow
          space 1
 ToValueUnderflow dc 0h'0'
@@ -2843,4 +2848,3 @@ CsExpAlt    Ds C                       Lowercase 'e'
 CsBlank     Ds C                       Blank character
 CharsetEnd Equ *
          MEND
-ToString dc    0h'0'

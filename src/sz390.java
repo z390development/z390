@@ -79,6 +79,7 @@ import javax.swing.Timer;
     * 07/07/06 RPI 358 prevent trap on invalid S command
     * 07/17/06 RPI 360 and 370 add CFD and CTD conversion svcs
     * 07/20/06 RPI 377 prevent DCB SYNAD recursion on missing file
+    * 08/08/06 RPI 397 synchronize system.out
     ********************************************************
     * Global variables
     *****************************************************/
@@ -93,6 +94,7 @@ import javax.swing.Timer;
    int max_lsn_spec       = 265;
    int max_dir_list       = 512;
    int max_guam_buff       = 3000;
+   int max_ecb_count = 16; // RPI 393
    /* 
     * shared global variables
     */
@@ -208,6 +210,7 @@ import javax.swing.Timer;
      */
         int wait_count = 0;  // 0 for ECB= else ECBLIST wait count
         int wait_addr  = 0;  // ECB= or ECBLIST= addr
+        boolean wait_retry = false; // do not refretch on retry after stimer exit
     /*
      * cmd processor variables
      */
@@ -606,14 +609,14 @@ public synchronized void put_log(String msg) {
    	 * if running standalone
    	 * 
    	 */
-	    	put_log_line(msg);
-        if  (z390_log_text != null){
-	        	z390_log_text.append(msg + "\n");
-        }
-	        if (tz390.opt_con || tz390.opt_test || tz390.z390_abort || ez390_startup){
-	    	    System.out.println(msg);
-	        }
-   }
+	put_log_line(msg);
+	if  (z390_log_text != null){
+		z390_log_text.append(msg + "\n");
+   	}
+	if (tz390.opt_con || tz390.opt_test || tz390.z390_abort || ez390_startup){
+		System.out.println(msg);
+	}
+}
 private void put_log_line(String msg){
 	   /*
 	    * put line to listing file
@@ -676,7 +679,7 @@ public void exit_ez390(){
       close_z390_guam();
       System.exit(ez390_rc); //RPI39
 }
-private void close_z390_guam(){
+private synchronized void close_z390_guam(){  // RPI 397
 	/*
 	 * if exit request, send shutdown request
 	 * to z390 gui via the sysout queue
@@ -951,7 +954,7 @@ private void svc_load(){
             return;
 		}
 	}
-	cur_cde = tz390.find_key_index("P:" + load_pgm_name + load_pgm_type);
+	cur_cde = tz390.find_key_index('P',load_pgm_name + load_pgm_type);
 	if (cur_cde != -1 && cde_loc[cur_cde] != 0){
 		cde_use[cur_cde]++;
         svc_load_set_regs();
@@ -1258,7 +1261,7 @@ private void svc_delete(){
             return;
 		}
 	}
-	cur_cde = tz390.find_key_index("P:" + load_pgm_name + load_pgm_type);
+	cur_cde = tz390.find_key_index('P',load_pgm_name + load_pgm_type);
 	if (cur_cde != -1 && delete_cur_cde()){
 		pz390.reg.putInt(pz390.r15,0);
 	} else {
@@ -1294,7 +1297,7 @@ private void add_cde(){
 	 * add new 390 load module to cde entry table
 	 * and set usage to 1
 	 */
-	cur_cde = tz390.find_key_index("P:" + load_pgm_name + load_pgm_type);
+	cur_cde = tz390.find_key_index('P',load_pgm_name + load_pgm_type);
 	if (cur_cde == -1){
 		if (tot_cde < max_cde_pgms){
 			cur_cde = tot_cde;
@@ -1858,7 +1861,7 @@ private void svc_bldl(){
 			return;
 		}
 		bldl_last_name = bldl_member_name;
-		cur_cde = tz390.find_key_index("P:" + bldl_member_name + ".390");
+		cur_cde = tz390.find_key_index('P',bldl_member_name + ".390");
 		if (cur_cde != -1 && cde_loc[cur_cde] != 0){
             pz390.mem.put(bldl_entry_addr+2+10,(byte)1); // R=1 entry found
             if (bldl_entry_len >= 13){  // RPI 311
@@ -3508,18 +3511,21 @@ private void svc_wait(){
 	 *       unless another process will post it
 	 *       or an stimer exit will post it.
 	 */
-	wait_count = pz390.reg.getInt(pz390.r0);
-	wait_addr    = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
-	// backup for stimer exit retry
-	pz390.psw_loc = pz390.psw_loc - 2;
-	tz390.systerm_ins--;
+	if (!wait_retry){
+		wait_count = pz390.reg.getInt(pz390.r0);
+		wait_addr    = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	}
     while (!check_wait_ecbs()  // RPI 280
     	&& !stimer_exit_request){
 		sleep_now(tz390.monitor_wait);
     }
-	if (!stimer_exit_request){
-		pz390.psw_loc = pz390.psw_loc + 2;
-		tz390.systerm_ins++;
+	if (stimer_exit_request){
+		wait_retry = true;
+		// backup for stimer exit retry
+		pz390.psw_loc = pz390.psw_loc - 2;
+		tz390.systerm_ins--;
+	} else {
+		wait_retry = false;
 		pz390.reg.putInt(pz390.r15,0);
 	    if (wait_count > 0){
 	    	reset_wait_list();
@@ -3545,7 +3551,9 @@ private boolean check_wait_ecbs(){
 	int ecb_count     = wait_count;
 	int ecb_list_addr = wait_addr;
 	int ecb_addr = pz390.mem.getInt(ecb_list_addr);
+	int list_entry_count = 0;
 	while (ecb_count > 0){
+		list_entry_count++;
 		ecb_code = pz390.mem.getInt(ecb_addr & 0x7fffffff);
 		if ((ecb_code & ecb_posted) == 0){
 			// if not posted set waiting bit
@@ -3557,6 +3565,9 @@ private boolean check_wait_ecbs(){
 			}
 		}
 		if (ecb_addr < 0){
+			if (list_entry_count < wait_count){ // RPI 393
+				pz390.set_psw_check(pz390.psw_pic_waiterr);
+			}
 			return false;
 		}
 		ecb_list_addr = ecb_list_addr + 4;
@@ -3570,7 +3581,8 @@ private void reset_wait_list(){
 	 */
 	int ecb_list_addr = wait_addr;
 	int ecb_addr = pz390.mem.getInt(ecb_list_addr);
-	while (ecb_addr != 0){
+	int ecb_list_count = max_ecb_count;
+	while (ecb_addr != 0 && ecb_list_count > 0){
 		// turn off ecb waiting bit
 		int ecb_code = pz390.mem.getInt(ecb_addr & 0x7fffffff);
 		pz390.mem.putInt(ecb_addr & 0x7fffffff,ecb_code & 0x7fffffff);
@@ -3579,6 +3591,10 @@ private void reset_wait_list(){
 		}
 		ecb_list_addr = ecb_list_addr + 4;
 		ecb_addr = pz390.mem.getInt(ecb_list_addr);
+	    ecb_list_count--;
+	}
+	if (ecb_list_count == 0){  // RPI 398
+		pz390.set_psw_check(pz390.psw_pic_waiterr);
 	}
 }
 private void svc_post(){  // RPI 279
@@ -4210,7 +4226,7 @@ private void exec_test_cmd(){
 	    put_log("z390 test command help summary (Visit www.z390.org for more information)");
 	    put_log("  addr=sdt    set memory value  (ie 1r?=x'80' changes mem at (r1) 31 bit");
 	    put_log("  reg=sdt     set register value (ie 15r=8 changes reg 15 to 8)");
-	    put_log("  A=addr      set address stop (ie A FF348. or A *+4 etc.)");
+	    put_log("  A addr      add address stop (ie A FF348. or A *+4 etc.)");  // RPI 395
 	    put_log("  B=addr      set base for rel addr (ie B=15r% sets base to (r15) 24 bit");
 	    put_log("  D           display DCB file status, DDNAME, and DSNAME information");
 	    put_log("  F nn        display specified floating point registers else all F0-FF");
@@ -4474,7 +4490,7 @@ private void set_test_break_op(){
 	/*
 	 * set break on opcode at current psw
 	 */
-	int index = tz390.find_key_index("O:" + test_token.toUpperCase());
+	int index = tz390.find_key_index('O',test_token.toUpperCase());
 	if (index != -1){
 		test_break_op_mode = true;
 		test_break_op_ins  = tz390.systerm_ins;

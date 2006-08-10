@@ -7,6 +7,7 @@
 *********************************************************************
 * 03/03/06 RPI 209 TEST STIMER WAIT                                 
 * 04/22/06 RPI 279 ADD STIMER REAL,EXIT AND TTIMER TESTS                                 
+* 08/06/06 RPI 396 INCREASE TIME TO 8 SECONDS TO ALLOW 2 SEC CPU TIME                    
 *********************************************************************
          TITLE 'TESTTIM1 REGRSSION TEST STIMER, TIMIER FUNCTIONS'
 TESTIM2  RT1   MAIN
@@ -36,7 +37,7 @@ ECB      DC    F'0'
          DSG    R2,=FL8'1000000'
          CLG    R3,=FL8'1500'
          RT1    CCH
-         CLG    R3,=FL8'2500'
+         CLG    R3,=FL8'15000' ALLOW 15 SEC
          RT1    CCL
          WTO    'TEST STIMER WAIT 2 SEC DINTVL'
          TIME   NS,STARTED
@@ -47,7 +48,7 @@ ECB      DC    F'0'
          DSG    R2,=FL8'1000000'
          CLG    R3,=FL8'1500'
          RT1    CCH
-         CLG    R3,=FL8'2500'
+         CLG    R3,=FL8'15000' ALLOW 15 SEC
          RT1    CCL
          WTO    'TEST STIMER WAIT 2 SEC MICVL'
          TIME   NS,STARTED
@@ -58,7 +59,7 @@ ECB      DC    F'0'
          DSG    R2,=FL8'1000000'
          CLG    R3,=FL8'1500'
          RT1    CCH
-         CLG    R3,=FL8'2500'
+         CLG    R3,=FL8'15000' ALLOW 15 SEC
          RT1    CCL
          LG     R1,=FL8'2000000' R0 = 2 SEC IN MICROSECONDS
          MSG    R1,=FL8'100000'  SCALE UP 5 DECIMAL PLACES
@@ -73,7 +74,7 @@ ECB      DC    F'0'
          DSG    R2,=FL8'1000000'
          CLG    R3,=FL8'1500'
          RT1    CCH
-         CLG    R3,=FL8'2500'
+         CLG    R3,=FL8'15000' ALLOW 15 SEC
          RT1    CCL
 * STIMER REAL,EXIT TEST USING WAIT AND POST
          TIME   NS,STARTED
@@ -87,7 +88,7 @@ ECB      DC    F'0'
          DSG    R2,=FL8'1000000'
          CLG    R3,=FL8'1500'
          RT1    CCH
-         CLG    R3,=FL8'3500' ALLOW EXTRA SEC FOR END OF WAIT   
+         CLG    R3,=FL8'15000' ALLOW 15 SECONDS TO GET 2 SEC CPU  
          RT1    CCL
 * STIMER REAL,EXIT TEST USING WAIT AND CPU LOOP
          MVC    ECB,=X'00000000' CLEAR ECB WAITING
@@ -102,7 +103,7 @@ LOOP     CLI    ECB,X'40' LOOP UNTIL STIMER EXIT POSTS ECB
          DSG    R2,=FL8'1000000'
          CLG    R3,=FL8'1500'
          RT1    CCH
-         CLG    R3,=FL8'2500'           
+         CLG    R3,=FL8'15000' ALLOW 15 SEC          
          RT1    CCL
 * STIMER REAL,EXIT TEST TIMER TU AND MIC
          MVC    ECB,=X'00000000' CLEAR ECB WAITING
@@ -137,7 +138,7 @@ LOOP     CLI    ECB,X'40' LOOP UNTIL STIMER EXIT POSTS ECB
          DSG    R2,=FL8'1000000'
          CLG    R3,=FL8'1500'
          RT1    CCH
-         CLG    R3,=FL8'2500'    
+         CLG    R3,=FL8'15000' ALLOW 15 SECONDS TO GET 2 SEC CPU 
          RT1    CCL
 * STIMER REAL,EXIT TEST STIMER AND TTIMER CANCEL
          MVC    ECB,=X'00000000' CLEAR ECB WAITING

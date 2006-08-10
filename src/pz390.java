@@ -190,6 +190,8 @@ public  class  pz390 {
     * 07/26/06 RPI 384 fix HFP true zero 
     * 07/30/06 RPI 386 fix MVCL trap when data length = 0.
     * 07/30/06 RPI 387 Fix RXY, RSY, and SIY to support 20 bit signed disp.
+    * 08/06/06 RPI 397 S0C5 on memory violations
+    * 08/06/06 RPI 398 fix D and DR truncated dividend error.
     ********************************************************
     * Global variables
     *****************************************************/
@@ -919,6 +921,10 @@ private void ins_lt_40(){
 		     	pad_len  = rflen1 - rflen2;
 			    fill_char = reg.get(rf2+12);
 		     }
+		     if (bd1_loc + data_len + pad_len > tot_mem){
+		    	 set_psw_check(psw_pic_addr); // RPI 397
+		         break;
+		     }
 		     if (data_len > 0
 		     	&& bd1_loc > bd2_loc
 				&& bd1_loc < bd2_loc + data_len){
@@ -959,6 +965,10 @@ private void ins_lt_40(){
 		     } else if (rflen1 > rflen2){
 		     	data_len = rflen2;
 		     	pad_len  = rflen1 - rflen2;
+		     }
+		     if (bd1_loc + data_len + pad_len > tot_mem){
+		    	 set_psw_check(psw_pic_addr); // RPI 397
+		         break;
 		     }
 		     bd1_end = bd1_loc + data_len;
 		     while (bd1_loc < bd1_end){
@@ -1133,17 +1143,14 @@ private void ins_lt_40(){
 		 case 0x1D:  // 480 "1D" "DR" "RR"
 			 psw_check = false;
 		     ins_setup_rr();
-		     work_reg.putInt(0,reg.getInt(rf1+4));
-		     work_reg.putInt(4,reg.getInt(rf1+12));
-		     rlv1 = work_reg.getLong(0);
+		     rlv1 = (long)(reg.getInt(rf1+4)) << 32
+		          | ((long)reg.getInt(rf1+12) & long_low32_bits); // RPI 398
 		     rv2 = reg.getInt(rf2+4);
-		     if (rv2 != 0){
-		     	rv1  = (int) rlv1 / rv2;
-		     } else {
+		     if (rv2 == 0){
 		     	set_psw_check(psw_pic_fx_div);
 		     	break;
 		     }
-		     rv1 = (int) rlv1/rv2;
+		     rv1 = (int)(rlv1/rv2); // RPI 398
 		     rv2 = (int) rlv1 - rv1 * rv2;
 		     reg.putInt(rf1+4,rv2);
 		     reg.putInt(rf1+12,rv1);
@@ -1637,17 +1644,14 @@ private void ins_lt_80(){
 		 case 0x5D:  // 1290 "5D" "D" "RX"
 		 	 psw_check = false;
 		     ins_setup_rx();
-		     work_reg.putInt(0,reg.getInt(rf1+4));
-		     work_reg.putInt(4,reg.getInt(rf1+12));
-		     rlv1 = work_reg.getLong(0);
+		     rlv1 = (long)(reg.getInt(rf1+4)) << 32 
+	          | ((long)reg.getInt(rf1+12) & long_low32_bits); // RPI 398
 		     rv2 = mem.getInt(xbd2_loc);
-		     if (rv2 != 0){
-		     	rv1  = (int) rlv1 / rv2;
-		     } else {
+		     if (rv2 == 0){
 		     	set_psw_check(psw_pic_fx_div);
 		     	break;
 		     }
-		     rv1 = (int) rlv1/rv2;
+		     rv1 = (int) (rlv1/rv2);  // RPI 398
 		     rv2 = (int) rlv1 - rv1 * rv2;
 		     reg.putInt(rf1+4,rv2);
 		     reg.putInt(rf1+12,rv1);
@@ -1916,38 +1920,39 @@ private void ins_lt_c0(){
 		 case 0x8C:  // 1660 "8C" "SRDL" "RS"
 		 	 psw_check = false;
 		     ins_setup_rs();
-		     work_reg.putInt(0,reg.getInt(rf1+4));
-		     work_reg.putInt(4,reg.getInt(rf1+12));
-		     work_reg.putLong(0,work_reg.getLong(0) >>> (bd2_loc & 0x3f));
-		     reg.putInt(rf1+4,work_reg.getInt(0));
-		     reg.putInt(rf1+12,work_reg.getInt(4));
+		     rlv1 = ((long)(reg.getInt(rf1+4)) << 32
+	                 | ((long)reg.getInt(rf1+12) & long_low32_bits)
+	                 ) >>> (bd2_loc & 0x3f); // RPI 398
+		     reg.putInt(rf1+4,(int)(rlv1 >>> 32));
+		     reg.putInt(rf1+12,(int)rlv1);
 		     break;
 		 case 0x8D:  // 1670 "8D" "SLDL" "RS"
 		 	 psw_check = false;
 		     ins_setup_rs();
-		     work_reg.putInt(0,reg.getInt(rf1+4));
-		     work_reg.putInt(4,reg.getInt(rf1+12));
-		     work_reg.putLong(0,work_reg.getLong(0) << (bd2_loc & 0x3f));
-		     reg.putInt(rf1+4,work_reg.getInt(0));
-		     reg.putInt(rf1+12,work_reg.getInt(4));
+		     rlv1 = ((long)(reg.getInt(rf1+4)) << 32
+	                 | ((long)reg.getInt(rf1+12) & long_low32_bits)
+	                 ) << (bd2_loc & 0x3f); // RPI 398
+		     reg.putInt(rf1+4,(int)(rlv1 >>> 32));
+		     reg.putInt(rf1+12,(int)rlv1);
 		     break;
 		 case 0x8E:  // 1680 "8E" "SRDA" "RS"
 		 	 psw_check = false;
 		     ins_setup_rs();
-		     work_reg.putInt(0,reg.getInt(rf1+4));
-		     work_reg.putInt(4,reg.getInt(rf1+12));
-		     work_reg.putLong(0,get_sra64(work_reg.getLong(0),bd2_loc & 0x3f));
-		     reg.putInt(rf1+4,work_reg.getInt(0));
-		     reg.putInt(rf1+12,work_reg.getInt(4));
+		     rlv1 = ((long)(reg.getInt(rf1+4)) << 32
+	                 | ((long)reg.getInt(rf1+12) & long_low32_bits)
+	                 ) >> (bd2_loc & 0x3f); // RPI 398
+		     reg.putInt(rf1+4,(int)(rlv1 >>> 32));
+		     reg.putInt(rf1+12,(int)rlv1);
+		     psw_cc = get_long_comp_cc(rlv1,0);
 		     break;
 		 case 0x8F:  // 1690 "8F" "SLDA" "RS"
 		 	 psw_check = false;
 		     ins_setup_rs();
-		     work_reg.putInt(0,reg.getInt(rf1+4));
-		     work_reg.putInt(4,reg.getInt(rf1+12));
-		     work_reg.putLong(0,get_sla64(work_reg.getLong(0),bd2_loc & 0x3f));
-		     reg.putInt(rf1+4,work_reg.getInt(0));
-		     reg.putInt(rf1+12,work_reg.getInt(4));
+		     rlv1 = get_sla64(((long)(reg.getInt(rf1+4)) << 32
+	                 | ((long)reg.getInt(rf1+12) & long_low32_bits)
+	                 ),bd2_loc & 0x3f); // RPI 398
+		     reg.putInt(rf1+4,(int)(rlv1 >>> 32));
+		     reg.putInt(rf1+12,(int)rlv1);
 		     break;
 		 case 0x90:  // 1700 "90" "STM" "RS"
 		     psw_check = false;
@@ -2319,6 +2324,10 @@ private void ins_lt_c0(){
 		     	data_len = rflen2;
 		     	pad_len  = rflen1 - rflen2;
 		     }
+		     if (bd1_loc + data_len + pad_len > tot_mem){
+		    	 set_psw_check(psw_pic_addr); // RPI 397
+		         break;
+		     }
 		     if (bd1_loc + data_len <= bd2_loc
 			    	 || bd2_loc + data_len <= bd1_loc){
 			     mem.position(bd1_loc);
@@ -2366,6 +2375,10 @@ private void ins_lt_c0(){
 		     } else if (rflen1 > rflen2){
 		     	data_len = rflen2;
 		     	pad_len  = rflen1 - rflen2;
+		     }
+		     if (bd1_loc + data_len + pad_len > tot_mem){
+		    	 set_psw_check(psw_pic_addr); // RPI 397
+		         break;
 		     }
 		     bd1_end = bd1_loc + data_len;
 		     while (bd1_loc < bd1_end){
@@ -5471,7 +5484,9 @@ private void ins_lt_ff(){
 		     case 0x0A:  // 6210 "EB0A" "SRAG" "RSY"
 		     	 psw_check = false;
 		         ins_setup_rsy();
-		         reg.putLong(rf1,get_sra64(reg.getLong(rf3),bd2_loc & 0x3f));
+		         rlv1 = reg.getLong(rf3) >> (bd2_loc & 0x3f);
+		         reg.putLong(rf1,rlv1); // RPI 398
+			     psw_cc = get_long_comp_cc(rlv1,0);
 		         break;
 		     case 0x0B:  // 6220 "EB0B" "SLAG" "RSY"
 		     	 psw_check = false;
@@ -6890,7 +6905,7 @@ private void ins_setup_rs(){  // "RS" 25  oorrbddd
 		ex_restore();
 	}
 	psw_loc = psw_loc + 4;
-	if (bd2_loc > tot_mem){
+	if (bd2_loc >= tot_mem){
 		set_psw_check(psw_pic_addr);
 	}
 }
@@ -7002,7 +7017,7 @@ private void ins_setup_rsy(){  // "RSY" 31  LMG  oorrbdddhhoo
 		ex_restore();
 	}
 	psw_loc = psw_loc + 6;
-	if (bd2_loc > tot_mem){
+	if (bd2_loc >= tot_mem){
 		set_psw_check(psw_pic_addr);
 	}
 }
@@ -7077,7 +7092,7 @@ private void ins_setup_rx(){  // "RX" 52  L  oorxbddd
 		ex_restore();
 	}
 	psw_loc = psw_loc + 4;
-	if (xbd2_loc + 4 > tot_mem
+	if (xbd2_loc >= tot_mem
 			&& opcode1 != 0x41){ // RPI 299
 			set_psw_check(psw_pic_addr);
 	}
@@ -7114,7 +7129,7 @@ private void ins_setup_rxf(){  // "RXF" 8   MAE  oorxbdddr0oo (note r3 before r1
 		ex_restore();
 	}
 	psw_loc = psw_loc + 6;
-	if (xbd2_loc + 4 > tot_mem){ // RPI 299
+	if (xbd2_loc >= tot_mem){ // RPI 299
 		set_psw_check(psw_pic_addr);
 	}
 }
@@ -7147,7 +7162,7 @@ private void ins_setup_rxe(){  // "RXE" 28  ADB oorxbddd00oo
 		ex_restore();
 	}
 	psw_loc = psw_loc + 6;
-	if (xbd2_loc + 4 > tot_mem){ // RPI 299
+	if (xbd2_loc >= tot_mem){ // RPI 299
 		set_psw_check(psw_pic_addr);
 	}
 }
@@ -7207,7 +7222,7 @@ private void ins_setup_rxy(){ // "RXY" 76 MLG oorxbdddhhoo
 		ex_restore();
 	}
 	psw_loc = psw_loc + 6;
-	if (xbd2_loc + 4 > tot_mem){ // RPI 299
+	if (xbd2_loc >= tot_mem){ // RPI 299
 			set_psw_check(psw_pic_addr);
 	}
 }
@@ -7231,7 +7246,7 @@ private void ins_setup_s(){  // "S" 43 SPM oo00bddd
 		ex_restore();
 	}
 	psw_loc = psw_loc + 4;
-	if (bd2_loc > tot_mem){ // RPI 299
+	if (bd2_loc >= tot_mem){ // RPI 299
 		set_psw_check(psw_pic_addr);
 }
 }
@@ -7260,7 +7275,7 @@ private void ins_setup_si(){  // "SI" 9 CLI  ooiibddd
 		ex_restore();
 	}
 	psw_loc = psw_loc + 4;
-	if (bd1_loc > tot_mem){ // RPI 299
+	if (bd1_loc >= tot_mem){ // RPI 299
 		set_psw_check(psw_pic_addr);
 	}
 }
@@ -7286,7 +7301,7 @@ private void ins_setup_siy(){  // "SIY" 6  TMY  ooiibdddhhoo
 		ex_restore();
 	}
 	psw_loc = psw_loc + 6;
-	if (bd1_loc > tot_mem){ // RPI 299
+	if (bd1_loc >= tot_mem){ // RPI 299
 		set_psw_check(psw_pic_addr);
 	}
 }
@@ -7431,7 +7446,7 @@ public String get_ins_name(int ins_loc){
 	 */
 	tz390.op_code_index = -1; // assume not found RPI 251
 	ins_loc = ins_loc & psw_amode;
-	if (ins_loc > tot_mem){
+	if (ins_loc >= tot_mem){
 		return "?????";
 	}
 	int op1 = mem_byte[ins_loc] & 0xff;
@@ -7479,7 +7494,7 @@ public String get_ins_name(int ins_loc){
 	} else {
 	    hex_key = hex_op1 + hex_op2;
 	}
-	tz390.op_code_index = tz390.find_key_index("H:" + hex_key);
+	tz390.op_code_index = tz390.find_key_index('H',hex_key);
 	if (tz390.op_code_index != -1){
 		ins_name = tz390.op_name[tz390.op_code_index];
 		if (ins_name.length() < 5){
@@ -7714,7 +7729,7 @@ public void set_psw_loc(int addr){
 	if (psw_loc >= tot_mem){
 		set_psw_check(psw_pic_addr);
 	}
-	if (tz390.opt_trace){
+	if (tz390.opt_trace && !tz390.opt_test){
 		sz390.put_log(""); // RPI 348
 	}
 	ex_mode = false;
@@ -7793,15 +7808,6 @@ private int get_sra32(int int_reg,int shift_count){
     int int_result = int_reg >> shift_count;
     psw_cc = get_int_comp_cc(int_result,0);
     return int_result;
-}
-private long get_sra64(long long_reg,int shift_count){
-	/*
-	 * return long_reg shifted right arith
-	 * and set psw_cc
-	 */
-    long long_result = long_reg >> shift_count;
-    psw_cc = get_long_comp_cc(long_result,0);
-    return long_result;
 }
 private int get_int_log_add_cc(){
 	/* 
@@ -10669,7 +10675,7 @@ private void init_opcode_keys(){
 				hex_key = "BL=" + hex_key; //RIP200
 			}
 		}
-		if (tz390.find_key_index("H:" + hex_key) == -1){
+		if (tz390.find_key_index('H',hex_key) == -1){
 			if (!tz390.add_key_index(index)){
 				set_psw_check(psw_pic_operr);
 			}
