@@ -13,6 +13,7 @@
 * 07/03/06 RPI 340 test T' for EQU with 3rd operand plus mult. types
 * 07/03/06 RPI 353 test prefix operator followed by (...)            
 * 07/08/06 RPI 359 test keyword parm with mixed case                 
+* 08/30/06 RPI 422 test padded setc compare with high low chars      
 *********************************************************************
 TESTMAC1 SUBENTRY
          WTO   'TESTMAC1 TEST SUBSTRINGS, '''' (DOUBLE QUOTES), AND &&'
@@ -108,4 +109,11 @@ Y3       EQU    X3
          MEND
          TESTMC  
          TESTMC ARMODE=Y
+* TEST PADDED SETC COMPARE WITH HIGH LOC CHARS
+         AIF ('A ' GE 'A1').AIFERR
+         AIF ('A1' LE 'A ').AIFERR
+         MNOTE 'A LT A1 AND A1 GT A OK'
+         AGO   .ENDAIF
+.AIFERR  MNOTE 'A GE A1 OR A1 LT A ERROR'
+.ENDAIF  ANOP
          END

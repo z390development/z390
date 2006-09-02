@@ -4,6 +4,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -83,7 +84,7 @@ public  class  tz390 {
     * 05/13/06 RPI 314 add AGOB and AIFB    
     * 05/13/06 RPI 315 allow ,space within (...) for
     *          macro ops prior to ,space continuation
-    *          add option REFORMAT with default false   
+    *          add option REFORMAT with default off   
     * 05/24/06 RPI 227 add shared alarm_bell for System.out  
     * 06/04/06 RPI 331 set opsyn_name to null for cancel
     * 06/09/06 RPI 342 correct parsing of parms with exp ?' operators 
@@ -91,6 +92,7 @@ public  class  tz390 {
     * 07/20/06 RPI 378 correct to use first SYSOBJ file dir
     * 08/08/06 RPI 397 synchronize system.out
     * 08/10/06 RPI 409 optimize find_key_index using type
+    * 08/19/06 RPI 415 replace option MFC with ASM and add BAL
     ********************************************************
     * Shared z390 tables
     *****************************************************/
@@ -99,7 +101,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.1.01c";  //dsh
+    String version    = "V1.1.01e";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -108,17 +110,18 @@ public  class  tz390 {
     boolean opt_amode24  = false;  // link to run amode24
     boolean opt_amode31  = true;   // link to run amode31
     boolean opt_ascii    = false; // use ascii vs ebcdic
+    boolean opt_asm      = true;  // run az390 assembler as mz390 subtask  RPI 415
+    boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
     boolean opt_cics     = false; // exec cics program honoring prolog,epilog
     boolean opt_con      = true;  // log msgs to console
     boolean opt_dump     = false; // only indicative dump on abend unless on
     boolean opt_epilog   = true;  // if cics, insert DFHEIRET
-    boolean opt_reformat = false; // reformat BAL statements
+    boolean opt_reformat = false;  // reformat BAL statements
     boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
     String  opt_ipl      = "";    // program to execute at startup
     boolean opt_list     = true;  // generate LOG file
     boolean opt_listcall = true;  // list macro calls
     boolean opt_listfile = true;  // list each file path
-    boolean opt_mfc      = true;  // mainframe compatiblity
     boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
@@ -158,7 +161,8 @@ public  class  tz390 {
 	 * global limits with option overrides
 	 */
     char   alarm_bell = 0x07;          // ascii bell char for system.out alarm
-	int    max_errors        = 100;     // ERR(100) max errors before abort
+	int    max_mnote_warning = 4;       // mnote limit for warnings (rc=4 vs rc=16) RPI 415
+    int    max_errors        = 100;     // ERR(100) max errors before abort
     int    max_main_width = 800;
     int    max_main_height = 600;
 	int    max_line_len = 80;           // opt_mlc max line length RPI 264
@@ -178,6 +182,18 @@ public  class  tz390 {
 	String pgm_dir  = null; // from first parm else dir_cur
 	String pgm_name = null; // from first parm else abort
 	String pgm_type = null; // from first parm override if mlc else def.
+    String ada_type = ".ADA"; // ADATA type (not supported yet)
+	String bal_type = ".BAL"; // basic assembler output from mz390, input to az390
+	String cpy_type = ".CPY"; // copybook source for mz390
+    String dat_type = ".DAT"; // AREAD default input for mz390
+	String err_type = ".ERR"; // step error and rc log
+    String log_type = ".LOG"; // log for z390, ez390, sz390, pz390
+	String mac_type = ".MAC"; // macro source
+    String mlc_type = ".MLC"; // macro assembler source program
+    String obj_type = ".OBJ"; // relocatable object code for az390 and lz390
+    String pch_type = ".PCH"; // punch output from mz390
+    String prn_type = ".PRN"; // assembly listing for az390
+    String z390_type = ".390"; // z390 executable load module for lz390 and ez390
     String dir_390 = null; // SYS390() load module
     String dir_bal = null; // SYSBAL() az390 source input
     String dir_cpy = null; // SYSCPY() mz390 copybook lib
@@ -226,6 +242,17 @@ public  class  tz390 {
     int     split_parms_index = -1;  // line index to parms else -1
     int     split_level = 0;
     boolean split_quote = true;
+    /*
+     * pad_spaces char table for padding
+     * starts at 4096 and expands as required
+     */
+    int    pad_spaces_len = 0;
+    char[] pad_spaces = null;
+	/*
+	 * dup operator buffer
+	 */
+	int dup_char_len = 0;
+	char[] dup_char = null; 
     /*
      * ASCII and EBCDIC printable character tables
      */
@@ -2884,59 +2911,6 @@ public  class  tz390 {
 		       "FD",  // 7130 "FD" "DP" "SS2" 26		       
 			};
       /*
-       * DS/DC type tables shared by mz390 and az390
-       */
-      String dc_valid_types   = "ABCDEFHLPSVXYZ";
-      String dc_type_explicit = "RBCKKGGKPRVXRZ";
-      int[] dc_type_len = {
-      		4,  // A
-			1,  // B
-			1,  // C
-			8,  // D
-			4,  // E
-			4,  // F
-			2,  // H
-			16, // L
-			1,  // P
-			2,  // S
-			4,  // V
-			1,  // X
-			2,  // Y
-			1   // Z
-			};
-      int[] dc_type_align = {
-      		4,  // A
-			0,  // B
-			0,  // C
-			8,  // D
-			4,  // E
-			4,  // F
-			2,  // H
-			8,  // L
-			0,  // P
-			2,  // S
-			4,  // V
-			0,  // X
-			2,  // Y
-			0   // Z
-			};
-      char[] dc_type_delimiter = {
-      		'(',  // A
-			'\'', // B
-			'\'', // C
-			'\'', // D
-			'\'', // E
-			'\'', // F
-			'\'', // H
-			'\'', // L
-			'\'', // P
-			'(',  // S
-			'(',  // V
-			'\'', // X
-			'(',  // Y
-			'\''  // Z
-			};
-      /*
        * key search table data
        */
       int last_key_op = 0;
@@ -3087,6 +3061,10 @@ public void init_options(String[] args,String pgm_type){
     		z390_amode31 = 'T';
     	} else if (token.toUpperCase().equals("ASCII")){
     		opt_ascii = true; 
+    	} else if (token.toUpperCase().equals("ASM")){
+    		opt_asm = true; 
+    	} else if (token.toUpperCase().equals("BAL")){
+    		opt_bal = true; 	
     	} else if (token.toUpperCase().equals("CICS")){
            	opt_cics = true;
     	} else if (token.toUpperCase().equals("CON")){
@@ -3150,6 +3128,10 @@ public void init_options(String[] args,String pgm_type){
            	} catch (Exception e){
            		abort_error(9,"invalid memory option " + token);
            	}
+        } else if (token.toUpperCase().equals("NOASM")){
+           	opt_asm = false; 
+        } else if (token.toUpperCase().equals("NOBAL")){
+           	opt_bal = false;    	
         } else if (token.toUpperCase().equals("NOCON")){
            	opt_con = false;
         } else if (token.toUpperCase().equals("NOEPILOG")){
@@ -3160,8 +3142,6 @@ public void init_options(String[] args,String pgm_type){
            	opt_listcall = false;
         } else if (token.equals("NOLISTFILE")){
            	opt_listfile = false;
-         } else if (token.toUpperCase().equals("NOMFC")){
-           	opt_mfc = false;
          } else if (token.toUpperCase().equals("NOPROLOG")){
             opt_prolog = false;
          } else if (token.toUpperCase().equals("NOSTATS")){
@@ -3252,7 +3232,7 @@ public void init_options(String[] args,String pgm_type){
            	opt_test = true;
          } else if (token.toUpperCase().equals("TEXT")){
             	opt_text = true;
-            	opt_mfc = false;
+            	opt_asm = false;
          } else if (token.toUpperCase().equals("TRACE")){
            	opt_trace = true;
            	opt_list   = true;
@@ -3280,8 +3260,8 @@ public void init_options(String[] args,String pgm_type){
          }
          index1++;
     }
-    if (opt_systerm.length() == 0){
-    	opt_systerm = pgm_name;
+    if (opt_systerm.length() == 0){  // RPI 425
+    	opt_systerm = get_file_name(dir_err,pgm_name,err_type);
     }
 }
 public void open_systerm(String z390_pgm){
@@ -3289,7 +3269,8 @@ public void open_systerm(String z390_pgm){
 	 * open systerm file else set null
 	 */
 	systerm_prefix = pgm_name + " " + z390_pgm + " ";
-    systerm_file_name = dir_err + opt_systerm + ".ERR";
+    if (systerm_file != null)return; // rpi 415
+	systerm_file_name = get_file_name(dir_err,opt_systerm,err_type);
     try {
         systerm_file = new RandomAccessFile(systerm_file_name,"rw");
         systerm_file.seek(systerm_file.length());
@@ -3330,7 +3311,7 @@ public synchronized void close_systerm(int rc){ // RPI 397
 	 */
      if (systerm_file != null){
      	 if (opt_timing){
-     		systerm_sec  = " SEC=" + get_int_string((int)((System.currentTimeMillis()-systerm_start)/1000),2);
+     		systerm_sec  = " SEC=" + right_justify("" + ((System.currentTimeMillis()-systerm_start)/1000),2);
     	    systerm_time = sdf_hhmmss.format(new Date()) + " ";;
     	 }
     	 try {
@@ -3339,7 +3320,12 @@ public synchronized void close_systerm(int rc){ // RPI 397
     		 if (systerm_ins > 0){
     			 systerm_ins_text = " INS=" + systerm_ins;
     		 }
-    		 systerm_file.writeBytes(systerm_time + systerm_prefix + "ENDED   RC=" + get_int_string(rc,2) + systerm_sec + " MEM(MB)=" + get_int_string(get_mem_usage(),3) + " IO=" + systerm_io + systerm_ins_text + "\r\n");
+    		 systerm_file.writeBytes(systerm_time + systerm_prefix
+    				 + "ENDED   RC=" + right_justify("" + rc,2) 
+    				 + systerm_sec 
+    				 + " MEM(MB)=" + right_justify("" + get_mem_usage(),3) 
+    				 + " IO=" + systerm_io 
+    				 + systerm_ins_text + "\r\n");
     	 } catch (Exception e){
     	 }
     	 try {
@@ -3359,17 +3345,6 @@ private int get_mem_usage(){
     	 mem_tot = mem_tot + p.getPeakUsage().getUsed();
     }
     return (int)(mem_tot >> 20);
-}
-private String get_int_string(int num,int min_len){
-	/*
-	 * return string value of integer with
-	 * minimum length by adding leading spaces
-	 */
-	String num_string = "" + num;
-	while (num_string.length() < min_len){
-		num_string = " " + num_string;
-	}
-	return num_string;
 }
 private String get_short_file_name(String file_name){
 	/*
@@ -3667,7 +3642,7 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
     index = file_name.lastIndexOf('.');
     if (index != -1){  // strip extension if any
     	pgm_name = file_name.substring(0,index);
-    	if (!file_type.equals(".MLC")){ //RPI169
+    	if (!file_type.equals(mlc_type)){ //RPI169
     		pgm_type=file_type;
     	} else {
     		pgm_type = file_name.substring(index);
@@ -3790,7 +3765,7 @@ public boolean get_sdt_char_int(String sdt){
 	   int index = 2;
 	   sdt_char_int = 0;
 	   char sdt_quote = '\'';
-	   char char_type = sdt.substring(1,2).toUpperCase().charAt(0);
+	   char char_type = sdt.substring(1,2).toUpperCase().charAt(0); 
 	   switch (char_type){
 	   case 'A': // ASCII
 		   index = 3;
@@ -3856,11 +3831,70 @@ public boolean verify_ascii_source(String temp_line){
     }
     return true;
 }
-public String get_padded_name(String name){
+public String left_justify(String text,int padded_len){
 	/*
-	 * return 8 character name string
+	 * return text left justified in field
+	 * if field larger than text
 	 */
-	return (name + "        ").substring(0,8);
+	int pad_len = padded_len - text.length();
+	if (pad_len > 0){
+		if (pad_len > pad_spaces_len){
+	        init_pad_spaces(pad_len);
+		}
+		return text + String.valueOf(pad_spaces,0,pad_len);
+	} else {
+		return text;
+	}
+}
+public String right_justify(String text,int padded_len){
+	/*
+	 * return text right justified in field
+	 * if field larger than text
+	 */
+	int pad_len = padded_len - text.length();
+	if (pad_len > 0){
+		if (pad_len > pad_spaces_len){
+           init_pad_spaces(pad_len);
+		}
+		return String.valueOf(pad_spaces,0,pad_len) + text;
+	} else {
+		return text;
+	}
+}
+private void init_pad_spaces(int new_pad_len){
+	/*
+	 * initialize new pad_spaces byte array
+	 * used by left and right justify
+	 */
+	pad_spaces_len = new_pad_len;
+	if (pad_spaces_len < 4096){
+		pad_spaces_len = 4096;
+	}
+    pad_spaces = new char[pad_spaces_len];
+    Arrays.fill(pad_spaces,0,pad_spaces_len,' ');
+}
+public String get_dup_string(String text,int dup_count){
+	/*
+	 * return string with text dupicated
+	 * dup_count times
+	 */
+	if (dup_char_len < dup_count){
+		dup_char_len = dup_count;
+		if (dup_char_len < 4096){
+			dup_char_len = 4096;
+		}
+		dup_char = new char[dup_char_len];
+	}
+	int tot_char = text.length() * dup_count;
+	if (text.length() == 1){
+		Arrays.fill(dup_char,0,dup_count,text.charAt(0));
+	} else {
+		System.arraycopy(text.toCharArray(),0,dup_char,0,text.length());
+		if (dup_count > 1){
+			System.arraycopy(dup_char,0,dup_char,text.length(),tot_char-text.length());
+		}
+	}
+	return String.valueOf(dup_char,0,tot_char);
 }
 public String trim_trailing_spaces(String line){
 	/*

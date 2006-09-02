@@ -192,6 +192,7 @@ public  class  pz390 {
     * 07/30/06 RPI 387 Fix RXY, RSY, and SIY to support 20 bit signed disp.
     * 08/06/06 RPI 397 S0C5 on memory violations
     * 08/06/06 RPI 398 fix D and DR truncated dividend error.
+    * 08/27/06 RPI 411 replace while loops with Arrays.fill and arraycopy
     ********************************************************
     * Global variables
     *****************************************************/
@@ -932,8 +933,7 @@ private void ins_lt_40(){
 		     	break;
 		     }
 		     if (data_len > 0){  // RPI 386
-		    	 mem.position(bd1_loc);
-		    	 mem.put(mem_byte,bd2_loc,data_len); //RPI108
+		    	 System.arraycopy(mem_byte,bd2_loc,mem_byte,bd1_loc,data_len); // RPI 411
 		    	 bd1_loc = bd1_loc + data_len;
 		    	 bd2_loc = bd2_loc + data_len;
 		     }
@@ -2330,8 +2330,7 @@ private void ins_lt_c0(){
 		     }
 		     if (bd1_loc + data_len <= bd2_loc
 			    	 || bd2_loc + data_len <= bd1_loc){
-			     mem.position(bd1_loc);
-			     mem.put(mem_byte,bd2_loc,data_len); //RPI82
+			     System.arraycopy(mem_byte,bd2_loc,mem_byte,bd1_loc,data_len); // RPI 411
 	             bd1_loc = bd1_loc + data_len;
 	             bd2_loc = bd2_loc + data_len;
 		     } else if (bd2_loc+1 == bd1_loc){
@@ -2339,6 +2338,8 @@ private void ins_lt_c0(){
 	             bd1_loc = bd1_loc + data_len;
 	             bd2_loc = bd2_loc + data_len;
 		     } else {
+			   	 bd1_end = bd1_loc + data_len;
+			   	 // destructive overlap with gap > 1
 			   	 bd1_end = bd1_loc + data_len;
 			   	 while (bd1_loc < bd1_end){
 			   	       	mem_byte[bd1_loc] = mem_byte[bd2_loc];
@@ -4048,8 +4049,8 @@ private void ins_lt_c0(){
 		     case 0x86:  // 4870 "B986" "MLGR" "RRE"
 		     	 psw_check = false;
 		         ins_setup_rre();
-		         big_int1 = new BigInteger(get_log_bytes(reg,rf1+8,8)); // RPI 383
-		         big_int2 = new BigInteger(get_log_bytes(reg,rf2,8));
+		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1+8,8)); // RPI 383
+		         big_int2 = new BigInteger(get_log_bytes(reg_byte,rf2,8));
 		         big_int1 = big_int1.multiply(big_int2);
                  zcvt_big_int_to_work_reg(big_int1,16);
 		         reg.putLong(rf1,work_reg.getLong(0));
@@ -4060,8 +4061,8 @@ private void ins_lt_c0(){
 		         ins_setup_rre();
 		         work_reg.putLong(0,reg.getLong(rf1));
 		         work_reg.putLong(8,reg.getLong(rf1+8));
-		         big_int1 = new BigInteger(get_log_bytes(work_reg,0,16));
-		         big_int2 = new BigInteger(get_log_bytes(reg,rf2,8));
+		         big_int1 = new BigInteger(get_log_bytes(work_reg_byte,0,16));
+		         big_int2 = new BigInteger(get_log_bytes(reg_byte,rf2,8));
 			     if (big_int2.compareTo(BigInteger.ZERO) != 0){
 			     	rv1  = (int) rlv1 / rv2;
 			     } else {
@@ -4128,8 +4129,8 @@ private void ins_lt_c0(){
 		     case 0x96:  // 4980 "B996" "MLR" "RRE"
 		     	 psw_check = false;
 		         ins_setup_rre();
-		         big_int1 = new BigInteger(get_log_bytes(reg,rf1+12,4)); // RPI 275
-		         big_int2 = new BigInteger(get_log_bytes(reg,rf2+4,4));
+		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1+12,4)); // RPI 275
+		         big_int2 = new BigInteger(get_log_bytes(reg_byte,rf2+4,4));
 		         big_int1 = big_int1.multiply(big_int2);
                  zcvt_big_int_to_work_reg(big_int1,8);
 		         reg.putInt(rf1+4,work_reg.getInt(0));
@@ -4140,8 +4141,8 @@ private void ins_lt_c0(){
 		         ins_setup_rre();
 		         work_reg.putInt(0,reg.getInt(rf1+4));
 		         work_reg.putInt(4,reg.getInt(rf1+12));
-		         big_int1 = new BigInteger(get_log_bytes(work_reg,0,8));
-		         big_int2 = new BigInteger(get_log_bytes(reg,rf2+4,4));
+		         big_int1 = new BigInteger(get_log_bytes(work_reg_byte,0,8));
+		         big_int2 = new BigInteger(get_log_bytes(reg_byte,rf2+4,4));
 			     if (big_int2.compareTo(BigInteger.ZERO) != 0){
 			     	rv1  = (int) rlv1 / rv2;
 			     } else {
@@ -4488,13 +4489,13 @@ private void ins_lt_ff(){
 		     ins_setup_ss();
 		     if (bd1_loc + rflen <= bd2_loc
 		    	 || bd2_loc + rflen <= bd1_loc){
-		    	 mem.position(bd1_loc);
-		    	 mem.put(mem_byte,bd2_loc,rflen); //RPI82
+		    	 System.arraycopy(mem_byte,bd2_loc,mem_byte,bd1_loc,rflen); // RPI 411
 		     } else if (bd2_loc+1 == bd1_loc){
 		    	 Arrays.fill(mem_byte,bd1_loc,bd1_loc + rflen,mem_byte[bd2_loc]);
 		     } else {
 		    	 bd1_end = bd1_loc + rflen;
 		    	 while (bd1_loc < bd1_end){
+		    		    // destructive overlap with gap > 1
 		    	       	mem_byte[bd1_loc] = mem_byte[bd2_loc];
 		    	       	bd1_loc++;
 		    	       	bd2_loc++;
@@ -5218,8 +5219,8 @@ private void ins_lt_ff(){
 		     case 0x86:  // 6000 "E386" "MLG" "RXY"
 		     	 psw_check = false;
 		         ins_setup_rxy();
-		         big_int1 = new BigInteger(get_log_bytes(reg,rf1+8,8)); // RPI 383
-		         big_int2 = new BigInteger(get_log_bytes(mem,xbd2_loc,8));
+		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1+8,8)); // RPI 383
+		         big_int2 = new BigInteger(get_log_bytes(mem_byte,xbd2_loc,8));
 		         big_int1 = big_int1.multiply(big_int2);
                  zcvt_big_int_to_work_reg(big_int1,16);
 		         reg.putLong(rf1,work_reg.getLong(0));
@@ -5230,8 +5231,8 @@ private void ins_lt_ff(){
 		         ins_setup_rxy();
 		         work_reg.putLong(0,reg.getLong(rf1));
 		         work_reg.putLong(8,reg.getLong(rf1+8));
-		         big_int1 = new BigInteger(get_log_bytes(work_reg,0,16));
-		         big_int2 = new BigInteger(get_log_bytes(mem,xbd2_loc,8));
+		         big_int1 = new BigInteger(get_log_bytes(work_reg_byte,0,16));
+		         big_int2 = new BigInteger(get_log_bytes(mem_byte,xbd2_loc,8));
 			     if (big_int2.compareTo(BigInteger.ZERO) != 0){
 			     	rv1  = (int) rlv1 / rv2;
 			     } else {
@@ -5299,8 +5300,8 @@ private void ins_lt_ff(){
 		     case 0x96:  // 6080 "E396" "ML" "RXY"
 		     	 psw_check = false;
 		         ins_setup_rxy();
-		         big_int1 = new BigInteger(get_log_bytes(reg,rf1+12,4)); // RPI 275
-		         big_int2 = new BigInteger(get_log_bytes(mem,xbd2_loc,4));
+		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf1+12,4)); // RPI 275
+		         big_int2 = new BigInteger(get_log_bytes(mem_byte,xbd2_loc,4));
 		         big_int1 = big_int1.multiply(big_int2);
                  zcvt_big_int_to_work_reg(big_int1,8);
 		         reg.putInt(rf1+4,work_reg.getInt(0));
@@ -5311,8 +5312,8 @@ private void ins_lt_ff(){
 		         ins_setup_rxy();
 		         work_reg.putInt(0,reg.getInt(rf1+4));
 		         work_reg.putInt(4,reg.getInt(rf1+12));
-		         big_int1 = new BigInteger(get_log_bytes(work_reg,0,8));
-		         big_int2 = new BigInteger(get_log_bytes(mem,xbd2_loc,4));
+		         big_int1 = new BigInteger(get_log_bytes(work_reg_byte,0,8));
+		         big_int2 = new BigInteger(get_log_bytes(mem_byte,xbd2_loc,4));
 			     if (big_int2.compareTo(BigInteger.ZERO) != 0){
 			     	rv1  = (int) rlv1 / rv2;
 			     } else {
@@ -5520,7 +5521,7 @@ private void ins_lt_ff(){
 		     case 0x1C:  // 6270 "EB1C" "RLLG" "RSY"
 		     	 psw_check = false;
 		         ins_setup_rsy();
-		         big_int1 = new BigInteger(get_log_bytes(reg,rf3,8));
+		         big_int1 = new BigInteger(get_log_bytes(reg_byte,rf3,8));
 		         big_int1 = big_int1.multiply(BigInteger.valueOf(2).pow(bd2_loc & 0x3f));
                  zcvt_big_int_to_work_reg(big_int1,16);
 		         reg.putLong(rf1,work_reg.getLong(8) | work_reg.getLong(0));
@@ -7947,17 +7948,14 @@ private int get_long_log_sub_cc(){
 		}	
 	}
 }
-private byte[] get_log_bytes(ByteBuffer data_byte,int data_offset,int data_len){
+private byte[] get_log_bytes(byte[] data_byte,int data_offset,int data_len){
 	/*
 	 * return byte array with leading 0 byte followed
 	 * by data bytes.  This array format is used to 
 	 * initialize BigInteger with logical unsigned value.
 	 */
 	byte[] new_byte = new byte[data_len+1];
-	while (data_len > 0){
-		data_len--;
-		new_byte[data_len+1] = data_byte.get(data_offset + data_len);
-	}
+	System.arraycopy(data_byte,data_offset,new_byte,1,data_len); // RPI 411
 	return new_byte;
 }
 private void zcvt_big_int_to_work_reg(BigInteger big_int,int work_reg_bytes){
@@ -7968,16 +7966,12 @@ private void zcvt_big_int_to_work_reg(BigInteger big_int,int work_reg_bytes){
 	byte[] work_byte = big_int.toByteArray();
 	byte extend_byte = 0;
 	if (work_byte[0] < 0)extend_byte = -1;
-	int index1 = work_byte.length - 1;
-	int index2 = work_reg_bytes - 1;
-	while (index1 >= 0 & index2 >= 0){
-		work_reg_byte[index2] = work_byte[index1];
-		index1--;
-		index2--;
-	}
-	while (index2 >= 0){
-		work_reg_byte[index2] = extend_byte;
-		index2--;
+	int extend_len = work_reg_bytes - work_byte.length;
+	if (extend_len > 0){
+		Arrays.fill(work_reg_byte,0,extend_len,extend_byte); // RPI 411
+		System.arraycopy(work_byte,0,work_reg_byte,extend_len,work_byte.length);
+	} else {
+		System.arraycopy(work_byte,work_byte.length-work_reg_bytes,work_reg_byte,0,work_reg_bytes);
 	}
 }
 private void exec_clm(){

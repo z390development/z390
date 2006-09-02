@@ -117,14 +117,16 @@ public class gz390_screen extends JPanel implements Runnable {
             scn_update_thread = null;
         }    
         public void run() {
-            while (scn_update_thread == Thread.currentThread()) {
-            	if (scn_repaint){
-                	scn_repaint = false;
-                	repaint();
-            	}
-                try {
+            while (scn_update_thread == Thread.currentThread()) {              
+            	try {  // RPI 423 catch repait exception too
+                	if (scn_repaint){
+                		scn_repaint = false;
+                		repaint();
+                	}
                     Thread.sleep(scn_update_wait);
-                } catch (InterruptedException e) { break; }
+                } catch (Exception e){
+                	break;
+                }
             }
             scn_update_thread = null;
         } 

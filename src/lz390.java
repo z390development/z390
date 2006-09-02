@@ -301,7 +301,7 @@ private void put_stats(){
 	   }
 	}
 	put_log("LZ390I total errors         = " + lz390_errors);
-	put_log("LZ390I return code(" + tz390.get_padded_name(tz390.pgm_name) + ")= " + lz390_rc); // RPI 312
+	put_log("LZ390I return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + lz390_rc); // RPI 312
 }
 private void close_files(){
 	  /*
@@ -690,7 +690,9 @@ private String cvt_obj_bin_to_hex(){
 		bin_byte[10] = 0;
 		int count = bin_byte_buff.getShort(10);
 		esd_len = tz390.get_hex(count,2);
-		text = text + " ESD=" + esd_id + " LOC=" + esd_loc + " LEN=" + esd_len + " ";
+		text = text + " ESD=" + esd_id 
+		            + " LOC=" + esd_loc 
+		            + " LEN=" + esd_len + " ";
 		index = 16;
 		while (count > 0){
 			text = text + tz390.get_hex(bin_byte[index] & 0xff,2);
@@ -761,7 +763,7 @@ private void add_gbl_cst(int obj_index1){
 	}
 	if  (esd_ok){
 		if (tz390.opt_list){ // RPI 385
-			put_log("LZ390I ESD=" + tz390.get_padded_name(obj_esd_name[obj_index1]) + " LOC=" + tz390.get_hex(loc_ctr,8) + " LEN=" + tz390.get_hex(obj_esd_len[obj_index1],8));
+			put_log("LZ390I ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " LOC=" + tz390.get_hex(loc_ctr,8) + " LEN=" + tz390.get_hex(obj_esd_len[obj_index1],8));
 		}
 		gbl_esd_name[cur_gbl_esd] = obj_esd_name[obj_index1];
 		gbl_esd_loc[cur_gbl_esd] = loc_ctr;
@@ -809,7 +811,7 @@ private void add_gbl_ent(int obj_index1){
 				   gbl_esd_loc[gbl_ent_esd] = obj_esd_loc[obj_index1] - obj_esd_loc[obj_index2] + gbl_esd_loc[cur_gbl_esd];
 				   gbl_esd_type[gbl_ent_esd] = gbl_esd_ent;
 				   if (tz390.opt_list){ // RPI 385
-					   put_log("LZ390I ESD=" + tz390.get_padded_name(obj_esd_name[obj_index1]) + " ENT=" + tz390.get_hex(gbl_esd_loc[gbl_ent_esd],8));
+					   put_log("LZ390I ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " ENT=" + tz390.get_hex(gbl_esd_loc[gbl_ent_esd],8));
 				   }
 				   obj_index2 = tot_obj_esd;
 				}

@@ -1,6 +1,5 @@
-z390 v1.1.01c PTF 08/10/06
+z390 v1.1.01e PTF 09/02/06
 Copyright 2006 Automated Software Tools Corporation
-
 
 The enclosed z390.jar contains following cumulative fixes for v1.1.01:
 
@@ -152,6 +151,78 @@ The enclosed z390.jar contains following cumulative fixes for v1.1.01:
     by eliminating extra string concatenation for every find_key_index
     call which is the most commonly used function in z390.
 
+44. RPI 410 correct mz390 to issue error if AREAD or PUNCH extension
+    parms DSNAME=,DDNAME=,DSN=,ID= are invalid.  Return 0 length string
+    at end of file and single space for blank lines. Support variables
+    in the parm fields, and and AREAD and PUNCH stats.
+
+45. RPI 411 improve speed of mz390, az390, lz390, and pz390 (MVC, MVCL)
+    by replacing array initializtion and copy with Arrays.fill and 
+    System.arraycopy native speed functions.  And reduce string garbage
+    collection overhead by replacing string concatenation loops with
+    fill function where possible.
+
+46. RPI 412 correct mz390 to show all errors during macro loading.
+
+47. RPI 414 correct mz390 to correctly support ERR(nnn) error limit 
+    override with 0 indicating no limit.
+
+48. RPI 415 merge mz390 and az390 to run together as parallel threads
+    with provider/consumer locking to pass BAL without requiring BAL
+    file.  New default ASM replaces MFC and new default NOBAL eliminates
+    need for BAL file output.  Option BAL will create it.  az390 can 
+    still be run using BAL file output to skip repeated macro expansions
+    if desired.  Option NOASM turns off az390 and surpresses support of
+    ordinary symbols in mz390.  The new ASM option fully supports 
+    ordinary symbol references in AIF expressions and does lookahead 
+    function automatically during mlc loading.  bal and prn file 
+    statistics now include total errors from each other.  See ERR
+    file for summary of mz390 and az390 errors in sequence.  Note
+    mz390 tracem and tracea messages may not appear in sequence due
+    to thread time slicing.  See TESTSYM1 for attribute and symbol
+    reference tests.
+
+49. RPI 416 correct az390 loop on invalide DS/DC length calculation.
+
+50. RPI 419 correct mz390 T', L', and D' operator parsing of SETC
+    type parm to extract ordinary symbol with labelled using prebix
+    and expression operator following name.
+
+51. RPI 420 add support for up to 10 concurrent AREAD files and 10 
+    concurrent PUNCH output files identified by new ID=n parm where
+    n can be 0-9 with 0 being the default.  See TESTPCH3 example of
+    text file merging and coping in single mz390 execution with NOASM.
+
+52. RPI 422 correct mz390 to correctly compare padded setc strings of
+    equal length but unequal value.  The string compare was failing
+    for EBCDIC compares when character < 128 was compared to character 
+    >= 128 due to not ANDing 0xff with byte value for int compare.  
+    Yuck!
+
+53. RPI 423 correct mz390, az390, ez390, sz390, and gz390 to 
+    issue error and abort when thread traps by adding separate
+    exception handler for each thread.
+
+54. RPI 424 correct az390 to correctly handle invalid D, E, F, H, and L
+    type decimal constants.
+
+55. RPI 425 add file and line cross reference to all az390 error 
+    messages when running with option ASM.  Generate mz390 
+    statistics before END statement only if BAL specified.  Force 
+    listing of file cross reference at end of mz390 or az390 for all 
+    files with errors and also list on ERR file for easy reference.
+    Note the cross reference info is not available when az390 is run
+    separately using just BAL input file.
+
+56. RPI 426 speed up assembly by skipping multiple passes to try and 
+    resolve forward refernces when there are hard mz390 phase errors.
+
+57. RPI 427 issue error when ordinary symbol reference is made when
+    running mz390 with option NOASM.
+
+58. RPI 428 ignore high bit indicating address mode when searching for
+    address break in TEST mode.
+
 To install PTF follow these steps.
 
 1.  Copy the z390.jar file into install directory for z390
@@ -196,12 +267,15 @@ TESTOPR1.MLC - test new operator functions added such as A2D, SLA, etc.
 TESTINS2.MLC - test D, DR and optimize SLDL etc.
 TESTSYN2.MLC - test OPSYN restore
 TESTSET2.MLC - test array expansion with multiple values
+TESTMAC1.MLC - test string compare
+TESTSYM1.MLC - test ordinary symbol attribute and length
+TESTPCH3.MLC - test merge and copy of multiple text files in single pgm
 
 6.  Copy updated commands to the z390 root directory
 
-ASM.BAT   - allow up to rc=4
-ASML.BAT  - allow up to rc=4
-ASMLG.BAT - allow up to rc=4
+ASM.BAT   - allow up to rc=4, new ASM, NOBAL options to skip az390
+ASML.BAT  - allow up to rc=4, new ASM, NOBAL options to skip az390
+ASMLG.BAT - allow up to rc=4, new ASM, NOBAL options to skip az390
 EXEC.BAT  - allow up to rc=4
 LINK.BAT  - allow up to rc=4
 RT7.BAT - assemble, link, and execute and compare with no

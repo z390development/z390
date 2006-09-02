@@ -80,6 +80,7 @@ import javax.swing.Timer;
     * 07/17/06 RPI 360 and 370 add CFD and CTD conversion svcs
     * 07/20/06 RPI 377 prevent DCB SYNAD recursion on missing file
     * 08/08/06 RPI 397 synchronize system.out
+    * 09/02/06 RPI 428 turn off high bit for test break addr
     ********************************************************
     * Global variables
     *****************************************************/
@@ -100,7 +101,6 @@ import javax.swing.Timer;
     */
     tz390 tz390 = null;
     pz390 pz390 = null;
-    Thread  pz390_thread = null;
     boolean pz390_running = false;
     String ez390_pgm = null; // saved by link for gz390 title
     int ez390_rc = 0;
@@ -718,7 +718,7 @@ private void put_stats(){
 		}
 	}
 	put_log("EZ390I total errors         = " + ez390_errors);
-	put_log("EZ390I return code(" + tz390.get_padded_name(tz390.pgm_name) + ")= " + ez390_rc); // RPI 312
+	put_log("EZ390I return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + ez390_rc); // RPI 312
 }
 private void close_files(){
 	/*
@@ -850,7 +850,7 @@ public void open_files(){
 	 * open 390 and lst files
 	 */
        	if (tz390.opt_list){
-            log_file = new File(tz390.dir_log + tz390.pgm_name + ".LOG");
+            log_file = new File(tz390.dir_log + tz390.pgm_name + tz390.log_type);
          	try {
        	       log_file_buff = new BufferedWriter(new FileWriter(log_file));
        	    } catch (IOException e){
@@ -966,7 +966,7 @@ private void svc_load(){
         pz390.reg.putInt(pz390.r15,4);
         return;
 	}
-    if (load_pgm_type.equals(".390")){
+    if (load_pgm_type.equals(tz390.z390_type)){
        	svc_load_390();
     } else {
        	svc_load_file();
@@ -1168,7 +1168,7 @@ private boolean get_load_dsn(){
 	 *       else get user list from dir_addr with
 	 *       null delimited or double quote delimiter.
 	 */
-	load_pgm_type = ".390";
+	load_pgm_type = tz390.z390_type;
 	String dsn_source = "dsname";
  	if (load_dsn_addr < 0){
  		String ddname = get_ascii_string(load_dsn_addr & 0x7fffffff,8);
@@ -1252,7 +1252,7 @@ private void svc_delete(){
 	 */
 	load_dsn_addr = pz390.reg.getInt(pz390.r15);
 	load_pgm_dir = tz390.dir_390;
-	load_pgm_type = ".390";
+	load_pgm_type = tz390.z390_type;
 	if (load_dsn_addr == 0){
 		load_pgm_name = get_ascii_string(pz390.reg.getInt(pz390.r0),8);
 	} else {
@@ -1861,14 +1861,14 @@ private void svc_bldl(){
 			return;
 		}
 		bldl_last_name = bldl_member_name;
-		cur_cde = tz390.find_key_index('P',bldl_member_name + ".390");
+		cur_cde = tz390.find_key_index('P',bldl_member_name + tz390.z390_type);
 		if (cur_cde != -1 && cde_loc[cur_cde] != 0){
             pz390.mem.put(bldl_entry_addr+2+10,(byte)1); // R=1 entry found
             if (bldl_entry_len >= 13){  // RPI 311
             	pz390.mem.put(bldl_entry_addr+2+12,(byte)1); // Z=1 entry found in memory
             }
 		} else {
-			String bldl_member_file_name = tz390.find_file_name(tz390.dir_390,bldl_member_name,".390",tz390.dir_cur);
+			String bldl_member_file_name = tz390.find_file_name(tz390.dir_390,bldl_member_name,tz390.z390_type,tz390.dir_cur);
 			if (bldl_member_file_name != null){
 				pz390.mem.put(bldl_entry_addr+2+10,(byte)1); // R=1 entry found
 				if (bldl_entry_len >= 13){  // RPI 311
@@ -1985,13 +1985,9 @@ private void dump_mem(int mem_addr,int mem_len){
 			}
 			index++;
 		}
-		while (dump_text.length() < 16){ // RPI 271
-			dump_text = dump_text + " ";
-		}
+		dump_text = tz390.left_justify(dump_text,16); // RPI 411
 		String dump_hex = pz390.bytes_to_hex(pz390.mem,mem_addr,dump_len,4); 
-        while (dump_hex.length() < 35){ // RPI 271
-        	dump_hex = dump_hex + " ";
-        }
+        dump_hex = tz390.left_justify(dump_hex,35); // RPI 411
 		put_log(" " +tz390.get_hex(mem_addr,8) 
 			  + " *"  + dump_hex
 			  + "* *" + dump_text + "*"
@@ -2736,18 +2732,7 @@ public String get_ascii_string(int mem_addr,int mem_len){
 		}
 		index++;
 	}
-	index = text.length()-1;
-	while (index >= 0 && text.charAt(index) == ' '){
-		index--;
-	}
-	if (index < text.length() -1){
-		if (index >= 0){
-			text = text.substring(0,index+1);
-		} else {
-			text = "";
-		}
-	}
-	return text;
+	return ("x"+text).trim().substring(1);
 }
 public void put_ascii_string(String text,int mem_addr,int mem_len){
 	/*
@@ -2989,10 +2974,6 @@ public void cmd_cancel(int cmd_id){
     cmd_proc_running[cmd_id] = false;
 }
 public void run() {
-	if (pz390_thread == Thread.currentThread()){
-		pz390.exec_pz390();
-		pz390_running = false;
-	}
 	int cmd_id = 0;
 	while (cmd_id < tot_cmd){
 		if (cmd_proc_thread[cmd_id] == Thread.currentThread()) {
@@ -4454,7 +4435,7 @@ private void set_test_break_addr(int addr){
 	 */
 	test_break_addr_mode = true;
 	test_break_addr_cmd  = test_cmd;
-	test_break_addr = addr;
+	test_break_addr = addr & 0x7fffffff; // RPI 428
 	dump_mem(test_break_addr,16);
 }
 private void set_test_break_reg(){

@@ -635,6 +635,13 @@ C:\z390\linklib\fpconvrt.sve
 C:\z390\linklib\fpconvrt.svl
 C:\z390\linklib\fpconvrt.svo
 C:\z390\linklib\fpconvrt.svp
+C:\z390\linklib\RTGENCMP.BAL
+C:\z390\linklib\RTGENCMP.DAT
+C:\z390\linklib\RTGENCMP.ERR
+C:\z390\linklib\RTGENCMP.MLC
+C:\z390\linklib\RTGENDIR.BAL
+C:\z390\linklib\RTGENDIR.ERR
+C:\z390\linklib\RTGENDIR.MLC
 C:\z390\linklib\TESTFPC1.390
 C:\z390\linklib\TESTFPC1.BAL
 C:\z390\linklib\testfpc1.di3
@@ -4299,6 +4306,7 @@ C:\z390\test\testpch2.svp
 C:\z390\test\testpch2.TF1
 C:\z390\test\testpch2.tf2
 C:\z390\test\testpch2.tf3
+C:\z390\test\TESTPCH3.MLC
 C:\z390\test\TESTPRM1.390
 C:\z390\test\TESTPRM1.BAL
 C:\z390\test\testprm1.di3

@@ -107,7 +107,8 @@ public  class  gz390
 	 * 05/18/06 RPI 227 replace JTextArea TN3270 screen view
 	 *          with gz390_screen class Graphics2D panel with
 	 *          support for mulitple font characters and symbols
-	 *          plus color and other extended TN3270 attributes     
+	 *          plus color and other extended TN3270 attributes 
+	 * 08/14/06 RPI 414 recognize ERR(nnn) limit override    
 	 ********************************************************
      * Global variables
      *****************************************************
@@ -116,7 +117,6 @@ public  class  gz390
 	/*
 	 * global max/min limits
 	 */
-        int max_errors = 100;
         int max_cmd  = 100;
         int max_keys = 100;
         int max_rows = 24;
@@ -618,7 +618,7 @@ public  class  gz390
 			cmd_error = true;
 			msg = "GZ390E error " + error + " " + msg;
 			guam_put_log(msg);
-			if  (max_errors != 0 && gz390_errors > max_errors){
+			if  (tz390.max_errors != 0 && gz390_errors > tz390.max_errors){
 		        abort_error(101,"maximum errors exceeded");
             }
 		}
