@@ -12,7 +12,6 @@
 .* 01/09/06 RPI 163 - SKIP LR FOR SAME REGISTER
 .* 04/12/06 RPI 244 - IGNORE NON CRITICAL KW PARMS
 .* 04/12/06 RPI 322 - support VL option with MF=L 
-.* 07/22/06 RPI 381 - support register substitution of parametrs 
 .*********************************************************************
 &N      CALL   &NAME,                                                  X
                &PARMS,                                                 X
@@ -20,9 +19,8 @@
                &ID=,           IGNORE                                  X
                &LINKINST=BALR,                                         X
                &MF=            S/L/E FORMS SUPPORTED
-         CNOP  0,4
          AIF   (&N EQ '').SKIPDS
-&N       DS    0F
+&N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST LE 3).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
@@ -32,17 +30,7 @@
          AIF   (&MF(1) EQ 'E').EXEC
 .STD     ANOP
          AIF    (&NPARMS EQ 0).ENDPARM
-         BAL    1,*+4+&NPARMS*4
-         DC     A&PARMS
-&I       SETA   0
-.REGLOOP ANOP
-&I       SETA   &I+1
-         AIF    (&I GT &NPARMS).REGEND
-         AIF    ('&PARMS(&I)'(1,1) NE '(').REGLOOP
-&OFF     SETA   &I*4-4
-         ST     &PARMS(&I),&OFF.(1)
-         AGO    .REGLOOP
-.REGEND  ANOP       
+         LA     1,=A&PARMS
          AIF    (&VL NE 'VL').SKIPVL1 
 &OFF     SETA   N'&PARMS*4-4
          OI     &OFF.(1),X'80'

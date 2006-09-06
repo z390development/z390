@@ -5,10 +5,7 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-* 01/29/06 RPI193 test mz390 symbol length for implicit CPZ
-* 08/29/06 RPI415 test AIF reference to ordinary symbol length
-* 08/30/06 RPI419 test AIF reference to ordinary symbol setc parm
-*          with labeled using prefix and trailing expression oper. 
+* 01/29/06 RPI193 test mz390 symbol lenght for implicit CPZ
 *********************************************************************
 TESTSYM1 SUBENTRY
          WTO   'TESTSYM1 - TEST SYMBOL T AND L OPERATORS'
@@ -98,19 +95,4 @@ SZD2     DC    Z'12'
 LR       LR    1,1
 ST       ST    1,0(1)
 MVC      MVC   0(1,1),0(2)
-* TEST AIF REF TO ORDINARY SYMBOL LENGTH OF DSECT
-D        DSECT
-DF1      DS   XL10
-DL       EQU  *-D
-         AIF  (DL EQ 10).OK1  
-         MNOTE 8,'DL LENGTH NOT 10'
-         AGO   .OK1END
-.OK1     MNOTE 'DL EQ 10 OK'
-.OK1END  ANOP
-&PARM    SETC  'LABEL.DL+2'
-         AIF  (&PARM EQ 10).OK2  
-         MNOTE 8,'LABEL.DL+2 LENGTH NOT 10'
-         AGO   .OK2END
-.OK2     MNOTE 'LABEL.DL+2 EQ 10 OK'
-.OK2END  ANOP
          END

@@ -40,12 +40,13 @@
 &OPR     SETC  '&SYSLIST(&S,2),&SYSLIST(&S,4)'
 .TESTGEN ANOP         
          &OP   &OPR                                                        
+.TESTEND ANOP                                                              
          AIF   (&TESTSW EQ 1).ORBC                                         
 .AMBC    ANOP                                                              
          BC    15-&BC,ZSTR_IF_&ZSTR_LAB                                  
          AGO   .CONNECT
 .ORBC    ANOP                                                              
-         BC    15-&BC,ZSTR_IF_&ZSTR_LAB                                  
+         BC    15-&SYSLIST(&S),ZSTR_IF_&ZSTR_LAB                                  
 ZSTR_IF_&ZSTR_LAB1 EQU *                                                             
 .CONNECT ANOP                                                              
 &S       SETA  &S+1                                                        

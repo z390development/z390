@@ -152,8 +152,6 @@ import javax.swing.Timer;
     * 03/02/06 RPI 220 detect tz390.z390_abort and close down
     * 04/10/06 RPI 276 support IPL(pgm) option
     * 04/22/06 RPI 279 request stimer exit when time expires
-    * 09/01/06 RPI 423 add runable exception handler to 
-    *          shut down thread on interal exceptions
     ********************************************************
     * Global variables
     *****************************************************/
@@ -333,7 +331,7 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
 	    pz390 = new pz390();
 	    sz390 = new sz390();
 	    tz390.init_tables();
-        tz390.init_options(args,tz390.z390_type);
+        tz390.init_options(args,".390");
 	    tz390.open_systerm("EZ390");
         sz390.init_sz390(tz390,pz390);
 	    pz390.init_pz390(tz390,sz390);
@@ -449,15 +447,7 @@ private void monitor_update(){
 }
 public void run() {
 	if (pz390_thread == Thread.currentThread()){
-		if (tz390.opt_trap){ // RPI 423
-			try {
-				pz390.exec_pz390();
-			} catch (Exception e){
-				sz390.abort_error(204,"pz390 internal system exception " + e.toString());
-			}
-		} else {
-			pz390.exec_pz390();
-		}
+		pz390.exec_pz390();
 		pz390_running = false;
 		return;
 	}

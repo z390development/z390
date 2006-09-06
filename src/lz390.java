@@ -63,8 +63,6 @@ public  class  lz390 {
     * 04/12/06 RPI 244 correct to use first dir on SYS390 for output
     * 04/28/06 RPI 301 validate obj esd's
     * 05/09/06 RPI 312 add pgm name to return code msg
-    * 07/20/06 RPI 378 correct to use first SYSOBJ and SYS390
-    * 07/26/06 RPI 385 show ESD CSECT's on LST and ignore 0 length
     ********************************************************
     * Global variables
     *****************************************************/
@@ -301,7 +299,7 @@ private void put_stats(){
 	   }
 	}
 	put_log("LZ390I total errors         = " + lz390_errors);
-	put_log("LZ390I return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + lz390_rc); // RPI 312
+	put_log("LZ390I return code(" + tz390.get_padded_name() + ")= " + lz390_rc); // RPI 312
 }
 private void close_files(){
 	  /*
@@ -375,8 +373,7 @@ private void put_copyright(){
 	   	    put_log("Copyright 2006 Automated Software Tools Corporation");
 	   	    put_log("z390 is licensed under GNU General Public License");
 	   	}
-	   	// RPI 378
-	   	put_log("LZ390I program = " + tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.pgm_type);
+	   	put_log("LZ390I program = " + tz390.dir_obj + tz390.pgm_name + tz390.pgm_type);
 	   	put_log("LZ390I options = " + tz390.cmd_parms);
 	   }
 	   private synchronized void put_log(String msg) {
@@ -536,12 +533,7 @@ private boolean load_obj_file(boolean esds_only){
 				if (gbl_esd_type[obj_gbl_esd[obj_rld_xesd]] == gbl_esd_ent){ //RPI182
 			    	rld_off = gbl_esd_loc[obj_gbl_esd[obj_rld_esd]] + obj_rld_loc;
 			    	rld_fld = z390_code_buff.getInt(rld_off);
-					if (tz390.opt_list){
-						put_log("LZ390I RLD LOC=" + tz390.get_hex(rld_off,8)
-								        + " FLD=" + tz390.get_hex(rld_fld,obj_rld_len*2)
-								        + " EXT=" + tz390.get_hex(gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]],8));
-					}
-			    	switch (obj_rld_len){
+					switch (obj_rld_len){
 					    case 3:
 					        int rld_save_byte = rld_fld & 0xff;
 					    	rld_fld = rld_fld/256;
@@ -690,9 +682,7 @@ private String cvt_obj_bin_to_hex(){
 		bin_byte[10] = 0;
 		int count = bin_byte_buff.getShort(10);
 		esd_len = tz390.get_hex(count,2);
-		text = text + " ESD=" + esd_id 
-		            + " LOC=" + esd_loc 
-		            + " LEN=" + esd_len + " ";
+		text = text + " ESD=" + esd_id + " LOC=" + esd_loc + " LEN=" + esd_len + " ";
 		index = 16;
 		while (count > 0){
 			text = text + tz390.get_hex(bin_byte[index] & 0xff,2);
@@ -745,16 +735,13 @@ private void add_gbl_cst(int obj_index1){
 	/*
 	 * add obj cst to gbl table
 	 */
-	if (obj_esd_len[obj_index1] == 0)
-		return; // RPI 385 ignore 0 length csects
 	tot_csect++;
 	boolean esd_ok = true;
 	if (find_gbl_esd(obj_esd_name[obj_index1])){
 		if (gbl_esd_type[cur_gbl_esd] != gbl_esd_ext
-			&& gbl_esd_type[cur_gbl_esd] != gbl_esd_wxt
-			){ //RPI182
+			&& gbl_esd_type[cur_gbl_esd] != gbl_esd_wxt){ //RPI182
 		    esd_ok = false;
-			put_log("LZ390W warning - ignoring duplicate CSECT - " + obj_esd_name[obj_index1]);
+			log_error(16,"ignoring duplicate CSECT - " + obj_esd_name[obj_index1]);
 		}
 	} else {
 		tot_gbl_esd++;
@@ -762,9 +749,6 @@ private void add_gbl_cst(int obj_index1){
 		tz390.add_key_index(cur_gbl_esd);
 	}
 	if  (esd_ok){
-		if (tz390.opt_list){ // RPI 385
-			put_log("LZ390I ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " LOC=" + tz390.get_hex(loc_ctr,8) + " LEN=" + tz390.get_hex(obj_esd_len[obj_index1],8));
-		}
 		gbl_esd_name[cur_gbl_esd] = obj_esd_name[obj_index1];
 		gbl_esd_loc[cur_gbl_esd] = loc_ctr;
 		loc_ctr = loc_ctr + obj_esd_len[obj_index1];
@@ -810,9 +794,6 @@ private void add_gbl_ent(int obj_index1){
 				   esd_ok = true;
 				   gbl_esd_loc[gbl_ent_esd] = obj_esd_loc[obj_index1] - obj_esd_loc[obj_index2] + gbl_esd_loc[cur_gbl_esd];
 				   gbl_esd_type[gbl_ent_esd] = gbl_esd_ent;
-				   if (tz390.opt_list){ // RPI 385
-					   put_log("LZ390I ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " ENT=" + tz390.get_hex(gbl_esd_loc[gbl_ent_esd],8));
-				   }
 				   obj_index2 = tot_obj_esd;
 				}
 			}
@@ -838,7 +819,7 @@ private boolean find_gbl_esd(String esd_name){
                abort_error(24,"time limit exceeded");
 			}
 		}
-	    cur_gbl_esd = tz390.find_key_index('G',esd_name);
+	    cur_gbl_esd = tz390.find_key_index("G:" + esd_name);
 	    if (cur_gbl_esd != -1){
 	    	return true;
 	    } else {
@@ -853,10 +834,8 @@ private boolean find_ext_file(){
 	cur_gbl_ext++;
 	while (cur_gbl_ext <= tot_gbl_esd){
 		if (gbl_esd_type[cur_gbl_ext] == gbl_esd_ext){
-			// RPI 378
-			obj_file_name = tz390.find_file_name(tz390.dir_obj,gbl_esd_name[cur_gbl_ext],tz390.pgm_type,tz390.dir_cur);
-			if (obj_file_name != null){ // RPI 378
-				open_obj_file(obj_file_name);
+			obj_file_name = tz390.dir_obj + gbl_esd_name[cur_gbl_ext] + tz390.pgm_type;
+			if (open_obj_file(obj_file_name)){
 				return true;
 			}
 		}
@@ -913,7 +892,19 @@ private void gen_load_module(){
     	abort_error(32,"maximum 390 file size exceeded");
     }
 	try {
-        z390_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_390) + tz390.pgm_name + ".390","rw");
+		String output_390_dir = tz390.dir_390;
+		int index = output_390_dir.indexOf('+');
+		if (index == 0){
+			index = output_390_dir.indexOf(';');
+		}
+		if (index > 0){
+			if (output_390_dir.substring(index,index+1).equals(File.separator)){
+				output_390_dir = tz390.dir_390.substring(0,index);
+			} else {
+				output_390_dir = tz390.dir_390.substring(0,index) + File.separator;
+			}
+		}
+        z390_file = new RandomAccessFile(output_390_dir + tz390.pgm_name + ".390","rw");
         z390_file.setLength(0);
         z390_file.seek(0);
         tz390.systerm_io = tz390.systerm_io + 6;

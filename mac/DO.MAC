@@ -13,50 +13,61 @@
 .*                       AND NO BRANCH INSTRUCTIONS. SEE IF MACRO.         
 .********************************************************************
 .* 05/14/06 DSH Z390 RPI 316 UPDATED FOR COMPAT.
-.* 07/21/06 DSH Z390 RPI 379 USE IF TO SUPPORT COMPOUND WHILE/UNTIL
 .********************************************************************
          AIF   (&ZSTR_DOLVL EQ 10).ERR1                                         
          AIF   (&WHILE NE '').WHILE
          AIF   (&UNTIL NE '').UNTIL
          AIF   (&END EQ 'END').END
-&PARM    SETC  &END
          AGO   .ERR3
-.UNTIL   ANOP 
-&UNTIL_LAB SETA &UNTIL_LAB+1
+.UNTIL   ANOP       
+&NP      SETA  N'&UNTIL                                              
+&OP      SETC  &UNTIL(1)
+         AIF   (&NP NE 4).ERR3
+&BC      SETC  &UNTIL(3)
+&OPR     SETC  '&UNTIL(2),&UNTIL(4)'
 &ZSTR_DOLVL   SETA  &ZSTR_DOLVL+1                                                    
-&ZSTR_DOLAB   SETA  &ZSTR_DOLAB+1                                                    
-&ZSTR_DOSEQ(&ZSTR_DOLVL) SETA 1                                                      
-&ZSTR_DO(&ZSTR_DOLVL) SETA &ZSTR_DOLAB                                                    
-         B     ZSTR_DO_&ZSTR_DOLAB._CODE 
-ZSTR_DO_&ZSTR_DOLAB._TEST EQU *  
-&IFPARM  SETC  '&UNTIL'(2,K'&UNTIL-2)                                                         
-         IF    &IFPARM
-               B     ZSTR_DO_&ZSTR_DOLAB._END                                               
-         ENDIF
-ZSTR_DO_&ZSTR_DOLAB._CODE EQU *                                                             
-         AGO   .EXIT                                                       
+&UNTIL_LAB  SETA  &ZSTR_DOLAB+1                                                    
+&ZSTR_DOLAB   SETA  &ZSTR_DOLAB+2                                                    
+         B     ZSTR_DO_&UNTIL_LAB                                                    
+         AGO   .COMM                                                       
 .WHILE   ANOP        
+&NP      SETA  N'&WHILE                                              
+&OP      SETC  &WHILE(1)
+         AIF   (&NP NE 4).ERR3
+&BC      SETC  &WHILE(3)
+&OPR     SETC  '&WHILE(2),&WHILE(4)'
 &ZSTR_DOLVL   SETA  &ZSTR_DOLVL+1                                                    
 &ZSTR_DOLAB   SETA  &ZSTR_DOLAB+1                                                    
+.COMM    ANOP                                                              
 &ZSTR_DOSEQ(&ZSTR_DOLVL) SETA 1                                                      
 &ZSTR_DO(&ZSTR_DOLVL) SETA &ZSTR_DOLAB                                                    
-ZSTR_DO_&ZSTR_DOLAB._TEST EQU   *                                                           
-&IFPARM  SETC  '&WHILE'(2,K'&WHILE-2)                                                         
-         IF    &IFPARM
-               B   ZSTR_DO_&ZSTR_DOLAB._CODE
-         ENDIF
-         B     ZSTR_DO_&ZSTR_DOLAB._END                                               
-ZSTR_DO_&ZSTR_DOLAB._CODE EQU *                                                             
+ZSTR_DO_&ZSTR_DOLAB EQU   *                                                           
+         AIF   (&ZSTR_LEVEL EQ 10).ERR1                                         
+&ZSTR_LEVEL   SETA  &ZSTR_LEVEL+1                                                    
+&ZSTR_SEQ(&ZSTR_LEVEL) SETA 1                                                        
+&ZSTR_LAB     SETA  &ZSTR_LAB+1                                                      
+&ZSTR_ELSE(&ZSTR_LEVEL) SETA &ZSTR_LAB                                                    
+&S       SETA  0                                                           
+.NEXTAND ANOP                                                              
+         &OP   &OPR                                                        
+         BC    15-&BC,ZSTR_IF_&ZSTR_LAB                                  
+.CHKUNTL ANOP                                                              
+         AIF   (&UNTIL_LAB EQ 0).EXIT                                          
+&ZSTR_LAB     SETA  &ZSTR_LAB+1                                                      
+         B     ZSTR_IF_&ZSTR_LAB                                                     
+ZSTR_IF_&ZSTR_ELSE(&ZSTR_LEVEL) EQU *                                                     
+&ZSTR_ELSE(&ZSTR_LEVEL) SETA &ZSTR_LAB                                                    
+ZSTR_DO_&UNTIL_LAB EQU *                                                             
          AGO   .EXIT                                                       
 .END     ANOP                                                              
-&PARM    SETC  &SYSLIST(2)
          AIF   (&N GT 1).ERR3                                              
          AIF   (&ZSTR_DOLVL EQ 0).ERR4                                          
          AIF   (&ZSTR_DOSEQ(&ZSTR_DOLVL) NE 1).ERR4                                  
 &ZSTR_DOSEQ(&ZSTR_DOLVL) SETA 0                                                      
-         B     ZSTR_DO_&ZSTR_DO(&ZSTR_DOLVL)._TEST           
-ZSTR_DO_&ZSTR_DO(&ZSTR_DOLVL)._END EQU *                                    
+         B     ZSTR_DO_&ZSTR_DO(&ZSTR_DOLVL)                                               
 &ZSTR_DOLVL   SETA  &ZSTR_DOLVL-1                                                    
+ZSTR_IF_&ZSTR_ELSE(&ZSTR_LEVEL) EQU *                                                     
+&ZSTR_LEVEL   SETA  &ZSTR_LEVEL-1                                                    
          AGO   .EXIT                                                       
 .ERR1    MNOTE 8,'DO - LEVEL OVERFLOW'                                     
          AGO   .EXIT                                                       

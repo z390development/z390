@@ -1042,6 +1042,97 @@ set GIT_COMMITTER_DATE=2021-03-20 15:11:00 +0100
 git commit -m "Reconstructed version v1.1.01e of z390 committed on behalf of Don Higgins"
 git tag -a v1.1.01e -m "Reconstructed version v1.1.01e of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.1.01f
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.1.01f
+git add ASM.BAT
+git add ASML.BAT
+git add ASMLG.BAT
+git add EXEC.BAT
+git add MAC.BAT
+git rm  README.TXT
+git add RT.BAT
+git rm  RT7.BAT
+git rm  RTLINK.BAT
+git add RTTEST.BAT
+git rm  linklib/ARCHLVL.MAC
+git rm  linklib/CVTTOHEX.MLC
+git rm  linklib/FPCONMFC.MLC
+git rm  linklib/FPCONVRT.MAC
+git rm  linklib/FPCONVRT.MLC
+git rm  linklib/RTGENCMP.MLC
+git rm  linklib/RTGENDIR.MLC
+git rm  linklib/TESTFPC1.MLC
+git rm  linklib/TESTFPC2.MLC
+git add mac/CALL.MAC
+git rm  mac/CFD.MAC
+git rm  mac/CTD.MAC
+git add mac/DCB.MAC
+git add mac/DO.MAC
+git add mac/GETMAIN.MAC
+git add mac/IF.MAC
+git rm  src/HELLO.java
+git add src/az390.java
+git add src/ez390.java
+git add src/gz390.java
+git add src/gz390_screen.java
+git add src/lz390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add src/z390.java
+git add test/TESTASM1.MLC
+git rm  test/TESTCFD1.MLC
+git rm  test/TESTCTD1.MLC
+git rm  test/TESTCVB1.MLC
+git rm  test/TESTCVBG.MLC
+git add test/TESTDC1.MLC
+git rm  test/TESTERR7.MLC
+git add test/TESTINS2.MLC
+git add test/TESTMAC1.MLC
+git add test/TESTOPR1.MLC
+git rm  test/TESTPCH3.MLC
+git add test/TESTSYM1.MLC
+git add test/TESTSYN2.MLC
+git add test/TESTTIM2.MLC
+git add temp/
+
+==> Create commit for V1.1.01f
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2006-09-06 09:52:00 -0500
+set GIT_COMMITTER_DATE=2021-03-20 15:17:00 +0100
+git commit -m "Reconstructed version v1.1.01f of z390 committed on behalf of Don Higgins"
+git tag -a v1.1.01f -m "Reconstructed version v1.1.01f of z390 committed on behalf of Don Higgins"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

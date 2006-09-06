@@ -97,34 +97,34 @@
          ORG   &N+DCBID-IHADCB        RPI88
          DC    C'DCBV1001'            RPI88
          ORG   &N+DCBDSORG-IHADCB
-         DC    AL1(DCBDSORG_&DSORG) DCBDSORG
+         DC    AL1(DCBDSORG_&DSORG)
          ORG   &N+DCBEODAD-IHADCB
-         DC    A(&EODAD) DCBEODAD
+         DC    A(&EODAD)
          ORG   &N+DCBRECFM-IHADCB
-         DC    AL1(DCBRECFM_&RECFM) DCBRECFM
+         DC    AL1(DCBRECFM_&RECFM)
          ORG   &N+DCBDDNAM-IHADCB
          AIF   (&DDNAME EQ '').DDDEF
-         DC    CL8'&DDNAME' DCBDDNAM
+         DC    CL8'&DDNAME'
          AGO   .DDEND
 .DDDEF   ANOP
-         DC    CL8'&N' DCBDDNAME        
+         DC    CL8'&N'
 .DDEND   ANOP
          ORG   &N+DCBOFLGS-IHADCB
-         DC    AL1(DCBOFLGS_&MACRF(1)) DCBOFLGS
+         DC    AL1(DCBOFLGS_&MACRF(1))
          ORG   &N+DCBMACRF-IHADCB
-         DC    AL2(DCBMACRF_&MACRF(1)) DCBMACRF
+         DC    AL2(DCBMACRF_&MACRF(1))
          ORG   &N+DCBSYNAD-IHADCB
-         DC    A(&SYNAD) DCBSYNAD DCBSYNAD
+         DC    A(&SYNAD)
          ORG   &N+DCBBLKSI-IHADCB
-         DC    H'&BLKSIZE' DCBBLKSI DCBBLKSI
+         DC    H'&BLKSIZE'
          ORG   &N+DCBLRECL-IHADCB
-         DC    H'&LRECL' DCBLRECL
+         DC    H'&LRECL'
          ORG   &N+DCBREC-IHADCB
-         DC    A(&RECORD) DCBREC
+         DC    A(&RECORD)
          ORG   &N+DCBDSNAM-IHADCB
-         DC    A(&DSNAME) DCBDSNAM
+         DC    A(&DSNAME)
          ORG   &N+DCBDCBE-IHADCB   RPI 281
-         DC    A(&DCBE) DCBDCBE
+         DC    A(&DCBE)
          ORG   &N+DCBLEN
          MEXIT
 .ERR_LRECL MNOTE 12,'DCB INVALID LRECL/BLKSIZE'

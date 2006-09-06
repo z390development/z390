@@ -40,9 +40,6 @@
 * 04/23/06 RPI 295 ADD ADDITIONAL TESTS FOR ICM AND OIHL          
 * 04/28/06 RPI 303 ADD ADDITIONAL TESTS FOR ICM TO SET HIGH IF POS          
 * 05/02/06 RPI 305 USE NEW ESPIE AND ESTAE CONTROL BLOCKS                   
-* 07/20/06 RPI 376 TEST ALR CC=1 WHEN HIGH BIT TURNED ON AND NO CARRY       
-* 07/24/06 RPI 383 CORRECT TESTS FOR MLG AND MLGR TO USE R1+1 * S2/R2       
-* 08/06/06 RPI 398 CORRECT TESTS FOR D AND DR TO INCLUDE 64 BITS            
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -573,41 +570,6 @@ SR2      ESTAE 0
          RT1   CCE
          CL    R1,=F'3'
          RT1   CCE
-         LM    R0,R1,=FL8'1E17'
-         L     R3,=F'1E9'
-         DR    R0,R3
-         CL    R0,=F'0'
-         RT1   CCE
-         CL    R1,=F'1E8'
-         RT1   CCE
-         LM    R0,R1,=FL8'-1E17'
-         L     R3,=F'1E9'
-         DR    R0,R3
-         CL    R0,=F'0'
-         RT1   CCE
-         CL    R1,=F'-1E8'
-         RT1   CCE
-         LM    R0,R1,=FL8'1E17'
-         L     R3,=F'-1E9'
-         DR    R0,R3
-         CL    R0,=F'0'
-         RT1   CCE
-         CL    R1,=F'-1E8'
-         RT1   CCE
-         LM    R0,R1,=F'1,3'
-         L     R3,=F'4'    
-         DR    R0,R3
-         CL    R0,=F'3'
-         RT1   CCE
-         CL    R1,=FS30'1'
-         RT1   CCE
-         LM    R0,R1,=F'1,3'
-         L     R3,=F'-4'  
-         DR    R0,R3
-         CL    R0,=F'3'
-         RT1   CCE
-         CL    R1,=FS30'-1'
-         RT1   CCE
          ESPIE SET,ESPIE_EXIT,9,PARAM=DR1
          LA    R2,0
          DR    R0,R2
@@ -625,10 +587,6 @@ DR1      ESPIE RESET
          L     R2,=X'00000001'
          ALR   R0,R2
          RT1   CC1        NZ,NC
-         L     R0,=X'40000000'
-         L     R2,=X'40000001'
-         ALR   R0,R2
-         RT1   CC1        NZ,NC  RPI 376
          CL    R0,=X'80000001'
          RT1   CCE
          L     R0,=X'FFFFFFFF'
@@ -894,36 +852,6 @@ BAS2     EQU   *
          RT1   CCE
          CL    R1,=F'3'
          RT1   CCE
-         LM    R0,R1,=FL8'1E17'
-         D     R0,=F'1E9'
-         CL    R0,=F'0'
-         RT1   CCE
-         CL    R1,=F'1E8'
-         RT1   CCE
-         LM    R0,R1,=FL8'-1E17'
-         D     R0,=F'1E9'
-         CL    R0,=F'0'
-         RT1   CCE
-         CL    R1,=F'-1E8'
-         RT1   CCE
-         LM    R0,R1,=FL8'1E17'
-         D     R0,=F'-1E9'
-         CL    R0,=F'0'
-         RT1   CCE
-         CL    R1,=F'-1E8'
-         RT1   CCE
-         LM    R0,R1,=F'1,3'
-         D     R0,=F'4'
-         CL    R0,=F'3'
-         RT1   CCE
-         CL    R1,=FS30'1'
-         RT1   CCE
-         LM    R0,R1,=F'1,3'
-         D     R0,=F'-4'
-         CL    R0,=F'3'
-         RT1   CCE
-         CL    R1,=FS30'-1'
-         RT1   CCE
 * 5E   AL
          L     R0,=F'3'
          AL    R0,=F'2'
@@ -944,11 +872,6 @@ BAS2     EQU   *
          AL    R0,=X'00000002'
          RT1   CC3        NZ,C
          CL    R0,=X'00000001'
-         RT1   CCE
-         L     R0,=X'FFFFFFFF'  RPI 376
-         AL    R0,=X'FFFFFFFF'
-         RT1   CC3        NZ,C
-         CL    R0,=X'FFFFFFFE'
          RT1   CCE
          L     R0,=X'00000000'
          AL    R0,=X'00000000'
@@ -2360,14 +2283,14 @@ SGR2     ESTAE 0
          CLG   R0,=AL8(X'FFFF')
          RT1   CCE
 * B986 MLGR
-         LG    R1,=FL8'3'
+         LG    R0,=FL8'3'
          LG    R2,=FL8'2'
          MLGR  R0,R2
          CLG   R0,=FL8'0'
          RT1   CCE
          CLG   R1,=FL8'6'
          RT1   CCE
-         LG     R1,=X'8000000000000000'
+         LG     R0,=X'8000000000000000'
          LG     R2,=X'8000000000000000'
          MLGR  R0,R2
          CLG   R0,=X'4000000000000000'
@@ -2452,13 +2375,6 @@ SGR2     ESTAE 0
          ALCGR R0,R1              RPI174 TEST < CC0 
          RT1   CC1
          CLG   R0,=FL8'1'
-         RT1   CCE
-         SGR   R0,R0              FORCE CC0 Z,NC
-         LG    R0,=FL8'-1'
-         LG    R1,=FL8'-1'
-         ALCGR R0,R1                                     
-         RT1   CC3                RPI 376
-         CLG   R0,=FL8'-2'
          RT1   CCE
 * B989 SLBGR
          CLI   =C'A',C'B' CC1= NZ,B 
@@ -2597,13 +2513,6 @@ SGR2     ESTAE 0
          ALCR  R0,R2
          RT1   CC3        NZ,C
          CL    R0,=X'00000001'
-         RT1   CCE
-         SR    R0,R0
-         L     R0,=X'FFFFFFFF'
-         L     R2,=X'FFFFFFFF'
-         ALCR  R0,R2
-         RT1   CC3        NZ,C    RPI 376
-         CL    R0,=X'FFFFFFFE'
          RT1   CCE
          L     R0,=F'3'
          AL    R0,=F'2'   NZ,NC
@@ -3656,13 +3565,13 @@ BCTG1    LA    R2,1(R2)
          CLG   R0,=X'0305070F000000F'
          RT1   CCE
 * E386 MLG
-         LG    R1,=FL8'3'
+         LG    R0,=FL8'3'
          MLG   R0,=FL8'2'
          CLG   R0,=FL8'0'
          RT1   CCE
          CLG   R1,=FL8'6'
          RT1   CCE
-         LG     R1,=X'8000000000000000'
+         LG     R0,=X'8000000000000000'
          MLG    R0,=X'8000000000000000'
          CLG   R0,=X'4000000000000000'
          RT1   CCE
@@ -3718,13 +3627,6 @@ BCTG1    LA    R2,1(R2)
          ALCG  R0,=X'0000000000000002'
          RT1   CC3        NZ,C
          CLG   R0,=X'0000000000000001'
-         RT1   CCE
-         L     R0,=F'3'
-         AL    R0,=F'2'   NZ,NC
-         LG    R0,=X'FFFFFFFFFFFFFFFF'
-         ALCG  R0,=X'FFFFFFFFFFFFFFFF'
-         RT1   CC3        NZ,C
-         CLG   R0,=X'FFFFFFFFFFFFFFFE'
          RT1   CCE
          L     R0,=F'3'
          AL    R0,=F'2'   NZ,NC
@@ -3851,13 +3753,13 @@ BCTG1    LA    R2,1(R2)
          CL    R1,=X'80000000'
          RT1   CCE
 * E398 ALC
-         CLI   =C'B',C'A' CC2 = Z,C
+         CLI   =C'B',C'A' CC2 = NZ,C
          L     R0,=F'3'
          ALC   R0,=F'2'
          RT1   CC1        NZ,NC
          CL    R0,=F'6'
          RT1   CCE
-         CLI   =C'B',C'A' CC2 = Z,C
+         CLI   =C'B',C'A' CC2 = NZ,C
          L     R0,=X'80000000'
          ALC   R0,=X'00000001'
          RT1   CC1        NZ,NC
@@ -3886,12 +3788,6 @@ BCTG1    LA    R2,1(R2)
          ALC   R0,=X'00000001'     RPI174 TEST < CC3                  
          RT1   CC1
          CL    R0,=X'00000003'
-         RT1   CC0
-         SR    R0,R0               FORCE CC0 Z,NC
-         L     R0,=X'FFFFFFFF'
-         ALC   R0,=X'FFFFFFFF'                                        
-         RT1   CC3                 RPI 376
-         CL    R0,=X'FFFFFFFE'
          RT1   CC0
          SR    R0,R0               FORCE CC0 Z,NC
          ALC   R0,=F'1'            RPI174 TEST < CC0 

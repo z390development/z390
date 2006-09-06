@@ -590,7 +590,7 @@ public  class  z390 extends JApplet
 				  install_doc = install_loc;
 				  put_log("install doc directory not found - " + install_doc);
 			  }
-			  log_file_name = tz390.get_file_name(tz390.dir_cur,"z390",tz390.log_type);
+			  log_file_name = tz390.get_file_name(tz390.dir_cur,"z390",".LOG");
 		      try {
 		      	  if  (log_tod){
 		      	      boolean new_log = false;
@@ -599,7 +599,7 @@ public  class  z390 extends JApplet
 			              Date tod = new Date();
 			              SimpleDateFormat tod_format = new SimpleDateFormat("_yyyy_MMdd_HHmmss");
 				          String log_file_tod = tod_format.format(tod);
-			              temp_log_name = log_file_name + log_file_tod + tz390.log_type;
+			              temp_log_name = log_file_name + log_file_tod + ".log";
 				          File temp_log_file = new File(temp_log_name);
 		                  if  (temp_log_file.exists()){
 			                  sleep_now();
@@ -609,7 +609,7 @@ public  class  z390 extends JApplet
 		              }
 		              log_file_name = temp_log_name;
 				  } else {
-				     log_file_name = log_file_name.concat(tz390.log_type);
+				     log_file_name = log_file_name.concat(".log");
 		      	  }
 		          log_file = new BufferedWriter(new FileWriter(log_file_name));
 		          put_copyright();
@@ -708,15 +708,7 @@ public  class  z390 extends JApplet
                     public void run() {
             	        if  (!shutdown_exit){
             	            shutdown_exit = true;
-            	            if (tz390.opt_trap){
-            	            	try { // RPI 423 catch window shutdown traps too
-            	            		abort_error(78,"aborting due to external shutdown request");
-            	            	} catch (Exception e){
-            	            		System.out.println("z390 internal system exception abort " + e.toString());
-            	            	}
-            	            } else {
-            	            	abort_error(78,"aborting due to external shutdown request");
-            	            }
+                            abort_error(78,"aborting due to external shutdown request");
             	        }
                     }
                 });

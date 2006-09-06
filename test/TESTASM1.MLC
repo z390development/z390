@@ -19,8 +19,6 @@
 * 04/28/06 RPI304 TEST PRINT DATA,NOPRINT                              
 * 05/12/06 RPI313 ADD UNARY OP TEST AND L'OP IN CONTINUED STMT TEST    
 * 07/03/06 RPI342 TEST OPERANDS WITH L' OPERATORS                      
-* 07/19/06 RPI365 TEST LITERAL AS TARGET OF L'                         
-* 07/19/06 RPI369 TEST IGNORING 4TH AND 5TH EQU PARM                   
 *********************************************************************
          START , RPI 230 TEST START CSECT
          USING *,R15
@@ -111,16 +109,6 @@ X2       MVC   F1(L'F2),F2
          RT1   CCE
          L     R1,=A(MYCOM)
          CALL  MYRSECT
-* TEST L'=CL3'ABC'
-         CLI   =AL1(3),L'=C'ABC'
-         RT1   CCE
-* TEST EQU IGNORE 4TH AND 5TH
-x1       equ   1,2,3,4,5
-         CLI   =AL1(1),X1
-         RT1   CCE
-* IGNORE ACONTROL AND ALIAS
-         ACONTROL
-         ALIAS
          RT1   END
          LTORG
 MYCOM    COM   , RPI 230 TEST COM SECTION (NO LINKER SUPPORT YET)

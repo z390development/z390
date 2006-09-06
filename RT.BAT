@@ -10,10 +10,8 @@ call %~dps0rttest %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0rtdemo %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0rtcics %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0rtmvs  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call %~dps0rtlink %1 %2 %3 %4 %5 %6 %7 %8 %9
 erase %~dps0?z390.d*
 erase %~dps0temp\*.d*
-copy %~dps0linklib\*.d*  temp
 copy %~dps0demo\*.d*     temp
 copy %~dps0test\*.d*     temp
 copy %~dps0cics\*.d*     temp

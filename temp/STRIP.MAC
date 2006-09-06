@@ -1,0 +1,68 @@
+.*                                                                      00000100
+.* This macro is free software; you can redistribute it and/or modify   00000200
+.* it under the terms of the GNU General Public License as published by 00000300
+.* the Free Software Foundation; either version 2 of the License        00000400
+.* or (at your option) any later version.                               00000500
+.* The license text is available at the following internet addresses:   00000600
+.* - http://www.bixoft.com/english/gpl.htm                              00000700
+.* - http://fsf.org                                                     00000800
+.* - http://opensource.org                                              00000900
+.*                                                                      00001000
+.* This macro is distributed in the hope that it will be useful,        00001100
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of       00001200
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                 00001300
+.* See the GNU General Public License for more details.                 00001400
+.*                                                                      00001500
+.* You should have received a copy of the GNU General Public License    00001600
+.* along with this program; if not, write to either of the following:   00001700
+.* the Free Software Foundation, Inc.      B.V. Bixoft                  00001800
+.* 59 Temple Place, Suite 330              Rogge 9                      00001900
+.* Boston, MA 02111-1307                   7261 JA Ruurlo               00002000
+.* United States of America                The Netherlands              00002100
+.*                                                                      00002200
+.*                                         e-mail: bixoft@bixoft.nl     00002300
+.*                                         phone : +31-6-22755401       00002400
+.*                                                                      00002500
+.********************************************************************** 00010000
+.*                                                                      00020000
+.* Bixoft eXtended Assembly language                                    00030000
+.* Licensed material - Property of B.V. Bixoft                          00040000
+.*                                                                      00050000
+.* This macro can be licensed or used on an as-is basis.                00060000
+.* No warranty, neither implicit nor explicit, is given.                00070000
+.* It remains your own responsibility to ensure the correct             00080000
+.* working of any program using this macro.                             00090000
+.*                                                                      00100000
+.* Suggestions for improvement are always welcome at                    00110000
+.* http://www.bixoft.com  or mail to  bixoft@bixoft.nl                  00120000
+.*                                                                      00130000
+.* (C) Copyright B.V. Bixoft, 2006                                      00140000
+.********************************************************************** 00150000
+         MACRO                                                          00160000
+.*                                                                      00170000
+.* Strip leading and trailing spaces from a SETC variable               00180000
+.*                                                                      00190000
+&LABEL   STRIP
+.*
+.* Variables for processing a single opcode definition
+         GBLC  &STRIPIT                * Input/Output variable
+         LCLA  &I                      * Char ptr in string
+.*
+.* Loop1 removes leading spaces, if any
+.LOOP1   ANOP  ,
+         AIF   (K'&STRIPIT EQ 0).LOOP1X
+         AIF   ('&STRIPIT'(1,1) NE ' ').LOOP1X
+&STRIPIT SETC  '&STRIPIT'(2,*)
+         AGO   .LOOP1
+.LOOP1X  ANOP  ,
+.*
+.* Loop2 removes trailing spaces, if any
+.LOOP2   ANOP  ,
+&I       SETA  K'&STRIPIT
+         AIF   (&I EQ 0).LOOP2X
+         AIF   ('&STRIPIT'(&I,1) NE ' ').LOOP2X
+&STRIPIT SETC  '&STRIPIT'(1,&I-1)
+         AGO   .LOOP2
+.LOOP2X  ANOP  ,
+.*
+.MEND    MEND

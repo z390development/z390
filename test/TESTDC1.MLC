@@ -16,11 +16,6 @@
 * 01/06/06 RPI192 - test && and '' in setc, sdt, and models   
 * 04/02/06 RPI265 - test alignment within DS/DC fields     
 * 04/05/06 RPI270 - test DS/DC CA/CE/AD/FD/VD (SEE TESTSDT1 CA/CE) 
-* 07/19/06 RPI371 - support spaces within X'...' data fields          
-* 07/19/06 RPI373 - align L type 16 byte fields to multiple of 8 vs 16
-* 07/19/06 RPI367 - support floating point (MIN) and (MAX) constants     
-* 07/19/06 RPI368 - support S scale factor for F, H, EH, DH, and LH      
-* 08/03/06 RPI388 - test fix dup count for E, D, F and FD                     
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -28,7 +23,7 @@ M1       DC    AL1(1),B'10',C'3',FL1'4',HL1'5',P'6',X'7',Z'8',X'FF'
 V1E      DC    X'0102F304056C07F8FF'
 V1A      DC    X'01023304056C0738FF'
 M2       DC    L'1',D'1',E'1',X'FF'
-V2       DC    X'41100000000000003300000000000000'
+V2       DC    X'41100000000000004000000000000000'
          DC    X'4110000000000000'
          DC    X'41100000',X'FF'
 M3       DC    S(1),S(2),X'FF'
@@ -37,47 +32,9 @@ M4       DC    V(TESTDC1),2V(TESTDC1),X'FF'
 V4       DC    3A(TESTDC1),X'FF'
          DS    0F
 V5       DC    X'AA',0H,X'BBCC' FORCE 1 ALIGNMENT BYTE WITHIN DC
-L1       DC    L'1'
-         DC    XL8'00'
-L2       DC    L'2'
-TE       DC    2E'0'
-TD       DC    2D'0'
-TL       DC    2L'0'
-TFD      DC    2FD'0'
-TF       DC    2F'0'
-TFE      EQU   *
-TES      DS    2E    
-TDS      DS    2D    
-TLS      DS    2L   
-TFDS     DS    2FD    
-TFS      DS    2F
-TFSE     EQU   *    
          RT1   START
 * verify ds/dc alignment between fields
          RT1   CCE,V5,=X'AA00BBCC'
-* test spaces in x'...'
-         RT1   CCE,=X'1234',=X'12 34'
-* test L align to mult. 8
-         RT1   CCE,=A(L2-L1),=A(24)
-* test scale factor for FHEDL
-         RT1   CCE,=FS24'1',=X'01000000'
-         RT1   CCE,=HS12'1',=X'1000'
-         RT1   CCE,=ES2'1',=X'43100000'
-         RT1   CCE,=DS2'1',=X'4310000000000000'
-         RT1   CCE,=LS2'1',=X'43100000000000003500000000000000'
-* test (MIN) and (MAX) constants
-         RT1   CCE,=EH'(MIN)',=X'01100000'
-         RT1   CCE,=EB'(MIN)',=X'00800000'
-         RT1   CCE,=DH'(MIN)',=X'0110000000000000'
-         RT1   CCE,=DB'(MIN)',=X'0010000000000000'
-         RT1   CCE,=LH'(MIN)',=X'01100000000000007200000000000000'
-         RT1   CCE,=LB'(MIN)',=X'00010000000000000000000000000000'
-         RT1   CCE,=EH'(MAX)',=X'7FFFFFFF'
-         RT1   CCE,=EB'(MAX)',=X'7F7FFFFF'
-         RT1   CCE,=DH'(MAX)',=X'7FFFFFFFFFFFFFFF'    
-         RT1   CCE,=DB'(MAX)',=X'7FEFFFFFFFFFFFFF'
-         RT1   CCE,=LH'(MAX)',=X'7FFFFFFFFFFFFFFF71FFFFFFFFFFFFFF'
-         RT1   CCE,=LB'(MAX)',=X'7FFEFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 * verify dc field continuations
          AIF   (C'A' EQ X'41').TEST1_ASCII
 .TEST1_EBCDIC ANOP
@@ -126,7 +83,7 @@ TFSE     EQU   *
          RT1   CCE,=H'1',=X'0001'
          RT1   CCE,=HL1'1',=X'01'
          RT1   CCE,=HL1'1,-1,3',=X'01FF03',3
-         RT1   CCE,=L'1',=X'41100000000000003300000000000000'
+         RT1   CCE,=L'1',=X'41100000000000004000000000000000'
          RT1   CCE,=P'1',=X'1C'
          RT1   CCE,=PL2'1,-1,12',=X'001C001D012C',6
          RT1   CCE,=P'12,1234',=X'012C01234C',5
@@ -165,7 +122,7 @@ TFSE     EQU   *
          RT1   CCE,=2H'1',=2X'0001',4
          RT1   CCE,=2HL1'1',=2X'01',2
          RT1   CCE,=2HL1'1,-1,3',=2X'01FF03',6                    
-         RT1   CCE,=2L'1',=2X'41100000000000003300000000000000',32
+         RT1   CCE,=2L'1',=2X'41100000000000004000000000000000',32
          RT1   CCE,=2P'1',=2X'1C',2
          RT1   CCE,=2PL2'1,-1,12',=2X'001C001D012C',12
          RT1   CCE,=2P'12,1234',=2X'012C01234C',10
@@ -323,26 +280,5 @@ VDX      RT1   CCE,=VD(VDX),=AL8(VDX)
          RT1   CCE,=FD'123',=FL8'123'
 VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
 .TEST5_END ANOP
-* TEST 2E,2D,2L, AND 2FD
-         RT1   CCE,=XL8'00',TE     
-         RT1   CCE,=XL16'00',TD     
-         RT1   CCE,=XL32'00',TL     
-         RT1   CCE,=XL16'00',TFD     
-         RT1   CCE,=XL8'00',TF     
-         RT1   CCE,=A(TD-TE),=F'8' 
-         RT1   CCE,=A(TL-TD),=F'16'
-         RT1   CCE,=A(TFD-TL),=F'32' 
-         RT1   CCE,=A(TF-TFD),=F'16' 
-         RT1   CCE,=A(TFE-TF),=F'8' 
-         RT1   CCE,=XL8'00',TES     
-         RT1   CCE,=XL16'00',TDS     
-         RT1   CCE,=XL32'00',TLS     
-         RT1   CCE,=XL16'00',TFDS     
-         RT1   CCE,=XL8'00',TFS     
-         RT1   CCE,=A(TDS-TES),=F'8' 
-         RT1   CCE,=A(TLS-TDS),=F'16'
-         RT1   CCE,=A(TFDS-TLS),=F'32' 
-         RT1   CCE,=A(TFS-TFDS),=F'16' 
-         RT1   CCE,=A(TFSE-TFS),=F'8' 
          RT1   END
          END         

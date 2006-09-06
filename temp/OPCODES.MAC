@@ -1,0 +1,224 @@
+.*                                                                      00000100
+.* This macro is free software; you can redistribute it and/or modify   00000200
+.* it under the terms of the GNU General Public License as published by 00000300
+.* the Free Software Foundation; either version 2 of the License        00000400
+.* or (at your option) any later version.                               00000500
+.* The license text is available at the following internet addresses:   00000600
+.* - http://www.bixoft.com/english/gpl.htm                              00000700
+.* - http://fsf.org                                                     00000800
+.* - http://opensource.org                                              00000900
+.*                                                                      00001000
+.* This macro is distributed in the hope that it will be useful,        00001100
+.* but WITHOUT ANY WARRANTY; without even the implied warranty of       00001200
+.* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.                 00001300
+.* See the GNU General Public License for more details.                 00001400
+.*                                                                      00001500
+.* You should have received a copy of the GNU General Public License    00001600
+.* along with this program; if not, write to either of the following:   00001700
+.* the Free Software Foundation, Inc.      B.V. Bixoft                  00001800
+.* 59 Temple Place, Suite 330              Rogge 9                      00001900
+.* Boston, MA 02111-1307                   7261 JA Ruurlo               00002000
+.* United States of America                The Netherlands              00002100
+.*                                                                      00002200
+.*                                         e-mail: bixoft@bixoft.nl     00002300
+.*                                         phone : +31-6-22755401       00002400
+.*                                                                      00002500
+.********************************************************************** 00010000
+.*                                                                      00020000
+.* Bixoft eXtended Assembly language                                    00030000
+.* Licensed material - Property of B.V. Bixoft                          00040000
+.*                                                                      00050000
+.* This macro can be licensed or used on an as-is basis.                00060000
+.* No warranty, neither implicit nor explicit, is given.                00070000
+.* It remains your own responsibility to ensure the correct             00080000
+.* working of any program using this macro.                             00090000
+.*                                                                      00100000
+.* Suggestions for improvement are always welcome at                    00110000
+.* http://www.bixoft.com  or mail to  bixoft@bixoft.nl                  00120000
+.*                                                                      00130000
+.* (C) Copyright B.V. Bixoft, 2006                                      00140000
+.********************************************************************** 00150000
+         MACRO                                                          00160000
+.*                                                                      00170000
+.* Process list of opcodes                                              00180000
+.*                                                                      00190000
+&LABEL   OPCODES &DSN
+.*
+.* Global variables
+         GBLC  &STRIPIT                * String to be stripped
+.*
+.* Variables for processing opcode definitions
+         LCLA  &LINE                   * Line counter for input
+         LCLA  &I,&J                   * Char ptrs in strings
+         LCLC  &DATA                   * Temp string
+         LCLC  &MNEMON                 * Mnemonic
+         LCLC  &OPCODE                 * Opcode
+         LCLC  &MASKVAL                * Mask value
+         LCLC  &DESCCD                 * Descriptor Code
+         LCLC  &FULLNM                 * Full Name
+         LCLC  &PREV                   * Previous mnemonic
+         LCLC  &NEXT                   * Next mnemonic
+.*
+.* Additional fields for processing
+         LCLC  &X                      * Extracted character
+         LCLB  &HASDIG                 * Mnemonic has digits
+         LCLB  &HASDASH                * Full name has a dash
+         LCLC  &MNEMON2                * Mnem from full name
+         LCLC  &FULLNM2                * Working copy of name
+         LCLC  &SEARCH                 * Searchable chars
+&SEARCH  SETC  'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/'
+.*
+.* Arrays to hold parsed opcode definitions
+         LCLA  &INDEX                  * Index for tables below
+         LCLC  &MNEM(1500)             * Mnemonics
+         LCLC  &OPCD(1500)             * Opcodes
+         LCLC  &MASK(1500)             * Mask values
+         LCLC  &DESC(1500)             * Descriptor codes
+         LCLC  &NAME(1500)             * Full names
+.*
+.* Read and buffer all input data
+.* Format of input data:
+.* BER         = 07    % 1000 $ B # Branch on Equal Register
+.* Comment lines start with a '*' in column 1
+.* The opcodes definition table ends with a marker line
+.* that contains only an '@'-sign in column 1
+.*
+&LINE    SETA  0
+.RDLOOP  ANOP  ,
+         ACTR  1024                    * Allow lots of loops!
+.* Read from designated input file
+&DATA    AREAD DSNAME=&DSN
+&LINE    SETA  &LINE+1
+         AIF   ('&DATA'(1,1) EQ '@').RDLOOPX * End of opcode list?
+         AIF   ('&DATA'(1,1) EQ '*').RDLOOP  * Skip comment lines
+         MNOTE *,'&DATA'
+.*
+.* Extract mnemonic
+&I       SETA  ('&DATA' INDEX '=')     * Find mnemonic delimiter
+         AIF   (&I EQ 0).ERROR1A       * Issue error if missing
+&STRIPIT SETC  '&DATA'(1,&I-1)         * Extract mnemonic
+&DATA    SETC  '&DATA'(&I+1,*)         *   and remove from string
+         STRIP ,                       * Remove spaces
+&MNEMON  SETC  '&STRIPIT'              * Obtain result
+         AIF   (K'&MNEMON EQ 0).ERROR1B
+.*
+.* Extract opcode
+&I       SETA  ('&DATA' INDEX '%')     * Find opcode delimiter
+         AIF   (&I EQ 0).ERROR2A       * Issue error if missing
+&STRIPIT SETC  '&DATA'(1,&I-1)         * Extract opcode
+&DATA    SETC  '&DATA'(&I+1,*)         *   and remove from string
+         STRIP ,                       * Remove spaces
+&OPCODE  SETC  '&STRIPIT'              * Obtain result
+         AIF   (K'&OPCODE EQ 0).ERROR2B
+.*
+.* Extract mask value
+&I       SETA  ('&DATA' INDEX '$')     * Find opcode delimiter
+         AIF   (&I EQ 0).ERROR3A       * Issue error if missing
+&STRIPIT SETC  '&DATA'(1,&I-1)         * Extract mask value
+&DATA    SETC  '&DATA'(&I+1,*)         *   and remove from string
+         STRIP ,                       * Remove spaces
+&MASKVAL SETC  '&STRIPIT'              * Obtain result
+.*
+.* Extract descriptor code
+&I       SETA  ('&DATA' INDEX '#')     * Find opcode delimiter
+         AIF   (&I EQ 0).ERROR4A       * Issue error if missing
+&STRIPIT SETC  '&DATA'(1,&I-1)         * Extract mask value
+&DATA    SETC  '&DATA'(&I+1,*)         *   and remove from string
+         STRIP ,                       * Remove spaces
+&DESCCD  SETC  '&STRIPIT'              * Obtain result
+.*
+.* Extract full name
+&STRIPIT SETC  '&DATA'                 * Extract full name
+         STRIP ,                       * Remove spaces
+&FULLNM  SETC  '&STRIPIT'              * Obtain result
+         AIF   (K'&FULLNM EQ 0).ERROR5A
+.*
+.* Check correct sequencing (comparison includes length of string!)
+         AIF   (&INDEX EQ 0).NOERR1C
+&NEXT    SETC  '&MNEMON'.20' '         * Append blanks to new mnemonic
+&NEXT    SETC  '&NEXT'(1,20)           * Fix length at 20 chars
+&PREV    SETC  '&MNEM(&INDEX)'.20' '   * Append blanks to last mnemonic
+&PREV    SETC  '&PREV'(1,20)           * Fix length at 20 chars
+         AIF   ('&NEXT' LE '&PREV').ERROR1C
+.NOERR1C ANOP  ,
+.*
+.* Check to make sure mnemonic matches full name
+         AIF   ('&OPCODE' EQ '????').OPCDOK * Cannot check
+         AIF   ('&FULLNM' EQ '???').OPCDOK  * Cannot check
+&I       SETA  ('&MNEMON' FIND '0123456789') * Digits in mnemonic?
+&HASDIG  SETB  (&I NE 0)
+&I       SETA  ('&FULLNM' INDEX ' - ') * Name has a separator dash?
+&HASDASH SETB  (&I GT 0 AND &I LT 6)   * Indicate validity
+&MNEMON2 SETC  ''
+&FULLNM2 SETC  '&FULLNM'
+.* Start Inner ReaD LooP to extract relevant chars
+.IRDLP   ANOP  ,
+&I       SETA  ('&FULLNM2' FIND '&SEARCH')
+         AIF   (&I EQ 0).IRDLPX        * Go exit inner loop
+&X       SETC  '&FULLNM2'(&I,1)        * Extract character
+&FULLNM2 SETC  '&FULLNM2'(&I+1,*)      * Keep only remainder
+         AIF   ('&X' EQ '-').IRDLPD    * Go handle dash
+         AIF   (&HASDIG).IRDLPAD       * Digits: add regardless
+&I       SETA  ('0123456789' FIND '&X')
+         AIF   (&I EQ 0).IRDLPAD       * Not a digit: Add
+         AGO   .IRDLP                  * Digit not needed: Skip
+.IRDLPAD ANOP  ,                       * Add char
+&MNEMON2 SETC  '&MNEMON2'.'&X'         * Add to recontructed mnemonic
+         AGO   .IRDLP                  * Go find next char
+.IRDLPD  ANOP  ,                       * Handle dash
+         AIF   (NOT &HASDASH).IRDLP    * Skip if not expected
+&HASDASH SETB  0                       * Max. 1 per opcode!
+&MNEMON2 SETC  '&MNEMON2'.'.'          * Add period to mnemonic
+         AGO   .IRDLP                  * Go find next char
+.IRDLPX  ANOP  ,
+         AIF   ('&MNEMON' EQ '&MNEMON2').OPCDOK
+.* 
+.* Non-matching entries: check for slash (alternative meanings)
+.* If preceding and following char are equal, replace entire
+.* substring x/x by a single occurrence of character x
+&I       SETA  ('&MNEMON2' FIND '/')   * Contains a slash?
+         AIF   (&I LE 1).ERROR1D       * No: issue error
+         AIF   (&I EQ K'&MNEMON2).ERROR1D * Must be in the middle
+&X       SETC  '&MNEMON2'(&I-1,1)      * Get preceding char
+         AIF   ('&MNEMON2'(&I+1,1) NE '&X').ERROR1D
+.* Ok: alternatives - condense into 1 character
+&MNEMON2 SETC  '&MNEMON2'(1,&I-2).'&MNEMON2'(&I+1,*)
+         AIF   ('&MNEMON' NE '&MNEMON2').ERROR1D
+.*
+.OPCDOK  ANOP  ,
+         MNOTE *,'&MNEMON = &OPCODE % &MASKVAL $ &DESCCD # &FULLNM'
+&INDEX   SETA  &INDEX+1                * Increment index
+&I       SETA  &INDEX                  * Copy index
+&MNEM(&I) SETC &MNEMON                 * Save mnemonic
+&OPCD(&I) SETC &OPCODE                 * Save opcode
+&MASK(&I) SETC &MASKVAL                * Save mask value
+&DESC(&I) SETC &DESCCD                 * Save descriptor code
+&NAME(&I) SETC &FULLNM                 * Save full name
+.*
+.* This entry processed completely
+         AGO   .RDLOOP                 * Go process next opcode line
+.*
+.* Error messages for RDLOOP
+.ERROR1A MNOTE 8,'Error 1A: Line nr &LINE contains no ''=''-sign'
+         AGO   .RDLOOP
+.ERROR1B MNOTE 8,'Error 1B: Line nr &LINE contains no mnemonic'
+         AGO   .RDLOOP
+.ERROR1C MNOTE 8,'Error 1C: Line nr &LINE out of sequence'
+         AGO   .RDLOOP
+.ERROR1D MNOTE 8,'Error 1D: Line nr &LINE mnemonic &MNEMON does not mat*
+               ch description: &MNEMON2'
+         AGO   .RDLOOP
+.ERROR2A MNOTE 8,'Error 2A: Line nr &LINE contains no ''%''-sign'
+         AGO   .RDLOOP
+.ERROR2B MNOTE 8,'Error 2B: Line nr &LINE contains no opcode'
+         AGO   .RDLOOP
+.ERROR3A MNOTE 8,'Error 3A: Line nr &LINE contains no ''$''-sign'
+         AGO   .RDLOOP
+.ERROR4A MNOTE 8,'Error 4A: Line nr &LINE contains no ''#''-sign'
+         AGO   .RDLOOP
+.ERROR5A MNOTE 8,'Error 5A: Line nr &LINE contains no full name'
+         AGO   .RDLOOP
+.*
+.RDLOOPX ANOP  ,                       * Exit point for read loop
+.*
+.MEND    MEND
