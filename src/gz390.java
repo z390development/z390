@@ -107,7 +107,8 @@ public  class  gz390
 	 * 05/18/06 RPI 227 replace JTextArea TN3270 screen view
 	 *          with gz390_screen class Graphics2D panel with
 	 *          support for mulitple font characters and symbols
-	 *          plus color and other extended TN3270 attributes     
+	 *          plus color and other extended TN3270 attributes 
+	 * 08/14/06 RPI 414 recognize ERR(nnn) limit override    
 	 ********************************************************
      * Global variables
      *****************************************************
@@ -116,7 +117,6 @@ public  class  gz390
 	/*
 	 * global max/min limits
 	 */
-        int max_errors = 100;
         int max_cmd  = 100;
         int max_keys = 100;
         int max_rows = 24;
@@ -358,8 +358,8 @@ public  class  gz390
  	boolean main_status  = true;
     boolean main_view_changed = false;
     JFrame main_frame    = null;
-    int main_width  = 650;
-    int main_height = 550;
+    int main_width  = 650;  
+    int main_height = 550;  
     int main_width_max = 800;
     int main_height_max = 600;
     int main_width_min  = 150;
@@ -618,7 +618,7 @@ public  class  gz390
 			cmd_error = true;
 			msg = "GZ390E error " + error + " " + msg;
 			guam_put_log(msg);
-			if  (max_errors != 0 && gz390_errors > max_errors){
+			if  (tz390.max_errors != 0 && gz390_errors > tz390.max_errors){
 		        abort_error(101,"maximum errors exceeded");
             }
 		}
@@ -1343,7 +1343,7 @@ public  class  gz390
       	 if (event_name.equals("TN3270")){
       	    if (!opt_tn3270){
         	   	set_view_screen(0,0,0);
-        	   	tn_kb_lock = false; //dsh
+        	   	tn_kb_lock = false; 
             }
       	 } 
       	 break;
@@ -1994,12 +1994,13 @@ public  class  gz390
             	main_view.setPreferredSize(   	        		
                			new Dimension(tn_scn.scn_width,tn_scn.scn_height)
         			);
-        	} else if (guam_view == guam_view_graph){
+        	} else if (guam_view == guam_view_graph 
+        		&& graph_scn != null){ // RPI 408
         		main_height = graph_scn.scn_height + title_height + menu_height + command_height + status_height;
         		main_width  = graph_scn.scn_width + scrollbar_width + 4 * main_border;
             	main_view.setPreferredSize(   	        		
                			new Dimension(graph_scn.scn_width,graph_scn.scn_height)
-        			);
+        		);
         	}
         	if (main_height > tz390.max_main_height){
 	        	main_height = tz390.max_main_height;

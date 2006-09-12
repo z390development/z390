@@ -1,4 +1,4 @@
-rem vdiff %1 %2 %3 %4 %5
+rem vdiff compare %1 with %2 creating %3 dif file
 if exist %1 goto ok1
 pause vdiff file missing %1 
 :ok1

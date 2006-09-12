@@ -1,12 +1,21 @@
-         TITLE 'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR'
-TESTCMD1 SUBENTRY
-         WTO   'TESTCMD1 TEST SVC 34 CMDPROC MULT TASK SUPPORT'
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/11/06                                                 *
+*********************************************************************
+* 09/11/06 RP 363 CHANGE FROM TEST TO RT\TEST DIRECTORY              
+*********************************************************************
+         TITLE 'TESTCMD2 TEST USE OF SVC 34 COMMAND PROCESSOR'
+TESTCMD2 SUBENTRY
+         WTO   'TESTCMD2 TEST SVC 34 CMDPROC MULT TASK SUPPORT'
          CMDPROC START,ID=0
          CMDPROC WRITE,=C'"PROMPT $G"',ID=0
-         CMDPROC WRITE,=C'"TEST\TESTCMD2.BAT"',ID=0
+         CMDPROC WRITE,=C'"RT\TEST\TESTCMD2.BAT"',ID=0
          CMDPROC START,ID=1
          CMDPROC WRITE,=C'"PROMPT $G"',ID=1
-         CMDPROC WRITE,=C'"TEST\TESTCMD2.BAT"',ID=1
+         CMDPROC WRITE,=C'"RT\TEST\TESTCMD2.BAT"',ID=1
 CMDLOOP  EQU   *
          LA    4,10
 CMDREAD1 EQU   *

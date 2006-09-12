@@ -1,4 +1,4 @@
-TESTCVT2 CSECT
+TESTCVT1 CSECT
          USING *,15
          L     1,=V(TESTCVTX)
          SR    15,15

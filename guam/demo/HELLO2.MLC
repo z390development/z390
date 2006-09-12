@@ -1,0 +1,44 @@
+HELLO1   CSECT ,
+         SAVE  (14,12),,*
+         LR    12,15
+         USING HELLO1,12
+*
+         LA    1,SAVEA
+         ST    1,8(,13)
+         ST    13,4(,1)
+         LR    13,1
+*
+         STFSMODE ON,INITIAL=YES
+         STTMPMD ON
+*
+         TPUT  STREAM,STREAMLN,FULLSCR
+*
+         TGET  INBUF,INBUFLN,ASIS
+*
+         STLINENO LINE=1
+         STFSMODE OFF
+         STTMPMD OFF
+*
+         L     13,4(,13)
+         LM    14,12,12(13)
+         SLR   15,15
+         BR    14
+*
+STREAM   DS    0C
+         DC    X'27'       ESCAPE CHAR
+         DC    X'F5'       ERASE/WRITE
+         DC    X'C3'       WCC
+         DC    X'114BF0'   SBA
+         DC    X'2903'     SFE (Three Attribute Pairs To Follow)     
+         DC    X'C0F0'     ATTR #1 (BASIC = PROTECTED)
+         DC    X'41F2'     ATTR #2 (HIGHLIGHTING = REVERSE)
+         DC    X'42F6'     ATTR #3 (COLOR = YELLOW)
+         DC    C'HELLO, WORLD!'
+         DC    X'1DF0'     SF (PROTECTED / END PREV FIELD)
+STREAMLN EQU   *-STREAM
+*
+INBUF    DS    XL128
+INBUFLN  EQU   *-INBUF
+*
+SAVEA    DS    18F
+         END   ,

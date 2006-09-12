@@ -1,0 +1,22 @@
+TESTGP3 SUBENTRY
+        LA     R0,LBUFF
+        LA     R1,BUFF
+        ICM    R1,8,=X'81'
+        TGET   (R1),(R0),R
+        LR     R2,R1        R2 = LEN
+        LTR    R15,R15      R15= RC
+LOOP    EQU    *
+        TPUT   MSG,LMSG,FULLSCR
+        TGET   BUFF,LBUFF,NOWAIT,ASIS
+        LTR    R15,R15
+        BZ     OK
+        STIMER WAIT,BINTVL==F'300' WAIT 3 SECONDS
+        B      LOOP
+OK      SUBEXIT
+        EQUREGS
+BUFF    DC     CL40' '
+LBUFF   EQU    *-BUFF
+MSG     TN3270 WCC_KD,(SBA,1,1),(SF,ATT_PA,C'READY')
+LMSG    EQU    *-MSG
+        TN3270 SYMBOLS
+        END

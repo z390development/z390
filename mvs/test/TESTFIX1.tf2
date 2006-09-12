@@ -1,8 +1,0 @@
-.* MVS 3.8J PUBLIC DOMAIN
-* TEST SOURCE PROGRAM FOR TESTFIX1
-* ADD MVS 3.8J PUBLIC DOMAIN MSG
-* ALSO STRIP SEQUENCE # IN 73-80 AND TRIM SPACES
-         MACRO
-         TEST  &P1,                                                    X
-               &P2
-         MEND

@@ -1,5 +1,0 @@
-23:31:41 OPCODES MZ390 STARTED
-23:31:44 OPCODES MZ390 MNOTE 8,'Error 1D: Line nr 154 mnemonic BRNOL does not mat*
-23:31:45 OPCODES MZ390 MNOTE 8,'Error 1D: Line nr 188 mnemonic CDFBR does not mat*
-23:31:45 OPCODES MZ390 MZ390E error 119 file=2 line=209 macro index table exceeded
-23:31:45 OPCODES MZ390 ENDED   RC=16 SEC= 4 MEM(MB)= 25 IO=2658

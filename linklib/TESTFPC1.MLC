@@ -1,0 +1,165 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 07/17/06                                                 *
+*********************************************************************
+* 07/17/06 RPI 370 test CTD and CFD including SVC and MF call option 
+*********************************************************************
+* Test conversion from and to 128 bit integer and all 6 floating 
+* point types using default svc 170 and 171 and also using 
+* LINKAGE=MF call to FPCONVRT contributed by David Bond.
+*********************************************************************
+         COPY  ASMMSP
+         PRINT DATA
+TESTFPC1 RT1   MAIN
+INT128   DC    0XL16,X'80',15X'00'      largest negative 128 bit int
+WORK16   DC    XL16'00'
+WTOMSG   DC    AL2(WTOEND-*,0)
+DTYPE    DC    CL6' ',C' '
+DHEX     DC    CL32' ',C'='
+DECIMAL  DC    CL45' '          
+WTOEND   EQU   *
+PRC      DC    PL8'0'
+WTOPRC   DC    AL2(WTOPRC_END-*,0)
+         DC    C'ERROR RC ='
+DRC      DC    CL4' '
+WTOPRC_END   EQU   *
+LHT1     DC    LH'-567678867789987898'
+LBT1     DC    LB'-567678867789987898'
+         EQUREGS
+         RT1   START
+         MACRO
+         TEST  &TYPE,&VAL
+         TEST1 MF,&TYPE,&VAL
+         TEST1 SVC,&TYPE,&VAL
+         MEND
+         MACRO
+         TEST1 &LINKAGE,&TYPE,&VAL
+         GBLA  &TESTNO
+&TESTNO  SETA  &TESTNO+1
+         BASR  R12,0
+         USING *,R12
+         CTD   CTD_&TYPE,&VAL,DECIMAL,LINKAGE=&LINKAGE
+         CVD   R15,PRC
+&LK      SETC  '&LINKAGE'(1,1)
+         MVC   DTYPE,=CL6'&LK.>D &TYPE'
+         MVC   DHEX,=CL32' '
+         LA    R2,&VAL
+         LA    R3,L'&VAL
+         CALL  CVTTOHEX,((R2),DHEX,(R3))
+         WTO   MF=(E,WTOMSG)
+         IF    (CP,PRC,NE,=P'0')
+               MVC DRC,=X'40202020'
+               ED  DRC,PRC+6
+               WTO MF=(E,WTOPRC)
+               ABEND 101
+         ENDIF
+         XC    WORK16,WORK16
+         CFD   CFD_&TYPE,WORK16,DECIMAL,LINKAGE=&LINKAGE
+         CVD   R15,PRC
+         MVC   DTYPE,=CL6'&LK.<D &TYPE'
+         MVC   DHEX,=CL32' '
+         LA    R3,L'&VAL
+         CALL  CVTTOHEX,(WORK16,DHEX,(R3))
+         WTO   MF=(E,WTOMSG)
+         IF    (CP,PRC,NE,=P'0')
+               MVC DRC,=X'40202020'
+               ED  DRC,PRC+6
+               WTO MF=(E,WTOPRC)
+               ABEND 102
+         ENDIF
+         AP    RT1_TOT,=P'1'
+         LA    R1,L'&VAL
+         BCTR  R1,0
+         EX    R1,*+4+4
+         B     *+4+6
+         CLC   WORK16(0),&VAL  VERIFY CTD CONSTANT WITH CFD RESULT
+         RT1   CCE
+         B     EXIT&TESTNO
+         LTORG
+EXIT&TESTNO DS 0H
+         MEND
+         TEST   EH,=EH'0'
+         TEST   EH,=EH'1E-78'   
+         TEST   EH,=EH'1'
+         TEST   EH,=EH'2'
+         TEST   EH,=EH'1E2'
+         TEST   EH,=EH'1E75'    
+         TEST   EH,=EH'-1'
+         TEST   EH,=EH'-2'
+         TEST   EH,=EH'-1E2'
+         TEST   EB,=EB'0'
+         TEST   EB,=EB'2E-38' 1E-38 CAUSES UNDERFLOW
+         TEST   EB,=EB'1'
+         TEST   EB,=EB'2'
+         TEST   EB,=EB'3'
+         TEST   EB,=EB'1E2'
+         TEST   EB,=EB'1E38'    
+         TEST   EB,=EB'-1'
+         TEST   EB,=EB'-2'
+         TEST   EB,=EB'-1E2'
+         TEST   DH,=DH'0'
+         TEST   DH,=DH'1E-78'       
+         TEST   DH,=DH'1'
+         TEST   DH,=DH'2'
+         TEST   DH,=DH'1E2'
+         TEST   DH,=DH'6E75' 1E75 CAUSES 1 BIT ROUNDING ERROR
+         TEST   DH,=DH'-1'
+         TEST   DH,=DH'-2'
+         TEST   DH,=DH'-1E2'
+         TEST   DB,=DB'0'
+         TEST   DB,=DB'1E-307'     
+         TEST   DB,=DB'1'
+         TEST   DB,=DB'2'
+         TEST   DB,=DB'1E2'
+         TEST   DB,=DB'1E307'     
+         TEST   DB,=DB'-1'
+         TEST   DB,=DB'-2'
+         TEST   DB,=DB'-1E2'
+         TEST   LH,=LH'0'
+         TEST   LH,=LH'3E-78' 1E-78 CAUSES 1 BIT ROUNDING ERROR    
+         TEST   LH,=LH'1'
+         TEST   LH,=LH'2'
+         TEST   LH,=LH'1E2'
+         TEST   LH,=LH'2E75'  1E75 CAUSES 1 BIT ROUNDING ERROR
+         TEST   LH,=LH'-1'
+         TEST   LH,=LH'-2'
+         TEST   LH,=LH'-1E2'
+         TEST   LH,LHT1 TEST VALUE FOR FPCONVRT
+         TEST   LB,=LB'0'
+         TEST   LB,=LB'1E-4931'     
+         TEST   LB,=LB'1'
+         TEST   LB,=LB'2'
+         TEST   LB,=LB'1E2'
+         TEST   LB,=LB'1E4931'     
+         TEST   LB,=LB'-1'
+         TEST   LB,=LB'-2'
+         TEST   LB,=LB'-1E2'
+         TEST   LB,LBT1 TEST VALUE FOR FPCONVRT
+         TEST   INT128,=FL16'0' 
+         TEST   INT128,=FL16'1' 
+         TEST   INT128,=FL16'2' 
+         TEST   INT128,=FL16'1E2' 
+         TEST   INT128,=FL16'1E6'      
+         TEST   INT128,=FL16'1E13'     
+         TEST   INT128,=FL16'1E14'     
+         TEST   INT128,=FL16S63'1'     
+         TEST   INT128,=FL16S64'1'     
+         TEST   INT128,=FL16'1E26'     
+         TEST   INT128,=FL16'1E27'     
+         TEST   INT128,=FL16'1E38'     
+         TEST   INT128,=FL16'-1' 
+         TEST   INT128,=FL16'-2' 
+         TEST   INT128,=FL16'-1E6'      
+         TEST   INT128,=FL16'-1E13'     
+         TEST   INT128,=FL16'-1E14'     
+         TEST   INT128,=FL16S63'-1'     
+         TEST   INT128,=FL16S64'-1'     
+         TEST   INT128,=FL16'-1E26'     
+         TEST   INT128,=FL16'-1E27'     
+         TEST   INT128,=FL16'-1E38'     
+         TEST   INT128,INT128 MAX NEG
+         RT1   END
+         END         

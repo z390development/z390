@@ -1,0 +1,58 @@
+1*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/10/06                                                 *
+*********************************************************************
+* 09/10/06 RPI 443 - add new benchmark timing program
+*********************************************************************
+*
+*  Run macro processor for BMKTIME with SYSPARM set to statistics file
+*
+*    1.  If the file is not found or if the file contains more 
+*        than 1 record, rewrite file with starting time.
+*    2.  If the file contains exactly one record with starting time,
+*        rewrite the file with starting time, ending time, and elapsed
+*        time in seconds and milliseconds.
+*********************************************************************
+&START   AREAD DSNAME=&SYSPARM
+         AIF   (&START EQ '').START    WRITE START IF NO FILE
+&END     AREAD DSNAME=&SYSPARM
+         AIF   (&END EQ '').END        GO TO ENDING IF START FOUND
+.*
+.* WRITE START RECORD IF NO FILE OR MULTIPLE LINES FOUND
+.*
+.START   ANOP
+         PUNCH 'BMKTIME STARTED &SYSCLOCK',DSNAME=&SYSPARM
+         AGO   .EXIT
+.*
+.* REWRITE FILE WITH STARTING, ENDING, AND ELAPSED TIME
+.*
+.END     ANOP
+&END     SETC  'BMKTIME ENDED   &SYSCLOCK'         
+&END_HH  SETA  '&END'(25,2)
+&END_HH  SETA  '&END'(28,2)
+&END_MM  SETA  '&END'(31,2)
+&END_SS  SETA  '&END'(34,2)
+&END_MS  SETA  '&END'(37,3)
+&END_TOD SETA  &END_SS+60*(&END_MM+60*&END_HH)
+         MNOTE 'END HH=&END_HH MM=&END_MM SS=&END_SS MS=&END_MS'
+         MNOTE 'END TOD=&END_TOD'
+&START_HH  SETA  '&START'(25,2)
+&START_HH  SETA  '&START'(28,2)
+&START_MM  SETA  '&START'(31,2)
+&START_SS  SETA  '&START'(34,2)
+&START_MS  SETA  '&START'(37,3)
+&START_TOD SETA  &START_SS+60*(&START_MM+60*&START_HH)
+&TOT_MS  SETA (&END_TOD-&START_TOD)*1000+(&END_MS-&START_MS)
+         MNOTE 'START HH=&START_HH MM=&START_MM SS=&ESTART_SS'
+         MNOTE 'START MS=&START_MS TOD=&START_TOD'
+&TOT_SEC SETA &TOT_MS/1000
+&REM_MS  SETA &TOT_MS-&TOT_SEC*1000
+&TIME    SETC 'BMKTIME ELAPSED TIME SEC=&TOT_SEC..&REM_MS'
+         PUNCH '&START',DSNAME=&SYSPARM
+         PUNCH '&END',DSNAME=&SYSPARM
+         PUNCH '&TIME',DSNAME=&SYSPARM
+.EXIT    ANOP
+         END

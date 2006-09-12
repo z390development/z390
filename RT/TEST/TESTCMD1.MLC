@@ -1,9 +1,18 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/11/06                                                 *
+*********************************************************************
+* 09/11/06 RP 363 CHANGE FROM TEST TO RT\TEST DIRECTORY              
+*********************************************************************
          TITLE 'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR'
 TESTCMD1 SUBENTRY
          WTO   'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR'
          CMDPROC START
          CMDPROC WRITE,=C'"PROMPT $G"'
-         CMDPROC WRITE,=C'"TEST\TESTCMD1.BAT"'
+         CMDPROC WRITE,=C'"RT\TEST\TESTCMD1.BAT"'
 CMDLOOP  EQU   *
          CMDPROC READ,MSG
          CHI   15,4

@@ -1,6 +1,6 @@
 *FMT  -INST-  TYPE --LL--    COMMENTS
 *                  L1  L2
-*                  XB
+*                  XBS
 *234  123456  123  123456
 *E     SCKPF   not supported
 *E     TAM     not supported
@@ -48,6 +48,39 @@ RR    OR
 RR    SLR
 RR    SR
 RR    XR
+*
+RR    LPDR    DPH
+RR    LNDR    DPH
+RR    LTDR    DPH
+RR    LCDR    DPH
+RR    HDR     DPH    F
+RR    LDXR    DPH
+RR    MXR     XPH
+RR    MXDR    XPH
+RR    LDR     DPH
+RR    CDR     DPH
+RR    ADR     DPH
+RR    SDR     DPH
+RR    MDR     DPH
+RR    DDR     DPH    F
+RR    AWR     DPH
+RR    SWR     DPH
+RR    LPER    EPH
+RR    LNER    EPH
+RR    LTER    EPH
+RR    LCER    EPH
+RR    HER     EPH    F
+RR    LEDR    EPH
+RR    AXR     XPH
+RR    SXR     XPH
+RR    LER     EPH
+RR    CER     EPH
+RR    AER     EPH
+RR    SER     EPH
+RR    MDER    EPH
+RR    DER     EPH    F
+RR    AUR     EPH
+RR    SUR     EPH
 *
 RX    STH     H    0BS
 RX    STH     H    XBS
@@ -149,10 +182,51 @@ RX    SL      F    00
 RX    SL      F    0B
 RX    SL      F    X0
 RX    SL      F    XB
+*
+RX    STD     DPH  0BS
+RX    STD     DPH  XBS
+RX    MXD     XPH  0B
+RX    MXD     XPH  XB
+RX    LD      DPH  0B
+RX    LD      DPH  XB
+RX    CD      DPH  0B
+RX    CD      DPH  XB
+RX    AD      DPH  0B
+RX    AD      DPH  XB
+RX    SD      DPH  0B
+RX    SD      DPH  XB
+RX    MD      DPH  0B
+RX    MD      DPH  XB
+RX    DD      DPH  0BF
+RX    DD      DPH  XBF
+RX    AW      DPH  0B
+RX    AW      DPH  XB
+RX    SW      DPH  0B
+RX    SW      DPH  XB
+RX    STE     EPH  0BS
+RX    STE     EPH  XBS
+*
 RX    MS      F    00
 RX    MS      F    0B
 RX    MS      F    X0
 RX    MS      F    XB
+*
+RX    LE      EPH  0B
+RX    LE      EPH  XB
+RX    CE      EPH  0B
+RX    CE      EPH  XB
+RX    AE      EPH  0B
+RX    AE      EPH  XB
+RX    SE      EPH  0B
+RX    SE      EPH  XB
+RX    MDE     EPH  0B
+RX    MDE     EPH  XB
+RX    DE      EPH  0BF
+RX    DE      EPH  XBF
+RX    AU      EPH  0B
+RX    AU      EPH  XB
+RX    SU      EPH  0B
+RX    SU      EPH  XB
 *
 RSI   BRXH                   BRANCH
 RSI   BRXH    B0             NO BRANCH
@@ -163,7 +237,6 @@ RS    BXH                    BRANCH
 RS    BXH     B0             NO BRANCH
 RS    BXLE                   BRANCH
 RS    BXLE    B0             NO BRANCH
-*
 RS    SRL          0B
 RS    SRL          00
 RS    SLL          0B
@@ -180,7 +253,6 @@ RS    SRDA         0B
 RS    SRDA         00
 RS    SLDA         0B
 RS    SLDA         00
-*
 RS    STM          01        L1=NO. OF REGISTERS
 RS    STM          04        L1=NO. OF REGISTERS
 RS    STM          08        L1=NO. OF REGISTERS
@@ -234,7 +306,6 @@ RI    BRCT    B              BRANCH
 RI    BRCT    B0             NO BRANCH
 RI    BRCTG   B              BRANCH
 RI    BRCTG   B0             NO BRANCH
-*
 RI    LHI
 RI    LGHI
 RI    AHI
@@ -263,9 +334,145 @@ S     STCK
 *S     STPT                  not supported
 *S     STPX                  not supported
 *S     STAP                  not supported
+*
+RRE   DXR     XPH    F
+RRE   SQDR    DPH    F
+RRE   SQER    EPH    F
+RRE   MSR
+*
 S     STCKE
 S     STCKF
-RRE   MSR
+S     SRNM
+S     STFPC
+S     LFPC
+*
+RRE   LPEBR   EPB
+RRE   LNEBR   EPB
+RRE   LTEBR   EPB
+RRE   LCEBR   EPB
+RRE   LDEBR   DPB
+RRE   LXDBR   XPB
+RRE   LXEBR   XPB
+RRE   MXDBR   XPB
+RRE   KEBR    EPB
+RRE   CEBR    EPB
+RRE   AEBR    EPB
+RRE   SEBR    EPB
+RRE   MDEBR   DPB
+RRE   DEBR    EPB    F
+*
+RRF   MAEBR   EPB
+RRF   MSEBR   EPB
+*
+RRE   LPDBR   DPB
+RRE   LNDBR   DPB
+RRE   LTDBR   DPB
+RRE   LCDBR   DPB
+RRE   SQEBR   EPB    F
+RRE   SQDBR   DPB    F
+RRE   SQXBR   XPB    F
+RRE   MEEBR   EPB
+RRE   KDBR    DPB
+RRE   CDBR    DPB
+RRE   ADBR    DPB
+RRE   SDBR    DPB
+RRE   MDBR    DPB
+RRE   DDBR    DPB    F
+*
+RRF   MADBR   DPB
+RRF   MSDBR   DPB
+*
+RRE   LDER    DPH
+RRE   LXDR    XPH
+RRE   LXER    XPH
+*
+RRF   MAER    EPH
+RRF   MSER    EPH
+*
+RRE   SQXR    XPH    F
+RRE   MEER    EPH
+*
+RRF   MAYLR   XPH
+RRF   MYLR    XPH
+RRF   MAYR    XPH
+RRF   MYR     XPH
+RRF   MAYHR   XPH
+RRF   MYHR    XPH
+RRF   MADR    DPH
+RRF   MSDR    DPH
+*
+RRE   LPXBR   XPB
+RRE   LNXBR   XPB
+RRE   LTXBR   XPB
+RRE   LCXBR   XPB
+RRE   LEDBR   EPB
+RRE   LDXBR   DPB
+RRE   LEXBR   EPB
+*
+RRF   FIXBR   XPB
+*
+RRE   KXBR    XPB
+RRE   CXBR    XPB
+RRE   AXBR    XPB
+RRE   SXBR    XPB
+RRE   MXBR    XPB
+RRE   DXBR    XPB    F
+*
+RRF   TBEDR   EPB
+RRF   TBDR    DPB
+RRF   DIEBR   EPB
+RRF   FIEBR   EPB
+*
+RRE   THDER   DPH
+RRE   THDR    DPH
+*
+RRF   DIDBR   DPB
+RRF   FIDBR   DPB
+*
+RRE   LPXR    XPH
+RRE   LNXR    XPH
+RRE   LTXR    XPH
+RRE   LCXR    XPH
+RRE   LXR     XPH
+RRE   LEXR    EPH
+RRE   FIXR    XPH
+RRE   CXR     XPH
+RRE   LZER    EPH
+RRE   LZDR    DPH
+RRE   LZXR    XPH
+RRE   FIER    EPH
+RRE   FIDR    DPH
+RRE   SFPC
+RRE   EFPC
+*
+RRE   CEFBR   EPB
+RRE   CDFBR   DPB
+RRE   CXFBR   XPB
+*
+RRF   CFEBR
+RRF   CFDBR
+RRF   CFXBR
+*
+RRE   CEGBR   EPB
+RRE   CDGBR   DPB
+RRE   CXGBR   XPB
+*
+RRF   CGEBR
+RRF   CGDBR
+RRF   CGXBR
+*
+RRE   CEFR    EPH
+RRE   CDFR    DPH
+RRE   CXFR    XPH
+RRF   CFER
+RRF   CFDR
+RRF   CFXR
+RRE   CEGR    EPH
+RRE   CDGR    DPH
+RRE   CXGR    XPH
+RRF   CGER
+RRF   CGDR
+RRF   CGXR
 *
 RRE   LPGR
 RRE   LNGR
@@ -334,8 +541,6 @@ RIL   LARL
 RIL   LGFI
 RIL   BRCL    B
 RIL   BRCL    B0
-RIL   JLU     B              SYNONYM
-RIL   JLU     B0             SYNONYM
 RIL   BRASL   B
 RIL   XIHF
 RIL   XILF
@@ -792,6 +997,107 @@ RIE   BRXHG                  BRANCH
 RIE   BRXHG   B0             NO BRANCH
 RIE   BRXLG                  BRANCH
 RIE   BRXLG   B0             NO BRANCH
+*
+RXE   LDEB    DPB  0B
+RXE   LDEB    DPB  XB
+RXE   LXDB    XPB  0B
+RXE   LXDB    XPB  XB
+RXE   LXEB    XPB  0B
+RXE   LXEB    XPB  XB
+RXE   MXDB    XPB  0B
+RXE   MXDB    XPB  XB
+RXE   KEB     EPB  0B
+RXE   KEB     EPB  XB
+RXE   CEB     EPB  0B
+RXE   CEB     EPB  XB
+RXE   AEB     EPB  0B
+RXE   AEB     EPB  XB
+RXE   SEB     EPB  0B
+RXE   SEB     EPB  XB
+RXE   MDEB    DPB  0B
+RXE   MDEB    DPB  XB
+RXE   DEB     EPB  0BF
+RXE   DEB     EPB  XBF
+*
+RXF   MAEB    EPB  0B
+RXF   MAEB    EPB  XB
+RXF   MSEB    EPB  0B
+RXF   MSEB    EPB  XB
+*
+RXE   TCEB    EPB  0B
+RXE   TCEB    EPB  XB
+RXE   TCDB    DPB  0B
+RXE   TCDB    DPB  XB
+RXE   TCXB    XPB  0B
+RXE   TCXB    XPB  XB
+RXE   SQEB    EPB  0BF
+RXE   SQEB    EPB  XBF
+RXE   SQDB    DPB  0BF
+RXE   SQDB    DPB  XBF
+RXE   MEEB    EPB  0B
+RXE   MEEB    EPB  XB
+RXE   KDB     DPB  0B
+RXE   KDB     DPB  XB
+RXE   CDB     DPB  0B
+RXE   CDB     DPB  XB
+RXE   ADB     DPB  0B
+RXE   ADB     DPB  XB
+RXE   SDB     DPB  0B
+RXE   SDB     DPB  XB
+RXE   MDB     DPB  0B
+RXE   MDB     DPB  XB
+RXE   DDB     DPB  0BF
+RXE   DDB     DPB  XBF
+*
+RXF   MADB    DPB  0B
+RXF   MADB    DPB  XB
+RXF   MSDB    DPB  0B
+RXF   MSDB    DPB  XB
+*
+RXE   LDE     DPH  0B
+RXE   LDE     DPH  XB
+RXE   LXD     XPH  0B
+RXE   LXD     XPH  XB
+RXE   LXE     XPH  0B
+RXE   LXE     XPH  XB
+*
+RXF   MAE     EPH  0B
+RXF   MAE     EPH  XB
+RXF   MSE     EPH  0B
+RXF   MSE     EPH  XB
+*
+RXE   SQE     EPH  0BF
+RXE   SQE     EPH  XBF
+RXE   SQD     DPH  0BF
+RXE   SQD     DPH  XBF
+RXE   MEE     EPH  0B
+RXE   MEE     EPH  XB
+*
+RXF   MAYL    XPH  0B
+RXF   MAYL    XPH  XB
+RXF   MYL     XPH  0B
+RXF   MYL     XPH  XB
+RXF   MAY     XPH  0B
+RXF   MAY     XPH  XB
+RXF   MY      XPH  0B
+RXF   MY      XPH  XB
+RXF   MAYH    XPH  0B
+RXF   MAYH    XPH  XB
+RXF   MYH     XPH  0B
+RXF   MYH     XPH  XB
+RXF   MAD     DPH  0B
+RXF   MAD     DPH  XB
+RXF   MSD     DPH  0B
+RXF   MSD     DPH  XB
+*
+RXY   LEY     EPH  0B
+RXY   LEY     EPH  XB
+RXY   LDY     DPH  0B
+RXY   LDY     DPH  XB
+RXY   STEY    EPH  0BS
+RXY   STEY    EPH  XBS
+RXY   STDY    DPH  0BS
+RXY   STDY    DPH  XBS
 *
 SS2   SRP     P    01
 SS2   SRP     P    04

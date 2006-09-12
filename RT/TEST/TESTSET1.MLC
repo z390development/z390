@@ -7,6 +7,8 @@
 *********************************************************************
 * 12/08/05 RPI 119 ADD TESTS FOR MULT VALUE SETS
 * 03/20/06 RPI 242 ADD TEST FOR LCLC AND GBLC INIT ERROR
+* 08/07/06 RPI 401 TEST EXPANSION VIA MULTIPLE STORE VALUES
+* 09/08/06 RPI 435 TEST DYNAMIC ALLOC OF LOCAL ARRAYS       
 *********************************************************************
 TESTSET1 SUBENTRY
          WTO   'TESTSET1 - TEST SUBSCRIPTED VARIABLES'
@@ -108,6 +110,40 @@ ok3      equ   *
          AIF   (&TEST_LCLC(100) NE '').ERR
          GBLC  &TEST_GBLC(100)
          AIF   (&TEST_GBLC(100) NE '').ERR
+* TEST EXPANSION VIA MULT. STORE
+         LCLA  &EA(1)
+         LCLB  &EB(1)
+         LCLC  &EC(1)
+         LCLA  &EGA(1)
+         LCLB  &EGB(1)
+         LCLC  &EGC(1)
+&EA(1)   SETA  1,2,3
+         AIF   (&EA(3) NE 3).ERR
+&EB(1)   SETB  1,2,3
+         AIF   (&EB(3) NE 3).ERR
+&EC(1)   SETC  '1','2','3'
+         AIF   (&EC(3) NE '3').ERR
+&EGA(1)   SETA  1,2,3
+         AIF   (&EGA(3) NE 3).ERR
+&EGB(1)   SETB  1,2,3
+         AIF   (&EGB(3) NE 3).ERR
+&EGC(1)   SETC  '1','2','3'
+         AIF   (&EGC(3) NE '3').ERR
+* TEST ALLOC OF SUBSCRIPTED ARRAY WITHOUT DECLARATION
+&DX(3)   SETB  1
+         AIF   (&DX(3) EQ 1 AND &DX(8) EQ 0).DXOK
+         MNOTE 8,'DX(3) ALLOC FAILED'
+         AGO   .EXIT
+.DXOK    ANOP
+         MNOTE 'DX(3)=&DX(3) DX(8)=&DX(8) OK'
+&DY(1)   SETA  1
+&DI      SETA  3
+&DY(&DI) SETA  3
+         AIF   (&DY(3) EQ 3 AND &DY(8) EQ 0).DYOK
+         MNOTE 8,'DY(3) ALLOC FAILED'
+         AGO   .EXIT
+.DYOK    ANOP
+         MNOTE 'DY(3)=&DY(3) DY(8)=&DY(8) OK'
          WTO   'TESTSET1 ENDED OK'
          SUBEXIT
          AGO   .EXIT

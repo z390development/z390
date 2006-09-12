@@ -1,15 +1,25 @@
 *FMT  -INST-  TYPE --LL--    COMMENTS
 *                  L1  L2
-*                  XB
+*                  XBS
 *234  123456  123  123456
-RR    BALR    B              BALR R1,R2
-RR    BALR    B0             BALR R1,0
-RR    BCTR    B              BCTR R1,R2
-RR    BCTR    B0             BCTR R1,0
+*E     SCKPF   not supported
+*E     TAM     not supported
+E     SAM24
+E     SAM31
+*E     SAM64   not supported
+RR    SPM
+RR    BALR    B              BALR  R1,R2
+RR    BALR    B0             BALR  R1,0
+RR    BCTR    B              BCTR  R1,R2
+RR    BCTR    B0             BCTR  R1,0
 RR    BCR     B              UNCOND
 RR    BCR     B0             NOPR
-RR    BASR    B              BASR R1,R2
-RR    BASR    B0             BASR R1,0
+RR    BSM     B              BSM   R1,R2
+RR    BSM     B0             BSM   R1,0
+RR    BASSM   B              BASSM R1,R2
+RR    BASSM   B0             BASSM R1,0
+RR    BASR    B              BASR  R1,R2
+RR    BASR    B0             BASR  R1,0
 RR    MVCL              1
 RR    MVCL             10
 RR    MVCL             50
@@ -39,6 +49,39 @@ RR    SLR
 RR    SR
 RR    XR
 *
+RR    LPDR    DPH
+RR    LNDR    DPH
+RR    LTDR    DPH
+RR    LCDR    DPH
+RR    HDR     DPH    F
+RR    LDXR    DPH
+RR    MXR     XPH
+RR    MXDR    XPH
+RR    LDR     DPH
+RR    CDR     DPH
+RR    ADR     DPH
+RR    SDR     DPH
+RR    MDR     DPH
+RR    DDR     DPH    F
+RR    AWR     DPH
+RR    SWR     DPH
+RR    LPER    EPH
+RR    LNER    EPH
+RR    LTER    EPH
+RR    LCER    EPH
+RR    HER     EPH    F
+RR    LEDR    EPH
+RR    AXR     XPH
+RR    SXR     XPH
+RR    LER     EPH
+RR    CER     EPH
+RR    AER     EPH
+RR    SER     EPH
+RR    MDER    EPH
+RR    DER     EPH    F
+RR    AUR     EPH
+RR    SUR     EPH
+*
 RX    STH     H    0BS
 RX    STH     H    XBS
 RX    LA      H    00
@@ -51,8 +94,16 @@ RX    IC      H    00
 RX    IC      H    0B
 RX    IC      H    X0
 RX    IC      H    XB
+RX    EX           0B
+RX    EX           XB
+RX    EX      R0   0B        NO TARGET OR
+RX    EX      R0   XB        NO TARGET OR
 RX    BAL     B    0B
 RX    BAL     B    XB
+RX    BCT     B    0B        BRANCH, NO INDEX
+RX    BCT     B0   0B        NO BRANCH, NO INDEX
+RX    BCT     B    XB        BRANCH, INDEX
+RX    BCT     B0   XB        NO BRANCH, INDEX
 RX    BC      B    0B        UNCOND
 RX    BC      B    XB        UNCOND
 RX    BC      B0   0B        NOP
@@ -132,11 +183,60 @@ RX    SL      F    0B
 RX    SL      F    X0
 RX    SL      F    XB
 *
+RX    STD     DPH  0BS
+RX    STD     DPH  XBS
+RX    MXD     XPH  0B
+RX    MXD     XPH  XB
+RX    LD      DPH  0B
+RX    LD      DPH  XB
+RX    CD      DPH  0B
+RX    CD      DPH  XB
+RX    AD      DPH  0B
+RX    AD      DPH  XB
+RX    SD      DPH  0B
+RX    SD      DPH  XB
+RX    MD      DPH  0B
+RX    MD      DPH  XB
+RX    DD      DPH  0BF
+RX    DD      DPH  XBF
+RX    AW      DPH  0B
+RX    AW      DPH  XB
+RX    SW      DPH  0B
+RX    SW      DPH  XB
+RX    STE     EPH  0BS
+RX    STE     EPH  XBS
+*
+RX    MS      F    00
+RX    MS      F    0B
+RX    MS      F    X0
+RX    MS      F    XB
+*
+RX    LE      EPH  0B
+RX    LE      EPH  XB
+RX    CE      EPH  0B
+RX    CE      EPH  XB
+RX    AE      EPH  0B
+RX    AE      EPH  XB
+RX    SE      EPH  0B
+RX    SE      EPH  XB
+RX    MDE     EPH  0B
+RX    MDE     EPH  XB
+RX    DE      EPH  0BF
+RX    DE      EPH  XBF
+RX    AU      EPH  0B
+RX    AU      EPH  XB
+RX    SU      EPH  0B
+RX    SU      EPH  XB
+*
+RSI   BRXH                   BRANCH
+RSI   BRXH    B0             NO BRANCH
+RSI   BRXLE                  BRANCH
+RSI   BRXLE   B0             NO BRANCH
+*
 RS    BXH                    BRANCH
 RS    BXH     B0             NO BRANCH
 RS    BXLE                   BRANCH
 RS    BXLE    B0             NO BRANCH
-*
 RS    SRL          0B
 RS    SRL          00
 RS    SLL          0B
@@ -153,7 +253,6 @@ RS    SRDA         0B
 RS    SRDA         00
 RS    SLDA         0B
 RS    SLDA         00
-*
 RS    STM          01        L1=NO. OF REGISTERS
 RS    STM          04        L1=NO. OF REGISTERS
 RS    STM          08        L1=NO. OF REGISTERS
@@ -197,6 +296,16 @@ RI    TMLL
 RI    TML
 RI    TMHH
 RI    TMHL
+*
+RI    BRC     B              UNCOND
+RI    J       B              UNCOND
+RI    BRU     B              UNCOND
+RI    BRC     B0             JNOP
+RI    BRAS    B
+RI    BRCT    B              BRANCH
+RI    BRCT    B0             NO BRANCH
+RI    BRCTG   B              BRANCH
+RI    BRCTG   B0             NO BRANCH
 RI    LHI
 RI    LGHI
 RI    AHI
@@ -206,13 +315,172 @@ RI    MGHI
 RI    CHI
 RI    CGHI
 *
+RS    MVCLE             1
+RS    MVCLE            10
+RS    MVCLE            50
+RS    MVCLE           100
+RS    MVCLE           500
+RS    MVCLE          1000
+RS    MVCLE          5000
+RS    MVCLE         10000
+RS    CLCLE             1
+RS    CLCLE            10
+RS    CLCLE            50
+RS    CLCLE           100
+*
+S     STIDP
+S     STCK
+*S     STCKC                 not supported
+*S     STPT                  not supported
+*S     STPX                  not supported
+*S     STAP                  not supported
+*
+RRE   DXR     XPH    F
+RRE   SQDR    DPH    F
+RRE   SQER    EPH    F
 RRE   MSR
+*
+S     STCKE
+S     STCKF
+S     SRNM
+S     STFPC
+S     LFPC
+*
+RRE   LPEBR   EPB
+RRE   LNEBR   EPB
+RRE   LTEBR   EPB
+RRE   LCEBR   EPB
+RRE   LDEBR   DPB
+RRE   LXDBR   XPB
+RRE   LXEBR   XPB
+RRE   MXDBR   XPB
+RRE   KEBR    EPB
+RRE   CEBR    EPB
+RRE   AEBR    EPB
+RRE   SEBR    EPB
+RRE   MDEBR   DPB
+RRE   DEBR    EPB    F
+*
+RRF   MAEBR   EPB
+RRF   MSEBR   EPB
+*
+RRE   LPDBR   DPB
+RRE   LNDBR   DPB
+RRE   LTDBR   DPB
+RRE   LCDBR   DPB
+RRE   SQEBR   EPB    F
+RRE   SQDBR   DPB    F
+RRE   SQXBR   XPB    F
+RRE   MEEBR   EPB
+RRE   KDBR    DPB
+RRE   CDBR    DPB
+RRE   ADBR    DPB
+RRE   SDBR    DPB
+RRE   MDBR    DPB
+RRE   DDBR    DPB    F
+*
+RRF   MADBR   DPB
+RRF   MSDBR   DPB
+*
+RRE   LDER    DPH
+RRE   LXDR    XPH
+RRE   LXER    XPH
+*
+RRF   MAER    EPH
+RRF   MSER    EPH
+*
+RRE   SQXR    XPH    F
+RRE   MEER    EPH
+*
+RRF   MAYLR   XPH
+RRF   MYLR    XPH
+RRF   MAYR    XPH
+RRF   MYR     XPH
+RRF   MAYHR   XPH
+RRF   MYHR    XPH
+RRF   MADR    DPH
+RRF   MSDR    DPH
+*
+RRE   LPXBR   XPB
+RRE   LNXBR   XPB
+RRE   LTXBR   XPB
+RRE   LCXBR   XPB
+RRE   LEDBR   EPB
+RRE   LDXBR   DPB
+RRE   LEXBR   EPB
+*
+RRF   FIXBR   XPB
+*
+RRE   KXBR    XPB
+RRE   CXBR    XPB
+RRE   AXBR    XPB
+RRE   SXBR    XPB
+RRE   MXBR    XPB
+RRE   DXBR    XPB    F
+*
+RRF   TBEDR   EPB
+RRF   TBDR    DPB
+RRF   DIEBR   EPB
+RRF   FIEBR   EPB
+*
+RRE   THDER   DPH
+RRE   THDR    DPH
+*
+RRF   DIDBR   DPB
+RRF   FIDBR   DPB
+*
+RRE   LPXR    XPH
+RRE   LNXR    XPH
+RRE   LTXR    XPH
+RRE   LCXR    XPH
+RRE   LXR     XPH
+RRE   LEXR    EPH
+RRE   FIXR    XPH
+RRE   CXR     XPH
+RRE   LZER    EPH
+RRE   LZDR    DPH
+RRE   LZXR    XPH
+RRE   FIER    EPH
+RRE   FIDR    DPH
+RRE   SFPC
+RRE   EFPC
+*
+RRE   CEFBR   EPB
+RRE   CDFBR   DPB
+RRE   CXFBR   XPB
+*
+RRF   CFEBR
+RRF   CFDBR
+RRF   CFXBR
+*
+RRE   CEGBR   EPB
+RRE   CDGBR   DPB
+RRE   CXGBR   XPB
+*
+RRF   CGEBR
+RRF   CGDBR
+RRF   CGXBR
+*
+RRE   CEFR    EPH
+RRE   CDFR    DPH
+RRE   CXFR    XPH
+RRF   CFER
+RRF   CFDR
+RRF   CFXR
+RRE   CEGR    EPH
+RRE   CDGR    DPH
+RRE   CXGR    XPH
+RRF   CGER
+RRF   CGDR
+RRF   CGXR
 *
 RRE   LPGR
 RRE   LNGR
 RRE   LTGR
 RRE   LCGR
 RRE   LGR
+RRE   LGBR
+RRE   LGHR
 RRE   AGR
 RRE   SGR
 RRE   ALGR
@@ -236,23 +504,65 @@ RRE   DSGFR
 RRE   LRVR
 RRE   CGR
 RRE   CLGR
+RRE   LBR
+RRE   LHR
 RRE   CGFR
 RRE   CLGFR
+RRE   BCTGR   B              BCTGR R1,R2
+RRE   BCTGR   B0             BCTGR R1,0
+RRE   BCTGR   B              BCTGR R1,R2
+RRE   BCTGR   B0             BCTGR R1,0
 RRE   NGR
 RRE   OGR
 RRE   XGR
+RRE   FLOGR
+RRE   LLGCR
+RRE   LLGHR
 RRE   MLGR
 RRE   DLGR
-*RRE   ALCGR   not supported
-*RRE   SLBGR   not supported
+RRE   ALCGR
+RRE   SLBGR
+RRE   LLCR
+RRE   LLHR
 RRE   MLR
 RRE   DLR
-*RRE   ALCR    not supported
-*RRE   SLBR    not supported
+RRE   ALCR
+RRE   SLBR
 *
+RS    CS      E
+RS    CS      N
+RS    CDS     E
+RS    CDS     N
 RS    CLM
 RS    STCM
 RS    ICM
+*
+RIL   LARL
+RIL   LGFI
+RIL   BRCL    B
+RIL   BRCL    B0
+RIL   BRASL   B
+RIL   XIHF
+RIL   XILF
+RIL   IIHF
+RIL   IILF
+RIL   NIHF
+RIL   NILF
+RIL   OIHF
+RIL   OILF
+RIL   LLIHF
+RIL   LLILF
+*
+RIL   SLGFI
+RIL   SLFI
+RIL   AGFI
+RIL   AFI
+RIL   ALGFI
+RIL   ALFI
+RIL   CGFI
+RIL   CFI
+RIL   CLGFI
+RIL   CLFI
 *
 SS1   MVN               1
 SS1   MVN               8
@@ -332,6 +642,10 @@ SS1   EDMK             64
 SS1   EDMK            128
 SS1   EDMK            256
 *
+RXY   LTG     D    00
+RXY   LTG     D    0B
+RXY   LTG     D    X0
+RXY   LTG     D    XB
 RXY   LG      D    00
 RXY   LG      D    0B
 RXY   LG      D    X0
@@ -366,6 +680,10 @@ RXY   LRVG    D    00
 RXY   LRVG    D    0B
 RXY   LRVG    D    X0
 RXY   LRVG    D    XB
+RXY   LT      F    00
+RXY   LT      F    0B
+RXY   LT      F    X0
+RXY   LT      F    XB
 RXY   LGF     F    00
 RXY   LGF     F    0B
 RXY   LGF     F    X0
@@ -404,10 +722,10 @@ RXY   MSGF    F    X0
 RXY   MSGF    F    XB
 RXY   DSGF    F    0B
 RXY   DSGF    F    XB
-*RXY   LRV     F    00  NOT SUPPORTED
-*RXY   LRV     F    0B  NOT SUPPORTED
-*RXY   LRV     F    X0  NOT SUPPORTED
-*RXY   LRV     F    XB  NOT SUPPORTED
+RXY   LRV     F    00
+RXY   LRV     F    0B
+RXY   LRV     F    X0
+RXY   LRV     F    XB
 RXY   LRVH    H    00
 RXY   LRVH    H    0B
 RXY   LRVH    H    X0
@@ -440,6 +758,10 @@ RXY   STRV    F    0BS
 RXY   STRV    F    XBS
 RXY   STRVH   H    0BS
 RXY   STRVH   H    XBS
+RXY   BCTG    B    0B        BRANCH, NO INDEX
+RXY   BCTG    B0   0B        NO BRANCH, NO INDEX
+RXY   BCTG    B    XB        BRANCH, INDEX
+RXY   BCTG    B0   XB        NO BRANCH, INDEX
 RXY   STY     F    0BS
 RXY   STY     F    XBS
 RXY   MSY     F    00
@@ -540,22 +862,20 @@ RXY   MLG     D    X0
 RXY   MLG     D    XB
 RXY   DLG     D    0B
 RXY   DLG     D    XB
-*RXY   ALCG    D    00    NOT SUPPORTED
-*RXY   ALCG    D    0B    NOT SUPPORTED
-*RXY   ALCG    D    X0    NOT SUPPORTED
-*RXY   ALCG    D    XB    NOT SUPPORTED
-*RXY   SLBG    D    00    NOT SUPPORTED
-*RXY   SLBG    D    0B    NOT SUPPORTED
-*RXY   SLBG    D    X0    NOT SUPPORTED
-*RXY   SLBG    D    XB    NOT SUPPORTED
-*RXY   STPQ    Q    00S   NOT SUPPORTED
-*RXY   STPQ    Q    0BS   NOT SUPPORTED
-*RXY   STPQ    Q    X0S   NOT SUPPORTED
-*RXY   STPQ    Q    XBS   NOT SUPPORTED
-*RXY   LPQ     Q    00    NOT SUPPORTED
-*RXY   LPQ     Q    0B    NOT SUPPORTED
-*RXY   LPQ     Q    X0    NOT SUPPORTED
-*RXY   LPQ     Q    XB    NOT SUPPORTED
+RXY   ALCG    D    00
+RXY   ALCG    D    0B
+RXY   ALCG    D    X0
+RXY   ALCG    D    XB
+RXY   SLBG    D    00
+RXY   SLBG    D    0B
+RXY   SLBG    D    X0
+RXY   SLBG    D    XB
+RXY   STPQ    Q    0BS
+RXY   STPQ    Q    XBS
+RXY   LPQ     Q    00
+RXY   LPQ     Q    0B
+RXY   LPQ     Q    X0
+RXY   LPQ     Q    XB
 RXY   LLGC    S    00
 RXY   LLGC    S    0B
 RXY   LLGC    S    X0
@@ -564,20 +884,28 @@ RXY   LLGH    H    00
 RXY   LLGH    H    0B
 RXY   LLGH    H    X0
 RXY   LLGH    H    XB
+RXY   LLC     S    00
+RXY   LLC     S    0B
+RXY   LLC     S    X0
+RXY   LLC     S    XB
+RXY   LLH     H    00
+RXY   LLH     H    0B
+RXY   LLH     H    X0
+RXY   LLH     H    XB
 RXY   ML      F    00
 RXY   ML      F    0B
 RXY   ML      F    X0
 RXY   ML      F    XB
 RXY   DL      F    0B
 RXY   DL      F    XB
-*RXY   ALC     F    00   NOT SUPPORTED
-*RXY   ALC     F    0B   NOT SUPPORTED
-*RXY   ALC     F    X0   NOT SUPPORTED
-*RXY   ALC     F    XB   NOT SUPPORTED
-*RXY   SLB     F    00   NOT SUPPORTED
-*RXY   SLB     F    0B   NOT SUPPORTED
-*RXY   SLB     F    X0   NOT SUPPORTED
-*RXY   SLB     F    XB   NOT SUPPORTED
+RXY   ALC     F    00
+RXY   ALC     F    0B
+RXY   ALC     F    X0
+RXY   ALC     F    XB
+RXY   SLB     F    00
+RXY   SLB     F    0B
+RXY   SLB     F    X0
+RXY   SLB     F    XB
 *
 SS1   MVCIN             1
 SS1   MVCIN             8
@@ -586,6 +914,190 @@ SS1   MVCIN            32
 SS1   MVCIN            64
 SS1   MVCIN           128
 SS1   MVCIN           256
+*
+RSY   LMG          01        L1=NO. OF REGISTERS
+RSY   LMG          04        L1=NO. OF REGISTERS
+RSY   LMG          08        L1=NO. OF REGISTERS
+RSY   LMG          12        L1=NO. OF REGISTERS
+RSY   LMG          16        L1=NO. OF REGISTERS
+*
+RSY   SRAG
+RSY   SRAG         00        NO BASE
+RSY   SLAG
+RSY   SLAG         00        NO BASE
+RSY   SRLG
+RSY   SRLG         00        NO BASE
+RSY   SLLG
+RSY   SLLG         00        NO BASE
+RSY   CSY     E
+RSY   CSY     N
+RSY   RLLG
+RSY   RLLG         00        NO BASE
+RSY   RLL
+RSY   RLL          00        NO BASE
+*
+RSY   CLMH
+RSY   CLMY
+*
+RSY   STMG         01        L1=NO. OF REGISTERS
+RSY   STMG         04        L1=NO. OF REGISTERS
+RSY   STMG         08        L1=NO. OF REGISTERS
+RSY   STMG         12        L1=NO. OF REGISTERS
+RSY   STMG         16        L1=NO. OF REGISTERS
+*
+RSY   STMH         01        L1=NO. OF REGISTERS
+RSY   STMH         04        L1=NO. OF REGISTERS
+RSY   STMH         08        L1=NO. OF REGISTERS
+RSY   STMH         12        L1=NO. OF REGISTERS
+RSY   STMH         16        L1=NO. OF REGISTERS
+*
+RSY   STCMH
+RSY   STCMY
+RSY   CSG     E
+RSY   CSG     N
+RSY   CDSY    E
+RSY   CDSY    N
+RSY   CDSG    E
+RSY   CDSG    N
+*
+RSY   BXHG                   BRANCH
+RSY   BXHG    B0             NO BRANCH
+RSY   BXLEG                  BRANCH
+RSY   BXLEG   B0             NO BRANCH
+*
+SIY   TMY
+SIY   MVIY
+SIY   NIY
+SIY   CLIY
+SIY   OIY
+SIY   XIY
+*
+RSY   ICMH
+RSY   ICMY
+*
+RSY   STMY         01        L1=NO. OF REGISTERS
+RSY   STMY         04        L1=NO. OF REGISTERS
+RSY   STMY         08        L1=NO. OF REGISTERS
+RSY   STMY         12        L1=NO. OF REGISTERS
+RSY   STMY         16        L1=NO. OF REGISTERS
+*
+RSY   LMH          01        L1=NO. OF REGISTERS
+RSY   LMH          04        L1=NO. OF REGISTERS
+RSY   LMH          08        L1=NO. OF REGISTERS
+RSY   LMH          12        L1=NO. OF REGISTERS
+RSY   LMH          16        L1=NO. OF REGISTERS
+*
+RSY   LMY          01        L1=NO. OF REGISTERS
+RSY   LMY          04        L1=NO. OF REGISTERS
+RSY   LMY          08        L1=NO. OF REGISTERS
+RSY   LMY          12        L1=NO. OF REGISTERS
+RSY   LMY          16        L1=NO. OF REGISTERS
+*
+RIE   BRXHG                  BRANCH
+RIE   BRXHG   B0             NO BRANCH
+RIE   BRXLG                  BRANCH
+RIE   BRXLG   B0             NO BRANCH
+*
+RXE   LDEB    DPB  0B
+RXE   LDEB    DPB  XB
+RXE   LXDB    XPB  0B
+RXE   LXDB    XPB  XB
+RXE   LXEB    XPB  0B
+RXE   LXEB    XPB  XB
+RXE   MXDB    XPB  0B
+RXE   MXDB    XPB  XB
+RXE   KEB     EPB  0B
+RXE   KEB     EPB  XB
+RXE   CEB     EPB  0B
+RXE   CEB     EPB  XB
+RXE   AEB     EPB  0B
+RXE   AEB     EPB  XB
+RXE   SEB     EPB  0B
+RXE   SEB     EPB  XB
+RXE   MDEB    DPB  0B
+RXE   MDEB    DPB  XB
+RXE   DEB     EPB  0BF
+RXE   DEB     EPB  XBF
+*
+RXF   MAEB    EPB  0B
+RXF   MAEB    EPB  XB
+RXF   MSEB    EPB  0B
+RXF   MSEB    EPB  XB
+*
+RXE   TCEB    EPB  0B
+RXE   TCEB    EPB  XB
+RXE   TCDB    DPB  0B
+RXE   TCDB    DPB  XB
+RXE   TCXB    XPB  0B
+RXE   TCXB    XPB  XB
+RXE   SQEB    EPB  0BF
+RXE   SQEB    EPB  XBF
+RXE   SQDB    DPB  0BF
+RXE   SQDB    DPB  XBF
+RXE   MEEB    EPB  0B
+RXE   MEEB    EPB  XB
+RXE   KDB     DPB  0B
+RXE   KDB     DPB  XB
+RXE   CDB     DPB  0B
+RXE   CDB     DPB  XB
+RXE   ADB     DPB  0B
+RXE   ADB     DPB  XB
+RXE   SDB     DPB  0B
+RXE   SDB     DPB  XB
+RXE   MDB     DPB  0B
+RXE   MDB     DPB  XB
+RXE   DDB     DPB  0BF
+RXE   DDB     DPB  XBF
+*
+RXF   MADB    DPB  0B
+RXF   MADB    DPB  XB
+RXF   MSDB    DPB  0B
+RXF   MSDB    DPB  XB
+*
+RXE   LDE     DPH  0B
+RXE   LDE     DPH  XB
+RXE   LXD     XPH  0B
+RXE   LXD     XPH  XB
+RXE   LXE     XPH  0B
+RXE   LXE     XPH  XB
+*
+RXF   MAE     EPH  0B
+RXF   MAE     EPH  XB
+RXF   MSE     EPH  0B
+RXF   MSE     EPH  XB
+*
+RXE   SQE     EPH  0BF
+RXE   SQE     EPH  XBF
+RXE   SQD     DPH  0BF
+RXE   SQD     DPH  XBF
+RXE   MEE     EPH  0B
+RXE   MEE     EPH  XB
+*
+RXF   MAYL    XPH  0B
+RXF   MAYL    XPH  XB
+RXF   MYL     XPH  0B
+RXF   MYL     XPH  XB
+RXF   MAY     XPH  0B
+RXF   MAY     XPH  XB
+RXF   MY      XPH  0B
+RXF   MY      XPH  XB
+RXF   MAYH    XPH  0B
+RXF   MAYH    XPH  XB
+RXF   MYH     XPH  0B
+RXF   MYH     XPH  XB
+RXF   MAD     DPH  0B
+RXF   MAD     DPH  XB
+RXF   MSD     DPH  0B
+RXF   MSD     DPH  XB
+*
+RXY   LEY     EPH  0B
+RXY   LEY     EPH  XB
+RXY   LDY     DPH  0B
+RXY   LDY     DPH  XB
+RXY   STEY    EPH  0BS
+RXY   STEY    EPH  XBS
+RXY   STDY    DPH  0BS
+RXY   STDY    DPH  XBS
 *
 SS2   SRP     P    01
 SS2   SRP     P    04
@@ -724,4 +1236,5 @@ SS2   DP      P    08  01
 SS2   DP      P    16  01
 SS2   DP      P    08  04
 SS2   DP      P    16  04
+SS2   DP      P    16  08
 

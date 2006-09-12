@@ -1,0 +1,40 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 07/20/07                                                 *
+*********************************************************************
+* 07/20/07 RPI 374 - add CVTTOHEX for use in TESTFPC1 
+*********************************************************************
+*
+*  CALL CVTTOHEX,(IN,OUT,INLEN)
+*
+*    IN    - ADDR INPUT BYTES
+*    OUT   - ADDR OUTPUT HEX EBCDIC BYTES
+*    INLEN - COUNT OF BYTES TO CONVERT
+*********************************************************************
+         COPY  ASMMSP       STRUCTURED PROGRAM MACROS AND EQUS
+CVTTOHEX SUBENTRY
+         LM    R3,R5,0(R1)  R3=IN, R4=OUT, R5=LEN
+         DO    WHILE=(LTR,R5,P,R5)
+               UNPK WORK(9),0(5,R3)
+               TR   WORK(8),TRTHEX
+               IF   (CH,R5,GE,=H'4')
+                    MVC  0(8,R4),WORK
+                    AHI  R4,8
+                    AHI  R3,4
+                    AHI  R5,-4
+               ELSE
+                    AR   R5,R5
+                    BCTR R5,0
+                    MVC  0(0,R4),WORK
+                    SR   R5,R5
+               ENDIF
+         ENDDO
+         SUBEXIT
+         LTORG
+         EQUREGS
+WORK     DC    CL9
+TRTHEX   DC    240X'00',C'0123456789ABCDEF'
+         END

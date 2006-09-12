@@ -28,7 +28,7 @@
                &LOC=,       BELOW/RES=24, ABOVE,ANY/64=31              X
                &MF=,        NOT SUPPORTED                              X
                &RELATED=,   IGNORED                                    X
-               &SP=,        UNSUPPORTED ERROR                          X
+               &SP=,        IGNORED (SEE RPI 244, 248, AND 394)        X
                &STARTBDY=   IGNORED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
@@ -61,7 +61,9 @@
 .*         4 - REQUEST FAILED OR ABEND 80A IF UNCONDITIONAL
 .*
          AIF   (&INADDR NE '').ERR2
-         AIF   (&SP     NE '').ERR3
+         AIF   (&SP     EQ '').SKPWARN
+         MNOTE 4,'GETMAIN IGNORING SP AND USING DEFAULT' RPI 394
+.SKPWARN ANOP
          AIF   (&TYPE EQ 'R').R
          AIF   (&TYPE EQ 'RC').RC
          AIF   (&TYPE EQ 'RU').RU

@@ -1,4 +1,4 @@
-z390 V1.1.01 Portable Mainframe Assembler
+z390 V1.1.02 Portable Mainframe Assembler
 Copyright 2006 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
@@ -13,10 +13,10 @@ You should have received a copy of the GNU General Public License as part of z39
 
 z390 is a portable mainframe assembler, linker, and emulator utility for Windows which includes the following tools:
 * z390 - Graphical User Interface written in J2SE Swing Java
-* mz390 - macro processor to expand MLC source file to BAL source
-     *     CICS, PROLOG, and EPILOG options support EXEC CICS and EXEC SQL compatable 
+* mz390 - macro processor to expand MLC source file to BAL source code
+     *     CICS, PROLOG, and EPILOG options support EXEC CICS and EXEC SQL compatible 
             statements which are reformatted into standard EXEC macro format for expansion.
-* az390 - assembler to translate BAL source file into OBJ file
+* az390 - assembler to translate BAL source code into OBJ file and generate PRN listing
 * lz390 - linker to translate OBJ files into 390 binary load module 
 * ez390 - runtime emulator to exec 390 load modules running in 24 or 31 bit mode
 * GUAM GUI Access Method dialog option for MCS console, TN3270, and graphical user interfaces which are used by WTO, WTOR, TGET, and TPUT to support EXEC CICS.
@@ -37,12 +37,12 @@ www.z390.org
 
 z390 Windows installation instructions:
 
-1. Download latest z390_setup.exe file from www.z390.org 
-2. Run z390_setup.exe to install it on Windows XP or 2000
+1. Download latest z390 InstallShield setup.exe file from www.z390.org 
+2. Run z390 setup.exe to install it on Windows XP or 2000 system
 3. Download and install Java 1.5.0 runtime update 5+ from: 
     http://java.sun.com/j2se/  (update 7 is now recommended)
 4. Double click on the z390 desktop icon to start z390 GUI
-    a. Enter the command “ASMLG DEMO” to run demo
+    a. Enter the command “ASMLG DEMO\DEMO” to run demo
     b. Scroll the output log to see output of each step
     c. Use file menu edit selection to view generated ASCII source files:
         1)  DEMO.MLC – source macro assembler demo for WTO ‘hello world’
@@ -51,10 +51,9 @@ z390 Windows installation instructions:
         4)  DEMO.OBJ – relocatable object code in ASCII hex format
         5)  DEMO.LST – linker listing
         6)  DEMO.LOG – execution log including WTO display message
-    d. To verify entire product enter “RT” to run regression tests
-        1)  Each regression test assembles, links, and executes test program
-        2)  Generated files are then compared using Windows FC utility
-        3)  Last step displays size of comparison files descending by size
+    d. Optional downloads from www.z390.org for use with z390 install include the following:
+        1)  Public domain MVS 3.8J macro library with associated demo and test programs
+        2)  Regression tests for all z390 components
 
 5. Click on help menu for links to additional information.
 

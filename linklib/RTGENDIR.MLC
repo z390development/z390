@@ -1,0 +1,34 @@
+         TITLE 'RTGENDIR - READ DIR LISTING AND OUTPUT FILE NAMES'
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 08/12/06                                                 *
+*********************************************************************
+* 08/12/06 RPI 363 REPACKAGE MVS_MACLIB.ZIP AND Z390_RT.ZIP RT TESTS
+*********************************************************************
+*
+*  RTGENDIR READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
+*
+*  The input file is any Windows dir command listing wihout /w.
+*  The ouput file is file names only (strip time stamps etc.)
+*
+*********************************************************************
+&TOT_FILES SETA 0
+&FILE    SETC  ''
+         MNOTE 'RTGENDIR SYSPARM=&SYSPARM'
+         ACTR  1000000
+.LOOP    ANOP
+&TEXT    AREAD DSNAME='&SYSPARM'  
+         AIF  (&TEXT EQ '').EOF              END OF FILE IF NULL
+         AIF  (K'&TEXT LT 40).LOOP           SKIP LINES < 40
+         AIF  ('&TEXT'(26,3) EQ 'DIR').LOOP  SKIP DIRS
+         AIF  ('&TEXT'(3,1)  NE '/').LOOP    SKIP IF NO MM/DD/YYYY
+&FILE    SETC (UPPER '&TEXT'(40,265))
+&TOT_FILES SETA &TOT_FILES+1
+         PUNCH '&FILE',DSNAME='&SYSPARM'
+         AGO   .LOOP
+.EOF     ANOP
+         MNOTE 'RTGENDIR FILES=&TOT_FILES'
+         END

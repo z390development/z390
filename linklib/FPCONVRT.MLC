@@ -1,0 +1,7 @@
+         ARCHLVL
+         GBLA  &ARCHLVL
+fpconvrt FpConvrt Type=Rsect,ArchLvl=&ARCHLVL,Linkage=OS,Regs=GR 
+*
+* NOTE ARCHLVL 2-5 MUST MATCH ARCHLVL IN FPCONMFC.MLC FOR FPCON DEF.
+*
+         END

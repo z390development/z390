@@ -40,6 +40,10 @@
 * 04/23/06 RPI 295 ADD ADDITIONAL TESTS FOR ICM AND OIHL          
 * 04/28/06 RPI 303 ADD ADDITIONAL TESTS FOR ICM TO SET HIGH IF POS          
 * 05/02/06 RPI 305 USE NEW ESPIE AND ESTAE CONTROL BLOCKS                   
+* 07/20/06 RPI 376 TEST ALR CC=1 WHEN HIGH BIT TURNED ON AND NO CARRY       
+* 07/24/06 RPI 383 CORRECT TESTS FOR MLG AND MLGR TO USE R1+1 * S2/R2       
+* 08/06/06 RPI 398 CORRECT TESTS FOR D AND DR TO INCLUDE 64 BITS            
+* 09/08/06 RPI 441 ADD TEST FOR MVST MOVE STRING AND UPDATE TP TESTS                           
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -82,6 +86,8 @@ KEY      DC    C'EFE'
 PAD      DC    C' '
 STRING1  DC    C'CABCBFDEFEAB'
 STRING2  DC    C'ACBABBCEFEAB'
+STRING3  DC    C'1234',X'00'
+STRING4  DC    C'ABCD',X'EE'
 &ZONE    SETC  'F'    EBCDIC ZONE FOR DIGITS
          AIF   (C'A' EQ X'C1').SKIP_ASCII_MODE
 &ZONE    SETC  '3'    ASCII ZONE FOR DIGITS
@@ -570,6 +576,41 @@ SR2      ESTAE 0
          RT1   CCE
          CL    R1,=F'3'
          RT1   CCE
+         LM    R0,R1,=FL8'1E17'
+         L     R3,=F'1E9'
+         DR    R0,R3
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'1E8'
+         RT1   CCE
+         LM    R0,R1,=FL8'-1E17'
+         L     R3,=F'1E9'
+         DR    R0,R3
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'-1E8'
+         RT1   CCE
+         LM    R0,R1,=FL8'1E17'
+         L     R3,=F'-1E9'
+         DR    R0,R3
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'-1E8'
+         RT1   CCE
+         LM    R0,R1,=F'1,3'
+         L     R3,=F'4'    
+         DR    R0,R3
+         CL    R0,=F'3'
+         RT1   CCE
+         CL    R1,=FS30'1'
+         RT1   CCE
+         LM    R0,R1,=F'1,3'
+         L     R3,=F'-4'  
+         DR    R0,R3
+         CL    R0,=F'3'
+         RT1   CCE
+         CL    R1,=FS30'-1'
+         RT1   CCE
          ESPIE SET,ESPIE_EXIT,9,PARAM=DR1
          LA    R2,0
          DR    R0,R2
@@ -587,6 +628,10 @@ DR1      ESPIE RESET
          L     R2,=X'00000001'
          ALR   R0,R2
          RT1   CC1        NZ,NC
+         L     R0,=X'40000000'
+         L     R2,=X'40000001'
+         ALR   R0,R2
+         RT1   CC1        NZ,NC  RPI 376
          CL    R0,=X'80000001'
          RT1   CCE
          L     R0,=X'FFFFFFFF'
@@ -852,6 +897,36 @@ BAS2     EQU   *
          RT1   CCE
          CL    R1,=F'3'
          RT1   CCE
+         LM    R0,R1,=FL8'1E17'
+         D     R0,=F'1E9'
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'1E8'
+         RT1   CCE
+         LM    R0,R1,=FL8'-1E17'
+         D     R0,=F'1E9'
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'-1E8'
+         RT1   CCE
+         LM    R0,R1,=FL8'1E17'
+         D     R0,=F'-1E9'
+         CL    R0,=F'0'
+         RT1   CCE
+         CL    R1,=F'-1E8'
+         RT1   CCE
+         LM    R0,R1,=F'1,3'
+         D     R0,=F'4'
+         CL    R0,=F'3'
+         RT1   CCE
+         CL    R1,=FS30'1'
+         RT1   CCE
+         LM    R0,R1,=F'1,3'
+         D     R0,=F'-4'
+         CL    R0,=F'3'
+         RT1   CCE
+         CL    R1,=FS30'-1'
+         RT1   CCE
 * 5E   AL
          L     R0,=F'3'
          AL    R0,=F'2'
@@ -872,6 +947,11 @@ BAS2     EQU   *
          AL    R0,=X'00000002'
          RT1   CC3        NZ,C
          CL    R0,=X'00000001'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'  RPI 376
+         AL    R0,=X'FFFFFFFF'
+         RT1   CC3        NZ,C
+         CL    R0,=X'FFFFFFFE'
          RT1   CCE
          L     R0,=X'00000000'
          AL    R0,=X'00000000'
@@ -1700,13 +1780,7 @@ PC2      EQU   *
          IPM   0
          CLM   0,8,=B'00101111' 00CCFPES CC=10 MASK=1111 FX,PD,EX,SG
          RT1   CCE
-* B252 MSR
-         L     R0,=F'2'
-         L     R2,=F'3'    
-         MSR   R0,R2
-         C     R0,=F'6'
-         RT1   CCE
-* B240 BALR
+* B240 BAKR
          LA    R1,BAKR2
          LA    R2,BAKR1
          BAKR  R1,R2
@@ -1720,6 +1794,15 @@ BAKR2    EQU   *
          L     R2,=F'3'    
          MSR   R0,R2
          C     R0,=F'6'
+         RT1   CCE
+* B255 MVST
+         LM    R0,R2,=A(X'EE',STRING3,STRING4)
+         MVST  R1,R2
+         CLC   STRING3,STRING4
+         RT1   CCE
+         CL    R1,=A(STRING3+L'STRING4)
+         RT1   CCE
+         CLI   0(R1),X'EE'
          RT1   CCE
 * B257 CUSE
          LA    R0,L'KEY
@@ -2283,14 +2366,14 @@ SGR2     ESTAE 0
          CLG   R0,=AL8(X'FFFF')
          RT1   CCE
 * B986 MLGR
-         LG    R0,=FL8'3'
+         LG    R1,=FL8'3'
          LG    R2,=FL8'2'
          MLGR  R0,R2
          CLG   R0,=FL8'0'
          RT1   CCE
          CLG   R1,=FL8'6'
          RT1   CCE
-         LG     R0,=X'8000000000000000'
+         LG     R1,=X'8000000000000000'
          LG     R2,=X'8000000000000000'
          MLGR  R0,R2
          CLG   R0,=X'4000000000000000'
@@ -2375,6 +2458,13 @@ SGR2     ESTAE 0
          ALCGR R0,R1              RPI174 TEST < CC0 
          RT1   CC1
          CLG   R0,=FL8'1'
+         RT1   CCE
+         SGR   R0,R0              FORCE CC0 Z,NC
+         LG    R0,=FL8'-1'
+         LG    R1,=FL8'-1'
+         ALCGR R0,R1                                     
+         RT1   CC3                RPI 376
+         CLG   R0,=FL8'-2'
          RT1   CCE
 * B989 SLBGR
          CLI   =C'A',C'B' CC1= NZ,B 
@@ -2513,6 +2603,13 @@ SGR2     ESTAE 0
          ALCR  R0,R2
          RT1   CC3        NZ,C
          CL    R0,=X'00000001'
+         RT1   CCE
+         SR    R0,R0
+         L     R0,=X'FFFFFFFF'
+         L     R2,=X'FFFFFFFF'
+         ALCR  R0,R2
+         RT1   CC3        NZ,C    RPI 376
+         CL    R0,=X'FFFFFFFE'
          RT1   CCE
          L     R0,=F'3'
          AL    R0,=F'2'   NZ,NC
@@ -3565,13 +3662,13 @@ BCTG1    LA    R2,1(R2)
          CLG   R0,=X'0305070F000000F'
          RT1   CCE
 * E386 MLG
-         LG    R0,=FL8'3'
+         LG    R1,=FL8'3'
          MLG   R0,=FL8'2'
          CLG   R0,=FL8'0'
          RT1   CCE
          CLG   R1,=FL8'6'
          RT1   CCE
-         LG     R0,=X'8000000000000000'
+         LG     R1,=X'8000000000000000'
          MLG    R0,=X'8000000000000000'
          CLG   R0,=X'4000000000000000'
          RT1   CCE
@@ -3627,6 +3724,13 @@ BCTG1    LA    R2,1(R2)
          ALCG  R0,=X'0000000000000002'
          RT1   CC3        NZ,C
          CLG   R0,=X'0000000000000001'
+         RT1   CCE
+         L     R0,=F'3'
+         AL    R0,=F'2'   NZ,NC
+         LG    R0,=X'FFFFFFFFFFFFFFFF'
+         ALCG  R0,=X'FFFFFFFFFFFFFFFF'
+         RT1   CC3        NZ,C
+         CLG   R0,=X'FFFFFFFFFFFFFFFE'
          RT1   CCE
          L     R0,=F'3'
          AL    R0,=F'2'   NZ,NC
@@ -3753,13 +3857,13 @@ BCTG1    LA    R2,1(R2)
          CL    R1,=X'80000000'
          RT1   CCE
 * E398 ALC
-         CLI   =C'B',C'A' CC2 = NZ,C
+         CLI   =C'B',C'A' CC2 = Z,C
          L     R0,=F'3'
          ALC   R0,=F'2'
          RT1   CC1        NZ,NC
          CL    R0,=F'6'
          RT1   CCE
-         CLI   =C'B',C'A' CC2 = NZ,C
+         CLI   =C'B',C'A' CC2 = Z,C
          L     R0,=X'80000000'
          ALC   R0,=X'00000001'
          RT1   CC1        NZ,NC
@@ -3788,6 +3892,12 @@ BCTG1    LA    R2,1(R2)
          ALC   R0,=X'00000001'     RPI174 TEST < CC3                  
          RT1   CC1
          CL    R0,=X'00000003'
+         RT1   CC0
+         SR    R0,R0               FORCE CC0 Z,NC
+         L     R0,=X'FFFFFFFF'
+         ALC   R0,=X'FFFFFFFF'                                        
+         RT1   CC3                 RPI 376
+         CL    R0,=X'FFFFFFFE'
          RT1   CC0
          SR    R0,R0               FORCE CC0 Z,NC
          ALC   R0,=F'1'            RPI174 TEST < CC0 
@@ -4238,17 +4348,157 @@ BXLEG3   EQU   *
          STM   R15,R0,PWORK
          RT1   CCE,PWORK,=A(123,456)
 * EBC0 TP
-         TP    =X'1C'
+         TP    =X'1C'   CC0 - OK
          RT1   CC0
-         TP    =X'1F'
+         TP    =X'1F'   CC0 - OK
          RT1   CC0
-         TP    =X'10'
+         TP    =X'10'   CC1 - BAD SIGN
          RT1   CC1
-         TP    =X'FC'
+         TP    =X'FC'   CC2 - BAD DIGIT   
          RT1   CC2
-         TP    =X'FFF0'
+         TP    =X'FFF0' CC3 - BAD DIGIT AND SIGN     
          RT1   CC3
-* EC44 BRXHG
+* 1-16 CC0 OK
+         TP    =PL1'1'  1-8 > LONG
+         RT1   CC0
+         TP    =PL2'1'
+         RT1   CC0
+         TP    =PL3'1'
+         RT1   CC0
+         TP    =PL4'1'
+         RT1   CC0
+         TP    =PL5'1'
+         RT1   CC0
+         TP    =PL6'1'
+         RT1   CC0
+         TP    =PL7'1'                   
+         RT1   CC0
+         TP    =PL8'1'                   
+         RT1   CC0
+         TP    =PL9'1'  9-16 > BIG DECIMAL
+         RT1   CC0
+         TP    =PL10'1'                          
+         RT1   CC0
+         TP    =PL11'1'                          
+         RT1   CC0
+         TP    =PL11'1'                          
+         RT1   CC0
+         TP    =PL12'1'                          
+         RT1   CC0
+         TP    =PL13'1'                          
+         RT1   CC0
+         TP    =PL14'1'                          
+         RT1   CC0
+         TP    =PL15'1'                          
+         RT1   CC0
+         TP    =PL16'1'                          
+         RT1   CC0
+* 1-16 CC1 BAD SIGNS
+         TP    =XL1'1'  1-8 > LONG
+         RT1   CC1
+         TP    =XL2'1'
+         RT1   CC1
+         TP    =XL3'1'
+         RT1   CC1
+         TP    =XL4'1'
+         RT1   CC1
+         TP    =XL5'1'
+         RT1   CC1
+         TP    =XL6'1'
+         RT1   CC1
+         TP    =XL7'1'                   
+         RT1   CC1
+         TP    =XL8'1'                   
+         RT1   CC1
+         TP    =XL9'1'  9-16 > BIG DECIMAL
+         RT1   CC1
+         TP    =XL10'1'                          
+         RT1   CC1
+         TP    =XL11'1'                          
+         RT1   CC1
+         TP    =XL11'1'                          
+         RT1   CC1
+         TP    =XL12'1'                          
+         RT1   CC1
+         TP    =XL13'1'                          
+         RT1   CC1
+         TP    =XL14'1'                          
+         RT1   CC1
+         TP    =XL15'1'                          
+         RT1   CC1
+         TP    =XL16'1'                          
+         RT1   CC1
+* 1-16 CC2 BAD DIGIT               
+         TP    =XL1'AC'  1-8 > LONG
+         RT1   CC2
+         TP    =XL2'AC'
+         RT1   CC2
+         TP    =XL3'AC'
+         RT1   CC2
+         TP    =XL4'AC'
+         RT1   CC2
+         TP    =XL5'AC'
+         RT1   CC2
+         TP    =XL6'AC'
+         RT1   CC2
+         TP    =XL7'AC'                   
+         RT1   CC2
+         TP    =XL8'AC'                   
+         RT1   CC2
+         TP    =XL9'AC'  9-16 > BIG DECIMAL
+         RT1   CC2
+         TP    =XL10'AC'                          
+         RT1   CC2
+         TP    =XL11'AC'                          
+         RT1   CC2
+         TP    =XL11'AC'                          
+         RT1   CC2
+         TP    =XL12'AC'                          
+         RT1   CC2
+         TP    =XL13'AC'                          
+         RT1   CC2
+         TP    =XL14'AC'                          
+         RT1   CC2
+         TP    =XL15'AC'                          
+         RT1   CC2
+         TP    =XL16'AC'                          
+         RT1   CC2
+* 1-16 CC3 BAD DIGIT AND SIGN
+         TP    =XL1'A1'  1-8 > LONG
+         RT1   CC3
+         TP    =XL2'A1'
+         RT1   CC3
+         TP    =XL3'A1'
+         RT1   CC3
+         TP    =XL4'A1'
+         RT1   CC3
+         TP    =XL5'A1'
+         RT1   CC3
+         TP    =XL6'A1'
+         RT1   CC3
+         TP    =XL7'A1'                   
+         RT1   CC3
+         TP    =XL8'A1'                   
+         RT1   CC3
+         TP    =XL9'A1'  9-16 > BIG DECIMAL
+         RT1   CC3
+         TP    =XL10'A1'                          
+         RT1   CC3
+         TP    =XL11'A1'                          
+         RT1   CC3
+         TP    =XL11'A1'                          
+         RT1   CC3
+         TP    =XL12'A1'                          
+         RT1   CC3
+         TP    =XL13'A1'                          
+         RT1   CC3
+         TP    =XL14'A1'                          
+         RT1   CC3
+         TP    =XL15'A1'                          
+         RT1   CC3
+         TP    =XL16'A1'                          
+         RT1   CC3
+* EC44 BRXHG           
          LMG   R1,R3,=AL8(2,-1,0)
          BRXHG R1,R2,BRXHG2
 BRXHG1   RT1   ABORT

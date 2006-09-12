@@ -1110,8 +1110,163 @@ set GIT_COMMITTER_DATE=2021-03-20 15:17:00 +0100
 git commit -m "Reconstructed version v1.1.01f of z390 committed on behalf of Don Higgins"
 git tag -a v1.1.01f -m "Reconstructed version v1.1.01f of z390 committed on behalf of Don Higgins"
 
+==> Rename test directory
+MD RT
+MOVE test RT\TEST
+git rm -r test/
+git add RT
+SetGit ++Abe 2021-03-20 16:32:00 +0100
+set GIT_COMMITTER_DATE=2021-03-20 16:32:00 +0100
+git commit -m "Intermediate commit to trace renamed files"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.1.02
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.1.02
+git add ASM.BAT
+git add ASML.BAT
+git add ASMLG.BAT
+git add Doc/readme.rtf
+git add Doc/readme.txt
+git add EXEC.BAT
+git add MAC.BAT
+git add RT.BAT
+git add RT/TEST/TESTASC1.MLC
+git add RT/TEST/TESTASC3.MLC
+git add RT/TEST/TESTASM1.MLC
+git add RT/TEST/TESTCAL1.MLC
+git add RT/TEST/TESTCAL2.MLC
+git add RT/TEST/TESTCMD1.MLC
+git add RT/TEST/TESTCMD2.MLC
+git add RT/TEST/TESTDC1.MLC
+git add RT/TEST/TESTDCBA.MLC
+git add RT/TEST/TESTDCBC.MLC
+git add RT/TEST/TESTDCBD.MLC
+git add RT/TEST/TESTDCBD.tf2
+git add RT/TEST/TESTDCBD.tf3
+git add RT/TEST/TESTDCBE.MLC
+git add RT/TEST/TESTDMP4.MLC
+git add RT/TEST/TESTERR2.MLC
+git add RT/TEST/TESTFP1.MLC
+git add RT/TEST/TESTINS2.MLC
+git add RT/TEST/TESTLNK1.MLC
+git add RT/TEST/TESTLOD1.MLC
+git add RT/TEST/TESTLOD2.MLC
+git add RT/TEST/TESTMAC1.MLC
+git add RT/TEST/TESTOPR1.MLC
+git add RT/TEST/TESTSET1.MLC
+git add RT/TEST/TESTSYM1.MLC
+git add RT/TEST/TESTSYN2.MLC
+git add RT/TEST/TESTTIM2.MLC
+git add RT/TEST/TESTTXT1.MLC
+git add RT1.BAT
+git add RT2.BAT
+git add RT3.BAT
+git add RT4.BAT
+git add RT5.BAT
+git add RT6.BAT
+git add RTC4.BAT
+git add RTC6.BAT
+git add RTCICS.BAT
+git add RTDEMO.BAT
+git add RTMVS.BAT
+git add RTTEST.BAT
+git add VDIFF.BAT
+git rm  bmk/BMKALCG.MLC
+git rm  bmk/BMKINS1.BAT
+git rm  bmk/BMKINS1.MLC
+git rm  bmk/BMKINS2.BAT
+git rm  bmk/BMKINS2.MLC
+git rm  bmk/BMKMAC1.BAT
+git rm  bmk/BMKMAC1.MLC
+git rm  bmk/BMKMVCL.BAT
+git rm  bmk/BMKMVCL.MLC
+git rm  bmk/BMKPD1.BAT
+git rm  bmk/BMKPD1.MLC
+git add bmk/INSTTIME.BAT
+git add bmk/INSTTIME.INS
+git add bmk/INSTTIME.MLC
+git add bmk/INSTTIME.TXT
+git rm  demo/CVTSBA.MLC
+git rm  demo/DEMOAPL1.MLC
+git rm  demo/DEMOGUI1.BAT
+git rm  demo/DEMOGUI1.MLC
+git rm  demo/DEMOGUI2.MLC
+git rm  demo/DEMOGUI3.MLC
+git rm  demo/DEMOGUI4.MLC
+git rm  demo/DEMOGUI5.MLC
+git rm  demo/DEMOGUI6.MLC
+git add mac/CALL.MAC
+git add mac/DCB.MAC
+git add mac/DO.MAC
+git add mac/GETMAIN.MAC
+git add mac/IF.MAC
+git rm  mvs/maclib/FIXFILE.BAT
+git rm  mvs/maclib/FIXFILE.MLC
+git rm  mvs/maclib/FIXFILE1.BAT
+git rm  mvs/maclib/FIXFILES.BAT
+git rm  mvs/test/TESTFIX1.MLC
+git rm  mvs/test/TESTFIX1.TF1
+git rm  mvs/test/TESTFIX1.tf2
+git rm  mvs/test/TESTFIX1.tf3
+git add mvs/test/testcvt1.MLC
+git rm  mvs/test/testcvtx.TXT
+git add src/az390.java
+git add src/ez390.java
+git add src/gz390.java
+git add src/gz390_screen.java
+git add src/lz390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add src/z390.java
+git rm  temp/OPCODES.MAC
+git rm  temp/OPCODES.MLC
+git rm  temp/STRIP.MAC
+git rm  temp/TEST.BAT
+git rm  temp/TEXTOFF
+git rm  temp/TEXTON
+git add MVS/README.TXT
+git add RT/README.TXT
+git add RT/TEST/TESTCFD1.MLC
+git add RT/TEST/TESTCTD1.MLC
+git add RT/TEST/TESTCVB1.MLC
+git add RT/TEST/TESTCVBG.MLC
+git add RT/TEST/TESTERR7.MLC
+git add RT/TEST/TESTPCH3.IN1
+git add RT/TEST/TESTPCH3.IN2
+git add RT/TEST/TESTPCH3.MLC
+git add RT7.BAT
+git add RTCICS1.BAT
+git add RTCLEAN.BAT
+git add RTCOMP.BAT
+git add RTDEMO1.BAT
+git add RTGUAM.BAT
+git add RTLINK.BAT
+git add RTLINK1.BAT
+git add RTLIST.BAT
+git add RTMVS1.BAT
+git add RTTEST1.BAT
+git add bmk/BMKTIME.BAT
+git add bmk/BMKTIME.MLC
+git add bmk/INSTTIME.VER
+git add guam/
+git add linklib/
+git add mac/CFD.MAC
+git add mac/CTD.MAC
+
+==> Create commit for V1.1.02
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2006-09-12 11:29:00 -0500
+set GIT_COMMITTER_DATE=2021-03-20 16:44:00 +0100
+git commit -m "Reconstructed version v1.1.02 of z390 committed on behalf of Don Higgins"
+git tag -a v1.1.02 -m "Reconstructed version v1.1.02 of z390 committed on behalf of Don Higgins"
+git gc --aggressive
 
 
 

@@ -1,0 +1,73 @@
+AID1     CSECT ,
+         SAVE  (14,12),,*
+         LR    12,15
+         USING AID1,12
+*
+         LA    1,SAVEA
+         ST    1,8(,13)
+         ST    13,4(,1)
+         LR    13,1
+*
+         STFSMODE ON,INITIAL=YES
+         STTMPMD ON
+*
+LOOP     DS    0H
+         TPUT  STREAM,STREAMLN,FULLSCR
+*
+         TGET  INBUF,INBUFLN,ASIS
+*
+**       CLI   INBUF,X'F3'   IS IT PFK3?
+**       BE    EXIT
+*
+         UNPK  WORK3,INBUF(2)
+         TR    WORK3(2),TRTAB-C'0'
+         MVC   AIDCHAR,WORK3
+*
+         UNPK  WORK5,INBUF+1(3)
+         TR    WORK5(4),TRTAB-C'0'
+         MVC   CURSOR,WORK5
+*
+         MVI   SETCSR,X'11'          SBA
+         MVC   SETCSR+1(2),INBUF+1   CURSOR POSITION
+         MVI   SETCSR+3,X'13'        IC (INSERT CUROSR)
+*
+         B     LOOP
+*
+EXIT     DS    0H
+         STLINENO LINE=1
+         STFSMODE OFF
+         STTMPMD OFF
+*
+         L     13,4(,13)
+         LM    14,12,12(13)
+         SLR   15,15
+         BR    14
+*
+STREAM   DS    0C
+         DC    X'27'       ESCAPE CHAR
+         DC    X'F5'       ERASE/WRITE
+         DC    X'C3'       WCC
+         DC    X'114BF0'   SBA
+         DC    X'1DF8'     SF (PROT,HIGH INTENSITY)     
+         DC    C'HELLO, WORLD!'
+         DC    X'114D40'   SBA
+         DC    X'1DF8'     SF
+         DC    C'AID='
+AIDCHAR  DC    C'  '
+         DC    X'114E50'   SBA
+         DC    X'1DF8'     SF
+         DC    C'CURSOR='
+CURSOR   DC    C'    '
+SETCSR   DC    C'    '
+STREAMLN EQU   *-STREAM
+*
+INBUF    DS    XL128
+INBUFLN  EQU   *-INBUF
+*
+WORK3    DC    XL3'00'
+WORK5    DC    XL5'00'
+*
+TRTAB    DC    C'0123456789ABCDEF'
+*
+SAVEA    DS    18F
+         END   ,

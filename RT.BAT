@@ -1,21 +1,23 @@
-rem run test and demo regression tests 
+rem run z390 regression tests
+rem  1. generate test files from source test programs in test dirs 
+rem  2. compare  test files with saved files and generate dif files
+rem  3. list dif directory files descending by size to see any changes 
 rem process stops on errors
-rem check temp\*.d?? difference files for changes from last test
-erase %~dps0test\*.d*
-erase %~dps0demo\*.d*
-erase %~dps0cics\*.d*
-erase %~dps0mvs\test\*.d*
-erase %~dps0mvs\demo\*.d*
-call %~dps0rttest %1 %2 %3 %4 %5 %6 %7 %8 %9
-call %~dps0rtdemo %1 %2 %3 %4 %5 %6 %7 %8 %9
-call %~dps0rtcics %1 %2 %3 %4 %5 %6 %7 %8 %9
-call %~dps0rtmvs  %1 %2 %3 %4 %5 %6 %7 %8 %9
-erase %~dps0?z390.d*
-erase %~dps0temp\*.d*
-copy %~dps0demo\*.d*     temp
-copy %~dps0test\*.d*     temp
-copy %~dps0cics\*.d*     temp
-copy %~dps0mvs\demo\*.d* temp
-copy %~dps0mvs\test\*.d* temp
-dir %~dps0temp\*.d*/o-s/p
+erase %~dps0rt\all\*.* /q 
+call rtclean
+call %~dps0rtlink1 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0rtdemo1 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0rtcics1 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0rtmvs1  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0rttest1 %1 %2 %3 %4 %5 %6 %7 %8 %9
+copy %~dps0linklib\dif\*.*  %~dps0rt\all
+copy %~dps0demo\dif\*.*     %~dps0rt\all
+copy %~dps0cics\dif\*.*     %~dps0rt\all
+copy %~dps0rt\dif\*.*       %~dps0rt\all
+copy %~dps0mvs\dif\*.*      %~dps0rt\all
+erase %~dps0rt\all\rtgen*.bal
+erase %~dps0rt\all\rtgen*.pch
+erase %~dps0rt\all\rtgen*.dat
+call rtlist %~dps0rt\all 
+rem end of rt.bat
 

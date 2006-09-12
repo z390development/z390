@@ -12,6 +12,7 @@
 * 03/21/06 RPI 253 ISSUE ERROR FOR INVALID LABELS SUCH AS _^A
 * 03/22/06 RPI 260 test expression parsing errors
 * 07/06/06 RPI 356 test error for instruction CVD with no args.
+* 07/19/06 RPI 375 test error when labelled using prefix on sdt etc.
 *********************************************************************
          TITLE 'TESTERR2 - TEST AZ390 ERRORS'
 TESTERR2 CSECT
@@ -42,14 +43,14 @@ TOOFAR  EQU  TESTERR2+X'100000'
          DC    FL1'128'         BAD
          DC    FL1'-128'        OK
          DC    FL1'-129'        BAD
-         DC    FL2'X'7FFF''     OK
-         DC    FL2'X'8000''     BAD
-         DC    FL2'-X'8000''    OK
-         DC    FL2'-X'8001''    BAD
-         DC    FL3'X'7FFFFF''   OK
-         DC    FL3'X'800000''   BAD
-         DC    FL3'-X'800000''  OK
-         DC    FL3'-X'800001''  BAD
+         DC    FL2'32767'     OK
+         DC    FL2'32768'     BAD
+         DC    FL2'-32768'    OK
+         DC    FL2'-32769'    BAD
+         DC    FL3'8388607'   OK
+         DC    FL3'8388608'   BAD
+         DC    FL3'-8388608'  OK
+         DC    FL3'-8388609'  BAD
 * CHECK TOO MANY PARMS
          OI    Y,3(1)
          LR    1,2,3
@@ -70,4 +71,8 @@ EXP1     EQU   1+
 EXP2     EQU   1//
 * TEST INSTRUCTION WITH NO ARGS CAUSING TRAP
          CVD
+* TEST LABELLED USING PREFIX ON SDT CAUSED BY TYPEING . VS ,
+R1       EQU   1
+R2       EQU   2
+         LR    R1.R2
          END 

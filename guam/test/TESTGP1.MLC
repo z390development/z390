@@ -1,0 +1,42 @@
+GREGTEST TITLE ' MY FIRST Z390 TEST'
+         YREGS
+GREGTEST CSECT
+GREGTEST AMODE 31
+GREGTEST RMODE 24
+         STM   R14,R12,12(R13)
+         LR    R11,R15
+         USING GREGTEST,R11
+         LA    R2,SAVE
+         ST    R13,4(,R2)
+         ST    R2,8(,R13)
+         LR    R13,R2
+         LA    R2,1920   <=== SCREEN SIZE
+MAINLOOP LR    R0,R2
+         BCTR  R0,0
+         STC   R0,SBA2
+         SRL   R0,6
+         STC   R0,SBA1
+         NI    SBA2,X'3F'
+         TR    SBA1(2),TABLE
+         TPUT  MESSAGE,MESGLEN,FULLSCR
+         BCT   R2,MAINLOOP
+         TGET  INBUFF,80
+         TPUT  INBUFF,80
+         L     R13,4(,R13)
+         LM    R14,R12,12(R13)
+         SR    R15,R15
+         BR    R14
+MESSAGE  DC    X'0311' < X'27F1C311'  DSH CHANGE PREFIX TO WCC_KD    
+SBA1     DC    X'40'
+SBA2     DC    X'40'
+         DC    C'@',X'13'
+MESGLEN  EQU   *-MESSAGE
+         LTORG
+         DC    0D'0'
+TABLE    DC    X'40C1C2C3C4C5C6C7C8C94A4B4C4D4E4F'
+         DC    X'50D1D2D3D4D5D6D7D8D95A5B5C5D5E5F'
+         DC    X'6061E2E3E4E5E6E7E8E96A6B6C6D6E6F'
+         DC    X'F0F1F2F3F4F5F6F7F8F97A7B7C7D7E7F'
+SAVE     DC    18F'0'
+INBUFF   DC    CL80' '
+         END   GREGTEST

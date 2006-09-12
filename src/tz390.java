@@ -4,9 +4,9 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,10 +83,18 @@ public  class  tz390 {
     * 05/13/06 RPI 314 add AGOB and AIFB    
     * 05/13/06 RPI 315 allow ,space within (...) for
     *          macro ops prior to ,space continuation
-    *          add option REFORMAT with default false   
+    *          add option REFORMAT with default off   
     * 05/24/06 RPI 227 add shared alarm_bell for System.out  
     * 06/04/06 RPI 331 set opsyn_name to null for cancel
     * 06/09/06 RPI 342 correct parsing of parms with exp ?' operators 
+    * 07/15/06 RPI 368 add ACONTROL opcode 147
+    * 07/20/06 RPI 378 correct to use first SYSOBJ file dir
+    * 08/08/06 RPI 397 synchronize system.out
+    * 08/10/06 RPI 409 optimize find_key_index using type
+    * 08/19/06 RPI 415 replace option MFC with ASM and add BAL
+    * 09/04/06 RPI 434 increase MAXLCL to 200000.
+    * 09/07/06 RPI 431 add option LISTUSE default to show
+    *          current usage at each USING and DROP
     ********************************************************
     * Shared z390 tables
     *****************************************************/
@@ -95,7 +103,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.1.01";  //dsh
+    String version    = "V1.1.02";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -104,17 +112,19 @@ public  class  tz390 {
     boolean opt_amode24  = false;  // link to run amode24
     boolean opt_amode31  = true;   // link to run amode31
     boolean opt_ascii    = false; // use ascii vs ebcdic
+    boolean opt_asm      = true;  // run az390 assembler as mz390 subtask  RPI 415
+    boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
     boolean opt_cics     = false; // exec cics program honoring prolog,epilog
     boolean opt_con      = true;  // log msgs to console
     boolean opt_dump     = false; // only indicative dump on abend unless on
     boolean opt_epilog   = true;  // if cics, insert DFHEIRET
-    boolean opt_reformat = false; // reformat BAL statements
+    boolean opt_reformat = false;  // reformat BAL statements
     boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
     String  opt_ipl      = "";    // program to execute at startup
     boolean opt_list     = true;  // generate LOG file
     boolean opt_listcall = true;  // list macro calls
     boolean opt_listfile = true;  // list each file path
-    boolean opt_mfc      = true;  // mainframe compatiblity
+    boolean opt_listuse  = true;  // list usage at USING and DROP
     boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
@@ -126,7 +136,6 @@ public  class  tz390 {
     String  opt_sysparm  = "";    // user parm string for mz390  
     String  opt_systerm  = "";    // mod error file name
     boolean opt_test     = false; // invoke interactive test cmds
-    boolean opt_text     = false; // free form text I/O for mz390
     boolean opt_time     = true;  // abend 422 if out of time TIME (sec)
     boolean opt_timing   = true;  // display current date, time, rate
     boolean opt_trace    = false; // trace pz390 instructions to LOG
@@ -145,7 +154,7 @@ public  class  tz390 {
     int opt_maxesd   = 1000;
     int opt_maxfile = 10000;
     int opt_maxgbl  = 100000;   // RPI 284
-    int opt_maxlcl  = 100000;
+    int opt_maxlcl  = 100000;   
     int opt_maxline = 200000;
     int opt_maxparm = 10000;
     int opt_maxrld  = 10000;
@@ -154,10 +163,11 @@ public  class  tz390 {
 	 * global limits with option overrides
 	 */
     char   alarm_bell = 0x07;          // ascii bell char for system.out alarm
-	int    max_errors        = 100;     // ERR(100) max errors before abort
+	int    max_mnote_warning = 4;       // mnote limit for warnings (rc=4 vs rc=16) RPI 415
+    int    max_errors        = 100;     // ERR(100) max errors before abort
     int    max_main_width = 800;
     int    max_main_height = 600;
-	int    max_line_len = 80;           // opt_mlc max line length RPI 264
+	int    max_line_len = 80;           // RPI 264
 	long   max_file_size = 50 << 20;    // max file output 
 	long   max_time_seconds  = 15;      // TIME(15)max elapsed time - override time(sec)
     int    monitor_wait = 300;          // fix interval in milliseconds
@@ -174,6 +184,18 @@ public  class  tz390 {
 	String pgm_dir  = null; // from first parm else dir_cur
 	String pgm_name = null; // from first parm else abort
 	String pgm_type = null; // from first parm override if mlc else def.
+    String ada_type = ".ADA"; // ADATA type (not supported yet)
+	String bal_type = ".BAL"; // basic assembler output from mz390, input to az390
+	String cpy_type = ".CPY"; // copybook source for mz390
+    String dat_type = ".DAT"; // AREAD default input for mz390
+	String err_type = ".ERR"; // step error and rc log
+    String log_type = ".LOG"; // log for z390, ez390, sz390, pz390
+	String mac_type = ".MAC"; // macro source
+    String mlc_type = ".MLC"; // macro assembler source program
+    String obj_type = ".OBJ"; // relocatable object code for az390 and lz390
+    String pch_type = ".PCH"; // punch output from mz390
+    String prn_type = ".PRN"; // assembly listing for az390
+    String z390_type = ".390"; // z390 executable load module for lz390 and ez390
     String dir_390 = null; // SYS390() load module
     String dir_bal = null; // SYSBAL() az390 source input
     String dir_cpy = null; // SYSCPY() mz390 copybook lib
@@ -188,7 +210,9 @@ public  class  tz390 {
     String dir_obj = null; // SYSOBJ() lz390 object lib
     int max_opsyn = 1000;
     int tot_opsyn = 0;
-    String[]  opsyn_name = new String[max_opsyn];
+    int opsyn_index = -1;
+    String[]  opsyn_new_name = new String[max_opsyn];
+    String[]  opsyn_old_name = new String[max_opsyn];
     /*
      * shared SYSTERM error file
      */
@@ -220,6 +244,17 @@ public  class  tz390 {
     int     split_parms_index = -1;  // line index to parms else -1
     int     split_level = 0;
     boolean split_quote = true;
+    /*
+     * pad_spaces char table for padding
+     * starts at 4096 and expands as required
+     */
+    int    pad_spaces_len = 0;
+    char[] pad_spaces = null;
+	/*
+	 * dup operator buffer
+	 */
+	int dup_char_len = 0;
+	char[] dup_char = null; 
     /*
      * ASCII and EBCDIC printable character tables
      */
@@ -505,37 +540,37 @@ public  class  tz390 {
 		       "TMHH",     // 2020 "A72" "TMHH" "RI" 12
 		       "TMHL",     // 2030 "A73" "TMHL" "RI" 12
 		       "BRC",      // 2040 "A74" "BRC" "RI" 12
-		       "J",        // 2050 "A74F" "J" "BRC" 13
-		       "JNOP",     // 2060 "A740" "JNOP" "BRC" 13
-		       "BRU",      // 2070 "A74F" "BRU" "BRC" 13
-		       "BRH",      // 2080 "A742" "BRH" "BRC" 13
-		       "BRL",      // 2090 "A744" "BRL" "BRC" 13
-		       "BRE",      // 2100 "A748" "BRE" "BRC" 13
-		       "BRNH",     // 2110 "A74D" "BRNH" "BRC" 13
-		       "BRNL",     // 2120 "A74B" "BRNL" "BRC" 13
-		       "BRNE",     // 2130 "A747" "BRNE" "BRC" 13
-		       "BRP",      // 2140 "A742" "BRP" "BRC" 13
-		       "BRM",      // 2150 "A744" "BRM" "BRC" 13
-		       "BRZ",      // 2160 "A748" "BRZ" "BRC" 13
-		       "BRO",      // 2170 "A741" "BRO" "BRC" 13
-		       "BRNP",     // 2180 "A74D" "BRNP" "BRC" 13
-		       "BRNM",     // 2190 "A74B" "BRNM" "BRC" 13
-		       "BRNZ",     // 2200 "A747" "BRNZ" "BRC" 13
-		       "BRNO",     // 2210 "A74E" "BRNO" "BRC" 13
-		       "JH",       // 2220 "A742" "JH" "BRC" 13
-		       "JL",       // 2230 "A744" "JL" "BRC" 13
-		       "JE",       // 2240 "A748" "JE" "BRC" 13
-		       "JNH",      // 2250 "A74D" "JNH" "BRC" 13
-		       "JNL",      // 2260 "A74B" "JNL" "BRC" 13
-		       "JNE",      // 2270 "A747" "JNE" "BRC" 13
-		       "JP",       // 2280 "A742" "JP" "BRC" 13
-		       "JM",       // 2290 "A744" "JM" "BRC" 13
-		       "JZ",       // 2300 "A748" "JZ" "BRC" 13
-		       "JO",       // 2310 "A741" "JO" "BRC" 13
-		       "JNP",      // 2320 "A74D" "JNP" "BRC" 13
-		       "JNM",      // 2330 "A74B" "JNM" "BRC" 13
-		       "JNZ",      // 2340 "A747" "JNZ" "BRC" 13
-		       "JNO",      // 2350 "A74E" "JNO" "BRC" 13
+		       "J",        // 2050 "A74F" "J" "BRCX" 13
+		       "JNOP",     // 2060 "A740" "JNOP" "BRCX" 13
+		       "BRU",      // 2070 "A74F" "BRU" "BRCX" 13
+		       "BRH",      // 2080 "A742" "BRH" "BRCX" 13
+		       "BRL",      // 2090 "A744" "BRL" "BRCX" 13
+		       "BRE",      // 2100 "A748" "BRE" "BRCX" 13
+		       "BRNH",     // 2110 "A74D" "BRNH" "BRCX" 13
+		       "BRNL",     // 2120 "A74B" "BRNL" "BRCX" 13
+		       "BRNE",     // 2130 "A747" "BRNE" "BRCX" 13
+		       "BRP",      // 2140 "A742" "BRP" "BRCX" 13
+		       "BRM",      // 2150 "A744" "BRM" "BRCX" 13
+		       "BRZ",      // 2160 "A748" "BRZ" "BRCX" 13
+		       "BRO",      // 2170 "A741" "BRO" "BRCX" 13
+		       "BRNP",     // 2180 "A74D" "BRNP" "BRCX" 13
+		       "BRNM",     // 2190 "A74B" "BRNM" "BRCX" 13
+		       "BRNZ",     // 2200 "A747" "BRNZ" "BRCX" 13
+		       "BRNO",     // 2210 "A74E" "BRNO" "BRCX" 13
+		       "JH",       // 2220 "A742" "JH" "BRCX" 13
+		       "JL",       // 2230 "A744" "JL" "BRCX" 13
+		       "JE",       // 2240 "A748" "JE" "BRCX" 13
+		       "JNH",      // 2250 "A74D" "JNH" "BRCX" 13
+		       "JNL",      // 2260 "A74B" "JNL" "BRCX" 13
+		       "JNE",      // 2270 "A747" "JNE" "BRCX" 13
+		       "JP",       // 2280 "A742" "JP" "BRCX" 13  
+		       "JM",       // 2290 "A744" "JM" "BRCX" 13
+		       "JZ",       // 2300 "A748" "JZ" "BRCX" 13
+		       "JO",       // 2310 "A741" "JO" "BRCX" 13
+		       "JNP",      // 2320 "A74D" "JNP" "BRCX" 13
+		       "JNM",      // 2330 "A74B" "JNM" "BRCX" 13
+		       "JNZ",      // 2340 "A747" "JNZ" "BRCX" 13
+		       "JNO",      // 2350 "A74E" "JNO" "BRCX" 13
 		       "BRAS",     // 2360 "A75" "BRAS" "RI" 12
 		       "JAS",      // 2370 "A75" "JAS" "RI" 12
 		       "BRCT",     // 2380 "A76" "BRCT" "RI" 12
@@ -1139,6 +1174,7 @@ public  class  tz390 {
 		       "PUNCH",    // 7570  "PUNCH"  223
 		       "PUSH",     // 7580  "PUSH"  145
 		       "REPRO",    // 7590  "REPRO"  146
+		       "ACONTROL", // 7595  "ACONTROL" 147 /RPI 368
 		       "ACTR",     // 7600  "ACTR"  201
 		       "AGO",      // 7610  "AGO"  202
 		       "AIF",      // 7620  "AIF"  203
@@ -1179,7 +1215,7 @@ public  class  tz390 {
          4, //10 "RS" 25  oorrbddd
          4, //11 "SI" 9 CLI  ooiibddd
          4, //12 "RI" 37 IIHH  ooroiiii
-         4, //13 "BRC" 31 BRE  oomoiiii
+         4, //13 "BRCX" 31 BRE  oomoiiii
          4, //14 "RRE" 185  MSR oooo00rr
          4, //15 "RRF1" 28 MAER oooor0rr (r1,r3,r2 maps to r1,r3,r2)
          6, //16 "RIL" 6  BRCL  oomollllllll
@@ -1203,9 +1239,9 @@ public  class  tz390 {
          6  //34 "RRF2" FIXBR oooom0rr (r1,m3,r2 maps to m3,r1,r2)
          };
 	int    max_op_type_offset = 34; // see changes required
-    int    max_ins_op = 100;    // RPI 315 
-    int    max_asm_op = 200;
-    int    max_mac_op = 300;
+    int    max_ins_type = 100;    // RPI 315 
+    int    max_asm_type = 200;
+    int    max_mac_type = 300;
 	//  When adding new opcode case:
 	//  1.  Increase the above max.
 	//  2.  Change above op_type_len table which must match
@@ -1419,37 +1455,37 @@ public  class  tz390 {
 		       12,  // 2020 "A72" "TMHH" "RI" 12
 		       12,  // 2030 "A73" "TMHL" "RI" 12
 		       12,  // 2040 "A74" "BRC" "RI" 12
-		       13,  // 2050 "A74F" "J" "BRC" 13
-		       13,  // 2060 "A740" "JNOP" "BRC" 13
-		       13,  // 2070 "A74F" "BRU" "BRC" 13
-		       13,  // 2080 "A742" "BRH" "BRC" 13
-		       13,  // 2090 "A744" "BRL" "BRC" 13
-		       13,  // 2100 "A748" "BRE" "BRC" 13
-		       13,  // 2110 "A74D" "BRNH" "BRC" 13
-		       13,  // 2120 "A74B" "BRNL" "BRC" 13
-		       13,  // 2130 "A747" "BRNE" "BRC" 13
-		       13,  // 2140 "A742" "BRP" "BRC" 13
-		       13,  // 2150 "A744" "BRM" "BRC" 13
-		       13,  // 2160 "A748" "BRZ" "BRC" 13
-		       13,  // 2170 "A741" "BRO" "BRC" 13
-		       13,  // 2180 "A74D" "BRNP" "BRC" 13
-		       13,  // 2190 "A74B" "BRNM" "BRC" 13
-		       13,  // 2200 "A747" "BRNZ" "BRC" 13
-		       13,  // 2210 "A74E" "BRNO" "BRC" 13
-		       13,  // 2220 "A742" "JH" "BRC" 13
-		       13,  // 2230 "A744" "JL" "BRC" 13
-		       13,  // 2240 "A748" "JE" "BRC" 13
-		       13,  // 2250 "A74D" "JNH" "BRC" 13
-		       13,  // 2260 "A74B" "JNL" "BRC" 13
-		       13,  // 2270 "A747" "JNE" "BRC" 13
-		       13,  // 2280 "A742" "JP" "BRC" 13
-		       13,  // 2290 "A744" "JM" "BRC" 13
-		       13,  // 2300 "A748" "JZ" "BRC" 13
-		       13,  // 2310 "A741" "JO" "BRC" 13
-		       13,  // 2320 "A74D" "JNP" "BRC" 13
-		       13,  // 2330 "A74B" "JNM" "BRC" 13
-		       13,  // 2340 "A747" "JNZ" "BRC" 13
-		       13,  // 2350 "A74E" "JNO" "BRC" 13
+		       13,  // 2050 "A74F" "J" "BRCX" 13
+		       13,  // 2060 "A740" "JNOP" "BRCX" 13
+		       13,  // 2070 "A74F" "BRU" "BRCX" 13
+		       13,  // 2080 "A742" "BRH" "BRCX" 13
+		       13,  // 2090 "A744" "BRL" "BRCX" 13
+		       13,  // 2100 "A748" "BRE" "BRCX" 13
+		       13,  // 2110 "A74D" "BRNH" "BRCX" 13
+		       13,  // 2120 "A74B" "BRNL" "BRCX" 13
+		       13,  // 2130 "A747" "BRNE" "BRCX" 13
+		       13,  // 2140 "A742" "BRP" "BRCX" 13
+		       13,  // 2150 "A744" "BRM" "BRCX" 13
+		       13,  // 2160 "A748" "BRZ" "BRCX" 13
+		       13,  // 2170 "A741" "BRO" "BRCX" 13
+		       13,  // 2180 "A74D" "BRNP" "BRCX" 13
+		       13,  // 2190 "A74B" "BRNM" "BRCX" 13
+		       13,  // 2200 "A747" "BRNZ" "BRCX" 13
+		       13,  // 2210 "A74E" "BRNO" "BRCX" 13
+		       13,  // 2220 "A742" "JH" "BRCX" 13
+		       13,  // 2230 "A744" "JL" "BRCX" 13
+		       13,  // 2240 "A748" "JE" "BRCX" 13
+		       13,  // 2250 "A74D" "JNH" "BRCX" 13
+		       13,  // 2260 "A74B" "JNL" "BRCX" 13
+		       13,  // 2270 "A747" "JNE" "BRCX" 13
+		       13,  // 2280 "A742" "JP" "BRCX" 13 
+		       13,  // 2290 "A744" "JM" "BRCX" 13
+		       13,  // 2300 "A748" "JZ" "BRCX" 13
+		       13,  // 2310 "A741" "JO" "BRCX" 13
+		       13,  // 2320 "A74D" "JNP" "BRCX" 13
+		       13,  // 2330 "A74B" "JNM" "BRCX" 13
+		       13,  // 2340 "A747" "JNZ" "BRCX" 13
+		       13,  // 2350 "A74E" "JNO" "BRCX" 13
 		       12,  // 2360 "A75" "BRAS" "RI" 12
 		       12,  // 2370 "A75" "JAS" "RI" 12
 		       12,  // 2380 "A76" "BRCT" "RI" 12
@@ -2053,6 +2089,7 @@ public  class  tz390 {
 		       223,  // 7570  "PUNCH"  223
 		       145,  // 7580  "PUSH"  145
 		       146,  // 7590  "REPRO"  146
+		       147,  // 7595  "ACONTROL" 147 // RPI 368
 		       201,  // 7600  "ACTR"   
 		       202,  // 7610  "AGO"  
 		       203,  // 7625  "AIF"  
@@ -2286,37 +2323,37 @@ public  class  tz390 {
 		       "A72",  // 2020 "A72" "TMHH" "RI" 12
 		       "A73",  // 2030 "A73" "TMHL" "RI" 12
 		       "A74",  // 2040 "A74" "BRC" "RI" 12
-		       "A74F",  // 2050 "A74F" "J" "BRC" 13
-		       "A740",  // 2060 "A740" "JNOP" "BRC" 13
-		       "A74F",  // 2070 "A74F" "BRU" "BRC" 13
-		       "A742",  // 2080 "A742" "BRH" "BRC" 13
-		       "A744",  // 2090 "A744" "BRL" "BRC" 13
-		       "A748",  // 2100 "A748" "BRE" "BRC" 13
-		       "A74D",  // 2110 "A74D" "BRNH" "BRC" 13
-		       "A74B",  // 2120 "A74B" "BRNL" "BRC" 13
-		       "A747",  // 2130 "A747" "BRNE" "BRC" 13
-		       "A742",  // 2140 "A742" "BRP" "BRC" 13
-		       "A744",  // 2150 "A744" "BRM" "BRC" 13
-		       "A748",  // 2160 "A748" "BRZ" "BRC" 13
-		       "A741",  // 2170 "A741" "BRO" "BRC" 13
-		       "A74D",  // 2180 "A74D" "BRNP" "BRC" 13
-		       "A74B",  // 2190 "A74B" "BRNM" "BRC" 13
-		       "A747",  // 2200 "A747" "BRNZ" "BRC" 13
-		       "A74E",  // 2210 "A74E" "BRNO" "BRC" 13
-		       "A742",  // 2220 "A742" "JH" "BRC" 13
-		       "A744",  // 2230 "A744" "JL" "BRC" 13
-		       "A748",  // 2240 "A748" "JE" "BRC" 13
-		       "A74D",  // 2250 "A74D" "JNH" "BRC" 13
-		       "A74B",  // 2260 "A74B" "JNL" "BRC" 13
-		       "A747",  // 2270 "A747" "JNE" "BRC" 13
-		       "A742",  // 2280 "A742" "JP" "BRC" 13
-		       "A744",  // 2290 "A744" "JM" "BRC" 13
-		       "A748",  // 2300 "A748" "JZ" "BRC" 13
-		       "A741",  // 2310 "A741" "JO" "BRC" 13
-		       "A74D",  // 2320 "A74D" "JNP" "BRC" 13
-		       "A74B",  // 2330 "A74B" "JNM" "BRC" 13
-		       "A747",  // 2340 "A747" "JNZ" "BRC" 13
-		       "A74E",  // 2350 "A74E" "JNO" "BRC" 13
+		       "A74F",  // 2050 "A74F" "J" "BRCX" 13
+		       "A740",  // 2060 "A740" "JNOP" "BRCX" 13
+		       "A74F",  // 2070 "A74F" "BRU" "BRCX" 13
+		       "A742",  // 2080 "A742" "BRH" "BRCX" 13
+		       "A744",  // 2090 "A744" "BRL" "BRCX" 13
+		       "A748",  // 2100 "A748" "BRE" "BRCX" 13
+		       "A74D",  // 2110 "A74D" "BRNH" "BRCX" 13
+		       "A74B",  // 2120 "A74B" "BRNL" "BRCX" 13
+		       "A747",  // 2130 "A747" "BRNE" "BRCX" 13
+		       "A742",  // 2140 "A742" "BRP" "BRCX" 13
+		       "A744",  // 2150 "A744" "BRM" "BRCX" 13
+		       "A748",  // 2160 "A748" "BRZ" "BRCX" 13
+		       "A741",  // 2170 "A741" "BRO" "BRCX" 13
+		       "A74D",  // 2180 "A74D" "BRNP" "BRCX" 13
+		       "A74B",  // 2190 "A74B" "BRNM" "BRCX" 13
+		       "A747",  // 2200 "A747" "BRNZ" "BRCX" 13
+		       "A74E",  // 2210 "A74E" "BRNO" "BRCX" 13
+		       "A742",  // 2220 "A742" "JH" "BRCX" 13
+		       "A744",  // 2230 "A744" "JL" "BRCX" 13
+		       "A748",  // 2240 "A748" "JE" "BRCX" 13
+		       "A74D",  // 2250 "A74D" "JNH" "BRCX" 13
+		       "A74B",  // 2260 "A74B" "JNL" "BRCX" 13
+		       "A747",  // 2270 "A747" "JNE" "BRCX" 13
+		       "A742",  // 2280 "A742" "JP" "BRCX" 13 
+		       "A744",  // 2290 "A744" "JM" "BRCX" 13
+		       "A748",  // 2300 "A748" "JZ" "BRCX" 13
+		       "A741",  // 2310 "A741" "JO" "BRCX" 13
+		       "A74D",  // 2320 "A74D" "JNP" "BRCX" 13
+		       "A74B",  // 2330 "A74B" "JNM" "BRCX" 13
+		       "A747",  // 2340 "A747" "JNZ" "BRCX" 13
+		       "A74E",  // 2350 "A74E" "JNO" "BRCX" 13
 		       "A75",  // 2360 "A75" "BRAS" "RI" 12
 		       "A75",  // 2370 "A75" "JAS" "RI" 12
 		       "A76",  // 2380 "A76" "BRCT" "RI" 12
@@ -2876,59 +2913,6 @@ public  class  tz390 {
 		       "FD",  // 7130 "FD" "DP" "SS2" 26		       
 			};
       /*
-       * DS/DC type tables shared by mz390 and az390
-       */
-      String dc_valid_types   = "ABCDEFHLPSVXYZ";
-      String dc_type_explicit = "RBCKKGGKPRVXRZ";
-      int[] dc_type_len = {
-      		4,  // A
-			1,  // B
-			1,  // C
-			8,  // D
-			4,  // E
-			4,  // F
-			2,  // H
-			16, // L
-			1,  // P
-			2,  // S
-			4,  // V
-			1,  // X
-			2,  // Y
-			1   // Z
-			};
-      int[] dc_type_align = {
-      		4,  // A
-			0,  // B
-			0,  // C
-			8,  // D
-			4,  // E
-			4,  // F
-			2,  // H
-			8,  // L
-			0,  // P
-			2,  // S
-			4,  // V
-			0,  // X
-			2,  // Y
-			0   // Z
-			};
-      char[] dc_type_delimiter = {
-      		'(',  // A
-			'\'', // B
-			'\'', // C
-			'\'', // D
-			'\'', // E
-			'\'', // F
-			'\'', // H
-			'\'', // L
-			'\'', // P
-			'(',  // S
-			'(',  // V
-			'\'', // X
-			'(',  // Y
-			'\''  // Z
-			};
-      /*
        * key search table data
        */
       int last_key_op = 0;
@@ -2938,16 +2922,17 @@ public  class  tz390 {
       int max_key_tab = 50000;
       int tot_key_tab = max_key_root+1;
       int tot_key = 0;
+      char   key_type = '?';
       String key_text = null;
       int key_index = 0;
       int key_index_last = 0;
-      Random key_rand = new Random();
       int key_hash = 0;
       int tot_key_search = 0;
       int tot_key_comp  = 0;
       int avg_key_comp  = 0;
       int cur_key_comp = 0;
       int max_key_comp = 0;
+      char[]    key_tab_type  = (char[])Array.newInstance(char.class,max_key_tab);
       String[]  key_tab_key   = new String[max_key_tab];
       int[]     key_tab_hash  = (int[])Array.newInstance(int.class,max_key_tab);
       int[]     key_tab_index = (int[])Array.newInstance(int.class,max_key_tab);
@@ -3077,6 +3062,10 @@ public void init_options(String[] args,String pgm_type){
     		z390_amode31 = 'T';
     	} else if (token.toUpperCase().equals("ASCII")){
     		opt_ascii = true; 
+    	} else if (token.toUpperCase().equals("ASM")){
+    		opt_asm = true; 
+    	} else if (token.toUpperCase().equals("BAL")){
+    		opt_bal = true; 	
     	} else if (token.toUpperCase().equals("CICS")){
            	opt_cics = true;
     	} else if (token.toUpperCase().equals("CON")){
@@ -3095,6 +3084,12 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.length() > 4
          		&& token.substring(0,4).toUpperCase().equals("IPL(")){
         	opt_ipl = token.substring(4,token.length()-1);
+        } else if (token.length() >= 8
+          		&& token.substring(0,8).toUpperCase().equals("LISTCALL")){
+           	opt_listcall = true;
+        } else if (token.length() >= 7
+          		&& token.substring(0,7).toUpperCase().equals("LISTUSE")){
+           	opt_listuse = true;
         } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("MAXCALL(")){
            	opt_maxcall = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
@@ -3140,6 +3135,10 @@ public void init_options(String[] args,String pgm_type){
            	} catch (Exception e){
            		abort_error(9,"invalid memory option " + token);
            	}
+        } else if (token.toUpperCase().equals("NOASM")){
+           	opt_asm = false;
+        } else if (token.toUpperCase().equals("NOBAL")){
+           	opt_bal = false;    	
         } else if (token.toUpperCase().equals("NOCON")){
            	opt_con = false;
         } else if (token.toUpperCase().equals("NOEPILOG")){
@@ -3150,24 +3149,24 @@ public void init_options(String[] args,String pgm_type){
            	opt_listcall = false;
         } else if (token.equals("NOLISTFILE")){
            	opt_listfile = false;
-         } else if (token.toUpperCase().equals("NOMFC")){
-           	opt_mfc = false;
-         } else if (token.toUpperCase().equals("NOPROLOG")){
+        } else if (token.equals("NOLISTUSE")){
+           	opt_listuse = false;   	
+        } else if (token.toUpperCase().equals("NOPROLOG")){
             opt_prolog = false;
-         } else if (token.toUpperCase().equals("NOSTATS")){
+        } else if (token.toUpperCase().equals("NOSTATS")){
            	opt_stats = false;
-         } else if (token.toUpperCase().equals("NOTIME")){
-          	opt_time = false; // no time limit
-         } else if (token.toUpperCase().equals("NOTIMING")){
+        } else if (token.toUpperCase().equals("NOTIME")){
+        	opt_time = false; // no time limit
+        } else if (token.toUpperCase().equals("NOTIMING")){
           	opt_timing = false; // no date/time changes
           	opt_time   = false;
-         } else if (token.toUpperCase().equals("NOTRAP")){
+        } else if (token.toUpperCase().equals("NOTRAP")){
            	opt_trap = false;
-         } else if (token.toUpperCase().equals("NOXREF")){
+        } else if (token.toUpperCase().equals("NOXREF")){
            	opt_xref = false;
-         } else if (token.toUpperCase().equals("OBJHEX")){
+        } else if (token.toUpperCase().equals("OBJHEX")){
            	opt_objhex = true;
-         } else if (token.length() > 5
+        } else if (token.length() > 5
            		&& token.substring(0,5).toUpperCase().equals("PARM(")){
             	opt_parm = token.substring(5,token.length()-1);
             	if (opt_parm.length() > 2 
@@ -3175,82 +3174,86 @@ public void init_options(String[] args,String pgm_type){
             		&& opt_parm.charAt(opt_parm.length()-1) == '\''){
             		opt_parm = opt_parm.substring(1,opt_parm.length()-1);          		
             	}
-         } else if (token.length() > 8
+        } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("PROFILE(")){
          	opt_profile = token.substring(8,token.length()-1);
-         } else if (token.toUpperCase().equals("REFORMAT")){
+        } else if (token.toUpperCase().equals("REFORMAT")){
             	opt_reformat = true; 
-         } else if (token.toUpperCase().equals("REGS")){
+        } else if (token.toUpperCase().equals("REGS")){
            	opt_regs = true;
            	opt_list  = true;
-         } else if (token.toUpperCase().equals("RMODE24")){
+        } else if (token.toUpperCase().equals("RMODE24")){
            	opt_rmode24 = true;
            	opt_rmode31 = false;
            	z390_rmode31 = 'F';
-         } else if (token.toUpperCase().equals("RMODE31")){
+        } else if (token.toUpperCase().equals("RMODE31")){
            	opt_rmode24 = false;
           	opt_rmode31 = true;
            	z390_rmode31 = 'T';
-         } else if (token.length() > 7
+        } else if (token.length() > 7
            		&& token.substring(0,7).toUpperCase().equals("SYS390(")){
            	dir_390 = token.substring(7,token.length()-1) + File.separator;	
-         } else if (token.length() > 7 
+        } else if (token.length() > 7 
            		&& token.substring(0,7).toUpperCase().equals("SYSBAL(")){
           	dir_bal = token.substring(7,token.length()-1) + File.separator; 
-         } else if (token.length() > 7 
+        } else if (token.length() > 7 
           		&& token.substring(0,7).toUpperCase().equals("SYSCPY(")){
            	dir_cpy = token.substring(7,token.length()-1); 
-         } else if (token.length() > 7 
+        } else if (token.length() > 7 
           		&& token.substring(0,7).toUpperCase().equals("SYSDAT(")){
            	dir_dat = token.substring(7,token.length()-1) + File.separator; 
-         } else if (token.length() > 7
+        } else if (token.length() > 7
            		&& token.substring(0,7).toUpperCase().equals("SYSERR(")){
             	dir_err = token.substring(7,token.length()-1) + File.separator; // RPI 243
-         } else if (token.length() > 7
+        } else if (token.length() > 7
           		&& token.substring(0,7).toUpperCase().equals("SYSLOG(")){
            	dir_log = token.substring(7,token.length()-1) + File.separator;
-         } else if (token.length() > 7 
+        } else if (token.length() > 7 
            		&& token.substring(0,7).toUpperCase().equals("SYSMAC(")){
            	dir_mac = token.substring(7,token.length()-1); 
-         } else if (token.length() > 7 
+        } else if (token.length() > 7 
            		&& token.substring(0,7).toUpperCase().equals("SYSMLC(")){
           	dir_mlc = get_short_file_name(token.substring(7,token.length()-1) + File.separator); 
-         } else if (token.length() > 7 
+        } else if (token.length() > 7 
            		&& token.substring(0,7).toUpperCase().equals("SYSOBJ(")){
            	dir_obj = token.substring(7,token.length()-1) + File.separator; 
-         } else if (token.length() > 8
+        } else if (token.length() > 8
          		&& token.substring(0,8).toUpperCase().equals("SYSPARM(")){
         	opt_sysparm = token.substring(8,token.length()-1);
-         } else if (token.length() > 7 
+        } else if (token.length() > 7 
            		&& token.substring(0,7).toUpperCase().equals("SYSPCH(")){
           	dir_pch = get_short_file_name(token.substring(7,token.length()-1) + File.separator); 
-         } else if (token.length() > 7 
+        } else if (token.length() > 7 
           		&& token.substring(0,7).toUpperCase().equals("SYSPRN(")){
           	dir_prn = token.substring(7,token.length()-1) + File.separator; 	
-         } else if (token.length() > 8
+        } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("SYSTERM(")){
          	opt_systerm = token.substring(8,token.length()-1);
-         } else if (token.length() > 5
+        } else if (token.length() > 5
           		&& token.substring(0,5).toUpperCase().equals("TIME(")){
            	max_time_seconds = Long.valueOf(token.substring(5,token.length()-1)).longValue();
-         } else if (token.toUpperCase().equals("TEST")){
+           	if (max_time_seconds > 0){
+           		opt_time = true;
+           		opt_timing = true;
+           	} else {
+           		opt_time = false;
+           		opt_timing = false;
+           	}
+        } else if (token.toUpperCase().equals("TEST")){
            	opt_test = true;
            	opt_time = false;
-         } else if (token.length() > 5
+        } else if (token.length() > 5
           		&& token.substring(0,5).toUpperCase().equals("TEST(")){
            	test_ddname = token.substring(5,token.length()-1);	
            	opt_test = true;
-         } else if (token.toUpperCase().equals("TEXT")){
-            	opt_text = true;
-            	opt_mfc = false;
-         } else if (token.toUpperCase().equals("TRACE")){
+        } else if (token.toUpperCase().equals("TRACE")){
            	opt_trace = true;
            	opt_list   = true;
            	opt_con   = false;
-         } else if (token.toUpperCase().equals("TRACEA")){
+        } else if (token.toUpperCase().equals("TRACEA")){
            	opt_tracea = true;
            	opt_list = true;	
-         } else if (token.toUpperCase().equals("TRACEALL")){
+        } else if (token.toUpperCase().equals("TRACEALL")){
            	opt_traceall = true;
            	opt_trace    = true;
            	opt_tracem   = true;
@@ -3259,19 +3262,19 @@ public void init_options(String[] args,String pgm_type){
            	opt_tracemem = true;
            	opt_list     = true;
            	opt_con   = false;
-         } else if (token.toUpperCase().equals("TRACEL")){
+        } else if (token.toUpperCase().equals("TRACEL")){
            	opt_tracel = true;
            	opt_list = true;
-         } else if (token.toUpperCase().equals("TRACEM")){
+        } else if (token.toUpperCase().equals("TRACEM")){
             	opt_tracem = true;
             	opt_list = true;
-         } else if (token.toUpperCase().equals("TRACEMEM")){
+        } else if (token.toUpperCase().equals("TRACEMEM")){
            	opt_tracemem = true;
-         }
-         index1++;
+        }
+        index1++;
     }
-    if (opt_systerm.length() == 0){
-    	opt_systerm = pgm_name;
+    if (opt_systerm.length() == 0){  // RPI 425
+    	opt_systerm = get_file_name(dir_err,pgm_name,err_type);
     }
 }
 public void open_systerm(String z390_pgm){
@@ -3279,7 +3282,8 @@ public void open_systerm(String z390_pgm){
 	 * open systerm file else set null
 	 */
 	systerm_prefix = pgm_name + " " + z390_pgm + " ";
-    systerm_file_name = dir_err + opt_systerm + ".ERR";
+    if (systerm_file != null)return; // rpi 415
+	systerm_file_name = get_file_name(dir_err,opt_systerm,err_type);
     try {
         systerm_file = new RandomAccessFile(systerm_file_name,"rw");
         systerm_file.seek(systerm_file.length());
@@ -3298,7 +3302,7 @@ public void open_systerm(String z390_pgm){
         abort_error(11,"I/O error on systerm file " + e.toString());
 	}
 }
-public  void put_systerm(String msg){
+public synchronized void put_systerm(String msg){ // RPI 397
 	/*
 	 * log error to systerm file
 	 */
@@ -3314,13 +3318,13 @@ public  void put_systerm(String msg){
 		}
 	}
 }
-public void close_systerm(int rc){
+public synchronized void close_systerm(int rc){ // RPI 397
 	/*
 	 * close systerm error file if open
 	 */
      if (systerm_file != null){
      	 if (opt_timing){
-     		systerm_sec  = " SEC=" + get_int_string((int)((System.currentTimeMillis()-systerm_start)/1000),2);
+     		systerm_sec  = " SEC=" + right_justify("" + ((System.currentTimeMillis()-systerm_start)/1000),2);
     	    systerm_time = sdf_hhmmss.format(new Date()) + " ";;
     	 }
     	 try {
@@ -3329,7 +3333,12 @@ public void close_systerm(int rc){
     		 if (systerm_ins > 0){
     			 systerm_ins_text = " INS=" + systerm_ins;
     		 }
-    		 systerm_file.writeBytes(systerm_time + systerm_prefix + "ENDED   RC=" + get_int_string(rc,2) + systerm_sec + " MEM(MB)=" + get_int_string(get_mem_usage(),3) + " IO=" + systerm_io + systerm_ins_text + "\r\n");
+    		 systerm_file.writeBytes(systerm_time + systerm_prefix
+    				 + "ENDED   RC=" + right_justify("" + rc,2) 
+    				 + systerm_sec 
+    				 + " MEM(MB)=" + right_justify("" + get_mem_usage(),3) 
+    				 + " IO=" + systerm_io 
+    				 + systerm_ins_text + "\r\n");
     	 } catch (Exception e){
     	 }
     	 try {
@@ -3350,17 +3359,6 @@ private int get_mem_usage(){
     }
     return (int)(mem_tot >> 20);
 }
-private String get_int_string(int num,int min_len){
-	/*
-	 * return string value of integer with
-	 * minimum length by adding leading spaces
-	 */
-	String num_string = "" + num;
-	while (num_string.length() < min_len){
-		num_string = " " + num_string;
-	}
-	return num_string;
-}
 private String get_short_file_name(String file_name){
 	/*
 	 * return shortest file name possible
@@ -3380,7 +3378,7 @@ private String get_short_file_name(String file_name){
 	}
 	return file_name;
 }
-private void abort_error(int error,String msg){
+private synchronized void abort_error(int error,String msg){ // RPI 397
 	/*
 	 * display options error on system out
 	 * and exit with rc 16.
@@ -3401,7 +3399,7 @@ private void init_ascii_ebcdic(){
 	  index++;
 	}
 }
-public int find_key_index(String user_key){
+public int find_key_index(char user_key_type,String user_key){
 	/*
 	 * return user_key_index for user_key else -1
 	 * and set following for possible add_key_index:
@@ -3431,15 +3429,17 @@ public int find_key_index(String user_key){
 	 *       c.  "O:" - opcodes by name (init_opcode_name_keys)
 	 *       d.  "P:" - CDE program name lookup
 	 *       e.  "R:" - OPSYN opcode/macro substitution
-	 * Notes:
-	 *   1.  See find_lcl_key_index in mz390 with
+	 *   5.  See find_lcl_key_index in mz390 with
 	 *       local key types KBPL
+	 *   6.  Optimize by using separate user_key_type char
+	 *       to avoid extra string concat and avoid string compare if not 
+	 *       desired type.  RPI 409 (all calls changed)
 	 */
 	tot_key_search++;
+	key_type = user_key_type;
 	key_text = user_key;
-    key_rand.setSeed((long) key_text.hashCode());
-    key_hash  = key_rand.nextInt();
-    key_index = key_rand.nextInt(max_key_root)+1;
+    key_hash  = key_text.hashCode(); // RPI 434 
+	key_index = Math.abs(key_hash % max_key_root)+1; 
 	if (key_tab_key[key_index] == null){
 		key_index_last = key_index;
 		last_key_op = key_not_found;
@@ -3449,11 +3449,12 @@ public int find_key_index(String user_key){
 	while (key_index > 0){ 
 		tot_key_comp++;
 		cur_key_comp++;
-		if (cur_key_comp > max_key_comp){
-			max_key_comp = cur_key_comp;
-		}
 		if (key_hash == key_tab_hash[key_index]
+		    && user_key_type == key_tab_type[key_index]                           
 		    && user_key.equals(key_tab_key[key_index])){
+			if (cur_key_comp > max_key_comp){
+				max_key_comp = cur_key_comp;
+			}
 			last_key_op = key_found;
 	    	return key_tab_index[key_index];
 	    }
@@ -3463,6 +3464,9 @@ public int find_key_index(String user_key){
 		} else {
 			key_index = key_tab_high[key_index];
 		}
+	}
+	if (cur_key_comp > max_key_comp){
+		max_key_comp = cur_key_comp;
 	}
 	last_key_op = key_not_found;
 	return -1;
@@ -3493,6 +3497,7 @@ public boolean add_key_index(int user_index){
 	    }
 	}
 	tot_key++;
+	key_tab_type[key_index]  = key_type;
 	key_tab_key[key_index]   = key_text;
 	key_tab_hash[key_index]  = key_hash;
 	key_tab_index[key_index] = user_index;
@@ -3507,17 +3512,6 @@ public boolean update_key_index(int user_key){
 	}
 	key_tab_index[key_index] = user_key;
 	return true;
-}
-public void reset_opsyn(){
-	/*
-	 * reset op_code key table indexes changed
-	 * by opsyn during previous pass if any.
-	 */
-	int index = 0;
-	while (index < tot_opsyn){
-		opsyn_name[index] = null;
-		index++;
-	}
 }
 public String get_file_name(String parm_dir,String parm,String parm_type){
 	   /*
@@ -3622,7 +3616,7 @@ public boolean init_opcode_name_keys(){
 	 */
 	int index = 0;
 	while (index < op_name.length){
-		if (find_key_index("O:" + op_name[index]) == -1){
+		if (find_key_index('O',op_name[index]) == -1){
 			if(!add_key_index(index)){ 
 				return false;
 			}
@@ -3663,7 +3657,7 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
     index = file_name.lastIndexOf('.');
     if (index != -1){  // strip extension if any
     	pgm_name = file_name.substring(0,index);
-    	if (!file_type.equals(".MLC")){ //RPI169
+    	if (!file_type.equals(mlc_type)){ //RPI169
     		pgm_type=file_type;
     	} else {
     		pgm_type = file_name.substring(index);
@@ -3680,49 +3674,97 @@ private void set_dir_cur(){  //RPI168
 	 */
 	dir_cur = System.getProperty("user.dir").toUpperCase() + File.separator;
 }
+public void reset_opsyn(){
+	/*
+	 * reset op_code key table indexes changed
+	 * by opsyn during previous pass if any.
+	 */
+	int index = 0;
+	while (index < tot_opsyn){
+		opsyn_old_name[index] = opsyn_new_name[index]; // RPI 403
+		index++;
+	}
+}
 public boolean update_opsyn(String new_name,String old_name){
 	/*
-	 * Add new alias name or add entry
-	 * to cancel opcode name.  // RPI 306
+	 * Update opsyn table as follows:
+	 *   1.  Add new alias name for opcode
+	 *   2.  Add null entry to cancel opcode  // RPI 306
+	 *   3.  Restore opcode to previous alias
+	 *       and remove any cancel entry.  // R{O 404
+	 * Notes:
+	 *   1.  Indexes pointing to new name entries
+	 *       in opsyn table are only added once.
+	 *   2,  az390 uses reset_opsyn() to reset old = new
+	 *       for multiple passes so opcodes prior to first
+	 *       OPSYN statement will map to std. opcode. mz390
+	 *       only makes one pass so its not an issue.     
 	 */
 	int index = -1;
 	if (old_name != null){
 		index = old_name.indexOf(" ");
 		if (index > 0){  // RPI 306 remove comments
-			old_name = old_name.substring(0,index);
+			old_name = old_name.substring(0,index).toUpperCase();
 		}
 		if (old_name.length() == 0 || old_name.charAt(0) == ','){
 			old_name = null;
 		}
 	}
-	index = find_key_index("R:" + new_name.toUpperCase());
-	if (index == -1){
+	if (new_name == null || new_name.length() == 0){
+		return false;
+	}
+	new_name = new_name.toUpperCase();
+	opsyn_index = find_key_index('R',new_name);
+	if (opsyn_index == -1){
+		// defining new alias
 		if (tot_opsyn < max_opsyn){
-			index = tot_opsyn;
+			opsyn_index = tot_opsyn;
 			tot_opsyn++;
-			add_key_index(index);
+			add_key_index(opsyn_index);
+			opsyn_new_name[opsyn_index] = new_name;
 		} else {
 			return false;
 		}
 	}
 	if (old_name != null){
-		opsyn_name[index] = old_name.toUpperCase();
+		index = find_key_index('R',
+				old_name);
+        if (index != -1){
+    		// replace old name with any
+        	// previously saved opcode
+			old_name = opsyn_old_name[index];
+		}
+		// save new and old opcodes
+		opsyn_old_name[opsyn_index] = old_name;
 	} else {
-		opsyn_name[index] = null; // RPI 331
+		opsyn_old_name[opsyn_index] = null; // RPI 331
 	}
 	return true;
 }
-public String get_hex(int work_int,int field_length) {
+public String get_hex(int work_int,int req_hex_digits) {
    	/*
-   	 * Format int into 1-16 byte hex string
+   	 * Format int into 1-16 hex digit string
    	 */
    	    String work_hex = Integer.toHexString(work_int);
-   	    if (work_hex.length() >= field_length){
-   	    	return work_hex.substring(work_hex.length() - field_length).toUpperCase();
+   	    if (req_hex_digits <= 8 || (work_int >= 0 && req_hex_digits <= 16)){
+   			return ("0000000000000000" + work_hex).substring(work_hex.length() + 16 - req_hex_digits).toUpperCase();
+   	    } else if (req_hex_digits >= 16 && work_int < 0){
+   	    	return ("FFFFFFFFFFFFFFFF" + work_hex).substring(work_hex.length() + 16 - req_hex_digits).toUpperCase();
    	    } else {
-   			return ("0000000000000000" + work_hex).substring(16 - field_length + work_hex.length()).toUpperCase();
+   	    	return null; // force error
    	    }
-   }
+}
+public String get_long_hex(long work_long,int req_hex_digits) {
+   	/*
+   	 * Format long into 1-16 hex digit string
+   	 */
+   	    String work_hex = Long.toHexString(work_long);
+   	    if (req_hex_digits <= 16) {
+   			return ("0000000000000000" + work_hex).substring(work_hex.length() + 16 - req_hex_digits).toUpperCase();
+   	    } else {
+   	    	return null; // force error
+   	    }
+}
 public boolean get_sdt_char_int(String sdt){
 	   /*
 	    *  set sdt_char_int to
@@ -3738,7 +3780,7 @@ public boolean get_sdt_char_int(String sdt){
 	   int index = 2;
 	   sdt_char_int = 0;
 	   char sdt_quote = '\'';
-	   char char_type = sdt.substring(1,2).toUpperCase().charAt(0);
+	   char char_type = sdt.substring(1,2).toUpperCase().charAt(0); 
 	   switch (char_type){
 	   case 'A': // ASCII
 		   index = 3;
@@ -3784,11 +3826,11 @@ public boolean get_sdt_char_int(String sdt){
 }
 public boolean verify_ascii_source(String temp_line){
 	/*
-	 * 1.  Verify ascii source code
-	 * 2.  If opt_mlc verify length <= 80
+	 * 1.  Verify ascii source code and
+	 *     length <= 80 
 	 *
 	 */
-	if (!opt_text && temp_line.length() > max_line_len){
+	if (temp_line.length() > max_line_len){ // RPI 437
 		return false; 
 	}
 	int index = 0;
@@ -3804,19 +3846,78 @@ public boolean verify_ascii_source(String temp_line){
     }
     return true;
 }
-public String get_padded_name(){
+public String left_justify(String text,int padded_len){
 	/*
-	 * return 8 character name string
+	 * return text left justified in field
+	 * if field larger than text
 	 */
-	return (pgm_name + "        ").substring(0,8);
+	int pad_len = padded_len - text.length();
+	if (pad_len > 0){
+		if (pad_len > pad_spaces_len){
+	        init_pad_spaces(pad_len);
+		}
+		return text + String.valueOf(pad_spaces,0,pad_len);
+	} else {
+		return text;
+	}
 }
-public String trim_trailing_spaces(String line){
+public String right_justify(String text,int padded_len){
+	/*
+	 * return text right justified in field
+	 * if field larger than text
+	 */
+	int pad_len = padded_len - text.length();
+	if (pad_len > 0){
+		if (pad_len > pad_spaces_len){
+           init_pad_spaces(pad_len);
+		}
+		return String.valueOf(pad_spaces,0,pad_len) + text;
+	} else {
+		return text;
+	}
+}
+private void init_pad_spaces(int new_pad_len){
+	/*
+	 * initialize new pad_spaces byte array
+	 * used by left and right justify
+	 */
+	pad_spaces_len = new_pad_len;
+	if (pad_spaces_len < 4096){
+		pad_spaces_len = 4096;
+	}
+    pad_spaces = new char[pad_spaces_len];
+    Arrays.fill(pad_spaces,0,pad_spaces_len,' ');
+}
+public String get_dup_string(String text,int dup_count){
+	/*
+	 * return string with text dupicated
+	 * dup_count times
+	 */
+	if (dup_char_len < dup_count){
+		dup_char_len = dup_count;
+		if (dup_char_len < 4096){
+			dup_char_len = 4096;
+		}
+		dup_char = new char[dup_char_len];
+	}
+	int tot_char = text.length() * dup_count;
+	if (text.length() == 1){
+		Arrays.fill(dup_char,0,dup_count,text.charAt(0));
+	} else {
+		System.arraycopy(text.toCharArray(),0,dup_char,0,text.length());
+		if (dup_count > 1){
+			System.arraycopy(dup_char,0,dup_char,text.length(),tot_char-text.length());
+		}
+	}
+	return String.valueOf(dup_char,0,tot_char);
+}
+public String trim_trailing_spaces(String line,int max_text){ // RPI 437
 	/*
 	 * remove trailing spaces from non-continued
 	 * source line
 	 */
-	if (line.length() > 72){
-	    return ("X" + line.substring(0,72)).trim().substring(1);  //RPI124
+	if (max_text > 0 && line.length() > max_text){
+	    return ("X" + line.substring(0,max_text)).trim().substring(1);  //RPI124
 	} else {
 		return ("X" + line).trim().substring(1);
 	}
@@ -3846,7 +3947,7 @@ public String trim_continue(String line, boolean first_line){
 		}
 		split_line(line);
 		if (split_op != null){
-			split_op_index = find_key_index("O:" + split_op.toUpperCase());
+			split_op_index = find_key_index('O',split_op.toUpperCase());
 		    if (split_op_index >= 0){
 		    	split_op_type = op_type[split_op_index];
 		    } else {
@@ -3877,7 +3978,7 @@ public String trim_continue(String line, boolean first_line){
 		index = parm_match.start();
 		switch (parm.charAt(0)){
 			case ',':
-				if ((split_op_type < max_asm_op 
+				if ((split_op_type < max_asm_type 
 						|| split_level == 0) // RPI 315 allow ,space within (...) for mac ops 
 					&& !split_quote 
 					&& line.length() > split_parms_index + index+1
@@ -3906,7 +4007,7 @@ public String trim_continue(String line, boolean first_line){
 			default: // check for ending white space
 				if (parm.charAt(0) <= ' '
 					&& !split_quote
-					&& (split_op_type < max_asm_op 
+					&& (split_op_type < max_asm_type 
 						|| split_level == 0) // RPI 315 allow ,space within (...) for mac ops 	
 				   ){
 					split_parm_end = true; // force end
@@ -3946,5 +4047,24 @@ public void split_line(String line){  // RPI 313
 		split_op = null;
 		split_parms = null;
 	}
+}
+public String get_first_dir(String dirs){
+	/*
+	 * return first directory in list
+	 */
+	    String first_dir;
+		int index_first = dirs.indexOf("+");
+   		if (index_first == -1){
+   			index_first = dirs.indexOf(";");   			
+   		}
+   		if (index_first != -1){ // RPI 378
+   			first_dir = dirs.substring(0,index_first);
+   		} else {
+   			first_dir = dirs;
+   		}
+   		if (first_dir.charAt(first_dir.length()-1) != File.separator.charAt(0)){
+   			first_dir = first_dir + File.separator;
+   		}
+   		return first_dir;
 }
 }
