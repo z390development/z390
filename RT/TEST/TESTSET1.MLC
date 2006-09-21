@@ -9,6 +9,9 @@
 * 03/20/06 RPI 242 ADD TEST FOR LCLC AND GBLC INIT ERROR
 * 08/07/06 RPI 401 TEST EXPANSION VIA MULTIPLE STORE VALUES
 * 09/08/06 RPI 435 TEST DYNAMIC ALLOC OF LOCAL ARRAYS       
+* 09/21/06 RPI 445 TEST DYNAMIC ARRAY EXPANSION COPY AND EXTEND       
+* 09/21/06 RPI 446 TEST NOT D'SYMBOL                                  
+* 09/21/06 RPI 456 TEST DUPLICATION OPERATOR WITHIN EXPRESSION
 *********************************************************************
 TESTSET1 SUBENTRY
          WTO   'TESTSET1 - TEST SUBSCRIPTED VARIABLES'
@@ -136,16 +139,35 @@ ok3      equ   *
          AGO   .EXIT
 .DXOK    ANOP
          MNOTE 'DX(3)=&DX(3) DX(8)=&DX(8) OK'
-&DY(1)   SETA  1
+* TEST EXPANSION COPY AND EXTEND RPI 445
+&DY(1)   SETA  1                                      ALLOC 100 
 &DI      SETA  3
-&DY(&DI) SETA  3
-         AIF   (&DY(3) EQ 3 AND &DY(8) EQ 0).DYOK
+&DY(&DI) SETA  3             
+&DY(800) SETA  800                                    EXPAND TO 800
+         AIF   (&DY(3) EQ 3 AND &DY(800) EQ 800).DYOK CHK EXPAND COPY
          MNOTE 8,'DY(3) ALLOC FAILED'
          AGO   .EXIT
 .DYOK    ANOP
-         MNOTE 'DY(3)=&DY(3) DY(8)=&DY(8) OK'
+         MNOTE 'DY(3)=&DY(3) DY(800)=&DY(800) OK'
+* TEST SUBSTRING * AND NOT D' OPERATION RPI 446
+&Y       SETC  '1234567'
+&YL6     SETC  '&Y'(K'&Y-5,*)
+         MNOTE 'YL6=&YL6'
+&VALUE   SETC  'TESTSET1'
+         AIF   (NOT D'&VALUE).NOTD             
+         MNOTE '&VALUE DEFINED OK'
+         AGO   .ENDNOT
+.NOTD    ANOP
+         MNOTE '&VALUE NOT DEFINED'
+.ENDNOT  ANOP
+* TEST DUPLICATION OPERATOR WITHIN EXPRESSION RPI 456
+&DUPXY   SETC  2'X'.2'Y'
+         MNOTE '2X2Y=&DUPXY'
+&DUPXY   SETC  (2)'X'.(2)'Y'
+         MNOTE '2X2Y=&DUPXY'
          WTO   'TESTSET1 ENDED OK'
          SUBEXIT
          AGO   .EXIT
 .ERR     MNOTE 12,'TESTSET1 ERROR - ABORTING'
-.EXIT    END
+.EXIT    ANOP
+         END

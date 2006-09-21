@@ -8,6 +8,7 @@
 * 03/03/06 RPI 209 TEST STIMER WAIT                                 
 * 04/22/06 RPI 279 ADD STIMER REAL,EXIT AND TTIMER TESTS                                 
 * 08/06/06 RPI 396 INCREASE TIME TO 8 SECONDS TO ALLOW 2 SEC CPU TIME                    
+* 09/19/06 RPI 452 TTIMER CANCEL REQUIRES TU OR MIC,ADDR                                 
 *********************************************************************
          TITLE 'TESTTIM1 REGRSSION TEST STIMER, TIMIER FUNCTIONS'
 TESTIM2  RT1   MAIN
@@ -146,7 +147,7 @@ LOOP     CLI    ECB,X'40' LOOP UNTIL STIMER EXIT POSTS ECB
          STIMER REAL,SEXIT,BINTVL==F'200' EXIT TO SEXIT IN 2 SEC
          WTO    'STIMER REAL INTERVAL SET AND THEN CANCELLED'
          STIMER WAIT,TUINTVL==F'50'
-         TTIMER CANCEL
+         TTIMER CANCEL,TU
          TIME   NS,ENDED
          LG     R3,ENDED
          SG     R3,STARTED

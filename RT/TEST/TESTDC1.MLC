@@ -21,6 +21,7 @@
 * 07/19/06 RPI367 - support floating point (MIN) and (MAX) constants     
 * 07/19/06 RPI368 - support S scale factor for F, H, EH, DH, and LH      
 * 08/03/06 RPI388 - test fix dup count for E, D, F and FD                     
+* 09/21/06 RPI458 - test DC S(rel and off(base)) constants                            
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -31,8 +32,8 @@ M2       DC    L'1',D'1',E'1',X'FF'
 V2       DC    X'41100000000000003300000000000000'
          DC    X'4110000000000000'
          DC    X'41100000',X'FF'
-M3       DC    S(1),S(2),X'FF'
-V3       DC    X'00010002FF'
+M3       DC    S(1),S(2),S(M3),S(1(2))X'FF'
+V3       DC    X'00010002',AL2(X'D000'+(M3-TESTDC1-8)),X'2001',X'FF'
 M4       DC    V(TESTDC1),2V(TESTDC1),X'FF'
 V4       DC    3A(TESTDC1),X'FF'
          DS    0F
@@ -87,7 +88,7 @@ TFSE     EQU   *
          RT1   CCE,M1,V1A,9
 .TEST1_END ANOP
          RT1   CCE,M2,V2,29
-         RT1   CCE,M3,V3,5
+         RT1   CCE,M3,V3,9
          RT1   CCE,M4,V4,13
 * single dup default and explicit length tests
          RT1   CCE,=A(-1),=X'FFFFFFFF'

@@ -108,9 +108,10 @@ public  class  gz390
 	 *          with gz390_screen class Graphics2D panel with
 	 *          support for mulitple font characters and symbols
 	 *          plus color and other extended TN3270 attributes 
-	 * 08/14/06 RPI 414 recognize ERR(nnn) limit override    
+	 * 08/14/06 RPI 414 recognize ERR(nnn) limit override
+	 * 09/21/06 RPI 460 wait for ez390 to close after PF3 abort    
 	 ********************************************************
-     * Global variables
+     * Global variables                   (last rpi)
      *****************************************************
      * global variables
      */
@@ -1614,8 +1615,12 @@ public  class  gz390
         * cancel cmd, or gui cmd in response to
         * F3 or CTRL-BREAK
         */	
-   	      abort_error(102,"GUAM GUI terminating due to external shutdown request");
-   	      
+    	   abort_error(102,"GUAM GUI terminating due to external shutdown request");
+    	   int count = 5;
+    	   while (count > 0){  // RPI 460
+    		   sleep_now(); // RPI 220 wait for ez390 to term
+    		   count--;
+    	   }
        }
        public void keyTyped(KeyEvent e) {
        /*

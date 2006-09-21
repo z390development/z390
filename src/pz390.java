@@ -195,6 +195,8 @@ public  class  pz390 {
     * 08/27/06 RPI 411 replace while loops with Arrays.fill and arraycopy
     * 09/06/06 RPI 395 fix IC,STC,SS trace data lengths
     * 09/08/06 RPI 441 add MVST move string and speed up TRT
+    * 09/18/06 RPI 453 speedup MVST with byte memory access
+    * 09/19/06 RPI 454 add TRE, TROT, TRTO, TRTT
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -412,6 +414,9 @@ public  class  pz390 {
     int xbd2_loc    = 0;
     int bd1_end    = 0;
     byte string_eod = 0;
+    byte test_control = 0;  // RPI 454
+    byte test_byte1   = 0;  // RPI 454
+    byte test_byte2   = 0;  // RPI 454
     boolean string_eod_found = false;
     boolean fields_equal = true;
     int bd2_end    = 0;
@@ -2722,8 +2727,8 @@ private void ins_lt_c0(){
 		    	 string_eod_found = false;
 		    	 psw_cc = psw_cc3;
 		         while (!string_eod_found){
-		        	 mem.put(bd1_loc,mem.get(bd2_loc));
-		        	 if (mem.get(bd2_loc) == string_eod){
+		        	 mem_byte[bd1_loc] = mem_byte[bd2_loc]; // RPI 453
+		        	 if (mem_byte[bd2_loc] == string_eod){  // RPI 453
 		        		 string_eod_found = true;
 		        		 reg.putInt(rf1+4,bd1_loc);
 		        		 psw_cc = psw_cc1;
@@ -2853,7 +2858,26 @@ private void ins_lt_c0(){
 		         fp_fpc_reg = fp_fpc_reg & 0xffff00ff;
 		         break;
 		     case 0xA5:  // 3330 "B2A5" "TRE" "RRE"
-		         ins_setup_rre();
+		         psw_check = false; // RPI 454
+		    	 ins_setup_rre();
+			     string_eod = reg.get(r0+3);
+			     bd1_loc = reg.getInt(rf1+4) & psw_amode;
+			     bd2_loc = reg.getInt(rf2+4) & psw_amode;
+			     bd1_end = bd1_loc + reg.getInt(rf1+12);
+			     psw_cc = psw_cc3;
+	             while (psw_cc == psw_cc3){
+	            	if (mem_byte[bd1_loc] == string_eod){
+	            		psw_cc = psw_cc1;
+	            	} else {
+	            		mem_byte[bd1_loc] = mem_byte[bd2_loc + (mem_byte[bd1_loc] & 0xff)];
+	            		bd1_loc++;
+	            		if (bd1_loc >= bd1_end){
+	            			psw_cc = psw_cc0;
+	            		}
+	            	}
+	             }
+	             reg.putInt(rf1+4,bd1_loc);
+	             reg.putInt(rf1+12,bd1_end - bd1_loc);
 		         break;
 		     case 0xA6:  // 3340 "B2A6" "CUUTF" "RRE"
 		         ins_setup_rre();
@@ -4126,17 +4150,128 @@ private void ins_lt_c0(){
 		         ins_setup_rrf2();
 		         break;
 		     case 0x90:  // 4940 "B990" "TRTT" "RRE"
-		         ins_setup_rre();
+		         psw_check = false; // RPI 454
+		    	 ins_setup_rre();
+		    	 test_control = (byte)(mem_byte[psw_loc-2] & 0x10); // eft2 test char control bit
+			     test_byte1 = reg.get(r0+2);
+			     test_byte2 = reg.get(r0+3);
+			     xbd2_loc = reg.getInt(r1)  & psw_amode;
+			     bd1_loc = reg.getInt(rf1+4) & psw_amode;
+			     bd2_loc = reg.getInt(rf2+4) & psw_amode;
+			     bd2_end = bd2_loc + reg.getInt(rf1+12);
+			     if (((bd2_end-bd2_loc) & 1) != 0){
+			    	 set_psw_check(psw_pic_spec);
+			     }
+			     psw_cc = psw_cc3;
+	             while (psw_cc == psw_cc3){
+	            	if (test_control == 0 
+	            		&& mem_byte[bd2_loc]   == test_byte1
+	            		&& mem_byte[bd2_loc+1] == test_byte2){
+	            		psw_cc = psw_cc1;
+	            	} else {
+	            		int index = xbd2_loc + ((mem.getShort(bd2_loc) & 0xffff) << 1);
+	            		mem_byte[bd1_loc] = mem_byte[index];
+	            		mem_byte[bd1_loc+1] = mem_byte[index+1];
+	            		bd1_loc = bd1_loc + 2;
+	            		bd2_loc = bd2_loc + 2;
+	            		if (bd2_loc >= bd2_end){
+	            			psw_cc = psw_cc0;
+	            		}
+	            	}
+	             }
+	             reg.putInt(rf1+4,bd1_loc);
+	             reg.putInt(rf1+12,bd2_end - bd2_loc); // bytes not translated
+		         reg.putInt(rf2+4,bd2_loc);
 		         break;
 		     case 0x91:  // 4950 "B991" "TRTO" "RRE"
-		         ins_setup_rre();
+		         psw_check = false; // RPI 454
+		    	 ins_setup_rre();
+		    	 test_control = (byte)(mem_byte[psw_loc-2] & 0x10); // eft2 test char control bit
+			     test_byte1 = reg.get(r0+2);
+			     test_byte2 = reg.get(r0+3);
+			     xbd2_loc = reg.getInt(r1)  & psw_amode;
+			     bd1_loc = reg.getInt(rf1+4) & psw_amode;
+			     bd2_loc = reg.getInt(rf2+4) & psw_amode;
+			     bd2_end = bd2_loc + reg.getInt(rf1+12);
+			     if (((bd2_end-bd2_loc) & 1) != 0){
+			    	 set_psw_check(psw_pic_spec);
+			     }
+			     psw_cc = psw_cc3;
+	             while (psw_cc == psw_cc3){
+	            	if (test_control == 0 
+	            		&& mem_byte[bd2_loc]   == test_byte1
+	            		&& mem_byte[bd2_loc+1] == test_byte2){
+	            		psw_cc = psw_cc1;
+	            	} else {
+	            		int index = xbd2_loc + (mem.getShort(bd2_loc) & 0xffff);
+	            		mem_byte[bd1_loc] = mem_byte[index];
+	            		bd1_loc++;
+	            		bd2_loc = bd2_loc + 2;
+	            		if (bd2_loc >= bd2_end){
+	            			psw_cc = psw_cc0;
+	            		}
+	            	}
+	             }
+	             reg.putInt(rf1+4,bd1_loc);
+	             reg.putInt(rf1+12,bd2_end - bd2_loc); // bytes not translated
+		         reg.putInt(rf2+4,bd2_loc);
 		         break;
 		     case 0x92:  // 4960 "B992" "TROT" "RRE"
-		         ins_setup_rre();
+		         psw_check = false; // RPI 454
+		    	 ins_setup_rre();
+		    	 test_control = (byte)(mem_byte[psw_loc-2] & 0x10); // eft2 test char control bit
+			     test_byte1   = reg.get(r0+3);
+			     xbd2_loc = reg.getInt(r1)  & psw_amode;
+			     bd1_loc = reg.getInt(rf1+4) & psw_amode;
+			     bd2_loc = reg.getInt(rf2+4) & psw_amode;
+			     bd2_end = bd2_loc + reg.getInt(rf1+12);
+			     psw_cc = psw_cc3;
+	             while (psw_cc == psw_cc3){
+	            	if (test_control == 0 
+	            		&& test_byte1 == mem_byte[bd2_loc]){
+	            		psw_cc = psw_cc1;
+	            	} else {
+	            		int index = xbd2_loc + ((mem_byte[bd2_loc] & 0xff) << 1);
+	            		mem_byte[bd1_loc] = mem_byte[index];
+	            		mem_byte[bd1_loc+1] = mem_byte[index+1];
+	            		bd1_loc = bd1_loc + 2;
+	            		bd2_loc++;
+	            		if (bd2_loc >= bd2_end){
+	            			psw_cc = psw_cc0;
+	            		}
+	            	}
+	             }
+	             reg.putInt(rf1+4,bd1_loc);
+	             reg.putInt(rf1+12,bd2_end - bd2_loc); // bytes not translated
+		         reg.putInt(rf2+4,bd2_loc);
 		         break;
 		     case 0x93:  // 4970 "B993" "TROO" "RRE"
-		         ins_setup_rre();
-		         break;
+		         psw_check = false; // RPI 454
+		    	 ins_setup_rre();
+		    	 test_control = (byte)(mem_byte[psw_loc-2] & 0x10); // eft2 test char control bit
+			     test_byte1   = reg.get(r0+3);
+			     xbd2_loc = reg.getInt(r1)  & psw_amode;
+			     bd1_loc = reg.getInt(rf1+4) & psw_amode;
+			     bd2_loc = reg.getInt(rf2+4) & psw_amode;
+			     bd2_end = bd2_loc + reg.getInt(rf1+12);
+			     psw_cc = psw_cc3;
+	             while (psw_cc == psw_cc3){
+	            	if (test_control == 0 
+	            		&& test_byte1 == mem_byte[bd2_loc]){
+	            		psw_cc = psw_cc1;
+	            	} else {
+	            		mem_byte[bd1_loc] = mem_byte[xbd2_loc + (mem_byte[bd2_loc] & 0xff)];
+	            		bd1_loc++;
+	            		bd2_loc++;
+	            		if (bd2_loc >= bd2_end){
+	            			psw_cc = psw_cc0;
+	            		}
+	            	}
+	             }
+	             reg.putInt(rf1+4,bd1_loc);
+	             reg.putInt(rf1+12,bd2_end - bd2_loc); // bytes not translated
+		         reg.putInt(rf2+4,bd2_loc);
+	             break;
 		     case 0x94:  // 5140 "B994" "LLCR" "RRE" Z9-17
 		         psw_check = false;
 		    	 ins_setup_rre();
@@ -6778,10 +6913,19 @@ private void ins_setup_rre(){  // "RRE" 185  MSR oooo00rr
    				  " F" + tz390.get_hex(mf1,1) + "=" + get_fp_long_hex(rf1)
                 + " R" + tz390.get_hex(mf2,1) + "=" + get_long_hex(reg.getLong(rf2)));
     	} else if (opcode1 == 0xb9){
-            put_ins_trace(
+    		if (opcode2 >= 0x90 && opcode2 <= 0x93){ // RPI 454
+    			put_ins_trace(
+      				    " R" + tz390.get_hex(mf1,1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8)
+                      + " R" + tz390.get_hex(mf1+1,1) + "=" + tz390.get_hex(reg.getInt(rf1+12),8)
+      				  + " R" + tz390.get_hex(mf2,1) + "=" + tz390.get_hex(reg.getInt(rf2+4),8)
+                      + " M=" + tz390.get_hex(mem.get(psw_loc+2) >> 4,1)
+      				);
+    		} else {
+    			put_ins_trace(
   				    " R" + tz390.get_hex(mf1,1) + "=" + get_long_hex(reg.getLong(rf1))
                   + " R" + tz390.get_hex(mf2,1) + "=" + get_long_hex(reg.getLong(rf2))
   				);
+    		}
     	} else {
              put_ins_trace(
   				    " R" + tz390.get_hex(mf1,1) + "=" + tz390.get_hex(reg.getInt(rf1+4),8)

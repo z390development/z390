@@ -14,6 +14,7 @@
 * 07/03/06 RPI 353 test prefix operator followed by (...)            
 * 07/08/06 RPI 359 test keyword parm with mixed case                 
 * 08/30/06 RPI 422 test padded setc compare with high low chars      
+* 09/21/06 RPI 447 test N'&PARM(&VAR)      
 *********************************************************************
 TESTMAC1 SUBENTRY
          WTO   'TESTMAC1 TEST SUBSTRINGS, '''' (DOUBLE QUOTES), AND &&'
@@ -116,4 +117,15 @@ Y3       EQU    X3
          AGO   .ENDAIF
 .AIFERR  MNOTE 'A GE A1 OR A1 LT A ERROR'
 .ENDAIF  ANOP
+* TEST N'&PARM(&VAR)
+         MACRO
+         TESTNPV &P1,&P2,&P3
+&NPV     SETA    N'&P2(&P3)
+         AIF     (&P1 NE &NPV).NPVERR
+         MNOTE   'NPV &P1 EQ &NPV OK'
+         MEXIT
+.NPVERR  MNOTE   'NPV ERROR &P1 VS &NPV'          
+         MEND
+         TESTNPV 1,A,1
+         TESTNPV 3,(A,(B,C,D)),2  
          END

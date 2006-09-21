@@ -103,7 +103,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.1.02";  //dsh
+    String version    = "V1.1.02a";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -3548,6 +3548,7 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 	 *       Else if directory path has *.type use
 	 *       the type instead of default file_type. 
 	 */
+	if (file_name == null)return null; // RPI 459
 	String file_dir;
 	String file_type;
 	String temp_file_name;

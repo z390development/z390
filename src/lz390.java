@@ -65,8 +65,10 @@ public  class  lz390 {
     * 05/09/06 RPI 312 add pgm name to return code msg
     * 07/20/06 RPI 378 correct to use first SYSOBJ and SYS390
     * 07/26/06 RPI 385 show ESD CSECT's on LST and ignore 0 length
+    * 09/18/06 RPI 459 prevent trap if ENTRY not found (OBJ error)
+    * 09/20/06 RPI 453 only route stats to BAL, copyright+rc to con
     ********************************************************
-    * Global variables
+    * Global variables                    (last RPI)
     *****************************************************/
     tz390 tz390 = null;
     int lz390_rc = 0;
@@ -278,6 +280,10 @@ private void put_stats(){
 	/*
 	 * display statistics as comments at end of bal
 	 */
+	boolean save_opt_con = tz390.opt_con; // RPI 453
+	if (tz390.opt_list){
+		tz390.opt_con = false;
+	}
 	if (tz390.opt_stats){
 	   put_log("Stats total obj files       = " + tot_obj_files);
 	   put_log("Stats total esds            = " + tot_gbl_esd);
@@ -300,6 +306,7 @@ private void put_stats(){
 	      put_log("Stats total seconds         = " + tot_sec);
 	   }
 	}
+	tz390.opt_con = save_opt_con; // RPI 453
 	put_log("LZ390I total errors         = " + lz390_errors);
 	put_log("LZ390I return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + lz390_rc); // RPI 312
 }
@@ -353,6 +360,7 @@ private void abort_error(int error,String msg){
 		 System.exit(16);
 	  }
 	  tz390.z390_abort = true;
+	  tz390.opt_con = true; // RPI 453
 	  error_msg = "LZ390E error " + error + " " + msg;
 	  put_log(error_msg);
 	  tz390.put_systerm(error_msg);
@@ -389,7 +397,7 @@ private void put_copyright(){
 	        if  (z390_log_text != null){
   	        	z390_log_text.append(msg + "\n");
    	        }
-	        if (tz390.opt_con || tz390.z390_abort){
+	        if (tz390.opt_con){ // RPI 453
    	    	    System.out.println(msg);
    	        }
 	   }
@@ -537,7 +545,7 @@ private boolean load_obj_file(boolean esds_only){
 			    	rld_off = gbl_esd_loc[obj_gbl_esd[obj_rld_esd]] + obj_rld_loc;
 			    	rld_fld = z390_code_buff.getInt(rld_off);
 					if (tz390.opt_list){
-						put_log("LZ390I RLD LOC=" + tz390.get_hex(rld_off,8)
+						put_lst_line("LZ390I RLD LOC=" + tz390.get_hex(rld_off,8)
 								        + " FLD=" + tz390.get_hex(rld_fld,obj_rld_len*2)
 								        + " EXT=" + tz390.get_hex(gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]],8));
 					}
@@ -763,7 +771,7 @@ private void add_gbl_cst(int obj_index1){
 	}
 	if  (esd_ok){
 		if (tz390.opt_list){ // RPI 385
-			put_log("LZ390I ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " LOC=" + tz390.get_hex(loc_ctr,8) + " LEN=" + tz390.get_hex(obj_esd_len[obj_index1],8));
+			put_lst_line("LZ390I ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " LOC=" + tz390.get_hex(loc_ctr,8) + " LEN=" + tz390.get_hex(obj_esd_len[obj_index1],8));
 		}
 		gbl_esd_name[cur_gbl_esd] = obj_esd_name[obj_index1];
 		gbl_esd_loc[cur_gbl_esd] = loc_ctr;
@@ -811,7 +819,7 @@ private void add_gbl_ent(int obj_index1){
 				   gbl_esd_loc[gbl_ent_esd] = obj_esd_loc[obj_index1] - obj_esd_loc[obj_index2] + gbl_esd_loc[cur_gbl_esd];
 				   gbl_esd_type[gbl_ent_esd] = gbl_esd_ent;
 				   if (tz390.opt_list){ // RPI 385
-					   put_log("LZ390I ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " ENT=" + tz390.get_hex(gbl_esd_loc[gbl_ent_esd],8));
+					   put_lst_line("LZ390I ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " ENT=" + tz390.get_hex(gbl_esd_loc[gbl_ent_esd],8));
 				   }
 				   obj_index2 = tot_obj_esd;
 				}
@@ -852,7 +860,8 @@ private boolean find_ext_file(){
 	 */
 	cur_gbl_ext++;
 	while (cur_gbl_ext <= tot_gbl_esd){
-		if (gbl_esd_type[cur_gbl_ext] == gbl_esd_ext){
+		if (gbl_esd_type[cur_gbl_ext] == gbl_esd_ext
+			&& gbl_esd_name[cur_gbl_ext] != null){ // RPI 459
 			// RPI 378
 			obj_file_name = tz390.find_file_name(tz390.dir_obj,gbl_esd_name[cur_gbl_ext],tz390.pgm_type,tz390.dir_cur);
 			if (obj_file_name != null){ // RPI 378

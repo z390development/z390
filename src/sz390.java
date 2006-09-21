@@ -83,8 +83,9 @@ import javax.swing.Timer;
     * 09/02/06 RPI 428 turn off high bit for test break addr
     * 09/06/06 RPI 395 add mult addr stop, mult. indirect, and supp EPA
     *          supress dup. dump lines
+    * 09/19/06 RPI 452 return time for TTIMER CANCEL,TU/MIC         
     ********************************************************
-    * Global variables
+    * Global variables                   (last RPI)
     *****************************************************/
     /*
      * static limits
@@ -699,6 +700,10 @@ private void put_stats(){
 	/*
 	 * display statistics as comments at end of bal
 	 */
+	boolean save_opt_con = tz390.opt_con; // RPI 453
+	if (tz390.opt_list){
+		tz390.opt_con = false;
+	}
 	if (tz390.opt_stats){
 		put_log("Stats total instructions    = " + tz390.systerm_ins);
 		if (tz390.opt_trace){
@@ -721,6 +726,7 @@ private void put_stats(){
 			put_log("Stats instructions/sec      = " + ins_rate);
 		}
 	}
+	tz390.opt_con = save_opt_con; // rpi 453
 	put_log("EZ390I total errors         = " + ez390_errors);
 	put_log("EZ390I return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + ez390_rc); // RPI 312
 }
@@ -1712,16 +1718,18 @@ private void svc_time(){
 private void svc_ttimer(){
 	/*
 	 * process TTIMER cancel, tu, or mic request
+	 *   R0 BIT 0 = return MIC at R1 addr else TU om R0
+	 *   R0 BIT 1 = CANCEL else just return time
+	 * Notes:
+	 *   1.  RPI 452 return time with/withour cancel
+	 *       opcode changed so recompile required.
 	 */
-	int index = pz390.reg.getInt(pz390.r0);
+	int  opcode = pz390.reg.getInt(pz390.r0);
 	long mics_remaining = 1000 * (stimer_exit_time - System.currentTimeMillis()) ;
-	switch (index){
-	case 1: // CANCEL
-		stimer_exit_addr = 0;
-		pz390.reg.putInt(pz390.r15,0);
-		break;
-	case 2: // return TU remaining in r0
-		if (mics_remaining < 0){
+	if ((opcode & 0x1) == 0){
+		// return TU time in R0
+		if (mics_remaining <= 0){
+			mics_remaining = 0;
 			pz390.reg.putInt(pz390.r0,0);
 			pz390.reg.putInt(pz390.r15,0);
 		} else {
@@ -1733,18 +1741,18 @@ private void svc_ttimer(){
 				pz390.reg.putInt(pz390.r15,4);
 			}
 		}
-		break;
-	case 3: // return mic remaining at r1 addr
+	} else {
+		// return MIC time at addr in R1
 		if (mics_remaining < 0){
             mics_remaining = 0;
 		}
 		int addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 		pz390.mem.putLong(addr,mics_remaining << 12);
 		pz390.reg.putInt(pz390.r15,0);
-		break;
-	default: 
-		pz390.set_psw_check(pz390.psw_pic_spec);
-        return;
+	}
+	if ((opcode & 0x2) == 0x2){
+		// cancel stimer
+		stimer_exit_addr = 0;
 	}
 }
 private void svc_stimer(){

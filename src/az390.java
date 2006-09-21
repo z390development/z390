@@ -195,6 +195,16 @@ public  class  az390 implements Runnable {
     *          and not do drop reg.  Only drop labeled using explicitly.
     * 09/08/06 RPI 440 route all MNOTE's to ERR file
     * 09/08/06 RPI 442 fix loc_ctr reset in DSECT's for EQU * calc
+    * 09/13/06 RPI 444 remove MNOTE '..' and *,'..' from ERR file
+    * 09/15/06 RPI 448 allow use of EQU/DS/DC processes during lookahead
+    * 09/16/06 RPI 450 prevent symbol cross reference truncation
+    * 09/17/06 RPI 451 prevent rel symbol update to loc_ctr at end of stmt
+    *          for EQU and USING
+    * 09/18/06 RPI 457 allow literal references across CSECT's
+    * 09/18/06 RPI 459 generate CSECT ESD's first in OBJ.
+    * 09/19/06 RPI 454 support TR?? RRE operands R1,R2,M
+    * 09/20/06 RPI 453 only route stats to BAL, copyright+rc to con
+    * 09/20/06 RPI 458 support explicit off(base) in DC S fields
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -228,6 +238,7 @@ public  class  az390 implements Runnable {
     String opsyn_label = null;
     String bal_op = null;
     boolean bal_op_ok = false;
+    boolean bal_label_ok = false; // RPI 451
     String bal_parms = null;
     boolean list_bal_line = false;
     boolean list_use      = false;
@@ -248,8 +259,9 @@ public  class  az390 implements Runnable {
 	Thread  az390_thread = null;    // RPI 415
 	boolean az390_running = false;  // RPI 415
     boolean mz390_call = false;     // RPI 415
-    boolean lookahead  = false;     // RPI 415
+    boolean lookahead_mode  = false;     // RPI 415
     boolean sym_lock = false;
+    String  sym_lock_desc = null;
     final Lock      lock            = new ReentrantLock();
     final Condition lock_condition  = lock.newCondition();
     boolean bal_line_full = false; 
@@ -293,8 +305,6 @@ public  class  az390 implements Runnable {
      * bal file global variables
      */
     long    tod_time_limit = 0;
-    int     next_time_ins   = 0x1000;
-    int     next_time_check = next_time_ins;
     int tot_bal_line = 1;
 	int tot_mnote_warning = 0;
     int tot_mnote_errors  = 0;
@@ -726,8 +736,9 @@ public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFil
 	az390_thread = new Thread(this);
     az390_running = true;
     az390_thread.start();
-    set_sym_lock();    // proceed to waiting for bal and lock sym table
-	lookahead  = true; // lookahead done during mz390 load_mac
+    set_sym_lock("az390 startup");    // proceed to waiting for bal and lock sym table
+    lookahead_mode  = true; // lookahead done during mz390 load_mac
+    reset_sym_lock();  // allow use of DS/DC/EQU during lookahead RPI 448
 	cur_esd = tz390.opt_maxesd - 1; // lookahead dummy section # for all ds/dc/equ
     cur_esd_sid = tz390.opt_maxsym-1;
     sym_type[tz390.opt_maxsym-1] = sym_cst;
@@ -1087,6 +1098,7 @@ private void update_symbols(){
          end_found = false;
          bal_line_index = 1;
 	     while (!bal_eof){
+	    	  check_timeout();
 		      if  (bal_line_index == tot_bal_line){
 	           	  bal_eof = true;
 	              if (tz390.opt_tracea){
@@ -1106,6 +1118,18 @@ private void update_symbols(){
 	     if (!end_found){
 	    	 process_end();
 	     }
+}
+private void check_timeout(){
+	/*
+	 * check if timeout expired
+	 */
+	if (tz390.opt_time){
+		cur_date = new Date();
+		tod_end = cur_date.getTime();
+		if (tod_end > tod_time_limit){
+			abort_error(80,"time limit exceeded");
+		}
+	}
 }
 private void update_sects(){
 	/*
@@ -1237,7 +1261,26 @@ private void gen_obj_esds(){
 	}
 	cur_esd = 1;
 	while (cur_esd <= tot_esd){
-        if (sym_type[esd_sid[cur_esd]] != sym_dst
+        if (sym_type[esd_sid[cur_esd]] == sym_cst // RPI 459
+        	&& sym_sect_prev[esd_sid[cur_esd]] == 0){
+    		String esd_code = 
+    			" ESD=" + tz390.get_hex(sym_esd[esd_sid[cur_esd]],4)
+    		  + " LOC=" + tz390.get_hex(sym_loc[esd_sid[cur_esd]],8)
+    		  + " LEN=" + tz390.get_hex(get_sym_len(esd_sid[cur_esd]),8)
+    		  + " TYPE=" + get_esd_type()
+    		  + " NAME=" + sym_name[esd_sid[cur_esd]]
+    		  ;
+        	if (tz390.opt_list){	
+                put_prn_line(esd_code);
+    		}
+        	put_obj_line(".ESD" + esd_code);
+        }
+		cur_esd++;
+	}
+	cur_esd = 1;
+	while (cur_esd <= tot_esd){
+        if (sym_type[esd_sid[cur_esd]] != sym_cst
+        	&& sym_type[esd_sid[cur_esd]] != sym_dst	
         	&& sym_sect_prev[esd_sid[cur_esd]] == 0){
     		String esd_code = 
     			" ESD=" + tz390.get_hex(sym_esd[esd_sid[cur_esd]],4)
@@ -1330,7 +1373,8 @@ private void process_bal_op(){
 	list_obj_loc = loc_start; // RPI 265
     dc_lit_ref = false;  // RPI12
     dc_lit_gen = false;
-	bal_op_ok = false;
+	bal_op_ok = false;   // assume opcode undefined
+	bal_label_ok = true; // assume label updates ok RPI 451
 	int index = tz390.op_type[bal_op_index];
 	if (index < tz390.max_ins_type){ // RPI 340
 		bal_lab_attr = tz390.ascii_to_ebcdic['I']; 
@@ -1543,6 +1587,17 @@ private void process_bal_op(){
     			skip_comma();
     			get_hex_reg();
     		}
+        	if (bal_op.charAt(0) == 'T'
+        		&& bal_op.length() == 4
+        		&& (bal_op.equals("TROO")
+        			|| bal_op.equals("TROT")
+        			|| bal_op.equals("TRTO")
+        			|| bal_op.equals("TRTT")
+    	           )){ 
+    		        skip_comma();
+        		    get_hex_reg(); // RPI 454
+        	    	obj_code = obj_code.substring(0,4) + obj_code.substring(8,9) + obj_code.substring(5,8);
+        	}
     		check_end_parms();
     	}
     	put_obj_text();
@@ -1917,14 +1972,14 @@ private void process_bal_op(){
     	bal_op_ok = true;
     	process_sect(sym_cst,bal_label);  // RPI 230
     	if (first_cst_esd == 0)first_cst_esd = cur_esd;
-        bal_label = null;
+    	bal_label_ok = false;
     	break;
     case 110:  // CSECT 0 
     	bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
     	bal_op_ok = true;
     	process_sect(sym_cst,bal_label);
     	if (first_cst_esd == 0)first_cst_esd = cur_esd;
-    	bal_label = null;
+    	bal_label_ok = false;
     	break;
     case 111:  // CXD 0 
     	break;
@@ -1932,7 +1987,7 @@ private void process_bal_op(){
     	bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
     	bal_op_ok = true;
     	process_sect(sym_dst,bal_label);
-    	bal_label = null;
+    	bal_label_ok = false;
     	break;
     case 113:  // DXD 0 
     	break;
@@ -1949,7 +2004,7 @@ private void process_bal_op(){
     	bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
     	bal_op_ok = true;
     	process_sect(sym_lct,bal_label);
-    	bal_label = null;
+    	bal_label_ok = false;
     	break;
     case 117:  // RMODE 0 
     	bal_op_ok = true; //RPI122 IGNORE
@@ -1959,14 +2014,14 @@ private void process_bal_op(){
     	bal_op_ok = true;
     	process_sect(sym_cst,bal_label);  // RPI 230
     	if (first_cst_esd == 0)first_cst_esd = cur_esd;
-    	bal_label = null;
+    	bal_label_ok = false;
     	break;
     case 119:  // START 0
     	bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
     	bal_op_ok = true;
     	process_sect(sym_cst,bal_label);  // RPI 230
     	if (first_cst_esd == 0)first_cst_esd = cur_esd;
-    	bal_label = null;
+    	bal_label_ok = false;
     	break;
     case 120:  // WXTRN 0
     	bal_lab_attr = tz390.ascii_to_ebcdic['S']; // RPI 340
@@ -1983,6 +2038,7 @@ private void process_bal_op(){
     	break;
     case 124:  // USING 0 
     	bal_op_ok = true;
+    	bal_label_ok = false;
     	check_private_csect();
     	if (gen_obj_code){
             add_using();
@@ -2015,7 +2071,7 @@ private void process_bal_op(){
     	break;
     case 131:  // TITLE 0 
     	bal_op_ok = true;
-    	bal_label = null; // RPI 131
+    	bal_label_ok = false; // RPI 131
     	break;
     case 132:  // ADATA 0 
     	break;
@@ -2032,9 +2088,8 @@ private void process_bal_op(){
     	break;
     case 225:  // OPSYN
     	bal_op_ok = true;
-    	opsyn_label = bal_label;  // save opsyn target
-    	bal_label = null;         // reset to avoid dup. label
-    	tz390.update_opsyn(opsyn_label,bal_parms);
+    	bal_label_ok = false;         // reset to avoid dup. label
+    	tz390.update_opsyn(bal_label,bal_parms);
     	if (tz390.opt_traceall){ // RPI 403
     		put_log("TRACEA OPSYN(" + tz390.opsyn_index + ") NEW=" + opsyn_label + " OLD=" + bal_parms);
     	}
@@ -2045,7 +2100,8 @@ private void process_bal_op(){
         process_end();
     	break;
     case 136:  // EQU 0
-    	bal_op_ok = true;  	
+    	bal_op_ok = true; 
+    	bal_label_ok = false;
     	process_equ();
     	break;
     case 137:  // EXITCTL 0 
@@ -2115,7 +2171,12 @@ private void process_bal_op(){
     	break;
     case 214:  // MNOTE 0
     	bal_op_ok = true;  // pass true from mz390
-		tz390.put_systerm("MNOTE " + bal_parms); // RPI 440
+		if (bal_parms != null 
+			&& bal_parms.length() > 0
+			&& bal_parms.charAt(0) != '\''
+			&& bal_parms.charAt(0) != '*'){  // RPI 444
+			tz390.put_systerm("MNOTE " + bal_parms); // RPI 440
+		}
     	force_print = true;    	
     	if (gen_obj_code){
     		if (bal_parms.length() > 0 
@@ -2166,7 +2227,7 @@ private void process_bal_op(){
 	if (!bal_op_ok){
    	   log_error(62,"undefined operation");
 	}
-	if (bal_label != null){
+	if (bal_label != null && bal_label_ok){ // RPI 451
        update_label();
 	}
 	if (!bal_abort){
@@ -2336,8 +2397,10 @@ private void gen_sym_list(){
 	 		"\r\nSymbol Table Listing\r\n");
 	 TreeSet<String> sort_sym = new TreeSet<String>();
 	 int index = 1;
-	 while (index <= tot_sym && sym_def[index] != sym_def_lookahead){ // RPI 415
-		 sort_sym.add(sym_name[index] + (sort_index_bias + index));
+	 while (index <= tot_sym){ // RPI 415
+		 if (sym_def[index] != sym_def_lookahead){ // RPI 450
+			 sort_sym.add(sym_name[index] + (sort_index_bias + index));
+		 }
 		 index++;
 	 }
 	 Iterator<String> sym_key_it = sort_sym.iterator();
@@ -2481,13 +2544,10 @@ public void pass_bal_line(String new_bal_line,int new_xref_file_num, int new_xre
 	 * 1.  pass mz390 bal_line to az390 bal_line
 	 *     with synchronization of threads.
 	 * 2.  ignore BAL after END
-	 */	
+	 */
 	if (sym_lock){
-		abort_error(166,"mz390 pass BAL found sym lock set");
+		abort_error(168,"bal pass sym lock error on line - " + new_bal_line);
 	}
-    if (tz390.opt_traceall){
-    	put_log("TRACEA MZ390 PASS WAITING FOR AZ390");
-    }
 	lock.lock(); // RPI 415
    	try {
    		if (pass_bal_eof){
@@ -2509,11 +2569,8 @@ public void pass_bal_line(String new_bal_line,int new_xref_file_num, int new_xre
    	} finally {
    		lock.unlock();
    	}
-    if (tz390.opt_traceall){
-    	put_log("TRACEA PASS_BAL = " + pass_bal_line);
-    }
 }
-public  void set_sym_lock(){
+public  void set_sym_lock(String desc){
 	/*
 	 * 1.  Block mz390 until az390 is waiting
 	 *     for next bal.
@@ -2523,17 +2580,16 @@ public  void set_sym_lock(){
 	 *   1.  See az390 pass_bal for lock check.
      *   2,  See mz390 put_bal_line for lock reset. 
 	 */
-		lock.lock();
-		try {
-			while (az390_running && !az390_waiting){
-				lock_condition.await();
-			}
+	    sym_lock_desc = desc;
+        while (az390_running && !az390_waiting){
+        	Thread.yield();
+        }
+		if (!lookahead_mode 
+			&& az390_thread != Thread.currentThread()){
 			sym_lock = true;
-		} catch(Exception e){
-			abort_error(160,"set sym lock wait interruption" + e.toString());
-		} finally {
-			lock.unlock();
-		}
+    	} else {
+			abort_error(167,"invalid set sym lock request - " + sym_lock_desc);
+	    }
 }
 public  void reset_sym_lock(){
 	/*
@@ -2547,14 +2603,11 @@ private void get_bal_line(){
 	 * get next bal line from bal file
 	 * concatenating continuation lines
 	 */
+	check_timeout();
 	if (mz390_call){
-		if (tz390.opt_traceall){
-			put_log("TRACEA GET_BAL WAIT FOR MZ390");
-	    }
 		lock.lock();
 		try {
 			az390_waiting = true;
-			lock_condition.signalAll();
 			while (!bal_line_full){
 				lock_condition.await();
 			}
@@ -2572,9 +2625,6 @@ private void get_bal_line(){
 	    cur_line_num++;
 	    if (bal_line != null && bal_line.length() > 71){ // RPI 415 adj for continuations for xref
 	       cur_line_num = cur_line_num + 1 + (bal_line.length()-72)/56;	
-	    }
-	    if (tz390.opt_traceall){
-	    	put_log("TRACEA GET_BAL FROM MZ390 = " + bal_line);
 	    }
         return;
 	}
@@ -2723,7 +2773,7 @@ private void process_esd(byte esd_type){
 	               break;
     	       case 4: // sym_ext
     	    	   cur_sid = find_sym(token);
-    	    	   if (!lookahead
+    	    	   if (!lookahead_mode
     	    		   && (cur_sid == -1
     	    		       || sym_def[cur_sid] == sym_def_lookahead)){ // RPI 415 
     	    		   add_extrn(cur_sid,token);
@@ -2855,11 +2905,11 @@ private void process_sect(byte sect_type,String sect_name){
 		    loc_ctr = 0;  // reset for first time dsect
 		}
 		init_sym_entry();
-		if (!lookahead){ 
+		if (!lookahead_mode){ 
 			cur_esd = add_esd(cur_sid,sect_type);
 		}
 	}
-	if  (!lookahead){ 
+	if  (!lookahead_mode){ 
 		if (cur_esd_sid < 1    // new section or extrn redefine
 	        || sym_def[cur_esd_sid] == sym_def_ref){  //RPI182
 			if (sect_type != sym_lct){
@@ -2905,28 +2955,16 @@ private void process_sect(byte sect_type,String sect_name){
 		loc_start = loc_ctr;
 	}
 }
-private int find_sym(String name){ // RPI 415 public
+public int find_sym(String name){ // RPI 415 public
 	/*
-	 * return symbol index else -1
+	 * 1.  Return symbol index else -1
+	 * 2.  If not lookahead mode
+	 *        if found, add xref
+	 *        else if vcon mode, add extrn
 	 * 
-	 * Notes:
-	 *   1. Abort if az390_sym_lock on.
 	 */
-	if (sym_lock){
-		abort_error(157,"sym lock error");
-	}
-	if (tz390.opt_time
-		&& (tot_sym_find > next_time_check)){
-		next_time_check = tot_sym_find + next_time_ins;
-		cur_date = new Date();
-		tod_end = cur_date.getTime();
-		if (tod_end > tod_time_limit){
-			abort_error(80,"time limit exceeded");
-    	}
-	}
-	tot_sym_find++;
-	int index  = az390_find_sym(name);
-	if (!lookahead){
+	int index  = tz390.find_key_index('S',name.toUpperCase());
+	if (!lookahead_mode){
 		if (index != -1 && sym_def[index] != sym_def_lookahead){ // RPI 415 
 			add_sym_xref(index);
 		} else if (dcv_type){
@@ -2935,18 +2973,7 @@ private int find_sym(String name){ // RPI 415 public
 	}
 	return index;
 }
-public int az390_find_sym(String name){
-	/*
-	 * return index of ordinary symbol table entry
-	 * else -1.
-	 * 
-	 * Notes:
-	 *   1.  Shared by mz390 and az390 with
-	 *       sym_lock used to detect when
-	 *       both threads attempting use.
-	 */
-	return tz390.find_key_index('S',name.toUpperCase());
-}
+
 public void update_label(){ // RPI 415
 	/*
 	 * add or update relative labels
@@ -2969,7 +2996,7 @@ public void update_label(){ // RPI 415
 		init_sym_entry();
 	} else if (sym_def[cur_sid] == bal_line_index){
 		if (sym_type[cur_sid] == sym_rel
-		    && !bal_op.equals("EQU")){
+		    && !bal_op.equals("EQU")){			
 	 	    sym_loc[cur_sid] = loc_start;
 	   	    if (loc_len == 0){
 	   	        sym_len[cur_sid] = dc_first_len;
@@ -2989,7 +3016,7 @@ private void init_sym_entry(){
 	 * init sym variables for new or 
 	 * existing lookahead symbol table entry
 	 */
-	   if (lookahead){
+	   if (lookahead_mode){
 		   sym_def[cur_sid] = sym_def_lookahead;
 	   } else {
 		   sym_def[cur_sid] = bal_line_index;
@@ -3874,8 +3901,12 @@ private void put_stats(){
 	/*
 	 * display statistics as comments at end of bal
 	 */
+	boolean save_opt_con = tz390.opt_con; // RPI 453
+	if (tz390.opt_list){
+		tz390.opt_con = false;
+	}
 	force_print = true; // RPI 285
-	if (tz390.opt_stats || az390_errors > 0){
+	if (tz390.opt_stats){  // RPI 453
 	   put_log("Stats BAL lines             = " + (tot_bal_line-1));
 	   put_log("Stats symbols               = " + tot_sym);
 	   put_log("Stats Literals              = " + tot_lit);
@@ -3908,6 +3939,7 @@ private void put_stats(){
 		}
 		index++;
 	}
+	tz390.opt_con = save_opt_con; // RPI 453
 	put_log("MZ390I total mnote warnings = " + tot_mnote_warning); // RPI 402
 	put_log("MZ390I total mnote errors   = " + tot_mnote_errors 
 			+ "  max level= " + max_mnote_level);
@@ -3960,12 +3992,7 @@ private void log_error(int error,String msg){
 			 list_bal_line();
 		 }
    	     force_print = true;  // RPI 285
-   	     if (tz390.opt_asm && xref_bal_index > -1){  // RPI 425
-   	    	 xref_file_errors[bal_line_xref_file[xref_bal_index]]++;
-   	    	 xref_file_line = " (" + (bal_line_xref_file[xref_bal_index]+1) + "/" + bal_line_xref_line[xref_bal_index] + ")";
-   	     } else {
-   	    	 xref_file_line = "";
-   	     }
+         set_file_line_xref();
    	     String error_msg = "AZ390E error " + error + " bal line " + bal_line_num[bal_line_index] + xref_file_line + "   " + bal_line_text[bal_line_index];
 	     put_log(error_msg);
 	     tz390.put_systerm(error_msg);
@@ -3978,6 +4005,18 @@ private void log_error(int error,String msg){
 	  if (gen_obj_code && tz390.max_errors != 0 && az390_errors > tz390.max_errors){
 	  	 abort_error(49,"max errors exceeded");	 
 	  }
+}
+private void set_file_line_xref(){
+	/*
+	 * set xref_file_line passed from mz390
+	 * if available for use in error messages
+	 */
+	     if (tz390.opt_asm && xref_bal_index > -1){  // RPI 425
+   	    	 xref_file_errors[bal_line_xref_file[xref_bal_index]]++;
+   	    	 xref_file_line = " (" + (bal_line_xref_file[xref_bal_index]+1) + "/" + bal_line_xref_line[xref_bal_index] + ")";
+   	     } else {
+   	    	 xref_file_line = "";
+   	     }
 }
 private void abort_error(int error,String msg){
 	/*
@@ -3993,9 +4032,10 @@ private void abort_error(int error,String msg){
 		 bal_line_full = false;
 	  	 System.exit(16);
 	  }
-	  bal_abort = true; // RPI 415
+	  bal_abort = true;        // RPI 415
 	  tz390.z390_abort = true;
-	  force_print = true; // RPI 285
+	  tz390.opt_con = true;    // RPI 453
+	  force_print = true;      // RPI 285
 	  list_bal_line();
 	  force_print = true; // RPI 285
 	  String error_msg = "AZ390E error " + error + " on line " + bal_line_num[bal_line_index] + " " + bal_line_text[bal_line_index];
@@ -4036,7 +4076,7 @@ private void put_copyright(){
 	        if  (z390_log_text != null){
   	        	z390_log_text.append(msg + "\n");
    	        } else {
-   	        	if (tz390.opt_con || tz390.z390_abort){
+   	        	if (tz390.opt_con){ // RPI 453
    	    	        System.out.println(msg);
    	        	}
    	        }
@@ -4524,10 +4564,13 @@ private void drop_using(){
 	/*
 	 * drop one or more using registers or labeled using
 	 */
+	if (tz390.opt_listuse){
+		list_use = true;
+	}
 	if  (bal_parms == null 
 			|| bal_parms.length() == 0
 			|| bal_parms.charAt(0) == ','){
-		cur_use_end = cur_use_start;  // drop all using
+		cur_use_end = cur_use_start; 
 		return;
 	}
 	tz390.parm_match = tz390.parm_pattern.matcher(bal_parms);
@@ -4552,9 +4595,6 @@ private void drop_using(){
            }
 		}
 	}
-	if (tz390.opt_listuse){
-		list_use = true;
-	}
 }
 private void drop_cur_use_label(){
 	/*
@@ -4574,11 +4614,12 @@ private void drop_cur_use_label(){
 }
 private void drop_cur_use_reg(){
 	/*
-	 * remove using reg entries if found
+	 * Remove cur_use_reg entries if found
+	 * but not labeled usings.
 	 */
 	int index = cur_use_start;
 	while (index < cur_use_end){
-		if (use_lab[index] == ""  // RPI 431
+		if (use_lab[index] == ""  // RPI 431, RPI 451
 			&& use_reg[index] == cur_use_reg){
 			cur_use_end--;
 			if (index < cur_use_end){
@@ -4590,7 +4631,7 @@ private void drop_cur_use_reg(){
 }
 private void move_use_entry(int index1,int index2){
 	/*
-	 * move use entry for delete, push, pop
+	 * move use entry from index1 to index2
 	 */
 	use_lab[index2] = use_lab[index1];
 	use_base_esd[index2] = use_base_esd[index1];
@@ -4646,7 +4687,7 @@ private void list_use(){
 	boolean none = true;
 	while (index < cur_use_end){
 		none = false;
-		put_log("LISTUSE"
+		put_prn_line("LISTUSE " + tz390.left_justify(sym_name[esd_sid[use_base_esd[index]]],8)
 				+ " ESD=" + tz390.get_hex(use_base_esd[index],4)
 				+ " LOC=" + tz390.get_hex(use_base_loc[index],8)
 				+ " LEN=" + tz390.get_hex(use_base_len[index],5)	
@@ -4657,7 +4698,7 @@ private void list_use(){
 		index++;
 	}
 	if (none){
-		put_log("LISTUSE NONE");
+		put_prn_line("LISTUSE NONE");
 	}
 }
 private void get_hex_op(int op_offset, int op_len){
@@ -5871,7 +5912,12 @@ private void process_dcs_data(){
 			    dc_index = exp_index;
 			    if (dc_op && dc_dup > 0){
 			    	if  (dc_len == 2){
-		    		    obj_code = obj_code + get_exp_rel_bddd();
+		    			if  (exp_type == sym_rel){ // RPI 458
+			    			obj_code = obj_code + get_exp_rel_bddd();
+		    			} else {
+		    				obj_code = obj_code + get_exp_abs_bddd();
+			    		}
+					    dc_index = exp_index;
 			    	} else {
 			    		log_error(99,"invalid length for S type");
 			    	}
@@ -6110,9 +6156,9 @@ public void process_equ(){ // RPI 415
 		}
 		int store_sid = cur_sid;
 		sym_name[store_sid] = bal_label;
-		if (!lookahead && sym_def[store_sid] <= sym_def_ref){ 
+		if (!lookahead_mode && sym_def[store_sid] <= sym_def_ref){ 
 			sym_def[store_sid] = bal_line_index;
-		} else if (!lookahead && sym_def[store_sid] != bal_line_index){
+		} else if (!lookahead_mode && sym_def[store_sid] != bal_line_index){
 			duplicate_symbol_error();
 		}
 		exp_text = bal_parms;
@@ -6370,12 +6416,16 @@ private boolean calc_lit(){
 				exp_val = exp_val + lit_loc[cur_lit];
 				exp_esd = esd_sdt;
 				exp_type = sym_sdt;
+			} else { // RPI 457
+				log_error(169,"invalid literal - rld absolute expression");
 			}
 		} else if (exp_next_char('+')){
-			if (calc_abs_exp()){
+			if (calc_exp() && exp_esd == esd_sdt){ // RPI 457
 				exp_val = exp_val + lit_loc[cur_lit];
-				exp_esd = esd_base[lit_esd[cur_lit]];
+				exp_esd = esd_base[lit_esd[cur_lit]];  // RPI 457
 				exp_type = sym_rel;
+			} else {
+				log_error(170,"invalid literal + offset expression");
 			}
 		} else {
 			exp_val = lit_loc[cur_lit];
@@ -6468,6 +6518,7 @@ private void gen_lit_size(int size){
 				&& lit_pool[cur_lit] == cur_lit_pool
 				){
 			lit_gen[cur_lit] = 1;
+			lit_esd[cur_lit] = esd_base[cur_esd]; // RPI 457
 			process_dc(3);
 			if (tz390.opt_tracea || (gen_obj_code && tz390.opt_list)){
 				if (list_obj_code.length() < 16){
@@ -6526,7 +6577,7 @@ public int add_sym(String name){ // RPI 415 public
 		   if (!tz390.add_key_index(tot_sym)){
 			   return -1;
 		   }
-		   if (lookahead){
+		   if (lookahead_mode){
 			   sym_def[tot_sym] = sym_def_lookahead;
 		   } else {
 			   add_sym_xref(tot_sym);
