@@ -1,57 +1,34 @@
-z390 v1.1.02a PTF 09/21/06
+z390 v1.1.02b PTF 09/26/06
 Copyright 2006 Automated Software Tools Corporation
 
-The enclosed z390.jar contains following cumulative fixes for v1.1.02a:
+The enclosed z390.jar contains following cumulative fixes for v1.1.02b:
 
-1.  RPI 445 correct mz390 dynamic array expansion to correctly
-copy existing values to new expanded array.
+1.  RPI 439 add mz390 pseudo code support to speed up macro    
+execution.  The new default option is PC.  Use NOPC to turn it off.
+Option MAXPC(nnn) can be used to change default pseuod code opcode
+cache from default of 100000 entries.  The cache is reused on least
+recently used opcode basis if overflow occurs.  Currently on AGO is
+supported.  AIF, SET, and others to follows.  The speed of an AGO loop
+executed 1000000 times improves from 0.15 to 2.2 MIPS with PC option by
+eliminating regular expression parsing and symbol table lookups.
 
-2.  RPI 446 correct mz390 D'symbol function to return setb vs seta
-so the NOT operator will perform logical versus binary operation.
+2.  RPI 461 update RT1.MAC regression test macro to suppport CCGE and 
+CCLE for use in RT\TEST\TESTTIM2 stimer tests to prevent errors.        
 
-3.  RPI 447 correct mz390 N'&PARMS(&VAR) to return correct conut
-when subscript has variable.
+3.  RPI 462 correct mz390 to always assume shorter string is low in
+string compares.                
 
-4.  RPI 448 correct az390 locking error when using EQU/DS/DC during
-lookahead mode.
+4.  RPI 463 correct mz390 and az390 to correctly handle quoted strings
+split across 2 or more continuation lines.
 
-5.  RPI 449 correct mz390 to restrict ordinary symbol lookup to only
-literal symbols with no quotes and variable setc symbols in AIF and
-SET expressions.
+5.  RPI 464 correct az390 to only display MNOTE's on ERR file during
+last pass to avoid duplicates.                                        
 
-6.  RPI 450 correct az390 to prevent truncation of symbol table 
-listing when M type symbols created by mz390 found.
+6.  RPI 465 correct az390 to allow register 0 as valid base for 
+a DSECT such as PSA.                                   
 
-7.  RPI 451 correct az390 to prevent EQU symbols defined as relative 
-from being updated to current location counter during label updates.
-
-8.  RPI 452 correct TTIMER macro and svc to correctly return remaining
-TU or MIC time as requested with CANCEL option.  Note v1102a requires
-reassembly with updated macro as the svc interface has changed.
-
-9.  RPI 453 speed up MVST move string instruction using byte access
-versus memory buffer access.
-
-10. RPI 454 add TRE, TROO, TROT, TRTO, and TROO translate instructions.
-See RT\TEST\TESTINS1.MLC for updated RRE instruction formats and see
-RT\TEST\TESTINS2.MLC for new instruction tests.
-
-11. RPI 455 reduce console output by only writing optional statistics
-to the BAL, PRN, LST, or LOG file.  Only the copyright, GNU license,
-program, options, and return codes are displayed for every step.
-
-12. RPI 456 correct mz390 to handle duplication operator inside complex
-expressions.
-
-13. RPI 457 correct az390 to allow literal cross references across 
-multiple CSECT's.
-
-14. RPI 458 correct az390 to support S type constant with explicit 
-offset and base in addition to relocatable expression.
-
-15. RPI 459 correct lz390 to prevent address exception for missing
-external references or entries.  Also correct az390 to generate all
-CSECT ESD entries before ENTRY, EXTRN, and WXTRN ESD entries.
+7.  RPI 466 correct mz390 lookahead to handle unlabeled DS/DC and
+multiple DSECT's.
 
 To install PTF follow these steps.
 
@@ -60,6 +37,7 @@ To install PTF follow these steps.
 
 2.  Copy the updated macro directory mac to z390\mac directory.
 
+RT1.MAC    - regression test macro support CCGE and CCLE
 TTIMER.MAC - update interface to correctly pass and return TU or MIC    
              remaining time for CANCEL option also.  Use of the 
              STIMER interface in v1102a requires reassembly.
@@ -84,12 +62,11 @@ TESTINS1.MLC - test updated RRE format for TROO,TROT,TRTO, and TRTT
 TESTINS2.MLC - test TRE, TROO, TROT, TRTO, and TRTT instructions    
 TESTMAC1.MLC - test N'&PARM(&VAR)
 TESTSET1.MLC - test array expansion, NOT D'sym, duplication in exp.
+TESTSYM1.MLC - test unlabled DS/DC and mulitple DSECT lookahead 
 TESTTIM2.MLC - test TTIMER CANCEL,TU
 
 6.  Copy updated commands to the z390 root directory
     
-none
-
 RTLINK.BAT - assemble, link, and test all LINKLIB programs
 
 Visit www.z390.org for more information on latest updates.

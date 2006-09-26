@@ -205,6 +205,10 @@ public  class  az390 implements Runnable {
     * 09/19/06 RPI 454 support TR?? RRE operands R1,R2,M
     * 09/20/06 RPI 453 only route stats to BAL, copyright+rc to con
     * 09/20/06 RPI 458 support explicit off(base) in DC S fields
+    * 09/25/06 RPI 463 correct tz390.trim_continue to support
+    *          string quotes over 1 or more lines followed by
+    *          parms and remove leading blanks from continuations
+    * 09/25/06 RPI 465 allow R0 as base for PSA DSECT etc.
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -2622,6 +2626,9 @@ private void get_bal_line(){
 		} finally {
 			lock.unlock();
 		}
+		if (lookahead_mode){
+			abort_error(157,"invalid pass bal record during lookahead - " + bal_line);
+		}
 	    cur_line_num++;
 	    if (bal_line != null && bal_line.length() > 71){ // RPI 415 adj for continuations for xref
 	       cur_line_num = cur_line_num + 1 + (bal_line.length()-72)/56;	
@@ -2663,9 +2670,8 @@ private void get_bal_line(){
             	    cur_line_num++;
             	    save_bal_line(); // RPI 274
             	    if  (temp_line.length() >= 16
-            	    	&& temp_line.substring(0,15).equals("               ")){ // RPI167
-               		    temp_line = tz390.trim_continue(temp_line,tz390.split_cont); // RPI 315
-            	    	bal_line = bal_line.concat(temp_line.substring(15));
+            	    	&& temp_line.substring(0,15).equals("               ")){ // RPI167 
+            	    	bal_line = bal_line + tz390.trim_continue(temp_line,tz390.split_cont); // RPI 315, RPI 463
             	    } else { 
             	    	log_error(8,"continuation line < 16 characters - " + temp_line);
             	    }
@@ -5087,7 +5093,7 @@ private String get_exp_rel_bddd(){
 		index++;
 	}
 	exp_use_lab = null;
-	if (cur_use_reg > 0){
+	if (cur_use_reg >= 0){  // RPI 465
 	    return get_exp_abs_bddd(cur_use_reg,cur_use_off);
 	} else if (cur_use_neg_reg > 0){
 		cur_use_reg = cur_use_neg_reg;

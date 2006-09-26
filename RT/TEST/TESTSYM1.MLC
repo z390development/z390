@@ -103,8 +103,9 @@ MVC      MVC   0(1,1),0(2)
 D        DSECT
 DF1      DS   XL10
 DL       EQU  *-D
-         AIF  (DL EQ 10).OK1  
-         MNOTE 8,'DL LENGTH NOT 10'
+         AIF  (DL EQ 10).OK1 
+&DL      SETA  DL 
+         MNOTE 8,'DL=&DL NE 10 ERROR'
          AGO   .OK1END
 .OK1     MNOTE 'DL EQ 10 OK'
 .OK1END  ANOP

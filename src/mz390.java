@@ -241,6 +241,12 @@ public  class  mz390 {
 	 * 09/20/06 RPI 453 only route stats to BAL, copyright+rc to con
 	 * 09/21/06 RPI 446 correct D' to return setb versus seta type
 	 *          to prevent NOT from performing binary vs logical NOT
+	 * 09/22/06 RPI 439 add Pseudo Code (PC) generator
+	 * 09/25/06 RPI 463 always assume shorter operand lower in string compare
+	 * 09/25/06 RPI 463 correct tz390.trim_continue to support
+     *          string quotes over 1 or more lines followed by
+     *          parms and remove leading blanks from continuations
+     * 09/26/06 RPI 466 correct lookahead processing for DS/DC/DSECT         
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -363,13 +369,13 @@ public  class  mz390 {
 	 * macro bal line tables
 	 */
 	int old_mac_line_index = 0; //prev    mac_line_index
+	int new_mac_line_index = 0; //target  mac_line_index
 	int mac_line_index = 0;     //current mac line index
 	int bal_xref_index = 0;     // last mac line ref to pass to az390
 	int tot_mac_line = 0;       // next avail line
 	String[] mac_file_line     = null;  // mlc, mac, and cpy source line including continued text
 	int[]    mac_file_line_num = null;  // starting line number in file
 	int[]    mac_file_name_num = null;  // mac file index
-	int[]    mac_file_ago_index = null; // mac ago/aif target line index or 0 RPI 434
 	int tot_mac_file_name = 0;
 	String[] mac_file_name = null;
 	/*
@@ -570,9 +576,17 @@ public  class  mz390 {
 	int     exp_start_index = 0; // index to start of exp text
 	int     exp_next_index = 0; // index to next op
 	byte    exp_type = 0;       // requested type
-	int     exp_seta = 0;
-	byte    exp_setb = 0;
-	String  exp_setc = "";
+	int     exp_seta = 0;       // result of calc_seta_exp
+	byte    exp_setb = 0;       // result of calc_setb_exp
+	String  exp_setc = "";      // result of calc_setc_exp
+	int    seta_value1 = 0;
+	int    seta_value2 = 0;
+	byte   setb_value1 = 0;
+	byte   setb_value2 = 0;
+	String setc_value1 = "";
+	String setc_value2 = "";
+	int    val_type1 = 0;
+	int    val_type2 = 0;
 	String  exp_token = null;
 	String  exp_prev_op = "" + exp_start_op;
 	boolean exp_prev_substring = false;
@@ -665,14 +679,41 @@ public  class  mz390 {
 	 *  16 logical XOR
 	 *  17 process created set symbol &(...)
 	 */
-	int    seta_value1 = 0;
-	int    seta_value2 = 0;
-	byte   setb_value1 = 0;
-	byte   setb_value2 = 0;
-	String setc_value1 = "";
-	String setc_value2 = "";
-	int    val_type1 = 0;
-	int    val_type2 = 0;
+    /*
+     * Pseudo Code for calc_exp 
+     * Notes:
+     *   1.  init_pc() initializes arrays and lists
+     *   2.  get_pc()  alloc next pc_op entry 
+     */
+	/*
+	 * Least recently used list of allocated pc_op entries
+	 */
+	int       pc_mru      = 0;     // ptr to most recently used mac line
+	int[]     pc_mru_next = null;  // next most recently used mac line
+	int[]     pc_mru_prev = null;  // prev most recentry used mac_line
+	int       pc_lru      = 0;     // ptr to last entry in mru list = least recently used
+	/*
+	 * allocated pc entry lists for mac lines
+	 */
+	int[]     pc_start    = null;  // first pc for bal line pc else 0
+	int[]     pc_end      = null;  // last  pc for bal line
+	/*
+	 * pseudo code operation entries on free or allocated list
+	 * with pointer from pc_start[mac_line_index]
+	 * Notes:
+	 *   1.  pc_next = 0 indicates end of list
+	 */
+	int       tot_pc_alloc  = 0;    // total pc entries allocated
+	int       tot_pc_exec   = 0;    // total pc entries executed
+	int       tot_pcl_alloc = 0;    // total pc lists allocated (1 per line)
+	int       tot_pcl_reuse = 0;    // total pc lists reused due to cache overflow
+	int       pc_loc      = 0;     // current pc entry to execute
+	int       pc_free     = 0;     // ptr to free pc enty and next list
+	byte[]    pc_op       = null;  // pseudo code operation
+	int[]     pc_seta  = null;  // pseudo code seta/setb sdt value or var name index
+	String[]  pc_setc  = null;  // pseudo code setc      sdt value
+	int[]     pc_next     = null;  // next pc entry in free or alloc list
+	byte pc_op_ago = 1; // branch to pc_index line
 	/* 
 	 * end of global mz390 class data and start of procs
 	 */
@@ -741,6 +782,9 @@ public  class  mz390 {
 		compile_patterns();
 		tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
 		put_copyright();
+		if (tz390.opt_pc){
+			init_pc_arrays();
+		}
 		init_arrays();
 		mac_name[0] = "OPEN CODE"; // for trace
 		init_gbl_sys();
@@ -940,34 +984,42 @@ public  class  mz390 {
 					}
 				}
 			} else {
-				bal_line = mac_file_line[mac_line_index];
-				bal_xref_index = mac_line_index;
-				parse_bal_line();
-				mac_op_type = find_opcode_type(bal_op);
-				if (mac_op_type > tz390.max_asm_type){  // RPI 274 -2 for OPSYN cancel
-					exec_mac_op();      // execute macro operation
-					bal_line = null;    // force macro execution cycle
-				} else if (bal_op != null) {
-					if (save_opsyn_index == -1 
+				if (tz390.opt_pc){
+					pc_loc = pc_start[mac_line_index];
+				}
+			    if (pc_loc > 0){
+				    exec_pc();
+				    bal_line = null;
+				} else {
+					bal_line = mac_file_line[mac_line_index];
+					bal_xref_index = mac_line_index;
+					parse_bal_line();
+					mac_op_type = find_opcode_type(bal_op);
+					if (mac_op_type > tz390.max_asm_type){  // RPI 274 -2 for OPSYN cancel
+						exec_mac_op();      // execute macro operation
+						bal_line = null;    // force macro execution cycle
+					} else if (bal_op != null) {
+						if (save_opsyn_index == -1 
 							|| tz390.opsyn_old_name[save_opsyn_index] == null
 							|| !tz390.opt_asm
 							|| tz390.find_key_index('O',bal_op) < 0
-					    ){
-						find_mac_name_index = find_mac_entry(bal_op);
-						if (find_mac_name_index == -2  // RPI 351
+					       ){
+							find_mac_name_index = find_mac_entry(bal_op);
+							if (find_mac_name_index == -2  // RPI 351
 								&& save_opsyn_index >= 0
 								&& tz390.opsyn_old_name[save_opsyn_index] == null){
-							find_mac_name_index = -1; // search again for opsyn cancel
+								find_mac_name_index = -1; // search again for opsyn cancel
+							}
+						} else { 
+							find_mac_name_index = -2; // RPI 331 don't search for opsyn rep.
 						}
-					} else { 
-						find_mac_name_index = -2; // RPI 331 don't search for opsyn rep.
-					}
-					if (find_mac_name_index == -1){
-						find_and_load_mac_file();
-					}
-					if (find_mac_name_index >= 0){
-						call_mac();      // call a nested macro
-						bal_line = null; // force macro exeuction cycle
+						if (find_mac_name_index == -1){
+							find_and_load_mac_file();
+						}
+						if (find_mac_name_index >= 0){
+							call_mac();      // call a nested macro
+							bal_line = null; // force macro exeuction cycle
+						}
 					}
 				}		   
 				mac_line_index++;
@@ -1356,8 +1408,9 @@ public  class  mz390 {
 		 *       sending any BAL trace comments during lookahead.
 		 *   3.  remove .* macro comments
 		 */
-		if (mac_label.length() > 1){
+		if (mac_label.length() >= 1){            // RPI 466
 			if (mac_label.charAt(0) == '.'
+				&& mac_label.length() > 1        // RPI 466
 				&& mac_label.charAt(1) != '*'){
 				label_match = label_pattern.matcher(mac_label);
 				if (label_match.find()){
@@ -1373,12 +1426,18 @@ public  class  mz390 {
 					&& mac_label.charAt(0) != '*'){
 				int index = mac_line.indexOf("&");
 				if (index == -1){
-					set_lookahead_sym_attr_len(mac_label,mac_op,mac_parms);		
+					set_lookahead_sym_attr_len();		
 				}
 			}
-		} 
+		} else if (tz390.opt_asm 
+				   && az390.lookahead_mode
+				   && (mac_op.equals("DS")
+				       || mac_op.equals("DC"))){
+			init_lookahead_az390();
+			az390.process_dc(1);  // RPI 466
+		}
 	}
-	private void set_lookahead_sym_attr_len(String sym_label,String sym_op,String sym_parms){
+	private void set_lookahead_sym_attr_len(){
 		/*
 		 * if ASM, set symbol type and length during
 		 * MLC macro loading in lookahead mode
@@ -1409,37 +1468,50 @@ public  class  mz390 {
 		 *       will remain with sym_def = -1 to allow
 		 *       redefine as ordinary symbol via BAL expansion.
 		 */
-		int index = tz390.find_key_index('R',sym_op.toUpperCase());
+		int index = tz390.find_key_index('R',mac_op.toUpperCase());
 		if (index >= 0 && tz390.opsyn_old_name[index] != null){
-			sym_op = tz390.opsyn_old_name[index];  
+			mac_op = tz390.opsyn_old_name[index];  
 		}
-		az390.bal_abort = false;
-		az390.bal_label = sym_label;
-		az390.bal_op    = sym_op;
-		az390.bal_parms = sym_parms;
-		int op_index = tz390.find_key_index('O',sym_op);
+        init_lookahead_az390();
+		int op_index = tz390.find_key_index('O',mac_op);
 		if (op_index != -1){
 			int op_type = tz390.op_type[op_index];
 			if (op_type <= tz390.max_op_type_offset){
 		        az390.update_label();
 				az390.sym_attr[az390.cur_sid] = tz390.ascii_to_ebcdic['I'];
 				az390.sym_len[az390.cur_sid] = tz390.op_type_len[op_type];
-			} else if (sym_op.equals("CSECT")
-					|| sym_op.equals("DSECT")
-					|| sym_op.equals("LOCTR")
-					|| sym_op.equals("RSECT")
-					|| sym_op.equals("COM")					
+			} else if (mac_op.equals("CSECT")
+					|| mac_op.equals("DSECT")
+					|| mac_op.equals("LOCTR")
+					|| mac_op.equals("RSECT")
+					|| mac_op.equals("COM")					
 					){
 				az390.update_label();
 				az390.sym_attr[az390.cur_sid] = tz390.ascii_to_ebcdic['J'];
+				if (mac_op.equals("DSECT")){
+					az390.loc_ctr = 0;
+					az390.sym_loc[az390.cur_sid] = az390.loc_ctr; // RPI 466
+				}
 				az390.sym_len[az390.cur_sid] = 1;
-			} else if (sym_op.equals("DS") || sym_op.equals("DC")){
+			} else if (mac_op.equals("DS") 
+					|| mac_op.equals("DC")){
 				az390.process_dc(1);
 				az390.update_label();
-			} else if (sym_op.equals("EQU")){
+			} else if (mac_op.equals("EQU")){
 				az390.process_equ();
 			}
 		}	
+	}
+	private void init_lookahead_az390(){
+		/*
+		 * init for mz390 calls to EQU/DS/DC
+		 * processing routines during lookahead
+		 */
+		az390.bal_abort = false;
+		az390.bal_line  = mac_line;  // RPI 466
+		az390.bal_label = mac_label;
+		az390.bal_op    = mac_op;
+		az390.bal_parms = mac_parms;
 	}
 	private void add_mac(String macro_name){
 		/*
@@ -1590,12 +1662,12 @@ public  class  mz390 {
 				mac_line = null;
 			} else if (temp_line.length() < 72   // RPI 437
 					|| temp_line.charAt(71) <= asc_space_char
-			){ //RPI181
+			    ){ //RPI181
 				mac_line = tz390.trim_trailing_spaces(temp_line,72);  //RPI124
 			} else {
 				mac_line = tz390.trim_continue(temp_line.substring(0,71),tz390.split_first); // first line
-				boolean mac_cont = true;
-				while (mac_cont){ //RPI181 //RPI 215
+				boolean mac_cont_line = true;
+				while (mac_cont_line){ //RPI181 //RPI 215
 					tz390.systerm_io++;
 					temp_line = mac_file_buff[cur_mac_file].readLine();
 					cur_mac_line_num++;
@@ -1607,14 +1679,14 @@ public  class  mz390 {
 					if (!tz390.verify_ascii_source(temp_line)){
 						abort_error(140,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
 					}
-					if (temp_line.length() < 72 || temp_line.charAt(71) <= asc_space_char){ //RPI181
-						mac_cont = false;
+					if (temp_line.length() < 72 
+						|| temp_line.charAt(71) <= asc_space_char){ //RPI181
+						mac_cont_line = false;
 						temp_line = tz390.trim_trailing_spaces(temp_line,72); //RPI124
 					}
 					if  (temp_line.length() >= 16
 							&& temp_line.substring(0,15).equals("               ")){ // RPI 167
-						temp_line = tz390.trim_continue(temp_line,tz390.split_cont); // RPI 315
-						mac_line = mac_line.concat(temp_line.substring(15));         // RPI 315
+						mac_line = mac_line + tz390.trim_continue(temp_line,tz390.split_cont); // RPI 315, RPI 463
 					} else { 
 						log_error(11,"continuation line < 16 characters - " + temp_line);
 					}
@@ -2176,23 +2248,12 @@ public  class  mz390 {
 	}
 	private void exec_ago(){
 		/*
-		 * branch to mac label or computed mac label
+		 * branch to new mac_line_index
 		 */
 		old_mac_line_index = mac_line_index;
-		if (mac_file_ago_index[mac_line_index] > 0){
-			actr_count--;
-			mac_line_index = mac_file_ago_index[mac_line_index];
-			update_sysstmt();
-			return;
-		}
 		if (bal_parms != null && bal_parms.length() > 1){
 			if (bal_parms.charAt(0) != '('){
 				exec_ago_branch(0);
-				if (mac_file_ago_index[old_mac_line_index] == 0
-						&& old_mac_line_index != mac_line_index){
-					// save ago target RPI 434 for reuse without key index lookups
-					mac_file_ago_index[old_mac_line_index] = mac_line_index;
-				}
 				return;
 			} else {
 				int ago_index = calc_seta_exp(bal_parms,1);
@@ -2229,12 +2290,17 @@ public  class  mz390 {
 		 * branch to ago target label
 		 */
 		actr_count--;
-		old_mac_line_index = mac_line_index;
-		mac_line_index = get_label_index(bal_parms.substring(lab_index));
-		if (mac_line_index < mac_name_line_start[mac_name_index] 
-		                                         || mac_line_index >= mac_name_line_end[mac_name_index]){
-			mac_line_index = old_mac_line_index;
+		new_mac_line_index = get_label_index(bal_parms.substring(lab_index));
+		if (new_mac_line_index < mac_name_line_start[mac_name_index] 
+		    || new_mac_line_index >= mac_name_line_end[mac_name_index]){
 			abort_error(16,mac_name[mac_name_index] + " undefined " + bal_parms.substring(lab_index));
+		} else {
+			if (tz390.opt_pc && lab_index == 0){
+				get_pc();
+				pc_op[pc_loc]   = pc_op_ago;
+				pc_seta[pc_loc] = new_mac_line_index;
+			}
+			mac_line_index = new_mac_line_index;
 		}
 		update_sysstmt();
 	}
@@ -2247,22 +2313,12 @@ public  class  mz390 {
 		while (aif_test_index >= 0){
 			if (calc_setb_exp(bal_parms.substring(aif_test_index),0) != 0){
 				actr_count--;
-				old_mac_line_index = mac_line_index;
-				if (mac_file_ago_index[mac_line_index] > 0){
-					// use prior aif label index to skip key index lookup RPI 434
-					mac_line_index = mac_file_ago_index[mac_line_index];
+				new_mac_line_index = get_label_index(bal_parms.substring(aif_test_index+exp_next_index));
+				if (new_mac_line_index < mac_name_line_start[mac_name_index]
+			        || new_mac_line_index >= mac_name_line_end[mac_name_index]){
+					abort_error(142,"AIF macro label not found - " + bal_parms.substring(aif_test_index+exp_next_index));
 				} else {
-					mac_line_index = get_label_index(bal_parms.substring(aif_test_index+exp_next_index));
-					if (mac_line_index < mac_name_line_start[mac_name_index]
-				        || mac_line_index >= mac_name_line_end[mac_name_index]){
-						mac_line_index = old_mac_line_index;
-						abort_error(142,"AIF macro label not found - " + bal_parms.substring(aif_test_index+exp_next_index));
-					}
-					if (mac_file_ago_index[old_mac_line_index] == 0
-							&& old_mac_line_index != mac_line_index){
-						// save ago target RPI 434 for reuse without key index lookups
-						mac_file_ago_index[old_mac_line_index] = mac_line_index;
-					}
+					mac_line_index = new_mac_line_index;
 				}
 				if (tz390.opt_traceall){
 					put_trace("AIF BRANCH");
@@ -2979,6 +3035,7 @@ public  class  mz390 {
 		 *       proceeding to next operator, And ignore
 		 *       var not found.
 		 *   3.  Always turn off parse_set_mode at exit
+		 *   4.  Generate pseudo code for repeat executions
 		 */
 		exp_text       = text;
 		exp_start_index = text_index;
@@ -4389,20 +4446,25 @@ public  class  mz390 {
 		 * compare setc_value1 and setc_value2
 		 * in EBCDIC and return -1, 0, or 1
 		 * for low, equal, high
+		 * Notes:
+		 *   1.  If length not equal, the shorter
+		 *       length operand is treated
+		 *       as lower. RPI 462
 		 */
 		int len1 = setc_value1.length();
 		int len2 = setc_value2.length();
-		int len_comp = len1;
-		if (len1 > len2){
-			len_comp = len2;
-		}
+        if (len1 < len2){ // RPI 462
+        	return -1;
+        } else if (len1 > len2){
+        	return 1;
+        }
 		int index = 0;
-		while (index < len_comp
+		while (index < len1
 			&& setc_value1.charAt(index)
 			== setc_value2.charAt(index)){
 			index++;
 		}
-		if (index < len_comp){
+		if (index < len1){
 			if (tz390.opt_ascii){
 				if (setc_value1.charAt(index)
 						> setc_value2.charAt(index)){
@@ -4420,13 +4482,7 @@ public  class  mz390 {
 				}
 			}
 		} else {
-			if (len1 == len2){
-				return 0;
-			} else if (len1 > len2){
-				return 1;
-			} else {
-				return -1;
-			}
+			return 0; // RPI 462
 		}
 	}
 	private void exp_not(){
@@ -5414,13 +5470,9 @@ public  class  mz390 {
 		if (tz390.opt_traceall){
 			put_trace(" MZ390 CALLING AZ390 SYM LOCK");
 		}
-		if (!az390.lookahead_mode){ 
-			az390.set_sym_lock("mz390_find for " + symbol + "(" + (mac_file_name_num[mac_line_index]+1) + "/" + mac_file_line_num[mac_line_index] + ")");
-		}
+		az390.set_sym_lock("mz390_find for " + symbol + "(" + (mac_file_name_num[mac_line_index]+1) + "/" + mac_file_line_num[mac_line_index] + ")");
         index = az390.find_sym(symbol);
-        if (!az390.lookahead_mode){
-        	az390.reset_sym_lock();
-        }
+       	az390.reset_sym_lock();
         return index;
 	}
 	private void set_sym_macro_attr(String sym_lab){
@@ -5430,7 +5482,7 @@ public  class  mz390 {
 		 */
 		if (!tz390.opt_asm)return;
 		if (tz390.opt_traceall){
-			put_trace("define type M macro label");
+			put_trace("define type M macro label for " + sym_lab);
 		}
 		int index = mz390_find_sym(sym_lab);
 		if (index == -1){
@@ -5685,6 +5737,7 @@ public  class  mz390 {
 		 * Notes:
 		 *  1. If var found but exp_parse_set_name
 		 *     is null, then issue error for parms
+		 *  2. Used by alloc set and store set
 		 * 
 		 */
 		exp_parse_set_mode = true;
@@ -6274,6 +6327,33 @@ public  class  mz390 {
 			abort_error(30,"max level of nested macros exceeded");
 		}
 	}
+	private void init_pc_arrays(){
+		/*
+		 * allocate pseudo code arrays if option pc
+		 */
+		pc_start    = (int[])Array.newInstance(int.class,tz390.opt_maxline);
+		pc_end      = (int[])Array.newInstance(int.class,tz390.opt_maxline);
+		pc_mru_next = (int[])Array.newInstance(int.class,tz390.opt_maxline);
+		pc_mru_prev = (int[])Array.newInstance(int.class,tz390.opt_maxline);
+		/*
+		 * opt_maxpc = pseudo code cache size for
+		 * optimizing execution of macro code expressions
+		 */
+		pc_op    = (byte[])Array.newInstance(byte.class,tz390.opt_maxpc);
+		pc_seta  = (int[])Array.newInstance(int.class,tz390.opt_maxpc);
+		pc_setc  = new String[tz390.opt_maxpc];
+		pc_next  = (int[])Array.newInstance(int.class,tz390.opt_maxpc);
+		/*
+		 * put all pc entries on free list
+		 */
+		int index = 1;
+		while (index < tz390.opt_maxpc-1){ // leave last entry 0
+			pc_next[index] = index+1; // chain free list
+			index++;
+		}
+		pc_free = 1; // next free pc entry in free list 
+
+	}
 	private void init_arrays(){
 		/*
 		 * init large arrays with optional
@@ -6315,7 +6395,6 @@ public  class  mz390 {
 		mac_file_line      = new String[tz390.opt_maxline];
 		mac_file_line_num  = (int[])Array.newInstance(int.class,tz390.opt_maxline);
 		mac_file_name_num  = (int[])Array.newInstance(int.class,tz390.opt_maxline);
-		mac_file_ago_index = (int[])Array.newInstance(int.class,tz390.opt_maxline);
 		mac_file_line[0] = "";
 		/*
 		 * opt_maxgbl - global set variable names and cells
@@ -6926,7 +7005,11 @@ public  class  mz390 {
 			}
 			put_log("Stats Key avg comps         = " + tz390.avg_key_comp);
 			put_log("Stats Key max comps         = " + tz390.max_key_comp);
-			put_log("Stats total macro instr.    = " + tot_mac_ins);
+			put_log("Stats total mac instr. exec = " + tot_mac_ins);
+			put_log("Stats total pcode ops alloc = " + tot_pc_alloc);
+			put_log("Stats total pcode ops exec  = " + tot_pc_exec);
+			put_log("Stats total pcode lst alloc = " + tot_pcl_alloc);
+			put_log("Stats total pcode lst reuse = " + tot_pcl_reuse);
 			if  (tz390.opt_timing){
 				cur_date = new Date();
 				tod_end = cur_date.getTime();
@@ -7230,4 +7313,96 @@ public  class  mz390 {
 			abort_error(186,"thread sleep error - " + e.toString());
 		}
 	}
+	private void exec_pc(){
+		/*
+		 * move this mac line to most recently
+		 * used entry and then
+		 * execute pseudo code starting at
+		 * pc_loc until pc_end entry found
+		 */
+		// chain prev to next to allow
+		// moving cur mac line to top of mru list
+		int prev = pc_mru_prev[mac_line_index];
+		int next = pc_mru_next[mac_line_index];
+		if (prev > 0){
+			pc_mru_next[prev] = next;
+		}
+	    if (next > 0){
+	    	pc_mru_prev[next] = prev;
+	    }
+	    // update lru if moving lru to mru
+	    if (pc_lru == mac_line_index){
+	    	pc_lru = pc_mru_prev[mac_line_index];
+	    }
+	    // move cur mac line to top fo mru list
+	    pc_mru_prev[mac_line_index] = 0;
+	    pc_mru_next[mac_line_index] = pc_mru;
+	    if (pc_mru > 0){
+	    	pc_mru_prev[pc_mru] = mac_line_index;
+	    }
+	    pc_mru = mac_line_index;
+	    // exec pc code
+	    tot_exp_stk_var = 0;
+		while (pc_loc > 0){
+			tot_pc_exec++;
+			switch (pc_op[pc_loc]){
+			case 1: // ago
+				actr_count--;
+				mac_line_index = pc_seta[pc_loc];
+				update_sysstmt();
+				break;
+			default:
+				abort_error(194,"invalid pseudo code operation - " + pc_op[pc_loc] + " at " + pc_loc);
+			    return;
+			}
+			pc_loc = pc_next[pc_loc];
+		}
+	}
+    private void get_pc(){
+    	/*
+    	 * add new pc_op to list of 
+    	 * pseudo codes for current mac_bal_line
+    	 *   1.  Set pc_loc to new pc_op entry
+    	 *   2.  Set pc_start[mac_bal_line] to first
+    	 *   3.  Set pc_end[mac_bal_line]  to last
+    	 *   4.  Set pc_next[pc_loc-1] to chain start to end
+    	 *   5.  First try to get next entry from pc_free list
+    	 *   6.  If none on free list, remove least recently
+    	 *       used entry from pc_lru and add to
+    	 *       pc_free list while and return first free 
+    	 *       entry.
+    	 */
+    	tot_pc_alloc++;
+    	pc_loc = pc_free;
+    	if (pc_loc == 0){
+    		// add least recently used pc list
+    		// to free list and update pc_lru
+    		if (pc_lru > 0){
+    			tot_pcl_reuse++;
+    			pc_free = pc_start[pc_lru];
+    			pc_start[pc_lru] = 0;
+    			pc_lru = pc_mru_prev[pc_lru];
+    			pc_loc = pc_free;
+    		} else {
+    			abort_error(195,"pc lru not found");
+    		}
+    	}
+    	// allocate first free pc entry
+    	pc_free = pc_next[pc_loc];
+    	if (pc_start[mac_line_index] == 0){
+    		// add first pc for mac line
+    		tot_pcl_alloc++;
+    		pc_start[mac_line_index] = pc_loc;
+    		pc_end[mac_line_index]   = pc_loc;
+    		if (pc_mru == 0){
+    			pc_mru = mac_line_index;
+    			pc_lru = pc_mru;
+    		}
+    	} else {
+    		// add pc to alloc list for mac line
+    		pc_next[pc_end[mac_line_index]] = pc_loc;
+    		pc_end[mac_line_index] = pc_loc;
+    	}
+    	pc_next[pc_loc] = 0; // end of alloc list for mac line
+    }
 }

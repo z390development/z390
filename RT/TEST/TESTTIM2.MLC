@@ -9,6 +9,8 @@
 * 04/22/06 RPI 279 ADD STIMER REAL,EXIT AND TTIMER TESTS                                 
 * 08/06/06 RPI 396 INCREASE TIME TO 8 SECONDS TO ALLOW 2 SEC CPU TIME                    
 * 09/19/06 RPI 452 TTIMER CANCEL REQUIRES TU OR MIC,ADDR                                 
+* 09/22/06 RPI 461 USE CCGE/CCLE FOR INTERVAL TESTS TO PREVENT 
+*                  INTERMITTANT FAILURES DEPENDING ON SYSTEM LOAD                          
 *********************************************************************
          TITLE 'TESTTIM1 REGRSSION TEST STIMER, TIMIER FUNCTIONS'
 TESTIM2  RT1   MAIN
@@ -120,7 +122,7 @@ LOOP     CLI    ECB,X'40' LOOP UNTIL STIMER EXIT POSTS ECB
          LTR    R15,R15
          RT1    CCE
          CLR    R0,R3
-         RT1    CCL
+         RT1    CCLE  RPI 461
          TTIMER ,MIC,MICS_REMAINING
          LTR    R15,R15
          RT1    CCE
@@ -131,7 +133,7 @@ LOOP     CLI    ECB,X'40' LOOP UNTIL STIMER EXIT POSTS ECB
          LTR    R15,R15
          RT1    CCE
          CLC    MICS_REMAINING,MICS_SAVE
-         RT1    CCL
+         RT1    CCLE       RPI 461
          WAIT   ECB=ECB    WAIT FOR STIMER EXIT TO POST ECB
          TIME   NS,ENDED
          LG     R3,ENDED

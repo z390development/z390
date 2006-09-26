@@ -95,15 +95,17 @@ public  class  tz390 {
     * 09/04/06 RPI 434 increase MAXLCL to 200000.
     * 09/07/06 RPI 431 add option LISTUSE default to show
     *          current usage at each USING and DROP
+    * 09/22/06 RPI 439 add Pseudo Code (PC) add opt_pc and opt_maxpc 
+    * 09/25/06 RPI 463 support continued string quote followed by parms        
     ********************************************************
-    * Shared z390 tables
+    * Shared z390 tables                  (last RPI)
     *****************************************************/
 	/*
 	 * shared version id 
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.1.02a";  //dsh
+    String version    = "V1.1.02b";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -127,6 +129,7 @@ public  class  tz390 {
     boolean opt_listuse  = true;  // list usage at USING and DROP
     boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
+    boolean opt_pc       = true;  // generate macro pseudo code
     String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
     boolean opt_prolog   = true;  // if cics, insert DFHEIBLK and DFHEIENT
     boolean opt_regs     = false; // show registers on trace
@@ -157,6 +160,7 @@ public  class  tz390 {
     int opt_maxlcl  = 100000;   
     int opt_maxline = 200000;
     int opt_maxparm = 10000;
+    int opt_maxpc   = 100000;  // RPI 439 pseudo code working set
     int opt_maxrld  = 10000;
     int opt_maxsym  = 50000;
     /*
@@ -243,7 +247,9 @@ public  class  tz390 {
     String  split_parms = null;
     int     split_parms_index = -1;  // line index to parms else -1
     int     split_level = 0;
-    boolean split_quote = true;
+    String  split_quote_text = null;
+    boolean split_quote = false;
+    boolean split_quote_last = false; // last char of prev continue is quote RPI 463
     /*
      * pad_spaces char table for padding
      * starts at 4096 and expands as required
@@ -3115,6 +3121,9 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("MAXPARM(")){
            	opt_maxparm = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
+        } else if (token.length() > 6
+          		&& token.substring(0,6).toUpperCase().equals("MAXPC(")){ // RPI 439
+           	opt_maxpc = Integer.valueOf(token.substring(6,token.length()-1)).intValue();
         } else if (token.length() > 7
           		&& token.substring(0,7).toUpperCase().equals("MAXRLD(")){
            	opt_maxrld = Integer.valueOf(token.substring(7,token.length()-1)).intValue();  
@@ -3151,6 +3160,8 @@ public void init_options(String[] args,String pgm_type){
            	opt_listfile = false;
         } else if (token.equals("NOLISTUSE")){
            	opt_listuse = false;   	
+        } else if (token.toUpperCase().equals("NOPC")){
+            opt_pc = false;   	
         } else if (token.toUpperCase().equals("NOPROLOG")){
             opt_prolog = false;
         } else if (token.toUpperCase().equals("NOSTATS")){
@@ -3174,6 +3185,8 @@ public void init_options(String[] args,String pgm_type){
             		&& opt_parm.charAt(opt_parm.length()-1) == '\''){
             		opt_parm = opt_parm.substring(1,opt_parm.length()-1);          		
             	}
+        } else if (token.toUpperCase().equals("PC")){
+            opt_pc = true;
         } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("PROFILE(")){
          	opt_profile = token.substring(8,token.length()-1);
@@ -3925,21 +3938,28 @@ public String trim_trailing_spaces(String line,int max_text){ // RPI 437
 }
 public String trim_continue(String line, boolean first_line){
 	/*
-	 * use parm parser to find ", " on
-	 * continued line and trim to comma.
+     * Trim line to comma delimiter or end of line
+     * recognizing whether line is continuation of 
+     * quoted string or not..
 	 * Notes:
 	 *   1.  Allows ", " to appear in quotes
 	 *       which may be split across lines.
 	 *   2.  Allow spaces within (...) on macro
-	 *       statements but not opcodes.    
+	 *       statements but not opcodes
+	 *   3.  Handle quoted string continued on one
+	 *       or more continuation lines. RPI 463.
+	 *   4.  Remove leading spaces from continuations.    
 	 */
+	int index;
 	int eol_index = line.length();
 	if (eol_index >= 72){
 		eol_index = 71; // RPI 315
 	}
 	if (first_line){
 		split_level = 0;
-		split_quote = false; // RPI115
+		split_quote = false;      // RPI115
+		split_quote_text = "";
+		split_quote_last = false; // RPI 463
 		if (line.charAt(0) == '*'){
 			split_comment = true;
 			return line.substring(0,eol_index); // RPI 313 don't look in comments
@@ -3954,16 +3974,47 @@ public String trim_continue(String line, boolean first_line){
 		    } else {
 		    	split_op_type = -1;
 		    }
+		    if (split_parms_index != -1){
+		    	split_quote_text = line.substring(0,split_parms_index);
+		    }
 		} else {
 			split_op_index = -1;
 			split_op_type  = -1;
 		}
 	} else {
 		if (split_comment){
-			return line.substring(0,eol_index);
+			if (line.length() > 16){
+				return line.substring(15,eol_index); // RPI 463
+			} else {
+				return line.substring(0,eol_index);
+			}
 		}
 		if (line.length() >= 16){
 			split_parms_index = 15;
+			split_quote_text = "";
+			if (split_quote){  // RPI 463
+				index = line.substring(split_parms_index,eol_index).indexOf('\'');
+				while (index != -1 && split_quote){
+					if (index == -1){
+						return split_quote_text + line.substring(split_parms_index,eol_index);
+					} else {
+						if (index < eol_index - 1){
+							if (line.charAt(index+1) != '\''){
+								split_quote = false;
+								split_quote_text = split_quote_text + line.substring(split_parms_index,split_parms_index + index+1);
+								split_parms_index = split_parms_index + index+1;
+							} else {
+								split_quote_text = split_quote_text + line.substring(split_parms_index,split_parms_index + index+2);
+								split_parms_index = split_parms_index + index+2; // skip double quotes in quoted string
+							}
+						} else {
+							split_quote_last = true;
+							split_quote = false;
+							return split_quote_text + line.substring(split_parms_index,eol_index);
+						}
+					}
+				}
+			}
 		} else {
 			split_parms_index = -1;		
 		}
@@ -3972,7 +4023,7 @@ public String trim_continue(String line, boolean first_line){
 		return line.substring(0,eol_index); // return line if no parms
 	}
 	parm_match = parm_pattern.matcher(line.substring(split_parms_index));
-	int index = 0;
+    index = 0;
 	boolean split_parm_end = false;
 	while (!split_parm_end && parm_match.find()){
 		String parm = parm_match.group();
@@ -3986,11 +4037,11 @@ public String trim_continue(String line, boolean first_line){
 					&& line.charAt(split_parms_index + index+1) <= ' '){  //RPI181
 					// truncate line to , delimter found
 					eol_index = split_parms_index + index +1;
-					return line.substring(0,eol_index); // RPI 313
+					return split_quote_text + line.substring(split_parms_index,eol_index); // RPI 313
 				}
 				break;
 			case '\'': // single quote found 
-				if (index > 0 && parm.length() == 1){
+				if (parm.length() == 1){  // rpi 463
 					if (!split_quote){
 						split_quote = true;
 						split_parm_end = true;
@@ -4015,7 +4066,7 @@ public String trim_continue(String line, boolean first_line){
 				}
 		}
 	}
-	return line.substring(0,eol_index); // return line with no comma,space
+	return split_quote_text + line.substring(split_parms_index,eol_index); // return line with no comma,space
 }
 public void split_line(String line){  // RPI 313
 	/*
