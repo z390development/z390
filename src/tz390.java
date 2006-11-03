@@ -1,4 +1,6 @@
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.RandomAccessFile;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
@@ -96,7 +98,9 @@ public  class  tz390 {
     * 09/07/06 RPI 431 add option LISTUSE default to show
     *          current usage at each USING and DROP
     * 09/22/06 RPI 439 add Pseudo Code (PC) add opt_pc and opt_maxpc 
-    * 09/25/06 RPI 463 support continued string quote followed by parms        
+    * 09/25/06 RPI 463 support continued string quote followed by parms 
+    * 09/27/06 RPI 467 add TRACEP option for pseudo code 
+    * 10/19/06 RPI 484 route all traces to trace files      
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -105,7 +109,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.1.02b";  //dsh
+    String version    = "V1.1.02c";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -130,6 +134,7 @@ public  class  tz390 {
     boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     boolean opt_pc       = true;  // generate macro pseudo code
+    boolean opt_pcopt    = true;  // optimize pc code for speed
     String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
     boolean opt_prolog   = true;  // if cics, insert DFHEIBLK and DFHEIENT
     boolean opt_regs     = false; // show registers on trace
@@ -146,6 +151,7 @@ public  class  tz390 {
     boolean opt_traceall = false; // trace all details
     boolean opt_tracel   = false;  // trace lz390
     boolean opt_tracem   = false; // trace mz390
+    boolean opt_tracep   = false; // trace pseudo code
     boolean opt_tracemem = false; // trace memory FQE updates to LOG
     boolean opt_trap     = true;  // trap exceptions as 0C5
     boolean opt_xref     = true;   // cross reference symbols
@@ -199,6 +205,10 @@ public  class  tz390 {
     String obj_type = ".OBJ"; // relocatable object code for az390 and lz390
     String pch_type = ".PCH"; // punch output from mz390
     String prn_type = ".PRN"; // assembly listing for az390
+    String tra_type = ".TRA"; // az390 trace file
+    String tre_type = ".TRE"; // ez390 trace file
+    String trl_type = ".TRL"; // lz390 trace file
+    String trm_type = ".TRM"; // mz390 trace file
     String z390_type = ".390"; // z390 executable load module for lz390 and ez390
     String dir_390 = null; // SYS390() load module
     String dir_bal = null; // SYSBAL() az390 source input
@@ -212,6 +222,7 @@ public  class  tz390 {
     String dir_pch = null; // SYSPCH() mz390 punch output dir
     String dir_prn = null; // SYSPRN() az390 listing
     String dir_obj = null; // SYSOBJ() lz390 object lib
+    String dir_trc = null; // SYSTRC() trace file directory
     int max_opsyn = 1000;
     int tot_opsyn = 0;
     int opsyn_index = -1;
@@ -228,6 +239,12 @@ public  class  tz390 {
     String systerm_prefix = null; // pgm_name plus space
     int    systerm_io     = 0;    // total file io count
     int    systerm_ins    = 0;    // ez390 instruction count
+    /*
+     * trace file used by mz390, az390, lz390, ez390
+     */
+    String         trace_file_name = null;
+	File           trace_file = null;
+	BufferedWriter trace_file_buff = null;
     /*
      * shared parm parsing for comma delimited continue
      * statement parsing to find comma used by 
@@ -3037,6 +3054,7 @@ public void init_options(String[] args,String pgm_type){
     	dir_obj = pgm_dir;
     	dir_pch = pgm_dir;
     	dir_prn = pgm_dir;
+    	dir_trc = pgm_dir;
         if (args.length > 1){
            cmd_parms = args[1];
            int index1 = 2;
@@ -3161,7 +3179,9 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.equals("NOLISTUSE")){
            	opt_listuse = false;   	
         } else if (token.toUpperCase().equals("NOPC")){
-            opt_pc = false;   	
+            opt_pc = false; 
+        } else if (token.toUpperCase().equals("NOPCOPT")){
+            opt_pcopt = false;
         } else if (token.toUpperCase().equals("NOPROLOG")){
             opt_prolog = false;
         } else if (token.toUpperCase().equals("NOSTATS")){
@@ -3187,6 +3207,8 @@ public void init_options(String[] args,String pgm_type){
             	}
         } else if (token.toUpperCase().equals("PC")){
             opt_pc = true;
+        } else if (token.toUpperCase().equals("PCOPT")){
+            opt_pcopt = true;
         } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("PROFILE(")){
          	opt_profile = token.substring(8,token.length()-1);
@@ -3242,6 +3264,9 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("SYSTERM(")){
          	opt_systerm = token.substring(8,token.length()-1);
+        } else if (token.length() > 7 
+           		&& token.substring(0,7).toUpperCase().equals("SYSTRC(")){
+          	dir_trc = token.substring(7,token.length()-1) + File.separator; 
         } else if (token.length() > 5
           		&& token.substring(0,5).toUpperCase().equals("TIME(")){
            	max_time_seconds = Long.valueOf(token.substring(5,token.length()-1)).longValue();
@@ -3265,11 +3290,13 @@ public void init_options(String[] args,String pgm_type){
            	opt_con   = false;
         } else if (token.toUpperCase().equals("TRACEA")){
            	opt_tracea = true;
-           	opt_list = true;	
+           	opt_list = true;
+           	opt_con   = false;
         } else if (token.toUpperCase().equals("TRACEALL")){
            	opt_traceall = true;
            	opt_trace    = true;
            	opt_tracem   = true;
+           	opt_tracep   = true;
            	opt_tracea   = true;
            	opt_tracel   = true;
            	opt_tracemem = true;
@@ -3278,11 +3305,19 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.toUpperCase().equals("TRACEL")){
            	opt_tracel = true;
            	opt_list = true;
+           	opt_con   = false;
         } else if (token.toUpperCase().equals("TRACEM")){
             	opt_tracem = true;
             	opt_list = true;
+            	opt_con   = false;
         } else if (token.toUpperCase().equals("TRACEMEM")){
            	opt_tracemem = true;
+           	opt_con   = false;
+        } else if (token.toUpperCase().equals("TRACEP")){
+        	opt_tracep = true;
+        	opt_tracem = true;
+        	opt_list = true;
+        	opt_con   = false;
         }
         index1++;
     }
@@ -3330,10 +3365,14 @@ public synchronized void put_systerm(String msg){ // RPI 397
 	        abort_error(12,"I/O error on systerm file " + e.toString());
 		}
 	}
+	if (trace_file_buff != null){
+		put_trace(msg); // RPI 484
+	}
 }
 public synchronized void close_systerm(int rc){ // RPI 397
 	/*
 	 * close systerm error file if open
+	 * and close trace file if open RPI 484
 	 */
      if (systerm_file != null){
      	 if (opt_timing){
@@ -3358,6 +3397,13 @@ public synchronized void close_systerm(int rc){ // RPI 397
     		 systerm_file.close();
     	 } catch (Exception e){
     		 System.out.println("TZ390E systerm file close error - " + e.toString());
+    	 }
+     }
+     if (trace_file_buff != null){
+    	 try {
+    		 trace_file_buff.close();
+    	 } catch (Exception e){
+    		 abort_error(15,"trace file close failed " + e.toString());
     	 }
      }
 }
@@ -3421,6 +3467,7 @@ public int find_key_index(char user_key_type,String user_key){
 	 *    3.  key_index_last = last search entry
 	 * Notes:
 	 *   1.  Usage my mz390
+	 *       a.  "A:" - ago gbla table pointer
 	 *       a.  "F:" - macro and copybook files
 	 *       b.  "G:" - global set variables
 	 *       e.  "M:" - loaded macros
@@ -4118,5 +4165,26 @@ public String get_first_dir(String dirs){
    			first_dir = first_dir + File.separator;
    		}
    		return first_dir;
+}
+public void put_trace(String text){
+	/*
+	 * open trace file if trace options on
+	 */
+	if (opt_con){
+		System.out.println(text);
+	}
+	if (trace_file == null){
+		try {
+			trace_file = new File(trace_file_name);
+			trace_file_buff = new BufferedWriter(new FileWriter(trace_file));
+		} catch (Exception e){
+			abort_error(16,"trace file open failed - " + e.toString());
+		}
+	}
+	try {
+		trace_file_buff.write(text + "\r\n");
+	} catch (Exception e){
+		abort_error(17,"trace file write error " + e.toString());
+	}
 }
 }

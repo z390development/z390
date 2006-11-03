@@ -1,0 +1,95 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 10/02/06                                                 *
+*********************************************************************
+* 01/29/06 RPI467 test pseudo code for set and aif          
+*********************************************************************
+TESTPC1  SUBENTRY
+         WTO   'TESTPC1 - TEST PSEUOD CODE FOR SET AND AIF'
+&COUNT   SETA  0
+.LOOP    ANOP
+&COUNT   SETA  &COUNT+1
+         AIF   (&COUNT GT 2).ENDTEST
+         MNOTE 'STARTING PSEUDO CODE TEST PASS &COUNT'
+* TEST SETB TRUE/FALSE SET AND AIF
+&TRUE    SETB  1
+&FALSE   SETB  0
+         AIF   (&TRUE).TRUE
+         MNOTE 8,'TRUE ERROR'
+         AGO   .ABORT
+.TRUE    ANOP
+         MNOTE 'AIF TRUE OK'
+         AIF   (&FALSE).FALSE
+         MNOTE 'AIF FALSE OK'
+* TEST COMPLEX AIF
+         MACRO
+         TEST  &MF=I,&SF=I                                               
+         AIF   (&MF EQ 'L' OR('&SF' EQ 'L' AND '&MF(1)' EQ 'E')).ERR
+         MNOTE 'AIF NO BRANCH OK - MF=&MF SF=&SF'
+         AGO   .SKPERR
+.ERR     MNOTE 12,'AIF BRANCDED TO ERR'
+         SUBEXIT RC=12
+.SKPERR   ANOP
+         MEND
+         TEST
+* TEST AIFB AND AGOB
+         AIFB  (1 EQ 0).ABORT
+         AIFB  (1 EQ 1).AIFBOK
+         AGOB  .ABORT
+.AIFBOK  ANOP
+         AGOB  .AGOBOK
+         AGO   .ABORT
+.AGOBOK  ANOP
+* TEST ALTERNATE AIF FORMAT COMPOUND TESTS
+         AIF   ('A' EQ 'B').TOK1,                                      X
+               ('C' EQ 'C').TOK2
+         MNOTE 'AIF FAILED'
+.TOK1    MNOTE 'TOK1'
+.TOK2    MNOTE 'TOK2' 
+* TEST COMPUTED AGO
+&I       SETA  2
+.T1      AGO   (&I).T11,.T12,.T13
+         MNOTE 'AGO NO BRANCH'
+         AGO    .E1
+.T11     MNOTE '.T11'
+         AGO   .E1
+.T12     MNOTE '.T12'
+         AGO   .E1
+.T13     MNOTE '.T13'
+.E1      ANOP
+* TEST CREATED VARIABLES
+&(DYNA)  SETA  1
+         AIF   (&DYNA NE 1).ABORT
+         AIF   (&(DYNA) NE 1).ABORT
+&(DYNB)(2)  SETA  &(DYNA)
+         AIF   (&DYNB(2) NE 1).ABORT
+         AIF   (&(DYNB)(2) NE 1).ABORT
+&(DYNC)  SETA  &(DYNB)(2)
+         AIF   (&DYNC NE 1).ABORT
+&I       SETA  2
+&(DYNC)  SETA  &(DYNB)(&I)
+         AIF   (&DYNC NE 1).ABORT
+* TEST OPT CONCAT
+&_LABEL   SETC  'LABEL'
+&_HDRTXT  SETC  'HDRTXT'
+&TITLE   SETC  '&_LABEL - company name a.b.c. - &_HDRTXT'
+         GBLA  &FLAG(3)
+&FLAGS   SETC  '&FLAG(1)&FLAG(2)&FLAG(3)'
+&A       SETC  'A'
+&B(2)    SETC 'B2'
+&I       SETA  2
+&A       SETC  '&A'.'  &B(&I).C'
+* TEST OPT ADD 
+&X       SETA  X'10'+X'20'
+         AGO   .LOOP
+.FALSE   ANOP
+         MNOTE 8,'FALSE ERROR'
+.ABORT   WTO   'TESTPC1 - ABORTING DUE TO ERROR'
+         SUBEXIT RC=16
+.ENDTEST ANOP
+         WTO   'TESTPC1 - ENDED OK'
+         SUBEXIT
+         END

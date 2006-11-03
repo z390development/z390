@@ -67,6 +67,7 @@ public  class  lz390 {
     * 07/26/06 RPI 385 show ESD CSECT's on LST and ignore 0 length
     * 09/18/06 RPI 459 prevent trap if ENTRY not found (OBJ error)
     * 09/20/06 RPI 453 only route stats to BAL, copyright+rc to con
+    * 10/19/06 RPI 483 prevent trap and issue error if obj truncated
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -472,7 +473,9 @@ private boolean load_obj_file(boolean esds_only){
     tot_obj_esd = 0;
     obj_eod = false;
 	get_obj_line();
-	if (esds_only && !obj_line.substring(0,4).equals(".ESD")){
+	if (obj_line == null){ // PRI 483
+		abort_error(38,"object file truncated");
+	} else if (esds_only && !obj_line.substring(0,4).equals(".ESD")){
 		obj_eod = true;
 	}
 	int max_obj_esd = 0;
@@ -592,7 +595,9 @@ private boolean load_obj_file(boolean esds_only){
 			abort_error(20,"unknown obj record type - " + obj_line);
 		}
         get_obj_line();
-		if ((esds_only && !obj_line.substring(0,4).equals(".ESD"))
+		if (obj_line == null){ // RPI 483
+			abort_error(38,"object file truncated - " + obj_file_name);
+		} else if (esds_only && !obj_line.substring(0,4).equals(".ESD")
 			|| obj_line.substring(0,4).equals(".END")){
 			obj_eod = true;
 		}

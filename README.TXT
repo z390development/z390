@@ -1,7 +1,7 @@
-z390 v1.1.02b PTF 09/26/06
+z390 v1.1.02c PTF 11/03/06
 Copyright 2006 Automated Software Tools Corporation
 
-The enclosed z390.jar contains following cumulative fixes for v1.1.02b:
+The enclosed z390.jar contains following cumulative fixes for v1.1.02:
 
 1.  RPI 439 add mz390 pseudo code support to speed up macro    
 execution.  The new default option is PC.  Use NOPC to turn it off.
@@ -29,6 +29,35 @@ a DSECT such as PSA.
 
 7.  RPI 466 correct mz390 lookahead to handle unlabeled DS/DC and
 multiple DSECT's.
+
+8.  RPI 467 add mz390 pseudo code support to speed up macro processor
+by factor of 3 or more for compute intensive macro programs.
+
+9.  RPI 468 return T'&var = 'N' if value in (...) is numeric.
+
+10. RPI 469 add extension prefix operator A'&var which returns 1
+    if symbol attributes are defined during lookahead regardess
+    of whether the symbol has been defined yet else 0.
+
+11. RPI 479 correct &SYSSTYP reference for START label to return CSECT.
+
+12. RPI 480 correct MZ390 error message for T' indicating L' in error.
+
+13. RPI 483 correct LZ390 to prevent trap when reading truncated OBJ
+    file due to abort in AZ390.
+
+14. RPI 485 correct MZ390/AZ390 processing to ensure last BAL statement
+    passed has been processed prior to allowing MZ390 symbol reference 
+    to proceed.  Problem only occurred when MZ390 saw AZ390 still 
+    waiting for new BAL and thoght it was done.
+
+15. RPI 486 update J2SE runtime to 1.5.0 update 9 for all regression
+    testing on v1.1.02c.
+
+16. RPI 487 correct mz390 to prevent character string starting with '~'
+    from causing erroneous expression stack error.  This character is 
+    used by mz390 to detect end of expression and now also checks 
+    the symbol class.
 
 To install PTF follow these steps.
 
@@ -61,6 +90,8 @@ TESTDC1.MLC  - test S(rel) and S(off(base)) constants
 TESTINS1.MLC - test updated RRE format for TROO,TROT,TRTO, and TRTT 
 TESTINS2.MLC - test TRE, TROO, TROT, TRTO, and TRTT instructions    
 TESTMAC1.MLC - test N'&PARM(&VAR)
+TESTOPR1.MLC - test pseudo code function generation and execution
+TESTPC1.MLC  - test pseudo code generation and execution in macro loop
 TESTSET1.MLC - test array expansion, NOT D'sym, duplication in exp.
 TESTSYM1.MLC - test unlabled DS/DC and mulitple DSECT lookahead 
 TESTTIM2.MLC - test TTIMER CANCEL,TU

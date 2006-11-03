@@ -209,6 +209,8 @@ public  class  az390 implements Runnable {
     *          string quotes over 1 or more lines followed by
     *          parms and remove leading blanks from continuations
     * 09/25/06 RPI 465 allow R0 as base for PSA DSECT etc.
+    * 10/14/06 RPI 481 add I', S' symbol table support
+    * 10/26/06 RPI 485 force completion of last BAL passed
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -409,7 +411,9 @@ public  class  az390 implements Runnable {
     int[]     sym_def          = null;
     byte[]    sym_type         = null;
     byte[]    sym_attr         = null; // RPI 340
-    byte[]    sym_attre        = null; // RPI 415 explicit length attribute
+    byte[]    sym_attr_elt     = null; // RPI 415 explicit length type attribute
+	int[]     sym_scale        = null; // scale factor for int or fp exp
+	int[]     sym_int          = null; // integer value
 	int[]     sym_attrp        = null; // equ 4th program attribute 4 ebcdic char stored as int
 	String[]  sym_attra        = null; // equ 5th assember attribute int RPI 415
     int[]     sym_esd          = null;
@@ -488,8 +492,8 @@ public  class  az390 implements Runnable {
     		"GR64"  // Register - General 64-bit
             };
     byte    bal_lab_attr = 0;
-    byte    sym_attre_def = 0; // null char
-    byte    bal_lab_attre = sym_attre_def; // RPI 415 explicit length attr
+    byte    sym_attr_elt_def = 0; // null char
+    byte    bal_lab_attr_elt = sym_attr_elt_def; // RPI 415 explicit length attr
     /*
      * literal table for next pool at LTORG or END
      */
@@ -640,7 +644,7 @@ public  class  az390 implements Runnable {
       int     dc_lit_index_start = 0;
       String dc_field = null;
       char   dc_type  = ' '; // ds/ds field type char
-      byte    dc_attre = sym_attre_def; // ds/dc explicit length field type char
+      byte    dc_attr_elt = sym_attr_elt_def; // ds/dc explicit length field type char
       boolean dcv_type = false;
       boolean dca_ignore_refs = false;
       char   dc_type_sfx = ' ';
@@ -700,7 +704,7 @@ public  class  az390 implements Runnable {
       int    dc_first_len = 0;
       int    dc_first_loc = 0;
       char   dc_first_type = ' ';  // dc first field type char
-      byte   dc_first_attre = ' '; // dc first explicit length field type char 
+      byte   dc_first_attr_elt = ' '; // dc first explicit length field type char 
       String dc_hex = null;
       byte[]     dc_data_byte = (byte[])Array.newInstance(byte.class,256);
       ByteBuffer dc_data = ByteBuffer.wrap(dc_data_byte,0,256);
@@ -897,8 +901,10 @@ private void init_arrays(){
     sym_def          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
     sym_type         = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
     sym_attr         = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
-    sym_attre        = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
+    sym_attr_elt     = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
     sym_attrp        = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
+    sym_scale        = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
+    sym_int          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
 	sym_attra        = new String[tz390.opt_maxsym];
     sym_esd          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
     sym_loc          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
@@ -1385,7 +1391,7 @@ private void process_bal_op(){
 	} else {
 		bal_lab_attr = tz390.ascii_to_ebcdic['U'];
 	}
-	bal_lab_attre = sym_attre_def;
+	bal_lab_attr_elt = sym_attr_elt_def;
 	switch (index){ 
 	case 0:  // * comments 
 		bal_op_ok = true;
@@ -2585,7 +2591,10 @@ public  void set_sym_lock(String desc){
      *   2,  See mz390 put_bal_line for lock reset. 
 	 */
 	    sym_lock_desc = desc;
-        while (az390_running && !az390_waiting){
+        // wait for az390 to processing pending bal
+	    while (az390_running 
+        		&& (bal_line_full // RPI 485
+        			|| !az390_waiting)){
         	Thread.yield();
         }
 		if (!lookahead_mode 
@@ -3029,7 +3038,7 @@ private void init_sym_entry(){
 	   }
 	   sym_type[cur_sid]  = sym_rel;
 	   sym_attr[cur_sid]  = bal_lab_attr;
-	   sym_attre[cur_sid] = bal_lab_attre;
+	   sym_attr_elt[cur_sid] = bal_lab_attr_elt;
 	   sym_esd[cur_sid]   = cur_esd;
 	   sym_loc[cur_sid]   = loc_start;
 	   if (loc_len == 0){
@@ -5307,7 +5316,7 @@ private void get_dc_field_modifiers(){
 	 * 3.  Align and save first length if req'd
 	 */
 	 if (dc_type_index != -1){
-		dc_attre = sym_attre_def; // default for not explicit length
+		dc_attr_elt = sym_attr_elt_def; // default for not explicit length
 	    dc_len = dc_type_len[dc_type_index];
 	    if (dc_len == 4 && dc_type_sfx == 'D'){
 	    	dc_len = 8; // RPI 270
@@ -5324,7 +5333,7 @@ private void get_dc_field_modifiers(){
 			 && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'L'){
 			 dc_len_explicit = true;
 			 if (!bal_abort){
-				 dc_attre = tz390.ascii_to_ebcdic[dc_type_explicit.charAt(dc_type_index)];
+				 dc_attr_elt = tz390.ascii_to_ebcdic[dc_type_explicit.charAt(dc_type_index)];
 			 }
 			 if (dc_index+1 < dc_field.length() && dc_field.charAt(dc_index+1) == '.'){
 				 dc_index++;  // RPI 438 limited bit lenght support
@@ -5353,8 +5362,8 @@ private void get_dc_field_modifiers(){
 	 if (dc_first_field){
 		dc_first_type  = dc_type;
 		bal_lab_attr   = tz390.ascii_to_ebcdic[dc_type];
-		dc_first_attre = dc_attre;
-		bal_lab_attre  = dc_attre;
+		dc_first_attr_elt = dc_attr_elt;
+		bal_lab_attr_elt  = dc_attr_elt;
 	 	dc_first_len = dc_len; // may be overridden by non-explicit data length
 	 	loc_start = loc_ctr;
 	 }
