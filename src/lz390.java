@@ -68,6 +68,7 @@ public  class  lz390 {
     * 09/18/06 RPI 459 prevent trap if ENTRY not found (OBJ error)
     * 09/20/06 RPI 453 only route stats to BAL, copyright+rc to con
     * 10/19/06 RPI 483 prevent trap and issue error if obj truncated
+    * 11/04/06 RPI 484 add TRL trace file support for TRACEL and TRACEALL
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -313,7 +314,7 @@ private void put_stats(){
 }
 private void close_files(){
 	  /*
-	   * close obj, lst, err
+	   * close obj, lst, err, trl
 	   */
 	  if (obj_file != null){
 	  	  try {
@@ -332,6 +333,7 @@ private void close_files(){
 		  }
 	  }
 	  tz390.close_systerm(lz390_rc);
+	  tz390.close_trace_file();
 }
 private void log_error(int error,String msg){
 	/*
@@ -339,7 +341,7 @@ private void log_error(int error,String msg){
 	 * inc error total
 	 * 1.  supress if not gen_obj and not trace
 	 */
-	  String error_msg = "LZ390E error " + error + " " + msg;
+	  String error_msg = "LZ390E error " + tz390.right_justify("" + error,3) + " " + msg;
       put_log(error_msg);
 	  tz390.put_systerm(error_msg);
       lz390_errors++;
@@ -381,8 +383,8 @@ private void put_copyright(){
 	   	    put_log("LZ390I " + tz390.version);
 	   	}
 	   	if  (z390_log_text == null){
-	   	    put_log("Copyright 2006 Automated Software Tools Corporation");
-	   	    put_log("z390 is licensed under GNU General Public License");
+	   	    put_log("LZ390I Copyright 2006 Automated Software Tools Corporation");
+	   	    put_log("LZ390I z390 is licensed under GNU General Public License");
 	   	}
 	   	// RPI 378
 	   	put_log("LZ390I program = " + tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.pgm_type);
@@ -406,7 +408,7 @@ private void put_copyright(){
 	   /*
 	    * put line to listing file
 	    */
-	   	   if (tz390.opt_list || tz390.opt_tracel){
+	   	   if (tz390.opt_list){ // RPI 484
 	   	      try {
 	   	    	  tz390.systerm_io++;
 	   	          lst_file_buff.write(msg + "\r\n");
@@ -417,11 +419,16 @@ private void put_copyright(){
 	   	          lz390_errors++;
 	   	      }
 	   	   }
+	   	   if (tz390.opt_tracel){
+	   		   tz390.put_trace(msg);
+	   	   }
 	   }
 private void open_files(){
 	/*
-	 * open 390 and lst files
+	 * 1.  Set trace file name for TRACEL TRACEALL
+	 * 2.  Open 390 and lst files
 	 */
+	    tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.trl_type;
        	if (tz390.opt_list){
             lst_file = new File(tz390.dir_lst + tz390.pgm_name + ".LST");
          	try {
@@ -468,7 +475,7 @@ private boolean load_obj_file(boolean esds_only){
 	 */
     open_obj_file(obj_file_name);
     if (tz390.opt_tracel){
-  	  	 put_log("TRACE LOADING OBJ FILE - " + obj_file_name);
+  	  	 tz390.put_trace("LZ390I LOADING OBJ FILE - " + obj_file_name);
     }
     tot_obj_esd = 0;
     obj_eod = false;
@@ -482,7 +489,7 @@ private boolean load_obj_file(boolean esds_only){
 	while (!obj_eod
 			&& tot_obj_esd < tz390.opt_maxesd){
 		if (tz390.opt_tracel){
-			put_log("  LOADING " + obj_line);
+			tz390.put_trace("LZ390I   LOADING " + obj_line);
 		}
 		if (obj_line.substring(0,4).equals(".END")){
 			obj_eod = true;

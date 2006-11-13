@@ -44,6 +44,8 @@
 * 07/24/06 RPI 383 CORRECT TESTS FOR MLG AND MLGR TO USE R1+1 * S2/R2       
 * 08/06/06 RPI 398 CORRECT TESTS FOR D AND DR TO INCLUDE 64 BITS            
 * 09/08/06 RPI 441 ADD TEST FOR MVST MOVE STRING AND UPDATE TP TESTS                           
+* 09/19/06 RPI 454 ADD TEST FOR TRE, TROO, TROT, TRTO, TRTT                                          
+* 11/10/06 RPI 476 ADD CC TEST FOR MVST ALONG WITH SPEEDUP                                           
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -93,6 +95,36 @@ STRING4  DC    C'ABCD',X'EE'
 &ZONE    SETC  '3'    ASCII ZONE FOR DIGITS
 .SKIP_ASCII_MODE ANOP
 NEGMASK  DC    C! !,X'202020',C!-   ! BI-MODAL EBCDIC MASK 
+TREEOD   EQU   X'EE' TRE EOD TEST BYTE
+TRETAB   DC    240X'FF',C!ABCD!,12X'FF' TRE TRANS TAB 0123 > ABCD
+TREF1    DC    C!0123!
+TREV1    DC    C!ABCD!
+TREF2    DC    X'F0F1EEF3'  EOD IN 3RD BYTE
+TREV2    DC    X'C1C2EEF3'
+TROOEOD  EQU   X'EE' TROO EOD TEST BYTE
+TROOTAB  DC    240X'FF',C!ABCD!,12X'FF' TROO TRANS TAB 0123 > ABCD
+TROOF1   DC    C!9999!
+TROOF1V1 DC    X'C1C2FFC4'  RESULT WITH NO TESTING FOR 4 BYTES
+TROOF1V2 DC    X'C1C2F9F9'  RESULT WITH TESTING STOP ON 3RD BYTE
+TROOF2   DC    X'F0F1EEF3'  EOD IN 3RD BYTE
+TROTEOD  EQU   X'EE' TROO EOD TEST BYTE
+TROTTAB  DC    240X'FFFF',C!AABBCCDD!,12X'FFFF' (F0 * 2 > C1C1) ETC
+TROTF1   DC    C!99999999!
+TROTF1V1 DC    X'C1C1C2C2FFFFC4C4'  RESULT WITH NO TESTING FOR 4 BYTES
+TROTF1V2 DC    X'C1C1C2C2F9F9F9F9'  RESULT WITH STOP ON 3RD BYTE
+TROTF2   DC    X'F0F1EEF3'  EOD IN 3RD BYTE
+TRTOEOD  EQU   X'0104' TROO EOD TEST BYTES
+TRTOTAB  DC    128X'FFFF',C!ABCDZ! (X'0100' > C'A' ETC
+TRTOF1   DC    C!9999!
+TRTOF1V1 DC    C!ABZD!  RESULT WITH NO TESTING FOR 4 BYTES
+TRTOF1V2 DC    C!AB99!  RESULT WITH STOP ON 3RD BYTE
+TRTOF2   DC    X'0100010101040103'  EOD IN 3RD ENTRY
+TRTTEOD  EQU   X'0104' TROO EOD TEST BYTES
+TRTTTAB  DC    256X'FFFF',C!AABBCCDDZZ! (X'0100' > C'AA' ETC
+TRTTF1   DC    C!99999999!
+TRTTF1V1 DC    C!AABBZZDD!  RESULT WITH NO TESTING
+TRTTF1V2 DC    C!AABB9999!  RESULT WITH STOP ON 3RD ENTRY
+TRTTF2   DC    X'0100010101040103'  EOD IN 3RD ENTRY
 * START TESTS
          RT1   START
 * 0101 PR
@@ -1798,6 +1830,7 @@ BAKR2    EQU   *
 * B255 MVST
          LM    R0,R2,=A(X'EE',STRING3,STRING4)
          MVST  R1,R2
+         RT1   CC1
          CLC   STRING3,STRING4
          RT1   CCE
          CL    R1,=A(STRING3+L'STRING4)
@@ -1878,6 +1911,26 @@ SEBR1    ESPIE RESET
          STFPC FPCREG
          CLI   FPCREG,X'70' VERIFY MASK FOR BFP DIV, OVF, UNF ONLY
          RT1   CCE
+* B2A5 TRE
+         LA    R0,TREEOD
+         LM    R2,R4,=A(TREF1,L'TREF1,TRETAB)
+         TRE   R2,R4
+         RT1   CC0
+         CL    R2,=A(TREF1+L'TREF1)
+         RT1   CCE
+         LTR   R3,R3
+         RT1   CCE
+         CLC   TREF1,TREV1
+         RT1   CCE 
+         LM    R2,R4,=A(TREF2,L'TREF2,TRETAB)
+         TRE   R2,R4
+         RT1   CC1
+         CL    R2,=A(TREF2+2)   TREF2 HAS EOD X'FF' IN 3RD BYTE
+         RT1   CCE
+         CL    R3,=A(L'TREF2-2)
+         RT1   CCE
+         CLC   TREF2,TREV2
+         RT1   CCE 
 * B2B0 STFLE Z9 STORE FACILITIES BIT LIST EXTENDED
          SR    R0,R0
          STFLE PWORK
@@ -2516,6 +2569,118 @@ SGR2     ESTAE 0
          SLBGR R0,R1               RPI174 TEST < CC0 Z,B    
          RT1   CC1                 NZ,B 
          CLG   R0,=FL8'-2'
+         RT1   CCE
+* B990 TRTT
+         L     R0,=A(TRTTEOD) TWO BYTE END OF DATA
+         LA    R1,TRTTTAB
+         LM    R2,R4,=A(TRTTF1,L'TRTTF2,TRTTF2)
+         TRTT  R2,R4,1 NO TEST BYTES
+         RT1   CC0
+         CL    R2,=A(TRTTF1+L'TRTTF2)
+         RT1   CC0
+         LTR   R3,R3
+         RT1   CC0
+         CL    R4,=A(TRTTF2+L'TRTTF2)
+         RT1   CC0
+         CLC   TRTTF1,TRTTF1V1
+         RT1   CCE
+         MVC   TRTTF1,=C!99999999!
+         L     R0,=A(TRTTEOD) TWO BYTE END OF DATA
+         LA    R1,TRTTTAB
+         LM    R2,R4,=A(TRTTF1,L'TRTTF2,TRTTF2)
+         TRTT  R2,R4,0 TEST BYTES
+         RT1   CC1         
+         CL    R2,=A(TRTTF1+4)
+         RT1   CC0
+         CL    R3,=A(L'TRTTF2-4)
+         RT1   CC0
+         CL    R4,=A(TRTTF2+4)
+         RT1   CC0
+         CLC   TRTTF1,TRTTF1V2
+         RT1   CCE
+* B991 TRTO
+         L     R0,=A(TROTEOD) TWO BYTE END OF DATA
+         LA    R1,TRTOTAB
+         LM    R2,R4,=A(TRTOF1,L'TRTOF2,TRTOF2)
+         TRTO  R2,R4,1 NO TEST BYTES
+         RT1   CC0
+         CL    R2,=A(TRTOF1+L'TRTOF2/2)
+         RT1   CC0
+         LTR   R3,R3
+         RT1   CC0
+         CL    R4,=A(TRTOF2+L'TRTOF2)
+         RT1   CC0
+         CLC   TRTOF1,TRTOF1V1
+         RT1   CCE
+         MVC   TRTOF1,=C!9999!
+         L     R0,=A(TRTOEOD) TWO BYTE END OF DATA
+         LA    R1,TRTOTAB
+         LM    R2,R4,=A(TRTOF1,L'TRTOF2,TRTOF2)
+         TRTO  R2,R4,0 TEST BYTES
+         RT1   CC1         
+         CL    R2,=A(TRTOF1+2)
+         RT1   CC0
+         CL    R3,=A(L'TRTOF2-4)
+         RT1   CC0
+         CL    R4,=A(TRTOF2+4)
+         RT1   CC0
+         CLC   TRTOF1,TRTOF1V2
+         RT1   CCE
+* B992 TROT
+         LA    R0,TROTEOD ONE BYTE END OF DATA
+         LA    R1,TROTTAB
+         LM    R2,R4,=A(TROTF1,L'TROTF2,TROTF2)
+         TROT  R2,R4,1 NO TEST BYTES
+         RT1   CC0
+         CL    R2,=A(TROTF1+2*L'TROTF2)
+         RT1   CC0
+         LTR   R3,R3
+         RT1   CC0
+         CL    R4,=A(TROTF2+L'TROTF2)
+         RT1   CC0
+         CLC   TROTF1,TROTF1V1
+         RT1   CCE
+         MVC   TROTF1,=C!99999999!
+         LA    R0,TROTEOD ONE BYTE END OF DATA
+         LA    R1,TROTTAB
+         LM    R2,R4,=A(TROTF1,L'TROTF2,TROTF2)
+         TROT  R2,R4,0 TEST BYTES
+         RT1   CC1         
+         CL    R2,=A(TROTF1+4)
+         RT1   CC0
+         CL    R3,=A(L'TROTF2-2)
+         RT1   CC0
+         CL    R4,=A(TROTF2+2)
+         RT1   CC0
+         CLC   TROTF1,TROTF1V2
+         RT1   CCE
+* B993 TROO
+         LA    R0,TROOEOD ONE BYTE END OF DATA
+         LA    R1,TROOTAB
+         LM    R2,R4,=A(TROOF1,L'TROOF2,TROOF2)
+         TROO  R2,R4,1 NO TEST BYTES
+         RT1   CC0
+         CL    R2,=A(TROOF1+L'TROOF2)
+         RT1   CC0
+         LTR   R3,R3
+         RT1   CC0
+         CL    R4,=A(TROOF2+L'TROOF2)
+         RT1   CC0
+         CLC   TROOF1,TROOF1V1
+         RT1   CCE
+         MVC   TROOF1,=C!9999!
+         LA    R0,TROOEOD ONE BYTE END OF DATA
+         LA    R1,TROOTAB
+         LM    R2,R4,=A(TROOF1,L'TROOF2,TROOF2)
+         TROO  R2,R4,0 TEST BYTES
+         RT1   CC1         
+         CL    R2,=A(TROOF1+2)
+         RT1   CC0
+         CL    R3,=A(L'TROOF2-2)
+         RT1   CC0
+         CL    R4,=A(TROOF2+2)
+         RT1   CC0
+         CLC   TROOF1,TROOF1V2
          RT1   CCE
 * B994 LLCR Z9 LOAD LOGICAL CHARACTER
          LA    R1,X'FF'

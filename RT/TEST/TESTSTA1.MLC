@@ -4,22 +4,37 @@
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 *********************************************************************
-* 05/01/06 RPI305 TEST ESTAE EXIT WITH PARM AND RESTART                
+* 05/01/06 RPI 305 TEST ESTAE EXIT WITH PARM AND RESTART                
+* 09/18/06 RPI 305 TEST REPEAT USAGE                                    
+* 11/10/06 RPI 475 TEST ESTAE EXIT,CT,PARAM=RESTART                     
 *********************************************************************
          TITLE 'TESTSTA1 - TEST ESTAE'
 TESTSTA1 SUBENTRY
          WTO   'TESTSTA1 TEST ESTAE STARTED'
          ESTAE EXIT,PARAM=RESTART
          DC    X'0000' CAUSE 0C1
-RESTART  WTO   'TESTSTA1 RESTART SUCCESSFUL'
+RESTART  DS    0H
+         AP    COUNT,=P'1'
+         CP    COUNT,=P'1'
+         BE    RESTART2
+         BH    RESTART3
+RESTART1 WTO   'TESTSTA1 RESTART1 SUCCESSFUL'
+         DC    X'0000' CAUSE 0C1
+RESTART2 WTO   'TESTSTA1 RESTART2 SUCCESSFUL'
+         ESTAE EXIT,CT,PARAM=RESTART
+         DC    X'0000' CAUSE 0C1
+RESTART3 WTO   'TESTSTA1 RESTART3 SUCCESSFUL'
          WTO   'TESTSTA1 ENDED OK'
          SUBEXIT
+         LTORG
          DROP
 EXIT     DS    0H
-         USING *,15
-         USING IHAESTA,1
-         L     0,ESTAPARM
-         ST    0,ESTAPSW+4
-         BR    14
+         USING *,R15
+         USING IHAESTA,R1
+         L     R0,ESTAPARM
+         ST    R0,ESTAPSW+4
+         BR    R14
+COUNT    DC    P'0'
          ESTAD
+         EQUREGS
          END         

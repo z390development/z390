@@ -1,0 +1,84 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 11/12/06 RPI 491 TEST BY MELVYN MALTZ FOR CORRUPTION ON FQE MERGE
+*********************************************************************
+TESTMEM4 SUBENTRY
+         WTO   'TESTMEM4 - TEST FIX FOR RPI 491 FQE MERGE ERROR'
+*
+* TS INST FOR INTERCEPT PURPOSES ONLY
+*
+CYCLE1   EQU   *
+         TS    BYTE
+         LA    R11,50
+         GETMAIN R,LV=(R11)       OP2
+         ST    R0,SAVE1           STORE IT
+         LR    R3,R0              SAVE ADDRESS
+         MVI   0(R3),X'FF'        MARK 1ST BYTE
+*
+         LA    R11,100            GETMAIN LENGTH
+         GETMAIN R,LV=(R11)       OP1
+         ST    R0,SAVE2           STORE IT
+         LR    R3,R0              SAVE ADDRESS
+         MVI   0(R3),X'FF'        MARK 1ST BYTE
+*
+         GETMAIN R,LV=128K        MAXIMUM TRANSLATE TABLE
+         ST    R0,SAVE3           STORE IT
+         LR    R3,R0              SAVE ADDRESS
+         MVI   0(R3),X'FF'        MARK 1ST BYTE
+*
+         TS    BYTE
+*
+         LA    R11,50             LENGTH TO FREEMAIN
+         FREEMAIN LV=(R11),A=SAVE1 FREE OP2
+         LA    R11,100            LENGTH TO FREEMAIN
+         FREEMAIN LV=(R11),A=SAVE2 FREE OP1
+         FREEMAIN LV=128K,A=SAVE3 FREE TRANSLATE TABLE
+         TS    BYTE
+CYCLE2   EQU   *
+         TS    BYTE
+         LA    R11,50
+         GETMAIN R,LV=(R11)       OP2
+         CL    R0,SAVE1           STORE IT
+         BNE   ERROR
+         LR    R3,R0              SAVE ADDRESS
+         MVI   0(R3),X'FF'        MARK 1ST BYTE
+*
+         LA    R11,100            GETMAIN LENGTH
+         GETMAIN R,LV=(R11)       OP1
+         CL    R0,SAVE2           STORE IT
+         BNE   ERROR
+         LR    R3,R0              SAVE ADDRESS
+         MVI   0(R3),X'FF'        MARK 1ST BYTE
+*
+         GETMAIN R,LV=128K        MAXIMUM TRANSLATE TABLE
+         CL    R0,SAVE3           STORE IT
+         BNE   ERROR
+         LR    R3,R0              SAVE ADDRESS
+         MVI   0(R3),X'FF'        MARK 1ST BYTE
+*
+         TS    BYTE
+*
+         LA    R11,50             LENGTH TO FREEMAIN
+         FREEMAIN LV=(R11),A=SAVE1 FREE OP2
+         LA    R11,100            LENGTH TO FREEMAIN
+         FREEMAIN LV=(R11),A=SAVE2 FREE OP1
+         FREEMAIN LV=128K,A=SAVE3 FREE TRANSLATE TABLE
+         TS    BYTE
+*
+         WTO   'TESTMEM4 ENDED OK'
+         SUBEXIT
+ERROR    ABEND  111,DUMP
+*
+SAVE1    DS    A
+SAVE2    DS    A
+SAVE3    DS    A
+BYTE     DS    C
+         LTORG
+*
+         EQUREGS REGS=GPR
+         END

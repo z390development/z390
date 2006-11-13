@@ -6,6 +6,7 @@
 * Date   - 07/17/06                                                 *
 *********************************************************************
 * 07/17/06 RPI 370 test CTD and CFD including SVC and MF call option 
+* 11/10/06 RPI 477 use IN= and OUT= on CTD and CFD macros            
 *********************************************************************
 * Test conversion from and to 128 bit integer and all 6 floating 
 * point types using default svc 170 and 171 and also using 
@@ -41,7 +42,7 @@ LBT1     DC    LB'-567678867789987898'
 &TESTNO  SETA  &TESTNO+1
          BASR  R12,0
          USING *,R12
-         CTD   CTD_&TYPE,&VAL,DECIMAL,LINKAGE=&LINKAGE
+         CTD   CTD_&TYPE,IN=&VAL,OUT=DECIMAL,LINKAGE=&LINKAGE
          CVD   R15,PRC
 &LK      SETC  '&LINKAGE'(1,1)
          MVC   DTYPE,=CL6'&LK.>D &TYPE'
@@ -57,7 +58,7 @@ LBT1     DC    LB'-567678867789987898'
                ABEND 101
          ENDIF
          XC    WORK16,WORK16
-         CFD   CFD_&TYPE,WORK16,DECIMAL,LINKAGE=&LINKAGE
+         CFD   CFD_&TYPE,OUT=WORK16,IN=DECIMAL,LINKAGE=&LINKAGE
          CVD   R15,PRC
          MVC   DTYPE,=CL6'&LK.<D &TYPE'
          MVC   DHEX,=CL32' '

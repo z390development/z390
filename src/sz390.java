@@ -23,7 +23,8 @@ import java.util.regex.Pattern;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.Timer;
-;public  class  sz390 implements Runnable {
+;@SuppressWarnings("unchecked")
+public  class  sz390 implements Runnable {
    /*****************************************************
 	
     z390 portable mainframe assembler and emulator.
@@ -83,7 +84,12 @@ import javax.swing.Timer;
     * 09/02/06 RPI 428 turn off high bit for test break addr
     * 09/06/06 RPI 395 add mult addr stop, mult. indirect, and supp EPA
     *          supress dup. dump lines
-    * 09/19/06 RPI 452 return time for TTIMER CANCEL,TU/MIC         
+    * 09/19/06 RPI 452 return time for TTIMER CANCEL,TU/MIC 
+    * 11/04/06 RPI 484 support TRE trace file for TRACE and TRACEALL  
+    * 11/10/06 RPI 471 cancel stimer exit at abend   
+    * 11/10/06 RPI 477 support ASCII in CTD and CFD  
+    * 11/12/06 RPI 490 correct TEST command processor 0r, traps 
+    * 11/12/06 RPI 491 correct FREEMAIN merge causing corrupted FQE
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -224,7 +230,7 @@ import javax.swing.Timer;
     InputStreamReader[] cmd_error_reader  = (InputStreamReader[])Array.newInstance(InputStreamReader.class,max_cmd_proc);
     InputStreamReader[] cmd_output_reader = (InputStreamReader[])Array.newInstance(InputStreamReader.class,max_cmd_proc);
     OutputStream[]      cmd_input_writer  = (OutputStream[])Array.newInstance(OutputStream.class,max_cmd_proc);
-    LinkedList<String>[]        cmd_output_queue  = (LinkedList<String>[])Array.newInstance(LinkedList.class,max_cmd_proc);
+    LinkedList<String>[] cmd_output_queue  = (LinkedList<String>[])Array.newInstance(LinkedList.class,max_cmd_proc);
     boolean[]           cmd_proc_running  = (boolean[])Array.newInstance(boolean.class,max_cmd_proc);
     int[]               cmd_proc_rc       = (int[])Array.newInstance(int.class,max_cmd_proc);
     int[]               cmd_proc_io       = (int[])Array.newInstance(int.class,max_cmd_proc);
@@ -621,6 +627,9 @@ public synchronized void put_log(String msg) {
 	if (tz390.opt_con || tz390.opt_test || tz390.z390_abort || ez390_startup){
 		System.out.println(msg);
 	}
+    if (tz390.opt_trace || tz390.opt_test){ // RPI 490
+    	tz390.put_trace("EZ390I " + msg);
+    }
 }
 private void put_log_line(String msg){
 	   /*
@@ -644,7 +653,7 @@ public void log_error(int error,String msg){
 	 * inc error total
 	 * 1.  supress if not gen_obj and not trace
 	 */
-	  String error_msg = "EZ390E error " + error + " " + msg;
+	  String error_msg = "EZ390E error " + tz390.right_justify("" + error,3) + " " + msg;
       put_log(error_msg);
       tz390.put_systerm(error_msg);
 	  ez390_errors++;
@@ -661,6 +670,7 @@ public void abort_error(int error,String msg){
 	  if (ez390_rc == 0){
 	  	 ez390_rc = 16;
 	  }
+	  stimer_exit_addr = 0; // RPI 471 cancel stimer exit
 	  String error_msg = "EZ390E error " + error + " " + msg;
 	  put_log(error_msg);
 	  tz390.put_systerm(error_msg);
@@ -705,25 +715,25 @@ private void put_stats(){
 		tz390.opt_con = false;
 	}
 	if (tz390.opt_stats){
-		put_log("Stats total instructions    = " + tz390.systerm_ins);
+		put_log("EZ390I Stats total instructions    = " + tz390.systerm_ins);
 		if (tz390.opt_trace){
-			put_log("Stats Keys                  = " + tz390.tot_key);
-			put_log("Stats Key searches          = " + tz390.tot_key_search);
+			tz390.put_trace("EZ390I Stats Keys                  = " + tz390.tot_key);
+			tz390.put_trace("EZ390I Stats Key searches          = " + tz390.tot_key_search);
 			if (tz390.tot_key_search > 0){
 				tz390.avg_key_comp = tz390.tot_key_comp/tz390.tot_key_search;
 			}
-			put_log("Stats Key avg comps         = " + tz390.avg_key_comp);
-			put_log("Stats Key max comps         = " + tz390.max_key_comp);
+			tz390.put_trace("EZ390I Stats Key avg comps         = " + tz390.avg_key_comp);
+			tz390.put_trace("EZ390I Stats Key max comps         = " + tz390.max_key_comp);
 		}
 		if (tz390.opt_timing){ // display instr rate
 		   	pz390.cur_date = new Date();
-		   	put_log("Stats current date " + cur_date_MMddyy.format(pz390.cur_date)
+		   	put_log("EZ390I Stats current date " + cur_date_MMddyy.format(pz390.cur_date)
 		   			+ " time " + cur_tod_hhmmss.format(pz390.cur_date)); // RPI 209
 			tod_end_pgm = pz390.cur_date.getTime();
 			tot_sec = (tod_end_pgm - tod_start_pgm)/1000;
-			put_log("Stats total seconds         = " + tot_sec);
+			put_log("EZ390I Stats total seconds         = " + tot_sec);
 			long ins_rate = ((long) tz390.systerm_ins)*1000/(tod_end_pgm - tod_start_pgm + 1);
-			put_log("Stats instructions/sec      = " + ins_rate);
+			put_log("EZ390I Stats instructions/sec      = " + ins_rate);
 		}
 	}
 	tz390.opt_con = save_opt_con; // rpi 453
@@ -732,7 +742,7 @@ private void put_stats(){
 }
 private void close_files(){
 	/*
-	 * close log, systerm
+	 * close log, err, tre
 	 */
 	  if (log_file != null && log_file.isFile()){
 	  	  try {
@@ -742,6 +752,7 @@ private void close_files(){
 	  	  }
 	  }
 	  tz390.close_systerm(ez390_rc);
+	  tz390.close_trace_file();
 }
 private void close_cmd(){
 	/*
@@ -857,8 +868,10 @@ public void init_test(){
 }
 public void open_files(){
 	/*
-	 * open 390 and lst files
+	 * 1.  Set trace file for TRACE and TRACEALL
+	 * 2.  Open 390 and lst files
 	 */
+	    tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tre_type;
        	if (tz390.opt_list){
             log_file = new File(tz390.dir_log + tz390.pgm_name + tz390.log_type);
          	try {
@@ -886,7 +899,7 @@ public void open_files(){
 		pz390.reg.putInt(pz390.r15,stimer_save_r15);
 		pz390.set_psw_loc(stimer_save_psw); 
 	    if (tz390.opt_trace){
-	    	put_log("TRACE STIMER EXIT ENDING");
+	    	tz390.put_trace("TRACE STIMER EXIT ENDING");
 	    }
 		return;
 	} else if (pz390.estae_exit_running){
@@ -896,7 +909,7 @@ public void open_files(){
 		pz390.reg.put(pz390.mem_byte,pz390.esta_gpr,128);
 		pz390.set_psw_loc(pz390.mem.getInt(pz390.esta_psw+4));
 	    if (tz390.opt_trace){
-	    	put_log("TRACE ESTAE EXIT ENDING");
+	    	tz390.put_trace("ESTAE EXIT ENDING");
 	    }
 		return;
 	} else if (pz390.espie_exit_running){
@@ -906,7 +919,7 @@ public void open_files(){
 		pz390.reg.put(pz390.mem_byte,pz390.epie_gpr,128);
 		pz390.set_psw_loc(pz390.mem.getInt(pz390.epie_psw+4));
 	    if (tz390.opt_trace){
-	    	put_log("TRACE ESPIE EXIT ENDING");
+	    	tz390.put_trace("ESPIE EXIT ENDING");
 	    }
 		return;
 	}
@@ -1495,7 +1508,7 @@ private void svc_freemain(){
 			if (req_addr + req_len == cur_fqe){
 				// merge insert with cur_fqe
 				pz390.mem.putInt(req_addr,next_fqe);
-				pz390.mem.putInt(req_addr+4,req_len + cur_fqe);
+				pz390.mem.putInt(req_addr+4,req_len + cur_fqe_len); // RPI 491 (was + cur_fqe)
 				if (tz390.opt_tracemem){
 					trace_mem("FQE IMRG",req_addr,req_len+cur_fqe,next_fqe);
 				}
@@ -1825,7 +1838,7 @@ public void start_stimer_exit(){
 	pz390.psw_loc = stimer_exit_addr;
 	stimer_exit_addr = 0;        // turn off stimer
     if (tz390.opt_trace){
-    	put_log("TRACE STIMER EXIT STARTING");
+    	tz390.put_trace("STIMER EXIT STARTING");
     }
 }
 private int get_ccyydddf(){
@@ -1943,7 +1956,7 @@ public void dump_gpr(int reg_offset){
 	/*
 	 * dump specified register or all if -1
 	 */
-	if (reg_offset <= 0 || reg_offset >= pz390.r15){
+	if (reg_offset < 0 || reg_offset > pz390.r15){ // RPI 490
 		put_log(" R0-R3 " + pz390.bytes_to_hex(pz390.reg,0,32,8));
 		put_log(" R4-R7 " + pz390.bytes_to_hex(pz390.reg,32,32,8));
 		put_log(" R8-RB " + pz390.bytes_to_hex(pz390.reg,64,32,8));
@@ -3814,12 +3827,20 @@ private void svc_ctd(){
 	}
 	int index = 0;
 	while (index < ctd_text.length()){
-		pz390.mem.put(addr_out,tz390.ascii_to_ebcdic[ctd_text.charAt(index)]);
+		if (tz390.opt_ascii){  // RPI 477
+			pz390.mem_byte[addr_out] = (byte)ctd_text.charAt(index);
+		} else {
+			pz390.mem.put(addr_out,tz390.ascii_to_ebcdic[ctd_text.charAt(index)]);
+		}
 		index++;
 		addr_out++;
 	}
 	while (index < ctd_display_len){
-		pz390.mem.put(addr_out,(byte)ebcdic_space);
+		if (tz390.opt_ascii){ // RPI 477
+			pz390.mem_byte[addr_out] = (byte)' ';
+		} else {
+			pz390.mem.put(addr_out,(byte)ebcdic_space);
+		}
 		index++;
 		addr_out++;
 	}
@@ -4243,7 +4264,7 @@ private void exec_test_cmd(){
 		if (test_token == null){
 			dump_fpr(-1);
 		} else {
-			dump_fpr(Integer.valueOf(test_token).intValue() * 8);
+			dump_fpr(get_test_int(test_token) * 8); // RPI 490
 		}
 		break;
 	case 'G':  // go nn instrs, to hex addr, or until reg/mem/op/addr break
@@ -4356,7 +4377,7 @@ private void exec_test_cmd(){
 		if (test_token == null){
 			dump_gpr(-1);
 		} else {
-			dump_gpr(Integer.valueOf(test_token).intValue() * 8);
+			dump_gpr(get_test_int(test_token) * 8); // RPI 490
 		}
 		break;
 	case 'S':  // set break on reg or memory change
@@ -4394,6 +4415,19 @@ private void exec_test_cmd(){
         break;
 	default:
 		test_error("undefined test command - " + test_opcode);
+	}
+}
+private int get_test_int(String token){// RPI 490
+	/*
+	 * return integer value of token
+	 * and just issue ivalid int error if error
+	 * and return -1.
+	 */
+	try {
+		return Integer.valueOf(token).intValue();
+	} catch (Exception e){
+		test_error("invalid integer - " + token);
+		return -1;
 	}
 }
 private String get_next_test_token(){
@@ -4467,10 +4501,10 @@ private void go_test(){
 			pz390.test_trace_count = -1; // go until break
 		} else {
 			try {
-				pz390.test_trace_count = Integer.valueOf(test_token);
+                pz390.test_trace_count = Integer.valueOf(test_token);
 			} catch (Exception e){
-				set_test_break_op();
-				pz390.test_trace_count = -1; // go until break
+                set_test_break_op();
+                pz390.test_trace_count = -1; // go until break
 			}
 		}
 	} else {
@@ -4541,17 +4575,37 @@ private void set_test_break_op(){
 		test_break_op_mode = true;
 		test_break_op_ins  = tz390.systerm_ins;
 		test_break_op_cmd  = test_cmd;
-		test_break_op1 = Integer.valueOf(tz390.op_code[index].substring(0,2),16).byteValue() & 0xff;
+		try { // RPI 490
+			test_break_op1 = Integer.valueOf(tz390.op_code[index].substring(0,2),16).byteValue() & 0xff;
+		} catch (Exception e){
+			test_error("invalid hex opcode for " + test_token);
+			test_break_op1 = 0;
+		}
 		test_break_op2_index = pz390.opcode2_offset[test_break_op1];
 		if (tz390.op_code[index].length() == 4){
-			test_break_op2 = Integer.valueOf(tz390.op_code[index].substring(2,4),16).byteValue() & 0xff;
+			try {
+				test_break_op2 = Integer.valueOf(tz390.op_code[index].substring(2,4),16).byteValue() & 0xff;
+			} catch (Exception e){
+				test_error("invalid hex opcode 2 for " + test_token);
+				test_break_op2 = 0;
+			}
 			test_break_op2_mask = 0xff;
 		} else if (tz390.op_code[index].length() == 3){
 			if (pz390.opcode2_mask[test_break_op1] == 0xf0){
-			    test_break_op2 = (Integer.valueOf(tz390.op_code[index].substring(2,3),16).intValue() << 4) & 0xff;
+			    try {
+			    	test_break_op2 = (Integer.valueOf(tz390.op_code[index].substring(2,3),16).intValue() << 4) & 0xff;
+			    } catch (Exception e){
+			    	test_error("invalid hex opcode2 for " + test_token);
+			    	test_break_op2 = 0;
+			    }
 			    test_break_op2_mask = 0xf0;
 			} else {
-				test_break_op2 = Integer.valueOf(tz390.op_code[index].substring(2,3),16).intValue() & 0xff;
+				try {
+					test_break_op2 = Integer.valueOf(tz390.op_code[index].substring(2,3),16).intValue() & 0xff;
+				} catch (Exception e){
+					test_error("invald hex opcode2 for " + test_token);
+					test_break_op2 = 0;
+				}
 			    test_break_op2_mask = 0x0f;
 			}
 		} else {
@@ -4596,7 +4650,7 @@ private int get_test_addr(String text){
 			} else if (text.toUpperCase().charAt(text.length()-1) == '%'){
 				int index_r = text.toUpperCase().indexOf('R');
 				int index_p = text.length()-2;
-				int indirect_addr = (pz390.reg.getInt(Integer.valueOf(text.substring(0,index_r)).intValue()*8+4)) & pz390.psw_amode24;
+				int indirect_addr = (pz390.reg.getInt(get_test_int(text.substring(0,index_r))*8+4)) & pz390.psw_amode24;
 				while (text.charAt(index_p) == '%'){
 				    indirect_addr = pz390.mem.getInt(indirect_addr) & pz390.psw_amode24;
 				    index_p--;
@@ -4605,7 +4659,7 @@ private int get_test_addr(String text){
 			} else if (text.toUpperCase().charAt(text.length()-1) == '?'){
 				int index_r = text.toUpperCase().indexOf('R');
 				int index_q = text.length()-2;
-				int indirect_addr = (pz390.reg.getInt(Integer.valueOf(text.substring(0,index_r)).intValue()*8+4)) & pz390.psw_amode31;
+				int indirect_addr = (pz390.reg.getInt(get_test_int(text.substring(0,index_r))*8+4)) & pz390.psw_amode31;
 				while (text.charAt(index_q) == '?'){
 				    indirect_addr = pz390.mem.getInt(indirect_addr) & pz390.psw_amode31;
 				    index_q--;
@@ -4614,12 +4668,12 @@ private int get_test_addr(String text){
 			} else if (text.toUpperCase().equals("EPA")){
 				return load_code_load & pz390.psw_amode;  // RPI 395
 			} else {
-				return Integer.valueOf(text).intValue();
+				return get_test_int(text);
 			}
 		} else if (text.charAt(0) == '*'){
 			return pz390.psw_loc;
 		} else { // assume single digit
-			return Integer.valueOf(text).intValue();
+			return get_test_int(text);
 		}
 	} catch (Exception e){
 		test_error("invalid addr - " + text);
@@ -4810,7 +4864,12 @@ private byte[] get_test_mem_sdt(String text){
             }
 			index = 0;
 			while (index < data_byte_len){
-				data_byte[index] = Integer.valueOf(data_text.substring(index*2,index*2+2),16).byteValue();
+				try {
+					data_byte[index] = Integer.valueOf(data_text.substring(index*2,index*2+2),16).byteValue();
+				} catch (Exception e){
+					test_error("invalid hex self defining term " + data_text);
+					data_byte[index] = 0;
+				}
 		        index++;
 			}
 			return data_byte;

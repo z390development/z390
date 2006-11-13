@@ -252,6 +252,7 @@ public  class  mz390 {
      * 10/14/06 RPI 481 add A', E', I', S' operator support 
      * 11/03/06 RPI 479 correct &SYSSTYP for START opcode
      * 11/03/06 RPI 487 prevent error due to string starting with '~'    
+     * 11/12/06 RPI 492 allow blank continue line
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -333,7 +334,7 @@ public  class  mz390 {
 	long    tod_time_limit = 0;
 	int     next_time_ins   = 0x1000;
 	int     next_time_check = next_time_ins;
-	String cur_mac_file_name = null;
+	String cur_mac_file_path = null;
 	int cur_mac_file = 0;
 	File[] mac_file                = null;
 	BufferedReader[] mac_file_buff = null;
@@ -358,6 +359,7 @@ public  class  mz390 {
 	/*
 	 * macro name table
 	 */
+	String cur_mac_name = null;
 	int mac_name_index = 0; //current mlc or macro
 	int mac_last_find_index = -1;
 	int tot_ins = 0; // count instr/cntl for MFC option
@@ -391,9 +393,9 @@ public  class  mz390 {
 	int tot_mac_line = 0;       // next avail line
 	String[] mac_file_line     = null;  // mlc, mac, and cpy source line including continued text
 	int[]    mac_file_line_num = null;  // starting line number in file
-	int[]    mac_file_name_num = null;  // mac file index
+	int[]    mac_file_num = null;  // mac file index
 	int tot_mac_file_name = 0;
-	String[] mac_file_name = null;
+	String[] mac_file_path = null;
 	/*
 	 * macro labels for loaded mlc and macros
 	 */
@@ -769,6 +771,7 @@ public  class  mz390 {
 	boolean pc_concat_pending = false; 
 	byte    pc_push_var_op = 0;
 	String  pc_push_var_setc_value = null;
+	String  pc_sublst_value1 = null;
 	String  pc_concat_setc_value1 = null;
 	String  pc_concat_setc_value = null;
 	String  pc_pushc_setc_value = null;
@@ -1073,7 +1076,7 @@ public  class  mz390 {
 					+ "|([']([^']|(['][']))*['])"        // parm in quotes
 					+ "|([\\s/()',\\.\\+\\-\\*=])"       // operators and white space RPI181 (\\ for reg exp. opers)
 					+ "|([dD]['])"                       // D' defined symbol test 0 or 1  RPI 336
-					+ "|([kKlLnNoOtT]['])"                       // ?' prefix operators
+					+ "|([iIkKlLnNoOsStT]['])"           // ?' prefix operators  RPI 481
 					+ "|([bB]['][0|1]+['])"              // B'0110' binary self def. term
 					+ "|([cC][aAeE]*[']([^']|(['][']))+['])"    // C'ABCD' ebcdic or ascii self def. term // RPI 270, 274
 					+ "|([cC][\"]([^\"]|([\"][\"]))+[\"])"    // C"ABCD" ascii self def. term   RPI73, 274
@@ -1136,7 +1139,7 @@ public  class  mz390 {
 					+ "|([&][a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"    // &var  RPI 253
 					+ "|([\\s&/()',\\.\\+\\-\\*=])"           // operators and white space RPI181 (\\ for reg exp. opers)
 					+ "|([0-9]+)"                             // number
-					+ "|([dDkKlLnNoOtT]['])"                            // D' defined symbol test 0 or 1  RPI 336, RPI 434
+					+ "|([dDiIkKlLnNoOsStT]['])"              // D' defined symbol test 0 or 1  RPI 336, RPI 434 RPI 481
 					+ "|([bB]['][0|1]+['])"                   // B'0110' binary self def. term
 					+ "|([cC][aAeE]*[']([^']|(['][']))+['])"         // C'ABCD' ebcdic or ascii self def. term // RPI 270, 274
 					+ "|([cC][\"]([^\"]|([\"][\"]))+[\"])"    // C"ABCD" ascii self def. term   RPI73, 274
@@ -1301,10 +1304,10 @@ public  class  mz390 {
 		 * 2.  load it if found
 		 * 3.  add macro entry or dummy entry
 		 */
-		cur_mac_file_name = tz390.find_file_name(tz390.dir_mac,bal_op,tz390.mac_type,tz390.dir_cur);
-		if (cur_mac_file_name != null){
+		cur_mac_file_path = tz390.find_file_name(tz390.dir_mac,bal_op,tz390.mac_type,tz390.dir_cur);
+		if (cur_mac_file_path != null){
 			load_type = load_mac_file;
-			load_file_name = cur_mac_file_name;
+			load_file_name = cur_mac_file_path;
 			load_mac();
 			find_mac_name_index = load_mac_name_index;
 		} else { // add dummy mac to prevent search
@@ -1805,10 +1808,10 @@ public  class  mz390 {
 				if (!tz390.add_key_index(cur_mac_file_num)){
 					abort_error(172,"key search table exceeded adding " + mac_file_key);
 				}
-				mac_file_name[cur_mac_file_num] = mac_file_key;
+				mac_file_path[cur_mac_file_num] = mac_file_key;
 			}
 		}
-		mac_file_name_num[cur_mac_file] = cur_mac_file_num;
+		mac_file_num[cur_mac_file] = cur_mac_file_num;
 	}
 	private void add_mac_label(int mac_index
 			,String mac_label, int lab_line){
@@ -1893,7 +1896,7 @@ public  class  mz390 {
 						cur_mac_file_num = mac_file_cur_file_num[cur_mac_file];
 						cur_mac_line_num = mac_file_cur_line_num[cur_mac_file];
 						if (tz390.opt_tracem){
-							tz390.put_trace("END OF COPY"); 
+							tz390.put_trace("ENDING  COPY LVL=" + (cur_mac_file+2) + " " + mac_file[cur_mac_file+1].getPath()); 
 						}
 					}
 				} else {
@@ -1930,9 +1933,10 @@ public  class  mz390 {
 						temp_line = tz390.trim_trailing_spaces(temp_line,72); //RPI124
 					}
 					if  (temp_line.length() >= 16
-							&& temp_line.substring(0,15).equals("               ")){ // RPI 167
+							&& temp_line.substring(0,15).equals("               ")
+						){ // RPI 167
 						mac_line = mac_line + tz390.trim_continue(temp_line,tz390.split_cont); // RPI 315, RPI 463
-					} else { 
+					} else if (temp_line.length() != 0) { // RPI 492 blank line 
 						log_error(11,"continuation line < 16 characters - " + temp_line);
 					}
 				} 
@@ -1948,7 +1952,7 @@ public  class  mz390 {
 		 * 2.  update &SYSSTMT
 		 */  
 		mac_file_line[mac_line_index]     = mac_line;
-		mac_file_name_num[mac_line_index] = cur_mac_file_num;
+		mac_file_num[mac_line_index] = cur_mac_file_num;
 		mac_file_line_num[mac_line_index] = cur_mac_line_num;
 		bal_xref_index = mac_line_index;
 		update_sysstmt();
@@ -2056,6 +2060,9 @@ public  class  mz390 {
 			}
 			return;
 		}
+		if  (cur_mac_file > 0 && tz390.opt_tracem){
+			tz390.put_trace("LOADING COPY LVL=" + (cur_mac_file+1) + " " + new_mac_name);
+		}
 		switch (load_type){ // RPI 300
 		case 0: // load_mlc
 		case 1: // load_mac_file
@@ -2120,17 +2127,9 @@ public  class  mz390 {
 			&& !bal_eof){
 			call_az390_pass_bal_line(text_line); // RPI 415
 		}
+		tz390.inc_cur_bal_line_num(text_line);
 		if (tz390.opt_tracem && text_line != null){
-			if (!end_found && mac_call_level >= 0){
-				if (mac_line_index >= mlc_line_end && mac_line_index > 0){
-					trace_pfx =tz390.left_justify(mac_name[mac_call_name_index[mac_call_level]],9) + tz390.right_justify("" + mac_file_line_num[mac_line_index-1],6);
-				} else {
-					trace_pfx = tz390.left_justify(mac_name[mac_call_name_index[mac_call_level]],9) + tz390.right_justify("" + mac_file_line_num[mac_line_index],6);
-				}
-			} else {
-				trace_pfx = "MZ390 STATS    ";
-			}
-			tz390.put_trace(trace_pfx +" BAL=" + text_line);
+			tz390.put_trace(trace_pfx + tz390.get_cur_bal_line_num(tz390.cur_bal_line_num,mac_call_level) + text_line);
 		}
 		if (!tz390.opt_bal){
 			return;
@@ -2180,7 +2179,12 @@ public  class  mz390 {
 			return;
 		}
 		az390.mz390_errors = mz390_errors; //update mz390 errors for PRN
-		az390.pass_bal_line(text_line,mac_file_name_num[bal_xref_index],mac_file_line_num[bal_xref_index]);
+		if (mac_call_level >=0){
+			cur_mac_name = mac_name[mac_call_name_index[mac_call_level]];
+		} else {
+			cur_mac_name = null;
+		}
+		az390.pass_bal_line(text_line,cur_mac_name,mac_file_num[bal_xref_index],mac_file_line_num[bal_xref_index]);
 		if (az390.pass_bal_eof){
 			bal_eof = true;
 		}
@@ -2214,16 +2218,10 @@ public  class  mz390 {
 		 * 1.  Substitute any macro variables found
 		 * 2.  Set bal_label and bal_o
 		 */
-		if (tz390.opt_tracem 
-			&& !(bal_line.length() > 0 
-					&& bal_line.charAt(0) == '*')){
-			pc_trace_gen = true;
-			trace_pfx = tz390.left_justify(mac_name[mac_call_name_index[mac_call_level]],9) + tz390.right_justify("" + mac_file_line_num[mac_line_index],6);
-			tz390.put_trace(trace_pfx +" SRC=" + bal_line);
-		}
 		bal_label = null;
 		bal_op    = null;
 		bal_parms = null;
+		trace_pfx = "" + tz390.left_justify(mac_name[mac_call_name_index[mac_call_level]],9) + tz390.right_justify("" + mac_file_line_num[mac_line_index],6) + " ";
 		if  (bal_line == null 
 				|| bal_line.length() == 0
 				|| (bal_line.length() > 1 && bal_line.substring(0,2).equals(".*"))){
@@ -2241,6 +2239,13 @@ public  class  mz390 {
 			if (exp_var_replacement_change){
 				split_bal_line();
 			}
+		} else {
+			exp_var_replacement_change = true; // set for mac stmts
+		}
+		if (tz390.opt_tracem 
+			&& exp_var_replacement_change){
+			pc_trace_gen = true;
+			tz390.put_trace(trace_pfx + "        " + mac_file_line[mac_line_index]);
 		}
 		save_bal_op = bal_op;    
 		if (bal_op != null && bal_op.length() > 0){
@@ -4201,8 +4206,8 @@ public  class  mz390 {
                 log_error(182,"undefined prefix operator");
 			}
 			break;
-		case 'I': // ISBIN, ISDEC, ISHEX
-			if (exp_stk_op[tot_exp_stk_op].equals("I'")){// I'sym returns integer value
+		case 'I': // i'. ISBIN, ISDEC, ISHEX
+		    if (exp_stk_op[tot_exp_stk_op].equals("I'")){// I'sym returns integer value
 			    exec_pc_pfx_i();
 	            gen_exp_pc(pc_op_pfx_i);
 			} else if (exp_stk_op[tot_exp_stk_op].equals("ISBIN")){
@@ -4532,24 +4537,30 @@ public  class  mz390 {
 			tz390.put_trace("NOT");
 		}
 		if (tot_exp_stk_var > 0){
+			seta_value1 =  get_seta_stack_value(-1);
+			seta_value  = ~ seta_value1;
 			switch (exp_stk_val_type[tot_exp_stk_var - 1]){
 			case 1: // not seta
-				seta_value = ~ exp_stk_seta[tot_exp_stk_var - 1];
 				exp_stk_seta[tot_exp_stk_var - 1] = seta_value;  
 				break;
 			case 2: // not setb
-				if (exp_stk_setb[tot_exp_stk_var - 1] != 1){ //RPI147
+				if (seta_value1 != 1){ //RPI147
 					setb_value = 1; 
 				} else {
 					setb_value = 0;
 				}
 				exp_stk_setb[tot_exp_stk_var - 1] = setb_value;
-				seta_value = setb_value; // for pc trace
+				seta_value = setb_value;
 				break;
-			case 3: // not setc
-				seta_value =  ~ get_seta_stack_value(-1);
-				exp_stk_val_type[tot_exp_stk_var - 1] = val_seta_type;
+			case 3: // not setc				
+				exp_stk_val_type[tot_exp_stk_var - 1] = val_setb_type;
+				if (seta_value1 != 1){ //RPI147
+					setb_value = 1; 
+				} else {
+					setb_value = 0;
+				}
 				exp_stk_seta[tot_exp_stk_var - 1] = seta_value;
+				seta_value = setb_value;
 				break;
 			}
 		} else {
@@ -4572,11 +4583,13 @@ public  class  mz390 {
 				exp_stk_seta[tot_exp_stk_var - 2] = seta_value;
 				break;
 			case 2: // and setb
-				exp_stk_setb[tot_exp_stk_var - 2] = (byte) seta_value;
+				setb_value = (byte) seta_value;
+				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			case 3: // and setc
 				exp_stk_val_type[tot_exp_stk_var - 2] = val_setb_type;
-				exp_stk_setb[tot_exp_stk_var - 2] = (byte) seta_value;
+				setb_value = (byte) seta_value;
+				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			}
 			tot_exp_stk_var--;
@@ -4588,7 +4601,7 @@ public  class  mz390 {
 		/*
 		 * perform logical or operation on stk vars
 		 */
-		if (tot_exp_stk_var > 0){
+		if (tot_exp_stk_var > 1){
 			seta_value1 = get_seta_stack_value(-2);
 			seta_value2 = get_seta_stack_value(-1);
 			if (tz390.opt_traceall){
@@ -4600,11 +4613,13 @@ public  class  mz390 {
 				exp_stk_seta[tot_exp_stk_var - 2] = seta_value;
 				break;
 			case 2: // or setb
-				exp_stk_setb[tot_exp_stk_var - 2] = (byte) seta_value;
+				setb_value = (byte) seta_value;
+				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			case 3: // or setc
 				exp_stk_val_type[tot_exp_stk_var - 2] = val_setb_type;
-				exp_stk_setb[tot_exp_stk_var - 2] = (byte) seta_value;
+				setb_value = (byte) seta_value;
+				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			}
 			tot_exp_stk_var--;
@@ -4616,7 +4631,7 @@ public  class  mz390 {
 		/*
 		 * perform logical xor operation on stk vars
 		 */
-		if (tot_exp_stk_var > 0){
+		if (tot_exp_stk_var > 1){
 			seta_value1 = get_seta_stack_value(-2);
 			seta_value2 = get_seta_stack_value(-1);
 			if (tz390.opt_traceall){
@@ -4628,11 +4643,13 @@ public  class  mz390 {
 				exp_stk_seta[tot_exp_stk_var - 2] = seta_value;
 				break;
 			case 2: // xor setb
-				exp_stk_setb[tot_exp_stk_var - 2] = (byte) seta_value;
+				setb_value = (byte) seta_value;
+				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			case 3: // xor setc
 				exp_stk_val_type[tot_exp_stk_var - 2] = val_setb_type;
-				exp_stk_setb[tot_exp_stk_var - 2] = (byte) seta_value;
+				setb_value = (byte) seta_value;
+				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			}
 			tot_exp_stk_var--;
@@ -5537,7 +5554,7 @@ public  class  mz390 {
 		if (tz390.opt_traceall){
 			tz390.put_trace(" MZ390 CALLING AZ390 SYM LOCK");
 		}
-		az390.set_sym_lock("mz390_find for " + symbol + "(" + (mac_file_name_num[mac_line_index]+1) + "/" + mac_file_line_num[mac_line_index] + ")");
+		az390.set_sym_lock("mz390_find for " + symbol + "(" + (mac_file_num[mac_line_index]+1) + "/" + mac_file_line_num[mac_line_index] + ")");
 		index = az390.find_sym(symbol);
        	az390.reset_sym_lock();
         return index;
@@ -6393,7 +6410,10 @@ public  class  mz390 {
 						call_line = bal_line;
 					}
 				}
+				bal_xref_index = save_mac_line_index; 
+				mac_call_level--;
 				put_bal_line("*MCALL #=" + sysndx + " LV=" +  sysnest + " LN=" + call_line_no + " " + call_line);
+			    mac_call_level++;
 			}
 			/*
 			 * 1.  parse proto-type and add initial
@@ -6472,12 +6492,12 @@ public  class  mz390 {
 		 * opt_maxfile - nested copy file I/O plus 
 		 * reference File with file paths for cross reference
 		 */
-		mac_file_name         = new String[tz390.opt_maxfile];
 		mac_file              = (File[])Array.newInstance(File.class,tz390.opt_maxfile);
 		mac_file_buff         = (BufferedReader[])Array.newInstance(BufferedReader.class,tz390.opt_maxfile);
 		mac_file_cur_file_num = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
 		mac_file_cur_line_num = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
 		mac_file_errors       = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
+		mac_file_path         = new String[tz390.opt_maxfile];
 		mac_name              = new String[tz390.opt_maxfile];
 		mac_name_line_start   =(int[])Array.newInstance(int.class,tz390.opt_maxfile);
 		mac_name_line_end   =(int[])Array.newInstance(int.class,tz390.opt_maxfile);
@@ -6488,7 +6508,7 @@ public  class  mz390 {
 		 */
 		mac_file_line      = new String[tz390.opt_maxline];
 		mac_file_line_num  = (int[])Array.newInstance(int.class,tz390.opt_maxline);
-		mac_file_name_num  = (int[])Array.newInstance(int.class,tz390.opt_maxline);
+		mac_file_num  = (int[])Array.newInstance(int.class,tz390.opt_maxline);
 		mac_file_line[0] = "";
 		/*
 		 * opt_maxgbl - global set variable names and cells
@@ -7121,7 +7141,7 @@ public  class  mz390 {
 			if (tz390.opt_listfile && tz390.opt_bal){
 				String xref_msg = "MZ390I FID=" + tz390.right_justify(""+(index+1),3)
 						        + " ERR=" + tz390.right_justify(""+mac_file_errors[index],2)
-						        + " " + mac_file_name[index];
+						        + " " + mac_file_path[index];
 			    put_log(xref_msg);
 			    if (!tz390.opt_asm && mac_file_errors[index] > 0){  // RPI 425
 			    	tz390.put_systerm(xref_msg);
@@ -7131,7 +7151,7 @@ public  class  mz390 {
 				// transfer xref file/line to az390 for
 				// combined error xref at end of PRN
 				az390.tot_xref_files = tot_mac_file_name;
-				az390.xref_file_name[index] = mac_file_name[index];
+				az390.xref_file_name[index] = mac_file_path[index];
 				az390.xref_file_errors[index] = az390.xref_file_errors[index] + mac_file_errors[index];
 			}
 			index++;
@@ -7148,7 +7168,7 @@ public  class  mz390 {
 	}
 	private void close_files(){
 		/*
-		 * close bal, pch, systerm
+		 * close bal, pch, err, trm
 		 */
 		if (tz390.opt_bal){
 			try {
@@ -7165,6 +7185,7 @@ public  class  mz390 {
 			pch_file_index++;
 		}
 		tz390.close_systerm(mz390_rc);
+		tz390.close_trace_file();
 	}
 	private void close_dat_file(int index){
 		/*
@@ -7233,11 +7254,11 @@ public  class  mz390 {
 			return;
 		}
 		log_to_bal = true;
-		int file_index = mac_file_name_num[mac_line_index];
+		int file_index = mac_file_num[mac_line_index];
 		mac_file_errors[file_index]++;
-		String error_msg = "MZ390E error " + error
-		+ " file=" + (file_index+1)
-		+ " line=" + mac_file_line_num[mac_line_index]
+		String error_msg = "MZ390E error " + tz390.right_justify("" + error,3)
+		+ " file=" + tz390.right_justify("" + (file_index+1),3)
+		+ " line=" + tz390.right_justify("" + mac_file_line_num[mac_line_index],6)
 		+ " " + msg;
 		put_log(error_msg);
 		tz390.put_systerm(error_msg);
@@ -7262,7 +7283,7 @@ public  class  mz390 {
 		tz390.z390_abort = true;
 		tz390.opt_con = true; // RPI 453
 		log_to_bal = true;
-		int file_index = mac_file_name_num[mac_line_index];
+		int file_index = mac_file_num[mac_line_index];
 		mac_file_errors[file_index]++;  // RPI 432
 		String err_line_and_num = "";
 		if (mac_line_index < tz390.opt_maxline){
@@ -7619,7 +7640,8 @@ public  class  mz390 {
 		if (tz390.opt_tracem 
 				&& !(mac_file_line[mac_line_index].length() > 0 
 						&& mac_file_line[mac_line_index].charAt(0) == '*')){
-				tz390.put_trace(tz390.left_justify(mac_name[mac_call_name_index[mac_call_level]],9) + tz390.right_justify("" + mac_file_line_num[mac_line_index],6) +" SRC=" + mac_file_line[mac_line_index]);
+			trace_pfx = tz390.left_justify(mac_name[mac_call_name_index[mac_call_level]],9) + tz390.right_justify("" + mac_file_line_num[mac_line_index],6) + "        ";	
+			tz390.put_trace(trace_pfx + " " + mac_file_line[mac_line_index]);
 			}
 	    tot_exp_stk_var = 0;
 	    tot_pcl_exec++;
@@ -7997,12 +8019,11 @@ public  class  mz390 {
     	if (pc_loc == 0){
     		// add least recently used pc list
     		// to free list and update pc_lru
-    		if (pcl_lru > 0){
+    		if (pcl_lru > 0 && pcl_lru != mac_line_index){ 
                 reuse_pc(pcl_lru);
                 pc_loc = pc_free;
-                pc_free = pc_next[pc_loc];
     		} else {
-    			abort_pc("pc lru not found");
+    			abort_pc("MAXPC limit exceeded for single statement");
     		}
     	}
     	// allocate first free pc entry
@@ -8016,6 +8037,8 @@ public  class  mz390 {
     		if (pcl_mru == 0){
     			pcl_mru = mac_line_index;
     			pcl_lru = pcl_mru;
+    		} else {
+    			update_mru(); 
     		}
     	} else {
     		// add pc to alloc list for mac line
@@ -8059,7 +8082,11 @@ public  class  mz390 {
     	 */
 		tot_pcl_reuse++;
 		pc_free = pcl_start[index];
+		if (tz390.opt_traceall){
+			tz390.put_trace("PC LRU RELEASING " + pcl_start[pcl_lru] + " - " + pcl_end[pcl_lru]);
+		}
 		pcl_start[index] = 0;
+		pcl_end[index]   = 0;
 		if (index == pcl_mru){
 			pcl_mru = pcl_mru_next[pcl_mru];
 		}
@@ -8121,20 +8148,20 @@ public  class  mz390 {
 		case 17: // trace pc_op_compgt     compare greater than
 		case 18: // trace pc_op_comple     compare greater less than or equal
 		case 19: // trace pc_op_complt     compare equal
-		case 20: // tr+ace pc_op_compne     compare greater than or equal
+		case 20: // trace pc_op_compne     compare greater than or equal
 		    text = "(" + get_pc_trace_val(val_type1,1) + "," + get_pc_trace_val(val_type1,2) + ")=" + setb_value;
 			break;
 		case 21: // trace pc_op_ucomp  compliement value on stack
 			text = "(" + (-seta_value) + ")=" + seta_value;
 			break;
 		case 22: // trace pc_op_dup    duplicate string
-			text = "()='" + setc_value + "'";
+			text = "(" + seta_value1 + ",'" + setc_value1 + "')='" + setc_value + "'";
 			break;
 		case 23: // trace pc_op_sublst calculate setc sublist
-			text = "()=" + pc_push_var_setc_value;
+			text = "('" + pc_sublst_value1 + "'," + set_sub + ")=" + pc_push_var_setc_value;
 			break;
 		case 24: // trace pc_op_substr calculate setc substring
-			text = "()='" + setc_value + "'";
+			text = "('" + setc_value1 + "'," + seta_value1 + "," + seta_value2 + ")='" + setc_value + "'";
 			break;
 		case 25: // trace pc_op_inc
 		case 26: // trace pc_op_dec
@@ -8152,103 +8179,130 @@ public  class  mz390 {
 	    case 30: // trace pc_op_stords store subscripted dynamic var using name and subscript on stack
             text = "(" + pc_setc[pc_loc] + "," + store_sub + ")=" + get_pc_trace_val(get_val_type(),3);
 			break;
-	    case 31: // gen pc_op_pfx_a A' lookahead defined symbol 
-			text = "()=" + setb_value;
+	    case 31: // trace pc_op_pfx_a A' lookahead defined symbol 
+			text = "('" + setc_value1 + "')=" + seta_value;
 			break;
 		case 32: // trace pc_op_pfx_d D' ordinary defined symbol
-			text = "()=" + setb_value;
+			text = "('" + setc_value1 + "')=" + setb_value;
 			break;
 		case 33: // trace pc_op_pfx_i I' integer count
-			text = "()=" + seta_value;
+			text = "('" + setc_value1 + "')=" + seta_value;
 			break;
 		case 34: // trace pc_op_pfx_k K' character count
-			text = "()=" + seta_value;
+			text = "('" + setc_value1 + "')=" + seta_value;
 			break;
 		case 35: // trace pc_op_pfx_l L' ordinary symbol length
-			text = "()=" + seta_value;
+			text = "('" + setc_value1 + "')=" + seta_value;
 			break;
 		case 36: // trace pc_op_pfx_n N' number of sublist operands
-			text = "()=" + seta_value;
+			switch (var_type){
+			case 21:
+			case 22:
+			case 23:
+				if (var_loc == var_lcl_loc){
+					setc_value1 = lcl_set_name[var_name_index];
+				} else {
+					setc_value1 = gbl_set_name[var_name_index];
+				}
+				break;
+			case 24:
+			case 25:
+				break;
+			case 26:
+				setc_value1 = "&SYSLIST";
+				break;
+			default:
+				abort_pc("invalide N' var type");
+			}
+			text = "('" + setc_value1 + "')=" + seta_value;
 			break;
 		case 37: // trace pc_op_pfx_o O' operator
-			text = "()=" + setb_value;
+			text = "('" + setc_value1 + "')='" + setc_value + "'";
 			break;
 		case 38: // trace pc_op_pfx_s S' scale factor  
-			text = "()=" + seta_value;
+			text = "('" + setc_value1 + "')=" + seta_value;
+			break;
+		case 39: // trace pc_op_pfx_t T' symbol type
+			text = "('" + setc_value1 + "')='" + setc_value + "'";
+			break; 
+		case 40: // trace pc_op_pushs push symbol abs value else 0
+	        text = "(" + pc_setc[pc_loc] + ")=" + seta_value;
 			break;
 		case 45: // trace pc_op_a2b  convert value to binary string (3 = '00000011')
 		case 46: // trace pc_op_a2c  convert value to character string (240 = '1')
 		case 47: // trace pc_op_a2d   convert value to decimal string (1 = '1')
 		case 48: // trace pc_op_a2x  convert value to hex string (240 = 'F0')
-		case 39: // trace pc_op_pfx_t T' symbol type
-			text = "()='" + setc_value + "'";
+			text = "(" + seta_value1 + ")='" + setc_value + "'";
 			break; 
-		case 40: // trace pc_op_pushs push symbol abs value else 0
-	        text = "(" + pc_setc[pc_loc] + ")=" + seta_value;
-			break;
 		case 49: // trace pc_op_and  logical and (NC)
+		    text = "(" + seta_value1 + "," + seta_value2 + ")=" + seta_value;
+		    break;
 		case 50: // trace pc_op_b2a  convert binary string to value (B2A('100') = 4)
 	        text = "(" + setc_value + ")=" + seta_value;
 			break;
 		case 51: // trace pc_op_b2c  convert binary string to character string ('11110000' = '1')
 		case 52: // trace pc_op_b2d  convert binary string to decimal string ('100' = '4')
 		case 53: // trace pc_op_b2x  convert binary string to hex string ('11110000' = 'F0')
-			text = "()='" + setc_value + "'";
+			text = "('" + setc_value1 + "')='" + setc_value + "'";
 			break;
 		case 54: // trace pc_op_c2a  convert characters to value (C2A('0') = 240)
-	        text = "()=" + seta_value;
+	        text = "('" + setc_value + "')=" + seta_value;
 			break;
 		case 55: // trace pc_op_c2b  convert character string to binary string ('1' = '11110000')
 		case 56: // trace pc_op_c2d   convert character string to decimal string ('1' = '240')
 		case 57: // trace pc_op_c2x  convert character string to hex string ('1' = 'F0')
-			text = "()='" + setc_value + "'";
+			text = "('" + setc_value1 + "')='" + setc_value + "'";
 			break;			
 		case 58: // trace pc_op_d2a  convert decimal string to value 
-	        text = "()=" + seta_value;
+	        text = "('" + setc_value1 + "')=" + seta_value;
 			break;
 		case 59: // trace pc_op_d2b  convert decimal string to binary string ('4' = '100')
 		case 60: // trace pc_op_d2c   convert decimal string to character string('240'  = '1')
 		case 61: // trace pc_op_d2x    convert decimal string to hex string ('240' = 'F0') 
-			text = "()='" + setc_value + "'";
+			text = "('" + setc_value1 + "')='" + setc_value + "'";
 			break;	
 		case 62: // trace pc_op_dclen  length of string after reducing double ' and & 
-	        text = "()=" + seta_value;
+	        text = "('" + setc_value1 + "')=" + seta_value;
 			break;
 		case 63: // trace pc_op_dcval  return string with double ' and & reduced 
 		case 64: // trace pc_op_dcequo return string without first and last ' if any 
 		case 65: // trace pc_op_double double quotes and & in string (NC)
-			text = "()='" + setc_value + "'";
+			text = "('" + setc_value1 + "')='" + setc_value + "'";
 			break;	
 		case 66: // trace pc_op_find   return index of any char in string2 found in string1 (NC)
 		case 67: // trace pc_op_index  return index of string2 found in string1 else 0 (NC)
-			text = "()=" + seta_value;
+			text = "('" + setc_value1 + "','" + setc_value2 + "')=" + seta_value;
 			break;	
 		case 68: // trace pc_op_isbin  return 1 if valid binary string else 0
 		case 69: // trace pc_op_isdec  return 1 if valid decimal string else 0 
 		case 70: // trace pc_op_ishex  return 1 if valid hex string else 0
 		case 71: // trace pc_op_issym  return 1 if valid character string for symbol else 0
-			text = "()=" + setb_value;
+			text = "('" + setc_value1 + "')=" + setb_value;
 			break;	
 		case 72: // trace pc_op_lower  return lower case string (NC)
-			text = "()=" + setc_value;
+			text = "('" + setc_value1 + "')='" + setc_value + "'";
 			break;
 		case 73: // trace pc_op_not    logical or arithmetic not (NC)
+	        text = "(" + seta_value1 + ")=" + seta_value;
+			break;
 		case 74: // trace pc_op_or     logical or (NC)
-	        text = "()=" + seta_value;
+	        text = "(" + seta_value1 + "," + seta_value2 + ")=" + seta_value;
 			break;
 		case 75: // trace pc_op_upper  return upper case string (NC)
+			text = "('" + setc_value1 + "')='" + setc_value + "'";
+			break;
 		case 76: // trace pc_op_signed return decimal string with minus sign if negative
-			text = "()=" + setc_value;
+			text = "(" + seta_value1 + ")='" + setc_value + "'";
 			break;
 		case 77: // trace pc_op_sla    shift left arithmetic (2 SLA 1 = 4)
 		case 78: // trace pc_op_sll    shift left logical (2 SLL 1 = 4)
 		case 79: // trace pc_op_sra    shift right arithmetic (4 SRA 1 = 2)
 		case 80: // trace pc_op_srl    shift right logical (4 SRL 1 = 2)
-			text = "()=" + seta_value;
+			text = "(" + seta_value1 + "," + seta_value2 + ")=" + seta_value;
 			break;
-		case 81: // trace pc_op_sysattra return assembler attribute for symbol (EQU 4th)
-		case 82: // trace pc_op_sysattrp  return program attribute for symbol (EQU 5th)
-			text = "()=" + setc_value;
+		case 81: // trace pc_op_sattra return assembler attribute for symbol (EQU 4th)
+		case 82: // trace pc_op_sattrp  return program attribute for symbol (EQU 5th)
+			text = "('" + setc_value1 + "')='" + setc_value + "'";
 			break;
 		case 83: // trace pc_op_x2a   convert hex string to value (X2A('F0') = 240)  
 			text = "()=" + seta_value;
@@ -8256,10 +8310,10 @@ public  class  mz390 {
 		case 84: // trace pc_op_x2b   convert hex string to binary string ('F0' = '11110000')
 		case 85: // trace pc_op_x2c    convert hex string to character string('F0'  = '1')
 		case 86: // trace pc_op_x2d   convert hex string to decimal string ('F0' = '240') 
-			text = "()=" + setc_value;
+			text = "('" + setc_value1 + "')='" + setc_value + "'";
 			break;
 		case 87: // trace pc_op_xor   logical exclusive or (NC) 			
-		    text = "()=" + seta_value;
+		    text = "(" + seta_value1 + "," + seta_value2 + ")=" + seta_value;
 			break;
 		default:
 			abort_pc("invalid pc op - " + pc_op[pc_loc]);
@@ -8698,8 +8752,8 @@ public  class  mz390 {
     	 */
 		set_sub = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
-		setc_value = exp_stk_setc[tot_exp_stk_var - 1]; // get parm value set by find_var
-		setc_value = get_sublist(setc_value,set_sub);
+		pc_sublst_value1 = exp_stk_setc[tot_exp_stk_var - 1]; // get parm value set by find_var
+		setc_value = get_sublist(pc_sublst_value1,set_sub);
 		pc_push_var_setc_value = "'" + setc_value + "'";
 		exp_stk_val_type[tot_exp_stk_var - 1] = val_setc_type;  // RPI 447
 		exp_stk_setc[tot_exp_stk_var - 1] = setc_value; // update sublist string
@@ -8718,7 +8772,8 @@ public  class  mz390 {
 			if (tz390.opt_traceall){
 				tz390.put_trace("SUBSTRING " + exp_stk_setc[tot_exp_stk_var - 1] + "(" + seta_value1 + "," + seta_value2 + ")");
 			}
-			setc_len = exp_stk_setc[tot_exp_stk_var - 1].length();
+			setc_value1 = exp_stk_setc[tot_exp_stk_var-1];
+			setc_len = setc_value1.length();
 			if (seta_value1 >= 0 && seta_value2 >= 0){
 				if (seta_value1 <= setc_len && seta_value2 > 0){
 					int e1 = seta_value1 - 1; 
@@ -9142,29 +9197,13 @@ public  class  mz390 {
     	 * (shared by exp and pc)
     	 */
     	if (tot_exp_stk_var > 0){
-			var_type = exp_stk_var_type[tot_exp_stk_var -1];
-			var_loc  = exp_stk_var_loc[tot_exp_stk_var -1];
-			var_name_index = exp_stk_var_name_index[tot_exp_stk_var -1];
-			switch (var_type){ // RPI 447 was exp_stk_type
-			case 1: // seta
-			case 2: // setb
-				log_error(196,"A' invalid type");
-			case 3: // setc
-			case 4: // parm var_parm_type
-			case 5: // subscript var_subscript type
-			case 6: // sublist var_sublist_type	
-				setc_value = exp_stk_setc[tot_exp_stk_var-1];
-				tot_exp_stk_var--;
-				if (mz390_find_sym(setc_value) != -1){
-					seta_value = 1;
-				} else {
-					seta_value = 0;
-				}
-				put_seta_stack_var();
-				break;
-			default: 
-				log_error(159,"invalid argument for N'");
+			setc_value1 = get_setc_stack_value();
+			if (mz390_find_sym(setc_value1) != -1){
+				seta_value = 1;
+			} else {
+				seta_value = 0;
 			}
+			put_seta_stack_var();
 			exp_var_pushed = true; // prevent unary minus
 		} else {
 			log_error(67,"A' missing variable");
@@ -9176,15 +9215,16 @@ public  class  mz390 {
     	 * indicating if defined as ordinary symbol yet
     	 */
     	if (tot_exp_stk_var > 0){
-			setc_value = get_setc_stack_value();
+			setc_value1 = get_setc_stack_value();
 			if (!tz390.opt_asm){
 				setb_value = 0;  
-			}
-			int cur_sym = mz390_find_sym(setc_value);
-			if (cur_sym != -1 && az390.sym_def[cur_sym] > az390.sym_def_ref){
-				setb_value = 1;
 			} else {
-				setb_value = 0;
+				int cur_sym = mz390_find_sym(setc_value1);
+				if (cur_sym != -1 && az390.sym_def[cur_sym] > az390.sym_def_ref){
+					setb_value = 1;
+				} else {
+					setb_value = 0;
+				}
 			}
 			put_setb_stack_var();
 		} else {
@@ -9196,15 +9236,16 @@ public  class  mz390 {
     	 * return I'sym integer value
     	 */
     	if (tot_exp_stk_var > 0){
-			setc_value = get_setc_stack_value();
+			setc_value1 = get_setc_stack_value();
 			if (!tz390.opt_asm){
 				seta_value = 0;  
-			}
-			int cur_sym = mz390_find_sym(setc_value);
-			if (cur_sym != -1 && az390.sym_def[cur_sym] > az390.sym_def_ref){
-				seta_value = az390.sym_int[cur_sym];
 			} else {
-				seta_value = 0;
+				int cur_sym = mz390_find_sym(setc_value1);
+				if (cur_sym != -1 && az390.sym_def[cur_sym] > az390.sym_def_ref){
+					seta_value = az390.sym_loc[cur_sym];
+				} else {
+					seta_value = 0;
+				}
 			}
 			put_seta_stack_var();
 		} else {
@@ -9216,8 +9257,8 @@ public  class  mz390 {
     	 * K'sym returns string length
     	 */
     	if (tot_exp_stk_var > 0){
-			setc_value = get_setc_stack_value();
-			seta_value = setc_value.length();
+			setc_value1 = get_setc_stack_value();
+			seta_value = setc_value1.length();
 			put_seta_stack_var();
 		} else {
 			log_error(197,"K' missing variable");
@@ -9228,8 +9269,8 @@ public  class  mz390 {
     	 * L'sym returns symbol length
     	 */
     	if (tot_exp_stk_var > 0){
-			setc_value = get_setc_stack_value();
-			seta_value = get_sym_len(setc_value);
+			setc_value1 = get_setc_stack_value();
+			seta_value = get_sym_len(setc_value1);
 			put_seta_stack_var();
 		} else {
 			log_error(198,"L' missing variable");
@@ -9276,15 +9317,15 @@ public  class  mz390 {
 			case 26: // sublist var_sublist_type
 				if (var_loc == var_syslist_loc      // RPI 447 was setb 
 					&& var_name_index == -1     // RPI 447 was seta
-						&& mac_call_level > 0){
+					&& mac_call_level > 0){
 					// syslist parm count
 					seta_value = mac_call_pos_tot[mac_call_level];
 					tot_exp_stk_var--; // remove syslist var
 					put_seta_stack_var();
 				} else {
 					// syslist parm sublist count
-					setc_value = get_setc_stack_value();
-					seta_value = get_sublist_count(setc_value);
+					setc_value1 = get_setc_stack_value();
+					seta_value = get_sublist_count(setc_value1);
 					put_seta_stack_var(); // RPI 447
 				}
 				break;
@@ -9307,8 +9348,8 @@ public  class  mz390 {
     	 *   U = unknown
     	 */
     	if (tot_exp_stk_var > 0){
-			setc_value = get_setc_stack_value().toUpperCase();
-			int opcode_type = find_opcode_type(setc_value);
+			setc_value1 = get_setc_stack_value().toUpperCase();
+			int opcode_type = find_opcode_type(setc_value1);
 			if (opcode_type >= 0){
 				if (opcode_type <= tz390.max_ins_type){
 					if (opcode_type == 3
@@ -9322,7 +9363,7 @@ public  class  mz390 {
 					setc_value = "A"; // assembler opcode
 				}
 			} else if (opcode_type == -1){
-				int macro_index = find_mac_entry(setc_value);
+				int macro_index = find_mac_entry(setc_value1);
 				if (macro_index > 0){
 					setc_value = "M";
 				} else if (macro_index == -1 
@@ -9344,11 +9385,11 @@ public  class  mz390 {
     	 * return exponent attrivute of ordinary symbol
     	 */
     	if (tot_exp_stk_var > 0){
-			setc_value = get_setc_stack_value();
+			setc_value1 = get_setc_stack_value();
 			if (!tz390.opt_asm){
 				seta_value = 0;  
 			}
-			int cur_sym = mz390_find_sym(setc_value);
+			int cur_sym = mz390_find_sym(setc_value1);
 			if (cur_sym != -1 && az390.sym_def[cur_sym] > az390.sym_def_ref){
 				seta_value = az390.sym_scale[cur_sym];
 			} else {
@@ -9364,23 +9405,27 @@ public  class  mz390 {
     	 * T'var/sym returns symbol type
     	 */
 		if (tz390.opt_asm && tot_exp_stk_var > 0){
-			setc_value = get_setc_stack_value();
-			int cur_sym = mz390_find_sym(setc_value);
-			if (cur_sym >= 0){
-				if (az390.sym_attr_elt[cur_sym] == az390.sym_attr_elt_def){
-					setc_value = "" + (char)tz390.ebcdic_to_ascii[az390.sym_attr[cur_sym] & 0xff];
-				} else {
-					setc_value = "" + (char)tz390.ebcdic_to_ascii[az390.sym_attr_elt[cur_sym] & 0xff];
-				}
+			setc_value1 = get_setc_stack_value();
+			if (!tz390.opt_asm){
+				setc_value = "U";
 			} else {
-				if (setc_value.length() > 0){
-					if (string_numeric(setc_value)){ // RPI 180, RPI 468
-						setc_value  = "N";
+				int cur_sym = mz390_find_sym(setc_value1);
+				if (cur_sym >= 0){
+					if (az390.sym_attr_elt[cur_sym] == az390.sym_attr_elt_def){
+						setc_value = "" + (char)tz390.ebcdic_to_ascii[az390.sym_attr[cur_sym] & 0xff];
 					} else {
-						setc_value = "U";
+						setc_value = "" + (char)tz390.ebcdic_to_ascii[az390.sym_attr_elt[cur_sym] & 0xff];
 					}
 				} else {
-					setc_value = "O";;
+					if (setc_value1.length() > 0){
+						if (string_numeric(setc_value1)){ // RPI 180, RPI 468
+							setc_value  = "N";
+						} else {
+							setc_value = "U";
+						}
+					} else {
+						setc_value = "O";;
+					}
 				}
 			}
 			put_setc_stack_var();
@@ -9416,16 +9461,16 @@ public  class  mz390 {
     	 * replace string on stack with upper case
     	 * 
     	 */
-		setc_value = get_setc_stack_value();
-		setc_value = setc_value.toUpperCase();
+		setc_value1 = get_setc_stack_value();
+		setc_value = setc_value1.toUpperCase();
 		put_setc_stack_var();
     }
     private void exec_pc_lower(){
     	/*
     	 * replace string on stack with lower case
     	 */
-		setc_value = get_setc_stack_value();
-		setc_value = setc_value.toLowerCase();
+		setc_value1 = get_setc_stack_value();
+		setc_value = setc_value1.toLowerCase();
 		put_setc_stack_var();
     }
     private void exec_pc_ago(){
@@ -9470,8 +9515,9 @@ public  class  mz390 {
     	 * convert int to binary string with
     	 * leading zeros to make length mult. 8
     	 */
-		setc_value = Integer.toString(get_seta_stack_value(-1),2);
+		seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
+    	setc_value = Integer.toString(seta_value1,2);
 		seta_value = setc_value.length();
 		seta_value = seta_value - seta_value/8*8;
 		if (seta_value != 0){
@@ -9483,13 +9529,13 @@ public  class  mz390 {
     	/*
     	 * convert int to character string
     	 */
-    	seta_value = get_seta_stack_value(-1);
+    	seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
 		setc_value = ""
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 24]
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 16 & 0xff]         
-			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 8  & 0xff]
-			       + (char)tz390.ebcdic_to_ascii[seta_value        & 0xff]					                               
+			       + (char)tz390.ebcdic_to_ascii[seta_value1 >>> 24]
+			       + (char)tz390.ebcdic_to_ascii[seta_value1 >>> 16 & 0xff]         
+			       + (char)tz390.ebcdic_to_ascii[seta_value1 >>> 8  & 0xff]
+			       + (char)tz390.ebcdic_to_ascii[seta_value1        & 0xff]					                               
 			       ;
 		put_setc_stack_var();
     }
@@ -9497,11 +9543,13 @@ public  class  mz390 {
     	/*
     	 * convert int to decimal string
     	 */
-    	seta_value = get_seta_stack_value(-1);
+    	seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
-		if (seta_value < 0){
-			seta_value = - seta_value;
-		}
+		if (seta_value1 < 0){
+			seta_value = - seta_value1;
+		} else {
+			seta_value = seta_value1;
+		}		
 		setc_value = Integer.toString(seta_value);
 		put_setc_stack_var();
     }
@@ -9509,9 +9557,9 @@ public  class  mz390 {
     	/*
     	 * convert int to hex string
     	 */
-    	seta_value = get_seta_stack_value(-1);
+    	seta_value1 = get_seta_stack_value(-1);
 		tot_exp_stk_var--;
-		setc_value = Integer.toString(seta_value,16).toUpperCase();
+		setc_value = Integer.toString(seta_value1,16).toUpperCase();
 		setc_value = ("00000000" + setc_value).substring(setc_value.length());
 		put_setc_stack_var();
     }
@@ -9519,7 +9567,8 @@ public  class  mz390 {
     	/*
     	 * convert binary string to int
     	 */
-    	setc_value = "B'" + get_setc_stack_value() + "'";
+    	setc_value1 = get_setc_stack_value();
+    	setc_value = "B'" + setc_value1 + "'";
 		exp_push_sdt();
     }
     private void exec_pc_b2c(){
@@ -9539,8 +9588,8 @@ public  class  mz390 {
     	/*
     	 * convert binary string to decimal string
     	 */
-    	setc_value = get_setc_stack_value();
-		seta_value = Integer.valueOf(setc_value,2);
+    	setc_value1 = get_setc_stack_value();
+		seta_value = Integer.valueOf(setc_value1,2);
 		if (seta_value < 0){
 			seta_value = - seta_value;
 		}
@@ -9551,7 +9600,8 @@ public  class  mz390 {
     	/*
     	 * convert binary string to hex string
     	 */
-    	seta_value = Integer.valueOf(get_setc_stack_value(),2);
+    	setc_value1 = get_setc_stack_value();
+    	seta_value = Integer.valueOf(setc_value1,2);
 		setc_value = Integer.toString(seta_value,16).toUpperCase();
 		setc_value = ("00000000" + setc_value).substring(setc_value.length());
 		put_setc_stack_var();
@@ -9568,7 +9618,8 @@ public  class  mz390 {
     	 * convert char string to binary string
     	 */
     	setc_value = "C'" + get_setc_stack_value() + "'";
-		if (!tz390.get_sdt_char_int(setc_value)){
+		setc_value1 = setc_value;
+    	if (!tz390.get_sdt_char_int(setc_value)){
 			log_error(178,"invalid character sdt " + setc_value);
 		}
 		seta_value = tz390.sdt_char_int; 
@@ -9585,6 +9636,7 @@ public  class  mz390 {
     	 * convert char string to decimal string
     	 */
 		setc_value = "C'" + get_setc_stack_value() + "'";
+		setc_value1 = setc_value;
 		if (!tz390.get_sdt_char_int(setc_value)){
 			log_error(179,"invalid character sdt " + setc_value);
 		}
@@ -9600,7 +9652,8 @@ public  class  mz390 {
     	 * convert char string to hex string
     	 */
     	setc_value = "C'" + get_setc_stack_value() + "'";
-		if (!tz390.get_sdt_char_int(setc_value)){
+		setc_value1 = setc_value;
+    	if (!tz390.get_sdt_char_int(setc_value)){
 			log_error(180,"invalid character sdt " + setc_value);
 		}
 		seta_value = tz390.sdt_char_int; 
@@ -9613,7 +9666,7 @@ public  class  mz390 {
     	 * convert decimal string to int
     	 */
     	seta_value = get_seta_stack_value(-1);
-		tot_exp_stk_var--;
+		setc_value1 = get_setc_stack_value();
 		put_seta_stack_var();
     }
     private void exec_pc_d2b(){
@@ -9621,7 +9674,7 @@ public  class  mz390 {
     	 * convert decimal string to binary string
     	 */
     	seta_value = get_seta_stack_value(-1);
-		tot_exp_stk_var--;
+		setc_value1 = get_setc_stack_value();
 		setc_value = Integer.toString(seta_value,2);
 		seta_value = setc_value.length();
 		seta_value = seta_value - seta_value/8*8;
@@ -9635,7 +9688,7 @@ public  class  mz390 {
     	 * convert decimal string to char string
     	 */
     	seta_value = get_seta_stack_value(-1);
-		tot_exp_stk_var--;
+		setc_value1 = get_setc_stack_value();
 		setc_value = ""
 			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 24]
 			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 16 & 0xff]         
@@ -9649,7 +9702,7 @@ public  class  mz390 {
     	 * convert decimal string to hex string
     	 */
 		seta_value = get_seta_stack_value(-1);
-		tot_exp_stk_var--;
+		setc_value1 = get_setc_stack_value();;
 		setc_value = Integer.toString(seta_value,16).toUpperCase();
 		setc_value = ("00000000" + setc_value).substring(setc_value.length());
 		put_setc_stack_var();
@@ -9659,7 +9712,8 @@ public  class  mz390 {
     	 * return dc length of string after
     	 * reducing double quotes and ampersands
     	 */
-    	setc_value = get_setc_stack_value().replaceAll("\\'\\'","\\'").replaceAll("\\&\\&","\\&"); 
+    	setc_value1 = get_setc_stack_value();
+    	setc_value = setc_value1.replaceAll("\\'\\'","\\'").replaceAll("\\&\\&","\\&"); 
 		seta_value = setc_value.length();
 		val_type = val_seta_type; 
 		put_seta_stack_var();
@@ -9668,18 +9722,21 @@ public  class  mz390 {
     	/*
     	 * return string with reduced quotes and ampersands
     	 */
-    	setc_value = get_setc_stack_value().replaceAll("\\'\\'","\\'").replaceAll("\\&\\&","\\&"); 
+    	setc_value1 = get_setc_stack_value();
+    	setc_value = setc_value1.replaceAll("\\'\\'","\\'").replaceAll("\\&\\&","\\&"); 
 		put_setc_stack_var();
     }
     private void exec_pc_dcequo(){
     	/*
     	 * remove start and ending quote if any
     	 */
-    	setc_value = get_setc_stack_value(); 
-		if (setc_value.length() > 1
-			&& setc_value.charAt(0) == '\'' 
-			&& setc_value.charAt(setc_value.length()-1) == '\''){
-			setc_value = setc_value.substring(1,setc_value.length()-1);
+    	setc_value1 = get_setc_stack_value();
+    	if (setc_value1.length() > 1
+			&& setc_value1.charAt(0) == '\'' 
+			&& setc_value1.charAt(setc_value1.length()-1) == '\''){
+			setc_value = setc_value1.substring(1,setc_value1.length()-1);
+    	} else {
+    		setc_value = setc_value1;
 		}
 		put_setc_stack_var();
     }
@@ -9687,16 +9744,17 @@ public  class  mz390 {
     	/*
     	 * double quotes within string
     	 */
-    	setc_value = get_setc_stack_value().replaceAll("\\'","\\'\\'").replaceAll("\\&","\\&\\&"); //RPI195
+    	setc_value1 = get_setc_stack_value();
+    	setc_value = setc_value1.replaceAll("\\'","\\'\\'").replaceAll("\\&","\\&\\&"); //RPI195
 		put_setc_stack_var();
     }
     private void exec_pc_isbin(){
     	/*
     	 * return 1 if binary string else 0
     	 */
-    	setc_value = get_setc_stack_value();
+    	setc_value1 = get_setc_stack_value();
 		try {
-			seta_value = Integer.valueOf(setc_value,2);
+			seta_value = Integer.valueOf(setc_value1,2);
 		    setb_value = 1;
 		} catch (Exception e){
 			setb_value = 0;
@@ -9707,9 +9765,9 @@ public  class  mz390 {
     	/*
     	 * if string decimal return 1 else 0
     	 */
-    	setc_value = get_setc_stack_value();
+    	setc_value1 = get_setc_stack_value();
 		try {
-			seta_value = Integer.valueOf(setc_value);
+			seta_value = Integer.valueOf(setc_value1);
 		    setb_value = 1;
 		} catch (Exception e){
 			setb_value = 0;
@@ -9720,9 +9778,9 @@ public  class  mz390 {
     	/*
     	 * return 1 if string hex else 0
     	 */
-    	setc_value = get_setc_stack_value();
+    	setc_value1 = get_setc_stack_value();
 		try {
-			seta_value = Integer.valueOf(setc_value,16);
+			seta_value = Integer.valueOf(setc_value1,16);
 		    setb_value = 1;
 		} catch (Exception e){
 			setb_value = 0;
@@ -9733,11 +9791,11 @@ public  class  mz390 {
     	/*
     	 * return 1 if symbol defined else 0
     	 */
-    	setc_value = get_setc_stack_value();
-		if (setc_value.length() > 0 && setc_value.length() <= 63){
-			symbol_match = symbol_pattern.matcher(setc_value); 
+    	setc_value1 = get_setc_stack_value();
+		if (setc_value1.length() > 0 && setc_value1.length() <= 63){
+			symbol_match = symbol_pattern.matcher(setc_value1); 
 			if (symbol_match.find() 
-				&& symbol_match.end() == setc_value.length()){
+				&& symbol_match.end() == setc_value1.length()){
 				setb_value = 1;
 			} else {
 				setb_value = 0;
@@ -9806,8 +9864,8 @@ public  class  mz390 {
     	 * return int value of assembler attribute
     	 * for symbol defined via EQU 4th parm
     	 */
-    	setc_value = get_setc_stack_value();
-		int cur_sym = mz390_find_sym(setc_value);
+    	setc_value1 = get_setc_stack_value();
+		int cur_sym = mz390_find_sym(setc_value1);
 		if (cur_sym >= 0){
 			setc_value = az390.sym_attra[cur_sym];
 		} else {
@@ -9820,8 +9878,8 @@ public  class  mz390 {
     	 * return int value of symbol program
     	 * attribute defined via EQU 5th parm
     	 */
-    	setc_value = get_setc_stack_value();
-    	int cur_sym = mz390_find_sym(setc_value);
+    	setc_value1 = get_setc_stack_value();
+    	int cur_sym = mz390_find_sym(setc_value1);
     	if (cur_sym >= 0){
     		seta_value = az390.sym_attrp[cur_sym];
     		setc_value = (""
@@ -9839,14 +9897,16 @@ public  class  mz390 {
     	/*
     	 * convert hex string to int
     	 */
-    	seta_value = Integer.valueOf(get_setc_stack_value(),16);
+    	setc_value1 = get_setc_stack_value();
+    	seta_value = Integer.valueOf(setc_value1,16);
 		put_seta_stack_var();
     }
     private void exec_pc_x2b(){
     	/*
     	 * convert hex string to binary string
     	 */
-    	seta_value1 = Integer.valueOf(get_setc_stack_value(),16);
+    	setc_value1 = get_setc_stack_value();
+    	seta_value1 = Integer.valueOf(setc_value1,16);
 		setc_value = Integer.toString(seta_value1,2);
 		seta_value = setc_value.length();
 		seta_value = seta_value - seta_value/8*8;
@@ -9859,7 +9919,8 @@ public  class  mz390 {
     	/*
     	 * convert hex string to char string
     	 */
-    	seta_value = Integer.valueOf(get_setc_stack_value(),16);
+    	setc_value1 = get_setc_stack_value();
+    	seta_value = Integer.valueOf(setc_value1,16);
 		setc_value = ""
 			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 24]
 			       + (char)tz390.ebcdic_to_ascii[seta_value >>> 16 & 0xff]         
@@ -9872,8 +9933,8 @@ public  class  mz390 {
     	/*
     	 * convert hex string to decimal string
     	 */
-    	setc_value = get_setc_stack_value();
-		seta_value = Integer.valueOf(setc_value,16);
+    	setc_value1 = get_setc_stack_value();
+		seta_value = Integer.valueOf(setc_value1,16);
 		if (seta_value < 0){
 			seta_value = - seta_value;
 		}

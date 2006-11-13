@@ -109,7 +109,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.1.02c";  //dsh
+    String version    = "V1.2.00";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -166,7 +166,7 @@ public  class  tz390 {
     int opt_maxlcl  = 100000;   
     int opt_maxline = 200000;
     int opt_maxparm = 10000;
-    int opt_maxpc   = 100000;  // RPI 439 pseudo code working set
+    int opt_maxpc   = 50000;  // RPI 439 pseudo code working set
     int opt_maxrld  = 10000;
     int opt_maxsym  = 50000;
     /*
@@ -228,6 +228,8 @@ public  class  tz390 {
     int opsyn_index = -1;
     String[]  opsyn_new_name = new String[max_opsyn];
     String[]  opsyn_old_name = new String[max_opsyn];
+    int cur_bal_line_num    = 0; // bal starting line number
+    int prev_bal_cont_lines = 0; // bal continue lines for prev bal
     /*
      * shared SYSTERM error file
      */
@@ -3329,7 +3331,7 @@ public void open_systerm(String z390_pgm){
 	/*
 	 * open systerm file else set null
 	 */
-	systerm_prefix = pgm_name + " " + z390_pgm + " ";
+	systerm_prefix = left_justify(pgm_name,9) + " " + z390_pgm + " ";
     if (systerm_file != null)return; // rpi 415
 	systerm_file_name = get_file_name(dir_err,opt_systerm,err_type);
     try {
@@ -3366,13 +3368,13 @@ public synchronized void put_systerm(String msg){ // RPI 397
 		}
 	}
 	if (trace_file_buff != null){
-		put_trace(msg); // RPI 484
+		put_trace("SYSTERM " + msg); // RPI 484
 	}
 }
 public synchronized void close_systerm(int rc){ // RPI 397
 	/*
 	 * close systerm error file if open
-	 * and close trace file if open RPI 484
+	 * 
 	 */
      if (systerm_file != null){
      	 if (opt_timing){
@@ -3399,6 +3401,11 @@ public synchronized void close_systerm(int rc){ // RPI 397
     		 System.out.println("TZ390E systerm file close error - " + e.toString());
     	 }
      }
+}
+public void close_trace_file(){
+	/*
+	 * close trace file if open RPI 484
+	 */
      if (trace_file_buff != null){
     	 try {
     		 trace_file_buff.close();
@@ -4186,5 +4193,33 @@ public void put_trace(String text){
 	} catch (Exception e){
 		abort_error(17,"trace file write error " + e.toString());
 	}
+	if (trace_file.length() > max_file_size){
+		abort_error(18,"maximum bal file size exceeded");
+	}
 }
+    public void inc_cur_bal_line_num(String text_line){
+	/*
+	 * 1.  inc cur_bal_line_num by 1
+	 * 2.  Return string with cur_bal_line_num
+	 *     plus "+" if mac_call_level > 0
+	 * 3.  inc cur_bal_line_num to skip any
+	 *     continuation lines before next call.
+	 */
+    	if (text_line == null)return;
+	    cur_bal_line_num = cur_bal_line_num + 1 + prev_bal_cont_lines;
+	    if (text_line != null && text_line.length() > 71){ // RPI 415 adj for continuations for xref
+	       prev_bal_cont_lines = 1 + (text_line.length()-72)/56;	
+	    }
+}
+    public String get_cur_bal_line_num(int num, int level){
+    	/*
+    	 * return current bal line number as
+    	 * string followed by '+' if level > 0
+    	 */
+    	if (level > 0){
+    		return right_justify("" + num + "+",7);
+    	} else {
+    		return right_justify("" + num + " ",7); 
+    	}
+    }
 }

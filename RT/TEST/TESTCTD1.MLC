@@ -5,29 +5,31 @@
 * Author - Don Higgins                                              *
 * Date   - 07/10/06                                                 *
 *********************************************************************
+* 11/10/06 RPI 477 ADD ASCII SUPPORT TO CTD AND CFD, USE IN=,OUPT=
+*********************************************************************
 TESTCTD1 SUBENTRY
          WTO   'TEST CTD CONVERT TO DISPLAY MACRO AND SVC 170 SERVICE'
          MVC   DTYPE,=CL20'128 BIT INTEGER'
-         CTD   CTD_INT128,INT128,D40
+         CTD   CTD_INT128,IN=INT128,OUT=D40
          WTO   MF=(E,WTOMSG)
          SQE   F0,EH_2
          STE   F0,EH_SQRT2
-         CTD   CTD_EH,EH_SQRT2,D40
+         CTD   CTD_EH,IN=EH_SQRT2,OUT=D40
          MVC   DTYPE,=CL20'EH SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQEB  F0,EB_2
          STE   F0,EB_SQRT2
-         CTD   CTD_EB,EB_SQRT2,D40
+         CTD   CTD_EB,IN=EB_SQRT2,OUT=D40
          MVC   DTYPE,=CL20'EB SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQD   F0,DH_2
          STD   F0,DH_SQRT2
-         CTD   CTD_DH,DH_SQRT2,D40
+         CTD   CTD_DH,IN=DH_SQRT2,OUT=D40
          MVC   DTYPE,=CL20'DH SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQDB  F0,DB_2
          STD   F0,DB_SQRT2
-         CTD   CTD_DB,DB_SQRT2,D40
+         CTD   CTD_DB,IN=DB_SQRT2,OUT=D40
          MVC   DTYPE,=CL20'DB SQRT 2'
          WTO   MF=(E,WTOMSG)
          LD    F1,LH_2
@@ -35,7 +37,7 @@ TESTCTD1 SUBENTRY
          SQXR  F0,F1
          STD   F0,LH_SQRT2
          STD   F2,LH_SQRT2+8
-         CTD   CTD_LH,LH_SQRT2,D40
+         CTD   CTD_LH,IN=LH_SQRT2,OUT=D40
          MVC   DTYPE,=CL20'LH SQRT 2'
          WTO   MF=(E,WTOMSG)
          LD    F1,LB_2
@@ -43,7 +45,7 @@ TESTCTD1 SUBENTRY
          SQXBR F0,F1
          STD   F0,LB_SQRT2
          STD   F2,LB_SQRT2+8
-         CTD   CTD_LB,LB_SQRT2,D40
+         CTD   CTD_LB,IN=LB_SQRT2,OUT=D40
          MVC   DTYPE,=CL20'LB SQRT 2'
          WTO   MF=(E,WTOMSG)
          WTO   'TESTCTD1 ENDED OK'

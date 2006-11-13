@@ -496,8 +496,8 @@ private void put_copyright(){
 	   		sz390.put_log("EZ390I " + tz390.version);
 	   	}
 	   	if  (z390_log_text == null){
-	   		sz390.put_log("Copyright 2006 Automated Software Tools Corporation");
-	   		sz390.put_log("z390 is licensed under GNU General Public License");
+	   		sz390.put_log("EZ390I Copyright 2006 Automated Software Tools Corporation");
+	   		sz390.put_log("EZ390I z390 is licensed under GNU General Public License");
 	   	}
 	   	sz390.put_log("EZ390I program = " + tz390.pgm_name);
 	   	sz390.put_log("EZ390I options = " + tz390.cmd_parms);

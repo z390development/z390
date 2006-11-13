@@ -13,6 +13,8 @@
 * 03/22/06 RPI 260 test expression parsing errors
 * 07/06/06 RPI 356 test error for instruction CVD with no args.
 * 07/19/06 RPI 375 test error when labelled using prefix on sdt etc.
+* 11/09/06 RPI 488 test error on branch label defined only as macro 
+* 11/10/06 RPI 473 test error messages from CALL macro               
 *********************************************************************
          TITLE 'TESTERR2 - TEST AZ390 ERRORS'
 TESTERR2 CSECT
@@ -75,4 +77,15 @@ EXP2     EQU   1//
 R1       EQU   1
 R2       EQU   2
          LR    R1.R2
+* TEST LABEL ONLY DEFINED AS MACRO LABEL
+         B     MYMAC
+         MACRO
+         TEST
+         MEND
+MYMAC    TEST
+* TEST CALL MACRO MNOTE ERRORS
+EXEC2    CALL  SUBR,,VL,MF=(E,LIST)
+EXEC3    CALL  SUBR,,,MF=E
+STD      CALL  SUBR,,VL,MF=S
+LIST     CALL  ,(0,0),MF=L
          END 

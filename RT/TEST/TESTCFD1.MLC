@@ -5,6 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 07/19/06                                                 *
 *********************************************************************
+* 11/10/06 RPI 477 ADD ASCII SUPPORT TO CTD AND CFD, USE IN=,OUPT=
+*********************************************************************
          PRINT DATA
 TESTCTD1 RT1   MAIN
 WORK     DC    XL16'00' INT128,E,D,L WORK AREA
@@ -15,7 +17,7 @@ DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          MACRO
          TEST  &TYPE,&IN,&VER
          MVC   DECIMAL,&IN         
-         CFD   &TYPE,WORK,DECIMAL
+         CFD   &TYPE,OUT=WORK,IN=DECIMAL
          LD    R0,WORK
          LD    R1,WORK+8
          CLC   &VER,WORK

@@ -197,6 +197,9 @@ public  class  pz390 {
     * 09/08/06 RPI 441 add MVST move string and speed up TRT
     * 09/18/06 RPI 453 speedup MVST with byte memory access
     * 09/19/06 RPI 454 add TRE, TROT, TRTO, TRTT
+    * 11/04/06 RPI 484 support TRE trace file for TRACE, TRACEALL
+    * 11/10/06 RPI 474 trace invalid opcode if trace on
+    * 11/10/06 RPI 487 speed up MVST using scan and arraycopy
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -758,7 +761,10 @@ public void exec_pz390(){
 			}
 		}
         if (psw_check && psw_pic != 0){  // RPI 301
-			 set_psw_check(psw_pic_oper);
+			if (psw_pic == psw_pic_oper && tz390.opt_trace){ // RPI 474
+				trace_psw();
+			}
+        	set_psw_check(psw_pic_oper);
         }
 		if (ex_mode && (opcode1 != ex_opcode)){
 	 	    set_psw_loc(ex_psw_return);
@@ -2723,20 +2729,15 @@ private void ins_lt_c0(){
 		    	 ins_setup_rre();
 		    	 bd1_loc = reg.getInt(rf1+4) & psw_amode;
 		    	 bd2_loc = reg.getInt(rf2+4) & psw_amode;
+		    	 bd2_start = bd2_loc;
 		    	 string_eod = reg.get(7);
-		    	 string_eod_found = false;
-		    	 psw_cc = psw_cc3;
-		         while (!string_eod_found){
-		        	 mem_byte[bd1_loc] = mem_byte[bd2_loc]; // RPI 453
-		        	 if (mem_byte[bd2_loc] == string_eod){  // RPI 453
-		        		 string_eod_found = true;
-		        		 reg.putInt(rf1+4,bd1_loc);
-		        		 psw_cc = psw_cc1;
-		        	 } else {
-		        		 bd1_loc++;
-		        		 bd2_loc++;
-		        	 }
+		         while (mem_byte[bd2_loc] != string_eod){  // RPI 453
+	        		 bd2_loc++;  // RPI 476
 		         }
+		         rflen = bd2_loc - bd2_start + 1; 
+		         System.arraycopy(mem_byte,bd2_start,mem_byte,bd1_loc,rflen); // RPI 411
+		         reg.putInt(r1,bd1_loc + rflen - 1);
+		         psw_cc = psw_cc1;
 		         break;
 		     case 0x57:  // 3190 "B257" "CUSE" "RRE"
 		     	 psw_check = false;
@@ -7608,7 +7609,11 @@ private void put_ins_trace(String ins_parms){
 			+ " " + get_ins_name(psw_loc)
 			+ ins_parms
 			;
-    sz390.put_log(ins_trace_line);
+    if (tz390.opt_test){
+    	sz390.put_log(ins_trace_line);
+    } else {
+    	tz390.put_trace(ins_trace_line);
+    }
 }
 public String get_ins_name(int ins_loc){
 	/*
@@ -7851,7 +7856,7 @@ private void setup_espie_exit(){
 	    espie_exit_running = true;
 	    psw_check = false;
 	    if (tz390.opt_trace){
-	    	sz390.put_log("TRACE ESPIE EXIT STARTING");
+	    	tz390.put_trace("ESPIE EXIT STARTING");
 	    }
 }
 private void setup_estae_exit(){
@@ -7873,7 +7878,7 @@ private void setup_estae_exit(){
 	    estae_exit_running = true;
 	    psw_check = false;
 	    if (tz390.opt_trace){
-	    	sz390.put_log("TRACE ESTAE EXIT STARTING");
+	    	tz390.put_trace("ESTAE EXIT STARTING");
 	    }
 }
 public void set_psw_amode(int amode_bit){
@@ -7899,8 +7904,8 @@ public void set_psw_loc(int addr){
 	if (psw_loc >= tot_mem){
 		set_psw_check(psw_pic_addr);
 	}
-	if (tz390.opt_trace && !tz390.opt_test){
-		sz390.put_log(""); // RPI 348
+	if (tz390.opt_trace && !tz390.opt_test){ 
+		tz390.put_trace(""); // RPI 348
 	}
 	ex_mode = false;
 }

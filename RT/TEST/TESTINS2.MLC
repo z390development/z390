@@ -45,6 +45,7 @@
 * 08/06/06 RPI 398 CORRECT TESTS FOR D AND DR TO INCLUDE 64 BITS            
 * 09/08/06 RPI 441 ADD TEST FOR MVST MOVE STRING AND UPDATE TP TESTS                           
 * 09/19/06 RPI 454 ADD TEST FOR TRE, TROO, TROT, TRTO, TRTT                                          
+* 11/10/06 RPI 476 ADD CC TEST FOR MVST ALONG WITH SPEEDUP                                           
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -1829,6 +1830,7 @@ BAKR2    EQU   *
 * B255 MVST
          LM    R0,R2,=A(X'EE',STRING3,STRING4)
          MVST  R1,R2
+         RT1   CC1
          CLC   STRING3,STRING4
          RT1   CCE
          CL    R1,=A(STRING3+L'STRING4)

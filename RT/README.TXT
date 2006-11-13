@@ -1,4 +1,4 @@
-z390 Regression Test readme as z390 v1.1.02 09/09/06
+z390 Regression Test readme as z390 v1.2.00 11/13/06
 
 The following regression test commands are included with z390 install
 and can be run from z390 GUI or command prompt to verify z390 works:
@@ -49,6 +49,7 @@ For more information visit www.z390.org.  Any and all feedback and
 suggestions are welcome.
 
 Don Higgins
+President, Automated Software Tools Corporation
 don@higgins.net
 
 

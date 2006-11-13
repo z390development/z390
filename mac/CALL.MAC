@@ -13,6 +13,7 @@
 .* 04/12/06 RPI 244 - IGNORE NON CRITICAL KW PARMS
 .* 04/12/06 RPI 322 - support VL option with MF=L 
 .* 07/22/06 RPI 381 - support register substitution of parametrs 
+.* 11/10/06 RPI 473 - correct macro bugs and update RT\TEST\TESTCAL1
 .*********************************************************************
 &N      CALL   &NAME,                                                  X
                &PARMS,                                                 X
@@ -24,10 +25,10 @@
          AIF   (&N EQ '').SKIPDS
 &N       DS    0F
 .SKIPDS  ANOP
-         AIF   (N'&SYSLIST LE 3).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
+         AIF   (N'&SYSLIST GT 3).ERR1
 .NPOK    ANOP
 &NPARMS  SETA   N'&PARMS
+         AIF    (&NPARMS EQ 0 AND &VL NE '').ERR3 RPI 473
          AIF   (&MF EQ 'L').LIST
          AIF   (&MF(1) EQ 'E').EXEC
 .STD     ANOP
@@ -72,7 +73,8 @@
 .VLLAST  ANOP
          DC    A(&PARMS(&I)+X'80000000')
          MEXIT
-.EXEC    ANO
+.EXEC    ANOP   RPI 473
+         AIF    ('&MF(2)' EQ '').ERR2    RPI 473
          AIF    ('&MF(2)' EQ '(').REGPARM
          LA     1,&MF(2)
          AGO    .EXEC2
@@ -93,12 +95,18 @@
          ST     0,&EXOFF.(1)
          AGO    .EXNEXTP
 .EXREGP  ANOP
-         ST     &EXPARM,EXOFF.(1)
+         ST     &EXPARM,&EXOFF.(1)   RPI 473
 .EXNEXTP ANOP
 &EXOFF   SETA   &EXOFF+4
          AGO    .EXLOOP
 .EXLEND  ANOP    
-         AIF    (&VL NE 'VL').BALR
+         AIF    (&VL NE 'VL' OR &EXOFF EQ 0).ENDPARM RPI 473
          OI     &EXOFF-4(1),X'80'
-         AGO    .BALR
+         AGO    .ENDPARM  RPI 473
+.ERR1    MNOTE 12,'CALL UNSUPPORTED OPERANDS - &SYSLIST(4)'
+         MEXIT
+.ERR2    MNOTE 12,'CALL EXEC FORM MISSING LIST ADDR'
+         MEXIT
+.ERR3    MNOTE 12,'CALL VL INVALID WHEN NO PARMS'     
+         MEXIT
          MEND

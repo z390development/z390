@@ -31,7 +31,7 @@ call rt1 %~dps0rt\test\testmac7 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 
 call rt1 %~dps0rt\test\testmac8 sysmac(rt\test+mac) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testmac9 sysmac(rt\test+mac) syscpy(rt\test) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testpro1 profile(testpro1) sysmac(rt\test+mac) syscpy(rt\test) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testopr1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0rt\test\testopr1 tracep systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testset1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testset2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testset3 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -51,6 +51,7 @@ set OT3=rt\test\testpch3.ot3
 call rt5 %~dps0rt\test\testpch3 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call mac %~dps0rt\test\testmcr1.asm sysmac(%~dps0rt\test\*.mcr) notiming systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt3 %~dps0rt\test\testtxt1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0rt\test\testpc1  tracep systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem az390 assembler
 rem
@@ -127,6 +128,7 @@ call rt1 %~dps0rt\test\testecb1 trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 
 call rt1 %~dps0rt\test\testmem1 mem(32)      systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testmem2 mem(2)       systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testmem3 mem(32)      systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0rt\test\testmem4 mem(2)       systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt5 %~dps0rt\test\testtst1 test(sysut1) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy %~dps0rt\test\testtst1.mlc %~dps0rt\test\testasc4.mlc
 copy %~dps0rt\test\testtst1.tf1 %~dps0rt\test\testasc4.tf1

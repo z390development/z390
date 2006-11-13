@@ -6,10 +6,11 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-.* 10/20/05 RPI27 - issue error for any undefined operands     
-.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
-.* 04/11/06 RPI244 IGNORE UNUSED KEYWORDS, SUPPORT CV,CT,PARAM=       
-.* 06/03/06 RPI321 CORRECT MNOTE MSG TO INCLUDE MACRO NAME            
+.* 10/20/05 RPI  27 - issue error for any undefined operands     
+.* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
+.* 04/11/06 RPI 244 IGNORE UNUSED KEYWORDS, SUPPORT CV,CT,PARAM=       
+.* 06/03/06 RPI 321 CORRECT MNOTE MSG TO INCLUDE MACRO NAME            
+.* 11/10/06 RPI 475 SUPPORT CT AS IF OV            
 .*********************************************************************
 &N      ESTAE  &ADDR,          ADDRESS OF ABEND RECOVERY EXIT          X
                &TYPE,          OV=REPLACE EXIT, CT=ADD NEW EXIT        X
@@ -25,7 +26,7 @@
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (&MF NE '').ERR1
-         AIF   (N'&SYSLIST EQ 1).NPOK
+         AIF   (N'&SYSLIST LE 2).NPOK  R[ 475
          MNOTE 12,'ESTAE UNSUPPORTED OPERANDS - &SYSLIST(2)'
 .NPOK    ANOP
         AIF    ('&ADDR'(1,1) EQ '(').AREG

@@ -125,4 +125,15 @@ CVT      EQU  CVTMAP,,T'CVTMAP
          AIF  (&LCVT EQ 8).OK3
          MNOTE 8,'LCVT NOT EQUAL 8 ERROR'
 .OK3     ANOP
+* TEST I' AND S'
+INT4     EQU  4
+         AIF  (I'INT4 NE 4).ERR2
+SCALE5   DC   FS5'1'
+         AIF  (S'SCALE5 NE 5).ERR3
+         AGO  .EXIT
+.ERR2    MNOTE 12,'INVALID I' VALUE'
+         MEXIT
+.ERR3    MNOTE 12,'INVALID S' VALUE'
+         MEXIT
+.EXIT    ANOP
          END

@@ -1,9 +1,10 @@
-z390 V1.1.02 Portable Mainframe Assembler
+z390 V1.2.00 Portable Mainframe Assembler
 Copyright 2006 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
- * Microsoft Windows 2000 or XP
+ * Microsoft Windows 2000, Windows XP, Linux
  * Sun Microsystems Java Runtime J2SE 1.5.0+
+ * Minimum of 512 MB memory (default Java user memory allocation set to 100 MB)
  * Adobe Acrobat or later for viewing User Guide
 
 
@@ -11,11 +12,13 @@ Z390 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY
 
 You should have received a copy of the GNU General Public License as part of z390 install (see OSI_GPL_License_Agreement.rtf); if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
-z390 is a portable mainframe assembler, linker, and emulator utility for Windows which includes the following tools:
+z390 is a portable mainframe assembler, linker, and emulator utility for Windows, Linux, and other platforms supporting J2SE.  z390 includes the following tools:
 * z390 - Graphical User Interface written in J2SE Swing Java
 * mz390 - macro processor to expand MLC source file to BAL source code
      *     CICS, PROLOG, and EPILOG options support EXEC CICS and EXEC SQL compatible 
             statements which are reformatted into standard EXEC macro format for expansion.
+     *     Macro pseudo code generator for 3 times faster macro execution
+     *     Macro pseudo code trace facility to see all macro variables in all expressions
 * az390 - assembler to translate BAL source code into OBJ file and generate PRN listing
 * lz390 - linker to translate OBJ files into 390 binary load module 
 * ez390 - runtime emulator to exec 390 load modules running in 24 or 31 bit mode
@@ -31,17 +34,18 @@ A TPUT and TGET macro based demo TN3270 application to update and display name, 
 
 An EXEC CICS compatible assembler application to update and display name, address, and numeric zip fields on screen can be assembled, linked, and executed.  Use the command RTCICS.BAT to assemble and link all the required EXEC CICS programs.  Use the command CICS PARM(GUI6) to start the z390 EXEC CICS assembler command processor and execute the transaction program TESTGUI6 as the first transaction.  The first GUI window to come up will be the TESTGUI6 application screen.  After exiting the application via PF3, the window will switch from screen view to MCS console view and prompt for the next EXEC CICS transaction or PF3 to exit CICS.
 
-For latest download and additional information about z390 and the open source project visit:
+For latest Windows and Linux downloads and additional information about z390 and the open source project visit:
 
 www.z390.org 
 
-z390 Windows installation instructions:
+z390 Windows 2000 and XP installation instructions:
 
 1. Download latest z390 InstallShield setup.exe file from www.z390.org 
 2. Run z390 setup.exe to install it on Windows XP or 2000 system
-3. Download and install Java 1.5.0 runtime update 5+ from: 
-    http://java.sun.com/j2se/  (update 7 is now recommended)
-4. Double click on the z390 desktop icon to start z390 GUI
+3. Download and install Java 1.5.0 runtime update 9+ from: 
+    http://java.sun.com/j2se/
+4. Remove old versions of J2SE runtime such as 1.4.2 etc.
+5. Double click on the z390 desktop icon to start z390 GUI
     a. Enter the command “ASMLG DEMO\DEMO” to run demo
     b. Scroll the output log to see output of each step
     c. Use file menu edit selection to view generated ASCII source files:
@@ -54,8 +58,9 @@ z390 Windows installation instructions:
     d. Optional downloads from www.z390.org for use with z390 install include the following:
         1)  Public domain MVS 3.8J macro library with associated demo and test programs
         2)  Regression tests for all z390 components
+        3)  Linux Pearle script and modifications to tz390.java for case sensitive file names
 
-5. Click on help menu for links to additional information.
+6. Click on help menu for links to additional information.
 
 IBM and CICS are registered trademarks of International Business Machines Corporation.
 

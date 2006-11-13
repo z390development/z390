@@ -5,14 +5,20 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 11/10/06 RPI 473 CORRECT CALL MACRO BUGS AND TEST OPTIONS
+*********************************************************************
 TESTCAL1 SUBENTRY
-         WTO 'TESTCAL1 TEST LOCAL STATIC LINKED CALL WITH PARMS'
-         CALL MYSUB,(PARM1),VL
-         CALL MYSUB,(PARM1,PARM2),VL
+         WTO   'TESTCAL1 TEST LOCAL STATIC LINKED CALL WITH PARMS'
+         CALL  MYSUB,(PARM1),VL
+         CALL  MYSUB,(PARM1,PARM2),VL
+         LA    R4,PARM2
+         CALL  MYSUB,(PARM1,(R4)),VL,MF=(E,LIST)
+         CALL  MYSUB,MF=(E,LIST)
          WTO  'TESTCAL1 ENDED OK'
          SUBEXIT
 PARM1    DC   CL20'PARM1 MSG'
 PARM2    DC   CL20'PARM2 MSG'
+LIST     CALL  ,(PARM1,PARM2),VL,MF=L
 MYSUB    SUBENTRY
          LR   R2,R1
 LOOP     EQU  *
