@@ -100,7 +100,8 @@ public  class  tz390 {
     * 09/22/06 RPI 439 add Pseudo Code (PC) add opt_pc and opt_maxpc 
     * 09/25/06 RPI 463 support continued string quote followed by parms 
     * 09/27/06 RPI 467 add TRACEP option for pseudo code 
-    * 10/19/06 RPI 484 route all traces to trace files      
+    * 10/19/06 RPI 484 route all traces to trace files 
+    * 11/16/06 RPI 499 merge Linux mods using z390_os_type indicator     
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -109,11 +110,14 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.2.00";  //dsh
+    String version    = "V1.2.00a";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
 	 */ 
+	byte    z390_os_type  = 0;      // 1=win,2=Linux  RPI 499
+	byte    z390_os_win   = 1;
+	byte    z390_os_linux = 2;
 	boolean z390_abort   = false;  // global abort request
     boolean opt_amode24  = false;  // link to run amode24
     boolean opt_amode31  = true;   // link to run amode31
@@ -3040,6 +3044,11 @@ public void init_options(String[] args,String pgm_type){
 	 *        test(ddname)
 	 *        time(seconds)
 	 */
+	if  (System.getProperty("os.name").substring(0,3).equals("Win")){
+		z390_os_type = z390_os_win;   // RPI 499
+    } else if (System.getProperty("os.name").substring(0,3).equals("Lin")){
+    	z390_os_type = z390_os_linux; // RPI 499
+    }
     if  (args.length >= 1){
     	if (!set_pgm_dir_name_type(args[0],pgm_type)){
     		abort_error(4,"invalid input file option - " + args[0]);
@@ -3594,7 +3603,8 @@ public String get_file_name(String parm_dir,String parm,String parm_type){
 	    	}
 	    	if  (file_name.length() > 0
 	            && file_name.indexOf('\\') == -1
-	    		&& file_name.indexOf(':')  == -1){
+	    		&& file_name.indexOf(':')  == -1
+	    		&& z390_os_type == z390_os_win){  // RPI 499 only on Windows
 	    		file_name = parm_dir.concat(File.separator + file_name);	
 	    	}
 	    	int index = file_name.indexOf(".");
@@ -3662,7 +3672,7 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 			temp_file = new File(file_name + file_type);
 		}
 		if (temp_file.isFile()){
-			return temp_file.getPath().toUpperCase();
+			return temp_file.getPath(); // RPI 499 drop upper case
 		}
 	}
 	return null;
@@ -3709,7 +3719,7 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
     int index = file_name.lastIndexOf(File.separator);
     if (index != -1){  // get dir path if any
     	pgm_dir = file_name.substring(0,index+1);
-    	file_name = file_name.substring(index + 1).toUpperCase();
+    	file_name = file_name.substring(index + 1); // RPI 499 drop upper case
     } else if (file_name.length() > 1 && file_name.charAt(1) == ':'){
     	File temp_file = new File(file_name.substring(0,2));
     	try {
@@ -3720,7 +3730,7 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
     	file_name = file_name.substring(2); //RPI113
     } else {
     	pgm_dir = dir_cur;
-	  	file_name = file_name.toUpperCase();
+	  	// RPI 499 drop upper case file_name = file_name.toUpperCase();
     }
     index = file_name.lastIndexOf('.');
     if (index != -1){  // strip extension if any
@@ -3740,7 +3750,7 @@ private void set_dir_cur(){  //RPI168
 	/*
 	 * set current directory dir_cur
 	 */
-	dir_cur = System.getProperty("user.dir").toUpperCase() + File.separator;
+	dir_cur = System.getProperty("user.dir") + File.separator; // RPI 499 drop upper case
 }
 public void reset_opsyn(){
 	/*

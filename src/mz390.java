@@ -253,6 +253,8 @@ public  class  mz390 {
      * 11/03/06 RPI 479 correct &SYSSTYP for START opcode
      * 11/03/06 RPI 487 prevent error due to string starting with '~'    
      * 11/12/06 RPI 492 allow blank continue line
+     * 11/16/06 RPI 498 ignore blank lines
+     * 11/16/06 RPI 499 merge Linux mods using z390_os_type indicator
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1268,6 +1270,8 @@ public  class  mz390 {
 							call_mac();      // call a nested macro
 							bal_line = null; // force macro exeuction cycle
 						}
+					} else if (bal_line != null && bal_line.length() == 0){
+						bal_line = null; // RPI 498 ignore blank lines
 					}
 				}		   
 				mac_line_index++;
@@ -1507,7 +1511,7 @@ public  class  mz390 {
 		if (!mac_file[cur_mac_file].isFile()){
 			abort_error(39,"file not found - " + load_file_name); //RPI169
 		}
-		load_macro_name = mac_file[cur_mac_file].getName().toUpperCase();
+		load_macro_name = mac_file[cur_mac_file].getName(); // RPI 499 drop upper case
 		if (tot_mac_name > 0){ // RPI127 leave suffix on main pgm loaded as macro
 			int index = load_macro_name.indexOf('.');
 			if (index > 0){
@@ -3606,7 +3610,7 @@ public  class  mz390 {
                        		exp_created_var[exp_level-1] = true; 
                         }
                     }
-					setc_value = exp_stk_setc[tot_exp_stk_var - 1].concat(setc_value); 
+                    setc_value = exp_stk_setc[tot_exp_stk_var - 1].concat(setc_value); 
 					exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
 					exp_var_last = true;
 				}
@@ -4088,7 +4092,7 @@ public  class  mz390 {
 			exp_check_prev_op = false;
 			exp_set_prev_op();
 			if (tot_exp_stk_var > 0){
-				exp_token = '&' + get_setc_stack_value();
+				exp_token = '&' + get_setc_stack_value().toUpperCase(); // RPI 499 force upper
 				exp_push_var(); 
 			} else {
 				log_error(103,"missing variable for created set variable");
@@ -6662,7 +6666,7 @@ public  class  mz390 {
 		sys_dsn = "";
 		sys_mem = "";
 		sys_vol = "";
-		sys_file = new File(file_name.toUpperCase());
+		sys_file = new File(file_name); // RPI 499 drop upper case
 		try {
 			sys_dsn = sys_file.getCanonicalPath();
 			sys_mem = sys_file.getName();
@@ -9947,7 +9951,7 @@ public  class  mz390 {
     	 * update var fields in pc
     	 */
     	pc_sysndx[pc_loc] = mac_call_sysndx[mac_call_level];
-    	var_name = "&" + exp_stk_setc[tot_exp_stk_var + offset];
+    	var_name = "&" + exp_stk_setc[tot_exp_stk_var + offset].toUpperCase(); // RPI 499 fix careted vars
     	pc_setc[pc_loc] = var_name;
         if (!find_set(var_name,set_sub)){
         	var_loc  = var_lcl_loc;

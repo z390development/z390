@@ -112,6 +112,7 @@ public  class  z390 extends JApplet
      *          and send msg to console saying use log command
      * 04/03/06 RPI 235 correct CD path display and suport cd.. etc
      * 05/05/06 RPI 309 retain last directory on file select
+     * 11/16/06 RPI 499 use z390_os_type to support Windows and Linux
 	 ********************************************************
      * Global variables
      *****************************************************
@@ -583,7 +584,7 @@ public  class  z390 extends JApplet
 			  } else {
 				  abort_error(52,"invalid install directory - " + install_loc);
 			  }
-			  temp_file = new File(install_loc + File.separator + "doc");
+			  temp_file = new File(install_loc + File.separator + "Doc"); // RPI 499 correct case for Linux
 			  if (temp_file.isDirectory()){
 				  install_doc = temp_file.getPath();
 			  } else {
@@ -1531,10 +1532,14 @@ public  class  z390 extends JApplet
 		    *
 		    */
 	           if (!tz390.dir_cur.equals(install_loc)){
-		           if (!tz390.dir_cur.substring(0,2).equals(install_loc.substring(0,2))){
-		           		cmd_exec_input(tz390.dir_cur.substring(0,2));
-		           }
-		           cmd_exec_input("CD " + tz390.dir_cur.substring(2));
+	        	   if (tz390.z390_os_type == tz390.z390_os_linux){
+	        		   cmd_exec_input("CD " + tz390.dir_cur); // RPI 499 change Linux directory and/or drive
+	        	   } else {
+	        		   if (!tz390.dir_cur.substring(0,2).equals(install_loc.substring(0,2))){
+		           			cmd_exec_input(tz390.dir_cur.substring(0,2)); // change windows drive
+	        		   }
+	        		   cmd_exec_input("CD " + tz390.dir_cur.substring(2)); // change windows directory
+	        	   }
 		       }
 	   }
 	   private void monitor_update(){
@@ -3198,7 +3203,7 @@ public  class  z390 extends JApplet
 			 */
 			if (file_name.length() > tz390.dir_cur.length()
 				&& file_name.substring(0,tz390.dir_cur.length()).equals(tz390.dir_cur)){
-				file_name = file_name.substring(tz390.dir_cur.length()+1); // skip dir + sep
+				file_name = file_name.substring(tz390.dir_cur.length()); // skip dir + sep // RPI 499 remove +1 (already skipping sep)
 			}
 			int index = file_name.indexOf(" ");
 			if (index >=0){

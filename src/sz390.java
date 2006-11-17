@@ -90,6 +90,7 @@ public  class  sz390 implements Runnable {
     * 11/10/06 RPI 477 support ASCII in CTD and CFD  
     * 11/12/06 RPI 490 correct TEST command processor 0r, traps 
     * 11/12/06 RPI 491 correct FREEMAIN merge causing corrupted FQE
+    * 11/16/06 RPI 499 fix cde for upper/lower case members on Linux
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -977,7 +978,7 @@ private void svc_load(){
             return;
 		}
 	}
-	cur_cde = tz390.find_key_index('P',load_pgm_name + load_pgm_type);
+	cur_cde = tz390.find_key_index('P',load_pgm_name.toUpperCase() + load_pgm_type); // RPI 499
 	if (cur_cde != -1 && cde_loc[cur_cde] != 0){
 		cde_use[cur_cde]++;
         svc_load_set_regs();
@@ -1284,7 +1285,7 @@ private void svc_delete(){
             return;
 		}
 	}
-	cur_cde = tz390.find_key_index('P',load_pgm_name + load_pgm_type);
+	cur_cde = tz390.find_key_index('P',load_pgm_name.toUpperCase() + load_pgm_type); // RPI 499
 	if (cur_cde != -1 && delete_cur_cde()){
 		pz390.reg.putInt(pz390.r15,0);
 	} else {
@@ -1320,7 +1321,7 @@ private void add_cde(){
 	 * add new 390 load module to cde entry table
 	 * and set usage to 1
 	 */
-	cur_cde = tz390.find_key_index('P',load_pgm_name + load_pgm_type);
+	cur_cde = tz390.find_key_index('P',load_pgm_name.toUpperCase() + load_pgm_type); // RPI 499
 	if (cur_cde == -1){
 		if (tot_cde < max_cde_pgms){
 			cur_cde = tot_cde;
@@ -1886,7 +1887,7 @@ private void svc_bldl(){
 			return;
 		}
 		bldl_last_name = bldl_member_name;
-		cur_cde = tz390.find_key_index('P',bldl_member_name + tz390.z390_type);
+		cur_cde = tz390.find_key_index('P',bldl_member_name.toUpperCase() + tz390.z390_type); // RPI 499
 		if (cur_cde != -1 && cde_loc[cur_cde] != 0){
             pz390.mem.put(bldl_entry_addr+2+10,(byte)1); // R=1 entry found
             if (bldl_entry_len >= 13){  // RPI 311
