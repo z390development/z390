@@ -101,7 +101,9 @@ public  class  tz390 {
     * 09/25/06 RPI 463 support continued string quote followed by parms 
     * 09/27/06 RPI 467 add TRACEP option for pseudo code 
     * 10/19/06 RPI 484 route all traces to trace files 
-    * 11/16/06 RPI 499 merge Linux mods using z390_os_type indicator     
+    * 11/16/06 RPI 499 merge Linux mods using z390_os_type indicator
+    * 11/28/06 RPI 500 use system newline for Win/Linux,
+    *          set browser to cmd.exe start or forfire     
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -110,7 +112,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.2.00a";  //dsh
+    String version    = "V1.2.00b";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -174,9 +176,15 @@ public  class  tz390 {
     int opt_maxrld  = 10000;
     int opt_maxsym  = 50000;
     /*
+     * Windows and Linux variables
+     */
+    String z390_acrobat = null; // RPI 500
+    String z390_browser = null; // RPI 500
+    String z390_command = null; // RPI 500
+    String z390_editor  = null; // RPI 500
+    /*
 	 * global limits with option overrides
 	 */
-    char   alarm_bell = 0x07;          // ascii bell char for system.out alarm
 	int    max_mnote_warning = 4;       // mnote limit for warnings (rc=4 vs rc=16) RPI 415
     int    max_errors        = 100;     // ERR(100) max errors before abort
     int    max_main_width = 800;
@@ -287,7 +295,9 @@ public  class  tz390 {
     /*
      * ASCII and EBCDIC printable character tables
      */
-        int sdt_char_int = 0; // RPI 192 shared character sdt
+        String newline = System.getProperty("line.separator"); // RPI 500
+        char   alarm_bell = 0x07;          // ascii bell char for system.out alarm
+        int    sdt_char_int = 0; // RPI 192 shared character sdt
         String ascii_table = 
         "................" + //00
         "................" + //10
@@ -2972,6 +2982,7 @@ public void init_tables(){
 	 * initialize dir_cur and tables
 	 */
 	set_dir_cur();  //RPI168
+	init_os();
 	init_ascii_ebcdic();
 	if (op_name.length != op_type.length){
 		abort_error(1,"opcode tables out of sync - aborting");
@@ -3033,6 +3044,37 @@ public void init_tables(){
 		  abort_error(14,"parm pattern errror - " + e.toString());
 	}
 }
+public void init_os(){
+	/*
+	 * init os dependant variables
+	 */
+	String os_name = System.getProperty("os.name"); 
+    z390_editor    = System.getenv("EDIT");
+	if  (os_name.substring(0,3).equals("Win")){
+		z390_os_type = z390_os_win;        // RPI 499
+		z390_browser = "cmd.exe /c Start"; // RPI 500
+	    z390_acrobat = z390_browser;
+		if (z390_editor == null 
+	    	|| z390_editor.length() == 0){
+	    	z390_editor  = "notepad.exe"; // RPI 500
+	    }
+		if  (os_name.equals("Windows 95")
+			|| os_name.equals("Windows 98")){
+			z390_command = "command.com" ;
+		} else {
+			z390_command = "cmd.exe";
+		}
+    } else if (os_name.substring(0,3).equals("Lin")){
+    	z390_os_type = z390_os_linux; // RPI 499
+    	z390_acrobat = "acroread";    // RPI 500
+    	z390_browser = "foxfire";     // RPI 500
+	    if (z390_editor == null 
+		    	|| z390_editor.length() == 0){
+	    	z390_editor  = "xemacs";
+	    }
+		z390_command = "perl"; // RPI 500
+    }
+}
 public void init_options(String[] args,String pgm_type){
 	/*
 	 * parse and set options
@@ -3044,11 +3086,6 @@ public void init_options(String[] args,String pgm_type){
 	 *        test(ddname)
 	 *        time(seconds)
 	 */
-	if  (System.getProperty("os.name").substring(0,3).equals("Win")){
-		z390_os_type = z390_os_win;   // RPI 499
-    } else if (System.getProperty("os.name").substring(0,3).equals("Lin")){
-    	z390_os_type = z390_os_linux; // RPI 499
-    }
     if  (args.length >= 1){
     	if (!set_pgm_dir_name_type(args[0],pgm_type)){
     		abort_error(4,"invalid input file option - " + args[0]);
@@ -3356,7 +3393,7 @@ public void open_systerm(String z390_pgm){
 	}
 	try {
 		systerm_io++;
-		systerm_file.writeBytes(systerm_time + systerm_prefix + "STARTED\r\n");
+		systerm_file.writeBytes(systerm_time + systerm_prefix + "STARTED" + newline); // RPI 500
 	} catch (Exception e){
         abort_error(11,"I/O error on systerm file " + e.toString());
 	}
@@ -3371,7 +3408,7 @@ public synchronized void put_systerm(String msg){ // RPI 397
 	if (systerm_file != null){
 		try {
 			systerm_io++;
-			systerm_file.writeBytes(systerm_time + systerm_prefix + msg + "\r\n");
+			systerm_file.writeBytes(systerm_time + systerm_prefix + msg + newline); // RPI 500
 		} catch (Exception e){
 	        abort_error(12,"I/O error on systerm file " + e.toString());
 		}
@@ -3401,7 +3438,7 @@ public synchronized void close_systerm(int rc){ // RPI 397
     				 + systerm_sec 
     				 + " MEM(MB)=" + right_justify("" + get_mem_usage(),3) 
     				 + " IO=" + systerm_io 
-    				 + systerm_ins_text + "\r\n");
+    				 + systerm_ins_text + newline); // RPI 500
     	 } catch (Exception e){
     	 }
     	 try {
@@ -4199,7 +4236,7 @@ public void put_trace(String text){
 		}
 	}
 	try {
-		trace_file_buff.write(text + "\r\n");
+		trace_file_buff.write(text + newline); // RPI 500
 	} catch (Exception e){
 		abort_error(17,"trace file write error " + e.toString());
 	}
@@ -4231,5 +4268,15 @@ public void put_trace(String text){
     	} else {
     		return right_justify("" + num + " ",7); 
     	}
+    }
+    public String jar_file_dir(){
+     	/*
+     	 *  Return the directory containing the jar file 
+     	 *  (Contributed by Martin Ward)
+     	 */
+     	StringBuffer path = new StringBuffer(System.getProperty("java.class.path"));
+        /* Delete everything from the last directory separator onwards: */
+     	path.delete(path.lastIndexOf(File.separator), path.length());
+        return path.toString();
     }
 }

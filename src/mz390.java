@@ -255,6 +255,8 @@ public  class  mz390 {
      * 11/12/06 RPI 492 allow blank continue line
      * 11/16/06 RPI 498 ignore blank lines
      * 11/16/06 RPI 499 merge Linux mods using z390_os_type indicator
+     * 11/28/06 RPI 500 use system newline for Win/Linux
+     * 22/28/06 RPI 502 ignore undefined vars in model statements
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -2141,23 +2143,23 @@ public  class  mz390 {
 		try {
 			if  (text_line.length() < 72){ // RPI 264, RPI 437
 				tz390.systerm_io++;
-				bal_file_buff.write(text_line + "\r\n");
+				bal_file_buff.write(text_line + tz390.newline); // RPI 500
 			} else {
 				tz390.systerm_io++;
-				bal_file_buff.write(text_line.substring(0,71) + "X\r\n");
+				bal_file_buff.write(text_line.substring(0,71) + "X" + tz390.newline); // RPI 500
 				String text_left = text_line.substring(71);
 				while (text_left.length() > 0){
 					if  (text_left.length() > 56){
 						String cont_line = "               " 
 							+ text_left.substring(0,56) 
-							+ "X\r\n";
+							+ "X" + tz390.newline ; // RPI 500
 						tz390.systerm_io++;
 						bal_file_buff.write(cont_line);
 						text_left = text_left.substring(56);
 					} else {
 						tz390.systerm_io++;
 						bal_file_buff.write("               " 
-								+ text_left + "\r\n");
+								+ text_left + tz390.newline); // RPI 500
 						text_left = "";
 					}
 				}
@@ -2290,6 +2292,8 @@ public  class  mz390 {
 		 * Notes:
 		 *   1.  Per RPI 241 ignore undefined &vars
 		 *       and let az390 report error if not in comment
+		 *   2.  Per RPI 502 remove undefined var which may cause null
+		 *       parm error in az390.
 		 */
 		exp_var_replacement_mode = false;
 		exp_var_replacement_change = false;
@@ -2323,8 +2327,8 @@ public  class  mz390 {
 						bal_text_index2++; // skip trailing . in parm substitution
 					}
 				} else {
-					parm_value = var_save;
-					bal_text_index2 = bal_text_index1 + parm_value.length();
+					parm_value = ""; // RPI 502 remove undefined var
+					bal_text_index2 = bal_text_index1 + var_save.length();
 				}
 			}
 			if (bal_text_index0 < bal_text_index1){
@@ -3437,7 +3441,7 @@ public  class  mz390 {
 				pch_text = ("X" + pch_text).trim().substring(1); //RPI 195
 				tz390.systerm_io++;
 				tot_punch_io++;
-				pch_file_buff[pch_file_index].write(pch_text + "\r\n");
+				pch_file_buff[pch_file_index].write(pch_text + tz390.newline); // RPI 500
 				if (pch_file[pch_file_index].length() > tz390.max_file_size){
 					abort_error(120,"maximum pch file size exceeded");
 				}

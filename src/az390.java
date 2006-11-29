@@ -218,6 +218,9 @@ public  class  az390 implements Runnable {
     * 11/12/06 RPI 493 fix opsyn's S type with no operands
     * 11/12/06 RPI 494 allow any bit length if DS and last field
     * 11/15/06 RPI 417 add full DS/DC bit length support
+    * 11/28/06 RPI 500 use system newline vs \r\n for Win/Linux
+    * 11/28/06 RPI 501 support literal minus abs expression in operands
+    * 11/28/06 RPI 503 suppress duplicate MNOTE's on SYSTERM
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -660,6 +663,12 @@ public  class  az390 implements Runnable {
       int     dcb_len = 0;
       int     dcb_pad = 0;
       String  dcb_bin = null;
+      String  dcc_text = null;
+      char    dcc_quote = ' ';
+      int     dcc_len  = 0;
+      int     dcp_len  = 0;
+  	  char    dcp_sign;
+      int     dcx_len  = 0;
       boolean dc_first_field = true;  // is this first dc field
       boolean dc_lit_ref = false;
       boolean dc_lit_gen = false;
@@ -735,6 +744,7 @@ public  class  az390 implements Runnable {
       BigDecimal  dc_bd_val = null;
       BigInteger  dc_bi_val = null;
       byte[]      dc_byte_val = null;
+      boolean     dcc_ascii_req = false;
       byte ascii_lf = 0x0a;
       byte ascii_cr = 0x0d;
       byte ascii_period =  (int)'.';
@@ -2207,14 +2217,14 @@ private void process_bal_op(){
     	break;
     case 214:  // MNOTE 0
     	bal_op_ok = true;  // pass true from mz390
-		if (bal_parms != null 
-			&& bal_parms.length() > 0
-			&& bal_parms.charAt(0) != '\''
-			&& bal_parms.charAt(0) != '*'){  // RPI 444
-			tz390.put_systerm("MNOTE " + bal_parms); // RPI 440
-		}
     	force_print = true;    	
     	if (gen_obj_code){
+    		if (bal_parms != null // RPI 503
+    				&& bal_parms.length() > 0
+    				&& bal_parms.charAt(0) != '\''
+    				&& bal_parms.charAt(0) != '*'){  // RPI 444
+    				tz390.put_systerm("MNOTE " + bal_parms); // RPI 440
+    		}
     		if (bal_parms.length() > 0 
         		&& bal_parms.charAt(0) != '\''
         	  	&& bal_parms.charAt(0) != ','
@@ -2445,8 +2455,8 @@ private void gen_sym_list(){
 	 * list symbols in alpah order 
 	 * with optional cross reference
 	 */
-	 put_prn_line("" +
-	 		"\r\nSymbol Table Listing\r\n");
+	 put_prn_line(tz390.newline +  // RPI 500
+	 		"Symbol Table Listing" + tz390.newline);
 	 TreeSet<String> sort_sym = new TreeSet<String>();
 	 int index = 1;
 	 while (index <= tot_sym){ // RPI 415
@@ -2501,7 +2511,7 @@ private void gen_lit_xref_list(){
 	 * list literals in alpha order
 	 * with optional cross reference
 	 */
-	 put_prn_line("\r\nLiteral Table Listing\r\n");
+	 put_prn_line(tz390.newline + "Literal Table Listing" + tz390.newline); // RPI 500
 	 TreeSet<String> sort_lit = new TreeSet<String>();
 	 int index = 0;
 	 while (index < tot_lit){
@@ -2670,7 +2680,7 @@ private void get_bal_line(){
 	        bal_xref_file_num  = pass_xref_file_num;
 	        bal_xref_file_line = pass_xref_file_line;
 	    	if (bal_xref_file_name != null){
-	    		xref_file_name[bal_xref_file_num] = bal_xref_file_name; //dshx
+	    		xref_file_name[bal_xref_file_num] = bal_xref_file_name; 
 	    	}
 			bal_line_full      = false;
 			lock_condition.signalAll();
@@ -2740,7 +2750,6 @@ private void save_bal_line(){
 	bal_line_text[tot_bal_line] = bal_line;
 	bal_line_num[tot_bal_line] = tz390.cur_bal_line_num;
 	bal_line_xref_file_num[tot_bal_line] = bal_xref_file_num;
-	//dshx xref_file_name[bal_xref_file_num] = bal_xref_file_name;
 	bal_line_xref_file_line[tot_bal_line] = bal_xref_file_line;
     xref_bal_index = tot_bal_line; // for error xref during lookahead
 }
@@ -3241,10 +3250,18 @@ public void process_dc(int request_type){ // RPI 415
   	  	       	  	 process_dcp_data();
   	  	       	  	 break;
   	  	       	  case 'S': // (exp1,expn)
+  	  	       		 if (dc_bit_len){
+  	  	       			  log_error(172,"DC S invalid length");
+  	  	       			  return;
+  	  	       		 }
   	  	       	     process_dcs_data();
   	  	       	     break;
   	  	       	  case 'V': // (exp1,expn)
-  	  	      		 if (cur_esd > 0 && sym_type[cur_esd_sid] == sym_cst){
+  	  	       		  if (dc_bit_len){
+  	  	       			  log_error(173,"DC V invalid length");
+  	  	       			  return;
+  	  	       		  } 
+  	  	      		  if (cur_esd > 0 && sym_type[cur_esd_sid] == sym_cst){
   	  	       			 dcv_type = true;
   	  	       			 process_dca_data();
   	  	       			 dcv_type = false;
@@ -3289,6 +3306,12 @@ public void process_dc(int request_type){ // RPI 415
 	          }
 	       	  return;
 	       }
+	 }
+	 if (dc_bit_len){
+     	 flush_dc_bits(); // RPI 417
+	 }
+	 if (gen_obj_code && loc_ctr != cur_text_loc){
+		 log_error(174,"location counter / hex object code error");
 	 }
 }
 private boolean calc_abs_exp(){
@@ -4172,7 +4195,7 @@ private void put_copyright(){
 	   		   }
 	   	       try {
 	   	    	  tz390.systerm_io++;
-	   	          prn_file_buff.write(msg + "\r\n");
+	   	          prn_file_buff.write(msg + tz390.newline); // RPI 500
 	   	          if (prn_file.length() > tz390.max_file_size){
 	   	        	  abort_error(118,"maximum prn file size exceeded");
 	   	          }
@@ -4187,7 +4210,7 @@ private void put_copyright(){
 	   	        	  }
 	   	        	  String data_line = tz390.get_hex(list_obj_loc,6) + " " + temp_hex;
 	   	        	  tz390.systerm_io++;
-	   	        	  prn_file_buff.write(data_line + "\r\n");
+	   	        	  prn_file_buff.write(data_line + tz390.newline); // RPI 500
 		   	          if (prn_file.length() > tz390.max_file_size){
 		   	        	  abort_error(118,"maximum prn file size exceeded");
 		   	          }
@@ -4220,7 +4243,7 @@ private void put_copyright(){
 		   	try {
 		   		if (tz390.opt_objhex){
 		   			tz390.systerm_io++;
-		   			obj_file.writeBytes(msg + "\r\n");
+		   			obj_file.writeBytes(msg + tz390.newline); // RPI 500
 		   		} else {
 		   			cvt_obj_hex_to_bin(msg);
 		   			if (!bal_abort){
@@ -4404,7 +4427,7 @@ private void put_copyright(){
 	   	    String work_hex = Long.toHexString(work_long);
 			return ("0000000000000000" + work_hex).substring(work_hex.length()).toUpperCase();
 	   }
-	   private String string_to_hex(String text,boolean ascii_req){
+	   private String string_to_hex(String text,boolean ascii){
 	   	/*
 	   	 * Format text string into hex string
 	   	 * If ascii_req true, gen ascii else ebcdic hex
@@ -4413,7 +4436,7 @@ private void put_copyright(){
             StringBuffer hex = new StringBuffer(2 * text.length());
             int index = 0;
             while (index < text.length()){
-            	if (ascii_req){
+            	if (ascii){
             		work_int = text.charAt(index) & 0xff;
             	} else {
             		work_int = tz390.ascii_to_ebcdic[text.charAt(index)] & 0xff;
@@ -5449,21 +5472,30 @@ private void flush_dc_bits(){
 	if (dc_bit_tot > 0){
 		dc_bit_byte_len = (dc_bit_tot + 7)/8;
 		if (dc_op){
-			dc_bit_fill = 8 - (dc_bit_tot - (dc_bit_tot/8)*8);
+			dc_bit_fill = dc_bit_tot - (dc_bit_tot/8)*8;
 			if (dc_bit_fill > 0){
-				dc_bit_buff = dc_bit_buff.shiftLeft(dc_bit_fill);
+				dc_bit_buff = dc_bit_buff.shiftLeft(8 - dc_bit_fill);
 			}
 			dc_bit_bytes = dc_bit_buff.toByteArray();
 			dc_bit_hex = "";
 			int index = 0;
-			while (index < dc_bit_byte_len - dc_bit_bytes.length){
-				dc_bit_hex = dc_bit_hex + "00";
-			    index++;
+			if (dc_bit_byte_len > dc_bit_bytes.length){
+				while (index < dc_bit_byte_len - dc_bit_bytes.length){
+					dc_bit_hex = dc_bit_hex + "00";
+					index++;
+				}
+				index = 0;
+			} else if (dc_bit_byte_len < dc_bit_bytes.length){
+				index = 1;
 			}
-			index = 0;
-			while (index < dc_bit_byte_len){
-				dc_bit_hex = dc_bit_hex + Integer.toHexString(dc_bit_bytes[index] & 0xff);
-			    index++;
+			while (index < dc_bit_bytes.length){
+				String dc_hex_byte = Integer.toHexString(dc_bit_bytes[index] & 0xff).toUpperCase();
+			    if (dc_hex_byte.length() < 2){
+			    	dc_bit_hex = dc_bit_hex + "0" + dc_hex_byte;
+			    } else {
+			    	dc_bit_hex = dc_bit_hex + dc_hex_byte;
+			    }
+				index++;
 			}
 		    obj_code = obj_code + dc_bit_hex;
 			put_obj_text();
@@ -5541,18 +5573,20 @@ private void process_dca_data(){
 }
 private void gen_dca_bits(){
 	/*
-	 * gen dca bit field in dc_bit_buff
+	 * gen dca exp_val in dc_bit_buff
+	 * Notes:
+	 *   1.  Shared by gen_dcb_bits
 	 */
+	dc_bit_tot = dc_bit_tot + dc_len;
 	if (dc_op && dc_dup > 0){
 		dc_bit_buff = dc_bit_buff.shiftLeft(dc_len);
-		dc_bit_tot = dc_bit_tot + dc_len;
 		if (exp_val >= 0){
 			dc_bit_buff = dc_bit_buff.add(BigInteger.valueOf(exp_val));
 		} else {
 			dc_bit_value = ((long)(-1) >>> (64-dc_len)) & (long)(exp_val);
 			dc_bit_buff = dc_bit_buff.add(BigInteger.valueOf(dc_bit_value));
 		}
-	}
+	} 
 }
 private void gen_dca_bytes(){
 	/*
@@ -5564,9 +5598,7 @@ private void gen_dca_bytes(){
 		} else {
 			obj_code = obj_code + ("FFFFFFFF").substring(0,2*dc_len-8) + tz390.get_hex(exp_val,8);
 		}
-		//dshx if (dc_op){  // RPI 301
-			put_obj_text();
-		//dshx }
+		put_obj_text();
 	} 
 	if (!dc_lit_ref && dc_dup > 0){
 		loc_ctr = loc_ctr + dc_len;
@@ -5693,11 +5725,11 @@ private void process_dcc_data(){
 	 *   5.  CA'...' always ASCII   RPI 270
 	 *   6.  CE'...' always EBCDIC  RPi 270
 	 */
-	String dcc_text = "";
+	dcc_text = "";
+	dcc_len  = 0;
 	String token = null;
-	int dcc_len  = 0;
 	int dcc_next = 0;
-	char dcc_quote = dc_field.charAt(dc_index); // ',", or ! delimiter
+	dcc_quote = dc_field.charAt(dc_index); // ',", or ! delimiter
     if (dcc_quote == '\''){
     	dcc_match = dcc_sq_pattern.matcher(dc_field.substring(dc_index + 1));
     } else if (dcc_quote == '"') {
@@ -5726,6 +5758,56 @@ private void process_dcc_data(){
 	}
 	dc_index = dc_index + dcc_next + 1;
 	dcc_len = dcc_text.length();
+	dcc_ascii_req = 
+		 (dcc_quote == '\'' 
+			 && (    (tz390.opt_ascii 
+				      && dc_type_sfx != 'E'
+				     )
+				  || dc_type_sfx == 'A'
+				)
+         )
+	     | dcc_quote == '"';  //RPI5 and RPI73
+	if (dc_bit_len){
+		gen_dcc_bits();
+	} else {
+		gen_dcc_bytes();
+	}
+	dc_len = 0;
+}
+private void gen_dcc_bits(){
+	/*
+	 * gen dcc bit field
+	 */
+	dc_bit_tot = dc_bit_tot + dc_len;
+	if (dc_op && dc_dup > 0){
+		int index = 0;
+		while (dc_len > 0){
+			dc_bit_buff = dc_bit_buff.shiftLeft(8);
+			if (index < dcc_text.length()){
+				if (dcc_ascii_req){
+					dc_bit_buff = dc_bit_buff.add(BigInteger.valueOf((int)dcc_text.charAt(index) & 0xff));
+				} else {
+					dc_bit_buff = dc_bit_buff.add(BigInteger.valueOf((int)tz390.ascii_to_ebcdic[dcc_text.charAt(index) & 0xff] & 0xff));
+				}
+			} else {
+				if (dcc_ascii_req){
+					dc_bit_buff = dc_bit_buff.add(BigInteger.valueOf((int)ascii_space & 0xff));
+				} else {
+					dc_bit_buff = dc_bit_buff.add(BigInteger.valueOf((int)ebcdic_space & 0xff));
+				}
+			}
+			dc_len = dc_len -8;
+			index++;
+		}
+		if (dc_len < 0){
+			dc_bit_buff = dc_bit_buff.shiftRight(-dc_len);
+		}
+	} 
+}
+private void gen_dcc_bytes(){
+	/*
+	 * gen dcc bytes
+	 */
 	if  (dc_len_explicit){
     	if  (dc_len > dcc_len){
     		dcc_text = tz390.left_justify(dcc_text,dc_len); // RPI 411
@@ -5742,16 +5824,7 @@ private void process_dcc_data(){
 	while (!bal_abort
 		&& dc_dup > 0){
 		if (dc_op){
-			 boolean ascii_req = 
-				 (dcc_quote == '\'' 
-					 && (    (tz390.opt_ascii 
-						      && dc_type_sfx != 'E'
-						     )
-						  || dc_type_sfx == 'A'
-						)
-		         )
-			     | dcc_quote == '"';  //RPI5 and RPI73
- 	         obj_code = obj_code + string_to_hex(dcc_text,ascii_req);
+ 	         obj_code = obj_code + string_to_hex(dcc_text,dcc_ascii_req);
   		     put_obj_text();
 		}
 		if (!dc_lit_ref){
@@ -5759,7 +5832,6 @@ private void process_dcc_data(){
 		}
    	    dc_dup--;
 	}
-	dc_len = 0;
 }
 private void process_dc_fp_data(){
 	/*
@@ -5777,13 +5849,11 @@ private void process_dc_fp_data(){
 		while (!dc_eod && !bal_abort 
 				&& dc_field.charAt(dc_index) != '\''){
 			dc_hex = get_dc_fp_hex(dc_field,dc_index);
-			if (dc_op && dc_dup > 0){
-				obj_code = obj_code + dc_hex;
-				put_obj_text();
-			}
-			if (!dc_lit_ref && dc_dup > 0){
-			   loc_ctr = loc_ctr + dc_len;
-			}
+            if (dc_bit_len){
+            	gen_dc_fp_bits();
+            } else {
+            	gen_dc_fp_bytes();
+            }
 			if (dc_field.charAt(dc_index) == ','){
 			   	exp_index++;
 		    } else if (dc_field.charAt(dc_index) == '\''){
@@ -5801,6 +5871,45 @@ private void process_dc_fp_data(){
 	    dc_len = 0; // don't double count
 	}
 	exp_rld_len = 0;
+}
+private void gen_dc_fp_bits(){
+	/*
+	 * gen del bit length field
+	 */
+	dc_bit_tot = dc_bit_tot + dc_len;
+	if (dc_op && dc_dup > 0){
+		int index = 0;
+		while (dc_len > 0){
+			dc_bit_buff = dc_bit_buff.shiftLeft(8);
+			dc_bit_buff = dc_bit_buff.add(BigInteger.valueOf(Integer.valueOf(dc_hex.substring(index,index+2),16) & 0xff));
+			dc_len = dc_len -8;
+			index = index + 2;
+		}
+		if (dc_len < 0){
+			dc_bit_buff = dc_bit_buff.shiftRight(-dc_len);
+		}
+	} 
+}
+private void gen_dc_fp_bytes(){
+	/*
+	 * gen del byte length field
+	 */
+	if (dc_len_explicit){
+		if (dc_len * 2 <= dc_hex.length()){
+			dc_hex = dc_hex.substring(0,dc_len*2);
+		} else {
+			while (dc_hex.length() < dc_len *2){
+				dc_hex = dc_hex + "00";
+			}
+		}
+	}
+	if (dc_op && dc_dup > 0){
+		obj_code = obj_code + dc_hex;
+		put_obj_text();
+	}
+	if (!dc_lit_ref && dc_dup > 0){
+	   loc_ctr = loc_ctr + dc_len;
+	}
 }
 private boolean get_dc_bd_val(){
 	/*
@@ -5835,9 +5944,9 @@ private boolean get_dc_bd_val(){
 	}
 	return false;
 }
-private void put_dc_bd_fh_val(){
+private String get_dc_fh_hex_val(){
 	/*
-	 * put 1-16 byte integer value for F or H
+	 * get 1-16 byte hex value for F or H
 	 * constant from dc_bd_val
 	 */
     if (dc_len <= 8){
@@ -5845,13 +5954,14 @@ private void put_dc_bd_fh_val(){
         if (temp_val > max_fh[dc_len-1] 
              || temp_val < min_fh[dc_len-1]){
             log_error(113,"signed value out of range - x'" + tz390.get_long_hex(temp_val,16) + "'");
+            return "";        	
         }
     }
 	try {
 		if (dc_len <= 4){
-			obj_code = obj_code + tz390.get_hex(dc_bd_val.intValueExact(),2*dc_len); 
+			return tz390.get_hex(dc_bd_val.intValueExact(),2*dc_len); 
     	} else if (dc_len <= 8){
-	        obj_code = obj_code + tz390.get_long_hex(dc_bd_val.longValueExact(),2*dc_len); 
+	        return tz390.get_long_hex(dc_bd_val.longValueExact(),2*dc_len); 
     	} else if (dc_len <= 16 
     			   && dc_bd_val.scale() <= 0
     			   && dc_bd_val.scale() > -40){
@@ -5860,7 +5970,7 @@ private void put_dc_bd_fh_val(){
     		if (dc_byte_val.length > dc_len){
     	    	log_error(129,"DC value out of range " + dc_len);
     	   	    dc_len = 0;
-    	   	    return;
+    	   	    return "";
     		}
     		byte pad = 0;
     		if (dc_bi_val.signum() < 0){
@@ -5874,18 +5984,18 @@ private void put_dc_bd_fh_val(){
     		if (index < 16){
     			System.arraycopy(dc_byte_val,0,fp_data_byte,index,16-index);
     		}
-    		obj_code = obj_code 
-    		+ tz390.get_long_hex(fp_data_buff.getLong(0),2*dc_len-16)
-    		+ tz390.get_long_hex(fp_data_buff.getLong(8),16); 
+    		return tz390.get_long_hex(fp_data_buff.getLong(0),2*dc_len-16)
+    		     + tz390.get_long_hex(fp_data_buff.getLong(8),16); 
     	} else {
     		log_error(122,"DC field length out of range " + dc_len);
     	    dc_len = 0;
+    	    return "";
     	}
     } catch (Exception e) {
     	log_error(128,"DC value out of range " + dc_len);
    	    dc_len = 0;
+   	    return "";
     }
-    put_obj_text();
 }
 private String get_dc_fp_hex(String text,int index){
 	/*
@@ -5914,12 +6024,11 @@ private void process_dcf_data(){
 	while (!dc_eod && !bal_abort){
 		while (!dc_eod && !bal_abort){
 		    if  (get_dc_bd_val()){
-		        if (dc_op && dc_dup > 0){
-                   put_dc_bd_fh_val();
-		        }
-			    if (!dc_lit_ref && dc_dup > 0){
-				   loc_ctr = loc_ctr + dc_len;
-			    }
+                if (dc_bit_len){
+                	gen_dc_fh_bits();
+                } else {
+                	gen_dc_fh_bytes();
+                }
 			    if (dc_field.charAt(dc_index) == ','){
 			    	dc_index++;
 			    } else if (dc_field.charAt(dc_index) == '\''){
@@ -5941,6 +6050,34 @@ private void process_dcf_data(){
 	}
 	exp_rld_len = 0;
 }
+private void gen_dc_fh_bits(){
+	/*
+	 * gen F bit field
+	 */
+	dc_bit_tot = dc_bit_tot + dc_len;
+	if (dc_op && dc_dup > 0){
+		dc_bit_buff = dc_bit_buff.shiftLeft(dc_len);
+		dc_bi_val = dc_bd_val.toBigIntegerExact();
+		if (dc_bi_val.signum() >= 0){
+			dc_bit_buff = dc_bit_buff.add(dc_bi_val);
+		} else {
+			dc_bi_val = BigInteger.ONE.shiftLeft(dc_len).subtract(BigInteger.ONE).and(dc_bi_val);
+			dc_bit_buff = dc_bit_buff.add(dc_bi_val);
+		}
+	} 
+}
+private void gen_dc_fh_bytes(){
+	/*
+	 * gen F byte field
+	 */
+    if (dc_op && dc_dup > 0){
+        obj_code = obj_code + get_dc_fh_hex_val();
+        put_obj_text();
+    }
+	if (!dc_lit_ref && dc_dup > 0){
+	   loc_ctr = loc_ctr + dc_len;
+	}
+}
 private void process_dch_data(){
 	/*
 	 * alloc or gen DS/DC H type parms using prev.
@@ -5952,12 +6089,11 @@ private void process_dch_data(){
 	while (!dc_eod && !bal_abort){
 		while (!dc_eod && !bal_abort){
 		    if  (get_dc_bd_val()){
-		        if (dc_op && dc_dup > 0){
-                   put_dc_bd_fh_val();
-		        }
-			    if (!dc_lit_ref && dc_dup > 0){
-				   loc_ctr = loc_ctr + dc_len;
-			    }
+                if (dc_bit_len){
+                	gen_dc_fh_bits();
+                } else {
+                	gen_dc_fh_bytes();
+                }
 			    if (dc_field.charAt(dc_index) == ','){
 			    	dc_index++;
 			    } else if (dc_field.charAt(dc_index) == '\''){
@@ -5985,8 +6121,6 @@ private void process_dcp_data(){
 	 * settings for dc_dup and dc_len.  Also save
 	 * first field dc_type, dc_len
 	 */
-	char dcp_sign;
-	String dcp_text;
 	dc_index++;   // start inside delimiter 'n,n'
 	dc_data_start = dc_index; 
 	while (!dc_eod && !bal_abort){
@@ -6014,35 +6148,16 @@ private void process_dcp_data(){
 			    }
 			    int dcp_digits = dc_index - index1;
 			    if (dcp_digits - dcp_digits/2*2 == 0){
-			    	dcp_text = '0' + dc_field.substring(index1,dc_index) + dcp_sign;
+			    	dc_hex = '0' + dc_field.substring(index1,dc_index) + dcp_sign;
 			    } else {
-			    	dcp_text = dc_field.substring(index1,dc_index) + dcp_sign;
+			    	dc_hex = dc_field.substring(index1,dc_index) + dcp_sign;
 			    }
-			    int dcp_len = dcp_text.length()/2;
-			    if (dc_len_explicit){
-			    	if (dcp_len < dc_len){
-			    		dcp_text = tz390.get_dup_string("0",2*(dc_len-dcp_len)) + dcp_text;
-			    		dcp_len = dc_len;
-			    	}
-			        if (dcp_len > dc_len){
-			        	dcp_text = dcp_text.substring(2*(dcp_len - dc_len));
-			        }
-			    } else {
-			        dc_len = dcp_len;
-			    }
-				if (!dc_len_explicit && dc_first_field){
-					dc_first_len = dcp_len;
-					dc_first_field = false;
-				}
-			    if (dc_len > 16){
-			       log_error(68,"P type field too long - " + dc_field);
-			    } else if (dc_op && dc_dup > 0){
-			    	obj_code = dcp_text;
-					put_obj_text();
-			    }
-			    if (!dc_lit_ref && dc_dup > 0){
-				   loc_ctr = loc_ctr + dc_len;
-			    }
+			    dcp_len = dc_hex.length()/2;
+                if (dc_bit_len){
+                	gen_dcp_bits();
+                } else {
+                	gen_dcp_bytes();
+                }
 			    if (dc_field.charAt(dc_index) == ','){
 			    	dc_index++;
 			    }
@@ -6058,6 +6173,51 @@ private void process_dcp_data(){
 		    }
 	    }
 	}
+}
+private void gen_dcp_bits(){
+	/*
+	 * gen P bit field
+	 */
+	dc_bit_tot = dc_bit_tot + dc_len;
+	if (dc_op && dc_dup > 0){
+		dc_bit_buff = dc_bit_buff.shiftLeft(dc_len);
+		dc_bi_val = BigInteger.ZERO;
+		int index = 0;
+		while (index < dc_hex.length()){
+			dc_bi_val = dc_bi_val.shiftLeft(8).add(BigInteger.valueOf(Integer.valueOf(dc_hex.substring(index,index+2),16)));
+			index = index + 2;
+		}
+		dc_bit_buff = dc_bit_buff.add(dc_bi_val);
+	} 
+}
+private void gen_dcp_bytes(){
+	/*
+	 * gen P byte field
+	 */
+    if (dc_len_explicit){
+    	if (dcp_len < dc_len){
+    		dc_hex = tz390.get_dup_string("0",2*(dc_len-dcp_len)) + dc_hex;
+    		dcp_len = dc_len;
+    	}
+        if (dcp_len > dc_len){
+        	dc_hex = dc_hex.substring(2*(dcp_len - dc_len));
+        }
+    } else {
+        dc_len = dcp_len;
+    }
+	if (!dc_len_explicit && dc_first_field){
+		dc_first_len = dcp_len;
+		dc_first_field = false;
+	}
+    if (dc_len > 16){
+       log_error(68,"P type field too long - " + dc_field);
+    } else if (dc_op && dc_dup > 0){
+    	obj_code = dc_hex;
+		put_obj_text();
+    }
+    if (!dc_lit_ref && dc_dup > 0){
+	   loc_ctr = loc_ctr + dc_len;
+    }
 }
 private void process_dcs_data(){
 	/*
@@ -6127,7 +6287,7 @@ private void process_dcx_data(){
 	dc_index++;   // start inside 'hex1,hex2,,'
 	dc_data_start = dc_index; 
 	while (!dc_eod && !bal_abort){
-		int dcx_len = 0;
+		dcx_len = 0;
 		dc_hex = "";
 		while (!dc_eod && !bal_abort
 				&& dc_index < dc_field.length()
@@ -6152,29 +6312,11 @@ private void process_dcx_data(){
 			dc_hex = "0" + dc_hex;
 		}
 		dcx_len = dc_hex.length()/2;
-		if (dc_len_explicit){
-			if (dcx_len < dc_len){ // RPI 411
-				dc_hex = tz390.get_dup_string("0",2*(dc_len-dcx_len)) + dc_hex;
-				dcx_len = dc_len;
-			}
-			if (dcx_len > dc_len){
-				dc_hex = dc_hex.substring(2*(dcx_len-dc_len));
-				dcx_len = dc_len;
-			}
-		} else {
-			dc_len = dcx_len;
-		}
-		if (!dc_len_explicit && dc_first_field){
-			dc_first_len = dc_len;
-			dc_first_field = false;
-		}
-		if (dc_op && dc_dup > 0){
-			obj_code = obj_code + dc_hex;
-			put_obj_text();
-		}
-		if (!dc_lit_ref && dc_dup > 0){
-		   loc_ctr = loc_ctr + dc_len;
-		}
+        if (dc_bit_len){
+        	gen_dcx_bits();
+        } else {
+        	gen_dcx_bytes();
+        }
 		if (dc_field.charAt(dc_index) == ','){
 		   	dc_index++;
 		} else if (dc_field.charAt(dc_index) == '\''){
@@ -6191,6 +6333,50 @@ private void process_dcx_data(){
 	}
     dc_index++; // skip terminator
     dc_len = 0; // don't double count
+}
+private void gen_dcx_bits(){
+	/*
+	 * gen X bit field
+	 */
+	dc_bit_tot = dc_bit_tot + dc_len;
+	if (dc_op && dc_dup > 0){
+		dc_bit_buff = dc_bit_buff.shiftLeft(dc_len);
+		dc_bi_val = BigInteger.ZERO;
+		int index = 0;
+		while (index < dc_hex.length()){
+			dc_bi_val = dc_bi_val.shiftLeft(8).add(BigInteger.valueOf(Integer.valueOf(dc_hex.substring(index,index+2),16)));
+			index = index + 2;
+		}
+		dc_bit_buff = dc_bit_buff.add(dc_bi_val);
+	} 
+}
+private void gen_dcx_bytes(){
+	/*
+	 * gen X byte field
+	 */
+	if (dc_len_explicit){
+		if (dcx_len < dc_len){ // RPI 411
+			dc_hex = tz390.get_dup_string("0",2*(dc_len-dcx_len)) + dc_hex;
+			dcx_len = dc_len;
+		}
+		if (dcx_len > dc_len){
+			dc_hex = dc_hex.substring(2*(dcx_len-dc_len));
+			dcx_len = dc_len;
+		}
+	} else {
+		dc_len = dcx_len;
+	}
+	if (!dc_len_explicit && dc_first_field){
+		dc_first_len = dc_len;
+		dc_first_field = false;
+	}
+	if (dc_op && dc_dup > 0){
+		obj_code = obj_code + dc_hex;
+		put_obj_text();
+	}
+	if (!dc_lit_ref && dc_dup > 0){
+	   loc_ctr = loc_ctr + dc_len;
+	}
 }
 private int get_dc_mod_int(){
 	/*
@@ -6575,13 +6761,19 @@ private boolean calc_lit(){
     get_lit_addr();
 	if (cur_lit != -1){
 		if (exp_next_char('-')){
-			if (calc_exp()
-				&& exp_esd == lit_esd[cur_lit]){
+			if (calc_exp()){
 				exp_val = exp_val + lit_loc[cur_lit];
-				exp_esd = esd_sdt;
-				exp_type = sym_sdt;
+				if (exp_esd == lit_esd[cur_lit]){
+					exp_esd = esd_sdt;
+					exp_type = sym_sdt;
+				} else if (exp_esd == 0){ // RPI 501
+				    exp_esd = lit_esd[cur_lit];
+				    exp_type = sym_rel;
+				} else {
+					log_error(175,"invalid literal complex expression");
+				}
 			} else { // RPI 457
-				log_error(169,"invalid literal - rld absolute expression");
+				log_error(169,"invalid literal expression");
 			}
 		} else if (exp_next_char('+')){
 			if (calc_exp() && exp_esd == esd_sdt){ // RPI 457

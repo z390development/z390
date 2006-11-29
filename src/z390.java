@@ -113,8 +113,9 @@ public  class  z390 extends JApplet
      * 04/03/06 RPI 235 correct CD path display and suport cd.. etc
      * 05/05/06 RPI 309 retain last directory on file select
      * 11/16/06 RPI 499 use z390_os_type to support Windows and Linux
+     * 11/28/06 RPI 500 use system newline for Win/Linux
 	 ********************************************************
-     * Global variables
+     * Global variables                  last RPI
      *****************************************************
      * global command mode variables
      */
@@ -212,6 +213,7 @@ public  class  z390 extends JApplet
 	Thread cmd_exec_output_reader_thread = null;
 	int    cmd_exec_rc = 0;
 	String cmd_line = null;
+	String last_cmd_line = "x"; // RPI 506
     boolean shutdown_exit = false;
     /*
      *  Global GUI objects 
@@ -333,8 +335,6 @@ public  class  z390 extends JApplet
            String job_opt = "";
            String link_opt = "";
            String exec_opt = "";
-           String edit_def = "notepad.exe";
-           String edit_cmd = null;
      /*
       * web site and install location
       */
@@ -589,7 +589,7 @@ public  class  z390 extends JApplet
 				  install_doc = temp_file.getPath();
 			  } else {
 				  install_doc = install_loc;
-				  put_log("install doc directory not found - " + install_doc);
+				  put_log("install doc directory not found - " + install_doc + File.separator + "Doc");
 			  }
 			  log_file_name = tz390.get_file_name(tz390.dir_cur,"z390",tz390.log_type);
 		      try {
@@ -778,7 +778,7 @@ public  class  z390 extends JApplet
    	        }
 	   	    if (log_file != null){
 	   	       try {
-	   	    	   log_file.write(msg + "\r\n");
+	   	    	   log_file.write(msg + tz390.newline); // RPI 500
 	   	       } catch (Exception e) {
 	   	    	   abort_error(2,"write to log error - " + e.toString());
 	   	       }	   	 	
@@ -1189,6 +1189,10 @@ public  class  z390 extends JApplet
 		   /*
 		    * add command cmd_line to rolling history
 		    */
+		   if (last_cmd_line.equals(cmd_line)){
+			   return;  // RPI 506
+		   }
+		   last_cmd_line = cmd_line;
 		   view_cmd = -1;
 		   cur_cmd++;
            if (cur_cmd >= max_cmd){
@@ -1465,25 +1469,30 @@ public  class  z390 extends JApplet
 	    * to processor via cmd_exec_input_writer.
 	    */
 	   	    int rc;
-	   	    String cmd_pgm;
 	   	    String[] cmd_parms;
 	   	    try {
-	   	    	String os_name = System.getProperty("os.name");
-                if(    os_name.equals("Windows 95")
-                	|| os_name.equals("Windows 98")){
-	                cmd_pgm = "command.com" ;
-	            } else {
-	            	cmd_pgm = "cmd.exe";
-	            }
-                if  (cmd_line != null){
-                	cmd_parms = new String[3];
-                	cmd_parms[0] = cmd_pgm;
-                	cmd_parms[1] = "/C";
-                    cmd_parms[2] = cmd_line;
-                } else {
-                	cmd_parms = new String[1];
-                	cmd_parms[0] = cmd_pgm;
-                }
+	   	    	if (tz390.z390_os_type == tz390.z390_os_linux) {
+	   	    	    if  (cmd_line != null){
+	   	    	        cmd_parms = new String[3];
+	   	    			cmd_parms[0] = tz390.z390_command;
+	   	    			cmd_parms[1] = tz390.jar_file_dir() + "/cmd.pl";
+	   	    			cmd_parms[2] = cmd_line;
+	   	    		} else {
+	   	    			cmd_parms = new String[2];
+	   	    			cmd_parms[0] = tz390.z390_command;
+	   	    		    cmd_parms[1] = tz390.jar_file_dir() + "/cmd.pl";
+	   	    		}
+	   	    	} else {
+	   	    		if  (cmd_line != null){
+	   	    			cmd_parms = new String[3];
+	   	    			cmd_parms[0] = tz390.z390_command;
+	   	    			cmd_parms[1] = "/C";
+	   	    			cmd_parms[2] = cmd_line;
+	   	    		} else {
+	   	    			cmd_parms = new String[1];
+	   	    			cmd_parms[0] = tz390.z390_command;
+	   	    		}
+	   	    	}
             	rc = cmd_exec_start(cmd_parms);
                 if  (rc == 0){
    		            monitor_cmd_time_total = 0;
@@ -1651,7 +1660,7 @@ public  class  z390 extends JApplet
 	   	    		 cmd_startup(null);
 	   	    		 cmd_exec_input(cmd);
 	   	    		 cmd_running = true;
-	   	    	     cmd_exec_input("\r\n" + "exit" + "\r\n");  //RPI15, RPI 98
+	   	    	     cmd_exec_input(tz390.newline + "exit" + tz390.newline);  //RPI15, RPI 98, RPI 500
 	   	    	 }
   	 	     }
 	   }
@@ -1747,10 +1756,6 @@ public  class  z390 extends JApplet
             main_frame.addComponentListener(this);
             build_main_panel();
             open_log_file();
-            edit_cmd = System.getenv("EDIT");
-            if (edit_cmd == null || edit_cmd.length() == 0){
-            	edit_cmd = edit_def;
-            }
             monitor_startup();
 			if (startup_cmd_file != null){
 				try {
@@ -2455,8 +2460,16 @@ public  class  z390 extends JApplet
    	  /*
    	   * link to PDF User Guide
    	   * note start parms are /d"path" file 
-   	   */	
- 	  	start_doc("/d" +  "\"" + install_doc + "\" z390_User_Guide.pdf");
+   	   */
+   		  if (tz390.z390_os_type == tz390.z390_os_linux){
+   			  if  (tz390.exec_cmd(tz390.z390_acrobat + " " + install_doc + File.separator + "z390_User_Guide.pdf")) {
+   			      put_log("Start issued for z390_User_Guide.pdf");
+   			  } else {
+   			      log_error(41,"Start error for z390_User_Guide.pdf");
+   			  }
+   		  } else {
+   			  start_doc("/d\"" + install_doc + "\" z390_User_Guide.pdf");
+   		  }
       }
    	  private void reset_z390_cmd(){
    	  /*
@@ -2474,7 +2487,7 @@ public  class  z390 extends JApplet
  	  	start_doc(web_site);
       }
    	public boolean start_doc(String file_name){
-	       if  (tz390.exec_cmd("cmd.exe /c Start " +  file_name)){
+	       if  (tz390.exec_cmd(tz390.z390_browser + " " +  file_name)){
 	  	       put_log("Start issued for " + file_name);
 	       	   return true;
 	       } else {
@@ -3160,9 +3173,9 @@ public  class  z390 extends JApplet
             	        }
                        if  (main_gui){
                        	 if (select_cmd.equals("EDIT")){
-      	     				 if (!tz390.exec_cmd("\"" + edit_cmd + "\" \"" 
+      	     				 if (!tz390.exec_cmd("\"" + tz390.z390_editor + "\" \"" 
       	     						 + selected_file_name + "\"")){
-   	     				         log_error(19,"start editor failed - " + edit_cmd);
+   	     				         log_error(19,"start editor failed - " + tz390.z390_editor);
    	     			         }
                        	 }  else if (select_cmd.equals("JOB")){
                        		selected_file_name = get_short_file_name(selected_file_name);
@@ -3439,9 +3452,9 @@ public  class  z390 extends JApplet
              * send input to exec command in process
              */
             	if  (cmd_line == null){
-            		cmd_line = "\r\n";
+            		cmd_line = tz390.newline; // RPI 500
              	} else {
-            		cmd_line = cmd_line + "\r\n"; 
+            		cmd_line = cmd_line + tz390.newline; // RPI 500 
             	}
             	try {
             		cmd_exec_input_writer.write(cmd_line.getBytes());
@@ -3518,7 +3531,7 @@ public  class  z390 extends JApplet
 						// if ez390 issues exit request close down gui
 						// this is trigged when ez390 exits if 
 						// z390 sent "exit_request to input queue
-					    cmd_exec_input("\r\n" + "exit" + "\r\n");  // RPI 98
+					    cmd_exec_input(tz390.newline + "exit" + tz390.newline);  // RPI 98, RPI 500
 					} else {
 						put_log(msg);
 					}
@@ -3601,8 +3614,8 @@ public  class  z390 extends JApplet
 	     	     	select_file(bat_cmd,bat_file_type, bat_opt);
 	     	   } else {
 	     			 if (bat_cmd.equals("EDIT")){
-	     				 if (!tz390.exec_cmd("\"" + edit_cmd + "\" \"" + bat_file_name + "\"")){
-	     				     log_error(19,"start editor failed - " + edit_cmd);
+	     				 if (!tz390.exec_cmd("\"" + tz390.z390_editor + "\" \"" + bat_file_name + "\"")){
+	     				     log_error(19,"start editor failed - " + tz390.z390_editor);
 	     			     }
 	     			 } else { 
 	     			    if (select_cmd.equals("JOB")){

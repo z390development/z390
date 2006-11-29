@@ -6,6 +6,7 @@
 * Date   - 07/19/06                                                 *
 *********************************************************************
 * 11/10/06 RPI 477 ADD ASCII SUPPORT TO CTD AND CFD, USE IN=,OUPT=
+* 11/29/06 RPI 507 SUPPORT IN=REG IN ADDITION TO IN=(REG ADDR)     
 *********************************************************************
          PRINT DATA
 TESTCTD1 RT1   MAIN
@@ -14,9 +15,12 @@ DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          EQUREGS
          RT1   START
          WTO   'TEST CFD CONVERT FROM DISPLAY MACRO/SVC 171 SERVICE'
+*********************************************************************
+         WTO   'TEST CTD USING OUT=RX FIELDS'
+*********************************************************************
          MACRO
          TEST  &TYPE,&IN,&VER
-         MVC   DECIMAL,&IN         
+         MVC   DECIMAL,&IN 
          CFD   &TYPE,OUT=WORK,IN=DECIMAL
          LD    R0,WORK
          LD    R1,WORK+8
@@ -30,5 +34,58 @@ DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          TEST  CFD_DB,=CL45'2',=DB'2'
          TEST  CFD_LH,=CL45'2',=LH'2'
          TEST  CFD_LB,=CL45'2',=LB'2'
+*********************************************************************
+         WTO   'TEST CTD USING OUT=(REG) RX FIELD ADDR'
+*********************************************************************
+         MACRO
+         TEST  &TYPE,&IN,&VER
+         MVC   DECIMAL,&IN        
+         LA    R2,WORK 
+         CFD   &TYPE,OUT=(R2),IN=DECIMAL
+         LD    R0,WORK
+         LD    R1,WORK+8
+         CLC   &VER,WORK
+         RT1   CCE
+         MEND
+         TEST  CFD_INT128,=CL45'2',=FL16'2'
+         TEST  CFD_EH,=CL45'2',=EH'2'
+         TEST  CFD_EB,=CL45'2',=EB'2'
+         TEST  CFD_DH,=CL45'2',=DH'2'
+         TEST  CFD_DB,=CL45'2',=DB'2'
+         TEST  CFD_LH,=CL45'2',=LH'2'
+         TEST  CFD_LB,=CL45'2',=LB'2'
+*********************************************************************
+         WTO   'TEST CTD USING OUT=REG GPR/FPR REG VALUES'
+*********************************************************************
+         MACRO
+         TEST  &TYPE,&IN
+         MVC   DECIMAL,&IN        
+         CFD   &TYPE,OUT=R1,IN=DECIMAL
+         MEND
+         TEST  CFD_INT128,=CL45'2'
+         STMG  R1,R2,WORK
+         CLC   WORK,=FL16'2'
+         RT1   CCE
+         TEST  CFD_EH,=CL45'2'
+         CE    F1,=EH'2'
+         RT1   CCE
+         TEST  CFD_EB,=CL45'2'
+         CEB   F1,=EB'2'
+         RT1   CCE
+         TEST  CFD_DH,=CL45'2'
+         CD    F1,=DH'2'
+         RT1   CCE
+         TEST  CFD_DB,=CL45'2'
+         CDB   F1,=DB'2'
+         RT1   CCE
+         TEST  CFD_LH,=CL45'2'
+         LX    F0,=LH'2'
+         CXR   F0,R1
+         RT1   CCE
+         TEST  CFD_LB,=CL45'2'
+         LX    F0,=LB'2'
+         CXBR  F0,R1
+         RT1   CCE
          RT1   END
+         EQUREGS REGS=FPR 
          END

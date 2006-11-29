@@ -27,6 +27,7 @@
 * 11/12/06 RPI 492 TEST BLANK CONTINUATION LINES       
 * 11/12/06 RPI 493 TEST OPSYN WITH NO OPERANDS AND IPK WITH NO COMMA       
 * 11/12/06 RPI 494 TEST DS BIT LENGTH SUPPORT FOR LAST FIELD               
+* 11/28/06 RPI 501 TEST LITERAL-ABS EXPRESSION                             
 *********************************************************************
          START , RPI 230 TEST START CSECT
          USING *,R15
@@ -63,6 +64,7 @@ X        DC    C'X'
 X3       DS    0CL10
 Y3       DC    CL2'12'
          DC    CL8'34567890'
+TRFIELD  DC    X'F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF'   
          RT1   START
 * TEST ALIGNMENT OPERATOR
          CNOP  0,4
@@ -146,7 +148,9 @@ SKIP_IPK EQU   *
 * TEST BIT LENGTH DS LAST FIELD SUPPORT
          CLC   =AL1(L'B15),=AL1(2)
          RT1   CCE
-         CLC   =AL1(L'B115),=AL1(3)
+* TEST LITERAL = ABS EXP.
+         TR    TRFIELD,=C'0123456789ABCDEF'-X'F0'
+         CLC   TRFIELD,=C'0123456789ABCDEF'
          RT1   CCE
          RT1   END
          LTORG
@@ -172,5 +176,4 @@ PSA      DSECT
          ORG   PSA+X'20'
 OLDPSW   DS    XL8
 B15      DS    BL.015   2 BYTES
-B115     DS    BL1.015  3 BYTES
          END         

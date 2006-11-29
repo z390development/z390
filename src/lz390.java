@@ -69,6 +69,7 @@ public  class  lz390 {
     * 09/20/06 RPI 453 only route stats to BAL, copyright+rc to con
     * 10/19/06 RPI 483 prevent trap and issue error if obj truncated
     * 11/04/06 RPI 484 add TRL trace file support for TRACEL and TRACEALL
+    * 11/28/06 RPI 500 use system newline for Win/Linux
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -411,7 +412,7 @@ private void put_copyright(){
 	   	   if (tz390.opt_list){ // RPI 484
 	   	      try {
 	   	    	  tz390.systerm_io++;
-	   	          lst_file_buff.write(msg + "\r\n");
+	   	          lst_file_buff.write(msg + tz390.newline); // RPI 500
 	   	          if (lst_file.length() > tz390.max_file_size){
 	   	        	  abort_error(34,"maximum lst file size exceeded");
 	   	          }

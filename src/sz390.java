@@ -91,6 +91,10 @@ public  class  sz390 implements Runnable {
     * 11/12/06 RPI 490 correct TEST command processor 0r, traps 
     * 11/12/06 RPI 491 correct FREEMAIN merge causing corrupted FQE
     * 11/16/06 RPI 499 fix cde for upper/lower case members on Linux
+    * 11/28/06 RPI 500 use system newline for Win/Linux
+    *          use perl vs command.com for command processor
+    * 11/28/06 RPI 505 prevent duplicate messages to console in TEST mode
+    * 11/29/06 rpi 507 support CTD/CFD in/out reg val as well as reg addr
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -625,12 +629,14 @@ public synchronized void put_log(String msg) {
 	if  (z390_log_text != null){
 		z390_log_text.append(msg + "\n");
    	}
-	if (tz390.opt_con || tz390.opt_test || tz390.z390_abort || ez390_startup){
+    if (tz390.opt_trace){ // RPI 490
+    	tz390.put_trace("EZ390I " + msg);
+    } else if (tz390.opt_test // RPI 505
+    		|| tz390.opt_con 
+    		|| tz390.z390_abort 
+    		|| ez390_startup){
 		System.out.println(msg);
 	}
-    if (tz390.opt_trace || tz390.opt_test){ // RPI 490
-    	tz390.put_trace("EZ390I " + msg);
-    }
 }
 private void put_log_line(String msg){
 	   /*
@@ -639,7 +645,7 @@ private void put_log_line(String msg){
 	   	   if (tz390.opt_list && log_file_buff != null){
 	   	      try {
 	   	    	  tz390.systerm_io++;
-	   	          log_file_buff.write(msg + "\r\n");
+	   	          log_file_buff.write(msg + tz390.newline); // RPI 500
 	                if (log_file.length() > tz390.max_file_size){
 	                	abort_error(107,"maximum log file size exceeded");
 	                }
@@ -1958,13 +1964,13 @@ public void dump_gpr(int reg_offset){
 	 * dump specified register or all if -1
 	 */
 	if (reg_offset < 0 || reg_offset > pz390.r15){ // RPI 490
-		put_log(" R0-R3 " + pz390.bytes_to_hex(pz390.reg,0,32,8));
-		put_log(" R4-R7 " + pz390.bytes_to_hex(pz390.reg,32,32,8));
-		put_log(" R8-RB " + pz390.bytes_to_hex(pz390.reg,64,32,8));
-		put_log(" RC-RF " + pz390.bytes_to_hex(pz390.reg,96,32,8));
+		put_log("R0-R3 " + pz390.bytes_to_hex(pz390.reg,0,32,8));
+		put_log("R4-R7 " + pz390.bytes_to_hex(pz390.reg,32,32,8));
+		put_log("R8-RB " + pz390.bytes_to_hex(pz390.reg,64,32,8));
+		put_log("RC-RF " + pz390.bytes_to_hex(pz390.reg,96,32,8));
 	} else {
 		int reg_num = reg_offset/8;
-		put_log(" r" + reg_num + "=" + pz390.get_long_hex(pz390.reg.getLong(reg_offset)));
+		put_log("R" + reg_num + "=" + pz390.get_long_hex(pz390.reg.getLong(reg_offset)));
 	}
 }
 public void dump_fpr(int reg_offset){
@@ -2475,7 +2481,7 @@ private void svc_put_move(){
                 }
                 cur_rec_text = get_ascii_string(cur_dcb_area+4,cur_rec_len);
                 tz390.systerm_io++;
-                tiot_file[cur_tiot_index].writeBytes(cur_rec_text + '\r' + '\n');
+                tiot_file[cur_tiot_index].writeBytes(cur_rec_text + tz390.newline); // RPI 500
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(104,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
@@ -2492,7 +2498,7 @@ private void svc_put_move(){
 				}
                 cur_rec_text = get_ascii_string(cur_dcb_area,cur_dcb_lrecl);
                 tz390.systerm_io++;
-                tiot_file[cur_tiot_index].writeBytes(cur_rec_text + '\r' + '\n');
+                tiot_file[cur_tiot_index].writeBytes(cur_rec_text + tz390.newline); // RPI 500
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(105,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
                 }
@@ -2899,18 +2905,16 @@ private int cmd_startup(int cmd_id){
      *   4.  Cancel via cmd_cancel(cur_id);
 	 */
 	 int rc;
-	 String cmd_pgm;
 	 String[] cmd_parms;
 	 try {
-	   	String os_name = System.getProperty("os.name");
-        if(os_name.equals("Windows 95")
-           || os_name.equals("Windows 98")){
-	       cmd_pgm = "command.com" ;
-	    } else {
-	       cmd_pgm = "cmd.exe";
-	    }
-       	cmd_parms = new String[1];
-       	cmd_parms[0] = cmd_pgm;
+       	if (tz390.z390_os_type == tz390.z390_os_linux){
+           	cmd_parms = new String[2];
+       		cmd_parms[0] = tz390.z390_command;
+       		cmd_parms[1] = tz390.jar_file_dir() + "/cmd.pl"; // RPI 500
+       	} else {
+       		cmd_parms = new String[1];
+       		cmd_parms[0] = tz390.z390_command;
+       	}
        	rc = cmd_proc_start(cmd_id,cmd_parms);
         if  (rc != 0){
         	log_error(67,"CMD task startup error rc = " + rc);
@@ -2985,9 +2989,9 @@ private synchronized void cmd_input(int cmd_id,String cmd_line){
      * send input to exec command in process
      */
     if  (cmd_line == null){
-    	cmd_line = "\r\n";
+    	cmd_line = tz390.newline; // RPI 500
     } else {
-    	cmd_line = cmd_line + "\r\n";
+    	cmd_line = cmd_line + tz390.newline; // RPI 500
     }
     try {
     	tz390.systerm_io++;
@@ -3450,13 +3454,13 @@ private void dump_cde_pgms(){
 				      + " LOC=" + tz390.get_hex(cde_loc[index],8)
 		              + " LEN=" + tz390.get_hex(cde_len[index],8)
 		              + " USE=" + tz390.get_hex(cde_use[index],8)
-		              + "\r\n");
+		              + tz390.newline); // RPI 500
 			} else {
 				put_log(" CDE  DSN=" + cde_name[index] 
 				      + " LOC=" + tz390.get_hex(cde_loc[index],8)
 				      + " LEN=" + tz390.get_hex(cde_len[index],8)
 				      + " USE=" + tz390.get_hex(cde_use[index],8)
-				      + "\r\n");
+				      + tz390.newline); // RPI 500
 			}
 			dump_mem(cde_loc[index] & pz390.psw_amode,cde_len[index]);
 		}
@@ -3787,38 +3791,85 @@ private void svc_ctd(){
 	int addr_out = pz390.mem.getInt(addr+8);
 	switch (type){
 	case 1: // 128 bit int to display
-		pz390.mem.position(addr_in);
-		pz390.mem.get(ctd_byte,0,16);
+		if (addr_in >= 16){ // RPI 507
+			pz390.mem.position(addr_in);
+			pz390.mem.get(ctd_byte,0,16);
+		} else {
+			pz390.reg.position(addr_in * 8);
+			pz390.reg.get(ctd_byte,0,16);
+		}
 		ctd_bi = new BigInteger(ctd_byte);
 		ctd_text = ctd_bi.toString();
 		break;
 	case 2: // eh 
-		ctd_d = pz390.fp_get_db_from_eh(pz390.mem,addr_in); 
+		if (addr_in >= 16){ // RPI 507
+			ctd_d = pz390.fp_get_db_from_eh(pz390.mem,addr_in); 
+		} else {
+		 	if (pz390.fp_reg_ctl[addr_in] != pz390.fp_ctl_ld){
+			 	pz390.fp_store_reg(pz390.fp_reg,addr_in * 8);
+			}
+			ctd_d = pz390.fp_get_db_from_eh(pz390.fp_reg,addr_in * 8);
+		}
         ctd_text = Double.toString(ctd_d);
         ctd_trunc(pz390.fp_eh_digits); 
         break;
 	case 3: // eb
-		ctd_e = pz390.fp_get_eb_from_eb(pz390.mem,addr_in); 
+		if (addr_in >= 16){ // RPI 507
+			ctd_e = pz390.fp_get_eb_from_eb(pz390.mem,addr_in); 
+		} else {
+		 	if (pz390.fp_reg_ctl[addr_in] != pz390.fp_ctl_ld){
+			 	pz390.fp_store_reg(pz390.fp_reg,addr_in * 8);
+			}
+			ctd_e = pz390.fp_get_eb_from_eb(pz390.fp_reg,addr_in * 8);
+		}
         ctd_text = Float.toString(ctd_e);
         ctd_trunc(pz390.fp_eb_digits); 
 		break;
 	case 4: // dh 
-		ctd_d = pz390.fp_get_db_from_dh(pz390.mem,addr_in); 
+		if (addr_in >= 16){ // RPI 507
+			ctd_d = pz390.fp_get_db_from_dh(pz390.mem,addr_in); 
+		} else {
+		 	if (pz390.fp_reg_ctl[addr_in] != pz390.fp_ctl_ld){
+			 	pz390.fp_store_reg(pz390.fp_reg,addr_in * 8);
+			}
+			ctd_d = pz390.fp_get_db_from_dh(pz390.fp_reg,addr_in * 8);
+		}
         ctd_text = Double.toString(ctd_d);
         ctd_trunc(pz390.fp_dh_digits); 
         break;
 	case 5: // db
-		ctd_d = pz390.fp_get_db_from_db(pz390.mem,addr_in); 
+		if (addr_in >= 16){ // RPI 507
+			ctd_d = pz390.fp_get_db_from_db(pz390.mem,addr_in); 
+		} else {
+		 	if (pz390.fp_reg_ctl[addr_in] != pz390.fp_ctl_ld){
+			 	pz390.fp_store_reg(pz390.fp_reg,addr_in * 8);
+			}
+			ctd_d = pz390.fp_get_db_from_db(pz390.fp_reg,addr_in * 8);
+		}
         ctd_text = Double.toString(ctd_d);
         ctd_trunc(pz390.fp_db_digits); 
         break;	
 	case 6: // lh 
-		ctd_bd = pz390.fp_get_bd_from_lh(pz390.mem,addr_in); 
+		if (addr_in >= 16){ // RPI 507
+			ctd_bd = pz390.fp_get_bd_from_lh(pz390.mem,addr_in); 
+		} else {
+		 	if (pz390.fp_reg_ctl[addr_in] != pz390.fp_ctl_ld){
+			 	pz390.fp_store_reg(pz390.fp_reg,addr_in * 8);
+			}
+			ctd_bd = pz390.fp_get_bd_from_lh(pz390.fp_reg,addr_in * 8);
+		}
         ctd_text = ctd_bd.toString();
         ctd_trunc(pz390.fp_lh_digits); 
         break;
 	case 7: // lb
-		ctd_bd = pz390.fp_get_bd_from_lb(pz390.mem,addr_in); 
+		if (addr_in >= 16){ // RPI 507
+			ctd_bd = pz390.fp_get_bd_from_lb(pz390.mem,addr_in); 
+		} else {
+		 	if (pz390.fp_reg_ctl[addr_in] != pz390.fp_ctl_ld){
+			 	pz390.fp_store_reg(pz390.fp_reg,addr_in * 8);
+			}
+			ctd_bd = pz390.fp_get_bd_from_lb(pz390.fp_reg,addr_in * 8);
+		}
         ctd_text = ctd_bd.toString();
         ctd_trunc(pz390.fp_lb_digits); 
         break;	
@@ -3900,46 +3951,96 @@ private void svc_cfd(){
 	switch (type){
 	case 21: // 128 bit int from display
 		cfd_bi = new BigInteger(cfd_text);
+		if (addr_out >= 16){ // RPI 507
+			pz390.mem.position(addr_out);
+		} else {
+			pz390.reg.position(addr_out * 8);
+		}
 		cfd_byte = cfd_bi.toByteArray();
-		pz390.mem.position(addr_out);
 		int index = 16-cfd_byte.length;
         byte fill_byte = 0;
 		if (cfd_byte[0] < 0){
 			fill_byte = -1;
 		}
 		while (index > 0){
-			pz390.mem.put(fill_byte);
+			if (addr_out >= 16){  // RPI 507
+				pz390.mem.put(fill_byte);
+			} else {
+				pz390.reg.put(fill_byte);
+			}
 			index--;
 		}
-		pz390.mem.put(cfd_byte);
+		if (addr_out >= 16){
+			pz390.mem.put(cfd_byte);
+		} else {
+			pz390.reg.put(cfd_byte);
+		}
 		break;
 	case 22: // eh 
-		cfd_d = Double.valueOf(cfd_text); 
-		pz390.mem.putInt(addr_out,pz390.zcvt_db_to_eh(cfd_d));
+		cfd_d = Double.valueOf(cfd_text);
+		if (addr_out >= 16){  // RPI 507
+			pz390.mem.putInt(addr_out,pz390.zcvt_db_to_eh(cfd_d));
+		} else {
+			pz390.fp_reg.putInt(addr_out * 8,pz390.zcvt_db_to_eh(cfd_d));
+			pz390.fp_reg_ctl[addr_out] = pz390.fp_ctl_ld;
+		}
 		break;
 	case 23: // eb
 		cfd_e = Float.valueOf(cfd_text); 
-		pz390.mem.putFloat(addr_out,cfd_e);
+		if (addr_out >= 16){  // RPI 507
+			pz390.mem.putFloat(addr_out,cfd_e);
+		} else {
+			pz390.fp_reg.putFloat(addr_out *8,cfd_e);
+			pz390.fp_reg_ctl[addr_out] = pz390.fp_ctl_ld;
+		}
 		break;
 	case 24: // dh 
 		cfd_d = Double.valueOf(cfd_text); 
-		pz390.mem.putLong(addr_out,pz390.zcvt_db_to_dh(cfd_d));
-        break;
+		if (addr_out >= 16){  // RPI 507
+			pz390.mem.putLong(addr_out,pz390.zcvt_db_to_dh(cfd_d));
+		} else {
+			pz390.fp_reg.putLong(addr_out * 8,pz390.zcvt_db_to_dh(cfd_d));
+			pz390.fp_reg_ctl[addr_out] = pz390.fp_ctl_ld;
+		}
+		break;
 	case 25: // db
 		cfd_d = Double.valueOf(cfd_text); 
-		pz390.mem.putDouble(addr_out,cfd_d);
+		if (addr_out >= 16){  // RPI 507
+			pz390.mem.putDouble(addr_out,cfd_d);
+		} else {
+			pz390.fp_reg.putDouble(addr_out * 8,cfd_d);
+			pz390.fp_reg_ctl[addr_out] = pz390.fp_ctl_ld;
+		}
 		break;	
 	case 26: // lh 
 		cfd_bd = new BigDecimal(cfd_text,pz390.fp_bd_context); 
 		pz390.zcvt_bd(pz390.fp_lh_type,cfd_bd);
-		pz390.mem.position(addr_out);
-		pz390.mem.put(pz390.fp_work_reg_byte,0,16);
-        break;
+		if (addr_out >= 16){  // RPI 507
+			pz390.mem.position(addr_out);
+			pz390.mem.put(pz390.fp_work_reg_byte,0,16);
+		} else {
+			pz390.fp_reg.position(addr_out * 8);
+			pz390.fp_reg.put(pz390.fp_work_reg_byte,0,8);
+			pz390.fp_reg_ctl[addr_out] = pz390.fp_ctl_ld;
+			pz390.fp_reg.position(addr_out * 8 + 16);
+			pz390.fp_reg.put(pz390.fp_work_reg_byte,8,8);
+			pz390.fp_reg_ctl[addr_out + 2] = pz390.fp_ctl_ld;
+		}
+		break;
 	case 27: // lb
 		cfd_bd = new BigDecimal(cfd_text,pz390.fp_bd_context); 
 		pz390.zcvt_bd(pz390.fp_lb_type,cfd_bd);
-		pz390.mem.position(addr_out);
-		pz390.mem.put(pz390.fp_work_reg_byte,0,16);
+		if (addr_out >= 16){  // RPI 507
+			pz390.mem.position(addr_out);
+			pz390.mem.put(pz390.fp_work_reg_byte,0,16);
+		} else {
+			pz390.fp_reg.position(addr_out * 8);
+			pz390.fp_reg.put(pz390.fp_work_reg_byte,0,8);
+			pz390.fp_reg_ctl[addr_out] = pz390.fp_ctl_ld;
+			pz390.fp_reg.position(addr_out * 8 + 16);
+			pz390.fp_reg.put(pz390.fp_work_reg_byte,8,8);
+			pz390.fp_reg_ctl[addr_out + 2] = pz390.fp_ctl_ld;
+		}
 		break;	
 	default:
 		pz390.reg.putInt(pz390.r15,12);

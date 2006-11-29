@@ -5,10 +5,14 @@
 * Author - Don Higgins                                              *
 * Date   - 07/10/06                                                 *
 *********************************************************************
-* 11/10/06 RPI 477 ADD ASCII SUPPORT TO CTD AND CFD, USE IN=,OUPT=
+* 11/10/06 RPI 477 ADD ASCII SUPPORT TO CTD AND CFD, USE IN=,OUT=
+* 11/29/06 RPI 507 ADD IN=REG SUPPORT IN ADDITION TO IN=(REG ADDR)    
 *********************************************************************
 TESTCTD1 SUBENTRY
          WTO   'TEST CTD CONVERT TO DISPLAY MACRO AND SVC 170 SERVICE'
+*********************************************************************
+         WTO   'USING IN=RX FIELDS'
+*********************************************************************
          MVC   DTYPE,=CL20'128 BIT INTEGER'
          CTD   CTD_INT128,IN=INT128,OUT=D40
          WTO   MF=(E,WTOMSG)
@@ -46,6 +50,90 @@ TESTCTD1 SUBENTRY
          STD   F0,LB_SQRT2
          STD   F2,LB_SQRT2+8
          CTD   CTD_LB,IN=LB_SQRT2,OUT=D40
+         MVC   DTYPE,=CL20'LB SQRT 2'
+         WTO   MF=(E,WTOMSG)
+*********************************************************************
+         WTO   'USING IN=(REG) ADDR RX FIELDS'
+*********************************************************************
+         LA    R2,INT128
+         LA    R4,D40
+         CTD   CTD_INT128,IN=(R2),OUT=(R4)
+         WTO   MF=(E,WTOMSG)
+         SQE   F0,EH_2
+         STE   F0,EH_SQRT2
+         LA    R2,EH_SQRT2
+         CTD   CTD_EH,IN=(R2),OUT=(R4)
+         MVC   DTYPE,=CL20'EH SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         SQEB  F0,EB_2
+         STE   F0,EB_SQRT2
+         LA    R2,EB_SQRT2
+         CTD   CTD_EB,IN=(R2),OUT=(R4)   
+         MVC   DTYPE,=CL20'EB SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         SQD   F0,DH_2
+         STD   F0,DH_SQRT2
+         LA    R2,DH_SQRT2
+         CTD   CTD_DH,IN=(R2),OUT=(R4)
+         MVC   DTYPE,=CL20'DH SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         SQDB  F0,DB_2
+         STD   F0,DB_SQRT2
+         LA    R2,DB_SQRT2
+         CTD   CTD_DB,IN=(R2),OUT=(R4)
+         MVC   DTYPE,=CL20'DB SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         LD    F1,LH_2
+         LD    F3,LH_2+8
+         SQXR  F0,F1
+         STD   F0,LH_SQRT2
+         STD   F2,LH_SQRT2+8
+         LA    R2,LH_SQRT2
+         CTD   CTD_LH,IN=(R2),OUT=(R4)
+         MVC   DTYPE,=CL20'LH SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         LD    F1,LB_2
+         LD    F3,LB_2+8
+         SQXBR F0,F1
+         STD   F0,LB_SQRT2
+         STD   F2,LB_SQRT2+8
+         LA    R2,LB_SQRT2
+         CTD   CTD_LB,IN=(R2),OUT=(R4)
+         MVC   DTYPE,=CL20'LB SQRT 2'
+         WTO   MF=(E,WTOMSG)
+*********************************************************************
+         WTO   'USING IN=REG GPR/FPR REG VALUE'
+*********************************************************************
+         LMG   R2,R3,INT128
+         LA    R4,D40
+         CTD   CTD_INT128,IN=R2,OUT=(R4)
+         WTO   MF=(E,WTOMSG)
+         SQE   F1,EH_2
+         CTD   CTD_EH,IN=F1,OUT=(R4)
+         MVC   DTYPE,=CL20'EH SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         SQEB  F1,EB_2
+         CTD   CTD_EB,IN=F1,OUT=(R4)   
+         MVC   DTYPE,=CL20'EB SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         SQD   F1,DH_2
+         CTD   CTD_DH,IN=F1,OUT=(R4)
+         MVC   DTYPE,=CL20'DH SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         SQDB  F1,DB_2
+         CTD   CTD_DB,IN=F1,OUT=(R4)
+         MVC   DTYPE,=CL20'DB SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         LD    F1,LH_2
+         LD    F3,LH_2+8
+         SQXR  F1,F1
+         CTD   CTD_LH,IN=F1,OUT=(R4)
+         MVC   DTYPE,=CL20'LH SQRT 2'
+         WTO   MF=(E,WTOMSG)
+         LD    F1,LB_2
+         LD    F3,LB_2+8
+         SQXBR F1,F1
+         CTD   CTD_LB,IN=F1,OUT=(R4)
          MVC   DTYPE,=CL20'LB SQRT 2'
          WTO   MF=(E,WTOMSG)
          WTO   'TESTCTD1 ENDED OK'

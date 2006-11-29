@@ -1337,7 +1337,7 @@ public  class  gz390
 		 }
 	   	 if (event_name.equals("SUPPORT")){
 	         event_ok = true;
-	         exec_cmd("cmd.exe /c Start http://www.z390.org");
+	         exec_cmd(tz390.z390_browser + " http://www.z390.org");
 	 	 }
          break;
       case 'T':
