@@ -114,6 +114,10 @@ public  class  z390 extends JApplet
      * 05/05/06 RPI 309 retain last directory on file select
      * 11/16/06 RPI 499 use z390_os_type to support Windows and Linux
      * 11/28/06 RPI 500 use system newline for Win/Linux
+     * 11/29/06 RPI 508 correct error 51 on /SC startup commands
+     *          and invalid path after CD command
+     * 12/01/06 RPI 509 use Monospace font for Windows and Linux
+     * 12/01/06 RPI 510 replace NOTEPAD command with EDIT command
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -212,7 +216,7 @@ public  class  z390 extends JApplet
 	Thread cmd_exec_error_reader_thread = null;
 	Thread cmd_exec_output_reader_thread = null;
 	int    cmd_exec_rc = 0;
-	String cmd_line = null;
+	String cmd_line = "";       // RPI 508 prevent last becoming null
 	String last_cmd_line = "x"; // RPI 506
     boolean shutdown_exit = false;
     /*
@@ -287,7 +291,7 @@ public  class  z390 extends JApplet
         JMenuItem edit_menu_paste = null;      
         JMenuItem edit_menu_select_all = null; 
         JMenuItem edit_menu_copy_log = null;   
-        JMenuItem edit_menu_notepad = null; 
+        JMenuItem edit_menu_editor = null; 
         JCheckBoxMenuItem option_menu_ascii = null;
         JCheckBoxMenuItem option_menu_con = null;  
         JCheckBoxMenuItem option_menu_dump = null;
@@ -600,7 +604,12 @@ public  class  z390 extends JApplet
 			              Date tod = new Date();
 			              SimpleDateFormat tod_format = new SimpleDateFormat("_yyyy_MMdd_HHmmss");
 				          String log_file_tod = tod_format.format(tod);
-			              temp_log_name = log_file_name + log_file_tod + tz390.log_type;
+				          int index = log_file_name.indexOf('.');
+				          if (index == -1){
+				        	  temp_log_name = log_file_name + log_file_tod + tz390.log_type;
+				          } else {
+				        	  temp_log_name = log_file_name.substring(0,index) + log_file_tod + tz390.log_type; // RPI 508
+				          }
 				          File temp_log_file = new File(temp_log_name);
 		                  if  (temp_log_file.exists()){
 			                  sleep_now();
@@ -784,7 +793,7 @@ public  class  z390 extends JApplet
 	   	       }	   	 	
 	   	    }
 	   }
-	   private void process_command(String cmd_line) {
+	   private void process_command(String cmd_text) {  // RPI 508
 	   	/* 
 	   	 * 1.  parse parms and execute 
 	   	 *     z390 command if found.
@@ -814,6 +823,7 @@ public  class  z390 extends JApplet
 	   	 * 4.  Use EXIT or BREAK event to abort CMD
 	   	 *     process. CTRL-C works in command mode only.
 	   	 */
+		 cmd_line = cmd_text; // RPI 508
 		 try {
 	   	    cmd_error = false;
 	   	    if  (cmd_line == null 
@@ -1062,23 +1072,6 @@ public  class  z390 extends JApplet
               	break;
               }
               break;
-         case 'N': 
-            if  (cmd_opcode.equals("NOTEPAD")){
-            	cmd_opcode_ok = true;
-            	if (perm_file_execute){
-            	   if (!main_batch){
-                      if (!tz390.exec_cmd("notepad.exe")){
-                	     log_error(16,"notepad.exe not found");
-                      }
-            	   } else {
-            	   	  log_error(54,"interactive command not supported in batch");
-            	   }
-            	} else {
-            		log_error(17,"Permission for file execute denied");
-            	}
-            	break;
-            }
-            break;
          case 'O':                      
             break;
          case 'P':
@@ -1300,7 +1293,7 @@ public  class  z390 extends JApplet
 	   	    if (cmd_parm1 != null){
 	   	    	new_font_size = get_dec_int(cmd_parm1);
 	   	    	if (new_font_size < 8 || new_font_size > 72){
-	   	    		log_error(63,"font outside New Courier fixed width font limits");
+	   	    		log_error(63,"font outside fixed width font limits");
 	   	    	} else {
 	   	    		if (main_gui){
 		   	    		font_size = new_font_size;
@@ -1311,7 +1304,7 @@ public  class  z390 extends JApplet
 	   	    		}
 	   	    	}	
 	   	    } else {
-	   	    	log_error(63,"font outside New Courier fixed width font limits");
+	   	    	log_error(63,"font outside fixed width font limits");
 	   	    }
 	   }
 	   private void set_text_font(){
@@ -1319,53 +1312,53 @@ public  class  z390 extends JApplet
 		    * reset font size for menu, log, cmd
 		    * and status line
 		    */
-	          menuBar.setFont(new Font("Courier",Font.BOLD,font_size)); //RPI81
-   	          file_menu.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          edit_menu.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          option_menu.setFont(new Font("Courier",Font.BOLD,font_size)); 
-   	          view_menu.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          help_menu.setFont(new Font("Courier",Font.BOLD,font_size)); 
-   	          file_menu_cd.setFont(new Font("Courier",Font.BOLD,font_size));     
-   	          file_menu_edit.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          file_menu_mac.setFont(new Font("Courier",Font.BOLD,font_size));    
-   	          file_menu_asm.setFont(new Font("Courier",Font.BOLD,font_size));    
-   	          file_menu_asml.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          file_menu_asmlg.setFont(new Font("Courier",Font.BOLD,font_size));  
-   	          file_menu_job.setFont(new Font("Courier",Font.BOLD,font_size));    
-   	          file_menu_link.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          file_menu_exec.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          file_menu_exit.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          edit_menu_cut.setFont(new Font("Courier",Font.BOLD,font_size));    
-   	          edit_menu_copy.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          edit_menu_paste.setFont(new Font("Courier",Font.BOLD,font_size));  
-   	          edit_menu_select_all.setFont(new Font("Courier",Font.BOLD,font_size)); 
-   	          edit_menu_copy_log.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          edit_menu_notepad.setFont(new Font("Courier",Font.BOLD,font_size));    
-   	          option_menu_ascii.setFont(new Font("Courier",Font.BOLD,font_size)); 
-   	          option_menu_con.setFont(new Font("Courier",Font.BOLD,font_size)); 
-   	          option_menu_dump.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          option_menu_guam.setFont(new Font("Courier",Font.BOLD,font_size));
-   	          option_menu_list.setFont(new Font("Courier",Font.BOLD,font_size));      
-   	          option_menu_listcall.setFont(new Font("Courier",Font.BOLD,font_size)); 
-   	          option_menu_stats.setFont(new Font("Courier",Font.BOLD,font_size));    
-   	          option_menu_amode31.setFont(new Font("Courier",Font.BOLD,font_size));  
-   	          option_menu_rmode31.setFont(new Font("Courier",Font.BOLD,font_size));  
-   	          option_menu_test.setFont(new Font("Courier",Font.BOLD,font_size));      
-   	          option_menu_trace.setFont(new Font("Courier",Font.BOLD,font_size));     
-   	          view_menu_status.setFont(new Font("Courier",Font.BOLD,font_size));      
-   	          view_menu_cmd.setFont(new Font("Courier",Font.BOLD,font_size));         
-   	          help_menu_help.setFont(new Font("Courier",Font.BOLD,font_size));       
-   	          help_menu_commands.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          help_menu_guide.setFont(new Font("Courier",Font.BOLD,font_size));      
-   	          help_menu_perm.setFont(new Font("Courier",Font.BOLD,font_size));       
-   	          help_menu_releases.setFont(new Font("Courier",Font.BOLD,font_size));   
-   	          help_menu_support.setFont(new Font("Courier",Font.BOLD,font_size));    
-   	          help_menu_about.setFont(new Font("Courier",Font.BOLD,font_size));      
-	          log_text.setFont(new Font("Courier",Font.BOLD,font_size));
-   	          cmd_label.setFont(new Font("Courier",Font.BOLD,font_size));
-   	          z390_cmd_line.setFont(new Font("Courier",Font.BOLD,font_size));
-   	          status_line_label.setFont(new Font("Courier",Font.BOLD,font_size));
-   	          status_line.setFont(new Font("Courier",Font.BOLD,font_size));
+	          menuBar.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); //RPI81
+   	          file_menu.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          edit_menu.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          option_menu.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); 
+   	          view_menu.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          help_menu.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); 
+   	          file_menu_cd.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));     
+   	          file_menu_edit.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          file_menu_mac.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));    
+   	          file_menu_asm.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));    
+   	          file_menu_asml.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          file_menu_asmlg.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));  
+   	          file_menu_job.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));    
+   	          file_menu_link.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          file_menu_exec.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          file_menu_exit.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          edit_menu_cut.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));    
+   	          edit_menu_copy.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          edit_menu_paste.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));  
+   	          edit_menu_select_all.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); 
+   	          edit_menu_copy_log.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          edit_menu_editor.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));    
+   	          option_menu_ascii.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); 
+   	          option_menu_con.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); 
+   	          option_menu_dump.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          option_menu_guam.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));
+   	          option_menu_list.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));      
+   	          option_menu_listcall.setFont(new Font(tz390.z390_font,Font.BOLD,font_size)); 
+   	          option_menu_stats.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));    
+   	          option_menu_amode31.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));  
+   	          option_menu_rmode31.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));  
+   	          option_menu_test.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));      
+   	          option_menu_trace.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));     
+   	          view_menu_status.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));      
+   	          view_menu_cmd.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));         
+   	          help_menu_help.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));       
+   	          help_menu_commands.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          help_menu_guide.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));      
+   	          help_menu_perm.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));       
+   	          help_menu_releases.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));   
+   	          help_menu_support.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));    
+   	          help_menu_about.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));      
+	          log_text.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));
+   	          cmd_label.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));
+   	          z390_cmd_line.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));
+   	          status_line_label.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));
+   	          status_line.setFont(new Font(tz390.z390_font,Font.BOLD,font_size));
 	   }
 	   private int get_dec_int(String cmd_parm){
 		   /*
@@ -1895,7 +1888,7 @@ public  class  z390 extends JApplet
      edit_menu_paste  = new JMenuItem("Paste");
      edit_menu_select_all = new JMenuItem("Select All");
      edit_menu_copy_log   = new JMenuItem("Copy Log");
-     edit_menu_notepad = new JMenuItem("Notepad");
+     edit_menu_editor = new JMenuItem("Editor");
      option_menu_ascii = new JCheckBoxMenuItem("ASCII");
      option_menu_con = new JCheckBoxMenuItem("CON");
      option_menu_con.setSelected(true);
@@ -1944,7 +1937,7 @@ public  class  z390 extends JApplet
      edit_menu_paste.setMnemonic(KeyEvent.VK_P);
      edit_menu_select_all.setMnemonic(KeyEvent.VK_S);
      edit_menu_copy_log.setMnemonic(KeyEvent.VK_L);
-     edit_menu_notepad.setMnemonic(KeyEvent.VK_N);
+     edit_menu_editor.setMnemonic(KeyEvent.VK_N);
      option_menu_ascii.setMnemonic(KeyEvent.VK_I);
      option_menu_con.setMnemonic(KeyEvent.VK_C);
      option_menu_dump.setMnemonic(KeyEvent.VK_D);
@@ -1981,7 +1974,7 @@ public  class  z390 extends JApplet
      edit_menu_cut.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E,ActionEvent.CTRL_MASK));
      edit_menu_copy.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,ActionEvent.CTRL_MASK));
      edit_menu_paste.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_V,ActionEvent.CTRL_MASK));
-     edit_menu_notepad.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,ActionEvent.CTRL_MASK));
+     edit_menu_editor.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,ActionEvent.CTRL_MASK));
      view_menu_status.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,ActionEvent.CTRL_MASK+ActionEvent.SHIFT_MASK));
      view_menu_cmd.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C,ActionEvent.CTRL_MASK+ActionEvent.SHIFT_MASK));
      help_menu_help.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H,ActionEvent.CTRL_MASK+ActionEvent.ALT_MASK));
@@ -2009,7 +2002,7 @@ public  class  z390 extends JApplet
      edit_menu_paste.addActionListener(this);
      edit_menu_select_all.addActionListener(this);
      edit_menu_copy_log.addActionListener(this);
-     edit_menu_notepad.addActionListener(this);
+     edit_menu_editor.addActionListener(this);
      option_menu_ascii.addActionListener(this);
      option_menu_con.addActionListener(this);
      option_menu_dump.addActionListener(this);
@@ -2045,7 +2038,7 @@ public  class  z390 extends JApplet
      edit_menu.add(edit_menu_paste);
      edit_menu.add(edit_menu_select_all);
      edit_menu.add(edit_menu_copy_log);
-     edit_menu.add(edit_menu_notepad);
+     edit_menu.add(edit_menu_editor);
      option_menu.add(option_menu_ascii);
      option_menu.add(option_menu_con);
      option_menu.add(option_menu_dump);
@@ -2074,7 +2067,7 @@ public  class  z390 extends JApplet
 	     String text_font_pfx = "<html><font size=" + font_size/3 + ">";
 	     String text_font_sfx = "</html>";
 	     file_menu_cd.setToolTipText(text_font_pfx + "CD change directory" + text_font_sfx);
-	     file_menu_edit.setToolTipText(text_font_pfx + "Edit source file with notepad" + text_font_sfx);
+	     file_menu_edit.setToolTipText(text_font_pfx + "Edit source file" + text_font_sfx);
 	     file_menu_mac.setToolTipText(text_font_pfx + "MAC macro expand (MLC > BAL)" + text_font_sfx);
 	     file_menu_asm.setToolTipText(text_font_pfx + "ASM macro assemble (MLC > BAL > OBJ)" + text_font_sfx);
 	     file_menu_asml.setToolTipText(text_font_pfx + "ASML macro assemble and link (MLC > BAL > OBJ > 390" + text_font_sfx);
@@ -2088,7 +2081,7 @@ public  class  z390 extends JApplet
 	     edit_menu_paste.setToolTipText(text_font_pfx + "Paste clipboard text (append if log has focus" + text_font_sfx);
 	     edit_menu_select_all.setToolTipText(text_font_pfx + "Select all text" + text_font_sfx);
 	     edit_menu_copy_log.setToolTipText(text_font_pfx + "Copy current log file to clipboard" + text_font_sfx);
-	     edit_menu_notepad.setToolTipText(text_font_pfx + "Launch notepad to edit selected data on clipboard" + text_font_sfx);
+	     edit_menu_editor.setToolTipText(text_font_pfx + "Launch editor to edit selected data on clipboard" + text_font_sfx);
 	     option_menu_ascii.setToolTipText(text_font_pfx + "ASCII use ASCII versus EBCDIC for character set" + text_font_sfx);
 	     option_menu_con.setToolTipText(text_font_pfx + "CON List statistics and log output on console" + text_font_sfx);
 	     option_menu_dump.setToolTipText(text_font_pfx + "DUMP generate full dump on abnoral termination" + text_font_sfx);
@@ -2241,10 +2234,24 @@ public  class  z390 extends JApplet
 		} 
 	  	break;
    	 case 'E':
-   	    if (event_name.equals("EDIT..")){
+   	    if (event_name.toUpperCase().equals("EDIT..")){
            batch_cmd("EDIT","","","");
            break;
 	    }
+   	    if (event_name.toUpperCase().equals("EDITOR")){
+   	    	if (perm_file_execute){
+                if (!main_batch){
+                   if (!tz390.exec_cmd(tz390.z390_editor)){
+                          log_error(16,"editor not found - " + tz390.z390_editor);
+                   }
+                } else {
+                       log_error(54,"interactive editor not supported in batch");
+                }
+             } else {
+                     log_error(17,"Permission for file execute denied");
+             }
+            break;
+ 	    }
  	    if (event_name.equals("EXEC..")){
             batch_cmd("EXEC","","390",exec_opt);
             break;
@@ -2302,11 +2309,6 @@ public  class  z390 extends JApplet
                 break;
      	    }
      	    break;
-      case 'N':
-	  	if (event_name.equals("NOTEPAD")){
-	           z390_cmd_line.setText("NOTEPAD");
-		}
-	  	break;
       case 'O':
    	  	break;  
 	  case 'P':
@@ -2421,9 +2423,9 @@ public  class  z390 extends JApplet
    	  		put_log("  Runtime Permissions - thread modify for popups - denied");
    	  	}
    	  	if  (perm_file_execute){
-   	  		put_log("  File Permissions - execute for browser/notepad - ok");
+   	  		put_log("  File Permissions - execute for browser/edit - ok");
    	  	} else {
-   	  		put_log("  File Permissions - execute for browser/notepad - denied");
+   	  		put_log("  File Permissions - execute for browser/edit - denied");
    	  	}
    	  	if  (perm_file_read){
    	  		put_log("  File Permissions - read - ok");
@@ -2647,19 +2649,19 @@ public  class  z390 extends JApplet
                  JMenuItem popup_edit_menu_paste  = new JMenuItem("Paste");
                  JMenuItem popup_edit_menu_select_all = new JMenuItem("Select All");
                  JMenuItem popup_edit_menu_copy_log = new JMenuItem("Copy Log");
-                 JMenuItem popup_edit_menu_notepad = new JMenuItem("Notepad");
+                 JMenuItem popup_edit_menu_editor = new JMenuItem("Edit..");
                  popup_edit_menu.add(popup_edit_menu_cut);
                  popup_edit_menu.add(popup_edit_menu_copy);
                  popup_edit_menu.add(popup_edit_menu_paste);
                  popup_edit_menu.add(popup_edit_menu_select_all);
                  popup_edit_menu.add(popup_edit_menu_copy_log);
-                 popup_edit_menu.add(popup_edit_menu_notepad);
+                 popup_edit_menu.add(popup_edit_menu_editor);
                  popup_edit_menu_cut.addActionListener(this);
                  popup_edit_menu_copy.addActionListener(this);
                  popup_edit_menu_paste.addActionListener(this);
                  popup_edit_menu_select_all.addActionListener(this);
                  popup_edit_menu_copy_log.addActionListener(this);
-                 popup_edit_menu_notepad.addActionListener(this);
+                 popup_edit_menu_editor.addActionListener(this);
               } 
               Component mouse_comp = e.getComponent();
               if  (mouse_comp == log_text){
@@ -2993,7 +2995,7 @@ public  class  z390 extends JApplet
 		       	        File new_dir_file = new File(new_dir);
 				  	    if  (new_dir_file.isDirectory()){
 				  	    	try {
-				  	    		new_dir = new_dir_file.getCanonicalPath(); // RPI 235
+				  	    		new_dir = new_dir_file.getCanonicalPath() + File.separator; // RPI 235 + RPI 508
 				  	    	} catch (Exception e){}
 				  	    	tz390.dir_cur = new_dir; 
 							dir_cur_file = new File(new_dir);
@@ -3258,7 +3260,6 @@ public  class  z390 extends JApplet
 	    	put_log("LISTCALL ON/OFF          set trace calls for MAC file cmd");
 	    	put_log("LOC      x y pixels      set upper left location of window");
 	    	put_log("MAC      mlc file        expand mlc macro file to bal source file");
-	    	put_log("NOTEPAD                  start Notepad for use with clipboard data (GUI only)  ");
 	    	put_log("PASTE                    paste clipboard text (GUI right click)                ");
 	    	put_log("PERM                     display current Java security manager permissions     ");
 	    	put_log("REL                      display current release level for OS, Java, and z390");

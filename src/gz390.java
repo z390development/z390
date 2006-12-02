@@ -109,7 +109,8 @@ public  class  gz390
 	 *          support for mulitple font characters and symbols
 	 *          plus color and other extended TN3270 attributes 
 	 * 08/14/06 RPI 414 recognize ERR(nnn) limit override
-	 * 09/21/06 RPI 460 wait for ez390 to close after PF3 abort    
+	 * 09/21/06 RPI 460 wait for ez390 to close after PF3 abort
+	 * 12/01/06 RPI 509 use Monospace font for Windows and Linux    
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -872,7 +873,7 @@ public  class  gz390
 	    * reset font size 
 	    */
    	    	if (new_font_size < 8 || new_font_size > 72){
-   	    		log_error(8,"font outside New Courier fixed width font limits");
+   	    		log_error(8,"font outside fixed width font limits");
    	    	} else {
    	    		font_size = new_font_size;
    	    		set_guam_size();
@@ -1042,7 +1043,7 @@ public  class  gz390
     	  * initialize tn3270 screen fonts
     	  * using current font size
     	  */
-    	 char_font = new Font("Courier",Font.BOLD,font_size);
+    	 char_font = new Font(tz390.z390_font,Font.BOLD,font_size);
      }
      private void set_guam_size(){
     	 /* 

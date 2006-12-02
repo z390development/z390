@@ -7,6 +7,9 @@
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
 .* 11/10/06 RPI 477 SUPPORT ASCII OPTION, REGISTER INPUT, RC=12 VS ERR
+.* 11/29/06 RPI 507 SUPPORT IN=REG (GPR OR FPR INPUT VALUE IN REG)
+.*                  (NOTE REG MUST NOT BE GPR 1)
+.*                  (NOTE IN=(REG) INDICATES FIELD ADDR IN GPR)
 .*********************************************************************
 .*
 .*  CONVERT INPUT NUMERIC FIELD TO DISPLAY EBCDIC FORMAT

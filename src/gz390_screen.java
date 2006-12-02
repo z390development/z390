@@ -73,7 +73,7 @@ public class gz390_screen extends JPanel implements Runnable {
          * create screen image based on
          * pixel size of character rendering
          * using specified font_size assuming
-         * font is monospace such as Courier
+         * font is monospace
          */
 	    BufferedImage     scn_image;
     	Graphics2D        scn_grid;

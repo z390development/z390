@@ -221,6 +221,7 @@ public  class  az390 implements Runnable {
     * 11/28/06 RPI 500 use system newline vs \r\n for Win/Linux
     * 11/28/06 RPI 501 support literal minus abs expression in operands
     * 11/28/06 RPI 503 suppress duplicate MNOTE's on SYSTERM
+    * 12/02/06 RPI 511 add option mcall to put mcall/mexit on PRN
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -1434,16 +1435,22 @@ private void process_bal_op(){
     	if (gen_obj_code 
     		&& bal_line.length() > 9){
        		if (bal_line.substring(0,9).equals("*MCALL #=")){
-       			hex_bddd2_loc = bal_line.substring(23,29);   //put mlc line # in data area
-       			bal_line = bal_line.substring(30); //strip * call prefix and level RPI 233
+       			if (!tz390.opt_mcall){ // RPI 511
+       				hex_bddd2_loc = bal_line.substring(23,29);   //put mlc line # in data area
+       				bal_line = bal_line.substring(30); //strip * call prefix and level RPI 233
+       			}
        			if (mac_call_level == 0){
        				mac_call_first = true; // delay setting level to print call if nogen
        			} else {
-       				list_bal_line = false;
+       				if (!tz390.opt_mcall){ // RPI 511
+       					list_bal_line = false;
+       				}
        				mac_call_inc = true;
        			}       			
        		} else if (bal_line.substring(0,9).equals("*MEXIT #=")){
-   				list_bal_line = false;
+   				if (!tz390.opt_mcall){ // RPI 511
+   					list_bal_line = false;
+   				}
        			mac_call_level--;
        		}
        	}

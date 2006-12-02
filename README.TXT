@@ -1,4 +1,4 @@
-z390 v1.2.00b PTF 11/29/06
+z390 v1.2.00c PTF 12/02/06
 Copyright 2006 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.2.00:
@@ -43,7 +43,29 @@ The enclosed z390.jar contains following cumulative fixes for v1.2.00:
 11. RPI 507 - Support CFD OUT=reg and CTD IN=reg as well as (reg) and    
     rx format options. See updated TESTCFD1 and TESTCTD1.
 
-    To install PTF follow these steps.
+12. RPI 508 - correct z390 GUI error on /SC startup commands and
+    invalid path on CD commands. (Regressions due to Linux changes)
+
+13. RPI 509 Change default font for both Windows and Linux to "Monospaced"
+    for improved graphics on Linus and no change on Windows.
+
+14. RPI 510 update default utility programs for Windows and Linux and
+    add environment variables to override defaults:
+    Z390ACROBAT=start/acroread
+    z390BROWSER=start/firefox
+    z390COMMAND=cmd.exe/perl
+    z399EDUTIR=notepad.exe/xemacs
+
+15. RPI 511 - add option MCALL to show MCALL and MEXIT comments on PRN listing
+    showing every macro call and exit with instance # and nesting level.
+
+16. RPI 512 - update CFD macro and svc to allow floating values for INT128 input
+    and update return codes as follows:
+    RC=0 ok
+    RC=8 invalid type or register
+    RC=12 invalid value (out of range)
+
+To install PTF follow these steps.
 
 1.  Copy the z390.jar file into install directory for z390
     replacing existing copy of z390.jar.

@@ -7,6 +7,7 @@
 *********************************************************************
 * 11/10/06 RPI 477 ADD ASCII SUPPORT TO CTD AND CFD, USE IN=,OUPT=
 * 11/29/06 RPI 507 SUPPORT IN=REG IN ADDITION TO IN=(REG ADDR)     
+* 12/02/06 RPI 511 SUPPORT FLOATING POINT FORMAT FOR INT128 INPUT  
 *********************************************************************
          PRINT DATA
 TESTCTD1 RT1   MAIN
@@ -28,6 +29,8 @@ DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          RT1   CCE
          MEND
          TEST  CFD_INT128,=CL45'2',=FL16'2'
+         TEST  CFD_INT128,=CL45'123E2',=FL16'12300'
+         TEST  CFD_INT128,=CL45'123.5',=FL16'123'
          TEST  CFD_EH,=CL45'2',=EH'2'
          TEST  CFD_EB,=CL45'2',=EB'2'
          TEST  CFD_DH,=CL45'2',=DH'2'
@@ -48,6 +51,8 @@ DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          RT1   CCE
          MEND
          TEST  CFD_INT128,=CL45'2',=FL16'2'
+         TEST  CFD_INT128,=CL45'123E2',=FL16'12300'
+         TEST  CFD_INT128,=CL45'123.5',=FL16'123'
          TEST  CFD_EH,=CL45'2',=EH'2'
          TEST  CFD_EB,=CL45'2',=EB'2'
          TEST  CFD_DH,=CL45'2',=DH'2'
@@ -60,31 +65,39 @@ DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          MACRO
          TEST  &TYPE,&IN
          MVC   DECIMAL,&IN        
-         CFD   &TYPE,OUT=R1,IN=DECIMAL
+         CFD   &TYPE,OUT=R4,IN=DECIMAL
          MEND
          TEST  CFD_INT128,=CL45'2'
-         STMG  R1,R2,WORK
+         STMG  R4,R5,WORK
          CLC   WORK,=FL16'2'
          RT1   CCE
+         TEST  CFD_INT128,=CL45'123E2'
+         STMG  R4,R5,WORK
+         CLC   WORK,=FL16'12300'
+         RT1   CCE
+         TEST  CFD_INT128,=CL45'123.5'
+         STMG  R4,R5,WORK
+         CLC   WORK,=FL16'123'
+         RT1   CCE
          TEST  CFD_EH,=CL45'2'
-         CE    F1,=EH'2'
+         CE    F4,=EH'2'
          RT1   CCE
          TEST  CFD_EB,=CL45'2'
-         CEB   F1,=EB'2'
+         CEB   F4,=EB'2'
          RT1   CCE
          TEST  CFD_DH,=CL45'2'
-         CD    F1,=DH'2'
+         CD    F4,=DH'2'
          RT1   CCE
          TEST  CFD_DB,=CL45'2'
-         CDB   F1,=DB'2'
+         CDB   F4,=DB'2'
          RT1   CCE
          TEST  CFD_LH,=CL45'2'
          LX    F0,=LH'2'
-         CXR   F0,R1
+         CXR   F0,R4
          RT1   CCE
          TEST  CFD_LB,=CL45'2'
          LX    F0,=LB'2'
-         CXBR  F0,R1
+         CXBR  F0,R4
          RT1   CCE
          RT1   END
          EQUREGS REGS=FPR 

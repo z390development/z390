@@ -19,7 +19,7 @@ public class test_screen{
 	    int font_size = 12;
 	    Color bg_color = Color.BLACK;
 	    Color text_color = Color.YELLOW;
-	    Font font_ascii = new Font("Courier New",Font.BOLD,font_size);
+	    Font font_ascii = new Font("Monospaced",Font.BOLD,font_size);
 	    tn_scn.set_screen(max_rows,max_cols,font_ascii,bg_color,text_color);       
 	    JFrame main_frame = new JFrame("Test z390 gz390_screen graphic2d panel class");
         main_frame.addWindowListener(new WindowAdapter() {

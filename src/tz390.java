@@ -103,7 +103,10 @@ public  class  tz390 {
     * 10/19/06 RPI 484 route all traces to trace files 
     * 11/16/06 RPI 499 merge Linux mods using z390_os_type indicator
     * 11/28/06 RPI 500 use system newline for Win/Linux,
-    *          set browser to cmd.exe start or forfire     
+    *          set browser to cmd.exe start or forfire 
+    * 12/01/06 RPI 509 use "Monospace" font for Win and Linux 
+    * 12/01/06 RPI 510 add z390??? env vars for default progams
+    * 12/02/06 RPI 511 add option MCALL to put MCALL and MEXIT on PRN   
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -112,7 +115,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.2.00b";  //dsh
+    String version    = "V1.2.00c";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -120,6 +123,7 @@ public  class  tz390 {
 	byte    z390_os_type  = 0;      // 1=win,2=Linux  RPI 499
 	byte    z390_os_win   = 1;
 	byte    z390_os_linux = 2;
+	String  z390_font    = "Monospaced";  // RPI 509 was Courier
 	boolean z390_abort   = false;  // global abort request
     boolean opt_amode24  = false;  // link to run amode24
     boolean opt_amode31  = true;   // link to run amode31
@@ -137,6 +141,7 @@ public  class  tz390 {
     boolean opt_listcall = true;  // list macro calls
     boolean opt_listfile = true;  // list each file path
     boolean opt_listuse  = true;  // list usage at USING and DROP
+    boolean opt_mcall    = false; // list MCALL and MEXIT on PRN // RPI 511
     boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     boolean opt_pc       = true;  // generate macro pseudo code
@@ -3049,30 +3054,51 @@ public void init_os(){
 	 * init os dependant variables
 	 */
 	String os_name = System.getProperty("os.name"); 
-    z390_editor    = System.getenv("EDIT");
+	z390_acrobat = System.getenv("Z390ACROBAT");;   // RPI 510
+	z390_browser = System.getenv("Z390BROWSER");;   // RPI 510
+	z390_command = System.getenv("Z390COMMAND");    // RPI 510
+	z390_editor  = System.getenv("Z390EDIT");       // RPI 510
 	if  (os_name.substring(0,3).equals("Win")){
 		z390_os_type = z390_os_win;        // RPI 499
-		z390_browser = "cmd.exe /c Start"; // RPI 500
-	    z390_acrobat = z390_browser;
+		if (z390_browser == null
+			|| z390_browser.length() == 0){
+			z390_browser = "cmd.exe /c Start"; // RPI 500
+		}
+		if (z390_acrobat == null 
+				|| z390_acrobat.length() == 0){
+				z390_acrobat = z390_browser;
+			}
+		if  (z390_command == null 
+			|| z390_command.length() == 0){
+			if  (os_name.equals("Windows 95")
+				|| os_name.equals("Windows 98")){
+				z390_command = "command.com" ;
+			} else {
+				z390_command = "cmd.exe";
+			}
+		}
 		if (z390_editor == null 
-	    	|| z390_editor.length() == 0){
-	    	z390_editor  = "notepad.exe"; // RPI 500
-	    }
-		if  (os_name.equals("Windows 95")
-			|| os_name.equals("Windows 98")){
-			z390_command = "command.com" ;
-		} else {
-			z390_command = "cmd.exe";
+		    || z390_editor.length() == 0){
+		    z390_editor  = "notepad.exe"; // RPI 500
 		}
     } else if (os_name.substring(0,3).equals("Lin")){
     	z390_os_type = z390_os_linux; // RPI 499
-    	z390_acrobat = "acroread";    // RPI 500
-    	z390_browser = "foxfire";     // RPI 500
-	    if (z390_editor == null 
-		    	|| z390_editor.length() == 0){
-	    	z390_editor  = "xemacs";
-	    }
-		z390_command = "perl"; // RPI 500
+		if (z390_browser == null
+			|| z390_browser.length() == 0){
+			z390_browser = "firefox"; // RPI 500
+		}
+		if (z390_acrobat == null 
+			|| z390_acrobat.length() == 0){
+			z390_acrobat = "acroread";
+		}
+		if  (z390_command == null 
+			|| z390_command.length() == 0){
+			z390_command = "perl";
+		}
+		if (z390_editor == null 
+		    || z390_editor.length() == 0){
+		    z390_editor  = "xemacs"; // RPI 500
+		}
     }
 }
 public void init_options(String[] args,String pgm_type){
@@ -3203,6 +3229,10 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.length() > 7
           		&& token.substring(0,7).toUpperCase().equals("MAXSYM(")){
            	opt_maxsym = Integer.valueOf(token.substring(7,token.length()-1)).intValue();
+        } else if (token.length() >= 5
+          		&& token.substring(0,5).toUpperCase().equals("MCALL")){
+           	opt_mcall = true; // RPI 511
+           	opt_listcall = true;
         } else if (token.length() > 5
         	&& token.substring(0,4).toUpperCase().equals("MEM(")){
            	try {
@@ -3638,11 +3668,14 @@ public String get_file_name(String parm_dir,String parm,String parm_type){
 	    	} else {
 	    	    file_name = parm;
 	    	}
+	    	if  (parm_dir.length() > 0 && !parm_dir.substring(parm_dir.length()-1).equals(File.separator)){
+	    		parm_dir = parm_dir.concat(File.separator); // RPI 508
+	    	}
 	    	if  (file_name.length() > 0
 	            && file_name.indexOf('\\') == -1
 	    		&& file_name.indexOf(':')  == -1
 	    		&& z390_os_type == z390_os_win){  // RPI 499 only on Windows
-	    		file_name = parm_dir.concat(File.separator + file_name);	
+	    		file_name = parm_dir.concat(file_name);	 // RPI 508
 	    	}
 	    	int index = file_name.indexOf(".");
 	    	if (index == -1){

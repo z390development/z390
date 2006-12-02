@@ -7,6 +7,8 @@
 .* Date   - 07/17/06                                                 *
 .*********************************************************************
 .* 11/10/06 RPI 477 SUPPORT ASCII OPTION, REGISTER INPUT, RC=12 VS ERR
+.* 11/29/06 RPI 507 SUPPORT OUT=REG (GPR OR FPR OUTPUT REG)
+.*                  (NOTE OUT=(REG) INDICATES FIELD ADDR IN GPR)
 .*********************************************************************
 .*
 .*  CONVERT FROM EBCDIC DECIMAL FIELD TO BINARY FIELD FORMAT
@@ -53,10 +55,10 @@ CFD_LB   EQU   27 CONVERT TO FP EXT.  LB FROM 45 BYTE SN.N(34)+ENNNN
          ST    &TYPE(1),0(1)
 .CHKIN   ANOP
          AIF   ('&IN'(1,1) NE '(').CHKOUT
-         ST    &IN(1),4(1)
+         ST    &IN(1),8(1)                  RPI 507
 .CHKOUT  ANOP
          AIF   ('&OUT'(1,1) NE '(').SVC
-         ST    &OUT(1),8(1)
+         ST    &OUT(1),4(1)                 RPI 507
 .SVC     ANOP
          AIF   (&LINKAGE NE 'SVC').CALL
          SVC   171 CFD Z390 SVC R1=A(TYPE,OUT,IN)
