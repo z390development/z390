@@ -22,6 +22,7 @@
 * 07/19/06 RPI368 - support S scale factor for F, H, EH, DH, and LH      
 * 08/03/06 RPI388 - test fix dup count for E, D, F and FD                     
 * 09/21/06 RPI458 - test DC S(rel and off(base)) constants                            
+* 12/09/06 RPI407 - test DC DD, ED, and LD (min) and (max) constants                  
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -67,17 +68,23 @@ TFSE     EQU   *
          RT1   CCE,=DS2'1',=X'4310000000000000'
          RT1   CCE,=LS2'1',=X'43100000000000003500000000000000'
 * test (MIN) and (MAX) constants
-         RT1   CCE,=EH'(MIN)',=X'01100000'
-         RT1   CCE,=EB'(MIN)',=X'00800000'
-         RT1   CCE,=DH'(MIN)',=X'0110000000000000'
          RT1   CCE,=DB'(MIN)',=X'0010000000000000'
-         RT1   CCE,=LH'(MIN)',=X'01100000000000007200000000000000'
+         RT1   CCE,=DD'(MIN)',=X'0000000000000001'
+         RT1   CCE,=DH'(MIN)',=X'0110000000000000'
+         RT1   CCE,=EB'(MIN)',=X'00800000'
+         RT1   CCE,=ED'(MIN)',=X'00000001'
+         RT1   CCE,=EH'(MIN)',=X'01100000'
          RT1   CCE,=LB'(MIN)',=X'00010000000000000000000000000000'
-         RT1   CCE,=EH'(MAX)',=X'7FFFFFFF'
-         RT1   CCE,=EB'(MAX)',=X'7F7FFFFF'
-         RT1   CCE,=DH'(MAX)',=X'7FFFFFFFFFFFFFFF'    
+         RT1   CCE,=LD'(MIN)',=X'00000000000000000000000000000001'
+         RT1   CCE,=LH'(MIN)',=X'01100000000000007200000000000000'
          RT1   CCE,=DB'(MAX)',=X'7FEFFFFFFFFFFFFF'
+         RT1   CCE,=DD'(MAX)',=X'77FCFF3FCFF3FCFF'    
+         RT1   CCE,=DH'(MAX)',=X'7FFFFFFFFFFFFFFF'    
+         RT1   CCE,=EB'(MAX)',=X'7F7FFFFF'
+         RT1   CCE,=ED'(MAX)',=X'77F3FCFF'
+         RT1   CCE,=EH'(MAX)',=X'7FFFFFFF'
          RT1   CCE,=LH'(MAX)',=X'7FFFFFFFFFFFFFFF71FFFFFFFFFFFFFF'
+         RT1   CCE,=LD'(MAX)',=X'77FFCFF3FCFF3FCFF3FCFF3FCFF3FCFF'
          RT1   CCE,=LB'(MAX)',=X'7FFEFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 * verify dc field continuations
          AIF   (C'A' EQ X'41').TEST1_ASCII

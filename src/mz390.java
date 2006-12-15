@@ -257,6 +257,7 @@ public  class  mz390 {
      * 11/16/06 RPI 499 merge Linux mods using z390_os_type indicator
      * 11/28/06 RPI 500 use system newline for Win/Linux
      * 22/28/06 RPI 502 ignore undefined vars in model statements
+     * 12/12/06 RPI 516 reduce '' to ' in PUNCH text
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -2241,7 +2242,7 @@ public  class  mz390 {
 		if  (opcode_type <= tz390.max_asm_type){  // RPI 274 OPSYN cancel -2 
 			// replace vars on model statements
 			// but no conditional macro statements
-			bal_line = replace_vars(bal_line,true);
+			bal_line = replace_vars(bal_line,false);
 			if (exp_var_replacement_change){
 				split_bal_line();
 			}
@@ -2284,11 +2285,11 @@ public  class  mz390 {
 			bal_parms = "";
 		}
 	}
-	private String replace_vars(String text,boolean bal_source){
+	private String replace_vars(String text,boolean reduce){
 		/* 
 		 * replace all variables in text
 		 * and set var_replacement if changed
-		 * if reduce true, replace && with & and '' with '
+		 * if reduce_quotes, replace && with & and '' with '
 		 * Notes:
 		 *   1.  Per RPI 241 ignore undefined &vars
 		 *       and let az390 report error if not in comment
@@ -2313,7 +2314,7 @@ public  class  mz390 {
 				bal_text_index2 = bal_text_index1 + 1;
 			} else if (parm_value.equals("&&")
 					|| parm_value.equals("''")){
-				if (!bal_source){ //RPI192 leave ?? and '' for BAL compatibility in az390
+				if (reduce){ //RPI192 leave ?? and '' for BAL compatibility in az390
 					// reduce ?? and '' for mnote and punch output
 					parm_value = parm_value.substring(1);
 				}
@@ -2773,7 +2774,7 @@ public  class  mz390 {
 			break;
 		case 214:  // MNOTE  RPI 238
 			bal_op_ok = true;
-			bal_parms = replace_vars(bal_parms,false);
+			bal_parms = replace_vars(bal_parms,true);
 			int mnote_level = -1;  // RPI 444
 			if (bal_parms.length() > 0 
 					&& bal_parms.charAt(0) != '\''
@@ -2863,13 +2864,13 @@ public  class  mz390 {
 			break;
 		case 223:  // PUNCH
 			bal_op_ok = true;
-			bal_parms = replace_vars(bal_parms,false);
+			bal_parms = replace_vars(bal_parms,false); // RPI 516
 			put_pch_line(bal_parms);
 			put_bal_line("         PUNCH " + bal_parms);  // RPI 410
 			break;
 		case 224:  // COPY (copy to bal and issue error if not found) RPI 300
 			bal_op_ok = true;
-			bal_parms = replace_vars(bal_parms,false);
+			bal_parms = replace_vars(bal_parms,true);
 			put_bal_line(bal_line);
 			mac_parms = bal_parms;
 			load_type = load_mac_exec;
@@ -2877,7 +2878,7 @@ public  class  mz390 {
 			break;
 		case 225:  // OPSYN
 			bal_op_ok = true;
-			bal_line = replace_vars(bal_line,false); // RPI 274
+			bal_line = replace_vars(bal_line,true); // RPI 274
 			parse_bal_line();  // RPI 306
 			put_bal_line(bal_line);
 			tz390.update_opsyn(bal_label,bal_parms);
@@ -3312,7 +3313,7 @@ public  class  mz390 {
 		 */
 		ap_file_index = 0;
 		ap_file_name = null;
-		parms = replace_vars(parms,false); 
+		parms = replace_vars(parms,true); 
 		String parm = null;
 		while (parms.length() > 0){
 			int index = parms.indexOf(',');

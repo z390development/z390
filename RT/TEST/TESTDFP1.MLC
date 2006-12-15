@@ -1,0 +1,106 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 12/09/06                                                 *
+*********************************************************************
+* TEST DFP DECIMAL FLOATING POINT
+*********************************************************************
+* Maintenance:
+* 12/09/06 RPI 407 ADD ADTR, SDTR, MDTR, DDTR, CDTR, CSDTR
+*********************************************************************
+         PRINT DATA
+TESTDFP1 RT1   MAIN
+DD1      DC    XL8'00'
+         RT1   START
+* B3D0 MDTR
+         LD    2,=DD'30'
+         LD    3,=DD'20'
+         MDTR  1,2,3
+         STD   1,DD1
+         RT1   CCE,DD1,=DD'600'
+* B3D1 MDTR
+         LD    2,=DD'600'
+         LD    3,=DD'20'
+         DDTR  1,2,3
+         STD   1,DD1
+         RT1   CCE,DD1,=DD'30'
+* B3D2 ADTR
+         LD    2,=DD'1234567890123456'
+         LD    3,=DD'1111111111111111'
+         ADTR  1,2,3
+         RT1   CC2
+         STD   1,DD1
+         RT1   CCE,DD1,=DD'2345679001234567'
+         LD    2,=DD'1'
+         LD    3,=DD'2'
+         ADTR  1,2,3
+         RT1   CC2
+         STD   1,DD1
+         RT1   CCE,DD1,=DD'3'
+         LD    2,=DD'1.1'
+         LD    3,=DD'2.2'
+         ADTR  1,2,3
+         RT1   CC2
+         STD   1,DD1
+         RT1   CCE,DD1,=DD'3.3'
+         LD    2,=DD'1'
+         LD    3,=DD'-1'
+         ADTR  1,2,3
+         RT1   CC0
+         STD   1,DD1
+         RT1   CCE,DD1,=DD'0'
+         LD    2,=DD'1'
+         LD    3,=DD'-2'
+         ADTR  1,2,3
+         RT1   CC1
+         STD   1,DD1
+         RT1   CCE,DD1,=DD'-1'
+* B3E3 CSDTR
+         LD    1,=DD'1'
+         CSDTR 0,1,0
+         CG    0,=PL8'1'
+         RT1   CCE 
+         CSDTR 0,1,1
+         CG    0,=XL8'000000000000001F'
+         RT1   CCE 
+         LD    1,=DD'-1'
+         CSDTR 0,1,0
+         CG    0,=PL8'-1'
+         RT1   CCE 
+         CSDTR 0,1,1
+         CG    0,=XL8'000000000000001D'
+         RT1   CCE 
+         LD    1,=DD'123456789012345'
+         CSDTR 0,1,0
+         CG    0,=PL8'123456789012345'
+         RT1   CCE 
+* B3E4 CDTR
+         LD    1,=DD'1'
+         LD    2,=DD'2'
+         CDTR  1,2
+         RT1   CC1
+         LD    1,=DD'1'
+         LD    2,=DD'1'
+         CDTR  1,2
+         RT1   CC0
+         LD    1,=DD'2'
+         LD    2,=DD'1'
+         CDTR  1,2
+         RT1   CC2
+* B3E5 EEDTR
+         LD    2,=DD'1'
+         EEDTR 1,2
+         CG    1,=FD'398'
+         RT1   CC0
+         LD    2,=DD'10'
+         EEDTR 1,2
+         CG    1,=FD'399'
+         RT1   CC0
+         LD    2,=DD'.1'
+         EEDTR 1,2
+         CG    1,=FD'397'
+         RT1   CC0
+         RT1   END
+         END         

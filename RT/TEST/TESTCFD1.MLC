@@ -8,12 +8,15 @@
 * 11/10/06 RPI 477 ADD ASCII SUPPORT TO CTD AND CFD, USE IN=,OUPT=
 * 11/29/06 RPI 507 SUPPORT IN=REG IN ADDITION TO IN=(REG ADDR)     
 * 12/02/06 RPI 511 SUPPORT FLOATING POINT FORMAT FOR INT128 INPUT  
+* 12/03/06 RPI 513 ADD RC TESTS                                    
+* 12/11/06 RPI 514 ADD DFP DD, ED, AND LD TESTS                                    
 *********************************************************************
          PRINT DATA
 TESTCTD1 RT1   MAIN
 WORK     DC    XL16'00' INT128,E,D,L WORK AREA
 DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          EQUREGS
+ABORT    ABEND 111
          RT1   START
          WTO   'TEST CFD CONVERT FROM DISPLAY MACRO/SVC 171 SERVICE'
 *********************************************************************
@@ -23,6 +26,8 @@ DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          TEST  &TYPE,&IN,&VER
          MVC   DECIMAL,&IN 
          CFD   &TYPE,OUT=WORK,IN=DECIMAL
+         LTR   R15,R15
+         BNZ   ABORT
          LD    R0,WORK
          LD    R1,WORK+8
          CLC   &VER,WORK
@@ -37,6 +42,9 @@ DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          TEST  CFD_DB,=CL45'2',=DB'2'
          TEST  CFD_LH,=CL45'2',=LH'2'
          TEST  CFD_LB,=CL45'2',=LB'2'
+         TEST  CFD_DD,=CL45'2',=DD'2'
+         TEST  CFD_ED,=CL45'2',=ED'2'
+         TEST  CFD_LD,=CL45'2',=LD'2'
 *********************************************************************
          WTO   'TEST CTD USING OUT=(REG) RX FIELD ADDR'
 *********************************************************************
@@ -45,6 +53,8 @@ DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          MVC   DECIMAL,&IN        
          LA    R2,WORK 
          CFD   &TYPE,OUT=(R2),IN=DECIMAL
+         LTR   R15,R15
+         BNZ   ABORT
          LD    R0,WORK
          LD    R1,WORK+8
          CLC   &VER,WORK
@@ -66,6 +76,8 @@ DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          TEST  &TYPE,&IN
          MVC   DECIMAL,&IN        
          CFD   &TYPE,OUT=R4,IN=DECIMAL
+         LTR   R15,R15
+         BNZ   ABORT
          MEND
          TEST  CFD_INT128,=CL45'2'
          STMG  R4,R5,WORK

@@ -222,6 +222,7 @@ public  class  az390 implements Runnable {
     * 11/28/06 RPI 501 support literal minus abs expression in operands
     * 11/28/06 RPI 503 suppress duplicate MNOTE's on SYSTERM
     * 12/02/06 RPI 511 add option mcall to put mcall/mexit on PRN
+    * 12/04/06 RPI 407 add ED, DD, LD types
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -464,6 +465,22 @@ public  class  az390 implements Runnable {
 			2,  // Y
 			1   // Z
 			};
+    int[] dc_sfxd_len = {  // RPI 270, RPI 407
+    		8,  // AD
+			1,  // B
+			1,  // C
+			8,  // D
+			4,  // E
+			8,  // FD
+			2,  // H
+			16, // L
+			1,  // P
+			2,  // S
+			8,  // VD
+			1,  // X
+			2,  // Y
+			1   // Z
+			};
     int[] dc_type_align = {
     		4,  // A
 			0,  // B
@@ -680,31 +697,8 @@ public  class  az390 implements Runnable {
       boolean dcv_type = false;
       boolean dca_ignore_refs = false;
       char   dc_type_sfx = ' ';
-      int fp_db_type = 0;
-      int fp_dh_type = 1;
-      int fp_eb_type = 2;
-      int fp_eh_type = 3;
-      int fp_lb_type = 4;
-      int fp_lh_type = 5;
-      int    fp_type = 0;
-      String fp_hex = null;
-      int[]  fp_man_bits = {52,56,23,24,112,112};
-      /*
-       * Note:  The following big decimal precision
-       *        array used in both az390 and ez390
-       *        should be maintained consistently
-       *        as it is used for rounding 
-       *        during conversions between types.
-       */
-      int[]  fp_precision = {18,18,8,8,36,36}; 
-      int[]  fp_sign_bit = {0x800,0x80,0x100,0x80,0x8000,0x80};
-      int[]  fp_one_bit_adj = {2,1,2,1,2,1};
-      int[]  fp_exp_bias = {0x3ff,0x40,0x7f,0x40,0x3fff,0x40};
-      int[]  fp_exp_max  = {0x7ff,0x7f,0xff,0x7f,0x7fff,0x7f};
-  	  double fp_log2  = Math.log(2);
+      double fp_log2  = Math.log(2);
 	  double fp_log10 = Math.log(10);
-      int fp_sign = 0;
-      int fp_exp   = 0; // scale * log10/log2
       MathContext fp_context = null;
       BigDecimal fp_big_dec1 = BigDecimal.ZERO;
       BigDecimal fp_big_dec2 = BigDecimal.ZERO;
@@ -1976,7 +1970,7 @@ private void process_bal_op(){
     	check_end_parms();
     	put_obj_text();
     	break;
-    case 34:   // RPI 206 CG?R, CF?R, FI?R, IDTE, TB?R (r1,m3,r2 maps to oooo3012)
+    case 34:   // RPI 206 CG?R, CF?R, FI?R, IDTE, TB?R RRF2 34 (r1,m3,r2 maps to oooo3012)
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;
     	loc_start = loc_ctr;
@@ -1994,6 +1988,44 @@ private void process_bal_op(){
 	    	+ obj_code.substring(4,5)  // r1
 	    	+ obj_code.substring(7,8); // r2
     	check_end_parms();
+    	put_obj_text();
+    	break;
+    case 35:  // RPI 407 "CSDTR" "RRF4" 35 oooo0mrr (r1,r2,m4 maps to oooo0412) 
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 4;
+    	get_hex_op(1,4);
+     	get_hex_zero(1);
+    	get_hex_reg();
+    	skip_comma();
+    	get_hex_reg();
+		skip_comma();
+    	get_hex_reg();
+       	obj_code = obj_code.substring(0,5)  // oooo 
+        + obj_code.substring(7,8)  // m4
+		+ obj_code.substring(5,7);  // r1,r2
+    	check_end_parms();
+    	put_obj_text();
+    	break;	
+    case  36:  // RPI 407 "ADTR" "RRR" oooo3012 
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 4;
+    	get_hex_op(1,4);
+     	get_hex_reg();
+     	get_hex_zero(1);
+     	skip_comma();
+     	get_hex_reg();
+     	skip_comma();
+     	get_hex_reg();
+    	obj_code = obj_code.substring(0,4)  // oooo
+     	    + obj_code.substring(7,8)  // r3
+	    	+ "0"
+	    	+ obj_code.substring(4,5)  // r1
+    	    + obj_code.substring(6,7); // r2
+	    check_end_parms();
     	put_obj_text();
     	break;
     case 101:  // CCW 0 
@@ -5314,7 +5346,7 @@ private void get_dc_field_type(){
 	/* 
 	 * 1.  set dc_type and dc_type_index 
 	 *     and verify else abort
-	 * 2.  if DEF check for B/H and set fp_type
+	 * 2.  if DEL check for B/D/H and set tz390.fp_type
 	 * 3.  if C check for A/E and set dc_type_sfx  // RPI 270
 	 * 4.  if AFV check for D and set dc_type_sfx  // RPI 270
 	 */
@@ -5348,10 +5380,13 @@ private void get_dc_field_type(){
       	 		break;
       	 	case 'D':
       	 		if (dc_type_sfx == 'B'){
-      	 			fp_type = fp_db_type;
+      	 			tz390.fp_type = tz390.fp_db_type;
+      	 			dc_index++;
+      	 		} else if (dc_type_sfx == 'D'){
+      	 			tz390.fp_type = tz390.fp_dd_type; // RPI 407
       	 			dc_index++;
       	 		} else {
-      	 			fp_type = fp_dh_type;
+      	 			tz390.fp_type = tz390.fp_dh_type;
       	 			if (dc_type_sfx == 'H'){
       	 			   dc_index++;
       	 			}
@@ -5359,10 +5394,13 @@ private void get_dc_field_type(){
       	 		break;
       	    case 'E':
       	 		if (dc_type_sfx == 'B'){
-      	 			fp_type = fp_eb_type;
+      	 			tz390.fp_type = tz390.fp_eb_type;
+      	 			dc_index++;
+      	 		} else if (dc_type_sfx == 'D'){
+      	 			tz390.fp_type = tz390.fp_ed_type; // RPI 407
       	 			dc_index++;
       	 		} else {
-      	 			fp_type = fp_eh_type;
+      	 			tz390.fp_type = tz390.fp_eh_type;
       	 			if (dc_type_sfx == 'H'){
        	 			   dc_index++;
        	 			}
@@ -5375,10 +5413,13 @@ private void get_dc_field_type(){
       	 		break;
       	    case 'L':
       	 		if (dc_type_sfx == 'B'){
-      	 			fp_type = fp_lb_type;
+      	 			tz390.fp_type = tz390.fp_lb_type;
       	 			dc_index++;
+      	 		} else if (dc_type_sfx == 'D'){
+      	 			tz390.fp_type = tz390.fp_ld_type; // RPI 407
+      	 			dc_index++;	
       	 		} else {
-      	 			fp_type = fp_lh_type;
+      	 			tz390.fp_type = tz390.fp_lh_type;
       	 			if (dc_type_sfx == 'H'){
        	 			   dc_index++;
        	 			}
@@ -5404,9 +5445,11 @@ private void get_dc_field_modifiers(){
 	 */
 	 if (dc_type_index != -1){
 		dc_attr_elt = sym_attr_elt_def; // default for not explicit length
-	    dc_len = dc_type_len[dc_type_index];
-	    if (dc_len == 4 && dc_type_sfx == 'D'){
-	    	dc_len = 8; // RPI 270
+	    
+	    if (dc_type_sfx == 'D'){
+	    	dc_len = dc_sfxd_len[dc_type_index]; // RPI 270
+	    } else {
+	    	dc_len = dc_type_len[dc_type_index];
 	    }
 	} else {
 	 	dc_len = 1;
@@ -5855,7 +5898,7 @@ private void process_dc_fp_data(){
 	while (!dc_eod && !bal_abort){
 		while (!dc_eod && !bal_abort 
 				&& dc_field.charAt(dc_index) != '\''){
-			dc_hex = get_dc_fp_hex(dc_field,dc_index);
+			get_dc_fp_hex(dc_field,dc_index);
             if (dc_bit_len){
             	gen_dc_fp_bits();
             } else {
@@ -6004,9 +6047,9 @@ private String get_dc_fh_hex_val(){
    	    return "";
     }
 }
-private String get_dc_fp_hex(String text,int index){
+private void get_dc_fp_hex(String text,int index){
 	/*
-	 * return hex for D, E, or F 
+	 * set dc_hex for D, E, or F 
 	 * floating point sdt starting at text index
 	 */
 	int text_end = text.substring(index).indexOf('\''); // RPI 411
@@ -6014,11 +6057,11 @@ private String get_dc_fp_hex(String text,int index){
 		text_end = text.substring(index).indexOf(',');
 		if (text_end == -1){
 			log_error(66,"invalid floating point data field");
-			return "00";
+			dc_hex = "00";
 		}
 	}
 	dc_index = index + text_end;
-	return get_fp_hex(fp_type,text.substring(index,index+text_end));
+	get_fp_hex(text.substring(index,index+text_end));
 }
 private void process_dcf_data(){
 	/*
@@ -6968,15 +7011,15 @@ private void add_sym_xref(int index){
 	}
 	sym_xref[index].add(bal_line_num[bal_line_index]);
 }
-private String get_fp_hex(int fp_type,String fp_text){
+private void get_fp_hex(String fp_text){
 	/*
-	 * return hex for floating point string
+	 * set dc_hex for floating point string
 	 * in scientific notation 0.314159E1 etc.
-	 * format is based on fp type 1-6 (db,dh,eb,eh,lb,lh)
+	 * format is based on fp type 0-8 (db,dd,dh,eb,ed,eh,lb,ld,lh)
 	 *
 	 * Notes:
 	 *   1.  This is very tricky code!
-	 *   2.  Use BigDecimal for all 6 types to 
+	 *   2.  Use BigDecimal for all types to 
 	 *       insure DH and EH exponents beyond 
 	 *       range of DB and EB will be correctly
 	 *       handled without error.
@@ -6991,40 +7034,71 @@ private String get_fp_hex(int fp_type,String fp_text){
 	 */
 	if (fp_text.charAt(0) == '('){ // RPI 367 support (MIN) and (MAX)
 		if (fp_text.toUpperCase().equals("(MAX)")){
-			switch (fp_type){  // gen (max) hex for fp_type
-			case 0: // fp_db_type s1,e11,m52 with assumed 1
-				return "7fefffffffffffff";
-			case 1: // fp_dh_type s1,e7,m56 with hex exp
-				return "7fffffffffffffff";
-			case 2: // fp_eb_type s1,e8,m23 with assumed 1
-	            return "7f7fffff";
-			case 3: // fp_eh_type s1,e7,m24 with hex exp
-				return "7fffffff";
-			case 4: // fp_lb_type s1,e15,m112 with assumed 1
-				return "7ffeffffffffffffffffffffffffffff";
-			case 5: // fp_lh_type s1,e7,m112 with split hex	
-				return "7fffffffffffffff71ffffffffffffff";
+			switch (tz390.fp_type){  // gen (max) hex for tz390.fp_type
+			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+				dc_hex = "7FEFFFFFFFFFFFFF";
+			    return;
+			case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+			    dc_hex = "77FCFF3FCFF3FCFF"; // RPI 407
+			    return;
+			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+				dc_hex = "7FFFFFFFFFFFFFFF";
+			    return;
+			case 3: // tz390.fp_eb_type s1,e8,m23 with assumed 1
+	            dc_hex = "7F7FFFFF";
+			    return;
+			case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50
+			    dc_hex = "77F3FCFF"; // RPI 407
+			    return;
+			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+				dc_hex = "7FFFFFFF";
+			    return;
+			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+				dc_hex = "7FFEFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+			    return;
+			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
+			    dc_hex = "77FFCFF3FCFF3FCFF3FCFF3FCFF3FCFF"; // RPI 407
+			    return;
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+				dc_hex = "7FFFFFFFFFFFFFFF71FFFFFFFFFFFFFF";
+			    return;
 			}
+			return;
 		} else if (fp_text.toUpperCase().equals("(MIN)")){
-			switch (fp_type){  // gen (min) hex for fp_type
-			case 0: // fp_db_type s1,e11,m52 with assumed 1
-				return "0010000000000000";
-			case 1: // fp_dh_type s1,e7,m56 with hex exp
-				return "0110000000000000";
-			case 2: // fp_eb_type s1,e7,m24 with assumed 1
-	            return "00800000";
-			case 3: // fp_eh_type s1,e7,m24 with hex exp
-				return "01100000";
-			case 4: // fp_lb_type s1,e15,m112 with assumed 1
-				return "00010000000000000000000000000000";
-			case 5: // fp_lh_type s1,e7,m112 with split hex	
-				return "01100000000000007200000000000000";
+			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
+			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+				dc_hex = "0010000000000000";
+			    return;
+			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
+				dc_hex = "0000000000000001"; // RPI 407
+				return;
+			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+				dc_hex = "0110000000000000";
+				return;
+			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+	            dc_hex = "00800000";
+	            return;
+			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+				dc_hex = "00000001"; // RPI 407
+				return;
+			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+				dc_hex = "01100000";
+				return;
+			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+				dc_hex = "00010000000000000000000000000000";
+				return;
+			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
+				dc_hex = "00000000000000000000000000000001"; // RPI 407
+				return;
+			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+				dc_hex = "01100000000000007200000000000000";
+				return;
 			}
 		} else {
 			log_error(112,"unrecognized floating point constant " + fp_text);
 		}
 	}
-	fp_context = new MathContext(fp_precision[fp_type]);
+	fp_context = new MathContext(tz390.fp_precision[tz390.fp_type]);
 	try { // RPI 424
 		fp_big_dec1 = new BigDecimal(fp_text,fp_context);
 	} catch (Exception e){
@@ -7038,29 +7112,69 @@ private String get_fp_hex(int fp_type,String fp_text){
 		
 	}
 	if (fp_big_dec1.signum() > 0){
-		fp_sign = 0;
+		tz390.fp_sign = 0;
 	} else if (fp_big_dec1.signum() < 0){
-		fp_sign = fp_sign_bit[fp_type];
+		tz390.fp_sign = tz390.fp_sign_bit[tz390.fp_type];
 		fp_big_dec1 = fp_big_dec1.abs();
 	} else {
-		switch (fp_type){  // gen zero hex for fp_type
-		case 0: // fp_db_type s1,e11,m52 with assumed 1
-		case 1: // fp_dh_type s1,e7,m56 with hex exp
-			return "0000000000000000"; // RPI 384
-		case 2: // fp_eb_type s1,e7,m24 with assumed 1
-		case 3: // fp_eh_type s1,e7,m24 with hex exp
-			return "00000000"; // RPI 384
-		case 4: // fp_lb_type s1,e15,m112 with assumed 1
-		case 5: // fp_lh_type s1,e7,m112 with split hex	
-			return "00000000000000000000000000000000";  // RPI 384
+		switch (tz390.fp_type){  // gen zero hex for tz390.fp_type
+		case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+		case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50 // RPI 407
+		case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+			dc_hex = "0000000000000000"; // RPI 384
+			return;
+		case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+		case 4: // tz390.fp_ed_type s1,cf5,bxdf6,ccf20 // RPI 407
+		case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+			dc_hex = "00000000"; // RPI 384
+			return;
+		case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+		case 7: // tz390.fp_ed_type s1,cf5,bxdf12,ccf110 // RPI 407	
+		case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+			dc_hex = "00000000000000000000000000000000";  // RPI 384
+			return;
 		}
 	}
+	/*
+	 * convert bfp and hfp to binary exp and mantissa
+	 */
+	switch (tz390.fp_type){
+	case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+	    cvt_fp_to_bfp();
+	    break;
+	case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50 // RPI 407
+		cvt_fp_to_hex();
+		break;
+	case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+	    cvt_fp_to_bfp();
+	    break;
+	case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+	    cvt_fp_to_bfp();
+	    break;
+	case 4: // tz390.fp_ed_type s1,cf5,bxdf6,ccf20 // RPI 407
+		cvt_fp_to_hex();
+		break;
+	case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+	    cvt_fp_to_bfp();
+	    break;
+	case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+	    cvt_fp_to_bfp();
+	    break;
+	case 7: // tz390.fp_ld_type s1,cf5,bxdf12,ccf110 // RPI 407	
+		cvt_fp_to_hex();
+		break;
+	case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+	    cvt_fp_to_bfp();
+	    break;
+	}
+}
+	private void cvt_fp_to_bfp(){
 	/*******************************************
-	 * calc fp_exp and big_dec2 such that:      
-	 * big_dec1 = big_dec2 * 2  ** fp_exp      
+	 * calc tz390.fp_exp and big_dec2 such that:      
+	 * big_dec1 = big_dec2 * 2  ** tz390.fp_exp      
 	 *************************************** 
 	 * 
-	 * fp_exp = log(big_dec1) / log(2)
+	 * tz390.fp_exp = log(big_dec1) / log(2)
 	 * 	 *                                           
 	 * Since the exponent range of LB exceeds  
 	 * native double, the log of big_dec1 is
@@ -7078,131 +7192,149 @@ private String get_fp_hex(int fp_type,String fp_text){
 	int    work_scale  =  - fp_big_dec1.stripTrailingZeros().scale();
 	double work_man    =    fp_big_dec1.multiply(
 		BigDecimal.TEN.pow(-work_scale,fp_context),fp_context).doubleValue();
-	fp_exp   =  (int)((Math.log(work_man) 
+	tz390.fp_exp   =  (int)((Math.log(work_man) 
 			           + ((double)work_scale 
 			                * fp_log10))
 			          / fp_log2) 
-	         - fp_man_bits[fp_type] 
-			 - fp_one_bit_adj[fp_type]; 
+	         - tz390.fp_man_bits[tz390.fp_type] 
+			 - tz390.fp_one_bit_adj[tz390.fp_type]; 
 	/*
 	 * Now calc big_dec2 mantissa truncated integer
-	 * fp_exp calculated above.  This calculation
+	 * tz390.fp_exp calculated above.  This calculation
 	 * may produce an irrational number with the 
 	 * precison specified due to base 10 to base 2
 	 * exponent conversion.
      *
-	 * big_dec2 = big_dec1 / 2 ** fp_exp/
+	 * big_dec2 = big_dec1 / 2 ** tz390.fp_exp/
 	 * 
 	 */
 	try {
-	    fp_big_dec2 = fp_big_dec1.multiply(BigDecimal.valueOf(2).pow(-fp_exp,fp_context),fp_context);
+	    fp_big_dec2 = fp_big_dec1.multiply(BigDecimal.valueOf(2).pow(-tz390.fp_exp,fp_context),fp_context);
 	} catch (Exception e){
 		log_error(89,"floating point value out of range");
-		fp_hex = "FFFF000000000000";
+		dc_hex = "FFFF000000000000";
+		return;
 	}
 	/*
 	 * retrieve fp_big_dec2 mantissa bits as big_int and
-	 * adjust fp_exp by mantissa bits
+	 * adjust tz390.fp_exp by mantissa bits
 	 */
 	fp_big_int1 = fp_big_dec2.toBigInteger();
-    fp_exp = fp_exp + fp_man_bits[fp_type];
+    tz390.fp_exp = tz390.fp_exp + tz390.fp_man_bits[tz390.fp_type];
+    cvt_fp_to_hex();
+	}
+	private void cvt_fp_to_hex(){
 	/*
 	 * adjust mantiss and base 2 exponent to
 	 * align for assumed 1 bit for IEEE binary
 	 * or IBM base 16 hex exponent and return
 	 * hex sign bit, exponent, and mantissa bytes
 	 */
-	switch (fp_type){  // gen hex for fp type
-	case 0: // fp_db_type s1,e11,m52 with assumed 1
+	switch (tz390.fp_type){  // gen hex for fp type
+	case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
 		fp_long1 = fp_big_int1.longValue();
 		fp_round_bit = 0;
 		while (fp_long1 > fp_long_db_one_bits){
 			fp_round_bit = (int)(fp_long1 & 1);
 			fp_long1 = fp_long1 >>> 1;
-			fp_exp++;
+			tz390.fp_exp++;
 			if (fp_long1 <= fp_long_db_one_bits){
 				fp_long1 = fp_long1 + fp_round_bit;	
 			}
 		}
-		fp_exp = fp_exp + fp_exp_bias[fp_type];
-		if (fp_exp >= 0 && fp_exp <= fp_exp_max[fp_type]){
-			fp_hex = get_long_hex( 
-			         ((long)(fp_sign | fp_exp) 
-			         		<< fp_man_bits[fp_type])
+		tz390.fp_exp = tz390.fp_exp + tz390.fp_exp_bias[tz390.fp_type];
+		if (tz390.fp_exp >= 0 && tz390.fp_exp <= tz390.fp_exp_max[tz390.fp_type]){
+			dc_hex = get_long_hex( 
+			         ((long)(tz390.fp_sign | tz390.fp_exp) 
+			         		<< tz390.fp_man_bits[tz390.fp_type])
 		              | (fp_long1 & fp_long_db_man_bits));
 		} else {
 			log_error(89,"floating point value out of range");
-			fp_hex = "FFFF000000000000";
+			dc_hex = "FFFF000000000000";
 		}
         break;
-	case 1: // fp_dh_type s1,e7,m56 with hex exp
+	case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50 // RPI 50
+	    dc_hex = get_dfp_hex(tz390.fp_dd_type,fp_big_dec1);
+	    if (dc_hex == null){
+	    	log_error(176,"decimal floating point value invalid");
+	    	dc_hex = "0000000000000000";
+	    }
+		break;
+	case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
 		fp_long1 = fp_big_int1.longValue();
 		fp_round_bit = 0;
 		while (fp_long1 > fp_long_dh_man_bits
-				|| (fp_exp & 0x3) != 0){
+				|| (tz390.fp_exp & 0x3) != 0){
 			fp_round_bit = (int)(fp_long1 & 1);
 			fp_long1 = fp_long1 >>> 1;
-			fp_exp++;
+			tz390.fp_exp++;
 			if (fp_long1 <= fp_long_dh_man_bits){
 				fp_long1 = fp_long1 + fp_round_bit;	
 			}
 		}
-		fp_exp = (fp_exp >> 2) + fp_exp_bias[fp_type] + dc_scale; // RPI 368
-		if (fp_exp >= 0 && fp_exp <= fp_exp_max[fp_type]){
-			fp_hex = get_long_hex( 
-			         ((long)(fp_sign | fp_exp) 
-			         		<< fp_man_bits[fp_type])
+		tz390.fp_exp = (tz390.fp_exp >> 2) + tz390.fp_exp_bias[tz390.fp_type] + dc_scale; // RPI 368
+		if (tz390.fp_exp >= 0 && tz390.fp_exp <= tz390.fp_exp_max[tz390.fp_type]){
+			dc_hex = get_long_hex( 
+			         ((long)(tz390.fp_sign | tz390.fp_exp) 
+			         		<< tz390.fp_man_bits[tz390.fp_type])
 		              | fp_long1);
 		} else {
 			log_error(89,"floating point value out of range");
-			fp_hex = "FFFF000000000000";
+			dc_hex = "FFFF000000000000";
 		}
 		break;
-	case 2: // fp_eb_type s1,e7,m24 with assumed 1
+	case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
 		fp_int1 = fp_big_int1.intValue();
 		fp_round_bit = 0;
 		while (fp_int1 >= fp_int_eb_one_bits){
 			fp_round_bit = fp_int1 & 1;
 			fp_int1 = fp_int1 >>> 1;
-			fp_exp++;
+			tz390.fp_exp++;
 			if (fp_int1 <= fp_int_eb_one_bits){
 				fp_int1 = fp_int1 + fp_round_bit;	
 			}
 		}
-		fp_exp = fp_exp + fp_exp_bias[fp_type];
-		if (fp_exp >= 0 && fp_exp <= fp_exp_max[fp_type]){
-			fp_hex = tz390.get_hex( 
-			          ((fp_sign | fp_exp) 
-			          		<< fp_man_bits[fp_type])
+		tz390.fp_exp = tz390.fp_exp + tz390.fp_exp_bias[tz390.fp_type];
+		if (tz390.fp_exp >= 0 && tz390.fp_exp <= tz390.fp_exp_max[tz390.fp_type]){
+			dc_hex = tz390.get_hex( 
+			          ((tz390.fp_sign | tz390.fp_exp) 
+			          		<< tz390.fp_man_bits[tz390.fp_type])
 		              | (fp_int1 & fp_int_eb_man_bits),8);
 		} else {
 			log_error(89,"floating point value out of range");
-			fp_hex = "FF000000";
+			dc_hex = "FF000000";
 		}
 		break;
-	case 3: // fp_eh_type s1,e7,m24 with hex exp
+	case 4: // tz390.fp_ed_type s1,cf5,bxcf6,ccf20 // RPI 407
+	    dc_hex = get_dfp_hex(tz390.fp_ed_type,fp_big_dec1);
+	    if (dc_hex == null){
+	    	log_error(177,"decimal floating point value invalid");
+	    	dc_hex = "00000000";
+	    }
+		break;
+	case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
 		fp_int1 = fp_big_int1.intValue();
 		fp_round_bit = 0;
 		while (fp_int1 > fp_int_eh_man_bits 
-				|| (fp_exp & 0x3) != 0){
+				|| (tz390.fp_exp & 0x3) != 0){
 			fp_round_bit = fp_int1 & 1;
 			fp_int1 = fp_int1 >>> 1;
-			fp_exp++;
+			tz390.fp_exp++;
 			if (fp_int1 <= fp_int_eh_man_bits){
 				fp_int1 = fp_int1 + fp_round_bit;	
 			}
 		}
-		fp_exp = (fp_exp >> 2) + fp_exp_bias[fp_type] + dc_scale;  // RPI 368
-		if (fp_exp >= 0 && fp_exp <= 0x7f){
-			fp_hex = tz390.get_hex( 
-			          ((fp_sign | fp_exp) << 24)
+		tz390.fp_exp = (tz390.fp_exp >> 2) + tz390.fp_exp_bias[tz390.fp_type] + dc_scale;  // RPI 368
+		if (tz390.fp_exp >= 0 && tz390.fp_exp <= 0x7f){
+			dc_hex = tz390.get_hex( 
+			          ((tz390.fp_sign | tz390.fp_exp) << 24)
 		              | fp_int1,8);
 		} else {
 			log_error(89,"floating point value out of range");
-			fp_hex = "00000000";
+			dc_hex = "00000000";
 		}
 	    break;
-	case 4: // fp_lb_type s1,e15,m112 with assumed 1
+	case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
 		fp_round_bit = 0;
 		while (fp_big_int1.compareTo(fp_big_int_one_bits) > 0){
 			if (fp_big_int1.testBit(0)){
@@ -7211,14 +7343,14 @@ private String get_fp_hex(int fp_type,String fp_text){
 				fp_round_bit = 0;
 			}
 			fp_big_int1 = fp_big_int1.shiftRight(1);
-			fp_exp++;
+			tz390.fp_exp++;
 			if (fp_round_bit == 1 
 				&& fp_big_int1.compareTo(fp_big_int_one_bits) <= 0){
 				fp_big_int1 = fp_big_int1.add(BigInteger.ONE);
 			}
 		}
-		fp_exp = fp_exp + fp_exp_bias[fp_type];
-		if (fp_exp >= 0 && fp_exp <= fp_exp_max[fp_type]){
+		tz390.fp_exp = tz390.fp_exp + tz390.fp_exp_bias[tz390.fp_type];
+		if (tz390.fp_exp >= 0 && tz390.fp_exp <= tz390.fp_exp_max[tz390.fp_type]){
 			fp_big_byte = fp_big_int1.toByteArray();
 			int index1 = fp_big_byte.length - 1;
 			int index2 = 15;
@@ -7231,31 +7363,38 @@ private String get_fp_hex(int fp_type,String fp_text){
 				}
 				index2--;
 			}
-			fp_data_buff.putShort(0,(short)(fp_sign | fp_exp));
-            fp_hex = bytes_to_hex(fp_data_byte,0,16,0);
+			fp_data_buff.putShort(0,(short)(tz390.fp_sign | tz390.fp_exp));
+            dc_hex = bytes_to_hex(fp_data_byte,0,16,0);
 		} else {
 			log_error(89,"floating point value out of range");
-			fp_hex = "FF00000000000000FF00000000000000";
+			dc_hex = "FF00000000000000FF00000000000000";
 		}
 	    break;
-	case 5: // fp_lh_type s1,e7,m112 with split hex
+	case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110 // RPI 407
+	    dc_hex = get_dfp_hex(tz390.fp_ld_type,fp_big_dec1);
+	    if (dc_hex == null){
+	    	log_error(178,"decimal floating point value invalid");
+	    	dc_hex = "00000000000000000000000000000000";
+	    }
+		break;
+	case 8: // tz390.fp_lh_type s1,e7,m112 with split hex
         fp_round_bit = 0;
 		while (fp_big_int1.compareTo(fp_big_int_man_bits) > 0
-				|| (fp_exp & 0x3) != 0){
+				|| (tz390.fp_exp & 0x3) != 0){
 			if (fp_big_int1.testBit(0)){
 				fp_round_bit = 1;
 			} else {
 				fp_round_bit = 0;
 			}
 			fp_big_int1 = fp_big_int1.shiftRight(1);
-			fp_exp++;
+			tz390.fp_exp++;
 			if (fp_round_bit == 1 
 				&& fp_big_int1.compareTo(fp_big_int_man_bits) <= 0){
 				fp_big_int1 = fp_big_int1.add(BigInteger.ONE);
 			}
 		}
-		fp_exp = (fp_exp >> 2) + fp_exp_bias[fp_type] + dc_scale; // RPI 368
-		if (fp_exp >= 0 && fp_exp <= fp_exp_max[fp_type]){
+		tz390.fp_exp = (tz390.fp_exp >> 2) + tz390.fp_exp_bias[tz390.fp_type] + dc_scale; // RPI 368
+		if (tz390.fp_exp >= 0 && tz390.fp_exp <= tz390.fp_exp_max[tz390.fp_type]){
 			fp_big_byte = fp_big_int1.toByteArray();
 			int index1 = fp_big_byte.length - 1;
 			int index2 = 15;
@@ -7271,20 +7410,46 @@ private String get_fp_hex(int fp_type,String fp_text){
 				}
 				index2--;
 			}
-			fp_data_buff.put(0,(byte)(fp_sign | fp_exp));
+			fp_data_buff.put(0,(byte)(tz390.fp_sign | tz390.fp_exp));
 			if (fp_data_buff.getLong(0) == 0){
 				fp_data_buff.put(8,(byte)0x00); // RPI 384
 			} else {
-				fp_data_buff.put(8,(byte)(fp_sign | ((fp_exp - 14) & 0x7f))); // RPI 384
+				fp_data_buff.put(8,(byte)(tz390.fp_sign | ((tz390.fp_exp - 14) & 0x7f))); // RPI 384
 			}
-            fp_hex = bytes_to_hex(fp_data_byte,0,16,0);
+            dc_hex = bytes_to_hex(fp_data_byte,0,16,0);
 		} else {
 			log_error(89,"floating point value out of range");
-			fp_hex = "FF00000000000000FF00000000000000";
+			dc_hex = "FF00000000000000FF00000000000000";
 		}
 	    break;
+	}	
+}
+private String get_dfp_hex(int dfp_type,BigDecimal dfp_bd){
+	/*
+	 * return hex string representation of
+	 * dd, ed, or ld decimal floating point value
+	 * else null if invalid digits or out of range
+	 */
+	switch (dfp_type){
+	case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
+        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){
+        	log_error(179,"DD dfp constant out of range");
+        }
+        return tz390.get_long_hex(tz390.fp_work_reg.getLong(0),16);
+	case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50
+        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){
+        	log_error(180,"ED dfp constant out of range");
+        }
+		return tz390.get_hex(tz390.fp_work_reg.getInt(0),8);
+	case 7: // tz390.fp_ld_type s1,cf5,bxdf12,ccf110
+        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){
+        	log_error(181,"LD dfp constant out of range");
+        }
+		return tz390.get_long_hex(tz390.fp_work_reg.getLong(0),16)
+	         + tz390.get_long_hex(tz390.fp_work_reg.getLong(8),16)	;
 	}
-	return fp_hex;
+	log_error(181,"invalid decimal floating point type " + dfp_type);
+	return null;
 }
 /*
  *  end of az390 code 

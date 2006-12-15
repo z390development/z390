@@ -5,6 +5,8 @@ import java.io.RandomAccessFile;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -106,7 +108,9 @@ public  class  tz390 {
     *          set browser to cmd.exe start or forfire 
     * 12/01/06 RPI 509 use "Monospace" font for Win and Linux 
     * 12/01/06 RPI 510 add z390??? env vars for default progams
-    * 12/02/06 RPI 511 add option MCALL to put MCALL and MEXIT on PRN   
+    * 12/02/06 RPI 511 add option MCALL to put MCALL and MEXIT on PRN 
+    * 12/06/06 RPI 407 add opcode type 35 RRF4 for CSDTR DFP 
+    * 12/09/06 RPI 515 remove EZ390I prefix for TEST msgs to console 
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -115,7 +119,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.2.00c";  //dsh
+    String version    = "V1.2.00d";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -374,6 +378,289 @@ public  class  tz390 {
                         "004A4B4C4D4E4F505152000000000000" + //D0 .JKLMNOPQR...... 
                         "5C00535455565758595A000000000000" + //E0 \.STUVWXYZ...... 
                         "30313233343536373839000000000000";  //F0 0123456789......  
+  /*
+   * Floating Point shared types and attributes
+   * for use by az390 for constants and pz390 instructions
+   */
+        /*
+         * fp conversion from big decimal to LH/LB
+         * variables copied from AZ390 routine 
+         * developed earlier to convert string to
+         * floating point constants (moved for RPI 407
+         */
+        byte fp_type    = 0; 
+        byte fp_db_type = 0; // BFP long
+        byte fp_dd_type = 1; // DPF long
+        byte fp_dh_type = 2; // HFP long
+        byte fp_eb_type = 3; // BFP short
+        byte fp_ed_type = 4; // DFP short
+        byte fp_eh_type = 5; // HFP short
+        byte fp_lb_type = 6; // BFP extended
+        byte fp_ld_type = 7; // DFP extended
+        byte fp_lh_type = 8; // HFP extended
+        byte fp_db_digits = 15;
+        byte fp_dd_digits = 16;
+        byte fp_dh_digits = 15;
+        byte fp_eb_digits = 7;
+        byte fp_ed_digits = 7;
+        byte fp_eh_digits = 6;
+        byte fp_lb_digits = 34;
+        byte fp_ld_digits = 34;
+        byte fp_lh_digits = 34;
+        byte fp_guard_digits = 3;
+        /*
+         * follow fp_work_reg used to format
+         * edl types to binary storage formats
+         */
+        byte[]     fp_work_reg_byte = (byte[])Array.newInstance(byte.class,17); // 1 extra guard byte ignored
+        ByteBuffer fp_work_reg = ByteBuffer.wrap(fp_work_reg_byte,0,17);  
+        /*
+         * Note:  The following big decimal precision
+         *        array used in both az390 and ez390
+         *        should be maintained consistently
+         *        as it is used for rounding 
+         *        during conversions between types.
+         */
+        int[]  fp_precision = {
+        		fp_db_digits+fp_guard_digits,
+        		fp_dd_digits+fp_guard_digits,
+        		fp_dh_digits+fp_guard_digits,
+        		fp_eb_digits+fp_guard_digits,
+        		fp_ed_digits+fp_guard_digits,
+        		fp_eh_digits+fp_guard_digits,
+        		fp_lb_digits+fp_guard_digits,
+        		fp_ld_digits+fp_guard_digits,
+        		fp_lh_digits+fp_guard_digits
+        		}; 
+        int[]  fp_digits_max  = {0,16,0,0,7,0,0,34,0};
+        int[]  fp_sign_bit    = {0x800,0x20,0x80,0x100,0x20,0x80,0x8000,0x20,0x80}; // RPI 407
+        int[]  fp_one_bit_adj = {2,-1,1,2,-1,1,2,-1,1}; // RPI 407
+        int[]  fp_exp_bias    = {0x3ff,398,0x40,0x7f,101,0x40,0x3fff,6176,0x40}; // RPI 407
+        int[]  fp_exp_max     = {0x7ff,0x3ff,0x7f,0xff,0xff,0x7f,0x7fff,0x3fff,0x7f}; // RPI 407
+        int[]  fp_man_bits = {52,-1,56,23,-1,24,112,-1,112};
+  /*
+   * DFP Decimal Floating Point shared tables
+   */
+        int fp_sign = 0;
+        int fp_exp   = 0; // scale * log10/log2
+        String dfp_digits = null;
+        byte[] dfp_work = new byte[16];
+   /* 
+   * dfp_exp_bcd_to_cf5 returns CF5 5 bit 
+   * combination field using index made up of 
+   * high 2 bits of bias exponent
+   * plus 4 bit BCDnibble for first digit. 
+   */
+        byte[] dfp_exp_bcd_to_cf5 = { // RPI 407 indexed by high 2 bits of exp + fisrt digit
+    			0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0,0,0,0,0,0, //0d
+    			0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x1A,0x1B,0,0,0,0,0,0, //1d
+    			0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x1C,0x1D,0,0,0,0,0,0, //2d
+    	  };
+        /*
+         * dfp_bcd_to_dpd returns 10 bit densely
+         * packed decimal indexed by 3 digit value 0-999
+         */
+      	  int[] dfp_bcd_to_dpd = {
+      	      0x000,0x001,0x002,0x003,0x004,0x005,0x006,0x007,0x008,0x009,
+      	      0x010,0x011,0x012,0x013,0x014,0x015,0x016,0x017,0x018,0x019,
+      	      0x020,0x021,0x022,0x023,0x024,0x025,0x026,0x027,0x028,0x029,
+      	      0x030,0x031,0x032,0x033,0x034,0x035,0x036,0x037,0x038,0x039,
+      	      0x040,0x041,0x042,0x043,0x044,0x045,0x046,0x047,0x048,0x049,
+      	      0x050,0x051,0x052,0x053,0x054,0x055,0x056,0x057,0x058,0x059,
+      	      0x060,0x061,0x062,0x063,0x064,0x065,0x066,0x067,0x068,0x069,
+      	      0x070,0x071,0x072,0x073,0x074,0x075,0x076,0x077,0x078,0x079,
+      	      0x00A,0x00B,0x02A,0x02B,0x04A,0x04B,0x06A,0x06B,0x04E,0x04F,
+      	      0x01A,0x01B,0x03A,0x03B,0x05A,0x05B,0x07A,0x07B,0x05E,0x05F,
+      	      0x080,0x081,0x082,0x083,0x084,0x085,0x086,0x087,0x088,0x089,
+      	      0x090,0x091,0x092,0x093,0x094,0x095,0x096,0x097,0x098,0x099,
+      	      0x0A0,0x0A1,0x0A2,0x0A3,0x0A4,0x0A5,0x0A6,0x0A7,0x0A8,0x0A9,
+      	      0x0B0,0x0B1,0x0B2,0x0B3,0x0B4,0x0B5,0x0B6,0x0B7,0x0B8,0x0B9,
+      	      0x0C0,0x0C1,0x0C2,0x0C3,0x0C4,0x0C5,0x0C6,0x0C7,0x0C8,0x0C9,
+      	      0x0D0,0x0D1,0x0D2,0x0D3,0x0D4,0x0D5,0x0D6,0x0D7,0x0D8,0x0D9,
+      	      0x0E0,0x0E1,0x0E2,0x0E3,0x0E4,0x0E5,0x0E6,0x0E7,0x0E8,0x0E9,
+      	      0x0F0,0x0F1,0x0F2,0x0F3,0x0F4,0x0F5,0x0F6,0x0F7,0x0F8,0x0F9,
+      	      0x08A,0x08B,0x0AA,0x0AB,0x0CA,0x0CB,0x0EA,0x0EB,0x0CE,0x0CF,
+      	      0x09A,0x09B,0x0BA,0x0BB,0x0DA,0x0DB,0x0FA,0x0FB,0x0DE,0x0DF,
+      	      0x100,0x101,0x102,0x103,0x104,0x105,0x106,0x107,0x108,0x109,
+      	      0x110,0x111,0x112,0x113,0x114,0x115,0x116,0x117,0x118,0x119,
+      	      0x120,0x121,0x122,0x123,0x124,0x125,0x126,0x127,0x128,0x129,
+      	      0x130,0x131,0x132,0x133,0x134,0x135,0x136,0x137,0x138,0x139,
+      	      0x140,0x141,0x142,0x143,0x144,0x145,0x146,0x147,0x148,0x149,
+      	      0x150,0x151,0x152,0x153,0x154,0x155,0x156,0x157,0x158,0x159,
+      	      0x160,0x161,0x162,0x163,0x164,0x165,0x166,0x167,0x168,0x169,
+      	      0x170,0x171,0x172,0x173,0x174,0x175,0x176,0x177,0x178,0x179,
+      	      0x10A,0x10B,0x12A,0x12B,0x14A,0x14B,0x16A,0x16B,0x14E,0x14F,
+      	      0x11A,0x11B,0x13A,0x13B,0x15A,0x15B,0x17A,0x17B,0x15E,0x15F,
+      	      0x180,0x181,0x182,0x183,0x184,0x185,0x186,0x187,0x188,0x189,
+      	      0x190,0x191,0x192,0x193,0x194,0x195,0x196,0x197,0x198,0x199,
+      	      0x1A0,0x1A1,0x1A2,0x1A3,0x1A4,0x1A5,0x1A6,0x1A7,0x1A8,0x1A9,
+      	      0x1B0,0x1B1,0x1B2,0x1B3,0x1B4,0x1B5,0x1B6,0x1B7,0x1B8,0x1B9,
+      	      0x1C0,0x1C1,0x1C2,0x1C3,0x1C4,0x1C5,0x1C6,0x1C7,0x1C8,0x1C9,
+      	      0x1D0,0x1D1,0x1D2,0x1D3,0x1D4,0x1D5,0x1D6,0x1D7,0x1D8,0x1D9,
+      	      0x1E0,0x1E1,0x1E2,0x1E3,0x1E4,0x1E5,0x1E6,0x1E7,0x1E8,0x1E9,
+      	      0x1F0,0x1F1,0x1F2,0x1F3,0x1F4,0x1F5,0x1F6,0x1F7,0x1F8,0x1F9,
+      	      0x18A,0x18B,0x1AA,0x1AB,0x1CA,0x1CB,0x1EA,0x1EB,0x1CE,0x1CF,
+      	      0x19A,0x19B,0x1BA,0x1BB,0x1DA,0x1DB,0x1FA,0x1FB,0x1DE,0x1DF,
+      	      0x200,0x201,0x202,0x203,0x204,0x205,0x206,0x207,0x208,0x209,
+      	      0x210,0x211,0x212,0x213,0x214,0x215,0x216,0x217,0x218,0x219,
+      	      0x220,0x221,0x222,0x223,0x224,0x225,0x226,0x227,0x228,0x229,
+      	      0x230,0x231,0x232,0x233,0x234,0x235,0x236,0x237,0x238,0x239,
+      	      0x240,0x241,0x242,0x243,0x244,0x245,0x246,0x247,0x248,0x249,
+      	      0x250,0x251,0x252,0x253,0x254,0x255,0x256,0x257,0x258,0x259,
+      	      0x260,0x261,0x262,0x263,0x264,0x265,0x266,0x267,0x268,0x269,
+      	      0x270,0x271,0x272,0x273,0x274,0x275,0x276,0x277,0x278,0x279,
+      	      0x20A,0x20B,0x22A,0x22B,0x24A,0x24B,0x26A,0x26B,0x24E,0x24F,
+      	      0x21A,0x21B,0x23A,0x23B,0x25A,0x25B,0x27A,0x27B,0x25E,0x25F,
+      	      0x280,0x281,0x282,0x283,0x284,0x285,0x286,0x287,0x288,0x289,
+      	      0x290,0x291,0x292,0x293,0x294,0x295,0x296,0x297,0x298,0x299,
+      	      0x2A0,0x2A1,0x2A2,0x2A3,0x2A4,0x2A5,0x2A6,0x2A7,0x2A8,0x2A9,
+      	      0x2B0,0x2B1,0x2B2,0x2B3,0x2B4,0x2B5,0x2B6,0x2B7,0x2B8,0x2B9,
+      	      0x2C0,0x2C1,0x2C2,0x2C3,0x2C4,0x2C5,0x2C6,0x2C7,0x2C8,0x2C9,
+      	      0x2D0,0x2D1,0x2D2,0x2D3,0x2D4,0x2D5,0x2D6,0x2D7,0x2D8,0x2D9,
+      	      0x2E0,0x2E1,0x2E2,0x2E3,0x2E4,0x2E5,0x2E6,0x2E7,0x2E8,0x2E9,
+      	      0x2F0,0x2F1,0x2F2,0x2F3,0x2F4,0x2F5,0x2F6,0x2F7,0x2F8,0x2F9,
+      	      0x28A,0x28B,0x2AA,0x2AB,0x2CA,0x2CB,0x2EA,0x2EB,0x2CE,0x2CF,
+      	      0x29A,0x29B,0x2BA,0x2BB,0x2DA,0x2DB,0x2FA,0x2FB,0x2DE,0x2DF,
+      	      0x300,0x301,0x302,0x303,0x304,0x305,0x306,0x307,0x308,0x309,
+      	      0x310,0x311,0x312,0x313,0x314,0x315,0x316,0x317,0x318,0x319,
+      	      0x320,0x321,0x322,0x323,0x324,0x325,0x326,0x327,0x328,0x329,
+      	      0x330,0x331,0x332,0x333,0x334,0x335,0x336,0x337,0x338,0x339,
+      	      0x340,0x341,0x342,0x343,0x344,0x345,0x346,0x347,0x348,0x349,
+      	      0x350,0x351,0x352,0x353,0x354,0x355,0x356,0x357,0x358,0x359,
+      	      0x360,0x361,0x362,0x363,0x364,0x365,0x366,0x367,0x368,0x369,
+      	      0x370,0x371,0x372,0x373,0x374,0x375,0x376,0x377,0x378,0x379,
+      	      0x30A,0x30B,0x32A,0x32B,0x34A,0x34B,0x36A,0x36B,0x34E,0x34F,
+      	      0x31A,0x31B,0x33A,0x33B,0x35A,0x35B,0x37A,0x37B,0x35E,0x35F,
+      	      0x380,0x381,0x382,0x383,0x384,0x385,0x386,0x387,0x388,0x389,
+      	      0x390,0x391,0x392,0x393,0x394,0x395,0x396,0x397,0x398,0x399,
+      	      0x3A0,0x3A1,0x3A2,0x3A3,0x3A4,0x3A5,0x3A6,0x3A7,0x3A8,0x3A9,
+      	      0x3B0,0x3B1,0x3B2,0x3B3,0x3B4,0x3B5,0x3B6,0x3B7,0x3B8,0x3B9,
+      	      0x3C0,0x3C1,0x3C2,0x3C3,0x3C4,0x3C5,0x3C6,0x3C7,0x3C8,0x3C9,
+      	      0x3D0,0x3D1,0x3D2,0x3D3,0x3D4,0x3D5,0x3D6,0x3D7,0x3D8,0x3D9,
+      	      0x3E0,0x3E1,0x3E2,0x3E3,0x3E4,0x3E5,0x3E6,0x3E7,0x3E8,0x3E9,
+      	      0x3F0,0x3F1,0x3F2,0x3F3,0x3F4,0x3F5,0x3F6,0x3F7,0x3F8,0x3F9,
+      	      0x38A,0x38B,0x3AA,0x3AB,0x3CA,0x3CB,0x3EA,0x3EB,0x3CE,0x3CF,
+      	      0x39A,0x39B,0x3BA,0x3BB,0x3DA,0x3DB,0x3FA,0x3FB,0x3DE,0x3DF,
+      	      0x00C,0x00D,0x10C,0x10D,0x20C,0x20D,0x30C,0x30D,0x02E,0x02F,
+      	      0x01C,0x01D,0x11C,0x11D,0x21C,0x21D,0x31C,0x31D,0x03E,0x03F,
+      	      0x02C,0x02D,0x12C,0x12D,0x22C,0x22D,0x32C,0x32D,0x12E,0x12F,
+      	      0x03C,0x03D,0x13C,0x13D,0x23C,0x23D,0x33C,0x33D,0x13E,0x13F,
+      	      0x04C,0x04D,0x14C,0x14D,0x24C,0x24D,0x34C,0x34D,0x22E,0x22F,
+      	      0x05C,0x05D,0x15C,0x15D,0x25C,0x25D,0x35C,0x35D,0x23E,0x23F,
+      	      0x06C,0x06D,0x16C,0x16D,0x26C,0x26D,0x36C,0x36D,0x32E,0x32F,
+      	      0x07C,0x07D,0x17C,0x17D,0x27C,0x27D,0x37C,0x37D,0x33E,0x33F,
+      	      0x00E,0x00F,0x10E,0x10F,0x20E,0x20F,0x30E,0x30F,0x06E,0x06F,
+      	      0x01E,0x01F,0x11E,0x11F,0x21E,0x21F,0x31E,0x31F,0x07E,0x07F,
+      	      0x08C,0x08D,0x18C,0x18D,0x28C,0x28D,0x38C,0x38D,0x0AE,0x0AF,
+      	      0x09C,0x09D,0x19C,0x19D,0x29C,0x29D,0x39C,0x39D,0x0BE,0x0BF,
+      	      0x0AC,0x0AD,0x1AC,0x1AD,0x2AC,0x2AD,0x3AC,0x3AD,0x1AE,0x1AF,
+      	      0x0BC,0x0BD,0x1BC,0x1BD,0x2BC,0x2BD,0x3BC,0x3BD,0x1BE,0x1BF,
+      	      0x0CC,0x0CD,0x1CC,0x1CD,0x2CC,0x2CD,0x3CC,0x3CD,0x2AE,0x2AF,
+      	      0x0DC,0x0DD,0x1DC,0x1DD,0x2DC,0x2DD,0x3DC,0x3DD,0x2BE,0x2BF,
+      	      0x0EC,0x0ED,0x1EC,0x1ED,0x2EC,0x2ED,0x3EC,0x3ED,0x3AE,0x3AF,
+      	      0x0FC,0x0FD,0x1FC,0x1FD,0x2FC,0x2FD,0x3FC,0x3FD,0x3BE,0x3BF,
+      	      0x08E,0x08F,0x18E,0x18F,0x28E,0x28F,0x38E,0x38F,0x0EE,0x0EF,
+      	      0x09E,0x09F,0x19E,0x19F,0x29E,0x29F,0x39E,0x39F,0x0FE,0x0FF,                                                  
+      	     };
+      	  /*
+      	   * dfp_cf5_to_exp2 returns 2 high bits of
+      	   * biased exponent indexed by 5 bit combined field
+      	   */
+          int[] dfp_cf5_to_exp2 = {
+        		     0,0,0,0,0,0,0,0,  // 0- 7 = 0
+		             1,1,1,1,1,1,1,1,  // 8-15 = 1
+		             2,2,2,2,2,2,2,2,  //16-23 = 2
+		             0,0,              //24-25 = 0
+		             1,1,              //26-27 = 1
+		             2,2};             //28-29 = 2
+          /*
+           * dfp_cf5_to_bcd returns decimal digit 0-9
+           * indexed by 5 bit combination field value
+           */
+             long[] dfp_cf5_to_bcd = { //cf5 value
+            		 0,1,2,3,4,5,6,7,  //00-07
+            		 0,1,2,3,4,5,6,7,  //08-0F
+            		 0,1,2,3,4,5,6,7,  //10-17
+            		 8,9,              //18-19
+            		 8,9,              //1A-1B
+            		 8,9               //1C-1D
+             };
+      	  /*
+      	   * dfp_dpd_to_bcd returns 3 digit decimal
+      	   * value 0-999 using 10 bit densely packed
+      	   * decimal index value.
+      	   * Notes:
+      	   *   1. Redundent values in (...)
+      	   *   2. Java interprets leading 08 as
+      	   *      octal number like 0x is hex so
+      	   *      any leading 0's should be removed,
+      	   */
+          long[] dfp_dpd_to_bcd = {
+        		  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 80, 81,800,801,880,881,    // 00
+        		 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 90, 91,810,811,890,891,    // 01
+        		 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 82, 83,820,821,808,809,    // 02
+        		 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 92, 93,830,831,818,819,    // 03
+        		 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 84, 85,840,841, 88, 89,    // 04
+        		 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 94, 95,850,851, 98, 99,    // 05
+        		 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 86, 87,860,861,888,889,    // 06
+        		 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 96, 97,870,871,898,899,    // 07
+        		100,101,102,103,104,105,106,107,108,109,180,181,900,901,980,981,    // 08
+        		110,111,112,113,114,115,116,117,118,119,190,191,910,911,990,991,    // 09
+        		120,121,122,123,124,125,126,127,128,129,182,183,920,921,908,909,    // 0A
+        		130,131,132,133,134,135,136,137,138,139,192,193,930,931,918,919,    // 0B
+        		140,141,142,143,144,145,146,147,148,149,184,185,940,941,188,189,    // 0C
+        		150,151,152,153,154,155,156,157,158,159,194,195,950,951,198,199,    // 0D
+        		160,161,162,163,164,165,166,167,168,169,186,187,960,961,988,989,    // 0E
+        		170,171,172,173,174,175,176,177,178,179,196,197,970,971,998,999,    // 0F
+        		200,201,202,203,204,205,206,207,208,209,280,281,802,803,882,883,    // 10
+        		210,211,212,213,214,215,216,217,218,219,290,291,812,813,892,893,    // 11
+        		220,221,222,223,224,225,226,227,228,229,282,283,822,823,828,829,    // 12
+        		230,231,232,233,234,235,236,237,238,239,292,293,832,833,838,839,    // 13
+        		240,241,242,243,244,245,246,247,248,249,284,285,842,843,288,289,    // 14
+        		250,251,252,253,254,255,256,257,258,259,294,295,852,853,298,299,    // 15
+        		260,261,262,263,264,265,266,267,268,269,286,287,862,863,(888),(889),// 16
+        		270,271,272,273,274,275,276,277,278,279,296,297,872,873,(898),(899),// 17
+        		300,301,302,303,304,305,306,307,308,309,380,381,902,903,982,983,    // 18
+        		310,311,312,313,314,315,316,317,318,319,390,391,912,913,992,993,    // 19
+        		320,321,322,323,324,325,326,327,328,329,382,383,922,923,928,929,    // 1A
+        		330,331,332,333,334,335,336,337,338,339,392,393,932,933,938,939,    // 1B
+        		340,341,342,343,344,345,346,347,348,349,384,385,942,943,388,389,    // 1C
+        		350,351,352,353,354,355,356,357,358,359,394,395,952,953,398,399,    // 1D
+        		360,361,362,363,364,365,366,367,368,369,386,387,962,963,(988),(989),// 1E
+        		370,371,372,373,374,375,376,377,378,379,396,397,972,973,(998),(999),// 1F
+        		400,401,402,403,404,405,406,407,408,409,480,481,804,805,884,885,    // 20
+        		410,411,412,413,414,415,416,417,418,419,490,491,814,815,894,895,    // 21
+        		420,421,422,423,424,425,426,427,428,429,482,483,824,825,848,849,    // 22
+        		430,431,432,433,434,435,436,437,438,439,492,493,834,835,858,859,    // 23
+        		440,441,442,443,444,445,446,447,448,449,484,485,844,845,488,489,    // 24
+        		450,451,452,453,454,455,456,457,458,459,494,495,854,855,498,499,    // 25
+        		460,461,462,463,464,465,466,467,468,469,486,487,864,865,(888),(889),// 26
+        		470,471,472,473,474,475,476,477,478,479,496,497,874,875,(898),(899),// 27
+        		500,501,502,503,504,505,506,507,508,509,580,581,904,905,984,985,    // 28
+        		510,511,512,513,514,515,516,517,518,519,590,591,914,915,994,995,    // 29
+        		520,521,522,523,524,525,526,527,528,529,582,583,924,925,948,949,    // 2A
+        		530,531,532,533,534,535,536,537,538,539,592,593,934,935,958,959,    // 2B
+        		540,541,542,543,544,545,546,547,548,549,584,585,944,945,588,589,    // 2C
+        		550,551,552,553,554,555,556,557,558,559,594,595,954,955,598,599,    // 2D
+        		560,561,562,563,564,565,566,567,568,569,586,587,964,965,(988),(989),// 2E
+        		570,571,572,573,574,575,576,577,578,579,596,597,974,975,(998),(999),// 2F
+        		600,601,602,603,604,605,606,607,608,609,680,681,806,807,886,887,    // 30
+        		610,611,612,613,614,615,616,617,618,619,690,691,816,817,896,897,    // 31
+        		620,621,622,623,624,625,626,627,628,629,682,683,826,827,868,869,    // 32
+        		630,631,632,633,634,635,636,637,638,639,692,693,836,837,878,879,    // 33
+        		640,641,642,643,644,645,646,647,648,649,684,685,846,847,688,689,    // 34
+        		650,651,652,653,654,655,656,657,658,659,694,695,856,857,698,699,    // 35
+        		660,661,662,663,664,665,666,667,668,669,686,687,866,867,(888),(889),// 36
+        		670,671,672,673,674,675,676,677,678,679,696,697,876,877,(898),(899),// 37
+        		700,701,702,703,704,705,706,707,708,709,780,781,906,907,986,987,    // 38
+        		710,711,712,713,714,715,716,717,718,719,790,791,916,917,996,997,    // 39
+        		720,721,722,723,724,725,726,727,728,729,782,783,926,927,968,969,    // 3A
+        		730,731,732,733,734,735,736,737,738,739,792,793,936,937,978,979,    // 3B
+        		740,741,742,743,744,745,746,747,748,749,784,785,946,947,788,789,    // 3C
+        		750,751,752,753,754,755,756,757,758,759,794,795,956,957,798,799,    // 3D
+        		760,761,762,763,764,765,766,767,768,769,786,787,966,967,(988),(989),// 3E
+        		770,771,772,773,774,775,776,777,778,779,796,797,976,977,(998),(999),// 3F
+        		};
   /*
    * opcode tables for trace
    */
@@ -830,6 +1117,50 @@ public  class  tz390 {
 		       "CGER",     // 4400 "B3C8" "CGER" "RRF2" 34
 		       "CGDR",     // 4410 "B3C9" "CGDR" "RRF2" 34
 		       "CGXR",     // 4420 "B3CA" "CGXR" "RRF2" 34
+		       "MDTR", // "B3D0" "RRR" DFP 1
+		       "DDTR", // "B3D1" "RRR" DFP 2
+		       "ADTR", // "B3D2" "RRR" DFP 3
+		       "SDTR", // "B3D3" "RRR" DFP 4
+		       "LDETR", // "B3D4" "RRF4" DFP 5
+		       "LEDTR", // "B3D5" "RRF4" DFP 6
+		       "LTDTR", // "B3D6" "RRE" DFP 7
+		       "FIDTR", // "B3D7" "RRF4" DFP 8
+		       "MXTR", // "B3D8" "RRR" DFP 9
+		       "DXTR", // "B3D9" "RRR" DFP 10
+		       "AXTR", // "B3DA" "RRR" DFP 11
+		       "SXTR", // "B3DB" "RRR" DFP 12
+		       "LXDTR", // "B3DC" "RRF4" DFP 13
+		       "LDXTR", // "B3DD" "RRF4" DFP 14
+		       "LTXTR", // "B3DE" "RRE" DFP 15
+		       "FIXTR", // "B3DF" "RRF4" DFP 16
+		       "KDTR", // "B3E0" "RRE" DFP 17
+		       "CGDTR", // "B3E1" "RRF4" DFP 18
+		       "CUDTR", // "B3E2" "RRE" DFP 19
+		       "CSDTR", // "B3E3" "RRF4" DFP 20
+		       "CDTR", // "B3E4" "RRE" DFP 21
+		       "EEDTR", // "B3E5" "RRE" DFP 22
+		       "ESDTR", // "B3E7" "RRE" DFP 23
+		       "KXTR", // "B3E8" "RRE" DFP 24
+		       "CGXTR", // "B3E9" "RRF4" DFP 25
+		       "CUXTR", // "B3EA" "RRE" DFP 26
+		       "CSXTR", // "B3EB" "RRF4" DFP 27
+		       "CXTR", // "B3EC" "RRE" DFP 28
+		       "EEXTR", // "B3ED" "RRE" DFP 29
+		       "ESXTR", // "B3EF" "RRE" DFP 30
+		       "CDGTR", // "B3F1" "RRE" DFP 31
+		       "CDUTR", // "B3F2" "RRE" DFP 32
+		       "CDSTR", // "B3F3" "RRE" DFP 33
+		       "CEDTR", // "B3F4" "RRE" DFP 34
+		       "QADTR", // "B3F5" "RRF4" DFP 35
+		       "IEDTR", // "B3F6" "RRF4" DFP 36
+		       "RRDTR", // "B3F7" "RRF4" DFP 37
+		       "CXGTR", // "B3F9" "RRE" DFP 38
+		       "CXUTR", // "B3FA" "RRE" DFP 39
+		       "CXSTR", // "B3FB" "RRE" DFP 40
+		       "CEXTR", // "B3FC" "RRE" DFP 41
+		       "QAXTR", // "B3FD" "RRF4" DFP 42
+		       "IEXTR", // "B3FE" "RRF4" DFP 43
+		       "RRXTR", // "B3FF" "RRF4" DFP 44
 		       "STCTL",    // 4430 "B6" "STCTL" "RS" 10
 		       "LCTL",     // 4440 "B7" "LCTL" "RS" 10
 		       "LPGR",     // 4450 "B900" "LPGR" "RRE" 14
@@ -1156,6 +1487,17 @@ public  class  tz390 {
 		       "MYH",      //      "ED3D" "MYH" "RXF" 25 Z9-51 RPI 298
 		       "MAD",      // 6960 "ED3E" "MAD" "RXF" 25
 		       "MSD",      // 6970 "ED3F" "MSD" "RXF" 25
+		       "SLDT", // "ED40" "RXF" DFP 45
+		       "SRDT", // "ED41" "RXF" DFP 46
+		       "SLXT", // "ED48" "RXF" DFP 47
+		       "SRXT", // "ED49" "RXF" DFP 48
+		       "TDCET", // "ED50" "RXE" DFP 49
+		       "TDGET", // "ED51" "RXE" DFP 50
+		       "TDCDT", // "ED54" "RXE" DFP 51
+		       "TDGDT", // "ED55" "RXE" DFP 52
+		       "TDCXT", // "ED58" "RXE" DFP 53
+		       "TDGXT", // "ED59" "RXE" DFP 54
+
 		       "LEY",      // 6980 "ED64" "LEY" "RXY" 18
 		       "LDY",      // 6990 "ED65" "LDY" "RXY" 18
 		       "STEY",     // 7000 "ED66" "STEY" "RXY" 18
@@ -1276,22 +1618,23 @@ public  class  tz390 {
          6, //27 PLO SS3  oorrbdddbddd  r1,s2,r3,s4
          6, //28 LMD SS5  oorrbdddbddd  r1,r3,s2,s4
          6, //29 SRP SS2  oolibdddbddd s1(l1),s2,i3
-         6, //30 "RRF3" 30 DIEBR oooormrr (r1,r3,r2,m4 maps to r3,m4,r1,r2) 
+         4, //30 "RRF3" 30 DIEBR oooormrr (r1,r3,r2,m4 maps to r3,m4,r1,r2) RPI 407 fix (was 6) 
          6, //31 "SS" PKA oollbdddbddd  ll from S2 
          6, //32 "SSF" MVCOS oor0bdddbddd (s1,s2,r3) z9-41
          6, //33 "BLX" BRCL  oomollllllll (label)
-         6  //34 "RRF2" FIXBR oooom0rr (r1,m3,r2 maps to m3,r1,r2)
+         4,  //34 "RRF2" FIXBR oooom0rr (r1,m3,r2 maps to m3,r1,r2) RPI 407 fix was 6
+         4,  //35 "FFR4" CSDTR oooo0mrr (r1,r2,m4 maps to m4,r1,r2) RPI 407 add new
+         4,  //36 "RRR"  
          };
-	int    max_op_type_offset = 34; // see changes required
+	int    max_op_type_offset = 36; // see changes required
     int    max_ins_type = 100;    // RPI 315 
     int    max_asm_type = 200;
     int    max_mac_type = 300;
-	//  When adding new opcode case:
+	//  When adding new opcode case: // RPI 407 type 35 for CSDTR etc
 	//  1.  Increase the above max.
 	//  2.  Change above op_type_len table which must match
-    //  3.  Change tz390.init_tables to verify max type
-    //  4.  Change az390 instruction format cases and
-    //  5.  Change pz390 op_type_offset and op_type_mask
+    //  3.  Change az390 instruction format cases and
+    //  4.  Change pz390 op_type_offset and op_type_mask
   	int[]    op_type  = {
 			   0,  // comments
 		       1,  // 10 "0101" "PR" "E" 1
@@ -1745,6 +2088,50 @@ public  class  tz390 {
 		       34,  // 4400 "B3C8" "CGER" "RRF2" 34
 		       34,  // 4410 "B3C9" "CGDR" "RRF2" 34
 		       34,  // 4420 "B3CA" "CGXR" "RRF2" 34
+		       36, // "MDTR" "B3D0" "RRR" DFP 1
+		       36, // "DDTR" "B3D1" "RRR" DFP 2
+		       36, // "ADTR" "B3D2" "RRR" DFP 3
+		       36, // "SDTR" "B3D3" "RRR" DFP 4
+		       35, // "LDETR" "B3D4" "RRF4" DFP 5
+		       35, // "LEDTR" "B3D5" "RRF4" DFP 6
+		       14, // "LTDTR" "B3D6" "RRE" DFP 7
+		       35, // "FIDTR" "B3D7" "RRF4" DFP 8
+		       36, // "MXTR" "B3D8" "RRR" DFP 9
+		       36, // "DXTR" "B3D9" "RRR" DFP 10
+		       36, // "AXTR" "B3DA" "RRR" DFP 11
+		       36, // "SXTR" "B3DB" "RRR" DFP 12
+		       35, // "LXDTR" "B3DC" "RRF4" DFP 13
+		       35, // "LDXTR" "B3DD" "RRF4" DFP 14
+		       14, // "LTXTR" "B3DE" "RRE" DFP 15
+		       35, // "FIXTR" "B3DF" "RRF4" DFP 16
+		       14, // "KDTR" "B3E0" "RRE" DFP 17
+		       35, // "CGDTR" "B3E1" "RRF4" DFP 18
+		       14, // "CUDTR" "B3E2" "RRE" DFP 19
+		       35, // "CSDTR" "B3E3" "RRF4" DFP 20
+		       14, // "CDTR" "B3E4" "RRE" DFP 21
+		       14, // "EEDTR" "B3E5" "RRE" DFP 22
+		       14, // "ESDTR" "B3E7" "RRE" DFP 23
+		       14, // "KXTR" "B3E8" "RRE" DFP 24
+		       35, // "CGXTR" "B3E9" "RRF4" DFP 25
+		       14, // "CUXTR" "B3EA" "RRE" DFP 26
+		       35, // "CSXTR" "B3EB" "RRF4" DFP 27
+		       14, // "CXTR" "B3EC" "RRE" DFP 28
+		       14, // "EEXTR" "B3ED" "RRE" DFP 29
+		       14, // "ESXTR" "B3EF" "RRE" DFP 30
+		       14, // "CDGTR" "B3F1" "RRE" DFP 31
+		       14, // "CDUTR" "B3F2" "RRE" DFP 32
+		       14, // "CDSTR" "B3F3" "RRE" DFP 33
+		       14, // "CEDTR" "B3F4" "RRE" DFP 34
+		       35, // "QADTR" "B3F5" "RRF4" DFP 35
+		       35, // "IEDTR" "B3F6" "RRF4" DFP 36
+		       35, // "RRDTR" "B3F7" "RRF4" DFP 37
+		       14, // "CXGTR" "B3F9" "RRE" DFP 38
+		       14, // "CXUTR" "B3FA" "RRE" DFP 39
+		       14, // "CXSTR" "B3FB" "RRE" DFP 40
+		       14, // "CEXTR" "B3FC" "RRE" DFP 41
+		       35, // "QAXTR" "B3FD" "RRF4" DFP 42
+		       35, // "IEXTR" "B3FE" "RRF4" DFP 43
+		       35, // "RRXTR" "B3FF" "RRF4" DFP 44
 		       10,  // 4430 "B6" "STCTL" "RS" 10
 		       10,  // 4440 "B7" "LCTL" "RS" 10
 		       14,  // 4450 "B900" "LPGR" "RRE" 14
@@ -2071,6 +2458,16 @@ public  class  tz390 {
 		       25,  //      "ED3D" "MYH" "RXF" 25 Z9-51 RPI 298
 		       25,  // 6960 "ED3E" "MAD" "RXF" 25
 		       25,  // 6970 "ED3F" "MSD" "RXF" 25
+		       25, // "SLDT" "ED40" "RXF" DFP 45
+		       25, // "SRDT" "ED41" "RXF" DFP 46
+		       25, // "SLXT" "ED48" "RXF" DFP 47
+		       25, // "SRXT" "ED49" "RXF" DFP 48
+		       24, // "TDCET" "ED50" "RXE" DFP 49
+		       24, // "TDGET" "ED51" "RXE" DFP 50
+		       24, // "TDCDT" "ED54" "RXE" DFP 51
+		       24, // "TDGDT" "ED55" "RXE" DFP 52
+		       24, // "TDCXT" "ED58" "RXE" DFP 53
+		       24, // "TDGXT" "ED59" "RXE" DFP 54
 		       18,  // 6980 "ED64" "LEY" "RXY" 18
 		       18,  // 6990 "ED65" "LDY" "RXY" 18
 		       18,  // 7000 "ED66" "STEY" "RXY" 18
@@ -2613,6 +3010,50 @@ public  class  tz390 {
 		       "B3C8",  // 4400 "B3C8" "CGER" "RRF2" 34
 		       "B3C9",  // 4410 "B3C9" "CGDR" "RRF2" 34
 		       "B3CA",  // 4420 "B3CA" "CGXR" "RRF2" 34
+		       "B3D0", // "MDTR" "RRR" DFP 1
+		       "B3D1", // "DDTR" "RRR" DFP 2
+		       "B3D2", // "ADTR" "RRR" DFP 3
+		       "B3D3", // "SDTR" "RRR" DFP 4
+		       "B3D4", // "LDETR" "RRF4" DFP 5
+		       "B3D5", // "LEDTR" "RRF4" DFP 6
+		       "B3D6", // "LTDTR" "RRE" DFP 7
+		       "B3D7", // "FIDTR" "RRF4" DFP 8
+		       "B3D8", // "MXTR" "RRR" DFP 9
+		       "B3D9", // "DXTR" "RRR" DFP 10
+		       "B3DA", // "AXTR" "RRR" DFP 11
+		       "B3DB", // "SXTR" "RRR" DFP 12
+		       "B3DC", // "LXDTR" "RRF4" DFP 13
+		       "B3DD", // "LDXTR" "RRF4" DFP 14
+		       "B3DE", // "LTXTR" "RRE" DFP 15
+		       "B3DF", // "FIXTR" "RRF4" DFP 16
+		       "B3E0", // "KDTR" "RRE" DFP 17
+		       "B3E1", // "CGDTR" "RRF4" DFP 18
+		       "B3E2", // "CUDTR" "RRE" DFP 19
+		       "B3E3", // "CSDTR" "RRF4" DFP 20
+		       "B3E4", // "CDTR" "RRE" DFP 21
+		       "B3E5", // "EEDTR" "RRE" DFP 22
+		       "B3E7", // "ESDTR" "RRE" DFP 23
+		       "B3E8", // "KXTR" "RRE" DFP 24
+		       "B3E9", // "CGXTR" "RRF4" DFP 25
+		       "B3EA", // "CUXTR" "RRE" DFP 26
+		       "B3EB", // "CSXTR" "RRF4" DFP 27
+		       "B3EC", // "CXTR" "RRE" DFP 28
+		       "B3ED", // "EEXTR" "RRE" DFP 29
+		       "B3EF", // "ESXTR" "RRE" DFP 30
+		       "B3F1", // "CDGTR" "RRE" DFP 31
+		       "B3F2", // "CDUTR" "RRE" DFP 32
+		       "B3F3", // "CDSTR" "RRE" DFP 33
+		       "B3F4", // "CEDTR" "RRE" DFP 34
+		       "B3F5", // "QADTR" "RRF4" DFP 35
+		       "B3F6", // "IEDTR" "RRF4" DFP 36
+		       "B3F7", // "RRDTR" "RRF4" DFP 37
+		       "B3F9", // "CXGTR" "RRE" DFP 38
+		       "B3FA", // "CXUTR" "RRE" DFP 39
+		       "B3FB", // "CXSTR" "RRE" DFP 40
+		       "B3FC", // "CEXTR" "RRE" DFP 41
+		       "B3FD", // "QAXTR" "RRF4" DFP 42
+		       "B3FE", // "IEXTR" "RRF4" DFP 43
+		       "B3FF", // "RRXTR" "RRF4" DFP 44
 		       "B6",  // 4430 "B6" "STCTL" "RS" 10
 		       "B7",  // 4440 "B7" "LCTL" "RS" 10
 		       "B900",  // 4450 "B900" "LPGR" "RRE" 14
@@ -2939,6 +3380,16 @@ public  class  tz390 {
 		       "ED3D",  //      "ED3D" "MYH" "RXF" 25 Z9-51  RPI 298
 		       "ED3E",  // 6960 "ED3E" "MAD" "RXF" 25
 		       "ED3F",  // 6970 "ED3F" "MSD" "RXF" 25
+		       "ED40", // "SLDT" "RXF" DFP 45
+		       "ED41", // "SRDT" "RXF" DFP 46
+		       "ED48", // "SLXT" "RXF" DFP 47
+		       "ED49", // "SRXT" "RXF" DFP 48
+		       "ED50", // "TDCET" "RXE" DFP 49
+		       "ED51", // "TDGET" "RXE" DFP 50
+		       "ED54", // "TDCDT" "RXE" DFP 51
+		       "ED55", // "TDGDT" "RXE" DFP 52
+		       "ED58", // "TDCXT" "RXE" DFP 53
+		       "ED59", // "TDGXT" "RXE" DFP 54
 		       "ED64",  // 6980 "ED64" "LEY" "RXY" 18
 		       "ED65",  // 6990 "ED65" "LDY" "RXY" 18
 		       "ED66",  // 7000 "ED66" "STEY" "RXY" 18
@@ -4258,6 +4709,9 @@ public void put_trace(String text){
 	 * open trace file if trace options on
 	 */
 	if (opt_con){
+		if (text.length() > 6 && text.substring(0,6).equals("EZ390I")){
+			text = text.substring(6); // RPI 515
+		}
 		System.out.println(text);
 	}
 	if (trace_file == null){
@@ -4311,5 +4765,103 @@ public void put_trace(String text){
         /* Delete everything from the last directory separator onwards: */
      	path.delete(path.lastIndexOf(File.separator), path.length());
         return path.toString();
+    }
+    public boolean get_dfp_bin(int dfp_type,BigDecimal dfp_bd){
+    	/*
+    	 * store binary DD,ED, or LD format
+    	 * in fp_work_reg.  Return true if value within range.
+    	 */
+    	/*
+    	 * get digits and power of 10 exponent
+    	 */
+    	if (dfp_bd.signum() == 0){
+    		fp_work_reg.putLong(0,0);
+    		fp_work_reg.putLong(8,0);
+    	}
+    	dfp_digits = dfp_bd.stripTrailingZeros().toString().toUpperCase();
+    	int  dfp_dec_index = dfp_digits.indexOf('.');
+    	int  dfp_exp_index = dfp_digits.indexOf('E');
+    	int  dfp_exp = 0;
+    	long dfp_scf = 0;
+    	if (dfp_exp_index != -1){
+    		dfp_exp = Integer.valueOf(dfp_digits.substring(dfp_exp_index+2));
+    		if (dfp_digits.charAt(dfp_exp_index+1) == '-'){
+    			dfp_exp = - dfp_exp;
+    		}
+    		if (dfp_dec_index != -1){
+    			dfp_exp = dfp_exp - (dfp_exp_index - dfp_dec_index - 1); // adjust exp 
+    			dfp_digits = dfp_digits.substring(0,dfp_dec_index) + dfp_digits.substring(dfp_dec_index+1,dfp_exp_index);
+    		} else {
+    			dfp_digits = dfp_digits.substring(0,dfp_exp_index);
+    		}
+    	} else {
+    		if (dfp_dec_index != -1){
+    			dfp_exp = dfp_exp - (dfp_digits.length() - dfp_dec_index - 1); // adjust exp
+    			dfp_digits = dfp_digits.substring(0,dfp_dec_index) + dfp_digits.substring(dfp_dec_index+1);
+    		}
+    	}
+    	/*
+    	 * issue error and return null if out of
+    	 * range.
+    	 */
+    	if (dfp_digits.length() > fp_digits_max[dfp_type]){
+    		return false;
+    	}
+    	dfp_exp = dfp_exp + fp_exp_bias[dfp_type];
+    	if (dfp_exp < 0
+    		|| dfp_exp > fp_exp_max[dfp_type]){
+    	    return false;
+    	}
+    	/*
+    	 * calc cf, bxcf, and ccf and return hex
+    	 */
+    	switch (dfp_type){
+    	case 1: // fp_dd_type s1,cf5,bxcf6,ccf20
+    		dfp_digits = ("0000000000000000" + dfp_digits).substring(dfp_digits.length());
+    		dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[(dfp_exp & 0x300) >>> 4 
+    		             | (dfp_digits.charAt(0) & 0xf)];
+    		fp_work_reg.putLong(0,
+    				       (long)dfp_scf << 58 
+    				     | (long)(dfp_exp & 0xff) << 50
+    				     | get_dfp_ccf_digits(16,1,15));
+    		return true;
+    	case 4: // fp_ed_type s1,cf5,bxcf8,ccf50
+            dfp_digits = ("0000000" + dfp_digits).substring(dfp_digits.length());
+    		dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[(dfp_exp & 0xc0) >>> 2 
+    		             | (dfp_digits.charAt(0) & 0xf)];
+    		fp_work_reg.putInt(0,
+    				       (int)(dfp_scf << 26 
+                                 | ((dfp_exp & 0x3f) << 20
+                                 | (int)get_dfp_ccf_digits(7,1,6)
+                                )));
+    		return true;
+    	case 7: // fp_ld_type s1,cf5,bxdf12,ccf110
+            dfp_digits = ("0000000000000000000000000000000000" + dfp_digits).substring(dfp_digits.length());
+    		dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[(dfp_exp & 0x3000) >>> 8 | (dfp_digits.charAt(0) & 0xf)];
+    		long dfp_ccf1 = get_dfp_ccf_digits(34,1,15);
+    		fp_work_reg.putLong(0,
+    				  (long)dfp_scf << 58 
+                    | (long)(dfp_exp & 0xfff) << 46
+                    | dfp_ccf1 >>> 4);
+    		fp_work_reg.putLong(8,                       
+                	  (long)(dfp_ccf1 & 0xf) << 60
+                	| get_dfp_ccf_digits(34,16,18));
+    		return true;
+    	}
+    	return false;
+    }
+    private long get_dfp_ccf_digits(int tot_digits,int digit_offset, int digit_count){
+    	/*
+    	 * return long with 1 to 6 DPD densly packed deciaml
+    	 * truples of 10 bits representing 3 digits.
+    	 */
+    	long dfp_bits = 0;
+    	int index = digit_offset;
+    	while (index < digit_offset + digit_count){
+            dfp_bits = (dfp_bits << 10) | dfp_bcd_to_dpd[Integer.valueOf(dfp_digits.substring(index,index+3))];
+            index = index + 3;
+    	}
+    	return dfp_bits;
+    	
     }
 }

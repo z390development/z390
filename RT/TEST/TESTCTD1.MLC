@@ -7,6 +7,7 @@
 *********************************************************************
 * 11/10/06 RPI 477 ADD ASCII SUPPORT TO CTD AND CFD, USE IN=,OUT=
 * 11/29/06 RPI 507 ADD IN=REG SUPPORT IN ADDITION TO IN=(REG ADDR)    
+* 12/03/06 RPI 513 ADD RC TESTS AND FIX DISPLAY FIELD LENGTH = 45     
 *********************************************************************
 TESTCTD1 SUBENTRY
          WTO   'TEST CTD CONVERT TO DISPLAY MACRO AND SVC 170 SERVICE'
@@ -14,26 +15,36 @@ TESTCTD1 SUBENTRY
          WTO   'USING IN=RX FIELDS'
 *********************************************************************
          MVC   DTYPE,=CL20'128 BIT INTEGER'
-         CTD   CTD_INT128,IN=INT128,OUT=D40
+         CTD   CTD_INT128,IN=INT128,OUT=D45
+         LTR   R15,R15
+         BNZ   ABORT
          WTO   MF=(E,WTOMSG)
          SQE   F0,EH_2
          STE   F0,EH_SQRT2
-         CTD   CTD_EH,IN=EH_SQRT2,OUT=D40
+         CTD   CTD_EH,IN=EH_SQRT2,OUT=D45
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'EH SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQEB  F0,EB_2
          STE   F0,EB_SQRT2
-         CTD   CTD_EB,IN=EB_SQRT2,OUT=D40
+         CTD   CTD_EB,IN=EB_SQRT2,OUT=D45
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'EB SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQD   F0,DH_2
          STD   F0,DH_SQRT2
-         CTD   CTD_DH,IN=DH_SQRT2,OUT=D40
+         CTD   CTD_DH,IN=DH_SQRT2,OUT=D45
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'DH SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQDB  F0,DB_2
          STD   F0,DB_SQRT2
-         CTD   CTD_DB,IN=DB_SQRT2,OUT=D40
+         CTD   CTD_DB,IN=DB_SQRT2,OUT=D45
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'DB SQRT 2'
          WTO   MF=(E,WTOMSG)
          LD    F1,LH_2
@@ -41,7 +52,9 @@ TESTCTD1 SUBENTRY
          SQXR  F0,F1
          STD   F0,LH_SQRT2
          STD   F2,LH_SQRT2+8
-         CTD   CTD_LH,IN=LH_SQRT2,OUT=D40
+         CTD   CTD_LH,IN=LH_SQRT2,OUT=D45
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'LH SQRT 2'
          WTO   MF=(E,WTOMSG)
          LD    F1,LB_2
@@ -49,38 +62,51 @@ TESTCTD1 SUBENTRY
          SQXBR F0,F1
          STD   F0,LB_SQRT2
          STD   F2,LB_SQRT2+8
-         CTD   CTD_LB,IN=LB_SQRT2,OUT=D40
+         CTD   CTD_LB,IN=LB_SQRT2,OUT=D45
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'LB SQRT 2'
          WTO   MF=(E,WTOMSG)
 *********************************************************************
          WTO   'USING IN=(REG) ADDR RX FIELDS'
 *********************************************************************
+         MVC   DTYPE,=CL20'128 BIT INTEGER'
          LA    R2,INT128
-         LA    R4,D40
+         LA    R4,D45
          CTD   CTD_INT128,IN=(R2),OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          WTO   MF=(E,WTOMSG)
          SQE   F0,EH_2
          STE   F0,EH_SQRT2
          LA    R2,EH_SQRT2
          CTD   CTD_EH,IN=(R2),OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'EH SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQEB  F0,EB_2
          STE   F0,EB_SQRT2
          LA    R2,EB_SQRT2
          CTD   CTD_EB,IN=(R2),OUT=(R4)   
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'EB SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQD   F0,DH_2
          STD   F0,DH_SQRT2
          LA    R2,DH_SQRT2
          CTD   CTD_DH,IN=(R2),OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'DH SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQDB  F0,DB_2
          STD   F0,DB_SQRT2
          LA    R2,DB_SQRT2
          CTD   CTD_DB,IN=(R2),OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'DB SQRT 2'
          WTO   MF=(E,WTOMSG)
          LD    F1,LH_2
@@ -90,6 +116,8 @@ TESTCTD1 SUBENTRY
          STD   F2,LH_SQRT2+8
          LA    R2,LH_SQRT2
          CTD   CTD_LH,IN=(R2),OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'LH SQRT 2'
          WTO   MF=(E,WTOMSG)
          LD    F1,LB_2
@@ -99,45 +127,63 @@ TESTCTD1 SUBENTRY
          STD   F2,LB_SQRT2+8
          LA    R2,LB_SQRT2
          CTD   CTD_LB,IN=(R2),OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'LB SQRT 2'
          WTO   MF=(E,WTOMSG)
 *********************************************************************
          WTO   'USING IN=REG GPR/FPR REG VALUE'
 *********************************************************************
+         MVC   DTYPE,=CL20'128 BIT INTEGER'
          LMG   R2,R3,INT128
-         LA    R4,D40
+         LA    R4,D45
          CTD   CTD_INT128,IN=R2,OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          WTO   MF=(E,WTOMSG)
          SQE   F1,EH_2
          CTD   CTD_EH,IN=F1,OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'EH SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQEB  F1,EB_2
          CTD   CTD_EB,IN=F1,OUT=(R4)   
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'EB SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQD   F1,DH_2
          CTD   CTD_DH,IN=F1,OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'DH SQRT 2'
          WTO   MF=(E,WTOMSG)
          SQDB  F1,DB_2
          CTD   CTD_DB,IN=F1,OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'DB SQRT 2'
          WTO   MF=(E,WTOMSG)
          LD    F1,LH_2
          LD    F3,LH_2+8
          SQXR  F1,F1
          CTD   CTD_LH,IN=F1,OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'LH SQRT 2'
          WTO   MF=(E,WTOMSG)
          LD    F1,LB_2
          LD    F3,LB_2+8
          SQXBR F1,F1
          CTD   CTD_LB,IN=F1,OUT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
          MVC   DTYPE,=CL20'LB SQRT 2'
          WTO   MF=(E,WTOMSG)
          WTO   'TESTCTD1 ENDED OK'
          SUBEXIT
+ABORT    ABEND 111
 INT128   DC    0XL16,X'80',15X'00'
 EH_2     DC    EH'2'
 EB_2     DC    EB'2'
@@ -153,7 +199,7 @@ LH_SQRT2 DC    LH'0'
 LB_SQRT2 DC    LB'0'
 WTOMSG   DC    AL2(WTOEND-*,0)       WTO MESSAGE LENGTH AND FLAGS
 DTYPE    DC    CL20' ',C' = '        DISPLAY DESCRIPTIONS
-D40      DC    CL40' '               DISPLAY VALUE                  
+D45      DC    CL45' '               DISPLAY VALUE                  
 WTOEND   EQU   *
          LTORG                       FORCE LITERALS IN POWERS CSECT
          EQUREGS REGS=GPR

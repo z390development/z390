@@ -1,4 +1,4 @@
-z390 v1.2.00c PTF 12/02/06
+z390 v1.2.00d PTF 12/14/06
 Copyright 2006 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.2.00:
@@ -64,6 +64,27 @@ The enclosed z390.jar contains following cumulative fixes for v1.2.00:
     RC=0 ok
     RC=8 invalid type or register
     RC=12 invalid value (out of range)
+
+17. RPI 407 add initial support for Decimal Floating Point instructions and data
+constants ED, DD, and LD.  All 54 instructions can now be assembled by az390 and the
+following initial instructions are supported by ez390 runtime: ADTR, SDTR, MDTR, DDTR,
+CDTR, EEDTR, and CSDTR.  See new regression test TESTDFP1.MLC plus updated TESTINS1.MLC,
+TESTFPC1.MLC, TESTFPC2.MLC, and TESTDC1.MLC.  See new demo DEMODFP1.MLC which shows the
+different results adding 1.1+2.2 using HFP DH versus DFP DD formats due to irrational 
+binary fractions using binary versus exact result using decimal.
+
+18. RPI 513 - correct CFD and CTD suc support to correctly set return code and update
+    TESTCFD1 and TESTCTD2 regression tests to test return codes.
+
+19. RPI 514 - add CFD and CTD support for Decimal Floating Point (DFP) conversions
+    between 45 character decimal scientrfic notation and ED, DD, or LD formats.  See
+    TESTFPC1, TESTFPC2, TESTCDF2, and new DEMODFP2 programs using these new conversions.
+
+20. RPI 515 change interactive debug TEST mode to strip the E370I prefix off the
+    console output in order to see more trace info on each line.
+
+31. RPI 516 change mz390 PUNCH correct code for support for '' and && reduction
+    in PUNCH output.
 
 To install PTF follow these steps.
 
