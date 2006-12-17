@@ -119,7 +119,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.2.00d";  //dsh
+    String version    = "V1.2.00e";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -4800,10 +4800,16 @@ public void put_trace(String text){
     			dfp_digits = dfp_digits.substring(0,dfp_dec_index) + dfp_digits.substring(dfp_dec_index+1);
     		}
     	}
-    	/*
+    	/* strip any leading zero and then
     	 * issue error and return null if out of
     	 * range.
     	 */
+    	int index = 0;
+    	while (index < dfp_digits.length() - 1 
+    		   && dfp_digits.charAt(index) == '0'){
+    		index++;
+    		dfp_digits = dfp_digits.substring(index);
+    	}
     	if (dfp_digits.length() > fp_digits_max[dfp_type]){
     		return false;
     	}
@@ -4837,7 +4843,7 @@ public void put_trace(String text){
     		return true;
     	case 7: // fp_ld_type s1,cf5,bxdf12,ccf110
             dfp_digits = ("0000000000000000000000000000000000" + dfp_digits).substring(dfp_digits.length());
-    		dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[(dfp_exp & 0x3000) >>> 8 | (dfp_digits.charAt(0) & 0xf)];
+    		dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[(dfp_exp & 0x3000) >>> 8 | (dfp_digits.charAt(0) & 0xf)]; 
     		long dfp_ccf1 = get_dfp_ccf_digits(34,1,15);
     		fp_work_reg.putLong(0,
     				  (long)dfp_scf << 58 

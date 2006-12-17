@@ -1,4 +1,4 @@
-z390 v1.2.00d PTF 12/14/06
+z390 v1.2.00e PTF 12/17/06
 Copyright 2006 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.2.00:
@@ -83,8 +83,15 @@ binary fractions using binary versus exact result using decimal.
 20. RPI 515 change interactive debug TEST mode to strip the E370I prefix off the
     console output in order to see more trace info on each line.
 
-31. RPI 516 change mz390 PUNCH correct code for support for '' and && reduction
+21. RPI 516 change mz390 PUNCH correct code for support for '' and && reduction
     in PUNCH output.
+
+22. RPI 517 correct all DFP operations to use current rounding mode to round any
+    irrational values to the current ED, DD, or LD precision of 7, 16, or 34 digits.
+
+23. RPI 518 add support for AXTR, SXTR, MXTR, and DXTR operations, plus fix fetch
+    specification errors on HFP, BFP, and DFP for extended operation register pairs,
+    plus fix CTD to handle leading 0 for fractional values.
 
 To install PTF follow these steps.
 

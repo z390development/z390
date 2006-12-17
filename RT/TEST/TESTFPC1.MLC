@@ -8,6 +8,7 @@
 * 07/17/06 RPI 370 test CTD and CFD including SVC and MF call option 
 * 11/10/06 RPI 477 use IN= and OUT= on CTD and CFD macros            
 * 12/11/06 RPI 513 test ED, DD, and LD CTD and CFD options           
+* 12/15/06 RPI 406 add additional ED and LD tests                    
 *********************************************************************
 * Test conversion from and to 128 bit integer and all 6 floating 
 * point types using default svc 170 and 171 and also using 
@@ -98,6 +99,8 @@ EXIT&TESTNO DS 0H
          TEST   DB,=DB'-1E2'
 * DD
          TEST   DD,=DD'0'
+         TEST   DD,=DD'0.1234567890123456'
+         TEST   DD,=DD'0.12345678901234560'
          TEST   DD,=DD'1E-398'     
          TEST   DD,=DD'1'
          TEST   DD,=DD'2'
@@ -133,11 +136,16 @@ EXIT&TESTNO DS 0H
          TEST   EB,=EB'-1E2'
 * ED
          TEST   ED,=ED'0'
+         TEST   ED,=ED'0.1234567'
+         TEST   ED,=ED'0.12345670'
          TEST   ED,=ED'1E-101'
          TEST   ED,=ED'1'
          TEST   ED,=ED'2'
          TEST   ED,=ED'3'
          TEST   ED,=ED'1E2'
+         TEST   ED,=ED'1234567'     
+         TEST   ED,=ED'1.234567E6'     
+         TEST   ED,=ED'1234567E90'
          TEST   ED,=ED'9999999E90'    
          TEST   ED,=ED'-1'
          TEST   ED,=ED'-2'
@@ -165,10 +173,17 @@ EXIT&TESTNO DS 0H
          TEST   LB,LBT1 TEST VALUE FOR FPCONVRT
 * LD
          TEST   LD,=LD'0'
+         TEST   LD,=LD'0.1234567890123456789012345678901234'
+         TEST   LD,=LD'0.12345678901234567890123456789012340'
          TEST   LD,=LD'1E-6176'     
          TEST   LD,=LD'1'
          TEST   LD,=LD'2'
          TEST   LD,=LD'1E2'
+         TEST   LD,=LD'1234567890123456789012345678901234'
+         TEST   LD,=LD'1.234567890123456789012345678901234E33'
+         TEST   LD,=LD'1234567890123456789012345678901234'
+         TEST   LD,=LD'1234567890123456789012345678901234E6111'
+         TEST   LD,=LD'9999999999999999999999999999999999E6111'
          TEST   LD,=LD'1E6111'     
          TEST   LD,=LD'-1'
          TEST   LD,=LD'-2'
