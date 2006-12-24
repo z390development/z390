@@ -9,7 +9,15 @@
 *********************************************************************
 * Maintenance:
 * 12/09/06 RPI 407 ADD ADTR, SDTR, MDTR, DDTR, CDTR, CSDTR
-* 12/15/06 RPI 406 ADD REMAINING DFP INSTRUCTIONS            
+* 12/15/06 RPI 518 ADD AXTR, SXTR, MXTR, DXTR                
+* 12/18/06 RPI 406 ADD REMAINING DFP INSTRUCTIONS            
+*   KDTR,  KXTR,  CEDTR, CEXTR, CDGTR, CXGTR, CDSTR, CXSTR
+*   CDUTR, CXUTR, CGDTR, CGXTR, CUDTR, CUXTR, ESDTR, ESXTR
+*   IEDTR, IEXTR, FIDTR, FIXTR
+*   SRNMT, SFASR, LFAS
+*   LDETR, LXDTR, LEDTR, LDXTR, QADTR, QAXTR, RRDTR, RRXTR
+*   SLDT,  SLXT   SRDT,  SRXT
+*   TDCDT, TDCET, TDCXT, TDGDT, TDGET, TDGXT
 *********************************************************************
          PRINT DATA
 TESTDFP1 RT1   MAIN
@@ -17,7 +25,83 @@ DD1      DC    DD'0'
 ED1      DC    ED'0'
 LD1      DC    LD'0'
 PL16     DC    PL16'0'
+WORK     DC    XL16'00'
+ED_BIAS  EQU   101    S,C5,BXCF6,CCF20
+DD_BIAS  EQU   398    S,C5,BXCF8,CCF50
+LD_BIAS  EQU   6176   S,C5,BXDF12,CCF110
+FPCREG   DC    F'0'   FPC BFP/DFP CONTROL REG WORK AREA
+TDCPZ    EQU   X'800' TEST DFP DATA CLASS PLUS  ZERO
+TDCMZ    EQU   X'400' TEST DFP DATA CLASS MINUS ZERO
+TDCPSN   EQU   X'200' TEST DFP DATA CLASS PLUS  SUBNORMAL  <MIN OR >MAX
+TDCMSN   EQU   X'100' TEST DFP DATA CLASS MINUS SUBNORMAL   
+TDCPN    EQU   X'080' TEST DFP DATA CLASS PLUS  NORMAL     IN RANGE
+TDCMN    EQU   X'040' TEST DFP DATA CLASS MINUS NORMAL          
+TDCPI    EQU   X'020' TEST DFP DATA CLASS PLUS  INFINITY
+TDCMI    EQU   X'010' TEST DFP DATA CLASS MINUS INFINITY
+TDCPQ    EQU   X'008' TEST DFP DATA CLASS PLUS  QUIET NAN
+TDCMQ    EQU   X'004' TEST DFP DATA CLASS MINUS QUIET NAN
+TDCPSG   EQU   X'002' TEST DFP DATA CLASS PLUS  SIGNAL NAN
+TDCMSG   EQU   X'001' TEST DFP DATA CLASS MINUS SIGNAL NAN
+TDGPSZ   EQU   X'800' TEST DFP DATA GROUP PLUS  SAFE ZERO                  
+TDGMSZ   EQU   X'400' TEST DFP DATA GROUP MINUS SAVE ZERO               
+TDGPEZ   EQU   X'200' TEST DFP DATA GROUP PLUS  EXTREME EXP ZERO        
+TDGMEZ   EQU   X'100' TEST DFP DATA GROUP MINUS EXTREME EXP ZERO        
+TDGPEF   EQU   X'080' TEST DFP DATA GROUP PLUS  EXTRENE FINITE          
+TDGMEF   EQU   X'040' TEST DFP DATA GROUP MINUS EXTREME FINITE          
+TDGPSF   EQU   X'020' TEST DFP DATA GROUP PLUS  SAFE FINITE             
+TDGMSF   EQU   X'010' TEST DFP DATA GROUP MINUS SAFE FINITE             
+TDGPDF   EQU   X'008' TEST DFP DATA GROUP PLUS  FIRST DIGIT NON EXT EXP 
+TDGMDF   EQU   X'004' TEST DFP DATA GROUP MINUS FIRST DIGIT NON EXT EXP 
+TDGPIN   EQU   X'002' TEST DFP DATA GROUP PLUS  INFINITY OR NAN         
+TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM         
          RT1   START
+* B2B9 SRNMT
+         SRNMT 1 SET DFP ROUND TO ZERO
+         LD    4,=DD'1.5'
+         FIDTR 1,0,4,0
+         LD    5,=DD'1'
+         CDTR  1,5
+         RT1   CC0
+         SRNMT 0 RESET TO DFP ROUND HALF EVEN
+         LD    4,=DD'1.5'
+         FIDTR 1,0,4,0
+         LD    5,=DD'2'
+         CDTR  1,5
+         RT1   CC0
+* B2BD LFAS 
+         STFPC FPCREG
+         OI    FPCREG+3,X'10'
+         LFAS  FPCREG SET DFP ROUND MODE 1 - RND TO ZERO
+         LD    4,=DD'1.5'
+         FIDTR 1,0,4,0
+         LD    5,=DD'1'
+         CDTR  1,5
+         RT1   CC0
+         NI    FPCREG+3,X'8F' RESET DFP RND TO 0 - NEAR HALF EVEN
+         LFAS  FPCREG                                
+         LD    4,=DD'1.5'
+         FIDTR 1,0,4,0
+         LD    5,=DD'2'
+         CDTR  1,5
+         RT1   CC0
+* B385 SFASR
+         STFPC FPCREG
+         OI    FPCREG+3,X'10'
+         L     1,FPCREG
+         SFASR 1 SET DFP ROUND MODE 1 - RND TO ZERO
+         LD    4,=DD'1.5'
+         FIDTR 1,0,4,0
+         LD    5,=DD'1'
+         CDTR  1,5
+         RT1   CC0
+         NI    FPCREG+3,X'8F' RESET DFP RND TO 0 - NEAR HALF EVEN
+         L     1,FPCREG
+         SFASR 1                                
+         LD    4,=DD'1.5'
+         FIDTR 1,0,4,0
+         LD    5,=DD'2'
+         CDTR  1,5
+         RT1   CC0
 * B3D0 MDTR
          LD    2,=DD'30'
          LD    3,=DD'20'
@@ -90,6 +174,60 @@ PL16     DC    PL16'0'
          RT1   CC1
          STD   1,DD1
          RT1   CCE,DD1,=DD'-1'
+* B3D4 LDETR
+         LE    4,=ED'123'
+         LDETR 1,4,0
+         LD    5,=DD'123'
+         CDTR  1,5
+         RT1   CC0
+* B3D5 LEDTR
+         LD    4,=DD'1234568.5'
+         LEDTR 1,0,4,0 DEFAULT NEAREST HALF EVEN
+         STE   1,ED1
+         CLC   ED1,=ED'1234568'
+         RT1   CC0
+         LD    4,=DD'1234565.5'
+         LEDTR 1,0,4,0 DEFAULT NEAREST HALF EVEN
+         STE   1,ED1
+         CLC   ED1,=ED'1234566'
+         RT1   CC0
+         LD    4,=DD'1234568.5'
+         LEDTR 1,8+1,4,0 ROUND TOWARD ZERO
+         STE   1,ED1
+         CLC   ED1,=ED'1234568'
+         RT1   CC0
+         LD    4,=DD'1234567.5'
+         LEDTR 1,8+1,4,0 ROUND TOWARD ZERO
+         STE   1,ED1
+         CLC   ED1,=ED'1234567'
+         RT1   CC0
+* B3D6 LTDTR
+         LD    4,=DD'1'
+         LTDTR 1,4
+         RT1   CCH
+         CDTR  1,4
+         RT1   CC0
+         LD    4,=DD'0'
+         LTDTR 1,4
+         RT1   CC0
+         CDTR  1,4
+         RT1   CC0
+         LD    4,=DD'-1'
+         LTDTR 1,4
+         RT1   CC1
+         CDTR  1,4
+         RT1   CC0
+* B3D7 FIDTR
+         LD    4,=DD'123'
+         FIDTR 1,0,4,0
+         LD    5,=DD'123'
+         CDTR  1,5
+         RT1   CC0
+         LD    4,=DD'1.5'
+         FIDTR 1,0,4,0
+         LD    5,=DD'2'
+         CDTR  1,5
+         RT1   CC0
 * B3D8 MXTR
          LX    4,=LD'30'
          LX    5,=LD'20'
@@ -162,6 +300,102 @@ PL16     DC    PL16'0'
          RT1   CC1
          STX   1,LD1
          RT1   CCE,LD1,=LD'-1'
+* B3DC LXDTR
+         LD    4,=DD'123'
+         LXDTR 1,4,0
+         LX    5,=LD'123'
+         CXTR  1,5
+         RT1   CC0
+* B3DD LDXTR
+         LX    4,=LD'1234567890123456.5'
+         LDXTR 1,0,4,0 DEFAULT NEAREST HALF EVEN
+         LD    5,=DD'1234567890123456'
+         CDTR  1,5
+         RT1   CC0
+         LX    4,=LD'1234567890123457.5'
+         LDXTR 1,0,4,0 DEFAULT NEAREST HALF EVEN
+         LD    5,=DD'1234567890123458'
+         CDTR  1,5
+         RT1   CC0
+         LX    4,=LD'1234567890123456.5'
+         LDXTR 1,8+1,4,0 ROUND TOWARD ZERO
+         LD    5,=DD'1234567890123456'
+         CDTR  1,5
+         RT1   CC0
+         LX    4,=LD'1234567890123457.5'
+         LDXTR 1,8+1,4,0 ROUND TOWARD ZERO
+         LD    5,=DD'1234567890123457'
+         CDTR  1,5
+         RT1   CC0
+* B3DF FIXTR
+         LX    4,=LD'123'
+         FIXTR 1,0,4,0
+         LX    5,=LD'123'
+         CXTR  1,5
+         RT1   CC0
+         LX    4,=LD'1.5'
+         FIXTR 1,0,4,0
+         LX    5,=LD'2'
+         CXTR  1,5
+         RT1   CC0
+* B3E0 KDTR
+         LD    1,=DD'1'
+         LD    2,=DD'2'
+         KDTR  1,2
+         RT1   CC1
+         LD    1,=DD'1'
+         LD    2,=DD'1'
+         KDTR  1,2
+         RT1   CC0
+         LD    1,=DD'2'
+         LD    2,=DD'1'
+         KDTR  1,2
+         RT1   CC2
+* B3DE LTXTR
+         LX    4,=LD'1'
+         LTXTR 1,4
+         RT1   CCH
+         CXTR  1,4
+         RT1   CC0
+         LX    4,=LD'0'
+         LTXTR 1,4
+         RT1   CC0
+         CXTR  1,4
+         RT1   CC0
+         LX    4,=LD'-1'
+         LTXTR 1,4
+         RT1   CC1
+         CXTR  1,4
+         RT1   CC0
+* B3E1 CGDTR
+         LD    2,=DD'1234567890123456'
+         CGDTR 1,0,2
+         RT1   CCH
+         CLG   1,=FD'1234567890123456'
+         RT1   CC0
+         LD    2,=DD'-1234567890123456'
+         CGDTR 1,0,2
+         RT1   CCL
+         CLG   1,=FD'-1234567890123456'
+         RT1   CC0
+         LD    2,=DD'0'
+         CGDTR 1,0,2
+         RT1   CC0
+         CLG   1,=FD'0'
+         RT1   CC0
+* B3E2 CUDTR
+         LD    1,=DD'1'
+         CUDTR 0,1
+         CG    0,=XL8'1'
+         RT1   CCE 
+         LD    1,=DD'-1'
+         CUDTR 0,1
+         CG    0,=XL8'1'
+         RT1   CCE 
+         LD    1,=DD'123456789012345'
+         CUDTR 0,1
+         CG    0,=XL8'123456789012345'
+         RT1   CCE 
 * B3E3 CSDTR
          LD    1,=DD'1'
          CSDTR 0,1,0
@@ -199,7 +433,7 @@ PL16     DC    PL16'0'
          EEDTR 1,2
          CG    1,=FD'398'
          RT1   CC0
-         LD    2,=DD'10'
+         LD    2,=DD'1E1'
          EEDTR 1,2
          CG    1,=FD'399'
          RT1   CC0
@@ -207,6 +441,74 @@ PL16     DC    PL16'0'
          EEDTR 1,2
          CG    1,=FD'397'
          RT1   CC0
+* B3E7 ESDTR
+         LD    4,=DD'0'
+         ESDTR 1,4
+         CG    1,=FD'1'
+         RT1   CC0
+         LD    4,=DD'1'
+         ESDTR 1,4
+         CG    1,=FD'1'
+         RT1   CC0
+         LD    4,=DD'-1'
+         ESDTR 1,4
+         CG    1,=FD'1'
+         RT1   CC0
+         LD    4,=DD'12'
+         ESDTR 1,4
+         CG    1,=FD'2'
+         RT1   CC0
+         LD    4,=DD'1234567890123456'
+         ESDTR 1,4
+         CG    1,=FD'16'
+         RT1   CC0
+* B3E8 KXTR
+         LX    4,=LD'1'
+         LX    5,=LD'2'
+         KXTR  4,5
+         RT1   CC1
+         LX    4,=DD'1'
+         LX    5,=DD'1'
+         KXTR  4,5
+         RT1   CC0
+         LX    4,=DD'2'
+         LX    5,=DD'1'
+         KXTR  4,5
+         RT1   CC2
+* B3E9 CGXTR
+         LX    4,=LD'123456789012345678'
+         CGXTR 1,0,4
+         RT1   CCH
+         CLG   1,=FD'123456789012345678'
+         RT1   CC0
+         LX    4,=LD'-123456789012345678'
+         CGXTR 1,0,4
+         RT1   CCL
+         CLG   1,=FD'-123456789012345678'
+         RT1   CC0
+         LX    4,=LD'0'
+         CGXTR 1,0,4
+         RT1   CC0
+         CLG   1,=FD'0'
+         RT1   CC0
+* B3EA CUXTR
+         LX    1,=LD'1'
+         CUXTR 0,1
+         CG    0,=XL8'0'
+         RT1   CCE
+         CG    1,=XL8'1'
+         RT1   CCE 
+         LX    1,=LD'-1'
+         CUXTR 0,1
+         CG    0,=XL8'0'
+         RT1   CCE
+         CG    1,=XL8'1'
+         RT1   CCE 
+         LX    1,=LD'12345678901234567890123456789012'
+         CUXTR 0,1
+         STMG  0,1,WORK
+         CLC   WORK,=XL16'12345678901234567890123456789012'
+         RT1   CCE 
 * B3EB CSXTR
          LX    1,=LD'1'
          CSXTR 0,1,0
@@ -240,7 +542,7 @@ PL16     DC    PL16'0'
          EEXTR 1,4
          CG    1,=FD'6176'
          RT1   CC0
-         LX    4,=LD'10'
+         LX    4,=LD'1E1'
          EEXTR 1,4
          CG    1,=FD'6177'
          RT1   CC0
@@ -248,5 +550,364 @@ PL16     DC    PL16'0'
          EEXTR 1,4
          CG    1,=FD'6175'
          RT1   CC0
+* B3EC CXTR
+         LX    4,=LD'1'
+         LX    5,=LD'2'
+         CXTR  4,5
+         RT1   CC1
+         LX    4,=DD'1'
+         LX    5,=DD'1'
+         CXTR  4,5
+         RT1   CC0
+         LX    4,=LD'2'
+         LX    5,=LD'1'
+         CXTR  4,5
+         RT1   CC2
+* B3EF ESXTR
+         LX    4,=LD'0'
+         ESXTR 1,4
+         CG    1,=FD'1'
+         RT1   CC0
+         LX    4,=LD'1'
+         ESXTR 1,4
+         CG    1,=FD'1'
+         RT1   CC0
+         LX    4,=LD'-1'
+         ESXTR 1,4
+         CG    1,=FD'1'
+         RT1   CC0
+         LX    4,=LD'12'
+         ESXTR 1,4
+         CG    1,=FD'2'
+         RT1   CC0
+         LX    4,=LD'1234567890123456789012345678901234'
+         ESXTR 1,4
+         CG    1,=FD'34'
+         RT1   CC0
+* B3F1 CDGTR
+         LG    2,=FD'1234567890123456'
+         CDGTR 1,2 CVT G TO DD
+         LD    4,=DD'1234567890123456'
+         CDTR  1,4
+         RT1   CC0
+* B3F2 CDUTR
+         LG    2,=XL8'1234567890123456'
+         CDUTR 1,2
+         LD    4,=DD'1234567890123456'
+         CDTR  1,4
+         RT1   CC0
+* B3F3 CDSTR
+         LG    2,=PL8'123456789012345'
+         CDSTR 1,2
+         LD    4,=DD'123456789012345'
+         CDTR  1,4
+         RT1   CC0
+* B3F4 CEDTR
+         LD    1,=DD'1'
+         LD    2,=DD'1E1'
+         CEDTR 1,2
+         RT1   CC1
+         LD    1,=DD'1'
+         LD    2,=DD'1'
+         CEDTR 1,2
+         RT1   CC0
+         LD    1,=DD'1E1'
+         LD    2,=DD'1'
+         CEDTR 1,2
+         RT1   CC2
+* B3F5 QADTR
+         LD    4,=DD'1235E-3'
+         LD    5,=DD'124E-2'
+         QADTR 1,4,5,0 F1=R4 WITH EXP= -2 AND ROUND HALF EVEN
+         CDTR  1,5
+         RT1   CCE
+         LD    4,=DD'1235E-3'
+         LD    5,=DD'123E-2'
+         QADTR 1,4,5,8+1 F1=R4 WITH EXP= -2 AND ROUND TOWARD ZERO
+         CDTR  1,5
+         RT1   CCE
+* B3F6 IEDTR
+         LD    4,=DD'1'
+         LG    2,=AD(DD_BIAS+2)
+         IEDTR 1,4,2
+         LD    5,=DD'100'
+         CDTR  1,5
+         RT1   CC0
+         LD    4,=DD'100'
+         LG    2,=AD(DD_BIAS-2)
+         IEDTR 1,4,2
+         LD    5,=DD'1'
+         CDTR  1,5
+         RT1   CC0
+* B3F7 LLDTR
+         LD    4,=DD'1235'
+         LG    2,=FD'3'
+         RRDTR 1,4,2,0 ROUND HALF EVEN F4 TO 3 SIG DIGITS
+         LD    5,=DD'1240'
+         CDTR  1,5
+         RT1   CCE
+         LD    4,=DD'1235'
+         LG    2,=FD'3'
+         RRDTR 1,4,2,8+1 ROUND TOWARD 0 F4 TO 3 SIG DIGITS
+         LD    5,=DD'1230'
+         CDTR  1,5
+         RT1   CCE
+* B3F9 CXGTR
+         LG    2,=FD'1234567890123456'
+         CXGTR 1,2 CVT G TO LD
+         LX    4,=LD'1234567890123456'
+         CXTR  1,4
+         RT1   CC0
+* B3FA CXUTR
+         LMG    2,3,=XL16'12345678901234567890123456789012'
+         CXUTR 1,2
+         LX    4,=LD'12345678901234567890123456789012'
+         CXTR  1,4
+         RT1   CC0
+* B3FB CXSTR
+         LMG    2,3,=PL16'1234567890123456789012345678901'
+         CXSTR 1,2
+         LX    4,=LD'1234567890123456789012345678901'
+         CXTR  1,4
+         RT1   CC0
+* B3FC CEXTR
+         LX    4,=LD'1'
+         LX    5,=LD'1E1'
+         CEXTR 4,5
+         RT1   CC1
+         LX    4,=DD'1'
+         LX    5,=DD'1'
+         CEXTR 4,5
+         RT1   CC0
+         LX    4,=DD'1E1'
+         LX    5,=DD'1'
+         CEXTR 4,5
+         RT1   CC2
+* B3FD QAXTR
+         LX    4,=LD'1235E-3'
+         LX    5,=LD'124E-2'
+         QAXTR 1,4,5,0 F1=R4 WITH EXP= -2 ROUNDED HALF EVEN
+         CXTR  1,5
+         RT1   CCE
+         LX    4,=LD'1235E-3'
+         LX    5,=LD'123E-2'
+         QAXTR 1,4,5,8+1 F1=R4 WITH EXP -2 AND ROUNDED TOWARD ZERO
+         CXTR  1,5
+         RT1   CCE
+* B3FE IEXTR
+         LX    4,=LD'1'
+         LG    2,=AD(LD_BIAS+2)
+         IEXTR 1,4,2
+         LX    5,=LD'100'
+         CXTR  1,5
+         RT1   CC0
+         LX    4,=LD'100'
+         LG    2,=AD(LD_BIAS-2)
+         IEXTR 1,4,2
+         LX    5,=LD'1'
+         CXTR  1,5
+         RT1   CC0
+* B3FF RRXTR
+         LX    4,=LD'1235'
+         LG    2,=FD'3'
+         RRXTR 1,4,2,0 ROUND HALF EVEN F4 TO 3 SIG DIGITS
+         LX    5,=LD'1240'
+         CXTR  1,5
+         RT1   CCE
+         LX    4,=LD'1235'
+         LG    2,=FD'3'
+         RRXTR 1,4,2,8+1 ROUND TOWARD 0 F4 TO 3 SIG DIGITS
+         LX    5,=LD'1230'
+         CXTR  1,5
+         RT1   CCE
+* ED40 SLDT
+         LD    4,=DD'123'
+         SLDT  1,4,3
+         LD    5,=DD'123000'
+         CDTR  1,5
+         RT1   CCE
+         LD    4,=DD'1234567890123456'
+         SLDT  1,4,1
+         LD    5,=DD'2345678901234560'
+         CDTR  1,5
+         RT1   CCE
+         LD    4,=DD'1234567890123456E1'
+         SLDT  1,4,1
+         LD    5,=DD'2345678901234560E1'
+         CDTR  1,5
+         RT1   CCE
+         LD    4,=DD'1234567890123456E-1'
+         SLDT  1,4,1
+         LD    5,=DD'2345678901234560E-1'
+         CDTR  1,5
+         RT1   CCE
+* ED41 SRDT
+         LD    4,=DD'1234'
+         SRDT  1,4,2
+         LD    5,=DD'12'
+         CDTR  1,5
+         RT1   CCE
+* ED48 SLXT
+         LX    4,=LD'123'
+         SLXT  1,4,3
+         LX    5,=LD'123000'
+         CXTR  1,5
+         RT1   CCE
+         LX    4,=LD'1234567890123456789012345678901234'
+         SLXT  1,4,1
+         LX    5,=LD'2345678901234567890123456789012340'
+         CXTR  1,5
+         RT1   CCE
+         LX    4,=LD'1234567890123456789012345678901234E1'
+         SLXT  1,4,1
+         LX    5,=LD'2345678901234567890123456789012340E1'
+         CXTR  1,5
+         RT1   CCE
+         LX    4,=LD'1234567890123456789012345678901234E-1'
+         SLXT  1,4,1
+         LX    5,=LD'2345678901234567890123456789012340E-1'
+         CXTR  1,5
+         RT1   CCE
+* ED49 SRXT
+         LX    4,=LD'1234'
+         SRXT  1,4,2
+         LX    5,=LD'12'
+         CXTR  1,5
+         RT1   CCE
+* ED50 TDCET
+         LE    1,=ED'1'
+         TDCET 1,TDCPZ
+         RT1   CC0 
+         LE    1,=ED'0'
+         TDCET 1,TDCPZ
+         RT1   CC1 
+         LE    1,=ED'-0'
+         TDCET 1,TDCMZ
+         RT1   CC1
+         LE    1,=ED'(MAX)'
+         TDCET 1,TDCPN
+         RT1   CC1
+         LE    1,=ED'-(MAX)'
+         TDCET 1,TDCMN
+         RT1   CC1
+         LE    1,=ED'1'
+         TDCET 1,TDCPN
+         RT1   CC1
+         LE    1,=ED'-1'
+         TDCET 1,TDCMN
+         RT1   CC1
+* ED51 TDGET
+         LE    1,=LD'1'
+         TDGET 1,TDGPSZ
+         RT1   CC0 
+         LE    1,=ED'0'
+         TDGET 1,TDGPSZ
+         RT1   CC1
+         LE    1,=ED'-0'
+         TDGET 1,TDGMSZ
+         RT1   CC1
+         LE    1,=ED'1'
+         TDGET 1,TDGPSF
+         RT1   CC1
+         LE    1,=ED'(MAX)'
+         TDGET 1,TDGPDF
+         RT1   CC1
+         LE    1,=ED'-1'
+         TDGET 1,TDGMSF
+         RT1   CC1
+         LE    1,=ED'-(MAX)'
+         TDGET 1,TDGMDF
+         RT1   CC1
+* ED54 TDCDT
+         LD    1,=DD'1'
+         TDCDT 1,TDCPZ
+         RT1   CC0 
+         LD    1,=DD'0'
+         TDCDT 1,TDCPZ
+         RT1   CC1
+         LD    1,=DD'-0'
+         TDCDT 1,TDCMZ
+         RT1   CC1
+         LD    1,=DD'(MAX)'
+         TDCDT 1,TDCPN
+         RT1   CC1
+         LD    1,=DD'-(MAX)'
+         TDCDT 1,TDCMN
+         RT1   CC1
+         LD    1,=DD'1'
+         TDCDT 1,TDCPN
+         RT1   CC1
+         LD    1,=DD'-1'
+         TDCDT 1,TDCMN
+         RT1   CC1
+* ED55 TDGDT
+         LD    1,=DD'1'
+         TDGDT 1,TDGPSZ
+         RT1   CC0 
+         LD    1,=DD'0'
+         TDGDT 1,TDGPSZ
+         RT1   CC1
+         LD    1,=DD'-0'
+         TDGDT 1,TDGMSZ
+         RT1   CC1
+         LD    1,=DD'1'
+         TDGDT 1,TDGPSF
+         RT1   CC1
+         LD    1,=DD'(MAX)'
+         TDGDT 1,TDGPDF
+         RT1   CC1
+         LD    1,=DD'-1'
+         TDGDT 1,TDGMSF
+         RT1   CC1
+         LD    1,=DD'-(MAX)'
+         TDGDT 1,TDGMDF
+         RT1   CC1
+* ED58 TDCXT
+         LX    1,=LD'1'
+         TDCXT 1,TDCPZ
+         RT1   CC0 
+         LX    1,=LD'0'
+         TDCXT 1,TDCPZ
+         RT1   CC1 
+         LX    1,=LD'-0'
+         TDCXT 1,TDCMZ
+         RT1   CC1
+         LX    1,=LD'(MAX)'
+         TDCXT 1,TDCPN
+         RT1   CC1
+         LX    1,=LD'-(MAX)'
+         TDCXT 1,TDCMN
+         RT1   CC1
+         LX    1,=LD'1'
+         TDCXT 1,TDCPN
+         RT1   CC1
+         LX    1,=LD'-1'
+         TDCXT 1,TDCMN
+         RT1   CC1
+* ED59 TDGXT
+         LX    1,=LD'1'
+         TDGXT 1,TDGPSZ
+         RT1   CC0 
+         LX    1,=LD'0'
+         TDGXT 1,TDGPSZ
+         RT1   CC1
+         LX    1,=LD'-0'
+         TDGXT 1,TDGMSZ
+         RT1   CC1
+         LX    1,=LD'1'
+         TDGXT 1,TDGPSF
+         RT1   CC1
+         LX    1,=LD'(MAX)'
+         TDGXT 1,TDGPDF
+         RT1   CC1
+         LX    1,=LD'-1'
+         TDGXT 1,TDGMSF
+         RT1   CC1
+         LX    1,=LD'-(MAX)'
+         TDGXT 1,TDGMDF
+         RT1   CC1
+*
+* END OF TESTS
+*
          RT1   END
          END         

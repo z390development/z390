@@ -110,7 +110,9 @@ public  class  tz390 {
     * 12/01/06 RPI 510 add z390??? env vars for default progams
     * 12/02/06 RPI 511 add option MCALL to put MCALL and MEXIT on PRN 
     * 12/06/06 RPI 407 add opcode type 35 RRF4 for CSDTR DFP 
-    * 12/09/06 RPI 515 remove EZ390I prefix for TEST msgs to console 
+    * 12/09/06 RPI 515 remove EZ390I prefix for TEST msgs to console
+    * 12/17/06 RPI 518 support leading zeros on DFP values 
+    * 12/20/06 RPI 406 correct opcode types and add LFAS, SRNMT
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -119,7 +121,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.2.00e";  //dsh
+    String version    = "V1.2.00f";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -1008,6 +1010,8 @@ public  class  tz390 {
 		       "STFLE",    //      "B2B0" "STFLE" "S" 7 Z9-3
 		       "STFL",     // 3380 "B2B1" "STFL" "S" 7
 		       "LPSWE",    // 3390 "B2B2" "LPSWE" "S" 7
+		       "SRNMT",    // 3395 "B2B9" "SRNMT" "S" 7 DFP 56
+		       "LFAS",     // 3395 "B2BD" "LFAS"  "S" 7 DFP 55
 		       "TRAP4",    // 3400 "B2FF" "TRAP4" "S" 7
 		       "LPEBR",    // 3410 "B300" "LPEBR" "RRE" 14
 		       "LNEBR",    // 3420 "B301" "LNEBR" "RRE" 14
@@ -1092,6 +1096,7 @@ public  class  tz390 {
 		       "FIER",     // 4150 "B377" "FIER" "RRE" 14
 		       "FIDR",     // 4160 "B37F" "FIDR" "RRE" 14
 		       "SFPC",     // 4170 "B384" "SFPC" "RRE" 14
+		       "SFASR",    // 4175 "B385" "SFASR" "RRE" 14 DFP 57
 		       "EFPC",     // 4180 "B38C" "EFPC" "RRE" 14
 		       "CEFBR",    // 4190 "B394" "CEFBR" "RRE" 14
 		       "CDFBR",    // 4200 "B395" "CDFBR" "RRE" 14
@@ -1122,17 +1127,17 @@ public  class  tz390 {
 		       "ADTR", // "B3D2" "RRR" DFP 3
 		       "SDTR", // "B3D3" "RRR" DFP 4
 		       "LDETR", // "B3D4" "RRF4" DFP 5
-		       "LEDTR", // "B3D5" "RRF4" DFP 6
+		       "LEDTR", // "B3D5" "RRF3" DFP 6
 		       "LTDTR", // "B3D6" "RRE" DFP 7
-		       "FIDTR", // "B3D7" "RRF4" DFP 8
+		       "FIDTR", // "B3D7" "RRF3" DFP 8
 		       "MXTR", // "B3D8" "RRR" DFP 9
 		       "DXTR", // "B3D9" "RRR" DFP 10
 		       "AXTR", // "B3DA" "RRR" DFP 11
 		       "SXTR", // "B3DB" "RRR" DFP 12
 		       "LXDTR", // "B3DC" "RRF4" DFP 13
-		       "LDXTR", // "B3DD" "RRF4" DFP 14
+		       "LDXTR", // "B3DD" "RRF3" DFP 14
 		       "LTXTR", // "B3DE" "RRE" DFP 15
-		       "FIXTR", // "B3DF" "RRF4" DFP 16
+		       "FIXTR", // "B3DF" "RRF3" DFP 16
 		       "KDTR", // "B3E0" "RRE" DFP 17
 		       "CGDTR", // "B3E1" "RRF4" DFP 18
 		       "CUDTR", // "B3E2" "RRE" DFP 19
@@ -1151,16 +1156,16 @@ public  class  tz390 {
 		       "CDUTR", // "B3F2" "RRE" DFP 32
 		       "CDSTR", // "B3F3" "RRE" DFP 33
 		       "CEDTR", // "B3F4" "RRE" DFP 34
-		       "QADTR", // "B3F5" "RRF4" DFP 35
-		       "IEDTR", // "B3F6" "RRF4" DFP 36
-		       "RRDTR", // "B3F7" "RRF4" DFP 37
+		       "QADTR", // "B3F5" "RRF3" DFP 35
+		       "IEDTR", // "B3F6" "RRF2" DFP 36
+		       "RRDTR", // "B3F7" "RRF3" DFP 37
 		       "CXGTR", // "B3F9" "RRE" DFP 38
 		       "CXUTR", // "B3FA" "RRE" DFP 39
 		       "CXSTR", // "B3FB" "RRE" DFP 40
 		       "CEXTR", // "B3FC" "RRE" DFP 41
-		       "QAXTR", // "B3FD" "RRF4" DFP 42
-		       "IEXTR", // "B3FE" "RRF4" DFP 43
-		       "RRXTR", // "B3FF" "RRF4" DFP 44
+		       "QAXTR", // "B3FD" "RRF3" DFP 42
+		       "IEXTR", // "B3FE" "RRF2" DFP 43
+		       "RRXTR", // "B3FF" "RRF3" DFP 44
 		       "STCTL",    // 4430 "B6" "STCTL" "RS" 10
 		       "LCTL",     // 4440 "B7" "LCTL" "RS" 10
 		       "LPGR",     // 4450 "B900" "LPGR" "RRE" 14
@@ -1979,6 +1984,8 @@ public  class  tz390 {
 		       7,  //      "B2B0" "STFLE" "S" 7 Z9-3
 		       7,  // 3380 "B2B1" "STFL" "S" 7
 		       7,  // 3390 "B2B2" "LPSWE" "S" 7
+		       7,  // 3395 "B2B9" "SRNMT" "S" 7 DFP 56
+		       7,  // 3395 "B2BD" "LFAS"  "S" 7 DFP 55
 		       7,  // 3400 "B2FF" "TRAP4" "S" 7
 		       14,  // 3410 "B300" "LPEBR" "RRE" 14
 		       14,  // 3420 "B301" "LNEBR" "RRE" 14
@@ -2063,6 +2070,7 @@ public  class  tz390 {
 		       14,  // 4150 "B377" "FIER" "RRE" 14
 		       14,  // 4160 "B37F" "FIDR" "RRE" 14
 		       14,  // 4170 "B384" "SFPC" "RRE" 14
+		       14,  // 4175 "B385" "SFASR" "RRE" 14 DFP 57
 		       14,  // 4180 "B38C" "EFPC" "RRE" 14
 		       14,  // 4190 "B394" "CEFBR" "RRE" 14
 		       14,  // 4200 "B395" "CDFBR" "RRE" 14
@@ -2093,26 +2101,26 @@ public  class  tz390 {
 		       36, // "ADTR" "B3D2" "RRR" DFP 3
 		       36, // "SDTR" "B3D3" "RRR" DFP 4
 		       35, // "LDETR" "B3D4" "RRF4" DFP 5
-		       35, // "LEDTR" "B3D5" "RRF4" DFP 6
+		       30, // "LEDTR" "B3D5" "RRF3" DFP 6
 		       14, // "LTDTR" "B3D6" "RRE" DFP 7
-		       35, // "FIDTR" "B3D7" "RRF4" DFP 8
+		       30, // "FIDTR" "B3D7" "RRF3" DFP 8
 		       36, // "MXTR" "B3D8" "RRR" DFP 9
 		       36, // "DXTR" "B3D9" "RRR" DFP 10
 		       36, // "AXTR" "B3DA" "RRR" DFP 11
 		       36, // "SXTR" "B3DB" "RRR" DFP 12
 		       35, // "LXDTR" "B3DC" "RRF4" DFP 13
-		       35, // "LDXTR" "B3DD" "RRF4" DFP 14
+		       30, // "LDXTR" "B3DD" "RRF3" DFP 14
 		       14, // "LTXTR" "B3DE" "RRE" DFP 15
-		       35, // "FIXTR" "B3DF" "RRF4" DFP 16
+		       30, // "FIXTR" "B3DF" "RRF3" DFP 16
 		       14, // "KDTR" "B3E0" "RRE" DFP 17
-		       35, // "CGDTR" "B3E1" "RRF4" DFP 18
+		       34, // "CGDTR" "B3E1" "RRF4" DFP 18
 		       14, // "CUDTR" "B3E2" "RRE" DFP 19
 		       35, // "CSDTR" "B3E3" "RRF4" DFP 20
 		       14, // "CDTR" "B3E4" "RRE" DFP 21
 		       14, // "EEDTR" "B3E5" "RRE" DFP 22
 		       14, // "ESDTR" "B3E7" "RRE" DFP 23
 		       14, // "KXTR" "B3E8" "RRE" DFP 24
-		       35, // "CGXTR" "B3E9" "RRF4" DFP 25
+		       34, // "CGXTR" "B3E9" "RRF4" DFP 25
 		       14, // "CUXTR" "B3EA" "RRE" DFP 26
 		       35, // "CSXTR" "B3EB" "RRF4" DFP 27
 		       14, // "CXTR" "B3EC" "RRE" DFP 28
@@ -2122,16 +2130,16 @@ public  class  tz390 {
 		       14, // "CDUTR" "B3F2" "RRE" DFP 32
 		       14, // "CDSTR" "B3F3" "RRE" DFP 33
 		       14, // "CEDTR" "B3F4" "RRE" DFP 34
-		       35, // "QADTR" "B3F5" "RRF4" DFP 35
-		       35, // "IEDTR" "B3F6" "RRF4" DFP 36
-		       35, // "RRDTR" "B3F7" "RRF4" DFP 37
+		       30, // "QADTR" "B3F5" "RRF3" DFP 35
+		       34, // "IEDTR" "B3F6" "RRF2" DFP 36
+		       30, // "RRDTR" "B3F7" "RRF3" DFP 37
 		       14, // "CXGTR" "B3F9" "RRE" DFP 38
 		       14, // "CXUTR" "B3FA" "RRE" DFP 39
 		       14, // "CXSTR" "B3FB" "RRE" DFP 40
 		       14, // "CEXTR" "B3FC" "RRE" DFP 41
-		       35, // "QAXTR" "B3FD" "RRF4" DFP 42
-		       35, // "IEXTR" "B3FE" "RRF4" DFP 43
-		       35, // "RRXTR" "B3FF" "RRF4" DFP 44
+		       30, // "QAXTR" "B3FD" "RRF3" DFP 42
+		       34, // "IEXTR" "B3FE" "RRF2" DFP 43
+		       30, // "RRXTR" "B3FF" "RRF3" DFP 44
 		       10,  // 4430 "B6" "STCTL" "RS" 10
 		       10,  // 4440 "B7" "LCTL" "RS" 10
 		       14,  // 4450 "B900" "LPGR" "RRE" 14
@@ -2901,6 +2909,8 @@ public  class  tz390 {
 		       "B2B0",  //      "B2B0" "STFLE" "S" 7 Z9-3
 		       "B2B1",  // 3380 "B2B1" "STFL" "S" 7
 		       "B2B2",  // 3390 "B2B2" "LPSWE" "S" 7
+		       "B2B9",  // 3395 "B2B9" "SRNMT" "S" 7 DFP 56
+		       "B2BD",  // 3395 "B2BD" "LFAS"  "S" 7 DFP 55
 		       "B2FF",  // 3400 "B2FF" "TRAP4" "S" 7
 		       "B300",  // 3410 "B300" "LPEBR" "RRE" 14
 		       "B301",  // 3420 "B301" "LNEBR" "RRE" 14
@@ -2985,6 +2995,7 @@ public  class  tz390 {
 		       "B377",  // 4150 "B377" "FIER" "RRE" 14
 		       "B37F",  // 4160 "B37F" "FIDR" "RRE" 14
 		       "B384",  // 4170 "B384" "SFPC" "RRE" 14
+		       "B385",  // 4175 "B385" "SFASR" "RRE" 14 DFP 57
 		       "B38C",  // 4180 "B38C" "EFPC" "RRE" 14
 		       "B394",  // 4190 "B394" "CEFBR" "RRE" 14
 		       "B395",  // 4200 "B395" "CDFBR" "RRE" 14
@@ -3015,17 +3026,17 @@ public  class  tz390 {
 		       "B3D2", // "ADTR" "RRR" DFP 3
 		       "B3D3", // "SDTR" "RRR" DFP 4
 		       "B3D4", // "LDETR" "RRF4" DFP 5
-		       "B3D5", // "LEDTR" "RRF4" DFP 6
+		       "B3D5", // "LEDTR" "RRF3" DFP 6
 		       "B3D6", // "LTDTR" "RRE" DFP 7
-		       "B3D7", // "FIDTR" "RRF4" DFP 8
+		       "B3D7", // "FIDTR" "RRF3" DFP 8
 		       "B3D8", // "MXTR" "RRR" DFP 9
 		       "B3D9", // "DXTR" "RRR" DFP 10
 		       "B3DA", // "AXTR" "RRR" DFP 11
 		       "B3DB", // "SXTR" "RRR" DFP 12
 		       "B3DC", // "LXDTR" "RRF4" DFP 13
-		       "B3DD", // "LDXTR" "RRF4" DFP 14
+		       "B3DD", // "LDXTR" "RRF3" DFP 14
 		       "B3DE", // "LTXTR" "RRE" DFP 15
-		       "B3DF", // "FIXTR" "RRF4" DFP 16
+		       "B3DF", // "FIXTR" "RRF3" DFP 16
 		       "B3E0", // "KDTR" "RRE" DFP 17
 		       "B3E1", // "CGDTR" "RRF4" DFP 18
 		       "B3E2", // "CUDTR" "RRE" DFP 19
@@ -3044,16 +3055,16 @@ public  class  tz390 {
 		       "B3F2", // "CDUTR" "RRE" DFP 32
 		       "B3F3", // "CDSTR" "RRE" DFP 33
 		       "B3F4", // "CEDTR" "RRE" DFP 34
-		       "B3F5", // "QADTR" "RRF4" DFP 35
-		       "B3F6", // "IEDTR" "RRF4" DFP 36
-		       "B3F7", // "RRDTR" "RRF4" DFP 37
+		       "B3F5", // "QADTR" "RRF3" DFP 35
+		       "B3F6", // "IEDTR" "RRF2" DFP 36
+		       "B3F7", // "RRDTR" "RRF3" DFP 37
 		       "B3F9", // "CXGTR" "RRE" DFP 38
 		       "B3FA", // "CXUTR" "RRE" DFP 39
 		       "B3FB", // "CXSTR" "RRE" DFP 40
 		       "B3FC", // "CEXTR" "RRE" DFP 41
-		       "B3FD", // "QAXTR" "RRF4" DFP 42
-		       "B3FE", // "IEXTR" "RRF4" DFP 43
-		       "B3FF", // "RRXTR" "RRF4" DFP 44
+		       "B3FD", // "QAXTR" "RRF3" DFP 42
+		       "B3FE", // "IEXTR" "RRF2" DFP 43
+		       "B3FF", // "RRXTR" "RRF3" DFP 44
 		       "B6",  // 4430 "B6" "STCTL" "RS" 10
 		       "B7",  // 4440 "B7" "LCTL" "RS" 10
 		       "B900",  // 4450 "B900" "LPGR" "RRE" 14
@@ -4772,13 +4783,17 @@ public void put_trace(String text){
     	 * in fp_work_reg.  Return true if value within range.
     	 */
     	/*
+    	 * round to specified precision using default 
+    	 */
+    	/*
     	 * get digits and power of 10 exponent
     	 */
     	if (dfp_bd.signum() == 0){
     		fp_work_reg.putLong(0,0);
     		fp_work_reg.putLong(8,0);
+    		return true; 
     	}
-    	dfp_digits = dfp_bd.stripTrailingZeros().toString().toUpperCase();
+    	dfp_digits = dfp_bd.toString().toUpperCase(); 
     	int  dfp_dec_index = dfp_digits.indexOf('.');
     	int  dfp_exp_index = dfp_digits.indexOf('E');
     	int  dfp_exp = 0;
@@ -4797,7 +4812,8 @@ public void put_trace(String text){
     	} else {
     		if (dfp_dec_index != -1){
     			dfp_exp = dfp_exp - (dfp_digits.length() - dfp_dec_index - 1); // adjust exp
-    			dfp_digits = dfp_digits.substring(0,dfp_dec_index) + dfp_digits.substring(dfp_dec_index+1);
+    			dfp_digits = dfp_digits.substring(0,dfp_dec_index) 
+    			           + dfp_digits.substring(dfp_dec_index+1);
     		}
     	}
     	/* strip any leading zero and then
@@ -4805,10 +4821,26 @@ public void put_trace(String text){
     	 * range.
     	 */
     	int index = 0;
-    	while (index < dfp_digits.length() - 1 
+    	while (index < dfp_dec_index      
     		   && dfp_digits.charAt(index) == '0'){
-    		index++;
+    		index++;  // RPI 518
+    	}
+    	if (index > 0){
     		dfp_digits = dfp_digits.substring(index);
+    	}
+    	/*
+    	 * strip trailing zeros if decimal point
+    	 */
+    	if (dfp_dec_index != -1){
+    		index = dfp_digits.length()-1;
+    		while (index > 0 
+    				&& dfp_digits.charAt(index) == '0'){
+    			index--;  // RPI 518
+    			dfp_exp++;
+    		}
+    		if (index < dfp_digits.length()-1){
+    			dfp_digits = dfp_digits.substring(0,index+1);
+    		}
     	}
     	if (dfp_digits.length() > fp_digits_max[dfp_type]){
     		return false;

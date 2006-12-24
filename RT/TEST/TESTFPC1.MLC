@@ -9,6 +9,8 @@
 * 11/10/06 RPI 477 use IN= and OUT= on CTD and CFD macros            
 * 12/11/06 RPI 513 test ED, DD, and LD CTD and CFD options           
 * 12/15/06 RPI 406 add additional ED and LD tests                    
+* 12/22/06 RPI 406 skip bug in DFP MF and skip slow BFP/HFP extended MF               
+*                  add check that SVC and MF display values match
 *********************************************************************
 * Test conversion from and to 128 bit integer and all 6 floating 
 * point types using default svc 170 and 171 and also using 
@@ -23,6 +25,7 @@ WTOMSG   DC    AL2(WTOEND-*,0)
 DTYPE    DC    CL6' ',C' '
 DHEX     DC    CL32' ',C'='
 DECIMAL  DC    CL45' '          
+SAVE_DECIMAL  DC    CL45' '          
 WTOEND   EQU   *
 PRC      DC    PL8'0'
 WTOPRC   DC    AL2(WTOPRC_END-*,0)
@@ -36,8 +39,14 @@ LHT1     DC    LH'-567678867789987898'
          RT1   START
          MACRO
          TEST  &TYPE,&VAL
-         AIF   ('&TYPE'(2,1) EQ 'D').SKPMF SKIP DFP MF FOR NOW
+         AIF   ('&TYPE'(2,1) EQ 'D').SKPMF SKIP DFP MF FOR NOW (BUG?)
+         AIF   ('&TYPE'(1,1) EQ 'L').SKPMF SKIP EXT MF FOR NOW (SLOW)
          TEST1 MF,&TYPE,&VAL
+         MVC   SAVE_DECIMAL,DECIMAL
+         TEST1 SVC,&TYPE,&VAL
+         CLC   DECIMAL,SAVE_DECIMAL
+         RT1   CCE
+         MEXIT
 .SKPMF   ANOP
          TEST1 SVC,&TYPE,&VAL
          MEND

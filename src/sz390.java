@@ -4084,7 +4084,7 @@ private void svc_cfd(){
 		}
 		break;	
 	case 26: // lh 
-		cfd_bd = new BigDecimal(cfd_text,pz390.fp_bd_context); 
+		cfd_bd = new BigDecimal(cfd_text,pz390.fp_bdg_context); 
 		pz390.zcvt_bd(tz390.fp_lh_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
@@ -4104,7 +4104,7 @@ private void svc_cfd(){
 		}
 		break;
 	case 27: // lb
-		cfd_bd = new BigDecimal(cfd_text,pz390.fp_bd_context); 
+		cfd_bd = new BigDecimal(cfd_text,pz390.fp_bdg_context); 
 		pz390.zcvt_bd(tz390.fp_lb_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);

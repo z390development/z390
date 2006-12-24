@@ -1,4 +1,4 @@
-z390 v1.2.00e PTF 12/17/06
+z390 v1.2.00f PTF 12/24/06
 Copyright 2006 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.2.00:
@@ -92,6 +92,19 @@ binary fractions using binary versus exact result using decimal.
 23. RPI 518 add support for AXTR, SXTR, MXTR, and DXTR operations, plus fix fetch
     specification errors on HFP, BFP, and DFP for extended operation register pairs,
     plus fix CTD to handle leading 0 for fractional values.
+
+24. RPI 406 add support for remaining DFP instructions to pz390 for total of 57 new
+    decimal floating point instructions.  See updated TESTDFP1.MLC.
+
+25. RPI 519 correct mz390 to prevent erroneous error 132 when macro file name and 
+    prototype name are different cases.
+
+26. RPI 520 publish updated Macro and SVC Guide with CFD and CTD support for DFP
+    type conversions.
+
+27. RPI 521 correct mz390 to prevent trap with brank to undefined label on AIF is not
+    taken during pseudo code generation and then is taken on later pseudo code execution. 
+
 
 To install PTF follow these steps.
 

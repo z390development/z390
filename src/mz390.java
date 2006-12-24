@@ -258,6 +258,8 @@ public  class  mz390 {
      * 11/28/06 RPI 500 use system newline for Win/Linux
      * 22/28/06 RPI 502 ignore undefined vars in model statements
      * 12/12/06 RPI 516 reduce '' to ' in PUNCH text
+     * 12/21/06 RPI 519 prevent error 132 due to mixed case names
+     * 12/22/06 RPI 521 prevent trap on undefined AIF label
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1542,7 +1544,7 @@ public  class  mz390 {
 		load_proto_index = mac_line_index;
 		if (load_type == load_mac_file){
 			mac_name_line_start[mac_name_index] = mac_line_index; // RPI 331 
-			if (!mac_op.equals(load_macro_name)){
+			if (!mac_op.equals(load_macro_name.toUpperCase())){ // RPI 519
 				log_error(132,"macro proto-type name " + mac_op + " not = file name " + load_macro_name);
 			}
 		} else {  // define inline macro
@@ -2549,7 +2551,7 @@ public  class  mz390 {
 			if (bal_parms.charAt(0) != '('){
 				new_mac_line_index = exp_ago_branch(0);
 				pcl_start[mac_line_index] = - new_mac_line_index;		
-	            mac_line_index = new_mac_line_index;
+               	mac_line_index = new_mac_line_index;
 				return;
 			} else {
 				tot_pc_gen_opt++; // count all computed ago's
@@ -2668,9 +2670,9 @@ public  class  mz390 {
 				if (tz390.opt_traceall){
 					tz390.put_trace("AIF BRANCH " + label_name);
 				}
-				actr_count--;				
+				actr_count--;
 				if (new_mac_line_index < mac_name_line_start[mac_name_index]
-			        || new_mac_line_index >= mac_name_line_end[mac_name_index]){
+				    || new_mac_line_index >= mac_name_line_end[mac_name_index]){
 					abort_error(142,"AIF macro label not found - " + bal_parms.substring(aif_test_index+exp_next_index));
 				} else {
 					if (tz390.opt_pc){
@@ -2681,7 +2683,7 @@ public  class  mz390 {
 						return;
 					}
 				}
-			}
+			}			
 			int label_comma_index = get_label_comma_index(bal_parms.substring(aif_test_index + exp_next_index)); 
 			if (label_comma_index != -1){
 				aif_test_index = aif_test_index+exp_next_index+label_comma_index+1;
@@ -7461,11 +7463,16 @@ public  class  mz390 {
 		switch (op){		
 		case  1: // gen pc_op_ago branch
 		    get_pc(op);
-			pc_seta[pc_loc] = ago_gbla_index;
+		    if (ago_gbla_index < 1){
+		    	abort_pc("undefined ago label " + pc_setc[pc_loc]);
+		    } else {
+		    	pc_seta[pc_loc] = ago_gbla_index;
+		    }
 			break;
 		case  2: // gen pc_op_aif    branch if stack value not 0
 			get_pc(op);
 			pc_seta[pc_loc] = new_mac_line_index;
+			pc_setc[pc_loc] = label_name;  // RPI 521
 			break;
 		case  3: // gen pc_op_pushv  push var on stack
 			get_pc(op);
@@ -7674,7 +7681,11 @@ public  class  mz390 {
 					tot_exp_stk_var--;
 					if (setb_value != 0){
 						actr_count--;
-						mac_line_index = pc_seta[pc_loc];
+						if (pc_seta[pc_loc] < 0){ // RPI 521
+							abort_pc("aif undefined branch label " + pc_setc[pc_loc]);
+						} else {
+							mac_line_index = pc_seta[pc_loc];
+						}
 						update_sysstmt();
 						if (tz390.opt_traceall){
 							tz390.put_trace("AIF BRANCH " + pc_setc[pc_loc]);
@@ -8115,9 +8126,6 @@ public  class  mz390 {
     		text = "(" + seta_value + ")=" + gbl_setc[ago_gblc_index + ago_index -1] + " BRANCH";
     	    break;
     	case  2: // trace pc_op_aif
-			if (pc_trace_gen){
-				pc_setc[pc_loc] = label_name;
-			} 
     		if (setb_value != 0){
     			 text = "(" + setb_value + ")=" + pc_setc[pc_loc] + " BRANCH";
     		 } else {

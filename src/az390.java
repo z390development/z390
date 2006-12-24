@@ -7032,68 +7032,80 @@ private void get_fp_hex(String fp_text){
 	 * big_dec1 value with sufficent sig. bits.
 	 * Exit with artbitrary format if zero.
 	 */
+	char fp_sign = '+';
+	if (fp_text.length() > 1 && fp_text.substring(0,2).equals("-(")){
+		fp_sign = '-';
+		fp_text = fp_text.substring(1);
+	}
 	if (fp_text.charAt(0) == '('){ // RPI 367 support (MIN) and (MAX)
 		if (fp_text.toUpperCase().equals("(MAX)")){
 			switch (tz390.fp_type){  // gen (max) hex for tz390.fp_type
 			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
 				dc_hex = "7FEFFFFFFFFFFFFF";
-			    return;
+			    break;
 			case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
 			    dc_hex = "77FCFF3FCFF3FCFF"; // RPI 407
-			    return;
+			    break;
 			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
 				dc_hex = "7FFFFFFFFFFFFFFF";
-			    return;
+				break;
 			case 3: // tz390.fp_eb_type s1,e8,m23 with assumed 1
 	            dc_hex = "7F7FFFFF";
-			    return;
+	            break;
 			case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50
 			    dc_hex = "77F3FCFF"; // RPI 407
-			    return;
+			    break;
 			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
 				dc_hex = "7FFFFFFF";
-			    return;
+				break;
 			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
 				dc_hex = "7FFEFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
-			    return;
+				break;
 			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
 			    dc_hex = "77FFCFF3FCFF3FCFF3FCFF3FCFF3FCFF"; // RPI 407
-			    return;
+			    break;
 			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
 				dc_hex = "7FFFFFFFFFFFFFFF71FFFFFFFFFFFFFF";
-			    return;
+				break;
+			}
+			if (fp_sign == '-'){
+				dc_hex = "F" + dc_hex.substring(1);
 			}
 			return;
 		} else if (fp_text.toUpperCase().equals("(MIN)")){
 			switch (tz390.fp_type){  // gen (min) hex for tz390.fp_type
 			case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
 				dc_hex = "0010000000000000";
-			    return;
+			    break;
 			case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50
 				dc_hex = "0000000000000001"; // RPI 407
-				return;
+				break;
 			case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
 				dc_hex = "0110000000000000";
-				return;
+				break;
 			case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
 	            dc_hex = "00800000";
-	            return;
+	            break;
 			case 4: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
 				dc_hex = "00000001"; // RPI 407
-				return;
+				break;
 			case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
 				dc_hex = "01100000";
-				return;
+				break;
 			case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
 				dc_hex = "00010000000000000000000000000000";
-				return;
+				break;
 			case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110
 				dc_hex = "00000000000000000000000000000001"; // RPI 407
-				return;
+				break;
 			case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
 				dc_hex = "01100000000000007200000000000000";
-				return;
+				break;
 			}
+			if (fp_sign == '-'){
+				dc_hex = "8" + dc_hex.substring(1);
+			}
+			return;
 		} else {
 			log_error(112,"unrecognized floating point constant " + fp_text);
 		}
