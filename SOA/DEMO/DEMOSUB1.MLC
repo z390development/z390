@@ -1,0 +1,27 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 12/26/06                                                 *
+*********************************************************************
+* 12/31/06 RPI 523 CODE EXAMPLE APPLICATION DEMOSUB1 ROUTINE
+*********************************************************************
+* CALC SCIENTIFIC DISPLAY PARM1 + PARM2 = PARM3 USING EXTENDED DFP
+*********************************************************************
+DEMOSUB1 SUBENTRY
+         LM    R3,R5,0(R1       LOAD 3 PARM ADDRESSES
+         WTO   'DEMOSUB1 ENTERED'
+         CFD   CFD_LD,IN=(R3),OUT=0  F0,R2 = LD PARM1
+         CFD   CFD_LD,IN=(R4),OUT=1  F1,R3 = LD PARM2
+         AXTR  0,0,1                 F0,R2 = LD PARM1 + LD PARM2
+         CTD   CTD_LD,IN=0,OUT=DSUB  DISPLAY VALUE OF SUB
+         WTO   MF=(E,WTOMSG)    DISPLAY PARM3 = LD PARM1 + LD PARM2
+         MVC   0(L'DSUB,R5),DSUB     UPDATE PARM3 FROM DSUB
+         WTO   'DEMOSUB1 EXITING'
+         SUBEXIT
+WTOMSG   DC   AL2(WTOEND-*,0),C'DEMOSUB1 SUM='
+DSUB     DC   CL45' '
+WTOEND   EQU  *
+         EQUREGS
+         END

@@ -18,6 +18,9 @@
 *   LDETR, LXDTR, LEDTR, LDXTR, QADTR, QAXTR, RRDTR, RRXTR
 *   SLDT,  SLXT   SRDT,  SRXT
 *   TDCDT, TDCET, TDCXT, TDGDT, TDGET, TDGXT
+* 12/29/06 RPI 527 ADD MISSING DFP INS
+*   LPDFR, LNDFR, CPSDR, LCDFR, LDGR, LGDR            
+* 02/08/07 RPI 527 CORRECT CGDTR, CGXTR ROUNDING
 *********************************************************************
          PRINT DATA
 TESTDFP1 RT1   MAIN
@@ -84,6 +87,52 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LD    5,=DD'2'
          CDTR  1,5
          RT1   CC0
+* B370 LPDFR
+         LD    2,=DD'1'
+         LD    3,=DD'1'
+         LPDFR 1,2
+         CDTR  1,3
+         RT1   CC0
+         LD    2,=DD'-1'
+         LD    3,=DD'1'
+         LPDFR 1,2
+         CDTR  1,3
+         RT1   CC0
+* B371 LNDFR
+         LD    2,=DD'1'
+         LD    3,=DD'-1'
+         LNDFR 1,2
+         CDTR  1,3
+         RT1   CC0
+         LD    2,=DD'-1'
+         LD    3,=DD'-1'
+         LNDFR 1,2
+         CDTR  1,3
+         RT1   CC0
+* B372 CPSDR
+         LD    2,=DD'2'
+         LD    3,=DD'-3'
+         LD    4,=DD'3'
+         CPSDR 1,2,3
+         CDTR  1,4
+         RT1   CC0
+         LD    2,=DD'-2'
+         LD    3,=DD'3'
+         LD    4,=DD'-3'
+         CPSDR 1,2,3
+         CDTR  1,4
+         RT1   CC0
+* B373 LCDFR
+         LD    2,=DD'1'
+         LD    3,=DD'-1'
+         LCDFR 1,2
+         CDTR  1,3
+         RT1   CC0
+         LD    2,=DD'-1'
+         LD    3,=DD'1'
+         LCDFR 1,2
+         CDTR  1,3
+         RT1   CC0
 * B385 SFASR
          STFPC FPCREG
          OI    FPCREG+3,X'10'
@@ -101,6 +150,28 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          FIDTR 1,0,4,0
          LD    5,=DD'2'
          CDTR  1,5
+         RT1   CC0
+* B3C1 LDGR 
+         LG    2,=DD'1'
+         LD    3,=DD'1'
+         LDGR  1,2
+         CDTR  1,3
+         RT1   CC0
+         LG    2,=DD'2'
+         LD    3,=DD'2'
+         LDGR  1,2
+         CDTR  1,3
+         RT1   CC0
+* B3CD LGDR 
+         LD    2,=DD'1'
+         LG    3,=DD'1'
+         LGDR  1,2
+         CGR   1,3
+         RT1   CC0
+         LD    2,=DD'2'
+         LG    3,=DD'2'
+         LGDR  1,2
+         CGR   1,3
          RT1   CC0
 * B3D0 MDTR
          LD    2,=DD'30'
@@ -383,6 +454,11 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          RT1   CC0
          CLG   1,=FD'0'
          RT1   CC0
+         LD    2,=DD'1.5'
+         CGDTR 1,0,2
+         RT1   CCH
+         CLG   1,=FD'2'
+         RT1   CC0
 * B3E2 CUDTR
          LD    1,=DD'1'
          CUDTR 0,1
@@ -490,6 +566,11 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          CGXTR 1,0,4
          RT1   CC0
          CLG   1,=FD'0'
+         RT1   CC0
+         LX    4,=LD'1.5'
+         CGXTR 1,0,4
+         RT1   CCH
+         CLG   1,=FD'2'
          RT1   CC0
 * B3EA CUXTR
          LX    1,=LD'1'
@@ -809,11 +890,23 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LE    1,=ED'1'
          TDGET 1,TDGPSF
          RT1   CC1
+         LE    1,=ED'123456'
+         TDGET 1,TDGPSF
+         RT1   CC1
+         LE    1,=ED'1234567'
+         TDGET 1,TDGPDF
+         RT1   CC1
          LE    1,=ED'(MAX)'
          TDGET 1,TDGPDF
          RT1   CC1
          LE    1,=ED'-1'
          TDGET 1,TDGMSF
+         RT1   CC1
+         LE    1,=ED'-123456'
+         TDGET 1,TDGMSF
+         RT1   CC1
+         LE    1,=ED'-1234567'
+         TDGET 1,TDGMDF
          RT1   CC1
          LE    1,=ED'-(MAX)'
          TDGET 1,TDGMDF
@@ -853,11 +946,23 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LD    1,=DD'1'
          TDGDT 1,TDGPSF
          RT1   CC1
+         LD    1,=DD'123456789012345'
+         TDGDT 1,TDGPSF
+         RT1   CC1
+         LD    1,=DD'1234567890123456'
+         TDGDT 1,TDGPDF
+         RT1   CC1
          LD    1,=DD'(MAX)'
          TDGDT 1,TDGPDF
          RT1   CC1
          LD    1,=DD'-1'
          TDGDT 1,TDGMSF
+         RT1   CC1
+         LD    1,=DD'-123456789012345'
+         TDGDT 1,TDGMSF
+         RT1   CC1
+         LD    1,=DD'-1234567890123456'
+         TDGDT 1,TDGMDF
          RT1   CC1
          LD    1,=DD'-(MAX)'
          TDGDT 1,TDGMDF
@@ -897,11 +1002,23 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LX    1,=LD'1'
          TDGXT 1,TDGPSF
          RT1   CC1
+         LX    1,=LD'123456789012345678901234567890123'
+         TDGXT 1,TDGPSF
+         RT1   CC1
+         LX    1,=LD'1234567890123456789012345678901234'
+         TDGXT 1,TDGPDF
+         RT1   CC1
          LX    1,=LD'(MAX)'
          TDGXT 1,TDGPDF
          RT1   CC1
          LX    1,=LD'-1'
          TDGXT 1,TDGMSF
+         RT1   CC1
+         LX    1,=LD'-123456789012345678901234567890123'
+         TDGXT 1,TDGMSF
+         RT1   CC1
+         LX    1,=LD'-1234567890123456789012345678901234'
+         TDGXT 1,TDGMDF
          RT1   CC1
          LX    1,=LD'-(MAX)'
          TDGXT 1,TDGMDF

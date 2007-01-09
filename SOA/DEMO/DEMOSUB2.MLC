@@ -1,0 +1,30 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 12/26/06                                                 *
+*********************************************************************
+* 12/31/06 RPI 523 CODE EXAMPLE APPLICATION CALLED DEMOSUB2 ROUTINE
+*********************************************************************
+* CALC INT PARM1 + INT PARM2 = INT PARM3
+*********************************************************************
+DEMOSUB2 SUBENTRY
+         LM    R3,R5,0(R1)      GET 3 PARM ADDRESSES  
+         WTO   'DEMOSUB2 ENTERED'
+         L     R0,0(R3)         LOAD  INT PARM1
+         A     R0,0(R4)         ADD   INT PARM2
+         ST    R0,0(R5)         STORE INT PARM3
+         CVD   R0,PWORK
+         MVC   DSUM,MASK
+         ED    DSUM,PWORK+4    
+         WTO   MF=(E,WTOMSG)    DISPLAY PARM3 = INT PARM1 + INT PARM2
+         WTO   'DEMOSUB2 EXITING'
+         SUBEXIT
+WTOMSG   DC   AL2(WTOEND-*,0),C'DEMOSUB2 SUM='
+DSUM     DC   C' Z,ZZZ,ZZ9'
+WTOEND   EQU  *
+MASK     DC   C' ',X'20',C',',X'202020',C',',X'202120'
+PWORK    DC   PL8'0'
+         EQUREGS
+         END

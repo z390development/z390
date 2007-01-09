@@ -1,0 +1,52 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 01/06/07                                                 *
+*********************************************************************
+* 01/06/07 RPI 523 CODE DEMOSTOP UTILITY TO CLOSE PORT SERVER
+*********************************************************************
+* SEND STOP MSG TO DEMOSMGR ON PORT SPECIFIED IN PARM OPTION
+*********************************************************************
+* Notes:
+*  1.  This stop message is only supported by generated SOASMGR
+*      servers running on specified port on same processor.
+*  2.  Currently any user can stop any SOASMGR with this message.
+*********************************************************************
+         COPY  ASMMSP
+DEMOSTOP SUBENTRY
+         LR    R2,R1
+         LH    R1,0(R2)
+         IF    (CH,R1,EQ,=H'0')
+               WTO 'DEMOSTOP MISSING PORT NUMBER IN PARM'
+               SUBEXIT RC=8
+         ENDIF
+         BCTR  R1,0
+         EX    R1,PACKPORT
+         ED    DPORT,PWORK+5
+         WTO   MF=(E,SHOWPORT)
+         CVB   R3,PWORK          R3=PORT
+         TCPIO OPEN,HOST=*,PORT=(R3),LMAX=LMAX
+         IF    (CH,R15,NE,=H'0')
+               WTO   'DEMOSTOP PORT NOT OPEN'
+               SUBEXIT RC=4
+         ENDIF                                     
+         TCPIO SEND,MSG=STOPMSG,LMSG=4,PORT=(R3)
+         IF    (CH,R15,EQ,=H'0')
+               WTO   'DEMOSTOP STOP SOA PORT SUCCESSFUL'
+               SUBEXIT
+         ELSE                                     
+               WTO   'DEMOSTOP STOP SOA PORT FAILED'
+               SUBEXIT RC=8
+         ENDIF
+PACKPORT PACK  PWORK,2(R1,R2)
+         LTORG
+PWORK    DC   PL8'0'
+LMAX     DC   F'4'
+STOPMSG  DC   F'-1'  SEND 4 BYTE MSG LENGTH OF -1 TO STOP SOASMGR
+SHOWPORT DC   AL2(SHOWEND-*,0),C'DEMOSTOP PORT ='
+DPORT    DC   X'402020202120'
+SHOWEND  EQU  *
+         EQUREGS
+         END

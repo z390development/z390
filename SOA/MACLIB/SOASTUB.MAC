@@ -1,0 +1,45 @@
+         MACRO
+         SOASTUB &SERVICE=,&CLIENT=SOACMGR 
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 12/28/06                                                 *
+*********************************************************************
+* 01/01/07 RPI 523 GENERATE SOURCE CODE FOR SERVICE CALL STUB     
+*********************************************************************
+* THIS CODE GENERATES RELOCATABLE OBJECT CODE TO BE LINKED WITH 
+* CLIENT SOA APPLICATION FOR EACH SERVICE CALL.  THE CODE LINKS
+* TO SOA CLIENT MESSAGE MANAGER SOACMGR TO REQUEST SERVICE FROM
+* SOA SERVER MESSAGE MANAGER VIA TCP/IP MESSAGING AND THEN UPDATE
+* USERS CALL PARMS FROM RESPONSE MESSAGE AND RETURN TO CALLER
+* WITH RETURN CODE.  SEE Z390\SOA\DEMO\DEMOSOA.MLC/BAT
+*********************************************************************
+&SERVICE CSECT                  DEFINE SERVICE CSECT FOR USER CALLS
+         USING *,15             DEFINE ENTRY AS BASE 
+         ST    12,SAVER12       SAVE BASE REG
+         BALR  12,0
+         USING *,12
+         ST    14,SVCEXIT       SAVE RETURN ADDRESS
+         ST    1,SVCPLIST       SAVE CALLER PARM ADDRESS
+         L     15,ACLIENT       GET CLIENT SOA MSG MANAGER
+         LTR   15,15
+         BNZ   CALL             GO CALL IF ALREADY LOADED
+         LOAD  EP=&CLIENT       LOAD CLIENT SOA MSG MGR
+         ST    0,ACLIENT
+         LTR   15,15
+         LR    15,0
+         BZ    CALL
+         WTO   '&CLIENT NOT FOUND'
+         ABEND 806
+CALL     CALL  (15),(SVCNAME,SVCPLIST),VL  CALL SOA MSG MGR 
+         L     14,SVCEXIT                  RESTORE EXIT
+         L     12,SAVER12                  RESTORE BASE
+         BR    14
+SAVER12  DC    A(0)
+ACLIENT  DC    A(0)             ADDRESS OF SHARED CLIENT MSG MANAGER
+SVCNAME  DC    CL8'&SERVICE'    NAME OF SOA SERVICE CALLED
+SVCPLIST DC    A(0)             ADDRESS OF CALLER PARM LIST
+SVCEXIT  DC    A(0)             RETURN FROM SERVICE    
+         MEND

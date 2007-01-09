@@ -1,4 +1,4 @@
-z390 v1.2.00f PTF 12/24/06
+z390 v1.2.00g PTF 01/08/07
 Copyright 2006 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.2.00:
@@ -105,6 +105,39 @@ binary fractions using binary versus exact result using decimal.
 27. RPI 521 correct mz390 to prevent trap with brank to undefined label on AIF is not
     taken during pseudo code generation and then is taken on later pseudo code execution. 
 
+28. RPI 522 Add additional DFP regression tests to RT\TESTDFP1.MLC
+
+29. RPI 523 Update to Sun Microsystems J2SE 1.5 Update 10 for regression tests.
+
+30. RPI 524 Add new TCPIO macro for use in establishing TCP/IP connections and sending
+    and receiving messages between clients and servers running locally or anywhere on
+    TCP/IP network.  See new SOA directory with DEMO which can be run as statically
+    linked main program calling to routines and then again as generated SOA application.
+    See SOA\DEMO\DEMOSTD.BAT and SOA\DEMO\DEMOSOA.BAT.  Also see readme and timing
+    statistics report in the SOA directory.
+
+31. RPI 525 Change mz390 to log subscript errors and continue in attempt to process all
+    source code in main program rather than aborting.
+
+32. RPI 526 Change sz390 to trap any CFD conversion errors and simply exit with RC=12.
+
+33. RPI 527 Add missing DFP instructions CPSDR, LCDFR, LDGR, LGDR, LNDFR, and LPDFR.
+    Also fix rounding for FIDTR, FIXTR, CGDTR, and CGXTR.
+
+34. RPI 528 Correct mz390 to strip trailing period after subscripted variable and remove
+    previous incorrect logic in variable replacement which was causing inconsistent period
+    handling after subscripted variables.
+
+35. RPI 529 Change mz390 to issue error for undefined macro varaiable when running
+    macro processor without assembler.
+
+36. RPI 530 Add option FORMAT extension to PUNCH operation to request continuation
+    formatting for MLC and BAL type output files.  The default for PUNCH is variable
+    length ASCII text with no continuation formatting.
+
+37. RPI 531 change pz390 to correct a number of DFP and other instruction trace formats
+    including SRP.  Also rewrite the trace code using table driven logic to simplify
+    future additions.
 
 To install PTF follow these steps.
 

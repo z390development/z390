@@ -1,0 +1,210 @@
+        MACRO
+       SOASMGR &SERVER=,     NAME OF SOA SERVER MESSAGE MANAGER        X
+               &HOST=,       URL  OF SOA SERVER                        X
+               &PORT=,       PORT NUMBER OF SOA SERVER                 X
+               &SERVICES=    SERVICE DEFINITION SUBLISTS WITH          X
+                             NAME AND PARM LENGTHS (NEG FOR READ ONLY)
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 01/01/07                                                 *
+.**********************************************************************
+.*  01/05/07 RPI 524 ADD MSGTIME FOR SOA CLIENT SERVER APPLICATIONS 
+.*  01/06/07 RPI 524 ADD SEND/RECEIVE TCPIO LMSG PARM                     
+.**********************************************************************
+.* GENERATE AN SOA SERVER TO HANDLE SERVICES DEFINED USING HOST
+.* AND PORT SPECIFIED.ERVICE REQUEST MESSAGE
+.*  2. SOASPUT - PUT SERVICE RESPONSE MESSAGE
+.**********************************************************************
+&SERVER  SUBENTRY
+         WTO   '&SERVER STARTED'
+         COPY  ASMMSP
+         TCPIO  OPEN,PORT=&PORT,LMAX=LMAX OPEN SERVER PORT
+         IF    (CH,R15,NE,=H'0')           
+               WTO 'TCPIO ERROR &SERVER OPEN PORT &PORT FAILED'
+               B   ABORT
+         ENDIF
+         L     R9,LMAX           R9 = LENGTH OF MSG BUFFER
+         GETMAIN RU,LV=(9)
+         LR     R4,R0            R4 = MAX MESSAGE BUFFER
+         USING  IHAMSG,R4
+         WTOR   '&SERVER REPLY ANY CHAR TO TERMINATE',REPLY,1,ECB
+SERVER_PROCESS_LOOP EQU    *     PROCESS MESSAGES UNTIL CANCELLED
+         IF     (TM,ECB,O,X'40') 
+                WTO '&SERVER CANCELLED VIA WTOR'
+                SUBEXIT
+         ENDIF
+*********************************************************************
+* GET NEXT SERVICE REQUEST MESSAGE
+*********************************************************************
+         TCPIO RECEIVE,MSG=(R4),LMSG=4,PORT=&PORT
+         IF    (CH,R15,NE,=H'0')
+               TCPIO CLOSE,PORT=&PORT  CLOSE SERVER PORT
+               TCPIO OPEN,PORT=&PORT,LMAX=LMAX REOPEN SERVER PORT
+               IF (CH,R15,NE,=H'0')           
+                  WTO 'TCPIO ERROR &SERVER REOPEN FAILED'
+                  B   ABORT
+               ENDIF
+               TCPIO  RECEIVE,MSG=(R4),LMSG=4,PORT=&PORT
+               IF (CH,R15,NE,=H'0')           
+                  WTO 'TCPIO ERROR &SERVER RETRY FAILED'
+                  B   ABORT
+               ENDIF
+         ENDIF
+         L     R2,MSGLEN
+         IF    (CH,R2,EQ,=H'-1')
+               WTO '&SERVER CLOSING DOWN AT USER REQUEST'
+               TCPIO CLOSE,PORT=&PORT CLOSE SERVER PORT
+               SUBEXIT  
+         ENDIF
+         IF    (C,R2,GT,LMAX),OR,(C,R2,LT,LMIN)
+               WTO '&SERVER ERROR MESSAGE LENGTH TOO LONG'
+               B   ABORT
+         ENDIF
+         SH    R2,=H'4'
+         TCPIO RECEIVE,MSG=MSGLEN+4,LMSG=(R2),PORT=&PORT   
+         IF    (CH,R15,NE,=H'0')
+               WTO '&SERVER ERROR ON RECEIVE'
+               B   ABORT
+         ENDIF
+&NS      SETA  0
+&MAXLEN  SETA  0
+&MINLEN  SETA  0      
+&MAXPARMS SETA  0
+.GEN_SERVICE_CALLS ANOP
+&NS      SETA  &NS+1
+         AIF   (&NS GT N'&SERVICES).END_GEN_SERVICE_CALLS
+SERVICES LOCTR
+&SERVICES(&NS,1) DC A(0) ADDRESS OF LOADED SERVICE
+&SERVER  CSECT
+*********************************************************************
+* GEN SERVICE CALL AND RESPONSE FOR EACH SERVICE
+*********************************************************************
+         IF    (CLC,MSGNAME,EQ,=CL8'&SERVICES(&NS,1)')
+               ICM R15,15,&SERVICES(&NS,1)
+               IF  (CH,R15,EQ,=H'0')
+                   LOAD EP=&SERVICES(&NS,1)
+                   IF  (CH,R15,EQ,=H'0')
+                        ST  R0,&SERVICES(&NS,1)
+                   ELSE 
+                        WTO '&SERVER LOAD ERROR ON &SERVICES(&NS.1)'
+                        B   ABORT
+                   ENDIF
+               ENDIF
+*********************************************************************
+* BUILD SERVICE CALL PARAMETER ADDRESS LIST FROM MESSAGE VALUES
+*********************************************************************
+               LA    R1,SVCPLIST
+               LA    R2,MSGPARMS
+&NP            SETA  1
+&LSTOFF        SETA  0
+&CURLEN        SETA  0
+.BLD_PARM_ADDR_LIST ANOP                           START COPY PARMS
+&NP            SETA  &NP+1
+               AIF (&NP GT N'&SERVICES(&NS)).END_BLD_PARM_ADDR_lIST
+               AIF  (&NP LE &MAXPARMS).SKIP_MAXPARMS
+&MAXPARMS      SETA &NP
+.SKIP_MAXPARMS ANOP
+               ST   R2,&LSTOFF.(R1)                R1=A(NEXT PARM)
+&LPARM         SETA &SERVICES(&NS,&NP)
+               AIF  (&LPARM GT 0).NOT_READ_ONLY
+&LPARM         SETA -&LPARM
+.NOT_READ_ONLY ANOP
+&CURLEN        SETA &CURLEN+&LPARM
+               AIF  (&CURLEN LE &MAXLEN).SKIP_MAX
+&MAXLEN        SETA &CURLEN
+               AIF  (&MINLEN GT 0).SKIP_MAX
+&MINLEN        SETA &CURLEN
+.SKIP_MAX      ANOP
+               AIF  (&CURLEN GE &MINLEN).SKIP_MIN
+&MINLEN        SETA &CURLEN
+.SKIP_MIN      ANOP
+               A    R2,=F'&LPARM'
+.NEXTPARM      ANOP
+&LSTOFF        SETA &LSTOFF+4                      NEXT PARM ADDR
+               AGO  .BLD_PARM_ADDR_LIST
+.END_BLD_PARM_ADDR_LIST ANOP                         
+*********************************************************************
+* CALL THE SERVICE AND LOG RESPONSE TIME IN MICRO-SECONDS
+*********************************************************************
+               BAL  R12,START_TIME
+               L    R15,&SERVICES(&NS,1)
+               LA   R1,SVCPLIST
+               CALL (R15)
+               ST   R15,MSGRC    SET RETURN CODE IN MSG
+               BAL  R12,STOP_TIME
+*********************************************************************
+* BUILD RESPONSE MESSAGE WITH UPDATED NON READ-ONLY PARMS
+*********************************************************************
+               LA    R6,MSGPARMS
+               L     R9,LMAX
+&NP            SETA  1
+&LSTOFF        SETA  0
+&READ_ONLY     SETB  0  ASSUME NO READ ONLY (NO CHANGE TO MESSAGE)
+.UPDATE_PARM_MSG_LOOP ANOP                 
+&NP            SETA  &NP+1
+               AIF (&NP GT N'&SERVICES(&NS)).END_UPDATE_PARM_MSG_LOOP
+&LPARM         SETA &SERVICES(&NS,&NP)
+               AIF  (&LPARM LT 0).SKIP_READ_ONLY2
+               AIF  (NOT &READ_ONLY).SKIP_MOVE
+               L    R8,SVCPLIST+&LSTOFF         R1=A(NEXT PARM)
+               L    R7,=F'&LPARM'
+               MVCL R6,R8                      MOVE UPDATED IF
+               AGO  .NEXT_PARM2
+.SKIP_MOVE     ANOP
+               A    R6,=F'&LPARM'
+               AGO  .SKIP_PARM2
+.SKIP_READ_ONLY2 ANOP
+&READ_ONLY      SETB 1
+&LPARM          SETA -&LPARM
+.SKIP_PARM2     ANOP
+                S    R9,=F'&LPARM'
+.NEXT_PARM2     ANOP
+&LSTOFF        SETA &LSTOFF+4                  NEXT PARM ADDR
+               AGO  .UPDATE_PARM_MSG_LOOP
+.END_UPDATE_PARM_MSG_LOOP ANOP
+         ENDIF
+         AGO    .GEN_SERVICE_CALLS
+.END_GEN_SERVICE_CALLS ANOP
+         SR     R6,R4
+         ST     R6,MSGLEN
+         TCPIO  SEND,MSG=(R4),LMSG=MSGLEN,PORT=&PORT
+         IF    (CH,R15,NE,=H'0')           
+               WTO 'TCPIO ERROR &SERVER SEND FAILED'
+               B   ABORT
+         ENDIF
+         B      SERVER_PROCESS_LOOP
+         WTO    '&SERVER CLOSING DOWN'
+         SUBEXIT
+ABORT    WTO    '&CLIENT ABORTING DUE TO TCPIO ERROR ON PORT &PORT'
+         ABEND  &PORT
+START_TIME DS 0H
+         TIME  NS,NS_START
+         BR    R12
+STOP_TIME DS 0H  SHOW SRERVICE TIME IN MICRO-SECONDS
+         TIME  NS,NS_STOP
+         LG    R1,NS_STOP
+         SG    R1,NS_START
+         DSG   R0,=FD'1000'
+         CVD   R1,PWORK
+         MVC   DMICS,MICS_MASK
+         ED    DMICS,PWORK+3
+         WTO   MF=(E,SHOW_MSG)
+         BR    R12
+NS_START DC    D'0' START TOD IN NANO-SECONDS
+NS_STOP  DC    D'0' END   TOD IN NANO-SECONDS
+SHOW_MSG DC    AL2(SHOW_END-*,0),C'SERVICE TIME IN MIRCO-SEC ='
+DMICS    DC    C' ZZZ,ZZZ,ZZZ'
+SHOW_END EQU   *
+MICS_MASK DC   X'40202020',C',',X'202020',C',',X'202120'
+PWORK    DC    D'0'
+LMAX     DC     A(MSGPARMS-IHAMSG+&MAXLEN)
+LMIN     DC     A(MSGPARMS-IHAMSG+&MINLEN)
+SVCPLIST DC     (&MAXPARMS)A(0)
+REPLY    DC     X'0'
+ECB      DC     F'0'
+         EQUREGS
+         SOAMSG
+         MEND

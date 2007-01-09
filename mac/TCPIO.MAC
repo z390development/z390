@@ -1,0 +1,99 @@
+         MACRO
+&N       TCPIO &OP,         OPERATION - OPEN, CLOSE, SEND, RECEIVE     X
+               &MSG=,       RX/REG ADDRESS OF MESSAGE TO SEND/RECEIVE  X
+               &LMAX=,      RX/REG MAXIMUM MESSAGE LENGTH FOR OPEN     X                  X
+               &LMSG=,      RX,REG LENGTH OF MSG TO SEND/RECEIVE       X
+               &HOST=,      RX/REG ADDR OF HOST IP ADDRESS (*=LOCAL)   X
+               &PORT=       PORT NUMBER FOR ALL OPERATIONS 
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 01/01/07                                                 *
+.*********************************************************************
+.* MAINTENANCE
+.* 01/01/07 RPI 524 ADD TCPIO MACRO AND SVC X'7C' SUPPORT FOR SOCKETS
+.*********************************************************************
+         AIF   (&OP EQ 'OPEN').OPEN
+         AIF   (&OP EQ 'CLOSE').CLOSE
+         AIF   (&OP EQ 'SEND').SEND
+         AIF   (&OP EQ 'RECEIVE').RECEIVE
+         AGO   .ERR1
+.OPEN    ANOP
+         AIF   (&HOST NE '').OPEN_CLIENT
+.OPEN_SERVER ANOP
+         LA    0,1           R0 = TCPIO OP OPEN SERVER PORT ON HOST
+         AGO   .LMAX
+.OPEN_CLIENT ANOP
+         LA    0,2           R0 = TCPIO OP OPEN CLIENT PORT CONNECTION
+         AIF   (&HOST EQ '*').HOST_LOCAL
+         AIF   ('&HOST'(1,1) EQ '(').HOSTREG
+         LA    14,&HOST      R14= TCPIO HOST IP NULL TERMINATED
+         AGO   .LMAX
+.HOST_LOCAL ANOP
+         LA    14,0          R14= 0 FOR LOCAL HOST
+         AGO   .LMAX
+.HOSTREG ANOP
+         LR    14,&HOST(1)   R14= TCPIO HOST IP NULL TERMINATED
+         AGO   .LMAX         
+.CLOSE   ANOP
+         LA    0,3           R0 = TCPIO OP CLOSE PORT
+         AGO   .PORT
+.SEND    ANOP
+         LA    0,4           R0 = TCPIO OP SEND MSG VIA PORT CONNECTION
+         AGO   .MSG
+.RECEIVE ANOP
+         LA    0,5           R0 = TCPIO OP RECV MSG VIA PORT CONNECTION
+.MSG     ANOP
+         AIF   (&MSG EQ '').ERR2
+         AIF   ('&MSG'(1,1) EQ '(').MSGREG
+         LA    14,&MSG
+         AGO   .LMSG
+.MSGREG  ANOP
+         LR    14,&MSG(1)
+         AGO   .LMSG
+.LMAX    ANOP
+         AIF   (&LMAX EQ '').ERR4
+         AIF   ('&LMAX'(1,1) EQ '(').LMAXREG
+         AIF   (T'&LMAX EQ 'N').LMAXLIT
+         L     15,&LMAX
+         AGO   .PORT
+.LMAXREG ANOP
+         LR    15,&LMAX(1)
+         AGO   .PORT
+.LMAXLIT ANOP
+         L     15,=F'&LMAX'
+         AGO   .PORT
+.LMSG    ANOP
+         AIF   (&LMSG EQ '').ERR5
+         AIF   ('&LMSG'(1,1) EQ '(').LMSGREG
+         AIF   (T'&LMSG EQ 'N').LMSGLIT
+         L     15,&LMSG
+         AGO   .PORT
+.LMSGLIT ANOP
+         L     15,=F'&LMSG'
+         AGO   .PORT
+.LMSGREG ANOP
+         LR    15,&LMSG(1)
+.PORT    ANOP
+         AIF   (&PORT EQ '').ERR3
+         AIF   ('&PORT'(1,1) EQ '(').PORTREG
+         LA    1,&PORT
+         AGO   .SVC
+.PORTREG ANOP
+         LR    1,&PORT(1)
+.SVC     ANOP
+         SVC   X'7C' R0=OP(1-5) R1=PORT R14=HOST/MSG R15=LMAX/LMSG
+         MEXIT
+.ERR1    MNOTE 12,'TCPIO - INVALID OP - OPEN, CLOSE, SEND, RECEIVE'
+         MEXIT
+.ERR2    MNOTE 12,'TCPIO - MISSING KEYWORD MSG= FOR SEND/RECV'
+         MEXIT
+.ERR3    MNOTE 12,'TCPIO - MISSING KEYWORD PORT= FOR SEND/RECV'
+         MEXIT
+.ERR4    MNOTE 12,'TCPIO - LMAX LENGTH OF MAX SEND/RECEIVE REQUIRED'
+         MEXIT
+.ERR5    MNOTE 12,'TCPIO - LMSG LENGTH OF SEND/RECEIVE REQUIRED'
+         MEXIT
+         MEND

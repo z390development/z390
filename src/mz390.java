@@ -260,6 +260,9 @@ public  class  mz390 {
      * 12/12/06 RPI 516 reduce '' to ' in PUNCH text
      * 12/21/06 RPI 519 prevent error 132 due to mixed case names
      * 12/22/06 RPI 521 prevent trap on undefined AIF label
+     * 12/28/06 RPI 525 change abort to log for subscript errors
+     * 12/31/06 RPI 528 move strip trailing period from replace var to subscript/sublist
+     * 01/01/07 RPI 529 issue error for missing var if not asm
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -306,6 +309,7 @@ public  class  mz390 {
 	int tot_punch_io = 0;
 	int ap_file_index = 0;
 	String ap_file_name = null;
+	boolean ap_format = false; // format PCH extension
 	int dat_file_index = 0;
 	int pch_file_index = 0;
 	File[] dat_file = new File[max_ap_files];
@@ -1093,7 +1097,7 @@ public  class  mz390 {
 					+ "|([^',()\\s]+)"   // RPI 223, RPI 250                  // any other text
 			);
 		} catch (Exception e){
-			abort_error(2,"proto pattern errror - " + e.toString());
+			abort_error(2,"proto pattern error - " + e.toString());
 		}
 		/*
 		 * macro label_pattern  .lll
@@ -1103,7 +1107,7 @@ public  class  mz390 {
 					"([.][a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"  // RPI 253         
 			);
 		} catch (Exception e){
-			abort_error(3,"label pattern errror - " + e.toString());
+			abort_error(3,"label pattern error - " + e.toString());
 		}
 		/*
 		 * assembler symbol_pattern A-Z09#$%_
@@ -1113,7 +1117,7 @@ public  class  mz390 {
 					"([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"  // RPI 253         
 			);
 		} catch (Exception e){
-			abort_error(3,"label pattern errror - " + e.toString());
+			abort_error(3,"label pattern error - " + e.toString());
 		}
 
 		/*
@@ -1128,7 +1132,7 @@ public  class  mz390 {
 					+ "|(['&])"             
 			);
 		} catch (Exception e){
-			abort_error(1,"pch pattern errror - " + e.toString());
+			abort_error(1,"pch pattern error - " + e.toString());
 		}
 		/*
 		 * macro set/aif expression pattern
@@ -1156,7 +1160,7 @@ public  class  mz390 {
 					+ "|([^'&]+)"  // RPI 268                            // string text
 			);
 		} catch (Exception e){
-			abort_error(4,"expression pattern errror - " + e.toString());
+			abort_error(4,"expression pattern error - " + e.toString());
 		}
 		/*
 		 * macro label_pattern  .lll
@@ -1167,7 +1171,7 @@ public  class  mz390 {
 				+	"|([^\\s]+)"           
 			);
 		} catch (Exception e){
-			abort_error(147,"exec pattern errror - " + e.toString());
+			abort_error(147,"exec pattern error - " + e.toString());
 		}
 	}
 	private void open_files(){
@@ -1911,7 +1915,7 @@ public  class  mz390 {
 				} else {
 					temp_line = tz390.trim_trailing_spaces(temp_line,72);
 					if (!tz390.verify_ascii_source(temp_line)){
-						abort_error(138,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
+						log_error(138,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
 					}
 				}
 			}
@@ -1930,11 +1934,11 @@ public  class  mz390 {
 					cur_mac_line_num++;
 					store_mac_line(); // RPI 273 update now for any cont. error
 					if (temp_line == null){
-						abort_error(139,"missing continuation line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
+						log_error(139,"missing continuation line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
 					}
 					temp_line = tz390.trim_trailing_spaces(temp_line,72);
 					if (!tz390.verify_ascii_source(temp_line)){
-						abort_error(140,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
+						log_error(140,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
 					}
 					if (temp_line.length() < 72 
 						|| temp_line.charAt(71) <= asc_space_char){ //RPI181
@@ -1975,6 +1979,9 @@ public  class  mz390 {
 		 */
 		if (mac_line_index >= tz390.opt_maxline){
 			abort_error(146,"maximum source lines exceeded - increase maxline(nnn)");
+		} else if (mac_line_index < 0){  // RPI 525
+			mac_line_index = mac_name_line_end[mac_name_index]; // force exit
+			log_error(207,"invalid macro line index");
 		} else {
 			gbl_seta[gbl_sysstmt_index] = mac_file_line_num[mac_line_index];
 		}
@@ -2144,29 +2151,7 @@ public  class  mz390 {
 			return;
 		}
 		try {
-			if  (text_line.length() < 72){ // RPI 264, RPI 437
-				tz390.systerm_io++;
-				bal_file_buff.write(text_line + tz390.newline); // RPI 500
-			} else {
-				tz390.systerm_io++;
-				bal_file_buff.write(text_line.substring(0,71) + "X" + tz390.newline); // RPI 500
-				String text_left = text_line.substring(71);
-				while (text_left.length() > 0){
-					if  (text_left.length() > 56){
-						String cont_line = "               " 
-							+ text_left.substring(0,56) 
-							+ "X" + tz390.newline ; // RPI 500
-						tz390.systerm_io++;
-						bal_file_buff.write(cont_line);
-						text_left = text_left.substring(56);
-					} else {
-						tz390.systerm_io++;
-						bal_file_buff.write("               " 
-								+ text_left + tz390.newline); // RPI 500
-						text_left = "";
-					}
-				}
-			}
+            put_continued_text(bal_file_buff,text_line);
 			if (bal_file.length() > tz390.max_file_size){
 				abort_error(119,"maximum bal file size exceeded");
 			}
@@ -2325,10 +2310,6 @@ public  class  mz390 {
 				parm_value = calc_setc_exp(bal_text.substring(bal_text_index1),0);
 				if (parm_value != null){  // RPI 241 ignore var if error
 					bal_text_index2 = bal_text_index1 + exp_next_index;
-					if  (bal_text_index2 < bal_text.length()
-							&& bal_text.charAt(bal_text_index2) == '.'){
-						bal_text_index2++; // skip trailing . in parm substitution
-					}
 				} else {
 					parm_value = ""; // RPI 502 remove undefined var
 					bal_text_index2 = bal_text_index1 + var_save.length();
@@ -2627,13 +2608,13 @@ public  class  mz390 {
                                 ago_lab_index = bal_parms.length();
 							}
 						} else {
-							abort_error(150,"AGO invald macro label operand - " + bal_parms.substring(ago_lab_index));
+							log_error(150,"AGO invald macro label operand - " + bal_parms.substring(ago_lab_index));
 						}
 					}
 				}
 			}
 		} else {
-			abort_error(149,"AGO missing macro label operand");
+			log_error(149,"AGO missing macro label operand");
 		}
 	}
 	private int exp_ago_branch(int lab_index){
@@ -2646,7 +2627,7 @@ public  class  mz390 {
 		int index = get_label_index(bal_parms.substring(lab_index));
 		if (index < mac_name_line_start[mac_name_index] 
 		    || index >= mac_name_line_end[mac_name_index]){
-			abort_error(16,mac_name[mac_name_index] + " undefined " + bal_parms.substring(lab_index));
+			log_error(16,mac_name[mac_name_index] + " undefined " + bal_parms.substring(lab_index));
 		}
 		update_sysstmt();
 		return index;
@@ -2673,7 +2654,7 @@ public  class  mz390 {
 				actr_count--;
 				if (new_mac_line_index < mac_name_line_start[mac_name_index]
 				    || new_mac_line_index >= mac_name_line_end[mac_name_index]){
-					abort_error(142,"AIF macro label not found - " + bal_parms.substring(aif_test_index+exp_next_index));
+					log_error(142,"AIF macro label not found - " + bal_parms.substring(aif_test_index+exp_next_index));
 				} else {
 					if (tz390.opt_pc){
 						aif_branch_index = new_mac_line_index;
@@ -2890,7 +2871,7 @@ public  class  mz390 {
 		}
 		if (!bal_op_ok){
 			put_bal_line(bal_line);
-			abort_error(47,"macro operation not supported - " + bal_op);
+			log_error(47,"macro operation not supported - " + bal_op);
 		}
 	}
 	private void alloc_set(byte alloc_set_type,int alloc_set_loc){
@@ -3058,7 +3039,7 @@ public  class  mz390 {
 			    exp_parse_set_name_index = store_name_index;
 			    store_set_found = true;
 			} else {
-				abort_error(192,"dynamic alloc failed for - " + store_name + "(" + store_sub + ")");
+				log_error(192,"dynamic alloc failed for - " + store_name + "(" + store_sub + ")");
 			}
 		} else {
 			store_set_found = true;
@@ -3315,6 +3296,7 @@ public  class  mz390 {
 		 */
 		ap_file_index = 0;
 		ap_file_name = null;
+		ap_format = false;
 		parms = replace_vars(parms,true); 
 		String parm = null;
 		while (parms.length() > 0){
@@ -3348,6 +3330,8 @@ public  class  mz390 {
 					   && parm.substring(3).compareTo("9") <= 0
 			          ){
 				ap_file_index = Integer.valueOf(parm.substring(3));
+			} else if (parm.length() == 6 && parm.substring(0,6).toUpperCase().equals("FORMAT")){
+				ap_format = true; // RPI 530
 			} else {
 				log_error(185,"invalid parm " + parm);
 			}
@@ -3364,7 +3348,7 @@ public  class  mz390 {
 			File temp_file = new File(temp_file_name);
 			return temp_file.getPath();
 		} else {
-			abort_error(62,"ddname=" + ddname + " not found");
+			log_error(62,"ddname=" + ddname + " not found");
 		}
 		return "";
 	}
@@ -3377,7 +3361,8 @@ public  class  mz390 {
 		 * 2.  If ,DSNAME= follows 'text' write to
 		 *     specified file instead of default 
 		 *     filename.pch
-		 *     
+		 * 3. If FORMAT specified as extended option on PUNCH,
+		 *    the output will format continuations like MLC.    
 		 */
 		String pch_text = "";
 		String token = null;
@@ -3444,9 +3429,13 @@ public  class  mz390 {
 				pch_text = ("X" + pch_text).trim().substring(1); //RPI 195
 				tz390.systerm_io++;
 				tot_punch_io++;
-				pch_file_buff[pch_file_index].write(pch_text + tz390.newline); // RPI 500
-				if (pch_file[pch_file_index].length() > tz390.max_file_size){
-					abort_error(120,"maximum pch file size exceeded");
+				if (ap_format){
+					put_continued_text(pch_file_buff[pch_file_index],pch_text);
+				} else {
+					pch_file_buff[pch_file_index].write(pch_text + tz390.newline); // RPI 500
+					if (pch_file[pch_file_index].length() > tz390.max_file_size){
+						abort_error(120,"maximum pch file size exceeded");
+					}
 				}
 			} catch (IOException e){
 				abort_error(76,"I/O error on PUNCH file write - " + e.toString());
@@ -4774,9 +4763,6 @@ public  class  mz390 {
 					} else {
 				        gen_exp_pc(pc_push_var_op);
 					}
-					if (exp_next_char() == '.'){
-						skip_next_token();  // skip trailing . in string substitution
-					}
 					exp_check_prev_op = false; 
 					break;
 				case 13: // pos parm var(sub) or var(sub,
@@ -4870,6 +4856,9 @@ public  class  mz390 {
 			exp_stk_var_type[tot_exp_stk_var-1] = var_type; 
 		} else {
 			log_error(54,"invalid subscripted variable");
+		}
+		if (exp_next_char() == '.'){  // RPI 528
+			skip_next_token();  // skip trailing . in string substitution
 		}
 		var_subscript_calc = false;
 	}
@@ -5970,7 +5959,7 @@ public  class  mz390 {
 			if (seta_index >= lcl_set_end[var_name_index]){
 				seta_index = expand_set(var_name_index,var_seta_type,var_lcl_loc,set_sub);
 			} else if (seta_index < lcl_set_start[var_name_index]){
-				abort_error(164,"lcla subscript < 1 = " + lcl_set_name[var_name_index]
+				log_error(164,"lcla subscript < 1 = " + lcl_set_name[var_name_index] // RPI 525
 				                                                       + "(" + (seta_index-lcl_set_start[var_name_index]+1) + ")" );
 			}
 			seta_value = lcl_seta[seta_index];
@@ -5980,8 +5969,8 @@ public  class  mz390 {
 			setb_index = lcl_set_start[var_name_index] + set_sub - 1;
 			if (setb_index >= lcl_set_end[var_name_index]){
 				setb_index = expand_set(var_name_index,var_setb_type,var_lcl_loc,set_sub);
-			} else if (setb_index < lcl_set_start[var_name_index]){
-				abort_error(165,"lclb subscript < 1 = " + lcl_set_name[var_name_index]
+			} else if (setb_index < lcl_set_start[var_name_index]){ // RPI 525
+				log_error(165,"lclb subscript < 1 = " + lcl_set_name[var_name_index]
 				                                                       + "(" + (setb_index-lcl_set_start[var_name_index]+1) + ")" );
 			}
 			setb_value = lcl_setb[setb_index];
@@ -5991,8 +5980,8 @@ public  class  mz390 {
 			setc_index = lcl_set_start[var_name_index] + set_sub - 1;
 			if (setc_index >= lcl_set_end[var_name_index]){
 				setc_index = expand_set(var_name_index,var_setc_type,var_lcl_loc,set_sub);
-			} else if (setc_index < lcl_set_start[var_name_index]){
-				abort_error(166,"lclc subscript < 1 = " + lcl_set_name[var_name_index]
+			} else if (setc_index < lcl_set_start[var_name_index]){ // RPI 525
+				log_error(166,"lclc subscript < 1 = " + lcl_set_name[var_name_index]
 				                                                       + "(" + (setc_index-lcl_set_start[var_name_index]+1) + ")" );
 			}
 			setc_value = lcl_setc[setc_index];
@@ -6224,7 +6213,7 @@ public  class  mz390 {
 			if (seta_index >= gbl_set_end[var_name_index]){
 				seta_index = expand_set(var_name_index,var_seta_type,var_gbl_loc,set_sub);
 			} else if (seta_index < gbl_set_start[var_name_index]){
-				abort_error(167,"gbla subscript < 1 = " + gbl_set_name[var_name_index]
+				log_error(167,"gbla subscript < 1 = " + gbl_set_name[var_name_index] // RPI 525
 				                                                       + "(" + (seta_index-gbl_set_start[var_name_index]+1) + ")" );
 			}
 			seta_value = gbl_seta[seta_index];
@@ -6235,7 +6224,7 @@ public  class  mz390 {
 			if (setb_index >= gbl_set_end[var_name_index]){
 				setb_index = expand_set(var_name_index,var_setb_type,var_gbl_loc,set_sub);
 			} else if (setb_index < gbl_set_start[var_name_index]){
-				abort_error(168,"gblb subscript < 1 = " + gbl_set_name[var_name_index]
+				log_error(168,"gblb subscript < 1 = " + gbl_set_name[var_name_index]  // RPI 525
 				                                                       + "(" + (setb_index-gbl_set_start[var_name_index]+1) + ")" );
 			}
 			setb_value = gbl_setb[setb_index];
@@ -6258,8 +6247,8 @@ public  class  mz390 {
 			setc_index = gbl_set_start[var_name_index] + set_sub - 1;
 			if (setc_index >= gbl_set_end[var_name_index]){
 				setc_index = expand_set(var_name_index,var_setc_type,var_gbl_loc,set_sub);
-			} else if (setc_index < gbl_set_start[var_name_index]){
-				abort_error(169,"gblc subscript < 1 = " + gbl_set_name[var_name_index]
+			} else if (setc_index < gbl_set_start[var_name_index]){  // RPI 525
+				log_error(169,"gblc subscript < 1 = " + gbl_set_name[var_name_index]
 				                                                       + "(" + (setc_index-gbl_set_start[var_name_index]+1) + ")" );
 			}
 			if (setc_index == gbl_sysclock_index){
@@ -6297,7 +6286,7 @@ public  class  mz390 {
 				}
 			}
 		}
-		abort_error(25,"macro label not found - " + label_name);
+		log_error(25,"macro label not found - " + label_name);
 		return -1;
 	}
 	private int get_label_comma_index(String label_source){
@@ -7260,7 +7249,8 @@ public  class  mz390 {
 		if (mac_abort)return;
 		mac_abort = true;
 		exp_end = true;
-		if (exp_var_replacement_mode){ // RPI 241
+		if (exp_var_replacement_mode  // RPI 241
+			&& tz390.opt_asm){ // RPI 529 issue error now if mac only
 			exp_setc = null;
 			return;
 		}
@@ -10052,5 +10042,42 @@ public  class  mz390 {
     		abort_pc("invalide var type");
     	    return -1;
     	}
+    }
+    private void put_continued_text(BufferedWriter file_buff,String text){
+    	/*
+    	 * write text to buffered file with
+    	 * continuations if > 71 characters.
+    	 * Notes:
+    	 *   1. Used by put_bal_line and
+    	 *   2. Used by put_pch_line if 
+    	 *      extended FORMAT option specified.
+    	 */
+    	try {
+    		if  (text.length() < 72){ // RPI 264, RPI 437
+    			tz390.systerm_io++;
+    			file_buff.write(text + tz390.newline); // RPI 500
+    		} else {
+    			tz390.systerm_io++;
+    			file_buff.write(text.substring(0,71) + "X" + tz390.newline); // RPI 500
+    			String text_left = text.substring(71);
+    			while (text_left.length() > 0){
+    				if  (text_left.length() > 56){
+    					String cont_line = "               " 
+    						+ text_left.substring(0,56) 
+    						+ "X" + tz390.newline ; // RPI 500
+    					tz390.systerm_io++;
+    					file_buff.write(cont_line);
+    					text_left = text_left.substring(56);
+    				} else {
+    					tz390.systerm_io++;
+    					file_buff.write("               " 
+							+ text_left + tz390.newline); // RPI 500
+    					text_left = "";
+    				}
+    			}
+    		} 
+		} catch (Exception e){
+			abort_error(206,"file I/O error " + e.toString());
+		}
     }
 }

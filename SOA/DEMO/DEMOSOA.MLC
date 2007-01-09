@@ -1,0 +1,12 @@
+        SOAGEN MAIN=DEMOMAIN,           MAIN CLIENT APPLICATION PGM    X
+               CLIENT=DEMOCMGR,         SOA CLIENT MSG MGR NAME        X
+               SERVER=DEMOSMGR,         SOA SERVER MSG MGR NAME        X
+               HOST=*,  (192.168.1.3)   HOST SERVER NAME (*=LOCAL)     X
+               PORT=3900,               HOST SERVER PORT               X
+               SERVICES=((DEMOSUB1,-45,-45,45), SERVICES WITH PARM LEN X
+               (DEMOSUB2,-4,-4,4)),     (NOTE -LENGTH FOR READ ONLY)   X
+               MACDIR=D:\WORK\Z390\SOA\MACLIB, SOA GEN MACRO DIRECTORY X
+               GENDIR=D:\WORK\Z390\SOA\DEMO, DIRECTORY FOR SOA APPL    X
+               GENBLD=DEMOBLD,          GENERATED BUILD BAT FILE       X
+               GENRUN=DEMORUN           GENERATED RUN BAT FILE          
+        END

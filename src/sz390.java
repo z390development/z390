@@ -1,15 +1,20 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -97,6 +102,9 @@ public  class  sz390 implements Runnable {
     * 11/29/06 RPI 507 support CTD/CFD in/out reg val as well as reg addr
     * 12/02/06 RPI 512 support CFD float for INT128 and set RC=0/8/12
     * 12/10/06 RPI 514 add CFD and CTD DFP support types
+    * 12/29/06 RPI 526 trap invalid CFD input and return rc=12
+    *          also fix CTD/CFD parm address to match amode
+    * 01/06/07 RPI 524 add TCPIO svc x'7C' support
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -407,6 +415,29 @@ public  class  sz390 implements Runnable {
 	BigInteger cfd_bi;
 	BigDecimal cfd_bd;
 	String     cfd_text;
+	/*
+	 * TCPIO TCP/IP sockes global variables
+	 */
+	int max_tcp_socket = 10;
+	int tot_tcp_socket = 0;
+	int cur_tcp_socket = 0;
+    ServerSocket[] tcp_server_socket = new ServerSocket[max_tcp_socket];
+    Socket[]       tcp_client_socket = new Socket[max_tcp_socket];
+    int[]    tcp_socket_port = new int[max_tcp_socket];
+    String[]      tcp_socket_host_text = new String[max_tcp_socket];
+    InetAddress[] tcp_socket_host_ip   = new InetAddress[max_tcp_socket];
+    int[]    tcp_socket_lmax = new int[max_tcp_socket];
+    DataInputStream[] tcp_socket_input  = new DataInputStream[max_tcp_socket];
+    PrintStream[]     tcp_socket_output = new PrintStream[max_tcp_socket];
+    int    tcpio_op   = 0;
+	int    tcpio_amsg = 0;
+	int    tcpio_lmsg = 0;
+	int    tcpio_lmax = 1000000; // max lmsg
+	int    tcpio_lmin = 1;       // min lmsg
+	int    tcpio_host_addr   = 0;
+	String tcpio_host_text   = null;
+	InetAddress tcpio_host_ip = null;
+	int    tcpio_port        = 0;
     /*
      * DCB sequential and random file I/O tables
      */
@@ -589,6 +620,9 @@ public void svc(int svc_id){
 	case 93:  // TGET/TPUT TN3290 data stream for GUI
 		svc_tget_tput();
 		break;
+	case 124: // x'7C' TCPIO tcp/ip sockets I/O
+		svc_tcpio();
+		break;
 	case 151: // dcb get move R0=REC,R1=DCB
 		svc_get_move();
 		break;
@@ -675,6 +709,14 @@ public void abort_error(int error,String msg){
 	 * issue error msg to log with prefix and
 	 * inc error total
 	 */
+ 	  if (tz390.z390_abort){
+		msg = "ez390 aborting due to recursive abort for " + msg;
+		System.out.println(msg);;
+		tz390.put_systerm(msg);
+		tz390.close_systerm(16);
+		System.exit(16);
+	  }
+ 	  tz390.z390_abort = true;
 	  ez390_errors++;
 	  if (ez390_rc == 0){
 	  	 ez390_rc = 16;
@@ -698,6 +740,7 @@ public void exit_ez390(){
 		  ez390_rc = 16;
       }
   	  put_stats();
+      tcpio_close_ports();
       close_files();
       close_cmd();  //RPI76
       close_z390_guam();
@@ -3792,8 +3835,8 @@ private void svc_ctd(){
 	 */
 	int addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	byte type = pz390.mem.get(addr+3);
-	int addr_in  = pz390.mem.getInt(addr+4);
-	int addr_out = pz390.mem.getInt(addr+8);
+	int addr_in  = pz390.mem.getInt(addr+4) & pz390.psw_amode; // RPI 526
+	int addr_out = pz390.mem.getInt(addr+8) & pz390.psw_amode; // RPI 526
 	switch (type){
 	case 1: // 128 bit int to display
 		if (addr_in >= 16){ // RPI 507
@@ -4006,8 +4049,8 @@ private void svc_cfd(){
 	 */
 	int addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	byte type = pz390.mem.get(addr+3);
-	int addr_out  = pz390.mem.getInt(addr+4);
-	int addr_in = pz390.mem.getInt(addr+8);
+	int addr_out  = pz390.mem.getInt(addr+4) & pz390.psw_amode; // RPI 526
+	int addr_in = pz390.mem.getInt(addr+8) & pz390.psw_amode;   // RPI 526
 	String cfd_text = get_ascii_var_string(addr_in,ctd_display_len).trim();  
 	switch (type){
 	case 21: // 128 bit int from display
@@ -4047,8 +4090,14 @@ private void svc_cfd(){
 			pz390.reg.put(cfd_byte);
 		}
 		break;
-	case 22: // eh 
-		cfd_d = Double.valueOf(cfd_text);
+	case 22: // eh
+		try {
+			cfd_d = Double.valueOf(cfd_text); // RPI 526
+		} catch (Exception e){
+			pz390.reg.putInt(pz390.r15,12);
+		    return;
+		}
+		
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.putInt(addr_out,pz390.zcvt_db_to_eh(cfd_d));
 		} else {
@@ -4057,7 +4106,12 @@ private void svc_cfd(){
 		}
 		break;
 	case 23: // eb
-		cfd_e = Float.valueOf(cfd_text); 
+		try {
+			cfd_e = Float.valueOf(cfd_text);  // RPI 526
+		} catch (Exception e){
+			pz390.reg.putInt(pz390.r15,12);
+		    return;
+		}
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.putFloat(addr_out,cfd_e);
 		} else {
@@ -4066,7 +4120,12 @@ private void svc_cfd(){
 		}
 		break;
 	case 24: // dh 
-		cfd_d = Double.valueOf(cfd_text); 
+		try {
+			cfd_d = Double.valueOf(cfd_text);  // RPI 526
+		} catch (Exception e){
+			pz390.reg.putInt(pz390.r15,12);
+		    return;
+		}		 
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.putLong(addr_out,pz390.zcvt_db_to_dh(cfd_d));
 		} else {
@@ -4075,7 +4134,12 @@ private void svc_cfd(){
 		}
 		break;
 	case 25: // db
-		cfd_d = Double.valueOf(cfd_text); 
+		try {
+			cfd_d = Double.valueOf(cfd_text);  // RPI 526
+		} catch (Exception e){
+			pz390.reg.putInt(pz390.r15,12);
+		    return;
+		}
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.putDouble(addr_out,cfd_d);
 		} else {
@@ -4084,7 +4148,12 @@ private void svc_cfd(){
 		}
 		break;	
 	case 26: // lh 
-		cfd_bd = new BigDecimal(cfd_text,pz390.fp_bdg_context); 
+		try {
+			cfd_bd = new BigDecimal(cfd_text,pz390.fp_bdg_context);   // RPI 526
+		} catch (Exception e){
+			pz390.reg.putInt(pz390.r15,12);
+		    return;
+		}		
 		pz390.zcvt_bd(tz390.fp_lh_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
@@ -4104,7 +4173,12 @@ private void svc_cfd(){
 		}
 		break;
 	case 27: // lb
-		cfd_bd = new BigDecimal(cfd_text,pz390.fp_bdg_context); 
+		try {
+			cfd_bd = new BigDecimal(cfd_text,pz390.fp_bdg_context);   // RPI 526
+		} catch (Exception e){
+			pz390.reg.putInt(pz390.r15,12);
+		    return;
+		}
 		pz390.zcvt_bd(tz390.fp_lb_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
@@ -4124,7 +4198,12 @@ private void svc_cfd(){
 		}
 		break;	
 	case 28: // dd   RPI 514
-		cfd_bd = new BigDecimal(cfd_text,pz390.fp_dd_context); 
+		try {
+			cfd_bd = new BigDecimal(cfd_text,pz390.fp_dd_context);   // RPI 526
+		} catch (Exception e){
+			pz390.reg.putInt(pz390.r15,12);
+		    return;
+		}
 		pz390.zcvt_bd(tz390.fp_dd_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
@@ -4136,7 +4215,12 @@ private void svc_cfd(){
 		}
 		break;
 	case 29: // ed  RPI 514
-		cfd_bd = new BigDecimal(cfd_text,pz390.fp_ed_context); 
+		try {
+			cfd_bd = new BigDecimal(cfd_text,pz390.fp_ed_context);   // RPI 526
+		} catch (Exception e){
+			pz390.reg.putInt(pz390.r15,12);
+		    return;
+		}
 		pz390.zcvt_bd(tz390.fp_ed_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
@@ -4148,7 +4232,12 @@ private void svc_cfd(){
 		}
 		break;	
 	case 30: // ld   RPI 514
-		cfd_bd = new BigDecimal(cfd_text,pz390.fp_ld_context); 
+		try {
+			cfd_bd = new BigDecimal(cfd_text,pz390.fp_ld_context);   // RPI 526
+		} catch (Exception e){
+			pz390.reg.putInt(pz390.r15,12);
+		    return;
+		}
 		pz390.zcvt_bd(tz390.fp_ld_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
@@ -5139,6 +5228,276 @@ public long get_feature_bits(){
 	 */
 	int bits0_31 = 0xE1000DC0;
 	return ((long)bits0_31) << 32;
+}
+private void svc_tcpio(){
+	/*
+	 * tcp/ip sockets I/O
+	 * Inputs:
+	 *   r0 = operation
+	 *      1 - open server port
+	 *      2 - open client port connection
+	 *      3 - close port connection
+	 *      4 - send message
+	 *      5 - receive message 
+	 *   r1  = port for all oper
+	 *   r14 = host (op 3), msg (op 4-5)          
+	 *   r15 = max message length (op 1-2)
+	 */
+	tcpio_op        = pz390.reg.getInt(pz390.r0);
+	tcpio_amsg  = 0;
+	tcpio_host_addr = 0;
+	tcpio_port      = pz390.reg.getInt(pz390.r1);
+	tcpio_host_ip   = null;
+	tcpio_lmsg = pz390.reg.getInt(pz390.r15);
+	pz390.reg.putInt(pz390.r15,0);
+	switch (tcpio_op){
+	case 1: // open server port
+		if (tcpio_find_port()){ 
+			if (tcp_server_socket[cur_tcp_socket] != null
+				&& !tcp_server_socket[cur_tcp_socket].isClosed()){				
+				put_log("TCPIO OPEN SERVER PORT ALREADY OPEN");
+				break; // ignore if already open
+			}
+		} else {
+			if (tot_tcp_socket < max_tcp_socket){
+	        	cur_tcp_socket = tot_tcp_socket;
+	        	tot_tcp_socket++;
+			} else {
+            	put_log("TCPIO ERROR MAX PORTS EXCEEDED");
+            	pz390.reg.putInt(pz390.r15,12);
+            	break;
+			}
+		}
+       	try {
+       		tcpio_host_ip = InetAddress.getLocalHost();
+       		tcpio_host_text = tcpio_host_ip.getHostAddress();      		
+       	} catch (Exception e){
+           	put_log("TCPIO ERROR GET LOCAL HOST FAILED");
+           	pz390.reg.putInt(pz390.r15,12);
+           	break;
+       	}
+       	tcp_socket_host_text[cur_tcp_socket] = tcpio_host_text;
+       	tcp_socket_host_ip[cur_tcp_socket] = tcpio_host_ip;
+       	tcp_socket_port[cur_tcp_socket] = tcpio_port;
+       	tcp_socket_lmax[cur_tcp_socket] = tcpio_lmsg;
+       	if (tcpio_lmsg < tcpio_lmin
+       		|| tcpio_lmsg > tcpio_lmax){
+        	put_log("TCPIO ERROR LMAX OUT OF RANGE " + tcpio_lmax);
+        	pz390.reg.putInt(pz390.r15,12);
+        	break;
+       	}
+       	if (!tcpio_open_server_port()){
+       		pz390.reg.putInt(pz390.r15,12);
+       	}
+		break;
+	case 2: // open client connection to server port
+		if (tcpio_find_port()){
+			if (tcp_client_socket[cur_tcp_socket] != null
+				&& !tcp_client_socket[cur_tcp_socket].isClosed()){
+				put_log("TCPIO OPEN CLIENT PORT ALREADY OPEN");
+				break; // ignore if already open
+			}
+		} else {
+			if (tot_tcp_socket < max_tcp_socket){
+	        	cur_tcp_socket = tot_tcp_socket;
+	        	tot_tcp_socket++;
+			} else {
+            	put_log("TCPIO ERROR MAX SERVER PORTS EXCEEDED");
+            	pz390.reg.putInt(pz390.r15,12);
+            	break;
+			}
+		}
+		tcpio_host_addr = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
+		if (tcpio_host_addr > 0){
+			tcpio_host_text = get_ascii_var_string(tcpio_host_addr,265);
+			try {
+				tcpio_host_ip   = InetAddress.getByName(tcpio_host_text);
+			} catch(Exception e) {
+				put_log("TCPIO ERROR OPEN CLIENT HOST NOT FOUND " + tcpio_host_text);
+				pz390.reg.putInt(pz390.r15,12);
+				break;
+			}
+		} else {
+			try {
+				tcpio_host_ip   = InetAddress.getLocalHost();
+				tcpio_host_text = tcpio_host_ip.getHostAddress();
+			} catch(Exception e) {
+				put_log("TCPIO ERROR OPEN CLIENT GET HOST FAILED");
+				pz390.reg.putInt(pz390.r15,12);
+				break;
+			}
+		}
+       	tcp_socket_host_text[cur_tcp_socket] = tcpio_host_text;
+       	tcp_socket_host_ip[cur_tcp_socket] = tcpio_host_ip;
+       	tcp_socket_port[cur_tcp_socket] = tcpio_port;
+       	tcp_socket_lmax[cur_tcp_socket] = tcpio_lmax;
+       	if (!tcpio_open_client_port()){
+       		pz390.reg.putInt(pz390.r15,12);
+       	}
+		break;
+	case 3: // close client connection
+		if (!tcpio_find_port()){
+			break; // ignore if already closed
+		}
+		tcpio_close_port();
+		break;
+	case 4: // send message
+		if (!tcpio_find_port()){
+			put_log("TCPIO ERROR SENT PORT NOT FOUND " + tcpio_port);
+			pz390.reg.putInt(pz390.r15,12);
+			break;
+		}
+		tcpio_amsg  = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
+		if (tcpio_lmsg < tcpio_lmin
+			|| tcpio_lmsg > tcp_socket_lmax[cur_tcp_socket]){
+			put_log("TCPIO ERROR MSG LENGTH OUT OF RANGE " + tcpio_lmsg);
+			pz390.reg.putInt(pz390.r15,12);
+			break;
+		}
+		if (tcp_socket_output[cur_tcp_socket] != null){
+			tcp_socket_output[cur_tcp_socket].write(pz390.mem_byte,tcpio_amsg,tcpio_lmsg);
+			if (tz390.opt_trace){
+				put_log("TCPIO SEND LENGTH =" + tcpio_lmsg);
+				dump_mem(tcpio_amsg,tcpio_lmsg);
+			}
+		} else {
+			put_log("TCPIO ERROR SEND PORT NOT OPEN " + tcpio_port);
+			pz390.reg.putInt(pz390.r15,12);
+			break;
+        }
+		break;
+	case 5: // receive message
+		if (!tcpio_find_port()){
+			put_log("TCPIO ERROR RECEIVE PORT NOT FOUND " + tcpio_port);
+			pz390.reg.putInt(pz390.r15,12);
+			break;
+		}
+		tcpio_amsg  = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
+		
+		if (tcp_socket_input[cur_tcp_socket] != null){
+			try {
+				if (tcp_socket_input[cur_tcp_socket].read(pz390.mem_byte,tcpio_amsg,tcpio_lmsg) != tcpio_lmsg){
+					throw new RuntimeException("TCPIO ERROR RECEIVE LENGTH");
+				}
+				if (tz390.opt_trace){
+					put_log("TCPIO RECEIVE LENGTH =" + tcpio_lmsg);
+					dump_mem(tcpio_amsg,tcpio_lmsg);
+				}
+			} catch (Exception e){
+				put_log("TCPIO SERVER CONNECTION LOST FOR PORT " + tcpio_port);
+				pz390.reg.putInt(pz390.r15,12);
+				break;
+			}
+		} else {
+			put_log("TCPIO ERROR RECEIVE PORT NOT OPEN " + tcpio_port);
+			pz390.reg.putInt(pz390.r15,12);
+			break;
+        }
+		break;
+    default:
+    	put_log("TCPIO ERROR INVALID OPERATION " + tcpio_op);
+    	pz390.set_psw_check(pz390.psw_pic_spec);			
+	}
+}
+private boolean tcpio_open_server_port(){
+	/*
+	 * open TCP/IP server socket for host ip
+	 */
+	if (tz390.opt_trace){
+		put_log("TCPIO OPEN SERVER SOCKET" 
+				+ " HOST=" + tcpio_host_text
+				+ " PORT=" + tcpio_port
+			    + " LMAX=" + tcpio_lmax);
+	}
+	try {
+		tcp_server_socket[cur_tcp_socket] = new ServerSocket(tcpio_port);
+		tcp_client_socket[cur_tcp_socket] = tcp_server_socket[cur_tcp_socket].accept();
+		tcp_socket_input[cur_tcp_socket] = new DataInputStream(tcp_client_socket[cur_tcp_socket].getInputStream());
+		tcp_socket_output[cur_tcp_socket] = new PrintStream(tcp_client_socket[cur_tcp_socket].getOutputStream());
+    	return true;
+	} catch (Exception e){
+		put_log("TCPIO ERROR OPEN SERVER SOCKET " + e.toString());
+    	return false;
+	}
+}
+private boolean tcpio_open_client_port(){
+	/*
+	 * open client port
+	 */
+	if (tz390.opt_trace){
+   		put_log("TCPIO OPEN CLIENT"
+   				+ " HOST=" + tcp_socket_host_text[cur_tcp_socket] 
+                + " PORT=" + tcpio_port
+                + " LMAX=" + tcpio_lmax);
+   	}
+   	try {
+   		tcp_client_socket[cur_tcp_socket] = new Socket(tcpio_host_ip, tcpio_port);
+	    tcp_socket_input[cur_tcp_socket] = new DataInputStream(tcp_client_socket[cur_tcp_socket].getInputStream());
+   		tcp_socket_output[cur_tcp_socket] = new PrintStream(tcp_client_socket[cur_tcp_socket].getOutputStream());
+   		return true;
+   	} catch (Exception e){
+   		put_log("TCPIO ERROR OPEN CLIENT SOCKET FAILED FOR PORT " + tcpio_port);
+       	return false;
+   	}
+}
+private boolean tcpio_find_port(){
+	/*
+	 * find open port and return true else false
+	 */
+	int cur_tcp_socket = 0;
+	while (cur_tcp_socket < tot_tcp_socket){
+		if (tcp_socket_port[cur_tcp_socket] == tcpio_port){
+			tcpio_host_text = tcp_socket_host_text[cur_tcp_socket];
+			tcpio_host_ip   = tcp_socket_host_ip[cur_tcp_socket];
+			tcpio_lmax      = tcp_socket_lmax[cur_tcp_socket];
+			return true;
+		}
+		cur_tcp_socket++;
+	}
+	return false;
+}
+private void tcpio_close_ports(){
+	/*
+	 * close all open TCP/IP ports
+	 */
+	if (tz390.z390_abort)return;
+	cur_tcp_socket = 0;
+	while (cur_tcp_socket < tot_tcp_socket){
+		tcpio_port = tcp_socket_port[cur_tcp_socket];
+		tcpio_close_port();
+		cur_tcp_socket++;
+	}
+}
+private boolean tcpio_close_port(){
+	/*
+	 * close open TCP/IP port
+	 */
+	if (tcp_server_socket[cur_tcp_socket] != null
+		&& !tcp_server_socket[cur_tcp_socket].isClosed()){
+		try {
+			if (tz390.opt_trace){
+				put_log("TCPIO CLOSING SERVER PORT - " + tcpio_port);
+			}
+			tcp_server_socket[cur_tcp_socket].close();
+		    return true;
+		} catch (Exception e){
+			put_log("TCPIO ERROR ON SERVER CLOSE PORT " + tcpio_port);
+			return false;
+		}
+	} else {
+		try {
+			if (tz390.opt_trace){
+				put_log("TCPIO CLOSING CLIENT PORT " + tcpio_port);
+			}
+			tcp_socket_output[cur_tcp_socket].flush();
+			tcp_socket_output[cur_tcp_socket].close();
+			tcp_client_socket[cur_tcp_socket].close();
+		    return true;
+		} catch (Exception e){
+			put_log("TCPIO ERROR CLOSING CLIENT PORTr " + tcpio_port);
+			return false;
+		}
+	}
 }
 /*
  *  end of ez390 code 

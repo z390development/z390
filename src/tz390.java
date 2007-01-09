@@ -121,7 +121,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.2.00f";  //dsh
+    String version    = "V1.2.00g";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -1090,6 +1090,10 @@ public  class  tz390 {
 		       "LEXR",     // 4090 "B366" "LEXR" "RRE" 14
 		       "FIXR",     // 4100 "B367" "FIXR" "RRE" 14
 		       "CXR",      // 4110 "B369" "CXR" "RRE" 14
+		       "LPDFR",    // 4115 "B370" "LPDFR" "RRE"  14 DFP
+		       "LNDFR",    // 4115 "B371" "LNDFR" "RRE"  14 DFP
+		       "CPSDR",    // 4115 "B372" "CPSDR" "RRF2" 34 DFP
+		       "LCDFR",    // 4115 "B373" "LCDFR" "RRE"  14 DFP
 		       "LZER",     // 4120 "B374" "LZER" "RRE" 14
 		       "LZDR",     // 4130 "B375" "LZDR" "RRE" 14
 		       "LZXR",     // 4140 "B376" "LZXR" "RRE" 14
@@ -1116,12 +1120,14 @@ public  class  tz390 {
 		       "CFER",     // 4340 "B3B8" "CFER" "RRF2" 34
 		       "CFDR",     // 4350 "B3B9" "CFDR" "RRF2" 34
 		       "CFXR",     // 4360 "B3BA" "CFXR" "RRF2" 34
+		       "LDGR",     // 4365 "B3C1" "LDGR" "RRE" 14 DFP
 		       "CEGR",     // 4370 "B3C4" "CEGR" "RRE" 14
 		       "CDGR",     // 4380 "B3C5" "CDGR" "RRE" 14
 		       "CXGR",     // 4390 "B3C6" "CXGR" "RRE" 14
 		       "CGER",     // 4400 "B3C8" "CGER" "RRF2" 34
 		       "CGDR",     // 4410 "B3C9" "CGDR" "RRF2" 34
 		       "CGXR",     // 4420 "B3CA" "CGXR" "RRF2" 34
+		       "LGDR",     // 4425 "B3CD" "LGDR" "RRE" 14 DFP
 		       "MDTR", // "B3D0" "RRR" DFP 1
 		       "DDTR", // "B3D1" "RRR" DFP 2
 		       "ADTR", // "B3D2" "RRR" DFP 3
@@ -1640,6 +1646,7 @@ public  class  tz390 {
 	//  2.  Change above op_type_len table which must match
     //  3.  Change az390 instruction format cases and
     //  4.  Change pz390 op_type_offset and op_type_mask
+    //  5.  Change pz390 trace_psw to add new case
   	int[]    op_type  = {
 			   0,  // comments
 		       1,  // 10 "0101" "PR" "E" 1
@@ -2064,6 +2071,10 @@ public  class  tz390 {
 		       14,  // 4090 "B366" "LEXR" "RRE" 14
 		       14,  // 4100 "B367" "FIXR" "RRE" 14
 		       14,  // 4110 "B369" "CXR" "RRE" 14
+		       14,  // 4115 "B370" "LPDFR" "RRE"  14 DFP
+		       14,  // 4115 "B371" "LNDFR" "RRE"  14 DFP
+		       34,  // 4115 "B372" "CPSDR" "RRF2" 34 DFP
+		       14,  // 4115 "B373" "LCDFR" "RRE"  14 DFP
 		       14,  // 4120 "B374" "LZER" "RRE" 14
 		       14,  // 4130 "B375" "LZDR" "RRE" 14
 		       14,  // 4140 "B376" "LZXR" "RRE" 14
@@ -2090,12 +2101,14 @@ public  class  tz390 {
 		       34,  // 4340 "B3B8" "CFER" "RRF2" 34
 		       34,  // 4350 "B3B9" "CFDR" "RRF2" 34
 		       34,  // 4360 "B3BA" "CFXR" "RRF2" 34
+		       14,  // 4365 "B3C1" "LDGR" "RRE" 14 DFP
 		       14,  // 4370 "B3C4" "CEGR" "RRE" 14
 		       14,  // 4380 "B3C5" "CDGR" "RRE" 14
 		       14,  // 4390 "B3C6" "CXGR" "RRE" 14
 		       34,  // 4400 "B3C8" "CGER" "RRF2" 34
 		       34,  // 4410 "B3C9" "CGDR" "RRF2" 34
 		       34,  // 4420 "B3CA" "CGXR" "RRF2" 34
+		       14,  // 4425 "B3CD" "LGDR" "RRE" 14 DFP
 		       36, // "MDTR" "B3D0" "RRR" DFP 1
 		       36, // "DDTR" "B3D1" "RRR" DFP 2
 		       36, // "ADTR" "B3D2" "RRR" DFP 3
@@ -2989,6 +3002,10 @@ public  class  tz390 {
 		       "B366",  // 4090 "B366" "LEXR" "RRE" 14
 		       "B367",  // 4100 "B367" "FIXR" "RRE" 14
 		       "B369",  // 4110 "B369" "CXR" "RRE" 14
+		       "B370",  // 4115 "B370" "LPDFR" "RRE"  14 DFP
+		       "B371",  // 4115 "B371" "LNDFR" "RRE"  14 DFP
+		       "B372",  // 4115 "B372" "CPSDR" "RRF2" 34 DFP
+		       "B373",  // 4115 "B373" "LCDFR" "RRE"  14 DFP
 		       "B374",  // 4120 "B374" "LZER" "RRE" 14
 		       "B375",  // 4130 "B375" "LZDR" "RRE" 14
 		       "B376",  // 4140 "B376" "LZXR" "RRE" 14
@@ -3015,12 +3032,14 @@ public  class  tz390 {
 		       "B3B8",  // 4340 "B3B8" "CFER" "RRF2" 34
 		       "B3B9",  // 4350 "B3B9" "CFDR" "RRF2" 34
 		       "B3BA",  // 4360 "B3BA" "CFXR" "RRF2" 34
+		       "B3C1",  // 4365 "B3C1" "LDGR" "RRE" 14 DFP
 		       "B3C4",  // 4370 "B3C4" "CEGR" "RRE" 14
 		       "B3C5",  // 4380 "B3C5" "CDGR" "RRE" 14
 		       "B3C6",  // 4390 "B3C6" "CXGR" "RRE" 14
 		       "B3C8",  // 4400 "B3C8" "CGER" "RRF2" 34
 		       "B3C9",  // 4410 "B3C9" "CGDR" "RRF2" 34
 		       "B3CA",  // 4420 "B3CA" "CGXR" "RRF2" 34
+		       "B3CD",  // 4425 "B3CD" "LGDR" "RRE" 14 DFP
 		       "B3D0", // "MDTR" "RRR" DFP 1
 		       "B3D1", // "DDTR" "RRR" DFP 2
 		       "B3D2", // "ADTR" "RRR" DFP 3
@@ -3635,7 +3654,7 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.length() > 4
         	&& token.substring(0,4).toUpperCase().equals("ERR(")){
            	try {
-           		max_errors = Integer.valueOf(token.substring(4,token.length()-1)).intValue();
+           		max_errors = Integer.valueOf(token.substring(4,token.length()-1)).intValue(); 
           	} catch (Exception e){
            		abort_error(6,"invalid error limit - " + token);
            	}
@@ -3643,7 +3662,7 @@ public void init_options(String[] args,String pgm_type){
            	opt_guam = true;
         } else if (token.length() > 4
          		&& token.substring(0,4).toUpperCase().equals("IPL(")){
-        	opt_ipl = token.substring(4,token.length()-1);
+        	opt_ipl = token.substring(4,token.length()-1); 
         } else if (token.length() >= 8
           		&& token.substring(0,8).toUpperCase().equals("LISTCALL")){
            	opt_listcall = true;
@@ -3652,7 +3671,7 @@ public void init_options(String[] args,String pgm_type){
            	opt_listuse = true;
         } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("MAXCALL(")){
-           	opt_maxcall = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
+           	opt_maxcall = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
         } else if (token.length() > 7
           		&& token.substring(0,7).toUpperCase().equals("MAXESD(")){
            	opt_maxesd = Integer.valueOf(token.substring(7,token.length()-1)).intValue();   	
@@ -3668,13 +3687,13 @@ public void init_options(String[] args,String pgm_type){
            	opt_maxgbl = Integer.valueOf(token.substring(7,token.length()-1)).intValue();
         } else if (token.length() > 7
           		&& token.substring(0,7).toUpperCase().equals("MAXLCL(")){
-           	opt_maxlcl = Integer.valueOf(token.substring(7,token.length()-1)).intValue();
+           	opt_maxlcl = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
         } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("MAXLINE(")){
-           	opt_maxline = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
+           	opt_maxline = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
         } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("MAXPARM(")){
-           	opt_maxparm = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
+           	opt_maxparm = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
         } else if (token.length() > 6
           		&& token.substring(0,6).toUpperCase().equals("MAXPC(")){ // RPI 439
            	opt_maxpc = Integer.valueOf(token.substring(6,token.length()-1)).intValue();
@@ -3684,13 +3703,13 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.length() > 8
             	&& token.substring(0,8).toUpperCase().equals("MAXSIZE(")){
                	try {
-               		max_file_size = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20;;
+               		max_file_size = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20; 
                	} catch (Exception e){
                		abort_error(8,"invalid maxsize limit (mb) - " + token);
                	}
         } else if (token.length() > 7
           		&& token.substring(0,7).toUpperCase().equals("MAXSYM(")){
-           	opt_maxsym = Integer.valueOf(token.substring(7,token.length()-1)).intValue();
+           	opt_maxsym = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
         } else if (token.length() >= 5
           		&& token.substring(0,5).toUpperCase().equals("MCALL")){
            	opt_mcall = true; // RPI 511
@@ -3743,7 +3762,7 @@ public void init_options(String[] args,String pgm_type){
             	if (opt_parm.length() > 2 
             		&& opt_parm.charAt(0) == '\''
             		&& opt_parm.charAt(opt_parm.length()-1) == '\''){
-            		opt_parm = opt_parm.substring(1,opt_parm.length()-1);          		
+            		opt_parm = opt_parm.substring(1,opt_parm.length()-1); 		
             	}
         } else if (token.toUpperCase().equals("PC")){
             opt_pc = true;
@@ -3779,13 +3798,13 @@ public void init_options(String[] args,String pgm_type){
            	dir_dat = token.substring(7,token.length()-1) + File.separator; 
         } else if (token.length() > 7
            		&& token.substring(0,7).toUpperCase().equals("SYSERR(")){
-            	dir_err = token.substring(7,token.length()-1) + File.separator; // RPI 243
+            	dir_err = token.substring(7,token.length()-1) + File.separator; // RPI 243 
         } else if (token.length() > 7
           		&& token.substring(0,7).toUpperCase().equals("SYSLOG(")){
            	dir_log = token.substring(7,token.length()-1) + File.separator;
         } else if (token.length() > 7 
            		&& token.substring(0,7).toUpperCase().equals("SYSMAC(")){
-           	dir_mac = token.substring(7,token.length()-1); 
+           	dir_mac = token.substring(7,token.length()-1);  
         } else if (token.length() > 7 
            		&& token.substring(0,7).toUpperCase().equals("SYSMLC(")){
           	dir_mlc = get_short_file_name(token.substring(7,token.length()-1) + File.separator); 
@@ -3794,7 +3813,7 @@ public void init_options(String[] args,String pgm_type){
            	dir_obj = token.substring(7,token.length()-1) + File.separator; 
         } else if (token.length() > 8
          		&& token.substring(0,8).toUpperCase().equals("SYSPARM(")){
-        	opt_sysparm = token.substring(8,token.length()-1);
+        	opt_sysparm = token.substring(8,token.length()-1); 
         } else if (token.length() > 7 
            		&& token.substring(0,7).toUpperCase().equals("SYSPCH(")){
           	dir_pch = get_short_file_name(token.substring(7,token.length()-1) + File.separator); 
@@ -4461,6 +4480,9 @@ public String left_justify(String text,int padded_len){
 	 * return text left justified in field
 	 * if field larger than text
 	 */
+	if (text == null){
+		return "";
+	}
 	int pad_len = padded_len - text.length();
 	if (pad_len > 0){
 		if (pad_len > pad_spaces_len){

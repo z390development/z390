@@ -1,0 +1,180 @@
+        MACRO
+       SOACMGR &CLIENT=,    CLIENT SOA MESSAGE MANAGER NAME            X
+               &HOST=,      HOST SERVER URL (*=LOCAL)                  X
+               &PORT=,      HOST SERVER PORT NUMBER                    X
+               &SERVICES=   DEFINE NAME AND LENGTH OF SERVICE PARMS    
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 12/26/06                                                 *
+*********************************************************************
+* 12/28/06 RPI 523 GEN SOURCE CODE FOR SOA CLIENT MSG MANAGER
+.*  01/05/07 RPI 524 ADD MSGTIME FOR SOA CLIENT SERVER APPLICATIONS 
+*********************************************************************
+* SOACMGR IS DYNAMICALLY CALLED FROM SOASTUB2 STUB WITH NAME/PARMS
+*
+*   INPUT PARMS 
+*     1  NAME OF SERVICE TO BE CALLED
+*     2  PARAMETER LIST ADDRESS
+*   ACTION
+*     1  BUILD MSG WITH LENGTH, NAME, AND PARM VALUES              
+*     2  SEND MSG TO SOA SERVER SOASMGR LISTENING FOR SOA MESSAGES                                        
+*     3  RECEIVE RESPONSE MSG FROM SOASMGR
+*     4  MOVE UPDATED PARMS FROM MESSAGE TO ADDRESSES IN PARMLIST                                                        
+*     5  RETURN TO CALLER
+*********************************************************************
+         COPY  ASMMSP
+&CLIENT  SUBENTRY
+         LR    R2,R1             SAVE PARM LIST FROM SOA STUB CALL
+.SKIP_LOCAL ANOP
+         LM    R2,R3,0(R2)       R2 = A(SVCNAME) R3=A(SVCPLIST)   
+         L     R3,0(R3)          R3 = USER CALL PARMS FOR SERVICE
+         L     R9,LMAX           R9 = LENGTH OF MSG BUFFER
+         L     R4,AMSG
+         IF    (CL,R4,EQ,=A(0))
+               GETMAIN RU,LV=(9)
+               LR    R4,R0             R4 = ADDRESS MSG BUFFER
+               USING IHAMSG,R4
+               ST    R4,AMSG           SAVE BUFFER FOR RE-ENTRY
+               TCPIO OPEN,HOST=&HOST,PORT=&PORT,LMAX=LMAX OPEN PORT
+               IF    (CH,R15,NE,=H'0')
+                     WTO '&CLIENT OPEN FAILED HOST=&HOST PORT=&PORT'
+                     B   ABORT
+               ENDIF
+         ENDIF
+         TIME  NS,MSGTIME        STORE NS TIME STAMP
+         MVC   SAVETIME,MSGTIME  SAVE MSGTIME FOR MATCHING SEND/RECV
+         MVC   MSGNAME,0(R2)     MOVE SERVICE NAME TO MSG
+         MVC   MSGRC,=F'0'       ZERO RETURN CODE FIELD 
+         LA    R6,MSGPARMS       R6 = ADDRESS FIRST PARM IN BUFFER
+         AHI   R9,-(MSGPARMS-IHAMSG) R9 = REMAINING BYTES FOR PARMS
+*********************************************************************
+* TEST EACH SERVICE NAME AND IF FOUND, 
+*   1.  BUILD SEND MESSAGE WITH NAME AND PARMS
+*   2.  WAIT FOR RECEIVED RESPONSE MESSAGE
+*   3.  UPDATE NON READ ONLY PARMS RETURNED
+*   4.  EXIT TO CALLER WITH RETURN CODE RETURNED
+*********************************************************************
+&NS      SETA  0
+&MAXLEN  SETA  0
+&MINLEN  SETA  0     
+.SERVICE_LOOP ANOP
+&NS      SETA  &NS+1
+         AIF   (&NS GT N'&SERVICES).END_SERVICES
+         IF    (CLC,0(8,R2),EQ,=CL8'&SERVICES(&NS,1)') IF NAME MATCHES
+*********************************************************************
+* BUILD SEND MESSAGE
+*********************************************************************
+&NP            SETA  1
+&LSTOFF        SETA  0
+&CURLEN        SETA  0
+.BLD_SEND_MSG_LOOP ANOP                            START COPY PARMS
+&NP            SETA  &NP+1
+               AIF (&NP GT N'&SERVICES(&NS)).END_BLD_SEND_MSG_LOOP
+               L    R8,&LSTOFF.(R3)                R1=A(NEXT PARM)
+&LPARM         SETA &SERVICES(&NS,&NP)
+               AIF  (&LPARM GT 0).NOT_READ_ONLY
+&LPARM         SETA -&LPARM
+.NOT_READ_ONLY ANOP
+&CURLEN        SETA &CURLEN+&LPARM
+               AIF  (&CURLEN LE &MAXLEN).SKIP_MAX
+&MAXLEN        SETA &CURLEN
+               AIF  (&MINLEN GT 0).SKIP_MAX
+&MINLEN        SETA &CURLEN
+.SKIP_MAX      ANOP
+               AIF  (&CURLEN GE &MINLEN).SKIP_MIN
+&MINLEN        SETA &CURLEN
+.SKIP_MIN      ANOP
+               L    R7,=F'&LPARM'
+               MVCL R6,R8                          MOVE SEND PARM
+.NEXTPARM      ANOP
+&LSTOFF        SETA &LSTOFF+4                      NEXT PARM ADDR
+               AGO  .BLD_SEND_MSG_LOOP
+.END_BLD_SEND_MSG_LOOP ANOP                        END SEND PARMS 
+               SR    R6,R4 
+               ST    R6,MSGLEN                     SET MSG LENGTH
+*********************************************************************
+* SEND MESSAGE TO SOACMGR SERVER
+*********************************************************************
+               TCPIO SEND,MSG=(R4),LMSG=MSGLEN,PORT=&PORT  SEND MSG 
+               IF    (CH,R15,NE,=H'0')
+                     WTO '&CLIENT ERROR ON TCPIO SEND MSG - ABORTING'
+                     B   ABORT  
+               ENDIF
+*********************************************************************
+* RECEIVE RESPONSE MESSAGE FROM SOACMGR SERVER AND CLOSE PORT
+*********************************************************************
+               LR    R6,R4
+               L     R7,LMAX
+               SR    R8,R8
+               SR    R9,R9
+               MVCL  R6,R8 CLEAR MESSAGE BUFFER
+               DO    UNTIL=(CLC,MSGTIME,GE,SAVETIME)
+                     TCPIO RECEIVE,MSG=(R4),LMSG=4,PORT=&PORT  GET LEN
+                     IF  (CH,R15,NE,=H'0')
+                         WTO '&CLIENT ERROR ON TCPIO RECEIVE LENGTH'
+                         B   ABORT   
+                     ENDIF
+                     L     R2,MSGLEN
+                     IF    (C,R2,GT,LMAX),OR,(C,R2,LT,LMIN)
+                           WTO '&CLIENT ERROR MSG LENGTH OUT OF RANGE'
+                           B   ABORT
+                     ENDIF
+                     SH    R2,=H'4'
+                     LA    R10,4(R4)
+                     TCPIO RECEIVE,MSG=(R10),LMSG=(R2),PORT=&PORT 
+                     IF  (CH,R15,NE,=H'0')
+                         WTO '&CLIENT ERROR ON TCPIO RECEIVE MSG'
+                         B   ABORT   
+                     ENDIF
+               ENDDO
+               IF    (CLC,MSGNAME,NE,=CL8'&SERVICES(&NS,1)')
+                     WTO '&CLEINT INVALID TCPIO RECEIVE MSG NAME'
+                     B   ABORT
+               ENDIF
+*********************************************************************
+* UPDATE NON READ ONLY PARMS RETURNED          
+*********************************************************************
+               LA    R8,MSGPARMS
+               L     R9,LMAX
+&NP            SETA  1
+&MSGOFF        SETA  2+8
+&LSTOFF        SETA  0
+.MOVE_UPDATED_PARMS_LOOP ANOP 
+&NP            SETA  &NP+1
+               AIF (&NP GT N'&SERVICES(&NS)).END_MOVE_UPDATED_PARMS
+&LPARM         SETA &SERVICES(&NS,&NP)
+               AIF  (&LPARM LT 0).NEXTPARM2    SKIP READ ONLY PARMS
+               L    R6,&LSTOFF.(R3)            R6=A(NEXT PARM)
+               L    R7,=F'&LPARM'
+               MVCL R6,R8                      RETURN UPDATED PARM
+.NEXTPARM2     ANOP
+&LSTOFF        SETA &LSTOFF+4                  NEXT PARM ADDR
+               AGO  .MOVE_UPDATED_PARMS_LOOP
+.END_MOVE_UPDATED_PARMS ANOP  
+               B    EXIT                         
+         ENDIF
+         AGO   .SERVICE_LOOP
+.END_SERVICES ANOP
+         WTO 'SOACMGR SOA SERVICE NOT FOUND = ABORTING'
+         B   ABORT
+*********************************************************************
+* EXIT TO CALLER WITH RETURN CODE FROM SERVICE
+*********************************************************************
+EXIT     EQU   *
+         L      R15,MSGRC
+         SUBEXIT RC=(15)
+ABORT    SUBEXIT RC=12
+         LTORG
+         AIF   (&HOST EQ '*').SKIP_HOST
+HOST     DC    C'&HOST',X'00'    HOST SERVER NAME NULL DELIMITED
+.SKIP_HOST ANOP
+AMSG     DC    A(0)                       ADDRESS OF MSG BUFFER
+LMAX     DC    A(MSGPARMS-IHAMSG+&MAXLEN) MAXIMUM LENGTH OF MESSAGE
+LMIN     DC    A(MSGPARMS-IHAMSG+&MINLEN) MINIMUM LENGTH OF MESSAGE
+SAVETIME DC    XL8'0'
+         EQUREGS 
+         SOAMSG  
+         MEND

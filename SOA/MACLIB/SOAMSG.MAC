@@ -1,0 +1,19 @@
+         MACRO
+         SOAMSG
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 01/01/07                                                 *
+.**********************************************************************
+.* GENERATE DSECT FOR SOA MESSAGE SENT FROM SOACMGR CLIENT MSG MANAGER
+.* TO SOASMGR SERVER MESSAGE MANAGER AND BACK AGAIN WITH RESPONSE
+.**********************************************************************
+IHAMSG   DSECT
+MSGLEN   DS    F     TOTAL LENGTH OF MSG = SUM OF PARMS + 14
+MSGTIME  DS    FL8   NS TIME STAMP
+MSGNAME  DS    CL8   NAME OF SERVICE BEING CALLED
+MSGRC    DS    A     SERVICE RETURN CODE
+MSGPARMS EQU   *     
+         MEND

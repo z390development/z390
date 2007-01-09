@@ -1,0 +1,89 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 12/26/06                                                 *
+*********************************************************************
+* 12/31/06 RPI 523 CODE DEMOMAIN CALLING DEMOSUB1/DEMOSUB2  
+* 01/08/07 RPI 523 ADD TIMING IN MICRO-SEC AND PERFORM TWICE
+*********************************************************************
+* 1.  DEMOMAIN CALLS DEMOSUB1 TO CALCULATE AND DISPLAY SUM OF 2     
+*     DISPLAY SCIENTIFIC NOTATION VALUES USING CFD AND CTD MACROS.
+*     FOR CONVERSION TO/FROM LD EXTENDED DFP FORMAT FOR ADDITION
+* 2.  DEMOMAIN CALLS DEMOSUB2 TO CALCULATE AND DISPLAY SUM OF 2 
+*     INTEGER VALUES.
+* 3.  RUN SOA\DEMO\DEMOSTD.BAT TO ASSEMBLE, STATICALLY LINK, AND
+*     EXECUTE DEMO APPLICATION AS STANDARD LOCAL SINGLE PROCESS.
+* 4.  RUN SOA\DEMO\DEMOSOA.BAT TO GENERATED, ASSEMBLE, LINK, AND 
+*     EXECUTE DEMO APPLICAITON USING SOA CLIENT SERVER TO ALLOW
+*     RUNNING THE TWO CALLED SUBROUTINES AS SERVICES RUNNING ON
+*     SEPARATE PROCESS ON SAME OR ANY TCP/IP CONNECTED PLATFORM.
+*********************************************************************
+         COPY  ASMMSP
+DEMOMAIN SUBENTRY
+         WTO   'DEMOMAIN SERVICE ORIENTED ARCHITECTURE APPLICATION'
+         LA    R11,5  REPEAT 5 TIMES TO CHECK TIMING CONSISTENCY
+LOOP     EQU   *
+         BAL   R12,START_TIME
+         CALL  DEMOSUB1,(DFP1,DFP2,DFP3),VL
+         MVC   DSUM1,DFP3
+         WTO   MF=(E,WTOMSG1)
+         BAL   R12,STOP_TIME
+         IF    (CLC,DFP3,NE,DFP4)
+               WTO 'DEMOMAIN DEMOSUB1 DFP SUM INVALID - ABORTING'
+               ABEND 111
+         ENDIF
+         BAL   R12,START_TIME
+         CALL  DEMOSUB2,(INT1,INT2,INT3),VL
+         L     R0,INT3
+         CVD   R0,PWORK
+         MVC   DSUM2,MASK2
+         ED    DSUM2,PWORK+4
+         WTO   MF=(E,WTOMSG2)
+         BAL   R12,STOP_TIME
+         IF    (CLC,INT3,NE,INT4)
+               WTO 'DEMOMAIN DEMOSUB2 INT SUM INVALID - ABORTING'
+               ABEND 111
+         ENDIF
+         BCT  R11,LOOP
+         WTO  'DEMOMAIN ENDED OK'
+         SUBEXIT
+START_TIME DS 0H
+         TIME  NS,NS_START
+         BR    R12
+STOP_TIME DS 0H  SHOW SRERVICE TIME IN MICRO-SECONDS
+         TIME  NS,NS_STOP
+         LG    R1,NS_STOP
+         SG    R1,NS_START
+         DSG   R0,=FD'1000'
+         CVD   R1,PWORK
+         MVC   DMICS,MICS_MASK
+         ED    DMICS,PWORK+3
+         WTO   MF=(E,SHOW_MSG)
+         BR    R12
+NS_START DC    D'0' START TOD IN NANO-SECONDS
+NS_STOP  DC    D'0' END   TOD IN NANO-SECONDS
+SHOW_MSG DC    AL2(SHOW_END-*,0),C'SERVICE TIME IN MIRCO-SEC ='
+DMICS    DC    C' ZZZ,ZZZ,ZZZ'
+SHOW_END EQU   *
+MICS_MASK DC   X'40202020',C',',X'202020',C',',X'202120'
+         LTORG
+WTOMSG1  DC   AL2(WTOEND1-*,0),C'DEMOMAIN DEMOSUB1 DFP SUM='
+DSUM1    DC   CL45' '
+WTOEND1  EQU  *
+WTOMSG2  DC   AL2(WTOEND2-*,0),C'DEMOMAIN DEMOSUB2 INT SUM='
+DSUM2    DC   C' Z,ZZZ,ZZZ'  
+WTOEND2  EQU  *
+MASK2    DC   C' ',X'20',C',',X'202020',C',',X'202120'
+PWORK    DC   PL8'0'
+DFP1     DC   CL45'1.1'
+DFP2     DC   CL45'2.2'
+DFP3     DC   CL45' '
+DFP4     DC   CL45'3.3'  VERIFY SUM VALUE
+INT1     DC   F'1'
+INT2     DC   F'2'
+INT3     DC   F'0'
+INT4     DC   F'3'
+         EQUREGS
+         END
