@@ -59,11 +59,15 @@
 *                                                                     *
 ***********************************************************************
 * Changes:                                                            *
-*    2006/08/05:                                                      *
+*    2006/08/05: DB                                                   *
 *        Corrected errors found by Don Higgins.                       *
 *        Corrected hexadecimal constant for DD'(MAX)'.                *
 *        H, B and D suffixes on floating point constants are only     *
 *        generated if the assembler supports them.                    *
+*    2006/12/21: DSH                                                  *
+*        Note DD'(MAX)' etc are now generated since the SRNMT opcode  *
+*        test succeeds with the addition of DFP opcode support.       *
+*                                                                     *
 ***********************************************************************
          MACRO
 &lbl     FPCONVRT &PFX=Fpcon,&TYPE=DSECT,&ARCHLVL=2,&LINKAGE=OS,       +

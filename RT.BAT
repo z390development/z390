@@ -9,12 +9,14 @@ call %~dps0rtlink1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0rtdemo1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0rtcics1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0rtmvs1  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0rtsoa1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0rttest1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy %~dps0linklib\dif\*.*  %~dps0rt\all
 copy %~dps0demo\dif\*.*     %~dps0rt\all
 copy %~dps0cics\dif\*.*     %~dps0rt\all
 copy %~dps0rt\dif\*.*       %~dps0rt\all
 copy %~dps0mvs\dif\*.*      %~dps0rt\all
+copy %~dps0soa\dif\*.*      %~dps0rt\all
 erase %~dps0rt\all\rtgen*.bal
 erase %~dps0rt\all\rtgen*.pch
 erase %~dps0rt\all\rtgen*.dat

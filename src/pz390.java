@@ -186,6 +186,7 @@ public class pz390 {
 	 * 23/28/06 RPI 526 add missing DFP instr. 
 	 *          and fix CGDTR, CGXTR, IEDTR, IEXTR rounding/sign 
 	 * 01/06/07 RPI 524 add TCPIO svc x'7C' support
+	 * 01/10/07 RPI 533 correct CGDTR/CGXTR rounding
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -880,6 +881,7 @@ public class pz390 {
 			RoundingMode.HALF_UP,   // 4
 			RoundingMode.HALF_DOWN, // 5
 			RoundingMode.UP,        // 6
+			RoundingMode.HALF_UP,   // 7 (prepare for shorter)
 	};
 	MathContext[] fp_dd_rnd_context = {
 			new MathContext(16,RoundingMode.HALF_EVEN), // 0
@@ -889,6 +891,7 @@ public class pz390 {
 			new MathContext(16,RoundingMode.HALF_UP),   // 4
 			new MathContext(16,RoundingMode.HALF_DOWN), // 5
 			new MathContext(16,RoundingMode.UP),        // 6
+			new MathContext(16,RoundingMode.HALF_UP),   // 7 (prevare for shorter)
 	};
 	MathContext[] fp_ed_rnd_context = {
 			new MathContext(7,RoundingMode.HALF_EVEN), // 0
@@ -898,6 +901,7 @@ public class pz390 {
 			new MathContext(7,RoundingMode.HALF_UP),   // 4
 			new MathContext(7,RoundingMode.HALF_DOWN), // 5
 			new MathContext(7,RoundingMode.UP),        // 6
+			new MathContext(7,RoundingMode.HALF_UP),   // 7
 	};
 	MathContext[] fp_ld_rnd_context = {
 			new MathContext(34,RoundingMode.HALF_EVEN), // 0
@@ -907,6 +911,7 @@ public class pz390 {
 			new MathContext(34,RoundingMode.HALF_UP),   // 4
 			new MathContext(34,RoundingMode.HALF_DOWN), // 5
 			new MathContext(34,RoundingMode.UP),        // 6
+			new MathContext(34,RoundingMode.HALF_UP),   // 7
 	};
 	MathContext fp_ed_context = new MathContext(7,fp_dfp_rnd_mode[fp_rnd_near_even]);  // fp_ed default
 	MathContext fp_dd_context = new MathContext(16,fp_dfp_rnd_mode[fp_rnd_near_even]); // fp_dd default
@@ -9157,7 +9162,7 @@ public class pz390 {
 	private void ins_setup_rrf4() { // RPI 407 "RRF4" 28 CSDTR oooo0412
 		// maps r1,r2,m4 to 0412
 		psw_ins_len = 4;
-		mf3 = mem_byte[psw_loc + 2]; 
+		mf3 = mem_byte[psw_loc + 2] & 0xff; // RPI 533
 		mf4 = mf3 & 0xf;
 		mf3 = mf3 >>> 4;
 		rf1 = mem_byte[psw_loc + 3];
@@ -11771,20 +11776,24 @@ public class pz390 {
 		} else {
 			fp_bd_inc = BigDecimal.ONE.negate();
 		}
-		int rem_comp = fp_bd_int_rem[1].abs().compareTo(fp_bd_half);
+		int rem_comp_half = fp_bd_int_rem[1].abs().compareTo(fp_bd_half);
 		switch (rnd_mode) {
-		case 0: // bias round to nearest with half even
-			if (rem_comp > 0) {
+		case 0: // round to nearest with half even
+			if (rem_comp_half > 0) {
 				return fp_bd_int_rem[0].add(fp_bd_inc);
-			} else if (rem_comp < 0){
+			} else if (rem_comp_half < 0){
 				return fp_bd_int_rem[0];
-			} else if (fp_bd_int_rem[0].stripTrailingZeros().unscaledValue().testBit(0)){
+			} else if (fp_bd_int_rem[0].toBigInteger().testBit(0)){ // RPI 533
 				return fp_bd_int_rem[0].add(fp_bd_inc); // round to even
 			} else {
 				return fp_bd_int_rem[0];
 			}
-		case 1: // round toward 0 with down
-			return fp_bd_int_rem[0];
+		case 1: // round nearest, half toward 0
+			if (rem_comp_half > 0) {
+				return fp_bd_int_rem[0].add(fp_bd_inc);
+			} else {  // RPI 533
+				return fp_bd_int_rem[0];
+			}
 		case 2: // round toward + infinity
 			if (fp_bd_int_rem[1].signum() > 0) {
 				return fp_bd_int_rem[0].add(fp_bd_inc);
@@ -11798,19 +11807,25 @@ public class pz390 {
 				return fp_bd_int_rem[0];
 			}
 		case 4: // round to nearest with ties away from 0
-			if (rem_comp >= 0) {
+			if (rem_comp_half >= 0) {
 				return fp_bd_int_rem[0].add(fp_bd_inc);
 			} else {
 				return fp_bd_int_rem[0];
 			}
 		case 5: // round to nearest with ties toward 0
-			if (rem_comp > 0) {
+			if (rem_comp_half > 0) {
 				return fp_bd_int_rem[0].add(fp_bd_inc);
 			} else {
 				return fp_bd_int_rem[0];
 			}	
 		case 6: // round away from zero
-			if (rem_comp != 0) {
+			if (fp_bd_int_rem[1].signum() != 0) {  // RPI 533
+				return fp_bd_int_rem[0].add(fp_bd_inc);
+			} else {
+				return fp_bd_int_rem[0];
+			}
+		case 7: // prepare for shorter (round to nearest with ties away from 0 for now) 
+			if (rem_comp_half >= 0) {
 				return fp_bd_int_rem[0].add(fp_bd_inc);
 			} else {
 				return fp_bd_int_rem[0];
@@ -11846,7 +11861,7 @@ public class pz390 {
 				}
 			}
 		}
-		if (rnd_mode < 0 || rnd_mode > 6){
+		if (rnd_mode < 0 || rnd_mode > 7){
 			set_psw_check(psw_pic_spec);
 			rnd_mode = 0;
 		}

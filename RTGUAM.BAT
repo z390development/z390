@@ -1,6 +1,7 @@
 rem regression test z390 GUI interactive programs in guam
 call rtclean1 guam\demo *
 call rtclean1 guam\test *
+call z390 /sc z390.ini
 call rt1 %~dps0guam\demo\demoapl1  guam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0guam\demo\demogui1  guam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0guam\demo\demogui2  guam %1 %2 %3 %4 %5 %6 %7 %8 %9

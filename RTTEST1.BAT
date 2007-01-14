@@ -67,11 +67,12 @@ call rt1 %~dps0rt\test\testprt1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 
 call rt1 %~dps0rt\test\testdc1  systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy %~dps0rt\test\testdc1.mlc %~dps0rt\test\testasc1.mlc
 call rt1 %~dps0rt\test\testasc1 ascii systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0rt\test\testdc2  systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testsdt1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testloc1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy %~dps0rt\test\testsdt1.mlc %~dps0rt\test\testasc2.mlc
 call rt1 %~dps0rt\test\testasc2 ascii systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testasm1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0rt\test\testasm1 systerm(rt\test\rttest) mcall %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testasm2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt4 %~dps0rt\test\testerr2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
@@ -96,6 +97,7 @@ call rt1 %~dps0rt\test\testins2 trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 
 copy %~dps0rt\test\testins2.mlc %~dps0rt\test\testasc3.mlc
 call rt1 %~dps0rt\test\testasc3 ascii trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testfp1  trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt1 %~dps0rt\test\testdfp1 trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 set DDTODEMO=DEMO\DEMO.390
 call rt1 %~dps0rt\test\testcal1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt1 %~dps0rt\test\testcal2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9

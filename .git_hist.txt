@@ -1587,7 +1587,41 @@ set GIT_COMMITTER_DATE=2021-03-21 17:43:00 +0100
 git commit -m "Reconstructed version v1.2.00g of z390 committed on behalf of Don Higgins"
 git tag -a v1.2.00g -m "Reconstructed version v1.2.00g of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.3.00
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.3.00
+git add Doc/readme.rtf
+git add Doc/readme.txt
+git rm  README.TXT
+git add RT.BAT
+git add RTDEMO1.BAT
+git add RTGUAM.BAT
+git add RTTEST1.BAT
+git add SOA/DEMO/DEMOSOA.BAT
+git add SOA/README.TXT
+git add linklib/FPCONMFC.MLC
+git add linklib/FPCONVRT.MAC
+git add linklib/TESTFPC1.MLC
+git add linklib/TESTFPC2.MLC
+git add mac/FREEMAIN.MAC
+git add mac/RT1.MAC
+git add mac/STX.MAC
+git add mac/TIME.MAC
+git add src/pz390.java
+git add src/tz390.java
+
+==> Create commit for V1.3.00
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2007-01-14 07:28:00 -0500
+set GIT_COMMITTER_DATE=2021-03-21 17:50:00 +0100
+git commit -m "Reconstructed version v1.3.00 of z390 committed on behalf of Don Higgins"
+git tag -a v1.3.00 -m "Reconstructed version v1.3.00 of z390 committed on behalf of Don Higgins"
+git gc --aggressive
 
 
 

@@ -1,5 +1,5 @@
-z390 V1.2.00 Portable Mainframe Assembler
-Copyright 2006 Automated Software Tools Corporation
+z390 V1.3.00 Portable Mainframe Assembler
+Copyright 2007 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
  * Microsoft Windows 2000, Windows XP, Linux
@@ -8,31 +8,35 @@ Minimum Requirements for z390:
  * Adobe Acrobat or later for viewing User Guide
 
 
-Z390 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+z390 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License as part of z390 install (see OSI_GPL_License_Agreement.rtf); if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
 
 z390 is a portable mainframe assembler, linker, and emulator utility for Windows, Linux, and other platforms supporting J2SE.  z390 includes the following tools:
 * z390 - Graphical User Interface written in J2SE Swing Java
 * mz390 - macro processor to expand MLC source file to BAL source code
-     *     CICS, PROLOG, and EPILOG options support EXEC CICS and EXEC SQL compatible 
-            statements which are reformatted into standard EXEC macro format for expansion.
-     *     Macro pseudo code generator for 3 times faster macro execution
-     *     Macro pseudo code trace facility to see all macro variables in all expressions
+o Macro pseudo code generator for 3 times faster macro execution
+o Macro pseudo code trace facility to see all macro variables in all expressions
+o CICS, PROLOG, and EPILOG options support EXEC CICS and EXEC SQL compatible statements which are reformatted into standard EXEC macro format for expansion.
+o Macro library with commonly used MVS compatible macros
 * az390 - assembler to translate BAL source code into OBJ file and generate PRN listing
-* lz390 - linker to translate OBJ files into 390 binary load module 
-* ez390 - runtime emulator to exec 390 load modules running in 24 or 31 bit mode
-* GUAM GUI Access Method dialog option for MCS console, TN3270, and graphical user interfaces which are used by WTO, WTOR, TGET, and TPUT to support EXEC CICS.
-* TEST option for interactive debugging with dump, modify, and trace options
-* TRACE option for instruction trace with operand register and memory data 
+* lz390 - linker to translate OBJ files into 390 binary load module
+* ez390 - runtime emulator to exec 390 load modules running in 24/31 bit mode
+o All problem state instructions including HFP, BFP, and new DFP floating point
+o TEST option for interactive debugging with dump, modify, and trace options
+o TRACE option for instruction trace with operand register and memory data
 
 A WTO macro based demo “Hello World” program demo.mlc is included which can be expanded, assembled, linked, and executed with the command “ASMLG DEMO\DEMO” issued from GUI command line or via point and click using the z390 GUI file menu ASMLG selection.
 
 Structured programming macros IF, ELSEIF, ELSE, ENDIF, DO, and ENDDO are included along with demo program DEMO\DEMOSTR1.
 
+A Service Oriented Architecture (SOA) client server application generation service including SOA directory with macro library and demo application which uses TCP/IP sockets messaging to enable client and server to run on same or different processors on a TCP/IP network.
+
 A TPUT and TGET macro based demo TN3270 application to update and display name, address, and numeric zip fields on screen can be assembled and executed with the command “ASMLG DEMO\DEMOGUI6 GUAM”.  Use PF1 for help screen and PF3 for exit.  The arrow, backspace, and tab keys can be used to control blinking cursor.  An alarm and status line error is issued if attempt is made to modify protected field or enter alpha data in numeric field.
 
 An EXEC CICS compatible assembler application to update and display name, address, and numeric zip fields on screen can be assembled, linked, and executed.  Use the command RTCICS.BAT to assemble and link all the required EXEC CICS programs.  Use the command CICS PARM(GUI6) to start the z390 EXEC CICS assembler command processor and execute the transaction program TESTGUI6 as the first transaction.  The first GUI window to come up will be the TESTGUI6 application screen.  After exiting the application via PF3, the window will switch from screen view to MCS console view and prompt for the next EXEC CICS transaction or PF3 to exit CICS.
+
+
 
 For latest Windows and Linux downloads and additional information about z390 and the open source project visit:
 

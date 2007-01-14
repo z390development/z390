@@ -12,7 +12,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 01/16/06 RPI175 ADD CHECK FOR MISSING ADDR PARM
 .*********************************************************************
-&N       TIME  &TYPE,               DEC,BIN,MIC,STCK,STCKE             X
+&N       TIME  &TYPE,               DEC,BIN,MIC,STCK,STCKE,NS          X
                &ADDR,               STORE RESULT ADDR                  X
                &CLOCKTYPE=,         STCK/STCKE(1900),EXT JAVA (1970)   X
                &DATETYPE=YYYYDDD,   SYSTEM DATE FORMATS                X

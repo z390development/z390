@@ -88,7 +88,7 @@
          AIF   (&A(1) EQ '0' OR &A(1) EQ 'R0').ERR4        
          LR   1,&A(1)
 .SVC     ANOP
-         SVC   5 FREEMAIN R0=ADDR, R1=LEN
+         SVC   5 FREEMAIN R0=LEN, R1=ADDR
          MEXIT
 .ERR1    MNOTE 12,'FREEMAIN LV LENGTH TOO LONG - &LV'
          MEXIT

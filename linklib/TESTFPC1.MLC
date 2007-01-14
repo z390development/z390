@@ -7,6 +7,10 @@
 *********************************************************************
 * 07/17/06 RPI 370 test CTD and CFD including SVC and MF call option 
 * 11/10/06 RPI 477 use IN= and OUT= on CTD and CFD macros            
+* 12/11/06 RPI 513 test ED, DD, and LD CTD and CFD options           
+* 12/15/06 RPI 406 add additional ED and LD tests                    
+* 12/22/06 RPI 406 skip bug in DFP MF and skip slow BFP/HFP extended MF               
+*                  add check that SVC and MF display values match
 *********************************************************************
 * Test conversion from and to 128 bit integer and all 6 floating 
 * point types using default svc 170 and 171 and also using 
@@ -21,19 +25,29 @@ WTOMSG   DC    AL2(WTOEND-*,0)
 DTYPE    DC    CL6' ',C' '
 DHEX     DC    CL32' ',C'='
 DECIMAL  DC    CL45' '          
+SAVE_DECIMAL  DC    CL45' '          
 WTOEND   EQU   *
 PRC      DC    PL8'0'
 WTOPRC   DC    AL2(WTOPRC_END-*,0)
          DC    C'ERROR RC ='
 DRC      DC    CL4' '
 WTOPRC_END   EQU   *
-LHT1     DC    LH'-567678867789987898'
 LBT1     DC    LB'-567678867789987898'
+LDT1     DC    LD'-567678867789987898'
+LHT1     DC    LH'-567678867789987898'
          EQUREGS
          RT1   START
          MACRO
          TEST  &TYPE,&VAL
+         AIF   ('&TYPE'(2,1) EQ 'D').SKPMF SKIP DFP MF FOR NOW (BUG?)
+         AIF   ('&TYPE'(1,1) EQ 'L').SKPMF SKIP EXT MF FOR NOW (SLOW)
          TEST1 MF,&TYPE,&VAL
+         MVC   SAVE_DECIMAL,DECIMAL
+         TEST1 SVC,&TYPE,&VAL
+         CLC   DECIMAL,SAVE_DECIMAL
+         RT1   CCE
+         MEXIT
+.SKPMF   ANOP
          TEST1 SVC,&TYPE,&VAL
          MEND
          MACRO
@@ -82,15 +96,43 @@ LBT1     DC    LB'-567678867789987898'
          LTORG
 EXIT&TESTNO DS 0H
          MEND
-         TEST   EH,=EH'0'
-         TEST   EH,=EH'1E-78'   
-         TEST   EH,=EH'1'
-         TEST   EH,=EH'2'
-         TEST   EH,=EH'1E2'
-         TEST   EH,=EH'1E75'    
-         TEST   EH,=EH'-1'
-         TEST   EH,=EH'-2'
-         TEST   EH,=EH'-1E2'
+* DB
+         TEST   DB,=DB'0'
+         TEST   DB,=DB'1E-307'     
+         TEST   DB,=DB'1'
+         TEST   DB,=DB'2'
+         TEST   DB,=DB'1E2'
+         TEST   DB,=DB'1E307'     
+         TEST   DB,=DB'-1'
+         TEST   DB,=DB'-2'
+         TEST   DB,=DB'-1E2'
+* DD
+         TEST   DD,=DD'0'
+         TEST   DD,=DD'0.1234567890123456'
+         TEST   DD,=DD'0.12345678901234560'
+         TEST   DD,=DD'1E-398'     
+         TEST   DD,=DD'1'
+         TEST   DD,=DD'2'
+         TEST   DD,=DD'1E2'
+         TEST   DD,=DD'123456789012345'     
+         TEST   DD,=DD'1.23456789012345E14'     
+         TEST   DD,=DD'1234567890123456'    
+         TEST   DD,=DD'1234567890123456E300'
+         TEST   DD,=DD'9999999999999999E369'     
+         TEST   DD,=DD'-1'
+         TEST   DD,=DD'-2'
+         TEST   DD,=DD'-1E2'
+* DH
+         TEST   DH,=DH'0'
+         TEST   DH,=DH'1E-78'       
+         TEST   DH,=DH'1'
+         TEST   DH,=DH'2'
+         TEST   DH,=DH'1E2'
+         TEST   DH,=DH'6E75' 1E75 CAUSES 1 BIT ROUNDING ERROR
+         TEST   DH,=DH'-1'
+         TEST   DH,=DH'-2'
+         TEST   DH,=DH'-1E2'
+* EB
          TEST   EB,=EB'0'
          TEST   EB,=EB'2E-38' 1E-38 CAUSES UNDERFLOW
          TEST   EB,=EB'1'
@@ -101,34 +143,33 @@ EXIT&TESTNO DS 0H
          TEST   EB,=EB'-1'
          TEST   EB,=EB'-2'
          TEST   EB,=EB'-1E2'
-         TEST   DH,=DH'0'
-         TEST   DH,=DH'1E-78'       
-         TEST   DH,=DH'1'
-         TEST   DH,=DH'2'
-         TEST   DH,=DH'1E2'
-         TEST   DH,=DH'6E75' 1E75 CAUSES 1 BIT ROUNDING ERROR
-         TEST   DH,=DH'-1'
-         TEST   DH,=DH'-2'
-         TEST   DH,=DH'-1E2'
-         TEST   DB,=DB'0'
-         TEST   DB,=DB'1E-307'     
-         TEST   DB,=DB'1'
-         TEST   DB,=DB'2'
-         TEST   DB,=DB'1E2'
-         TEST   DB,=DB'1E307'     
-         TEST   DB,=DB'-1'
-         TEST   DB,=DB'-2'
-         TEST   DB,=DB'-1E2'
-         TEST   LH,=LH'0'
-         TEST   LH,=LH'3E-78' 1E-78 CAUSES 1 BIT ROUNDING ERROR    
-         TEST   LH,=LH'1'
-         TEST   LH,=LH'2'
-         TEST   LH,=LH'1E2'
-         TEST   LH,=LH'2E75'  1E75 CAUSES 1 BIT ROUNDING ERROR
-         TEST   LH,=LH'-1'
-         TEST   LH,=LH'-2'
-         TEST   LH,=LH'-1E2'
-         TEST   LH,LHT1 TEST VALUE FOR FPCONVRT
+* ED
+         TEST   ED,=ED'0'
+         TEST   ED,=ED'0.1234567'
+         TEST   ED,=ED'0.12345670'
+         TEST   ED,=ED'1E-101'
+         TEST   ED,=ED'1'
+         TEST   ED,=ED'2'
+         TEST   ED,=ED'3'
+         TEST   ED,=ED'1E2'
+         TEST   ED,=ED'1234567'     
+         TEST   ED,=ED'1.234567E6'     
+         TEST   ED,=ED'1234567E90'
+         TEST   ED,=ED'9999999E90'    
+         TEST   ED,=ED'-1'
+         TEST   ED,=ED'-2'
+         TEST   ED,=ED'-1E2'
+* EH
+         TEST   EH,=EH'0'
+         TEST   EH,=EH'1E-78'   
+         TEST   EH,=EH'1'
+         TEST   EH,=EH'2'
+         TEST   EH,=EH'1E2'
+         TEST   EH,=EH'1E75'    
+         TEST   EH,=EH'-1'
+         TEST   EH,=EH'-2'
+         TEST   EH,=EH'-1E2'
+* LB
          TEST   LB,=LB'0'
          TEST   LB,=LB'1E-4931'     
          TEST   LB,=LB'1'
@@ -139,6 +180,36 @@ EXIT&TESTNO DS 0H
          TEST   LB,=LB'-2'
          TEST   LB,=LB'-1E2'
          TEST   LB,LBT1 TEST VALUE FOR FPCONVRT
+* LD
+         TEST   LD,=LD'0'
+         TEST   LD,=LD'0.1234567890123456789012345678901234'
+         TEST   LD,=LD'0.12345678901234567890123456789012340'
+         TEST   LD,=LD'1E-6176'     
+         TEST   LD,=LD'1'
+         TEST   LD,=LD'2'
+         TEST   LD,=LD'1E2'
+         TEST   LD,=LD'1234567890123456789012345678901234'
+         TEST   LD,=LD'1.234567890123456789012345678901234E33'
+         TEST   LD,=LD'1234567890123456789012345678901234'
+         TEST   LD,=LD'1234567890123456789012345678901234E6111'
+         TEST   LD,=LD'9999999999999999999999999999999999E6111'
+         TEST   LD,=LD'1E6111'     
+         TEST   LD,=LD'-1'
+         TEST   LD,=LD'-2'
+         TEST   LD,=LD'-1E2'
+         TEST   LD,LDT1 TEST VALUE FOR FPCONVRT
+* LH
+         TEST   LH,=LH'0'
+         TEST   LH,=LH'3E-78' 1E-78 CAUSES 1 BIT ROUNDING ERROR    
+         TEST   LH,=LH'1'
+         TEST   LH,=LH'2'
+         TEST   LH,=LH'1E2'
+         TEST   LH,=LH'2E75'  1E75 CAUSES 1 BIT ROUNDING ERROR
+         TEST   LH,=LH'-1'
+         TEST   LH,=LH'-2'
+         TEST   LH,=LH'-1E2'
+         TEST   LH,LHT1 TEST VALUE FOR FPCONVRT
+* INT128
          TEST   INT128,=FL16'0' 
          TEST   INT128,=FL16'1' 
          TEST   INT128,=FL16'2' 

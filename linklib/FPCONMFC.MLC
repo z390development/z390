@@ -18,9 +18,10 @@
 * BETWEEN 31 BIT AND 64 BIT SAVE AREA AND PARM ADDRESS FIELDS.
 *
 *********************************************************************
-* 07/17/07 RPI 374 - add FPCONMFC interface to FPCONVRT routines
-* 07/21/07 RPI 379 - use compound DO conditions in (...)        
-* 08/04/07 RPI 391 - replace trailing output nulls with spaces  
+* 07/17/06 RPI 374 - add FPCONMFC interface to FPCONVRT routines
+* 07/21/06 RPI 379 - use compound DO conditions in (...)        
+* 08/04/06 RPI 391 - replace trailing output nulls with spaces  
+* 12/11/06 RPI 514 - add DD, ED, and LD DFP conversion support  
 *********************************************************************
          PRINT DATA
          COPY  ASMMSP       STRUCTURED PROGRAM MACROS AND EQUS
@@ -47,7 +48,7 @@
 FPCONMFC SUBENTRY
          LM    R3,R5,0(R1)  R3=TYPE, R4=ARG2, R5=ARG3
          STC   R3,TYPE
-         IF    (CLI,TYPE,GT,7)
+         IF    (CLI,TYPE,GE,21)     RPI 514
                BAS   R12,CFD_RTNS
          ELSE
                BAS   R12,CTD_RTNS
@@ -105,6 +106,26 @@ CFD_RTNS EQU   *
                LD    F2,FpconValueL+8  F2 =  LB2
                STD   F0,0(R4)        STORE   LB1
                STD   F2,8(R4)        STORE   LB2
+         ELSEIF (CLI,TYPE,EQ,28) CFD DD     FROM D40
+               MVI   FpconValueLen,FpconValueLenD
+               MVI   FpconBase,FpconBase10     
+               BAS   R11,CFD_CALL
+               LD    F0,FpconValueD  F0 =  DD
+               STD   F0,0(R4)        STORE DD
+         ELSEIF (CLI,TYPE,EQ,29) CFD ED     FROM D40
+               MVI   FpconValueLen,FpconValueLenE
+               MVI   FpconBase,FpconBase10    
+               BAS   R11,CFD_CALL
+               LE    F0,FpconValueE  F0 =  ED
+               STE   F0,0(R4)        STORE ED
+         ELSEIF (CLI,TYPE,EQ,30) CFD LD     FROM D40
+               MVI   FpconValueLen,FpconValueLenL
+               MVI   FpconBase,FpconBase10   
+               BAS   R11,CFD_CALL
+               LD    F0,FpconValueL    F0 =  LD1
+               LD    F2,FpconValueL+8  F2 =  LD2
+               STD   F0,0(R4)        STORE   LD1
+               STD   F2,8(R4)        STORE   LD2
          ELSE
                LA   R15,12
          ENDIF
@@ -170,6 +191,32 @@ CTD_RTNS EQU   *
                LD    F2,8(R4)        F2 =  LB2
                STD   F0,FpconValueD   store  LB1
                STD   F2,FpconValueD+8 store  LB2
+               BAS   R11,CTD_CALL
+         ELSEIF (CLI,TYPE,EQ,8) CFD DD     TO   D40
+               MVI   FpconValueLen,FpconValueLenD
+               MVI   FpconBase,FpconBase10     
+               MVC   FpconMaxLeading,=H'16'
+               MVC   FpconMinDecimal,=H'-1'
+               LD    F0,0(R4)        F0 =  DD
+               STD   F0,FpconValueD store  DD
+               BAS   R11,CTD_CALL
+         ELSEIF (CLI,TYPE,EQ,9) CFD ED     TO   D40
+               MVI   FpconValueLen,FpconValueLenE
+               MVI   FpconBase,FpconBase10     
+               MVC   FpconMaxLeading,=H'7'
+               MVC   FpconMinDecimal,=H'-1'
+               LE    F0,0(R4)        F0 =  ED
+               STE   F0,FpconValueE store  ED
+               BAS   R11,CTD_CALL
+         ELSEIF (CLI,TYPE,EQ,10) CFD LD     TO   D40
+               MVI   FpconValueLen,FpconValueLenL
+               MVI   FpconBase,FpconBase10     
+               MVC   FpconMaxLeading,=H'34'
+               MVC   FpconMinDecimal,=H'-1'
+               LD    F0,0(R4)        F0 =  LD1
+               LD    F2,8(R4)        F2 =  LD2
+               STD   F0,FpconValueD   store  LD1
+               STD   F2,FpconValueD+8 store  LD2
                BAS   R11,CTD_CALL
          ELSE
                LA   R15,12
