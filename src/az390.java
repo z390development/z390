@@ -223,6 +223,8 @@ public  class  az390 implements Runnable {
     * 11/28/06 RPI 503 suppress duplicate MNOTE's on SYSTERM
     * 12/02/06 RPI 511 add option mcall to put mcall/mexit on PRN
     * 12/04/06 RPI 407 add ED, DD, LD types
+    * 01/19/07 RPI 538 fix SS instruction PKA d1(b1) to correctly gen b1
+    *          also fix duplication factor for DC P type fields
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -4950,7 +4952,7 @@ private void get_hex_llbddd(){
 						}
 					} else if (exp_next_char(')')){
 						exp_index++;
-						ll = exp_len;
+						b = exp_len;  // RPI 538 (was ll)
 					}
 				} else {
 					ll = exp_len;
@@ -6213,7 +6215,6 @@ private void process_dcp_data(){
 			    }
 		}
 	    dc_index++; // skip dcp terminator
-	    dc_len = 0; // don't double count
 	    if  (!bal_abort){
 		    if  (dc_dup > 1){
 			    dc_index = dc_data_start;
@@ -6223,6 +6224,7 @@ private void process_dcp_data(){
 		    }
 	    }
 	}
+	dc_len = 0; // don't double count RPI 538
 }
 private void gen_dcp_bits(){
 	/*

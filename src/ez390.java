@@ -155,6 +155,7 @@ import javax.swing.Timer;
     * 09/01/06 RPI 423 add runable exception handler to 
     *          shut down thread on interal exceptions
     * 09/09/06 RPI 440 correct reset of ez390_startup in sz390
+    * 01/15/07 RPI 535 issue FFF abend on internal trap with dump
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -453,6 +454,7 @@ public void run() {
 			try {
 				pz390.exec_pz390();
 			} catch (Exception e){
+				sz390.svc_abend(pz390.psw_pic_error,sz390.system_abend,true); // RPI 536
 				sz390.abort_error(204,"pz390 internal system exception " + e.toString());
 			}
 		} else {

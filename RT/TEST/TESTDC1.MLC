@@ -23,6 +23,7 @@
 * 08/03/06 RPI388 - test fix dup count for E, D, F and FD                     
 * 09/21/06 RPI458 - test DC S(rel and off(base)) constants                            
 * 12/09/06 RPI407 - test DC DD, ED, and LD (min) and (max) constants                  
+* 01/19/07 RPI538 - test duplication factors for P and all types                           
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -300,6 +301,8 @@ TFSE     EQU   *
          RT1   CCE,=AD(123),=FL8'123'
          RT1   CCE,=FD'123',=FL8'123'
 VDX      RT1   CCE,=VD(VDX),=AL8(VDX)
+         RT1   CCE,=2C'1',=2X'F1',2
+         RT1   CCE,=2Z'1',=2X'F1',2
          AGO   .TEST5_END
 .TEST5_ASCII ANOP
          CLC   =C'&AMP&AMP',=X'26'
@@ -330,6 +333,8 @@ VDX      RT1   CCE,=VD(VDX),=AL8(VDX)
          RT1   CCE,=AD(123),=FL8'123'
          RT1   CCE,=FD'123',=FL8'123'
 VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
+         RT1   CCE,=2C'1',=2X'31',2
+         RT1   CCE,=2Z'1',=2X'31',2
 .TEST5_END ANOP
 * TEST 2E,2D,2L, AND 2FD
          RT1   CCE,=XL8'00',TE     
@@ -352,5 +357,14 @@ VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
          RT1   CCE,=A(TFDS-TLS),=F'32' 
          RT1   CCE,=A(TFS-TFDS),=F'16' 
          RT1   CCE,=A(TFSE-TFS),=F'8' 
+* TEST ALL DUP FACTORS
+         RT1   CCE,=2A(1),=2XL4'1',8
+         RT1   CCE,=2D'0',=16X'00',16
+         RT1   CCE,=2E'0',=8X'00',8
+         RT1   CCE,=2F'1',=2XL4'1',8
+         RT1   CCE,=2H'1',=2XL2'1',4
+         RT1   CCE,=2L'0',=32X'00',32
+         RT1   CCE,=2PL3'0',=6X'00000C00000C',6
+         RT1   CCE,=2S(1),=2XL2'1',4
          RT1   END
          END         

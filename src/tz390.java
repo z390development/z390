@@ -113,6 +113,8 @@ public  class  tz390 {
     * 12/09/06 RPI 515 remove EZ390I prefix for TEST msgs to console
     * 12/17/06 RPI 518 support leading zeros on DFP values 
     * 12/20/06 RPI 406 correct opcode types and add LFAS, SRNMT
+    * 01/16/07 RPI 536 add codes 3,4 for infinity and Nan to dfp_cf5 table
+    * 01/19/07 RPI 538 add default option PROTECT to prevent PSA mods
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -121,7 +123,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.00";  //dsh
+    String version    = "V1.3.00a";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -154,6 +156,7 @@ public  class  tz390 {
     boolean opt_pcopt    = true;  // optimize pc code for speed
     String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
     boolean opt_prolog   = true;  // if cics, insert DFHEIBLK and DFHEIENT
+    boolean opt_protect  = true;  // prevent PSA mods by user
     boolean opt_regs     = false; // show registers on trace
     boolean opt_rmode24  = true;  // link to load below line
     boolean opt_rmode31  = false; // link to load above line
@@ -574,7 +577,9 @@ public  class  tz390 {
 		             2,2,2,2,2,2,2,2,  //16-23 = 2
 		             0,0,              //24-25 = 0
 		             1,1,              //26-27 = 1
-		             2,2};             //28-29 = 2
+		             2,2,             //28-29 = 2
+		             3,               //30 infinity  RPI 536
+		             4};              //31 NaN      RPI 536
           /*
            * dfp_cf5_to_bcd returns decimal digit 0-9
            * indexed by 5 bit combination field value
@@ -3743,6 +3748,8 @@ public void init_options(String[] args,String pgm_type){
             opt_pcopt = false;
         } else if (token.toUpperCase().equals("NOPROLOG")){
             opt_prolog = false;
+        } else if (token.toUpperCase().equals("NOPROTECT")){
+            opt_protect = false;
         } else if (token.toUpperCase().equals("NOSTATS")){
            	opt_stats = false;
         } else if (token.toUpperCase().equals("NOTIME")){

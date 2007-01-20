@@ -105,6 +105,7 @@ public  class  sz390 implements Runnable {
     * 12/29/06 RPI 526 trap invalid CFD input and return rc=12
     *          also fix CTD/CFD parm address to match amode
     * 01/06/07 RPI 524 add TCPIO svc x'7C' support
+    * 01/16/07 RPI 536 issue RC=4 if CTD for DFP infinity or NAN
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -3936,10 +3937,18 @@ private void svc_ctd(){
         break;	
 	case 8: // dd 
 		if (addr_in >= 16){ // RPI 507
+			if (!check_dfp_finite(pz390.mem_byte,addr_in)){ // RPI 536
+				pz390.reg.putInt(pz390.r15,4);
+			    return;
+			}
 			ctd_bd = pz390.fp_get_bd_from_dd(pz390.mem,addr_in); 
 		} else {
 		 	if (pz390.fp_reg_ctl[addr_in] != pz390.fp_ctl_ld){
 			 	pz390.fp_store_reg(pz390.fp_reg,addr_in * 8);
+			}
+			if (!check_dfp_finite(pz390.fp_reg_byte,addr_in * 8)){ // RPI 536
+				pz390.reg.putInt(pz390.r15,4);
+			    return;
 			}
 			ctd_bd = pz390.fp_get_bd_from_dd(pz390.fp_reg,addr_in * 8);
 		}
@@ -4947,55 +4956,58 @@ private int get_test_addr(String text){
 	 * register type address forms
 	 *    nnr or rnn
 	 */
+	int addr = 0;
 	test_addr_type = test_addr_mem;
 	try {
 		if (text.length() > 1){
 			if (text.toUpperCase().charAt(text.length()-1) == 'R'){
 				test_addr_type = test_addr_reg;
-				return Integer.valueOf(text.substring(0,text.length()-1)).intValue();
+				addr = Integer.valueOf(text.substring(0,text.length()-1)).intValue();
 			} else if (text.charAt(text.length()-1) == '.'){
-				return Long.valueOf(text.substring(0,text.length()-1),16).intValue() & 0xffffffff;
+				addr = Long.valueOf(text.substring(0,text.length()-1),16).intValue() & 0xffffffff;
 			} else if (text.charAt(0) == '+'){
-				return test_base_addr + Long.valueOf(text.substring(1),16).intValue() & 0xffffffff;
+				addr = test_base_addr + Long.valueOf(text.substring(1),16).intValue() & 0xffffffff;
 			} else if (text.charAt(0) == '-'){
-				return test_base_addr - Long.valueOf(text.substring(1),16).intValue() & 0xffffffff;
+				addr = test_base_addr - Long.valueOf(text.substring(1),16).intValue() & 0xffffffff;
 			} else if (text.length() > 2 && text.substring(0,2).equals("*+")){
-				return pz390.psw_loc + Long.valueOf(text.substring(2),16).intValue() & 0xffffffff;
+				addr = pz390.psw_loc + Long.valueOf(text.substring(2),16).intValue() & 0xffffffff;
 			} else if (text.substring(0,2).equals("*-")){
-				return pz390.psw_loc - Long.valueOf(text.substring(2),16).intValue() & 0xffffffff;
+				addr = pz390.psw_loc - Long.valueOf(text.substring(2),16).intValue() & 0xffffffff;
 			} else if (text.toUpperCase().charAt(text.length()-1) == '%'){
 				int index_r = text.toUpperCase().indexOf('R');
 				int index_p = text.length()-2;
-				int indirect_addr = (pz390.reg.getInt(get_test_int(text.substring(0,index_r))*8+4)) & pz390.psw_amode24;
+				addr = (pz390.reg.getInt(get_test_int(text.substring(0,index_r))*8+4)) & pz390.psw_amode24;
 				while (text.charAt(index_p) == '%'){
-				    indirect_addr = pz390.mem.getInt(indirect_addr) & pz390.psw_amode24;
+				    addr = pz390.mem.getInt(addr) & pz390.psw_amode24;
 				    index_p--;
 				}
-				return indirect_addr;
 			} else if (text.toUpperCase().charAt(text.length()-1) == '?'){
 				int index_r = text.toUpperCase().indexOf('R');
 				int index_q = text.length()-2;
-				int indirect_addr = (pz390.reg.getInt(get_test_int(text.substring(0,index_r))*8+4)) & pz390.psw_amode31;
+				addr = (pz390.reg.getInt(get_test_int(text.substring(0,index_r))*8+4)) & pz390.psw_amode31;
 				while (text.charAt(index_q) == '?'){
-				    indirect_addr = pz390.mem.getInt(indirect_addr) & pz390.psw_amode31;
+				    addr = pz390.mem.getInt(addr) & pz390.psw_amode31;
 				    index_q--;
 				}
-				return indirect_addr;
 			} else if (text.toUpperCase().equals("EPA")){
-				return load_code_load & pz390.psw_amode;  // RPI 395
+				addr = load_code_load & pz390.psw_amode;  // RPI 395
 			} else {
-				return get_test_int(text);
+				addr = get_test_int(text);
 			}
 		} else if (text.charAt(0) == '*'){
-			return pz390.psw_loc;
+			addr = pz390.psw_loc;
 		} else { // assume single digit
-			return get_test_int(text);
+			addr = get_test_int(text);
 		}
 	} catch (Exception e){
 		test_error("invalid addr - " + text);
 		test_cmd_abort = true;
 	}
-	return -1;
+	if (addr >= 0 && addr < pz390.tot_mem){
+		return addr; // RPI 540
+	} else {
+		return -1;
+	}
 }
 private byte get_test_compare(String compare){
 	/*
@@ -5497,6 +5509,17 @@ private boolean tcpio_close_port(){
 			put_log("TCPIO ERROR CLOSING CLIENT PORTr " + tcpio_port);
 			return false;
 		}
+	}
+}
+private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
+	/*
+	 * return true if DFP value finite based
+	 * on CF5 field value common to all DFP types
+	 */
+	if (tz390.dfp_cf5_to_exp2[(dfp_bytes[dfp_byte_index] >>> 2) & 0x1f]<= 2){
+		return true;
+	} else {
+		return false;
 	}
 }
 /*

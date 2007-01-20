@@ -263,6 +263,7 @@ public  class  mz390 {
      * 12/28/06 RPI 525 change abort to log for subscript errors
      * 12/31/06 RPI 528 move strip trailing period from replace var to subscript/sublist
      * 01/01/07 RPI 529 issue error for missing var if not asm
+     * 01/14/07 RPI 535 prevent trap parsing invalid computed AGO
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1612,7 +1613,9 @@ public  class  mz390 {
 						,label_match.group().toUpperCase()
 						,-mac_line_index);
 				if (mac_parms.charAt(0) == '('){
-					while (label_match.end() < mac_parms.length()
+					boolean label_found = true;  // RPI 535
+					while (label_found
+							&& label_match.end() < mac_parms.length()
 							&& mac_parms.charAt(label_match.end()) == ','){ 
 						lab_index = label_match.end()+1;
 						if (label_match.find()){
@@ -1620,6 +1623,7 @@ public  class  mz390 {
 									,label_match.group().toUpperCase()
 									,-mac_line_index);
 						} else {
+							label_found = false;  // RPI 535
 							log_error(151," invalid AGO label - " + mac_parms.substring(lab_index));
 						}
 					}

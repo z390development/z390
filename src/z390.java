@@ -118,6 +118,7 @@ public  class  z390 extends JApplet
      *          and invalid path after CD command
      * 12/01/06 RPI 509 use Monospace font for Windows and Linux
      * 12/01/06 RPI 510 replace NOTEPAD command with EDIT command
+     * 01/20/07 RPI 541 correct GUI file selection dialog cancel action
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -3020,20 +3021,14 @@ public  class  z390 extends JApplet
 		   	     *  dispose causing gui shutdown on last window)
 		   	     */
 		   	   if (perm_select){
-		         final JFileChooser select_dir_chooser = new
-		         JFileChooser();
-		         if  (select_dir_frame == null){
-                     create_select_dir(select_dir_chooser);
-		   	     } else {
-		   	     	 if  (main_gui){
-		                 main_frame.setVisible(false);
-		   	     	 }
-		             select_dir_frame.setVisible(true);           
-		   	     }
+		   		   final JFileChooser select_dir_chooser 
+		               = new JFileChooser();
+		   		   // rebuild every time RPI 541
+		   		   create_select_dir(select_dir_chooser);
 		   	   } else {
-		   	   	 log_error(38,"Permision for directory selection denied");
+		   	   	 	log_error(38,"Permision for directory selection denied");
 		   	   }
-		      }
+		   }
 		   private void create_select_dir(final JFileChooser select_dir_chooser){
 			   /*
 			    * create dialog with file chooser to
@@ -3060,15 +3055,15 @@ public  class  z390 extends JApplet
 	                 String selected_dir_name = null;
 	                 	String state =
 	                 (String)e.getActionCommand();
-	                 if (!state.equals(
+	                 if (state.equals( // RPI 541
 	                    JFileChooser.APPROVE_SELECTION)){
+		                 selected_file = select_dir_chooser.getSelectedFile();
+	                 } else {
 	                	select_dir_frame.setVisible(false);
 	                    if (main_gui){
 	                       main_frame.setVisible(true);
 	                    }
-	                    return;
 	                 }
-	                 selected_file = select_dir_chooser.getSelectedFile();
 	                 if (selected_file != null){
 	                 	selected_dir_name = selected_file.getPath();
 	                    if  (main_gui){
@@ -3078,7 +3073,7 @@ public  class  z390 extends JApplet
 	                    	cd_command("CD " + "\"" + selected_dir_name + "\"");
 	                    }
 	                 } else {
-	                 	log_error(37,"directory not found");
+	                 	log_error(37,"directory not selected");
 	                 }
 	                 select_dir_frame.setVisible(false);
 	                 if (main_gui){
@@ -3108,28 +3103,27 @@ public  class  z390 extends JApplet
 			   select_file_type = file_type;
 			   select_opt       = file_opt; 
 			   if (perm_select){
-			       final JFileChooser select_file_chooser = new
-		           JFileChooser();
-			     if (select_file_frame == null){  // RPI 309  
-			       select_file_chooser.resetChoosableFileFilters();
-		    	   select_file_chooser.setAcceptAllFileFilterUsed(true);
-			       if (select_file_type.length() > 0){
-			    	   select_file_chooser.addChoosableFileFilter(new SelectFileType());
-			    	   select_file_chooser.setAcceptAllFileFilterUsed(false);
-			       } else {
-			    	   select_file_type = "ALL";
-			       }
-		    	   create_select_file(select_file_chooser);
-			     }
-		    	 if (main_gui){
-	                main_frame.setVisible(false);
-	             } 
-	             select_file_frame.setLocation(100,100);
-	             select_file_frame.setVisible(true);
-			   } else {
-			   	 log_error(39,"Permission for file selection denied");
-			   }
-		} 
+				   final JFileChooser select_file_chooser 
+				         = new JFileChooser();
+				   // rebuild every time RPI 541
+				   select_file_chooser.resetChoosableFileFilters();
+				   select_file_chooser.setAcceptAllFileFilterUsed(true);
+				   if (select_file_type.length() > 0){
+					   select_file_chooser.addChoosableFileFilter(new SelectFileType());
+					   select_file_chooser.setAcceptAllFileFilterUsed(false);
+				   } else {
+					   select_file_type = "ALL";
+				   }
+				   create_select_file(select_file_chooser);
+				   if (main_gui){
+					   main_frame.setVisible(false);
+				   } 
+				   select_file_frame.setLocation(100,100);
+				   select_file_frame.setVisible(true);
+			   	} else {
+			   		log_error(39,"Permission for file selection denied");
+			   	}
+		   } 
 		private void create_select_file(final JFileChooser select_file_chooser){
 			/*
 			 * create select file frame with chooser
@@ -3156,15 +3150,15 @@ public  class  z390 extends JApplet
                     String selected_file_name = null;
             	     String state =
                        (String)e.getActionCommand();
-                    if (!state.equals(
+                    if (state.equals(  // RPI 541
                        JFileChooser.APPROVE_SELECTION)){
+                    	selected_file = select_file_chooser.getSelectedFile();
+                    } else {
             		    select_file_frame.setVisible(false);
                         if (main_gui){
                           main_frame.setVisible(true);
                         }
-            		    return;
                     }
-                    selected_file = select_file_chooser.getSelectedFile();
                     if (selected_file != null){
             	        selected_file_name = selected_file.getPath();
             	        if (select_file_type.length() > 0 && !select_cmd.equals("EDIT")){
@@ -3200,7 +3194,7 @@ public  class  z390 extends JApplet
                	         process_command(select_cmd + " " + get_short_file_name(selected_file_name));
                        }
                     } else {
-            	        log_error(37,"file not found");
+            	        log_error(37,"file not selected");
                     }
             	    select_file_frame.setVisible(false);
                     if (main_gui){
