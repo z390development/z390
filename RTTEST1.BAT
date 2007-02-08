@@ -6,152 +6,152 @@ rem note testtst1.mlc > testasc4.mlc for ascii test
 rem note testins1.mlc > testasc5.mlc for az390 test
 rem note testmac7 and testasm2 must be edited with notepad for tabs
 erase %~dps0rt\dif\*.* /q
-call rtclean1 rt\test *
+call RTCLEAN1 rt\test *
 rem
 rem dynamic linked subroutines used in testlnk1
 rem
-call rt1 %~dps0rt\test\testsub1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testsub4 amode24 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSUB1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSUB4 amode24 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem mz390 macro processor
 rem
-call rt1 %~dps0rt\test\testsys1 sysparm(12345) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testsyn1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testsyn2 sysmac(mac+rt\test) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testprm1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testprm2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testprm3 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmac1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmac2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmac3 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmac4 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmac5 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmac6 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmac7 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmac8 sysmac(rt\test+mac) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmac9 sysmac(rt\test+mac) syscpy(rt\test) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testpro1 profile(testpro1) sysmac(rt\test+mac) syscpy(rt\test) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testopr1 tracep systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testset1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testset2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testset3 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testact1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testcpy1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testsql1 sysmac(rt\test+mac) syscpy(rt\test) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt3 %~dps0rt\test\testequ1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt3 %~dps0rt\test\testerr1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt3 %~dps0rt\test\testerr3 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testpch1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testpch2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-set IN1=rt\test\testpch3.in1
-set IN2=rt\test\testpch3.in2
-set OT1=rt\test\testpch3.ot1
-set OT2=rt\test\testpch3.ot2
-set OT3=rt\test\testpch3.ot3
-call rt5 %~dps0rt\test\testpch3 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call mac %~dps0rt\test\testmcr1.asm sysmac(%~dps0rt\test\*.mcr) notiming systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt3 %~dps0rt\test\testtxt1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testpc1  tracep systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSYS1 sysparm(12345) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSYN1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSYN2 sysmac(mac+rt\test) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTPRM1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTPRM2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTPRM3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMAC1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMAC2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMAC3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMAC4 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMAC5 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMAC6 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMAC7 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMAC8 sysmac(rt\test+mac) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMAC9 sysmac(rt\test+mac) syscpy(rt\test) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTPRO1 profile(TESTPRO1) sysmac(rt\test+mac) syscpy(rt\test) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTOPR1 tracep systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSET1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSET2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSET3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTACT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTCPY1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSQL1 sysmac(rt\test+mac) syscpy(rt\test) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT3 %~dps0rt\test\TESTEQU1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT3 %~dps0rt\test\TESTERR1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT3 %~dps0rt\test\TESTERR3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTPCH1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTPCH2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+set IN1=rt\test\TESTPCH3.IN1
+set IN2=rt\test\TESTPCH3.IN2
+set OT1=rt\test\TESTPCH3.OT1
+set OT2=rt\test\TESTPCH3.OT2
+set OT3=rt\test\TESTPCH3.OT3
+call RT5 %~dps0rt\test\TESTPCH3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call MAC %~dps0rt\test\TESTMCR1.ASM sysmac(%~dps0rt\test\*.mcr) notiming systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT3 %~dps0rt\test\TESTTXT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTPC1  tracep systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem az390 assembler
 rem
-call rt1 %~dps0rt\test\testins1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-copy %~dps0rt\test\testins1.bal %~dps0rt\test\testasc5.bal
-call az390 %~dps0rt\test\testasc5 notiming systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testdst1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testlct1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testsym1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testuse1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testuse2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testprt1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testdc1  systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-copy %~dps0rt\test\testdc1.mlc %~dps0rt\test\testasc1.mlc
-call rt1 %~dps0rt\test\testasc1 ascii systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testdc2  systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testsdt1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testloc1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-copy %~dps0rt\test\testsdt1.mlc %~dps0rt\test\testasc2.mlc
-call rt1 %~dps0rt\test\testasc2 ascii systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testasm1 systerm(rt\test\rttest) mcall %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testasm2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt4 %~dps0rt\test\testerr2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTINS1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+copy %~dps0rt\test\TESTINS1.BAL %~dps0rt\test\TESTASC5.BAL
+call AZ390 %~dps0rt\test\TESTASC5 notiming systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTDST1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTLCT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSYM1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTUSE1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTUSE2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTPRT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTDC1  systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+copy %~dps0rt\test\TESTDC1.MLC %~dps0rt\test\TESTASC1.MLC
+call RT1 %~dps0rt\test\TESTASC1 ascii systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTDC2  systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSDT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTLOC1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+copy %~dps0rt\test\TESTSDT1.MLC %~dps0rt\test\TESTASC2.MLC
+call RT1 %~dps0rt\test\TESTASC2 ascii systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTASM1 systerm(RTTEST) mcall %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTASM2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT4 %~dps0rt\test\TESTERR2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem lz390 linker
 rem
-call rt1 %~dps0rt\test\testrld1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testent1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testext1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testext2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testwxt1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testobj1 objhex systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testobj2 objhex mem(49) rmode31 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testprm4 "parm('a, b')" "sysparm(a, b)" trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTRLD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTENT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTEXT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTEXT2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTWXT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTOBJ1 objhex systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTOBJ2 objhex mem(49) rmode31 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTPRM4 "parm('a, b')" "sysparm(a, b)" trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem ez390 emulator
 rem
-call rt7 %~dps0rt\test\testerr4 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testerr5 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt7 %~dps0rt\test\testerr6 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt7 %~dps0rt\test\testerr7 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testins2 trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-copy %~dps0rt\test\testins2.mlc %~dps0rt\test\testasc3.mlc
-call rt1 %~dps0rt\test\testasc3 ascii trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testfp1  trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testdfp1 trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-set DDTODEMO=DEMO\DEMO.390
-call rt1 %~dps0rt\test\testcal1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testcal2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testlnk1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testlod1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testlod2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testxcl3 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testxcl2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testxcl1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcb1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcb2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcb3 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcb4 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcb5 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcb6 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcb7 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcb8 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcb9 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-erase %~dps0rt\test\testdcba.tf2
-erase %~dps0rt\test\testdcba.tf3
-call rt1 %~dps0rt\test\testdcba systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcbb systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcbc ascii systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcbd systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testdcbe ascii systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testeof1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testtim1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testtim2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testecb1 trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmem1 mem(32)      systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmem2 mem(2)       systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmem3 mem(32)      systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testmem4 mem(2)       systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt5 %~dps0rt\test\testtst1 test(sysut1) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-copy %~dps0rt\test\testtst1.mlc %~dps0rt\test\testasc4.mlc
-copy %~dps0rt\test\testtst1.tf1 %~dps0rt\test\testasc4.tf1
-call rt5 %~dps0rt\test\testasc4 test(sysut1) ascii systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testcmd1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testcmd2 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt7 %~dps0rt\test\testdmp1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt7 %~dps0rt\test\testdmp2 dump systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt7 %~dps0rt\test\testdmp3 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testdmp4 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt7 %~dps0rt\test\testdmp5 dump ascii systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testxlt1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testbld1 sys390(rt\test+demo) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testsvc1 trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testipl1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testipl2 ipl(testipl1) sys390(rt\test) systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testzcv1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testspi1 trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\teststa1 trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testctd1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testcfd1 systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testcvb1 trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt1 %~dps0rt\test\testcvbg trace systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rtcomp %~dps0rt\test %~dps0rt\test\save %~dps0rt\dif
+call RT7 %~dps0rt\test\TESTERR4 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTERR5 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT7 %~dps0rt\test\TESTERR6 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT7 %~dps0rt\test\TESTERR7 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTINS2 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+copy %~dps0rt\test\TESTINS2.MLC %~dps0rt\test\TESTASC3.MLC
+call RT1 %~dps0rt\test\TESTASC3 ascii trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTFP1  trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTDFP1 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+set DDTODEMO=demo\DEMO.390
+call RT1 %~dps0rt\test\TESTCAL1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTCAL2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTLNK1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTLOD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTLOD2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTXCL3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTXCL2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTXCL1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCB1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCB2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCB3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCB4 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCB5 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCB6 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCB7 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCB8 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCB9 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+erase %~dps0rt\test\TESTDCBA.TF2
+erase %~dps0rt\test\TESTDCBA.TF3
+call RT1 %~dps0rt\test\TESTDCBA systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCBB systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCBC ascii systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCBD systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTDCBE ascii systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTEOF1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTTIM1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTTIM2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTECB1 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMEM1 mem(32)      systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMEM2 mem(2)       systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMEM3 mem(32)      systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTMEM4 mem(2)       systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT5 %~dps0rt\test\TESTTST1 test(SYSUT1) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+copy %~dps0rt\test\TESTTST1.MLC %~dps0rt\test\TESTASC4.MLC
+copy %~dps0rt\test\TESTTST1.TF1 %~dps0rt\test\TESTASC4.TF1
+call RT5 %~dps0rt\test\TESTASC4 test(SYSUT1) ascii systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTCMD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTCMD2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT7 %~dps0rt\test\TESTDMP1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT7 %~dps0rt\test\TESTDMP2 dump systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT7 %~dps0rt\test\TESTDMP3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTDMP4 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT7 %~dps0rt\test\TESTDMP5 dump ascii systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTXLT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTBLD1 sys390(rt\test+demo) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSVC1 trace systerm(RTTEST) noprotect %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTIPL1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTIPL2 ipl(TESTIPL1) sys390(rt\test) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTZCV1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSPI1 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSTA1 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTCTD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTCFD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTCVB1 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTCVBG trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RTCOMP %~dps0rt\test %~dps0rt\test\save %~dps0rt\dif

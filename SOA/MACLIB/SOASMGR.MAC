@@ -10,14 +10,15 @@
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 * Date   - 01/01/07                                                 *
-.**********************************************************************
-.*  01/05/07 RPI 524 ADD MSGTIME FOR SOA CLIENT SERVER APPLICATIONS 
-.*  01/06/07 RPI 524 ADD SEND/RECEIVE TCPIO LMSG PARM                     
-.**********************************************************************
-.* GENERATE AN SOA SERVER TO HANDLE SERVICES DEFINED USING HOST
-.* AND PORT SPECIFIED.ERVICE REQUEST MESSAGE
-.*  2. SOASPUT - PUT SERVICE RESPONSE MESSAGE
-.**********************************************************************
+**********************************************************************
+*  01/05/07 RPI 524 ADD MSGTIME FOR SOA CLIENT SERVER APPLICATIONS 
+*  01/06/07 RPI 524 ADD SEND/RECEIVE TCPIO LMSG PARM                     
+*  01/22/07 RPI 542 CORRECT R1=ADDR FOR GETMAIN                          
+**********************************************************************
+* GENERATE AN SOA SERVER TO HANDLE SERVICES DEFINED USING HOST
+* AND PORT SPECIFIED.ERVICE REQUEST MESSAGE
+*  2. SOASPUT - PUT SERVICE RESPONSE MESSAGE
+**********************************************************************
 &SERVER  SUBENTRY
          WTO   '&SERVER STARTED'
          COPY  ASMMSP
@@ -28,7 +29,7 @@
          ENDIF
          L     R9,LMAX           R9 = LENGTH OF MSG BUFFER
          GETMAIN RU,LV=(9)
-         LR     R4,R0            R4 = MAX MESSAGE BUFFER
+         LR     R4,R1            R4 = MAX MESSAGE BUFFER     RPI 542
          USING  IHAMSG,R4
          WTOR   '&SERVER REPLY ANY CHAR TO TERMINATE',REPLY,1,ECB
 SERVER_PROCESS_LOOP EQU    *     PROCESS MESSAGES UNTIL CANCELLED

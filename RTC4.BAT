@@ -1,7 +1,7 @@
 rem test and verify asm only
-erase %1.err
-erase %1.bal
-erase %1.obj
-erase %1.prn
-erase %1.tr?
-call %~dps0asm %1 bal notiming %2 %3 %4 %5 %6 %7 %8 %9
+erase %1.ERR
+erase %1.BAL
+erase %1.OBJ
+erase %1.PRN
+erase %1.TR?
+call %~dps0ASM %1 bal notiming %2 %3 %4 %5 %6 %7 %8 %9

@@ -1651,7 +1651,86 @@ set GIT_COMMITTER_DATE=2021-03-21 17:58:00 +0100
 git commit -m "Reconstructed version v1.3.00a of z390 committed on behalf of Don Higgins"
 git tag -a v1.3.00a -m "Reconstructed version v1.3.00a of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.3.01
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Add to .gitignore file:
+# Assembler/emulator input stuff
+# **/*.pl  --> perl script
+
+==> Stage files for V1.3.01
+git add ASMLG.BAT
+git add Doc/readme.rtf
+git add Doc/readme.txt
+git rm  README.TXT
+git add RT.BAT
+git add RT1.BAT
+git add RT2.BAT
+git add RT5.BAT
+git add RT6.BAT
+git add RT7.BAT
+git add RTC4.BAT
+git add RTC6.BAT
+git add RTCICS.BAT
+git add RTCICS1.BAT
+git add RTCLEAN.BAT
+git add RTCOMP.BAT
+git add RTDEMO.BAT
+git add RTDEMO1.BAT
+git add RTGUAM.BAT
+git add RTLINK.BAT
+git add RTLINK1.BAT
+git add RTLIST.BAT
+git add RTMVS.BAT
+git add RTMVS1.BAT
+git add RTTEST.BAT
+git add RTTEST1.BAT
+git add SOA/DEMO/CLEANUP.BAT
+git add SOA/DEMO/DEMOBLD.BAT
+git add SOA/DEMO/DEMORUN.BAT
+git add SOA/DEMO/DEMOSOA.BAT
+git add SOA/DEMO/DEMOSOA.MLC
+git add SOA/DEMO/DEMOSTD.BAT
+git add SOA/DEMO/DEMOSTOP.BAT
+git add SOA/MACLIB/SOACMGR.MAC
+git add SOA/MACLIB/SOAGEN.MAC
+git add SOA/MACLIB/SOASMGR.MAC
+git add SOA/README.TXT
+git add bmk/BMKSAVE.BAT
+git add bmk/BMKTIME.BAT
+git add bmk/INSTTIME.BAT
+git add bmk/INSTTIME.TXT
+git add cics/CICS.MLC
+git add cics/DFHEAI0.MLC
+git add demo.bat
+git add mac/GETMAIN.MAC
+git add mac/STORAGE.MAC
+git add src/az390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add src/z390.java
+git add RTCLEAN1.BAT
+git add RTSOA.BAT
+git add RTSOA1.BAT
+git add Z390.INI
+git add cmd.pl
+git add dos.pl
+git add soa/demo/DEMORUNC.BAT
+git add soa/demo/DEMORUNS.BAT
+git add z390.pl
+
+==> Create commit for V1.3.01
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2007-02-08 14:24:00 -0500
+set GIT_COMMITTER_DATE=2021-03-21 18:07:00 +0100
+git commit -m "Reconstructed version v1.3.01 of z390 committed on behalf of Don Higgins"
+git tag -a v1.3.01 -m "Reconstructed version v1.3.01 of z390 committed on behalf of Don Higgins"
 
 
 

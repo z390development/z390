@@ -1072,7 +1072,7 @@ private void open_files(){
 	 */
 		tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tra_type;
        	try {
-       		obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type,"rw");
+       		obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type,"rw"); 
        	} catch (IOException e){
        		abort_error(4,"I/O error on obj open - " + e.toString());
        	}

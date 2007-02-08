@@ -1,4 +1,4 @@
-z390 V1.3.00 Portable Mainframe Assembler
+z390 V1.3.01 Portable Mainframe Assembler
 Copyright 2007 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
@@ -36,8 +36,6 @@ A TPUT and TGET macro based demo TN3270 application to update and display name, 
 
 An EXEC CICS compatible assembler application to update and display name, address, and numeric zip fields on screen can be assembled, linked, and executed.  Use the command RTCICS.BAT to assemble and link all the required EXEC CICS programs.  Use the command CICS PARM(GUI6) to start the z390 EXEC CICS assembler command processor and execute the transaction program TESTGUI6 as the first transaction.  The first GUI window to come up will be the TESTGUI6 application screen.  After exiting the application via PF3, the window will switch from screen view to MCS console view and prompt for the next EXEC CICS transaction or PF3 to exit CICS.
 
-
-
 For latest Windows and Linux downloads and additional information about z390 and the open source project visit:
 
 www.z390.org 
@@ -46,7 +44,7 @@ z390 Windows 2000 and XP installation instructions:
 
 1. Download latest z390 InstallShield setup.exe file from www.z390.org 
 2. Run z390 setup.exe to install it on Windows XP or 2000 system
-3. Download and install Java 1.5.0 runtime update 9+ from: 
+3. Download and install Java 1.5.0 runtime update 10 from: 
     http://java.sun.com/j2se/
 4. Remove old versions of J2SE runtime such as 1.4.2 etc.
 5. Double click on the z390 desktop icon to start z390 GUI
@@ -60,9 +58,9 @@ z390 Windows 2000 and XP installation instructions:
         5)  DEMO.LST – linker listing
         6)  DEMO.LOG – execution log including WTO display message
     d. Optional downloads from www.z390.org for use with z390 install include the following:
-        1)  Public domain MVS 3.8J macro library with associated demo and test programs
-        2)  Regression tests for all z390 components
-        3)  Linux Pearle script and modifications to tz390.java for case sensitive file names
+        1) Regression tests for all z390 components - these tests have been successfully run
+              on both Windows XP and Ubuntu Linux 6.06 LTS using J2RE 1.5.0_10.           
+        2)  Public domain MVS 3.8J macro library with associated demo and test programs
 
 6. Click on help menu for links to additional information.
 

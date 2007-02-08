@@ -5,6 +5,7 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 05/07/06 RPI 308 - ADD INITIAL EXEC CICS SUPPORT COMMAND PROCESSOR 
+.* 02/02/07 RPI 542 - CORRECT GETMAIN OUTPUT REG R1 VS R0             
 .*********************************************************************
 .* CICS.390 z390 EXEC CICS assembler command processor performs the
 .* the following functions:                                            
@@ -31,7 +32,7 @@ CICS     SUBENTRY
          GETMAIN R,LV=EIBLENG   
          LTR   15,15
          BNZ   ERR_EIB2          ERROR - EIB GETMAIN FAILED
-         LR    R4,R0
+         LR    R4,R1                                        RPI 542
          ST    R4,ZCVTEIBP       SET EIB IN ZCVT FIRST TIME
          USING DFHEIBLK,R4     
          LH    1,=AL2(DFHEICAL)  GET COMMAREA LENGTH FROM DFHEICAD
@@ -45,7 +46,7 @@ CICS     SUBENTRY
          GETMAIN R,LV=(1)
          LTR   15,15
          BNZ   ERR_CA2           ERROR - CA GETMAIN FAILED
-         ST    0,ZCVTCAP         SET CAP IN ZCVT FIRST TIME
+         ST    1,ZCVTCAP         SET CAP IN ZCVT FIRST TIME  RPI 542
 *
 * ISSUE CICS STARTUP MESSAGE IN GUAM MCS CONSOLE WINDOW VIEW
 *

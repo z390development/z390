@@ -4,6 +4,6 @@ rem rt1 - assemble, link, and execute with notiming
 rem rt6 - assemble and link with notiming
 rem rtcomp - compare mvs\test files with mvs\save files to build mvs\dif files
 rem rtlist - display mvs\dif dir in descending size order
-call rtmvs1 %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rtlist %~dps0mvs\dif 
+call RTMVS1 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RTLIST %~dps0mvs\dif 
 rem end of rtmvs.bat

@@ -115,6 +115,11 @@ public  class  tz390 {
     * 12/20/06 RPI 406 correct opcode types and add LFAS, SRNMT
     * 01/16/07 RPI 536 add codes 3,4 for infinity and Nan to dfp_cf5 table
     * 01/19/07 RPI 538 add default option PROTECT to prevent PSA mods
+    * 01/30/07 RPI 532 change Linux editor to gedit, fix separators
+    *          add option INSTALL(path) to override current dir at startup
+    * 02/02/07 RPI 546 fix get_file_name to handle relative path 
+    *          overrides using dir_cur override to parm_dir.
+    *          and replace \ with / file separator if Linux
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -123,7 +128,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.00a";  //dsh
+    String version    = "V1.3.01";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -145,6 +150,7 @@ public  class  tz390 {
     boolean opt_reformat = false;  // reformat BAL statements
     boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
     String  opt_ipl      = "";    // program to execute at startup
+    String  opt_install_loc = ""; // optional install location for source debugging
     boolean opt_list     = true;  // generate LOG file
     boolean opt_listcall = true;  // list macro calls
     boolean opt_listfile = true;  // list each file path
@@ -162,7 +168,7 @@ public  class  tz390 {
     boolean opt_rmode31  = false; // link to load above line
     boolean opt_stats    = true;  // show statistics on LOG file
     String  opt_sysparm  = "";    // user parm string for mz390  
-    String  opt_systerm  = "";    // mod error file name
+    String  opt_systerm  = "";    // mod error file name with explict or SYSERR path
     boolean opt_test     = false; // invoke interactive test cmds
     boolean opt_time     = true;  // abend 422 if out of time TIME (sec)
     boolean opt_timing   = true;  // display current date, time, rate
@@ -3472,6 +3478,9 @@ public void init_tables(){
 	/*
 	 * initialize dir_cur and tables
 	 */
+	if (opt_install_loc.length() > 0){
+		System.setProperty("user.dir",opt_install_loc); // RPI 532
+	}
 	set_dir_cur();  //RPI168
 	init_os();
 	init_ascii_ebcdic();
@@ -3583,7 +3592,7 @@ public void init_os(){
 		}
 		if (z390_editor == null 
 		    || z390_editor.length() == 0){
-		    z390_editor  = "xemacs"; // RPI 500
+		    z390_editor  = "gedit"; // RPI 500  RPI 532 
 		}
     }
 }
@@ -3668,6 +3677,9 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.length() > 4
          		&& token.substring(0,4).toUpperCase().equals("IPL(")){
         	opt_ipl = token.substring(4,token.length()-1); 
+        } else if (token.length() > 8
+         		&& token.substring(0,8).toUpperCase().equals("INSTALL(")){
+        	opt_install_loc = token.substring(8,token.length()-1); 	
         } else if (token.length() >= 8
           		&& token.substring(0,8).toUpperCase().equals("LISTCALL")){
            	opt_listcall = true;
@@ -3887,8 +3899,8 @@ public void init_options(String[] args,String pgm_type){
         }
         index1++;
     }
-    if (opt_systerm.length() == 0){  // RPI 425
-    	opt_systerm = get_file_name(dir_err,pgm_name,err_type);
+    if (opt_systerm.length() == 0){  // RPI 425 RPI 546
+    	opt_systerm = pgm_name; // RPI 546
     }
 }
 public void open_systerm(String z390_pgm){
@@ -3899,7 +3911,7 @@ public void open_systerm(String z390_pgm){
     if (systerm_file != null)return; // rpi 415
 	systerm_file_name = get_file_name(dir_err,opt_systerm,err_type);
     try {
-        systerm_file = new RandomAccessFile(systerm_file_name,"rw");
+        systerm_file = new RandomAccessFile(systerm_file_name,"rw"); 
         systerm_file.seek(systerm_file.length());
     } catch (Exception e){
     	systerm_file = null;
@@ -4148,7 +4160,12 @@ public String get_file_name(String parm_dir,String parm,String parm_type){
 	   /*
 	    * 1.  Strip long spacey name quotes if found
 	    * 2.  Add directory and type if not specified
+	    * 3.  Replace \ with / if Linux
 	    */
+	        if (z390_os_type == z390_os_linux){ // RPI 532 file separator fix
+	        	parm_dir = parm_dir.replace('\\','/');
+	        	parm     = parm.replace('\\','/');
+	        }
 	   	    String file_name = null;
 	    	if (parm.charAt(0) == '\"' 
 	    		|| parm.charAt(0) == '\''){
@@ -4160,10 +4177,15 @@ public String get_file_name(String parm_dir,String parm,String parm_type){
 	    		parm_dir = parm_dir.concat(File.separator); // RPI 508
 	    	}
 	    	if  (file_name.length() > 0
-	            && file_name.indexOf('\\') == -1
+	            && !file_name.substring(0,1).equals(File.separator) // RPI 532 
 	    		&& file_name.indexOf(':')  == -1
-	    		&& z390_os_type == z390_os_win){  // RPI 499 only on Windows
-	    		file_name = parm_dir.concat(file_name);	 // RPI 508
+	    		){
+	    		if (file_name.indexOf('\\') != -1 // RPI 546
+	    			|| file_name.indexOf('/') != -1){
+	    			file_name = dir_cur.concat(file_name);
+	    		} else {
+	    			file_name = parm_dir.concat(file_name);	 // RPI 508
+	    		}
 	    	}
 	    	int index = file_name.indexOf(".");
 	    	if (index == -1){
@@ -4712,7 +4734,7 @@ public void split_line(String line){  // RPI 313
 		split_label = null;
 	}
 	if (find_parm_match.find()){
-		split_op = find_parm_match.group();
+		split_op = find_parm_match.group().toUpperCase(); // RPI 532 
 		if (find_parm_match.find()){
 			split_parms = line.substring(find_parm_match.start());
 			split_parms_index = find_parm_match.start();

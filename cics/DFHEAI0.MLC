@@ -7,6 +7,7 @@
 .*********************************************************************
 .* 05/05/06 RPI 308 - ADD SUPPORT FOR FIRST EXEC CICS PGM TESTCIC1    
 .* 05/25/06 RPI 317 - EXIT IF NO DSA FOR NON CICS PGM                 
+.* 02/02/07 RPI 542 - CORRECT GETMAIN OUTPUT REG (DELETE LR R1,R0)    
 .*********************************************************************
 .* DFHEAI0 IS DYNAMICALLY LINKED FROM DFHEIENT AT FIRST CSECT
 .* IN EXEC CICS PROGRAM.  DFHEIENT IS INSERTED IF CICS AND PROLOG
@@ -24,7 +25,6 @@ DFHEAI0  CSECT
          GETMAIN RC,LV=(2) 
          LTR   15,15
          BNZ   ERR_DSA        ERROR DSA GETMAIN FAILED
-         LR    1,0
          ST    1,8(13)        SAVE NEW DSA SAVE AREA IN PRIOR SAVE
          ST    13,4(1)        SAVE OLD SAVE AREA IN NEW DSA SAVE 
          LR    13,1                                   

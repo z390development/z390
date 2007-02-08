@@ -264,6 +264,7 @@ public  class  mz390 {
      * 12/31/06 RPI 528 move strip trailing period from replace var to subscript/sublist
      * 01/01/07 RPI 529 issue error for missing var if not asm
      * 01/14/07 RPI 535 prevent trap parsing invalid computed AGO
+     * 02/02/07 RPI 532 force macro file names to uppercase for search
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/

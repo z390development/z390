@@ -15,6 +15,7 @@
 .* 03/14/06 RPI 210 ALLOW LOC=24,(24),31,(31),(24,31)
 .* 04/11/06 RPI 244 ISSUE ERROR FOR UNSUPPORTED KW OPERANDS
 .* 06/03/06 RPI 324 correct register 0 versus 1 for A= store                
+.* 01/23/07 RPI 542 correct output regs r0=len, r1=addr                     
 .*********************************************************************
 &N       GETMAIN &TYPE,     TYPE OF REQUEST R,RC,RU ELSE UNSUPP ERROR  X
                &A=,         ADDR TO STORE ADDR                         X
@@ -121,12 +122,12 @@
 &ABOVE   SETB  0
 .OPTIONS ANOP
          LA    0,B'&ABOVE&COND'
-         SVC   4 GETMAIN R0=(X'02'=AMODE31,X'01'=COND), R1=LEN
+         SVC   4 GMAIN R0=(X'02'=31B,X'01'=COND),R1=LEN OUT(R0=L,R1=A)
          AIF   (&A EQ '').EXIT
          AIF   ('&A'(1,1) EQ '(').AREG
-         ST    0,&A RPI 324
+         ST    1,&A RPI 542
          MEXIT
-.AREG    ST    0,0(&A(1)) RPI 324
+.AREG    ST    1,0(&A(1)) RPI 542
          MEXIT
 .ERR1    MNOTE 12,'GETMAIN LENGTH TOO LONG - &LV'
          MEXIT

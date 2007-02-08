@@ -119,6 +119,7 @@ public  class  z390 extends JApplet
      * 12/01/06 RPI 509 use Monospace font for Windows and Linux
      * 12/01/06 RPI 510 replace NOTEPAD command with EDIT command
      * 01/20/07 RPI 541 correct GUI file selection dialog cancel action
+     * 01/30/07 RPI 532 correct Doc path and cmd.pl path and separator
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -581,7 +582,7 @@ public  class  z390 extends JApplet
 			/*
 			 * Open log file
 			 */ 
-	      if (perm_file_log){
+	      if (perm_file_log){	    	  
 	    	  install_loc = System.getProperty("user.dir");
 			  File temp_file = new File(install_loc);
 			  if (temp_file.isDirectory()){
@@ -589,12 +590,12 @@ public  class  z390 extends JApplet
 			  } else {
 				  abort_error(52,"invalid install directory - " + install_loc);
 			  }
-			  temp_file = new File(install_loc + File.separator + "Doc"); // RPI 499 correct case for Linux
+			  temp_file = new File(install_loc + File.separator + "doc"); // RPI 499 correct case for Linux RPI 532 
 			  if (temp_file.isDirectory()){
 				  install_doc = temp_file.getPath();
 			  } else {
 				  install_doc = install_loc;
-				  put_log("install doc directory not found - " + install_doc + File.separator + "Doc");
+				  put_log("install doc directory not found - " + install_doc + File.separator + "doc");  // RPI 532 
 			  }
 			  log_file_name = tz390.get_file_name(tz390.dir_cur,"z390",tz390.log_type);
 		      try {
@@ -1469,12 +1470,12 @@ public  class  z390 extends JApplet
 	   	    	    if  (cmd_line != null){
 	   	    	        cmd_parms = new String[3];
 	   	    			cmd_parms[0] = tz390.z390_command;
-	   	    			cmd_parms[1] = tz390.jar_file_dir() + "/cmd.pl";
+	   	    			cmd_parms[1] = install_loc + "/cmd.pl"; // RPI 532 
 	   	    			cmd_parms[2] = cmd_line;
 	   	    		} else {
 	   	    			cmd_parms = new String[2];
 	   	    			cmd_parms[0] = tz390.z390_command;
-	   	    		    cmd_parms[1] = tz390.jar_file_dir() + "/cmd.pl";
+	   	    		    cmd_parms[1] = install_loc + "/cmd.pl";// RPI 532 
 	   	    		}
 	   	    	} else {
 	   	    		if  (cmd_line != null){
@@ -1725,7 +1726,7 @@ public  class  z390 extends JApplet
    private void init_z390(String[] args){
 	   /*
 	    * load shared tables and file routines
-	    */
+	    */	 	  
 	   tz390 = new tz390();
 	   tz390.init_tables();
 	   dir_cur_file = new File(tz390.dir_cur); // RPI 309
@@ -3169,8 +3170,8 @@ public  class  z390 extends JApplet
             	        }
                        if  (main_gui){
                        	 if (select_cmd.equals("EDIT")){
-      	     				 if (!tz390.exec_cmd("\"" + tz390.z390_editor + "\" \"" 
-      	     						 + selected_file_name + "\"")){
+      	     				 if (!tz390.exec_cmd(tz390.z390_editor
+      	     						       + " " + selected_file_name)){
    	     				         log_error(19,"start editor failed - " + tz390.z390_editor);
    	     			         }
                        	 }  else if (select_cmd.equals("JOB")){

@@ -106,6 +106,11 @@ public  class  sz390 implements Runnable {
     *          also fix CTD/CFD parm address to match amode
     * 01/06/07 RPI 524 add TCPIO svc x'7C' support
     * 01/16/07 RPI 536 issue RC=4 if CTD for DFP infinity or NAN
+    * 01/22/07 RPI 542 change GETMAIN output regs for 
+    *          compatibility R0=RND LEN, R1=ADDR 
+    * 01/28/06 RPI 545 correct user specified timeout limit on CMDPROC
+    * 02/03/07 RPI 547 close std i/o before stopping command process
+    * 02/08/07 RPI 532 fix dcb file separator if linux
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -250,7 +255,7 @@ public  class  sz390 implements Runnable {
     boolean[]           cmd_proc_running  = (boolean[])Array.newInstance(boolean.class,max_cmd_proc);
     int[]               cmd_proc_rc       = (int[])Array.newInstance(int.class,max_cmd_proc);
     int[]               cmd_proc_io       = (int[])Array.newInstance(int.class,max_cmd_proc);
-    long[]              cmd_proc_start    = (long[])Array.newInstance(long.class,max_cmd_proc);
+    long[]              cmd_proc_start_time = (long[])Array.newInstance(long.class,max_cmd_proc); // RPI 545
     String[]            cmd_error_msg     = new String[max_cmd_proc];
 	String[]            cmd_output_msg    = new String[max_cmd_proc];
 	int tot_cmd = 0; //max cmd processes started;
@@ -909,7 +914,10 @@ public void init_test(){
    		  abort_error(56,"test error in expression pattern - " + e.toString());
    	}
 	if (tz390.test_ddname != null){
-		test_file_name = get_ascii_env_var_string(tz390.test_ddname);
+		 test_file_name = get_ascii_env_var_string(tz390.test_ddname);
+         if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
+        	test_file_name = test_file_name.replace('\\','/');
+         }
          try {
         	 test_cmd_file = new BufferedReader(new FileReader(test_file_name));
          } catch (Exception e){
@@ -1088,7 +1096,7 @@ private void svc_load_390(){
     pz390.reg.putInt(pz390.r1,load_code_len);
     svc_getmain();
     if (pz390.reg.getInt(pz390.r15) == 0){
-       load_code_load = pz390.reg.getInt(pz390.r0);
+       load_code_load = pz390.reg.getInt(pz390.r1); // RPI 542
 	   tz390.systerm_io++;
        z390_file.read(pz390.mem_byte,load_code_load,load_code_len);
        load_code_ent = load_code_ent + load_code_load; 
@@ -1176,7 +1184,7 @@ private void svc_load_file(){
     pz390.reg.putInt(pz390.r1,load_code_len);
     svc_getmain();
     if (pz390.reg.getInt(pz390.r15) == 0){
-       load_code_load = pz390.reg.getInt(pz390.r0);
+       load_code_load = pz390.reg.getInt(pz390.r1);  // RPI 542
        load_code_ent  = -1; // no entry for files;
        tz390.systerm_io++;
        z390_file.read(pz390.mem_byte,load_code_load,load_code_len);
@@ -1261,6 +1269,9 @@ private boolean get_load_dsn(){
  			return false;
  		}
  	}
+    if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
+    	load_dsn = load_dsn.replace('\\','/');
+    }
  	int index = load_dsn.indexOf(";");
  	if (index != -1){ // dsn is dir list vs file spec
         load_pgm_dir = load_dsn;
@@ -1453,8 +1464,9 @@ private void svc_getmain(){
 	 *   2.  R0 = options
 	 *         bit 0 allocate memory above the line
 	 * Output:    
-	 *   1.  set r0 to address of area
-	 *   2.  set r15 to 0 of ok, else nz
+	 *   1.  Set r0 to length of allocated area rounded to *8 // RPI 542 (was address)
+	 *   2.  set r1 to address of area                        // RPI 542 not set previously                      
+	 *   3.  set r15 to 0 of ok, else nz
 	 * Notes:
 	 *   1.  Use TRACEMEM option to trace FQE's 
 	 *   2.  If no 31 bit memory then allocate from
@@ -1484,7 +1496,8 @@ private void svc_getmain(){
 		if (cur_fqe_len >= req_len){
 			// allocate from end of cur_fqe
 			cur_fqe_len = cur_fqe_len - req_len;
-			pz390.reg.putInt(pz390.r0,cur_fqe + cur_fqe_len);
+			pz390.reg.putInt(pz390.r0,req_len);               // RPI 542
+			pz390.reg.putInt(pz390.r1,cur_fqe + cur_fqe_len); // RPI 542
 			if (tz390.opt_tracemem){
 				trace_mem("GETMAIN ",cur_fqe+cur_fqe_len,req_len,0);
 			}
@@ -2201,10 +2214,17 @@ private String get_dcb_file_name(){
 	String file_name = "";
 	int dcb_dsn = pz390.mem.getInt(cur_dcb_addr + dcb_dsnam);
 	if (dcb_dsn > 0){
-        return get_ascii_var_string(dcb_dsn,max_lsn_spec).trim();  
+        file_name = get_ascii_var_string(dcb_dsn,max_lsn_spec).trim();  
+        if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
+        	file_name = file_name.replace('\\','/');
+        }
+        return file_name;
 	} else {
 		file_name = get_ascii_env_var_string(tiot_ddnam[cur_tiot_index]);
 		if (file_name != null && file_name.length() > 0){
+	        if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
+	        	file_name = file_name.replace('\\','/');
+	        }
 			return file_name;
 		} else {
 			dcb_synad_error(62,"ddname=" + tiot_ddnam[cur_tiot_index] + " not found");
@@ -2883,7 +2903,6 @@ private void svc_cmd(){
 		cmd_startup(cmd_id);
 		if (tz390.opt_time){
 			pz390.cur_date = new Date();
-			cmd_proc_start[cmd_id] = pz390.cur_date.getTime();
 		}
 		cmd_proc_running[cmd_id] = true;
 		pz390.reg.putInt(pz390.r15,0);
@@ -2914,14 +2933,13 @@ private void svc_cmd(){
 		// r15 = 16 i/o error during operation see log
 		try {
 			int cmd_read_wait = pz390.reg.getInt(pz390.r3);
-			long cmd_read_ms   = 0;
 			String cmd_read_line = cmd_get_queue(cmd_id);
-			while (cmd_read_line == null
+		    cmd_proc_start_time[cmd_id] = System.currentTimeMillis(); // RPI 545
+		    while (cmd_read_line == null
 					&& cmd_proc_running[cmd_id]
 					&& cmd_proc_rc(cmd_id) == -1
-					&& cmd_read_ms < cmd_read_wait){
+					&& System.currentTimeMillis() - cmd_proc_start_time[cmd_id] < cmd_read_wait){
 				sleep_now(tz390.monitor_wait);
-				cmd_read_ms = System.currentTimeMillis() - cmd_proc_start[cmd_id];
 				cmd_read_line = cmd_get_queue(cmd_id);
 			}
 			if  (cmd_read_line != null){
@@ -3072,6 +3090,9 @@ public void cmd_cancel(int cmd_id){
      */
    	if  (cmd_proc[cmd_id] != null){
    	    try {
+   	        cmd_input_writer[cmd_id].close();  // RPI 547
+   	   	    cmd_output_reader[cmd_id].close(); // RPI 547
+   	   	    cmd_error_reader[cmd_id].close();  // RPI 547
    	    	cmd_proc[cmd_id].destroy();	    	
     	} catch (Exception e){
            	cmd_proc[cmd_id] = null; 

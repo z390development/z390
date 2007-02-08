@@ -1,16 +1,22 @@
 rem compare %1 test files with %2 save files and gen %3 dif files
-dir %1 > %~dps0rtgendr1.dat
-call mac linklib\rtgendir sysparm(%~dps0rtgendr1)
-if errorlevel 1 pause error in rtgendir processing %~dps0rtgendr1.dat
-dir %2 > %~dps0rtgendr2.dat
-call mac linklib\rtgendir sysparm(%~dps0rtgendr2)
-if errorlevel 1 pause error in rtgendir processing %~dps0rtgendr2.dat
-copy %~dps0rtgendr1.pch+%~dps0rtgendr2.pch %~dps0rtgendr3.dat
-if errorlevel 1 pause error on copy for %~dps0rtgendr1+%~dps0rtgendr2 to %~dps0rtgendr3.dat
-sort < %~dps0rtgendr3.dat > %~dps0rtgencmp.dat
-if errorlevel 1 pause error on sort of %~dps0rtgendr3.dat to %~dps0rtgencmp.dat
-call mac linklib\rtgencmp sysparm(%~dps0rtgencmp)
-if errorlevel 1 pause error in rtgencmp processing %~dps0rtgencmp.dat
-erase  %~dps0rtgencmp.bat
-rename %~dps0rtgencmp.pch rtgencmp.bat 
-call %~dps0rtgencmp.bat %1 %2 %3
+if exist /usr/local/lib/z390/z390.jar goto linux
+:windows
+dir %1 > %~dps0RTGENDR1.DAT
+call mac linklib\RTGENDIR sysparm(%~dps0RTGENDR1)
+if errorlevel 1 pause error in rtgendir processing %~dps0RTGENDR1.DAT
+dir %2 > %~dps0RTGENDR2.DAT
+call mac linklib\RTGENDIR sysparm(%~dps0RTGENDR2)
+if errorlevel 1 pause error in rtgendir processing %~dps0RTGENDR2.DAT
+copy %~dps0RTGENDR1.pch+%~dps0RTGENDR2.PCH %~dps0RTGENDR3.DAT
+if errorlevel 1 pause error on copy for %~dps0RTGENDR1+%~dps0RTGENDR2 to %~dps0RTGENDR3.DAT
+sort < %~dps0RTGENDR3.DAT > %~dps0RTGENCMP.DAT
+if errorlevel 1 pause error on sort of %~dps0RTGENDR3.DAT to %~dps0RTGENCMP.DAT
+call mac linklib\RTGENCMP sysparm(%~dps0RTGENCMP)
+if errorlevel 1 pause error in rtgencmp processing %~dps0RTGENCMP.DAT
+erase  %~dps0RTGENCMP.BAT
+rename %~dps0RTGENCMP.PCH RTGENCMP.BAT 
+call %~dps0RTGENCMP.BAT %1 %2 %3
+goto end
+:linux
+diff %1 %2 %3/DIFF.TXT
+:end

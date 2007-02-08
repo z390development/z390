@@ -1,17 +1,17 @@
 rem asmlg assemble, link, and go from mlc to 390 execution
-erase %1.bal
-erase %1.prn
-erase %1.obj
-erase %1.lst
+erase %1.BAL
+erase %1.PRN
+erase %1.OBJ
+erase %1.LST
 erase %1.390
-erase %1.log
-erase %1.err
-erase %1.tr*
-call %~dps0mz390 %1  sysmac(%~dps0mac+.) syscpy(%~dps0mac+.) %2 %3 %4 %5 %6 %7 %8 %9
+erase %1.LOG
+erase %1.ERR
+erase %1.TR*
+call %~dps0MZ390 %1  sysmac(%~dps0mac+.) syscpy(%~dps0mac+.) %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto mzerr
-call %~dps0lz390 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0LZ390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto lzerr
-call %~dps0ez390 %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0EZ390 %1 %2 %3 %4 %5 %6 %7 %8 %9
 if errorlevel 5 goto ezerr
 goto end
 :mzerr

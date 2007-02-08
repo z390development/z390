@@ -191,6 +191,7 @@ public class pz390 {
 	 * 01/19/07 RPI 538 fix TEST single step through EX target.
 	 * 01/19/07 RPI 540 fix DLG to prevent erroneous divide by 0 trap
 	 *          and optimizie DLG, DLGR by removing work reg copy
+	 * 01/23/07 RPI 544 corect trace format 183 for DLG, MLG to show r1+1          
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -13894,7 +13895,7 @@ public class pz390 {
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 					+ get_long_hex(reg.getLong(rf1))
 					+ " R" + tz390.get_hex(mf1+1, 1) + "="
-					+ get_long_hex(reg.getLong(rf1))
+					+ get_long_hex(reg.getLong(rf1+8)) // RPI 544
 					+ " S2("
 					+ tz390.get_hex(xbd2_loc, 8) + ")="
 					+ bytes_to_hex(mem, xbd2_loc, 8, 0);

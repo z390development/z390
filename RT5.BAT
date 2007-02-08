@@ -1,5 +1,5 @@
 REM test and verify file i/o from sysut1=%1.tf1 and sysut2=%2.tf2
-set sysut1=%1.tf1
-set sysut2=%1.tf2
-set sysout=%1.tf3
-call %~dps0asmlg %1 bal notiming %2 %3 %4 %5 %6 %7 %8 %9
+set SYSUT1=%1.TF1
+set SYSUT2=%1.TF2
+set SYSOUT=%1.TF3
+call %~dps0ASMLG %1 bal notiming %2 %3 %4 %5 %6 %7 %8 %9
