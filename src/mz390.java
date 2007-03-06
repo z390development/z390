@@ -36,7 +36,7 @@ public  class  mz390 {
 	 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 	 
 	 mz390 is the macro processor component of z390 which can be called from
-	 z390 gui interface or from command line to read mlc macro source and
+	 z390 GUI interface or from command line to read mlc macro source and
 	 any referenced macros and copybooks to generate expanded BAL source file.
 	 
 	 ****************************************************
@@ -265,6 +265,9 @@ public  class  mz390 {
      * 01/01/07 RPI 529 issue error for missing var if not asm
      * 01/14/07 RPI 535 prevent trap parsing invalid computed AGO
      * 02/02/07 RPI 532 force macro file names to uppercase for search
+     * 02/16/07 RPI 559 correct paser to support array subscript starting with N'
+     * 02/17/07 RPI 549 show '=' for generated bal copybook lines and show line_id=(FID/FLN)GSN
+     * 03/05/07 RPI 564 correct computed AGO support for branch to last label
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -409,6 +412,8 @@ public  class  mz390 {
 	int[]    mac_file_num = null;  // mac file index
 	int tot_mac_file_name = 0;
 	String[] mac_file_path = null;
+	char[]   mac_file_type = null; // ' ' - mlc, '+' - mac, '=' - copy RPI 549
+	boolean  skip_store = false;
 	/*
 	 * macro labels for loaded mlc and macros
 	 */
@@ -701,7 +706,7 @@ public  class  mz390 {
 			1, 3, 3, 1, 0, 1, 1, 8, 1, 3, 1, 1, 1, 1, 3, // 1 +-  prev add/sub
 			2, 2, 3, 2, 0, 2, 2, 8, 2, 3, 2, 2, 2, 2, 3, // 2 * / prev mpy/div  RPI 214
 			3, 3, 3, 4, 3, 0, 3, 3, 0, 3, 3, 3, 3, 3, 3, // 3 (   prev open (...) RPI 274
-			3, 3, 3,11, 0, 0, 0, 8,11, 0, 3, 3, 3, 3, 0, // 4 )   prev var subscript
+			3, 3, 3,11, 3, 3, 3, 8,11, 3, 3, 3, 3, 3, 3, // 4 )   prev var subscript RPI 559
 			0, 0, 3, 5, 5, 5, 5, 8, 0, 3, 0, 0, 0, 0, 3, // 5 .   prev concat
 			3, 3, 3, 6, 3, 6, 3, 8, 3, 3, 3, 3, 3, 3, 3, // 6 ~   prev terminator
 			3, 3, 3, 7, 3, 7, 7, 8, 0, 3, 7, 7, 7, 7, 3, // 7 LL  logical compares //RPI144 (was 1,2 now 3,3)
@@ -1291,7 +1296,7 @@ public  class  mz390 {
 			if   (bal_line != null){
 				if (tz390.opt_asm){
 					if (bal_op != null && bal_op.equals("END")){
-						if (tz390.opt_asm && tz390.opt_bal){
+						if (tz390.opt_asm){ // RPI 549
 							end_found = true;
 							put_stats(); // RPI 425
 						}
@@ -1412,7 +1417,7 @@ public  class  mz390 {
 			if (tz390.opt_tracem){
 				tz390.put_trace("LOADING INLINE MACRO");
 			}
-			load_macro_mend_level = 1; // macro statment read inline
+			load_macro_mend_level = 1; // macro statement read inline
 			load_mac_inline_end = mac_name_line_end[mac_name_index];
 			load_proto_type = false;
 			break;
@@ -1428,7 +1433,7 @@ public  class  mz390 {
 			if (load_type != load_mac_inline
 					&& (mac_line.length() < 2
 							|| !mac_line.substring(0,2).equals(".*"))
-			){
+			   ){
 				store_mac_line(); // RPI 273 update now for any cont. error
 			}
 			if (mac_op != null && mac_op.length() > 0){
@@ -1446,7 +1451,7 @@ public  class  mz390 {
 							load_macro_label_sym();
 						}
 					} else if (load_macro_mend_level == 0){
-						log_error(148,"macro statment preceeding MACRO " + mac_line);
+						log_error(148,"macro statement preceeding MACRO " + mac_line);
 					}
 					if (mac_op.equals("MEND")){
 						load_macro_mend_level--;
@@ -1827,9 +1832,18 @@ public  class  mz390 {
 					abort_error(172,"key search table exceeded adding " + mac_file_key);
 				}
 				mac_file_path[cur_mac_file_num] = mac_file_key;
+				int index_sfx = mac_file_key.indexOf('.');
+				if (index_sfx > 0 && mac_file_key.substring(index_sfx).toUpperCase().equals(tz390.cpy_type)){
+					mac_file_type[cur_mac_file_num] = '='; // RPI 549
+				} else {
+					if (cur_mac_file_num > 0){
+						mac_file_type[cur_mac_file_num] = '+'; // RPI 549
+					} else {
+						mac_file_type[cur_mac_file_num] = ' '; // RPI 549
+					}
+				}
 			}
 		}
-		mac_file_num[cur_mac_file] = cur_mac_file_num;
 	}
 	private void add_mac_label(int mac_index
 			,String mac_label, int lab_line){
@@ -1874,7 +1888,14 @@ public  class  mz390 {
 			if (mac_lab_index[index] <= 0){
 				int old_mac_line_index = mac_line_index;
 				mac_line_index = -mac_lab_index[index];
-				create_mnote(4,"Macro " + mac_name[mac_index] + " undefined " + mac_lab_name[index] + " at line " + mac_file_line_num[mac_line_index]);
+				create_mnote(4,"Macro " + mac_name[mac_index] 
+				             + " undefined " + mac_lab_name[index]
+                             + " at "  + tz390.get_cur_bal_line_id(mac_file_num[mac_line_index],
+                            		                               mac_file_line_num[mac_line_index],
+                            		                               tz390.cur_bal_line_num,
+                            		                               mac_call_level,
+                            		                               mac_file_type[mac_file_num[mac_line_index]])
+                             );
 				mac_line_index = old_mac_line_index;
 			}
 			index++;
@@ -1969,7 +1990,11 @@ public  class  mz390 {
 		 *     for use by log_error
 		 * 2.  update &SYSSTMT
 		 */  
-		mac_file_line[mac_line_index]     = mac_line;
+		if (skip_store){
+			skip_store = false;
+			return;
+		}
+		mac_file_line[mac_line_index] = mac_line;
 		mac_file_num[mac_line_index] = cur_mac_file_num;
 		mac_file_line_num[mac_line_index] = cur_mac_line_num;
 		bal_xref_index = mac_line_index;
@@ -2060,9 +2085,9 @@ public  class  mz390 {
 		/*
 		 * open copy file specified in mac_parms
 		 * Notes:
-		 *   1.  ignore error duing MLC loading and
-		 *       issue error on copy file not found
-		 *       if not loading MLC.
+		 *   1.  Expand during MLC and macro loads
+		 *   2.  Issue error on copy file not found
+		 *       if not loading MLC
 		 */
 		String new_mac_name = null;
 		cur_mac_file++;
@@ -2087,6 +2112,8 @@ public  class  mz390 {
 		switch (load_type){ // RPI 300
 		case 0: // load_mlc
 		case 1: // load_mac_file
+			store_mac_line();  // RPI 549
+			skip_store = true; // RPI 549
 			mac_file[cur_mac_file] = new File(new_mac_name);
 			try {
 				mac_file_buff[cur_mac_file] = new BufferedReader(new FileReader(mac_file[cur_mac_file]));
@@ -2094,6 +2121,7 @@ public  class  mz390 {
 				gbl_setc[gbl_syslib_index] = sys_dsn;
 				gbl_setc[gbl_syslib_index+1] = sys_mem;
 				gbl_setc[gbl_syslib_index+2] = sys_vol;
+				mac_file_cur_file_num[cur_mac_file - 1] = cur_mac_file_num;  // RPI 549
 				set_mac_file_num();
 				mac_file_cur_line_num[cur_mac_file - 1] = cur_mac_line_num;
 				cur_mac_line_num = 0;
@@ -2148,9 +2176,15 @@ public  class  mz390 {
 			&& !bal_eof){
 			call_az390_pass_bal_line(text_line); // RPI 415
 		}
-		tz390.inc_cur_bal_line_num(text_line);
 		if (tz390.opt_tracem && text_line != null){
-			tz390.put_trace(trace_pfx + tz390.get_cur_bal_line_num(tz390.cur_bal_line_num,mac_call_level) + text_line);
+			tz390.put_trace(trace_pfx 
+				+ tz390.get_cur_bal_line_id(mac_file_num[mac_line_index],
+						                    mac_file_line_num[mac_line_index],
+						                    tz390.
+						                    cur_bal_line_num,
+						                    mac_call_level,
+						                    mac_file_type[mac_file_num[mac_line_index]]) 
+						                  + text_line); // RPI 549
 		}
 		if (!tz390.opt_bal){
 			return;
@@ -2183,7 +2217,7 @@ public  class  mz390 {
 		} else {
 			cur_mac_name = null;
 		}
-		az390.pass_bal_line(text_line,cur_mac_name,mac_file_num[bal_xref_index],mac_file_line_num[bal_xref_index]);
+		az390.pass_bal_line(text_line,cur_mac_name,mac_file_type[mac_file_num[bal_xref_index]],mac_file_num[bal_xref_index],mac_file_line_num[bal_xref_index]); // RPI 549
 		if (az390.pass_bal_eof){
 			bal_eof = true;
 		}
@@ -2578,7 +2612,7 @@ public  class  mz390 {
 							}
 							// store mac line index in 
 							// ago gbla array
-							gbl_seta[ago_gbla_index + 1 + index] = ago_line_index;
+							gbl_seta[ago_gbla_index + 1 + index] = ago_line_index; 
 							if (tz390.opt_tracem){
 								// store ago label in 
 								// ago setc array if tracem or tracep
@@ -2595,7 +2629,7 @@ public  class  mz390 {
                                 } else {
 								    gbl_seta[ago_gbla_index] = -1;
                                 }
-                                gbl_seta[ago_gbla_index+1] = index;
+                                gbl_seta[ago_gbla_index+1] = index; // dshx RPI 564
                                 tot_gbl_seta = tot_gbl_seta + 2 + index;
                                 // add key index to retrieve ago arrays 
                                 // for reuse with or without pseudo code
@@ -2859,7 +2893,7 @@ public  class  mz390 {
 		case 224:  // COPY (copy to bal and issue error if not found) RPI 300
 			bal_op_ok = true;
 			bal_parms = replace_vars(bal_parms,true);
-			put_bal_line(bal_line);
+			put_bal_line(bal_line); 
 			mac_parms = bal_parms;
 			load_type = load_mac_exec;
 			open_mac_copy_file(); // issue error if not found
@@ -6503,6 +6537,7 @@ public  class  mz390 {
 		mac_file_cur_line_num = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
 		mac_file_errors       = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
 		mac_file_path         = new String[tz390.opt_maxfile];
+		mac_file_type         = new char[tz390.opt_maxfile]; // RPI 549
 		mac_name              = new String[tz390.opt_maxfile];
 		mac_name_line_start   =(int[])Array.newInstance(int.class,tz390.opt_maxfile);
 		mac_name_line_end   =(int[])Array.newInstance(int.class,tz390.opt_maxfile);
@@ -7088,6 +7123,7 @@ public  class  mz390 {
 		 *     from mz390 and lookahead phase of az390
 		 *     for use in file xref at end of PRN..
 		 */
+		String  stats_pfx = "MZ390I ";
 		boolean save_opt_con = tz390.opt_con;
 		if (tz390.opt_bal || tz390.opt_asm){ // RPI 453
 			tz390.opt_con = false;
@@ -7096,55 +7132,55 @@ public  class  mz390 {
 		if  (tz390.opt_stats){ // RPI 453
 			log_to_bal = true;
             put_copyright(); // RPI 453
-			put_log("Stats total MLC/MAC loaded  = " + tot_mac_line);
-			put_log("Stats total BAL output lines= " + tot_bal_line);
+			put_log(stats_pfx + "total MLC/MAC loaded  = " + tot_mac_line);
+			put_log(stats_pfx + "total BAL output lines= " + tot_bal_line);
 			if (tot_aread_io + tot_punch_io > 0){
-				put_log("Stats total AREAD input     = " + tot_aread_io);
-				put_log("Stats total PUNCH output    = " + tot_punch_io);
+				put_log(stats_pfx + "total AREAD input     = " + tot_aread_io);
+				put_log(stats_pfx + "total PUNCH output    = " + tot_punch_io);
 			}
-			put_log("Stats total BAL instructions= " + tot_ins);
-			put_log("Stats total macros          = " + tot_mac_name);
-			put_log("Stats total macro loads     = " + tot_mac_load);
-			put_log("Stats total macro calls     = " + tot_mac_call);	
-			put_log("Stats total global set names= " + tot_gbl_name);
-			put_log("Stats tot global seta cells = " + tot_gbl_seta);
-			put_log("Stats tot global setb cells = " + tot_gbl_setb);
-			put_log("Stats tot global setc cells = " + tot_gbl_setc);
-			put_log("Stats max local pos parms   = " + hwm_pos_parm);
-			put_log("Stats max local key parms   = " + hwm_kwd_parm);
-			put_log("Stats max local set names   = " + hwm_lcl_name);
-			put_log("Stats max local seta cells  = " + hwm_lcl_seta);
-			put_log("Stats max local setb cells  = " + hwm_lcl_setb);
-			put_log("Stats max local setc cells  = " + hwm_lcl_setc);
-			put_log("Stats total array expansions= " + tot_expand);
-			put_log("Stats total Keys            = " + tz390.tot_key);
-			put_log("Stats Key searches          = " + tz390.tot_key_search);
+			put_log(stats_pfx + "total BAL instructions= " + tot_ins);
+			put_log(stats_pfx + "total macros          = " + tot_mac_name);
+			put_log(stats_pfx + "total macro loads     = " + tot_mac_load);
+			put_log(stats_pfx + "total macro calls     = " + tot_mac_call);	
+			put_log(stats_pfx + "total global set names= " + tot_gbl_name);
+			put_log(stats_pfx + "tot global seta cells = " + tot_gbl_seta);
+			put_log(stats_pfx + "tot global setb cells = " + tot_gbl_setb);
+			put_log(stats_pfx + "tot global setc cells = " + tot_gbl_setc);
+			put_log(stats_pfx + "max local pos parms   = " + hwm_pos_parm);
+			put_log(stats_pfx + "max local key parms   = " + hwm_kwd_parm);
+			put_log(stats_pfx + "max local set names   = " + hwm_lcl_name);
+			put_log(stats_pfx + "max local seta cells  = " + hwm_lcl_seta);
+			put_log(stats_pfx + "max local setb cells  = " + hwm_lcl_setb);
+			put_log(stats_pfx + "max local setc cells  = " + hwm_lcl_setc);
+			put_log(stats_pfx + "total array expansions= " + tot_expand);
+			put_log(stats_pfx + "total Keys            = " + tz390.tot_key);
+			put_log(stats_pfx + "Key searches          = " + tz390.tot_key_search);
 			if (tz390.tot_key_search > 0){
 				tz390.avg_key_comp = tz390.tot_key_comp/tz390.tot_key_search;
 			}
-			put_log("Stats Key avg comps         = " + tz390.avg_key_comp);
-			put_log("Stats Key max comps         = " + tz390.max_key_comp);
-			put_log("Stats total macro line exec = " + tot_mac_ins);
-			put_log("Stats total pcode line exec = " + tot_pcl_exec);
-			put_log("Stats total pcode line gen. = " + tot_pcl_gen);
-			put_log("Stats total pcode line reuse= " + tot_pcl_reuse);
-			put_log("Stats total pcode op   gen. = " + tot_pc_gen);
-			put_log("Stats total pcode op   exec = " + tot_pc_exec);
-			put_log("Stats total pcode gen  opt  = " + tot_pc_gen_opt);
-			put_log("Stats total pcode exec opt  = " + tot_pc_exec_opt);
+			put_log(stats_pfx + "Key avg comps         = " + tz390.avg_key_comp);
+			put_log(stats_pfx + "Key max comps         = " + tz390.max_key_comp);
+			put_log(stats_pfx + "total macro line exec = " + tot_mac_ins);
+			put_log(stats_pfx + "total pcode line exec = " + tot_pcl_exec);
+			put_log(stats_pfx + "total pcode line gen. = " + tot_pcl_gen);
+			put_log(stats_pfx + "total pcode line reuse= " + tot_pcl_reuse);
+			put_log(stats_pfx + "total pcode op   gen. = " + tot_pc_gen);
+			put_log(stats_pfx + "total pcode op   exec = " + tot_pc_exec);
+			put_log(stats_pfx + "total pcode gen  opt  = " + tot_pc_gen_opt);
+			put_log(stats_pfx + "total pcode exec opt  = " + tot_pc_exec_opt);
 			if  (tz390.opt_timing){
 				cur_date = new Date();
 				tod_end = cur_date.getTime();
 				tot_msec = tod_end-tod_start+1;
-				put_log("Stats total milliseconds    = " + tot_msec);
+				put_log(stats_pfx + "total milliseconds    = " + tot_msec);
 				ins_rate = tot_mac_ins*1000/tot_msec;
-				put_log("Stats instructions/second   = " + ins_rate);
+				put_log(stats_pfx + "instructions/second   = " + ins_rate);
 			}
 		}
 		int index = 0;
 		while (index < tot_mac_file_name){
-			if (tz390.opt_listfile && tz390.opt_bal){
-				String xref_msg = "MZ390I FID=" + tz390.right_justify(""+(index+1),3)
+			if (tz390.opt_listfile){  // RPI 549
+				String xref_msg = stats_pfx + "FID=" + tz390.right_justify(""+(index+1),3)
 						        + " ERR=" + tz390.right_justify(""+mac_file_errors[index],2)
 						        + " " + mac_file_path[index];
 			    put_log(xref_msg);
@@ -7263,8 +7299,9 @@ public  class  mz390 {
 		int file_index = mac_file_num[mac_line_index];
 		mac_file_errors[file_index]++;
 		String error_msg = "MZ390E error " + tz390.right_justify("" + error,3)
-		+ " file=" + tz390.right_justify("" + (file_index+1),3)
-		+ " line=" + tz390.right_justify("" + mac_file_line_num[mac_line_index],6)
+		+ tz390.right_justify("(" + (file_index+1)
+	                        + "/" + mac_file_line_num[mac_line_index]
+	                        + ")" + mac_file_line_num[mac_line_index],15) 
 		+ " " + msg;
 		put_log(error_msg);
 		tz390.put_systerm(error_msg);

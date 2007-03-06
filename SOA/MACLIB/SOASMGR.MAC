@@ -14,6 +14,9 @@
 *  01/05/07 RPI 524 ADD MSGTIME FOR SOA CLIENT SERVER APPLICATIONS 
 *  01/06/07 RPI 524 ADD SEND/RECEIVE TCPIO LMSG PARM                     
 *  01/22/07 RPI 542 CORRECT R1=ADDR FOR GETMAIN                          
+*  02/21/07 RPI 553 REMOVE LMAX FROM TCPIO OPEN AND USE R5 FOR LMSG      
+*  02/26/07 RPI 553 ADD CONN= PARM FOR SERVER RESPONSE AND HANDLE
+*           VARIABLE LENGTH RECEIVE MSGS UP TO LMSG              
 **********************************************************************
 * GENERATE AN SOA SERVER TO HANDLE SERVICES DEFINED USING HOST
 * AND PORT SPECIFIED.ERVICE REQUEST MESSAGE
@@ -22,7 +25,7 @@
 &SERVER  SUBENTRY
          WTO   '&SERVER STARTED'
          COPY  ASMMSP
-         TCPIO  OPEN,PORT=&PORT,LMAX=LMAX OPEN SERVER PORT
+         TCPIO  OPEN,PORT=&PORT OPEN SERVER PORT
          IF    (CH,R15,NE,=H'0')           
                WTO 'TCPIO ERROR &SERVER OPEN PORT &PORT FAILED'
                B   ABORT
@@ -31,45 +34,13 @@
          GETMAIN RU,LV=(9)
          LR     R4,R1            R4 = MAX MESSAGE BUFFER     RPI 542
          USING  IHAMSG,R4
-         WTOR   '&SERVER REPLY ANY CHAR TO TERMINATE',REPLY,1,ECB
 SERVER_PROCESS_LOOP EQU    *     PROCESS MESSAGES UNTIL CANCELLED
-         IF     (TM,ECB,O,X'40') 
-                WTO '&SERVER CANCELLED VIA WTOR'
-                SUBEXIT
-         ENDIF
 *********************************************************************
 * GET NEXT SERVICE REQUEST MESSAGE
 *********************************************************************
-         TCPIO RECEIVE,MSG=(R4),LMSG=4,PORT=&PORT
-         IF    (CH,R15,NE,=H'0')
-               TCPIO CLOSE,PORT=&PORT  CLOSE SERVER PORT
-               TCPIO OPEN,PORT=&PORT,LMAX=LMAX REOPEN SERVER PORT
-               IF (CH,R15,NE,=H'0')           
-                  WTO 'TCPIO ERROR &SERVER REOPEN FAILED'
-                  B   ABORT
-               ENDIF
-               TCPIO  RECEIVE,MSG=(R4),LMSG=4,PORT=&PORT
-               IF (CH,R15,NE,=H'0')           
-                  WTO 'TCPIO ERROR &SERVER RETRY FAILED'
-                  B   ABORT
-               ENDIF
-         ENDIF
-         L     R2,MSGLEN
-         IF    (CH,R2,EQ,=H'-1')
-               WTO '&SERVER CLOSING DOWN AT USER REQUEST'
-               TCPIO CLOSE,PORT=&PORT CLOSE SERVER PORT
-               SUBEXIT  
-         ENDIF
-         IF    (C,R2,GT,LMAX),OR,(C,R2,LT,LMIN)
-               WTO '&SERVER ERROR MESSAGE LENGTH TOO LONG'
-               B   ABORT
-         ENDIF
-         SH    R2,=H'4'
-         TCPIO RECEIVE,MSG=MSGLEN+4,LMSG=(R2),PORT=&PORT   
-         IF    (CH,R15,NE,=H'0')
-               WTO '&SERVER ERROR ON RECEIVE'
-               B   ABORT
-         ENDIF
+         L     R10,=F'-1'    READ FROM ANY CONNECTION
+         LA    R14,IHAMSG    INTO MSG BUFFER
+         BAL   R12,READ_VLR_MSG  READ VARIABLE LENGTH MSG  
 &NS      SETA  0
 &MAXLEN  SETA  0
 &MINLEN  SETA  0      
@@ -171,7 +142,7 @@ SERVICES LOCTR
 .END_GEN_SERVICE_CALLS ANOP
          SR     R6,R4
          ST     R6,MSGLEN
-         TCPIO  SEND,MSG=(R4),LMSG=MSGLEN,PORT=&PORT
+         TCPIO  SEND,MSG=(R4),LMSG=MSGLEN,PORT=&PORT,CONN=(R10)
          IF    (CH,R15,NE,=H'0')           
                WTO 'TCPIO ERROR &SERVER SEND FAILED'
                B   ABORT
@@ -179,11 +150,20 @@ SERVICES LOCTR
          B      SERVER_PROCESS_LOOP
          WTO    '&SERVER CLOSING DOWN'
          SUBEXIT
+*********************************************************************
+* ABORT DUE TO ERROR                                          
+*********************************************************************
 ABORT    WTO    '&CLIENT ABORTING DUE TO TCPIO ERROR ON PORT &PORT'
          ABEND  &PORT
+*********************************************************************
+* SAVE TRANS START TIME                                       
+*********************************************************************
 START_TIME DS 0H
          TIME  NS,NS_START
          BR    R12
+*********************************************************************
+* DISPLAY SERVER TIME FOR TRANSACTION                         
+*********************************************************************
 STOP_TIME DS 0H  SHOW SRERVICE TIME IN MICRO-SECONDS
          TIME  NS,NS_STOP
          LG    R1,NS_STOP
@@ -194,6 +174,60 @@ STOP_TIME DS 0H  SHOW SRERVICE TIME IN MICRO-SECONDS
          ED    DMICS,PWORK+3
          WTO   MF=(E,SHOW_MSG)
          BR    R12
+*********************************************************************
+* READ VARIABLE LENGTH MSG INTO BUFFER AT R14                 
+*  R10 = CONNECTION ID OR -1 FOR ANY
+*  R14 = READ START ADDRESS
+*********************************************************************
+READ_VLR_MSG DS 0H
+         ST    R12,VLR_SAVE       SAVE RETURN ACROSS READ_MSG
+         XC    READ_LEN,READ_LEN  ZERO READ_LEN BYTES
+         L     R11,LMAX      MAX LENGTH MESSAGE ALLOWED
+         BAL   R12,READ_MSG
+         LR    R10,R2      READ REST ENTIRE MSG FROM SAME CONN
+         DO    WHILE=(CLC,READ_LEN,LT,=F'4')
+               SR    R11,R1      REDUCE REMAINING MAX
+               AR    R14,R1      UPDATE READ STARTING ADDR
+               BAL   R12,READ_MSG
+         ENDDO    
+         IF    (CLC,MSGLEN,EQ,=F'-1')
+               WTO   '&SERVER TERMINATING AT USER REQUEST'
+               SUBEXIT
+         ENDIF
+         DO    WHILE=(CLC,READ_LEN,LT,MSGLEN)
+               SR    R11,R1      REDUCE REMAINING MAX
+               AR    R14,R1      UPDATE READ STARTING ADDR
+               BAL   R12,READ_MSG
+         ENDDO   
+         L     R12,VLR_SAVE
+         BR    R12 
+*********************************************************************
+* READ THE NUMBER OF BYTES AVAILABLE UP TO R11 INTO BUFFER ELSE ABORT       
+*  R10 = CONNECTION ID OR -1 FOR ANY
+*  R11 = MAX LENGTH TO READ
+*  R14 = READ START ADDRESS
+*  INCREMENT READ_LEN BY BYTES READ IN R1
+*********************************************************************
+READ_MSG DS    0H
+         TCPIO RECEIVE,MSG=(R14),LMSG=(R11),PORT=&PORT,CONN=(R10)
+         IF    (CH,R15,NE,=H'0')
+               WTO 'TCPIO ERROR &SERVER RECEIVE RC NZ'
+               B   ABORT
+         ENDIF
+         IF    (CH,R1,LE,=H'0')
+               WTO 'TCPIO ERROR &SERVER RECEIVE LENGTH <= 0'
+               B   ABORT
+         ENDIF
+         IF    (CH,R2,LT,=H'0')
+               WTO 'TCPIO ERROR &SERVER RECEIVE CONN < 0'
+               B   ABORT
+         ENDIF
+         L     R0,READ_LEN
+         AR    R0,R1
+         ST    R0,READ_LEN
+         BR    R12
+READ_LEN DC    F'0' BYTES READ BY READ_MSG
+VLR_SAVE DC    A(0)      
 NS_START DC    D'0' START TOD IN NANO-SECONDS
 NS_STOP  DC    D'0' END   TOD IN NANO-SECONDS
 SHOW_MSG DC    AL2(SHOW_END-*,0),C'SERVICE TIME IN MIRCO-SEC ='
@@ -204,8 +238,6 @@ PWORK    DC    D'0'
 LMAX     DC     A(MSGPARMS-IHAMSG+&MAXLEN)
 LMIN     DC     A(MSGPARMS-IHAMSG+&MINLEN)
 SVCPLIST DC     (&MAXPARMS)A(0)
-REPLY    DC     X'0'
-ECB      DC     F'0'
          EQUREGS
          SOAMSG
          MEND

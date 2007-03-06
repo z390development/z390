@@ -100,7 +100,7 @@ public  class  z390 extends JApplet
      * 10/09/05 RPI  16 - remove TEST and TRACE dependency bug
      * 10/12/05 RPI  15 & 17 - fix CMD processing and status line
      * 10/18/05 RPI  29 - use Z390E and Z390I prefixes 
-     * 10/27/05 RPI  55 - change /SC to execute GUI commands
+     * 10/27/05 RPI  55 - change /SC to execute Z390 GUI commands
      *          which may include batch commands CMD.
      * 11/03/05 RPI  62 - remove extra space added to test commands
      * 11/12/05 RPI  81 - change menu item font_size
@@ -118,7 +118,7 @@ public  class  z390 extends JApplet
      *          and invalid path after CD command
      * 12/01/06 RPI 509 use Monospace font for Windows and Linux
      * 12/01/06 RPI 510 replace NOTEPAD command with EDIT command
-     * 01/20/07 RPI 541 correct GUI file selection dialog cancel action
+     * 01/20/07 RPI 541 correct Z390 GUI file selection dialog cancel action
      * 01/30/07 RPI 532 correct Doc path and cmd.pl path and separator
 	 ********************************************************
      * Global variables                  last RPI
@@ -222,7 +222,7 @@ public  class  z390 extends JApplet
 	String last_cmd_line = "x"; // RPI 506
     boolean shutdown_exit = false;
     /*
-     *  Global GUI objects 
+     *  Global Z390 GUI objects 
      */
     int ascii_lf = 10;
     int ascii_cr = 13;
@@ -365,7 +365,7 @@ public  class  z390 extends JApplet
             ImageIcon start_icon = createImageIcon("z390.jpg","Run z390");
             JButton start_button = new JButton(start_icon);
             start_button.setSize(48,48);
-            start_button.setToolTipText("Click on z390 icon to start GUI");
+            start_button.setToolTipText("Click on z390 icon to start Z390 GUI");
             start_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                     String[] args = new String[1];           
@@ -1273,7 +1273,7 @@ public  class  z390 extends JApplet
 	   	  put_copyright();
 	   	  put_log("z390 Portable mainframe macro assembler, linker, and emulator tool");
 	   	  put_log("  * edit, assemble, link, and execute mainframe assembler code");
-	   	  put_log("  * use interactive GUI, command line, or batch interface");
+	   	  put_log("  * use interactive z390 GUI, command line, or batch interface");
 	   	  put_log("  * macro assembler compatible with HLASM");
 	   	  put_log("  * linker supports AMODE/RMODE relocatable load modules");
 	   	  put_log("  * emulator supports 32/64 bit plus HFP/BFP floating point instructions");
@@ -1549,7 +1549,7 @@ public  class  z390 extends JApplet
 	   private void monitor_update(){
 	   /*
 	    * 1.  At monitor_wait intervals, update the
-	    *     GUI title date and time and the status
+	    *     z390 GUI title date and time and the status
 	    *     line information.
 	    *  
 	    * 2.  If CMD mode and 
@@ -1668,7 +1668,7 @@ public  class  z390 extends JApplet
      private String get_status_line(){
      /*
       * format fixed field status line for both
-      * gui status line and status log requests
+      * z390 gui status line and status log requests
       * 
       *     1.  Time of date
    	  *     2.  INS total

@@ -22,6 +22,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,7 +54,7 @@ public  class  sz390 implements Runnable {
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
     ez390 is the emulator component of z390 which can be called from
-    z390 gui interface or from command line to execute 390 load
+    z390 GUI interface or from command line to execute 390 load
     module files.  
 
     ****************************************************
@@ -111,13 +114,15 @@ public  class  sz390 implements Runnable {
     * 01/28/06 RPI 545 correct user specified timeout limit on CMDPROC
     * 02/03/07 RPI 547 close std i/o before stopping command process
     * 02/08/07 RPI 532 fix dcb file separator if linux
+    * 02/20/07 RPI 551 correct ASCII mode for CMDPROC and WTOR
+    * 02/24/07 RPI 560 prevent errouneous recursiave abort error
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
     /*
      * static limits
      */
-    int    max_tiot_files    = 100;        // max open files
+	int    max_tiot_files    = 100;        // max open files
     int    max_cde_pgms      = 500;        // max loaded 390 pgms
     int    max_link_stk      = 50;         // max nested links
     int max_cmd_out        = 10000;        // cmd output character buffer 
@@ -185,8 +190,8 @@ public  class  sz390 implements Runnable {
     int guam_key_achar = 0; // addr key char
     int guam_key       = 0; // mod and char from keyboard
     int[] guam_mouse   = null; // guam_mouse_read returns x,y,left,right
-    int guam_left      = 0;    // gui mouse left button addr (1=pressed)
-    int guam_right     = 0;    // guam_mouse right button addr (1 = pressed)
+    int guam_left      = 0;    // GUAM mouse left button addr (1=pressed)
+    int guam_right     = 0;    // GUAM_mouse right button addr (1 = pressed)
     boolean guam_wait  = true; // wait for input
     /*
      * global tget and tput data
@@ -421,24 +426,64 @@ public  class  sz390 implements Runnable {
 	BigInteger cfd_bi;
 	BigDecimal cfd_bd;
 	String     cfd_text;
+    /*
+     * tcpio server port global data
+     * 
+     * Note thread for each open port:
+     *   1.  Waits for connection from client
+     *   2.  Start connection thread to process
+     *       messages and send responses.
+     *   3.  Return to wait for next connection
+     * 
+     */
+    final Lock      lock            = new ReentrantLock();
+    final Condition lock_condition  = lock.newCondition();
+	boolean tcpio_server_running = false;  // true if any tcpio server ports open (required for server threads to run)
+	int     tcpio_conn_ready_count   = 0;        // count of conn msgs ready
+	int max_tcp_server_port   = 10; // max server ports open
+	int cur_tcp_server_index   = 0;  // current port
+	int[]          tcp_server_port   = new int[max_tcp_server_port];
+	Thread[]       tcp_server_thread = new Thread[max_tcp_server_port];  // RPI 554
+	int[]          tcp_server_conn_index = new int[max_tcp_server_port];     // RPI 554 index to allocated conn for next connection
+	ServerSocket[] tcp_server_socket = new ServerSocket[max_tcp_server_port];
+	String[]       tcp_server_host_text = new String[max_tcp_server_port];
+    InetAddress[]  tcp_server_host_ip   = new InetAddress[max_tcp_server_port];
 	/*
-	 * TCPIO TCP/IP sockes global variables
-	 */
-	int max_tcp_socket = 10;
-	int tot_tcp_socket = 0;
-	int cur_tcp_socket = 0;
-    ServerSocket[] tcp_server_socket = new ServerSocket[max_tcp_socket];
-    Socket[]       tcp_client_socket = new Socket[max_tcp_socket];
-    int[]    tcp_socket_port = new int[max_tcp_socket];
-    String[]      tcp_socket_host_text = new String[max_tcp_socket];
-    InetAddress[] tcp_socket_host_ip   = new InetAddress[max_tcp_socket];
-    int[]    tcp_socket_lmax = new int[max_tcp_socket];
-    DataInputStream[] tcp_socket_input  = new DataInputStream[max_tcp_socket];
-    PrintStream[]     tcp_socket_output = new PrintStream[max_tcp_socket];
-    int    tcpio_op   = 0;
-	int    tcpio_amsg = 0;
-	int    tcpio_lmsg = 0;
-	int    tcpio_lmax = 1000000; // max lmsg
+     * tcp server socket connection data
+     * 
+     * Note thread for each active connection 
+     * started by server port thread processes
+     * receive messages and send messages to client.
+     */
+	int               max_tcp_conn = 10; // max connections to server ports
+	int               cur_tcp_conn = 0;  // current thread
+	Thread[]          tcp_conn_thread         = new Thread[max_tcp_conn];  // RPI 554
+    Socket[]          tcp_conn_socket = new Socket[max_tcp_conn];
+    int[]             tcp_conn_server_port  = new int[max_tcp_conn];
+    int[]             tcp_conn_server_index = new int[max_tcp_conn];
+    boolean[]         tcp_conn_msg_ready    = new boolean[max_tcp_conn]; // 1 or more bytes ready for receiving
+    boolean[]         tcp_conn_read         = new boolean[max_tcp_conn];
+    byte[]            tcp_conn_byte         = new byte[max_tcp_conn];
+    DataInputStream[] tcp_conn_input        = new DataInputStream[max_tcp_conn];
+    PrintStream[]     tcp_conn_output       = new PrintStream[max_tcp_conn];
+    /*
+     * tcpio client global data
+     */
+    int           max_tcp_client_port   = 10; // max client ports open
+    int           cur_tcp_client_index   = 0;
+    int[]         tcp_client_port       = new int[max_tcp_client_port];
+	Socket[]      tcp_client_socket     = new Socket[max_tcp_client_port];
+    String[]      tcp_client_host_text  = new String[max_tcp_client_port];
+    InetAddress[] tcp_client_host_ip    = new InetAddress[max_tcp_client_port];
+    DataInputStream[] tcp_client_input  = new DataInputStream[max_tcp_client_port];
+    PrintStream[]     tcp_client_output = new PrintStream[max_tcp_client_port];
+    int    tcpio_op   = 0;       // r0 low = opcode 1-5
+    int    tcpio_flags= 0;       // r0 high= bit 15 = NOWAIT for receive
+	boolean tcpio_wait = false;
+	int    tcpio_conn = 0;       // r2 connection id for send/receive (-1 = any)
+	int    tcpio_amsg = 0;       // r14 msg start address
+	int    tcpio_lmsg = 0;       // r15 message length (max for receive)
+	int    tcpio_lmax = 1000000; // max lmsg set by send/recv
 	int    tcpio_lmin = 1;       // min lmsg
 	int    tcpio_host_addr   = 0;
 	String tcpio_host_text   = null;
@@ -620,10 +665,10 @@ public void svc(int svc_id){
 	case 0x6d:
 		svc_espie();  // set program check exit R0=types, R1=addr
 		break;
-	case 84:  // gui application window I/O
+	case 84:  // GUAM GUI application window I/O
 		svc_guam();
 		break;
-	case 93:  // TGET/TPUT TN3290 data stream for GUI
+	case 93:  // TGET/TPUT TN3290 data stream for GUAM GUI
 		svc_tget_tput();
 		break;
 	case 124: // x'7C' TCPIO tcp/ip sockets I/O
@@ -716,10 +761,14 @@ public void abort_error(int error,String msg){
 	 * inc error total
 	 */
  	  if (tz390.z390_abort){
-		msg = "ez390 aborting due to recursive abort for " + msg;
-		System.out.println(msg);;
+		msg = "EZ390E shutdown for " + msg;
 		tz390.put_systerm(msg);
-		tz390.close_systerm(16);
+		try { // rpi 560
+			put_stats();
+			close_files();
+		} catch (Exception e){
+			System.out.println("EZ390E CLOSE FILES FAILED");
+		}
 		System.exit(16);
 	  }
  	  tz390.z390_abort = true;
@@ -745,22 +794,38 @@ public void exit_ez390(){
 	  if  (ez390_errors > 0 || tz390.z390_abort){
 		  ez390_rc = 16;
       }
-  	  put_stats();
-      tcpio_close_ports();
-      close_files();
-      close_cmd();  //RPI76
-      close_z390_guam();
+	  try {
+		  close_z390_guam();
+	  } catch (Exception e){
+		  System.out.println("EZ390E GUAM SHUTDOWN FAILED");
+	  } 
+	  try {
+		  close_cmd();  //RPI76
+	  } catch (Exception e){
+		  System.out.println("EZ390E CMDPROC SHUTDOWN FAILED");
+	  }
+	  try {
+		  tcpio_close_ports();
+	  } catch (Exception e){
+		  System.out.println("EZ390E TCPIO SHUTDOWN FAILED");
+	  }
+	  try {
+		  put_stats();
+		  close_files();
+	  } catch (Exception e){
+		  System.out.println("EZ390E CLOSE FILES FAILED");
+	  }  
       System.exit(ez390_rc); //RPI39
 }
 private synchronized void close_z390_guam(){  // RPI 397
 	/*
 	 * if exit request, send shutdown request
-	 * to z390 gui via the sysout queue
+	 * to z390 GUI via the sysout queue
 	 */
     if (exit_request){
   	  tz390.opt_trace = false;     //RPI35
   	  tz390.z390_abort = true;     //RPI208
-  	  // send exit request to z390 gui process
+  	  // send exit request to z390 GUI process
   	  System.out.println("exit_request");
     }
 }
@@ -871,7 +936,7 @@ public void init_test(){
 	 * 1. init test regular expression parser
 	 * 2. init optional test=ddname file for batch input 
 	 *    else init test_cmd_file which is also used
-	 *    for wtor replies when not in GUI mode
+	 *    for wtor replies when not in GUAM GUI mode
      *
      * expression pattern
      *   1. self defining terms 
@@ -1415,8 +1480,8 @@ public void svc_link(){
 	 * Output:
 	 *   1. r15 = user pgm return code if call ok
 	 *   2. abend s106
-	 *   3. On first load with option GUI on,
-	 *      the gz390 gui window will be staretd
+	 *   3. On first load with option GUAM on,
+	 *      the gz390 GUAM GUI window will be staretd
 	 *      with default title using program name
 	 */
 	int save_r1 = pz390.reg.getInt(pz390.r1);
@@ -1435,7 +1500,7 @@ public void svc_link(){
            	gz390 = new gz390();
         	gz390.start_guam(ez390_pgm,tz390);
 			if (tz390.z390_abort){
-				abort_error(58,"guam gui startup abort");
+				abort_error(58,"GUAM GUI startup abort");
 			}
         }
 	}
@@ -2879,7 +2944,7 @@ public void put_ascii_string(String text,int mem_addr,int mem_len){
 			text_char = ' ';
 		}
 		if (tz390.opt_ascii){
-			pz390.mem.putChar(mem_addr + index,text_char);
+			pz390.mem_byte[mem_addr + index] = (byte)(text_char & 0xff); // RPI 551
 		} else {
 			pz390.mem_byte[mem_addr + index] = tz390.ascii_to_ebcdic[text_char & 0xff];
 		}
@@ -2891,6 +2956,9 @@ private void svc_cmd(){
 	 * exec OS command process
 	 *   r0+2 = cmd process id 0-9
 	 *   r0+3 = cmd operation type
+	 *   r1   = A(command)
+	 *   r2   = command length
+	 *   r3   = timeout wait limit in milli-sec
 	 */
 	String svc_cmd_text = "";
 	int cmd_id = pz390.reg.get(pz390.r0+2);
@@ -3101,6 +3169,8 @@ public void cmd_cancel(int cmd_id){
     cmd_proc_running[cmd_id] = false;
 }
 public void run() {
+	// wait for comproc threads to end normally
+	// or issue error if abnormal termination
 	int cmd_id = 0;
 	while (cmd_id < tot_cmd){
 		if (cmd_proc_thread[cmd_id] == Thread.currentThread()) {
@@ -3120,6 +3190,104 @@ public void run() {
 			return;
 		}
 		cmd_id++;
+	}
+	// wait for next connection on each server
+	// port thread, create connection and repeat 
+	int port_index = 0;
+	while (tcpio_server_running && port_index < max_tcp_server_port){
+		if (tcp_server_port[port_index] > 0
+			&& tcp_server_thread[port_index] != null
+			&& tcp_server_thread[port_index] == Thread.currentThread()){
+			while (tcp_server_socket[port_index] != null 
+				   && !tcp_server_socket[port_index].isClosed()
+				   && tcp_alloc_conn(port_index)){
+				int conn_index = tcp_server_conn_index[port_index]; // get allocaed conn 
+				try {
+					// this conn thread will wait here for next connection
+					if (tz390.opt_tracet){
+						put_log("TCPIO waiting for connection on port=" + tcp_conn_server_port[conn_index]);
+					}
+					tcp_conn_socket[conn_index] = tcp_server_socket[port_index].accept();
+					tcp_conn_input[conn_index] = new DataInputStream(tcp_conn_socket[conn_index].getInputStream());
+					tcp_conn_output[conn_index] = new PrintStream(tcp_conn_socket[conn_index].getOutputStream());
+				    tcp_conn_thread[conn_index] = new Thread(this);
+				    tcp_conn_thread[conn_index].start();
+					if (tz390.opt_tracet){
+						put_log("TCPIO new connection on port=" + tcp_conn_server_port[conn_index] + " conn=" + tcp_server_conn_index[port_index]);
+					}
+				} catch (Exception e){
+					if (tcpio_server_running){
+						put_log("TCPIO error starting connection for port=" + tcp_server_port[port_index]);
+						tcp_free_conn(conn_index);
+					} else {
+						return; // exit thread during shutdown close
+					}
+				}
+			}
+		}
+		port_index++;
+	}
+	int conn_index = 0;  
+	while (tcpio_server_running
+			&& conn_index < max_tcp_conn){
+		// find and run connection thread
+		if (tcp_conn_server_port[conn_index] > 0 
+			&& tcp_conn_thread[conn_index] != null
+			&& tcp_conn_thread[conn_index] == Thread.currentThread()){
+			while (tcpio_server_running){
+				//
+				// this is a live connection thread which
+				// runs following loop until server port closed
+				//   1   While message ready on connection
+				//       signal TCPIO main user thread and
+				//       then yield.
+				//   2   Read 1 byte from connection
+				//   3   if disconnect, release connection
+				//       and terminate thread
+				//       else set conn msg avail
+				//   4.  repeat
+				try {
+					while (tcpio_server_running 
+            			   && tcp_conn_msg_ready[conn_index]
+                   	      ){
+						lock.lock();
+						try { // signal TCPIO main user thread to check for connection messages
+							lock_condition.signalAll();
+						} catch (Exception e){
+							put_log("TCPIO disconnect during post for conn=" + conn_index + " port="  + tcp_conn_server_port[conn_index]);
+							tcpio_close_conn(conn_index);
+							return; // kill this thread
+						} finally {
+							lock.unlock();
+						}
+						// let tcpio main thread run until
+						// all current conn msgs are read
+						Thread.yield(); 
+					}
+				} catch(Exception e){
+					put_log("TCPIO disconnect during yield for conn=" + conn_index + " port="  + tcp_conn_server_port[conn_index]);
+					tcpio_close_conn(conn_index);
+					return; // kill this thread
+				}
+				try {
+					// thread waits here for 1 byte read
+					// or disconnect interrupt
+					tcp_conn_byte[conn_index] = tcp_conn_input[conn_index].readByte();
+					tcp_conn_read[conn_index] = true;
+					if (tz390.opt_tracet){
+						put_log("TCPIO msg received on conn=" + conn_index + " LEN=" +(1+tcp_conn_input[conn_index].available()));
+					}
+                    tcpio_set_conn_msg_ready(conn_index,true);
+				} catch (Exception e) {
+					if (tcpio_server_running){
+						put_log("TCPIO disconnect during read for conn=" + conn_index + " port="  + tcp_conn_server_port[conn_index]);
+						tcpio_close_conn(conn_index);
+						return; // kill this task
+					}
+				}
+			}
+		}
+		conn_index++;
 	}
 }
 public void copy_cmd_output_to_queue(int cmd_id){
@@ -3220,13 +3388,13 @@ private void svc_tget_tput(){
 			gz390.tput_buff.put(pz390.mem_byte,buff_addr,buff_len);
 			gz390.guam_tput();
 			if (tz390.z390_abort){
-				abort_error(59,"guam gui tput abort");
+				abort_error(59,"GUAM GUI tput abort");
 			}
 		} else {
 			gz390.tget_len = buff_len;
 			gz390.guam_tget();
 			if (tz390.z390_abort){
-				abort_error(60,"guam gui tget abort");
+				abort_error(60,"GUAM GUI tget abort");
 			}
 			pz390.mem.position(buff_addr);
             // move tget_len actual and set R1= bytes returned
@@ -3275,7 +3443,7 @@ private void svc_tget_tput(){
 private void svc_guam(){
 	/*
 	 * GUAN Graphical User Access Method
-	 * for user I/O vua GUI dialog window
+	 * for user I/O vua GUAM GUI dialog window
 	 * with 3 views:
 	 *   1.  MCS - view for WTO and WTOR I/O
 	 *   2.  SCREEN - view for TPUT and TGET I/0
@@ -3283,7 +3451,7 @@ private void svc_guam(){
 	 * r1 = major/minor opcode bytes
 	 */
 	if (!tz390.opt_guam){
-		abort_error(104,"GUI option not specified - aborting");
+		abort_error(104,"GUAM GUI option not specified - aborting");
 	}
 	guam_major = pz390.reg.get(pz390.r0+2);
 	guam_minor = pz390.reg.get(pz390.r0+3);
@@ -3328,7 +3496,7 @@ private void svc_guam(){
 			pz390.reg.putInt(pz390.r0,guam_view);
 			break;
 		default:
-			log_error(94,"undefined GUI Window command - " + guam_minor);
+			log_error(94,"undefined GUAM GUI Window command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 		break;
@@ -3369,7 +3537,7 @@ private void svc_guam(){
 			gz390.guam_screen_color(guam_bg_rgb,guam_text_rgb);
 		    break;
 		default:
-			log_error(95,"undefined GUI Screen command - " + guam_minor);
+			log_error(95,"undefined GUAM GUI Screen command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 		break;
@@ -3408,7 +3576,7 @@ private void svc_guam(){
 			gz390.guam_screen_write(guam_row,guam_col,tput_buff,guam_lbuff,guam_color);
 			break;
 		default:
-			log_error(96,"undefined GUI Graph command - " + guam_minor);
+			log_error(96,"undefined GUAM GUI Graph command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 		break;
@@ -3427,7 +3595,7 @@ private void svc_guam(){
 			}
 			break;
 		default:
-			log_error(97,"undefined GUI Keyboard command - " + guam_minor);
+			log_error(97,"undefined GUAM GUI Keyboard command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 		break;
@@ -3445,7 +3613,7 @@ private void svc_guam(){
 			pz390.mem.putInt(guam_right,guam_mouse[3]);
 			break;
 		default:
-			log_error(98,"undefined GUI Mouse command - " + guam_minor);
+			log_error(98,"undefined GUAM GUI Mouse command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 	case 6: // SOUND
@@ -3456,11 +3624,11 @@ private void svc_guam(){
 			gz390.guam_sound_play(guam_text);
 			break;
 		default:
-			log_error(99,"undefined GUI Sound command - " + guam_minor);
+			log_error(99,"undefined GUAM GUI Sound command - " + guam_minor);
 		    pz390.reg.putInt(pz390.r15,8);
 		}
 		if (tz390.z390_abort){
-			abort_error(61,"guam svc abort");
+			abort_error(61,"GUAM GUI svc abort");
 		}
 	}
 }
@@ -3587,7 +3755,7 @@ private void dump_tiot(){
 private void wto_msg(String wto_pfx,int msg_addr,int msg_len){
 	/*
 	 * 1.  Log msg on z390 system log
-	 * 2.  If GUI option on, display msg
+	 * 2.  If QUAM GUI option on, display msg
 	 *     on gz390 mcs window view
 	 *     
 	 */
@@ -3599,7 +3767,7 @@ private void wto_msg(String wto_pfx,int msg_addr,int msg_len){
 	if (tz390.opt_guam){
 		gz390.guam_put_log(wto_msg);
 		if (tz390.z390_abort){
-			abort_error(62,"guam gui put_log abort");
+			abort_error(62,"GUAM GUI put_log abort");
 		}
 	}
 	pz390.reg.putInt(pz390.r15,0);  //RPI31
@@ -3728,7 +3896,7 @@ private void svc_wtor(){
 	 * request WTOR reply as follows:
 	 * 1.  Save r0=reply, r14 length,r15=ecb 
 	 * 2.  Issue wtor message
-	 * 2.  if GUI option, check for gz390 cmd reply
+	 * 2.  if QUAM GUI option, check for gz390 cmd reply
 	 *     else check for z390 cmd input reply 
 	 * 3.  if reply found, post ecb else repeat check
 	 *     at every monitor_update interval until
@@ -4304,7 +4472,7 @@ public void process_test_cmd(){
 	 *        until go or quit command executed.
 	 *      
 	 *  Notes:
-	 *   1.  Get next command from z390 gui
+	 *   1.  Get next command from z390 GUI
 	 *       cmd line, system command_line, or
 	 *       from ddname file specified in test
 	 *       option test(ddname)..
@@ -4346,7 +4514,7 @@ public void process_test_cmd(){
 }
 private void get_test_cmd(){
 	/*
-	 * get next test command from gui command line
+	 * get next test command from Z390 GUI command line
 	 * or system command line or file specified
 	 * with the test(ddname) option
 	 */
@@ -5268,268 +5436,569 @@ private void svc_tcpio(){
 	 * Inputs:
 	 *   r0 = operation
 	 *      1 - open server port
+	 *            r1=port
 	 *      2 - open client port connection
+	 *            r1=port
+	 *            r14=host ip addr or 0 (HOST=*)
 	 *      3 - close port connection
+	 *            r1=port
 	 *      4 - send message
+	 *            r1=port
+	 *            r2=connection id
+	 *            r14=msg addr
+	 *            r15=msg length
 	 *      5 - receive message 
-	 *   r1  = port for all oper
-	 *   r14 = host (op 3), msg (op 4-5)          
-	 *   r15 = max message length (op 1-2)
+	 *            r1=port
+	 *            r2=connection id or -1
+	 *            r14=buffer address
+	 *            r15=max msg length
+     * Output:
+     *   r1 = message length for receive
+     *   r2 = connection id for receive
+     *   r15= return code
+     *         0 - ok
+     *         4 - no msg and nowait
+     *         12- error on last operation
 	 */
-	tcpio_op        = pz390.reg.getInt(pz390.r0);
-	tcpio_amsg  = 0;
-	tcpio_host_addr = 0;
-	tcpio_port      = pz390.reg.getInt(pz390.r1);
-	tcpio_host_ip   = null;
-	tcpio_lmsg = pz390.reg.getInt(pz390.r15);
+	tcpio_op    = pz390.reg.getShort(pz390.r0+2);
+	tcpio_flags = pz390.reg.getShort(pz390.r0);
+	tcpio_wait =  (tcpio_flags & 0x0001) == 0; // set wait true if NOWAIT bit off
+	tcpio_port  = pz390.reg.getInt(pz390.r1);
+	tcpio_conn  = pz390.reg.getInt(pz390.r2);
+	tcpio_amsg  = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
+	tcpio_lmsg  = pz390.reg.getInt(pz390.r15);
 	pz390.reg.putInt(pz390.r15,0);
 	switch (tcpio_op){
 	case 1: // open server port
-		if (tcpio_find_port()){ 
-			if (tcp_server_socket[cur_tcp_socket] != null
-				&& !tcp_server_socket[cur_tcp_socket].isClosed()){				
-				put_log("TCPIO OPEN SERVER PORT ALREADY OPEN");
+		tcpio_server_running = true; // enable tcpio server threads
+		if (tz390.opt_tracet){
+			put_log("TCPIO open server port " + tcpio_port);
+		}
+		if (!tcpio_find_server_port() 
+			&& cur_tcp_server_index > -1){ 
+			tcp_server_port[cur_tcp_server_index] = tcpio_port;
+			if (tcp_server_socket[cur_tcp_server_index] != null
+				&& !tcp_server_socket[cur_tcp_server_index].isClosed()){				
+				put_log("TCPIO server port alrady open");
 				break; // ignore if already open
 			}
 		} else {
-			if (tot_tcp_socket < max_tcp_socket){
-	        	cur_tcp_socket = tot_tcp_socket;
-	        	tot_tcp_socket++;
-			} else {
-            	put_log("TCPIO ERROR MAX PORTS EXCEEDED");
-            	pz390.reg.putInt(pz390.r15,12);
-            	break;
-			}
+			put_log("TCPIO open server failed - no ports available");
+           	pz390.reg.putInt(pz390.r15,12);
+			break;
 		}
        	try {
        		tcpio_host_ip = InetAddress.getLocalHost();
        		tcpio_host_text = tcpio_host_ip.getHostAddress();      		
        	} catch (Exception e){
-           	put_log("TCPIO ERROR GET LOCAL HOST FAILED");
+           	put_log("TCPIO error on open get local host failed");
            	pz390.reg.putInt(pz390.r15,12);
            	break;
        	}
-       	tcp_socket_host_text[cur_tcp_socket] = tcpio_host_text;
-       	tcp_socket_host_ip[cur_tcp_socket] = tcpio_host_ip;
-       	tcp_socket_port[cur_tcp_socket] = tcpio_port;
-       	tcp_socket_lmax[cur_tcp_socket] = tcpio_lmsg;
-       	if (tcpio_lmsg < tcpio_lmin
-       		|| tcpio_lmsg > tcpio_lmax){
-        	put_log("TCPIO ERROR LMAX OUT OF RANGE " + tcpio_lmax);
-        	pz390.reg.putInt(pz390.r15,12);
-        	break;
-       	}
-       	if (!tcpio_open_server_port()){
-       		pz390.reg.putInt(pz390.r15,12);
-       	}
+       	tcp_server_host_text[cur_tcp_server_index] = tcpio_host_text;
+       	tcp_server_host_ip[cur_tcp_server_index] = tcpio_host_ip;
+       	tcp_server_port[cur_tcp_server_index] = tcpio_port;
+       	if (tz390.opt_tracet){
+    		put_log("TCPIO open server socket" 
+    				+ " host=" + tcpio_host_text
+    				+ " port=" + tcpio_port);
+    	}
+    	try {
+    		tcp_server_socket[cur_tcp_server_index] = new ServerSocket(tcpio_port);
+    		tcp_server_thread[cur_tcp_server_index] = new Thread(this);
+    		tcp_server_thread[cur_tcp_server_index].start();
+    	} catch (Exception e){
+    		put_log("TCPIO error open server socket " + e.toString());
+    		pz390.reg.putInt(pz390.r15,12);
+    	}
 		break;
 	case 2: // open client connection to server port
-		if (tcpio_find_port()){
-			if (tcp_client_socket[cur_tcp_socket] != null
-				&& !tcp_client_socket[cur_tcp_socket].isClosed()){
-				put_log("TCPIO OPEN CLIENT PORT ALREADY OPEN");
+		if (tz390.opt_tracet){
+			put_log("TCPIO open client port " + tcpio_port);
+		}
+		if (tcpio_find_client_port()){
+			if (tcp_client_socket[cur_tcp_client_index] != null
+				&& !tcp_client_socket[cur_tcp_client_index].isClosed()){
+				put_log("TCPIO open client port already open");
 				break; // ignore if already open
 			}
-		} else {
-			if (tot_tcp_socket < max_tcp_socket){
-	        	cur_tcp_socket = tot_tcp_socket;
-	        	tot_tcp_socket++;
+		} else if (cur_tcp_client_index != -1){
+            tcp_client_port[cur_tcp_client_index] = tcpio_port;
+			tcpio_host_addr = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
+			if (tcpio_host_addr > 0){
+				tcpio_host_text = get_ascii_var_string(tcpio_host_addr,265);
+				try {
+					tcpio_host_ip   = InetAddress.getByName(tcpio_host_text);
+				} catch(Exception e) {
+					put_log("TCPIO error open client host not found " + tcpio_host_text);
+					pz390.reg.putInt(pz390.r15,12);
+					break;
+				}
 			} else {
-            	put_log("TCPIO ERROR MAX SERVER PORTS EXCEEDED");
-            	pz390.reg.putInt(pz390.r15,12);
-            	break;
+				try {
+					tcpio_host_ip   = InetAddress.getLocalHost();
+					tcpio_host_text = tcpio_host_ip.getHostAddress();
+				} catch(Exception e) {
+					put_log("TCPIO error open client get host failed");
+					pz390.reg.putInt(pz390.r15,12);
+					break;
+				}
 			}
-		}
-		tcpio_host_addr = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
-		if (tcpio_host_addr > 0){
-			tcpio_host_text = get_ascii_var_string(tcpio_host_addr,265);
+			tcp_client_host_text[cur_tcp_client_index] = tcpio_host_text;
+			tcp_client_host_ip[cur_tcp_client_index] = tcpio_host_ip;
+			if (tz390.opt_tracet){
+				put_log("TCPIO open client"
+					  + " HOST=" + tcpio_host_text 
+					  + " PORT=" + tcpio_port);
+			}
 			try {
-				tcpio_host_ip   = InetAddress.getByName(tcpio_host_text);
-			} catch(Exception e) {
-				put_log("TCPIO ERROR OPEN CLIENT HOST NOT FOUND " + tcpio_host_text);
+				tcp_client_socket[cur_tcp_client_index] = new Socket(tcpio_host_ip, tcpio_port);
+				tcp_client_input[cur_tcp_client_index]  = new DataInputStream(tcp_client_socket[cur_tcp_client_index].getInputStream());
+				tcp_client_output[cur_tcp_client_index] = new PrintStream(tcp_client_socket[cur_tcp_client_index].getOutputStream());
+			} catch (Exception e){
+				put_log("TCPIO error open client socket failed for port " + tcpio_port);
 				pz390.reg.putInt(pz390.r15,12);
-				break;
 			}
 		} else {
-			try {
-				tcpio_host_ip   = InetAddress.getLocalHost();
-				tcpio_host_text = tcpio_host_ip.getHostAddress();
-			} catch(Exception e) {
-				put_log("TCPIO ERROR OPEN CLIENT GET HOST FAILED");
-				pz390.reg.putInt(pz390.r15,12);
-				break;
-			}
+           	put_log("TCPIO error max client ports exceeded");
+           	pz390.reg.putInt(pz390.r15,12);	
 		}
-       	tcp_socket_host_text[cur_tcp_socket] = tcpio_host_text;
-       	tcp_socket_host_ip[cur_tcp_socket] = tcpio_host_ip;
-       	tcp_socket_port[cur_tcp_socket] = tcpio_port;
-       	tcp_socket_lmax[cur_tcp_socket] = tcpio_lmax;
-       	if (!tcpio_open_client_port()){
-       		pz390.reg.putInt(pz390.r15,12);
-       	}
 		break;
-	case 3: // close client connection
-		if (!tcpio_find_port()){
-			break; // ignore if already closed
+	case 3: // close port
+		if (tz390.opt_tracet){
+			put_log("TCPIO close port" + tcpio_port);
 		}
-		tcpio_close_port();
+		if (tcpio_find_client_port()){
+			tcpio_close_client_port();
+		} else if (tcpio_find_server_port()){
+			tcpio_close_server_port();
+		}
 		break;
 	case 4: // send message
-		if (!tcpio_find_port()){
-			put_log("TCPIO ERROR SENT PORT NOT FOUND " + tcpio_port);
-			pz390.reg.putInt(pz390.r15,12);
-			break;
-		}
-		tcpio_amsg  = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
 		if (tcpio_lmsg < tcpio_lmin
-			|| tcpio_lmsg > tcp_socket_lmax[cur_tcp_socket]){
-			put_log("TCPIO ERROR MSG LENGTH OUT OF RANGE " + tcpio_lmsg);
+			|| tcpio_lmsg > tcpio_lmax){
+			put_log("TCPIO send error msg length out of range " + tcpio_lmsg);
 			pz390.reg.putInt(pz390.r15,12);
 			break;
 		}
-		if (tcp_socket_output[cur_tcp_socket] != null){
-			tcp_socket_output[cur_tcp_socket].write(pz390.mem_byte,tcpio_amsg,tcpio_lmsg);
-			if (tz390.opt_trace){
-				put_log("TCPIO SEND LENGTH =" + tcpio_lmsg);
-				dump_mem(tcpio_amsg,tcpio_lmsg);
-			}
-		} else {
-			put_log("TCPIO ERROR SEND PORT NOT OPEN " + tcpio_port);
-			pz390.reg.putInt(pz390.r15,12);
-			break;
-        }
-		break;
-	case 5: // receive message
-		if (!tcpio_find_port()){
-			put_log("TCPIO ERROR RECEIVE PORT NOT FOUND " + tcpio_port);
-			pz390.reg.putInt(pz390.r15,12);
-			break;
-		}
-		tcpio_amsg  = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
-		
-		if (tcp_socket_input[cur_tcp_socket] != null){
-			try {
-				if (tcp_socket_input[cur_tcp_socket].read(pz390.mem_byte,tcpio_amsg,tcpio_lmsg) != tcpio_lmsg){
-					throw new RuntimeException("TCPIO ERROR RECEIVE LENGTH");
-				}
-				if (tz390.opt_trace){
-					put_log("TCPIO RECEIVE LENGTH =" + tcpio_lmsg);
+		if (tcpio_find_client_port()){
+			if (tcp_client_output[cur_tcp_client_index] != null){
+				tcp_client_output[cur_tcp_client_index].write(pz390.mem_byte,tcpio_amsg,tcpio_lmsg);
+				if (tz390.opt_tracet){
+					put_log("TCPIO send port=" + tcpio_port 
+							     + " length=" + tcpio_lmsg);
 					dump_mem(tcpio_amsg,tcpio_lmsg);
 				}
-			} catch (Exception e){
-				put_log("TCPIO SERVER CONNECTION LOST FOR PORT " + tcpio_port);
+			} else {
+				put_log("TCPIO errpr semd failed for port=" + tcpio_port);
+				pz390.reg.putInt(pz390.r15,12);
+				break;
+	        }
+		} else if (tcpio_find_server_port()){
+			int conn_index = pz390.reg.getInt(pz390.r2);
+			if (conn_index >= 0 
+				&& conn_index < max_tcp_conn
+				&& tcp_conn_server_port[conn_index] == tcpio_port){
+				if (tcp_conn_output[conn_index] != null){
+					tcp_conn_output[conn_index].write(pz390.mem_byte,tcpio_amsg,tcpio_lmsg);
+					if (tz390.opt_tracet){
+						put_log("TCPIO send port=" + tcpio_port 
+							  + " conn=" + conn_index	
+							  + " length=" + tcpio_lmsg);
+						dump_mem(tcpio_amsg,tcpio_lmsg);
+					}
+				} else {
+					put_log("TCPIO error send failed on port=" + tcpio_port);
+					pz390.reg.putInt(pz390.r15,12);
+					break;
+				}
+			} else {
+				put_log("TCPIO error send port not found " + tcpio_port);
 				pz390.reg.putInt(pz390.r15,12);
 				break;
 			}
-		} else {
-			put_log("TCPIO ERROR RECEIVE PORT NOT OPEN " + tcpio_port);
+		}
+		break;
+	case 5: // receive message
+		if (tz390.opt_tracet){
+			put_log("TCPIO receive msg for port=" + tcpio_port);
+		}
+		if (tcpio_lmsg < tcpio_lmin
+			|| tcpio_lmsg > tcpio_lmax){
+			put_log("TCPIO receive error msg length out of range " + tcpio_lmsg);
 			pz390.reg.putInt(pz390.r15,12);
 			break;
-        }
+		}
+		if (tcpio_find_client_port()){
+			tcpio_receive_client_port();
+		} else if (tcpio_find_server_port()){
+			tcpio_receive_server_port();
+		} else {
+			put_log("TCPIO error receive port not found " + tcpio_port);
+			pz390.reg.putInt(pz390.r15,12);
+			break;
+		}		
 		break;
     default:
-    	put_log("TCPIO ERROR INVALID OPERATION " + tcpio_op);
+    	put_log("TCPIO error invalid operation " + tcpio_op);
     	pz390.set_psw_check(pz390.psw_pic_spec);			
 	}
 }
-private boolean tcpio_open_server_port(){
+private boolean tcpio_find_server_port(){
 	/*
-	 * open TCP/IP server socket for host ip
+	 * set cur_tcp_server_index to allocated
+	 * server port and return true else
+	 * set cur_tcp_server_index to first free port
+	 * and return true else
+	 * set cur_tcp_server_index to -1
+	 * and return false indicating no ports avail.
+	 * 
 	 */
-	if (tz390.opt_trace){
-		put_log("TCPIO OPEN SERVER SOCKET" 
-				+ " HOST=" + tcpio_host_text
-				+ " PORT=" + tcpio_port
-			    + " LMAX=" + tcpio_lmax);
-	}
-	try {
-		tcp_server_socket[cur_tcp_socket] = new ServerSocket(tcpio_port);
-		tcp_client_socket[cur_tcp_socket] = tcp_server_socket[cur_tcp_socket].accept();
-		tcp_socket_input[cur_tcp_socket] = new DataInputStream(tcp_client_socket[cur_tcp_socket].getInputStream());
-		tcp_socket_output[cur_tcp_socket] = new PrintStream(tcp_client_socket[cur_tcp_socket].getOutputStream());
-    	return true;
-	} catch (Exception e){
-		put_log("TCPIO ERROR OPEN SERVER SOCKET " + e.toString());
-    	return false;
-	}
-}
-private boolean tcpio_open_client_port(){
-	/*
-	 * open client port
-	 */
-	if (tz390.opt_trace){
-   		put_log("TCPIO OPEN CLIENT"
-   				+ " HOST=" + tcp_socket_host_text[cur_tcp_socket] 
-                + " PORT=" + tcpio_port
-                + " LMAX=" + tcpio_lmax);
-   	}
-   	try {
-   		tcp_client_socket[cur_tcp_socket] = new Socket(tcpio_host_ip, tcpio_port);
-	    tcp_socket_input[cur_tcp_socket] = new DataInputStream(tcp_client_socket[cur_tcp_socket].getInputStream());
-   		tcp_socket_output[cur_tcp_socket] = new PrintStream(tcp_client_socket[cur_tcp_socket].getOutputStream());
-   		return true;
-   	} catch (Exception e){
-   		put_log("TCPIO ERROR OPEN CLIENT SOCKET FAILED FOR PORT " + tcpio_port);
-       	return false;
-   	}
-}
-private boolean tcpio_find_port(){
-	/*
-	 * find open port and return true else false
-	 */
-	int cur_tcp_socket = 0;
-	while (cur_tcp_socket < tot_tcp_socket){
-		if (tcp_socket_port[cur_tcp_socket] == tcpio_port){
-			tcpio_host_text = tcp_socket_host_text[cur_tcp_socket];
-			tcpio_host_ip   = tcp_socket_host_ip[cur_tcp_socket];
-			tcpio_lmax      = tcp_socket_lmax[cur_tcp_socket];
+	cur_tcp_server_index = 0;
+	int free = -1;
+	while (cur_tcp_server_index < max_tcp_server_port){
+		if (tcp_server_port[cur_tcp_server_index] == tcpio_port){
 			return true;
-		}
-		cur_tcp_socket++;
+		} else if (free == -1 && tcp_server_port[cur_tcp_server_index] == 0){
+            free = cur_tcp_server_index;			
+		}		
+		cur_tcp_server_index++;
 	}
+	cur_tcp_server_index = free;
+	return false;
+}
+private boolean tcpio_find_client_port(){
+	/*
+	 * set cur_tcp_client_index to allocated
+	 * client port and return true else 
+	 * set cur_tcp_client_index to first free
+	 * client port and return false else 
+	 * set cur_tcp_client index to -1 and return false
+	 */
+	int cur_tcp_client_index = 0;
+	int free = -1;
+	while (cur_tcp_client_index < max_tcp_client_port){
+		if (tcp_client_port[cur_tcp_client_index] == tcpio_port){
+			return true;
+		} else if (free == -1 && tcp_client_port[cur_tcp_client_index] == 0){
+			free = cur_tcp_client_index;
+		}
+		cur_tcp_client_index++;
+	}
+	cur_tcp_client_index = free;
 	return false;
 }
 private void tcpio_close_ports(){
 	/*
-	 * close all open TCP/IP ports
+	 * close all client and server ports
 	 */
-	if (tz390.z390_abort)return;
-	cur_tcp_socket = 0;
-	while (cur_tcp_socket < tot_tcp_socket){
-		tcpio_port = tcp_socket_port[cur_tcp_socket];
-		tcpio_close_port();
-		cur_tcp_socket++;
+	tcpio_server_running = false; // shut down any server threads
+	cur_tcp_client_index = 0;
+	while (cur_tcp_client_index < max_tcp_client_port){
+		if (tcp_client_port[cur_tcp_client_index] > 0){
+			tcpio_close_client_port();
+		}
+		cur_tcp_client_index++;
+	}
+	cur_tcp_server_index = 0;
+	while (cur_tcp_server_index < max_tcp_server_port){
+		if (tcp_server_port[cur_tcp_server_index] > 0){
+			tcpio_close_server_port();
+		}
+		cur_tcp_server_index++;
 	}
 }
-private boolean tcpio_close_port(){
+private void tcpio_close_client_port(){
 	/*
-	 * close open TCP/IP port
+	 * close all open TCP/IP ports
 	 */
-	if (tcp_server_socket[cur_tcp_socket] != null
-		&& !tcp_server_socket[cur_tcp_socket].isClosed()){
-		try {
-			if (tz390.opt_trace){
-				put_log("TCPIO CLOSING SERVER PORT - " + tcpio_port);
-			}
-			tcp_server_socket[cur_tcp_socket].close();
-		    return true;
-		} catch (Exception e){
-			put_log("TCPIO ERROR ON SERVER CLOSE PORT " + tcpio_port);
-			return false;
+	try {
+		if (tz390.opt_tracet){
+			put_log("TCPIO closing client port" + tcp_client_port[cur_tcp_client_index]);
 		}
+		tcp_client_output[cur_tcp_client_index].flush();
+		tcp_client_output[cur_tcp_client_index].close();
+		tcp_client_input[cur_tcp_client_index].close();
+		tcp_client_socket[cur_tcp_client_index].close();
+		tcp_client_socket[cur_tcp_client_index] = null;
+		tcp_client_port[cur_tcp_client_index] = 0;
+	} catch (Exception e){
+		put_log("TCPIO error closing client port " + tcpio_port);
+	}
+}
+private synchronized void tcpio_close_server_port(){
+	/*
+	 * close open TCP/IP server port
+	 */
+	if (tcp_server_socket[cur_tcp_server_index] != null){
+		try {
+			if (tz390.opt_tracet){
+				put_log("TCPIO closing server port=" + tcpio_port);
+			}
+			int conn_index = 0;
+			while (conn_index < max_tcp_conn){
+				if (tcp_conn_server_port[conn_index] == tcp_server_port[cur_tcp_server_index]){
+                   tcpio_close_conn(conn_index);
+				}
+				conn_index++;
+			}
+			tcp_server_socket[cur_tcp_server_index].close();
+			tcp_server_socket[cur_tcp_server_index] = null;
+		} catch (Exception e){
+			put_log("TCPIO error on closing server port=" + tcpio_port);
+		}		
+	}
+}
+private synchronized void tcpio_close_conn(int conn_index){
+	/*
+	 * close connection
+	 */
+	if (tcp_conn_socket[conn_index] == null){
+		return;
+	}
+	try {
+		if (tz390.opt_tracet){
+			put_log("TCPIO closing connection " + conn_index);
+		}
+		tcp_conn_output[conn_index].close();
+		tcp_conn_input[conn_index].close();
+		tcp_conn_socket[conn_index].close();
+		tcp_conn_socket[conn_index] = null;
+		tcp_conn_server_port[conn_index] = 0;
+	} catch (Exception e){
+		put_log("TCPIO close connection failed " + e.toString());
+	}
+}
+private void tcpio_receive_client_port(){
+	/* 
+	 * receive message from client port
+	 * if nowait and message not ready RC=4
+	 * else wait for message
+	 */
+	try {
+		int cur_msg_len = tcp_client_input[cur_tcp_client_index].available();
+		if (cur_msg_len > 0
+			|| tcpio_wait){
+			if (tz390.opt_tracet && cur_msg_len == 0){
+				put_log("TCPIO waiting for client msg on port=" + tcpio_port);
+			}
+			cur_msg_len = tcp_client_input[cur_tcp_client_index].read(pz390.mem_byte,tcpio_amsg,tcpio_lmsg);
+			if (cur_msg_len <= 0){
+				throw new RuntimeException("TCPIO error on client receive port=" + tcpio_port);
+			}
+			if (tz390.opt_tracet){
+				put_log("TCPIO receive client port=" + tcpio_port 
+						     + " length=" + cur_msg_len);
+				dump_mem(tcpio_amsg,cur_msg_len);
+			}
+			pz390.reg.putInt(pz390.r1,cur_msg_len);
+			return; // return with msg stored in mem
+		} else {
+			pz390.reg.putInt(pz390.r15,4);
+			pz390.reg.putInt(pz390.r1,0);
+			return; // return RC=4 for NOWAIT
+		}
+	} catch (Exception e){
+		put_log("TCPIO receive error on client port=" + tcpio_port);
+		pz390.reg.putInt(pz390.r15,12);
+	}
+}
+private void tcpio_receive_server_port(){
+	/* 
+	 * receive message from server
+	 * port connection.
+	 * If no connection id is specified (-1),
+	 * then next message from any conncetion.
+	 * if nowait and message not ready RC=4
+	 * else wait for next message..
+	 * Notes:
+	 *   1. Connection # returned in R2
+	 */
+	if (tz390.opt_traceall){
+		put_log("TCPIO receive msg from port=" + tcpio_port);
+	}
+	int conn_index = tcpio_conn;
+	if (tcpio_conn == -1){
+		conn_index = 0; // start search at conn 0
+	}
+	tcpio_conn_ready_count = 0; // count ready connections during scan
+	while (tcpio_server_running 
+			&& (conn_index < max_tcp_conn 
+			    || tcpio_wait)
+		  ){
+		if (tz390.opt_traceall){
+			put_log("TCPIO check receive conn=" + conn_index);
+		}		
+		try {
+			if (tcp_conn_server_port[conn_index] > 0
+				&& tcp_conn_msg_ready[conn_index]
+				){
+				// this connection has msg ready
+				// 	so store it and exit 
+				tcpio_conn_store_msg(conn_index);
+				return;
+			}
+			if (tcpio_conn == -1){
+				// find next message 
+				// from any connection
+				conn_index++;
+				if (conn_index >= max_tcp_conn
+					&& tcpio_wait){
+					// After checking all connections
+					// for any pending messages,
+					// wait here for msg ready post
+					// from live connection thread
+					// and then proceed to check again
+                    lock.lock();
+                    try {
+                    	if (tcpio_conn_ready_count == 0){
+                    		lock_condition.await();
+                    	}
+                    } catch(Exception e){
+                    	if (tz390.opt_traceall){
+                    		put_log("TCPIO error waiting for server message on any conn");
+                    	}
+                    } finally {
+                    	lock.unlock();
+                    }
+                    tcpio_conn_ready_count = 0;
+					conn_index = 0;
+				}
+			} else if (tcpio_wait){
+				// no msg ready from specific connection
+                // so wait for post from connection and try again
+                try {
+               		lock_condition.await();
+                } catch(Exception e){
+                	if (tz390.opt_traceall){
+                		put_log("TCPIO error waiting for server message on conn=" + tcpio_conn);
+                	}
+                } finally {
+                	lock.unlock();
+                }				
+			} else {
+				// force nowait exit with conn=-1
+				conn_index = max_tcp_conn; 
+			}
+		} catch (Exception e){
+    		put_log("TCPIO error checking conn msg available on conn=" + conn_index + " - " + e.toString());
+    		tcpio_close_conn(conn_index);     
+		}
+	}
+	pz390.reg.putInt(pz390.r1,0);  // return 0 msg length
+	pz390.reg.putInt(pz390.r2,-1); // return -1 conn index (none)
+	pz390.reg.putInt(pz390.r15,4); // exit RC=4 NOWAIT and no msg ready
+}
+private void tcpio_conn_store_msg(int conn_index){
+	/*
+	 * 1.  store msg from conn input buffer
+	 *     up to specified lmsg length
+	 *     and return actual length stored in R1.
+	 *.2.  Turn off tcp_conn_msg_ready if 0 avail.
+	 * Notes:
+	 *   1.  First byte may be in conn_byte
+	 *       if conn_read = true
+	 */
+	if (tz390.opt_traceall){
+		System.out.println("TCPIO storing msg from conn=" + conn_index);
+		sleep_now(tz390.monitor_wait);
+	}
+	pz390.reg.putInt(pz390.r2,conn_index); // return conn index
+    int cur_msg_len = 0;
+	int conn_amsg = tcpio_amsg;
+	int conn_lmsg = tcpio_lmsg;
+	if (tcp_conn_read[conn_index]){
+		cur_msg_len = 1;
+		pz390.mem.put(conn_amsg,tcp_conn_byte[conn_index]);
+	    tcp_conn_read[conn_index] = false;
+        conn_amsg++;
+        conn_lmsg--;
+	}
+	if  (conn_lmsg > 1){
+        try {
+        	int msg_avail = tcp_conn_input[conn_index].available();
+        	if (conn_lmsg > msg_avail){
+        		conn_lmsg = msg_avail;
+        	}
+        	if (conn_lmsg > 0 
+        		&& tcp_conn_input[conn_index].read(pz390.mem_byte,conn_amsg,conn_lmsg) != conn_lmsg){
+        		throw new RuntimeException("TCPIO error on store message from port=" + tcp_conn_server_port[conn_index]);
+        	}
+        	cur_msg_len = cur_msg_len + conn_lmsg;
+    	} catch (Exception e){
+    		put_log("TCPIO error storing message from conn=" + conn_index + " - " + e.toString());
+    		pz390.reg.putInt(pz390.r15,12);
+    	}
+	}
+	pz390.reg.putInt(pz390.r1,cur_msg_len);
+	if (tz390.opt_tracet){
+		put_log("TCPIO receive server msg from port=" + tcpio_port 
+		      + " conn=" + conn_index
+					     + " length=" + cur_msg_len);
+		dump_mem(tcpio_amsg,cur_msg_len);
+	}
+    tcpio_set_conn_msg_ready(conn_index,false);
+}
+private synchronized boolean tcpio_set_conn_msg_ready(int conn_index,boolean state){
+	/*
+	 * if state true
+	 *    set conn msg ready
+	 *    (byte has been read by conn thread)
+	 * else if no msg data available 
+	 *    reset conn msg ready
+	 *    (will force read on conn thread)
+	 * else
+	 *    leave conn ready set to true
+	 *    (allows main user thread to read
+	 *    mult msgs without switching back
+	 *    to conn thread for a read)
+	 */
+	if (state){
+		tcp_conn_msg_ready[conn_index] = true;
+		return true;
+	}
+	try {
+		if (tcp_conn_input[conn_index].available() == 0){
+			tcp_conn_msg_ready[conn_index] = false;
+			return false;
+		} else {
+			return true;
+		}
+	} catch (Exception e){
+		put_log("TCPIO disconnect while switching state for conn=" + conn_index);
+		tcpio_close_conn(conn_index);
+	}
+	return false;
+}
+private synchronized boolean tcp_alloc_conn(int port_index){
+    /*
+     * allocate next conn for server port use
+     */
+    int conn_index = 0;
+    while (conn_index < max_tcp_conn){
+    	if (tcp_conn_server_port[conn_index] == 0){
+    		tcp_conn_server_port[conn_index] = tcpio_port;
+    		tcp_server_conn_index[port_index] = conn_index;
+    		tcp_conn_server_index[conn_index] = port_index;
+    		tcp_conn_socket[conn_index] = null;
+    		return true;
+    	}
+    	conn_index++;
+    }
+    return false;
+}
+private synchronized void tcp_free_conn(int conn_index){
+	/* 
+	 * release tcp connecntion for reuse
+	 */
+	int port_index = tcp_conn_server_index[conn_index];
+	if (tcp_conn_server_index[conn_index] == tcp_server_conn_index[port_index]){
+		tcp_server_conn_index[port_index] = 0;
+		tcp_conn_server_index[conn_index] = 0;
+		tcp_conn_server_port[conn_index] = 0;
+		tcp_conn_socket[conn_index] = null;
 	} else {
-		try {
-			if (tz390.opt_trace){
-				put_log("TCPIO CLOSING CLIENT PORT " + tcpio_port);
-			}
-			tcp_socket_output[cur_tcp_socket].flush();
-			tcp_socket_output[cur_tcp_socket].close();
-			tcp_client_socket[cur_tcp_socket].close();
-		    return true;
-		} catch (Exception e){
-			put_log("TCPIO ERROR CLOSING CLIENT PORTr " + tcpio_port);
-			return false;
-		}
+		abort_error(23,"TCPIO free conn internal error - abprting");
 	}
 }
 private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){

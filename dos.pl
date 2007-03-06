@@ -1,5 +1,4 @@
-#!/usr/bin/perl
-#
+#!/usr/bin/perl --
 # dos.pl perl bat file and dos command processor for use with z390 on Linux
 # 
 # Installation:
@@ -10,14 +9,14 @@
 #   1.  Start Linux terminal window from "Applications", ,"Accessories", menu
 #   2.  Enter command: dos   (this will  issue cd to z390 directory and prompt
 #       for any z390 bat file or supported dos command  such as:
-#          ASMLG demo\DEMO  (assemble,  link,  and exec hello world  demo)
-#          RT               (run z390 regression tests after installing RT and MVS zips)
-#          soa\demo\DEMOSOA (gen SOA client server demo application
-#          soa\demo\DEMORUNS (run SOA server in this terminal window)
-#          soa\demo\DEMORUNC (run SOA client applicaiton in another terminal window)
-#          soa\demo\DEMOSTOP (stop the SOA demo server from anywhere on  network)
-#          z390              (start z390 GUI interface from this window)
-#          exit              (exit z390 dos command processor)
+$         ASMLG demo\DEMO  (assemble,  link,  and exec hello world  demo)
+#         RT               (run z390 regression tests after installing RT and MVS zips)
+#         soa\demo\DEMOSOA (gen SOA client server demo application
+#         soa\demo\DEMORUNS (run SOA server in this terminal window)
+#         soa\demo\DEMORUNC (run SOA client applicaiton in another terminal window)
+#         soa\demo\DEMOSTOP (stop the SOA demo server from anywhere on  network)
+#         z390              (start z390 GUI interface from this window)
+#         exit              (exit z390 dos command processor)
 ###########################################################
 # Author Don Higgins www.z390.org  don@higgins.net
 ###########################################################
@@ -32,6 +31,7 @@
 #           CR,LF carriage return and line feed.  This only
 #           applies to first line of perl scripts as BAT
 #           files edited on Windows work fine.)
+# 02/09/07 RPI 548 add -- to first line to allow Windows editing
 ###########################################################
 use strict;
 use warnings;

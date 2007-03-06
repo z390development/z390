@@ -32,7 +32,7 @@ public  class  lz390 {
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
     lz390 is the linker component of z390 which can be called from
-    z390 gui interface or from command line to read obj     relocatble object code files and generate single 390 load
+    z390 GUI interface or from command line to read obj     relocatble object code files and generate single 390 load
     module file.  Both obj and 390 files are in ascii text     file format with hex codes for all binary data.
 
     ****************************************************

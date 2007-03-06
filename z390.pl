@@ -1,5 +1,4 @@
-#!/usr/bin/perl
-#
+#!/usr/bin/perl --
 # z390 IBM assembler control program
 # Usage: z390 [options] file [assembler options]
 #
@@ -31,6 +30,7 @@
 #           CR,LF carriage return and line feed.  This only
 #           applies to first line of perl scripts as BAT
 #           files edited on Windows work fine.)
+# 02/09/07 RPI 548 add -- on first line to allow Windows editing
 ###########################################################
 
 use strict;

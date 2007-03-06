@@ -1,4 +1,4 @@
-z390 V1.3.01 Portable Mainframe Assembler
+z390 V1.3.02 Portable Mainframe Assembler
 Copyright 2007 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
@@ -30,7 +30,7 @@ A WTO macro based demo “Hello World” program demo.mlc is included which can be e
 
 Structured programming macros IF, ELSEIF, ELSE, ENDIF, DO, and ENDDO are included along with demo program DEMO\DEMOSTR1.
 
-A Service Oriented Architecture (SOA) client server application generation service including SOA directory with macro library and demo application which uses TCP/IP sockets messaging to enable client and server to run on same or different processors on a TCP/IP network.
+A Service Oriented Architecture (SOA) client server application generation service including SOA directory with macro library and demo application which uses TCP/IP sockets messaging to enable clients and servers with multiple connections to run on same or different processors on a TCP/IP network including networks connected via VPN links over the Internet.
 
 A TPUT and TGET macro based demo TN3270 application to update and display name, address, and numeric zip fields on screen can be assembled and executed with the command “ASMLG DEMO\DEMOGUI6 GUAM”.  Use PF1 for help screen and PF3 for exit.  The arrow, backspace, and tab keys can be used to control blinking cursor.  An alarm and status line error is issued if attempt is made to modify protected field or enter alpha data in numeric field.
 
@@ -48,7 +48,7 @@ z390 Windows 2000 and XP installation instructions:
     http://java.sun.com/j2se/
 4. Remove old versions of J2SE runtime such as 1.4.2 etc.
 5. Double click on the z390 desktop icon to start z390 GUI
-    a. Enter the command “ASMLG DEMO\DEMO” to run demo
+    a. Enter the command “ASMLG demo\DEMO” to run demo
     b. Scroll the output log to see output of each step
     c. Use file menu edit selection to view generated ASCII source files:
         1)  DEMO.MLC – source macro assembler demo for WTO ‘hello world’
@@ -58,9 +58,9 @@ z390 Windows 2000 and XP installation instructions:
         5)  DEMO.LST – linker listing
         6)  DEMO.LOG – execution log including WTO display message
     d. Optional downloads from www.z390.org for use with z390 install include the following:
-        1) Regression tests for all z390 components - these tests have been successfully run
-              on both Windows XP and Ubuntu Linux 6.06 LTS using J2RE 1.5.0_10.           
-        2)  Public domain MVS 3.8J macro library with associated demo and test programs
+        1)   Regression tests for all z390 components - these tests have been successfully run
+               on both Windows XP and Ubuntu Linux 6.06 LTS using J2RE 1.5.0_10.           
+        2)   Public domain MVS 3.8J macro library with associated demo and test programs
 
 6. Click on help menu for links to additional information.
 

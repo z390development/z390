@@ -191,7 +191,7 @@ public  class  gz390
         long    monitor_cur_rate = 0;
         boolean monitor_last_cmd_mode = false;
     /*
-     * GUI screen view variables
+     * GUAM GUI screen view variables
      */
 
         int guam_view_mcs    = 1;
@@ -350,7 +350,7 @@ public  class  gz390
     	0x38,0x39,0xff,0xff,0xff,0xff,0xff,0xff, //F8
     	};
     /*
-     *  Global GUI objects 
+     *  Global GUAM GUI objects 
      */
     int ascii_lf = 10;
     int ascii_cr = 13;
@@ -401,7 +401,7 @@ public  class  gz390
     int view_cmd = -1;
     String[] cmd_history = new String[100];
     /*
-     * Graphics 2d GUI objects
+     * Graphics 2d GUAM GUI objects
      */
     JTextArea graph_grid = null;
     /*
@@ -643,7 +643,7 @@ public  class  gz390
 		 * (turn off runtime shutdown exit
 		 */
 			if  (!tz390.z390_abort){
-				abort_error(58,"GUAM gui window closed");
+				abort_error(58,"GUAM GUI window closed");
 				int count = 5;
 				while (count > 0){
 					sleep_now(); // RPI 220 wait for ez390 to term
@@ -860,7 +860,7 @@ public  class  gz390
 	   	return parm_string;
 	   }
 	   private void about_command(){
-		    guam_put_log("\nz390 GUI gz390 Graphical User Access Method "
+		    guam_put_log("\nz390 GUAM GUI gz390 Graphical User Access Method "
 				  + tz390.version); 
  	   	    guam_put_log("Copyright 2006 Automated Software Tools Corporation");
 			guam_put_log("z390 is licensed under GNU General Public License");
@@ -916,7 +916,7 @@ public  class  gz390
 	   	/*
 	   	 * log summary list of commands and help reference
 	   	 */
-	   	guam_put_log("\nz390 GUI z390 Graphical User Access Method Help");
+	   	guam_put_log("\nz390 GUAM GUI z390 Graphical User Access Method Help");
 	   	guam_put_log("View menu MCS     - Display WTO and WTOR scrolling window (default)");
 	   	guam_put_log("View menu TN3270  - Display TPUT and TGET TN3270 window");
 	   	guam_put_log("View menu Graph   - Display graph drawn by gz390 GKS commands");
@@ -946,7 +946,7 @@ public  class  gz390
 	   private void monitor_update(){
 	   /*
 	    * 1.  At monitor_wait intervals, update the
-	    *     GUI title date and time and the status
+	    *     GUAM GUI title date and time and the status
 	    *     line information.
 	    * 
 	    * 2.  reset focus to gz390_cmd_line after wto
@@ -1047,7 +1047,7 @@ public  class  gz390
      }
      private void set_guam_size(){
     	 /* 
-    	  * calculate gui object sizes based on
+    	  * calculate GUAM GUI object sizes based on
     	  * sreen size and font size
     	  */
     	title_height = 56;
@@ -1197,7 +1197,7 @@ public  class  gz390
 	    */
 	     String text_font_pfx = "<html><font size=" + font_size/3 + ">";
 	     String text_font_sfx = "</html>";
-	     file_menu_exit.setToolTipText(text_font_pfx + "Exit gz390 GUI" + text_font_sfx);
+	     file_menu_exit.setToolTipText(text_font_pfx + "Exit gz390 GUAM GUI" + text_font_sfx);
 	     edit_menu_cut.setToolTipText(text_font_pfx + "Cut selected text" + text_font_sfx);
 	     edit_menu_copy.setToolTipText(text_font_pfx + "Copy selected text to clipboard" + text_font_sfx);
 	     edit_menu_paste.setToolTipText(text_font_pfx + "Paste clipboard text (append if log has focus" + text_font_sfx);
@@ -1613,7 +1613,7 @@ public  class  gz390
   	   }
        private void process_cancel_key(){
        /*
-        * cancel cmd, or gui cmd in response to
+        * cancel cmd, or GUAM GUI cmd in response to
         * F3 or CTRL-BREAK
         */	
     	   abort_error(102,"GUAM GUI terminating due to external shutdown request");
@@ -1939,12 +1939,12 @@ public  class  gz390
         	 */
            	if (graph_grid == null){ // init first time
            		graph_grid = new JTextArea(
-           			"\n  GUI grahics support not done yet"
+           			"\n  GUAM GUI grahics support not done yet"
            	      + "\n  Click on View to see MCS and TN3270 views"
-           	      + "\n  Run demogui1 for simple WTO, WTOR, WAIT interface"
-           	      + "\n  Run demogui2 for WTO, WTOR,ECB MIP rate calculation"
-           	      + "\n  Run demogui3 for TPUT, TGET TN3270 EDIT mode interface"
-           	      + "\n  Run demogui4 for TPUT, TGET TN3270 data stream demo (useing edit mode until done)"
+           	      + "\n  Run DEMOGUI1 for simple WTO, WTOR, WAIT interface"
+           	      + "\n  Run DEMOGUI2 for WTO, WTOR,ECB MIP rate calculation"
+           	      + "\n  Run DEMOGUI3 for TPUT, TGET TN3270 EDIT mode interface"
+           	      + "\n  Run DEMOGUI4 for TPUT, TGET TN3270 data stream demo (useing edit mode until done)"
            		);
            		graph_grid.addMouseListener(this);
            	}
@@ -2863,10 +2863,10 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 	return text;
 }
      /***********************************************
-      * Public GUI application interfaces for
-      *   WTO/WTOR -  MCS view
-      *   TPUT/TGET - Screen view
-      *   GUI       - graphic view and window commands
+      * Public GUAM GUI application interfaces for
+      *   WTO/WTOR   - MCS view
+      *   TPUT/TGET  - Screen view
+      *   GUAM MACRO - graphic view and window commands
       ***********************************************/
 	 public boolean wtor_request_reply(int ecb_addr){
 		 /*
@@ -2901,7 +2901,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 	 }
 	 public void start_guam(String title,tz390 shared_tz390){
 		 /*
-		  * startup gz390 gui window with title
+		  * startup gz390 GUAM GUI window with title
 		  * in default mcs mode for wto/wtor
 		  */
 	     tz390 = shared_tz390;
@@ -2914,11 +2914,11 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 	 }
 	 public void guam_window_title(String title){
 		 /*
-		  * set gz390 gui window title 
+		  * set gz390 GUAM GUI window title 
 		  * 
 		  * Notes:
 		  *   1.  Called from ez390 with ez390_pgm
-		  *       at initization time if option gui.
+		  *       at initization time if option GUAM .
 		  */
 		 main_title = title;
 	   }
@@ -3054,7 +3054,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
     		try {
     			Thread.sleep(monitor_wait);
     		} catch (Exception e){
-    			abort_error(109,"GUI Screen read wait exception -" + e.toString());
+    			abort_error(109,"GUAM GUI Screen read wait exception -" + e.toString());
     		}
         }
         public void guam_screen_field(int row, int col, int lfield){
@@ -3110,7 +3110,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         		try {
         			Thread.sleep(monitor_wait);
         		} catch (Exception e){
-        			abort_error(110,"GUI Keyboard read wait exception -" + e.toString());
+        			abort_error(110,"GUAM GUI Keyboard read wait exception -" + e.toString());
         		    return -1;
         		}
         	}
@@ -3185,7 +3185,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
     public void guam_tput(){
     	/*
     	 * 1.  Display TN3290 data stream buffer on
-    	 *     GUI 3270 screen and return true of ok.
+    	 *     GUAM GUI 3270 screen and return true of ok.
     	 */
     	tpg_rc = 0; // RPI 221 assume ok
     	if (guam_view != guam_view_screen){

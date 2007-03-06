@@ -9,6 +9,8 @@ INSTTIME SUBENTRY
 * EXECUTE WITH OPTIONS: ASCII NOTIME MEM(5)
 *
 * TO DO
+*    ADD RC TESTS FOR OUTPUT CFD/CTD
+*    TEST IF LD ETC FUNDAMENTAL, TIMES DIFF IF HFP/BFP/DFP
 *    CC TESTING
 *
          LARL  R3,PARMSIN         ADDRESS PARM I/O AREA
@@ -51,12 +53,12 @@ BCTTIMER BCT   R7,BCTTIMER        DO IT
 * HOLDING PL6 PER TIME, 500 SLOTS, CAN EXTEND IF NEEDED
 * IF SLOTS MORE THAN 999, CHANGE MEAN SUBROUTINE
          GETMAIN R,LV=3000        TIMES COLLECTION AREA
-         ST    R0,STATADR1        SAVE STATS ORIGIN
-         ST    R0,STATNXT1        SAVE STATS NEXT SLOT
+         ST    R1,STATADR1        SAVE STATS ORIGIN
+         ST    R1,STATNXT1        SAVE STATS NEXT SLOT
 * HOLDING PL4'L1',PL4'L2' OR PL4'LL',PL4'0'
          GETMAIN R,LV=4000        LENGTHS COLLECTION AREA
-         ST    R0,STATADR2        SAVE STATS ORIGIN
-         ST    R0,STATNXT2        SAVE STATS NEXT SLOT
+         ST    R1,STATADR2        SAVE STATS ORIGIN
+         ST    R1,STATNXT2        SAVE STATS NEXT SLOT
 ******** LARL  R1,INSTABND        ABEND INTERCEPT ADDRESS
 ******** ESTAE (1)
 *
@@ -1686,9 +1688,9 @@ RRMVCL   EQU   *
          LTR   R11,R1             SET FOR MVCL/CLCL
          BZ    RRLENERR           EXIT IF IT IS
          GETMAIN R,LV=1000000     'FROM' ADDRESS
-         LR    R10,R0             SET FOR MVCL/CLCL
+         LR    R10,R1             SET FOR MVCL/CLCL
          GETMAIN R,LV=1000000     'TO' ADDRESS
-         LR    R4,R0              SET FOR MVCL/CLCL
+         LR    R4,R1              SET FOR MVCL/CLCL
          STM   R4,R5,RRGET1       SAVE 'TO' REGS
          STM   R10,R11,RRGET2     SAVE 'FROM' REGS
 * TIME A 2-REG LM
@@ -2135,9 +2137,9 @@ RSMVCLE  EQU   *
          LTR   R11,R1             SET FOR MVCLE/CLCLE
          BZ    RSLENERR           EXIT IF IT IS
          GETMAIN R,LV=1000000     'FROM' ADDRESS
-         LR    R10,R0             SET FOR MVCLE/CLCLE
+         LR    R10,R1             SET FOR MVCLE/CLCLE
          GETMAIN R,LV=1000000     'TO' ADDRESS
-         LR    R4,R0              SET FOR MVCLE/CLCLE
+         LR    R4,R1              SET FOR MVCLE/CLCLE
          STM   R4,R5,RSGET1       SAVE 'TO' REGS
          STM   R10,R11,RSGET2     SAVE 'FROM' REGS
 * TIME A 2-REG LM
@@ -3650,9 +3652,9 @@ RRECUSE  EQU   *
          LTR   R11,R1             SET FOR CUSE
          BZ    RRELENER           EXIT IF IT IS
          GETMAIN R,LV=1000000     OP1 ADDRESS
-         LR    R10,R0             SET FOR CUSE/MVST/CLST/TRE
+         LR    R10,R1             SET FOR CUSE/MVST/CLST/TRE
          GETMAIN R,LV=1000000     OP2 ADDRESS
-         LR    R4,R0              SET FOR CUSE/MVST/CLST/SRST/TRE
+         LR    R4,R1              SET FOR CUSE/MVST/CLST/SRST/TRE
          ST    R4,RRER4           SAVE IT
          SGR   R6,R6              CLEAR R6
          LA    R6,X'FF'           STOPPER FOR MVST/CLST/TRE
@@ -4327,14 +4329,14 @@ RRFTR    EQU   *
          BO    RRFLENER           ERROR IF IT IS
 RRFNT2   EQU   *
          GETMAIN R,LV=(R11),LOC=24 OP2
-         ST    R0,RRFSAVE2        STORE IT
-         LR    R1,R11             GETMAIN LENGTH
-         AR    R1,R1              MAXIMUM SIZE OF OP1
-         GETMAIN R,LV=(1),LOC=24  OP1
-         LR    R10,R0             SAVE ADDRESS
+         ST    R1,RRFSAVE2        STORE IT
+         LR    R0,R11             GETMAIN LENGTH
+         AR    R0,R0              MAXIMUM SIZE OF OP1
+         GETMAIN R,LV=(0),LOC=24  OP1
+         LR    R10,R1             SAVE ADDRESS
          STM   R10,R11,RRFSAVE    SAVE OP1 ADDRESS, OP2 LENGTH
          GETMAIN R,LV=128K,LOC=24 MAXIMUM TRANSLATE TABLE
-         LR    R4,R0              SAVE ADDRESS
+         LR    R4,R1              SAVE ADDRESS
 * TIME AN LM, L AND LR
          L     R7,SPINCNT         SET LOOP LIMIT
 *
@@ -5325,8 +5327,8 @@ SVCXL    EQU   *
          LTR   R11,R11            IS IT ZERO ?
          BZ    SVCERROR           ERROR IF IT IS
          GETMAIN R,LV=(R11),LOC=24 XLATE AREA
-         ST    R0,SVCSAVE         SAVE FOR FREEMAIN
-         LR    R10,R0             SAVE FOR XLATE
+         ST    R1,SVCSAVE         SAVE FOR FREEMAIN
+         LR    R10,R1             SAVE FOR XLATE
          CLI   INSTTYPE,C'A'      ASCII CONVERT ?
          BE    SVCXLATA           EXIT IF IT IS
          CLI   INSTTYPE,C'E'      EBCDIC CONVERT ?
@@ -5932,12 +5934,12 @@ SVCCFD10 EQU   *
 SVCGETMN EQU   *
          MVC   RSLTTYPE+1(2),INSTTYPE MOVE TYPE TO OUTPUT
 * GETMAIN ENOUGH STORAGE TO HOLD SPIN NUMBER OF 4-BYTE ADDRESSES
-         L     R1,SPINCNT         CURRENT SPIN COUNT
-         SLL   R1,2               * 4
-         ST    R1,SVCGETLN        SAVE LENGTH
-         GETMAIN R,LV=(1)         FREEMAIN ADDRESSES
-         ST    R0,SVCGETAD        SAVE ADDRESS LIST
-         LR    R4,R0              INDEX TO ADDRESS LIST
+         L     R0,SPINCNT         CURRENT SPIN COUNT
+         SLL   R0,2               * 4
+         ST    R0,SVCGETLN        SAVE LENGTH
+         GETMAIN R,LV=(0)         FREEMAIN ADDRESSES
+         ST    R1,SVCGETAD        SAVE ADDRESS LIST
+         LR    R4,R1              INDEX TO ADDRESS LIST
 * TIME AN LA AND ST
          L     R7,SPINCNT         SET LOOP LIMIT
 *
@@ -5967,7 +5969,7 @@ SVCGETR  EQU   *
          TIME  NS,TIMEBEF         BEFORE TIME IN nS
 SVCGETM1 EQU   *
          GETMAIN R,LV=10          GET 10 BYTES
-         ST    R0,0(R4)           SAVE ADDRESS FOR FREEMAIN
+         ST    R1,0(R4)           SAVE ADDRESS FOR FREEMAIN
          LA    R4,4(R4)           BUMP POINTER
          BCT   R7,SVCGETM1        DO IT
          TIME  NS,TIMEAFT         AFTER TIME IN nS
@@ -5989,7 +5991,7 @@ SVCGETRC EQU   *
          TIME  NS,TIMEBEF         BEFORE TIME IN nS
 SVCGETM2 EQU   *
          GETMAIN RC,LV=10         GET 10 BYTES
-         ST    R0,0(R4)           SAVE ADDRESS FOR FREEMAIN
+         ST    R1,0(R4)           SAVE ADDRESS FOR FREEMAIN
          LA    R4,4(R4)           BUMP POINTER
          BCT   R7,SVCGETM2        DO IT
          TIME  NS,TIMEAFT         AFTER TIME IN nS
@@ -6011,7 +6013,7 @@ SVCGETRU EQU   *
          TIME  NS,TIMEBEF         BEFORE TIME IN nS
 SVCGETM3 EQU   *
          GETMAIN RU,LV=10         GET 10 BYTES
-         ST    R0,0(R4)           SAVE ADDRESS FOR FREEMAIN
+         ST    R1,0(R4)           SAVE ADDRESS FOR FREEMAIN
          LA    R4,4(R4)           BUMP POINTER
          BCT   R7,SVCGETM3        DO IT
          TIME  NS,TIMEAFT         AFTER TIME IN nS
@@ -6029,12 +6031,12 @@ SVCGETF3 EQU   *
 *
 SVCFREMN EQU   *
 * GETMAIN ENOUGH STORAGE TO HOLD SPIN NUMBER OF 4-BYTE ADDRESSES
-         L     R1,SPINCNT         CURRENT SPIN COUNT
-         SLL   R1,2               * 4
-         ST    R1,SVCGETLN        SAVE LENGTH
-         GETMAIN R,LV=(1)         FREEMAIN ADDRESSES
-         ST    R0,SVCGETAD        SAVE ADDRESS LIST
-         LR    R4,R0              INDEX TO ADDRESS LIST
+         L     R0,SPINCNT         CURRENT SPIN COUNT
+         SLL   R0,2               * 4
+         ST    R0,SVCGETLN        SAVE LENGTH
+         GETMAIN R,LV=(0)         FREEMAIN ADDRESSES
+         ST    R1,SVCGETAD        SAVE ADDRESS LIST
+         LR    R4,R1              INDEX TO ADDRESS LIST
 * TIME AN LA
          L     R7,SPINCNT         SET LOOP LIMIT
 *
@@ -6053,7 +6055,7 @@ SVCFRELA EQU   *
 * GETMAINS, UNTIMED
 SVCFREG  EQU   *
          GETMAIN R,LV=10          GET 10 BYTES
-         ST    R0,0(R4)           SAVE ADDRESS FOR FREEMAIN
+         ST    R1,0(R4)           SAVE ADDRESS FOR FREEMAIN
          LA    R4,4(R4)           BUMP POINTER
          BCT   R7,SVCFREG         DO IT
 * NOW FREEMAIN ALL THE GETMAINS, TIMED

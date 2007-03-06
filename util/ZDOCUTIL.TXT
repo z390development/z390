@@ -1,0 +1,21 @@
+Utilities
+=========
+
+   Name    ---Author---  --Publication date--  Z390 version
+1) UNREF   Melvyn Maltz  February 26th, 2007     V1.3.01
+
+1) UNREF
+   This program reads the PRN output file and produces an extract
+   of the Symbol Table containing just the unreferenced labels.
+
+   There is a large exclude table which eliminates common labels
+   like register equates and Z390 DSECTs. The user may extend this
+   table as wished.
+
+   See the UNREF.BAT file for usage.
+   SET PRNFILE= is the input file.
+   SET URFFILE= is the output file, the suffix .URF can be changed.
+
+   The UNREF program itself has 3 intentional unreferenced labels
+   for verification.
+

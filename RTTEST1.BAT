@@ -36,7 +36,8 @@ call RT1 %~dps0rt\test\TESTSET1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSET2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSET3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTACT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call RT1 %~dps0rt\test\TESTCPY1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTCPY1 systerm(RTTEST) bal %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTCPY2 systerm(RTTEST) bal %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSQL1 sysmac(rt\test+mac) syscpy(rt\test) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT3 %~dps0rt\test\TESTEQU1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT3 %~dps0rt\test\TESTERR1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9

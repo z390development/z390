@@ -13,6 +13,8 @@
 * 12/28/06 RPI 523 GEN SOURCE CODE FOR SOA CLIENT MSG MANAGER
 * 01/05/07 RPI 524 ADD MSGTIME FOR SOA CLIENT SERVER APPLICATIONS 
 * 01/22/07 RPI 542 CORRECT R1ADDR FROM GETMAIN FOR BUFFER         
+* 02/21/07 RPI 553 REMOVE TCPIO LMAX AND USE R5 VS R2 FOR LMSG CALC     
+*          AND HANDLE VARIABLE LENGTH MSGS UP TO LMSG
 *********************************************************************
 * SOACMGR IS DYNAMICALLY CALLED FROM SOASTUB2 STUB WITH NAME/PARMS
 *
@@ -39,7 +41,7 @@
                LR    R4,R1             R4 = ADDRESS MSG BUFFER RPI 542 
                USING IHAMSG,R4
                ST    R4,AMSG           SAVE BUFFER FOR RE-ENTRY
-               TCPIO OPEN,HOST=&HOST,PORT=&PORT,LMAX=LMAX OPEN PORT
+               TCPIO OPEN,HOST=&HOST,PORT=&PORT OPEN PORT
                IF    (CH,R15,NE,=H'0')
                      WTO '&CLIENT OPEN FAILED HOST=&HOST PORT=&PORT'
                      B   ABORT
@@ -112,25 +114,9 @@
                SR    R8,R8
                SR    R9,R9
                MVCL  R6,R8 CLEAR MESSAGE BUFFER
-               DO    UNTIL=(CLC,MSGTIME,GE,SAVETIME)
-                     TCPIO RECEIVE,MSG=(R4),LMSG=4,PORT=&PORT  GET LEN
-                     IF  (CH,R15,NE,=H'0')
-                         WTO '&CLIENT ERROR ON TCPIO RECEIVE LENGTH'
-                         B   ABORT   
-                     ENDIF
-                     L     R2,MSGLEN
-                     IF    (C,R2,GT,LMAX),OR,(C,R2,LT,LMIN)
-                           WTO '&CLIENT ERROR MSG LENGTH OUT OF RANGE'
-                           B   ABORT
-                     ENDIF
-                     SH    R2,=H'4'
-                     LA    R10,4(R4)
-                     TCPIO RECEIVE,MSG=(R10),LMSG=(R2),PORT=&PORT 
-                     IF  (CH,R15,NE,=H'0')
-                         WTO '&CLIENT ERROR ON TCPIO RECEIVE MSG'
-                         B   ABORT   
-                     ENDIF
-               ENDDO
+               LA    R11,4         R11 = LENGTH (4 BYTE RECORD LENGTH)
+               LA    R14,IHAMSG    INTO MSG BUFFER
+               BAL   R12,READ_VLR_MSG
                IF    (CLC,MSGNAME,NE,=CL8'&SERVICES(&NS,1)')
                      WTO '&CLEINT INVALID TCPIO RECEIVE MSG NAME'
                      B   ABORT
@@ -168,6 +154,50 @@ EXIT     EQU   *
          L      R15,MSGRC
          SUBEXIT RC=(15)
 ABORT    SUBEXIT RC=12
+*********************************************************************
+* READ VARIABLE LENGTH MSG INTO BUFFER AT R14                 
+*  R14 = READ START ADDRESS
+*********************************************************************
+READ_VLR_MSG DS 0H
+         ST    R12,VLR_SAVE       SAVE RETURN ACROSS READ_MSG
+         XC    READ_LEN,READ_LEN  ZERO READ_LEN BYTES
+         L     R11,LMAX      MAX LENGTH MESSAGE ALLOWED
+         BAL   R12,READ_MSG
+         LR    R10,R2      READ REST ENTIRE MSG FROM SAME CONN
+         DO    WHILE=(CLC,READ_LEN,LT,=F'4')
+               SR    R11,R1      REDUCE REMAINING MAX
+               AR    R14,R1      UPDATE READ STARTING ADDR
+               BAL   R12,READ_MSG
+         ENDDO    
+         DO    WHILE=(CLC,READ_LEN,LT,MSGLEN)
+               SR    R11,R1      REDUCE REMAINING MAX
+               AR    R14,R1      UPDATE READ STARTING ADDR
+               BAL   R12,READ_MSG
+         ENDDO   
+         L     R12,VLR_SAVE
+         BR    R12 
+*********************************************************************
+* READ THE NUMBER OF BYTES AVAILABLE UP TO R11 INTO BUFFER ELSE ABORT       
+*  R11 = MAX LENGTH TO READ
+*  R14 = READ START ADDRESS
+*  INCREMENT READ_LEN BY BYTES READ IN R1
+*********************************************************************
+READ_MSG DS    0H
+         TCPIO RECEIVE,MSG=(R14),LMSG=(R11),PORT=&PORT
+         IF    (CH,R15,NE,=H'0')
+               WTO 'TCPIO ERROR &CLIENT RECEIVE RC NZ'
+               B   ABORT
+         ENDIF
+         IF    (CH,R1,LE,=H'0')
+               WTO 'TCPIO ERROR &CLIENT RECEIVE LENGTH <= 0'
+               B   ABORT
+         ENDIF
+         L     R0,READ_LEN
+         AR    R0,R1
+         ST    R0,READ_LEN
+         BR    R12
+READ_LEN DC    F'0' BYTES READ BY READ_MSG
+VLR_SAVE DC    A(0)      
          LTORG
          AIF   (&HOST EQ '*').SKIP_HOST
 HOST     DC    C'&HOST',X'00'    HOST SERVER NAME NULL DELIMITED

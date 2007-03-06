@@ -66,7 +66,7 @@
 .********************************************************************
 &ZOPT    SETC  &SYSPARM
          AIF   (&ZOPT EQ '' OR '&ZOPT'(1,1) NE '''').SKP_FIX_ZOPT
-&ZOPT    SETC  '&ZOPT'(2,K'&ZOPT-2)
+&ZOPT    SETC  '&ZOPT'(2,K'&ZOPT-2).'%1 %2 %3 %4 %5'
 .SKP_FIX_ZOPT ANOP
  PUNCH ' SOACMGR CLIENT=&CLIENT,HOST=&HOST,PORT=&PORT,SERVICES=&SERVICEX
                S',DSNAME=&GENDIR\&CLIENT..MLC,FORMAT

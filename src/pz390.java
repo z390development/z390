@@ -111,7 +111,7 @@ public class pz390 {
 	 * RPI110 turn off DCBOFLGS open bit at close 11/23/05 RPI108 speed up PD by
 	 * removing mem_work and using int vs BigInteger when possible 11/25/05
 	 * RPI111 trim spaces from DDNAME and DSNAME file 11/26/05 RPI47 add inital
-	 * gz390 GUI window option for WTO and WTOR support 11/27/05 RPI112 correct
+	 * gz390 GUAM GUI window option for WTO and WTOR support 11/27/05 RPI112 correct
 	 * error 90 I/O error 
 	 * 11/27/05 RPI108 replace byte buffer mem.get, mem.put
 	 * reg.get and reg.put with direct byte array. 11/28/05 RPI113 file path
@@ -1078,7 +1078,7 @@ public class pz390 {
 
 	int zcvt_exit = zcvt_start + 0x18; // svc 3 exit to last link or term
 
-	int zcvt_tget_ecb = zcvt_start + 0x1c; // ecb for tget reply in non gui
+	int zcvt_tget_ecb = zcvt_start + 0x1c; // ecb for tget reply in non GUAM GUI
 											// mode
 
 	int zcvt_save = zcvt_start + 0x100; // user save
@@ -10680,9 +10680,9 @@ public class pz390 {
 														// R1=addr
 		case 0x7c: // TCPIO
 			return "TCPIO R0=(1-4=O/C/S/R) R1=PORT R14=HOST/MSG R15=LMAX";
-		case 84: // gui application window I/O
+		case 84: // GUAM GUI application window I/O
 			return "GUAM R0+2=MAJOR, R0+3=MINOR, R1=ADDR";
-		case 93: // TGET/TPUT TN3290 data stream for GUI
+		case 93: // TGET/TPUT TN3290 data stream for GUAM GUI
 			int flags = reg.get(r1) & 0xff;
 			int len = reg.getShort(r0 + 2) & 0xffff;
 			int show = len * 2;

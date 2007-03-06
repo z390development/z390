@@ -441,7 +441,7 @@ private void monitor_update(){
         sz390.stimer_exit_request = true; // request exit
 	}
 	if (tz390.z390_abort){  // RPI 220 shut down due to external request
-		sz390.abort_error(203,"ex390 terminating due to external shutdown request");
+		sz390.abort_error(203,"EZ390E monitor external shutdown request");
 	}
 	monitor_last_cmd_mode = sz390.cmd_proc_running[cmd_id];
 	monitor_last_time = monitor_next_time;

@@ -1,10 +1,12 @@
          MACRO
 &N       TCPIO &OP,         OPERATION - OPEN, CLOSE, SEND, RECEIVE     X
+               &OPTION,     NOWAIT OPTION FOR RECIEVE                  X
                &MSG=,       RX/REG ADDRESS OF MESSAGE TO SEND/RECEIVE  X
-               &LMAX=,      RX/REG MAXIMUM MESSAGE LENGTH FOR OPEN     X                  X
-               &LMSG=,      RX,REG LENGTH OF MSG TO SEND/RECEIVE       X
+               &LMSG=,      RX,REG MSG SEND LENGTH OR RECEIVE MAX LEN  X
+               &WAIT=-1,    WAIT TIME IN MILLISECONDS (-1= NO LIMIT)   X
                &HOST=,      RX/REG ADDR OF HOST IP ADDRESS (*=LOCAL)   X
-               &PORT=       PORT NUMBER FOR ALL OPERATIONS 
+               &PORT=,      PORT NUMBER FOR ALL OPERATIONS             X
+               &CONN=       CONNECTION NUMBER FOR SERVER SEND/RECEIVE
 .*********************************************************************
 .* Copyright 2007 Automated Software Tools Corporation               *
 .* This source code is part of z390 assembler/emulator package       *
@@ -14,6 +16,35 @@
 .*********************************************************************
 .* MAINTENANCE
 .* 01/01/07 RPI 524 ADD TCPIO MACRO AND SVC X'7C' SUPPORT FOR SOCKETS
+.* 02/21/07 RPI 554 ADD TCPIO NOWAIT OPTION FOR RECEIVE   
+.*                  REMOVE LMAX AND USE LMSG FOR SEND/RECEIVE
+.*                  ADD CONN= CONNECTION ID FOR SEND OR RECEIVE
+.*                  (CONN ID IS RETURNED IN R2 BY SERVER RECEIVE)
+.*********************************************************************
+.* SVC INPUT:
+.*   R0 OP CODE 1=OPEN SERVER ON CURRENT HOST TO ACCEPT CONNECTIONS
+.*     R1  PORT #
+.*   R0 OP CODE 2=OPEN CLIENT CONNECTION TO ACTIVE SERVER ON HOST
+.*     R1  PORT #
+.*     R14 HOST IP ADDR NULL TERMINATED OR 0 FOR LOCAL HOST (HOST=*)
+.*   R0 OP CODE 3=CLOSE
+.*     R1  PORT #
+.*   R0 OP CODE 4=SEND
+.*     R1  PORT #
+.*     R2  CONN # (ONLY REQUIRED FOR SERVER PORT DUE TO MULT. CONN)
+.*     R14 MSG ADDRESS                                        
+.*     R15 MSG LENGTH FOR SEND                                        
+.*   R0 OP CODE 5= RECEIVE WITH OPTIONAL NOWAIT BIT 15
+.*     R1  PORT # 
+.*     R2  CONN # (IF -1 THEN NEXT MSG FROM ANY CONNECTION)
+.*     R14 MSG ADDRESS                                        
+.*     R15 MAX MESSAGE LENGTH FOR RECEOVE (ACTUAL RETURNED IN R1)                                        
+.* SVC OUTPUT
+.*     R15 =  0 OK 
+.*     R15 =  4 NOWAIT SPECIFIED ON RECEIVE AND NO MSG READY
+.*     R15 = 12 ERROR OCCURRED (SEE ERROR MESSAGES)       
+.*     R1  = ACTUAL MESSAGE LENGTH RETURNED FOR RECEIVE        
+.*     R2  = CONNECTION ID FOR SERVER PORT RECEIVE (REQUIRED FOR SEND)                          
 .*********************************************************************
          AIF   (&OP EQ 'OPEN').OPEN
          AIF   (&OP EQ 'CLOSE').CLOSE
@@ -24,27 +55,42 @@
          AIF   (&HOST NE '').OPEN_CLIENT
 .OPEN_SERVER ANOP
          LA    0,1           R0 = TCPIO OP OPEN SERVER PORT ON HOST
-         AGO   .LMAX
+         AGO   .PORT
 .OPEN_CLIENT ANOP
          LA    0,2           R0 = TCPIO OP OPEN CLIENT PORT CONNECTION
          AIF   (&HOST EQ '*').HOST_LOCAL
          AIF   ('&HOST'(1,1) EQ '(').HOSTREG
          LA    14,&HOST      R14= TCPIO HOST IP NULL TERMINATED
-         AGO   .LMAX
+         AGO   .PORT
 .HOST_LOCAL ANOP
          LA    14,0          R14= 0 FOR LOCAL HOST
-         AGO   .LMAX
+         AGO   .PORT
 .HOSTREG ANOP
          LR    14,&HOST(1)   R14= TCPIO HOST IP NULL TERMINATED
-         AGO   .LMAX         
+         AGO   .PORT         
 .CLOSE   ANOP
          LA    0,3           R0 = TCPIO OP CLOSE PORT
          AGO   .PORT
 .SEND    ANOP
          LA    0,4           R0 = TCPIO OP SEND MSG VIA PORT CONNECTION
-         AGO   .MSG
+         AGO   .CONN
 .RECEIVE ANOP
          LA    0,5           R0 = TCPIO OP RECV MSG VIA PORT CONNECTION
+         AIF   (&OPTION EQ '').CONN
+         AIF   (UPPER &OPTION EQ 'NOWAIT').NOWAIT
+         AGO   .ERR5
+.NOWAIT  ANOP
+         OILH  0,1           R0 BIT 15 FOR NOWAIT  RPI 554
+.CONN    AIF   (&CONN EQ '').NOCONN 
+         AIF   ('&CONN'(1,1) EQ '(').CONNREG
+         L     2,&CONN
+         AGO   .MSG
+.NOCONN  ANOP          ASSUME CLIENT PORT SEND 
+         SR    2,2     (SVC WILL ISSUE ERROR IF SERVER PORT AND R2=-1)
+         BCTR  2,0
+         AGO   .MSG 
+.CONNREG ANOP
+         LR    2,&CONN(1)
 .MSG     ANOP
          AIF   (&MSG EQ '').ERR2
          AIF   ('&MSG'(1,1) EQ '(').MSGREG
@@ -52,21 +98,8 @@
          AGO   .LMSG
 .MSGREG  ANOP
          LR    14,&MSG(1)
-         AGO   .LMSG
-.LMAX    ANOP
-         AIF   (&LMAX EQ '').ERR4
-         AIF   ('&LMAX'(1,1) EQ '(').LMAXREG
-         AIF   (T'&LMAX EQ 'N').LMAXLIT
-         L     15,&LMAX
-         AGO   .PORT
-.LMAXREG ANOP
-         LR    15,&LMAX(1)
-         AGO   .PORT
-.LMAXLIT ANOP
-         L     15,=F'&LMAX'
-         AGO   .PORT
 .LMSG    ANOP
-         AIF   (&LMSG EQ '').ERR5
+         AIF   (&LMSG EQ '').ERR4
          AIF   ('&LMSG'(1,1) EQ '(').LMSGREG
          AIF   (T'&LMSG EQ 'N').LMSGLIT
          L     15,&LMSG
@@ -84,7 +117,7 @@
 .PORTREG ANOP
          LR    1,&PORT(1)
 .SVC     ANOP
-         SVC   X'7C' R0=OP(1-5) R1=PORT R14=HOST/MSG R15=LMAX/LMSG
+         SVC   X'7C' R0=OP(1-5) R1=PORT R14=HOST/MSG R15=LMSG
          MEXIT
 .ERR1    MNOTE 12,'TCPIO - INVALID OP - OPEN, CLOSE, SEND, RECEIVE'
          MEXIT
@@ -92,8 +125,8 @@
          MEXIT
 .ERR3    MNOTE 12,'TCPIO - MISSING KEYWORD PORT= FOR SEND/RECV'
          MEXIT
-.ERR4    MNOTE 12,'TCPIO - LMAX LENGTH OF MAX SEND/RECEIVE REQUIRED'
+.ERR4    MNOTE 12,'TCPIO - LMSG LENGTH FOR SEND/RECEIVE REQUIRED'
          MEXIT
-.ERR5    MNOTE 12,'TCPIO - LMSG LENGTH OF SEND/RECEIVE REQUIRED'
+.ERR5    MNOTE 12,'TCPIO - INVALID OPTION - &OPTION'
          MEXIT
          MEND

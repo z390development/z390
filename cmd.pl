@@ -29,6 +29,11 @@
 #      PAUSE, REM, SET
 #      (Any command not recognized such as java will be executed as child program)
 #   4) Add dos.pl perl script and alias dos command to support bat file commands
+# 02/15/07 DSH RPI 548
+#   1) Correct PAUSE to wait for ENTER key rather than reading stdin
+#   2) Use /^.../i for mixed case per Martin Ward suggestion
+#   3) Correct if errorlevel  to use specific value vs 1
+#   4) Support DIR and CD as dos commands outside BAT file
 ##################################################################
 # Notes:
 #   1. Paths must be correct case with \ separators
@@ -67,20 +72,29 @@ while (<STDIN>) {
   chomp;
 
   print "$_\n";
-
-  if ((/^cd (.*)$/) 
-   || (/^CD (.*)$/)) {  
-    chdir $1 or die "Can't chdir to $1: $!\n";
-  } elsif ((/^exit$/) || (/^EXIT$/)) { 
+# cd command outside bat file
+  if (/^cd (.*)$/i) {  
+    chdir $1;
+    system("ls");
+# dir path command outside bat file
+  } elsif (/^dir\s+(.*)$/i) { 
+      system("ls -l $1");
+# dir cur directory command outside bat file
+  } elsif (/^dir/i) { 
+      system("ls -l");       
+# exit dos command processor
+  } elsif (/^exit$/i) { 
     last;
+# ignore blank lines
   } elsif (/^\s*$/) {
     # blank line
+# xxxx assume bat command
   } elsif (s/(^\S+)\s*//) {
     my $cmd = $1;
     # Assume that the command is a batch file
     batch_file($cmd, $_);
   } else {
-    die "Unexpected input: $_\n";
+    printf "Unknown command syntax = $_\n";
   }
 }
 
@@ -142,22 +156,19 @@ sub batch_file($$) {
       # Label line
 
 # call
-    } elsif (($line =~ /^call\s+(\S+)(.*)$/) 
-          || ($line =~ /^CALL\s+(\S+)(.*)$/)) { 
+    } elsif ($line =~ /^call\s+(\S+)(.*)$/i) { 
       # Call another batch file:
       batch_file($1, $2);
 
 # copy one or more files
-    } elsif (($line =~ /^copy\s+(\S+)\s+(\S+)$/) 
-          || ($line =~ /^COPY\s+(\S+)\s+(\S+)$/)){  
+    } elsif ($line =~ /^copy\s+(\S+)\s+(\S+)$/i){  
          $errorlevel = system("cp $1 $2");
          if ($errorlevel){
             print "Copy error: $errorlevel\n";
          }
 
 # diff dir1 dir2 file3
-    } elsif (($line =~ /^diff\s+(\S+)\s+(\S+)\s+(\S+)$/) 
-          || ($line =~ /^DIFF\s+(\S+)\s+(\S+)\s+(\S+)$/)) {
+    } elsif ($line =~ /^diff\s+(\S+)\s+(\S+)\s+(\S+)$/i) {
       open IN, "diff $1 $2 |" or die "diff generation failed";
       open OUT,"> $3" or die "diff open output $3 failed";
       print OUT <IN>;
@@ -165,77 +176,74 @@ sub batch_file($$) {
       close OUT; 
 
 # dir
-    } elsif (($line =~ /^dir\s+(.*)$/) 
-          || ($line =~ /^DIR\s+(.*)$/)) { 
+    } elsif ($line =~ /^dir\s+(.*)$/i) { 
       $errorlevel = system("ls -l $1");
       if ($errorlevel) {
           print "dir errorlevel: $errorlevel";
       }
 # erase file
-    } elsif (($line =~ /^erase\s+(\S+)$/)
-          || ($line =~ /^ERASE\s+(\S+)$/)) { 
+    } elsif ($line =~ /^erase\s+(\S+)$/i) { 
       $errorlevel = system("rm $1");
       if ($errorlevel) {
           print "erase errorlevel: $errorlevel";
       };
 # erase files /q    
-    } elsif (($line =~ /^erase\s+(\S+)\s+(\S+)$/) 
-          || ($line =~ /^ERASE\s+(\S+)\s+(\S+)$/)) {
+    } elsif ($line =~ /^erase\s+(\S+)\s+(\S+)$/i) {
       $errorlevel = system("rm $1");
       if ($errorlevel) {
           print "erase errorlevel: $errorlevel";
       };
 # exit
-    } elsif (($line =~ /^exit\s$/) 
-          || ($line =~ /^EXIT\s$/)) { 
+    } elsif ($line =~ /^exit\s$/i) { 
       die "EXIT\n";
 # gedit file1
-    } elsif (($line =~ /gedit\s+(.*)$/) 
-          || ($line =~ /^GEDIT\s+(.*)$/)) { 
+    } elsif ($line =~ /gedit\s+(.*)$/i) { 
       $errorlevel = system("gedit $1");
       if ($errorlevel) {
           print "gedit errorlevel: $errorlevel";
       }
 # goto
-    } elsif (($line =~ /^goto\s+(\S+)$/) 
-          || ($line =~ /^GOTO\s+(\S+)$/)) { 
+    } elsif ($line =~ /^goto\s+(\S+)$/i) { 
       $i = $labline{lc $1}; 
       die "Label $1 not found!\n" unless defined($i);
       next;
 # if exist file goto label
-    } elsif (($line =~ /^if\s+exist\s+(\S+)+\s+goto\s+(\S+)$/i)
-          || ($line =~ /^IF\s+EXIST\s+(\S+)+\s+GOTO\s+(\S+)$/i)) {
+    } elsif ($line =~ /^if\s+exist\s+(\S+)+\s+goto\s+(\S+)$/i) {
       if (-f "$1") {
           $i = $labline{lc $2}; 
 	  die "Label $1 not found!\n" unless defined($i);
 	  next;
       }
 # if errorlevel 1 goto label
-    } elsif (($line =~ /^if\s+errorlevel\s+\d+\s+goto\s+(\S+)$/i)
-          || ($line =~ /^IF\s+ERRORLEVEL\s+\d+\s+GOTO\s+(\S+)$/i)) {
-      if ($errorlevel > 0) {
-	$i = $labline{lc $1}; 
-	die "Label $1 not found!\n" unless defined($i);
+    } elsif ($line =~ /^if\s+errorlevel\s+(\d+)\s+goto\s+(\S+)$/i) {
+      my $RC = $errorlevel/256; ## RPI 548
+      printf "Return code = $RC";
+      if ($RC >= $1) {
+	$i = $labline{lc $2}; 
+	die "Label $2 not found!\n" unless defined($i);
 	next;
       }
 # if errorlevel 1 pause text
-    } elsif (($line =~ /^if\s+errorlevel\s+\d+\s+pause\s+(.*)$/)
-          || ($line =~ /^IF\s+ERRORLEVEL\s+\d+\s+PAUSE\s+(.*)$/)) {
-      if ($errorlevel > 0) {
-        die "PAUSE $1\n";  
+    } elsif ($line =~ /^if\s+errorlevel\s+(\d+)\s+pause\s+(.*)$/i) {
+      my $RC = $errorlevel/256; ## RPI 548
+      printf "Return code = $RC";
+      if ($RC >= $1) {
+          open(TTY,"/dev/tty");  ## RPI 548
+          my $REPLY = getc(TTY);
+          close(TTY);  
       }
 
 
 # pause
-    } elsif (($line =~ /^pause\s+(.*)$/) 
-          || ($line =~ /^PAUSE\s+(\S+)$/)) { 
-      my $REPLY = getc(STDIN);
+    } elsif ($line =~ /^pause\s+(.*)$/i) { 
+      open(TTY,"/dev/tty");  ## RPI 548
+      my $REPLY = getc(TTY);
+      close(TTY);
 # rem
     } elsif (($line =~ /^rem/i) || ($line =~ /^REM/i)) {  
       # Comment line
 # set
-    } elsif (($line =~ /^set\s+(\S+)=+(\S+)$/) 
-          || ($line =~ /^SET\s+(\S+)=+(\S+)$/)){  
+    } elsif ($line =~ /^set\s+(\S+)=+(\S+)$/i){  
       $ENV{$1} = $2;
      
 # default - assume Linux command and attempt to execute it     

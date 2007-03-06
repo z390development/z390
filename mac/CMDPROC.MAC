@@ -9,8 +9,9 @@
 .* MAINTENANCE
 .* 11/09/05 ADD &ID=0 TASK ID AND &WAIT=500 MILLISECONDS WAIT FOR READ 
 .* 11/11/05 FIX INCORRECT LENGHT IN R2                                 
-.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
-.* 01/16/06 RPI177 REQUIRE LENGTH PARM IF REC IS REGISTER FORM
+.* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
+.* 01/16/06 RPI 177 REQUIRE LENGTH PARM IF REC IS REGISTER FORM
+.* 02/20/07 RPI 551 ADD SUPPORT FOR IP=(REG)                       
 .*********************************************************************
 .*
 .* CMDPROC PROVIDES INTERFACE TO SUPPORT UP TO 10 CONCURRENT 
@@ -42,19 +43,19 @@
          MEXIT
 .START   ANOP
          LA    0,0  START COMMAND PROCESSOR
-         AGO   .SVC
+         AGO   .SETID
 .STOP    ANOP
          LA    0,1  STOP COMMAND PROCESSOR
-         AGO   .SVC
+         AGO   .SETID
 .WRITE   ANOP
          LA    0,2  WRITE CMD TO PROCESS
          AIF   ('&REC'(1,1) EQ '(').WRITE_REC_REG
          LA    1,&REC EBCDIC NULL TERM OR DQOUTES
-         AGO   .SVC
+         AGO   .SETID
 .WRITE_REC_REG  ANOP
-         AIF   (&REC(1) EQ '1' OR &REC(1) EQ 'R1').SVC  RPI163
+         AIF   (&REC(1) EQ '1' OR &REC(1) EQ 'R1').SETID RPI163
          LR    1,&REC(1)
-         AGO   .SVC
+         AGO   .SETID
 .READ    ANOP
          LA    0,3 READ CMD OUTPUT LINE
          AIF   ('&REC'(1,1) EQ '(').READ_REC_REG
@@ -80,12 +81,20 @@
 .READ_WAIT ANOP
          AIF   ('&WAIT'(1,1) EQ '(').READ_WAIT_REG
          LA    3,&WAIT
-         AGO   .SVC
+         AGO   .SETID
 .READ_WAIT_REG  ANOP
-         AIF   (&WAIT(1) EQ '3' OR &WAIT(1) EQ 'R3').SVC  RPI163
+         AIF   (&WAIT(1) EQ '3' OR &WAIT(1) EQ 'R3').SETID RPI163
          LR    3,&WAIT(1)
-.SVC     ANOP
+.SETID   ANOP                                              RPI 551
+         AIF   (&ID EQ '0').SVC
+         AIF   ('&ID'(1,1) EQ '(').IDREG
          ICM   0,2,=AL1(&ID)  
-         SVC   34
+         AGO   .SVC
+.IDREG   ANOP
+         LR   15,&ID(1)
+         SLL  15,8
+         OR   0,15    
+.SVC     ANOP
+         SVC   34 R0=(BYTE3=ID,BYTE4=OP),R1=A(REC),R2=LREC,R3=MILS WAIT
          MEXIT
          MEND

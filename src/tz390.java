@@ -120,6 +120,8 @@ public  class  tz390 {
     * 02/02/07 RPI 546 fix get_file_name to handle relative path 
     *          overrides using dir_cur override to parm_dir.
     *          and replace \ with / file separator if Linux
+    * 02/20/07 RPI 549 return line_id = (FID/FLN)GSN for PRN and traces  
+    * 02/20/07 RPI 550 correct FLN after COPY in MLC.       
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -128,7 +130,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.01";  //dsh
+    String version    = "V1.3.02";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -178,6 +180,7 @@ public  class  tz390 {
     boolean opt_tracel   = false;  // trace lz390
     boolean opt_tracem   = false; // trace mz390
     boolean opt_tracep   = false; // trace pseudo code
+    boolean opt_tracet   = false; // trace TCPIO 
     boolean opt_tracemem = false; // trace memory FQE updates to LOG
     boolean opt_trap     = true;  // trap exceptions as 0C5
     boolean opt_xref     = true;   // cross reference symbols
@@ -3858,12 +3861,14 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.toUpperCase().equals("TEST")){
            	opt_test = true;
            	opt_time = false;
+           	opt_con  = true;
         } else if (token.length() > 5
           		&& token.substring(0,5).toUpperCase().equals("TEST(")){
            	test_ddname = token.substring(5,token.length()-1);	
            	opt_test = true;
         } else if (token.toUpperCase().equals("TRACE")){
            	opt_trace = true;
+           	opt_tracet = true;
            	opt_list   = true;
            	opt_con   = false;
         } else if (token.toUpperCase().equals("TRACEA")){
@@ -3877,6 +3882,7 @@ public void init_options(String[] args,String pgm_type){
            	opt_tracep   = true;
            	opt_tracea   = true;
            	opt_tracel   = true;
+           	opt_tracet   = true;
            	opt_tracemem = true;
            	opt_list     = true;
            	opt_con   = false;
@@ -3895,6 +3901,9 @@ public void init_options(String[] args,String pgm_type){
         	opt_tracep = true;
         	opt_tracem = true;
         	opt_list = true;
+        	opt_con   = false;
+        } else if (token.toUpperCase().equals("TRACET")){
+        	opt_tracet = true;
         	opt_con   = false;
         }
         index1++;
@@ -4795,28 +4804,45 @@ public void put_trace(String text){
 }
     public void inc_cur_bal_line_num(String text_line){
 	/*
-	 * 1.  inc cur_bal_line_num by 1
-	 * 2.  Return string with cur_bal_line_num
-	 *     plus "+" if mac_call_level > 0
-	 * 3.  inc cur_bal_line_num to skip any
-	 *     continuation lines before next call.
+	 * 1.  inc cur_bal_line_num by 1 plus
+	 *     previous continuations.
+	 * 2.  Set number of continuation lines for next call.
 	 */
     	if (text_line == null)return;
 	    cur_bal_line_num = cur_bal_line_num + 1 + prev_bal_cont_lines;
 	    if (text_line != null && text_line.length() > 71){ // RPI 415 adj for continuations for xref
-	       prev_bal_cont_lines = 1 + (text_line.length()-72)/56;	
+	        prev_bal_cont_lines = 1 + (text_line.length()-72)/56;	
+	    } else {
+	    	prev_bal_cont_lines = 0; // RPI 550
 	    }
-}
-    public String get_cur_bal_line_num(int num, int level){
+    }
+    public String get_cur_bal_line_id(int file_num, int file_line_num, int bal_line_num, int line_level, char line_type){
     	/*
-    	 * return current bal line number as
-    	 * string followed by '+' if level > 0
+    	 * return unique BAL line id consisting of:  // RPI 549
+    	 *   1.  FID file id number (See list of files in stats at end of BAL)
+    	 *   2.  FLN file Line number within file
+    	 *   3.  GSN Generated statement number for BAL line
+    	 *   4.  Type code
+    	 *       ' ' main source code
+    	 *       '+' generated macro code
+    	 *       '=' included copybook code
+    	 * Notes:
+    	 *   1.  If FLN is 0 only GSN is returned for az standalone mode.
+    	 *   2.  If GSN is 0 only (FID/FLN) is returned for mz trace..
     	 */
-    	if (level > 0){
-    		return right_justify("" + num + "+",7);
-    	} else {
-    		return right_justify("" + num + " ",7); 
+    	if (file_line_num == 0){
+    		return right_justify("" + bal_line_num + line_type,10);
     	}
+    	if (bal_line_num == 0){
+    		return right_justify("(" + (file_num+1)
+    			                 + "/" + file_line_num 
+    			                 + ")"
+    			                 + line_type,10); // RPI 549
+    	}
+    	return right_justify("(" + (file_num+1)
+    			                 + "/" + file_line_num 
+    			                 + ")" + bal_line_num 
+    			                 + line_type,15); // RPI 549
     }
     public String jar_file_dir(){
      	/*
