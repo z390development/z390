@@ -1,0 +1,41 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/11/07                                                 *
+.*********************************************************************
+.* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.*********************************************************************
+&N       GETVIS &LENGTH=(0),   INPUT LENGTH VALUE OR FROM REG (DEF R0) X
+               &ADDRESS=(1),   RETURN ADDR IN RX FIELD OR REG (DEF R1) X
+               &LOC=RES,       RES/BELOW/ANY STORAGE LOCATION          X
+               &PAGE=NO,       PAGE BOUNDARD (IGNORED)                 X
+               &PFIX=NO,       PAGE FIXED    (IGNORED)                 X
+               &POOL=NO,       SUBPOOL       (IGNORED)                 X
+               &SPACE=NO,      USE DYN MEM   (IGNORED)                 X
+               &SPCNTRL=NO,    SUBPOOL CTRL  (IGNORED)                 X
+               &SPID=,         SUBPOOL ID    (IGNORED)                 X
+               &SVA=NO,        SYS KEY 0     (IGNORED)                 X
+               &TSKSUBP=NO     TASK SUBPOOL  (IGNORED)                  
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+         AIF   ('&LENGTH'(1,1) EQ '(').LENGTH_REG
+         LLILF 1,&LENGTH
+         AGO   .GETMAIN
+.LENGTH_REG ANOP
+         LR    1,&LENGTH(1)
+.GETMAIN ANOP
+         GETMAIN R,LV=(1),LOC=&LOC
+         AIF   ('&ADDRESS'(1,1) EQ '(').ADDRESS_REG
+         ST    1,&ADDRESS
+         AGO   .EXIT
+.ADDRESS_REG ANOP
+         LR    &ADDRESS(1),1
+.EXIT    ANOP
+         MEND

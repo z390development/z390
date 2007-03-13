@@ -9,7 +9,7 @@
 #   1.  Start Linux terminal window from "Applications", ,"Accessories", menu
 #   2.  Enter command: dos   (this will  issue cd to z390 directory and prompt
 #       for any z390 bat file or supported dos command  such as:
-$         ASMLG demo\DEMO  (assemble,  link,  and exec hello world  demo)
+#         ASMLG demo\DEMO  (assemble,  link,  and exec hello world  demo)
 #         RT               (run z390 regression tests after installing RT and MVS zips)
 #         soa\demo\DEMOSOA (gen SOA client server demo application
 #         soa\demo\DEMORUNS (run SOA server in this terminal window)

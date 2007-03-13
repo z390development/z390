@@ -1,0 +1,27 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/11/07                                                 *
+.*********************************************************************
+.* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.*********************************************************************
+&N       CDDELETE &PHASENAME   PROGRAM TO LOAD                               
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'INVALID POSITIONAL OPERAND - &SYSLIST(2)'
+.NPOK    ANOP
+.*
+.* CDDELETE - DELETE A PROGRAM FROM MEMORY 
+.*
+         AIF   ('&PHASENAME'(1,1) EQ '(').NAME_REG
+         DELETE  EP=&PHASENAME
+         AGO   .EXIT
+.NAME_REG ANOP
+         DELETE EPLOC=&PHASENAME
+.EXIT    ANOP
+         MEND

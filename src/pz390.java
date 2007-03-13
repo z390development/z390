@@ -191,7 +191,8 @@ public class pz390 {
 	 * 01/19/07 RPI 538 fix TEST single step through EX target.
 	 * 01/19/07 RPI 540 fix DLG to prevent erroneous divide by 0 trap
 	 *          and optimizie DLG, DLGR by removing work reg copy
-	 * 01/23/07 RPI 544 corect trace format 183 for DLG, MLG to show r1+1          
+	 * 01/23/07 RPI 544 corect trace format 183 for DLG, MLG to show r1+1   
+	 * 03/12/07 RPI 558 init ZCVT VSE COMRG JOBDATE and COMNAME       
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1091,7 +1092,7 @@ public class pz390 {
 	int zcvt_epie = zcvt_start + 0x400; // espie passed in r1
 
 	int zcvt_esta = zcvt_start + 0x500; // estae passed in r1
-
+    int zcvt_comrg = zcvt_start + 0x600; // start of VSE COMRG area RPI 558
 	/*
 	 * OS/MVS compatible CVT with pointer at x'10'
 	 */
@@ -1101,7 +1102,11 @@ public class pz390 {
 
 	int cvt_dcb = cvt_start + 0x74; // os flags (x'80' 31 bit, x'13' MVS+) RPI
 									// 228
-
+    /*
+     * VSE COMRG data fields
+     */
+	int zcvt_comrg_jobdate = zcvt_comrg +  0; // COMRG JOBDATE  0  8 MM/DD/YY
+	int zcvt_comrg_comname = zcvt_comrg + 24; // COMRG COMNAME 24  8 JOB NAME 
 	/*
 	 * epie fields
 	 */
@@ -13575,7 +13580,15 @@ public class pz390 {
 		 * init svc 3 for return register r14
 		 */
 		mem.putShort(zcvt_exit, (short) 0x0a03); // svc 3
+		/*
+		 * init MVS CVT compatibility fields
+		 */
 		mem.put(cvt_dcb, (byte) 0x9b); // os flags RPI 228
+		/*
+		 * init VSE COMRG fields RPI 558
+		 */
+		set_pgm_name(zcvt_comrg_jobdate, tz390.job_date);
+		set_pgm_name(zcvt_comrg_comname, tz390.pgm_name);
 	}
 
 	private void set_pgm_name(int pgm_name_addr, String pgm_name) {

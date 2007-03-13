@@ -1,0 +1,36 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/11/07                                                 *
+.*********************************************************************
+.* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.*********************************************************************
+&N       FREEVIS &LENGTH=(0),  INPUT LENGTH VALUE OR REG (R0)          X
+               &ADDRESS=(1),   INPUT ADDR RX FIELD OR REG (DEF R1)     X
+               &SPACE=NO,      USE DYN MEM   (IGNORED)                 X
+               &SPID=,         SUBPOOL ID    (IGNORED)                 X
+               &SVA=YES        SYS KEY 0     (IGNORED)                  
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+         AIF   ('&LENGTH'(1,1) EQ '(').LENGTH_REG
+         LLILF 0,&LENGTH
+         AGO   .ADDRESS
+.LENGTH_REG ANOP
+         LR    0,&LENGTH(1)
+.ADDRESS ANOP
+         AIF   ('&ADDRESS'(1,1) EQ '(').ADDRESS_REG
+         L     1,&ADDRESS
+         AGO   .FREEMAIN
+.ADDRESS_REG ANOP
+         LR    1,&ADDRESS(1)
+.FREEMAIN ANOP
+         FREEMAIN R,LV=(0),A=(1)
+.EXIT    ANOP
+         MEND

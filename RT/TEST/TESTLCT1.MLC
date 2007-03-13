@@ -1,15 +1,20 @@
 *********************************************************************
-* Copyright 2005 Automated Software Tools Corporation               *
+* Copyright 2007 Automated Software Tools Corporation               *
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
+*********************************************************************
+* 03/09/07 RPI 564 ADD REGRESSION TEST FOR RLD IN LOCTR SECTION
 *********************************************************************
 TESTLCT1 SUBENTRY
          WTO   'TESTLCT1 TEST LOCTR SUPPORT'
          L     R2,=A(C2)
          USING C2,R2
          CLC   C2(4),=C'1234'
+         BNE   1
+         LA    1,C2B3
+         CL    1,C2RLD  RPI 564
          BNE   1
          WTO   'TESTLCT1 ENDED OK'
          SUBEXIT
@@ -24,4 +29,6 @@ C2L2     LOCTR
 C2B3     DC    C'3'
 C2L1     LOCTR
 C2B2     DC    C'2'
+C2B4     LOCTR
+C2RLD    DC    A(C2B3) VERIFY THIS RLD IS CORRECT AFTER LOADING 
          END

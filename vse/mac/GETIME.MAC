@@ -1,0 +1,51 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/11/07                                                 *
+.*********************************************************************
+.* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.*********************************************************************
+&N       GETIME &TYPE,     STANDARD(PD)/BINARY/TU/MIC                  X  
+               &ZONE,       LOCAL/GMT                      (IGNORED)   X
+               &CLOCK=YES,  R0-R1 CONTAINTS STCK TOD INPUT             X
+               &MFG=        RX 64 BYTE WORK AREA FOR RENT  (IGNORED)
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (&CLOCK EQ 'YES').ERR1
+         AIF   (&TYPE EQ '').STANDARD
+         AIF   (&TYPE EQ 'STANDARD').STANDARD
+         AIF   (&TYPE EQ 'BINARY').BINARY
+         AIF   (&TYPE EQ 'TU').TU
+         AIF   (&TYPE EQ 'MIC').MIC
+         MNOTE 12,'GETTIME INVALID TYPE - &TYPE'
+         MEXIT
+.STANDARD ANOP
+         TIME  DEC    R0=0CYYDDDC R1=HHMMSSTH  TOD
+         LR    1,0
+         IC    1,=X'C0'
+         SRL   1,4    R1=0HHMMSSC
+         AGO   .EXIT
+.BINARY  ANOP
+         TIME  BIN   R0=0.01 SEC TOD
+         LR    1,0
+         SR    0,0
+         D     0,=F'100' R1=SECONDS TOD
+         AGO   .EXIT
+.TU      ANOP
+         TIME  TU
+         LR    1,0
+         AGO   .EXIT
+.MIC     ANOP
+         BAL   14,*+12
+         DC    XL8'00'
+         TIME  MIC,4(14) STORE TOD MIC
+         LM    0,1,4(14) R0-R1 = TOD MIC
+         AGO   .EXIT
+.ERR1    MNOTE 12,'GETTIME DOES NOT CURRENTLY SUPPORT CLOCK=YES'
+         MEXIT
+.EXIT    ANOP
+         MEND

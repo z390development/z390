@@ -1,0 +1,56 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 03/11/07                                                 *
+*********************************************************************
+* YOU CAN ASSEMBLE, LINK, AND EXECUTE THIS DEMO
+* USING Z390 GUI INTERFACE BY ENTERING DEMO IN COMMAND BOX
+* OR BY EXECUTING DEMO FROM WINDOWS COMMAND LINE 
+* WITH CURRENT DIRECTORY SET TO Z390 INSTALL DIRECTORY WHICH
+* IS "C:\PROGRAM FILES\AUTOMATED SOFTWARE TOOLS\Z390"
+* ENTER THE COMMAND:  
+*
+*   ASMLG vse\demo\DEMOVSE1 sysmac(vse\mac+mac)
+*
+* THE Z390 TOOLKIT IS DISTRIBUTED IN SOURCE AND EXECUTABLE
+* FORMAT UNDER OPEN SOURCE GPL LICENSE.  VISIT WWW.Z390.ORG
+* FOR MORE INFORMATION.
+*********************************************************************
+         TITLE 'DEMOVSE1 Z390 VSE HELLO WORLD DEMO'
+DEMOVSE1 CSECT
+         BALR  12,0
+         USING *,12
+         WTO   'DEMOVSE1 HELLO WORLD'
+         COMRG ,         GET VSE COMMUNICATIONS AREA IN REG 1
+         USING IHACOMRG,1
+         MVC   JOBDATE,COMRG_JOBDATE
+         GETIME ,CLOCK=NO        SET R1= CURRENT TOD PD 0HHMMSSC
+         ST    1,PWORK+4         STORE PD TOD 0HHMMSSC
+         MVC   TIME,TIMEMASK
+         ED    TIME,PWORK+4
+         WTO   MF=(E,WTOMSG)
+         EOJ   ,         EXIT PROGRAM
+         LTORG
+PWORK    DC    PL8'0'
+WTOMSG   DC    AL2(WTOEND-*,0)
+         DC    C'DEMOVSE1 COMRG JOBDATE '
+JOBDATE  DC    C'MM/DD/YY'
+         DC    C'  GETIME CURRENT TIME'
+TIME     DC    C'  HH:MM:SS'
+WTOEND   EQU   *
+TIMEMASK DC    C' ',X'202120',C':',X'2020',C':',X'2020' HH:MM:SS
+IHACOMRG      DSECT
+COMRG_JOBDATE DS    CL8            0  8 MM/DD/YY (SET IF TIMING)
+COMRG_RESV1   DS    XL4            8  4 RESERVED
+COMRG_COMUSCR DS    XL11          12 11 USER AREA (ZERO'D)
+COMRG_UPSI    DS    B             23  1 SWITCH BITS
+COMRG_COMNAME DS    CL8           24  8 JOBNAME (SET TO PGMNAME)
+COMRG_PPEND   DS    A             32  4 ADDR HIGH PGM 
+COMRG_HTPHAS  DS    A             36  4 ADDR HIGH LAST PH
+COMRG_HTPROG  DS    A             40  4 ADDR HIGH MAX  PH ID4
+COMRG_LABLEN  DS    H             44  2 LENGTH OF LABEL
+COMRG_RESV2   DS    XL2           46  2 RESERVERD LENGTH ?????
+COMRG_IJBHPHLA DS   A             48  4 ADDR HIGH MAX  PH ANY
+         END 

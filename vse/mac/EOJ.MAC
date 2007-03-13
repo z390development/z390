@@ -1,0 +1,29 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/11/07                                                 *
+.*********************************************************************
+.* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.*********************************************************************
+&N       EOJ   &RC=0      SET RETURN CODE TO 0 OR SPECIFIED VALUE       
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.* EOJ - END OF JOB WITH SPECIFIED RETURN CODE      
+.*
+         AIF   ('&RC'(1,1) EQ '(').REG
+.DEFAULT ANOP
+         LA    15,0
+         AGO   .SVC   
+.REG     ANOP
+         LA    15,&RC
+.SVC     ANOP
+         SVC   3 EXIT CURRENT PROGRAM
+         MEND

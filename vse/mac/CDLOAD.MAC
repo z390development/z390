@@ -1,0 +1,32 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/11/07                                                 *
+.*********************************************************************
+.* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.*********************************************************************
+&N       CDLOAD &PHASENAME,    PROGRAM TO LOAD                         X     
+               &PAGE=NO,       PAGE BOUNDARY (IGNORED)                 X
+               &RETPNF=NO,     REUSE PROGRAM (IGNORED)                 X
+               &SVA=NO         RETURN EXISTING LOAD POINTS  
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST EQ 1).NPOK
+         MNOTE 12,'INVALID POSITIONAL OPERAND - &SYSLIST(2)'
+.NPOK    ANOP
+.*
+.* CDLOAD - LOAD A PROGRAM AND RETURN ENTRY IN R1 
+.*
+         AIF   ('&PHASENAME'(1,1) EQ '(').NAME_REG
+         LOAD  EP=&PHASENAME
+         LR    1,0
+         AGO   .EXIT
+.NAME_REG ANOP
+         LOAD  EPLOC=&PHASENAME
+         LR    1,0
+.EXIT    ANOP
+         MEND

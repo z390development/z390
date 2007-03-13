@@ -121,7 +121,9 @@ public  class  tz390 {
     *          overrides using dir_cur override to parm_dir.
     *          and replace \ with / file separator if Linux
     * 02/20/07 RPI 549 return line_id = (FID/FLN)GSN for PRN and traces  
-    * 02/20/07 RPI 550 correct FLN after COPY in MLC.       
+    * 02/20/07 RPI 550 correct FLN after COPY in MLC. 
+    * 03/09/07 RPI 569 leave CON on for TEST 
+    * 03/12/07 RPI 558 init job_date for use in COMRG init by pz390     
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -130,7 +132,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.02";  //dsh
+    String version    = "V1.3.02b";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -220,13 +222,14 @@ public  class  tz390 {
     /*
      * shared date and time formats
      */
-	SimpleDateFormat sdf_mmddyy = new SimpleDateFormat("MM/dd/yy");
-	SimpleDateFormat sdf_hhmmss = new SimpleDateFormat("HH:mm:ss");
+	SimpleDateFormat sdf_MMddyy = new SimpleDateFormat("MM/dd/yy");
+	SimpleDateFormat sdf_HHmmss = new SimpleDateFormat("HH:mm:ss");
     /*
 	 * shared pgm dir, name, type and associated dirs
 	 */
 	String dir_cur = null; // default current dir
 	String pgm_dir  = null; // from first parm else dir_cur
+	String job_date = null; // job date mm/dd/yy  RPI 558
 	String pgm_name = null; // from first parm else abort
 	String pgm_type = null; // from first parm override if mlc else def.
     String ada_type = ".ADA"; // ADATA type (not supported yet)
@@ -3870,7 +3873,9 @@ public void init_options(String[] args,String pgm_type){
            	opt_trace = true;
            	opt_tracet = true;
            	opt_list   = true;
-           	opt_con   = false;
+           	if (!opt_test){
+           		opt_con   = false; // RPI 569 leave on if TEST
+           	}
         } else if (token.toUpperCase().equals("TRACEA")){
            	opt_tracea = true;
            	opt_list = true;
@@ -3928,7 +3933,10 @@ public void open_systerm(String z390_pgm){
     }
 	if (opt_timing){
 		systerm_start = System.currentTimeMillis();
-        systerm_time = sdf_hhmmss.format(new Date()) + " ";;
+        systerm_time = sdf_HHmmss.format(new Date()) + " ";
+        job_date = sdf_MMddyy.format(new Date());
+	} else {
+		job_date = "MM/DD/YY";
 	}
 	try {
 		systerm_io++;
@@ -3942,7 +3950,7 @@ public synchronized void put_systerm(String msg){ // RPI 397
 	 * log error to systerm file
 	 */
 	if (opt_timing){
-           systerm_time = sdf_hhmmss.format(new Date()) + " ";;
+           systerm_time = sdf_HHmmss.format(new Date()) + " ";;
 	}
 	if (systerm_file != null){
 		try {
@@ -3964,7 +3972,7 @@ public synchronized void close_systerm(int rc){ // RPI 397
      if (systerm_file != null){
      	 if (opt_timing){
      		systerm_sec  = " SEC=" + right_justify("" + ((System.currentTimeMillis()-systerm_start)/1000),2);
-    	    systerm_time = sdf_hhmmss.format(new Date()) + " ";;
+    	    systerm_time = sdf_HHmmss.format(new Date()) + " ";;
     	 }
     	 try {
     		 systerm_io++;

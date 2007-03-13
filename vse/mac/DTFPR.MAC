@@ -1,0 +1,66 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/12/07                                                 *
+.*********************************************************************
+.* 03/12/07 RPI 558 CONVERT Z390 MVS MACROS TO VSE MACROS     
+.*********************************************************************
+&DDNAME  DTFPR &ASOCFILE=,   ASSOCIATED FILE (IGNORED)                 X
+               &BLKSIZE=,    RECORD LENGTH                             X
+               &CONTROL=,    PRINTER CARRIAGE CONTROL (IGNORED)        X
+               &CTLCHR=,     ASA OR YES FOR MACHINGE CODE (IGNORED)    X
+               &DEVADDR=,    DEVICE TYPE (IGNORED)                     X
+               &DEVICE=,     DEVICE (IGNORED)                          X
+               &ERROROPT=,   ERROR RETRY/IGNORE/NAME(SYNAD)            X
+               &FUNC=,       (IGNORED)                                 X
+               &IOAREA1=,    I/O AREA                                  X
+               &IOAREA2=,    ALTERNANT RECORD AREA (IGNORED)           X 
+               &IOREG=,      (IGNORED)                                 X
+               &MODNAME=,    (IGNORED)                                 X
+               &PRINTOV=,    (IGNORED)                                 X
+               &RDONLY=,     (IGNORED)                                 X 
+               &WORKA=YES    ASSUMES PUT MOVE FOR NOW                       
+&DSORG   SETC  'PS'          PHYSICAL SEQUENTIAL
+&EODAD   SETC  '0'           END OF FILE EXIT ADDR
+&RECFM   SETC  'F'           RECORD FORMAT
+&MACRF   SETC  'RW'          ACCESS METHOD TYPE (ALLOW WRITE)
+&SYNAD   SETC  '0'           ERROR EXIT ADDR
+&LRECL   SETC  '&BLKSIZE'    RECORD LENGTH
+&RECORD  SETC  '0'           RECORD AREA ADDR
+&DSNAME  SETC  '0'           DSNAME AREA ADDR (OVERRIDES DDNAME)
+&DCBE    SETC  '0'           DCBE EXTENSION ADDR
+.SKIP_DCBD ANOP
+&DDNAME  DS    0D
+         ORG   &DDNAME+DCBID-IHADCB             
+         DC    C'DCBV1001'                 
+         ORG   &DDNAME+DCBDSORG-IHADCB
+         DC    AL1(DCBDSORG_&DSORG) DCBDSORG
+         ORG   &DDNAME+DCBEODAD-IHADCB
+         DC    A(&EODAD) DCBEODAD
+         ORG   &DDNAME+DCBRECFM-IHADCB
+         DC    AL1(DCBRECFM_&RECFM) DCBRECFM
+         ORG   &DDNAME+DCBDDNAM-IHADCB
+         AIF   (&DDNAME EQ '').DDDEF
+         DC    CL8'&DDNAME' DCBDDNAM
+         ORG   &DDNAME+DCBOFLGS-IHADCB
+         DC    AL1(DCBOFLGS_&MACRF(1)) DCBOFLGS
+         ORG   &DDNAME+DCBMACRF-IHADCB
+         DC    AL2(DCBMACRF_&MACRF(1)) DCBMACRF
+         ORG   &DDNAME+DCBSYNAD-IHADCB
+         DC    A(&SYNAD) DCBSYNAD DCBSYNAD
+         ORG   &DDNAME+DCBBLKSI-IHADCB
+         DC    H'&BLKSIZE' DCBBLKSI DCBBLKSI
+         ORG   &DDNAME+DCBLRECL-IHADCB
+         DC    H'&LRECL' DCBLRECL
+         ORG   &DDNAME+DCBREC-IHADCB
+         DC    A(&RECORD) DCBREC
+         ORG   &DDNAME+DCBDSNAM-IHADCB
+         DC    A(&DSNAME) DCBDSNAM
+         ORG   &DDNAME+DCBDCBE-IHADCB   RPI 281
+         DC    A(&DCBE) DCBDCBE
+         ORG   &DDNAME+DCBLEN
+         DCBD
+         MEND

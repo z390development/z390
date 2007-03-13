@@ -5,10 +5,11 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-* 11/10/05 RPI80  = ADD DUPLICATE AND MISSING MACRO LABEL ERRORS
-* 12/08/05 RPI119 - ADD TEST FOR SUBSCRIPT ON MULT VALUES        
-* 01/28/06 RPI192 - TEST SINGLE QUOTE AND SINGLE &               
-* 05/14/06 RPI314 - TEST COMPOUND AIF AND COMPUTED AGO MISSING LAB
+* 11/10/05 RPI  80  = ADD DUPLICATE AND MISSING MACRO LABEL ERRORS
+* 12/08/05 RPI 119 - ADD TEST FOR SUBSCRIPT ON MULT VALUES        
+* 01/28/06 RPI 192 - TEST SINGLE QUOTE AND SINGLE &               
+* 05/14/06 RPI 314 - TEST COMPOUND AIF AND COMPUTED AGO MISSING LAB
+* 03/09/07 RPI 565 - TEST INVALID USE OF &SYSLIST WITHOUT SUBSCRIPT
 *********************************************************************
          TITLE 'TESTERR1 TEST MZ390 ERRORS'
 TESTERR1 CSECT
@@ -89,6 +90,24 @@ TESTERR1 CSECT
 A        TEST2 B,K1=C
 * VALID COPY STATEMENT ON NEXT LINE IN TESTERR1.MLC
          COPY  TESTERR1
+* TEST INVALID USE OF &SYSLIST
+&SLZ     SETC  &SYSLIST             ERR
+         MACRO 
+         TEST  &A,&B,&C             
+&SLX     SETA  &SYSLIST             ERR ASM AND MAC
+&SLY     SETB  &SYSLIST             ERR ASM AND MAC
+&SLZ     SETC  &SYSLIST             ERR ASM AND MAC
+         MNOTE 'SYSLIST=&SYSLIST'   ERR ASM AND MAC
+         MNOTE 'UNDEF=&UNDEF'       ERR IF MAC ELSE OK
+         MEND
+         TEST  A,B,C
+* ADD COMPOND AIF AND COMPUTED AGO MISSING LABELS
+&I       SETA  2
+         AIF   (1 EQ 2).T11,(2 EQ 2).X11
+         AGO   (&I).T11,.X12,.T13
+.T11     MNOTE '.T11'
+.T12     MNOTE '.T12'
+.T13     MNOTE '.T13'
 * ADD DUPLICATE AND MISSING MACRO ERRORS IN MACRO CODE
          MACRO
          TESTLAB
@@ -98,18 +117,15 @@ A        TEST2 B,K1=C
          AGO    .UNDEFINED1
          AIF    (1 EQ 1).UNDEFINED2
          MEND
+**********************************************************
 * ADD DUPLICATE AND MISSING MACRO ERRORS IN OPEN CODE
+*
+* THIS MUST BE LAST TEST WITH FAILING AGO IN OPEN CODE
+*
+**********************************************************
 .LAB1    ANOP
 .LAB2    ANOP
 .LAB1    ANOP
          AGO    .UNDEFINED1
          AIF    (1 EQ 1).UNDEFINED2
-* ADD COMPOND AIF AND COMPUTED AGO MISSING LABELS
-&I       SETA  2
-         AIF   (1 EQ 2).T11,(2 EQ 2).X11
-         AGO   (&I).T11,.X12,.T13
-.T11     MNOTE '.T11'
-.T12     MNOTE '.T12'
-.T13     MNOTE '.T13'
-
          END 

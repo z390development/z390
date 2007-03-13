@@ -1,0 +1,34 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 03/11/07                                                 *
+.*********************************************************************
+.* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.*********************************************************************
+&N       COMRG &REG=1       SET REGISTER TO COMMUNICATIONS AREA           
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.* COMRG - SET SPECIFIED REGISTER OR R1 TO ADDRESS OF 
+.*         COMMUNICATIONS AREA IN Z390 CVT DEFINED BY ZCVTD
+.*         FIELD NAMED Z390VSE 
+.*
+         LHI   1,ZCVT
+         USING IHAZCVT,1
+         AIF   ('&REG'(1,1) EQ '(').REG
+.DEFAULT ANOP
+         LA    1,ZCVT_COMRG
+         AGO   .ZCVTD
+.REG     ANOP
+         LA    &REG(1),ZCVT_COMRG
+.ZCVTD   ANOP
+         DROP  1
+         ZCVTD DEFINE Z390 CVT IN LOW STORAGE WITH COMRG COMM AREA
+.EXIT    MEND

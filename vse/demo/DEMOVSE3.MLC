@@ -1,0 +1,45 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 03/11/07                                                 *
+*********************************************************************
+* YOU CAN ASSEMBLE, LINK, AND EXECUTE THIS DEMO
+* USING Z390 GUI INTERFACE BY ENTERING DEMO IN COMMAND BOX
+* OR BY EXECUTING DEMO FROM WINDOWS COMMAND LINE 
+* WITH CURRENT DIRECTORY SET TO Z390 INSTALL DIRECTORY WHICH
+* IS "C:\PROGRAM FILES\AUTOMATED SOFTWARE TOOLS\Z390"
+* ENTER THE COMMAND:  
+*
+*   SET SYSUT1=vse\demo\DEMOVS3.TF1
+*   SET SYSUT2=vse\demo\DEMOVS3.TF2
+*   ASMLG vse\demo\DEMOVSE3 sysmac(vse\mac+mac)
+*
+* THE Z390 TOOLKIT IS DISTRIBUTED IN SOURCE AND EXECUTABLE
+* FORMAT UNDER OPEN SOURCE GPL LICENSE.  VISIT WWW.Z390.ORG
+* FOR MORE INFORMATION.
+*********************************************************************
+         TITLE 'DEMOVSE3 VSE COPY DISK FILE TO PRINT FILE'
+DEMOVSE2 SUBENTRY
+         WTO   'DEMOVSE3 VSE COPY FILE SYSDSK TO SYSLST'
+         OPEN   SYSUT1,SYSUT2
+         LTR    15,15
+         BNZ    ABORT
+LOOP     EQU    *
+         GET    SYSUT1,RECORD
+         LTR    15,15
+         BNZ    ABORT
+         PUT    SYSUT2,RECORD
+         B      LOOP
+EOF      CLOSE  SYSUT1,SYSUT2
+         WTO    'DEMOVSE3 ENDED OK'
+         SUBEXIT
+RECORD   DC     CL80' '
+SYSUT1_IO DC    CL80' '
+SYSUT2_IO DC    CL80' '
+SYSUT1   DTFSD  IOAREA1=SYSUT1_IO,BLKSIZE=80,EOFADDR=EOF
+SYSUT2   DTFPR  IOAREA1=SYSUT2_IO,BLKSIZE=80
+ABORT    WTO   'DEMOVSE3 ABORTING DUE TO ERROR'
+         EOJ   RC=16
+         END 

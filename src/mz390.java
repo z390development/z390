@@ -267,7 +267,7 @@ public  class  mz390 {
      * 02/02/07 RPI 532 force macro file names to uppercase for search
      * 02/16/07 RPI 559 correct paser to support array subscript starting with N'
      * 02/17/07 RPI 549 show '=' for generated bal copybook lines and show line_id=(FID/FLN)GSN
-     * 03/05/07 RPI 564 correct computed AGO support for branch to last label
+     * 03/09/07 RPI 565 issue error 208-210 for unsubscripted &SYSLIST
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -459,7 +459,6 @@ public  class  mz390 {
 	Pattern exec_pattern = null;
 	Matcher exec_match   = null;
 	int label_comma_index = 0; // parm into to comma after macro label else -1
-	int sublist_index = 0;
 	int sublist_count = 0;
 	int tot_pos_parm = 0; // cur pos parms on stack
 	int cur_pos_parm = 0; // cur pos parm during init (may exceed prototype pos)
@@ -2629,7 +2628,7 @@ public  class  mz390 {
                                 } else {
 								    gbl_seta[ago_gbla_index] = -1;
                                 }
-                                gbl_seta[ago_gbla_index+1] = index; // dshx RPI 564
+                                gbl_seta[ago_gbla_index+1] = index; 
                                 tot_gbl_seta = tot_gbl_seta + 2 + index;
                                 // add key index to retrieve ago arrays 
                                 // for reuse with or without pseudo code
@@ -3217,6 +3216,11 @@ public  class  mz390 {
 		 * store setc string at store loc
 		 * (shared by exp and pc)
 		 */
+		if  (setc_value == null){ // RPI 565
+			setc_value = "";
+			log_error(209,"invalid SYSLIST substitution reference");
+			return;
+		}
 		if  (store_loc == var_lcl_loc){
 			store_setc_index = lcl_set_start[store_name_index] + store_sub -1;
 			if (store_setc_index < lcl_set_start[store_name_index]){
@@ -3496,8 +3500,9 @@ public  class  mz390 {
 		 *       var not found.
 		 *   3.  Always turn off parse_set_mode at exit
 		 *   4.  Generate pseudo code for repeat executions
-		 */
-		exp_text       = text;
+		 */	
+		setc_value = null;  // RPI 565
+		exp_text = text;
 		exp_start_index = text_index;
 		if (exp_text == null || exp_start_index >= exp_text.length()){
 			log_error(128,"invalid exp_calc text index - " + exp_text + "(" + exp_start_index + ")");
@@ -5364,6 +5369,11 @@ public  class  mz390 {
 		try {
 			return Integer.valueOf(setc_text,base).intValue();
 		} catch (Exception e) {
+			if (setc_text == null){  // RPI 565
+				setc_value = "";
+				log_error(210,"invalid SYSLIST numeric reference");
+				return 0;
+			}
 			if (base == 10){
 				int index = 0;
 				int value = 0;
@@ -7284,13 +7294,15 @@ public  class  mz390 {
 		 * issue error msg to log with prefix and
 		 * inc error total
 		 * Notes:
-		 *   1.  If exp_replacement mode errror
+		 *   1.  If exp_replacement mode error
 		 *       ignore and return setc_value = null
+		 *       except for 208 SYSLIST substitution error
 		 */
 		if (mac_abort)return;
 		mac_abort = true;
 		exp_end = true;
 		if (exp_var_replacement_mode  // RPI 241
+			&& error != 208  // RPI 565 bad SYSLIST sub
 			&& tz390.opt_asm){ // RPI 529 issue error now if mac only
 			exp_setc = null;
 			return;
@@ -7352,8 +7364,8 @@ public  class  mz390 {
 		if  (tz390.opt_timing){
 			cur_date = new Date();
 			put_log(pfx + tz390.version 
-					+ " Current Date " +tz390.sdf_mmddyy.format(cur_date)
-					+ " Time " + tz390.sdf_hhmmss.format(cur_date));
+					+ " Current Date " +tz390.sdf_MMddyy.format(cur_date)
+					+ " Time " + tz390.sdf_HHmmss.format(cur_date));
 		} else {
 			put_log(pfx + tz390.version);
 		}
@@ -8441,11 +8453,21 @@ public  class  mz390 {
 			break;
 		case 23:  // push setc
 		case 24:  // push parm as setc
+			if (setc_value == null){
+				setc_value = "";  // RPI 565
+			}
 			exp_stk_val_type[tot_exp_stk_var - 1] = val_setc_type; // RPI 447
 			exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
 			pc_push_var_setc_value = "'" + setc_value + "'";
 			break;	                                                   
 		case 26:  // syslist
+            if (setc_value == null){
+            	setc_value = ""; // RPI 565
+            }
+			if (exp_prev_class != exp_class_oper){  // RPI 565
+				setc_value = "";
+				log_error(208,"invalid SYSLIST string reference"); 
+			}
 			exp_stk_val_type[tot_exp_stk_var -1] = val_setc_type;  // RPI 447
 			pc_push_var_setc_value = "'" + setc_value + "'";
 			break;

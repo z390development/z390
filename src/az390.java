@@ -228,7 +228,9 @@ public  class  az390 implements Runnable {
     * 02/20/07 RPI 553 flag CSECT and DSECT duplicate symbols
     *          and flag duplicate EQU symbols.  
     * 03/01/07 RPI 555 allow DS/DC LQ type as default L type for compat. 
-    * 03/05/07 RPI 563 correct computed AGO branch to last label               
+    * 03/05/07 RPI 563 correct computed AGO branch to last label 
+    * 03/09/07 RPI 564 correct RLD generation when esd base does not match currect esd  
+    * 03/12/07 RPI 574 list all BAL lines in error regardless of PRINT setting            
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -2213,7 +2215,7 @@ private void process_bal_op(){
    		list_bal_line();
     	if (tot_lit > 0
     		&& cur_esd > 0
-    		&& sym_type[esd_sid[cur_esd]] == sym_cst){
+    		&& sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst){ // RPI 564
      	   gen_ltorg();
      	}
     	cur_lit_pool++;
@@ -2454,11 +2456,19 @@ private void gen_exp_rld(){
 		while (index1 < tot_exp_rld_add){
 			if (tot_rld < tz390.opt_maxrld){
 				rld_fld_esd[tot_rld] = esd_base[cur_esd]; // RPI 301
-				rld_fld_loc[tot_rld] = loc_ctr - sym_loc[esd_sid[cur_esd]]; 
+				rld_fld_loc[tot_rld] = loc_ctr - sym_loc[esd_sid[esd_base[cur_esd]]]; // RPI 564 use base 
 				rld_fld_len[tot_rld] = exp_rld_len;
 				rld_fld_sgn[tot_rld] = rld_add;
 				rld_xrf_esd[tot_rld] = exp_rld_add_esd[index1];
 				exp_val = exp_val - sym_loc[esd_sid[exp_rld_add_esd[index1]]]; 
+				if (tz390.opt_traceall){
+					tz390.put_trace("EXP RLD" // RPI 564 additional traceall info
+							  + " ESD=" + tz390.get_hex(rld_fld_esd[tot_rld],4)
+							  + " LOC=" + tz390.get_hex(rld_fld_loc[tot_rld],8)
+							  + " LEN=" + tz390.get_hex(rld_fld_len[tot_rld],1)
+							  + " SIGN=" + rld_fld_sgn[tot_rld]
+							  + " XESD=" + tz390.get_hex(rld_xrf_esd[tot_rld],4));                       
+				}
 				tot_rld++;
 			} else {
 				abort_error(103,"rld table exceeded");
@@ -2474,6 +2484,14 @@ private void gen_exp_rld(){
 				rld_fld_sgn[tot_rld] = rld_sub;
 				rld_xrf_esd[tot_rld] = exp_rld_sub_esd[index2];
 				exp_val = exp_val + sym_loc[esd_sid[exp_rld_sub_esd[index2]]]; 
+				if (tz390.opt_traceall){
+					tz390.put_trace("EXP RLD" // RPI 564 additional traceall info
+							  + " ESD=" + tz390.get_hex(rld_fld_esd[tot_rld],4)
+							  + " LOC=" + tz390.get_hex(rld_fld_loc[tot_rld],8)
+							  + " LEN=" + tz390.get_hex(rld_fld_len[tot_rld],1)
+							  + " SIGN=" + rld_fld_sgn[tot_rld]
+							  + " XESD=" + tz390.get_hex(rld_xrf_esd[tot_rld],4));                       
+				}
 				tot_rld++;
 			} else {
 				abort_error(103,"rld table exceeded");
@@ -3226,15 +3244,10 @@ public void process_dc(int request_type){ // RPI 415
 	         dc_lit_gen = false;
 	         if (bal_op.equals("DC")
 	 	         && gen_obj_code
-		         && sym_type[cur_esd_sid] == sym_cst){
-			 	 if (gen_obj_code 
-			 		 && sym_type[cur_esd_sid] == sym_cst){
-			 	 	dc_op = true;
-			 	 } else { 
-			 	 	dc_op = false;
-			 	 }
-	         } else if (bal_op.equals("DS")){
-	 	        dc_op = false;
+		         && sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst){ // RPI 564
+		 	 	dc_op = true;
+		 	 } else { 
+			 	dc_op = false;
 	         }
 	         break;
 	     case 2:  // find or add literal table entry 
@@ -3255,7 +3268,7 @@ public void process_dc(int request_type){ // RPI 415
 		 	 dc_lit_ref = false;
 		 	 dc_lit_gen = true;
 		 	 if (gen_obj_code 
-		 		 && sym_type[cur_esd_sid] == sym_cst){
+		 		 && sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst){ // RPI 564
 		 	 	dc_op = true;
 		 	 } else { 
 		 	 	dc_op = false;
@@ -3331,7 +3344,7 @@ public void process_dc(int request_type){ // RPI 415
   	  	       			  log_error(173,"DC V invalid length");
   	  	       			  return;
   	  	       		  } 
-  	  	      		  if (cur_esd > 0 && sym_type[cur_esd_sid] == sym_cst){
+  	  	      		  if (cur_esd > 0 && sym_type[esd_sid[esd_base[cur_esd]]] == sym_cst){ // RPI 564
   	  	       			 dcv_type = true;
   	  	       			 process_dca_data();
   	  	       			 dcv_type = false;
@@ -4256,6 +4269,9 @@ private void put_copyright(){
 	    * if print data, print all data.
 	    */
 		   String temp_hex;
+		   if (tz390.opt_tracea){
+			   tz390.put_trace(msg); // RPI 564 additional tracea info
+		   }
 	   	   if (tz390.opt_list){ // RPI 484
 	   		   if (!print_on[print_level]        //PRINT OFF
 	   		       || (!print_gen[print_level]  //PRINT NOGEN 
@@ -4263,7 +4279,11 @@ private void put_copyright(){
 	   		       || (mac_call_level == 0
 	   		    	   && bal_line_xref_file_num[bal_line_index] > 0)    
 	   		      ){ 
-	   			  if (!force_print){ // RPI 484
+	   			  if (!force_print 
+	   				  && (bal_line.length() <= 8 
+	   					  || !bal_line.substring(0,8)
+	   					         .equals("* MZ390E"))
+  					  ){ // RPI 484 RPI 574
 	   				   return; // supress prn RPI182
 	   			  }	   		
 	   		   }
@@ -4281,8 +4301,11 @@ private void put_copyright(){
 	   	        		  temp_hex = list_obj_code.substring(index);
 	   	        	  } else {
 	   	        		  temp_hex = list_obj_code.substring(index,index+16);
-	   	        	  }
+	   	        	  }	   	        	  
 	   	        	  String data_line = tz390.get_hex(list_obj_loc,6) + " " + temp_hex;
+	   	        	  if (tz390.opt_tracea){
+	   	        		  tz390.put_trace(data_line); // RPI 564 additional tracea info
+	   	        	  }
 	   	        	  tz390.systerm_io++;
 	   	        	  prn_file_buff.write(data_line + tz390.newline); // RPI 500
 		   	          if (prn_file.length() > tz390.max_file_size){
@@ -4313,6 +4336,9 @@ private void put_copyright(){
 		    */
 		    if (obj_file == null || tz390.z390_abort){
 		    	return;
+		    }
+		    if (tz390.opt_traceall){
+		    	tz390.put_trace(msg); // RPI 564 additional traceall info
 		    }
 		   	try {
 		   		if (tz390.opt_objhex){
@@ -4570,7 +4596,7 @@ private void put_obj_text(){
 		 if (!gen_obj_code){
 			 return;
 		 }
-		 if (cur_esd == 0 || sym_type[cur_esd_sid] != sym_cst){  // RPI 301
+		 if (cur_esd == 0 || sym_type[esd_sid[esd_base[cur_esd]]] != sym_cst){  // RPI 564, RPI 301
 		  	 return;
 		 }
 	 }
@@ -6552,7 +6578,7 @@ private void process_end(){
 	if (tot_lit > 0){
 		cur_esd = 1;
 		while (cur_esd <= tot_esd 
-				&& sym_type[esd_sid[cur_esd]] != sym_cst){
+				&& sym_type[esd_sid[esd_base[cur_esd]]] != sym_cst){ // RPI 564
 			cur_esd++;
 		}
 		if (cur_esd <= tot_esd){
