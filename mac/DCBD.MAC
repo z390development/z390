@@ -7,13 +7,20 @@
 .*********************************************************************
 .* MAINTENANCE
 .* 10/12/05 ADD DCBAREA AND DCBDSNAM FIELDS
-.* 10/20/05 RPI27 - issue error for any undefined operands     
-.* 11/13/05 RPI88 - add DCBID id EBCDIC/ASCII ID for I/O verification
-.* 04/10/06 RPI244  support RECFM A/M, DSORG=, unsupported DEVD=                    
-.* 05/05/06 RPI281  add DCBDCBE field                                               
+.* 10/20/05 RPI  27 - issue error for any undefined operands     
+.* 11/13/05 RPI  88 - add DCBID id EBCDIC/ASCII ID for I/O verification
+.* 04/10/06 RPI 244  support RECFM A/M, DSORG=, unsupported DEVD=                    
+.* 05/05/06 RPI 281  add DCBDCBE field                                               
+.* 03/12/07 RPI 558  add glba z390_dcbd to only define once for DCB/DTF              
 .*********************************************************************
          DCBD  &DSORG=,     IGNORE                                     X
                &DEVD=       IGNORE
+.*
+.* IF DCBD ALREADY DEFINED EXIT NOW
+.*
+         GBLC  &Z390_DCBD
+         AIF   (&Z390_DCBD NE '').EXIT
+&Z390_DCBD SETC '&SYSECT &SYSSTYP'        
          AIF   (N'&SYSLIST EQ 0).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
 .NPOK    ANOP
@@ -75,4 +82,5 @@ DCBREC   DS    A              ADDRESS OF USER SUPPLIED RECORD AREA
 DCBDSNAM DS    A              ADDRESS OF USER SUPPLIED DSN FILE SPEC 
 DCBDCBE  DS    A              ADDRESS OF DCBE EODAD/SYNAD  RPI 281
 DCBLEN   EQU   *-IHADCB
-         MEND
+&Z390_DCBD
+.EXIT    MEND

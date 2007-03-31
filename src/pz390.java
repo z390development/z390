@@ -192,7 +192,9 @@ public class pz390 {
 	 * 01/19/07 RPI 540 fix DLG to prevent erroneous divide by 0 trap
 	 *          and optimizie DLG, DLGR by removing work reg copy
 	 * 01/23/07 RPI 544 corect trace format 183 for DLG, MLG to show r1+1   
-	 * 03/12/07 RPI 558 init ZCVT VSE COMRG JOBDATE and COMNAME       
+	 * 03/12/07 RPI 558 init ZCVT VSE COMRG JOBDATE and COMNAME 
+	 * 03/17/07 RPI 579 correct SRST to stop on = vs >=  
+	 * 03/18/07 RPI 580 correct TR?? test code compares    
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -623,6 +625,8 @@ public class pz390 {
 	byte test_byte1 = 0; // RPI 454
 
 	byte test_byte2 = 0; // RPI 454
+	byte function_byte1 = 0; // RPI 580
+	byte function_byte2 = 0; // RPI 580;
 
 	boolean string_eod_found = false;
 
@@ -5971,10 +5975,6 @@ public class pz390 {
 				psw_check = false; // RPI 454
 				ins_setup_rre();
 				test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2
-																		// test
-																		// char
-																		// control
-																		// bit
 				test_byte1 = reg.get(r0 + 2);
 				test_byte2 = reg.get(r0 + 3);
 				xbd2_loc = reg.getInt(r1) & psw_amode;
@@ -5986,14 +5986,17 @@ public class pz390 {
 				}
 				psw_cc = psw_cc3;
 				while (psw_cc == psw_cc3) {
-					if (test_control == 0 && mem_byte[bd2_loc] == test_byte1
-							&& mem_byte[bd2_loc + 1] == test_byte2) {
+					int index = xbd2_loc
+					+ ((mem.getShort(bd2_loc) & 0xffff) << 1); // RPI 580
+					function_byte1 = mem_byte[index];          // RPI 580
+					function_byte2 = mem_byte[index + 1];      // RPI 580
+					if (test_control == 0 
+							&& test_byte1 == function_byte1
+							&& test_byte2 == function_byte2) {
 						psw_cc = psw_cc1;
 					} else {
-						int index = xbd2_loc
-								+ ((mem.getShort(bd2_loc) & 0xffff) << 1);
-						mem_byte[bd1_loc] = mem_byte[index];
-						mem_byte[bd1_loc + 1] = mem_byte[index + 1];
+						mem_byte[bd1_loc] = function_byte1;
+						mem_byte[bd1_loc + 1] = function_byte2;
 						bd1_loc = bd1_loc + 2;
 						bd2_loc = bd2_loc + 2;
 						if (bd2_loc >= bd2_end) {
@@ -6010,12 +6013,7 @@ public class pz390 {
 				psw_check = false; // RPI 454
 				ins_setup_rre();
 				test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2
-																		// test
-																		// char
-																		// control
-																		// bit
-				test_byte1 = reg.get(r0 + 2);
-				test_byte2 = reg.get(r0 + 3);
+				test_byte1 = reg.get(r0 + 3);
 				xbd2_loc = reg.getInt(r1) & psw_amode;
 				bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
 				bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
@@ -6025,12 +6023,13 @@ public class pz390 {
 				}
 				psw_cc = psw_cc3;
 				while (psw_cc == psw_cc3) {
-					if (test_control == 0 && mem_byte[bd2_loc] == test_byte1
-							&& mem_byte[bd2_loc + 1] == test_byte2) {
+					int index = xbd2_loc + (mem.getShort(bd2_loc) & 0xffff);
+					function_byte1 = mem_byte[index];
+					if (test_control == 0 
+						&& test_byte1 == function_byte1) {
 						psw_cc = psw_cc1;
 					} else {
-						int index = xbd2_loc + (mem.getShort(bd2_loc) & 0xffff);
-						mem_byte[bd1_loc] = mem_byte[index];
+						mem_byte[bd1_loc] = function_byte1;
 						bd1_loc++;
 						bd2_loc = bd2_loc + 2;
 						if (bd2_loc >= bd2_end) {
@@ -6046,25 +6045,26 @@ public class pz390 {
 			case 0x92: // 4960 "B992" "TROT" "RRE"
 				psw_check = false; // RPI 454
 				ins_setup_rre();
-				test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2
-																		// test
-																		// char
-																		// control
-																		// bit
-				test_byte1 = reg.get(r0 + 3);
+				test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2													// bit
+				test_byte1 = reg.get(r0 + 2); // RPI 580
+				test_byte2 = reg.get(r0 + 3); // RPI 580
 				xbd2_loc = reg.getInt(r1) & psw_amode;
 				bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
 				bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
 				bd2_end = bd2_loc + reg.getInt(rf1 + 12);
 				psw_cc = psw_cc3;
 				while (psw_cc == psw_cc3) {
-					if (test_control == 0 && test_byte1 == mem_byte[bd2_loc]) {
+					int index = xbd2_loc
+					+ ((mem_byte[bd2_loc] & 0xff) << 1); // RPI 580
+			        function_byte1 = mem_byte[index]; // RPI 580
+			        function_byte2 = mem_byte[index+1]; // RPI 580                               
+					if (test_control == 0
+						&& test_byte1 == function_byte1
+						&& test_byte2 == function_byte2) {  // RPI 580
 						psw_cc = psw_cc1;
 					} else {
-						int index = xbd2_loc
-								+ ((mem_byte[bd2_loc] & 0xff) << 1);
-						mem_byte[bd1_loc] = mem_byte[index];
-						mem_byte[bd1_loc + 1] = mem_byte[index + 1];
+						mem_byte[bd1_loc] = function_byte1;     // RPI 580
+						mem_byte[bd1_loc + 1] = function_byte2; // RPI  580
 						bd1_loc = bd1_loc + 2;
 						bd2_loc++;
 						if (bd2_loc >= bd2_end) {
@@ -6080,11 +6080,7 @@ public class pz390 {
 			case 0x93: // 4970 "B993" "TROO" "RRE"
 				psw_check = false; // RPI 454
 				ins_setup_rre();
-				test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2
-																		// test
-																		// char
-																		// control
-																		// bit
+				test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2														// bit
 				test_byte1 = reg.get(r0 + 3);
 				xbd2_loc = reg.getInt(r1) & psw_amode;
 				bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
@@ -6092,11 +6088,13 @@ public class pz390 {
 				bd2_end = bd2_loc + reg.getInt(rf1 + 12);
 				psw_cc = psw_cc3;
 				while (psw_cc == psw_cc3) {
-					if (test_control == 0 && test_byte1 == mem_byte[bd2_loc]) {
+					function_byte1 = mem_byte[xbd2_loc  // RPI 580
+													+ (mem_byte[bd2_loc] & 0xff)];
+					if (test_control == 0
+						&& test_byte1 == function_byte1) { // RPI 580
 						psw_cc = psw_cc1;
 					} else {
-						mem_byte[bd1_loc] = mem_byte[xbd2_loc
-								+ (mem_byte[bd2_loc] & 0xff)];
+						mem_byte[bd1_loc] = function_byte1; // RPI 580
 						bd1_loc++;
 						bd2_loc++;
 						if (bd2_loc >= bd2_end) {
@@ -10306,13 +10304,14 @@ public class pz390 {
 		int str_loc = reg.getInt(rf2 + 4) & psw_amode;
 		int str_end = reg.getInt(rf1 + 4) & psw_amode;
 		psw_cc = psw_cc2;
-		while (str_loc < str_end) {
+		while (str_loc != str_end) { // RPI 579 was <
 			if (mem_byte[str_loc] == key_byte) {
 				psw_cc = psw_cc1;
 				reg.putInt(rf1 + 4, str_loc);
 				str_loc = str_end;
+			} else { // RPI 579
+				str_loc++;
 			}
-			str_loc++;
 		}
 	}
 

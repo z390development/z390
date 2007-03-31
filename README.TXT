@@ -1,4 +1,4 @@
-z390 v1.3.02b PTF 03/13/07
+z390 v1.3.02g PTF 03/31/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.02:
@@ -27,13 +27,31 @@ Maltz.
 8.  RPI 575 - correct GETMAIN macro to honor LOC=RES like LOC=BELOW per documentation.
     This is also required to support the GETVIS default LOC=RES.
 
+9.  RPI 576 - include updates to ZCVTD and DCBD macros in z390 mac 
+directory which were updated as part of new VSE support
+
+10. RPI 577 - corect az390 to support optional 3rd M field on
+    TR?? extended translate instructions.  Operand was required previously.
+
+11. RPI 578 - correct az390 to correct parsing error on multiple S type explicit
+    base displacement operands.  See updated rt\test\TESTDC1.MLC.
+
+12. RPI 579 - correct pz390 to stop SRST on address = end address
+    versus >= end address.
+
+13, RPI 580 - correct TR?? test code compares to use function bytes
+    from translate table instead of data byte from R2 field.
+    See updated regression tests in rt\test\TESTINS2.MLC
+
 To install this cumulative PTF for z390 v1.3.02 follow these steps.
 
 1.  Extract the PTF zip file into the z390 install directory replacing existing copy of z390.jar executable java file. 
 
 2.  Copy updated macro source files into z390\mac directory:
- 
+
+DCBD.MAC    - add global to only gen once (called by each DTF) 
 GETMAIN.MAC - update documentation comments for output R1=ADDR, R0=LEN and support LOC=RES
+ZCVTD.MAC   - add VSE COMRG fields and only gen once (called by COMRG)
 
 3.  If you need to change Java source for this PTF version, all
     the Java source is in src directory and can be copied to 

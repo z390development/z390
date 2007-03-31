@@ -230,7 +230,9 @@ public  class  az390 implements Runnable {
     * 03/01/07 RPI 555 allow DS/DC LQ type as default L type for compat. 
     * 03/05/07 RPI 563 correct computed AGO branch to last label 
     * 03/09/07 RPI 564 correct RLD generation when esd base does not match currect esd  
-    * 03/12/07 RPI 574 list all BAL lines in error regardless of PRINT setting            
+    * 03/12/07 RPI 574 list all BAL lines in error regardless of PRINT setting 
+    * 03/17/07 RPI 577 TR?? 3rd M field optional
+    * 03/17/08 RPI 578 Correct mult. DC S(abs d(b) terms)           
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -1653,10 +1655,12 @@ private void process_bal_op(){
         			|| bal_op.equals("TROT")
         			|| bal_op.equals("TRTO")
         			|| bal_op.equals("TRTT")
-    	           )){ 
-    		        skip_comma();
-        		    get_hex_reg(); // RPI 454
-        	    	obj_code = obj_code.substring(0,4) + obj_code.substring(8,9) + obj_code.substring(5,8);
+    	           )){
+        		    if (!bal_abort && exp_next_char(',')){ //RPI 577
+        		    	skip_comma();
+        		    	get_hex_reg(); // RPI 454
+        		    	obj_code = obj_code.substring(0,4) + obj_code.substring(8,9) + obj_code.substring(5,8);
+        		    }
         	}
     		check_end_parms();
     	}
@@ -6348,19 +6352,24 @@ private void process_dcs_data(){
 		while (!dc_eod && !bal_abort){
 		    if  (calc_exp()){
 			    dc_index = exp_index;
-			    if (dc_op && dc_dup > 0){
-			    	if  (dc_len == 2){
-		    			if  (exp_type == sym_rel){ // RPI 458
+			    if  (dc_len == 2){
+			    	if  (exp_type == sym_rel){ // RPI 458
+			    		if (dc_op && dc_dup > 0){ //RPI 578
 			    			obj_code = obj_code + get_exp_rel_bddd();
-		    			} else {
-		    				obj_code = obj_code + get_exp_abs_bddd();
 			    		}
-					    dc_index = exp_index;
 			    	} else {
-			    		log_error(99,"invalid length for S type");
+			    		dc_hex = get_exp_abs_bddd();
+			    		if (dc_op && dc_dup > 0){ // RPI 578
+			    			obj_code = obj_code + dc_hex;
+			    		}
 			    	}
-					put_obj_text();
-			    } 
+			    	dc_index = exp_index;
+			    } else {
+			    	log_error(99,"invalid length for S type");
+			    }
+			    if (dc_op && dc_dup > 0){ //RPI 578
+			    	put_obj_text();
+			    }
 			    if (!dc_lit_ref && dc_dup > 0){
 				   loc_ctr = loc_ctr + dc_len;
 				   dc_dup_loc = dc_dup_loc + dc_len;

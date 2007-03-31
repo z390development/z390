@@ -24,6 +24,8 @@
 * 09/21/06 RPI458 - test DC S(rel and off(base)) constants                            
 * 12/09/06 RPI407 - test DC DD, ED, and LD (min) and (max) constants                  
 * 01/19/07 RPI538 - test duplication factors for P and all types                           
+* 03/01/07 RPI555 - test LQ quad word hex                                                  
+* 03/16/07 RPI578 - test corrected M3 complex mult S type
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -34,7 +36,7 @@ M2       DC    L'1',D'1',E'1',X'FF'
 V2       DC    X'41100000000000003300000000000000'
          DC    X'4110000000000000'
          DC    X'41100000',X'FF'
-M3       DC    S(1),S(2),S(M3),S(1(2))X'FF'
+M3       DC    S(1),S(2),S(M3),S(1(2)),X'FF'
 V3       DC    X'00010002',AL2(X'D000'+(M3-TESTDC1-8)),X'2001',X'FF'
 M4       DC    V(TESTDC1),2V(TESTDC1),X'FF'
 V4       DC    3A(TESTDC1),X'FF'
@@ -366,5 +368,7 @@ VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
          RT1   CCE,=2L'0',=32X'00',32
          RT1   CCE,=2PL3'0',=6X'00000C00000C',6
          RT1   CCE,=2S(1),=2XL2'1',4
+* TEST LQ HEX QUAD WORD
+         RT1   CCE,=LQ'1',=L'1',16
          RT1   END
          END         
