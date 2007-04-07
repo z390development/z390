@@ -232,7 +232,10 @@ public  class  az390 implements Runnable {
     * 03/09/07 RPI 564 correct RLD generation when esd base does not match currect esd  
     * 03/12/07 RPI 574 list all BAL lines in error regardless of PRINT setting 
     * 03/17/07 RPI 577 TR?? 3rd M field optional
-    * 03/17/08 RPI 578 Correct mult. DC S(abs d(b) terms)           
+    * 03/17/08 RPI 578 Correct mult. DC S(abs d(b) terms)  
+    * 04/01/07 RPI 567 add CCW, CCW0, CCW1 support   
+    * 04/04/07 RPI 581 print COPY  and inline source in PRN unless PRINT OFF 
+    * 04/07/08 RPI 585 gen ADDR2 target address for relative BR? and J?? instr.
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -257,6 +260,8 @@ public  class  az390 implements Runnable {
     String bal_line = null;
     String bal_xref_file_name = null;
     char   bal_xref_file_type = ' ';
+    char   cur_line_type  = ' '; // RPI 581
+    int    cur_line_file_num = 0;
     String bal_xref_file_path = null;
     int    bal_xref_file_num  = 0;
     int    bal_xref_file_line = 0;
@@ -275,6 +280,10 @@ public  class  az390 implements Runnable {
     String bal_parms = null;
     boolean list_bal_line = false;
     boolean list_use      = false;
+    int      mac_inline_level = 0;      // rpi 581
+    int      mac_inline_op_macro = 220; // rpi 581
+    int      mac_inline_op_mend  = 221; // rpi 581
+    int      mac_inline_op_other = 226; // rpi 581
     int      mac_call_level = 0;
     boolean  mac_call_first = false;
     boolean  mac_call_inc = false;
@@ -342,7 +351,8 @@ public  class  az390 implements Runnable {
      */
     long    tod_time_limit = 0;
     int tot_bal_line = 1;
-	int tot_mnote_warning = 0;
+	int tot_mac_copy = 0;
+    int tot_mnote_warning = 0;
     int tot_mnote_errors  = 0;
     int max_mnote_level   = 0;
     String[]  bal_line_text = null; //logical bal line from 1 or more physical lines
@@ -1105,6 +1115,9 @@ private void process_bal(){
 	 *   
 	 */
 	     resolve_symbols();
+	     list_bal_line = true;  // RPI 581
+	     force_print = false;   // RPI 581
+	     mac_inline_level = 0;  // RPI 581
 	     gen_obj_esds();
 	     gen_obj_text();
 	     gen_obj_rlds();
@@ -1384,7 +1397,7 @@ private void gen_obj_text(){
               xref_bal_index = bal_line_index;
               parse_bal_line();
               bal_op_index = find_bal_op();
-              if (bal_op_index > -1){  // RPI 274 OPYSN cancel -2
+              if (bal_op_index > -1){  // RPI 274 OPYSN cancel -2  
           	     process_bal_op();    
               }
 		      bal_line_index++;
@@ -1439,6 +1452,11 @@ private void process_bal_op(){
 		bal_lab_attr = tz390.ascii_to_ebcdic['U'];
 	}
 	bal_lab_attr_elt = sym_attr_elt_def;
+    if (mac_inline_level > 0 
+    	&& index != mac_inline_op_macro  // MACRO
+    	&& index != mac_inline_op_mend){ // MEND
+    	index     = mac_inline_op_other; // RPI 581 print inline source
+    }
 	switch (index){ 
 	case 0:  // * comments 
 		bal_op_ok = true;
@@ -1446,7 +1464,7 @@ private void process_bal_op(){
     		&& bal_line.length() > 9){
        		if (bal_line.substring(0,9).equals("*MCALL #=")){
        			if (!tz390.opt_mcall){ // RPI 511
-       				bal_line = bal_line.substring(30); //strip * call prefix and level RPI 233
+       				bal_line = bal_line.substring(20); //strip * call prefix and level RPI 233 RPI 581
        			}
        			if (mac_call_level == 0){
        				mac_call_first = true; // delay setting level to print call if nogen
@@ -2045,14 +2063,16 @@ private void process_bal_op(){
 	    check_end_parms();
     	put_obj_text();
     	break;
-    case 101:  // CCW 0 
-    	bal_lab_attr = tz390.ascii_to_ebcdic['W']; // RPI 340
-    	break;
+    case 101:  // CCW  0 
     case 102:  // CCW0 0
+    	bal_op_ok = true;
     	bal_lab_attr = tz390.ascii_to_ebcdic['W']; // RPI 340
+    	gen_ccw0(); // op8,addr24,flags8,zero8,len16 // RPI 567
     	break;
     case 103:  // CCW1 0 
+    	bal_op_ok = true;
     	bal_lab_attr = tz390.ascii_to_ebcdic['W']; // RPI 340
+    	gen_ccw1();  // op8,flags8,len16,bit0,addr31  // RPI 567
     	break;
     case 104:  // DC 0
     	bal_op_ok = true;
@@ -2183,21 +2203,7 @@ private void process_bal_op(){
     case 133:  // CNOP 0 
     	bal_op_ok = true;
     	process_cnop();
-    	break;
-    case 147:  // ACONTROL  
-    	bal_op_ok = true;  // RPI 368 ignore
-    	break;
-    case 224:  // COPY 0 
-    	bal_op_ok = true;  // already expanded in mz390
-    	break;
-    case 225:  // OPSYN
-    	bal_op_ok = true;
-    	bal_label_ok = false;         // reset to avoid dup. label
-    	tz390.update_opsyn(bal_label,bal_parms);
-    	if (tz390.opt_traceall){ // RPI 403
-    		tz390.put_trace("OPSYN(" + tz390.opsyn_index + ") NEW=" + opsyn_label + " OLD=" + bal_parms);
-    	}
-    	break;
+    	break;   
     case 135:  // END 0 
     	bal_op_ok = true;
     	end_found = true;
@@ -2236,9 +2242,6 @@ private void process_bal_op(){
     		process_pop();
     	}
     	break;
-    case 223:  // PUNCH 0
-    	bal_op_ok = true; // pass thru after gen by mz390
-    	break;
     case 145:  // PUSH 0 
     	bal_op_ok = true;
     	if (gen_obj_code){
@@ -2247,6 +2250,9 @@ private void process_bal_op(){
     	break;
     case 146:  // REPRO 0
     	break;
+    case 147:  // ACONTROL  
+    	bal_op_ok = true;  // RPI 368 ignore
+    	break; 
     case 201:  // ACTR 0
     	break;
     case 202:  // AGO 0
@@ -2275,8 +2281,9 @@ private void process_bal_op(){
     	break;
     case 214:  // MNOTE 0
     	bal_op_ok = true;  // pass true from mz390
-    	force_print = true;    	
-    	if (gen_obj_code){
+    	if (gen_obj_code 
+    		&& mac_inline_level == 0){ // RPI 581
+        	force_print = true;        // RPI 581
     		if (bal_parms != null // RPI 503
     				&& bal_parms.length() > 0
     				&& bal_parms.charAt(0) != '\''
@@ -2319,20 +2326,43 @@ private void process_bal_op(){
     case 219:  // SETCF 0
     	break;
     case 220:  // MACRO 0
+    	bal_op_ok = true;  // pass true from mz390
+    	mac_inline_level++; // RPI 581
     	break;
     case 221:  // MEND 0
+    	bal_op_ok = true;  // pass true from mz390
+    	mac_inline_level--;  // RPI 581
     	break;
     case 222:  // MEXIT 0 
         break;
+    case 223:  // PUNCH 0
+    	bal_op_ok = true; // pass thru after gen by mz390
+    	break;
+    case 224:  // COPY 0 
+    	bal_op_ok = true;  // already expanded in mz390
+    	break;
+    case 225:  // OPSYN
+    	bal_op_ok = true;
+    	bal_label_ok = false;         // reset to avoid dup. label
+    	tz390.update_opsyn(bal_label,bal_parms);
+    	if (tz390.opt_traceall){ // RPI 403
+    		tz390.put_trace("OPSYN(" + tz390.opsyn_index + ") NEW=" + opsyn_label + " OLD=" + bal_parms);
+    	}
+    	break;
+    case 226:  // inline macro code and not MACRO or MEND
+        bal_op_ok = true;
+    	break;
     default:
     	// should not occur - see tz390 opcode_type table
     	abort_error(139,"invalid opcode type index");
 	}
-	if (!bal_op_ok){
-   	   log_error(62,"unsupported operation code " + bal_op); // RPI 563
-	}
-	if (bal_label != null && bal_label_ok){ // RPI 451
-       update_label();
+	if (mac_inline_level == 0){
+		if (!bal_op_ok){
+			log_error(62,"unsupported operation code " + bal_op); // RPI 563
+		}
+		if (bal_label != null && bal_label_ok){ // RPI 451
+			update_label();
+		}
 	}
 	if (!bal_abort){
 	    list_bal_line();
@@ -2350,8 +2380,10 @@ private void list_bal_line(){
 	 *       call reformating, and delay flags
 	 *       mac_call_first and mac_call_last.
 	 */
-	    if (!list_bal_line 
-	    	|| !tz390.opt_list){ // RPI 484
+	    if (!force_print  // RPI 581
+	    	&& (!list_bal_line 
+	    	   	|| !tz390.opt_list)
+	    	){ // RPI 484
 	    	update_mac_call_level();
 	    	return;
 	    }
@@ -2359,16 +2391,20 @@ private void list_bal_line(){
 	    	list_obj_code = list_obj_code.concat("                ").substring(0,16);
 	    } 
 	    list_obj_loc = loc_start;
-	    put_prn_line(tz390.get_hex(list_obj_loc,6)
+	    if (gen_obj_code){ // RPI 581
+	    	cur_line_type     = xref_file_type[bal_line_xref_file_num[bal_line_index]];
+	    	cur_line_file_num = bal_line_xref_file_num[bal_line_index];
+	    	put_prn_line(tz390.get_hex(list_obj_loc,6)
     		  + " " + list_obj_code.substring(0,16) 
     		  + " " + hex_bddd1_loc 
     		  + " " + hex_bddd2_loc 
-    		  + " " + tz390.get_cur_bal_line_id(bal_line_xref_file_num[bal_line_index],
+    		  + " " + tz390.get_cur_bal_line_id(cur_line_file_num,
                       bal_line_xref_file_line[bal_line_index],
                       bal_line_num[bal_line_index],
                       mac_call_level,
-                      xref_file_type[bal_line_xref_file_num[bal_line_index]])
+                      cur_line_type)
     		  + bal_line);
+	    }
 	    force_print = false;   // RPI 285
 	    list_bal_line = false; 
         update_mac_call_level();
@@ -2880,6 +2916,8 @@ private int find_bal_op(){
 		index = tz390.find_key_index('O',key);
 		if (index > -1){ // RPI 274 OPYSN cancel
 			return index;
+		} else if (mac_inline_level > 0){
+			return mac_inline_op_other; // rpi 581
 		}
 	    log_error(29,"undefined operation code - " + bal_op);
 	    return -1;
@@ -4277,16 +4315,16 @@ private void put_copyright(){
 			   tz390.put_trace(msg); // RPI 564 additional tracea info
 		   }
 	   	   if (tz390.opt_list){ // RPI 484
-	   		   if (!print_on[print_level]        //PRINT OFF
-	   		       || (!print_gen[print_level]  //PRINT NOGEN 
-	   		           && mac_call_level > 0)
-	   		       || (mac_call_level == 0
-	   		    	   && bal_line_xref_file_num[bal_line_index] > 0)    
-	   		      ){ 
-	   			  if (!force_print 
-	   				  && (bal_line.length() <= 8 
-	   					  || !bal_line.substring(0,8)
+	   		   if (!print_on[print_level]        //IF  PRINT OFF
+	   		       || (!print_gen[print_level]   //    OR (PRINT NOGEN 
+	   		           && mac_call_level > 0)   //         AND MAC LVL > 0    
+	   		      // RPI 581 remove code to allow COPY listing
+	   		      ){ // suppress unless force print or error
+	   			  if (!(force_print
+	   				    || (bal_line.length() > 8 
+	   					    && bal_line.substring(0,8)
 	   					         .equals("* MZ390E"))
+	   				   )
   					  ){ // RPI 484 RPI 574
 	   				   return; // supress prn RPI182
 	   			  }	   		
@@ -5197,6 +5235,7 @@ private String get_rel_exp_iiii(){
 		if (hw_off >= -0x8000 && hw_off <= 0x7fff){
 			if ((exp_val & 0x1) == 0){
 				hex_iiii = tz390.get_hex(hw_off,4);
+				hex_bddd2_loc = tz390.get_hex(exp_val,6);  // RPI 585
 			} else {
 				log_error(111,"relative target address is odd - " + tz390.get_hex(exp_val,8));
 			}
@@ -5221,6 +5260,7 @@ private String get_rel_exp_llllllll(){
 		if ((exp_val & 0x1) == 0){
 			exp_val = (exp_val - loc_start)/2;
 			hex_llllllll = tz390.get_hex(exp_val,8);
+			hex_bddd2_loc = tz390.get_hex(exp_val,6); // RPI 585
 		} else {
 			log_error(112,"relate target address odd - " + tz390.get_hex(exp_val,8));
 		}
@@ -5573,7 +5613,7 @@ private void get_dc_field_modifiers(){
 }
 private void dc_align(int align_len){
 	/*
-	 * align to mult of algin_len from loc_ctr
+	 * align to mult of align_len from loc_ctr
 	 * If align_len > 8 use 8  RPI 373
 	 */
 	 if (align_len > 8){
@@ -7083,6 +7123,103 @@ private void add_sym_xref(int index){
 		sym_xref[index] = new TreeSet<Integer>();
 	}
 	sym_xref[index].add(bal_line_num[bal_line_index]);
+}
+private void gen_ccw0(){  // RPI 567
+	/*
+	 * generate 8 byte aligned CCW0
+	 * op8,addr24,flags8,zero8,len16
+	 */
+	dc_align(8);
+	loc_start = loc_ctr;
+	exp_text = bal_parms;
+	exp_index = 0;
+	if (calc_abs_exp() 
+		&& exp_val >= 0 
+		&& exp_val <  256){ 
+		obj_code = obj_code + tz390.get_hex(exp_val,2);
+		loc_len  = 1;
+		put_obj_text();
+		loc_ctr++;
+		if (exp_text.charAt(exp_index) == ','){
+			 exp_index++;
+			 exp_rld_len = 3;
+			 if (calc_rel_exp()){
+				 obj_code = obj_code + tz390.get_hex(exp_val,6);
+				 if (exp_text.charAt(exp_index) == ','){
+					 exp_index++;
+					 exp_rld_len = 0;
+					 if (calc_abs_exp()
+						&& exp_val < 256){
+						obj_code = obj_code + tz390.get_hex(exp_val,2);
+						obj_code = obj_code + tz390.get_hex(0,2);
+						if (exp_text.charAt(exp_index) == ','){
+							 exp_index++;
+							 if (calc_abs_exp()
+								 && exp_val <= 0xffff){
+								obj_code = obj_code + tz390.get_hex(exp_val,4);
+							}
+						}
+					}
+				}
+			 }
+		}
+	}
+	put_obj_text();
+	loc_ctr = loc_ctr + 7;
+	loc_len = 0;
+	exp_rld_len = 0;
+}
+private void gen_ccw1(){  // RPI 567
+	/*
+	 * generate 8 byte aligned CCW0
+	 * op8,flags8,len16,addr32
+	 */
+	String ccw_op    = null;
+	String ccw_flags = null;
+	String ccw_len   = null;
+	dc_align(8);
+	loc_start = loc_ctr;
+	exp_text = bal_parms;
+	exp_index = 0;
+	if (calc_abs_exp() 
+		&& exp_val >= 0 
+		&& exp_val <  256){ 
+		ccw_op = tz390.get_hex(exp_val,2);
+		loc_ctr = loc_ctr + 4;
+		if (exp_text.charAt(exp_index) == ','){
+			 exp_index++;
+			 exp_rld_len = 4;
+			 if (calc_rel_exp()){
+				 obj_code = obj_code + tz390.get_hex(exp_val,8);
+				 put_obj_text();
+				 exp_rld_len = 0;
+				 loc_ctr = loc_ctr - 4;
+				 if (exp_text.charAt(exp_index) == ','){
+					 exp_index++;
+					 put_obj_text();
+					 if (calc_abs_exp()
+						&& exp_val < 256){
+						ccw_flags = tz390.get_hex(exp_val,2);
+						if (exp_text.charAt(exp_index) == ','){
+							 exp_index++;
+							 if (calc_abs_exp()
+								 && exp_val <= 0xffff){
+								 ccw_len = tz390.get_hex(exp_val,4);
+							 }
+						}
+					}
+				}
+			 }
+		}
+	}
+	obj_code = obj_code + ccw_op + ccw_flags + ccw_len;
+	put_obj_text();
+	loc_ctr = loc_ctr + 8;
+	loc_len = 0;
+	exp_rld_len = 0;
+	if (list_obj_code.length() == 16){
+		list_obj_code = list_obj_code.substring(8)+list_obj_code.substring(0,8);
+	}
 }
 private void get_fp_hex(String fp_text){
 	/*

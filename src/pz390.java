@@ -194,7 +194,9 @@ public class pz390 {
 	 * 01/23/07 RPI 544 corect trace format 183 for DLG, MLG to show r1+1   
 	 * 03/12/07 RPI 558 init ZCVT VSE COMRG JOBDATE and COMNAME 
 	 * 03/17/07 RPI 579 correct SRST to stop on = vs >=  
-	 * 03/18/07 RPI 580 correct TR?? test code compares    
+	 * 03/18/07 RPI 580 correct TR?? test code compares   
+	 * 04/03/07 RPI 584 fix trap at startup with option ASCII and pgmname < 8 
+	 * 04/07/07 RPI 582 set R1 to addr of addr of PARM
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1089,8 +1091,8 @@ public class pz390 {
 	int zcvt_save = zcvt_start + 0x100; // user save
 
 	int zcvt_stimer_save = zcvt_start + 0x200;
-
-	int zcvt_exec_parm = zcvt_start + 0x300; // half word length followed by
+    int zcvt_exec_parma = zcvt_start + 0x300; // address of exec_parm RPI 582
+	int zcvt_exec_parm  = zcvt_start + 0x304; // half word length followed by
 												// EBCDIC/ASCII value of PARM(.)
 
 	int zcvt_epie = zcvt_start + 0x400; // espie passed in r1
@@ -13558,8 +13560,8 @@ public class pz390 {
 		/*
 		 * init cvt initial program load pgm name field
 		 */
-		set_pgm_name(zcvt_ipl_pgm, tz390.opt_ipl);
-		set_pgm_name(zcvt_user_pgm, tz390.pgm_name);
+		sz390.put_ascii_string(tz390.opt_ipl,zcvt_ipl_pgm,8);
+		sz390.put_ascii_string(tz390.pgm_name,zcvt_user_pgm,8);
 		/*
 		 * init zcvt_exec_parm from PARM(..) option Notes: 1. ez390 sets R1 to
 		 * zcvt_exec_parm at start
@@ -13586,36 +13588,8 @@ public class pz390 {
 		/*
 		 * init VSE COMRG fields RPI 558
 		 */
-		set_pgm_name(zcvt_comrg_jobdate, tz390.job_date);
-		set_pgm_name(zcvt_comrg_comname, tz390.pgm_name);
-	}
-
-	private void set_pgm_name(int pgm_name_addr, String pgm_name) {
-		/*
-		 * store program name in memory in EBCDIC
-		 */
-		mem.position(pgm_name_addr);
-		int index = 0;
-		while (index < pgm_name.length()) {
-			if (pgm_name.charAt(index) != '.') {
-				if (tz390.opt_ascii) {
-					mem.put((byte) tz390.pgm_name.charAt(index));
-				} else {
-					mem.put(tz390.ascii_to_ebcdic[pgm_name.charAt(index)]);
-				}
-			} else {
-				index = pgm_name.length();
-			}
-			index++;
-		}
-		while (index < 8) {
-			if (tz390.opt_ascii) {
-				mem.put((byte) ' ');
-			} else {
-				mem.put(tz390.ascii_to_ebcdic[32]);
-			}
-			index++;
-		}
+		sz390.put_ascii_string(tz390.job_date,zcvt_comrg_jobdate,8);
+		sz390.put_ascii_string(tz390.pgm_name,zcvt_comrg_comname,8);
 	}
 	private void trace_ins(){
 		/*

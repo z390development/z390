@@ -156,6 +156,7 @@ import javax.swing.Timer;
     *          shut down thread on interal exceptions
     * 09/09/06 RPI 440 correct reset of ez390_startup in sz390
     * 01/15/07 RPI 535 issue FFF abend on internal trap with dump
+    * 04/07/07 RPI 582 set R1 to addr of addr of PARM
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -263,7 +264,8 @@ private void run_pgm(int zcvt_pgm_addr){
 	pz390.reg.putInt(pz390.r13,pz390.zcvt_save);
 	pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);
 	pz390.reg.putInt(pz390.r0,zcvt_pgm_addr);
-	pz390.reg.putInt(pz390.r1,pz390.zcvt_exec_parm);
+	pz390.reg.putInt(pz390.r1,pz390.zcvt_exec_parma);              // RPI 582
+	pz390.mem.putInt(pz390.zcvt_exec_parma,pz390.zcvt_exec_parm);  // RPI 582
 	sz390.svc_link();  
    	if (tz390.opt_trap){
    	    pz390.psw_check = false;

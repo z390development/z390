@@ -132,7 +132,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.02g";  //dsh
+    String version    = "V1.3.02h";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -4846,6 +4846,10 @@ public void put_trace(String text){
     			                 + "/" + file_line_num 
     			                 + ")"
     			                 + line_type,10); // RPI 549
+    	}
+    	if (line_type == ' ' 
+    		&& line_level > 0){
+    		line_type = '+'; // RPI 581 inline macro generated code
     	}
     	return right_justify("(" + (file_num+1)
     			                 + "/" + file_line_num 

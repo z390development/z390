@@ -110,7 +110,8 @@ public  class  gz390
 	 *          plus color and other extended TN3270 attributes 
 	 * 08/14/06 RPI 414 recognize ERR(nnn) limit override
 	 * 09/21/06 RPI 460 wait for ez390 to close after PF3 abort
-	 * 12/01/06 RPI 509 use Monospace font for Windows and Linux    
+	 * 12/01/06 RPI 509 use Monospace font for Windows and Linux
+	 * 04/02/07 RPI 	572 strip high bits from EBCDIC attribute bytes    
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -2588,7 +2589,7 @@ private void tn_start_field(){
 	 *       clears them all.
 	 * 
 	 * field attribute byte
-	 * bit  0-1 - set based on remaining bits
+	 * bit  0-1 - set to form EBCDIC/ASCII graphic symbol rpi 572
 	 * bit  2   - protected output
 	 * bit  3   - numeric (protected & numeric = skip)
 	 * bit  4-5 - display format
@@ -2600,7 +2601,7 @@ private void tn_start_field(){
 	 * bit  7   - modified data tag
 	 */
 	 scn_fld[scn_addr] = tn_field;
-	 cur_fld_attr  = tput_byte[tput_index] & 0xff;
+	 cur_fld_attr  = tput_byte[tput_index] & 0x3f; // RPI 572
 	 cur_fld_hl    = 0;
 	 cur_fld_color = 0;
 	 scn_attr[scn_addr] = cur_fld_attr;

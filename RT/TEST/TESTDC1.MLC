@@ -26,6 +26,7 @@
 * 01/19/07 RPI538 - test duplication factors for P and all types                           
 * 03/01/07 RPI555 - test LQ quad word hex                                                  
 * 03/16/07 RPI578 - test corrected M3 complex mult S type
+* 04/01/07 RPI567 - add CCW, CCW0, and CCW1 tests                
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -57,6 +58,16 @@ TLS      DS    2L
 TFDS     DS    2FD    
 TFS      DS    2F
 TFSE     EQU   *    
+CCW      CCW   OP,DATA,FLAGS,LEN
+CCWV     DC    AL1(OP),AL3(DATA),AL1(FLAGS,0),AL2(LEN)
+CCW0     CCW0  OP,DATA,FLAGS,LEN
+CCW0V    DC    AL1(OP),AL3(DATA),AL1(FLAGS,0),AL2(LEN)
+CCW1     CCW1  OP,DATA,FLAGS,LEN
+CCW1V    DC    AL1(OP),AL1(FLAGS),AL2(LEN),A(DATA)
+DATA     DC    D'0'
+OP       EQU   X'12'
+FLAGS    EQU   X'34'
+LEN      EQU   X'5678'
          RT1   START
 * verify ds/dc alignment between fields
          RT1   CCE,V5,=X'AA00BBCC'
@@ -370,5 +381,9 @@ VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
          RT1   CCE,=2S(1),=2XL2'1',4
 * TEST LQ HEX QUAD WORD
          RT1   CCE,=LQ'1',=L'1',16
+* TEST CCW, CCW0, AND CCW1
+         RT1   CCE,CCW,CCWV,8
+         RT1   CCE,CCW0,CCW0V,8
+         RT1   CCE,CCW1,CCW1V,8
          RT1   END
          END         

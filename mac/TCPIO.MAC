@@ -3,10 +3,9 @@
                &OPTION,     NOWAIT OPTION FOR RECIEVE                  X
                &MSG=,       RX/REG ADDRESS OF MESSAGE TO SEND/RECEIVE  X
                &LMSG=,      RX,REG MSG SEND LENGTH OR RECEIVE MAX LEN  X
-               &WAIT=-1,    WAIT TIME IN MILLISECONDS (-1= NO LIMIT)   X
                &HOST=,      RX/REG ADDR OF HOST IP ADDRESS (*=LOCAL)   X
                &PORT=,      PORT NUMBER FOR ALL OPERATIONS             X
-               &CONN=       CONNECTION NUMBER FOR SERVER SEND/RECEIVE
+               &CONN=-1     CONNECTION NUMBER FOR SERVER SEND/RECEIVE
 .*********************************************************************
 .* Copyright 2007 Automated Software Tools Corporation               *
 .* This source code is part of z390 assembler/emulator package       *
@@ -20,6 +19,7 @@
 .*                  REMOVE LMAX AND USE LMSG FOR SEND/RECEIVE
 .*                  ADD CONN= CONNECTION ID FOR SEND OR RECEIVE
 .*                  (CONN ID IS RETURNED IN R2 BY SERVER RECEIVE)
+.* 03/11/07 RPI 573 ALLOW CONN=-1 IN ADDITION TO DEFAULT CONN=-1
 .*********************************************************************
 .* SVC INPUT:
 .*   R0 OP CODE 1=OPEN SERVER ON CURRENT HOST TO ACCEPT CONNECTIONS
@@ -57,7 +57,7 @@
          LA    0,1           R0 = TCPIO OP OPEN SERVER PORT ON HOST
          AGO   .PORT
 .OPEN_CLIENT ANOP
-         LA    0,2           R0 = TCPIO OP OPEN CLIENT PORT CONNECTION
+         LA    0,2           R0 = TCPIO OP OPEN CLIENT PORT CONN7ECTION
          AIF   (&HOST EQ '*').HOST_LOCAL
          AIF   ('&HOST'(1,1) EQ '(').HOSTREG
          LA    14,&HOST      R14= TCPIO HOST IP NULL TERMINATED
@@ -82,6 +82,7 @@
 .NOWAIT  ANOP
          OILH  0,1           R0 BIT 15 FOR NOWAIT  RPI 554
 .CONN    AIF   (&CONN EQ '').NOCONN 
+         AIF   (&CONN EQ '-1').NOCONN
          AIF   ('&CONN'(1,1) EQ '(').CONNREG
          L     2,&CONN
          AGO   .MSG

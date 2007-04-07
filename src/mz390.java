@@ -268,6 +268,7 @@ public  class  mz390 {
      * 02/16/07 RPI 559 correct paser to support array subscript starting with N'
      * 02/17/07 RPI 549 show '=' for generated bal copybook lines and show line_id=(FID/FLN)GSN
      * 03/09/07 RPI 565 issue error 208-210 for unsubscripted &SYSLIST
+     * 04/05/07 RPI 581 list mlc inline macro code if PRINT ON
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -306,6 +307,7 @@ public  class  mz390 {
 	int tot_mac_ins  = 0;
 	int tot_mac_load = 0;
 	int tot_mac_call = 0;
+	int tot_mac_copy = 0;
 	int mlc_line_end = 0;
 	File bal_file = null;
 	BufferedWriter bal_file_buff = null;
@@ -1410,6 +1412,7 @@ public  class  mz390 {
 			load_proto_type = false;
 			break;
 		case 2: // macro inline
+			put_bal_line(mac_file_line[mac_line_index]); // RPI 581
 			mac_line_index++; // skip macro statement
 			update_sysstmt();
 			cur_mac_line_num = mac_file_line_num[mac_line_index];
@@ -1429,9 +1432,11 @@ public  class  mz390 {
 			}
 			mac_abort = false;  // RPI 412
 			parse_mac_line();
-			if (load_type != load_mac_inline
-					&& (mac_line.length() < 2
-							|| !mac_line.substring(0,2).equals(".*"))
+			if (load_type == load_mac_inline){
+				bal_xref_index = mac_line_index; // RPI 581
+				put_bal_line(mac_line);          // RPI 581
+			} else if (mac_line.length() < 2
+					|| !mac_line.substring(0,2).equals(".*")
 			   ){
 				store_mac_line(); // RPI 273 update now for any cont. error
 			}
@@ -1930,12 +1935,12 @@ public  class  mz390 {
 					mac_file_buff[cur_mac_file].close();
 					cur_mac_file--;
 					if (cur_mac_file >= 0){
+						if (tz390.opt_tracem){
+							tz390.put_trace("COPY ENDING FID=" + cur_mac_file_num + " LVL=" + (cur_mac_file+2) + " " + mac_file[cur_mac_file+1].getName()); 
+						}
 						retry = true;
 						cur_mac_file_num = mac_file_cur_file_num[cur_mac_file];
 						cur_mac_line_num = mac_file_cur_line_num[cur_mac_file];
-						if (tz390.opt_tracem){
-							tz390.put_trace("ENDING  COPY LVL=" + (cur_mac_file+2) + " " + mac_file[cur_mac_file+1].getPath()); 
-						}
 					}
 				} else {
 					temp_line = tz390.trim_trailing_spaces(temp_line,72);
@@ -2105,9 +2110,6 @@ public  class  mz390 {
 			}
 			return;
 		}
-		if  (cur_mac_file > 0 && tz390.opt_tracem){
-			tz390.put_trace("LOADING COPY LVL=" + (cur_mac_file+1) + " " + new_mac_name);
-		}
 		switch (load_type){ // RPI 300
 		case 0: // load_mlc
 		case 1: // load_mac_file
@@ -2124,6 +2126,9 @@ public  class  mz390 {
 				set_mac_file_num();
 				mac_file_cur_line_num[cur_mac_file - 1] = cur_mac_line_num;
 				cur_mac_line_num = 0;
+				if (tz390.opt_tracem){
+					tz390.put_trace("LOADING COPY LVL=" + (cur_mac_file+1) + " " + new_mac_name);
+				}
 			} catch (IOException e){
 				cur_mac_file--;
 				abort_error(26,"I/O error opening file - " + e.toString());
@@ -2892,7 +2897,9 @@ public  class  mz390 {
 		case 224:  // COPY (copy to bal and issue error if not found) RPI 300
 			bal_op_ok = true;
 			bal_parms = replace_vars(bal_parms,true);
-			put_bal_line(bal_line); 
+			if (mac_call_level == 0){ // RPI 581
+				put_bal_line(bal_line);
+			}
 			mac_parms = bal_parms;
 			load_type = load_mac_exec;
 			open_mac_copy_file(); // issue error if not found
@@ -6448,7 +6455,6 @@ public  class  mz390 {
 				String sysndx = tz390.right_justify("" + lcl_sysndx,4);
 				String sysnest = tz390.right_justify("" + mac_call_level,2);
 				if (call_parms == null)call_parms = "";
-				String call_line_no = tz390.right_justify("" + mac_file_line_num[save_mac_line_index],6);
 				String call_line = null;
 				if (tz390.opt_reformat){
 					call_line = call_label + " " + call_op + " " + call_parms;
@@ -6461,7 +6467,7 @@ public  class  mz390 {
 				}
 				bal_xref_index = save_mac_line_index; 
 				mac_call_level--;
-				put_bal_line("*MCALL #=" + sysndx + " LV=" +  sysnest + " LN=" + call_line_no + " " + call_line);
+				put_bal_line("*MCALL #=" + sysndx + " LV=" +  sysnest + " " + call_line);
 			    mac_call_level++;
 			}
 			/*

@@ -116,6 +116,7 @@ public  class  sz390 implements Runnable {
     * 02/08/07 RPI 532 fix dcb file separator if linux
     * 02/20/07 RPI 551 correct ASCII mode for CMDPROC and WTOR
     * 02/24/07 RPI 560 prevent errouneous recursiave abort error
+    * 03/30/07 RPI 566 add TCPIO statistics to log if STATS
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -489,7 +490,14 @@ public  class  sz390 implements Runnable {
 	String tcpio_host_text   = null;
 	InetAddress tcpio_host_ip = null;
 	int    tcpio_port        = 0;
-    /*
+	int    tot_tcpio_oper    = 0;
+    int    tot_tcpio_openc   = 0;
+    int    tot_tcpio_opens   = 0;
+    int    tot_tcpio_closec  = 0;
+    int    tot_tcpio_closes  = 0;
+    int    tot_tcpio_send    = 0;
+    int    tot_tcpio_recv    = 0;
+	/*
      * DCB sequential and random file I/O tables
      */
      int    tot_tiot_files = 0;
@@ -839,6 +847,14 @@ private void put_stats(){
 	}
 	if (tz390.opt_stats){
 		put_log("EZ390I Stats total instructions    = " + tz390.systerm_ins);
+		if (tot_tcpio_oper > 0){ // RPI 566
+			put_log("EZ390I stats TCPIO open client     = " + tot_tcpio_openc);
+			put_log("EZ390I stats TCPIO open server     = " + tot_tcpio_opens);
+			put_log("EZ390I stats TCPIO close_client    = " + tot_tcpio_closec);
+			put_log("EZ390I stats TCPIO close server    = " + tot_tcpio_closes);
+			put_log("EZ390I stats TCPIO send message    = " + tot_tcpio_send);
+			put_log("EZ390I stats TCPIO receive message = " + tot_tcpio_recv);
+		}
 		if (tz390.opt_trace){
 			tz390.put_trace("EZ390I Stats Keys                  = " + tz390.tot_key);
 			tz390.put_trace("EZ390I Stats Key searches          = " + tz390.tot_key_search);
@@ -5468,8 +5484,10 @@ private void svc_tcpio(){
 	tcpio_amsg  = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
 	tcpio_lmsg  = pz390.reg.getInt(pz390.r15);
 	pz390.reg.putInt(pz390.r15,0);
+	tot_tcpio_oper++;
 	switch (tcpio_op){
 	case 1: // open server port
+		tot_tcpio_opens++;
 		tcpio_server_running = true; // enable tcpio server threads
 		if (tz390.opt_tracet){
 			put_log("TCPIO open server port " + tcpio_port);
@@ -5513,6 +5531,7 @@ private void svc_tcpio(){
     	}
 		break;
 	case 2: // open client connection to server port
+		tot_tcpio_openc++;
 		if (tz390.opt_tracet){
 			put_log("TCPIO open client port " + tcpio_port);
 		}
@@ -5569,12 +5588,15 @@ private void svc_tcpio(){
 			put_log("TCPIO close port" + tcpio_port);
 		}
 		if (tcpio_find_client_port()){
+			tot_tcpio_closec++;
 			tcpio_close_client_port();
 		} else if (tcpio_find_server_port()){
+			tot_tcpio_closes++;
 			tcpio_close_server_port();
 		}
 		break;
 	case 4: // send message
+		tot_tcpio_send++;
 		if (tcpio_lmsg < tcpio_lmin
 			|| tcpio_lmsg > tcpio_lmax){
 			put_log("TCPIO send error msg length out of range " + tcpio_lmsg);
@@ -5620,6 +5642,7 @@ private void svc_tcpio(){
 		}
 		break;
 	case 5: // receive message
+		tot_tcpio_recv++;
 		if (tz390.opt_tracet){
 			put_log("TCPIO receive msg for port=" + tcpio_port);
 		}
