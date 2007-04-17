@@ -8,6 +8,8 @@ call RTCLEAN1 linklib
 call RTCLEAN1 mac
 call RTCLEAN1 mvs\demo
 call RTCLEAN1 mvs\test
+call RTCLEAN1 vse\demo
+call RTCLEAN1 vse\test
 call RTCLEAN1 pc
 call RTCLEAN1 rt\test
 call RTCLEAN1 soa\demo

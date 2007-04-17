@@ -3,6 +3,9 @@ INSTTIME SUBENTRY
 * AUTHOR:       MELVYN MALTZ
 * Z390 VERSION: V1.3.00
 * INSTTIME VERSION: 8
+*********************************************************************
+* 04/17/07 DSH RPI 588 CORRECT SRL TO REMOVE COMMA FROM D(,B)
+*********************************************************************
 *
 * CALL MZ390 MUST HAVE "SYSPARM(drive:\pathname)"
 * ASSEMBLE WITH OPTION: ASCII
@@ -2063,7 +2066,7 @@ RSXB1    EQU   *
          L     R7,SPINCNT         SET LOOP LIMIT
 *
          TIME  NS,TIMEBEF         BEFORE TIME IN nS
-RSINSFT  SRL   R10,1(,R6)         TESTED INST
+RSINSFT  SRL   R10,1(R6)          TESTED INST RPI 588
          BCT   R7,RSINSFT         DO IT
          TIME  NS,TIMEAFT         AFTER TIME IN nS
 *

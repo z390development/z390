@@ -5,14 +5,15 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-* 11/19/05 RPI102 TEST NEW NON-390 FILE LOADING DDNAME/DSNAME OPTION 
-* 11/25/05 RPI111 TEST LOADING SAME FILE TWICE AND DELETING TWICE    
+* 11/19/05 RPI 102 TEST NEW NON-390 FILE LOADING DDNAME/DSNAME OPTION 
+* 11/25/05 RPI 111 TEST LOADING SAME FILE TWICE AND DELETING TWICE    
+* 02/07/07 RPI 532 CORRECT PATH CASE FOR LINUX                        
 *********************************************************************
          TITLE 'TESTLOD2 TEST LOAD DDNAME AND DSNAME OPTIONS'
 TESTLOD2 RT1  MAIN
          EQUREGS
-DSNFILE1 DC   C'RT\TEST\TESTLOD2.TF2',X'00'    
-DSNFILE2 DC   C'RT\TEST\TESTLOD2.TF3',X'00'    
+DSNFILE1 DC   C'rt\test\TESTLOD2.TF2',X'00'    
+DSNFILE2 DC   C'rt\test\TESTLOD2.TF3',X'00'    
 ABORT    WTO  'TESTLOD1 ABORTING DUE TO ERROR'
          ABEND 111,DUMP
          RT1  START

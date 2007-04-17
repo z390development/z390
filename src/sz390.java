@@ -117,6 +117,13 @@ public  class  sz390 implements Runnable {
     * 02/20/07 RPI 551 correct ASCII mode for CMDPROC and WTOR
     * 02/24/07 RPI 560 prevent errouneous recursiave abort error
     * 03/30/07 RPI 566 add TCPIO statistics to log if STATS
+    * 04/11/07 RPI 587 support 32 DCBLRECLF and DCBBLKSIF fields
+    *          plus return 64 bit file length in R0 for OPEN
+    * 04/15/07 RPI 583 dump all storage for abend and snap if PDATA=ALL  
+    * 04/15/07 RPI 586 support TEST command E to toggle EBCDIC/ASCII 
+    * 04/16/07 RPI 596 correctly pass user parm for XCTL 
+    * 04/16/07 RPI 592 use cmd_proc_running to control stopping
+    *          of processes without distroying queues etc.     
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -519,8 +526,8 @@ public  class  sz390 implements Runnable {
      int    cur_dcb_macrf  = 0;
      int    cur_dcb_recfm  = 0;
      int    cur_dcb_area   = 0;
-     int    cur_dcb_lrecl  = 0;
-     int    cur_dcb_blksi  = 0;
+     int    cur_dcb_lrecl_f  = 0;
+     int    cur_dcb_blksi_f  = 0;
      int    cur_vrec_lrecl  = 0;
      String cur_rec_text  = null;
      int    cur_rec_len   = 0;
@@ -548,8 +555,8 @@ public  class  sz390 implements Runnable {
      int dcb_macrf_pm = 0x0050;  // put move
      int dcb_macrf_rw = 0x2020;  // read/write random
      int dcb_synad = 0x38;       // synchronous error exit
-     int dcb_blksi = 0x3e;       // blocksize
-     int dcb_lrecl = 0x52;       // record length
+     int dcb_blksi_f = 0x3c;       // blocksize RPI 587 32 bits
+     int dcb_lrecl_f = 0x50;       // record length RPI 587 32 bits
      int dcb_rec   = 0x58;       // record area
      int dcb_dsnam = 0x5c;       // ascii file spec override ddname
      int dcb_dcbe  = 0x60; // dcbe extention for eodad and synad
@@ -899,7 +906,7 @@ private void close_cmd(){
 	 */
 	int cmd_id = 0;
 	while (cmd_id < max_cmd_proc){
-		if (cmd_proc[cmd_id] != null){
+		if (cmd_proc_running[cmd_id]){  // RPI 592
 			cmd_cancel(cmd_id);
 		}
 		cmd_id++;
@@ -1296,6 +1303,7 @@ private void svc_xctl(){
 	 *   1. r15 = user pgm return code if call ok
 	 *   2. abend s106
 	 */
+	int user_parm = pz390.reg.getInt(pz390.r0); // RPI 596
 	svc_load();
 	if (pz390.reg.getInt(pz390.r15) != 0){
 		if (pz390.tot_estae == 0){
@@ -1312,6 +1320,7 @@ private void svc_xctl(){
 		link_stk_cde[cur_link_stk] = save_new_cde;
 		pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);
 		pz390.reg.putInt(pz390.r15,link_addr);
+		pz390.reg.putInt(pz390.r1,user_parm); // RPI 596
 		pz390.set_psw_loc(link_addr);
         if ((link_addr & pz390.psw_amode31_bit) != 0){
             pz390.set_psw_amode(pz390.psw_amode31_bit);
@@ -2063,7 +2072,7 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 	 *        display gpr's
 	 *        display fpr'ss
 	 *        display tiot dcbs
-	 *        dump storage for each cde pgm
+	 *        dump all storage
 	 * 3.  Abort if not in test mode
 	 */
 	int dump_loc = pz390.psw_loc - pz390.psw_ins_len;
@@ -2089,6 +2098,7 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 		dump_tiot();
 		put_log("");
 		dump_cde_pgms();
+		dump_mem(0,pz390.tot_mem);  // RPI 583
 	}
 	if (!tz390.opt_test){
 		ez390_errors--; // don't count abend twice
@@ -2227,6 +2237,8 @@ private void svc_open(){
 	 *   6.  Take synad exit if defined else
 	 *       issue error message and abort.
 	 *  
+	 *  Output registers:
+	 *    R0 - 64 bit file length RPI 587
 	 */
 	cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	check_dcb_addr();
@@ -2280,6 +2292,7 @@ private void svc_open(){
 	}
 	pz390.mem_byte[cur_dcb_addr + dcb_oflgs] = (byte)(cur_dcb_oflgs | dcb_oflgs_open);
 	tiot_dcb_open[cur_tiot_index] = true;  //RPI110
+	pz390.reg.putLong(0,tiot_eof_rba[cur_tiot_index]);  // RPI 587 return file length
 	pz390.reg.putInt(pz390.r15,0);
 }
 private String get_dcb_file_name(){
@@ -2358,8 +2371,8 @@ private void svc_get_move(){
 	if (cur_tiot_index != -1){
 		cur_dcb_recfm = pz390.mem_byte[cur_dcb_addr+dcb_recfm] & 0xff;
 		cur_dcb_area  = pz390.reg.getInt(pz390.r0) & pz390.psw_amode;
-		cur_dcb_lrecl = pz390.mem.getShort(cur_dcb_addr + dcb_lrecl) & 0xffff;
-		cur_dcb_blksi = pz390.mem.getShort(cur_dcb_addr + dcb_blksi) & 0xffff;
+		cur_dcb_lrecl_f = pz390.mem.getInt(cur_dcb_addr + dcb_lrecl_f); // RPI 587
+		cur_dcb_blksi_f = pz390.mem.getInt(cur_dcb_addr + dcb_blksi_f); // RPI 587
 		if (tiot_cur_rba[cur_tiot_index] >= tiot_eof_rba[cur_tiot_index]){
 			dcb_eodad_exit();
 			return;
@@ -2385,14 +2398,14 @@ private void svc_get_move(){
 		switch (cur_dcb_recfm){
 		case 0x40: // variable 
 			try {
-				if (cur_dcb_lrecl == 0){
-					cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
+				if (cur_dcb_lrecl_f == 0){
+					cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
 				}
 				tz390.systerm_io++;
                 cur_vrec_lrecl = tiot_file[cur_tiot_index].readInt();
                 pz390.mem.putInt(cur_dcb_area,cur_vrec_lrecl);
                 cur_vrec_lrecl = cur_vrec_lrecl >>> 16;
-                if (cur_vrec_lrecl <= 5 || cur_vrec_lrecl > cur_dcb_lrecl){
+                if (cur_vrec_lrecl <= 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){
                 	dcb_synad_error(28,"invalid variable record length - " + cur_vrec_lrecl);
                 	return;
             	}
@@ -2406,13 +2419,13 @@ private void svc_get_move(){
 	        break;
 		case 0x50: // variable blocked 
 			try {
-				if (cur_dcb_lrecl == 0){
-					cur_dcb_lrecl = cur_dcb_blksi - 4; // use blksi if no lrecl
+				if (cur_dcb_lrecl_f == 0){
+					cur_dcb_lrecl_f = cur_dcb_blksi_f - 4; // use blksi if no lrecl
 				}
 				if (tiot_vrec_blksi[cur_tiot_index] == 0){
 					tz390.systerm_io++;
 					tiot_vrec_blksi[cur_tiot_index] = (tiot_file[cur_tiot_index].readInt() >>> 16)-4;
-                    if (tiot_vrec_blksi[cur_tiot_index] < 5 || tiot_vrec_blksi[cur_tiot_index] > cur_dcb_blksi-4){
+                    if (tiot_vrec_blksi[cur_tiot_index] < 5 || tiot_vrec_blksi[cur_tiot_index] > cur_dcb_blksi_f-4){
                     	dcb_synad_error(30,"invalid variable block size - " + tiot_vrec_blksi[cur_tiot_index]);
                     	return;
                     }
@@ -2421,7 +2434,7 @@ private void svc_get_move(){
                 cur_vrec_lrecl = tiot_file[cur_tiot_index].readInt();
                 pz390.mem.putInt(cur_dcb_area,cur_vrec_lrecl);
                 cur_vrec_lrecl = cur_vrec_lrecl >>> 16;
-                if (cur_vrec_lrecl <= 5 || cur_vrec_lrecl > cur_dcb_lrecl){
+                if (cur_vrec_lrecl <= 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){
                 	dcb_synad_error(28,"invalid variable record length - " + cur_vrec_lrecl);
                 	return;
                 }
@@ -2440,14 +2453,14 @@ private void svc_get_move(){
 	        break;
 		case 0x60: // variable from ascii text
 			try {
-				if (cur_dcb_lrecl == 0){
-					cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
+				if (cur_dcb_lrecl_f == 0){
+					cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
 				}
 				tz390.systerm_io++;
                 cur_rec_text = tiot_file[cur_tiot_index].readLine();
                 cur_rec_len  = cur_rec_text.length();
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
-                if (cur_rec_len < 1 || cur_rec_len > cur_dcb_lrecl - 4){
+                if (cur_rec_len < 1 || cur_rec_len > cur_dcb_lrecl_f - 4){
                 	dcb_synad_error(46,"variable record too long");
                 	return;
                 }
@@ -2469,12 +2482,12 @@ private void svc_get_move(){
 		case 0x80: // fixed - read lrecl bytes into area
 		case 0x90: // fixed blocked
 			try {
-				if (cur_dcb_lrecl == 0){
-					cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
+				if (cur_dcb_lrecl_f == 0){
+					cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
 				}
 				tz390.systerm_io++;
-                tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl);
-                tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl;
+                tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
+                tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
 	        } catch (Exception e){
 		        dcb_synad_error(27,"i/o error on get move fixed - " + e.toString());
 		        return;
@@ -2482,14 +2495,14 @@ private void svc_get_move(){
 	        break;
 		case 0xa0: // fixed from ascii text
 			try {
-				if (cur_dcb_lrecl == 0){
-					cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
+				if (cur_dcb_lrecl_f == 0){
+					cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
 				}
 				tz390.systerm_io++;
                 cur_rec_text = tiot_file[cur_tiot_index].readLine();
                 cur_rec_len  = cur_rec_text.length();
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
-                if (cur_rec_len <= cur_dcb_lrecl){
+                if (cur_rec_len <= cur_dcb_lrecl_f){
                 	int index = 0;
                 	while (index < cur_rec_len){
                 		if (tz390.opt_ascii){
@@ -2499,7 +2512,7 @@ private void svc_get_move(){
                 		}
                 		index++;
                 	}
-                	while (index < cur_dcb_lrecl){
+                	while (index < cur_dcb_lrecl_f){
                 		if (tz390.opt_ascii){
                 			pz390.mem_byte[cur_dcb_area + index] = (byte)0x20; //RPI66
                 		} else {
@@ -2538,18 +2551,18 @@ private void svc_put_move(){
 		}
 		cur_dcb_recfm = pz390.mem_byte[cur_dcb_addr+dcb_recfm] & 0xff;
 		cur_dcb_area  = pz390.reg.getInt(pz390.r0) & pz390.psw_amode;
-		cur_dcb_lrecl = pz390.mem.getShort(cur_dcb_addr + dcb_lrecl) & 0xffff;
-		cur_dcb_blksi = pz390.mem.getShort(cur_dcb_addr + dcb_blksi) & 0xffff;
+		cur_dcb_lrecl_f = pz390.mem.getInt(cur_dcb_addr + dcb_lrecl_f); // RPI 587
+		cur_dcb_blksi_f = pz390.mem.getInt(cur_dcb_addr + dcb_blksi_f); // RPI 587
 		switch (cur_dcb_recfm){
 		case 0x80: // fixed - read lrecl bytes into area
 		case 0x90: // fixed blocked
 			try {
-				if (cur_dcb_lrecl == 0){
-					cur_dcb_lrecl = cur_dcb_blksi;
+				if (cur_dcb_lrecl_f == 0){
+					cur_dcb_lrecl_f = cur_dcb_blksi_f;
 				}
 				tz390.systerm_io++;
-                tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl);
-                tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl;
+                tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
+                tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(101,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
                 }
@@ -2560,11 +2573,11 @@ private void svc_put_move(){
 	        break;
 		case 0x40: // variable 
 			try {
-				if (cur_dcb_lrecl == 0){
-					cur_dcb_lrecl = cur_dcb_blksi;
+				if (cur_dcb_lrecl_f == 0){
+					cur_dcb_lrecl_f = cur_dcb_blksi_f;
 				}
                 cur_vrec_lrecl = pz390.mem.getInt(cur_dcb_area) >>> 16;
-                if (cur_vrec_lrecl <= 5 || cur_vrec_lrecl > cur_dcb_lrecl){
+                if (cur_vrec_lrecl <= 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){
     	            dcb_synad_error(35,"invalid variable record length - " + cur_vrec_lrecl);
                     return;
                 }
@@ -2581,8 +2594,8 @@ private void svc_put_move(){
 	        break;
 		case 0x50: // variable blocked 
 			try {
-				if (cur_dcb_lrecl == 0){
-					cur_dcb_lrecl = cur_dcb_blksi - 4;
+				if (cur_dcb_lrecl_f == 0){
+					cur_dcb_lrecl_f = cur_dcb_blksi_f - 4;
 				}
 				if (tiot_vrec_blksi[cur_tiot_index] == 0){
 					tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
@@ -2590,12 +2603,12 @@ private void svc_put_move(){
 					tiot_file[cur_tiot_index].writeInt(-1); // place holder for vb LLZZ
 				}
 				cur_vrec_lrecl = pz390.mem.getInt(cur_dcb_area) >>> 16;
-                if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl){
+                if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){
                    	dcb_synad_error(37,"invalid variable record size - " + cur_vrec_lrecl);
                     return;
                 }
                 tiot_vrec_blksi[cur_tiot_index] = tiot_vrec_blksi[cur_tiot_index] + cur_vrec_lrecl;
-                if (tiot_vrec_blksi[cur_tiot_index] > cur_dcb_blksi - 4){
+                if (tiot_vrec_blksi[cur_tiot_index] > cur_dcb_blksi_f - 4){
                 	tiot_vrec_blksi[cur_tiot_index] = tiot_vrec_blksi[cur_tiot_index] - cur_vrec_lrecl;
                 	tiot_file[cur_tiot_index].seek(tiot_cur_rba[cur_tiot_index]);
                 	tz390.systerm_io++;
@@ -2618,11 +2631,11 @@ private void svc_put_move(){
 	        break;
 		case 0x60: // variable to ascii text
 			try {
-				if (cur_dcb_lrecl == 0){
-					cur_dcb_lrecl = cur_dcb_blksi;
+				if (cur_dcb_lrecl_f == 0){
+					cur_dcb_lrecl_f = cur_dcb_blksi_f;
 				}
                 cur_rec_len = (pz390.mem.getInt(cur_dcb_area) >> 16)-4;
-                if (cur_rec_len < 1 || cur_rec_len > (cur_dcb_lrecl - 4)){
+                if (cur_rec_len < 1 || cur_rec_len > (cur_dcb_lrecl_f - 4)){
                 	dcb_synad_error(48,"variable record too long - " + cur_rec_len);
                 	return;
                 }
@@ -2640,10 +2653,10 @@ private void svc_put_move(){
 	        break;
 		case 0xa0: // fixed to ascii text
 			try {
-				if (cur_dcb_lrecl == 0){
-					cur_dcb_lrecl = cur_dcb_blksi;
+				if (cur_dcb_lrecl_f == 0){
+					cur_dcb_lrecl_f = cur_dcb_blksi_f;
 				}
-                cur_rec_text = get_ascii_string(cur_dcb_area,cur_dcb_lrecl);
+                cur_rec_text = get_ascii_string(cur_dcb_area,cur_dcb_lrecl_f);
                 tz390.systerm_io++;
                 tiot_file[cur_tiot_index].writeBytes(cur_rec_text + tz390.newline); // RPI 500
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
@@ -2680,16 +2693,16 @@ private void svc_read(){
 		}
 		cur_dcb_area  = pz390.mem.getInt(cur_decb_addr + decb_area) & pz390.psw_amode;
 		cur_dcb_recfm = pz390.mem_byte[cur_dcb_addr+dcb_recfm] & 0xff;
-		cur_dcb_lrecl = pz390.mem.getShort(cur_dcb_addr + dcb_lrecl) & 0xffff;
-		cur_dcb_blksi = pz390.mem.getShort(cur_dcb_addr + dcb_blksi) & 0xffff;
+		cur_dcb_lrecl_f = pz390.mem.getInt(cur_dcb_addr + dcb_lrecl_f);  // RPI 587
+		cur_dcb_blksi_f = pz390.mem.getInt(cur_dcb_addr + dcb_blksi_f);  // RPI 587
 		try {
 	        pz390.mem_byte[cur_decb_addr + decb_ecb] = (byte) 0x80; // post ecb waiting for post
-			if (cur_dcb_lrecl == 0){
-				cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
+			if (cur_dcb_lrecl_f == 0){
+				cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
 			}
 			tz390.systerm_io++;
-            tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl);
-            tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl;
+            tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
+            tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
         } catch (Exception e){
             pz390.mem_byte[cur_decb_addr + decb_ecb] = (byte) 0x41; // post ecb for check synad exit
 	        return;
@@ -2712,16 +2725,16 @@ private void svc_write(){
 	if (cur_tiot_index != -1){
 		cur_dcb_area  = pz390.mem.getInt(cur_decb_addr + decb_area) & pz390.psw_amode;
 		cur_dcb_recfm = pz390.mem_byte[cur_dcb_addr+dcb_recfm] & 0xff;
-		cur_dcb_lrecl = pz390.mem.getShort(cur_dcb_addr + dcb_lrecl) & 0xffff;
-		cur_dcb_blksi = pz390.mem.getShort(cur_dcb_addr + dcb_blksi) & 0xffff;
+		cur_dcb_lrecl_f = pz390.mem.getInt(cur_dcb_addr + dcb_lrecl_f);  // RPI 587
+		cur_dcb_blksi_f = pz390.mem.getInt(cur_dcb_addr + dcb_blksi_f);  // RPI 587
         pz390.mem_byte[cur_decb_addr + decb_ecb] = (byte) 0x80; // post ecb waiting for post
 		try {
-			if (cur_dcb_lrecl == 0){
-				cur_dcb_lrecl = cur_dcb_blksi; // use blksi if no lrecl
+			if (cur_dcb_lrecl_f == 0){
+				cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
 			}
 			tz390.systerm_io++;
-			tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl);
-            tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl;
+			tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
+            tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
             if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
             	abort_error(106,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
             }
@@ -2988,13 +3001,11 @@ private void svc_cmd(){
 		if (tz390.opt_time){
 			pz390.cur_date = new Date();
 		}
-		cmd_proc_running[cmd_id] = true;
 		pz390.reg.putInt(pz390.r15,0);
 		break;
 	case 1: // close windows command process
 		if (cmd_proc_running[cmd_id]){
 			cmd_cancel(cmd_id);
-			cmd_proc_running[cmd_id] = false;
 		}
 		pz390.reg.putInt(pz390.r15,0);
 		break;
@@ -3092,7 +3103,7 @@ public int cmd_proc_start(int cmd_id,String[] exec_cmd){
     if  (cmd_id + 1 > tot_cmd){
     	tot_cmd = cmd_id + 1;
     }
-    if  (cmd_proc[cmd_id] != null){
+    if  (cmd_proc_running[cmd_id]){
     	rc = cmd_proc_rc(cmd_id);
         if (rc != 0){
         	if (rc == -1){
@@ -3116,6 +3127,7 @@ public int cmd_proc_start(int cmd_id,String[] exec_cmd){
 	    cmd_output_queue[cmd_id] = new LinkedList<String>();
 	    cmd_error_msg[cmd_id] = "";
 	    cmd_proc_io[cmd_id] = 0;
+	    cmd_proc_running[cmd_id] = true;  // RPI 592
 	    cmd_proc_thread[cmd_id].start();
 	    cmd_error_thread[cmd_id].start();
 	    cmd_output_thread[cmd_id].start();
@@ -3157,7 +3169,7 @@ public int cmd_proc_rc(int cmd_id){
      * return 0 if no process defined
      */           	
     int rc = -1;
-    if  (cmd_proc[cmd_id] != null){
+    if  (cmd_proc_running[cmd_id]){
         try {
         	rc = cmd_proc[cmd_id].exitValue(); 
         } catch (Exception e){
@@ -3172,16 +3184,6 @@ public void cmd_cancel(int cmd_id){
      * cancel exec process
      * 
      */
-   	if  (cmd_proc[cmd_id] != null){
-   	    try {
-   	        cmd_input_writer[cmd_id].close();  // RPI 547
-   	   	    cmd_output_reader[cmd_id].close(); // RPI 547
-   	   	    cmd_error_reader[cmd_id].close();  // RPI 547
-   	    	cmd_proc[cmd_id].destroy();	    	
-    	} catch (Exception e){
-           	cmd_proc[cmd_id] = null; 
-    	}
-    }
     cmd_proc_running[cmd_id] = false;
 }
 public void run() {
@@ -3189,7 +3191,8 @@ public void run() {
 	// or issue error if abnormal termination
 	int cmd_id = 0;
 	while (cmd_id < tot_cmd){
-		if (cmd_proc_thread[cmd_id] == Thread.currentThread()) {
+		if (cmd_proc_running[cmd_id] // RPI 592
+            && cmd_proc_thread[cmd_id] == Thread.currentThread()) {
 			io_count++;
 			cmd_proc_io[cmd_id]++;
 			try {
@@ -3198,10 +3201,12 @@ public void run() {
 				abort_error(79,"cmd proc wait error " + e.toString());
 			}
 			return;
-		} else if (cmd_output_thread[cmd_id] == Thread.currentThread()) {
+		} else if (cmd_proc_running[cmd_id] // RPI 592
+		           && cmd_output_thread[cmd_id] == Thread.currentThread()) {
 			copy_cmd_output_to_queue(cmd_id);
 			return;
-		} else if (cmd_error_thread[cmd_id] == Thread.currentThread()) {
+		} else if (cmd_proc_running[cmd_id] // RPI 592
+                   && cmd_error_thread[cmd_id] == Thread.currentThread()) {
 			copy_cmd_error_to_queue(cmd_id);
 			return;
 		}
@@ -3313,7 +3318,8 @@ public void copy_cmd_output_to_queue(int cmd_id){
 	try {
 		tz390.systerm_io++;
 		int next_int = cmd_output_reader[cmd_id].read();
-		while (next_int != -1){
+		while (cmd_proc_running[cmd_id] // RPI 592
+               && next_int != -1){
 			if  (next_int == ascii_lf){
 				cmd_proc_io[cmd_id]++;
 				String msg = cmd_output_msg[cmd_id];
@@ -3328,8 +3334,10 @@ public void copy_cmd_output_to_queue(int cmd_id){
 			next_int = cmd_output_reader[cmd_id].read();
 		}
 	} catch (Exception e) {
-		log_error(73,"cmd process output error - " + e.toString());
-		cmd_cancel(cmd_id);
+		if (cmd_proc_running[cmd_id]){
+			log_error(73,"cmd process output error - " + e.toString());
+			cmd_cancel(cmd_id);
+		}
 	};
 }
 public void copy_cmd_error_to_queue(int cmd_id){
@@ -3339,7 +3347,8 @@ public void copy_cmd_error_to_queue(int cmd_id){
 	try {
 		tz390.systerm_io++;
 		int next_int = cmd_error_reader[cmd_id].read();
-		while (next_int != -1){
+		while (cmd_proc_running[cmd_id] // RPI 592
+               && next_int != -1){
 		   if  (next_int == ascii_lf){
 		   	   String msg = cmd_error_msg[cmd_id];
 			   if (msg.length() > 0){
@@ -3353,8 +3362,10 @@ public void copy_cmd_error_to_queue(int cmd_id){
 		   next_int = cmd_error_reader[cmd_id].read();
 		}
 	} catch (Exception ex) {
-		log_error(74,"exec execution output error");
-		cmd_cancel(cmd_id);
+		if (cmd_proc_running[cmd_id]){ // RPI 592
+			log_error(74,"exec execution output error");
+			cmd_cancel(cmd_id);
+		}
 	}
 }
 private synchronized void cmd_put_queue(int cmd_id,String msg){
@@ -3363,7 +3374,8 @@ private synchronized void cmd_put_queue(int cmd_id,String msg){
 	 * synchronized so output and main thread
 	 * retrieval via CMDPROC READ are safe.
 	 */
-	if (!cmd_output_queue[cmd_id].offer(msg)){
+	if (cmd_proc_running[cmd_id] // RPI 592
+        && !cmd_output_queue[cmd_id].offer(msg)){
 		log_error(77,"cmd process output queue io error");
 	}
 }
@@ -3375,6 +3387,9 @@ private synchronized String cmd_get_queue(int cmd_id){
 	 * 
 	 * If no string ready, return null
 	 */
+	if (!cmd_proc_running[cmd_id]){ // RPI 592
+		return null;
+	}
 	try {
 		String cmd_output_line = (String) cmd_output_queue[cmd_id].remove();
 		return cmd_output_line;
@@ -3400,11 +3415,14 @@ private void svc_tget_tput(){
 	if (tz390.opt_guam){
 		if ((tpg_flags & tpg_op_mask) == tpg_op_tput){
             gz390.tput_len = buff_len;
+            if (gz390.tput_len > tput_buff.limit()){
+            	abort_error(59,"GUAM GUI tput length too long");
+            }
 			gz390.tput_buff.position(0);
 			gz390.tput_buff.put(pz390.mem_byte,buff_addr,buff_len);
 			gz390.guam_tput();
 			if (tz390.z390_abort){
-				abort_error(59,"GUAM GUI tput abort");
+				abort_error(59,"GUAM GUI tput external abort");
 			}
 		} else {
 			gz390.tget_len = buff_len;
@@ -3657,6 +3675,7 @@ private void svc_snap(){
 	 *     x'2000' - dump fpr f0-f15
 	 *     x'1000' - dump cde program info
 	 *     x'0800' - dump dcb file info
+	 *     x'0400' - dump all memory
 	 */
 	int text_addr = pz390.reg.getInt(pz390.r1);
 	if (text_addr > 0){
@@ -3683,12 +3702,13 @@ private void svc_snap(){
 		int dump_addr = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
 		int dump_len  = (pz390.reg.getInt(pz390.r15) & pz390.psw_amode) - dump_addr;
  		dump_mem(dump_addr,dump_len);
+	} else if ((flags & 0x0400) != 0){ // RPI 583
+		dump_mem(0,pz390.tot_mem);
 	}
 }
 private void dump_cde_pgms(){
 	/*
-	 * dump cde entry and program storage for
-	 * all loaded programs
+	 * dump cde entries for all loaded pgms and files RPI 583
 	 */
 	int index = 0;
 	boolean first_line = true;
@@ -3713,7 +3733,6 @@ private void dump_cde_pgms(){
 				      + " USE=" + tz390.get_hex(cde_use[index],8)
 				      + tz390.newline); // RPI 500
 			}
-			dump_mem(cde_loc[index] & pz390.psw_amode,cde_len[index]);
 		}
 		index++;
 	}
@@ -4787,7 +4806,18 @@ private void exec_test_cmd(){
     	dump_tiot();
         break;
 	case 'E':  // capture exit request from batch and exit when done
-	    exit_request = true;
+	    if (test_token.length() > 1){ // RPI 586
+	    	put_log("batch exit request");
+	    	exit_request = true;
+	    } else {  // RPI 586
+	    	if (tz390.opt_ascii){
+	    		tz390.opt_ascii = false;
+	    		put_log("Setting EBCDIC text mode");
+	    	} else {
+	    		tz390.opt_ascii = true;
+	    		put_log("Setting ASCII text mode");
+	    	}
+	    }
 	    break;
 	case 'F': // dump fp regs
 		test_token = get_next_test_token();
@@ -4808,6 +4838,7 @@ private void exec_test_cmd(){
 	    put_log("  A addr      add/remove address stop (ie A FF348. or A *+4 etc.)");  // RPI 395
 	    put_log("  B=addr      set base for rel addr (ie B=15r% sets base to (r15) 24 bit");
 	    put_log("  D           display DCB file status, DDNAME, and DSNAME information");
+	    put_log("  E           toggle EBCDIC/ASCII mode for dumping storage etc.");
 	    put_log("  F nn        display specified floating point registers else all F0-FF");
 	    put_log("  G nn/adr/op exec n instr. or to hex addr or until next break without trace");
 	    put_log("  J addr      jump to new addr and trace instruction");

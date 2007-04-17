@@ -1,4 +1,4 @@
-z390 V1.3.02 Portable Mainframe Assembler
+z390 V1.3.03 Portable Mainframe Assembler
 Copyright 2007 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
@@ -18,13 +18,16 @@ z390 is a portable mainframe assembler, linker, and emulator utility for Windows
 o Macro pseudo code generator for 3 times faster macro execution
 o Macro pseudo code trace facility to see all macro variables in all expressions
 o CICS, PROLOG, and EPILOG options support EXEC CICS and EXEC SQL compatible statements which are reformatted into standard EXEC macro format for expansion.
-o Macro library with commonly used MVS compatible macros
+o Macro libraries with commonly used MVS and VSE compatible macros
 * az390 - assembler to translate BAL source code into OBJ file and generate PRN listing
 * lz390 - linker to translate OBJ files into 390 binary load module
 * ez390 - runtime emulator to exec 390 load modules running in 24/31 bit mode
 o All problem state instructions including HFP, BFP, and new DFP floating point
 o TEST option for interactive debugging with dump, modify, and trace options
 o TRACE option for instruction trace with operand register and memory data
+* Z390 Utilities written in z390 assembler with source included:
+o SUPERZAP – verify, replace, and dump any Windows or Linux file up to 2 GB.
+o UNREF – scan PRN assembly listing and list unreferenced symbols.
 
 A WTO macro based demo “Hello World” program demo.mlc is included which can be expanded, assembled, linked, and executed with the command “ASMLG DEMO\DEMO” issued from GUI command line or via point and click using the z390 GUI file menu ASMLG selection.
 

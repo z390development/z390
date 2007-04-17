@@ -5,23 +5,34 @@
 * Author - Don Higgins                                              *
 * Date   - 09/11/06                                                 *
 *********************************************************************
-* 09/11/06 RP 363 CHANGE FROM TEST TO RT\TEST DIRECTORY              
+* 09/11/06 RPI 363 CHANGE FROM TEST TO RT\TEST DIRECTORY              
+* 02/02/07 RPI 532 REMOVE WINDOWS PROMPT AND FIX PATH CASE FOR LINUX  
 *********************************************************************
          TITLE 'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR'
 TESTCMD1 SUBENTRY
+         COPY  ASMMSP
          WTO   'TESTCMD1 TEST USE OF SVC 34 COMMAND PROCESSOR'
          CMDPROC START
-         CMDPROC WRITE,=C'"PROMPT $G"'
-         CMDPROC WRITE,=C'"RT\TEST\TESTCMD1.BAT"'
+         CMDPROC WRITE,=C'"rt\test\TESTCMD1.BAT"'  RPI 532
+         LA    R4,50
 CMDLOOP  EQU   *
+         AHI   R4,-1
+         BZ    ERROR
          CMDPROC READ,MSG
-         CHI   15,4
+         CHI   R15,4
          BE    CMDLOOP
-         CHI   15,8
+         CHI   R15,8
          BE    CMDEND
          WTO   MF=(E,WTOCMD)
-         CLC   MSG(8),=C'>REM END'
-         BNE   CMDLOOP
+         LA    R1,MSG
+         LA    R2,MSG+70
+         DO    UNTIL=(CR,R1,GE,R2)
+               IF (CLC,0(7,R1),EQ,=C'REM END')
+                  B CMDEND
+               ENDIF
+               AHI R1,1
+         ENDDO
+         B     CMDLOOP
 CMDEND   EQU   *
          CMDPROC STOP
          WTO   'TESTSVC1 ENDING OK'
@@ -32,4 +43,5 @@ WTOCMD   DC    AL2(WTOEND-*,0)
          DC    C'MSG FROM CMD='
 MSG      DC    CL80' '
 WTOEND   EQU   *
+         EQUREGS
          END

@@ -5,29 +5,31 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 02/21/07 RPI 553 CORRECT SOURCE ERROR FOR DS1 DUP. CSECT/DSECT
+*********************************************************************
 TESTDST1 SUBENTRY
          WTO   'TESTDST1 TEST CSECT AND DSECT SUPPORT'
-         LA    2,=A(CS1)
+         L     2,=A(CS1)                RPI 553 WAS LA IN ERROR
          USING CS1,2
          USING DS1,2
-         LA    3,=A(CS1)
+         L     3,=A(CS2)                RPI 553 WAS LA IN ERROR
          USING CS2,3
          CLC   DS1F2,DS1F2-DS1+CS2
          BNE   1
          WTO   'TESTDST1 ENDED OK'
          SUBEXIT
 DS1      DSECT
-         DS   XL3
+DS1F1    DS   XL3
 CS1      CSECT
 CS1F1    DC   C'ABC'
 CS1F2    DC   C'DEF'
 CS2      CSECT
-         DS   XL3
+CS2F1    DS   XL3
 CS1      CSECT
 CS1F3    DC   C'GHI'
 CS2      CSECT
-         DC   C'DEF'
-DS1      CSECT
+CS2F2    DC   C'DEF'
+DS1      DSECT             RPI 553 FIX (WAS CSECT IN ERROR)
 DS1F2    DS   CL3
 DS1F3    DS   CL3        
          END

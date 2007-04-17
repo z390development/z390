@@ -197,6 +197,7 @@ public class pz390 {
 	 * 03/18/07 RPI 580 correct TR?? test code compares   
 	 * 04/03/07 RPI 584 fix trap at startup with option ASCII and pgmname < 8 
 	 * 04/07/07 RPI 582 set R1 to addr of addr of PARM
+	 * 04/16/07 RPI 588 correct trace for CVB, CVBG, CVBY, CVD, CVDG, CVDY
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1263,8 +1264,8 @@ public class pz390 {
 		       53,  // 1130 "4B" "SH" "RX" 5
 		       53,  // 1140 "4C" "MH" "RX" 5
 		       50,  // 1150 "4D" "BAS" "RX" 5
-		       50,  // 1160 "4E" "CVD" "RX" 5
-		       50,  // 1170 "4F" "CVB" "RX" 5
+		       57,  // 1160 "4E" "CVD" "RX" 5  RPI 588
+		       57,  // 1170 "4F" "CVB" "RX" 5  RPI 588
 		       50,  // 1180 "50" "ST" "RX" 5
 		       50,  // 1190 "51" "LAE" "RX" 5
 		       50,  // 1200 "54" "N" "RX" 5
@@ -1812,14 +1813,14 @@ public class pz390 {
 		       180,  //      "E302" "LTG" "RXY" 18 Z9-42
 		       180,  // 5400 "E303" "LRAG" "RXY" 18
 		       180,  // 5410 "E304" "LG" "RXY" 18
-		       180,  // 5420 "E306" "CVBY" "RXY" 18
+		       57,   // 5420 "E306" "CVBY" "RXY" 18  RPI 588
 		       180,  // 5430 "E308" "AG" "RXY" 18
 		       180,  // 5440 "E309" "SG" "RXY" 18
 		       180,  // 5450 "E30A" "ALG" "RXY" 18
 		       180,  // 5460 "E30B" "SLG" "RXY" 18
 		       180,  // 5470 "E30C" "MSG" "RXY" 18
 		       180,  // 5480 "E30D" "DSG" "RXY" 18
-		       180,  // 5490 "E30E" "CVBG" "RXY" 18
+		       188,  // 5490 "E30E" "CVBG" "RXY" 18  RPI 588
 		       180,  // 5500 "E30F" "LRVG" "RXY" 18
 		       180,  //      "E312" "LT" "RXY" 18 Z9-43
 		       180,  // 5510 "E313" "LRAY" "RXY" 18
@@ -1838,8 +1839,8 @@ public class pz390 {
 		       180,  // 5640 "E320" "CG" "RXY" 18
 		       180,  // 5650 "E321" "CLG" "RXY" 18
 		       180,  // 5660 "E324" "STG" "RXY" 18
-		       180,  // 5670 "E326" "CVDY" "RXY" 18
-		       180,  // 5680 "E32E" "CVDG" "RXY" 18
+		       57,   // 5670 "E326" "CVDY" "RXY" 18  RPI 588
+		       188,  // 5680 "E32E" "CVDG" "RXY" 18  RPI 588
 		       180,  // 5690 "E32F" "STRVG" "RXY" 18
 		       184,  // 5700 "E330" "CGF" "RXY" 18
 		       184,  // 5710 "E331" "CLGF" "RXY" 18
@@ -13673,7 +13674,7 @@ public class pz390 {
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
 						+ get_fp_long_hex(rf1) + " S2("
 						+ tz390.get_hex(xbd2_loc, 8) + ")="
-						+ bytes_to_hex(mem, xbd2_loc, 8, 0);
+						+ get_long_hex(mem.getLong(xbd2_loc)); // RPI 588
 			break;
 		case 55: // 5c,5d MD,DD
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
@@ -13688,6 +13689,12 @@ public class pz390 {
 						+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " S2("
 						+ tz390.get_hex(xbd2_loc & psw_amode, 8) + ")="
 						+ bytes_to_hex(mem, xbd2_loc, 1, 0);
+			break;
+		case 57:// "RX" CVD, CVB RPI 588
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+					+ tz390.get_hex(reg.getInt(rf1 + 4),8) + " S2("
+					+ tz390.get_hex(xbd2_loc, 8) + ")="
+					+ get_long_hex(mem.getLong(xbd2_loc)); // RPI 588
 			break;
 		case 60:// "BCX" 16 BE oomxbddd
 			trace_parms = " S2(" + tz390.get_hex(xbd2_loc, 8) 
@@ -13863,7 +13870,7 @@ public class pz390 {
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 					+ get_long_hex(reg.getLong(rf1)) + " S2("
 					+ tz390.get_hex(xbd2_loc, 8) + ")="
-					+ bytes_to_hex(mem, xbd2_loc, 8, 0);
+					+ get_long_hex(mem.getLong(xbd2_loc)); // RPI 588
 			break;
 		case 181: // e370, e378-b37b, e395  LHY, STHY, AHY .. LLG
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
@@ -13884,7 +13891,7 @@ public class pz390 {
 					+ get_long_hex(reg.getLong(rf1+8)) // RPI 544
 					+ " S2("
 					+ tz390.get_hex(xbd2_loc, 8) + ")="
-					+ bytes_to_hex(mem, xbd2_loc, 8, 0);
+					+ get_long_hex(mem.getLong(xbd2_loc)); // RPI 588
 			break;	
 		case 184: // LLGF
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
@@ -13909,6 +13916,12 @@ public class pz390 {
 							+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " S2("
 							+ tz390.get_hex(xbd2_loc, 8) + ")="
 							+ bytes_to_hex(mem, xbd2_loc, 4, 0);
+			break;
+		case 188: // CVBG, CVDG RPI 588
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+							+ get_long_hex(reg.getLong(rf1)) + " S2("
+							+ tz390.get_hex(xbd2_loc, 8) + ")="
+							+ bytes_to_hex(mem, xbd2_loc, 16, 0);
 			break;
 		case 190:// "SSE" 5 LASP oooobdddbddd
 			trace_parms = " S1(" + tz390.get_hex(bd1_loc, 8) + ")="
@@ -13988,7 +14001,7 @@ public class pz390 {
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
 					+ get_fp_long_hex(rf1) + " S2("
 					+ tz390.get_hex(xbd2_loc, 8) + ")="
-					+ bytes_to_hex(mem, xbd2_loc, 8, 0);
+					+ get_long_hex(mem.getLong(xbd2_loc)); // RPI 588
 			break;
 		case 241:// "RXE" TDCET etc.
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="

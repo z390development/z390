@@ -20,7 +20,8 @@
 *   TDCDT, TDCET, TDCXT, TDGDT, TDGET, TDGXT
 * 12/29/06 RPI 527 ADD MISSING DFP INS
 *   LPDFR, LNDFR, CPSDR, LCDFR, LDGR, LGDR            
-* 02/08/07 RPI 527 CORRECT CGDTR, CGXTR ROUNDING
+* 01/08/07 RPI 527 CORRECT CGDTR, CGXTR ROUNDING
+* 01/10/07 RPI 533 CORRECT CGDTR, CGXTR ROUNDING 
 *********************************************************************
          PRINT DATA
 TESTDFP1 RT1   MAIN
@@ -409,6 +410,11 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LX    5,=LD'2'
          CXTR  1,5
          RT1   CC0
+         LX    4,=LD'1.5'
+         FIXTR 1,0,4,0       
+         LX    5,=LD'2'
+         CXTR  1,5
+         RT1   CC0
 * B3E0 KDTR
          LD    1,=DD'1'
          LD    2,=DD'2'
@@ -439,25 +445,169 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          CXTR  1,4
          RT1   CC0
 * B3E1 CGDTR
-         LD    2,=DD'1234567890123456'
-         CGDTR 1,0,2
+         LD    4,=DD'1234567890123456'
+         CGDTR 1,0,4
          RT1   CCH
          CLG   1,=FD'1234567890123456'
          RT1   CC0
-         LD    2,=DD'-1234567890123456'
-         CGDTR 1,0,2
+         LD    4,=DD'-1234567890123456'
+         CGDTR 1,0,4
          RT1   CCL
          CLG   1,=FD'-1234567890123456'
          RT1   CC0
-         LD    2,=DD'0'
-         CGDTR 1,0,2
+         LD    4,=DD'0'
+         CGDTR 1,0,4
          RT1   CC0
          CLG   1,=FD'0'
          RT1   CC0
-         LD    2,=DD'1.5'
-         CGDTR 1,0,2
+         LD    4,=DD'1.5'
+         CGDTR 1,0,4
          RT1   CCH
          CLG   1,=FD'2'
+         RT1   CC0
+* MORE THAN HALF
+         LD    4,=DD'999.99'
+         CGDTR 1,8+0,4          RPI 533 NEAREST, HALF EVEN DEFAULT
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LD    4,=DD'999.99'
+         CGDTR 1,8+1,4          RPI 533 NEAREST, HALF TOWARD ZERO       
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LD    4,=DD'999.99'
+         CGDTR 1,8+2,4          RPI 533 TOWARD +INFINITY                
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LD    4,=DD'999.99'
+         CGDTR 1,8+3,4          RPI 533 TOWARD -INFINITY                
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'999.99'
+         CGDTR 1,8+4,4          RPI 533 NEAREST, HALF AWAY FROM 0       
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LD    4,=DD'999.99'
+         CGDTR 1,8+5,4          RPI 533 NEAREST, HALF TOWARD 0       
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LD    4,=DD'999.99'
+         CGDTR 1,8+6,4          RPI 533 AWAY FROM ZERO               
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+* LESS THAN HALF
+         LD    4,=DD'999.11'
+         CGDTR 1,8+0,4          RPI 533 NEAREST, HALF EVEN DEFAULT
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'999.11'
+         CGDTR 1,8+1,4          RPI 533 NEAREST, HALF TOWARD ZERO       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'999.11'
+         CGDTR 1,8+2,4          RPI 533 TOWARD +INFINITY                
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LD    4,=DD'999.11'
+         CGDTR 1,8+3,4          RPI 533 TOWARD -INFINITY                
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'999.11'
+         CGDTR 1,8+4,4          RPI 533 NEAREST, HALF AWAY FROM 0       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'999.11'
+         CGDTR 1,8+5,4          RPI 533 NEAREST, HALF TOWARD 0       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'999.11'
+         CGDTR 1,8+6,4          RPI 533 AWAY FROM ZERO               
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+* ODD HALF
+         LD    4,=DD'999.5'
+         CGDTR 1,8+0,4          RPI 533 NEAREST, HALF EVEN DEFAULT
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LD    4,=DD'999.5'
+         CGDTR 1,8+1,4          RPI 533 NEAREST, HALF TOWARD ZERO       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'999.5'
+         CGDTR 1,8+2,4          RPI 533 TOWARD +INFINITY                
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LD    4,=DD'999.5'
+         CGDTR 1,8+3,4          RPI 533 TOWARD -INFINITY                
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'999.5'
+         CGDTR 1,8+4,4          RPI 533 NEAREST, HALF AWAY FROM 0       
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LD    4,=DD'999.5'
+         CGDTR 1,8+5,4          RPI 533 NEAREST, HALF TOWARD 0       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'999.5'
+         CGDTR 1,8+6,4          RPI 533 AWAY FROM ZERO               
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+* EVEN HALF
+         LD    4,=DD'998.5'
+         CGDTR 1,8+0,4          RPI 533 NEAREST, HALF EVEN DEFAULT
+         RT1   CCH
+         CLG   1,=FD'998'
+         RT1   CC0     
+         LD    4,=DD'998.5'
+         CGDTR 1,8+1,4          RPI 533 NEAREST, HALF TOWARD ZERO       
+         RT1   CCH
+         CLG   1,=FD'998'
+         RT1   CC0
+         LD    4,=DD'998.5'
+         CGDTR 1,8+2,4          RPI 533 TOWARD +INFINITY                
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'998.5'
+         CGDTR 1,8+3,4          RPI 533 TOWARD -INFINITY                
+         RT1   CCH
+         CLG   1,=FD'998'
+         RT1   CC0
+         LD    4,=DD'998.5'
+         CGDTR 1,8+4,4          RPI 533 NEAREST, HALF AWAY FROM 0       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'998.5'
+         CGDTR 1,8+5,4          RPI 533 NEAREST, HALF TOWARD 0       
+         RT1   CCH
+         CLG   1,=FD'998'
+         RT1   CC0
+         LD    4,=DD'998.5'
+         CGDTR 1,8+6,4          RPI 533 AWAY FROM ZERO               
+         RT1   CCH
+         CLG   1,=FD'999'
          RT1   CC0
 * B3E2 CUDTR
          LD    1,=DD'1'
@@ -571,6 +721,150 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          CGXTR 1,0,4
          RT1   CCH
          CLG   1,=FD'2'
+         RT1   CC0
+* MORE THAN HALF
+         LX    4,=LD'999.99'
+         CGXTR 1,8+0,4          RPI 533 NEAREST, HALF EVEN DEFAULT
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LX    4,=LD'999.99'
+         CGXTR 1,8+1,4          RPI 533 NEAREST, HALF TOWARD ZERO       
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LX    4,=LD'999.99'
+         CGXTR 1,8+2,4          RPI 533 TOWARD +INFINITY                
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LX    4,=LD'999.99'
+         CGXTR 1,8+3,4          RPI 533 TOWARD -INFINITY                
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LX    4,=LD'999.99'
+         CGXTR 1,8+4,4          RPI 533 NEAREST, HALF AWAY FROM 0       
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LX    4,=LD'999.99'
+         CGXTR 1,8+5,4          RPI 533 NEAREST, HALF TOWARD 0       
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LX    4,=LD'999.99'
+         CGXTR 1,8+6,4          RPI 533 AWAY FROM ZERO               
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+* LESS THAN HALF
+         LX    4,=LD'999.11'
+         CGXTR 1,8+0,4          RPI 533 NEAREST, HALF EVEN DEFAULT
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LX    4,=LD'999.11'
+         CGXTR 1,8+1,4          RPI 533 NEAREST, HALF TOWARD ZERO       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LX    4,=LD'999.11'
+         CGXTR 1,8+2,4          RPI 533 TOWARD +INFINITY                
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LX    4,=LD'999.11'
+         CGXTR 1,8+3,4          RPI 533 TOWARD -INFINITY                
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LX    4,=LD'999.11'
+         CGXTR 1,8+4,4          RPI 533 NEAREST, HALF AWAY FROM 0       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LX    4,=LD'999.11'
+         CGXTR 1,8+5,4          RPI 533 NEAREST, HALF TOWARD 0       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LX    4,=LD'999.11'
+         CGXTR 1,8+6,4          RPI 533 AWAY FROM ZERO               
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+* ODD HALF
+         LX    4,=LD'999.5'
+         CGXTR 1,8+0,4          RPI 533 NEAREST, HALF EVEN DEFAULT
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LX    4,=LD'999.5'
+         CGXTR 1,8+1,4          RPI 533 NEAREST, HALF TOWARD ZERO       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LX    4,=LD'999.5'
+         CGXTR 1,8+2,4          RPI 533 TOWARD +INFINITY                
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LX    4,=LD'999.5'
+         CGXTR 1,8+3,4          RPI 533 TOWARD -INFINITY                
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LX    4,=LD'999.5'
+         CGXTR 1,8+4,4          RPI 533 NEAREST, HALF AWAY FROM 0       
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+         LX    4,=LD'999.5'
+         CGXTR 1,8+5,4          RPI 533 NEAREST, HALF TOWARD 0       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LX    4,=LD'999.5'
+         CGXTR 1,8+6,4          RPI 533 AWAY FROM ZERO               
+         RT1   CCH
+         CLG   1,=FD'1000'
+         RT1   CC0
+* EVEN HALF
+         LD    4,=DD'998.5'
+         CGDTR 1,8+0,4          RPI 533 NEAREST, HALF EVEN DEFAULT
+         RT1   CCH
+         CLG   1,=FD'998'
+         RT1   CC0     
+         LD    4,=DD'998.5'
+         CGDTR 1,8+1,4          RPI 533 NEAREST, HALF TOWARD ZERO       
+         RT1   CCH
+         CLG   1,=FD'998'
+         RT1   CC0
+         LD    4,=DD'998.5'
+         CGDTR 1,8+2,4          RPI 533 TOWARD +INFINITY                
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'998.5'
+         CGDTR 1,8+3,4          RPI 533 TOWARD -INFINITY                
+         RT1   CCH
+         CLG   1,=FD'998'
+         RT1   CC0
+         LD    4,=DD'998.5'
+         CGDTR 1,8+4,4          RPI 533 NEAREST, HALF AWAY FROM 0       
+         RT1   CCH
+         CLG   1,=FD'999'
+         RT1   CC0
+         LD    4,=DD'998.5'
+         CGDTR 1,8+5,4          RPI 533 NEAREST, HALF TOWARD 0       
+         RT1   CCH
+         CLG   1,=FD'998'
+         RT1   CC0
+         LD    4,=DD'998.5'
+         CGDTR 1,8+6,4          RPI 533 AWAY FROM ZERO               
+         RT1   CCH
+         CLG   1,=FD'999'
          RT1   CC0
 * B3EA CUXTR
          LX    1,=LD'1'

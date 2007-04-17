@@ -22,6 +22,11 @@
 * 07/19/06 RPI368 - support S scale factor for F, H, EH, DH, and LH      
 * 08/03/06 RPI388 - test fix dup count for E, D, F and FD                     
 * 09/21/06 RPI458 - test DC S(rel and off(base)) constants                            
+* 12/09/06 RPI407 - test DC DD, ED, and LD (min) and (max) constants                  
+* 01/19/07 RPI538 - test duplication factors for P and all types                           
+* 03/01/07 RPI555 - test LQ quad word hex                                                  
+* 03/16/07 RPI578 - test corrected M3 complex mult S type
+* 04/01/07 RPI567 - add CCW, CCW0, and CCW1 tests                
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -32,7 +37,7 @@ M2       DC    L'1',D'1',E'1',X'FF'
 V2       DC    X'41100000000000003300000000000000'
          DC    X'4110000000000000'
          DC    X'41100000',X'FF'
-M3       DC    S(1),S(2),S(M3),S(1(2))X'FF'
+M3       DC    S(1),S(2),S(M3),S(1(2)),X'FF'
 V3       DC    X'00010002',AL2(X'D000'+(M3-TESTDC1-8)),X'2001',X'FF'
 M4       DC    V(TESTDC1),2V(TESTDC1),X'FF'
 V4       DC    3A(TESTDC1),X'FF'
@@ -53,6 +58,16 @@ TLS      DS    2L
 TFDS     DS    2FD    
 TFS      DS    2F
 TFSE     EQU   *    
+CCW      CCW   OP,DATA,FLAGS,LEN
+CCWV     DC    AL1(OP),AL3(DATA),AL1(FLAGS,0),AL2(LEN)
+CCW0     CCW0  OP,DATA,FLAGS,LEN
+CCW0V    DC    AL1(OP),AL3(DATA),AL1(FLAGS,0),AL2(LEN)
+CCW1     CCW1  OP,DATA,FLAGS,LEN
+CCW1V    DC    AL1(OP),AL1(FLAGS),AL2(LEN),A(DATA)
+DATA     DC    D'0'
+OP       EQU   X'12'
+FLAGS    EQU   X'34'
+LEN      EQU   X'5678'
          RT1   START
 * verify ds/dc alignment between fields
          RT1   CCE,V5,=X'AA00BBCC'
@@ -67,17 +82,23 @@ TFSE     EQU   *
          RT1   CCE,=DS2'1',=X'4310000000000000'
          RT1   CCE,=LS2'1',=X'43100000000000003500000000000000'
 * test (MIN) and (MAX) constants
-         RT1   CCE,=EH'(MIN)',=X'01100000'
-         RT1   CCE,=EB'(MIN)',=X'00800000'
-         RT1   CCE,=DH'(MIN)',=X'0110000000000000'
          RT1   CCE,=DB'(MIN)',=X'0010000000000000'
-         RT1   CCE,=LH'(MIN)',=X'01100000000000007200000000000000'
+         RT1   CCE,=DD'(MIN)',=X'0000000000000001'
+         RT1   CCE,=DH'(MIN)',=X'0110000000000000'
+         RT1   CCE,=EB'(MIN)',=X'00800000'
+         RT1   CCE,=ED'(MIN)',=X'00000001'
+         RT1   CCE,=EH'(MIN)',=X'01100000'
          RT1   CCE,=LB'(MIN)',=X'00010000000000000000000000000000'
-         RT1   CCE,=EH'(MAX)',=X'7FFFFFFF'
-         RT1   CCE,=EB'(MAX)',=X'7F7FFFFF'
-         RT1   CCE,=DH'(MAX)',=X'7FFFFFFFFFFFFFFF'    
+         RT1   CCE,=LD'(MIN)',=X'00000000000000000000000000000001'
+         RT1   CCE,=LH'(MIN)',=X'01100000000000007200000000000000'
          RT1   CCE,=DB'(MAX)',=X'7FEFFFFFFFFFFFFF'
+         RT1   CCE,=DD'(MAX)',=X'77FCFF3FCFF3FCFF'    
+         RT1   CCE,=DH'(MAX)',=X'7FFFFFFFFFFFFFFF'    
+         RT1   CCE,=EB'(MAX)',=X'7F7FFFFF'
+         RT1   CCE,=ED'(MAX)',=X'77F3FCFF'
+         RT1   CCE,=EH'(MAX)',=X'7FFFFFFF'
          RT1   CCE,=LH'(MAX)',=X'7FFFFFFFFFFFFFFF71FFFFFFFFFFFFFF'
+         RT1   CCE,=LD'(MAX)',=X'77FFCFF3FCFF3FCFF3FCFF3FCFF3FCFF'
          RT1   CCE,=LB'(MAX)',=X'7FFEFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
 * verify dc field continuations
          AIF   (C'A' EQ X'41').TEST1_ASCII
@@ -293,6 +314,8 @@ TFSE     EQU   *
          RT1   CCE,=AD(123),=FL8'123'
          RT1   CCE,=FD'123',=FL8'123'
 VDX      RT1   CCE,=VD(VDX),=AL8(VDX)
+         RT1   CCE,=2C'1',=2X'F1',2
+         RT1   CCE,=2Z'1',=2X'F1',2
          AGO   .TEST5_END
 .TEST5_ASCII ANOP
          CLC   =C'&AMP&AMP',=X'26'
@@ -323,6 +346,8 @@ VDX      RT1   CCE,=VD(VDX),=AL8(VDX)
          RT1   CCE,=AD(123),=FL8'123'
          RT1   CCE,=FD'123',=FL8'123'
 VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
+         RT1   CCE,=2C'1',=2X'31',2
+         RT1   CCE,=2Z'1',=2X'31',2
 .TEST5_END ANOP
 * TEST 2E,2D,2L, AND 2FD
          RT1   CCE,=XL8'00',TE     
@@ -345,5 +370,20 @@ VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
          RT1   CCE,=A(TFDS-TLS),=F'32' 
          RT1   CCE,=A(TFS-TFDS),=F'16' 
          RT1   CCE,=A(TFSE-TFS),=F'8' 
+* TEST ALL DUP FACTORS
+         RT1   CCE,=2A(1),=2XL4'1',8
+         RT1   CCE,=2D'0',=16X'00',16
+         RT1   CCE,=2E'0',=8X'00',8
+         RT1   CCE,=2F'1',=2XL4'1',8
+         RT1   CCE,=2H'1',=2XL2'1',4
+         RT1   CCE,=2L'0',=32X'00',32
+         RT1   CCE,=2PL3'0',=6X'00000C00000C',6
+         RT1   CCE,=2S(1),=2XL2'1',4
+* TEST LQ HEX QUAD WORD
+         RT1   CCE,=LQ'1',=L'1',16
+* TEST CCW, CCW0, AND CCW1
+         RT1   CCE,CCW,CCWV,8
+         RT1   CCE,CCW0,CCW0V,8
+         RT1   CCE,CCW1,CCW1V,8
          RT1   END
          END         

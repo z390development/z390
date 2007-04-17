@@ -1,4 +1,4 @@
-rem run mvs\test and mvs\demo pgms and get mvs\dif
+rem run mvs\test and mvs\demo pgms and gen mvs\dif
 rem after installing z390, you can download MVS\MVSLIB from www.z390.org
 rem rt1 - assemble, link, and execute with notiming
 rem rt6 - assemble and link with notiming

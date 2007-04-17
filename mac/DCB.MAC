@@ -8,13 +8,14 @@
 .*********************************************************************
 .* MAINTENANCE
 .* 10/12/05 ADD DCBREC AND DCBDSNAM FIELDS, AND DEFAULT DDNAME
-.* 10/17/05 RPI26 - correct missing .DDDEF label
-.* 10/17/05 RPI27 - issue error for any defined key word parms
-.* 11/13/05 RPI88 - add DCBID EBCDIC/ASCII ID for I/O verification               
-.* 11/16/05 RPI95 - add DDNAME and DSNAME conflict check                         
-.* 11/17/05 RPI96 - add RECFM, LRECL, and BLKSIZE consistency check              
-.* 04/10/06 RPI244  support RECFM A/M, allow LRECL=0                     
-.* 05/05/06 RPI281  add DCBE support for EODAD and SYNAD                 
+.* 10/17/05 RPI  26 - correct missing .DDDEF label
+.* 10/17/05 RPI  27 - issue error for any defined key word parms
+.* 11/13/05 RPI  88 - add DCBID EBCDIC/ASCII ID for I/O verification               
+.* 11/16/05 RPI  95 - add DDNAME and DSNAME conflict check                         
+.* 11/17/05 RPI  96 - add RECFM, LRECL, and BLKSIZE consistency check              
+.* 04/10/06 RPI 244  support RECFM A/M, allow LRECL=0                     
+.* 05/05/06 RPI 281  add DCBE support for EODAD and SYNAD                 
+.* 04/11/07 RPI 587  support 32 bit DCBLRECLF and DCBBLKSIF fields        
 .*********************************************************************
 &N       DCB   &DSORG=PS,    PHYSICAL SEQUENTIAL                       X
                &BFALN=,      IGNORE                                    X
@@ -115,10 +116,10 @@
          DC    AL2(DCBMACRF_&MACRF(1)) DCBMACRF
          ORG   &N+DCBSYNAD-IHADCB
          DC    A(&SYNAD) DCBSYNAD DCBSYNAD
-         ORG   &N+DCBBLKSI-IHADCB
-         DC    H'&BLKSIZE' DCBBLKSI DCBBLKSI
-         ORG   &N+DCBLRECL-IHADCB
-         DC    H'&LRECL' DCBLRECL
+         ORG   &N+DCBBLKSIF-IHADCB    RPI 587
+         DC    F'&BLKSIZE' DCBBLKSIF  RPI 587
+         ORG   &N+DCBLRECLF-IHADCB    RPI 587
+         DC    F'&LRECL' DCBLRECLF    RPI 587
          ORG   &N+DCBREC-IHADCB
          DC    A(&RECORD) DCBREC
          ORG   &N+DCBDSNAM-IHADCB

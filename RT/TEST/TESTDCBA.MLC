@@ -7,6 +7,7 @@
 *********************************************************************
 * MAINTENANCE
 * 10/18/05 CHANGE DSN TO EBCDIC UNLESS ASCII MODE
+* 02/07/07 RPI 532 CHANGE PATH CASE FOR LINUX     
 *********************************************************************
 TESTDCBA SUBENTRY
          WTO   'TESTDCBA TEST USE OF DCBREC, DCBDSNAM, NEW OUTPUT'
@@ -28,9 +29,9 @@ SYSUT2   DCB   RECFM=FT,LRECL=80,MACRF=PM,                             X
                RECORD=RECORD,DSNAME=DSN2
 SYSOUT   DCB   RECFM=FT,BLKSIZE=120,MACRF=PM,                          X
                RECORD=RECORD,DSNAME=DSN3
-DSN1     DC    C'RT\TEST\TESTDCBA.TF1',X'00'
-DSN2     DC    C'RT\TEST\TESTDCBA.TF2',X'00'
-DSN3     DC    C'RT\TEST\TESTDCBA.TF3',X'00'
+DSN1     DC    C'rt\test\TESTDCBA.TF1',X'00'
+DSN2     DC    C'rt\test\TESTDCBA.TF2',X'00'
+DSN3     DC    C'rt\test\TESTDCBA.TF3',X'00'
 PTOT     DC    PL2'0'
 MSG      DS    0CL120
          DC    C'REC#='

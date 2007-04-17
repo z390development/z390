@@ -6,6 +6,7 @@
 * Date   - 09/30/05                                                 *
 *********************************************************************
 * 01/09/06 RPI 162 TEST EXTENSIONS LV=NNNK AND LV=NNNM
+* 01/22/07 RPI 542 CORRECT GETMAIN OUTPUT R1=ADDR
 *********************************************************************
          TITLE 'TESTMEM2 TEST GETMAIN EXTENSIONS'
 TESTMEM2 RT1   MAIN
@@ -14,7 +15,7 @@ TESTMEM2 RT1   MAIN
          GETMAIN R,LV=1K     GET 1K
          LTR   R15,R15
          RT1   CCE                 VERIFY R15 = 0
-         LR    R2,R0
+         LR    R2,R1                                RPI 542
          LR    R4,R2
          L     R5,=A(1024)
          SR    R0,R0
@@ -27,7 +28,7 @@ TESTMEM2 RT1   MAIN
          GETMAIN R,LV=1M     GET 1M
          LTR   R15,R15
          RT1   CCE                 VERIFY R15 = 0
-         LR    R2,R0
+         LR    R2,R1                              RPI 542
          LR    R4,R2
          L     R5,=A(1024*1024)
          SR    R0,R0

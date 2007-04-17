@@ -12,6 +12,7 @@
 * 09/21/06 RPI 445 TEST DYNAMIC ARRAY EXPANSION COPY AND EXTEND       
 * 09/21/06 RPI 446 TEST NOT D'SYMBOL                                  
 * 09/21/06 RPI 456 TEST DUPLICATION OPERATOR WITHIN EXPRESSION
+* 02/15/07 RPI 559 TEST &VAR(N'&VAR)                            
 *********************************************************************
 TESTSET1 SUBENTRY
          WTO   'TESTSET1 - TEST SUBSCRIPTED VARIABLES'
@@ -165,6 +166,10 @@ ok3      equ   *
          MNOTE '2X2Y=&DUPXY'
 &DUPXY   SETC  (2)'X'.(2)'Y'
          MNOTE '2X2Y=&DUPXY'
+* TEXT &VAR(N'&VAR)
+&VAR(1)  SETA  1,2,3
+         MNOTE 'VAR(3)=3=&VAR(N'&VAR)'
+         AIF   (&VAR(N'&VAR) NE 3).ERR
          WTO   'TESTSET1 ENDED OK'
          SUBEXIT
          AGO   .EXIT

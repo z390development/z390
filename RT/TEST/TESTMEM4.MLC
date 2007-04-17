@@ -6,6 +6,7 @@
 * Date   - 09/30/05                                                 *
 *********************************************************************
 * 11/12/06 RPI 491 TEST BY MELVYN MALTZ FOR CORRUPTION ON FQE MERGE
+* 01/22/07 RPI 542 CORRECT OUTPUT R1=ADDR FOR GETMAIN                           
 *********************************************************************
 TESTMEM4 SUBENTRY
          WTO   'TESTMEM4 - TEST FIX FOR RPI 491 FQE MERGE ERROR'
@@ -16,19 +17,19 @@ CYCLE1   EQU   *
          TS    BYTE
          LA    R11,50
          GETMAIN R,LV=(R11)       OP2
-         ST    R0,SAVE1           STORE IT
-         LR    R3,R0              SAVE ADDRESS
+         ST    R1,SAVE1           STORE IT              RPI 542
+         LR    R3,R1              SAVE ADDRESS          RPI 542
          MVI   0(R3),X'FF'        MARK 1ST BYTE
 *
          LA    R11,100            GETMAIN LENGTH
          GETMAIN R,LV=(R11)       OP1
-         ST    R0,SAVE2           STORE IT
-         LR    R3,R0              SAVE ADDRESS
+         ST    R1,SAVE2           STORE IT              RPI 542
+         LR    R3,R1              SAVE ADDRESS          RPI 542
          MVI   0(R3),X'FF'        MARK 1ST BYTE
 *
          GETMAIN R,LV=128K        MAXIMUM TRANSLATE TABLE
-         ST    R0,SAVE3           STORE IT
-         LR    R3,R0              SAVE ADDRESS
+         ST    R1,SAVE3           STORE IT              RPI 542
+         LR    R3,R1              SAVE ADDRESS          RPI 542
          MVI   0(R3),X'FF'        MARK 1ST BYTE
 *
          TS    BYTE
@@ -43,22 +44,22 @@ CYCLE2   EQU   *
          TS    BYTE
          LA    R11,50
          GETMAIN R,LV=(R11)       OP2
-         CL    R0,SAVE1           STORE IT
+         CL    R1,SAVE1           STORE IT                RPI 542
          BNE   ERROR
-         LR    R3,R0              SAVE ADDRESS
+         LR    R3,R1              SAVE ADDRESS            RPI 542
          MVI   0(R3),X'FF'        MARK 1ST BYTE
 *
          LA    R11,100            GETMAIN LENGTH
          GETMAIN R,LV=(R11)       OP1
-         CL    R0,SAVE2           STORE IT
+         CL    R1,SAVE2           STORE IT                RPI 542
          BNE   ERROR
-         LR    R3,R0              SAVE ADDRESS
+         LR    R3,R1              SAVE ADDRESS            RPI 542
          MVI   0(R3),X'FF'        MARK 1ST BYTE
 *
          GETMAIN R,LV=128K        MAXIMUM TRANSLATE TABLE
-         CL    R0,SAVE3           STORE IT
+         CL    R1,SAVE3           STORE IT                RPI 542
          BNE   ERROR
-         LR    R3,R0              SAVE ADDRESS
+         LR    R3,R1              SAVE ADDRESS            RPI 542
          MVI   0(R3),X'FF'        MARK 1ST BYTE
 *
          TS    BYTE

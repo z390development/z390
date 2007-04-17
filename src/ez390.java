@@ -1,5 +1,7 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -157,6 +159,7 @@ import javax.swing.Timer;
     * 09/09/06 RPI 440 correct reset of ez390_startup in sz390
     * 01/15/07 RPI 535 issue FFF abend on internal trap with dump
     * 04/07/07 RPI 582 set R1 to addr of addr of PARM
+    * 04/16/07 RPI 595 echo WTOR reply to console if not GUAM or TEST 
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -188,6 +191,10 @@ import javax.swing.Timer;
         long    monitor_cur_int  = 0;
         long    monitor_cur_rate = 0;
         boolean monitor_last_cmd_mode = false;
+        /*
+         * wtor console data
+         */
+        BufferedReader    wtor_reply_buff   = null; // RPI 595
     /*
      * time and date variables
      */
@@ -421,10 +428,20 @@ private void monitor_update(){
 	if (sz390.wtor_reply_pending){
 		if (tz390.opt_guam){
 			sz390.wtor_reply_string = sz390.gz390.get_wtor_reply_string(sz390.wtor_ecb_addr);
-		} else {
+		} else if (tz390.opt_test && sz390.test_cmd_file != null){
 			try {
-				if (sz390.test_cmd_file.ready()){ 
-					sz390.wtor_reply_string = sz390.test_cmd_file.readLine();
+				sz390.wtor_reply_string = sz390.test_cmd_file.readLine();
+			} catch (Exception e){
+				sz390.log_error(93,"wtor reply I/O error - " + e.toString());
+			}
+		} else {  // RPI 595
+			try {
+				if (wtor_reply_buff == null){
+					wtor_reply_buff   = new BufferedReader(new InputStreamReader(System.in));
+				}
+				if (pz390.mem.getInt(sz390.wtor_ecb_addr) == sz390.ecb_waiting
+					|| wtor_reply_buff.ready()){
+					sz390.wtor_reply_string = wtor_reply_buff.readLine();
 				}
 			} catch (Exception e){
 				sz390.log_error(93,"wtor reply I/O error - " + e.toString());

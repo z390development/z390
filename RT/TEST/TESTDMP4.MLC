@@ -7,6 +7,7 @@
 *********************************************************************
 * 11/15/05 RPI  92 TEST NON-ZERO MEMORY ADDRESSES
 * 09/11/06 RPI 363 CHANGE TEST TO RT\TEST DIRECTORY 
+* 02/07/07 RPI 532 CHANGE PATH CASE FOR LINUX       
 *********************************************************************
 TESTDMP1 SUBENTRY
          WTO   'TESTDMP4 TEST SNAP DUMP OPTIONS'
@@ -18,7 +19,7 @@ TESTDMP1 SUBENTRY
          SUBEXIT
 SYSUT1   DCB   RECFM=FT,BLKSIZE=80,MACRF=GM,                           X
                DSNAME=DSN1
-DSN1     DC    C'RT\TEST\TESTDMP4.TF1',X'00'
+DSN1     DC    C'rt\test\TESTDMP4.TF1',X'00'
 DATA1    DC    C'MEMORY DUMP AREA'
 DATA2    EQU   *
          DCBD

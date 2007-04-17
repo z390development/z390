@@ -1,7 +1,6 @@
          MACRO                                                             
          ELSEIF                                                            
-         GBLA  &ZSTR_ELSE(10),&ZSTR_SEQ(10),&ZSTR_LEVEL,&ZSTR_LAB                              
-         GBLA  &ZSTR_ELSEIF(10)                                                 
+         COPY  ZSTRGBL
          LCLA  &N,&M,&S,&ZSTR_LAB1,&L,&I                                        
          LCLC  &OP,&OPR                                                    
          LCLB  &TESTSW                                                     
@@ -11,8 +10,9 @@
 .*             REMARKS.  CONTROL STRUCTURE FOR CONDITIONAL EXECUTION.      
 .********************************************************************
 .* 05/12/06 Z390 RPI 316 UPDATE FOR COMPAT.
+.* 04/11/07 Z390 RPI 589 USE ZSTRGBL AND EXPAND LEVELS TO 100
 .********************************************************************
-         AIF   (&ZSTR_LEVEL EQ 10).ERR1                                         
+         AIF   (&ZSTR_LEVEL EQ &ZSTR_MAX_LEVEL).ERR1                                         
          ELSE                                                              
 &ZSTR_LEVEL   SETA  &ZSTR_LEVEL+1                                                    
 &ZSTR_ELSEIF(&ZSTR_LEVEL) SETA 1                                                     

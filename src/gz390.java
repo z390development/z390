@@ -111,7 +111,8 @@ public  class  gz390
 	 * 08/14/06 RPI 414 recognize ERR(nnn) limit override
 	 * 09/21/06 RPI 460 wait for ez390 to close after PF3 abort
 	 * 12/01/06 RPI 509 use Monospace font for Windows and Linux
-	 * 04/02/07 RPI 	572 strip high bits from EBCDIC attribute bytes    
+	 * 04/02/07 RPI 	572 strip high bits from EBCDIC attribute bytes 
+	 * 04/17/07 RPI 592 if tget len = 1 just return AID   
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -2421,6 +2422,9 @@ private void tn_get_screen_input(){
 	 *      screen with no input fields 
 	 */
 	tget_byte[0] = (byte) tn_aid;
+	if (tget_len == 1){
+		return;  // RPI 592
+	}
 	tget_byte[1] = (byte)sba_to_ebc[scn_addr >> 6];
 	tget_byte[2] = (byte)sba_to_ebc[scn_addr & 0x3f];
 	if (tn_aid != tn_enter_code){

@@ -5,13 +5,15 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 01/22/07 RPI 542 CORRECT GETMAIN OUTPUT R1=ADDR
+*********************************************************************
          MACRO
          TESTGM &TYPE,&LV,&LOC,&HL,&REG
          GETMAIN &TYPE,LV=&LV,LOC=&LOC
-         CL    R0,=A(LINE)
+         CL    R1,=A(LINE)                         RPI 542
          RT1   CC&HL
-         LR    &REG,R0
-         LR    R14,R0
+         LR    &REG,R1                             RPI 542
+         LR    R14,R1                              RPI 542
          LA    R15,GMLEN
          L     R1,=X'EE000000'
          MVCL  R14,R0

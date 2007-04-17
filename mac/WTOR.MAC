@@ -91,7 +91,7 @@ WTOR#&SYSNDX._EOT EQU *
          AIF   (&ECB(1) EQ '15' OR &ECB(1) EQ 'R15').SVC  RPI163
          LR    15,&ECB(1)
 .SVC     ANOP
-         SVC   160
+         SVC   160 WTOR R1=MSG,R0=REPLY,R14=LEN,R15=ECB
          MEXIT
 .ERR1    MNOTE 12,'WTOR TEXT= NOT SUPPORTED'
          MEXIT

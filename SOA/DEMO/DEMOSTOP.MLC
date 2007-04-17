@@ -6,6 +6,7 @@
 * Date   - 01/06/07                                                 *
 *********************************************************************
 * 01/06/07 RPI 523 CODE DEMOSTOP UTILITY TO CLOSE PORT SERVER
+* 04/17/07 RPI 582 CHANGE LR TO L FOR PARM(..)
 *********************************************************************
 * SEND STOP MSG TO DEMOSMGR ON PORT SPECIFIED IN PARM OPTION
 *********************************************************************
@@ -16,7 +17,7 @@
 *********************************************************************
          COPY  ASMMSP
 DEMOSTOP SUBENTRY
-         LR    R2,R1
+         L     R2,0(R1)  RPI 582
          LH    R1,0(R2)
          IF    (CH,R1,EQ,=H'0')
                WTO 'DEMOSTOP MISSING PORT NUMBER IN PARM'

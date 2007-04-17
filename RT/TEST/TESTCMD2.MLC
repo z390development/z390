@@ -5,36 +5,41 @@
 * Author - Don Higgins                                              *
 * Date   - 09/11/06                                                 *
 *********************************************************************
-* 09/11/06 RP 363 CHANGE FROM TEST TO RT\TEST DIRECTORY              
+* 09/11/06 RPI 363 CHANGE FROM TEST TO RT\TEST DIRECTORY              
+* 02/02/07 RPI 532 REMOVE WINDOWS PROMPT AND FIX PATH CASE FOR LINUX  
 *********************************************************************
          TITLE 'TESTCMD2 TEST USE OF SVC 34 COMMAND PROCESSOR'
 TESTCMD2 SUBENTRY
+         COPY  ASMMSP
          WTO   'TESTCMD2 TEST SVC 34 CMDPROC MULT TASK SUPPORT'
          CMDPROC START,ID=0
-         CMDPROC WRITE,=C'"PROMPT $G"',ID=0
-         CMDPROC WRITE,=C'"RT\TEST\TESTCMD2.BAT"',ID=0
+         CMDPROC WRITE,=C'"rt\test\TESTCMDA.BAT"',ID=0
          CMDPROC START,ID=1
-         CMDPROC WRITE,=C'"PROMPT $G"',ID=1
-         CMDPROC WRITE,=C'"RT\TEST\TESTCMD2.BAT"',ID=1
+         CMDPROC WRITE,=C'"rt\test\TESTCMDB.BAT"',ID=1
+         LA    R4,50
 CMDLOOP  EQU   *
-         LA    4,10
 CMDREAD1 EQU   *
-         AHI   4,-1
+         AHI   R4,-1
          BZ    ERROR1
          CMDPROC READ,MSG,ID=0
-         CHI   15,4
+         CHI   R15,4
          BE    CMDREAD1 
-         CHI   15,8
+         CHI   R15,8
          BE    ERROR1
          MVI   WTOCMD_ID,C'0'
          WTO   MF=(E,WTOCMD)
-         CLC   MSG(8),=C'>REM END'
-         BNE   SKIPEND1
-         CLI   EOF2,C'T'
-         BE    CMDEND
-         MVI   EOF1,C'T'
-SKIPEND1 EQU   *
-         LA    4,10
+         LA    R1,MSG
+         LA    R2,MSG+70
+         DO    WHILE=(CR,R1,LT,R2)
+               IF (CLC,0(7,R1),EQ,=C'REM END')
+                  IF (CLI,EOF2,EQ,C'T')
+                     B  CMDEND
+                  ELSE
+                     MVI EOF1,C'T'
+                  ENDIF
+               ENDIF
+               AHI  R1,1
+         ENDDO
 CMDREAD2 EQU   *
          AHI   4,-1
          BZ    ERROR2                         
@@ -45,12 +50,18 @@ CMDREAD2 EQU   *
          BE    ERROR2
          MVI   WTOCMD_ID,C'1'
          WTO   MF=(E,WTOCMD)
-         CLC   MSG(8),=C'>REM END'
-         BNE   SKIPEND2
-         CLI   EOF1,C'T'
-         BE    CMDEND
-         MVI   EOF2,C'T'
-SKIPEND2 EQU   *
+         LA    R1,MSG
+         LA    R2,MSG+70
+         DO    WHILE=(CR,R1,LT,R2)
+               IF (CLC,0(7,R1),EQ,=C'REM END')
+                  IF (CLI,EOF1,EQ,C'T')
+                     B  CMDEND
+                  ELSE
+                     MVI EOF2,C'T'
+                  ENDIF
+               ENDIF
+               AHI  R1,1
+         ENDDO
          B     CMDLOOP
 CMDEND   EQU   *
          CMDPROC STOP,ID=0
@@ -68,4 +79,5 @@ MSG      DC    CL80' '
 WTOEND   EQU   *
 EOF1     DC    C'F'
 EOF2     DC    C'F'
+         EQUREGS
          END

@@ -174,7 +174,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          AIF   (O'BC        NE 'O').OTERR  MACHIVE CODE
          AIF   (O'BRC       NE 'O').OTERR  MACHIVE CODE
          AIF   (O'SAVE      NE 'S').OTERR  LIBRARY MACRO FOUND
-         AIF   (O'SRNMT     NE 'U').OTERR  UNDEFINED
+         AIF   (O'XXXXX     NE 'U').OTERR  UNDEFINED RPI 406 WAS SRNMT
          MNOTE 'TESTING STRING DUPLICATION IN EXPRESSION'
          AIF   ('A'.2'B' NE 'ABB').DUPERR
 &A       SETC  'A'

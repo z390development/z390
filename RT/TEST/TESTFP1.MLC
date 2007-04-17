@@ -24,6 +24,7 @@
 * 07/03/06 RPI 326 ADD TESTS FOR TCEB, TCDB, and TCXB            
 * 07/04/06 RPI 333 ADD TESTS SRNM and FIEBR, FIDBR, and FIXBR    
 * 08/02/06 RPI 367 ADJ LB MIN VALUE REQUIRED TO TRAP FOR KXBR    
+* 12/16/06 RPI 518 CORRECT INVALID PAIR FETCH FOR FIXBR          
 *********************************************************************
          PRINT DATA
          MACRO
@@ -1615,28 +1616,28 @@ DDBR1    ESPIE RESET
          CEB   R0,=EB'123'
          RT1   CCE
 * B347 FIXBR
-         LX    R2,=LB'1.1'
-         FIXBR R1,0,R2
+         LX    R0,=LB'1.1' RPI 518 WAS R2
+         FIXBR R1,0,R0
          LX    R4,=LB'1.0'
          CXBR  R1,R4
          RT1   CCE
-         LX    R2,=LB'1.5'
-         FIXBR R1,0,R2
+         LX    R0,=LB'1.5' RPI 518 WAS R2
+         FIXBR R1,0,R0
          LX    R4,=LB'2.0'
          CXBR  R1,R4
          RT1   CCE
-         LX    R2,=LB'2.5'
-         FIXBR R1,0,R2
+         LX    R0,=LB'2.5' RPI 518 WAS R2
+         FIXBR R1,0,R0
          LX    R4,=LB'2.0'
          CXBR  R1,R4       
          RT1   CCE
-         LX    R2,=LB'-1.5'
-         FIXBR R1,0,R2
+         LX    R0,=LB'-1.5' RPI 518 WAS R2
+         FIXBR R1,0,R0
          LX    R4,=LB'-2.0'
          CXBR  R1,R4        
          RT1   CCE
-         LX    R2,=LB'-2.5'
-         FIXBR R1,0,R2
+         LX    R0,=LB'-2.5' RPI 518 WAS R2
+         FIXBR R1,0,R0
          LX    R4,=LB'-2.0'
          CXBR  R1,R4         
          RT1   CCE

@@ -5,17 +5,18 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-* 11/16/05 RP I89 ADD TEST OF LINK AND LOAD DSNAME AND DDNAME OPTIONS
-* 09/11/06 RP 363 CHANGE FROM TEST TO RT\TEST DIRECTORY              
+* 11/16/05 RPI I89 ADD TEST OF LINK AND LOAD DSNAME AND DDNAME OPTIONS
+* 09/11/06 RPI 363 CHANGE FROM TEST TO RT\TEST DIRECTORY              
+* 02/07/07 RPI 532 CORRECT PATH CASE FOR LINUX                        
 *********************************************************************
          TITLE 'TESTLOD1 TEST LOAD DDNAME AND DSNAME OPTIONS'
 TESTLOD1 RT1  MAIN
          EQUREGS
-DSNFSUB1 DC   C'RT\TEST\TESTSUB1.390',X'00'    NULL TERM DSNAME FILE
-DSNDSUB1 DC   C'RT\TEST',X'00'                 NULL TERM DSNAME DIR
-DSNFDEMO DC   C'"DEMO\DEMO.390"'            ".." FILE
-DSNDDEMO DC   C'"DEMO"'                     ".." DIR
-DSNMDEMO DC   C'"RT\TEST;DEMO"'                     ".." MULT DIR LIST
+DSNFSUB1 DC   C'rt\test\TESTSUB1.390',X'00'    NULL TERM DSNAME FILE
+DSNDSUB1 DC   C'rt\test',X'00'                 NULL TERM DSNAME DIR
+DSNFDEMO DC   C'"demo\DEMO.390"'            ".." FILE
+DSNDDEMO DC   C'"demo"'                     ".." DIR
+DSNMDEMO DC   C'"rt\test;demo"'                     ".." MULT DIR LIST
 PGMNAME  DC   CL8'TESTSUB1'
 ABORT    WTO  'TESTLOD1 ABORTING DUE TO ERROR'
          ABEND 111,DUMP

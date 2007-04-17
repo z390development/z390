@@ -5,6 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 04/14/07 RPI 590 CORRECT BDDD OFFSETS TO BOTH BE LESS THAN X'100'
+*********************************************************************
 TESTUSE2 SUBENTRY
          WTO   'TESTUSE2 TEST PUSH/POP USING'
          CLC   =S(TESTUSE2+8),=X'D000'
@@ -13,11 +15,11 @@ TESTUSE2 SUBENTRY
          DROP  ,        DROP ALL
          BALR  12,0
          USING *,12     NEW USING 12
-LA12X    LA    11,X
+LA12X    LA    11,LA12X
          CLI   LA12X+2,X'C0'
          BNE   ERR
          POP   USING   RESTORE USING 13
-LA12X2   LA    11,X
+LA12X2   LA    11,LA12X
          CLI   LA12X2+2,X'D0'
          BNE   ERR
          WTO   'TESTUSE2 ENDED OK'

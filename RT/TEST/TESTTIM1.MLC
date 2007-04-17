@@ -5,7 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-* 11/02/05 RPI68 ADD CLOCK=STCK, CLOCK=STCKE, CLOCK=JAVA EXTENSIONS
+* 11/02/05 RPI  68 ADD CLOCK=STCK, CLOCK=STCKE, CLOCK=JAVA EXTENSIONS
+* 02/07/07 RPI 532 SHORTEN STCKF CLOCK COMPARE TO 16 BITS           
 *********************************************************************
          TITLE 'TESTTIM1 REGRSSION TEST TIME MACRO FUNCTIONS'
 *
@@ -115,11 +116,11 @@ TOD_STCKE  DC  XL16'00'                   TOD  BIT 59   MIC
 * CLOCK=STCK   DOUBLE WORD WITH BIT 51 = MICROSECONDS FROM 1900
          TIME  CLOCK,WORK16,CLOCKTYPE=STCK
          STCKF CLOCK
-         RT1   CCE,WORK16(8),CLOCK
+         RT1   CCE,WORK16(2),CLOCK
 * CLOCK=STCKE  2 DOUBLE WORDS WITH BIT 59 = MICROSECONDS FROM 1900
          TIME  CLOCK,WORK16,CLOCKTYPE=STCKE
          STCKE CLOCK
-         RT1   CCE,WORK16,CLOCK
+         RT1   CCE,WORK16(2),CLOCK
 * CLOCK=JAVA   DOUBLE WORD WITH BIT 63 = MICROSECONDS FROM 1970
          TIME  CLOCK,WORK16,CLOCKTYPE=JAVA
          LG    R0,WORK16
@@ -128,7 +129,7 @@ TOD_STCKE  DC  XL16'00'                   TOD  BIT 59   MIC
          SLLG  R0,R0,(63-51)
          STG   R0,WORK16
          STCKF CLOCK
-         RT1   CCE,WORK16(8),CLOCK
+         RT1   CCE,WORK16(2),CLOCK
          WTO   'TESTTIM1 ENDED OK'
          RT1   END
          END

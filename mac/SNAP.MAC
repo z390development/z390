@@ -6,12 +6,13 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-.* 11/22/05 RPI110 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
-.* 01/06/06 RPI154 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
-.* 01/08/06 RPI154 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
-.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
-.* 04/11/06 RPI244 UPDATE KW PARMS, SUPPORT PDATA=PSW
-.* 04/25/06 RPI297 USE L VS LA FOR STOARGE PARMS        
+.* 11/22/05 RPI 110 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
+.* 01/06/06 RPI 154 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
+.* 01/08/06 RPI 154 CORRECT FLAG SETTING FOR STORAGE, ADD REG CHK
+.* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
+.* 04/11/06 RPI 244 UPDATE KW PARMS, SUPPORT PDATA=PSW
+.* 04/25/06 RPI 297 USE L VS LA FOR STOARGE PARMS        
+.* 04/14/07 RPI 583 CHANGE PDATA=ALL TO ALSO DUMP ALL STORAGE
 .*********************************************************************
 .* SNAP WILL GENERATE DUMP ON LOG FILE BASED ON THESE PARMS:
 .*  1. PDATA= (DEFAULT IS ALL)
@@ -31,6 +32,7 @@
 .*   R0  BIT 2 = FPR REGS
 .*   R0  BIT 3 = CDE LOADED 390 PROGRAMS AND FILES
 .*   R0  BIT 4 = DCBS WITH DDNAME AND DSNAME
+.*   R0  BIT 5 = DUMP ALL MEMORY  RPI 583
 .*********************************************************************
 &N       SNAP  &DCB=,        IGNORED                                   X
                &ID=0,        SHOW ID ON DUMP                           X
@@ -68,8 +70,8 @@
          AIF   (&PDATA(&NP) EQ 'PSW').PSW 
          MNOTE 8,'SNAP UNSUPPORTED PARM - &PDATA(&NP)'
          AGO   .NPLOOP
-.ALL     ANOP
-&FLAGS   SETA  &FLAGS+X'7FFF'
+.ALL     ANOP                       8     4   2   1   8   4
+&FLAGS   SETA  &FLAGS+X'7C00' NO STORAGE,GPR,FPR,CDE,DCB,ALL  RPI 583
          AGO   .CHKSTOR
 .REGS    ANOP
 &FLAGS   SETA  &FLAGS+X'6000'

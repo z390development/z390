@@ -235,7 +235,10 @@ public  class  az390 implements Runnable {
     * 03/17/08 RPI 578 Correct mult. DC S(abs d(b) terms)  
     * 04/01/07 RPI 567 add CCW, CCW0, CCW1 support   
     * 04/04/07 RPI 581 print COPY  and inline source in PRN unless PRINT OFF 
-    * 04/07/08 RPI 585 gen ADDR2 target address for relative BR? and J?? instr.
+    * 04/07/07 RPI 585 gen ADDR2 target address for relative BR? and J?? instr.
+    * 04/11/07 RPI 588 fix PRINT to avoid trap on bad parm
+    *          RPI 588 issue error for d(,b) if no length or index
+    * 04/17/07 RPI 597 flag missing EQU label         
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -5349,6 +5352,7 @@ private String get_exp_abs_bddd(){
 		exp_index++;	
 		if (exp_next_char(',')){
 			exp_index++; // ignore , in (,b)
+			log_error(183,"no index or length comma allowed"); // RPI 588
 		}
 		if (calc_abs_exp()){
 			b = exp_val;  
@@ -6751,6 +6755,8 @@ public void process_equ(){ // RPI 415
 		} else {
 			log_error(53,"invalid equ expression");
 		}
+	} else {
+		log_error(184,"missing EQU label");  // RPI 597
 	}
 }
 private void process_org(){
@@ -6853,6 +6859,7 @@ private void process_pop(){
 private void process_print(){
 	/*
 	 * process print options
+	 * (unsupported options ignored)
 	 */
 	init_get_next_parm(bal_parms);
 	String parm = get_next_parm();
@@ -6867,7 +6874,7 @@ private void process_print(){
 			print_gen[print_level] = true;
 		} else if (parm.equals("NOGEN")){
 			print_gen[print_level] = false;
-		} else if (parm.substring(0,4).equals("DATA")){
+		} else if (parm.equals("DATA")){ // RPI 588
 			print_data[print_level] = true;
 		} else if (parm.equals("NODATA")){
 			print_data[print_level] = false;

@@ -1,0 +1,59 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 11/18/06                                                 *
+*********************************************************************
+* 11/18/06 RPI 417 TEST BIT LENGTH FIELDS                                
+*********************************************************************
+         PRINT DATA
+TESTDC1  RT1   MAIN
+DCZ      DC    XL256'00'
+DATA     LOCTR
+CODE     LOCTR
+         RT1   START
+         MACRO
+         TEST  &D=,&V=,&L=
+         GBLA  &N
+&N       SETA  &N+1
+DATA     LOCTR
+&TD      SETC  '&D'(2,K'&D-2)
+&TV      SETC  '&V'(2,K'&V-2)
+DCT&N    DC    &TD
+DCV&N    DC    &TV
+DST&N    DS    &TD
+CODE     LOCTR
+         RT1   CCE,DCT&N,DCV&N
+         RT1   CCE,DST&N,DCZ
+         RT1   CCE,=AL1(L'DCT&N),=AL1(&L)
+         MEND
+         TEST  L=1,D=(AL.4(1)),V=(X'10')
+         TEST  L=1,D=(AL.4(1,2)),V=(X'12')
+         TEST  L=1,D=(AL.4(1,2,3)),V=(X'1230')
+         TEST  L=2,D=(AL.12(x'123')),V=(X'1230')
+         TEST  L=1,D=(BL.4'1'),V=(X'10')
+         TEST  L=1,D=(BL.4'1,10'),V=(X'12')
+         TEST  L=1,D=(BL.4'1,10,11'),V=(X'1230')
+         TEST  L=2,D=(BL.12'000100100011'),V=(X'1230')
+         TEST  L=1,D=(AL.4(1,2,3),BL.4'100,101,110'),V=(X'123456')
+         TEST  L=2,D=(CL.16'AB'),V=(C'AB')
+         TEST  L=2,D=(CL.16'A'),V=(X'C140')
+         TEST  L=2,D=(CAL.16'A'),V=(X'4120')
+         TEST  L=2,D=(CL.16'AB'),V=(C'AB')
+         TEST  L=2,D=(CL.12'AB',CL.4'1'),V=(X'C1CF')
+         TEST  L=2,D=(DBL.16'1'),V=(X'3FF0')
+         TEST  L=2,D=(EBL.16'1'),V=(X'3F80')
+         TEST  L=2,D=(LBL.16'1'),V=(X'3FFF')
+         TEST  L=1,D=(FL.4'1,2,3,4'),V=(X'1234')
+         TEST  L=1,D=(FL.4'-1,-2,-3,-4'),V=(X'FEDC')
+         TEST  L=1,D=(HL.4'1,2,3,4'),V=(X'1234')
+         TEST  L=1,D=(HL.4'-1,-2,-3,-4'),V=(X'FEDC')
+         TEST  L=1,D=(PL.8'1,2'),V=(X'1C2C')
+         TEST  L=1,D=(PL.8'-1,-2'),V=(X'1D2D')
+         TEST  L=1,D=(XL.8'1,2'),V=(X'0102')
+         TEST  L=1,D=(XL.8'AB,CD'),V=(X'ABCD')
+         TEST  L=1,D=(XL.4'A,B,C,D'),V=(X'ABCD')
+         TEST  L=2,D=(XL.12'ABC,DEF'),V=(X'ABCDEF')
+         RT1   END
+         END         

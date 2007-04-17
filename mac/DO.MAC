@@ -1,7 +1,6 @@
          MACRO                                                             
          DO    &END,&WHILE=,&UNTIL=                                                            
-         GBLA  &ZSTR_DO(10),&ZSTR_DOSEQ(10),&ZSTR_DOLVL,&ZSTR_DOLAB                            
-         GBLA  &ZSTR_ELSE(10),&ZSTR_SEQ(10),&ZSTR_LEVEL,&ZSTR_LAB                              
+         COPY  ZSTRGBL
          LCLA  &N,&M,&S,&ZSTR_LAB1,&L,&I                                        
          LCLA  &UNTIL_LAB                                                      
          LCLC  &OP,&OPR                                                    
@@ -14,8 +13,9 @@
 .********************************************************************
 .* 05/14/06 DSH Z390 RPI 316 UPDATED FOR COMPAT.
 .* 07/21/06 DSH Z390 RPI 379 USE IF TO SUPPORT COMPOUND WHILE/UNTIL
+.* 04/11/07 DSH Z390 RPI 589 USE ZSTRGBL AND EXPAND LEVELS TO 100   
 .********************************************************************
-         AIF   (&ZSTR_DOLVL EQ 10).ERR1                                         
+         AIF   (&ZSTR_DOLVL EQ &ZSTR_MAX_LEVEL).ERR1                                         
          AIF   (&WHILE NE '').WHILE
          AIF   (&UNTIL NE '').UNTIL
          AIF   (&END EQ 'END').END

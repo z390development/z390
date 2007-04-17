@@ -5,7 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 10/02/06                                                 *
 *********************************************************************
-* 01/29/06 RPI467 test pseudo code for set and aif          
+* 09/29/06 RPI 467 test pseudo code for set and aif          
+* 12/22/06 RPI 521 test aif undefined label ok if not taken       
 *********************************************************************
 TESTPC1  SUBENTRY
          WTO   'TESTPC1 - TEST PSEUOD CODE FOR SET AND AIF'
@@ -84,6 +85,9 @@ TESTPC1  SUBENTRY
 &A       SETC  '&A'.'  &B(&I).C'
 * TEST OPT ADD 
 &X       SETA  X'10'+X'20'
+* TEST PSEUDO CODE AIF FALSE WITH BAD LABEL OK
+         AIF  (0).NF4
+* RETURN TO START OF LOOP
          AGO   .LOOP
 .FALSE   ANOP
          MNOTE 8,'FALSE ERROR'

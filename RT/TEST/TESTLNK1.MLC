@@ -7,15 +7,16 @@
 *********************************************************************
 * 11/13/05 RP I89 ADD TEST OF LINK AND LOAD DSNAME AND DDNAME OPTIONS
 * 09/11/06 RP 362 CHANGE FROM TEST TO RT\TEST DIRECTTORY              
+* 02/07/07 RP 532 CORRECT PATH CASE FOR LINUX                         
 *********************************************************************
          TITLE 'TESTLNK1 TEST LINK, LOAD, AND DELETE'
 TESTLNK1 RT1  MAIN
          EQUREGS
-DSNFSUB1 DC   C'RT\TEST\TESTSUB1.390',X'00'    NULL TERM DSNAME FILE
-DSNDSUB1 DC   C'RT\TEST',X'00'                 NULL TERM DSNAME DIR
-DSNFDEMO DC   C'"DEMO\DEMO.390"'            ".." FILE
-DSNDDEMO DC   C'"DEMO"'                     ".." DIR
-DSNMDEMO DC   C'"RT\TEST;DEMO"'                     ".." MULT DIR LIST
+DSNFSUB1 DC   C'rt\test\TESTSUB1.390',X'00'    NULL TERM DSNAME FILE
+DSNDSUB1 DC   C'rt\test',X'00'                 NULL TERM DSNAME DIR
+DSNFDEMO DC   C'"demo\DEMO.390"'            ".." FILE
+DSNDDEMO DC   C'"demo"'                     ".." DIR
+DSNMDEMO DC   C'"rt\test;demo"'                     ".." MULT DIR LIST
          RT1  START
          LINK EP=TESTSUB1 EXEC IN AMODE31 PER LZ390 AMODE31 DEFAULT
          LOAD EP=TESTSUB1  USE=1

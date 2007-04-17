@@ -1,7 +1,6 @@
          MACRO                                                             
          ELSE  &OPT                                                        
-         GBLA  &ZSTR_ELSE(10),&ZSTR_SEQ(10),&ZSTR_LEVEL,&ZSTR_LAB                              
-         GBLA  &ZSTR_ELSEIF(10)                                                 
+         COPY  ZSTRGBL
 .********************************************************************
 .*             AUTHOR.   DON HIGGINS.                                      
 .*             DATE.     03/27/74.                                         
@@ -10,7 +9,8 @@
 .*                       AND NO BRANCH INSTRUCTIONS. SEE IF MACRO.         
 .********************************************************************
 .* 05/23/76 DSH - SUPPORT ELSEIF                          
-.* 05/15/06 DSH - Z390 RPI 315 UPDATE FOR COMPAT.         
+.* 05/15/06 DSH - Z390 RPI 315 UPDATE FOR COMPAT.
+.* 04/11/07 DSH - RPI 589 USE ZSTRGBL COPY AND EXPAND LEVELS TO 100         
 .********************************************************************
          AIF   (&ZSTR_LEVEL EQ 0).ERR0                                          
          AIF   (T'&OPT EQ 'O').BEGIN                                       

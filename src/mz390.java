@@ -269,6 +269,7 @@ public  class  mz390 {
      * 02/17/07 RPI 549 show '=' for generated bal copybook lines and show line_id=(FID/FLN)GSN
      * 03/09/07 RPI 565 issue error 208-210 for unsubscripted &SYSLIST
      * 04/05/07 RPI 581 list mlc inline macro code if PRINT ON
+     * 04/16/07 RPI 593 correct &SYSNDX to GE 4 digits with leading zeros
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1216,12 +1217,10 @@ public  class  mz390 {
 			tot_mac_ins++;
 			if  (mac_line_index >= mac_name_line_end[mac_call_name_index[mac_call_level]]){
 				if  (tz390.opt_listcall){
-					if (mac_call_level > 0){
-						String sysndx = "    " + get_set_string("&SYSNDX",1);
-						sysndx = sysndx.substring(sysndx.length() - 4);				 	     
+					if (mac_call_level > 0){			 	     
 						String sysnest = "  " + mac_call_level;
 						sysnest = sysnest.substring(sysnest.length() - 2);
-						put_bal_line("*MEXIT #=" + sysndx + " LV=" + sysnest + " " + mac_name[mac_call_name_index[mac_call_level]]);
+						put_bal_line("*MEXIT #=" + get_set_string("&SYSNDX",1) + " LV=" + sysnest + " " + mac_name[mac_call_name_index[mac_call_level]]);
 					}
 				}
 				mac_call_level--;
@@ -6467,7 +6466,9 @@ public  class  mz390 {
 				}
 				bal_xref_index = save_mac_line_index; 
 				mac_call_level--;
-				put_bal_line("*MCALL #=" + sysndx + " LV=" +  sysnest + " " + call_line);
+				put_bal_line("*MCALL #=" + sysndx 
+						        + " LV=" +  sysnest 
+						        + " " + call_line);
 			    mac_call_level++;
 			}
 			/*
@@ -6743,10 +6744,11 @@ public  class  mz390 {
 		/*
 		 * init local system macro variables
 		 */
-		add_lcl_sys("&SYSNDX",var_seta_type);
+		add_lcl_sys("&SYSNDX",var_setc_type); // RPI 593 was SETA
 		lcl_sysndx++;
-		lcl_seta[tot_lcl_seta-1] = lcl_sysndx;
-		mac_call_sysndx[mac_call_level] = lcl_sysndx;
+		String sysndx = "0000" + lcl_sysndx;
+		lcl_setc[tot_lcl_setc-1] = sysndx.substring(sysndx.length()-4); // RPI 593
+		mac_call_sysndx[mac_call_level] = lcl_sysndx; // RPI 593
 		add_lcl_sys("&SYSNEST",var_seta_type);
 		lcl_seta[tot_lcl_seta-1] = mac_call_level;
 		add_lcl_sys("&SYSECT",var_setc_type);
