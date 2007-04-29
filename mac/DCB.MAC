@@ -15,7 +15,8 @@
 .* 11/17/05 RPI  96 - add RECFM, LRECL, and BLKSIZE consistency check              
 .* 04/10/06 RPI 244  support RECFM A/M, allow LRECL=0                     
 .* 05/05/06 RPI 281  add DCBE support for EODAD and SYNAD                 
-.* 04/11/07 RPI 587  support 32 bit DCBLRECLF and DCBBLKSIF fields        
+.* 04/11/07 RPI 587  support 32 bit DCBLRECLF and DCBBLKSIF fields  
+.* 04/23/07 RPI 599  add call to DCBD to define referened fields       
 .*********************************************************************
 &N       DCB   &DSORG=PS,    PHYSICAL SEQUENTIAL                       X
                &BFALN=,      IGNORE                                    X
@@ -127,13 +128,15 @@
          ORG   &N+DCBDCBE-IHADCB   RPI 281
          DC    A(&DCBE) DCBDCBE
          ORG   &N+DCBLEN
+.EXIT    ANOP
+         DCBD
          MEXIT
 .ERR_LRECL MNOTE 12,'DCB INVALID LRECL/BLKSIZE'
-         MEXIT
+         AGO   .EXIT
 .ERR2    MNOTE 12,'DCB DEVD NOT SUPPORTED'
-         MEXIT
+         AGO   .EXIT
 .ERR3    MNOTE 12,'DCB EXLST NOT SUPPORTED'
-         MEXIT
+         AGO   .EXIT
 .ERR4    MNOTE 12,'DCB KEYLEN NOT SUPPORTED'
-         MEXIT
+         AGO   .EXIT
          MEND

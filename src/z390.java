@@ -120,6 +120,7 @@ public  class  z390 extends JApplet
      * 12/01/06 RPI 510 replace NOTEPAD command with EDIT command
      * 01/20/07 RPI 541 correct Z390 GUI file selection dialog cancel action
      * 01/30/07 RPI 532 correct Doc path and cmd.pl path and separator
+     * 04/26/07 RPI 603 correct up/down scrolling
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -264,10 +265,11 @@ public  class  z390 extends JApplet
         JTextField  z390_cmd_line = null;
         JLabel status_line_label = null;
         JTextField  status_line = null;
-        int cur_cmd = 0;
-        int last_cmd = 0;
+        int cur_cmd = 0;  // index of most recent comment entered
+        int end_cmd = 0;  // index of highest cmd entered
         int max_cmd  = 100;
-        int view_cmd = -1;
+        int view_cmd = 0; // index of current cmd in view
+        boolean view_restore = false; // RPI 603
         String[] cmd_history = new String[100];
     /*
      *  Menu items requiring state changes
@@ -1188,42 +1190,39 @@ public  class  z390 extends JApplet
 			   return;  // RPI 506
 		   }
 		   last_cmd_line = cmd_line;
-		   view_cmd = -1;
 		   cur_cmd++;
+		   if (cur_cmd < max_cmd && cur_cmd > end_cmd){
+			   end_cmd = cur_cmd;
+		   }
            if (cur_cmd >= max_cmd){
-              cur_cmd = 1;
-           } else {
-              last_cmd = cur_cmd;
+              cur_cmd = 0;
            }
            cmd_history[cur_cmd] = cmd_line;
+           view_restore = true; // RPI 603 force cmd restore on next up/down
+           view_cmd = cur_cmd;
 	   }
 	   private void get_prev_cmd(){
 		   /*
 		    * restore prev cmd to z390_cmd_line
 		    */
-   	   	   if  (view_cmd < 0){
-   	   	   	   view_cmd = cur_cmd;
-   	   	   } else {
-   	   		   if (view_cmd > 0){
-   	   			   view_cmd--;
-   	   	       } else {
-   	   	           view_cmd = last_cmd;
-   	   	       }
+		   if (view_restore){
+			   view_restore = false;
+		   } else {
+			   view_cmd--; // RPI 603
+   	   	   	   if  (view_cmd < 0){
+   	   	   		   view_cmd = end_cmd;
+   	   	   	   }
    	   	   }
    	   	   z390_cmd_line.setText(cmd_history[view_cmd]);
 	   }
 	   private void get_next_cmd(){
 		   /*
-		    * restore next cmd to z390_cmd_line
+		    * display next cmd
 		    */
-  	   	   if  (view_cmd < 0){
-  	   	   	   view_cmd = cur_cmd;
-  	   	   } else {
-  	   		   if (view_cmd < last_cmd) {
-  	   			   view_cmd++;
-  	   	       } else {
-  	  	           view_cmd = 0;
-  	   	       }
+		   view_restore = false;
+		   view_cmd++;  // RPI 603
+  	   	   if  (view_cmd > end_cmd){
+  	   	   	   view_cmd = 0;
   	   	   }
  	   	   z390_cmd_line.setText(cmd_history[view_cmd]);
 	   }
@@ -1764,6 +1763,7 @@ public  class  z390 extends JApplet
 					log_error(72,"startup file I/O error - " + e.toString());
 				}
 			}
+	        cmd_history[0] = ""; // RPI 603
             main_frame.setVisible(true);
             z390_cmd_line.requestFocus();
    }

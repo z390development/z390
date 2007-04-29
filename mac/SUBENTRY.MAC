@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 04/12/07 RPI 590 COPIED FROM FPC SHARE SPLA FILE 178 CONTRIBUTION
 .*          TO SUPPORT MULTIPLE BASES AND RENT OPTIONS
+.* 04/26/07 RPI 601 CHANGE BASE OFFSETS FROM 4095 TO STD 4096        
 .*********************************************************************
 .*             MACRO-ID. 'SUBENTRY'                                      
 .*             AUTHOR.   DON HIGGINS.                                    
@@ -183,8 +184,8 @@
 .LOOP    ANOP                                                            
 &S       SETA  &S+1                                                      
          AIF   (&S GT &NBASE).EXIT                                       
-&OFFSET  SETA  &OFFSET+4095                                              
-         LA    &BASES(&S),4095(&BASES(&S-1))                             
+&OFFSET  SETA  &OFFSET+4096                    RPI 601                          
+         LAY   &BASES(&S),4096(&BASES(&S-1))   RPI 601                          
          USING &NAME+8+&OFFSET,&BASES(&S)                                
          AGO   .LOOP                                                     
 .EXIT    ANOP                                                            

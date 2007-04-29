@@ -270,6 +270,8 @@ public  class  mz390 {
      * 03/09/07 RPI 565 issue error 208-210 for unsubscripted &SYSLIST
      * 04/05/07 RPI 581 list mlc inline macro code if PRINT ON
      * 04/16/07 RPI 593 correct &SYSNDX to GE 4 digits with leading zeros
+     * 04/25/07 RPI 600 find gbl set only if declared locally or &SYS
+     *          and issue error for duplicate keyword parm on call
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -468,10 +470,11 @@ public  class  mz390 {
 	int tot_kwd_parm = 0; // cur kwd parms on stack
 	int hwm_pos_parm = 0;      // tot pos parms defined
 	int hwm_kwd_parm = 0;      // tot kwd parms defined
-	String[] mac_call_pos_name = null; 
-	String[] mac_call_pos_parm = null; 
-	String[] mac_call_kwd_name = null; 
-	String[] mac_call_kwd_parm = null; 
+	String[]  mac_call_pos_name = null; 
+	String[]  mac_call_pos_parm = null; 
+	String[]  mac_call_kwd_name = null; 
+	String[]  mac_call_kwd_parm = null; 
+	boolean[] mac_call_kwd_set  = null; // RPI 600
 	/*
 	 * global and local macro variables
 	 */
@@ -881,7 +884,8 @@ public  class  mz390 {
     byte pc_op_x2c    = 85; //  convert hex string to character string('F0'  = '1')
     byte pc_op_x2d    = 86; // convert hex string to decimal string ('F0' = '240')
     byte pc_op_xor    = 87; // logical exclusive or (NC) 
-	String[] pc_op_desc = {
+	byte pc_op_gbl    = 88; // gbla,gblb,gblc declaration
+    String[] pc_op_desc = {
 			"?",       // 0 not used 
 			"AGO",     // 1 pc_op_ago
 			"AIF",     // 2 pc_op_aif
@@ -2762,26 +2766,14 @@ public  class  mz390 {
 		case 207:  // GBLA 
 			bal_op_ok = true;
 			alloc_set(var_seta_type,var_gbl_loc);
-			if (!exp_alloc_set_created){
-				// don't repeat static gbl's
-				pcl_start[mac_line_index] = - mac_line_index;
-			}
 			break;
 		case 208:  // GBLB 
 			bal_op_ok = true;
 			alloc_set(var_setb_type,var_gbl_loc);
-			if (!exp_alloc_set_created){
-				// don't repeat static gbl's
-				pcl_start[mac_line_index] = - mac_line_index;
-			}
 			break;
 		case 209:  // GBLC
 			bal_op_ok = true;
 			alloc_set(var_setc_type,var_gbl_loc);
-			if (!exp_alloc_set_created){
-				// don't repeat static gbl's
-				pcl_start[mac_line_index] = - mac_line_index;
-			}
 			break;
 		case 210:  // LCLA
 			bal_op_ok = true;
@@ -2956,8 +2948,11 @@ public  class  mz390 {
 				if (exp_parse_set_name != null){
 					if (alloc_set_loc == var_lcl_loc){
 						add_lcl_set(exp_parse_set_name,alloc_set_type,exp_parse_set_sub);
-					} else {
-						add_gbl_set(exp_parse_set_name,alloc_set_type,exp_parse_set_sub);
+					} else if (find_lcl_key_index("G:" + exp_parse_set_name) == -1){
+						add_lcl_key_index(0); // RPI 600 create gbl lcl declaration forst time
+						if (tz390.find_key_index('G',exp_parse_set_name) == -1){
+							add_gbl_set(exp_parse_set_name,alloc_set_type,exp_parse_set_sub);
+						}
 					}
 				} else {
 					log_error(105,"syntax error at " + text.substring(index));
@@ -5488,7 +5483,7 @@ public  class  mz390 {
 				exp_end = true;
 				return;
 			}
-			log_error(24,"undefined macro variable - " + exp_token);
+		 	log_error(24,"undefined macro variable - " + exp_token);
 		}
 	}
 	private void exp_push_sdt(){
@@ -5921,6 +5916,9 @@ public  class  mz390 {
 		 * Notes:
 		 *  1.  Saves create set name for possible
 		 *      scalar allocation for set.
+		 *  2.  Global set only found if declared locally or &SYS.
+		 *  3.  Both lcl and gbl key index finds ready for
+		 *      add if not found returned.
 		 */
 		if (exp_parse_set_mode 
 				&& exp_level == 0){
@@ -5935,6 +5933,13 @@ public  class  mz390 {
 			return true;
 		}
 		if (find_gbl_set(var_name,var_sub)){
+			if (find_lcl_key_index("G:" + var_name) == -1
+				&& (var_name.length() < 4 
+					|| !var_name.substring(1,4).equals("SYS"))){
+				find_lcl_key_index("L:" + var_name); // RPI 600 reset local key index for possible local set add
+				var_name_index = -1;
+				return false;
+			}
 			if (exp_parse_set_name_index == -1 && exp_level == 0){ // RPI 345
 				exp_parse_set_name_index = var_name_index;
 				exp_parse_set_loc = var_gbl_loc;
@@ -6605,6 +6610,7 @@ public  class  mz390 {
 		mac_call_pos_parm = new String[tz390.opt_maxparm]; 
 		mac_call_kwd_name = new String[tz390.opt_maxparm]; 
 		mac_call_kwd_parm = new String[tz390.opt_maxparm];
+		mac_call_kwd_set  = new boolean[tz390.opt_maxparm]; // RPI 600
 		/*
 		 * opt_maxsym - symbols, macro labels, 
 		 */
@@ -7043,11 +7049,12 @@ public  class  mz390 {
 		}
 		mac_call_kwd_name[tot_kwd_parm] = kwd_parm_name;
 		mac_call_kwd_parm[tot_kwd_parm] = kwd_parm_value;
+		mac_call_kwd_set[tot_kwd_parm]  = false;  // RPI 600
 		if (kwd_parm_name.length() > 0){
 			if (find_lcl_key_index("K:" + kwd_parm_name) == -1){
 				add_lcl_key_index(tot_kwd_parm);
 			} else {
-				log_error(91,"duplicate keyword parm - " + kwd_parm_name);
+				log_error(91,"duplicate keyword parm definition - " + kwd_parm_name);
 			}
 		}
 		tot_kwd_parm++;
@@ -7072,6 +7079,11 @@ public  class  mz390 {
 		 */
 		int key_index = find_kwd_parm(key);
 		if  (key_index != -1){
+			if (!mac_call_kwd_set[key_index]){
+				mac_call_kwd_set[key_index] = true;
+			} else { 
+				log_error(211,"duplicate keyword parm on call " + key + "=" + key_parm);
+			}
 			mac_call_kwd_parm[key_index] = key_parm;
 			return true;
 		} else {

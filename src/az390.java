@@ -238,7 +238,11 @@ public  class  az390 implements Runnable {
     * 04/07/07 RPI 585 gen ADDR2 target address for relative BR? and J?? instr.
     * 04/11/07 RPI 588 fix PRINT to avoid trap on bad parm
     *          RPI 588 issue error for d(,b) if no length or index
-    * 04/17/07 RPI 597 flag missing EQU label         
+    * 04/17/07 RPI 597 error 184 if missing EQU label  
+    * 04/26/07 RPI 602 error 195 if negative DS/DC length 
+    * 04/27/07 RPI 605 add loc_ctr to TRA, add additional
+    *          checks for label, equ, and end address value changes 
+    *          change section length error messages to show hex 
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -293,6 +297,9 @@ public  class  az390 implements Runnable {
     boolean  mac_call_last  = false;
 	boolean bal_abort = false;
     int bal_op_index = 0;
+    int end_loc = 0; // RPI 605
+    boolean report_label_changes = true; // RPI 605
+    boolean report_equ_changes = true;   // RPI 605
     boolean bal_eof = false;
     boolean end_found = false;
 	SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
@@ -323,7 +330,7 @@ public  class  az390 implements Runnable {
     /*
      * static limits
      */
-    int max_pass = 4;
+    int max_pass = 6; // RPI 605 was 4
     int sort_index_bias = 100000; // must be > tz390.opt_maxsym and tz390.opt_maxsym
     int sort_index_len  = 6;      // digits in key_index_bias
     int max_exp_stk = 500;
@@ -1139,7 +1146,7 @@ private void resolve_symbols(){
 	 */
 	reset_lits();
 	tz390.reset_opsyn();
-    if  (az390_errors > 0){
+    if  (az390_errors > 0 || sect_change){ // RPI 605 
     	 int prev_az390_errors = az390_errors + 1;
     	 while (cur_pass < max_pass
     	 		&& az390_errors !=0
@@ -1153,7 +1160,9 @@ private void resolve_symbols(){
     	 	 cur_pass++;
     	     update_symbols();
     	     if (tz390.opt_tracea){
-    	    	 tz390.put_trace("AZ390 PASS " + cur_pass + "  TOTAL ERRORS " + az390_errors);
+    	    	 String pass_msg = "PASS " + cur_pass + "  TOTAL ERRORS " + az390_errors;
+    	    	 tz390.put_trace(pass_msg);
+    	    	 tz390.put_systerm(pass_msg); // RPI 605
     	     }
     		 reset_lits();
     		 tz390.reset_opsyn();
@@ -1232,8 +1241,8 @@ private void update_sects(){
 				bal_abort = false; // force all change errors
 				log_error(91,"csect start change error - " 
 						      + sym_name[cur_sid]
-							  + " old start=" + sym_loc[cur_sid]
-							  + " new start=" + loc_ctr);
+							  + " old start=" + tz390.get_hex(sym_loc[cur_sid],6)
+							  + " new start=" + tz390.get_hex(loc_ctr,6));
 			}
 			sym_loc[cur_sid] = loc_ctr;
 			if (sym_sect_next[cur_sid] == 0){
@@ -1245,10 +1254,10 @@ private void update_sects(){
 				&& tot_esd > 1){
 				sect_change = true;
 				bal_abort = false; // force all change errors
-				log_error(92,"csect end change error - " 
+				log_error(92,"csect end   change error - " 
 						     + sym_name[cur_sid]
-							 + " old end=" + sym_max_loc[cur_sid]
-							 + " new end=" + loc_ctr);   
+							 + " old end =" + tz390.get_hex(sym_max_loc[cur_sid],6)
+							 + " new end =" + tz390.get_hex(loc_ctr,6)); 
 			}	
 			sym_max_loc[cur_sid] = loc_ctr;
 			sym_len[cur_sid] = loc_ctr - sym_loc[cur_sid];
@@ -1263,10 +1272,10 @@ private void update_sects(){
 			if (sym_max_loc[cur_sid] != loc_ctr){
 				sect_change = true;
 				bal_abort = false; // force all change errors
-				log_error(93,"dsect end change error - " 
+				log_error(93,"dsect end   change error - " 
 						     + sym_name[cur_sid]
-							 + " old end=" + sym_max_loc[cur_sid]
-							 + " new end=" + loc_ctr);   
+							 + " old end  =" + tz390.get_hex(sym_max_loc[cur_sid],6)
+							 + " new end  =" + tz390.get_hex(loc_ctr,6));
 			}
 			sym_max_loc[cur_sid] = loc_ctr;
 			sym_len[cur_sid] = loc_ctr - sym_loc[cur_sid];
@@ -1293,8 +1302,8 @@ private void update_loctrs(){
 			bal_abort = false; // force all change errors
 			log_error(94,"loctr section start change error - " 
 					   + sym_name[index]
-					   + " old start=" + sym_loc[index]
-					   + " new start=" + loc_ctr 
+					   + " old start=" + tz390.get_hex(sym_loc[cur_sid],6)
+					   + " new start=" + tz390.get_hex(loc_ctr,6)
 						);
 		}
 		sym_loc[index] = loc_ctr;
@@ -1302,10 +1311,10 @@ private void update_loctrs(){
 		if (loc_ctr != sym_max_loc[index]){
 			sect_change = true;
 			bal_abort = false; // force all change errors
-			log_error(95,"loctr section length change error - " 
+			log_error(95,"loctr section end   change error - " 
 					   + sym_name[index]
-					   + " old end=" + sym_max_loc[index]
-					   + " new end=" + loc_ctr  
+					   + " old end  =" + tz390.get_hex(sym_max_loc[cur_sid],6)
+					   + " new end  =" + tz390.get_hex(loc_ctr,6) 
 			           );
 		}
 		sym_max_loc[index] = loc_ctr;
@@ -2705,7 +2714,7 @@ private void load_bal(){
 			abort_error(83,"maximum source lines exceeded");
 		}
         if (tz390.opt_tracea){
-        	tz390.put_trace("AZ390 PASS " + cur_pass + " TOTAL ERRORS = " + az390_errors);
+        	tz390.put_trace("PASS " + cur_pass + " TOTAL ERRORS = " + az390_errors);
         }
         if (!mz390_call){ // RPI 415
         	try {
@@ -2879,7 +2888,7 @@ private void parse_bal_line(){
 	 */
 	if (tz390.opt_tracea){
 		trace_pfx = tz390.left_justify(xref_file_name[bal_line_xref_file_num[bal_line_index]],9) + tz390.right_justify("" + bal_line_xref_file_line[bal_line_index],6) + tz390.right_justify("" + bal_line_num[bal_line_index],7) + " ";
-		tz390.put_trace(trace_pfx + bal_line);
+		tz390.put_trace(trace_pfx + tz390.get_hex(loc_ctr,6) + " " + bal_line); // RPI 605
 	}
 	bal_abort = false;
 	bal_label = null;
@@ -3194,7 +3203,14 @@ public void update_label(){ // RPI 415
 		init_sym_entry();
 	} else if (sym_def[cur_sid] == bal_line_index){
 		if (sym_type[cur_sid] == sym_rel
-		    && !bal_op.equals("EQU")){			
+		    && !bal_op.equals("EQU")){	
+			if (sym_loc[cur_sid] != loc_start){ // RPI 605
+				sect_change = true;
+				if (gen_obj_code && report_label_changes){
+					report_label_changes = false;
+				    log_error(187,"first label address change for " + bal_label + " from " + tz390.get_hex(sym_loc[cur_sid],6) + " to " + tz390.get_hex(loc_start,6));
+				}
+			}
 	 	    sym_loc[cur_sid] = loc_start;
 	   	    if (loc_len == 0){
 	   	        sym_len[cur_sid] = dc_first_len;
@@ -5588,6 +5604,9 @@ private void get_dc_field_modifiers(){
             	 flush_dc_bits(); // RPI 417
              }
 			 dc_len = get_dc_mod_int();
+			 if (dc_len < 0){
+				 log_error(185,"DS/DC negative length -" + dc_len);
+			 }
 		 } else if (dc_index < dc_field.length() 
 			 && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'S'){
 			 dc_scale = get_dc_mod_int();
@@ -6650,6 +6669,13 @@ private void process_end(){
 	loc_ctr = 0;
 	cur_esd = 0;
 	put_obj_text(); // flush buffer
+	if (end_loc != loc_ctr){ // RPI 605
+		sect_change = true;
+		log_error(186,"end location changed from " 
+				+ tz390.get_hex(end_loc,6) 
+				+ " to " + tz390.get_hex(loc_ctr,6));
+	}
+	end_loc = loc_ctr;
 	update_sects();
 }
 public void process_equ(){ // RPI 415
@@ -6685,6 +6711,13 @@ public void process_equ(){ // RPI 415
 			sym_type[store_sid] = exp_type;
 			sym_attr[store_sid] = exp_attr;
 			sym_esd[store_sid] = exp_esd;
+			if (sym_loc[store_sid] != exp_val){ // RPI 605
+				sect_change = true;
+				if (gen_obj_code && report_equ_changes){
+					report_equ_changes = false;
+					log_error(188,"first equ change for " + sym_name[store_sid] + " from " + tz390.get_hex(sym_loc[store_sid],8) + " to " + tz390.get_hex(exp_val,8));
+				}
+			}
 			sym_loc[store_sid] = exp_val;
 			sym_len[store_sid] = 1;
 			hex_bddd1_loc = tz390.get_hex(exp_val,6);
@@ -7048,12 +7081,12 @@ private void gen_lit_size(int size){
 			process_dc(3);
 			if (gen_obj_code && tz390.opt_list){ // RPI 484
 				if (list_obj_code.length() < 16){
-				   list_obj_code = list_obj_code.concat("                ").substring(0,16);
+					list_obj_code = list_obj_code.concat("                ").substring(0,16);
 				} 
 				list_obj_loc = lit_loc[cur_lit];
-		 	    String lit_line = tz390.get_hex(list_obj_loc,6) + " " + list_obj_code.substring(0,16) + " =" + lit_name[cur_lit]; 
-	        	put_prn_line(lit_line);
-			}
+				String lit_line = tz390.get_hex(list_obj_loc,6) + " " + list_obj_code.substring(0,16) + " =" + lit_name[cur_lit]; 
+				put_prn_line(lit_line);
+			}			
 		}
 		cur_lit++;
 	}

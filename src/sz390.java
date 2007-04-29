@@ -123,7 +123,10 @@ public  class  sz390 implements Runnable {
     * 04/15/07 RPI 586 support TEST command E to toggle EBCDIC/ASCII 
     * 04/16/07 RPI 596 correctly pass user parm for XCTL 
     * 04/16/07 RPI 592 use cmd_proc_running to control stopping
-    *          of processes without distroying queues etc.     
+    *          of processes without distroying queues etc.   
+    * 04/28/07 RPI 598 correct error in RPI 596 saving R1 across XCTL 
+    *          and correct bug causing delete of wrong CDE after 
+    *          multiple XCTL's          
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -1303,7 +1306,7 @@ private void svc_xctl(){
 	 *   1. r15 = user pgm return code if call ok
 	 *   2. abend s106
 	 */
-	int user_parm = pz390.reg.getInt(pz390.r0); // RPI 596
+	int user_parm = pz390.reg.getInt(pz390.r1); // RPI 596 RPI 598
 	svc_load();
 	if (pz390.reg.getInt(pz390.r15) != 0){
 		if (pz390.tot_estae == 0){
@@ -1315,7 +1318,7 @@ private void svc_xctl(){
 	int link_addr = pz390.reg.getInt(pz390.r0);
 	if  (pz390.reg.getInt(pz390.r15) == 0){
 		int save_new_cde = cur_cde;
-		cur_cde = link_stk_cde[cur_link_stk];
+		cur_cde = link_stk_cde[tot_link_stk-1]; // RPI 598
 		delete_cur_cde();
 		link_stk_cde[cur_link_stk] = save_new_cde;
 		pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);

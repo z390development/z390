@@ -22,6 +22,7 @@
 * 07/21/06 RPI 379 - use compound DO conditions in (...)        
 * 08/04/06 RPI 391 - replace trailing output nulls with spaces  
 * 12/11/06 RPI 514 - add DD, ED, and LD DFP conversion support  
+* 04/27/07 RPI 600 - add GBLA &ARCHLVL to FPCON_CALL  
 *********************************************************************
          PRINT DATA
          COPY  ASMMSP       STRUCTURED PROGRAM MACROS AND EQUS
@@ -30,6 +31,7 @@
          GBLC  &ARCHSFX     SUFFIX NULL FOR 32 OR G FOR 64 BIT LINKAGE
          MACRO
          FPCON_CALL
+         GBLA  &ARCHLVL          RPI 600
          AIF   (&ARCHLVL GT 2).ZOS_CALL
 .OS_CALL ANOP
          LA    R1,=A(FPCON)      R1 > 32 BIT ADDR

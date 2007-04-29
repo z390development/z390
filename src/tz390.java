@@ -123,7 +123,8 @@ public  class  tz390 {
     * 02/20/07 RPI 549 return line_id = (FID/FLN)GSN for PRN and traces  
     * 02/20/07 RPI 550 correct FLN after COPY in MLC. 
     * 03/09/07 RPI 569 leave CON on for TEST 
-    * 03/12/07 RPI 558 init job_date for use in COMRG init by pz390     
+    * 03/12/07 RPI 558 init job_date for use in COMRG init by pz390 
+    * 04/27/07 RPI 605 remove dup SYSTERM msgs on trace files    
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -132,7 +133,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.03";  //dsh
+    String version    = "V1.3.03a";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -3960,9 +3961,9 @@ public synchronized void put_systerm(String msg){ // RPI 397
 	        abort_error(12,"I/O error on systerm file " + e.toString());
 		}
 	}
-	if (trace_file_buff != null){
-		put_trace("SYSTERM " + msg); // RPI 484
-	}
+	//dshx if (trace_file_buff != null){
+	//dshx 	put_trace("SYSTERM " + msg); // RPI 484
+	//dshx }
 }
 public synchronized void close_systerm(int rc){ // RPI 397
 	/*

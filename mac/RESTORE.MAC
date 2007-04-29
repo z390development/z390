@@ -6,7 +6,8 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-.* 12/06/05 RPI118- use RESTORE in RETURN and XCTL to restore regs
+.* 12/06/05 RPI 118- use RESTORE in RETURN and XCTL to restore regs
+.* 04/26/07 RPI 601- support R0-R15 format args                         
 .*********************************************************************
 &N       RESTORE &REGS
          AIF   (&N EQ '').SKIPDS
@@ -16,10 +17,19 @@
          MNOTE 12,'RESTORE REQUIRES SINGLE REGISTER SUBLIST OPERAND'
          MEXIT
 .NPOK    ANOP
+         AIF   ('&REGS(1)'(1,1) EQ 'R').SETR1
 &R1      SETA  &REGS(1)
+         AGO   .CHKR2
+.SETR1   ANOP
+&R1      SETA  '&REGS(1)'(2,K'&REGS(1)-1)
+.CHKR2   ANOP
 &R2      SETA  &R1
          AIF   (&REGS(2) EQ '').R2OK
+         AIF   ('&REGS(2)'(1,1) EQ 'R').SETR2
 &R2      SETA  &REGS(2)
+         AGO   .R2OK
+.SETR2   ANOP
+&R2      SETA  '&REGS(2)'(2,K'&REGS(2)-1)
 .R2OK    ANOP
          AIF   (&R1 LT 0 OR &R1 GT 15).ERR
          AIF   (&R2 LT 0 OR &R2 GT 15).ERR

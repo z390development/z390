@@ -6,10 +6,16 @@
 * Date   - 09/30/05                                                 *
 *********************************************************************
 * 11/16/05 RPI95 TEST XCTL
+* 04/26/07 RPI 598  ADD ADDITIONAL CDE SNAPS TO VERIFY OK
 *********************************************************************
          TITLE 'TESTXCL2 TEST TESTXCL2 XCTL TO TESTXCL3'
 TESTXCL2 SUBENTRY
-         SNAP  ID=2,PDATA=CDE,TEXT='VERIFY TESTXCL1 AND TESTXCL2'
+         WTO   'TESTXCL2 ENTERED'
+         SNAP  ID=21,PDATA=CDE,TEXT='TESTXCL2 VERIFY TESTXCL1+2 CDES'
+         GETMAIN R,LV=256
+         XC    0(256,1),0(1) CLEAR IT
+         LA    2,256(1)
+         SNAP  ID=22,PDATA=CDE,STORAGE=((1),(2)),TEXT='TESTXCL2 AREA'
          WTO   'TESTXCL2 NOW XCTL TO TESTXCL3'
          BALR  12,0         ESTABLISH TEMP BASE FOR XCTL USE
          USING *,12

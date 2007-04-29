@@ -5,14 +5,27 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-* 11/16/05 RPI95 TEST XCTL
+* 11/16/05 RPI  95 TEST XCTL
+* 04/26/07 RPI 598  ADD ADDITIONAL CDE SNAPS TO VERIFY OK AND REPEAT
 *********************************************************************
          TITLE 'TESTXCL1 TEST LINK TO TESTXCL2, XCTL TO TESTXCL3'
 TESTXCL1 SUBENTRY
-         SNAP  ID=1,PDATA=CDE,TEXT='VERIFY TESTXCL1'
+         WTO   'TESTXCL1 STARTING'
+         SNAP  ID=11,PDATA=CDE,TEXT='TESTXCL1 VERIFY TESTXCL1 CDE'
          WTO   'TESTXCL1 NOW LINKING TO TESTXCL2'
          LINK  EP=TESTXCL2
-         WTO   'TESTXCL1 NOW BACK FROM TESTXCL3'
-         WTO   'TESTXCL1 ENDING OK'
-         SUBEXIT
+         WTO   'TESTXCL1 NOW BACK FROM TESTXCL4'
+         SNAP  ID=12,PDATA=CDE,TEXT='TESTXCL1 VERIFY TESTXCL1+3 CDES'
+         WTO   'TESTXCL1 REPEAT TEST'
+         SNAP  ID=13,PDATA=CDE,TEXT='TESTXCL1 VERIFY TESTXCL1 CDE'
+         WTO   'TESTXCL1 NOW LINKING TO TESTXCL2'
+         LINK  EP=TESTXCL2
+         WTO   'TESTXCL1 NOW BACK FROM TESTXCL4'
+         SNAP  ID=14,PDATA=CDE,TEXT='TESTXCL1 VERIFY TESTXCL1+3 CDES'
+         WTO   'TESTXCL1 NOW XCTL TO TESTXCL4'
+         BALR  12,0         ESTABLISH TEMP BASE FOR XCTL USE
+         USING *,12
+         L     13,4(13)            RESTORE TESTXCL1 SAVE AREA POINTER
+         XCTL  (2,12),EP=TESTXCL4  RESTORE REGS,DEL XCL1, TRANS XCL4
+*        SUBEXIT
          END

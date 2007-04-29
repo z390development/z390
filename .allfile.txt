@@ -24,6 +24,7 @@ C:\z390\mac
 C:\z390\MAC.BAT
 C:\z390\mvs
 C:\z390\MZ390.BAT
+C:\z390\README.TXT
 C:\z390\rt
 C:\z390\RT.BAT
 C:\z390\RT1.BAT
@@ -3334,6 +3335,7 @@ C:\z390\rt\test\TESTWXT1.MLC
 C:\z390\rt\test\TESTXCL1.MLC
 C:\z390\rt\test\TESTXCL2.MLC
 C:\z390\rt\test\TESTXCL3.MLC
+C:\z390\rt\test\TESTXCL4.MLC
 C:\z390\rt\test\TESTXLT1.MLC
 C:\z390\rt\test\TESTZCV1.MLC
 C:\z390\rt\test\WTO.MCR
