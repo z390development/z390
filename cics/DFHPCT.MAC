@@ -1,0 +1,33 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         DFHPCT &TYPE=,&TRANSID=,&PROGRAM=
+.* TABLE OF TRANSIDS AND INITIAL PROGRAMS
+
+         AIF   (&TYPE EQ 'ENTRY').ENTRY
+         AIF   (&TYPE EQ 'FINAL').FINAL
+         MNOTE 12,'INVALID TYPE - &TYPE'
+         MEXIT
+.*
+.ENTRY   ANOP
+         AIF   (K'&TRANSID EQ 0).ERR1
+         AIF   (K'&TRANSID GT 4).ERR1
+         AIF   (K'&PROGRAM EQ 0).ERR2
+         AIF   (K'&PROGRAM GT 8).ERR2
+         DC    CL4'&TRANSID',CL8'&PROGRAM'
+         MEXIT
+.*
+.FINAL   ANOP
+         DC    X'FF'              STOPPER
+         MEXIT
+.*
+.ERR1    MNOTE 12,'TRANSID MISSING OR TOO LARGE'
+         MEXIT
+.ERR2    MNOTE 12,'PROGRAM MISSING OR TOO LARGE'
+         MEXIT
+         MEND
+

@@ -4,23 +4,19 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
-.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS EPILOG                  
+.* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS EPILOG
 .*********************************************************************
 .*  If options CICS and EPILOG are on, then
-.*  replace END statement with DFHEIEND       
+.*  replace END statement with DFHEIEND
 .*********************************************************************
          MACRO
-&N       DFHEIEND  &ENTRY
+         DFHEIEND
 .*
-.*       1. DEFINE DFHEIEND LABEL FOR END OF DSA DFHEISTG DSECT
-.*       2. SWITCH BACK TO FIRST CSECT
-.*       3. EXIT PROGRAM VIA DFHEIRET CALL TO DFHEAI1
+.* DEFINE DFHEIEND LABEL FOR END OF DSA DFHEISTG DSECT
 .*
 DFHEISTG DSECT
          ORG
 DFHEIEND EQU   *
-         GBLC  &DFHEIENT_CSECT
-&DFHEIENT_CSECT CSECT
-         DFHEIRET
          END
          MEND
+

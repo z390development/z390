@@ -1,0 +1,224 @@
+Z390/CICS Application Programmers Guide
+---------------------------------------
+
+The EXEC CICS commands listed here are the only ones currently
+supported in the Z390/CICS environment.
+
+Differences between mainframe operation and Z390/CICS are explained.
+
+For the operation of each command please refer to the Manuals listed
+in the Reference section at the end of this document.
+
+If you create your own Z390/CICS applications, it would be wise to
+create a .BAT file that re-assembles them all in one go. The internal
+interfaces are volatile at present and this will be a frequent
+instruction. The current Z390/CICS environment and all test programs
+can be re-assembled using DFHALL.BAT (change the first three
+statements to your own environment).
+
+Assembly notes
+--------------
+CICS must be added as an option to CALL MZ390.
+PROLOG and EPILOG are defaults.
+
+NOPROLOG and NOEPILOG are supported but not fully tested, testing is
+scheduled for a future release of Z390/CICS.
+
+PROLOG inserts the following:
+
+  DFHEIGBL -- Define the EIB and TCTTE DSECTS
+  DFHEISTG -- Define the prefix areas of the Dynamic Storage Area (DSA).
+  DFHEIENT -- Replaces the first CSECT statement.
+              Establish linkage and base register.
+              GETMAIN the DSA.
+              Establish addressability to the EIB and TCTTE.
+              Some COMMAREA management.
+  DFHEIEND -- Replaces the END statement and defines the end of the DSA.
+
+Other macros...
+  DFHEIRET -- Part of EXEC CICS RETURN
+              FREEMAIN the DSA.
+              Manage link-level and return to last linker.
+  DFHEIBLK -- EIB DSECT
+  DFHTCTTE -- TCTTE DSECT
+  EXEC     -- Converts EXEC CICS statements into a unique macro call
+              with parameter lists.
+
+Register Usage
+--------------
+R0   Reserved for internal use
+R1   Reserved for internal use
+R10  TCTTE address, must not be modified
+R11  EIB address, must not be modified
+R12  Base register
+R13  DSA address, must not be modified
+R14  Reserved for internal use
+R15  Reserved for internal use
+
+It is the programmers responsibility to set up additional program base
+registers as required, as well as additional bases for the DSA.
+
+Assembler Notes
+---------------
+Inclusion of the macro EQUREGS is mandatory.
+
+HANDLE condition and abends
+---------------------------
+There is no support yet, but there will be.
+Some HANDLE conditions are detected, and they will result in an S0C1
+abend. R15 may contain an 8-byte EBCDIC reason.
+
+Supported EXEC CICS commands
+----------------------------
+1) LINK PROGRAM() COMMAREA() LENGTH()
+      Executes another CICS program.
+      If COMMAREA is present, the address/length are passed.
+      Return is to the linker.
+
+      PROGRAM is mandatory
+         Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
+         label must point to an 8-byte field.
+
+      COMMAREA(label) is optional
+
+      LENGTH
+         Can be specified as LENGTH(value) or LENGTH(label)
+         LENGTH(value) supports the use of the length attribute.
+         label must point to a 2-byte hex value.
+
+         LENGTH can be omitted. When it is, the implied length of the
+         COMMAREA is used.
+
+      Errors
+         PROGRAM IS MISSING
+         INVALID PROGRAM
+         LENGTH WITHOUT COMMAREA
+
+2) LOAD PROGRAM() ENTRY() SET() LENGTH() FLENGTH()
+      Loads a module.
+      The intention in the Z390/CICS environment is to load a table
+      or some other data, not an executable program.
+
+      PROGRAM is mandatory
+         Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
+         label must point to an 8-byte field.
+
+         At present, only modules with a suffix of .390 may be LOADed.
+
+      ENTRY and SET are optional
+         Must be specified as a permitted general register value.
+         Both are equivalent in Z390/CICS.
+
+      LENGTH is optional
+         LENGTH(label) is the only format.
+         label must point to a 2-byte field.
+
+      FLENGTH is optional
+         FLENGTH(label) is the only format.
+         label must point to a 4-byte field.
+
+      Errors
+         PROGRAM IS MISSING
+         INVALID PROGRAM
+         LENGTH AND FLENGTH SPECIFIED
+
+      Notes:
+         At task end the LOADed module is not RELEASEd.
+         EXEC CICS RELEASE will be implemented.
+
+         There is no error detection at present.
+         Until then, if R15=4 then the LOAD failed.
+
+3) RECEIVE INTO() LENGTH()
+
+      RECEIVE
+         Defaults to RECEIVE INTO(EIBAID)
+         LENGTH is set to 1 internally.
+
+      RECEIVE INTO() LENGTH()
+         LENGTH must be specified as LENGTH(label)
+         label must point to a 2-byte hex value.
+
+      Errors
+         BOTH INTO AND LENGTH ARE REQUIRED
+         LENGTH ERROR
+
+4) RETURN TRANSID() COMMAREA() LENGTH()
+      Returns to the last caller.
+
+      TRANSID
+         Optional, but when COMMAREA is specified, TRANSID is mandatory.
+         Can be specified as TRANSID('xxxx') or TRANSID(label)
+         label must point to a 4-byte field.
+
+      COMMAREA(label) is optional
+
+      LENGTH
+         Can be specified as LENGTH(value) or LENGTH(label)
+         LENGTH(value) supports the use of the length attribute.
+         label must point to a 2-byte hex value.
+
+         LENGTH can be omitted. When it is, the implied length of the
+         COMMAREA is used.
+
+      Errors
+         LENGTH WITHOUT COMMAREA
+         INVALID TRANSID
+         TRANSID IS MISSING
+
+5) SEND FROM() LENGTH()
+
+      LENGTH
+         Can be specified as LENGTH(value) or LENGTH(label)
+         LENGTH(value) supports the use of the length attribute.
+         label must point to a 2-byte hex value.
+
+      Errors
+         FROM IS MANDATORY
+         LENGTH IS MANDATORY
+
+6) XCTL PROGRAM() COMMAREA() LENGTH()
+      Executes another CICS program.
+
+      If COMMAREA is present and both the address and length are the
+      same as passed to the current program, then address/length are
+      passed to the new program.
+
+      If the address or length differs, then a copy of the COMMAREA is
+      taken and the new address/length are passed to the new program.
+
+      Return is to the last linker.
+
+      PROGRAM is mandatory
+         Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
+         label must point to an 8-byte field.
+
+      COMMAREA(label) is optional
+
+      LENGTH
+         Can be specified as LENGTH(value) or LENGTH(label)
+         LENGTH(value) supports the use of the length attribute.
+         label must point to a 2-byte hex value.
+
+         LENGTH can be omitted. When it is, the implied length of the
+         COMMAREA is used.
+
+      Errors
+         PROGRAM IS MISSING
+         INVALID PROGRAM
+         LENGTH WITHOUT COMMAREA
+
+References
+----------
+SC34-6433 CICS Application Programmers Guide
+SC34-6434 CICS Application Programmers Reference
+
+Trademarks
+----------
+CICS is a registered trademark of International Business Corporation.
+
+Author: Melvyn Maltz
+Shipping Date: May 1, 2007
+Z390 version: V1.3.03b
+Z390/CICS version: V1
+

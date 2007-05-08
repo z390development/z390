@@ -198,6 +198,7 @@ public class pz390 {
 	 * 04/03/07 RPI 584 fix trap at startup with option ASCII and pgmname < 8 
 	 * 04/07/07 RPI 582 set R1 to addr of addr of PARM
 	 * 04/16/07 RPI 588 correct trace for CVB, CVBG, CVBY, CVD, CVDG, CVDY
+	 * 05/07/07 RPI 606 add MVCOS  support per SHARE HLASM info.
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -6414,12 +6415,27 @@ public class pz390 {
 			}
 			break;
 		case 0xC8: // 5630 "C80" "MVCOS" "SSF" Z9-41
-			opcode2 = mem_byte[psw_loc + opcode2_offset_ssf] + 0x0f; // RPI202
+			opcode2 = mem_byte[psw_loc + opcode2_offset_ssf] & 0x0f; // RPI202 RPI 606
 			switch (opcode2) {
 			case 0x0: // 5630 "C80" "MVCOS" "SSF" Z9-41
-				ins_setup_ss();
+				psw_check = false; // RPI 606
+				ins_setup_ssf();   // RPI 606
+				if (reg.getInt(r0) == 0){
+					rflen = reg.getInt(rf3 + 4);
+					psw_cc = psw_cc0;
+					if (rflen > 0){
+						if (rflen > 4096){
+							rflen = 4096;
+							psw_cc = psw_cc3;
+						}
+						exec_mvc_rflen();
+					}
+				} else {
+					set_psw_check(psw_pic_spec);
+				}
 				break;
 			}
+			break; // RPI 606
 		case 0xD0: // 5230 "D0" "TRTR" "SS"
 			psw_check = false;
 			ins_setup_ss();
@@ -6477,21 +6493,7 @@ public class pz390 {
 		case 0xD2: // 5250 "D2" "MVC" "SS"
 			psw_check = false;
 			ins_setup_ss();
-			if (bd1_loc + rflen <= bd2_loc || bd2_loc + rflen <= bd1_loc) {
-				System.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc, rflen); // RPI
-																				// 411
-			} else if (bd2_loc + 1 == bd1_loc) {
-				Arrays.fill(mem_byte, bd1_loc, bd1_loc + rflen,
-						mem_byte[bd2_loc]);
-			} else {
-				bd1_end = bd1_loc + rflen;
-				while (bd1_loc < bd1_end) {
-					// destructive overlap with gap > 1
-					mem_byte[bd1_loc] = mem_byte[bd2_loc];
-					bd1_loc++;
-					bd2_loc++;
-				}
-			}
+			exec_mvc_rflen(); // RPI 606
 			break;
 		case 0xD3: // 5260 "D3" "MVZ" "SS"
 			psw_check = false;
@@ -9630,6 +9632,45 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+	private void ins_setup_ssf() { // "SSF" 32 MVCOS oor0bdddbddd
+		/*
+		 * fetch rf3,bd1_loc, bd2_loc, and update psw
+		 */
+		rf3 = (mem_byte[psw_loc + 1] & 0xf0) >>> 1;
+		mf3 = rf3 >>> 3;
+		bf1 = mem.getShort(psw_loc + 2) & 0xffff;
+		df1 = bf1 & 0xfff;
+		bf1 = (bf1 & 0xf000) >> 9;
+		if (bf1 > 0) {
+			bd1_loc = (reg.getInt(bf1 + 4) & psw_amode) + df1;
+		} else {
+			bd1_loc = df1;
+		}
+		bf2 = mem.getShort(psw_loc + 4) & 0xffff;
+		df2 = bf2 & 0xfff;
+		bf2 = (bf2 & 0xf000) >> 9;
+		if (bf2 > 0) {
+			bd2_loc = (reg.getInt(bf2 + 4) & psw_amode) + df2;
+		} else {
+			bd2_loc = df2;
+		}
+		psw_ins_len = 6;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+		if (bd2_loc > tot_mem || bd1_loc + rflen > tot_mem) { // RPI 299 RPI 528
+			set_psw_check(psw_pic_addr);
+		}
+		if (tz390.opt_protect // RPI 538
+				&& opcode1 != opcode_clc
+				&& bd1_loc < psa_len){ 
+				set_psw_check(psw_pic_addr);
+		}
+	}
 	public String get_ins_name(int ins_loc) {
 		/*
 		 * return opcode or ????? for given op1 and op2
@@ -10296,7 +10337,27 @@ public class pz390 {
 			reg.putInt(rf2 + 12, 0);
 		}
 	}
-
+    private void exec_mvc_rflen(){
+    	/*
+    	 * move from bd2_loc to bd1_loc
+    	 * for length rflen - used by MVC and MVCOS // RPI 606
+    	 */
+    	if (bd1_loc + rflen <= bd2_loc || bd2_loc + rflen <= bd1_loc) {
+			System.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc, rflen); // RPI
+																			// 411
+		} else if (bd2_loc + 1 == bd1_loc) {
+			Arrays.fill(mem_byte, bd1_loc, bd1_loc + rflen,
+					mem_byte[bd2_loc]);
+		} else {
+			bd1_end = bd1_loc + rflen;
+			while (bd1_loc < bd1_end) {
+				// destructive overlap with gap > 1
+				mem_byte[bd1_loc] = mem_byte[bd2_loc];
+				bd1_loc++;
+				bd2_loc++;
+			}
+		}
+    }
 	private void exec_srst() {
 		/*
 		 * find char in r2 field which ends at r1 char is in r0 cc 1 = char
@@ -14091,7 +14152,9 @@ public class pz390 {
 			trace_parms = " S1(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, maxlen, 0) + " S2("
 					+ tz390.get_hex(bd2_loc, 8) + ")="
-					+ bytes_to_hex(mem, bd2_loc, maxlen, 0);
+					+ bytes_to_hex(mem, bd2_loc, maxlen, 0)
+                    + " R" + tz390.get_hex(mf3,1)  // RPI 606
+                    + "=" + tz390.get_hex(reg.getInt(rf3 + 4),8);
 			break;
 		case 330: // "BLX" BRCL extended mnemonics
 			trace_parms = " S2(" + tz390.get_hex(bd2_loc, 8) + ")="

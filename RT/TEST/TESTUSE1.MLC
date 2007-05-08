@@ -6,7 +6,8 @@
 * Date   - 09/30/05                                                 *
 *********************************************************************
 * 03/22/06 RPI 237 test drop using with comments, mult labels
-* 04/06/06 RPI 274 support non-specfic ref to prior labeled USING
+* 04/06/06 RPI 274 support DSECT dependent using                   
+* 05/07/07 RPI 609 remove label on non-specific dependant using
 *********************************************************************
 TESTUSE1 SUBENTRY
          WTO   'TESTUSE1 TEST LABELD AND DEPENDANT USING'
@@ -59,9 +60,9 @@ DCB2     USING IHADCB,SYSUT2
          CLC   DCB2.DCBLRECL,=H'120'
          BNE   ERR
          DROP  DCB1,DCB2 TEST COMMENT FOR RPI 237
-* TEST NON-SPECIFIC REF TO PRIOR LABELED USING
+* TEST DEPENDENT USING DSECT                    
          LA    12,PRIVATE             * Point new savearea
-NEXT     USING SAVEAREA,12            * Address new savearea
+         USING SAVEAREA,12            * Address new savearea
 CHECK    USING PRIVATE,SAVEAREA        **!! for testing purposes
          LA    1,CHECK.P1
          CLI   0(1),X'EE'

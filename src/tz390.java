@@ -133,7 +133,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.03a";  //dsh
+    String version    = "V1.3.03b";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -1330,7 +1330,7 @@ public  class  tz390 {
 		       "CFI",      //      "C2D" "CFI" "RIL" 16 Z9-38
 		       "CLGFI",    //      "C2E" "CLGFI" "RIL" 16 Z9-39
 		       "CLFI",     //      "C2F" "CLFI" "RIL" 16 Z9-40
-		       "MVCOS",    //      "C80" "MVCOS" "SSF" 17 Z9-41
+		       "MVCOS",    //      "C80" "MVCOS" "SSF" 32 Z9-41 // RPI 606
 		       "TRTR",     // 5230 "D0" "TRTR" "SS" 17
 		       "MVN",      // 5240 "D1" "MVN" "SS" 17
 		       "MVC",      // 5250 "D2" "MVC" "SS" 17

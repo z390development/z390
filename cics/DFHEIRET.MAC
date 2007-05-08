@@ -5,17 +5,29 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR EXIT FROM PROGRAM
-.* 05/25/06 RPI 317 - PASS DSA LEN IN R0 SO DFHEAI1 CAN INGNORE IF 0
+.* 05/25/06 RPI 317 - PASS DSA LEN IN R0 SO DFHEAI1 CAN IGNORE IF 0
 .*********************************************************************
-.*  exit from EXEC CICS assembler program   
-.*  Notes:
-.*   1.  DFHEIRET called from CICS_RETURN and DFHEIEND.  Note DFHEIEND
-.*       inserted at END statement if CICS and EPILOG options on.
-.*   2.  DFHEIRET calls DFHEAI1 to free DSA and exit    
-.*                                                   
+.*  Exit from EXEC CICS assembler program
+.*  Notes: DFHEIRET called from CICS_RETURN
 .*********************************************************************
          MACRO
-&N       DFHEIRET       
-         L     0,=A(DFHEIEND-DFHEISTG)    R0 = DSA LENGTH
-&N       CALL  DFHEAI1
+&N       DFHEIRET
+&N       L     R0,DFHEILEN        R0=DSA LENGTH
+*
+* FREE DSA
+*
+         LR    R1,R13             R1=CURRENT DSA ADDRESS
+         FREEMAIN R,A=(R1),LV=(R0)
+         LH    R0,TCTTELNK        LOAD LINK-LEVEL
+         AHI   R0,-1              -1
+         STH   R0,TCTTELNK        STORE BACK
+         SLL   R0,2               R0=LINK-LEVEL * 4
+         L     R1,TCTTELKA        R1=LKA ADDRESS
+         AR    R1,R0              INDEX TO LINK-LEVEL ENTRY
+*
+* EXIT TO LAST LINKER
+*
+         L     R13,0(R1)          LOAD DSA/SAVE AREA ADDRESS
+         RETURN (R14,R12)
          MEND
+

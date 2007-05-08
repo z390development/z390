@@ -1,0 +1,29 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         DFHTCTTE
+.* A HYBRID OF TCTTE AND TCA CONTROL BLOCKS
+.* NO ATTEMPT HAS BEEN MADE TO MAKE IT LOOK AUTHENTIC
+*
+* TERMINAL CONTROL TABLE - TERMINAL ENTRY
+*
+DFHTCTTE DSECT
+TCTTEHED DS    CL8         'TCTTE  '
+TCTTETI  DS    CL4         TERMINAL ID
+TCTTEDA  DS    A           A(TIOA)
+TCTTETC  DS    CL4         NEXT TRANSID
+TCTTECA  DS    A           RETURN COMMAREA ADDRESS
+TCTTECAL DS    H           RETURN COMMAREA ADDRESS LENGTH
+TCTTELNK DS    H           RETURN LINK LEVEL, 0 RETURNS TO Z390KCP
+TCTTELKA DS    A           LINK LEVEL AREA
+*                          EACH 4-BYTE ENTRY HAS THE DSA ADDRESS
+TCTTETS  DS    X           X'FF'=SHUTDOWN REQUEST
+TCTTECND DS    X           X'FF'=XCTL COMMAREA MUST BE FREED ON RETURN
+TCTTELEN EQU   *-DFHTCTTE
+TCTTEAR  EQU   10
+         MEND
+

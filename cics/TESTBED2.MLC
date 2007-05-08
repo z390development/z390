@@ -1,0 +1,88 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+DFHEISTG DSECT       DSA STORAGE
+SENDLNS1 DS    XL(LINE1END)
+SENDLNS2 DS    XL(LINE2END)
+SENDLNS3 DS    XL(LINE3END)
+TESTBED2 CSECT
+*
+* TEST BED 2
+*
+*    LINKED-TO FROM TESTBED1
+*    DISPLAYS ANOTHER QUOTE
+*
+*    IF A COMMAREA IS PASSED, ANOTHER QUOTE IS DISPLAYED DEPENDING
+*    ON COMMAREA PASSED
+*
+*    XCTL TO TESTBED3 FOR FINAL QUOTE
+*    RETURN TO TESTBED1
+*
+         MVC   SENDLNS1(LINE1END),LINE1 MESSAGE
+         EXEC  CICS SEND FROM(SENDLNS1) LENGTH(LINE1LEN)
+*
+         ICM   R4,15,DFHEICAP     ANY COMMAREA ?
+         BNZ   TRYCOMM1           EXIT IF THERE IS
+         EXEC  CICS RETURN
+*
+TRYCOMM1 EQU   *
+         CLC   0(6,R4),=C'QUOTE2' IS IT QUOTE 2 ?
+         BNE   TRYCOMM2           EXIT IF NOT
+         MVC   SENDLNS2(LINE2END),LINE2 MESSAGE
+         EXEC  CICS SEND FROM(SENDLNS2) LENGTH(LINE2LEN)
+         EXEC  CICS RETURN
+*
+TRYCOMM2 EQU   *
+         CLC   0(6,R4),=C'QUOTE3' IS IT QUOTE 3 ?
+         BNE   ABORT              EXIT IF NOT
+         MVC   SENDLNS3(LINE3END),LINE3 MESSAGE
+         EXEC  CICS SEND FROM(SENDLNS3) LENGTH(LINE3LEN)
+*
+* XCTL WITH NO COMMAREA TO TESTBED3 FOR THE NEXT QUOTE
+* CONTROL WILL RETURN TO TESTBED1
+*
+         EXEC  CICS XCTL PROGRAM('TESTBED3')
+*
+ABORT    ABEND 999,DUMP
+*
+LINE1    EQU   *
+         TN3270 WCC_KD
+         TN3270 (SBA,12,2)
+         DC    CL55'How sour sweet music is'
+         TN3270 (SBA,13,2)
+         DC    CL55'When time is broke and no proportion kept'
+         TN3270 (SBA,14,2)
+         DC    CL55'So is it in the music of men''s lives'
+         TN3270 (SBA,15,2)
+         DC    CL55'END'
+LINE1END EQU   *-LINE1
+LINE1LEN DC    AL2(*-LINE1)
+*
+LINE2    EQU   *
+         TN3270 WCC_KD
+         TN3270 (SBA,16,2)
+         DC    CL55'This blessed plot, this earth, this realm, this Eng-
+               land'
+         TN3270 (SBA,17,2)
+         DC    CL55'END'
+LINE2END EQU   *-LINE2
+LINE2LEN DC    AL2(*-LINE2)
+*
+LINE3    EQU   *
+         TN3270 WCC_KD
+         TN3270 (SBA,18,2)
+         DC    CL55'How beauteous mankind is!'
+         TN3270 (SBA,19,2)
+         DC    CL55'O brave new world, that hath such people in''t!'
+         TN3270 (SBA,20,2)
+         DC    CL55'END'
+LINE3END EQU   *-LINE3
+LINE3LEN DC    AL2(*-LINE3)
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         END
+

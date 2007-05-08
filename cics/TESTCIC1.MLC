@@ -1,46 +1,63 @@
-DFHEISTG DSECT       DSA STORAGE (EXEC CICS PROLOG DFHEISTG TRIGGER)                                              
-SENDBUFF DS   0H     SEND MESSAGE BUFFER
-SENDTERM DS   CL4    TERM ID (IGNORED)
-SENDMSG  DS   CL2000 MESSAGE BUFFER
-ADDRCIC2 DS   A      ADDRESS OF TESTCIC2 LOADED PROGRAM
-TESTCIC1 CSECT       PROGRAM CSECT (EXEC CICS PROLOG DFHEIENT TRIGGER)
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+DFHEISTG DSECT                    DSA STORAGE
+SENDMSG  DS    CL200              MESSAGE BUFFER
+TESTCIC1 CSECT
+         MVC   SENDMSG,WCC        MOVE WCC
 *
-* SEND MSG1 TO GUAM TN3270 TERMINAL AND WAIT FOR AID TO PROCEED
+* SEND MSG1 AND WAIT FOR AID TO PROCEED
 *
-         MVC   SENDTERM,=C'3270'                                                    
-         MVC   SENDMSG(L'MSG1),MSG1                                     
-         EXEC  CICS SEND TEXT FROM(SENDBUFF)                           X
-               LENGTH(L'MSG1+4) FREEKB ERASE 
-         EXEC  CICS RECEIVE                                         
-*
-* SEND MSG2 TO GUAM TN3270 TERMINAL AND WAIT FOR AID TO PROCEED
-*
-         EXEC  CICS LOAD PROGRAM(TESTCIC2) ENTRY(ADDRCIC2)
-         MVC   SENDMSG(L'MSG2),MSG2                                     
-         EXEC  CICS SEND TEXT FROM(SENDBUFF)                           X
-               LENGTH(L'MSG2+4) FREEKB ERASE 
+         MVC   SENDMSG+1(L'MSG1+3),MSG1SBA
+DOMSG1   EQU   *
+         EXEC  CICS SEND FROM(SENDMSG) LENGTH(L'MSG1+4)
          EXEC  CICS RECEIVE
+         CLI   EIBAID,ENTER       IS IT ENTER ?
+         BNE   DOMSG1             EXIT IF NOT
 *
-* CALL TESTCIC2 LOADED PROGRAM USING ENTRY SAVED BY EXEC CICS LOAD
+* LINK TO TESTCIC2
 *
-         L     15,ADDRCIC2
-         BALR  14,15                                         
+         EXEC  CICS LINK PROGRAM('TESTCIC2')
 *
-* SEND MSG2 TO GUAM TN3270 TERMINAL AND WAIT FOR AID TO PROCEED
+* SEND MSG2 AND WAIT FOR AID TO PROCEED
 *
-REQUEST_PF3 EQU *
-         MVC   SENDMSG(L'MSG3),MSG3                                     
-         EXEC  CICS SEND TEXT FROM(SENDBUFF)                           X
-               LENGTH(L'MSG2+4) FREEKB ERASE 
+         MVC   SENDMSG+1(L'MSG2+3),MSG2SBA
+DOMSG2   EQU   *
+         EXEC  CICS SEND FROM(SENDMSG) LENGTH(L'MSG2+4)
          EXEC  CICS RECEIVE
-         CLI   EIBAID,PF3
-         BNE   REQUEST_PF3
+         CLI   EIBAID,ENTER       IS IT ENTER ?
+         BNE   DOMSG2             EXIT IF NOT
+*
+* LINK TO TESTBED2
+*
+         EXEC  CICS LINK PROGRAM('TESTBED2')
+*
+* SEND MSG3 AND WAIT FOR AID TO PROCEED
+*
+         MVC   SENDMSG+1(L'MSG3+3),MSG3SBA
+DOMSG3   EQU   *
+         EXEC  CICS SEND FROM(SENDMSG) LENGTH(L'MSG3+4)
+         EXEC  CICS RECEIVE
+         CLI   EIBAID,PF3         IS IT PF3 ?
+         BNE   DOMSG3             EXIT IF NOT
 *
 * EXIT PROGRAM
 *
-         EXEC  CICS RETURN                                          
-MSG1     DC    C'TESTCIC1 PRESS ENTER TO LOAD TESTCIC2'          
-MSG2     DC    C'TESTCIC1 PRESS ENTER TO CALL TESTCIC2'          
-MSG3     DC    C'TESTCIC1 PRESS PF3 TO END  TESTCIC1'                 
+         EXEC  CICS RETURN
+*
+WCC      TN3270 WRT_EW
+*
+MSG1SBA  TN3270 (SBA,1,2)
+MSG1     DC    C'TESTCIC1 PRESS ENTER TO LINK TO TESTCIC2'
+MSG2SBA  TN3270 (SBA,3,2)
+MSG2     DC    C'TESTCIC1 PRESS ENTER TO LINK TO TESTBED2'
+MSG3SBA  TN3270 (SBA,17,2)
+MSG3     DC    C'TESTCIC1 PRESS PF3 TO END TESTCIC1'
+*
          TN3270 SYMBOLS
-         END   ,    END PROGRAM (EXEC CICS EPILOG DFHEIEND TRIGGER)
+         EQUREGS
+         END
+

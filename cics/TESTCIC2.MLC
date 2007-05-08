@@ -1,19 +1,29 @@
-DFHEISTG DSECT       DSA STORAGE (EXEC CICS PROLOG DFHEISTG TRIGGER)                                              
-SENDBUFF DS   0H     SEND MESSAGE BUFFER
-SENDTERM DS   CL4    TERM ID (IGNORED)
-SENDMSG  DS   CL2000 MESSAGE BUFFER
-TESTCIC2 CSECT       PROGRAM CSECT (EXEC CICS PROLOG DFHEIENT TRIGGER)
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+DFHEISTG DSECT                    DSA STORAGE
+SENDMSG  DS   CL200               MESSAGE BUFFER
+TESTCIC2 CSECT
+         MVC   SENDMSG,WCC
 *
 * SEND MSG1 TO GUAM TN3270 TERMINAL AND WAIT FOR AID TO PROCEED
 *
-         MVC   SENDTERM,=C'3270'                                                    
-         MVC   SENDMSG(L'MSG1),MSG1                                     
-         EXEC  CICS SEND TEXT FROM(SENDBUFF)                           X
-               LENGTH(L'MSG1+4) FREEKB ERASE 
-         EXEC  CICS RECEIVE                                         
+         MVC   SENDMSG+1(L'MSG1+3),MSG1SBA
+         EXEC  CICS SEND FROM(SENDMSG) LENGTH(L'MSG1+4)
 *
 * EXIT PROGRAM
 *
-         EXEC  CICS RETURN                                          
-MSG1     DC    C'TESTCIC2 HELLO - PRESS ENTER TO EXIT'          
-         END   ,    END PROGRAM (EXEC CICS EPILOG DFHEIEND TRIGGER)
+         EXEC  CICS RETURN
+*
+WCC      TN3270 WCC_KD
+*
+MSG1SBA  TN3270 (SBA,2,2)
+MSG1     DC    C'TESTCIC2 SAYS HELLO'
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         END
+

@@ -409,7 +409,6 @@ public  class  sz390 implements Runnable {
      * nested link variables
      */
     int tot_link_stk = 0;
-    int cur_link_stk = 0;
     int[]    link_stk_cde = (int[])Array.newInstance(int.class,max_link_stk);
     int[]    link_stk_ret = (int[])Array.newInstance(int.class,max_link_stk);
     /*
@@ -1320,7 +1319,7 @@ private void svc_xctl(){
 		int save_new_cde = cur_cde;
 		cur_cde = link_stk_cde[tot_link_stk-1]; // RPI 598
 		delete_cur_cde();
-		link_stk_cde[cur_link_stk] = save_new_cde;
+		link_stk_cde[tot_link_stk-1] = save_new_cde; // RPI 610
 		pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);
 		pz390.reg.putInt(pz390.r15,link_addr);
 		pz390.reg.putInt(pz390.r1,user_parm); // RPI 596
@@ -1535,10 +1534,9 @@ public void svc_link(){
 	int link_addr = pz390.reg.getInt(pz390.r0);
 	if  (pz390.reg.getInt(pz390.r15) == 0){
 		if (tot_link_stk < max_link_stk){
-			cur_link_stk = tot_link_stk;
-			tot_link_stk++;
-			link_stk_cde[cur_link_stk] = cur_cde; // set by load
-			link_stk_ret[cur_link_stk] = pz390.psw_loc | pz390.psw_amode_bit;
+			link_stk_cde[tot_link_stk] = cur_cde; // set by load RPI 610
+			link_stk_ret[tot_link_stk] = pz390.psw_loc | pz390.psw_amode_bit; // RPI  610
+			tot_link_stk++; // RPI 610
 		}
 		pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);
 		pz390.reg.putInt(pz390.r15,link_addr);

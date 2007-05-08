@@ -4,34 +4,52 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
-.* 05/06/06 RPI 308 ADD EXEC CICS SUPPORT FOR RECEIVE     
+.* 05/06/06 RPI 308 ADD EXEC CICS SUPPORT FOR RECEIVE
 .*********************************************************************
          MACRO
-         CICS_RECEIVE                      
-         LCLC &INTO,&LENGTH
-&NP      SETA N'&SYSLIST
-&IP      SETA 0
+         CICS_RECEIVE
+         LCLC  &INTO,&LENGTH
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
 .PLOOP   ANOP
-&IP      SETA &IP+1
-         AIF  (&IP GT &NP).ELOOP
-&PARM    SETC &SYSLIST(&IP)
-         AIF  ('&PARM'(1,5) EQ 'INTO(').INTO
-         AIF  ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
-         AGO  .PLOOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  &SYSLIST(&IP)
+         AIF   ('&PARM'(1,5) EQ 'INTO(').INTO
+         AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AGO   .PLOOP
 .INTO    ANOP
-&INTO    SETC '&PARM'(6,K'&PARM-6)
-         AGO  .PLOOP
+&INTO    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
 .LENGTH  ANOP
-&LENGTH  SETC '&PARM'(8,K'&PARM-8)
-         AGO  .PLOOP
+&LENGTH  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
 .ELOOP   ANOP
-         AIF   (&INTO EQ '').READAID
-         AIF   (&LENGTH NE '').TGET
-&LENGTH  SETC  'L''&INTO'
+         AIF   (&INTO EQ '' AND &LENGTH EQ '').READAID
+         AIF   (&INTO NE '' AND &LENGTH NE '').LENNUM
+         MNOTE 12,'BOTH INTO AND LENGTH ARE REQUIRED'
+         MEXIT
+.LENNUM  ANOP
+         AIF   ('&LENGTH'(1,2) EQ 'L''').LENERR
+         AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
+.LENERR  ANOP
+         MNOTE 12,'LENGTH ERROR'
+         MEXIT
+.LENLABL ANOP
+         LH    R0,&LENGTH         R0=LENGTH
          AGO   .TGET
-.READAID ANOP    
+.READAID ANOP
 &INTO    SETC  'EIBAID'
-&LENGTH  SETC  '1'
+         LA    R0,1               SET LENGTH=1
 .TGET    ANOP
-         TGET  &INTO,&LENGTH,ASIS 
+         LR    R14,R1             R14=REQUESTED LENGTH
+         MVC   EIBFN,=X'0402'     SET EIBFN
+         TGET  &INTO,(0),ASIS
+         CR    R14,R1             ACTUAL LENGTH EXCEEDS REQUESTED ?
+         BNL   CICS_RECEIVE_&SYSNDX._01 EXIT IF NOT
+.* ### SET EIBRCODE/EIBRESP2 LATER, LENGERR,X'00E1'
+         LG    R15,=CL8'LENGERR'
+         DC    H'0'
+CICS_RECEIVE_&SYSNDX._01 DS 0H
          MEND
+

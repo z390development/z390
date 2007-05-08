@@ -6,6 +6,7 @@
 * Date   - 07/20/07                                                 *
 *********************************************************************
 * 07/20/07 RPI 374 - add CVTTOHEX for use in TESTFPC1 
+* 05/07/07 RPI 609 - fix DC CL9                         
 *********************************************************************
 *
 *  CALL CVTTOHEX,(IN,OUT,INLEN)
@@ -35,6 +36,6 @@ CVTTOHEX SUBENTRY
          SUBEXIT
          LTORG
          EQUREGS
-WORK     DC    CL9
+WORK     DS    CL9      RPI 609
 TRTHEX   DC    240X'00',C'0123456789ABCDEF'
          END

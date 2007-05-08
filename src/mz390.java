@@ -272,6 +272,8 @@ public  class  mz390 {
      * 04/16/07 RPI 593 correct &SYSNDX to GE 4 digits with leading zeros
      * 04/25/07 RPI 600 find gbl set only if declared locally or &SYS
      *          and issue error for duplicate keyword parm on call
+     * 05/07/07 RPI 609 error 212-216 on string conv for SETB 
+     * 05/07/07 RPI 611 prevent trap on computed AGO with bad index var        
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -2586,6 +2588,9 @@ public  class  mz390 {
 		    		pc_gen_exp = true;
 				}
 				ago_index = calc_seta_exp(bal_parms,1);
+				if (mac_abort){
+					return; // RPI 611 do not build ago  if error
+				}
 				ago_gbla_index = tz390.find_key_index('A',"" + mac_line_index);
 				if (ago_gbla_index != -1 
 					&& gbl_seta[ago_gbla_index] != 0){
@@ -3008,11 +3013,7 @@ public  class  mz390 {
 		case 2:
 			return exp_setb;
 		case 3:
-			if (get_int_from_string(exp_setc,10) == 1){
-				return 1;
-			} else {
-				return 0;
-			}
+            log_error(212,"invalid string in SETB expression"); // RPI 609
 		default: 
 			abort_case();
 		}
@@ -5135,25 +5136,8 @@ public  class  mz390 {
 		case 2:
 			return exp_stk_setb[tot_exp_stk_var + offset];
 		case 3:
-			int value = 0;
-			String text = exp_stk_setc[tot_exp_stk_var + offset];
-			if (text.length() > 0 
-				&& ((text.charAt(0) >= '0' 
-				     && text.charAt(0) <= '9'
-				    )
-				    || text.charAt(0) == '-'
-				    || text.charAt(0) == '+'
-		           )
-				){
-				value = get_int_from_string(text,10);
-			} else {
-                value = 0;				
-			}
-			if (value != 0){
-				return 1;
-			} else {
-				return 0;
-			}
+			log_error(213,"invalid string in SETB expression"); // RPI 609
+			break;
 		default:
 			log_error(53,"expression type error");
 		}
@@ -5202,7 +5186,7 @@ public  class  mz390 {
 				setb_value1 = exp_stk_setb[tot_exp_stk_var - 2];
 				break;
 			case 3:	
-				setb_value1 = (byte) get_int_from_string(exp_stk_setc[tot_exp_stk_var - 2],10);
+				log_error(214,"invalid string in SETB expression"); // RPI 609
 				break;
 			default: 
 				abort_case();
@@ -5215,7 +5199,7 @@ public  class  mz390 {
 				setb_value2 = exp_stk_setb[tot_exp_stk_var - 1];
 				break;
 			case 3:
-				setb_value2 = (byte) get_int_from_string(exp_stk_setc[tot_exp_stk_var - 1],10);
+				log_error(215,"invalid string in SETB expression"); // RPI 609
 				break;
 			default: 
 				abort_case();
@@ -5331,7 +5315,7 @@ public  class  mz390 {
 					exp_setb = exp_stk_setb[0];
 					break;
 				case 3:	
-					exp_setb = (byte) get_int_from_string(exp_stk_setc[0],10);
+					log_error(216,"invalid string in SETB expression"); // RPI 609
 					break;
 				default: 
 					abort_case();

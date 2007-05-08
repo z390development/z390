@@ -242,7 +242,16 @@ public  class  az390 implements Runnable {
     * 04/26/07 RPI 602 error 195 if negative DS/DC length 
     * 04/27/07 RPI 605 add loc_ctr to TRA, add additional
     *          checks for label, equ, and end address value changes 
-    *          change section length error messages to show hex 
+    *          change section length error messages to show hex
+    * 05/07/07 RPI 606 Fix SSF case 32 to not use llbddd for MVCOS 
+    * 05/07/07 RPI 609 compatibility fixes
+    *           1.  Error 189 if DC with no date and dup > 0  
+    *           2.  Prevent non-labeled using ref to labeld using
+    *           3.  Error 190 if comment * after col 1 
+    *           4.  Error 191 missing comma before comments for type E
+    * 05/07/07 RPI 612 RX off(reg) use X vs B  
+    * 05/07/07 RPI 613 fix SS off(len) for low storage move 
+    * 05/07/07 RPI 615 correct ATTRA string length for FPR              
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -1472,6 +1481,9 @@ private void process_bal_op(){
 	switch (index){ 
 	case 0:  // * comments 
 		bal_op_ok = true;
+		if (bal_line.length() > 0 && bal_line.charAt(0) != '*'){
+			log_error(190,"Comment must start with * in position 1");  // RPI 609
+		}
     	if (gen_obj_code 
     		&& bal_line.length() > 9){
        		if (bal_line.substring(0,9).equals("*MCALL #=")){
@@ -1500,6 +1512,9 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 2;
 	    get_hex_op(1,4);
+	    if (bal_parms != null && bal_parms.length() > 0 && bal_parms.charAt(0) != ','){
+	    	log_error(191,"comma required  before comments");// RPI 609
+	    }
     	put_obj_text();
     	break;
     case 2:  // "RR" 60  LR  oorr
@@ -1899,15 +1914,13 @@ private void process_bal_op(){
     	get_hex_op(1,2); 
     	hex_len1 = get_hex_nib();
     	skip_comma();
-       	get_hex_llbddd();
- 		hex_bddd1     = hex_bddd;
-       	hex_bddd1_loc = hex_bddd_loc;
+       	get_hex_bddd2(false);          // RPI 613
+ 		hex_bddd1     = hex_bddd2;     // RPI 613
+       	hex_bddd1_loc = hex_bddd2_loc; // RPI 613
        	skip_comma();
       	hex_len2 = get_hex_nib();
     	skip_comma();
-    	get_hex_llbddd();
-   		hex_bddd2     = hex_bddd;
-   		hex_bddd2_loc = hex_bddd_loc;
+    	get_hex_bddd2(false);  // RPI 613
       	obj_code = obj_code + hex_len1 + hex_len2 + hex_bddd1 + hex_bddd2;
     	check_end_parms();
       	put_obj_text();
@@ -1977,9 +1990,9 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 6;
     	get_hex_op(1,2); 
-       	get_hex_llbddd();
-       	hex_bddd1     = hex_bddd;
-       	hex_bddd1_loc = hex_bddd_loc;
+       	get_hex_bddd2(false);          // RPI 613
+       	hex_bddd1     = hex_bddd2;     // RPI 613
+       	hex_bddd1_loc = hex_bddd2_loc; // RPI 613
        	skip_comma();
     	get_hex_llbddd();
     	hex_bddd2 = hex_bddd;
@@ -1994,9 +2007,9 @@ private void process_bal_op(){
     	loc_start = loc_ctr;
     	loc_len = 6;
     	get_hex_op(1,2); 
-       	get_hex_llbddd();
-       	hex_bddd1     = hex_bddd;
-       	hex_bddd1_loc = hex_bddd_loc;
+    	get_hex_bddd2(false);          // RPI 606
+       	hex_bddd1     = hex_bddd2;     // RPI 606
+       	hex_bddd1_loc = hex_bddd2_loc; // RPI 606
        	skip_comma();
     	get_hex_bddd2(false); 
         skip_comma();
@@ -3429,6 +3442,9 @@ public void process_dc(int request_type){ // RPI 415
 	           }
 	       } else { 
 	    	    // no field data so fill with zeros
+	    	    if (dc_op && dc_dup > 0){
+	    		   log_error(189,"DC field with no data"); // RPI 609
+	    	    }
                 dc_fill(dc_dup * dc_len); // RPI 265 align within ds/dc
 	    	    dc_len = 0;
 	       }
@@ -5072,10 +5088,8 @@ private void get_hex_llbddd(){
 						}
 					} else if (exp_next_char(')')){
 						exp_index++;
-						b = exp_len;  // RPI 538 (was ll)
+						ll = exp_val;  // RPI 538 (was ll), RPI 613 (was b = exp_len in err)
 					}
-				} else {
-					ll = exp_len;
 				}
 			}
 			hex_bddd = get_exp_abs_bddd(b,ddd);
@@ -5320,8 +5334,10 @@ private String get_exp_rel_bddd(){
 	cur_esd_base = exp_esd; // RPI 301
 	while (index < cur_use_end){
 		if (use_base_esd[index] == cur_esd_base // RPI 301
-			&& (exp_use_lab == null 
-				|| use_lab[index].equals(exp_use_lab))  // RPI 274
+			&& ((exp_use_lab != null 
+				 && use_lab[index].equals(exp_use_lab))  // RPI 274
+			    || (exp_use_lab == null  // RPI 609
+			        && use_lab[index] == ""))
 			){
 			test_offset = exp_val - use_base_loc[index];
 			if (get_bdddhh){
@@ -5402,7 +5418,7 @@ private String get_exp_abs_xbddd(){
 					b = exp_val;
 				}
 			} else if (exp_next_char(')')){
-				b = exp_val; 
+				x = exp_val;  // RPI 612 
 				exp_index++;
 			}
 		}
@@ -6763,15 +6779,7 @@ public void process_equ(){ // RPI 415
 				if (exp_next_char(',')){
 					// equ 5th explicit attra asm attr
 				    String setc_value = exp_text.substring(exp_index+1).toUpperCase();
-					if (setc_value.length() > 2){
-						if (setc_value.charAt(2)  <= ' '){
-							setc_value = setc_value.substring(0,2);
-						} else if (setc_value.length() > 4 
-								&& setc_value.charAt(4) <= ' '){
-							setc_value = setc_value.substring(0,4);
-						}
-					}
-				    sym_attra[store_sid] = setc_value;
+				    sym_attra[store_sid] = setc_value; // RPI 615 remove bad code setting string length
 					int index = 0;
 					boolean attra_found = false;
 					while (!attra_found && index < sym_attra_type.length){

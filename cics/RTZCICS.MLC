@@ -1,0 +1,124 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+DFHEISTG DSECT       DSA STORAGE
+RTZCICS  CSECT
+*
+* THIS PROGRAM JUST TESTS MACRO EXPANSION
+*
+*** LOAD ***
+*
+* VALID FORMS
+         EXEC  CICS LOAD PROGRAM('MYPROG')
+         EXEC  CICS LOAD PROGRAM(MYPROG)
+         EXEC  CICS LOAD PROGRAM('MYPROG') SET(3) ENTRY(4)             X
+               LENGTH(LEN)
+         EXEC  CICS LOAD PROGRAM('MYPROG') SET(R3) ENTRY(R4)           X
+               FLENGTH(FLEN)
+         EXEC  CICS LOAD PROGRAM(MYPROG) SET(R3) ENTRY(R4)             X
+               LENGTH(LEN)
+         EXEC  CICS LOAD PROGRAM(MYPROG) SET(R3) ENTRY(R4)             X
+               FLENGTH(FLEN)
+* INVALID FORMS
+         EXEC  CICS LOAD
+         EXEC  CICS LOAD PROGRAM('TOOBIGPROG')
+         EXEC  CICS LOAD PROGRAM(MYPROG) SET(BADREG)
+         EXEC  CICS LOAD PROGRAM(MYPROG) ENTRY(BADREG)
+         EXEC  CICS LOAD PROGRAM(MYPROG) SET(R3) ENTRY(R4)             X
+               FLENGTH(FLEN) LENGTH(LEN)
+*
+*** LINK ***
+*
+* VALID FORMS
+         EXEC  CICS LINK PROGRAM('MYPROG')
+         EXEC  CICS LINK PROGRAM(MYPROG)
+         EXEC  CICS LINK PROGRAM('MYPROG') COMMAREA(MYCOMM)
+         EXEC  CICS LINK PROGRAM('MYPROG') COMMAREA(MYCOMM) LENGTH(50)
+         EXEC  CICS LINK PROGRAM('MYPROG') COMMAREA(MYCOMM) LENGTH(LEN)
+         EXEC  CICS LINK PROGRAM('MYPROG') COMMAREA(MYCOMM)            X
+               LENGTH(L'LEN)
+* INVALID FORMS
+         EXEC  CICS LINK
+         EXEC  CICS LINK PROGRAM('TOOBIGPROG')
+         EXEC  CICS LINK PROGRAM(MYPROG) LENGTH(99)
+         EXEC  CICS LINK PROGRAM(MYPROG) LENGTH(LEN)
+         EXEC  CICS LINK PROGRAM(MYPROG) LENGTH(L'LEN)
+*
+*** RECEIVE ***
+*
+* VALID FORMS
+         EXEC  CICS RECEIVE
+         EXEC  CICS RECEIVE INTO(MYCOMM) LENGTH(LEN)
+* INVALID FORMS
+         EXEC  CICS RECEIVE              LENGTH(LEN)
+         EXEC  CICS RECEIVE INTO(MYCOMM)
+         EXEC  CICS RECEIVE INTO(MYCOMM) LENGTH(20)
+*
+*** RETURN ***
+*
+* VALID FORMS
+         EXEC  CICS RETURN
+         EXEC  CICS RETURN TRANSID('A')
+         EXEC  CICS RETURN TRANSID('AB')
+         EXEC  CICS RETURN TRANSID('ABC')
+         EXEC  CICS RETURN TRANSID('ABCD')
+         EXEC  CICS RETURN TRANSID(MYTRAN)
+*
+         EXEC  CICS RETURN TRANSID('ABCD') COMMAREA(MYCOMM)
+         EXEC  CICS RETURN TRANSID('ABCD') COMMAREA(MYCOMM) LENGTH(20)
+         EXEC  CICS RETURN TRANSID('ABCD') COMMAREA(MYCOMM) LENGTH(LEN)
+         EXEC  CICS RETURN TRANSID('ABCD') COMMAREA(MYCOMM)            X
+               LENGTH(L'MYCOMM)
+* INVALID FORMS
+         EXEC  CICS RETURN TRANSID('')
+         EXEC  CICS RETURN TRANSID('ABCDE')
+*
+         EXEC  CICS RETURN                 COMMAREA(MYCOMM)
+         EXEC  CICS RETURN                                  LENGTH(20)
+         EXEC  CICS RETURN                                  LENGTH(LEN)
+         EXEC  CICS RETURN TRANSID('ABCD')                  LENGTH(20)
+         EXEC  CICS RETURN TRANSID('ABCD')                  LENGTH(LEN)
+         EXEC  CICS RETURN TRANSID(MYTRAN)                  LENGTH(20)
+         EXEC  CICS RETURN TRANSID(MYTRAN)                  LENGTH(LEN)
+         EXEC  CICS RETURN                 COMMAREA(MYCOMM) LENGTH(20)
+         EXEC  CICS RETURN                 COMMAREA(MYCOMM) LENGTH(LEN)
+*
+*** SEND ***
+*
+* VALID FORMS
+         EXEC  CICS SEND FROM(MYCOMM) LENGTH(20)
+         EXEC  CICS SEND FROM(MYCOMM) LENGTH(LEN)
+         EXEC  CICS SEND FROM(MYCOMM) LENGTH(L'MYCOMM)
+* INVALID FORMS
+         EXEC  CICS SEND
+         EXEC  CICS SEND FROM(MYCOMM)
+*
+*** XCTL ***
+*
+* VALID FORMS
+         EXEC  CICS XCTL PROGRAM('MYPROG')
+         EXEC  CICS XCTL PROGRAM(MYPROG)
+         EXEC  CICS XCTL PROGRAM('MYPROG') COMMAREA(MYCOMM)
+         EXEC  CICS XCTL PROGRAM('MYPROG') COMMAREA(MYCOMM) LENGTH(50)
+         EXEC  CICS XCTL PROGRAM('MYPROG') COMMAREA(MYCOMM) LENGTH(LEN)
+         EXEC  CICS XCTL PROGRAM('MYPROG') COMMAREA(MYCOMM)            X
+               LENGTH(L'MYCOMM)
+* INVALID FORMS
+         EXEC  CICS XCTL
+         EXEC  CICS XCTL PROGRAM('TOOBIGPROG')
+         EXEC  CICS XCTL PROGRAM(MYPROG) LENGTH(99)
+         EXEC  CICS XCTL PROGRAM(MYPROG) LENGTH(LEN)
+*
+MYCOMM   DS    CL50
+MYTRAN   DC    C'ABCD'
+LEN      DC    H'20'
+FLEN     DC    F'0'
+MYPROG   DC    CL8'MYPROG'
+BADREG   EQU   *
+*
+         EQUREGS
+         END
+

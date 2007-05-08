@@ -159,7 +159,8 @@ import javax.swing.Timer;
     * 09/09/06 RPI 440 correct reset of ez390_startup in sz390
     * 01/15/07 RPI 535 issue FFF abend on internal trap with dump
     * 04/07/07 RPI 582 set R1 to addr of addr of PARM
-    * 04/16/07 RPI 595 echo WTOR reply to console if not GUAM or TEST 
+    * 04/16/07 RPI 595 echo WTOR reply to console if not GUAM or TEST
+    * 05/07/07 RPI 610 correct XCTL link on mult link,xctl,exit 
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -258,7 +259,6 @@ public void process_ez390(String[] args,JTextArea log_text,JTextField command_te
     if (tz390.opt_ipl.length() > 0){
     	run_pgm(pz390.zcvt_ipl_pgm);
     	sz390.ez390_pgm = null;
-    	sz390.cur_link_stk = 0;
     	sz390.tot_link_stk = 0;
     }
     run_pgm(pz390.zcvt_user_pgm);

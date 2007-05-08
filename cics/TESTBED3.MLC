@@ -1,0 +1,56 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+DFHEISTG DSECT       DSA STORAGE
+SENDLNS5 DS    XL(LINE5END)
+SENDLNS6 DS    XL(LINE6END)
+TESTBED3 CSECT
+*
+* TEST BED 3
+*
+*    XCTL'D FROM TESTBED2 AND THEN TESTBED1 WITH COMMAREA
+*    DISPLAYS QUOTES DEPENDING ON COMMAREA ABSENCE OR PRESENCE
+*
+         ICM   R4,15,DFHEICAP     ANY COMMAREA ?
+         BNZ   TRYCOMM1           EXIT IF THERE IS
+         EXEC  CICS SEND FROM(SENDLNS5) LENGTH(LINE5LEN)
+         B     RETURN             EXIT
+*
+TRYCOMM1 EQU   *
+         CLC   0(6,R4),=C'QUOTE6' IS IT QUOTE 6 ?
+         BNE   ABEND              EXIT IF NOT
+         MVC   SENDLNS6(LINE6END),LINE6 MESSAGE
+         EXEC  CICS SEND FROM(SENDLNS6) LENGTH(LINE6LEN)
+RETURN   EQU   *
+         EXEC  CICS RETURN
+*
+ABEND    EQU   *
+         ABEND 999,DUMP
+*
+LINE5    EQU   *
+         TN3270 WCC_KD
+         TN3270 (SBA,20,2)
+         DC    CL55'We are such stuff as dreams are made on'
+         TN3270 (SBA,21,2)
+         DC    CL55'And our little life is rounded with a sleep'
+         TN3270 (SBA,22,2)
+         DC    CL55'END'
+LINE5END EQU   *-LINE5
+LINE5LEN DC    AL2(*-LINE5)
+*
+LINE6    EQU   *
+         TN3270 WCC_KD
+         TN3270 (SBA,23,2)
+         DC    CL55'Brevity is the soul of wit'
+         TN3270 (SBA,24,2)
+         DC    CL55'END - Task end, now press clear'
+LINE6END EQU   *-LINE6
+LINE6LEN DC    AL2(*-LINE6)
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         END
+

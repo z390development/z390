@@ -1,0 +1,94 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         CICS_XCTL
+         LCLC  &PROGRAM,&COMMAREA,&LENGTH
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  &SYSLIST(&IP)
+         AIF   ('&PARM'(1,8)  EQ 'PROGRAM(').PROGRAM
+         AIF   ('&PARM'(1,9)  EQ 'COMMAREA(').COMMAREA
+         AIF   ('&PARM'(1,7)  EQ 'LENGTH(').LENGTH
+         AGO   .PLOOP
+.PROGRAM ANOP
+&PROGRAM SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.COMMAREA ANOP
+&COMMAREA SETC '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.LENGTH  ANOP
+&LENGTH  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.ELOOP   ANOP
+         AIF   (&PROGRAM EQ '').MISPROG
+         AIF   (&COMMAREA NE '').COMMCHK
+         AIF   (&LENGTH EQ '').COMMCHK
+         MNOTE 12,'LENGTH WITHOUT COMMAREA'
+         MEXIT
+.COMMCHK ANOP
+         AIF   (&COMMAREA NE '').GOTCOMM
+         XC    DFHEICAP,DFHEICAP  CLEAR COMMAREA ADDRESS
+         XC    EIBCALEN,EIBCALEN  CLEAR COMMAREA LENGTH
+         AGO   .ALLDONE
+.GOTCOMM ANOP
+         AIF   (&LENGTH NE '').LENVAL
+&LENGTH  SETC  'L''&COMMAREA'
+         AGO   .LENNUM
+.LENVAL  ANOP
+         AIF   ('&LENGTH'(1,2) EQ 'L''').LENNUM
+         AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
+.LENNUM  ANOP
+         LH    R15,=AL2(&LENGTH)  R15=NUMERIC LENGTH
+         AGO   .COMMCPY
+.LENLABL ANOP
+         LH    R15,&LENGTH        R15=LENGTH FROM LABEL
+.COMMCPY ANOP
+         LA    R14,&COMMAREA      COMMAREA ADDRESS
+         C     R14,DFHEICAP       SAME COMMAREA ADDRESS ?
+         BNE   CICS_XCTL_&SYSNDX._01 EXIT IF NOT
+         C     R15,EIBCALEN       SAME COMMAREA LENGTH ?
+         BE    CICS_XCTL_&SYSNDX._02 EXIT IF IT IS
+CICS_XCTL_&SYSNDX._01 DS 0H
+.* MUST TAKE A COPY OF THE COMMAREA
+         STH   R15,EIBCALEN       OLD LENGTH HOLDING AREA
+         GETMAIN R,LV=(R15)
+         LH    R15,EIBCALEN       R15=OLD LENGTH
+         STH   R0,EIBCALEN        SAVE ACTUAL LENGTH ACQUIRED
+         ST    R1,DFHEICAP        SAVE COMMAREA COPY ADDRESS
+         LR    R0,R1              R0=NEW ADDRESS
+         LR    R1,R15             USE OLD LENGTH FOR RECEIVING AREA
+         MVCL  R0,R14             COPY DATA
+         MVI   TCTTECND,X'FF'     TELL RETURN, FREEMAIN IS NEEDED
+CICS_XCTL_&SYSNDX._02 DS 0H
+.ALLDONE ANOP
+         MVC   EIBFN,=X'0E04'     SET EIBFN
+.* MUST COPY THE PARMS, BECAUSE WE HAVE TO FREE THE DSA
+.* THE CURRENT PROGRAM WILL BE AUTO-FREED
+         GETMAIN R,LV=12
+         MVC   0(12,R1),DFHEITCT  MOVE PARMS INTO GETMAINED AREA
+         LR    R14,R1             SAVE PARM ADDRESS
+.* FREE THE DSA
+         FREEMAIN A=(R13),LA=DFHEILEN
+         LR    R1,R14             RESTORE PARM ADDRESS
+         AIF   ('&PROGRAM'(1,1) EQ '''').STRING
+         XCTL  EPLOC=&PROGRAM
+         MEXIT
+.STRING  ANOP
+&PROGLEN SETA  K'&PROGRAM
+         AIF   (&PROGLEN LT 3 OR &PROGLEN GT 10).BADPROG
+&PROGRAM SETC  '&PROGRAM'(2,&PROGLEN-2)
+         XCTL  EP=&PROGRAM
+         MEXIT
+.MISPROG MNOTE 12,'PROGRAM IS MISSING'
+         MEXIT
+.BADPROG MNOTE 12,'INVALID PROGRAM'
+         MEXIT
+         MEND
+

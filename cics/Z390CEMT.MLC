@@ -1,0 +1,520 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 05/07/07 DSH correct DC XL4 to add data per RPI  609
+*********************************************************************
+DFHEISTG DSECT                    DSA STORAGE
+PARSE1   DS    C                  COMMAND
+PARSE2   DS    CL4                OPERATION TYPE
+PARSE3   DS    CL3                OPERATION MODIFIER
+*
+DFHPCTAD DS    A                  PCT ADDRESS
+*
+* I SYS  MESSAGE AREA
+SNDISYST DS    CL(ISYSTITE)
+SNDISYSL DS    CL(ISYSLSTL)
+* I TER  MESSAGE AREA
+SNDITERT DS    CL(ITERTITE)
+SNDITERL DS    CL(ITERLSTL)
+* I TRAN MESSAGE AREA
+SNDITRNT DS    CL(ITRNTITE)
+SNDITRNL DS    CL(ITRNLSTL)
+*
+Z390CEMT CSECT
+* CEMT FUNCTIONS
+*   I SYS        REQUEST Z390CICS.INI INFO AND DISPLAY
+*   I TER        REQUEST TERMINAL INFO AND DISPLAY
+*   I TRAN       PCT DISPLAY
+*   S TER OUT    CLOSES THE Z390KCP THREAD
+*   P SHUT       CLOSES THE Z390KCP THREAD AND Z390CICS
+*                CLOSE ALL Z390KCP THREADS, UNLESS THERE IS A TASK
+*                WHEN NO THREADS, CLOSE Z390CICS
+*   P SHUT IMM   CLOSES ALL Z390KCP THREADS AND Z390CICS
+*
+         L     R6,TCTTEDA         INITIAL TIOA
+         AHI   R6,3               MISS AID, CURSOR ADDRESS
+         CLI   0(R6),SBA          PRECEDING SBA ?
+         BNE   PARSLP0            EXIT IF NOT
+         AHI   R6,3               MISS SBA
+PARSLP0  EQU   *
+         LA    R7,50              LIMIT OF 50 BYTES
+PARSLP1  EQU   *
+* FIND FIRST BLANK AFTER CEMT
+         CLI   0(R6),C' '         FIND BLANK ?
+         BE    PARSLP2            EXIT WHEN FOUND
+         AHI   R6,1               BUMP POINTER
+         BCT   R7,PARSLP1         LOOP
+         B     PARSERR            EXIT
+*
+PARSLP2  EQU   *
+* FIND NEXT CHAR
+         CLI   0(R6),C' '         CHAR ?
+         BH    PARSLP3            EXIT IF IT IS
+         AHI   R6,1               BUMP POINTER
+         BCT   R7,PARSLP2         LOOP
+         B     PARSERR            EXIT
+PARSLP3  EQU   *
+* CHECK OPERATION TYPE IS SINGLE CHAR
+         CLI   1(R6),C' '         NEXT BYTE IS BLANK ?
+         BNE   PARSERR            ERROR IF NOT
+         MVC   PARSE1,0(R6)       MOVE OPERATION TYPE
+         AHI   R6,1               BUMP POINTER
+         AHI   R7,-1              ADJUST LOOP COUNTER
+PARSLP4  EQU   *
+* FIND NEXT CHAR
+         CLI   0(R6),C' '         CHAR ?
+         BH    PARSLP5            EXIT IF IT IS
+         AHI   R6,1               BUMP POINTER
+         BCT   R7,PARSLP4         LOOP
+         B     PARSERR            EXIT
+PARSLP5  EQU   *
+         CLI   3(R6),C' '         3 CHAR OP TYPE (MORE OPERANDS) ?
+         BNE   PARSLP5A           EXIT IF NOT
+         MVC   PARSE2(3),0(R6)    SAVE OPERATION TYPE
+         B     PARSLP6            EXIT
+PARSLP5A EQU   *
+         CLI   3(R6),X'00'        3 CHAR OP TYPE ?
+         BNE   PARSLP6            EXIT IF NOT
+         MVC   PARSE2(3),0(R6)    SAVE OPERATION TYPE
+         B     PROCESS            EXIT
+PARSLP6  EQU   *
+         CLI   4(R6),X'00'        4 CHAR OPERATION TYPE ?
+         BNE   PARSLP7            EXIT IF NOT
+         MVC   PARSE2,0(R6)       SAVE OPERATION TYPE
+         B     PROCESS            EXIT
+PARSLP7  EQU   *
+         CLI   3(R6),C' '         3RD PARM ?
+         BNE   PARSERR            ERROR IF NOT
+* MUST BE S TER OUT
+         AHI   R6,3               BUMP POINTER
+         AHI   R7,-3              ADJUST LOOP COUNTER
+PARSLP8  EQU   *
+* FIND NEXT CHAR
+         CLI   0(R6),C' '         CHAR ?
+         BH    PARSLP9            EXIT IF IT IS
+         AHI   R6,1               BUMP POINTER
+         BCT   R7,PARSLP8         LOOP
+         B     PARSERR            EXIT IF BAD
+PARSLP9  EQU   *
+         MVC   PARSE3,0(R6)       MOVE OPERATION MODIFIER
+*
+PROCESS  EQU   *
+         OC    PARSE1(8),=8C' '   CONVERT TO UPPER CASE
+* SYNTAX CHECKS
+         CLI   PARSE1,C'I'        I ?
+         BNE   TRYS               EXIT IF NOT
+* CEMT I
+         CLC   PARSE2(3),=C'SYS'  I SYS ?
+         BE    ISYS               EXIT IF IT IS
+         CLC   PARSE2(3),=C'TER'  I TER ?
+         BE    ITER               EXIT IF IT IS
+         CLC   PARSE2,=C'TRAN'    I TRAN ?
+         BE    ITRN               EXIT IF IT IS
+         B     PARSERR            EXIT IF BAD
+*
+ISYS     EQU   *
+* PROCESS CEMT I SYS, IGNORE OTHER PARMS
+         L     R8,CEMTI           R8=MESSAGE LENGTH
+         LA    R5,CEMTI           R5=MESSAGE
+         MVC   CEMTIREQ,=C'FE01'  SET REQUEST CODE
+         MVC   CEMTITRM,TCTTETI   SET TERMID
+         TCPIO SEND,MSG=(R5),LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         L     R8,CEMTRCVE        R8=MESSAGE LENGTH
+         TCPIO RECEIVE,MSG=CEMTRCVE,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         MVC   SNDISYST,ISYSTITL  SET UP TITLE
+         LA    R6,SNDISYSL        R6=DESTINATION
+         LA    R8,ISYSLIST        R8=SOURCE
+         LA    R7,ISYSLSTL        DESTINATION LENGTH
+         LR    R9,R7              SOURCE LENGTH
+         MVCL  R6,R8              INITIALIZE DISPLAY
+         LA    R6,SNDISYSL        R6=DISPLAY ADDRESS
+         USING ISYSDSCT,R6
+         LA    R7,CEMTDATA        R7=RECEIVED DATA
+         USING ISYSDATA,R7
+* MOVE THE DATA
+         MVC   ISYSPATH,ISYSDJRP  MOVE JAR_PATH
+         MVC   ISYSTPFX,ISYSDPFX  MOVE TERMID_PREFIX
+         MVC   ISYSMAXT(1),ISYSDTHD MOVE MAXTHREADS
+         OI    ISYSMAXT,C'0'      CONVERT TO CHAR
+         CLI   ISYSDTHD,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX1           EXIT IF NOT
+         MVC   ISYSMAXT,=C'10'    SET 10
+ISYSHEX1 EQU   *
+         MVC   ISYSLOCL(1),ISYSDLCL MOVE LOCAL_TERMINALS
+         OI    ISYSLOCL,C'0'      CONVERT TO CHAR
+         CLI   ISYSDLCL,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX2           EXIT IF NOT
+         MVC   ISYSLOCL,=C'10'    SET 10
+ISYSHEX2 EQU   *
+         MVC   ISYSREMT(1),ISYSDRMT MOVE REMOTE_TERMINALS
+         OI    ISYSREMT,C'0'      CONVERT TO CHAR
+         CLI   ISYSDRMT,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX3           EXIT IF NOT
+         MVC   ISYSREMT,=C'10'    SET 10
+ISYSHEX3 EQU   *
+         MVC   ISYSLTRC,ISYSDTRL  MOVE TRACE_LOCALS
+         MVC   ISYSZTRC,ISYSDTRZ  MOVE TRACE_Z390CICS
+         EXEC  CICS SEND FROM(SNDISYST) LENGTH(ISYSLEN)
+         B     RETURN             END OF PROGRAM
+*
+ITER     EQU   *
+* PROCESS CEMT I TER, IGNORE OTHER PARMS
+         L     R8,CEMTI           R8=MESSAGE LENGTH
+         LA    R5,CEMTI           R5=MESSAGE
+         MVC   CEMTIREQ,=C'FE00'  SET REQUEST CODE
+         MVC   CEMTITRM,TCTTETI   SET TERMID
+         TCPIO SEND,MSG=(R5),LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         L     R8,CEMTRCVE        R8=MESSAGE LENGTH
+         TCPIO RECEIVE,MSG=CEMTRCVE,LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         MVC   SNDITERT,ITERTITL  SET UP TITLE
+         LA    R6,SNDITERL        R6=DESTINATION
+         LA    R8,ITERLIST        R8=SOURCE
+         LA    R7,ITERLSTL        DESTINATION LENGTH
+         LR    R9,R7              SOURCE LENGTH
+         MVCL  R6,R8              INITIALIZE LIST
+         LA    R6,SNDITERL        R6=LIST ADDRESS
+         USING ITERDSCT,R6
+         LA    R7,CEMTDATA        R7=RECEIVED DATA
+         USING THRDDSCT,R7
+         LA    R8,10              R8=MAX THREADS
+         LA    R9,C'0'            R9=TERMID SUFFIX
+ITERLOOP EQU   *
+         MVC   ITERTERM(3),EIBTRMID MOVE TERMID PREFIX
+         STC   R9,ITERTERM+3      MOVE TERMID SUFFIX
+         CLI   THRDTYPE,THRDTYPR  IS IT UNALLOCATED ?
+         BE    ITERLOC            EXIT IF IT IS
+         MVC   ITERTYPE,=CL6'LOCAL' PRESUME LOCAL
+         CLI   THRDTYPE,LOCAL     IS IT LOCAL ?
+         BE    ITERLOC            EXIT IF IT IS
+         MVC   ITERTYPE,=C'REMOTE' SET REMOTE
+ITERLOC  EQU   *
+         MVC   ITERTRAN,THRDTRAN  MOVE TRANSID
+         MVC   ITERIND,=CL9'RUNNING' PRESUME RUNNING
+         CLI   THRDIND,RUNNING    RUNNING STATUS ?
+         BE    ITERRUN            EXIT IF IT IS
+         MVC   ITERIND,=C'AVAILABLE' SET AVAILABLE
+ITERRUN  EQU   *
+         AHI   R6,ITERLEN         BUMP OUTPUT POINTER
+         AHI   R7,THRDLEN         BUMP INPUT POINTER
+         AHI   R9,1               BUMP TERMID SUFFIX
+         BCT   R8,ITERLOOP        LOOP
+         EXEC  CICS SEND FROM(SNDITERT) LENGTH(ITERMLEN)
+         B     RETURN             END OF PROGRAM
+*
+ITRN     EQU   *
+* PROCESS CEMT I TRAN, IGNORE OTHER PARMS
+* ### LIMIT OF 10
+* ### LATER, EXTEND AND CODE PAGE FORWARD (PF7) AND BACK (PF8)
+         EXEC  CICS LOAD PROGRAM('DFHPCT') SET(R6)
+         ST    R6,DFHPCTAD        SAVE LOAD POINT
+         MVC   SNDITRNT,ITRNTITL  SET UP TITLE
+         LA    R6,SNDITRNL        R6=DESTINATION
+         LA    R8,ITRNLIST        R8=SOURCE
+         LA    R7,ITRNLSTL        DESTINATION LENGTH
+         LR    R9,R7              SOURCE LENGTH
+         MVCL  R6,R8              INITIALIZE LIST
+         LA    R6,SNDITRNL        R6=LIST ADDRESS
+         USING ITRNDSCT,R6
+         L     R7,DFHPCTAD        R7=PCT ADDRESS
+         LA    R8,10              R8=MAX TRANSIDS
+ITRNLOOP EQU   *
+         MVC   ITRNTRAN,0(R7)     MOVE TRANSID
+         MVC   ITRNPROG,4(R7)     MOVE PROGRAM
+         MVC   BLDLNAME,4(R7)     SAVE PROGRAM NAME
+         BLDL  0,BLDLLIST         BLDL
+         LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
+         BZ    ITRNINCR           EXIT IF FOUND
+* PROGRAM NOT FOUND
+         MVC   ITRNMSG,=C'PROGRAM NOT FOUND' SET MESSAGE
+ITRNINCR EQU   *
+         AHI   R6,ITRNLEN         BUMP OUTPUT POINTER
+         AHI   R7,12              BUMP PCT POINTER
+         CLI   0(R7),X'FF'        END OF PCT ?
+         BE    ITRNSEND           EXIT IF IT IS
+         BCT   R8,ITRNLOOP        LOOP
+ITRNSEND EQU   *
+         EXEC  CICS SEND FROM(SNDITRNT) LENGTH(ITRNMLEN)
+         DELETE EP=DFHPCT         REDUCE USE COUNT ### DO E-C RELEASE
+         B     RETURN             END OF PROGRAM
+*
+TRYS     EQU   *
+* SYNTAX CHECK
+         CLI   PARSE1,C'S'        S ?
+         BNE   TRYP               EXIT IF NOT
+         CLC   PARSE2(3),=C'TER'  S TER ?
+         BNE   PARSERR            ERROR IF NOT
+         CLC   PARSE3,=C'OUT'     S TER OUT ?
+         BNE   PARSERR            ERROR IF NOT
+* PROCESS CEMT S TER OUT, IGNORE OTHER PARMS
+         MVI   TCTTETS,X'FF'      SET SHUTTERM REQUEST
+         B     RETURN             END OF PROGRAM
+*
+TRYP     EQU   *
+         L     R8,CEMTI           R8=MESSAGE LENGTH
+         LA    R5,CEMTI           R5=MESSAGE
+         CLI   PARSE1,C'P'        P ?
+         BNE   PARSERR            ERROR IF NOT
+         CLC   PARSE2,=C'SHUT'    P SHUT ?
+         BNE   PARSERR            ERROR IF NOT
+         MVI   TCTTETS,X'FF'      SET SHUTTERM REQUEST
+         MVC   CEMTIREQ,=C'FE02'  SET REQUEST CODE
+         MVC   CEMTITRM,TCTTETI   SET TERMID
+         CLC   PARSE3,=C'IMM'     P SHUT IMM ?
+         BNE   PSEND              EXIT IF NOT
+         MVC   CEMTIREQ,=C'FE03'  SET REQUEST CODE
+PSEND    EQU   *
+         TCPIO SEND,MSG=(R5),LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         B     RETURN             EXIT
+*
+PARSERR  EQU   *
+         EXEC  CICS SEND FROM(SYNTAX) LENGTH(SYNTAXL)
+         B     RETURN             EXIT
+*
+TCPIOERR EQU   *
+         EXEC  CICS SEND FROM(TCPERR) LENGTH(TCPERRL)
+         B     RETURN             EXIT
+*
+RETURN   EQU   *
+         EXEC  CICS RETURN
+*
+CEMTI    DS    0F
+* REQUEST INFO
+* FE00  REQUEST I TER DATA
+* FE01  REQUEST I SYS DATA
+* FE02  REQUEST P SHUT
+* FE03  REQUEST P SHUT IMM
+         DC    A(CEMTIEND-*)
+CEMTIREQ DS    CL4                REQUEST ID
+CEMTITRM DS    CL4                TERMID
+CEMTIEND EQU   *
+*
+CEMTRCVE DS    0F
+* RECEIVE AREA
+* MUST KEEP THIS CONSISTANT WITH ALL Z390CICS SENDS
+         DC    A(128)             MAX LENGTH
+         DS    CL4                REQUEST CODE
+         DS    CL4                TERMINAL ID
+CEMTDATA DS    CL116              RETURNED DATA
+*
+* I SYS -- STRUCTURES
+*
+* -----KEYWORD----  VALUE---------------
+* JAR_PATH          E:\SOFTWARE\Z390
+* TERMID_PREFIX     DON
+*
+ISYSTITL EQU   *
+         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA),IC
+         DC    C'CEMT I SYS'
+         TN3270 (SBA,3,1),(SF,ATT_PA)
+         DC    C'-----KEYWORD----  VALUE---------------'
+ISYSTITE EQU   *-ISYSTITL
+*
+ISYSLIST EQU   *
+         TN3270 (SBA,4,2)
+         DC    CL18'JAR_PATH'
+         DC    CL50' '
+         TN3270 (SBA,5,2)
+         DC    CL18'TERMID_PREFIX'
+         DC    CL3' '
+         TN3270 (SBA,6,2)
+         DC    CL18'MAXTHREADS'
+         DC    CL2' '
+         TN3270 (SBA,7,2)
+         DC    CL18'LOCAL_TERMINALS'
+         DC    CL2' '
+         TN3270 (SBA,8,2)
+         DC    CL18'REMOTE_TERMINALS'
+         DC    CL2' '
+         TN3270 (SBA,9,2)
+         DC    CL18'TRACE_LOCALS'
+         DC    CL3' '
+         TN3270 (SBA,10,2)
+         DC    CL18'TRACE_Z390CICS'
+         DC    CL3' '
+ISYSLSTL EQU   *-ISYSLIST
+ISYSLEN  DC    AL2(*-ISYSTITL)
+*
+* I TER -- STRUCTURES
+*
+* TERM  -TYPE-  TRAN  -STATUS--
+* DON0  REMOTE  GUI6  RUNNING
+* DON1  LOCAL         AVAILABLE
+*
+ITERTITL EQU   *
+         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA),IC
+         DC    C'CEMT I TER'
+         TN3270 (SBA,3,1),(SF,ATT_PA)
+         DC    C'TERM  -TYPE-  TRAN  -STATUS--'
+ITERTITE EQU   *-ITERTITL
+*
+ITERLIST EQU   *
+         TN3270 (SBA,4,2)
+         DC    CL(ITERLEN-3)' '
+         TN3270 (SBA,5,2)
+         DC    CL(ITERLEN-3)' '
+         TN3270 (SBA,6,2)
+         DC    CL(ITERLEN-3)' '
+         TN3270 (SBA,7,2)
+         DC    CL(ITERLEN-3)' '
+         TN3270 (SBA,8,2)
+         DC    CL(ITERLEN-3)' '
+         TN3270 (SBA,9,2)
+         DC    CL(ITERLEN-3)' '
+         TN3270 (SBA,10,2)
+         DC    CL(ITERLEN-3)' '
+         TN3270 (SBA,11,2)
+         DC    CL(ITERLEN-3)' '
+         TN3270 (SBA,12,2)
+         DC    CL(ITERLEN-3)' '
+         TN3270 (SBA,13,2)
+         DC    CL(ITERLEN-3)' '
+ITERLSTL EQU   *-ITERLIST
+ITERMLEN DC    AL2(*-ITERTITL)
+*
+* I TRAN -- STRUCTURES
+*
+* TRAN  PROGRAM-  ----MESSAGES-----
+* AAAA  MELPROG1  PROGRAM NOT FOUND
+* CEMT  Z390CEMT
+*
+ITRNTITL EQU   *
+         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA),IC
+         DC    C'CEMT I TRAN'
+         TN3270 (SBA,3,1),(SF,ATT_PA)
+         DC    C'TRAN  PROGRAM-  ----MESSAGES-----'
+ITRNTITE EQU   *-ITRNTITL
+*
+ITRNLIST EQU   *
+         TN3270 (SBA,4,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,5,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,6,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,7,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,8,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,9,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,10,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,11,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,12,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,13,2)
+         DC    CL(ITRNLEN-3)' '
+ITRNLSTL EQU   *-ITRNLIST
+ITRNMLEN DC    AL2(*-ITRNTITL)
+*
+SYNTAX   EQU   *
+         TN3270 WCC_KD,(SBA,24,1)
+         DC    C'CEMT SYNTAX ERROR'
+SYNTAXL  DC    AL2(*-SYNTAX)
+*
+TCPERR   EQU   *
+         TN3270 WCC_KD,(SBA,24,1)
+         DC    C'CEMT TCPIO ERROR'
+TCPERRL  DC    AL2(*-TCPERR)
+*
+BLDLLIST DC    H'1'       BLDL LIST WITH 1 ENTRY
+         DC    H'12'      BLDL ENTRY WITH LENGTH EXCLUDING LENGTH FIELD
+BLDLNAME DS    CL8' '     BLDL ENTRY NAME TO FIND IN SYS390 DIR OR CDE
+         DC    XL4'00'    TTRK R=1 IF FOUND K=1 IF CDE OR 0 IF SYS390
+*                 RPI 609 add data to above DC XL4 DSH 05/08/07
+THRDDSCT DSECT
+* MUST KEEP THRDCNTL AND Z390CEMT IN SYNC
+THRDIND  DS    X                  THREAD STATE
+*                                    X'00'=AVAILABLE
+*                                    X'80'=RUNNING
+*                                    X'FF'=SHUTDOWN
+*VAIL    EQU   X'00'
+RUNNING  EQU   X'80'
+*HUTDOWN EQU   X'FF'              ###
+THRDTYPE DS    C                  THREAD TYPE
+*                                    X'00'=UNALLOCATED
+*                                    L=LOCAL
+*                                    R=REMOTE
+LOCAL    EQU   C'L'
+*EMOTE   EQU   C'R'
+THRDTYPR EQU   X'00'
+THRDTRAN DS    CL4                THREAD CURRENT TRANSACTION
+THRDLEN  EQU   *-THRDDSCT
+*
+* I SYS -- DSECT OUTPUT
+*
+ISYSDSCT DSECT
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSPATH DS    CL50               JAR_PATH
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSTPFX DS    CL3                TERMID_PREFIX
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSMAXT DS    CL2                MAXTHREADS
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSLOCL DS    CL2                LOCAL_TERMINALS
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSREMT DS    CL2                REMOTE_TERMINALS
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSLTRC DS    CL3                TRACE_LOCALS
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSZTRC DS    CL3                TRACE_Z390CICS
+*
+* I SYS -- REQUESTED DATA FORMAT
+*
+ISYSDATA DSECT
+ISYSDJRP DS    CL50               JAR_PATH
+ISYSDPFX DS    CL3                TERMID_PREFIX
+ISYSDTHD DS    X                  MAXTHREADS
+ISYSDLCL DS    X                  LOCAL_TERMINALS
+ISYSDRMT DS    X                  REMOTE_TERMINALS
+ISYSDTRL DS    CL3                TRACE_LOCALS
+ISYSDTRZ DS    CL3                TRACE_Z390CICS
+*
+* I TER -- DSECT OUTPUT
+*
+ITERDSCT DSECT
+         DS    CL3                SBA
+ITERTERM DS    CL4                TERMID
+         DS    CL2
+ITERTYPE DS    CL6                LOCAL OR REMOTE
+         DS    CL2
+ITERTRAN DS    CL4                TRANSID
+         DS    CL2
+ITERIND  DS    CL9                RUNNING OR AVAILABLE
+ITERLEN  EQU   *-ITERDSCT
+*
+* I TRAN -- DSECT OUTPUT
+*
+ITRNDSCT DSECT
+         DS    CL3                SBA
+ITRNTRAN DS    CL4                TRANSID
+         DS    CL2
+ITRNPROG DS    CL8                PROGRAM
+         DS    CL2
+ITRNMSG  DS    CL17               MESSAGE
+ITRNLEN  EQU   *-ITRNDSCT
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         END

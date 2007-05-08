@@ -1,0 +1,40 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+DFHEISTG DSECT       DSA STORAGE
+MSGSBA   DS   CL4
+SENDMSG  DS   CL100  MESSAGE BUFFER
+MMMMCIC2 CSECT
+*
+* SEND MSG1 TO GUAM TN3270 TERMINAL
+*
+         MVC   MSGSBA,SBA11
+         MVC   SENDMSG(L'MSG1),MSG1
+         BAL   R14,GETTIME
+         MVC   SENDMSG(13),TIMEHERE
+         EXEC  CICS SEND FROM(MSGSBA) LENGTH(L'MSG1+4)
+         EXEC  CICS RETURN
+*
+GETTIME  EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM
+         MVO   TIMEPACK,TIME
+         MVC   TIMEHERE(13),TIMEEDIT
+         ED    TIMEHERE(13),TIMEPACK
+         BR    R14
+*
+SBA11    TN3270 WCC_KD,(SBA,1,1)
+MSG1     DC    C'  HH:MM:SS.TT HELLO FROM MMMMCIC2'
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402120207A20207A20204B2020'
+TIMEHERE DS    CL13
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         END
+

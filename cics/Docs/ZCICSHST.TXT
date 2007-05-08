@@ -1,0 +1,23 @@
+Z390/CICS History
+-----------------
+
+This is only a brief summary, please refer to the Application
+Programmers Guide and the System Programmers Guide for the details.
+
+Ver  Ship Date    Z390 version
+---  -----------  ------------
+V1   May 1, 2007  V1.3.03b
+   Provides assembly support for CICS programs.
+
+   Includes most parameters associated with the following EXEC CICS
+   commands...
+      LINK, LOAD, RECEIVE, RETURN, SEND, XCTL
+
+   Some basic CEMT functions.
+
+Trademarks
+----------
+CICS is a registered trademark of International Business Corporation.
+
+Author: Melvyn Maltz
+

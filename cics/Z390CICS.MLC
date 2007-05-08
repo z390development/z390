@@ -1,0 +1,811 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+Z390CICS SUBENTRY BASES=(R13,R3)
+*
+* THE REAL CICS, THE COORDINATOR
+* THIS IS BETTER DESCRIBED AS THE GLOBAL MAMAGER OF Z390/CICS
+*
+* READ Z390CICS.INI FILE AND SET ALL PARMS
+*
+         OPEN  Z390INI            OPEN INI FILE
+INIGET   EQU   *
+         GET   Z390INI            GET A RECORD
+         CLI   INIAREA,C'*'       COMMENT ?
+         BE    INIGET             YES, MISS IT
+         CLC   INIAREA(9),=C'JAR_PATH=' GOT A PARAM ?
+         BE    PROCJARP           EXIT IF IT IS
+         CLC   INIAREA(14),=C'TERMID_PREFIX=' GOT A PARAM ?
+         BE    PROCTRMP           EXIT IF IT IS
+         CLC   INIAREA(11),=C'MAXTHREADS=' GOT A PARAM ?
+         BE    PROCMAXT           EXIT IF IT IS
+         CLC   INIAREA(13),=C'TRACE_LOCALS=' GOT A PARAM ?
+         BE    PROCLTRC           EXIT IF IT IS
+         CLC   INIAREA(16),=C'LOCAL_TERMINALS=' GOT A PARAM ?
+         BE    PROCLOCL           EXIT IF IT IS
+         CLC   INIAREA(17),=C'REMOTE_TERMINALS=' GOT A PARAM ?
+         BE    PROCREMT           EXIT IF IT IS
+         CLC   INIAREA(15),=C'TRACE_Z390CICS=' GOT A PARAM ?
+         BE    PROCZTRC           EXIT IF IT IS
+* BAD PARM OR SYNTAX ERROR, WTO AND ABORT
+BADPARM  EQU   *
+         CLOSE Z390INI            CLOSE INI FILE
+BADPARM2 EQU   *
+         WTO   'BAD PARM IN Z390CICS.INI, ABORTING'
+         SUBEXIT RC=16
+*
+PROCJARP EQU   *
+* JAR_PATH=.:\...\...
+* BASIC SYNTAX CHECK
+         CLC   INIAREA+10(2),=C':\' OK ?
+         BNE   BADPARM            ABORT IF NOT
+         MVC   CMD0+1(2),INIAREA+9 MOVE DRIVE:
+* SEARCH FOR BLANK
+         LA    R6,80-9            LOOP LIMIT
+         LA    R7,INIAREA+11      START OF PATH
+JARPLOOP EQU   *
+         CLI   0(R7),C' '         BLANK ?
+         BE    JARPEND            EXIT IF END FOUND
+         AHI   R7,1               BUMP POINTER
+         BCT   R6,JARPLOOP        LOOP
+         B     BADPARM            BLANK NOT FOUND
+JARPEND  EQU   *
+         MVI   0(R7),C'"'         ADD A DOUBLE QUOTE
+         S     R7,=A(INIAREA+12)  CALC LENGTH OF PARM
+         STH   R7,CMD1LEN         SAVE IT
+         EX    R7,JARPMVC         MOVE PATH+"
+         B     INIGET             LOOP
+JARPMVC  MVC   CMD1+4(0),INIAREA+11 MOVE PATH+"
+*
+PROCTRMP EQU   *
+* TERMID_PREFIX=XXX
+         MVC   TRMPREFX,INIAREA+14 MOVE TERMID PREFIX
+         B     INIGET             LOOP
+*
+PROCMAXT EQU   *
+* MAXTHREADS=N OR NN
+         CLI   INIAREA+12,C' '    ONE DIGIT ?
+         BNE   MAXTTWO            EXIT IF NOT
+         PACK  DEC,INIAREA+11(1)  PACK SINGLE DIGIT
+         B     MAXTCVB            EXIT
+MAXTTWO  EQU   *
+         PACK  DEC,INIAREA+11(2)  PACK TWO DIGITS
+MAXTCVB  EQU   *
+         CVB   R6,DEC             CONVERT TO BINARY
+         C     R6,=F'10'          NOT OVER 10 ?
+         BH    BADPARM            ERROR IF IT IS
+         ST    R6,THREADS         SAVE IT
+         B     INIGET             LOOP
+*
+PROCLOCL EQU   *
+* LOCAL_TERMINALS=N OR NN
+         CLI   INIAREA+17,C' '    ONE DIGIT ?
+         BNE   LOCLTWO            EXIT IF NOT
+         PACK  DEC,INIAREA+16(1)  PACK SINGLE DIGIT
+         B     LOCLCVB            EXIT
+LOCLTWO  EQU   *
+         PACK  DEC,INIAREA+16(2)  PACK TWO DIGITS
+LOCLCVB  EQU   *
+         CVB   R6,DEC             CONVERT TO BINARY
+         ST    R6,LOCALS          SAVE IT
+         B     INIGET             LOOP
+*
+PROCREMT EQU   *
+* REMOTE_TERMINALS=N OR NN
+         CLI   INIAREA+18,C' '    ONE DIGIT ?
+         BNE   REMTTWO            EXIT IF NOT
+         PACK  DEC,INIAREA+17(1)  PACK SINGLE DIGIT
+         B     REMTCVB            EXIT
+REMTTWO  EQU   *
+         PACK  DEC,INIAREA+17(2)  PACK TWO DIGITS
+REMTCVB  EQU   *
+         CVB   R6,DEC             CONVERT TO BINARY
+         ST    R6,REMOTES         SAVE IT
+         B     INIGET             LOOP
+*
+PROCLTRC EQU   *
+* TRACE_LOCAL
+         CLI   INIAREA+13,C'N'    =NO ?
+         BE    INIGET             EXIT IF IT IS
+         CLI   INIAREA+13,C'Y'    =YES ?
+         BNE   BADPARM            ERROR IF NOT
+         MVC   KCPOPTS,KCPTRACE   SET TRACE CON
+         B     INIGET             LOOP
+*
+PROCZTRC EQU   *
+         MVC   TRCEZ390,INIAREA+15 SAVE TRACE OPTION
+         CLI   TRCEZ390,C'N'      =NO ?
+         BE    INIGET             EXIT IF OK
+         CLI   TRCEZ390,C'I'      =INT ?
+         BE    INIGET             EXIT IF OK
+         CLI   TRCEZ390,C'A'      =APP ?
+         BE    INIGET             EXIT IF OK
+         CLI   TRCEZ390,C'Y'      =YES ?
+         BE    INIGET             EXIT IF OK
+         B     BADPARM            ERROR IF NOT
+*
+EOFINI   EQU   *
+         CLOSE Z390INI            CLOSE INI FILE
+* CHECK LOCAL AND REMOTE NUMBERS ARE SENSIBLE
+         L     R6,LOCALS          R6=LOCALS
+         A     R6,REMOTES         R6=LOCALS+REMOTES
+         BZ    BADPARM2           ERROR IF NO TERMINALS
+         C     R6,THREADS         SUM CANNOT EXCEED THREADS
+         BH    BADPARM2           ERROR IT IF HAS
+*
+         MVC   WTOFN,=C'1200'     INITIALIZE REQUEST
+         MVC   WTOTERM,=4C' '     NO TERMID
+         MVC   WTOTRAN,=4C' '     NO PRESET TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         MVC   WTOTASKN,=7C' '    NO TASK NUMBER
+         MVC   WTODESC,=CL45'GLOBAL MANAGER INITIALIZED'
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+*
+* START LOCAL THREADS AND INITIALISE THEM WITH DRIVE AND PATH
+* TO Z390.JAR. THIS COMES FROM Z390CICS.INI JAR_PATH=
+*
+* START Z390KCP IN EACH THREAD
+* Z390KCP PRESENTS THE USER WITH A LOGO OR BLANK SCREEN
+* ### RETAIN THE OPTION OF FIRING A TRAN LIKE CESN
+*
+         ICM   R6,15,LOCALS       R6=NO. OF LOCALS
+         BZ    OPENS              EXIT IF NONE
+         SR    R7,R7              R7=THREAD ID
+         SR    R8,R8              R8=COUNT THREADS STARTED
+         LA    R5,THRDCNTL        ADDRESS THREAD CONTROL AREA
+         USING THRDDSCT,R5
+         MVC   WTOFN,=C'1201'     MARK 'KCP IS STARTING'
+         MVC   WTOTASKN,=7C' '    NO TASK NUMBER
+         MVC   WTODESC,=CL45'START Z390KCP'
+*
+LOCLSTRT EQU   *
+         CLI   THRDIND,RUNNING    THREAD RUNNING ?
+         BE    LOCLINCR           EXIT IF IT IS
+         MVC   WTOTERM(3),TRMPREFX SET TERMID PREFIX
+         STC   R7,WTOTERM+3       SAVE HEX TERMID NUMBER (0-9)
+         OI    WTOTERM+3,X'F0'    CONVERT TO CHAR
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         CMDPROC START,ID=(R7)    START THREAD
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND666           EXIT IF BAD
+         CMDPROC WRITE,CMD0,ID=(R7) SEND DRIVE:
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND666           EXIT IF BAD
+         CMDPROC WRITE,CMD1,ID=(R7) SEND PATH
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND666           EXIT IF BAD
+         MVC   KCPTERM,WTOTERM    TELL Z390KCP THE TERM
+* ###    MVC   KCPTRAN,WTOTRAN    TELL Z390KCP THE TRAN
+* ###    MVI   KCPTYPE,C'A'       TELL Z390KCP THE TRAN TYPE
+         CMDPROC WRITE,KCPSTART,ID=(R7) START Z390KCP
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND666           EXIT IF BAD
+         MVI   THRDIND,RUNNING    SET RUNNING STATUS
+         MVI   THRDTYPE,LOCAL     SET LOCAL
+         AHI   R8,1               COUNT THREADS STARTED
+LOCLINCR EQU   *
+         AHI   R5,THRDLEN         BUMP THREAD CONTROL AREA
+         AHI   R7,1               BUMP THREAD ID
+         BCT   R6,LOCLSTRT        LOOP
+*
+         MVC   WTOFN,=C'1202'     SET FN
+         MVC   WTOTERM,=4C' '     NO TERMID
+         MVC   WTOTASKN,=7C' '    NO TASK NUMBER
+         MVC   WTODESC,=CL45' N OF  N LOCAL TERMIDS STARTED'
+         C     R8,=F'10'          IS IT 10 ?
+         BNE   LOCLGD10           EXIT IF NOT
+         MVC   WTODESC(2),=C'10'  MOVE 10
+         B     LOCLOF             EXIT
+LOCLGD10 EQU   *
+         STC   R8,WTODESC+1       SAVE NUMBER STARTED
+         OI    WTODESC+1,X'F0'    INTO CHAR
+LOCLOF   EQU   *
+         CLI   LOCALS+3,X'0A'     IS IT 10 ?
+         BNE   LOCLMX10           EXIT IF NOT
+         MVC   WTODESC+6(2),=C'10' MOVE 10
+         B     LOCLMSG            EXIT
+LOCLMX10 EQU   *
+         MVC   WTODESC+7(1),LOCALS+3 SAVE NUMBER REQUESTED
+         OI    WTODESC+7,X'F0'    INTO CHAR
+LOCLMSG  EQU   *
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+*
+* OPEN SERVER PORT, NO HOST=* MEANS IT'S A SERVER
+*
+OPENS    EQU   *
+         MVC   WTOFN,=C'FF00'     SET FN
+         MVC   WTODESC,=CL45'OPEN SERVER'
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         TCPIO OPEN,PORT=3900     OPEN SERVER PORT
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND777           EXIT IF BAD
+READLOOP EQU   *
+*
+* IT DOESN'T MATTER WHAT IS OUT THERE
+* JUST WAIT FOR SOMETHING TO BE SENT
+*
+* RECEIVE WITHOUT CONN= WILL RETURN CONN IN R2 AND LENGTH IN R1
+*
+* IF A CLIENT SENDS 2+ MESSAGES WE CAN GET THEM ALL TOGETHER
+* THIS CODE ASSUMES MESSAGE LENGTH NEVER EXCEEDS 256 BYTES
+*
+         CLI   BATCHIND,X'FF'     BATCHED RECEIVE ?
+         BNE   READMSG            EXIT IF NOT
+         L     R6,BATCHLEN        R6=RECEIVED LENGTH
+         S     R6,REQLEN          - CURRENT MSG LENGTH
+         ST    R6,BATCHLEN        STORE BACK
+         BNZ   READBTCH           EXIT IF MORE
+         MVI   BATCHIND,X'00'     NO MORE BATCHED MSGS
+         B     READMSG            EXIT
+READBTCH EQU   *
+         BCTR  R6,0               -1 FOR EXECUTE
+         LA    R7,REQLEN          R7=DESTINATION
+         LA    R8,REQLEN          R8=
+         A     R8,REQLEN             SOURCE
+         EX    R6,READMVC         MOVE THE NEXT BATCHED MSG
+         L     R1,BATCHLEN        R1=NEW RECEIVED LENGTH
+         L     R2,CONNID          ENSURE CONN ID CONTINUITY
+         B     READNOTC           EXIT
+*
+READMSG  EQU   *
+         TCPIO RECEIVE,MSG=REQLEN,LMSG=128,PORT=3900 GET MESSAGE
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND778           EXIT IF BAD
+READNOTC EQU   *
+         C     R1,REQLEN          LENGTH RECEIVED<LENGTH EXPECTED ?
+         BE    READOK             EXIT IF OK
+         BL    ABEND779           EXIT IF NOT
+* WE GOT MORE THAN EXPECTED, MESSAGES ARE BATCHED
+         MVI   BATCHIND,X'FF'     SET BATCH REQUEST
+         ST    R1,BATCHLEN        SAVE LENGTH
+READOK   EQU   *
+         ST    R2,CONNID          SAVE CONN ID
+         BAL   R12,REQHANDL       PROCESS REQUEST
+         B     READLOOP           LOOP
+READMVC  MVC   0(0,R7),0(R8)      MOVE THE NEXT BATCHED MESSAGE
+*
+SHUTSERV EQU   *
+         MVC   WTOFN,=C'FF01'     SET FN
+         MVC   WTOTERM,=4C' '     NO TERMID
+         MVC   WTOTASKN,=7C' '    NO TASK NUMBER
+         MVC   WTODESC,=CL45'CLOSE SERVER'
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         TCPIO CLOSE,PORT=3900    CLOSE SERVER
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND777           EXIT IF BAD
+         SUBEXIT
+*
+* SUBROUTINES
+*
+CICSTRCE EQU   *
+         CLI   TRCEZ390,C'N'      NO TRACING ?
+         BER   R12                RETURN IF IT IS
+         CLI   TRCEZ390,C'Y'      ALL TRACING ?
+         BE    CICSTRGO           TRACE IF IT IS
+         CLC   TRCEZ390,CICSTIND  TRACE TYPE=TRACE REQUEST ?
+         BNER  R12                RETURN IF NOT
+CICSTRGO EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM GET TIME
+         MVO   TIMEPACK,TIME      MOVE TO PACKED FIELD
+         MVC   TIMEHERE(13),TIMEEDIT MOVE EDIT WORD
+         ED    TIMEHERE(13),TIMEPACK EDIT TIME
+         MVC   WTOTIME,TIMEHERE   SET TIME
+         WTO   MF=(E,WTOMSG)      TRACE IT
+         BR    R12                RETURN
+CICSTIND DS    C                  TRACE TYPE INDICATOR
+*
+REQHANDL DS    0H
+* PROCESS CLIENTS REQUESTS
+* R2=CONN ID
+         ST    R12,REQR12         SAVE RETURN REG
+         LA    R7,REQTABLE        ADDRESS REQUEST TABLE
+REQLOOP  EQU   *
+         CLC   REQFN,0(R7)        MATCH REQUEST CODE ?
+         BE    REQMATCH           EXIT IF MATCHED
+         AHI   R7,8               BUMP POINTER
+         CLI   0(R7),X'FF'        STOPPER ?
+         BE    ABEND555           YES, BAD REQUEST
+         B     REQLOOP            LOOP
+REQMATCH EQU   *
+         MVC   WTOFN,REQFN        SET REQUEST FOR MSG
+         MVC   MSGFN,REQFN        SET REQUEST FOR SEND
+         MVC   WTOTERM,=4C' '     ASSUME NO TERMID
+         MVC   WTOTRAN,=4C' '     ASSUME NO TRANSID
+         MVI   WTOTYPE,C' '       ASSUME NO TRANSID TYPE
+         MVC   WTOTASKN,=7C' '    ASSUME NO TASK NUMBER
+         L     R12,4(R7)          R12=PROCESSING ROUTINE
+         BR    R12                GO TO IT
+REQRETRN EQU   *
+* ALL PROCESSING ROUTINES COME BACK HERE
+         L     R12,REQR12         RESTORE RETURN REG
+         BR    R12                RETURN
+REQR12   DS    A
+REQTABLE EQU   *
+* RECEIVED REQUESTS
+         DC    C'04FF',A(TERMREQ)  REQUEST TERMID
+         DC    C'0E00',A(TRANGO)   TRANSID STARTED
+         DC    C'0EFF',A(TRANEND)  TRANSID ENDED
+         DC    C'12FD',A(KCPABEND) Z390KCP ABENDED
+         DC    C'12FE',A(KCPSHUT)  Z390KCP SHUTTERM
+         DC    C'12FF',A(KCPUP)    Z390KCP READY
+         DC    C'FE00',A(CEMTITER) CEMT I TER REQUEST
+         DC    C'FE01',A(CEMTISYS) CEMT I SYS REQUEST
+         DC    C'FE02',A(CEMTPSHT) CEMT P SHUT REQUEST
+* ###    DC    C'FE03',A(CEMTPSHI) CEMT P SHUT IMM REQUEST
+         DC    C'FE04',A(SHUTQURY) QUERY SHUTDOWN
+         DC    X'FF'               STOPPER
+*
+* REQUEST PROCESSES
+*
+KCPUP    DS    0H
+* FN=12FF  Z390KCP READY
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTODESC,=CL45'<<<Z390KCP READY'
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         J     REQRETRN           EXIT
+*
+KCPSHUT  DS    0H
+* FN=12FE  Z390KCP SHUTTERM REQUEST
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTODESC,=CL45'<<<Z390KCP SHUTTERM'
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         LA    R5,THRDCNTL        ADDRESS THREAD CONTROL AREA
+         NI    REQTERM+3,X'0F'    CONVERT ID TO HEX
+         SR    R8,R8              CLEAR R8
+         IC    R8,REQTERM+3       R8=THREAD NUMBER
+         CMDPROC STOP,ID=(R8)     CLOSE THREAD
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND666           EXIT IF BAD
+         MS    R8,=AL4(THRDLEN)   INDEX TO THREAD STATE
+         AR    R5,R8              POINT TO THREAD STATE
+         CLI   THRDTYPE,LOCAL     LOCAL ?
+         BNE   KCPSHRMT           EXIT IF NOT
+         L     R8,LOCALS          R8=NO. OF LOCALS
+         AHI   R8,1               +1
+         ST    R8,LOCALS          STORE BACK
+         MVI   THRDIND,SHUTDOWN   SET SHUTDOWN STATUS
+         B     KCPSHRST           EXIT
+KCPSHRMT EQU   *
+         L     R8,REMOTES         R8=NO. OF REMOTES
+         AHI   R8,1               +1
+         ST    R8,REMOTES         STORE BACK
+         MVI   THRDIND,AVAIL      SET AVAILABLE STATUS
+KCPSHRST EQU   *
+         MVI   THRDTYPE,UNALLOC   RESET LOCAL/REMOTE
+         MVC   THRDTRAN,=4C' '    CLEAR CURRENT TRANSID
+         CLI   SHUTIND,X'FF'      IS SHUTDOWN IN PROGRESS ?
+         JE    PSHTTEST           YES, EXIT TO TEST FOR SERVER SHUTDOWN
+         J     REQRETRN           EXIT
+*
+KCPABEND DS    0H
+* FN=12FD  Z390KCP ABENDED
+         MVC   WTODESC,=CL45'<<<Z390KCP ABENDED -'
+         MVC   WTOTERM,REQTERM    SET TERMID
+         CLC   REQABEND,=C'MM01'  ABEND MM01 ?
+         BNE   KCPABM02           EXIT IF NOT
+         MVC   WTODESC+21(21),=C'REQUEST TERMID FAILED'
+         B     KCPABCHK           EXIT
+KCPABM02 EQU   *
+         CLC   REQABEND,=C'MM02'  ABEND MM02 ?
+         BNE   KCPABM03           EXIT IF NOT
+         MVC   WTODESC+21(12),=C'PARM() ERROR'
+         B     KCPABCHK           EXIT
+KCPABM03 EQU   *
+         MVC   WTODESC+21(19),=C'CLIENT TCPIO FAILED'
+KCPABCHK EQU   *
+         CLI   REQTERM,C' '       ANY KNOWN TERMID ?
+         BE    KCPABTRC           EXIT IF NONE
+         NI    REQTERM+3,X'0F'    CONVERT ID TO HEX
+         SR    R8,R8              CLEAR R8
+         IC    R8,REQTERM+3       R8=THREAD NUMBER
+         MS    R8,=AL4(THRDLEN)   INDEX TO THREAD STATE
+         AR    R5,R8              POINT TO THREAD STATE
+         CLI   THRDTYPE,LOCAL     LOCAL ?
+         BNE   KCPABRMT           EXIT IF NOT
+         L     R8,LOCALS          R8=NO. OF LOCALS
+         AHI   R8,1               +1
+         ST    R8,LOCALS          STORE BACK
+         B     KCPABRST           EXIT
+KCPABRMT EQU   *
+         L     R8,REMOTES         R8=NO. OF REMOTES
+         AHI   R8,1               +1
+         ST    R8,REMOTES         STORE BACK
+KCPABRST EQU   *
+         MVI   THRDIND,AVAIL      SET AVAILABLE STATUS
+         MVI   THRDTYPE,UNALLOC   RESET TYPE
+         MVC   THRDTRAN,=4C' '    CLEAR CURRENT TRANSID
+KCPABTRC EQU   *
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         J     REQRETRN           EXIT
+*
+TERMREQ  EQU   *
+* FN=04FF  REMOTE TERMINAL REQUEST FOR TERMID
+*
+* FN=04FE  REQUEST FAILED SENT BACK
+* FN=04FF  REQUEST SUCCEEDED SENT BACK
+         OC    REMOTES,REMOTES    ANY REMOTES ALLOWED ?
+         BZ    TERMRQBD           EXIT IF NONE
+* HUNT FOR AVAILABLE TERMID
+         LA    R5,THRDCNTL        ADDRESS THREAD CONTROL AREA
+         LA    R8,C'0'            THREAD ID
+         LA    R7,10              MAXIMUM ALLOWED
+TERMRQLP EQU   *
+         CLI   THRDIND,AVAIL      AVAILABLE ?
+         BE    TERMRQGT           EXIT IF IT IS
+         AHI   R5,THRDLEN         BUMP THREAD CONTROL AREA
+         AHI   R8,1               BUMP THREAD ID
+         BCT   R7,TERMRQLP        LOOP
+TERMRQBD EQU   *
+* TERMID REQUEST FAILED
+         MVC   WTOFN,=C'04FE'     SET FN IN MSG
+         MVC   WTODESC,=CL45'>>>Z390KCP REQUEST TERMID FAILED'
+         MVC   MSGFN,WTOFN        SET FN RESPONSE
+         MVC   MSGTERM,=4C' '     SET NO TERMID
+         B     TERMRQSN           EXIT
+*
+TERMRQGT EQU   *
+         MVC   MSGTERM(3),TRMPREFX SET TERMID PREFIX
+         STC   R8,MSGTERM+3       SET TERMID SUFFIX
+         MVC   WTOTERM,MSGTERM    SET TERMID IN MSG
+         MVC   WTODESC,=CL45'>>>Z390KCP REQUESTED TERMID'
+         MVI   THRDIND,RUNNING    SET RUNNING STATUS
+         MVI   THRDTYPE,REMOTE    SET REMOTE
+         L     R8,REMOTES         R8=REMOTES ALLOWED
+         BCTR  R8,0               -1
+         ST    R8,REMOTES         STORE BACK
+TERMRQSN EQU   *
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         L     R8,CONNID          R8=CONN ID
+         TCPIO SEND,MSG=MSGLEN,LMSG=128,CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         J     REQRETRN           EXIT
+*
+TRANGO   DS    0H
+* FN=0E00  TRANSACTION STARTED, PASS BACK THE TASK NUMBER
+* IF SHUTDOWN IN PROGRESS, REJECT REQUEST, TELL Z390KCP
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTOTRAN,REQTRAN    SET TRANSID
+         MVC   WTOTYPE,REQTYPE    SET TRANSID TYPE
+         CLI   SHUTIND,X'FF'      IS SHUTDOWN IN PROGRESS ?
+         BNE   TRANGOK            EXIT IF NOT
+         MVC   MSGTASKN,=7C'F'    SET BAD TASK NUMBER
+         MVC   WTODESC,=CL45'<<<Z390KCP - Z390/CICS SHUTDOWN IN PROGRES-
+               S'
+         B     TRANGOMS
+TRANGOK  EQU   *
+         UNPK  MSGTASKN,TASKNO    UNPACK TASK NUMBER
+         OI    MSGTASKN+6,X'F0'   CLEAR SIGN
+         MVC   WTOTASKN,MSGTASKN  SET TASK NUMBER
+         MVC   WTODESC,=CL45'<<<Z390KCP TRAN STARTED'
+TRANGOMS EQU   *
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         L     R8,CONNID          R8=CONN ID
+         TCPIO SEND,MSG=MSGLEN,LMSG=128,CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         CLI   SHUTIND,X'FF'      IS SHUTDOWN IN PROGRESS ?
+         JE    REQRETRN           EXIT IF IT IS
+         AP    TASKNO,=P'1'       BUMP TASK NUMBER
+         LA    R5,THRDCNTL        ADDRESS THREAD CONTROL AREA
+         NI    REQTERM+3,X'0F'    CONVERT ID TO HEX
+         SR    R8,R8              CLEAR R8
+         IC    R8,REQTERM+3       R8=THREAD NUMBER
+         MS    R8,=AL4(THRDLEN)   INDEX TO THREAD STATE
+         AR    R5,R8              POINT TO THREAD STATE
+         MVC   THRDTRAN,REQTRAN   SAVE TRANSID
+         J     REQRETRN           EXIT
+*
+TRANEND  DS    0H
+* FN=0EFF  TRANSID ENDED
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTOTRAN,REQTRAN    SET TRANSID
+         UNPK  WTOTASKN,REQTASKN  UNPACK TASK NUMBER
+         OI    WTOTASKN+6,X'F0'   CLEAR SIGN
+         MVC   WTODESC,=CL45'<<<Z390KCP TRAN ENDED'
+         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         LA    R5,THRDCNTL        ADDRESS THREAD CONTROL AREA
+         NI    REQTERM+3,X'0F'    CONVERT ID TO HEX
+         SR    R8,R8              CLEAR R8
+         IC    R8,REQTERM+3       R8=THREAD NUMBER
+         MS    R8,=AL4(THRDLEN)   INDEX TO THREAD STATE
+         AR    R5,R8              POINT TO THREAD STATE
+         MVC   THRDTRAN,=4C' '    CLEAR TRANSID
+         CLI   SHUTIND,X'FF'      IS SHUTDOWN IN PROGRESS ?
+         JNE   REQRETRN           EXIT IF NOT
+         OI    REQTERM+3,X'F0'    RESTORE CHAR TERMID
+         J     KCPSHUT            EXIT TO CLOSE TERM
+*
+PSHTTEST EQU   *
+*
+* SHUTDOWN IS FLAGGED, SCAN TO SEE IF WE CAN SHUTDOWN SERVER
+* ALSO INVOKED BY SHUTTERM
+*
+         LA    R5,THRDCNTL        ADDRESS THREAD CONTROL AREA
+         L     R6,THREADS         R6=MAXTHREADS
+         SR    R8,R8              R8=THREAD NUMBER
+PSHTLOOP EQU   *
+         CLI   THRDIND,AVAIL      AVAILABLE TERMINAL ?
+         BE    PSHTINCR           EXIT IF IT IS
+         CLI   THRDIND,SHUTDOWN   TERMINAL ALREADY SHUTDOWN ?
+         JNE   REQRETRN           EXIT IF SHUTDOWN INCOMPLETE
+PSHTINCR EQU   *
+         AHI   R8,1               INCREMENT THREAD NUMBER
+         AHI   R5,THRDLEN         BUMP THREAD CONTROL AREA
+         BCT   R6,PSHTLOOP        LOOP
+         B     SHUTSERV           GO AND SHUT THE SERVER
+*
+CEMTITER DS    0H
+* FN=FE00  CEMT I TER REQUESTED
+*
+* FN=FE00  THRDCNTL SENT BACK
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTODESC,=CL45'<<<Z390KCP CEMT I TER REQUEST'
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         MVC   MSGDATA(THRDLEN*10),THRDCNTL MOVE THREAD DATA
+         L     R8,CONNID          R8=CONN ID
+         TCPIO SEND,MSG=MSGLEN,LMSG=128,CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         J     REQRETRN           EXIT
+*
+CEMTISYS DS    0H
+* FN=FE01  CEMT I SYS REQUESTED
+*
+* FN=FE01  ISYSDATA SENT BACK
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTODESC,=CL45'<<<Z390KCP CEMT I SYS REQUEST'
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         MVC   ISYSTERM,REQTERM   PASS BACK TERMID
+         MVC   ISYSJARP(2),CMD0+1 DRIVE ID
+         LH    R6,CMD1LEN         LENGTH OF JAR_PATH
+         EX    R6,ISYSMVC         MOVE PATH
+         MVC   ISYSTPFX,TRMPREFX  MOVE TERMID_PREFIX
+         MVC   ISYSTHRD,THREADS+3 MOVE MAXTHREADS
+         MVC   ISYSLOCL,LOCALS+3  MOVE LOCAL_TERMINALS
+         MVC   ISYSRMTE,REMOTES+3 MOVE REMOTE_TERMINALS
+         MVC   ISYSLTRC,=C'NO '   ASSUME TRACE_LOCALS=NO
+         CLI   KCPOPTS+2,C'T'     IS TRACE SET ?
+         BNE   CEMTISTN           EXIT IF NOT
+         MVC   ISYSLTRC,=C'YES'   TRACE_LOCALS=YES
+CEMTISTN EQU   *
+         MVC   ISYSZTRC,=C'NO '   ASSUME TRACE_Z390CICS=NO
+         CLI   TRCEZ390,C'N'      IS IT NO ?
+         BE    CEMTISOK           EXIT IF IT IS
+         MVC   ISYSZTRC,=C'INT'   ASSUME TRACE_Z390CICS=INT
+         CLI   TRCEZ390,C'I'      IS IT INT ?
+         BE    CEMTISOK           EXIT IF IT IS
+         MVC   ISYSZTRC,=C'APP'   ASSUME TRACE_Z390CICS=APP
+         CLI   TRCEZ390,C'A'      IS IT APP ?
+         BE    CEMTISOK           EXIT IF IT IS
+         MVC   ISYSZTRC,=C'YES'   MUST BE TRACE_Z390CICS=YES
+CEMTISOK EQU   *
+         L     R8,CONNID          R8=CONN ID
+         LA    R6,ISYSLEN         R6=MESSAGE LENGTH
+         TCPIO SEND,MSG=ISYSDATA,LMSG=(R6),CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         J     REQRETRN           EXIT
+ISYSMVC  MVC   ISYSJARP+2(0),CMD1+4 MOVE PATH
+*
+CEMTPSHT DS    0H
+* FN=FE02  CEMT P SHUT REQUESTED
+         OI    REQTERM+3,X'F0'    RESET TERMID
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTODESC,=CL45'<<<Z390KCP CEMT P SHUT REQUEST'
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         MVI   SHUTIND,X'FF'      SET SHUTDOWN IN PROGRESS
+         J     REQRETRN           EXIT
+*
+SHUTQURY DS    0H
+*
+* SHUT QUERY
+*
+* FN=FE04  SHUT QUERY
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTODESC,=CL45'<<<Z390KCP QUERY SHUTDOWN'
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+         BAL   R12,CICSTRCE       TRACE IT
+         MVC   MSGFN,REQFN        SET REQUEST FOR SEND
+         MVC   MSGSHUTI,SHUTIND   MOVE SHUTDOWN INDICATOR
+         L     R8,CONNID          R8=CONN ID
+         TCPIO SEND,MSG=MSGLEN,LMSG=128,CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         J     REQRETRN           EXIT
+*
+ABEND555 ABEND 555                BAD REQUEST
+ABEND666 ABEND 666                CMDPROC FAILED
+ABEND777 ABEND 777                TCPIO OPEN/CLOSE SERVER FAILED
+ABEND778 ABEND 778                TCPIO RECEIVE FAILED
+ABEND779 ABEND 779                TCPIO RECEIVE PARTIAL DATA
+ABEND780 ABEND 780                TCPIO SEND FAILED
+*
+CMD0     DC    C'"  "'            "DRIVE ID"
+CMD1     DC    CL84'"CD '         "PATH"
+CMD1LEN  DS    H                  LENGTH OF PATH
+TRMPREFX DS    CL3                TERMINAL ID PREFIX
+*
+KCPSTART DC    C'CALL EZ390 E:\Z390\CICS\Z390KCP GUAM PARM('
+KCPTERM  DS    CL4
+*CPTRAN  DC    C'----'            ###
+         DC    C'----'            ###
+KCPOPTS  DC    C')          ',X'00'
+KCPTRACE DC    C') TRACE CON',X'00'
+*
+* RECEIVE MESSAGE AREA
+*
+REQLEN   DC    A(128)             REQUEST LENGTH
+REQFN    DS    CL4                REQUEST CODE
+REQTERM  DS    CL4                TERMINAL ID
+REQTRAN  DS    CL4                TRANSID
+REQTYPE  DS    C                  TRANSID TYPE
+REQDATA  DS    CL116              REQUEST DATA
+         ORG   REQDATA
+* 0EFF FIELDS RECEIVED
+REQTASKN DS    PL4                PACKED TASK NUMBER
+         ORG   REQDATA
+* 12FD FIELDS RECEIVED
+REQABEND DS    CL4                ABEND CODE
+         ORG
+*
+* TCPIO SEND MESSAGE AREA
+*
+MSGLEN   DC    A(128)             LENGTH OF PARMS
+MSGFN    DS    CL4                REQUEST CODE
+MSGTERM  DS    CL4                TERMINAL ID
+MSGDATA  DS    CL116
+         ORG   MSGDATA
+* 0E00 FIELD SENT
+MSGTASKN DS    CL7                TASK NUMBER
+         ORG   MSGDATA
+* FE04 FIELD SENT
+MSGSHUTI DS    C                  SHUTDOWN INDICATOR
+         ORG
+*
+* THREAD CONTROL
+THREADS  DC    F'0'               MAXIMUM THREADS
+LOCALS   DC    F'0'               MAXIMUM LOCAL TERMINALS
+REMOTES  DC    F'0'               MAXIMUM REMOTE TERMINALS
+*
+* 10 LOCAL AND REMOTE TERMINALS...SEE THRDDSCT
+THRDCNTL DC    10XL(THRDLEN)'00'
+*
+TASKNO   DC    PL4'0'             TASK NUMBER
+CONNID   DS    XL4                CONN ID FROM LAST RECEIVE
+BATCHLEN DS    F                  SAVE TCPIO RECEIVED LENGTH
+BATCHIND DC    X'00'              X'FF'=TCPIO RECEIVE IS BATCHED
+SHUTIND  DC    X'00'              X'FF'=SHUTDOWN IN PROGRESS
+TRCEZ390 DC    C'Y'               Z390 TRACE OPTION, DEFAULT=YES
+*
+* TIME CONVERSION FIELDS
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402020207A20207A20204B2020'
+TIMEHERE DS    CL13
+*
+* WTO MESSAGES
+*
+WTOMSG   DC    AL2(WTOMEND-*,0)
+WTOTIME  DS    CL13               TIME STAMP
+         DC    C' '
+WTOFN    DS    CL4                MODULE/FUNCTION REFERENCE (EIBFN)
+         DC    C' '
+WTOTERM  DS    CL4                TERMID
+         DC    C' '
+WTOTRAN  DS    CL4                TRANSID (OR BLANK)
+         DC    C' '
+WTOTYPE  DS    C                  TRANSID TYPE
+         DC    C' '
+WTOTASKN DS    CL7                TASK NUMBER
+         DC    C' '
+WTODESC  DS    CL45               DESCRIPTION
+WTOMEND  EQU   *
+*
+* CEMT I SYS DATA AREA
+*
+ISYSDATA DS    0F
+         DC    A(ISYSLEN)
+         DC    C'FE01'            REQUEST CODE
+ISYSTERM DS    CL4                TERMID
+ISYSJARP DC    CL50' '            JAR_PATH
+ISYSTPFX DS    CL3                TERMID_PREFIX
+ISYSTHRD DS    X                  MAXTHREADS
+ISYSLOCL DS    X                  LOCAL_TERMINALS
+ISYSRMTE DS    X                  REMOTE_TERMINALS
+ISYSLTRC DS    CL3                TRACE_LOCALS
+ISYSZTRC DS    CL3                TRACE_Z390CICS
+ISYSLEN  EQU   *-ISYSDATA
+*
+* WORK AREAS
+*
+DEC      DC    PL8'0'
+*
+Z390INI  DCB   DSORG=PS,                                               X
+               EODAD=EOFINI,                                           X
+               RECFM=FT,                                               X
+               DDNAME=Z390INI,                                         X
+               MACRF=GM,                                               X
+               BLKSIZE=80,                                             X
+               LRECL=80,                                               X
+               RECORD=INIAREA
+INIAREA  DS    CL80
+*
+* EIBFN CODES
+*
+*    04FE  REQUEST TERMID FAILED (SEND)
+*    04FF  REQUEST TERMID        (RECEIVE AND SEND)
+*
+*    0E00  TRANSID STARTED AND TASK NUMBER REQUEST (RECEIVE AND SEND)
+*    0EFF  TRANSID ENDED                           (RECEIVE)
+*
+*    1200  GLOBAL MANAGER INITIALIZED      (INTERNAL)
+*    1201  START Z390KCP                   (INTERNAL)
+*    1202  N OF N LOCAL TERMIDS STARTED    (INTERNAL)
+*    12FD  Z390KCP ABENDED                 (RECEIVE)
+*             MM01 -- REQUEST TERMID FAILED
+*             MM02 -- PARM() INVALID
+*             MM03 -- CLIENT TCPIO ERROR
+*    12FE  CEMT S TER OUT                  (RECEIVE)
+*    12FF  Z390KCP UP                      (RECEIVE)
+*
+*    FE00  CEMT I TER                      (RECEIVE AND SEND)
+*    FE01  CEMT I SYS                      (RECEIVE AND SEND)
+*    FE02  CEMT P SHUT                     (RECEIVE)
+*    FE03  CEMT P SHUT IMM                 (RECEIVE)
+*    FE04  QUERY SHUTDOWN STATUS           (RECEIVE AND SEND)
+*
+*    FF00  TCPIO OPEN SERVER               (INTERNAL)
+*    FF01  TCPIO CLOSE SERVER              (INTERNAL)
+*
+THRDDSCT DSECT
+* MUST KEEP THRDCNTL AND Z390CEMT IN SYNC
+THRDIND  DS    X                  THREAD STATE
+*                                    X'00'=AVAILABLE
+*                                    X'80'=RUNNING
+*                                    X'FF'=SHUTDOWN
+AVAIL    EQU   X'00'
+RUNNING  EQU   X'80'
+SHUTDOWN EQU   X'FF'
+THRDTYPE DS    C                  THREAD TYPE
+*                                    X'00'=UNALLOCATED
+*                                    L=LOCAL
+*                                    R=REMOTE
+LOCAL    EQU   C'L'
+REMOTE   EQU   C'R'
+UNALLOC  EQU   X'00'
+THRDTRAN DS    CL4                THREAD CURRENT TRANSACTION
+THRDLEN  EQU   *-THRDDSCT
+*
+         DCBD
+*
+         EQUREGS REGS=GPR
+* R3   BASE 2
+* R5   THRDDSCT BASE
+* R6   WORK REG
+* R7   WORK REG
+* R8   WORK REG
+* R12  LINK REG
+* R13  BASE 1
+*
+         END
+

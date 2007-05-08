@@ -1,4 +1,4 @@
-********************************************************************
+*******************************************************************
 * Copyright 2005 Automated Software Tools Corporation               *
 * This source code is part of z390 assembler/emulator package       *
 * The z390 package is distributed under GNU general public license  *
@@ -16,6 +16,7 @@
 * 11/09/06 RPI 488 test error on branch label defined only as macro 
 * 11/10/06 RPI 473 test error messages from CALL macro               
 * 02/22/07 RPI 553 add tests for duplicate symbols                   
+* 05/07/07 RPI 609 dc without data, comment                    
 *********************************************************************
          TITLE 'TESTERR2 - TEST AZ390 ERRORS'
 TESTERR2 CSECT
@@ -94,4 +95,9 @@ TESTERR2 DSECT     BAD
 TESTERR2 DS    0H  BAD
 EQU1     EQU   1
 EQU1     EQU   2   BAD
+* TEST DC NO DATA, COMMENT * AFTER 1, E type comma before comments
+         DC    CL3
+ * BAD COMMENT
+         PR    , GOOD COMMENT
+         PR    BAD COMMENT
          END 

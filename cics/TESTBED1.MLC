@@ -1,0 +1,91 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+DFHEISTG DSECT                    DSA STORAGE
+SENDWCC  DS    X
+SENDSBA  DS    CL3
+SENDLINE DS    CL45
+MYCOMM   DS    AL2
+TESTBED1 CSECT
+*
+* TEST BED 1
+*
+*    TEST RETURN TRANSID AND COMMAREA
+*    BED1 DISPLAYS 1ST LINE
+*    EACH SUBSEQUENT LINE INDEX COMES FROM IMPORTED COMMAREA
+*
+*    TEST LINK WITH DIFFERENT COMMAREAS
+*
+*    TEST XCTL WITH COMMAREA
+*
+         XC    MYCOMM,MYCOMM      INITIALISE COMMAREA
+         MVC   SENDWCC,WCC        MOVE WCC
+         OC    TCTTECA,TCTTECA    ANY COMMAREA ?
+         BNZ   NOT1ST             EXIT IF NOT FIRST
+* FIRST LINE
+         MVC   SENDSBA,SBA1       1ST SBA
+         MVC   SENDLINE,LINE1     1ST LINE
+         EXEC  CICS SEND FROM(SENDWCC) LENGTH(49)
+         EXEC  CICS RETURN TRANSID('BED1') COMMAREA(MYCOMM)
+*
+NOT1ST   EQU   *
+         L     R5,TCTTECA         ADDRESS RECEIVED COMMAREA
+         LH    R6,0(R5)           R6=INDEX
+         AHI   R6,1               INCREMENT
+         STH   R6,0(R5)           SAVE
+         MS    R6,=F'3'           INDEX TO SBA
+         LA    R7,SBA1(R6)        R7=ADDRESS OF NEXT SBA
+         MVC   SENDSBA,0(R7)      MOVE NEXT SBA TO OUTPUT
+         LH    R6,0(R5)           R6=INDEX
+         MS    R6,=F'45'          INDEX TO NEXT LINE
+         LA    R7,LINE1(R6)       R7=ADDRESS OF NEXT LINE
+         MVC   SENDLINE,0(R7)     MOVE NEXT LINE TO OUTPUT
+         EXEC  CICS SEND FROM(SENDWCC) LENGTH(49)
+         CLC   0(2,R5),=H'8'      DISPLAYED LAST ?
+         BE    NEXT1              EXIT IF WE HAVE
+         EXEC  CICS RETURN TRANSID('BED1') COMMAREA(0(R5)) LENGTH(2)
+*
+NEXT1    EQU   *
+* TEST LINK
+         EXEC  CICS LINK PROGRAM(MYBED2)
+* TEST LINK WITH COMMAREA 1
+         EXEC  CICS LINK PROGRAM('TESTBED2') COMMAREA(COMM1)
+* TEST LINK WITH COMMAREA 2
+         EXEC  CICS LINK PROGRAM('TESTBED2') COMMAREA(COMM2) LENGTH(6)
+* TEST XCTL WITH COMMAREA 3
+         EXEC  CICS XCTL PROGRAM('TESTBED3') COMMAREA(COMM3)
+*
+MYBED2   DC    CL8'TESTBED2'
+COMM1    DC    C'QUOTE2'
+COMM2    DC    C'QUOTE3'
+COMM3    DC    C'QUOTE6'
+*
+LINE1    DC    CL45'What a piece of work is man'
+         DC    CL45'How noble in reason'
+         DC    CL45'How infinite in faculties'
+         DC    CL45'In form and moving, how express and admirable'
+         DC    CL45'In action, how like an angel'
+         DC    CL45'In apprehension, how like a god'
+         DC    CL45'The beauty of the world'
+         DC    CL45'The paragon of animals'
+         DC    CL45'END'
+*
+SBA1     TN3270 (SBA,3,2)
+         TN3270 (SBA,4,2)
+         TN3270 (SBA,5,2)
+         TN3270 (SBA,6,2)
+         TN3270 (SBA,7,2)
+         TN3270 (SBA,8,2)
+         TN3270 (SBA,9,2)
+         TN3270 (SBA,10,2)
+         TN3270 (SBA,11,2)
+*
+WCC      TN3270 WRT_EW
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         END
+

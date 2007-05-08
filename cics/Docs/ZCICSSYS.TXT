@@ -1,0 +1,160 @@
+Z390/CICS System Programmers Guide
+==================================
+
+This document describes the Z390/CICS environment, how it operates and
+the modifications that can be made to it.
+
+Experienced CICS people may notice a lack of authenticity in the
+background coding and formats, and some use of archaic methods.
+This is all intentional, and as Z390 matures, so will Z390/CICS.
+
+Objective
+---------
+To take an existing Assembler CICS application, re-assemble it in the
+Z390 environment and run it unmodified and successfully under Z390/CICS.
+
+Current environment
+-------------------
+It is fair to say that the facilities available to Z390/CICS
+Application programmers are somewhat limited at present. These are
+early days, and functions will be added gradually.
+
+The currently supported Application environment is described in the
+Z390/CICS Application Programmers Guide.
+
+How it works
+------------
+I have split the Z390/CICS environment into two sections.
+
+The primary task is Z390CICS, which I have called the Global Manager.
+This will handle all shared resources like TS, IC etc.
+
+Each terminal has its own Command Prompt (MS-DOS task).
+This environment runs Z390KCP and invokes any Application programs
+requested.
+
+It is effectively a single terminal, single task environment.
+
+Z390KCP is therefore the Local Manager handling EIB, COMMAREAs, DSAs
+and other task related storage.
+
+TCPIO SEND/RECEIVE are used to pass requests and data between Z390CICS
+and each Z390KCP, with Z390CICS being the server and all terminals
+running Z390KCP as multiple clients.
+
+Setting it up
+-------------
+Parameters...
+   The Z390CICS.INI file is self-documenting.
+
+   The only parameter that needs to be changed is JAR_PATH to point to
+   the location of the Z390.JAR program.
+
+The following BAT files need to be modified to your own environment...
+   Z390CICG - Start up CICS
+
+   Z390KCPR - Start a remote terminal.
+              Especially important that you regularly check that your
+              IP address is correct. This may vary and should always be
+              checked with the IPCONFIG command.
+
+DFHPCT.MLC has a basic set of test transaction codes which are listed
+later. Users may add their own transactions to this table.
+The table must be re-assembled after modification.
+
+Local and Remote terminals
+--------------------------
+A Local terminal is a Command Prompt (MS-DOS task) that is auto-started
+when Z390CICS is started. The number of Local terminals that are started
+is controlled by the LOCAL_TERMINALS parameter.
+
+A Remote terminal must be started in a Command Prompt that you have
+manually created and is initiated by using Z390KCPR.BAT (see the
+'Starting it up' section).
+
+A Remote terminal doesn't have to be on the same PC as Z390CICS, but
+can be on another PC connected via a home network.
+
+There is a restraint on the number of Remote terminals set by the
+REMOTE_TERMINALS parameter.
+
+Starting it up
+--------------
+From the Z390 GUI (recommended), or in your own Command Prompt...
+
+1) Z390CICG
+   This will start the Z390/CICS Global Manager and all Local
+   terminals.
+
+2) A Remote terminal may be set up as follows...
+   Create a Command Prompt window and use CD to navigate to, and invoke
+   Z390KCPR.BAT
+
+   You should get another Z390/CICS window.
+
+   This method should be used if the code needs to use the Z390 debug
+   facilities, in which case use Z390KCPR TEST
+
+Ok, I've got a blank Z390/CICS screen...now what ?
+--------------------------------------------------
+When the terminal is opened, the termid is in the title.
+
+From the 'initial screen' you can do the following...
+
+   CTRL+C      Clear the screen.
+               Within a transaction that has issued a RECEIVE,
+               the CLEAR AID is returned.
+   AAAA        test invalid transid message
+   MMM1        test abend APCT message
+   MMM2        'hello world'
+   GUI4        conversational test 1
+   GUI6        conversational test 2
+   TST1        conversational test 3 and LINK test
+   BED1        Test bed for LINK, XCTL and RETURN with COMMAREA.
+               Keep pressing ENTER until the 'clear screen' message
+               is displayed.
+
+   CEMT I TER       displays the state of all terminals
+                    ENTER does a refresh
+   CEMT I TRAN      displays the PCT
+   CEMT I SYS       displays the Z390CICS.INI file
+   CEMT S TER OUT   shuts down Z390KCP
+   CEMT P SHUT      shut down the server...see Shutdown section
+
+Shutdown
+--------
+Clean shutdown still evades me.
+
+Each terminal can be cleanly closed with CEMT S TER OUT
+
+Z390/CICS shutdown is signalled by CEMT P SHUT, but that will only
+shut down the terminal issuing the command and flag other terminals.
+As soon as other terminals are activated (eg. ENTER) they are shutdown
+and the server is closed when all terminals are closed.
+
+Abends
+------
+These are not handled properly yet, so any abend may cause the Z390/CICS
+environment to lock up.
+
+Here's how to abort the Z390/CICS environment...
+The Z390 GUI can stay up and wont be harmed by this process.
+
+a) Right click the taskbar
+b) Select Task Manager
+c) Search for java.exe
+   You can sort the tasks by clicking on 'Image name'
+   Don't confuse this with javaw.exe
+d) Right click on java.exe
+e) Select End Process and Yes.
+   All the Z390/CICS environment and terminals should go away.
+
+Trademarks
+----------
+CICS is a registered trademark of International Business Corporation.
+
+Author: Melvyn Maltz
+Shipping Date: May 1, 2007
+Z390 version: V1.3.03b
+Z390/CICS version: V1
+

@@ -1,0 +1,18 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+         DFHPCT TYPE=ENTRY,TRANSID=MMM1,PROGRAM=BADPROG  INVALID PROG
+         DFHPCT TYPE=ENTRY,TRANSID=MMM2,PROGRAM=MMMMCIC2 SEND MSG/RTN
+*
+         DFHPCT TYPE=ENTRY,TRANSID=TST1,PROGRAM=TESTCIC1 DON'S TEST 1
+         DFHPCT TYPE=ENTRY,TRANSID=GUI4,PROGRAM=TESTGUI4 DON'S GUAM 4
+         DFHPCT TYPE=ENTRY,TRANSID=GUI6,PROGRAM=TESTGUI6 DON'S GUAM 6
+         DFHPCT TYPE=ENTRY,TRANSID=CEMT,PROGRAM=Z390CEMT CEMT
+*
+         DFHPCT TYPE=ENTRY,TRANSID=BED1,PROGRAM=TESTBED1 TESTBED
+         DFHPCT TYPE=FINAL
+         END
+
