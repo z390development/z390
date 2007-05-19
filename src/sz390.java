@@ -126,7 +126,9 @@ public  class  sz390 implements Runnable {
     *          of processes without distroying queues etc.   
     * 04/28/07 RPI 598 correct error in RPI 596 saving R1 across XCTL 
     *          and correct bug causing delete of wrong CDE after 
-    *          multiple XCTL's          
+    *          multiple XCTL's    
+    * 05/17/07 RPI 622 correct TCPIO server shutdown errors due  to connection
+    *          thread interruptions.               
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -453,6 +455,7 @@ public  class  sz390 implements Runnable {
 	int max_tcp_server_port   = 10; // max server ports open
 	int cur_tcp_server_index   = 0;  // current port
 	int[]          tcp_server_port   = new int[max_tcp_server_port];
+	boolean[]      tcp_server_open   = new boolean[max_tcp_server_port]; // RPI 622
 	Thread[]       tcp_server_thread = new Thread[max_tcp_server_port];  // RPI 554
 	int[]          tcp_server_conn_index = new int[max_tcp_server_port];     // RPI 554 index to allocated conn for next connection
 	ServerSocket[] tcp_server_socket = new ServerSocket[max_tcp_server_port];
@@ -3220,8 +3223,7 @@ public void run() {
 		if (tcp_server_port[port_index] > 0
 			&& tcp_server_thread[port_index] != null
 			&& tcp_server_thread[port_index] == Thread.currentThread()){
-			while (tcp_server_socket[port_index] != null 
-				   && !tcp_server_socket[port_index].isClosed()
+			while (tcp_server_open[port_index] // RPI 622
 				   && tcp_alloc_conn(port_index)){
 				int conn_index = tcp_server_conn_index[port_index]; // get allocaed conn 
 				try {
@@ -3238,12 +3240,10 @@ public void run() {
 						put_log("TCPIO new connection on port=" + tcp_conn_server_port[conn_index] + " conn=" + tcp_server_conn_index[port_index]);
 					}
 				} catch (Exception e){
-					if (tcpio_server_running){
+					if (tcp_server_open[port_index]){
 						put_log("TCPIO error starting connection for port=" + tcp_server_port[port_index]);
-						tcp_free_conn(conn_index);
-					} else {
-						return; // exit thread during shutdown close
 					}
+					tcp_free_conn(conn_index);
 				}
 			}
 		}
@@ -5527,8 +5527,7 @@ private void svc_tcpio(){
 		if (!tcpio_find_server_port() 
 			&& cur_tcp_server_index > -1){ 
 			tcp_server_port[cur_tcp_server_index] = tcpio_port;
-			if (tcp_server_socket[cur_tcp_server_index] != null
-				&& !tcp_server_socket[cur_tcp_server_index].isClosed()){				
+			if (tcp_server_open[cur_tcp_server_index]){				
 				put_log("TCPIO server port alrady open");
 				break; // ignore if already open
 			}
@@ -5560,7 +5559,9 @@ private void svc_tcpio(){
     	} catch (Exception e){
     		put_log("TCPIO error open server socket " + e.toString());
     		pz390.reg.putInt(pz390.r15,12);
+    		break; // RPI  622
     	}
+    	tcp_server_open[cur_tcp_server_index] = true; // RPI 622
 		break;
 	case 2: // open client connection to server port
 		tot_tcpio_openc++;
@@ -5785,7 +5786,8 @@ private synchronized void tcpio_close_server_port(){
 	/*
 	 * close open TCP/IP server port
 	 */
-	if (tcp_server_socket[cur_tcp_server_index] != null){
+	if (tcp_server_open[cur_tcp_server_index]){
+		tcp_server_open[cur_tcp_server_index] = false; // RPI 622
 		try {
 			if (tz390.opt_tracet){
 				put_log("TCPIO closing server port=" + tcpio_port);
@@ -5798,13 +5800,12 @@ private synchronized void tcpio_close_server_port(){
 				conn_index++;
 			}
 			tcp_server_socket[cur_tcp_server_index].close();
-			tcp_server_socket[cur_tcp_server_index] = null;
+			tcp_server_socket[cur_tcp_server_index] = null; 
 		} catch (Exception e){
-			put_log("TCPIO error on closing server port=" + tcpio_port);
 		}		
 	}
 }
-private synchronized void tcpio_close_conn(int conn_index){
+private void tcpio_close_conn(int conn_index){ 
 	/*
 	 * close connection
 	 */
@@ -6047,13 +6048,17 @@ private synchronized void tcp_free_conn(int conn_index){
 	 * release tcp connecntion for reuse
 	 */
 	int port_index = tcp_conn_server_index[conn_index];
+	if (!tcp_server_open[port_index]){ // RPI 622 free conn's at close
+		tcp_conn_server_port[conn_index] = 0;
+		return;  
+	}
 	if (tcp_conn_server_index[conn_index] == tcp_server_conn_index[port_index]){
 		tcp_server_conn_index[port_index] = 0;
 		tcp_conn_server_index[conn_index] = 0;
 		tcp_conn_server_port[conn_index] = 0;
 		tcp_conn_socket[conn_index] = null;
 	} else {
-		abort_error(23,"TCPIO free conn internal error - abprting");
+		abort_error(23,"TCPIO free conn internal error - aborting");
 	}
 }
 private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){

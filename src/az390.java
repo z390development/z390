@@ -251,7 +251,10 @@ public  class  az390 implements Runnable {
     *           4.  Error 191 missing comma before comments for type E
     * 05/07/07 RPI 612 RX off(reg) use X vs B  
     * 05/07/07 RPI 613 fix SS off(len) for low storage move 
-    * 05/07/07 RPI 615 correct ATTRA string length for FPR              
+    * 05/07/07 RPI 615 correct ATTRA string length for FPR
+    * 05/09/07 RPI 617 prevent loop on bad PD digit 
+    * 05/15/07 RPI 624 correct EQU ATTRA operand when followed by comment 
+    * 05/16/07 RPI 620 gen 47000700 for CNOP  compatiblity            
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -6326,7 +6329,8 @@ private void process_dcp_data(){
 				&& dc_field.charAt(dc_index) != '\''){
 			    dcp_sign = 'C';
 			    int index1 = dc_index;
-			    while (dc_index < dc_field.length() 
+			    while (!bal_abort  // RPI 617 
+			    		&& dc_index < dc_field.length() 
 			    		&& dc_field.charAt(dc_index) != ','
 			    	    && dc_field.charAt(dc_index) != '\''){
 			         if (dc_field.charAt(dc_index) >= '0'
@@ -6632,7 +6636,7 @@ private void process_cnop(){
 		 req_off = exp_val;
 		 if (exp_text.charAt(exp_index) == ','){
 			 exp_index++;
-			 if (calc_abs_exp() 
+			 if (calc_abs_exp()  // RPI 620
 					 && (exp_val == 4
 					     || exp_val == 8)){
 				 cur_off = loc_ctr - loc_ctr/exp_val*exp_val;
@@ -6643,14 +6647,23 @@ private void process_cnop(){
                  if ((gap_bytes & 0x1) > 0){
                 	 loc_len = 1;
                 	 gap_bytes--;
-                	 obj_code = "00";       
+                	 cur_off++;
+                	 obj_code = "00";
                  }
-                 if (gap_bytes > 0){ // RPI 411
-                	 obj_code = obj_code + tz390.get_dup_string("0700",gap_bytes/2);
-                	 loc_len = loc_len + gap_bytes;
+			 	 if ((gap_bytes & (4-1)) > 0){ // 2 byte alignment
+             		obj_code = obj_code + "0700";
+             		cur_off += 2;
+             		gap_bytes -= 2;
+             		loc_len += 2;
+			 	 }
+                 while (gap_bytes > 0){ 
+	             	obj_code = obj_code + "47000700";
+	             	cur_off += 4;
+	             	gap_bytes -= 4;
+	             	loc_len += 4;
                  }
                	 put_obj_text();
-			 } 
+			 }
 		 }
 	}
 }
@@ -6706,6 +6719,7 @@ public void process_equ(){ // RPI 415
 	 *   4. Set sym_attrp 4th program type
 	 *   5. Set sym_attra 5th assembler type
 	 */
+    int index = 0;
 	check_private_csect();
 	loc_start = loc_ctr;
 	if (bal_label != null){
@@ -6755,7 +6769,7 @@ public void process_equ(){ // RPI 415
 					if (exp_text.charAt(exp_index) != ','){
 						if (exp_text.length() > 2 
 							&& exp_text.substring(exp_index,exp_index+2).equals("T'")){
-							int index = find_sym(exp_text.substring(exp_index+2));
+							index = find_sym(exp_text.substring(exp_index+2));
 							if (index > 0){
 								sym_attr[store_sid] = sym_attr[index];
 							} else {
@@ -6779,8 +6793,16 @@ public void process_equ(){ // RPI 415
 				if (exp_next_char(',')){
 					// equ 5th explicit attra asm attr
 				    String setc_value = exp_text.substring(exp_index+1).toUpperCase();
+				    index = 0;  // RPI 624
+				    while (index < setc_value.length()
+				    		&& setc_value.charAt(index) > ' '){
+				    	index++;
+				    }
+				    if (index > 0){
+				    	setc_value = setc_value.substring(0,index);
+				    }
 				    sym_attra[store_sid] = setc_value; // RPI 615 remove bad code setting string length
-					int index = 0;
+					index = 0;
 					boolean attra_found = false;
 					while (!attra_found && index < sym_attra_type.length){
 						if (sym_attra[store_sid].equals(sym_attra_type[index])){

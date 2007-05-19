@@ -273,7 +273,8 @@ public  class  mz390 {
      * 04/25/07 RPI 600 find gbl set only if declared locally or &SYS
      *          and issue error for duplicate keyword parm on call
      * 05/07/07 RPI 609 error 212-216 on string conv for SETB 
-     * 05/07/07 RPI 611 prevent trap on computed AGO with bad index var        
+     * 05/07/07 RPI 611 prevent trap on computed AGO with bad index var
+     * 05/14/07 RPI 604 BS2000 compatibility option            
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -348,7 +349,9 @@ public  class  mz390 {
 	SimpleDateFormat sdf_sysclock = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS000");
 	SimpleDateFormat sdf_sysdatc  = new SimpleDateFormat("yyyyMMdd");
 	SimpleDateFormat sdf_sysdate  = new SimpleDateFormat("MM/dd/yy");
+	SimpleDateFormat sdf_sysdate_bs2000 = new SimpleDateFormat("MMddyyDDD");
 	SimpleDateFormat sdf_systime = new SimpleDateFormat("HH.mm");
+	SimpleDateFormat sdf_systime_bs2000 = new SimpleDateFormat("HHmmss");
 	boolean log_tod = true; 
 	JTextArea z390_log_text = null;
 	/*
@@ -6620,7 +6623,11 @@ public  class  mz390 {
 		add_gbl_sys("&SYSDATC",var_setc_type);
 		gbl_setc[tot_gbl_setc-1] = sdf_sysdatc.format(cur_date);
 		add_gbl_sys("&SYSDATE",var_setc_type);
-		gbl_setc[tot_gbl_setc-1] = sdf_sysdate.format(cur_date);
+		if (tz390.opt_bs2000){  // RPI 604
+			gbl_setc[tot_gbl_setc-1] = sdf_sysdate_bs2000.format(cur_date);
+		} else {
+			gbl_setc[tot_gbl_setc-1] = sdf_sysdate.format(cur_date);
+		}
 		add_gbl_sys("&SYSIN_DSN",var_setc_type); // MLC full path and file name  RPI 259
 		set_sys_dsn_mem_vol(tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 		gbl_setc[tot_gbl_setc-1] = sys_dsn;
@@ -6697,9 +6704,29 @@ public  class  mz390 {
 			System.getProperty("java.vendor") 
 			+ " " + System.getProperty("java.version");
 		add_gbl_sys("&SYSTIME",var_setc_type);
-		gbl_setc[tot_gbl_setc-1] = sdf_systime.format(cur_date);
+		if (tz390.opt_bs2000){  // RPI 604
+			gbl_setc[tot_gbl_setc-1] = sdf_systime_bs2000.format(cur_date);
+		} else {
+			gbl_setc[tot_gbl_setc-1] = sdf_systime.format(cur_date);
+		}
 		add_gbl_sys("&SYSVER",var_setc_type);
 		gbl_setc[tot_gbl_setc-1] = tz390.version;
+	    if (tz390.opt_bs2000){  // RPI 604
+	    	add_gbl_sys("&SYSTEM",var_setc_type);
+	    	gbl_setc[tot_gbl_setc-1] = tz390.version.substring(1,2)
+	    	                         + tz390.version.substring(3,4)
+	    	                         + tz390.version.substring(5,7);
+	    	add_gbl_sys("&SYSMOD",var_setc_type);
+	    	if (tz390.opt_amode24){
+	    		gbl_setc[tot_gbl_setc-1] = "24";
+	    	} else {
+	    		gbl_setc[tot_gbl_setc-1] = "31";
+	    	}
+	    	add_gbl_sys("&SYSVERM",var_setc_type);
+	    	gbl_setc[tot_gbl_setc-1] = "VER   ";
+	    	add_gbl_sys("&SYSVERS",var_setc_type);
+	    	gbl_setc[tot_gbl_setc-1] = "VER   ";
+	    }
 	}
 	private void set_sys_dsn_mem_vol(String file_name){
 		/*
@@ -6747,6 +6774,10 @@ public  class  mz390 {
 		lcl_setc[tot_lcl_setc-1] = lcl_sysloc;
 		add_lcl_sys("&SYSSTYP",var_setc_type);
 		lcl_setc[tot_lcl_setc-1] = lcl_sysstyp;
+		if (tz390.opt_bs2000){  // RPI 604
+			add_lcl_sys("&SYSTSEC",var_setc_type);
+			lcl_setc[tot_lcl_setc-1] = lcl_sysstyp;
+		}
 	}
 	private void add_lcl_sys(String sys_name,byte sys_type){
 		/*

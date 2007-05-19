@@ -13,6 +13,7 @@
 .* 04/11/06 RPI 244 UPDATE KW PARMS, SUPPORT PDATA=PSW
 .* 04/25/06 RPI 297 USE L VS LA FOR STOARGE PARMS        
 .* 04/14/07 RPI 583 CHANGE PDATA=ALL TO ALSO DUMP ALL STORAGE
+.* 05/15/07 RPI 623 SUPPORT ID=(REG)                            
 .*********************************************************************
 .* SNAP WILL GENERATE DUMP ON LOG FILE BASED ON THESE PARMS:
 .*  1. PDATA= (DEFAULT IS ALL)
@@ -115,8 +116,13 @@
                RPI163
          LR    15,&STORAGE(2,1)
 .SETUP   ANOP
-         IILH  0,&FLAGS               RPI158
+         AIF   ('&ID'(1,1) EQ '(').IDREG     RPI 623
          IILL  0,&ID                  RPI158
+         AGO   .SETFLAGS
+.IDREG   ANOP
+         LR    0,&ID(1)                      RPI 623
+.SETFLAGS ANOP
+         IILH  0,&FLAGS               RPI158
          AIF   (&TEXT EQ '').NOTEXT
 &TEMP    SETC  &TEXT
          AIF   ('&TEMP'(1,1) NE '''').SKIP

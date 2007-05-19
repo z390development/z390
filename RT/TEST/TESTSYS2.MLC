@@ -1,0 +1,35 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 05/14/07 RPI 604 TEST OPTION BS2000 SYSTEM VARIABLES    
+*********************************************************************
+TESTSYS2 SUBENTRY 
+         WTO   'TESTSYS2 STARTED'  
+         MNOTE 'SYSTEM=&SYSTEM'
+         MNOTE 'SYSMOD=&SYSMOD'
+         MNOTE 'SYSTIME=&SYSTIME'
+         MNOTE 'SYSDATE=&SYSDATE'
+         MNOTE 'SYSVERM=&SYSVERM'
+         MNOTE 'SYSVERS=&SYSVERS'
+         MACRO
+         TEST
+         MNOTE 'SYSTSEC=&SYSTSEC'
+         MEND
+         TEST
+TESTD    DSECT
+         TEST
+TESTDLOC LOCTR
+         TEST
+TESTSYS2 CSECT
+         TEST
+         GPARMOD 31
+         MNOTE 'SYSMOD=&SYSMOD'
+         GPARMOD 24
+         MNOTE 'SYSMOD=&SYSMOD'
+         WTO   'TESTSYS2 ENDED OK'       
+         SUBEXIT                 
+         END                        

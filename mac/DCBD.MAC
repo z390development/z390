@@ -14,6 +14,7 @@
 .* 03/12/07 RPI 558  add glba z390_dcbd to only define once for DCB/DTF              
 .* 03/12/07 RPI 587  add DCBBLKSIF and DCBLRECLF 32 bit len extension             
 .* 04/13/07 RPI 591  correct to handle DCBD before any CSECT/DSECT                
+.* 05/17/07 RPI 625  correct to handle LOCTR as well as CSECT/DSECT               
 .*********************************************************************
          DCBD  &DSORG=,     IGNORE                                     X
                &DEVD=       IGNORE
@@ -24,7 +25,7 @@
          GBLC  &Z390_DCBD_NAME,&Z390_DCBD_TYPE  RPI 591
          AIF   (&Z390_DCBD).EXIT                RPI 591
 &Z390_DCBD      SETB 1                          RPI 591
-&Z390_DCBD_NAME SETC '&SYSECT'                  RPI 591
+&Z390_DCBD_NAME SETC '&SYSLOC'                  RPI 591 RPI 625   
 &Z390_DCBD_TYPE SETC '&SYSSTYP'        
          AIF   (N'&SYSLIST EQ 0).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'

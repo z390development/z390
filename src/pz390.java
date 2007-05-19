@@ -199,6 +199,7 @@ public class pz390 {
 	 * 04/07/07 RPI 582 set R1 to addr of addr of PARM
 	 * 04/16/07 RPI 588 correct trace for CVB, CVBG, CVBY, CVD, CVDG, CVDY
 	 * 05/07/07 RPI 606 add MVCOS  support per SHARE HLASM info.
+	 * 05/11/07 RPI 619 restore MVC and MVCOS to use inline code, fix  trace
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -6421,14 +6422,31 @@ public class pz390 {
 				psw_check = false; // RPI 606
 				ins_setup_ssf();   // RPI 606
 				if (reg.getInt(r0) == 0){
-					rflen = reg.getInt(rf3 + 4);
 					psw_cc = psw_cc0;
 					if (rflen > 0){
 						if (rflen > 4096){
 							rflen = 4096;
 							psw_cc = psw_cc3;
 						}
-						exec_mvc_rflen();
+						/*  // RPI 619
+				    	 * move from bd2_loc to bd1_loc
+				    	 * for length rflen - used by MVC and MVCOS // RPI 606
+				    	 */
+				    	if (bd1_loc + rflen <= bd2_loc || bd2_loc + rflen <= bd1_loc) {
+							System.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc, rflen); // RPI
+																							// 411
+						} else if (bd2_loc + 1 == bd1_loc) {
+							Arrays.fill(mem_byte, bd1_loc, bd1_loc + rflen,
+									mem_byte[bd2_loc]);
+						} else {
+							bd1_end = bd1_loc + rflen;
+							while (bd1_loc < bd1_end) {
+								// destructive overlap with gap > 1
+								mem_byte[bd1_loc] = mem_byte[bd2_loc];
+								bd1_loc++;
+								bd2_loc++;
+							}
+						}
 					}
 				} else {
 					set_psw_check(psw_pic_spec);
@@ -6493,7 +6511,25 @@ public class pz390 {
 		case 0xD2: // 5250 "D2" "MVC" "SS"
 			psw_check = false;
 			ins_setup_ss();
-			exec_mvc_rflen(); // RPI 606
+			/*
+	    	 * move from bd2_loc to bd1_loc
+	    	 * for length rflen 
+	    	 */
+	    	if (bd1_loc + rflen <= bd2_loc || bd2_loc + rflen <= bd1_loc) {
+				System.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc, rflen); // RPI
+																				// 411
+			} else if (bd2_loc + 1 == bd1_loc) {
+				Arrays.fill(mem_byte, bd1_loc, bd1_loc + rflen,
+						mem_byte[bd2_loc]);
+			} else {
+				bd1_end = bd1_loc + rflen;
+				while (bd1_loc < bd1_end) {
+					// destructive overlap with gap > 1
+					mem_byte[bd1_loc] = mem_byte[bd2_loc];
+					bd1_loc++;
+					bd2_loc++;
+				}
+			}
 			break;
 		case 0xD3: // 5260 "D3" "MVZ" "SS"
 			psw_check = false;
@@ -9637,6 +9673,7 @@ public class pz390 {
 		 * fetch rf3,bd1_loc, bd2_loc, and update psw
 		 */
 		rf3 = (mem_byte[psw_loc + 1] & 0xf0) >>> 1;
+		rflen = reg.getInt(rf3+4); // RPI 619
 		mf3 = rf3 >>> 3;
 		bf1 = mem.getShort(psw_loc + 2) & 0xffff;
 		df1 = bf1 & 0xfff;
@@ -10337,27 +10374,6 @@ public class pz390 {
 			reg.putInt(rf2 + 12, 0);
 		}
 	}
-    private void exec_mvc_rflen(){
-    	/*
-    	 * move from bd2_loc to bd1_loc
-    	 * for length rflen - used by MVC and MVCOS // RPI 606
-    	 */
-    	if (bd1_loc + rflen <= bd2_loc || bd2_loc + rflen <= bd1_loc) {
-			System.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc, rflen); // RPI
-																			// 411
-		} else if (bd2_loc + 1 == bd1_loc) {
-			Arrays.fill(mem_byte, bd1_loc, bd1_loc + rflen,
-					mem_byte[bd2_loc]);
-		} else {
-			bd1_end = bd1_loc + rflen;
-			while (bd1_loc < bd1_end) {
-				// destructive overlap with gap > 1
-				mem_byte[bd1_loc] = mem_byte[bd2_loc];
-				bd1_loc++;
-				bd2_loc++;
-			}
-		}
-    }
 	private void exec_srst() {
 		/*
 		 * find char in r2 field which ends at r1 char is in r0 cc 1 = char
@@ -10664,7 +10680,7 @@ public class pz390 {
 			ins_setup_ss();
 			break;
 		case 32: // "SSF" MVCOS oor0bdddbddd (s1,s2,r3) z9-41
-			ins_setup_ss();
+			ins_setup_ssf();  // RPI 619 was ss()
 			break;
 		case 33: // "BLX" BRCL extended mnemonics
 			ins_setup_ril();

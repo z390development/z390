@@ -4,6 +4,8 @@
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 *********************************************************************
+* 05/17/07 RPI 622 Replace E:... start path with cics\.... path
+*********************************************************************
 Z390CICS SUBENTRY BASES=(R13,R3)
 *
 * THE REAL CICS, THE COORDINATOR
@@ -643,7 +645,7 @@ CMD1     DC    CL84'"CD '         "PATH"
 CMD1LEN  DS    H                  LENGTH OF PATH
 TRMPREFX DS    CL3                TERMINAL ID PREFIX
 *
-KCPSTART DC    C'CALL EZ390 E:\Z390\CICS\Z390KCP GUAM PARM('
+KCPSTART DC    C'CALL EZ390 cics\Z390KCP GUAM PARM(' * RPI 622
 KCPTERM  DS    CL4
 *CPTRAN  DC    C'----'            ###
          DC    C'----'            ###
@@ -808,4 +810,3 @@ THRDLEN  EQU   *-THRDDSCT
 * R13  BASE 1
 *
          END
-

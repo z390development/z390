@@ -1429,7 +1429,7 @@ public  class  gz390
        /*
         * Handle key pressed events
         */
-//dsh          displayInfo(e, "KEY PRESSED: ");
+           //dsh displayInfo(e, "KEY PRESSED: "); 
            int keyCode = e.getKeyCode();
            int keyMods = e.getModifiers();
            if  (e.isActionKey()){

@@ -124,7 +124,9 @@ public  class  tz390 {
     * 02/20/07 RPI 550 correct FLN after COPY in MLC. 
     * 03/09/07 RPI 569 leave CON on for TEST 
     * 03/12/07 RPI 558 init job_date for use in COMRG init by pz390 
-    * 04/27/07 RPI 605 remove dup SYSTERM msgs on trace files    
+    * 04/27/07 RPI 605 remove dup SYSTERM msgs on trace files
+    * 05/14/07 RPI 604 BS2000 compatibility option 
+    * 05/16/07 RPI 620 correct get_dup_string for CNOP use   
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -133,7 +135,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.03b";  //dsh
+    String version    = "V1.3.03c";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -148,6 +150,7 @@ public  class  tz390 {
     boolean opt_ascii    = false; // use ascii vs ebcdic
     boolean opt_asm      = true;  // run az390 assembler as mz390 subtask  RPI 415
     boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
+    boolean opt_bs2000   = false; // Seimens BS2000 asm compatibility
     boolean opt_cics     = false; // exec cics program honoring prolog,epilog
     boolean opt_con      = true;  // log msgs to console
     boolean opt_dump     = false; // only indicative dump on abend unless on
@@ -3665,7 +3668,12 @@ public void init_options(String[] args,String pgm_type){
     	} else if (token.toUpperCase().equals("ASM")){
     		opt_asm = true; 
     	} else if (token.toUpperCase().equals("BAL")){
-    		opt_bal = true; 	
+    		opt_bal = true; 
+    	} else if (token.toUpperCase().equals("BS2000")){
+    		opt_bs2000 = true;  // RPI 604
+    		opt_amode24 = true;
+    		opt_amode31 = false;
+    		z390_amode31 = 'F';
     	} else if (token.toUpperCase().equals("CICS")){
            	opt_cics = true;
     	} else if (token.toUpperCase().equals("CON")){
@@ -3961,9 +3969,6 @@ public synchronized void put_systerm(String msg){ // RPI 397
 	        abort_error(12,"I/O error on systerm file " + e.toString());
 		}
 	}
-	//dshx if (trace_file_buff != null){
-	//dshx 	put_trace("SYSTERM " + msg); // RPI 484
-	//dshx }
 }
 public synchronized void close_systerm(int rc){ // RPI 397
 	/*
@@ -3994,6 +3999,7 @@ public synchronized void close_systerm(int rc){ // RPI 397
     	 } catch (Exception e){
     		 System.out.println("TZ390E systerm file close error - " + e.toString());
     	 }
+    	 systerm_file = null;  // RPI 622
      }
 }
 public void close_trace_file(){
@@ -4583,9 +4589,11 @@ public String get_dup_string(String text,int dup_count){
 	if (text.length() == 1){
 		Arrays.fill(dup_char,0,dup_count,text.charAt(0));
 	} else {
-		System.arraycopy(text.toCharArray(),0,dup_char,0,text.length());
-		if (dup_count > 1){
-			System.arraycopy(dup_char,0,dup_char,text.length(),tot_char-text.length());
+		int rep = 0;
+		while (rep < dup_count){  // RPI 620
+			System.arraycopy(text.toCharArray(),0,dup_char,rep * text.length(),
+					text.length());
+			rep++;
 		}
 	}
 	return String.valueOf(dup_char,0,tot_char);
