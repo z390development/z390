@@ -47,6 +47,7 @@
 * 09/19/06 RPI 454 ADD TEST FOR TRE, TROO, TROT, TRTO, TRTT                                          
 * 11/10/06 RPI 476 ADD CC TEST FOR MVST ALONG WITH SPEEDUP                                           
 * 03/18/07 RPI 580 CORRECT TEST CHAR FOR TR??
+* 05/07/07 RPI 606 add MVCOS tests
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -3184,6 +3185,36 @@ BRASL2   EQU   *
          L     R0,=X'FFFFFFFF'
          CLFI  R0,X'FFFFFFFF'
          RT1   CCE
+* C80  MVCOS
+         SR    R0,R0
+         MVC   WORD,=4X'AA'
+         LA    R3,2
+         MVCOS WORD+1,=2X'BB',R3
+         RT1   CCE
+         CLC   WORD,=X'AABBBBAA'
+         RT1   CCE
+         GETMAIN RU,LV=8192
+         LR    R4,R1
+         LR    R0,R4
+         LHI   R1,8192
+         SR    R2,R2
+         L     R3,=X'AA000000'     
+         MVCL  R0,R2
+         SR    R0,R0
+         LHI   R5,8191
+         MVI   0(R4),X'BB'
+         MVCOS 1(R4),0(R4),R5
+         RT1   CC3
+         AHI   R4,4096
+         AHI   R5,-4096
+         MVCOS 1(R4),0(R4),R5
+         RT1   CC0
+         AHI   R4,-4096
+         LR    R0,R4
+         LHI   R1,8192
+         SR    R2,R2
+         L     R3,=X'BB000000'
+         RT1   CCE 
 * D0   TRTR
          MVC   WORD,=AL1(3,2,1,0)
          LA    R1,0

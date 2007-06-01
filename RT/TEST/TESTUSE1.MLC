@@ -8,6 +8,7 @@
 * 03/22/06 RPI 237 test drop using with comments, mult labels
 * 04/06/06 RPI 274 support DSECT dependent using                   
 * 05/07/07 RPI 609 remove label on non-specific dependant using
+* 05/30/07 RPI 629 correct drop of prev unlabeled USING
 *********************************************************************
 TESTUSE1 SUBENTRY
          WTO   'TESTUSE1 TEST LABELD AND DEPENDANT USING'
@@ -67,6 +68,19 @@ CHECK    USING PRIVATE,SAVEAREA        **!! for testing purposes
          LA    1,CHECK.P1
          CLI   0(1),X'EE'
          BNE   ERR
+*
+* TEST DROPING PREV UNLABELED USING - RPI 629
+*
+         BALR  10,0
+         USING *,10    
+         BALR  10,0
+L10      USING *,10
+         BALR  10,0
+         USING *,10
+         LA    1,*
+         LA    10,0(10) CLEAR HIGH BITS
+         CLR   1,10    VERIFY USE OF LAST USING VESUS PREV
+         BNE   ERR   
          WTO   'TESTUSE1 ENDED OK'
          SUBEXIT
 ERR      WTO   'TESTUSE1 ABORTING WITH ERROR'

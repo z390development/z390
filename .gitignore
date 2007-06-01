@@ -101,6 +101,7 @@ zcobol/test/z390/
 **/*.[pP][nN][gG]
 **/*.[pP][pP][tT]
 **/*.[xX][lL][sS]
+**/*.[xX][mM][lL]
 
 # Backup and junk files
 **/_private/

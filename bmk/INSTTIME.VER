@@ -129,6 +129,10 @@ V8
       CTD      --  3 FORMS
       CFD      --  3 FORMS
 
+V9
+==
+   ADD INST MVCOS
+
 COMPLETED INSTRUCTIONS:
    01 SET
      01, 07, 0B-0E
@@ -158,6 +162,7 @@ COMPLETED INSTRUCTIONS:
    BA-BB, BD-BF
    C00-C01, C04-C0F
    C24-C25, C28-C2F
+   C80
    D0-D7, DC-DF
    E3 SET
       02, 04, 06, 08-0F, 12, 14-21, 24, 26

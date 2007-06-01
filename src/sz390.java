@@ -128,7 +128,8 @@ public  class  sz390 implements Runnable {
     *          and correct bug causing delete of wrong CDE after 
     *          multiple XCTL's    
     * 05/17/07 RPI 622 correct TCPIO server shutdown errors due  to connection
-    *          thread interruptions.               
+    *          thread interruptions.   
+    * 05/30/07 RPI 626 prevent DELETE removing active link pgm.            
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -1444,11 +1445,27 @@ private void svc_delete(){
 		}
 	}
 	cur_cde = tz390.find_key_index('P',load_pgm_name.toUpperCase() + load_pgm_type); // RPI 499
-	if (cur_cde != -1 && delete_cur_cde()){
+	if (cur_cde != -1 
+		&& !find_link_cde()   // RPI 626 
+	    && delete_cur_cde()){
 		pz390.reg.putInt(pz390.r15,0);
 	} else {
 		pz390.reg.putInt(pz390.r15,4);
 	}
+}
+private boolean find_link_cde(){
+	/*
+	 * return true if cur_cde is on link stack
+	 * else false.  Used to prevent deleting link entries. RPI 626
+	 */
+	int index = 0;
+	while (index < tot_link_stk){
+		if (cur_cde == link_stk_cde[index]){
+			return true;
+		}
+		index++;
+	}
+	return false;
 }
 private boolean delete_cur_cde(){
 	/*

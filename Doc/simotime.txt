@@ -1,0 +1,24 @@
+Simotime assembler demo testing on z390 v1.0.03 as of 10/18/05
+
+SIMLABA1.MLC - 0 errors
+    RPI32 look in current dir if not found in SYSMAC
+    ran ok
+QSAMIOA1.MLC - 2 error
+   add DCBD
+   CORRECT MACRF=GM
+CBLASMA1.MLC - 8 prn errors
+    TESTCB, RPL, ACB, EXLST - undefined
+ASMWTOA1.MLC - 0 prn errors
+ASMTRXA1.MLC - 0 errors
+  ran ok
+ASMASMA1.MLC - 0 errors
+   correct F() and H()
+  runs ok
+ASMASMA2.MLC - 0 errors
+   correct F() and H()
+ASMASMA3.MLC - 0 errors
+   correct F() and H()
+ASMASMAA.MLC - 0 errors
+ASM370A1.MLC - 0 errors
+   RPI33 to change default psw pgm mask to prevent 0C8
+   runs ok

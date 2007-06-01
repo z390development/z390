@@ -16,6 +16,7 @@ rem
 rem mz390 macro processor
 rem
 call RT1 %~dps0rt\test\TESTSYS1 sysparm(12345) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSYS2 bs2000 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSYN1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSYN2 sysmac(mac+rt\test) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTPRM1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -105,6 +106,7 @@ call RT1 %~dps0rt\test\TESTCAL2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTLNK1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTLOD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT5 %~dps0rt\test\TESTLOD2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTXCL4 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTXCL3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTXCL2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTXCL1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -138,6 +140,7 @@ copy %~dps0rt\test\TESTTST1.TF1 %~dps0rt\test\TESTASC4.TF1
 call RT5 %~dps0rt\test\TESTASC4 test(SYSUT1) ascii systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTCMD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTCMD2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTCIC1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT7 %~dps0rt\test\TESTDMP1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT7 %~dps0rt\test\TESTDMP2 dump systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT7 %~dps0rt\test\TESTDMP3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9

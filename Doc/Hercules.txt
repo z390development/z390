@@ -1,0 +1,50 @@
+Hercules MVS 3.8 installation and use guide:
+
+1.  Download and install native Windows Hercules from:
+
+http://www.conmicro.cx/hercules/
+
+Save self extracting exe from link on above page to archive location:
+
+d:\archive\hercules\hercules-3.03-native.exe
+
+Execute above to install at:
+
+c:\program files\mvs38j\hercules
+
+2.  Download and install Jay Maynard's ready to run MVS 3.8 from:
+
+http://www.ibiblio.org/jmaynard/
+
+Save zip from link on above page to archive location:
+
+d:\archive\hercules\turnkey-mvs-3.zip
+
+Unzip to d:\archive\hercules\turnkey-mvs-3.iso
+
+Run Easy CD creator to convert to CD archive
+
+Copy CD to archive d:\archive\hercules
+
+3.  Open window and set directory to:
+
+d:\archive\hercules\CDROM(H)
+
+Enter setup to run installation with target:
+
+c:\program files\mvs38j
+
+4.  Change directory to:
+
+c:\program files\mvs38j
+
+Enter startmvs which will start hercules and 5 sessions
+(change startmvs.bat to match your telnet and 3270 terminal options
+
+6.  Enter ipl command:
+
+ipl 148
+
+References:
+
+http://www.bsp-gmbh.com/turnkey/cookbook/index.html

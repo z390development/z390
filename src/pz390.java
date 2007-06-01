@@ -200,6 +200,8 @@ public class pz390 {
 	 * 04/16/07 RPI 588 correct trace for CVB, CVBG, CVBY, CVD, CVDG, CVDY
 	 * 05/07/07 RPI 606 add MVCOS  support per SHARE HLASM info.
 	 * 05/11/07 RPI 619 restore MVC and MVCOS to use inline code, fix  trace
+	 * 05/29/07 RPI 627 repackage all 2 byte opcodes into separate function
+	 *          for nested switch to speed up primary switch byte code
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1293,7 +1295,7 @@ public class pz390 {
 		       54,  // 1400 "6E" "AW" "RX" 5
 		       54,  // 1410 "6F" "SW" "RX" 5
 		       54,  // 1420 "70" "STE" "RX" 5
-		       54,  // 1430 "71" "MS" "RX" 5
+		       50,  // 1430 "71" "MS" "RX" 5  RPI 627
 		       54,  // 1440 "78" "LE" "RX" 5
 		       54,  // 1450 "79" "CE" "RX" 5
 		       54,  // 1460 "7A" "AE" "RX" 5
@@ -1849,28 +1851,28 @@ public class pz390 {
 		       180,  // 5720 "E33E" "STRV" "RXY" 18
 		       182,  // 5730 "E33F" "STRVH" "RXY" 18
 		       180,  // 5740 "E346" "BCTG" "RXY" 18
-		       180,  // 5750 "E350" "STY" "RXY" 18
-		       180,  // 5760 "E351" "MSY" "RXY" 18
-		       180,  // 5770 "E354" "NY" "RXY" 18
-		       180,  // 5780 "E355" "CLY" "RXY" 18
-		       180,  // 5790 "E356" "OY" "RXY" 18
-		       180,  // 5800 "E357" "XY" "RXY" 18
-		       180,  // 5810 "E358" "LY" "RXY" 18
-		       180,  // 5820 "E359" "CY" "RXY" 18
-		       180,  // 5830 "E35A" "AY" "RXY" 18
-		       180,  // 5840 "E35B" "SY" "RXY" 18
-		       180,  // 5850 "E35E" "ALY" "RXY" 18
-		       180,  // 5860 "E35F" "SLY" "RXY" 18
-		       181,  // 5870 "E370" "STHY" "RXY" 18
+		       50,  // 5750 "E350" "STY" "RXY" 18
+		       50,   // 5760 "E351" "MSY" "RXY" 18
+		       50,   // 5770 "E354" "NY" "RXY" 18
+		       50,   // 5780 "E355" "CLY" "RXY" 18
+		       50,   // 5790 "E356" "OY" "RXY" 18
+		       50,   // 5800 "E357" "XY" "RXY" 18
+		       50,   // 5810 "E358" "LY" "RXY" 18
+		       50,   // 5820 "E359" "CY" "RXY" 18
+		       50,   // 5830 "E35A" "AY" "RXY" 18
+		       50,   // 5840 "E35B" "SY" "RXY" 18
+		       50,   // 5850 "E35E" "ALY" "RXY" 18
+		       50,   // 5860 "E35F" "SLY" "RXY" 18
+		       53,  // 5870 "E370" "STHY" "RXY" 18
 		       180,  // 5880 "E371" "LAY" "RXY" 18
 		       186,  // 5890 "E372" "STCY" "RXY" 18
 		       186,  // 5900 "E373" "ICY" "RXY" 18
 		       186,  // 5910 "E376" "LB" "RXY" 18
 		       185,  // 5920 "E377" "LGB" "RXY" 18
-		       181,  // 5930 "E378" "LHY" "RXY" 18
-		       181,  // 5940 "E379" "CHY" "RXY" 18
-		       181,  // 5950 "E37A" "AHY" "RXY" 18
-		       181,  // 5960 "E37B" "SHY" "RXY" 18
+		       53,  // 5930 "E378" "LHY" "RXY" 18
+		       53,  // 5940 "E379" "CHY" "RXY" 18
+		       53,  // 5950 "E37A" "AHY" "RXY" 18
+		       53,  // 5960 "E37B" "SHY" "RXY" 18
 		       180,  // 5970 "E380" "NG" "RXY" 18
 		       180,  // 5980 "E381" "OG" "RXY" 18
 		       180,  // 5990 "E382" "XG" "RXY" 18
@@ -1883,7 +1885,7 @@ public class pz390 {
 		       185,  // 6060 "E390" "LLGC" "RXY" 18
 		       182,  // 6070 "E391" "LLGH" "RXY" 18
 		       186,  //      "E394" "LLC" "RXY" 18 Z9-44
-		       181,  //      "E395" "LLH" "RXY" 18 Z9-45
+		       53,  //      "E395" "LLH" "RXY" 18 Z9-45
 		       180,  // 6080 "E396" "ML" "RXY" 18
 		       180,  // 6090 "E397" "DL" "RXY" 18
 		       187,  // 6100 "E398" "ALC" "RXY" 18
@@ -2063,50 +2065,7 @@ public class pz390 {
 		 */
 		switch (opcode1) {
 		case 0x01:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_e] & 0xff;
-			switch (opcode2) {
-			case 0x01: // 10 "0101" "PR" "E"
-				psw_check = false;
-				ins_setup_e();
-				pop_pc_stack();
-				break;
-			case 0x02: // 20 "0102" "UPT" "E"
-				ins_setup_e();
-				break;
-			case 0x04: // 30 "0104" "PTFF" "E" Z9-1
-				/*
-				 * perform timing facility function r0 = function r1 - parm
-				 * block address Notes: 1. Map functions 0x00-0x43 to timing
-				 * functions 0x80-C3 in svc 11
-				 */
-				psw_check = false;
-				ins_setup_e();
-				reg.put(rf1 + 7, (byte) (reg.get(rf1 + 7) | 0x80 - 0x80));
-				sz390.svc(11);
-				break;
-			case 0x07: // 30 "0107" "SCKPF" "E"
-				ins_setup_e();
-				break;
-			case 0x0B: // 40 "010B" "TAM" "E"
-				ins_setup_e();
-				break;
-			case 0x0C: // 50 "010C" "SAM24" "E"
-				psw_check = false;
-				ins_setup_e();
-				set_psw_amode(psw_amode24_bit);
-				break;
-			case 0x0D: // 60 "010D" "SAM31" "E"
-				psw_check = false;
-				ins_setup_e();
-				set_psw_amode(psw_amode31_bit);
-				break;
-			case 0x0E: // 70 "010E" "SAM64" "E"
-				ins_setup_e();
-				break;
-			case 0xFF: // 80 "01FF" "TRAP2" "E"
-				ins_setup_e();
-				break;
-			}
+			ins_01XX();
 			break;
 		case 0x04: // 90 "04" "SPM" "RR"
 			psw_check = false;
@@ -2204,126 +2163,12 @@ public class pz390 {
 		case 0x0E: // 330 "0E" "MVCL" "RR"
 			psw_check = false;
 			ins_setup_rr();
-			bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
-			bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
-			rflen1 = reg.getInt(rf1 + 12) & psw_amode24;
-			rflen2 = reg.getInt(rf2 + 12) & psw_amode24;
-			data_len = rflen1;
-			pad_len = 0;
-			psw_cc = psw_cc0;
-			if (rflen1 < rflen2) {
-				psw_cc = psw_cc1;
-			} else if (rflen1 > rflen2) {
-				psw_cc = psw_cc2;
-				data_len = rflen2;
-				pad_len = rflen1 - rflen2;
-				fill_char = reg.get(rf2 + 12);
-			}
-			if (bd1_loc + data_len + pad_len > tot_mem) {
-				set_psw_check(psw_pic_addr); // RPI 397
-				break;
-			}
-			if (data_len > 0 && bd1_loc > bd2_loc
-					&& bd1_loc < bd2_loc + data_len) {
-				psw_cc = psw_cc3;
-				break;
-			}
-			if (data_len > 0) { // RPI 386
-				System
-						.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc,
-								data_len); // RPI 411
-				bd1_loc = bd1_loc + data_len;
-				bd2_loc = bd2_loc + data_len;
-			}
-			if (pad_len > 0) {
-				Arrays.fill(mem_byte, bd1_loc, bd1_loc + pad_len, fill_char);
-				bd1_loc = bd1_loc + pad_len;
-			}
-			reg.putInt(rf1 + 4, (reg.getInt(rf1 + 4) & psw_amode_high_bits)
-					| bd1_loc);
-			reg.putInt(rf1 + 12, reg.getInt(rf1 + 12) & psw_amode24_high_bits);
-			reg.putInt(rf2 + 4, (reg.getInt(rf2 + 4) & psw_amode_high_bits)
-					| bd2_loc);
-			reg.putInt(rf2 + 12, (reg.getInt(rf2 + 12) & psw_amode24_high_bits)
-					| (rflen2 - data_len));
+			exec_mvcl();
 			break;
 		case 0x0F: // 340 "0F" "CLCL" "RR"
 			psw_check = false;
 			ins_setup_rr();
-			fill_char = reg.get(rf2 + 12);
-			bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
-			bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
-			bd1_start = bd1_loc;
-			bd2_start = bd2_loc;
-			rflen1 = reg.getInt(rf1 + 12) & psw_amode24;
-			rflen2 = reg.getInt(rf2 + 12) & psw_amode24;
-			data_len = rflen1;
-			pad_len = 0;
-			psw_cc = psw_cc0;
-			if (rflen1 < rflen2) {
-				data_len = rflen1;
-				pad_len = rflen2 - rflen1;
-			} else if (rflen1 > rflen2) {
-				data_len = rflen2;
-				pad_len = rflen1 - rflen2;
-			}
-			if (bd1_loc + data_len + pad_len > tot_mem) {
-				set_psw_check(psw_pic_addr); // RPI 397
-				break;
-			}
-			bd1_end = bd1_loc + data_len;
-			while (bd1_loc < bd1_end) {
-				if (mem_byte[bd1_loc] != mem_byte[bd2_loc]) {
-					if ((mem_byte[bd1_loc] & 0xff) > (mem_byte[bd2_loc] & 0xff)) {
-						psw_cc = psw_cc_high;
-					} else {
-						psw_cc = psw_cc_low;
-					}
-					bd1_end = bd1_loc;
-				} else {
-					bd1_loc++;
-					bd2_loc++;
-				}
-			}
-			if (psw_cc == psw_cc_equal & pad_len > 0) {
-				if (rflen1 > rflen2) {
-					bd1_end = bd1_loc + pad_len;
-					while (bd1_loc < bd1_end) {
-						if (mem_byte[bd1_loc] != fill_char) {
-							if ((mem_byte[bd1_loc] & 0xff) > (fill_char & 0xff)) {
-								psw_cc = psw_cc_high;
-							} else {
-								psw_cc = psw_cc_low;
-							}
-							bd1_end = bd1_loc;
-						} else {
-							bd1_loc++;
-						}
-					}
-				} else {
-					bd2_end = bd2_loc + pad_len;
-					while (bd2_loc < bd2_end) {
-						if (mem_byte[bd2_loc] != fill_char) {
-							if ((mem_byte[bd2_loc] & 0xff) > (fill_char & 0xff)) {
-								psw_cc = psw_cc_high;
-							} else {
-								psw_cc = psw_cc_low;
-							}
-							bd2_end = bd2_loc;
-						} else {
-							bd2_loc++;
-						}
-					}
-				}
-			}
-			reg.putInt(rf1 + 4, (reg.getInt(rf1 + 4) & psw_amode_high_bits)
-					| bd1_loc);
-			reg.putInt(rf1 + 12, (reg.getInt(rf1 + 12) & psw_amode24_high_bits)
-					| (rflen1 - (bd1_loc - bd1_start)));
-			reg.putInt(rf2 + 4, (reg.getInt(rf2 + 4) & psw_amode_high_bits)
-					| bd2_loc);
-			reg.putInt(rf2 + 12, (reg.getInt(rf2 + 12) & psw_amode24_high_bits)
-					| (rflen2 - (bd2_loc - bd2_start)));
+			exec_clcl();
 			break;
 		case 0x10: // 350 "10" "LPR" "RR"
 			psw_check = false;
@@ -3409,372 +3254,20 @@ public class pz390 {
 			ins_setup_rs();
 			break;
 		case 0xA5:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_ri] & 0x0f;
-			switch (opcode2) {
-			case 0x0: // 1820 "A50" "IIHH" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putShort(rf1, (short) if2);
-				break;
-			case 0x1: // 1830 "A51" "IIHL" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putShort(rf1 + 2, (short) if2);
-				break;
-			case 0x2: // 1840 "A52" "IILH" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putShort(rf1 + 4, (short) if2);
-				break;
-			case 0x3: // 1850 "A53" "IILL" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putShort(rf1 + 6, (short) if2);
-				break;
-			case 0x4: // 1860 "A54" "NIHH" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				rv1 = reg.getInt(rf1) & ((if2 << 16) | 0xffff);
-				reg.putInt(rf1, rv1);
-				if (rv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x5: // 1870 "A55" "NIHL" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				rv1 = reg.getInt(rf1) & (0xffff0000 | (if2 & 0xffff));
-				reg.putInt(rf1, rv1);
-				if (rv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x6: // 1880 "A56" "NILH" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				rv1 = reg.getInt(rf1 + 4) & (0xffff | (if2 << 16));
-				reg.putInt(rf1 + 4, rv1);
-				if (rv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x7: // 1890 "A57" "NILL" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				rv1 = reg.getInt(rf1 + 4) & (0xffff0000 | (if2 & 0xffff));
-				reg.putInt(rf1 + 4, rv1);
-				if (rv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x8: // 1900 "A58" "OIHH" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				rv1 = reg.getInt(rf1) | (if2 << 16);
-				reg.putInt(rf1, rv1);
-				if (rv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x9: // 1910 "A59" "OIHL" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				rv1 = reg.getInt(rf1) | (if2 & 0xffff);
-				reg.putInt(rf1, rv1);
-				if (rv1 == 0) { // rpi 295
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0xA: // 1920 "A5A" "OILH" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				rv1 = reg.getInt(rf1 + 4) | (if2 << 16); // RPI 295
-				reg.putInt(rf1 + 4, rv1);
-				if (rv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0xB: // 1930 "A5B" "OILL" "RI"\
-				psw_check = false;
-				ins_setup_ri();
-				rv1 = reg.getInt(rf1 + 4) | (if2 & 0xffff);
-				reg.putInt(rf1 + 4, rv1);
-				if (rv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0xC: // 1940 "A5C" "LLIHH" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putLong(rf1, (long) if2 << 48); // RPI158
-				break;
-			case 0xD: // 1950 "A5D" "LLIHL" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putLong(rf1, ((long) if2 << 32) & long_low48_bits); // RPI158
-				break;
-			case 0xE: // 1960 "A5E" "LLILH" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putLong(rf1, ((long) if2 << 16) & long_low32_bits); // RPI158
-				break;
-			case 0xF: // 1970 "A5F" "LLILL" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putLong(rf1, (long) (if2 & 0xffff)); // RPI158
-				break;
-			}
+			ins_A5XX();
 			break;
 		case 0xA7:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_ri] & 0x0f;
-			switch (opcode2) {
-			case 0x0: // 1980 "A70" "TMLH" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				psw_cc = get_tm_reg_cc(reg.getShort(rf1 + 4) & 0xffff, if2);
-				break;
-			case 0x1: // 2000 "A71" "TMLL" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				psw_cc = get_tm_reg_cc(reg.getShort(rf1 + 6) & 0xffff, if2);
-				break;
-			case 0x2: // 2020 "A72" "TMHH" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				psw_cc = get_tm_reg_cc(reg.getShort(rf1) & 0xffff, if2);
-				break;
-			case 0x3: // 2030 "A73" "TMHL" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				psw_cc = get_tm_reg_cc(reg.getShort(rf1 + 2) & 0xffff, if2);
-				break;
-			case 0x4: // 2040 "A74" "BRC" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				if ((psw_cc & mf1) > 0) {
-					set_psw_loc(psw_loc - 4 + 2 * if2);
-				}
-				break;
-			case 0x5: // 2360 "A75" "BRAS" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
-				set_psw_loc(psw_loc - 4 + 2 * if2);
-				break;
-			case 0x6: // 2380 "A76" "BRCT" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				rv1 = reg.getInt(rf1 + 4) - 1;
-				reg.putInt(rf1 + 4, rv1);
-				if (rv1 != 0) {
-					set_psw_loc(psw_loc - 4 + if2 + if2); // RPI 357
-				}
-				break;
-			case 0x7: // 2400 "A77" "BRCTG" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				rlv1 = reg.getLong(rf1) - 1;
-				reg.putLong(rf1, rlv1);
-				if (rlv1 != 0) {
-					set_psw_loc(psw_loc - 4 + 2 * if2);
-				}
-				break;
-			case 0x8: // 2420 "A78" "LHI" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putInt(rf1 + 4, if2);
-				break;
-			case 0x9: // 2430 "A79" "LGHI" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putLong(rf1, if2);
-				break;
-			case 0xA: // 2440 "A7A" "AHI" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				rv1 = reg.getInt(rf1 + 4);
-				rv2 = if2;
-				rv3 = rv1 + rv2;
-				reg.putInt(rf1 + 4, rv3);
-				psw_cc = get_int_add_cc();
-				break;
-			case 0xB: // 2450 "A7B" "AGHI" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				rlv1 = reg.getLong(rf1);
-				rlv2 = if2;
-				rlv3 = rlv1 + rlv2;
-				reg.putLong(rf1, rlv3);
-				psw_cc = get_long_add_cc();
-				break;
-			case 0xC: // 2460 "A7C" "MHI" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) * if2);
-				break;
-			case 0xD: // 2470 "A7D" "MGHI" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				reg.putLong(rf1, reg.getLong(rf1) * if2);
-				break;
-			case 0xE: // 2480 "A7E" "CHI" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				psw_cc = get_int_comp_cc(reg.getInt(rf1 + 4), if2);
-				break;
-			case 0xF: // 2490 "A7F" "CGHI" "RI"
-				psw_check = false;
-				ins_setup_ri();
-				psw_cc = get_long_comp_cc(reg.getLong(rf1), if2);
-				break;
-			}
+			ins_A7XX();
 			break;
 		case 0xA8: // 2500 "A8" "MVCLE" "RS"
 			psw_check = false;
 			ins_setup_rs();
-			fill_char = (byte) bd2_loc;
-			bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
-			bd2_loc = reg.getInt(rf3 + 4) & psw_amode;
-			rflen1 = reg.getInt(rf1 + 12) & max_pos_int;
-			rflen2 = reg.getInt(rf3 + 12) & max_pos_int;
-			data_len = rflen1;
-			pad_len = 0;
-			psw_cc = psw_cc0;
-			if (rflen1 < rflen2) {
-				psw_cc = psw_cc1;
-			} else if (rflen1 > rflen2) {
-				psw_cc = psw_cc2;
-				data_len = rflen2;
-				pad_len = rflen1 - rflen2;
-			}
-			if (bd1_loc + data_len + pad_len > tot_mem) {
-				set_psw_check(psw_pic_addr); // RPI 397
-				break;
-			}
-			if (bd1_loc + data_len <= bd2_loc || bd2_loc + data_len <= bd1_loc) {
-				System
-						.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc,
-								data_len); // RPI 411
-				bd1_loc = bd1_loc + data_len;
-				bd2_loc = bd2_loc + data_len;
-			} else if (bd2_loc + 1 == bd1_loc) {
-				Arrays.fill(mem_byte, bd1_loc, bd1_loc + data_len,
-						mem_byte[bd2_loc]);
-				bd1_loc = bd1_loc + data_len;
-				bd2_loc = bd2_loc + data_len;
-			} else {
-				bd1_end = bd1_loc + data_len;
-				// destructive overlap with gap > 1
-				bd1_end = bd1_loc + data_len;
-				while (bd1_loc < bd1_end) {
-					mem_byte[bd1_loc] = mem_byte[bd2_loc];
-					bd1_loc++;
-					bd2_loc++;
-				}
-			}
-			bd1_end = bd1_loc + pad_len;
-			if (bd1_loc < bd1_end) {
-				Arrays.fill(mem_byte, bd1_loc, bd1_loc + pad_len, fill_char);
-				bd1_loc = bd1_loc + pad_len;
-			}
-			reg.putInt(rf1 + 4, (reg.getInt(rf1 + 4) & psw_amode_high_bits)
-					| bd1_loc);
-			reg.putInt(rf1 + 12, 0);
-			reg.putInt(rf3 + 4, (reg.getInt(rf3 + 4) & psw_amode_high_bits)
-					| bd2_loc);
-			reg.putInt(rf3 + 12, rflen2 - data_len);
+			exec_mvcle();
 			break;
 		case 0xA9: // 2510 "A9" "CLCLE" "RS"
 			psw_check = false;
 			ins_setup_rs();
-			fill_char = (byte) bd2_loc;
-			bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
-			bd2_loc = reg.getInt(rf3 + 4) & psw_amode;
-			bd1_start = bd1_loc;
-			bd2_start = bd2_loc;
-			rflen1 = reg.getInt(rf1 + 12) & max_pos_int;
-			rflen2 = reg.getInt(rf3 + 12) & max_pos_int;
-			data_len = rflen1;
-			pad_len = 0;
-			psw_cc = psw_cc0;
-			if (rflen1 < rflen2) {
-				data_len = rflen1;
-				pad_len = rflen2 - rflen1;
-			} else if (rflen1 > rflen2) {
-				data_len = rflen2;
-				pad_len = rflen1 - rflen2;
-			}
-			if (bd1_loc + data_len + pad_len > tot_mem) {
-				set_psw_check(psw_pic_addr); // RPI 397
-				break;
-			}
-			bd1_end = bd1_loc + data_len;
-			while (bd1_loc < bd1_end) {
-				if (mem_byte[bd1_loc] != mem_byte[bd2_loc]) {
-					if ((mem_byte[bd1_loc] & 0xff) > (mem_byte[bd2_loc] & 0xff)) {
-						psw_cc = psw_cc_high;
-					} else {
-						psw_cc = psw_cc_low;
-					}
-					bd1_end = bd1_loc;
-				} else {
-					bd1_loc++;
-					bd2_loc++;
-				}
-			}
-			if (psw_cc == psw_cc_equal & pad_len > 0) {
-				if (rflen1 > rflen2) {
-					bd1_end = bd1_loc + pad_len;
-					while (bd1_loc < bd1_end) {
-						if (mem_byte[bd1_loc] != fill_char) {
-							if ((mem_byte[bd1_loc] & 0xff) > (fill_char & 0xff)) {
-								psw_cc = psw_cc_high;
-							} else {
-								psw_cc = psw_cc_low;
-							}
-							bd1_end = bd1_loc;
-						} else {
-							bd1_loc++;
-						}
-					}
-				} else {
-					bd2_end = bd2_loc + pad_len;
-					while (bd2_loc < bd2_end) {
-						if (mem_byte[bd2_loc] != fill_char) {
-							if ((mem_byte[bd2_loc] & 0xff) > (fill_char & 0xff)) {
-								psw_cc = psw_cc_high;
-							} else {
-								psw_cc = psw_cc_low;
-							}
-							bd2_end = bd2_loc;
-						} else {
-							bd2_loc++;
-						}
-					}
-				}
-			}
-			reg.putInt(rf1 + 4, (reg.getInt(rf1 + 4) & psw_amode_high_bits)
-					| bd1_loc);
-			reg.putInt(rf1 + 12, rflen1 - (bd1_loc - bd1_start));
-			reg.putInt(rf3 + 4, (reg.getInt(rf3 + 4) & psw_amode_high_bits)
-					| bd2_loc);
-			reg.putInt(rf3 + 12, rflen2 - (bd2_loc - bd2_start));
+			exec_clcle();
 			break;
 		case 0xAC: // 2520 "AC" "STNSM" "SI"
 			ins_setup_si();
@@ -3792,1755 +3285,10 @@ public class pz390 {
 			ins_setup_rx();
 			break;
 		case 0xB2:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_s] & 0xff;
-			switch (opcode2) {
-			case 0x02: // 2570 "B202" "STIDP" "S"
-				psw_check = false;
-				ins_setup_s();
-				mem.putLong(bd2_loc, cpu_id);
-				break;
-			case 0x04: // 2580 "B204" "SCK" "S"
-				ins_setup_s();
-				break;
-			case 0x05: // 2590 "B205" "STCK" "S"
-				psw_check = false;
-				ins_setup_s();
-				/*
-				 * Notes: 1. The Java time stored is milliseconds since Jan. 1,
-				 * 1970. 2. For IBM OS compatibility the STCK instruction
-				 * converts Java time to base of January 1, 1900 with bit 51
-				 * being incremented each microsecond. 3. The low bits are
-				 * incremented to prevent duplicate values from being returned
-				 * when timing on.
-				 */
-				if (tz390.opt_timing) {
-					java_mil = System.currentTimeMillis();
-				} else {
-					java_mil = cur_date.getTime();
-				}
-				ibm_ms = (java_mil + ibm_mil) * 1000;
-				cur_stck = ibm_ms << (63 - 51);
-				if (cur_stck > last_stck) {
-					last_stck = cur_stck;
-				} else {
-					last_stck++;
-				}
-				mem.putLong(bd2_loc, last_stck);
-				break;
-			case 0x06: // 2600 "B206" "SCKC" "S"
-				ins_setup_s();
-				break;
-			case 0x07: // 2610 "B207" "STCKC" "S"
-				ins_setup_s();
-				break;
-			case 0x08: // 2620 "B208" "SPT" "S"
-				ins_setup_s();
-				break;
-			case 0x09: // 2630 "B209" "STPT" "S"
-				ins_setup_s();
-				break;
-			case 0x0A: // 2640 "B20A" "SPKA" "S"
-				ins_setup_s();
-				break;
-			case 0x0B: // 2650 "B20B" "IPK" "S"
-				ins_setup_s();
-				break;
-			case 0x0D: // 2660 "B20D" "PTLB" "S"
-				ins_setup_s();
-				break;
-			case 0x10: // 2670 "B210" "SPX" "S"
-				ins_setup_s();
-				break;
-			case 0x11: // 2680 "B211" "STPX" "S"
-				ins_setup_s();
-				break;
-			case 0x12: // 2690 "B212" "STAP" "S"
-				ins_setup_s();
-				break;
-			case 0x18: // 2700 "B218" "PC" "S"
-				psw_check = false;
-				ins_setup_s();
-				push_pc_stack(psw_loc);
-				set_psw_loc(bd2_loc);
-				break;
-			case 0x19: // 2710 "B219" "SAC" "S"
-				ins_setup_s();
-				break;
-			case 0x1A: // 2720 "B21A" "CFC" "S"
-				ins_setup_s();
-				break;
-			case 0x21: // 2730 "B221" "IPTE" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x22: // 2740 "B222" "IPM" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				int_work = (psw_cc_code[psw_cc] << 4) | psw_pgm_mask;
-				rv1 = reg.getInt(rf1 + 4) & 0xffffff; // RPI106
-				reg.putInt(rf1 + 4, rv1 | (int_work << 24)); // RPI106
-				break;
-			case 0x23: // 2750 "B223" "IVSK" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x24: // 2760 "B224" "IAC" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x25: // 2770 "B225" "SSAR" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x26: // 2780 "B226" "EPAR" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x27: // 2790 "B227" "ESAR" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x28: // 2800 "B228" "PT" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x29: // 2810 "B229" "ISKE" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x2A: // 2820 "B22A" "RRBE" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x2B: // 2830 "B22B" "SSKE" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x2C: // 2840 "B22C" "TB" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x2D: // 2850 "B22D" "DXR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf1);
-				fp_rbdv2 = fp_get_bd_from_lh(fp_reg, rf2);
-				if (fp_rbdv2.signum() != 0) {
-					fp_rbdv1 = fp_rbdv1.divide(fp_rbdv2, fp_bdg_context).round(
-							fp_x_context);
-				}
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_div();
-				break;
-			case 0x2E: // 2860 "B22E" "PGIN" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x2F: // 2870 "B22F" "PGOUT" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x30: // 2880 "B230" "CSCH" "S"
-				ins_setup_s();
-				break;
-			case 0x31: // 2890 "B231" "HSCH" "S"
-				ins_setup_s();
-				break;
-			case 0x32: // 2900 "B232" "MSCH" "S"
-				ins_setup_s();
-				break;
-			case 0x33: // 2910 "B233" "SSCH" "S"
-				ins_setup_s();
-				break;
-			case 0x34: // 2920 "B234" "STSCH" "S"
-				ins_setup_s();
-				break;
-			case 0x35: // 2930 "B235" "TSCH" "S"
-				ins_setup_s();
-				break;
-			case 0x36: // 2940 "B236" "TPI" "S"
-				ins_setup_s();
-				break;
-			case 0x37: // 2950 "B237" "SAL" "S"
-				ins_setup_s();
-				break;
-			case 0x38: // 2960 "B238" "RSCH" "S"
-				ins_setup_s();
-				break;
-			case 0x39: // 2970 "B239" "STCRW" "S"
-				ins_setup_s();
-				break;
-			case 0x3A: // 2980 "B23A" "STCPS" "S"
-				ins_setup_s();
-				break;
-			case 0x3B: // 2990 "B23B" "RCHP" "S"
-				ins_setup_s();
-				break;
-			case 0x3C: // 3000 "B23C" "SCHM" "S"
-				ins_setup_s();
-				break;
-			case 0x40: // 3010 "B240" "BAKR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				if (rf1 == 0) {
-					push_pc_stack(psw_loc);
-				} else {
-					push_pc_stack(reg.getInt(rf1 + 4));
-				}
-				if (rf2 != 0) {
-					set_psw_loc(reg.getInt(rf2 + 4));
-				}
-				break;
-			case 0x41: // 3020 "B241" "CKSM" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x44: // 3030 "B244" "SQDR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = Math.sqrt(fp_get_db_from_dh(fp_reg, rf2)); // RPI
-																		// 364
-				fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
-				break;
-			case 0x45: // 3040 "B245" "SQER" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = Math.sqrt(fp_get_db_from_eh(fp_reg, rf2));
-				fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
-				break;
-			case 0x46: // 3050 "B246" "STURA" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x47: // 3060 "B247" "MSTA" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x48: // 3070 "B248" "PALB" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x49: // 3080 "B249" "EREG" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				if (cur_pc_stk_reg <= 0) {
-					set_psw_check(psw_pic_stkerr);
-					return;
-				}
-				int pc_stk_reg_base = cur_pc_stk_reg - reg_len;
-				if (rf1 > rf3) {
-					while (rf1 < reg_len) {
-						reg.putInt(rf1 + 4, pc_stk_reg.getInt(pc_stk_reg_base
-								+ rf1 + 4));
-						rf1 = rf1 + 8;
-					}
-					rf1 = 0;
-				}
-				while (rf1 <= rf3) {
-					reg.putInt(rf1 + 4, pc_stk_reg.getInt(pc_stk_reg_base + rf1
-							+ 4));
-					rf1 = rf1 + 8;
-				}
-				break;
-			case 0x4A: // 3090 "B24A" "ESTA" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x4B: // 3100 "B24B" "LURA" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x4C: // 3110 "B24C" "TAR" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x4D: // 3120 "B24D" "CPYA" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x4E: // 3130 "B24E" "SAR" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x4F: // 3140 "B24F" "EAR" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x50: // 3150 "B250" "CSP" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x52: // 3160 "B252" "MSR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) * reg.getInt(rf2 + 4));
-				break;
-			case 0x54: // 3170 "B254" "MVPG" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x55: // 3180 "B255" "MVST" "RRE"
-				psw_check = false; // RPI 441
-				ins_setup_rre();
-				bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
-				bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
-				bd2_start = bd2_loc;
-				string_eod = reg.get(7);
-				while (mem_byte[bd2_loc] != string_eod) { // RPI 453
-					bd2_loc++; // RPI 476
-				}
-				rflen = bd2_loc - bd2_start + 1;
-				System.arraycopy(mem_byte, bd2_start, mem_byte, bd1_loc, rflen); // RPI
-																					// 411
-				reg.putInt(r1, bd1_loc + rflen - 1);
-				psw_cc = psw_cc1;
-				break;
-			case 0x57: // 3190 "B257" "CUSE" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				exec_cuse();
-				break;
-			case 0x58: // 3200 "B258" "BSG" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x5A: // 3210 "B25A" "BSA" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x5D: // 3220 "B25D" "CLST" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				exec_clst();
-				break;
-			case 0x5E: // 3230 "B25E" "SRST" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				exec_srst();
-				break;
-			case 0x63: // 3240 "B263" "CMPSC" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x76: // 3250 "B276" "XSCH" "S"
-				ins_setup_s();
-				break;
-			case 0x77: // 3260 "B277" "RP" "S"
-				ins_setup_s();
-				break;
-			case 0x78: // 3270 "B278" "STCKE" "S"
-				psw_check = false;
-				ins_setup_s();
-				/*
-				 * Notes: 1. The Java time stored is milliseconds since Jan. 1,
-				 * 1970. 2. For IBM OS compatibility the STCKE instruction
-				 * converts Java time to base of January 1, 1900 with bit 59
-				 * being incremented each microsecond.
-				 */
-				if (tz390.opt_timing) {
-					java_mil = System.currentTimeMillis();
-				} else {
-					java_mil = cur_date.getTime();
-				}
-				ibm_ms = (java_mil + ibm_mil) * 1000;
-				mem.putLong(bd2_loc, ibm_ms << (63 - 59));
-				mem.putLong(bd2_loc + 8, 0);
-				break;
-			case 0x79: // 3280 "B279" "SACF" "S"
-				ins_setup_s();
-				break;
-			case 0x7C: // 3300 "B27C" "STCKF" "S" Z9-2
-				psw_check = false;
-				ins_setup_s();
-				/*
-				 * Notes: 1. The Java time stored is milliseconds since Jan. 1,
-				 * 1970. 2. For IBM OS compatibility the STCK instruction
-				 * converts Java time to base of January 1, 1900 with bit 51
-				 * being incremented each microsecond.
-				 */
-				if (tz390.opt_timing) {
-					java_mil = System.currentTimeMillis();
-				} else {
-					java_mil = cur_date.getTime();
-				}
-				ibm_ms = (java_mil + ibm_mil) * 1000;
-				mem.putLong(bd2_loc, ibm_ms << (63 - 51));
-				psw_cc = psw_cc0;
-				break;
-			case 0x7D: // 3290 "B27D" "STSI" "S"
-				ins_setup_s();
-				break;
-			case 0x99: // 3300 "B299" "SRNM" "S"
-				psw_check = false;
-				ins_setup_s();
-				fp_bfp_rnd = (bd2_loc & 0x3); // set bfp rounding mode
-				fp_fpc_reg = (fp_fpc_reg & fp_bfp_rnd_not) | fp_bfp_rnd;
-				switch (fp_bfp_rnd) {
-				case 0: // round half even
-					fp_e_context = MathContext.DECIMAL32; // fp_fpc_rnd
-															// default half even
-					fp_d_context = MathContext.DECIMAL64; // fp_fpc_rnd
-															// default half even
-					fp_x_context = MathContext.DECIMAL128; // fp_fpc_rnd
-															// default half even
-					break;
-				case 1: // round toward 0
-					fp_e_context = new MathContext(32, RoundingMode.DOWN);
-					fp_d_context = new MathContext(64, RoundingMode.DOWN);
-					fp_x_context = new MathContext(128, RoundingMode.DOWN);
-					break;
-				case 2: // round toward +infinity
-					fp_e_context = new MathContext(32, RoundingMode.CEILING);
-					fp_d_context = new MathContext(64, RoundingMode.CEILING);
-					fp_x_context = new MathContext(128, RoundingMode.CEILING);
-					break;
-				case 3: // round toward -infinity;
-					fp_e_context = new MathContext(32, RoundingMode.FLOOR);
-					fp_d_context = new MathContext(64, RoundingMode.FLOOR);
-					fp_x_context = new MathContext(128, RoundingMode.FLOOR);
-					break;
-				}
-				break;
-			case 0x9C: // 3310 "B29C" "STFPC" "S"
-				psw_check = false;
-				ins_setup_s();
-				mem.putInt(bd2_loc, fp_fpc_reg | (fp_dxc << 8));
-				break;
-			case 0x9D: // 3320 "B29D" "LFPC" "S"
-				psw_check = false;
-				ins_setup_s();
-                set_fpc_reg(mem.getInt(bd2_loc));
-				break;
-			case 0xA5: // 3330 "B2A5" "TRE" "RRE"
-				psw_check = false; // RPI 454
-				ins_setup_rre();
-				string_eod = reg.get(r0 + 3);
-				bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
-				bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
-				bd1_end = bd1_loc + reg.getInt(rf1 + 12);
-				psw_cc = psw_cc3;
-				while (psw_cc == psw_cc3) {
-					if (mem_byte[bd1_loc] == string_eod) {
-						psw_cc = psw_cc1;
-					} else {
-						mem_byte[bd1_loc] = mem_byte[bd2_loc
-								+ (mem_byte[bd1_loc] & 0xff)];
-						bd1_loc++;
-						if (bd1_loc >= bd1_end) {
-							psw_cc = psw_cc0;
-						}
-					}
-				}
-				reg.putInt(rf1 + 4, bd1_loc);
-				reg.putInt(rf1 + 12, bd1_end - bd1_loc);
-				break;
-			case 0xA6: // 3340 "B2A6" "CUUTF" "RRE"
-				ins_setup_rre();
-				break;
-			case 0xA7: // 3360 "B2A7" "CUTFU" "RRE"
-				ins_setup_rre();
-				break;
-			case 0xB0: // 3400 "B2B0" "STFLE" "S" Z9-3
-				psw_check = false;
-				ins_setup_s();
-				/*
-				 * store feature bit list
-				 */
-				mem.putLong(bd2_loc, sz390.get_feature_bits());
-				reg.put(r0 + 7, (byte) 0); // number of feature doulbe words-1
-				psw_cc = psw_cc0;
-				break;
-			case 0xB1: // 3380 "B2B1" "STFL" "S"
-				ins_setup_s();
-				break;
-			case 0xB2: // 3390 "B2B2" "LPSWE" "S"
-				ins_setup_s();
-				break;
-			case 0xB9: // 3395 "B2B9" "SRNMT" "S" DFP 56
-				psw_check = false;
-				ins_setup_s();
-				fp_dfp_rnd = (bd2_loc & 0x7); // set dfp rounding mode
-				fp_fpc_reg = (fp_fpc_reg & fp_dfp_rnd_not) | (fp_dfp_rnd << 4);
-                fp_set_dfp_rnd();
-				break;
-			case 0xBD: // 3395 "B2BD" "LFAS" "S" DFP 55
-				psw_check = false;
-				ins_setup_s();
-				set_fpc_reg(mem.getInt(bd2_loc));
-				break;		
-			case 0xFF: // 3400 "B2FF" "TRAP4" "S"
-				ins_setup_s();
-				break;
-			}
+			ins_B2XX();
 			break;
 		case 0xB3:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_rre] & 0xff;
-			switch (opcode2) {
-			case 0x00: // 3410 "B300" "LPEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rev1 = Math.abs(fp_get_eb_from_eb(fp_reg, rf2));
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				psw_cc = fp_get_eb_comp_cc(fp_rev1, 0);
-				break;
-			case 0x01: // 3420 "B301" "LNEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rev1 = Math.abs(fp_get_eb_from_eb(fp_reg, rf2));
-				if (fp_rev1 != 0) {
-					fp_rev1 = -fp_rev1;
-				}
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				psw_cc = fp_get_eb_comp_cc(fp_rev1, 0);
-				break;
-			case 0x02: // 3430 "B302" "LTEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf2);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				psw_cc = fp_get_eb_comp_cc(fp_rev1, 0);
-				break;
-			case 0x03: // 3440 "B303" "LCEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf2);
-				if (fp_rev1 != 0) {
-					fp_rev1 = -fp_rev1;
-				}
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				psw_cc = fp_get_eb_comp_cc(fp_rev1, 0);
-				break;
-			case 0x04: // 3450 "B304" "LDEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = fp_get_db_from_eb(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				break;
-			case 0x05: // 3460 "B305" "LXDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_db(fp_reg, rf2);
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				break;
-			case 0x06: // 3470 "B306" "LXEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_eb(fp_reg, rf2);
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				break;
-			case 0x07: // 3480 "B307" "MXDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_db(fp_reg, rf1).multiply(
-						fp_get_bd_from_db(fp_reg, rf2), fp_dbg_context).round(
-						fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				check_lb_mpy();
-				break;
-			case 0x08: // 3490 "B308" "KEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_signal = true;
-				psw_cc = fp_get_eb_comp_cc(fp_get_eb_from_eb(fp_reg, rf1),
-						fp_get_eb_from_eb(fp_reg, rf2));
-				break;
-			case 0x09: // 3500 "B309" "CEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				psw_cc = fp_get_eb_comp_cc(fp_get_eb_from_eb(fp_reg, rf1),
-						fp_get_eb_from_eb(fp_reg, rf2));
-				break;
-			case 0x0A: // 3510 "B30A" "AEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
-						+ fp_get_eb_from_eb(fp_reg, rf2);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				psw_cc = fp_get_eb_add_sub_cc();
-				break;
-			case 0x0B: // 3520 "B30B" "SEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
-						- fp_get_eb_from_eb(fp_reg, rf2);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				psw_cc = fp_get_eb_add_sub_cc();
-				break;
-			case 0x0C: // 3530 "B30C" "MDEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = fp_get_db_from_eb(fp_reg, rf1)
-						* fp_get_db_from_eb(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				check_db_mpy();
-				break;
-			case 0x0D: // 3540 "B30D" "DEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1);
-				fp_rev2 = fp_get_eb_from_eb(fp_reg, rf2);
-				fp_rev1 = fp_rev1 / fp_rev2;
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				check_eb_div();
-				break;
-			case 0x0E: // 3550 "B30E" "MAEBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf1();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
-						+ fp_get_eb_from_eb(fp_reg, rf2)
-						* fp_get_eb_from_eb(fp_reg, rf3);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				check_eb_mpy();
-				break;
-			case 0x0F: // 3560 "B30F" "MSEBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf1();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
-						- fp_get_eb_from_eb(fp_reg, rf2)
-						* fp_get_eb_from_eb(fp_reg, rf3);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				check_eb_mpy();
-				break;
-			case 0x10: // 3570 "B310" "LPDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = Math.abs(fp_get_db_from_db(fp_reg, rf2));
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
-				break;
-			case 0x11: // 3580 "B311" "LNDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = -Math.abs(fp_get_db_from_db(fp_reg, rf2));
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
-				break;
-			case 0x12: // 3590 "B312" "LTDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
-				break;
-			case 0x13: // 3600 "B313" "LCDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = -fp_get_db_from_db(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
-				break;
-			case 0x14: // 3610 "B314" "SQEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rev1 = (float) Math.sqrt(fp_get_db_from_eb(fp_reg, rf2));
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				break;
-			case 0x15: // 3620 "B315" "SQDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = Math.sqrt(fp_get_db_from_db(fp_reg, rf2));
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				break;
-			case 0x16: // 3630 "B316" "SQXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv2 = fp_get_bd_from_lb(fp_reg, rf2);
-				fp_get_bd_sqrt();
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				break;
-			case 0x17: // 3640 "B317" "MEEBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
-						* fp_get_eb_from_eb(fp_reg, rf2);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				check_eh_mpy();
-				break;
-			case 0x18: // 3650 "B318" "KDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_signal = true;
-				psw_cc = fp_get_db_comp_cc(fp_get_db_from_db(fp_reg, rf1),
-						fp_get_db_from_db(fp_reg, rf2));
-				break;
-			case 0x19: // 3660 "B319" "CDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				psw_cc = fp_get_db_comp_cc(fp_get_db_from_db(fp_reg, rf1),
-						fp_get_db_from_db(fp_reg, rf2));
-				break;
-			case 0x1A: // 3670 "B31A" "ADBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
-						+ fp_get_db_from_db(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				psw_cc = fp_get_db_add_sub_cc();
-				break;
-			case 0x1B: // 3680 "B31B" "SDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
-						- fp_get_db_from_db(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				psw_cc = fp_get_db_add_sub_cc();
-				break;
-			case 0x1C: // 3690 "B31C" "MDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
-						* fp_get_db_from_db(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				check_db_mpy();
-				break;
-			case 0x1D: // 3700 "B31D" "DDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1);
-				fp_rdv2 = fp_get_db_from_db(fp_reg, rf2);
-				fp_rdv1 = fp_rdv1 / fp_rdv2;
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				check_db_div();
-				break;
-			case 0x1E: // 3710 "B31E" "MADBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf1();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
-						+ fp_get_db_from_db(fp_reg, rf2)
-						* fp_get_db_from_db(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				check_db_mpy();
-				break;
-			case 0x1F: // 3720 "B31F" "MSDBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf1();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
-						- fp_get_db_from_db(fp_reg, rf2)
-						* fp_get_db_from_db(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				check_db_mpy();
-				break;
-			case 0x24: // 3730 "B324" "LDER" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_load_reg(rf1, tz390.fp_dh_type, fp_reg, rf2,
-						tz390.fp_eh_type);
-				break;
-			case 0x25: // 3740 "B325" "LXDR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2,
-						tz390.fp_dh_type);
-				break;
-			case 0x26: // 3750 "B326" "LXER" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2,
-						tz390.fp_eh_type);
-				break;
-			case 0x2E: // 3760 "B32E" "MAER" "RRF"
-				psw_check = false;
-				ins_setup_rrf1();
-				fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
-						+ fp_get_db_from_eh(fp_reg, rf2)
-						* fp_get_db_from_eh(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
-				check_eh_mpy();
-				break;
-			case 0x2F: // 3770 "B32F" "MSER" "RRF"
-				psw_check = false;
-				ins_setup_rrf1();
-				fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
-						- fp_get_db_from_eh(fp_reg, rf2)
-						* fp_get_db_from_eh(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
-				check_eh_mpy();
-				break;
-			case 0x36: // 3780 "B336" "SQXR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv2 = fp_get_bd_from_lh(fp_reg, rf2);
-				fp_get_bd_sqrt();
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				break;
-			case 0x37: // 3790 "B337" "MEER" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
-						* fp_get_db_from_eh(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
-				check_eh_mpy();
-				break;
-			case 0x38: // 3830 "B338" "MAYLR" "RRF" Z9-4
-				psw_check = false; // RPI 298
-				ins_setup_rrf1();
-				fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
-						fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x39: // 3840 "B339" "MYLR" "RRF" Z9-5
-				psw_check = false; // RPI 298
-				ins_setup_rrf1();
-				fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
-						fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x3A: // 3850 "B33A" "MAYR" "RRF" Z9-6
-				psw_check = false;
-				ins_setup_rrf1();
-				fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
-						fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x3B: // 3860 "B33B" "MYR" "RRF" Z9-7
-				psw_check = false;
-				ins_setup_rrf1();
-				fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
-						fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x3C: // 3870 "B33C" "MAYHR" "RRF" Z9-8
-				psw_check = false; // RPI 298
-				ins_setup_rrf1();
-				fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
-						fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x3D: // 3880 "B33D" "MYHR" "RRF" Z9-9
-				psw_check = false; // RPI 298
-				ins_setup_rrf1();
-				fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
-						fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x3E: // 3800 "B33E" "MADR" "RRF"
-				psw_check = false;
-				ins_setup_rrf1();
-				fp_rdv1 = fp_get_db_from_dh(fp_reg, rf1)
-						+ fp_get_db_from_dh(fp_reg, rf2)
-						* fp_get_db_from_dh(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
-				check_dh_mpy();
-				break;
-			case 0x3F: // 3810 "B33F" "MSDR" "RRF"
-				psw_check = false;
-				ins_setup_rrf1();
-				fp_rdv1 = fp_get_db_from_dh(fp_reg, rf1)
-						- fp_get_db_from_dh(fp_reg, rf2)
-						* fp_get_db_from_dh(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
-				check_dh_mpy();
-				break;
-			case 0x40: // 3820 "B340" "LPXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf2).abs();
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				psw_cc = fp_get_lb_comp_cc(fp_rbdv1, BigDecimal.ZERO);
-				break;
-			case 0x41: // 3830 "B341" "LNXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf2).abs().negate();
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				psw_cc = fp_get_lb_comp_cc(fp_rbdv1, BigDecimal.ZERO);
-				break;
-			case 0x42: // 3840 "B342" "LTXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf2);
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				psw_cc = fp_get_lb_comp_cc(fp_rbdv1, BigDecimal.ZERO);
-				break;
-			case 0x43: // 3850 "B343" "LCXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf2).negate();
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				psw_cc = fp_get_lb_comp_cc(fp_rbdv1, BigDecimal.ZERO);
-				break;
-			case 0x44: // 3860 "B344" "LEDBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2,
-						tz390.fp_db_type);
-				break;
-			case 0x45: // 3870 "B345" "LDXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_load_reg(rf1, tz390.fp_db_type, fp_reg, rf2,
-						tz390.fp_lb_type);
-				break;
-			case 0x46: // 3880 "B346" "LEXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2,
-						tz390.fp_lb_type);
-				break;
-			case 0x47: // 3890 "B347" "FIXBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_lb(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_get_bd_rnd_int(fp_bfp_class,mf3));
-				break;
-			case 0x48: // 3900 "B348" "KXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_signal = true;
-				psw_cc = fp_get_lb_comp_cc(fp_get_bd_from_lb(fp_reg, rf1),
-						fp_get_bd_from_lb(fp_reg, rf2));
-				break;
-			case 0x49: // 3910 "B349" "CXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				psw_cc = fp_get_lb_comp_cc(fp_get_bd_from_lb(fp_reg, rf1),
-						fp_get_bd_from_lb(fp_reg, rf2));
-				break;
-			case 0x4A: // 3920 "B34A" "AXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1);
-				fp_rbdv2 = fp_get_bd_from_lb(fp_reg, rf2);
-				fp_rbdv1 = fp_rbdv1.add(fp_rbdv2, fp_x_context).round(
-						fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				psw_cc = fp_get_lb_add_sub_cc();
-				break;
-			case 0x4B: // 3930 "B34B" "SXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1).subtract(
-						fp_get_bd_from_lb(fp_reg, rf2), fp_bdg_context);
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				psw_cc = fp_get_lb_add_sub_cc();
-				break;
-			case 0x4C: // 3940 "B34C" "MXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1).multiply(
-						fp_get_bd_from_lb(fp_reg, rf2), fp_bdg_context).round(
-						fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				check_lb_mpy();
-				break;
-			case 0x4D: // 3950 "B34D" "DXBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1);
-				fp_rbdv2 = fp_get_bd_from_lb(fp_reg, rf2);
-				if (fp_rbdv2.signum() != 0) {
-					fp_rbdv1 = fp_rbdv1.divide(fp_rbdv2, fp_bdg_context).round(
-							fp_x_context);
-				}
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				check_lb_div();
-				break;
-			case 0x50: // 3960 "B350" "TBEDR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_dh(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				fp_rev1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).floatValue(); // RPI 333
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				psw_cc = fp_get_eb_comp_cc(fp_rev1, 0);
-				break;
-			case 0x51: // 3970 "B351" "TBDR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_dh(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				fp_rdv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).doubleValue(); // RPI 333
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
-				break;
-			case 0x53: // 3980 "B353" "DIEBR" "RR4"
-				psw_check = false;
-				ins_setup_rrf3();
-				if (mf4 != 0) { // only def. rounding for now
-					set_psw_check(psw_pic_spec);
-				}
-				fp_rdv1 = fp_get_db_from_eb(fp_reg, rf1);
-				fp_rdv2 = fp_get_db_from_eb(fp_reg, rf2);
-				fp_rdv3 = (long) (fp_rdv1 / fp_rdv2);
-				fp_rdv4 = fp_rdv1 - fp_rdv3 * fp_rdv2;
-				fp_put_eb(rf3, tz390.fp_eb_type, (float) fp_rdv3);
-				fp_put_eb(rf1, tz390.fp_eb_type, (float) fp_rdv4);
-				psw_cc = fp_get_di_cc();
-				break;
-			case 0x57: // 3990 "B357" "FIEBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_eb(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_get_bd_rnd_int(fp_bfp_class,mf3)
-						.floatValue());
-				break;
-			case 0x58: // 4000 "B358" "THDER" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = fp_get_db_from_eb(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
-				psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
-				break;
-			case 0x59: // 4010 "B359" "THDR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
-				psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
-				break;
-			case 0x5B: // 4020 "B35B" "DIDBR" "RR4"
-				psw_check = false;
-				ins_setup_rrf3();
-				if (mf4 != 0) { // only def. rounding for now
-					set_psw_check(psw_pic_spec);
-				}
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1);
-				fp_rdv2 = fp_get_db_from_db(fp_reg, rf2);
-				fp_rdv3 = (long) (fp_rdv1 / fp_rdv2);
-				fp_rdv4 = fp_rdv1 - fp_rdv3 * fp_rdv2;
-				fp_put_db(rf3, tz390.fp_db_type, fp_rdv3);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv4);
-				psw_cc = fp_get_di_cc();
-				break;
-			case 0x5F: // 4030 "B35F" "FIDBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_db(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				fp_put_db(rf1, tz390.fp_db_type, fp_get_bd_rnd_int(fp_bfp_class,mf3)
-						.doubleValue());
-				break;
-			case 0x60: // 4040 "B360" "LPXR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf2).abs();
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				psw_cc = fp_get_lh_comp_cc(fp_rbdv1, BigDecimal.ZERO);
-				break;
-			case 0x61: // 4050 "B361" "LNXR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf2).abs().negate();
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				psw_cc = fp_get_lh_comp_cc(fp_rbdv1, BigDecimal.ZERO);
-				break;
-			case 0x62: // 4060 "B362" "LTXR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf2);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				psw_cc = fp_get_lh_comp_cc(fp_rbdv1, BigDecimal.ZERO);
-
-				break;
-			case 0x63: // 4070 "B363" "LCXR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf2).negate();
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				psw_cc = fp_get_lh_comp_cc(fp_rbdv1, BigDecimal.ZERO);
-
-				break;
-			case 0x65: // 4080 "B365" "LXR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2,
-						tz390.fp_lh_type);
-				break;
-			case 0x66: // 4090 "B366" "LEXR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2,
-						tz390.fp_lh_type);
-				break;
-			case 0x67: // 4100 "B367" "FIXR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf2);
-				fp_rbdv1 = fp_rbdv1.subtract(fp_rbdv1.remainder(BigDecimal.ONE,
-						fp_bdg_context));
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				break;
-			case 0x69: // 4110 "B369" "CXR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				psw_cc = fp_get_lh_comp_cc(fp_get_bd_from_lh(fp_reg, rf1),
-						fp_get_bd_from_lh(fp_reg, rf2));
-				break;
-			case 0x70: // 4115 "B370" "LPDFR" "RRE"  14 DFP
-			    psw_check = false;
-			    ins_setup_rre();
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).abs());
-				break;
-			case 0x71: // 4115 "B371" "LNDFR" "RRE"  14 DFP
-			    psw_check = false;
-			    ins_setup_rre();
-			    fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).abs().negate());
-				break;
-			case 0x72: // 4115 "B372" "CPSDR" "RRF2" 34 DFP
-			    psw_check = false;
-			    ins_setup_rrf2();
-			    if (fp_get_bd_from_dd(fp_reg,rf3).signum() >= 0){
-			    	fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).abs());
-			    } else {
-			    	fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).abs().negate());
-			    }			
-				break;
-			case 0x73: // 4115 "B373" "LCDFR" "RRE"  14 DFP
-			    psw_check = false;
-			    ins_setup_rre();
-			    fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).negate());
-				break;
-			case 0x74: // 4120 "B374" "LZER" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_db(rf1, tz390.fp_eh_type, 0);
-				break;
-			case 0x75: // 4130 "B375" "LZDR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_db(rf1, tz390.fp_dh_type, 0);
-				break;
-			case 0x76: // 4140 "B376" "LZXR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_bd(rf1, tz390.fp_lh_type, BigDecimal.ZERO);
-				break;
-			case 0x77: // 4150 "B377" "FIER" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = (long) fp_get_db_from_eh(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
-				break;
-			case 0x7F: // 4160 "B37F" "FIDR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_rdv1 = (long) fp_get_db_from_dh(fp_reg, rf2);
-				fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
-				break;
-			case 0x84: // 4170 "B384" "SFPC" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_fpc_reg = reg.getInt(rf1 + 4);
-				fp_dxc = (fp_fpc_reg & 0xff00) >>> 8;
-				fp_fpc_reg = fp_fpc_reg & 0xffff00ff;
-				break;
-			case 0x85: // 4175 "B385" "SFASR" "RRE" DFP 57
-				psw_check = false;
-				ins_setup_rre();
-				set_fpc_reg(reg.getInt(rf1+4));
-				break;
-			case 0x8C: // 4180 "B38C" "EFPC" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				reg.putInt(rf1 + 4, fp_fpc_reg | (fp_dxc << 8));
-				break;
-			case 0x94: // 4190 "B394" "CEFBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_eb(rf1, tz390.fp_eb_type, (float) reg.getInt(rf2 + 4));
-				break;
-			case 0x95: // 4200 "B395" "CDFBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_db(rf1, tz390.fp_db_type, (double) reg.getInt(rf2 + 4));
-				break;
-			case 0x96: // 4210 "B396" "CXFBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_bd(rf1, tz390.fp_eb_type, BigDecimal.valueOf(reg
-						.getInt(rf2 + 4)));
-				break;
-			case 0x98: // 4220 "B398" "CFEBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_eb(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_comp_cc(rv1, 0);
-				break;
-			case 0x99: // 4230 "B399" "CFDBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_db(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_comp_cc(rv1, 0);
-				break;
-			case 0x9A: // 4240 "B39A" "CFXBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_lb(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_comp_cc(rv1, 0);
-				break;
-			case 0xA4: // 4250 "B3A4" "CEGBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_eb(rf1, tz390.fp_eb_type, (float) reg.getLong(rf2));
-				break;
-			case 0xA5: // 4260 "B3A5" "CDGBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_db(rf1, tz390.fp_db_type, (double) reg.getLong(rf2));
-				break;
-			case 0xA6: // 4270 "B3A6" "CXGBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_bd(rf1, tz390.fp_lb_type, BigDecimal
-						.valueOf((double) reg.getLong(rf2)));
-				break;
-			case 0xA8: // 4280 "B3A8" "CGEBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_eb(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0xA9: // 4290 "B3A9" "CGDBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_db(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0xAA: // 4300 "B3AA" "CGXBR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_lb(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0xB4: // 4310 "B3B4" "CEFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_db(rf1, tz390.fp_eh_type, (float) reg.getInt(rf2 + 4));
-				break;
-			case 0xB5: // 4320 "B3B5" "CDFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_db(rf1, tz390.fp_dh_type, (float) reg.getInt(rf2 + 4));
-				break;
-			case 0xB6: // 4330 "B3B6" "CXFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_bd(rf1, tz390.fp_lh_type, BigDecimal.valueOf(reg
-						.getInt(rf2 + 4)));
-				break;
-			case 0xB8: // 4340 "B3B8" "CFER" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_eh(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_comp_cc(rv1, 0);
-				break;
-			case 0xB9: // 4350 "B3B9" "CFDR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_dh(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_comp_cc(rv1, 0);
-				break;
-			case 0xBA: // 4360 "B3BA" "CFXR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_lh(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_comp_cc(rv1, 0);
-				break;
-			case 0xC1: // 4365 "B3C1" "LDGR" "RRE" 14 DFP
-				psw_check = false;
-				ins_setup_rre();
-				fp_load_reg(rf1, tz390.fp_dd_type, reg, rf2, tz390.fp_dd_type);
-				break;
-			case 0xC4: // 4370 "B3C4" "CEGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_db(rf1, tz390.fp_eh_type, (float) reg.getLong(rf2));
-				break;
-			case 0xC5: // 4380 "B3C5" "CDGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_db(rf1, tz390.fp_dh_type, (double) reg.getLong(rf2));
-				break;
-			case 0xC6: // 4390 "B3C6" "CXGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				fp_put_bd(rf1, tz390.fp_lh_type, BigDecimal.valueOf(reg
-						.getLong(rf2)));
-				break;
-			case 0xC8: // 4400 "B3C8" "CGER" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_eh(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0xC9: // 4410 "B3C9" "CGDR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_dh(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0xCA: // 4420 "B3CA" "CGXR" "RRF"
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_lh(fp_reg, rf2)
-						.divideAndRemainder(BigDecimal.ONE);
-				rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0xCD: // 4425 "B3CD" "LGDR" "RRE" 14 DFP
-				psw_check = false;
-				ins_setup_rre();
-				if (fp_reg_ctl[mf2] != fp_ctl_ld) {
-					fp_store_reg(fp_reg, rf2);
-				}
-				reg.putLong(rf1,fp_reg.getLong(rf2));
-				break;
-			case 0xD0: // "MDTR" "B3D0" "RRR" DFP 1
-				psw_check = false;
-				ins_setup_rrr();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-                .multiply(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_context); // RPI 517
-                fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				break;
-			case 0xD1: // "DDTR" "B3D1" "RRR" DFP 2
-				psw_check = false;
-				ins_setup_rrr();
-				fp_rbdv3 = fp_get_bd_from_dd(fp_reg, rf3);
-				if (fp_rbdv3.signum() == 0){
-					set_psw_check(psw_pic_fp_div);
-					break;
-				}
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-                .divide(fp_rbdv3,fp_dd_context); // RPI 517
-                fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				break;
-			case 0xD2: // "ADTR" "B3D2" "RRR" DFP 3
-				psw_check = false;
-				ins_setup_rrr();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-                           .add(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_context); // RPI 517
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				psw_cc = fp_get_dfp_add_sub_cc();
-				break;
-			case 0xD3: // "SDTR" "B3D3" "RRR" DFP 4
-				psw_check = false;
-				ins_setup_rrr();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-                         .subtract(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_context); // RPI 517
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				psw_cc = fp_get_dfp_add_sub_cc();
-				break;
-			case 0xD4: // "LDETR" "B3D4" "RRF4" DFP 5
-				psw_check = false;
-				ins_setup_rrf4();
-				fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf2);
-               	fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				break;
-			case 0xD5: // "LEDTR" "B3D5" "RRF4" DFP 6
-				psw_check = false;
-				ins_setup_rrf3();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf2)
-				           .round(fp_ed_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf3)]);
-				fp_put_bd(rf1, tz390.fp_ed_type, fp_rbdv1);
-				break;
-			case 0xD6: // "LTDTR" "B3D6" "RRE" DFP 7
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2);
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				psw_cc = fp_get_dd_comp_cc(fp_rbdv1,BigDecimal.ZERO);
-				break;
-			case 0xD7: // "FIDTR" "B3D7" "RRF3" DFP 8
-				psw_check = false;
-				ins_setup_rrf3();
-				fp_rbdv2 = fp_get_bd_from_dd(fp_reg, rf2);
-				if (fp_rbdv2.scale() <= 0){
-					fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv2);
-				} else {
-					fp_bd_int_rem = fp_rbdv2
-					.divideAndRemainder(BigDecimal.ONE);
-					fp_rbdv1 = fp_get_bd_rnd_int(fp_dfp_class,mf3);
-					fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-					if ((mf4 & 0x2) == 1){
-                       check_bd12_exact();
-					}
-				}
-				break;
-			case 0xD8: // "MXTR" "B3D8" "RRR" DFP 9
-				psw_check = false;
-				ins_setup_rrr();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-                .multiply(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_context);  // RPI 517
-				fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-				break;
-			case 0xD9: // "DXTR" "B3D9" "RRR" DFP 10
-				psw_check = false;
-				ins_setup_rrr();
-				fp_rbdv3 = fp_get_bd_from_ld(fp_reg, rf3);
-				if (fp_rbdv3.signum() == 0){
-					set_psw_check(psw_pic_fp_div);
-					return;
-				}
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-                .divide(fp_rbdv3,fp_ld_context);  // RPI 517
-				fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-				break;
-			case 0xDA: // "AXTR" "B3DA" "RRR" DFP 11
-				psw_check = false;
-				ins_setup_rrr();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-                .add(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_context); // RPI 517
-				fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-				psw_cc = fp_get_dfp_add_sub_cc();
-				break;
-			case 0xDB: // "SXTR" "B3DB" "RRR" DFP 12
-				psw_check = false;
-				ins_setup_rrr();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-                .subtract(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_context); // RPI 517
-				fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-				psw_cc = fp_get_dfp_add_sub_cc();
-				break;
-			case 0xDC: // "LXDTR" "B3DC" "RRF4" DFP 13
-				psw_check = false;
-				ins_setup_rrf4();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2);
-               	fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-				break;
-			case 0xDD: // "LDXTR" "B3DD" "RRF4" DFP 14
-				psw_check = false;
-				ins_setup_rrf3();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf2)
-				           .round(fp_dd_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf3)]);
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				break;
-			case 0xDE: // "LTXTR" "B3DE" "RRE" DFP 15
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2);
-				fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-				psw_cc = fp_get_ld_comp_cc(fp_rbdv1,BigDecimal.ZERO);
-				break;
-			case 0xDF: // "FIXTR" "B3DF" "RRF4" DFP 16
-				psw_check = false;
-				ins_setup_rrf4();
-				fp_rbdv2 = fp_get_bd_from_ld(fp_reg, rf2);
-				if (fp_rbdv2.scale() <= 0){
-					fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv2);
-				} else {
-					fp_bd_int_rem = fp_rbdv2
-					.divideAndRemainder(BigDecimal.ONE);
-					fp_rbdv1 = fp_get_bd_rnd_int(fp_dfp_class,mf3);
-					fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-					if ((mf4 & 0x2) == 1 
-						&& fp_rbdv1.compareTo(fp_rbdv2) != 0){
-						fp_dxc = fp_dxc_it; // raise inexact
-						set_psw_check(psw_pic_data);
-					}
-				}
-				break;
-			case 0xE0: // "KDTR" "B3E0" "RRE" DFP 17
-				psw_check = false;
-				ins_setup_rre();
-                fp_signal = true;
-				psw_cc = fp_get_dd_comp_cc(
-					fp_get_bd_from_dd(fp_reg, rf1),
-					fp_get_bd_from_dd(fp_reg, rf2));
-				break;
-			case 0xE1: // "CGDTR" "B3E1" "RRF2" DFP 18
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_dd(fp_reg, rf2)
-				                .divideAndRemainder(BigDecimal.ONE);
-				big_int1 = fp_get_bd_rnd_int(fp_dfp_class,mf3) 
-				           .toBigInteger();	// RPI 527			
-				rlv1 = big_int1.longValue(); // RPI 540
-				reg.putLong(rf1, rlv1);
-                psw_cc = get_long_comp_cc(rlv1,0);
-				break;
-			case 0xE2: // "CUDTR" "B3E2" "RRE" DFP 19
-				psw_check = false;
-				ins_setup_rre();
-				pdf_big_int = fp_get_bd_from_dd(fp_reg, rf2).unscaledValue();
-				pdf_is_big = true;
-				pdf_signed = false;
-				put_pd(reg_byte, rf1, 8);
-				break;
-			case 0xE3: // "CSDTR" "B3E3" "RRF4" DFP 20
-				psw_check = false;
-				ins_setup_rrf4();
-				pdf_big_int = fp_get_bd_from_dd(fp_reg, rf2).unscaledValue();
-				pdf_is_big = true;
-				put_pd(reg_byte, rf1, 8);
-				if (mf4 == 1 && pdf_big_int.signum() >= 0) {
-					reg.put(rf1 + 7, (byte) (reg.get(rf1 + 7) | 0xf));
-				}
-				break;
-			case 0xE4: // "CDTR" "B3E4" "RRE" DFP 21
-				psw_check = false;
-				ins_setup_rre();
-                fp_signal = false;
-				psw_cc = fp_get_dd_comp_cc(
-					fp_get_bd_from_dd(fp_reg, rf1),
-					fp_get_bd_from_dd(fp_reg, rf2));
-				break;
-			case 0xE5: // "EEDTR" "B3E5" "RRE" DFP 22
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2);
-                reg.putLong(rf1,tz390.fp_exp_bias[tz390.fp_dd_type]
-                            - fp_rbdv1.scale()); 
-                break;
-			case 0xE7: // "ESDTR" "B3E7" "RRE" DFP 23
-				psw_check = false;
-				ins_setup_rre();
-				rv1 = fp_get_bd_from_dd(fp_reg, rf2)
-				      .unscaledValue()
-				      .abs()
-				      .toString()
-				      .length();
-                reg.putLong(rf1,rv1);
-				break;
-			case 0xE8: // "KXTR" "B3E8" "RRE" DFP 24
-				psw_check = false;
-				ins_setup_rre();
-                fp_signal = true;
-				psw_cc = fp_get_ld_comp_cc(
-					fp_get_bd_from_ld(fp_reg, rf1),
-					fp_get_bd_from_ld(fp_reg, rf2));
-				break;
-			case 0xE9: // "CGXTR" "B3E9" "RRF4" DFP 25
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_bd_int_rem = fp_get_bd_from_ld(fp_reg, rf2)
-                              .divideAndRemainder(BigDecimal.ONE);
-				big_int1 = fp_get_bd_rnd_int(fp_dfp_class,mf3) 
-				           .toBigInteger();	// RPI 527			
-				rlv1 = big_int1.longValue(); // RPI 540
-				reg.putLong(rf1, rlv1);
-                psw_cc = get_long_comp_cc(rlv1,0);
-				break;
-			case 0xEA: // "CUXTR" "B3EA" "RRE" DFP 26
-				psw_check = false;
-				ins_setup_rre();
-				pdf_big_int = fp_get_bd_from_ld(fp_reg, rf2).unscaledValue();
-				pdf_is_big = true;
-				pdf_signed = false;
-				put_pd(reg_byte, rf1, 16);
-				break;
-			case 0xEB: // "CSXTR" "B3EB" "RRF4" DFP 27
-				psw_check = false;
-				ins_setup_rrf4();
-				pdf_big_int = fp_get_bd_from_ld(fp_reg, rf2).unscaledValue();
-				pdf_is_big = true;
-				put_pd(reg_byte, rf1, 16);
-				if (mf4 == 1 && pdf_big_int.signum() >= 0) {
-					reg.put(rf1 + 15, (byte) (reg.get(rf1 + 15) | 0xf));
-				}
-				break;
-			case 0xEC: // "CXTR" "B3EC" "RRE" DFP 28
-				psw_check = false;
-				ins_setup_rre();
-                fp_signal = false;
-				psw_cc = fp_get_ld_comp_cc(
-					fp_get_bd_from_ld(fp_reg, rf1),
-					fp_get_bd_from_ld(fp_reg, rf2));
-				break;
-			case 0xED: // "EEXTR" "B3ED" "RRE" DFP 29
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2);
-                reg.putLong(rf1,tz390.fp_exp_bias[tz390.fp_ld_type]
-                            - fp_rbdv1.scale());  
-				break;
-			case 0xEF: // "ESXTR" "B3EF" "RRE" DFP 30
-				psw_check = false;
-				ins_setup_rre();
-				rv1 = fp_get_bd_from_ld(fp_reg, rf2)
-			      .unscaledValue()
-				  .abs()
-				  .toString()
-				  .length();
-				reg.putLong(rf1,rv1);
-				break;
-			case 0xF1: // "CDGTR" "B3F1" "RRE" DFP 31
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv2 = BigDecimal.valueOf(reg.getLong(rf2));
-				fp_rbdv1 = fp_rbdv2.round(fp_dd_context);
-				if (fp_rbdv1.compareTo(fp_rbdv2) != 0){
-					fp_dxc = fp_dxc_it;
-					set_psw_check(psw_pic_data);	
-				}
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				break;
-			case 0xF2: // "CDUTR" "B3F2" "RRE" DFP 32
-				psw_check = false;
-				ins_setup_rre();
-				pdf_signed = false;
-				if (get_pd(reg,rf2,8)){
-					if (pdf_is_big) {
-						fp_put_bd(rf1,tz390.fp_dd_type,new BigDecimal(pdf_big_int));
-					} else {
-						fp_put_bd(rf1,tz390.fp_dd_type,BigDecimal.valueOf(pdf_long));
-					}
-				}
-				break;
-			case 0xF3: // "CDSTR" "B3F3" "RRE" DFP 33
-				psw_check = false;
-				ins_setup_rre();
-				if (get_pd(reg,rf2,8)){
-					if (pdf_is_big) {
-						fp_put_bd(rf1,tz390.fp_dd_type,new BigDecimal(pdf_big_int));
-					} else {
-						fp_put_bd(rf1,tz390.fp_dd_type,BigDecimal.valueOf(pdf_long));
-					}
-				}
-				break;
-			case 0xF4: // "CEDTR" "B3F4" "RRE" DFP 34
-				psw_check = false;
-				ins_setup_rre();
-				psw_cc = get_int_comp_cc(
-						-fp_get_bd_from_dd(fp_reg, rf1).scale(),
-						-fp_get_bd_from_dd(fp_reg, rf2).scale());
-				break;
-			case 0xF5: // "QADTR" "B3F5" "RRF3" DFP 35
-				psw_check = false;
-				ins_setup_rrf3();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf3);
-		        fp_rbdv2 = fp_get_bd_from_dd(fp_reg,rf2);
-		        if (fp_rbdv1.scale() != fp_rbdv2.scale()){
-		        	fp_rbdv1 = fp_rbdv1.setScale(fp_rbdv2.scale(), fp_get_rnd_mode(fp_dfp_class,mf4));
-		        } else {
-		        	fp_rbdv1 = fp_rbdv1.round(fp_dd_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf4)]);
-		        }
-                check_bd12_exact();
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				break;
-			case 0xF6: // "IEDTR" "B3F6" "RRF2" DFP 36
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_rbdv1 = new BigDecimal(fp_get_bd_from_dd(fp_reg, rf3)
-						  .round(fp_dd_context)  // RPI 527
-			              .unscaledValue())
-				          .scaleByPowerOfTen((int)(reg.getLong(rf2)
-				        		  - tz390.fp_exp_bias[tz390.fp_dd_type]
-				                             ));
-				if (fp_get_bd_from_dd(fp_reg,rf3).signum() >= 0){ // RPI 527
-					fp_put_bd(rf1,tz390.fp_dd_type,fp_rbdv1.abs());
-				} else {
-					fp_put_bd(rf1,tz390.fp_dd_type,fp_rbdv1.abs().negate());
-				}
-				break;
-			case 0xF7: // "RRDTR" "B3F7" "RRF3" DFP 37
-				psw_check = false;
-				ins_setup_rrf3();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf3);
-		        fp_sig_req = reg.get(rf2+7) & 0x3f;
-		        if (fp_sig_req > 0){
-		        	fp_sig_dig = fp_rbdv1.unscaledValue().abs().toString().length();
-		        	if (fp_sig_dig > fp_sig_req){
-		        		fp_rbdv1 = fp_rbdv1.round(new MathContext(fp_sig_req,fp_dfp_rnd_mode[fp_get_rnd_mode(fp_dfp_class,mf4)]));
-		        	}
-		        }
-                check_bd12_exact();
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				break;
-			case 0xF9: // "CXGTR" "B3F9" "RRE" DFP 38
-				psw_check = false;
-				ins_setup_rre();
-				fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2));
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				break;
-			case 0xFA: // "CXUTR" "B3FA" "RRE" DFP 39
-				psw_check = false;
-				ins_setup_rre();
-				if ((rf2 & 0x8) != 0){
-					set_psw_check(psw_pic_spec);
-				}
-				pdf_signed = false;
-				if (get_pd(reg,rf2,16)){
-					if (pdf_is_big) {
-						fp_put_bd(rf1,tz390.fp_ld_type,new BigDecimal(pdf_big_int));
-					} else {
-						fp_put_bd(rf1,tz390.fp_ld_type,BigDecimal.valueOf(pdf_long));
-					}
-				}
-				break;
-			case 0xFB: // "CXSTR" "B3FB" "RRE" DFP 40
-				psw_check = false;
-				ins_setup_rre();
-				if ((rf2 & 0x8) != 0){
-					set_psw_check(psw_pic_spec);
-				}
-				if (get_pd(reg,rf2,16)){
-					if (pdf_is_big) {
-						fp_put_bd(rf1,tz390.fp_ld_type,new BigDecimal(pdf_big_int));
-					} else {
-						fp_put_bd(rf1,tz390.fp_ld_type,BigDecimal.valueOf(pdf_long));
-					}
-				}
-				break;
-			case 0xFC: // "CEXTR" "B3FC" "RRE" DFP 41
-				psw_check = false;
-				ins_setup_rre();
-				psw_cc = get_int_comp_cc(
-						-fp_get_bd_from_ld(fp_reg, rf1).scale(),
-						-fp_get_bd_from_ld(fp_reg, rf2).scale());
-				break;
-			case 0xFD: // "QAXTR" "B3FD" "RRF3" DFP 42
-				psw_check = false;
-				ins_setup_rrf3();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf3);
-		        fp_rbdv2 = fp_get_bd_from_ld(fp_reg,rf2);
-		        if (fp_rbdv1.scale() != fp_rbdv2.scale()){
-		        	fp_rbdv1 = fp_rbdv1.setScale(fp_rbdv2.scale(), fp_get_rnd_mode(fp_dfp_class,mf4));
-		        } else {
-		        	fp_rbdv1 = fp_rbdv1.round(fp_dd_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf4)]);
-		        }
-                check_bd12_exact();
-				fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-				break;
-			case 0xFE: // "IEXTR" "B3FE" "RRF2" DFP 43
-				psw_check = false;
-				ins_setup_rrf2();
-				fp_rbdv1 = new BigDecimal(fp_get_bd_from_ld(fp_reg, rf3)
-						  .round(fp_ld_context)  // RPI 527
-		                  .unscaledValue())
-		          .scaleByPowerOfTen((int)(reg.getLong(rf2)
-		        		  - tz390.fp_exp_bias[tz390.fp_ld_type]
-		                             ));
-			    if (fp_get_bd_from_ld(fp_reg,rf3).signum() >= 0){ /// RPI 527
-			    	fp_put_bd(rf1,tz390.fp_ld_type,fp_rbdv1.abs());
-			    } else {
-					fp_put_bd(rf1,tz390.fp_ld_type,fp_rbdv1.abs().negate());
-			    }
-				break;
-			case 0xFF: // "RRXTR" "B3FF" "RRF3" DFP 44
-				psw_check = false;
-				ins_setup_rrf3();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf3);
-		        fp_sig_req = reg.get(rf2+7) & 0x3f;
-		        if (fp_sig_req > 0){
-		        	fp_sig_dig = fp_rbdv1.unscaledValue().abs().toString().length();
-		        	if (fp_sig_dig > fp_sig_req){
-		        		fp_rbdv1 = fp_rbdv1.round(new MathContext(fp_sig_req,fp_dfp_rnd_mode[fp_get_rnd_mode(fp_dfp_class,mf4)]));
-		        	}
-		        }
-                check_bd12_exact();
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				break;
-			}
+			ins_B3XX();
 			break;
 		case 0xB6: // 4430 "B6" "STCTL" "RS"
 			ins_setup_rs();
@@ -5549,657 +3297,7 @@ public class pz390 {
 			ins_setup_rs();
 			break;
 		case 0xB9:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_rre] & 0xff;
-			switch (opcode2) {
-			case 0x00: // 4450 "B900" "LPGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf2);
-				if (rlv1 < 0) {
-					if (rlv1 == long_high_bit) {
-						psw_cc = psw_cc3;
-						break;
-					}
-					rlv1 = -rlv1;
-				}
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0x01: // 4460 "B901" "LNGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf2);
-				if (rlv1 > 0) {
-					rlv1 = -rlv1;
-				}
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0x02: // 4470 "B902" "LTGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf2);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0x03: // 4480 "B903" "LCGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf2);
-				if (rlv1 == long_high_bit) {
-					psw_cc = psw_cc3;
-					break;
-				}
-				rlv1 = -rlv1;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0x04: // 4490 "B904" "LGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				reg.putLong(rf1, reg.getLong(rf2));
-				break;
-			case 0x05: // 4500 "B905" "LURAG" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x06: // 4600 "B906" "LGBR" "RRE" Z9-10
-				psw_check = false;
-				ins_setup_rre();
-				reg.putLong(rf1, reg.get(rf2 + 7));
-				break;
-			case 0x07: // 4610 "B907" "LGHR" "RRE" Z9-11
-				psw_check = false;
-				ins_setup_rre();
-				reg.putLong(rf1, reg.getShort(rf2 + 6));
-				break;
-			case 0x08: // 4510 "B908" "AGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf1);
-				rlv2 = reg.getLong(rf2);
-				rlv3 = rlv1 + rlv2;
-				reg.putLong(rf1, rlv3);
-				psw_cc = get_long_add_cc();
-				break;
-			case 0x09: // 4520 "B909" "SGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf1);
-				rlv2 = reg.getLong(rf2);
-				rlv3 = rlv1 - rlv2;
-				reg.putLong(rf1, rlv3);
-				psw_cc = get_long_sub_cc();
-				break;
-			case 0x0A: // 4530 "B90A" "ALGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlvw = reg.getLong(rf1);
-				rlv2 = reg.getLong(rf2);
-				rlv1 = rlvw + rlv2;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_add_cc();
-				break;
-			case 0x0B: // 4540 "B90B" "SLGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlvw = reg.getLong(rf1);
-				rlv2 = reg.getLong(rf2);
-				rlv1 = rlvw - rlv2;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_sub_cc();
-				break;
-			case 0x0C: // 4550 "B90C" "MSGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				reg.putLong(rf1, reg.getLong(rf1) * reg.getLong(rf2));
-				break;
-			case 0x0D: // 4560 "B90D" "DSGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf1 + 8);
-				rlv2 = reg.getLong(rf2);
-				if (rlv2 != 0) {
-					rlvw = rlv1 / rlv2;
-				} else {
-					set_psw_check(psw_pic_fx_div);
-					break;
-				}
-				rlv1 = rlv1 - rlvw * rlv2;
-				reg.putLong(rf1, rlv1);
-				reg.putLong(rf1 + 8, rlvw);
-				break;
-			case 0x0E: // 4570 "B90E" "EREGG" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				if (cur_pc_stk_reg <= 0) {
-					set_psw_check(psw_pic_stkerr);
-					return;
-				}
-				int pc_stk_reg_base = cur_pc_stk_reg - reg_len;
-				if (rf1 > rf3) {
-					while (rf1 < reg_len) {
-						reg.putLong(rf1, pc_stk_reg.getLong(pc_stk_reg_base
-								+ rf1));
-						rf1 = rf1 + 8;
-					}
-					rf1 = 0;
-				}
-				while (rf1 <= rf3) {
-					reg.putLong(rf1, pc_stk_reg.getLong(pc_stk_reg_base + rf1));
-					rf1 = rf1 + 8;
-				}
-				break;
-			case 0x0F: // 4580 "B90F" "LRVGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rflen = 7;
-				while (rflen >= 0) {
-					reg.put(rf1 + rflen, reg.get(rf2 + 7 - rflen));
-					rflen--;
-				}
-				break;
-			case 0x10: // 4590 "B910" "LPGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getInt(rf2 + 4);
-				if (rlv1 < 0) {
-					rlv1 = -rlv1;
-				}
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0x11: // 4600 "B911" "LNGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getInt(rf2 + 4);
-				if (rlv1 >= 0) {
-					rlv1 = -rlv1;
-				}
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0x12: // 4610 "B912" "LTGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getInt(rf2 + 4);
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0x13: // 4620 "B913" "LCGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getInt(rf2 + 4);
-				rlv1 = -rlv1;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0x14: // 4630 "B914" "LGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				reg.putLong(rf1, reg.getInt(rf2 + 4));
-				break;
-			case 0x16: // 4640 "B916" "LLGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				reg.putLong(rf1, (long) reg.getInt(rf2 + 4) & long_low32_bits);
-				break;
-			case 0x17: // 4650 "B917" "LLGTR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				reg.putLong(rf1, reg.getInt(rf2 + 4) & max_pos_int);
-				break;
-			case 0x18: // 4660 "B918" "AGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf1);
-				rlv2 = reg.getInt(rf2 + 4);
-				rlv3 = rlv1 + rlv2;
-				reg.putLong(rf1, rlv3);
-				psw_cc = get_long_add_cc();
-				break;
-			case 0x19: // 4670 "B919" "SGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf1);
-				rlv2 = reg.getInt(rf2 + 4);
-				rlv3 = rlv1 - rlv2;
-				reg.putLong(rf1, rlv3);
-				psw_cc = get_long_sub_cc();
-				break;
-			case 0x1A: // 4680 "B91A" "ALGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlvw = reg.getLong(rf1);
-				rlv2 = ((long) reg.getInt(rf2 + 4) & long_low32_bits);
-				rlv1 = rlvw + rlv2;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_add_cc();
-				break;
-			case 0x1B: // 4690 "B91B" "SLGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlvw = reg.getLong(rf1);
-				rlv2 = (long) reg.getInt(rf2 + 4) & long_low32_bits;
-				rlv1 = rlvw - rlv2;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_sub_cc();
-				break;
-			case 0x1C: // 4700 "B91C" "MSGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				reg.putLong(rf1, reg.getLong(rf1) * reg.getInt(rf2 + 4));
-				break;
-			case 0x1D: // 4710 "B91D" "DSGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf1 + 8);
-				rlv2 = (long) reg.getInt(rf2 + 4);
-				if (rlv2 != 0) {
-					rlvw = rlv1 / rlv2;
-				} else {
-					set_psw_check(psw_pic_fx_div);
-					break;
-				}
-				rlv1 = rlv1 - rlvw * rlv2;
-				reg.putLong(rf1, rlv1);
-				reg.putLong(rf1 + 8, rlvw);
-				break;
-			case 0x1E: // 4720 "B91E" "KMAC" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x1F: // 4730 "B91F" "LRVR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rflen = 3;
-				while (rflen >= 0) {
-					reg.put(rf1 + 4 + rflen, reg.get(rf2 + 7 - rflen));
-					rflen--;
-				}
-				break;
-			case 0x20: // 4740 "B920" "CGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				psw_cc = get_long_comp_cc(reg.getLong(rf1), reg.getLong(rf2));
-				break;
-			case 0x21: // 4750 "B921" "CLGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				psw_cc = get_long_log_comp_cc(reg.getLong(rf1), reg
-						.getLong(rf2));
-				break;
-			case 0x25: // 4760 "B925" "STURG" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x26: // 4880 "B926" "LBR" "RRE" Z9-12
-				psw_check = false;
-				ins_setup_rre();
-				reg.putInt(rf1 + 4, reg.get(rf2 + 7));
-				break;
-			case 0x27: // 4890 "B927" "LHR" "RRE" Z9-13
-				psw_check = false;
-				ins_setup_rre();
-				reg.putInt(rf1 + 4, reg.getShort(rf2 + 6));
-				break;
-			case 0x2E: // 4770 "B92E" "KM" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x2F: // 4780 "B92F" "KMC" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x30: // 4790 "B930" "CGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				psw_cc = get_long_comp_cc(reg.getLong(rf1), (long) reg
-						.getInt(rf2 + 4));
-				break;
-			case 0x31: // 4800 "B931" "CLGFR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				psw_cc = get_long_log_comp_cc(reg.getLong(rf1), (long) reg
-						.getInt(rf2 + 4));
-				break;
-			case 0x3E: // 4810 "B93E" "KIMD" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x3F: // 4820 "B93F" "KLMD" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x46: // 4830 "B946" "BCTGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf1) - 1;
-				reg.putLong(rf1, rlv1);
-				if (rf2 != 0 && rlv1 != 0) {
-					set_psw_loc(reg.getInt(rf2 + 4));
-				}
-				break;
-			case 0x80: // 4840 "B980" "NGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf1) & reg.getLong(rf2);
-				reg.putLong(rf1, rlv1);
-				if (rlv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x81: // 4850 "B981" "OGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf1) | reg.getLong(rf2);
-				reg.putLong(rf1, rlv1);
-				if (rlv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x82: // 4860 "B982" "XGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlv1 = reg.getLong(rf1) ^ reg.getLong(rf2);
-				reg.putLong(rf1, rlv1);
-				if (rlv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x83: // 5000 "B983" "FLOGR" "RRE" Z9-14
-				psw_check = false;
-				ins_setup_rre();
-				rlv2 = reg.getLong(rf2);
-				reg.putLong(rf1, Long.numberOfLeadingZeros(rlv2));
-				reg.putLong(rf1 + 8, rlv2 ^ Long.highestOneBit(rlv2));
-				if (rlv2 != 0) {
-					psw_cc = psw_cc2; // bit found
-				} else {
-					psw_cc = psw_cc0; // no bits found
-				}
-				break;
-			case 0x84: // 5010 "B984" "LLGCR" "RRE" Z9-15
-				psw_check = false;
-				ins_setup_rre();
-				reg.putLong(rf1, reg.get(rf2 + 7) & 0xff);
-				break;
-			case 0x85: // 5020 "B985" "LLGHR" "RRE" Z9-16
-				psw_check = false;
-				ins_setup_rre();
-				reg.putLong(rf1, reg.getShort(rf2 + 6) & 0xffff);
-				break;
-			case 0x86: // 4870 "B986" "MLGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 8, 8)); // RPI
-																				// 383
-				big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2, 8));
-				big_int1 = big_int1.multiply(big_int2);
-				zcvt_big_int(reg_byte,rf1,big_int1, 16); // RPI 540
-				break;
-			case 0x87: // 4880 "B987" "DLGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1, 16)); // RPI 540
-				big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2, 8));
-				if (big_int2.signum() == 0) {
-					set_psw_check(psw_pic_fx_div);
-					break;
-				}
-				big_int_array = big_int1.divideAndRemainder(big_int2);
-				zcvt_big_int(reg_byte,rf1,big_int_array[1], 8);  // RPI 540												// remainder
-				zcvt_big_int(reg_byte,rf1+8,big_int_array[0], 8); // RPI 540										// quotent
-				break;
-			case 0x88: // 4890 "B988" "ALCGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlvw = reg.getLong(rf1);
-				rlv2 = reg.getLong(rf2);
-				rlv1 = rlvw + rlv2 + psw_carry[psw_cc];
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_add_cc();
-				break;
-			case 0x89: // 4900 "B989" "SLBGR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rlvw = reg.getLong(rf1);
-				rlv2 = reg.getLong(rf2);
-				rlv1 = rlvw - rlv2 - psw_borrow[psw_cc];
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_sub_cc();
-				break;
-			case 0x8A: // 4910 "B98A" "CSPG" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x8D: // 4920 "B98D" "EPSW" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x8E: // 4930 "B98E" "IDTE" "RRF"
-				ins_setup_rrf2();
-				break;
-			case 0x90: // 4940 "B990" "TRTT" "RRE"
-				psw_check = false; // RPI 454
-				ins_setup_rre();
-				test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2
-				test_byte1 = reg.get(r0 + 2);
-				test_byte2 = reg.get(r0 + 3);
-				xbd2_loc = reg.getInt(r1) & psw_amode;
-				bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
-				bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
-				bd2_end = bd2_loc + reg.getInt(rf1 + 12);
-				if (((bd2_end - bd2_loc) & 1) != 0) {
-					set_psw_check(psw_pic_spec);
-				}
-				psw_cc = psw_cc3;
-				while (psw_cc == psw_cc3) {
-					int index = xbd2_loc
-					+ ((mem.getShort(bd2_loc) & 0xffff) << 1); // RPI 580
-					function_byte1 = mem_byte[index];          // RPI 580
-					function_byte2 = mem_byte[index + 1];      // RPI 580
-					if (test_control == 0 
-							&& test_byte1 == function_byte1
-							&& test_byte2 == function_byte2) {
-						psw_cc = psw_cc1;
-					} else {
-						mem_byte[bd1_loc] = function_byte1;
-						mem_byte[bd1_loc + 1] = function_byte2;
-						bd1_loc = bd1_loc + 2;
-						bd2_loc = bd2_loc + 2;
-						if (bd2_loc >= bd2_end) {
-							psw_cc = psw_cc0;
-						}
-					}
-				}
-				reg.putInt(rf1 + 4, bd1_loc);
-				reg.putInt(rf1 + 12, bd2_end - bd2_loc); // bytes not
-															// translated
-				reg.putInt(rf2 + 4, bd2_loc);
-				break;
-			case 0x91: // 4950 "B991" "TRTO" "RRE"
-				psw_check = false; // RPI 454
-				ins_setup_rre();
-				test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2
-				test_byte1 = reg.get(r0 + 3);
-				xbd2_loc = reg.getInt(r1) & psw_amode;
-				bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
-				bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
-				bd2_end = bd2_loc + reg.getInt(rf1 + 12);
-				if (((bd2_end - bd2_loc) & 1) != 0) {
-					set_psw_check(psw_pic_spec);
-				}
-				psw_cc = psw_cc3;
-				while (psw_cc == psw_cc3) {
-					int index = xbd2_loc + (mem.getShort(bd2_loc) & 0xffff);
-					function_byte1 = mem_byte[index];
-					if (test_control == 0 
-						&& test_byte1 == function_byte1) {
-						psw_cc = psw_cc1;
-					} else {
-						mem_byte[bd1_loc] = function_byte1;
-						bd1_loc++;
-						bd2_loc = bd2_loc + 2;
-						if (bd2_loc >= bd2_end) {
-							psw_cc = psw_cc0;
-						}
-					}
-				}
-				reg.putInt(rf1 + 4, bd1_loc);
-				reg.putInt(rf1 + 12, bd2_end - bd2_loc); // bytes not
-															// translated
-				reg.putInt(rf2 + 4, bd2_loc);
-				break;
-			case 0x92: // 4960 "B992" "TROT" "RRE"
-				psw_check = false; // RPI 454
-				ins_setup_rre();
-				test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2													// bit
-				test_byte1 = reg.get(r0 + 2); // RPI 580
-				test_byte2 = reg.get(r0 + 3); // RPI 580
-				xbd2_loc = reg.getInt(r1) & psw_amode;
-				bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
-				bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
-				bd2_end = bd2_loc + reg.getInt(rf1 + 12);
-				psw_cc = psw_cc3;
-				while (psw_cc == psw_cc3) {
-					int index = xbd2_loc
-					+ ((mem_byte[bd2_loc] & 0xff) << 1); // RPI 580
-			        function_byte1 = mem_byte[index]; // RPI 580
-			        function_byte2 = mem_byte[index+1]; // RPI 580                               
-					if (test_control == 0
-						&& test_byte1 == function_byte1
-						&& test_byte2 == function_byte2) {  // RPI 580
-						psw_cc = psw_cc1;
-					} else {
-						mem_byte[bd1_loc] = function_byte1;     // RPI 580
-						mem_byte[bd1_loc + 1] = function_byte2; // RPI  580
-						bd1_loc = bd1_loc + 2;
-						bd2_loc++;
-						if (bd2_loc >= bd2_end) {
-							psw_cc = psw_cc0;
-						}
-					}
-				}
-				reg.putInt(rf1 + 4, bd1_loc);
-				reg.putInt(rf1 + 12, bd2_end - bd2_loc); // bytes not
-															// translated
-				reg.putInt(rf2 + 4, bd2_loc);
-				break;
-			case 0x93: // 4970 "B993" "TROO" "RRE"
-				psw_check = false; // RPI 454
-				ins_setup_rre();
-				test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2														// bit
-				test_byte1 = reg.get(r0 + 3);
-				xbd2_loc = reg.getInt(r1) & psw_amode;
-				bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
-				bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
-				bd2_end = bd2_loc + reg.getInt(rf1 + 12);
-				psw_cc = psw_cc3;
-				while (psw_cc == psw_cc3) {
-					function_byte1 = mem_byte[xbd2_loc  // RPI 580
-													+ (mem_byte[bd2_loc] & 0xff)];
-					if (test_control == 0
-						&& test_byte1 == function_byte1) { // RPI 580
-						psw_cc = psw_cc1;
-					} else {
-						mem_byte[bd1_loc] = function_byte1; // RPI 580
-						bd1_loc++;
-						bd2_loc++;
-						if (bd2_loc >= bd2_end) {
-							psw_cc = psw_cc0;
-						}
-					}
-				}
-				reg.putInt(rf1 + 4, bd1_loc);
-				reg.putInt(rf1 + 12, bd2_end - bd2_loc); // bytes not
-															// translated
-				reg.putInt(rf2 + 4, bd2_loc);
-				break;
-			case 0x94: // 5140 "B994" "LLCR" "RRE" Z9-17
-				psw_check = false;
-				ins_setup_rre();
-				reg.putInt(rf1 + 4, reg.get(rf2 + 7) & 0xff);
-				break;
-			case 0x95: // 5150 "B995" "LLHR" "RRE" Z9-18
-				psw_check = false;
-				ins_setup_rre();
-				reg.putInt(rf1 + 4, reg.getShort(rf2 + 6) & 0xffff);
-				break;
-			case 0x96: // 4980 "B996" "MLR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 12, 4)); // RPI
-																					// 275
-				big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2 + 4, 4));
-				big_int1 = big_int1.multiply(big_int2);
-				zcvt_big_int(work_reg_byte,0,big_int1, 8);
-				reg.putInt(rf1 + 4, work_reg.getInt(0));
-				reg.putInt(rf1 + 12, work_reg.getInt(4));
-				break;
-			case 0x97: // 4990 "B997" "DLR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				work_reg.putInt(0, reg.getInt(rf1 + 4));
-				work_reg.putInt(4, reg.getInt(rf1 + 12));
-				big_int1 = new BigInteger(get_log_bytes(work_reg_byte, 0, 8));
-				big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2 + 4, 4));
-				if (big_int2.signum() == 0) {
-					set_psw_check(psw_pic_fx_div);
-					break;
-				}
-				BigInteger[] temp_big = big_int1.divideAndRemainder(big_int2);
-				zcvt_big_int(reg_byte,rf1+4,temp_big[1], 4); // get big remainder RPI 540
-				zcvt_big_int(reg_byte,rf1+12,temp_big[0], 4); // get big quotent RPI 540
-				break;
-			case 0x98: // 5000 "B998" "ALCR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rvw = reg.getInt(rf1 + 4);
-				rv2 = reg.getInt(rf2 + 4);
-				rv1 = rvw + rv2 + psw_carry[psw_cc];
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_log_add_cc();
-				break;
-			case 0x99: // 5010 "B999" "SLBR" "RRE"
-				psw_check = false;
-				ins_setup_rre();
-				rvw = reg.getInt(rf1 + 4);
-				rv2 = reg.getInt(rf2 + 4);
-				rv1 = rvw - rv2 - psw_borrow[psw_cc];
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_log_sub_cc();
-				break;
-			case 0x9A: // 5020 "B99A" "EPAIR" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x9B: // 5030 "B99B" "ESAIR" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x9D: // 5040 "B99D" "ESEA" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x9E: // 5050 "B99E" "PTI" "RRE"
-				ins_setup_rre();
-				break;
-			case 0x9F: // 5060 "B99F" "SSAIR" "RRE"
-				ins_setup_rre();
-				break;
-			case 0xAA: // 5250 "B9AA" "LPTEA" "RRE" Z9-19
-				ins_setup_rre();
-				break;
-			case 0xB0: // 5070 "B9B0" "CU14" "RRE"
-				ins_setup_rre();
-				break;
-			case 0xB1: // 5080 "B9B1" "CU24" "RRE"
-				ins_setup_rre();
-				break;
-			case 0xB2: // 5090 "B9B2" "CU41" "RRE"
-				ins_setup_rre();
-				break;
-			case 0xB3: // 5100 "B9B3" "CU42" "RRE"
-				ins_setup_rre();
-				break;
-			case 0xBE: // 5110 "B9BE" "SRSTU" "RRE"
-				ins_setup_rre();
-				break;
-			}
+			ins_B9XX();
 			break;
 		case 0xBA: // 5120 "BA" "CS" "RS"
 			psw_check = false;
@@ -6254,205 +3352,13 @@ public class pz390 {
 		 */
 		switch (opcode1) {
 		case 0xC0:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f;
-			switch (opcode2) {
-			case 0x0: // 5170 "C00" "LARL" "RIL"
-				psw_check = false;
-				ins_setup_ril();
-				reg.putInt(rf1 + 4, (psw_loc - 6 + 2 * if2) & psw_amode);
-				break;
-			case 0x1: // 5370 "C01" "LGFI" "RIL" Z9-20
-				psw_check = false;
-				ins_setup_ril();
-				reg.putLong(rf1, if2);
-				break;
-			case 0x4: // 5180 "C04" "BRCL" "RIL"
-				psw_check = false;
-				ins_setup_ril();
-				if ((mf1 & psw_cc) != 0) {
-					set_psw_loc(psw_loc - 6 + 2 * if2);
-				}
-				break;
-			case 0x5: // 5210 "C05" "BRASL" "RIL"
-				psw_check = false;
-				ins_setup_ril();
-				if (ex_mode) {
-					reg.putInt(rf1 + 4, ex_psw_return | psw_amode_bit);
-				} else {
-					reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
-				}
-				set_psw_loc(psw_loc - 6 + 2 * if2);
-				break;
-			case 0x6: // 5430 "C06" "XIHF" "RIL" Z9-21
-				psw_check = false;
-				ins_setup_ril();
-				reg.putInt(rf1, reg.getInt(rf1) ^ if2);
-				break;
-			case 0x7: // 5440 "C07" "XILF" "RIL" Z9-22
-				psw_check = false;
-				ins_setup_ril();
-				reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) ^ if2);
-				break;
-			case 0x8: // 5450 "C08" "IIHF" "RIL" Z9-23
-				psw_check = false;
-				ins_setup_ril();
-				reg.putInt(rf1, if2);
-				break;
-			case 0x9: // 5460 "C09" "IILF" "RIL" Z9-24
-				psw_check = false;
-				ins_setup_ril();
-				reg.putInt(rf1 + 4, if2);
-				break;
-			case 0xA: // 5470 "C0A" "NIHF" "RIL" Z9-25
-				psw_check = false;
-				ins_setup_ril();
-				reg.putInt(rf1, reg.getInt(rf1) & if2);
-				break;
-			case 0xB: // 5480 "C0B" "NILF" "RIL" Z9-26
-				psw_check = false;
-				ins_setup_ril();
-				reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) & if2);
-				break;
-			case 0xC: // 5490 "C0C" "OIHF" "RIL" Z9-27
-				psw_check = false;
-				ins_setup_ril();
-				reg.putInt(rf1, reg.getInt(rf1) | if2);
-				break;
-			case 0xD: // 5500 "C0D" "OILF" "RIL" Z9-28
-				psw_check = false;
-				ins_setup_ril();
-				reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) | if2);
-				break;
-			case 0xE: // 5510 "C0E" "LLIHF" "RIL" Z9-29
-				psw_check = false;
-				ins_setup_ril();
-				reg.putLong(rf1, ((long) if2) << 32);
-				break;
-			case 0xF: // 5520 "C0F" "LLILF" "RIL" Z9-30
-				psw_check = false;
-				ins_setup_ril();
-				reg.putLong(rf1, ((long) if2) & long_low32_bits);
-				break;
-			}
+			ins_C0XX();
 			break;
 		case 0xC2:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f; // RPI202
-			switch (opcode2) {
-			case 0x4: // 5530 "C24" "SLGFI" "RIL" Z9-31
-				psw_check = false;
-				ins_setup_ril();
-				rlvw = reg.getLong(rf1);
-				rlv2 = (long) if2 & long_low32_bits;
-				rlv1 = rlvw - rlv2;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_sub_cc();
-				break;
-			case 0x5: // 5540 "C25" "SLFI" "RIL" Z9-32
-				psw_check = false;
-				ins_setup_ril();
-				rvw = reg.getInt(rf1 + 4);
-				rv2 = if2;
-				rv1 = rvw - rv2;
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_log_sub_cc();
-				break;
-			case 0x8: // "C28" "AGFI" "RIL" Z9-33
-				psw_check = false;
-				ins_setup_ril();
-				rlv1 = reg.getLong(rf1);
-				rlv2 = if2;
-				rlv3 = rlv1 + rlv2;
-				reg.putLong(rf1, rlv3);
-				psw_cc = get_long_add_cc();
-				break;
-			case 0x9: // "C29" "AFI" "RIL" Z9-34
-				psw_check = false;
-				ins_setup_ril();
-				rv1 = reg.getInt(rf1 + 4);
-				rv2 = if2;
-				rv3 = rv1 + rv2;
-				reg.putInt(rf1 + 4, rv3);
-				psw_cc = get_int_add_cc();
-				break;
-			case 0xA: // "C2A" "ALGFI" "RIL" Z9-35
-				psw_check = false;
-				ins_setup_ril();
-				rlvw = reg.getLong(rf1);
-				rlv2 = ((long) if2 & long_low32_bits);
-				rlv1 = rlvw + rlv2;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_add_cc();
-				break;
-			case 0xB: // "C2B" "ALFI" "RIL" Z9-36
-				psw_check = false;
-				ins_setup_ril();
-				rvw = reg.getInt(rf1 + 4);
-				rv2 = if2;
-				rv1 = rvw + rv2;
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_log_add_cc();
-				break;
-			case 0xC: // "C2C" "CGFI" "RIL" Z9-37
-				psw_check = false;
-				ins_setup_ril();
-				psw_cc = get_long_comp_cc(reg.getLong(rf1), if2);
-				break;
-			case 0xD: // "C2D" "CFI" "RIL" Z9-38
-				psw_check = false;
-				ins_setup_ril();
-				psw_cc = get_int_comp_cc(reg.getInt(rf1 + 4), if2);
-				break;
-			case 0xE: // "C2E" "CLGFI" "RIL" Z9-39
-				psw_check = false;
-				ins_setup_ril();
-				psw_cc = get_long_log_comp_cc(reg.getLong(rf1), (long) if2
-						& long_low32_bits);
-				break;
-			case 0xF: // "C2F" "CLFI" "RIL" Z9-40
-				psw_check = false;
-				ins_setup_ril();
-				psw_cc = get_int_log_comp_cc(reg.getInt(rf1 + 4), if2);
-				break;
-			}
+			ins_C2XX();
 			break;
 		case 0xC8: // 5630 "C80" "MVCOS" "SSF" Z9-41
-			opcode2 = mem_byte[psw_loc + opcode2_offset_ssf] & 0x0f; // RPI202 RPI 606
-			switch (opcode2) {
-			case 0x0: // 5630 "C80" "MVCOS" "SSF" Z9-41
-				psw_check = false; // RPI 606
-				ins_setup_ssf();   // RPI 606
-				if (reg.getInt(r0) == 0){
-					psw_cc = psw_cc0;
-					if (rflen > 0){
-						if (rflen > 4096){
-							rflen = 4096;
-							psw_cc = psw_cc3;
-						}
-						/*  // RPI 619
-				    	 * move from bd2_loc to bd1_loc
-				    	 * for length rflen - used by MVC and MVCOS // RPI 606
-				    	 */
-				    	if (bd1_loc + rflen <= bd2_loc || bd2_loc + rflen <= bd1_loc) {
-							System.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc, rflen); // RPI
-																							// 411
-						} else if (bd2_loc + 1 == bd1_loc) {
-							Arrays.fill(mem_byte, bd1_loc, bd1_loc + rflen,
-									mem_byte[bd2_loc]);
-						} else {
-							bd1_end = bd1_loc + rflen;
-							while (bd1_loc < bd1_end) {
-								// destructive overlap with gap > 1
-								mem_byte[bd1_loc] = mem_byte[bd2_loc];
-								bd1_loc++;
-								bd2_loc++;
-							}
-						}
-					}
-				} else {
-					set_psw_check(psw_pic_spec);
-				}
-				break;
-			}
+			ins_C8XX();
 			break; // RPI 606
 		case 0xD0: // 5230 "D0" "TRTR" "SS"
 			psw_check = false;
@@ -6511,25 +3417,7 @@ public class pz390 {
 		case 0xD2: // 5250 "D2" "MVC" "SS"
 			psw_check = false;
 			ins_setup_ss();
-			/*
-	    	 * move from bd2_loc to bd1_loc
-	    	 * for length rflen 
-	    	 */
-	    	if (bd1_loc + rflen <= bd2_loc || bd2_loc + rflen <= bd1_loc) {
-				System.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc, rflen); // RPI
-																				// 411
-			} else if (bd2_loc + 1 == bd1_loc) {
-				Arrays.fill(mem_byte, bd1_loc, bd1_loc + rflen,
-						mem_byte[bd2_loc]);
-			} else {
-				bd1_end = bd1_loc + rflen;
-				while (bd1_loc < bd1_end) {
-					// destructive overlap with gap > 1
-					mem_byte[bd1_loc] = mem_byte[bd2_loc];
-					bd1_loc++;
-					bd2_loc++;
-				}
-			}
+			exec_mvc_rflen();
 			break;
 		case 0xD3: // 5260 "D3" "MVZ" "SS"
 			psw_check = false;
@@ -6770,627 +3658,10 @@ public class pz390 {
 			ins_setup_ss();
 			break;
 		case 0xE3:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_rxy] & 0xff;
-			switch (opcode2) {
-			case 0x02: // 5810 "E302" "LTG" "RXY" Z9-42
-				psw_check = false;
-				ins_setup_rxy();
-				rlv1 = mem.getLong(xbd2_loc);
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0x03: // 5400 "E303" "LRAG" "RXY"
-				ins_setup_rxy();
-				break;
-			case 0x04: // 5410 "E304" "LG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putLong(rf1, mem.getLong(xbd2_loc));
-				break;
-			case 0x06: // 5420 "E306" "CVBY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				if (get_pd(mem,xbd2_loc, 8)) { // RPI 305
-					if (pdf_is_big) { // RPI 389
-						set_psw_check(psw_pic_fx_div);
-					} else {
-						if (pdf_long <= max_pos_int && pdf_long >= min_neg_int) {
-							reg.putInt(rf1 + 4, (int) pdf_long);
-						} else {
-							set_psw_check(psw_pic_fx_div);
-						}
-					}
-				}
-				break;
-			case 0x08: // 5430 "E308" "AG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlv1 = reg.getLong(rf1);
-				rlv2 = mem.getLong(xbd2_loc);
-				rlv3 = rlv1 + rlv2;
-				reg.putLong(rf1, rlv3);
-				psw_cc = get_long_add_cc();
-				break;
-			case 0x09: // 5440 "E309" "SG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlv1 = reg.getLong(rf1);
-				rlv2 = mem.getLong(xbd2_loc);
-				rlv3 = rlv1 - rlv2;
-				reg.putLong(rf1, rlv3);
-				psw_cc = get_long_sub_cc();
-				break;
-			case 0x0A: // 5450 "E30A" "ALG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlvw = reg.getLong(rf1);
-				rlv2 = mem.getLong(xbd2_loc);
-				rlv1 = rlvw + rlv2;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_add_cc();
-				break;
-			case 0x0B: // 5460 "E30B" "SLG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlvw = reg.getLong(rf1);
-				rlv2 = mem.getLong(xbd2_loc);
-				rlv1 = rlvw - rlv2;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_sub_cc();
-				break;
-			case 0x0C: // 5470 "E30C" "MSG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putLong(rf1, reg.getLong(rf1) * mem.getLong(xbd2_loc));
-				break;
-			case 0x0D: // 5480 "E30D" "DSG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlv1 = reg.getLong(rf1 + 8);
-				rlv2 = mem.getLong(xbd2_loc);
-				if (rlv2 != 0) {
-					rlvw = rlv1 / rlv2;
-				} else {
-					set_psw_check(psw_pic_fx_div);
-					break;
-				}
-				rlv1 = rlv1 - rlvw * rlv2;
-				reg.putLong(rf1, rlv1);
-				reg.putLong(rf1 + 8, rlvw);
-				break;
-			case 0x0E: // 5490 "E30E" "CVBG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				if (get_pd(mem,xbd2_loc, 16)) { // RPI 305
-					if (pdf_big_int.compareTo(bi_max_pos_long) != 1
-							&& pdf_big_int.compareTo(bi_min_neg_long) != -1) {
-						reg.putLong(rf1, pdf_big_int.longValue());
-					} else {
-						set_psw_check(psw_pic_fx_div);
-					}
-				} else {
-					reg.putLong(rf1, pdf_long);
-				}
-				break;
-			case 0x0F: // 5500 "E30F" "LRVG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rflen = 7;
-				while (rflen >= 0) {
-					reg.put(rf1 + rflen, mem_byte[xbd2_loc + 7 - rflen]);
-					rflen--;
-				}
-				break;
-			case 0x12: // 5930 "E312" "LT" "RXY" Z9-43
-				psw_check = false;
-				ins_setup_rxy();
-				rv1 = mem.getInt(xbd2_loc);
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_comp_cc(rv1, 0);
-				break;
-			case 0x13: // 5510 "E313" "LRAY" "RXY"
-				ins_setup_rxy();
-				break;
-			case 0x14: // 5520 "E314" "LGF" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putLong(rf1, mem.getInt(xbd2_loc));
-				break;
-			case 0x15: // 5530 "E315" "LGH" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putLong(rf1, mem.getShort(xbd2_loc));
-				break;
-			case 0x16: // 5540 "E316" "LLGF" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putLong(rf1, (long) mem.getInt(xbd2_loc) & long_low32_bits);
-				break;
-			case 0x17: // 5550 "E317" "LLGT" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putLong(rf1, mem.getInt(xbd2_loc) & max_pos_int); // RPI160
-																		// was
-																		// LOC+4
-				break;
-			case 0x18: // 5560 "E318" "AGF" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlv1 = reg.getLong(rf1);
-				rlv2 = mem.getInt(xbd2_loc);
-				rlv3 = rlv1 + rlv2;
-				reg.putLong(rf1, rlv3);
-				psw_cc = get_long_add_cc();
-				break;
-			case 0x19: // 5570 "E319" "SGF" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlv1 = reg.getLong(rf1);
-				rlv2 = mem.getInt(xbd2_loc);
-				rlv3 = rlv1 - rlv2;
-				reg.putLong(rf1, rlv3);
-				psw_cc = get_long_sub_cc();
-				break;
-			case 0x1A: // 5580 "E31A" "ALGF" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlvw = reg.getLong(rf1);
-				rlv2 = ((long) mem.getInt(xbd2_loc) & long_low32_bits);
-				rlv1 = rlvw + rlv2;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_add_cc();
-				break;
-			case 0x1B: // 5590 "E31B" "SLGF" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlvw = reg.getLong(rf1);
-				rlv2 = (long) mem.getInt(xbd2_loc) & long_low32_bits;
-				rlv1 = rlvw - rlv2;
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_sub_cc();
-				break;
-			case 0x1C: // 5600 "E31C" "MSGF" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putLong(rf1, reg.getLong(rf1) * mem.getInt(xbd2_loc));
-				break;
-			case 0x1D: // 5610 "E31D" "DSGF" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlv1 = reg.getLong(rf1 + 8);
-				rlv2 = (long) mem.getInt(xbd2_loc);
-				if (rlv2 != 0) {
-					rlvw = rlv1 / rlv2;
-				} else {
-					set_psw_check(psw_pic_fx_div);
-					break;
-				}
-				rlv1 = rlv1 - rlvw * rlv2;
-				reg.putLong(rf1, rlv1);
-				reg.putLong(rf1 + 8, rlvw);
-				break;
-			case 0x1E: // 5620 "E31E" "LRV" "RXY"
-				psw_check = false; // RPI173
-				ins_setup_rxy();
-				rflen = 3;
-				while (rflen >= 0) {
-					reg.put(rf1 + 4 + rflen, mem_byte[xbd2_loc + 3 - rflen]);
-					rflen--;
-				}
-				break;
-			case 0x1F: // 5630 "E31F" "LRVH" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rflen = 1;
-				while (rflen >= 0) {
-					reg.put(rf1 + 6 + rflen, mem_byte[xbd2_loc + 1 - rflen]);
-					rflen--;
-				}
-				break;
-			case 0x20: // 5640 "E320" "CG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				psw_cc = get_long_comp_cc(reg.getLong(rf1), mem
-						.getLong(xbd2_loc));
-				break;
-			case 0x21: // 5650 "E321" "CLG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				psw_cc = get_long_log_comp_cc(reg.getLong(rf1), mem
-						.getLong(xbd2_loc));
-				break;
-			case 0x24: // 5660 "E324" "STG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				mem.putLong(xbd2_loc & psw_amode, reg.getLong(rf1));
-				break;
-			case 0x26: // 5670 "E326" "CVDY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				big_int = BigInteger.valueOf(reg.getInt(rf1 + 4));
-				put_pd(mem_byte, xbd2_loc, 8);
-				break;
-			case 0x2E: // 5680 "E32E" "CVDG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				pdf_is_big = false; // RPI 389
-				pdf_long = reg.getLong(rf1);
-				put_pd(mem_byte, xbd2_loc, 16);
-				break;
-			case 0x2F: // 5690 "E32F" "STRVG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rflen = 7;
-				while (rflen >= 0) {
-					mem_byte[xbd2_loc + rflen] = reg.get(rf1 + 7 - rflen);
-					rflen--;
-				}
-				break;
-			case 0x30: // 5700 "E330" "CGF" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				psw_cc = get_long_comp_cc(reg.getLong(rf1), (long) mem
-						.getInt(xbd2_loc));
-				break;
-			case 0x31: // 5710 "E331" "CLGF" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				psw_cc = get_long_log_comp_cc(reg.getLong(rf1), (long) mem
-						.getInt(xbd2_loc)
-						& long_low32_bits);
-				break;
-			case 0x3E: // 5720 "E33E" "STRV" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rflen = 3;
-				while (rflen >= 0) {
-					mem_byte[xbd2_loc + rflen] = reg.get(rf1 + 7 - rflen);
-					rflen--;
-				}
-				break;
-			case 0x3F: // 5730 "E33F" "STRVH" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rflen = 1;
-				while (rflen >= 0) {
-					mem_byte[xbd2_loc + rflen] = reg.get(rf1 + 7 - rflen);
-					rflen--;
-				}
-				break;
-			case 0x46: // 5740 "E346" "BCTG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlv1 = reg.getLong(rf1) - 1;
-				reg.putLong(rf1, rlv1);
-				if (rlv1 != 0) {
-					set_psw_loc(xbd2_loc);
-				}
-				break;
-			case 0x50: // 5750 "E350" "STY" "RXY"
-				ins_setup_rxy();
-				psw_check = false;
-				mem.putInt(xbd2_loc, reg.getInt(rf1 + 4));
-				break;
-			case 0x51: // 5760 "E351" "MSY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) * mem.getInt(xbd2_loc));
-				break;
-			case 0x54: // 5770 "E354" "NY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rv1 = reg.getInt(rf1 + 4) & mem.getInt(xbd2_loc);
-				reg.putInt(rf1 + 4, rv1);
-				if (rv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x55: // 5780 "E355" "CLY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				psw_cc = get_int_log_comp_cc(reg.getInt(rf1 + 4), mem
-						.getInt(xbd2_loc));
-				break;
-			case 0x56: // 5790 "E356" "OY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rv1 = reg.getInt(rf1 + 4) | mem.getInt(xbd2_loc);
-				reg.putInt(rf1 + 4, rv1);
-				if (rv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x57: // 5800 "E357" "XY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rv1 = reg.getInt(rf1 + 4) ^ mem.getInt(xbd2_loc);
-				reg.putInt(rf1 + 4, rv1);
-				if (rv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x58: // 5810 "E358" "LY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putInt(rf1 + 4, mem.getInt(xbd2_loc));
-				break;
-			case 0x59: // 5820 "E359" "CY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				psw_cc = get_int_comp_cc(reg.getInt(rf1 + 4), mem
-						.getInt(xbd2_loc));
-				break;
-			case 0x5A: // 5830 "E35A" "AY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rv1 = reg.getInt(rf1 + 4);
-				rv2 = mem.getInt(xbd2_loc);
-				rv3 = rv1 + rv2;
-				reg.putInt(rf1 + 4, rv3);
-				psw_cc = get_int_add_cc();
-				break;
-			case 0x5B: // 5840 "E35B" "SY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rv1 = reg.getInt(rf1 + 4);
-				rv2 = mem.getInt(xbd2_loc);
-				rv3 = rv1 - rv2;
-				reg.putInt(rf1 + 4, rv3);
-				psw_cc = get_int_sub_cc();
-				break;
-			case 0x5E: // 5850 "E35E" "ALY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rvw = reg.getInt(rf1 + 4);
-				rv2 = mem.getInt(xbd2_loc);
-				rv1 = rvw + rv2;
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_log_add_cc();
-				break;
-			case 0x5F: // 5860 "E35F" "SLY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rvw = reg.getInt(rf1 + 4);
-				rv2 = mem.getInt(xbd2_loc);
-				rv1 = rvw - rv2;
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_log_sub_cc();
-				break;
-			case 0x70: // 5870 "E370" "STHY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				mem.putShort(xbd2_loc, (short) reg.getInt(rf1 + 4));
-				break;
-			case 0x71: // 5880 "E371" "LAY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putInt(rf1 + 4, xbd2_loc & psw_amode);
-				break;
-			case 0x72: // 5890 "E372" "STCY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				mem_byte[xbd2_loc] = reg.get(rf1 + 4 + 3);
-				break;
-			case 0x73: // 5900 "E373" "ICY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.put(rf1 + 7, mem_byte[xbd2_loc]);
-				break;
-			case 0x76: // 5910 "E376" "LB" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putInt(rf1 + 4, mem_byte[xbd2_loc]);
-				break;
-			case 0x77: // 5920 "E377" "LGB" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putLong(rf1, mem_byte[xbd2_loc]);
-				break;
-			case 0x78: // 5930 "E378" "LHY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putInt(rf1 + 4, mem.getShort(xbd2_loc));
-				break;
-			case 0x79: // 5940 "E379" "CHY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				psw_cc = get_int_comp_cc(reg.getInt(rf1 + 4), mem
-						.getShort(xbd2_loc));
-				break;
-			case 0x7A: // 5950 "E37A" "AHY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rv1 = reg.getInt(rf1 + 4);
-				rv2 = mem.getShort(xbd2_loc);
-				rv3 = rv1 + rv2;
-				reg.putInt(rf1 + 4, rv3);
-				psw_cc = get_int_add_cc();
-				break;
-			case 0x7B: // 5960 "E37B" "SHY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rv1 = reg.getInt(rf1 + 4);
-				rv2 = mem.getShort(xbd2_loc);
-				rv3 = rv1 - rv2;
-				reg.putInt(rf1 + 4, rv3);
-				psw_cc = get_int_sub_cc();
-				break;
-			case 0x80: // 5970 "E380" "NG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlv1 = reg.getLong(rf1) & mem.getLong(xbd2_loc);
-				reg.putLong(rf1, rlv1);
-				if (rlv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x81: // 5980 "E381" "OG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlv1 = reg.getLong(rf1) | mem.getLong(xbd2_loc);
-				reg.putLong(rf1, rlv1);
-				if (rlv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x82: // 5990 "E382" "XG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlv1 = reg.getLong(rf1) ^ mem.getLong(xbd2_loc);
-				reg.putLong(rf1, rlv1);
-				if (rlv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x86: // 6000 "E386" "MLG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 8, 8)); // RPI
-																				// 383
-				big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 8));
-				big_int1 = big_int1.multiply(big_int2);
-				zcvt_big_int(reg_byte,rf1,big_int1, 16); // RPI 540
-				break;
-			case 0x87: // 6010 "E387" "DLG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1, 16)); // RPI 540
-				big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 8));
-				if (big_int2.signum() == 0) { // RPI 540
-					set_psw_check(psw_pic_fx_div);
-					break;
-				}
-				big_int_array = big_int1.divideAndRemainder(big_int2);
-				zcvt_big_int(reg_byte,rf1,big_int_array[1], 8); // get remainder RPI 540
-				zcvt_big_int(reg_byte,rf1+8,big_int_array[0], 8); // get big quotent RPI 540
-				break;
-			case 0x88: // 6020 "E388" "ALCG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlvw = reg.getLong(rf1);
-				rlv2 = mem.getLong(xbd2_loc);
-				rlv1 = rlvw + rlv2 + psw_carry[psw_cc];
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_add_cc();
-				break;
-			case 0x89: // 6030 "E389" "SLBG" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rlvw = reg.getLong(rf1);
-				rlv2 = mem.getLong(xbd2_loc);
-				rlv1 = rlvw - rlv2 - psw_borrow[psw_cc];
-				reg.putLong(rf1, rlv1);
-				psw_cc = get_long_log_sub_cc();
-				break;
-			case 0x8E: // 6040 "E38E" "STPQ" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				mem.putLong(xbd2_loc, reg.getLong(rf1));
-				mem.putLong(xbd2_loc + 8, reg.getLong(rf1 + 8));
-				break;
-			case 0x8F: // 6050 "E38F" "LPQ" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putLong(rf1, mem.getLong(xbd2_loc));
-				reg.putLong(rf1 + 8, mem.getLong(xbd2_loc + 8));
-				break;
-			case 0x90: // 6060 "E390" "LLGC" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putLong(rf1, mem_byte[xbd2_loc] & 0xff);
-				break;
-			case 0x91: // 6070 "E391" "LLGH" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putLong(rf1, mem.getShort(xbd2_loc) & 0xffff);
-				break;
-			case 0x94: // 6510 "E394" "LLC" "RXY" Z9-44
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putInt(rf1 + 4, mem.get(xbd2_loc) & 0xff);
-				break;
-			case 0x95: // 6520 "E395" "LLH" "RXY" Z9-45
-				psw_check = false;
-				ins_setup_rxy();
-				reg.putInt(rf1 + 4, mem.getShort(xbd2_loc) & 0xffff);
-				break;
-			case 0x96: // 6080 "E396" "ML" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 12, 4)); // RPI
-																					// 275
-				big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 4));
-				big_int1 = big_int1.multiply(big_int2);
-				zcvt_big_int(work_reg_byte,0,big_int1, 8);
-				reg.putInt(rf1 + 4, work_reg.getInt(0));
-				reg.putInt(rf1 + 12, work_reg.getInt(4));
-				break;
-			case 0x97: // 6090 "E397" "DL" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				work_reg.putInt(0, reg.getInt(rf1 + 4));
-				work_reg.putInt(4, reg.getInt(rf1 + 12));
-				big_int1 = new BigInteger(get_log_bytes(work_reg_byte, 0, 8));
-				big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 4));
-				if (big_int2.signum() == 0) { // RPI 540
-					set_psw_check(psw_pic_fx_div);
-					break;
-				}
-				big_int_array = big_int1.divideAndRemainder(big_int2);
-				zcvt_big_int(reg_byte,rf1+4,big_int_array[1], 4); // RPI 540
-				zcvt_big_int(reg_byte,rf1+12,big_int_array[0], 4); // RPI 540
-				break;
-			case 0x98: // 6100 "E398" "ALC" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rvw = reg.getInt(rf1 + 4);
-				rv2 = mem.getInt(xbd2_loc);
-				rv1 = rvw + rv2 + psw_carry[psw_cc];
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_log_add_cc();
-				break;
-			case 0x99: // 6110 "E399" "SLB" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				rvw = reg.getInt(rf1 + 4);
-				rv2 = mem.getInt(xbd2_loc);
-				rv1 = rvw - rv2 - psw_borrow[psw_cc];
-				reg.putInt(rf1 + 4, rv1);
-				psw_cc = get_int_log_sub_cc();
-				break;
-			}
+			ins_E2XX();
 			break;
 		case 0xE5:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_sse] & 0xff;
-			switch (opcode2) {
-			case 0x00: // 6120 "E500" "LASP" "SSE"
-				ins_setup_sse();
-				break;
-			case 0x01: // 6130 "E501" "TPROT" "SSE"
-				ins_setup_sse();
-				break;
-			case 0x02: // 6140 "E502" "STRAG" "SSE"
-				ins_setup_sse();
-				break;
-			case 0x0E: // 6150 "E50E" "MVCSK" "SSE"
-				ins_setup_sse();
-				break;
-			case 0x0F: // 6160 "E50F" "MVCDK" "SSE"
-				ins_setup_sse();
-				break;
-			}
+			ins_E5XX();
 			break;
 		case 0xE8: // 6170 "E8" "MVCIN" "SS"
 			psw_check = false;
@@ -7437,1377 +3708,16 @@ public class pz390 {
 		case 0xEA: // 6190 "EA" "UNPKA" "SS"
 			psw_check = false;
 			ins_setup_ss();
-			if (rflen <= 32) {
-				rflen1 = rflen;
-			} else {
-				set_psw_check(psw_pic_spec);
-				break;
-			}
-			rflen2 = 16;
-			bd1_end = bd1_loc - 1;
-			bd2_end = bd2_loc - 1;
-			bd1_loc = bd1_loc + rflen1 - 1;
-			bd2_loc = bd2_loc + rflen2 - 1;
-			int sign_byte = mem_byte[bd2_loc];
-			int sign_nib = sign_byte & 0xf;
-			mem_byte[bd1_loc] = (byte) (((sign_byte & 0xf0) >> 4) | 0x30);
-			bd1_loc--;
-			bd2_loc--;
-			pdf_next_right = true;
-			while (bd1_loc > bd1_end) {
-				if (pdf_next_right) {
-					if (bd2_loc > bd2_end) {
-						pdf_next_right = false;
-						pdf_next_in = mem_byte[bd2_loc];
-						bd2_loc--;
-					} else {
-						pdf_next_in = 0;
-					}
-					mem_byte[bd1_loc] = (byte) ((pdf_next_in & 0xf) | 0x30);
-					bd1_loc--;
-				} else {
-					pdf_next_right = true;
-					mem_byte[bd1_loc] = (byte) (((pdf_next_in & 0xf0) >> 4) | 0x30);
-					bd1_loc--;
-				}
-			}
-			switch (sign_nib) {
-			case 0xa:
-			case 0xc:
-			case 0xe:
-			case 0xf:
-				psw_cc = psw_cc0;
-				break;
-			case 0xb:
-			case 0xd:
-				psw_cc = psw_cc1;
-				break;
-			default:
-				psw_cc = psw_cc3;
-			}
+			exec_unpka();
 			break;
 		case 0xEB:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_rsy] & 0xff;
-			switch (opcode2) {
-			case 0x04: // 6200 "EB04" "LMG" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				if (rf1 > rf3) {
-					while (rf1 < reg_len) {
-						reg.putLong(rf1, mem.getLong(bd2_loc));
-						bd2_loc = bd2_loc + 8;
-						rf1 = rf1 + 8;
-					}
-					rf1 = 0;
-				}
-				while (rf1 <= rf3) {
-					reg.putLong(rf1, mem.getLong(bd2_loc));
-					bd2_loc = bd2_loc + 8;
-					rf1 = rf1 + 8;
-				}
-				break;
-			case 0x0A: // 6210 "EB0A" "SRAG" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				rlv1 = reg.getLong(rf3) >> (bd2_loc & 0x3f);
-				reg.putLong(rf1, rlv1); // RPI 398
-				psw_cc = get_long_comp_cc(rlv1, 0);
-				break;
-			case 0x0B: // 6220 "EB0B" "SLAG" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				reg.putLong(rf1, get_sla64(reg.getLong(rf3), bd2_loc & 0x3f));
-				break;
-			case 0x0C: // 6230 "EB0C" "SRLG" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				reg.putLong(rf1, reg.getLong(rf3) >>> (bd2_loc & 0x3f));
-				break;
-			case 0x0D: // 6240 "EB0D" "SLLG" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				reg.putLong(rf1, reg.getLong(rf3) << (bd2_loc & 0x3f));
-				break;
-			case 0x0F: // 6250 "EB0F" "TRACG" "RSY"
-				ins_setup_rsy();
-				break;
-			case 0x14: // 6260 "EB14" "CSY" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				if (reg.getInt(rf1 + 4) == mem.getInt(bd2_loc)) {
-					psw_cc = psw_cc0;
-					mem.putInt(bd2_loc, reg.getInt(rf3 + 4));
-				} else {
-					psw_cc = psw_cc1;
-					reg.putInt(rf1 + 4, mem.getInt(bd2_loc));
-				}
-				break;
-			case 0x1C: // 6270 "EB1C" "RLLG" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				big_int1 = new BigInteger(get_log_bytes(reg_byte, rf3, 8));
-				big_int1 = big_int1.multiply(BigInteger.valueOf(2).pow(
-						bd2_loc & 0x3f));
-				zcvt_big_int(work_reg_byte,0,big_int1, 16);
-				reg.putLong(rf1, work_reg.getLong(8) | work_reg.getLong(0));
-				break;
-			case 0x1D: // 6280 "EB1D" "RLL" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				rlv1 = ((long) reg.getInt(rf3 + 4) & long_low32_bits) << (bd2_loc & 0x3f);
-				reg.putInt(rf1 + 4,
-						(int) ((rlv1 & long_low32_bits) | (rlv1 >>> 32)));
-				break;
-			case 0x20: // 6290 "EB20" "CLMH" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				rv1 = reg.getInt(rf1);
-				exec_clm();
-				break;
-			case 0x21: // 6300 "EB21" "CLMY" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				rv1 = reg.getInt(rf1 + 4);
-				exec_clm();
-				break;
-			case 0x24: // 6310 "EB24" "STMG" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				if (rf1 > rf3) {
-					while (rf1 < reg_len) {
-						mem.putLong(bd2_loc, reg.getLong(rf1));
-						bd2_loc = bd2_loc + 8;
-						rf1 = rf1 + 8;
-					}
-					rf1 = 0;
-				}
-				while (rf1 <= rf3) {
-					mem.putLong(bd2_loc, reg.getLong(rf1));
-					bd2_loc = bd2_loc + 8;
-					rf1 = rf1 + 8;
-				}
-				break;
-			case 0x25: // 6320 "EB25" "STCTG" "RSY"
-				ins_setup_rsy();
-				break;
-			case 0x26: // 6330 "EB26" "STMH" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				if (rf1 > rf3) {
-					while (rf1 < reg_len) {
-						mem.putInt(bd2_loc, reg.getInt(rf1));
-						bd2_loc = bd2_loc + 4;
-						rf1 = rf1 + 8;
-					}
-					rf1 = 0;
-				}
-				while (rf1 <= rf3) {
-					mem.putInt(bd2_loc, reg.getInt(rf1));
-					bd2_loc = bd2_loc + 4;
-					rf1 = rf1 + 8;
-				}
-				break;
-			case 0x2C: // 6340 "EB2C" "STCMH" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				rv1 = reg.getInt(rf1);
-				exec_stcm();
-				break;
-			case 0x2D: // 6350 "EB2D" "STCMY" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				rv1 = reg.getInt(rf1 + 4);
-				exec_stcm();
-				break;
-			case 0x2F: // 6360 "EB2F" "LCTLG" "RSY"
-				ins_setup_rsy();
-				break;
-			case 0x30: // 6370 "EB30" "CSG" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				if (reg.getLong(rf1) == mem.getLong(bd2_loc)) {
-					psw_cc = psw_cc0;
-					mem.putLong(bd2_loc, reg.getLong(rf3));
-				} else {
-					psw_cc = psw_cc1;
-					reg.putLong(rf1, mem.getLong(bd2_loc));
-				}
-				break;
-			case 0x31: // 6380 "EB31" "CDSY" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				if (reg.getInt(rf1 + 4) == mem.getInt(bd2_loc)
-						&& reg.getInt(rf1 + 12) == mem.getInt(bd2_loc + 4)) {
-					psw_cc = psw_cc0;
-					mem.putInt(bd2_loc, reg.getInt(rf3 + 4));
-					mem.putInt(bd2_loc + 4, reg.getInt(rf3 + 12));
-				} else {
-					psw_cc = psw_cc1;
-					reg.putInt(rf1 + 4, mem.getInt(bd2_loc));
-					reg.putInt(rf1 + 12, mem.getInt(bd2_loc + 4));
-				}
-				break;
-			case 0x3E: // 6390 "EB3E" "CDSG" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				if (reg.getLong(rf1) == mem.getLong(bd2_loc)
-						&& reg.getLong(rf1 + 8) == mem.getLong(bd2_loc + 8)) {
-					psw_cc = psw_cc0;
-					mem.putLong(bd2_loc, reg.getLong(rf3));
-					mem.putLong(bd2_loc + 8, reg.getLong(rf3 + 8));
-				} else {
-					psw_cc = psw_cc1;
-					reg.putLong(rf1, mem.getLong(bd2_loc));
-					reg.putLong(rf1 + 8, mem.getLong(bd2_loc + 8));
-				}
-				break;
-			case 0x44: // 6400 "EB44" "BXHG" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				rlv3 = reg.getLong(rf3);
-				rlv1 = reg.getLong(rf1) + rlv3;
-				reg.putLong(rf1, rlv1);
-				if (rf3 == ((rf3 >> 4) << 4)) {
-					rlv3 = reg.getLong(rf3 + 8);
-				}
-				if (rlv1 > rlv3) {
-					set_psw_loc(bd2_loc);
-				}
-				break;
-			case 0x45: // 6410 "EB45" "BXLEG" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				rlv3 = reg.getLong(rf3);
-				rlv1 = reg.getLong(rf1) + rlv3;
-				reg.putLong(rf1, rlv1);
-				if (rf3 == ((rf3 >> 4) << 4)) {
-					rlv3 = reg.getLong(rf3 + 8);
-				}
-				if (rlv1 <= rlv3) {
-					set_psw_loc(bd2_loc);
-				}
-				break;
-			case 0x51: // 6420 "EB51" "TMY" "SIY"
-				psw_check = false;
-				ins_setup_siy();
-				rv1 = mem_byte[bd1_loc] & 0xff;
-				rvw = rv1 & if2;
-				if (rvw == 0) {
-					psw_cc = psw_cc0;
-				} else if (rvw == rv1) {
-					psw_cc = psw_cc3;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x52: // 6430 "EB52" "MVIY" "SIY"
-				psw_check = false;
-				ins_setup_siy();
-				mem_byte[bd1_loc] = (byte) if2;
-				break;
-			case 0x54: // 6440 "EB54" "NIY" "SIY"
-				psw_check = false;
-				ins_setup_siy();
-				sv1 = mem_byte[bd1_loc] & if2;
-				mem_byte[bd1_loc] = (byte) sv1;
-				if (sv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x55: // 6450 "EB55" "CLIY" "SIY"
-				psw_check = false;
-				ins_setup_siy();
-				psw_cc = get_int_comp_cc((mem_byte[bd1_loc] & 0xff), if2);
-				break;
-			case 0x56: // 6460 "EB56" "OIY" "SIY"
-				psw_check = false;
-				ins_setup_siy();
-				sv1 = mem_byte[bd1_loc] | if2;
-				mem_byte[bd1_loc] = (byte) sv1;
-				if (sv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x57: // 6470 "EB57" "XIY" "SIY"
-				psw_check = false;
-				ins_setup_siy();
-				sv1 = mem_byte[bd1_loc] ^ if2;
-				mem_byte[bd1_loc] = (byte) sv1;
-				if (sv1 == 0) {
-					psw_cc = psw_cc0;
-				} else {
-					psw_cc = psw_cc1;
-				}
-				break;
-			case 0x80: // 6480 "EB80" "ICMH" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				rv1 = reg.getInt(rf1);
-				exec_icm();
-				reg.putInt(rf1, rv1);
-				break;
-			case 0x81: // 6490 "EB81" "ICMY" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				rv1 = reg.getInt(rf1 + 4);
-				exec_icm();
-				reg.putInt(rf1 + 4, rv1);
-				break;
-			case 0x8E: // 6500 "EB8E" "MVCLU" "RSY"
-				ins_setup_rsy();
-				break;
-			case 0x8F: // 6510 "EB8F" "CLCLU" "RSY"
-				ins_setup_rsy();
-				break;
-			case 0x90: // 6520 "EB90" "STMY" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				if (rf1 > rf3) {
-					while (rf1 < reg_len) {
-						mem.putInt(bd2_loc, reg.getInt(rf1 + 4));
-						bd2_loc = bd2_loc + 4;
-						rf1 = rf1 + 8;
-					}
-					rf1 = 0;
-				}
-				while (rf1 <= rf3) {
-					mem.putInt(bd2_loc, reg.getInt(rf1 + 4));
-					bd2_loc = bd2_loc + 4;
-					rf1 = rf1 + 8;
-				}
-				break;
-			case 0x96: // 6530 "EB96" "LMH" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				if (rf1 > rf3) {
-					while (rf1 < reg_len) {
-						reg.putInt(rf1, mem.getInt(bd2_loc));
-						bd2_loc = bd2_loc + 4;
-						rf1 = rf1 + 8;
-					}
-					rf1 = 0;
-				}
-				while (rf1 <= rf3) {
-					reg.putInt(rf1, mem.getInt(bd2_loc));
-					bd2_loc = bd2_loc + 4;
-					rf1 = rf1 + 8;
-				}
-				break;
-			case 0x98: // 6540 "EB98" "LMY" "RSY"
-				psw_check = false;
-				ins_setup_rsy();
-				if (rf1 > rf3) {
-					while (rf1 < reg_len) {
-						reg.putInt(rf1 + 4, mem.getInt(bd2_loc));
-						bd2_loc = bd2_loc + 4;
-						rf1 = rf1 + 8;
-					}
-					rf1 = 0;
-				}
-				while (rf1 <= rf3) {
-					reg.putInt(rf1 + 4, mem.getInt(bd2_loc));
-					bd2_loc = bd2_loc + 4;
-					rf1 = rf1 + 8;
-				}
-				break;
-			case 0x9A: // 6550 "EB9A" "LAMY" "RSY"
-				ins_setup_rsy();
-				break;
-			case 0x9B: // 6560 "EB9B" "STAMY" "RSY"
-				ins_setup_rsy();
-				break;
-			case 0xC0: // 6570 "EBC0" "TP" "RSL"
-				psw_check = false;
-				ins_setup_rsl();
-				get_pd(mem,bd1_loc, rflen1);
-				psw_cc = pd_cc;
-				break;
-			}
+			ins_EBXX();
 			break;
 		case 0xEC:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_rie] & 0xff;
-			switch (opcode2) {
-			case 0x44: // 6580 "EC44" "BRXHG" "RIE"
-				psw_check = false;
-				ins_setup_rie();
-				rlv3 = reg.getLong(rf3);
-				rlv1 = reg.getLong(rf1) + rlv3;
-				reg.putLong(rf1, rlv1);
-				if (rf3 == ((rf3 >> 4) << 4)) {
-					rlv3 = reg.getLong(rf3 + 8);
-				}
-				if (rlv1 > rlv3) {
-					set_psw_loc(psw_loc - 6 + 2 * if2);
-				}
-				break;
-			case 0x45: // 6600 "EC45" "BRXLG" "RIE"
-				psw_check = false;
-				ins_setup_rie();
-				rlv3 = reg.getLong(rf3);
-				rlv1 = reg.getLong(rf1) + rlv3;
-				reg.putLong(rf1, rlv1);
-				if (rf3 == ((rf3 >> 4) << 4)) {
-					rlv3 = reg.getLong(rf3 + 8);
-				}
-				if (rlv1 <= rlv3) {
-					set_psw_loc(psw_loc - 6 + 2 * if2);
-				}
-				break;
-			}
+			ins_ECXX();
 			break;
 		case 0xED:
-			opcode2 = mem_byte[psw_loc + opcode2_offset_rxe] & 0xff;
-			switch (opcode2) {
-			case 0x04: // 6620 "ED04" "LDEB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rdv1 = fp_get_db_from_eb(mem, xbd2_loc);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				break;
-			case 0x05: // 6630 "ED05" "LXDB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rbdv1 = fp_get_bd_from_db(mem, xbd2_loc);
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				break;
-			case 0x06: // 6640 "ED06" "LXEB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rbdv1 = fp_get_bd_from_eb(mem, xbd2_loc);
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				break;
-			case 0x07: // 6650 "ED07" "MXDB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rbdv1 = fp_get_bd_from_db(fp_reg, rf1).multiply(
-						fp_get_bd_from_db(mem, xbd2_loc), fp_dbg_context).round(
-						fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
-				check_lb_mpy();
-				break;
-			case 0x08: // 6660 "ED08" "KEB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_signal = true;
-				psw_cc = fp_get_eb_comp_cc(fp_get_eb_from_eb(fp_reg, rf1),
-						fp_get_eb_from_eb(mem, xbd2_loc));
-				break;
-			case 0x09: // 6670 "ED09" "CEB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				psw_cc = fp_get_eb_comp_cc(fp_get_eb_from_eb(fp_reg, rf1),
-						fp_get_eb_from_eb(mem, xbd2_loc));
-				break;
-			case 0x0A: // 6680 "ED0A" "AEB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
-						+ fp_get_eb_from_eb(mem, xbd2_loc);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				psw_cc = fp_get_eb_add_sub_cc();
-				break;
-			case 0x0B: // 6690 "ED0B" "SEB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
-						- fp_get_eb_from_eb(mem, xbd2_loc);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				psw_cc = fp_get_eb_add_sub_cc();
-				break;
-			case 0x0C: // 6700 "ED0C" "MDEB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rdv1 = fp_get_db_from_eb(fp_reg, rf1)
-						* fp_get_db_from_eb(mem, xbd2_loc);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				check_db_mpy();
-				break;
-			case 0x0D: // 6710 "ED0D" "DEB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rev2 = fp_get_eb_from_eb(mem, xbd2_loc);
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1) / fp_rev2;
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				check_eb_div();
-				break;
-			case 0x0E: // 6720 "ED0E" "MAEB" "RXF"
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
-						+ fp_get_eb_from_eb(mem, xbd2_loc)
-						* fp_get_eb_from_eb(fp_reg, rf3);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				check_eb_mpy();
-				break;
-			case 0x0F: // 6730 "ED0F" "MSEB" "RXF"
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
-						- fp_get_eb_from_eb(mem, xbd2_loc)
-						* fp_get_eb_from_eb(fp_reg, rf3);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				check_eb_mpy();
-				break;
-			case 0x10: // 6740 "ED10" "TCEB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1); // RPI 326
-				psw_cc = psw_cc0;
-				if ((xbd2_loc & 0x800) != 0 && fp_rev1 == 0) {
-					psw_cc = psw_cc1; // +0
-				}
-				if ((xbd2_loc & 0x400) != 0 && fp_rev1 == 0) {
-					psw_cc = psw_cc1; // -0
-				}
-				if ((xbd2_loc & 0x200) != 0 && fp_rev1 > 0) {
-					psw_cc = psw_cc1; // +normalized
-				}
-				if ((xbd2_loc & 0x100) != 0 && fp_rev1 < 0) {
-					psw_cc = psw_cc1; // -normalized
-				}
-				if ((xbd2_loc & 0x080) != 0) {
-					// psw_cc = psw_cc1; //+denormalized (never)
-				}
-				if ((xbd2_loc & 0x040) != 0) {
-					// psw_cc = psw_cc1; //-denormalized (never)
-				}
-				if ((xbd2_loc & 0x020) != 0) {
-					// psw_cc = psw_cc1; //+infinity
-				}
-				if ((xbd2_loc & 0x010) != 0) {
-					// psw_cc = psw_cc1; //-infinity
-				}
-				if ((xbd2_loc & 0x008) != 0) {
-					// psw_cc = psw_cc1; //+quiet nan
-				}
-				if ((xbd2_loc & 0x004) != 0) {
-					// psw_cc = psw_cc1; //-quiet nan
-				}
-				if ((xbd2_loc & 0x002) != 0) {
-					// psw_cc = psw_cc1; //+signaling nan
-				}
-				if ((xbd2_loc & 0x001) != 0) {
-					// psw_cc = psw_cc1; //-signaling nan
-				}
-				break;
-			case 0x11: // 6750 "ED11" "TCDB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rdv1 = fp_get_db_from_dh(fp_reg, rf1); // RPI 326
-				psw_cc = psw_cc0;
-				if ((xbd2_loc & 0x800) != 0 && fp_rdv1 == 0) {
-					psw_cc = psw_cc1; // +0
-				}
-				if ((xbd2_loc & 0x400) != 0 && fp_rdv1 == 0) {
-					psw_cc = psw_cc1; // -0
-				}
-				if ((xbd2_loc & 0x200) != 0 && fp_rdv1 > 0) {
-					psw_cc = psw_cc1; // +normalized
-				}
-				if ((xbd2_loc & 0x100) != 0 && fp_rdv1 < 0) {
-					psw_cc = psw_cc1; // -normalized
-				}
-				if ((xbd2_loc & 0x080) != 0) {
-					// psw_cc = psw_cc1; //+denormalized (never)
-				}
-				if ((xbd2_loc & 0x040) != 0) {
-					// psw_cc = psw_cc1; //-denormalized (never)
-				}
-				if ((xbd2_loc & 0x020) != 0) {
-					// psw_cc = psw_cc1; //+infinity
-				}
-				if ((xbd2_loc & 0x010) != 0) {
-					// psw_cc = psw_cc1; //-infinity
-				}
-				if ((xbd2_loc & 0x008) != 0) {
-					// psw_cc = psw_cc1; //+quiet nan
-				}
-				if ((xbd2_loc & 0x004) != 0) {
-					// psw_cc = psw_cc1; //-quiet nan
-				}
-				if ((xbd2_loc & 0x002) != 0) {
-					// psw_cc = psw_cc1; //+signaling nan
-				}
-				if ((xbd2_loc & 0x001) != 0) {
-					// psw_cc = psw_cc1; //-signaling nan
-				}
-				break;
-			case 0x12: // 6760 "ED12" "TCXB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1); // RPI 326
-				psw_cc = psw_cc0;
-				if ((xbd2_loc & 0x800) != 0
-						&& fp_rbdv1.signum() == 0) {
-					psw_cc = psw_cc1; // +0
-				}
-				if ((xbd2_loc & 0x400) != 0
-						&& fp_rbdv1.signum() == 0) {
-					psw_cc = psw_cc1; // -0
-				}
-				if ((xbd2_loc & 0x200) != 0
-						&& fp_rbdv1.signum() > 0) {
-					psw_cc = psw_cc1; // +normalized
-				}
-				if ((xbd2_loc & 0x100) != 0
-						&& fp_rbdv1.signum() < 0) {
-					psw_cc = psw_cc1; // -normalized
-				}
-				if ((xbd2_loc & 0x080) != 0) {
-					// psw_cc = psw_cc1; //+denormalized (never)
-				}
-				if ((xbd2_loc & 0x040) != 0) {
-					// psw_cc = psw_cc1; //-denormalized (never)
-				}
-				if ((xbd2_loc & 0x020) != 0) {
-					// psw_cc = psw_cc1; //+infinity
-				}
-				if ((xbd2_loc & 0x010) != 0) {
-					// psw_cc = psw_cc1; //-infinity
-				}
-				if ((xbd2_loc & 0x008) != 0) {
-					// psw_cc = psw_cc1; //+quiet nan
-				}
-				if ((xbd2_loc & 0x004) != 0) {
-					// psw_cc = psw_cc1; //-quiet nan
-				}
-				if ((xbd2_loc & 0x002) != 0) {
-					// psw_cc = psw_cc1; //+signaling nan
-				}
-				if ((xbd2_loc & 0x001) != 0) {
-					// psw_cc = psw_cc1; //-signaling nan
-				}
-				break;
-			case 0x14: // 6770 "ED14" "SQEB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rev1 = (float) Math.sqrt(fp_get_db_from_eb(mem, xbd2_loc));
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				break;
-			case 0x15: // 6780 "ED15" "SQDB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rdv1 = Math.sqrt(fp_get_db_from_db(mem, xbd2_loc));
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				break;
-			case 0x17: // 6790 "ED17" "MEEB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
-						* fp_get_eb_from_eb(mem, xbd2_loc);
-				fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
-				check_eh_mpy();
-				break;
-			case 0x18: // 6800 "ED18" "KDB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_signal = true;
-				psw_cc = fp_get_db_comp_cc(fp_get_db_from_db(fp_reg, rf1),
-						fp_get_db_from_db(mem, xbd2_loc));
-				break;
-			case 0x19: // 6810 "ED19" "CDB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				psw_cc = fp_get_db_comp_cc(fp_get_db_from_db(fp_reg, rf1),
-						fp_get_db_from_db(mem, xbd2_loc));
-				break;
-			case 0x1A: // 6820 "ED1A" "ADB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
-						+ fp_get_db_from_db(mem, xbd2_loc);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				psw_cc = fp_get_db_add_sub_cc();
-				break;
-			case 0x1B: // 6830 "ED1B" "SDB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
-						- fp_get_db_from_db(mem, xbd2_loc);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				psw_cc = fp_get_db_add_sub_cc();
-				break;
-			case 0x1C: // 6840 "ED1C" "MDB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
-						* fp_get_db_from_db(mem, xbd2_loc);
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				check_db_mpy();
-				break;
-			case 0x1D: // 6850 "ED1D" "DDB" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rdv2 = fp_get_db_from_db(mem, xbd2_loc);
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1) / fp_rdv2;
-				fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
-				check_db_div();
-				break;
-			case 0x1E: // 6860 "ED1E" "MADB" "RXF"
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
-						+ fp_get_db_from_db(mem, xbd2_loc)
-						* fp_get_db_from_db(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
-				check_db_mpy();
-				break;
-			case 0x1F: // 6870 "ED1F" "MSDB" "RXF"
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
-						- fp_get_db_from_db(mem, xbd2_loc)
-						* fp_get_db_from_db(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
-				check_db_mpy();
-				break;
-			case 0x24: // 6880 "ED24" "LDE" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_load_reg(rf1, tz390.fp_dh_type, mem, xbd2_loc,
-						tz390.fp_eh_type);
-				break;
-			case 0x25: // 6890 "ED25" "LXD" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_load_reg(rf1, tz390.fp_lh_type, mem, xbd2_loc,
-						tz390.fp_lh_type);
-				break;
-			case 0x26: // 6900 "ED26" "LXE" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_load_reg(rf1, tz390.fp_lh_type, mem, xbd2_loc,
-						tz390.fp_eh_type);
-				break;
-			case 0x2E: // 6910 "ED2E" "MAE" "RXF"
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
-						+ fp_get_db_from_eh(mem, xbd2_loc)
-						* fp_get_db_from_eh(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
-				check_eh_mpy();
-				break;
-			case 0x2F: // 6920 "ED2F" "MSE" "RXF"
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
-						- fp_get_db_from_eh(mem, xbd2_loc)
-						* fp_get_db_from_eh(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
-				check_eh_mpy();
-				break;
-			case 0x34: // 6930 "ED34" "SQE" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rdv1 = Math.sqrt(fp_get_db_from_eh(mem, xbd2_loc));
-				fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
-				break;
-			case 0x35: // 6940 "ED35" "SQD" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rdv1 = Math.sqrt(fp_get_db_from_dh(mem, xbd2_loc));
-				fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
-				break;
-			case 0x37: // 6950 "ED37" "MEE" "RXE"
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
-						* fp_get_db_from_eh(mem, xbd2_loc);
-				fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
-				check_eh_mpy();
-				break;
-			case 0x38: // 7410 "ED38" "MAYL" "RXF" Z9-46
-				psw_check = false; // RPI 298
-				ins_setup_rxf();
-				fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
-						fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x39: // 7420 "ED39" "MYL" "RXF" Z9-47
-				psw_check = false; // RPI 298
-				ins_setup_rxf();
-				fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
-						fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x3A: // 7430 "ED3A" "MAY" "RXF" Z9-48
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
-						fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x3B: // 7440 "ED3B" "MY" "RXF" Z9-49 RPI 298
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
-						fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x3C: // 7450 "ED3C" "MAYH" "RXF" Z9-50
-				psw_check = false; // RPI 298
-				ins_setup_rxf();
-				fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
-						fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x3D: // 7460 "ED3D" "MYH" "RXF" Z9-51 // RPI 298
-				psw_check = false; // RPI 298
-				ins_setup_rxf();
-				fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
-						fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
-						fp_x_context);
-				fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
-				check_lh_mpy();
-				break;
-			case 0x3E: // 6960 "ED3E" "MAD" "RXF"
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rdv1 = fp_get_db_from_dh(fp_reg, rf1)
-						+ fp_get_db_from_dh(mem, xbd2_loc)
-						* fp_get_db_from_dh(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
-				check_dh_mpy();
-				break;
-			case 0x3F: // 6970 "ED3F" "MSD" "RXF"
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rdv1 = fp_get_db_from_dh(fp_reg, rf1)
-						- fp_get_db_from_dh(mem, xbd2_loc)
-						* fp_get_db_from_dh(fp_reg, rf3);
-				fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
-				check_dh_mpy();
-				break;
-			case 0x40: // "SLDT" "ED40" "RXF" DFP 45
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf3);
-				work_fp_bi1 = fp_rbdv1
-				              .unscaledValue()
-				              .multiply(BigInteger.TEN.pow(xbd2_loc & 0x3f))
-				              .mod(fp_dd_mod_bi);
-				fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				break;
-			case 0x41: // "SRDT" "ED41" "RXF" DFP 46
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf3);
-				work_fp_bi1 = fp_rbdv1
-				              .unscaledValue()
-				              .divide(BigInteger.TEN.pow((xbd2_loc & 0x3f)));
-				fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
-				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-				break;
-			case 0x48: // "SLXT" "ED48" "RXF" DFP 47
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf3);
-				work_fp_bi1 = fp_rbdv1
-				              .unscaledValue()
-				              .multiply(BigInteger.TEN.pow(xbd2_loc & 0x3f))
-				              .mod(fp_ld_mod_bi);
-				fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
-				fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-				break;
-			case 0x49: // "SRXT" "ED49" "RXF" DFP 48
-				psw_check = false;
-				ins_setup_rxf();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf3);
-				work_fp_bi1 = fp_rbdv1
-				              .unscaledValue()
-				              .divide(BigInteger.TEN.pow(xbd2_loc & 0x3f));
-				fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
-				fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-				break;
-			case 0x50: // "TDCET" "ED50" "RXE" DFP 49
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf1); 
-				psw_cc = psw_cc0;
-				if ((xbd2_loc & 0x800) != 0 && fp_rbdv1.signum() == 0) {
-					psw_cc = psw_cc1; // +0
-				}
-				if ((xbd2_loc & 0x400) != 0 && fp_rbdv1.signum() == 0) {
-					psw_cc = psw_cc1; // -0
-				}
-				if ((xbd2_loc & 0x200) != 0
-					&& fp_rbdv1.signum() > 0
-					&& (fp_rbdv1.compareTo(fp_ed_pos_min) < 0
-						|| fp_rbdv1.compareTo(fp_ed_pos_max) > 0)
-					) {
-					psw_cc = psw_cc1; // +subnormal
-				}
-				if ((xbd2_loc & 0x100) != 0 
-					&& fp_rdv1 < 0
-					&& (fp_rbdv1.compareTo(fp_ed_neg_min) > 0
-							|| fp_rbdv1.compareTo(fp_ed_neg_max) < 0)
-					){
-					psw_cc = psw_cc1; // -subnormal
-				}
-				if ((xbd2_loc & 0x080) != 0
-					 && fp_rbdv1.signum() > 0
-					 && fp_rbdv1.compareTo(fp_ed_pos_min) >= 0
-					 && fp_rbdv1.compareTo(fp_ed_pos_max) <= 0
-					 ) {
-					psw_cc = psw_cc1; //+normal
-				}
-				if ((xbd2_loc & 0x040) != 0
-					 && fp_rbdv1.signum() < 0
-					 && fp_rbdv1.compareTo(fp_ed_neg_min) <= 0
-					 && fp_rbdv1.compareTo(fp_ed_neg_max) >= 0
-					 ){
-					psw_cc = psw_cc1; //-normal
-				}
-				if ((xbd2_loc & 0x020) != 0) {
-					// psw_cc = psw_cc1; //+infinity
-				}
-				if ((xbd2_loc & 0x010) != 0) {
-					// psw_cc = psw_cc1; //-infinity
-				}
-				if ((xbd2_loc & 0x008) != 0) {
-					// psw_cc = psw_cc1; //+quiet nan
-				}
-				if ((xbd2_loc & 0x004) != 0) {
-					// psw_cc = psw_cc1; //-quiet nan
-				}
-				if ((xbd2_loc & 0x002) != 0) {
-					// psw_cc = psw_cc1; //+signaling nan
-				}
-				if ((xbd2_loc & 0x001) != 0) {
-					// psw_cc = psw_cc1; //-signaling nan
-				}
-				break;
-			case 0x51: // "TDGET" "ED51" "RXE" DFP 50
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf1); 
-				psw_cc = psw_cc0;
-				if ((xbd2_loc & 0x800) != 0
-					&& fp_rbdv1.signum() == 0
-					&& fp_rbdv1.scale() >= fp_ed_exp_min
-					&& fp_rbdv1.scale() <= fp_ed_exp_max
-				    ) {
-					psw_cc = psw_cc1; // + safe 0
-				}
-				if ((xbd2_loc & 0x400) != 0 
-					&& fp_rbdv1.signum() == 0
-					&& fp_rbdv1.scale() >= fp_ed_exp_min
-					&& fp_rbdv1.scale() <= fp_ed_exp_max	
-				) {
-					psw_cc = psw_cc1; // - safe 0
-				}
-				if ((xbd2_loc & 0x200) != 0
-					&& fp_rbdv1.signum() == 0
-					&& (fp_rbdv1.scale() < fp_ed_exp_min
-						|| fp_rbdv1.scale() > fp_ed_exp_max)
-					) {
-					psw_cc = psw_cc1; // + extreme zero
-				}
-				if ((xbd2_loc & 0x100) != 0 
-					&& fp_rdv1 < 0
-					&& (fp_rbdv1.scale() < fp_ed_exp_min
-						|| fp_rbdv1.scale() > fp_ed_exp_max)
-					){
-					psw_cc = psw_cc1; // - extreme zero
-				}
-				if ((xbd2_loc & 0x080) != 0
-					 && fp_rbdv1.signum() > 0
-					 && (fp_rbdv1.scale() < fp_ed_exp_min
-						 ||	fp_rbdv1.scale() > fp_ed_exp_max)
-					 ) {
-					psw_cc = psw_cc1; //+ extreme finite
-				}
-				if ((xbd2_loc & 0x040) != 0
-					 && fp_rbdv1.signum() < 0
- 					 && (fp_rbdv1.scale() < fp_ed_exp_min
-						|| fp_rbdv1.scale() > fp_ed_exp_max)
-					 ){
-					psw_cc = psw_cc1; // - extreme finite
-				}
-				if ((xbd2_loc & 0x020) != 0
-					&& fp_rbdv1.signum() > 0
-					&& fp_rbdv1.scale() >= fp_ed_exp_min
-					&& fp_rbdv1.scale() <= fp_ed_exp_max
-					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() < tz390.fp_ed_digits
-					) {
-					psw_cc = psw_cc1; //+ safe finite
-				}
-				if ((xbd2_loc & 0x010) != 0
-					&& fp_rbdv1.signum() < 0
-					&& fp_rbdv1.scale() >= fp_ed_exp_min
-					&& fp_rbdv1.scale() <= fp_ed_exp_max
-					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() < tz390.fp_ed_digits	
-				    ) {
-					psw_cc = psw_cc1; // - safe finite
-				}
-				if ((xbd2_loc & 0x008) != 0
-					&& fp_rbdv1.signum() > 0
-					&& fp_rbdv1.scale() >= fp_ed_exp_min
-					&& fp_rbdv1.scale() <= fp_ed_exp_max
-					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() >= tz390.fp_ed_digits	
-				    ) {
-					psw_cc = psw_cc1; // + non zero lmd non extreem exp
-				}
-				if ((xbd2_loc & 0x004) != 0
-						&& fp_rbdv1.signum() < 0
-						&& fp_rbdv1.scale() >= fp_ed_exp_min
-						&& fp_rbdv1.scale() <= fp_ed_exp_max
-						&& fp_rbdv1.abs().unscaledValue()
-						   .toString().length() >= tz390.fp_ed_digits		
-					) {
-					psw_cc = psw_cc1; // - non zero lmd non extreme exp
-				}
-				if ((xbd2_loc & 0x002) != 0) {
-					// psw_cc = psw_cc1; //+ infinity or nan
-				}
-				if ((xbd2_loc & 0x001) != 0) {
-					// psw_cc = psw_cc1; // - infinity or nan
-				}
-				break;
-			case 0x54: // "TDCDT" "ED54" "RXE" DFP 51
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf1); 
-				psw_cc = psw_cc0;
-				if ((xbd2_loc & 0x800) != 0 && fp_rbdv1.signum() == 0) {
-					psw_cc = psw_cc1; // +0
-				}
-				if ((xbd2_loc & 0x400) != 0 && fp_rbdv1.signum() == 0) {
-					psw_cc = psw_cc1; // -0
-				}
-				if ((xbd2_loc & 0x200) != 0
-					&& fp_rbdv1.signum() > 0
-					&& (fp_rbdv1.compareTo(fp_dd_pos_min) < 0
-						|| fp_rbdv1.compareTo(fp_dd_pos_max) > 0)
-					) {
-					psw_cc = psw_cc1; // +subnormal
-				}
-				if ((xbd2_loc & 0x100) != 0 
-					&& fp_rdv1 < 0
-					&& (fp_rbdv1.compareTo(fp_dd_neg_min) > 0
-							|| fp_rbdv1.compareTo(fp_dd_neg_max) < 0)
-					){
-					psw_cc = psw_cc1; // -subnormal
-				}
-				if ((xbd2_loc & 0x080) != 0
-					 && fp_rbdv1.signum() > 0
-					 && fp_rbdv1.compareTo(fp_dd_pos_min) >= 0
-					 && fp_rbdv1.compareTo(fp_dd_pos_max) <= 0
-					 ) {
-					psw_cc = psw_cc1; //+normal
-				}
-				if ((xbd2_loc & 0x040) != 0
-					 && fp_rbdv1.signum() < 0
-					 && fp_rbdv1.compareTo(fp_dd_neg_min) <= 0
-					 && fp_rbdv1.compareTo(fp_dd_neg_max) >= 0
-					 ){
-					psw_cc = psw_cc1; //-normal
-				}
-				if ((xbd2_loc & 0x020) != 0) {
-					// psw_cc = psw_cc1; //+infinity
-				}
-				if ((xbd2_loc & 0x010) != 0) {
-					// psw_cc = psw_cc1; //-infinity
-				}
-				if ((xbd2_loc & 0x008) != 0) {
-					// psw_cc = psw_cc1; //+quiet nan
-				}
-				if ((xbd2_loc & 0x004) != 0) {
-					// psw_cc = psw_cc1; //-quiet nan
-				}
-				if ((xbd2_loc & 0x002) != 0) {
-					// psw_cc = psw_cc1; //+signaling nan
-				}
-				if ((xbd2_loc & 0x001) != 0) {
-					// psw_cc = psw_cc1; //-signaling nan
-				}
-				break;
-			case 0x55: // "TDGDT" "ED55" "RXE" DFP 52
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf1); 
-				psw_cc = psw_cc0;
-				if ((xbd2_loc & 0x800) != 0
-					&& fp_rbdv1.signum() == 0
-					&& fp_rbdv1.scale() >= fp_dd_exp_min
-					&& fp_rbdv1.scale() <= fp_dd_exp_max
-				    ) {
-					psw_cc = psw_cc1; // + safe 0
-				}
-				if ((xbd2_loc & 0x400) != 0 
-					&& fp_rbdv1.signum() == 0
-					&& fp_rbdv1.scale() >= fp_dd_exp_min
-					&& fp_rbdv1.scale() <= fp_dd_exp_max	
-				) {
-					psw_cc = psw_cc1; // - safe 0
-				}
-				if ((xbd2_loc & 0x200) != 0
-					&& fp_rbdv1.signum() == 0
-					&& (fp_rbdv1.scale() < fp_dd_exp_min
-						|| fp_rbdv1.scale() > fp_dd_exp_max)
-					) {
-					psw_cc = psw_cc1; // + extreme zero
-				}
-				if ((xbd2_loc & 0x100) != 0 
-					&& fp_rdv1 < 0
-					&& (fp_rbdv1.scale() < fp_dd_exp_min
-						|| fp_rbdv1.scale() > fp_dd_exp_max)
-					){
-					psw_cc = psw_cc1; // - extreme zero
-				}
-				if ((xbd2_loc & 0x080) != 0
-					 && fp_rbdv1.signum() > 0
-					 && (fp_rbdv1.scale() < fp_dd_exp_min
-						 ||	fp_rbdv1.scale() > fp_dd_exp_max)
-					 ) {
-					psw_cc = psw_cc1; //+ extreme finite
-				}
-				if ((xbd2_loc & 0x040) != 0
-					 && fp_rbdv1.signum() < 0
- 					 && (fp_rbdv1.scale() < fp_dd_exp_min
-						|| fp_rbdv1.scale() > fp_dd_exp_max)
-					 ){
-					psw_cc = psw_cc1; // - extreme finite
-				}
-				if ((xbd2_loc & 0x020) != 0
-					&& fp_rbdv1.signum() > 0
-					&& fp_rbdv1.scale() >= fp_dd_exp_min
-					&& fp_rbdv1.scale() <= fp_dd_exp_max
-					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() < tz390.fp_dd_digits
-					) {
-					psw_cc = psw_cc1; //+ safe finite
-				}
-				if ((xbd2_loc & 0x010) != 0
-					&& fp_rbdv1.signum() < 0
-					&& fp_rbdv1.scale() >= fp_dd_exp_min
-					&& fp_rbdv1.scale() <= fp_dd_exp_max
-					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() < tz390.fp_dd_digits	
-				    ) {
-					psw_cc = psw_cc1; // - safe finite
-				}
-				if ((xbd2_loc & 0x008) != 0
-					&& fp_rbdv1.signum() > 0
-					&& fp_rbdv1.scale() >= fp_dd_exp_min
-					&& fp_rbdv1.scale() <= fp_dd_exp_max
-					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() >= tz390.fp_dd_digits	
-				    ) {
-					psw_cc = psw_cc1; // + non zero lmd non extreem exp
-				}
-				if ((xbd2_loc & 0x004) != 0
-						&& fp_rbdv1.signum() < 0
-						&& fp_rbdv1.scale() >= fp_dd_exp_min
-						&& fp_rbdv1.scale() <= fp_dd_exp_max
-						&& fp_rbdv1.abs().unscaledValue()
-						   .toString().length() >= tz390.fp_dd_digits		
-					) {
-					psw_cc = psw_cc1; // - non zero lmd non extreme exp
-				}
-				if ((xbd2_loc & 0x002) != 0) {
-					// psw_cc = psw_cc1; //+ infinity or nan
-				}
-				if ((xbd2_loc & 0x001) != 0) {
-					// psw_cc = psw_cc1; // - infinity or nan
-				}
-				break;
-			case 0x58: // "" "ED58" "RXE" DFP 53
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf1); 
-				psw_cc = psw_cc0;
-				if ((xbd2_loc & 0x800) != 0 && fp_rbdv1.signum() == 0) {
-					psw_cc = psw_cc1; // +0
-				}
-				if ((xbd2_loc & 0x400) != 0 && fp_rbdv1.signum() == 0) {
-					psw_cc = psw_cc1; // -0
-				}
-				if ((xbd2_loc & 0x200) != 0
-					&& fp_rbdv1.signum() > 0
-					&& (fp_rbdv1.compareTo(fp_ld_pos_min) < 0
-						|| fp_rbdv1.compareTo(fp_ld_pos_max) > 0)
-					) {
-					psw_cc = psw_cc1; // +subnormal
-				}
-				if ((xbd2_loc & 0x100) != 0 
-					&& fp_rdv1 < 0
-					&& (fp_rbdv1.compareTo(fp_ld_neg_min) > 0
-						|| fp_rbdv1.compareTo(fp_ld_neg_max) < 0)
-					){
-					psw_cc = psw_cc1; // -subnormal
-				}
-				if ((xbd2_loc & 0x080) != 0
-					 && fp_rbdv1.signum() > 0
-					 && fp_rbdv1.compareTo(fp_ld_pos_min) >= 0
-					 && fp_rbdv1.compareTo(fp_ld_pos_max) <= 0
-					 ) {
-					psw_cc = psw_cc1; //+normal
-				}
-				if ((xbd2_loc & 0x040) != 0
-					 && fp_rbdv1.signum() < 0
-					 && fp_rbdv1.compareTo(fp_ld_neg_min) <= 0
-					 && fp_rbdv1.compareTo(fp_ld_neg_max) >= 0
-					 ){
-					psw_cc = psw_cc1; //-normal
-				}
-				if ((xbd2_loc & 0x020) != 0) {
-					// psw_cc = psw_cc1; //+infinity
-				}
-				if ((xbd2_loc & 0x010) != 0) {
-					// psw_cc = psw_cc1; //-infinity
-				}
-				if ((xbd2_loc & 0x008) != 0) {
-					// psw_cc = psw_cc1; //+quiet nan
-				}
-				if ((xbd2_loc & 0x004) != 0) {
-					// psw_cc = psw_cc1; //-quiet nan
-				}
-				if ((xbd2_loc & 0x002) != 0) {
-					// psw_cc = psw_cc1; //+signaling nan
-				}
-				if ((xbd2_loc & 0x001) != 0) {
-					// psw_cc = psw_cc1; //-signaling nan
-				}
-				break;
-			case 0x59: // "TDGXT" "ED59" "RXE" DFP 54
-				psw_check = false;
-				ins_setup_rxe();
-				fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf1); 
-				psw_cc = psw_cc0;
-				if ((xbd2_loc & 0x800) != 0
-					&& fp_rbdv1.signum() == 0
-					&& fp_rbdv1.scale() >= fp_ld_exp_min
-					&& fp_rbdv1.scale() <= fp_ld_exp_max
-				    ) {
-					psw_cc = psw_cc1; // + safe 0
-				}
-				if ((xbd2_loc & 0x400) != 0 
-					&& fp_rbdv1.signum() == 0
-					&& fp_rbdv1.scale() >= fp_ld_exp_min
-					&& fp_rbdv1.scale() <= fp_ld_exp_max	
-				) {
-					psw_cc = psw_cc1; // - safe 0
-				}
-				if ((xbd2_loc & 0x200) != 0
-					&& fp_rbdv1.signum() == 0
-					&& (fp_rbdv1.scale() < fp_ld_exp_min
-						|| fp_rbdv1.scale() > fp_ld_exp_max)
-					) {
-					psw_cc = psw_cc1; // + extreme zero
-				}
-				if ((xbd2_loc & 0x100) != 0 
-					&& fp_rdv1 < 0
-					&& (fp_rbdv1.scale() < fp_ld_exp_min
-						|| fp_rbdv1.scale() > fp_ld_exp_max)
-					){
-					psw_cc = psw_cc1; // - extreme zero
-				}
-				if ((xbd2_loc & 0x080) != 0
-					 && fp_rbdv1.signum() > 0
-					 && (fp_rbdv1.scale() < fp_ld_exp_min
-						 ||	fp_rbdv1.scale() > fp_ld_exp_max)
-					 ) {
-					psw_cc = psw_cc1; //+ extreme finite
-				}
-				if ((xbd2_loc & 0x040) != 0
-					 && fp_rbdv1.signum() < 0
- 					 && (fp_rbdv1.scale() < fp_ld_exp_min
-						|| fp_rbdv1.scale() > fp_ld_exp_max)
-					 ){
-					psw_cc = psw_cc1; // - extreme finite
-				}
-				if ((xbd2_loc & 0x020) != 0
-					&& fp_rbdv1.signum() > 0
-					&& fp_rbdv1.scale() >= fp_ld_exp_min
-					&& fp_rbdv1.scale() <= fp_ld_exp_max
-					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() < tz390.fp_ld_digits
-					) {
-					psw_cc = psw_cc1; //+ safe finite
-				}
-				if ((xbd2_loc & 0x010) != 0
-					&& fp_rbdv1.signum() < 0
-					&& fp_rbdv1.scale() >= fp_ld_exp_min
-					&& fp_rbdv1.scale() <= fp_ld_exp_max
-					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() < tz390.fp_ld_digits	
-				    ) {
-					psw_cc = psw_cc1; // - safe finite
-				}
-				if ((xbd2_loc & 0x008) != 0
-					&& fp_rbdv1.signum() > 0
-					&& fp_rbdv1.scale() >= fp_ld_exp_min
-					&& fp_rbdv1.scale() <= fp_ld_exp_max
-					&& fp_rbdv1.abs().unscaledValue()
-					   .toString().length() >= tz390.fp_ld_digits	
-				    ) {
-					psw_cc = psw_cc1; // + non zero lmd non extreem exp
-				}
-				if ((xbd2_loc & 0x004) != 0
-						&& fp_rbdv1.signum() < 0
-						&& fp_rbdv1.scale() >= fp_ld_exp_min
-						&& fp_rbdv1.scale() <= fp_ld_exp_max
-						&& fp_rbdv1.abs().unscaledValue()
-						   .toString().length() >= tz390.fp_ld_digits		
-					) {
-					psw_cc = psw_cc1; // - non zero lmd non extreme exp
-				}
-				if ((xbd2_loc & 0x002) != 0) {
-					// psw_cc = psw_cc1; //+ infinity or nan
-				}
-				if ((xbd2_loc & 0x001) != 0) {
-					// psw_cc = psw_cc1; // - infinity or nan
-				}
-				break;
-			case 0x64: // 6980 "ED64" "LEY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				fp_load_reg(rf1, tz390.fp_eh_type, mem, xbd2_loc,
-						tz390.fp_eh_type);
-				break;
-			case 0x65: // 6990 "ED65" "LDY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				fp_load_reg(rf1, tz390.fp_dh_type, mem, xbd2_loc,
-						tz390.fp_dh_type);
-				break;
-			case 0x66: // 7000 "ED66" "STEY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				if (fp_reg_ctl[mf1] != fp_ctl_ld) {
-					fp_store_reg(fp_reg, rf1);
-				}
-				mem.putInt(xbd2_loc, fp_reg.getInt(rf1));
-				break;
-			case 0x67: // 7010 "ED67" "STDY" "RXY"
-				psw_check = false;
-				ins_setup_rxy();
-				if (fp_reg_ctl[mf1] != fp_ctl_ld) {
-					fp_store_reg(fp_reg, rf1);
-				}
-				mem.putLong(xbd2_loc, fp_reg.getLong(rf1));
-				break;
-			}
+			ins_EDXX();
 			break;
 		case 0xEE: // 7020 "EE" "PLO" "SS"
 			ins_setup_ss();
@@ -9043,7 +3953,4822 @@ public class pz390 {
 			break;
 		}
 	}
+	private void ins_01XX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_e] & 0xff;
+		switch (opcode2) {
+		case 0x01: // 10 "0101" "PR" "E"
+			psw_check = false;
+			ins_setup_e();
+			pop_pc_stack();
+			break;
+		case 0x02: // 20 "0102" "UPT" "E"
+			ins_setup_e();
+			break;
+		case 0x04: // 30 "0104" "PTFF" "E" Z9-1
+			/*
+			 * perform timing facility function r0 = function r1 - parm
+			 * block address Notes: 1. Map functions 0x00-0x43 to timing
+			 * functions 0x80-C3 in svc 11
+			 */
+			psw_check = false;
+			ins_setup_e();
+			reg.put(rf1 + 7, (byte) (reg.get(rf1 + 7) | 0x80 - 0x80));
+			sz390.svc(11);
+			break;
+		case 0x07: // 30 "0107" "SCKPF" "E"
+			ins_setup_e();
+			break;
+		case 0x0B: // 40 "010B" "TAM" "E"
+			ins_setup_e();
+			break;
+		case 0x0C: // 50 "010C" "SAM24" "E"
+			psw_check = false;
+			ins_setup_e();
+			set_psw_amode(psw_amode24_bit);
+			break;
+		case 0x0D: // 60 "010D" "SAM31" "E"
+			psw_check = false;
+			ins_setup_e();
+			set_psw_amode(psw_amode31_bit);
+			break;
+		case 0x0E: // 70 "010E" "SAM64" "E"
+			ins_setup_e();
+			break;
+		case 0xFF: // 80 "01FF" "TRAP2" "E"
+			ins_setup_e();
+			break;
+		}
+	}
+	private void ins_A5XX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_ri] & 0x0f;
+		switch (opcode2) {
+		case 0x0: // 1820 "A50" "IIHH" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putShort(rf1, (short) if2);
+			break;
+		case 0x1: // 1830 "A51" "IIHL" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putShort(rf1 + 2, (short) if2);
+			break;
+		case 0x2: // 1840 "A52" "IILH" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putShort(rf1 + 4, (short) if2);
+			break;
+		case 0x3: // 1850 "A53" "IILL" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putShort(rf1 + 6, (short) if2);
+			break;
+		case 0x4: // 1860 "A54" "NIHH" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			rv1 = reg.getInt(rf1) & ((if2 << 16) | 0xffff);
+			reg.putInt(rf1, rv1);
+			if (rv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x5: // 1870 "A55" "NIHL" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			rv1 = reg.getInt(rf1) & (0xffff0000 | (if2 & 0xffff));
+			reg.putInt(rf1, rv1);
+			if (rv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x6: // 1880 "A56" "NILH" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			rv1 = reg.getInt(rf1 + 4) & (0xffff | (if2 << 16));
+			reg.putInt(rf1 + 4, rv1);
+			if (rv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x7: // 1890 "A57" "NILL" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			rv1 = reg.getInt(rf1 + 4) & (0xffff0000 | (if2 & 0xffff));
+			reg.putInt(rf1 + 4, rv1);
+			if (rv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x8: // 1900 "A58" "OIHH" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			rv1 = reg.getInt(rf1) | (if2 << 16);
+			reg.putInt(rf1, rv1);
+			if (rv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x9: // 1910 "A59" "OIHL" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			rv1 = reg.getInt(rf1) | (if2 & 0xffff);
+			reg.putInt(rf1, rv1);
+			if (rv1 == 0) { // rpi 295
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0xA: // 1920 "A5A" "OILH" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			rv1 = reg.getInt(rf1 + 4) | (if2 << 16); // RPI 295
+			reg.putInt(rf1 + 4, rv1);
+			if (rv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0xB: // 1930 "A5B" "OILL" "RI"\
+			psw_check = false;
+			ins_setup_ri();
+			rv1 = reg.getInt(rf1 + 4) | (if2 & 0xffff);
+			reg.putInt(rf1 + 4, rv1);
+			if (rv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0xC: // 1940 "A5C" "LLIHH" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putLong(rf1, (long) if2 << 48); // RPI158
+			break;
+		case 0xD: // 1950 "A5D" "LLIHL" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putLong(rf1, ((long) if2 << 32) & long_low48_bits); // RPI158
+			break;
+		case 0xE: // 1960 "A5E" "LLILH" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putLong(rf1, ((long) if2 << 16) & long_low32_bits); // RPI158
+			break;
+		case 0xF: // 1970 "A5F" "LLILL" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putLong(rf1, (long) (if2 & 0xffff)); // RPI158
+			break;
+		}
+	}
+	private void ins_A7XX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_ri] & 0x0f;
+		switch (opcode2) {
+		case 0x0: // 1980 "A70" "TMLH" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			psw_cc = get_tm_reg_cc(reg.getShort(rf1 + 4) & 0xffff, if2);
+			break;
+		case 0x1: // 2000 "A71" "TMLL" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			psw_cc = get_tm_reg_cc(reg.getShort(rf1 + 6) & 0xffff, if2);
+			break;
+		case 0x2: // 2020 "A72" "TMHH" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			psw_cc = get_tm_reg_cc(reg.getShort(rf1) & 0xffff, if2);
+			break;
+		case 0x3: // 2030 "A73" "TMHL" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			psw_cc = get_tm_reg_cc(reg.getShort(rf1 + 2) & 0xffff, if2);
+			break;
+		case 0x4: // 2040 "A74" "BRC" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			if ((psw_cc & mf1) > 0) {
+				set_psw_loc(psw_loc - 4 + 2 * if2);
+			}
+			break;
+		case 0x5: // 2360 "A75" "BRAS" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
+			set_psw_loc(psw_loc - 4 + 2 * if2);
+			break;
+		case 0x6: // 2380 "A76" "BRCT" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			rv1 = reg.getInt(rf1 + 4) - 1;
+			reg.putInt(rf1 + 4, rv1);
+			if (rv1 != 0) {
+				set_psw_loc(psw_loc - 4 + if2 + if2); // RPI 357
+			}
+			break;
+		case 0x7: // 2400 "A77" "BRCTG" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			rlv1 = reg.getLong(rf1) - 1;
+			reg.putLong(rf1, rlv1);
+			if (rlv1 != 0) {
+				set_psw_loc(psw_loc - 4 + 2 * if2);
+			}
+			break;
+		case 0x8: // 2420 "A78" "LHI" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putInt(rf1 + 4, if2);
+			break;
+		case 0x9: // 2430 "A79" "LGHI" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putLong(rf1, if2);
+			break;
+		case 0xA: // 2440 "A7A" "AHI" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			rv1 = reg.getInt(rf1 + 4);
+			rv2 = if2;
+			rv3 = rv1 + rv2;
+			reg.putInt(rf1 + 4, rv3);
+			psw_cc = get_int_add_cc();
+			break;
+		case 0xB: // 2450 "A7B" "AGHI" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			rlv1 = reg.getLong(rf1);
+			rlv2 = if2;
+			rlv3 = rlv1 + rlv2;
+			reg.putLong(rf1, rlv3);
+			psw_cc = get_long_add_cc();
+			break;
+		case 0xC: // 2460 "A7C" "MHI" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) * if2);
+			break;
+		case 0xD: // 2470 "A7D" "MGHI" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			reg.putLong(rf1, reg.getLong(rf1) * if2);
+			break;
+		case 0xE: // 2480 "A7E" "CHI" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			psw_cc = get_int_comp_cc(reg.getInt(rf1 + 4), if2);
+			break;
+		case 0xF: // 2490 "A7F" "CGHI" "RI"
+			psw_check = false;
+			ins_setup_ri();
+			psw_cc = get_long_comp_cc(reg.getLong(rf1), if2);
+			break;
+		}
+	}
+	private void ins_B2XX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_s] & 0xff;
+		switch (opcode2) {
+		case 0x02: // 2570 "B202" "STIDP" "S"
+			psw_check = false;
+			ins_setup_s();
+			mem.putLong(bd2_loc, cpu_id);
+			break;
+		case 0x04: // 2580 "B204" "SCK" "S"
+			ins_setup_s();
+			break;
+		case 0x05: // 2590 "B205" "STCK" "S"
+			psw_check = false;
+			ins_setup_s();
+			/*
+			 * Notes: 1. The Java time stored is milliseconds since Jan. 1,
+			 * 1970. 2. For IBM OS compatibility the STCK instruction
+			 * converts Java time to base of January 1, 1900 with bit 51
+			 * being incremented each microsecond. 3. The low bits are
+			 * incremented to prevent duplicate values from being returned
+			 * when timing on.
+			 */
+			if (tz390.opt_timing) {
+				java_mil = System.currentTimeMillis();
+			} else {
+				java_mil = cur_date.getTime();
+			}
+			ibm_ms = (java_mil + ibm_mil) * 1000;
+			cur_stck = ibm_ms << (63 - 51);
+			if (cur_stck > last_stck) {
+				last_stck = cur_stck;
+			} else {
+				last_stck++;
+			}
+			mem.putLong(bd2_loc, last_stck);
+			break;
+		case 0x06: // 2600 "B206" "SCKC" "S"
+			ins_setup_s();
+			break;
+		case 0x07: // 2610 "B207" "STCKC" "S"
+			ins_setup_s();
+			break;
+		case 0x08: // 2620 "B208" "SPT" "S"
+			ins_setup_s();
+			break;
+		case 0x09: // 2630 "B209" "STPT" "S"
+			ins_setup_s();
+			break;
+		case 0x0A: // 2640 "B20A" "SPKA" "S"
+			ins_setup_s();
+			break;
+		case 0x0B: // 2650 "B20B" "IPK" "S"
+			ins_setup_s();
+			break;
+		case 0x0D: // 2660 "B20D" "PTLB" "S"
+			ins_setup_s();
+			break;
+		case 0x10: // 2670 "B210" "SPX" "S"
+			ins_setup_s();
+			break;
+		case 0x11: // 2680 "B211" "STPX" "S"
+			ins_setup_s();
+			break;
+		case 0x12: // 2690 "B212" "STAP" "S"
+			ins_setup_s();
+			break;
+		case 0x18: // 2700 "B218" "PC" "S"
+			psw_check = false;
+			ins_setup_s();
+			push_pc_stack(psw_loc);
+			set_psw_loc(bd2_loc);
+			break;
+		case 0x19: // 2710 "B219" "SAC" "S"
+			ins_setup_s();
+			break;
+		case 0x1A: // 2720 "B21A" "CFC" "S"
+			ins_setup_s();
+			break;
+		case 0x21: // 2730 "B221" "IPTE" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x22: // 2740 "B222" "IPM" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			int_work = (psw_cc_code[psw_cc] << 4) | psw_pgm_mask;
+			rv1 = reg.getInt(rf1 + 4) & 0xffffff; // RPI106
+			reg.putInt(rf1 + 4, rv1 | (int_work << 24)); // RPI106
+			break;
+		case 0x23: // 2750 "B223" "IVSK" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x24: // 2760 "B224" "IAC" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x25: // 2770 "B225" "SSAR" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x26: // 2780 "B226" "EPAR" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x27: // 2790 "B227" "ESAR" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x28: // 2800 "B228" "PT" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x29: // 2810 "B229" "ISKE" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x2A: // 2820 "B22A" "RRBE" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x2B: // 2830 "B22B" "SSKE" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x2C: // 2840 "B22C" "TB" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x2D: // 2850 "B22D" "DXR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf1);
+			fp_rbdv2 = fp_get_bd_from_lh(fp_reg, rf2);
+			if (fp_rbdv2.signum() != 0) {
+				fp_rbdv1 = fp_rbdv1.divide(fp_rbdv2, fp_bdg_context).round(
+						fp_x_context);
+			}
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_div();
+			break;
+		case 0x2E: // 2860 "B22E" "PGIN" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x2F: // 2870 "B22F" "PGOUT" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x30: // 2880 "B230" "CSCH" "S"
+			ins_setup_s();
+			break;
+		case 0x31: // 2890 "B231" "HSCH" "S"
+			ins_setup_s();
+			break;
+		case 0x32: // 2900 "B232" "MSCH" "S"
+			ins_setup_s();
+			break;
+		case 0x33: // 2910 "B233" "SSCH" "S"
+			ins_setup_s();
+			break;
+		case 0x34: // 2920 "B234" "STSCH" "S"
+			ins_setup_s();
+			break;
+		case 0x35: // 2930 "B235" "TSCH" "S"
+			ins_setup_s();
+			break;
+		case 0x36: // 2940 "B236" "TPI" "S"
+			ins_setup_s();
+			break;
+		case 0x37: // 2950 "B237" "SAL" "S"
+			ins_setup_s();
+			break;
+		case 0x38: // 2960 "B238" "RSCH" "S"
+			ins_setup_s();
+			break;
+		case 0x39: // 2970 "B239" "STCRW" "S"
+			ins_setup_s();
+			break;
+		case 0x3A: // 2980 "B23A" "STCPS" "S"
+			ins_setup_s();
+			break;
+		case 0x3B: // 2990 "B23B" "RCHP" "S"
+			ins_setup_s();
+			break;
+		case 0x3C: // 3000 "B23C" "SCHM" "S"
+			ins_setup_s();
+			break;
+		case 0x40: // 3010 "B240" "BAKR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			if (rf1 == 0) {
+				push_pc_stack(psw_loc);
+			} else {
+				push_pc_stack(reg.getInt(rf1 + 4));
+			}
+			if (rf2 != 0) {
+				set_psw_loc(reg.getInt(rf2 + 4));
+			}
+			break;
+		case 0x41: // 3020 "B241" "CKSM" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x44: // 3030 "B244" "SQDR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = Math.sqrt(fp_get_db_from_dh(fp_reg, rf2)); // RPI
+																	// 364
+			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
+			break;
+		case 0x45: // 3040 "B245" "SQER" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = Math.sqrt(fp_get_db_from_eh(fp_reg, rf2));
+			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
+			break;
+		case 0x46: // 3050 "B246" "STURA" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x47: // 3060 "B247" "MSTA" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x48: // 3070 "B248" "PALB" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x49: // 3080 "B249" "EREG" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			if (cur_pc_stk_reg <= 0) {
+				set_psw_check(psw_pic_stkerr);
+				return;
+			}
+			int pc_stk_reg_base = cur_pc_stk_reg - reg_len;
+			if (rf1 > rf3) {
+				while (rf1 < reg_len) {
+					reg.putInt(rf1 + 4, pc_stk_reg.getInt(pc_stk_reg_base
+							+ rf1 + 4));
+					rf1 = rf1 + 8;
+				}
+				rf1 = 0;
+			}
+			while (rf1 <= rf3) {
+				reg.putInt(rf1 + 4, pc_stk_reg.getInt(pc_stk_reg_base + rf1
+						+ 4));
+				rf1 = rf1 + 8;
+			}
+			break;
+		case 0x4A: // 3090 "B24A" "ESTA" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x4B: // 3100 "B24B" "LURA" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x4C: // 3110 "B24C" "TAR" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x4D: // 3120 "B24D" "CPYA" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x4E: // 3130 "B24E" "SAR" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x4F: // 3140 "B24F" "EAR" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x50: // 3150 "B250" "CSP" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x52: // 3160 "B252" "MSR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) * reg.getInt(rf2 + 4));
+			break;
+		case 0x54: // 3170 "B254" "MVPG" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x55: // 3180 "B255" "MVST" "RRE"
+			psw_check = false; // RPI 441
+			ins_setup_rre();
+			bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
+			bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
+			bd2_start = bd2_loc;
+			string_eod = reg.get(7);
+			while (mem_byte[bd2_loc] != string_eod) { // RPI 453
+				bd2_loc++; // RPI 476
+			}
+			rflen = bd2_loc - bd2_start + 1;
+			System.arraycopy(mem_byte, bd2_start, mem_byte, bd1_loc, rflen); // RPI
+																				// 411
+			reg.putInt(r1, bd1_loc + rflen - 1);
+			psw_cc = psw_cc1;
+			break;
+		case 0x57: // 3190 "B257" "CUSE" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			exec_cuse();
+			break;
+		case 0x58: // 3200 "B258" "BSG" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x5A: // 3210 "B25A" "BSA" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x5D: // 3220 "B25D" "CLST" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			exec_clst();
+			break;
+		case 0x5E: // 3230 "B25E" "SRST" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			exec_srst();
+			break;
+		case 0x63: // 3240 "B263" "CMPSC" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x76: // 3250 "B276" "XSCH" "S"
+			ins_setup_s();
+			break;
+		case 0x77: // 3260 "B277" "RP" "S"
+			ins_setup_s();
+			break;
+		case 0x78: // 3270 "B278" "STCKE" "S"
+			psw_check = false;
+			ins_setup_s();
+			/*
+			 * Notes: 1. The Java time stored is milliseconds since Jan. 1,
+			 * 1970. 2. For IBM OS compatibility the STCKE instruction
+			 * converts Java time to base of January 1, 1900 with bit 59
+			 * being incremented each microsecond.
+			 */
+			if (tz390.opt_timing) {
+				java_mil = System.currentTimeMillis();
+			} else {
+				java_mil = cur_date.getTime();
+			}
+			ibm_ms = (java_mil + ibm_mil) * 1000;
+			mem.putLong(bd2_loc, ibm_ms << (63 - 59));
+			mem.putLong(bd2_loc + 8, 0);
+			break;
+		case 0x79: // 3280 "B279" "SACF" "S"
+			ins_setup_s();
+			break;
+		case 0x7C: // 3300 "B27C" "STCKF" "S" Z9-2
+			psw_check = false;
+			ins_setup_s();
+			/*
+			 * Notes: 1. The Java time stored is milliseconds since Jan. 1,
+			 * 1970. 2. For IBM OS compatibility the STCK instruction
+			 * converts Java time to base of January 1, 1900 with bit 51
+			 * being incremented each microsecond.
+			 */
+			if (tz390.opt_timing) {
+				java_mil = System.currentTimeMillis();
+			} else {
+				java_mil = cur_date.getTime();
+			}
+			ibm_ms = (java_mil + ibm_mil) * 1000;
+			mem.putLong(bd2_loc, ibm_ms << (63 - 51));
+			psw_cc = psw_cc0;
+			break;
+		case 0x7D: // 3290 "B27D" "STSI" "S"
+			ins_setup_s();
+			break;
+		case 0x99: // 3300 "B299" "SRNM" "S"
+			psw_check = false;
+			ins_setup_s();
+			fp_bfp_rnd = (bd2_loc & 0x3); // set bfp rounding mode
+			fp_fpc_reg = (fp_fpc_reg & fp_bfp_rnd_not) | fp_bfp_rnd;
+			switch (fp_bfp_rnd) {
+			case 0: // round half even
+				fp_e_context = MathContext.DECIMAL32; // fp_fpc_rnd
+														// default half even
+				fp_d_context = MathContext.DECIMAL64; // fp_fpc_rnd
+														// default half even
+				fp_x_context = MathContext.DECIMAL128; // fp_fpc_rnd
+														// default half even
+				break;
+			case 1: // round toward 0
+				fp_e_context = new MathContext(32, RoundingMode.DOWN);
+				fp_d_context = new MathContext(64, RoundingMode.DOWN);
+				fp_x_context = new MathContext(128, RoundingMode.DOWN);
+				break;
+			case 2: // round toward +infinity
+				fp_e_context = new MathContext(32, RoundingMode.CEILING);
+				fp_d_context = new MathContext(64, RoundingMode.CEILING);
+				fp_x_context = new MathContext(128, RoundingMode.CEILING);
+				break;
+			case 3: // round toward -infinity;
+				fp_e_context = new MathContext(32, RoundingMode.FLOOR);
+				fp_d_context = new MathContext(64, RoundingMode.FLOOR);
+				fp_x_context = new MathContext(128, RoundingMode.FLOOR);
+				break;
+			}
+			break;
+		case 0x9C: // 3310 "B29C" "STFPC" "S"
+			psw_check = false;
+			ins_setup_s();
+			mem.putInt(bd2_loc, fp_fpc_reg | (fp_dxc << 8));
+			break;
+		case 0x9D: // 3320 "B29D" "LFPC" "S"
+			psw_check = false;
+			ins_setup_s();
+            set_fpc_reg(mem.getInt(bd2_loc));
+			break;
+		case 0xA5: // 3330 "B2A5" "TRE" "RRE"
+			psw_check = false; // RPI 454
+			ins_setup_rre();
+			string_eod = reg.get(r0 + 3);
+			bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
+			bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
+			bd1_end = bd1_loc + reg.getInt(rf1 + 12);
+			psw_cc = psw_cc3;
+			while (psw_cc == psw_cc3) {
+				if (mem_byte[bd1_loc] == string_eod) {
+					psw_cc = psw_cc1;
+				} else {
+					mem_byte[bd1_loc] = mem_byte[bd2_loc
+							+ (mem_byte[bd1_loc] & 0xff)];
+					bd1_loc++;
+					if (bd1_loc >= bd1_end) {
+						psw_cc = psw_cc0;
+					}
+				}
+			}
+			reg.putInt(rf1 + 4, bd1_loc);
+			reg.putInt(rf1 + 12, bd1_end - bd1_loc);
+			break;
+		case 0xA6: // 3340 "B2A6" "CUUTF" "RRE"
+			ins_setup_rre();
+			break;
+		case 0xA7: // 3360 "B2A7" "CUTFU" "RRE"
+			ins_setup_rre();
+			break;
+		case 0xB0: // 3400 "B2B0" "STFLE" "S" Z9-3
+			psw_check = false;
+			ins_setup_s();
+			/*
+			 * store feature bit list
+			 */
+			mem.putLong(bd2_loc, sz390.get_feature_bits());
+			reg.put(r0 + 7, (byte) 0); // number of feature doulbe words-1
+			psw_cc = psw_cc0;
+			break;
+		case 0xB1: // 3380 "B2B1" "STFL" "S"
+			ins_setup_s();
+			break;
+		case 0xB2: // 3390 "B2B2" "LPSWE" "S"
+			ins_setup_s();
+			break;
+		case 0xB9: // 3395 "B2B9" "SRNMT" "S" DFP 56
+			psw_check = false;
+			ins_setup_s();
+			fp_dfp_rnd = (bd2_loc & 0x7); // set dfp rounding mode
+			fp_fpc_reg = (fp_fpc_reg & fp_dfp_rnd_not) | (fp_dfp_rnd << 4);
+            fp_set_dfp_rnd();
+			break;
+		case 0xBD: // 3395 "B2BD" "LFAS" "S" DFP 55
+			psw_check = false;
+			ins_setup_s();
+			set_fpc_reg(mem.getInt(bd2_loc));
+			break;		
+		case 0xFF: // 3400 "B2FF" "TRAP4" "S"
+			ins_setup_s();
+			break;
+		}
+	}
+	private void ins_B3XX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_rre] & 0xff;
+		switch (opcode2) {
+		case 0x00: // 3410 "B300" "LPEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rev1 = Math.abs(fp_get_eb_from_eb(fp_reg, rf2));
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			psw_cc = fp_get_eb_comp_cc(fp_rev1, 0);
+			break;
+		case 0x01: // 3420 "B301" "LNEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rev1 = Math.abs(fp_get_eb_from_eb(fp_reg, rf2));
+			if (fp_rev1 != 0) {
+				fp_rev1 = -fp_rev1;
+			}
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			psw_cc = fp_get_eb_comp_cc(fp_rev1, 0);
+			break;
+		case 0x02: // 3430 "B302" "LTEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf2);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			psw_cc = fp_get_eb_comp_cc(fp_rev1, 0);
+			break;
+		case 0x03: // 3440 "B303" "LCEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf2);
+			if (fp_rev1 != 0) {
+				fp_rev1 = -fp_rev1;
+			}
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			psw_cc = fp_get_eb_comp_cc(fp_rev1, 0);
+			break;
+		case 0x04: // 3450 "B304" "LDEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = fp_get_db_from_eb(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			break;
+		case 0x05: // 3460 "B305" "LXDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_db(fp_reg, rf2);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			break;
+		case 0x06: // 3470 "B306" "LXEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_eb(fp_reg, rf2);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			break;
+		case 0x07: // 3480 "B307" "MXDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_db(fp_reg, rf1).multiply(
+					fp_get_bd_from_db(fp_reg, rf2), fp_dbg_context).round(
+					fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			check_lb_mpy();
+			break;
+		case 0x08: // 3490 "B308" "KEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_signal = true;
+			psw_cc = fp_get_eb_comp_cc(fp_get_eb_from_eb(fp_reg, rf1),
+					fp_get_eb_from_eb(fp_reg, rf2));
+			break;
+		case 0x09: // 3500 "B309" "CEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = fp_get_eb_comp_cc(fp_get_eb_from_eb(fp_reg, rf1),
+					fp_get_eb_from_eb(fp_reg, rf2));
+			break;
+		case 0x0A: // 3510 "B30A" "AEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
+					+ fp_get_eb_from_eb(fp_reg, rf2);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			psw_cc = fp_get_eb_add_sub_cc();
+			break;
+		case 0x0B: // 3520 "B30B" "SEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
+					- fp_get_eb_from_eb(fp_reg, rf2);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			psw_cc = fp_get_eb_add_sub_cc();
+			break;
+		case 0x0C: // 3530 "B30C" "MDEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = fp_get_db_from_eb(fp_reg, rf1)
+					* fp_get_db_from_eb(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			check_db_mpy();
+			break;
+		case 0x0D: // 3540 "B30D" "DEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1);
+			fp_rev2 = fp_get_eb_from_eb(fp_reg, rf2);
+			fp_rev1 = fp_rev1 / fp_rev2;
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			check_eb_div();
+			break;
+		case 0x0E: // 3550 "B30E" "MAEBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf1();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
+					+ fp_get_eb_from_eb(fp_reg, rf2)
+					* fp_get_eb_from_eb(fp_reg, rf3);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			check_eb_mpy();
+			break;
+		case 0x0F: // 3560 "B30F" "MSEBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf1();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
+					- fp_get_eb_from_eb(fp_reg, rf2)
+					* fp_get_eb_from_eb(fp_reg, rf3);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			check_eb_mpy();
+			break;
+		case 0x10: // 3570 "B310" "LPDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = Math.abs(fp_get_db_from_db(fp_reg, rf2));
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
+			break;
+		case 0x11: // 3580 "B311" "LNDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = -Math.abs(fp_get_db_from_db(fp_reg, rf2));
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
+			break;
+		case 0x12: // 3590 "B312" "LTDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
+			break;
+		case 0x13: // 3600 "B313" "LCDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = -fp_get_db_from_db(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
+			break;
+		case 0x14: // 3610 "B314" "SQEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rev1 = (float) Math.sqrt(fp_get_db_from_eb(fp_reg, rf2));
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			break;
+		case 0x15: // 3620 "B315" "SQDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = Math.sqrt(fp_get_db_from_db(fp_reg, rf2));
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			break;
+		case 0x16: // 3630 "B316" "SQXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv2 = fp_get_bd_from_lb(fp_reg, rf2);
+			fp_get_bd_sqrt();
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			break;
+		case 0x17: // 3640 "B317" "MEEBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
+					* fp_get_eb_from_eb(fp_reg, rf2);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			check_eh_mpy();
+			break;
+		case 0x18: // 3650 "B318" "KDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_signal = true;
+			psw_cc = fp_get_db_comp_cc(fp_get_db_from_db(fp_reg, rf1),
+					fp_get_db_from_db(fp_reg, rf2));
+			break;
+		case 0x19: // 3660 "B319" "CDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = fp_get_db_comp_cc(fp_get_db_from_db(fp_reg, rf1),
+					fp_get_db_from_db(fp_reg, rf2));
+			break;
+		case 0x1A: // 3670 "B31A" "ADBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
+					+ fp_get_db_from_db(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			psw_cc = fp_get_db_add_sub_cc();
+			break;
+		case 0x1B: // 3680 "B31B" "SDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
+					- fp_get_db_from_db(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			psw_cc = fp_get_db_add_sub_cc();
+			break;
+		case 0x1C: // 3690 "B31C" "MDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
+					* fp_get_db_from_db(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			check_db_mpy();
+			break;
+		case 0x1D: // 3700 "B31D" "DDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1);
+			fp_rdv2 = fp_get_db_from_db(fp_reg, rf2);
+			fp_rdv1 = fp_rdv1 / fp_rdv2;
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			check_db_div();
+			break;
+		case 0x1E: // 3710 "B31E" "MADBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf1();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
+					+ fp_get_db_from_db(fp_reg, rf2)
+					* fp_get_db_from_db(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			check_db_mpy();
+			break;
+		case 0x1F: // 3720 "B31F" "MSDBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf1();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
+					- fp_get_db_from_db(fp_reg, rf2)
+					* fp_get_db_from_db(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			check_db_mpy();
+			break;
+		case 0x24: // 3730 "B324" "LDER" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_load_reg(rf1, tz390.fp_dh_type, fp_reg, rf2,
+					tz390.fp_eh_type);
+			break;
+		case 0x25: // 3740 "B325" "LXDR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2,
+					tz390.fp_dh_type);
+			break;
+		case 0x26: // 3750 "B326" "LXER" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2,
+					tz390.fp_eh_type);
+			break;
+		case 0x2E: // 3760 "B32E" "MAER" "RRF"
+			psw_check = false;
+			ins_setup_rrf1();
+			fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
+					+ fp_get_db_from_eh(fp_reg, rf2)
+					* fp_get_db_from_eh(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
+			check_eh_mpy();
+			break;
+		case 0x2F: // 3770 "B32F" "MSER" "RRF"
+			psw_check = false;
+			ins_setup_rrf1();
+			fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
+					- fp_get_db_from_eh(fp_reg, rf2)
+					* fp_get_db_from_eh(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
+			check_eh_mpy();
+			break;
+		case 0x36: // 3780 "B336" "SQXR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv2 = fp_get_bd_from_lh(fp_reg, rf2);
+			fp_get_bd_sqrt();
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			break;
+		case 0x37: // 3790 "B337" "MEER" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
+					* fp_get_db_from_eh(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
+			check_eh_mpy();
+			break;
+		case 0x38: // 3830 "B338" "MAYLR" "RRF" Z9-4
+			psw_check = false; // RPI 298
+			ins_setup_rrf1();
+			fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
+					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x39: // 3840 "B339" "MYLR" "RRF" Z9-5
+			psw_check = false; // RPI 298
+			ins_setup_rrf1();
+			fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
+					fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x3A: // 3850 "B33A" "MAYR" "RRF" Z9-6
+			psw_check = false;
+			ins_setup_rrf1();
+			fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
+					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x3B: // 3860 "B33B" "MYR" "RRF" Z9-7
+			psw_check = false;
+			ins_setup_rrf1();
+			fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
+					fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x3C: // 3870 "B33C" "MAYHR" "RRF" Z9-8
+			psw_check = false; // RPI 298
+			ins_setup_rrf1();
+			fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
+					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x3D: // 3880 "B33D" "MYHR" "RRF" Z9-9
+			psw_check = false; // RPI 298
+			ins_setup_rrf1();
+			fp_rbdv1 = fp_get_bd_from_dh(fp_reg, rf2).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
+					fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x3E: // 3800 "B33E" "MADR" "RRF"
+			psw_check = false;
+			ins_setup_rrf1();
+			fp_rdv1 = fp_get_db_from_dh(fp_reg, rf1)
+					+ fp_get_db_from_dh(fp_reg, rf2)
+					* fp_get_db_from_dh(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
+			check_dh_mpy();
+			break;
+		case 0x3F: // 3810 "B33F" "MSDR" "RRF"
+			psw_check = false;
+			ins_setup_rrf1();
+			fp_rdv1 = fp_get_db_from_dh(fp_reg, rf1)
+					- fp_get_db_from_dh(fp_reg, rf2)
+					* fp_get_db_from_dh(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
+			check_dh_mpy();
+			break;
+		case 0x40: // 3820 "B340" "LPXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf2).abs();
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			psw_cc = fp_get_lb_comp_cc(fp_rbdv1, BigDecimal.ZERO);
+			break;
+		case 0x41: // 3830 "B341" "LNXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf2).abs().negate();
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			psw_cc = fp_get_lb_comp_cc(fp_rbdv1, BigDecimal.ZERO);
+			break;
+		case 0x42: // 3840 "B342" "LTXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf2);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			psw_cc = fp_get_lb_comp_cc(fp_rbdv1, BigDecimal.ZERO);
+			break;
+		case 0x43: // 3850 "B343" "LCXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf2).negate();
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			psw_cc = fp_get_lb_comp_cc(fp_rbdv1, BigDecimal.ZERO);
+			break;
+		case 0x44: // 3860 "B344" "LEDBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2,
+					tz390.fp_db_type);
+			break;
+		case 0x45: // 3870 "B345" "LDXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_load_reg(rf1, tz390.fp_db_type, fp_reg, rf2,
+					tz390.fp_lb_type);
+			break;
+		case 0x46: // 3880 "B346" "LEXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_load_reg(rf1, tz390.fp_eb_type, fp_reg, rf2,
+					tz390.fp_lb_type);
+			break;
+		case 0x47: // 3890 "B347" "FIXBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_lb(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_get_bd_rnd_int(fp_bfp_class,mf3));
+			break;
+		case 0x48: // 3900 "B348" "KXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_signal = true;
+			psw_cc = fp_get_lb_comp_cc(fp_get_bd_from_lb(fp_reg, rf1),
+					fp_get_bd_from_lb(fp_reg, rf2));
+			break;
+		case 0x49: // 3910 "B349" "CXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = fp_get_lb_comp_cc(fp_get_bd_from_lb(fp_reg, rf1),
+					fp_get_bd_from_lb(fp_reg, rf2));
+			break;
+		case 0x4A: // 3920 "B34A" "AXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1);
+			fp_rbdv2 = fp_get_bd_from_lb(fp_reg, rf2);
+			fp_rbdv1 = fp_rbdv1.add(fp_rbdv2, fp_x_context).round(
+					fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			psw_cc = fp_get_lb_add_sub_cc();
+			break;
+		case 0x4B: // 3930 "B34B" "SXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1).subtract(
+					fp_get_bd_from_lb(fp_reg, rf2), fp_bdg_context);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			psw_cc = fp_get_lb_add_sub_cc();
+			break;
+		case 0x4C: // 3940 "B34C" "MXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1).multiply(
+					fp_get_bd_from_lb(fp_reg, rf2), fp_bdg_context).round(
+					fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			check_lb_mpy();
+			break;
+		case 0x4D: // 3950 "B34D" "DXBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1);
+			fp_rbdv2 = fp_get_bd_from_lb(fp_reg, rf2);
+			if (fp_rbdv2.signum() != 0) {
+				fp_rbdv1 = fp_rbdv1.divide(fp_rbdv2, fp_bdg_context).round(
+						fp_x_context);
+			}
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			check_lb_div();
+			break;
+		case 0x50: // 3960 "B350" "TBEDR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_dh(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			fp_rev1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).floatValue(); // RPI 333
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			psw_cc = fp_get_eb_comp_cc(fp_rev1, 0);
+			break;
+		case 0x51: // 3970 "B351" "TBDR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_dh(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			fp_rdv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).doubleValue(); // RPI 333
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
+			break;
+		case 0x53: // 3980 "B353" "DIEBR" "RR4"
+			psw_check = false;
+			ins_setup_rrf3();
+			if (mf4 != 0) { // only def. rounding for now
+				set_psw_check(psw_pic_spec);
+			}
+			fp_rdv1 = fp_get_db_from_eb(fp_reg, rf1);
+			fp_rdv2 = fp_get_db_from_eb(fp_reg, rf2);
+			fp_rdv3 = (long) (fp_rdv1 / fp_rdv2);
+			fp_rdv4 = fp_rdv1 - fp_rdv3 * fp_rdv2;
+			fp_put_eb(rf3, tz390.fp_eb_type, (float) fp_rdv3);
+			fp_put_eb(rf1, tz390.fp_eb_type, (float) fp_rdv4);
+			psw_cc = fp_get_di_cc();
+			break;
+		case 0x57: // 3990 "B357" "FIEBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_eb(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_get_bd_rnd_int(fp_bfp_class,mf3)
+					.floatValue());
+			break;
+		case 0x58: // 4000 "B358" "THDER" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = fp_get_db_from_eb(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
+			psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
+			break;
+		case 0x59: // 4010 "B359" "THDR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
+			psw_cc = fp_get_db_comp_cc(fp_rdv1, 0);
+			break;
+		case 0x5B: // 4020 "B35B" "DIDBR" "RR4"
+			psw_check = false;
+			ins_setup_rrf3();
+			if (mf4 != 0) { // only def. rounding for now
+				set_psw_check(psw_pic_spec);
+			}
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1);
+			fp_rdv2 = fp_get_db_from_db(fp_reg, rf2);
+			fp_rdv3 = (long) (fp_rdv1 / fp_rdv2);
+			fp_rdv4 = fp_rdv1 - fp_rdv3 * fp_rdv2;
+			fp_put_db(rf3, tz390.fp_db_type, fp_rdv3);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv4);
+			psw_cc = fp_get_di_cc();
+			break;
+		case 0x5F: // 4030 "B35F" "FIDBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_db(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			fp_put_db(rf1, tz390.fp_db_type, fp_get_bd_rnd_int(fp_bfp_class,mf3)
+					.doubleValue());
+			break;
+		case 0x60: // 4040 "B360" "LPXR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf2).abs();
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			psw_cc = fp_get_lh_comp_cc(fp_rbdv1, BigDecimal.ZERO);
+			break;
+		case 0x61: // 4050 "B361" "LNXR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf2).abs().negate();
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			psw_cc = fp_get_lh_comp_cc(fp_rbdv1, BigDecimal.ZERO);
+			break;
+		case 0x62: // 4060 "B362" "LTXR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf2);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			psw_cc = fp_get_lh_comp_cc(fp_rbdv1, BigDecimal.ZERO);
 
+			break;
+		case 0x63: // 4070 "B363" "LCXR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf2).negate();
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			psw_cc = fp_get_lh_comp_cc(fp_rbdv1, BigDecimal.ZERO);
+
+			break;
+		case 0x65: // 4080 "B365" "LXR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2,
+					tz390.fp_lh_type);
+			break;
+		case 0x66: // 4090 "B366" "LEXR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_load_reg(rf1, tz390.fp_eh_type, fp_reg, rf2,
+					tz390.fp_lh_type);
+			break;
+		case 0x67: // 4100 "B367" "FIXR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_lh(fp_reg, rf2);
+			fp_rbdv1 = fp_rbdv1.subtract(fp_rbdv1.remainder(BigDecimal.ONE,
+					fp_bdg_context));
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			break;
+		case 0x69: // 4110 "B369" "CXR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = fp_get_lh_comp_cc(fp_get_bd_from_lh(fp_reg, rf1),
+					fp_get_bd_from_lh(fp_reg, rf2));
+			break;
+		case 0x70: // 4115 "B370" "LPDFR" "RRE"  14 DFP
+		    psw_check = false;
+		    ins_setup_rre();
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).abs());
+			break;
+		case 0x71: // 4115 "B371" "LNDFR" "RRE"  14 DFP
+		    psw_check = false;
+		    ins_setup_rre();
+		    fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).abs().negate());
+			break;
+		case 0x72: // 4115 "B372" "CPSDR" "RRF2" 34 DFP
+		    psw_check = false;
+		    ins_setup_rrf2();
+		    if (fp_get_bd_from_dd(fp_reg,rf3).signum() >= 0){
+		    	fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).abs());
+		    } else {
+		    	fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).abs().negate());
+		    }			
+			break;
+		case 0x73: // 4115 "B373" "LCDFR" "RRE"  14 DFP
+		    psw_check = false;
+		    ins_setup_rre();
+		    fp_put_bd(rf1, tz390.fp_dd_type, fp_get_bd_from_dd(fp_reg,rf2).negate());
+			break;
+		case 0x74: // 4120 "B374" "LZER" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_db(rf1, tz390.fp_eh_type, 0);
+			break;
+		case 0x75: // 4130 "B375" "LZDR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_db(rf1, tz390.fp_dh_type, 0);
+			break;
+		case 0x76: // 4140 "B376" "LZXR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_bd(rf1, tz390.fp_lh_type, BigDecimal.ZERO);
+			break;
+		case 0x77: // 4150 "B377" "FIER" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = (long) fp_get_db_from_eh(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
+			break;
+		case 0x7F: // 4160 "B37F" "FIDR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_rdv1 = (long) fp_get_db_from_dh(fp_reg, rf2);
+			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
+			break;
+		case 0x84: // 4170 "B384" "SFPC" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_fpc_reg = reg.getInt(rf1 + 4);
+			fp_dxc = (fp_fpc_reg & 0xff00) >>> 8;
+			fp_fpc_reg = fp_fpc_reg & 0xffff00ff;
+			break;
+		case 0x85: // 4175 "B385" "SFASR" "RRE" DFP 57
+			psw_check = false;
+			ins_setup_rre();
+			set_fpc_reg(reg.getInt(rf1+4));
+			break;
+		case 0x8C: // 4180 "B38C" "EFPC" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			reg.putInt(rf1 + 4, fp_fpc_reg | (fp_dxc << 8));
+			break;
+		case 0x94: // 4190 "B394" "CEFBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_eb(rf1, tz390.fp_eb_type, (float) reg.getInt(rf2 + 4));
+			break;
+		case 0x95: // 4200 "B395" "CDFBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_db(rf1, tz390.fp_db_type, (double) reg.getInt(rf2 + 4));
+			break;
+		case 0x96: // 4210 "B396" "CXFBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_bd(rf1, tz390.fp_eb_type, BigDecimal.valueOf(reg
+					.getInt(rf2 + 4)));
+			break;
+		case 0x98: // 4220 "B398" "CFEBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_eb(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_comp_cc(rv1, 0);
+			break;
+		case 0x99: // 4230 "B399" "CFDBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_db(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_comp_cc(rv1, 0);
+			break;
+		case 0x9A: // 4240 "B39A" "CFXBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_lb(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_comp_cc(rv1, 0);
+			break;
+		case 0xA4: // 4250 "B3A4" "CEGBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_eb(rf1, tz390.fp_eb_type, (float) reg.getLong(rf2));
+			break;
+		case 0xA5: // 4260 "B3A5" "CDGBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_db(rf1, tz390.fp_db_type, (double) reg.getLong(rf2));
+			break;
+		case 0xA6: // 4270 "B3A6" "CXGBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_bd(rf1, tz390.fp_lb_type, BigDecimal
+					.valueOf((double) reg.getLong(rf2)));
+			break;
+		case 0xA8: // 4280 "B3A8" "CGEBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_eb(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0xA9: // 4290 "B3A9" "CGDBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_db(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0xAA: // 4300 "B3AA" "CGXBR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_lb(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0xB4: // 4310 "B3B4" "CEFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_db(rf1, tz390.fp_eh_type, (float) reg.getInt(rf2 + 4));
+			break;
+		case 0xB5: // 4320 "B3B5" "CDFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_db(rf1, tz390.fp_dh_type, (float) reg.getInt(rf2 + 4));
+			break;
+		case 0xB6: // 4330 "B3B6" "CXFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_bd(rf1, tz390.fp_lh_type, BigDecimal.valueOf(reg
+					.getInt(rf2 + 4)));
+			break;
+		case 0xB8: // 4340 "B3B8" "CFER" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_eh(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_comp_cc(rv1, 0);
+			break;
+		case 0xB9: // 4350 "B3B9" "CFDR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_dh(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_comp_cc(rv1, 0);
+			break;
+		case 0xBA: // 4360 "B3BA" "CFXR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_lh(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).intValue(); // RPI 333
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_comp_cc(rv1, 0);
+			break;
+		case 0xC1: // 4365 "B3C1" "LDGR" "RRE" 14 DFP
+			psw_check = false;
+			ins_setup_rre();
+			fp_load_reg(rf1, tz390.fp_dd_type, reg, rf2, tz390.fp_dd_type);
+			break;
+		case 0xC4: // 4370 "B3C4" "CEGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_db(rf1, tz390.fp_eh_type, (float) reg.getLong(rf2));
+			break;
+		case 0xC5: // 4380 "B3C5" "CDGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_db(rf1, tz390.fp_dh_type, (double) reg.getLong(rf2));
+			break;
+		case 0xC6: // 4390 "B3C6" "CXGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			fp_put_bd(rf1, tz390.fp_lh_type, BigDecimal.valueOf(reg
+					.getLong(rf2)));
+			break;
+		case 0xC8: // 4400 "B3C8" "CGER" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_eh(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0xC9: // 4410 "B3C9" "CGDR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_dh(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0xCA: // 4420 "B3CA" "CGXR" "RRF"
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_lh(fp_reg, rf2)
+					.divideAndRemainder(BigDecimal.ONE);
+			rlv1 = fp_get_bd_rnd_int(fp_bfp_class,mf3).longValue(); // RPI 333
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0xCD: // 4425 "B3CD" "LGDR" "RRE" 14 DFP
+			psw_check = false;
+			ins_setup_rre();
+			if (fp_reg_ctl[mf2] != fp_ctl_ld) {
+				fp_store_reg(fp_reg, rf2);
+			}
+			reg.putLong(rf1,fp_reg.getLong(rf2));
+			break;
+		case 0xD0: // "MDTR" "B3D0" "RRR" DFP 1
+			psw_check = false;
+			ins_setup_rrr();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
+            .multiply(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_context); // RPI 517
+            fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			break;
+		case 0xD1: // "DDTR" "B3D1" "RRR" DFP 2
+			psw_check = false;
+			ins_setup_rrr();
+			fp_rbdv3 = fp_get_bd_from_dd(fp_reg, rf3);
+			if (fp_rbdv3.signum() == 0){
+				set_psw_check(psw_pic_fp_div);
+				break;
+			}
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
+            .divide(fp_rbdv3,fp_dd_context); // RPI 517
+            fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			break;
+		case 0xD2: // "ADTR" "B3D2" "RRR" DFP 3
+			psw_check = false;
+			ins_setup_rrr();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
+                       .add(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_context); // RPI 517
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			psw_cc = fp_get_dfp_add_sub_cc();
+			break;
+		case 0xD3: // "SDTR" "B3D3" "RRR" DFP 4
+			psw_check = false;
+			ins_setup_rrr();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
+                     .subtract(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_context); // RPI 517
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			psw_cc = fp_get_dfp_add_sub_cc();
+			break;
+		case 0xD4: // "LDETR" "B3D4" "RRF4" DFP 5
+			psw_check = false;
+			ins_setup_rrf4();
+			fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf2);
+           	fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			break;
+		case 0xD5: // "LEDTR" "B3D5" "RRF4" DFP 6
+			psw_check = false;
+			ins_setup_rrf3();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf2)
+			           .round(fp_ed_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf3)]);
+			fp_put_bd(rf1, tz390.fp_ed_type, fp_rbdv1);
+			break;
+		case 0xD6: // "LTDTR" "B3D6" "RRE" DFP 7
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2);
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			psw_cc = fp_get_dd_comp_cc(fp_rbdv1,BigDecimal.ZERO);
+			break;
+		case 0xD7: // "FIDTR" "B3D7" "RRF3" DFP 8
+			psw_check = false;
+			ins_setup_rrf3();
+			fp_rbdv2 = fp_get_bd_from_dd(fp_reg, rf2);
+			if (fp_rbdv2.scale() <= 0){
+				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv2);
+			} else {
+				fp_bd_int_rem = fp_rbdv2
+				.divideAndRemainder(BigDecimal.ONE);
+				fp_rbdv1 = fp_get_bd_rnd_int(fp_dfp_class,mf3);
+				fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+				if ((mf4 & 0x2) == 1){
+                   check_bd12_exact();
+				}
+			}
+			break;
+		case 0xD8: // "MXTR" "B3D8" "RRR" DFP 9
+			psw_check = false;
+			ins_setup_rrr();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
+            .multiply(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_context);  // RPI 517
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			break;
+		case 0xD9: // "DXTR" "B3D9" "RRR" DFP 10
+			psw_check = false;
+			ins_setup_rrr();
+			fp_rbdv3 = fp_get_bd_from_ld(fp_reg, rf3);
+			if (fp_rbdv3.signum() == 0){
+				set_psw_check(psw_pic_fp_div);
+				return;
+			}
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
+            .divide(fp_rbdv3,fp_ld_context);  // RPI 517
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			break;
+		case 0xDA: // "AXTR" "B3DA" "RRR" DFP 11
+			psw_check = false;
+			ins_setup_rrr();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
+            .add(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_context); // RPI 517
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			psw_cc = fp_get_dfp_add_sub_cc();
+			break;
+		case 0xDB: // "SXTR" "B3DB" "RRR" DFP 12
+			psw_check = false;
+			ins_setup_rrr();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
+            .subtract(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_context); // RPI 517
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			psw_cc = fp_get_dfp_add_sub_cc();
+			break;
+		case 0xDC: // "LXDTR" "B3DC" "RRF4" DFP 13
+			psw_check = false;
+			ins_setup_rrf4();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2);
+           	fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			break;
+		case 0xDD: // "LDXTR" "B3DD" "RRF4" DFP 14
+			psw_check = false;
+			ins_setup_rrf3();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf2)
+			           .round(fp_dd_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf3)]);
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			break;
+		case 0xDE: // "LTXTR" "B3DE" "RRE" DFP 15
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2);
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			psw_cc = fp_get_ld_comp_cc(fp_rbdv1,BigDecimal.ZERO);
+			break;
+		case 0xDF: // "FIXTR" "B3DF" "RRF4" DFP 16
+			psw_check = false;
+			ins_setup_rrf4();
+			fp_rbdv2 = fp_get_bd_from_ld(fp_reg, rf2);
+			if (fp_rbdv2.scale() <= 0){
+				fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv2);
+			} else {
+				fp_bd_int_rem = fp_rbdv2
+				.divideAndRemainder(BigDecimal.ONE);
+				fp_rbdv1 = fp_get_bd_rnd_int(fp_dfp_class,mf3);
+				fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+				if ((mf4 & 0x2) == 1 
+					&& fp_rbdv1.compareTo(fp_rbdv2) != 0){
+					fp_dxc = fp_dxc_it; // raise inexact
+					set_psw_check(psw_pic_data);
+				}
+			}
+			break;
+		case 0xE0: // "KDTR" "B3E0" "RRE" DFP 17
+			psw_check = false;
+			ins_setup_rre();
+            fp_signal = true;
+			psw_cc = fp_get_dd_comp_cc(
+				fp_get_bd_from_dd(fp_reg, rf1),
+				fp_get_bd_from_dd(fp_reg, rf2));
+			break;
+		case 0xE1: // "CGDTR" "B3E1" "RRF2" DFP 18
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_dd(fp_reg, rf2)
+			                .divideAndRemainder(BigDecimal.ONE);
+			big_int1 = fp_get_bd_rnd_int(fp_dfp_class,mf3) 
+			           .toBigInteger();	// RPI 527			
+			rlv1 = big_int1.longValue(); // RPI 540
+			reg.putLong(rf1, rlv1);
+            psw_cc = get_long_comp_cc(rlv1,0);
+			break;
+		case 0xE2: // "CUDTR" "B3E2" "RRE" DFP 19
+			psw_check = false;
+			ins_setup_rre();
+			pdf_big_int = fp_get_bd_from_dd(fp_reg, rf2).unscaledValue();
+			pdf_is_big = true;
+			pdf_signed = false;
+			put_pd(reg_byte, rf1, 8);
+			break;
+		case 0xE3: // "CSDTR" "B3E3" "RRF4" DFP 20
+			psw_check = false;
+			ins_setup_rrf4();
+			pdf_big_int = fp_get_bd_from_dd(fp_reg, rf2).unscaledValue();
+			pdf_is_big = true;
+			put_pd(reg_byte, rf1, 8);
+			if (mf4 == 1 && pdf_big_int.signum() >= 0) {
+				reg.put(rf1 + 7, (byte) (reg.get(rf1 + 7) | 0xf));
+			}
+			break;
+		case 0xE4: // "CDTR" "B3E4" "RRE" DFP 21
+			psw_check = false;
+			ins_setup_rre();
+            fp_signal = false;
+			psw_cc = fp_get_dd_comp_cc(
+				fp_get_bd_from_dd(fp_reg, rf1),
+				fp_get_bd_from_dd(fp_reg, rf2));
+			break;
+		case 0xE5: // "EEDTR" "B3E5" "RRE" DFP 22
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2);
+            reg.putLong(rf1,tz390.fp_exp_bias[tz390.fp_dd_type]
+                        - fp_rbdv1.scale()); 
+            break;
+		case 0xE7: // "ESDTR" "B3E7" "RRE" DFP 23
+			psw_check = false;
+			ins_setup_rre();
+			rv1 = fp_get_bd_from_dd(fp_reg, rf2)
+			      .unscaledValue()
+			      .abs()
+			      .toString()
+			      .length();
+            reg.putLong(rf1,rv1);
+			break;
+		case 0xE8: // "KXTR" "B3E8" "RRE" DFP 24
+			psw_check = false;
+			ins_setup_rre();
+            fp_signal = true;
+			psw_cc = fp_get_ld_comp_cc(
+				fp_get_bd_from_ld(fp_reg, rf1),
+				fp_get_bd_from_ld(fp_reg, rf2));
+			break;
+		case 0xE9: // "CGXTR" "B3E9" "RRF4" DFP 25
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_bd_int_rem = fp_get_bd_from_ld(fp_reg, rf2)
+                          .divideAndRemainder(BigDecimal.ONE);
+			big_int1 = fp_get_bd_rnd_int(fp_dfp_class,mf3) 
+			           .toBigInteger();	// RPI 527			
+			rlv1 = big_int1.longValue(); // RPI 540
+			reg.putLong(rf1, rlv1);
+            psw_cc = get_long_comp_cc(rlv1,0);
+			break;
+		case 0xEA: // "CUXTR" "B3EA" "RRE" DFP 26
+			psw_check = false;
+			ins_setup_rre();
+			pdf_big_int = fp_get_bd_from_ld(fp_reg, rf2).unscaledValue();
+			pdf_is_big = true;
+			pdf_signed = false;
+			put_pd(reg_byte, rf1, 16);
+			break;
+		case 0xEB: // "CSXTR" "B3EB" "RRF4" DFP 27
+			psw_check = false;
+			ins_setup_rrf4();
+			pdf_big_int = fp_get_bd_from_ld(fp_reg, rf2).unscaledValue();
+			pdf_is_big = true;
+			put_pd(reg_byte, rf1, 16);
+			if (mf4 == 1 && pdf_big_int.signum() >= 0) {
+				reg.put(rf1 + 15, (byte) (reg.get(rf1 + 15) | 0xf));
+			}
+			break;
+		case 0xEC: // "CXTR" "B3EC" "RRE" DFP 28
+			psw_check = false;
+			ins_setup_rre();
+            fp_signal = false;
+			psw_cc = fp_get_ld_comp_cc(
+				fp_get_bd_from_ld(fp_reg, rf1),
+				fp_get_bd_from_ld(fp_reg, rf2));
+			break;
+		case 0xED: // "EEXTR" "B3ED" "RRE" DFP 29
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2);
+            reg.putLong(rf1,tz390.fp_exp_bias[tz390.fp_ld_type]
+                        - fp_rbdv1.scale());  
+			break;
+		case 0xEF: // "ESXTR" "B3EF" "RRE" DFP 30
+			psw_check = false;
+			ins_setup_rre();
+			rv1 = fp_get_bd_from_ld(fp_reg, rf2)
+		      .unscaledValue()
+			  .abs()
+			  .toString()
+			  .length();
+			reg.putLong(rf1,rv1);
+			break;
+		case 0xF1: // "CDGTR" "B3F1" "RRE" DFP 31
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv2 = BigDecimal.valueOf(reg.getLong(rf2));
+			fp_rbdv1 = fp_rbdv2.round(fp_dd_context);
+			if (fp_rbdv1.compareTo(fp_rbdv2) != 0){
+				fp_dxc = fp_dxc_it;
+				set_psw_check(psw_pic_data);	
+			}
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			break;
+		case 0xF2: // "CDUTR" "B3F2" "RRE" DFP 32
+			psw_check = false;
+			ins_setup_rre();
+			pdf_signed = false;
+			if (get_pd(reg,rf2,8)){
+				if (pdf_is_big) {
+					fp_put_bd(rf1,tz390.fp_dd_type,new BigDecimal(pdf_big_int));
+				} else {
+					fp_put_bd(rf1,tz390.fp_dd_type,BigDecimal.valueOf(pdf_long));
+				}
+			}
+			break;
+		case 0xF3: // "CDSTR" "B3F3" "RRE" DFP 33
+			psw_check = false;
+			ins_setup_rre();
+			if (get_pd(reg,rf2,8)){
+				if (pdf_is_big) {
+					fp_put_bd(rf1,tz390.fp_dd_type,new BigDecimal(pdf_big_int));
+				} else {
+					fp_put_bd(rf1,tz390.fp_dd_type,BigDecimal.valueOf(pdf_long));
+				}
+			}
+			break;
+		case 0xF4: // "CEDTR" "B3F4" "RRE" DFP 34
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = get_int_comp_cc(
+					-fp_get_bd_from_dd(fp_reg, rf1).scale(),
+					-fp_get_bd_from_dd(fp_reg, rf2).scale());
+			break;
+		case 0xF5: // "QADTR" "B3F5" "RRF3" DFP 35
+			psw_check = false;
+			ins_setup_rrf3();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf3);
+	        fp_rbdv2 = fp_get_bd_from_dd(fp_reg,rf2);
+	        if (fp_rbdv1.scale() != fp_rbdv2.scale()){
+	        	fp_rbdv1 = fp_rbdv1.setScale(fp_rbdv2.scale(), fp_get_rnd_mode(fp_dfp_class,mf4));
+	        } else {
+	        	fp_rbdv1 = fp_rbdv1.round(fp_dd_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf4)]);
+	        }
+            check_bd12_exact();
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			break;
+		case 0xF6: // "IEDTR" "B3F6" "RRF2" DFP 36
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_rbdv1 = new BigDecimal(fp_get_bd_from_dd(fp_reg, rf3)
+					  .round(fp_dd_context)  // RPI 527
+		              .unscaledValue())
+			          .scaleByPowerOfTen((int)(reg.getLong(rf2)
+			        		  - tz390.fp_exp_bias[tz390.fp_dd_type]
+			                             ));
+			if (fp_get_bd_from_dd(fp_reg,rf3).signum() >= 0){ // RPI 527
+				fp_put_bd(rf1,tz390.fp_dd_type,fp_rbdv1.abs());
+			} else {
+				fp_put_bd(rf1,tz390.fp_dd_type,fp_rbdv1.abs().negate());
+			}
+			break;
+		case 0xF7: // "RRDTR" "B3F7" "RRF3" DFP 37
+			psw_check = false;
+			ins_setup_rrf3();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf3);
+	        fp_sig_req = reg.get(rf2+7) & 0x3f;
+	        if (fp_sig_req > 0){
+	        	fp_sig_dig = fp_rbdv1.unscaledValue().abs().toString().length();
+	        	if (fp_sig_dig > fp_sig_req){
+	        		fp_rbdv1 = fp_rbdv1.round(new MathContext(fp_sig_req,fp_dfp_rnd_mode[fp_get_rnd_mode(fp_dfp_class,mf4)]));
+	        	}
+	        }
+            check_bd12_exact();
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			break;
+		case 0xF9: // "CXGTR" "B3F9" "RRE" DFP 38
+			psw_check = false;
+			ins_setup_rre();
+			fp_rbdv1 = BigDecimal.valueOf(reg.getLong(rf2));
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			break;
+		case 0xFA: // "CXUTR" "B3FA" "RRE" DFP 39
+			psw_check = false;
+			ins_setup_rre();
+			if ((rf2 & 0x8) != 0){
+				set_psw_check(psw_pic_spec);
+			}
+			pdf_signed = false;
+			if (get_pd(reg,rf2,16)){
+				if (pdf_is_big) {
+					fp_put_bd(rf1,tz390.fp_ld_type,new BigDecimal(pdf_big_int));
+				} else {
+					fp_put_bd(rf1,tz390.fp_ld_type,BigDecimal.valueOf(pdf_long));
+				}
+			}
+			break;
+		case 0xFB: // "CXSTR" "B3FB" "RRE" DFP 40
+			psw_check = false;
+			ins_setup_rre();
+			if ((rf2 & 0x8) != 0){
+				set_psw_check(psw_pic_spec);
+			}
+			if (get_pd(reg,rf2,16)){
+				if (pdf_is_big) {
+					fp_put_bd(rf1,tz390.fp_ld_type,new BigDecimal(pdf_big_int));
+				} else {
+					fp_put_bd(rf1,tz390.fp_ld_type,BigDecimal.valueOf(pdf_long));
+				}
+			}
+			break;
+		case 0xFC: // "CEXTR" "B3FC" "RRE" DFP 41
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = get_int_comp_cc(
+					-fp_get_bd_from_ld(fp_reg, rf1).scale(),
+					-fp_get_bd_from_ld(fp_reg, rf2).scale());
+			break;
+		case 0xFD: // "QAXTR" "B3FD" "RRF3" DFP 42
+			psw_check = false;
+			ins_setup_rrf3();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf3);
+	        fp_rbdv2 = fp_get_bd_from_ld(fp_reg,rf2);
+	        if (fp_rbdv1.scale() != fp_rbdv2.scale()){
+	        	fp_rbdv1 = fp_rbdv1.setScale(fp_rbdv2.scale(), fp_get_rnd_mode(fp_dfp_class,mf4));
+	        } else {
+	        	fp_rbdv1 = fp_rbdv1.round(fp_dd_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf4)]);
+	        }
+            check_bd12_exact();
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			break;
+		case 0xFE: // "IEXTR" "B3FE" "RRF2" DFP 43
+			psw_check = false;
+			ins_setup_rrf2();
+			fp_rbdv1 = new BigDecimal(fp_get_bd_from_ld(fp_reg, rf3)
+					  .round(fp_ld_context)  // RPI 527
+	                  .unscaledValue())
+	          .scaleByPowerOfTen((int)(reg.getLong(rf2)
+	        		  - tz390.fp_exp_bias[tz390.fp_ld_type]
+	                             ));
+		    if (fp_get_bd_from_ld(fp_reg,rf3).signum() >= 0){ /// RPI 527
+		    	fp_put_bd(rf1,tz390.fp_ld_type,fp_rbdv1.abs());
+		    } else {
+				fp_put_bd(rf1,tz390.fp_ld_type,fp_rbdv1.abs().negate());
+		    }
+			break;
+		case 0xFF: // "RRXTR" "B3FF" "RRF3" DFP 44
+			psw_check = false;
+			ins_setup_rrf3();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf3);
+	        fp_sig_req = reg.get(rf2+7) & 0x3f;
+	        if (fp_sig_req > 0){
+	        	fp_sig_dig = fp_rbdv1.unscaledValue().abs().toString().length();
+	        	if (fp_sig_dig > fp_sig_req){
+	        		fp_rbdv1 = fp_rbdv1.round(new MathContext(fp_sig_req,fp_dfp_rnd_mode[fp_get_rnd_mode(fp_dfp_class,mf4)]));
+	        	}
+	        }
+            check_bd12_exact();
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			break;
+		}
+	}
+	private void ins_B9XX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_rre] & 0xff;
+		switch (opcode2) {
+		case 0x00: // 4450 "B900" "LPGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf2);
+			if (rlv1 < 0) {
+				if (rlv1 == long_high_bit) {
+					psw_cc = psw_cc3;
+					break;
+				}
+				rlv1 = -rlv1;
+			}
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0x01: // 4460 "B901" "LNGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf2);
+			if (rlv1 > 0) {
+				rlv1 = -rlv1;
+			}
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0x02: // 4470 "B902" "LTGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf2);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0x03: // 4480 "B903" "LCGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf2);
+			if (rlv1 == long_high_bit) {
+				psw_cc = psw_cc3;
+				break;
+			}
+			rlv1 = -rlv1;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0x04: // 4490 "B904" "LGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			reg.putLong(rf1, reg.getLong(rf2));
+			break;
+		case 0x05: // 4500 "B905" "LURAG" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x06: // 4600 "B906" "LGBR" "RRE" Z9-10
+			psw_check = false;
+			ins_setup_rre();
+			reg.putLong(rf1, reg.get(rf2 + 7));
+			break;
+		case 0x07: // 4610 "B907" "LGHR" "RRE" Z9-11
+			psw_check = false;
+			ins_setup_rre();
+			reg.putLong(rf1, reg.getShort(rf2 + 6));
+			break;
+		case 0x08: // 4510 "B908" "AGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf1);
+			rlv2 = reg.getLong(rf2);
+			rlv3 = rlv1 + rlv2;
+			reg.putLong(rf1, rlv3);
+			psw_cc = get_long_add_cc();
+			break;
+		case 0x09: // 4520 "B909" "SGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf1);
+			rlv2 = reg.getLong(rf2);
+			rlv3 = rlv1 - rlv2;
+			reg.putLong(rf1, rlv3);
+			psw_cc = get_long_sub_cc();
+			break;
+		case 0x0A: // 4530 "B90A" "ALGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlvw = reg.getLong(rf1);
+			rlv2 = reg.getLong(rf2);
+			rlv1 = rlvw + rlv2;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_add_cc();
+			break;
+		case 0x0B: // 4540 "B90B" "SLGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlvw = reg.getLong(rf1);
+			rlv2 = reg.getLong(rf2);
+			rlv1 = rlvw - rlv2;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_sub_cc();
+			break;
+		case 0x0C: // 4550 "B90C" "MSGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			reg.putLong(rf1, reg.getLong(rf1) * reg.getLong(rf2));
+			break;
+		case 0x0D: // 4560 "B90D" "DSGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf1 + 8);
+			rlv2 = reg.getLong(rf2);
+			if (rlv2 != 0) {
+				rlvw = rlv1 / rlv2;
+			} else {
+				set_psw_check(psw_pic_fx_div);
+				break;
+			}
+			rlv1 = rlv1 - rlvw * rlv2;
+			reg.putLong(rf1, rlv1);
+			reg.putLong(rf1 + 8, rlvw);
+			break;
+		case 0x0E: // 4570 "B90E" "EREGG" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			if (cur_pc_stk_reg <= 0) {
+				set_psw_check(psw_pic_stkerr);
+				return;
+			}
+			int pc_stk_reg_base = cur_pc_stk_reg - reg_len;
+			if (rf1 > rf3) {
+				while (rf1 < reg_len) {
+					reg.putLong(rf1, pc_stk_reg.getLong(pc_stk_reg_base
+							+ rf1));
+					rf1 = rf1 + 8;
+				}
+				rf1 = 0;
+			}
+			while (rf1 <= rf3) {
+				reg.putLong(rf1, pc_stk_reg.getLong(pc_stk_reg_base + rf1));
+				rf1 = rf1 + 8;
+			}
+			break;
+		case 0x0F: // 4580 "B90F" "LRVGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rflen = 7;
+			while (rflen >= 0) {
+				reg.put(rf1 + rflen, reg.get(rf2 + 7 - rflen));
+				rflen--;
+			}
+			break;
+		case 0x10: // 4590 "B910" "LPGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getInt(rf2 + 4);
+			if (rlv1 < 0) {
+				rlv1 = -rlv1;
+			}
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0x11: // 4600 "B911" "LNGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getInt(rf2 + 4);
+			if (rlv1 >= 0) {
+				rlv1 = -rlv1;
+			}
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0x12: // 4610 "B912" "LTGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getInt(rf2 + 4);
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0x13: // 4620 "B913" "LCGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getInt(rf2 + 4);
+			rlv1 = -rlv1;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0x14: // 4630 "B914" "LGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			reg.putLong(rf1, reg.getInt(rf2 + 4));
+			break;
+		case 0x16: // 4640 "B916" "LLGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			reg.putLong(rf1, (long) reg.getInt(rf2 + 4) & long_low32_bits);
+			break;
+		case 0x17: // 4650 "B917" "LLGTR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			reg.putLong(rf1, reg.getInt(rf2 + 4) & max_pos_int);
+			break;
+		case 0x18: // 4660 "B918" "AGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf1);
+			rlv2 = reg.getInt(rf2 + 4);
+			rlv3 = rlv1 + rlv2;
+			reg.putLong(rf1, rlv3);
+			psw_cc = get_long_add_cc();
+			break;
+		case 0x19: // 4670 "B919" "SGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf1);
+			rlv2 = reg.getInt(rf2 + 4);
+			rlv3 = rlv1 - rlv2;
+			reg.putLong(rf1, rlv3);
+			psw_cc = get_long_sub_cc();
+			break;
+		case 0x1A: // 4680 "B91A" "ALGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlvw = reg.getLong(rf1);
+			rlv2 = ((long) reg.getInt(rf2 + 4) & long_low32_bits);
+			rlv1 = rlvw + rlv2;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_add_cc();
+			break;
+		case 0x1B: // 4690 "B91B" "SLGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlvw = reg.getLong(rf1);
+			rlv2 = (long) reg.getInt(rf2 + 4) & long_low32_bits;
+			rlv1 = rlvw - rlv2;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_sub_cc();
+			break;
+		case 0x1C: // 4700 "B91C" "MSGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			reg.putLong(rf1, reg.getLong(rf1) * reg.getInt(rf2 + 4));
+			break;
+		case 0x1D: // 4710 "B91D" "DSGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf1 + 8);
+			rlv2 = (long) reg.getInt(rf2 + 4);
+			if (rlv2 != 0) {
+				rlvw = rlv1 / rlv2;
+			} else {
+				set_psw_check(psw_pic_fx_div);
+				break;
+			}
+			rlv1 = rlv1 - rlvw * rlv2;
+			reg.putLong(rf1, rlv1);
+			reg.putLong(rf1 + 8, rlvw);
+			break;
+		case 0x1E: // 4720 "B91E" "KMAC" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x1F: // 4730 "B91F" "LRVR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rflen = 3;
+			while (rflen >= 0) {
+				reg.put(rf1 + 4 + rflen, reg.get(rf2 + 7 - rflen));
+				rflen--;
+			}
+			break;
+		case 0x20: // 4740 "B920" "CGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = get_long_comp_cc(reg.getLong(rf1), reg.getLong(rf2));
+			break;
+		case 0x21: // 4750 "B921" "CLGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = get_long_log_comp_cc(reg.getLong(rf1), reg
+					.getLong(rf2));
+			break;
+		case 0x25: // 4760 "B925" "STURG" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x26: // 4880 "B926" "LBR" "RRE" Z9-12
+			psw_check = false;
+			ins_setup_rre();
+			reg.putInt(rf1 + 4, reg.get(rf2 + 7));
+			break;
+		case 0x27: // 4890 "B927" "LHR" "RRE" Z9-13
+			psw_check = false;
+			ins_setup_rre();
+			reg.putInt(rf1 + 4, reg.getShort(rf2 + 6));
+			break;
+		case 0x2E: // 4770 "B92E" "KM" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x2F: // 4780 "B92F" "KMC" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x30: // 4790 "B930" "CGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = get_long_comp_cc(reg.getLong(rf1), (long) reg
+					.getInt(rf2 + 4));
+			break;
+		case 0x31: // 4800 "B931" "CLGFR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			psw_cc = get_long_log_comp_cc(reg.getLong(rf1), (long) reg
+					.getInt(rf2 + 4));
+			break;
+		case 0x3E: // 4810 "B93E" "KIMD" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x3F: // 4820 "B93F" "KLMD" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x46: // 4830 "B946" "BCTGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf1) - 1;
+			reg.putLong(rf1, rlv1);
+			if (rf2 != 0 && rlv1 != 0) {
+				set_psw_loc(reg.getInt(rf2 + 4));
+			}
+			break;
+		case 0x80: // 4840 "B980" "NGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf1) & reg.getLong(rf2);
+			reg.putLong(rf1, rlv1);
+			if (rlv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x81: // 4850 "B981" "OGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf1) | reg.getLong(rf2);
+			reg.putLong(rf1, rlv1);
+			if (rlv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x82: // 4860 "B982" "XGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlv1 = reg.getLong(rf1) ^ reg.getLong(rf2);
+			reg.putLong(rf1, rlv1);
+			if (rlv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x83: // 5000 "B983" "FLOGR" "RRE" Z9-14
+			psw_check = false;
+			ins_setup_rre();
+			rlv2 = reg.getLong(rf2);
+			reg.putLong(rf1, Long.numberOfLeadingZeros(rlv2));
+			reg.putLong(rf1 + 8, rlv2 ^ Long.highestOneBit(rlv2));
+			if (rlv2 != 0) {
+				psw_cc = psw_cc2; // bit found
+			} else {
+				psw_cc = psw_cc0; // no bits found
+			}
+			break;
+		case 0x84: // 5010 "B984" "LLGCR" "RRE" Z9-15
+			psw_check = false;
+			ins_setup_rre();
+			reg.putLong(rf1, reg.get(rf2 + 7) & 0xff);
+			break;
+		case 0x85: // 5020 "B985" "LLGHR" "RRE" Z9-16
+			psw_check = false;
+			ins_setup_rre();
+			reg.putLong(rf1, reg.getShort(rf2 + 6) & 0xffff);
+			break;
+		case 0x86: // 4870 "B986" "MLGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 8, 8)); // RPI
+																			// 383
+			big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2, 8));
+			big_int1 = big_int1.multiply(big_int2);
+			zcvt_big_int(reg_byte,rf1,big_int1, 16); // RPI 540
+			break;
+		case 0x87: // 4880 "B987" "DLGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1, 16)); // RPI 540
+			big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2, 8));
+			if (big_int2.signum() == 0) {
+				set_psw_check(psw_pic_fx_div);
+				break;
+			}
+			big_int_array = big_int1.divideAndRemainder(big_int2);
+			zcvt_big_int(reg_byte,rf1,big_int_array[1], 8);  // RPI 540												// remainder
+			zcvt_big_int(reg_byte,rf1+8,big_int_array[0], 8); // RPI 540										// quotent
+			break;
+		case 0x88: // 4890 "B988" "ALCGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlvw = reg.getLong(rf1);
+			rlv2 = reg.getLong(rf2);
+			rlv1 = rlvw + rlv2 + psw_carry[psw_cc];
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_add_cc();
+			break;
+		case 0x89: // 4900 "B989" "SLBGR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rlvw = reg.getLong(rf1);
+			rlv2 = reg.getLong(rf2);
+			rlv1 = rlvw - rlv2 - psw_borrow[psw_cc];
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_sub_cc();
+			break;
+		case 0x8A: // 4910 "B98A" "CSPG" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x8D: // 4920 "B98D" "EPSW" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x8E: // 4930 "B98E" "IDTE" "RRF"
+			ins_setup_rrf2();
+			break;
+		case 0x90: // 4940 "B990" "TRTT" "RRE"
+			psw_check = false; // RPI 454
+			ins_setup_rre();
+			test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2
+			test_byte1 = reg.get(r0 + 2);
+			test_byte2 = reg.get(r0 + 3);
+			xbd2_loc = reg.getInt(r1) & psw_amode;
+			bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
+			bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
+			bd2_end = bd2_loc + reg.getInt(rf1 + 12);
+			if (((bd2_end - bd2_loc) & 1) != 0) {
+				set_psw_check(psw_pic_spec);
+			}
+			psw_cc = psw_cc3;
+			while (psw_cc == psw_cc3) {
+				int index = xbd2_loc
+				+ ((mem.getShort(bd2_loc) & 0xffff) << 1); // RPI 580
+				function_byte1 = mem_byte[index];          // RPI 580
+				function_byte2 = mem_byte[index + 1];      // RPI 580
+				if (test_control == 0 
+						&& test_byte1 == function_byte1
+						&& test_byte2 == function_byte2) {
+					psw_cc = psw_cc1;
+				} else {
+					mem_byte[bd1_loc] = function_byte1;
+					mem_byte[bd1_loc + 1] = function_byte2;
+					bd1_loc = bd1_loc + 2;
+					bd2_loc = bd2_loc + 2;
+					if (bd2_loc >= bd2_end) {
+						psw_cc = psw_cc0;
+					}
+				}
+			}
+			reg.putInt(rf1 + 4, bd1_loc);
+			reg.putInt(rf1 + 12, bd2_end - bd2_loc); // bytes not
+														// translated
+			reg.putInt(rf2 + 4, bd2_loc);
+			break;
+		case 0x91: // 4950 "B991" "TRTO" "RRE"
+			psw_check = false; // RPI 454
+			ins_setup_rre();
+			test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2
+			test_byte1 = reg.get(r0 + 3);
+			xbd2_loc = reg.getInt(r1) & psw_amode;
+			bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
+			bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
+			bd2_end = bd2_loc + reg.getInt(rf1 + 12);
+			if (((bd2_end - bd2_loc) & 1) != 0) {
+				set_psw_check(psw_pic_spec);
+			}
+			psw_cc = psw_cc3;
+			while (psw_cc == psw_cc3) {
+				int index = xbd2_loc + (mem.getShort(bd2_loc) & 0xffff);
+				function_byte1 = mem_byte[index];
+				if (test_control == 0 
+					&& test_byte1 == function_byte1) {
+					psw_cc = psw_cc1;
+				} else {
+					mem_byte[bd1_loc] = function_byte1;
+					bd1_loc++;
+					bd2_loc = bd2_loc + 2;
+					if (bd2_loc >= bd2_end) {
+						psw_cc = psw_cc0;
+					}
+				}
+			}
+			reg.putInt(rf1 + 4, bd1_loc);
+			reg.putInt(rf1 + 12, bd2_end - bd2_loc); // bytes not
+														// translated
+			reg.putInt(rf2 + 4, bd2_loc);
+			break;
+		case 0x92: // 4960 "B992" "TROT" "RRE"
+			psw_check = false; // RPI 454
+			ins_setup_rre();
+			test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2													// bit
+			test_byte1 = reg.get(r0 + 2); // RPI 580
+			test_byte2 = reg.get(r0 + 3); // RPI 580
+			xbd2_loc = reg.getInt(r1) & psw_amode;
+			bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
+			bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
+			bd2_end = bd2_loc + reg.getInt(rf1 + 12);
+			psw_cc = psw_cc3;
+			while (psw_cc == psw_cc3) {
+				int index = xbd2_loc
+				+ ((mem_byte[bd2_loc] & 0xff) << 1); // RPI 580
+		        function_byte1 = mem_byte[index]; // RPI 580
+		        function_byte2 = mem_byte[index+1]; // RPI 580                               
+				if (test_control == 0
+					&& test_byte1 == function_byte1
+					&& test_byte2 == function_byte2) {  // RPI 580
+					psw_cc = psw_cc1;
+				} else {
+					mem_byte[bd1_loc] = function_byte1;     // RPI 580
+					mem_byte[bd1_loc + 1] = function_byte2; // RPI  580
+					bd1_loc = bd1_loc + 2;
+					bd2_loc++;
+					if (bd2_loc >= bd2_end) {
+						psw_cc = psw_cc0;
+					}
+				}
+			}
+			reg.putInt(rf1 + 4, bd1_loc);
+			reg.putInt(rf1 + 12, bd2_end - bd2_loc); // bytes not
+														// translated
+			reg.putInt(rf2 + 4, bd2_loc);
+			break;
+		case 0x93: // 4970 "B993" "TROO" "RRE"
+			psw_check = false; // RPI 454
+			ins_setup_rre();
+			test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2														// bit
+			test_byte1 = reg.get(r0 + 3);
+			xbd2_loc = reg.getInt(r1) & psw_amode;
+			bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
+			bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
+			bd2_end = bd2_loc + reg.getInt(rf1 + 12);
+			psw_cc = psw_cc3;
+			while (psw_cc == psw_cc3) {
+				function_byte1 = mem_byte[xbd2_loc  // RPI 580
+												+ (mem_byte[bd2_loc] & 0xff)];
+				if (test_control == 0
+					&& test_byte1 == function_byte1) { // RPI 580
+					psw_cc = psw_cc1;
+				} else {
+					mem_byte[bd1_loc] = function_byte1; // RPI 580
+					bd1_loc++;
+					bd2_loc++;
+					if (bd2_loc >= bd2_end) {
+						psw_cc = psw_cc0;
+					}
+				}
+			}
+			reg.putInt(rf1 + 4, bd1_loc);
+			reg.putInt(rf1 + 12, bd2_end - bd2_loc); // bytes not
+														// translated
+			reg.putInt(rf2 + 4, bd2_loc);
+			break;
+		case 0x94: // 5140 "B994" "LLCR" "RRE" Z9-17
+			psw_check = false;
+			ins_setup_rre();
+			reg.putInt(rf1 + 4, reg.get(rf2 + 7) & 0xff);
+			break;
+		case 0x95: // 5150 "B995" "LLHR" "RRE" Z9-18
+			psw_check = false;
+			ins_setup_rre();
+			reg.putInt(rf1 + 4, reg.getShort(rf2 + 6) & 0xffff);
+			break;
+		case 0x96: // 4980 "B996" "MLR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 12, 4)); // RPI
+																				// 275
+			big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2 + 4, 4));
+			big_int1 = big_int1.multiply(big_int2);
+			zcvt_big_int(work_reg_byte,0,big_int1, 8);
+			reg.putInt(rf1 + 4, work_reg.getInt(0));
+			reg.putInt(rf1 + 12, work_reg.getInt(4));
+			break;
+		case 0x97: // 4990 "B997" "DLR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			work_reg.putInt(0, reg.getInt(rf1 + 4));
+			work_reg.putInt(4, reg.getInt(rf1 + 12));
+			big_int1 = new BigInteger(get_log_bytes(work_reg_byte, 0, 8));
+			big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2 + 4, 4));
+			if (big_int2.signum() == 0) {
+				set_psw_check(psw_pic_fx_div);
+				break;
+			}
+			BigInteger[] temp_big = big_int1.divideAndRemainder(big_int2);
+			zcvt_big_int(reg_byte,rf1+4,temp_big[1], 4); // get big remainder RPI 540
+			zcvt_big_int(reg_byte,rf1+12,temp_big[0], 4); // get big quotent RPI 540
+			break;
+		case 0x98: // 5000 "B998" "ALCR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rvw = reg.getInt(rf1 + 4);
+			rv2 = reg.getInt(rf2 + 4);
+			rv1 = rvw + rv2 + psw_carry[psw_cc];
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_log_add_cc();
+			break;
+		case 0x99: // 5010 "B999" "SLBR" "RRE"
+			psw_check = false;
+			ins_setup_rre();
+			rvw = reg.getInt(rf1 + 4);
+			rv2 = reg.getInt(rf2 + 4);
+			rv1 = rvw - rv2 - psw_borrow[psw_cc];
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_log_sub_cc();
+			break;
+		case 0x9A: // 5020 "B99A" "EPAIR" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x9B: // 5030 "B99B" "ESAIR" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x9D: // 5040 "B99D" "ESEA" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x9E: // 5050 "B99E" "PTI" "RRE"
+			ins_setup_rre();
+			break;
+		case 0x9F: // 5060 "B99F" "SSAIR" "RRE"
+			ins_setup_rre();
+			break;
+		case 0xAA: // 5250 "B9AA" "LPTEA" "RRE" Z9-19
+			ins_setup_rre();
+			break;
+		case 0xB0: // 5070 "B9B0" "CU14" "RRE"
+			ins_setup_rre();
+			break;
+		case 0xB1: // 5080 "B9B1" "CU24" "RRE"
+			ins_setup_rre();
+			break;
+		case 0xB2: // 5090 "B9B2" "CU41" "RRE"
+			ins_setup_rre();
+			break;
+		case 0xB3: // 5100 "B9B3" "CU42" "RRE"
+			ins_setup_rre();
+			break;
+		case 0xBE: // 5110 "B9BE" "SRSTU" "RRE"
+			ins_setup_rre();
+			break;
+		}
+	}
+	private void ins_C0XX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f;
+		switch (opcode2) {
+		case 0x0: // 5170 "C00" "LARL" "RIL"
+			psw_check = false;
+			ins_setup_ril();
+			reg.putInt(rf1 + 4, (psw_loc - 6 + 2 * if2) & psw_amode);
+			break;
+		case 0x1: // 5370 "C01" "LGFI" "RIL" Z9-20
+			psw_check = false;
+			ins_setup_ril();
+			reg.putLong(rf1, if2);
+			break;
+		case 0x4: // 5180 "C04" "BRCL" "RIL"
+			psw_check = false;
+			ins_setup_ril();
+			if ((mf1 & psw_cc) != 0) {
+				set_psw_loc(psw_loc - 6 + 2 * if2);
+			}
+			break;
+		case 0x5: // 5210 "C05" "BRASL" "RIL"
+			psw_check = false;
+			ins_setup_ril();
+			if (ex_mode) {
+				reg.putInt(rf1 + 4, ex_psw_return | psw_amode_bit);
+			} else {
+				reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
+			}
+			set_psw_loc(psw_loc - 6 + 2 * if2);
+			break;
+		case 0x6: // 5430 "C06" "XIHF" "RIL" Z9-21
+			psw_check = false;
+			ins_setup_ril();
+			reg.putInt(rf1, reg.getInt(rf1) ^ if2);
+			break;
+		case 0x7: // 5440 "C07" "XILF" "RIL" Z9-22
+			psw_check = false;
+			ins_setup_ril();
+			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) ^ if2);
+			break;
+		case 0x8: // 5450 "C08" "IIHF" "RIL" Z9-23
+			psw_check = false;
+			ins_setup_ril();
+			reg.putInt(rf1, if2);
+			break;
+		case 0x9: // 5460 "C09" "IILF" "RIL" Z9-24
+			psw_check = false;
+			ins_setup_ril();
+			reg.putInt(rf1 + 4, if2);
+			break;
+		case 0xA: // 5470 "C0A" "NIHF" "RIL" Z9-25
+			psw_check = false;
+			ins_setup_ril();
+			reg.putInt(rf1, reg.getInt(rf1) & if2);
+			break;
+		case 0xB: // 5480 "C0B" "NILF" "RIL" Z9-26
+			psw_check = false;
+			ins_setup_ril();
+			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) & if2);
+			break;
+		case 0xC: // 5490 "C0C" "OIHF" "RIL" Z9-27
+			psw_check = false;
+			ins_setup_ril();
+			reg.putInt(rf1, reg.getInt(rf1) | if2);
+			break;
+		case 0xD: // 5500 "C0D" "OILF" "RIL" Z9-28
+			psw_check = false;
+			ins_setup_ril();
+			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) | if2);
+			break;
+		case 0xE: // 5510 "C0E" "LLIHF" "RIL" Z9-29
+			psw_check = false;
+			ins_setup_ril();
+			reg.putLong(rf1, ((long) if2) << 32);
+			break;
+		case 0xF: // 5520 "C0F" "LLILF" "RIL" Z9-30
+			psw_check = false;
+			ins_setup_ril();
+			reg.putLong(rf1, ((long) if2) & long_low32_bits);
+			break;
+		}
+	}
+	private void ins_C2XX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f; // RPI202
+		switch (opcode2) {
+		case 0x4: // 5530 "C24" "SLGFI" "RIL" Z9-31
+			psw_check = false;
+			ins_setup_ril();
+			rlvw = reg.getLong(rf1);
+			rlv2 = (long) if2 & long_low32_bits;
+			rlv1 = rlvw - rlv2;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_sub_cc();
+			break;
+		case 0x5: // 5540 "C25" "SLFI" "RIL" Z9-32
+			psw_check = false;
+			ins_setup_ril();
+			rvw = reg.getInt(rf1 + 4);
+			rv2 = if2;
+			rv1 = rvw - rv2;
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_log_sub_cc();
+			break;
+		case 0x8: // "C28" "AGFI" "RIL" Z9-33
+			psw_check = false;
+			ins_setup_ril();
+			rlv1 = reg.getLong(rf1);
+			rlv2 = if2;
+			rlv3 = rlv1 + rlv2;
+			reg.putLong(rf1, rlv3);
+			psw_cc = get_long_add_cc();
+			break;
+		case 0x9: // "C29" "AFI" "RIL" Z9-34
+			psw_check = false;
+			ins_setup_ril();
+			rv1 = reg.getInt(rf1 + 4);
+			rv2 = if2;
+			rv3 = rv1 + rv2;
+			reg.putInt(rf1 + 4, rv3);
+			psw_cc = get_int_add_cc();
+			break;
+		case 0xA: // "C2A" "ALGFI" "RIL" Z9-35
+			psw_check = false;
+			ins_setup_ril();
+			rlvw = reg.getLong(rf1);
+			rlv2 = ((long) if2 & long_low32_bits);
+			rlv1 = rlvw + rlv2;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_add_cc();
+			break;
+		case 0xB: // "C2B" "ALFI" "RIL" Z9-36
+			psw_check = false;
+			ins_setup_ril();
+			rvw = reg.getInt(rf1 + 4);
+			rv2 = if2;
+			rv1 = rvw + rv2;
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_log_add_cc();
+			break;
+		case 0xC: // "C2C" "CGFI" "RIL" Z9-37
+			psw_check = false;
+			ins_setup_ril();
+			psw_cc = get_long_comp_cc(reg.getLong(rf1), if2);
+			break;
+		case 0xD: // "C2D" "CFI" "RIL" Z9-38
+			psw_check = false;
+			ins_setup_ril();
+			psw_cc = get_int_comp_cc(reg.getInt(rf1 + 4), if2);
+			break;
+		case 0xE: // "C2E" "CLGFI" "RIL" Z9-39
+			psw_check = false;
+			ins_setup_ril();
+			psw_cc = get_long_log_comp_cc(reg.getLong(rf1), (long) if2
+					& long_low32_bits);
+			break;
+		case 0xF: // "C2F" "CLFI" "RIL" Z9-40
+			psw_check = false;
+			ins_setup_ril();
+			psw_cc = get_int_log_comp_cc(reg.getInt(rf1 + 4), if2);
+			break;
+		}
+	}
+	private void ins_C8XX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_ssf] & 0x0f; // RPI202 RPI 606
+		switch (opcode2) {
+		case 0x0: // 5630 "C80" "MVCOS" "SSF" Z9-41
+			psw_check = false; // RPI 606
+			ins_setup_ssf();   // RPI 606
+			if (reg.getInt(r0) == 0){
+				psw_cc = psw_cc0;
+				if (rflen > 0){
+					if (rflen > 4096){
+						rflen = 4096;
+						psw_cc = psw_cc3;
+					}
+					exec_mvc_rflen();
+				}
+			} else {
+				set_psw_check(psw_pic_spec);
+			}
+		break;
+		}
+	}
+    private void ins_E2XX(){
+    	opcode2 = mem_byte[psw_loc + opcode2_offset_rxy] & 0xff;
+		switch (opcode2) {
+		case 0x02: // 5810 "E302" "LTG" "RXY" Z9-42
+			psw_check = false;
+			ins_setup_rxy();
+			rlv1 = mem.getLong(xbd2_loc);
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0x03: // 5400 "E303" "LRAG" "RXY"
+			ins_setup_rxy();
+			break;
+		case 0x04: // 5410 "E304" "LG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putLong(rf1, mem.getLong(xbd2_loc));
+			break;
+		case 0x06: // 5420 "E306" "CVBY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			if (get_pd(mem,xbd2_loc, 8)) { // RPI 305
+				if (pdf_is_big) { // RPI 389
+					set_psw_check(psw_pic_fx_div);
+				} else {
+					if (pdf_long <= max_pos_int && pdf_long >= min_neg_int) {
+						reg.putInt(rf1 + 4, (int) pdf_long);
+					} else {
+						set_psw_check(psw_pic_fx_div);
+					}
+				}
+			}
+			break;
+		case 0x08: // 5430 "E308" "AG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlv1 = reg.getLong(rf1);
+			rlv2 = mem.getLong(xbd2_loc);
+			rlv3 = rlv1 + rlv2;
+			reg.putLong(rf1, rlv3);
+			psw_cc = get_long_add_cc();
+			break;
+		case 0x09: // 5440 "E309" "SG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlv1 = reg.getLong(rf1);
+			rlv2 = mem.getLong(xbd2_loc);
+			rlv3 = rlv1 - rlv2;
+			reg.putLong(rf1, rlv3);
+			psw_cc = get_long_sub_cc();
+			break;
+		case 0x0A: // 5450 "E30A" "ALG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlvw = reg.getLong(rf1);
+			rlv2 = mem.getLong(xbd2_loc);
+			rlv1 = rlvw + rlv2;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_add_cc();
+			break;
+		case 0x0B: // 5460 "E30B" "SLG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlvw = reg.getLong(rf1);
+			rlv2 = mem.getLong(xbd2_loc);
+			rlv1 = rlvw - rlv2;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_sub_cc();
+			break;
+		case 0x0C: // 5470 "E30C" "MSG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putLong(rf1, reg.getLong(rf1) * mem.getLong(xbd2_loc));
+			break;
+		case 0x0D: // 5480 "E30D" "DSG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlv1 = reg.getLong(rf1 + 8);
+			rlv2 = mem.getLong(xbd2_loc);
+			if (rlv2 != 0) {
+				rlvw = rlv1 / rlv2;
+			} else {
+				set_psw_check(psw_pic_fx_div);
+				break;
+			}
+			rlv1 = rlv1 - rlvw * rlv2;
+			reg.putLong(rf1, rlv1);
+			reg.putLong(rf1 + 8, rlvw);
+			break;
+		case 0x0E: // 5490 "E30E" "CVBG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			if (get_pd(mem,xbd2_loc, 16)) { // RPI 305
+				if (pdf_big_int.compareTo(bi_max_pos_long) != 1
+						&& pdf_big_int.compareTo(bi_min_neg_long) != -1) {
+					reg.putLong(rf1, pdf_big_int.longValue());
+				} else {
+					set_psw_check(psw_pic_fx_div);
+				}
+			} else {
+				reg.putLong(rf1, pdf_long);
+			}
+			break;
+		case 0x0F: // 5500 "E30F" "LRVG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rflen = 7;
+			while (rflen >= 0) {
+				reg.put(rf1 + rflen, mem_byte[xbd2_loc + 7 - rflen]);
+				rflen--;
+			}
+			break;
+		case 0x12: // 5930 "E312" "LT" "RXY" Z9-43
+			psw_check = false;
+			ins_setup_rxy();
+			rv1 = mem.getInt(xbd2_loc);
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_comp_cc(rv1, 0);
+			break;
+		case 0x13: // 5510 "E313" "LRAY" "RXY"
+			ins_setup_rxy();
+			break;
+		case 0x14: // 5520 "E314" "LGF" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putLong(rf1, mem.getInt(xbd2_loc));
+			break;
+		case 0x15: // 5530 "E315" "LGH" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putLong(rf1, mem.getShort(xbd2_loc));
+			break;
+		case 0x16: // 5540 "E316" "LLGF" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putLong(rf1, (long) mem.getInt(xbd2_loc) & long_low32_bits);
+			break;
+		case 0x17: // 5550 "E317" "LLGT" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putLong(rf1, mem.getInt(xbd2_loc) & max_pos_int); // RPI160
+																	// was
+																	// LOC+4
+			break;
+		case 0x18: // 5560 "E318" "AGF" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlv1 = reg.getLong(rf1);
+			rlv2 = mem.getInt(xbd2_loc);
+			rlv3 = rlv1 + rlv2;
+			reg.putLong(rf1, rlv3);
+			psw_cc = get_long_add_cc();
+			break;
+		case 0x19: // 5570 "E319" "SGF" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlv1 = reg.getLong(rf1);
+			rlv2 = mem.getInt(xbd2_loc);
+			rlv3 = rlv1 - rlv2;
+			reg.putLong(rf1, rlv3);
+			psw_cc = get_long_sub_cc();
+			break;
+		case 0x1A: // 5580 "E31A" "ALGF" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlvw = reg.getLong(rf1);
+			rlv2 = ((long) mem.getInt(xbd2_loc) & long_low32_bits);
+			rlv1 = rlvw + rlv2;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_add_cc();
+			break;
+		case 0x1B: // 5590 "E31B" "SLGF" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlvw = reg.getLong(rf1);
+			rlv2 = (long) mem.getInt(xbd2_loc) & long_low32_bits;
+			rlv1 = rlvw - rlv2;
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_sub_cc();
+			break;
+		case 0x1C: // 5600 "E31C" "MSGF" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putLong(rf1, reg.getLong(rf1) * mem.getInt(xbd2_loc));
+			break;
+		case 0x1D: // 5610 "E31D" "DSGF" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlv1 = reg.getLong(rf1 + 8);
+			rlv2 = (long) mem.getInt(xbd2_loc);
+			if (rlv2 != 0) {
+				rlvw = rlv1 / rlv2;
+			} else {
+				set_psw_check(psw_pic_fx_div);
+				break;
+			}
+			rlv1 = rlv1 - rlvw * rlv2;
+			reg.putLong(rf1, rlv1);
+			reg.putLong(rf1 + 8, rlvw);
+			break;
+		case 0x1E: // 5620 "E31E" "LRV" "RXY"
+			psw_check = false; // RPI173
+			ins_setup_rxy();
+			rflen = 3;
+			while (rflen >= 0) {
+				reg.put(rf1 + 4 + rflen, mem_byte[xbd2_loc + 3 - rflen]);
+				rflen--;
+			}
+			break;
+		case 0x1F: // 5630 "E31F" "LRVH" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rflen = 1;
+			while (rflen >= 0) {
+				reg.put(rf1 + 6 + rflen, mem_byte[xbd2_loc + 1 - rflen]);
+				rflen--;
+			}
+			break;
+		case 0x20: // 5640 "E320" "CG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			psw_cc = get_long_comp_cc(reg.getLong(rf1), mem
+					.getLong(xbd2_loc));
+			break;
+		case 0x21: // 5650 "E321" "CLG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			psw_cc = get_long_log_comp_cc(reg.getLong(rf1), mem
+					.getLong(xbd2_loc));
+			break;
+		case 0x24: // 5660 "E324" "STG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			mem.putLong(xbd2_loc & psw_amode, reg.getLong(rf1));
+			break;
+		case 0x26: // 5670 "E326" "CVDY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			big_int = BigInteger.valueOf(reg.getInt(rf1 + 4));
+			put_pd(mem_byte, xbd2_loc, 8);
+			break;
+		case 0x2E: // 5680 "E32E" "CVDG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			pdf_is_big = false; // RPI 389
+			pdf_long = reg.getLong(rf1);
+			put_pd(mem_byte, xbd2_loc, 16);
+			break;
+		case 0x2F: // 5690 "E32F" "STRVG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rflen = 7;
+			while (rflen >= 0) {
+				mem_byte[xbd2_loc + rflen] = reg.get(rf1 + 7 - rflen);
+				rflen--;
+			}
+			break;
+		case 0x30: // 5700 "E330" "CGF" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			psw_cc = get_long_comp_cc(reg.getLong(rf1), (long) mem
+					.getInt(xbd2_loc));
+			break;
+		case 0x31: // 5710 "E331" "CLGF" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			psw_cc = get_long_log_comp_cc(reg.getLong(rf1), (long) mem
+					.getInt(xbd2_loc)
+					& long_low32_bits);
+			break;
+		case 0x3E: // 5720 "E33E" "STRV" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rflen = 3;
+			while (rflen >= 0) {
+				mem_byte[xbd2_loc + rflen] = reg.get(rf1 + 7 - rflen);
+				rflen--;
+			}
+			break;
+		case 0x3F: // 5730 "E33F" "STRVH" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rflen = 1;
+			while (rflen >= 0) {
+				mem_byte[xbd2_loc + rflen] = reg.get(rf1 + 7 - rflen);
+				rflen--;
+			}
+			break;
+		case 0x46: // 5740 "E346" "BCTG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlv1 = reg.getLong(rf1) - 1;
+			reg.putLong(rf1, rlv1);
+			if (rlv1 != 0) {
+				set_psw_loc(xbd2_loc);
+			}
+			break;
+		case 0x50: // 5750 "E350" "STY" "RXY"
+			ins_setup_rxy();
+			psw_check = false;
+			mem.putInt(xbd2_loc, reg.getInt(rf1 + 4));
+			break;
+		case 0x51: // 5760 "E351" "MSY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) * mem.getInt(xbd2_loc));
+			break;
+		case 0x54: // 5770 "E354" "NY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rv1 = reg.getInt(rf1 + 4) & mem.getInt(xbd2_loc);
+			reg.putInt(rf1 + 4, rv1);
+			if (rv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x55: // 5780 "E355" "CLY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			psw_cc = get_int_log_comp_cc(reg.getInt(rf1 + 4), mem
+					.getInt(xbd2_loc));
+			break;
+		case 0x56: // 5790 "E356" "OY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rv1 = reg.getInt(rf1 + 4) | mem.getInt(xbd2_loc);
+			reg.putInt(rf1 + 4, rv1);
+			if (rv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x57: // 5800 "E357" "XY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rv1 = reg.getInt(rf1 + 4) ^ mem.getInt(xbd2_loc);
+			reg.putInt(rf1 + 4, rv1);
+			if (rv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x58: // 5810 "E358" "LY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1 + 4, mem.getInt(xbd2_loc));
+			break;
+		case 0x59: // 5820 "E359" "CY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			psw_cc = get_int_comp_cc(reg.getInt(rf1 + 4), mem
+					.getInt(xbd2_loc));
+			break;
+		case 0x5A: // 5830 "E35A" "AY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rv1 = reg.getInt(rf1 + 4);
+			rv2 = mem.getInt(xbd2_loc);
+			rv3 = rv1 + rv2;
+			reg.putInt(rf1 + 4, rv3);
+			psw_cc = get_int_add_cc();
+			break;
+		case 0x5B: // 5840 "E35B" "SY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rv1 = reg.getInt(rf1 + 4);
+			rv2 = mem.getInt(xbd2_loc);
+			rv3 = rv1 - rv2;
+			reg.putInt(rf1 + 4, rv3);
+			psw_cc = get_int_sub_cc();
+			break;
+		case 0x5E: // 5850 "E35E" "ALY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rvw = reg.getInt(rf1 + 4);
+			rv2 = mem.getInt(xbd2_loc);
+			rv1 = rvw + rv2;
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_log_add_cc();
+			break;
+		case 0x5F: // 5860 "E35F" "SLY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rvw = reg.getInt(rf1 + 4);
+			rv2 = mem.getInt(xbd2_loc);
+			rv1 = rvw - rv2;
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_log_sub_cc();
+			break;
+		case 0x70: // 5870 "E370" "STHY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			mem.putShort(xbd2_loc, (short) reg.getInt(rf1 + 4));
+			break;
+		case 0x71: // 5880 "E371" "LAY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1 + 4, xbd2_loc & psw_amode);
+			break;
+		case 0x72: // 5890 "E372" "STCY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			mem_byte[xbd2_loc] = reg.get(rf1 + 4 + 3);
+			break;
+		case 0x73: // 5900 "E373" "ICY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.put(rf1 + 7, mem_byte[xbd2_loc]);
+			break;
+		case 0x76: // 5910 "E376" "LB" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1 + 4, mem_byte[xbd2_loc]);
+			break;
+		case 0x77: // 5920 "E377" "LGB" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putLong(rf1, mem_byte[xbd2_loc]);
+			break;
+		case 0x78: // 5930 "E378" "LHY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1 + 4, mem.getShort(xbd2_loc));
+			break;
+		case 0x79: // 5940 "E379" "CHY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			psw_cc = get_int_comp_cc(reg.getInt(rf1 + 4), mem
+					.getShort(xbd2_loc));
+			break;
+		case 0x7A: // 5950 "E37A" "AHY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rv1 = reg.getInt(rf1 + 4);
+			rv2 = mem.getShort(xbd2_loc);
+			rv3 = rv1 + rv2;
+			reg.putInt(rf1 + 4, rv3);
+			psw_cc = get_int_add_cc();
+			break;
+		case 0x7B: // 5960 "E37B" "SHY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rv1 = reg.getInt(rf1 + 4);
+			rv2 = mem.getShort(xbd2_loc);
+			rv3 = rv1 - rv2;
+			reg.putInt(rf1 + 4, rv3);
+			psw_cc = get_int_sub_cc();
+			break;
+		case 0x80: // 5970 "E380" "NG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlv1 = reg.getLong(rf1) & mem.getLong(xbd2_loc);
+			reg.putLong(rf1, rlv1);
+			if (rlv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x81: // 5980 "E381" "OG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlv1 = reg.getLong(rf1) | mem.getLong(xbd2_loc);
+			reg.putLong(rf1, rlv1);
+			if (rlv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x82: // 5990 "E382" "XG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlv1 = reg.getLong(rf1) ^ mem.getLong(xbd2_loc);
+			reg.putLong(rf1, rlv1);
+			if (rlv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x86: // 6000 "E386" "MLG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 8, 8)); // RPI
+																			// 383
+			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 8));
+			big_int1 = big_int1.multiply(big_int2);
+			zcvt_big_int(reg_byte,rf1,big_int1, 16); // RPI 540
+			break;
+		case 0x87: // 6010 "E387" "DLG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1, 16)); // RPI 540
+			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 8));
+			if (big_int2.signum() == 0) { // RPI 540
+				set_psw_check(psw_pic_fx_div);
+				break;
+			}
+			big_int_array = big_int1.divideAndRemainder(big_int2);
+			zcvt_big_int(reg_byte,rf1,big_int_array[1], 8); // get remainder RPI 540
+			zcvt_big_int(reg_byte,rf1+8,big_int_array[0], 8); // get big quotent RPI 540
+			break;
+		case 0x88: // 6020 "E388" "ALCG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlvw = reg.getLong(rf1);
+			rlv2 = mem.getLong(xbd2_loc);
+			rlv1 = rlvw + rlv2 + psw_carry[psw_cc];
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_add_cc();
+			break;
+		case 0x89: // 6030 "E389" "SLBG" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rlvw = reg.getLong(rf1);
+			rlv2 = mem.getLong(xbd2_loc);
+			rlv1 = rlvw - rlv2 - psw_borrow[psw_cc];
+			reg.putLong(rf1, rlv1);
+			psw_cc = get_long_log_sub_cc();
+			break;
+		case 0x8E: // 6040 "E38E" "STPQ" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			mem.putLong(xbd2_loc, reg.getLong(rf1));
+			mem.putLong(xbd2_loc + 8, reg.getLong(rf1 + 8));
+			break;
+		case 0x8F: // 6050 "E38F" "LPQ" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putLong(rf1, mem.getLong(xbd2_loc));
+			reg.putLong(rf1 + 8, mem.getLong(xbd2_loc + 8));
+			break;
+		case 0x90: // 6060 "E390" "LLGC" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putLong(rf1, mem_byte[xbd2_loc] & 0xff);
+			break;
+		case 0x91: // 6070 "E391" "LLGH" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putLong(rf1, mem.getShort(xbd2_loc) & 0xffff);
+			break;
+		case 0x94: // 6510 "E394" "LLC" "RXY" Z9-44
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1 + 4, mem.get(xbd2_loc) & 0xff);
+			break;
+		case 0x95: // 6520 "E395" "LLH" "RXY" Z9-45
+			psw_check = false;
+			ins_setup_rxy();
+			reg.putInt(rf1 + 4, mem.getShort(xbd2_loc) & 0xffff);
+			break;
+		case 0x96: // 6080 "E396" "ML" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 12, 4)); // RPI
+																				// 275
+			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 4));
+			big_int1 = big_int1.multiply(big_int2);
+			zcvt_big_int(work_reg_byte,0,big_int1, 8);
+			reg.putInt(rf1 + 4, work_reg.getInt(0));
+			reg.putInt(rf1 + 12, work_reg.getInt(4));
+			break;
+		case 0x97: // 6090 "E397" "DL" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			work_reg.putInt(0, reg.getInt(rf1 + 4));
+			work_reg.putInt(4, reg.getInt(rf1 + 12));
+			big_int1 = new BigInteger(get_log_bytes(work_reg_byte, 0, 8));
+			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 4));
+			if (big_int2.signum() == 0) { // RPI 540
+				set_psw_check(psw_pic_fx_div);
+				break;
+			}
+			big_int_array = big_int1.divideAndRemainder(big_int2);
+			zcvt_big_int(reg_byte,rf1+4,big_int_array[1], 4); // RPI 540
+			zcvt_big_int(reg_byte,rf1+12,big_int_array[0], 4); // RPI 540
+			break;
+		case 0x98: // 6100 "E398" "ALC" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rvw = reg.getInt(rf1 + 4);
+			rv2 = mem.getInt(xbd2_loc);
+			rv1 = rvw + rv2 + psw_carry[psw_cc];
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_log_add_cc();
+			break;
+		case 0x99: // 6110 "E399" "SLB" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			rvw = reg.getInt(rf1 + 4);
+			rv2 = mem.getInt(xbd2_loc);
+			rv1 = rvw - rv2 - psw_borrow[psw_cc];
+			reg.putInt(rf1 + 4, rv1);
+			psw_cc = get_int_log_sub_cc();
+			break;
+		}
+    }
+    private void ins_E5XX(){
+    	opcode2 = mem_byte[psw_loc + opcode2_offset_sse] & 0xff;
+		switch (opcode2) {
+		case 0x00: // 6120 "E500" "LASP" "SSE"
+			ins_setup_sse();
+			break;
+		case 0x01: // 6130 "E501" "TPROT" "SSE"
+			ins_setup_sse();
+			break;
+		case 0x02: // 6140 "E502" "STRAG" "SSE"
+			ins_setup_sse();
+			break;
+		case 0x0E: // 6150 "E50E" "MVCSK" "SSE"
+			ins_setup_sse();
+			break;
+		case 0x0F: // 6160 "E50F" "MVCDK" "SSE"
+			ins_setup_sse();
+			break;
+		}
+    }
+    private void ins_EBXX(){
+    	opcode2 = mem_byte[psw_loc + opcode2_offset_rsy] & 0xff;
+		switch (opcode2) {
+		case 0x04: // 6200 "EB04" "LMG" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			if (rf1 > rf3) {
+				while (rf1 < reg_len) {
+					reg.putLong(rf1, mem.getLong(bd2_loc));
+					bd2_loc = bd2_loc + 8;
+					rf1 = rf1 + 8;
+				}
+				rf1 = 0;
+			}
+			while (rf1 <= rf3) {
+				reg.putLong(rf1, mem.getLong(bd2_loc));
+				bd2_loc = bd2_loc + 8;
+				rf1 = rf1 + 8;
+			}
+			break;
+		case 0x0A: // 6210 "EB0A" "SRAG" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			rlv1 = reg.getLong(rf3) >> (bd2_loc & 0x3f);
+			reg.putLong(rf1, rlv1); // RPI 398
+			psw_cc = get_long_comp_cc(rlv1, 0);
+			break;
+		case 0x0B: // 6220 "EB0B" "SLAG" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			reg.putLong(rf1, get_sla64(reg.getLong(rf3), bd2_loc & 0x3f));
+			break;
+		case 0x0C: // 6230 "EB0C" "SRLG" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			reg.putLong(rf1, reg.getLong(rf3) >>> (bd2_loc & 0x3f));
+			break;
+		case 0x0D: // 6240 "EB0D" "SLLG" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			reg.putLong(rf1, reg.getLong(rf3) << (bd2_loc & 0x3f));
+			break;
+		case 0x0F: // 6250 "EB0F" "TRACG" "RSY"
+			ins_setup_rsy();
+			break;
+		case 0x14: // 6260 "EB14" "CSY" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			if (reg.getInt(rf1 + 4) == mem.getInt(bd2_loc)) {
+				psw_cc = psw_cc0;
+				mem.putInt(bd2_loc, reg.getInt(rf3 + 4));
+			} else {
+				psw_cc = psw_cc1;
+				reg.putInt(rf1 + 4, mem.getInt(bd2_loc));
+			}
+			break;
+		case 0x1C: // 6270 "EB1C" "RLLG" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf3, 8));
+			big_int1 = big_int1.multiply(BigInteger.valueOf(2).pow(
+					bd2_loc & 0x3f));
+			zcvt_big_int(work_reg_byte,0,big_int1, 16);
+			reg.putLong(rf1, work_reg.getLong(8) | work_reg.getLong(0));
+			break;
+		case 0x1D: // 6280 "EB1D" "RLL" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			rlv1 = ((long) reg.getInt(rf3 + 4) & long_low32_bits) << (bd2_loc & 0x3f);
+			reg.putInt(rf1 + 4,
+					(int) ((rlv1 & long_low32_bits) | (rlv1 >>> 32)));
+			break;
+		case 0x20: // 6290 "EB20" "CLMH" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			rv1 = reg.getInt(rf1);
+			exec_clm();
+			break;
+		case 0x21: // 6300 "EB21" "CLMY" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			rv1 = reg.getInt(rf1 + 4);
+			exec_clm();
+			break;
+		case 0x24: // 6310 "EB24" "STMG" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			if (rf1 > rf3) {
+				while (rf1 < reg_len) {
+					mem.putLong(bd2_loc, reg.getLong(rf1));
+					bd2_loc = bd2_loc + 8;
+					rf1 = rf1 + 8;
+				}
+				rf1 = 0;
+			}
+			while (rf1 <= rf3) {
+				mem.putLong(bd2_loc, reg.getLong(rf1));
+				bd2_loc = bd2_loc + 8;
+				rf1 = rf1 + 8;
+			}
+			break;
+		case 0x25: // 6320 "EB25" "STCTG" "RSY"
+			ins_setup_rsy();
+			break;
+		case 0x26: // 6330 "EB26" "STMH" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			if (rf1 > rf3) {
+				while (rf1 < reg_len) {
+					mem.putInt(bd2_loc, reg.getInt(rf1));
+					bd2_loc = bd2_loc + 4;
+					rf1 = rf1 + 8;
+				}
+				rf1 = 0;
+			}
+			while (rf1 <= rf3) {
+				mem.putInt(bd2_loc, reg.getInt(rf1));
+				bd2_loc = bd2_loc + 4;
+				rf1 = rf1 + 8;
+			}
+			break;
+		case 0x2C: // 6340 "EB2C" "STCMH" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			rv1 = reg.getInt(rf1);
+			exec_stcm();
+			break;
+		case 0x2D: // 6350 "EB2D" "STCMY" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			rv1 = reg.getInt(rf1 + 4);
+			exec_stcm();
+			break;
+		case 0x2F: // 6360 "EB2F" "LCTLG" "RSY"
+			ins_setup_rsy();
+			break;
+		case 0x30: // 6370 "EB30" "CSG" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			if (reg.getLong(rf1) == mem.getLong(bd2_loc)) {
+				psw_cc = psw_cc0;
+				mem.putLong(bd2_loc, reg.getLong(rf3));
+			} else {
+				psw_cc = psw_cc1;
+				reg.putLong(rf1, mem.getLong(bd2_loc));
+			}
+			break;
+		case 0x31: // 6380 "EB31" "CDSY" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			if (reg.getInt(rf1 + 4) == mem.getInt(bd2_loc)
+					&& reg.getInt(rf1 + 12) == mem.getInt(bd2_loc + 4)) {
+				psw_cc = psw_cc0;
+				mem.putInt(bd2_loc, reg.getInt(rf3 + 4));
+				mem.putInt(bd2_loc + 4, reg.getInt(rf3 + 12));
+			} else {
+				psw_cc = psw_cc1;
+				reg.putInt(rf1 + 4, mem.getInt(bd2_loc));
+				reg.putInt(rf1 + 12, mem.getInt(bd2_loc + 4));
+			}
+			break;
+		case 0x3E: // 6390 "EB3E" "CDSG" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			if (reg.getLong(rf1) == mem.getLong(bd2_loc)
+					&& reg.getLong(rf1 + 8) == mem.getLong(bd2_loc + 8)) {
+				psw_cc = psw_cc0;
+				mem.putLong(bd2_loc, reg.getLong(rf3));
+				mem.putLong(bd2_loc + 8, reg.getLong(rf3 + 8));
+			} else {
+				psw_cc = psw_cc1;
+				reg.putLong(rf1, mem.getLong(bd2_loc));
+				reg.putLong(rf1 + 8, mem.getLong(bd2_loc + 8));
+			}
+			break;
+		case 0x44: // 6400 "EB44" "BXHG" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			rlv3 = reg.getLong(rf3);
+			rlv1 = reg.getLong(rf1) + rlv3;
+			reg.putLong(rf1, rlv1);
+			if (rf3 == ((rf3 >> 4) << 4)) {
+				rlv3 = reg.getLong(rf3 + 8);
+			}
+			if (rlv1 > rlv3) {
+				set_psw_loc(bd2_loc);
+			}
+			break;
+		case 0x45: // 6410 "EB45" "BXLEG" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			rlv3 = reg.getLong(rf3);
+			rlv1 = reg.getLong(rf1) + rlv3;
+			reg.putLong(rf1, rlv1);
+			if (rf3 == ((rf3 >> 4) << 4)) {
+				rlv3 = reg.getLong(rf3 + 8);
+			}
+			if (rlv1 <= rlv3) {
+				set_psw_loc(bd2_loc);
+			}
+			break;
+		case 0x51: // 6420 "EB51" "TMY" "SIY"
+			psw_check = false;
+			ins_setup_siy();
+			rv1 = mem_byte[bd1_loc] & 0xff;
+			rvw = rv1 & if2;
+			if (rvw == 0) {
+				psw_cc = psw_cc0;
+			} else if (rvw == rv1) {
+				psw_cc = psw_cc3;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x52: // 6430 "EB52" "MVIY" "SIY"
+			psw_check = false;
+			ins_setup_siy();
+			mem_byte[bd1_loc] = (byte) if2;
+			break;
+		case 0x54: // 6440 "EB54" "NIY" "SIY"
+			psw_check = false;
+			ins_setup_siy();
+			sv1 = mem_byte[bd1_loc] & if2;
+			mem_byte[bd1_loc] = (byte) sv1;
+			if (sv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x55: // 6450 "EB55" "CLIY" "SIY"
+			psw_check = false;
+			ins_setup_siy();
+			psw_cc = get_int_comp_cc((mem_byte[bd1_loc] & 0xff), if2);
+			break;
+		case 0x56: // 6460 "EB56" "OIY" "SIY"
+			psw_check = false;
+			ins_setup_siy();
+			sv1 = mem_byte[bd1_loc] | if2;
+			mem_byte[bd1_loc] = (byte) sv1;
+			if (sv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x57: // 6470 "EB57" "XIY" "SIY"
+			psw_check = false;
+			ins_setup_siy();
+			sv1 = mem_byte[bd1_loc] ^ if2;
+			mem_byte[bd1_loc] = (byte) sv1;
+			if (sv1 == 0) {
+				psw_cc = psw_cc0;
+			} else {
+				psw_cc = psw_cc1;
+			}
+			break;
+		case 0x80: // 6480 "EB80" "ICMH" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			rv1 = reg.getInt(rf1);
+			exec_icm();
+			reg.putInt(rf1, rv1);
+			break;
+		case 0x81: // 6490 "EB81" "ICMY" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			rv1 = reg.getInt(rf1 + 4);
+			exec_icm();
+			reg.putInt(rf1 + 4, rv1);
+			break;
+		case 0x8E: // 6500 "EB8E" "MVCLU" "RSY"
+			ins_setup_rsy();
+			break;
+		case 0x8F: // 6510 "EB8F" "CLCLU" "RSY"
+			ins_setup_rsy();
+			break;
+		case 0x90: // 6520 "EB90" "STMY" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			if (rf1 > rf3) {
+				while (rf1 < reg_len) {
+					mem.putInt(bd2_loc, reg.getInt(rf1 + 4));
+					bd2_loc = bd2_loc + 4;
+					rf1 = rf1 + 8;
+				}
+				rf1 = 0;
+			}
+			while (rf1 <= rf3) {
+				mem.putInt(bd2_loc, reg.getInt(rf1 + 4));
+				bd2_loc = bd2_loc + 4;
+				rf1 = rf1 + 8;
+			}
+			break;
+		case 0x96: // 6530 "EB96" "LMH" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			if (rf1 > rf3) {
+				while (rf1 < reg_len) {
+					reg.putInt(rf1, mem.getInt(bd2_loc));
+					bd2_loc = bd2_loc + 4;
+					rf1 = rf1 + 8;
+				}
+				rf1 = 0;
+			}
+			while (rf1 <= rf3) {
+				reg.putInt(rf1, mem.getInt(bd2_loc));
+				bd2_loc = bd2_loc + 4;
+				rf1 = rf1 + 8;
+			}
+			break;
+		case 0x98: // 6540 "EB98" "LMY" "RSY"
+			psw_check = false;
+			ins_setup_rsy();
+			if (rf1 > rf3) {
+				while (rf1 < reg_len) {
+					reg.putInt(rf1 + 4, mem.getInt(bd2_loc));
+					bd2_loc = bd2_loc + 4;
+					rf1 = rf1 + 8;
+				}
+				rf1 = 0;
+			}
+			while (rf1 <= rf3) {
+				reg.putInt(rf1 + 4, mem.getInt(bd2_loc));
+				bd2_loc = bd2_loc + 4;
+				rf1 = rf1 + 8;
+			}
+			break;
+		case 0x9A: // 6550 "EB9A" "LAMY" "RSY"
+			ins_setup_rsy();
+			break;
+		case 0x9B: // 6560 "EB9B" "STAMY" "RSY"
+			ins_setup_rsy();
+			break;
+		case 0xC0: // 6570 "EBC0" "TP" "RSL"
+			psw_check = false;
+			ins_setup_rsl();
+			get_pd(mem,bd1_loc, rflen1);
+			psw_cc = pd_cc;
+			break;
+		}
+    }
+    private void ins_ECXX(){
+    	opcode2 = mem_byte[psw_loc + opcode2_offset_rie] & 0xff;
+		switch (opcode2) {
+		case 0x44: // 6580 "EC44" "BRXHG" "RIE"
+			psw_check = false;
+			ins_setup_rie();
+			rlv3 = reg.getLong(rf3);
+			rlv1 = reg.getLong(rf1) + rlv3;
+			reg.putLong(rf1, rlv1);
+			if (rf3 == ((rf3 >> 4) << 4)) {
+				rlv3 = reg.getLong(rf3 + 8);
+			}
+			if (rlv1 > rlv3) {
+				set_psw_loc(psw_loc - 6 + 2 * if2);
+			}
+			break;
+		case 0x45: // 6600 "EC45" "BRXLG" "RIE"
+			psw_check = false;
+			ins_setup_rie();
+			rlv3 = reg.getLong(rf3);
+			rlv1 = reg.getLong(rf1) + rlv3;
+			reg.putLong(rf1, rlv1);
+			if (rf3 == ((rf3 >> 4) << 4)) {
+				rlv3 = reg.getLong(rf3 + 8);
+			}
+			if (rlv1 <= rlv3) {
+				set_psw_loc(psw_loc - 6 + 2 * if2);
+			}
+			break;
+		}
+    }
+    private void ins_EDXX(){
+    	opcode2 = mem_byte[psw_loc + opcode2_offset_rxe] & 0xff;
+		switch (opcode2) {
+		case 0x04: // 6620 "ED04" "LDEB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rdv1 = fp_get_db_from_eb(mem, xbd2_loc);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			break;
+		case 0x05: // 6630 "ED05" "LXDB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rbdv1 = fp_get_bd_from_db(mem, xbd2_loc);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			break;
+		case 0x06: // 6640 "ED06" "LXEB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rbdv1 = fp_get_bd_from_eb(mem, xbd2_loc);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			break;
+		case 0x07: // 6650 "ED07" "MXDB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rbdv1 = fp_get_bd_from_db(fp_reg, rf1).multiply(
+					fp_get_bd_from_db(mem, xbd2_loc), fp_dbg_context).round(
+					fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lb_type, fp_rbdv1);
+			check_lb_mpy();
+			break;
+		case 0x08: // 6660 "ED08" "KEB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_signal = true;
+			psw_cc = fp_get_eb_comp_cc(fp_get_eb_from_eb(fp_reg, rf1),
+					fp_get_eb_from_eb(mem, xbd2_loc));
+			break;
+		case 0x09: // 6670 "ED09" "CEB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			psw_cc = fp_get_eb_comp_cc(fp_get_eb_from_eb(fp_reg, rf1),
+					fp_get_eb_from_eb(mem, xbd2_loc));
+			break;
+		case 0x0A: // 6680 "ED0A" "AEB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
+					+ fp_get_eb_from_eb(mem, xbd2_loc);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			psw_cc = fp_get_eb_add_sub_cc();
+			break;
+		case 0x0B: // 6690 "ED0B" "SEB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
+					- fp_get_eb_from_eb(mem, xbd2_loc);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			psw_cc = fp_get_eb_add_sub_cc();
+			break;
+		case 0x0C: // 6700 "ED0C" "MDEB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rdv1 = fp_get_db_from_eb(fp_reg, rf1)
+					* fp_get_db_from_eb(mem, xbd2_loc);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			check_db_mpy();
+			break;
+		case 0x0D: // 6710 "ED0D" "DEB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rev2 = fp_get_eb_from_eb(mem, xbd2_loc);
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1) / fp_rev2;
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			check_eb_div();
+			break;
+		case 0x0E: // 6720 "ED0E" "MAEB" "RXF"
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
+					+ fp_get_eb_from_eb(mem, xbd2_loc)
+					* fp_get_eb_from_eb(fp_reg, rf3);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			check_eb_mpy();
+			break;
+		case 0x0F: // 6730 "ED0F" "MSEB" "RXF"
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
+					- fp_get_eb_from_eb(mem, xbd2_loc)
+					* fp_get_eb_from_eb(fp_reg, rf3);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			check_eb_mpy();
+			break;
+		case 0x10: // 6740 "ED10" "TCEB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1); // RPI 326
+			psw_cc = psw_cc0;
+			if ((xbd2_loc & 0x800) != 0 && fp_rev1 == 0) {
+				psw_cc = psw_cc1; // +0
+			}
+			if ((xbd2_loc & 0x400) != 0 && fp_rev1 == 0) {
+				psw_cc = psw_cc1; // -0
+			}
+			if ((xbd2_loc & 0x200) != 0 && fp_rev1 > 0) {
+				psw_cc = psw_cc1; // +normalized
+			}
+			if ((xbd2_loc & 0x100) != 0 && fp_rev1 < 0) {
+				psw_cc = psw_cc1; // -normalized
+			}
+			if ((xbd2_loc & 0x080) != 0) {
+				// psw_cc = psw_cc1; //+denormalized (never)
+			}
+			if ((xbd2_loc & 0x040) != 0) {
+				// psw_cc = psw_cc1; //-denormalized (never)
+			}
+			if ((xbd2_loc & 0x020) != 0) {
+				// psw_cc = psw_cc1; //+infinity
+			}
+			if ((xbd2_loc & 0x010) != 0) {
+				// psw_cc = psw_cc1; //-infinity
+			}
+			if ((xbd2_loc & 0x008) != 0) {
+				// psw_cc = psw_cc1; //+quiet nan
+			}
+			if ((xbd2_loc & 0x004) != 0) {
+				// psw_cc = psw_cc1; //-quiet nan
+			}
+			if ((xbd2_loc & 0x002) != 0) {
+				// psw_cc = psw_cc1; //+signaling nan
+			}
+			if ((xbd2_loc & 0x001) != 0) {
+				// psw_cc = psw_cc1; //-signaling nan
+			}
+			break;
+		case 0x11: // 6750 "ED11" "TCDB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rdv1 = fp_get_db_from_dh(fp_reg, rf1); // RPI 326
+			psw_cc = psw_cc0;
+			if ((xbd2_loc & 0x800) != 0 && fp_rdv1 == 0) {
+				psw_cc = psw_cc1; // +0
+			}
+			if ((xbd2_loc & 0x400) != 0 && fp_rdv1 == 0) {
+				psw_cc = psw_cc1; // -0
+			}
+			if ((xbd2_loc & 0x200) != 0 && fp_rdv1 > 0) {
+				psw_cc = psw_cc1; // +normalized
+			}
+			if ((xbd2_loc & 0x100) != 0 && fp_rdv1 < 0) {
+				psw_cc = psw_cc1; // -normalized
+			}
+			if ((xbd2_loc & 0x080) != 0) {
+				// psw_cc = psw_cc1; //+denormalized (never)
+			}
+			if ((xbd2_loc & 0x040) != 0) {
+				// psw_cc = psw_cc1; //-denormalized (never)
+			}
+			if ((xbd2_loc & 0x020) != 0) {
+				// psw_cc = psw_cc1; //+infinity
+			}
+			if ((xbd2_loc & 0x010) != 0) {
+				// psw_cc = psw_cc1; //-infinity
+			}
+			if ((xbd2_loc & 0x008) != 0) {
+				// psw_cc = psw_cc1; //+quiet nan
+			}
+			if ((xbd2_loc & 0x004) != 0) {
+				// psw_cc = psw_cc1; //-quiet nan
+			}
+			if ((xbd2_loc & 0x002) != 0) {
+				// psw_cc = psw_cc1; //+signaling nan
+			}
+			if ((xbd2_loc & 0x001) != 0) {
+				// psw_cc = psw_cc1; //-signaling nan
+			}
+			break;
+		case 0x12: // 6760 "ED12" "TCXB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1); // RPI 326
+			psw_cc = psw_cc0;
+			if ((xbd2_loc & 0x800) != 0
+					&& fp_rbdv1.signum() == 0) {
+				psw_cc = psw_cc1; // +0
+			}
+			if ((xbd2_loc & 0x400) != 0
+					&& fp_rbdv1.signum() == 0) {
+				psw_cc = psw_cc1; // -0
+			}
+			if ((xbd2_loc & 0x200) != 0
+					&& fp_rbdv1.signum() > 0) {
+				psw_cc = psw_cc1; // +normalized
+			}
+			if ((xbd2_loc & 0x100) != 0
+					&& fp_rbdv1.signum() < 0) {
+				psw_cc = psw_cc1; // -normalized
+			}
+			if ((xbd2_loc & 0x080) != 0) {
+				// psw_cc = psw_cc1; //+denormalized (never)
+			}
+			if ((xbd2_loc & 0x040) != 0) {
+				// psw_cc = psw_cc1; //-denormalized (never)
+			}
+			if ((xbd2_loc & 0x020) != 0) {
+				// psw_cc = psw_cc1; //+infinity
+			}
+			if ((xbd2_loc & 0x010) != 0) {
+				// psw_cc = psw_cc1; //-infinity
+			}
+			if ((xbd2_loc & 0x008) != 0) {
+				// psw_cc = psw_cc1; //+quiet nan
+			}
+			if ((xbd2_loc & 0x004) != 0) {
+				// psw_cc = psw_cc1; //-quiet nan
+			}
+			if ((xbd2_loc & 0x002) != 0) {
+				// psw_cc = psw_cc1; //+signaling nan
+			}
+			if ((xbd2_loc & 0x001) != 0) {
+				// psw_cc = psw_cc1; //-signaling nan
+			}
+			break;
+		case 0x14: // 6770 "ED14" "SQEB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rev1 = (float) Math.sqrt(fp_get_db_from_eb(mem, xbd2_loc));
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			break;
+		case 0x15: // 6780 "ED15" "SQDB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rdv1 = Math.sqrt(fp_get_db_from_db(mem, xbd2_loc));
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			break;
+		case 0x17: // 6790 "ED17" "MEEB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rev1 = fp_get_eb_from_eb(fp_reg, rf1)
+					* fp_get_eb_from_eb(mem, xbd2_loc);
+			fp_put_eb(rf1, tz390.fp_eb_type, fp_rev1);
+			check_eh_mpy();
+			break;
+		case 0x18: // 6800 "ED18" "KDB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_signal = true;
+			psw_cc = fp_get_db_comp_cc(fp_get_db_from_db(fp_reg, rf1),
+					fp_get_db_from_db(mem, xbd2_loc));
+			break;
+		case 0x19: // 6810 "ED19" "CDB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			psw_cc = fp_get_db_comp_cc(fp_get_db_from_db(fp_reg, rf1),
+					fp_get_db_from_db(mem, xbd2_loc));
+			break;
+		case 0x1A: // 6820 "ED1A" "ADB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
+					+ fp_get_db_from_db(mem, xbd2_loc);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			psw_cc = fp_get_db_add_sub_cc();
+			break;
+		case 0x1B: // 6830 "ED1B" "SDB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
+					- fp_get_db_from_db(mem, xbd2_loc);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			psw_cc = fp_get_db_add_sub_cc();
+			break;
+		case 0x1C: // 6840 "ED1C" "MDB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
+					* fp_get_db_from_db(mem, xbd2_loc);
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			check_db_mpy();
+			break;
+		case 0x1D: // 6850 "ED1D" "DDB" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rdv2 = fp_get_db_from_db(mem, xbd2_loc);
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1) / fp_rdv2;
+			fp_put_db(rf1, tz390.fp_db_type, fp_rdv1);
+			check_db_div();
+			break;
+		case 0x1E: // 6860 "ED1E" "MADB" "RXF"
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
+					+ fp_get_db_from_db(mem, xbd2_loc)
+					* fp_get_db_from_db(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
+			check_db_mpy();
+			break;
+		case 0x1F: // 6870 "ED1F" "MSDB" "RXF"
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rdv1 = fp_get_db_from_db(fp_reg, rf1)
+					- fp_get_db_from_db(mem, xbd2_loc)
+					* fp_get_db_from_db(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
+			check_db_mpy();
+			break;
+		case 0x24: // 6880 "ED24" "LDE" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_load_reg(rf1, tz390.fp_dh_type, mem, xbd2_loc,
+					tz390.fp_eh_type);
+			break;
+		case 0x25: // 6890 "ED25" "LXD" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_load_reg(rf1, tz390.fp_lh_type, mem, xbd2_loc,
+					tz390.fp_lh_type);
+			break;
+		case 0x26: // 6900 "ED26" "LXE" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_load_reg(rf1, tz390.fp_lh_type, mem, xbd2_loc,
+					tz390.fp_eh_type);
+			break;
+		case 0x2E: // 6910 "ED2E" "MAE" "RXF"
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
+					+ fp_get_db_from_eh(mem, xbd2_loc)
+					* fp_get_db_from_eh(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
+			check_eh_mpy();
+			break;
+		case 0x2F: // 6920 "ED2F" "MSE" "RXF"
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
+					- fp_get_db_from_eh(mem, xbd2_loc)
+					* fp_get_db_from_eh(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
+			check_eh_mpy();
+			break;
+		case 0x34: // 6930 "ED34" "SQE" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rdv1 = Math.sqrt(fp_get_db_from_eh(mem, xbd2_loc));
+			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
+			break;
+		case 0x35: // 6940 "ED35" "SQD" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rdv1 = Math.sqrt(fp_get_db_from_dh(mem, xbd2_loc));
+			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
+			break;
+		case 0x37: // 6950 "ED37" "MEE" "RXE"
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rdv1 = fp_get_db_from_eh(fp_reg, rf1)
+					* fp_get_db_from_eh(mem, xbd2_loc);
+			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
+			check_eh_mpy();
+			break;
+		case 0x38: // 7410 "ED38" "MAYL" "RXF" Z9-46
+			psw_check = false; // RPI 298
+			ins_setup_rxf();
+			fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
+					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x39: // 7420 "ED39" "MYL" "RXF" Z9-47
+			psw_check = false; // RPI 298
+			ins_setup_rxf();
+			fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
+					fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x3A: // 7430 "ED3A" "MAY" "RXF" Z9-48
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
+					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x3B: // 7440 "ED3B" "MY" "RXF" Z9-49 RPI 298
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
+					fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x3C: // 7450 "ED3C" "MAYH" "RXF" Z9-50
+			psw_check = false; // RPI 298
+			ins_setup_rxf();
+			fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).add(
+					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x3D: // 7460 "ED3D" "MYH" "RXF" Z9-51 // RPI 298
+			psw_check = false; // RPI 298
+			ins_setup_rxf();
+			fp_rbdv1 = fp_get_bd_from_dh(mem, xbd2_loc).multiply(
+					fp_get_bd_from_dh(fp_reg, rf3), fp_dbg_context).round(
+					fp_x_context);
+			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
+			check_lh_mpy();
+			break;
+		case 0x3E: // 6960 "ED3E" "MAD" "RXF"
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rdv1 = fp_get_db_from_dh(fp_reg, rf1)
+					+ fp_get_db_from_dh(mem, xbd2_loc)
+					* fp_get_db_from_dh(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
+			check_dh_mpy();
+			break;
+		case 0x3F: // 6970 "ED3F" "MSD" "RXF"
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rdv1 = fp_get_db_from_dh(fp_reg, rf1)
+					- fp_get_db_from_dh(mem, xbd2_loc)
+					* fp_get_db_from_dh(fp_reg, rf3);
+			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
+			check_dh_mpy();
+			break;
+		case 0x40: // "SLDT" "ED40" "RXF" DFP 45
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf3);
+			work_fp_bi1 = fp_rbdv1
+			              .unscaledValue()
+			              .multiply(BigInteger.TEN.pow(xbd2_loc & 0x3f))
+			              .mod(fp_dd_mod_bi);
+			fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			break;
+		case 0x41: // "SRDT" "ED41" "RXF" DFP 46
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf3);
+			work_fp_bi1 = fp_rbdv1
+			              .unscaledValue()
+			              .divide(BigInteger.TEN.pow((xbd2_loc & 0x3f)));
+			fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
+			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			break;
+		case 0x48: // "SLXT" "ED48" "RXF" DFP 47
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf3);
+			work_fp_bi1 = fp_rbdv1
+			              .unscaledValue()
+			              .multiply(BigInteger.TEN.pow(xbd2_loc & 0x3f))
+			              .mod(fp_ld_mod_bi);
+			fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			break;
+		case 0x49: // "SRXT" "ED49" "RXF" DFP 48
+			psw_check = false;
+			ins_setup_rxf();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf3);
+			work_fp_bi1 = fp_rbdv1
+			              .unscaledValue()
+			              .divide(BigInteger.TEN.pow(xbd2_loc & 0x3f));
+			fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
+			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			break;
+		case 0x50: // "TDCET" "ED50" "RXE" DFP 49
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf1); 
+			psw_cc = psw_cc0;
+			if ((xbd2_loc & 0x800) != 0 && fp_rbdv1.signum() == 0) {
+				psw_cc = psw_cc1; // +0
+			}
+			if ((xbd2_loc & 0x400) != 0 && fp_rbdv1.signum() == 0) {
+				psw_cc = psw_cc1; // -0
+			}
+			if ((xbd2_loc & 0x200) != 0
+				&& fp_rbdv1.signum() > 0
+				&& (fp_rbdv1.compareTo(fp_ed_pos_min) < 0
+					|| fp_rbdv1.compareTo(fp_ed_pos_max) > 0)
+				) {
+				psw_cc = psw_cc1; // +subnormal
+			}
+			if ((xbd2_loc & 0x100) != 0 
+				&& fp_rdv1 < 0
+				&& (fp_rbdv1.compareTo(fp_ed_neg_min) > 0
+						|| fp_rbdv1.compareTo(fp_ed_neg_max) < 0)
+				){
+				psw_cc = psw_cc1; // -subnormal
+			}
+			if ((xbd2_loc & 0x080) != 0
+				 && fp_rbdv1.signum() > 0
+				 && fp_rbdv1.compareTo(fp_ed_pos_min) >= 0
+				 && fp_rbdv1.compareTo(fp_ed_pos_max) <= 0
+				 ) {
+				psw_cc = psw_cc1; //+normal
+			}
+			if ((xbd2_loc & 0x040) != 0
+				 && fp_rbdv1.signum() < 0
+				 && fp_rbdv1.compareTo(fp_ed_neg_min) <= 0
+				 && fp_rbdv1.compareTo(fp_ed_neg_max) >= 0
+				 ){
+				psw_cc = psw_cc1; //-normal
+			}
+			if ((xbd2_loc & 0x020) != 0) {
+				// psw_cc = psw_cc1; //+infinity
+			}
+			if ((xbd2_loc & 0x010) != 0) {
+				// psw_cc = psw_cc1; //-infinity
+			}
+			if ((xbd2_loc & 0x008) != 0) {
+				// psw_cc = psw_cc1; //+quiet nan
+			}
+			if ((xbd2_loc & 0x004) != 0) {
+				// psw_cc = psw_cc1; //-quiet nan
+			}
+			if ((xbd2_loc & 0x002) != 0) {
+				// psw_cc = psw_cc1; //+signaling nan
+			}
+			if ((xbd2_loc & 0x001) != 0) {
+				// psw_cc = psw_cc1; //-signaling nan
+			}
+			break;
+		case 0x51: // "TDGET" "ED51" "RXE" DFP 50
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf1); 
+			psw_cc = psw_cc0;
+			if ((xbd2_loc & 0x800) != 0
+				&& fp_rbdv1.signum() == 0
+				&& fp_rbdv1.scale() >= fp_ed_exp_min
+				&& fp_rbdv1.scale() <= fp_ed_exp_max
+			    ) {
+				psw_cc = psw_cc1; // + safe 0
+			}
+			if ((xbd2_loc & 0x400) != 0 
+				&& fp_rbdv1.signum() == 0
+				&& fp_rbdv1.scale() >= fp_ed_exp_min
+				&& fp_rbdv1.scale() <= fp_ed_exp_max	
+			) {
+				psw_cc = psw_cc1; // - safe 0
+			}
+			if ((xbd2_loc & 0x200) != 0
+				&& fp_rbdv1.signum() == 0
+				&& (fp_rbdv1.scale() < fp_ed_exp_min
+					|| fp_rbdv1.scale() > fp_ed_exp_max)
+				) {
+				psw_cc = psw_cc1; // + extreme zero
+			}
+			if ((xbd2_loc & 0x100) != 0 
+				&& fp_rdv1 < 0
+				&& (fp_rbdv1.scale() < fp_ed_exp_min
+					|| fp_rbdv1.scale() > fp_ed_exp_max)
+				){
+				psw_cc = psw_cc1; // - extreme zero
+			}
+			if ((xbd2_loc & 0x080) != 0
+				 && fp_rbdv1.signum() > 0
+				 && (fp_rbdv1.scale() < fp_ed_exp_min
+					 ||	fp_rbdv1.scale() > fp_ed_exp_max)
+				 ) {
+				psw_cc = psw_cc1; //+ extreme finite
+			}
+			if ((xbd2_loc & 0x040) != 0
+				 && fp_rbdv1.signum() < 0
+					 && (fp_rbdv1.scale() < fp_ed_exp_min
+					|| fp_rbdv1.scale() > fp_ed_exp_max)
+				 ){
+				psw_cc = psw_cc1; // - extreme finite
+			}
+			if ((xbd2_loc & 0x020) != 0
+				&& fp_rbdv1.signum() > 0
+				&& fp_rbdv1.scale() >= fp_ed_exp_min
+				&& fp_rbdv1.scale() <= fp_ed_exp_max
+				&& fp_rbdv1.abs().unscaledValue()
+				   .toString().length() < tz390.fp_ed_digits
+				) {
+				psw_cc = psw_cc1; //+ safe finite
+			}
+			if ((xbd2_loc & 0x010) != 0
+				&& fp_rbdv1.signum() < 0
+				&& fp_rbdv1.scale() >= fp_ed_exp_min
+				&& fp_rbdv1.scale() <= fp_ed_exp_max
+				&& fp_rbdv1.abs().unscaledValue()
+				   .toString().length() < tz390.fp_ed_digits	
+			    ) {
+				psw_cc = psw_cc1; // - safe finite
+			}
+			if ((xbd2_loc & 0x008) != 0
+				&& fp_rbdv1.signum() > 0
+				&& fp_rbdv1.scale() >= fp_ed_exp_min
+				&& fp_rbdv1.scale() <= fp_ed_exp_max
+				&& fp_rbdv1.abs().unscaledValue()
+				   .toString().length() >= tz390.fp_ed_digits	
+			    ) {
+				psw_cc = psw_cc1; // + non zero lmd non extreem exp
+			}
+			if ((xbd2_loc & 0x004) != 0
+					&& fp_rbdv1.signum() < 0
+					&& fp_rbdv1.scale() >= fp_ed_exp_min
+					&& fp_rbdv1.scale() <= fp_ed_exp_max
+					&& fp_rbdv1.abs().unscaledValue()
+					   .toString().length() >= tz390.fp_ed_digits		
+				) {
+				psw_cc = psw_cc1; // - non zero lmd non extreme exp
+			}
+			if ((xbd2_loc & 0x002) != 0) {
+				// psw_cc = psw_cc1; //+ infinity or nan
+			}
+			if ((xbd2_loc & 0x001) != 0) {
+				// psw_cc = psw_cc1; // - infinity or nan
+			}
+			break;
+		case 0x54: // "TDCDT" "ED54" "RXE" DFP 51
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf1); 
+			psw_cc = psw_cc0;
+			if ((xbd2_loc & 0x800) != 0 && fp_rbdv1.signum() == 0) {
+				psw_cc = psw_cc1; // +0
+			}
+			if ((xbd2_loc & 0x400) != 0 && fp_rbdv1.signum() == 0) {
+				psw_cc = psw_cc1; // -0
+			}
+			if ((xbd2_loc & 0x200) != 0
+				&& fp_rbdv1.signum() > 0
+				&& (fp_rbdv1.compareTo(fp_dd_pos_min) < 0
+					|| fp_rbdv1.compareTo(fp_dd_pos_max) > 0)
+				) {
+				psw_cc = psw_cc1; // +subnormal
+			}
+			if ((xbd2_loc & 0x100) != 0 
+				&& fp_rdv1 < 0
+				&& (fp_rbdv1.compareTo(fp_dd_neg_min) > 0
+						|| fp_rbdv1.compareTo(fp_dd_neg_max) < 0)
+				){
+				psw_cc = psw_cc1; // -subnormal
+			}
+			if ((xbd2_loc & 0x080) != 0
+				 && fp_rbdv1.signum() > 0
+				 && fp_rbdv1.compareTo(fp_dd_pos_min) >= 0
+				 && fp_rbdv1.compareTo(fp_dd_pos_max) <= 0
+				 ) {
+				psw_cc = psw_cc1; //+normal
+			}
+			if ((xbd2_loc & 0x040) != 0
+				 && fp_rbdv1.signum() < 0
+				 && fp_rbdv1.compareTo(fp_dd_neg_min) <= 0
+				 && fp_rbdv1.compareTo(fp_dd_neg_max) >= 0
+				 ){
+				psw_cc = psw_cc1; //-normal
+			}
+			if ((xbd2_loc & 0x020) != 0) {
+				// psw_cc = psw_cc1; //+infinity
+			}
+			if ((xbd2_loc & 0x010) != 0) {
+				// psw_cc = psw_cc1; //-infinity
+			}
+			if ((xbd2_loc & 0x008) != 0) {
+				// psw_cc = psw_cc1; //+quiet nan
+			}
+			if ((xbd2_loc & 0x004) != 0) {
+				// psw_cc = psw_cc1; //-quiet nan
+			}
+			if ((xbd2_loc & 0x002) != 0) {
+				// psw_cc = psw_cc1; //+signaling nan
+			}
+			if ((xbd2_loc & 0x001) != 0) {
+				// psw_cc = psw_cc1; //-signaling nan
+			}
+			break;
+		case 0x55: // "TDGDT" "ED55" "RXE" DFP 52
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf1); 
+			psw_cc = psw_cc0;
+			if ((xbd2_loc & 0x800) != 0
+				&& fp_rbdv1.signum() == 0
+				&& fp_rbdv1.scale() >= fp_dd_exp_min
+				&& fp_rbdv1.scale() <= fp_dd_exp_max
+			    ) {
+				psw_cc = psw_cc1; // + safe 0
+			}
+			if ((xbd2_loc & 0x400) != 0 
+				&& fp_rbdv1.signum() == 0
+				&& fp_rbdv1.scale() >= fp_dd_exp_min
+				&& fp_rbdv1.scale() <= fp_dd_exp_max	
+			) {
+				psw_cc = psw_cc1; // - safe 0
+			}
+			if ((xbd2_loc & 0x200) != 0
+				&& fp_rbdv1.signum() == 0
+				&& (fp_rbdv1.scale() < fp_dd_exp_min
+					|| fp_rbdv1.scale() > fp_dd_exp_max)
+				) {
+				psw_cc = psw_cc1; // + extreme zero
+			}
+			if ((xbd2_loc & 0x100) != 0 
+				&& fp_rdv1 < 0
+				&& (fp_rbdv1.scale() < fp_dd_exp_min
+					|| fp_rbdv1.scale() > fp_dd_exp_max)
+				){
+				psw_cc = psw_cc1; // - extreme zero
+			}
+			if ((xbd2_loc & 0x080) != 0
+				 && fp_rbdv1.signum() > 0
+				 && (fp_rbdv1.scale() < fp_dd_exp_min
+					 ||	fp_rbdv1.scale() > fp_dd_exp_max)
+				 ) {
+				psw_cc = psw_cc1; //+ extreme finite
+			}
+			if ((xbd2_loc & 0x040) != 0
+				 && fp_rbdv1.signum() < 0
+					 && (fp_rbdv1.scale() < fp_dd_exp_min
+					|| fp_rbdv1.scale() > fp_dd_exp_max)
+				 ){
+				psw_cc = psw_cc1; // - extreme finite
+			}
+			if ((xbd2_loc & 0x020) != 0
+				&& fp_rbdv1.signum() > 0
+				&& fp_rbdv1.scale() >= fp_dd_exp_min
+				&& fp_rbdv1.scale() <= fp_dd_exp_max
+				&& fp_rbdv1.abs().unscaledValue()
+				   .toString().length() < tz390.fp_dd_digits
+				) {
+				psw_cc = psw_cc1; //+ safe finite
+			}
+			if ((xbd2_loc & 0x010) != 0
+				&& fp_rbdv1.signum() < 0
+				&& fp_rbdv1.scale() >= fp_dd_exp_min
+				&& fp_rbdv1.scale() <= fp_dd_exp_max
+				&& fp_rbdv1.abs().unscaledValue()
+				   .toString().length() < tz390.fp_dd_digits	
+			    ) {
+				psw_cc = psw_cc1; // - safe finite
+			}
+			if ((xbd2_loc & 0x008) != 0
+				&& fp_rbdv1.signum() > 0
+				&& fp_rbdv1.scale() >= fp_dd_exp_min
+				&& fp_rbdv1.scale() <= fp_dd_exp_max
+				&& fp_rbdv1.abs().unscaledValue()
+				   .toString().length() >= tz390.fp_dd_digits	
+			    ) {
+				psw_cc = psw_cc1; // + non zero lmd non extreem exp
+			}
+			if ((xbd2_loc & 0x004) != 0
+					&& fp_rbdv1.signum() < 0
+					&& fp_rbdv1.scale() >= fp_dd_exp_min
+					&& fp_rbdv1.scale() <= fp_dd_exp_max
+					&& fp_rbdv1.abs().unscaledValue()
+					   .toString().length() >= tz390.fp_dd_digits		
+				) {
+				psw_cc = psw_cc1; // - non zero lmd non extreme exp
+			}
+			if ((xbd2_loc & 0x002) != 0) {
+				// psw_cc = psw_cc1; //+ infinity or nan
+			}
+			if ((xbd2_loc & 0x001) != 0) {
+				// psw_cc = psw_cc1; // - infinity or nan
+			}
+			break;
+		case 0x58: // "" "ED58" "RXE" DFP 53
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf1); 
+			psw_cc = psw_cc0;
+			if ((xbd2_loc & 0x800) != 0 && fp_rbdv1.signum() == 0) {
+				psw_cc = psw_cc1; // +0
+			}
+			if ((xbd2_loc & 0x400) != 0 && fp_rbdv1.signum() == 0) {
+				psw_cc = psw_cc1; // -0
+			}
+			if ((xbd2_loc & 0x200) != 0
+				&& fp_rbdv1.signum() > 0
+				&& (fp_rbdv1.compareTo(fp_ld_pos_min) < 0
+					|| fp_rbdv1.compareTo(fp_ld_pos_max) > 0)
+				) {
+				psw_cc = psw_cc1; // +subnormal
+			}
+			if ((xbd2_loc & 0x100) != 0 
+				&& fp_rdv1 < 0
+				&& (fp_rbdv1.compareTo(fp_ld_neg_min) > 0
+					|| fp_rbdv1.compareTo(fp_ld_neg_max) < 0)
+				){
+				psw_cc = psw_cc1; // -subnormal
+			}
+			if ((xbd2_loc & 0x080) != 0
+				 && fp_rbdv1.signum() > 0
+				 && fp_rbdv1.compareTo(fp_ld_pos_min) >= 0
+				 && fp_rbdv1.compareTo(fp_ld_pos_max) <= 0
+				 ) {
+				psw_cc = psw_cc1; //+normal
+			}
+			if ((xbd2_loc & 0x040) != 0
+				 && fp_rbdv1.signum() < 0
+				 && fp_rbdv1.compareTo(fp_ld_neg_min) <= 0
+				 && fp_rbdv1.compareTo(fp_ld_neg_max) >= 0
+				 ){
+				psw_cc = psw_cc1; //-normal
+			}
+			if ((xbd2_loc & 0x020) != 0) {
+				// psw_cc = psw_cc1; //+infinity
+			}
+			if ((xbd2_loc & 0x010) != 0) {
+				// psw_cc = psw_cc1; //-infinity
+			}
+			if ((xbd2_loc & 0x008) != 0) {
+				// psw_cc = psw_cc1; //+quiet nan
+			}
+			if ((xbd2_loc & 0x004) != 0) {
+				// psw_cc = psw_cc1; //-quiet nan
+			}
+			if ((xbd2_loc & 0x002) != 0) {
+				// psw_cc = psw_cc1; //+signaling nan
+			}
+			if ((xbd2_loc & 0x001) != 0) {
+				// psw_cc = psw_cc1; //-signaling nan
+			}
+			break;
+		case 0x59: // "TDGXT" "ED59" "RXE" DFP 54
+			psw_check = false;
+			ins_setup_rxe();
+			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf1); 
+			psw_cc = psw_cc0;
+			if ((xbd2_loc & 0x800) != 0
+				&& fp_rbdv1.signum() == 0
+				&& fp_rbdv1.scale() >= fp_ld_exp_min
+				&& fp_rbdv1.scale() <= fp_ld_exp_max
+			    ) {
+				psw_cc = psw_cc1; // + safe 0
+			}
+			if ((xbd2_loc & 0x400) != 0 
+				&& fp_rbdv1.signum() == 0
+				&& fp_rbdv1.scale() >= fp_ld_exp_min
+				&& fp_rbdv1.scale() <= fp_ld_exp_max	
+			) {
+				psw_cc = psw_cc1; // - safe 0
+			}
+			if ((xbd2_loc & 0x200) != 0
+				&& fp_rbdv1.signum() == 0
+				&& (fp_rbdv1.scale() < fp_ld_exp_min
+					|| fp_rbdv1.scale() > fp_ld_exp_max)
+				) {
+				psw_cc = psw_cc1; // + extreme zero
+			}
+			if ((xbd2_loc & 0x100) != 0 
+				&& fp_rdv1 < 0
+				&& (fp_rbdv1.scale() < fp_ld_exp_min
+					|| fp_rbdv1.scale() > fp_ld_exp_max)
+				){
+				psw_cc = psw_cc1; // - extreme zero
+			}
+			if ((xbd2_loc & 0x080) != 0
+				 && fp_rbdv1.signum() > 0
+				 && (fp_rbdv1.scale() < fp_ld_exp_min
+					 ||	fp_rbdv1.scale() > fp_ld_exp_max)
+				 ) {
+				psw_cc = psw_cc1; //+ extreme finite
+			}
+			if ((xbd2_loc & 0x040) != 0
+				 && fp_rbdv1.signum() < 0
+					 && (fp_rbdv1.scale() < fp_ld_exp_min
+					|| fp_rbdv1.scale() > fp_ld_exp_max)
+				 ){
+				psw_cc = psw_cc1; // - extreme finite
+			}
+			if ((xbd2_loc & 0x020) != 0
+				&& fp_rbdv1.signum() > 0
+				&& fp_rbdv1.scale() >= fp_ld_exp_min
+				&& fp_rbdv1.scale() <= fp_ld_exp_max
+				&& fp_rbdv1.abs().unscaledValue()
+				   .toString().length() < tz390.fp_ld_digits
+				) {
+				psw_cc = psw_cc1; //+ safe finite
+			}
+			if ((xbd2_loc & 0x010) != 0
+				&& fp_rbdv1.signum() < 0
+				&& fp_rbdv1.scale() >= fp_ld_exp_min
+				&& fp_rbdv1.scale() <= fp_ld_exp_max
+				&& fp_rbdv1.abs().unscaledValue()
+				   .toString().length() < tz390.fp_ld_digits	
+			    ) {
+				psw_cc = psw_cc1; // - safe finite
+			}
+			if ((xbd2_loc & 0x008) != 0
+				&& fp_rbdv1.signum() > 0
+				&& fp_rbdv1.scale() >= fp_ld_exp_min
+				&& fp_rbdv1.scale() <= fp_ld_exp_max
+				&& fp_rbdv1.abs().unscaledValue()
+				   .toString().length() >= tz390.fp_ld_digits	
+			    ) {
+				psw_cc = psw_cc1; // + non zero lmd non extreem exp
+			}
+			if ((xbd2_loc & 0x004) != 0
+					&& fp_rbdv1.signum() < 0
+					&& fp_rbdv1.scale() >= fp_ld_exp_min
+					&& fp_rbdv1.scale() <= fp_ld_exp_max
+					&& fp_rbdv1.abs().unscaledValue()
+					   .toString().length() >= tz390.fp_ld_digits		
+				) {
+				psw_cc = psw_cc1; // - non zero lmd non extreme exp
+			}
+			if ((xbd2_loc & 0x002) != 0) {
+				// psw_cc = psw_cc1; //+ infinity or nan
+			}
+			if ((xbd2_loc & 0x001) != 0) {
+				// psw_cc = psw_cc1; // - infinity or nan
+			}
+			break;
+		case 0x64: // 6980 "ED64" "LEY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			fp_load_reg(rf1, tz390.fp_eh_type, mem, xbd2_loc,
+					tz390.fp_eh_type);
+			break;
+		case 0x65: // 6990 "ED65" "LDY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			fp_load_reg(rf1, tz390.fp_dh_type, mem, xbd2_loc,
+					tz390.fp_dh_type);
+			break;
+		case 0x66: // 7000 "ED66" "STEY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			if (fp_reg_ctl[mf1] != fp_ctl_ld) {
+				fp_store_reg(fp_reg, rf1);
+			}
+			mem.putInt(xbd2_loc, fp_reg.getInt(rf1));
+			break;
+		case 0x67: // 7010 "ED67" "STDY" "RXY"
+			psw_check = false;
+			ins_setup_rxy();
+			if (fp_reg_ctl[mf1] != fp_ctl_ld) {
+				fp_store_reg(fp_reg, rf1);
+			}
+			mem.putLong(xbd2_loc, fp_reg.getLong(rf1));
+			break;
+		}
+    }
 	/*
 	 * end of ez390 emulator while switch code
 	 */
@@ -10221,7 +9946,156 @@ public class pz390 {
 					store_bytes, store_offset, store_length);
 		}
 	}
-
+	private void exec_clcl(){
+		fill_char = reg.get(rf2 + 12);
+		bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
+		bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
+		bd1_start = bd1_loc;
+		bd2_start = bd2_loc;
+		rflen1 = reg.getInt(rf1 + 12) & psw_amode24;
+		rflen2 = reg.getInt(rf2 + 12) & psw_amode24;
+		data_len = rflen1;
+		pad_len = 0;
+		psw_cc = psw_cc0;
+		if (rflen1 < rflen2) {
+			data_len = rflen1;
+			pad_len = rflen2 - rflen1;
+		} else if (rflen1 > rflen2) {
+			data_len = rflen2;
+			pad_len = rflen1 - rflen2;
+		}
+		if (bd1_loc + data_len + pad_len > tot_mem) {
+			set_psw_check(psw_pic_addr); // RPI 397
+			return;
+		}
+		bd1_end = bd1_loc + data_len;
+		while (bd1_loc < bd1_end) {
+			if (mem_byte[bd1_loc] != mem_byte[bd2_loc]) {
+				if ((mem_byte[bd1_loc] & 0xff) > (mem_byte[bd2_loc] & 0xff)) {
+					psw_cc = psw_cc_high;
+				} else {
+					psw_cc = psw_cc_low;
+				}
+				bd1_end = bd1_loc;
+			} else {
+				bd1_loc++;
+				bd2_loc++;
+			}
+		}
+		if (psw_cc == psw_cc_equal & pad_len > 0) {
+			if (rflen1 > rflen2) {
+				bd1_end = bd1_loc + pad_len;
+				while (bd1_loc < bd1_end) {
+					if (mem_byte[bd1_loc] != fill_char) {
+						if ((mem_byte[bd1_loc] & 0xff) > (fill_char & 0xff)) {
+							psw_cc = psw_cc_high;
+						} else {
+							psw_cc = psw_cc_low;
+						}
+						bd1_end = bd1_loc;
+					} else {
+						bd1_loc++;
+					}
+				}
+			} else {
+				bd2_end = bd2_loc + pad_len;
+				while (bd2_loc < bd2_end) {
+					if (mem_byte[bd2_loc] != fill_char) {
+						if ((mem_byte[bd2_loc] & 0xff) > (fill_char & 0xff)) {
+							psw_cc = psw_cc_high;
+						} else {
+							psw_cc = psw_cc_low;
+						}
+						bd2_end = bd2_loc;
+					} else {
+						bd2_loc++;
+					}
+				}
+			}
+		}
+		reg.putInt(rf1 + 4, (reg.getInt(rf1 + 4) & psw_amode_high_bits)
+				| bd1_loc);
+		reg.putInt(rf1 + 12, (reg.getInt(rf1 + 12) & psw_amode24_high_bits)
+				| (rflen1 - (bd1_loc - bd1_start)));
+		reg.putInt(rf2 + 4, (reg.getInt(rf2 + 4) & psw_amode_high_bits)
+				| bd2_loc);
+		reg.putInt(rf2 + 12, (reg.getInt(rf2 + 12) & psw_amode24_high_bits)
+				| (rflen2 - (bd2_loc - bd2_start)));
+	}
+    private void exec_clcle(){
+    	fill_char = (byte) bd2_loc;
+		bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
+		bd2_loc = reg.getInt(rf3 + 4) & psw_amode;
+		bd1_start = bd1_loc;
+		bd2_start = bd2_loc;
+		rflen1 = reg.getInt(rf1 + 12) & max_pos_int;
+		rflen2 = reg.getInt(rf3 + 12) & max_pos_int;
+		data_len = rflen1;
+		pad_len = 0;
+		psw_cc = psw_cc0;
+		if (rflen1 < rflen2) {
+			data_len = rflen1;
+			pad_len = rflen2 - rflen1;
+		} else if (rflen1 > rflen2) {
+			data_len = rflen2;
+			pad_len = rflen1 - rflen2;
+		}
+		if (bd1_loc + data_len + pad_len > tot_mem) {
+			set_psw_check(psw_pic_addr); // RPI 397
+			return;
+		}
+		bd1_end = bd1_loc + data_len;
+		while (bd1_loc < bd1_end) {
+			if (mem_byte[bd1_loc] != mem_byte[bd2_loc]) {
+				if ((mem_byte[bd1_loc] & 0xff) > (mem_byte[bd2_loc] & 0xff)) {
+					psw_cc = psw_cc_high;
+				} else {
+					psw_cc = psw_cc_low;
+				}
+				bd1_end = bd1_loc;
+			} else {
+				bd1_loc++;
+				bd2_loc++;
+			}
+		}
+		if (psw_cc == psw_cc_equal & pad_len > 0) {
+			if (rflen1 > rflen2) {
+				bd1_end = bd1_loc + pad_len;
+				while (bd1_loc < bd1_end) {
+					if (mem_byte[bd1_loc] != fill_char) {
+						if ((mem_byte[bd1_loc] & 0xff) > (fill_char & 0xff)) {
+							psw_cc = psw_cc_high;
+						} else {
+							psw_cc = psw_cc_low;
+						}
+						bd1_end = bd1_loc;
+					} else {
+						bd1_loc++;
+					}
+				}
+			} else {
+				bd2_end = bd2_loc + pad_len;
+				while (bd2_loc < bd2_end) {
+					if (mem_byte[bd2_loc] != fill_char) {
+						if ((mem_byte[bd2_loc] & 0xff) > (fill_char & 0xff)) {
+							psw_cc = psw_cc_high;
+						} else {
+							psw_cc = psw_cc_low;
+						}
+						bd2_end = bd2_loc;
+					} else {
+						bd2_loc++;
+					}
+				}
+			}
+		}
+		reg.putInt(rf1 + 4, (reg.getInt(rf1 + 4) & psw_amode_high_bits)
+				| bd1_loc);
+		reg.putInt(rf1 + 12, rflen1 - (bd1_loc - bd1_start));
+		reg.putInt(rf3 + 4, (reg.getInt(rf3 + 4) & psw_amode_high_bits)
+				| bd2_loc);
+		reg.putInt(rf3 + 12, rflen2 - (bd2_loc - bd2_start));
+    }
 	private void exec_clm() {
 		/*
 		 * exec clmh or clm using rv1, db2_loc
@@ -10416,7 +10290,56 @@ public class pz390 {
 			bd2_loc++;
 		}
 	}
-
+    private void exec_unpka(){
+    	if (rflen <= 32) {
+			rflen1 = rflen;
+		} else {
+			set_psw_check(psw_pic_spec);
+			return;
+		}
+		rflen2 = 16;
+		bd1_end = bd1_loc - 1;
+		bd2_end = bd2_loc - 1;
+		bd1_loc = bd1_loc + rflen1 - 1;
+		bd2_loc = bd2_loc + rflen2 - 1;
+		int sign_byte = mem_byte[bd2_loc];
+		int sign_nib = sign_byte & 0xf;
+		mem_byte[bd1_loc] = (byte) (((sign_byte & 0xf0) >> 4) | 0x30);
+		bd1_loc--;
+		bd2_loc--;
+		pdf_next_right = true;
+		while (bd1_loc > bd1_end) {
+			if (pdf_next_right) {
+				if (bd2_loc > bd2_end) {
+					pdf_next_right = false;
+					pdf_next_in = mem_byte[bd2_loc];
+					bd2_loc--;
+				} else {
+					pdf_next_in = 0;
+				}
+				mem_byte[bd1_loc] = (byte) ((pdf_next_in & 0xf) | 0x30);
+				bd1_loc--;
+			} else {
+				pdf_next_right = true;
+				mem_byte[bd1_loc] = (byte) (((pdf_next_in & 0xf0) >> 4) | 0x30);
+				bd1_loc--;
+			}
+		}
+		switch (sign_nib) {
+		case 0xa:
+		case 0xc:
+		case 0xe:
+		case 0xf:
+			psw_cc = psw_cc0;
+			break;
+		case 0xb:
+		case 0xd:
+			psw_cc = psw_cc1;
+			break;
+		default:
+			psw_cc = psw_cc3;
+		}
+    }
 	private void exec_icm() {
 		/*
 		 * exec icmh, icmy, or icm using rv1, db2_loc Notes: 1. psw_cc =
@@ -10484,7 +10407,126 @@ public class pz390 {
 			}
 		}
 	}
-
+    private void exec_mvcl(){
+    	bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
+		bd2_loc = reg.getInt(rf2 + 4) & psw_amode;
+		rflen1 = reg.getInt(rf1 + 12) & psw_amode24;
+		rflen2 = reg.getInt(rf2 + 12) & psw_amode24;
+		data_len = rflen1;
+		pad_len = 0;
+		psw_cc = psw_cc0;
+		if (rflen1 < rflen2) {
+			psw_cc = psw_cc1;
+		} else if (rflen1 > rflen2) {
+			psw_cc = psw_cc2;
+			data_len = rflen2;
+			pad_len = rflen1 - rflen2;
+			fill_char = reg.get(rf2 + 12);
+		}
+		if (bd1_loc + data_len + pad_len > tot_mem) {
+			set_psw_check(psw_pic_addr); // RPI 397
+			return;
+		}
+		if (data_len > 0 && bd1_loc > bd2_loc
+				&& bd1_loc < bd2_loc + data_len) {
+			psw_cc = psw_cc3;
+			return;
+		}
+		if (data_len > 0) { // RPI 386
+			System
+					.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc,
+							data_len); // RPI 411
+			bd1_loc = bd1_loc + data_len;
+			bd2_loc = bd2_loc + data_len;
+		}
+		if (pad_len > 0) {
+			Arrays.fill(mem_byte, bd1_loc, bd1_loc + pad_len, fill_char);
+			bd1_loc = bd1_loc + pad_len;
+		}
+		reg.putInt(rf1 + 4, (reg.getInt(rf1 + 4) & psw_amode_high_bits)
+				| bd1_loc);
+		reg.putInt(rf1 + 12, reg.getInt(rf1 + 12) & psw_amode24_high_bits);
+		reg.putInt(rf2 + 4, (reg.getInt(rf2 + 4) & psw_amode_high_bits)
+				| bd2_loc);
+		reg.putInt(rf2 + 12, (reg.getInt(rf2 + 12) & psw_amode24_high_bits)
+				| (rflen2 - data_len));
+    }
+    private void exec_mvcle(){
+    	fill_char = (byte) bd2_loc;
+		bd1_loc = reg.getInt(rf1 + 4) & psw_amode;
+		bd2_loc = reg.getInt(rf3 + 4) & psw_amode;
+		rflen1 = reg.getInt(rf1 + 12) & max_pos_int;
+		rflen2 = reg.getInt(rf3 + 12) & max_pos_int;
+		data_len = rflen1;
+		pad_len = 0;
+		psw_cc = psw_cc0;
+		if (rflen1 < rflen2) {
+			psw_cc = psw_cc1;
+		} else if (rflen1 > rflen2) {
+			psw_cc = psw_cc2;
+			data_len = rflen2;
+			pad_len = rflen1 - rflen2;
+		}
+		if (bd1_loc + data_len + pad_len > tot_mem) {
+			set_psw_check(psw_pic_addr); // RPI 397
+			return;
+		}
+		if (bd1_loc + data_len <= bd2_loc || bd2_loc + data_len <= bd1_loc) {
+			System
+					.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc,
+							data_len); // RPI 411
+			bd1_loc = bd1_loc + data_len;
+			bd2_loc = bd2_loc + data_len;
+		} else if (bd2_loc + 1 == bd1_loc) {
+			Arrays.fill(mem_byte, bd1_loc, bd1_loc + data_len,
+					mem_byte[bd2_loc]);
+			bd1_loc = bd1_loc + data_len;
+			bd2_loc = bd2_loc + data_len;
+		} else {
+			bd1_end = bd1_loc + data_len;
+			// destructive overlap with gap > 1
+			bd1_end = bd1_loc + data_len;
+			while (bd1_loc < bd1_end) {
+				mem_byte[bd1_loc] = mem_byte[bd2_loc];
+				bd1_loc++;
+				bd2_loc++;
+			}
+		}
+		bd1_end = bd1_loc + pad_len;
+		if (bd1_loc < bd1_end) {
+			Arrays.fill(mem_byte, bd1_loc, bd1_loc + pad_len, fill_char);
+			bd1_loc = bd1_loc + pad_len;
+		}
+		reg.putInt(rf1 + 4, (reg.getInt(rf1 + 4) & psw_amode_high_bits)
+				| bd1_loc);
+		reg.putInt(rf1 + 12, 0);
+		reg.putInt(rf3 + 4, (reg.getInt(rf3 + 4) & psw_amode_high_bits)
+				| bd2_loc);
+		reg.putInt(rf3 + 12, rflen2 - data_len);
+    }
+    private void exec_mvc_rflen(){
+    	/*
+    	 * move from bd2_loc to bd1_loc
+    	 * for length rflen 
+    	 * Notes:
+    	 *   1.  Used by MVC and MVCOS
+    	 */
+    	if (bd1_loc + rflen <= bd2_loc || bd2_loc + rflen <= bd1_loc) {
+			System.arraycopy(mem_byte, bd2_loc, mem_byte, bd1_loc, rflen); // RPI
+																			// 411
+		} else if (bd2_loc + 1 == bd1_loc) {
+			Arrays.fill(mem_byte, bd1_loc, bd1_loc + rflen,
+					mem_byte[bd2_loc]);
+		} else {
+			bd1_end = bd1_loc + rflen;
+			while (bd1_loc < bd1_end) {
+				// destructive overlap with gap > 1
+				mem_byte[bd1_loc] = mem_byte[bd2_loc];
+				bd1_loc++;
+				bd2_loc++;
+			}
+		}
+    }
 	private void push_pc_stack(int link_addr) {
 		/*
 		 * push psw and regs on PC stack
@@ -13948,12 +13990,6 @@ public class pz390 {
 					+ get_long_hex(reg.getLong(rf1)) + " S2("
 					+ tz390.get_hex(xbd2_loc, 8) + ")="
 					+ get_long_hex(mem.getLong(xbd2_loc)); // RPI 588
-			break;
-		case 181: // e370, e378-b37b, e395  LHY, STHY, AHY .. LLG
-			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
-							+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " S2("
-							+ tz390.get_hex(xbd2_loc, 8) + ")="
-							+ bytes_to_hex(mem, xbd2_loc, 2, 0);
 			break;
 		case 182: // e391 LLGH
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="

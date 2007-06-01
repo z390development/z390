@@ -1,7 +1,7 @@
 rem remove gnerated files from rt directories
 call RTCLEAN1 bmk
 call RTCLEAN1 demo
-call RTCLEAN1 cics
+rem call RTCLEAN1 cics
 call RTCLEAN1 guam\demo
 call RTCLEAN1 guam\test
 call RTCLEAN1 linklib

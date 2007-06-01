@@ -1,0 +1,20 @@
+         TITLE 'TESTCIC1 - TEST CICS DFHRESP LITERALS'
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 05/31/07                                                 *
+*********************************************************************
+* 05/31/07 RPI 501 TEST LITERAL-ABS EXPRESSION                             
+*********************************************************************
+TESTCIC1 RT1   MAIN
+         EQUREGS
+         RT1   START
+         RT1   CCE,=F'0',DFHRESP(NORMAL)
+         RT1   CCE,=F'1',DFHRESP(ERROR)
+         RT1   CCE,=F'16',DFHRESP(INVREQ)
+         RT1   CCE,=F'22',DFHRESP(LENGERR)
+         RT1   CCE,=F'27',DFHRESP(PGMIDERR)
+         RT1   END
+         END         

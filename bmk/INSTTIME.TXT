@@ -771,6 +771,15 @@ RIL   CFI                       V1.0.12
 RIL   CLGFI                     V1.0.12
 RIL   CLFI                      V1.0.12
 *
+SSF   MVCOS            10       V1.3.03b
+SSF   MVCOS            50       V1.3.03b
+SSF   MVCOS           100       V1.3.03b
+SSF   MVCOS           500       V1.3.03b
+SSF   MVCOS          1000       V1.3.03b
+SSF   MVCOS          2000       V1.3.03b
+SSF   MVCOS          3000       V1.3.03b
+SSF   MVCOS          4096       V1.3.03b
+*
 SS1   TRTR              1
 SS1   TRTR              8
 SS1   TRTR             16

@@ -1,11 +1,8 @@
 INSTTIME SUBENTRY
 *
 * AUTHOR:       MELVYN MALTZ
-* Z390 VERSION: V1.3.00
-* INSTTIME VERSION: 8
-*********************************************************************
-* 04/17/07 DSH RPI 588 CORRECT SRL TO REMOVE COMMA FROM D(,B)
-*********************************************************************
+* Z390 VERSION: V1.3.03b
+* INSTTIME VERSION: 9
 *
 * CALL MZ390 MUST HAVE "SYSPARM(drive:\pathname)"
 * ASSEMBLE WITH OPTION: ASCII
@@ -815,6 +812,7 @@ TYPETABL DS    0F
          DC    CL4'SIY',A(SIY)    SIY
          DC    CL4'SS1',A(SS1)    SS WITH 1 LENGTH
          DC    CL4'SS2',A(SS2)    SS WITH 2 LENGTHS
+         DC    CL4'SSF',A(SSF)    SSF
          DC    CL4'SVC',A(SVC)    FUNCTION TIMING
          DC    X'FF'              STOPPER
 *
@@ -962,6 +960,7 @@ OPCD1TAB DS    0H
          DC    CL6'CLM ',X'BD'     RS
          DC    CL6'STCM',X'BE'     RS
          DC    CL6'ICM ',X'BF'     RS
+         DC    CL6'MVCOS',X'C8'   SSF
          DC    CL6'TRTR ',X'D0'   SS1
          DC    CL6'MVN  ',X'D1'   SS1
          DC    CL6'MVC  ',X'D2'   SS1
@@ -1494,11 +1493,11 @@ E        DS    0H
          CLC   6(2,R7),=X'0101'   IS IT PR ?
          BE    EPR                EXIT IF IT IS
          MVC   EINST(2),6(R7)     SET THE INST DOUBLE OPCODE
-         SAM24                    MAKE SURE WE ARE IN 24-BIT MODE
+         SAM24 ,                  MAKE SURE WE ARE IN 24-BIT MODE
          L     R7,SPINCNT         SET LOOP LIMIT
 *
          TIME  NS,TIMEBEF         BEFORE TIME IN nS
-EINST    SAM24                    TESTED INST
+EINST    SAM24 ,                  TESTED INST
          BCT   R7,EINST           DO IT
          TIME  NS,TIMEAFT         AFTER TIME IN nS
          B     EDONE              EXIT
@@ -2066,7 +2065,7 @@ RSXB1    EQU   *
          L     R7,SPINCNT         SET LOOP LIMIT
 *
          TIME  NS,TIMEBEF         BEFORE TIME IN nS
-RSINSFT  SRL   R10,1(R6)          TESTED INST RPI 588
+RSINSFT  SRL   R10,1(R6)          TESTED INST
          BCT   R7,RSINSFT         DO IT
          TIME  NS,TIMEAFT         AFTER TIME IN nS
 *
@@ -3175,6 +3174,55 @@ SS2DEC   DC    PL16'0'
 SS2OP1SV DS    CL16
 SS2OP1   DC    CL256' '           SS2 1ST OP
 SS2OP2   DC    CL256' '           SS2 2ND OP
+         LTORG
+*
+SSF      DS    0H
+* 12-BIT OPCODE
+* SINGLE LENGTH
+* AS THERE IS ONLY ONE, TREAT AS 1-BYTE OPCODE
+*
+* MVCOS
+         USING *,R12
+         BAL   R14,SRCHOPCD       SET UP OPCODE
+         MVC   SSFMVCOS(1),6(R7)  SET THE INST
+         MVC   RSLTLEN,INSTLL     MOVE LENGTH TO OUTPUT
+         ZAP   SSFDEC,=P'0'       CLEAR SSFDEC
+         PACK  SSFDEC+12(4),INSTLL-1(7) DECIMAL LENGTH
+         CVBG  R11,SSFDEC         CONVERT TO HEX
+*
+         GETMAIN R,LV=4K          'FROM' ADDRESS
+         LR    R10,R1             SET FOR MVCOS
+         GETMAIN R,LV=4K          'TO' ADDRESS
+         LR    R4,R1              SET FOR MVCOS
+* TIME AN EXTRA SGR, THE TIME MACRO AMENDS R0
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SSFSGR   SGR   R0,R0              SPECIAL INST
+         BCT   R7,SSFSGR          DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+*
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SSFINST  SGR   R0,R0              SPECIAL INST
+SSFMVCOS MVCOS 0(R10),0(R4),R11   TESTED INST
+         BCT   R7,SSFINST         DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         FREEMAIN LV=4K,A=(R10)
+         FREEMAIN LV=4K,A=(R4)
+         LA    R5,SSFMVCOS        INST ADDRESS
+         LA    R4,6               INST LENGTH
+         BAL   R14,OUTPUT         WRITE THE OUTPUT RECORD
+         B     GET                EXIT TO GET ANOTHER TEST
+*
+SSFDEC   DC    PL16'0'
          LTORG
 *
 RI       DS    0H

@@ -254,7 +254,9 @@ public  class  az390 implements Runnable {
     * 05/07/07 RPI 615 correct ATTRA string length for FPR
     * 05/09/07 RPI 617 prevent loop on bad PD digit 
     * 05/15/07 RPI 624 correct EQU ATTRA operand when followed by comment 
-    * 05/16/07 RPI 620 gen 47000700 for CNOP  compatiblity            
+    * 05/16/07 RPI 620 gen 47000700 for CNOP  compatiblity 
+    * 05/30/07 RPI 629 correct USING to drop prev unlabeled USING for reg.
+    * 05/31/07 RPI 626 literal substitution for CICS DFHRESP(type) codes           
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -792,6 +794,23 @@ public  class  az390 implements Runnable {
       byte ascii_space = (int) ' ';
       byte ebcdic_period = 0x4B;
       byte ebcdic_space = 0x40;
+  /*
+   * EXEC CICS DFHRESP(type) literal data substitution per RPI 626
+   */
+      String[] dfhresp_type = {
+    		  "NORMAL)",          // 0 - =F'0'
+    		  "ERROR)",           // 1 - =F'1'
+    		  "INVREQ)",          // 2 - =F'16'
+    		  "LENGERR)",         // 3 - =F'22'
+    		  "PGMIDERR)"         // 4 - =F'27'
+    		  };
+      String[] dfhresp_lit = {
+    		  "=F'0'",           //"NORMAL"   - 0
+    		  "=F'1'",           //"ERROR"    - 1
+    		  "=F'16'",          //"INVREQ"   - 2
+    		  "=F'22'",          //"LENGERR"  - 3
+    		  "=F'27'"           //"PGMIDERR" - 4
+    		  };
   /* 
    * end of global az390 class data and start of procs
    */
@@ -4738,6 +4757,10 @@ private void add_using(){
 	use_eof = false;
     get_use_domain();
     while (!use_eof){
+    	if (cur_use_lab.length() == 0 
+    		&& !cur_use_depend){
+    		drop_cur_use_reg(); // RPI 629
+    	}
       	add_use_entry();
        	get_use_domain();
        	cur_use_base_loc = cur_use_base_loc + 4096;
@@ -4919,24 +4942,9 @@ private void add_use_entry(){
 	/*
 	 * add use entry
 	 */
-	int entry_index = -1;
-	if (cur_use_lab.length() == 0){
-		int index = cur_use_start;
-	    while (index < cur_use_end){
-	    	if (use_reg[index] == cur_use_reg
-	    		&& use_base_esd[index] == cur_use_base_esd){
-	    		entry_index = index; // RPI 431
-	    	}
-	    	index++;
-	    }
-	}
 	if (cur_use_end < tz390.opt_maxcall){
-		if (entry_index != -1){
-			cur_use = entry_index;
-		} else {
-			cur_use = cur_use_end;
-			cur_use_end++;
-		}
+		cur_use = cur_use_end;
+		cur_use_end++;
 		use_lab[cur_use] = cur_use_lab;
 		if (cur_use_lab.length() > 0 
 			&& tz390.find_key_index('U',cur_use_lab) == -1){
@@ -5059,11 +5067,7 @@ private void get_hex_llbddd(){
 	hex_ll = "ll";
 	hex_bddd = "bddd";
 	hex_bddd_loc = "      ";
-	if (exp_next_char('=')){
-		calc_lit();
-	} else {
-	    calc_exp();
-	}
+    calc_lit_or_exp();
 	if (!bal_abort){
 		if (exp_type == sym_rel){
 			hex_bddd_loc = tz390.get_hex(exp_val,6);
@@ -5134,11 +5138,7 @@ private void get_hex_xbddd(){
 	 * from next parm
 	 */
 	String hex_xbddd = "llbddd";
-	if (exp_next_char('=')){
-		calc_lit();
-	} else {
-		calc_exp();
-	}
+    calc_lit_or_exp();
 	if (!bal_abort){
 		if  (exp_type == sym_rel){
 			hex_bddd2_loc = tz390.get_hex(exp_val,6);
@@ -5184,11 +5184,7 @@ private void get_hex_bddd2(boolean add_code){
 	 *    just set hex_bddd2
 	 */
 	hex_bddd2 = null;
-	if (exp_next_char('=')){
-		calc_lit();		
-	} else {
-		calc_exp();
-	}
+	calc_lit_or_exp();
 	if  (!bal_abort){
 		if  (exp_type == sym_rel){
 			hex_bddd2_loc = tz390.get_hex(exp_val,6);
@@ -6981,6 +6977,30 @@ private void duplicate_symbol_error(){
 	 * issue error for duplicate symbol definition
 	 */
 	log_error(72,"duplicate symbol " + sym_name[cur_sid] + " on line " + bal_line_num[bal_line_index] + " and " + bal_line_num[sym_def[cur_sid]]);
+}
+private void calc_lit_or_exp(){
+	/*
+	 * calc rel exp for lit or explicit offset
+	 * for following offset(index,base)
+	 */
+	if (exp_next_char('=')){
+		calc_lit();
+	} else if (exp_text.substring(exp_index).length() > 8  // RPI 626
+			   && exp_text.substring(exp_index,exp_index+8).toUpperCase().equals("DFHRESP(")){
+		String dfh_type_key = exp_text.substring(exp_index + 8).toUpperCase() + "        ";
+		int index = 0;
+		while (index < dfhresp_type.length && !dfh_type_key.substring(0,dfhresp_type[index].length()).equals(dfhresp_type[index])){
+			index++;
+		}
+		if (index < dfhresp_type.length){
+			exp_text = exp_text.substring(0,exp_index) + dfhresp_lit[index] + exp_text.substring(exp_index + 9 + dfhresp_lit[index].length());
+		    calc_lit();
+		} else {
+			calc_exp();
+		}
+	} else {
+		calc_exp();
+	}
 }
 private boolean calc_lit(){
 	/*
