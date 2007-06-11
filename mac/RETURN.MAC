@@ -6,7 +6,8 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-.* 10/20/05 RPI27 - issue error for any undefined operands     
+.* 10/20/05 RPI  27 - issue error for any undefined operands     
+.* 06/08/07 RPI 639 - add RC=(reg) support                       
 .*********************************************************************
 &N       RETURN &REGS,                                                 X
                &SETFLAG,                                               X
@@ -24,7 +25,12 @@
          OI    15(13),1 
 .SETRC   ANOP
          AIF   (&RC EQ '').EXIT
+         AIF   ('&RC'(1,1) EQ '(').RCREG
          LA    15,&RC
+         AGO   .EXIT
+.RCREG   ANOP 
+         AIF   (&RC(1) EQ 15 OR &RC(1) EQ 'R15').EXIT
+         LR    15,&RC(1)
 .EXIT    ANOP
          BR    14
          MEXIT

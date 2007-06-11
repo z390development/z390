@@ -10,8 +10,29 @@
 *********************************************************************
 TESTCIC1 RT1   MAIN
          EQUREGS
+X        DS    F
          RT1   START
-         RT1   CCE,=F'0',DFHRESP(NORMAL)
+         MVC   X,DFHRESP(NORMAL)      
+         MVC   X,DFHRESP(ERROR)      
+         MVC   X,DFHRESP(INVREQ)      
+         MVC   X,DFHRESP(LENGERR)      
+         MVC   X,DFHRESP(PGMIDERR)      
+         MVC   X,DFHRESP(NORMAL)     X
+         MVC   X,DFHRESP(ERROR)     X
+         MVC   X,DFHRESP(INVREQ)     X
+         MVC   X,DFHRESP(LENGERR)     X
+         MVC   X,DFHRESP(PGMIDERR)     X
+         CLC   =F'0',DFHRESP(NORMAL)     X
+         RT1   CCE
+         CLC   =F'1',DFHRESP(ERROR)      X
+         RT1   CCE
+         CLC   =F'16',DFHRESP(INVREQ)    X
+         RT1   CCE
+         CLC   =F'22',DFHRESP(LENGERR)   X
+         RT1   CCE
+         CLC   =F'27',DFHRESP(PGMIDERR)  X
+         RT1   CCE
+         RT1   CCE,=F'0',DFHRESP(NORMAL) X
          RT1   CCE,=F'1',DFHRESP(ERROR)
          RT1   CCE,=F'16',DFHRESP(INVREQ)
          RT1   CCE,=F'22',DFHRESP(LENGERR)

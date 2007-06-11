@@ -274,7 +274,10 @@ public  class  mz390 {
      *          and issue error for duplicate keyword parm on call
      * 05/07/07 RPI 609 error 212-216 on string conv for SETB 
      * 05/07/07 RPI 611 prevent trap on computed AGO with bad index var
-     * 05/14/07 RPI 604 BS2000 compatibility option            
+     * 05/14/07 RPI 604 BS2000 compatibility option   
+     * 06/08/07 RPI 632 reset az390 loc_ctr to prevent extra pass 
+     * 06/09/07 RPI 633 prevent error when macro call label not symbol
+     *          and only find symbol if entire string matches        
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1500,6 +1503,8 @@ public  class  mz390 {
 				az390.cur_esd = 0;
 				az390.cur_esd_sid = -1;
 				az390.lookahead_mode = false;
+				az390.loc_ctr = 0; // RPI 632  
+				az390.loc_len = 0; // RPI 632
 			}
 			if (load_macro_mend_level != 1){
 				log_error(133,"unbalanced macro mend in " + load_macro_name);
@@ -5577,7 +5582,7 @@ public  class  mz390 {
 			symbol = symbol.substring(index+1); // RPI 419
 		}
 		symbol_match = symbol_pattern.matcher(symbol); 
-		if (symbol_match.find()){
+		if (symbol_match.find()){ 
 			symbol = symbol_match.group();
 		} else {
 			return -1;
@@ -6939,7 +6944,10 @@ public  class  mz390 {
 		 */
 		cur_pos_parm = mac_call_pos_start[mac_call_level]; // rpi 313
 		if  (bal_label.length() > 0 && bal_label.charAt(0) != '.'){
-			set_sym_macro_attr(bal_label);
+			symbol_match = symbol_pattern.matcher(bal_label);
+			if (symbol_match.find() && symbol_match.group().equals(bal_label)){  // rpi 633
+				set_sym_macro_attr(bal_label);
+			}
 			set_pos_parm(bal_label);  // set syslist(0) label
 		} else {
 			set_pos_parm(""); // syslist(0) null
@@ -9901,7 +9909,7 @@ public  class  mz390 {
 		if (setc_value1.length() > 0 && setc_value1.length() <= 63){
 			symbol_match = symbol_pattern.matcher(setc_value1); 
 			if (symbol_match.find() 
-				&& symbol_match.end() == setc_value1.length()){
+				&& symbol_match.group().equals(setc_value1)){  // RPI 633
 				setb_value = 1;
 			} else {
 				setb_value = 0;

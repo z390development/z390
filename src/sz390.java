@@ -129,7 +129,10 @@ public  class  sz390 implements Runnable {
     *          multiple XCTL's    
     * 05/17/07 RPI 622 correct TCPIO server shutdown errors due  to connection
     *          thread interruptions.   
-    * 05/30/07 RPI 626 prevent DELETE removing active link pgm.            
+    * 05/30/07 RPI 626 prevent DELETE removing active link pgm. 
+    * 06/10/07 RPI 636 percolate or restart at ESTAE exit based 
+    *          bases on R15 = 0 or 4.  If RC=0 reset link stack
+    *          to same level as next ESTAE exit being invoked.        
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -1058,14 +1061,25 @@ public void open_files(){
 	    }
 		return;
 	} else if (pz390.estae_exit_running){
+		int estae_exit_rc = pz390.reg.getInt(pz390.r15);
 		pz390.estae_last_ins = tz390.systerm_ins;
 		pz390.estae_exit_running = false;
 		pz390.reg.position(0);
 		pz390.reg.put(pz390.mem_byte,pz390.esta_gpr,128);
-		pz390.set_psw_loc(pz390.mem.getInt(pz390.esta_psw+4));
-	    if (tz390.opt_trace){
-	    	tz390.put_trace("ESTAE EXIT ENDING");
-	    }
+		if (estae_exit_rc == 4){ // RPI 636 restart at ESTAPSW
+			pz390.set_psw_loc(pz390.mem.getInt(pz390.esta_psw+4));
+			if (tz390.opt_trace){
+				tz390.put_trace("ESTAE EXIT RESTART");
+			}
+		} else if (estae_exit_rc == 0){ // RPI 636 percolate to next higher ESTAE exit
+			if (pz390.tot_estae > 1){ // RPI 636 percolate to next ESTAE exit
+				pz390.tot_estae--; // RPI 636 purge ESTAE
+				tot_link_stk = pz390.estae_link[pz390.tot_estae-1]; // RPI 636 reset link stack
+				pz390.setup_estae_exit();
+			}
+		} else { // abort due to invalid ESTAE exit rc
+			abort_error(100,"ESTAE abort due to invalid return code = " + estae_exit_rc);	
+		}
 		return;
 	} else if (pz390.espie_exit_running){
 		pz390.espie_last_ins = tz390.systerm_ins;
@@ -4030,6 +4044,7 @@ private void svc_estae(){
 		}
 		pz390.estae_exit[pz390.tot_estae-1] = estae_addr;
 		pz390.estae_parm[pz390.tot_estae-1] = estae_param;
+		pz390.estae_link[pz390.tot_estae-1] = tot_link_stk; // RPI 636
 		pz390.reg.putInt(pz390.r15,0);
 	} else {
 		pz390.set_psw_check(pz390.psw_pic_error);

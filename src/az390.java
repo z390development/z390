@@ -256,7 +256,15 @@ public  class  az390 implements Runnable {
     * 05/15/07 RPI 624 correct EQU ATTRA operand when followed by comment 
     * 05/16/07 RPI 620 gen 47000700 for CNOP  compatiblity 
     * 05/30/07 RPI 629 correct USING to drop prev unlabeled USING for reg.
-    * 05/31/07 RPI 626 literal substitution for CICS DFHRESP(type) codes           
+    * 05/31/07 RPI 626 literal substitution for CICS DFHRESP(type) codes   
+    * 06/02/07 RPI 635 fix bug in DFHRESP continued text offset 
+    * 06/05/07 RPI 632 show old and new ORG addresses
+    *          align each new CSECt to double word 
+    *          if loctr force 3 passes to check sect changes 
+    *          show DC A/Y/V data address as rel module to
+    *          match PRN location counter but leave obj data
+    *          as relative CSECT for use by linker 
+    * 06/10/07 RPI 637 issue error if missing ) on off(reg,reg) opnd              
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -469,6 +477,7 @@ public  class  az390 implements Runnable {
     int prev_sect_esd = 0;
     boolean cur_sym_sect = false; // RPI 553 indicate if sym is sect or not
     boolean sect_change = false;
+    boolean loctr_found = false;  // RPI 632
     byte prev_sect_type = sym_cst;
     String[] sym_type_desc = {
     	"ABS","CST","DST","ENT","EXT","REL","RLD","LCT","WXT"}; //RPI182
@@ -676,6 +685,8 @@ public  class  az390 implements Runnable {
      /*
       * expression relocation definitions RLDS
       */
+      int     exp_rld_mod_val = 0;     // RPI 632    
+      boolean exp_rld_mod_set = false; // RPI 632
       byte exp_rld_len = 0;  // gen rlds if 3 or 4
       int tot_exp_rld_add = 0;
       int tot_exp_rld_sub = 0;
@@ -1180,12 +1191,13 @@ private void resolve_symbols(){
     if  (az390_errors > 0 || sect_change){ // RPI 605 
     	 int prev_az390_errors = az390_errors + 1;
     	 while (cur_pass < max_pass
-    	 		&& az390_errors !=0
     	 		&& (sect_change 
-    	 			|| az390_errors < prev_az390_errors
-    	 			|| cur_pass <= 2  // RPI 264
+    	 			|| (az390_errors > 0 && az390_errors < prev_az390_errors) // RPI 632 repeat until 0 or no change
+    	 			|| cur_pass <= 1  // RPI 264, RPI 632 was <=2
     	 			)
     	 		){
+    		 report_label_changes = true; // RPI 632
+    		 report_equ_changes   = true; // RPI 632
     	 	 prev_az390_errors = az390_errors;
     	 	 az390_errors = 0;
     	 	 cur_pass++;
@@ -1260,15 +1272,19 @@ private void update_sects(){
 	 *       for cst, dst, and loctors
 	 **/
 	sect_change = false;
+	if (loctr_found && cur_pass < 2){ // RPI 632 
+		sect_change_error();  // RPI 632 force first 2 passes if LOCTR found
+	}
 	int cst_ctr = 0;
 	int index = 1;
 	while (index <= tot_esd){
 		cur_sid = esd_sid[index];
 		if (sym_type[cur_sid] == sym_cst
 			&& sym_sect_prev[cur_sid] == 0){
-			loc_ctr = cst_ctr;
+			// new CSECT/RSECT aligned to double word
+			loc_ctr = (cst_ctr+7)/8*8;  // RPI 632
 			if (sym_loc[cur_sid] != loc_ctr){
-				sect_change = true;
+				sect_change_error();;
 				bal_abort = false; // force all change errors
 				log_error(91,"csect start change error - " 
 						      + sym_name[cur_sid]
@@ -1283,7 +1299,7 @@ private void update_sects(){
 			}
 			if (sym_max_loc[cur_sid] != loc_ctr
 				&& tot_esd > 1){
-				sect_change = true;
+				sect_change_error();
 				bal_abort = false; // force all change errors
 				log_error(92,"csect end   change error - " 
 						     + sym_name[cur_sid]
@@ -1301,7 +1317,7 @@ private void update_sects(){
 			sym_loc[esd_sid[index]] = loc_ctr;
 			loc_ctr = loc_ctr + sym_len[cur_sid];
 			if (sym_max_loc[cur_sid] != loc_ctr){
-				sect_change = true;
+				sect_change_error();
 				bal_abort = false; // force all change errors
 				log_error(93,"dsect end   change error - " 
 						     + sym_name[cur_sid]
@@ -1317,6 +1333,12 @@ private void update_sects(){
 	}
 	loc_ctr = 0;
 }
+private void sect_change_error(){
+	/*
+	 * set sect_change 
+	 */
+	sect_change = true;  // RPI 632
+}
 private void update_loctrs(){
 	/*
 	 * update loctr sections with contiguous
@@ -1329,7 +1351,7 @@ private void update_loctrs(){
 	while (sym_sect_next[index] > 0){
 		index = sym_sect_next[index];
 		if (sym_loc[index] != loc_ctr){
-			sect_change = true;
+			sect_change_error();
 			bal_abort = false; // force all change errors
 			log_error(94,"loctr section start change error - " 
 					   + sym_name[index]
@@ -1340,7 +1362,7 @@ private void update_loctrs(){
 		sym_loc[index] = loc_ctr;
         loc_ctr = loc_ctr + sym_len[index];
 		if (loc_ctr != sym_max_loc[index]){
-			sect_change = true;
+			sect_change_error();
 			bal_abort = false; // force all change errors
 			log_error(95,"loctr section end   change error - " 
 					   + sym_name[index]
@@ -2174,6 +2196,7 @@ private void process_bal_op(){
     case 116:  // LOCTR 0 
     	bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
     	bal_op_ok = true;
+    	loctr_found = true; // RPI 632 indicate loctr exta passes req'd
     	process_sect(sym_lct,bal_label);
     	bal_label_ok = false;
     	break;
@@ -2535,7 +2558,12 @@ private void gen_exp_rld(){
 	 * Notes:
 	 *   1.  convert to rel csect vs rel module
 	 *       offsets for linker use. 
+	 *   2.  Original exp_val saved in rld_exp_val
+	 *       for use in PRN display (i.e. show addresses
+	 *       relative to module versus CSECT).
 	 */
+	exp_rld_mod_val = exp_val;  // RPI 632 rel module vs CSECT
+	exp_rld_mod_set = true;     // RPI 632
 	int index1 = 0;
 	int index2 = 0;
 	if (exp_rld_len > 0){
@@ -2737,7 +2765,7 @@ private void load_bal(){
             if (bal_op_index > -1){ // RPI 274 OPSYN cancel
 	           	process_bal_op();    
 	        }
-			if  (bal_line != null){
+ 			if  (bal_line != null){
 				tot_bal_line++;
 	            get_bal_line();
 			}
@@ -3240,7 +3268,7 @@ public void update_label(){ // RPI 415
 		if (sym_type[cur_sid] == sym_rel
 		    && !bal_op.equals("EQU")){	
 			if (sym_loc[cur_sid] != loc_start){ // RPI 605
-				sect_change = true;
+				sect_change_error();
 				if (gen_obj_code && report_label_changes){
 					report_label_changes = false;
 				    log_error(187,"first label address change for " + bal_label + " from " + tz390.get_hex(sym_loc[cur_sid],6) + " to " + tz390.get_hex(loc_start,6));
@@ -4700,7 +4728,12 @@ private void put_obj_text(){
 		 }
 	 }
 	 String temp_obj_line;
-     list_obj_code = list_obj_code.concat(obj_code);
+	 if (exp_rld_mod_set){
+		 list_obj_code = list_obj_code.concat(tz390.get_hex(exp_rld_mod_val,2*exp_rld_len)); // RPI 632
+		 exp_rld_mod_set = false;
+	 } else {
+		 list_obj_code = list_obj_code.concat(obj_code);
+	 }
 	 int obj_code_len = obj_code.length()/2;
 	 tot_obj_bytes = tot_obj_bytes + obj_code_len;
 	 if (cur_text_len > 0
@@ -5089,20 +5122,18 @@ private void get_hex_llbddd(){
 						exp_index++;
 						if (calc_abs_exp()){
 							b = exp_val;
-							if (exp_next_char(')')){
-								exp_index++;
-							}
 						}
-					} else if (exp_next_char(')')){
-						exp_index++;
+					} else {
 						ll = exp_val;  // RPI 538 (was ll), RPI 613 (was b = exp_len in err)
 					}
 				}
+				if (exp_next_char(')')){
+					exp_index++;
+				} else {
+					log_error(192,"missing close )"); // RPI 637
+				}
 			}
 			hex_bddd = get_exp_abs_bddd(b,ddd);
-		 }
-		 if (exp_next_char(')')){
-		 	 exp_index++;
 		 }
 		 if (ll >= 0 && ll <= 256){
 			 if (ll > 0){
@@ -5386,10 +5417,12 @@ private String get_exp_abs_bddd(){
 			log_error(183,"no index or length comma allowed"); // RPI 588
 		}
 		if (calc_abs_exp()){
-			b = exp_val;  
-			if (exp_next_char(')')){
-				exp_index++;
-			}
+			b = exp_val; 
+		}
+		if (exp_next_char(')')){
+			exp_index++;
+		} else {
+			log_error(193,"missing close ) ");  // RPI 637
 		}
 	}
 	return get_exp_abs_bddd(b,ddd);
@@ -5416,14 +5449,15 @@ private String get_exp_abs_xbddd(){
 				if (calc_abs_exp()){
 					b = exp_val;
 				}
-			} else if (exp_next_char(')')){
+			} else {
 				x = exp_val;  // RPI 612 
-				exp_index++;
 			}
 		}
-	}
-	if (exp_next_char(')')){
-		exp_index++;
+		if (exp_next_char(')')){
+			exp_index++;
+		} else {
+			log_error(194,"missing close ) ");  // RPI 637
+		}
 	}
 	return tz390.get_hex(x,1) + get_exp_abs_bddd(b,ddd);
 }
@@ -6695,7 +6729,7 @@ private void process_end(){
 	cur_esd = 0;
 	put_obj_text(); // flush buffer
 	if (end_loc != loc_ctr){ // RPI 605
-		sect_change = true;
+		sect_change_error();
 		log_error(186,"end location changed from " 
 				+ tz390.get_hex(end_loc,6) 
 				+ " to " + tz390.get_hex(loc_ctr,6));
@@ -6738,7 +6772,7 @@ public void process_equ(){ // RPI 415
 			sym_attr[store_sid] = exp_attr;
 			sym_esd[store_sid] = exp_esd;
 			if (sym_loc[store_sid] != exp_val){ // RPI 605
-				sect_change = true;
+				sect_change_error();
 				if (gen_obj_code && report_equ_changes){
 					report_equ_changes = false;
 					log_error(188,"first equ change for " + sym_name[store_sid] + " from " + tz390.get_hex(sym_loc[store_sid],8) + " to " + tz390.get_hex(exp_val,8));
@@ -6829,7 +6863,7 @@ private void process_org(){
 		|| bal_parms.charAt(0) == ','){  // RPI 258
 		if (cur_esd > 0){  //RPI10, RPI87
 			loc_ctr = sym_loc[esd_sid[cur_esd]] + sym_len[esd_sid[cur_esd]];
-			loc_start = loc_ctr;
+			hex_bddd1_loc = tz390.get_hex(loc_ctr,6); // RPI 632
 		} else {
 			log_error(102,"org expression must be in same section");
 		}
@@ -6844,7 +6878,7 @@ private void process_org(){
 			update_sect_len();  //RPI10
 		}
 		loc_ctr = exp_val;
-		loc_start = loc_ctr;
+		hex_bddd1_loc = tz390.get_hex(loc_ctr,6); // RPI 632
 	} else {
 		log_error(102,"org expression must be in same section");
 	}
@@ -6987,13 +7021,13 @@ private void calc_lit_or_exp(){
 		calc_lit();
 	} else if (exp_text.substring(exp_index).length() > 8  // RPI 626
 			   && exp_text.substring(exp_index,exp_index+8).toUpperCase().equals("DFHRESP(")){
-		String dfh_type_key = exp_text.substring(exp_index + 8).toUpperCase() + "        ";
+		String dfhresp_type_key = exp_text.substring(exp_index + 8).toUpperCase() + "         ";
 		int index = 0;
-		while (index < dfhresp_type.length && !dfh_type_key.substring(0,dfhresp_type[index].length()).equals(dfhresp_type[index])){
+		while (index < dfhresp_type.length && !dfhresp_type_key.substring(0,dfhresp_type[index].length()).equals(dfhresp_type[index])){
 			index++;
 		}
 		if (index < dfhresp_type.length){
-			exp_text = exp_text.substring(0,exp_index) + dfhresp_lit[index] + exp_text.substring(exp_index + 9 + dfhresp_lit[index].length());
+			exp_text = exp_text.substring(0,exp_index) + dfhresp_lit[index] + exp_text.substring(exp_index + 8 + dfhresp_type[index].length()); // RPI 635
 		    calc_lit();
 		} else {
 			calc_exp();
@@ -7235,6 +7269,8 @@ private void gen_ccw0(){  // RPI 567
 			 exp_rld_len = 3;
 			 if (calc_rel_exp()){
 				 obj_code = obj_code + tz390.get_hex(exp_val,6);
+				 put_obj_text();        // RPI 632 
+				 loc_ctr = loc_ctr + 3; // RPI 632
 				 if (exp_text.charAt(exp_index) == ','){
 					 exp_index++;
 					 exp_rld_len = 0;
@@ -7242,11 +7278,15 @@ private void gen_ccw0(){  // RPI 567
 						&& exp_val < 256){
 						obj_code = obj_code + tz390.get_hex(exp_val,2);
 						obj_code = obj_code + tz390.get_hex(0,2);
+						put_obj_text();        // rpi 632 
+						loc_ctr = loc_ctr + 2; // rpi 632
 						if (exp_text.charAt(exp_index) == ','){
 							 exp_index++;
 							 if (calc_abs_exp()
 								 && exp_val <= 0xffff){
 								obj_code = obj_code + tz390.get_hex(exp_val,4);
+								put_obj_text();        // rpi 632 
+								loc_ctr = loc_ctr + 2; // rpi 632
 							}
 						}
 					}
@@ -7254,14 +7294,12 @@ private void gen_ccw0(){  // RPI 567
 			 }
 		}
 	}
-	put_obj_text();
-	loc_ctr = loc_ctr + 7;
 	loc_len = 0;
 	exp_rld_len = 0;
 }
 private void gen_ccw1(){  // RPI 567
 	/*
-	 * generate 8 byte aligned CCW0
+	 * generate 8 byte aligned CCW1
 	 * op8,flags8,len16,addr32
 	 */
 	String ccw_op    = null;

@@ -1,0 +1,71 @@
+CHSERROR TITLE 'Error Message handling'
+         MACRO
+&MSG#    #ERROR &TEXT,&MSGLVL=0,&SEV=0
+         GBLB  &MSGDEF(10000)
+         LCLA  &#
+         LCLC  &#C,&TEMP
+         AIF   ('&TEXT' EQ 'HEADER').HEADER
+         AIF   ('&TEXT' EQ 'DSECT').DSECT
+.*&T       SETC  T'&MSG#
+.*         AIF   (T'&MSG# EQ 'N').GOOD#
+.*       MNOTE 12,'&MSG# NOT NUMERIC'
+&TEMP    SETC  '&MSG#'(2,K'&MSG#-1)
+&T       SETC  T'&TEMP
+         AIF   (T'&TEMP EQ 'N').GOOD#
+         MNOTE 12,'&TEMP NOT NUMERIC'
+         MEXIT
+.GOOD#   ANOP  ,
+.*&#       SETA  &MSG#
+.*&#C      SETC  '000&MSG#'
+.*         MNOTE '&&#=''&#'' &&#C=''&#C'''
+.*&#C      SETC  '000&MSG#'(L'&MSG#,4)
+&#       SETA  &TEMP
+         AIF   (NOT &MSGDEF(1+&#)).NOTADUP
+         MNOTE 12,'MSG NUMBER &TEMP ALREADY DEFINED!'
+         MEXIT
+.NOTADUP ANOP  ,
+&#C      SETC  '000&TEMP'(K'&TEMP,4)
+&LAB#    SETC  'MSG&#C'
+&MSGDEF(1+&#) SETB 1
+         ORG   MESSAGES+(4*&#)
+         DC    A(&LAB#)
+         ORG   ,
+&LAB#    DS    0C
+         DC    AL2(&MSGLVL),AL2(&SEV),AL2(L'&LAB#.T)
+&LAB#.T  DC    C&TEXT
+         MEXIT
+.HEADER  ANOP  ,
+         DC    10000A(0)
+         MEXIT
+.DSECT   ANOP  ,
+ERRENT   DSECT ,
+
+         MEND
+CHSERROR RSECT
+         SAVE  (14,12)
+* CODE TO TEST DC A(MSGS) AFTER RPI 632
+         USING CHSERROR,15
+         SNAP  ID=1
+         LA    2,0(15)    R2=A(CHSERROR)
+         AFI   2,X'9C88'  R2=A(MESSAGES+X'9C88') ADDR MSG0000 FROM PRN
+         CL    2,=A(MSG0000)  VERIFY ADCON 
+         BNE   1
+         LA    2,0(15)    R2=A(CHSERROR)
+         AFI   2,X'9C98'  R2=A(MESSAGES+X'9C98') ADDR MSG9999 FROM PRN
+         CL    2,=A(MSG9999)
+         BNE   1
+         SR    15,15
+         RETURN (14,12),RC=(15)
+CONSTANT LOCTR ,
+WORK     DSECT ,
+         DS    18F
+WORKLEN  EQU   *-WORK
+WORK24   DSECT ,
+         DS    F
+WORK24LEN EQU  *-WORK24
+MESSAGES RSECT ,
+         #ERROR HEADER
+M0        #ERROR '%1 started'
+M9999     #ERROR '%1 ended'
+         #ERROR DSECT
+         END

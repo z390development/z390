@@ -25,6 +25,7 @@ C:\z390\mac
 C:\z390\MAC.BAT
 C:\z390\mvs
 C:\z390\MZ390.BAT
+C:\z390\README.TXT
 C:\z390\rt
 C:\z390\RT.BAT
 C:\z390\RT1.BAT
@@ -3304,6 +3305,7 @@ C:\z390\rt\test\TESTMEM4.MLC
 C:\z390\rt\test\TESTOBJ1.MLC
 C:\z390\rt\test\TESTOBJ2.MLC
 C:\z390\rt\test\TESTOPR1.MLC
+C:\z390\rt\test\TESTORG1.MLC
 C:\z390\rt\test\TESTPC1.MLC
 C:\z390\rt\test\TESTPCH1.MLC
 C:\z390\rt\test\TESTPCH1.TF1
@@ -3337,6 +3339,8 @@ C:\z390\rt\test\TESTSPI1.MLC
 C:\z390\rt\test\TESTSQL1.MAC
 C:\z390\rt\test\TESTSQL1.MLC
 C:\z390\rt\test\TESTSTA1.MLC
+C:\z390\rt\test\TESTSTA2.MLC
+C:\z390\rt\test\TESTSTA3.MLC
 C:\z390\rt\test\TESTSUB1.MLC
 C:\z390\rt\test\TESTSUB4.MLC
 C:\z390\rt\test\TESTSVC1.MLC

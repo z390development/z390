@@ -202,6 +202,8 @@ public class pz390 {
 	 * 05/11/07 RPI 619 restore MVC and MVCOS to use inline code, fix  trace
 	 * 05/29/07 RPI 627 repackage all 2 byte opcodes into separate function
 	 *          for nested switch to speed up primary switch byte code
+	 * 06/10/07 RPI 636 add estae_link to reset link stack for puercolate
+	 *          and share setup_estae_exit routine.
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -556,9 +558,8 @@ public class pz390 {
 	boolean estae_exit_running = false;
 
 	int[] estae_exit = (int[]) Array.newInstance(int.class, max_estae);
-
 	int[] estae_parm = (int[]) Array.newInstance(int.class, max_estae);
-
+    int[] estae_link = (int[]) Array.newInstance(int.class, max_estae);
 	int if1 = 0;
 
 	int if2 = 0;
@@ -9669,7 +9670,7 @@ public class pz390 {
 		}
 	}
 
-	private void setup_estae_exit() {
+	public void setup_estae_exit() { // RPI 636 used by sz390 percolate
 		/*
 		 * initialize zcvt_esta and pass addr to estae exit via r1
 		 */
@@ -10796,7 +10797,7 @@ public class pz390 {
 		case 0x33: // SNAP r0hh=flags,r0ll=id,r14-15 storage
 			return "SNAP R0 HH=FLAGS, R0 LL=ID, R14=START, R15=END";
 		case 0x3c:
-			return "ESTAE R1=EXIT ADDR"; // set abend exit R1=addr
+			return "ESTAE R0=EXIT ADDR  R1=PARAM"; // set abend exit R0=addr rpi 636
 		case 0x67:
 			return "XLATE R0=ADDR(+ASC>ECB,-EBC>ASC), R1=LENGTH"; // translate
 																	// ascii/EBCDIC

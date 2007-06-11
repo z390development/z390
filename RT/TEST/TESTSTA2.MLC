@@ -1,0 +1,42 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 06/10/07 RPI 636 TEST R15=0 FOR PERCOLATE AND CANCEL LINKS
+*********************************************************************
+         TITLE 'TESTSTA2 - TEST ESTAE EXIT RESTART AND PERCOLATE'
+TESTSTA2 SUBENTRY
+         WTO   'TESTSTA2 TEST ESTAE EXIT RESTART AND PERCOLATE'
+         WTO   'TESTSTA2 SET  ESTAE EXIT FOR PEROCOLATE FROM TESTSTA3'
+         ESTAE EXIT,PARAM=RESTART  
+         WTO   'TESTSTA2 LINK TO TESTSTA3'
+         LINK  EP=TESTSTA3
+         WTO   'TESTSTA2 RETURN FROM TESTSTA3 SHOULD NOT OCCUR'
+         ABEND 111,DUMP
+RESTART  EQU   *
+         BALR  R1,0              SET RESTART ADDRESSABILITY
+         USING *,R1
+         L     R13,=A(TESTSTA2+8) RELOAD TESTSTA2 BASE AND SAVE AREA
+         DROP  R1
+         WTO   'TESTSTA2 RESTARTED AFTER TESTSTA3 ABEND'
+         WTO   'TESTSTA2 ENDING OK'
+         SUBEXIT
+         LTORG
+         DROP
+EXIT     DS    0H             
+*
+* ENTERED VIA PERCOLATE FROM TESTSTA3 EXIT
+* AFTER REMOVING TESTSTA3 FROM LINK STACK
+*
+         USING *,R15
+         USING IHAESTA,R1
+         L     R0,ESTAPARM
+         ST    R0,ESTAPSW+4   SET RESTART PSW ADDR TO ESTAE PARM
+         WTO   'TESTSTA2 ESTAE EXIT REQUESTING RESTART'
+         LA    R15,4          RESTART CURRENT TASK AT ESTAPSW DSH
+         BR    R14
+         ESTAD
+         EQUREGS
+         END         

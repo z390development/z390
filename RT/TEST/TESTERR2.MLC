@@ -17,6 +17,7 @@
 * 11/10/06 RPI 473 test error messages from CALL macro               
 * 02/22/07 RPI 553 add tests for duplicate symbols                   
 * 05/07/07 RPI 609 dc without data, comment                    
+* 06/10/07 RPI 637 test missing close ) on explicit off(len,base) arg
 *********************************************************************
          TITLE 'TESTERR2 - TEST AZ390 ERRORS'
 TESTERR2 CSECT
@@ -100,4 +101,8 @@ EQU1     EQU   2   BAD
  * BAD COMMENT
          PR    , GOOD COMMENT
          PR    BAD COMMENT
+* TEST MISSING CLOSE ) ON EXPLICIT ARGS
+         CLI   1(2,3      BAD
+         L     1,2(3,4    BAD
+         CLC   1(2,3,4(5) BAD
          END 
