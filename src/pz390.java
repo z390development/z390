@@ -204,6 +204,7 @@ public class pz390 {
 	 *          for nested switch to speed up primary switch byte code
 	 * 06/10/07 RPI 636 add estae_link to reset link stack for puercolate
 	 *          and share setup_estae_exit routine.
+	 * 06/21/07 RPI 643 fix CEFBR, CDFBR, CXFBR, CEGBR, CDGBR, CXGBR trace         
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1587,15 +1588,15 @@ public class pz390 {
 		       142,  // 4170 "B384" "SFPC" "RRE" 14
 		       142,  // 4175 "B385" "SFASR" "RRE" 14 DFP 57
 		       142,  // 4180 "B38C" "EFPC" "RRE" 14
-		       142,  // 4190 "B394" "CEFBR" "RRE" 14
-		       142,  // 4200 "B395" "CDFBR" "RRE" 14
-		       142,  // 4210 "B396" "CXFBR" "RRE" 14
+		       146,  // 4190 "B394" "CEFBR" "RRE" 14 // RPI 643
+		       146,  // 4200 "B395" "CDFBR" "RRE" 14 // RPI 643
+		       146,  // 4210 "B396" "CXFBR" "RRE" 14 // RPI 643
 		       341,  // 4220 "B398" "CFEBR" "RRF2" 34
 		       341,  // 4230 "B399" "CFDBR" "RRF2" 34
 		       341,  // 4240 "B39A" "CFXBR" "RRF2" 34
-		       142,  // 4250 "B3A4" "CEGBR" "RRE" 14
-		       142,  // 4260 "B3A5" "CDGBR" "RRE" 14
-		       142,  // 4270 "B3A6" "CXGBR" "RRE" 14
+		       141,  // 4250 "B3A4" "CEGBR" "RRE" 14 // RPI 643
+		       141,  // 4260 "B3A5" "CDGBR" "RRE" 14 // RPI 643
+		       141,  // 4270 "B3A6" "CXGBR" "RRE" 14 // RPI 643
 		       342,  // 4280 "B3A8" "CGEBR" "RRF2" 34
 		       342,  // 4290 "B3A9" "CGDBR" "RRF2" 34
 		       342,  // 4300 "B3AA" "CGXBR" "RRF2" 34

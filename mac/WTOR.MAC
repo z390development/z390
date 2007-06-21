@@ -9,6 +9,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 01/21/06 RPI188 REQUIRE LENGTH IF REPLY REG FORM  
 .* 04/12/06 RPI244 IGNORE UNUSED KW PARMS, MNOTE ERROR FOR TEXT=
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 .*
 .*  WTOR - write to operator with reply (routed to GUAM window if 
@@ -39,7 +40,7 @@
                &REPLYLEN,    REPLY LENGTH                              X
                &ECB,         ECB POSTED WHEN REPLY READY               X
                &TEXT=,       NOT SUPPORTED                             X
-               &MF=,         NOT SUPPORTED                             X
+               &MF=I,        NOT SUPPORTED                             X
                &CART=,       IGNORED                                   X
                &CONSID=,     IGNORED                                   X
                &CONSNAME=,   IGNORED                                   X
@@ -58,7 +59,7 @@
          MEXIT
 .NPOK    ANOP
          AIF   (&TEXT NE '').ERR1
-         AIF   (&MF   NE '').ERR2
+         AIF   (&MF   NE 'I').ERR2
          BAL   1,*+(WTOR#&SYSNDX._EOT-*+1)/2*2
          DC    AL2(WTOR#&SYSNDX._EOT-*,0),C&MSG
 WTOR#&SYSNDX._EOT EQU *
@@ -95,7 +96,7 @@ WTOR#&SYSNDX._EOT EQU *
          MEXIT
 .ERR1    MNOTE 12,'WTOR TEXT= NOT SUPPORTED'
          MEXIT
-.ERR2    MNOTE 12,'WTOR MF=E/L ENOT SUPPORTED'
+.ERR2    MNOTE 12,'WTOR MF=E/L NOT SUPPORTED'
          MEXIT
 .ERR3    MNOTE 12,'WTOR REPLY LENGTH REGISTER 0 NOT ALLOWED'
          MEXIT

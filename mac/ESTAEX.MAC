@@ -7,11 +7,12 @@
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
 .* 04/11/06 RPI244 COPY FROM ESTAE FOR LIMITED SUPPORT                
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N      ESTAEX &ADDR,          ADDRESS OF ABEND RECOVERY EXIT          X
                &TYPE,          OV=REPLACE EXIT, CT=ADD NEW EXIT        X
                &ASYNCH=NO,     IGNORE                                  X
-               &MF=,           NOT SUPPORTED                           X
+               &MF=I,          NOT SUPPORTED                           X
                &PARAM=,        ADDRESS PASSED IN R1 IF SPECIFIED       X
                &PURGE=NONE,    IGNORE                                  X
                &RELATED=,      IGNORE                                  X
@@ -21,7 +22,7 @@
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR1
+         AIF   (&MF NE 'I').ERR1
          AIF   (N'&SYSLIST EQ 1).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
 .NPOK    ANOP

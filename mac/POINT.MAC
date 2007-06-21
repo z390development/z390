@@ -10,16 +10,17 @@
 .* 11/26/05 RPI111- add missing AGO      
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/12/06 RPI244 SUPPORT TYPE=REL         
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       POINT &DCB,         DCB                                       X
                &REL,         RELATIVE BLOCK                            X
-               &MF=,         NOT SUPPORTED                             X
+               &MF=I,        NOT SUPPORTED                             X
                &RBA=,        EXTENSION RELATIVE BYTE ADDR              X
                &TYPE=REL     REL (ABS NOT SUPPORTED)
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR2
+         AIF   (&MF NE 'I').ERR2
          AIF   (N'&SYSLIST LE 2).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
          MEXIT

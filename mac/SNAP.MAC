@@ -14,6 +14,7 @@
 .* 04/25/06 RPI 297 USE L VS LA FOR STOARGE PARMS        
 .* 04/14/07 RPI 583 CHANGE PDATA=ALL TO ALSO DUMP ALL STORAGE
 .* 05/15/07 RPI 623 SUPPORT ID=(REG)                            
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 .* SNAP WILL GENERATE DUMP ON LOG FILE BASED ON THESE PARMS:
 .*  1. PDATA= (DEFAULT IS ALL)
@@ -38,7 +39,7 @@
 &N       SNAP  &DCB=,        IGNORED                                   X
                &ID=0,        SHOW ID ON DUMP                           X
                &LIST=,       NOT SUPPORTED                             X
-               &MF=,         NOT SUPPORTED                             X
+               &MF=I,        NOT SUPPORTED                             X
                &PDATA=ALL,   ALL, REGS, GPR, FPR, CDE, DCB, PSW        X
                &SDATA=,      IGNORED                                   X
                &STORAGE=,    STORAGE ADDRESS RANGE                     X
@@ -56,7 +57,7 @@
          AIF   (&LIST    NE '').ERR2
          AIF   (&STRHDR  NE '').ERR3
          AIF   (&SUBPLST NE '').ERR4
-         AIF   (&MF      NE '').ERR5
+         AIF   (&MF NE 'I').ERR5
 &FLAGS   SETA  0
 &NP      SETA  N'&PDATA+1
 .NPLOOP  ANOP

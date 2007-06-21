@@ -5,10 +5,11 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 04/24/06 RPI 291 - ADD AND IGNORE FOR TESTING                 
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
         MACRO
 &N      ENQ    &LIST,  (QNAMEA,RNAMEA,E/S,LEN,STEP/SYSTEM/SYSTEMS),,,  X
-               &MF=,         L/E NOT SUPPORTED YET                     X
+               &MF=I,        L/E NOT SUPPORTED YET                     X
                &RET=NONE,    CHNG,HAVE,TEST,USE,NONE (CONTROL ALL)     X
                &RNL=YES,     GLOBAL RESOURCE SERIALIZATION             X
                &RELATED=,    IGNORED                                   X
@@ -16,7 +17,7 @@
         AIF    (&N EQ '').SKIPDS
 &N      DS     0H
 .SKIPDS ANOP
-        AIF    (&MF EQ '').EXIT
+        AIF    (&MF EQ 'I').EXIT
         MNOTE  12,'ENQ MF= NOT SUPPORTED'
 .EXIT   ANOP
         MEND

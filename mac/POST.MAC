@@ -5,15 +5,18 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 04/26/06 RPI 279 ADD POST SVC                               
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
          MACRO
 &N       POST  &ECB,         POST ECB COMPLETION                       X
                &CODE,        EVENT COMPLETION CODE                     X
                &LINKAGE=SVC, IGNORED                                   X
+               &MF=I,        NOT SUPPORTED                             X
                &RELATED=     IGNORED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         AIF   (&MF NE 'I').ERR3
          AIF   (&ECB EQ '').ERR1
          AIF   ('&ECB'(1,1) EQ '(').REGECB
          LA    1,&ECB
@@ -39,4 +42,6 @@
 .ERR1    MNOTE 12,'POST REQUIRES ECB'
          MEXIT
 .ERR2    MNOTE 12,'POST CODE REGISTER CONFLICTS WITH ECB REGISTER'
+         MEXIT
+.ERR3    MNOTE 12,'POST MF= NOT SUPPORTED'
          MEND

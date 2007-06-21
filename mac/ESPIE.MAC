@@ -13,16 +13,17 @@
 .* 04/12/06 RPI244 SUPPORT PARAM=             
 .* 04/29/06 RPI305 CORRECT REGISTER FORM OF PARAM= (AIR TO AIF)
 .* 06/03/06 RPI321 CORRECT MNOTE MSG TO INCLUDE MACRO NAME            
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       ESPIE &OP,     SET/RESET                                      X
                &ADDR,   EXIT ADDRESS                                   X
                &LIST,   INTERRUPTION LIST (1,2...15)                   X
-               &MF=,    NOT SUPPORTED                                  X
+               &MF=I,   NOT SUPPORTED                                  X
                &PARAM=  OPTIONAL PARM TO PASS TO EXIT
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR1
+         AIF   (&MF NE 'I').ERR1
          AIF   (N'&SYSLIST LE 3).NPOK
          MNOTE 12,'ESPIE UNSUPPORTED OPERANDS - &SYSLIST(4)'
          MEXIT

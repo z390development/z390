@@ -6,6 +6,7 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 04/12/06 RPI244 ADD BLDL FOR SUPPORT OF DE= ON LINK, LOAD, XCTL
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 .* BLDL SEARCH SYS390 DIRECTORIES FOR MEMBER NAMES IN LIST AND 
 .* SET R15 RETURN CODE:
@@ -25,13 +26,13 @@
 .*********************************************************************
 &N       BLDL  &DCB,      IGNORED                                      X
                &LIST,     BLDL LIST WITH HWORD TOTAL LENGTH            X
-               &MF=,      NOT SUPPORTED                                X
+               &MF=I,     NOT SUPPORTED                                X
                &START=,   INGORED                                      X
                &STOP=     IGNORED                                       
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR2
+         AIF   (&MF NE 'I').ERR2
          AIF   (&LIST EQ '').ERR1
          AIF   ('&LIST'(1,1) EQ '(').REGLIST
          LA    1,&LIST

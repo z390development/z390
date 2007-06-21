@@ -14,18 +14,19 @@
 .* 10/20/05 RP47 - add WTOR as part of first GUAM release in v1008  
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/10/06 RPI244 IGNORE LONG=, LINKAGE=, RELATED=, SUPPORT NUM
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       WAIT  &NUM,       EVENT COUNT (DEFAULT 1)                     X
                &ECB=,      ECB ADDRESS                                 X
                &ECBLIST=,  ECB ADDRESS LIST                            X
                &LONG=,     IGNORE                                      X
                &LINKAGE=,  IGNORE                                      X
-               &MF=,       NOT SUPPORTED                               X
+               &MF=I,      NOT SUPPORTED                               X
                &RELATED=   IGNORE
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR1
+         AIF   (&MF NE 'I').ERR1
          AIF   (N'&SYSLIST LE 1).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
          MEXIT

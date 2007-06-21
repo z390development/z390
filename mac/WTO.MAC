@@ -16,10 +16,11 @@
 .* 01/12/06 RPI151 CHANGE BAL TO BRAS FOR USE WITHOUT BASE REG
 .* 04/10/06 RPI244 IGNORE KEYWORDS EXCEPT TEXT= UNSUPPORTED ERROR  
 .* 04/25/06 RPI290 ALWAYS GEN LABEL IF ANY, CHECK MF=                
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       WTO   &MSG,         'TEXT' OR TEXT= REQUIRED                  X
                &TEXT=,       MULTIPLE QUOTED TEXT ELSE ERROR           X
-               &MF=,         MF=(E,ADDR) OR MF=L DEFAULT IS STD.       X
+               &MF=I,        MF=(E,ADDR) OR MF=L DEFAULT IS STD.       X
                &CART=,       IGNORED                                   X
                &CONSID=,     IGNORED                                   X
                &CONSNAME=,   IGNORED                                   X
@@ -35,7 +36,7 @@
          MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(2)'
          MEXIT
 .NPOK    ANOP
-         AIF   (&MF NE '').MF
+         AIF   (&MF NE 'I').MF
          AIF   (&TEXT NE '').ERR2
          AIF   (&MSG EQ '').ERR3
 &MSGTEXT SETC  &MSG

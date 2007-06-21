@@ -2154,7 +2154,62 @@ set GIT_COMMITTER_DATE=2021-03-22 06:57:00 +0100
 git commit -m "Reconstructed version v1.3.04a of z390 committed on behalf of Don Higgins"
 git tag -a v1.3.04a -m "Reconstructed version v1.3.04a of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.3.04b
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.3.04b
+git add README.TXT
+git add mac/ABEND.MAC
+git add mac/BLDL.MAC
+git add mac/CALL.MAC
+git add mac/CHECK.MAC
+git add mac/CLOSE.MAC
+git add mac/DELETE.MAC
+git add mac/DEQ.MAC
+git add mac/ENQ.MAC
+git add mac/ESPIE.MAC
+git add mac/ESTAE.MAC
+git add mac/ESTAEX.MAC
+git add mac/FREEMAIN.MAC
+git add mac/GET.MAC
+git add mac/GETMAIN.MAC
+git add mac/LINK.MAC
+git add mac/LOAD.MAC
+git add mac/OPEN.MAC
+git add mac/POINT.MAC
+git add mac/POST.MAC
+git add mac/PUT.MAC
+git add mac/READ.MAC
+git add mac/RETURN.MAC
+git add mac/SAVE.MAC
+git add mac/SNAP.MAC
+git add mac/STIMER.MAC
+git add mac/STORAGE.MAC
+git add mac/TGET.MAC
+git add mac/TIME.MAC
+git add mac/TPUT.MAC
+git add mac/TTIMER.MAC
+git add mac/WAIT.MAC
+git add mac/WRITE.MAC
+git add mac/WTO.MAC
+git add mac/WTOR.MAC
+git add mac/XCTL.MAC
+git add src/az390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/tz390.java
+git add demo/STDDEVLB.MLC
+
+==> Create commit for V1.3.04b
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2007-06-21 17:06:00 -0500
+set GIT_COMMITTER_DATE=2021-03-22 07:33:00 +0100
+git commit -m "Reconstructed version v1.3.04b of z390 committed on behalf of Don Higgins"
+git tag -a v1.3.04b -m "Reconstructed version v1.3.04b of z390 committed on behalf of Don Higgins"
 
 
 

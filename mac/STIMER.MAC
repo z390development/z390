@@ -9,6 +9,7 @@
 .* 03/03/06 RPI 209 ADD STIMER WAIT INTERVAL SUPPORT
 .* 04/11/06 RPI 244 UPDATE PARMS, SUPPORT REAL       
 .* 04/20/06 RPI 279 ADD REAL/TASK,EXIT AND DINTVL= SUPPORT
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 .*
 .*  STIMER WAIT,BINTVL=s  -  where S is RX type label of full 
@@ -55,14 +56,14 @@
                &DINTVL=,   DOUBLE WORD DEC HHMMSSTH INTERVAL           X
                &ERRET=,    IGNORED                                     X
                &GMT=,      NOT SUPPORTED                               X
-               &MF=,       NOT SUPPORTED                               X
+               &MF=I,      NOT SUPPORTED                               X
                &MICVL=,    DOUBLE WORD MICROSECONDS                    X
                &TUINTVL=   DOUBLE WORD TIMER UNTIS 26.04166 MICROSEC  
         AIF   (&N EQ '').SKPLAB
 &N      DS    0H
 .SKPLAB ANOP
         AIF   (&GMT    NE '').ERR3
-        AIF   (&MF     NE '').ERR5
+        AIF   (&MF NE 'I').ERR5
         AIF   (&TYPE EQ 'WAIT').WAIT
         AIF   (&TYPE EQ 'REAL').REAL
         AIF   (&TYPE EQ 'TASK').TASK

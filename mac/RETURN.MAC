@@ -8,15 +8,16 @@
 .*********************************************************************
 .* 10/20/05 RPI  27 - issue error for any undefined operands     
 .* 06/08/07 RPI 639 - add RC=(reg) support                       
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       RETURN &REGS,                                                 X
                &SETFLAG,                                               X
-               &MF=,       NOT SUPPORTED                               X
+               &MF=I,      NOT SUPPORTED                               X
                &RC=
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR1
+         AIF   (&MF NE 'I').ERR1
          AIF   (N'&SYSLIST LE 2).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
 .NPOK    ANOP

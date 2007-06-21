@@ -15,19 +15,20 @@
 .* 04/11/06 RPI 244 CHECK FOR REGISTER CONFLICT, IGNORE UNUSED KWDS,
 .*          ALSO SWITCH R0=LENGTH AND R1=ADDR FOR COMPATIBILITY
 .* 04/16/06 RPI 293 IGNORE SP= AND FIX MNOTES
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       FREEMAIN &TYPE,      IGNORED                                  X
                &A=,        ADDRESS                                     X
                &KEY=,      NOT SUPPORTED ERROR                         X
                &LA=,       LENGTH ADDRESS                              X
                &LV=,       LENGTH VALUE                                X
-               &MF=,       NOT SUPPORTED                               X
+               &MF=I,      NOT SUPPORTED                               X
                &RELATED=,  IGNORED                                     X
                &SP=        IGNORED                                  
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR5
+         AIF   (&MF NE 'I').ERR5
          AIF   (N'&SYSLIST LE 1).NPOK   RPI 210
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
          MEXIT

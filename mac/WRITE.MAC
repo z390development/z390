@@ -13,17 +13,18 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 01/11/06 RPI170 ALLOW 'S' AS FIFTH PARM  
 .* 04/25/06 RPI290 ALWAYS DEFINE LABEL IF ANY, CHECK MF=
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       WRITE &DECB,                                                  X
                &TYPE,                                                  X
                &DCB,                                                   X
                &AREA,                                                  X
                &LENGTH,                                                X
-               &MF=       NOT SUPPORTED
+               &MF=I       NOT SUPPORTED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR3
+         AIF   (&MF NE 'I').ERR3
          AIF   (N'&SYSLIST LT 5).NPOK
          AIF   (N'&SYSLIST EQ 5 AND &SYSLIST(5) EQ '''S''').NPOK
          MNOTE 12,'WRITE UNSUPPORTED OPERANDS - &SYSLIST(5)'

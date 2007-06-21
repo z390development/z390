@@ -11,15 +11,16 @@
 .* 11/13/05 RPI96 - add additional validity checking for parms
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/10/06 RPI244 IGNORE OR ISSUE UNSUPPORTED ERROR, SUPPORT (REG)
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       OPEN  &DCBLIST,   ((DCB,OPT),(DCB,OPT),,) OR DCB OR (REG)     X
-               &MF=,       NOT SUPPORTED                               X
+               &MF=I,      NOT SUPPORTED                               X
                &MODE=31,   IGNORED AS IT WORKS IN BOTH                 X
                &TYPE=      FLAG TYPE J AS UNSUPPORTED               
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR1
+         AIF   (&MF NE 'I').ERR1
          AIF   (N'&SYSLIST EQ 1).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
 .NPOK    ANOP

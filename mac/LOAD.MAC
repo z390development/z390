@@ -14,6 +14,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 03/28/06 RPI266 CORRECT MISSING .SKP1 TO .SKPLR1
 .* 04/11/06 RPI244 ERROR ON UNSUPPORTED KEYWORDS, SUPPORT DE=,LOADPT=
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 .* LOAD PGM VIA SVC 8
 .*
@@ -42,12 +43,12 @@
                &EXTINFO=, IGNORED                                      X
                &LSEARCH=, IGNORED                                      X
                &LOADPT=,  STORE LOAD ADDRESS                           X
-               &MF=,      NOT SUPPORTED                                X
+               &MF=I,     NOT SUPPORTED                                X
                &RELATED=  IGNORED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR2
+         AIF   (&MF NE 'I').ERR2
          AIF   (N'&SYSLIST EQ 0).NPOK
          MNOTE 12,'LOAD UNSUPPORTED OPERANDS - &SYSLIST(1)'
 .NPOK    ANOP

@@ -11,6 +11,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/12/06 RPI244 SUPPORT DE= SAME REGISTER
 .* 04/25/06 RPI290 ALWAYS GEN LABEL IF ANY, CHECK MF=
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 .* XCTL AND EXEC PGM VIA SVC 7 (DELETES CALLING PGM FROM MEMORY)
 .*   R0  = ADDR PGM NAME (8 BYTES SPACE FILLED)
@@ -31,7 +32,7 @@
                &EP=,          PGMNAME 1-8 CHAR                         X
                &EPLOC=,       RX LABEL OR (REG) POINTER TO PGM FIELD   X
                &ERRET=,       NOT SUPPORTED                            X
-               &MF=,          NOT SUPPORTED                            X
+               &MF=I,         NOT SUPPORTED                            X
                &PARAM=,       PARAMETER LIST                           X
                &VL=1          SET HIGH BIT IN LAST PARM ADDR            
          AIF   (&N EQ '').SKIPDS
@@ -41,7 +42,7 @@
          MNOTE 12,'XCTL UNSUPPORTED OPERANDS - &SYSLIST(2)'
          MEXIT
 .NPOK    ANOP
-         AIF    (&MF NE '').ERR2
+         AIF    (&MF NE 'I').ERR2
          AIF    (&ERRET NE '').ERR1
          AIF    (&PARAM EQ '').ENDPARM
          LA     1,=A&PARAM

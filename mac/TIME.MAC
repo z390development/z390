@@ -11,13 +11,14 @@
 .* 11/15/05 RPI94 - add SVC NS option for nano-second interval timer  
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 01/16/06 RPI175 ADD CHECK FOR MISSING ADDR PARM
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       TIME  &TYPE,               DEC,BIN,MIC,STCK,STCKE,NS          X
                &ADDR,               STORE RESULT ADDR                  X
                &CLOCKTYPE=,         STCK/STCKE(1900),EXT JAVA (1970)   X
                &DATETYPE=YYYYDDD,   SYSTEM DATE FORMATS                X
                &LINKAGE=SVC,        SVC/SYSTEM                         X
-               &MF=,                NOT SUPPORTED                      X
+               &MF=I,               NOT SUPPORTED                      X
                &ZONE=LT             LOCAL TIME (GMT/UTC NOT SUPPORTED)
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
@@ -29,7 +30,7 @@
 .*
 .* RETURN TIME AND DATE IN REQUESTED FORMAT
 .*
-         AIF   (&MF NE '').ERR3
+         AIF   (&MF NE 'I').ERR3
          AIF   (&ZONE NE 'LT').ERR2
          AIF   (&LINKAGE EQ 'SVC').SVCLINK
          AIF   (&LINKAGE EQ 'SYSTEM').SYSLINK

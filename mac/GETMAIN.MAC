@@ -18,6 +18,7 @@
 .* 01/23/07 RPI 542 correct output regs r0=len, r1=addr                     
 .* 03/08/07 RPI 568 correct output regs r0=len, r1=addr comments            
 .* 03/12/07 RPI 575 correct to honor LOC=RES equivalent to LOC=BELOW        
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       GETMAIN &TYPE,     TYPE OF REQUEST R,RC,RU ELSE UNSUPP ERROR  X
                &A=,         ADDR TO STORE ADDR                         X
@@ -29,14 +30,14 @@
                &LA=,        ADDR OF LENGTH                             X
                &LV=,        LENGTH VALUE                               X
                &LOC=,       BELOW/RES=24, ABOVE,ANY/64=31              X
-               &MF=,        NOT SUPPORTED                              X
+               &MF=I,       NOT SUPPORTED                              X
                &RELATED=,   IGNORED                                    X
                &SP=,        IGNORED (SEE RPI 244, 248, AND 394)        X
                &STARTBDY=   IGNORED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR4
+         AIF   (&MF NE 'I').ERR4
          AIF   (N'&SYSLIST EQ 1).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
 .NPOK    ANOP

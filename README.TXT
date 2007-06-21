@@ -1,4 +1,4 @@
-z390 v1.3.04a PTF 06/10/07
+z390 v1.3.04b PTF 06/21/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.04:
@@ -42,6 +42,21 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.04:
 7.  RPI 639 update RETURN macro to correctly support RC=(reg)
     format for return code in register.
 
+8.  RPI 640 correct mz390 to correctly handle EXEC CICS parms
+    with quoted character strings with blanks.
+
+9.  RPI 641 change all macros supporting MF= to default to 
+    MF=I for z/OS compatibility.
+
+10. RPI 642 add SNAP macro support for TEXT=(reg).
+
+11. RPI 643 correct assembler to support multiple floating point
+    DS/DC values separated by commas.  Also correct emulator trace
+    format for CEFBR, CDFBR, CXFBR, CEGBR, CDGBR, and CXGBR
+    to display GPR source.  See new demo program STDDEVLB.MLC
+    which calculates standard deviation of 4 BPF 128 bit array
+    values using 128 bit BFP precision. 
+
 
 To install this cumulative PTF for z390 v1.3.04 follow these steps.
 
@@ -52,9 +67,10 @@ To install this cumulative PTF for z390 v1.3.04 follow these steps.
     replacing previous version.
   
 
-2.  Copy updated macro source files into z390\mac directory:
+2.  Copy updated macro source directory from ptf\mac to z390\mac.
 
 RETRUN - support RC=(reg) option
+All macros supporting MF= changed to default MF=I.
 
 3.  If you need to change Java source for this PTF version, all
     the Java source is in src directory and can be copied to 

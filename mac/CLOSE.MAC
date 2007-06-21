@@ -11,15 +11,16 @@
 .* 11/26/05 RPI112- check for invalid DCB RX form (reg) vs ((reg)) 
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/10/06 RPI244 support (reg) and ignore other keywords
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       CLOSE &DCBLIST, ((DCB,OPT),(DCB2,OPT2)..) OR (DCB) OR DCB     X
                &MODE=,   IGNORED AS IT WORKS IN EITHER MODE            X
-               &MF=,     NOT SUPPORTED                                 X
+               &MF=I,    NOT SUPPORTED                                 X
                &TYPE=    IGNORED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR1
+         AIF   (&MF NE 'I').ERR1
          AIF   (N'&SYSLIST EQ 1).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
          MEXIT

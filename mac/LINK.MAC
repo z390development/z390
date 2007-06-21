@@ -15,6 +15,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 03/28/06 RPI266 CORRECT MISSING .DSNERR LABEL (WAS .DSHERR)
 .* 04/11/06 RPI244 SUPPORT DE=, UNSUPPORTED ERRET=                         
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 .* LOAD AND EXEC PGM VIA SVC 6
 .*   R0  = ADDR PGM NAME (8 BYTES SPACE FILLED)
@@ -36,13 +37,13 @@
                &ERRET=,       ERROR EXIT NOT SUPPORTED                 X
                &ID=,          IGNORED                                  X
                &LSEARCH=,     IGNORED                                  X
-               &MF=,          NOT SUPPORTED                            X
+               &MF=I,         NOT SUPPORTED                            X
                &PARAM=,       PARAMETER LIST                           X
                &VL=1          SET HIGH BIT IN LAST PARM ADDR           
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR2
+         AIF   (&MF NE 'I').ERR2
          AIF   (N'&SYSLIST LE 0).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
          MEXIT

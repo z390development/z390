@@ -14,13 +14,14 @@
 .* 04/12/06 RPI 322 - support VL option with MF=L 
 .* 07/22/06 RPI 381 - support register substitution of parametrs 
 .* 11/10/06 RPI 473 - correct macro bugs and update RT\TEST\TESTCAL1
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N      CALL   &NAME,                                                  X
                &PARMS,                                                 X
                &VL,            SET END OF LIST HIGH BIT                X                 X
                &ID=,           IGNORE                                  X
                &LINKINST=BALR,                                         X
-               &MF=            S/L/E FORMS SUPPORTED
+               &MF=I           I/L/E FORMS SUPPORTED
          CNOP  0,4
          AIF   (&N EQ '').SKIPDS
 &N       DS    0F
@@ -29,8 +30,11 @@
 .NPOK    ANOP
 &NPARMS  SETA   N'&PARMS
          AIF    (&NPARMS EQ 0 AND &VL NE '').ERR3 RPI 473
+         AIF   (&MF EQ 'I').STD
          AIF   (&MF EQ 'L').LIST
          AIF   (&MF(1) EQ 'E').EXEC
+         MNOTE 12,'CALL INVALID MF=&MF'
+         MEXIT
 .STD     ANOP
          AIF    (&NPARMS EQ 0).ENDPARM
          BAL    1,*+4+&NPARMS*4

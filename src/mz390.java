@@ -277,7 +277,8 @@ public  class  mz390 {
      * 05/14/07 RPI 604 BS2000 compatibility option   
      * 06/08/07 RPI 632 reset az390 loc_ctr to prevent extra pass 
      * 06/09/07 RPI 633 prevent error when macro call label not symbol
-     *          and only find symbol if entire string matches        
+     *          and only find symbol if entire string matches 
+     * 06/13/07 RPI 640 correct EXEC CICS parser to handle quoted strings                
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1121,6 +1122,37 @@ public  class  mz390 {
 			abort_error(2,"proto pattern error - " + e.toString());
 		}
 		/*
+		 * exec_pattern same as proto_pattern plus ; for comments RPI 640
+		 *   1.  &vvv=  var followed by = for detecting key vs pos
+		 *   2.  C'xxx' spaces and '' ok in xxx
+		 *   3.  'xxx' spaces and '' ok in xxx
+		 *   4.  xxx    no spaces or commas in xxx ('s ok)
+		 *   5.  ,      return commas for detecting null pos
+		 *   6.  space  return space for detecting  comments
+		 *   7.  return ( and ) to parse kw parm value (a,b)  RPI 223
+		 * */
+		try {
+			exec_pattern = Pattern.compile(
+					"([&][&])"
+					+ "|([&][(])"
+					+ "|([&][a-zA-Z$@#_][a-zA-Z0-9$@#_]*[=]*)" // &var or &var= for keyword  RPI 253
+					+ "|([0-9]+)"                        // number
+					+ "|([']([^']|(['][']))*['])"        // parm in quotes
+					+ "|([\\s/()',\\.\\+\\-\\*=;])"       // operators and white space RPI181 (\\ for reg exp. opers) add ";" RPI 640 
+					+ "|([dD]['])"                       // D' defined symbol test 0 or 1  RPI 336
+					+ "|([iIkKlLnNoOsStT]['])"           // ?' prefix operators  RPI 481
+					+ "|([bB]['][0|1]+['])"              // B'0110' binary self def. term
+					+ "|([cC][aAeE]*[']([^']|(['][']))+['])"    // C'ABCD' ebcdic or ascii self def. term // RPI 270, 274
+					+ "|([cC][\"]([^\"]|([\"][\"]))+[\"])"    // C"ABCD" ascii self def. term   RPI73, 274
+					+ "|([cC][!]([^!]|([!][!]))+[!])"        // C"ABCD" ebcdic self def. term  RPI84, 274
+					+ "|([xX]['][0-9a-fA-F]+['])"        // X'0F'   hex self defining term
+					+ "|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"   // symbol or logical operator (AND, OR, XOR, NOT, GT, LT etc.) // RPI 253
+					+ "|([^',()\\s]+)"   // RPI 223, RPI 250                  // any other text
+			);
+		} catch (Exception e){
+			abort_error(2,"exec pattern error - " + e.toString());
+		}
+		/*
 		 * macro label_pattern  .lll
 		 */
 		try {
@@ -1182,17 +1214,6 @@ public  class  mz390 {
 			);
 		} catch (Exception e){
 			abort_error(4,"expression pattern error - " + e.toString());
-		}
-		/*
-		 * macro label_pattern  .lll
-		 */
-		try {
-			exec_pattern = Pattern.compile( // RPI 293
-					"([;,])"
-				+	"|([^\\s]+)"           
-			);
-		} catch (Exception e){
-			abort_error(147,"exec pattern error - " + e.toString());
 		}
 	}
 	private void open_files(){
@@ -1599,27 +1620,46 @@ public  class  mz390 {
 		 * parse space delimited parms for exec
 		 * sql cics or dli and replace with comma
 		 * delimited parms for EXEC macro processing.
+		 * Notes:
+		 *   1.  Use the proto_pattern to handle all
+		 *       valid macro assembler parm expressions
+		 *       including quoted strings with spaces. RPI 640
 		 */
+		
 		exec_match = exec_pattern.matcher(mac_parms);
 		String exec_parms = "";
+		String exec_parm;
+		char   exec_parm_char;
 		boolean exec_eof = false;
+		boolean exec_space = false;
 		while (!exec_eof 
 				&& exec_match.find()){
-			String exec_parm = exec_match.group();
-			switch (exec_parm.charAt(0)){
-			case ',': // ignore
-				break;
-			case ';': // ignore following comments
-				exec_eof = true;
-				break;
-			default: // assume exec statement parm
-				exec_parms = exec_parms.concat("," + exec_parm);
-			break;
+			exec_parm = exec_match.group();
+			exec_parm_char = exec_parm.charAt(0);
+			if (!exec_space){
+				if (exec_parm_char <= ' '){
+					exec_space = true;
+				} else {
+					if (exec_parm_char != ';'){
+						exec_parms = exec_parms.concat(exec_parm);
+					} else {
+						exec_eof = true;
+					}
+				}
+			} else {
+				if (exec_parm_char > ' '){
+					exec_space = false;
+					if (exec_parm_char != ';'){
+						exec_parms = exec_parms.concat("," + exec_parm);
+					} else {
+						exec_eof = true;
+					}
+				}
 			}
 		}
-		if (exec_parms.length() > 0){
-			exec_parms = exec_parms.substring(1);
-		}
+		//dshx if (exec_parms.length() > 0){ // remove extra space
+		//dshx	exec_parms = exec_parms.substring(1);
+		//dshx }
 		mac_file_line[mac_line_index] = " EXEC " + exec_parms;
 	}
 	private void load_macro_ago_aif_refs(){

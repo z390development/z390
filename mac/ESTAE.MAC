@@ -11,11 +11,12 @@
 .* 04/11/06 RPI 244 IGNORE UNUSED KEYWORDS, SUPPORT CV,CT,PARAM=       
 .* 06/03/06 RPI 321 CORRECT MNOTE MSG TO INCLUDE MACRO NAME            
 .* 11/10/06 RPI 475 SUPPORT CT AS IF OV            
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N      ESTAE  &ADDR,          ADDRESS OF ABEND RECOVERY EXIT          X
                &TYPE,          OV=REPLACE EXIT, CT=ADD NEW EXIT        X
                &ASYNCH=NO,     IGNORE                                  X
-               &MF=,           NOT SUPPORTED                           X
+               &MF=I,          NOT SUPPORTED                           X
                &PARAM=,        ADDRESS PASSED IN R1 IF SPECIFIED       X
                &PURGE=NONE,    IGNORE                                  X
                &RELATED=,      IGNORE                                  X
@@ -25,7 +26,7 @@
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR1
+         AIF   (&MF NE 'I').ERR1
          AIF   (N'&SYSLIST LE 2).NPOK  R[ 475
          MNOTE 12,'ESTAE UNSUPPORTED OPERANDS - &SYSLIST(2)'
 .NPOK    ANOP

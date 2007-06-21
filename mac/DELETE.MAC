@@ -10,18 +10,19 @@
 .* 11/19/05 RPI102 - allow DDNAME or DSNAME to replace EP or EPLOC
 .* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       DELETE &DE=,      BLDL ENTRY                                  X
                &EP=,      PROGRAM NAME                                 X
                &EPLOC=,   ADDR OF PROGRAM NAME                         X
                &DDNAME=,  1-9 CHARACTER DDNAME                         X
                &DSNAME=,  RX ADDR OF DSN WITH PATH                     X
-               &MF=,      NOT SUPPORTED                                X
+               &MF=I,     NOT SUPPORTED                                X
                &RELATED   IGNORED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR1
+         AIF   (&MF NE 'I').ERR1
          AIF   (N'&SYSLIST EQ 0).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
 .NPOK    ANOP

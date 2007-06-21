@@ -9,16 +9,17 @@
 .* 04/23/06 RPI 279 - add TTIMER to test or cancel STIMER REAL         
 .* 09/19/06 RPI 452 - return time for CANCEL,TU OR CANCEL,MIC,ADDR                          
 .* 10/07/06 RPI 472 - set TYPE=TU for default on CANCEL                                     
+.* 06/14/07 RPI 641 DEFAULT MF=I
 .*********************************************************************
 &N       TTIMER &CANCEL,   CANCEL TTIMER INTERVAL IF DEFINED           X
                &TYPE,      TU (DEFAULT RETURN IN R0) OR MIC,MICADDR    X
                &ADDR,      DOUBLE WORD TO STORE MIC TIME REMAINING     X
                &ERRET=,    IGNORE                                      X 
-               &MF=        NOT SUPPORTED
+               &MF=I        NOT SUPPORTED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE '').ERR2
+         AIF   (&MF NE 'I').ERR2
          AIF   (&CANCEL EQ 'CANCEL').CANCEL
          AIF   (&TYPE EQ '').TU
          AIF   (&TYPE EQ 'TU').TU

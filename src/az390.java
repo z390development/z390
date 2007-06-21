@@ -264,7 +264,8 @@ public  class  az390 implements Runnable {
     *          show DC A/Y/V data address as rel module to
     *          match PRN location counter but leave obj data
     *          as relative CSECT for use by linker 
-    * 06/10/07 RPI 637 issue error if missing ) on off(reg,reg) opnd              
+    * 06/10/07 RPI 637 issue error if missing ) on off(reg,reg) opnd 
+    * 06/21/07 RPI 643 correct multiple value DCF's             
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -6232,13 +6233,18 @@ private void get_dc_fp_hex(String text,int index){
 	 * set dc_hex for D, E, or F 
 	 * floating point sdt starting at text index
 	 */
-	int text_end = text.substring(index).indexOf('\''); // RPI 411
-	if (text_end == -1){
-		text_end = text.substring(index).indexOf(',');
+	if (text.charAt(index) == ','){
+		index++;
+	}
+	int text_end   = text.substring(index).indexOf('\''); // RPI 411
+	int text_comma = text.substring(index).indexOf(','); // RPI 463
+	if (text_comma == -1 || text_comma > text_end){
 		if (text_end == -1){
 			log_error(66,"invalid floating point data field");
 			dc_hex = "00";
 		}
+	} else {
+		text_end = text_comma; // rpi 463
 	}
 	dc_index = index + text_end;
 	get_fp_hex(text.substring(index,index+text_end));
