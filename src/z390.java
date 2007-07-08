@@ -121,6 +121,7 @@ public  class  z390 extends JApplet
      * 01/20/07 RPI 541 correct Z390 GUI file selection dialog cancel action
      * 01/30/07 RPI 532 correct Doc path and cmd.pl path and separator
      * 04/26/07 RPI 603 correct up/down scrolling
+     * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -682,7 +683,7 @@ public  class  z390 extends JApplet
 		        abort_error(10,"maximum errors exceeded");
             }
 		}
-		private void abort_error(int error,String msg){
+		private synchronized void abort_error(int error,String msg){ // RPI 646
 			z390_errors++;
 			msg = "SZ390E " + error + " " + msg;
 			put_log(msg);

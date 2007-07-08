@@ -1,12 +1,65 @@
 Z390/CICS History
------------------
+=================
 
 This is only a brief summary, please refer to the Application
 Programmers Guide and the System Programmers Guide for the details.
 
-Ver  Ship Date    Z390 version
----  -----------  ------------
-V1   May 1, 2007  V1.3.03b
+The Ship Date is the date the package is given to Don, there may be
+a delay before he can include it in a PTF or release.
+
+Ver  Ship Date     Z390 version
+---  ------------  ------------
+V2   June 25,2007  V1.3.04c
+   Corrections to setting of EIBAID and EIBCPOSN.
+   Maintain EIBRSRCE (program name).
+   Clear prefix section of DSA, possibility of abends.
+   Support of multiple base registers for code and DSA...
+      see ZCICSAPP doc.
+   Local terminals may not start...thanks to Don for a temporary fix.
+      Command Prompt pathname not externalised.
+      Fixed by extra INI parm CICS_PATH...see ZCICSSYS doc.
+   Added DFHAID.CPY...BAT files may need SYSCPY amended if used.
+
+   Enhancements and changes...
+      EXEC CICS RECEIVE
+         ... supports NOHANDLE
+         ... default INTO(EIBAID) has been withdrawn,
+             recode to EXEC CICS RECEIVE INTO(EIBAID) LENGTH(ONE)
+                       ...
+                       ONE DC H'1'
+      Abend handling now properly implemented.
+      COMMAREA()  now supports indirect addressing.
+      SEND FROM() now supports indirect addressing.
+      Added SHUT DOWN status to CEMT I TER.
+      CEMT now accepts full wording for commands, ie. CEMT SET
+         TERMINAL OUT, but only the minimum number of characters
+         of each parameter will be tested.
+      CEMT P SHU and CEMT P SHU IMM are fully implemented, there are
+         some issues, see ZCICSSYS for details.
+      Added INI parameter INITIAL_TRANSID to fire a transaction when
+         terminal is started. New LOGO transid.
+      Added dummy DFHPCTUS.CPY for users to add their own PCT entries.
+      INI parms JAR_PATH and CICS_PATH now support preset environment
+      variables as %...%
+
+   Added support for...
+      ABEND
+      FREEMAIN
+      GETMAIN
+      HANDLE AID
+      HANDLE ABEND
+      HANDLE CONDITION
+         only ERROR, INVREQ, LENGERR, PGMIDERR supported
+      IGNORE CONDITION
+         only ERROR, INVREQ, LENGERR, PGMIDERR supported
+      PUSH HANDLE
+      POP HANDLE
+      RELEASE
+
+Ver  Ship Date     Z390 version
+---  ------------  ------------
+V1   May 1, 2007   V1.3.03b
+
    Provides assembly support for CICS programs.
 
    Includes most parameters associated with the following EXEC CICS
@@ -20,4 +73,7 @@ Trademarks
 CICS is a registered trademark of International Business Corporation.
 
 Author: Melvyn Maltz
+Shipping Date: June 25, 2007
+Z390 version: V1.3.04c
+Z390/CICS version: V2
 

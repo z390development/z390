@@ -8,6 +8,8 @@
 .*********************************************************************
          MACRO
          CICS_RECEIVE
+         GBLB  &AIDIX
+         LCLB  &NOHAND
          LCLC  &INTO,&LENGTH
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
@@ -17,39 +19,144 @@
 &PARM    SETC  &SYSLIST(&IP)
          AIF   ('&PARM'(1,5) EQ 'INTO(').INTO
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
+         MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
+.*
 .INTO    ANOP
 &INTO    SETC  '&PARM'(6,K'&PARM-6)
          AGO   .PLOOP
+.*
 .LENGTH  ANOP
 &LENGTH  SETC  '&PARM'(8,K'&PARM-8)
          AGO   .PLOOP
+.*
+.NOHAND  ANOP
+&NOHAND  SETB  1
+         AGO   .PLOOP
+.*
 .ELOOP   ANOP
-         AIF   (&INTO EQ '' AND &LENGTH EQ '').READAID
          AIF   (&INTO NE '' AND &LENGTH NE '').LENNUM
          MNOTE 12,'BOTH INTO AND LENGTH ARE REQUIRED'
          MEXIT
+.*
 .LENNUM  ANOP
-         AIF   ('&LENGTH'(1,2) EQ 'L''').LENERR
+         AIF   ('&LENGTH'(2,1) EQ '''').LENERR
          AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
 .LENERR  ANOP
          MNOTE 12,'LENGTH ERROR'
          MEXIT
+.*
 .LENLABL ANOP
-         LH    R0,&LENGTH         R0=LENGTH
-         AGO   .TGET
-.READAID ANOP
-&INTO    SETC  'EIBAID'
-         LA    R0,1               SET LENGTH=1
-.TGET    ANOP
-         LR    R14,R1             R14=REQUESTED LENGTH
+         LA    R0,L'&INTO         R0=LENGTH
+         LR    R14,R0             R14=REQUESTED LENGTH
          MVC   EIBFN,=X'0402'     SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
          TGET  &INTO,(0),ASIS
+         STH   R1,&LENGTH         SET RECEIVED LENGTH
+.* NOHANDLE AVOIDS CONDITION CHECKS
+         AIF   (&NOHAND).NOLENCHK
          CR    R14,R1             ACTUAL LENGTH EXCEEDS REQUESTED ?
          BNL   CICS_RECEIVE_&SYSNDX._01 EXIT IF NOT
-.* ### SET EIBRCODE/EIBRESP2 LATER, LENGERR,X'00E1'
-         LG    R15,=CL8'LENGERR'
-         DC    H'0'
+.* INVOKE LENGERR
+         MVI   EIBRCODE,X'E1'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(CICS_RECEIVE_&SYSNDX._01) ENTPT FOR IGNORE COND
+.*
 CICS_RECEIVE_&SYSNDX._01 DS 0H
+.NOLENCHK ANOP
+         AIF   ('&INTO' EQ 'EIBAID').MISAIDMV
+.* SET EIBAID
+         MVC   EIBAID,&INTO       SET EIBAID
+.* SET EIBCPOSN IF ENOUGH DATA
+         CH    R1,=H'3'           LENGTH >= 3 ?
+         BL    CICS_RECEIVE_&SYSNDX._02 EXIT IF NOT
+* CURSOR POS TO HEX EG. C1C6, ROW 1 COL 71, POS 70
+         SR    R0,R0              CLEAR R0
+         LR    R1,R0              CLEAR R1
+         ICM   R0,8,&INTO+1       1ST BYTE TO TOP OF R0  C1..
+         SLL   R0,2               SHIFT OUT PARITY BITS  04..
+         SRL   R0,26              CONVERT TO 6 BIT VALUE ..01
+         ICM   R1,8,&INTO+2       2ND BYTE TO TOP OF R1  ..01/C6...
+         SLL   R1,2               SHIFT OUT PARITY BITS  ..01/18...
+         SRDL  R0,26              COMBINE TO 12-BITS     ..../...46
+         STH   R1,EIBCPOSN        SAVE IT
+CICS_RECEIVE_&SYSNDX._02 DS 0H
+.MISAIDMV ANOP
+.* PROCESS ANY HANDLE AID
+.* NOHANDLE AVOIDS HANDLE AID CHECKS
+         AIF   (&NOHAND).NOAIDCHK
+         USING DFHADBLK,R1
+         ICM   R1,15,DFHEIAID     ANY AID BLOCKS ?
+         BZ    CICS_RECEIVE_&SYSNDX._03 EXIT IF NONE
+CICS_RECEIVE_&SYSNDX._07 DS 0H
+         OC    AIDCHAIN,AIDCHAIN  ANY CHAIN ?
+         BZ    CICS_RECEIVE_&SYSNDX._05 EXIT IF LAST AID BLOCK
+         L     R1,AIDCHAIN        CHAIN TO NEXT AID BLOCK
+         B     CICS_RECEIVE_&SYSNDX._07 LOOP
+*
+CICS_RECEIVE_&SYSNDX._05 DS 0H
+         LA    R14,CICS_RECEIVE_AIDIX R14=AID INDEX
+CICS_RECEIVE_&SYSNDX._06 DS 0H
+         CLC   0(1,R14),EIBAID    OUR AID ?
+         BE    CICS_RECEIVE_&SYSNDX._04 EXIT IF IT IS
+         AHI   R14,3              BUMP POINTER
+         CLI   0(R14),X'FF'       STOPPER ?
+         BNE   CICS_RECEIVE_&SYSNDX._06 LOOP IF NOT
+         ABEND 999,DUMP           EIBAID IN ERROR
+CICS_RECEIVE_&SYSNDX._04 DS 0H
+.* TEST AID BLOCK SLOT
+         LH    R15,1(R14)         R15=AID INDEX
+         SLL   R15,2              * 4
+         LA    R15,12(R15,R1)     + 12 (HEADER+CHAIN) + ADBLK ADDRESS
+         OC    0(4,R15),0(R15)    ANY LABEL HERE ?
+         BZ    CICS_RECEIVE_&SYSNDX._03 EXIT IF NONE
+         L     R14,0(R15)         LOAD ROUTINE ADDRESS
+         BR    R14                GO TO IT
+.*
+CICS_RECEIVE_&SYSNDX._03 DS 0H
+.* ONE OFF AID INDEX GENERATION
+         AIF   (&AIDIX).MISAIDIX
+&AIDIX   SETB  1
+         B     CICS_RECEIVE_&SYSNDX._IX BRANCH ROUND AID INDEX
+*
+CICS_RECEIVE_AIDIX DS 0H
+         DC    X'7D',AL2(0)       ENTER
+         DC    X'6D',AL2(1)       CLEAR
+         DC    X'6C',AL2(2)       PA1
+         DC    X'6E',AL2(3)       PA2
+         DC    X'6B',AL2(4)       PA3
+         DC    X'F1',AL2(5)       PF1
+         DC    X'F2',AL2(6)       PF2
+         DC    X'F3',AL2(7)       PF3
+         DC    X'F4',AL2(8)       PF4
+         DC    X'F5',AL2(9)       PF5
+         DC    X'F6',AL2(10)      PF6
+         DC    X'F7',AL2(11)      PF7
+         DC    X'F8',AL2(12)      PF8
+         DC    X'F9',AL2(13)      PF9
+         DC    X'7A',AL2(14)      PF10
+         DC    X'7B',AL2(15)      PF11
+         DC    X'7C',AL2(16)      PF12
+         DC    X'C1',AL2(17)      PF13
+         DC    X'C2',AL2(18)      PF14
+         DC    X'C3',AL2(19)      PF15
+         DC    X'C4',AL2(20)      PF16
+         DC    X'C5',AL2(21)      PF17
+         DC    X'C6',AL2(22)      PF18
+         DC    X'C7',AL2(23)      PF19
+         DC    X'C8',AL2(24)      PF20
+         DC    X'C9',AL2(25)      PF21
+         DC    X'4A',AL2(26)      PF22
+         DC    X'4B',AL2(27)      PF23
+         DC    X'4C',AL2(28)      PF24
+         DC    X'FF'              STOPPER
+CICS_RECEIVE_&SYSNDX._IX DS 0H
+.MISAIDIX ANOP
+         DROP  R1
+.NOAIDCHK ANOP
          MEND
 

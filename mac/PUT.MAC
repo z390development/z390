@@ -12,9 +12,11 @@
 .* 10/20/05 RPI38 - check for register conflicts     
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 07/22/07 RPI 644 ADD RPL VSAM SUPPORT VIA SVC 121 R0=1, R1=A(RPL)
 .*********************************************************************
 &N       PUT   &DCB,                                                   X
                &REC,                                                   X
+               &RPL=,    VSAM REQUEST PARAMETER LIST                   X
                &MF=I  NOT SUPPORTED
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
@@ -23,6 +25,7 @@
          AIF   (N'&SYSLIST LE 2).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
 .NPOK    ANOP
+         AIF   (&RPL NE '').VSAM
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          LA    1,&DCB
          AGO   .CHKREC
@@ -42,8 +45,18 @@
 .RECDEF  ANOP
          L     0,DCBREC-IHADCB(1)
 .SVC     ANOP
-         SVC  152 PUT R0=REC, R1=DCB 
+         SVC  152 QSAM PUT R0=REC, R1=DCB 
          MEXIT
+.VSAM    ANOP
+         AIF   ('&RPL'(1,1) EQ '(').RPLREG
+         LA    1,&RPL
+         AGO   .VSVC
+.RPLREG  ANOP
+         LR    1,&RPL(1)
+.VSVC    ANOP
+         LA    0,1
+         SVC   121 VSAM PUT R0=1 R1=A(RPL)
+         MEXIT         
 .ERR1    MNOTE 12,'PUT RECORD REG INVALID - &REC(1)'
          MEXIT
 .ERR2    MNOTE 12,'PUT MF= NOT SUPPORTED'

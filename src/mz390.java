@@ -278,7 +278,10 @@ public  class  mz390 {
      * 06/08/07 RPI 632 reset az390 loc_ctr to prevent extra pass 
      * 06/09/07 RPI 633 prevent error when macro call label not symbol
      *          and only find symbol if entire string matches 
-     * 06/13/07 RPI 640 correct EXEC CICS parser to handle quoted strings                
+     * 06/13/07 RPI 640 correct EXEC CICS parser to handle quoted strings 
+     * 06/23/07 RPI 645 issue error for invalid substring subscripts
+     * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
+     * 07/05/07 RPI 647 allow comma between INDEX, FIND operands and fix trace               
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -712,14 +715,13 @@ public  class  mz390 {
 	 * define exp actions based on last and
 	 * next operator class
 	 *     1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
-	 *    +- * / (  )  .  ~ EQ  '  , ?'NOT AND OR XOR &( col = next_op
-	 *                                                   row = prev_op
+	 *    +- * / (  )  .  ~ EQ  '  , ?'NOT AND OR XOR &( col = next_op                                                  row = prev_op
 	 */ 
 	int tot_classes = 15;
 	int[] exp_action = {  
 			1, 3, 3, 1, 0, 1, 1, 8, 1, 3, 1, 1, 1, 1, 3, // 1 +-  prev add/sub
 			2, 2, 3, 2, 0, 2, 2, 8, 2, 3, 2, 2, 2, 2, 3, // 2 * / prev mpy/div  RPI 214
-			3, 3, 3, 4, 3, 0, 3, 3, 0, 3, 3, 3, 3, 3, 3, // 3 (   prev open (...) RPI 274
+			3, 3, 3, 4, 3, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, // 3 (   prev open (...) RPI 274, RPI 647
 			3, 3, 3,11, 3, 3, 3, 8,11, 3, 3, 3, 3, 3, 3, // 4 )   prev var subscript RPI 559
 			0, 0, 3, 5, 5, 5, 5, 8, 0, 3, 0, 0, 0, 0, 3, // 5 .   prev concat
 			3, 3, 3, 6, 3, 6, 3, 8, 3, 3, 3, 3, 3, 3, 3, // 6 ~   prev terminator
@@ -1657,9 +1659,6 @@ public  class  mz390 {
 				}
 			}
 		}
-		//dshx if (exec_parms.length() > 0){ // remove extra space
-		//dshx	exec_parms = exec_parms.substring(1);
-		//dshx }
 		mac_file_line[mac_line_index] = " EXEC " + exec_parms;
 	}
 	private void load_macro_ago_aif_refs(){
@@ -2571,7 +2570,7 @@ public  class  mz390 {
 		}
 		return null;
 	}
-	private void abort_case(){
+	private synchronized void abort_case(){ // RPI 646
 		/*
 		 * abort case with invalide index
 		 */
@@ -4060,7 +4059,11 @@ public  class  mz390 {
 			}
 			break;
 		case  3: // (..) 
-			exp_push_op();
+			if (exp_next_first != ','){  // RPI 647 SKIP COMMAS
+				exp_push_op();
+			} else {
+				break;
+			}
 			if (exp_next_first == '('){
 				exp_level++;
 			} else if (exp_next_first == '\''){  //RPI99
@@ -4500,7 +4503,7 @@ public  class  mz390 {
 		 */
 		get_setc_stack_values();
 		if (tz390.opt_traceall){
-			tz390.put_trace("INDEX " + setc_value1 + " IN " + setc_value2);
+			tz390.put_trace("INDEX " + setc_value2 + " IN " + setc_value1);  // RPI 647
 		}
 		int str1_len = setc_value1.length();
 		int str2_len = setc_value2.length();
@@ -4528,7 +4531,7 @@ public  class  mz390 {
 		 */
 		get_setc_stack_values();
 		if (tz390.opt_traceall){
-			tz390.put_trace("FIND " + setc_value1 + " IN " + setc_value2);
+			tz390.put_trace("FIND " + setc_value2 + " IN " + setc_value1);  // RPI 647
 		}
 		int str1_len = setc_value1.length();
 		int str2_len = setc_value2.length();
@@ -8928,17 +8931,21 @@ public  class  mz390 {
 			}
 			setc_value1 = exp_stk_setc[tot_exp_stk_var-1];
 			setc_len = setc_value1.length();
-			if (seta_value1 >= 0 && seta_value2 >= 0){
+			if (seta_value1 > 0 && seta_value2 >= 0){ // RPI 645
 				if (seta_value1 <= setc_len && seta_value2 > 0){
 					int e1 = seta_value1 - 1; 
 					int e2 = e1 + seta_value2;
-					if (e2 > setc_len)e2 = setc_len;
+					if (e2 > setc_len){
+						e2 = setc_len;
+					}
 					setc_value = exp_stk_setc[tot_exp_stk_var - 1].substring(e1,e2);
 					exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
 				} else {
 					setc_value = "";
 					exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
 				}
+			} else {  // RPI 645
+				log_error(217,"invalid substring - offset=" + seta_value1 + " len=" + seta_value2);
 			}
 		} else {
 			log_error(52,"invalid substring expression");

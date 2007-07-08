@@ -1,0 +1,25 @@
+Z390/CICS Readme
+================
+
+Recommended Z390 release is V1.3.05
+
+All user-wriitem Z390/CICS Application programs must be re-assembled.
+
+A brief summary of updates is in ZCICSHST.TXT
+
+Z390/CICS V2 has a new document, ZCICSDRF.TXT, the Diagnosis Reference.
+This contains a description of control blocks and the techniques used
+in the implementation of some commands.
+
+There is a new Z390CICS.INI parameter, CICS_PATH which may need amending.
+Environment variables nay now be used in JAR_PATH and CICS_PATH in the
+form %...%
+
+Trademarks
+----------
+CICS is a registered trademark of International Business Corporation.
+
+Author: Melvyn Maltz
+Shipping Date: June 25, 2007
+Z390 version: V1.3.05
+Z390/CICS version: V2

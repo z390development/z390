@@ -33,6 +33,7 @@ call RT1 %~dps0rt\test\TESTMAC8 sysmac(rt\test+mac) systerm(RTTEST) %1 %2 %3 %4 
 call RT1 %~dps0rt\test\TESTMAC9 sysmac(rt\test+mac) syscpy(rt\test) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTPRO1 profile(TESTPRO1) sysmac(rt\test+mac) syscpy(rt\test) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTOPR1 tracep systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTORG1 trace  systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSET1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSET2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSET3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -141,6 +142,7 @@ call RT5 %~dps0rt\test\TESTASC4 test(SYSUT1) ascii systerm(RTTEST) %1 %2 %3 %4 %
 call RT1 %~dps0rt\test\TESTCMD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTCMD2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTCIC1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call ASM %~dps0rt\test\TESTCIC2 cics notiming systerm(RTTEST) sysmac(cics+mac) syscpy(cics+mac) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT7 %~dps0rt\test\TESTDMP1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT7 %~dps0rt\test\TESTDMP2 dump systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT7 %~dps0rt\test\TESTDMP3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -154,6 +156,8 @@ call RT1 %~dps0rt\test\TESTIPL2 ipl(TESTIPL1) sys390(rt\test) systerm(RTTEST) %1
 call RT1 %~dps0rt\test\TESTZCV1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSPI1 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSTA1 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call ASML %~dps0rt\test\TESTSTA3 notiming systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTSTA2 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTCTD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTCFD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTCVB1 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9

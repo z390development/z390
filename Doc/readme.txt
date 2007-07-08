@@ -1,9 +1,9 @@
-z390 V1.3.04 Portable Mainframe Assembler
+z390 V1.3.05 Portable Mainframe Assembler
 Copyright 2007 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
  * Microsoft Windows Vista, Windows XP, or Ubuntu Linux 6.06 LTS (others not tested)
- * Sun Microsystems Java Runtime J2SE 1.5.0+ (1.5.0_11 latest fully tested)
+ * Sun Microsystems Java Runtime J2SE 1.5.0+ (1.6.0_01 latest fully tested on XP/Vista)
  * Minimum of 512 MB memory (default Java user memory allocation set to 100 MB)
  * Adobe Acrobat or later for viewing User Guide
 
@@ -54,7 +54,7 @@ z390 Windows Vista and XP installation instructions:
         which should display correct OS, J2SE, and z390 versions.  Verify the z390 install 
         version and the J2SE version.  The RT regression test version and MVS
         macro versions will only match after you download and install these options.
-    b. Enter the command “ASMLG demo\DEMO” to run demo
+    b. Enter the command “ASMLG demo\DEMO” to assembler and run demo\DEMO.MLC
     c. Scroll the output log to see output of each step
     d. Use file menu edit selection to view generated ASCII source files:
         1)  DEMO.MLC – source macro assembler demo for WTO ‘hello world’

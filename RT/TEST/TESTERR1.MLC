@@ -11,6 +11,7 @@
 * 05/14/06 RPI 314 - TEST COMPOUND AIF AND COMPUTED AGO MISSING LAB
 * 03/09/07 RPI 565 - TEST INVALID USE OF &SYSLIST WITHOUT SUBSCRIPT
 * 05/07/07 RPI 609 - TEST INVALID STRING CONV IN SETB EXPRESSION
+* 07/06/07 RPI 645 - TEST INVALID SUBSTRING SUBSCRIPT 0            
 *********************************************************************
          TITLE 'TESTERR1 TEST MZ390 ERRORS'
 TESTERR1 CSECT
@@ -111,7 +112,14 @@ A        TEST2 B,K1=C
 .T13     MNOTE '.T13'
 * ADD INVALID  SETB STRING CONV
 &SETB    SETB   '0'
-* ADD DUPLICATE AND MISSING MACRO ERRORS IN MACRO CODE
+* ADD TEST INVALID SUBSTRING SUBSCRIPT 0
+&SETC    SETC   'X'(0,0)
+**********************************************************
+* ADD DUPLICATE AND MISSING MACRO ERRORS IN OPEN CODE
+*
+* THIS MUST BE LAST TEST WITH FAILING AGO IN OPEN CODE
+*
+**********************************************************
          MACRO
          TESTLAB
 .LAB1    ANOP
@@ -120,12 +128,6 @@ A        TEST2 B,K1=C
          AGO    .UNDEFINED1
          AIF    (1 EQ 1).UNDEFINED2
          MEND
-**********************************************************
-* ADD DUPLICATE AND MISSING MACRO ERRORS IN OPEN CODE
-*
-* THIS MUST BE LAST TEST WITH FAILING AGO IN OPEN CODE
-*
-**********************************************************
 .LAB1    ANOP
 .LAB2    ANOP
 .LAB1    ANOP

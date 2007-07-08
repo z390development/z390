@@ -161,6 +161,7 @@ import javax.swing.Timer;
     * 04/07/07 RPI 582 set R1 to addr of addr of PARM
     * 04/16/07 RPI 595 echo WTOR reply to console if not GUAM or TEST
     * 05/07/07 RPI 610 correct XCTL link on mult link,xctl,exit 
+    * 06/22/07 RPI 644 add init for vz390 VSAM access method
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -170,6 +171,7 @@ import javax.swing.Timer;
 	tz390 tz390 = null;
 	pz390 pz390 = null;
 	sz390 sz390 = null;
+	vz390 vz390 = null; // RPI 644
 	Thread  pz390_thread = null;
 	boolean pz390_running = false;
     String load_file_name = null;
@@ -342,11 +344,13 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
 	    tz390 = new tz390();
 	    pz390 = new pz390();
 	    sz390 = new sz390();
+	    vz390 = new vz390();
 	    tz390.init_tables();
         tz390.init_options(args,tz390.z390_type);
 	    tz390.open_systerm("EZ390");
         sz390.init_sz390(tz390,pz390);
 	    pz390.init_pz390(tz390,sz390);
+	    vz390.init_vz390(tz390,pz390);
 		sz390.open_files(); // RPI 357
         sz390.init_time();
         sz390.init_test();

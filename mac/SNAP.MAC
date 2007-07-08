@@ -15,6 +15,7 @@
 .* 04/14/07 RPI 583 CHANGE PDATA=ALL TO ALSO DUMP ALL STORAGE
 .* 05/15/07 RPI 623 SUPPORT ID=(REG)                            
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 06/23/07 RPI 642 SUPPORT TEXT=(REG)
 .*********************************************************************
 .* SNAP WILL GENERATE DUMP ON LOG FILE BASED ON THESE PARMS:
 .*  1. PDATA= (DEFAULT IS ALL)
@@ -125,11 +126,15 @@
 .SETFLAGS ANOP
          IILH  0,&FLAGS               RPI158
          AIF   (&TEXT EQ '').NOTEXT
+         AIF   ('&TEXT'(1,1) EQ '(').REGTEXT  RPI 642
 &TEMP    SETC  &TEXT
          AIF   ('&TEMP'(1,1) NE '''').SKIP
 &TEMP    SETC  '&TEMP'(2,K'&TEMP-2)
 .SKIP    ANOP
          LA    1,=CL60'&TEMP'
+         AGO   .SVC
+.REGTEXT ANOP
+         LR    1,&TEXT(1)  RPI 642 PTR TO TEXT WITH NULL TERM (MAX 60)
          AGO   .SVC
 .NOTEXT  ANOP
          LA    1,0

@@ -2211,7 +2211,109 @@ set GIT_COMMITTER_DATE=2021-03-22 07:33:00 +0100
 git commit -m "Reconstructed version v1.3.04b of z390 committed on behalf of Don Higgins"
 git tag -a v1.3.04b -m "Reconstructed version v1.3.04b of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.3.05
+==> Add util and vse directories from v1.3.03c
+==> Add util/vse related files: RTUTIL.BAT RTUTIL1.BAT RTVSE.BAT RTVSE1.BAT ZAP.BAT
+==> Add demo/STDDEVLB.MLC from v1.3.04b
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.3.05
+git add Doc/readme.rtf
+git add Doc/readme.txt
+git rm  README.TXT
+git add RT/TEST/TESTASC3.MLC
+git add RT/TEST/TESTDMP3.MLC
+git add RT/TEST/TESTDMP4.MLC
+git add RT/TEST/TESTDST1.MLC
+git add RT/TEST/TESTERR1.MLC
+git add RT/TEST/TESTINS2.MLC
+git add RT/TEST/TESTOPR1.MLC
+git add RT/TEST/TESTSTA1.MLC
+git add RT/TEST/TESTTST1.TF1
+git add RT/TEST/testasc4.tf1
+git add RT/Z390.IVP
+git add RTTEST1.BAT
+git add SOA/DEMO/DEMOSUB1.MLC
+git add Z390.IVP
+git add cics/CICS_LINK.MAC
+git add cics/CICS_LOAD.MAC
+git add cics/CICS_RECEIVE.MAC
+git add cics/CICS_RETURN.MAC
+git add cics/CICS_SEND.MAC
+git add cics/CICS_XCTL.MAC
+git add cics/DFHALL.BAT
+git add cics/DFHEIBLK.MAC
+git add cics/DFHEIENT.MAC
+git add cics/DFHEIGBL.MAC
+git add cics/DFHEIRET.MAC
+git add cics/DFHEISTG.MAC
+git add cics/DFHPCT.BAT
+git add cics/DFHPCT.MLC
+git add cics/DFHTCTTE.MAC
+git add cics/Docs/ZCICSAPP.TXT
+git add cics/Docs/ZCICSHST.TXT
+git add cics/Docs/ZCICSSYS.TXT
+git add cics/RTZCICS.BAT
+git add cics/RTZCICS.MLC
+git add cics/TESTBED3.MLC
+git add cics/TESTCIC1.MLC
+git add cics/TESTGUI4.MLC
+git add cics/TESTGUI6.MLC
+git add cics/Z390CEMT.MLC
+git add cics/Z390CICG.BAT
+git add cics/Z390CICS.INI
+git add cics/Z390CICS.MLC
+git add cics/Z390KCP.MLC
+git add cics/Z390KCPR.BAT
+git add mac/ACB.MAC
+git add mac/ACBD.MAC
+git add mac/GET.MAC
+git add mac/PUT.MAC
+git add mac/SNAP.MAC
+git add mvs/Z390.IVP
+git add src/az390.java
+git add src/ez390.java
+git add src/lz390.java
+git add src/mz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add src/z390.java
+git add cics/CICS_ABEND.MAC
+git add cics/CICS_FREEMAIN.MAC
+git add cics/CICS_GETMAIN.MAC
+git add cics/CICS_HANDLE.MAC
+git add cics/CICS_IGNORE.MAC
+git add cics/CICS_POP.MAC
+git add cics/CICS_PUSH.MAC
+git add cics/CICS_RELEASE.MAC
+git add cics/DFHABBLK.MAC
+git add cics/DFHADBLK.MAC
+git add cics/DFHAID.CPY
+git add cics/DFHHCBLK.MAC
+git add cics/DFHPCTUS.CPY
+git add cics/TESTBED4.MLC
+git add cics/TESTBED5.MLC
+git add cics/TESTBED6.MLC
+git add cics/TESTBED7.MLC
+git add cics/TESTBED8.MLC
+git add cics/Z390LOGO.MLC
+git add cics/docs/ZCICSDRF.TXT
+git add cics/docs/ZCICSRME.TXT
+git add mac/RPL.MAC
+git add mac/RPLD.MAC
+git add rt/test/TESTCIC2.MLC
+git add src/vz390.java
+
+==> Create commit for V1.3.05
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2007-07-08 18:12:00 -0500
+set GIT_COMMITTER_DATE=2021-03-22 07:40:00 +0100
+git commit -m "Reconstructed version v1.3.05 of z390 committed on behalf of Don Higgins"
+git tag -a v1.3.05 -m "Reconstructed version v1.3.05 of z390 committed on behalf of Don Higgins"
 
 
 

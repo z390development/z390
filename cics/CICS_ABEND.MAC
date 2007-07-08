@@ -1,0 +1,91 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         CICS_ABEND
+         LCLB  &CANCEL,&NODUMP
+         LCLC  &ABCODE
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  &SYSLIST(&IP)
+         AIF   ('&PARM'(1,7) EQ 'ABCODE(').ABCODE
+         AIF   ('&PARM'(1,6) EQ 'CANCEL').CANCEL
+         AIF   ('&PARM'(1,6) EQ 'NODUMP').NODUMP
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.ABCODE  ANOP
+&ABCODE  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.CANCEL  ANOP
+&CANCEL  SETB  1
+         AGO   .PLOOP
+.*
+.NODUMP  ANOP
+&NODUMP  SETB  1
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   (K'&ABCODE NE 0).GOTABCD
+&NODUMP  SETB  1                  NO ABCODE, NO DUMP
+.GOTABCD ANOP
+         MVC   EIBFN,=X'0E0C'     SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+.*
+         AIF   ('&ABCODE'(1,1) EQ '''').STRING
+         AIF   (K'&ABCODE NE 0).INDIR
+         MVC   CICS_ABEND_&SYSNDX._ABCODE,=C'????' DEFAULT ABEND CODE
+         AGO   .NOSTRING
+.*
+.INDIR   ANOP
+         MVC   CICS_ABEND_&SYSNDX._ABCODE,&ABCODE MOVE ABEND CODE
+         AGO   .NOSTRING
+.*
+.STRING  ANOP
+         AIF   ('&ABCODE'(2,1) EQ 'A').BADABCD
+&ABCDLEN SETA  K'&ABCODE
+         AIF   (&ABCDLEN LT 3 OR &ABCDLEN GT 6).INVABCD
+         MVC   CICS_ABEND_&SYSNDX._ABCODE,=CL4&ABCODE MOVE ABEND CODE
+.NOSTRING ANOP
+         AIF   (NOT &NODUMP).GODUMP
+         MVI   CICS_ABEND_&SYSNDX._NODUMP,X'FF' SET NO DUMP
+.GODUMP  ANOP
+         AIF   (NOT &CANCEL).NOCANCEL
+.* FREEMAIN THE ABEND BLOCK IF THERE IS ONE
+         ICM   R1,15,TCTTEABD     ANY ABEND BLOCK ADDRESS ?
+         BZ    CICS_ABEND_&SYSNDX._01 EXIT IF NONE
+         AHI   R1,-8              R1=ORIGIN ADDRESS
+         LA    R0,(ABDLENG*25)+8  R0=ABEND BLOCK TOTAL LENGTH
+         FREEMAIN R,A=(R1),LV=(R0)
+         XC    TCTTEABD,TCTTEABD  CLEAR ABEND BLOCK ANCHOR
+CICS_ABEND_&SYSNDX._01 EQU *
+.NOCANCEL ANOP
+.*
+.* ABEND HERE
+         DC    X'0000'            ABEND POINT
+         AIF   (&NODUMP).GENLABL
+         DC    X'FE'              FE=TAKE DUMP  FF=NODUMP
+         AGO   .LABDONE
+.GENLABL ANOP
+CICS_ABEND_&SYSNDX._NODUMP DC X'FE' FE=TAKE DUMP  FF=NODUMP
+.LABDONE ANOP
+         DC    C'ABEND'           MARKER
+CICS_ABEND_&SYSNDX._ABCODE DC CL4' ' ABEND CODE IF ANY
+         MEXIT
+.*
+.BADABCD MNOTE 12,'ABCODE MUST NOT BEGIN WITH ''A'''
+         MEXIT
+.*
+.INVABCD MNOTE 12,'ABCODE IS INVALID'
+         MEXIT
+         MEND
+

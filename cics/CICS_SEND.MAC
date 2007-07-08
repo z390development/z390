@@ -17,17 +17,21 @@
 &PARM    SETC  &SYSLIST(&IP)
          AIF   ('&PARM'(1,5) EQ 'FROM(').FROM
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
+.*
 .FROM    ANOP
 &FROM    SETC  '&PARM'(6,K'&PARM-6)
          AGO   .PLOOP
+.*
 .LENGTH  ANOP
 &LENGTH  SETC  '&PARM'(8,K'&PARM-8)
          AGO   .PLOOP
+.*
 .ELOOP   ANOP
          AIF   (&FROM EQ '').BADFROM
          AIF   (&LENGTH EQ '').BADLEN
-         AIF   ('&LENGTH'(1,2) EQ 'L''').LENNUM
+         AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
          AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
 .LENNUM  ANOP
          LA    R0,&LENGTH         SET NUMERIC LENGTH
@@ -35,8 +39,16 @@
 .LENLABL ANOP
          LH    R0,&LENGTH         SET LENGTH FROM LABEL
 .ALLDONE ANOP
+&FROMTQ  SETC  T'&FROM
+         AIF   ('&FROM'(1,1) EQ '=' OR &FROMTQ EQ 'A').FRMADLIT
+         LA    R1,&FROM           FROM ADDRESS
+         AGO   .FROMOK
+.*
+.FRMADLIT ANOP
+         L     R1,&FROM           INDIRECT FROM ADDRESS
+.FROMOK  ANOP
          MVC   EIBFN,=X'0404'     SET EIBFN
-         TPUT  &FROM,(0),FULLSCR  SEND TN3270 DATA STREAM
+         TPUT  (R1),(0),FULLSCR   SEND TN3270 DATA STREAM
          MEXIT
 .BADFROM ANOP
          MNOTE 12,'FROM IS MANDATORY'

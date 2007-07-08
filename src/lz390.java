@@ -70,6 +70,7 @@ public  class  lz390 {
     * 10/19/06 RPI 483 prevent trap and issue error if obj truncated
     * 11/04/06 RPI 484 add TRL trace file support for TRACEL and TRACEALL
     * 11/28/06 RPI 500 use system newline for Win/Linux
+    * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -350,7 +351,7 @@ private void log_error(int error,String msg){
 	  	 abort_error(5,"max errors exceeded");	 
 	  }
 }
-private void abort_error(int error,String msg){
+private synchronized void abort_error(int error,String msg){ // RPI 646
 	/*
 	 * issue error msg to log with prefix and
 	 * inc error total

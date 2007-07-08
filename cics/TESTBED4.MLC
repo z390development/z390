@@ -1,0 +1,143 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+DFHEISTG DSECT                    DSA STORAGE
+WORDWCC  DS    X                  WCC
+WORDMSG  DS    0CL12              WORD ENTRY
+         DS    CL10               SBA/WORD
+WORDLEN  DS    CL2                ACTUAL LENGTH
+KEYINDS  DS    CL18               KEY INDICATORS
+TESTBED4 CSECT
+*
+         MVC   KEYINDS,=18X'FF'   MARK ALL KEYS UNPRESSED
+         MVC   WORDWCC,WCC        SET WORD WCC
+*
+         EXEC  CICS SEND FROM(HEAD) LENGTH(HEADL)
+*
+* HANDLE PF KEYS 1-18
+*
+         EXEC  CICS HANDLE AID                                         X
+               ANYKEY(PROCKEY)                                         X
+               CLEAR PA1 PA2 PA3                                       X
+               PF19 PF20 PF21 PF22 PF23 PF24
+*
+KEYPRESS EQU   *
+         EXEC  CICS RECEIVE INTO(EIBAID) LENGTH(RECLEN)
+         CLI   EIBAID,CLEAR       CLEAR PRESSED ?
+         BE    RETURN             END TASK IF IT IS
+         B     KEYPRESS           LOOP
+*
+PROCKEY  EQU   *
+         LA    R3,KEYTAB          ADDRESS KEY TABLE
+         SR    R4,R4              CLEAR R4
+KEYLOOP  EQU   *
+         CLC   0(1,R3),EIBAID     FOUND AID ?
+         BE    GETWORD            EXIT TO PROCESS IT
+         AHI   R4,1               BUMP INDEX
+         AHI   R3,1               BUMP TABLE POINTER
+         CLI   0(R3),X'FF'        STOPPER ?
+         BE    ABEND              EXIT IF BAD AID
+         B     KEYLOOP
+*
+GETWORD  EQU   *
+* GOT A VALID AID
+         LA    R5,KEYINDS(R4)     INDEX TO KEY INDICATORS
+         MVI   0(R5),X'00'        RESET INDICATOR
+         MS    R4,=F'12'          INDEX TO WORD LIST
+         LA    R4,WORDS(R4)       + WORD BASE
+         MVC   WORDMSG(12),0(R4)  MOVE WORD
+         EXEC  CICS SEND FROM(WORDWCC) LENGTH(WORDLEN)
+         OC    KEYINDS,KEYINDS    ALL DONE YET ?
+         BNZ   KEYPRESS           LOOP
+         EXEC  CICS SEND FROM(TAIL) LENGTH(TAILL)
+*
+RETURN   EQU   *
+         EXEC  CICS RETURN
+*
+KEYTAB   EQU   *
+         DC    X'F1F2F3F4F5F6F7F8F9' PF1-9
+         DC    X'7A7B7C'             PF10-12
+         DC    X'C1C2C3C4C5C6'       PF13-18
+         DC    X'FF'              STOPPER
+*
+HEAD     TN3270 ESC,WRT_EW,WCC_KD,(SBA,2,2)
+         DC    C'TESTBED4 TEST HANDLE AID'
+         TN3270 (SBA,3,2)
+         DC    C'PRESS PF KEYS 1-18 IN ANY ORDER'
+         TN3270 (SBA,4,2)
+         DC    C'CLEAR WILL END TASK EARLY'
+HEADL    DC    AL2(*-HEAD)
+*
+TAIL     TN3270 WCC_KD,(SBA,11,2)
+         DC    C'TESTBED4 ENDED OK, NOW PRESS CLEAR'
+TAILL    DC    AL2(*-TAIL)
+*
+WCC      TN3270 WCC_KD
+*
+WORDS    EQU   *
+         TN3270 (SBA,6,24)        PF1
+         DC    CL7'that'          WORD
+         DC    AL2(8)             ACTUAL LENGTH+SBA+WCC
+         TN3270 (SBA,7,21)        PF2
+         DC    CL7'the'
+         DC    AL2(7)
+         TN3270 (SBA,6,9)         PF3
+         DC    CL7'go'
+         DC    AL2(6)
+         TN3270 (SBA,7,8)         PF4
+         DC    CL7'rage'
+         DC    AL2(8)
+         TN3270 (SBA,9,8)         PF5
+         DC    CL7'Thomas'
+         DC    AL2(10)
+         TN3270 (SBA,7,31)        PF6
+         DC    CL7'of'
+         DC    AL2(6)
+         TN3270 (SBA,6,2)         PF7
+         DC    CL7'Do'
+         DC    AL2(6)
+         TN3270 (SBA,6,34)        PF8
+         DC    CL7'night,'
+         DC    AL2(10)
+         TN3270 (SBA,7,13)        PF9
+         DC    CL7'against'
+         DC    AL2(11)
+         TN3270 (SBA,6,19)        PF10
+         DC    CL7'into'
+         DC    AL2(8)
+         TN3270 (SBA,7,38)        PF11
+         DC    CL7'light.'
+         DC    AL2(10)
+         TN3270 (SBA,7,2)         PF12
+         DC    CL7'Rage,'
+         DC    AL2(9)
+         TN3270 (SBA,9,2)         PF13
+         DC    CL7'Dylan'
+         DC    AL2(9)
+         TN3270 (SBA,6,29)        PF14
+         DC    CL7'good'
+         DC    AL2(8)
+         TN3270 (SBA,7,34)        PF15
+         DC    CL7'the'
+         DC    AL2(7)
+         TN3270 (SBA,6,12)        PF16
+         DC    CL7'gentle'
+         DC    AL2(10)
+         TN3270 (SBA,7,25)        PF17
+         DC    CL7'dying'
+         DC    AL2(9)
+         TN3270 (SBA,6,5)         PF18
+         DC    CL7'not'
+         DC    AL2(7)
+*
+ABEND    ABEND 111,DUMP
+*
+RECLEN   DS    H                  RECEIVED LENGTH
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         END
+

@@ -5,7 +5,7 @@
 * Author - Don Higgins                                              *
 * Date   - 11/08/05                                                 *
 *********************************************************************
-TESTDMP1 SUBENTRY
-         WTO   'TESTDMP1 FORCE 0C1 ABEND TO TEST ABEND DUMP OPTION'
+TESTDMP3 SUBENTRY
+         WTO   'TESTDMP3 FORCE 0C1 ABEND TO TEST ABEND DUMP OPTION'
          ABEND 111,DUMP
          END

@@ -1,0 +1,90 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         CICS_POP
+         LCLC  &TYPE
+&TYPE    SETC  &SYSLIST(1)
+         AIF   (&TYPE EQ 'HANDLE').GOTHAND
+         MNOTE 12,'POP TYPE NOT RECOGNIZED'
+         MEXIT
+.*
+.GOTHAND ANOP
+         MVC   EIBFN,=X'020E'     SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+.* RAISE CONDITION ONLY IF NOTHING STACKED BY PUSH
+         OC    DFHEIAID,DFHEIAID  ANY AID BLOCKS ?
+         BNZ   CICS_POP_&SYSNDX._00 EXIT IF SOME
+         OC    DFHEIHCN,DFHEIHCN  ANY CONDITION BLOCKS ?
+         BNZ   CICS_POP_&SYSNDX._00 EXIT IF SOME
+.* NOTHING TO POP
+.* INVOKE INVREQ
+         MVI   EIBRCODE,X'E0'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(CICS_POP_&SYSNDX._IGNORE) ENTPT FOR IGNORE COND
+.*
+CICS_POP_&SYSNDX._00 DS 0H
+.*
+.* POP AID BLOCK
+.*
+         LA    R2,DFHEIAID-(AIDCHAIN-DFHADBLK) R2=REL. POS. OF DFHEIAID
+         USING DFHADBLK,R14
+         ICM   R14,15,DFHEIAID    ANY AID BLOCKS ?
+         BZ    CICS_POP_&SYSNDX._03 EXIT IF NONE
+CICS_POP_&SYSNDX._01 DS 0H
+         OC    AIDCHAIN,AIDCHAIN  IS THERE A CHAIN ?
+         BZ    CICS_POP_&SYSNDX._02 EXIT IF END OF CHAIN
+         LR    R2,R14             SAVE ADDRESS OF LAST AID BLOCK
+         L     R14,AIDCHAIN       R14=NEXT AID BLOCK
+         B     CICS_POP_&SYSNDX._01 LOOP
+.*
+CICS_POP_&SYSNDX._02 DS 0H
+         LA    R0,AIDLENG         R0=AID BLOCK LENGTH
+         FREEMAIN R,A=(R14),LV=(R0)
+         LR    R14,R2             R14=LAST AID BLOCK OR DFHEIAID
+         XC    AIDCHAIN,AIDCHAIN  CLEAR CHAIN ADDRESS
+CICS_POP_&SYSNDX._03 DS 0H
+         DROP  R14
+.*
+.* POP HANDLE CONDITION BLOCK
+.*
+         LA    R2,DFHEIHCN-(HCNCHAIN-DFHHCBLK) R2=REL. POS. OF DFHEIHCN
+         USING DFHHCBLK,R14
+         ICM   R14,15,DFHEIHCN    ANY CONDITION BLOCKS ?
+         BZ    CICS_POP_&SYSNDX._IGNORE EXIT IF NONE
+CICS_POP_&SYSNDX._04 DS 0H
+         OC    HCNCHAIN,HCNCHAIN  IS THERE A CHAIN ?
+         BZ    CICS_POP_&SYSNDX._05 EXIT IF END OF CHAIN
+         LR    R2,R14             SAVE ADDRESS OF LAST CONDITION BLOCK
+         L     R14,HCNCHAIN       R14=NEXT CONDITION BLOCK
+         B     CICS_POP_&SYSNDX._04 LOOP
+.*
+CICS_POP_&SYSNDX._05 DS 0H
+         LA    R0,HCNLENG         R0=CONDITION BLOCK LENGTH
+         FREEMAIN R,A=(R14),LV=(R0)
+         LR    R14,R2             R14=LAST CONDITION BLOCK OR DFHEIHCN
+         XC    HCNCHAIN,HCNCHAIN  CLEAR CHAIN ADDRESS
+CICS_POP_&SYSNDX._IGNORE DS 0H
+         DROP  R14
+.*
+.* POP HANDLE ABEND BLOCK
+.* THIS IS THE SAME AS EXEC CICS HANDLE ABEND RESET
+.*
+         ICM   R14,15,TCTTEABD    ANY ABEND BLOCK ?
+         BZ    CICS_POP_&SYSNDX._06 EXIT IF NONE
+         USING ABDDEST,R14
+         LH    R1,TCTTELNK        R1=CURRENT LINK LEVEL
+         AHI   R1,-1              -1 FOR INDEX
+         MS    R1,=AL4(ABDLENG)   * ENTRY LENGTH
+         AR    R14,R1             R14=CORRECT ABEND BLOCK ENTRY
+         XC    ABDACTIV,ABDACTIV  SET ENTRY ACTIVE
+CICS_POP_&SYSNDX._06 DS 0H
+         DROP  R14
+         MEND
+

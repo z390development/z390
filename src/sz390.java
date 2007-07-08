@@ -132,7 +132,10 @@ public  class  sz390 implements Runnable {
     * 05/30/07 RPI 626 prevent DELETE removing active link pgm. 
     * 06/10/07 RPI 636 percolate or restart at ESTAE exit based 
     *          bases on R15 = 0 or 4.  If RC=0 reset link stack
-    *          to same level as next ESTAE exit being invoked.        
+    *          to same level as next ESTAE exit being invoked.
+    * 06/23/07 RPI 642 terminate get_ascii_string at null 
+    * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
+    * 07/06/07 RPI 650 support TEST mode indirect expression addressing VIA ? OR %               
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -153,7 +156,9 @@ public  class  sz390 implements Runnable {
     */
     tz390 tz390 = null;
     pz390 pz390 = null;
+    vz390 vz390 = null; // RPI 644
     boolean pz390_running = false;
+    boolean put_stats_running = false; // RPI 646
     String ez390_pgm = null; // saved by link for gz390 title
     int ez390_rc = 0;
     int ez390_errors = 0;
@@ -695,6 +700,9 @@ public void svc(int svc_id){
 	case 93:  // TGET/TPUT TN3290 data stream for GUAM GUI
 		svc_tget_tput();
 		break;
+	case 121: // x'79' VSAM access method
+		vz390.svc_vsam();  // RPI 644
+		break;
 	case 124: // x'7C' TCPIO tcp/ip sockets I/O
 		svc_tcpio();
 		break;
@@ -761,7 +769,7 @@ private void put_log_line(String msg){
 	                	abort_error(107,"maximum log file size exceeded");
 	                }
 	   	      } catch (Exception e){
-	   	          abort_error(6,"I/O error on log file write");
+	   	          tz390.abort_error(6,"I/O error on log file write"); // RPI 646
 	   	      }
 	   	   }
 	   }
@@ -779,7 +787,7 @@ public void log_error(int error,String msg){
 	  	 abort_error(5,"max errors exceeded");	 
 	  }
 }
-public void abort_error(int error,String msg){
+public synchronized void abort_error(int error,String msg){  // RPI 646
 	/*
 	 * issue error msg to log with prefix and
 	 * inc error total
@@ -788,7 +796,10 @@ public void abort_error(int error,String msg){
 		msg = "EZ390E shutdown for " + msg;
 		tz390.put_systerm(msg);
 		try { // rpi 560
-			put_stats();
+			if (!put_stats_running){  // RPI 646
+				put_stats_running = true;
+				put_stats();
+			}
 			close_files();
 		} catch (Exception e){
 			System.out.println("EZ390E CLOSE FILES FAILED");
@@ -903,7 +914,7 @@ private void close_files(){
 	  	  try {
 	  	  	  log_file_buff.close();
 	  	  } catch (IOException e){
-	  	  	  abort_error(3,"I/O error on log file close - " + e.toString());
+	  	  	  tz390.abort_error(3,"I/O error on log file close - " + e.toString()); // RPI 646
 	  	  }
 	  }
 	  tz390.close_systerm(ez390_rc);
@@ -1004,8 +1015,8 @@ public void init_test(){
 		  + "|([0-9a-fA-F]+[\\.])"          // hex. addr
 		  + "|([0-9]+)"                     // dec
 		  + "|([a-zA-Z]+)"                  // cmd or opcode
-		  + "|([*+-])"                        // * addr or comment
-		  + "|([=])|([!][=])|([>][=]*)|([<][=]*)"  // set break compare operator
+		  + "|([!][=])|([>][=])|([<][=])"   // set break compare operator RPI 650
+   	      + "|([=*+-?%<>])"                  // single operators RPI 650
    	    );
    	} catch (Exception e){
    		  abort_error(56,"test error in expression pattern - " + e.toString());
@@ -2978,10 +2989,13 @@ public String get_ascii_string(int mem_addr,int mem_len){
 	 * Notes:
 	 *   1.  Translates from EBCDIC to ASCII
 	 *       unless in ASCII mode.
+	 *   2.  Terminate string at first 0 byte
+	 *       or end of field.  RPI 642
 	 */
 	String text = "";
 	int index = 0;
-	while (index < mem_len){
+	while (index < mem_len
+			&& pz390.mem_byte[mem_addr + index] != 0){  // RPI 642
 		if (tz390.opt_ascii){
 			text = text + (char) pz390.mem_byte[mem_addr + index];
 		} else {
@@ -4964,7 +4978,7 @@ private void exec_test_cmd(){
 		dump_cde();
 		break;
 	case 'Q': // quit test mode
-		abort_error(101,"quitting test mode"); //RPI121
+		abort_error(109,"quitting test mode"); //RPI121
 		break;
 	case 'R':  // dump gpr regs
 		test_token = get_next_test_token();
@@ -5038,7 +5052,7 @@ private int get_next_test_addr(){
 	/*
 	 * return memory address of [addr][+-addr]
 	 * start with current test_token and continue
-	 * until next test_token not +,-, or valid address.
+	 * until next test_token not +,-, ?, % or valid address RPI 650
 	 * If invalid return -1
 	 * Notes:
 	 *   1.  EPA returns last program load address
@@ -5059,6 +5073,18 @@ private int get_next_test_addr(){
 			total = total - test_next_addr;
 		}
 	    test_token = get_next_test_token();
+	    while (test_token != null 
+	    		&& test_token.length() == 1
+	    		&& (test_token.charAt(0) == '?' // RPI 650
+	                || test_token.charAt(0) == '%')
+              ){
+	    	if (test_token.charAt(0) == '?'){
+	    		total = pz390.mem.getInt(total & pz390.psw_amode31);
+	    	} else {
+	    		total = pz390.mem.getInt(total & pz390.psw_amode24);
+	    	}
+	    	test_token = get_next_test_token();
+	    }
 	    if (test_token == null){
 	    	return total;
 	    }
@@ -5221,6 +5247,7 @@ private int get_test_addr(String text){
 	 *   *    = pz390.psw_loc
 	 *   nr% indirect 24 bit 
 	 *   nr? indirect 31 bit
+     *   ?   indirect address
 	 *   EPA last load address  // RPI 395
 	 * register type address forms
 	 *    nnr or rnn

@@ -8,26 +8,71 @@
 .* 05/25/06 RPI 317 - PASS DSA LEN IN R0 SO DFHEAI1 CAN IGNORE IF 0
 .*********************************************************************
 .*  Exit from EXEC CICS assembler program
-.*  Notes: DFHEIRET called from CICS_RETURN
+.*  Notes: DFHEIRET invoked from CICS_RETURN
 .*********************************************************************
          MACRO
 &N       DFHEIRET
-&N       L     R0,DFHEILEN        R0=DSA LENGTH
+&N       DS    0H
 *
-* FREE DSA
+* FREE ALL AID BLOCKS
 *
-         LR    R1,R13             R1=CURRENT DSA ADDRESS
+         USING DFHADBLK,R1
+         ICM   R1,15,DFHEIAID     ANY AID BLOCK ADDRESSES ?
+         BZ    CICS_EIRET_&SYSNDX._02 EXIT IF NONE
+CICS_EIRET_&SYSNDX._01 DS 0H
+         L     R14,AIDCHAIN       R14=NEXT AID BLOCK IF ANY
+         LA    R0,AIDLENG         R0=AID BLOCK LENGTH
          FREEMAIN R,A=(R1),LV=(R0)
+         LTR   R1,R14             ANY MORE AID BLOCKS ?
+         BNZ   CICS_EIRET_&SYSNDX._01 LOOP IF THERE ARE
+.*
+CICS_EIRET_&SYSNDX._02 DS 0H
+         DROP  R1
+*
+* FREE ALL HANDLE CONDITION BLOCKS
+*
+         USING DFHHCBLK,R1
+         ICM   R1,15,DFHEIHCN     ANY CONDITION BLOCK ADDRESSES ?
+         BZ    CICS_EIRET_&SYSNDX._06 EXIT IF NONE
+CICS_EIRET_&SYSNDX._05 DS 0H
+         L     R14,HCNCHAIN       R14=NEXT CONDITION BLOCK IF ANY
+         LA    R0,HCNLENG         R0=CONDITION BLOCK LENGTH
+         FREEMAIN R,A=(R1),LV=(R0)
+         LTR   R1,R14             ANY MORE CONDITION BLOCKS ?
+         BNZ   CICS_EIRET_&SYSNDX._05 LOOP IF THERE ARE
+         DROP  R1                 DROP HANDLE BLOCK BASE
+*
+* FREE THE DSA
+*
+CICS_EIRET_&SYSNDX._06 DS 0H
+         FREEMAIN R,A=(R13),LA=DFHEILEN
+*
+* ADJUST LINK LEVEL
+*
          LH    R0,TCTTELNK        LOAD LINK-LEVEL
          AHI   R0,-1              -1
          STH   R0,TCTTELNK        STORE BACK
+         LR    R14,R0             SAVE LINK LEVEL
+*
+* CLEAR HANDLE ABEND ENTRY IF ANY
+*
+         ICM   R1,15,TCTTEABD     ANY ABEND BLOCK ?
+         BZ    CICS_EIRET_&SYSNDX._07 EXIT IF NONE
+         USING ABDDEST,R1
+         MS    R14,=AL4(ABDLENG)  * ENTRY LENGTH
+         AR    R14,R1             R14=CORRECT ABEND BLOCK ENTRY
+         XC    ABDDEST(ABDLENG),ABDDEST CLEAR ABEND ENTRY
+CICS_EIRET_&SYSNDX._07 DS 0H
+         DROP  R1
+*
+* EXIT TO LAST LINKER
+* CLEAR OUR LEVEL
+*
          SLL   R0,2               R0=LINK-LEVEL * 4
          L     R1,TCTTELKA        R1=LKA ADDRESS
          AR    R1,R0              INDEX TO LINK-LEVEL ENTRY
-*
-* EXIT TO LAST LINKER
-*
-         L     R13,0(R1)          LOAD DSA/SAVE AREA ADDRESS
+         L     R13,0(R1)          R13=PREV DSA ADDRESS
+         XC    4(4,R1),4(R1)      CLEAR OUR LEVEL
          RETURN (R14,R12)
          MEND
 

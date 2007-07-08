@@ -96,6 +96,11 @@ l +1+2 2
 l *+1+2 1
 j 300.+1+2
 t 1
+* test indirect expressions
+l 1r?
+l 1r%
+l 22fc.+4?
+l 22fc.+4%
 * return to cgxr instr in r12 and trace to wto svc
 j 12r%
 t svc

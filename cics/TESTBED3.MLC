@@ -46,7 +46,7 @@ LINE6    EQU   *
          TN3270 (SBA,23,2)
          DC    CL55'Brevity is the soul of wit'
          TN3270 (SBA,24,2)
-         DC    CL55'END - Task end, now press clear'
+         DC    CL55'END - Task end, now press CLEAR'
 LINE6END EQU   *-LINE6
 LINE6LEN DC    AL2(*-LINE6)
 *

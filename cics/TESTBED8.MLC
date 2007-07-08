@@ -1,0 +1,27 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+*
+* HANDLE ABEND BY PROGRAM (PART OF TRANSID BED5)
+*
+DFHEISTG DSECT                    DSA STORAGE
+TESTBED8 CSECT
+*
+* BED5 ABEND HANDLER
+         L     R6,DFHEICAP        R5=COMMAREA ADDRESS
+         MVC   TESTAEI0,0(R6)     MOVE TO MESSAGE
+         EXEC  CICS SEND FROM(TEST1) LENGTH(TEST1L)
+         EXEC  CICS RETURN
+*
+TEST1    TN3270 WCC_KD,(SBA,8,2)
+         DC    C'TESTBED8 SAYS HELLO AND THE COMMAREA SAYS '
+TESTAEI0 DS    CL4
+TEST1L   DC    AL2(*-TEST1)
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         END
+

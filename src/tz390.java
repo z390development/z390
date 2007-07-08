@@ -135,7 +135,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.04b";  //dsh
+    String version    = "V1.3.05";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -4044,7 +4044,7 @@ private String get_short_file_name(String file_name){
 	}
 	return file_name;
 }
-private synchronized void abort_error(int error,String msg){ // RPI 397
+public synchronized void abort_error(int error,String msg){ // RPI 397
 	/*
 	 * display options error on system out
 	 * and exit with rc 16.

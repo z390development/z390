@@ -1,0 +1,28 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         DFHHCBLK
+*
+* HANDLE CONDITION BLOCK
+*
+DFHHCBLK DSECT
+HCNHEAD  DS    CL8                'DFHHCBLK'
+HCNCHAIN DS    A                  PUSH CHAIN
+.* ENTRY=4X'00'   DEFAULT ACTION
+.* ENTRY=LABEL    HANDLE CONDITION SET
+.* ENTRY=4X'FF'   IGNORE CONDITION SET
+         DS    A                    0=NORMAL
+HCNERROR DS    A                    1=ERROR
+         DS    14A                  2-15 UNUSED
+         DS    A                   16=INVREQ
+         DS    5A                  17-21 UNUSED
+         DS    A                   22=LENGERR
+         DS    4A                  23-26 UNUSED
+         DS    A                   27=PGMIDERR
+HCNLENG  EQU   *-DFHHCBLK
+         MEND
+

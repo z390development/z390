@@ -1,0 +1,76 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         CICS_PUSH
+         LCLC  &TYPE
+&TYPE    SETC  &SYSLIST(1)
+         AIF   (&TYPE EQ 'HANDLE').GOTHAND
+         MNOTE 12,'PUSH TYPE NOT RECOGNIZED'
+         MEXIT
+.*
+.GOTHAND ANOP
+         MVC   EIBFN,=X'020C'     SET EIBFN
+         USING DFHADBLK,R14
+         ICM   R14,15,DFHEIAID    ANY AID BLOCKS ?
+         BZ    CICS_PUSH_&SYSNDX._03 EXIT IF NONE
+.*
+.* PUSH AID BLOCK
+.*
+CICS_PUSH_&SYSNDX._01 DS 0H
+         OC    AIDCHAIN,AIDCHAIN  IS THERE A CHAIN ?
+         BZ    CICS_PUSH_&SYSNDX._02 EXIT IF END OF CHAIN
+         L     R14,AIDCHAIN       R14=NEXT AID BLOCK
+         B     CICS_PUSH_&SYSNDX._01 LOOP
+.*
+CICS_PUSH_&SYSNDX._02 DS 0H
+.* R14=LAST AID BLOCK
+.* GET ANOTHER AID BLOCK
+         LA    R1,AIDLENG         R1=AID BLOCK LENGTH
+         GETMAIN R,LV=(R1)
+         XC    0(AIDLENG,R1),0(R1) CLEAR AID BLOCK
+         ST    R1,AIDCHAIN        CHAIN AID BLOCK ADDRESS
+         MVC   0(8,R1),=C'DFHADBLK' SET HEADER
+CICS_PUSH_&SYSNDX._03 DS 0H
+         DROP  R14
+.*
+.* PUSH HANDLE CONDITION BLOCK
+.*
+         USING DFHHCBLK,R14
+         ICM   R14,15,DFHEIHCN    ANY CONDITION BLOCKS ?
+         BZ    CICS_PUSH_&SYSNDX._06 EXIT IF NONE
+CICS_PUSH_&SYSNDX._04 DS 0H
+         OC    HCNCHAIN,HCNCHAIN  IS THERE A CHAIN ?
+         BZ    CICS_PUSH_&SYSNDX._05 EXIT IF END OF CHAIN
+         L     R14,HCNCHAIN       R14=NEXT CONDITION BLOCK
+         B     CICS_PUSH_&SYSNDX._04 LOOP
+.*
+CICS_PUSH_&SYSNDX._05 DS 0H
+.* R14=LAST CONDITION BLOCK
+.* GET ANOTHER CONDITION BLOCK
+         LA    R1,HCNLENG         R1=CONDITION BLOCK LENGTH
+         GETMAIN R,LV=(R1)
+         XC    0(HCNLENG,R1),0(R1) CLEAR CONDITION BLOCK
+         ST    R1,HCNCHAIN        CHAIN CONDITION BLOCK ADDRESS
+         MVC   0(8,R1),=C'DFHHCBLK' SET HEADER
+CICS_PUSH_&SYSNDX._06 DS 0H
+         DROP  R14
+.*
+.* PUSH HANDLE ABEND BLOCK
+.* THIS IS THE SAME AS EXEC CICS HANDLE ABEND CANCEL
+.*
+         ICM   R14,15,TCTTEABD    ANY ABEND BLOCK ?
+         BZ    CICS_PUSH_&SYSNDX._07 EXIT IF NONE
+         USING ABDDEST,R14
+         LH    R1,TCTTELNK        R1=CURRENT LINK LEVEL
+         AHI   R1,-1              -1 FOR INDEX
+         MS    R1,=AL4(ABDLENG)   * ENTRY LENGTH
+         AR    R14,R1             R14=CORRECT ABEND BLOCK ENTRY
+         MVC   ABDACTIV,=X'FFFF'  SET ENTRY INACTIVE
+CICS_PUSH_&SYSNDX._07 DS 0H
+         DROP  R14
+         MEND
+

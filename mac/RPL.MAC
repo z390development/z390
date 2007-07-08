@@ -1,0 +1,63 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 06/22/07                                                 *
+.*********************************************************************
+.* 06/22/07 RPI 644 INITIAL CODING OF VSAM REQUEST BLOCK
+.*********************************************************************
+.* OPTIONS:
+.*   ADR|CNV|KEY  ADR=RBA access, CNV=control int,KEY=key access
+.*   DIR|SEQ|SKP  DIR=direct access, SEQ=sequential, SKP=skip seq.
+.*   ARD|LRD      ARD=user arg access, LRD=last record (req BWD)
+.*   FWD|BWD      FWD=forward, BWD=backward
+.*   ASY|SYN      ASY=async, SYN=synchronous
+.*   NSP|NUP|UPD  NSP=remember addr for SEQ,NUP=no update,UPD=update
+.*   KEQ|KGE      KEQ=key equal, KGE=key greater than or equal
+.*   FKS|GEN      FKS=full key, GEN=generic key
+.*   LOC|MVE      LOC=4 byte buff addr in AREA, MVE=REC in AREA
+.*   CR|CRE|NRI   CR=consistent read lock,CRE=transaction lock,
+.*                    NRI=no read int
+.*   RBA|XRBA     RBA=4 byte, XRBA=8 byte for DIR access
+.*********************************************************************
+&N       RPL   &ACB=0,    VSAM ACCESS CONTROL BLOCK ADDRESS            X
+               &AM=VSAM,  VSAM VS VTAM                                 X
+               &AREA=0,   RECORD WORK AREA (DATA FOR MVE, ADDR FOR LOC)X
+               &AREALEN=0, LENGTH OF AREA (MAX LRECL IF MVS, 4 FOR LOC)X
+               &ARG=0,    KEY FIELD FOR KSDS ACCESS                    X
+               &KEYLEN=0, KEY LENGTH FOR GENERIC KEY SEARCH            X
+               &NXTRPL=0, NEXT RPL IN CHAINED RPL LIST                 X
+               &OPTCD=,   OPTIONS (SEE SUPPORTED OPTIONS ABOVE)        X
+               &RECLEN=0  RECORD LENGTH FOR VARIABLE LENGTH PUT
+         AIF   (&N EQ '').SKIPDS
+&N       DS    0H
+.SKIPDS  ANOP
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+         MEXIT
+.NPOK    ANOP
+         AIF   (&AM NE 'VSAM').ERR1
+         ORG   &N+RPLACB-IHARPL
+         DC    A(&ACB)
+         ORG   &N+RPLAREA-IHARPL
+         DC    A(&AREA)
+         ORG   &N+RPLAREALEN-IHARPL
+         DC    A(&AREALEN)
+         ORG   &N+RPLARG-IHARPL
+         DC    A(&ARG)
+         ORG   &N+RPLAREALEN-IHARPL
+         DC    A(&AREALEN)
+         ORG   &N+RPLARG-IHARPL
+         DC    A(&ARG)
+         ORG   &N+RPLKEYLEN-IHARPL
+         DC    A(&KEYLEN)
+         ORG   &N+RPLNXTRPL-IHARPL
+         DC    A(&NXTRPL)
+         ORG   &N+RPLRECLEN-IHARPL
+         DC    A(&RECLEN)
+         RPLD
+         MEND
+.ERR1    MNOTE 12,'ONLY AM=VSAM IS SUPPORTED'
+         MEND

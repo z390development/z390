@@ -4,12 +4,12 @@
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 *********************************************************************
-* 05/07/07 DSH correct DC XL4 to add data per RPI  609
-*********************************************************************
 DFHEISTG DSECT                    DSA STORAGE
-PARSE1   DS    C                  COMMAND
-PARSE2   DS    CL4                OPERATION TYPE
-PARSE3   DS    CL3                OPERATION MODIFIER
+PARSE    DS    0H
+PARSE1   DS    CL20               COMMAND
+PARSE2   DS    CL20               OPERATION TYPE
+PARSE3   DS    CL20               OPERATION MODIFIER
+PARSELEN EQU   *-PARSE
 *
 DFHPCTAD DS    A                  PCT ADDRESS
 *
@@ -25,84 +25,54 @@ SNDITRNL DS    CL(ITRNLSTL)
 *
 Z390CEMT CSECT
 * CEMT FUNCTIONS
+*   THE FULL SYSTAX IS SUPPORTED, EG. CEMT PERFORM SHUTDOWN IMMEDIATE
+*   THE FOLLOWING MINIMUMS ARE TESTED
+*
 *   I SYS        REQUEST Z390CICS.INI INFO AND DISPLAY
 *   I TER        REQUEST TERMINAL INFO AND DISPLAY
-*   I TRAN       PCT DISPLAY
-*   S TER OUT    CLOSES THE Z390KCP THREAD
-*   P SHUT       CLOSES THE Z390KCP THREAD AND Z390CICS
-*                CLOSE ALL Z390KCP THREADS, UNLESS THERE IS A TASK
-*                WHEN NO THREADS, CLOSE Z390CICS
-*   P SHUT IMM   CLOSES ALL Z390KCP THREADS AND Z390CICS
+*   I TRA        PCT DISPLAY
+*   S TER OUT    CLOSES THE Z390KCP THREAD (CLIENT)
+*   P SHU        CLOSES THE Z390KCP THREAD (CLIENT)
+*                WHEN ALL ACTIVE TASKS HAVE ENDED, CLOSE SERVER
+*   P SHU IMM    CLOSE THE SERVER
 *
-         L     R6,TCTTEDA         INITIAL TIOA
+         L     R6,TCTTEDA         INITIAL TIOA (NULL TERMINATED)
          AHI   R6,3               MISS AID, CURSOR ADDRESS
          CLI   0(R6),SBA          PRECEDING SBA ?
-         BNE   PARSLP0            EXIT IF NOT
+         BNE   NOSBA              EXIT IF NOT
          AHI   R6,3               MISS SBA
-PARSLP0  EQU   *
-         LA    R7,50              LIMIT OF 50 BYTES
-PARSLP1  EQU   *
-* FIND FIRST BLANK AFTER CEMT
-         CLI   0(R6),C' '         FIND BLANK ?
-         BE    PARSLP2            EXIT WHEN FOUND
-         AHI   R6,1               BUMP POINTER
-         BCT   R7,PARSLP1         LOOP
-         B     PARSERR            EXIT
+NOSBA    EQU   *
+         AHI   R6,4               MISS CEMT
+         XC    PARSE(PARSELEN),PARSE CLEAR PARSE AREA
 *
-PARSLP2  EQU   *
-* FIND NEXT CHAR
-         CLI   0(R6),C' '         CHAR ?
-         BH    PARSLP3            EXIT IF IT IS
-         AHI   R6,1               BUMP POINTER
-         BCT   R7,PARSLP2         LOOP
-         B     PARSERR            EXIT
-PARSLP3  EQU   *
-* CHECK OPERATION TYPE IS SINGLE CHAR
-         CLI   1(R6),C' '         NEXT BYTE IS BLANK ?
-         BNE   PARSERR            ERROR IF NOT
-         MVC   PARSE1,0(R6)       MOVE OPERATION TYPE
-         AHI   R6,1               BUMP POINTER
-         AHI   R7,-1              ADJUST LOOP COUNTER
-PARSLP4  EQU   *
-* FIND NEXT CHAR
-         CLI   0(R6),C' '         CHAR ?
-         BH    PARSLP5            EXIT IF IT IS
-         AHI   R6,1               BUMP POINTER
-         BCT   R7,PARSLP4         LOOP
-         B     PARSERR            EXIT
-PARSLP5  EQU   *
-         CLI   3(R6),C' '         3 CHAR OP TYPE (MORE OPERANDS) ?
-         BNE   PARSLP5A           EXIT IF NOT
-         MVC   PARSE2(3),0(R6)    SAVE OPERATION TYPE
-         B     PARSLP6            EXIT
-PARSLP5A EQU   *
-         CLI   3(R6),X'00'        3 CHAR OP TYPE ?
-         BNE   PARSLP6            EXIT IF NOT
-         MVC   PARSE2(3),0(R6)    SAVE OPERATION TYPE
-         B     PROCESS            EXIT
-PARSLP6  EQU   *
-         CLI   4(R6),X'00'        4 CHAR OPERATION TYPE ?
-         BNE   PARSLP7            EXIT IF NOT
-         MVC   PARSE2,0(R6)       SAVE OPERATION TYPE
-         B     PROCESS            EXIT
-PARSLP7  EQU   *
-         CLI   3(R6),C' '         3RD PARM ?
-         BNE   PARSERR            ERROR IF NOT
-* MUST BE S TER OUT
-         AHI   R6,3               BUMP POINTER
-         AHI   R7,-3              ADJUST LOOP COUNTER
-PARSLP8  EQU   *
-* FIND NEXT CHAR
-         CLI   0(R6),C' '         CHAR ?
-         BH    PARSLP9            EXIT IF IT IS
-         AHI   R6,1               BUMP POINTER
-         BCT   R7,PARSLP8         LOOP
-         B     PARSERR            EXIT IF BAD
-PARSLP9  EQU   *
-         MVC   PARSE3,0(R6)       MOVE OPERATION MODIFIER
+* FIND 1ST PARM
+*
+         BAL   R14,NEXTPARM       LOCATE START OF 1ST PARM
+         CLI   0(R6),X'00'        END OF TIOA ?
+         BE    PARSERR            ERROR IF 1ST PARM NOT FOUND
+         LA    R7,PARSE1          PARM ADDRESS
+         BAL   R14,EXTRACT        EXTRACT PARM
+*
+* FIND 2ND PARM
+*
+         BAL   R14,NEXTPARM       LOCATE START OF 2ND PARM
+         CLI   0(R6),X'00'        END OF TIOA ?
+         BE    PARSERR            ERROR IF 2ND PARM NOT FOUND
+         LA    R7,PARSE2          PARM ADDRESS
+         BAL   R14,EXTRACT        EXTRACT PARM
+*
+* FIND OPTIONAL 3RD PARM
+*
+         BAL   R14,NEXTPARM       LOCATE START OF 2ND PARM
+         CLI   0(R6),X'00'        END OF TIOA ?
+         BE    PROCESS            EXIT IF NO 3RD PARM
+         LA    R7,PARSE3          PARM ADDRESS
+         BAL   R14,EXTRACT        EXTRACT PARM
 *
 PROCESS  EQU   *
-         OC    PARSE1(8),=8C' '   CONVERT TO UPPER CASE
+         OI    PARSE1,C' '        CONVERT 1ST PARM TO UPPER CASE
+         OC    PARSE2(3),=4C' '   CONVERT 2ND PARM TO UPPER CASE
+         OC    PARSE3(4),=4C' '   CONVERT 3RD PARM TO UPPER CASE
 * SYNTAX CHECKS
          CLI   PARSE1,C'I'        I ?
          BNE   TRYS               EXIT IF NOT
@@ -111,7 +81,7 @@ PROCESS  EQU   *
          BE    ISYS               EXIT IF IT IS
          CLC   PARSE2(3),=C'TER'  I TER ?
          BE    ITER               EXIT IF IT IS
-         CLC   PARSE2,=C'TRAN'    I TRAN ?
+         CLC   PARSE2(3),=C'TRA'  I TRA ?
          BE    ITRN               EXIT IF IT IS
          B     PARSERR            EXIT IF BAD
 *
@@ -139,7 +109,8 @@ ISYS     EQU   *
          LA    R7,CEMTDATA        R7=RECEIVED DATA
          USING ISYSDATA,R7
 * MOVE THE DATA
-         MVC   ISYSPATH,ISYSDJRP  MOVE JAR_PATH
+         MVC   ISYSJPTH,ISYSDJRP  MOVE JAR_PATH
+         MVC   ISYSCPTH,ISYSDCSP  MOVE CICS_PATH
          MVC   ISYSTPFX,ISYSDPFX  MOVE TERMID_PREFIX
          MVC   ISYSMAXT(1),ISYSDTHD MOVE MAXTHREADS
          OI    ISYSMAXT,C'0'      CONVERT TO CHAR
@@ -161,6 +132,7 @@ ISYSHEX2 EQU   *
 ISYSHEX3 EQU   *
          MVC   ISYSLTRC,ISYSDTRL  MOVE TRACE_LOCALS
          MVC   ISYSZTRC,ISYSDTRZ  MOVE TRACE_Z390CICS
+         MVC   ISYSINIT,ISYSDINT  MOVE INITIAL_TRANSID
          EXEC  CICS SEND FROM(SNDISYST) LENGTH(ISYSLEN)
          B     RETURN             END OF PROGRAM
 *
@@ -202,9 +174,12 @@ ITERLOC  EQU   *
          MVC   ITERTRAN,THRDTRAN  MOVE TRANSID
          MVC   ITERIND,=CL9'RUNNING' PRESUME RUNNING
          CLI   THRDIND,RUNNING    RUNNING STATUS ?
-         BE    ITERRUN            EXIT IF IT IS
+         BE    ITERNXT            EXIT IF IT IS
          MVC   ITERIND,=C'AVAILABLE' SET AVAILABLE
-ITERRUN  EQU   *
+         CLI   THRDIND,AVAIL      AVAILABLE STATUS ?
+         BE    ITERNXT            EXIT IF IT IS
+         MVC   ITERIND,=C'SHUT DOWN' SET SHUT DOWN
+ITERNXT  EQU   *
          AHI   R6,ITERLEN         BUMP OUTPUT POINTER
          AHI   R7,THRDLEN         BUMP INPUT POINTER
          AHI   R9,1               BUMP TERMID SUFFIX
@@ -214,7 +189,7 @@ ITERRUN  EQU   *
 *
 ITRN     EQU   *
 * PROCESS CEMT I TRAN, IGNORE OTHER PARMS
-* ### LIMIT OF 10
+* ### LIMIT OF 12
 * ### LATER, EXTEND AND CODE PAGE FORWARD (PF7) AND BACK (PF8)
          EXEC  CICS LOAD PROGRAM('DFHPCT') SET(R6)
          ST    R6,DFHPCTAD        SAVE LOAD POINT
@@ -227,7 +202,7 @@ ITRN     EQU   *
          LA    R6,SNDITRNL        R6=LIST ADDRESS
          USING ITRNDSCT,R6
          L     R7,DFHPCTAD        R7=PCT ADDRESS
-         LA    R8,10              R8=MAX TRANSIDS
+         LA    R8,12              R8=MAX TRANSIDS
 ITRNLOOP EQU   *
          MVC   ITRNTRAN,0(R7)     MOVE TRANSID
          MVC   ITRNPROG,4(R7)     MOVE PROGRAM
@@ -245,7 +220,7 @@ ITRNINCR EQU   *
          BCT   R8,ITRNLOOP        LOOP
 ITRNSEND EQU   *
          EXEC  CICS SEND FROM(SNDITRNT) LENGTH(ITRNMLEN)
-         DELETE EP=DFHPCT         REDUCE USE COUNT ### DO E-C RELEASE
+         EXEC  CICS RELEASE PROGRAM('DFHPCT')
          B     RETURN             END OF PROGRAM
 *
 TRYS     EQU   *
@@ -254,9 +229,9 @@ TRYS     EQU   *
          BNE   TRYP               EXIT IF NOT
          CLC   PARSE2(3),=C'TER'  S TER ?
          BNE   PARSERR            ERROR IF NOT
-         CLC   PARSE3,=C'OUT'     S TER OUT ?
+         CLC   PARSE3(3),=C'OUT'  S TER OUT ?
          BNE   PARSERR            ERROR IF NOT
-* PROCESS CEMT S TER OUT, IGNORE OTHER PARMS
+* PROCESS CEMT S TER OUT
          MVI   TCTTETS,X'FF'      SET SHUTTERM REQUEST
          B     RETURN             END OF PROGRAM
 *
@@ -265,12 +240,12 @@ TRYP     EQU   *
          LA    R5,CEMTI           R5=MESSAGE
          CLI   PARSE1,C'P'        P ?
          BNE   PARSERR            ERROR IF NOT
-         CLC   PARSE2,=C'SHUT'    P SHUT ?
+         CLC   PARSE2(3),=C'SHU'  P SHU ?
          BNE   PARSERR            ERROR IF NOT
          MVI   TCTTETS,X'FF'      SET SHUTTERM REQUEST
          MVC   CEMTIREQ,=C'FE02'  SET REQUEST CODE
          MVC   CEMTITRM,TCTTETI   SET TERMID
-         CLC   PARSE3,=C'IMM'     P SHUT IMM ?
+         CLC   PARSE3(3),=C'IMM'  P SHU IMM ?
          BNE   PSEND              EXIT IF NOT
          MVC   CEMTIREQ,=C'FE03'  SET REQUEST CODE
 PSEND    EQU   *
@@ -290,12 +265,40 @@ TCPIOERR EQU   *
 RETURN   EQU   *
          EXEC  CICS RETURN
 *
+* SUBROUTINES
+*
+NEXTPARM EQU   *
+* FIND START OF NEXT PARM
+* R6=CURRENT LOCATION
+         CLI   0(R6),X'00'        TIOA DONE ?
+         BER   R14                EXIT IT IS IT
+         CLI   0(R6),C' '         FIND BLANK ?
+         BNER  R14                EXIT WHEN PARM FOUND
+         AHI   R6,1               BUMP TIOA POINTER
+         B     NEXTPARM           LOOP
+*
+EXTRACT  EQU   *
+* EXTRACT PARM
+* R6=1ST PARM CHAR
+* R7=PARM LOCATION
+         SR    R8,R8              ZERO PARM LENGTH
+EXTRLOOP EQU   *
+         TM    0(R6),X'BF'        END OF PARM (BLANK OR X'00') ?
+         BER   R14                RETURN IF IT IS
+         CH    R8,=H'21'          TOO MANY CHARS ?
+         BE    PARSERR            YES, ERROR IF OVER 20 CHARS
+         MVC   0(1,R7),0(R6)      MOVE PARM CHAR
+         AHI   R6,1               BUMP TIOA POINTER
+         AHI   R7,1               BUMP PARM POINTER
+         AHI   R8,1               COUNT THEM
+         B     EXTRLOOP           LOOP
+*
 CEMTI    DS    0F
 * REQUEST INFO
 * FE00  REQUEST I TER DATA
 * FE01  REQUEST I SYS DATA
-* FE02  REQUEST P SHUT
-* FE03  REQUEST P SHUT IMM
+* FE02  REQUEST P SHU
+* FE03  REQUEST P SHU IMM
          DC    A(CEMTIEND-*)
 CEMTIREQ DS    CL4                REQUEST ID
 CEMTITRM DS    CL4                TERMID
@@ -327,21 +330,27 @@ ISYSLIST EQU   *
          DC    CL18'JAR_PATH'
          DC    CL50' '
          TN3270 (SBA,5,2)
+         DC    CL18'CICS_PATH'
+         DC    CL50' '
+         TN3270 (SBA,6,2)
          DC    CL18'TERMID_PREFIX'
          DC    CL3' '
-         TN3270 (SBA,6,2)
+         TN3270 (SBA,7,2)
          DC    CL18'MAXTHREADS'
          DC    CL2' '
-         TN3270 (SBA,7,2)
+         TN3270 (SBA,8,2)
          DC    CL18'LOCAL_TERMINALS'
          DC    CL2' '
-         TN3270 (SBA,8,2)
+         TN3270 (SBA,9,2)
          DC    CL18'REMOTE_TERMINALS'
          DC    CL2' '
-         TN3270 (SBA,9,2)
+         TN3270 (SBA,10,2)
+         DC    CL18'INITIAL_TRANSID'
+         DC    CL4' '
+         TN3270 (SBA,11,2)
          DC    CL18'TRACE_LOCALS'
          DC    CL3' '
-         TN3270 (SBA,10,2)
+         TN3270 (SBA,12,2)
          DC    CL18'TRACE_Z390CICS'
          DC    CL3' '
 ISYSLSTL EQU   *-ISYSLIST
@@ -352,6 +361,7 @@ ISYSLEN  DC    AL2(*-ISYSTITL)
 * TERM  -TYPE-  TRAN  -STATUS--
 * DON0  REMOTE  GUI6  RUNNING
 * DON1  LOCAL         AVAILABLE
+* DON2  LOCAL         SHUT DOWN
 *
 ITERTITL EQU   *
          TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA),IC
@@ -392,7 +402,7 @@ ITERMLEN DC    AL2(*-ITERTITL)
 *
 ITRNTITL EQU   *
          TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA),IC
-         DC    C'CEMT I TRAN'
+         DC    C'CEMT I TRA'
          TN3270 (SBA,3,1),(SF,ATT_PA)
          DC    C'TRAN  PROGRAM-  ----MESSAGES-----'
 ITRNTITE EQU   *-ITRNTITL
@@ -418,39 +428,41 @@ ITRNLIST EQU   *
          DC    CL(ITRNLEN-3)' '
          TN3270 (SBA,13,2)
          DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,14,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,15,2)
+         DC    CL(ITRNLEN-3)' '
 ITRNLSTL EQU   *-ITRNLIST
 ITRNMLEN DC    AL2(*-ITRNTITL)
 *
 SYNTAX   EQU   *
-         TN3270 WCC_KD,(SBA,24,1)
+         TN3270 WCC_KD,(SBA,3,2)
          DC    C'CEMT SYNTAX ERROR'
 SYNTAXL  DC    AL2(*-SYNTAX)
 *
 TCPERR   EQU   *
-         TN3270 WCC_KD,(SBA,24,1)
+         TN3270 WCC_KD,(SBA,3,2)
          DC    C'CEMT TCPIO ERROR'
 TCPERRL  DC    AL2(*-TCPERR)
 *
 BLDLLIST DC    H'1'       BLDL LIST WITH 1 ENTRY
          DC    H'12'      BLDL ENTRY WITH LENGTH EXCLUDING LENGTH FIELD
-BLDLNAME DS    CL8' '     BLDL ENTRY NAME TO FIND IN SYS390 DIR OR CDE
+BLDLNAME DC    CL8' '     BLDL ENTRY NAME TO FIND IN SYS390 DIR OR CDE
          DC    XL4'00'    TTRK R=1 IF FOUND K=1 IF CDE OR 0 IF SYS390
-*                 RPI 609 add data to above DC XL4 DSH 05/08/07
+*
 THRDDSCT DSECT
 * MUST KEEP THRDCNTL AND Z390CEMT IN SYNC
 THRDIND  DS    X                  THREAD STATE
 *                                    X'00'=AVAILABLE
 *                                    X'80'=RUNNING
 *                                    X'FF'=SHUTDOWN
-*VAIL    EQU   X'00'
+AVAIL    EQU   X'00'
 RUNNING  EQU   X'80'
-*HUTDOWN EQU   X'FF'              ###
 THRDTYPE DS    C                  THREAD TYPE
 *                                    X'00'=UNALLOCATED
 *                                    L=LOCAL
 *                                    R=REMOTE
 LOCAL    EQU   C'L'
-*EMOTE   EQU   C'R'
 THRDTYPR EQU   X'00'
 THRDTRAN DS    CL4                THREAD CURRENT TRANSACTION
 THRDLEN  EQU   *-THRDDSCT
@@ -460,7 +472,10 @@ THRDLEN  EQU   *-THRDDSCT
 ISYSDSCT DSECT
          DS    CL3                SBA
          DS    CL18               HEADER
-ISYSPATH DS    CL50               JAR_PATH
+ISYSJPTH DS    CL50               JAR_PATH
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSCPTH DS    CL50               CICS_PATH
          DS    CL3                SBA
          DS    CL18               HEADER
 ISYSTPFX DS    CL3                TERMID_PREFIX
@@ -475,6 +490,9 @@ ISYSLOCL DS    CL2                LOCAL_TERMINALS
 ISYSREMT DS    CL2                REMOTE_TERMINALS
          DS    CL3                SBA
          DS    CL18               HEADER
+ISYSINIT DS    CL4                INITIAL_TRANSID
+         DS    CL3                SBA
+         DS    CL18               HEADER
 ISYSLTRC DS    CL3                TRACE_LOCALS
          DS    CL3                SBA
          DS    CL18               HEADER
@@ -484,10 +502,12 @@ ISYSZTRC DS    CL3                TRACE_Z390CICS
 *
 ISYSDATA DSECT
 ISYSDJRP DS    CL50               JAR_PATH
+ISYSDCSP DS    CL50               CICS_PATH
 ISYSDPFX DS    CL3                TERMID_PREFIX
 ISYSDTHD DS    X                  MAXTHREADS
 ISYSDLCL DS    X                  LOCAL_TERMINALS
 ISYSDRMT DS    X                  REMOTE_TERMINALS
+ISYSDINT DS    CL4                INITIAL_TRANSID
 ISYSDTRL DS    CL3                TRACE_LOCALS
 ISYSDTRZ DS    CL3                TRACE_Z390CICS
 *
@@ -501,7 +521,7 @@ ITERTYPE DS    CL6                LOCAL OR REMOTE
          DS    CL2
 ITERTRAN DS    CL4                TRANSID
          DS    CL2
-ITERIND  DS    CL9                RUNNING OR AVAILABLE
+ITERIND  DS    CL9                RUNNING/AVAILABLE/SHUT DOWN
 ITERLEN  EQU   *-ITERDSCT
 *
 * I TRAN -- DSECT OUTPUT
@@ -518,3 +538,4 @@ ITRNLEN  EQU   *-ITRNDSCT
          TN3270 SYMBOLS
          EQUREGS
          END
+

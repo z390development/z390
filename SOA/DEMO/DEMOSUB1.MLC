@@ -6,11 +6,12 @@
 * Date   - 12/26/06                                                 *
 *********************************************************************
 * 12/31/06 RPI 523 CODE EXAMPLE APPLICATION DEMOSUB1 ROUTINE
+* 07/08/07 RPI 637 CORRECT MISSING ENDING ) ON EXPLICIT OPERAND LM
 *********************************************************************
 * CALC SCIENTIFIC DISPLAY PARM1 + PARM2 = PARM3 USING EXTENDED DFP
 *********************************************************************
 DEMOSUB1 SUBENTRY
-         LM    R3,R5,0(R1       LOAD 3 PARM ADDRESSES
+         LM    R3,R5,0(R1)      LOAD 3 PARM ADDRESSES   RPI 637
          WTO   'DEMOSUB1 ENTERED'
          CFD   CFD_LD,IN=(R3),OUT=0  F0,R2 = LD PARM1
          CFD   CFD_LD,IN=(R4),OUT=1  F1,R3 = LD PARM2

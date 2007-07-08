@@ -48,6 +48,7 @@
 * 11/10/06 RPI 476 ADD CC TEST FOR MVST ALONG WITH SPEEDUP                                           
 * 03/18/07 RPI 580 CORRECT TEST CHAR FOR TR??
 * 05/07/07 RPI 606 add MVCOS tests
+* 06/10/07 RPI 636 set ESTAE required exit RC=4 for restart request
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -73,6 +74,7 @@ ESTAE_EXIT DS  0H
          USING IHAESTA,R1
          L     R0,ESTAPARM
          ST    R0,ESTAPSW+4
+         LA    R15,4   REQUEST RESTART RPI 636
          BR    R14
          DROP  R15,R1
 PWORK    DS    D

@@ -1,0 +1,21 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         DFHADBLK
+*
+* HANDLE AID BLOCK
+*
+DFHADBLK DSECT
+AIDHEAD  DS    CL8                'DFHADBLK'
+AIDCHAIN DS    A                  PUSH CHAIN
+         DS    A                  ENTER  ADDRESS    0
+AIDCLEAR DS    A                  CLEAR  ADDRESS    1
+         DS    3A                 PA1-3  ADDRESSES  2-4
+         DS    24A                PF1-24 ADDRESSES  5-28
+AIDLENG  EQU   *-DFHADBLK
+         MEND
+

@@ -7,6 +7,7 @@
 * 05/01/06 RPI 305 TEST ESTAE EXIT WITH PARM AND RESTART                
 * 09/18/06 RPI 305 TEST REPEAT USAGE                                    
 * 11/10/06 RPI 475 TEST ESTAE EXIT,CT,PARAM=RESTART                     
+* 06/10/07 RPI 636 REQUIRE R15=4 FOR RESTART, R15=0 FOR PERCOLATE       
 *********************************************************************
          TITLE 'TESTSTA1 - TEST ESTAE'
 TESTSTA1 SUBENTRY
@@ -33,6 +34,7 @@ EXIT     DS    0H
          USING IHAESTA,R1
          L     R0,ESTAPARM
          ST    R0,ESTAPSW+4
+         LA    R15,4          RESTART CURRENT TASK AT ESTAPSW DSH
          BR    R14
 COUNT    DC    P'0'
          ESTAD

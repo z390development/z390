@@ -1,0 +1,22 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         DFHABBLK
+*
+* HANDLE ABEND BLOCK
+*
+DFHABBLK DSECT
+         DS    CL8                'DFHABBLK'
+.* THERE ARE 25 ENTRIES, ONE FOR EACH LINK LEVEL
+ABDDEST  DS    XL8                AL8(LABEL) OR CL8'PROGRAM'
+ABDCOMM  DS    A                  COMMAREA ADDRESS
+ABDCALEN DS    H                  COMMAREA LENGTH
+ABDACTIV DS    H                  X'0000'=ACTIVE   X'FFFF'=INACTIVE
+ABDREGS  DS    12A                REG SAVE, R2-R13
+ABDLENG  EQU   *-ABDDEST
+         MEND
+

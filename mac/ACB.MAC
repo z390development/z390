@@ -6,22 +6,24 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-.* MAINTENANCE
 .* 10/22/05 INITIAL CODING                                       
+.* 06/23/07 ADD OPTCD FLAG DEFINITIONS
 .*********************************************************************
-&N       ACB   &AM=VSAM,                                               X
-               &DDNAME=,                                               X
+&N       ACB   &AM=VSAM,      VSAM VS VTAM                             X
+               &BUFSP=0,      MAXIMUM BUFFER SPACE FOR CLUSTER         X
+               &DDNAME=,      DDNAME OR DSNAME REF TO VSAM CLUSTER     X
                &DSNAME=0,                                              X 
-               &EXLST=0,                                               X
-               &MACRF=,                                                X
-               &RMODE31=ALL                                             
+               &EXLST=0,      NOT CURRENTLY SUPPORTED                  X
+               &MACRF=        PROCESSING OPTIONS                                         
 &NPOS    SETA  N'&SYSLIST
 .POSLOOP ANOP
          AIF   (&NPOS EQ 0).POSEND
          MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
 &NPOS    SETA  &NPOS-1
          AGO   .POSLOOP
-.POSEND  ANOP                  
+.POSEND  ANOP  
+         AIF   (&AM NE 'VSAM').ERR1                
+         AIF   (&EXLST NE 0).ERR2
 &N       DS    0D
          ORG   &N+ACBDDNAM-IHAACB
          AIF   (&DDNAME EQ '').DDDEF
@@ -43,4 +45,10 @@
          ORG   &N+ACBMACRF-IHAACB
          DC    AL2(&TV)
          ORG   &N+ACBLEN
+         ACBD
+         MEXIT
+.ERR1    MNOTE 12,'ACB ONLY AM=VSAM IS SUPPORTED'
+         MEXIT
+.ERR2    MNOTE 12,'ACB EXLST NOT CURRENTLY SUPPORTED'
+         MEXIT
          MEND

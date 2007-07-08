@@ -10,6 +10,15 @@
 .* 10/22/05 INITIAL CODING                    
 .*********************************************************************
          ACBD   
+.*
+.* IF ACBD ALREADY DEFINED EXIT NOW
+.*
+         GBLB  &Z390_ACBD                          
+         GBLC  &Z390_ACBD_NAME,&Z390_ACBD_TYPE            
+         AIF   (&Z390_ACBD).EXIT                          
+&Z390_ACBD      SETB 1                                   
+&Z390_ACBD_NAME SETC '&SYSLOC'                                    
+&Z390_ACBD_TYPE SETC '&SYSSTYP'        
          AIF   (N'&SYSLIST EQ 0).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
 .NPOK    ANOP
@@ -26,4 +35,7 @@ ACBMACRF_SEQ EQU X'4000'         SEQUENTIAL ACCESS
 ACBMACRF_DIR EQU X'2000'         RANDOM ACCESS
 ACBMACRF_OUT EQU X'1000'         WRITE UPDATE
 ACBLEN   EQU   *-IHAACB
+          AIF  (&Z390_ACBD_NAME EQ '' OR &Z390_ACBD_TYPE EQ '').EXIT
+&Z390_ACBD_NAME &Z390_ACBD_TYPE                    
+.EXIT    ANOP
          MEND

@@ -1,0 +1,39 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 06/23/07                                                 *
+.*********************************************************************
+.* 06/23/07 INITIAL CODING                    
+.*********************************************************************
+         RPLD   
+.*
+.* IF RPLD ALREADY DEFINED EXIT NOW
+.*
+         GBLB  &Z390_RPLD                          
+         GBLC  &Z390_RPLD_NAME,&Z390_RPLD_TYPE            
+         AIF   (&Z390_RPLD).EXIT                          
+&Z390_RPLD      SETB 1                                   
+&Z390_RPLD_NAME SETC '&SYSLOC'                                    
+&Z390_RPLD_TYPE SETC '&SYSSTYP'        
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.*       ACCESS CONTROL BLOCK DSECT FOR VSAM
+.*
+IHARPL   DSECT
+RPLACB   DS    A              ACB                                     
+RPLAREA  DS    A              AREA WITH MVE REC OR LOC REC ADDRESS
+RPLAREALEN DS    A            AREA LENGTH - MAX RECORD LEN OR 4          
+RPLARG   DS    H              KEY FIELD                       
+RPLKEYLEN  DS    A            KEY LENGTH       
+RPLNXTRPL  DS    A            NEXT RPL IN LIST     
+RPLRECLEN  DS    A            MAX RECORD LENGTH FOR PUT  
+RPLLEN   EQU   *-IHARPL
+          AIF  (&Z390_RPLD_NAME EQ '' OR &Z390_RPLD_TYPE EQ '').EXIT
+&Z390_RPLD_NAME &Z390_RPLD_TYPE                    
+.EXIT    ANOP
+         MEND

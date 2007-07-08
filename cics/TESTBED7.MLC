@@ -1,0 +1,54 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+*
+* 1) HANDLE ABEND BY PROGRAM
+* 2) LINKED PROGRAM TO DEMO COMPLEX HANDLE ABEND
+*
+DFHEISTG DSECT                    DSA STORAGE
+TESTBED7 CSECT
+*
+         CLC   EIBTRNID,=C'BED5'  SECOND TEST TRANSID ?
+         BE    BED5               EXIT IF IT IS
+*
+* BED4 ABEND HANDLER
+         EXEC  CICS SEND FROM(TEST1) LENGTH(TEST1L)
+         EXEC  CICS RETURN
+*
+* ABEND PRODUCER FOR TRANSID BED5
+*
+BED5     EQU   *
+         OC    DFHEICAP,DFHEICAP  ANY COMMAREA ?
+         BNZ   BED5COMM           EXIT IF WE HAVE
+* CAUSE ASRA TO BE HANDLED BY TESTBED6
+         EXEC  CICS SEND FROM(TEST2) LENGTH(TEST2L)
+         DC    H'0'
+*
+BED5COMM EQU   *
+         EXEC  CICS HANDLE ABEND PROGRAM('TESTBED8')
+         EXEC  CICS SEND FROM(TEST3) LENGTH(TEST3L)
+* CAUSE AEI0
+* THIS IS 'REPLACED' BY XCTL TO TESTBED8 WITH OUR COMMAREA
+         EXEC  CICS LOAD PROGRAM('BADPROG7')
+*
+TEST1    TN3270 WCC_KD,(SBA,7,2)
+         DC    C'TESTBED7 IN TRANSID BED4 SAYS HELLO'
+         TN3270 (SBA,9,2)
+         DC    C'BED4 COMPLETED OK, NOW PRESS CLEAR'
+TEST1L   DC    AL2(*-TEST1)
+*
+TEST2    TN3270 WCC_KD,(SBA,3,2)
+         DC    C'TESTBED7 IN TRANSID BED5 SAYS HELLO AND ABENDS ASRA'
+TEST2L   DC    AL2(*-TEST2)
+*
+TEST3    TN3270 WCC_KD,(SBA,7,2)
+         DC    C'TESTBED7 IN TRANSID BED5 SAYS HELLO AND ABENDS AEI0'
+TEST3L   DC    AL2(*-TEST3)
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         END
+

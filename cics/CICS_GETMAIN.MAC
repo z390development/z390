@@ -1,0 +1,118 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         CICS_GETMAIN
+         LCLC  &SET,&LENGTH,&FLENGTH,&INITIMG
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  &SYSLIST(&IP)
+         AIF   ('&PARM'(1,4) EQ 'SET(').SET
+         AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,8) EQ 'FLENGTH(').FLENGTH
+         AIF   ('&PARM'(1,8) EQ 'INITIMG(').INITIMG
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.SET     ANOP
+&SET     SETC  '&PARM'(5,K'&PARM-5)
+         AGO   .PLOOP
+.*
+.LENGTH  ANOP
+&LENGTH  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.FLENGTH ANOP
+&FLENGTH SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.INITIMG ANOP
+&INITIMG SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   (&LENGTH NE '' AND &FLENGTH NE '').BADLEN
+         AIF   (&LENGTH EQ '' AND &FLENGTH EQ '').NEEDLEN
+         AIF   (&SET EQ '').BADSET
+         MVC   EIBFN,=X'0C02'     SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+.* LENGTH MAY BE L' OR CONSTANT LIKE C'.' X'..'
+         AIF   (&FLENGTH NE '').FLEN
+         AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
+         AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
+.LENNUM  ANOP
+         LH    R1,=AL2(&LENGTH)   SET NUMERIC GETMAIN LENGTH
+         AGO   .ALLDONE
+.*
+.LENLABL ANOP
+         LH    R1,&LENGTH         SET GETMAIN LENGTH FROM LABEL
+         AGO   .ALLDONE
+.*
+.FLEN    ANOP
+         AIF   ('&FLENGTH'(2,1) EQ '''').FLENNUM
+         AIF   ('&FLENGTH'(1,1) LT '0' OR '&FLENGTH'(1,1) GT '9').FLENL-
+               AB
+.FLENNUM ANOP
+         L     R1,=AL4(&FLENGTH)  SET NUMERIC GETMAIN LENGTH
+         AGO   .ALLDONE
+.*
+.FLENLAB ANOP
+         L     R1,&FLENGTH        SET GETMAIN LENGTH FROM LABEL
+.*
+.ALLDONE ANOP
+         AHI   R1,8               +8 FOR PREFIX
+         GETMAIN R,LV=(R1)
+         LA    &SET,8(R1)         SET GETMAIN ADDRESS FOR REQUESTOR
+         LA    R14,TCTTESCC       R14=ANCHOR OF GETMAIN CHAIN
+CICS_GETMAIN_&SYSNDX._LOOP EQU *
+         OC    0(4,R14),0(R14)    ANY GETMAIN CHAIN ?
+         BNZ   CICS_GETMAIN_&SYSNDX._CHAIN EXIT IF THERE IS
+         ST    R1,0(R14)          SAVE GETMAIN CHAIN
+         XC    0(4,R1),0(R1)      CLEAR FORWARD CHAIN
+         ST    R0,4(R1)           SAVE LENGTH ACQUIRED IN PREFIX
+         B     CICS_GETMAIN_&SYSNDX._INIT EXIT
+.*
+CICS_GETMAIN_&SYSNDX._CHAIN EQU *
+         L     R14,0(R14)         NEXT GETMAIN AREA
+         B     CICS_GETMAIN_&SYSNDX._LOOP LOOP THRU CHAIN
+.*
+CICS_GETMAIN_&SYSNDX._INIT EQU *
+         AIF   (&INITIMG EQ '').DUNGETM
+         LR    R14,&SET           SET ADDRESS TO CLEAR
+         LR    R15,R0             SET LENGTH TO CLEAR
+         AHI   R15,-8             ADJUST FOR PREFIX
+         LR    R0,R14             SET 2ND ADDRESS
+         SR    R1,R1              CLEAR 2ND LENGTH
+         AIF   ('&INITIMG'(2,1) EQ '''').INITNUM
+         AIF   ('&INITIMG'(1,1) LT '0' OR '&INITIMG'(1,1) GT '9').INITL-
+               AB
+.INITNUM ANOP
+         ICM   R1,8,=AL1(&INITIMG) SET NUMERIC PADDING BYTE
+         AGO   .DOINIT
+.*
+.INITLAB ANOP
+         ICM   R1,8,&INITIMG       SET PADDING BYTE FROM LABEL
+.DOINIT  ANOP
+         MVCL  R14,R0              CLEAR GETMAINED AREA WITH INITIMG
+.*
+.DUNGETM ANOP
+         MEXIT
+.*
+.BADLEN  MNOTE 12,'LENGTH AND FLENGTH SPECIFIED'
+         MEXIT
+.*
+.BADSET  MNOTE 12,'SET IS MANDATORY'
+         MEXIT
+.*
+.NEEDLEN MNOTE 12,'LENGTH OR FLENGTH IS MANDATORY'
+         MEXIT
+         MEND
+

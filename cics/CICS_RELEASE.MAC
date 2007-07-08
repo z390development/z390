@@ -1,0 +1,83 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         CICS_RELEASE
+         GBLB  &RLSEBLDL
+         GBLC  &DFHEIENT_CSECT
+         LCLC  &PROGRAM
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  &SYSLIST(&IP)
+         AIF   ('&PARM'(1,8) EQ 'PROGRAM(').PROGRAM
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.PROGRAM ANOP
+&PROGRAM SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   (&PROGRAM EQ '').MISPROG
+         MVC   EIBFN,=X'0E0A'     SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         AIF   (&RLSEBLDL).NOBLDL
+&RLSEBLDL SETB 1
+         B     CICS_RLSE_&SYSNDX._01 BRANCH ROUND BLDL BLOCK
+RLSE_BLDLLIST DC H'1'             BLDL LIST WITH 1 ENTRY
+         DC    H'12'              BLDL ENTRY LENGTH
+RLSE_BLDLNAME DS CL8              BLDL ENTRY NAME TO FIND
+         DS    XL4
+CICS_RLSE_&SYSNDX._01 DS 0H
+.NOBLDL  ANOP
+         AIF   ('&PROGRAM'(1,1) EQ '''').STRING
+         MVC   RLSE_BLDLNAME,&PROGRAM MOVE PROGRAM FOR BLDL
+         MVC   EIBRSRCE,&PROGRAM  SET EIBRSRCE
+         AGO   .NOSTRING
+.*
+.STRING  ANOP
+&PROGLEN SETA  K'&PROGRAM
+         AIF   (&PROGLEN LT 3 OR &PROGLEN GT 10).BADPROG
+         MVC   RLSE_BLDLNAME,=CL8&PROGRAM MOVE PROGRAM FOR BLDL
+         MVC   EIBRSRCE,=CL8&PROGRAM SET EIBRSRCE
+.NOSTRING ANOP
+         BLDL  0,RLSE_BLDLLIST    BLDL
+         LTR   R15,R15            RC=4 IF ENTRY NOT FOUND
+         BZ    CICS_RLSE_&SYSNDX._02 EXIT IF OK
+.* INVOKE INVREQ
+         MVI   EIBRCODE,X'E0'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         MVC   EIBRESP2,=F'6'     SET EIBRESP2=PROGRAM NOT LOADED
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(CICS_RLSE_&SYSNDX._IGNORE) ENTPT FOR IGNORE COND
+.*
+CICS_RLSE_&SYSNDX._02 DS 0H
+         CLC   RLSE_BLDLNAME,=CL8'&DFHEIENT_CSECT' IS IT US ?
+         BNE   CICS_RLSE_&SYSNDX._03 EXIT IF OK
+.* INVOKE INVREQ
+         MVI   EIBRCODE,X'E0'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(INVREQ) SET EIBRESP=INVREQ
+         MVC   EIBRESP2,=F'5'     SET EIBRESP2=PROGRAM IS US
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(CICS_RLSE_&SYSNDX._IGNORE) ENTPT FOR IGNORE COND
+.*
+CICS_RLSE_&SYSNDX._03 DS 0H
+         DELETE EPLOC=EIBRSRCE
+CICS_RLSE_&SYSNDX._IGNORE DS 0H
+         MEXIT
+.*
+.MISPROG MNOTE 12,'PROGRAM IS MISSING'
+         MEXIT
+.*
+.BADPROG MNOTE 12,'INVALID PROGRAM'
+         MEXIT
+         MEND
+

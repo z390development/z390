@@ -16,6 +16,8 @@ TESTDST1 SUBENTRY
          USING CS2,3
          CLC   DS1F2,DS1F2-DS1+CS2
          BNE   1
+         CLC   =A(LDST2),=A(32)
+         BNE   1
          WTO   'TESTDST1 ENDED OK'
          SUBEXIT
 DS1      DSECT
@@ -31,5 +33,9 @@ CS2      CSECT
 CS2F2    DC   C'DEF'
 DS1      DSECT             RPI 553 FIX (WAS CSECT IN ERROR)
 DS1F2    DS   CL3
-DS1F3    DS   CL3        
+DS1F3    DS   CL3     
+DST2     DSECT
+         DS    X
+         DS    ((*-DST2+31)/32*32-(*-DST2))X
+LDST2    EQU   *-DST2   
          END

@@ -1,0 +1,67 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         CICS_IGNORE
+         LCLC  &TYPE
+         LCLC  &CONDS(30)
+&TYPE    SETC  &SYSLIST(1)
+         AIF   (&TYPE EQ 'CONDITION').COND
+         MNOTE 12,'IGNORE TYPE NOT RECOGNIZED'
+         MEXIT
+.*
+.* IGNORE CONDITION
+.*
+.COND    ANOP
+         MVC   EIBFN,=X'020A'     SET EIBFN
+         USING DFHHCBLK,R1
+         ICM   R1,15,DFHEIHCN     ANY CONDITION BLOCK ADDRESS ?
+         BZ    CICS_IGNORE_&SYSNDX._04 EXIT IF NO CONDITION BLOCKS
+CICS_IGNORE_&SYSNDX._05 DS 0H
+         LR    R14,R1             R14=LAST CONDITION BLOCK ADDRESS
+         ICM   R1,15,HCNCHAIN     R1=NEXT CONDITION BLOCK
+         BNZ   CICS_IGNORE_&SYSNDX._05 LOOP
+.* END OF CONDITION BLOCK CHAIN
+         LR    R1,R14             R1=LAST CONDITION BLOCK ADDRESS
+.* SET CONDITION LIST
+&CONDS(01) SETC 'ERROR'
+&CONDS(16) SETC 'INVREQ'
+&CONDS(22) SETC 'LENGERR'
+&CONDS(27) SETC 'PGMIDERR'
+.*
+&NP      SETA  N'&SYSLIST
+&IP      SETA  1
+.PLOOPC  ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  &SYSLIST(&IP)
+.* INNER LOOP
+&INNER   SETA  0
+.ILOOPC  ANOP
+&INNER   SETA  &INNER+1
+         AIF   (&INNER GT 30).BADPARM
+         AIF   (K'&CONDS(&INNER) EQ 0).ILOOPC
+         AIF   (&PARM EQ &CONDS(&INNER)).GOTCOND
+         AGO   .ILOOPC
+.*
+.GOTCOND ANOP
+.* IGNORE IT
+         LR    R14,R1             R14=ADDRESS OF CONDITION BLOCK
+         LA    R14,12+(&INNER*4)(R14) INDEX TO ENTRY
+         MVC   0(4,R14),=4X'FF'   IGNORE ENTRY
+         AGO   .PLOOPC
+.*
+.BADPARM ANOP
+CICS_IGNORE_&SYSNDX._04 DS 0H
+         MNOTE 12,'BAD PARM &PARM'
+         MEXIT
+.*
+.ELOOP   ANOP
+CICS_IGNORE_&SYSNDX._04 DS 0H
+         DROP  R1
+         MEXIT
+         MEND
+

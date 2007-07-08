@@ -265,7 +265,9 @@ public  class  az390 implements Runnable {
     *          match PRN location counter but leave obj data
     *          as relative CSECT for use by linker 
     * 06/10/07 RPI 637 issue error if missing ) on off(reg,reg) opnd 
-    * 06/21/07 RPI 643 correct multiple value DCF's             
+    * 06/21/07 RPI 643 correct multiple value DCF's 
+    * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
+    * 07/07/07 RPI 651 prevent trap on USING with no parms 
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -4262,7 +4264,7 @@ private void close_files(){
 	  	  try {
 	  	  	  obj_file.close();
 	  	  } catch (IOException e){
-	  	  	  abort_error(24,"I/O error on obj close - " + e.toString());
+	  	  	  tz390.abort_error(24,"I/O error on obj close - " + e.toString());
 	  	  }
 	  }
 	  if  (tz390.opt_list){
@@ -4270,7 +4272,7 @@ private void close_files(){
 		  	  try {
 		  	  	  prn_file_buff.close();
 		  	  } catch (IOException e){
-		  	  	  abort_error(24,"I/O error on prn close - " + e.toString());
+		  	  	  tz390.abort_error(24,"I/O error on prn close - " + e.toString());
 		  	  }
 		  }
 	  }
@@ -4324,14 +4326,14 @@ private void set_file_line_xref(){
    	    	 xref_file_line = "";
    	     }
 }
-private void abort_error(int error,String msg){
+private synchronized void abort_error(int error,String msg){ // RPI 646
 	/*
 	 * issue error msg to log with prefix and
 	 * inc error total
 	 */
 	  az390_errors++;
 	  if (tz390.z390_abort){
-		 msg = "az390 aborting due to recursive abort request for " + msg;
+		 msg = "az390 aborting due to recursive abort error " + error + " - " + msg;
 		 System.out.println(msg);
 		 tz390.put_systerm(msg);
 		 tz390.close_systerm(16);
@@ -4781,6 +4783,10 @@ private void add_using(){
 	/*
 	 * add or replace USING for code generation
 	 */
+	if (bal_parms == null){ // RPI 651
+		log_error(195,"missing USING parms");
+		return;
+	}
 	get_use_range();
 	if (bal_label != null){
 		cur_use_lab = bal_label.toUpperCase();
