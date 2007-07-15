@@ -11,6 +11,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/12/06 RPI244 SUPPORT TYPE=REL         
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 07/11/07 RPI 654 CORRECT TO SUPPORT DCBBLKSIF
 .*********************************************************************
 &N       POINT &DCB,         DCB                                       X
                &REL,         RELATIVE BLOCK                            X
@@ -55,7 +56,7 @@
 .RELREG  ANOP
          LGF   0,0(&REL(1))
 .TORBA   ANOP
-         LH    15,DCBBLKSI-IHADCB(1)
+         L     15,DCBBLKSIF-IHADCB(1)      RPI 654
          MSGFR 0,15
 .SVC     ANOP
          SVC   156 POINT R1=DCB R0=(64 BIT RBA)

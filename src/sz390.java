@@ -135,7 +135,8 @@ public  class  sz390 implements Runnable {
     *          to same level as next ESTAE exit being invoked.
     * 06/23/07 RPI 642 terminate get_ascii_string at null 
     * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
-    * 07/06/07 RPI 650 support TEST mode indirect expression addressing VIA ? OR %               
+    * 07/06/07 RPI 650 support TEST mode indirect expression addressing VIA ? OR % 
+    * 07/12/07 RPI 413 add extract svc x'28' with GETENV support               
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -151,6 +152,8 @@ public  class  sz390 implements Runnable {
    int max_dir_list       = 512;
    int max_guam_buff       = 3000;
    int max_ecb_count = 16; // RPI 393
+   int max_env_name_len = 256;   // RPI 413
+   int max_env_value_len = 4096; // RPI 413 could be move?
    /* 
     * shared global variables
     */
@@ -181,6 +184,13 @@ public  class  sz390 implements Runnable {
     int  stimer_save_r14 = 0; // save r14 during exit
     int  stimer_save_r15 = 0; // save r15 during exit
     int  stimer_save_psw = 0; // save psw at time of exit
+    /*
+     * environment variables
+     */
+    int env_name_addr  = 0;
+    int env_value_addr = 0;
+    String env_name = "";
+    String env_value = "";
     /*
      * gz390 graphical user access method variables
      */
@@ -676,6 +686,9 @@ public void svc(int svc_id){
         wto_len = pz390.mem.getShort(wto_fld);
 		wto_msg("",wto_fld+4,wto_len-4);  //RPI190 remove "WTO  MSG"
 		break;
+	case 0x28:  //EXTRACT (GETENV) RPI 413
+		svc_extract();
+		break;
 	case 0x2e:  //TTIMER r0=function, r1=mic addr
 		svc_ttimer();
 		break;
@@ -1119,6 +1132,43 @@ public void open_files(){
  		}
  	}
  }
+private void svc_extract(){ // RPI 413
+	/*
+	 * extract svc supports the following functions
+	 *   r0 function
+	 *    1 - GETENV get environment variable
+	 *            input  r1=name with null terminator
+	 *            output r2=getmain'd area value and null terminator
+	 */
+	int op = pz390.reg.getInt(pz390.r0);
+	switch (op){
+	case 1: // GETENV r1=name, r2 set to getmain'd value with null term
+		env_name_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+        env_name = get_ascii_string(env_name_addr,max_env_name_len);
+        if (env_name.length() > 0){
+        	env_value = get_ascii_env_var_string(env_name);
+        	if (env_value.length() > 0){
+                pz390.reg.putInt(pz390.r0,0); // getmain below line
+                pz390.reg.putInt(pz390.r1,env_value.length()+1);
+                svc_getmain();
+                if (pz390.reg.getInt(pz390.r15) == 0){
+                	env_value_addr = pz390.reg.getInt(pz390.r1); 
+                	pz390.reg.putInt(pz390.r2,env_value_addr);
+                	put_ascii_string(env_value,env_value_addr,env_value.length()+1,(char)0);
+                } else {
+                	return; // exit with rc = getmain error
+                }        		
+        	} else {
+            	pz390.reg.putInt(pz390.r15,4); // no value
+        	}
+        } else {
+        	pz390.reg.putInt(pz390.r15,8); // no name
+        }
+        break;
+	default:
+		pz390.set_psw_check(pz390.psw_pic_spec);
+	}
+}
 private void svc_load(){
 	/*
 	 * load 390 load module into virtual memory
@@ -2944,7 +2994,7 @@ private String get_ascii_env_var_string(String env_var_name){
 	 * with leading and trailing spaces removed
 	 * or return "" if not found.
 	 */
-	String text = System.getenv(env_var_name);
+	String text = System.getenv(env_var_name); 
 	if (text != null){
 		return text.trim(); //RPI111
 	} else {
@@ -3005,7 +3055,7 @@ public String get_ascii_string(int mem_addr,int mem_len){
 	}
 	return ("x"+text).trim().substring(1);
 }
-public void put_ascii_string(String text,int mem_addr,int mem_len){
+public void put_ascii_string(String text,int mem_addr,int mem_len,char pad_char){
 	/*
 	 * put ascii string with trailing spaces to
 	 * memory address and length
@@ -3019,7 +3069,7 @@ public void put_ascii_string(String text,int mem_addr,int mem_len){
 		if (index < text.length()){
 			text_char = text.charAt(index);
 		} else {
-			text_char = ' ';
+			text_char = pad_char;
 		}
 		if (tz390.opt_ascii){
 			pz390.mem_byte[mem_addr + index] = (byte)(text_char & 0xff); // RPI 551
@@ -3087,7 +3137,7 @@ private void svc_cmd(){
 				cmd_read_line = cmd_get_queue(cmd_id);
 			}
 			if  (cmd_read_line != null){
-				put_ascii_string(cmd_read_line,pz390.reg.getInt(pz390.r1),pz390.reg.getInt(pz390.r2));
+				put_ascii_string(cmd_read_line,pz390.reg.getInt(pz390.r1),pz390.reg.getInt(pz390.r2),' ');
 				pz390.reg.putInt(pz390.r15,0);
 			} else if (cmd_proc_running[cmd_id]
 					   && cmd_proc_rc(cmd_id) == -1){

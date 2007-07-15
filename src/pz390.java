@@ -10791,6 +10791,14 @@ public class pz390 {
 			return "CMDPROC R0+2=ID, R0+3=OP, R1=COMMAND";
 		case 0x23: // WTO R1=ADDR
 			return "WTO R1=ADDR(AL2(LEN),AL2(FLAGS),C'MSG')";
+		case 0x28: // EXTRACE r0=1 GETENV R1=NAME set R2=VALUE
+			int op = reg.getInt(r0);
+			switch (op){
+			case 1: // GETENV R1=name set R2=value
+				return "EXTRACT GETENV R1=NAME, SET R2=VALUE";
+			default:
+				return "UNKNOWN";
+			}
 		case 0x2e: // TTIMER r0=function, r1=mic addr
 			return "TTIMER R0=OP, R1=ADDR";
 		case 0x2f: // STIMER r0=flags, r1=rx storage arg.
@@ -13682,8 +13690,8 @@ public class pz390 {
 		/*
 		 * init cvt initial program load pgm name field
 		 */
-		sz390.put_ascii_string(tz390.opt_ipl,zcvt_ipl_pgm,8);
-		sz390.put_ascii_string(tz390.pgm_name,zcvt_user_pgm,8);
+		sz390.put_ascii_string(tz390.opt_ipl,zcvt_ipl_pgm,8,' ');
+		sz390.put_ascii_string(tz390.pgm_name,zcvt_user_pgm,8,' ');
 		/*
 		 * init zcvt_exec_parm from PARM(..) option Notes: 1. ez390 sets R1 to
 		 * zcvt_exec_parm at start
@@ -13710,8 +13718,8 @@ public class pz390 {
 		/*
 		 * init VSE COMRG fields RPI 558
 		 */
-		sz390.put_ascii_string(tz390.job_date,zcvt_comrg_jobdate,8);
-		sz390.put_ascii_string(tz390.pgm_name,zcvt_comrg_comname,8);
+		sz390.put_ascii_string(tz390.job_date,zcvt_comrg_jobdate,8,' ');
+		sz390.put_ascii_string(tz390.pgm_name,zcvt_comrg_comname,8,' ');
 	}
 	private void trace_ins(){
 		/*

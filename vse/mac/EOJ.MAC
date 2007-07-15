@@ -7,6 +7,7 @@
 .* Date   - 03/11/07                                                 *
 .*********************************************************************
 .* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.* 07/10/07 RPI 655 CORRECT RC= HANDLING OF EXPRESSION AND (REG)
 .*********************************************************************
 &N       EOJ   &RC=0      SET RETURN CODE TO 0 OR SPECIFIED VALUE       
          AIF   (&N EQ '').SKIPDS
@@ -20,10 +21,10 @@
 .*
          AIF   ('&RC'(1,1) EQ '(').REG
 .DEFAULT ANOP
-         LA    15,0
+         LA    15,&RC
          AGO   .SVC   
 .REG     ANOP
-         LA    15,&RC
+         LR    15,&RC(1)
 .SVC     ANOP
          SVC   3 EXIT CURRENT PROGRAM
          MEND

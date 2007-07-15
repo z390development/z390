@@ -7,6 +7,7 @@
 * Date   - 04/07/07                                                 *
 *********************************************************************
 * 04/13/07 INITIAL CODING OF SUPERZAP V1,0               
+* 07/11/07 RPI 654 REMOVE LOCAL PM, PENTRY, PEXIT AND USE MAC VERSIONS
 *********************************************************************
 *
 *  SUPERZAP - UPDATE OR DUMP SECTIONS OF ANY FILE
@@ -67,29 +68,11 @@
 *  R7-R8 EXTENDED BASE REGISTERS
 *  R9    START OF FILE CONTENT
 *  R10   END OF FILE CONTENT + 1
-*  R11   PERFORM STACK FOR LINK ADDRESSES
-*  R12   PERFORM LINK ADDR
 *  R13   CODE BASE AND SAVE AREA
 *  R14-R15 WORK
 *********************************************************************
-         MACRO
-&N       PENTRY
-&N       ST    R12,0(R11)
-         AHI   R11,4
-         MEND
-         MACRO
-         PM    &RTN
-         BAL   R12,&RTN
-         MEND
-         MACRO
-         PEXIT
-         AHI   R11,-4
-         L     R12,0(R11)
-         BR    R12
-         MEND
 SUPERZAP SUBENTRY BASES=(R13,R7,R8)
          COPY  ASMMSP
-         LA    R11,STACK
          LR    R2,R1
          PM    CMD_INIT
          LA    R2,=CL80'SUPERZAP V1.0 04/13/07 Z390 FILE UTILITY'
@@ -779,7 +762,6 @@ CMD      DC    CL80' ',C'*'
 CUR_CMD  DC   A(CMD_LIST)
 NEXT_CMD DC   A(CMD_LIST)
 OP       DC   CL8' '
-STACK    DC   10A(0)
 LENGTH   DC   A(0)
 BASE     DC   A(0)
 OFFSET   DC   A(0)

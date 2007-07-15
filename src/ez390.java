@@ -453,7 +453,7 @@ private void monitor_update(){
 		}
 		if (sz390.wtor_reply_string != null){
 			sz390.put_log("" + sz390.wtor_reply_string);  //RPI190 remove "WTOR REPLY MSG"
-			sz390.put_ascii_string(sz390.wtor_reply_string,sz390.wtor_reply_addr,sz390.wtor_reply_len);
+			sz390.put_ascii_string(sz390.wtor_reply_string,sz390.wtor_reply_addr,sz390.wtor_reply_len,' ');
 			sz390.pz390.mem.putInt(sz390.wtor_ecb_addr,sz390.ecb_posted); // post ecb for any wait
 			sz390.wtor_reply_pending = false;
 		}

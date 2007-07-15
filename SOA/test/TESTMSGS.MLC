@@ -1,0 +1,64 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 02/22/07                                                 *
+*********************************************************************
+* TESTMSGS start server for 4 digit port in PARM(1234)              
+*     1.  read 48 character message from port connection        
+*     2.  display message on log                  
+*     3.  return msg
+*     4.  repeat until msg = STOP
+*********************************************************************
+* Maintenance:
+* 02/22/07 RPI 553 code new TCPIO test server          
+*********************************************************************
+TESTMSGS SUBENTRY
+         LR    R2,R1
+         WTO   'TESTMSGC TC[OP TEST SERVER'
+         PACK  PWORK,2(4,R2)
+         CVB   R4,PWORK        R4=PORT
+         TCPIO OPEN,PORT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
+         ZAP   RETRY,=P'2'
+LOOP     EQU   *
+         WTO   'TESTMSGS RECEIVE NEXT MESSAGE'
+         TCPIO RECEIVE,PORT=(R4),MSG=RMSG,LMSG==A(L'RMSG)
+         LTR   R15,R15
+         BZ    OK     
+         SP    RETRY,=P'1'
+         BNM   LOOP
+         WTO   'TESTMSGS RECEIVE RETRY FAILED'
+         B     ABORT
+OK       EQU   *
+         ZAP   RETRY,=P'2'
+         WTO   MF=(E,WTORMSG)
+         CLC   RMSGCMD+5(4),=C'STOP'
+         BE    STOP
+         TCPIO SEND,PORT=(R4),MSG=RMSG,LMSG==A(L'RMSG)
+         LTR   R15,R15
+         BNZ   ABORT
+         B     LOOP
+STOP     EQU   *
+         TCPIO CLOSE,PORT=(R4)
+         LTR   R15,R15
+         BNZ   ABORT
+         WTO   'TESTMSGS STOPPED OK BY STOP COMMAND'
+         SUBEXIT
+ABORT    EQU   *
+         LR    R5,R15
+         WTO   'TESTMSGS ABORTING DUE TO ERROR'
+         LR    R15,R5
+         ABEND 111,DUMP
+         LTORG
+PWORK    DC    PL8'0'
+RETRY    DC    PL3'0'
+WTORMSG  DC    AL2(WTORMSG_END-*,0),C'TESTMSGS RECV MSG='
+RMSG     DS    0CL48
+RMSGID   DC    CL8' '
+RMSGCMD  DC    CL40' '
+WTORMSG_END EQU *
+         EQUREGS
+         END

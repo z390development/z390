@@ -1,0 +1,103 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 02/22/07                                                 *
+*********************************************************************
+* TESTMSGC prompt for command via WTOR                              
+*          Sppppmsg - semd record with tod and msg to port pppp 
+*                     and display reply record
+*          Q        - quit
+*********************************************************************
+* Maintenance:
+* 02/22/07 RPI 553 code new TCPIO test client          
+*********************************************************************
+TESTMSGC SUBENTRY
+         WTO   'TESTMSGC TC[OP TEST CLIENT'
+         LA    R4,0         R4 = OPEN PORT #
+LOOP     EQU   *
+         MVI   WTORECB,0
+         WTOR  'ENTER SPPPPMSG TO SEND MSG TO PORT OR Q TO QUIT',      X
+               COMMAND,L'COMMAND,WTORECB
+         WAIT  ECB=WTORECB
+         CLI   COMMAND,C'S'
+         BE    SEND
+         CLI   COMMAND,C'Q'
+         BE    QUIT
+         WTO   'TESTMSCC INVALID COMMAND IGNORED'
+         B     LOOP
+QUIT     EQU   *
+         LTR   R4,R4
+         BZ    SKIP_CLOSE1
+         TCPIO CLOSE,PORT=(R4)
+SKIP_CLOSE1 EQU *
+         WTO   'TESTMSGC QUITTING'
+         SUBEXIT
+SEND     EQU   *
+         BAL   R12,START_TIME
+         PACK  PWORK,COMMAND+1(4)
+         CVB   R3,PWORK     R3 = PORT
+         CLR   R3,R4        IS THIS PORT OPEN
+         BE    SKIP_OPEN    YES, SKIP OPENA AND USE CURRENT CONNECTION
+         LTR   R4,R4        IS DIFFERENT PORT OPEN
+         BE    SKIP_CLOSE2  NO SKIP CLOSE
+         TCPIO CLOSE,PORT=(R4)
+SKIP_CLOSE2 EQU  *
+         LR    R4,R3
+         TCPIO OPEN,PORT=(R4),HOST=*
+         LTR   R15,R15
+         BNZ   LOOP
+SKIP_OPEN EQU *
+         MVC   SMSGCMD,COMMAND
+         AP    TRANSID,=P'1'
+         MVC   SMSGID,=X'4020202020202020'
+         ED    SMSGID,TRANSID
+         WTO   MF=(E,WTOSMSG)
+         TCPIO SEND,PORT=(R4),MSG=SMSG,LMSG==A(L'SMSG)
+         LTR   R15,R15
+         BNZ   LOOP
+         CLC   SMSGCMD+5(4),=C'STOP'  IS THIS STOP SERVER CMD
+         BE    QUIT                   YES, STOP CLIENT TOO
+         TCPIO RECEIVE,PORT=(R4),MSG=RMSG,LMSG==A(L'RMSG)
+         LTR   R15,R15
+         BNZ   LOOP
+         WTO   MF=(E,WTORMSG)
+         BAL   R12,STOP_TIME
+         B     LOOP
+         LTORG
+PWORK    DC    PL8'0'
+TRANSID  DC    PL4'0'
+COMMAND  DC    CL40' '
+WTORECB  DC    F'0'
+WTOSMSG  DC    AL2(WTOSMSG_END-*,0),C'TESTMSGC SEND MSG='
+SMSG     DS    0CL48
+SMSGID   DC    CL8' '
+SMSGCMD  DC    CL40' '
+WTOSMSG_END EQU *
+WTORMSG  DC    AL2(WTORMSG_END-*,0),C'TESTMSGC RECV MSG='
+RMSG     DS    0CL48
+RMSGID   DC    CL8' '
+RMSGCMD  DC    CL40' '
+WTORMSG_END EQU *
+START_TIME DS 0H
+         TIME  NS,NS_START
+         BR    R12
+STOP_TIME DS 0H  SHOW SRERVICE TIME IN MICRO-SECONDS
+         TIME  NS,NS_STOP
+         LG    R1,NS_STOP
+         SG    R1,NS_START
+         DSG   R0,=FD'1000'
+         CVD   R1,PWORK
+         MVC   DMICS,MICS_MASK
+         ED    DMICS,PWORK+3
+         WTO   MF=(E,SHOW_MSG)
+         BR    R12
+NS_START DC    D'0' START TOD IN NANO-SECONDS
+NS_STOP  DC    D'0' END   TOD IN NANO-SECONDS
+SHOW_MSG DC    AL2(SHOW_END-*,0),C'SERVICE TIME IN MICRO-SEC ='
+DMICS    DC    C' ZZZ,ZZZ,ZZZ'
+SHOW_END EQU   *
+MICS_MASK DC   X'40202020',C',',X'202020',C',',X'202120'
+         EQUREGS
+         END

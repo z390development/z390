@@ -36,6 +36,10 @@ public class iz390{
 	    * Maintenance
 	    ****************************************************
 	    * 05/06/07 initial coding for v1303b 
+	    * 07/12/07 RPI 656 change RT to MVS if MVS not installed
+	    ****************************************************
+	    *                                       last RPI
+	    *                                        
     	 */
 		tz390  tz390 = null;
 		String os_ver   = System.getProperty("os.name"); 
@@ -114,7 +118,7 @@ public class iz390{
 	    ivp_file_name = z390_dir + File.separator + "mvs";
         ivp_file      = new File(ivp_file_name);
 	    if (!ivp_file.isDirectory()){
-	    	System.out.println("IVP RT optional  zip not installed");
+	    	System.out.println("IVP MVS optional  zip not installed");
 	    	ivp_rc = 4;
 	    } else {
 	    	ivp_file_name = z390_dir + File.separator + "mvs" + File.separator + "z390.ivp";

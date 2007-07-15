@@ -1,0 +1,20 @@
+         TITLE 'TESTENV1 - TEST ENVIRONMENT VARIABLE GET/SET'
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 07/12/07                                                 *
+*********************************************************************
+* 07/12/07 RPI 413 TEST GETENV AND SETENV                                  
+*********************************************************************
+TESTENV1 SUBENTRY                              
+         WTO   'TESTENV1 START GETENV TEST'
+         GETENV PATH
+         LR    4,2 SAVE PATH VALUE
+         LA    5,256(4)
+         SNAP  ID=1,TEXT='PATH VALUE',STORAGE=((4),(5))
+         WTO   'TESTENV1 ENDED OK'
+         SUBEXIT
+PATH     DC    C'PATH',X'00'
+         END

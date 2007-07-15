@@ -9,6 +9,7 @@
 .* 04/12/07 RPI 590 COPIED FROM FPC SHARE SPLA FILE 178 CONTRIBUTION
 .*          TO SUPPORT MULTIPLE BASES AND RENT OPTIONS
 .* 04/26/07 RPI 601 CHANGE BASE OFFSETS FROM 4095 TO STD 4096        
+.* 07/11/07 RPI 654 CLEANUP - ADD DROP, CHECK RENT+R13, RWA+RWALNG
 .*********************************************************************
 .*             MACRO-ID. 'SUBENTRY'                                      
 .*             AUTHOR.   DON HIGGINS.                                    
@@ -23,7 +24,7 @@
 .*                         SUCH AS BASES=(R12)                           
 .*                 2.  OPTIONALLY YOU CAN SPECIFY A DSECT NAME AND       
 .*                     LENGTH FOR A WORK AREA BUILT BEHIND SAVE AREA.    
-.*                     FOR EXAMPLE  RWADSECT=MYWORK,RWALNG=8             
+.*                     FOR EXAMPLE  RWA=MYWORK,RWALNG=8             
 .*             REV2 02/10/76 DSH - ADD SUBPOOL OPTION                    
 .*             REV3 XX/XX/77 FDB - ADD STACK OPTION TO SUPPORT           
 .*                                 REENTRANT PERFORM, PENTRY, PEXIT      
@@ -78,6 +79,8 @@
 .STM     ANOP                                                            
          AIF   ('&RENT'(1,1) EQ 'N').NORENT                              
 &RENTOPT SETB  1                                                         
+         AIF   ('&BASES(1)' EQ 'R13').ERR2  RPI 654
+         AIF   ('&BASES(1)' EQ 13).ERR2     RPI 654
          STM   14,12,12(13)                                              
          BAL   &BASES(1),40(15)                                          
          USING &NAME+8,&BASES(1)                                         
@@ -154,7 +157,8 @@
          ST    13,4(1)                                                   
          LM    14,2,12(13)                                               
          L     13,8(13)                                                  
-         AIF   ('&RWALNG' EQ '0').GEN                                    
+         AIF   ('&RWALNG' EQ '0' AND '&RWA' EQ '').GEN   RPI 654   
+         AIF   ('&RWALNG  EQ '0' OR  '&RWA' EQ '').ERR1  RPI 654                              
          USING &RWA-(72+&STKSIZE),13                                     
          AGO   .GEN                                                      
 .NORENT  ANOP                                                            
@@ -171,9 +175,10 @@
          AIF   (&BASES(1) EQ 13).GENB13                                  
          AGO   .GENBX                                                    
 .CHKR13  ANOP                                                            
-         AIF   ('&BASES'(2,3) EQ 'R13').GENB13                           
+         AIF   (&BASES(1) EQ 'R13').GENB13      RPI 654                         
 .GENBX   ANOP                                                            
-         LR    &BASES(1),13                                              
+         LR    &BASES(1),13                            
+         DROP  13                               RPI 654                  
          USING &NAME+8,&BASES(1)                                         
          AGO   .GEN                                                      
 .GENB13  ANOP                                                            
@@ -189,5 +194,10 @@
          USING &NAME+8+&OFFSET,&BASES(&S)                                
          AGO   .LOOP                                                     
 .EXIT    ANOP                                                            
+         MEXIT
+.ERR1    MNOTE 'SUBENTRY PARM ERROR RWA= REQUIRES RWALNG= ALSO'
+         MEXIT
+.ERR2    MNOTE 'SUBENTRY PARM ERROR RENT=YES REQUIRES BASE(1) NE 13'
+         MEXIT
          MEND                                                            
 

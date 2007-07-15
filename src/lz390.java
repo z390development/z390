@@ -71,6 +71,7 @@ public  class  lz390 {
     * 11/04/06 RPI 484 add TRL trace file support for TRACEL and TRACEALL
     * 11/28/06 RPI 500 use system newline for Win/Linux
     * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
+    * 07/15/07 RPI 656 change error message 19 to indicate missing code
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -918,7 +919,7 @@ private void load_obj_code(){
 		z390_code = new byte[loc_ctr];
 		z390_code_buff = ByteBuffer.wrap(z390_code,0,loc_ctr);
 	} else {
-		abort_error(19,"no csects defined for load module");
+		abort_error(19,"no csect object code text defined for load module");  // RPI 656
 	}
 	cur_obj_file = 0;
 	while (cur_obj_file < tot_obj_files){

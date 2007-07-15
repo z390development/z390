@@ -1,9 +1,9 @@
-z390 V1.3.05 Portable Mainframe Assembler
+z390 V1.3.06 Portable Mainframe Assembler
 Copyright 2007 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
  * Microsoft Windows Vista, Windows XP, or Ubuntu Linux 6.06 LTS (others not tested)
- * Sun Microsystems Java Runtime J2SE 1.5.0+ (1.6.0_01 latest fully tested on XP/Vista)
+ * Sun Microsystems Java Runtime J2SE 5.0_11 or 6.0u1 (latest fully tested on XP/Vista)
  * Minimum of 512 MB memory (default Java user memory allocation set to 100 MB)
  * Adobe Acrobat or later for viewing User Guide
 
@@ -32,7 +32,7 @@ o UNREF – scan PRN assembly listing and list unreferenced symbols contributed by
 
 A WTO macro based demo “Hello World” program demo.mlc is included which can be expanded, assembled, linked, and executed with the command “ASMLG DEMO\DEMO” issued from GUI command line or via point and click using the z390 GUI file menu ASMLG selection.
 
-Structured programming macros IF, ELSEIF, ELSE, ENDIF, DO, and ENDDO are included along with demo program DEMO\DEMOSTR1.
+Structured programming macros IF, ELSEIF, ELSE, ENDIF, DO, and ENDDO are included along with demo programs demo\DEMOSTR1.MLC and util\superzap\SUPERZAP.MLC.
 
 A Service Oriented Architecture (SOA) client server application generation service including SOA directory with macro library and demo application which uses TCP/IP sockets messaging to enable clients and servers with multiple connections to run on same or different processors on a TCP/IP network including networks connected via VPN links over the Internet.  Also see the CICS transaction manager for more client/server examples.
 
@@ -46,7 +46,7 @@ z390 Windows Vista and XP installation instructions:
 
 1. Download latest z390 InstallShield setup.exe file from www.z390.org 
 2. Run z390 setup.exe to install it on Windows Vista or XP system
-3. Download and install Java 1.5.0 runtime update 11 from: 
+3. Download and install Java 1.5.0_11 or 1.6.0u1 runtime from: 
     http://java.sun.com/j2se/
 4. Remove old versions of J2SE runtime such as 1.4.2 etc.
 5. Double click on the z390 desktop icon to start z390 GUI

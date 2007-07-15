@@ -7,6 +7,7 @@
 .* Date   - 03/12/07                                                 *
 .*********************************************************************
 .* 03/12/07 RPI 558 CONVERT Z390 MVS MACROS TO VSE MACROS     
+.* 07/10/07 RPI 655 CORRECT .DDDEF MISSING LABEL              
 .*********************************************************************
 &DDNAME  DTFPR &ASOCFILE=,   ASSOCIATED FILE (IGNORED)                 X
                &BLKSIZE=,    RECORD LENGTH                             X
@@ -45,6 +46,10 @@
          ORG   &DDNAME+DCBDDNAM-IHADCB
          AIF   (&DDNAME EQ '').DDDEF
          DC    CL8'&DDNAME' DCBDDNAM
+         AGO   .DDDEF_END
+.DDDEF   ANOP
+         DC    CL8' '       DCBDDNAME
+.DDDEF_END ANOP
          ORG   &DDNAME+DCBOFLGS-IHADCB
          DC    AL1(DCBOFLGS_&MACRF(1)) DCBOFLGS
          ORG   &DDNAME+DCBMACRF-IHADCB
