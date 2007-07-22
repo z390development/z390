@@ -5,6 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 03/11/07                                                 *
 *********************************************************************
+* 07/19/07 RPI 658 USE DEMOVSE1 FOR CDLOAD IN DEMOVSE2
+*********************************************************************
 * YOU CAN ASSEMBLE, LINK, AND EXECUTE THIS DEMO
 * USING Z390 GUI INTERFACE BY ENTERING DEMO IN COMMAND BOX
 * OR BY EXECUTING DEMO FROM WINDOWS COMMAND LINE 
@@ -18,18 +20,20 @@
 * FORMAT UNDER OPEN SOURCE GPL LICENSE.  VISIT WWW.Z390.ORG
 * FOR MORE INFORMATION.
 *********************************************************************
+* 07/19/07 RPI 658 USE DEMOVSE1 FOR CDLOAD, TEST EOJ VS SUBEXIT
+*********************************************************************
          TITLE 'DEMOVSE2 Z390 VSE LOAD, CALL, DELETE DEMOSUB1'
 DEMOVSE2 SUBENTRY
          WTO   'DEMOVSE2 DEMO CDLOAD, CALL, CDDELETE'
-         CDLOAD DEMOWTO1
+         CDLOAD DEMOVSE1
          LTR    15,15
          BNZ    ABORT
          CALL   (1)
-         CDDELETE DEMOWTO1
+         CDDELETE DEMOVSE1
          LTR    15,15
          BNZ    ABORT
          WTO   'DEMOVSE2 ENDED OK'
-         SUBEXIT
+         EOJ    , EXIT TO OS NOW
 ABORT    WTO   'DEMOVSE2 ABORTING DUE TO ERROR'
          EOJ   RC=16
          END 

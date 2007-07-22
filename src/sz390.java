@@ -136,7 +136,10 @@ public  class  sz390 implements Runnable {
     * 06/23/07 RPI 642 terminate get_ascii_string at null 
     * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
     * 07/06/07 RPI 650 support TEST mode indirect expression addressing VIA ? OR % 
-    * 07/12/07 RPI 413 add extract svc x'28' with GETENV support               
+    * 07/12/07 RPI 413 add extract svc x'28' with GETENV support 
+    * 07/18/07 RPI 659 correct ESTAE exit retry to use R0 for PSW 
+    * 07/18/07 RPI 661 test if log buffer is ok for write, synchronize close, add msg 
+    * 07/19/07 RPI 662 remove redundant EZ390I prefix on trace            
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -762,7 +765,7 @@ public synchronized void put_log(String msg) {
 		z390_log_text.append(msg + "\n");
    	}
     if (tz390.opt_trace){ // RPI 490
-    	tz390.put_trace("EZ390I " + msg);
+    	tz390.put_trace(msg); // RPI 662 remove EZ390I
     } else if (tz390.opt_test // RPI 505
     		|| tz390.opt_con 
     		|| tz390.z390_abort 
@@ -774,16 +777,20 @@ private void put_log_line(String msg){
 	   /*
 	    * put line to listing file
 	    */
-	   	   if (tz390.opt_list && log_file_buff != null){
-	   	      try {
-	   	    	  tz390.systerm_io++;
-	   	          log_file_buff.write(msg + tz390.newline); // RPI 500
-	                if (log_file.length() > tz390.max_file_size){
-	                	abort_error(107,"maximum log file size exceeded");
-	                }
-	   	      } catch (Exception e){
-	   	          tz390.abort_error(6,"I/O error on log file write"); // RPI 646
-	   	      }
+	   	   if (tz390.opt_list){
+	   		   if (log_file.canWrite()){ // RPI 661
+	   	   	      try {
+	   	   	    	  tz390.systerm_io++;
+	   	   	    	  log_file_buff.write(msg + tz390.newline); // RPI 500
+	   	   	    	  if (log_file.length() > tz390.max_file_size){
+	   	   	    		  abort_error(107,"maximum log file size exceeded");
+	   	   	    	  }
+	   	   	      } catch (Exception e){
+	   	   	    	  tz390.abort_error(6,"I/O error on log file write msg - " + msg); //   RPI 661
+	   	   	      }
+	   		   } else {
+	   			   System.out.println(msg); // RPI 661
+	   		   }
 	   	   }
 	   }
 public void log_error(int error,String msg){
@@ -919,7 +926,7 @@ private void put_stats(){
 	put_log("EZ390I total errors         = " + ez390_errors);
 	put_log("EZ390I return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + ez390_rc); // RPI 312
 }
-private void close_files(){
+private synchronized void close_files(){  // RPI 661
 	/*
 	 * close log, err, tre
 	 */
@@ -1085,13 +1092,14 @@ public void open_files(){
 	    }
 		return;
 	} else if (pz390.estae_exit_running){
+		int estae_restart_psw = pz390.reg.getInt(pz390.r0);
 		int estae_exit_rc = pz390.reg.getInt(pz390.r15);
 		pz390.estae_last_ins = tz390.systerm_ins;
 		pz390.estae_exit_running = false;
 		pz390.reg.position(0);
 		pz390.reg.put(pz390.mem_byte,pz390.esta_gpr,128);
 		if (estae_exit_rc == 4){ // RPI 636 restart at ESTAPSW
-			pz390.set_psw_loc(pz390.mem.getInt(pz390.esta_psw+4));
+			pz390.set_psw_loc(estae_restart_psw);  // RPI 659
 			if (tz390.opt_trace){
 				tz390.put_trace("ESTAE EXIT RESTART");
 			}
@@ -1911,6 +1919,9 @@ private void svc_time(){
 	case 8:  // nano - 8 byte (bit 63 nano-second counter)
 		pz390.mem.putLong(time_addr,System.nanoTime());
 		break;
+	case  9: // JDBC 29 char timestamp yyyy-mm-dd hh:mm:ss.nnnnnnnnn
+		put_ascii_string(tz390.get_timestamp(),time_addr,29,' ');
+		break;
 	case 10: // dec
         pz390.mem.putInt(time_addr,Integer.valueOf(cur_tod_hhmmss00.format(pz390.cur_date),16)
         		+(Integer.valueOf(cur_date_ms.format(pz390.cur_date),16) >> 4));
@@ -2334,7 +2345,7 @@ private void svc_open(){
 	 *       issue error message and abort.
 	 *  
 	 *  Output registers:
-	 *    R0 - 64 bit file length RPI 587
+	 *    R0  - 64 bit file length RPI 587
 	 */
 	cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	check_dcb_addr();

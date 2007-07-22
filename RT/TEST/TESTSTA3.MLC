@@ -5,6 +5,7 @@
 * Author - Don Higgins                                              *
 *********************************************************************
 * 06/10/07 RPI 636 TEST R15=0 FOR PERCOLATE IN TESTSTA2
+* 07/18/07 RPI 659 TEST RESTART R15=0 WITH NEW R0=NEW RESTART PSW
 *********************************************************************
          TITLE 'TESTSTA3 - TEST ESTAE RESTART AND PERCOLATE'
 TESTSTA3 SUBENTRY
@@ -28,7 +29,6 @@ EXIT     EQU   *
 * RESTART ON FIRST ABEND IN TESTSTA3
 *
          L     R0,ESTAPARM
-         ST    R0,ESTAPSW+4
          WTO   'TESTSTA3 ESTAE EXIT REQUESTING RESTART'
          LA    R15,4
          BR    R14

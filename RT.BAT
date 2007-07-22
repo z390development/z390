@@ -5,6 +5,8 @@ rem  3. list dif directory files descending by size to see any changes
 rem process stops on errors
 REM ******************************************************************
 REM * 07/10/07 RPI 652 ADD RTVSE1 AND RTUTIL1 TO TEST VSE AND UTILS
+REM * 07/18/07 RPI 658 CHANGE RTCLEAN TO DIRCLEAN                   
+REM ******************************************************************
 erase %~dps0rt\all\*.* /q 
 erase %~dps0linklib\dif\*.* /q 
 erase %~dps0demo\dif\*.* /q 
@@ -13,7 +15,7 @@ erase %~dps0mvs\dif\*.* /q
 erase %~dps0vse\dif\*.* /q 
 erase %~dps0util\dif\*.* /q 
 erase %~dps0rt\dif\*.* /q 
-call RTCLEAN
+call DIRCLEAN
 call %~dps0RTLINK1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0RTDEMO1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem call %~dps0RTCICS1 %1 %2 %3 %4 %5 %6 %7 %8 %9

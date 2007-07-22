@@ -1,0 +1,64 @@
+EMPTY    AMODE ANY                                                    
+EMPTY    RMODE ANY                                                    
+         YREGS ,                                                      
+&OPCD    SETC  '2'                                                    
+*                                                                     
+* Try a normal label                                                  
+*                                                                     
+A1       LR    R2,R3                                                  
+&LBL     SETC  'A2'                                                   
+&LBL     LR    R2,R3                                                  
+A3       2     R2,R3                                                  
+&LBL     SETC  'A4'                                                   
+&LBL     2     R2,R3                                                  
+&LBL     &OPCD R2,R3                                                  
+*                                                                     
+* Try a comment line                                                  
+*                                                                     
+*        LR    R2,R3                                                  
+&LBL     SETC  '*'                                                    
+&LBL     LR    R2,R3                                                  
+&LBL     2     R2,R3                                                  
+&LBL     &OPCD R2,R3                                                  
+*                                                                     
+* Try a macro comment line                                            
+*                                                                     
+.*       LR    R2,R3                                                  
+&LBL     SETC  '.*'                                                   
+&LBL     LR    R2,R3                                                  
+&LBL     2     R2,R3                                                  
+&LBL     &OPCD R2,R3                                                  
+*                                                                     
+* Try a macro label                                                   
+*                                                                     
+.A       LR    R2,R3                                                  
+&LBL     SETC  '.B'                                                   
+&LBL     LR    R2,R3                                                  
+.C       2     R2,R3                                                  
+&LBL     SETC  '.D'                                                   
+&LBL     2     R2,R3                                                  
+&LBL     &OPCD R2,R3                                                  
+*                                                                     
+* Try an invalid character                                            
+*                                                                     
+,*       LR    R2,R3                                                  
+&LBL     SETC  ',*'                                                   
+&LBL     LR    R2,R3                                                  
+&LBL     2     R2,R3                                                  
+&LBL     &OPCD R2,R3                                                  
+*                                                                     
+* Try  a label with embedded blank                                    
+*                                                                     
+'X0 AR 1,2 '  LR    R2,R3                                                  
+'X0 Y0'  LR    R2,R3                                                  
+X1 Y1    LR    R2,R3                                                  
+&LBL     SETC  'X2 Y2'                                                
+&LBL     LR    R2,R3                                                  
+'X3 Y3'  2     R2,R3                                                  
+X4 Y4    2     R2,R3                                                  
+&LBL     SETC  'X5 Y5'                                                
+&LBL     2     R2,R3                                                  
+&LBL     &OPCD R2,R3                                                  
+*                                                                     
+         END                                                          
+

@@ -72,10 +72,12 @@ public  class  lz390 {
     * 11/28/06 RPI 500 use system newline for Win/Linux
     * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
     * 07/15/07 RPI 656 change error message 19 to indicate missing code
+    * 07/21/07 RPI 659 add LZ390I to stats on LST
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
     tz390 tz390 = null;
+    String msg_id = "LZ390 ";
     int lz390_rc = 0;
     int lz390_errors = 0;
     Date cur_date = new Date();
@@ -290,30 +292,30 @@ private void put_stats(){
 		tz390.opt_con = false;
 	}
 	if (tz390.opt_stats){
-	   put_log("Stats total obj files       = " + tot_obj_files);
-	   put_log("Stats total esds            = " + tot_gbl_esd);
-	   put_log("Stats total csects          = " + tot_csect);
-	   put_log("Stats total entries         = " + tot_entry);
-	   put_log("Stats missing wxtrn's       = " + tot_missing_wxtrn);
-	   put_log("Stats Keys                  = " + tz390.tot_key);
-	   put_log("Stats Key searches          = " + tz390.tot_key_search);
+	   put_log(msg_id + "Stats total obj files       = " + tot_obj_files);
+	   put_log(msg_id + "Stats total esds            = " + tot_gbl_esd);
+	   put_log(msg_id + "Stats total csects          = " + tot_csect);
+	   put_log(msg_id + "Stats total entries         = " + tot_entry);
+	   put_log(msg_id + "Stats missing wxtrn's       = " + tot_missing_wxtrn);
+	   put_log(msg_id + "Stats Keys                  = " + tz390.tot_key);
+	   put_log(msg_id + "Stats Key searches          = " + tz390.tot_key_search);
 	   if (tz390.tot_key_search > 0){
 	       tz390.avg_key_comp = tz390.tot_key_comp/tz390.tot_key_search;
 	   }
-	   put_log("Stats Key avg comps         = " + tz390.avg_key_comp);
-	   put_log("Stats Key max comps         = " + tz390.max_key_comp);
-	   put_log("Stats total obj bytes       = " + tot_obj_bytes);
-	   put_log("Stats total obj rlds        = " + tot_rld);
+	   put_log(msg_id + "Stats Key avg comps         = " + tz390.avg_key_comp);
+	   put_log(msg_id + "Stats Key max comps         = " + tz390.max_key_comp);
+	   put_log(msg_id + "Stats total obj bytes       = " + tot_obj_bytes);
+	   put_log(msg_id + "Stats total obj rlds        = " + tot_rld);
 	   if (tz390.opt_timing){
 	      cur_date = new Date();
 	      tod_end = cur_date.getTime();
 	      tot_sec = (tod_end - tod_start)/1000;
-	      put_log("Stats total seconds         = " + tot_sec);
+	      put_log(msg_id + "Stats total seconds         = " + tot_sec);
 	   }
 	}
 	tz390.opt_con = save_opt_con; // RPI 453
-	put_log("LZ390I total errors         = " + lz390_errors);
-	put_log("LZ390I return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + lz390_rc); // RPI 312
+	put_log(msg_id +"total errors         = " + lz390_errors);
+	put_log(msg_id +"return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + lz390_rc); // RPI 312
 }
 private void close_files(){
 	  /*
@@ -379,19 +381,19 @@ private void put_copyright(){
 	    */
 	   	if  (tz390.opt_timing){
 			cur_date = new Date();
-	   	    put_log("LZ390I " + tz390.version 
+	   	    put_log(msg_id + tz390.version 
 	   			+ " Current Date " +mmddyy.format(cur_date)
 	   			+ " Time " + hhmmss.format(cur_date));
 	   	} else {
-	   	    put_log("LZ390I " + tz390.version);
+	   	    put_log(msg_id + tz390.version);
 	   	}
 	   	if  (z390_log_text == null){
-	   	    put_log("LZ390I Copyright 2006 Automated Software Tools Corporation");
-	   	    put_log("LZ390I z390 is licensed under GNU General Public License");
+	   	    put_log(msg_id + "Copyright 2006 Automated Software Tools Corporation");
+	   	    put_log(msg_id + "z390 is licensed under GNU General Public License");
 	   	}
 	   	// RPI 378
-	   	put_log("LZ390I program = " + tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.pgm_type);
-	   	put_log("LZ390I options = " + tz390.cmd_parms);
+	   	put_log(msg_id + "program = " + tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.pgm_type);
+	   	put_log(msg_id + "options = " + tz390.cmd_parms);
 	   }
 	   private synchronized void put_log(String msg) {
 	   	/*
@@ -478,7 +480,7 @@ private boolean load_obj_file(boolean esds_only){
 	 */
     open_obj_file(obj_file_name);
     if (tz390.opt_tracel){
-  	  	 tz390.put_trace("LZ390I LOADING OBJ FILE - " + obj_file_name);
+  	  	 tz390.put_trace("LOADING OBJ FILE - " + obj_file_name);
     }
     tot_obj_esd = 0;
     obj_eod = false;
@@ -492,7 +494,7 @@ private boolean load_obj_file(boolean esds_only){
 	while (!obj_eod
 			&& tot_obj_esd < tz390.opt_maxesd){
 		if (tz390.opt_tracel){
-			tz390.put_trace("LZ390I   LOADING " + obj_line);
+			tz390.put_trace("LOADING " + obj_line);
 		}
 		if (obj_line.substring(0,4).equals(".END")){
 			obj_eod = true;
@@ -558,7 +560,7 @@ private boolean load_obj_file(boolean esds_only){
 			    	rld_off = gbl_esd_loc[obj_gbl_esd[obj_rld_esd]] + obj_rld_loc;
 			    	rld_fld = z390_code_buff.getInt(rld_off);
 					if (tz390.opt_list){
-						put_lst_line("LZ390I RLD LOC=" + tz390.get_hex(rld_off,8)
+						put_lst_line(msg_id + "RLD LOC=" + tz390.get_hex(rld_off,8)
 								        + " FLD=" + tz390.get_hex(rld_fld,obj_rld_len*2)
 								        + " EXT=" + tz390.get_hex(gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]],8));
 					}
@@ -786,7 +788,7 @@ private void add_gbl_cst(int obj_index1){
 	}
 	if  (esd_ok){
 		if (tz390.opt_list){ // RPI 385
-			put_lst_line("LZ390I ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " LOC=" + tz390.get_hex(loc_ctr,8) + " LEN=" + tz390.get_hex(obj_esd_len[obj_index1],8));
+			put_lst_line(msg_id + "ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " LOC=" + tz390.get_hex(loc_ctr,8) + " LEN=" + tz390.get_hex(obj_esd_len[obj_index1],8));
 		}
 		gbl_esd_name[cur_gbl_esd] = obj_esd_name[obj_index1];
 		gbl_esd_loc[cur_gbl_esd] = loc_ctr;
@@ -834,7 +836,7 @@ private void add_gbl_ent(int obj_index1){
 				   gbl_esd_loc[gbl_ent_esd] = obj_esd_loc[obj_index1] - obj_esd_loc[obj_index2] + gbl_esd_loc[cur_gbl_esd];
 				   gbl_esd_type[gbl_ent_esd] = gbl_esd_ent;
 				   if (tz390.opt_list){ // RPI 385
-					   put_lst_line("LZ390I ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " ENT=" + tz390.get_hex(gbl_esd_loc[gbl_ent_esd],8));
+					   put_lst_line(msg_id + "ESD=" + tz390.left_justify(obj_esd_name[obj_index1],8) + " ENT=" + tz390.get_hex(gbl_esd_loc[gbl_ent_esd],8));
 				   }
 				   obj_index2 = tot_obj_esd;
 				}

@@ -5,6 +5,7 @@
 * Author - Don Higgins                                              *
 *********************************************************************
 * 06/10/07 RPI 636 TEST R15=0 FOR PERCOLATE AND CANCEL LINKS
+* 07/18/07 RPI 659 TEST RESTART EXIT WITH R15=4 AND R0=NEW RESTART PSW
 *********************************************************************
          TITLE 'TESTSTA2 - TEST ESTAE EXIT RESTART AND PERCOLATE'
 TESTSTA2 SUBENTRY
@@ -33,7 +34,6 @@ EXIT     DS    0H
          USING *,R15
          USING IHAESTA,R1
          L     R0,ESTAPARM
-         ST    R0,ESTAPSW+4   SET RESTART PSW ADDR TO ESTAE PARM
          WTO   'TESTSTA2 ESTAE EXIT REQUESTING RESTART'
          LA    R15,4          RESTART CURRENT TASK AT ESTAPSW DSH
          BR    R14

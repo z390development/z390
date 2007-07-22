@@ -12,8 +12,9 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 01/16/06 RPI175 ADD CHECK FOR MISSING ADDR PARM
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 06/22/07 RPI 662 ADD SVC TS OPTION FOR 29 CHAR NANOSEC TIMESTAMP
 .*********************************************************************
-&N       TIME  &TYPE,               DEC,BIN,MIC,STCK,STCKE,NS          X
+&N       TIME  &TYPE,               DEC,BIN,MIC,STCK,STCKE,NS,TS       X
                &ADDR,               STORE RESULT ADDR                  X
                &CLOCKTYPE=,         STCK/STCKE(1900),EXT JAVA (1970)   X
                &DATETYPE=YYYYDDD,   SYSTEM DATE FORMATS                X
@@ -48,6 +49,7 @@
          AIF   (&TYPE EQ 'STCK').SVCSTCK
          AIF   (&TYPE EQ 'CLOCK').SVCCLOCK
          AIF   (&TYPE EQ 'NS').SVCNS
+         AIF   (&TYPE EQ 'TS').SVCTS        RPI 662
          MNOTE 12,'TIME INVALID SVC LINKAGE TYPE - &TYPE'
          MEXIT
 .SVCDEC  ANOP             R1 = HEX CCYYDDDF
@@ -91,6 +93,9 @@
          AGO   .SVCADDR
 .SVCNS   ANOP
          LA    0,8 NANOSECONDS - DOUBLE WORD BIT 63 NANO-SEC COUNTER
+         AGO   .SVCADDR
+.SVCTS   ANOP      RPI 662 YYYY-MM-DD HH:MM:SS.NNNNNNNNN (29 CHAR)
+         LA    0,9 OBDC TIMESTAMP WITH 9 DIGIT NANOSECONDS 
          AGO   .SVCADDR
 .*
 .* LINKAGE=SYSTEM 

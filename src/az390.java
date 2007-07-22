@@ -268,10 +268,13 @@ public  class  az390 implements Runnable {
     * 06/21/07 RPI 643 correct multiple value DCF's 
     * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
     * 07/07/07 RPI 651 prevent trap on USING with no parms 
+    * 07/20/07 RPI 662 add DFHRESP lits ITEMERR,QIDERR
+    * 07/20/07 RPI 659 error 196 for invalid opcode char.
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
 	tz390 tz390 = null;
+	String msg_id = "AZ390I ";
     int az390_rc = 0;
     int az390_errors = 0;
     int mz390_errors = 0; // RPI 415 passed from mz390 if option asm
@@ -816,14 +819,18 @@ public  class  az390 implements Runnable {
     		  "ERROR)",           // 1 - =F'1'
     		  "INVREQ)",          // 2 - =F'16'
     		  "LENGERR)",         // 3 - =F'22'
-    		  "PGMIDERR)"         // 4 - =F'27'
+    		  "ITEMERR)",         // 4 - =F'26'  RPI 662
+    		  "PGMIDERR)",        // 5 - =F'27'
+    		  "QIDERR)"           // 6 - =F'44'  RPI 662 
     		  };
       String[] dfhresp_lit = {
     		  "=F'0'",           //"NORMAL"   - 0
     		  "=F'1'",           //"ERROR"    - 1
     		  "=F'16'",          //"INVREQ"   - 2
     		  "=F'22'",          //"LENGERR"  - 3
-    		  "=F'27'"           //"PGMIDERR" - 4
+    		  "=F'26'",          //"ITEMERR"  - 4  RPI 662
+    		  "=F'27'",          //"PGMIDERR" - 5
+    		  "=F'44'"           //"QIDERR"   - 6  RPI 662
     		  };
   /* 
    * end of global az390 class data and start of procs
@@ -872,7 +879,7 @@ public void run() {
 			try {
 				process_az390();
 			} catch (Exception e){
-				abort_error(158,"az390 internal system exception - " + e.toString());
+				abort_error(158,"internal system exception - " + e.toString());
 			}
 		} else {
 			process_az390();
@@ -882,7 +889,7 @@ public void run() {
 			az390_running = false;
 	   	    lock_condition.signalAll();
 	   	} catch (Exception e) {
-	   		abort_error(159,"az390 thread ending interruption");
+	   		abort_error(159,"thread ending interruption");
 	   	} finally {
 	   		lock.unlock();
 	   	}
@@ -1475,7 +1482,7 @@ private void gen_obj_text(){
 		if (tz390.opt_profile.length() == 0){	
 			bal_line_index = tot_bal_line-1;
 			if (mz390_abort){  // RPI 433
-				log_error(165,"az390 input truncated due to mz390 abort");
+				log_error(165,"input truncated due to mz390 abort");
 			} else {
 				log_error(115,"END statement not found");
 			}
@@ -2997,7 +3004,12 @@ private int find_bal_op(){
 		} else if (mac_inline_level > 0){
 			return mac_inline_op_other; // rpi 581
 		}
-	    log_error(29,"undefined operation code - " + bal_op);
+		label_match = label_pattern.matcher(bal_op);  // RPI 253
+		if (!label_match.find()){
+			log_error(196,"invalid character in opcode - " + bal_op);  // RPI 659
+		} else {
+			log_error(29,"undefined operation code - " + bal_op);
+		}
 	    return -1;
 	} 
 	if (bal_line.length() == 0 || bal_line.charAt(0) == '*'){
@@ -4207,38 +4219,37 @@ private void put_stats(){
 	/*
 	 * display statistics as comments at end of bal
 	 */
-	String stats_pfx = "AZ390I ";
 	boolean save_opt_con = tz390.opt_con; // RPI 453
 	if (tz390.opt_list){
 		tz390.opt_con = false;
 	}
 	force_print = true; // RPI 285
 	if (tz390.opt_stats){  // RPI 453
-	   put_log(stats_pfx + "BAL lines             = " + (tot_bal_line-1));
-	   put_log(stats_pfx + "symbols               = " + tot_sym);
-	   put_log(stats_pfx + "Literals              = " + tot_lit);
-	   put_log(stats_pfx + "alloc passes          = " + (cur_pass-1));
-	   put_log(stats_pfx + "Keys                  = " + tz390.tot_key);
-	   put_log(stats_pfx + "Key searches          = " + tz390.tot_key_search);
+	   put_log(msg_id + "BAL lines             = " + (tot_bal_line-1));
+	   put_log(msg_id + "symbols               = " + tot_sym);
+	   put_log(msg_id + "Literals              = " + tot_lit);
+	   put_log(msg_id + "alloc passes          = " + (cur_pass-1));
+	   put_log(msg_id + "Keys                  = " + tz390.tot_key);
+	   put_log(msg_id + "Key searches          = " + tz390.tot_key_search);
 	   if (tz390.tot_key_search > 0){
 	       tz390.avg_key_comp = tz390.tot_key_comp/tz390.tot_key_search;
 	   }
-	   put_log(stats_pfx + "Key avg comps         = " + tz390.avg_key_comp);
-	   put_log(stats_pfx + "Key max comps         = " + tz390.max_key_comp);
-	   put_log(stats_pfx + "ESD symbols           = " + tot_esd);
-	   put_log(stats_pfx + "object bytes          = " + tot_obj_bytes);
-	   put_log(stats_pfx + "object rlds           = " + tot_rld);
+	   put_log(msg_id + "Key avg comps         = " + tz390.avg_key_comp);
+	   put_log(msg_id + "Key max comps         = " + tz390.max_key_comp);
+	   put_log(msg_id + "ESD symbols           = " + tot_esd);
+	   put_log(msg_id + "object bytes          = " + tot_obj_bytes);
+	   put_log(msg_id + "object rlds           = " + tot_rld);
 	   if (tz390.opt_timing){
 	      cur_date = new Date();
 	      tod_end = cur_date.getTime();
 	      tot_sec = (tod_end - tod_start)/1000;
-	      put_log(stats_pfx + "total seconds         = " + tot_sec);
+	      put_log(msg_id + "total seconds         = " + tot_sec);
 	   }
 	}
 	int index = 0;
 	while (index < tot_xref_files){
 		if (tz390.opt_asm && xref_file_errors[index] > 0){
-			String xref_msg = stats_pfx + "FID=" + tz390.right_justify(""+(index+1),3) 
+			String xref_msg = msg_id + "FID=" + tz390.right_justify(""+(index+1),3) 
 					        + " ERR=" + tz390.right_justify(""+xref_file_errors[index],2) 
  	                        + " " + xref_file_name[index];
 		    put_log(xref_msg);
@@ -4247,14 +4258,14 @@ private void put_stats(){
 		index++;
 	}
 	tz390.opt_con = save_opt_con; // RPI 453
-	put_log(stats_pfx + "total mnote warnings = " + tot_mnote_warning); // RPI 402
-	put_log(stats_pfx + "total mnote errors   = " + tot_mnote_errors 
+	put_log(msg_id + "total mnote warnings = " + tot_mnote_warning); // RPI 402
+	put_log(msg_id + "total mnote errors   = " + tot_mnote_errors 
 			+ "  max level= " + max_mnote_level);
 	if (mz390_call){
-		put_log(stats_pfx + "total errors         = " + mz390_errors);
+		put_log(msg_id + "total mz390 errors   = " + mz390_errors); // RPI 659
 	}
-	put_log(stats_pfx + "total errors         = " + az390_errors);
-	put_log(stats_pfx + "return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + az390_rc); // RPI 312
+	put_log(msg_id +     "total az390 errors   = " + az390_errors); // RPI 659
+	put_log(msg_id + "return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + az390_rc); // RPI 312
 }
 private void close_files(){
 	/*
@@ -4304,7 +4315,7 @@ private void log_error(int error,String msg){
    	     String error_msg = "AZ390E error " + tz390.right_justify("" + error,3) + tz390.right_justify(xref_file_line + bal_line_num[bal_line_index],15) + "   " + bal_line_text[bal_line_index];
 	     put_log(error_msg);
 	     tz390.put_systerm(error_msg);
-	     error_msg = "AZ390I " + msg;
+	     error_msg = msg_id + msg;
 	     put_log(error_msg);
 	     tz390.put_systerm(error_msg);
 	     force_print = false;  // RPI 285
@@ -4333,7 +4344,7 @@ private synchronized void abort_error(int error,String msg){ // RPI 646
 	 */
 	  az390_errors++;
 	  if (tz390.z390_abort){
-		 msg = "az390 aborting due to recursive abort error " + error + " - " + msg;
+		 msg = msg_id + "aborting due to recursive abort error " + error + " - " + msg;
 		 System.out.println(msg);
 		 tz390.put_systerm(msg);
 		 tz390.close_systerm(16);
@@ -4349,7 +4360,7 @@ private synchronized void abort_error(int error,String msg){ // RPI 646
 	  String error_msg = "AZ390E error " + error + " on line " + bal_line_num[bal_line_index] + " " + bal_line_text[bal_line_index];
 	  put_log(error_msg);
 	  tz390.put_systerm(error_msg);
-	  error_msg = "AZ390I " + msg;
+	  error_msg = msg_id + msg;
 	  put_log(error_msg);
 	  tz390.put_systerm(error_msg);
       exit_az390();
@@ -4361,18 +4372,18 @@ private void put_copyright(){
 	    */
 	   	if  (tz390.opt_timing){
 			cur_date = new Date();
-	   	    put_log("AZ390I " + tz390.version 
+	   	    put_log(msg_id + tz390.version 
 	   			+ " Current Date " +mmddyy.format(cur_date)
 	   			+ " Time " + hhmmss.format(cur_date));
 	   	} else {
-	   	    put_log("AZ390I " + tz390.version);
+	   	    put_log(msg_id + tz390.version);
 	   	}
 	   	if  (z390_log_text == null){
-	   	    put_log("Copyright 2006 Automated Software Tools Corporation");
-	   	    put_log("z390 is licensed under GNU General Public License");
+	   	    put_log(msg_id + "Copyright 2006 Automated Software Tools Corporation");
+	   	    put_log(msg_id + "z390 is licensed under GNU General Public License");
 	   	}
-	   	put_log("AZ390I program = " + tz390.dir_bal + tz390.pgm_name + tz390.pgm_type);
-	   	put_log("AZ390I options = " + tz390.cmd_parms);
+	   	put_log(msg_id + "program = " + tz390.dir_bal + tz390.pgm_name + tz390.pgm_type);
+	   	put_log(msg_id + "options = " + tz390.cmd_parms);
        }
 	   private synchronized void put_log(String msg) {
 	   	/*
@@ -4388,9 +4399,6 @@ private void put_copyright(){
    	    	        System.out.println(msg);
    	        	}
    	        }
-	        if (tz390.opt_tracea){
-	        	tz390.put_trace("AZ390 " + msg);
-	        }
 	   }
 	   private void put_prn_line(String msg){
 	   /*

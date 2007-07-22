@@ -18,10 +18,10 @@
 * FORMAT UNDER OPEN SOURCE GPL LICENSE.  VISIT WWW.Z390.ORG
 * FOR MORE INFORMATION.
 *********************************************************************
+* 07/19/07 RPI 658 USE SUBENTRY/SUBEXIT AND TEST EOJ IN DEMOVSE2
+*********************************************************************
          TITLE 'DEMOVSE1 Z390 VSE HELLO WORLD DEMO'
-DEMOVSE1 CSECT
-         BALR  12,0
-         USING *,12
+DEMOVSE1 SUBENTRY
          WTO   'DEMOVSE1 HELLO WORLD'
          COMRG ,         GET VSE COMMUNICATIONS AREA IN REG 1
          USING IHACOMRG,1
@@ -31,7 +31,7 @@ DEMOVSE1 CSECT
          MVC   TIME,TIMEMASK
          ED    TIME,PWORK+4
          WTO   MF=(E,WTOMSG)
-         EOJ   ,         EXIT PROGRAM
+         SUBEXIT
          LTORG
 PWORK    DC    PL8'0'
 WTOMSG   DC    AL2(WTOEND-*,0)

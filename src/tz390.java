@@ -7,6 +7,7 @@ import java.lang.management.MemoryPoolMXBean;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -126,7 +127,9 @@ public  class  tz390 {
     * 03/12/07 RPI 558 init job_date for use in COMRG init by pz390 
     * 04/27/07 RPI 605 remove dup SYSTERM msgs on trace files
     * 05/14/07 RPI 604 BS2000 compatibility option 
-    * 05/16/07 RPI 620 correct get_dup_string for CNOP use   
+    * 05/16/07 RPI 620 correct get_dup_string for CNOP use 
+    * 07/19/07 RPI 662 add TS option for timestamp on trace 
+    * 07/21/07 RPI 659 remove redundant trace prefixes 
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -135,7 +138,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.06";  //dsh
+    String version    = "V1.3.06a";  //dsh
 	String dcb_id_ver = "DCBV1001"; //dsh
 	/*
 	 * global options 
@@ -189,6 +192,7 @@ public  class  tz390 {
     boolean opt_tracet   = false; // trace TCPIO 
     boolean opt_tracemem = false; // trace memory FQE updates to LOG
     boolean opt_trap     = true;  // trap exceptions as 0C5
+    boolean opt_ts       = false; // time-stamp logs RPI 662
     boolean opt_xref     = true;   // cross reference symbols
     String  cmd_parms = " "; // all options from command
     String  test_ddname = null;
@@ -221,7 +225,7 @@ public  class  tz390 {
 	int    max_line_len = 80;           // RPI 264
 	long   max_file_size = 50 << 20;    // max file output 
 	long   max_time_seconds  = 15;      // TIME(15)max elapsed time - override time(sec)
-    int    monitor_wait = 300;          // fix interval in milliseconds
+	int    monitor_wait = 300;          // fix interval in milliseconds
     int    max_mem           = 1;       // MEM(1)  MB memory default (see mem(mb) override)
     /*
      * shared date and time formats
@@ -289,6 +293,18 @@ public  class  tz390 {
     String         trace_file_name = null;
 	File           trace_file = null;
 	BufferedWriter trace_file_buff = null;
+	/*
+	 * timestamp data for TS optional trace timestamps
+	 * The first 23 characters are standard ODBC SQL Timestamp
+	 * to start of previous micro-second.  The last 6 digits
+	 * are the nanoseconds from last micro-second to current time.
+	 */
+    long   ts_nano_start = 0; // RPI 662 nanotime at startup
+    long   ts_nano_now = 0;   // RPI 662 nanotime now
+    long   ts_mic_start = 0;  // RPI 662 cur time in mics at startup
+    long   ts_mic_dif   = 0;  // RPI 662 mics from startup to now
+    long   ts_mic_now   = 0;  // RPI 662 cur time in mics   
+    String ts_nano_digits;    // RPI 662 last 6 digit nanos within mic
     /*
      * shared parm parsing for comma delimited continue
      * statement parsing to find comma used by 
@@ -3486,8 +3502,13 @@ public  class  tz390 {
       int[]     key_tab_high  = (int[])Array.newInstance(int.class,max_key_tab);
 public void init_tables(){
 	/*
-	 * initialize dir_cur and tables
+	 * initialize stared data and tables
 	 */
+	/*
+	 * init starting nanotime for use in timestamps
+	 */
+	ts_nano_start = System.nanoTime();          // RPI 662
+	ts_mic_start  = System.currentTimeMillis(); // RPI 662
 	if (opt_install_loc.length() > 0){
 		System.setProperty("user.dir",opt_install_loc); // RPI 532
 	}
@@ -3919,6 +3940,8 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.toUpperCase().equals("TRACET")){
         	opt_tracet = true;
         	opt_con   = false;
+        } else if (token.toUpperCase().equals("TS")){
+        	opt_ts = true; // timestamp traces
         }
         index1++;
     }
@@ -4796,10 +4819,12 @@ public void put_trace(String text){
 	/*
 	 * open trace file if trace options on
 	 */
+	if (text != null 
+		&& text.length() > 13
+	    && text.substring(0,6).equals(text.substring(7,13))){ // RPI 659
+	    text = text.substring(7); // RPI 515 RPI 659
+	}
 	if (opt_con){
-		if (text.length() > 6 && text.substring(0,6).equals("EZ390I")){
-			text = text.substring(6); // RPI 515
-		}
 		System.out.println(text);
 	}
 	if (trace_file == null){
@@ -4811,6 +4836,9 @@ public void put_trace(String text){
 		}
 	}
 	try {
+		if (opt_ts){
+			text = get_timestamp() +  text; // RPI 662
+		}
 		trace_file_buff.write(text + newline); // RPI 500
 	} catch (Exception e){
 		abort_error(17,"trace file write error " + e.toString());
@@ -5000,4 +5028,23 @@ public void put_trace(String text){
     	return dfp_bits;
     	
     }
+    public String get_timestamp(){  // RPI 662
+    	/*
+    	 * return current JDBC time stamp string 
+    	 * with 9 digit fractional nanosecond forrmat:
+    	 * yyyy-mm-dd hh:mm:ss.nnnnnnnnn (29 characters)
+    	 * 
+    	 * Note only thefirst 3 millisecond digits are
+    	 * returned by current JDBC TimeStamp constructor so
+    	 * System.nanotime() method is used to add 
+    	 * remaining 6 digits of nanosecond fraction.
+    	 */
+    	ts_nano_now    = System.nanoTime();
+    	ts_mic_dif    = (ts_nano_now - ts_nano_start)/1000000;
+    	ts_mic_now     = ts_mic_start + ts_mic_dif;
+    	ts_nano_digits = "" + (ts_nano_now - (ts_nano_start + ts_mic_dif * 1000000));
+    	return (new Timestamp(ts_mic_now).toString() + "000").substring(0,23)
+    	            + ("000000" + ts_nano_digits).substring(ts_nano_digits.length())
+    	            + " ";
+   }
 }
