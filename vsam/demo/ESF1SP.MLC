@@ -1,0 +1,38 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 07/25/07 INITIAL CODING OF TEST TO CREATE VSAM ESDS FILE FROM QSAM
+*********************************************************************
+ESF1SP   SUBENTRY                                                  
+         WTO   'ESF1SP CREATE ESF1.VES ESDS FIXED FILE FROM QSAM FILE'
+         OPEN  (INFILE,(INPUT),OUTFILE,(OUTPUT))
+         LTR   R15,R15
+         BNZ   ERR1
+LOOP     EQU   *
+         GET   INFILE,RECORD
+         PUT   RPL=ESPUT
+         LTR   R15,R15
+         BNZ   ERR2
+         B     LOOP
+EOF      CLOSE (INFILE,,OUTFILE)
+         LTR   R15,R15
+         BNZ   ERR3
+         WTO   'ESF1SP ENDED OK'
+         SUBEXIT
+ERR1     WTO   'ESF1SP  OPEN FAILED'
+         ABEND 111,DUMP
+ERR2     WTO   'ESF1SP  PUT RPL FAILED'
+         ABEND 222,DUMP
+ERR3     WTO   'ESF1SP  CLOSE FAILED'
+         ABEND 333,DUMP
+INFILE   DCB   DDNAME=INFILE,RECFM=FT,LRECL=20,MACRF=GM,EODAD=EOF
+OUTFILE  ACB   DDNAME=OUTFILE,MACRF=(SEQ,OUT)
+ESPUT    RPL   ACB=OUTFILE,AREA=RECORD,OPTCD=(SEQ,OUT)
+RECORD   DC    CL20' '
+         LTORG
+         EQUREGS
+         END

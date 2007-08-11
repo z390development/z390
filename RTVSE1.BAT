@@ -10,7 +10,6 @@ rem
 rem assemble, link, and execute demo wto 'hello world'
 rem
 call RT1 %~dps0vse\demo\DEMOVSE1 sysmac(vse\mac+mac) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call ASML %~dps0demo\DEMOWTO1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0vse\demo\DEMOVSE2 sysmac(vse\mac+mac) sys390(vse\demo+demo) %1 %2 %3 %4 %5 %6 %7 %8 %9
 erase vse\demo\DEMOVSE3.TF2
 call RT5 %~dps0vse\demo\DEMOVSE3 sysmac(vse\mac+mac) %1 %2 %3 %4 %5 %6 %7 %8 %9

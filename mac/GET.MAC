@@ -13,7 +13,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/12/06 RPI163 ISSUE MNOTE ERROR FOR TYPE=P
 .* 06/14/07 RPI 641 DEFAULT MF=I
-.* 06/22/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC 221 R0=2 R1=A(RPL)
+.* 06/22/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC 221 R0=1 R1=A(RPL)
 .*********************************************************************
 &N       GET   &DCB,    DCB                                            X
                &REC,    RECORD                                         X
@@ -58,8 +58,8 @@
 .RPLREG  ANOP
          LR    1,&RPL(1)
 .VSVC    ANOP
-         LA    0,0
-         SVC   121 VSAM GET R0=0 R1=A(RPL)
+         LA    0,RPLOPGET
+         SVC   121 VSAM GET R0=1 R1=A(RPL)
          MEXIT         
 .ERR1    MNOTE 12,'GET TYPE=P NOT SUPPORTED'
          MEXIT

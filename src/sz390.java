@@ -139,7 +139,10 @@ public  class  sz390 implements Runnable {
     * 07/12/07 RPI 413 add extract svc x'28' with GETENV support 
     * 07/18/07 RPI 659 correct ESTAE exit retry to use R0 for PSW 
     * 07/18/07 RPI 661 test if log buffer is ok for write, synchronize close, add msg 
-    * 07/19/07 RPI 662 remove redundant EZ390I prefix on trace            
+    * 07/19/07 RPI 662 remove redundant EZ390I prefix on trace   
+    * 08/02/07 RPI 668 check GET/PUT/READ/WRITE for record area 0C5 
+    * 08/04/07 RPI 668 set DCBOFLGS from open options, use VCDT path for ACB's 
+    *          and issue synad error if DCBLRECLF == 0       
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -425,6 +428,7 @@ public  class  sz390 implements Runnable {
     int tot_cde = 0;
     int cur_cde = 0;
     String[] cde_name  = new String[max_cde_pgms];
+    String[] cde_file  = new String[max_cde_pgms];
     int[]    cde_use   = (int[])Array.newInstance(int.class,max_cde_pgms);
     int[]    cde_loc   = (int[])Array.newInstance(int.class,max_cde_pgms);
     int[]    cde_len   = (int[])Array.newInstance(int.class,max_cde_pgms);
@@ -536,6 +540,13 @@ public  class  sz390 implements Runnable {
      */
      int    tot_tiot_files = 0;
      int    cur_tiot_index = 0;
+     int    tot_dcb_oper   = 0;
+     int    tot_dcb_open   = 0;
+     int    tot_dcb_close  = 0;
+     int    tot_dcb_get    = 0;
+     int    tot_dcb_put    = 0;
+     int    tot_dcb_read   = 0;
+     int    tot_dcb_write  = 0;
      int    cur_decb_addr  = 0;
      int    cur_ecb        = 0;
      int decb_ecb   = 0;
@@ -544,6 +555,7 @@ public  class  sz390 implements Runnable {
      int decb_area  = 12;
      long   cur_rba        = 0;
      int    cur_dcb_addr   = 0;     // mem offset to dcb from r1
+     int    cur_open_opt   = 0;     // open options (GET=x'40, PUT=x'20')
      int    cur_dcbe_addr  = 0;     // dcb extension
      String cur_dcb_ddnam = null;  // ascii ddname from dcb ebcdic
      String cur_dcb_file_name = null;
@@ -580,6 +592,8 @@ public  class  sz390 implements Runnable {
      int dcb_macrf  = 0x32;      // macro access type
      int dcb_macrf_gm = 0x5000;  // get move
      int dcb_macrf_pm = 0x0050;  // put move
+     int dcb_macrf_r  = 0x2000;  // read only  RPI 668
+     int dcb_macrf_w  = 0x0020;  // write only RPI 668
      int dcb_macrf_rw = 0x2020;  // read/write random
      int dcb_synad = 0x38;       // synchronous error exit
      int dcb_blksi_f = 0x3c;       // blocksize RPI 587 32 bits
@@ -618,6 +632,12 @@ public  class  sz390 implements Runnable {
   int next_fqe_len = 0;
   int opt_getmain_amode31 = 0x02;
   int opt_getmain_cond    = 0x01;
+  /*
+   * VSAM svc 97 interface variables
+   */
+  int cur_vsam_op   = 0;
+  int vsam_op_open  = 19;
+  int vsam_op_clsoe = 20;
   /*
    * end of global ez390 class data and start of procs
    */
@@ -717,6 +737,7 @@ public void svc(int svc_id){
 		svc_tget_tput();
 		break;
 	case 121: // x'79' VSAM access method
+		vz390.cur_vsam_op = pz390.reg.get(pz390.r0 + 3);
 		vz390.svc_vsam();  // RPI 644
 		break;
 	case 124: // x'7C' TCPIO tcp/ip sockets I/O
@@ -894,6 +915,8 @@ private void put_stats(){
 	}
 	if (tz390.opt_stats){
 		put_log("EZ390I Stats total instructions    = " + tz390.systerm_ins);
+		
+		put_log("EZ390I stats TCPIO operations      = " + tot_tcpio_oper);
 		if (tot_tcpio_oper > 0){ // RPI 566
 			put_log("EZ390I stats TCPIO open client     = " + tot_tcpio_openc);
 			put_log("EZ390I stats TCPIO open server     = " + tot_tcpio_opens);
@@ -901,6 +924,22 @@ private void put_stats(){
 			put_log("EZ390I stats TCPIO close server    = " + tot_tcpio_closes);
 			put_log("EZ390I stats TCPIO send message    = " + tot_tcpio_send);
 			put_log("EZ390I stats TCPIO receive message = " + tot_tcpio_recv);
+		}
+		put_log("EZ390I stats DCB operations        = " + tot_dcb_oper);
+		if (tot_dcb_oper > 0){ // RPI 566
+			put_log("EZ390I stats DCB open              = " + tot_dcb_open);
+			put_log("EZ390I stats DCB close             = " + tot_dcb_close);
+			put_log("EZ390I stats DCB get               = " + tot_dcb_get);
+			put_log("EZ390I stats DCB put               = " + tot_dcb_put);
+			put_log("EZ390I stats DCB read              = " + tot_dcb_read);
+			put_log("EZ390I stats DCB write             = " + tot_dcb_write);
+		}
+		put_log("EZ390I stats VSAM operations       = " + vz390.tot_vsam_oper);
+		if (vz390.tot_vsam_oper > 0){ // RPI 566
+			put_log("EZ390I stats ACB open              = " + vz390.tot_acb_open);
+			put_log("EZ390I stats ACB close             = " + vz390.tot_acb_close);
+			put_log("EZ390I stats RPL get               = " + vz390.tot_rpl_get);
+			put_log("EZ390I stats RPL put               = " + vz390.tot_rpl_put);
 		}
 		if (tz390.opt_trace){
 			tz390.put_trace("EZ390I Stats Keys                  = " + tz390.tot_key);
@@ -1177,7 +1216,7 @@ private void svc_extract(){ // RPI 413
 		pz390.set_psw_check(pz390.psw_pic_spec);
 	}
 }
-private void svc_load(){
+public void svc_load(){
 	/*
 	 * load 390 load module into virtual memory
 	 * 
@@ -1209,7 +1248,7 @@ private void svc_load(){
 	if (load_dsn_addr == 0){
 		load_pgm_name = get_ascii_string(pz390.reg.getInt(pz390.r0),8);
 	} else {
-		if (!get_load_dsn()){
+		if (!get_load_dsn(load_dsn_addr)){
 			pz390.reg.putInt(pz390.r1,0);  // RPI102
             pz390.reg.putInt(pz390.r15,4);
             return;
@@ -1418,8 +1457,11 @@ private void svc_xctl(){
         }
 	}
 }
-private boolean get_load_dsn(){
+public boolean get_load_dsn(int dd_dsn_addr){
 	/*
+	 * Set DSN from addr DDNAM with high bit
+	 * or frp, addr DSNAM.
+	 * 
 	 * 1. Set following from ddname/dsname
 	 *    load_pgm_dir (overrides dir_390 default) RPI 244
 	 *    load_pgm_name
@@ -1433,8 +1475,8 @@ private boolean get_load_dsn(){
 	 */
 	load_pgm_type = tz390.z390_type;
 	String dsn_source = "dsname";
- 	if (load_dsn_addr < 0){
- 		String ddname = get_ascii_string(load_dsn_addr & 0x7fffffff,8);
+ 	if (dd_dsn_addr < 0){
+ 		String ddname = get_ascii_string(dd_dsn_addr & 0x7fffffff,8);
  		dsn_source = "ddname " + ddname;
  		load_dsn = get_ascii_env_var_string(ddname);
  		if (load_dsn == null || load_dsn.length() == 0){
@@ -1442,9 +1484,9 @@ private boolean get_load_dsn(){
  			return false;
  		}
  	} else {
- 		load_dsn = get_ascii_var_string(load_dsn_addr,max_dir_list);
+ 		load_dsn = get_ascii_var_string(dd_dsn_addr,max_dir_list);
  		if (load_dsn == null || load_dsn.length() == 0){
- 			log_error(83,"DSNAME invalid field at " + tz390.get_hex(load_dsn_addr,8));
+ 			log_error(83,"DSNAME invalid field at " + tz390.get_hex(dd_dsn_addr,8));
  			return false;
  		}
  	}
@@ -1522,7 +1564,7 @@ private void svc_delete(){
 	if (load_dsn_addr == 0){
 		load_pgm_name = get_ascii_string(pz390.reg.getInt(pz390.r0),8);
 	} else {
-		if (!get_load_dsn()){
+		if (!get_load_dsn(load_dsn_addr)){
             pz390.reg.putInt(pz390.r15,4);
             return;
 		}
@@ -1593,6 +1635,7 @@ private void add_cde(){
 		}
 	}
 	cde_name[cur_cde] = load_pgm_name + load_pgm_type;
+	cde_file[cur_cde] = load_file_name;  // RPI 668
 	cde_use[cur_cde]  = 1;
 	cde_len[cur_cde]  = load_code_len;
     cde_loc[cur_cde] = load_code_load;
@@ -2325,7 +2368,22 @@ private void dump_mem_stat(){
 }
 private void svc_open(){
 	/*
+	 * check for DCB or ACB and route accordingly
+	 */
+	cur_dcb_addr  = pz390.reg.getInt(pz390.r1);
+	cur_open_opt  = pz390.reg.getInt(pz390.r0);
+	byte cur_acb_id = pz390.mem.get(cur_dcb_addr);
+	if (cur_acb_id == tz390.acb_id_ver){
+		vz390.cur_vsam_op = vz390.vsam_op_open;
+		vz390.svc_vsam();  // RPI 644
+	} else {
+		svc_open_dcb("");
+	}
+}
+public void svc_open_dcb(String dsnam_path){
+	/*
 	 * open DCB file for sequential or random I/O
+	 * and use dsnam_path prefix for dcbdsnam option
 	 * Notes:
 	 *   1.  R1 = DCB
 	 *   2.  R0 = OPEN OPTION
@@ -2347,7 +2405,8 @@ private void svc_open(){
 	 *  Output registers:
 	 *    R0  - 64 bit file length RPI 587
 	 */
-	cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	tot_dcb_open++; 
+	tot_dcb_oper++;
 	check_dcb_addr();
 	get_cur_tiot_index();
 	if (cur_tiot_index != -1){
@@ -2356,9 +2415,15 @@ private void svc_open(){
 			dcb_synad_error(22,"file already open");
 			return;
 		}
-	    cur_dcb_file_name = get_dcb_file_name();
+	    cur_dcb_file_name = get_dcb_file_name(dsnam_path);
 	    tiot_dsn[cur_tiot_index] = cur_dcb_file_name;
         cur_dcb_macrf = pz390.mem.getShort(cur_dcb_addr + dcb_macrf) & 0xffff;
+        if ((cur_dcb_macrf & dcb_macrf_pm) != 0 // RPI 668
+        	|| (cur_dcb_macrf & dcb_macrf_w) != 0){
+        	cur_dcb_oflgs = (dcb_oflgs_pm | dcb_oflgs_gm) & cur_open_opt;
+        } else {
+        	cur_dcb_oflgs = dcb_oflgs_gm & cur_open_opt;
+        }
         tiot_cur_rba[cur_tiot_index] = 0; // RPI101
 	    tiot_vrec_blksi[cur_tiot_index] = 0;
 		switch (cur_dcb_oflgs){
@@ -2402,9 +2467,10 @@ private void svc_open(){
 	pz390.reg.putLong(0,tiot_eof_rba[cur_tiot_index]);  // RPI 587 return file length
 	pz390.reg.putInt(pz390.r15,0);
 }
-private String get_dcb_file_name(){
+private String get_dcb_file_name(String dsnam_path){
 	/*
 	 * Get file name from DCBDSNAM if not zero
+	 *   and append dsnam_path RPI 668
 	 * else get file from DCBDDNAM environment 
 	 * variable.
 	 * NOtes:
@@ -2415,7 +2481,7 @@ private String get_dcb_file_name(){
 	String file_name = "";
 	int dcb_dsn = pz390.mem.getInt(cur_dcb_addr + dcb_dsnam);
 	if (dcb_dsn > 0){
-        file_name = get_ascii_var_string(dcb_dsn,max_lsn_spec).trim();  
+        file_name = dsnam_path + get_ascii_var_string(dcb_dsn,max_lsn_spec).trim(); // RPI 668  
         if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
         	file_name = file_name.replace('\\','/');
         }
@@ -2435,9 +2501,23 @@ private String get_dcb_file_name(){
 }
 private void svc_close(){
 	/*
+	 * check for DCB or ACB and route accordingly
+	 */
+	cur_dcb_addr  = pz390.reg.getInt(pz390.r1);
+	byte cur_acb_id = pz390.mem.get(cur_dcb_addr);
+	if (cur_acb_id == tz390.acb_id_ver){
+		vz390.cur_vsam_op = vz390.vsam_op_close;
+		vz390.svc_vsam();  // RPI 644
+	} else {
+		svc_close_dcb();
+	}
+}
+public void svc_close_dcb(){
+	/*
 	 * close file if open else synad error
 	 */
-	cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
+	tot_dcb_close++; 
+	tot_dcb_oper++;
 	check_dcb_addr();
 	get_cur_tiot_index();
 	if (cur_tiot_index != -1){
@@ -2472,6 +2552,8 @@ private void svc_get_move(){
 	 * Notes:
 	 *   1.  Translate to EBCDIC unless ASCII mode
 	 */
+	tot_dcb_get++; 
+	tot_dcb_oper++;
 	cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	check_dcb_addr();
 	get_cur_tiot_index();
@@ -2503,15 +2585,16 @@ private void svc_get_move(){
 			}
 		}
 		switch (cur_dcb_recfm){
-		case 0x40: // variable 
+		case 0x40: // get variable 
 			try {
 				if (cur_dcb_lrecl_f == 0){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
 				}
 				tz390.systerm_io++;
                 cur_vrec_lrecl = tiot_file[cur_tiot_index].readInt();
+                check_mem_area(cur_dcb_area,cur_vrec_lrecl >> 16); // RPI 668
                 pz390.mem.putInt(cur_dcb_area,cur_vrec_lrecl);
-                cur_vrec_lrecl = cur_vrec_lrecl >>> 16;
+                cur_vrec_lrecl = cur_vrec_lrecl >> 16;
                 if (cur_vrec_lrecl <= 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){
                 	dcb_synad_error(28,"invalid variable record length - " + cur_vrec_lrecl);
                 	return;
@@ -2524,7 +2607,7 @@ private void svc_get_move(){
 		        return;
 	        }
 	        break;
-		case 0x50: // variable blocked 
+		case 0x50: // get variable blocked 
 			try {
 				if (cur_dcb_lrecl_f == 0){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f - 4; // use blksi if no lrecl
@@ -2539,8 +2622,9 @@ private void svc_get_move(){
 				}
 				tz390.systerm_io++;
                 cur_vrec_lrecl = tiot_file[cur_tiot_index].readInt();
+                check_mem_area(cur_dcb_area,cur_vrec_lrecl >> 16); // RPI 668
                 pz390.mem.putInt(cur_dcb_area,cur_vrec_lrecl);
-                cur_vrec_lrecl = cur_vrec_lrecl >>> 16;
+                cur_vrec_lrecl = cur_vrec_lrecl >> 16;
                 if (cur_vrec_lrecl <= 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){
                 	dcb_synad_error(28,"invalid variable record length - " + cur_vrec_lrecl);
                 	return;
@@ -2571,6 +2655,7 @@ private void svc_get_move(){
                 	dcb_synad_error(46,"variable record too long");
                 	return;
                 }
+                check_mem_area(cur_dcb_area,cur_rec_len+4); // RPI 668
                 pz390.mem.putInt(cur_dcb_area,(cur_rec_len+4) << 16);
                 int index = 0;
                 while (index < cur_rec_len){
@@ -2591,8 +2676,12 @@ private void svc_get_move(){
 			try {
 				if (cur_dcb_lrecl_f == 0){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
+					if (cur_dcb_lrecl_f == 0){
+				        dcb_synad_error(110,"invalid DCB lrecl = " + cur_dcb_lrecl_f); // RPI 668
+					}
 				}
 				tz390.systerm_io++;
+                check_mem_area(cur_dcb_area,cur_dcb_lrecl_f); // RPI 668
                 tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
 	        } catch (Exception e){
@@ -2604,10 +2693,14 @@ private void svc_get_move(){
 			try {
 				if (cur_dcb_lrecl_f == 0){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
+					if (cur_dcb_lrecl_f == 0){
+				        dcb_synad_error(111,"invalid DCB lrecl = " + cur_dcb_lrecl_f); // RPI 668
+					}
 				}
 				tz390.systerm_io++;
                 cur_rec_text = tiot_file[cur_tiot_index].readLine();
                 cur_rec_len  = cur_rec_text.length();
+                check_mem_area(cur_dcb_area,cur_dcb_lrecl_f); // RPI 668
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
                 if (cur_rec_len <= cur_dcb_lrecl_f){
                 	int index = 0;
@@ -2647,6 +2740,8 @@ private void svc_put_move(){
 	/*
 	 * put next record from area to dcb pm file
 	 */
+	tot_dcb_put++; 
+	tot_dcb_oper++;
 	cur_dcb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	check_dcb_addr();
 	get_cur_tiot_index();
@@ -2662,12 +2757,16 @@ private void svc_put_move(){
 		cur_dcb_blksi_f = pz390.mem.getInt(cur_dcb_addr + dcb_blksi_f); // RPI 587
 		switch (cur_dcb_recfm){
 		case 0x80: // fixed - read lrecl bytes into area
-		case 0x90: // fixed blocked
+		case 0x90: // put fixed blocked
 			try {
 				if (cur_dcb_lrecl_f == 0){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f;
+					if (cur_dcb_lrecl_f == 0){
+				        dcb_synad_error(112,"invalid DCB lrecl = " + cur_dcb_lrecl_f); // RPI 668
+					}
 				}
 				tz390.systerm_io++;
+                check_mem_area(cur_dcb_area,cur_dcb_lrecl_f); // RPI 668
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
@@ -2678,7 +2777,7 @@ private void svc_put_move(){
 		        return;
 	        }
 	        break;
-		case 0x40: // variable 
+		case 0x40: // put variable 
 			try {
 				if (cur_dcb_lrecl_f == 0){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f;
@@ -2689,6 +2788,7 @@ private void svc_put_move(){
                     return;
                 }
                 tz390.systerm_io++;
+                check_mem_area(cur_dcb_area,cur_vrec_lrecl); // RPI 668
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_vrec_lrecl);
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_vrec_lrecl;
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
@@ -2699,7 +2799,7 @@ private void svc_put_move(){
 		        return;
 	        }
 	        break;
-		case 0x50: // variable blocked 
+		case 0x50: // put variable blocked 
 			try {
 				if (cur_dcb_lrecl_f == 0){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f - 4;
@@ -2709,7 +2809,8 @@ private void svc_put_move(){
 					tz390.systerm_io++;
 					tiot_file[cur_tiot_index].writeInt(-1); // place holder for vb LLZZ
 				}
-				cur_vrec_lrecl = pz390.mem.getInt(cur_dcb_area) >>> 16;
+                check_mem_area(cur_dcb_area,4); // RPI 668
+				cur_vrec_lrecl = pz390.mem.getShort(cur_dcb_area); // RPI 668
                 if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){
                    	dcb_synad_error(37,"invalid variable record size - " + cur_vrec_lrecl);
                     return;
@@ -2727,6 +2828,7 @@ private void svc_put_move(){
                 	tiot_vrec_blksi[cur_tiot_index] = cur_vrec_lrecl;
                 }
                 tz390.systerm_io++;
+                check_mem_area(cur_dcb_area,cur_vrec_lrecl); // RPI 668
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_vrec_lrecl);
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(103,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
@@ -2736,11 +2838,12 @@ private void svc_put_move(){
 		        return;
 	        }
 	        break;
-		case 0x60: // variable to ascii text
+		case 0x60: // put variable to ascii text
 			try {
 				if (cur_dcb_lrecl_f == 0){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f;
 				}
+                check_mem_area(cur_dcb_area,cur_dcb_lrecl_f); // RPI 668
                 cur_rec_len = (pz390.mem.getInt(cur_dcb_area) >> 16)-4;
                 if (cur_rec_len < 1 || cur_rec_len > (cur_dcb_lrecl_f - 4)){
                 	dcb_synad_error(48,"variable record too long - " + cur_rec_len);
@@ -2758,11 +2861,15 @@ private void svc_put_move(){
 		        return;
 	        }
 	        break;
-		case 0xa0: // fixed to ascii text
+		case 0xa0: // put fixed to ascii text
 			try {
 				if (cur_dcb_lrecl_f == 0){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f;
+					if (cur_dcb_lrecl_f == 0){
+				        dcb_synad_error(113,"invalid DCB lrecl = " + cur_dcb_lrecl_f); // RPI 668
+					}
 				}
+                check_mem_area(cur_dcb_area,cur_dcb_lrecl_f); // RPI 668
                 cur_rec_text = get_ascii_string(cur_dcb_area,cur_dcb_lrecl_f);
                 tz390.systerm_io++;
                 tiot_file[cur_tiot_index].writeBytes(cur_rec_text + tz390.newline); // RPI 500
@@ -2789,6 +2896,8 @@ private void svc_read(){
 	 * read next record forward or backward
 	 * into area from dcb macrf r/rw file
 	 */
+	tot_dcb_read++; 
+	tot_dcb_oper++;
 	cur_decb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	cur_dcb_addr  = pz390.mem.getInt(cur_decb_addr + decb_dcb) & pz390.psw_amode;
 	check_dcb_addr();
@@ -2808,6 +2917,7 @@ private void svc_read(){
 				cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
 			}
 			tz390.systerm_io++;
+            check_mem_area(cur_dcb_area,cur_dcb_lrecl_f); // RPI 668
             tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
             tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
         } catch (Exception e){
@@ -2825,6 +2935,8 @@ private void svc_write(){
 	 * write next record forward or backward
 	 * into area from dcb macrf r/rw file
 	 */
+	tot_dcb_write++; 
+	tot_dcb_oper++;
 	cur_decb_addr  = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	cur_dcb_addr  = pz390.mem.getInt(cur_decb_addr + decb_dcb) & pz390.psw_amode;
 	check_dcb_addr();
@@ -2840,6 +2952,7 @@ private void svc_write(){
 				cur_dcb_lrecl_f = cur_dcb_blksi_f; // use blksi if no lrecl
 			}
 			tz390.systerm_io++;
+            check_mem_area(cur_dcb_area,cur_dcb_lrecl_f); // RPI 668
 			tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
             tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
             if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
@@ -2914,7 +3027,7 @@ private void dcb_synad_error(int error_num,String error_msg){
 	}
 	if (cur_dcb_synad == 0){
 		String cur_ddnam = get_ascii_string(cur_dcb_addr + dcb_ddnam,8);
-		String cur_file  = get_dcb_file_name();
+		String cur_file  = get_dcb_file_name("");
 		log_error(43,"I/O error for DCB=" + tz390.get_hex(cur_dcb_addr,8) 
 				             + " DDNAME=" + cur_ddnam
 				             + " FILE=" + cur_file);
@@ -2999,7 +3112,7 @@ private void get_cur_tiot_index(){
         }
     }
 }
-private String get_ascii_env_var_string(String env_var_name){
+public String get_ascii_env_var_string(String env_var_name){
 	/*
 	 * return environment variable string
 	 * with leading and trailing spaces removed
@@ -3012,7 +3125,7 @@ private String get_ascii_env_var_string(String env_var_name){
 		return "";
 	}
 }
-private String get_ascii_var_string(int mem_addr,int max_len){
+public String get_ascii_var_string(int mem_addr,int max_len){
 	/*
 	 * return ascii variable length string 
 	 * delimited by null or double quotes which
@@ -5568,12 +5681,13 @@ private byte[] get_test_mem_sdt(String text){
 	}
 	return data_byte;
 }
-public void init_sz390(tz390 shared_tz390,pz390 shared_pz390){
+public void init_sz390(tz390 shared_tz390,pz390 shared_pz390, vz390 shared_vz390){
 	/*
 	 * init tz390
 	 */
 	tz390 = shared_tz390;
 	pz390 = shared_pz390;
+	vz390 = shared_vz390;
 }
 public long get_feature_bits(){
 	/*
@@ -6192,6 +6306,17 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
 		return false;
 	}
 }
+ 	private void check_mem_area(int addr, int len){
+		/*
+		 * check area start end and abort S0C5
+		 * if invalid.  RPI 668
+		 */
+		if (addr < 0 
+			|| len < 0
+			|| addr + len > pz390.tot_mem){
+			pz390.set_psw_check(pz390.psw_pic_addr);
+		}
+	}
 /*
  *  end of ez390 code 
  */

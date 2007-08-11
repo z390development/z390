@@ -79,6 +79,7 @@ call RT1 %~dps0rt\test\TESTASM1 systerm(RTTEST) mcall %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTASM2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTENV1 TRACE systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT4 %~dps0rt\test\TESTERR2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT4 %~dps0rt\test\TESTLAB1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem lz390 linker
 rem

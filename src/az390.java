@@ -270,6 +270,8 @@ public  class  az390 implements Runnable {
     * 07/07/07 RPI 651 prevent trap on USING with no parms 
     * 07/20/07 RPI 662 add DFHRESP lits ITEMERR,QIDERR
     * 07/20/07 RPI 659 error 196 for invalid opcode char.
+    * 07/30/07 RPI 667 issue error 197 for invalid binary value string
+    * 
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -5925,14 +5927,18 @@ private void gen_dcb_bytes(){
 	 */
 	int index = 0;
 	dc_hex = "";
-	while (index < dcb_bin.length()){
-		String dcb_hex = Integer.toHexString(Integer.valueOf(dcb_bin.substring(index,index+8),2).intValue()).toUpperCase();
-		if (dcb_hex.length() < 2){
-			dc_hex = dc_hex + "0" + dcb_hex;
-		} else {
-			dc_hex = dc_hex + dcb_hex;
+	try {
+		while (index < dcb_bin.length()){
+			String dcb_hex = Integer.toHexString(Integer.valueOf(dcb_bin.substring(index,index+8),2).intValue()).toUpperCase();
+			if (dcb_hex.length() < 2){
+				dc_hex = dc_hex + "0" + dcb_hex;
+			} else {
+				dc_hex = dc_hex + dcb_hex;
+			}
+			index = index + 8;
 		}
-		index = index + 8;
+	} catch (Exception e){
+		log_error(197,"invalid binary value string - " + dcb_bin);  // RPI 667
 	}
 	dcb_len = dc_hex.length()/2;
 	if (dc_len_explicit){

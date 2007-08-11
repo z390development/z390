@@ -348,9 +348,9 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
 	    tz390.init_tables();
         tz390.init_options(args,tz390.z390_type);
 	    tz390.open_systerm("EZ390");
-        sz390.init_sz390(tz390,pz390);
+	    vz390.init_vz390(tz390,pz390,sz390);
+	    sz390.init_sz390(tz390,pz390,vz390);
 	    pz390.init_pz390(tz390,sz390);
-	    vz390.init_vz390(tz390,pz390);
 		sz390.open_files(); // RPI 357
         sz390.init_time();
         sz390.init_test();

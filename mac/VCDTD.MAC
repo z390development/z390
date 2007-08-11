@@ -1,0 +1,56 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2007 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/27/07                                                 *
+.*********************************************************************
+.* 07/27/07 RPI INITIAL CODING                                   
+.* 08/03/07 RPI 668 VCDTTIOT TABLE INDEX AFTER LOADING                                   
+.* 08/06/07 RPI 668 VCDTPATH ADDR KSDS ALT PATH IHAAIX SECTION                         
+.*********************************************************************
+         VCDTD
+.*
+.* IF VCDTD ALREADY DEFINED EXIT NOW
+.*
+         GBLB  &Z390_VCDT                         
+         GBLC  &Z390_VCDT_NAME,&Z390_VCDT_TYPE            
+         AIF   (&Z390_VCDT).EXIT                          
+&Z390_VCDT      SETB 1                                   
+&Z390_VCDT_NAME SETC '&SYSLOC'                                    
+&Z390_VCDT_TYPE SETC '&SYSSTYP'        
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'VCDTD UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.*       VSAM CLUSTOER DEFINITION TABLE (VCDT)
+.*
+IHAVCDT  DSECT
+VCDTID   DS    CL4  C'VCDT' ID
+VCDTFLAG DS    F    OPTION FLAGS
+VCDTRECV EQU   X'80000000' RECFM=V VARIABLE LENGTH VS FIXED
+VCDTRUSE EQU   X'40000000' REUSE OPTION RESETS EOF TO 0 AT ACB OPEN
+VCDTPATH EQU   X'20000000' PATH OPTION TO ACCESS KSDS VIA AIX KEY
+VCDTKSDS EQU   X'08000000' KSDS KEY SEQUENCED (DEF) VIA VXN INDEXES     
+VCDTRRDS EQU   X'04000000' RRDS RELATIVE RECORD     VIA VX0 INDEX     
+VCDTESDS EQU   X'02000000' ESDS ENTRY SEQUENCED     VIA VX0 INDEX     
+VCDTLDS  EQU   X'01000000' LDS  LINEAR CI SEQUENCE  VIA VX0 INDEX  
+VCDTLREC DS    F    MAX RECORD LENGTH (EXCLUDES 4 BYTE RECV LENGTH)
+VCDTNAIX DS    F    NUMBER OF KSDS ALTERNATE INDEX KEYS    
+VCDTPAIX DS    A    ADDRESS OF ALTERNATE INDEX PATH SECTION 
+VCDTTIOT DS    F    VCDT FILE TIOT TABLE INDEX AFTER LOADING
+VCDTAVES DS    A    VES ESDS DCB FOR DATA RECORDS
+VCDTAVX0 DS    A    VX0 RRDS DCB FOR RR RANDOM AND RR/ES SEQ ACCESS
+VCDTKLEN DS    F    VX0 KSDS PRIMARY KEY LENGTH IN VES 
+VCDTKOFF DS    F    VX0 KSDS PRIMARY KEY OFFSET IN VES
+AIXSECT  DS    0A   VXN KSDS ALT INDEX SECTIONS IHAAIS
+IHAAIX   DSECT 
+AIXADCB  DS    A    VXN DCB ADDRESS OF XRBA INDEX BY ALT KEY
+AIXDUP   EQU   X'80000000' AIX DUP KEYS ALLOWED IF AIXADCB HIGH BIT
+AIXKLEN  DS    F    VXN ALTERATE KEY LENGTH IN VES
+AIXKOFF  DS    F    VXN ALTERATE KEY OFFSET IN VES
+         AIF   (&Z390_VCDT_NAME EQ '' OR &Z390_VCDT_TYPE EQ '').EXIT
+&Z390_VCDT_NAME &Z390_VCDT_TYPE                    
+.EXIT    ANOP
+         MEND

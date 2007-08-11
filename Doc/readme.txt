@@ -1,4 +1,4 @@
-z390 V1.3.06 Portable Mainframe Assembler
+z390 V1.3.07 Portable Mainframe Assembler
 Copyright 2007 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
@@ -26,7 +26,8 @@ o All problem state instructions including HFP, BFP, and new DFP floating point 
 o TEST option for interactive debugging with dump, modify, and trace options
 o TRACE option for instruction trace with operand register and memory data
 * Z390 based CICS compatible transaction manager supporting multiple CICS clients connected to single CICS server over TCP/IP network contributed by Melvyn Maltz.  See the cics directory for additional documentation, demos, and startup commands.
-* Z390 Utilities written in z390 assembler with source included (see util directory):
+* Z390 Utilities written in z390 assembler with source included:
+o REPRO – load or unload VSAM data set from/to QSAM or another VSAM data set
 o SUPERZAP – verify, replace, and dump any Windows or Linux file up to 2 GB.
 o UNREF – scan PRN assembly listing and list unreferenced symbols contributed by Melvyn Maltz.
 
@@ -37,6 +38,8 @@ Structured programming macros IF, ELSEIF, ELSE, ENDIF, DO, and ENDDO are include
 A Service Oriented Architecture (SOA) client server application generation service including SOA directory with macro library and demo application which uses TCP/IP sockets messaging to enable clients and servers with multiple connections to run on same or different processors on a TCP/IP network including networks connected via VPN links over the Internet.  Also see the CICS transaction manager for more client/server examples.
 
 A TPUT and TGET macro based demo TN3270 application to update and display name, address, and numeric zip fields on screen can be assembled and executed with the command “ASMLG DEMO\DEMOGUI6 GUAM”.  Use PF1 for help screen and PF3 for exit.  The arrow, backspace, and tab keys can be used to control blinking cursor.  An alarm and status line error is issued if attempt is made to modify protected field or enter alpha data in numeric field.
+
+Z390 v1.3.07 includes the initial release of VSAM compatible support for ESDS type files with fixed or variable length records up to 2 GB.  Support includes ACB, RPL, GET, PUT, MODCB, SHOWCB, TESTCB, type macros plus DEFINE macro to define clusters.  Support for RRDS, KSDS, and LDS types will follow.
 
 For latest Windows and Linux downloads and additional information about z390 and the open source project visit:
 

@@ -1,0 +1,232 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 07/25/07                                                 *
+*********************************************************************
+* 07/25/07 INITIAL CODING OF REPRO UTILITY TO COPY INFILE TO OUTFILE
+*********************************************************************
+REPRO    SUBENTRY
+         COPY  ASMMSP                                                  
+         WTO   'REPRO COPY INFILE TO OUTFILE (QSAM TO/FROM VSAM)'
+         PM    INIT    SET FILE AND RECORD TYPE INFO             
+         PM    OPEN
+LOOP     EQU   *
+         PM    GET
+         PM    PUT
+         B     LOOP
+EOF      EQU   *
+         PM    CLOSE
+         WTO   'REPRO ENDED OK'
+         SUBEXIT
+*
+* INIT - SET INFILE AND OUTFILE TYPES AND SET RECORD AREA
+*
+INIT     PENTRY
+         GETENV INFILEDD
+         IF    (CH,R15,NE,=H'0')
+               WTO 'REPRO INFILE DDNAME NOT FOUND'
+               SUBEXIT RC=15
+         ENDIF
+         LR    R1,R2
+         DO    WHILE=(CLI,0(R1),NE,0)
+               AHI R1,1
+         ENDDO
+         AHI   R1,-3
+         IF    (CLC,0(3,R1),EQ,=C'390')
+               MVI  INFILET,C'V'
+         ELSE
+               MVI  INFILET,C'Q'
+         ENDIF
+         GETENV OUTFILEDD
+         IF    (CH,R15,NE,=H'0')
+               WTO 'REPRO OUTFILE DDNAME NOT FOUND'
+               SUBEXIT RC=15
+         ENDIF
+         LR    R1,R2
+         DO    WHILE=(CLI,0(R1),NE,0)
+               AHI R1,1
+         ENDDO
+         AHI   R1,-3
+         IF    (CLC,0(3,R1),EQ,=C'390')
+               MVI  OUTFILET,C'V'
+         ELSE
+               MVI  OUTFILET,C'Q'
+         ENDIF
+         IF    (CLI,INFILET,EQ,C'Q'),AND,(CLI,OUTFILET,EQ,C'Q')
+               WTO 'REPRO INFILE OR OUTFILE MUST BE VSAM'
+               SUBEXIT RC=16
+         ENDIF
+         PEXIT
+*
+* OPEN INFILE AND OUTFILE USING DCB OR ACM BASED ON TYPE
+* AND COPY RECFM AND LRECLF FROM VCDT TO QSAM DCB
+*
+OPEN     PENTRY
+         IF    (CLI,INFILET,EQ,C'Q')
+               MVC INFILEQ+DCBSYNAD-IHADCB(4),=A(ERR11)
+               OPEN (INFILEQ,(INPUT))
+               IF  (CH,R15,NE,=F'0')
+                   B  ERR11
+               ENDIF
+         ELSE
+               OPEN (INFILEV,(INPUT))
+               IF  (CH,R15,NE,=F'0')
+                   B  ERR12
+               ELSE
+                   LA  R1,OUTFILEQ
+                   L   R2,INFILEV+(ACBAVCDT-IHAACB)
+                   PM    INITREC 
+               ENDIF
+         ENDIF
+         IF    (CLI,OUTFILET,EQ,C'Q')
+               MVC  OUTFILEQ+DCBSYNAD-IHADCB(4),=A(ERR13)
+               OPEN (OUTFILEQ,(OUTPUT))
+               IF  (CH,R15,NE,=F'0')
+                   B  ERR13
+               ELSE
+                   LA  R1,OUTFILEQ
+                   L   R2,INFILEV+(ACBAVCDT-IHAACB)
+                   PM  INITREC
+               ENDIF
+         ELSE
+               OPEN (OUTFILEV,(OUTPUT))
+               IF  (CH,R15,NE,=F'0')
+                   B  ERR14
+               ELSE
+                   LA  R1,INFILEQ
+                   L   R2,OUTFILEV+(ACBAVCDT-IHAACB)
+                   PM  INITREC
+               ENDIF
+         ENDIF
+         PEXIT
+*
+* CLOSE FILES
+*
+CLOSE    PENTRY
+         IF     (CLI,INFILET,EQ,C'Q')
+               MVC  INFILEQ+DCBSYNAD-IHADCB(4),=A(ERR41)
+               CLOSE INFILEQ
+         ELSE
+               CLOSE INFILEV
+               IF  (CH,R15,NE,=F'0')
+                   B  ERR42
+               ENDIF
+         ENDIF
+         IF     (CLI,OUTFILET,EQ,C'Q')
+               MVC  INFILEQ+DCBSYNAD-IHADCB(4),=A(ERR43)
+               CLOSE OUTFILEQ
+         ELSE
+               CLOSE OUTFILEV
+               IF  (CH,R15,NE,=F'0')
+                   B  ERR44
+               ENDIF
+         ENDIF
+         PEXIT
+*
+* GET RECORD FROM INFILE QSAM OR VSAM FILE
+*
+GET      PENTRY
+         IF    (CLI,INFILET,EQ,C'Q')
+               MVC  INFILEQ+DCBSYNAD-IHADCB(4),=A(ERR21)
+               GET  INFILEQ,(R3)
+         ELSE
+               GET  RPL=INFILER
+               SHOWCB RPL=INFILER,AREA=FDBK,LENGTH=1,FIELDS=(FDBK)
+               IF  (CH,R15,EQ,=H'8'),  CHECK RC AND REASON FOR EOD     X
+               AND,(CLI,FDBK,EQ,4)
+                   B  EOF
+               ENDIF
+               IF  (CH,R15,NE,=F'0')
+                   B  ERR22
+               ENDIF
+         ENDIF
+         PEXIT
+*
+* PUT RECORD TO OUTFILE QSAM OR VSAM FILE
+*
+PUT      PENTRY
+         IF    (CLI,OUTFILET,EQ,C'Q')
+               MVC  INFILEQ+DCBSYNAD-IHADCB(4),=A(ERR31)
+               PUT  OUTFILEQ,(R3)
+         ELSE
+               PUT  RPL=OUTFILER
+               IF  (CH,R15,NE,=F'0')
+                   B  ERR32
+               ENDIF
+         ENDIF
+         PEXIT
+*
+* INITREC
+*   R1 = QSAM DCB
+*   R2 = VSAM VCDT 
+*
+*  INITREC - INIT QSAM DCB LRECLF AND RECFM FROM VCDT
+*    R1  = QSAM DCB
+*    R2  = VCDT VSAM CLUSTER DEFINITION TABLE
+*
+INITREC  PENTRY
+         USING IHADCB,R1
+         USING IHAVCDT,R2
+         L     R14,VCDTAVES R14= VSAM ESDS DATA DCB
+         MVC   DCBRECFM,DCBRECFM-IHADCB(R14)     SET QSAM DCBRECFM
+         MVC   DCBBLKSIF,VCDTLREC                SET QSAM DCBBLKSIF
+         MVC   DCBLRECLF,VCDTLREC                SET QSAM DCBLRECLF
+         L     R2,DCBLRECLF
+         AHI   R2,4          LENGTH OF MAX RECORD + 4
+         GETMAIN RU,LV=(R2)
+         LR    R3,R1         R3=A(VSAM RECORD LENGTH IN 4 BYTE PREFIX)
+         LA    R4,4(R3)      R4=A(VSAM LOGICAL)
+         MODCB RPL=INFILER,AREA=(R3)
+         MODCB RPL=OUTFILER,AREA=(R3)
+         DROP  R1,R2
+         PEXIT
+*
+* ABORT ERROR ROUTINES
+*
+ERR11    WTO   'REPRO OPEN INFILE QSAM FAILED'
+         ABEND 11,DUMP
+ERR12    WTO   'REPRO OPEN INFILE VSAM FAILED'
+         ABEND 12,DUMP
+ERR13    WTO   'REPRO OPEN OUTFILE QSAM FAILED'
+         ABEND 13,DUMP
+ERR14    WTO   'REPRO OPEN OUTFILE VSAM FAILED'
+         ABEND 14,DUMP
+ERR21    WTO   'REPRO GET INFILE QSAM FAILED'
+         ABEND 21,DUMP
+ERR22    WTO   'REPRO GET INFILE VSAM FAILED'
+         ABEND 22,DUMP
+ERR31    WTO   'REPRO PUT OUTFILE QSAM FAILED'
+         ABEND 31,DUMP
+ERR32    WTO   'REPRO PUT OUTFILE VSAM FAILED'
+         ABEND 32,DUMP
+ERR41    WTO   'REPRO CLOSE INFILE QSAM FAILED'
+         ABEND 41,DUMP
+ERR42    WTO   'REPRO CLOSE INFILE VSAM FAILED'
+         ABEND 42,DUMP
+ERR43    WTO   'REPRO CLOSE OUTFILE QSAM FAILED'
+         ABEND 43,DUMP
+ERR44    WTO   'REPRO CLOSE OUTFILE VSAM FAILED'
+         ABEND 44,DUMP
+*
+* QSAM DCB AND VSAM ACB CB'S
+*
+INFILEQ  DCB   DDNAME=INFILE,RECFM=F,LRECL=0,MACRF=GM,EODAD=EOF
+INFILEV  ACB   DDNAME=INFILE,MACRF=(SEQ,IN)
+INFILER  RPL   ACB=INFILEV,OPTCD=(SEQ,IN)
+OUTFILEQ DCB   DDNAME=OUTFILE,RECFM=F,LRECL=0,MACRF=PM
+OUTFILEV ACB   DDNAME=OUTFILE,MACRF=(SEQ,OUT)
+OUTFILER RPL   ACB=OUTFILEV,OPTCD=(SEQ,OUT)
+*
+* WORK AREAS
+*
+INFILET  DC    C'Q' QSAM OR VSAM
+OUTFILET DC    C'Q' QSAM OR VSAM
+INFILEDD DC    C'INFILE',X'00'
+OUTFILEDD DC   C'OUTFILE',X'00'
+FDBK      DS   X  RPL REASON CODE
+         LTORG
+         EQUREGS
+         VCDTD
+         END

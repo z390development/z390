@@ -17,6 +17,7 @@
 .* 05/05/06 RPI 281  add DCBE support for EODAD and SYNAD                 
 .* 04/11/07 RPI 587  support 32 bit DCBLRECLF and DCBBLKSIF fields  
 .* 04/23/07 RPI 599  add call to DCBD to define referened fields       
+.* 08/03/07 RPI 644  zero DCBOFLGS and fix DCBMACRF when 2 operands     
 .*********************************************************************
 &N       DCB   &DSORG=PS,    PHYSICAL SEQUENTIAL                       X
                &BFALN=,      IGNORE                                    X
@@ -112,9 +113,14 @@
          DC    CL8'&N' DCBDDNAME        
 .DDEND   ANOP
          ORG   &N+DCBOFLGS-IHADCB
-         DC    AL1(DCBOFLGS_&MACRF(1)) DCBOFLGS
+         DC    AL1(0) DCBOFLGS RPI 668 ZERO (SET AT OPEN)
          ORG   &N+DCBMACRF-IHADCB
+         AIF   (N'&MACRF GT 1).MACRF2 RPI 668
          DC    AL2(DCBMACRF_&MACRF(1)) DCBMACRF
+         AGO   .MACRF2_END
+.MACRF2  ANOP
+         DC    AL2(DCBMACRF_&MACRF(1)+DCBMACRF_&MACRF(2)) DCBMACRF 
+.MACRF2_END ANOP
          ORG   &N+DCBSYNAD-IHADCB
          DC    A(&SYNAD) DCBSYNAD DCBSYNAD
          ORG   &N+DCBBLKSIF-IHADCB    RPI 587

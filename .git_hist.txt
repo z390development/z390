@@ -2412,8 +2412,62 @@ set GIT_COMMITTER_DATE=2021-03-22 07:56:00 +0100
 git commit -m "Reconstructed version v1.3.06a of z390 committed on behalf of Don Higgins"
 git tag -a v1.3.06a -m "Reconstructed version v1.3.06a of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.3.07
+==> Add ZAP.BAT from v1.3.06a
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.3.07
+git add DIRCLEAN.BAT
+git add Doc/readme.rtf
+git add Doc/readme.txt
+git rm  README.TXT
+git add RT.BAT
+git add RTDEMO.BAT
+git add RTGUAM.BAT
+git add RTLINK1.BAT
+git add RTSOA1.BAT
+git add RTTEST1.BAT
+git add RTVSE1.BAT
+git add SOA/test/TESTMSGS.MLC
+git add mac/ACB.MAC
+git add mac/ACBD.MAC
+git add mac/CLOSE.MAC
+git add mac/DCB.MAC
+git add mac/GET.MAC
+git add mac/OPEN.MAC
+git add mac/POINT.MAC
+git add mac/PUT.MAC
+git add mac/RPL.MAC
+git add mac/RPLD.MAC
+git add src/az390.java
+git add src/ez390.java
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add src/vz390.java
+git add RTVSAM.BAT
+git add RTVSAM1.BAT
+git add linklib/REPRO.MLC
+git add mac/DEFINE.MAC
+git add mac/ERASE.MAC
+git add mac/GENCB.MAC
+git add mac/MODCB.MAC
+git add mac/SHOWCB.MAC
+git add mac/TESTCB.MAC
+git add mac/VCDTD.MAC
+git add vsam/
 
+==> Create commit for V1.3.07
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2007-08-11 09:14:00 -0500
+set GIT_COMMITTER_DATE=2021-03-22 08:05:00 +0100
+git commit -m "Reconstructed version v1.3.07 of z390 committed on behalf of Don Higgins"
+git tag -a v1.3.07 -m "Reconstructed version v1.3.07 of z390 committed on behalf of Don Higgins"
+git gc --aggressive
 
 
 

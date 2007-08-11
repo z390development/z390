@@ -1,0 +1,43 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 08/10/07 INITIAL CODING TO SUPPORT FDBK, AREA, RECLEN INITIALLY                 
+.*********************************************************************
+&N       SHOWCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS       X
+               &AREA=,        AREA TO RECEIVE RPL FIELD                X
+               &LENGTH=,      LENGTH OF AREA                           X
+               &FIELDS=       NAME OF FIELD TO RETRIEVE       
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'SHOWCB UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AIF   (&NPOS GT 0).POSLOOP
+         MEXIT
+.POSEND  ANOP  
+&N       DS    0H
+         AIF   (&AREA EQ '').ERR1
+         AIF   (&LENGTH EQ '').ERR2
+         AIF   (&FIELDS(1) EQ 'AREA').AREA
+         AIF   (&FIELDS(1) EQ 'FDBK').FDBK
+         AIF   (&FIELDS(1) EQ 'RECLEN').RECLEN
+         MNOTE 12,'SHOWCB FIELD NOT SUPPORTED YET - &FIELDS(1)'
+         MEXIT
+.AREA    ANOP  RETURN ADDRESS OF RECORD AREA   
+         MVC   &AREA.(4),&RPL+(RPLAREA-IHARPL)
+         MEXIT
+.FDBK    ANOP  RETURN REASON CODE FROM RPLFEEDB
+         MVC   &AREA.(1),&RPL+(RPLFEEDB-IHARPL)+3
+         MEXIT
+.RECLEN  ANOP
+         MVC   &AREA.(4),&RPL+(RPLLREC-IHARPL)
+         MEXIT
+.ERR1    MNOTE 12,'SHOWCB REQUIRES AREA='
+         MEXIT
+.ERR2    MNOTE 12,'SHOWCB REQUIRES LENGTH='
+         MEND

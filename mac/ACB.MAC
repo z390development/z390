@@ -6,13 +6,12 @@
 .* Author - Don Higgins                                              *
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
-.* 10/22/05 INITIAL CODING                                       
-.* 06/23/07 ADD OPTCD FLAG DEFINITIONS
+.* 07/26/07 INITIAL CODING                  
 .*********************************************************************
 &N       ACB   &AM=VSAM,      VSAM VS VTAM                             X
                &BUFSP=0,      MAXIMUM BUFFER SPACE FOR CLUSTER         X
-               &DDNAME=,      DDNAME OR DSNAME REF TO VSAM CLUSTER     X
-               &DSNAME=0,                                              X 
+               &DDNAME=,      DDNAME FOR VSAM CLUSTER DEFINITION TABLE X
+               &DSNAME=0,     DSNAME FOR VSAM CLUSTER DEFINITION TABLE X 
                &EXLST=0,      NOT CURRENTLY SUPPORTED                  X
                &MACRF=        PROCESSING OPTIONS                                         
 &NPOS    SETA  N'&SYSLIST
@@ -25,27 +24,122 @@
          AIF   (&AM NE 'VSAM').ERR1                
          AIF   (&EXLST NE 0).ERR2
 &N       DS    0D
-         ORG   &N+ACBDDNAM-IHAACB
+         DC    X'A0'                    ACBID    VSAM VS VTAM
+         DC    X'11'                    ACBSTYPE 11-1F VSAM 20-2F VTAM
+         DC    AL2(ACBEND-IHAACB)       ACBLEN   ACB LENGTH
+         DC    A(0)                     ACBAMBL  ACCESS METHOD PARMS
+         DC    A(0)                     ACBIFR   VTAM INTERFACE ROUTINE
+.*
+.* SET 27 MACRF OPTION BITS USING PUBLIC DOMAIN MVS 3.8
+.* IDAVSACB CODE AS INITIAL MODEL
+.*
+         LCLB  &MKEY,&MADR,&MCNV,&MSEQ,&MSKP     
+         LCLB  &LOGONF,&NLOGON
+         LCLB  &MDIR,&IN,&OUT,&NUB,&UBF          
+         LCLB  &NFX,&CFX,&RST,&NRS,&DDN,&DSN     
+         LCLB  &NRM,&AIX,&NSR,&LSR,&GSR          
+         LCLB  &NCI,&ICI,&NDF,&DFR,&NIS,&SIS     
+&I       SETA  0
+.MACRF_LOOP ANOP
+&I       SETA  &I+1                              
+         AIF   (&I GT N'&MACRF).MACRF_CHECK
+&MKEY    SETB  ('&MACRF(&I)' EQ 'KEY' OR &MKEY)                 
+&MADR    SETB  ('&MACRF(&I)' EQ 'ADR' OR &MADR)                 
+&MCNV    SETB  ('&MACRF(&I)' EQ 'CNV' OR &MCNV)                 
+&MSEQ    SETB  ('&MACRF(&I)' EQ 'SEQ' OR &MSEQ)                 
+&MSKP    SETB  ('&MACRF(&I)' EQ 'SKP' OR &MSKP)                 
+&MDIR    SETB  ('&MACRF(&I)' EQ 'DIR' OR &MDIR)                 
+&OUT     SETB  ('&MACRF(&I)' EQ 'OUT' OR &OUT)                  
+&IN      SETB  ('&MACRF(&I)' EQ 'IN' OR &IN)                    
+&NUB     SETB  ('&MACRF(&I)' EQ 'NUB' OR &NUB)                  
+&UBF     SETB  ('&MACRF(&I)' EQ 'UBF' OR &UBF)                  
+&NFX     SETB  ('&MACRF(&I)' EQ 'NFX' OR &NFX)                  
+&CFX     SETB  ('&MACRF(&I)' EQ 'CFX' OR &CFX)                  
+&DDN     SETB  ('&MACRF(&I)' EQ 'DDN' OR &DDN)                  
+&DSN     SETB  ('&MACRF(&I)' EQ 'DSN' OR &DSN)                  
+&NRM     SETB  ('&MACRF(&I)' EQ 'NRM' OR &NRM)                  
+&AIX     SETB  ('&MACRF(&I)' EQ 'AIX' OR &AIX)                  
+&NSR     SETB  ('&MACRF(&I)' EQ 'NSR' OR &NSR)                  
+&LSR     SETB  ('&MACRF(&I)' EQ 'LSR' OR &LSR)                  
+&GSR     SETB  ('&MACRF(&I)' EQ 'GSR' OR &GSR)                  
+&NCI     SETB  ('&MACRF(&I)' EQ 'NCI' OR &NCI)                  
+&ICI     SETB  ('&MACRF(&I)' EQ 'ICI' OR &ICI)                  
+&NDF     SETB  ('&MACRF(&I)' EQ 'NDF' OR &NDF)                  
+&DFR     SETB  ('&MACRF(&I)' EQ 'DFR' OR &DFR)                  
+&NIS     SETB  ('&MACRF(&I)' EQ 'NIS' OR &NIS)                  
+&SIS     SETB  ('&MACRF(&I)' EQ 'SIS' OR &SIS)                  
+&RST     SETB  ('&MACRF(&I)' EQ 'RST' OR &RST)                  
+&NRS     SETB  ('&MACRF(&I)' EQ 'NRS' OR &NRS)                  
+         AGO   .MACRF_LOOP
+.*
+.* CHECK FOR MUTUALLY EXCLUSIVE OPTIONS
+.*
+.MACRF_CHECK ANOP
+         LCLB  &ACBERR
+.CHK1    AIF   (NOT(&UBF AND &NUB)).CHK2                        
+         MNOTE 12,'ACB UBF AND NUB MUTUTALLY EXCLUSIVE'                             @ZA34940
+&ACBERR  SETB  1
+.CHK2    AIF   (NOT(&LOGONF AND &NLOGON)).CHK3              
+         MNOTE 12,'ACB LOGONF AND NLOGON MUTUTALLY EXCLUSIVE'                             @ZA34940
+&ACBERR  SETB  1
+.CHK3    AIF   (NOT(&RST AND &NRS)).CHK4                    
+         MNOTE 12,'ACB RST AND NRS MUTUTALLY EXCLUSIVE'                             @ZA34940
+&ACBERR  SETB  1
+.CHK4    AIF   (NOT(&NFX AND &CFX)).CHK5                       
+         MNOTE 12,'ACB NFX AND CFX MUTUTALLY EXCLUSIVE'                             @ZA34940
+&ACBERR  SETB  1
+.CHK5    AIF   (NOT(&DDN AND &DSN)).CHK6                       
+         MNOTE 12,'ACB DDN AND DSN MUTUTALLY EXCLUSIVE'                             @ZA34940
+&ACBERR  SETB  1
+.CHK6    AIF   (NOT(&NRM AND &AIX)).CHK7                       
+         MNOTE 12,'ACB NRM AND AIX MUTUTALLY EXCLUSIVE'                             @ZA34940
+&ACBERR  SETB  1
+.CHK7    AIF   ((NOT(&NSR AND &GSR)) AND (NOT(&GSR AND &LSR))          X
+               AND (NOT(&LSR AND &NSR))).CHK8                      
+         MNOTE 12,'ACB NSR, LSR, AND GXR MUTUTALLY EXCLUSIVE'                             @ZA34940
+&ACBERR  SETB  1
+.CHK8    AIF   (NOT(&NCI AND &ICI)).CHK9                       
+         MNOTE 12,'ACB NCI AND ICI MUTUTALLY EXCLUSIVE'                             @ZA34940
+&ACBERR  SETB  1
+.CHK9    AIF   (NOT(&NDF AND &DFR)).CHK10                      
+         MNOTE 12,'ACB NDF AND DFR MUTUTALLY EXCLUSIVE'                             @ZA34940
+&ACBERR  SETB  1
+.CHK10   AIF   (NOT(&NIS AND &SIS)).CHK11                      
+         MNOTE 12,'ACB NIS AND SIS MUTUTALLY EXCLUSIVE'                             @ZA34940
+&ACBERR  SETB  1
+.CHK11   ANOP 
+         AIF   (NOT &ACBERR).MACRF_DEF
+         MEXIT
+.MACRF_DEF ANOP
+.*
+.* SET DEFAULT OPTIONS
+.*                                                 
+&MKEY    SETB  (NOT(&MADR OR &MCNV) OR &MKEY)                   
+&MSEQ    SETB  (NOT(&MSKP OR &MDIR) OR &MSEQ)                   
+&IN      SETB  (NOT(&OUT) OR &IN)                               
+.*
+.* GEN MACRF FLAG BYTES (SEE ACBD FOR FLAG SYMBOLS AND DESCRIPTIONS)
+.*
+         DS    F   ACBMACRF MACRO ACCESS OPTION FLAGS
+         ORG   *-4
+         DC    B'&MKEY&MADR&MCNV&MSEQ&MDIR&IN&OUT&UBF'  ACBMACF1         
+         DC    B'000&MSKP&NLOGON&RST&DSN&AIX'           ACBMACF2         
+         DC    B'0&LSR&GSR&ICI&DFR&SIS&CFX.0'           ACBMACF3         
+         DC    B'00000000'                              ACBMACF4
+*
+* ACB Z390 EXTENSIONS
+* 
+         DC    A(0)                     ACBVCDT   ADDR OF VCDT TABLE
          AIF   (&DDNAME EQ '').DDDEF
          DC    CL8'&DDNAME'
-         AGO   .DDEND
+         AGO   .DDEND                   ACBDDNAM  DDNAME FOR VCDT.390
 .DDDEF   ANOP
          DC    CL8'&N'
 .DDEND   ANOP
-         ORG   &N+ACBDSNAM-IHAACB
-         DC    A(&DSNAME)
-&NV      SETA  N'&MACRF
-&TV      SETC  '0'
-.VLOOP   ANOP
-&IV      SETA  &IV+1
-         AIF   (&IV GT &NV).ELOOP
-&TV      SETC  '&TV+ACBMACRF_&MACRF(&IV)' 
-         AGO   .VLOOP
-.ELOOP   ANOP        
-         ORG   &N+ACBMACRF-IHAACB
-         DC    AL2(&TV)
-         ORG   &N+ACBLEN
+         DC    A(&DSNAME)               ACBDSNAM  DSNAME FOR VCDT.390
+         DC    X'00'                    ACBOFLAGS OPEN FLAGS
          ACBD
+         DCBD
          MEXIT
 .ERR1    MNOTE 12,'ACB ONLY AM=VSAM IS SUPPORTED'
          MEXIT

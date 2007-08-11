@@ -1,6 +1,7 @@
 rem run rtlink pgms and gen linklib\dif
 erase linklib\dif\*.* /q
 call RTCLEAN1 linklib *
+call rt6 linklib\REPRO    bal
 call RT4 linklib\FPCONVRT sysmac(mac+linklib)
 call RT4 linklib\FPCONMFC sysmac(mac+linklib)
 call RT4 linklib\CVTTOHEX 

@@ -1,0 +1,41 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 08/10/07 INITIAL CODING TO SUPPORT AREA, RECLEN INITIALLY                         
+.*********************************************************************
+&N       MODCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS        X
+               &AREA=,       ADDRESS OF RECORD AREA                    X
+               &RECLEN=      RECORD LENGTH                              
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'MODCB UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AIF   (&NPOS GT 0).POSLOOP
+         MEXIT
+.POSEND  ANOP  
+&N       DS    0H
+         AIF   (&AREA NE '').AREA
+         AIF   (&RECLEN NE '').RECLEN
+         MNOTE 12,'MODCB FIELD NOT SUPPORTED YET'
+         MEXIT
+.AREA    ANOP
+         AIF   ('&AREA'(1,1) EQ '(').REGAREA
+         MVC   &RPL+(RPLAREA-IHARPL)(4),=A(&AREA)
+         MEXIT
+.REGAREA ANOP
+         ST    &AREA(1),&RPL+(RPLAREA-IHARPL)
+         MEXIT
+.RECLEN  ANOP
+         AIF   ('&RECLEN'(1,1) EQ '(').REGLEN
+         MVC   &RPL+(RPLLREC-IHARPL)(4),=A(&RECLEN)
+         MEXIT
+.REGLEN  ANOP
+         ST    &RECLEN(1),&RPL+(REPLREC-IHARPL)
+         MEXIT
+         MEND

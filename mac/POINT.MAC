@@ -12,11 +12,13 @@
 .* 04/12/06 RPI244 SUPPORT TYPE=REL         
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 07/11/07 RPI 654 CORRECT TO SUPPORT DCBBLKSIF
+.* 08/07/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC
 .*********************************************************************
 &N       POINT &DCB,         DCB                                       X
                &REL,         RELATIVE BLOCK                            X
                &MF=I,        NOT SUPPORTED                             X
                &RBA=,        EXTENSION RELATIVE BYTE ADDR              X
+               &RPL=,        VSAM RPL ADDR FOR KSDS/RRDS/ESDS          X
                &TYPE=REL     REL (ABS NOT SUPPORTED)
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
@@ -26,6 +28,7 @@
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
          MEXIT
 .NPOK    ANOP
+         AIF   (&RPL NE '').VSAM
 .*
 .* SET FILE POINTER FOR READ/WRITE RANDOM ACCESS
 .*   DCB  - REQUIRED WITH DCBBLKSI DEFINED 
@@ -61,6 +64,16 @@
 .SVC     ANOP
          SVC   156 POINT R1=DCB R0=(64 BIT RBA)
          MEXIT
+.VSAM    ANOP
+         AIF   ('&RPL'(1,1) EQ '(').RPLREG
+         LA    1,&RPL
+         AGO   .VSVC
+.RPLREG  ANOP
+         LR    1,&RPL(1)
+.VSVC    ANOP
+         LA    0,RPLOPPNT
+         SVC   121 VSAM POINT R0=4 R1=A(RPL)
+         MEXIT         
 .ERR1    MNOTE 12,'POINT ONLY TYPE=REL SUPPORTED'
          MEXIT
 .ERR2    MNOTE 12,'POINT MF= NOT SUPPORTED'

@@ -12,7 +12,7 @@
 .* 10/20/05 RPI38 - check for register conflicts     
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 06/14/07 RPI 641 DEFAULT MF=I
-.* 07/22/07 RPI 644 ADD RPL VSAM SUPPORT VIA SVC 121 R0=1, R1=A(RPL)
+.* 07/22/07 RPI 644 ADD RPL VSAM SUPPORT VIA SVC 121 R0=2, R1=A(RPL)
 .*********************************************************************
 &N       PUT   &DCB,                                                   X
                &REC,                                                   X
@@ -54,8 +54,8 @@
 .RPLREG  ANOP
          LR    1,&RPL(1)
 .VSVC    ANOP
-         LA    0,1
-         SVC   121 VSAM PUT R0=1 R1=A(RPL)
+         LA    0,RPLOPPUT
+         SVC   121 VSAM PUT R0=2 R1=A(RPL)
          MEXIT         
 .ERR1    MNOTE 12,'PUT RECORD REG INVALID - &REC(1)'
          MEXIT

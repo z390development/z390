@@ -13,9 +13,11 @@
 *********************************************************************
 * Maintenance:
 * 02/22/07 RPI 553 code new TCPIO test server          
+* 07/23/07 RPI 664 correct fetch of EXEC PARM(...) address
+* 07/23/07 RPI 664 add CONN= option to TCPIO SEND              
 *********************************************************************
 TESTMSGS SUBENTRY
-         LR    R2,R1
+         L     R2,0(R1)  RPI 582 ADDR OF EXEC PARM
          WTO   'TESTMSGC TC[OP TEST SERVER'
          PACK  PWORK,2(4,R2)
          CVB   R4,PWORK        R4=PORT
@@ -37,7 +39,7 @@ OK       EQU   *
          WTO   MF=(E,WTORMSG)
          CLC   RMSGCMD+5(4),=C'STOP'
          BE    STOP
-         TCPIO SEND,PORT=(R4),MSG=RMSG,LMSG==A(L'RMSG)
+         TCPIO SEND,PORT=(R4),CONN=(R2),MSG=RMSG,LMSG==A(L'RMSG) RPI664
          LTR   R15,R15
          BNZ   ABORT
          B     LOOP

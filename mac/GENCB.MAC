@@ -1,0 +1,4 @@
+         MACRO
+&N       GENCB 
+         MNOTE 12,'GENCB NOT SUPPORTED YET'
+         MEND

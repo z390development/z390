@@ -12,24 +12,27 @@ erase %~dps0linklib\dif\*.* /q
 erase %~dps0demo\dif\*.* /q 
 rem erase %~dps0cics\dif\*.* /q 
 erase %~dps0mvs\dif\*.* /q 
-erase %~dps0vse\dif\*.* /q 
 erase %~dps0util\dif\*.* /q 
+erase %~dps0vsam\demo\dif\*.* /q 
+erase %~dps0vse\dif\*.* /q 
 erase %~dps0rt\dif\*.* /q 
 call DIRCLEAN
 call %~dps0RTLINK1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0RTDEMO1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem call %~dps0RTCICS1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0RTMVS1  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call %~dps0RTVSE1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0RTUTIL1  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0RTVSAM1  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call %~dps0RTVSE1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call %~dps0RTTEST1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy %~dps0linklib\dif\*.*  %~dps0rt\all
 copy %~dps0demo\dif\*.*     %~dps0rt\all
 rem copy %~dps0cics\dif\*.*     %~dps0rt\all
 copy %~dps0rt\dif\*.*       %~dps0rt\all
 copy %~dps0mvs\dif\*.*      %~dps0rt\all
-copy %~dps0vse\dif\*.*      %~dps0rt\all
 copy %~dps0util\dif\*.*     %~dps0rt\all
+copy %~dps0vse\dif\*.*      %~dps0rt\all
+copy %~dps0vsam\demo\dif\*.*      %~dps0rt\all
 copy %~dps0linklib\dif\DIFF.TXT  %~dps0rt\all\RTLINK.DIF
 copy %~dps0demo\dif\DIFF.TXT     %~dps0rt\all\RTDEMO.DIF
 rem copy %~dps0cics\dif\DIFF.TXT     %~dps0rt\all\RTCICS.DIF

@@ -18,6 +18,8 @@ call RTCLEAN1 soa\maclib
 call RTCLEAN1 util
 call RTCLEAN1 util\unref    
 call RTCLEAN1 util\superzap 
+call RTCLEAN1 vsam
+call RTCLEAN1 vsam\demo
 call RTCLEAN1 vse
 call RTCLEAN1 vse\mac
 call RTCLEAN1 vse\demo

@@ -12,6 +12,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/10/06 RPI244 IGNORE OR ISSUE UNSUPPORTED ERROR, SUPPORT (REG)
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/03/07 RPI 668 check return code for each svc and exit if nz
 .*********************************************************************
 &N       OPEN  &DCBLIST,   ((DCB,OPT),(DCB,OPT),,) OR DCB OR (REG)     X
                &MF=I,      NOT SUPPORTED                               X
@@ -71,9 +72,15 @@
 .UPDATE  ANOP
          LA    0,DCBOFLGS_RW   READ AND WRITE
 .SVC     ANOP
-         SVC   19 OPEN R0=TYPE,R1=DCB
+         SVC   19 OPEN R0=TYPE,R1=DCB/ACB
+         AIF   (&I+2 GT &NP).EXIT
+         LTR   15,15
+         BNZ   Z390_OPEN_EXIT&SYSNDX RPI668
          AGO   .LOOP
 .EXIT    ANOP
+         AIF   (&NP LE 2).EXIT1
+Z390_OPEN_EXIT&SYSNDX EQU *
+.EXIT1   ANOP
          MEXIT
 .ERR1    MNOTE 12,'OPEN MF= NOT SUPPORTED'
          MEND

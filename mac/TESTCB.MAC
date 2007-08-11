@@ -1,0 +1,32 @@
+         MACRO
+.*********************************************************************
+.* Copyright 2005 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 09/30/05                                                 *
+.*********************************************************************
+.* 08/10/07 INITIAL CODING TO TEST FDBK OR RECLEN FIELDS
+.*********************************************************************
+&N       TESTCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS       X
+               &FDBK=,        TEST FEEDBACK REASON CODE BYTE           X
+               &RECLEN=       TEST LENGTH OF RECORD                     
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS EQ 0).POSEND
+         MNOTE 12,'SHOWCB UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.POSEND  ANOP  
+&N       DS    0H
+         AIF   (&FDBK   NE '').FDBK
+         AIF   (&RECLEN NE '').RECLEN
+         MNOTE 12,'TESTCB FIELD NOT SUPPORTED YET'
+         MEXIT
+.FDBK    ANOP
+         CLI   &RPL+(RPLFEEDB-IHARPL)+3,&FDBK
+         MEXIT
+.RECLEN  ANOP
+         CLC   &RPL+(RPLLREC-IHARPL),=A(&RECLEN)
+         MEXIT
+         MEND

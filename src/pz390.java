@@ -204,7 +204,10 @@ public class pz390 {
 	 *          for nested switch to speed up primary switch byte code
 	 * 06/10/07 RPI 636 add estae_link to reset link stack for puercolate
 	 *          and share setup_estae_exit routine.
-	 * 06/21/07 RPI 643 fix CEFBR, CDFBR, CXFBR, CEGBR, CDGBR, CXGBR trace         
+	 * 06/21/07 RPI 643 fix CEFBR, CDFBR, CXFBR, CEGBR, CDGBR, CXGBR trace
+	 * 08/09/07 RPI 672 prevent trace_psw switch being left on during
+	 *          trace of undefined opcode causing EX target instruction
+	 *          to be left modified.         
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -451,8 +454,7 @@ public class pz390 {
 	int psw_pic_fp_div = 0x0cf;
 
 	int psw_pic_timeout = 0x422;
-
-	int psw_pic_gm_err = 0x804; // getmain request invalid
+    int psw_pic_gm_err = 0x804; // getmain request invalid
 
 	int psw_pic_link_err = 0x806; // link failed
 
@@ -10624,11 +10626,11 @@ public class pz390 {
 			opcode2 = mem_byte[psw_loc + opcode2] & opcode2_mask[opcode1];
 		}
 		get_ins_name(psw_loc); // set op_code_index for RPI 251
-		if (tz390.op_code_index < 0) {
-			trace_ins();
-			return;
+		int ins_type = -1;  // RPI 672
+		if (tz390.op_code_index >= 0) {
+			ins_type = tz390.op_type[tz390.op_code_index];
 		}
-		switch (tz390.op_type[tz390.op_code_index]) { // RPI 251
+		switch (ins_type) { // RPI 251
 		case 1: // "E" 8 PR oooo
 			ins_setup_e();
 			break;
@@ -10812,8 +10814,8 @@ public class pz390 {
 																	// ascii/EBCDIC
 		case 0x6d:
 			return "ESPIE R0=TYPE INT, R1=EXIT ADDR"; // set program check
-														// exit R0=types,
-														// R1=addr
+		case 0x79: // VSAM												// exit R0=types,
+			return "VSAM R0=(1=GET,2=PUT, 3=ERASE) R1=A(RPL)"; // RPI 668											// R1=addr
 		case 0x7c: // TCPIO
 			return "TCPIO R0=(1-4=O/C/S/R) R1=PORT R14=HOST/MSG R15=LMAX";
 		case 84: // GUAM GUI application window I/O

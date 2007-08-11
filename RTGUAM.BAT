@@ -11,6 +11,7 @@ call RT1 %~dps0guam\demo\DEMOGUI5  guam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0guam\demo\DEMOGUI6  guam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0guam\demo\HELLO1  guam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0guam\demo\HELLO2  guam %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0guam\demo\HELLO3  guam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0guam\test\AID     guam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0guam\test\TESTGP1 guam %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0guam\test\TESTGP2 guam %1 %2 %3 %4 %5 %6 %7 %8 %9

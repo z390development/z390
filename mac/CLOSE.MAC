@@ -12,6 +12,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/10/06 RPI244 support (reg) and ignore other keywords
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/03/07 RPI 668 check return code for each svc and exit if nz
 .*********************************************************************
 &N       CLOSE &DCBLIST, ((DCB,OPT),(DCB2,OPT2)..) OR (DCB) OR DCB     X
                &MODE=,   IGNORED AS IT WORKS IN EITHER MODE            X
@@ -56,9 +57,15 @@
          MNOTE 12,'CLOSE OPTION NOT SUPPORTED - &OPTION'
          MEXIT
 .SVC     ANOP
-         SVC   20 CLOSE R1=DCB
+         SVC   20 CLOSE R1=DCB/ACB
+         AIF   (&I+2 GT &NP).EXIT
+         LTR   15,15
+         BNZ   Z390_CLOSE_EXIT&SYSNDX RPI 668
          AGO   .LOOP
 .EXIT    ANOP
+         AIF   (&NP LE 2).EXIT1
+Z390_CLOSE_EXIT&SYSNDX EQU *
+.EXIT1   ANOP
          MEXIT
 .ERR1    MNOTE 12,'CLOSE MF= NOT SUPPORTED'
          MEND
