@@ -1,3 +1,4 @@
+import java.awt.GraphicsEnvironment;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -138,7 +139,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.07";  //dsh
+    String version    = "V1.3.07a";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -221,8 +222,10 @@ public  class  tz390 {
 	 */
 	int    max_mnote_warning = 4;       // mnote limit for warnings (rc=4 vs rc=16) RPI 415
     int    max_errors        = 100;     // ERR(100) max errors before abort
-    int    max_main_width = 800;
+    int    max_main_width  = 800;
     int    max_main_height = 600;
+    int    min_main_width  = 150;
+    int    min_main_height = 150;
 	int    max_line_len = 80;           // RPI 264
 	long   max_file_size = 50 << 20;    // max file output 
 	long   max_time_seconds  = 15;      // TIME(15)max elapsed time - override time(sec)
@@ -5048,4 +5051,17 @@ public void put_trace(String text){
     	            + ("000000" + ts_nano_digits).substring(ts_nano_digits.length())
     	            + " ";
    }
+    public void get_window_size(){
+    	/*
+    	 * set max_main_height and max_main_width
+    	 */
+        int start_bar_height = 36; //windows start bar
+        try {
+            max_main_height = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getHeight() 
+                            - start_bar_height;
+            max_main_width = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getWidth();
+        } catch (Exception e){
+
+        }
+    }
 }

@@ -282,7 +282,8 @@ public  class  mz390 {
      * 06/23/07 RPI 645 issue error for invalid substring subscripts
      * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
      * 07/05/07 RPI 647 allow comma between INDEX, FIND operands and fix trace 
-     * 07/20/07 MZ390 error 218 if * or . in substituted model label              
+     * 07/20/07 MZ390 error 218 if * or . in substituted model label 
+     * 08/14/07 support macro name symbolic substitution for inline proto-type             
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1596,6 +1597,7 @@ public  class  mz390 {
 		 */
 		load_proto_type = true;
 		load_proto_index = mac_line_index;
+		mac_op = replace_vars(mac_op,false,false); // RPI 673
 		if (load_type == load_mac_file){
 			mac_name_line_start[mac_name_index] = mac_line_index; // RPI 331 
 			if (!mac_op.equals(load_macro_name.toUpperCase())){ // RPI 519
@@ -5033,7 +5035,19 @@ public  class  mz390 {
 			setb_value = exp_set_compare;
 			exp_stk_setb[tot_exp_stk_var - 1] = setb_value;
 			if (tz390.opt_traceall){
-				tz390.put_trace("COMPARE '" + setc_value1 + "' "+ exp_prev_op  + " '" + setc_value2 + "' = " + exp_stk_setb[tot_exp_stk_var -1]);
+				switch (val_type1){ // RPI 682
+				case 1:
+					tz390.put_trace("COMPARE " + seta_value1 + " "+ exp_prev_op  + " " + seta_value2 + " = " + exp_stk_setb[tot_exp_stk_var -1]);
+					break;
+				case  2:
+					tz390.put_trace("COMPARE " + setb_value1 + " "+ exp_prev_op  + " " + setb_value2 + " = " + exp_stk_setb[tot_exp_stk_var -1]);
+					break;
+				case  3:
+					tz390.put_trace("COMPARE '" + setc_value1 + "' "+ exp_prev_op  + " '" + setc_value2 + "' = " + exp_stk_setb[tot_exp_stk_var -1]);
+					break;
+				default:
+					abort_case();
+				}
 			}
 		}
 	}

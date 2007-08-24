@@ -17,6 +17,7 @@
 .* 02/24/06 RPI217 CORRECT GRAPH,TEXT COMMAND TO SET TEXT LENGTH 
 .* 05/08/06 RPI308 FIX WINDOW,VIEW TO SWITCH WITH NO RESET OPTIONS
 .* 05/24/06 RPI227 ADD SCREEN,COLOR TO SET BACKGROUND AND TEXT COLOR              
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       GUAM  &MAJOR,&MINOR
          AIF   (&N EQ '').SKIPDS
@@ -319,9 +320,7 @@
         LA     1,&SYSLIST(3) R1=A(wave_file) DQ or null terminated
         AGO    .SVC                   
 .SOUND_PLAY_REG ANOP
-        AIF    (&SYSLIST(3,1) EQ '1' OR &SYSLIST(3,1) EQ 'R1').SVC     X
-               RPI163
-        LR     1,&SYSLIST(3,1)
+        ZOPTLR 1,&SYSLIST(3,1)
         AGO    .SVC
 .SYMBOLS ANOP
 GUI_WINDOW_TITLE       EQU X'0101' GUI WINDOW,TITLE,'text'

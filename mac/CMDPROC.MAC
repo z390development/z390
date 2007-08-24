@@ -12,6 +12,7 @@
 .* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
 .* 01/16/06 RPI 177 REQUIRE LENGTH PARM IF REC IS REGISTER FORM
 .* 02/20/07 RPI 551 ADD SUPPORT FOR IP=(REG)                       
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 .*
 .* CMDPROC PROVIDES INTERFACE TO SUPPORT UP TO 10 CONCURRENT 
@@ -53,8 +54,7 @@
          LA    1,&REC EBCDIC NULL TERM OR DQOUTES
          AGO   .SETID
 .WRITE_REC_REG  ANOP
-         AIF   (&REC(1) EQ '1' OR &REC(1) EQ 'R1').SETID RPI163
-         LR    1,&REC(1)
+         ZOPTLR 1,&REC(1)
          AGO   .SETID
 .READ    ANOP
          LA    0,3 READ CMD OUTPUT LINE
@@ -62,8 +62,7 @@
          LA    1,&REC
          AGO   .READ_LEN
 .READ_REC_REG ANOP
-         AIF   (&REC(1) EQ '1' OR &REC(1) EQ 'R1').READ_LEN  RPI163
-         LR    1,&REC(1)
+         ZOPTLR 1,&REC(1)
          AIF   (&LEN NE '').READ_LEN
          MNOTE 12,'CMDPROC READ MISSING LENGTH FOR REGISTER REC FORM'
          MEXIT
@@ -76,22 +75,21 @@
          LA    2,L'&REC
          AGO   .READ_WAIT
 .READ_LEN_REG  ANOP
-         AIF   (&LEN(1) EQ '2' OR &LEN(1) EQ 'R2').READ_WAIT  RPI163
-         LR    2,&LEN(1)
+         ZOPTLR 2,&LEN(1)
 .READ_WAIT ANOP
          AIF   ('&WAIT'(1,1) EQ '(').READ_WAIT_REG
          LA    3,&WAIT
          AGO   .SETID
 .READ_WAIT_REG  ANOP
-         AIF   (&WAIT(1) EQ '3' OR &WAIT(1) EQ 'R3').SETID RPI163
-         LR    3,&WAIT(1)
+         ZOPTLR 3,&WAIT(1)
 .SETID   ANOP                                              RPI 551
          AIF   (&ID EQ '0').SVC
          AIF   ('&ID'(1,1) EQ '(').IDREG
          ICM   0,2,=AL1(&ID)  
          AGO   .SVC
 .IDREG   ANOP
-         LR   15,&ID(1)
+         ZOPTLR 15,&ID(1)
+.SKIP15  ANOP
          SLL  15,8
          OR   0,15    
 .SVC     ANOP

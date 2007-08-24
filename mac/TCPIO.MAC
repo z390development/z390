@@ -20,6 +20,7 @@
 .*                  ADD CONN= CONNECTION ID FOR SEND OR RECEIVE
 .*                  (CONN ID IS RETURNED IN R2 BY SERVER RECEIVE)
 .* 03/11/07 RPI 573 ALLOW CONN=-1 IN ADDITION TO DEFAULT CONN=-1
+.* 08/21/07 RPI 670 ADD REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 .* SVC INPUT:
 .*   R0 OP CODE 1=OPEN SERVER ON CURRENT HOST TO ACCEPT CONNECTIONS
@@ -66,7 +67,7 @@
          LA    14,0          R14= 0 FOR LOCAL HOST
          AGO   .PORT
 .HOSTREG ANOP
-         LR    14,&HOST(1)   R14= TCPIO HOST IP NULL TERMINATED
+         ZOPTLR 14,&HOST(1)   R14= TCPIO HOST IP NULL TERMINATED
          AGO   .PORT         
 .CLOSE   ANOP
          LA    0,3           R0 = TCPIO OP CLOSE PORT
@@ -91,14 +92,14 @@
          BCTR  2,0
          AGO   .MSG 
 .CONNREG ANOP
-         LR    2,&CONN(1)
+         ZOPTLR 2,&CONN(1)
 .MSG     ANOP
          AIF   (&MSG EQ '').ERR2
          AIF   ('&MSG'(1,1) EQ '(').MSGREG
          LA    14,&MSG
          AGO   .LMSG
 .MSGREG  ANOP
-         LR    14,&MSG(1)
+         ZOPTLR 14,&MSG(1)
 .LMSG    ANOP
          AIF   (&LMSG EQ '').ERR4
          AIF   ('&LMSG'(1,1) EQ '(').LMSGREG
@@ -109,14 +110,14 @@
          L     15,=F'&LMSG'
          AGO   .PORT
 .LMSGREG ANOP
-         LR    15,&LMSG(1)
+         ZOPTLR 15,&LMSG(1)
 .PORT    ANOP
          AIF   (&PORT EQ '').ERR3
          AIF   ('&PORT'(1,1) EQ '(').PORTREG
          LA    1,&PORT
          AGO   .SVC
 .PORTREG ANOP
-         LR    1,&PORT(1)
+         ZOPTLR 1,&PORT(1)
 .SVC     ANOP
          SVC   X'7C' R0=OP(1-5) R1=PORT R14=HOST/MSG R15=LMSG
          MEXIT

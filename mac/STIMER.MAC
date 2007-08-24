@@ -10,6 +10,7 @@
 .* 04/11/06 RPI 244 UPDATE PARMS, SUPPORT REAL       
 .* 04/20/06 RPI 279 ADD REAL/TASK,EXIT AND DINTVL= SUPPORT
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 .*
 .*  STIMER WAIT,BINTVL=s  -  where S is RX type label of full 
@@ -97,8 +98,7 @@
         LA    0,&EXIT       REAL EXIT
         AGO   .RCHKTYPE
 .REGEXIT ANOP
-        AIF   (&EXIT(1) EQ '0' OR &EXIT(1) EQ 'R0').RCHKTYPE
-        LR    0,&EXIT(1)    REAL EXIT
+        ZOPTLR 0,&EXIT(1)    REAL EXIT
 .RCHKTYPE ANOP
         AIF   (&BINTVL EQ '').RCHK_DINTVL
         IIHF  0,X'02010000' REAL BINTVL

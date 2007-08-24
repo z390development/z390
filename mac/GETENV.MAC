@@ -7,6 +7,7 @@
 .* Date   - 07/12/07                                                 *
 .*********************************************************************
 .* 07/12/07 RPI 413 INITIAL CODING                                    
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 .*
 .* GETENV - GET ENVIRONMENT VARIABLE VALUE
@@ -31,7 +32,7 @@
          LA    1,&NAME
          AGO   .SVC
 .REGNAME ANOP
-         LR   1,&NAME(1)
+         ZOPTLR 1,&NAME(1)
 .SVC     ANOP
          LA   0,1
          SVC  40 EXTRACT GETENV R0=1, R1=A(NAME) OUTPUT R2=A(VALUE)

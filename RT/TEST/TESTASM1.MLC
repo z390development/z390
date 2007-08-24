@@ -28,6 +28,7 @@
 * 11/12/06 RPI 493 TEST OPSYN WITH NO OPERANDS AND IPK WITH NO COMMA       
 * 11/12/06 RPI 494 TEST DS BIT LENGTH SUPPORT FOR LAST FIELD               
 * 11/28/06 RPI 501 TEST LITERAL-ABS EXPRESSION                             
+* 08/22/07 RPI 673 TEST DROP WITH EXPRESSION 1+1 ETC.                      
 *********************************************************************
          START , RPI 230 TEST START CSECT
          USING *,R15
@@ -152,8 +153,17 @@ SKIP_IPK EQU   *
          TR    TRFIELD,=C'0123456789ABCDEF'-X'F0'
          CLC   TRFIELD,=C'0123456789ABCDEF'
          RT1   CCE
+* TEST DROP WITH EXPRESSION
+         USING *,15
+         USING X4,2
+         LA    1,X4
+         DROP  1+1
+         LA    1,X4
+         USING X4,2
+         DROP  1+1,15
          RT1   END
          LTORG
+X4       DS    X 
 MYCOM    COM   , RPI 230 TEST COM SECTION (NO LINKER SUPPORT YET)
 MYCOM1   DC    F'123'
 MYCOM2   DC    F'456'

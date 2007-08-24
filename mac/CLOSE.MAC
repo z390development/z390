@@ -13,6 +13,7 @@
 .* 04/10/06 RPI244 support (reg) and ignore other keywords
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/03/07 RPI 668 check return code for each svc and exit if nz
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       CLOSE &DCBLIST, ((DCB,OPT),(DCB2,OPT2)..) OR (DCB) OR DCB     X
                &MODE=,   IGNORED AS IT WORKS IN EITHER MODE            X
@@ -50,8 +51,7 @@
          LA    1,&DCB
          AGO   .CHKOPT
 .DCBREG  ANOP
-         AIF   (&DCB(1) EQ '1' OR &DCB(1) EQ 'R1').CHKOPT  RPI163
-         LR    1,&DCB(1)
+         ZOPTLR 1,&DCB(1)
 .CHKOPT  ANOP
          AIF   ('&OPTION' EQ '').SVC
          MNOTE 12,'CLOSE OPTION NOT SUPPORTED - &OPTION'

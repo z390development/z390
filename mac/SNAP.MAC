@@ -16,6 +16,7 @@
 .* 05/15/07 RPI 623 SUPPORT ID=(REG)                            
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 06/23/07 RPI 642 SUPPORT TEXT=(REG)
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 .* SNAP WILL GENERATE DUMP ON LOG FILE BASED ON THESE PARMS:
 .*  1. PDATA= (DEFAULT IS ALL)
@@ -105,24 +106,20 @@
          L     14,=A(&STORAGE(1))
          AGO   .ADDR2_CHK
 .ADDR1_REG ANOP
-         AIF   (&STORAGE(1,1) EQ '14' OR &STORAGE(1,1) EQ 'R14').ADDR2_X
-               CHK  RPI163
-         LR    14,&STORAGE(1,1)
+         ZOPTLR 14,&STORAGE(1,1)
 .ADDR2_CHK ANOP
          AIF   ('&STORAGE(2)'(1,1) EQ '(').ADDR2_REG
          L     15,=A(&STORAGE(2))
          AGO   .SETUP
 .ADDR2_REG ANOP
-         AIF   (&STORAGE(2,1) EQ 14).ERR1
-         AIF   (&STORAGE(2,1) EQ '15' OR &STORAGE(2,1) EQ 'R15').SETUP X
-               RPI163
-         LR    15,&STORAGE(2,1)
+         AIF   (&STORAGE(2,1) EQ '14' OR &STORAGE(2,1) EQ 'R14').ERR1
+         ZOPTLR 15,&STORAGE(2,1)
 .SETUP   ANOP
          AIF   ('&ID'(1,1) EQ '(').IDREG     RPI 623
          IILL  0,&ID                  RPI158
          AGO   .SETFLAGS
 .IDREG   ANOP
-         LR    0,&ID(1)                      RPI 623
+         ZOPTLR 0,&ID(1)                      RPI 623
 .SETFLAGS ANOP
          IILH  0,&FLAGS               RPI158
          AIF   (&TEXT EQ '').NOTEXT
@@ -134,7 +131,7 @@
          LA    1,=CL60'&TEMP'
          AGO   .SVC
 .REGTEXT ANOP
-         LR    1,&TEXT(1)  RPI 642 PTR TO TEXT WITH NULL TERM (MAX 60)
+         ZOPTLR 1,&TEXT(1) RPI 642 PTR TO TEXT WITH NULL TERM (MAX 60)
          AGO   .SVC
 .NOTEXT  ANOP
          LA    1,0

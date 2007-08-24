@@ -13,6 +13,7 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 07/11/07 RPI 654 CORRECT TO SUPPORT DCBBLKSIF
 .* 08/07/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       POINT &DCB,         DCB                                       X
                &REL,         RELATIVE BLOCK                            X
@@ -42,8 +43,7 @@
          LA    1,&DCB
          AGO   .CHKRBA
 .DCBREG  ANOP
-         AIF   (&DCB(1) EQ '1' OR &DCB(1) EQ 'R1').CHKRBA  RPI163
-         LR    1,&DCB(1)
+         ZOPTLR 1,&DCB(1)
 .CHKRBA  ANOP
          AIF   (&RBA EQ '').CHKREL
          AIF   ('&RBA'(1,1) EQ '(').RBAREG
@@ -69,7 +69,7 @@
          LA    1,&RPL
          AGO   .VSVC
 .RPLREG  ANOP
-         LR    1,&RPL(1)
+         ZOPTLR 1,&RPL(1)
 .VSVC    ANOP
          LA    0,RPLOPPNT
          SVC   121 VSAM POINT R0=4 R1=A(RPL)

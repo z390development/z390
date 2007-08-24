@@ -14,6 +14,7 @@
 .* 04/29/06 RPI305 CORRECT REGISTER FORM OF PARAM= (AIR TO AIF)
 .* 06/03/06 RPI321 CORRECT MNOTE MSG TO INCLUDE MACRO NAME            
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       ESPIE &OP,     SET/RESET                                      X
                &ADDR,   EXIT ADDRESS                                   X
@@ -78,8 +79,7 @@
         LA     15,&PARAM
         AGO    .ENDPARM
 .REGPARM ANOP
-        AIF    (&PARAM(1) EQ '0' OR &PARAM(1) EQ 'R0').ENDPARM
-        LR     15,&PARAM(1)
+        ZOPTLR 15,&PARAM(1)
         AGO    .ENDPARM
 .ZPARM  ANOP
         SR     15,15
@@ -141,8 +141,7 @@
         LA     1,&ADDR
         AGO    .SVC
 .AREG   ANOP
-        AIF    (&ADDR(1) EQ '1' OR &ADDR(1) EQ 'R1').SVC  RPI163
-        LR     1,&ADDR(1)
+        ZOPTLR 1,&ADDR(1)
         AGO    .SVC
 .RESET  ANOP
         SR     1,1

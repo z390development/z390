@@ -10815,9 +10815,9 @@ public class pz390 {
 		case 0x6d:
 			return "ESPIE R0=TYPE INT, R1=EXIT ADDR"; // set program check
 		case 0x79: // VSAM												// exit R0=types,
-			return "VSAM R0=(1=GET,2=PUT, 3=ERASE) R1=A(RPL)"; // RPI 668											// R1=addr
+			return "VSAM R0=(1=GET,2=PUT, 3=ERASE, 4-POINT) R1=A(RPL)"; // RPI 668											// R1=addr
 		case 0x7c: // TCPIO
-			return "TCPIO R0=(1-4=O/C/S/R) R1=PORT R14=HOST/MSG R15=LMAX";
+			return "TCPIO R0=(1-5=OS/OC/C/S/R) R1=PORT R14=HOST/MSG R15=LMAX";
 		case 84: // GUAM GUI application window I/O
 			return "GUAM R0+2=MAJOR, R0+3=MINOR, R1=ADDR";
 		case 93: // TGET/TPUT TN3290 data stream for GUAM GUI
@@ -10826,14 +10826,14 @@ public class pz390 {
 			int show = len * 2;
 			if (show > 16)
 				show = 16;
-			int addr = reg.getInt(r1) + psw_amode24;
+			int addr = reg.getInt(r1) & psw_amode24;  // RPI 671
 			if (flags >= 0x80) {
 				return "TGET" + " FLAGS=" + tz390.get_hex(flags, 2) + " LEN="
-						+ tz390.get_hex(reg.getShort(r0 + 2), 2) + " ADDR="
+						+ tz390.get_hex(reg.getShort(r0 + 2), 4) + " ADDR="  // RPI 671
 						+ tz390.get_hex(addr, 6);
 			} else {
 				return "TPUT" + " FLAGS=" + tz390.get_hex(flags, 2) + " LEN="
-						+ tz390.get_hex(reg.getShort(r0 + 2), 2) + " ADDR="
+						+ tz390.get_hex(reg.getShort(r0 + 2), 4) + " ADDR="  // RPI 671
 						+ tz390.get_hex(addr, 6);
 			}
 		case 151: // dcb get move R0=REC,R1=DCB

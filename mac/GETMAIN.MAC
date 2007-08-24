@@ -19,6 +19,7 @@
 .* 03/08/07 RPI 568 correct output regs r0=len, r1=addr comments            
 .* 03/12/07 RPI 575 correct to honor LOC=RES equivalent to LOC=BELOW        
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       GETMAIN &TYPE,     TYPE OF REQUEST R,RC,RU ELSE UNSUPP ERROR  X
                &A=,         ADDR TO STORE ADDR                         X
@@ -108,8 +109,7 @@
          L    1,=A(&LEN)  RPI 117
          AGO  .LOC
 .LVREG   ANOP
-         AIF  (&LV(1) EQ '1' OR &LV(1) EQ 'R1').LOC  RPI163
-         LR   1,&LV(1)
+         ZOPTLR 1,&LV(1)
 .LOC     ANOP
          AIF  (&LOC EQ '').OPTIONS
          AIF  (&LOC EQ 'ANY').SETABOVE

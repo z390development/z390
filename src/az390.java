@@ -271,7 +271,7 @@ public  class  az390 implements Runnable {
     * 07/20/07 RPI 662 add DFHRESP lits ITEMERR,QIDERR
     * 07/20/07 RPI 659 error 196 for invalid opcode char.
     * 07/30/07 RPI 667 issue error 197 for invalid binary value string
-    * 
+    * 08/22/07 RPI 673 support symbolic register on DROP
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -2541,14 +2541,15 @@ private void reduce_exp_rld(){
 		while (index2 < tot_exp_rld_sub){
 			if (exp_rld_add_esd[index1] == exp_rld_sub_esd[index2]){
 				tot_exp_rld_add--;
-				if (index1 < tot_exp_rld_add -1){
+				if (index1 < tot_exp_rld_add){ // RPI 673
 					exp_rld_add_esd[index1] = exp_rld_add_esd[tot_exp_rld_add];
-					index1--;
+				    index1--; // backup to restart on replacement
 				}
 				tot_exp_rld_sub--;
-				if (index2 < tot_exp_rld_sub - 1){
+				if (index2 < tot_exp_rld_sub){  // RPI 673
 					exp_rld_sub_esd[index2] = exp_rld_sub_esd[tot_exp_rld_sub];
 				}
+			    index2 = tot_exp_rld_sub;  // rpi 673 force restart
 			}
 			index2++;
 		}
@@ -2556,6 +2557,7 @@ private void reduce_exp_rld(){
 	}
 	if ((tot_exp_rld_add + tot_exp_rld_sub) == 0){
 		exp_type = sym_sdt;
+		exp_esd  = 0; // RPI 673
 		return;
 	} else if (tot_exp_rld_add == 1 && tot_exp_rld_sub == 0){
 		exp_type = sym_rel;
@@ -4929,7 +4931,7 @@ private void drop_using(){
    		      if (tz390.find_key_index('U',cur_use_lab) != -1){
 			      drop_cur_use_label();
    		      } else {
-   		    	  exp_text = cur_use_lab;
+   		    	  exp_text = bal_parms.substring(tz390.parm_match.start()); // RPI 673
    		    	  exp_index = 0;
    		    	  if (calc_abs_exp()){ 
    		    		  cur_use_reg = exp_val;

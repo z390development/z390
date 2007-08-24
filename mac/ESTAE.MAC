@@ -12,6 +12,7 @@
 .* 06/03/06 RPI 321 CORRECT MNOTE MSG TO INCLUDE MACRO NAME            
 .* 11/10/06 RPI 475 SUPPORT CT AS IF OV            
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N      ESTAE  &ADDR,          ADDRESS OF ABEND RECOVERY EXIT          X
                &TYPE,          OV=REPLACE EXIT, CT=ADD NEW EXIT        X
@@ -34,16 +35,14 @@
         LA     0,&ADDR
         AGO    .CHKP
 .AREG   ANOP
-        AIF    (&ADDR(1) EQ '0' OR &ADDR(1) EQ 'R0').CHKP        
-        LR     0,&ADDR(1)
+        ZOPTLR 0,&ADDR(1)
 .CHKP   ANOP
         AIF    (&PARAM EQ '').ZPARM
         AIF    ('&PARAM'(1,1) EQ '(').PREG
         LA     1,&PARAM
         AGO    .CHKTYPE
 .PREG   ANOP
-        AIF    (&PARAM(1) EQ '1' OR &PARAM(1) EQ 'R1').CHKTYPE
-        LR     1,&PARAM(1)
+        ZOPTLR 1,&PARAM(1)
         AGO    .CHKTYPE
 .ZPARM  ANOP
         SR     1,1

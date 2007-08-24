@@ -10,6 +10,7 @@
 .*          TO SUPPORT MULTIPLE BASES AND RENT OPTIONS
 .* 04/26/07 RPI 601 CHANGE BASE OFFSETS FROM 4095 TO STD 4096        
 .* 07/11/07 RPI 654 CLEANUP - ADD DROP, CHECK RENT+R13, RWA+RWALNG
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 .*             MACRO-ID. 'SUBENTRY'                                      
 .*             AUTHOR.   DON HIGGINS.                                    
@@ -176,8 +177,9 @@
          AGO   .GENBX                                                    
 .CHKR13  ANOP                                                            
          AIF   (&BASES(1) EQ 'R13').GENB13      RPI 654                         
-.GENBX   ANOP                                                            
-         LR    &BASES(1),13                            
+.GENBX   ANOP
+         ZOPTLR &BASES(1),13             
+.SKIPR13 ANOP               
          DROP  13                               RPI 654                  
          USING &NAME+8,&BASES(1)                                         
          AGO   .GEN                                                      

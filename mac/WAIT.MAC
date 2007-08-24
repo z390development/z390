@@ -15,6 +15,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/10/06 RPI244 IGNORE LONG=, LINKAGE=, RELATED=, SUPPORT NUM
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       WAIT  &NUM,       EVENT COUNT (DEFAULT 1)                     X
                &ECB=,      ECB ADDRESS                                 X
@@ -41,8 +42,7 @@
          LA    1,&ECB
          AGO   .SVC
 .ECBREG  ANOP
-         AIF   (&ECB(1) EQ '1' OR &ECB(1) EQ 'R1').SVC  RPI163
-         LR    1,&ECB(1)
+         ZOPTLR 1,&ECB(1)
          AGO   .SVC
 .CHKLIST ANOP
          AIF   (&ECBLIST EQ '').ERR2
@@ -56,8 +56,7 @@
          LA    1,&ECBLIST
          AGO   .SVC
 .REGLIST ANOP
-         AIF   (&ECBLIST EQ 1 OR &ECBLIST EQ 'R1').SVC
-         LR    1,&ECBLIST(1)
+         ZOPTLR 1,&ECBLIST(1)
 .SVC     ANOP
          SVC   1 (R0=0,R1=A(ECB) OR (R0=NUM,R1=ECBLIST)
          MEXIT

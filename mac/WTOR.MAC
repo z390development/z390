@@ -10,6 +10,7 @@
 .* 01/21/06 RPI188 REQUIRE LENGTH IF REPLY REG FORM  
 .* 04/12/06 RPI244 IGNORE UNUSED KW PARMS, MNOTE ERROR FOR TEXT=
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 .*
 .*  WTOR - write to operator with reply (routed to GUAM window if 
@@ -67,8 +68,7 @@ WTOR#&SYSNDX._EOT EQU *
          LA    0,&REPLY
          AGO   .CHKLEN
 .REPLY_REG ANOP
-         AIF   (&REPLY(1) EQ '0' OR &REPLY(1) EQ 'R0').CHKLEN  RPI163
-         LR    0,&REPLY(1)
+         ZOPTLR 0,&REPLY(1)
          AIF   (&REPLYLEN NE '').CHKLENREG
          MNOTE 12,'WTOR REPLY LENGTH REQUIRED'
          MEXIT
@@ -80,7 +80,7 @@ WTOR#&SYSNDX._EOT EQU *
          AGO   .CHKECB
 .LEN_REG ANOP
          AIF   (&REPLYLEN(1) EQ '0' OR &REPLYLEN(1) EQ 'R0').ERR3
-         LR    14,&REPLYLEN(1)
+         ZOPTLR 14,&REPLYLEN(1)
          AGO   .CHKECB
 .DEFLEN  ANOP
          LA    14,L'&REPLY
@@ -89,8 +89,7 @@ WTOR#&SYSNDX._EOT EQU *
          LA    15,&ECB
          AGO   .SVC
 .ECBREG  ANOP
-         AIF   (&ECB(1) EQ '15' OR &ECB(1) EQ 'R15').SVC  RPI163
-         LR    15,&ECB(1)
+         ZOPTLR 15,&ECB(1)
 .SVC     ANOP
          SVC   160 WTOR R1=MSG,R0=REPLY,R14=LEN,R15=ECB
          MEXIT

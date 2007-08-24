@@ -7,6 +7,7 @@
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
 .* 08/10/07 INITIAL CODING TO SUPPORT AREA, RECLEN INITIALLY                         
+.* 08/22/07 RPI 680 CORRECT REPLRECL
 .*********************************************************************
 &N       MODCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS        X
                &AREA=,       ADDRESS OF RECORD AREA                    X
@@ -36,6 +37,6 @@
          MVC   &RPL+(RPLLREC-IHARPL)(4),=A(&RECLEN)
          MEXIT
 .REGLEN  ANOP
-         ST    &RECLEN(1),&RPL+(REPLREC-IHARPL)
+         ST    &RECLEN(1),&RPL+(RPLLREC-IHARPL)
          MEXIT
          MEND

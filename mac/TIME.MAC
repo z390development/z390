@@ -13,6 +13,7 @@
 .* 01/16/06 RPI175 ADD CHECK FOR MISSING ADDR PARM
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 06/22/07 RPI 662 ADD SVC TS OPTION FOR 29 CHAR NANOSEC TIMESTAMP
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       TIME  &TYPE,               DEC,BIN,MIC,STCK,STCKE,NS,TS       X
                &ADDR,               STORE RESULT ADDR                  X
@@ -72,8 +73,7 @@
          LA    1,&ADDR
          AGO   .SVCSVC
 .SVCAREG ANOP
-         AIF   (&ADDR(1) EQ '1' OR &ADDR(1) EQ 'R1').SVCSVC  RPI163
-         LR    1,&ADDR(1)
+         ZOPTLR 1,&ADDR(1)
 .SVCSVC  ANOP
          SVC   11 TIME AND DATE
          MEXIT
@@ -129,8 +129,7 @@
          LA    1,&ADDR
          AGO   .SYSDATE
 .SYSAREG ANOP
-         AIF   (&ADDR(1) EQ '1' OR &ADDR(1) EQ 'R1').SYSDATE  RPI163
-         LR    1,&ADDR(1)
+         ZOPTLR 1,&ADDR(1)
 .SYSDATE ANOP
          AIF   (&TYPE EQ 'STCKE').SYSSVC NO DATE
          AIF   (&DATETYPE EQ 'YYYYDDD').SYSYYYYDDD

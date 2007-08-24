@@ -7,6 +7,7 @@
 .*********************************************************************
 .* 04/12/06 RPI244 ADD BLDL FOR SUPPORT OF DE= ON LINK, LOAD, XCTL
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 .* BLDL SEARCH SYS390 DIRECTORIES FOR MEMBER NAMES IN LIST AND 
 .* SET R15 RETURN CODE:
@@ -38,8 +39,7 @@
          LA    1,&LIST
          AGO   .SVC
 .REGLIST ANOP
-         AIF   (&LIST EQ '1' OR &LIST EQ 'R1').SVC
-         LR    1,&LIST(1)
+         ZOPTLR 1,&LIST(1)
 .SVC     ANOP
          SVC   X'12' BLDL R1=BLDL LIST LL(LL,NAME,TTR,KZC,USER),(...)
          MEXIT

@@ -1,0 +1,5 @@
+         MACRO
+&N       EXTRACT
+&N       DS    0H
+         MNOTE 12,'EXTRACT NOT SUPPORTED YET'
+         MEND

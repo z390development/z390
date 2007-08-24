@@ -12,6 +12,7 @@
 .* 04/12/06 RPI244 SUPPORT DE= SAME REGISTER
 .* 04/25/06 RPI290 ALWAYS GEN LABEL IF ANY, CHECK MF=
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 .* XCTL AND EXEC PGM VIA SVC 7 (DELETES CALLING PGM FROM MEMORY)
 .*   R0  = ADDR PGM NAME (8 BYTES SPACE FILLED)
@@ -61,8 +62,7 @@
          LA    0,&DE
          AGO   .DEADD
 .DEREG ANOP
-         AIF   (&DE(1) EQ '0' OR &DE(1) EQ 'R0').DEADD
-         LR    0,&DE(1)
+         ZOPTLR 0,&DE(1)
 .DEADD   ANOP
          AHI   0,2
          AIF   (&EP EQ '' AND &EPLOC EQ '').CHKDSN
@@ -77,9 +77,8 @@
          LA    0,&EPLOC
          AGO   .CHKDSN
 .EPLOCREG ANOP
-         AIF   (&EPLOC(1) EQ 1).EPERR
-         AIF   (&EPLOC(1) EQ '0' OR &EPLOC(1) EQ 'R0').CHKDSN  RPI163
-         LR    0,&EPLOC(1)
+         AIF   (&EPLOC(1) EQ '1' OR &EPLOC(1) EQ 'R1').EPERR
+         ZOPTLR 0,&EPLOC(1)
          AGO   .CHKDSN
 .EPERR   ANOP
          MNOTE 12,'XCTL INVALID EPLOC REG'
@@ -93,10 +92,8 @@
          LA    15,&DSNAME
          AGO   .CHKRST
 .DSNREG  ANOP
-         AIF   (&DSNAME(1) LE 1).DSNERR
-         AIF   (&DSNAME(1) EQ '15' OR &DSNAME(1) EQ 'R15').CHKRST      X
-               RPI163
-         LR    15,&DSNAME(1)
+         AIF   (&DSNAME(1) LE '1' OR &DSNAME(1) EQ 'R1').DSNERR
+         ZOPTLR 15,&DSNAME(1)
          AGO   .CHKRST
 .DSNERR  ANOP
          MNOTE 12,'XCTL INVALID DSNAME REG'
@@ -108,10 +105,8 @@
          OILH  15,X'8000' DD VS DSN
          AGO   .CHKRST
 .DDREG   ANOP
-         AIF   (&DDNAME(1) LE 1).DDERR
-         AIF   (&DDNAME(1) EQ '15' OR &DDNAME(1) EQ 'R15').SKPLR1      X 
-               RPI163
-         LR    15,&DDNAME(1)
+         AIF   (&DDNAME(1) LE '1' OR &DDNAME(1) EQ 'R1').DDERR
+         ZOPTLR 15,&DDNAME(1)                           
 .SKPLR1  ANOP
          OILH  15,X'8000' DD VS DSN
          AGO   .CHKRST

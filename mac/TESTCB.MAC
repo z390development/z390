@@ -7,6 +7,7 @@
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
 .* 08/10/07 INITIAL CODING TO TEST FDBK OR RECLEN FIELDS
+.* 08/19/07 RPI 680 SHOWCB TO TESTCB                       
 .*********************************************************************
 &N       TESTCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS       X
                &FDBK=,        TEST FEEDBACK REASON CODE BYTE           X
@@ -14,7 +15,7 @@
 &NPOS    SETA  N'&SYSLIST
 .POSLOOP ANOP
          AIF   (&NPOS EQ 0).POSEND
-         MNOTE 12,'SHOWCB UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+         MNOTE 12,'TESTCB UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
 &NPOS    SETA  &NPOS-1
          AGO   .POSLOOP
 .POSEND  ANOP  

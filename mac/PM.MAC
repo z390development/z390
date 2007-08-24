@@ -7,6 +7,7 @@
 .* Date   - 07/11/07                                                 *
 .*********************************************************************
 .* 07/11/07 RPI 654 ADD PERFORM, PM, PENTRY, PEXIT WITH RENT SUPPORT       
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       PM    &PENTRY                                                
          GBLC  &PSTKREG,&PBASREG,&PBASLAB                               
@@ -30,8 +31,9 @@
          AIF   (&PBASESW EQ 1).L1                                       
          BAL   14,&PENTRY                                               
          AGO   .L2                                                      
-.L1      ANOP                                                           
-         LR    15,&PBASREG                                              
+.L1      ANOP
+         ZOPTLR 15,&PBASREG            
+.SKIP15  ANOP                                  
          A     15,=A(&PENTRY-PBASLAB)                                   
          BALR  14,15                                                    
 .L2      ANOP                                                           
@@ -41,8 +43,9 @@
          AIF   (&PBASESW EQ 1).L4                                       
          BAL   14,&PENTRY                                               
          AGO   .L5                                                      
-.L4      ANOP                                                           
-         LR    15,&PBASREG                                              
+.L4      ANOP
+         ZOPTLR 15,&PBASREG             
+.SKIP15B ANOP                                 
          A     15,=A(&PENTRY-(&PBASLAB))                                
          BALR  14,15                                                    
 .L5      ANOP                                                           

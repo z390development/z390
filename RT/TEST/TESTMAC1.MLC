@@ -16,6 +16,7 @@
 * 08/30/06 RPI 422 test padded setc compare with high low chars      
 * 09/21/06 RPI 447 test N'&PARM(&VAR)      
 * 06/10/07 RPI 633 test macro label parameters
+* 08/22/07 RPI 673 test &var in macro inline prototype name field
 *********************************************************************
 TESTMAC1 SUBENTRY
          WTO   'TESTMAC1 TEST SUBSTRINGS, '''' (DOUBLE QUOTES), AND &&'
@@ -141,4 +142,11 @@ A        TESTL
 1(2)     TESTL
 'A'      TESTL
 TESTPC1  TESTL
-         END
+* TEST VAR NAME FIELD IN INLINE MACRO PROTOTYPE
+&NAME SETC  'TESTN'
+      MACRO
+&N    &NAME &TEXT
+&N    MNOTE &TEXT
+      MEND
+A     TESTN 'TEST NAME SUBSTITUTION'
+      END

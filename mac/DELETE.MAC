@@ -11,6 +11,7 @@
 .* 12/06/05 RPI118 - use SR vs LA, reg chk, drop BALR/USING, fix VL
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       DELETE &DE=,      BLDL ENTRY                                  X
                &EP=,      PROGRAM NAME                                 X
@@ -38,8 +39,7 @@
          LA    0,&DE
          AGO   .DEADD
 .DEREG ANOP
-         AIF   (&DE(1) EQ '0' OR &DE(1) EQ 'R0').DEADD
-         LR    0,&DE(1)
+         ZOPTLR 0,&DE(1)
 .DEADD   ANOP
          AHI   0,2
          AIF   (&EP EQ '' AND &EPLOC EQ '').CHKDSN
@@ -57,7 +57,7 @@
          MNOTE 12,'DELETE DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
          MEXIT
 .EPLOCREG ANOP
-         AIF   (&EPLOC(1) EQ '0' OR &EPLOC(1) EQ 'R0').CHKDSN  RPI163
+         AIF   (&EPLOC(1) EQ 0).CHKDSN  RPI163
          LR    0,&EPLOC(1)
 .CHKDSN  ANOP
          AIF   (&DSNAME EQ '').CHKDD
@@ -69,7 +69,7 @@
          AGO   .SVC
 .DSNREG  ANOP
          AIF   (&DSNAME(1) EQ 0).DSNERR
-         AIF   (&DSNAME(1) EQ '15' OR &DSNAME(1) EQ 'R15').SVC  RPI163
+         AIF   (&DSNAME(1) EQ 15).SVC  RPI163
          LR    15,&DSNAME(1)
          AGO   .SVC
 .DSNERR  ANOP
@@ -83,7 +83,7 @@
          AGO   .SVC
 .DDREG   ANOP
          AIF   (&DSNAME(1) EQ 0).DDERR
-         AIF   (&DDNAME(1) EQ '15' OR &DDNAME(1) EQ 'R15').SKP1 RPI163
+         AIF   (&DDNAME(1) EQ 15).SKP1 RPI163
          LR    15,&DDNAME(1)
 .SKP1    ANOP
          OILH  15,X'8000' DD VS DSN

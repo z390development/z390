@@ -14,6 +14,7 @@
 .* 04/12/06 RPI163 ISSUE MNOTE ERROR FOR TYPE=P
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 06/22/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC 221 R0=1 R1=A(RPL)
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       GET   &DCB,    DCB                                            X
                &REC,    RECORD                                         X
@@ -34,17 +35,15 @@
          LA    1,&DCB
          AGO   .CHKREC
 .DCBREG  ANOP
-         AIF   (&DCB(1) EQ '1' OR &DCB(1) EQ 'R1').CHKREC  RPI163
-         LR    1,&DCB(1)
+         ZOPTLR 1,&DCB(1)
 .CHKREC  ANOP
          AIF   (&REC EQ '').RECDEF
          AIF   ('&REC'(1,1) EQ '(').RECREG
          LA    0,&REC
          AGO   .SVC
 .RECREG  ANOP
-         AIF   (&REC(1) EQ 1 OR &REC(1) EQ 'R1').ERR2
-         AIF   (&REC(1) EQ '0' OR &REC(1) EQ 'R0').SVC  RPI163
-         LR    0,&REC(1)
+         AIF   (&REC(1) EQ '1' OR &REC(1) EQ 'R1').ERR2
+         ZOPTLR 0,&REC(1)
          AGO   .SVC
 .RECDEF  ANOP
          L     0,DCBREC-IHADCB(1)
@@ -56,7 +55,7 @@
          LA    1,&RPL
          AGO   .VSVC
 .RPLREG  ANOP
-         LR    1,&RPL(1)
+         ZOPTLR 1,&RPL(1)
 .VSVC    ANOP
          LA    0,RPLOPGET
          SVC   121 VSAM GET R0=1 R1=A(RPL)

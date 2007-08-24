@@ -16,6 +16,7 @@
 .* 03/28/06 RPI266 CORRECT MISSING .DSNERR LABEL (WAS .DSHERR)
 .* 04/11/06 RPI244 SUPPORT DE=, UNSUPPORTED ERRET=                         
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 .* LOAD AND EXEC PGM VIA SVC 6
 .*   R0  = ADDR PGM NAME (8 BYTES SPACE FILLED)
@@ -67,8 +68,7 @@
          LA    0,&DE
          AGO   .DEADD
 .DEREG ANOP
-         AIF   (&DE(1) EQ '0' OR &DE(1) EQ 'R0').DEADD
-         LR    0,&DE(1)
+         ZOPTLR 0,&DE(1)
 .DEADD   ANOP
          AHI   0,2
          AIF   (&EP EQ '' AND &EPLOC EQ '').CHKDSN
@@ -82,9 +82,8 @@
          LA    0,&EPLOC
          AGO   .CHKDSN
 .EPLOCREG ANOP
-         AIF   (&EPLOC(1) EQ 1).EPERR
-         AIF   (&EPLOC(1) EQ '0' OR &EPLOC(1) EQ 'R0').CHKDSN  RPI163
-         LR    0,&EPLOC(1)
+         AIF   (&EPLOC(1) EQ '1' OR &EPLOC(1) EQ 'R1').EPERR
+         ZOPTLR 0,&EPLOC(1)
          AGO   .CHKDSN
 .EPERR   ANOP
          MNOTE 12,'LINK INVALID EPLOC REG'
@@ -99,9 +98,8 @@
          LA    15,&DSNAME
          AGO   .SVC
 .DSNREG  ANOP
-         AIF   (&DSNAME(1) LE 1).DSNERR
-         AIF   (&DSNAME(1) EQ '15' OR &DSNAME(1) EQ 'R15').SVC  RPI163
-         LR    15,&DSNAME(1)
+         AIF   (&DSNAME(1) EQ '0' OR &DSNAME(1) EQ 'R0').DSNERR
+         ZOPTLR 15,&DSNAME(1)
          AGO   .SVC
 .DSNERR  ANOP
          MNOTE 12,'LINK INVALID DSNAME REG'
@@ -113,9 +111,8 @@
          OILH  15,X'8000' DD VS DSN
          AGO   .SVC
 .DDREG   ANOP
-         AIF   (&DDNAME(1) LE 1).DDERR
-         AIF   (&DDNAME(1) EQ '15' OR &DDNAME(1) EQ 'R15').SKP1 RPI163
-         LR    15,&DDNAME(1)
+         AIF   (&DDNAME(1) EQ '0' OR &DDNAME(1) EQ 'R0').DDERR
+         ZOPTLR 15,&DDNAME(1)
 .SKP1    ANOP
          OILH  15,X'8000' DD VS DSN
          AGO   .SVC

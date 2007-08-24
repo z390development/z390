@@ -8,7 +8,8 @@
 .*********************************************************************
 .* XLATE TRANSLATE AREA TO EBCDIC OR ASCII
 .*********************************************************************
-.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
+.* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       XLATE &AREA,&LEN,&TO=
          AIF   (&N EQ '').SKIPDS
@@ -22,15 +23,13 @@
          LA    0,&AREA
          AGO   .CHKLEN
 .AREAREG ANOP
-         AIF   (&AREA(1) EQ '0' OR &AREA(1) EQ 'R0').CHKLEN  RPI163
-         LR    0,&AREA(1)
+         ZOPTLR 0,&AREA(1)
 .CHKLEN  ANOP
          AIF   ('&LEN'(1,1) EQ '(').LENREG
          LA    1,&LEN
          AGO   .CHKTO
 .LENREG  ANOP
-         AIF   (&LEN(1) EQ '1' OR &LEN(1) EQ 'R1').CHKTO  RPI163
-         LR    1,&LEN(1)
+         ZOPTLR 1,&LEN(1)
 .CHKTO   ANOP
          AIF   (&TO EQ 'E').SVC
          AIF   (&TO NE 'A').ERR

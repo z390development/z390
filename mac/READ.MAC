@@ -13,6 +13,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 01/11/06 RPI170 ALLOW 'S' AS FIFTH PARM  
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       READ  &DECB,                                                  X
                &TYPE,                                                  X
@@ -50,8 +51,7 @@
          ORG   &DECB+DECBL
          AGO   .CHKDCB
 .DECBREG ANOP
-         AIF   (&DECB(1) EQ '1' OR &DECB(1) EQ 'R1').CHKDCB  RPI163
-         LR    1,&DECB(1)
+         ZOPTLR 1,&DECB(1)
 .CHKDCB  ANOP
          AIF   (&DCB EQ '').CHKAREA
          AIF   ('&DCB'(1,1) EQ '(').DCBREG

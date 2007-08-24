@@ -10,6 +10,7 @@
 .* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
 .* 04/12/06 RPI244 IGNORE DSORG=                  
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       CHECK &DECB,                                                  X
                &DSORG=ALL,                                             X
@@ -33,8 +34,7 @@
          LA    1,&DECB
          AGO   .SVC
 .DECBREG ANOP
-         AIF   (&DECB(1) EQ '1' OR &DECB(1) EQ 'R1').SVC  RPI163
-         LR    1,&DECB(1)
+         ZOPTLR 1,&DECB(1)
 .SVC     ANOP
          SVC   155 CHECK R1=DECB
          MEXIT

@@ -15,6 +15,7 @@
 .* 07/22/06 RPI 381 - support register substitution of parametrs 
 .* 11/10/06 RPI 473 - correct macro bugs and update RT\TEST\TESTCAL1
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N      CALL   &NAME,                                                  X
                &PARMS,                                                 X
@@ -58,8 +59,7 @@
          L      15,=V(&NAME)
          AGO    .BALR
 .REG     ANOP
-         AIF    (&NAME(1) EQ '15' OR &NAME(1) EQ 'R15').BALR  RPI163
-         LR     15,&NAME(1)
+         ZOPTLR 15,&NAME(1)
 .BALR    ANOP
          &LINKINST 14,15
          MEXIT
@@ -83,8 +83,7 @@
          LA     1,&MF(2)
          AGO    .EXEC2
 .REGPARM ANOP
-         AIF    (&MF(2,1) EQ 1 OR &MF(2,1) EQ 'R1').EXEC2
-         LR     1,&MF(2,1)
+         ZOPTLR 1,&MF(2,1)
 .EXEC2   ANOP
 &NPARMS  SETA   N'&PARMS
          AIF    (&NPARMS EQ 0).ENDPARM

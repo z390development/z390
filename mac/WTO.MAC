@@ -17,6 +17,7 @@
 .* 04/10/06 RPI244 IGNORE KEYWORDS EXCEPT TEXT= UNSUPPORTED ERROR  
 .* 04/25/06 RPI290 ALWAYS GEN LABEL IF ANY, CHECK MF=                
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       WTO   &MSG,         'TEXT' OR TEXT= REQUIRED                  X
                &TEXT=,       MULTIPLE QUOTED TEXT ELSE ERROR           X
@@ -59,8 +60,7 @@ WTO#&SYSNDX._EOT EQU *
          LA    1,&MF(2)
          AGO   .SVC
 .MFEREG  ANOP
-         AIF   (&MF(2) EQ '1' OR &MF(2) EQ 'R1').SVC  RPI163
-         LR    1,&MF(2)
+         ZOPTLR 1,&MF(2)
 .SVC     ANOP
          SVC   35
          MEXIT

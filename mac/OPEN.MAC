@@ -13,6 +13,7 @@
 .* 04/10/06 RPI244 IGNORE OR ISSUE UNSUPPORTED ERROR, SUPPORT (REG)
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/03/07 RPI 668 check return code for each svc and exit if nz
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       OPEN  &DCBLIST,   ((DCB,OPT),(DCB,OPT),,) OR DCB OR (REG)     X
                &MF=I,      NOT SUPPORTED                               X
@@ -54,8 +55,7 @@
          LA    1,&DCB
          AGO   .CHKOPT
 .DCBREG  ANOP
-         AIF   (&DCB(1) EQ '1' OR &DCB(1) EQ 'R1').CHKOPT  RPI163
-         LR    1,&DCB(1)
+         ZOPTLR 1,&DCB(1)
 .CHKOPT  ANOP
          AIF   ('&OPTION' EQ '').INPUT
          AIF   ('&OPTION' EQ 'INPUT').INPUT

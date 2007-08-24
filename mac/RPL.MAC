@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 07/28/07 RPI 644 INITIAL CODING OF RPL OPTIONS        
 .* 08/04/07 RPI 644 UPDATE RPLFEEDB TO 4 BYTE CODES      
+.* 08/19/07 RPI 680 CORRECT LOOP GE TO GT, ADD LCLB &LRD 
 .*********************************************************************
 .*
 .* RPL 28 VSAM OPTCD OPTIONS - MODELED ON MVS 3.8 IDAVSOPT
@@ -64,14 +65,14 @@
 .*
          LCLB  &KEY,&ADR,&CNV,&SEQ,&DIR,&SKP     6
          LCLB  &SYN,&ASY,&NUP,&UPD,&NSP,&KEQ     6
-         LCLB  &KGE,&FKS,&GEN,&MVE,&LOC          5
+         LCLB  &KGE,&FKS,&GEN,&MVE,&LOC,&LRD     5
          LCLB  &WAITX,&NWAITX                    2
          LCLB  &ARD,&ASY,&BWD,&CR,&CRE           5
          LCLB  &FWD,&NRI,&RBA,&XRBA              4
 &I       SETA  0
 .OPTLOOP ANOP
 &I       SETA  &I+1
-         AIF   (&I GE N'&OPTCD).CHK_OPT                 
+         AIF   (&I GT N'&OPTCD).CHK_OPT  RPI 680        
 &ADR     SETB  ('&OPTCD(&I)' EQ 'ADR' OR &ADR)
 &ARD     SETB  ('&OPTCD(&I)' EQ 'ARD' OR &ARD)               
 &ASY     SETB  ('&OPTCD(&I)' EQ 'ASY' OR &ASY)

@@ -142,7 +142,9 @@ public  class  sz390 implements Runnable {
     * 07/19/07 RPI 662 remove redundant EZ390I prefix on trace   
     * 08/02/07 RPI 668 check GET/PUT/READ/WRITE for record area 0C5 
     * 08/04/07 RPI 668 set DCBOFLGS from open options, use VCDT path for ACB's 
-    *          and issue synad error if DCBLRECLF == 0       
+    *          and issue synad error if DCBLRECLF == 0 
+    * 08/15/07 RPI 671 dump TGET/TPUT msgs on trace for option tracet 
+    * 08/16/07 RPI 677 only check DCB PUT current record lenght for 0C5              
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -2843,8 +2845,9 @@ private void svc_put_move(){
 				if (cur_dcb_lrecl_f == 0){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f;
 				}
-                check_mem_area(cur_dcb_area,cur_dcb_lrecl_f); // RPI 668
+                check_mem_area(cur_dcb_area,4); // RPI 668  RPI 677
                 cur_rec_len = (pz390.mem.getInt(cur_dcb_area) >> 16)-4;
+                check_mem_area(cur_dcb_area,cur_rec_len+4); // RPI 668 RPI 677
                 if (cur_rec_len < 1 || cur_rec_len > (cur_dcb_lrecl_f - 4)){
                 	dcb_synad_error(48,"variable record too long - " + cur_rec_len);
                 	return;
@@ -3444,7 +3447,7 @@ public void run() {
 			&& tcp_server_thread[port_index] == Thread.currentThread()){
 			while (tcp_server_open[port_index] // RPI 622
 				   && tcp_alloc_conn(port_index)){
-				int conn_index = tcp_server_conn_index[port_index]; // get allocaed conn 
+				int conn_index = tcp_server_conn_index[port_index]; // get allocated conn 
 				try {
 					// this conn thread will wait here for next connection
 					if (tz390.opt_tracet){
@@ -3634,17 +3637,24 @@ private void svc_tget_tput(){
 	String wto_msg = null;
 	if (tz390.opt_guam){
 		if ((tpg_flags & tpg_op_mask) == tpg_op_tput){
+			// TPUT
             gz390.tput_len = buff_len;
             if (gz390.tput_len > tput_buff.limit()){
             	abort_error(59,"GUAM GUI tput length too long");
             }
 			gz390.tput_buff.position(0);
 			gz390.tput_buff.put(pz390.mem_byte,buff_addr,buff_len);
+			if (tz390.opt_tracet){ // RPI 671
+				tz390.put_trace("");
+				dump_mem(buff_addr,buff_len);
+				tz390.put_trace("");
+			}
 			gz390.guam_tput();
 			if (tz390.z390_abort){
 				abort_error(59,"GUAM GUI tput external abort");
 			}
 		} else {
+			// TGET
 			gz390.tget_len = buff_len;
 			gz390.guam_tget();
 			if (tz390.z390_abort){
@@ -3653,6 +3663,12 @@ private void svc_tget_tput(){
 			pz390.mem.position(buff_addr);
             // move tget_len actual and set R1= bytes returned
 			pz390.mem.put(gz390.tget_byte,0,gz390.tget_len);
+			if (tz390.opt_tracet){  // RPI 671
+				tz390.put_trace("");
+				tz390.put_trace(" TGET bytes received = " + tz390.get_hex(gz390.tget_len,4));
+				dump_mem(buff_addr,gz390.tget_len);
+				tz390.put_trace("");
+			}
 		    pz390.reg.putInt(pz390.r1,gz390.tget_len); 
 		}
 		pz390.reg.putInt(pz390.r15,gz390.tpg_rc); // RPI 221 set retrun code
@@ -6157,7 +6173,8 @@ private void tcpio_receive_server_port(){
 			} else if (tcpio_wait){
 				// no msg ready from specific connection
                 // so wait for post from connection and try again
-                try {
+                lock.lock(); // RPI 630 fix missing lock 
+				try {
                		lock_condition.await();
                 } catch(Exception e){
                 	if (tz390.opt_traceall){

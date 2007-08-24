@@ -7,6 +7,7 @@
 .* Date   - 08/07/07                                                 *
 .*********************************************************************
 .* 08/07/07 RPI 644 INITIAL CODING FOR VSAM ERASE FOLLOWING GET UPD
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       ERASE &RPL=,   VSAM REQUEST PARAMETER LIST                    X
                &MF=I    NOT SUPPORTED                                   
@@ -23,7 +24,7 @@
          LA    1,&RPL
          AGO   .VSVC
 .RPLREG  ANOP
-         LR    1,&RPL(1)
+         ZOPTLR 1,&RPL(1)
 .VSVC    ANOP
          LA    0,RPLOPERA
          SVC   121 VSAM ERASE R0=3 R1=A(RPL)

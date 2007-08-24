@@ -10,6 +10,7 @@
 .* 10/27/05 RPI56 - correct OIHH to OILH to set dump bit       
 .* 04/10/06 RPI 244 - update parm support                        
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       ABEND &COMP,      COMPLETION CODE NNN OR (REG)                X
                &DUMP,      DUMP ALLOCATED PROGRAM STORAGE              X
@@ -37,7 +38,7 @@
          LA   1,&COMP
          AGO  .CHKDUMP
 .REGCOMP ANOP
-         LR   1,&COMP(1)
+         ZOPTLR 1,&COMP(1)
 .CHKDUMP ANOP
          AIF  (&DUMP EQ '').SKIPDUMP
          OILH 1,X'8000'

@@ -3,7 +3,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -122,6 +121,9 @@ public  class  z390 extends JApplet
      * 01/30/07 RPI 532 correct Doc path and cmd.pl path and separator
      * 04/26/07 RPI 603 correct up/down scrolling
      * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
+     * 08/16/07 RPI 630 prevent PF10 causing file menu popup
+     *          use get_window_size() for all GUI's
+     * 08/23/07 RPI 685 adjust GUI height for status line         
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -234,10 +236,7 @@ public  class  z390 extends JApplet
         JFrame main_frame    = null;
         int main_width  = 625;
         int main_height = 400;
-        int main_width_min  = 150;
-        int main_height_min = 150;
         int main_border = 2;
-        int start_bar_height = 36; //windows start bar
         int main_loc_x = 50;
         int main_loc_y = 50;
         int scrollbar_width = 15;
@@ -251,9 +250,11 @@ public  class  z390 extends JApplet
     int lines_per_page = 0;   //set by update_main_view()
 	int log_height = 0;       //set by update_main_view()
 	int log_width  = 0;      //set by update_main_view()
-	int command_height = 0;
-	int command_columns  = 75;
-	int status_height  = 0;
+   	int command_columns  = 75; // RPI 685
+	 int command_height = font_size + font_space 
+           + main_border;
+     int status_height  = font_size + font_space
+           + main_border;
 	int applet_status_height = 0;
 	boolean labels_visible = true;
 	int labels_min_width = main_width;
@@ -1740,12 +1741,7 @@ public  class  z390 extends JApplet
         */ 
             main_frame = new JFrame();
             title_update();
-            try {
-                tz390.max_main_height = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getHeight() - start_bar_height;
-                tz390.max_main_width = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getWidth();
-            } catch (Exception e){
-
-            }
+            tz390.get_window_size(); // RPI 630
             main_frame.setSize(main_width,main_height);
             main_frame.setLocation(main_loc_x,main_loc_y);
             main_frame.addComponentListener(this);
@@ -2541,9 +2537,12 @@ public  class  z390 extends JApplet
           	   if (keyCode == KeyEvent.VK_F3){   // F3 exit
         	   	  process_cancel_key();
         	   }
+          	   if (keyCode == KeyEvent.VK_F10){   // RPI 630 consume to prevent Windows popup of file menu
+         	   	  e.consume();
+         	   }
            } else {  // not action key
           	   if (keyCode == KeyEvent.VK_CANCEL){
-          	   	  process_cancel_key();
+          	   	  process_cancel_key();;
           	   }
            }
        }
@@ -2735,9 +2734,9 @@ public  class  z390 extends JApplet
         			x = 0;
         		} else {
         			if (x + main_width > tz390.max_main_width){
-        				if  (x + main_width_min > tz390.max_main_width){
-        					x = tz390.max_main_width - main_width_min;
-        					main_width = main_width_min;
+        				if  (x + tz390.min_main_width > tz390.max_main_width){
+        					x = tz390.max_main_width - tz390.min_main_width;
+        					main_width = tz390.min_main_width;
         				} else {
         				    main_width = tz390.max_main_width - x;
         				}
@@ -2747,9 +2746,9 @@ public  class  z390 extends JApplet
         			y = 0;
         		} else {
         			if (y + main_height > tz390.max_main_height){
-                        if  (y + main_height_min > tz390.max_main_height){
-                        	y = tz390.max_main_height - main_height_min;
-                        	main_height = main_height_min;
+                        if  (y + tz390.min_main_height > tz390.max_main_height){
+                        	y = tz390.max_main_height - tz390.min_main_height;
+                        	main_height = tz390.min_main_height;
                         } else {
         				    main_height = tz390.max_main_height - y;
                         }
@@ -2777,15 +2776,15 @@ public  class  z390 extends JApplet
 		    	main_loc_y = (int) main_frame.getLocation().getY();
 	    		x = get_dec_int(cmd_parm1);
 	    		y = get_dec_int(cmd_parm2);
-	    		if  (x < main_width_min){
-	    			x = main_width_min;
+	    		if  (x < tz390.min_main_width){
+	    			x = tz390.min_main_width;
 	    		} else {
 	    			if (x > tz390.max_main_width - main_loc_x){
 	    				x = tz390.max_main_width - main_loc_x;
 	    			}
 	    		}
-	    		if  (y < main_height_min){
-	    			y = main_height_min;
+	    		if  (y < tz390.min_main_height){
+	    			y = tz390.min_main_height;
 	    		} else {
 	    			if (y > tz390.max_main_height - main_loc_y){
 	    				y = tz390.max_main_height - main_loc_y;
@@ -3351,7 +3350,6 @@ public  class  z390 extends JApplet
             } else {
             	label_width = 0;
             }
-    		command_columns = (log_width - label_width)/(z390_cmd_line.getPreferredSize().width/z390_cmd_line.getColumns()) - 1;
             z390_cmd_line.setColumns(command_columns);
             main_panel.add(z390_cmd_line);
             if  (status_visible){

@@ -3,7 +3,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -112,7 +111,14 @@ public  class  gz390
 	 * 09/21/06 RPI 460 wait for ez390 to close after PF3 abort
 	 * 12/01/06 RPI 509 use Monospace font for Windows and Linux
 	 * 04/02/07 RPI 	572 strip high bits from EBCDIC attribute bytes 
-	 * 04/17/07 RPI 592 if tget len = 1 just return AID   
+	 * 04/17/07 RPI 592 if tget len = 1 just return AID  
+	 * 08/13/07 RPI 630 - 1. Change TPUT to reset scn_addr to last IC
+	 *          2.  Adjust screen font pixel size and location to prevent clipping underline etc.
+	 *          3.  Delete char at cursor and shift input feild left for del key
+	 *          4.  ConsumePF10-PF22 KeyPressed events to prevent Windows file menu popup
+	 * 08/23/07 RPI 685 adjust GUI height for status line 
+	 * 08/24/07 RPI 671 return all modified bytes when no 
+	 *          fields on screen and add TRACET support       
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -267,13 +273,15 @@ public  class  gz390
     byte tn_eua_cmd = 0x12; // erase unprotected to addr (sba)
     byte tn_sa_cmd  = 0x28; // eds set attribute
     byte tn_sfe_cmd = 0x29; // eds start field
+    boolean tn_delete_request = false;  // RPI 630
     boolean tn_cursor = false;
     boolean tn_cursor_alt = false;
+    char tn_cursor_sym = '_';      // alternate cursor char with underline
+    char tn_cursor_sym_alt = '?';  // alternate cursor underline with ?
     int tn_cursor_scn_addr = 0;
     int tn_cursor_count = 1;
-    int tn_cursor_wait_int = 2;
+    int tn_cursor_wait_int = 1;
     char scn_space = ' ';
-    char tn_cursor_sym = '_';
     boolean tn_full_screen = false;
     byte tn_null  = 0;
     byte tn_field = 1;
@@ -361,20 +369,14 @@ public  class  gz390
     boolean refresh_request = false;
  	boolean main_status  = true;
     boolean main_view_changed = false;
-    JFrame main_frame    = null;
-    int main_width  = 650;  
-    int main_height = 550;  
-    int main_width_max = 800;
-    int main_height_max = 600;
-    int main_width_min  = 150;
-    int main_height_min = 150;
+    JFrame main_frame    = null; 
     int main_border = 2;
     int start_bar_height = 36; //windows start bar
     int main_loc_x = 20;
     int main_loc_y = 20;
     int scrollbar_width = 15;
     int font_space = 10;
-	int font_size = 12;       //see FONT command
+	int font_size = 14;  //see FONT command RPI 630 was 12
     Font char_font = null;
 	int title_height = 0;
 	int menu_height = 0;
@@ -384,10 +386,10 @@ public  class  gz390
 	int log_height = 0;       //set by update_main_view()
 	int log_width  = 0;      //set by update_main_view()
 	int command_height = 0;
-	int command_columns  = 75;
+	int command_columns  = 75;  // RPI 685
 	int status_height  = 0;
 	boolean labels_visible = true;
-	int labels_min_width = main_width;
+	int labels_min_width = 0;  
 	int labels_max_font  = font_size;
 	int label_width    = 0;
     JPanel main_panel    = null;
@@ -974,32 +976,27 @@ public  class  gz390
    private void init_tn3270_screen(){
        /*
         * init first time or if rows spec. RPI 308
-  		*/
-  		tn_scn = new gz390_screen();
-  		tn_scn.set_screen(max_rows,max_cols,
+  		*/	   
+		tn_scn = new gz390_screen();
+		tn_scn.tz390 = tz390; // RPI 671
+		set_char_font();
+		tn_scn.set_screen(max_rows,max_cols,
   				char_font,bg_color,text_color);
-  		tn_clear_screen();
-       tn_update_scn(0);
+        tn_clear_screen();
    }
    private void init_gz390(String[] args){
        /*
         * Init graphical user interface
         */ 
-            main_frame = new JFrame();
+        	init_tn3270_screen();
+ 			main_frame = new JFrame();
             title_update();
-            try {
-                main_height_max = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getHeight() - start_bar_height;
-                main_width_max = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDisplayMode().getWidth();
-            } catch (Exception e){
-
-            }
-            main_frame.setSize(main_width,main_height);
+            main_frame.setSize(tn_scn.main_width,tn_scn.main_height);
             main_frame.setLocation(main_loc_x,main_loc_y);
             main_frame.addComponentListener(this);
             build_main_panel();
             set_char_font();
-            monitor_startup();
-            main_frame.setVisible(true);
+            monitor_startup();        
             gz390_cmd_line.requestFocus();
         }
         private void build_main_panel(){ 
@@ -1055,8 +1052,8 @@ public  class  gz390
     	title_height = 56;
   	    menu_height = font_size + font_space;
  	    log_char_height = font_size + font_space;
-		log_height = main_height - title_height - menu_height - tool_height - command_height - status_height;
-		log_width  = main_width - scrollbar_width - 4 * main_border;
+		log_height = tn_scn.main_height - title_height - menu_height - tool_height - command_height - status_height;
+		log_width  = tn_scn.main_width - scrollbar_width - 4 * main_border;
 	    lines_per_page = log_height / log_char_height;
    	    command_height = font_size + font_space 
    	                   + main_border;
@@ -1433,7 +1430,7 @@ public  class  gz390
            int keyCode = e.getKeyCode();
            int keyMods = e.getModifiers();
            if  (e.isActionKey()){
-        	   if (tn_kb_lock){
+        	   if (tn_kb_lock){ 
         		   if (keyCode == KeyEvent.VK_UP){
            	   			get_prev_cmd();
            	   			return;
@@ -1518,6 +1515,9 @@ public  class  gz390
               	   		                    - KeyEvent.VK_F10;
               	   		  tn_attn = true;
                	   	  }
+            	   	  if (keyCode == KeyEvent.VK_F10){
+            	   		  e.consume(); // RPI 630 consume Windows annoying file menu popup for PF10
+            	   	  }
             	   	  return;
           	     }
           	     return;
@@ -1564,6 +1564,9 @@ public  class  gz390
               	   		                    - KeyEvent.VK_F10;
               	   		  tn_attn = true;
                	   	  }
+            	   	  if (keyCode == KeyEvent.VK_F10){
+            	   		  e.consume(); // RPI 630 consume Windows annoying file menu popup for PF10
+            	   	  }
             	   	  return;
           	   }
        		   if (keyCode >= KeyEvent.VK_F13
@@ -1585,16 +1588,12 @@ public  class  gz390
             	   	  return;
           	   }
            } else {  // not action key
-          	   if (keyCode == KeyEvent.VK_CANCEL){
-          	   	  process_cancel_key();
-          	   }
         	   if (keyCode == KeyEvent.VK_ENTER){
         		   if (!tn_kb_lock){
         			   tn_attn = true;
         			   tn_aid = tn_enter_code;
         		   }
-        	   }
-        	   if (keyCode == KeyEvent.VK_BACK_SPACE){
+        	   } else if (keyCode == KeyEvent.VK_BACK_SPACE){
         		   if (!tn_kb_lock){
                        if (scn_addr > 0){
                     	   scn_addr--;
@@ -1603,7 +1602,11 @@ public  class  gz390
                        }
                        tn_update_cursor();
         		   }
-        	   }
+        	   } else if (keyCode == KeyEvent.VK_DELETE){ // RPI 630
+		    	   tn_delete_request = true;
+		       } else if (keyCode == KeyEvent.VK_CANCEL){
+           	   	  process_cancel_key();
+           	   }
            }
      	   if (keyCode == KeyEvent.VK_CLEAR
      			   || (keyCode == KeyEvent.VK_C && keyMods == KeyEvent.CTRL_MASK)){
@@ -1646,6 +1649,7 @@ public  class  gz390
       	   if (!tn_kb_lock 
       			   && e.getKeyChar() != KeyEvent.VK_ENTER
       			   && e.getKeyChar() != KeyEvent.VK_BACK_SPACE
+      			   && e.getKeyChar() != KeyEvent.VK_DELETE // RPI 630
       			   && (e.getModifiers() & KeyEvent.CTRL_MASK) == 0){
              if (guam_tot_key < max_keys){        	   
         	   if (tn_input_field()){
@@ -1822,36 +1826,64 @@ public  class  gz390
 	            return null;
 	        }
 	    }
-	    private synchronized void check_main_view(){
+	    private void check_main_view(){ 
 	    /*
-	     * if main window size has changed due to
+	     * 1.  If screen not ready, exit
+	     * 2.  If delete key pending, do it now
+	     * 3.  If cursor active, update it now
+	     * 4.  If main window size has changed due to
 	     * user streching without window event handler
 	     * triggering update, do it now.
 	     */
-    		if (tn_cursor){ 
+	    	if (!tn_scn.scn_ready){
+	    		return; 
+	    	}
+	    	if (tn_delete_request){
+            	tn_delete_request = false;
+            	if (tn_input_field() && tn_cursor){
+		    		   int save_scn_addr = scn_addr;
+		    		   scn_addr++;
+		    		   while (scn_addr < max_addr 
+		    				   && scn_addr > save_scn_addr
+		    				   && tn_input_field()){
+		    			   scn_char[scn_addr-1] = scn_char[scn_addr];
+		    			   tn_update_scn(scn_addr-1);
+		    			   scn_addr++;
+		    		   }
+		    		   scn_char[scn_addr-1]= ' ';
+	    			   tn_update_scn(scn_addr-1);
+		    		   scn_addr = save_scn_addr;
+		    		   refresh_request = true;
+		    	   } else {
+		    		   sound_alarm();
+		    		   status_line.setText(status_line_view + " Alarm - invalid key in protected field");
+		    	   }
+            }
+	    	if (tn_scn.scn_ready && tn_cursor){ 
     			tn_cursor_count--;
     			if (tn_cursor_count <= 0){
     				tn_cursor_count = tn_cursor_wait_int;
-    				char save_char = scn_char[tn_cursor_scn_addr];
+                    char save_cursor_char = scn_char[tn_cursor_scn_addr];
     				if (!tn_cursor_alt){
     					tn_cursor_alt = true;
-    					if (save_char != tn_cursor_sym){
-    						scn_char[tn_cursor_scn_addr] = tn_cursor_sym;
+    					if (save_cursor_char == tn_cursor_sym){
+    						scn_char[tn_cursor_scn_addr] = tn_cursor_sym_alt;
     					} else {
-    						scn_char[tn_cursor_scn_addr] = '?'; // blink ? for underline
+    						scn_char[tn_cursor_scn_addr] = tn_cursor_sym;
     					}
     				} else {
     					tn_cursor_alt = false;
     				}
     				tn_update_scn(tn_cursor_scn_addr);
-    				scn_char[tn_cursor_scn_addr] = save_char;
+    				scn_char[tn_cursor_scn_addr] = save_cursor_char;
     			}
     		}
-	    	if (refresh_request 
-	    		|| main_width != main_frame.getSize().getWidth()
-	    		|| main_height != main_frame.getSize().getHeight()){
-	    		main_width = (int) main_frame.getSize().getWidth();
-	    		main_height = (int) main_frame.getSize().getHeight();
+	    	if (refresh_request  
+	    		|| tn_scn.main_width != main_frame.getSize().getWidth()
+	    		|| tn_scn.main_height != main_frame.getSize().getHeight()
+	    		){
+	    		tn_scn.main_width = (int) main_frame.getSize().getWidth();
+	    		tn_scn.main_height = (int) main_frame.getSize().getHeight();
 	    		update_main_view();
 	            gz390_cmd_line.requestFocus();
             	refresh_request = false;
@@ -1860,9 +1892,7 @@ public  class  gz390
         private void update_main_view(){
         /*
          * update main_view and command line size 
-         * following any of the following changes:
-         *   1.  Change in window size
-         *   2.  Change in font size
+         * following change in window size
          */	
         	if (refresh_wait){
         		refresh_request = true;
@@ -1870,17 +1900,12 @@ public  class  gz390
         	}
  	        refresh_wait = true;
  	        if (guam_view == guam_view_mcs){
- 	        	log_height = main_height - title_height - menu_height - command_height - status_height;
- 	        	log_width  = main_width - scrollbar_width - 4 * main_border;
- 	        	main_panel.setSize(main_width - 4 * main_border,main_height - title_height - menu_height - main_border);
- 	        	lines_per_page = log_height / log_char_height;
- 	        	main_view.setPreferredSize(   	        		
- 	        			new Dimension(log_width, log_height)
-       				);
+                set_main_view_mcs();
+ 	        } else if (guam_view == guam_view_screen){
+ 	        	set_main_view_screen();
  	        } else {
- 	        	reset_main_view_size();
+ 	        	set_main_view_graph();
  	        }
- 	        update_main_view();
        		main_frame.setVisible(true);
         }
         private void set_view_mcs(){
@@ -1917,9 +1942,10 @@ public  class  gz390
     		max_rows = rows;
     		max_addr = rows * cols;
         }
-       	if (tn_scn == null || rows != 0){ 
-           init_tn3270_screen();
-       	}
+        if (tn_scn == null || rows != 0){ 
+            init_tn3270_screen();
+            tn_clear_screen();  // rpi 671
+         }
         set_main_view(guam_view_screen);
        	guam_view = guam_view_screen;
 	    opt_mcs    = false;
@@ -1982,42 +2008,55 @@ public  class  gz390
               	  }});
         	} else {
         		if (guam_view == guam_view_screen){
-            		main_view = new JScrollPane(tn_scn);
+            	    set_main_view_screen();
             	} else {
             		main_view = new JScrollPane(graph_grid);
-            	}
-        		reset_main_view_size(); 
+            		set_main_view_graph();
+            	} 
         	}
             rebuild_main_panel();
         }
-        private void reset_main_view_size(){
+        private void set_main_view_mcs(){
         	/*
-        	 * reset main_view preferred size
-        	 * for screen or graph and
-        	 * reset main frame size to fit
+        	 * set guam dialog window to show mcs log
         	 */
-        	if (guam_view == guam_view_screen){
-        		main_height = tn_scn.scn_height + title_height + menu_height + command_height + status_height;
-        		main_width  = tn_scn.scn_width + scrollbar_width + 4 * main_border;
-            	main_view.setPreferredSize(   	        		
-               			new Dimension(tn_scn.scn_width,tn_scn.scn_height)
-        			);
-        	} else if (guam_view == guam_view_graph 
-        		&& graph_scn != null){ // RPI 408
-        		main_height = graph_scn.scn_height + title_height + menu_height + command_height + status_height;
-        		main_width  = graph_scn.scn_width + scrollbar_width + 4 * main_border;
-            	main_view.setPreferredSize(   	        		
-               			new Dimension(graph_scn.scn_width,graph_scn.scn_height)
-        		);
-        	}
-        	if (main_height > tz390.max_main_height){
-	        	main_height = tz390.max_main_height;
-	        }
-	        if (main_width > tz390.max_main_width){
-	        	main_width = tz390.max_main_width;
-	        }
-	        main_frame.setSize(main_width,main_height);
-	        main_panel.setSize(main_width - 4 * main_border,main_height - title_height - menu_height - main_border);
+	        	log_height = tn_scn.main_height - title_height - menu_height - command_height - status_height;
+ 	        	log_width  = tn_scn.main_width - scrollbar_width - 4 * main_border;
+ 	        	main_panel.setSize(tn_scn.main_width - 4 * main_border,tn_scn.main_height - title_height - menu_height - main_border);
+ 	        	lines_per_page = log_height / log_char_height;
+ 	        	main_view.setPreferredSize(   	        		
+ 	        			new Dimension(log_width, log_height)
+       				);
+        }
+        private void set_main_view_screen(){
+        	/*
+        	 * adjust font to show full TN3270 screen
+        	 * in current window space.
+        	 */
+        	// try main panel at max size
+        	tn_scn.main_panel_width  = tn_scn.main_width - 4 * main_border - 5;  
+	        tn_scn.main_panel_height = tn_scn.main_height - title_height - menu_height - main_border; 
+        	tn_scn.resize_screen(); 
+        	// adjust main panel to actual screen size
+	        tn_scn.main_panel_width  = tn_scn.scn_width; 
+	        tn_scn.main_panel_height = tn_scn.scn_height;  
+	        tn_scn.scn_panel.setSize(tn_scn.main_panel_width,tn_scn.main_panel_height);
+	        main_view = tn_scn.scn_panel;
+	        main_view.setSize(tn_scn.main_panel_width,tn_scn.main_panel_height);
+	        main_view.setPreferredSize(   	        		
+ 	        			new Dimension(tn_scn.main_panel_width, tn_scn.main_panel_height) 
+       				);
+        	tn_repaint_screen();
+        }
+        private void set_main_view_graph(){
+        	/*
+        	 * set guam dialog window to show 
+        	 * TN3270 screen using current
+        	 * main window size (max require
+        	 * scrolling to see entrie screen)
+        	 */
+	        main_frame.setSize(tn_scn.main_width,tn_scn.main_height);
+	        main_panel.setSize(tn_scn.main_width - 4 * main_border,tn_scn.main_height - title_height - menu_height - main_border);
         }
         private void rebuild_main_panel(){
         /*
@@ -2031,7 +2070,7 @@ public  class  gz390
         	/* 
         	 * determine if labels will fit
         	 */
-            if  (main_width >= labels_min_width
+            if  (tn_scn.main_width >= labels_min_width
                  && font_size <= labels_max_font){
                  labels_visible = true;
             } else {
@@ -2046,7 +2085,9 @@ public  class  gz390
             } else {
             	label_width = 0;
             }
-    		command_columns = (log_width - label_width)/(gz390_cmd_line.getPreferredSize().width/gz390_cmd_line.getColumns()) - 1;
+            gz390_cmd_line.setFont(tn_scn.scn_font); // RPI 686 
+            status_line.setFont(tn_scn.scn_font);    // RPI 686
+    		command_columns = tn_scn.scn_cols - 10;   // RPI 686         
             gz390_cmd_line.setColumns(command_columns);
             // disable focus subsystem to process tab key
             gz390_cmd_line.setFocusTraversalKeysEnabled(false); 
@@ -2082,6 +2123,7 @@ public  class  gz390
      //dsh                          + c.getSize().width
      //dsh                          + ", "
      //dsh                          + c.getSize().height);
+            				   check_main_view(); 
                                update_main_view();
             }
 
@@ -2133,6 +2175,7 @@ private void tn_tput_buffer(){
 	/*
 	 * update screen from tn3270 data stream buffer
 	 */
+	tn_scn.stop_scn_updates();
 	tput_index = 0;
 	switch (tpg_type){
 	case 0x01: // asis and noedit  RPI 219
@@ -2207,6 +2250,8 @@ private void tn_tput_buffer(){
 			tn_next_field_addr();
 		}
 	}
+	scn_addr = tn_cursor_scn_addr; // RPI 630 reset to last insert cursor
+	tn_scn.start_scn_updates(); 
 }
 private void tn_get_tput_byte(){
 	/*
@@ -2363,6 +2408,9 @@ private void tn_modify_field(){
 	if (fld_input_tot > 0){
 		scn_attr[cur_fld_addr] = scn_attr[cur_fld_addr] 
 		                     | tn_mdt_mask;
+	} else {
+		scn_attr[scn_addr] = scn_attr[scn_addr] 
+		     		                     | tn_mdt_mask; // RPI 671
 	}
 }
 private void tn_update_cursor(){
@@ -2378,23 +2426,24 @@ private void tn_update_cursor(){
 		return;
 	}
 	if (scn_addr != tn_cursor_scn_addr){ // put char back at prev cursor position
+		tn_cursor_alt = false; // RPI 630
 		tn_update_scn(tn_cursor_scn_addr);
 	}
 	tn_cursor_scn_addr = scn_addr;
     refresh_request = true;
 }
-private void tn_update_scn(int sba){
+private synchronized void tn_update_scn(int sba){
 	/*
 	 * update screen character with field
 	 * attributes and extended attributes
 	 */
-	tn_scn.scn_layout   = new TextLayout("" + scn_char[scn_addr],char_font, tn_scn.scn_context);
+	tn_scn.scn_layout   = new TextLayout("" + scn_char[sba],tn_scn.scn_font, tn_scn.scn_context);  // RPI 630 scn_addr > sba
     int row = sba / max_cols;
     int col = sba - row * max_cols;
     int x   = col * tn_scn.scn_char_width;
     int y   = (row + 1) * tn_scn.scn_char_height;
-    if (scn_color[scn_addr] != 0){
-    	int tn_color_index = scn_color[scn_addr] & 0xf;
+    if (scn_color[sba] != 0){  // RPI 630 scn_addr > sba
+    	int tn_color_index = scn_color[sba] & 0xf;  // RPI 630 scn_addr > sba
     	if (tn_color_index > tn_color.length){
     		tn_color_index = 0;
     	}
@@ -2402,13 +2451,13 @@ private void tn_update_scn(int sba){
     } else {
     	text_color = tn_scn.scn_text_color;
     }
-    if (scn_hl[scn_addr] != 0 || (scn_attr[scn_addr] & fld_attr_hl) != 0){
+    if (scn_hl[sba] != 0 || (scn_attr[sba] & fld_attr_hl) != 0){  // RPI 630 scn_addr > sba
     	tn_scn.scn_grid.setColor(text_color.brighter());
     } else {
     	tn_scn.scn_grid.setColor(text_color);
     }
-    tn_scn.scn_grid.clearRect(x,y-tn_scn.scn_char_height,tn_scn.scn_char_width,tn_scn.scn_char_height);
-    tn_scn.scn_grid.drawChars(scn_char,sba,1,x,y);
+   	tn_scn.scn_grid.clearRect(x-1,y-tn_scn.scn_char_height,tn_scn.scn_char_width+1,tn_scn.scn_char_height);
+   	tn_scn.scn_grid.drawChars(scn_char,sba,1,x,y-tn_scn.scn_char_base);  // RPI 630 
 	tn_scn.scn_repaint = true;
 }
 private void tn_get_screen_input(){
@@ -2439,8 +2488,30 @@ private void tn_get_screen_input(){
 }
 private void tn_unformatted_input(){
 	/*
-	 * return non-null data bytes
+	 * return all modified bytes on screen
+	 * when no field formatting.  RPI 671
 	 */
+	tget_index = 3;             
+	int sba = 0;
+    while (sba < max_addr){
+    	if ((scn_attr[sba] & tn_mdt_mask) == tn_mdt_mask){
+    		if (tget_index < tget_len){
+            	if (tz390.opt_ascii){
+            		tget_byte[tget_index] = (byte)scn_char[sba];
+            	} else {
+            		tget_byte[tget_index] = tz390.ascii_to_ebcdic[scn_char[sba] & 0xff];
+            	}
+            	tget_index++;
+            } else {
+            	abort_error(113,"tget input buffer overrun");
+            	return;
+            }
+    	}
+        sba++;
+	}
+	if (tget_index < tget_len){
+		tget_len = tget_index; // set actual length
+	}
 }
 private void tn_formatted_input(){
 	/*
@@ -2495,7 +2566,7 @@ private void tn_formatted_input(){
 private void tn_write_control_char(){
 	/*
 	 * execute wcc from next byte in buffer
-     * WWC 0xC3 = clear screen, reset KB and MDT's
+     * WCC 0xC3 = clear screen, reset KB and MDT's
      * bit 0   - even bit count 
      * bit 1   - reset screen
      * bit 2-3 - printout format
@@ -2538,7 +2609,7 @@ private void sound_alarm(){
 	 */
 	System.out.println(tz390.alarm_bell); // RPI 220 use ascii bell x'07'
 }
-private void tn_clear_screen(){
+private synchronized void tn_clear_screen(){ 
 	/*
 	 * clear screen and reset fields
 	 */
@@ -2548,7 +2619,7 @@ private void tn_clear_screen(){
 		fld_tot = 0;
 		fld_input_tot = 0;
 	    scn_addr = 0;
-	    tn_cursor = false;
+	    tn_cursor = false; 
         tn_scn.scn_grid.clearRect(0,0,tn_scn.scn_width,tn_scn.scn_height);
 }
 private void tn_reset_mdt(){
@@ -2946,31 +3017,31 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
            		if  (x < 0){
            			x = 0;
            		} else {
-           			if (x + main_width > main_width_max){
-           				if  (x + main_width_min > main_width_max){
-           					x = main_width_max - main_width_min;
-           					main_width = main_width_min;
+           			if (x + tn_scn.main_width > tz390.max_main_width){
+           				if  (x + tz390.min_main_width > tz390.max_main_width){
+           					x = tz390.max_main_width - tz390.min_main_width;
+           					tn_scn.main_width = tz390.min_main_width;
            				} else {
-           				    main_width = main_width_max - x;
+           				    tn_scn.main_width = tz390.max_main_width - x;
            				}
            			}
            		}
            		if  (y < 0){
            			y = 0;
            		} else {
-           			if (y + main_height > main_height_max){
-                           if  (y + main_height_min > main_height_max){
-                           	y = main_height_max - main_height_min;
-                           	main_height = main_height_min;
+           			if (y + tn_scn.main_height > tz390.max_main_height){
+                           if  (y + tz390.min_main_height > tz390.max_main_height){
+                           	y = tz390.max_main_height - tz390.min_main_height;
+                           	tn_scn.main_height = tz390.min_main_height;
                            } else {
-           				    main_height = main_height_max - y;
+           				    tn_scn.main_height = tz390.max_main_height - y;
                            }
            			}
            		}
            		main_loc_x = x;
            		main_loc_y = y;
            		main_frame.setLocation(main_loc_x,main_loc_y);
-          		main_frame.setSize(main_width,main_height);
+          		main_frame.setSize(tn_scn.main_width,tn_scn.main_height);
               	refresh_request = true;
            }
    	    public void guam_window_size(int x,int y){
@@ -2979,23 +3050,23 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
    	     */	
    		    	main_loc_x = (int) main_frame.getLocation().getX();
    		    	main_loc_y = (int) main_frame.getLocation().getY();
-   	    		if  (x < main_width_min){
-   	    			x = main_width_min;
+   	    		if  (x < tz390.min_main_width){
+   	    			x = tz390.min_main_width;
    	    		} else {
-   	    			if (x > main_width_max - main_loc_x){
-   	    				x = main_width_max - main_loc_x;
+   	    			if (x > tz390.max_main_width - main_loc_x){
+   	    				x = tz390.max_main_width - main_loc_x;
    	    			}
    	    		}
-   	    		if  (y < main_height_min){
-   	    			y = main_height_min;
+   	    		if  (y < tz390.min_main_height){
+   	    			y = tz390.min_main_height;
    	    		} else {
-   	    			if (y > main_height_max - main_loc_y){
-   	    				y = main_height_max - main_loc_y;
+   	    			if (y > tz390.max_main_height - main_loc_y){
+   	    				y = tz390.max_main_height - main_loc_y;
    	    			}
    	    		}
-   	    		main_width  = x;
-   	    		main_height = y;
-   	    		main_frame.setSize(main_width,main_height);
+   	    		tn_scn.main_width  = x;
+   	    		tn_scn.main_height = y;
+   	    		main_frame.setSize(tn_scn.main_width,tn_scn.main_height);
    	    		refresh_request = true;
     	    }
         public void guam_window_font(int font){
@@ -3076,9 +3147,6 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         	/*
         	 * set screen background and text colors
         	 */
-        	if (tn_scn == null){
-        		init_tn3270_screen();
-        	}
         	tn_scn.scn_background_color = new Color(bg_color);
         	tn_scn.scn_text_color = new Color(text_color);	
         	tn_scn.scn_grid.setBackground(tn_scn.scn_background_color);
@@ -3206,4 +3274,16 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
     	}
         gz390_cmd_line.requestFocus();
 	}
+    private void tn_repaint_screen(){
+    	/*
+    	 * repaint scn_char for new font size screen
+    	 */
+    	tn_scn.stop_scn_updates();
+    	int sba = 0;
+    	while (sba < max_addr){
+    		tn_update_scn(sba);
+    		sba++;
+    	}
+    	tn_scn.start_scn_updates();
+    }
 }

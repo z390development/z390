@@ -16,6 +16,7 @@
 .*          ALSO SWITCH R0=LENGTH AND R1=ADDR FOR COMPATIBILITY
 .* 04/16/06 RPI 293 IGNORE SP= AND FIX MNOTES
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .*********************************************************************
 &N       FREEMAIN &TYPE,      IGNORED                                  X
                &A=,        ADDRESS                                     X
@@ -77,8 +78,7 @@
          L    0,=A(&LEN)  RPI 117
          AGO  .A
 .LVREG   ANOP
-         AIF   (&LV(1) EQ '0' OR &LV(1) EQ 'R0').A  RPI163
-         LR   0,&LV(1)
+         ZOPTLR 0,&LV(1)
 .A       ANOP
          AIF  (&A EQ '').SVC
          AIF  ('&A'(1,1) EQ '(').AREG
@@ -86,8 +86,7 @@
          AGO  .SVC
 .AREG    ANOP
          AIF   (&A(1) EQ '1' OR &A(1) EQ 'R1').SVC  RPI163
-         AIF   (&A(1) EQ '0' OR &A(1) EQ 'R0').ERR4        
-         LR   1,&A(1)
+         ZOPTLR 1,&A(1)
 .SVC     ANOP
          SVC   5 FREEMAIN R0=LEN, R1=ADDR
          MEXIT

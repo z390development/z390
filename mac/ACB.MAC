@@ -7,6 +7,7 @@
 .* Date   - 09/30/05                                                 *
 .*********************************************************************
 .* 07/26/07 INITIAL CODING                  
+.* 08/19/07 RPI 680 FIX 10 MUTUALLY MISSPELLED
 .*********************************************************************
 &N       ACB   &AM=VSAM,      VSAM VS VTAM                             X
                &BUFSP=0,      MAXIMUM BUFFER SPACE FOR CLUSTER         X
@@ -77,35 +78,35 @@
 .MACRF_CHECK ANOP
          LCLB  &ACBERR
 .CHK1    AIF   (NOT(&UBF AND &NUB)).CHK2                        
-         MNOTE 12,'ACB UBF AND NUB MUTUTALLY EXCLUSIVE'                             @ZA34940
+         MNOTE 12,'ACB UBF AND NUB MUTUALLY EXCLUSIVE'                             @ZA34940
 &ACBERR  SETB  1
 .CHK2    AIF   (NOT(&LOGONF AND &NLOGON)).CHK3              
-         MNOTE 12,'ACB LOGONF AND NLOGON MUTUTALLY EXCLUSIVE'                             @ZA34940
+         MNOTE 12,'ACB LOGONF AND NLOGON MUTUALLY EXCLUSIVE'                             @ZA34940
 &ACBERR  SETB  1
 .CHK3    AIF   (NOT(&RST AND &NRS)).CHK4                    
-         MNOTE 12,'ACB RST AND NRS MUTUTALLY EXCLUSIVE'                             @ZA34940
+         MNOTE 12,'ACB RST AND NRS MUTUALLY EXCLUSIVE'                             @ZA34940
 &ACBERR  SETB  1
 .CHK4    AIF   (NOT(&NFX AND &CFX)).CHK5                       
-         MNOTE 12,'ACB NFX AND CFX MUTUTALLY EXCLUSIVE'                             @ZA34940
+         MNOTE 12,'ACB NFX AND CFX MUTUALLY EXCLUSIVE'                             @ZA34940
 &ACBERR  SETB  1
 .CHK5    AIF   (NOT(&DDN AND &DSN)).CHK6                       
-         MNOTE 12,'ACB DDN AND DSN MUTUTALLY EXCLUSIVE'                             @ZA34940
+         MNOTE 12,'ACB DDN AND DSN MUTUALLY EXCLUSIVE'                             @ZA34940
 &ACBERR  SETB  1
 .CHK6    AIF   (NOT(&NRM AND &AIX)).CHK7                       
-         MNOTE 12,'ACB NRM AND AIX MUTUTALLY EXCLUSIVE'                             @ZA34940
+         MNOTE 12,'ACB NRM AND AIX MUTUALLY EXCLUSIVE'                             @ZA34940
 &ACBERR  SETB  1
 .CHK7    AIF   ((NOT(&NSR AND &GSR)) AND (NOT(&GSR AND &LSR))          X
                AND (NOT(&LSR AND &NSR))).CHK8                      
-         MNOTE 12,'ACB NSR, LSR, AND GXR MUTUTALLY EXCLUSIVE'                             @ZA34940
+         MNOTE 12,'ACB NSR, LSR, AND GXR MUTUALLY EXCLUSIVE'                             @ZA34940
 &ACBERR  SETB  1
 .CHK8    AIF   (NOT(&NCI AND &ICI)).CHK9                       
-         MNOTE 12,'ACB NCI AND ICI MUTUTALLY EXCLUSIVE'                             @ZA34940
+         MNOTE 12,'ACB NCI AND ICI MUTUALLY EXCLUSIVE'                             @ZA34940
 &ACBERR  SETB  1
 .CHK9    AIF   (NOT(&NDF AND &DFR)).CHK10                      
-         MNOTE 12,'ACB NDF AND DFR MUTUTALLY EXCLUSIVE'                             @ZA34940
+         MNOTE 12,'ACB NDF AND DFR MUTUALLY EXCLUSIVE'                             @ZA34940
 &ACBERR  SETB  1
 .CHK10   AIF   (NOT(&NIS AND &SIS)).CHK11                      
-         MNOTE 12,'ACB NIS AND SIS MUTUTALLY EXCLUSIVE'                             @ZA34940
+         MNOTE 12,'ACB NIS AND SIS MUTUALLY EXCLUSIVE'                             @ZA34940
 &ACBERR  SETB  1
 .CHK11   ANOP 
          AIF   (NOT &ACBERR).MACRF_DEF
