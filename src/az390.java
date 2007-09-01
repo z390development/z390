@@ -272,6 +272,7 @@ public  class  az390 implements Runnable {
     * 07/20/07 RPI 659 error 196 for invalid opcode char.
     * 07/30/07 RPI 667 issue error 197 for invalid binary value string
     * 08/22/07 RPI 673 support symbolic register on DROP
+    * 08/25/07 RPI 687 add CICS VSAM DFHRESP literals
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -819,20 +820,36 @@ public  class  az390 implements Runnable {
       String[] dfhresp_type = {
     		  "NORMAL)",          // 0 - =F'0'
     		  "ERROR)",           // 1 - =F'1'
-    		  "INVREQ)",          // 2 - =F'16'
-    		  "LENGERR)",         // 3 - =F'22'
-    		  "ITEMERR)",         // 4 - =F'26'  RPI 662
-    		  "PGMIDERR)",        // 5 - =F'27'
-    		  "QIDERR)"           // 6 - =F'44'  RPI 662 
+    		  "FILENOTFOUND)",    // 2 - =F'12' RPI 687
+    		  "NOTEND)",          // 3 - =F'13' RPI 687
+    		  "DUPREC)",          // 4 - =F'14' RPI 687
+    		  "DUPKEY)",          // 5 - =F'15' RPI 687
+    		  "INVREQ)",          // 6 - =F'16'
+    		  "NOSPACE)",         // 7 - =F'18' RPI 687
+    		  "NOTOPEN)",         // 8 - =F'19' RPI 687
+    		  "ENDFILE)",         // 9 - =F'20' RPI 687
+    		  "LENGERR)",         //10 - =F'22'
+    		  "ITEMERR)",         //11 - =F'26'  RPI 662
+    		  "PGMIDERR)",        //12 - =F'27'
+    		  "QIDERR)",          //13 - =F'44'  RPI 662
+    		  "DISABLED)",        //14 - =F'84' RPI 687
     		  };
       String[] dfhresp_lit = {
-    		  "=F'0'",           //"NORMAL"   - 0
-    		  "=F'1'",           //"ERROR"    - 1
-    		  "=F'16'",          //"INVREQ"   - 2
-    		  "=F'22'",          //"LENGERR"  - 3
-    		  "=F'26'",          //"ITEMERR"  - 4  RPI 662
-    		  "=F'27'",          //"PGMIDERR" - 5
-    		  "=F'44'"           //"QIDERR"   - 6  RPI 662
+    		  "=F'0'",           // 0 "NORMAL)" 
+    		  "=F'1'",           // 1 "ERROR)" 
+    		  "=F'12'",          // 2 "FILENOTFOUND)" RPI 687
+    		  "=F'13'",          // 3 "NOTEND)" RPI 687 
+    		  "=F'14'",          // 4 "DUPREC)" RPI 687
+    		  "=F'15'",          // 5 "DUPKEY)" RPI 687 
+    		  "=F'16'",          // 6 "INVREQ)" 
+    		  "=F'18'",          // 7 "NOSPACE)" RPI 687 
+    		  "=F'19'",          // 8 "NOTOPEN)" RPI 687 
+    		  "=F'20'",          // 9 "ENDFILE)" RPI 687 
+    		  "=F'22'",          //10 "LENGERR)" 
+    		  "=F'26'",          //11 "ITEMERR)" RPI 662
+    		  "=F'27'",          //12 "PGMIDERR)"
+    		  "=F'44'",          //13 "QIDERR)"  RPI 662
+    		  "=F'84'",          //14 "DISABLED)" RPI 687
     		  };
   /* 
    * end of global az390 class data and start of procs

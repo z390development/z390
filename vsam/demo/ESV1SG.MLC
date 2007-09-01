@@ -5,118 +5,52 @@
 * Author - Don Higgins                                              *
 * Date   - 04/23/07                                                 *
 *********************************************************************
-* 08/10/07 CODE VSAM DEMO TO LOAD 6 VAR. RCDS FROM 1 TO 100,000
+* 09/01/07 INITIAL CODING TO COPY ESDS TO QSAM                       
 *********************************************************************
 ESV1SG   SUBENTRY                                                  
-         WTO   'ESV1SG READ ESV1.VES ESDS VARIABLE LENGTH VSAM FILE'
-         OPEN  (INFILE,(INPUT))
+         WTO   'ESV1SG COPY VAR LENGTH ESDS TO QSAM FILE'
+         OPEN  (VFILE,(INPUT),QFILE,(OUTPUT))
          LTR   R15,R15
          BNZ   ERR1
 LOOP     EQU   *
-         GET   RPL=ESGET
+         GET   RPL=VFILER
          LTR   R15,R15
-         BNZ   ERR2
-         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
-         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
-         L     R0,AREC
-         L     R1,LREC
-         L     R2,=A(VLR1)
-         LR    R3,R1
-         CLCL  R0,R2
-         BNE   ERR3
-         GET   RPL=ESGET
+         BZ    COPYREC
+         CHI   R15,8
+         BNE   ERR2
+         SHOWCB RPL=VFILER,AREA=FDBK,LENGTH=1,FIELDS=(FDBK)
+         CLI   FDBK,4
+         BE    EOF
+COPYREC  EQU   *
+         SHOWCB RPL=VFILER,AREA=PREFIX,LENGTH=4,FIELDS=(RECLEN)
+         L     R0,PREFIX
+         AHI   R0,4
+         CHI   R0,32764
+         BH    ERR4
+         SLL   R0,16
+         ST    R0,PREFIX
+         PUT   QFILE,PREFIX
+         B     LOOP
+EOF      EQU   *
+         CLOSE (VFILE,,QFILE)
          LTR   R15,R15
-         BNZ   ERR2
-         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
-         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
-         L     R0,AREC
-         L     R1,LREC
-         L     R2,=A(VLR10)
-         LR    R3,R1
-         CLCL  R0,R2
-         BNE   ERR3
-         GET   RPL=ESGET
-         LTR   R15,R15
-         BNZ   ERR2
-         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
-         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
-         L     R0,AREC
-         L     R1,LREC
-         L     R2,=A(VLR100)
-         LR    R3,R1
-         CLCL  R0,R2
-         BNE   ERR3
-         GET   RPL=ESGET
-         LTR   R15,R15
-         BNZ   ERR2
-         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
-         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
-         L     R0,AREC
-         L     R1,LREC
-         L     R2,=A(VLR1000)
-         LR    R3,R1
-         CLCL  R0,R2
-         BNE   ERR3
-         GET   RPL=ESGET
-         LTR   R15,R15
-         BNZ   ERR2
-         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
-         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
-         L     R0,AREC
-         L     R1,LREC
-         L     R2,=A(VLR10000)
-         LR    R3,R1
-         CLCL  R0,R2
-         BNE   ERR3
-         GET   RPL=ESGET
-         LTR   R15,R15
-         BNZ   ERR2
-         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
-         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
-         L     R0,AREC
-         L     R1,LREC
-         L     R2,=A(VLR100000)
-         LR    R3,R1
-         CLCL  R0,R2
-         BNE   ERR3
-         GET   RPL=ESGET
-         CHI   R15,8  IS THIS LOGICALL ERROR
-         BNZ   ERR4
-         TESTCB RPL=ESGET,FDBK=4 EOD REASON CODE
-         BNE   ERR4
-         CLOSE (INFILE)
-         LTR   R15,R15
-         BNZ   ERR5
+         BNZ   ERR3
          WTO   'ESV1SG ENDED OK'
          SUBEXIT
 ERR1     WTO   'ESV1SG  OPEN FAILED'
          ABEND 111,DUMP
 ERR2     WTO   'ESV1SG  GET RPL FAILED'
          ABEND 222,DUMP
-ERR3     WTO   'ESV1SG  RECORD DID NOT MATCH ESV1SP'
+ERR3     WTO   'ESV1SG  CLOSE FAILED'                     
          ABEND 333,DUMP
-ERR4     WTO   'ESV1SG  EOV NOT FOUND AS EXPECTED'
+ERR4     WTO   'ESV1SG VSAM RECORD TOO LONG FOR QSAM'     
          ABEND 444,DUMP
-ERR5     WTO   'ESV1SG  CLOSE FAILED'                     
-         ABEND 444,DUMP
-INFILE   ACB   DDNAME=INFILE,MACRF=(SEQ,IN)
-ESGET    RPL   ACB=INFILE,AREA=RECORD,OPTCD=(SEQ,IN)
-AREC     DS    F
-LREC     DS    F
+VFILE    ACB   DDNAME=VFILE,MACRF=(SEQ,IN)
+VFILER   RPL   ACB=VFILE,AREA=RECORD,OPTCD=(SEQ)
+QFILE    DCB   DDNAME=QFILE,RECFM=V,LRECL=304,MACRF=PM
+FDBK     DC    X'00' VSAM FEEDBACK REASON CODE
          LTORG
          EQUREGS
-         DC    0D,C'VLR1='
-VLR1     DC    C'1'
-         DC    0D,C'VLR10='
-VLR10    DC    5C'10'
-         DC    0D,C'VLR100='
-VLR100   DC    25C'100 '
-         DC    0D,C'VLR1000='
-VLR1000  DC    250C'1000'
-         DC    0D,C'VLR10000='
-VLR10000 DC    2000C'10000'
-         DC    0D,C'VLR100000='
-VLR100000 DC   12500C'100000  '
-         DC    0D,C'RECORD='
-RECORD   DS    XL100000
+PREFIX   DS    F
+RECORD   DS    XL300
          END

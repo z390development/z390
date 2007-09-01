@@ -139,7 +139,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.07a";  //dsh
+    String version    = "V1.3.07b";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -191,8 +191,9 @@ public  class  tz390 {
     boolean opt_tracel   = false;  // trace lz390
     boolean opt_tracem   = false; // trace mz390
     boolean opt_tracep   = false; // trace pseudo code
-    boolean opt_tracet   = false; // trace TCPIO 
     boolean opt_tracemem = false; // trace memory FQE updates to LOG
+    boolean opt_tracet   = false; // trace TCPIO and TGET/TPUT data I/O
+    boolean opt_tracev   = false; // trace VSAM file I/O
     boolean opt_trap     = true;  // trap exceptions as 0C5
     boolean opt_ts       = false; // time-stamp logs RPI 662
     boolean opt_xref     = true;   // cross reference symbols
@@ -3944,6 +3945,9 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.toUpperCase().equals("TRACET")){
         	opt_tracet = true;
         	opt_con   = false;
+        } else if (token.toUpperCase().equals("TRACEV")){
+        	opt_tracev = true;
+        	opt_con   = false;
         } else if (token.toUpperCase().equals("TS")){
         	opt_ts = true; // timestamp traces
         }
@@ -4828,7 +4832,7 @@ public void put_trace(String text){
 	    && text.substring(0,6).equals(text.substring(7,13))){ // RPI 659
 	    text = text.substring(7); // RPI 515 RPI 659
 	}
-	if (opt_con){
+	if (opt_con || opt_test){  // RPI 689
 		System.out.println(text);
 	}
 	if (trace_file == null){

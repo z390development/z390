@@ -1,4 +1,4 @@
-z390 v1.3.07a PTF 08/24/07
+z390 v1.3.07b PTF 09/01/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.07:
@@ -33,11 +33,24 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.07:
     b.  Remove RPL IN and OUT options from demo programs
     c.  ACB - correct misspelling of mutually (10 times)
     d.  MODCB - correct misspelled RPLLREC DSECT symbol reference
-8.  RPI 686 - correct both z390 main GUI window and GUAM dialog window to 
+8.  RPI 685 - ignore nulls in DCB FT and VT input files rather than treating
+    as end of record marker.
+9.  RPI 686 - correct both z390 main GUI window and GUAM dialog window to 
     allow full display of both command line and status line.
+10. RPI 687 - add VSAM response codes to CICS DFHRESP support.  See updates to
+    rt\test\TESTCIC1.MLC regression test.
+11. RPI 688 - correct errors in initial VSAM support, add ESDS RBA and XRBA
+    support, add RRDS support, add RPL=(reg) support, add RBA and XRBA field
+    support to SHOWCB, TESTCB, and MODCB.  Add RRDS demo programs and add new
+    regression tests in vsam\test directory for fixed and variable ESDS and RRDS.
+    Add new z390 option TRACEV to trace all data for VSAM file I/O operations. 
+    Correct and test REPRO support for both fixed and variable length record QSAM
+    to/from VSAM load and unload.
+12. RPI 689 - correct TRACET to support TS timestamp option.  Route all dump output to
+    just TRE file unless TEST and TRACE are off.  All log messages appear on both LOG 
+    and TRE file.
 
-
-To install this cumulative PTF for z390 v1.3.04 follow these steps.
+To install this cumulative PTF for z390 follow these steps.
 
 1.  Extract the PTF zip file into the z390 install directory
     creating ptf subdirectory.
@@ -48,11 +61,17 @@ To install this cumulative PTF for z390 v1.3.04 follow these steps.
 3.  Copy the entire mac directory containing updated macros to the
     z390\mac directory.
 
-4.  If you need to change Java source for this PTF version, all
+4.  Copy the entire vsam directory containing updated demo and 
+    regression tests. 
+
+5.  Copy the entire linklib direcotory containing updated REPRO utility  
+    and CVTTOHEX utility.
+
+6.  If you need to change Java source for this PTF version, all
     the Java source is in src directory and can be copied to 
     z390\src directory.
 
-5.  Run IVP.BAT command from the z390 directory and verify 
+7.  Run IVP.BAT command from the z390 directory and verify 
     the new z390 version running matches this PTF version.
 
 Visit www.z390.org for more information on latest updates.

@@ -6,19 +6,21 @@
 * Date   - 04/23/07                                                 *
 *********************************************************************
 * 07/25/07 INITIAL CODING OF TEST TO CREATE VSAM ESDS FILE FROM QSAM
+* 08/19/07 RPI 680 REMOVE OUT FROM RPL OPTCD LIST                
+* 08/30/07 RPI 688 CHANGE TO USE 3 - 80 BYTE FIXED LENGTH RECORDS
 *********************************************************************
 ESF1SP   SUBENTRY                                                  
          WTO   'ESF1SP CREATE ESF1.VES ESDS FIXED FILE FROM QSAM FILE'
-         OPEN  (INFILE,(INPUT),OUTFILE,(OUTPUT))
+         OPEN  (QFILE,(INPUT),VFILE,(OUTPUT))
          LTR   R15,R15
          BNZ   ERR1
 LOOP     EQU   *
-         GET   INFILE,RECORD
+         GET   QFILE,RECORD
          PUT   RPL=ESPUT
          LTR   R15,R15
          BNZ   ERR2
          B     LOOP
-EOF      CLOSE (INFILE,,OUTFILE)
+EOF      CLOSE (QFILE,,VFILE)
          LTR   R15,R15
          BNZ   ERR3
          WTO   'ESF1SP ENDED OK'
@@ -29,10 +31,10 @@ ERR2     WTO   'ESF1SP  PUT RPL FAILED'
          ABEND 222,DUMP
 ERR3     WTO   'ESF1SP  CLOSE FAILED'
          ABEND 333,DUMP
-INFILE   DCB   DDNAME=INFILE,RECFM=FT,LRECL=20,MACRF=GM,EODAD=EOF
-OUTFILE  ACB   DDNAME=OUTFILE,MACRF=(SEQ,OUT)
-ESPUT    RPL   ACB=OUTFILE,AREA=RECORD,OPTCD=(SEQ,OUT)
-RECORD   DC    CL20' '
+QFILE    DCB   DDNAME=QFILE,RECFM=F,LRECL=80,MACRF=GM,EODAD=EOF
+VFILE    ACB   DDNAME=VFILE,MACRF=(SEQ,OUT)
+ESPUT    RPL   ACB=VFILE,AREA=RECORD,OPTCD=(SEQ)
+RECORD   DC    CL80' '
          LTORG
          EQUREGS
          END

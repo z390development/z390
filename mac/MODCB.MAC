@@ -8,10 +8,12 @@
 .*********************************************************************
 .* 08/10/07 INITIAL CODING TO SUPPORT AREA, RECLEN INITIALLY                         
 .* 08/22/07 RPI 680 CORRECT REPLRECL
+.* 08/27/07 RPI 688 SUPPORT RPL=(REG)
 .*********************************************************************
 &N       MODCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS        X
                &AREA=,       ADDRESS OF RECORD AREA                    X
                &RECLEN=      RECORD LENGTH                              
+         LCLB  &MODS         SET IF MOD FOUND
 &NPOS    SETA  N'&SYSLIST
 .POSLOOP ANOP
          AIF   (&NPOS EQ 0).POSEND
@@ -20,23 +22,23 @@
          AIF   (&NPOS GT 0).POSLOOP
          MEXIT
 .POSEND  ANOP  
+         AIF   (&N EQ '').SKIPDS
 &N       DS    0H
+.SKIPDS  ANOP
          AIF   (&AREA NE '').AREA
+.AREA_END ANOP
          AIF   (&RECLEN NE '').RECLEN
+.RECLEN_END ANOP
+         AIF   (&MODS).EXIT
          MNOTE 12,'MODCB FIELD NOT SUPPORTED YET'
+.EXIT    ANOP
          MEXIT
 .AREA    ANOP
-         AIF   ('&AREA'(1,1) EQ '(').REGAREA
-         MVC   &RPL+(RPLAREA-IHARPL)(4),=A(&AREA)
-         MEXIT
-.REGAREA ANOP
-         ST    &AREA(1),&RPL+(RPLAREA-IHARPL)
-         MEXIT
+&MODS    SETB   1
+         ZMODCB &RPL,RPLAREA-IHARPL,&AREA
+         AGO   .AREA_END
 .RECLEN  ANOP
-         AIF   ('&RECLEN'(1,1) EQ '(').REGLEN
-         MVC   &RPL+(RPLLREC-IHARPL)(4),=A(&RECLEN)
-         MEXIT
-.REGLEN  ANOP
-         ST    &RECLEN(1),&RPL+(RPLLREC-IHARPL)
-         MEXIT
+&MODS    SETB   1
+         ZMODCB &RPL,RPLLREC-IHARPL,&RECLEN
+         AGO   .RECLEN_END
          MEND

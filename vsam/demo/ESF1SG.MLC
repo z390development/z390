@@ -6,26 +6,26 @@
 * Date   - 04/23/07                                                 *
 *********************************************************************
 * 07/25/07 INITIAL CODING OF TEST TO COPY VSAM ESDS FILE TO QSAM 
+* 08/19/07 RPI 680 REMOVE IN FROM RPL OPTCD LIST                
+* 08/30/07 RPI 688 CHANGE TO USE 3 - 80 BYTE RECORDS            
 *********************************************************************
 ESF1SG   SUBENTRY                                                  
          WTO   'ESF1SG COPY ESF1 ESDS FIXED FILE TO QSAM FILE'
-         OPEN  (INFILE,(INPUT),OUTFILE,(OUTPUT))
+         OPEN  (VFILE,(INPUT),QFILE,(OUTPUT))
          LTR   R15,R15
          BNZ   ERR1
-         LA    R3,5  MAX GET/PUT 
 LOOP     EQU   *
-         GET   RPL=ESGET
+         GET   RPL=VFILER
          LTR   R15,R15
          BNZ   CHKEOF
-         PUT   OUTFILE,RECORD
-         BCT   R3,LOOP
-         B     ERR4
+         PUT   QFILE,RECORD
+         B     LOOP
 CHKEOF   EQU   *
          CHI   R15,8 LOGIC ERROR
          BNE   ERR2
-         TESTCB RPL=ESGET,FDBK=4 EOD REASON CODE 
+         TESTCB RPL=VFILER,FDBK=4 EOD REASON CODE 
          BNE   ERR2
-EOF      CLOSE (INFILE,,OUTFILE)
+EOF      CLOSE (VFILE,,QFILE)
          LTR   R15,R15
          BNZ   ERR3
          WTO   'ESF1SG ENDED OK'
@@ -38,10 +38,10 @@ ERR3     WTO   'ESF1SG CLOSE FAILED'
          ABEND 333,DUMP
 ERR4     WTO   'ESF1SG READ PAST MAX RECORDS'    
          ABEND 444,DUMP
-INFILE   ACB   DDNAME=INFILE,MACRF=(SEQ,IN)
-OUTFILE  DCB   DDNAME=OUTFILE,RECFM=FT,LRECL=20,MACRF=PM
-ESGET    RPL   ACB=INFILE,AREA=RECORD,OPTCD=(SEQ,IN)
-RECORD   DC    CL20' '
+VFILE    ACB   DDNAME=VFILE,MACRF=(SEQ,IN)
+VFILER   RPL   ACB=VFILE,AREA=RECORD,OPTCD=(SEQ)
+QFILE    DCB   DDNAME=QFILE,RECFM=F,LRECL=80,MACRF=PM
+RECORD   DC    CL80' '
          LTORG
          EQUREGS
          END

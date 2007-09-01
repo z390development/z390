@@ -9,6 +9,7 @@
 .* 07/28/07 RPI 644 INITIAL CODING OF RPL OPTIONS        
 .* 08/04/07 RPI 644 UPDATE RPLFEEDB TO 4 BYTE CODES      
 .* 08/19/07 RPI 680 CORRECT LOOP GE TO GT, ADD LCLB &LRD 
+.* 08/29/07 RPI 688 CORRECT SETTING OF MACR1_XRBA OPTION BIT, ADD XRBA
 .*********************************************************************
 .*
 .* RPL 28 VSAM OPTCD OPTIONS - MODELED ON MVS 3.8 IDAVSOPT
@@ -156,7 +157,7 @@
 &RPLERR  SETB  1
 .CHKEND  ANOP                                                 
          LCLC  &OPT1,&OPT2,&OPT3,&OPT4
-&OPT1    SETC  '&LOC&DIR&SEQ&SKP&ASY&KGE&GEN.0'     OPTCD BYTE 1
+&OPT1    SETC  '&LOC&DIR&SEQ&SKP&ASY&KGE&GEN&XRBA'  OPTCD BYTE 1
 &OPT2    SETC  '&KEY&ADR&CNV&BWD&LRD&WAITX&UPD&NSP' OPTCD BYTE 2           
 .*
 .* GENERATE VSAM RPL
@@ -175,6 +176,7 @@
          DC    X'0000'            (ALIGN)
          DC    A(&NXTRPL)         RPLNEXT   NEXT RPL
          DC    A(&RECLEN)         RPLRECL   RECORD LENGTH FOR PUT
+         DC    XL8'00'            RPLXRBA   VX0 XRBA FOR LAST REC
          DC    A(&AREALEN)        RPLAREAL  AREA LENGTH
          RPLD
          MEXIT

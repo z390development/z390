@@ -7,6 +7,7 @@
 .* Date   - 06/23/07                                                 *
 .*********************************************************************
 .* 06/23/07 INITIAL CODING                    
+.* 08/29/07 RPI 688 ADD RPLXRBA XRBA/RBA FIELD AND SPLIT OPT1/OPT2 EQU       
 .*********************************************************************
          RPLD   
 .*
@@ -34,27 +35,29 @@ RPLFEEDB DS   XL4 RPL FEEDBACK CODES (PDF,RC,COMP,REASON CODE)
 RPLLKEY  DS   A   KEY LENGTH
 RPLACB   DS   A   ACB
 RPLAREA  DS   A   AREA
-RPLARG   DS   A   ARG (KSDS KEY OR RRDS NUMBER)
-RPLOPT   DS   H   OPTION BYTE 1+2
-RPLOPTCD_LOC   EQU X'8000' - leave record from GET in I/O buffer (IG)
-RPLOPTCD_DIR   EQU X'4000' - direct access to RRDS, KSDS, or ESDS  
-RPLOPTCD_SEQ   EQU X'2000' - Sequential access to RRDS, KSDS, or ESDS
-RPLOPTCD_SKP   EQU X'1000' - Skip sequential access.                 
-RPLOPTCD_ASY   EQU X'0800' - Asynchronous access (ignored)
-RPLOPTCD_KGE   EQU X'0400' - key GE, for RRDS rel rcd > max returns EOD
-RPLOPTCD_GEN   EQU X'0200' - A generic key provided with RPLKEYL length
-RPLOPTCD_XRBA  EQU X'0100' - for ADR, use 8 vs 4 byte RBA in ARG field
-RPLOPTCD_KEY   EQU X'0080' - rel rcd RRDS access or key KSDS access  
-RPLOPTCD_ADR   EQU X'0040' - addressed access to KSDS or ESDS by RBA 
-RPLOPTCD_CNV   EQU X'0020' - control intervAL access (not supported) 
-RPLOPTCD_BWD   EQU X'0010' - proceed backward for KEY, SEQ, DIR 
-RPLOPTCD_LRD   EQU X'0008' - locate last record in the data set
-RPLOPTCD_WAITX EQU X'0004' - if SYN and UPAD, take UPAD exit vs WAIT
-RPLOPTCD_UPD   EQU X'0002' - rcds may be updated or deleted after GET
-RPLOPTCD_NSP   EQU X'0001' - For DIR, remember position for seq access
+RPLARG   DS   A   ARG (KSDS KEY, RRDS REC NUMBER, OR RBA/XRBA)
+RPLOPT1  DS   X   OPTION BYTE 1
+RPLOPT1_LOC   EQU X'80' - leave record from GET in I/O buffer (IG)
+RPLOPT1_DIR   EQU X'40' - direct access to RRDS, KSDS, or ESDS  
+RPLOPT1_SEQ   EQU X'20' - Sequential access to RRDS, KSDS, or ESDS
+RPLOPT1_SKP   EQU X'10' - Skip sequential access.                 
+RPLOPT1_ASY   EQU X'08' - Asynchronous access (ignored)
+RPLOPT1_KGE   EQU X'04' - key GE, for RRDS rel rcd > max returns EOD
+RPLOPT1_GEN   EQU X'02' - A generic key provided with RPLKEYL length
+RPLOPT1_XRBA  EQU X'01' - for ADR, use 8 vs 4 byte RBA in ARG field
+RPLOPT2  DS   X   OPTION BYTE 2
+RPLOPT2_KEY   EQU X'80' - rel rcd RRDS access or key KSDS access  
+RPLOPT2_ADR   EQU X'40' - addressed access to KSDS or ESDS by RBA 
+RPLOPT2_CNV   EQU X'20' - control intervAL access (not supported) 
+RPLOPT2_BWD   EQU X'10' - proceed backward for KEY, SEQ, DIR 
+RPLOPT2_LRD   EQU X'08' - locate last record in the data set
+RPLOPT2_WAITX EQU X'04' - if SYN and UPAD, take UPAD exit vs WAIT
+RPLOPT2_UPD   EQU X'02' - rcds may be updated or deleted after GET
+RPLOPT2_NSP   EQU X'01' - For DIR, remember position for seq access
          DS   H   (ALIGN)      
 RPLNEXT  DS   A   NEXT RPL
-RPLLREC  DS   A   RECORD LENGTH FOR PUT
+RPLLREC  DS   A   RECORD LENGTH FOR GET/PUT VAR LENGTH RECORDS
+RPLXRBA  DS   XL8 XRBA OF LAST VX0 XRBA ESDS RECORD POINTER ENTRY
 RPLLAREA DS   F   AREA LENGTH
 RPLEND   EQU *
 *

@@ -1,0 +1,157 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 08/10/07 CODE VSAM DEMO TO LOAD 6 VAR. RCDS FROM 1 TO 100,000
+* 08/19/07 RPI 680 REMOVE OUT FROM RPL OPTCD LIST                
+* 08/31/07 RPI 688 CONVERT TO RT1 TEST CREATE AND VERIFY ESDS VAR
+*********************************************************************
+ESV2TEST RT1   MAIN                                                
+OUTFILE  ACB   DDNAME=VFILE,MACRF=(SEQ,OUT)
+ESPUT    RPL   ACB=OUTFILE,OPTCD=(SEQ)
+INFILE   ACB   DDNAME=VFILE,MACRF=(SEQ,IN)
+ESGET    RPL   ACB=INFILE,AREA=RECORD,OPTCD=(SEQ)
+AREC     DS    F
+LREC     DS    F
+         LTORG
+         EQUREGS
+         DC    0D,C'RECORD='
+RECORD   DS    XL100000
+         DC    0D,C'VLR1='
+VLR1     DC    C'1'
+         DC    0D,C'VLR10='
+VLR10    DC    5C'10'
+         DC    0D,C'VLR100='
+VLR100   DC    25C'100 '
+         DC    0D,C'VLR1000='
+VLR1000  DC    250C'1000'
+         DC    0D,C'VLR10000='
+VLR10000 DC    2000C'10000'
+         DC    0D,C'VLR100000='
+VLR100000 DC   12500C'100000  '
+         RT1   START
+*
+* CREATE ESDS VAR RCD FILE WITH 6 RECORDS FROM 1 TO 100,000 LONG
+*
+         OPEN  (OUTFILE,(OUTPUT))
+         LTR   R15,R15
+         RT1   CC0
+         MODCB RPL=ESPUT,AREA=VLR1
+         MODCB RPL=ESPUT,RECLEN=1
+         PUT   RPL=ESPUT
+         LTR   R15,R15
+         RT1   CC0
+         MODCB RPL=ESPUT,AREA=VLR10
+         MODCB RPL=ESPUT,RECLEN=10
+         PUT   RPL=ESPUT
+         LTR   R15,R15
+         RT1   CC0
+         MODCB RPL=ESPUT,AREA=VLR100
+         MODCB RPL=ESPUT,RECLEN=100
+         PUT   RPL=ESPUT
+         LTR   R15,R15
+         RT1   CC0
+         MODCB RPL=ESPUT,AREA=VLR1000
+         MODCB RPL=ESPUT,RECLEN=1000
+         PUT   RPL=ESPUT
+         LTR   R15,R15
+         RT1   CC0
+         MODCB RPL=ESPUT,AREA=VLR10000
+         MODCB RPL=ESPUT,RECLEN=10000
+         PUT   RPL=ESPUT
+         LTR   R15,R15
+         RT1   CC0
+         MODCB RPL=ESPUT,AREA=VLR100000
+         MODCB RPL=ESPUT,RECLEN=100000
+         PUT   RPL=ESPUT
+         LTR   R15,R15
+         RT1   CC0
+         CLOSE (OUTFILE)
+         LTR   R15,R15
+         RT1   CC0
+*
+* READ AND VERIFY 6 VAR RECORDS FROM 1  TO 100,000
+*
+         OPEN  (INFILE,(INPUT))
+         LTR   R15,R15
+         RT1   CC0
+LOOP     EQU   *
+         GET   RPL=ESGET
+         LTR   R15,R15
+         RT1   CC0
+         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
+         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
+         L     R0,AREC
+         L     R1,LREC
+         L     R2,=A(VLR1)
+         LR    R3,R1
+         CLCL  R0,R2
+         RT1   CC0
+         GET   RPL=ESGET
+         LTR   R15,R15
+         RT1   CC0
+         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
+         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
+         L     R0,AREC
+         L     R1,LREC
+         L     R2,=A(VLR10)
+         LR    R3,R1
+         CLCL  R0,R2
+         RT1   CC0
+         GET   RPL=ESGET
+         LTR   R15,R15
+         RT1   CC0
+         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
+         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
+         L     R0,AREC
+         L     R1,LREC
+         L     R2,=A(VLR100)
+         LR    R3,R1
+         CLCL  R0,R2
+         RT1   CC0
+         GET   RPL=ESGET
+         LTR   R15,R15
+         RT1   CC0
+         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
+         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
+         L     R0,AREC
+         L     R1,LREC
+         L     R2,=A(VLR1000)
+         LR    R3,R1
+         CLCL  R0,R2
+         RT1   CC0
+         GET   RPL=ESGET
+         LTR   R15,R15
+         RT1   CC0
+         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
+         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
+         L     R0,AREC
+         L     R1,LREC
+         L     R2,=A(VLR10000)
+         LR    R3,R1
+         CLCL  R0,R2
+         RT1   CC0
+         GET   RPL=ESGET
+         LTR   R15,R15
+         RT1   CC0
+         SHOWCB RPL=ESGET,AREA=AREC,LENGTH=4,FIELDS=(AREA)
+         SHOWCB RPL=ESGET,AREA=LREC,LENGTH=4,FIELDS=(RECLEN)
+         L     R0,AREC
+         L     R1,LREC
+         L     R2,=A(VLR100000)
+         LR    R3,R1
+         CLCL  R0,R2
+         RT1   CC0
+         GET   RPL=ESGET
+         CHI   R15,8  IS THIS LOGICALL ERROR
+         RT1   CC0
+         TESTCB RPL=ESGET,FDBK=4 EOD REASON CODE
+         RT1   CC0
+         CLOSE (INFILE)
+         LTR   R15,R15
+         RT1   CC0
+         RT1   END
+         END

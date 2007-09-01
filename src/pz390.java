@@ -207,7 +207,8 @@ public class pz390 {
 	 * 06/21/07 RPI 643 fix CEFBR, CDFBR, CXFBR, CEGBR, CDGBR, CXGBR trace
 	 * 08/09/07 RPI 672 prevent trace_psw switch being left on during
 	 *          trace of undefined opcode causing EX target instruction
-	 *          to be left modified.         
+	 *          to be left modified.   
+	 * 08/30/07 RPI 689 route all TRACE output to TRE vs LOG               
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -8805,7 +8806,9 @@ public class pz390 {
 	private void ins_setup_i() { // "I" 1 SVC 00ii
 		if1 = mem_byte[psw_loc + 1] & 0xff;
 		psw_ins_len = 2;
-		if (tz390.opt_trace) {
+		if (tz390.opt_trace
+			|| (tz390.opt_tracet // RPI 689 TRACET TCPIO and TGET/TPUT
+				&& (if1 == 93 || if1 == 0x7c))) {
            trace_ins();
 		}
 		if (ex_mode) {
@@ -10765,19 +10768,19 @@ public class pz390 {
 			return "FREEMAIN R0=LEN, R1=ADDR";
 		case 0x06: // LINK R0=PGMID, R1=PARMS
 			return "LINK R1=PARMS R0=PGM("
-					+ sz390.get_ascii_string(reg.getInt(r0) & psw_amode, 8)
+					+ sz390.get_ascii_string(reg.getInt(r0) & psw_amode, 8,true)
 							.toUpperCase() + ")";
 		case 0x07: // XCTL R15=PGMID, R1=PARMS
 			return "XCTL R1=PARMS R0=PGM("
-					+ sz390.get_ascii_string(reg.getInt(r0) & psw_amode, 8)
+					+ sz390.get_ascii_string(reg.getInt(r0) & psw_amode, 8,true)
 							.toUpperCase() + ")";
 		case 0x08: // LOAD R15=PGMID
 			return "LOAD R1=PARMS R0=PGM("
-					+ sz390.get_ascii_string(reg.getInt(r0) & psw_amode, 8)
+					+ sz390.get_ascii_string(reg.getInt(r0) & psw_amode, 8,true)
 							.toUpperCase() + ")";
 		case 0x09: // DELETE R0=A(NAME)
 			return "DELETE R1=PARMS R0=PGM("
-					+ sz390.get_ascii_string(reg.getInt(r0) & psw_amode, 8)
+					+ sz390.get_ascii_string(reg.getInt(r0) & psw_amode, 8,true)
 							.toUpperCase() + ")";
 		case 0x0b: // TIME R0_LH=DATETYPE, R0_LL=TIMETYPE, R1=ADDR
 			return "TIME R0 LH=DATETYPE, R0 LL=TIMETYPE, R1=ADDR";
@@ -14270,10 +14273,6 @@ public class pz390 {
 		               + psw_cc_code[psw_cc] + " " + get_ins_hex(psw_loc) + " "
 		               + trace_name 
 		               + trace_parms;
-		if (tz390.opt_test) {
-			sz390.put_log(ins_trace_line);
-		} else {
-			tz390.put_trace(ins_trace_line);
-		}
+		tz390.put_trace(ins_trace_line);  // RPI 689
 	}
 }

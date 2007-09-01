@@ -12,6 +12,7 @@
 &N       TESTCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS       X
                &FDBK=,        TEST FEEDBACK REASON CODE BYTE           X
                &RECLEN=       TEST LENGTH OF RECORD                     
+         LCLB  &MODS
 &NPOS    SETA  N'&SYSLIST
 .POSLOOP ANOP
          AIF   (&NPOS EQ 0).POSEND
@@ -19,15 +20,23 @@
 &NPOS    SETA  &NPOS-1
          AGO   .POSLOOP
 .POSEND  ANOP  
+         AIF   (&N EQ '').SKIPDS
 &N       DS    0H
+.SKIPDS  ANOP
          AIF   (&FDBK   NE '').FDBK
+.FDBK_END ANOP
          AIF   (&RECLEN NE '').RECLEN
+.RECLEN_END ANOP
+         AIF   (&MODS).EXIT
          MNOTE 12,'TESTCB FIELD NOT SUPPORTED YET'
+.EXIT    ANOP
          MEXIT
 .FDBK    ANOP
-         CLI   &RPL+(RPLFEEDB-IHARPL)+3,&FDBK
-         MEXIT
+&MODS    SETB  1
+         ZTESTCB &RPL,RPLFEEDB-IHARPL+3,&FDBK,1
+         AGO   .FDBK_END
 .RECLEN  ANOP
-         CLC   &RPL+(RPLLREC-IHARPL),=A(&RECLEN)
-         MEXIT
+&MODS    SETB  1
+         ZTESTCB &RPL,RPLLREC-IHARPL,&RECLEN,4
+         AGO     .RECLEN_END
          MEND

@@ -1,0 +1,99 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 04/23/07                                                 *
+*********************************************************************
+* 08/31/07 INITIAL CODING OF RRDS VARIABLE LENGTH RECORD TESTS           
+*********************************************************************
+RRV1DEMO SUBENTRY   
+         RT1   START
+*
+* BUILD VSAM RRDS VARIABLE LENGTH FILE WITH 3 RECORDS
+*
+         WTO   'RRV1DEMO CREATE RRDS VFILE WITH 3 RECORDS'
+         OPEN  (VFILEO,(OUTPUT))
+         LTR   R15,R15
+         BNZ   ERR1
+         MVC   RECORD(100),=100C'0'
+         MVC   REC#,=F'0'
+         MODCB RPL=VRPLOUT,RECLEN=100
+         PUT   RPL=VRPLOUT
+         LTR   R15,R15
+         BNZ   ERR2
+         MVC   RECORD(200),=200C'4'
+         MVC   RECORD+200(200),=200C'4'
+         MVC   REC#,=F'4'
+         MODCB RPL=VRPLOUT,RECLEN=400
+         PUT   RPL=VRPLOUT
+         LTR   R15,R15
+         BNZ   ERR2
+         MVC   RECORD(200),=200C'2'
+         MVC   REC#,=F'2'
+         MODCB RPL=VRPLOUT,RECLEN=200
+         PUT   RPL=VRPLOUT
+         LTR   R15,R15
+         BNZ   ERR2
+         CLOSE (VFILEO)
+         LTR   R15,R15
+         BNZ   ERR3
+*
+* READ AND VERIFY 3 VSAM RRDS VARIABLE LENGTH RECORDS 
+*
+         WTO   'RRV1DEMO READ AND VERIFY VFILE RECORDS'
+         OPEN  (VFILEI)
+         LTR   R15,R15
+         BNZ   ERR1
+         MVC   REC#,=F'0'
+         GET   RPL=VRPLIN
+         LTR   R15,R15
+         BNZ   ERR4
+         TESTCB RPL=VRPLIN,RECLEN=100
+         BNZ   ERR5
+         CLC   RECORD(100),=100C'0'
+         BNZ   ERR6
+         MVC   REC#,=F'2'
+         GET   RPL=VRPLIN
+         LTR   R15,R15
+         BNZ   ERR4
+         TESTCB RPL=VRPLIN,RECLEN=200
+         BNZ   ERR5
+         CLC   RECORD(200),=200C'2'
+         BNZ   ERR6
+         MVC   REC#,=F'4'
+         GET   RPL=VRPLIN
+         LTR   R15,R15
+         BNZ   ERR4
+         TESTCB RPL=VRPLIN,RECLEN=400
+         BNZ   ERR5
+         CLC   RECORD(200),=200C'4'
+         BNZ   ERR6
+         CLC   RECORD+200(200),=200C'4'
+         BNZ   ERR6
+         CLOSE (VFILEI)
+         LTR   R15,R15
+         BNZ   ERR3
+         WTO   'RRV1DEMO ENDED OK'
+         SUBEXIT
+ERR1     WTO   'RRV1DEMO OPEN ERROR'
+         ABEND 111,DUMP
+ERR2     WTO   'RRV1DEMO PUT ERROR'
+         ABEND 222,DUMP
+ERR3     WTO   'RRV1DEMO CLOSE ERROR'
+         ABEND 333,DUMP
+ERR4     WTO   'RRV1DEMO GET ERROR'
+         ABEND 444,DUMP
+ERR5     WTO   'RRV1DEMO VERIFY RECORD LENGTH ERROR'
+         ABEND 666,DUMP
+ERR6     WTO   'RRV1DEMO VERIFY RECORD CONTENT ERROR'
+         ABEND 666,DUMP
+VFILEO  ACB   DDNAME=VFILE,MACRF=(DIR,OUT)
+VFILEI   ACB   DDNAME=VFILE,MACRF=(DIR,IN)
+VRPLOUT  RPL   ACB=VFILEO,AREA=RECORD,OPTCD=(DIR),ARG=REC#
+VRPLIN   RPL   ACB=VFILEI,AREA=RECORD,OPTCD=(DIR),ARG=REC#
+RECORD   DC    CL400' '
+REC#     DC    F'0'
+         LTORG
+         EQUREGS
+         END

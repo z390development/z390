@@ -6,6 +6,8 @@
 * Date   - 07/25/07                                                 *
 *********************************************************************
 * 07/25/07 INITIAL CODING OF REPRO UTILITY TO COPY INFILE TO OUTFILE
+* 08/30/07 RPI 688 CORRECT OUTFILEQ SYNAD ADDRESS FOR ERRORS
+*          CORRECT VAR LENGTH QSAM OUTPUT PREFIX  GENERATION        
 *********************************************************************
 REPRO    SUBENTRY
          COPY  ASMMSP                                                  
@@ -115,7 +117,7 @@ CLOSE    PENTRY
                ENDIF
          ENDIF
          IF     (CLI,OUTFILET,EQ,C'Q')
-               MVC  INFILEQ+DCBSYNAD-IHADCB(4),=A(ERR43)
+               MVC  OUTFILEQ+DCBSYNAD-IHADCB(4),=A(ERR43) RPI 688
                CLOSE OUTFILEQ
          ELSE
                CLOSE OUTFILEV
@@ -148,9 +150,21 @@ GET      PENTRY
 *
 PUT      PENTRY
          IF    (CLI,OUTFILET,EQ,C'Q')
-               MVC  INFILEQ+DCBSYNAD-IHADCB(4),=A(ERR31)
+               MVC  OUTFILEQ+DCBSYNAD-IHADCB(4),=A(ERR31)   RPI 688
+               SHOWCB RPL=INFILER,AREA=VLEN,LENGTH=4,FIELDS=(RECLEN)
+               IF   (TM,OUTFILEQ+DCBRECFM-IHADCB,O,DCBRECFM_V) RPI 688  
+                    L    R2,VLEN
+                    AHI  R2,4
+                    SLL  R2,16
+                    ST   R2,0(R3)  RPI 688 SET QSAM VAR LENGTH PREFIX
+               ENDIF
                PUT  OUTFILEQ,(R3)
          ELSE
+               IF   (TM,INFILEQ+DCBRECFM-IHADCB,O,DCBRECFM_V)  RPI 688  
+                    LH    R0,0(R3) 
+                    AHI   R0,-4
+                    MODCB RPL=OUTFILER,RECLEN=(R0)   RPI 688
+               ENDIF
                PUT  RPL=OUTFILER
                IF  (CH,R15,NE,=F'0')
                    B  ERR32
@@ -170,16 +184,33 @@ INITREC  PENTRY
          USING IHADCB,R1
          USING IHAVCDT,R2
          L     R14,VCDTAVES R14= VSAM ESDS DATA DCB
-         MVC   DCBRECFM,DCBRECFM-IHADCB(R14)     SET QSAM DCBRECFM
          MVC   DCBBLKSIF,VCDTLREC                SET QSAM DCBBLKSIF
          MVC   DCBLRECLF,VCDTLREC                SET QSAM DCBLRECLF
-         L     R2,DCBLRECLF
-         AHI   R2,4          LENGTH OF MAX RECORD + 4
-         GETMAIN RU,LV=(R2)
-         LR    R3,R1         R3=A(VSAM RECORD LENGTH IN 4 BYTE PREFIX)
-         LA    R4,4(R3)      R4=A(VSAM LOGICAL)
-         MODCB RPL=INFILER,AREA=(R3)
-         MODCB RPL=OUTFILER,AREA=(R3)
+         IF    (TM,VCDTFLG1,O,VCDTRECV)  RPI 688  
+               MVI   DCBRECFM,DCBRECFM_V  VARIABLE LENGTH REC QSAM
+               L     R2,VCDTLREC
+               AHI   R2,4          LENGTH OF MAX RECORD + 4
+               IF    (CH,R2,GT,=H'32764')
+                     B  ERR51
+               ENDIF
+               ST    R2,DCBBLKSIF
+               ST    R2,DCBLRECLF
+               GETMAIN RU,LV=(R2)
+               LR    R3,R1         R3=A(VSAM RECORD LENGTH IN PFX)
+               LA    R4,4(R3)      R4=A(VSAM LOGICAL)
+         ELSE
+               MVI   DCBRECFM,DCBRECFM_F  FIXED LENGTH REC QSAM
+               L     R2,VCDTLREC
+               ST    R2,DCBBLKSIF
+               ST    R2,DCBLRECLF
+               MODCB RPL=INFILER,RECLEN=(R2)    RPI 688
+               MODCB RPL=OUTFILER,RECLEN=(R2)   RPI 688
+               GETMAIN RU,LV=(R2)
+               LR    R3,R1         R3=A(VSAM RECORD LENGTH IN PEX)
+               LR    R4,R1         R4=A(VSAM LOGICAL REC)
+         ENDIF
+         MODCB RPL=INFILER,AREA=(R4)    RPI 688
+         MODCB RPL=OUTFILER,AREA=(R4)   RPI 688
          DROP  R1,R2
          PEXIT
 *
@@ -209,15 +240,17 @@ ERR43    WTO   'REPRO CLOSE OUTFILE QSAM FAILED'
          ABEND 43,DUMP
 ERR44    WTO   'REPRO CLOSE OUTFILE VSAM FAILED'
          ABEND 44,DUMP
+ERR51    WTO   'REPRO RECORD LENGTH TOO LARGE FOR QSAM'
+         ABEND 51,DUMP
 *
 * QSAM DCB AND VSAM ACB CB'S
 *
 INFILEQ  DCB   DDNAME=INFILE,RECFM=F,LRECL=0,MACRF=GM,EODAD=EOF
 INFILEV  ACB   DDNAME=INFILE,MACRF=(SEQ,IN)
-INFILER  RPL   ACB=INFILEV,OPTCD=(SEQ,IN)
+INFILER  RPL   ACB=INFILEV,OPTCD=(SEQ)
 OUTFILEQ DCB   DDNAME=OUTFILE,RECFM=F,LRECL=0,MACRF=PM
 OUTFILEV ACB   DDNAME=OUTFILE,MACRF=(SEQ,OUT)
-OUTFILER RPL   ACB=OUTFILEV,OPTCD=(SEQ,OUT)
+OUTFILER RPL   ACB=OUTFILEV,OPTCD=(SEQ)
 *
 * WORK AREAS
 *
@@ -225,7 +258,8 @@ INFILET  DC    C'Q' QSAM OR VSAM
 OUTFILET DC    C'Q' QSAM OR VSAM
 INFILEDD DC    C'INFILE',X'00'
 OUTFILEDD DC   C'OUTFILE',X'00'
-FDBK      DS   X  RPL REASON CODE
+FDBK     DS    X  RPL REASON CODE
+VLEN     DC    F'0'
          LTORG
          EQUREGS
          VCDTD

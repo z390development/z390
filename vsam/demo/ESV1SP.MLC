@@ -6,43 +6,24 @@
 * Date   - 04/23/07                                                 *
 *********************************************************************
 * 08/10/07 CODE VSAM DEMO TO LOAD 6 VAR. RCDS FROM 1 TO 100,000
+* 08/19/07 RPI 680 REMOVE OUT FROM RPL OPTCD LIST                
 *********************************************************************
 ESV1SP   SUBENTRY                                                  
          WTO   'ESV1SP CREATE ESV1.VES ESDS VARIABLE LENGTH VSAM FILE'
-         OPEN  (OUTFILE,(OUTPUT))
+         OPEN  (QFILE,(INPUT),VFILE,(OUTPUT))
          LTR   R15,R15
          BNZ   ERR1
-         MODCB RPL=ESPUT,AREA=VLR1
-         MODCB RPL=ESPUT,RECLEN=1
-         PUT   RPL=ESPUT
+LOOP     EQU   *
+         GET   QFILE,PREFIX
+         LH    R0,PREFIX
+         AHI   R0,-4
+         MODCB RPL=VFILER,RECLEN=(R0)
+         PUT   RPL=VFILER
          LTR   R15,R15
          BNZ   ERR2
-         MODCB RPL=ESPUT,AREA=VLR10
-         MODCB RPL=ESPUT,RECLEN=10
-         PUT   RPL=ESPUT
-         LTR   R15,R15
-         BNZ   ERR2
-         MODCB RPL=ESPUT,AREA=VLR100
-         MODCB RPL=ESPUT,RECLEN=100
-         PUT   RPL=ESPUT
-         LTR   R15,R15
-         BNZ   ERR2
-         MODCB RPL=ESPUT,AREA=VLR1000
-         MODCB RPL=ESPUT,RECLEN=1000
-         PUT   RPL=ESPUT
-         LTR   R15,R15
-         BNZ   ERR2
-         MODCB RPL=ESPUT,AREA=VLR10000
-         MODCB RPL=ESPUT,RECLEN=10000
-         PUT   RPL=ESPUT
-         LTR   R15,R15
-         BNZ   ERR2
-         MODCB RPL=ESPUT,AREA=VLR100000
-         MODCB RPL=ESPUT,RECLEN=100000
-         PUT   RPL=ESPUT
-         LTR   R15,R15
-         BNZ   ERR2
-         CLOSE (OUTFILE)
+         B     LOOP
+EOF      EQU   *
+         CLOSE (VFILE)
          LTR   R15,R15
          BNZ   ERR3
          WTO   'ESV1SP ENDED OK'
@@ -53,14 +34,11 @@ ERR2     WTO   'ESV1SP  PUT RPL FAILED'
          ABEND 222,DUMP
 ERR3     WTO   'ESV1SP  CLOSE FAILED'
          ABEND 333,DUMP
-OUTFILE  ACB   DDNAME=OUTFILE,MACRF=(SEQ,OUT)
-ESPUT    RPL   ACB=OUTFILE,OPTCD=(SEQ,OUT)
+VFILE    ACB   DDNAME=VFILE,MACRF=(SEQ,OUT)
+VFILER   RPL   ACB=VFILE,OPTCD=(SEQ),AREA=RECORD
+QFILE    DCB   DDNAME=QFILE,RECFM=V,LRECL=304,EODAD=EOF
          LTORG
          EQUREGS
-VLR1     DC    C'1'
-VLR10    DC    5C'10'
-VLR100   DC    25C'100 '
-VLR1000  DC    250C'1000'
-VLR10000 DC    2000C'10000'
-VLR100000 DC   12500C'100000  '
+PREFIX   DS    F
+RECORD   DS    XL300
          END
