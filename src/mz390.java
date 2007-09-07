@@ -283,7 +283,8 @@ public  class  mz390 {
      * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
      * 07/05/07 RPI 647 allow comma between INDEX, FIND operands and fix trace 
      * 07/20/07 MZ390 error 218 if * or . in substituted model label 
-     * 08/14/07 support macro name symbolic substitution for inline proto-type             
+     * 08/14/07 support macro name symbolic substitution for inline proto-type 
+     * 09/04/07 RPI 691 remove exp_index++ for alloc_set subsc.            
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -3020,7 +3021,7 @@ public  class  mz390 {
 					if (alloc_set_loc == var_lcl_loc){
 						add_lcl_set(exp_parse_set_name,alloc_set_type,exp_parse_set_sub);
 					} else if (find_lcl_key_index("G:" + exp_parse_set_name) == -1){
-						add_lcl_key_index(0); // RPI 600 create gbl lcl declaration forst time
+						add_lcl_key_index(0); // RPI 600 create gbl lcl declaration first time
 						if (tz390.find_key_index('G',exp_parse_set_name) == -1){
 							add_gbl_set(exp_parse_set_name,alloc_set_type,exp_parse_set_sub);
 						}
@@ -5955,7 +5956,6 @@ public  class  mz390 {
 			if (!exp_ok){
 				save_exp_ok = false;
 			}
-			exp_next_index++;  // skip subscript )
 		} else {
 			exp_parse_set_sub = 1;
 		}

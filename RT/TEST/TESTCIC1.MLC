@@ -9,6 +9,7 @@
 * 05/31/07 RPI 501 TEST LITERAL-ABS EXPRESSION                             
 * 07/20/07 RPI 662 TEST ADDITIONAL ITEMERR AND QIDERR FOR DFHRESP          
 * 08/25/07 RPI 687 TEST ADDITIONAL CICS VSAM DFHRESP CODES    
+* 08/25/07 RPI 690 CORRECT NOTEND TO NOTFND                   
 *********************************************************************
 TESTCIC1 RT1   MAIN
          EQUREGS
@@ -18,7 +19,7 @@ X        DS    F
          MVC   X,DFHRESP(NORMAL)     X   TEST COMMENTS
          MVC   X,DFHRESP(ERROR)      
          MVC   X,DFHRESP(FILENOTFOUND)  RPI 687
-         MVC   X,DFHRESP(NOTEND)        RPI 687
+         MVC   X,DFHRESP(NOTFND)        RPI 687 RPI 690
          MVC   X,DFHRESP(DUPREC)        RPI 687
          MVC   X,DFHRESP(DUPKEY)        RPI 687
          MVC   X,DFHRESP(INVREQ)      
@@ -36,7 +37,7 @@ X        DS    F
          RT1   CCE
          CLC   =F'12',DFHRESP(FILENOTFOUND) RPI 687      
          RT1   CCE
-         CLC   =F'13',DFHRESP(NOTEND)       RPI 687
+         CLC   =F'13',DFHRESP(NOTFND)       RPI 687 RPI 690
          RT1   CCE
          CLC   =F'14',DFHRESP(DUPREC)       RPI 687
          RT1   CCE
@@ -63,7 +64,7 @@ X        DS    F
          RT1   CCE,=F'0',DFHRESP(NORMAL) 
          RT1   CCE,=F'1',DFHRESP(ERROR)
          RT1   CCE,=F'12',DFHRESP(FILENOTFOUND) RPI 687
-         RT1   CCE,=F'13',DFHRESP(NOTEND)       RPI 687
+         RT1   CCE,=F'13',DFHRESP(NOTFND)       RPI 687 RPI 690
          RT1   CCE,=F'14',DFHRESP(DUPREC)       RPI 687
          RT1   CCE,=F'15',DFHRESP(DUPKEY)       RPI 687
          RT1   CCE,=F'16',DFHRESP(INVREQ)

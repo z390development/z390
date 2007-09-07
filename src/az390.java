@@ -273,6 +273,7 @@ public  class  az390 implements Runnable {
     * 07/30/07 RPI 667 issue error 197 for invalid binary value string
     * 08/22/07 RPI 673 support symbolic register on DROP
     * 08/25/07 RPI 687 add CICS VSAM DFHRESP literals
+    * 09/03/07 RPI 690 correct NOTEND to NOTFND for =F'13'
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -821,7 +822,7 @@ public  class  az390 implements Runnable {
     		  "NORMAL)",          // 0 - =F'0'
     		  "ERROR)",           // 1 - =F'1'
     		  "FILENOTFOUND)",    // 2 - =F'12' RPI 687
-    		  "NOTEND)",          // 3 - =F'13' RPI 687
+    		  "NOTFND)",          // 3 - =F'13' RPI 687, RPI 690
     		  "DUPREC)",          // 4 - =F'14' RPI 687
     		  "DUPKEY)",          // 5 - =F'15' RPI 687
     		  "INVREQ)",          // 6 - =F'16'
@@ -838,7 +839,7 @@ public  class  az390 implements Runnable {
     		  "=F'0'",           // 0 "NORMAL)" 
     		  "=F'1'",           // 1 "ERROR)" 
     		  "=F'12'",          // 2 "FILENOTFOUND)" RPI 687
-    		  "=F'13'",          // 3 "NOTEND)" RPI 687 
+    		  "=F'13'",          // 3 "NOTFND)" RPI 687, RPI 690 
     		  "=F'14'",          // 4 "DUPREC)" RPI 687
     		  "=F'15'",          // 5 "DUPKEY)" RPI 687 
     		  "=F'16'",          // 6 "INVREQ)" 

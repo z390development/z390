@@ -32,6 +32,14 @@ public  class  vz390 {
     *          1) return code 8 if open ACB fails
     *          2) return code 4 if close fails
     *          3) set RPLXRBA field to last VX0 read offset
+    * 09/07/07 RPI 681 support new VCDT catalog with entries:
+    *          1) VCLR - base clusters
+    *          2) VAIX - alternate indexes
+    *          3) VPTH - path to vaix or alias vclr
+    *          Dynamically allocate DCB's for ACB
+    *          Use ACB DDNAME file spec to load catalog and
+    *          use option .name suffix to specify entry name
+    *          else use ACB name to find entry in catalog.          
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -42,83 +50,161 @@ public  class  vz390 {
     byte vsam_op_open  = 19;
     byte vsam_op_close = 20;
     /*
-     * VCDT - VSAM cluster definition table
+     * VCDT - VSAM Catalog Definition Table
+     * (See mac\VCDTD for VCDT, VCLR, VAIX, VPTH DSECTS)
      */
-    int  cur_vcdt_addr = 0;
-    int  cur_vcdt_flag = 0; 
-    int  cur_vcdt_lrec = 0;
-    int  cur_vcdt_naix = 0;
-    int  cur_vcdt_paix = 0;
-    int  cur_vcdt_tiot = 0;
-    int  cur_vcdt_aves = 0;
-    int  cur_vcdt_avx0 = 0;
-    int  cur_vcdt_klen = 0;
-    int  cur_vcdt_koff = 0;
-    int  cur_vcdt_aix  = 0;
-    String cur_vcdt_file_name;
-    int  vcdt_id   = 0; // vcdt offset to id C'VCDT'
-    int  vcdt_flag = 4; // vcdt option flags
-    int  vcdt_flag_recv = 0x80000000; // variable record length
-    int  vcdt_flag_ksds = 0x08000000; // KSDS key sequential (default)
-    int  vcdt_flag_ruse = 0x40000000; // reset EOF at ACB open
-    int  vcdt_flag_path = 0x20000000; // use KSDS alternate path in VCDTPAIX
-    int  vcdt_flag_rrds = 0x04000000; // RRDS relative record data set
-    int  vcdt_flag_esds = 0x02000000; // KSDS key sequenced data set
-    int  vcdt_flag_lds  = 0x01000000; // LDS  linear
-    int  vcdt_lrec      = 8; // vcdt offset to max or fixed record length
-    int  vcdt_naix      = 12; // vcdt number of KSDS alternate indexes
-    int  vcdt_paix      = 16; // vcdt addr path aix section with VX0DCB, ALEN, AOFF
-    int  vcdt_tiot      = 20; // vcdt TIOT table index after loading
-    int  vcdt_aves      = 24; // vcdt offset to addr of VESDCB for ESDS data file
-    int  vcdt_avx0      = 28; // vcdt offset to addr of VX0DCB for RRDS index file
-    int  vcdt_klen      = 32; // vcdt KSDS primary key length
-    int  vcdt_koff      = 36; // vcdt KSDS primary key offset
-    int  vcdt_aix       = 40; // vcdt start of alternate index sections
-	/* 
-	 * AIX alternate index section within VCDT
+    int    cur_vcdt_addr = 0; // addr loaded VCDT VSAM catalog
+    String cur_vcdt_id;     // VCDTID C'VCDT'
+    String cur_vcdt_name;   // VCDTNAME name of VCDT catalog
+    int    cur_vcdt_clrt = 0; // VCDTCLRT total base clusters
+    int    cur_vcdt_aixt = 0; // VCDTAIXT tot aix indexes
+    int    cur_vcdt_aixa = 0; // VCDTAIXA addr aix upgrade table of vaix entries
+    int    cur_vcdt_ptht = 0; // VCDTPTHT total paths
+    int    cur_vcdt_ptha = 0; // VCDTPTHA addr path entry
+    int    cur_vcdt_dcba = 0;
+    int    vcdt_id   = 0;  // VCDTID C'VCDT'
+    int    vcdt_name = 4;  // VCDTNAME name of catalog
+    int    vcdt_clrt = 12; // VCDTCLRT tot base clusters
+    int    vcdt_clra = 16; // VCDTCLRA addr base cluster entry
+    int    vcdt_aixt = 20; // VCDTAIXT tot aix indexes
+    int    vcdt_aixa = 24; // VCDTAIXA addr aix index
+    int    vcdt_ptht = 28; // VCDTPTHT tot paths
+    int    vcdt_ptha = 32; // VCDTPTHA addr path 
+    int    vcdt_dcba = 36; // VCDTDCBA addr model DCB for ACB allocation
+    String cur_vcdt_file_name; // from ACB DDNAME/DSNAME
+    String cur_vcdt_path;    
+    int    cur_vcdt_tiot = 0;  // index of tiot entry + 1
+    /*
+     * VCLR - VSAM Cluster entry in VCDT catalog 
+     */
+    String cur_vcltr_id;        // VCLRID C"VCLR"
+    String cur_vclr_name;       // VCLRNAME name of base cluster
+    String cur_vclr_type;       // VCLRTYPE type of base cluster
+    int    cur_vclr_flag = 0;   // VCLRFLAG 4 bytes of flags
+    int    cur_vclr_lavg = 0;   // VCLRLAVG average record length for VREC
+    int    cur_vclr_lrec = 0;   // VCLRLREC max length or fixed length
+    int    cur_vclr_klen = 0;   // VCLRKLEN KSDS primary key length
+    int    cur_vclr_koff = 0;   // VCLRKOFF KSDS primary key offset
+    int    cur_vclr_vesa = 0;   // VCLRVESA addr DSNAME override for VES
+    int    cur_vclr_vx0a = 0;   // VCLRVX0A addr DSNAME override for VX0
+    int    cur_vclr_aixn = 0;   // VCLRAIXN total alterante indexes with upgrade for cluster7
+    int    cur_vclr_aixa = 0;   // VCLRAIXA addr of VAIX addr table
+    int    vclr_id   = 0;  // VCLRID C'VCLR'
+    int    vclr_name = 4;  // VCLRNAME name of base cluster
+    int    vclr_type = 12; // VCLRTYPE ESDS/RRDS/ESDS/LDS
+    int    vclr_flag = 16; // VCLRFLAG option flags
+    int    vclr_flag_vrec = 0x80000000; // VCLRVREC variable record length
+    int    vclr_flag_ruse = 0x40000000; // VCLRRUSE reset EOF at ACB open
+    int    vclr_flag_ksds = 0x08000000; // VCLRKSDS key sequential (default)
+    int    vclr_flag_rrds = 0x04000000; // VCLRRRDS relative record data set
+    int    vclr_flag_esds = 0x02000000; // VCLRESDS entry sequenced data set
+    int    vclr_flag_lds  = 0x01000000; // VCLRLDS  linear
+    int    vclr_lavg = 20; // VCLRLAVG average record length for VREC 
+    int    vclr_lrec = 24; // VCLRLREC max or fixed record length
+    int    vclr_klen = 28; // VCLRKLEN KSDS primary key length
+    int    vclr_koff = 32; // VCLRKOFF KSDS primary key offset
+    int    vclr_vesa = 36; // VCLRVESA addr optional VES DSNAME (Def NAME.VES)
+    int    vclr_vx0a = 40; // VCLRVX0A addr optional VX0 DSNAME (Def NAME.VX0)
+    int    vclr_aixt = 44; // VCLRAIXT total AIX with upgrade for cluster changes
+    int    vclr_aixa = 48; // VCLRAIXA addr of table with AIX upgrade catalog entries
+    int    vclr_len  = 52; // VCLRLEN  length of VCLR catalog entry
+    /* 
+	 * VAIX alternate index VCDT catalog entries
 	 */
-    int cur_aix_sect = 0; // cur aix section addr
-    int aix_adcb     = 0; // cur aid vxn dcb address
-    int aix_klen     = 0; // cur aix vxn key length in VES
-    int aix_koff     = 0; // cur aix vxn key offset in VES
-    int aix_sect_len = 4; // length of each aix section
+    int cur_vaix_addr = 0; // cur aix section addr
+    String cur_vaix_id;    // VAIXID C'VAIX'
+    String cur_vaix_name;  // VAIXNAME name of alternate index
+    String cur_vaix_reln;  // VAIXRELN name of related VCLR base cluster
+    int cur_vaix_flag = 0; // VAIXFLAG option flags
+    int cur_vaix_klen = 0; // VAIXKLEN length of aix key in base cluster
+    int cur_vaix_koff = 0; // VAIXKOFF offset of aix key in base cluster
+    int cur_vaix_vxna = 0; // VAIXVXNA addr optional DSNAME (def. NAME.VXN)
+    int cur_vaix_rela = 0; // VAIXRELA addr related VCLR base cluster catalog entry
+    int vaix_id   =  0; // VAIXID C'VAIX'
+    int vaix_name =  4; // VAIXNAME name of AIX
+    int vaix_reln = 12; // VAIXRELN name of related VCLR base cluster
+    int vaix_flag = 16; // VAIXFLAG 4 bytes of option flags
+    int vaix_flag_ruse = 0x80000000; // VAIXRUSE reset aix eof at open
+    int vaix_flag_ukey = 0x40000000; // VAIXUKEY inforce unique keys
+    int vaix_flag_uaix = 0x20000000; // VAIXUAIX upgrade AIX for base cluster updates
+    int vaix_klen = 20; // VAIXKLEN aix key length in VES
+    int vaix_koff = 24; // VAIXKOFF aix key offset in VES
+    int vaix_vxna = 28; // VAIXVXNA addr optional VXN DSNAME (def. NAME.VXN)
+    int vaix_rela = 32; // VAIXRELA addr of related VCLR base cluster catalog entry
+    int vaix_len  = 36; // VAIXLEN  length of VAIX catalog entry
+    /*
+     * VPTH path VCDT catalog entry
+     */
+    int cur_vpth_addr = 0; // addr current VPTH path entry in VCDT
+    String cur_vpth_id;    // VPTHID C'VPTH'
+    String cur_vpth_name;  // VPTHNAME name of path
+    String cur_vpth_entn;  // VPTHENTN name of path (VAIX or VCLR)
+    int cur_vpth_flag = 0; // VPTHFLAG 4 byte option flags
+    int cur_vpth_enta = 0; // VPTHENTA addr of VAIX or VCLR entry for path
+    int vpth_id   =  0; // VPTHID C'VPTH'
+    int vpth_name =  4; // VPTHNAME name of path
+    int vpth_entn = 12; // VPTHENTN name of entry VAIX or VCLR path
+    int vpth_flag = 20; // VPTHFLAG 4 bytes of option flags
+    int vpth_flag_aixp = 0x80000000; // VPTHUAIX update all upgrade AIX's for base cluster
+    int vpth_flag_aixu = 0x40000000; // VPTHPAIX path is for VAIX vs alias VCLR 
+    int vpth_enta = 24; // VPTHENTA addr of entry VAIX or VCLR entry    
+    int vpth_len  = 28; // VPTHLEN  length of VPTH catalog entry
     /*
 	 * ACB 
 	 */
-	int  cur_acb_addr  = 0;
-	int  cur_acb_macrf = 0;
-    String cur_vcdt_path;
-	byte   cur_acb_oflgs   = 0;
+	int   cur_acb_addr  = 0;
+	byte  cur_acb_id;        // ACBID   x'A0'
+	byte  cur_acb_stype;     // ACBSTYPE x'11' - x'1F' VSAM vs VTAM types
+    short cur_acb_len;       // ACBLEN   length of ACB	
+	int   cur_acb_ambl  = 0; // ACBAMBL  AMB list pointer
+	int   cur_acb_ifr   = 0; // ACBIFR   VTAM interface routine 0 for VSAM
+	int   cur_acb_macrf = 0; // ACBMACRF 4 bytes of option bits
+    byte   cur_acb_oflgs   = 0;
 	boolean acb_seq_out = false;
-	int  acb_id       = 0;  // acb offset to id
-	int  acb_macrf    = 12; // acb offset to macrf flags
-	int  acb_macrf_key = 0x80000000; // KSDS key access
-	int  acb_macrf_adr = 0x40000000; // RBA access
-	int  acb_macrf_cnv = 0x20000000; // control interval access (not suppored)
-	int  acb_macrf_seq = 0x10000000; // sequential access
-	int  acb_macrf_dir = 0x08000000; // direct access
-	int  acb_macrf_in  = 0x04000000; // input only
-	int  acb_macrf_out = 0x02000000; // output add, update, delete
-	int  acb_macrf_ubf = 0x01000000; // user buffer management (ignored)
-	int  acb_macrf_skp = 0x00800000; // skip sequential access
-	int  acb_macrf_nlogon = 0x00400000; // no logon required
-	int  acb_macrf_rst = 0x00200000; // data set reusable (reset rba at open)
-	int  acb_macrf_dsn = 0x00100000; // subtask sharing based on DSN
-	int  acb_macrf_aix = 0x00080000; // process alt. index versus base
-	int  acb_macrf_lsr = 0x00040000; // local shared resources
-	int  acb_macrf_gsr = 0x00020000; // global shared resources
-	int  acb_macrf_ici = 0x00010000; // improve control interval processing
-	int  acb_macrf_dfr = 0x00008000; // defer puts until WRTBUF or required
-	int  acb_macrf_sis = 0x00004000; // sequential insert strategy
-	int  acb_macrf_cfx = 0x00002000; // fix control blocks and buffers
-	int  acb_vcdt      = 16; // acb offset to vcdt addr
-	int  acb_ddnam     = 20; // acb offset to DDNAME
-	int  acb_dsnam     = 28; // acb offset to DSNAME addr
-	int  acb_oflgs     = 32; // acb offset to open flags
-	byte acb_oflgs_open = (byte)0x80;  // acb open
-	byte acb_oflgs_in   = 0x40;  // input only
-	byte acb_oflgs_out  = 0x20;  // output add, update, delete
-    /*
+    String cur_acb_vclrn;    // ACBVCLRN label of ACB (def. VCLR/VPTH entry)
+    int   cur_acb_vclra = 0; // ACBVCLRA addr of VCLR entry in VCDT catalog
+    int   cur_acb_vaixa = 0; // ACBVAIXA addr of VAIX entry in VCDT catalog for path
+    int   cur_acb_dcbt = 0;  // ACBDCBT  total DCB's for VES, VX0, and VNN upgrades
+    int   cur_acb_dcba = 0;  // ACBDCBA  addr of dyn alloc DCB table
+	int  acb_id       =  0; // ACBID   x'A0'
+	int  acb_stype    =  1; // ACBSTYPE x'11' - x'1F' for VSAM vs VTAM 
+	int  acb_len      =  2; // ACBLEN   half word length of ACB
+	int  acb_ambl     =  4; // ACBAMBL  AMB list
+	int  acb_ifr      =  8; // ACBIFR   VTAM interface routine (0 for VSAM)
+	int  acb_macrf    = 12; // ACBMACRF macrf flags
+	int  acb_macrf_key = 0x80000000; // ACBMACR1_KEY key access
+	int  acb_macrf_adr = 0x40000000; // ACBMACR1_ADR access bu RBA or XRBA
+	int  acb_macrf_cnv = 0x20000000; // ACBMACR1_CNV control interval access (not suppored)
+	int  acb_macrf_seq = 0x10000000; // ACBMACR1_SEQ sequential access
+	int  acb_macrf_dir = 0x08000000; // ACBMACR1_DIR direct access
+	int  acb_macrf_in  = 0x04000000; // ACBMACR1_IN  input only
+	int  acb_macrf_out = 0x02000000; // ACBMACR1_OUT output add, update, delete
+	int  acb_macrf_ubf = 0x01000000; // ACBMACR1_UBF user buffer management (ignored)
+	int  acb_macrf_skp = 0x00800000; // ACBMACR2_SKP skip sequential access
+	int  acb_macrf_nlogon = 0x00400000; // ACBMACR2_NLOGON no logon required
+	int  acb_macrf_rst = 0x00200000; // ACBMACR2_RST data set reusable (reset rba at open)
+	int  acb_macrf_dsn = 0x00100000; // ACBMACR2_DSN subtask sharing based on DSN
+	int  acb_macrf_aix = 0x00080000; // ACBMACR2_AIX process alt. index versus base
+	int  acb_macrf_lsr = 0x00040000; // ACBMACR2_LSR local shared resources
+	int  acb_macrf_gsr = 0x00020000; // ACBMACR2_GSR global shared resources
+	int  acb_macrf_ici = 0x00010000; // ACBMACR2_ICI improve control interval processing
+	int  acb_macrf_dfr = 0x00008000; // ACBMACR3_DFR defer puts until WRTBUF or required
+	int  acb_macrf_sis = 0x00004000; // ACBMACR3_SIS sequential insert strategy
+	int  acb_macrf_cfx = 0x00002000; // ACBMACR3_CFX fix control blocks and buffers
+	int  acb_oflgs     = 16; // ACBPFLGS offset to open flag
+	byte acb_oflgs_open = (byte)0x80;  // ACB_OPEN open
+	byte acb_oflgs_in   = (byte)0x40;  // ACBGET only
+	byte acb_oflgs_out  = (byte)0x20;  // ACBPUT output add, update, delete
+    byte acb_oflgs_aixp = (byte)0x10;  // ACBAIXP use aix vs primary key
+    byte acb_oflgs_aixu = (byte)0x08;  // ACBAIXU ugrade aix indexes for VCLR
+	int  acb_ddnam     = 20; // ACBDDNAM DDNAME > env. var.> VCDT[.VCLR/VPTH)
+	int  acb_dsnam     = 28; // ACBDSNAM DSNAME addr > VCDT[.VCLR/VPTH]
+	int  acb_vclrn     = 32; // ACBVCLRN name from label field (def VCDT entry)
+	int  acb_vclra     = 40; // ACBVCLRA addr VCLR in VCDT catalog
+	int  acb_vaixa     = 44; // ACBVAIXA addr VAIX in VCDT catalog for alt path
+	int  acb_dcbt      = 48; // ACBDCBN  total DCB's for this ACB
+	int  acb_dcba      = 52; // ACBDCBA  addr of dynamically allocated DCB's
+	/*
      * RPL request list
      */
 	int cur_rpl_addr  = 0; // cur RPL address
@@ -196,8 +282,10 @@ public  class  vz390 {
 	 */
     long rrds_ves_xrba_min = 0x10;
     long cur_read_index = 0; // xbra read by excp_read_index
+    int  cur_ves_dcba = 0;
     int  cur_ves_tiot_index = 0;
     long cur_ves_xrba = 0;
+    int  cur_vx0_dcba = 0;
     int  cur_vx0_tiot_index = 0;
     long cur_vx0_xrba = 0;
     long cur_vx0_ves_xrba = 0;
@@ -252,10 +340,11 @@ public  class  vz390 {
     public void svc_open_acb(){
     	/*
     	 * open ACB defining VSAM ESDS, RRDS, or KSDS
-    	 *    1.  Use DDNAME/DSNAME to load VCDT 
+    	 *    1.  Use DDNAME/DSNAME to load VCDT and
+    	 *        find VCLR entry based on cat.name or 
+    	 *        search for VCLR with matching ACBNAME. RPI 681
     	 *    2.  Verify ACB vs VCDT options
-    	 *    3.  Open VESDCB ESDS data record file
-    	 *    4.  Open VX0DCB RRDS index file
+    	 *    3.  Open VES, VX0, and any upgrade VXN's
     	 * Notes:
     	 *   1.  Issue ABEND 813 if open fails.
     	 */
@@ -267,15 +356,15 @@ public  class  vz390 {
     		pz390.mem.putInt(pz390.r15,4);
     		return;
     	}
-    	if (load_vcdt()
-    		&& check_acb_macrf()
-    		&& open_ves_dcb()
-    	    && open_vx0_dcb()
-    		&& open_vxn_dcbs()){
+    	if (load_vcdt()           // load VCDT catalog 
+    		&& find_vclr()        // find VCLR cluster
+    		&& check_acb_macrf()  // check VCLR/ACB options
+    		&& open_acb_dcbs()){        // open DCB's for VES,VX0,VXN's
     		// set acb oflg open flag and in/out flags
     		pz390.mem.put(cur_acb_addr+acb_oflgs,(byte)(sz390.cur_open_opt | acb_oflgs_open));
-            pz390.mem.putInt(cur_acb_addr+acb_vcdt,cur_vcdt_addr);
-    		pz390.reg.putInt(pz390.r15,0);
+            pz390.mem.putInt(cur_acb_addr + acb_vclra,cur_acb_vclra);
+            pz390.mem.putInt(cur_acb_addr + acb_vaixa,cur_acb_vaixa);
+            pz390.reg.putInt(pz390.r15,0);
     	} else {
     		pz390.reg.putInt(pz390.r15,8); // RPI 688 VSAM open failed
     	}
@@ -295,10 +384,7 @@ public  class  vz390 {
     		pz390.reg.putInt(pz390.r15,4);
     		return;
     	}
-   		fetch_vcdt_fields();
-  		if (close_ves_dcb()
-	        && close_vx0_dcb()
- 			&& close_vxn_dcbs()){
+  		if (close_acb_dcbs()){
   			// reset acb oflg open flag and in/out flags 
   			pz390.mem.put(cur_acb_addr+acb_oflgs,(byte)0);
   			pz390.reg.putInt(pz390.r15,0);
@@ -309,7 +395,11 @@ public  class  vz390 {
     private boolean load_vcdt(){
     	/*
     	 * load VCDT using ACB DSNAME or DDNAME
-    	 * 
+    	 *   1. If file spec includes dot, use
+    	 *      suffix to find VCDT entry else
+    	 *      use ACBNAME field.
+    	 *   2. Set ACBDCBN, and ACBDCBA from VCDT 
+    	 *      VCLR or VPTH entry. 
     	 */
     	int cur_dsn_addr = pz390.mem.getInt(cur_acb_addr + acb_dsnam);
     	if (cur_dsn_addr == 0){
@@ -317,14 +407,67 @@ public  class  vz390 {
     	} else {
     		pz390.reg.putInt(pz390.r15,cur_dsn_addr);
     	}
+    	sz390.load_vcdt_mode = true;
     	sz390.svc_load();
+    	sz390.load_vcdt_mode = false;
     	if (pz390.reg.getInt(pz390.r15) == 0){
-    		// set current VCDT address and TIOT index 
+    		// set current VCDT address, path, tiot index 
     		cur_vcdt_addr = pz390.reg.getInt(pz390.r0) & pz390.psw_amode;
-    		pz390.mem.putInt(cur_acb_addr + acb_vcdt,cur_vcdt_addr);
-    		pz390.mem.putInt(cur_vcdt_addr + vcdt_tiot,sz390.cur_cde+1); // store +1 (nz indicates set)
-    		fetch_vcdt_fields();
-    		return true;
+    		cur_vcdt_path = sz390.load_pgm_dir;
+    		cur_vcdt_tiot = sz390.cur_cde + 1;
+    	    sz390.put_ascii_string(sz390.load_vcdt_entry,cur_acb_addr + acb_vclrn,8,' ');
+   			return true;
+    	}
+    	return false;
+    }
+    private boolean find_vclr(){
+    	/*
+    	 * find VCLR/VPTH entry in VCDT
+    	 *   1.  Set cur_vclra_addr
+    	 *   2.  Set cur_vptha_addr or 0
+    	 *       a.  If vpth_flag_aixp, set acb_oflgs_aixp else 0
+    	 *       b.  If vpth_flag_aixu, set acb_oflgs_aixu else 0
+    	 *   3.  Se cur_vcdt_dcba for use by init_acb_dcb.
+    	 */
+    	cur_vcdt_dcba  = pz390.mem.getInt(cur_vcdt_addr + vcdt_dcba);
+    	cur_vcdt_clrt  = pz390.mem.getInt(cur_vcdt_addr + vcdt_clrt);
+    	cur_acb_vclra = pz390.mem.getInt(cur_vcdt_addr + vcdt_clra);
+    	while (cur_vcdt_clrt > 0){
+    		cur_vclr_name = sz390.get_ascii_string(cur_acb_vclra + vclr_name,8,false);
+    		if (sz390.load_vcdt_entry.equals(cur_vclr_name)){
+    			pz390.mem.putInt(cur_acb_addr + acb_vclra,cur_acb_vclra);
+    			fetch_vclr_fields();
+    			cur_vpth_addr = 0; // no path
+    			return true;
+    		}
+    		cur_acb_vclra = cur_acb_vclra + vclr_len;
+    	    cur_vcdt_clrt--;
+    	}
+    	int cur_vcdt_ptht = pz390.mem.getInt(cur_vcdt_addr + vcdt_ptht);
+    	int cur_vcdt_ptha = pz390.mem.getInt(cur_vcdt_addr + vcdt_ptha);
+    	while (cur_vcdt_ptht > 0){
+    		if (sz390.load_vcdt_entry.equals(sz390.get_ascii_string(cur_vcdt_ptha + vpth_name,8,false))){
+    			cur_vpth_flag = pz390.mem.getInt(cur_vpth_addr + vpth_flag);
+    			if ((cur_vpth_flag & vpth_flag_aixp) != 0){
+    			    cur_acb_vaixa = pz390.mem.getInt(cur_vcdt_ptha + vpth_enta);
+    			    cur_acb_oflgs = (byte)(cur_acb_oflgs | acb_oflgs_aixp); // use aix path access vs primary
+    			    cur_acb_vclra = pz390.mem.getInt(cur_acb_vaixa + vaix_rela);
+    			} else {
+    				cur_acb_vclra = pz390.mem.getInt(cur_vpth_addr + vpth_enta);
+    				cur_acb_vaixa = 0;
+    			}
+    			pz390.mem.putInt(cur_acb_addr + acb_vclra,cur_acb_vclra);
+    			pz390.mem.putInt(cur_acb_addr + acb_vaixa,cur_acb_vaixa);
+				if ((cur_vpth_flag & vpth_flag_aixu) != 0){
+					cur_acb_oflgs = (byte)(cur_acb_oflgs | acb_oflgs_aixp); // allow aix  ugrades if any
+				}
+			    pz390.mem.putInt(cur_acb_addr + acb_vclra,cur_acb_vclra);
+			    fetch_vclr_fields();
+			    pz390.mem.putInt(cur_acb_addr + acb_vaixa,cur_vaix_addr);
+    			return true;
+    		}
+    		cur_vcdt_ptha = cur_vcdt_ptha + vpth_len;
+    	    cur_vcdt_ptht--;
     	}
     	return false;
     }
@@ -333,24 +476,24 @@ public  class  vz390 {
     	 * fetch acb fields from cur_acb_addr
     	 */
     	cur_acb_macrf  = pz390.mem.getInt(cur_acb_addr + acb_macrf);
-    	cur_vcdt_addr = pz390.mem.getInt(cur_acb_addr + acb_vcdt);
-    	cur_acb_oflgs  = pz390.mem.get(cur_acb_addr + acb_oflgs);   		
+    	cur_acb_oflgs  = pz390.mem.get(cur_acb_addr + acb_oflgs);
+    	cur_acb_vclra  = pz390.mem.getInt(cur_acb_addr + acb_vclra);
+    	cur_acb_vaixa  = pz390.mem.getInt(cur_acb_addr + acb_vaixa);
+    	cur_acb_dcbt   = pz390.mem.getInt(cur_acb_addr + acb_dcbt);
+    	cur_acb_dcba   = pz390.mem.getInt(cur_acb_addr + acb_dcba);
+        cur_ves_dcba       = cur_acb_dcba;
+        cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad);
+        cur_vx0_dcba       = cur_acb_dcba + sz390.dcb_len;
+        cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad);
     }
-    private void fetch_vcdt_fields(){
-    	/* 
-    	 * fetch fields from cur_vcdt_addr 
-    	 * for use by open, get, put, close
+    private void fetch_vclr_fields(){
+    	/*
+    	 * fetch current vclr fields used by rpl_get/put.
+    	 * Note open_acb does additional vclr field fetches,
     	 */
-    	cur_vcdt_flag = pz390.mem.getInt(cur_vcdt_addr + vcdt_flag);
-		cur_vcdt_lrec = pz390.mem.getInt(cur_vcdt_addr + vcdt_lrec);
-		cur_vcdt_naix = pz390.mem.getInt(cur_vcdt_addr + vcdt_naix);
-		cur_vcdt_paix = pz390.mem.getInt(cur_vcdt_addr + vcdt_paix);
-		cur_vcdt_tiot = pz390.mem.getInt(cur_vcdt_addr + vcdt_tiot);
-		cur_vcdt_aves = pz390.mem.getInt(cur_vcdt_addr + vcdt_aves);
-		cur_vcdt_avx0 = pz390.mem.getInt(cur_vcdt_addr + vcdt_avx0);
-		cur_vcdt_klen = pz390.mem.getInt(cur_vcdt_addr + vcdt_klen);
-		cur_vcdt_koff = pz390.mem.getInt(cur_vcdt_addr + vcdt_koff);
-		cur_vcdt_aix  = pz390.mem.getInt(cur_vcdt_addr + vcdt_aix);
+    	cur_vclr_flag = pz390.mem.getInt(cur_acb_vclra + vclr_flag);
+    	cur_vclr_lrec = pz390.mem.getInt(cur_acb_vclra + vclr_lrec);
+    	cur_vclr_klen = pz390.mem.getInt(cur_acb_vclra + vclr_klen);
     }
     private void fetch_rpl_fields(){
     	/*
@@ -374,7 +517,7 @@ public  class  vz390 {
     	 * VCDT and ACB options and if 
     	 * seq out then set acb_seq_out
     	 */
-    	if ((cur_vcdt_flag & vcdt_flag_esds) != 0){
+    	if ((cur_vclr_flag & vclr_flag_esds) != 0){
     		// ESDS
     		if ((cur_acb_macrf & acb_macrf_seq) != 0
     			&& (cur_acb_macrf & acb_macrf_out) != 0){
@@ -382,7 +525,7 @@ public  class  vz390 {
     		} else { 
     			acb_seq_out = false;
     		}
-    	} else if ((cur_vcdt_flag & vcdt_flag_rrds) != 0){
+    	} else if ((cur_vclr_flag & vclr_flag_rrds) != 0){
     		// RRDS
     		if ((cur_acb_macrf & acb_macrf_dir) != acb_macrf_dir
     			 && (cur_acb_macrf & acb_macrf_key) != acb_macrf_key){
@@ -394,124 +537,114 @@ public  class  vz390 {
     	pz390.reg.putInt(pz390.r15,0);
     	return true;
     }
-    private boolean open_ves_dcb(){
+    private boolean open_acb_dcbs(){
     	/*
-    	 * open VES DCB for ESDS data record file
+    	 * 1.  dynamically allocate and open
+    	 *     dcbs required for VES, VX0, and
+    	 *     any upgrade VXN's.
     	 */
-        // use same flags in r0 for open acb and dcb's
-    	sz390.cur_dcb_addr = cur_vcdt_aves;
-    	get_vcdt_path();
-    	sz390.svc_open_dcb(cur_vcdt_path);
-    	if (pz390.reg.getInt(pz390.r15) == 0){
-    		if (acb_seq_out){
-    			reuse_file(cur_vcdt_aves);
-    		}
-    		return true;
+    	int save_open_flags = pz390.reg.getInt(pz390.r0);
+    	if ((cur_acb_oflgs & acb_oflgs_aixu) != 0){
+    		cur_acb_dcbt = pz390.mem.getInt(cur_acb_addr + acb_dcbt);
+    	} else if ((cur_vclr_flag & vclr_flag_lds) != 0){
+    		cur_acb_dcbt = 1; // open VES and VX0 with no AIX upgrades
     	} else {
+    		cur_acb_dcbt = 2;
+    	}
+    	pz390.mem.putInt(cur_acb_addr + acb_dcbt,cur_acb_dcbt);
+    	pz390.reg.putInt(pz390.r0,0);  // force 24 bit 
+    	pz390.reg.putInt(pz390.r1,cur_acb_dcbt * sz390.dcb_len);
+    	sz390.svc_getmain();
+    	if (pz390.reg.getInt(pz390.r15) != 0){
+    		pz390.set_psw_check(pz390.psw_pic_gm_err);
+    	}
+    	pz390.reg.putInt(pz390.r0,save_open_flags); // restore open options
+    	cur_acb_dcba = pz390.reg.getInt(pz390.r1);
+    	pz390.mem.putInt(cur_acb_addr + acb_dcba,cur_acb_dcba);
+    	cur_vclr_vesa = pz390.mem.getInt(cur_acb_vclra + vclr_vesa);
+    	init_acb_dcb(cur_acb_dcba,cur_vclr_lrec,cur_vclr_vesa);
+    	if (!open_acb_dcb(cur_acb_dcba)){
     		return false;
     	}
-    }
-    private boolean open_vx0_dcb(){
-    	/*
-    	 * open VX0 DCB for KSDS< RRDS, ESDS only
-    	 * (not used for LDS RBA access with variable length)
-    	 */
-    	if ((cur_vcdt_flag & vcdt_flag_lds) != 0){
-            // skip open for LDS linear RBA access
-    		pz390.reg.putInt(pz390.r15,0);
-    		return true; 
-    	}
-        // use same flags in r0 for open acb and dcb's
-    	sz390.cur_dcb_addr = cur_vcdt_avx0;
-    	get_vcdt_path();
-    	sz390.svc_open_dcb(cur_vcdt_path);
-    	if (pz390.reg.getInt(pz390.r15) == 0){
-    		if (acb_seq_out){
-    			reuse_file(cur_vcdt_avx0);
+    	if (cur_acb_dcbt > 1){
+    		cur_vclr_vx0a = pz390.mem.getInt(cur_acb_vclra + vclr_vx0a);
+        	init_acb_dcb(cur_acb_dcba + sz390.dcb_len,8+cur_vclr_klen,cur_vclr_vx0a);
+    		if (!open_acb_dcb(cur_acb_dcba + sz390.dcb_len)){
+    			return false;
     		}
-    		return true;
-    	} else {
-    		return false;
-    	}
-    }
-    private boolean open_vxn_dcbs(){
-    	/*
-    	 * open VXN DCB's for KSDS index files
-    	 */
-    	if ((cur_vcdt_flag & vcdt_flag_ksds) == 0){
-            // skip open if not KSDS
-    		pz390.reg.putInt(pz390.r15,0);
-    		return true; 
-    	}
-    	cur_aix_sect = cur_vcdt_aix;
-    	int index = 0;
-    	while (index <= cur_vcdt_naix){
-            // use same flags in r0 for open acb and dcb's
-        	sz390.cur_dcb_addr = pz390.mem.getInt(cur_aix_sect + aix_adcb);
-        	get_vcdt_path();
-        	sz390.svc_open_dcb(cur_vcdt_path);
-        	if (pz390.reg.getInt(pz390.r15) != 0){
-        		return false;
-        	}
-    		if (acb_seq_out){
-    			reuse_file(sz390.cur_dcb_addr);
+    		cur_acb_dcba = cur_acb_dcba + 2 * sz390.dcb_len;
+    		int index = 2;
+    		while (index < cur_acb_dcbt){
+    			// open aix upgrade dcb's
+    			cur_vaix_addr = pz390.mem.getInt(cur_acb_vaixa);
+    			cur_vaix_vxna = pz390.mem.getInt(cur_vaix_addr + vaix_vxna);
+    			cur_vaix_klen = pz390.mem.getInt(cur_vaix_addr + vaix_klen);
+    			init_acb_dcb(cur_acb_dcba,8+cur_vclr_klen,cur_vaix_vxna);
+    			if (!open_acb_dcb(cur_acb_dcba)){
+    				return false;
+    			}
+    			cur_acb_dcba  = cur_acb_dcba + sz390.dcb_len;
+    			cur_acb_vaixa = cur_acb_vaixa + 4;
+    			index++;
     		}
-    		cur_aix_sect = cur_aix_sect + aix_sect_len;
-        	index++;
     	}
     	return true;
     }
-    private boolean close_ves_dcb(){
+    private void init_acb_dcb(int dcb_addr,int dcb_lrecl_f,int dcb_dsname){
     	/*
-    	 * close VES DCB for ESDS data record file
+    	 * copy model dcb from vcdt_dcba to new
+    	 * dynamcially allocated dcb address 
+    	 * and set  DCBLRECLF and DCBDSNAM fields
     	 */
-    	sz390.cur_dcb_addr = cur_vcdt_aves;
-    	sz390.svc_close_dcb();
+    	System.arraycopy(pz390.mem_byte, cur_vcdt_dcba, pz390.mem_byte, dcb_addr, sz390.dcb_len);
+    	pz390.mem.putInt(dcb_addr + sz390.dcb_lrecl_f,dcb_lrecl_f);
+        pz390.mem.putInt(dcb_addr + sz390.dcb_dsnam,dcb_dsname);
+    }
+    private boolean open_acb_dcb(int dcb_addr){
+    	/*
+    	 * dynamically allocate and open
+    	 *  DCB for VES, VX0, VXN's
+    	 */
+        // use same flags in r0 for open acb and dcb's
+    	sz390.cur_dcb_addr = dcb_addr;
+    	get_vcdt_path();
+    	sz390.svc_open_dcb(cur_vcdt_path);
     	if (pz390.reg.getInt(pz390.r15) == 0){
+    		if (acb_seq_out){
+    			reuse_file(dcb_addr);
+    		}
     		return true;
     	} else {
     		return false;
     	}
     }
-    private boolean close_vx0_dcb(){
+    private boolean close_acb_dcbs(){
     	/*
-    	 * close VX0 DCB for KSDS, RRDS, ESDS only
-    	 * (not used for LDS RBA access with variable length)
-    	 */
-    	if ((cur_vcdt_flag & vcdt_flag_lds) != 0){
-            // skip open for LDS linear RBA access
-    		pz390.reg.putInt(pz390.r15,0);
-    		return true; 
-    	}
-    	sz390.cur_dcb_addr = cur_vcdt_avx0;
-    	sz390.svc_close_dcb();
-    	if (pz390.reg.getInt(pz390.r15) == 0){
-    		return true;
+    	 * close dynamically allocated ACB DCB's
+    	 */    	
+    	if ((cur_acb_oflgs & acb_oflgs_aixu) != 0){
+    		cur_acb_dcbt = pz390.mem.getInt(cur_acb_addr + acb_dcbt);
+    	} else if ((cur_vclr_flag & vclr_flag_lds) != 0){
+    		cur_acb_dcbt = 1; // open VES and VX0 with no AIX upgrades
     	} else {
-    		return false;
+    		cur_acb_dcbt = 2;
     	}
-    }
-    private boolean close_vxn_dcbs(){
-    	/*
-    	 * close VXN DCB's for KSDS index files
-    	 * after building/rebuilding each KSDS
-    	 * linear XRBA key index to VES data file. 
-    	 */
-    	if ((cur_vcdt_flag & vcdt_flag_ksds) == 0){
-            // skip open if not KSDS
-    		pz390.reg.putInt(pz390.r15,0);
-    		return true; 
-    	}
-    	cur_aix_sect = cur_vcdt_aix;
     	int index = 0;
-    	while (index <= cur_vcdt_naix){
-        	sz390.cur_dcb_addr = pz390.mem.getInt(cur_aix_sect + aix_adcb);
+    	while (index < cur_acb_dcbt){
+        	sz390.cur_dcb_addr = cur_acb_dcba;
     		sz390.svc_close_dcb();
         	if (pz390.reg.getInt(pz390.r15) != 0){
         		return false;
         	}
-    		cur_aix_sect = cur_aix_sect + aix_sect_len;
-        	index++;
+        	cur_acb_dcba = cur_acb_dcba + sz390.dcb_len;
+    	    index++;
+    	}
+    	pz390.reg.putInt(pz390.r0,cur_acb_dcbt * sz390.dcb_len);
+    	cur_acb_dcba = pz390.mem.getInt(cur_acb_addr + acb_dcba);
+    	pz390.reg.putInt(pz390.r1,cur_acb_dcba);
+    	sz390.svc_freemain();
+    	if (pz390.reg.getInt(pz390.r15) != 0){
+    		pz390.set_psw_check(pz390.psw_pic_gm_err);
     	}
     	return true;
     }
@@ -541,14 +674,14 @@ public  class  vz390 {
     		set_feedback(pdf_def,rc_log,cmp_base,rn_acb_not_open);
     		return;
     	}
-       	if ((cur_vcdt_flag & vcdt_flag_esds) != 0){
+       	if ((cur_vclr_flag & vclr_flag_esds) != 0){
        		// ESDS get
        		if ((cur_acb_macrf & acb_macrf_seq) == acb_macrf_seq){
        		    rpl_get_esds_seq();
        		} else if ((cur_acb_macrf & acb_macrf_adr) == acb_macrf_adr){
        			rpl_get_esds_adr();
        		}
-       	} else if ((cur_vcdt_flag & vcdt_flag_rrds) != 0){
+       	} else if ((cur_vclr_flag & vclr_flag_rrds) != 0){
        		// RRDS get
        		rpl_get_rrds();
        	} else {
@@ -561,7 +694,7 @@ public  class  vz390 {
     	 * ESDS seq get
     	 */
         // read rec xrba from VX0 and read corresponding rec from VES
-    	cur_vx0_tiot_index = pz390.mem.getInt(cur_vcdt_avx0 + sz390.dcb_iobad)-1;
+    	cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
     	cur_vx0_xrba       = sz390.tiot_cur_rba[cur_vx0_tiot_index];
     	if (cur_vx0_xrba >= sz390.tiot_eof_rba[cur_vx0_tiot_index]){
         	// return logical end of file
@@ -581,7 +714,7 @@ public  class  vz390 {
     		// return log index error for now
     		set_feedback(pdf_def,rc_phy,cmp_base,rn_read_index_err);
     	}
-    	cur_ves_tiot_index = pz390.mem.getInt(cur_vcdt_aves + sz390.dcb_iobad)-1;
+    	cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
     	// read ves record at cur vs0 index 
     	if (!excp_read_rec(cur_ves_tiot_index,cur_read_index-1)){ // rpi 688
     		return;
@@ -599,7 +732,7 @@ public  class  vz390 {
     	 * ESDS get by rba or xrba
     	 */
         // get vx0 rba or xrba from RPLARG addr
-    	cur_vx0_tiot_index = pz390.mem.getInt(cur_vcdt_avx0 + sz390.dcb_iobad)-1;
+    	cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
     	if ((cur_rpl_opt & rpl_opt_xrba) == rpl_opt_xrba){
         	cur_vx0_xrba = pz390.mem.getLong(cur_rpl_arg);
         } else {
@@ -622,7 +755,7 @@ public  class  vz390 {
     		// return log index error for now
     		set_feedback(pdf_def,rc_phy,cmp_base,rn_read_index_err);
     	}
-    	cur_ves_tiot_index = pz390.mem.getInt(cur_vcdt_aves + sz390.dcb_iobad)-1;
+    	cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
     	// read ves record at cur vs0 index 
     	if (!excp_read_rec(cur_ves_tiot_index,cur_read_index-1)){ // RPI 688
     		return;
@@ -644,8 +777,8 @@ public  class  vz390 {
     	 *   1.  Read vx0 XRBA for rel. rcd #
     	 *   2.  If XRBA = 0, add rec to VES else rewrite
     	 */
-    	cur_ves_tiot_index = pz390.mem.getInt(cur_vcdt_aves + sz390.dcb_iobad)-1;
-		cur_vx0_tiot_index = pz390.mem.getInt(cur_vcdt_avx0 + sz390.dcb_iobad)-1;
+    	cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
+		cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
 		if (!get_rrds_rec_xrba()){
 			// RRDS rec not written or too big
 			set_feedback(pdf_def,rc_phy,cmp_base,rn_rcd_not_fnd);
@@ -700,6 +833,7 @@ public  class  vz390 {
     	tot_vsam_oper++;
         fetch_rpl_fields();
         fetch_acb_fields();
+        fetch_vclr_fields();
     	if ((cur_acb_oflgs & acb_oflgs_open) == 0){
     		set_feedback(pdf_def,rc_log,cmp_base,rn_acb_not_open);
     		return;
@@ -709,10 +843,10 @@ public  class  vz390 {
     		set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rpl_opt);
     		return;
     	}
-    	if ((cur_vcdt_flag & vcdt_flag_esds) != 0){
+    	if ((cur_vclr_flag & vclr_flag_esds) != 0){
     		// ESDS out - add rec to VES
             rpl_put_esds();
-    	} else if ((cur_vcdt_flag & vcdt_flag_rrds) != 0){
+    	} else if ((cur_vclr_flag & vclr_flag_rrds) != 0){
     		// RRDS
     		rpl_put_rrds();
     	} else {
@@ -724,7 +858,7 @@ public  class  vz390 {
     	/*
     	 * put for open ESDS output file
     	 */
-		cur_ves_tiot_index = pz390.mem.getInt(cur_vcdt_aves + sz390.dcb_iobad)-1;
+		cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
 		cur_ves_xrba = sz390.tiot_eof_rba[cur_ves_tiot_index];
 		if (!excp_write_rec(cur_ves_tiot_index,cur_ves_xrba)){
 			return;
@@ -735,7 +869,7 @@ public  class  vz390 {
 			set_feedback(pdf_def,rc_phy,cmp_base,rn_write_data_err);
 		}
 		// add rec xrba index to VX0
-		cur_vx0_tiot_index = pz390.mem.getInt(cur_vcdt_avx0 + sz390.dcb_iobad)-1;
+		cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
 		cur_vx0_xrba       = sz390.tiot_eof_rba[cur_vx0_tiot_index];
 		if (!excp_write_index(cur_vx0_tiot_index,cur_vx0_xrba,cur_ves_xrba+1)){ // rpi 688
 			return;
@@ -757,8 +891,8 @@ public  class  vz390 {
     	 *   1.  Read vx0 XRBA for rel. rcd #
     	 *   2.  If XRBA = 0, add rec to VES else rewrite
     	 */
-    	cur_ves_tiot_index = pz390.mem.getInt(cur_vcdt_aves + sz390.dcb_iobad)-1;
-		cur_vx0_tiot_index = pz390.mem.getInt(cur_vcdt_avx0 + sz390.dcb_iobad)-1;
+    	cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
+		cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
 		if (get_rrds_rec_xrba()){
 			// rewrite existing record
 			if (!excp_write_rec(cur_ves_tiot_index,cur_read_index)){
@@ -777,7 +911,7 @@ public  class  vz390 {
 				set_feedback(pdf_def,rc_phy,cmp_base,rn_write_data_err);
 			}
 			// update vx0 index to VES XRBA+1 to indicate valid record
-			cur_vx0_tiot_index = pz390.mem.getInt(cur_vcdt_avx0 + sz390.dcb_iobad)-1;
+			cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
 			if (!excp_write_index(cur_vx0_tiot_index,cur_vx0_xrba,cur_ves_xrba+1)){ // rpi 688
 				return;
 			}
@@ -836,7 +970,7 @@ public  class  vz390 {
     		set_feedback(pdf_def,rc_phy,cmp_base,rn_inv_rba_req);
 			return false;
     	}
-    	if ((cur_vcdt_flag & vcdt_flag_recv) != 0){
+    	if ((cur_vclr_flag & vclr_flag_vrec) != 0){
     		// read variable length record putting
     		// 4 length prefix into RPLLREC and the remainer in RPLAREA
     		try {
@@ -857,7 +991,7 @@ public  class  vz390 {
     		}
     	} else {
             // read fixed length record
-    		cur_rpl_lrec = cur_vcdt_lrec;
+    		cur_rpl_lrec = cur_vclr_lrec;
     		try {
     			sz390.tiot_file[tiot_index].seek(xrba);
     			sz390.tiot_file[tiot_index].read(pz390.mem_byte,cur_rpl_area,cur_rpl_lrec);
@@ -883,7 +1017,7 @@ public  class  vz390 {
     		set_feedback(pdf_def,rc_phy,cmp_base,rn_inv_rba_req);
 			return false;
     	}
-    	if ((cur_vcdt_flag & vcdt_flag_recv) != 0){
+    	if ((cur_vclr_flag & vclr_flag_vrec) != 0){
     		// write variable length record with 4 byte prefixed length
     		int save_rec_pfx = pz390.mem.getInt(cur_rpl_area - 4);
     		pz390.mem.putInt(cur_rpl_area-4,cur_rpl_lrec);
@@ -905,7 +1039,7 @@ public  class  vz390 {
     		}
     	} else {
             // write fixed length record
-    		cur_rpl_lrec = cur_vcdt_lrec;
+    		cur_rpl_lrec = cur_vclr_lrec;
     		try {
     			sz390.tiot_file[tiot_index].seek(xrba);
     			sz390.tiot_file[tiot_index].write(pz390.mem_byte,cur_rpl_area,cur_rpl_lrec);

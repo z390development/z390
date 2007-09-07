@@ -146,7 +146,9 @@ public  class  sz390 implements Runnable {
     * 08/15/07 RPI 671 dump TGET/TPUT msgs on trace for option tracet 
     * 08/16/07 RPI 677 only check DCB PUT current record lenght for 0C5 
     * 08/27/07 RPI 685 allow nulls in DCB FT/VT format records
-    * 08/30/07 RPI 689 route all TRACE/TEST output to TRE vs LOG             
+    * 08/30/07 RPI 689 route all TRACE/TEST output to TRE vs LOG 
+    * 09/07/09 RPI 681 and load support for vsam catalog with
+    *          optional .name suffix to specify entry.            
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -186,6 +188,7 @@ public  class  sz390 implements Runnable {
     boolean user_abend   = false;
     boolean svc_abend_type   = system_abend;
     boolean svc_req_dump     = false; // request dump
+    boolean dump_taken = false;
     long stimer_exit_time = 0;  // set by STIMER for update+monitor to check
     int  stimer_exit_addr = 0;  // exit when STIMER tod reached
     boolean stimer_exit_request = false; // set when time expired
@@ -420,6 +423,8 @@ public  class  sz390 implements Runnable {
     String load_pgm_dir   = null;
     String load_pgm_name  = null;
     String load_pgm_type  = null;
+    String load_vcdt_entry = null;
+    boolean load_vcdt_mode = false;
     int    load_code_load = 0;
     int    load_code_len  = 0;
     int    load_code_ent  = 0;
@@ -605,6 +610,7 @@ public  class  sz390 implements Runnable {
      int dcb_rec   = 0x58;       // record area
      int dcb_dsnam = 0x5c;       // ascii file spec override ddname
      int dcb_dcbe  = 0x60; // dcbe extention for eodad and synad
+     int dcb_len   = 0x68; // length of DCB
      int dcbe_eodad = 0;  
      int dcbe_synad = 4;
      boolean dcb_synad_recur = false; // RPI 377
@@ -866,6 +872,9 @@ public synchronized void abort_error(int error,String msg){  // RPI 646
 	  String error_msg = "EZ390E error " + error + " " + msg;
 	  put_log(error_msg);
 	  tz390.put_systerm(error_msg);
+	  if (!dump_taken && tz390.opt_dump){
+		  dump_req(tz390.opt_dump);
+	  }
       exit_ez390();
 }
 public void exit_ez390(){
@@ -1470,13 +1479,16 @@ private void svc_xctl(){
 public boolean get_load_dsn(int dd_dsn_addr){
 	/*
 	 * Set DSN from addr DDNAM with high bit
-	 * or frp, addr DSNAM.
+	 * or from addr DSNAM.
 	 * 
-	 * 1. Set following from ddname/dsname
-	 *    load_pgm_dir (overrides dir_390 default) RPI 244
+	 * 1.  If vcdt_load then strip .xxx and set
+	 *     vcdt_entry = xxx else set to ACBNAME 
+	 *     RPI 691
+	 * 2.  Set following from ddname/dsname
+	 *     load_pgm_dir (overrides dir_390 default) RPI 244
 	 *    load_pgm_name
 	 *    load_pgm_type
-	 * 2. Return true if ok else false.
+	 * 3. Return true if ok else false.
 	 * Notes:
 	 *   1.  If dir_addr high bit on, get user list
 	 *       from 8 byte ddname env. var. at dir_addr
@@ -1510,12 +1522,21 @@ public boolean get_load_dsn(int dd_dsn_addr){
         	return false;
         }
  	} else { // may be path with or without file name
+ 		index = load_dsn.indexOf(".");
+ 		if (load_vcdt_mode){
+ 			if (index > 0){
+ 				load_vcdt_entry = load_dsn.substring(index+1);
+ 			} else {
+ 				load_vcdt_entry = vz390.cur_acb_vclrn;
+ 			}
+ 			load_dsn = load_dsn.substring(0,index).concat(tz390.z390_type);
+ 		}
  		File temp_file = new File(load_dsn);
  		if (temp_file.isFile()){
- 			load_pgm_name = temp_file.getName();
+ 			load_pgm_name = temp_file.getName(); 
  			index = load_pgm_name.indexOf(".");
  			if (index > 0){
- 				load_pgm_type  = load_pgm_name.substring(index);
+				load_pgm_type  = load_pgm_name.substring(index);
  				load_pgm_name = load_pgm_name.substring(0,index);
  			} else {
  				load_pgm_type = "";
@@ -1532,7 +1553,6 @@ public boolean get_load_dsn(int dd_dsn_addr){
             	return false;
             }
  		} else {
- 			log_error(81,"invalid " + dsn_source + "=" + load_dsn);
  			return false;
  		}
  	}
@@ -1704,7 +1724,7 @@ public void svc_link(){
         }
 	}
 }
-private void svc_getmain(){
+public void svc_getmain(){
 	/*
 	 * Input
 	 *   1.  R1 = length to allocate
@@ -1772,7 +1792,7 @@ private void svc_getmain(){
 		pz390.set_psw_check(pz390.psw_pic_no_mem);
 	}
 }
-private void svc_freemain(){
+public void svc_freemain(){
 	/*
 	 * Input
 	 *   1.  r0 = length  to return  RPI 244
@@ -2250,6 +2270,22 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 	       + " PSW=" + tz390.get_hex(dump_loc,8) 
 		   + " INS=" + pz390.get_ins_hex(dump_loc).trim()
 		   + " " + pz390.get_ins_name(dump_loc));
+	dump_req(req_dump);
+	if (!tz390.opt_test){
+		ez390_errors--; // don't count abend twice
+		abort_error(12,"program aborting due to abend "
+		       + abend_code);
+	} else {
+		pz390.test_trace_count = 1; // stop test G/Z/T
+		pz390.psw_check = false; // reset default
+	}
+    svc_abend_type = system_abend;
+}
+private void dump_req(boolean req_dump){
+	/*
+	 * dump regs and optionals dump everything
+	 */
+	dump_taken = true;
 	dump_gpr(-1);
 	if (req_dump){
 		put_dump("");
@@ -2260,15 +2296,6 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 		dump_cde_pgms();
 		dump_mem(0,pz390.tot_mem);  // RPI 583
 	}
-	if (!tz390.opt_test){
-		ez390_errors--; // don't count abend twice
-		abort_error(12,"program aborting due to abend "
-		       + abend_code);
-	} else {
-		pz390.test_trace_count = 1; // stop test G/Z/T
-		pz390.psw_check = false; // reset default
-	}
-    svc_abend_type = system_abend;
 }
 public void dump_gpr(int reg_offset){
 	/*

@@ -1,4 +1,4 @@
-z390 v1.3.07b PTF 09/01/07
+z390 v1.3.07c PTF 09/07/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.07:
@@ -49,6 +49,15 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.07:
 12. RPI 689 - correct TRACET to support TS timestamp option.  Route all dump output to
     just TRE file unless TEST and TRACE are off.  All log messages appear on both LOG 
     and TRE file.
+13. RPI 681 redefine VCDT as VSAM catalog with multiple base cluster, alternate index,
+    and path entries.  At ACB open time the DDNAME points to catalog and user can
+    specify which entry to open via suffix on catalog name or using ACB name as default.
+    See vsam\demo\DEMOCAT.MLC and vsam\test\TESTCAT.MLC for examples and run RTVSAM.BAT
+    regression tests.
+14. RPI 690 correct DFHRESP codes NOTEND to be NOTFND.  Add MODCB RPL support
+    for ARG= and OPTCD=.  Add MODCB ACB MACRF= support. See updated rt\test\TESTCIC1.
+15. RPI 691 correct mz390 macro assembler to terminate parsing global and local
+    macro variable definitionss with singe space prior to comments.
 
 To install this cumulative PTF for z390 follow these steps.
 

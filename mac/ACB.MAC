@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 07/26/07 INITIAL CODING                  
 .* 08/19/07 RPI 680 FIX 10 MUTUALLY MISSPELLED
+.* 09/04/07 RPI 691 ADD ACBNAME, ACBDCBN, ACBDCBS, ACBDCBP
 .*********************************************************************
 &N       ACB   &AM=VSAM,      VSAM VS VTAM                             X
                &BUFSP=0,      MAXIMUM BUFFER SPACE FOR CLUSTER         X
@@ -127,18 +128,23 @@
          DC    B'000&MSKP&NLOGON&RST&DSN&AIX'           ACBMACF2         
          DC    B'0&LSR&GSR&ICI&DFR&SIS&CFX.0'           ACBMACF3         
          DC    B'00000000'                              ACBMACF4
-*
-* ACB Z390 EXTENSIONS
-* 
-         DC    A(0)                     ACBVCDT   ADDR OF VCDT TABLE
+         DC    X'00'                    ACBOFLAGS OPEN FLAGS
+         DC    XL3'00'                  ALIGNMENT
          AIF   (&DDNAME EQ '').DDDEF
          DC    CL8'&DDNAME'
-         AGO   .DDEND                   ACBDDNAM  DDNAME FOR VCDT.390
+         AGO   .DDEND                   ACBDDNAM  DDNAME FOR VCDT CAT
 .DDDEF   ANOP
          DC    CL8'&N'
 .DDEND   ANOP
+*
+* ACB Z390 EXTENSIONS
+* 
          DC    A(&DSNAME)               ACBDSNAM  DSNAME FOR VCDT.390
-         DC    X'00'                    ACBOFLAGS OPEN FLAGS
+         DC    CL8'&N'                  ACBVCLRN  ACB LABEL DEF VCLR 
+         DC    A(0)                     ACBVCLRA  ADDR OF VCLR ENTRY
+         DC    A(0)                     ACBVAIXA  ADDR OF VAIX PTH ENT
+         DC    F'0'                     ACBDCBN   NUMBER OF DCBS OPEN
+         DC    A(0)                     ACBDCBA   ADDR OF DCB TABLE
          ACBD
          DCBD
          MEXIT

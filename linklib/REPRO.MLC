@@ -8,6 +8,7 @@
 * 07/25/07 INITIAL CODING OF REPRO UTILITY TO COPY INFILE TO OUTFILE
 * 08/30/07 RPI 688 CORRECT OUTFILEQ SYNAD ADDRESS FOR ERRORS
 *          CORRECT VAR LENGTH QSAM OUTPUT PREFIX  GENERATION        
+* 09/07/07 RPI 681 CONVERT VCDT TO VSAM CATALOG WITH VCLR/VAIX ENTRIES
 *********************************************************************
 REPRO    SUBENTRY
          COPY  ASMMSP                                                  
@@ -25,80 +26,104 @@ EOF      EQU   *
 *
 * INIT - SET INFILE AND OUTFILE TYPES AND SET RECORD AREA
 *
+* FILE TYPE IS VSAM IF DD FILE NAME UP TO . IS 390 LOADABLE
+* ELSE IT IS ASSUMED QSAM.  NOT WHEN ACB IS OPENED THE NAME
+* FOLLOWING PERIOD IN DDNAME FILE SPEC IS OPTIONAL CATALOG ENTRY
+* NAME FOR BASE CLUSTER.
+*
 INIT     PENTRY
          GETENV INFILEDD
-         IF    (CH,R15,NE,=H'0')
+         IF    (LTR,R15,NE,R15)
                WTO 'REPRO INFILE DDNAME NOT FOUND'
                SUBEXIT RC=15
          ENDIF
-         LR    R1,R2
-         DO    WHILE=(CLI,0(R1),NE,0)
-               AHI R1,1
-         ENDDO
-         AHI   R1,-3
-         IF    (CLC,0(3,R1),EQ,=C'390')
+         PM    LOADVCAT
+         IF    (LTR,R15,EQ,R15)
                MVI  INFILET,C'V'
-         ELSE
+         ELSE  
                MVI  INFILET,C'Q'
          ENDIF
          GETENV OUTFILEDD
-         IF    (CH,R15,NE,=H'0')
+         IF    (LTR,R15,NE,R15)
                WTO 'REPRO OUTFILE DDNAME NOT FOUND'
                SUBEXIT RC=15
          ENDIF
-         LR    R1,R2
-         DO    WHILE=(CLI,0(R1),NE,0)
-               AHI R1,1
-         ENDDO
-         AHI   R1,-3
-         IF    (CLC,0(3,R1),EQ,=C'390')
+         PM    LOADVCAT
+         IF    (LTR,R15,EQ,R15)
                MVI  OUTFILET,C'V'
-         ELSE
+         ELSE  
                MVI  OUTFILET,C'Q'
          ENDIF
          IF    (CLI,INFILET,EQ,C'Q'),AND,(CLI,OUTFILET,EQ,C'Q')
                WTO 'REPRO INFILE OR OUTFILE MUST BE VSAM'
                SUBEXIT RC=16
+         ELSEIF (CLI,INFILET,EQ,C'V'),AND,(CLI,OUTFILET,EQ,C'V')
+               WTO 'REPRO INFILE OR OUTFILE MUST BE QSAM'
+               SUBEXIT RC=16
          ENDIF
          PEXIT
 *
+* ATTEMPT TO LOAD VSAM CATALOG FROM FILE SPEC AT R1 
+* AND SET R15 0 IF SUCCESSFUL
+*
+LOADVCAT PENTRY
+         LR    R14,R1   R14=A(OUTFILE FILE SPEC)
+         IF    (TRT,0(256,R14),NE,FIND_PERIOD_NULL) FIND PERIOD OR NULL
+               LR   R15,R1
+               SR   R15,R14
+               BCTR R15,0
+               EX   R15,VCATMVC         MOVE FILE SPEC WO PERIOD
+               LA   R15,VCATDSN+1(R15)
+               MVC  0(5,R15),VCAT390    APPEND .390
+               LOAD DSNAME=VCATDSN      TRY LOADING CATALOG
+               IF   (LTR,R15,EQ,R15)
+                    MVI  OUTFILET,C'V'  ASSUME VSAM IF CAT LOADED
+               ELSE
+                    MVI  OUTFILET,C'Q'  ELSE ASSUME QSAM
+               ENDIF
+         ELSE
+               MVI  OUTFILET,C'Q'       ASSUME QSAM IF NO PERIOD/NULL
+         ENDIF
+         PEXIT
+VCATMVC  MVC   VCATDSN(0),0(R14)  MOVE VSAM CATALOG DSN 
+*
 * OPEN INFILE AND OUTFILE USING DCB OR ACM BASED ON TYPE
-* AND COPY RECFM AND LRECLF FROM VCDT TO QSAM DCB
+* AND COPY RECFM AND LRECLF FROM VSAM CATALOG CLUSTER ENTRY TO QSAM DCB
 *
 OPEN     PENTRY
          IF    (CLI,INFILET,EQ,C'Q')
                MVC INFILEQ+DCBSYNAD-IHADCB(4),=A(ERR11)
                OPEN (INFILEQ,(INPUT))
-               IF  (CH,R15,NE,=F'0')
+               IF  (LTR,R15,NE,R15)
                    B  ERR11
                ENDIF
          ELSE
                OPEN (INFILEV,(INPUT))
-               IF  (CH,R15,NE,=F'0')
+               IF  (LTR,R15,NE,R15)
                    B  ERR12
                ELSE
                    LA  R1,OUTFILEQ
-                   L   R2,INFILEV+(ACBAVCDT-IHAACB)
+                   LA  R2,INFILEV   RPI 681 (WAS OLD ACBAVCDT)
                    PM    INITREC 
                ENDIF
          ENDIF
          IF    (CLI,OUTFILET,EQ,C'Q')
                MVC  OUTFILEQ+DCBSYNAD-IHADCB(4),=A(ERR13)
                OPEN (OUTFILEQ,(OUTPUT))
-               IF  (CH,R15,NE,=F'0')
+               IF  (LTR,R15,NE,R15)
                    B  ERR13
                ELSE
                    LA  R1,OUTFILEQ
-                   L   R2,INFILEV+(ACBAVCDT-IHAACB)
+                   LA  R2,INFILEV   RPI 681 (WAS OLD ACBAVCDT)
                    PM  INITREC
                ENDIF
          ELSE
                OPEN (OUTFILEV,(OUTPUT))
-               IF  (CH,R15,NE,=F'0')
+               IF  (LTR,R15,NE,R15)
                    B  ERR14
                ELSE
                    LA  R1,INFILEQ
-                   L   R2,OUTFILEV+(ACBAVCDT-IHAACB)
+                   LA  R2,OUTFILEV  RPI 681 (WAS OLD ACBAVCDT)
                    PM  INITREC
                ENDIF
          ENDIF
@@ -112,7 +137,7 @@ CLOSE    PENTRY
                CLOSE INFILEQ
          ELSE
                CLOSE INFILEV
-               IF  (CH,R15,NE,=F'0')
+               IF  (LTR,R15,NE,R15)
                    B  ERR42
                ENDIF
          ENDIF
@@ -121,7 +146,7 @@ CLOSE    PENTRY
                CLOSE OUTFILEQ
          ELSE
                CLOSE OUTFILEV
-               IF  (CH,R15,NE,=F'0')
+               IF  (LTR,R15,NE,R15)
                    B  ERR44
                ENDIF
          ENDIF
@@ -140,7 +165,7 @@ GET      PENTRY
                AND,(CLI,FDBK,EQ,4)
                    B  EOF
                ENDIF
-               IF  (CH,R15,NE,=F'0')
+               IF  (LTR,R15,NE,R15)
                    B  ERR22
                ENDIF
          ENDIF
@@ -166,7 +191,7 @@ PUT      PENTRY
                     MODCB RPL=OUTFILER,RECLEN=(R0)   RPI 688
                ENDIF
                PUT  RPL=OUTFILER
-               IF  (CH,R15,NE,=F'0')
+               IF  (LTR,R15,NE,R15)
                    B  ERR32
                ENDIF
          ENDIF
@@ -174,7 +199,7 @@ PUT      PENTRY
 *
 * INITREC
 *   R1 = QSAM DCB
-*   R2 = VSAM VCDT 
+*   R2 = VSAM VCLR VSAM CATALOG BASE CLUSTER ENTRY 
 *
 *  INITREC - INIT QSAM DCB LRECLF AND RECFM FROM VCDT
 *    R1  = QSAM DCB
@@ -182,13 +207,15 @@ PUT      PENTRY
 *
 INITREC  PENTRY
          USING IHADCB,R1
-         USING IHAVCDT,R2
-         L     R14,VCDTAVES R14= VSAM ESDS DATA DCB
-         MVC   DCBBLKSIF,VCDTLREC                SET QSAM DCBBLKSIF
-         MVC   DCBLRECLF,VCDTLREC                SET QSAM DCBLRECLF
-         IF    (TM,VCDTFLG1,O,VCDTRECV)  RPI 688  
+         USING IHAACB,R2  RPI 681 (WAS OLD IHAVCDT FOR SINGLE FILE)
+         L     R14,ACBDCBA  R14= VSAM ESDS DATA DCB  RPI 681
+         L     R15,ACBVCLRA R15= VCLR BASE CLUSTER   RPI 681
+         USING IHAVCLR,R15                           RPI 681
+         MVC   DCBBLKSIF,VCLRLREC SET QSAM DCBBLKSIF RPI 681
+         MVC   DCBLRECLF,VCLRLREC SET QSAM DCBLRECLF RPI 681
+         IF    (TM,VCLRFLG1,O,VCLRVREC)  RPI 688     RPI 681
                MVI   DCBRECFM,DCBRECFM_V  VARIABLE LENGTH REC QSAM
-               L     R2,VCDTLREC
+               L     R2,VCLRLREC                     RPI 681
                AHI   R2,4          LENGTH OF MAX RECORD + 4
                IF    (CH,R2,GT,=H'32764')
                      B  ERR51
@@ -200,7 +227,7 @@ INITREC  PENTRY
                LA    R4,4(R3)      R4=A(VSAM LOGICAL)
          ELSE
                MVI   DCBRECFM,DCBRECFM_F  FIXED LENGTH REC QSAM
-               L     R2,VCDTLREC
+               L     R2,VCLRLREC                    RPI 681
                ST    R2,DCBBLKSIF
                ST    R2,DCBLRECLF
                MODCB RPL=INFILER,RECLEN=(R2)    RPI 688
@@ -260,6 +287,14 @@ INFILEDD DC    C'INFILE',X'00'
 OUTFILEDD DC   C'OUTFILE',X'00'
 FDBK     DS    X  RPL REASON CODE
 VLEN     DC    F'0'
+VCATDSN  DC    CL256' '
+VCAT390  DC    C'.390',X'00'
+FIND_PERIOD_NULL DC 256X'00'
+         ORG   FIND_PERIOD_NULL+X'00'
+         DC    X'FF' STOP ON SOURCE NULL
+         ORG   FIND_PERIOD_NULL+C'.'
+         DC    X'FF' STOP ON SOURCE PERIOD
+         ORG
          LTORG
          EQUREGS
          VCDTD

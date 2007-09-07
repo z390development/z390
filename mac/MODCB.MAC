@@ -9,10 +9,15 @@
 .* 08/10/07 INITIAL CODING TO SUPPORT AREA, RECLEN INITIALLY                         
 .* 08/22/07 RPI 680 CORRECT REPLRECL
 .* 08/27/07 RPI 688 SUPPORT RPL=(REG)
+.* 09/03/07 RPI 690 ADD ARG= AND OPTCD= SUPPORT
 .*********************************************************************
-&N       MODCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS        X
-               &AREA=,       ADDRESS OF RECORD AREA                    X
-               &RECLEN=      RECORD LENGTH                              
+&N       MODCB &ACB=,        ACB CONTROL BLOCK ADDRESS                 X
+               &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS        X
+               &AREA=,       RPL ADDR OF RECORD AREA                   X
+               &ARG=,        RPL ADDR OF ARG FOR KEY/REC#/RBA/XRBA     X
+               &MACRF=,      ACB OPTIONS                               X
+               &OPTCD=,      OPTION FLAGS                              X
+               &RECLEN=      RPL RECORD LENGTH                              
          LCLB  &MODS         SET IF MOD FOUND
 &NPOS    SETA  N'&SYSLIST
 .POSLOOP ANOP
@@ -27,18 +32,212 @@
 .SKIPDS  ANOP
          AIF   (&AREA NE '').AREA
 .AREA_END ANOP
+         AIF   (&ARG    NE '').ARG
+.ARG_END ANOP
+         AIF   (&MACRF  NE '').MACRF
+         AIF   (&OPTCD  NE '').OPTCD
+.OPTCD_END ANOP
          AIF   (&RECLEN NE '').RECLEN
 .RECLEN_END ANOP
          AIF   (&MODS).EXIT
          MNOTE 12,'MODCB FIELD NOT SUPPORTED YET'
 .EXIT    ANOP
          MEXIT
+.*
+.* MODIFY RPLAREA
+.*
 .AREA    ANOP
 &MODS    SETB   1
-         ZMODCB &RPL,RPLAREA-IHARPL,&AREA
+         ZMODCB &RPL,RPLAREA-IHARPL,&AREA,4
          AGO   .AREA_END
+.*
+.* MODIFY RPLARG
+.*
+.ARG     ANOP
+&MODS    SETB   1
+         ZMODCB &RPL,RPLARG-IHARPL,&ARG,4
+         AGO    .ARG_END
+.*
+.* MODIFY ACBMACRF
+.*
+.MACRF   ANOP
+&I       SETA   0
+&MACR1   SETA   0
+&MACR2   SETA   0
+&MACR3   SETA   0
+&MACR4   SETA   0
+.MACRF_LOOP ANOP
+&I       SETA   &I+1
+         AIF    (&I GT N'&MACRF).MACRF_SET
+         AIF    (&MACRF(&I) EQ 'KEY').MACRF_KEY
+         AIF    (&MACRF(&I) EQ 'ADR').MACRF_ADR
+         AIF    (&MACRF(&I) EQ 'CNV').MACRF_CNV
+         AIF    (&MACRF(&I) EQ 'SEQ').MACRF_SEQ
+         AIF    (&MACRF(&I) EQ 'DIR').MACRF_DIR
+         AIF    (&MACRF(&I) EQ 'IN').MACRF_IN 
+         AIF    (&MACRF(&I) EQ 'OUT').MACRF_OUT
+         AIF    (&MACRF(&I) EQ 'UBF').MACRF_UBF
+         AIF    (&MACRF(&I) EQ 'SKP').MACRF_SKP
+         AIF    (&MACRF(&I) EQ 'NLOGON').MACRF_NLOGON
+         AIF    (&MACRF(&I) EQ 'RST').MACRF_RST
+         AIF    (&MACRF(&I) EQ 'DSN').MACRF_DSN
+         AIF    (&MACRF(&I) EQ 'AIX').MACRF_AIX
+         AIF    (&MACRF(&I) EQ 'LSR').MACRF_LSR
+         AIF    (&MACRF(&I) EQ 'GSR').MACRF_GSR
+         AIF    (&MACRF(&I) EQ 'ICI').MACRF_ICI
+         AIF    (&MACRF(&I) EQ 'DFR').MACRF_DFR
+         AIF    (&MACRF(&I) EQ 'SIS').MACRF_SIS
+         AIF    (&MACRF(&I) EQ 'CFX').MACRF_CFX
+         MNOTE  12,'MODCB ACB UNKNOWN MACRF OPTION - &MACRF(&I)'
+         MEXIT
+.MACRF_KEY ANOP
+&MACR1   SETA  &MACR1+X'80'
+         AGO   .MACRF_LOOP
+.MACRF_ADR ANOP
+&MACR1   SETA  &MACR1+X'40'
+         AGO   .MACRF_LOOP
+.MACRF_CNV ANOP
+&MACR1   SETA  &MACR1+X'20'
+         AGO   .MACRF_LOOP
+.MACRF_SEQ ANOP
+&MACR1   SETA  &MACR1+X'10'
+         AGO   .MACRF_LOOP
+.MACRF_DIR ANOP
+&MACR1   SETA  &MACR1+X'08'
+         AGO   .MACRF_LOOP
+.MACRF_IN  ANOP
+&MACR1   SETA  &MACR1+X'04'
+         AGO   .MACRF_LOOP
+.MACRF_OUT ANOP
+&MACR1   SETA  &MACR1+X'02'
+         AGO   .MACRF_LOOP
+.MACRF_URF ANOP
+&MACR1   SETA  &MACR1+X'01'
+         AGO   .MACRF_LOOP
+.MACRF_SKP ANOP
+&MACR2   SETA  &MACR2+X'80'
+         AGO   .MACRF_LOOP
+.MACRF_NLOGON ANOP
+&MACR2   SETA  &MACR2+X'40'
+         AGO   .MACRF_LOOP
+.MACRF_RST ANOP
+&MACR2   SETA  &MACR2+X'20'
+         AGO   .MACRF_LOOP
+.MACRF_DSN ANOP
+&MACR2   SETA  &MACR2+X'10'
+         AGO   .MACRF_LOOP
+.MACRF_AIX ANOP
+&MACR2   SETA  &MACR2+X'08'
+         AGO   .MACRF_LOOP
+.MACRF_LSR ANOP
+&MACR2   SETA  &MACR2+X'04'
+         AGO   .MACRF_LOOP
+.MACRF_GSR ANOP
+&MACR2   SETA  &MACR2+X'02'
+         AGO   .MACRF_LOOP
+.MACRF_IGI ANOP
+&MACR2   SETA  &MACR2+X'01'
+         AGO   .MACRF_LOOP
+.MACRF_DFR ANOP
+&MACR3   SETA  &MACR3+X'80'
+         AGO   .MACRF_LOOP
+.MACRF_SIS ANOP
+&MACR3   SETA  &MACR3+X'40'
+         AGO   .MACRF_LOOP
+.MACRF_CFX ANOP
+&MACR3   SETA  &MACR3+X'20'
+         AGO   .MACRF_LOOP
+.MACRF_SET ANOP
+         ZMODCB &ACB,ACBMACR1-IHAACB,&MACR1,1
+         ZMODCB &ACB,ACBMACR2-IHAACB,&MACR2,1
+         ZMODCB &ACB,ACBMACR3-IHAACB,&MACR3,1
+         ZMODCB &ACB,ACBMACR4-IHAACB,&MACR4,1
+         AGO   .MACRF_END
+.*
+.* MODIFY RPLOPTCD
+.*
+.OPTCD   ANOP
+&I       SETA   0
+&OPTCDF1 SETA   0
+&OPTCDF2 SETA   0
+.OPTCD_LOOP ANOP
+&I       SETA   &I+1
+         AIF    (&I GT N'&OPTCD).OPTCD_SET
+         AIF    (&OPTCD(&I) EQ LOC).OPTCD_LOC
+         AIF    (&OPTCD(&I) EQ DIR).OPTCD_DIR
+         AIF    (&OPTCD(&I) EQ SEQ).OPTCD_SEQ
+         AIF    (&OPTCD(&I) EQ SKP).OPTCD_SKP
+         AIF    (&OPTCD(&I) EQ ASY).OPTCD_ASY
+         AIF    (&OPTCD(&I) EQ KGE).OPTCD_KGE
+         AIF    (&OPTCD(&I) EQ GEN).OPTCD_GEN
+         AIF    (&OPTCD(&I) EQ XRBA).OPTCD_XRBA
+         AIF    (&OPTCD(&I) EQ KEY).OPTCD_KEY
+         AIF    (&OPTCD(&I) EQ ADR).OPTCD_ADR
+         AIF    (&OPTCD(&I) EQ CNV).OPTCD_CNV
+         AIF    (&OPTCD(&I) EQ BWD).OPTCD_BWD 
+         AIF    (&OPTCD(&I) EQ LRD).OPTCD_LRD
+         AIF    (&OPTCD(&I) EQ WAITX).OPTCD_WAITX
+         AIF    (&OPTCD(&I) EQ UPD).OPTCD_UPD
+         AIF    (&OPTCD(&I) EQ NSP).OPTCD_NSP
+         MNOTE  12,'MODCB UNKNOWN OPTCD OPTION - &OPTCD(&I)'
+         MEXIT
+.OPTCD_LOC ANOP
+&OPTF1     SETA &OPTF1+X'80'
+         AGO   .OPTCD_LOOP
+.OPTCD_DIR ANOP
+&OPTF1     SETA &OPTF1+X'40'
+         AGO   .OPTCD_LOOP
+.OPTCD_SEQ ANOP
+&OPTF1     SETA &OPTF1+X'20'
+         AGO   .OPTCD_LOOP
+.OPTCD_SKP ANOP
+&OPTF1     SETA &OPTF1+X'10'
+         AGO   .OPTCD_LOOP
+.OPTCD_ASY ANOP
+&OPTF1     SETA &OPTF1+X'08'
+         AGO   .OPTCD_LOOP
+.OPTCD_KGE ANOP
+&OPTF1     SETA &OPTF1+X'04'
+         AGO   .OPTCD_LOOP
+.OPTCD_GEN ANOP
+&OPTF1     SETA &OPTF1+X'02'
+         AGO   .OPTCD_LOOP
+.OPTCD_XRBA ANOP
+&OPTF1     SETA &OPTF1+X'014'
+         AGO   .OPTCD_LOOP
+.OPTCD_KEY ANOP
+&OPTF2     SETA &OPTF1+X'80'
+         AGO   .OPTCD_LOOP
+.OPTCD_ADR ANOP
+&OPTF2     SETA &OPTF1+X'40'
+         AGO   .OPTCD_LOOP
+.OPTCD_CNV ANOP
+&OPTF2     SETA &OPTF1+X'20'
+         AGO   .OPTCD_LOOP
+.OPTCD_BWD ANOP
+&OPTF2     SETA &OPTF1+X'10'
+         AGO   .OPTCD_LOOP
+.OPTCD_LRD ANOP
+&OPTF2     SETA &OPTF1+X'08'
+         AGO   .OPTCD_LOOP
+.OPTCD_WAITX ANOP
+&OPTF2     SETA &OPTF1+X'04'
+         AGO   .OPTCD_LOOP
+.OPTCD_UPD ANOP
+&OPTF2     SETA &OPTF1+X'02'
+         AGO   .OPTCD_LOOP
+.OPTCD_NSP ANOP
+&OPTF2     SETA &OPTF1+X'01'
+         AGO   .OPTCD_LOOP
+.OPTCD_SET ANOP
+         ZMODCB &RPL,RPLOPT1-IHARPL,&OPTF1,1
+         ZMODCB &RPL,RPLOPT2-IHARPL,&OPTF2,1
+         AGO   .OPTCD_END
+.*
+.* MODIFY RPLLREC
+.*
 .RECLEN  ANOP
 &MODS    SETB   1
-         ZMODCB &RPL,RPLLREC-IHARPL,&RECLEN
+         ZMODCB &RPL,RPLLREC-IHARPL,&RECLEN,4
          AGO   .RECLEN_END
          MEND

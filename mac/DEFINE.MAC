@@ -7,27 +7,45 @@
 .* Date   - 04/19/07                                                 *
 .*********************************************************************
 .* 07/31/07 RPI 668 INITIAL CODING                               
-.* 08/04/07 RPI 668 ADD VCDTCDE FOR ACCESSING TIOT PATH/FILE     
+.* 08/04/07 RPI 668 ADD VCDTTIOT FOR ACCESSING TIOT PATH/FILE     
+.* 09/02/07 RPI 681 EXPAND DEFINE TO DEFINE ENTIRE VSAM CATALOG      
 .*********************************************************************
 .*
-.* DEFINE - GENERATE z390 VSAM cluster definition loadable table
+.* DEFINE - define z390 VSAM catalog loadable table entries:
 .*
-.*   NAME= path and base file name of all files in VSAM cluster
-.*   RECORDSIZE= fixed length or (average,max length) 
-.*   KEYS= optional index keys ((length,offset),(length,offset),,,)
+.*           1. DEFINE CATALOG,        DEFINE VCDT VSAM CATALOG TABLE
+.*                     NAME=           NAME OF VCDT CATALOG TABLE
+.*           2. DEFINE CLUSTER,        DEFINE BASE CLUSTER (DATA/INDEX)
+.*                     NAME=,          BASE OF BASE CLUSTER
+.*                     INDEX=INDEXED/NONINDEXED/NUMBERED/LINEAR, TYPE
+.*                     RECORDSIZE=(average,max) or fixed length, V/F
+.*                     KEYS=(64,0),    KSDS PRIMARY KEY LENGTH, OFFSET
+.*                     REUSE=NOREUSE,  ERASE ALL DATA AT OPEN
+.*                     VESDSN=,        OPTIONAL DSNAME FOR VES FILE 
+.*                     VX0DSN=         OPTIONAL DSNAME FOR VX0 INDEX      
+.*           3. DEFINE ALTERNATEINDEX, DEFINE KSDS ALTERNATE INDEX KEY
+.*                     NAME=,          NAME OF KSDS ALT IDX
+.*                     RELATE=,        NAME OF BASE CLUSTER
+.*                     KEYS=(64,0),    ALT KEY IN BASE CLUSTER 
+.*                     UNIQUEKEY=UNIQUEKEY,  DO NOT ALLOW DUPLICATES
+.*                     UPGRADE=UPGRADE,      UPDATE AIX FOR BASE CHANGE
+.*                     VXNDSN=         OPTIONAL DSNAME FOR AIX
+.*           4. DEFINE PATH,           DEFINE PATH FOR KSDS ACCESS
+.*                     NAME=,          NAME OF PATH
+.*                     PATHENTRY=,     NAME OF AIX OR BASE
+.*                     UPDATE=UPDATE   UPDATE AIX FOR BASE CHANGE
+.*           5. DEFINE END             GENERATE CATALOG TABLE
 .*
-.*  Example: DEFINE NAME=CLUSTER1,RECORDSIZE=40             X
-.*                  KEYS=(10,0),AIX=((10,10,DUP))
+.*   See example in vsam\demo and vsam\test directories:
+.*     1.  vsam\demo\DEMOCAT.MLC defines demo VSAM files
+.*     2.  vsam\test\TESTCAT.MLC defines test VSAM files
 .*
-.*    The above example can be assembled and linked into CLUSTER1.390
-.*    This table is loaded at ACB OPEN time to access the following
-.*    VSAM cluster files:
-.*      CLUSTER1.VES - entry sequenced base data file with fixed
-.*                     length 40 byte records.
-.*      CLUSTER1.VX0 - primary key index file with 8 byte XRBA's to
-.*                     each record in sequence by key1 (len 10, off 0)
-.*      CLUSTER1.VX1 - alternate index file with 8 byte XRBA's to each
-.*                     record in seq by non-unique key (len 10, off 10)
+.*     The DDNAME in ACB must point to the VCDT loadable catalog table
+.*     containing the base cluster or alternate path to be opened.  
+.*     The DDNAME may have optional specific name appended to catalog
+.*     name separated by period otherwise the ACB label field name will
+.*     be the name used to search VCDT catalog for matching cluster
+.*     or alternate path name.
 .*
 .*  Notes:
 .*    1.  Variable length VSAM records are prefixed by 4 byte length  
@@ -36,231 +54,304 @@
 .*        Specify INDEXED=NUMBERED   for RRDS relative record file.
 .*        Specify INDEXED=LINEAR     for LDS  linear (XRBA,LEN access)
 .*        The default is KSDS key sequened file with at primary key.
-.*    3.  KSDS, RRDS. ESDS. and LDS build VX0 RBA index for use in 
-.*        random access by KSDS primary key or RRDS record #.
-.*        High-values indicate deleted or unwritten record.
-.*        Negative_value XRBA point to inserted record indexes.
+.*    3.  KSDS, RRDS. ESDS. and LDS build VX0 XRBA index for use in 
+.*        random access by KSDS primary key, RRDS record #, or ESDS
+.*        or LDS RBA/XRBA access. Zero value XRBA entry indicates
+.*        record has been erased or has not been written yet.
+.*        Negative_value XRBA point to inserted record binary tree
+.*        structure records in the VX0 index file.  Positive non-zero
+.*        XRBA values are pointers to VES data record with 1 added to
+.*        avoid zero for the first VES record XRBA pointer which is 
+.*        actually at zero.
 .*        Note updates for variable records with different lengths and
 .*        new inserted records are added to VES ESDS data file and the
 .*        corresponding VX0 RBA pointer is updated accordingly.         
-.*    5.  Any number of additional VXN alternate key indexes can be
-.*        defined with contain XRBA pointers into VX0.  
+.*    5.  Any number of additional alternate key indexes can be
+.*        defined with contain XRBA pointers into VX0 primary index.  
 .*        Beware of overhead to update each alternate index file
 .*        every time a record is added, deleted, or updated.
 .*********************************************************************
-         DEFINE &NAME=,      PATH AND BASE NAME OF CLUSTER FILES       X
-               &RECORDSIZE=, FIXED LENGTH OR (AVG,MAX) FOR VARIABLE    X
-               &INDEX=INDEXED, LINEAR/NONINDEXED/NUMBERED (DEF IS KSDS)X
-               &KEYS=(64,0),  (LENGTH,OFFSET) FOR KSDS PRIMARY KEY     X
-               &AIX=,         ((LEN,OFF,DUP),(LEN,OFF,DUP)..) ALT IX'S X
-               &PATH=,        (LEN,OFF) FOR CURRENT AIX (DEF PRIMARY)  X
-               &REUSE=NOREUSE RESET HIGH RBA AT OPEN FOR WORK FILE      
-         AIF   (&NAME EQ '').ERR1         MISSING CLUSTER NAME
-.*
-.* SET LRECL, RECFM, AND RECV OPTION FLAG 
-.*
-         AIF   (&RECORDSIZE EQ '').ERR2   MISSING RECORDSIZE
-&OPT_RECV SETB  0  ASSUME FIXED LENGTH RECORDS
-&RECFM   SETC  'F'  
-&LRECL   SETA  &RECORDSIZE(1)
-         AIF   (N'&RECORDSIZE EQ 1).REC_END
-&OPT_RECV SETB  1  VARIABLE LENGTH RECORDS UP TO 2 GB
-&RECFM   SETC  'V'
-&LRECL   SETA  &RECORDSIZE(2)
-.REC_END ANOP
-.*
-.* SET REUSE OPTION
-.*
-&OPT_REUSE SETB  0  ASSUME NON REUSABLE FILE (NO EOF RESET AT OPEN)
-         AIF   (&REUSE EQ 'NOREUSE').REUSE_END
-&OPT_REUSE SETB  1  REUABLE FILE (EOF RESET TO 0 AT EACH ACB OPEN)
-.REUSE_END ANOP
-.*
-.* SET PATH OPTION 
-.*
-&NAIX    SETA  N'&AIX   NUMBER OF ALTERNATE INDEX (LEN,OFF) KEYS
-&OPT_PATH SETB 0
-&AIX_PATH_SECT SETC '0'
-         AIF   (&PATH EQ '').PATH_END
-         AIF   (N'&PATH NE 2).ERR3
-&I       SETA  0
-.FIND_AIX_PATH ANOP
-&I       SETA  &I+1
-         AIF   (&I GT &NAIX).ERR10
-         AIF   (&PATH(1) NE &AIX(&I,1)).FIND_AIX_PATH
-         AIF   (&PATH(2) NE &AIX(&I,2)).FIND_AIX_PATH
-&OPT_PATH SETB 1
-&AIX_PATH_SECT SETC 'AIXSECT+&I*AIXLEN' 
-.PATH_END ANOP         
-.*
-.* SET TYPE KSDS, RRDS, ESDS, OR LDS BASED ON 
-.* INDEX=INDEXED/NUMBERED/NONINDEXED/LDS (INDEXED KSDS IS DEFAULT)
-.*
-&NKEYS   SETA  N'&KEYS
-&OPT_KSDS    SETB  1   KSDS IS DEFAULT REQUIRING PRI KEYS-(LEN,OFF)
-&KSDS_KLEN SETA 0
-&KSDS_KOFF SETA 0
-&OPT_RRDS SETB  0  NOT RELATIVE RECORD
-&OPT_ESDS SETB  0  NOT ENTERY SEQUENCED
-&OPT_LDS  SETB  0  NOT LINEAR (XRBA,LEN) ACCESS
-         AIF   (&INDEX EQ 'INDEXED').KSDS
-&OPT_KSDS    SETB  0   NOT KSDS 
-         AIF   (&INDEX EQ 'NUMBERED').RRDS
-         AIF   (&INDEX EQ 'NONINDEXED').ESDS
-         AIF   (&INDEX EQ 'LINEAR').LDS
-         AGO   .ERR5
-.*
-.* MUST HAVE PRIMARY OR ALT INDEX
-.*
-.KSDS    ANOP
-         AIF   (&NKEYS NE 2).ERR4
-&KSDS_KLEN SETA &KEYS(1)
-&KSDS_KOFF SETA &KEYS(2)
-         AGO   .GEN_VCDT
-.RRDS    ANOP
-&OPT_RRDS SETB  1 RELATIVE RECORD
-         AIF   (&NAIX EQ 0).GEN_VCDT
-         AGO   .ERR6
-.ESDS    ANOP
-&OPT_ESDS SETB  1  ENTRY SEQUENCED
-         AIF   (&NAIX EQ 0)).GEN_VCDT
-         AGO   .ERR7
-.LDS     ANOP
-&OPT_LDS SETB  1 LINEAR (ACCESS VIA XRBA WITH USER SPEC CI LENGTH)
-         AIF   (&NAIX EQ 0).GEN_VCDT
-         AGO   .ERR8
-*
-* VSAM CLUSTER DEFINITION TABLE (VCDT)
-*
-.GEN_VCDT ANOP
-VCDT     CSECT 
-         DC    C'VCDT'       VCDTID   VCDT ID
-&OPTS    SETC  '&OPT_RECV&OPT_REUSE&OPT_PATH.0'              4 BITS+
-&OPTS    SETC  '&OPTS'.'&OPT_KSDS&OPT_RRDS&OPT_ESDS&OPT_LDS' 4 BITS
-         DC    B'&OPTS,0,0,0' VCDTOPTS (VCDT OPTCD OPTION BIT FLAGS)
-         AIF   (&OPT_RECV).MNOTE_RECV
-.MNOTE_RECF ANOP
-         MNOTE 'DEFINE VSAM FIXED RECORD LENGTH = &LRECL'
-         AGO   .MNOTE_REC_END
-.MNOTE_RECV ANOP
-         MNOTE 'DEFINE VSAM MAX VARIABLE LENGTH RECORD = &LRECL'
-.MNOTE_REC_END ANOP
-         AIF   (&OPT_KSDS).MNOTE_KSDS
-         AIF   (&OPT_RRDS).MNOTE_RRDS
-         AIF   (&OPT_ESDS).MNOTE_ESDS
-         AIF   (&OPT_LDS).MNOTE_LDS
-         AGO   .ERR5
-.MNOTE_KSDS ANOP
-         MNOTE 'DEFINE VSAM KSDS DATA AND &NKEYS KEY INDEX FILES'
-         AGO   .ENDDS
-.MNOTE_RRDS ANOP
-         MNOTE 'DEFINE VSAM RRDS DATA AND RECORD INDEX FILE'
-         AGO   .ENDDS
-.MNOTE_ESDS ANOP
-         MNOTE 'DEFINE VSAM ESDS - DATA AND RECORD INDEX FILE'
-         AGO   .ENDDS
-.MNOTE_LDS ANOP
-         MNOTE 'DEFINE VSAM LDS  - DATA AND RECORD INDEX FILE'
-         AGO   .ENDDS
-.ENDDS   ANOP
-         DC    A(&LRECL) VCDTRECL MAX RECORD LENGTH < 2 GB
-         DC    A(&NAIX) VCDTNAIX NUMBER OF ALTERNATE KEYS 1-N
-         DC    A(&AIX_PATH_SECT) VCDTPAIX ADDR ALT PATH SECTION 
-         DC    F'0' VCDTTIOT TIOT TABLE INDEX AFTER LOADING
-*
-* ESDS BASE DATA FILE SECTION
-*
-         DC    A(VESDCB) VCDTAVES ADDR VES DCB FOR ES DATA
-*
-* KSDS/RRDS/ESDS INDEX XRBA RECORD INDEX SECTION
-*
-         DC    A(VX0DCB) VCDTAVX0 ADDR VX0 DCB FOR XRBA INDEX FILE
-         DC    A(&KSDS_KLEN) VCDTKLEN PRIMARY KEY LENGTH FOR KSDS
-         DC    A(&KSDS_KOFF) VCDTKOFF PRIMARY KEY OFFSET FOR KSDS
-         AIF   (&NAIX EQ 0).AIX_END
-*
-* KSDS ALTERNATE KEY INDEX SECTIONS (SEE IHAAIX IN VCDTD MACRO)
-*
-*  NOTE VXNDCB HIGH BIT ON IF ALTERNATE INDEX DUPLICATE KEYS OK                
-*
-AIXSECT  DS    0A  START OF AIX ENTRIES WITH A(VXNDCB,KEYLEN,KEYOFF)
-&I       SETA  0
-.AIXLOOP ANOP
-&I       SETA  &I+1
-         AIF   (&I GT &NAIX).AIX_END
-         AIF   (&AIX(&I,3) NE '').DUP_ALT_KEY  
-VXN&I.ADCB DC    A(VX&I.DCB) VX&I.DCB FOR UNIQUE AIX KEY&I
-VX&I.KEYL DC A(&AIX(&I,1)+X'80000000') UNIQUE ALT KEY 
-         AGO   .END_ALT_KEY
-.DUP_ALT_KEY ANOP
-VX&I.ADCB DC A(VX&I.DCB+X'80000000') VX&I.DCB FOR NON-UNIQUE AIX KEY&I
-VX&I.KEYL DC A(&AIX(&I,1)) DUPLICATE ALT KEY ALLOWED
-.END_ALT_KEY ANOP 
-VX&I.KLEN DC A(&AIX(&I,1)) PRIMARY KSDS KEY LENGTH
-VX&I.LOFF DC A(&AIX(&I,2)) PRIMARY KSDS KEY OFFSET
-         AGO   .AIXLOOP
-.AIX_END ANOP
-*
-* VES DCB FOR ES ENTRY SEQUENCE BASE DATA FILE
-*
-VESDSN   DC    C'&NAME..VES',X'00'
-VESDCB   DCB   DSORG=PS,MACRF=(GM,PM),DSNAME=VESDSN,      ESDS BASE    X
-               RECFM=&RECFM,LRECL=&LRECL,BLKSIZE=&LRECL
-*
-* VX0 DCB FOR KSDS PRIMARY KEY INDEX OR RRDS/ESDS RECORD INDEX          
-*
-* NOTES:
-*   1.  VX0 INDEXES ARE 8 BYTE XRBA POINTERS INTO ESDS BASE FILE
-*   2.  HIGH-VALUES FOR RBA INDICATES RECORD DELETED OR NEVER WRITTEN
-*   3.  NEG-VALUES ARE KSDS INSERT POINTERS TO INDEXED INSERT RECORDS
-*
-VX0DSN   DC    C'&NAME..VX0',X'00'
-VX0DCB   DCB   DSORG=PS,MACRF=(GM,PM),DSNAME=VX0DSN,      RRDS INDEX   X
-               RECFM=F,LRECL=8,BLKSIZE=8
-         AIF   (&NAIX EQ 0).END_VXN
-*
-* VXN DCBS FOR KSDS ALTERNATE INDEXE FILES
-*
-* NOTES:
-*   1.  VXN INDEXES ARE 8 BYTE XRBA POINTERS INTO VX0 RECORD INDEX FILE
-*   2.  HIGH-VALUES FOR XRBA INDICATES ALT KEY DELECTED
-*   3.  NEG-VALUE   FOR XBRA INDICATES POINTER TO INDEXED INSERTED KEYS 
-*
-.GEN_VXNDCB  ANOP
-&I       SETA  0
-.VXNLOOP ANOP
-&I       SETA  &I+1
-         AIF   (&I GT &NAIX).END_VXN
-VX&I.DSN DC    C'&NAME..VX&I',X'00' 
-VX&I.DCB DCB DSORG=PS,MACRF=(GM,PM),DSNAME=VX&I.DSN,                   X
-               RECFM=F,LRECL=8,BLKSIZE=8  8 BYTE RBA KEY&I INDEX            
-         AGO   .VXNLOOP
-.END_VXN ANOP
-.*
-.* GEN DCB AND VCDT DSECTS IF NOT ALREADY DEFINED
-.*
-.EXIT    ANOP
-         VCDTD
-         DCBD
+         DEFINE &TYPE,         CATALOG,CLUSTER,ALTERNATEINDEX,PATH     X
+               &NAME=,         NAME OF CATALOG, CLUSTER, AIX, OR PATH  X
+               &ENTRY=,        AIX OR BASE CLUSTER NAME FOR PATH       X
+               &RECORDSIZE=,   FIXED LENGTH OR VAR (AVG,MAX) CLUSTER   X
+               &INDEX=INDEXED, LINEAR/NONINDEXED/NUMBERED CLUSTER TYPE X
+               &KEYS=(64,0),   (LENGTH,OFFSET) FOR KSDS PRI/ALT KEY    X
+               &RELATE=,       BASE CLUSTER NAME FOR ALTERNATEINDEX    X
+               &REUSE=NOREUSE, RESET HIGH XRBA AT OPEN FOR AIX/CLUSTER X
+               &UNIQUEKEY=UNIQUEKEY, REQUIRE UNIQUE AIX KEYS           X
+               &UPDATE=UPDATE,   REQUIRE AIX UPDATES FOR THIS PATH     X
+               &UPGRADE=UPGRADE, REQUIRE AIX UPDATE FOR THIS AIX       X
+               &VESDSN=, OPTIONAL CLUSTER DSNAME FOR VES (DEF NAME.VES)X
+               &VX0DSH=, OPTIONAL CLUSTER DSNAME FOR VX0 (DEF NAME.VX0)X
+               &VXNDSN=  OPTIONAL AIX     DSNAME FOR VXN (DEF NAME.VXN)
+         COPY  ZDEFINE.CPY   INCLUDE GLOBALS SHARED WITH ZDEFINE.MAC
+         AIF   (&TYPE EQ 'CATALOG').DEFINE_CATALOG
+         AIF   (&TYPE EQ 'CLUSTER').DEFINE_CLUSTER
+         AIF   (&TYPE EQ 'ALTERNATEINDEX').DEFINE_AIX
+         AIF   (&TYPE EQ 'AIX').DEFINE_AIX
+         AIF   (&TYPE EQ 'PATH').DEFINE_PATH
+         AIF   (&TYPE EQ 'END').DEFINE_END
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE INVALID TYPE - &TYPE'        
          MEXIT
-.ERR1    MNOTE 12,'DEFINE - MISSING NAME FOR CLUSTER' 
-         AGO   .EXIT
-.ERR2    MNOTE 12,'DEFINE - RECORDSIZE=LEN OR (AVG,MAX) MISSING'
-         AGO   .EXIT
-.ERR3    MNOTE 12,'DEFINE - PATH=(LEN,OFF) AIX KEY INVALID - &PATH'
-         AGO   .EXIT
-.ERR4    MNOTE 12,'DEFINE - KEYS=(LEN,OFF) PRI KEY INVALID - &KEYS'
-         AGO   .EXIT
-.ERR5    MNOTE 12,'DEFINE INVALID FILE TYPE INDEXED=&INDEXED'
-         AGO   .EXIT
-.ERR6    MNOTE 12,'DEFINE RRDS CANNOT HAVE ALT KEYS OR PATH'
-         AGO   .EXIT
-.ERR7    MNOTE 12,'DEFINE ESDS CANNOT HAVE ALT KEYS OR PATH'
-         AGO   .EXIT
-.ERR8    MNOTE 12,'DEFINE LDS CANNOT HAVE ALTERNATE KEYS OR PATH'
-         AGO   .EXIT
-.ERR9    MNOTE 12,'DEFINE PATH REQUIRES CORESPONDING AIX KEY'
-         AGO   .EXIT
-.ERR10   MNOTE 12,'DEFINE PATH KEY NOT FOUND IN AIX KEYS'
-         AGO   .EXIT
+.*
+.* DEFINE CATALOG
+.*
+.DEFINE_CATALOG ANOP
+         AIF   (&CATALOG NE '' AND K'&CATALOG LE 8).SET_CATALOG
+.SET_CATALOG ANOP
+&CATALOG SETC &NAME
+         MEXIT
+.*
+.* DEFINE CLUSTER
+.*
+.DEFINE_CLUSTER ANOP
+&CLR_TOT SETA  &CLR_TOT+1
+.*
+.* SET BASE CLUSTER NAME
+.*
+.SET_CLR_NAME ANOP
+         AIF   (&NAME NE '' AND K'&NAME LE 8).SET_CLR_NAME2
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE INVALID BASE CLUSTER NAME - &NAME'
+         MEXIT
+.SET_CLR_NAME2 ANOP
+&CLR_NAME(&CLR_TOT) SETC &NAME       
+.*
+.* SET BASE CLUSTER TYPE
+.*
+.SET_CLR_TYPE ANOP
+         AIF   (&INDEX EQ 'INDEXED').SET_CLR_KSDS
+         AIF   (&INDEX EQ 'NONINDEXED').SET_CLR_ESDS
+         AIF   (&INDEX EQ 'NUMBERED').SET_CLR_RRDS
+         AIF   (&INDEX EQ 'LINEAR').SET_CLR_LDS
+&ERROR   SETB  1
+         MNOTE 12,'ZDEFCLR INVALID INDEX TYPE - &INDEX'
+         MEXIT
+.SET_CLR_KSDS ANOP
+&CLR_TYPE(&CLR_TOT) SETC 'KSDS'
+&CLR_KSDS(&CLR_TOT) SETB 1
+         AGO   .SET_CLR_VREC
+.SET_CLR_ESDS ANOP
+&CLR_TYPE(&CLR_TOT) SETC 'ESDS'
+&CLR_ESDS(&CLR_TOT) SETB 1
+         AGO   .SET_CLR_VREC
+.SET_CLR_RRDS ANOP
+&CLR_TYPE(&CLR_TOT) SETC 'RRDS'
+&CLR_RRDS(&CLR_TOT) SETB 1
+         AGO   .SET_CLR_VREC
+.SET_CLR_LDS ANOP
+&CLR_TYPE(&CLR_TOT) SETC 'LDS'
+&CLR_LDS(&CLR_TOT) SETB 1
+.*
+.* SET BASE CLUSTER VREC FLAG AND LAVG AND LMAX
+.*
+.SET_CLR_VREC ANOP
+         AIF  (N'&RECORDSIZE EQ 2).SET_CLR_VREC2
+&CLR_LMAX(&CLR_TOT) SETA &RECORDSIZE
+         AGO  .SET_CLR_KEY
+.SET_CLR_VREC2 ANOP
+&CLR_VREC(&CLR_TOT) SETB 1
+&CLR_LAVG(&CLR_TOT) SETA &RECORDSIZE(1)
+&CLR_LMAX(&CLR_TOT) SETA &RECORDSIZE(2)
+.*
+.* SET BASE CLUSTER KSDS KEY LENGTH AND OFFSET
+.*
+.SET_CLR_KEY ANOP
+         AIF (&CLR_TYPE(&CLR_TOT) NE 'KSDS').SET_CLR_REUSE
+         AIF (N'&KEYS EQ 2).SET_CLR_KEY2
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE INVALID KEYS FOR KSDS - &KEYS'
+         MEXIT
+.SET_CLR_KEY2 ANOP
+&CLR_KLEN(&CLR_TOT) SETA &KEYS(1)       
+&CLR_KOFF(&CLR_TOT) SETA &KEYS(2)
+         AIF   (&CLR_KOFF(&CLR_TOT)+&CLR_KLEN(&CLR_TOT) LE &CLR_LMAX(&CX
+               LR_TOT)).SET_CLR_KEY3
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE KEY EXTENDS BEYOND RECORDSIZE'
+         MEXIT
+.SET_CLR_KEY3 ANOP
+.*
+.* SET BASE CLUSTER REUSE
+.*
+.SET_CLR_REUSE ANOP
+         AIF   (&REUSE EQ 'NOREUSE').SET_CLR_VESDSN
+&CLR_REUSE(&CLR_TOT) SETB 1
+.*
+.* SET BASE CLUSTER VESDSN
+.*
+.SET_CLR_VESDSN ANOP
+&CLR_VES(&CLR_TOT) SETC '&NAME..VES'
+         AIF   (&VESDSN EQ '').SET_CLR_VX0DSN
+&CLR_VES(&CLR_TOT) SETC '&VSEDSN'
+.*
+.* SET BASE CLUSTER VX0DSN
+.*
+.SET_CLR_VX0DSN ANOP
+&CLR_VX0(&CLR_TOT) SETC '&NAME..VX0'
+         AIF   (&VESDSN EQ '').SET_CLR_VX0DSN2
+&CLR_VX0(&CLR_TOT) SETC '&VSEDSN'
+.SET_CLR_VX0DSN2 ANOP
+         MEXIT
+.*
+.* DEFINE AIX
+.*
+.DEFINE_AIX ANOP
+&AIX_TOT SETA  &AIX_TOT+1
+.*
+.* SET AIX NAME
+.*
+.SET_AIX_NAME ANOP
+         AIF   (&NAME NE '' AND K'&NAME LE 8).SET_AIX_NAME2
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE INVALID AIX NAME - &NAME'
+         MEXIT
+.SET_AIX_NAME2 ANOP
+&AIX_NAME(&AIX_TOT) SETC &NAME       
+.*
+.* SET AIX KEY LENGTH AND OFFSET
+.*
+.SET_AIX_KEY ANOP
+         AIF (N'&KEYS EQ 2).SET_AIX_KEY2
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE INVALID AIX KEYS LENGTH AND OFFSET - &KEYS'
+         MEXIT
+.SET_AIX_KEY2 ANOP
+&AIX_KLEN(&AIX_TOT) SETA &KEYS(1)       
+&AIX_KOFF(&AIX_TOT) SETA &KEYS(2)
+.*
+.* SET AIX RELATE        
+.*
+.SET_AIX_RELATE ANOP
+         AIF   (&RELATE NE '').SET_AIX_RELATE2
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE AIX MISSING RELATE NAME OF BASE CLUSTER'
+.SET_AIX_RELATE2 ANOP
+&AIX_RELATE(&AIX_TOT) SETC &RELATE
+.*
+.* SET BASE CLUSTER REUSE
+.*
+.SET_AIX_REUSE ANOP
+         AIF   (&REUSE EQ 'NOREUSE').SET_AIX_UNIQUEKEY
+&AIX_REUSE(&AIX_TOT) SETB 1
+.*
+.* SET AIX UNIQUEKEY      
+.*
+.SET_AIX_UNIQUEKEY ANOP
+         AIF   (&UNIQUEKEY EQ 'NOUNIQUEKEYE').SET_AIX_UPGRADE
+&AIX_UNIQUEKEY(&AIX_TOT) SETB 1
+.*
+.* SET AIX UPGRADE      
+.*
+.SET_AIX_UPGRADE ANOP
+         AIF   (&UPGRADE EQ 'NOUPGRADE').SET_AIX_VXNDSN
+&AIX_UPGRADE(&AIX_TOT) SETB 1
+.*
+.* SET AIX VXNDSN
+.*
+.SET_AIX_VXNDSN ANOP
+&AIX_VXN(&AIX_TOT) SETC '&NAME..VXN'
+         AIF   (&VXNDSN EQ '').SET_AIX_VXNDSN2
+&AIX_VXN(&AIX_TOT) SETC '&VXNDSN'
+.SET_AIX_VXNDSN2 ANOP
+         MEXIT
+.*
+.* DEFINE PATH
+.*
+.DEFINE_PATH ANOP
+&PTH_TOT SETA  &PTH_TOT+1
+.*
+.* SET PATH NAME
+.*
+.SET_PTH_NAME ANOP
+         AIF   (&NAME NE '' AND K'&NAME LE 8).SET_PTH_NAME2
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE INVALID PATH NAME - &NAME'
+         MEXIT
+.SET_PTH_NAME2 ANOP
+&PTH_NAME(&PTH_TOT) SETC &NAME       
+.*
+.* SET PATH ENTRY        
+.*
+.SET_PTH_ENTRY ANOP
+         AIF   (&ENTRY NE '').SET_PTH_ENTRY2
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE PATH MISSING ENTRY NAME OF AIX OR BASE'
+         MEXIT
+.SET_PTH_ENTRY2 ANOP
+&PTH_ENTRY(&PTH_TOT) SETC &ENTRY
+.*
+.* SET PATH UPDATE
+.*
+.SET_PTH_UPDATE ANOP
+         AIF   (&UPDATE EQ 'NOUPDATE').SET_PTH_UPDATE2   
+&PTH_UPDATE(&PTH_TOT) SETB 1
+.SET_PTH_UPDATE2 ANOP
+         MEXIT
+.*
+.* DEFINE END
+.*
+.DEFINE_END ANOP
+.*
+.* VERIFY VAIX ENTRIES HAVE MATCHING VCLR RELATE 
+.*
+&AIX_CUR SETA  0
+.CHK_AIX ANOP
+&AIX_CUR SETA  &AIX_CUR+1
+         AIF   (&AIX_CUR GT &AIX_TOT).CHK_AIX_END
+&CLR_CUR SETA  0
+.FIND_CLR ANOP
+&CLR_CUR SETA  &CLR_CUR+1
+         AIF   (&CLR_CUR GT &CLR_TOT).AIX_ERR
+         AIF   (&AIX_RELATE(&AIX_CUR) NE &CLR_NAME(&CLR_CUR)).FIND_CLR
+         AIF   (&AIX_KOFF(&AIX_CUR)+&AIX_KLEN(&AIX_CUR) LE &CLR_LMAX(&CX
+               LR_CUR)).CHK_AIX
+ MNOTE 'DSHX2 AIX_CUR=&AIX_CUR RELATE=&AIX_RELATE(&AIX_CUR) CLR_CUR=&CLX
+               R_CUR'
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE AIX &AIX_NAME(&AIX_CUR) KEY BEYOND CLUSTER &CX
+               LR_NAME(&CLR_CUR) RECORD' 
+         AGO   .CHK_AIX
+.AIX_ERR ANOP
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE AIX RELATE=&AIX_RELATE(&AIX_CUR) NOT FOUND'
+         AGO   .CHK_AIX
+.CHK_AIX_END ANOP
+.*
+.* VERIFY VPTH ENTRIES HAVE MATCHING VCLR OR VAIX ENTRY 
+.* AND SET VPTH_AIXP ACCORDINGLY
+.*
+&PTH_CUR SETA  0
+.CHK_PTH ANOP
+&PTH_CUR SETA  &PTH_CUR+1
+         AIF   (&PTH_CUR GT &PTH_TOT).CHK_PTH_END
+&AIX_CUR SETA  0
+.FIND_AIX ANOP
+&AIX_CUR SETA  &AIX_CUR+1
+         AIF   (&AIX_CUR GT &AIX_TOT).CHK_CLR
+         AIF   (&PTH_ENTRY(&PTH_CUR) EQ &AIX_NAME(&AIX_CUR)).SET_AIXP
+         AGO   .FIND_AIX
+.SET_AIXP ANOP
+&PTH_AIXP(&PTH_CUR) SETB 1
+         AGO   .CHK_PTH
+.CHK_CLR ANOP
+&CLR_CUR SETA  0
+.FIND_CLR2 ANOP
+&CLR_CUR SETA  &CLR_CUR+1
+         AIF   (&CLR_CUR GT &CLR_TOT).PTH_ERR
+         AIF   (&PTH_ENTRY(&PTH_CUR) EQ &CLR_NAME(&CLR_CUR)).CHK_PTH
+         AGO   .FIND_CLR2
+.PTH_ERR ANOP
+&ERROR   SETB  1
+         MNOTE 12,'DEFINE PTH ENTER=&PTH_ENTRY(&PTH_CUR) NOT FOUND'
+         AGO   .CHK_PTH
+.CHK_PTH_END ANOP
+         AIF   (&ERROR).EXIT
+         ZDEFINE  , GENERATE VCDT CATALOG LOADABLE TABLE
+         VCDTD    , GENERATE VCDT DSECTS
+         DCBD     , GENERATE DCB  DSECT
+.EXIT    ANOP
+         MEXIT
          MEND
