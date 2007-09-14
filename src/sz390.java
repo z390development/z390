@@ -1496,10 +1496,8 @@ public boolean get_load_dsn(int dd_dsn_addr){
 	 *       null delimited or double quote delimiter.
 	 */
 	load_pgm_type = tz390.z390_type;
-	String dsn_source = "dsname";
  	if (dd_dsn_addr < 0){
  		String ddname = get_ascii_string(dd_dsn_addr & 0x7fffffff,8,true);
- 		dsn_source = "ddname " + ddname;
  		load_dsn = get_ascii_env_var_string(ddname);
  		if (load_dsn == null || load_dsn.length() == 0){
  			log_error(82,"DDNAME=" + ddname + " not defined");

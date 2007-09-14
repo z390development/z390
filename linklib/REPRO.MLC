@@ -216,7 +216,7 @@ INITREC  PENTRY
          IF    (TM,VCLRFLG1,O,VCLRVREC)  RPI 688     RPI 681
                MVI   DCBRECFM,DCBRECFM_V  VARIABLE LENGTH REC QSAM
                L     R2,VCLRLREC                     RPI 681
-               AHI   R2,4          LENGTH OF MAX RECORD + 4
+               AHI   R2,4         LENGTH OF MAX RECORD + 4
                IF    (CH,R2,GT,=H'32764')
                      B  ERR51
                ENDIF

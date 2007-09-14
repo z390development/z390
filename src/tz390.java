@@ -131,6 +131,10 @@ public  class  tz390 {
     * 05/16/07 RPI 620 correct get_dup_string for CNOP use 
     * 07/19/07 RPI 662 add TS option for timestamp on trace 
     * 07/21/07 RPI 659 remove redundant trace prefixes 
+    * 09/11/07 RPI 694 add option ERRSUM to summarize critical errors
+    *           1. List missing COPY and MACRO files.
+    *           2. List undefined symbols if #1 = 0
+    *           3. Total errror counts to ERR and CON only. 
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -139,7 +143,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.07c";  //dsh
+    String version    = "V1.3.07d";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -160,7 +164,7 @@ public  class  tz390 {
     boolean opt_con      = true;  // log msgs to console
     boolean opt_dump     = false; // only indicative dump on abend unless on
     boolean opt_epilog   = true;  // if cics, insert DFHEIRET
-    boolean opt_reformat = false;  // reformat BAL statements
+    boolean opt_errsum   = false; // just list critical errors and summary on ERR file and console 
     boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
     String  opt_ipl      = "";    // program to execute at startup
     String  opt_install_loc = ""; // optional install location for source debugging
@@ -169,6 +173,7 @@ public  class  tz390 {
     boolean opt_listfile = true;  // list each file path
     boolean opt_listuse  = true;  // list usage at USING and DROP
     boolean opt_mcall    = false; // list MCALL and MEXIT on PRN // RPI 511
+    boolean opt_obj      = true;  // generate binary MVS compatible OBJ file RPI 694
     boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
     boolean opt_pc       = true;  // generate macro pseudo code
@@ -176,6 +181,7 @@ public  class  tz390 {
     String  opt_profile  = "";    // include PROFILE(COPYBOOK) as first MLC statement
     boolean opt_prolog   = true;  // if cics, insert DFHEIBLK and DFHEIENT
     boolean opt_protect  = true;  // prevent PSA mods by user
+    boolean opt_reformat = false;  // reformat BAL statements
     boolean opt_regs     = false; // show registers on trace
     boolean opt_rmode24  = true;  // link to load below line
     boolean opt_rmode31  = false; // link to load above line
@@ -3713,6 +3719,8 @@ public void init_options(String[] args,String pgm_type){
           	} catch (Exception e){
            		abort_error(6,"invalid error limit - " + token);
            	}
+        } else if (token.toUpperCase().equals("ERRSUM")){
+           	init_errsum();
         } else if (token.toUpperCase().equals("GUAM")){
            	opt_guam = true;
         } else if (token.length() > 4
@@ -3794,7 +3802,9 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.equals("NOLISTFILE")){
            	opt_listfile = false;
         } else if (token.equals("NOLISTUSE")){
-           	opt_listuse = false;   	
+           	opt_listuse = false; 
+        } else if (token.toUpperCase().equals("NOOBJ")){ // RPI694
+           	opt_obj = false;
         } else if (token.toUpperCase().equals("NOPC")){
             opt_pc = false; 
         } else if (token.toUpperCase().equals("NOPCOPT")){
@@ -5067,5 +5077,24 @@ public void put_trace(String text){
         } catch (Exception e){
 
         }
+    }
+    public void init_errsum(){
+    	/*
+    	 * turn on ERRSUM option either
+    	 * by user request or
+    	 * if missing COPY or MACRO error
+    	 * detected during pass 1 of az390.
+    	 * Note:
+    	 *   1.  ASM and ERR() != 0 are prereq.
+    	 *   2.  Any error limit can prevent finding
+    	 *       all the missing copybooks and macros
+    	 *       due to pre-mature abort on error limit.
+    	 */
+    	if (opt_asm && max_errors != 0){
+    		opt_errsum = true;
+    		max_errors = 0;
+    		opt_obj    = false;
+    		opt_stats  = false;
+    	}
     }
 }

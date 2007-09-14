@@ -28,7 +28,12 @@
          MVI   &STADDR,&SOURCE
          MEXIT
 .MV4     ANOP
+         AIF   ('&SOURCE'(1,1) EQ '=').MV4LIT
          L     0,=A(&SOURCE)
+         AGO   .MV4ST
+.MV4LIT  ANOP
+         L     0,&SOURCE
+.MV4ST   ANOP
          ST    0,&STADDR
          MEXIT
 .CHK_SCON ANOP

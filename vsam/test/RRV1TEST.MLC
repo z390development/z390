@@ -7,7 +7,7 @@
 *********************************************************************
 * 08/31/07 INITIAL CODING OF RRDS VARIABLE LENGTH RECORD TESTS           
 *********************************************************************
-RRV1SP   RT1   MAIN 
+RRV1TEST RT1   MAIN 
 VACBOUT  ACB   DDNAME=VFILE,MACRF=(DIR,OUT)
 VACBIN   ACB   DDNAME=VFILE,MACRF=(DIR,IN)
 VRPLOUT  RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(DIR),ARG=REC#
@@ -80,6 +80,30 @@ REC#     DC    F'0'
          CLC   RECORD+200(200),=200C'4'
          RT1   CC0
          CLOSE (VACBIN)
+         LTR   R15,R15
+         RT1   CC0
+*
+* REWRITE RECORD 2 WITH LENGTH OF 250 FILLED WITH C'T'
+*
+         WTO   'RRV1TEST REWRITE RECORD 2 WITH LENGTH 250'  
+         OPEN  (VACBOUT,(OUTPUT))
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD(250),=250C'T'
+         MVC   REC#,=F'2'
+         MODCB RPL=VRPLOUT,RECLEN=250
+         PUT   RPL=VRPLOUT
+         LTR   R15,R15
+         RT1   CC0
+         MVC   REC#,=F'2'
+         GET   RPL=VRPLOUT
+         LTR   R15,R15
+         RT1   CC0
+         TESTCB RPL=VRPLOUT,RECLEN=250
+         RT1   CC0
+         CLC   RECORD(250),=250C'T'
+         RT1   CC0
+         CLOSE (VACBOUT)
          LTR   R15,R15
          RT1   CC0
          RT1   END

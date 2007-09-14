@@ -10,6 +10,7 @@
 .* 08/04/07 RPI 644 UPDATE RPLFEEDB TO 4 BYTE CODES      
 .* 08/19/07 RPI 680 CORRECT LOOP GE TO GT, ADD LCLB &LRD 
 .* 08/29/07 RPI 688 CORRECT SETTING OF MACR1_XRBA OPTION BIT, ADD XRBA
+.* 09/14/07 RPI 672 ISSUE MNOTE ERROR FOR UNDEFINED OPTIONS              
 .*********************************************************************
 .*
 .* RPL 28 VSAM OPTCD OPTIONS - MODELED ON MVS 3.8 IDAVSOPT
@@ -70,10 +71,48 @@
          LCLB  &WAITX,&NWAITX                    2
          LCLB  &ARD,&ASY,&BWD,&CR,&CRE           5
          LCLB  &FWD,&NRI,&RBA,&XRBA              4
+&OPTS(1) SETC  'ADR',   1                                              X 
+               'ARD',   2                                              X
+               'ASY',   3                                              X
+               'BWD',   4                                              X
+               'CNV',   5                                              X
+               'CR',    6                                              X
+               'CRE',   7                                              X
+               'DIR',   8                                              X
+               'FKS',   9                                              X
+               'FWD',  10                                              X
+               'GEN',  11                                              X
+               'KEQ',  12                                              X
+               'KEY',  13                                              X
+               'KGE',  14                                              X
+               'LOC',  15                                              X
+               'LRD',  16                                              X
+               'MVE',  17                                              X
+               'NRI',  18                                              X
+               'NSP',  19                                              X
+               'NUP',  20                                              X
+               'NWAITX', 21                                            X
+               'RBA',  22                                              X
+               'SEQ',  23                                              X
+               'SKP',  24                                              X
+               'SYN',  25                                              X
+               'UPD',  26                                              X
+               'WAITX', 27                                             X
+               'XRBA'  28
 &I       SETA  0
 .OPTLOOP ANOP
 &I       SETA  &I+1
          AIF   (&I GT N'&OPTCD).CHK_OPT  RPI 680        
+&J       SETA  0
+.FINDOPT ANOP
+&J       SETA  &J+1
+         AIF   (&J GT N'&OPTS).OPT_NOT_FND
+         AIF   (&OPTCD(&I) EQ &OPTS(&J)).OPT_FND
+         AGO   .FINDOPT
+.OPT_NOT_FND ANOP
+         MNOTE 12,'RPL OPTCD NOT FOUND - &OPTCD(&I)'
+         AGO   .OPTLOOP
+.OPT_FND ANOP
 &ADR     SETB  ('&OPTCD(&I)' EQ 'ADR' OR &ADR)
 &ARD     SETB  ('&OPTCD(&I)' EQ 'ARD' OR &ARD)               
 &ASY     SETB  ('&OPTCD(&I)' EQ 'ASY' OR &ASY)

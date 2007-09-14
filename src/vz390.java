@@ -39,7 +39,10 @@ public  class  vz390 {
     *          Dynamically allocate DCB's for ACB
     *          Use ACB DDNAME file spec to load catalog and
     *          use option .name suffix to specify entry name
-    *          else use ACB name to find entry in catalog.          
+    *          else use ACB name to find entry in catalog. 
+    * 09/10/07 RPI 672 changes to ESDS/RRDS support
+    *          1) remove use of VX0 for ESDS and fixed RRDS
+    *             and return VES RBA/XRBA for ESDS.                 
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -160,7 +163,6 @@ public  class  vz390 {
 	int   cur_acb_ifr   = 0; // ACBIFR   VTAM interface routine 0 for VSAM
 	int   cur_acb_macrf = 0; // ACBMACRF 4 bytes of option bits
     byte   cur_acb_oflgs   = 0;
-	boolean acb_seq_out = false;
     String cur_acb_vclrn;    // ACBVCLRN label of ACB (def. VCLR/VPTH entry)
     int   cur_acb_vclra = 0; // ACBVCLRA addr of VCLR entry in VCDT catalog
     int   cur_acb_vaixa = 0; // ACBVAIXA addr of VAIX entry in VCDT catalog for path
@@ -197,7 +199,8 @@ public  class  vz390 {
 	byte acb_oflgs_out  = (byte)0x20;  // ACBPUT output add, update, delete
     byte acb_oflgs_aixp = (byte)0x10;  // ACBAIXP use aix vs primary key
     byte acb_oflgs_aixu = (byte)0x08;  // ACBAIXU ugrade aix indexes for VCLR
-	int  acb_ddnam     = 20; // ACBDDNAM DDNAME > env. var.> VCDT[.VCLR/VPTH)
+	byte acb_oflgs_getok= (byte)0x04;  // last get ok (pre-requisit for UPD PUT)
+    int  acb_ddnam     = 20; // ACBDDNAM DDNAME > env. var.> VCDT[.VCLR/VPTH)
 	int  acb_dsnam     = 28; // ACBDSNAM DSNAME addr > VCDT[.VCLR/VPTH]
 	int  acb_vclrn     = 32; // ACBVCLRN name from label field (def VCDT entry)
 	int  acb_vclra     = 40; // ACBVCLRA addr VCLR in VCDT catalog
@@ -272,16 +275,17 @@ public  class  vz390 {
     byte rn_inv_rec_num  = (byte)192; // RPLIRRNO invalid RRDS record #
     byte rn_inv_rba_req  = (byte)196; // RPLRRADR invalid RBA req to RRDS
     byte rn_acb_not_open = (byte)235; // z390 catch all 
+    String rn_log_reason[] = new String[256];
     // rc_phy physical error reason codes
     byte rn_read_data_err   = 4;  // RPLRDERD data read error
     byte rn_read_index_err  = 8;  // RPLRDERI index read error
     byte rn_write_data_err  = 16; // RPLWTERD data write error
     byte rn_write_index_err = 20; // RPLWTERI index write error
-	/*
+	String rn_phy_reason[] = new String[256];	
+    /*
 	 * excp level I/O
 	 */
     long rrds_ves_xrba_min = 0x10;
-    long cur_read_index = 0; // xbra read by excp_read_index
     int  cur_ves_dcba = 0;
     int  cur_ves_tiot_index = 0;
     long cur_ves_xrba = 0;
@@ -290,6 +294,10 @@ public  class  vz390 {
     long cur_vx0_xrba = 0;
     long cur_vx0_ves_xrba = 0;
     long cur_vxn_xrba = 0;
+    int excp_lrec = 0;
+    int excp_area_pfx = 0; // vrec suffix
+    int excp_area_sfx = 0; // RPI 672 ESDS vrec suffix
+    long bwd_xrba = 0;
     /*
      * stats option statistics for log
      */
@@ -308,6 +316,33 @@ public  class  vz390 {
     	tz390 = shared_tz390;
     	pz390 = shared_pz390;
     	sz390 = shared_sz390;
+    	init_rn_codes();
+    }
+    private void init_rn_codes(){
+    	/*
+    	 * init logical and physical reason
+    	 * codes for use in set_feedback tracing
+    	 * 
+    	 */
+    	rn_log_reason[4] = "end of data";
+    	rn_log_reason[8] = "duplicate key";
+    	rn_log_reason[12] = "out of seq";
+    	rn_log_reason[16] = "record not found";
+    	rn_log_reason[32] = "rba address not_a record";
+    	rn_log_reason[44] = "area length too small";
+    	rn_log_reason[68] = "invalid RPL access type for ACB";
+    	rn_log_reason[72] = "invalid key request for ESDS/RRDS";
+    	rn_log_reason[104] = "invalid RPL_option";
+    	rn_log_reason[108] = "invalid record length";
+    	rn_log_reason[112] = "invalid key length";
+    	rn_log_reason[192] = "invalid RRDS record number";
+    	rn_log_reason[196] = "invalid RRDS RBA request";
+    	rn_log_reason[235] = "ACB not open"; 
+    	
+    	rn_phy_reason[4] = "read data error";
+    	rn_phy_reason[8] = "read index error";
+        rn_phy_reason[16] = "write data error";
+        rn_phy_reason[20] = "write index error";
     }
     public void svc_vsam(){
    /*
@@ -372,7 +407,8 @@ public  class  vz390 {
     public void svc_close_acb(){
     	/*
     	 * close open acb
-    	 *   1.  close VESDCB and VX0DCB
+    	 *   1.  Close VESDCB
+    	 *   2.  Close VX0 if not ESDS or fixed RRDS
     	 *   2.  If KSDS index updates pending,
     	 *       rewrite VXNDCB's from key index trees.
     	 */
@@ -482,9 +518,9 @@ public  class  vz390 {
     	cur_acb_dcbt   = pz390.mem.getInt(cur_acb_addr + acb_dcbt);
     	cur_acb_dcba   = pz390.mem.getInt(cur_acb_addr + acb_dcba);
         cur_ves_dcba       = cur_acb_dcba;
-        cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad);
+        cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
         cur_vx0_dcba       = cur_acb_dcba + sz390.dcb_len;
-        cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad);
+        cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
     }
     private void fetch_vclr_fields(){
     	/*
@@ -515,16 +551,9 @@ public  class  vz390 {
     	/*
     	 * check for consistency between
     	 * VCDT and ACB options and if 
-    	 * seq out then set acb_seq_out
     	 */
     	if ((cur_vclr_flag & vclr_flag_esds) != 0){
     		// ESDS
-    		if ((cur_acb_macrf & acb_macrf_seq) != 0
-    			&& (cur_acb_macrf & acb_macrf_out) != 0){
-    			acb_seq_out = true;
-    		} else { 
-    			acb_seq_out = false;
-    		}
     	} else if ((cur_vclr_flag & vclr_flag_rrds) != 0){
     		// RRDS
     		if ((cur_acb_macrf & acb_macrf_dir) != acb_macrf_dir
@@ -546,8 +575,11 @@ public  class  vz390 {
     	int save_open_flags = pz390.reg.getInt(pz390.r0);
     	if ((cur_acb_oflgs & acb_oflgs_aixu) != 0){
     		cur_acb_dcbt = pz390.mem.getInt(cur_acb_addr + acb_dcbt);
-    	} else if ((cur_vclr_flag & vclr_flag_lds) != 0){
-    		cur_acb_dcbt = 1; // open VES and VX0 with no AIX upgrades
+    	} else if ((cur_vclr_flag & vclr_flag_esds) != 0       // RPI 672
+                || ((cur_vclr_flag & vclr_flag_rrds) != 0      // RPI 672
+                    && (cur_vclr_flag & vclr_flag_vrec) == 0)
+    			|| (cur_vclr_flag & vclr_flag_lds) != 0){
+    		cur_acb_dcbt = 1; // open VES only for ESDS, VRRDS, LDS
     	} else {
     		cur_acb_dcbt = 2;
     	}
@@ -610,7 +642,7 @@ public  class  vz390 {
     	get_vcdt_path();
     	sz390.svc_open_dcb(cur_vcdt_path);
     	if (pz390.reg.getInt(pz390.r15) == 0){
-    		if (acb_seq_out){
+    		if ((cur_vclr_flag & vclr_flag_ruse) != 0){
     			reuse_file(dcb_addr);
     		}
     		return true;
@@ -624,7 +656,10 @@ public  class  vz390 {
     	 */    	
     	if ((cur_acb_oflgs & acb_oflgs_aixu) != 0){
     		cur_acb_dcbt = pz390.mem.getInt(cur_acb_addr + acb_dcbt);
-    	} else if ((cur_vclr_flag & vclr_flag_lds) != 0){
+    	} else if ((cur_vclr_flag & vclr_flag_esds) != 0
+    			||  ((cur_vclr_flag & vclr_flag_rrds) != 0
+    			     && (cur_vclr_flag & vclr_flag_vrec) == 0)
+    			|| (cur_vclr_flag & vclr_flag_lds) != 0){
     		cur_acb_dcbt = 1; // open VES and VX0 with no AIX upgrades
     	} else {
     		cur_acb_dcbt = 2;
@@ -676,14 +711,29 @@ public  class  vz390 {
     	}
        	if ((cur_vclr_flag & vclr_flag_esds) != 0){
        		// ESDS get
-       		if ((cur_acb_macrf & acb_macrf_seq) == acb_macrf_seq){
-       		    rpl_get_esds_seq();
-       		} else if ((cur_acb_macrf & acb_macrf_adr) == acb_macrf_adr){
-       			rpl_get_esds_adr();
+       		if ((cur_rpl_opt & rpl_opt_seq) != 0){
+       			if ((cur_acb_macrf & acb_macrf_seq) != 0){
+       				rpl_get_esds_seq();
+       			} else {
+       				set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rpl_opt);
+       			}
+       		} else if ((cur_rpl_opt & rpl_opt_adr) != 0){
+       			if ((cur_acb_macrf & acb_macrf_adr) != 0){
+       				rpl_get_esds_adr();
+       			} else {
+       				set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rpl_opt);
+       			}
+       		} else {
+       		    // unkown or unsupported opteraion
+       			set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rpl_opt);
        		}
        	} else if ((cur_vclr_flag & vclr_flag_rrds) != 0){
        		// RRDS get
-       		rpl_get_rrds();
+       		if ((cur_vclr_flag & vclr_flag_vrec) != 0){
+       			rpl_get_vrrds(); // RPI 672 var length
+       		} else {
+       			rpl_get_rrds();  // fixed length - no vx0
+       		}
        	} else {
        		// add KSDS, LDS support
        		set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rpl_opt);
@@ -693,36 +743,40 @@ public  class  vz390 {
     	/*
     	 * ESDS seq get
     	 */
-        // read rec xrba from VX0 and read corresponding rec from VES
-    	cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
-    	cur_vx0_xrba       = sz390.tiot_cur_rba[cur_vx0_tiot_index];
-    	if (cur_vx0_xrba >= sz390.tiot_eof_rba[cur_vx0_tiot_index]){
+    	if ((cur_rpl_opt & rpl_opt_lrd) != 0){
+    		if (!set_esds_bwd_lrd()){
+    			return; // RPI 682 opt or file error
+    		}    		
+    	}
+    	if ((cur_rpl_opt & rpl_opt_bwd) != 0){
+    		if (!set_esds_bwd_next()){
+    			return; // RPI 672 error or eod
+    		}
+    	}
+    	cur_ves_xrba = sz390.tiot_cur_rba[cur_ves_tiot_index];
+    	if (cur_ves_xrba >= sz390.tiot_eof_rba[cur_ves_tiot_index]){
         	// return logical end of file
     		set_feedback(pdf_def,rc_log,cmp_base,rn_eod);
         	return;
     	} else {
-    		rpl_set_xrba();
+    		// set rba/xrba
+    		set_rpl_xrba();
     	}
-    	// read next vse record xrba from vx0
-    	if (!excp_read_index(cur_vx0_tiot_index,cur_vx0_xrba)){
-    		return;
-    	} else {
-    		rpl_set_xrba();
-    	}
-    	if  (cur_read_index <= 0){
-    		// inserted or deleted records index
-    		// return log index error for now
-    		set_feedback(pdf_def,rc_phy,cmp_base,rn_read_index_err);
-    	}
-    	cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
-    	// read ves record at cur vs0 index 
-    	if (!excp_read_rec(cur_ves_tiot_index,cur_read_index-1)){ // rpi 688
+    	// read ves record  
+    	if (!excp_read_rec()){ // rpi 672
     		return;
     	}
-    	try {
-    		sz390.tiot_cur_rba[cur_ves_tiot_index] = sz390.tiot_file[cur_ves_tiot_index].getFilePointer();
-    	} catch (Exception e){
-    		set_feedback(pdf_def,rc_phy,cmp_base,rn_read_data_err);
+    	if ((cur_rpl_opt & rpl_opt_bwd) == 0){
+    		try {
+    			sz390.tiot_cur_rba[cur_ves_tiot_index] = sz390.tiot_file[cur_ves_tiot_index].getFilePointer();
+    		} catch (Exception e){
+    			set_feedback(pdf_def,rc_phy,cmp_base,rn_read_data_err);
+    		}
+    	}
+    	if ((cur_rpl_opt & rpl_opt_upd) != 0){
+    		// set successful get flag for possible UPD put update
+    		cur_acb_oflgs = (byte)(cur_acb_oflgs | acb_oflgs_getok);
+    		pz390.mem.put(cur_acb_addr + acb_oflgs,cur_acb_oflgs);
     	}
     	// return successful write of ves rec and vx0 index
     	set_feedback(pdf_def,rc_ok,cmp_base,rn_ok);
@@ -731,43 +785,36 @@ public  class  vz390 {
     	/*
     	 * ESDS get by rba or xrba
     	 */
-        // get vx0 rba or xrba from RPLARG addr
-    	cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
+        // get ves rba or xrba from RPLARG addr
     	if ((cur_rpl_opt & rpl_opt_xrba) == rpl_opt_xrba){
-        	cur_vx0_xrba = pz390.mem.getLong(cur_rpl_arg);
+        	cur_ves_xrba = pz390.mem.getLong(cur_rpl_arg);
         } else {
-        	cur_vx0_xrba = pz390.mem.getInt(cur_rpl_arg);
+        	cur_ves_xrba = pz390.mem.getInt(cur_rpl_arg);
         }
-    	if (cur_vx0_xrba >= sz390.tiot_eof_rba[cur_vx0_tiot_index]
-    	    || cur_vx0_xrba < 0){
+    	if (cur_ves_xrba >= sz390.tiot_eof_rba[cur_ves_tiot_index]
+    	    || cur_ves_xrba < 0){
         	// return logical invalid rba request error
     		set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rba_req);
         	return;
-    	}
-    	// read next ves record xrba from vx0
-    	if (!excp_read_index(cur_vx0_tiot_index,cur_vx0_xrba)){
-    		return;
-    	} else {
-            rpl_set_xrba();
-    	}
-    	if  (cur_read_index <= 0){
-    		// inserted or deleted records index
-    		// return log index error for now
-    		set_feedback(pdf_def,rc_phy,cmp_base,rn_read_index_err);
-    	}
-    	cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
+    	}    	 	
     	// read ves record at cur vs0 index 
-    	if (!excp_read_rec(cur_ves_tiot_index,cur_read_index-1)){ // RPI 688
+    	if (!excp_read_rec()){ // RPI 688 RPI 672
     		return;
+    	}
+    	set_rpl_xrba();
+    	if ((cur_rpl_opt & rpl_opt_upd) != 0){
+    		// set successful get flag for possible UPD put update
+    		cur_acb_oflgs = (byte)(cur_acb_oflgs | acb_oflgs_getok);
+    		pz390.mem.put(cur_acb_addr + acb_oflgs,cur_acb_oflgs);
     	}
     	// return successful read of ves rec and vx0 index
     	set_feedback(pdf_def,rc_ok,cmp_base,rn_ok);
     }
-    private void rpl_set_xrba(){
+    private void set_rpl_xrba(){
     	/*
-    	 * set RPL get/put cur_rpl_xrba
+    	 * set RPL get/put xrba to cur_ves_xrba
     	 */
-		cur_rpl_xrba = cur_vx0_xrba;
+		cur_rpl_xrba = cur_ves_xrba;
 		pz390.mem.putLong(cur_rpl_addr+rpl_xrba,cur_rpl_xrba);
     }
     private void rpl_get_rrds(){
@@ -777,24 +824,53 @@ public  class  vz390 {
     	 *   1.  Read vx0 XRBA for rel. rcd #
     	 *   2.  If XRBA = 0, add rec to VES else rewrite
     	 */
-    	cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
-		cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
-		if (!get_rrds_rec_xrba()){
-			// RRDS rec not written or too big
-			set_feedback(pdf_def,rc_phy,cmp_base,rn_rcd_not_fnd);
-			return;
-		}
 		// read existing record
-		if (!excp_read_rec(cur_ves_tiot_index,cur_read_index)){
+   		if (!get_rrds_xrba()
+   		 || !excp_read_rec()){  // RPI 672
 			return;
 		}
 		// return successful read of ves rec and vx0 index
 		set_feedback(pdf_def,rc_ok,cmp_base,rn_ok);
     }
-    private boolean get_rrds_rec_xrba(){
+    private void rpl_get_vrrds(){
+    	/*
+    	 * get for open RRDS variable length file
+    	 * Notes:
+    	 *   1.  Read vx0 XRBA for rel. rcd #
+    	 *   2.  If XRBA = 0, add rec to VES else rewrite
+    	 */
+		if (!get_vrrds_xrba()){
+			// RRDS rec not written or too big
+			set_feedback(pdf_def,rc_phy,cmp_base,rn_rcd_not_fnd);
+			return;
+		}
+		// read existing record
+		if (!excp_read_rec()){
+			return;
+		}
+		// return successful read of ves rec and vx0 index
+		set_feedback(pdf_def,rc_ok,cmp_base,rn_ok);
+    }
+    private boolean get_rrds_xrba(){
+    	/*
+    	 * set cur_ves_xrba based on rel rcd
+    	 * and check limits.
+    	 */
+    	cur_ves_xrba = (long) pz390.mem.getInt(cur_rpl_arg) * cur_vclr_lrec;
+    	if (cur_ves_xrba > tz390.max_file_size
+    		|| cur_ves_xrba < 0){
+    		set_feedback(pdf_def,rc_phy,cmp_base,rn_inv_rba_req);
+			return false;
+    	}
+    	return true;
+    }
+    private boolean get_vrrds_xrba(){
     	/*
     	 * 1.  Set cur_vx0_xrba = rpl rec # * 8
     	 *     and read index xrba int cur_ves_xrba
+    	 *     if xrba > eod
+    	 *        set cur_vx0_xrba = 0
+    	 *        and return false
     	 * 2.  Set cur_ves_xrba as follows:
     	 *     a.  0 if no record found and return false
     	 *     b.  xrba and return true.
@@ -802,26 +878,35 @@ public  class  vz390 {
     	 *   1.  VX0 XRBA's for valid records are stored +1.
     	 *       to distinguish 0 as unwritten VES XRBA. 
     	 */
-    	cur_vx0_xrba = pz390.mem.getInt(cur_rpl_arg) << 3;
+    	cur_vx0_xrba = (long) pz390.mem.getInt(cur_rpl_arg)
+    	               << 3;
+    	if (cur_vx0_xrba > tz390.max_file_size
+    		|| cur_vx0_xrba < 0){
+    		set_feedback(pdf_def,rc_phy,cmp_base,rn_inv_rba_req);
+			return false;
+    	}
     	if (cur_vx0_xrba >= sz390.tiot_eof_rba[cur_vx0_tiot_index]){
 			// RRDS rec not written yet
-			cur_ves_xrba = 0;
+			cur_ves_xrba = -1;
 			return false;
 		}
-		if (!excp_read_index(cur_vx0_tiot_index,cur_vx0_xrba)){
+    	if (cur_ves_xrba > tz390.max_file_size
+        	|| cur_ves_xrba < 0){
+        	set_feedback(pdf_def,rc_phy,cmp_base,rn_inv_rba_req);
+    		return false;
+        }
+		if (!excp_read_index()){
 			// I/O error on index
 			cur_ves_xrba = -1;
 			return false;
-		} else {
-            rpl_set_xrba();
 		}
-		if (cur_read_index == 0){
+		if (cur_ves_xrba == 0){
 			// RRDS record not found
-			cur_ves_xrba = 0;
+			cur_ves_xrba = -1;
 			return false;
 		}
 		// remove odd bit from RRDS VES XRBA
-		cur_read_index--;
+		cur_ves_xrba--;
 		return true;
     }
     private void svc_rpl_put(){
@@ -845,10 +930,14 @@ public  class  vz390 {
     	}
     	if ((cur_vclr_flag & vclr_flag_esds) != 0){
     		// ESDS out - add rec to VES
-            rpl_put_esds();
+    		rpl_put_esds();
     	} else if ((cur_vclr_flag & vclr_flag_rrds) != 0){
     		// RRDS
-    		rpl_put_rrds();
+    		if ((cur_vclr_flag & vclr_flag_vrec) != 0){
+    			rpl_put_vrrds();
+    		} else {
+    			rpl_put_rrds();
+    		}
     	} else {
     		// add KSDS, LDS support
     		set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rpl_opt);
@@ -858,50 +947,89 @@ public  class  vz390 {
     	/*
     	 * put for open ESDS output file
     	 */
-		cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
-		cur_ves_xrba = sz390.tiot_eof_rba[cur_ves_tiot_index];
-		if (!excp_write_rec(cur_ves_tiot_index,cur_ves_xrba)){
+        if ((cur_rpl_opt & rpl_opt_upd) != 0){
+        	if ((cur_acb_oflgs & acb_oflgs_getok) != 0){
+        		// turn off successful get flag and set xrba to rewrite record
+            	cur_acb_oflgs = (byte)(cur_acb_oflgs ^ acb_oflgs_getok);
+            	pz390.mem.put(cur_acb_addr + acb_oflgs,cur_acb_oflgs);
+        		cur_ves_xrba = cur_rpl_xrba;
+        	} else {
+        		// required get not done successfully
+        		set_feedback(pdf_def,rc_log,cmp_base,rn_inv_acc_type);
+        		return;
+        	}
+        } else {
+        	cur_ves_xrba = sz390.tiot_eof_rba[cur_ves_tiot_index];
+        }
+		if (!excp_write_rec()){
 			return;
 		}
-		try {
-			sz390.tiot_eof_rba[cur_ves_tiot_index] = sz390.tiot_file[cur_ves_tiot_index].length();
-		} catch (Exception e){
-			set_feedback(pdf_def,rc_phy,cmp_base,rn_write_data_err);
-		}
-		// add rec xrba index to VX0
-		cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
-		cur_vx0_xrba       = sz390.tiot_eof_rba[cur_vx0_tiot_index];
-		if (!excp_write_index(cur_vx0_tiot_index,cur_vx0_xrba,cur_ves_xrba+1)){ // rpi 688
-			return;
-		} else {
-			rpl_set_xrba();
-		}
-		try {
-			sz390.tiot_eof_rba[cur_vx0_tiot_index] = sz390.tiot_file[cur_vx0_tiot_index].length();
-		} catch (Exception e){
-			set_feedback(pdf_def,rc_phy,cmp_base,rn_write_index_err);
+		if ((cur_rpl_opt & rpl_opt_upd) == 0){
+			// update eof for sequential ESDS put
+			try {
+				sz390.tiot_eof_rba[cur_ves_tiot_index] = sz390.tiot_file[cur_ves_tiot_index].length();
+			} catch (Exception e){
+				set_feedback(pdf_def,rc_phy,cmp_base,rn_write_data_err);
+			}
+			set_rpl_xrba();
 		}
 		// return successful write of ves rec and vx0 index
 		set_feedback(pdf_def,rc_ok,cmp_base,rn_ok);
     }
     private void rpl_put_rrds(){
     	/*
-    	 * put for open RRDS output file
+    	 * put for open RRDS fixed length output file
     	 * Notes:
+    	 *   1.  Always use rel rec # to calc XRBA.
+    	 */
+		if (!get_rrds_xrba()
+    	  ||!excp_write_rec()){
+			return;
+		}		
+		// return successful write of ves rec and vx0 index
+		set_feedback(pdf_def,rc_ok,cmp_base,rn_ok);
+    }
+    private void rpl_put_vrrds(){
+    	/*
+    	 * put for open VRRDS output file
+    	 * Notes:
+    	 *   1.  Always use rel rec # to calc XRBA.
     	 *   1.  Read vx0 XRBA for rel. rcd #
     	 *   2.  If XRBA = 0, add rec to VES else rewrite
-    	 */
-    	cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
-		cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
-		if (get_rrds_rec_xrba()){
-			// rewrite existing record
-			if (!excp_write_rec(cur_ves_tiot_index,cur_read_index)){
-				return;
+    	 */    	
+		if (get_vrrds_xrba()){
+			// rewrite or replace with bigger added record at end
+			try {
+				sz390.tiot_file[cur_ves_tiot_index].seek(cur_ves_xrba);
+			   	excp_lrec = sz390.tiot_file[cur_ves_tiot_index].readInt();
+			   	if (excp_lrec == cur_rpl_lrec){
+				   	// rewrite record
+					if (!excp_write_rec()){
+						return;
+					}
+				} else {
+					add_vrrds_rec();
+				}
+			} catch (Exception e){
+				set_feedback(pdf_def,rc_phy,cmp_base,rn_write_data_err);
 			}
-		} else if (cur_ves_xrba == 0) {
-			// add record to VES and update VX0 XRBA
+		} else if (cur_ves_xrba == -1) {
+			add_vrrds_rec();
+		} else {
+			// exit with invalid RRDS rec #
+			return;
+		}
+		// return successful write of ves rec and vx0 index
+		set_feedback(pdf_def,rc_ok,cmp_base,rn_ok);
+    }
+    private void add_vrrds_rec(){
+    	/*
+		 * add record to end of VES 
+         * and update VX0 XRBA address
+		 */
+		 // add record to VES and update VX0 XRBA
 			cur_ves_xrba = sz390.tiot_eof_rba[cur_ves_tiot_index];
-			if (!excp_write_rec(cur_ves_tiot_index,cur_ves_xrba)){
+			if (!excp_write_rec()){
 				return;
 			}
 			try {
@@ -911,17 +1039,10 @@ public  class  vz390 {
 				set_feedback(pdf_def,rc_phy,cmp_base,rn_write_data_err);
 			}
 			// update vx0 index to VES XRBA+1 to indicate valid record
-			cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
-			if (!excp_write_index(cur_vx0_tiot_index,cur_vx0_xrba,cur_ves_xrba+1)){ // rpi 688
+			if (!excp_write_index(cur_ves_xrba+1)){ // rpi 688
 				return;
 			}
-		} else {
-			// exit with invalid RRDS rec #
-			return;
-		}
-		// return successful write of ves rec and vx0 index
-		set_feedback(pdf_def,rc_ok,cmp_base,rn_ok);
-    }
+		}	
     private void svc_rpl_erase(){
     	/*
     	 * erase current record retrieved from open VSAM 
@@ -958,15 +1079,44 @@ public  class  vz390 {
     	 *   3 - rn_ reason code for corresponding rc_
     	 *   
     	 */
-    	pz390.mem.putInt(cur_rpl_addr + rpl_feedb,((pdf << 8 | rc) << 8 | cmp) << 8 | (rn & 0xff));
+    	int feedback = ((pdf << 8 | rc) << 8 | cmp) << 8 | (rn & 0xff); 
+    	pz390.mem.putInt(cur_rpl_addr + rpl_feedb,feedback);
     	pz390.reg.putInt(pz390.r15,rc & 0xff);
+        if (feedback != 0 && tz390.opt_tracev){
+        	String type   = "unknown";
+        	String reason = null;
+        	switch (rc){
+        	case 8: // logical error
+        		type   = "logical";
+        		reason = rn_log_reason[rn & 0xff];
+        		break;
+        	case 12: // physical error
+        		type   = "physical";
+        		reason = rn_phy_reason[rn & 0xff];
+        		break;
+        	}
+        	if (reason == null){
+        		reason = "unknown";
+        	}
+        	tz390.put_trace("VSAM FEEDBACK=" + tz390.get_hex(feedback,8)
+        			      + " TYPE="   + type
+        			      + " REASON=" + reason);
+        }
     }
-    private boolean excp_read_rec(int tiot_index,long xrba){
+    private boolean excp_read_rec(){
     	/*
     	 * read record from VES into RPLAREA and set length in RPLLREC
     	 * to the VES ESDS base cluster data file at specified xrba.
+    	 * Notes:
+    	 *   1.  If ESDS, skip duplicate length after record. // RPI 672
     	 */
-    	if (xrba > tz390.max_file_size){
+    	if (cur_ves_xrba >= sz390.tiot_eof_rba[cur_ves_tiot_index]
+    	    || cur_ves_xrba < 0){
+    	   	// return logical invalid rba request error
+    	   	set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rba_req);
+    	   	return false;
+    	}
+    	if (cur_ves_xrba > tz390.max_file_size){
     		set_feedback(pdf_def,rc_phy,cmp_base,rn_inv_rba_req);
 			return false;
     	}
@@ -974,13 +1124,32 @@ public  class  vz390 {
     		// read variable length record putting
     		// 4 length prefix into RPLLREC and the remainer in RPLAREA
     		try {
-    			sz390.tiot_file[tiot_index].seek(xrba);
-    			cur_rpl_lrec = sz390.tiot_file[tiot_index].readInt();
+    			sz390.tiot_file[cur_ves_tiot_index].seek(cur_ves_xrba);
+    			cur_rpl_lrec = sz390.tiot_file[cur_ves_tiot_index].readInt();
+    			if (cur_rpl_lrec < 1 || cur_rpl_lrec > cur_vclr_lrec){
+    				// prefix lrec invalid
+    				if (tz390.opt_tracev){
+    					tz390.put_trace("VSAM READ INVALID VREC PFX LREC = " + tz390.get_hex(cur_rpl_lrec,8) + " AT XRBA=" + tz390.get_long_hex(cur_ves_xrba,16));
+    				}
+    	    		set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rec_len);
+        			return false;
+    			}
     			pz390.mem.putInt(cur_rpl_addr + rpl_lrec,cur_rpl_lrec); // RPI 688
-    			sz390.tiot_file[tiot_index].read(pz390.mem_byte,cur_rpl_area,cur_rpl_lrec);
-    			if (tz390.opt_tracev){
-    				tz390.put_trace("VSAM EXCP READ VREC  XRBA=" + tz390.get_long_hex(xrba + 4,16) + " LEN=" + tz390.get_hex(cur_rpl_lrec,8));
-    				sz390.dump_mem(cur_rpl_area,cur_rpl_lrec);
+    			sz390.tiot_file[cur_ves_tiot_index].read(pz390.mem_byte,cur_rpl_area,cur_rpl_lrec);
+				if (tz390.opt_tracev){
+					tz390.put_trace("VSAM EXCP READ VREC  XRBA=" + tz390.get_long_hex(cur_ves_xrba + 4,16) + " LEN=" + tz390.get_hex(cur_rpl_lrec,8));
+					sz390.dump_mem(cur_rpl_area,cur_rpl_lrec);
+				}
+    			if ((cur_vclr_flag & vclr_flag_esds) != 0){
+    				int ver_rpl_lrec = sz390.tiot_file[cur_ves_tiot_index].readInt();
+    				if (ver_rpl_lrec != cur_rpl_lrec){
+    					// prefix lrec not equal sfx lrec
+    					if (tz390.opt_tracev){
+    						tz390.put_trace("VSAM EXCP READ ERROR PFX RECLEN = " + tz390.get_hex(cur_rpl_lrec,8) + " SFX RECLEN=" + tz390.get_hex(ver_rpl_lrec,8));
+    					}
+    					set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rec_len);
+    					return false;
+    				}
     			}
     			sz390.tot_dcb_read++;
         		sz390.tot_dcb_oper++;
@@ -993,10 +1162,10 @@ public  class  vz390 {
             // read fixed length record
     		cur_rpl_lrec = cur_vclr_lrec;
     		try {
-    			sz390.tiot_file[tiot_index].seek(xrba);
-    			sz390.tiot_file[tiot_index].read(pz390.mem_byte,cur_rpl_area,cur_rpl_lrec);
+    			sz390.tiot_file[cur_ves_tiot_index].seek(cur_ves_xrba);
+    			sz390.tiot_file[cur_ves_tiot_index].read(pz390.mem_byte,cur_rpl_area,cur_rpl_lrec);
     			if (tz390.opt_tracev){
-    				tz390.put_trace("VSAM EXCP READ FREC XRBA=" + tz390.get_long_hex(xrba,16) + " LEN=" + tz390.get_hex(cur_rpl_lrec,8));
+    				tz390.put_trace("VSAM EXCP READ FREC XRBA=" + tz390.get_long_hex(cur_ves_xrba,16) + " LEN=" + tz390.get_hex(cur_rpl_lrec,8));
     				sz390.dump_mem(cur_rpl_area,cur_rpl_lrec);
     			}
     			sz390.tot_dcb_read++;
@@ -1008,32 +1177,52 @@ public  class  vz390 {
     		}
     	}
     }
-    private boolean excp_write_rec(int tiot_index,long xrba){
+    private boolean excp_write_rec(){
     	/*
     	 * write current RPL record in RPLAREA with length RPLLREC
-    	 * to the VES ESDS base cluster data file at specified xrba.
+    	 * to the VES base cluster data file at specified xrba.
+    	 * Notes:
+    	 *   1.  Variable length records have 4 byte length 
+    	 *       preceeding record.
+    	 *   2.  ESDS variable length records also have 4 byte
+    	 *       length following record to support BWD
+    	 *       read backward option without any index.
     	 */
-    	if (xrba > tz390.max_file_size){
+    	if (cur_ves_xrba > tz390.max_file_size
+    		|| cur_ves_xrba < 0){
     		set_feedback(pdf_def,rc_phy,cmp_base,rn_inv_rba_req);
 			return false;
     	}
     	if ((cur_vclr_flag & vclr_flag_vrec) != 0){
     		// write variable length record with 4 byte prefixed length
-    		int save_rec_pfx = pz390.mem.getInt(cur_rpl_area - 4);
+    		excp_area_pfx = pz390.mem.getInt(cur_rpl_area - 4);
     		pz390.mem.putInt(cur_rpl_area-4,cur_rpl_lrec);
+    		if ((cur_vclr_flag & vclr_flag_esds) != 0){
+    			excp_lrec = cur_rpl_lrec + 8;
+    			excp_area_sfx = pz390.mem.getInt(cur_rpl_area + cur_rpl_lrec);
+                pz390.mem.putInt(cur_rpl_area + cur_rpl_lrec,cur_rpl_lrec);
+    		} else {
+    			excp_lrec = cur_rpl_lrec + 4;
+    		}
     		try {
-    			sz390.tiot_file[tiot_index].seek(xrba);
-    			sz390.tiot_file[tiot_index].write(pz390.mem_byte,cur_rpl_area-4,cur_rpl_lrec+4);
-    			pz390.mem.putInt(cur_rpl_area-4,save_rec_pfx);
+    			sz390.tiot_file[cur_ves_tiot_index].seek(cur_ves_xrba);
+    			sz390.tiot_file[cur_ves_tiot_index].write(pz390.mem_byte,cur_rpl_area-4,excp_lrec);
     			if (tz390.opt_tracev){
-    				tz390.put_trace("VSAM EXCP WRITE VREC  XRBA=" + tz390.get_long_hex(xrba+4,16) + " LEN=" + tz390.get_hex(cur_rpl_lrec,8));
+    				tz390.put_trace("VSAM EXCP WRITE VREC  XRBA=" + tz390.get_long_hex(cur_ves_xrba+4,16) + " LEN=" + tz390.get_hex(cur_rpl_lrec,8));
     				sz390.dump_mem(cur_rpl_area,cur_rpl_lrec);
     			}
+    			pz390.mem.putInt(cur_rpl_area-4,excp_area_pfx);
+        		if ((cur_vclr_flag & vclr_flag_esds) != 0){
+                    pz390.mem.putInt(cur_rpl_area + cur_rpl_lrec,excp_area_sfx);
+        		}
     			sz390.tot_dcb_write++;
         		sz390.tot_dcb_oper++;
     			return true;
     		} catch (Exception e){
-    			pz390.mem.putInt(cur_rpl_area-4,save_rec_pfx);
+    			pz390.mem.putInt(cur_rpl_area-4,excp_area_pfx);
+    			if ((cur_vclr_flag & vclr_flag_esds) != 0){
+                    pz390.mem.putInt(cur_rpl_area + cur_rpl_lrec,excp_area_sfx);
+        		}
     			set_feedback(pdf_def,rc_phy,cmp_base,rn_write_data_err);
     			return false;
     		}
@@ -1041,10 +1230,10 @@ public  class  vz390 {
             // write fixed length record
     		cur_rpl_lrec = cur_vclr_lrec;
     		try {
-    			sz390.tiot_file[tiot_index].seek(xrba);
-    			sz390.tiot_file[tiot_index].write(pz390.mem_byte,cur_rpl_area,cur_rpl_lrec);
+    			sz390.tiot_file[cur_ves_tiot_index].seek(cur_ves_xrba);
+    			sz390.tiot_file[cur_ves_tiot_index].write(pz390.mem_byte,cur_rpl_area,cur_rpl_lrec);
     			if (tz390.opt_tracev){
-    				tz390.put_trace("VSAM EXCP WRITE FREC XRBA=" + tz390.get_long_hex(xrba,16) + " LEN=" + tz390.get_hex(cur_rpl_lrec,8));
+    				tz390.put_trace("VSAM EXCP WRITE FREC XRBA=" + tz390.get_long_hex(cur_ves_xrba,16) + " LEN=" + tz390.get_hex(cur_rpl_lrec,8));
     				sz390.dump_mem(cur_rpl_area,cur_rpl_lrec);
     			}
     			sz390.tot_dcb_write++;
@@ -1056,21 +1245,21 @@ public  class  vz390 {
     		}
     	}
     }
-    private boolean excp_read_index(int tiot_index,long xrba){
+    private boolean excp_read_index(){
     	/*
     	 * read index entry in vx? at xrba
     	 * and store in cur_read_index.
     	 */
-    	if (xrba > tz390.max_file_size){
+    	if (cur_vx0_xrba > tz390.max_file_size){
     		set_feedback(pdf_def,rc_phy,cmp_base,rn_inv_rba_req);
 			return false;
     	}
     	try {
-    		sz390.tiot_file[tiot_index].seek(xrba);
-    		cur_read_index = sz390.tiot_file[tiot_index].readLong();
-    		sz390.tiot_cur_rba[tiot_index] = sz390.tiot_file[tiot_index].getFilePointer();
+    		sz390.tiot_file[cur_vx0_tiot_index].seek(cur_vx0_xrba);
+    		cur_ves_xrba = sz390.tiot_file[cur_vx0_tiot_index].readLong();
+    		sz390.tiot_cur_rba[cur_vx0_tiot_index] = sz390.tiot_file[cur_vx0_tiot_index].getFilePointer();
 			if (tz390.opt_tracev){
-				tz390.put_trace("VSAM EXCP READ INDEX XRBA=" + tz390.get_long_hex(xrba,16) + " ESDS XRBA=" + tz390.get_long_hex(cur_read_index,16));
+				tz390.put_trace("VSAM EXCP READ INDEX XRBA=" + tz390.get_long_hex(cur_vx0_xrba,16) + " ESDS XRBA=" + tz390.get_long_hex(cur_ves_xrba,16));
 			}
     		sz390.tot_dcb_read++;
     		sz390.tot_dcb_oper++;
@@ -1080,19 +1269,19 @@ public  class  vz390 {
     		return false;
     	}
     }
-    private boolean excp_write_index(int tiot_index,long xrba,long index){
+    private boolean excp_write_index(long xrba){
     	/*
-    	 * write index entry in vx? at xrba.
+    	 * write xra index entry in vx0.
     	 */
-    	if (xrba > tz390.max_file_size){
+    	if (cur_vx0_xrba > tz390.max_file_size){
     		set_feedback(pdf_def,rc_phy,cmp_base,rn_inv_rba_req);
 			return false;
     	}
     	try {
-    		sz390.tiot_file[tiot_index].seek(xrba);
-    		sz390.tiot_file[tiot_index].writeLong(index);
+    		sz390.tiot_file[cur_vx0_tiot_index].seek(cur_vx0_xrba);
+    		sz390.tiot_file[cur_vx0_tiot_index].writeLong(xrba);
 			if (tz390.opt_tracev){
-				tz390.put_trace("VSAM EXCP WRITE INDEX XRBA=" + tz390.get_long_hex(xrba,16) + " ESDS XRBA=" + tz390.get_long_hex(index,16));
+				tz390.put_trace("VSAM EXCP WRITE INDEX XRBA=" + tz390.get_long_hex(cur_vx0_xrba,16) + " ESDS XRBA=" + tz390.get_long_hex(xrba,16));
 			}
     		sz390.tot_dcb_write++;
     		sz390.tot_dcb_oper++;
@@ -1117,6 +1306,78 @@ public  class  vz390 {
     		set_feedback(pdf_def,rc_phy,cmp_aix,rn_write_index_err);
     		return false;    		
     	}
+    }
+    private boolean set_esds_bwd_lrd(){
+    	/*
+    	 * setup for ESDS backward read of
+    	 * last record in VES file.
+    	 */
+    	if ((cur_rpl_opt & rpl_opt_seq) == 0
+    		|| (cur_rpl_opt & rpl_opt_bwd) == 0){
+    		set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rpl_opt);
+    	    return false; // SEQ,BWD required for LRD
+    	}
+    	try {
+    		sz390.tiot_cur_rba[cur_ves_tiot_index] = sz390.tiot_eof_rba[cur_ves_tiot_index];
+    	} catch (Exception e) {
+			set_feedback(pdf_def,rc_phy,cmp_base,rn_rcd_not_fnd);
+			return false;  // LRD last record not found
+    	}
+    	return true;
+    }
+    private boolean set_esds_bwd_next(){
+    	/*
+    	 * backup to next record for 
+    	 * ESDS SEQ BWD retrieval
+    	 * and return logical EOD error
+    	 * if at front of file.
+    	 */
+    	cur_ves_xrba = sz390.tiot_cur_rba[cur_ves_tiot_index];
+    	if (cur_ves_xrba == 0){
+    		set_feedback(pdf_def,rc_log,cmp_base,rn_eod);
+        	// return logical end of data to front of file
+    		return false;
+    	}
+    	if ((cur_vclr_flag & vclr_flag_vrec) != 0){
+    		// read prev rcd suffix record length
+    		// at cur xrba - 4 and update tiot
+    		// cur rec rba to rba - lrec - 8
+    		try {
+    			sz390.tiot_file[cur_ves_tiot_index].seek(cur_ves_xrba-4);
+    			cur_rpl_lrec = sz390.tiot_file[cur_ves_tiot_index].readInt();
+    			if (cur_rpl_lrec <= 0 
+    				|| cur_rpl_lrec > cur_vclr_lrec){
+    				if (tz390.opt_tracev){
+    					tz390.put_trace("VSAM EXCP READ PREV SFX RECLEN=" + tz390.get_hex(cur_rpl_lrec,8));
+    				}
+    	    		set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rec_len);
+    	        	return false;
+    			}
+    			bwd_xrba = cur_ves_xrba - cur_rpl_lrec -8;
+    			if (bwd_xrba < 0){
+    				if (tz390.opt_tracev){
+    					tz390.put_trace("VSAM BWD XRBA=" + tz390.get_long_hex(bwd_xrba,16) + "RECLEN=" + tz390.get_hex(cur_rpl_lrec,8));
+    				}
+    	    		set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rec_len);
+    	        	return false;
+        		}
+    		} catch (Exception e){
+    			set_feedback(pdf_def,rc_phy,cmp_base,rn_read_data_err);
+    			return false;
+    		}
+    	} else {
+    		bwd_xrba = sz390.tiot_cur_rba[cur_ves_tiot_index] - cur_vclr_lrec;
+    		if (bwd_xrba < 0){
+				if (tz390.opt_tracev){
+					tz390.put_trace("VSAM BWD XRBA=" + tz390.get_long_hex(bwd_xrba,16) + "RECLEN=" + tz390.get_hex(cur_rpl_lrec,8));
+				}
+	    		set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rec_len);
+	        	return false;
+    		}
+    	}
+		sz390.tiot_cur_rba[cur_ves_tiot_index]
+		                   = bwd_xrba;
+    	return true;
     }
 /*
  *  end of vz390 code 

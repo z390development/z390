@@ -8,10 +8,12 @@
 .*********************************************************************
 .* 08/10/07 INITIAL CODING TO TEST FDBK OR RECLEN FIELDS
 .* 08/19/07 RPI 680 SHOWCB TO TESTCB                       
+.* 09/14/07 RPI 672 VERIFY RPL VS ACB                                              
 .*********************************************************************
 &N       TESTCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS       X
-               &FDBK=,        TEST FEEDBACK REASON CODE BYTE           X
-               &RECLEN=       TEST LENGTH OF RECORD                     
+               &ACB=,         ACB ACCESS CONTROL BLOCK ADDRESS         X
+               &FDBK=,        TEST RPL FEEDBACK REASON CODE BYTE       X
+               &RECLEN=       TEST RPL LENGTH OF RECORD                     
          LCLB  &MODS
 &NPOS    SETA  N'&SYSLIST
 .POSLOOP ANOP
@@ -34,9 +36,13 @@
 .FDBK    ANOP
 &MODS    SETB  1
          ZTESTCB &RPL,RPLFEEDB-IHARPL+3,&FDBK,1
+         AIF   (&RPL NE '' AND &ACB EQ '').FDBK_END
+         MNOTE 'TESTCB RPL REQUIRED FOR FDBK'
          AGO   .FDBK_END
 .RECLEN  ANOP
 &MODS    SETB  1
          ZTESTCB &RPL,RPLLREC-IHARPL,&RECLEN,4
+         AIF   (&RPL NE '' AND &ACB EQ '').RECLEN_END
+         MNOTE 'TESTCB RPL REQUIRED FOR RECLEN'
          AGO     .RECLEN_END
          MEND

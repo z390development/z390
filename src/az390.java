@@ -274,6 +274,11 @@ public  class  az390 implements Runnable {
     * 08/22/07 RPI 673 support symbolic register on DROP
     * 08/25/07 RPI 687 add CICS VSAM DFHRESP literals
     * 09/03/07 RPI 690 correct NOTEND to NOTFND for =F'13'
+    * 09/11/07 RPI 694 add option ERRSUM to summarize critical errors 
+    *           1. List missing COPY and MACRO files.
+    *           2. List undefined symbols if #1 = 0
+    *           3. Total errror counts all reported on ERR, PRN, CON
+    *           4. ERRSUM turned on automatically if #1 != 0
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -479,6 +484,7 @@ public  class  az390 implements Runnable {
     byte sym_rld   = 6;  // complex rld exp
     byte sym_lct   = 7;  // loctr (changed to cst/dst). 
     byte sym_wxt   = 8;  // WXTRN weak external link RPI182
+    byte sym_und   = 9;  // undefined symbol RPI 694
     int tot_sym = 0;
     int tot_sym_find = 0;
     int tot_sym_comp = 0;
@@ -490,7 +496,7 @@ public  class  az390 implements Runnable {
     boolean loctr_found = false;  // RPI 632
     byte prev_sect_type = sym_cst;
     String[] sym_type_desc = {
-    	"ABS","CST","DST","ENT","EXT","REL","RLD","LCT","WXT"}; //RPI182
+    	"ABS","CST","DST","ENT","EXT","REL","RLD","LCT","WXT","UND"}; //RPI182 RPI 694
     String[]  sym_name         = null;
     int[]     sym_def          = null;
     byte[]    sym_type         = null;
@@ -511,6 +517,15 @@ public  class  az390 implements Runnable {
     int last_xref_line  = 0;
     int sym_def_ref       = 0;  // symbol referenced but not defined
     int sym_def_lookahead = -1; // symbol defined during lookahead
+    /*
+     * ERRSUM critical error data
+     */
+    int max_missing = 100;
+    int tot_missing_copy = 0;
+    int tot_missing_macro = 0;
+    int tot_missing_sym = 0;
+    String missing_copy[] = new String[max_missing];
+    String missing_macro[] = new String[max_missing];
     /*
      * DS/DC type and attribute tables
      */
@@ -1176,10 +1191,12 @@ private void open_files(){
 	 * 2.  Open obj and prn files
 	 */
 		tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tra_type;
-       	try {
-       		obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type,"rw"); 
-       	} catch (IOException e){
-       		abort_error(4,"I/O error on obj open - " + e.toString());
+       	if (tz390.opt_obj){  // RPI 694
+       		try {
+       			obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type,"rw"); 
+       		} catch (IOException e){
+       			abort_error(4,"I/O error on obj open - " + e.toString());
+       		}
        	}
        	if (tz390.opt_list){
             prn_file = new File(tz390.dir_prn + tz390.pgm_name + tz390.prn_type);
@@ -1207,7 +1224,7 @@ private void process_bal(){
 	     if (tz390.opt_list){
 	     	gen_sym_list();
 	     	gen_lit_xref_list(); //RPI198
-	     }
+	     }	     
 }
 private void resolve_symbols(){
 	/*
@@ -2385,6 +2402,7 @@ private void process_bal_op(){
     		&& mac_inline_level == 0){ // RPI 581
         	force_print = true;        // RPI 581
     		if (bal_parms != null // RPI 503
+    				&& !tz390.opt_errsum // RPI 694
     				&& bal_parms.length() > 0
     				&& bal_parms.charAt(0) != '\''
     				&& bal_parms.charAt(0) != '*'){  // RPI 444
@@ -2932,7 +2950,7 @@ private void get_bal_line(){
    				   || temp_line.charAt(71) <= ' '){  //RPI181
    			bal_line = tz390.trim_trailing_spaces(temp_line,72);  //RPI124
     	    if (!tz390.verify_ascii_source(bal_line)){
-    	    	abort_error(116,"invalid ascii source line " + tz390.cur_bal_line_num + " in " + bal_file.getPath());
+    	    	abort_error(116,"invalid ascii source line " + tz390.cur_bal_line_num + " in " + bal_file.getAbsolutePath());  // RPI 694
     	    }
    		} else {
    		    bal_line = temp_line.substring(0,71);
@@ -2942,11 +2960,11 @@ private void get_bal_line(){
             	    tz390.systerm_io++;
             	    temp_line = bal_file_buff.readLine();
             	    if (temp_line == null){
-            	    	abort_error(117,"missing continue source line " + tz390.cur_bal_line_num + " in " + bal_file.getPath());
+            	    	abort_error(117,"missing continue source line " + tz390.cur_bal_line_num + " in " + bal_file.getAbsolutePath());
             	    }
             	    temp_line = tz390.trim_trailing_spaces(temp_line,72);
             	    if (!tz390.verify_ascii_source(temp_line)){
-            	    	abort_error(118,"invalid ascii source line " + tz390.cur_bal_line_num + " in " + bal_file.getPath());
+            	    	abort_error(118,"invalid ascii source line " + tz390.cur_bal_line_num + " in " + bal_file.getAbsolutePath()); // RPI 694
             	    }
             	    if (temp_line.length() < 72 || temp_line.charAt(71) <= ' '){ //RPI181
             	    	bal_cont = false; // RPI 315
@@ -2982,7 +3000,11 @@ private void parse_bal_line(){
 	 * set bal_label and bal_op
 	 */
 	if (tz390.opt_tracea){
-		trace_pfx = tz390.left_justify(xref_file_name[bal_line_xref_file_num[bal_line_index]],9) + tz390.right_justify("" + bal_line_xref_file_line[bal_line_index],6) + tz390.right_justify("" + bal_line_num[bal_line_index],7) + " ";
+		if (bal_line_xref_file_num[bal_line_index] == 0){
+			trace_pfx = "OPEN CODE" + tz390.right_justify("" + bal_line_xref_file_line[bal_line_index],6) + tz390.right_justify("" + bal_line_num[bal_line_index],7) + " ";
+		} else {
+			trace_pfx = tz390.left_justify(xref_file_name[bal_line_xref_file_num[bal_line_index]],9) + tz390.right_justify("" + bal_line_xref_file_line[bal_line_index],6) + tz390.right_justify("" + bal_line_num[bal_line_index],7) + " ";
+		}
 		tz390.put_trace(trace_pfx + tz390.get_hex(loc_ctr,6) + " " + bal_line); // RPI 605
 	}
 	bal_abort = false;
@@ -3030,7 +3052,10 @@ private int find_bal_op(){
 		if (!label_match.find()){
 			log_error(196,"invalid character in opcode - " + bal_op);  // RPI 659
 		} else {
-			log_error(29,"undefined operation code - " + bal_op);
+			if (!tz390.opt_errsum){
+				tz390.init_errsum(); // RPI 694
+			}
+			log_error(29,"missing macro = " + bal_op); // RPI 694
 		}
 	    return -1;
 	} 
@@ -3264,7 +3289,7 @@ private void process_sect(byte sect_type,String sect_name){
 }
 public int find_sym(String name){ // RPI 415 public
 	/*
-	 * 1.  Return symbol index else -1
+	 * 1.  Return defined symbol index else -1
 	 * 2.  If not lookahead mode
 	 *        if found, add xref
 	 *        else if vcon mode, add extrn
@@ -3272,8 +3297,12 @@ public int find_sym(String name){ // RPI 415 public
 	 */
 	int index  = tz390.find_key_index('S',name.toUpperCase());
 	if (!lookahead_mode){
-		if (index != -1 && sym_def[index] != sym_def_lookahead){ // RPI 415 
+		if (index != -1
+			&& sym_def[index] != sym_def_lookahead){ // RPI 415 
 			add_sym_xref(index);
+			if (sym_type[index] == sym_und){  // RPI 694
+			  	log_error(198,"symbol not defined " + sym_name[index]);
+			}
 		} else if (dcv_type){
 			add_extrn(index,name);
 		}
@@ -4134,6 +4163,13 @@ private void push_exp_sym(){
 	          exp_stk_sym_val[tot_exp_stk_sym-1]  = 0;
 		  } else {
 			  log_error(98,"symbol not found - " + exp_token);
+			  if (cur_sid < 0 && cur_pass > 1){
+				  tot_missing_sym++;
+				  cur_sid = add_sym(exp_token); // RPI 694
+				  sym_type[cur_sid] = sym_und;  // RPI 694 
+			      sym_loc[cur_sid]  = -1;       // RPI 694
+			      sym_len[cur_sid]  = -1;       // RPI 694
+			  }
 		  }
 	   }
     }
@@ -4230,6 +4266,9 @@ public void exit_az390(){
 	  if (az390_errors > 0 || tz390.z390_abort){
 		  az390_rc = 16;
       }
+	  if (tz390.opt_errsum){
+		report_critical_errors();
+	  }
   	  put_stats();
       close_files();
 	  if (mz390_call){ // RPI 415
@@ -4272,7 +4311,7 @@ private void put_stats(){
 	while (index < tot_xref_files){
 		if (tz390.opt_asm && xref_file_errors[index] > 0){
 			String xref_msg = msg_id + "FID=" + tz390.right_justify(""+(index+1),3) 
-					        + " ERR=" + tz390.right_justify(""+xref_file_errors[index],2) 
+					        + " ERR=" + tz390.right_justify(""+xref_file_errors[index],4) 
  	                        + " " + xref_file_name[index];
 		    put_log(xref_msg);
 		    tz390.put_systerm(xref_msg);
@@ -4334,12 +4373,20 @@ private void log_error(int error,String msg){
 		 }
    	     force_print = true;  // RPI 285
          set_file_line_xref();
-   	     String error_msg = "AZ390E error " + tz390.right_justify("" + error,3) + tz390.right_justify(xref_file_line + bal_line_num[bal_line_index],15) + "   " + bal_line_text[bal_line_index];
-	     put_log(error_msg);
-	     tz390.put_systerm(error_msg);
-	     error_msg = msg_id + msg;
-	     put_log(error_msg);
-	     tz390.put_systerm(error_msg);
+	     if (tz390.opt_errsum){  // RPI 694 (see mz390 log_error also
+		     if (error == 29){   // undefined opcode
+	             if (!add_missing_macro(bal_op)){
+	            	 abort_error(199,"max missing copy exceeded");
+	             }
+		     }
+	     } else {
+		    	 String error_msg = "AZ390E error " + tz390.right_justify("" + error,3) + tz390.right_justify(xref_file_line + bal_line_num[bal_line_index],15) + "   " + bal_line_text[bal_line_index];
+	    	 put_log(error_msg);
+	    	 tz390.put_systerm(error_msg);
+	    	 error_msg = msg_id + msg;
+	    	 put_log(error_msg);
+	    	 tz390.put_systerm(error_msg);
+	     }
 	     force_print = false;  // RPI 285
 	  }
 	  az390_errors++;
@@ -4369,6 +4416,9 @@ private synchronized void abort_error(int error,String msg){ // RPI 646
 		 msg = msg_id + "aborting due to recursive abort error " + error + " - " + msg;
 		 System.out.println(msg);
 		 tz390.put_systerm(msg);
+		 if (tz390.opt_errsum){
+			report_critical_errors();
+		 }
 		 tz390.close_systerm(16);
 		 bal_line_full = false;
 	  	 System.exit(16);
@@ -4432,7 +4482,8 @@ private void put_copyright(){
 		   if (tz390.opt_tracea){
 			   tz390.put_trace(msg); // RPI 564 additional tracea info
 		   }
-	   	   if (tz390.opt_list){ // RPI 484
+	   	   if (tz390.opt_list 
+	   		  && !tz390.opt_errsum){ // RPI 484  RPI 694
 	   		   if (!print_on[print_level]        //IF  PRINT OFF
 	   		       || (!print_gen[print_level]   //    OR (PRINT NOGEN 
 	   		           && mac_call_level > 0)   //         AND MAC LVL > 0    
@@ -7846,6 +7897,89 @@ private String get_dfp_hex(int dfp_type,BigDecimal dfp_bd){
 	}
 	log_error(181,"invalid decimal floating point type " + dfp_type);
 	return null;
+}
+public boolean add_missing_copy(String name){
+	/*
+	 * add nussubg ciot file for ERRSUM
+	 */
+	int index = 0;
+	while (index < tot_missing_copy){
+		if (name.equals(missing_copy[index])){
+			return true;
+		}
+		index++;
+	}
+	if (index < max_missing){
+		tot_missing_copy++;
+		missing_copy[index] = name;
+		return true;
+	} else {
+		return false;
+	}	
+}
+private boolean add_missing_macro(String name){
+	/*
+	 * add nussubg ciot file for ERRSUM
+	 */
+	int index = 0;
+	while (index < tot_missing_macro){
+		if (name.equals(missing_macro[index])){
+			return true;
+		}
+		index++;
+	}
+	if (index < max_missing){
+		tot_missing_macro++;
+		missing_macro[index] = name;
+		return true;
+	} else {
+		return false;
+	}
+}
+public void report_critical_errors(){
+	/*
+	 * report critical errors on ERR file
+	 * and console for ERRSUM option
+	 */
+	tz390.opt_errsum = false; // allow printing on PRN again
+	tz390.opt_list   = true;
+	put_errsum("ERRSUM Critical Error Summary Option");
+    put_errsum("Fix and repeat until all nested errors resolved");
+    put_errsum("Use option ERR(0) to force assembly with errors");
+	int index = 0;
+	while (index < tot_missing_copy){
+		put_errsum("missing copy  =" + missing_copy[index]);
+		index++;
+	}
+	index = 0;
+	while (index < tot_missing_macro){
+		put_errsum("missing macro =" + missing_macro[index]);
+		index++;
+	}
+	if (tot_missing_macro + tot_missing_copy == 0){
+		index = 1;
+		while (index <= tot_sym){
+			if (sym_type[index] == sym_und){
+				put_errsum("undefined symbol = " + sym_name[index]);
+			}
+			index++;
+		}
+	}
+	put_errsum("total missing   copy   files =" + tot_missing_copy);
+	put_errsum("total missing   macro  files =" + tot_missing_macro);
+	put_errsum("total undefined symbols      =" + tot_missing_sym);
+}
+private void put_errsum(String msg){
+	/*
+	 * put ERRSUM msgs on ERR file and console
+	 */
+	msg = "AZ390E " + msg;
+	System.out.println(msg);
+	if (prn_file != null){
+		// if ERRSUM turned on after open put msgs to PRN
+		put_prn_line(msg);
+	}
+	tz390.put_systerm(msg);
 }
 /*
  *  end of az390 code 

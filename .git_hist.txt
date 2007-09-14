@@ -2654,6 +2654,80 @@ git add mac/ZDEFINE.MAC
 git add vsam/demo/DEMOCAT.MLC
 git add vsam/test/TESTCAT.MLC
 
+==> Create commit for V1.3.07c
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2007-09-07 16:18:00 -0500
+set GIT_COMMITTER_DATE=2021-03-22 14:47:00 +0100
+git commit -m "Reconstructed version v1.3.07c of z390 committed on behalf of Don Higgins"
+git tag -a v1.3.07c -m "Reconstructed version v1.3.07c of z390 committed on behalf of Don Higgins"
+
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.3.07d
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.3.07d
+git add README.TXT
+git add RTVSAM1.BAT
+git add linklib/REPRO.MLC
+git add mac/ACBD.MAC
+git add mac/MODCB.MAC
+git add mac/RPL.MAC
+git add mac/SHOWCB.MAC
+git add mac/TESTCB.MAC
+git add mac/ZMODCB.MAC
+git add mac/ZSHOWCB.MAC
+git add src/az390.java
+git add src/mz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add src/vz390.java
+git add vsam/demo/ESF1DEMO.BAT
+git add vsam/demo/ESV1DEMO.BAT
+git add vsam/demo/RRF1DEMO.BAT
+git add vsam/test/ESF1REPO.BAT
+git add vsam/test/ESF1TEST.MLC
+git add vsam/test/ESV1REPO.BAT
+git add vsam/test/ESV1TEST.MLC
+git rm  vsam/test/KSF1TEST.BAT
+git rm  vsam/test/LDF1TEST.BAT
+git add vsam/test/RRF1TEST.BAT
+git add vsam/test/RRF1TEST.MLC
+git add vsam/test/RRV1TEST.MLC
+git add vsam/test/TESTCAT.MLC
+git add vsam/test/ESF2TEST.BAT
+git add vsam/test/ESF2TEST.MLC
+git add vsam/test/ESF3TEST.BAT
+git add vsam/test/ESF3TEST.MLC
+git add vsam/test/ESV3TEST.BAT
+git add vsam/test/ESV3TEST.MLC
+git add vsam/test/ESV4TEST.BAT
+git add vsam/test/ESV4TEST.MLC
+
+==> Create commit for V1.3.07d
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2007-09-14 13:39:00 -0500
+set GIT_COMMITTER_DATE=2021-03-22 14:55:00 +0100
+git commit -m "Reconstructed version v1.3.07d of z390 committed on behalf of Don Higgins"
+git tag -a v1.3.07d -m "Reconstructed version v1.3.07d of z390 committed on behalf of Don Higgins"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

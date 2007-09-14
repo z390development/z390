@@ -284,7 +284,13 @@ public  class  mz390 {
      * 07/05/07 RPI 647 allow comma between INDEX, FIND operands and fix trace 
      * 07/20/07 MZ390 error 218 if * or . in substituted model label 
      * 08/14/07 support macro name symbolic substitution for inline proto-type 
-     * 09/04/07 RPI 691 remove exp_index++ for alloc_set subsc.            
+     * 09/04/07 RPI 691 remove exp_index++ for alloc_set subsc. 
+    * 09/11/07 RPI 694 add option ERRSUM to summarize critical errors 
+    *           1. List missing COPY and MACRO files.
+    *           2. List undefined symbols if #1 = 0
+    *           3. Total errror counts all reported on ERR, PRN, CON
+    *           4. ERRSUM turned on automatically if #1 != 0
+    * 09/12/07 RPI 695 replace single null macro call parm with comma if comments                    
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -328,6 +334,7 @@ public  class  mz390 {
 	int tot_mac_copy = 0;
 	int mlc_line_end = 0;
 	File bal_file = null;
+	File temp_file = null;
 	BufferedWriter bal_file_buff = null;
 	boolean aread_op = false;
 	int tot_aread_io = 0;
@@ -638,7 +645,6 @@ public  class  mz390 {
 	char    exp_create_set_op = '&'; // created set &(...) oper
 	boolean exp_var_replacement_mode = false; // for repace_vars()
 	boolean exp_var_replacement_change = false; // set if replacements made
-	boolean exp_var_replacement_label  = false; // set if label replaced RPI 659
 	boolean exp_alloc_set_mode = false;  // for lcl/gbl alloc
 	boolean exp_parse_set_mode = false;  // for set target and lcl/gbl alloc
 	boolean exp_alloc_set_created  = false;  // set true if alloc_set finds created
@@ -1883,7 +1889,7 @@ public  class  mz390 {
 		/*
 		 * find/add file name and set cur_mac_file_num
 		 */
-		String mac_file_key = mac_file[cur_mac_file].getPath(); 
+		String mac_file_key = mac_file[cur_mac_file].getAbsolutePath(); 
 		cur_mac_file_num = tz390.find_key_index(
 				'F',mac_file_key);		
 		if (cur_mac_file_num == -1){
@@ -2003,7 +2009,7 @@ public  class  mz390 {
 				} else {
 					temp_line = tz390.trim_trailing_spaces(temp_line,72);
 					if (!tz390.verify_ascii_source(temp_line)){
-						log_error(138,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
+						log_error(138,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getAbsolutePath());
 					}
 				}
 			}
@@ -2022,11 +2028,11 @@ public  class  mz390 {
 					cur_mac_line_num++;
 					store_mac_line(); // RPI 273 update now for any cont. error
 					if (temp_line == null){
-						log_error(139,"missing continuation line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
+						log_error(139,"missing continuation line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getAbsolutePath());
 					}
 					temp_line = tz390.trim_trailing_spaces(temp_line,72);
 					if (!tz390.verify_ascii_source(temp_line)){
-						log_error(140,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getPath());
+						log_error(140,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getAbsolutePath());
 					}
 					if (temp_line.length() < 72 
 						|| temp_line.charAt(71) <= asc_space_char){ //RPI181
@@ -2164,7 +2170,12 @@ public  class  mz390 {
 		if (new_mac_name == null){
 			cur_mac_file--;
 			if (load_type != load_mlc_file){ // RPI 300 
-				log_error(101,"copy file not found - " + mac_parms);
+				if (tz390.opt_asm 
+					&& !az390.tz390.opt_errsum){
+				    tz390.init_errsum();
+					az390.tz390.init_errsum();  // RPI 694
+				}
+				log_error(101,"missing copy  = " + mac_parms);
 			}
 			return;
 		}
@@ -2275,7 +2286,12 @@ public  class  mz390 {
 		}
 		az390.mz390_errors = mz390_errors; //update mz390 errors for PRN
 		if (mac_call_level >=0){
-			cur_mac_name = mac_name[mac_call_name_index[mac_call_level]];
+			if (mac_call_level == 0){
+				temp_file = new File(tz390.dir_bal + tz390.pgm_name + tz390.pgm_type);
+				cur_mac_name = temp_file.getAbsolutePath(); // RPI 694
+			} else {
+				cur_mac_name = mac_name[mac_call_name_index[mac_call_level]];
+			}
 		} else {
 			cur_mac_name = null;
 		}
@@ -2383,12 +2399,11 @@ public  class  mz390 {
 		 *       and let az390 report error if not in comment
 		 *   2.  Per RPI 502 remove undefined var which may cause null
 		 *       parm error in az390.
-		 *   3.  Set exp_var_replacement_label if rep at index 0.  RPI 659
-		 *       (Not note label for parm rep and not used)
+		 *   3.  Replace null single parm with comma
+		 *       if comments follow RPI 695       
 		 */
 		exp_var_replacement_mode = false;
 		exp_var_replacement_change = false;
-		exp_var_replacement_label  = false;
 		bal_text = text;
 		var_match   = var_pattern.matcher(bal_text);
 		bal_text_index0 = 0; // end of prev. parm
@@ -2412,10 +2427,17 @@ public  class  mz390 {
 				bal_text_index2 = bal_text_index1 + 2;
 			} else {
 				parm_value = calc_setc_exp(bal_text.substring(bal_text_index1),0);
-				if (parm_value != null){  // RPI 241 ignore var if error
+				if (parm_value != null){  
+					if (mac_call_level > 0 
+						&& parm_value.length() == 0
+						&& bal_text_index1 + exp_next_index < bal_text.length()
+						&& bal_text.charAt(bal_text_index1+exp_next_index) <= ' '
+						&& bal_parms.equals(bal_text.substring(bal_text_index1))){
+						parm_value = ","; // RPI 695 replace with comma to delimit comments
+					}
 					bal_text_index2 = bal_text_index1 + exp_next_index;
 				} else {
-					parm_value = ""; // RPI 502 remove undefined var
+					parm_value = ""; // RPI 241 RPI 502 remove undefined var
 					bal_text_index2 = bal_text_index1 + var_save.length();
 				}
 			}
@@ -3346,7 +3368,7 @@ public  class  mz390 {
 				ap_file_name = tz390.get_file_name(tz390.dir_dat,tz390.pgm_name,tz390.dat_type); // RPI 431
 			}
             if (dat_file[dat_file_index] != null
-				&& !ap_file_name.equals(dat_file[dat_file_index].getPath())
+				&& !ap_file_name.equals(dat_file[dat_file_index].getAbsolutePath())
 			    ){
                 close_dat_file(dat_file_index); // RPI 432
 			}
@@ -3354,7 +3376,7 @@ public  class  mz390 {
 				int index = 0;
 				while (index < max_ap_files){
 					if (pch_file[index] != null
-						&& pch_file[index].getPath().equals(ap_file_name)){
+						&& pch_file[index].getAbsolutePath().equals(ap_file_name)){
 						close_pch_file(index);
 					}
 					index++;
@@ -3457,8 +3479,8 @@ public  class  mz390 {
 		 */
 		String temp_file_name = System.getenv(ddname);
 		if (temp_file_name != null && temp_file_name.length() > 0){
-			File temp_file = new File(temp_file_name);
-			return temp_file.getPath();
+			temp_file = new File(temp_file_name);
+			return temp_file.getAbsolutePath();
 		} else {
 			log_error(62,"ddname=" + ddname + " not found");
 		}
@@ -3508,7 +3530,7 @@ public  class  mz390 {
 					ap_file_name = tz390.get_file_name(tz390.dir_pch,tz390.pgm_name,tz390.pch_type);
 				}
 				if  (pch_file[pch_file_index] != null
-					 && !ap_file_name.equals(pch_file[pch_file_index].getPath())
+					 && !ap_file_name.equals(pch_file[pch_file_index].getAbsolutePath())
 				    ){
                     close_pch_file(pch_file_index);
 				}
@@ -3521,11 +3543,11 @@ public  class  mz390 {
 					// close all matching dat and pch files
 					// before opening new output pch file
 					if (dat_file[index] != null 
-						&& dat_file[index].getPath().equals(ap_file_name)){
+						&& dat_file[index].getAbsolutePath().equals(ap_file_name)){
 						close_dat_file(index); // RPI 432
 					}
 					if (pch_file[index] != null
-						&& pch_file[index].getPath().equals(ap_file_name)){
+						&& pch_file[index].getAbsolutePath().equals(ap_file_name)){
 						close_pch_file(index);
 					}
 					index++;
@@ -7432,8 +7454,17 @@ public  class  mz390 {
 	                        + "/" + mac_file_line_num[mac_line_index]
 	                        + ")" + mac_file_line_num[mac_line_index],15) 
 		+ " " + msg;
-		put_log(error_msg);
-		tz390.put_systerm(error_msg);
+		if (tz390.opt_asm 
+			&& az390.tz390.opt_errsum){  // RPI 694 (see az390 log_error also)
+			if (error == 101){  // RPI 694 only log copy not found
+                if (!az390.add_missing_copy(mac_parms)){
+                	abort_error(219,"max missing copy exceeded");
+                }
+			}
+		} else {
+			put_log(error_msg);
+			tz390.put_systerm(error_msg);
+		}
 		mz390_errors++;
 		if (tz390.max_errors != 0 && mz390_errors > tz390.max_errors){
 			abort_error(83,"maximum errors exceeded");
@@ -7446,8 +7477,12 @@ public  class  mz390 {
 		 */
 		if (tz390.z390_abort){
 			msg = msg_id + "aborting due to recursive abort for " + msg;
-			System.out.println(msg);;
+			System.out.println(msg);
 			tz390.put_systerm(msg);
+			if (tz390.opt_asm 
+				&& az390.tz390.opt_errsum){
+				az390.report_critical_errors();
+			}
 			tz390.close_systerm(16);
 			System.exit(16);
 		}

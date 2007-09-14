@@ -5,67 +5,67 @@
 * Author - Don Higgins                                              *
 * Date   - 04/23/07                                                 *
 *********************************************************************
-* 08/31/07 INITIAL CODING OF RRDS FIXED LENGTH RECORD TESTS           
+* 09/13/07 RPI 672 CODE TEST FOR LRD,BWD SEQ,BWD BACKWARD ACCESS      
 *********************************************************************
-RRF1TEST RT1   MAIN 
-VACBOUT  ACB   DDNAME=VFILE,MACRF=(DIR,OUT)
-VACBIN   ACB   DDNAME=VFILE,MACRF=(DIR,IN)
-VRPLOUT  RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(DIR),ARG=REC#
-VRPLIN   RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(DIR),ARG=REC#
+ESF3TEST RT1   MAIN 
+VACBOUT  ACB   DDNAME=VFILE,MACRF=(SEQ,OUT)
+VACBIN   ACB   DDNAME=VFILE,MACRF=(SEQ,IN)
+VRPLOUTS RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(SEQ)
+VRPLINSL RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(SEQ,BWD,LRD)
+VRPLINSB RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(SEQ,BWD)
 RECORD   DC    CL80' '
-REC#     DC    F'00'
          LTORG
          EQUREGS
          RT1   START
+         WTO   'ESF3TEST TEST SEQ CREATE AND READ BACKWARDS'  
 *
-* BUILD VSAM RRDS FIXED LENGTH FILE WITH 3 RECORDS
+* BUILD VSAM FIXED LENGTH FILE FROM QSAME FILE WITH 3 RECORDS
 *
-         WTO   'RRF1TEST CREATE RRDS VFILE WITH 3 RECORDS'
+         WTO   'ESF3TEST CREATE VFILE'
          OPEN  (VACBOUT,(OUTPUT))
          LTR   R15,R15
          RT1   CC0
-         MVC   RECORD,=80C'0'
-         MVC   REC#,=F'0'
-         PUT   RPL=VRPLOUT
-         LTR   R15,R15
-         RT1   CC0
-         MVC   RECORD,=80C'4'
-         MVC   REC#,=F'4'
-         PUT   RPL=VRPLOUT
+         MVC   RECORD,=80C'1'
+         PUT   RPL=VRPLOUTS
          LTR   R15,R15
          RT1   CC0
          MVC   RECORD,=80C'2'
-         MVC   REC#,=F'2'
-         PUT   RPL=VRPLOUT
+         PUT   RPL=VRPLOUTS
+         LTR   R15,R15
+         RT1   CC0
+         MVC   RECORD,=80C'3'
+         PUT   RPL=VRPLOUTS
          LTR   R15,R15
          RT1   CC0
          CLOSE (VACBOUT)
          LTR   R15,R15
          RT1   CC0
 *
-* READ AND VERIFY 3 VSAM RRDS FIXED LENGTH RECORDS 
+* READ AND VERIFY 3 VSAM RECORDS BACKWARD                    
 *
-         WTO   'RRF1TEST READ AND VERIFY VFILE RECORDS'
+         WTO   'ESF3TEST READ AND VERIFY VFILE BACKWARDS'
          OPEN  (VACBIN)
          LTR   R15,R15
          RT1   CC0
-         MVC   REC#,=F'0'
-         GET   RPL=VRPLIN
+         GET   RPL=VRPLINSL
          LTR   R15,R15
          RT1   CC0
-         CLC   RECORD,=80C'0'
+         CLC   RECORD,=80C'3'
          RT1   CC0
-         MVC   REC#,=F'2'
-         GET   RPL=VRPLIN
+         GET   RPL=VRPLINSB  
          LTR   R15,R15
          RT1   CC0
          CLC   RECORD,=80C'2'
          RT1   CC0
-         MVC   REC#,=F'4'
-         GET   RPL=VRPLIN
+         GET   RPL=VRPLINSB  
          LTR   R15,R15
          RT1   CC0
-         CLC   RECORD,=80C'4'
+         CLC   RECORD,=80C'1'
+         RT1   CC0
+         GET   RPL=VRPLINSB  
+         CHI   R15,8
+         RT1   CC0
+         TESTCB RPL=VRPLINSB,FDBK=4 VERIFY LOGICAL EOD AT FRONT
          RT1   CC0
          CLOSE (VACBIN)
          LTR   R15,R15

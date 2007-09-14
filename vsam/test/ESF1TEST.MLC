@@ -6,8 +6,9 @@
 * Date   - 04/23/07                                                 *
 *********************************************************************
 * 08/29/07 INITIAL CODING OF ESDS FIXED LENGTH RECORD TESTS           
+* 09/09/07 RPI 672 CHANGE RBA/XRBA VALUES TO VES RCD ADDRESSES        
 *********************************************************************
-ESF1SP   RT1   MAIN 
+ESF1TEST RT1   MAIN 
 QDCBIN   DCB   DDNAME=QFILE,RECFM=F,LRECL=80,MACRF=GM,EODAD=EOF
 QDCBOUT  DCB   DDNAME=QFILE,RECFM=F,LRECL=80,MACRF=PM
 VACBOUT  ACB   DDNAME=VFILE,MACRF=(SEQ,OUT)
@@ -80,10 +81,10 @@ EOF      CLOSE (QDCBIN,,VACBOUT)
          CLC   RECORD,=80C'2'
          RT1   CC0
          SHOWCB RPL=VRPLINS,AREA=RBA2,LENGTH=4,FIELDS=(RBA)
-         CLC   RBA2,=F'8'
+         CLC   RBA2,=F'80'
          RT1   CC0
          SHOWCB RPL=VRPLINS,AREA=XRBA2,LENGTH=8,FIELDS=(XRBA)
-         CLC   XRBA2,=FL8'8'
+         CLC   XRBA2,=FL8'80'
          RT1   CC0
          GET   RPL=VRPLINS
          LTR   R15,R15
@@ -91,10 +92,10 @@ EOF      CLOSE (QDCBIN,,VACBOUT)
          CLC   RECORD,=80C'3'
          RT1   CC0
          SHOWCB RPL=VRPLINS,AREA=RBA3,LENGTH=4,FIELDS=(RBA)
-         CLC   RBA3,=F'16'
+         CLC   RBA3,=F'160'
          RT1   CC0
          SHOWCB RPL=VRPLINS,AREA=XRBA3,LENGTH=8,FIELDS=(XRBA)
-         CLC   XRBA3,=FL8'16'
+         CLC   XRBA3,=FL8'160'
          RT1   CC0
          GET   RPL=VRPLINS
          CHI   R15,8             VERIFY LOGIC ERROR AT EOD
@@ -150,6 +151,5 @@ EOF      CLOSE (QDCBIN,,VACBOUT)
          CLOSE (VACBINR)
          LTR   R15,R15
          RT1   CC0
-         WTO   'ESF1TEST ENDED OK'
          RT1   END
          END

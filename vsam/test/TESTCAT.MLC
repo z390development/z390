@@ -4,9 +4,17 @@
          DEFINE CATALOG,NAME=TESTCAT              
          DEFINE CLUSTER,NAME=ESF1,                                     X
                RECORDSIZE=80,INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESF2,                                     X
+               RECORDSIZE=80,INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESF3,                                     X
+               RECORDSIZE=80,INDEX=NONINDEXED
          DEFINE CLUSTER,NAME=ESV1,RECORDSIZE=(200,300),                X
                INDEX=NONINDEXED
          DEFINE CLUSTER,NAME=ESV2,RECORDSIZE=(1,100000),               X
+               INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESV3,RECORDSIZE=(200,300),                X
+               INDEX=NONINDEXED
+         DEFINE CLUSTER,NAME=ESV4,RECORDSIZE=(200,300),                X
                INDEX=NONINDEXED
          DEFINE CLUSTER,NAME=RRF1,                                     X
                RECORDSIZE=80,INDEX=NUMBERED

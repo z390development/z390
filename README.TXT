@@ -1,4 +1,4 @@
-z390 v1.3.07c PTF 09/07/07
+z390 v1.3.07d PTF 09/14/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.07:
@@ -58,6 +58,27 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.07:
     for ARG= and OPTCD=.  Add MODCB ACB MACRF= support. See updated rt\test\TESTCIC1.
 15. RPI 691 correct mz390 macro assembler to terminate parsing global and local
     macro variable definitionss with singe space prior to comments.
+16. RPI 672 add ESDS support for fixed and variable length UPD, LRD, BWD for update
+    and read backwards.  Eliminated need for index file on ESDS fixed and variable 
+    and RRDS fixed length record files.  Correct logic to always use RPL options 
+    versus ACB flags to determine current request type.  Correct numerious errors
+    in macros and logic.  Add the following new VSAM regression tests:
+    a)  ESF2TEST - test ESDS fixed length update and RBA/XRBA access
+    b)  ESF3TEST - test ESDS fixed length sequential read backwards
+    c)  ESV3TEST = test ESDS variable update and RBA/XRBA access
+    d)  ESV4TEST - test ESDS variable sequential read backwards
+17. RPI 694 - add new option ERRSUM for critical error summary in place of
+    normal assembly.  This option shows any missing macros and copybooks which
+    must be fixed by adding correct library paths to SYSMAC and SYSCPY parms.
+    If all macro and copybooks have been resolved, ERRSUM then shows any undefined
+    symbols which usually indicates need to add macro or copybook reference.
+    This option is turned on automatically if there are missing macros or copybooks.
+    To force assembly with these critical errors use ERR(0).  The symbol table now
+    includes all undefined symbols with TYPE=UND.
+18. RPI 695 correct macro processor to insert comma for single null parm on inner macro
+    call to prevent following comments from being parsed as first parm in error.  See
+    updated regression test rt\test\TESTMAC1.
+
 
 To install this cumulative PTF for z390 follow these steps.
 
