@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 06/23/07 INITIAL CODING                    
 .* 08/29/07 RPI 688 ADD RPLXRBA XRBA/RBA FIELD AND SPLIT OPT1/OPT2 EQU       
+.* 09/16/07 RPI 682 CORRECT RPLID                                            
 .*********************************************************************
          RPLD   
 .*
@@ -26,7 +27,7 @@
 .*       ACCESS CONTROL BLOCK DSECT FOR VSAM
 .*
 IHARPL   DSECT
-RPLTYPE  DS   X   RPL ID
+RPLID    DS   X   RPL ID
 RPLSTYPE DS   X   RPL TYPE VSAM
 RPLLEN   DS   X   RPL LENGTH
          DS   X   (ALIGN)

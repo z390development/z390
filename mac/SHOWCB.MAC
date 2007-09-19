@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 08/10/07 INITIAL CODING TO SUPPORT FDBK, AREA, RECLEN INITIALLY                 
 .* 09/14/07 RPI 672 VERIFY RPL VS ACB                                              
+.* 09/19/07 RPI 697 SET RC=0                                                       
 .*********************************************************************
 &N       SHOWCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS       X
                &ACB=,         ACB ACCESS CONTROL BLOCK                 X
@@ -42,7 +43,9 @@
          AIF   (&FIELDS(&I) EQ 'RECLEN').RECLEN
          AIF   (&FIELDS(&I) EQ 'XRBA').XRBA
          MNOTE 12,'SHOWCB FIELD NOT SUPPORTED - &FIELDS(&I)'
+         MEXIT
 .EXIT    ANOP
+         SR    15,15 RC=0
          MEXIT
 .AREA    ANOP  RETURN ADDRESS OF RECORD AREA   
          ZSHOWCB &RPL,RPLAREA-IHARPL,&AREA,&OFFSET,4

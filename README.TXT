@@ -1,4 +1,4 @@
-z390 v1.3.07d PTF 09/14/07
+z390 v1.3.07e PTF 09/19/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.07:
@@ -78,7 +78,27 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.07:
 18. RPI 695 correct macro processor to insert comma for single null parm on inner macro
     call to prevent following comments from being parsed as first parm in error.  See
     updated regression test rt\test\TESTMAC1.
-
+19. RPI 682 add GENCB macro support to dynamically allocate ACB and RPL VSAM
+    control blocks.  Two additional support macros were added ZGENMACF and 
+    ZGENOPTD to share same option bit generation and verification.
+20. RPI 696 - correct MODCB to handle both ACB= and RPL= fields in same macro call.
+    Correct REPRO to verify INFILE or OUTFILE primary name that loads successfuly
+    is actually a VCDT catalog otherwise assume file name with extension is QSAM file.
+21. RPI 697 - correct several QSAM and VSAM I/O related bugs and add several new options:
+    1) Add option TRACEQ to trace QSAM sequential file I/O data transfers for use in
+       debugging QSAM and VSAM file issues.
+    2) Add new REPRO option to override QSAM INFILE or OUTFILE RECFM by coding
+       [RECFM=FT|FB|VT|VB] folling QSAM file name.  See vsam\test\ESF4REPO.BAT
+       and vsam\test\ESV5REPO.BAT tests converting ascii text files to VSAM ESDS.
+    3) Correct QSAM VT I/O to allow 5 byte variable length records and convert
+       blank ASCII lines to 5 byte VLR record with single blank.
+    4) Correct hyper bug to refresh current catalog entry info for each ACB and RPL
+       switch.
+    5) Correct RPL feedback codes for bad RBA/XRBA between ESDS and RRDS. 
+    6) Correct support for ADR,XRBA,SKP,FWD and ADR,XRBA,SKP,BWD to support
+       reading ESDS record at XRBA and then sequentially reading forward or
+       backward.  See update vsam\test\ESF1SKP1.BAT and ESV1SKP1.BAT.
+    7) Correct SHOWCB and MODCB to set return code 0.
 
 To install this cumulative PTF for z390 follow these steps.
 

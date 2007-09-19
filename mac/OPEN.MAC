@@ -14,6 +14,8 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/03/07 RPI 668 check return code for each svc and exit if nz
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 09/16/07 RPI 697 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 09/16/07 RPI 682 CHANGE TO GEN DCBD REQUIRED FOR OPEN FLAG REFS  
 .*********************************************************************
 &N       OPEN  &DCBLIST,   ((DCB,OPT),(DCB,OPT),,) OR DCB OR (REG)     X
                &MF=I,      NOT SUPPORTED                               X
@@ -32,7 +34,7 @@
 .*
          AIF   (&TYPE EQ '').NOTYPE
          MNOTE 12,'OPEN TYPE= NOT SUPPORTED'
-         MEXIT
+         AGO   .EXIT
 .NOTYPE  ANOP
 &NP      SETA  N'&SYSLIST(1)
 &I       SETA  -1
@@ -50,7 +52,7 @@
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          AIF   ('&DCB'(1,1) GT '9' OR '&DCB'(1,1) LT '0').RXOK
          MNOTE 12,'INVALID DCB RX ADDRESS - &DCB'
-         MEXIT
+         AGO   .EXIT
 .RXOK    ANOP
          LA    1,&DCB
          AGO   .CHKOPT
@@ -62,7 +64,7 @@
          AIF   ('&OPTION' EQ 'OUTPUT').OUTPUT
          AIF   ('&OPTION' EQ 'UPDATE').UPDATE
          MNOTE 12,'OPEN OPTION NOT SUPPORTED - &OPTION'
-         MEXIT
+         AGO   .EXIT
 .INPUT   ANOP
          LA    0,DCBOFLGS_GM   READ ONLY
          AGO   .SVC
@@ -81,6 +83,7 @@
          AIF   (&NP LE 2).EXIT1
 Z390_OPEN_EXIT&SYSNDX EQU *
 .EXIT1   ANOP
+         DCBD
          MEXIT
 .ERR1    MNOTE 12,'OPEN MF= NOT SUPPORTED'
          MEND

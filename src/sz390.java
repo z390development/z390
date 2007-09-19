@@ -147,8 +147,11 @@ public  class  sz390 implements Runnable {
     * 08/16/07 RPI 677 only check DCB PUT current record lenght for 0C5 
     * 08/27/07 RPI 685 allow nulls in DCB FT/VT format records
     * 08/30/07 RPI 689 route all TRACE/TEST output to TRE vs LOG 
-    * 09/07/09 RPI 681 and load support for vsam catalog with
-    *          optional .name suffix to specify entry.            
+    * 09/07/07 RPI 681 and load support for vsam catalog with
+    *          optional .name suffix to specify entry.  
+    * 09/17/07 RPI 697 allow 5 byte QSAM var rcds (err 28/35)
+    *          force 5 byte VLR for blank VT input
+    *          add TRACEQ QSAM I/O data trace                   
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -2643,12 +2646,16 @@ private void svc_get_move(){
                 check_mem_area(cur_dcb_area,cur_vrec_lrecl >> 16); // RPI 668
                 pz390.mem.putInt(cur_dcb_area,cur_vrec_lrecl);
                 cur_vrec_lrecl = cur_vrec_lrecl >> 16;
-                if (cur_vrec_lrecl <= 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){
+                if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){ // RPI 697
                 	dcb_synad_error(28,"invalid variable record length - " + cur_vrec_lrecl);
                 	return;
             	}
                 tz390.systerm_io++;
                 tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area + 4,cur_vrec_lrecl - 4);
+				if (tz390.opt_traceq){
+					tz390.put_trace("QSAM EXCP READ  VREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_vrec_lrecl,8));
+					dump_mem(cur_dcb_area,cur_vrec_lrecl);
+				}
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
 	        } catch (Exception e){
 		        dcb_synad_error(29,"i/o error on get move variable - " + e.toString());
@@ -2673,12 +2680,16 @@ private void svc_get_move(){
                 check_mem_area(cur_dcb_area,cur_vrec_lrecl >> 16); // RPI 668
                 pz390.mem.putInt(cur_dcb_area,cur_vrec_lrecl);
                 cur_vrec_lrecl = cur_vrec_lrecl >> 16;
-                if (cur_vrec_lrecl <= 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){
+                if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){ // RPI 697
                 	dcb_synad_error(28,"invalid variable record length - " + cur_vrec_lrecl);
                 	return;
                 }
                 tz390.systerm_io++;
                 tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area + 4,cur_vrec_lrecl - 4);
+				if (tz390.opt_traceq){
+					tz390.put_trace("QSAM EXCP READ  VREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_vrec_lrecl,8));
+					dump_mem(cur_dcb_area,cur_vrec_lrecl);
+				}
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
                 tiot_vrec_blksi[cur_tiot_index] = tiot_vrec_blksi[cur_tiot_index] - cur_vrec_lrecl;
                 if (tiot_vrec_blksi[cur_tiot_index] < 0){
@@ -2699,9 +2710,12 @@ private void svc_get_move(){
                 cur_rec_text = tiot_file[cur_tiot_index].readLine();
                 cur_rec_len  = cur_rec_text.length();
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
-                if (cur_rec_len < 1 || cur_rec_len > cur_dcb_lrecl_f - 4){
+                if (cur_rec_len > cur_dcb_lrecl_f - 4){ // rpi 697
                 	dcb_synad_error(46,"variable record too long");
                 	return;
+                } else if (cur_rec_len == 0){
+                	cur_rec_len = 1; // RPI 697
+                	cur_rec_text = " ";
                 }
                 check_mem_area(cur_dcb_area,cur_rec_len+4); // RPI 668
                 pz390.mem.putInt(cur_dcb_area,(cur_rec_len+4) << 16);
@@ -2713,7 +2727,11 @@ private void svc_get_move(){
                 		pz390.mem_byte[cur_dcb_area + 4 + index] = tz390.ascii_to_ebcdic[cur_rec_text.charAt(index)];
                 	}
                 	index++;
-                }
+                }                
+				if (tz390.opt_traceq){
+					tz390.put_trace("QSAM EXCP READ  VREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index]-cur_rec_len-4,16) + " LEN=" + tz390.get_hex(cur_rec_len+4,8));
+					dump_mem(cur_dcb_area,cur_rec_len+4);
+				}
 	        } catch (Exception e){
 		        dcb_synad_error(47,"i/o error on get move variable from ascii - " + e.toString());
 		        return;
@@ -2731,6 +2749,10 @@ private void svc_get_move(){
 				tz390.systerm_io++;
                 check_mem_area(cur_dcb_area,cur_dcb_lrecl_f); // RPI 668
                 tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
+				if (tz390.opt_traceq){
+					tz390.put_trace("QSAM EXCP READ  FREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_dcb_lrecl_f,8));
+					dump_mem(cur_dcb_area,cur_dcb_lrecl_f);
+				}
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
 	        } catch (Exception e){
 		        dcb_synad_error(27,"i/o error on get move fixed - " + e.toString());
@@ -2768,6 +2790,10 @@ private void svc_get_move(){
                 		}
                 		index++;
                 	}
+        			if (tz390.opt_traceq){
+    					tz390.put_trace("QSAM EXCP READ  FREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index]-cur_dcb_lrecl_f,16) + " LEN=" + tz390.get_hex(cur_dcb_lrecl_f,8));
+    					dump_mem(cur_dcb_area,cur_dcb_lrecl_f);
+    				}
                 }
 	        } catch (Exception e){
 		        dcb_synad_error(44,"i/o error on get move fixed from ascii - " + e.toString());
@@ -2816,6 +2842,10 @@ private void svc_put_move(){
 				tz390.systerm_io++;
                 check_mem_area(cur_dcb_area,cur_dcb_lrecl_f); // RPI 668
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
+				if (tz390.opt_traceq){
+					tz390.put_trace("QSAM EXCP WRITE FREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_dcb_lrecl_f,8));
+					dump_mem(cur_dcb_area,cur_dcb_lrecl_f);
+				}
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(101,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
@@ -2831,13 +2861,17 @@ private void svc_put_move(){
 					cur_dcb_lrecl_f = cur_dcb_blksi_f;
 				}
                 cur_vrec_lrecl = pz390.mem.getInt(cur_dcb_area) >>> 16;
-                if (cur_vrec_lrecl <= 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){
+                if (cur_vrec_lrecl < 5 || cur_vrec_lrecl > cur_dcb_lrecl_f){  // RPI 697 
     	            dcb_synad_error(35,"invalid variable record length - " + cur_vrec_lrecl);
                     return;
                 }
                 tz390.systerm_io++;
                 check_mem_area(cur_dcb_area,cur_vrec_lrecl); // RPI 668
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_vrec_lrecl);
+				if (tz390.opt_traceq){
+					tz390.put_trace("QSAM EXCP WRITE VREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_vrec_lrecl,8));
+					dump_mem(cur_dcb_area,cur_vrec_lrecl);
+				}
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_vrec_lrecl;
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(102,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
@@ -2878,6 +2912,10 @@ private void svc_put_move(){
                 tz390.systerm_io++;
                 check_mem_area(cur_dcb_area,cur_vrec_lrecl); // RPI 668
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_vrec_lrecl);
+				if (tz390.opt_traceq){
+					tz390.put_trace("QSAM EXCP WRITE VREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_vrec_lrecl,8));
+					dump_mem(cur_dcb_area,cur_vrec_lrecl);
+				}
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(103,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
                 }
@@ -2901,6 +2939,10 @@ private void svc_put_move(){
                 cur_rec_text = get_ascii_string(cur_dcb_area+4,cur_rec_len,false);
                 tz390.systerm_io++;
                 tiot_file[cur_tiot_index].writeBytes(cur_rec_text + tz390.newline); // RPI 500
+				if (tz390.opt_traceq){
+					tz390.put_trace("QSAM EXCP WRITE VTXT  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_rec_len+4,8));
+					dump_mem(cur_dcb_area,cur_rec_len+4);
+				}
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(104,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
@@ -2922,6 +2964,10 @@ private void svc_put_move(){
                 cur_rec_text = get_ascii_string(cur_dcb_area,cur_dcb_lrecl_f,false);
                 tz390.systerm_io++;
                 tiot_file[cur_tiot_index].writeBytes(cur_rec_text + tz390.newline); // RPI 500
+				if (tz390.opt_traceq){
+					tz390.put_trace("QSAM EXCP WRITE FTXT  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_dcb_lrecl_f,8));
+					dump_mem(cur_dcb_area,cur_dcb_lrecl_f);
+				}
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(105,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
                 }
@@ -4060,7 +4106,7 @@ private void dump_tiot(){
 			dsn = "";
 		}
 		any_found = true;
-		put_dump(" TIOT  DDNAME=" + tiot_ddnam[index]
+		put_dump(" TIOT  DDNAME=" + tz390.left_justify(tiot_ddnam[index],8)
 		      + " DCB=" + tz390.get_hex(tiot_dcb_addr[index],8)
 		      + " DCBOFLGS=" + tz390.get_hex(pz390.mem_byte[tiot_dcb_addr[index] + dcb_oflgs] & 0xff,2)
 		      + " DSN=" + dsn

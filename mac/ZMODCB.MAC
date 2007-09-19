@@ -8,6 +8,8 @@
 .*********************************************************************
 .* 08/27/07 INITIAL CODING TO SUPPORT MODCB ACB OR RPL FIELD MODS                         
 .* 09/03/07 RPI 690 ADD OPTCD LENGTH 2 SUPPORT                                            
+.* 09/15/07 RPI 696 CORRECT SUPPORT FOR 1 BYTE FIELD LENGHTS                              
+.* 09/15/07 RPI 682 ADD SUPPORT FOR 8 BYTE DDNAME,VCLRN TYPE MODS                         
 .*********************************************************************
 &N       ZMODCB &CB,         ACB/RPL ADDRESS OR (REG)                  X
                &OFFSET,      OFFSET TO TARGET FIELD                    X
@@ -21,7 +23,8 @@
 .SOURCE  ANOP
          AIF   ('&SOURCE'(1,1) EQ '(').CHK_SCON
          AIF   (&LENGTH EQ 4).MV4
-         AIF   (&LENGTH EQ 2).MV1  
+         AIF   (&LENGTH EQ 1).MV1  
+         AIF   (&LENGTH EQ 8).MV8
          MNOTE 12,'ZMODCB INVALID LENGTH - &LENGTH'
          MEXIT
 .MV1     ANOP
@@ -31,6 +34,13 @@
          AIF   ('&SOURCE'(1,1) EQ '=').MV4LIT
          L     0,=A(&SOURCE)
          AGO   .MV4ST
+.MV8     ANOP
+         AIF   ('&CB'(1,1) EQ '(').MV8REG
+         MVC   &CB+&OFFSET.(8),=CL8'&SOURCE'
+         MEXIT
+.MV8REG  ANOP
+         MVC   &OFFSET.(8,&CB(1)),=CL8'&SOURCE'
+         MEXIT
 .MV4LIT  ANOP
          L     0,&SOURCE
 .MV4ST   ANOP

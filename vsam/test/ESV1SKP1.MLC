@@ -1,0 +1,74 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/19/07                                                 *
+*********************************************************************
+* 09/19/07 INITIAL CODING OF ESDS VAR LEN SKP SEQ ACCESS USING GENCB    
+*********************************************************************
+ESV1SKP1 RT1   MAIN 
+XRBA2    DC    AL8(108) ADDR 2ND VAR LEN REC IN ESV1.VES
+         LTORG
+         EQUREGS
+         RT1   START
+*
+* READ SEQ FWD STARTING AT REC 2 USING ADR,DIR and SKP,SEQ
+*
+         WTO   'GEN ACB/RPL AND SKP SEQ READ STARTING AT REC 2'
+         GENCB BLK=ACB,DDNAME=VFILE,MACRF=(ADR,DIR,SKP,SEQ)
+         LTR   R15,R15
+         RT1   CC0
+         LR    R2,R1             R2=ACB 
+         OPEN  ((R2),(INPUT))
+         LTR   R15,R15
+         RT1   CC0
+         GETMAIN R,LV=300
+         LR    R4,R1             R4=RECORD AREA
+         GENCB BLK=RPL,ACB=(R2),AREA=(R4)
+         LTR   R15,R15
+         RT1   CC0
+         LR    R3,R1             R3=RPL
+         MODCB RPL=(R3),ARG=XRBA2,OPTCD=(ADR,XRBA,SKP)
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=(R3)           READ REC2 VIA XRBA AND SET POS FWD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   0(200,R4),=200C'2' VERIFY REC 2
+         RT1   CC0
+         MODCB RPL=(R3),OPTCD=(SEQ)
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=(R3)           READ REC 3 SEQUENTIALLY
+         LTR   R15,R15
+         RT1   CC0
+         CLC   0(200,R4),=200C'3' VERIF REC 3
+         RT1   CC0
+         CLC   200(100,R4),=100C'3' VERIF REC 3
+         RT1   CC0
+*
+* REPOSITION TO REC2 FOR READING BACKWARD AND SEQ READ REC 1
+*
+         WTO   'SKP SEQ READ BACKWARD STARTING AT REC 2'
+         MODCB RPL=(R3),OPTCD=(ADR,XRBA,SKP,BWD)
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=(R3)           READ REC2 VIA XRBA AND SET POS BWD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   0(200,R4),=200C'2' VERIFY REC 2
+         RT1   CC0
+         MODCB RPL=(R3),OPTCD=(SEQ,BWD)
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=(R3)           READ REC 1 SEQUENTIALLY BACKWARD
+         LTR   R15,R15
+         RT1   CC0
+         CLC   0(100,R4),=100C'1' VERIF REC 1
+         RT1   CC0
+         CLOSE ((R2))
+         LTR   R15,R15
+         RT1   CC0
+         RT1   END
+         END

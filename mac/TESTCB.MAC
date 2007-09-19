@@ -9,6 +9,7 @@
 .* 08/10/07 INITIAL CODING TO TEST FDBK OR RECLEN FIELDS
 .* 08/19/07 RPI 680 SHOWCB TO TESTCB                       
 .* 09/14/07 RPI 672 VERIFY RPL VS ACB                                              
+.* 09/19/07 RPI 697 SET RC=0                                                       
 .*********************************************************************
 &N       TESTCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS       X
                &ACB=,         ACB ACCESS CONTROL BLOCK ADDRESS         X
@@ -25,24 +26,20 @@
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
+         SR    15,15 RC=0
          AIF   (&FDBK   NE '').FDBK
-.FDBK_END ANOP
          AIF   (&RECLEN NE '').RECLEN
-.RECLEN_END ANOP
-         AIF   (&MODS).EXIT
          MNOTE 12,'TESTCB FIELD NOT SUPPORTED YET'
 .EXIT    ANOP
          MEXIT
 .FDBK    ANOP
-&MODS    SETB  1
          ZTESTCB &RPL,RPLFEEDB-IHARPL+3,&FDBK,1
-         AIF   (&RPL NE '' AND &ACB EQ '').FDBK_END
+         AIF   (&RPL NE '').EXIT
          MNOTE 'TESTCB RPL REQUIRED FOR FDBK'
-         AGO   .FDBK_END
+         AGO   .EXIT
 .RECLEN  ANOP
-&MODS    SETB  1
          ZTESTCB &RPL,RPLLREC-IHARPL,&RECLEN,4
-         AIF   (&RPL NE '' AND &ACB EQ '').RECLEN_END
+         AIF   (&RPL NE '').EXIT
          MNOTE 'TESTCB RPL REQUIRED FOR RECLEN'
-         AGO     .RECLEN_END
+         AGO     .EXIT
          MEND

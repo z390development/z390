@@ -42,7 +42,9 @@ public  class  vz390 {
     *          else use ACB name to find entry in catalog. 
     * 09/10/07 RPI 672 changes to ESDS/RRDS support
     *          1) remove use of VX0 for ESDS and fixed RRDS
-    *             and return VES RBA/XRBA for ESDS.                 
+    *             and return VES RBA/XRBA for ESDS.    
+    * 09/17/07 RPI 697 correct FDBK for rba error (x'32' ESDS, x'c3' RRDS) 
+    *          add set position for ESDS ADR with SKP.                        
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -168,7 +170,8 @@ public  class  vz390 {
     int   cur_acb_vaixa = 0; // ACBVAIXA addr of VAIX entry in VCDT catalog for path
     int   cur_acb_dcbt = 0;  // ACBDCBT  total DCB's for VES, VX0, and VNN upgrades
     int   cur_acb_dcba = 0;  // ACBDCBA  addr of dyn alloc DCB table
-	int  acb_id       =  0; // ACBID   x'A0'
+	int  tot_dcb_alloc = 0;  // counter for unique ddnames "V??#NNNN"
+    int  acb_id       =  0; // ACBID   x'A0'
 	int  acb_stype    =  1; // ACBSTYPE x'11' - x'1F' for VSAM vs VTAM 
 	int  acb_len      =  2; // ACBLEN   half word length of ACB
 	int  acb_ambl     =  4; // ACBAMBL  AMB list
@@ -463,7 +466,7 @@ public  class  vz390 {
     	 *   2.  Set cur_vptha_addr or 0
     	 *       a.  If vpth_flag_aixp, set acb_oflgs_aixp else 0
     	 *       b.  If vpth_flag_aixu, set acb_oflgs_aixu else 0
-    	 *   3.  Se cur_vcdt_dcba for use by init_acb_dcb.
+    	 *   3.  Set cur_vcdt_dcba for use by init_acb_dcb.
     	 */
     	cur_vcdt_dcba  = pz390.mem.getInt(cur_vcdt_addr + vcdt_dcba);
     	cur_vcdt_clrt  = pz390.mem.getInt(cur_vcdt_addr + vcdt_clrt);
@@ -521,6 +524,9 @@ public  class  vz390 {
         cur_ves_tiot_index = pz390.mem.getInt(cur_ves_dcba + sz390.dcb_iobad)-1;
         cur_vx0_dcba       = cur_acb_dcba + sz390.dcb_len;
         cur_vx0_tiot_index = pz390.mem.getInt(cur_vx0_dcba + sz390.dcb_iobad)-1;
+        if ((cur_acb_oflgs & acb_oflgs_open) != 0){
+        	fetch_vclr_fields();  // RPI 697
+        }
     }
     private void fetch_vclr_fields(){
     	/*
@@ -546,6 +552,7 @@ public  class  vz390 {
         cur_rpl_next = pz390.mem.getInt(cur_rpl_addr + rpl_next);
         cur_rpl_lrec = pz390.mem.getInt(cur_rpl_addr + rpl_lrec);
         cur_rpl_larea= pz390.mem.getInt(cur_rpl_addr + rpl_larea);
+        fetch_acb_fields(); // RPI 697
     }
     private boolean check_acb_macrf(){
     	/*
@@ -594,13 +601,13 @@ public  class  vz390 {
     	cur_acb_dcba = pz390.reg.getInt(pz390.r1);
     	pz390.mem.putInt(cur_acb_addr + acb_dcba,cur_acb_dcba);
     	cur_vclr_vesa = pz390.mem.getInt(cur_acb_vclra + vclr_vesa);
-    	init_acb_dcb(cur_acb_dcba,cur_vclr_lrec,cur_vclr_vesa);
+    	init_acb_dcb(cur_acb_dcba,cur_vclr_lrec,cur_vclr_vesa,"VES#");
     	if (!open_acb_dcb(cur_acb_dcba)){
     		return false;
     	}
     	if (cur_acb_dcbt > 1){
     		cur_vclr_vx0a = pz390.mem.getInt(cur_acb_vclra + vclr_vx0a);
-        	init_acb_dcb(cur_acb_dcba + sz390.dcb_len,8+cur_vclr_klen,cur_vclr_vx0a);
+        	init_acb_dcb(cur_acb_dcba + sz390.dcb_len,8+cur_vclr_klen,cur_vclr_vx0a,"VX0#");
     		if (!open_acb_dcb(cur_acb_dcba + sz390.dcb_len)){
     			return false;
     		}
@@ -611,7 +618,7 @@ public  class  vz390 {
     			cur_vaix_addr = pz390.mem.getInt(cur_acb_vaixa);
     			cur_vaix_vxna = pz390.mem.getInt(cur_vaix_addr + vaix_vxna);
     			cur_vaix_klen = pz390.mem.getInt(cur_vaix_addr + vaix_klen);
-    			init_acb_dcb(cur_acb_dcba,8+cur_vclr_klen,cur_vaix_vxna);
+    			init_acb_dcb(cur_acb_dcba,8+cur_vclr_klen,cur_vaix_vxna,"VXN#");
     			if (!open_acb_dcb(cur_acb_dcba)){
     				return false;
     			}
@@ -622,7 +629,7 @@ public  class  vz390 {
     	}
     	return true;
     }
-    private void init_acb_dcb(int dcb_addr,int dcb_lrecl_f,int dcb_dsname){
+    private void init_acb_dcb(int dcb_addr,int dcb_lrecl_f,int dcb_dsname,String dcb_ddname){
     	/*
     	 * copy model dcb from vcdt_dcba to new
     	 * dynamcially allocated dcb address 
@@ -631,6 +638,8 @@ public  class  vz390 {
     	System.arraycopy(pz390.mem_byte, cur_vcdt_dcba, pz390.mem_byte, dcb_addr, sz390.dcb_len);
     	pz390.mem.putInt(dcb_addr + sz390.dcb_lrecl_f,dcb_lrecl_f);
         pz390.mem.putInt(dcb_addr + sz390.dcb_dsnam,dcb_dsname);
+        tot_dcb_alloc++;
+        sz390.put_ascii_string(tz390.left_justify(dcb_ddname + tot_dcb_alloc,8),dcb_addr + sz390.dcb_ddnam,8,' ');
     }
     private boolean open_acb_dcb(int dcb_addr){
     	/*
@@ -703,7 +712,6 @@ public  class  vz390 {
     	tot_rpl_get++;
     	tot_vsam_oper++;
         fetch_rpl_fields();
-        fetch_acb_fields();
     	if ((cur_acb_oflgs & acb_oflgs_open) == 0){
     		// acb not open
     		set_feedback(pdf_def,rc_log,cmp_base,rn_acb_not_open);
@@ -794,7 +802,7 @@ public  class  vz390 {
     	if (cur_ves_xrba >= sz390.tiot_eof_rba[cur_ves_tiot_index]
     	    || cur_ves_xrba < 0){
         	// return logical invalid rba request error
-    		set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rba_req);
+    		set_feedback(pdf_def,rc_log,cmp_base,rn_rba_not_rcd); // RPI 697
         	return;
     	}    	 	
     	// read ves record at cur vs0 index 
@@ -806,6 +814,18 @@ public  class  vz390 {
     		// set successful get flag for possible UPD put update
     		cur_acb_oflgs = (byte)(cur_acb_oflgs | acb_oflgs_getok);
     		pz390.mem.put(cur_acb_addr + acb_oflgs,cur_acb_oflgs);
+    	}
+    	if  ((cur_rpl_opt & rpl_opt_skp) != 0){
+            // set position for seq fwd/bwd from xrba
+    		if ((cur_rpl_opt & rpl_opt_bwd) != 0){
+    			sz390.tiot_cur_rba[cur_ves_tiot_index] = cur_ves_xrba;
+    		} else{
+    			if ((cur_vclr_flag & vclr_flag_vrec) != 0){
+    				sz390.tiot_cur_rba[cur_ves_tiot_index] = cur_ves_xrba + cur_rpl_lrec + 8;
+    			} else {
+    				sz390.tiot_cur_rba[cur_ves_tiot_index] = cur_ves_xrba + cur_rpl_lrec;
+    			}
+    		}
     	}
     	// return successful read of ves rec and vx0 index
     	set_feedback(pdf_def,rc_ok,cmp_base,rn_ok);
@@ -917,8 +937,6 @@ public  class  vz390 {
     	tot_rpl_put++;
     	tot_vsam_oper++;
         fetch_rpl_fields();
-        fetch_acb_fields();
-        fetch_vclr_fields();
     	if ((cur_acb_oflgs & acb_oflgs_open) == 0){
     		set_feedback(pdf_def,rc_log,cmp_base,rn_acb_not_open);
     		return;
@@ -1052,8 +1070,7 @@ public  class  vz390 {
     	 *   high values.
     	 */
         fetch_rpl_fields();
-        fetch_acb_fields();
-    	if ((cur_acb_oflgs & acb_oflgs_open) == 0){
+     	if ((cur_acb_oflgs & acb_oflgs_open) == 0){
     		set_feedback(pdf_def,rc_log,cmp_base,rn_acb_not_open);
     		return;
     	}
@@ -1064,7 +1081,6 @@ public  class  vz390 {
     	 * key, record, or RBA in ESDS base
     	 */
         fetch_rpl_fields();
-        fetch_acb_fields();
     	if ((cur_acb_oflgs & acb_oflgs_open) == 0){
     		set_feedback(pdf_def,rc_log,cmp_base,rn_acb_not_open);
     		return;
@@ -1113,7 +1129,11 @@ public  class  vz390 {
     	if (cur_ves_xrba >= sz390.tiot_eof_rba[cur_ves_tiot_index]
     	    || cur_ves_xrba < 0){
     	   	// return logical invalid rba request error
-    	   	set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rba_req);
+    		if  ((cur_vclr_flag & vclr_flag_rrds) != 0){
+    			set_feedback(pdf_def,rc_log,cmp_base,rn_inv_rba_req);
+    		} else {
+    			set_feedback(pdf_def,rc_log,cmp_base,rn_rba_not_rcd);  // RPI 697
+    		}
     	   	return false;
     	}
     	if (cur_ves_xrba > tz390.max_file_size){
@@ -1190,7 +1210,11 @@ public  class  vz390 {
     	 */
     	if (cur_ves_xrba > tz390.max_file_size
     		|| cur_ves_xrba < 0){
-    		set_feedback(pdf_def,rc_phy,cmp_base,rn_inv_rba_req);
+    		if ((cur_vclr_flag & vclr_flag_rrds) != 0){
+    			set_feedback(pdf_def,rc_phy,cmp_base,rn_rba_not_rcd); // RPI 697
+    		} else {
+    			
+    		}
 			return false;
     	}
     	if ((cur_vclr_flag & vclr_flag_vrec) != 0){
