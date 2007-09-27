@@ -6,12 +6,13 @@
 * Date   - 04/23/07                                                 *
 *********************************************************************
 * 08/31/07 INITIAL CODING OF RRDS VARIABLE LENGTH RECORD TESTS           
+* 09/21/07 RPI 702 CHANGE DIR TO KEY FOR ACCESS BY REC#                  
 *********************************************************************
 RRV1TEST RT1   MAIN 
-VACBOUT  ACB   DDNAME=VFILE,MACRF=(DIR,OUT)
-VACBIN   ACB   DDNAME=VFILE,MACRF=(DIR,IN)
-VRPLOUT  RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(DIR),ARG=REC#
-VRPLIN   RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(DIR),ARG=REC#
+VACBOUT  ACB   DDNAME=VFILE,MACRF=(KEY,OUT)
+VACBIN   ACB   DDNAME=VFILE,MACRF=(KEY,IN)
+VRPLOUT  RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(KEY),ARG=REC#
+VRPLIN   RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(KEY),ARG=REC#
 RECORD   DC    CL400' '
 REC#     DC    F'0'
          LTORG
@@ -27,6 +28,8 @@ REC#     DC    F'0'
          MVC   RECORD(100),=100C'0'
          MVC   REC#,=F'0'
          MODCB RPL=VRPLOUT,RECLEN=100
+         LTR   R15,R15
+         RT1   CC0
          PUT   RPL=VRPLOUT
          LTR   R15,R15
          RT1   CC0
@@ -34,12 +37,16 @@ REC#     DC    F'0'
          MVC   RECORD+200(200),=200C'4'
          MVC   REC#,=F'4'
          MODCB RPL=VRPLOUT,RECLEN=400
+         LTR   R15,R15
+         RT1   CC0
          PUT   RPL=VRPLOUT
          LTR   R15,R15
          RT1   CC0
          MVC   RECORD(200),=200C'2'
          MVC   REC#,=F'2'
          MODCB RPL=VRPLOUT,RECLEN=200
+         LTR   R15,R15
+         RT1   CC0
          PUT   RPL=VRPLOUT
          LTR   R15,R15
          RT1   CC0
@@ -92,6 +99,8 @@ REC#     DC    F'0'
          MVC   RECORD(250),=250C'T'
          MVC   REC#,=F'2'
          MODCB RPL=VRPLOUT,RECLEN=250
+         LTR   R15,R15
+         RT1   CC0
          PUT   RPL=VRPLOUT
          LTR   R15,R15
          RT1   CC0

@@ -6,6 +6,7 @@
 .* Date   - 04/19/07                                                 *
 .*********************************************************************
 .* 09/04/07 RPI 681 DEFINE ZDEFINE TO GENERATE VCDT CATALOG TABLE      
+.* 09/23/07 RPI 704 DEFINE VCLRCI OPTIONAL CONTROL INTERVAL SIZE       
 .*********************************************************************
          MACRO
          ZDEFINE 
@@ -59,6 +60,7 @@ VCLR     CSECT
          DC    F'&CLR_KOFF(&CLR_CUR)'     VCLRKOFF KSDS PRI KEY OFFSET
          DC    A(&CLR_NAME(&CLR_CUR)_VES) VCLRVESA ADDR CLR DATA  DSN
          DC    A(&CLR_NAME(&CLR_CUR)_VX0) VCLRVX0A ADDR CLR INDEX DSN
+         DC    A(&CLR_CI(&CLR_CUR))       VCLRCI   OPTIONAL CI SIZE 
 VCLRAIXS CSECT
 &CLR_NAME(&CLR_CUR)_AIX_UPGRADES DS 0F
 &AIX_CUR SETA  0

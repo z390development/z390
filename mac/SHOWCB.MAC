@@ -9,6 +9,7 @@
 .* 08/10/07 INITIAL CODING TO SUPPORT FDBK, AREA, RECLEN INITIALLY                 
 .* 09/14/07 RPI 672 VERIFY RPL VS ACB                                              
 .* 09/19/07 RPI 697 SET RC=0                                                       
+.* 09/24/07 RPI 702 CHANGE RPLXRBA TO RPLLXRBA                                     
 .*********************************************************************
 &N       SHOWCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS       X
                &ACB=,         ACB ACCESS CONTROL BLOCK                 X
@@ -60,7 +61,7 @@
          MNOTE 12,'SHOWCB RPL RQUIRED FOR FDBK'
          AGO   .LOOP
 .RBA     ANOP
-         ZSHOWCB &RPL,RPLXRBA-IHARPL+4,&AREA,&OFFSET,4
+         ZSHOWCB &RPL,RPLLXRBA-IHARPL+4,&AREA,&OFFSET,4  RPI 702
 &OFFSET  SETA  &OFFSET+4
          AIF   (&RPL NE '').LOOP
          MNOTE 12,'SHOWCB RPL RQUIRED FOR RBA'
@@ -72,7 +73,7 @@
          MNOTE 12,'SHOWCB RPL RQUIRED FOR RECLEN'
          AGO   .LOOP
 .XRBA    ANOP
-         ZSHOWCB &RPL,RPLXRBA-IHARPL,&AREA,&OFFSET,8
+         ZSHOWCB &RPL,RPLLXRBA-IHARPL,&AREA,&OFFSET,8    RPI 702
 &OFFSET  SETA  &OFFSET+8
          AIF   (&RPL NE '').LOOP
          MNOTE 12,'SHOWCB RPL RQUIRED FOR XRBA'

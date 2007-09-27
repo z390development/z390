@@ -12,14 +12,14 @@
 *            3. REPLACE RPL'S WITH GENCB BLK=RPL,...
 *            4. GETMAIN RECORD AREA  AND CHANGE MVC/CLC REFERENCES 
 *            (NOTE THERE ARE NO REMAINING STATIC DATA AREAS IN PGM!)
+* 09/25/07 RPI 702 USE POINT WITH LRD FOLLOWED BY GET,BWD,LRD RPL     
 *********************************************************************
 ESF3TEST RT1   MAIN 
 VACBOUT  EQU   R3
 VACBIN   EQU   R4
 VRPLOUTS EQU   R5
-VRPLINSL EQU   R6
-VRPLINSB EQU   R7
-RECORD   EQU   R8
+VRPLINSB EQU   R6  RPI 702
+RECORD   EQU   R7  RPI 702
          LTORG
          EQUREGS
          RT1   START
@@ -29,6 +29,8 @@ RECORD   EQU   R8
 *
          WTO   'ESF3TEST CREATE VFILE'
          GENCB BLK=ACB,DDNAME=VFILE,MACRF=(SEQ,OUT)
+         LTR   R15,R15
+         RT1   CC0
          LR    VACBOUT,R1
          OPEN  ((VACBOUT),(OUTPUT))
          LTR   R15,R15
@@ -37,6 +39,8 @@ RECORD   EQU   R8
          LR    RECORD,R1
          MVC   0(80,RECORD),=80C'1'
          GENCB BLK=RPL,ACB=(VACBOUT),AREA=(RECORD),OPTCD=(SEQ)
+         LTR   R15,R15
+         RT1   CC0
          LR    VRPLOUTS,R1
          PUT   RPL=(VRPLOUTS)
          LTR   R15,R15
@@ -57,18 +61,24 @@ RECORD   EQU   R8
 *
          WTO   'ESF3TEST READ AND VERIFY VFILE BACKWARDS'
          GENCB BLK=ACB,DDNAME=VFILE,MACRF=(SEQ,IN)
+         LTR   R15,R15
+         RT1   CC0
          LR    VACBIN,R1
          OPEN  ((VACBIN))
          LTR   R15,R15
          RT1   CC0
          GENCB BLK=RPL,ACB=(VACBIN),AREA=(RECORD),OPTCD=(SEQ,BWD,LRD)
-         LR    VRPLINSL,R1
-         GET   RPL=(VRPLINSL)
+         LTR   R15,R15
+         RT1   CC0
+         LR    VRPLINSB,R1
+         POINT RPL=(VRPLINSB)   RPI 702
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=(VRPLINSB)
          LTR   R15,R15
          RT1   CC0
          CLC   0(80,RECORD),=80C'3'
          RT1   CC0
-         GENCB BLK=RPL,ACB=(VACBIN),AREA=(RECORD),OPTCD=(SEQ,BWD)
          LR    VRPLINSB,R1
          GET   RPL=(VRPLINSB)  
          LTR   R15,R15

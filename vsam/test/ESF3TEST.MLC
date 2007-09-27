@@ -6,13 +6,13 @@
 * Date   - 04/23/07                                                 *
 *********************************************************************
 * 09/13/07 RPI 672 CODE TEST FOR LRD,BWD SEQ,BWD BACKWARD ACCESS      
+* 09/25/07 RPI 702 ISSUE POINT WITH LRD AND GET BWD USING SAME RPL
 *********************************************************************
 ESF3TEST RT1   MAIN 
 VACBOUT  ACB   DDNAME=VFILE,MACRF=(SEQ,OUT)
 VACBIN   ACB   DDNAME=VFILE,MACRF=(SEQ,IN)
 VRPLOUTS RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(SEQ)
-VRPLINSL RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(SEQ,BWD,LRD)
-VRPLINSB RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(SEQ,BWD)
+VRPLINSB RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(SEQ,BWD,LRD)  RPI 702
 RECORD   DC    CL80' '
          LTORG
          EQUREGS
@@ -47,7 +47,10 @@ RECORD   DC    CL80' '
          OPEN  (VACBIN)
          LTR   R15,R15
          RT1   CC0
-         GET   RPL=VRPLINSL
+         POINT RPL=VRPLINSB  RPI 702
+         LTR   R15,R15
+         RT1   CC0
+         GET   RPL=VRPLINSB
          LTR   R15,R15
          RT1   CC0
          CLC   RECORD,=80C'3'

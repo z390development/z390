@@ -12,6 +12,8 @@
 .* 08/29/07 RPI 688 CORRECT SETTING OF MACR1_XRBA OPTION BIT, ADD XRBA
 .* 09/14/07 RPI 672 ISSUE MNOTE ERROR FOR UNDEFINED OPTIONS              
 .* 09/16/07 RPI 682 SHARE ZGENOPTD TO GEN OPTCD BITS                     
+.* 09/24/07 RPI 702 REPLACE RPLXRBA WITH RPLLXRTA AND RPLCXRBA           
+.*          ADD RPLOPENC UNIQUE ACB OPEN COUNT FOR REPOSITION REQ'D
 .*********************************************************************
 .*
 .* RPL 28 VSAM OPTCD OPTIONS - MODELED ON MVS 3.8 IDAVSOPT
@@ -49,7 +51,7 @@
                &AM=VSAM,  VSAM VS VTAM                                 X
                &AREA=0,   RECORD WORK AREA (DATA FOR MVE, ADDR FOR LOC)X
                &AREALEN=0, LENGTH OF AREA (MAX LRECL IF MVS, 4 FOR LOC)X
-               &ARG=0,    KEY FIELD FOR KSDS ACCESS                    X
+               &ARG=0,    KEY(KSDS), XRBA/RBA(KSDS/ESDS), REC#(RRDSS)  X
                &ECB=0,    ECB TO BE POSTED ON COMPLETION               X
                &KEYLEN=0, KEY LENGTH FOR GENERIC KEY SEARCH            X
                &NXTRPL=0, NEXT RPL IN CHAINED RPL LIST                 X
@@ -82,7 +84,9 @@
          DC    X'0000'            (ALIGN)
          DC    A(&NXTRPL)         RPLNEXT   NEXT RPL
          DC    A(&RECLEN)         RPLRECL   RECORD LENGTH FOR PUT
-         DC    XL8'00'            RPLXRBA   VX0 XRBA FOR LAST REC
+         DC    XL8'00'            RPLLXRBA  LAST RCD VES/VX0 XRBA 
+         DC    XL8'00'            RPLCXRBA  CURR POS VES/VX0 XRBA  
+         DC    A(0)               RPLOPENC  UNIQUE ACB OPEN COUNT 
          DC    A(&AREALEN)        RPLAREAL  AREA LENGTH
          RPLD
          MEXIT

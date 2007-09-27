@@ -7,6 +7,7 @@
 .* Date   - 09/16/07                                                 *
 .*********************************************************************
 .* 09/16/07 RPI 682 INITIAL CODING                  
+.* 09/20/07 RPI 703 CORRECT NISSING QUOTE IN AIF    
 .*********************************************************************
 &N       GENCB &AM=VSAM, VSAM VS VTAM                                  X
                &BLK=,    ACB OR RPL CONTROL BLOCK GENERATION           X
@@ -65,7 +66,7 @@
          MNOTE 12,'GENCB MISSING WAREA FOR LENGTH'
          MEXIT
 .WAREA2  ANOP
-         AIF   (&WAREA'(1,1) EQ '(').REGWAREA
+         AIF   ('&WAREA'(1,1) EQ '(').REGWAREA   RPI 703
          LA    1,&WAREA  
          LR    14,1
          AGO   .LENGTH

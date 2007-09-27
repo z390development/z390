@@ -1,4 +1,4 @@
-z390 v1.3.07e PTF 09/19/07
+z390 v1.3.07f PTF 09/26/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.07:
@@ -99,6 +99,17 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.07:
        reading ESDS record at XRBA and then sequentially reading forward or
        backward.  See update vsam\test\ESF1SKP1.BAT and ESV1SKP1.BAT.
     7) Correct SHOWCB and MODCB to set return code 0.
+22. RPI 701 - change REPRO default to rewrite VSAM file during loading unless
+    [DISP=MOD] coded as suffix on OUTFILE.
+23. RPI 702 - Correct GET, PUT, and POINT support for ESDS, RRDS, and VRRDS
+    for compatibility including returning of RBA/XRBA/REC# in RPLARG field.
+    See updated regression tests in vsam\test.
+24. RPI 703 - correct unnecessary code generated for 0 value fields by GENCB
+    and correct missing quote in syntax error in AIF. 
+25. RPI 704 - add VSAM VCDT catalog support for CONTROLINTERVALSIZE= on CLUSTER
+    for future support of LDS.
+26. RPI 705 - add new online web page with VSAM regression tests by RPL type.
+http://www.automatedsoftwaretools.com/z390/z390_VSAM_RPL_Operation_Regression_Tests.htm
 
 To install this cumulative PTF for z390 follow these steps.
 

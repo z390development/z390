@@ -6,6 +6,7 @@
 .* Date   - 04/19/07                                                 *
 .*********************************************************************
 .* 09/02/07 RPI 681 DEFINE GLOBALS FOR DEFINE AND ZDEFINE MACROS     
+.* 09/23/07 RPI 704 ADD CONTROL INTERVAL SIZE FOR LINEAR SUPPORT     
 .*********************************************************************
 .*
 .* DEFINE GLOBAL DATA FOR Z390 VSAM CATALOG DEFINITION TABLE (VCDT)
@@ -18,6 +19,7 @@
          GBLA  &CLR_TOT          TOTAL CLR BASE CLUSTERS DEFINED
          GBLC  &CLR_NAME(100)    NAMES OF BASE CLUSTERS
          GBLC  &CLR_TYPE(100)    TYPE ESDS, RRDS, KSDS, OR LDS
+         GBLA  &CLR_CI(100)      OPTIONAL CI SIZE (DEFAULT 0)
          GBLB  &CLR_VREC(100)    VARIABLE LENGTH RECORDS (ELSE FIXED)
          GBLB  &CLR_REUSE(100)   ERASE ALL DATA FOR REUSE AT OPEN
          GBLB  &CLR_KSDS(100)    KSDS KEY SEQUENCED

@@ -6,12 +6,13 @@
 * Date   - 04/23/07                                                 *
 *********************************************************************
 * 08/31/07 INITIAL CODING OF RRDS FIXED LENGTH RECORD TESTS           
+* 09/21/07 RPI 702 CHANGE DIR TO KEY FOR ACCESS BY REC#               
 *********************************************************************
 RRF1TEST RT1   MAIN 
-VACBOUT  ACB   DDNAME=VFILE,MACRF=(DIR,OUT)
-VACBIN   ACB   DDNAME=VFILE,MACRF=(DIR,IN)
-VRPLOUT  RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(DIR),ARG=REC#
-VRPLIN   RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(DIR),ARG=REC#
+VACBOUT  ACB   DDNAME=VFILE,MACRF=(KEY,OUT)
+VACBIN   ACB   DDNAME=VFILE,MACRF=(KEY,IN)
+VRPLOUT  RPL   ACB=VACBOUT,AREA=RECORD,OPTCD=(KEY),ARG=REC#
+VRPLIN   RPL   ACB=VACBIN,AREA=RECORD,OPTCD=(KEY),ARG=REC#
 RECORD   DC    CL80' '
 REC#     DC    F'00'
          LTORG

@@ -9,6 +9,7 @@
 .* 07/31/07 RPI 668 INITIAL CODING                               
 .* 08/04/07 RPI 668 ADD VCDTTIOT FOR ACCESSING TIOT PATH/FILE     
 .* 09/02/07 RPI 681 EXPAND DEFINE TO DEFINE ENTIRE VSAM CATALOG      
+.* 09/23/07 RPI 704 ADD CLUSTER SUPPORT FOR CONTROLINTERVALSIZE=     
 .*********************************************************************
 .*
 .* DEFINE - define z390 VSAM catalog loadable table entries:
@@ -22,7 +23,8 @@
 .*                     KEYS=(64,0),    KSDS PRIMARY KEY LENGTH, OFFSET
 .*                     REUSE=NOREUSE,  ERASE ALL DATA AT OPEN
 .*                     VESDSN=,        OPTIONAL DSNAME FOR VES FILE 
-.*                     VX0DSN=         OPTIONAL DSNAME FOR VX0 INDEX      
+.*                     VX0DSN=         OPTIONAL DSNAME FOR VX0 INDEX
+.*                     CONTROLINTERVALSIZE= OPTIONAL CI BLOCK PADDING      
 .*           3. DEFINE ALTERNATEINDEX, DEFINE KSDS ALTERNATE INDEX KEY
 .*                     NAME=,          NAME OF KSDS ALT IDX
 .*                     RELATE=,        NAME OF BASE CLUSTER
@@ -45,27 +47,25 @@
 .*     The DDNAME may have optional specific name appended to catalog
 .*     name separated by period otherwise the ACB label field name will
 .*     be the name used to search VCDT catalog for matching cluster
-.*     or alternate path name.
+.*     or alternate path name.  For REPRO the OUTFILE spec pointing to 
+.*     catalog and entry may also be followed by [DISP=MOD] to add rcds
 .*
 .*  Notes:
 .*    1.  Variable length VSAM records are prefixed by 4 byte length  
 .*        which is not included in RECORDSIZE=(average,maximum)      
 .*    2.  Specify INDEXED=NONINDEXED for ESDS sequential file.
 .*        Specify INDEXED=NUMBERED   for RRDS relative record file.
-.*        Specify INDEXED=LINEAR     for LDS  linear (XRBA,LEN access)
+.*        Specify INDEXED=LINEAR     for LDS  CI size required.
 .*        The default is KSDS key sequened file with at primary key.
-.*    3.  KSDS, RRDS. ESDS. and LDS build VX0 XRBA index for use in 
-.*        random access by KSDS primary key, RRDS record #, or ESDS
-.*        or LDS RBA/XRBA access. Zero value XRBA entry indicates
-.*        record has been erased or has not been written yet.
-.*        Negative_value XRBA point to inserted record binary tree
-.*        structure records in the VX0 index file.  Positive non-zero
-.*        XRBA values are pointers to VES data record with 1 added to
-.*        avoid zero for the first VES record XRBA pointer which is 
-.*        actually at zero.
+.*    3.  KSDS and VRRDS use VX0 index file to obtain XRBA of VES
+.*        records.  For KSDS, the VX0 file has key field after XRBA. 
+.*        For VRRDS, 0 XRBA indicates no record written.  All VRRDS
+.*        record XRBA's are stored with +1 added.  For KSDS files
+.*        negative_value XRBA point to inserted record binary tree
+.*        structure records at the end of VX0 index file.
 .*        Note updates for variable records with different lengths and
-.*        new inserted records are added to VES ESDS data file and the
-.*        corresponding VX0 RBA pointer is updated accordingly.         
+.*        new inserted records are added to VRRDS and KSDS data file 
+.*        and the corresponding VX0 RBA pointer is updated accordingly.         
 .*    5.  Any number of additional alternate key indexes can be
 .*        defined with contain XRBA pointers into VX0 primary index.  
 .*        Beware of overhead to update each alternate index file
@@ -73,10 +73,11 @@
 .*********************************************************************
          DEFINE &TYPE,         CATALOG,CLUSTER,ALTERNATEINDEX,PATH     X
                &NAME=,         NAME OF CATALOG, CLUSTER, AIX, OR PATH  X
+               &CONTROLINTERVALSIZE=0, OPTIONAL CI SIZE NOT REQUIRED   X
                &ENTRY=,        AIX OR BASE CLUSTER NAME FOR PATH       X
-               &RECORDSIZE=,   FIXED LENGTH OR VAR (AVG,MAX) CLUSTER   X
                &INDEX=INDEXED, LINEAR/NONINDEXED/NUMBERED CLUSTER TYPE X
                &KEYS=(64,0),   (LENGTH,OFFSET) FOR KSDS PRI/ALT KEY    X
+               &RECORDSIZE=,   FIXED LENGTH OR VAR (AVG,MAX) CLUSTER   X
                &RELATE=,       BASE CLUSTER NAME FOR ALTERNATEINDEX    X
                &REUSE=NOREUSE, RESET HIGH XRBA AT OPEN FOR AIX/CLUSTER X
                &UNIQUEKEY=UNIQUEKEY, REQUIRE UNIQUE AIX KEYS           X
@@ -108,6 +109,7 @@
 .*
 .DEFINE_CLUSTER ANOP
 &CLR_TOT SETA  &CLR_TOT+1
+&CLR_CI(&CLR_TOT) SETA &CONTROLINTERVALSIZE
 .*
 .* SET BASE CLUSTER NAME
 .*
@@ -144,6 +146,10 @@
 .SET_CLR_LDS ANOP
 &CLR_TYPE(&CLR_TOT) SETC 'LDS'
 &CLR_LDS(&CLR_TOT) SETB 1
+         AIF   (&CONTROLINTERVALSIZE NE '0').SET_CLR_LDS2
+         MNOTE 12,'DEFINE LINEAR REQUIRES CONTROL INTERVAL SIZE'
+.SET_CLR_LDS2 ANOP
+         AGO   .SET_CLR_VESDSN
 .*
 .* SET BASE CLUSTER VREC FLAG AND LAVG AND LMAX
 .*
@@ -308,8 +314,6 @@
          AIF   (&AIX_RELATE(&AIX_CUR) NE &CLR_NAME(&CLR_CUR)).FIND_CLR
          AIF   (&AIX_KOFF(&AIX_CUR)+&AIX_KLEN(&AIX_CUR) LE &CLR_LMAX(&CX
                LR_CUR)).CHK_AIX
- MNOTE 'DSHX2 AIX_CUR=&AIX_CUR RELATE=&AIX_RELATE(&AIX_CUR) CLR_CUR=&CLX
-               R_CUR'
 &ERROR   SETB  1
          MNOTE 12,'DEFINE AIX &AIX_NAME(&AIX_CUR) KEY BEYOND CLUSTER &CX
                LR_NAME(&CLR_CUR) RECORD' 

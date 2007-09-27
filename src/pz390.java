@@ -10813,14 +10813,39 @@ public class pz390 {
 		case 0x3c:
 			return "ESTAE R0=EXIT ADDR  R1=PARAM"; // set abend exit R0=addr rpi 636
 		case 0x67:
-			return "XLATE R0=ADDR(+ASC>ECB,-EBC>ASC), R1=LENGTH"; // translate
-																	// ascii/EBCDIC
+			return "XLATE R0=ADDR(+ASC>ECB,-EBC>ASC), R1=LENGTH"; // translate																	// ascii/EBCDIC
 		case 0x6d:
 			return "ESPIE R0=TYPE INT, R1=EXIT ADDR"; // set program check
-		case 0x79: // VSAM												// exit R0=types,
-			return "VSAM R0=(1=GET,2=PUT, 3=ERASE, 4-POINT) R1=A(RPL)"; // RPI 668											// R1=addr
+		case 0x79: // VSAM	R0=type
+			int vsam_op = reg.get(r0+3);
+			switch (vsam_op){
+			case 1:
+				return "VSAM GET   R1=A(RPL)"; 
+			case 2:
+				return "VSAM PUT   R1=A(RPL)";
+			case 3:
+				return "VSAM ERASE R1=A(RPL)"; 
+			case 4:
+				return "VSAM POINT R1=A(RPL)";
+			default:
+				return "VSAM ????? R1=A(RPL)";
+			}
 		case 0x7c: // TCPIO
-			return "TCPIO R0=(1-5=OS/OC/C/S/R) R1=PORT R14=HOST/MSG R15=LMAX";
+			int tcpio_op = reg.get(r0+3);
+			switch (tcpio_op){
+			case 1:
+				return "TCPIO OPENC R1=PORT R14=HOST/MSG R15=LMAX";
+			case 2:
+				return "TCPIO OPENS R1=PORT R14=HOST/MSG R15=LMAX";
+			case 3:
+				return "TCPIO CLOSE R1=PORT R14=HOST/MSG R15=LMAX";
+			case 4:
+				return "TCPIO SEND  R1=PORT R14=HOST/MSG R15=LMAX";
+			case 5:
+				return "TCPIO RECV  R1=PORT R14=HOST/MSG R15=LMAX";
+			default:
+				return "TCPIO ????? R1=PORT R14=HOST/MSG R15=LMAX";
+			}
 		case 84: // GUAM GUI application window I/O
 			return "GUAM R0+2=MAJOR, R0+3=MINOR, R1=ADDR";
 		case 93: // TGET/TPUT TN3290 data stream for GUAM GUI

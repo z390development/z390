@@ -2764,8 +2764,88 @@ set GIT_COMMITTER_DATE=2021-03-22 15:02:00 +0100
 git commit -m "Reconstructed version v1.3.07e of z390 committed on behalf of Don Higgins"
 git tag -a v1.3.07e -m "Reconstructed version v1.3.07e of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.3.07f
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.3.07f
+git add README.TXT
+git add RTVSAM1.BAT
+git add linklib/REPRO.MLC
+git add mac/ACB.MAC
+git add mac/ACBD.MAC
+git add mac/DEFINE.MAC
+git add mac/GENCB.MAC
+git add mac/RPL.MAC
+git add mac/RPLD.MAC
+git add mac/SHOWCB.MAC
+git add mac/VCDTD.MAC
+git add mac/ZDEFINE.CPY
+git add mac/ZDEFINE.MAC
+git add mac/ZGENACB.MAC
+git add mac/ZGENRPL.MAC
+git add src/pz390.java
+git add src/tz390.java
+git add src/vz390.java
+git add vsam/demo/DEMOCAT.MLC
+git add vsam/demo/DEMOS.BAT
+git add vsam/demo/ESF1DEMO.BAT
+git add vsam/demo/ESV1DEMO.BAT
+git add vsam/demo/RRF1DEMO.MLC
+git add vsam/demo/RRV1DEMO.MLC
+git add vsam/test/ESF1REPO.BAT
+git add vsam/test/ESF1SKP1.BAT
+git add vsam/test/ESF1SKP1.MLC
+git add vsam/test/ESF1TEST.BAT
+git add vsam/test/ESF1TEST.MLC
+git add vsam/test/ESF2TEST.BAT
+git add vsam/test/ESF2TEST.MLC
+git add vsam/test/ESF3GEN1.BAT
+git add vsam/test/ESF3GEN1.MLC
+git add vsam/test/ESF3TEST.BAT
+git add vsam/test/ESF3TEST.MLC
+git add vsam/test/ESF4REPO.BAT
+git add vsam/test/ESV1REPO.BAT
+git add vsam/test/ESV1SKP1.BAT
+git add vsam/test/ESV1SKP1.MLC
+git add vsam/test/ESV1TEST.BAT
+git add vsam/test/ESV1TEST.MLC
+git add vsam/test/ESV2TEST.BAT
+git add vsam/test/ESV3TEST.BAT
+git add vsam/test/ESV3TEST.MLC
+git add vsam/test/ESV4TEST.BAT
+git add vsam/test/ESV4TEST.MLC
+git add vsam/test/ESV5REPO.BAT
+git add vsam/test/RRF1TEST.BAT
+git add vsam/test/RRF1TEST.MLC
+git add vsam/test/RRV1TEST.BAT
+git add vsam/test/RRV1TEST.MLC
+git add vsam/test/TESTCAT.MLC
+git add vsam/demo/BUILDCAT.BAT
+git add vsam/demo/KSF1.TXT
+git add vsam/demo/KSF1ADDR.TF1
+git add vsam/demo/KSF1CITY.TF1
+git add vsam/demo/KSF1NAME.TF1
+git add vsam/demo/KSF1NAME.TF2
+git add vsam/demo/KSF1RPO1.BAT
+git add vsam/demo/KSF1RPO2.BAT
+git add vsam/demo/KSF1STAT.TF1
+git add vsam/demo/KSF1ZIP.TF1
+git add vsam/test/BUILDCAT.BAT
+git add vsam/test/RRF1SKP1.BAT
+git add vsam/test/RRF1SKP1.MLC
+git add vsam/test/RRV1SKP1.BAT
+git add vsam/test/RRV1SKP1.MLC
 
+==> Create commit for V1.3.07f
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2007-09-27 11:03:00 -0500
+set GIT_COMMITTER_DATE=2021-03-22 15:14:00 +0100
+git commit -m "Reconstructed version v1.3.07f of z390 committed on behalf of Don Higgins"
+git tag -a v1.3.07f -m "Reconstructed version v1.3.07f of z390 committed on behalf of Don Higgins"
 
 
 

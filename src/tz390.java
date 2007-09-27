@@ -144,7 +144,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.07e";  //dsh
+    String version    = "V1.3.7f";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -253,7 +253,9 @@ public  class  tz390 {
 	String job_date = null; // job date mm/dd/yy  RPI 558
 	String pgm_name = null; // from first parm else abort
 	String pgm_type = null; // from first parm override if mlc else def.
-    String ada_type = ".ADA"; // ADATA type (not supported yet)
+	String file_dir;        // dir for find_file_name RPI 700
+	String file_type;       // type for find_file_name
+	String ada_type = ".ADA"; // ADATA type (not supported yet)
 	String bal_type = ".BAL"; // basic assembler output from mz390, input to az390
 	String cpy_type = ".CPY"; // copybook source for mz390
     String dat_type = ".DAT"; // AREAD default input for mz390
@@ -4276,8 +4278,6 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 	 *       the type instead of default file_type. 
 	 */
 	if (file_name == null)return null; // RPI 459
-	String file_dir;
-	String file_type;
 	String temp_file_name;
 	File   temp_file;
 	int index = file_name.indexOf('.');

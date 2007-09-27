@@ -1,0 +1,40 @@
+KSF1.TXT - Documentation of KSDS demo
+
+1. Create KSDS file KSF1NAME from QSAM 80 byte text records using REPRO
+   and the KSF1NAME DEMOCAT catalog entry with primary name key field
+   in positions 1-20:
+
+   KSF1NAME - KSDS CLUSTER WITH PRIMARY KEY NAME KEY (20,0)
+   KSF1ADDR - KSDS ALT INDEX WITH ADDR KEY (20,20)
+   KSF1CITY - KSDS ALT INDEX WITH CITY KEY (20,40)
+   KSF1STAT - KSDS ALT INDEX WITH STAT KEY (10,60)
+   KSF1ZIP  - KSDS ALT INDEX WITH ZIP  KEY (10,70)
+   NAMELIST - READ KSF1NAME WITH NO INDEX UPDATE USING PATH
+   ADDRLIST - READ KSF1ADDR AIX PATH WITH NO UPDATES
+   CITYLIST - READ KSF1CITY AIX PATH WITH NO UPDATES
+   STATLIST - READ KSF1STAT AIX PATH WITH NO UPDATES
+   ZIPLIST  - READ KSF1ZIP  AIX PATH WITH NO UPDATES
+
+2. Use BUILDAIX utility to read primary KSDS and create AIX
+   using INFILE and OUTFILE DDNAME's where INFILE points to 
+   primary cluster catalog entry and OUTFILE points to 
+   alternate index to be created.
+
+3. Use REPRO to unload the KSDS file in name sequence by setting
+   INFILE to either KSF1NAME or NAMELIST alias path catalog entry
+   which provides access in name sequence without AIX updates.
+
+4. Use REPRO to unload each alternate index in alternate index
+   sequence by setting INFILE to corresponding AIX PATH catalog entry.
+
+5. The original text file for KSF1NAME load via REPRO contains:
+
+NAME (1-20)         ADDR (21-40)        CITY (41-60)        STATE     ZIP
+AK                  HOLLAND             AMPSTERDAM          HL        123
+DSH                 USA                 TAMPA BAY           FL        456
+MM                  UK                  LONDON              LE        789
+MT                  GERMANY             BERLIN              BG        012
+MW                  UK                  LONDON              LE        789
+RM                  USA                 SAN FRANCISCO       CA        456
+
+(NO DUPLICATES)     (2 DUPLICATES)
