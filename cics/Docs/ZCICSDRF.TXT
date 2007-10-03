@@ -3,7 +3,7 @@ Z390/CICS Diagnosis Reference
 
 Index
 -----
-Control Blocks...
+Control Blocks...Client
    Dynamic Storage Area (DSA)
    EXEC Interface Block (EIB)
    HANDLE ABEND Block
@@ -11,6 +11,12 @@ Control Blocks...
    HANDLE CONDITION Block
    Link-Level Area (LKA)
    Terminal Control Table-Terminal Entry (TCTTE)
+   Temporary Storage request/reply block (DFHTSBLK)
+   File Control request/reply block (DFHFCBLK)
+
+Control Blocks...Server
+   File Control Table (DFHFCT)
+   VSAM Work Area (DFHVSWAD)
 
 Management descriptions...
    Abend
@@ -18,13 +24,18 @@ Management descriptions...
    GETMAIN/FREEMAIN
    HANDLE AID
    HANDLE/IGNORE CONDITION
+   Temporary Storage
+   File Control
+
+Event Tracing
+Internal Abends (Z390CICS)
 
 -----------------------------------------------------------------------
 
-Control Blocks
---------------
+Control Blocks...Client
+-----------------------
 
-Dynamic Storage Area (DSA)
+Dynamic Storage Area (DSA).
    Eye catcher: None
    Acquired   : DFHEIENT
    Released   : DFHEIRET
@@ -33,7 +44,7 @@ Dynamic Storage Area (DSA)
    Cleared    : Only the prefix, not the user area
    Length     : Variable
 
-EXEC Interface Block (EIB)
+EXEC Interface Block (EIB).
    Eye catcher: 'DFHEIBLK'
    Acquired   : Z390KCP
    Released   : Close of thread
@@ -42,7 +53,7 @@ EXEC Interface Block (EIB)
    Cleared    : Yes
    Length     : EIBLENG
 
-HANDLE ABEND Block
+HANDLE ABEND Block.
    Eye catcher: 'DFHABBLK'
    Acquired   : 1st use
    Released   : Task end
@@ -52,7 +63,7 @@ HANDLE ABEND Block
    Length     : ABDLENG (one table entry)
    Entries    : 25
 
-HANDLE AID block
+HANDLE AID block.
    Eye catcher: 'DFHADBLK'
    Acquired   : HANDLE AID (1st block only)
                 PUSH HANDLE
@@ -65,7 +76,7 @@ HANDLE AID block
    Cleared    : Yes
    Length     : AIDLENG
 
-HANDLE CONDITION block
+HANDLE CONDITION block.
    Eye catcher: 'DFHHCBLK'
    Acquired   : HANDLE CONDITION (1st block only)
                 PUSH HANDLE
@@ -78,7 +89,7 @@ HANDLE CONDITION block
    Cleared    : Yes
    Length     : HCNLENG
 
-Link-Level Area (LKA)
+Link-Level Area (LKA).
    Eye catcher: None
    Acquired   : Z390KCP
    Released   : Close of thread
@@ -87,7 +98,7 @@ Link-Level Area (LKA)
    Length     : 4 (R13 value for this link-level)
    Entries    : 25
 
-Terminal Control Table-Terminal Entry (TCTTE)
+Terminal Control Table-Terminal Entry (TCTTE).
    Eye catcher: 'DFHTCTTE'
    Acquired   : Z390KCP
    Released   : Close of thread
@@ -95,6 +106,49 @@ Terminal Control Table-Terminal Entry (TCTTE)
    DSECT      : DFHTCTTE
    Cleared    : Yes
    Length     : TCTTELEN
+
+Temporary Storage request/reply block (DFHTSBLK).
+Data sent/received follows the block.
+   Eye catcher: None
+   Acquired   : GETMAINd by EXEC CICS TS command
+   Released   : FREEMAINd by EXEC CICS TS command
+   Anchor     : None
+   DSECT      : DFHTSBLK
+   Cleared    : No
+   Length     : TSPREFIX
+
+File control request/reply block (DFHFCBLK).
+Data sent/received follows the block.
+   Eye catcher: None
+   Acquired   : GETMAINd by an EXEC CICS file control command
+   Released   : FREEMAINd by an EXEC CICS file control command
+   Anchor     : None
+   DSECT      : DFHFCBLK
+   Cleared    : Yes
+   Length     : FCPREFIX
+
+Control Blocks...Server
+-----------------------
+
+File Control Table (DFHFCT)
+Contains the ACB for each file operation.
+   Eye catcher: None
+   Acquired   : Z390CICS at start
+   Released   : Never released
+   Anchor     : DFHFCTAD
+   DSECT      : DFHFCTDS
+   Length     : FCTABLEN
+
+VSAM Work Area (DFHVSWAD)
+Also contains the RPL for file operations.
+   Eye catcher: None
+   Acquired   : Z390CICS at File Control process start
+   Released   : Z390CICS at File Control process end
+   Anchor     : FCTVSWA
+   Chain      : VSWCHAIN
+   DSECT      : DFHVSWAD
+   Cleared    : Yes
+   Length     : VSWLEN
 
 -----------------------------------------------------------------------
 
@@ -238,12 +292,149 @@ HANDLE/IGNORE CONDITION Management
    At task end, task abend or an XCTL, all CONDITION blocks are
    FREEMAINd.
 
+Temporary Storage Management
+   The queues are owned by Z390CICS, so all requests for TS services
+   are sent by Z390/CICS tasks to the server.
+
+   There are two structures in the server:
+      The queue name chain ...
+         A chain of all queue names.
+         The anchor of the chain is internal (TSNANCHR).
+         The DSECT for the name table is internal (TSNAMES).
+
+         A queue name is created by the first WRITEQ TS for the name
+         and is chained on the end.
+
+         DELETEQ TS will delete all the data items and then delete the
+         queue name and repair the chain.
+
+      The TS data chain ...
+         A chain of all items added to the queue.
+         The anchor of the chain is in the queue name table (TSNITEM1).
+         The DSECT for the TS data chain prefix is internal (TSDPREFX),
+         the data follows the prefix.
+
+         WRITEQ TS  will add a new item to the chain end.
+         WRITEQ TS REWRITE will free the old item, create a new one,
+         and repair the chain.
+
+         DELETEQ TS will delete all the data items and then delete the
+         queue name and repair the chain.
+
+File Control Management
+   The files are owned by Z390CICS, so all requests for FC services
+   are sent by Z390/CICS tasks to the server.
+
+   The FCT (DSECT DFHFCTDS) defines the status of each file.
+   Each FCTTE contains the ACB for that file.
+   See ZCICSVSM - Z390/CICS VSAM Guide to see how files are created and
+   defined to Z390/CICS.
+
+   a) File opening
+      When Z390CICS starts, all files defined as FILSTAT=OPENED are
+      opened.
+      Failure results in the status (CLOSED,DISABLED).
+
+      Files defined as (CLOSED,ENABLED) are opened when the first
+      request is received.
+      Failure results in the status (CLOSED,DISABLED).
+
+   b) Request processing
+
+      Any feedback codes are converted to RESP/RESP2 values and sent
+      back to the Client.
+
+      When a task ends or abends all VSWAs owned by the task are
+      released.
+
+      i) READ (ESDS)
+         A VSWA is acquired.
+         RPL OPTCD is set to (ADR) or (ADR,XRBA).
+         RPLARG is set to the address of (X)RBA.
+         Area of the maximum or fixed length is GETMAINd and RPLAREA
+         is set. GET issued and the data is sent to the program.
+         The VSWA is released.
+
+     ii) STARTBR (ESDS)
+         A check is made to ensure that a VSWA for the same REQID has
+         not already been acquired for this task (INVREQ/33).
+         A VSWA is acquired.
+         The REQID is set (default is zero).
+         RPL OPTCD is set to (ADR,SEQ) or (ADR,SEQ,XRBA).
+         RPLARG is set to the address of (X)RBA.
+         A POINT is issued.
+         The current XRBA is saved in the VSWA and returned to the
+         program.
+
+    iii) READNEXT (ESDS)
+         The VSWA created by the STARTBR is searched for, an error is
+         raised if not found (INVREQ/34).
+         RPL OPTCD is set to (ADR,SEQ,FWD) or (ADR,SEQ,FWD,XRBA).
+         RPLARG is set to the address of (X)RBA.
+         A check is made to see if the XRBA supplied differs from the
+         current XRBA, if it does then a POINT is issued. This allows
+         skip-sequential processing to occur.
+         Area of the maximum or fixed length is GETMAINd and RPLAREA
+         is set.
+         The current XRBA is saved in the VSWA, a GET is issued, and
+         the current (X)RBA and the data are sent to the program.
+
+    iii) READPREV (ESDS)
+         The VSWA created by the STARTBR is searched for, an error is
+         raised if not found (INVREQ/41).
+         RPL OPTCD is set to (ADR,SEQ,BWD) or (ADR,SEQ,BWD,XRBA).
+         RPLARG is set to the address of (X)RBA.
+         A check is made to see if the XRBA supplied differs from the
+         current XRBA, if it does then a POINT is issued. This allows
+         skip-sequential processing to occur.
+         Area of the maximum or fixed length is GETMAINd and RPLAREA
+         is set.
+         The current XRBA is saved in the VSWA, a GET is issued, and
+         the current (X)RBA and the data are sent to the program.
+
+     iv) RESETBR (ESDS)
+         The VSWA created by the STARTBR is searched for, an error is
+         raised if not found (INVREQ/36).
+         RPL OPTCD is set to (ADR,SEQ) or (ADR,SEQ,XRBA).
+         RPLARG is set to the address of (X)RBA.
+         A POINT is issued.
+         The current XRBA is saved in the VSWA and returned to the
+         program.
+
+      v) ENDBR (ESDS)
+         The VSWA created by the STARTBR is searched for, an error is
+         raised if not found (INVREQ/35).
+         The VSWA is released.
+
+-----------------------------------------------------------------------
+
+Event Tracing
+   Tracing is currently limited to those events that the server knows
+   about. These events appear on the log as WTO messages.
+
+   The level of tracing is controlled by the INI parm TRACE_Z390CICS=
+
+   There is an intent to provide full application tracing, but each
+   event would have to be sent to the server and may be too great an
+   overhead in this environment.
+
+Internal Abends (Z390CICS)
+   These are mostly caused by programming errors or situations I had
+   not anticipated. Please report all of these to Don.
+
+   555   Unknown request sent to Server
+   666   CMDPROC failed
+   777   TCPIO OPEN/CLOSE Server failed
+   778   TCPIO RECEIVE failed
+   780   TCPIO SEND failed
+   790   VSAM feedback code was not expected
+
 Trademarks
 ----------
 CICS is a registered trademark of International Business Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 25, 2007
-Z390 version: V1.3.04c
-Z390/CICS version: V2
+Shipping Date: October 1st, 2007
+Z390 version: V1.3.08
+Z390/CICS version: V3
 

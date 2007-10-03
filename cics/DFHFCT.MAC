@@ -1,0 +1,110 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+.* FILE CONTROL TABLE
+         DFHFCT &TYPE=,                                                X
+               &DATASET=,                                              X
+               &FILSTAT=(ENABLED,CLOSED),                              X
+               &RECFORM=(VARIABLE,BLOCKED),                            X
+               &SERVREQ=
+.*
+         LCLB  &FILOPEN,&FILCLOS,&FILENAB,&FILDISA,&FILUNEN
+         LCLB  &RECFIX,&RECVAR
+         LCLB  &SVQREAD,&SVQDELT,&SVQUPDT,&SVQADD,&SVQBRWS
+.*
+         AIF   (&TYPE EQ 'DATASET').FILE
+         AIF   (&TYPE EQ 'FINAL').FINAL
+         MNOTE 12,'INVALID TYPE - &TYPE'
+         MEXIT
+.*
+.FILE    ANOP
+         AIF   (K'&DATASET EQ 0 OR K'&DATASET GT 8).ERR1
+DFHFCT   CSECT
+         DS    0D
+         DC    CL8'&DATASET'
+.*
+.* FILSTAT PROCESSING
+.*
+&I       SETA  0
+.FILLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&FILSTAT).CHKFIL
+&FILOPEN SETB  ('&FILSTAT(&I)' EQ 'OPENED'    OR &FILOPEN)
+&FILCLOS SETB  ('&FILSTAT(&I)' EQ 'CLOSED'    OR &FILCLOS)
+&FILENAB SETB  ('&FILSTAT(&I)' EQ 'ENABLED'   OR &FILENAB)
+&FILDISA SETB  ('&FILSTAT(&I)' EQ 'DISABLED'  OR &FILDISA)
+&FILUNEN SETB  ('&FILSTAT(&I)' EQ 'UNENABLED' OR &FILUNEN)
+         AGO   .FILLOOP
+.*
+.CHKFIL  ANOP
+         AIF   (&FILOPEN AND &FILCLOS).FILSERR
+         AIF   (&FILENAB AND &FILDISA).FILSERR
+         AIF   (&FILENAB AND &FILUNEN).FILSERR
+         AIF   (&FILDISA AND &FILUNEN).FILSERR
+         AIF   (NOT(&FILOPEN) AND NOT(&FILCLOS)).FILSERR
+         AIF   (&FILUNEN AND NOT(&FILCLOS)).FILSERR
+         DC    B'&FILOPEN&FILENAB&FILUNEN.00000'
+.*
+.* RECFORM PROCESSING
+.*
+&I       SETA  0
+.RECLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&RECFORM).CHKREC
+&RECFIX  SETB  ('&RECFORM(&I)' EQ 'FIXED'     OR &RECFIX)
+&RECVAR  SETB  ('&RECFORM(&I)' EQ 'VARIABLE'  OR &RECVAR)
+         AIF   ('&RECFORM(&I)' EQ 'UNBLOCKED').NOTVSAM
+         AGO   .RECLOOP
+.*
+.CHKREC  ANOP
+         AIF   (&RECFIX AND &RECVAR).RECSERR
+         DC    B'&RECFIX.0000000'
+.*
+.* SERVREQ PROCESSING
+.*
+&I       SETA  0
+.SVQLOOP ANOP
+&I       SETA  &I+1
+         AIF   (&I GT N'&SERVREQ).CHKSVQ
+&SVQREAD SETB  ('&SERVREQ(&I)' EQ 'READ'   OR &SVQREAD)
+&SVQDELT SETB  ('&SERVREQ(&I)' EQ 'DELETE' OR &SVQDELT)
+&SVQUPDT SETB  ('&SERVREQ(&I)' EQ 'UPDATE' OR &SVQUPDT)
+&SVQADD  SETB  ('&SERVREQ(&I)' EQ 'ADD'    OR &SVQADD)
+&SVQBRWS SETB  ('&SERVREQ(&I)' EQ 'BROWSE' OR &SVQBRWS)
+         AGO   .SVQLOOP
+.*
+.CHKSVQ  ANOP
+.* UPDATE OR BROWSE FORCES READ
+         AIF   (&SVQUPDT OR &SVQBRWS).SVQDEFR
+         AGO   .GENSVQ
+.*
+.SVQDEFR ANOP
+&SVQREAD SETB  1
+.GENSVQ  ANOP
+         DC    B'&SVQREAD&SVQDELT&SVQUPDT&SVQADD&SVQBRWS.000'
+.*
+         ACB   DDNAME=&DATASET
+         MEXIT
+.*
+.FINAL   ANOP
+         DS    0D
+         DC    X'FF'              STOPPER
+         MEXIT
+.*
+.ERR1    MNOTE 12,'DATASET MISSING OR TOO LARGE'
+         MEXIT
+.*
+.FILSERR MNOTE 12,'FILSTAT HAS INCORRECT OR CONFLICTING PARAMETERS'
+         MEXIT
+.*
+.RECSERR MNOTE 12,'RECFORM HAS INCORRECT OR CONFLICTING PARAMETERS'
+         MEXIT
+.*
+.NOTVSAM MNOTE 12,'RECFORM=(UNBLOCKED) NOT ALLOWED IN VSAM'
+         MEXIT
+         MEND
+

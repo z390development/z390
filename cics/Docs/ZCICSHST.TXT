@@ -7,9 +7,68 @@ Programmers Guide and the System Programmers Guide for the details.
 The Ship Date is the date the package is given to Don, there may be
 a delay before he can include it in a PTF or release.
 
-Ver  Ship Date     Z390 version
----  ------------  ------------
-V2   June 25,2007  V1.3.04c
+Ver  Ship Date           Z390 version
+---  -----------------   ------------
+V3   October 1st, 2007   V1.3.08
+   Improvements to the shutdown process.
+
+   Changes to remote terminal start procedure.
+      Z390KCPL to launch multiple remotes
+      Z390KCPR to launch one remote, used for test/trace
+
+   Z390CICS.INI ...
+      JAR_PATH= and CICS_PATH= are withdrawn. The paths are extracted
+      from the environment variables JARPATH and CICSPATH.
+
+      New parm, DATE_FORMAT=UK or US
+
+   Bug fix
+      EXEC CICS IGNORE not acquiring handle block.
+
+   Enhancements and changes...
+      RECEIVE INTO(EIBAID) no longer supported
+         Receive into your own area, EIBAID and EIBCPOSN will be
+         automatically extracted.
+
+      HANDLE/IGNORE extra conditions...
+         QIDERR, ITEMERR, FILENOTFOUND, NOTFND, DUPREC, DUPKEY,
+         NOSPACE, NOTOPEN, ENDFILE, DISABLED
+
+      CEMT I SYS ...
+         Terminal numbers were in error, display enhanced.
+         JAR_PATH and CICS_PATH are displayed from the environment
+         variables.
+
+      DFHALLV.BAT to rebuild the test VSAM catalog and files.
+
+   Added support for...
+      DELETEQ TS
+      READQ TS
+      WRITEQ TS
+
+   File control commands are for VSAM ESDS read-only...
+      READ
+      STARTBR
+      READNEXT
+      READPREV
+      RESETBR
+      ENDBR
+
+   Added facilities
+      CEBR transaction, a hybrid of CEMT I TSQ and CEBR.
+      Extensive improvements.
+
+      CEMT I FIL
+
+   Documentation
+      CEMT and CEBR are now moved to ZCICSSTR -- Z390/CICS Supplied
+      Transactions.
+
+      New document ZCICSVSM - Z390/CICS VSAM Guide
+
+-----------------------------------------------------------------------
+
+V2   June 25, 2007   V1.3.05
    Corrections to setting of EIBAID and EIBCPOSN.
    Maintain EIBRSRCE (program name).
    Clear prefix section of DSA, possibility of abends.
@@ -48,17 +107,15 @@ V2   June 25,2007  V1.3.04c
       GETMAIN
       HANDLE AID
       HANDLE ABEND
-      HANDLE CONDITION
-         only ERROR, INVREQ, LENGERR, PGMIDERR supported
-      IGNORE CONDITION
+      HANDLE/IGNORE CONDITION
          only ERROR, INVREQ, LENGERR, PGMIDERR supported
       PUSH HANDLE
       POP HANDLE
       RELEASE
 
-Ver  Ship Date     Z390 version
----  ------------  ------------
-V1   May 1, 2007   V1.3.03b
+Ver  Ship Date       Z390 version
+---  --------------  ------------
+V1   May 1, 2007     V1.3.03b
 
    Provides assembly support for CICS programs.
 
@@ -73,7 +130,7 @@ Trademarks
 CICS is a registered trademark of International Business Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 25, 2007
-Z390 version: V1.3.04c
-Z390/CICS version: V2
+Shipping Date: October 1st, 2007
+Z390 version: V1.3.08
+Z390/CICS version: V3
 

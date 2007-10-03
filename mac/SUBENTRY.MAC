@@ -11,6 +11,7 @@
 .* 04/26/07 RPI 601 CHANGE BASE OFFSETS FROM 4095 TO STD 4096        
 .* 07/11/07 RPI 654 CLEANUP - ADD DROP, CHECK RENT+R13, RWA+RWALNG
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 10/01/07 RPI 709 FIX MISSING QUOTE IN AIF AFTER .NOSTK2           
 .*********************************************************************
 .*             MACRO-ID. 'SUBENTRY'                                      
 .*             AUTHOR.   DON HIGGINS.                                    
@@ -159,7 +160,7 @@
          LM    14,2,12(13)                                               
          L     13,8(13)                                                  
          AIF   ('&RWALNG' EQ '0' AND '&RWA' EQ '').GEN   RPI 654   
-         AIF   ('&RWALNG  EQ '0' OR  '&RWA' EQ '').ERR1  RPI 654                              
+         AIF   ('&RWALNG' EQ '0' OR  '&RWA' EQ '').ERR1  RPI 654,709                              
          USING &RWA-(72+&STKSIZE),13                                     
          AGO   .GEN                                                      
 .NORENT  ANOP                                                            

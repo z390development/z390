@@ -1,0 +1,48 @@
+Z390RMTE SUBENTRY
+*
+* FOR EACH REMOTE REQUESTED INVOKE Z390KCPR
+*
+         L     R4,=A(ZCVT)        ADDRESS ZCVT
+         USING IHAZCVT,R4
+         SR    R5,R5              CLEAR R5
+         ICM   R5,3,ZCVTPARM      R5=PARM LENGTH
+         BZ    NOPARM             EXIT IF ZERO
+         CLI   ZCVTPARM+2,C'1'    NUMERIC AND NOT 0 ?
+         BL    NOPARM             EXIT IF NOT
+         CLI   ZCVTPARM+2,C'9'    NUMERIC ?
+         BNH   GETPARM            EXIT IF IT IS
+NOPARM   EQU   *
+         LA    R6,1               SET DEFAULT OF 1
+         B     ISSUESET           EXIT
+*
+GETPARM  EQU   *
+         SR    R6,R6              CLEAR R5
+         IC    R6,ZCVTPARM+2      INSERT REMOTE COUNT
+         NILL  R6,X'FF0F'         CONVERT TO BINARY
+*
+ISSUESET EQU   *
+         SR    R7,R7              START THREAD ID=0
+RMTELOOP EQU   *
+         CMDPROC START,ID=(R7)    START A COMMAND PROMPT
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND              ABEND IF BAD
+*
+         CMDPROC WRITE,KCPR,ID=(R7) SEND REMOTE SETUP COMMAND
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND              ABEND IF BAD
+         AHI   R7,1               INCREMENT CMDPROC ID
+         BCT   R6,RMTELOOP        LOOP
+*
+EXIT     EQU   *
+         SUBEXIT
+*
+ABEND    EQU   *
+         SNAP  PDATA=ALL,ID=999   TAKE DUMP
+         B     EXIT               EXIT
+*
+KCPR     DC    C'%CICSPATH%\Z390KCPR',X'00'
+*
+         ZCVTD
+         EQUREGS
+         END
+

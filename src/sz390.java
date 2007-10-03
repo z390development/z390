@@ -958,10 +958,18 @@ private void put_stats(){
 		}
 		put_log("EZ390I stats VSAM operations       = " + vz390.tot_vsam_oper);
 		if (vz390.tot_vsam_oper > 0){ // RPI 566
-			put_log("EZ390I stats ACB open              = " + vz390.tot_acb_open);
-			put_log("EZ390I stats ACB close             = " + vz390.tot_acb_close);
-			put_log("EZ390I stats RPL get               = " + vz390.tot_rpl_get);
-			put_log("EZ390I stats RPL put               = " + vz390.tot_rpl_put);
+			put_log("EZ390I stats VSAM ACB open         = " + vz390.tot_acb_open);
+			put_log("EZ390I stats VSAM ACB close        = " + vz390.tot_acb_close);
+			put_log("EZ390I stats VSAM RPL get          = " + vz390.tot_rpl_get);
+			put_log("EZ390I stats VSAM RPL put          = " + vz390.tot_rpl_put);
+			put_log("EZ390I stats VSAM ACB point        = " + vz390.tot_rpl_point);
+			put_log("EZ390I stats VSAM ACB erase        = " + vz390.tot_rpl_erase);
+			put_log("EZ390I stats VSAM VES read  cache  = " + vz390.tot_ves_cache);
+			put_log("EZ390I stats VSAM VES read  file   = " + vz390.tot_ves_read);
+			put_log("EZ390I stats VSAM VES write file   = " + vz390.tot_ves_write);
+			put_log("EZ390I stats VSAM VXN read  cache  = " + vz390.tot_vxn_cache);
+			put_log("EZ390I stats VSAM VXN read  file   = " + vz390.tot_vxn_read);
+			put_log("EZ390I stats VSAM VXN write file   = " + vz390.tot_vxn_write);
 		}
 		if (tz390.opt_trace){
 			tz390.put_trace("EZ390I Stats Keys                  = " + tz390.tot_key);
@@ -1507,7 +1515,7 @@ public boolean get_load_dsn(int dd_dsn_addr){
  			return false;
  		}
  	} else {
- 		load_dsn = get_ascii_var_string(dd_dsn_addr,max_dir_list);
+ 		load_dsn = tz390.get_ascii_var_string(pz390.mem_byte,dd_dsn_addr,max_dir_list);
  		if (load_dsn == null || load_dsn.length() == 0){
  			log_error(83,"DSNAME invalid field at " + tz390.get_hex(dd_dsn_addr,8));
  			return false;
@@ -2532,7 +2540,7 @@ private String get_dcb_file_name(String dsnam_path){
 	String file_name = "";
 	int dcb_dsn = pz390.mem.getInt(cur_dcb_addr + dcb_dsnam);
 	if (dcb_dsn > 0){
-        file_name = dsnam_path + get_ascii_var_string(dcb_dsn,max_lsn_spec).trim(); // RPI 668  
+        file_name = dsnam_path + tz390.get_ascii_var_string(pz390.mem_byte,dcb_dsn,max_lsn_spec).trim(); // RPI 668  
         if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
         	file_name = file_name.replace('\\','/');
         }
@@ -3220,37 +3228,6 @@ public String get_ascii_env_var_string(String env_var_name){
 		return "";
 	}
 }
-public String get_ascii_var_string(int mem_addr,int max_len){
-	/*
-	 * return ascii variable length string 
-	 * delimited by null or double quotes which
-	 * are stripped off along with leading or traling 
-	 * spaces.
-	 */
-	String text = "";
-	int index = 0;
-	while (index < max_len){
-		byte data_byte = pz390.mem_byte[mem_addr+index];
-		char data_char;
-		if (tz390.opt_ascii){
-			data_char = (char) data_byte;
-		} else {
-			data_char = (char) tz390.ebcdic_to_ascii[data_byte & 0xff]; //RPI42
-		}
-		if (data_byte == 0){
-			break;
-		}
-		if (data_char == '"'){
-			if (index != 0){
-				break;
-			}
-		} else {
-			text = text + data_char;
-		}
-		index++;
-	}
-    return text.trim();  //RPI111
-}
 public String get_ascii_string(int mem_addr,int mem_len,boolean null_term){
 	/*
 	 * get ascii string with no trailing spaces from
@@ -3331,7 +3308,7 @@ private void svc_cmd(){
 		break;
 	case 2: // send command string at R1, null term
 		if (cmd_proc_running[cmd_id]){
-			svc_cmd_text = get_ascii_var_string(pz390.reg.getInt(pz390.r1),max_lsn_spec);
+			svc_cmd_text = tz390.get_ascii_var_string(pz390.mem_byte,pz390.reg.getInt(pz390.r1),max_lsn_spec);
 			cmd_input(cmd_id,svc_cmd_text);
 		    pz390.reg.putInt(pz390.r15,0);
 		} else {
@@ -3825,7 +3802,7 @@ private void svc_guam(){
 	case 1: // WINDOW
 		switch (guam_minor){
 		case 1: // TITLE,"text" 
-			guam_text = get_ascii_var_string(pz390.mem.getInt(guam_args),256);
+			guam_text = tz390.get_ascii_var_string(pz390.mem_byte,pz390.mem.getInt(guam_args),256);
 			gz390.guam_window_title(guam_text);
 			break;
 		case 2: // LOC,x,y
@@ -3984,7 +3961,7 @@ private void svc_guam(){
 		switch (guam_minor){
 		case 1: // PLAY,"wav_file"
 			guam_abuff = pz390.mem.getInt(guam_args);
-			guam_text = get_ascii_var_string(guam_abuff,max_lsn_spec);
+			guam_text = tz390.get_ascii_var_string(pz390.mem_byte,guam_abuff,max_lsn_spec);
 			gz390.guam_sound_play(guam_text);
 			break;
 		default:
@@ -4615,7 +4592,7 @@ private void svc_cfd(){
 	byte type = pz390.mem.get(addr+3);
 	int addr_out  = pz390.mem.getInt(addr+4) & pz390.psw_amode; // RPI 526
 	int addr_in = pz390.mem.getInt(addr+8) & pz390.psw_amode;   // RPI 526
-	String cfd_text = get_ascii_var_string(addr_in,ctd_display_len).trim();  
+	String cfd_text = tz390.get_ascii_var_string(pz390.mem_byte,addr_in,ctd_display_len).trim();  
 	switch (type){
 	case 21: // 128 bit int from display
 		try {
@@ -5927,7 +5904,7 @@ private void svc_tcpio(){
             tcp_client_port[cur_tcp_client_index] = tcpio_port;
 			tcpio_host_addr = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
 			if (tcpio_host_addr > 0){
-				tcpio_host_text = get_ascii_var_string(tcpio_host_addr,265);
+				tcpio_host_text = tz390.get_ascii_var_string(pz390.mem_byte,tcpio_host_addr,265);
 				try {
 					tcpio_host_ip   = InetAddress.getByName(tcpio_host_text);
 				} catch(Exception e) {

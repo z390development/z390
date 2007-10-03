@@ -13,7 +13,7 @@ erase %~dps0demo\dif\*.* /q
 rem erase %~dps0cics\dif\*.* /q 
 erase %~dps0mvs\dif\*.* /q 
 erase %~dps0util\dif\*.* /q 
-erase %~dps0vsam\demo\dif\*.* /q 
+erase %~dps0vsam\test\dif\*.* /q 
 erase %~dps0vse\dif\*.* /q 
 erase %~dps0rt\dif\*.* /q 
 call DIRCLEAN
@@ -31,8 +31,8 @@ rem copy %~dps0cics\dif\*.*     %~dps0rt\all
 copy %~dps0rt\dif\*.*       %~dps0rt\all
 copy %~dps0mvs\dif\*.*      %~dps0rt\all
 copy %~dps0util\dif\*.*     %~dps0rt\all
+copy %~dps0vsam\test\dif\*.*      %~dps0rt\all
 copy %~dps0vse\dif\*.*      %~dps0rt\all
-copy %~dps0vsam\demo\dif\*.*      %~dps0rt\all
 copy %~dps0linklib\dif\DIFF.TXT  %~dps0rt\all\RTLINK.DIF
 copy %~dps0demo\dif\DIFF.TXT     %~dps0rt\all\RTDEMO.DIF
 rem copy %~dps0cics\dif\DIFF.TXT     %~dps0rt\all\RTCICS.DIF

@@ -6,6 +6,8 @@ call ASML vsam\test\TESTCAT notiming
 REM test ESDS fixed length
 REM test creation of ESF1 from QSAM fixed, SEQ/ADR access
 call vsam\test\ESF1TEST notiming tracev %1 %2 %3 %4 %5 %6 %7 %8 %9
+REM test point error on fixed ESF1 
+call vsam\test\ESF1ERR1 notiming tracev %1 %2 %3 %4 %5 %6 %7 %8 %9
 REM test reading fixed ESF1 forward/backward starting at XRBA addr rec
 call vsam\test\ESF1SKP1 notiming tracev %1 %2 %3 %4 %5 %6 %7 %8 %9
 REM test creation of ESF2 from QSAM fixed, SEQ and random UPD in place
@@ -45,5 +47,7 @@ call vsam\test\RRV1SKP1 notiming tracev %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RTCOMP %~dps0vsam\test %~dps0vsam\test\save %~dps0vsam\test\dif
 erase %~dps0vsam\demo\dif\*.* /q
 call RTCLEAN1 vsam\demo * 
-REM test ESDS fixed length
+REM asml ESF1.390 which is not a catalog to verify ESF1.TF? works ok
+call asml vsam\demo\ESF1 %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\demo\demos notiming tracev %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RTCOMP %~dps0vsam\demo %~dps0vsam\demo\save %~dps0vsam\demo\dif

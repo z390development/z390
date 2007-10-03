@@ -7,19 +7,19 @@
 .* Date   - 07/11/07                                                 *
 .*********************************************************************
 .* 07/11/07 RPI 654 ADD PERFORM, PM, PENTRY, PEXIT WITH RENT SUPPORT       
+.* 10/01/07 RPI 709 REMOVE PTRACE REFS                                     
 .*********************************************************************
 &N       PENTRY                                                         
 .*             AUTHOR.   DON HIGGINS.                                   
 .*             DATE.     01/06/75.                                      
-.*             REMARKS.  PERFORM ROUTINE ENTRY POINT WITH TRACE OPTION. 
-.*                       SEE PTRACE MACRO FOR TRACE INFO.               
+.*             REMARKS.  PERFORM ROUTINE ENTRY POINT  RPI 709            
+.*                                                                      
 .*       REV1 01/04/78 DSH - ADD STACK OPTIONS (SEE SUBENTRY)           
          GBLC  &PSTKREG,&PBASREG,&PBASLAB                               
          GBLB  &PSTKSW,&PBASESW,&PSAVESW,&PCHKSW                        
          LCLC  &STKREG                                                  
          LCLA  &OFFSET                                                  
-         GBLB  &PTRACE,&STKOPT                                          
-         GBLC  &PTNAME                                                  
+         GBLB  &STKOPT  RPI 709 REMOVE &TRACE                   
          GBLC  &PENAME                                                  
          AIF   (&PBASESW EQ 0).L0                                       
          LTORG                                                          
@@ -29,7 +29,7 @@
          AIF   (&STKOPT EQ 1).STK                                       
          B     *+4                                                      
 &N       EQU   *                                                        
-         AGO   .TRACE                                                   
+         AGO   .EXIT  RPI 709                                           
 .STK     AIF   (K'&N EQ 0).STK1                                         
 &N       DS    0H                                                       
 .STK1    ANOP                                                           
@@ -67,8 +67,7 @@
 .L5      AIF   (&PSAVESW EQ 0).L6                                       
          LM    14,15,72(13)                                             
 .L6      ANOP                                                           
-.TRACE   AIF   (&PTRACE EQ 0).EXIT                                      
-         PM    &PTNAME                                                  
+.* RPI 709                                      
 .EXIT    ANOP                                                           
          MEND                                                           
 

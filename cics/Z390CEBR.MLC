@@ -1,0 +1,1240 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+*
+* BROWSE TEMPORARY STORAGE
+*
+* ### TO DO
+*   FIND, NEED GRAPHICS TO MAKE IT PRETTY
+*
+         DFHEIGBL
+         DFHEISTG
+PARSE1   DS    CL19               TS Q NAME, ALLOW FOR X'  '
+PARSE2   DS    CL60               COMMAND
+PARSE3   DS    CL60               COMMAND PARAMETER
+GTNAMADR DS    A                  NAME TABLE ADDRESS
+*
+* TS NAME MESSAGE AREA
+SNDQNAMT DS    CL(QNAMTITE)       Q NAME TITLE
+         ORG   SNDQNAMT
+         DS    CL(QNAMTT1)        TITLE AREA
+SNDQNAMM DS    CL6                EBCDIC/ASCII/HEX
+         DS    CL3                SBA
+SNDQNAMN DS    CL(L'QNAMENDT)     END MESSAGE
+         ORG
+SNDQNAML DS    20CL(QNAMOLEN*3)   20 LINES OF NAMES, 3 ON EACH LINE
+*
+* KEY DISPLAY AREA
+SNDKEYS  DS    CL(QLSTKEYL)       KEY LIST
+* Q NAME TABLE CONTROL
+QNAMCOL  DS    C                  COLUMN NO. TRACKER
+QNAMSEPC DS    C                  SEPARATOR WHEN NEEDED
+QNAMMODE DS    C                  DISPLAY MODE
+*                                    E=EBCDIC
+*                                    A=ASCII
+*                                    X=HEX
+* DATA DISPLAY CONTROL
+QLSTITEM DS    AL2                ITEM TRACKER
+QLSTCOL  DS    AL2                COLUMN TRACKER
+QLSTMAX  DS    AL2                MAXIMUM LENGTH OF ANY ITEM DISPLAYED
+QLSTCOLM DS    AL2                MAXIMUM LAST COLUMN DISPLAYED
+QLSTTOP  DS    X                  X'FF'=TOP IS REQUIRED
+QLSTBOT  DS    X                  X'FF'=BOTTOM IS REQUIRED
+QLSTITM  DS    AL2                LAST ITEM READ
+QLSTLEN  DS    AL2                LENGTH OF LAST ITEM READ
+QLSTITND DS    AL2                LAST ITEM NUMBER TO READ
+QLSTNMIT DS    AL2                NUMITEMS REFRESHED
+QLSTMODE DS    C                  DISPLAY MODE
+*                                    E=EBCDIC
+*                                    A=ASCII
+*                                    X=HEX
+QLSTRETN DS    X                  X'FF'=PF3 RETURNS TO QNAME DISPLAY
+*
+Z390CEBR DFHEIENT CODEREG=(R12,R3)
+*
+* CEBR FUNCTIONS
+*
+* CEBR INVOKES THE NAME DISPLAY
+*    BUBBLE SORT THEM (LATER)
+*    CURSOR SELECT NAME TO DISPLAY THE Q
+*
+* CEBR QNAME INVOKES THE Q DISPLAY DIRECTLY
+*
+         MVI   QLSTRETN,X'00'     PF3 IN DATA DISPLAY ENDS
+         L     R6,TCTTEDA         INITIAL TIOA (NULL TERMINATED)
+         AHI   R6,3               MISS AID, CURSOR ADDRESS
+         CLI   0(R6),SBA          PRECEDING SBA ?
+         BNE   NOSBA              EXIT IF NOT
+         AHI   R6,3               MISS SBA
+NOSBA    EQU   *
+         AHI   R6,4               MISS CEBR
+         MVC   PARSE1,=19C' '     BLANK THE TS Q NAME
+*
+* FIND 1ST PARM
+*
+         BAL   R9,NEXTPARM        LOCATE START OF 1ST PARM
+         CLI   0(R6),X'00'        END OF TIOA ?
+         BE    PROCESS            EXIT IF PARM NOT FOUND
+         LA    R7,PARSE1          PARM ADDRESS
+         MVC   EXTRLIMT,=H'20'    SET LIMIT OF 19
+         BAL   R9,EXTRACT         EXTRACT PARM
+         CLC   PARSE1(2),=C'x'''  IS IT HEX ?
+         BE    HEXQNAME           EXIT IF IT IS
+         CLC   PARSE1(2),=C'X'''  IS IT HEX ?
+         BE    HEXQNAME           EXIT IF IT IS
+         B     PROCESS            EXIT
+*
+HEXQNAME EQU   *
+         LA    R7,PARSE1-1(R8)    R7=LAST PARM CHAR
+         CLI   0(R7),C''''        IS IT QUOTE ?
+         BNE   HEXQNERR           EXIT IF INVALID
+         STC   R8,PARSE1          SAVE LENGTH
+         TM    PARSE1,X'01'       IS IT ODD ?
+         BNO   HEXQNERR           INVALID IF NOT
+         AHI   R8,-3              SET LENGTH FOR EX
+         EX    R8,HEXOC           CONVERT TO UPPER CASE
+         EX    R8,HEXTR           TRANSLATE TO UNPACKED HEX
+         PACK  PARSE2(5),PARSE1+2(9) PACK MORE
+         PACK  PARSE2+4(5),PARSE1+11(9)        THAN NEEDED
+         MVC   PARSE1,=19C' '     BLANK DESTINATION
+         SRL   R8,1               LENGTH IS HALVED
+         BCTR  R8,0               -1 FOR ACTUAL PACKED LENGTH FOR EX
+         EX    R8,HEXMVC          MOVE HEX RESULT
+         B     PROCESS            EXIT
+*
+HEXQNERR EQU   *
+         MVI   PARSE1,C' '        ASSUME NO PARM
+         B     PROCESS            EXIT
+HEXOC    OC    PARSE1+2(0),=19C' ' CONVERT TO UPPER CASE
+HEXTR    TR    PARSE1+2(0),TRANHXCH-X'C1' TRANSLATE TO UNPACKED HEX
+HEXMVC   MVC   PARSE1(0),PARSE2   MOVE HEX RESULT
+*
+PROCESS  EQU   *
+*
+* DISPLAY Q NAMES IF NO PARM PASSED
+* IF PARM PASSED OR Q COMMAND, REFRESH QNAMES AND SEARCH FOR IT
+*
+         MVC   SNDQNAMT,QNAMTITL  SET UP TITLE
+         MVC   CEBRNREQ,=C'0AFF'  SET REQUEST CODE
+         MVC   CEBRNTRM,TCTTETI   SET TERMID
+         TCPIO SEND,MSG=CEBRQNAM,LMSG=12,PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+* Z390CICS WILL ONLY SEND THE NO. OF NAMES
+         TCPIO RECEIVE,MSG=CEBRRCVE,LMSG=14,PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         ICM   R8,3,CEBRQUS       R8=NO. OF Q NAMES
+         BZ    QNAMSEND           EXIT IF NONE
+* GETMAIN AN AREA AND RECEIVE ALL THE NAME TABLE
+* WE LET END-OF-TASK DO THE FREEMAINS
+         EXEC  CICS GETMAIN LENGTH(60*18) SET(R7)
+         ST    R7,GTNAMADR        SAVE IT
+         USING QNAMDATA,R7
+         LA    R15,60*18          EXPECTED LENGTH
+         TCPIO RECEIVE,MSG=(R7),LMSG=(R15),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+* WE HAVE A Q NAME TABLE
+* IF PARM NOT FOUND OR NO PARM, DISPLAY Q NAMES FOR CURSOR SELECT
+         MVI   QNAMMODE,C'E'      SET DISPLAY TO EBCDIC
+         CLI   PARSE1,C' '        PARM EXISTS ?
+         BE    SHOWQ              EXIT IF NOT
+         LH    R8,CEBRQUS         R8=NO. OF Q NAMES
+PARMFIND EQU   *
+         CLC   PARSE1(16),QNAMDQNM OUR ONE ?
+         BE    PROCQ              EXIT IF IT IS
+         AHI   R7,QNAMDLEN        BUMP Q NAME POINTER
+         BCT   R8,PARMFIND        LOOP TILL FOUND
+DISPQNAM EQU   *
+         L     R7,GTNAMADR        R7=QNAME TABLE
+*
+SHOWQ    EQU   *
+         LA    R6,SNDQNAML        R6=DISPLAY ADDRESS
+         USING QNAMDSCT,R6
+         LH    R8,CEBRQUS         R8=NO. OF Q NAMES
+         MVI   QNAMSEPC,C' '      INITIALIZE SEPARATOR
+         C     R8,=F'20'          MORE THAN 20 ?
+         BNH   QNAMCOL1           EXIT IF NOT
+         LA    R8,20              SET MAXIMUM
+         MVI   QNAMSEPC,C'|'      SET SEPARATOR
+QNAMCOL1 EQU   *
+         MVI   QNAMCOL,C'1'       SET COL NUMBER
+         LA    R9,SBATAB1         R9=SBA'S FOR COL 1
+QNAMLP   EQU   *
+         MVC   QNAMSBA,0(R9)      MOVE SBA
+         MVC   QNAMNAME,QNAMDQNM  MOVE Q NAME
+         CLI   QNAMMODE,C'E'      IS IT EBCDIC ?
+         BNE   QNAMTR1            EXIT IF NOT
+         TR    QNAMNAME,TRANEBC   TRANSLATE TO EBCDIC
+         MVC   SNDQNAMM,=C'EBCDIC' SHOW IT
+         B     QNAMTRDN           EXIT
+*
+QNAMTR1  EQU   *
+         CLI   QNAMMODE,C'A'      IS IT ASCII ?
+         BNE   QNAMTR2            EXIT IF NOT
+         TR    QNAMNAME,TRANASC   TRANSLATE TO ASCII
+         MVC   SNDQNAMM,=C'ASCII ' SHOW IT
+         B     QNAMTRDN           EXIT
+*
+QNAMTR2  EQU   *
+* Q NAME HEX TRANSLATE
+* ONLY THE 1ST 8 CHARS ARE SHOWN IN HEX
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R5,QNAMDQNM        SOURCE ADDRESS
+         LA    R14,QNAMNAME       DESTINATION ADDRESS
+         LA    R15,8              SOURCE LENGTH
+         TROT  R14,R5,1           TRANSLATE TO PRINTABLE HEX
+         MVC   SNDQNAMM,=C'HEX   ' SHOW IT
+QNAMTRDN EQU   *
+         LH    R5,QNAMDITM        R5=NUMITEMS
+         CVD   R5,DEC             CONVERT TO DECIMAL
+         MVC   QNAMITEM,=X'402020202020' MOVE EDIT WORD
+         ED    QNAMITEM,DEC+5     EDIT NUMITEMS
+         MVC   QNAMSPCE,=2C' '    SPACER
+         MVC   QNAMSEP,QNAMSEPC   MOVE SEPARATOR
+         AHI   R9,3               BUMP SBA TABLE POINTER
+         AHI   R7,QNAMDLEN        BUMP RECEIVED DATA POINTER
+         AHI   R6,QNAMOLEN        BUMP OUTPUT AREA POINTER
+         BCT   R8,QNAMLP          LOOP
+*
+         LH    R8,CEBRQUS         R8=NO. OF Q NAMES
+         CLI   QNAMCOL,C'1'       COMPLETED COL 1 ?
+         BNE   QNAMTRY2           EXIT IF NOT
+         C     R8,=F'20'          MORE THAN 20 ?
+         BNH   QNAMSEND           EXIT IF ALL DONE
+         AHI   R8,-20             REDUCE BY 20
+         MVI   QNAMCOL,C'2'       SET TO COL 2
+         LA    R9,SBATAB2         R9=SBA'S FOR COL 2
+         MVI   QNAMSEPC,C' '      INITIALIZE SEPARATOR
+         C     R8,=F'20'          STILL MORE THAN 20 ?
+         BNH   QNAMLP             EXIT IF NOT
+         LA    R8,20              SET MAXIMUM
+         MVI   QNAMSEPC,C'|'      SET SEPARATOR
+         B     QNAMLP             START COL 2 LOOP
+QNAMTRY2 EQU   *
+         CLI   QNAMCOL,C'2'       COMPLETED COL 2 ?
+         BNE   QNAMSEND           EXIT IF NOT
+         C     R8,=F'40'          MORE THAN 40 ?
+         BNH   QNAMSEND           EXIT IF ALL DONE
+         AHI   R8,-40             REDUCE BY 40
+         MVI   QNAMCOL,C'3'       SET TO COL 3
+         LA    R9,SBATAB3         R9=SBA'S FOR COL 3
+         MVI   QNAMSEPC,C' '      INITIALIZE SEPARATOR
+         C     R8,=F'20'          STILL MORE THAN 20 ?
+         BNH   QNAMLP             EXIT IF NOT
+         LA    R8,20              SET MAXIMUM
+         MVI   QNAMSEPC,C'|'      SET SEPARATOR
+         B     QNAMLP             START COL 3 LOOP
+*
+QNAMSEND EQU   *
+         MVI   QLSTRETN,X'00'     ENSURE CLEAR MEANS IT
+         ICM   R8,3,CEBRQUS       R8=NO. OF Q NAMES
+         BNZ   QNAMCALC           EXIT IF SOME
+         MVC   SNDQNAMN,QNAMNONE  SHOW NO QNAMES MESSAGE
+         B     QNAMNOFR           EXIT
+*
+QNAMCALC EQU   *
+* CALCULATE DATA LENGTH TO SEND
+         MS    R8,=AL4(QNAMOLEN)  * LENGTH OF EACH OUTPUT ENTRY
+QNAMNOFR EQU   *
+         AHI   R8,QNAMTITE        + TITLE LENGTH
+         STH   R8,QNAMSLEN        SAVE IT
+         EXEC  CICS SEND FROM(SNDQNAMT) LENGTH(QNAMSLEN)
+*
+         EXEC  CICS HANDLE AID CLEAR(TERMINAT) ENTER(PROCCURS)         X
+               PF2(QNAMEAX)
+GETCURS  EQU   *
+         BAL   R9,RECEIVE         RECEIVE
+         B     GETCURS            RETRY IF NOT ENTER OR CLEAR
+*
+QNAMEAX  EQU   *
+*
+* PF2 - SWITCH EBCDIC/ASCII/HEX CYCLICALLY
+*
+         CLI   QNAMMODE,C'E'      IS IT EBCDIC ?
+         BNE   NEAXNOTE           EXIT IF NOT
+         MVI   QNAMMODE,C'A'      SWITCH TO ASCII
+         B     DISPQNAM           EXIT
+*
+NEAXNOTE EQU   *
+         CLI   QNAMMODE,C'A'      IS IT ASCII ?
+         BNE   NEAXNOTA           EXIT IF NOT
+         MVI   QNAMMODE,C'H'      SWITCH TO HEX
+         B     DISPQNAM           EXIT
+*
+NEAXNOTA EQU   *
+         MVI   QNAMMODE,C'E'      MUST BE HEX TO EBCDIC
+         B     DISPQNAM           EXIT
+*
+PROCCURS EQU   *
+* LOCATE CURSOR AND EXTRACT QNAME
+* 1ST QNAME IS POS 241
+         CLC   EIBCPOSN,=H'241'   CURSOR BEFORE DATA ?
+         BL    GETCURS            EXIT IF IT IS
+         CLC   EIBCPOSN,=H'1891'  CURSOR AFTER DATA ?
+         BH    GETCURS            EXIT IF IT IS
+* SEARCH COL 1
+         LA    R8,241             START OF COL 1 POSITIONS
+         LA    R9,241+24          END   OF COL 1 POSITIONS
+         SR    R6,R6              COUNT Q NAMES
+COL1LOOP EQU   *
+         CH    R8,EIBCPOSN        IS IT THIS ONE ?
+         BE    FOUNDIT            EXIT IF IT IS
+         BNL   COL1INCR           EXIT IF NOT
+         CH    R9,EIBCPOSN        IS IT THIS ONE ?
+         BNL   FOUNDIT            EXIT IF IT IS
+COL1INCR EQU   *
+         AHI   R8,80              BUMP START POSITION
+         AHI   R9,80              BUMP END POSITION
+         AHI   R6,1               BUMP Q NAME COUNTER
+         CHI   R8,1841            END OF COL 1 ?
+         BNE   COL1LOOP           LOOP THRU COL 1
+* SEARCH COL 2
+         LA    R8,266             START OF COL 2 POSITIONS
+         LA    R9,266+24          END   OF COL 2 POSITIONS
+COL2LOOP EQU   *
+         CH    R8,EIBCPOSN        IS IT THIS ONE ?
+         BE    FOUNDIT            EXIT IF IT IS
+         BNL   COL2INCR           EXIT IF NOT
+         CH    R9,EIBCPOSN        IS IT THIS ONE ?
+         BNL   FOUNDIT            EXIT IF IT IS
+COL2INCR EQU   *
+         AHI   R8,80              BUMP START POSITION
+         AHI   R9,80              BUMP END POSITION
+         AHI   R6,1               BUMP Q NAME COUNTER
+         CHI   R8,1866            END OF COL 2 ?
+         BNE   COL2LOOP           LOOP THRU COL 2
+* SEARCH COL 3
+         LA    R8,291             START OF COL 3 POSITIONS
+         LA    R9,291+24          END   OF COL 3 POSITIONS
+COL3LOOP EQU   *
+         CH    R8,EIBCPOSN        IS IT THIS ONE ?
+         BE    FOUNDIT            EXIT IF IT IS
+         BNL   COL3INCR           EXIT IF NOT
+         CH    R9,EIBCPOSN        IS IT THIS ONE ?
+         BNL   FOUNDIT            EXIT IF IT IS
+COL3INCR EQU   *
+         AHI   R8,80              BUMP START POSITION
+         AHI   R9,80              BUMP END POSITION
+         AHI   R6,1               BUMP Q NAME COUNTER
+         CHI   R8,1891            END OF COL 3 ?
+         BNE   COL3LOOP           LOOP THRU COL 3
+FOUNDIT  EQU   *
+         MVI   QLSTRETN,X'FF'     PF3 RETURNS TO Q NAME DISPLAY
+         L     R7,GTNAMADR        R7=QNAME TABLE
+         MS    R6,=F'18'          CALCULATE INDEX
+         AR    R7,R6              POINT TO SELECTED QNAME
+         MVC   PARSE1(16),QNAMDQNM MOVE SELECTED QNAME
+PROCQ    EQU   *
+         MVC   QLSTITEM,=H'1'     SET ITEM DISPLAY TO 1
+         MVC   QLSTCOL,=H'1'      SET COLUMN DISPLAY TO 1
+         LH    R6,QNAMDITM        R6=NUMITEMS
+         STH   R6,QLSTNMIT        NUMITEMS REFRESHED
+         MVI   QLSTMODE,C'E'      SET DEFAULT EBCDIC
+* QIDERR COULD OCCUR IF ANOTHER TASK DELETED THE Q WE WERE LOOKING AT
+         EXEC  CICS HANDLE CONDITION QIDERR(TERMINAT)
+         EXEC  CICS IGNORE CONDITION LENGERR
+DISPNEXT EQU   *
+         XC    QLSTMAX,QLSTMAX    CLEAR MAXIMUM LENGTH ON SCREEN
+* CLEAR SCREEN
+         EXEC  CICS SEND FROM(QLSTCLR) LENGTH(QLSTCLRL)
+* 17 LINES AVAILABLE
+* *TOP* REDUCES IT TO 16
+* *BOTTOM* MAY REDUCE IT TO 15
+         MVI   QLSTTOP,X'00'      ASSUME NO TOP MSG REQUIRED
+         CLC   QLSTITEM,=H'1'     AT THE TOP ?
+         BNE   NOTOP1             EXIT IF NOT
+         MVI   QLSTTOP,X'FF'      TOP MSG REQUIRED
+NOTOP1   EQU   *
+         MVI   QLSTBOT,X'FF'      BOTTOM MSG REQUIRED
+         LH    R6,QLSTNMIT        R6=NUMITEMS
+         STH   R6,QLSTITND        NUMITEMS IS DEFAULT LAST ITEM TO READ
+         SH    R6,QLSTITEM        - 1ST ITEM NUMBER DISPLAYED
+         BNM   GOTDATA            EXIT IF SOMETHING TO DISPLAY
+* PAGE FORWARD LEFT NOTHING TO DISPLAY EXCEPT BOTTOM
+         LA    R6,DATASBA+3       R6=DATA SBA TABLE
+         MVC   QLSTRECS,=C'     0' NOT DISPLAYING DATA
+         B     SENDBOT            EXIT
+GOTDATA  EQU   *
+         CHI   R6,14              WILL DATA+BOTTOM FIT ON SCREEN ?
+         BNH   DODATA             EXIT IF IT WILL
+* MORE DATA THAN WILL FIT
+         LH    R6,QLSTITEM        R6=1ST ITEM NUMBER DISPLAYED
+         AHI   R6,15              SET FOR 16 LINES
+         STH   R6,QLSTITND        SAVE MAXIMUM ITEM NUMBER
+         MVI   QLSTBOT,X'00'      BOTTOM MSG NOT REQUIRED
+         XC    QLSTBSBA,QLSTBSBA  CLEAR ANY SBA
+DODATA   EQU   *
+* SHOW DATA ON SCREEN
+         LH    R6,QLSTNMIT        R6=NUMITEMS
+         CVD   R6,DEC             CONVERT TO DECIMAL
+         MVC   QLSTRECT,=X'402020202020' MOVE EDIT WORD
+         ED    QLSTRECT,DEC+5     EDIT NUMITEMS AS LAST RECORD
+         LH    R6,QLSTITEM        R6=START ITEM NUMBER
+         CVD   R6,DEC             CONVERT TO DECIMAL
+         MVC   QLSTRECS,=X'402020202020' MOVE EDIT WORD
+         ED    QLSTRECS,DEC+5     EDIT START ITEM NUMBER
+         LH    R6,QLSTCOL         R6=START COLUMN NUMBER
+         CVD   R6,DEC             CONVERT TO DECIMAL
+         MVC   QLSTCOLS,=X'402020202020' MOVE EDIT WORD
+         ED    QLSTCOLS,DEC+5     EDIT START COLUMN NUMBER
+         MVC   QLSTITM,QLSTITEM   START ITEM NUMBER TO READ
+         LA    R6,DATASBA+3       R6=DATA SBA TABLE
+         XC    QLSTCOLM,QLSTCOLM  CLEAR MAXIMUM LAST COL DISPLAYED
+DATALOOP EQU   *
+         LH    R4,QLSTCOL         R4=START COLUMN NUMBER
+         AHI   R4,71              +71
+         STH   R4,QLSTLEN         SET LENGTH TO READ
+         EXEC  CICS READQ TS QNAME(PARSE1) SET(R5) LENGTH(QLSTLEN)     X
+               ITEM(QLSTITM) NUMITEMS(QLSTNMIT)
+* QLSTLEN IS NOW ACTUAL LENGTH OF DATA
+         CLC   QLSTLEN,QLSTMAX    BIGGEST DATA YET ?
+         BNH   GOTMAX             EXIT IF NOT
+         MVC   QLSTMAX,QLSTLEN    SET MAXIMUM LENGTH
+         LH    R4,QLSTMAX         R4=CURRENT MAXIMUM LENGTH
+         CVD   R4,DEC             CONVERT TO DECIMAL
+         MVC   QLSTCOLT,=X'402020202020' MOVE EDIT WORD
+         ED    QLSTCOLT,DEC+5     EDIT MAXIMUM LENGTH
+GOTMAX   EQU   *
+* SEND THE TOP IF MARKED
+         CLI   QLSTTOP,X'FF'      IS TOP REQUIRED ?
+         BNE   NOTOP2             EXIT IF NOT
+         EXEC  CICS SEND FROM(QLSTTOPQ) LENGTH(QLSTTPQE)
+         MVI   QLSTTOP,X'00'      RESET TOP MARKER
+NOTOP2   EQU   *
+         MVC   QLSTDSBA,0(R6)     MOVE NEXT SBA
+         MVC   QLSTDATA,=72C' '   BLANK DATA AREA
+         LH    R4,QLSTITM         R4=CURRENT ITEM NUMBER
+         CVD   R4,DEC             CONVERT TO DECIMAL
+         MVC   QLSTDITM,=X'F02020202020' MOVE EDIT WORD
+         ED    QLSTDITM,DEC+5     EDIT CURRENT ITEM NUMBER
+         MVI   QLSTDITM,C' '      BLANK 1ST CHAR
+         SR    R8,R8              SET LENGTH MOVED TO ZERO
+         CLC   QLSTCOL,QLSTLEN    START COLUMN <= RECORD LENGTH ?
+         BH    DATASEND           EXIT IF NOT
+         AH    R5,QLSTCOL         INDEX INTO DATA RECEIVED
+         BCTR  R5,0               -1 FOR OFFSET
+         LH    R8,QLSTLEN         R8=LENGTH OF CURRENT ITEM
+         CH    R8,QLSTMAX         CAN WE DISPLAY A WHOLE LINE ?
+         BL    SMALDATA           EXIT IF NOT
+         LH    R8,QLSTMAX         R8=MAXIMUM DATA LENGTH
+SMALDATA EQU   *
+         SH    R8,QLSTCOL         -CURRENT START=LENGTH SET FOR EX
+         CLI   QLSTMODE,C'H'      HEX TRANSLATE
+         BNE   NOTHEX             EXIT IF NOT
+* HEX TRANSLATION
+         AHI   R8,1               +1 FOR EXACT LENGTH
+         CHI   R8,36              BIGGER THAN 36 ?
+         BNH   HEXOK              EXIT IF NOT
+         LA    R8,36              SET MAXIMUM
+HEXOK    EQU   *
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R14,QLSTDATA       R14=DESTINATION ADDRESS
+         LR    R15,R8             R15=SOURCE LENGTH
+         TROT  R14,R5,1           TRANSLATE TO PRINTABLE HEX
+* DO THE Q NAME
+         MVC   QLSTQNAM,=19C' '   BLANK QNAME
+         MVC   QLSTQNAM(2),=C'X''' MOVE X'
+         MVI   QLSTQNAM+18,C''''  MOVE END QUOTE
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R14,QLSTQNAM+2     R14=DESTINATION ADDRESS
+         LA    R5,PARSE1          R5=SOURCE ADDRESS
+         LA    R15,8              R15=SOURCE LENGTH
+         TROT  R14,R5,1           TRANSLATE TO PRINTABLE HEX
+         MVC   QLSTMODT,=C'HEX   ' SHOW IT
+         B     DATASEND           EXIT
+*
+NOTHEX   EQU   *
+         CHI   R8,71              BIGGER THAN 71 ?
+         BL    DATAFITS           EXIT IF NOT
+         LA    R8,71              SET MAXIMUM
+DATAFITS EQU   *
+         EX    R8,DATAMOVE        MOVE THE DATA
+         CLI   QLSTMODE,C'E'      EBCDIC TRANSLATE ?
+         BNE   TRANSASC           EXIT IF NOT
+         EX    R8,DATAEBCD        TRANSLATE THE DATA TO EBCDIC
+* DO THE Q NAME
+         MVC   QLSTQNAM,=19C' '   BLANK QNAME
+         MVC   QLSTQNAM(16),PARSE1 MOVE Q NAME
+         TR    QLSTQNAM(16),TRANEBC TRANSLATE Q NAME TO EBCDIC
+         MVC   QLSTMODT,=C'EBCDIC' SHOW IT
+         B     DATASEND           EXIT
+*
+TRANSASC EQU   *
+* ASCII TRANSLATE
+         EX    R8,DATAASCI        TRANSLATE THE DATA TO ASCII
+* DO THE Q NAME
+         MVC   QLSTQNAM,=19C' '   BLANK QNAME
+         MVC   QLSTQNAM(16),PARSE1 MOVE Q NAME
+         TR    QLSTQNAM(16),TRANASC TRANSLATE Q NAME TO ASCII
+         MVC   QLSTMODT,=C'ASCII ' SHOW IT
+DATASEND EQU   *
+         AH    R8,QLSTCOL         +CURRENT START
+         CH    R8,QLSTCOLM        MAXIMUM ?
+         BNH   DATAGO             EXIT IF NOT
+         STH   R8,QLSTCOLM        SAVE MAXIMUM LAST COL DISPLAYED
+DATAGO   EQU   *
+* SEND THE DATA LINE
+         EXEC  CICS SEND FROM(QLSTDAT) LENGTH(QLSTDTLN)
+         AHI   R6,3               NEXT SBA
+         CH    R4,QLSTITND        GOT TO ITEM NUMBER LIMIT ?
+         BE    SENDBOT            EXIT IF WE HAVE
+         AHI   R4,1               NEXT ITEM NUMBER
+         STH   R4,QLSTITM         SAVE IT
+         B     DATALOOP           LOOP
+DATAMOVE MVC   QLSTDATA(0),0(R5)  MOVE THE DATA
+DATAEBCD TR    QLSTDATA(0),TRANEBC TRANSLATE THE DATA TO EBCDIC
+DATAASCI TR    QLSTDATA(0),TRANASC TRANSLATE THE DATA TO ASCII
+*
+SENDBOT  EQU   *
+         CLI   QLSTBOT,X'FF'      IS BOTTOM REQUIRED ?
+         BNE   NOBOT1             EXIT IF NOT
+* SEND THE BOTTOM
+         MVC   QLSTBSBA,0(R6)     MOVE SBA
+         EXEC  CICS SEND FROM(QLSTBOTQ) LENGTH(QLSTBTQE)
+         MVI   QLSTBOT,X'00'      RESET BOTTOM MARKER
+NOBOT1   EQU   *
+* SEND THE HEADER
+         EXEC  CICS SEND FROM(QLSTTITL) LENGTH(QLSTTITE)
+         MVC   SNDKEYS(200),QLSTKEYS       MOVE WHOLE
+         MVC   SNDKEYS+200(QLSTKEYL-200),QLSTKEYS+200 KEY DISPLAY
+         XC    KEYINDS(9),KEYINDS CLEAR KEY INDICATORS
+         LA    R4,SNDKEYS         KEYS DISPLAY
+         USING QLSTKEYD,R4
+*
+* KEY DETECTION
+*
+* CANCEL ALL KEYS
+         EXEC  CICS HANDLE AID ANYKEY
+* ESTABLISH FIXED KEYS
+         EXEC  CICS HANDLE AID PF1(HELP) PF2(EAX) PF3(TERMINAT)        X
+               ENTER(COMMAND) CLEAR(ABORT)
+*
+         CLC   QLSTITEM,=H'1'     ARE WE AT THE TOP ?
+         BE    NOKEY04            EXIT IF WE ARE
+         MVI   KEYPF04,X'FF'      SET TO DISPLAY PF4
+         EXEC  CICS HANDLE AID PF4(PAGETOP)
+NOKEY04  EQU   *
+         CLC   QLSTNMIT,=H'15'    <16 ITEMS ALWAYS FITS ?
+         BNH   NOKEY05            EXIT IF IT DOES
+         CLC   QLSTBSBA,DATASBAL  IS BOTTOM ON LAST LINE ?
+         BE    NOKEY05            EXIT IF CAN'T DO PF5
+         MVI   KEYPF05,X'FF'      SET TO DISPLAY PF5
+         EXEC  CICS HANDLE AID PF5(PAGEBOT)
+NOKEY05  EQU   *
+         CLC   QLSTCOL,=H'1'      CAN WE GO LEFT ?
+         BE    NOKEY12            EXIT IF NOT
+         EXEC  CICS HANDLE AID PF12(LEFTFULL)
+         MVI   KEYPF12,X'FF'      SET TO DISPLAY PF12
+NOKEY12  EQU   *
+         CLC   QLSTMAX,QLSTCOLM   CAN WE GO RIGHT ?
+         BNH   NOKEY09            EXIT IF NOT
+         MVI   KEYPF09,X'FF'      SET TO DISPLAY PF09
+         EXEC  CICS HANDLE AID PF9(RITEFULL)
+NOKEY09  EQU   *
+         LH    R6,QLSTITND        R6=LAST ITEM NUMBER ON SCREEN
+         SH    R6,QLSTITEM        - 1ST ITEM ON SCREEN
+         CHI   R6,15              16 ITEMS ON SCREEN ?
+         BNE   NOKEY11            EXIT IF NOT
+         MVI   KEYPF11,X'FF'      SET TO DISPLAY PF11
+         EXEC  CICS HANDLE AID PF11(PAGEFWDF)
+NOKEY11  EQU   *
+         CHI   R6,7               >8 ITEMS ON SCREEN ?
+         BNH   NOKEY08            EXIT IF NOT
+         MVI   KEYPF08,X'FF'      SET TO DISPLAY PF08
+         EXEC  CICS HANDLE AID PF8(PAGEFWDH)
+NOKEY08  EQU   *
+         CLC   QLSTITEM,=H'1'     AT THE TOP ?
+         BE    NOKEY07            EXIT IF WE ARE
+         MVI   KEYPF07,X'FF'      SET TO DISPLAY PF07
+         EXEC  CICS HANDLE AID PF7(PAGEBAKH)
+NOKEY07  EQU   *
+         CLC   QLSTITEM,=H'17'    FULL PAGE FROM THE TOP ?
+         BL    NOKEY10            EXIT IF WE ARE
+         MVI   KEYPF10,X'FF'      SET TO DISPLAY PF10
+         EXEC  CICS HANDLE AID PF10(PAGEBAKF)
+NOKEY10  EQU   *
+*
+* KEY DISPLAY
+*
+         MVC   QLSTPF03+6(20),=CL20'TERMINATE BROWSE' DEFAULT FOR PF3
+         CLI   QLSTRETN,X'FF'     PF3 RETURNS TO Q NAME DISPLAY ?
+         BNE   KEYNXT01           EXIT IF NOT
+         MVC   QLSTPF03+6(20),=CL20'RETURN TO QNAMES' SHOW IT
+KEYNXT01 EQU   *
+         CLI   KEYPF04,X'00'      PF4 WANTED ?
+         BNE   KEYNXT02           EXIT IF IT IS
+         XC    QLSTPF04,QLSTPF04  CLEAR IT
+KEYNXT02 EQU   *
+         CLI   KEYPF05,X'00'      PF5 WANTED ?
+         BNE   KEYNXT03           EXIT IF IT IS
+         XC    QLSTPF05,QLSTPF05  CLEAR IT
+KEYNXT03 EQU   *
+         CLI   KEYPF06,X'00'      PF6 WANTED ?
+         BNE   KEYNXT04           EXIT IF IT IS
+         XC    QLSTPF06,QLSTPF06  CLEAR IT
+KEYNXT04 EQU   *
+         CLI   KEYPF07,X'00'      PF7 WANTED ?
+         BNE   KEYNXT05           EXIT IF IT IS
+         XC    QLSTPF07,QLSTPF07  CLEAR IT
+KEYNXT05 EQU   *
+         CLI   KEYPF08,X'00'      PF8 WANTED ?
+         BNE   KEYNXT06           EXIT IF IT IS
+         XC    QLSTPF08,QLSTPF08  CLEAR IT
+KEYNXT06 EQU   *
+         CLI   KEYPF09,X'00'      PF9 WANTED ?
+         BNE   KEYNXT07           EXIT IF IT IS
+         XC    QLSTPF09,QLSTPF09  CLEAR IT
+KEYNXT07 EQU   *
+         CLI   KEYPF10,X'00'      PF10 WANTED ?
+         BNE   KEYNXT08           EXIT IF IT IS
+         XC    QLSTPF10,QLSTPF10  CLEAR IT
+KEYNXT08 EQU   *
+         CLI   KEYPF11,X'00'      PF11 WANTED ?
+         BNE   KEYNXT09           EXIT IF IT IS
+         XC    QLSTPF11,QLSTPF11  CLEAR IT
+KEYNXT09 EQU   *
+         CLI   KEYPF12,X'00'      PF12 WANTED ?
+         BNE   KEYNXT10           EXIT IF IT IS
+         XC    QLSTPF12,QLSTPF12  CLEAR IT
+KEYNXT10 EQU   *
+         EXEC  CICS SEND FROM(SNDKEYS) LENGTH(QLSTKEYE)
+GETAID   EQU   *
+* WAIT FOR AID KEY OR DATA
+         BAL   R9,RECEIVE         RECEIVE
+         B     GETAID             EXIT
+*
+COMMAND  EQU   *
+*
+* ENTER - ANALYSE COMMAND ENTERED
+*
+         CLC   RCVEAREA+4(2),=X'C1E4' DATA FROM 'ENTER COMMAND'
+         BNE   DISPNEXT           EXIT IF NOT
+         LA    R6,RCVEAREA+6      START OF PARMS
+         XC    PARSE2(120),PARSE2 CLEAR PARSE AREAS
+         BAL   R9,NEXTPARM        LOCATE START OF 1ST PARM
+         CLI   0(R6),X'00'        END OF TIOA ?
+         BE    DISPNEXT           EXIT IF NO PARMS
+         LA    R7,PARSE2          PARM ADDRESS
+         MVC   EXTRLIMT,=H'61'    SET LIMIT OF 60
+         BAL   R9,EXTRACT         EXTRACT PARM
+         BAL   R9,NEXTPARM        LOCATE START OF 2ND PARM
+         CLI   0(R6),X'00'        END OF TIOA ?
+         BE    COMMPROC           EXIT IF NO 2ND PARM
+         LA    R7,PARSE3          PARM ADDRESS
+         MVC   EXTRLIMT,=H'61'    SET LIMIT OF 60
+         BAL   R9,EXTRACT         EXTRACT PARM
+COMMPROC EQU    *
+* GOT THE 1 OR 2 PARMS, NOW ANALYSE
+         OI    PARSE2,C' '        1ST CHAR TO UPPER CASE
+         CLI   PARSE2,C'T'        IS IT TOP ?
+         BE    PAGETOP            EXIT IF IT IS
+         CLI   PARSE2,C'B'        IS IT BOTTOM ?
+         BE    PAGEBOT            EXIT IF IT IS
+         CLI   PARSE2,C'L'        IS IT LINE ?
+         BNE   COMMNXT1           EXIT IF NOT
+* LINE NNNNN
+         MVC   CFDAREA,PARSE3     MOVE NUMERIC VALUE
+         CFD   CFD_INT128,IN=CFDAREA,OUT=R6
+         CHI   R15,12             BAD NUMERIC DATA ?
+         BE    DISPNEXT           EXIT IF IT IS
+         LTR   R7,R7              CHECK FOR ZERO ?
+         BZ    DISPNEXT           EXIT IF IT IS
+         CH    R7,QLSTNMIT        MORE THAN NUMITEMS ?
+         BH    DISPNEXT           EXIT IF IT IS
+         STH   R7,QLSTITEM        STORE ITEM REQUESTED
+         B     DISPNEXT           EXIT
+*
+COMMNXT1 EQU   *
+         CLI   PARSE2,C'C'        IS IT COLUMN ?
+         BNE   COMMNXT2           EXIT IF NOT
+* COLUMN NNNNN
+         MVC   CFDAREA,PARSE3     MOVE NUMERIC VALUE
+         CFD   CFD_INT128,IN=CFDAREA,OUT=R6
+         CHI   R15,12             BAD NUMERIC DATA ?
+         BE    DISPNEXT           EXIT IF IT IS
+         LTR   R7,R7              CHECK FOR ZERO ?
+         BZ    DISPNEXT           EXIT IF IT IS
+         CH    R7,QLSTMAX         MORE THAN MAXIMUM LENGTH ?
+         BH    DISPNEXT           EXIT IF IT IS
+         STH   R7,QLSTCOL         STORE COLUMN REQUESTED
+         B     DISPNEXT           EXIT
+*
+COMMNXT2 EQU   *
+         CLI   PARSE2,C'Q'        IS IT QUEUE ?
+         BNE   COMMNXT3           EXIT IF NOT
+* QUEUE QNAME
+* QUEUE X'QNAME'
+         CLC   PARSE3(2),=C'x'''  IS IT HEX ?
+         BE    COMMQHEX           EXIT IF IT IS
+         CLC   PARSE3(2),=C'X'''  IS IT HEX ?
+         BE    COMMQHEX           EXIT IF IT IS
+         B     COMMQNHX           EXIT
+*
+COMMQHEX EQU   *
+         LA    R7,PARSE3-1(R8)    R7=LAST PARM CHAR
+         CLI   0(R7),C''''        IS IT QUOTE ?
+         BNE   COMMQERR           EXIT IF INVALID
+         STC   R8,PARSE3          SAVE LENGTH
+         TM    PARSE3,X'01'       IS IT ODD ?
+         BNO   COMMQERR           INVALID IF NOT
+         AHI   R8,-3              SET LENGTH FOR EX
+         EX    R8,COMMQXOC        CONVERT TO UPPER CASE
+         EX    R8,COMMQXTR        TRANSLATE TO UNPACKED HEX
+         PACK  PARSE2(5),PARSE3+2(9) PACK MORE
+         PACK  PARSE2+4(5),PARSE3+11(9)        THAN NEEDED
+         MVC   PARSE1,=19C' '     BLANK DESTINATION
+         SRL   R8,1               LENGTH IS HALVED
+         BCTR  R8,0               -1 FOR ACTUAL PACKED LENGTH FOR EX
+         EX    R8,COMMQXMV        MOVE HEX RESULT
+         B     PROCESS            EXIT
+*
+COMMQERR EQU   *
+         MVI   PARSE1,C' '        ASSUME NO PARM
+         B     PROCESS            EXIT
+COMMQXOC OC    PARSE3+2(0),=19C' ' CONVERT TO UPPER CASE
+COMMQXTR TR    PARSE3+2(0),TRANHXCH-X'C1' TRANSLATE TO UNPACKED HEX
+COMMQXMV MVC   PARSE1(0),PARSE2   MOVE HEX RESULT
+*
+COMMQNHX EQU   *
+* NOT HEX, SET NEW QNAME
+         MVC   PARSE1,=19C' '     BLANK THE TS Q NAME
+         BCTR  R8,0               -1 FOR EXECUTE
+         EX    R8,COMMMVQN        MOVE THE NEW QNAME
+         B     PROCESS            EXIT
+COMMMVQN MVC   PARSE1(0),PARSE3   MOVE THE NEW QNAME
+*
+COMMNXT3 EQU   *
+         CLI   PARSE2,C'P'        IS IT PURGE ?
+         BNE   COMMNXT4           EXIT IF NOT
+         CLC   PARSE2(5),=C'PURGE' MUST BE UPPER CASE
+         BNE   PROCESS            EXIT IF NOT
+* PURGE
+         EXEC  CICS DELETEQ TS QNAME(PARSE1)
+         B     COMMQERR           EXIT
+*
+COMMNXT4 EQU   *
+         B     PROCESS            EXIT
+*
+HELP     EQU   *
+*
+* PF1 - HELP DISPLAY
+*
+         EXEC  CICS SEND FROM(QLSTHELP) LENGTH(QLSTHLPL)
+* CANCEL ALL KEYS
+         EXEC  CICS HANDLE AID ANYKEY
+* WAIT FOR ANY KEY
+         BAL   R9,RECEIVE         RECEIVE
+         B     DISPNEXT           EXIT
+*
+EAX      EQU   *
+*
+* PF2 - SWITCH EBCDIC/ASCII/HEX CYCLICALLY
+*
+         CLI   QLSTMODE,C'E'      IS IT EBCDIC ?
+         BNE   EAXNOTE            EXIT IF NOT
+         MVI   QLSTMODE,C'A'      SWITCH TO ASCII
+         B     DISPNEXT           EXIT
+*
+EAXNOTE  EQU   *
+         CLI   QLSTMODE,C'A'      IS IT ASCII ?
+         BNE   EAXNOTA            EXIT IF NOT
+         MVI   QLSTMODE,C'H'      SWITCH TO HEX
+         B     DISPNEXT           EXIT
+*
+EAXNOTA  EQU   *
+         MVI   QLSTMODE,C'E'      MUST BE HEX TO EBCDIC
+         B     DISPNEXT           EXIT
+*
+TERMINAT EQU   *
+*
+* PF3 - IF DIRECT ENTRY, TERMINATE AND CLEAR SCREEN
+*       IF VIA QNAME DISPLAY, GO BACK THERE
+*
+         MVI   PARSE1,C' '        FORCE QNAMES DISPLAY
+         CLI   QLSTRETN,X'FF'     PF3 RETURNS TO Q NAME DISPLAY ?
+         BE    PROCESS            EXIT IF IT DOES
+ABORT    EQU   *
+         EXEC  CICS SEND FROM(QLSTCLR) LENGTH(QLSTCLRL)
+         B     RETURN             EXIT
+*
+PAGETOP  EQU   *
+*
+* PF4 - VIEW TOP
+*
+         MVC   QLSTITEM,=H'1'     SET TO TOP
+         B     DISPNEXT           EXIT
+*
+PAGEBOT  EQU   *
+*
+* PF5 - VIEW BOTTOM
+*
+         LH    R6,QLSTNMIT        R6=NUMITEMS
+         AHI   R6,-14             START POINT TO SHOW BOTTOM
+         STH   R6,QLSTITEM        SAVE IT
+         B     DISPNEXT           EXIT
+*
+PAGEBAKH EQU   *
+*
+* PF7 - PAGE BACK HALF
+*
+         LH    R6,QLSTITEM        ITEM NUMBER AT TOP
+         AHI   R6,-8              -8
+         BP    PF7OK              EXIT IF OK
+         MVC   QLSTITEM,=H'1'     SET TO 1
+         B     DISPNEXT           EXIT
+PF7OK    EQU   *
+         STH   R6,QLSTITEM        SAVE IT
+         B     DISPNEXT           EXIT
+*
+PAGEFWDH EQU   *
+*
+* PF8 - PAGE FORWARD HALF
+*
+         LH    R6,QLSTITEM        ITEM NUMBER AT TOP
+         AHI   R6,8               +8
+         STH   R6,QLSTITEM        SAVE IT
+         B     DISPNEXT           EXIT
+*
+RITEFULL EQU   *
+*
+* PF9 - PAGE RIGHT FULL
+*
+         LH    R6,QLSTCOL         CURRENT COLUMN NUMBER
+         CLI   QLSTMODE,C'H'      IS IT HEX ?
+         BNE   PF9NTHEX           EXIT IF NOT
+         AHI   R6,36              +36 FOR HEX
+         B     PF9DUN             EXIT
+*
+PF9NTHEX EQU   *
+         AHI   R6,72              +72
+PF9DUN   EQU   *
+         STH   R6,QLSTCOL         SAVE IT
+         B     DISPNEXT           EXIT
+*
+PAGEBAKF EQU   *
+*
+* PF10 - PAGE BACK FULL
+*
+         LH    R6,QLSTITEM        ITEM NUMBER AT TOP
+         AHI   R6,-16             -16
+         BP    PF10OK             EXIT IF OK
+         MVC   QLSTITEM,=H'1'     SET TO 1
+         B     DISPNEXT           EXIT
+PF10OK   EQU   *
+         STH   R6,QLSTITEM        SAVE IT
+         B     DISPNEXT           EXIT
+*
+PAGEFWDF EQU   *
+*
+* PF11 - PAGE FORWARD FULL
+*
+         LH    R6,QLSTITEM        ITEM NUMBER AT TOP
+         AHI   R6,16              +16
+         STH   R6,QLSTITEM        SAVE IT
+         B     DISPNEXT           EXIT
+*
+LEFTFULL EQU   *
+*
+* PF12 - PAGE LEFT FULL
+*
+         LH    R6,QLSTCOL         CURRENT COLUMN NUMBER
+         CLI   QLSTMODE,C'H'      IS IT HEX ?
+         BNE   PF12NTHX           EXIT IF NOT
+         AHI   R6,-36             -36 FOR HEX
+         B     PF12TEST           EXIT
+*
+PF12NTHX EQU   *
+         AHI   R6,-72             -72
+PF12TEST EQU   *
+         BP    PF12OK             EXIT IF OK
+         MVC   QLSTCOL,=H'1'      SET TO 1
+         B     DISPNEXT           EXIT
+PF12OK   EQU   *
+         STH   R6,QLSTCOL         SAVE IT
+         B     DISPNEXT           EXIT
+*
+TCPIOERR EQU   *
+         EXEC  CICS SEND FROM(TCPERR) LENGTH(TCPERRL)
+         B     RETURN             EXIT
+*
+RETURN   EQU   *
+         EXEC  CICS RETURN
+*
+* SUBROUTINES
+*
+NEXTPARM EQU   *
+* FIND START OF NEXT PARM
+* R6=CURRENT LOCATION
+         CLI   0(R6),X'00'        TIOA DONE ?
+         BER   R9                 EXIT IT IS IT
+         CLI   0(R6),C' '         FIND BLANK ?
+         BNER  R9                 EXIT WHEN PARM FOUND
+         AHI   R6,1               BUMP TIOA POINTER
+         B     NEXTPARM           LOOP
+*
+EXTRACT  EQU   *
+* EXTRACT PARM
+* R6=1ST PARM CHAR
+* R7=PARM LOCATION
+*
+* OUTPUT: R8=NO. OF PARM CHARS
+*
+         SR    R8,R8              ZERO PARM LENGTH
+EXTRLOOP EQU   *
+         TM    0(R6),X'BF'        END OF PARM (BLANK OR X'00') ?
+         BER   R9                 RETURN IF IT IS
+         CH    R8,EXTRLIMT        TOO MANY CHARS ?
+         BER   R9                 YES, TRUNCATE
+         MVC   0(1,R7),0(R6)      MOVE PARM CHAR
+         AHI   R6,1               BUMP TIOA POINTER
+         AHI   R7,1               BUMP PARM POINTER
+         AHI   R8,1               COUNT THEM
+         B     EXTRLOOP           LOOP
+EXTRLIMT DS    AL2                LENGTH LIMIT
+*
+RECEIVE  EQU   *
+         XC    RCVEAREA,RCVEAREA  CLEAR RECEIVE AREA
+         EXEC  CICS RECEIVE INTO(RCVEAREA) LENGTH(RCVELEN)
+         BR    R9                 RETURN
+*
+CEBRQNAM DS    0F
+* REQUEST INFO
+* 0AFF  REQUEST Q NAME LIST
+         DC    A(CEBRNEND-*)
+CEBRNREQ DS    CL4                REQUEST ID
+CEBRNTRM DS    CL4                TERMID
+CEBRNEND EQU   *
+*
+CEBRRCVE DS    0F
+* TCPIO RECEIVE AREA
+* MUST KEEP THIS CONSISTANT WITH Z390CICS SENDS
+         DC    A(14)              MAX LENGTH
+         DS    CL4                REQUEST CODE
+         DS    CL4                TERMINAL ID (NOT SENT)
+CEBRQUS  DS    AL2                NO. OF Q NAMES
+*
+* Q NAME -- STRUCTURES
+*
+QNAMTITL EQU   *
+         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA),IC
+         DC    C'CEBR'
+         TN3270 (SBA,3,1),(SF,ATT_PA)
+         DC    C'QNAME----------- ITEMS  |  '
+         DC    C'QNAME----------- ITEMS  |  '
+         DC    C'QNAME----------- ITEMS'
+         TN3270 (SBA,1,74)
+QNAMTT1  EQU   *-QNAMTITL
+         DC    CL6' '             EBCDIC/ASCII/HEX
+         TN3270 (SBA,24,1)
+QNAMENDT DC    C'CURSOR SELECT QNAME : PF2=EBCDIC/ASCII/HEX : CLEAR TO -
+               END'
+QNAMTITE EQU   *-QNAMTITL
+QNAMNONE DC    CL(L'QNAMENDT)'NO QNAMES TO DISPLAY, PRESS CLEAR'
+*
+QLSTCLR  EQU   *
+         TN3270 ESC,WRT_EW,WCC_KD CLEAR SCREEN
+QLSTCLRL DC    AL2(*-QLSTCLR)
+*
+QLSTTITL EQU   *
+         TN3270 WCC_KD,(SBA,1,1),(SF,ATT_UA)
+         DC    C'CEBR '
+QLSTQNAM DS    CL19               Q NAME (ALLOW FOR X'  ')
+         TN3270 (SF,ATT_PA)
+         DC    5C' '
+         DC    C'REC'
+QLSTRECS DS    CL6                RECORD NUMBER START
+         DC    C' OF'
+QLSTRECT DS    CL6                RECORD NUMBER TOTAL
+         DC    4C' '
+         DC    C'COL'
+QLSTCOLS DS    CL6                COLUMN NUMBER START
+         DC    C' OF'
+QLSTCOLT DS    CL6                COLUMN NUMBER TOTAL
+         TN3270 (SBA,1,75)
+QLSTMODT DS    CL6                EBCDIC/ASCII/HEX
+         TN3270 (SBA,2,2)
+         DC    C'ENTER COMMAND ===>'
+         TN3270 (SF,ATT_UA),(SBA,2,21),IC,(SBA,2,80),(SF,ATT_PA)
+QLSTTITE DC    AL2(*-QLSTTITL)
+*
+QLSTTOPQ EQU   *
+         TN3270 WCC_KD,(SBA,3,8)
+         DC    26C'*'
+         DC    C'  TOP OF QUEUE  '
+         DC    31C'*'
+QLSTTPQE DC    AL2(*-QLSTTOPQ)
+*
+QLSTBOTQ EQU   *
+         TN3270 WCC_KD
+QLSTBSBA DS    XL3                BOTTOM IS DYNAMIC
+         DC    7C' '
+         DC    25C'*'
+         DC    C'  BOTTOM OF QUEUE  '
+         DC    29C'*'
+QLSTBTQE DC    AL2(*-QLSTBOTQ)
+*
+QLSTKEYS EQU   *
+         TN3270 WCC_KD,(SBA,21,2)
+         DC    C'PF1 : HELP                PF2 : EBCDIC/ASCII/HEX    PF-
+               3 : TERMINATE BROWSE    '
+         TN3270 (SBA,22,2)
+         DC    C'PF4 : VIEW TOP            PF5 : VIEW BOTTOM         PF-
+               6 : REPEAT LAST FIND    '
+         TN3270 (SBA,23,2)
+         DC    C'PF7 : SCROLL BACK HALF    PF8 : SCROLL FORWARD HALF PF-
+               9 : SCROLL RIGHT        '
+         TN3270 (SBA,24,2)
+         DC    C'PF10: SCROLL BACK FULL    PF11: SCROLL FORWARD FULL PF-
+               12: SCROLL LEFT         '
+QLSTKEYL EQU   *-QLSTKEYS
+QLSTKEYE DC    AL2(*-QLSTKEYS)
+*
+QLSTDAT  EQU   *
+         TN3270 WCC_KD
+QLSTDSBA DS    XL3                DATA LINE SBA
+QLSTDITM DS    XL6                DATA LINE ITEM NUMBER
+         DC    C' '
+QLSTDATA DS    CL72               DATA LINE - HEX OR CHAR
+QLSTDTLN DC    AL2(*-QLSTDAT)
+*
+QLSTHELP EQU   *
+         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1)
+         DC    C'These commands are available to you (abbreviations in -
+               UPPER CASE):'
+         TN3270 (SBA,3,1)
+         DC    C'Line line-number'
+         TN3270 (SBA,4,1)
+         DC    C'Column column-number'
+         TN3270 (SBA,5,1)
+         DC    C'Top'
+         TN3270 (SBA,6,1)
+         DC    C'Bottom'
+         TN3270 (SBA,7,1)
+         DC    C'Queue temp-stg-queue        - Browse a named temp. sto-
+               rage queue'
+         TN3270 (SBA,8,31)
+         DC    C'(name may be in hex - e.g., X''9BA1'')'
+         TN3270 (SBA,9,1)
+         DC    C'PURGE                       - Destroy the current queu-
+               e.'
+QLSTHLPL DC    AL2(*-QLSTHELP)
+*
+* SET KEYS TO DISPLAY
+*
+KEYINDS  EQU   *
+KEYPF04  DC    X'00'              PF4
+KEYPF05  DC    X'00'              PF5
+KEYPF06  DC    X'00'              PF6
+KEYPF07  DC    X'00'              PF7
+KEYPF08  DC    X'00'              PF8
+KEYPF09  DC    X'00'              PF9
+KEYPF10  DC    X'00'              PF10
+KEYPF11  DC    X'00'              PF11
+KEYPF12  DC    X'00'              PF12
+*
+DATASBA  EQU   *
+*
+* DATA LINES SBA'S'
+*
+         TN3270 (SBA,3,1)         RESERVED FOR *TOP*
+         TN3270 (SBA,4,1)
+         TN3270 (SBA,5,1)
+         TN3270 (SBA,6,1)
+         TN3270 (SBA,7,1)
+         TN3270 (SBA,8,1)
+         TN3270 (SBA,9,1)
+         TN3270 (SBA,10,1)
+         TN3270 (SBA,11,1)
+         TN3270 (SBA,12,1)
+         TN3270 (SBA,13,1)
+         TN3270 (SBA,14,1)
+         TN3270 (SBA,15,1)
+         TN3270 (SBA,16,1)
+         TN3270 (SBA,17,1)
+         TN3270 (SBA,18,1)
+DATASBAL TN3270 (SBA,19,1)
+*
+SBATAB1  EQU   *
+*
+* QUEUE NAMES COLUMN 1
+*
+         TN3270 (SBA,4,2)
+         TN3270 (SBA,5,2)
+         TN3270 (SBA,6,2)
+         TN3270 (SBA,7,2)
+         TN3270 (SBA,8,2)
+         TN3270 (SBA,9,2)
+         TN3270 (SBA,10,2)
+         TN3270 (SBA,11,2)
+         TN3270 (SBA,12,2)
+         TN3270 (SBA,13,2)
+         TN3270 (SBA,14,2)
+         TN3270 (SBA,15,2)
+         TN3270 (SBA,16,2)
+         TN3270 (SBA,17,2)
+         TN3270 (SBA,18,2)
+         TN3270 (SBA,19,2)
+         TN3270 (SBA,20,2)
+         TN3270 (SBA,21,2)
+         TN3270 (SBA,22,2)
+         TN3270 (SBA,23,2)
+*
+SBATAB2  EQU   *
+*
+* QUEUE NAMES COLUMN 2
+*
+         TN3270 (SBA,4,29)
+         TN3270 (SBA,5,29)
+         TN3270 (SBA,6,29)
+         TN3270 (SBA,7,29)
+         TN3270 (SBA,8,29)
+         TN3270 (SBA,9,29)
+         TN3270 (SBA,10,29)
+         TN3270 (SBA,11,29)
+         TN3270 (SBA,12,29)
+         TN3270 (SBA,13,29)
+         TN3270 (SBA,14,29)
+         TN3270 (SBA,15,29)
+         TN3270 (SBA,16,29)
+         TN3270 (SBA,17,29)
+         TN3270 (SBA,18,29)
+         TN3270 (SBA,19,29)
+         TN3270 (SBA,20,29)
+         TN3270 (SBA,21,29)
+         TN3270 (SBA,22,29)
+         TN3270 (SBA,23,29)
+*
+SBATAB3  EQU   *
+*
+* QUEUE NAMES COLUMN 3
+*
+         TN3270 (SBA,4,56)
+         TN3270 (SBA,5,56)
+         TN3270 (SBA,6,56)
+         TN3270 (SBA,7,56)
+         TN3270 (SBA,8,56)
+         TN3270 (SBA,9,56)
+         TN3270 (SBA,10,56)
+         TN3270 (SBA,11,56)
+         TN3270 (SBA,12,56)
+         TN3270 (SBA,13,56)
+         TN3270 (SBA,14,56)
+         TN3270 (SBA,15,56)
+         TN3270 (SBA,16,56)
+         TN3270 (SBA,17,56)
+         TN3270 (SBA,18,56)
+         TN3270 (SBA,19,56)
+         TN3270 (SBA,20,56)
+         TN3270 (SBA,21,56)
+         TN3270 (SBA,22,56)
+         TN3270 (SBA,23,56)
+*
+DEC      DC    PL8'0'
+QNAMSLEN DS    AL2
+RCVELEN  DS    AL2                RECEIVED LENGTH
+RCVEAREA DC    XL80'00'           RECEIVE AREA
+CFDAREA  DC    CL45' '            DECIMAL CONVERSION AREA
+*
+* TRANSLATE TABLE FOR EBCDIC MODE
+*
+TRANEBC  EQU   *
+         DC    64X'FF'                              00-3F
+*                0 1 2 3 4 5 6 7 8 9 A B C D E F
+         DC    X'40FFFFFFFFFFFFFFFFFFFF4B4C4D4E4F'  40-4F
+         DC    X'50FFFFFFFFFFFFFFFFFF5A5B5C5D5E5F'  50-5F
+         DC    X'6061FFFFFFFFFFFFFFFFFF6B6C6D6E6F'  60-6F
+         DC    X'FFFFFFFFFFFFFFFFFF797A7B7C7D7E7F'  70-7F
+         DC    X'FF818283848586878889FF8BFFFFFFFF'  80-8F
+         DC    X'FF919293949596979899FF9BFFFFFFFF'  90-9F
+         DC    X'FFA1A2A3A4A5A6A7A8A9FFFFFFADFFFF'  A0-AF
+         DC    X'FFFFFFFFFFFFFFFFFFFFFFFFFFBDFFFF'  B0-BF
+         DC    X'FFC1C2C3C4C5C6C7C8C9FFFFFFFFFFFF'  C0-CF
+         DC    X'FFD1D2D3D4D5D6D7D8D9FFFFFFFFFFFF'  D0-DF
+         DC    X'E0FFE2E3E4E5E6E7E8E9FFFFFFFFFFFF'  E0-EF
+         DC    X'F0F1F2F3F4F5F6F7F8F9FFFFFFFFFFFF'  F0-FF
+*
+TRANASC  EQU   *
+         DC    32X'FF'                              00-1F
+*                0 1 2 3 4 5 6 7 8 9 A B C D E F
+         DC    X'405A7F7B5B6C507D4D5D5C4E6B604B61'  20-2F
+         DC    X'F0F1F2F3F4F5F6F7F8F97A5E4C7E6E6F'  30-3F
+         DC    X'7CC1C2C3C4C5C6C7C8C9D1D2D3D4D5D6'  40-4F
+         DC    X'D7D8D9E2E3E4E5E6E7E8E9ADE0BD5F6D'  50-5F
+         DC    X'79818283848586878889919293949596'  60-6F
+         DC    X'979899A2A3A4A5A6A7A8A98B4F9BA1FF'  70-7F
+         DC    128X'FF'                             80-FF
+*
+TRANHEX  DC    C'000102030405060708090A0B0C0D0E0F'  00-0F
+         DC    C'101112131415161718191A1B1C1D1E1F'  10-1F
+         DC    C'202122232425262728292A2B2C2D2E2F'  20-2F
+         DC    C'303132333435363738393A3B3C3D3E3F'  30-3F
+         DC    C'404142434445464748494A4B4C4D4E4F'  40-4F
+         DC    C'505152535455565758595A5B5C5D5E5F'  50-5F
+         DC    C'606162636465666768696A6B6C6D6E6F'  60-6F
+         DC    C'707172737475767778797A7B7C7D7E7F'  70-7F
+         DC    C'808182838485868788898A8B8C8D8E8F'  80-8F
+         DC    C'909192939495969798999A9B9C9D9E9F'  90-9F
+         DC    C'A0A1A2A3A4A5A6A7A8A9AAABACADAEAF'  A0-AF
+         DC    C'B0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF'  B0-BF
+         DC    C'C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF'  C0-CF
+         DC    C'D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF'  D0-DF
+         DC    C'E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF'  E0-EF
+         DC    C'F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF'  F0-FF
+*
+*                  C1C2C3C4C5C6
+TRANHXCH DC      X'0A0B0C0D0E0F000000000000000000'  C1-CF
+         DC    32X'00'                              D0-EF
+*                F0F1F2F3F4F5F6F7F8F9
+         DC    X'00010203040506070809000000000000'  F0-FF
+*
+TCPERR   EQU   *
+         TN3270 WCC_KD,(SBA,3,2)
+         DC    C'CEBR TCPIO ERROR'
+TCPERRL  DC    AL2(*-TCPERR)
+*
+* Q NAME -- OUTPUT
+*
+QNAMDSCT DSECT
+QNAMSBA  DS    XL3                SBA
+QNAMNAME DS    CL16               Q NAME
+QNAMITEM DS    CL6                NUMITEMS
+QNAMSPCE DS    CL2                SPACE
+QNAMSEP  DS    C                  SEPARATOR
+QNAMOLEN EQU   *-QNAMDSCT
+*
+* Q NAME -- REQUESTED DATA FORMAT
+*
+QNAMDATA DSECT
+QNAMDQNM DS    CL16               Q NAME
+QNAMDITM DS    AL2                NUMITEMS
+QNAMDLEN EQU   *-QNAMDATA
+*
+* DSECT FOR QLSTKEYS
+*
+QLSTKEYD DSECT
+         DS    XL4                WCC/SBA
+         DS    CL26               PF1
+         DS    CL26               PF2
+QLSTPF03 DS    CL26               PF3
+         DS    XL3                SBA
+QLSTPF04 DS    CL26               PF4
+QLSTPF05 DS    CL26               PF5
+QLSTPF06 DS    CL26               PF6
+         DS    XL3                SBA
+QLSTPF07 DS    CL26               PF7
+QLSTPF08 DS    CL26               PF8
+QLSTPF09 DS    CL26               PF9
+         DS    XL3                SBA
+QLSTPF10 DS    CL26               PF10
+QLSTPF11 DS    CL26               PF11
+QLSTPF12 DS    CL26               PF12
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         END
+

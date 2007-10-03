@@ -1,0 +1,32 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         DFHVSWAD
+*
+* VSAM WORK AREA AND RPL
+*
+DFHVSWAD DSECT
+VSWCHAIN DS    A                  CHAIN TO NEXT VSWA
+VSWTASKN DS    PL4                TASK NUMBER
+VSWCTYPE DS    X                  COMMAND TYPE (BYTE, NOT BITS)
+VSWCREAD EQU   X'01'              -- READ
+VSWCBRWS EQU   X'02'              -- BROWSE
+VSWREQID DS    XL2                REQID FOR BROWSE
+VSWARID  DS    XL128              MAXIMUM KEY LENGTH, CAN EXTEND
+         ORG   VSWARID
+VSWAXRBA DS    XL8                EXTENDED RBA
+         ORG   VSWARID
+         DS    XL4
+VSWARBA  DS    XL4                NORMAL RBA
+         ORG
+         DS    0D
+VSWRPL   EQU   *
+         RPLD
+VSWLEN   EQU   (*-DFHVSWAD)+(RPLEND-IHARPL) VSWA+RPL LENGTH
+*
+         MEND
+

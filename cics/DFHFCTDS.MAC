@@ -1,0 +1,39 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         DFHFCTDS
+*
+* FILE CONTROL TABLE
+*
+DFHFCTDS DSECT
+FCTFILNM DS    CL8                FILENAME
+*
+FCTFILST DS    X                  FILSTAT OPTIONS
+FCTOPCLO EQU   X'80'                 1=OPENED   0=CLOSED
+FCTENDIS EQU   X'40'                 1=ENABLED  0=DISABLED
+FCTUNENA EQU   X'20'                 1=UNENABLED
+FCTOPEN  EQU   X'01'                 1=FILE IS OPEN  0=FILE IS CLOSED
+*
+FCTRECFM DS    X                  RECFORM OPTIONS
+FCTFXVIM EQU   X'80'                 1=FIXED    0=VARIABLE
+*
+FCTSERV  DS    X                  SERVREQ OPTIONS
+FCTREAD  EQU   X'80'                 READ
+FCTDELT  EQU   X'40'                 DELETE
+FCTUPDT  EQU   X'20'                 UPDATE
+FCTADD   EQU   X'10'                 ADD
+FCTBRWSE EQU   X'08'                 BROWSE
+*
+FCTVSWA  DS    A                  VSWA CHAIN
+         DS    0D
+FCTTELEN EQU   *-DFHFCTDS         FCT LENGTH+ALIGN
+         DS    XL(ACBEND-IHAACB)  ACB AREA
+         DS    0D
+FCTABLEN EQU   *-DFHFCTDS         FCT+ACB LENGTH+ALIGN
+*
+         MEND
+

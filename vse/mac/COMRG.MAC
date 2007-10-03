@@ -7,8 +7,9 @@
 .* Date   - 03/11/07                                                 *
 .*********************************************************************
 .* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.* 10/01/07 RPI 709 CORRECT DEFAULT REG=(1) FROM REG=1          
 .*********************************************************************
-&N       COMRG &REG=1       SET REGISTER TO COMMUNICATIONS AREA           
+&N       COMRG &REG=(1)     SET REGISTER TO COMMUNICATIONS AREA           
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP

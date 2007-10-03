@@ -1,0 +1,49 @@
+Z390/CICS VSAM Guide
+====================
+
+I recommend that the catalog and file structures are kept in a common
+directory. More flexibility will be added if time permits.
+
+Step 1:
+Create and assemble a catalog and the files it is to contain using the
+DEFINE macro.
+
+The test files used in Z390\CICS are in the \cics\vsam directory, and
+many more examples in \vsam\demo.
+
+Multiple catalogs are supported.
+
+Step 2:
+Use REPRO to create the VSAM base cluster, paths and alternate indexes
+as needed.
+
+Step 3:
+Add the FCT entries for your files to DFHFCTUS and assemble.
+
+Step 4:
+Add SET statements to Z390FILE.BAT to define the catalog and filename
+that will be used at OPEN time.
+
+VSAM Extensions
+---------------
+
+The following facilities are not supported in standard CICS/VSAM, but
+they are in Z390/CICS VSAM.
+
+a) Support of 4 gigabyte files and record sizes greater than 32K for all
+   VSAM file types.
+
+b) Skip-sequential access (browse) of an ESDS by RBA (fixed or variable),
+   forward or backward.
+   Note: Knowledge of the file will be necessary for variable ESDS in
+         order to set the initial RBA.
+
+Trademarks
+----------
+CICS is a registered trademark of International Business Corporation.
+
+Author: Melvyn Maltz
+Shipping Date: October 1st, 2007
+Z390 version: V1.3.08
+Z390/CICS version: V3
+

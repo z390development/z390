@@ -1,8 +1,8 @@
 INSTTIME SUBENTRY
 *
 * AUTHOR:       MELVYN MALTZ
-* Z390 VERSION: V1.3.03b
-* INSTTIME VERSION: 9
+* Z390 VERSION: V1.3.08
+* INSTTIME VERSION: 10
 *
 * CALL MZ390 MUST HAVE "SYSPARM(drive:\pathname)"
 * ASSEMBLE WITH OPTION: ASCII
@@ -59,8 +59,8 @@ BCTTIMER BCT   R7,BCTTIMER        DO IT
          GETMAIN R,LV=4000        LENGTHS COLLECTION AREA
          ST    R1,STATADR2        SAVE STATS ORIGIN
          ST    R1,STATNXT2        SAVE STATS NEXT SLOT
-******** LARL  R1,INSTABND        ABEND INTERCEPT ADDRESS
-******** ESTAE (1)
+* ###    LARL  R1,INSTABND        ABEND INTERCEPT ADDRESS
+* ###    ESTAE (1)
 *
 GET      EQU   *
          GET   PARMS              GET PARM
@@ -5365,6 +5365,8 @@ SVC      DS    0H
          BE    SVCGETMN           EXIT IF IT IS
          CLC   INSTOPCD(8),=C'FREEMAIN' IS IT FREEMAIN ?
          BE    SVCFREMN           EXIT IF IT IS
+         CLC   INSTOPCD(6),=C'GETENV' IS IT GETENV ?
+         BE    SVCGETEV           EXIT IF IT IS
          B     SVCBADOP           ERROR IF NOT
 *
 SVCXL    EQU   *
@@ -5490,6 +5492,17 @@ SVCTIM06 TIME  STCK,SVCTIME       TESTED FUNCTION
          BCT   R7,SVCTIM06        DO IT
          TIME  NS,TIMEAFT         AFTER TIME IN nS
          LA    R5,SVCTIM06+8      SVC ADDRESS
+         B     SVCDONE2           EXIT
+*
+SVCTMST  EQU   *
+* TIME TS,LABEL,LINKAGE=SVC
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SVCTIM27 TIME  TS,SVCTIME         TESTED FUNCTION
+         BCT   R7,SVCTIM27        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+         LA    R5,SVCTIM27+8      SVC ADDRESS
          B     SVCDONE2           EXIT
 *
 SVCTMCK  EQU   *
@@ -6124,6 +6137,50 @@ SVCFREE  EQU   *
          LA    R5,SVCFREE+8       SVC ADDRESS
          B     SVCDONE            EXIT
 *
+SVCGETEV EQU   *
+* GETMAIN ENOUGH STORAGE TO HOLD SPIN NUMBER OF 4-BYTE ADDRESSES
+         L     R0,SPINCNT         CURRENT SPIN COUNT
+         SLL   R0,2               * 4
+         ST    R0,SVCGEVLN        SAVE LENGTH
+         GETMAIN R,LV=(0)         FREEMAIN ADDRESSES
+         ST    R1,SVCGEVAD        SAVE ADDRESS LIST
+         LR    R4,R1              INDEX TO ADDRESS LIST
+* TIME AN LA AND ST
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SVCGEVLA EQU   *
+         LA    R5,1(R5)           SPECIAL INST
+         ST    R5,SVCSAVE         SPECIAL INST
+         BCT   R7,SVCGEVLA        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+         LG    R7,TIMEAFT         END TIME
+         SG    R7,TIMEBEF                  - BEG TIME
+         SG    R7,TIMEBCT                  - BCT TIME
+         STG   R7,TIMEXTRA        SAVE IT
+*
+         L     R7,SPINCNT         SET LOOP LIMIT
+*
+         TIME  NS,TIMEBEF         BEFORE TIME IN nS
+SVCGEVM1 EQU   *
+         GETENV SVCGEV            GET ENVIRONMENT VARIABLE
+         ST    R2,0(R4)           SAVE ADDRESS FOR FREEMAIN
+         LA    R4,4(R4)           BUMP POINTER
+         BCT   R7,SVCGEVM1        DO IT
+         TIME  NS,TIMEAFT         AFTER TIME IN nS
+*
+* NOW FREEMAIN ALL THE GETMAINS, UNTIMED
+         L     R4,SVCGEVAD        FREEMAIN POINTERS
+         L     R7,SPINCNT         SET LOOP LIMIT
+SVCGEVF1 EQU   *
+         FREEMAIN LV=16,A=0(R4)   FREE ALL THE GETS
+         LA    R4,4(R4)           BUMP POINTER
+         BCT   R7,SVCGEVF1        DO IT
+         FREEMAIN LA=SVCGEVLN,A=SVCGEVAD
+         LA    R5,SVCGEVM1+8      SVC ADDRESS
+         B     SVCDONE            EXIT
+*
 SVCDONE3 EQU   *
          LMG   R10,R11,SVCCONV    FOR DISPLAY
          B     SVCDONE            EXIT
@@ -6151,8 +6208,11 @@ SVCERROR EQU   *
 *
 SVCGETAD DS    A
 SVCGETLN DS    F
+SVCGEVAD DS    A
+SVCGEVLN DS    F
 SVCDEC   DC    PL16'0'
-SVCTIME  DS    CL16
+SVCGEV   DC    C'GETENV',X'00'
+SVCTIME  DS    CL29
 SVCSAVE  DS    CL4
 SVCCONV  DS    CL45
 SVCCONV2 DC    CL45'12.345E5'
@@ -6166,6 +6226,7 @@ SVCTMTAB EQU   *
          DC    CL11'MIC/SVC',AL4(SVCTMMIC)     MIC
          DC    CL11'NS/SVC',AL4(SVCTMNS)       NS
          DC    CL11'STCK/SVC',AL4(SVCTMSTK)    STCK
+         DC    CL11'TS/SVC',AL4(SVCTMST)       TS
          DC    CL11'CLOCK/STCK',AL4(SVCTMCK)   CLOCK,LABEL,STCK
          DC    CL11'CLOCK/STCKE',AL4(SVCTMCKE) CLOCK,LABEL,STCKE
          DC    CL11'CLOCK/JAVA',AL4(SVCTMCJV)  CLOCK,LABEL,JAVA
@@ -6222,8 +6283,8 @@ SVCCFTAB EQU   *
 ******************************
 * END OF PROCESSING ROUTINES *
 ******************************
-* ESTAE ROUTINE
-INSTABND DS    0H
+* ### ESTAE ROUTINE
+*INSTABND DS    0H
          BALR  R12,0
          USING *,R12
          MVC   RSLTMICS+1(7),=C'ABENDED'

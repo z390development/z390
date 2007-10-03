@@ -17,5 +17,7 @@
          DFHADBLK                 HANDLE AID BLOCK
          DFHHCBLK                 HANDLE CONDITION BLOCK
          DFHABBLK                 HANDLE ABEND BLOCK
+         DFHTSBLK                 TEMPORARY STORAGE PREFIX AREA
+         DFHFCBLK                 FILE CONTROL PREFIX AREA
          MEND
 

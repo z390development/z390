@@ -1,0 +1,46 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         DFHFCBLK
+*
+* FILE REQUEST PREFIX AREA
+.* KEEP IT MULTIPLE OF 8
+*
+DFHFCBLK DSECT
+FCPTCPIO DS    A                  LENGTH SENT TO SERVER
+FCPFN    DS    CL4                FC FUNCTION
+FCPTERM  DS    CL4                TERMINAL ID
+FCPTRAN  DS    CL4                TRANSACTION ID
+         DS    C                  TRANSACTION TYPE (NOT USED)
+FCPTASKN DS    PL4                TASK NUMBER
+FCPFILNM DS    CL8                FILE
+FCPRETCD DS    XL4                RETURN CODE
+FCPRESP2 DS    XL4                RESP2 CODE
+FCPRID   DS    XL128              MAXIMUM KEY LENGTH, CAN EXTEND
+         ORG   FCPRID
+FCPXRBA  DS    XL8                EXTENDED RBA
+         ORG   FCPRID
+         DS    XL4
+FCPRBA   DS    XL4                NORMAL RBA
+         ORG
+FCPRDOPT DS    X                  RID IDENTIFIER (BYTE, NOT BITS)
+FCPRDRBA EQU   X'01'              -- RID IS RBA
+FCPRDXRB EQU   X'02'              -- RID IS XRBA
+FCPCTYPE DS    X                  COMMAND TYPE (BYTE, NOT BITS)
+FCPCREAD EQU   X'01'              -- READ
+FCPCBRWS EQU   X'02'              -- BROWSE
+FCPBROPT DS    X                  BROWSE OPTIONS (BYTE, NOT BITS)
+FCPBRGTE EQU   X'01'              -- GTEQ
+FCPBREQU EQU   X'02'              -- EQUAL
+FCPREQID DS    XL2                REQID FOR BROWSE
+FCPACLEN DS    FL4                READ ACTUAL RECORD LENGTH
+FCPLEN   DS    FL4                LENGTH OF FOLLOWING DATA
+         DS    0D
+FCPREFIX EQU   *-DFHFCBLK
+FCPDATA  DS    0X                 FC DATA
+         MEND
+

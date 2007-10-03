@@ -2847,7 +2847,186 @@ set GIT_COMMITTER_DATE=2021-03-22 15:14:00 +0100
 git commit -m "Reconstructed version v1.3.07f of z390 committed on behalf of Don Higgins"
 git tag -a v1.3.07f -m "Reconstructed version v1.3.07f of z390 committed on behalf of Don Higgins"
 
+REN     ZAP.BAT SUPERZAP.BAT
+git rm  ZAP.BAT
+git add SUPERZAP.BAT
+MOVE    util\superzap\ZAPDEMO1.BAT linklib\ZAPDEMO1.BAT
+git rm  util/superzap/ZAPDEMO1.BAT
+git add linklib/ZAPDEMO1.BAT
+MOVE    util\superzap\ZAPDEMO2.BAT linklib\ZAPDEMO2.BAT
+git rm  util/superzap/ZAPDEMO2.BAT
+git add linklib/ZAPDEMO2.BAT
+MOVE    util\superzap\BUILD.BAT linklib\SUPERZAP.BAT
+git rm  util/superzap/BUILD.BAT
+git add linklib/SUPERZAP.BAT
+MOVE    util\unref\BUILD.BAT linklib\UNREF.BAT
+git rm  util/unref/BUILD.BAT
+git add linklib/UNREF.BAT
+SetGit ++Abe 2021-03-22 15:17:00 +0100
+set GIT_COMMITTER_DATE=2021-03-22 15:17:00 +0100
+git commit -m "Intermediate commit to trace renamed files"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.3.08
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
+
+# Assembler/emulator input stuff
+# **/*.bat --> Dos command files
+
+# Backup and junk files
+!linklib/ZAPDEMO1.[sS][aA][vV]
+
+==> Stage files for V1.3.08
+git add DIRCLEAN.BAT
+git rm  Doc/Hercules.txt
+git rm  Doc/Mel_missing_opcodes.txt
+git rm  Doc/PC370AS2.TXT
+git rm  Doc/PC370AS3.TXT
+git rm  Doc/PC370AS4.txt
+git rm  Doc/PC370ASC.txt
+git add Doc/readme.rtf
+git add Doc/readme.txt
+git rm  Doc/simotime.txt
+git add IVP.BAT
+git rm  README.TXT
+git add RT.BAT
+git add RT/Z390.IVP
+git add RTLINK1.BAT
+git add RTTEST1.BAT
+git add RTVSAM.BAT
+git add RTVSAM1.BAT
+git add SUPERZAP.BAT
+git add Z390.IVP
+git add bmk/INSTTIME.BAT
+git add bmk/INSTTIME.INS
+git add bmk/INSTTIME.MLC
+git add bmk/INSTTIME.TXT
+git add bmk/INSTTIME.VER
+git add cics/CICS_FREEMAIN.MAC
+git add cics/CICS_GETMAIN.MAC
+git add cics/CICS_HANDLE.MAC
+git add cics/CICS_IGNORE.MAC
+git add cics/CICS_LINK.MAC
+git add cics/CICS_LOAD.MAC
+git add cics/CICS_PUSH.MAC
+git add cics/CICS_RECEIVE.MAC
+git add cics/CICS_RELEASE.MAC
+git add cics/CICS_XCTL.MAC
+git add cics/DFHALL.BAT
+git add cics/DFHEIGBL.MAC
+git add cics/DFHEISTG.MAC
+git add cics/DFHHCBLK.MAC
+git add cics/DFHPCT.MLC
+git add cics/Docs/ZCICSAPP.TXT
+git add cics/Docs/ZCICSDRF.TXT
+git add cics/Docs/ZCICSHST.TXT
+git add cics/Docs/ZCICSRME.TXT
+git add cics/Docs/ZCICSSYS.TXT
+git rm  cics/RTZCICS.BAT
+git rm  cics/RTZCICS.MLC
+git add cics/TESTBED4.MLC
+git add cics/TESTBED5.MLC
+git add cics/TESTBED6.MLC
+git add cics/TESTCIC1.MLC
+git add cics/TESTGUI6.MLC
+git add cics/Z390CEMT.MLC
+git add cics/Z390CICG.BAT
+git add cics/Z390CICS.INI
+git add cics/Z390CICS.MLC
+git add cics/Z390KCP.MLC
+git add cics/Z390KCPR.BAT
+git add cics/Z390LOGO.MLC
+git add linklib/SUPERZAP.BAT
+git add linklib/UNREF.BAT
+git add linklib/ZAPDEMO1.BAT
+git add linklib/ZAPDEMO2.BAT
+git add mac/GET.MAC
+git add mac/PENTRY.MAC
+git add mac/SUBENTRY.MAC
+git rm  mac/ZSTRDOC.TXT
+git add mvs/Z390.IVP
+git add src/sz390.java
+git add src/tz390.java
+git add src/vz390.java
+git rm  util/ZDOCUTIL.TXT
+git rm  util/superzap/SUPERZAP.MLC
+git rm  util/superzap/ZAPDEMO1.SAV
+git rm  util/superzap/ZAPDEMO1.ZAP
+git rm  util/superzap/ZAPDEMO2.ZAP
+git rm  util/unref/UNREF.BAT
+git rm  util/unref/UNREF.MLC
+git rm  util/unref/UNREFUSR.CPY
+git rm  vsam/demo/BUILD.BAT
+git add vsam/demo/DEMOS.BAT
+git add vsam/demo/ESF1.MLC
+git rm  vsam/demo/ESF1REPO.BAT
+git rm  vsam/demo/ESF1SP.TF1
+git rm  vsam/demo/ESF1SPSG.BAT
+git rm  vsam/demo/ESV1.MLC
+git rm  vsam/demo/ESV1SP.TF1
+git rm  vsam/demo/ESV1SPSG.BAT
+git rm  vsam/demo/KSF1.MLC
+git rm  vsam/demo/LDF1.MLC
+git rm  vsam/demo/RRF1.MLC
+git add vse/mac/COMRG.MAC
+git add vse/mac/GETIME.MAC
+git add REPRO.BAT
+git add UNREF.BAT
+git add cics/CICS_DELETEQ.MAC
+git add cics/CICS_ENDBR.MAC
+git add cics/CICS_READ.MAC
+git add cics/CICS_READNEXT.MAC
+git add cics/CICS_READPREV.MAC
+git add cics/CICS_READQ.MAC
+git add cics/CICS_RESETBR.MAC
+git add cics/CICS_STARTBR.MAC
+git add cics/CICS_WRITEQ.MAC
+git add cics/DFHALLV.BAT
+git add cics/DFHFCBLK.MAC
+git add cics/DFHFCT.BAT
+git add cics/DFHFCT.MAC
+git add cics/DFHFCT.MLC
+git add cics/DFHFCTDS.MAC
+git add cics/DFHFCTUS.CPY
+git add cics/DFHTSBLK.MAC
+git add cics/DFHVSWAD.MAC
+git add cics/RTZCICS1.BAT
+git add cics/RTZCICS1.MLC
+git add cics/RTZCICS2.BAT
+git add cics/RTZCICS2.MLC
+git add cics/TESTBED9.MLC
+git add cics/TESTVSM1.MLC
+git add cics/VSAM/
+git add cics/Z390CEBR.MLC
+git add cics/Z390FILE.BAT
+git add cics/Z390KCPL.BAT
+git add cics/Z390RMTE.MLC
+git add cics/docs/ZCICSSTR.TXT
+git add cics/docs/ZCICSVSM.TXT
+git add linklib/SUPERZAP.MLC
+git add linklib/UNREF.MLC
+git add linklib/UNREFUSR.CPY
+git add linklib/ZAPDEMO1.SAV
+git add linklib/ZAPDEMO1.ZAP
+git add linklib/ZAPDEMO2.ZAP
+git add linklib/ZDOCUTIL.TXT
+git add vsam/demo/KSF1DEMO.BAT
+git add vsam/demo/KSF1DEMO.MLC
+git add vsam/demo/KSF1SKP1.BAT
+git add vsam/demo/KSF1SKP1.MLC
+git add vsam/test/ESF1ERR1.BAT
+git add vsam/test/ESF1ERR1.MLC
+
+==> Create commit for V1.3.08
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2007-10-03 06:30:00 -0500
+set GIT_COMMITTER_DATE=2021-03-22 16:25:00 +0100
+git commit -m "Reconstructed version v1.3.08 of z390 committed on behalf of Don Higgins"
+git tag -a v1.3.08 -m "Reconstructed version v1.3.08 of z390 committed on behalf of Don Higgins"
+git gc --aggressive
 
 
 

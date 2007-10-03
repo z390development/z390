@@ -10,6 +10,8 @@ WORDMSG  DS    0CL12              WORD ENTRY
          DS    CL10               SBA/WORD
 WORDLEN  DS    CL2                ACTUAL LENGTH
 KEYINDS  DS    CL18               KEY INDICATORS
+RECAREA  DS    CL80               RECEIVE AREA
+RECLEN   DS    AL2                RECEIVED LENGTH
 TESTBED4 CSECT
 *
          MVC   KEYINDS,=18X'FF'   MARK ALL KEYS UNPRESSED
@@ -25,7 +27,7 @@ TESTBED4 CSECT
                PF19 PF20 PF21 PF22 PF23 PF24
 *
 KEYPRESS EQU   *
-         EXEC  CICS RECEIVE INTO(EIBAID) LENGTH(RECLEN)
+         EXEC  CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN)
          CLI   EIBAID,CLEAR       CLEAR PRESSED ?
          BE    RETURN             END TASK IF IT IS
          B     KEYPRESS           LOOP
@@ -134,8 +136,6 @@ WORDS    EQU   *
          DC    AL2(7)
 *
 ABEND    ABEND 111,DUMP
-*
-RECLEN   DS    H                  RECEIVED LENGTH
 *
          TN3270 SYMBOLS
          EQUREGS

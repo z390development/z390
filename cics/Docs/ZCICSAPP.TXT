@@ -12,8 +12,11 @@ Manuals listed in the Reference section at the end of this document.
 If you create your own Z390/CICS applications, it would be wise to
 create a .BAT file that re-assembles them all in one go. The internal
 interfaces are volatile at present and this will be a frequent
-instruction. The current Z390/CICS environment and all test programs
-can be re-assembled using DFHALL.BAT
+instruction.
+
+The current Z390/CICS environment and all test programs can be
+re-assembled using DFHALL.BAT. The test VSAM catalog and files can be
+rebuilt using DFHALLV.BAT.
 
 Assembly notes
 --------------
@@ -27,30 +30,30 @@ PROLOG inserts the following:
 
   DFHEIGBL -- Defines the basic set of control block DSECTs.
   DFHEISTG -- Define the prefix areas of the Dynamic Storage Area (DSA).
-  DFHEIENT -- Replaces the first CSECT statement.
-              Establish linkage and base registers.
-              GETMAIN the DSA.
-              Establish addressability to the EIB and TCTTE.
-              Some COMMAREA management.
   DFHEIEND -- Replaces the END statement and defines the end of the DSA.
+  DFHEIENT -- Replaces the first CSECT statement
+              Establish linkage and base registers
+              GETMAIN the DSA
+              Establish addressability to the EIB and TCTTE
+              Some COMMAREA management
 
 Other macros...
-  DFHABBLK -- HANDLE ABEND block DSECT
-  DFHADBLK -- HANDLE AID block DSECT
-  DFHEIRET -- Part of EXEC CICS RETURN
-              Some clean-up operations.
-              FREEMAIN the DSA.
-              Manage link-level and return to last linker.
   DFHEIBLK -- EIB DSECT
-  DFHHCBLK -- HANDLE CONDITION block DSECT
+  DFHEIRET -- Part of EXEC CICS RETURN
+              Some clean-up operations
+              FREEMAIN the DSA
+              Manage link-level and return to last linker
   DFHPCT   -- Transaction definition
-  DFHTCTTE -- TCTTE DSECT
+  DFHFCT   -- File definitions and options
   EXEC     -- Converts EXEC CICS statements into a unique macro call
-              with a parameter list.
+              with a parameter list
 
 Copy books...
    DFHAID     Standard CICS equates for AID keys
    DFHPCTUS   User transaction codes
+   DFHFCTUS   User file definitions
+
+Inclusion of the macro EQUREGS is mandatory.
 
 Register Usage
 --------------
@@ -88,48 +91,479 @@ MYFIELD  DS    CL100              demo user field
 ...
 MYPROG   DFHEIENT CODEREG=(R8,R5),DATAREG=(R13,R6,R7)
 
-Notes: You cannot override the first DATAREG value,
-       it will always be R13. ie. if you code DATAREG=(R6,R7)
-       you will get DATAREG=(R13,R7).
+Notes: You cannot override the first DATAREG value, it will always be R13
+       ie. if you code DATAREG=(R6,R7) you will get DATAREG=(R13,R7).
 
        There is no cross-checking for register conflicts.
 
-Assembler Notes
----------------
-Inclusion of the macro EQUREGS is mandatory.
+VSAM Notes
+----------
+See ZCICSVSM, Z390/CICS VSAM Guide for guidance in the setup of a
+VSAM environment. This document also contains extensions to the VSAM
+facilities currently available.
 
-Supported EXEC CICS commands (summary)
---------------------------------------
- 1) ABEND ABCODE() CANCEL NODUMP
- 2) FREEMAIN DATA() DATAPOINTER()
- 3) GETMAIN SET() LENGTH() FLENGTH() INITIMG()
- 4) HANDLE ABEND CANCEL/RESET/LABEL()/PROGRAM()
- 5) HANDLE AID key() key
- 6) HANDLE CONDITION condition() condition
- 7) IGNORE CONDITION condition
- 8) LINK PROGRAM() COMMAREA() LENGTH()
- 9) LOAD PROGRAM() ENTRY() SET() LENGTH() FLENGTH()
-10) POP HANDLE
-11) PUSH HANDLE
-12) RECEIVE INTO() LENGTH() NOHANDLE
-13) RELEASE PROGRAM()
-14) RETURN TRANSID() COMMAREA() LENGTH()
-15) SEND FROM() LENGTH()
-16) XCTL PROGRAM() COMMAREA() LENGTH()
+Supported EXEC CICS commands (summary by type)
+----------------------------------------------
+ 1) General commands (02)
+    a) HANDLE AID key() key
+    b) HANDLE CONDITION condition() condition
+    c) IGNORE CONDITION condition
+    d) POP HANDLE
+    e) PUSH HANDLE
 
-Supported EXEC CICS commands (detail)
--------------------------------------
- 1) ABEND ABCODE() CANCEL NODUMP
+ 2) Terminal Control (04)
+    a) RECEIVE INTO() LENGTH() NOHANDLE
+    b) SEND FROM() LENGTH()
 
-       ABCODE can be specified as ABCODE('xxxx') or ABCODE(label)
-       label must point to a 4-byte field.
+ 3) File Control (06)
+    a) READ FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
+       RIDFLD() RBA/XRBA
+    b) STARTBR FILE()/DATASET() RIDFLD() REQID() RBA/XRBA GTEQ/EQUAL
+    c) READNEXT FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
+       RIDFLD() REQID() RBA/XRBA
+    d) READPREV FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
+       RIDFLD() REQID() RBA/XRBA
+    e) ENDBR FILE()/DATASET() REQID()
+    f) RESETBR FILE()/DATASET() RIDFLD() REQID() RBA/XRBA GTEQ/EQUAL
 
-    Errors
-       ABCODE MUST NOT BEGIN WITH 'A'
-       ABCODE IS INVALID
-       BAD PARM
+ 4) Storage Control (08)
+    a) FREEMAIN DATA()/DATAPOINTER()
+    b) GETMAIN SET() LENGTH()/FLENGTH() INITIMG()
 
- 2) FREEMAIN DATA() DATAPOINTER()
+ 5) Temporary Storage Control (0A)
+    a) DELETEQ TS QUEUE()/QNAME()
+    b) READQ TS QUEUE()/QNAME() INTO()/SET() LENGTH() NUMITEMS()
+       ITEM()/NEXT
+    c) WRITEQ TS QUEUE()/QNAME() FROM() LENGTH() NUMITEMS() ITEM()
+       REWRITE
+
+ 6) Program Control (0E)
+    a) ABEND ABCODE() CANCEL NODUMP
+    b) HANDLE ABEND CANCEL/RESET/LABEL()/PROGRAM()
+    c) LINK PROGRAM() COMMAREA() LENGTH()
+    d) LOAD PROGRAM() ENTRY()/SET() LENGTH() FLENGTH()
+    e) RELEASE PROGRAM()
+    f) RETURN TRANSID() COMMAREA() LENGTH()
+    g) XCTL PROGRAM() COMMAREA() LENGTH()
+
+Supported EXEC CICS commands (detail by type)
+---------------------------------------------
+ 1) General commands (02)
+
+    a) HANDLE AID key(label) key etc.
+
+       The following parameters are not supported...
+          CLRPARTN, LIGHTPEN, OPERID, TRIGGER
+
+       The manual is not clear about ANYKEY (no label). I have assumed
+       that it clears all settings for CLEAR, PA and PF keys.
+
+       label may take three forms:
+          Direct reference
+          Indirect reference
+          Adcon literal
+
+       eg. EXEC CICS HANDLE AID PA1(GOPA1) PA2(INDGOPA1) PA3(=A(GOPA1))
+           ...
+           GOPA1    DS 0H
+           ...
+           INDGOPA1 DC A(GOPA1)
+
+       Errors
+          BAD PARM
+          HANDLE TYPE NOT RECOGNISED
+
+    b) HANDLE CONDITION condition(label) condition etc.
+
+       label may take three forms:
+          Direct reference
+          Indirect reference
+          Adcon literal
+
+          See HANDLE AID for examples of these forms.
+
+       Errors
+          BAD PARM
+          HANDLE TYPE NOT RECOGNISED
+
+    c) IGNORE CONDITION condition ...
+
+       Notes:
+          Ignoring an error may lead to unpredictable abends.
+
+          INVREQ, PGMIDERR or ERROR by default...
+             The EXEC CICS command treated as never existed.
+
+          INVREQ on EXEC CICS RETURN will abend the task ASRA as I
+          cannot ignore a RETURN.
+
+          LENGERR or ERROR by default...
+            Only on EXEC CICS RECEIVE.
+            NOHANDLE and any outstanding HANDLE AID will not invoke
+            this condition.
+
+       Errors
+          BAD PARM
+          IGNORE TYPE NOT RECOGNISED
+
+    d) POP HANDLE
+
+       For the HANDLE ABEND, a POP is the equivalent of a HANDLE ABEND
+       RESET.
+
+       Errors
+          POP TYPE NOT RECOGNISED
+
+       Conditions (RESP/RESP2)
+          INVREQ/0
+
+    e) PUSH HANDLE
+
+       For the HANDLE ABEND, a PUSH is the equivalent of a HANDLE ABEND
+       CANCEL.
+
+       Errors
+          PUSH TYPE NOT RECOGNISED
+
+ 2) Terminal Control (04)
+
+    a) RECEIVE INTO(label) LENGTH(label) NOHANDLE
+
+       INTO(label) and LENGTH(label) are mandatory.
+       LENGTH must point to a 2-byte field.
+
+       Although MAXLENGTH is not implemented yet, there is an internal
+       maximum length set to the implied length of the INTO label.
+
+       NOHANDLE is optional.
+
+       Errors
+          BAD PARM
+          BOTH INTO AND LENGTH ARE REQUIRED
+          LENGTH ERROR
+
+       Conditions (RESP/RESP2)
+          LENGERR/0
+
+    b) SEND FROM(label) LENGTH()
+
+       FROM(label) is mandatory.
+          label may take three forms:
+             Direct reference
+             Indirect reference
+             Adcon literal
+
+       LENGTH
+          Can be specified as LENGTH(value) or LENGTH(label)
+          LENGTH(value) supports the use of the length attribute.
+          label must point to a 2-byte hex value.
+
+       Errors
+          BAD PARM
+          FROM IS MANDATORY
+          LENGTH IS MANDATORY
+
+ 3) File Control (06)
+
+    a) READ FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
+       RIDFLD() RBA/XRBA
+
+       Note: FLENGTH and XRBA are extensions, do not use these
+             parameters if the source code is likely to be ported
+             back to a mainframe environment.
+
+       DATASET is supported for legacy applications. It is noted that
+       this parameter no longer appears in the Manuals.
+
+       LENGTH
+          Can be specified as a constant, literal or label.
+          A constant must not exceed 32767.
+          A literal or label must be 2 bytes and must not exceed 32767.
+
+       FLENGTH
+          Can be specified as a constant, literal or label.
+          A constant must not exceed 2G-1.
+          A literal or label must be 4 bytes and must not exceed 2G-1.
+
+       LENGTH/FLENGTH notes:
+          If not a label then ...
+             If INTO is specified, then the length received is the
+             implied length of INTO. This may raise the LENGERR
+             condition if the data length is larger.
+
+             If SET is specified, the complete record is returned and
+             LENGERR cannot occur.
+
+          If it is a label then ...
+             If INTO or SET is specified, then it specifies the maximum data
+             length that can be received. LENGERR can be raised if the
+             data length is larger. The true data length is returned in
+             label.
+
+       RBA   RIDFLD has a 4-byte RBA
+       XRBA  RIDFLD has an 8-byte RBA
+          Note: For an ESDS, if neither is specified, RBA is assumed.
+
+       Errors
+          BAD PARM
+          BOTH FILE AND DATASET ARE SPECIFIED
+          BOTH INTO AND SET ARE SPECIFIED
+          BOTH LENGTH AND FLENGTH ARE SPECIFIED
+          BOTH RBA AND XRBA ARE SPECIFIED
+          FILE OR DATASET MUST BE SPECIFIED
+          INTO OR SET MUST BE SPECIFIED
+          INVALID FILE OR DATASET
+          RIDFLD IS MANDATORY
+
+       Conditions (RESP/RESP2)
+          FILENOTFOUND/1
+          DISABLED/50
+          NOTOPEN/60
+          INVREQ/20
+
+    b) STARTBR FILE()/DATASET() RIDFLD() REQID() RBA/XRBA GTEQ/EQUAL
+
+       Note: XRBA is an extension, do not use this parameter if the
+             source code is likely to be ported back to a mainframe
+             environment.
+
+       DATASET is supported for legacy applications. It is noted that
+       this parameter no longer appears in the Manuals.
+
+       REQID
+          Can be specified as a constant, literal or label.
+          A constant must not exceed 32767.
+          A literal or label must be 2 bytes and must not exceed 32767.
+          If omitted, zero is assumed.
+
+       RBA   RIDFLD has a 4-byte RBA
+       XRBA  RIDFLD has an 8-byte RBA
+          Note: For an ESDS, if neither is specified, RBA is assumed.
+
+       GTEQ/EQUAL currently not used
+
+       Errors
+          BAD PARM
+          BOTH FILE AND DATASET ARE SPECIFIED
+          BOTH GTEQ AND EQUAL ARE SPECIFIED
+          BOTH RBA AND XRBA ARE SPECIFIED
+          FILE OR DATASET MUST BE SPECIFIED
+          INVALID FILE OR DATASET
+          RIDFLD IS MANDATORY
+
+       Conditions (RESP/RESP2)
+          FILENOTFOUND/1
+          DISABLED/50
+          NOTFND/80
+          NOTOPEN/60
+          INVREQ/20
+          INVREQ/33
+
+          Note: NOTFND cannot occur for an ESDS
+
+    c) READNEXT FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
+       RIDFLD() REQID() RBA/XRBA
+
+       Note: FLENGTH and XRBA are extensions, do not use these
+             parameters if the source code is likely to be ported
+             back to a mainframe environment.
+
+       DATASET is supported for legacy applications. It is noted that
+       this parameter no longer appears in the Manuals.
+
+       LENGTH
+          Can be specified as a constant, literal or label.
+          A constant must not exceed 32767.
+          A literal or label must be 2 bytes and must not exceed 32767.
+
+       FLENGTH
+          Can be specified as a constant, literal or label.
+          A constant must not exceed 2G-1.
+          A literal or label must be 4 bytes and must not exceed 2G-1.
+
+       LENGTH/FLENGTH notes:
+          If either is not a label then ...
+             If INTO is specified, then the length received is the
+             implied length of INTO. This may raise the LENGERR
+             condition if the data length is larger.
+
+             If SET is specified, the complete record is returned and
+             LENGERR cannot occur.
+
+          If either is a label then ...
+             If INTO or SET is specified, then it specifies the maximum data
+             length that can be received. LENGERR can be raised if the
+             data length is larger. The true data length is returned in
+             label.
+
+       REQID
+          Can be specified as a constant, literal or label.
+          A constant must not exceed 32767.
+          A literal or label must be 2 bytes and must not exceed 32767.
+          If omitted, zero is assumed.
+
+       RBA   RIDFLD has a 4-byte RBA
+       XRBA  RIDFLD has an 8-byte RBA
+          Note: For an ESDS, if neither is specified, RBA is assumed.
+
+       Errors
+          BAD PARM
+          BOTH FILE AND DATASET ARE SPECIFIED
+          BOTH INTO AND SET ARE SPECIFIED
+          BOTH LENGTH AND FLENGTH ARE SPECIFIED
+          BOTH RBA AND XRBA ARE SPECIFIED
+          FILE OR DATASET MUST BE SPECIFIED
+          INTO OR SET MUST BE SPECIFIED
+          INVALID FILE OR DATASET
+          RIDFLD IS MANDATORY
+
+       Conditions (RESP/RESP2)
+          ENDFILE/90
+          DISABLED/50
+          FILENOTFOUND/1
+          INVREQ/20
+          INVREQ/33
+          NOTOPEN/60
+
+    c) READPREV FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
+       RIDFLD() REQID() RBA/XRBA
+
+       Note: FLENGTH and XRBA are extensions, do not use these
+             parameters if the source code is likely to be ported
+             back to a mainframe environment.
+
+       DATASET is supported for legacy applications. It is noted that
+       this parameter no longer appears in the Manuals.
+
+       LENGTH
+          Can be specified as a constant, literal or label.
+          A constant must not exceed 32767.
+          A literal or label must be 2 bytes and must not exceed 32767.
+
+       FLENGTH
+          Can be specified as a constant, literal or label.
+          A constant must not exceed 2G-1.
+          A literal or label must be 4 bytes and must not exceed 2G-1.
+
+       LENGTH/FLENGTH notes:
+          If either is not a label then ...
+             If INTO is specified, then the length received is the
+             implied length of INTO. This may raise the LENGERR
+             condition if the data length is larger.
+
+             If SET is specified, the complete record is returned and
+             LENGERR cannot occur.
+
+          If either is a label then ...
+             If INTO or SET is specified, then it specifies the maximum data
+             length that can be received. LENGERR can be raised if the
+             data length is larger. The true data length is returned in
+             label.
+
+       REQID
+          Can be specified as a constant, literal or label.
+          A constant must not exceed 32767.
+          A literal or label must be 2 bytes and must not exceed 32767.
+          If omitted, zero is assumed.
+
+       RBA   RIDFLD has a 4-byte RBA
+       XRBA  RIDFLD has an 8-byte RBA
+          Note: For an ESDS, if neither is specified, RBA is assumed.
+
+       Errors
+          BAD PARM
+          BOTH FILE AND DATASET ARE SPECIFIED
+          BOTH INTO AND SET ARE SPECIFIED
+          BOTH LENGTH AND FLENGTH ARE SPECIFIED
+          BOTH RBA AND XRBA ARE SPECIFIED
+          FILE OR DATASET MUST BE SPECIFIED
+          INTO OR SET MUST BE SPECIFIED
+          INVALID FILE OR DATASET
+          RIDFLD IS MANDATORY
+
+       Conditions (RESP/RESP2)
+          DISABLED/50
+          ENDFILE/90
+          FILENOTFOUND/1
+          INVREQ/20
+          INVREQ/33
+          NOTOPEN/60
+
+          Note: ENDFILE occurs when a READPREV attempts to read past
+                the beginning of the file.
+
+    d) ENDBR FILE()/DATASET() REQID()
+
+       DATASET is supported for legacy applications. It is noted that
+       this parameter no longer appears in the Manuals.
+
+       REQID
+          Can be specified as a constant, literal or label.
+          A constant must not exceed 32767.
+          A literal or label must be 2 bytes and must not exceed 32767.
+          If omitted, zero is assumed.
+
+       Note: In real CICS, ENDBR cannot cause a file to open, but it
+             will in Z390/CICS. The ENDBR command will be invalid, and
+             may result in a transaction abend.
+
+       Errors
+          BAD PARM
+          BOTH FILE AND DATASET ARE SPECIFIED
+          FILE OR DATASET MUST BE SPECIFIED
+          INVALID FILE OR DATASET
+
+       Conditions (RESP/RESP2)
+          DISABLED/50
+          FILENOTFOUND/1
+          INVREQ/20
+          INVREQ/35
+          NOTOPEN/60
+
+    e) RESETBR FILE()/DATASET() RIDFLD() REQID() RBA/XRBA GTEQ/EQUAL
+
+       Note: XRBA is an extension, do not use this parameter if the
+             source code is likely to be ported back to a mainframe
+             environment.
+
+       DATASET is supported for legacy applications. It is noted that
+       this parameter no longer appears in the Manuals.
+
+       REQID
+          Can be specified as a constant, literal or label.
+          A constant must not exceed 32767.
+          A literal or label must be 2 bytes and must not exceed 32767.
+          If omitted, zero is assumed.
+
+       RBA   RIDFLD has a 4-byte RBA
+       XRBA  RIDFLD has an 8-byte RBA
+          Note: For an ESDS, if neither is specified, RBA is assumed.
+
+       GTEQ/EQUAL currently not used
+
+       Note: In real CICS, RESETBR cannot cause a file to open, but it
+             will in Z390/CICS. The RESETBR command will be invalid, and
+             may result in a transaction abend.
+
+       Errors
+          BAD PARM
+          BOTH FILE AND DATASET ARE SPECIFIED
+          BOTH GTEQ AND EQUAL ARE SPECIFIED
+          BOTH RBA AND XRBA ARE SPECIFIED
+          FILE OR DATASET MUST BE SPECIFIED
+          INVALID FILE OR DATASET
+          RIDFLD IS MANDATORY
+
+       Conditions (RESP/RESP2)
+          DISABLED/50
+          FILENOTFOUND/1
+          INVREQ/20
+          INVREQ/36
+          NOTOPEN/60
+
+ 4) Storage Control (08)
+
+    a) FREEMAIN DATA()/DATAPOINTER()
 
        DATA(label)
           label may only be an indirect reference to the address.
@@ -137,15 +571,15 @@ Supported EXEC CICS commands (detail)
        DATAPOINTER
           Must be specified as a permitted general register value.
 
-    Errors
-       BAD PARM
-       DATA AND DATAPOINTER SPECIFIED
-       DATA OR DATAPOINTER IS MANDATORY
+       Errors
+          BAD PARM
+          BOTH DATA AND DATAPOINTER ARE SPECIFIED
+          DATA OR DATAPOINTER MUST BE SPECIFIED
 
-    Conditions (RESP/RESP2)
-       INVREQ/1   Can be IGNOREd
+       Conditions (RESP/RESP2)
+          INVREQ/1
 
- 3) GETMAIN SET() LENGTH() FLENGTH() INITIMG()
+    b) GETMAIN SET() LENGTH()/FLENGTH() INITIMG()
 
        SET is mandatory
           Must be specified as a permitted general register value.
@@ -165,106 +599,187 @@ Supported EXEC CICS commands (detail)
           Can be specified as a constant, literal or label.
           Only the first byte generated by the parameter is used.
 
-    Errors
-       BAD PARM
-       LENGTH AND FLENGTH SPECIFIED
-       LENGTH OR FLENGTH IS MANDATORY
-       SET IS MANDATORY
+       Errors
+          BAD PARM
+          BOTH LENGTH AND FLENGTH ARE SPECIFIED
+          LENGTH OR FLENGTH MUST BE SPECIFIED
+          SET IS MANDATORY
 
- 4) HANDLE ABEND CANCEL
-    HANDLE ABEND RESET
+ 5) Temporary Storage Control (0A)
 
-    HANDLE ABEND LABEL(label)
-       label may take three forms:
-          Direct reference
-          Indirect reference
-          Adcon literal
+    a) DELETEQ TS QUEUE()/QNAME()
 
-    HANDLE ABEND PROGRAM()
-       Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
-       label must point to an 8-byte field.
+       The parameters MAIN and AUXILIARY are accepted and discarded.
 
-       Any received COMMAREA when the EXEC CICS HANDLE ABEND is issued
-       is passed to the handling program when an abend occurs.
+       QUEUE may be specified as:
+          A quoted string which must not exceed 8 bytes.
+          A label which points to an 8-byte field.
+          A literal not exceeding 8 bytes.
+          Only label or literal may be used to specify a QUEUE with
+          hex characters.
 
-    Notes: When an XCTL is executed, any HANDLE ABEND LABEL at the
-           current logical level is cleared as the current program
-           is no longer in use. HANDLE ABEND PROGRAMs are not cleared.
+       QNAME may be specified as:
+          A quoted string which must not exceed 16 bytes.
+          A label which points to a 16-byte field.
+          A literal not exceeding 16 bytes.
+          Only label or literal may be used to specify a QNAME with
+          hex characters.
 
-    Errors
-       BAD PARM
-       INVALID PROGRAM
-       HANDLE TYPE NOT RECOGNISED
-       PARMS MISSING OR TOO MANY PARMS
+       Errors
+          BAD PARM
+          BOTH QUEUE AND QNAME ARE SPECIFIED
+          DELETEQ TYPE NOT RECOGNIZED
+          INVALID QUEUE OR QNAME
+          QUEUE OR QNAME MUST BE SPECIFIED
 
- 5) HANDLE AID key(label) key etc.
+       Conditions (RESP/RESP2)
+          INVREQ/0
+          QIDERR/0
 
-    The following parameters are not supported...
-       CLRPARTN, LIGHTPEN, OPERID, TRIGGER
+    b) READQ TS QUEUE()/QNAME() INTO()/SET() LENGTH() NUMITEMS()
+       ITEM()/NEXT
 
-    The manual is not clear about ANYKEY (no label). I have assumed that
-    it clears all settings for CLEAR, PA and PF keys.
+       The parameters MAIN and AUXILIARY are accepted and discarded.
 
-    label may take three forms:
-       Direct reference
-       Indirect reference
-       Adcon literal
+       QUEUE may be specified as:
+          A quoted string which must not exceed 8 bytes.
+          A label which points to an 8-byte field.
+          A literal not exceeding 8 bytes.
+          Only label or literal may be used to specify a QUEUE with
+          hex characters.
 
-    eg. EXEC CICS HANDLE AID PA1(GOPA1) PA2(INDGOPA1) PA3(=A(GOPA1))
-        ...
-        GOPA1    DS 0H
-        ...
-        INDGOPA1 DC A(GOPA1)
+       QNAME may be specified as:
+          A quoted string which must not exceed 16 bytes.
+          A label which points to a 16-byte field.
+          A literal not exceeding 16 bytes.
+          Only label or literal may be used to specify a QNAME with
+          hex characters.
 
-    Errors
-       BAD PARM
-       HANDLE TYPE NOT RECOGNISED
+       LENGTH
+          May be specified as LENGTH(value) or LENGTH(label)
+          LENGTH(value) supports the use of the length attribute.
+          label must point to a 2-byte hex value.
 
- 6) HANDLE CONDITION condition(label) condition etc.
+          LENGTH can be omitted. When it is, the implied length of
+          INTO is used. LENGTH is mandatory when SET is used.
 
-    Only the following conditions are supported:
-       ERROR, INVREQ, LENGERR, PGMIDERR
+       ITEM
+          May be specified as ITEM(value) or ITEM(label)
+          label must point to a 2-byte hex value.
 
-    label may take three forms:
-       Direct reference
-       Indirect reference
-       Adcon literal
+       Errors
+          BAD PARM
+          BOTH INTO AND SET ARE SPECIFIED
+          BOTH ITEM AND NEXT ARE SPECIFIED
+          BOTH QUEUE AND QNAME ARE SPECIFIED
+          INTO OR SET MUST BE SPECIFIED
+          INVALID QUEUE OR QNAME
+          ITEM OR NEXT MUST BE SPECIFIED
+          QUEUE OR QNAME MUST BE SPECIFIED
+          READQ TYPE NOT RECOGNIZED
+          SET REQUIRES LENGTH
 
-       See HANDLE AID for examples of these forms.
+       Conditions (RESP/RESP2)
+          INVREQ/0
+          LENGERR/0
+          ITEMERR/0
+          QIDERR/0
 
-    Errors
-       BAD PARM
-       HANDLE TYPE NOT RECOGNISED
+    c) WRITEQ TS QUEUE()/QNAME() FROM() LENGTH() NUMITEMS() ITEM()
+       REWRITE
 
- 7) IGNORE CONDITION condition ...
+       The parameters MAIN and AUXILIARY are accepted and discarded.
 
-    Only the following conditions are supported:
-       ERROR, INVREQ, LENGERR, PGMIDERR
+       QUEUE may be specified as:
+          A quoted string which must not exceed 8 bytes.
+          A label which points to an 8-byte field.
+          A literal not exceeding 8 bytes.
+          Only label or literal may be used to specify a QUEUE with
+          hex characters.
 
-    Notes:
-       Ignoring an error may lead to unpredictable abends.
-       Advice for the asking.
+       QNAME may be specified as:
+          A quoted string which must not exceed 16 bytes.
+          A label which points to a 16-byte field.
+          A literal not exceeding 16 bytes.
+          Only label or literal may be used to specify a QNAME with
+          hex characters.
 
-       PGMIDERR or ERROR by default...
-          The EXEC CICS command treated as never existed.
+       FROM(label) is mandatory.
+          label may take three forms:
+             Direct reference
+             Indirect reference
+             Adcon literal
 
-       INVREQ or ERROR by default...
-          EXEC CICS RELEASE never existed.
-          EXEC CICS RETURN...
-             This will abend the task ASRA as I cannot ignore a RETURN.
+       LENGTH
+          May be specified as LENGTH(value) or LENGTH(label)
+          LENGTH(value) supports the use of the length attribute.
+          label must point to a 2-byte hex value.
 
-        LENGERR or ERROR by default...
-          Only on EXEC CICS RECEIVE.
-          NOHANDLE and any outstanding HANDLE AID will not invoke this
-          condition.
+          LENGTH can be omitted. When it is, the implied length of
+          FROM is used. LENGTH is mandatory when FROM is an indirect
+          reference.
 
-          Testing is not complete for this condition.
+       ITEM
+          May be specified as ITEM(value) or ITEM(label)
+          label must point to a 2-byte hex value.
 
-    Errors
-       BAD PARM
-       IGNORE TYPE NOT RECOGNISED
+       Errors
+          BAD PARM
+          BOTH QUEUE AND QNAME ARE SPECIFIED
+          FROM IS MANDATORY
+          IF NUMITEMS IS SPECIFIED, ITEM AND REWRITE ARE INVALID
+          INVALID QUEUE OR QNAME
+          ITEM AND REWRITE MUST BOTH BE SPECIFIED
+          LENGTH IS MANDATORY FOR INDIRECT FROM
+          LENGTH WITHOUT FROM
+          QUEUE OR QNAME MUST BE SPECIFIED
+          WRITEQ TYPE NOT RECOGNIZED
 
- 8) LINK PROGRAM() COMMAREA(label) LENGTH()
+       Conditions (RESP/RESP2)
+          INVREQ/0
+          LENGERR/0
+          ITEMERR/0
+          QIDERR/0
+
+ 6) Program Control (0E)
+
+    a) ABEND ABCODE() CANCEL NODUMP
+
+       ABCODE can be specified as ABCODE('xxxx') or ABCODE(label)
+       label must point to a 4-byte field.
+
+       Errors
+          ABCODE MUST NOT BEGIN WITH 'A'
+          ABCODE IS INVALID
+          BAD PARM
+
+    b) HANDLE ABEND CANCEL
+       HANDLE ABEND RESET
+
+       HANDLE ABEND LABEL(label)
+          label may take three forms:
+             Direct reference
+             Indirect reference
+             Adcon literal
+
+       HANDLE ABEND PROGRAM()
+          Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
+          label must point to an 8-byte field.
+
+          Any received COMMAREA when the EXEC CICS HANDLE ABEND is
+          issued is passed to the handling program when an abend occurs.
+
+       Notes: When an XCTL is executed, any HANDLE ABEND LABEL at the
+              current logical level is cleared as the current program
+              is no longer in use. HANDLE ABEND PROGRAMs are not cleared.
+
+       Errors
+          BAD PARM
+          INVALID PROGRAM
+          HANDLE TYPE NOT RECOGNISED
+          PARMS MISSING OR TOO MANY PARMS
+
+    c) LINK PROGRAM() COMMAREA(label) LENGTH()
 
        Executes another CICS program.
        If COMMAREA is present, the address/length are passed.
@@ -289,17 +804,17 @@ Supported EXEC CICS commands (detail)
           COMMAREA is used. LENGTH is mandatory when COMMAREA is an
           indirect reference.
 
-    Errors
-       BAD PARM
-       INVALID PROGRAM
-       PROGRAM IS MISSING
-       LENGTH IS MANDATORY FOR INDIRECT COMMAREA
-       LENGTH WITHOUT COMMAREA
+       Errors
+          BAD PARM
+          INVALID PROGRAM
+          PROGRAM IS MISSING
+          LENGTH IS MANDATORY FOR INDIRECT COMMAREA
+          LENGTH WITHOUT COMMAREA
 
-    Conditions (RESP/RESP2)
-       PGMIDERR/3   Can be IGNOREd
+       Conditions (RESP/RESP2)
+          PGMIDERR/3
 
- 9) LOAD PROGRAM() ENTRY() SET() LENGTH(label) FLENGTH(label)
+    d) LOAD PROGRAM() ENTRY()/SET() LENGTH(label) FLENGTH(label)
 
        Loads a module.
        The intention in the Z390/CICS environment is to load a table
@@ -309,7 +824,8 @@ Supported EXEC CICS commands (detail)
           Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
           label must point to an 8-byte field.
 
-          At present, only modules with a suffix of .390 may be LOADed.
+          At present, only modules with a suffix of .390 may be
+          LOADed.
 
        ENTRY and SET are optional
           Must be specified as a permitted general register value.
@@ -323,71 +839,36 @@ Supported EXEC CICS commands (detail)
           FLENGTH(label) is the only format.
           label must point to a 4-byte field.
 
-    Note: At task end the LOADed module is not RELEASEd.
+       Note: At task end the LOADed module is not RELEASEd.
 
-    Errors
-       BAD PARM
-       INVALID PROGRAM
-       LENGTH AND FLENGTH SPECIFIED
-       PROGRAM IS MISSING
+       Errors
+          BAD PARM
+          INVALID PROGRAM
+          LENGTH AND FLENGTH SPECIFIED
+          PROGRAM IS MISSING
 
-    Conditions (RESP/RESP2)
-       PGMIDERR/3   Can be IGNOREd
+       Conditions (RESP/RESP2)
+          PGMIDERR/3
 
-10) POP HANDLE
+    e) RELEASE PROGRAM()
 
-    For the HANDLE ABEND, a POP is the equivalent of a HANDLE ABEND
-    RESET.
-
-    Errors
-       POP TYPE NOT RECOGNISED
-
-    Conditions (RESP/RESP2)
-       INVREQ/0     Can be IGNOREd
-
-11) PUSH HANDLE
-
-    For the HANDLE ABEND, a PUSH is the equivalent of a HANDLE ABEND
-    CANCEL.
-
-    Errors
-       PUSH TYPE NOT RECOGNISED
-
-12) RECEIVE INTO(label) LENGTH(label) NOHANDLE
-
-    INTO(label) and LENGTH(label) are mandatory.
-    LENGTH must point to a 2-byte field.
-
-    Although MAXLENGTH is not implemented yet, there is an internal
-    maximum length set to the implied length of the INTO label.
-
-    NOHANDLE is optional.
-
-    Errors
-       BAD PARM
-       BOTH INTO AND LENGTH ARE REQUIRED
-       LENGTH ERROR
-
-    Conditions (RESP/RESP2)
-       LENGERR/0    Can be IGNOREd
-
-13) RELEASE PROGRAM()
        Releases a previously LOADed module.
 
        PROGRAM is mandatory
           Can be specified as PROGRAM('xxxxxxxx') or PROGRAM(label)
           label must point to an 8-byte field.
 
-    Errors
-       BAD PARM
-       INVALID PROGRAM
-       PROGRAM IS MISSING
+       Errors
+          BAD PARM
+          INVALID PROGRAM
+          PROGRAM IS MISSING
 
-    Conditions (RESP/RESP2)
-       INVREQ/5     Can be IGNOREd
-       INVREQ/6     Can be IGNOREd
+       Conditions (RESP/RESP2)
+          INVREQ/5
+          INVREQ/6
 
-14) RETURN TRANSID() COMMAREA(label) LENGTH()
+    f) RETURN TRANSID() COMMAREA(label) LENGTH()
+
        Returns to the last caller.
 
        TRANSID
@@ -410,35 +891,18 @@ Supported EXEC CICS commands (detail)
           COMMAREA is used. LENGTH is mandatory when COMMAREA is an
           indirect reference.
 
-    Errors
-       BAD PARM
-       INVALID TRANSID
-       TRANSID IS MISSING
-       LENGTH IS MANDATORY FOR INDIRECT COMMAREA
-       LENGTH WITHOUT COMMAREA
+       Errors
+          BAD PARM
+          INVALID TRANSID
+          TRANSID IS MISSING
+          LENGTH IS MANDATORY FOR INDIRECT COMMAREA
+          LENGTH WITHOUT COMMAREA
 
-    Conditions (RESP/RESP2)
-       INVREQ/2     Cannot be IGNOREd
+       Conditions (RESP/RESP2)
+          INVREQ/2     See the section on IGNORE for this condition
 
-15) SEND FROM(label) LENGTH()
+    g) XCTL PROGRAM() COMMAREA(label) LENGTH()
 
-       FROM(label) is mandatory.
-          label may take three forms:
-             Direct reference
-             Indirect reference
-             Adcon literal
-
-       LENGTH
-          Can be specified as LENGTH(value) or LENGTH(label)
-          LENGTH(value) supports the use of the length attribute.
-          label must point to a 2-byte hex value.
-
-    Errors
-       BAD PARM
-       FROM IS MANDATORY
-       LENGTH IS MANDATORY
-
-16) XCTL PROGRAM() COMMAREA(label) LENGTH()
        Executes another CICS program.
 
        If COMMAREA is present and both the address and length are the
@@ -469,15 +933,15 @@ Supported EXEC CICS commands (detail)
           COMMAREA is used. LENGTH is mandatory when COMMAREA is an
           indirect reference.
 
-    Errors
-       BAD PARM
-       INVALID PROGRAM
-       PROGRAM IS MISSING
-       LENGTH IS MANDATORY FOR INDIRECT COMMAREA
-       LENGTH WITHOUT COMMAREA
+       Errors
+          BAD PARM
+          INVALID PROGRAM
+          PROGRAM IS MISSING
+          LENGTH IS MANDATORY FOR INDIRECT COMMAREA
+          LENGTH WITHOUT COMMAREA
 
-    Conditions (RESP/RESP2)
-       PGMIDERR/3   Can be IGNOREd
+       Conditions (RESP/RESP2)
+          PGMIDERR/3
 
 Appendicies
 -----------
@@ -501,7 +965,7 @@ Trademarks
 CICS is a registered trademark of International Business Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 25, 2007
-Z390 version: V1.3.04c
-Z390/CICS version: V2
+Shipping Date: October 1st, 2007
+Z390 version: V1.3.08
+Z390/CICS version: V3
 

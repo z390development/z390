@@ -1,0 +1,45 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYFILE01,                                       X
+               FILSTAT=(OPENED,ENABLED),                               X
+               RECFORM=VARIABLE,                                       X
+               SERVREQ=(READ,BROWSE)
+*
+* TEST INVALID FUNCTION (READ)
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYFILE02,                                       X
+               FILSTAT=(CLOSED,ENABLED),                               X
+               RECFORM=FIXED,                                          X
+               SERVREQ=ADD,
+*
+* TEST NOTOPEN
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYFILE03,                                       X
+               FILSTAT=(CLOSED,UNENABLED),                             X
+               RECFORM=FIXED,                                          X
+               SERVREQ=(READ,BROWSE,UPDATE,DELETE,ADD)
+*
+* TEST DISABLED
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYFILE04,                                       X
+               FILSTAT=(CLOSED,DISABLED),                              X
+               RECFORM=FIXED,                                          X
+               SERVREQ=(READ,BROWSE,UPDATE,DELETE,ADD)
+*
+* TEST INDIRECT, MYFILE05 READS MYFILE02
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYFILE05,                                       X
+               FILSTAT=(CLOSED,ENABLED),                               X
+               RECFORM=FIXED,                                          X
+               SERVREQ=(READ,BROWSE,UPDATE,DELETE,ADD)
+*
+         COPY   DFHFCTUS
+*
+         DFHFCT TYPE=FINAL
+         END
+

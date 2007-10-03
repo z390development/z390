@@ -15,6 +15,7 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 06/22/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC 221 R0=1 R1=A(RPL)
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 10/01/07 RPI 709 CORRECT MNOTE TEXT                                    
 .*********************************************************************
 &N       GET   &DCB,    DCB                                            X
                &REC,    RECORD                                         X
@@ -26,7 +27,7 @@
 .SKIPDS  ANOP
          AIF   (&MF NE 'I').ERR3
          AIF   (N'&SYSLIST LE 2).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
+         MNOTE 12,'GET UNSUPPORTED OPERANDS - &SYSLIST(3)'
          MEXIT
 .NPOK    ANOP
          AIF   (&RPL NE '').VSAM
@@ -60,7 +61,7 @@
          LA    0,RPLOPGET
          SVC   121 VSAM GET R0=1 R1=A(RPL)
          MEXIT         
-.ERR1    MNOTE 12,'GET TYPE=P NOT SUPPORTED'
+.ERR1    MNOTE 12,'GET TYPE= NOT SUPPORTED'
          MEXIT
 .ERR2    MNOTE 12,'GET RECORD REG INVALID - &REC(1)'
          MEXIT

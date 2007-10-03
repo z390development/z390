@@ -49,7 +49,7 @@ public  class  tz390 {
     *          use by both mz390 and az390
     * 12/23/05 RPI 127 allow file sfx overrides and add
     *          shared set_pgm_dir_name_type method
-    * 12/23/05 RPI 131 MAXFILE default 10 MB
+    * 12/23/05 RPI 131 MAXFILE default 10 MB (see RPI 707)
     * 12/31/05 add update_key_index for use by mz390
     * 12/31/05 RPI 150 add OPSYN support 
     * 01/14/06 RPI 168 correct null dir_cur in z390 startup
@@ -135,7 +135,9 @@ public  class  tz390 {
     *           1. List missing COPY and MACRO files.
     *           2. List undefined symbols if #1 = 0
     *           3. Total errror counts to ERR and CON only. 
-    * 09/18/07 RPI 697 add TRACEQ for QSAM file I/O trace          
+    * 09/18/07 RPI 697 add TRACEQ for QSAM file I/O trace   
+    * 09/28/07 RPI 707 change MAXFILE default to 1000 vs 10000  
+    * 10/01/07 RPI 700 set dir_390 to pgm_dir + linklib     
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -144,7 +146,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.7f";  //dsh
+    String version    = "V1.3.08";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -204,6 +206,7 @@ public  class  tz390 {
     boolean opt_tracev   = false; // trace VSAM file I/O
     boolean opt_trap     = true;  // trap exceptions as 0C5
     boolean opt_ts       = false; // time-stamp logs RPI 662
+    boolean opt_vcb      = true;  // vsam cache operational
     boolean opt_xref     = true;   // cross reference symbols
     String  cmd_parms = " "; // all options from command
     String  test_ddname = null;
@@ -211,7 +214,7 @@ public  class  tz390 {
     char    z390_rmode31 = 'F';
     int opt_maxcall  = 50;
     int opt_maxesd   = 1000;
-    int opt_maxfile = 10000;
+    int opt_maxfile = 1000;     // RPI 707 max concourrent files open
     int opt_maxgbl  = 100000;   // RPI 284
     int opt_maxlcl  = 100000;   
     int opt_maxline = 200000;
@@ -237,6 +240,7 @@ public  class  tz390 {
     int    min_main_height = 150;
 	int    max_line_len = 80;           // RPI 264
 	long   max_file_size = 50 << 20;    // max file output 
+	int    max_rba_size = 0x7fffffff;   // max vsam RBA vs XRBA RPI 706
 	long   max_time_seconds  = 15;      // TIME(15)max elapsed time - override time(sec)
 	int    monitor_wait = 300;          // fix interval in milliseconds
     int    max_mem           = 1;       // MEM(1)  MB memory default (see mem(mb) override)
@@ -3657,7 +3661,7 @@ public void init_options(String[] args,String pgm_type){
     	if (!set_pgm_dir_name_type(args[0],pgm_type)){
     		abort_error(4,"invalid input file option - " + args[0]);
     	}
-    	dir_390 = pgm_dir;
+    	dir_390 = pgm_dir + "+linklib"; // RPI 700
     	dir_bal = pgm_dir;
     	dir_cpy = pgm_dir;
         dir_dat = pgm_dir;
@@ -3750,7 +3754,7 @@ public void init_options(String[] args,String pgm_type){
            	try {
            		opt_maxfile = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
            	} catch (Exception e){
-           		abort_error(7,"invalid maxfile limit (mb) - " + token);
+           		abort_error(7,"invalid maxfile limit = " + token);
            	}
         } else if (token.length() > 7
           		&& token.substring(0,7).toUpperCase().equals("MAXGBL(")){
@@ -3826,6 +3830,8 @@ public void init_options(String[] args,String pgm_type){
           	opt_time   = false;
         } else if (token.toUpperCase().equals("NOTRAP")){
            	opt_trap = false;
+        } else if (token.toUpperCase().equals("NOVCB")){
+           	opt_vcb = false;
         } else if (token.toUpperCase().equals("NOXREF")){
            	opt_xref = false;
         } else if (token.toUpperCase().equals("OBJHEX")){
@@ -3932,11 +3938,13 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.toUpperCase().equals("TRACEALL")){
            	opt_traceall = true;
            	opt_trace    = true;
+          	opt_tracea   = true;
            	opt_tracem   = true;
            	opt_tracep   = true;
-           	opt_tracea   = true;
            	opt_tracel   = true;
+           	opt_traceq   = true;
            	opt_tracet   = true;
+           	opt_tracev   = true;
            	opt_tracemem = true;
            	opt_list     = true;
            	opt_con   = false;
@@ -3967,7 +3975,9 @@ public void init_options(String[] args,String pgm_type){
         	opt_con   = false;
         } else if (token.toUpperCase().equals("TS")){
         	opt_ts = true; // timestamp traces
-        }
+        } else if (token.toUpperCase().equals("VCB")){
+        	opt_vcb = true; // VSAM Cache Buffering to reduce I/O
+        } 
         index1++;
     }
     if (opt_systerm.length() == 0){  // RPI 425 RPI 546
@@ -5101,5 +5111,36 @@ public void put_trace(String text){
     		opt_obj    = false;
     		opt_stats  = false;
     	}
+    }
+    public String get_ascii_var_string(byte[] byte_array,int mem_addr,int max_len){
+    	/*
+    	 * return ascii variable length string 
+    	 * delimited by null or double quotes which
+    	 * are stripped off along with leading or traling 
+    	 * spaces.
+    	 */
+    	String text = "";
+    	int index = 0;
+    	while (index < max_len){
+    		byte data_byte = byte_array[mem_addr+index];
+    		char data_char;
+    		if (opt_ascii){
+    			data_char = (char) data_byte;
+    		} else {
+    			data_char = (char) ebcdic_to_ascii[data_byte & 0xff]; //RPI42
+    		}
+    		if (data_byte == 0){
+    			break;
+    		}
+    		if (data_char == '"'){
+    			if (index != 0){
+    				break;
+    			}
+    		} else {
+    			text = text + data_char;
+    		}
+    		index++;
+    	}
+        return text.trim();  //RPI111
     }
 }

@@ -7,10 +7,11 @@
 .* Date   - 03/11/07                                                 *
 .*********************************************************************
 .* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.* 10/01/07 RPI 709 CHANGE CLOCK=NO AND FIX MIC STORE/LOAD OFFSETS
 .*********************************************************************
 &N       GETIME &TYPE,     STANDARD(PD)/BINARY/TU/MIC                  X  
                &ZONE,       LOCAL/GMT                      (IGNORED)   X
-               &CLOCK=YES,  R0-R1 CONTAINTS STCK TOD INPUT             X
+               &CLOCK=NO,   R0-R1 CONTAINTS STCK TOD INPUT             X
                &MFG=        RX 64 BYTE WORK AREA FOR RENT  (IGNORED)
          AIF   (&N EQ '').SKIPDS
 &N       DS    0H
@@ -21,7 +22,7 @@
          AIF   (&TYPE EQ 'BINARY').BINARY
          AIF   (&TYPE EQ 'TU').TU
          AIF   (&TYPE EQ 'MIC').MIC
-         MNOTE 12,'GETTIME INVALID TYPE - &TYPE'
+         MNOTE 12,'GETIME INVALID TYPE - &TYPE'
          MEXIT
 .STANDARD ANOP
          TIME  DEC    R0=0CYYDDDC R1=HHMMSSTH  TOD
@@ -42,10 +43,10 @@
 .MIC     ANOP
          BAL   14,*+12
          DC    XL8'00'
-         TIME  MIC,4(14) STORE TOD MIC
-         LM    0,1,4(14) R0-R1 = TOD MIC
+         TIME  MIC,0(14) STORE TOD MIC
+         LM    0,1,0(14) R0-R1 = TOD MIC
          AGO   .EXIT
-.ERR1    MNOTE 12,'GETTIME DOES NOT CURRENTLY SUPPORT CLOCK=YES'
+.ERR1    MNOTE 12,'GETIME DOES NOT CURRENTLY SUPPORT CLOCK=YES'
          MEXIT
 .EXIT    ANOP
          MEND

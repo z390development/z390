@@ -4,6 +4,7 @@
 **/*.[lL][iI][nN][kK]
 
 # Assembler/emulator input stuff
+# **/*.bat --> Dos command files
 # **/*.cbl --> Cobol source code
 # **/*.cpy --> Assembler copy members
 # **/*.in[0-9] --> Test input data
@@ -112,6 +113,7 @@ zcobol/test/z390/
 **/*.[mM][aA]1
 **/*.[sS][aA][vV]
 !util/superzap/*.[sS][aA][vV]
+!linklib/ZAPDEMO1.[sS][aA][vV]
 **/*.[tT][mM][pP]
 **/*.[zZ][iI][pP]
 **/*(2).*

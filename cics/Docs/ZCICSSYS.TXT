@@ -8,12 +8,30 @@ Experienced CICS people may notice a lack of authenticity in the
 background coding and formats, and some use of archaic methods.
 This is all intentional, and as Z390 matures, so will Z390/CICS.
 
-Objective
----------
-To take an existing Assembler CICS application, re-assemble it in the
-Z390 environment and run it unmodified and successfully under Z390/CICS.
+Objectives
+----------
+1) To take an existing Assembler CICS application, re-assemble it in
+   the Z390 environment and run it unmodified and successfully under
+   Z390/CICS.
+
+2) To be able to develop an Assembler CICS application in the Z390
+   environment and transfer the source to the mainframe for re-assembly
+   and testing.
 
 Only the source may be exchanged between any environments.
+
+Version compatability
+---------------------
+Versions of Java and Z390 are tested by Don and there are mechanisms
+for checking compatability.
+
+In Z390/CICS History (ZCICSHST) each Z390/CICS release has a Z390
+version. This is the release/PTF that was used to test Z390/CICS.
+Previous releases of Z390 may not work.
+
+Future releases of Z390 will work unless there is a PTF that requires
+source modification or re-assembly. When that happens, I will ask Don
+to add an instruction to the README and provide fixes as needed.
 
 Current environment
 -------------------
@@ -27,10 +45,19 @@ Z390/CICS Application Programmers Guide (ZCICSAPP.TXT).
 Requests for commands and extra parameters are very welcome and will
 help to set a priority list.
 
+Re-entrancy
+-----------
+Much of the internal code does not conform to the strict (quasi)-
+re-entrancy rules required of mainframe CICS.
+
+If you are developing an application for later transfer to the
+mainframe, you must obey all the re-entrancy rules. There is no
+checking yet for rule breaking.
+
 Regression testing
 ------------------
-The program RTZCICS tests good and bad forms of supported EXEC CICS
-functions. It is not part of DFHALL.BAT and must be re-assembled
+The programs RTZCICS1 and 2 test good and bad forms of supported EXEC
+CICS functions. They are not part of DFHALL.BAT and must be re-assembled
 separately.
 
 There should be no assembler errors, only a collection of sev 12 MNOTEs.
@@ -40,13 +67,14 @@ How it works
 I have split the Z390/CICS environment into two sections.
 
 The primary task is Z390CICS, which I have called the Global Manager.
-This will handle all shared resources like TS, IC, etc.
+This will handle all shared resources like TS, FC, etc.
 
 Each terminal has its own Command Prompt (MS-DOS task).
 This environment runs Z390KCP and invokes any Application programs
 requested.
 
-It is effectively a single terminal, single task environment.
+Each Command Prompt is effectively a single terminal, single task
+environment.
 
 Z390KCP is therefore the Local Manager handling EIB, COMMAREAs, DSAs
 and other task related storage.
@@ -60,37 +88,39 @@ Setting it up
 Parameters...
    The Z390CICS.INI file is self-documenting.
 
-   Two parameters need to be changed...
-      JAR_PATH  points to the location of the Z390.JAR program.
-      CICS_PATH points to the location of the Z390/CICS programs
-
-The following BAT files need to be modified to your own environment...
+The following BAT files may need to be modified to your own environment...
    Z390CICG - Start up CICS
 
-   Z390KCPR - Start a remote terminal.
-              Especially important that you regularly check that your
-              IP address is correct. This may vary and should always be
-              checked with the IPCONFIG command.
+   Z390KCPR - Start 1 remote terminal for testing/tracing.
+
+   Z390KCPL - Start many remote terminals.
 
 DFHPCT.MLC has a basic set of test transaction codes which are listed
 later. Users should add their own transactions to DFHPCTUS.CPY and
-re-assembled the PCT.
+re-assemble the PCT.
+
+DFHFCT.MLC has a basic set of test files.  Users should add their own
+files to DFHFCTUS.CPY and re-assemble the FCT.
+File creation and setup is more fully described in the Z390/CICS VSAM
+Guide (ZCICSVSM.TXT).
 
 Local and Remote terminals
 --------------------------
 A Local terminal is a Command Prompt (MS-DOS task) that is auto-started
 when Z390CICS is started. The number of Local terminals that are started
-is controlled by the LOCAL_TERMINALS parameter.
+is controlled by the LOCAL_TERMINALS= parameter.
 
-A Remote terminal must be started in a Command Prompt that you have
-manually created and is initiated by using Z390KCPR (see the 'Starting
-it up' section).
+A Remote terminal must be started from a Command Prompt that you have
+manually created and is initiated by using Z390KCPR or Z390KCPL (see
+the 'Starting it up' section).
 
 A Remote terminal doesn't have to be on the same PC as Z390CICS, but
 can be on another PC connected via a home network.
 
 There is a restraint on the number of Remote terminals set by the
-REMOTE_TERMINALS parameter.
+REMOTE_TERMINALS= parameter.
+
+The MAXTHREADS= parameter defines the upper limit for all terminals.
 
 Starting it up
 --------------
@@ -100,13 +130,32 @@ From the Z390 GUI (recommended), or in your own Command Prompt...
    This will start the Z390/CICS Global Manager and all Local terminals.
 
 2) A Remote terminal may be set up as follows...
-   Create a Command Prompt window and use CD to navigate to, and invoke
-   Z390KCPR.
 
-   You should get another Z390/CICS window.
+   a) Method 1 : One remote for testing
+      If interactive debugging of an application is wanted...
+      Create a Command Prompt window and use CD to navigate to, and
+      invoke Z390KCPR. Parameters like TEST and TRACE may be added.
 
-   This method should be used if the code needs to use the Z390 debug
-   facilities, in which case use Z390KCPR TEST
+      The remote terminal will be started in the Command Prompt.
+
+      If TEST is specified, then Z390/CICS progress cannot be made
+      unless you give commands to the Z390 GUI as well.
+
+   b) Method 2 : The Launcher
+      Create a Command Prompt window and use CD to navigate to, and
+      invoke Z390KCPL.
+
+      Z390KCPL takes a single digit parameter, eg. Z390KCPL 2
+      A parameter of 1 is assumed if missing.
+
+      Z390KCPL does not use the current Command Prompt, but creates
+      the specified number of remote terminals in other windows.
+
+      The use of TEST or TRACE is not recommended and will only affect
+      the launcher program Z390RMTE.
+
+      The number of terminals actually started is subject to both the
+      REMOTE_TERMINALS= and the MAXTHREADS= parameters.
 
 Ok, I've got a blank Z390/CICS screen or a logo...now what ?
 ------------------------------------------------------------
@@ -142,20 +191,19 @@ From the 'initial screen' you can perform the following tests...
    BED5        HANDLE ABEND testing. Complex handling.
                Follow the on-screen instructions.
 
-   CEMT I TER       displays the state of all terminals
-                    ENTER does a refresh
+   BED9        Temporary Storage testing.
+               Also builds an environment for testing CEBR.
+               Can be run multiple times to extend the CEBR test queues.
 
-   CEMT I TRA       displays the PCT
-   CEMT I SYS       displays the Z390CICS.INI file
-   CEMT S TER OUT   shuts down Z390KCP
-   CEMT P SHU       shut down the server if no active tasks
-   CEMT P SHU IMM   shut down the server immediately
+   VSM1        Read and browse of ESDS files.
+               Records successfully read are written to the TS queue
+               VSM1.
 
 Shutdown
 --------
-Some shutdown methods still leave the CICS window behind.
-Myself and Don are working to resolve this, just click close (big X) on
-each stranded window.
+CEMT P SHU IMM may still leave a Z390/CICS window behind.
+I am working to resolve this, just click close (big X) on each
+stranded window.
 
    CEMT S TER OUT
       This closes the terminal.
@@ -173,12 +221,13 @@ each stranded window.
     CEMT P SHU IMM
        The terminal issuing this command will be closed.
        The server is then closed and Z390/CICS ends.
+       Terminals with active tasks may remain stranded.
 
 Abends
 ------
 
-Abends are now handled properly, SNAP dumps are provided when requested
-or when circumstances demand them.
+SNAP dumps are provided when requested or when circumstances demand
+them.
 
 A standard abend message (DFH2206) is usually displayed.
 
@@ -205,6 +254,7 @@ The Z390 GUI can stay up and won't be harmed by this process.
 a) Right click the taskbar
 b) Select Task Manager
 c) Search for java.exe
+   There might be more than one, repeat d) and e) below for each one
    You can sort the tasks by clicking on 'Image name'
    Don't confuse this with javaw.exe
 d) Right click on java.exe
@@ -216,7 +266,7 @@ Trademarks
 CICS is a registered trademark of International Business Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: June 25, 2007
-Z390 version: V1.3.04c
-Z390/CICS version: V2
+Shipping Date: October 1st, 2007
+Z390 version: V1.3.08
+Z390/CICS version: V3
 

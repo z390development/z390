@@ -4,7 +4,8 @@
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 *********************************************************************
-DFHEISTG DSECT                    DSA STORAGE
+         DFHEIGBL
+         DFHEISTG
 PARSE    DS    0H
 PARSE1   DS    CL20               COMMAND
 PARSE2   DS    CL20               OPERATION TYPE
@@ -19,11 +20,15 @@ SNDISYSL DS    CL(ISYSLSTL)
 * I TER  MESSAGE AREA
 SNDITERT DS    CL(ITERTITE)
 SNDITERL DS    CL(ITERLSTL)
-* I TRAN MESSAGE AREA
+* I TRA MESSAGE AREA
 SNDITRNT DS    CL(ITRNTITE)
 SNDITRNL DS    CL(ITRNLSTL)
+* I FIL MESSAGE AREA
+SNDIFILT DS    CL(IFILTITE)
+SNDIFILL DS    CL(IFILLSTL)
 *
-Z390CEMT CSECT
+Z390CEMT DFHEIENT CODEREG=(R12,R3)
+*
 * CEMT FUNCTIONS
 *   THE FULL SYSTAX IS SUPPORTED, EG. CEMT PERFORM SHUTDOWN IMMEDIATE
 *   THE FOLLOWING MINIMUMS ARE TESTED
@@ -31,7 +36,10 @@ Z390CEMT CSECT
 *   I SYS        REQUEST Z390CICS.INI INFO AND DISPLAY
 *   I TER        REQUEST TERMINAL INFO AND DISPLAY
 *   I TRA        PCT DISPLAY
+*   I FIL        FCT DISPLAY
+*
 *   S TER OUT    CLOSES THE Z390KCP THREAD (CLIENT)
+*
 *   P SHU        CLOSES THE Z390KCP THREAD (CLIENT)
 *                WHEN ALL ACTIVE TASKS HAVE ENDED, CLOSE SERVER
 *   P SHU IMM    CLOSE THE SERVER
@@ -83,6 +91,8 @@ PROCESS  EQU   *
          BE    ITER               EXIT IF IT IS
          CLC   PARSE2(3),=C'TRA'  I TRA ?
          BE    ITRN               EXIT IF IT IS
+         CLC   PARSE2(3),=C'FIL'  I FIL ?
+         BE    IFIL               EXIT IF IT IS
          B     PARSERR            EXIT IF BAD
 *
 ISYS     EQU   *
@@ -109,27 +119,50 @@ ISYS     EQU   *
          LA    R7,CEMTDATA        R7=RECEIVED DATA
          USING ISYSDATA,R7
 * MOVE THE DATA
-         MVC   ISYSJPTH,ISYSDJRP  MOVE JAR_PATH
-         MVC   ISYSCPTH,ISYSDCSP  MOVE CICS_PATH
+         MVC   ISYSJPTH,ISYSDJRP  MOVE JARPATH
+         MVC   ISYSCPTH,ISYSDCSP  MOVE CICSPATH
          MVC   ISYSTPFX,ISYSDPFX  MOVE TERMID_PREFIX
-         MVC   ISYSMAXT(1),ISYSDTHD MOVE MAXTHREADS
-         OI    ISYSMAXT,C'0'      CONVERT TO CHAR
-         CLI   ISYSDTHD,X'0A'     IS IT 10 ?
+         MVC   ISYSTDAT,=C'UK'    SET DEFAULT DATE FORMAT
+         CLI   ISYSDDTE,C'K'      IS DATE=UK ?
+         BE    ISYSDTDN           EXIT IF IT IS
+         MVC   ISYSTDAT,=C'US'    SET US FORMAT
+ISYSDTDN EQU   *
+         MVC   ISYSMAXU+1(1),ISYSDTUS MOVE MAXTHREADS IN USE
+         OI    ISYSMAXU+1,C'0'    CONVERT TO CHAR
+         CLI   ISYSDTUS,X'0A'     IS IT 10 ?
          BNE   ISYSHEX1           EXIT IF NOT
-         MVC   ISYSMAXT,=C'10'    SET 10
+         MVC   ISYSMAXU,=C'10'    SET 10
 ISYSHEX1 EQU   *
-         MVC   ISYSLOCL(1),ISYSDLCL MOVE LOCAL_TERMINALS
-         OI    ISYSLOCL,C'0'      CONVERT TO CHAR
-         CLI   ISYSDLCL,X'0A'     IS IT 10 ?
+         MVC   ISYSMAXT+1(1),ISYSDTMX MOVE MAXTHREADS
+         OI    ISYSMAXT+1,C'0'      CONVERT TO CHAR
+         CLI   ISYSDTMX,X'0A'     IS IT 10 ?
          BNE   ISYSHEX2           EXIT IF NOT
-         MVC   ISYSLOCL,=C'10'    SET 10
+         MVC   ISYSMAXT,=C'10'    SET 10
 ISYSHEX2 EQU   *
-         MVC   ISYSREMT(1),ISYSDRMT MOVE REMOTE_TERMINALS
-         OI    ISYSREMT,C'0'      CONVERT TO CHAR
-         CLI   ISYSDRMT,X'0A'     IS IT 10 ?
+         MVC   ISYSLCLU+1(1),ISYSDLUS MOVE LOCAL TERMINALS IN USE
+         OI    ISYSLCLU+1,C'0'      CONVERT TO CHAR
+         CLI   ISYSDLUS,X'0A'     IS IT 10 ?
          BNE   ISYSHEX3           EXIT IF NOT
-         MVC   ISYSREMT,=C'10'    SET 10
+         MVC   ISYSLCLU,=C'10'    SET 10
 ISYSHEX3 EQU   *
+         MVC   ISYSLOCL+1(1),ISYSDLCL MOVE LOCAL_TERMINALS
+         OI    ISYSLOCL+1,C'0'      CONVERT TO CHAR
+         CLI   ISYSDLCL,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX4           EXIT IF NOT
+         MVC   ISYSLOCL,=C'10'    SET 10
+ISYSHEX4 EQU   *
+         MVC   ISYSRMTU+1(1),ISYSDRUS MOVE REMOTE TERMINALS IN USE
+         OI    ISYSRMTU+1,C'0'      CONVERT TO CHAR
+         CLI   ISYSDRUS,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX5           EXIT IF NOT
+         MVC   ISYSRMTU,=C'10'    SET 10
+ISYSHEX5 EQU   *
+         MVC   ISYSREMT+1(1),ISYSDRMT MOVE REMOTE_TERMINALS
+         OI    ISYSREMT+1,C'0'      CONVERT TO CHAR
+         CLI   ISYSDRMT,X'0A'     IS IT 10 ?
+         BNE   ISYSHEX6           EXIT IF NOT
+         MVC   ISYSREMT,=C'10'    SET 10
+ISYSHEX6 EQU   *
          MVC   ISYSLTRC,ISYSDTRL  MOVE TRACE_LOCALS
          MVC   ISYSZTRC,ISYSDTRZ  MOVE TRACE_Z390CICS
          MVC   ISYSINIT,ISYSDINT  MOVE INITIAL_TRANSID
@@ -188,8 +221,8 @@ ITERNXT  EQU   *
          B     RETURN             END OF PROGRAM
 *
 ITRN     EQU   *
-* PROCESS CEMT I TRAN, IGNORE OTHER PARMS
-* ### LIMIT OF 12
+* PROCESS CEMT I TRA, IGNORE OTHER PARMS
+* ### LIMIT OF 15
 * ### LATER, EXTEND AND CODE PAGE FORWARD (PF7) AND BACK (PF8)
          EXEC  CICS LOAD PROGRAM('DFHPCT') SET(R6)
          ST    R6,DFHPCTAD        SAVE LOAD POINT
@@ -202,7 +235,7 @@ ITRN     EQU   *
          LA    R6,SNDITRNL        R6=LIST ADDRESS
          USING ITRNDSCT,R6
          L     R7,DFHPCTAD        R7=PCT ADDRESS
-         LA    R8,12              R8=MAX TRANSIDS
+         LA    R8,15              R8=MAX TRANSIDS
 ITRNLOOP EQU   *
          MVC   ITRNTRAN,0(R7)     MOVE TRANSID
          MVC   ITRNPROG,4(R7)     MOVE PROGRAM
@@ -223,6 +256,96 @@ ITRNSEND EQU   *
          EXEC  CICS RELEASE PROGRAM('DFHPCT')
          B     RETURN             END OF PROGRAM
 *
+IFIL     EQU   *
+* PROCESS CEMT I FIL, IGNORE OTHER PARMS
+         L     R8,CEMTI           R8=MESSAGE LENGTH
+         LA    R5,CEMTI           R5=MESSAGE
+         MVC   CEMTIREQ,=C'FE05'  SET REQUEST CODE
+         MVC   CEMTITRM,TCTTETI   SET TERMID
+         TCPIO SEND,MSG=(R5),LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+* RECEIVE THE PREFIX ONLY
+* THIS COULD BE A LARGE AREA, SO WE NEED TO GETMAIN A RECEIVE AREA
+         TCPIO RECEIVE,MSG=CEMTRCVE,LMSG=12,PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         L     R8,CEMTRCVE        R8=ACTUAL LENGTH TO RECEIVE
+         MVC   CEMTRCVE,=F'200'   RESTORE THE STANDARD RECEIVE LENGTH
+         AHI   R8,-12             -12 FOR DATA RECEIVED
+         GETMAIN R,LV=(R8),A=IFILGETM
+         ST    R0,IFILGETL        SAVE LENGTH FOR FREEMAIN
+         TCPIO RECEIVE,MSG=0(R1),LMSG=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   TCPIOERR           EXIT IF BAD
+         MVC   SNDIFILT,IFILTITL  SET UP TITLE
+         LA    R6,SNDIFILL        R6=DESTINATION
+         LA    R8,IFILLIST        R8=SOURCE
+         LA    R7,IFILLSTL        DESTINATION LENGTH
+         LR    R9,R7              SOURCE LENGTH
+         MVCL  R6,R8              INITIALIZE LIST
+         LA    R6,SNDIFILL        R6=LIST ADDRESS
+         USING IFILDSCT,R6
+         L     R7,IFILGETM        R7=RECEIVED DATA
+         USING IFILDATA,R7
+IFILLOOP EQU   *
+         MVC   IFILFILE,IFILDFLE  MOVE FILENAME
+         MVC   IFILOPE,=C'OPE'    PRESET OPEN
+         TM    IFILDSTA,FCTOPCLO  IS IT OPEN ?
+         BO    IFILOPEN           EXIT IF IT IS
+         MVC   IFILOPE,=C'CLO'    SET CLOSED
+IFILOPEN EQU   *
+         MVC   IFILENA,=C'ENA'    PRESET ENABLED
+         TM    IFILDSTA,FCTENDIS  IS IT ENABLED ?
+         BO    IFILENAB           EXIT IF IT IS
+         MVC   IFILOPE,=C'DIS'    SET DISABLED
+IFILENAB EQU   *
+         TM    IFILDSTA,FCTUNENA  IS IT UNENABLED ?
+         BNO   IFILNTUN           EXIT IF NOT
+         MVC   IFILOPE,=C'UNE'    SET UNENABLED
+IFILNTUN EQU   *
+         MVC   IFILREA,=C'REA'    SET READ
+         TM    IFILDSRV,FCTREAD   IS IT READ ?
+         BO    IFILREAD           EXIT IF IT IS
+         MVC   IFILREA,=C'   '    SET NO READ
+IFILREAD EQU   *
+         MVC   IFILUPD,=C'UPD'    SET UPDATE
+         TM    IFILDSRV,FCTUPDT   IS IT UPDATE ?
+         BO    IFILUPDT           EXIT IF IT IS
+         MVC   IFILUPD,=C'   '    SET NO UPDATE
+IFILUPDT EQU   *
+         MVC   IFILADD,=C'ADD'    SET ADD
+         TM    IFILDSRV,FCTADD    IS IT ADD ?
+         BO    IFILADD1           EXIT IF IT IS
+         MVC   IFILADD,=C'   '    SET NO ADD
+IFILADD1 EQU   *
+         MVC   IFILBRO,=C'BRO'    SET BROWSE
+         TM    IFILDSRV,FCTBRWSE  IS IT BROWSE ?
+         BO    IFILBRWS           EXIT IF IT IS
+         MVC   IFILBRO,=C'   '    SET NO READ
+IFILBRWS EQU   *
+         MVC   IFILDEL,=C'DEL'    SET DELETE
+         TM    IFILDSRV,FCTDELT   IS IT DELETE ?
+         BO    IFILGOFV           EXIT IF IT IS
+         MVC   IFILDEL,=C'   '    SET NO DELETE
+IFILGOFV EQU   *
+         MVC   IFILFXVR,=C'FIX'   SET FIXED
+         TM    IFILDFXV,FCTFXVIM  IS IT FIXED ?
+         BO    IFILINCR           EXIT IF IT IS
+         MVC   IFILFXVR,=C'VAR'   SET VARIABLE
+IFILINCR EQU   *
+         MVC   IFILDSN,IFILDDSN   MOVE DSNAME
+         AHI   R6,IFILLEN         BUMP OUTPUT POINTER
+         AHI   R7,IFILDLEN        BUMP INPUT POINTER
+         CLI   IFILDFLE,X'FF'     END OF FILES ?
+         BNE   IFILLOOP           LOOP IF NOT
+         EXEC  CICS SEND FROM(SNDIFILT) LENGTH(IFILMLEN)
+         FREEMAIN LA=IFILGETL,A=IFILGETM
+         B     RETURN             END OF PROGRAM
+IFILGETM DS    A                  GETMAIN ADDRESS
+IFILGETL DS    F                  GETMAIN LENGTH
+         DROP  R6,R7
+*
 TRYS     EQU   *
 * SYNTAX CHECK
          CLI   PARSE1,C'S'        S ?
@@ -242,7 +365,6 @@ TRYP     EQU   *
          BNE   PARSERR            ERROR IF NOT
          CLC   PARSE2(3),=C'SHU'  P SHU ?
          BNE   PARSERR            ERROR IF NOT
-         MVI   TCTTETS,X'FF'      SET SHUTTERM REQUEST
          MVC   CEMTIREQ,=C'FE02'  SET REQUEST CODE
          MVC   CEMTITRM,TCTTETI   SET TERMID
          CLC   PARSE3(3),=C'IMM'  P SHU IMM ?
@@ -299,6 +421,7 @@ CEMTI    DS    0F
 * FE01  REQUEST I SYS DATA
 * FE02  REQUEST P SHU
 * FE03  REQUEST P SHU IMM
+* FE05  REQUEST I FIL DATA
          DC    A(CEMTIEND-*)
 CEMTIREQ DS    CL4                REQUEST ID
 CEMTITRM DS    CL4                TERMID
@@ -307,16 +430,17 @@ CEMTIEND EQU   *
 CEMTRCVE DS    0F
 * RECEIVE AREA
 * MUST KEEP THIS CONSISTANT WITH ALL Z390CICS SENDS
-         DC    A(128)             MAX LENGTH
+         DC    A(200)             MAX LENGTH
          DS    CL4                REQUEST CODE
          DS    CL4                TERMINAL ID
-CEMTDATA DS    CL116              RETURNED DATA
+CEMTDATA DS    CL188              RETURNED DATA
 *
 * I SYS -- STRUCTURES
 *
 * -----KEYWORD----  VALUE---------------
-* JAR_PATH          E:\SOFTWARE\Z390
+* JARPATH           E:\SOFTWARE\Z390
 * TERMID_PREFIX     DON
+* THREADS            4 OF 10 ALLOCATED
 *
 ISYSTITL EQU   *
          TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA),IC
@@ -327,30 +451,33 @@ ISYSTITE EQU   *-ISYSTITL
 *
 ISYSLIST EQU   *
          TN3270 (SBA,4,2)
-         DC    CL18'JAR_PATH'
+         DC    CL18'JARPATH'
          DC    CL50' '
          TN3270 (SBA,5,2)
-         DC    CL18'CICS_PATH'
+         DC    CL18'CICSPATH'
          DC    CL50' '
          TN3270 (SBA,6,2)
          DC    CL18'TERMID_PREFIX'
          DC    CL3' '
          TN3270 (SBA,7,2)
-         DC    CL18'MAXTHREADS'
+         DC    CL18'DATE_FORMAT'
          DC    CL2' '
          TN3270 (SBA,8,2)
-         DC    CL18'LOCAL_TERMINALS'
-         DC    CL2' '
+         DC    CL18'THREADS'
+         DC    C' N OF  N ALLOCATED'
          TN3270 (SBA,9,2)
-         DC    CL18'REMOTE_TERMINALS'
-         DC    CL2' '
+         DC    CL18'LOCAL_TERMINALS'
+         DC    C' N OF  N ALLOCATED'
          TN3270 (SBA,10,2)
+         DC    CL18'REMOTE_TERMINALS'
+         DC    C' N OF  N ALLOCATED'
+         TN3270 (SBA,11,2)
          DC    CL18'INITIAL_TRANSID'
          DC    CL4' '
-         TN3270 (SBA,11,2)
+         TN3270 (SBA,12,2)
          DC    CL18'TRACE_LOCALS'
          DC    CL3' '
-         TN3270 (SBA,12,2)
+         TN3270 (SBA,13,2)
          DC    CL18'TRACE_Z390CICS'
          DC    CL3' '
 ISYSLSTL EQU   *-ISYSLIST
@@ -432,8 +559,61 @@ ITRNLIST EQU   *
          DC    CL(ITRNLEN-3)' '
          TN3270 (SBA,15,2)
          DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,16,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,17,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,18,2)
+         DC    CL(ITRNLEN-3)' '
 ITRNLSTL EQU   *-ITRNLIST
 ITRNMLEN DC    AL2(*-ITRNTITL)
+*
+* I FIL -- STRUCTURES
+*
+* FILENAME  ----------- STATUS ------------  DSNAME--------------------
+* MYFILE01  OPE ENA REA UPD ADD BRO DEL FIX  E:\MYFILE01
+*
+IFILTITL EQU   *
+         TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),(SF,ATT_UA),IC
+         DC    C'CEMT I FIL'
+         TN3270 (SBA,3,1),(SF,ATT_PA)
+         DC    C'FILENAME  ----------- STATUS ------------  DSNAME-----X
+               -------------------------'
+IFILTITE EQU   *-IFILTITL
+*
+IFILLIST EQU   *
+         TN3270 (SBA,4,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,5,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,6,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,7,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,8,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,9,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,10,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,11,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,12,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,13,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,14,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,15,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,16,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,17,2)
+         DC    CL(IFILLEN-3)' '
+         TN3270 (SBA,18,2)
+         DC    CL(IFILLEN-3)' '
+IFILLSTL EQU   *-IFILLIST
+IFILMLEN DC    AL2(*-IFILTITL)
 *
 SYNTAX   EQU   *
          TN3270 WCC_KD,(SBA,3,2)
@@ -472,22 +652,35 @@ THRDLEN  EQU   *-THRDDSCT
 ISYSDSCT DSECT
          DS    CL3                SBA
          DS    CL18               HEADER
-ISYSJPTH DS    CL50               JAR_PATH
+ISYSJPTH DS    CL50               JARPATH
          DS    CL3                SBA
          DS    CL18               HEADER
-ISYSCPTH DS    CL50               CICS_PATH
+ISYSCPTH DS    CL50               CICSPATH
          DS    CL3                SBA
          DS    CL18               HEADER
 ISYSTPFX DS    CL3                TERMID_PREFIX
          DS    CL3                SBA
          DS    CL18               HEADER
+ISYSTDAT DS    CL2                DATE FORMAT
+         DS    CL3                SBA
+         DS    CL18               HEADER
+* NN OF NN ALLOCATED
+ISYSMAXU DS    CL2                MAXTHREADS IN USE
+         DS    CL4                ' OF '
 ISYSMAXT DS    CL2                MAXTHREADS
+         DS    CL10               ' ALLOCATED'
          DS    CL3                SBA
          DS    CL18               HEADER
+ISYSLCLU DS    CL2                LOCAL TERMINALS IN USE
+         DS    CL4                ' OF '
 ISYSLOCL DS    CL2                LOCAL_TERMINALS
+         DS    CL10               ' ALLOCATED'
          DS    CL3                SBA
          DS    CL18               HEADER
+ISYSRMTU DS    CL2                REMOTE TERMINALS IN USE
+         DS    CL4                ' OF '
 ISYSREMT DS    CL2                REMOTE_TERMINALS
+         DS    CL10               ' ALLOCATED'
          DS    CL3                SBA
          DS    CL18               HEADER
 ISYSINIT DS    CL4                INITIAL_TRANSID
@@ -501,12 +694,16 @@ ISYSZTRC DS    CL3                TRACE_Z390CICS
 * I SYS -- REQUESTED DATA FORMAT
 *
 ISYSDATA DSECT
-ISYSDJRP DS    CL50               JAR_PATH
-ISYSDCSP DS    CL50               CICS_PATH
+ISYSDJRP DS    CL50               JARPATH
+ISYSDCSP DS    CL50               CICSPATH
 ISYSDPFX DS    CL3                TERMID_PREFIX
-ISYSDTHD DS    X                  MAXTHREADS
+ISYSDDTE DS    C                  DATE FORMAT
+ISYSDTMX DS    X                  MAXTHREADS
+ISYSDTUS DS    X                  THREADS IN USE
 ISYSDLCL DS    X                  LOCAL_TERMINALS
+ISYSDLUS DS    X                  LOCAL TERMINALS IN USE
 ISYSDRMT DS    X                  REMOTE_TERMINALS
+ISYSDRUS DS    X                  REMOTE TERMINALS IN USE
 ISYSDINT DS    CL4                INITIAL_TRANSID
 ISYSDTRL DS    CL3                TRACE_LOCALS
 ISYSDTRZ DS    CL3                TRACE_Z390CICS
@@ -524,7 +721,7 @@ ITERTRAN DS    CL4                TRANSID
 ITERIND  DS    CL9                RUNNING/AVAILABLE/SHUT DOWN
 ITERLEN  EQU   *-ITERDSCT
 *
-* I TRAN -- DSECT OUTPUT
+* I TRA -- DSECT OUTPUT
 *
 ITRNDSCT DSECT
          DS    CL3                SBA
@@ -534,6 +731,45 @@ ITRNPROG DS    CL8                PROGRAM
          DS    CL2
 ITRNMSG  DS    CL17               MESSAGE
 ITRNLEN  EQU   *-ITRNDSCT
+*
+* I FIL -- DSECT OUTPUT
+*
+IFILDSCT DSECT
+         DS    CL3                SBA
+IFILFILE DS    CL8                FILENAME
+         DS    CL2
+IFILOPE  DS    CL3                   OPE/CLO
+         DS    C
+IFILENA  DS    CL3                   ENA/DIS/UNE
+         DS    C
+IFILREA  DS    CL3
+         DS    C
+IFILUPD  DS    CL3
+         DS    C
+IFILADD  DS    CL3
+         DS    C
+IFILBRO  DS    CL3
+         DS    C
+IFILDEL  DS    CL3
+         DS    C
+IFILFXVR DS    CL3                   FIX/VAR
+         DS    CL2
+IFILDSN  DS    CL40               DSNAME
+IFILLEN  EQU   *-IFILDSCT
+*
+*
+* I FIL -- REQUESTED DATA FORMAT
+*
+IFILDATA DSECT
+IFILDFLE DS    CL8                FILENAME
+IFILDSTA DS    X                  STATUS
+IFILDSRV DS    X                  SERVREQ
+IFILDFXV DS    X                  FIXED/VARIABLE
+IFILDDSN DS    CL40               DSNAME
+IFILDLEN EQU   *-IFILDATA
+*
+         DFHFCTDS
+         ACBD
 *
          TN3270 SYMBOLS
          EQUREGS
