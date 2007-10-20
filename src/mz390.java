@@ -290,7 +290,8 @@ public  class  mz390 {
     *           2. List undefined symbols if #1 = 0
     *           3. Total errror counts all reported on ERR, PRN, CON
     *           4. ERRSUM turned on automatically if #1 != 0
-    * 09/12/07 RPI 695 replace single null macro call parm with comma if comments                    
+    * 09/12/07 RPI 695 replace single null macro call parm with comma if comments  
+    * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files                   
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1234,7 +1235,11 @@ public  class  mz390 {
 		 * 1. Set trace_file_name
 		 * 2. Open BAL file if option BAL
 		 */
-		tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.trm_type;
+	    if (tz390.trace_file_name == null){  // RPI 719
+	    	tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.trm_type;
+	    } else {
+	    	tz390.trace_file_name = tz390.trace_file_name + tz390.trm_type;
+	    }
 		if (!tz390.opt_bal){
 			return;
 		}
@@ -1576,6 +1581,7 @@ public  class  mz390 {
 		 */	
 		mac_file[cur_mac_file] = new File(load_file_name);
 		if (!mac_file[cur_mac_file].isFile()){
+			tz390.opt_asm = false; // RPI 720
 			abort_error(39,"file not found - " + load_file_name); //RPI169
 		}
 		load_macro_name = mac_file[cur_mac_file].getName(); // RPI 499 drop upper case
@@ -7250,7 +7256,7 @@ public  class  mz390 {
 			|| tz390.z390_abort){
 			mz390_rc = 16;
 		}
-		if (!tz390.opt_asm){
+		if (!tz390.opt_asm && tot_bal_line > 1){
 			put_stats();
 		}
 		close_files();

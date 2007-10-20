@@ -279,6 +279,7 @@ public  class  az390 implements Runnable {
     *           2. List undefined symbols if #1 = 0
     *           3. Total errror counts all reported on ERR, PRN, CON
     *           4. ERRSUM turned on automatically if #1 != 0
+    * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files 
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -1190,7 +1191,11 @@ private void open_files(){
 	 * 1.  Set trace file name
 	 * 2.  Open obj and prn files
 	 */
-		tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tra_type;
+	    if (tz390.trace_file_name == null){  // RPI 719
+	    	tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tra_type;
+	    } else {
+	    	tz390.trace_file_name = tz390.trace_file_name + tz390.tra_type;
+	    }
        	if (tz390.opt_obj){  // RPI 694
        		try {
        			obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type,"rw"); 

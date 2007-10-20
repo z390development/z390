@@ -1466,7 +1466,7 @@ public  class  gz390
         		   }
         		   if (keyCode == KeyEvent.VK_RIGHT){
         			   	scn_addr++;
-           		    	if (scn_addr == max_addr){
+           		    	if (scn_addr >= max_addr){
             	   			scn_addr = 0;
             	   		}
         	   			tn_update_cursor();
@@ -1613,6 +1613,7 @@ public  class  gz390
          	  if (!tn_kb_lock){
          	  	  tn_aid = 0x6d; // clear key
          	  	  tn_attn = true;
+         	  	  tn_clear_screen(); // dshx
          	  }
     	   }
   	   }
@@ -2618,8 +2619,10 @@ private synchronized void tn_clear_screen(){
 		Arrays.fill(scn_attr,0,max_addr,0);
 		fld_tot = 0;
 		fld_input_tot = 0;
-	    scn_addr = 0;
-	    tn_cursor = false; 
+	    scn_addr = 0;           // dshx
+	    tn_cursor_scn_addr = 0; // dshx
+	    tn_cursor = true;       // dshx 
+	    tn_cursor_alt = false;  // dshx
         tn_scn.scn_grid.clearRect(0,0,tn_scn.scn_width,tn_scn.scn_height);
 }
 private void tn_reset_mdt(){

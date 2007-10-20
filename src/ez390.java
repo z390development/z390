@@ -162,6 +162,7 @@ import javax.swing.Timer;
     * 04/16/07 RPI 595 echo WTOR reply to console if not GUAM or TEST
     * 05/07/07 RPI 610 correct XCTL link on mult link,xctl,exit 
     * 06/22/07 RPI 644 add init for vz390 VSAM access method
+    * 10/18/07 RPI 722 move wtor_reply_buff to sz390
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -193,11 +194,6 @@ import javax.swing.Timer;
         long    monitor_cur_ins  = 0;
         long    monitor_cur_int  = 0;
         long    monitor_cur_rate = 0;
-        boolean monitor_last_cmd_mode = false;
-        /*
-         * wtor console data
-         */
-        BufferedReader    wtor_reply_buff   = null; // RPI 595
     /*
      * time and date variables
      */
@@ -440,12 +436,12 @@ private void monitor_update(){
 			}
 		} else {  // RPI 595
 			try {
-				if (wtor_reply_buff == null){
-					wtor_reply_buff   = new BufferedReader(new InputStreamReader(System.in));
+				if (sz390.wtor_reply_buff == null){
+					sz390.wtor_reply_buff   = new BufferedReader(new InputStreamReader(System.in));
 				}
 				if (pz390.mem.getInt(sz390.wtor_ecb_addr) == sz390.ecb_waiting
-					|| wtor_reply_buff.ready()){
-					sz390.wtor_reply_string = wtor_reply_buff.readLine();
+					|| sz390.wtor_reply_buff.ready()){
+					sz390.wtor_reply_string = sz390.wtor_reply_buff.readLine();
 				}
 			} catch (Exception e){
 				sz390.log_error(93,"wtor reply I/O error - " + e.toString());
@@ -466,7 +462,6 @@ private void monitor_update(){
 	if (tz390.z390_abort){  // RPI 220 shut down due to external request
 		sz390.abort_error(203,"EZ390E monitor external shutdown request");
 	}
-	monitor_last_cmd_mode = sz390.cmd_proc_running[cmd_id];
 	monitor_last_time = monitor_next_time;
 	monitor_last_ins_count  = monitor_next_ins_count;
 	monitor_last_io_count   = monitor_next_io_count;

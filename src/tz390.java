@@ -137,7 +137,8 @@ public  class  tz390 {
     *           3. Total errror counts to ERR and CON only. 
     * 09/18/07 RPI 697 add TRACEQ for QSAM file I/O trace   
     * 09/28/07 RPI 707 change MAXFILE default to 1000 vs 10000  
-    * 10/01/07 RPI 700 set dir_390 to pgm_dir + linklib     
+    * 10/01/07 RPI 700 set dir_390 to pgm_dir + linklib
+    * 10/18/07 RPI 713 replace \ with / for Linux   
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -146,7 +147,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.08";  //dsh
+    String version    = "V1.3.08a";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -307,8 +308,9 @@ public  class  tz390 {
     int    systerm_io     = 0;    // total file io count
     int    systerm_ins    = 0;    // ez390 instruction count
     /*
-     * trace file used by mz390, az390, lz390, ez390
+     * log, trace file used by mz390, az390, lz390, ez390
      */
+    String         log_file_name = null;
     String         trace_file_name = null;
 	File           trace_file = null;
 	BufferedWriter trace_file_buff = null;
@@ -3743,6 +3745,9 @@ public void init_options(String[] args,String pgm_type){
         } else if (token.length() >= 7
           		&& token.substring(0,7).toUpperCase().equals("LISTUSE")){
            	opt_listuse = true;
+        } else if (token.length() > 4
+          		&& token.substring(0,4).toUpperCase().equals("LOG(")){
+         	log_file_name = token.substring(4,token.length()-1); // RPI 719
         } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("MAXCALL(")){
            	opt_maxcall = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
@@ -3926,7 +3931,6 @@ public void init_options(String[] args,String pgm_type){
            	opt_test = true;
         } else if (token.toUpperCase().equals("TRACE")){
            	opt_trace = true;
-           	opt_tracet = true;
            	opt_list   = true;
            	if (!opt_test){
            		opt_con   = false; // RPI 569 leave on if TEST
@@ -3979,6 +3983,14 @@ public void init_options(String[] args,String pgm_type){
         	opt_vcb = true; // VSAM Cache Buffering to reduce I/O
         } 
         index1++;
+    }
+    if (log_file_name != null){ // RPI 719
+    	if (opt_systerm.length() == 0){
+    		opt_systerm = log_file_name;
+    	}
+    	if (trace_file_name == null){
+    		trace_file_name = log_file_name;
+    	}
     }
     if (opt_systerm.length() == 0){  // RPI 425 RPI 546
     	opt_systerm = pgm_name; // RPI 546
@@ -4288,6 +4300,9 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 	 *       the type instead of default file_type. 
 	 */
 	if (file_name == null)return null; // RPI 459
+	if (z390_os_type == z390_os_linux){ 
+		file_name = file_name.replace('\\','/'); // RPI 713
+	}
 	String temp_file_name;
 	File   temp_file;
 	int index = file_name.indexOf('.');

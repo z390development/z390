@@ -279,7 +279,6 @@ public  class  vz390 {
     byte cmp_vx0  = 1;  // primary KSDS ro VRRDS index
     // rc_ok reason codes (see MVS 3.8 IDARMRCD.MAC)
     byte rn_ok      = 0; // ok
-    byte rn_dup_aix_key = 8; // RPLMOKEY dup aix key exists
     // rc_log logical error reason codes
     byte rn_eod          = 4;   // RPLEODER end of data
     byte rn_dup_key      = 8;   // RPLDUP attempt to write dup pri or unique aix key
@@ -464,7 +463,7 @@ public  class  vz390 {
     	 *    3.  Open VES, VX0, and any upgrade VXN's
     	 *    4.  If REPRO and OUTPUT, then reset ves/vx0 eof RPI 701
     	 * Notes:
-    	 *   1.  Issue ABEND 813 if open fails.
+    	 *   1.  Issue ABEND 013 if open fails.
     	 */
     	tot_acb_open++;
     	tot_vsam_oper++;

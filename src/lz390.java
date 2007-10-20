@@ -73,6 +73,7 @@ public  class  lz390 {
     * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
     * 07/15/07 RPI 656 change error message 19 to indicate missing code
     * 07/21/07 RPI 659 add LZ390I to stats on LST
+    * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files 
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -433,7 +434,11 @@ private void open_files(){
 	 * 1.  Set trace file name for TRACEL TRACEALL
 	 * 2.  Open 390 and lst files
 	 */
-	    tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.trl_type;
+        if (tz390.trace_file_name == null){  // RPI 719
+        	tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.trl_type;
+	    } else {
+	    	tz390.trace_file_name = tz390.trace_file_name + tz390.trl_type;
+	    }
        	if (tz390.opt_list){
             lst_file = new File(tz390.dir_lst + tz390.pgm_name + ".LST");
          	try {

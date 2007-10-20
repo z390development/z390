@@ -37,6 +37,7 @@ public class iz390{
 	    ****************************************************
 	    * 05/06/07 initial coding for v1303b 
 	    * 07/12/07 RPI 656 change RT to MVS if MVS not installed
+	    * 10/20/07 RPI 713 change file name case for Linux
 	    ****************************************************
 	    *                                       last RPI
 	    *                                        
@@ -62,7 +63,7 @@ public class iz390{
         System.out.println("IVP OS   verison = " + os_ver);
         System.out.println("IVP J2SE version = " + j2se_ver);
         System.out.println("IVP z390 version = " + z390_ver);
-	    ivp_file_name = z390_dir + File.separator + "z390.ivp";
+	    ivp_file_name = z390_dir + File.separator + "Z390.IVP"; // RPI 713
         ivp_file      = new File(ivp_file_name);
 	    if (ivp_file.isFile()){
         	try {
@@ -77,7 +78,7 @@ public class iz390{
         		ivp_rc = 16;
         	}
 	    } else if (z390_base_ver.compareTo("V1.3.03") > 0) {
-	    	System.out.println("IVP z390 base version file z390.ivp not found");
+	    	System.out.println("IVP z390 base version file Z390.IVP not found");
 	    	ivp_rc = 8;
 	    }
 	    if (j2se_ver.length() < 3 || j2se_ver.substring(0,3).compareTo("1.5") < 0){
@@ -93,7 +94,7 @@ public class iz390{
 	    	System.out.println("IVP RT optional  zip not installed");
 	    	ivp_rc = 4;
 	    } else {
-	    	ivp_file_name = z390_dir + File.separator + "rt" + File.separator + "z390.ivp";
+	    	ivp_file_name = z390_dir + File.separator + "rt" + File.separator + "Z390.IVP";
 	    	ivp_file      = new File(ivp_file_name);
 	    	if (ivp_file.isFile()){
 	    		try {
@@ -121,7 +122,7 @@ public class iz390{
 	    	System.out.println("IVP MVS optional  zip not installed");
 	    	ivp_rc = 4;
 	    } else {
-	    	ivp_file_name = z390_dir + File.separator + "mvs" + File.separator + "z390.ivp";
+	    	ivp_file_name = z390_dir + File.separator + "mvs" + File.separator + "Z390.IVP";
 	    	ivp_file      = new File(ivp_file_name);
 	    	if (ivp_file.isFile()){
 	    		try {

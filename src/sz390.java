@@ -151,7 +151,10 @@ public  class  sz390 implements Runnable {
     *          optional .name suffix to specify entry.  
     * 09/17/07 RPI 697 allow 5 byte QSAM var rcds (err 28/35)
     *          force 5 byte VLR for blank VT input
-    *          add TRACEQ QSAM I/O data trace                   
+    *          add TRACEQ QSAM I/O data trace  
+    * 10/05/07 RPI 712 dont' return data if RC=4 on TGET NOWAIT 
+    * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files 
+    * 10/18/07 RPI 713 replace \ with / and insert cur dir for rel path                        
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -169,6 +172,13 @@ public  class  sz390 implements Runnable {
    int max_ecb_count = 16; // RPI 393
    int max_env_name_len = 256;   // RPI 413
    int max_env_value_len = 4096; // RPI 413 could be move?
+   /*
+    * environment variables
+    */
+   int env_name_addr  = 0;
+   int env_value_addr = 0;
+   String env_name = "";
+   String env_value = "";
    /* 
     * shared global variables
     */
@@ -200,13 +210,6 @@ public  class  sz390 implements Runnable {
     int  stimer_save_r14 = 0; // save r14 during exit
     int  stimer_save_r15 = 0; // save r15 during exit
     int  stimer_save_psw = 0; // save psw at time of exit
-    /*
-     * environment variables
-     */
-    int env_name_addr  = 0;
-    int env_value_addr = 0;
-    String env_name = "";
-    String env_value = "";
     /*
      * gz390 graphical user access method variables
      */
@@ -278,10 +281,13 @@ public  class  sz390 implements Runnable {
         long    monitor_cur_ins  = 0;
         long    monitor_cur_int  = 0;
         long    monitor_cur_rate = 0;
-        boolean monitor_last_cmd_mode = false;
-        boolean wtor_reply_pending = false;
         int wto_fld = 0;
         int wto_len = 0;
+        /*
+         * wtor console data
+         */
+        BufferedReader wtor_reply_buff = null; // RPI 595, RPI 722
+        boolean wtor_reply_pending = false;
         String  wtor_reply_string = null;
         int wtor_reply_addr = 0;
         int wtor_reply_len  = 0;
@@ -734,53 +740,53 @@ public void svc(int svc_id){
 	case 0x33:  // SNAP r0hh=flags,r0ll=id,r14-15 storage
         svc_snap();
         break;
-	case 0x3c:
+	case 0x3c:  // ESTAE R1=ADDR
 	    svc_estae(); // set abend exit R1=addr
 	    break;
-	case 0x67:
-		svc_xlate();  // translate ascii/EBCDIC
-		break;
-	case 0x6d:
-		svc_espie();  // set program check exit R0=types, R1=addr
-		break;
-	case 84:  // GUAM GUI application window I/O
+	case 0x54:  // GUAM GUI application window I/O
 		svc_guam();
 		break;
-	case 93:  // TGET/TPUT TN3290 data stream for GUAM GUI
+	case 0x5d:  // TGET/TPUT TN3290 data stream for GUAM GUI
 		svc_tget_tput();
 		break;
-	case 121: // x'79' VSAM access method
+	case 0x67:  // XLATE 
+		svc_xlate();  // translate ascii/EBCDIC
+		break;
+	case 0x6d:  // ESPIE 
+		svc_espie();  // set program check exit R0=types, R1=addr
+		break;
+	case 0x79: // VSAM access method
 		vz390.cur_vsam_op = pz390.reg.get(pz390.r0 + 3);
 		vz390.svc_vsam();  // RPI 644
 		break;
-	case 124: // x'7C' TCPIO tcp/ip sockets I/O
+	case 0x7c: // TCPIO tcp/ip sockets I/O
 		svc_tcpio();
 		break;
-	case 151: // dcb get move R0=REC,R1=DCB
+	case 0x97: // dcb get move R0=REC,R1=DCB
 		svc_get_move();
 		break;
-	case 152: // dcb put move R0=REC, R1=DCB
+	case 0x98: // dcb put move R0=REC, R1=DCB
 		svc_put_move();
 		break;
-	case 153: // dcb read  R1=DECB
+	case 0x99: // dcb read  R1=DECB
 		svc_read();
 		break;
-	case 154: // dcb write R1=DECB
+	case 0x9a: // dcb write R1=DECB
 		svc_write();
 		break;
-	case 155: // decb check  R1=DECB
+	case 0x9b: // decb check  R1=DECB
 		svc_check();
 		break;
-	case 156: // dcb point  R1=DCB
+	case 0x9c: // dcb point  R1=DCB
 		svc_point();
 		break;
-	case 160: // wtor 
+	case 0xa0: // wtor 
 		svc_wtor();
 		break;
-	case 170: // ctd - convert to display format r1=a(type,in,out)
+	case 0xaa: // ctd - convert to display format r1=a(type,in,out)
 		svc_ctd(); // RPI 360
 		break;
-	case 171: // cfd - convert from display format r1=a(type,in,out)
+	case 0xab: // cfd - convert from display format r1=a(type,in,out)
 		svc_cfd(); // RPI 370
 		break;
 	default:
@@ -1129,9 +1135,18 @@ public void open_files(){
 	 * 1.  Set trace file for TRACE and TRACEALL
 	 * 2.  Open 390 and lst files
 	 */
-	    tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tre_type;
+    	if (tz390.log_file_name == null){ // RPI 719
+    		tz390.log_file_name = tz390.dir_trc + tz390.pgm_name + tz390.log_type;
+    	} else {
+    		tz390.log_file_name = tz390.log_file_name + tz390.log_type;
+    	}
+	    if (tz390.trace_file_name == null){ // RPI 719
+	    	tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tre_type;
+	    } else {
+	    	tz390.trace_file_name = tz390.trace_file_name + tz390.tre_type;
+	    }	
        	if (tz390.opt_list){
-            log_file = new File(tz390.dir_log + tz390.pgm_name + tz390.log_type);
+            log_file = new File(tz390.log_file_name); // RPI 719
          	try {
        	       log_file_buff = new BufferedWriter(new FileWriter(log_file));
        	    } catch (IOException e){
@@ -1232,6 +1247,9 @@ private void svc_extract(){ // RPI 413
                 	env_value_addr = pz390.reg.getInt(pz390.r1); 
                 	pz390.reg.putInt(pz390.r2,env_value_addr);
                 	put_ascii_string(env_value,env_value_addr,env_value.length()+1,(char)0);
+                    if (tz390.opt_trace){
+                    	tz390.put_trace("GETENV NAME=" + env_name + " VALUE=" + env_value);
+                    }
                 } else {
                 	return; // exit with rc = getmain error
                 }        		
@@ -1540,6 +1558,13 @@ public boolean get_load_dsn(int dd_dsn_addr){
  			}
  			load_dsn = load_dsn.substring(0,index).concat(tz390.z390_type);
  		}
+        if (!load_dsn.substring(0,1).equals(File.separator)
+        		&& load_dsn.charAt(1) != ':'){
+        	load_dsn = tz390.dir_cur + load_dsn; // RPI 713
+        }
+        if (tz390.opt_trace){
+        	tz390.put_trace("LOAD DSN=" + load_dsn);
+        }
  		File temp_file = new File(load_dsn);
  		if (temp_file.isFile()){
  			load_pgm_name = temp_file.getName(); 
@@ -1960,32 +1985,28 @@ private void svc_time(){
 	    pz390.cur_date = new Date();
 	}
 	time_mil  = pz390.cur_date.getTime();
+    pz390.reg.putInt(pz390.r15,0);  // RPI 717
     switch (time_type){
 	case 0: // dec
         pz390.reg.putInt(pz390.r0,Integer.valueOf(cur_tod_hhmmss00.format(pz390.cur_date),16)
         		+(Integer.valueOf(cur_date_ms.format(pz390.cur_date),16) >> 4));
         pz390.reg.putInt(pz390.r1,get_ccyydddf());
-        pz390.reg.putInt(pz390.r15,0);
         return;
 	case 1: // bin - 0.01 sec = (milliseconds/10)
 		pz390.reg.putInt(pz390.r0,(int)((time_mil-tod_start_day)/10));
         pz390.reg.putInt(pz390.r1,get_ccyydddf());
-        pz390.reg.putInt(pz390.r15,0);
         return;
 	case 2: // tu - 26.04166 mic (milliseconds * 1000 / 26.04166)
 		pz390.reg.putInt(pz390.r0,(int)((time_mil-tod_start_day)*1000*100000/2604166));
         pz390.reg.putInt(pz390.r1,get_ccyydddf());
-        pz390.reg.putInt(pz390.r15,0);
         return;
 	case 3: // mic - double word microseconds 
 		pz390.mem.putLong(time_addr,(time_mil-tod_start_day)*1000);
         pz390.reg.putInt(pz390.r1,get_ccyydddf());
-        pz390.reg.putInt(pz390.r15,0);
         return;
 	case 4: // stck - double word clock (bit 51 = microseconds)
 		pz390.mem.putLong(time_addr,((time_mil-tod_start_day))*1000 << (63-51));
         pz390.reg.putInt(pz390.r1,get_ccyydddf());
-        pz390.reg.putInt(pz390.r15,0);
         return;
 	case  5: // clock stck  - 8 bytes (bit 51 ms from 1900)
 		pz390.ibm_ms = (time_mil+pz390.ibm_mil)*1000;
@@ -2020,14 +2041,12 @@ private void svc_time(){
 	case 15: // estck - double word clock (bit 51 = microseconds)
 		pz390.mem.putLong(time_addr,((time_mil-tod_start_day)*1000) << (63-59));
 		pz390.mem.putLong(time_addr+8,0);
-        pz390.reg.putInt(pz390.r15,0);
         return;
 	case 0x80: // PTFF-QAF 0x00 - query ava8lable functions  
 		// 0-3 bits on for functions 0-3 problem state functions avail.
 		// 4-127 bits off for supervisor state functions not avail
 		pz390.mem.putInt(time_addr,0xf0000000); // functions 0-3 avail
 		Arrays.fill(pz390.mem_byte,time_addr+1,time_addr+16,(byte)0x00);
-        pz390.reg.putInt(pz390.r15,0);
 		return;
 	case 0x81: // PTFF-QTO 0x01 - time of day offset
 	    // 0-7   physical clock - double word clock (bit 51 = microseconds)
@@ -2036,19 +2055,16 @@ private void svc_time(){
 		// 24-31 tod epoch difference 
 		pz390.mem.putLong(time_addr,((time_mil-tod_start_day))*1000 << (63-51));
 		Arrays.fill(pz390.mem_byte,time_addr+8,time_addr+32,(byte)0x00);
-        pz390.reg.putInt(pz390.r15,0);
         return;
 	case 0x82: // PTFF-QSI steering information 
 		// 0-7 physical clock
 		// 8-56 currently old and new epoch all zeros
 		pz390.mem.putLong(time_addr,((time_mil-tod_start_day))*1000 << (63-51));
 		Arrays.fill(pz390.mem_byte,time_addr+8,time_addr+56,(byte)0x00);
-		pz390.reg.putInt(pz390.r15,0);
         return;
 	case 0x83: // PTFF-QPT physical clock
 		// 9-7 physical clock
 		pz390.mem.putLong(time_addr,((time_mil-tod_start_day))*1000 << (63-51));
-		pz390.reg.putInt(pz390.r15,0);
         return;
 	default:
 		pz390.reg.putInt(pz390.r15,4);
@@ -2071,7 +2087,6 @@ private void svc_time(){
 		pz390.reg.putInt(pz390.r15,4);
         return;
     }
-    pz390.reg.putInt(pz390.r15,0);
 }
 private void svc_ttimer(){
 	/*
@@ -2543,6 +2558,10 @@ private String get_dcb_file_name(String dsnam_path){
         file_name = dsnam_path + tz390.get_ascii_var_string(pz390.mem_byte,dcb_dsn,max_lsn_spec).trim(); // RPI 668  
         if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
         	file_name = file_name.replace('\\','/');
+        }
+        if (!file_name.substring(0,1).equals(File.separator)
+        		&& file_name.charAt(1) != ':'){
+        	file_name = tz390.dir_cur + file_name; // RPI 713
         }
         return file_name;
 	} else {
@@ -3263,6 +3282,11 @@ public void put_ascii_string(String text,int mem_addr,int mem_len,char pad_char)
 	 */
 	char text_char;
 	int index = 0;
+	mem_addr = mem_addr & pz390.psw_amode;  // RPI 712
+	if (mem_addr + mem_len > pz390.tot_mem){
+		log_error(114,"invalid put ascii text address for msg = " + text);
+		return;
+	}
 	while (index < mem_len){
 		if (index < text.length()){
 			text_char = text.charAt(index);
@@ -3731,16 +3755,18 @@ private void svc_tget_tput(){
 			if (tz390.z390_abort){
 				abort_error(60,"GUAM GUI tget abort");
 			}
-			pz390.mem.position(buff_addr);
-            // move tget_len actual and set R1= bytes returned
-			pz390.mem.put(gz390.tget_byte,0,gz390.tget_len);
-			if (tz390.opt_tracet){  // RPI 671
-				tz390.put_trace("");
-				tz390.put_trace(" TGET bytes received = " + tz390.get_hex(gz390.tget_len,4));
-				dump_mem(buff_addr,gz390.tget_len);
-				tz390.put_trace("");
+			if (gz390.tpg_rc == 0){  // RPI 712
+				pz390.mem.position(buff_addr);
+				// move tget_len actual and set R1= bytes returned
+				pz390.mem.put(gz390.tget_byte,0,gz390.tget_len);
+				if (tz390.opt_tracet){  // RPI 671
+					tz390.put_trace("");
+					tz390.put_trace(" TGET bytes received = " + tz390.get_hex(gz390.tget_len,4));
+					dump_mem(buff_addr,gz390.tget_len);
+					tz390.put_trace("");
+				}
+				pz390.reg.putInt(pz390.r1,gz390.tget_len);
 			}
-		    pz390.reg.putInt(pz390.r1,gz390.tget_len); 
 		}
 		pz390.reg.putInt(pz390.r15,gz390.tpg_rc); // RPI 221 set retrun code
 	} else {
@@ -3755,7 +3781,7 @@ private void svc_tget_tput(){
 				if (!wtor_reply_pending){					
 					wtor_reply_addr = buff_addr;
 					wtor_reply_len  = buff_len;
-					wtor_ecb_addr = pz390.zcvt_tget_ecb;
+					wtor_ecb_addr = pz390.zcvt_tget_ecb & pz390.psw_amode;
 					wto_msg("TGET ENTER",0,0);
 					pz390.mem.putInt(wtor_ecb_addr,ecb_waiting); // ecb waiting for post by montior wtorit
 					wtor_reply_string  = null;
@@ -4256,6 +4282,16 @@ private void svc_wtor(){
     }
 	if (tz390.z390_abort){
 		abort_error(63,"guam wtor reply abort");
+	}
+	if (wtor_reply_buff == null){
+		wtor_reply_buff   = new BufferedReader(new InputStreamReader(System.in));
+	}
+	try {
+		while (wtor_reply_buff.ready()){
+			wtor_reply_string = wtor_reply_buff.readLine();
+		}
+	} catch (Exception e){
+		abort_error(115,"WTOR REPLY FLUSH I/O ERROR");
 	}
     wtor_reply_string  = null;
     wtor_reply_pending = true;

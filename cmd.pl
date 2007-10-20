@@ -34,6 +34,10 @@
 #   2) Use /^.../i for mixed case per Martin Ward suggestion
 #   3) Correct if errorlevel  to use specific value vs 1
 #   4) Support DIR and CD as dos commands outside BAT file
+# 10/20/07 RPI 713 fix SET to  support = in file extended parms (ie [RECFM=FT]
+#                  set return code for DIFF command, ignore white space changes
+#                  and show brief results in log along with rc
+#                  pause on unknown BAT command file
 ##################################################################
 # Notes:
 #   1. Paths must be correct case with \ separators
@@ -97,7 +101,13 @@ while (<STDIN>) {
     printf "Unknown command syntax = $_\n";
   }
 }
-
+sub open_bat_file_error(){
+  printf "BAT file  not found";
+  open(TTY,"/dev/tty");  ## RPI 548
+  my $REPLY = getc(TTY);
+  close(TTY);
+  die "exiting dos processor";
+}
 
 sub batch_file($$) {
   my ($cmd, $args) = @_;
@@ -120,7 +130,7 @@ sub batch_file($$) {
   }
 # load bat file into @lines array
   my $fh;
-  open($fh, $file) or die "Can't read $file: $!\n";
+  open($fh, $file) or open_bat_file_error(); ## RPI 713
   my @lines = <$fh>;
   close($fh);
 # set line number for each :label defined forcinglower case
@@ -169,29 +179,31 @@ sub batch_file($$) {
 
 # diff dir1 dir2 file3
     } elsif ($line =~ /^diff\s+(\S+)\s+(\S+)\s+(\S+)$/i) {
-      open IN, "diff $1 $2 |" or die "diff generation failed";
+      open IN, "diff -b $1 $2 |" or die "diff generation failed"; ## RPI 713 ignore white space
       open OUT,"> $3" or die "diff open output $3 failed";
       print OUT <IN>;
       close IN;
-      close OUT; 
+      close OUT;
+      $errorlevel = system("diff -b -q $1 $2"); ## // RPI 713 set rc, skip white space, brief
+      print "diff errorlevel: $errorlevel\n";
 
 # dir
     } elsif ($line =~ /^dir\s+(.*)$/i) { 
       $errorlevel = system("ls -l $1");
       if ($errorlevel) {
-          print "dir errorlevel: $errorlevel";
+          print "dir errorlevel: $errorlevel\n";
       }
 # erase file
     } elsif ($line =~ /^erase\s+(\S+)$/i) { 
       $errorlevel = system("rm $1");
       if ($errorlevel) {
-          print "erase errorlevel: $errorlevel";
+          print "erase errorlevel: $errorlevel\n";
       };
 # erase files /q    
     } elsif ($line =~ /^erase\s+(\S+)\s+(\S+)$/i) {
       $errorlevel = system("rm $1");
       if ($errorlevel) {
-          print "erase errorlevel: $errorlevel";
+          print "erase errorlevel: $errorlevel\n";
       };
 # exit
     } elsif ($line =~ /^exit\s$/i) { 
@@ -200,7 +212,7 @@ sub batch_file($$) {
     } elsif ($line =~ /gedit\s+(.*)$/i) { 
       $errorlevel = system("gedit $1");
       if ($errorlevel) {
-          print "gedit errorlevel: $errorlevel";
+          print "gedit errorlevel: $errorlevel\n";
       }
 # goto
     } elsif ($line =~ /^goto\s+(\S+)$/i) { 
@@ -226,7 +238,7 @@ sub batch_file($$) {
 # if errorlevel 1 pause text
     } elsif ($line =~ /^if\s+errorlevel\s+(\d+)\s+pause\s+(.*)$/i) {
       my $RC = $errorlevel/256; ## RPI 548
-      printf "Return code = $RC";
+      printf "Return code = $RC\n";
       if ($RC >= $1) {
           open(TTY,"/dev/tty");  ## RPI 548
           my $REPLY = getc(TTY);
@@ -243,8 +255,13 @@ sub batch_file($$) {
     } elsif (($line =~ /^rem/i) || ($line =~ /^REM/i)) {  
       # Comment line
 # set
-    } elsif ($line =~ /^set\s+(\S+)=+(\S+)$/i){  
-      $ENV{$1} = $2;
+    } elsif ($line =~ /^set\s+(\w+)=(\S+)$/i){ ## RPI 713
+      printf "SET NAME=%s\n", $1;
+      printf "SET PARM VALUE=%s\n", $2;
+      my $VAL = $2;
+      $VAL =~ s/\\=/\>\//g;       # replace = with > to avoid Linux set error
+      $ENV{$1} = $VAL;
+      printf "SET ENV VALUE=%s\n", $ENV{$1}; ## RPI 713
      
 # default - assume Linux command and attempt to execute it     
 

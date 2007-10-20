@@ -2871,7 +2871,7 @@ git commit -m "Intermediate commit to trace renamed files"
 dir *.* /B /on /s >.allfile.txt
 git status >\temp\.gitstat.lst
 
-# Assembler/emulator input stuff
+# Assembler/emulator and other input stuff
 # **/*.bat --> Dos command files
 
 # Backup and junk files
@@ -3028,7 +3028,42 @@ git commit -m "Reconstructed version v1.3.08 of z390 committed on behalf of Don 
 git tag -a v1.3.08 -m "Reconstructed version v1.3.08 of z390 committed on behalf of Don Higgins"
 git gc --aggressive
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.3.08a
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.3.08a
+git add RT.BAT
+git add cmd.pl
+git add src/az390.java
+git add src/ez390.java
+git add src/gz390.java
+git add src/iz390.java
+git add src/lz390.java
+git add src/mz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add src/vz390.java
+git add vsam/demo/ESF1DEMO.BAT
+git add vsam/demo/ESV1DEMO.BAT
+git add vsam/demo/KSF1RPO1.BAT
+git add vsam/demo/KSF1RPO2.BAT
+git add vsam/test/ESF1REPO.BAT
+git add vsam/test/ESF4REPO.BAT
+git add vsam/test/ESV1REPO.BAT
+git add vsam/test/ESV5REPO.BAT
+git add COMP1.BAT
+git add README.TXT
+
+==> Create commit for V1.3.08a
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2007-10-20 15:10:00 -0500
+set GIT_COMMITTER_DATE=2021-03-22 18:01:00 +0100
+git commit -m "Reconstructed version v1.3.08a of z390 committed on behalf of Don Higgins"
+git tag -a v1.3.08a -m "Reconstructed version v1.3.08a of z390 committed on behalf of Don Higgins"
 
 
 

@@ -3,7 +3,7 @@
 **/*.[eEe][xX][eE]
 **/*.[lL][iI][nN][kK]
 
-# Assembler/emulator input stuff
+# Assembler/emulator and other input stuff
 # **/*.bat --> Dos command files
 # **/*.cbl --> Cobol source code
 # **/*.cpy --> Assembler copy members
