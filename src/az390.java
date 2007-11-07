@@ -280,6 +280,10 @@ public  class  az390 implements Runnable {
     *           3. Total errror counts all reported on ERR, PRN, CON
     *           4. ERRSUM turned on automatically if #1 != 0
     * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files 
+    * 10/24/07 RPI 726 only issue error 187 if trace
+    * 10/24/07 RPI 728 ignore ISEQ and ICTL instructions
+    *          handled by mz390 and reformated to std 1,71,16
+    * 10/30/07 RPI 729 add DFHRESP code ILLOGIC=F'21'         
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -845,11 +849,12 @@ public  class  az390 implements Runnable {
     		  "NOSPACE)",         // 7 - =F'18' RPI 687
     		  "NOTOPEN)",         // 8 - =F'19' RPI 687
     		  "ENDFILE)",         // 9 - =F'20' RPI 687
-    		  "LENGERR)",         //10 - =F'22'
-    		  "ITEMERR)",         //11 - =F'26'  RPI 662
-    		  "PGMIDERR)",        //12 - =F'27'
-    		  "QIDERR)",          //13 - =F'44'  RPI 662
-    		  "DISABLED)",        //14 - =F'84' RPI 687
+    		  "ILLOGIC)",         //10 - =F'21'  RPI 729
+    		  "LENGERR)",         //11 - =F'22'   		  
+    		  "ITEMERR)",         //12 - =F'26'  RPI 662
+    		  "PGMIDERR)",        //13 - =F'27'
+    		  "QIDERR)",          //14 - =F'44'  RPI 662
+    		  "DISABLED)",        //15 - =F'84' RPI 687
     		  };
       String[] dfhresp_lit = {
     		  "=F'0'",           // 0 "NORMAL)" 
@@ -862,11 +867,12 @@ public  class  az390 implements Runnable {
     		  "=F'18'",          // 7 "NOSPACE)" RPI 687 
     		  "=F'19'",          // 8 "NOTOPEN)" RPI 687 
     		  "=F'20'",          // 9 "ENDFILE)" RPI 687 
-    		  "=F'22'",          //10 "LENGERR)" 
-    		  "=F'26'",          //11 "ITEMERR)" RPI 662
-    		  "=F'27'",          //12 "PGMIDERR)"
-    		  "=F'44'",          //13 "QIDERR)"  RPI 662
-    		  "=F'84'",          //14 "DISABLED)" RPI 687
+    		  "=F'21'",          //10 "ILLOGIC)" RPI 729
+    		  "=F'22'",          //11 "LENGERR)" 
+    		  "=F'26'",          //12 "ITEMERR)" RPI 662
+    		  "=F'27'",          //13 "PGMIDERR)"
+    		  "=F'44'",          //14 "QIDERR)"  RPI 662
+    		  "=F'84'",          //15 "DISABLED)" RPI 687
     		  };
   /* 
    * end of global az390 class data and start of procs
@@ -2339,8 +2345,10 @@ private void process_bal_op(){
     case 137:  // EXITCTL 0 
     	break;
     case 138:  // ICTL 0
+    	bal_op_ok = true; // RPI 728
     	break;
     case 139:  // ISEQ 0
+    	bal_op_ok = true; // RPI 728 ignore
     	break;
     case 140:  // LTORG 0
     	bal_op_ok = true;
@@ -2951,15 +2959,15 @@ private void get_bal_line(){
         save_bal_line(); // RPI 274
     	if  (temp_line == null){
     			bal_line = null;
-   		} else if (temp_line.length() < 72  // RPI 437
-   				   || temp_line.charAt(71) <= ' '){  //RPI181
-   			bal_line = tz390.trim_trailing_spaces(temp_line,72);  //RPI124
+   		} else if (temp_line.length() < tz390.bal_ictl_end + 1  // RPI 437 RPI 728
+   				   || temp_line.charAt(tz390.bal_ictl_end) <= ' '){  //RPI181 RPI 728
+   			bal_line = tz390.trim_trailing_spaces(temp_line,tz390.bal_ictl_end + 1);  //RPI124 RPI 728
     	    if (!tz390.verify_ascii_source(bal_line)){
     	    	abort_error(116,"invalid ascii source line " + tz390.cur_bal_line_num + " in " + bal_file.getAbsolutePath());  // RPI 694
     	    }
    		} else {
-   		    bal_line = temp_line.substring(0,71);
-   		    bal_line = tz390.trim_continue(bal_line,tz390.split_first);
+   		    bal_line = temp_line.substring(0,tz390.bal_ictl_end);  // RPI 728
+   		    bal_line = tz390.trim_continue(bal_line,tz390.split_first,tz390.bal_ictl_end,tz390.bal_ictl_cont); // RPI 728
             boolean bal_cont = true;
    		    while (bal_cont){  //RPI181  // RPI 315
             	    tz390.systerm_io++;
@@ -2967,21 +2975,21 @@ private void get_bal_line(){
             	    if (temp_line == null){
             	    	abort_error(117,"missing continue source line " + tz390.cur_bal_line_num + " in " + bal_file.getAbsolutePath());
             	    }
-            	    temp_line = tz390.trim_trailing_spaces(temp_line,72);
+            	    temp_line = tz390.trim_trailing_spaces(temp_line,tz390.bal_ictl_end + 1);  // RPI 728
             	    if (!tz390.verify_ascii_source(temp_line)){
             	    	abort_error(118,"invalid ascii source line " + tz390.cur_bal_line_num + " in " + bal_file.getAbsolutePath()); // RPI 694
             	    }
-            	    if (temp_line.length() < 72 || temp_line.charAt(71) <= ' '){ //RPI181
+            	    if (temp_line.length() < tz390.bal_ictl_end + 1 || temp_line.charAt(tz390.bal_ictl_end) <= ' '){ //RPI181 RPI 278
             	    	bal_cont = false; // RPI 315
-            	    	temp_line = tz390.trim_trailing_spaces(temp_line,72); //RPI124
+            	    	temp_line = tz390.trim_trailing_spaces(temp_line,tz390.bal_ictl_end + 1); //RPI124 RPI 728
             	    }
             	    tz390.prev_bal_cont_lines++;
             	    save_bal_line(); // RPI 274
-            	    if  (temp_line.length() >= 16
-            	    	&& temp_line.substring(0,15).equals("               ")){ // RPI167 
-            	    	bal_line = bal_line + tz390.trim_continue(temp_line,tz390.split_cont); // RPI 315, RPI 463
+            	    if  (temp_line.length() >= tz390.bal_ictl_cont  // RPI 728
+            	    	&& temp_line.substring(tz390.bal_ictl_start - 1,tz390.bal_ictl_cont - 1).trim().equals("")){ // RPI167  RPI 728 no char preceeding cont  
+            	    	bal_line = bal_line + tz390.trim_continue(temp_line,tz390.split_cont,tz390.bal_ictl_end,tz390.bal_ictl_cont); // RPI 315, RPI 463 RPI 728
             	    } else { 
-            	    	log_error(8,"continuation line < 16 characters - " + temp_line);
+            	    	log_error(8,"continuation line < " + tz390.bal_ictl_cont + " characters - " + temp_line);
             	    }
             }   
    		}
@@ -3340,7 +3348,9 @@ public void update_label(){ // RPI 415
 		    && !bal_op.equals("EQU")){	
 			if (sym_loc[cur_sid] != loc_start){ // RPI 605
 				sect_change_error();
-				if (gen_obj_code && report_label_changes){
+				if (tz390.opt_trace // RPI 726 
+					&& gen_obj_code 
+					&& report_label_changes){
 					report_label_changes = false;
 				    log_error(187,"first label address change for " + bal_label + " from " + tz390.get_hex(sym_loc[cur_sid],6) + " to " + tz390.get_hex(loc_start,6));
 				}

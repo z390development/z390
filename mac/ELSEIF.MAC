@@ -11,6 +11,7 @@
 .********************************************************************
 .* 05/12/06 Z390 RPI 316 UPDATE FOR COMPAT.
 .* 04/11/07 Z390 RPI 589 USE ZSTRGBL AND EXPAND LEVELS TO 100
+.* 11/02/07 Z390 RPI 734 CORRECT BAD CONDITION CODE FOR OR CONNECTOR 
 .********************************************************************
          AIF   (&ZSTR_LEVEL EQ &ZSTR_MAX_LEVEL).ERR1                                         
          ELSE                                                              
@@ -46,7 +47,8 @@
          BC    15-&BC,ZSTR_IF_&ZSTR_LAB                                  
          AGO   .CONNECT
 .ORBC    ANOP                                                              
-         BC    15-&SYSLIST(&S,&M),ZSTR_IF_&ZSTR_LAB                                  
+.* DSHX         BC    15-&SYSLIST(&S,&M),ZSTR_IF_&ZSTR_LAB                                  
+         BC    15-&BC,ZSTR_IF_&ZSTR_LAB RPI 734 REP &SYSLIST(&S,&M)=&BC                                 
 ZSTR_IF_&ZSTR_LAB1 EQU *                                                             
 .CONNECT ANOP                                                              
 &S       SETA  &S+1                                                        

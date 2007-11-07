@@ -29,7 +29,7 @@ import java.io.FilePermission;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.PropertyPermission;
@@ -138,7 +138,7 @@ public  class  z390 extends JApplet
         int z390_errors = 0;
 	    boolean cmd_error = false;
 	    int max_errors = 100;
-        boolean main_applet  = false;  // running as browser applet
+	    boolean main_applet  = false;  // running as browser applet
 	    boolean main_gui     = false;     // parm = /g
         boolean main_console = false; // parm = /c
 	    boolean main_batch   = false;   // parm = file name
@@ -213,9 +213,9 @@ public  class  z390 extends JApplet
     boolean cmd_running = false;
     int cmd_io_total = 0;
 	Process cmd_exec_process = null;
-	InputStreamReader  cmd_exec_error_reader = null;
-	InputStreamReader  cmd_exec_output_reader = null;
-    OutputStream       cmd_exec_input_writer  = null;
+	BufferedReader     cmd_exec_error_reader = null;  // RPI 731
+	BufferedReader     cmd_exec_output_reader = null; // RPI 731
+    PrintStream        cmd_exec_input_writer  = null;  // RPI 731
 	String cmd_exec_error_msg = "";
 	String cmd_exec_output_msg = "";
 	Thread cmd_exec_process_thread = null;
@@ -232,7 +232,6 @@ public  class  z390 extends JApplet
     int ascii_cr = 13;
  	boolean refresh_request = false;
  	boolean main_status  = true;
-        boolean log_text_added = false;
         JFrame main_frame    = null;
         int main_width  = 625;
         int main_height = 400;
@@ -757,35 +756,10 @@ public  class  z390 extends JApplet
 	   	 * Write message to log file and to console
 	   	 * if console mode or console option on.
 	   	 * 
-	   	 * Append any output from CMD still in buffers
-	   	 * to front of msg with \n
 	   	 */
-	   	    String work_msg = "";
-	   	    if  (cmd_exec_output_msg.length() > 0){
-	   	    	work_msg = cmd_exec_output_msg;
-	   	    	cmd_exec_output_msg = "";
-	   	    }
-	   	    if  (cmd_exec_error_msg.length() > 0){
-	   	    	if  (work_msg.length() > 0){
-	   	    	    work_msg = work_msg + "\n" + cmd_exec_error_msg + "\n";
-	   	    	} else {
-	   	    		work_msg = cmd_exec_error_msg;
-	   	    	}
-	   	    	cmd_exec_error_msg = "";
-	   	    }
-	   	    if  (work_msg.length() > 0){
-	   	    	if  (msg.length() > 0){
-	   	    		msg = work_msg + "\n" + msg;
-	   	    	} else {
-	   	    		msg = work_msg;
-	   	    	}
-	   	    } else if (msg.length() == 0){
-	   	    	return;  // false alarm fixed by sync
-	   	    }
 	   	    io_count++;
-	        if  (main_gui){
-  	        	log_text.append(msg + "\n");
-   	        	log_text_added = true;
+	        if  (main_gui){      
+	        	tz390.log_text_append(log_text,msg); // RPI 731
    	        } else {
 	   	        if  (main_console || console_log) {
 	   	    	    System.out.println(msg);
@@ -1569,9 +1543,6 @@ public  class  z390 extends JApplet
 		    if (tz390.z390_abort){
 		    	exit_command();
 		    }
-     	    if (cmd_exec_output_msg.length() + cmd_exec_error_msg.length() > 0){
-	   	    	put_log("");
-	   	    }
 	        monitor_next_time = System.currentTimeMillis();
 	        monitor_next_ins_count = ins_count;
 	        monitor_next_io_count = io_count;
@@ -1656,7 +1627,7 @@ public  class  z390 extends JApplet
 	   	    		 cmd_startup(null);
 	   	    		 cmd_exec_input(cmd);
 	   	    		 cmd_running = true;
-	   	    	     cmd_exec_input(tz390.newline + "exit" + tz390.newline);  //RPI15, RPI 98, RPI 500
+	   	    	     cmd_exec_input("exit");  //RPI15, RPI 98, RPI 500, RPI 731
 	   	    	 }
   	 	     }
 	   }
@@ -1830,8 +1801,8 @@ public  class  z390 extends JApplet
         log_view = new JScrollPane(log_text);
         log_view.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener(){
     	  public void adjustmentValueChanged(AdjustmentEvent e){
-    		if (log_text_added){
-                log_text_added = false;
+    		if (tz390.log_text_added){
+                tz390.log_text_added = false;
     			log_view.getVerticalScrollBar().setValue(log_view.getVerticalScrollBar().getMaximum());
     		}       
     	  }});
@@ -3417,9 +3388,9 @@ public  class  z390 extends JApplet
                     }
                 	try {
                         cmd_exec_process = Runtime.getRuntime().exec(exec_cmd);
-               		    cmd_exec_error_reader  = new InputStreamReader(cmd_exec_process.getErrorStream());
-               		    cmd_exec_output_reader = new InputStreamReader(cmd_exec_process.getInputStream());
-                   	    cmd_exec_input_writer  = cmd_exec_process.getOutputStream();
+               		    cmd_exec_error_reader  = new BufferedReader(new InputStreamReader(cmd_exec_process.getErrorStream()));
+               		    cmd_exec_output_reader = new BufferedReader(new InputStreamReader(cmd_exec_process.getInputStream()));
+                   	    cmd_exec_input_writer  = new PrintStream(cmd_exec_process.getOutputStream());  // RPI 731
                		    cmd_exec_process_thread = new Thread(this);
             		    cmd_exec_error_reader_thread   = new Thread(this);
             		    cmd_exec_output_reader_thread  = new Thread(this);
@@ -3446,13 +3417,13 @@ public  class  z390 extends JApplet
             /*
              * send input to exec command in process
              */
-            	if  (cmd_line == null){
-            		cmd_line = tz390.newline; // RPI 500
-             	} else {
-            		cmd_line = cmd_line + tz390.newline; // RPI 500 
-            	}
+
             	try {
-            		cmd_exec_input_writer.write(cmd_line.getBytes());
+            		if (cmd_line == null){  // RPI 731
+            			cmd_exec_input_writer.println("");
+            		} else {
+            			cmd_exec_input_writer.println(cmd_line);
+            		}
             		cmd_io_total++;
             		cmd_exec_input_writer.flush();
             		monitor_cmd_time_total = 0;
@@ -3517,27 +3488,23 @@ public  class  z390 extends JApplet
       * to handle cmd output with cr/lf (ie TIME)
       */	
      	try {
-            int next_int = cmd_exec_output_reader.read();
-			while (!tz390.z390_abort && next_int != -1){
-				if  (next_int == ascii_lf){
-					String msg = cmd_exec_output_msg;
-					cmd_exec_output_msg = "";
-					if (msg.equals("exit_request")){
-						// if ez390 issues exit request close down gui
-						// this is trigged when ez390 exits if 
-						// z390 sent "exit_request to input queue
-					    cmd_exec_input(tz390.newline + "exit" + tz390.newline);  // RPI 98, RPI 500
-					} else {
-						put_log(msg);
-					}
-				} else if (next_int != ascii_cr){
-                    append_exec_output_msg(next_int);
+            cmd_exec_output_msg = cmd_exec_output_reader.readLine();
+			while (cmd_exec_output_msg != null){
+				if (cmd_exec_output_msg.equals("exit_request")){
+					// if ez390 issues exit request close down gui
+					// this is trigged when ez390 exits if 
+					// z390 sent "exit_request to input queue
+				    cmd_exec_input("exit");  // RPI 98, RPI 500 RPI 731
+				} else {
+					put_log(cmd_exec_output_msg);
 				}
-                next_int = cmd_exec_output_reader.read();
-			}
+                cmd_exec_output_msg = cmd_exec_output_reader.readLine();
+			}     	
 		} catch (Exception ex) {
-			log_error(67,"exec execution output error");
-			cmd_exec_cancel();
+			if (cmd_exec_rc() == -1){  // RPI 731
+			    log_error(67,"exec execution output error");
+			    cmd_exec_cancel();
+			}
 		}
      }
      private void copy_cmd_error_to_log(){
@@ -3547,33 +3514,18 @@ public  class  z390 extends JApplet
          * request and error msgs without CR/LF
          */	
         	try {
-               int next_int = cmd_exec_error_reader.read();
-   			while (!tz390.z390_abort && next_int != -1){
-   				   if  (next_int == ascii_lf){
-   				   	   String msg = cmd_exec_error_msg;
-   				   	   cmd_exec_error_msg = "";
-   				   	   put_log(msg);
-   				   } else if (next_int != ascii_cr){
-                       append_exec_error_msg(next_int);
-   				   }
-                   next_int = cmd_exec_error_reader.read();
-   			}
-   		} catch (Exception ex) {
-   			log_error(67,"exec execution output error");
-   			cmd_exec_cancel();
-   		}
-        }
-     private synchronized void append_exec_output_msg(int next_int){
-     /*
-      * add cmd char to log sync with put_log
-      */
-		cmd_exec_output_msg = cmd_exec_output_msg.concat(String.valueOf((char) next_int));
-     }
-     private synchronized void append_exec_error_msg(int next_int){
-        /*
-         * add cmd char to log sync with put_log
-         */
-   		cmd_exec_error_msg = cmd_exec_error_msg.concat(String.valueOf((char) next_int));
+        		cmd_exec_error_msg = cmd_exec_error_reader.readLine();
+        		put_log(cmd_exec_error_msg);
+   			   	while (cmd_exec_error_msg != null){
+		   			put_log(cmd_exec_error_msg);
+		   			cmd_exec_error_msg = cmd_exec_error_reader.readLine();
+   			   	}
+        	} catch (Exception ex) {
+        		if (cmd_exec_rc() == -1){  // RPI 731
+        			log_error(67,"exec execution output error");
+        			cmd_exec_cancel();
+        		}
+        	}
         }
 		private void batch_cmd(String bat_cmd, String bat_file_name, String bat_file_type, String bat_opt){
 	        /*

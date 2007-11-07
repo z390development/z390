@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.JTextArea;
+
 
 public  class  tz390 {
    /*****************************************************
@@ -139,6 +141,8 @@ public  class  tz390 {
     * 09/28/07 RPI 707 change MAXFILE default to 1000 vs 10000  
     * 10/01/07 RPI 700 set dir_390 to pgm_dir + linklib
     * 10/18/07 RPI 713 replace \ with / for Linux   
+    * 10/26/07 RPI 728 pass ictl end, cont to trim_continue
+    * 10/26/07 RPI 731 add option MAXLOG(mb) to limit visible log size
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -147,7 +151,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.08a";  //dsh
+    String version    = "V1.3.08b";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -191,7 +195,6 @@ public  class  tz390 {
     boolean opt_rmode31  = false; // link to load above line
     boolean opt_stats    = true;  // show statistics on LOG file
     String  opt_sysparm  = "";    // user parm string for mz390  
-    String  opt_systerm  = "";    // mod error file name with explict or SYSERR path
     boolean opt_test     = false; // invoke interactive test cmds
     boolean opt_time     = true;  // abend 422 if out of time TIME (sec)
     boolean opt_timing   = true;  // display current date, time, rate
@@ -209,6 +212,7 @@ public  class  tz390 {
     boolean opt_ts       = false; // time-stamp logs RPI 662
     boolean opt_vcb      = true;  // vsam cache operational
     boolean opt_xref     = true;   // cross reference symbols
+    boolean max_cmd_queue_exceeded = false;  // RPI 731
     String  cmd_parms = " "; // all options from command
     String  test_ddname = null;
     char    z390_amode31 = 'T';
@@ -219,8 +223,10 @@ public  class  tz390 {
     int opt_maxgbl  = 100000;   // RPI 284
     int opt_maxlcl  = 100000;   
     int opt_maxline = 200000;
+    int opt_maxlog  = 1000000; // RPI 731
     int opt_maxparm = 10000;
     int opt_maxpc   = 50000;  // RPI 439 pseudo code working set
+    int opt_maxque  = 1000;   // RPI 731 max CMD output queue
     int opt_maxrld  = 10000;
     int opt_maxsym  = 50000;
     /*
@@ -296,6 +302,10 @@ public  class  tz390 {
     String[]  opsyn_old_name = new String[max_opsyn];
     int cur_bal_line_num    = 0; // bal starting line number
     int prev_bal_cont_lines = 0; // bal continue lines for prev bal
+    int bal_ictl_start =  1; // RPI 728 reformated to std by mz390
+    int bal_ictl_end   = 71; // RPI 728
+    int bal_ictl_cont  = 16; // RPI 728
+    int bal_ictl_cont_tot = 56; // RPI 728
     /*
      * shared SYSTERM error file
      */
@@ -314,7 +324,10 @@ public  class  tz390 {
     String         trace_file_name = null;
 	File           trace_file = null;
 	BufferedWriter trace_file_buff = null;
-	/*
+    int tot_log_msg  = 0; // RPI 731
+    int tot_log_text = 0; // RPI 731
+    boolean log_text_added = false; // RPI 731
+    /*
 	 * timestamp data for TS optional trace timestamps
 	 * The first 23 characters are standard ODBC SQL Timestamp
 	 * to start of previous micro-second.  The last 6 digits
@@ -1620,8 +1633,8 @@ public  class  tz390 {
 		       "END",      // 7480  "END"  135
 		       "EQU",      // 7490  "EQU"  136
 		       "EXITCTL",  // 7500  "EXITCTL"  137
-		       "ICTL",     // 7510  "ICTL"  138
-		       "ISEQ",     // 7520  "ISEQ"  139
+		       "ICTL",    // 7510  "ICTL"  138 
+		       "ISEQ",    // 7520  "ISEQ"  139 
 		       "LTORG",    // 7530  "LTORG"  140
 		       "OPSYN",    // 7540  "OPSYN"  225
 		       "ORG",      // 7550  "ORG"  142
@@ -3771,11 +3784,17 @@ public void init_options(String[] args,String pgm_type){
           		&& token.substring(0,8).toUpperCase().equals("MAXLINE(")){
            	opt_maxline = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
         } else if (token.length() > 8
+          		&& token.substring(0,7).toUpperCase().equals("MAXLOG(")){
+           	opt_maxlog = Integer.valueOf(token.substring(7,token.length()-1)).intValue() << 20; 
+        } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("MAXPARM(")){
            	opt_maxparm = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
         } else if (token.length() > 6
           		&& token.substring(0,6).toUpperCase().equals("MAXPC(")){ // RPI 439
            	opt_maxpc = Integer.valueOf(token.substring(6,token.length()-1)).intValue();
+        } else if (token.length() > 7
+          		&& token.substring(0,7).toUpperCase().equals("MAXQUE(")){
+           	opt_maxque = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
         } else if (token.length() > 7
           		&& token.substring(0,7).toUpperCase().equals("MAXRLD(")){
            	opt_maxrld = Integer.valueOf(token.substring(7,token.length()-1)).intValue();  
@@ -3907,7 +3926,7 @@ public void init_options(String[] args,String pgm_type){
           	dir_prn = token.substring(7,token.length()-1) + File.separator; 	
         } else if (token.length() > 8
           		&& token.substring(0,8).toUpperCase().equals("SYSTERM(")){
-         	opt_systerm = token.substring(8,token.length()-1);
+         	systerm_file_name = token.substring(8,token.length()-1); // RPI 730
         } else if (token.length() > 7 
            		&& token.substring(0,7).toUpperCase().equals("SYSTRC(")){
           	dir_trc = token.substring(7,token.length()-1) + File.separator; 
@@ -3985,15 +4004,15 @@ public void init_options(String[] args,String pgm_type){
         index1++;
     }
     if (log_file_name != null){ // RPI 719
-    	if (opt_systerm.length() == 0){
-    		opt_systerm = log_file_name;
+    	if (systerm_file_name == null){  // RPI 730
+    		systerm_file_name = log_file_name;
     	}
     	if (trace_file_name == null){
     		trace_file_name = log_file_name;
     	}
     }
-    if (opt_systerm.length() == 0){  // RPI 425 RPI 546
-    	opt_systerm = pgm_name; // RPI 546
+    if (systerm_file_name == null){  // RPI 425 RPI 546
+    	systerm_file_name = pgm_name; // RPI 546
     }
 }
 public void open_systerm(String z390_pgm){
@@ -4002,7 +4021,7 @@ public void open_systerm(String z390_pgm){
 	 */
 	systerm_prefix = left_justify(pgm_name,9) + " " + z390_pgm + " ";
     if (systerm_file != null)return; // rpi 415
-	systerm_file_name = get_file_name(dir_err,opt_systerm,err_type);
+	systerm_file_name = get_file_name(dir_err,systerm_file_name,err_type);
     try {
         systerm_file = new RandomAccessFile(systerm_file_name,"rw"); 
         systerm_file.seek(systerm_file.length());
@@ -4120,7 +4139,11 @@ public synchronized void abort_error(int error,String msg){ // RPI 397
 	 * and exit with rc 16.
 	 */
 	System.out.println("TZ390E abort error " + error + " - " + msg);
-    close_systerm(16);
+    System.out.println("z390_abort_request"); // RPI 731 request parent shutdown
+	System.out.flush();
+	z390_abort = true;
+    sleep_now(3000);
+	close_systerm(16);
 	System.exit(16);
 }
 
@@ -4680,7 +4703,7 @@ public String trim_trailing_spaces(String line,int max_text){ // RPI 437
 		return ("X" + line).trim().substring(1);
 	}
 }
-public String trim_continue(String line, boolean first_line){
+public String trim_continue(String line, boolean first_line,int ictl_end,int ictl_cont){
 	/*
      * Trim line to comma delimiter or end of line
      * recognizing whether line is continuation of 
@@ -4696,8 +4719,8 @@ public String trim_continue(String line, boolean first_line){
 	 */
 	int index;
 	int eol_index = line.length();
-	if (eol_index >= 72){
-		eol_index = 71; // RPI 315
+	if (eol_index >= ictl_end+1){  // RPI 728
+		eol_index = ictl_end; // RPI 315 // RPI 728
 	}
 	if (first_line){
 		split_level = 0;
@@ -4733,8 +4756,8 @@ public String trim_continue(String line, boolean first_line){
 				return line.substring(0,eol_index);
 			}
 		}
-		if (line.length() >= 16){
-			split_parms_index = 15;
+		if (line.length() >= ictl_cont){     // RPI 728
+			split_parms_index = ictl_cont-1; // RPI 728
 			split_quote_text = "";
 			if (split_quote){  // RPI 463
 				index = line.substring(split_parms_index,eol_index).indexOf('\'');
@@ -4892,7 +4915,7 @@ public void put_trace(String text){
 		abort_error(17,"trace file write error " + e.toString());
 	}
 	if (trace_file.length() > max_file_size){
-		abort_error(18,"maximum bal file size exceeded");
+		abort_error(18,"maximum trace file size exceeded"); // RPI 731
 	}
 }
     public void inc_cur_bal_line_num(String text_line){
@@ -5157,5 +5180,32 @@ public void put_trace(String text){
     		index++;
     	}
         return text.trim();  //RPI111
+    }
+    public void log_text_append(JTextArea log_text, String msg){
+		   /* 
+		    * append msg to visible log textarea
+		    * and reduce size by 50% when it exceeds
+		    * opt_maxlog byte limit.
+		    */
+    	   tot_log_msg++;
+		   if (tot_log_text > opt_maxlog){
+			   log_text.replaceRange(" Z390 visible log truncated at msg #" + tot_log_msg + "\n",0,opt_maxlog/2);
+			   tot_log_text = tot_log_text - opt_maxlog/2;
+		   }
+		   tot_log_text = tot_log_text + msg.length() + 1;
+		   log_text.append(msg + "\n");
+    	   log_text_added = true;
+	   }
+    public void sleep_now(long mills){
+    	/*
+    	 * sleep for 1 monitor wait interval
+    	 */
+    	try {
+    		Thread.sleep(mills);
+    	} catch (Exception e){
+    		z390_abort = true;
+    		System.out.println("TZ390E thread sleep error - " + e.toString());
+    	    Thread.yield();
+    	}
     }
 }

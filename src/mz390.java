@@ -387,6 +387,9 @@ public  class  mz390 {
 	int[]        mac_file_cur_file_num = null; 
 	int[]        mac_file_cur_line_num = null;
 	int[]        mac_file_errors = null;
+	int[]        mac_ictl_start = null; // RPI 728
+	int[]        mac_ictl_end   = null; // RPI 728
+	int[]        mac_ictl_cont  = null; // RPI 728
 	int cur_mac_line_num = 0;
 	int cur_mac_file_num = 0;
 	String mac_line = null;
@@ -1493,6 +1496,8 @@ public  class  mz390 {
 			if (mac_op != null && mac_op.length() > 0){
 				if (mac_op.equals("MACRO")){
 					load_macro_mend_level++;
+				} else if (mac_op.equals("ICTL")){
+					set_ictl();  // RPI 728
 				} else {
 					if (load_macro_mend_level == 1){
 						if (!load_proto_type){
@@ -1574,6 +1579,37 @@ public  class  mz390 {
 		mac_name_index = save_mac_name_index;
 		loading_mac = false;
 	}
+	private void set_ictl(){  // RPI 728
+		/*
+		 * set ICTL start, end, cont columns
+		 */
+		mac_ictl_start[cur_mac_file] = calc_seta_exp(mac_parms,0);
+		if (!mac_abort 
+			&& mac_parms.length() > exp_next_index
+			&& mac_parms.charAt(exp_next_index-1) == ','){
+			mac_ictl_end[cur_mac_file] = calc_seta_exp(mac_parms,exp_next_index);
+			if (!mac_abort 
+				&& mac_parms.length() > exp_next_index
+				&& mac_parms.charAt(exp_next_index-1) == ','){
+				mac_ictl_cont[cur_mac_file] = calc_seta_exp(mac_parms,exp_next_index);
+			}
+		}
+		if (mac_ictl_start[cur_mac_file] < 1 
+			|| mac_ictl_start[cur_mac_file] > 40){
+			log_error(220,"invalid ICTL start value - " + mac_ictl_start[cur_mac_file]);
+			mac_ictl_start[cur_mac_file] = 1;
+		}
+		if (mac_ictl_end[cur_mac_file] < mac_ictl_start[cur_mac_file] + 5 
+			|| mac_ictl_start[cur_mac_file] > 80){
+				log_error(221,"invalid ICTL end value - " + mac_ictl_end[cur_mac_file]);
+				mac_ictl_end[cur_mac_file] = 71;
+		}
+		if (mac_ictl_cont[cur_mac_file] < 2 
+				|| mac_ictl_start[cur_mac_file] > 40){
+					log_error(222,"invalid ICTL continue value - " + mac_ictl_cont[cur_mac_file]);
+					mac_ictl_end[cur_mac_file] = 16;
+		}
+	}
 	private void load_open_macro_file(){
 		/*
 		 * open file for MLC or macro file
@@ -1602,6 +1638,9 @@ public  class  mz390 {
 		if (tz390.opt_tracem){
 			tz390.put_trace("LOADING FILE " + load_file_name);
 		}
+		mac_ictl_start[cur_mac_file] =  1; // RPI 728
+		mac_ictl_end[cur_mac_file]   = 71; // RPI 728
+		mac_ictl_cont[cur_mac_file]  = 16; // RPI 728
 	}
 	private void load_proto_type(){
 		/* 
@@ -2013,7 +2052,7 @@ public  class  mz390 {
 						cur_mac_line_num = mac_file_cur_line_num[cur_mac_file];
 					}
 				} else {
-					temp_line = tz390.trim_trailing_spaces(temp_line,72);
+					temp_line = tz390.trim_trailing_spaces(temp_line,mac_ictl_end[cur_mac_file]+1);  // RPI 728 include cont col.
 					if (!tz390.verify_ascii_source(temp_line)){
 						log_error(138,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getAbsolutePath());
 					}
@@ -2021,12 +2060,12 @@ public  class  mz390 {
 			}
 			if  (temp_line == null){
 				mac_line = null;
-			} else if (temp_line.length() < 72   // RPI 437
-					|| temp_line.charAt(71) <= asc_space_char
+			} else if (temp_line.length() <= mac_ictl_end[cur_mac_file]   // RPI 437 RPI 728 no cont col
+					|| temp_line.charAt(mac_ictl_end[cur_mac_file]) <= asc_space_char // RPI 728 test cont col
 			    ){ //RPI181
-				mac_line = tz390.trim_trailing_spaces(temp_line,72);  //RPI124
+				mac_line = tz390.trim_trailing_spaces(temp_line,mac_ictl_end[cur_mac_file]);  //RPI 124  RPI 728 exclude cont col
 			} else {
-				mac_line = tz390.trim_continue(temp_line.substring(0,71),tz390.split_first); // first line
+				mac_line = tz390.trim_continue(temp_line.substring(0,mac_ictl_end[cur_mac_file]),tz390.split_first,mac_ictl_end[cur_mac_file],mac_ictl_cont[cur_mac_file]); // first line RPI 728 remove cont char 
 				boolean mac_cont_line = true;
 				while (mac_cont_line){ //RPI181 //RPI 215
 					tz390.systerm_io++;
@@ -2045,14 +2084,21 @@ public  class  mz390 {
 						mac_cont_line = false;
 						temp_line = tz390.trim_trailing_spaces(temp_line,72); //RPI124
 					}
-					if  (temp_line.length() >= 16
-							&& temp_line.substring(0,15).equals("               ")
+					if  (temp_line.length() >= mac_ictl_start[cur_mac_file] + mac_ictl_cont[cur_mac_file] - 1 // RPI 728
+							&& temp_line.substring(mac_ictl_start[cur_mac_file]-1,mac_ictl_cont[cur_mac_file]-1).trim().equals("")  // RPI 728 check all spaces on preceeding cont
 						){ // RPI 167
-						mac_line = mac_line + tz390.trim_continue(temp_line,tz390.split_cont); // RPI 315, RPI 463
+						mac_line = mac_line + tz390.trim_continue(temp_line,tz390.split_cont,mac_ictl_end[cur_mac_file],mac_ictl_cont[cur_mac_file]); // RPI 315, RPI 463 RPI 728
 					} else if (temp_line.length() != 0) { // RPI 492 blank line 
-						log_error(11,"continuation line < 16 characters - " + temp_line);
+						log_error(11,"continuation line < " + mac_ictl_cont[cur_mac_file] + " characters - " + temp_line);
 					}
 				} 
+			}
+			if (mac_line != null && mac_ictl_start[cur_mac_file] > 1){  // RPI 728
+				if (mac_line.length() > mac_ictl_start[cur_mac_file]){
+					mac_line = mac_line.substring(mac_ictl_start[cur_mac_file]-1);
+				} else {
+					mac_line = "";
+				}
 			}
 		} catch (IOException e){
 			abort_error(29,"I/O error on file read " + e.toString());
@@ -2170,6 +2216,9 @@ public  class  mz390 {
 			abort_error(100,"maximum nested copy files exceeded");
 			return;
 		}
+		mac_ictl_start[cur_mac_file] = 1;   // RPI 728
+		mac_ictl_end[cur_mac_file]   = 71;  // RPI 728
+		mac_ictl_cont[cur_mac_file]  = 16;  // RPI 728
 		tz390.split_line(mac_parms); //RPI84
 		if (tz390.split_label == null)tz390.split_label = "";
 		new_mac_name = tz390.find_file_name(tz390.dir_cpy,tz390.split_label,tz390.cpy_type,tz390.dir_cur);
@@ -6654,11 +6703,14 @@ public  class  mz390 {
 		mac_file_errors       = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
 		mac_file_path         = new String[tz390.opt_maxfile];
 		mac_file_type         = new char[tz390.opt_maxfile]; // RPI 549
+		mac_ictl_start        = new int[tz390.opt_maxfile]; // RPI 549
+		mac_ictl_end          = new int[tz390.opt_maxfile]; // RPI 549
+		mac_ictl_cont         = new int[tz390.opt_maxfile]; // RPI 549
 		mac_name              = new String[tz390.opt_maxfile];
-		mac_name_line_start   =(int[])Array.newInstance(int.class,tz390.opt_maxfile);
-		mac_name_line_end   =(int[])Array.newInstance(int.class,tz390.opt_maxfile);
-		mac_name_lab_start  = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
-		mac_name_lab_end    = (int[])Array.newInstance(int.class,tz390.opt_maxfile);
+		mac_name_line_start   = new int[tz390.opt_maxfile];
+		mac_name_line_end     = new int[tz390.opt_maxfile];
+		mac_name_lab_start    = new int[tz390.opt_maxfile];
+		mac_name_lab_end      = new int[tz390.opt_maxfile];
 		/*
 		 * opt_maxline - total MLC and MAC/CPY file source loaded
 		 */
@@ -7245,7 +7297,7 @@ public  class  mz390 {
 				bal_eof = true;
 			}
 			while (tz390.opt_asm && az390.az390_running){
-				sleep_now(tz390.monitor_wait);
+				tz390.sleep_now(tz390.monitor_wait);
 			}
 			if (az390.az390_rc > mz390_rc){
 				mz390_rc = az390.az390_rc;
@@ -7628,16 +7680,6 @@ public  class  mz390 {
 		lcl_key_tab_index[lcl_key_index] = user_index;
 		lcl_key_tab_low[lcl_key_index] = 0;
 		lcl_key_tab_high[lcl_key_index] = 0;
-	}
-	private void sleep_now(long mills){
-		/*
-		 * sleep for 1 monitor wait interval
-		 */
-		try {
-			Thread.sleep(mills);
-		} catch (Exception e){
-			abort_error(186,"thread sleep error - " + e.toString());
-		}
 	}
 	//****************************************
 	//* Pseudo Code Support Routines
@@ -10277,21 +10319,21 @@ public  class  mz390 {
     	 *      extended FORMAT option specified.
     	 */
     	try {
-    		if  (text.length() < 72){ // RPI 264, RPI 437
+    		if  (text.length() < tz390.bal_ictl_end + 1){ // RPI 264, RPI 437 RPI 728
     			tz390.systerm_io++;
     			file_buff.write(text + tz390.newline); // RPI 500
     		} else {
     			tz390.systerm_io++;
-    			file_buff.write(text.substring(0,71) + "X" + tz390.newline); // RPI 500
-    			String text_left = text.substring(71);
+    			file_buff.write(text.substring(0,tz390.bal_ictl_end) + "X" + tz390.newline); // RPI 500 RPI 728
+    			String text_left = text.substring(tz390.bal_ictl_end);  // RPI 728
     			while (text_left.length() > 0){
-    				if  (text_left.length() > 56){
-    					String cont_line = "               " 
-    						+ text_left.substring(0,56) 
+    				if  (text_left.length() > tz390.bal_ictl_cont_tot){  // RPI 728
+    					String cont_line = "               "   // RPI 728 - 16 blanks
+    						+ text_left.substring(0,tz390.bal_ictl_cont_tot) // RPI 728
     						+ "X" + tz390.newline ; // RPI 500
     					tz390.systerm_io++;
     					file_buff.write(cont_line);
-    					text_left = text_left.substring(56);
+    					text_left = text_left.substring(tz390.bal_ictl_cont_tot);
     				} else {
     					tz390.systerm_io++;
     					file_buff.write("               " 

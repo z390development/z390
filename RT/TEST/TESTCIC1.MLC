@@ -10,6 +10,7 @@
 * 07/20/07 RPI 662 TEST ADDITIONAL ITEMERR AND QIDERR FOR DFHRESP          
 * 08/25/07 RPI 687 TEST ADDITIONAL CICS VSAM DFHRESP CODES    
 * 08/25/07 RPI 690 CORRECT NOTEND TO NOTFND                   
+* 10/30/07 RPI 729 ADD DFHRESP ILLOGIC=F'21'                  
 *********************************************************************
 TESTCIC1 RT1   MAIN
          EQUREGS
@@ -31,6 +32,7 @@ X        DS    F
          MVC   X,DFHRESP(ITEMERR)       RPI 662
          MVC   X,DFHRESP(QIDERR)        RPI 662
          MVC   X,DFHRESP(DISABLED)      RPI 687
+         MVC   X,DFHRESP(ILLOGIC)       RPI 729
          CLC   =F'0',DFHRESP(NORMAL)      
          RT1   CCE
          CLC   =F'1',DFHRESP(ERROR)       
@@ -50,6 +52,8 @@ X        DS    F
          CLC   =F'19',DFHRESP(NOTOPEN)      RPI 687      
          RT1   CCE
          CLC   =F'20',DFHRESP(ENDFILE)      RPI 687      
+         RT1   CCE
+         CLC   =F'21',DFHRESP(ILLOGIC)      RPI 729      
          RT1   CCE
          CLC   =F'22',DFHRESP(LENGERR)   
          RT1   CCE
@@ -71,6 +75,7 @@ X        DS    F
          RT1   CCE,=F'18',DFHRESP(NOSPACE)      RPI 687
          RT1   CCE,=F'19',DFHRESP(NOTOPEN)      RPI 687
          RT1   CCE,=F'20',DFHRESP(ENDFILE)      RPI 687
+         RT1   CCE,=F'21',DFHRESP(ILLOGIC)      RPI 729
          RT1   CCE,=F'22',DFHRESP(LENGERR)
          RT1   CCE,=F'26',DFHRESP(ITEMERR)      RPI 662
          RT1   CCE,=F'27',DFHRESP(PGMIDERR)

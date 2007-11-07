@@ -7,6 +7,7 @@
 *********************************************************************
 * 09/01/07 INITIAL CODING OF RRDS FIXED LENGTH RECORD DEMO            
 * 09/21/07 RPI 702 CHANGE DIR TO KEY FOR ACCESS BY REC#               
+* 10/25/07 RPI 724 CHANGE RRN TO START AT 1                           
 *********************************************************************
 RRF1DEMO SUBENTRY   
 *
@@ -16,18 +17,18 @@ RRF1DEMO SUBENTRY
          OPEN  (VFILEO,(OUTPUT))
          LTR   R15,R15
          BNZ   ERR1
-         MVC   RECORD,=80C'0'
-         MVC   REC#,=F'0'
+         MVC   RECORD,=80C'1'
+         MVC   REC#,=F'1'
          PUT   RPL=VRPLOUT
          LTR   R15,R15
          BNZ   ERR2
-         MVC   RECORD,=80C'4'
-         MVC   REC#,=F'4'
+         MVC   RECORD,=80C'5'
+         MVC   REC#,=F'5'
          PUT   RPL=VRPLOUT
          LTR   R15,R15
          BNZ   ERR2
-         MVC   RECORD,=80C'2'
-         MVC   REC#,=F'2'
+         MVC   RECORD,=80C'3'
+         MVC   REC#,=F'3'
          PUT   RPL=VRPLOUT
          LTR   R15,R15
          BNZ   ERR2
@@ -41,23 +42,23 @@ RRF1DEMO SUBENTRY
          OPEN  (VFILEI)
          LTR   R15,R15
          BNZ   ERR1
-         MVC   REC#,=F'0'
+         MVC   REC#,=F'1'
          GET   RPL=VRPLIN
          LTR   R15,R15
          BNZ   ERR4
-         CLC   RECORD,=80C'0'
+         CLC   RECORD,=80C'1'
          BNZ   ERR5
-         MVC   REC#,=F'2'
+         MVC   REC#,=F'3'
          GET   RPL=VRPLIN
          LTR   R15,R15
          BNZ   ERR4
-         CLC   RECORD,=80C'2'
+         CLC   RECORD,=80C'3'
          BNZ   ERR5
-         MVC   REC#,=F'4'
+         MVC   REC#,=F'5'
          GET   RPL=VRPLIN
          LTR   R15,R15
          BNZ   ERR4
-         CLC   RECORD,=80C'4'
+         CLC   RECORD,=80C'5'
          BNZ   ERR5
          CLOSE (VFILEI)
          LTR   R15,R15

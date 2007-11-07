@@ -194,6 +194,7 @@ import javax.swing.Timer;
         long    monitor_cur_ins  = 0;
         long    monitor_cur_int  = 0;
         long    monitor_cur_rate = 0;
+        String  cmd_read_line = null;
     /*
      * time and date variables
      */
@@ -309,7 +310,7 @@ private void exec_pz390(){
 	try {
 		if (tz390.opt_guam){
 			while (!tz390.z390_abort && pz390_running){
-				sz390.sleep_now(tz390.monitor_wait);  // RPI 218
+				tz390.sleep_now(tz390.monitor_wait);  // RPI 218
 			}
 		} else {
 			pz390_thread.join(); // faster with no spurious interrupts
@@ -414,12 +415,22 @@ private void monitor_update(){
     			 + " CMD task ended TOT SEC=" + monitor_cmd_time_total
     			 + " TOT LOG IO=" + io_count);
     		sz390.cmd_proc_running[cmd_id] = false;
-    	}
-    	if (tz390.opt_time && tz390.max_time_seconds > 0){
+    	} else if (tz390.opt_time && tz390.max_time_seconds > 0){
     		if (sz390.cmd_proc_running[cmd_id] && sz390.cmd_proc_rc(cmd_id) == -1){
     			if  (monitor_cmd_time_total > tz390.max_time_seconds){
     				sz390.cmd_cancel(cmd_id);
     				sz390.log_error(75,"CMD command timeout error " + monitor_cmd_time_total + " > " + tz390.max_time_seconds); 
+    			}
+    		}
+    	} else {
+    		if ((sz390.cmd_proc_cmdlog[cmd_id]     // RPI 731
+    		     || tz390.max_cmd_queue_exceeded) // RPI 731
+    			&& sz390.cmd_proc_running[cmd_id]
+    		    && sz390.cmd_proc_rc(cmd_id) == -1){
+    			cmd_read_line = sz390.cmd_get_queue(cmd_id);
+    		    while (cmd_read_line != null){
+    				sz390.put_log("CMDLOG ID=" + cmd_id + " MSG=" + cmd_read_line);
+    				cmd_read_line = sz390.cmd_get_queue(cmd_id);
     			}
     		}
     	}

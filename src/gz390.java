@@ -650,7 +650,7 @@ public  class  gz390
 				abort_error(58,"GUAM GUI window closed");
 				int count = 5;
 				while (count > 0){
-					sleep_now(); // RPI 220 wait for ez390 to term
+					tz390.sleep_now(monitor_wait); // RPI 220 wait for ez390 to term
 				    count--;
 				}
 				return;
@@ -1625,7 +1625,7 @@ public  class  gz390
     	   abort_error(102,"GUAM GUI terminating due to external shutdown request");
     	   int count = 5;
     	   while (count > 0){  // RPI 460
-    		   sleep_now(); // RPI 220 wait for ez390 to term
+    		   tz390.sleep_now(monitor_wait); // RPI 220 wait for ez390 to term
     		   count--;
     	   }
        }
@@ -3122,19 +3122,9 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         	byte[] temp_byte = new byte[lbuff];
         	ByteBuffer temp_buff = ByteBuffer.wrap(temp_byte,0,lbuff);
         	while (guam_tot_key == 0 && wait){
-                sleep_now();
+                tz390.sleep_now(monitor_wait);
         	}
         	return temp_buff;
-        }
-        private void sleep_now(){
-        	/*
-        	 * sleep for interval
-        	 */
-    		try {
-    			Thread.sleep(monitor_wait);
-    		} catch (Exception e){
-    			abort_error(109,"GUAM GUI Screen read wait exception -" + e.toString());
-    		}
         }
         public void guam_screen_field(int row, int col, int lfield){
         	/*
@@ -3241,7 +3231,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         	}
     		if ((tpg_flags & tpg_wait_mask) == tpg_wait){
     			while (!tz390.z390_abort && !tn_attn){
-    				sleep_now();
+    				tz390.sleep_now(monitor_wait);
     			}
     		} else if (!tn_attn){
     			tpg_rc = 4; // RPI 221 return 4 if NOWAIT and no data 

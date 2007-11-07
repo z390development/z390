@@ -17,6 +17,11 @@
 * 09/22/07 RPI 701 CHANGE DEFAULT TO REPLACE EXISTING VSAM FILES 
 *          DURING LOADING UNLESS [DISP=MOD] IS CODED FOLLOWING 
 *          CATALOG.ENTRY ON OUTFILE.
+* 10/25/07 RPI 724 SUPPORT NEW EF, EV, RF, AND RV SEQ UNLOAD      
+*          FORMATS TO HANDLE ALL VSAM FILE RCDS TO 2 GB.
+*          SUPPORT STD F, FB, FT, V, VB, VT FORMAT OVERRIDES.
+*          RRDS KEY,KGE WILL GET NEXT
+*          BUFFER TO REDUCE I/O'S AND IMPROVE PERFORMANCE.
 *********************************************************************
 *
 *  REPRO WILL LOAD OR UNLOAD VSAM FILE FROM/TO QSAM FILE 
@@ -35,24 +40,31 @@
 *       EXEC REPRO
 *
 * REGISTER USAGE
-*   R3 = RECORD PREFIX (QSAM VAR RECORD WITH 4 BYTE PREFIX)
-*   R4 = RECORD AREA   (VSAM FIXED OR VAR LEN RECORD)
-*   R5 = QSAM INFILE/OUTFILE DCB
-*   R6 = VSAM INFILE/OUTFILE ACB
-*   R7 = VSAM VCLR CATALOG ENTRY
-*   R8 = VSAM/QSAM TEST DDNAME 
-*   R9 = QSAM DSNAME WITH OPTIONAL OVERRIDE [RECFM=XX]
-*
+*   R3  = RECORD PREFIX (QSAM VAR RECORD WITH 4 BYTE PREFIX)
+*   R4  = RECORD AREA   (VSAM FIXED OR VAR LEN RECORD)
+*   R5  = QSAM INFILE/OUTFILE DCB
+*   R6  = VSAM INFILE/OUTFILE ACB
+*   R7  = VSAM VCLR CATALOG ENTRY
+*   R8  = VSAM/QSAM TEST DDNAME 
+*   R9  = QSAM DSNAME WITH OPTIONAL OVERRIDE [RECFM=XX] 
+*   R9  = BUFFER AVAILABLE LENGTH FOR MVCL TO/FROM AFTER INIT_BUFF
+*   R10 = BUFFER POINTER     
+*   R11 = BUFFER MOVE LENGTH 
+*   R12 = BASE
+*   R13 = BASE
 *********************************************************************
 REPRO    SUBENTRY BASES=(R13,R12)
          COPY  ASMMSP                                                  
-         WTO   'Z390 VSAM REPRO UTILITY V1.0'
+         WTO   'REPRO z390 VSAM UTILITY V1.1'
          PM    INIT    SET FILE AND RECORD TYPE INFO             
 LOOP     EQU   *
          PM    GET
          PM    PUT
          B     LOOP
 EOF      EQU   *
+         MVC   DTOTREC,=X'4020202020202020'
+         ED    DTOTREC,PTOTREC
+         WTO   MF=(E,WTO_TOTREC)
          PM    CLOSE
          WTO   'REPRO ENDED OK'
          SUBEXIT
@@ -165,12 +177,19 @@ SET_QFILE_RECFM PENTRY
              WTO 'REPRO INVALID QSAM FILE OVERRIDE [RECFM=FT|FB|VT|VB]'
          ELSEIF (CLC,7(2,R1),EQ,=C'VB')
              MVC RECFM_OVF,=C'VB'
+             MVI VL32,FALSE
          ELSEIF (CLC,7(2,R1),EQ,=C'VT')
              MVC RECFM_OVF,=C'VT'
+             MVI VL32,FALSE
          ELSEIF (CLC,7(2,R1),EQ,=C'FB')
              MVC RECFM_OVF,=C'FB'
          ELSEIF (CLC,7(2,R1),EQ,=C'FT')
              MVC RECFM_OVF,=C'FT'
+         ELSEIF (CLC,7(1,R1),EQ,=C'F')
+             MVC RECFM_OVF,=C'F '
+         ELSEIF (CLC,7(1,R1),EQ,=C'V')
+             MVC RECFM_OVF,=C'V '
+             MVI VL32,FALSE
          ELSE
              WTO 'REPRO INVALID QSAM OVERRIDE [RECFM=FT|FB|VT|VB]'
              SUBEXIT RC=16
@@ -180,7 +199,7 @@ SET_QFILE_RECFM PENTRY
 * LOAD - OPEN INFILE QSAM AND OUTFILE VSAM
 *
 INIT_LOAD PENTRY
-         WTO   'LOADING VSAM OUTFILE FROM QSAM INFILE'
+         WTO   'REPRO LOADING VSAM FROM QSAM INFILE'
          PM    CHECK_VSAM_OVERRIDE
          IF    (CLI,MOD,EQ,TRUE)
                WTO 'REPRO OPENING VSAM OUTFILE FOR MOD VS RELOAD'
@@ -201,13 +220,14 @@ INIT_LOAD PENTRY
               WTO 'REPRO OPEN FOR INFILE QSAM FILE FAILED'
               SUBEXIT RC=16
          ENDIF
+         STG  R0,INFILEQL
          MVC  INFILEQ+DCBSYNAD-IHADCB(4),=A(ERR11)
          PEXIT
 *
 * UNLOAD - OPEN INFILE VSAM AND OUTFILE QSAM
 *
 INIT_UNLOAD PENTRY
-         WTO   'UNLOADING VSAM INFILE TO QSAM OUTFILE'
+         WTO   'REPRO UNLOADING VSAM INFILE TO QSAM OUTFILE'
          OPEN  (INFILEV,(INPUT))
          IF    (LTR,R15,NE,R15)
                WTO 'REPRO OPEN FOR INFILE VSAM CATALOG ENTRY FAILED'
@@ -239,10 +259,9 @@ CHECK_VSAM_OVERRIDE PENTRY
                ENDIF
          ENDIF    
          PEXIT
-
-INIT_VSAM PENTRY
 *
 * INIT_QSAM - SET QSAM RECFM, LRECL, BLKSIZE CONSISTENT WITH VSAM
+*             AND ANY QSAM [RECFM=XX] OVERRIDE OPTION
 *
 *   R5 = QSAM DCB
 *   R6 = VSAM ACB                                  
@@ -253,35 +272,46 @@ INIT_QSAM PENTRY
          USING IHAACB,R6  VSAM ACB IN/OUT FILE
          L     R7,ACBVCLRA R15= VCLR BASE CLUSTER    RPI 681
          USING IHAVCLR,R7                            RPI 681
+         IF    (TM,VCLRFLG1,O,VCLRRRDS)  RPI 724
+               MVI   RR,TRUE 
+         ENDIF
          IF    (TM,VCLRFLG1,O,VCLRVREC)  RPI 688     RPI 681
                PM    SET_VREC_RECFM
                L     R2,VCLRLREC                     RPI 681
                AHI   R2,4         LENGTH OF MAX RECORD + 4
-               IF    (CH,R2,GT,=H'32764')
-                     B  ERR51
-               ENDIF
-               IF    (CLC,RECFM_OVF,EQ,=C'VB')
-                     AHI   R2,4    ADD 4 BYTE VB PREFIX
+               IF    (CLC,RECFM_OVF,EQ,=C'RV')
+                     AHI   R2,4    ADD 4 BYTE FOR LLLL,RRN PFX
                ENDIF
                ST    R2,DCBBLKSIF  VB BLKSI
                GETMAIN RU,LV=(R2)
                LR    R3,R1         R3=A(VSAM RECORD LENGTH IN PFX)
-               LA    R4,4(R3)      R4=A(VSAM LOGICAL)
+               IF    (CLC,RECFM_OVF,EQ,=C'RV')
+                     LA    R4,8(R3)      R4=A(VSAM LOGICAL)
+               ELSE
+                     LA    R4,4(R3)      R4=A(VSAM LOGICAL)
+               ENDIF
          ELSE
                PM    SET_FIXED_RECFM
                L     R2,VCLRLREC                RPI 681
-               ST    R2,DCBBLKSIF
-               ST    R2,DCBLRECLF
                MODCB RPL=INFILER,RECLEN=(R2)    RPI 688
                MODCB RPL=OUTFILER,RECLEN=(R2)   RPI 688
+               IF    (CLC,RECFM_OVF,EQ,=C'RF')
+                     AHI   R2,4   ADD RRN PFX              
+               ENDIF
+               ST    R2,DCBBLKSIF
+               ST    R2,DCBLRECLF
                GETMAIN RU,LV=(R2)
-               LR    R3,R1         R3=A(VSAM RECORD LENGTH IN PEX)
-               LR    R4,R1         R4=A(VSAM LOGICAL REC)
+               LR    R3,R1         R3=A(VSAM RECORD PFX IF ANY)
+               IF    (CLC,RECFM_OVF,EQ,=C'RF')
+                     LA    R4,4(R3)   R4=A(VSAM LOCICAL REC)              
+               ELSE
+                     LR    R4,R1      R4=A(VSAM LOGICAL REC)
+               ENDIF
          ENDIF
          CVD   R2,PWORK
-         MVC   DLRECL,=X'402020202020'
-         ED    DLRECL,PWORK+5
-         WTO MF=(E,WTO_QSAM)
+         MVC   DLRECL,=X'4020202020202020'
+         ED    DLRECL,PWORK+4
+         WTO   MF=(E,WTO_RECFM)
          MODCB RPL=INFILER,AREA=(R4)    RPI 688
          MODCB RPL=OUTFILER,AREA=(R4)   RPI 688
          PEXIT
@@ -289,13 +319,20 @@ INIT_QSAM PENTRY
 * SET FIXED QSAM RECORD FORMAT AND DISPLAY IT
 *
 SET_FIXED_RECFM PENTRY
-         IF    (CLC,RECFM_OVF,EQ,=C'XX'),OR,(CLC,RECFM_OVF,EQ,=C'F ')
-               MVC   RECFM_OVF,=C'F ' 
-               MVI   DCBRECFM,DCBRECFM_F 
+         IF    (CLC,RECFM_OVF,EQ,=C'XX')
+               IF    (CLI,RR,EQ,TRUE)
+                     MVC   RECFM_OVF,=C'RF' RRDS WITH RRN PFX       
+               ELSE
+                     MVC   RECFM_OVF,=C'EF' ESDS SEQ RCDS            
+               ENDIF 
+               PM    INIT_BUFF
          ELSEIF (CLC,RECFM_OVF,EQ,=C'FT')
                MVI DCBRECFM,DCBRECFM_FT
          ELSEIF (CLC,RECFM_OVF,EQ,=C'FB')
                MVI DCBRECFM,DCBRECFM_FB
+         ELSEIF (CLC,RECFM_OVF(1),EQ,=C'F')
+               MVC   RECFM_OVF,=C'F ' 
+               MVI   DCBRECFM,DCBRECFM_F 
          ELSE 
                WTO 'REPRO INVALID FIXED QSAM [RECFM=FT|FB]'
                SUBEXIT RC=16
@@ -305,23 +342,53 @@ SET_FIXED_RECFM PENTRY
 * SET VARIABLE QSAM RECORD FORMAT AND DISPLAY IT
 *
 SET_VREC_RECFM PENTRY
-         IF    (CLC,RECFM_OVF,EQ,=C'XX'),OR,(CLC,RECFM_OVF,EQ,=C'V ')
-               MVC   RECFM_OVF,=C'V '
-               MVI   DCBRECFM,DCBRECFM_V
+         MVI   VAR,TRUE            VARIABLE LENGTH 
+         MVI   VL32,FALSE         ASSUME QSAM VL16 BIT LENGTH
+         IF    (CLC,RECFM_OVF,EQ,=C'XX')
+               MVI   VL32,TRUE          ASSUME ES VL32 USING QSAM F
+               IF    (CLI,RR,EQ,TRUE)  
+                     MVC   RECFM_OVF,=C'RV' RRDS WITH LLLL,RRN PFX REC
+               ELSE
+                     MVC   RECFM_OVF,=C'EV' ESDS WITH LLLL FPX REC
+               ENDIF
+               PM  INIT_BUFF
          ELSEIF (CLC,RECFM_OVF,EQ,=C'VT')
                MVI DCBRECFM,DCBRECFM_VT
          ELSEIF (CLC,RECFM_OVF,EQ,=C'VB')
                MVI DCBRECFM,DCBRECFM_VB
+         ELSEIF (CLC,RECFM_OVF(1),EQ,=C'V')
+               MVI   DCBRECFM,DCBRECFM_V
          ELSE 
                WTO 'REPRO INVALID VARIABLE QSAM [RECFM=VT|VB]'
                SUBEXIT RC=16
          ENDIF
          PEXIT
 *
+* INIT BUFF FOR EF, EV, RF, RF FORMAT SEQUENTIAL FILE BUFFERING
+*
+INIT_BUFF PENTRY
+         MVI   BUFF,TRUE
+         MVI   DCBRECFM,DCBRECFM_F  USE FIXED 32 BIT QSAM I/O
+         L     R9,VCLRLREC
+         AHI   R9,8
+         IF    (C,R9,LT,LBUFF) 
+               L  R9,LBUFF     SET LBUFF
+         ENDIF
+         ST    R9,LBUFF        R11=BUFFER LENGTH
+         GETMAIN R,LV=(R9)
+         ST    R1,ABUFF
+         IF    (CLI,INFILET,EQ,C'Q')
+               SR    R9,R9    R11=REMAINING DATA 0 (FORCE READ)
+         ELSE
+               L     R10,ABUFF  R10=NEXT OUTPUT RCD IN BUFF
+               L     R9,LBUFF  R9=REMAINING BUFF LENGTH
+         ENDIF
+         PEXIT
+*
 * CLOSE FILES
 *
 CLOSE    PENTRY
-         IF     (CLI,INFILET,EQ,C'Q')
+         IF    (CLI,INFILET,EQ,C'Q')
                MVC  INFILEQ+DCBSYNAD-IHADCB(4),=A(ERR41)
                CLOSE INFILEQ
                CLOSE OUTFILEV
@@ -333,6 +400,9 @@ CLOSE    PENTRY
                IF  (LTR,R15,NE,R15)
                    B  ERR42
                ENDIF
+               IF    (CLI,BUFF,EQ,TRUE),AND,(CHI,R9,GT,0)
+                     PM WRITE_BUFF  FLUSH BUFFER 
+               ENDIF
                MVC  OUTFILEQ+DCBSYNAD-IHADCB(4),=A(ERR43) RPI 688
                CLOSE OUTFILEQ
          ENDIF
@@ -342,9 +412,19 @@ CLOSE    PENTRY
 *
 GET      PENTRY
          IF    (CLI,INFILET,EQ,C'Q')
+*
+*              GET SEQ RECORD
+*
                MVC  INFILEQ+DCBSYNAD-IHADCB(4),=A(ERR21)
-               GET  INFILEQ,(R3)
+               IF   (CLI,BUFF,EQ,TRUE)
+                    PM   GET_BUFF      USE BUFF FOR EF,EV,RF,RV
+               ELSE
+                    GET  INFILEQ,(R3)  USE STD QSAM V/VB FORMAT
+               ENDIF
          ELSE
+*
+*              GET VSAM RECORD
+*
                GET  RPL=INFILER
                IF  (CH,R15,EQ,=H'8')   CHECK RC
                    SHOWCB RPL=INFILER,AREA=FDBK,LENGTH=1,FIELDS=(FDBK)
@@ -355,27 +435,97 @@ GET      PENTRY
                IF  (LTR,R15,NE,R15)
                    B  ERR22
                ENDIF
+               AP   PTOTREC,=P'1'
          ENDIF
          PEXIT
 *
 * PUT RECORD TO OUTFILE QSAM OR VSAM FILE
 *
 PUT      PENTRY
-         IF    (CLI,OUTFILET,EQ,C'Q')
+         IF    (CLI,OUTFILET,EQ,C'Q')  PUT TO QSAM DCB
+*
+*              PUT SEQ RECORD 
+*
                MVC  OUTFILEQ+DCBSYNAD-IHADCB(4),=A(ERR31)   RPI 688
                SHOWCB RPL=INFILER,AREA=VLEN,LENGTH=4,FIELDS=(RECLEN)
-               IF   (TM,OUTFILEQ+DCBRECFM-IHADCB,O,DCBRECFM_V) RPI 688  
-                    L    R2,VLEN
-                    AHI  R2,4
-                    SLL  R2,16
-                    ST   R2,0(R3)  RPI 688 SET QSAM VAR LENGTH PREFIX
+               L    R2,VLEN
+               IF   (CLI,VAR,EQ,TRUE) 
+                    IF   (CLI,RR,EQ,TRUE)
+                         IF   (CLC,RECFM_OVF,EQ,=C'RV')
+                              AHI  R2,8      ADD 8 BYTE PREFIX RRN,LEN
+                              ST   R2,0(R3)    SET LLLL FULL WORD LEN      
+                              MVC  4(4,R3),KEY SET RRV  FULL WORD RRN
+                              ST   R2,OUTFILEQ+DCBLRECLF-IHADCB
+                         ELSE
+                              AHI  R2,4
+                              IF   (CH,R2,LE,=H'32760')
+                                   SLL  R2,16
+                                   ST   R2,0(R3) SET LL00 LENGTH
+                              ELSE 
+                                   B    ERR31
+                              ENDIF
+                         ENDIF
+                    ELSE
+                         IF   (CLI,VL32,EQ,TRUE)
+                              AHI  R2,4
+                              ST   R2,0(R3)    SET LLLL FULL WORD LEN      
+                              ST   R2,OUTFILEQ+DCBLRECLF-IHADCB
+                         ELSE
+                              AHI  R2,4
+                              IF   (CH,R2,LE,=H'32760')
+                                   SLL  R2,16
+                                   ST   R2,0(R3) SET LL00 LENGTH
+                              ELSE 
+                                   B    ERR31
+                              ENDIF
+                         ENDIF
+                    ENDIF
+               ELSE
+                    IF  (CLC,RECFM_OVF,EQ,=C'RF')
+                        MVC  0(4,R3),KEY
+                    ENDIF
                ENDIF
-               PUT  OUTFILEQ,(R3)
+               IF   (CLI,BUFF,EQ,TRUE)
+                    PM   PUT_BUFF
+               ELSE
+                    PUT  OUTFILEQ,(R3)
+               ENDIF
          ELSE
-               IF   (TM,INFILEQ+DCBRECFM-IHADCB,O,DCBRECFM_V)  RPI 688  
-                    LH    R0,0(R3) 
-                    AHI   R0,-4
+*
+*              PUT VSAM RECORD
+*
+               AP   PTOTREC,=P'1'
+               IF   (CLI,VAR,EQ,TRUE)
+                    IF    (CLI,RR,EQ,TRUE)  
+                          IF    (CLC,RECFM_OVF,EQ,=C'RV'
+                                MVC   KEY,4(R3) SET RRN
+                                L     R0,0(R3)  GET LENGTH
+                                AHI   R0,-8
+                          ELSE
+                                L     R0,KEY
+                                AHI   R0,1
+                                ST    R0,KEY
+                                L     R0,0(R3)  GET LENGTH
+                                SRL   R0,16
+                                AHI   R0,-4
+                          ENDIF
+                    ELSE
+                          IF    (CLI,VL32,EQ,TRUE)
+                                L     R0,0(R3)
+                          ELSE 
+                                LH    R0,0(R3)
+                          ENDIF
+                          AHI   R0,-4
+                    ENDIF 
                     MODCB RPL=OUTFILER,RECLEN=(R0)   RPI 688
+               ELSE
+                    IF  (CLC,RECFM_OVF,EQ,=C'RF')
+                        MVC  KEY,0(R3)
+                    ELSE
+                        L     R0,KEY
+                        AHI   R0,1
+                        ST    R0,KEY
+                    ENDIF
                ENDIF
                PUT  RPL=OUTFILER
                IF  (LTR,R15,NE,R15)
@@ -383,6 +533,91 @@ PUT      PENTRY
                ENDIF
          ENDIF
          PEXIT
+*
+*  GET NEXT SEQ EF, EV, RF, OR RV RECORD FROM BUFFER FOR INFILEQ
+*  AND MOVE IT TO (R3) 
+*
+GET_BUFF PENTRY
+         IF    (CLI,VAR,EQ,TRUE)
+               IF  (CHI,R9,LT,4)
+                   PM  READ_BUFF
+               ENDIF
+               L   R2,0(R10)     R2=VAR LEN
+         ELSE
+               L   R2,INFILEQ+DCBLRECLF-IHADCB R9=FIXED LEN
+         ENDIF
+         IF    (CR,R2,GT,R9)
+               PM  READ_BUFF
+         ENDIF
+         IF    (SR,R9,M,R2)
+               B   ERR21       BUFF RESIDNUAL NEG ERROR
+         ENDIF
+         LR    R0,R3
+         LR    R1,R2 
+         LR    R11,R1
+         MVCL  R0,R10
+         PEXIT
+*
+*  READ_BUFF - MOVE RESIDUAL TO FRONT OF BUFFER AND THEN FILL BUFFER
+*
+READ_BUFF PENTRY
+         L    R0,ABUFF
+         LR   R1,R9
+         LR   R11,R1
+         MVCL R0,R10         MOVE ANY RESIDUAL IN BUFFER TO FRONT
+         LR   R10,R0         END OF RESIDUAL IN BUFFER
+         LG   R0,INFILEQL    64 BIT LENGTH OF QFILE REMAINING
+         IF   (LTGR,R0,EQ,R0)  IS IT EOF
+              IF  (C,R10,EQ,ABUFF)
+                  B   EOF
+              ELSE  
+                  B   ERR21    EOF WITH RESIDUAL ERROR
+              ENDIF
+         ENDIF
+         SGR  R1,R1
+         L    R1,LBUFF
+         SR   R1,R9         RG1=LENGTH OF READ TO FILL BUFFER
+         IF   (CGR,R0,LT,R1)
+              LR   R1,R0
+              SGR  R0,R0
+         ELSE
+              SGR  R0,R1
+         ENDIF
+         STG  R0,INFILEQL    UPDATE REMAINING FILE LENGTH
+         AR   R9,R1         R11=LENGTH OF DATA IN BUFFER
+         ST   R1,INFILEQ+DCBLRECLF-IHADCB  SET BUFF LRECL
+         GET  INFILEQ,(R10) FILL BUFF BEYOND RESIDUAL
+         ST   R2,INFILEQ+DCBLRECLF-IHADCB  RESET CUR LRECL    
+         L    R10,ABUFF     RESET TO START OF BUFF
+         PEXIT
+*
+*  PUT NEXT SEQ EF, EV, RF, OR RV RECORD TO BUFFER FOR OUTFILEQ
+*  FROM (R3) FOR LENGTH OF DCBLRECLF
+*
+PUT_BUFF PENTRY
+         L     R2,OUTFILEQ+DCBLRECLF-IHADCB   R1=LENGTH
+         IF    (CR,R2,GT,R9)  FLUSH BUFFER IF RCD DOESN'T FIT
+               PM   WRITE_BUFF
+               L     R10,ABUFF      RESET BUFF PTR
+               L     R9,LBUFF      RESET BUFF REMAINING
+         ENDIF
+         SR    R9,R2         REDUCE REMAINING BUFF AVAIL
+         LR    R0,R3
+         LR    R1,R2
+         LR    R11,R1
+         MVCL  R10,R0         ADD RECORD TO BUFFER
+         PEXIT
+*
+* WRITE DATA IN BUFFER
+*
+WRITE_BUFF PENTRY 
+         L     R0,ABUFF        R0=A(BUFF)
+         LR    R1,R10
+         SR    R1,R0           R1=LENGTH OF RCDS IN BUFF
+         ST    R1,OUTFILEQ+DCBLRECLF-IHADCB  SET BUFF LRECL
+         PUT   OUTFILEQ,(0)    WRITE BUFFER
+         ST    R2,OUTFILEQ+DCBLRECLF-IHADCB  RESTORE CUR LRECL
+         PEXIT         
 *
 * ABORT ERROR ROUTINES
 *
@@ -417,23 +652,39 @@ ERR51    WTO   'REPRO RECORD LENGTH TOO LARGE FOR QSAM'
 *
 INFILEQ  DCB   DDNAME=INFILE,RECFM=F,LRECL=0,MACRF=GM,EODAD=EOF
 INFILEV  ACB   DDNAME=INFILE,MACRF=(SEQ,IN)
-INFILER  RPL   ACB=INFILEV,OPTCD=(SEQ)
+INFILER  RPL   ACB=INFILEV,OPTCD=(SEQ),ARG=KEY
 OUTFILEQ DCB   DDNAME=OUTFILE,RECFM=F,LRECL=0,MACRF=PM
 OUTFILEV ACB   DDNAME=OUTFILE,MACRF=(SEQ,OUT)
-OUTFILER RPL   ACB=OUTFILEV,OPTCD=(SEQ)
+OUTFILER RPL   ACB=OUTFILEV,OPTCD=(SEQ),ARG=KEY
+*
+* LOGICAL SWITCHES
+*
+MOD      DC    AL1(FALSE) ADD VSAM RECORDS IF [DISP=MOD] ON OUTFILE
+VAR      DC    AL1(FALSE) VARIABLE LENGTH RECORDS
+RR       DC    AL1(FALSE) RELATIVE RECORD FILE
+VL32     DC    AL1(TRUE)  VARIABLE LENGTH RECRODS WITH 32 BIT LENGTHS
+BUFF     DC    AL1(FALSE) USE BUFFER FOR EF, EV, RF, RV SEQ FORMATS
+TRUE     EQU   1
+FALSE    EQU   0
 *
 * WORK AREAS
 *
-MOD      DC    AL1(FALSE) ADD VSAM RECORDS IF [DISP=MOD] ON OUTFILE
-TRUE     EQU   1
-FALSE    EQU   0
+INFILEQL DC    D'0'  64 BIT LENGTH OF INFILEQ
+ABUFF    DC    A(0) ADDRESS AND LENGTH OF BUFFER
+LBUFF    DC    F'500000' 500K BUFFER OR MAX RCD+8 
+KEY      DC    F'0'  RRN FOR RRVS/VRRDS
 PWORK    DC    D'0'
-WTO_QSAM DC    AL2(WTO_QSAM_END-*,0)
-         DC    C'QSAM FILE RECFM='
+PTOTREC  DC    PL4'0'
+WTO_RECFM DC    AL2(WTO_RECFM_END-*,0)
+         DC    C'REPRO RECFM='
 RECFM_OVF DC   C'XX'
          DC    C' LRECL ='
-DLRECL   DC    C' 12345'
-WTO_QSAM_END   EQU   *
+DLRECL   DC    C' 1234567'
+WTO_RECFM_END EQU *
+WTO_TOTREC DC  AL2(WTO_TOTREC_END-*,0)
+         DC    C' REPRO TOTAL RECORDS ='
+DTOTREC  DC    C' 1234567'
+WTO_TOTREC_END   EQU   *
 INFILET  DC    C'Q' QSAM OR VSAM
 OUTFILET DC    C'Q' QSAM OR VSAM
 INFILEDD DC    C'INFILE',X'00'

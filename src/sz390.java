@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Array;
@@ -154,7 +153,9 @@ public  class  sz390 implements Runnable {
     *          add TRACEQ QSAM I/O data trace  
     * 10/05/07 RPI 712 dont' return data if RC=4 on TGET NOWAIT 
     * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files 
-    * 10/18/07 RPI 713 replace \ with / and insert cur dir for rel path                        
+    * 10/18/07 RPI 713 replace \ with / and insert cur dir for rel path 
+    * 10/28/07 RPI 732 set cmd_proc_cmdlog if R0 byte 1 == 1 for start 
+    * 10/31/07 RPI 731 add support for CMD parent abort request                      
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -307,19 +308,22 @@ public  class  sz390 implements Runnable {
     Thread[]            cmd_proc_thread   = (Thread[])Array.newInstance(Thread.class,max_cmd_proc);
     Thread[]            cmd_error_thread  = (Thread[])Array.newInstance(Thread.class,max_cmd_proc);
     Thread[]            cmd_output_thread = (Thread[])Array.newInstance(Thread.class,max_cmd_proc);
-    InputStreamReader[] cmd_error_reader  = (InputStreamReader[])Array.newInstance(InputStreamReader.class,max_cmd_proc);
-    InputStreamReader[] cmd_output_reader = (InputStreamReader[])Array.newInstance(InputStreamReader.class,max_cmd_proc);
-    OutputStream[]      cmd_input_writer  = (OutputStream[])Array.newInstance(OutputStream.class,max_cmd_proc);
+    BufferedReader[] cmd_error_reader  = new BufferedReader[max_cmd_proc]; // RPI 731
+    BufferedReader[] cmd_output_reader = new BufferedReader[max_cmd_proc]; // RPI 731
+    PrintStream[]      cmd_input_writer  = new PrintStream[max_cmd_proc];  // RPI 731
     LinkedList<String>[] cmd_output_queue  = (LinkedList<String>[])Array.newInstance(LinkedList.class,max_cmd_proc);
     boolean[]           cmd_proc_running  = (boolean[])Array.newInstance(boolean.class,max_cmd_proc);
+    boolean[]           cmd_proc_cmdlog   = new boolean[max_cmd_proc];  // RPI 731
     int[]               cmd_proc_rc       = (int[])Array.newInstance(int.class,max_cmd_proc);
     int[]               cmd_proc_io       = (int[])Array.newInstance(int.class,max_cmd_proc);
     long[]              cmd_proc_start_time = (long[])Array.newInstance(long.class,max_cmd_proc); // RPI 545
     String[]            cmd_error_msg     = new String[max_cmd_proc];
 	String[]            cmd_output_msg    = new String[max_cmd_proc];
+	String[]            cmd_read_line     = new String[max_cmd_proc]; // RPI 731
 	int tot_cmd = 0; //max cmd processes started;
 	int cmd_io_total = 0;
-    /*
+    int tot_log_queue = 0;  // RPI 781
+	/*
      * test option interactive debug variables
      */
     String  test_file_name = null;
@@ -802,7 +806,7 @@ public synchronized void put_log(String msg) {
    	 */
 	put_log_line(msg);
 	if  (z390_log_text != null){
-		z390_log_text.append(msg + "\n");
+		tz390.log_text_append(z390_log_text,msg);  // RPI 731
    	}
     if (tz390.opt_trace
     	|| tz390.opt_tracemem
@@ -811,12 +815,12 @@ public synchronized void put_log(String msg) {
     	|| tz390.opt_test){ // RPI 490 RPI 689
     	tz390.put_trace(msg); // RPI 662 remove EZ390I
     } else if (tz390.opt_con){ // RPI 505
-		System.out.println(msg);
+    	put_con(msg); // RPI 731
 	}
     if (!tz390.opt_con 
     	&& (tz390.z390_abort 
     		|| ez390_startup)){
-		System.out.println(msg);
+    	put_con(msg); // RPI 731
     }
 }
 private void put_log_line(String msg){
@@ -835,10 +839,18 @@ private void put_log_line(String msg){
 	   	   	    	  tz390.abort_error(6,"I/O error on log file write msg - " + msg); //   RPI 661
 	   	   	      }
 	   		   } else {
-	   			   System.out.println(msg); // RPI 661
+	   			   put_con(msg);
 	   		   }
 	   	   }
 	   }
+private void put_con(String msg){
+	/*
+	 * put msg to console or cmd process output
+	 * and yield to let parent process m
+	 */
+	System.out.println(msg);
+	Thread.yield();
+}
 public void log_error(int error,String msg){
 	/*
 	 * issue error msg to log with prefix and
@@ -868,7 +880,7 @@ public synchronized void abort_error(int error,String msg){  // RPI 646
 			}
 			close_files();
 		} catch (Exception e){
-			System.out.println("EZ390E CLOSE FILES FAILED");
+			put_con("EZ390E CLOSE FILES FAILED");
 		}
 		System.exit(16);
 	  }
@@ -901,12 +913,12 @@ public void exit_ez390(){
 	  try {
 		  close_z390_guam();
 	  } catch (Exception e){
-		  System.out.println("EZ390E GUAM SHUTDOWN FAILED");
+		  put_con("EZ390E GUAM SHUTDOWN FAILED");
 	  } 
 	  try {
 		  close_cmd();  //RPI76
 	  } catch (Exception e){
-		  System.out.println("EZ390E CMDPROC SHUTDOWN FAILED");
+		  put_con("EZ390E CMDPROC SHUTDOWN FAILED");
 	  }
 	  try {
 		  tcpio_close_ports();
@@ -917,7 +929,7 @@ public void exit_ez390(){
 		  put_stats();
 		  close_files();
 	  } catch (Exception e){
-		  System.out.println("EZ390E CLOSE FILES FAILED");
+		  put_con("EZ390E CLOSE FILES FAILED");
 	  }  
       System.exit(ez390_rc); //RPI39
 }
@@ -930,7 +942,7 @@ private synchronized void close_z390_guam(){  // RPI 397
   	  tz390.opt_trace = false;     //RPI35
   	  tz390.z390_abort = true;     //RPI208
   	  // send exit request to z390 GUI process
-  	  System.out.println("exit_request");
+  	  put_con("exit_request");
     }
 }
 private void put_stats(){
@@ -1136,14 +1148,14 @@ public void open_files(){
 	 * 2.  Open 390 and lst files
 	 */
     	if (tz390.log_file_name == null){ // RPI 719
-    		tz390.log_file_name = tz390.dir_trc + tz390.pgm_name + tz390.log_type;
+    		tz390.log_file_name = tz390.dir_log + tz390.pgm_name + tz390.log_type;
     	} else {
-    		tz390.log_file_name = tz390.log_file_name + tz390.log_type;
+    		tz390.log_file_name = tz390.dir_log + tz390.log_file_name + tz390.log_type;  // RPI 730
     	}
 	    if (tz390.trace_file_name == null){ // RPI 719
 	    	tz390.trace_file_name = tz390.dir_trc + tz390.pgm_name + tz390.tre_type;
 	    } else {
-	    	tz390.trace_file_name = tz390.trace_file_name + tz390.tre_type;
+	    	tz390.trace_file_name = tz390.dir_trc + tz390.trace_file_name + tz390.tre_type;  // RPI 730
 	    }	
        	if (tz390.opt_list){
             log_file = new File(tz390.log_file_name); // RPI 719
@@ -2166,7 +2178,7 @@ private void svc_stimer(){
 	 */
 	switch (req_type){
 	case 1: // WAIT
-		sleep_now(intvl_mics/1000);
+		tz390.sleep_now(intvl_mics/1000);
 		break;
     case 2: // REAL/TASK
     	stimer_exit_addr  = pz390.reg.getInt(pz390.r0) & pz390.psw_amode;
@@ -2426,7 +2438,7 @@ private void put_dump(String text){
 	 * unless TRACE or TRACET is on in
 	 * which case route to TRE file.
 	 */
-	if (tz390.opt_trace || tz390.opt_test){
+	if (tz390.trace_file != null || tz390.opt_test){  // RPI 724 
 		tz390.put_trace(text); // RPI 689
 	} else {
 		put_log(text);
@@ -3304,6 +3316,7 @@ public void put_ascii_string(String text,int mem_addr,int mem_len,char pad_char)
 private void svc_cmd(){
 	/*
 	 * exec OS command process
+	 *   r0+1 = CMDLOG x'00', NOCMDLOG x'01'
 	 *   r0+2 = cmd process id 0-9
 	 *   r0+3 = cmd operation type
 	 *   r1   = A(command)
@@ -3347,19 +3360,22 @@ private void svc_cmd(){
 		// r15 =  4 no record in time allowed
 		// r15 =  8 no record and process terminated
 		// r15 = 16 i/o error during operation see log
+		if (!cmd_proc_running[cmd_id]){
+			pz390.reg.putInt(pz390.r15,8);
+		}
 		try {
 			int cmd_read_wait = pz390.reg.getInt(pz390.r3);
-			String cmd_read_line = cmd_get_queue(cmd_id);
+			cmd_read_line[cmd_id] = cmd_get_queue(cmd_id);
 		    cmd_proc_start_time[cmd_id] = System.currentTimeMillis(); // RPI 545
-		    while (cmd_read_line == null
+		    while (cmd_read_line[cmd_id] == null
 					&& cmd_proc_running[cmd_id]
 					&& cmd_proc_rc(cmd_id) == -1
 					&& System.currentTimeMillis() - cmd_proc_start_time[cmd_id] < cmd_read_wait){
-				sleep_now(tz390.monitor_wait);
-				cmd_read_line = cmd_get_queue(cmd_id);
+				tz390.sleep_now(tz390.monitor_wait);
+				cmd_read_line[cmd_id] = cmd_get_queue(cmd_id);
 			}
 			if  (cmd_read_line != null){
-				put_ascii_string(cmd_read_line,pz390.reg.getInt(pz390.r1),pz390.reg.getInt(pz390.r2),' ');
+				put_ascii_string(cmd_read_line[cmd_id],pz390.reg.getInt(pz390.r1),pz390.reg.getInt(pz390.r2),' ');
 				pz390.reg.putInt(pz390.r15,0);
 			} else if (cmd_proc_running[cmd_id]
 					   && cmd_proc_rc(cmd_id) == -1){
@@ -3384,6 +3400,11 @@ private int cmd_startup(int cmd_id){
      *   3.  Retrieve output from cmd_output_queue
      *   4.  Cancel via cmd_cancel(cur_id);
 	 */
+	 if (pz390.reg.get(pz390.r0+1) == 1){ // RPI 731 default is copy output to log
+		 cmd_proc_cmdlog[cmd_id] = true;
+	 } else {
+		 cmd_proc_cmdlog[cmd_id] = false;
+	 }
 	 int rc;
 	 String[] cmd_parms;
 	 try {
@@ -3437,9 +3458,9 @@ public int cmd_proc_start(int cmd_id,String[] exec_cmd){
     }
     try {
         cmd_proc[cmd_id] = Runtime.getRuntime().exec(exec_cmd);
-   	    cmd_error_reader[cmd_id] = new InputStreamReader(cmd_proc[cmd_id].getErrorStream());
-   	    cmd_output_reader[cmd_id] = new InputStreamReader(cmd_proc[cmd_id].getInputStream());
-        cmd_input_writer[cmd_id] = cmd_proc[cmd_id].getOutputStream();
+   	    cmd_error_reader[cmd_id] = new BufferedReader(new InputStreamReader(cmd_proc[cmd_id].getErrorStream()));  // RPI 731
+   	    cmd_output_reader[cmd_id] = new BufferedReader(new InputStreamReader(cmd_proc[cmd_id].getInputStream())); // RPI 731
+        cmd_input_writer[cmd_id] = new PrintStream(cmd_proc[cmd_id].getOutputStream());
    	    cmd_proc_thread[cmd_id] = new Thread(this);
 	    cmd_error_thread[cmd_id] = new Thread(this);
 	    cmd_output_thread[cmd_id] = new Thread(this);
@@ -3452,10 +3473,10 @@ public int cmd_proc_start(int cmd_id,String[] exec_cmd){
 	    cmd_proc_thread[cmd_id].start();
 	    cmd_error_thread[cmd_id].start();
 	    cmd_output_thread[cmd_id].start();
-	    sleep_now(tz390.monitor_wait); // wait for first io
+	    tz390.sleep_now(tz390.monitor_wait); // wait for first io
 	    int wait_count = 5;
 	    while (cmd_proc_io[cmd_id] == 0 && wait_count > 0){
-	    	sleep_now(tz390.monitor_wait);
+	    	tz390.sleep_now(tz390.monitor_wait);
 	    	wait_count--;
 	    }
 	    return 0;
@@ -3469,14 +3490,13 @@ private synchronized void cmd_input(int cmd_id,String cmd_line){
     /*
      * send input to exec command in process
      */
-    if  (cmd_line == null){
-    	cmd_line = tz390.newline; // RPI 500
-    } else {
-    	cmd_line = cmd_line + tz390.newline; // RPI 500
-    }
     try {
     	tz390.systerm_io++;
-    	cmd_input_writer[cmd_id].write(cmd_line.getBytes());
+    	if (cmd_line == null){  // RPI 731
+    		cmd_input_writer[cmd_id].println("");
+    	} else {
+    		cmd_input_writer[cmd_id].println(cmd_line);
+    	}
     	cmd_io_total++;
     	cmd_proc_io[cmd_id]++;
     	cmd_input_writer[cmd_id].flush();
@@ -3635,21 +3655,18 @@ public void copy_cmd_output_to_queue(int cmd_id){
 	 */	
 	try {
 		tz390.systerm_io++;
-		int next_int = cmd_output_reader[cmd_id].read();
+		String msg = cmd_output_reader[cmd_id].readLine();
 		while (cmd_proc_running[cmd_id] // RPI 592
-               && next_int != -1){
-			if  (next_int == ascii_lf){
-				cmd_proc_io[cmd_id]++;
-				String msg = cmd_output_msg[cmd_id];
-				if (msg.length() > 0){
-                    cmd_put_queue(cmd_id,msg);
-				}
-				cmd_output_msg[cmd_id] = "";
-			} else if (next_int != ascii_cr){
-				cmd_output_msg[cmd_id] = cmd_output_msg[cmd_id].concat(String.valueOf((char) next_int));
+               && msg != null){
+			cmd_proc_io[cmd_id]++;
+			if (msg.equals("z390_abort_request")){  // RPI 731
+				System.out.println("EZ390E z390 abort request from CMD ID=" + cmd_id);
+				tz390.z390_abort = true;
+			} else {
+				cmd_put_queue(cmd_id,msg);
+				tz390.systerm_io++;
 			}
-			tz390.systerm_io++;
-			next_int = cmd_output_reader[cmd_id].read();
+			msg = cmd_output_reader[cmd_id].readLine();
 		}
 	} catch (Exception e) {
 		if (cmd_proc_running[cmd_id]){
@@ -3664,20 +3681,15 @@ public void copy_cmd_error_to_queue(int cmd_id){
 	 */	
 	try {
 		tz390.systerm_io++;
-		int next_int = cmd_error_reader[cmd_id].read();
+		String msg = cmd_error_reader[cmd_id].readLine();
 		while (cmd_proc_running[cmd_id] // RPI 592
-               && next_int != -1){
-		   if  (next_int == ascii_lf){
-		   	   String msg = cmd_error_msg[cmd_id];
-			   if (msg.length() > 0){
-                   cmd_put_queue(cmd_id,msg);
-			   }
-		   	   cmd_error_msg[cmd_id] = "";
-		   } else if (next_int != ascii_cr){
-				cmd_error_msg[cmd_id] = cmd_error_msg[cmd_id].concat(String.valueOf((char) next_int));
-		   }
-		   tz390.systerm_io++;
-		   next_int = cmd_error_reader[cmd_id].read();
+               && msg != null){
+			cmd_proc_io[cmd_id]++;
+			if (msg.trim().length() > 0){
+				tz390.systerm_io++;
+				cmd_put_queue(cmd_id,msg);
+			}
+			msg = cmd_error_reader[cmd_id].readLine();
 		}
 	} catch (Exception ex) {
 		if (cmd_proc_running[cmd_id]){ // RPI 592
@@ -3692,12 +3704,23 @@ private synchronized void cmd_put_queue(int cmd_id,String msg){
 	 * synchronized so output and main thread
 	 * retrieval via CMDPROC READ are safe.
 	 */
+	if (msg.length() == 0)return; 
+	tot_log_queue++;
+	if (!tz390.max_cmd_queue_exceeded 
+		&& tot_log_queue > tz390.opt_maxque){
+		log_error(116,"CMD MSG MAXQUE EXCEEDED - COPYING ALL CMD OUTPUT TO LOG");
+		tz390.max_cmd_queue_exceeded = true;
+	}
+	if (msg.equals("z390_abort_request")){  // RPI 731
+		log_error(117,"z390 abort request from CMD ID=" + cmd_id);
+        tz390.max_cmd_queue_exceeded = true;
+	}
 	if (cmd_proc_running[cmd_id] // RPI 592
         && !cmd_output_queue[cmd_id].offer(msg)){
 		log_error(77,"cmd process output queue io error");
 	}
 }
-private synchronized String cmd_get_queue(int cmd_id){
+public synchronized String cmd_get_queue(int cmd_id){
 	/*
 	 * retrieve next FIFO line from linklist queue
 	 * synchronized so output and main thread
@@ -3710,6 +3733,7 @@ private synchronized String cmd_get_queue(int cmd_id){
 	}
 	try {
 		String cmd_output_line = (String) cmd_output_queue[cmd_id].remove();
+		tot_log_queue--;
 		return cmd_output_line;
 	} catch (Exception e){
 		return null;
@@ -3789,7 +3813,7 @@ private void svc_tget_tput(){
 				}
 				while ((tpg_flags & tpg_wait_mask) == tpg_wait
 						&& (pz390.mem.getInt(wtor_ecb_addr) & ecb_waiting) == ecb_waiting){
-					sleep_now(tz390.monitor_wait);
+					tz390.sleep_now(tz390.monitor_wait);
 				}
 				if (wtor_reply_string != null){
 					pz390.reg.putInt(pz390.r15,0);
@@ -4161,7 +4185,7 @@ private void svc_wait(){
 	}
     while (!check_wait_ecbs()  // RPI 280
     	&& !stimer_exit_request){
-		sleep_now(tz390.monitor_wait);
+		tz390.sleep_now(tz390.monitor_wait);
     }
 	if (stimer_exit_request){
 		wait_retry = true;
@@ -4248,16 +4272,6 @@ private void svc_post(){  // RPI 279
 	int ecb_addr = pz390.reg.getInt(pz390.r1) & pz390.psw_amode;
 	int ecb_code = pz390.reg.getInt(pz390.r0) & pz390.max_pos_int;
 	pz390.mem.putInt(ecb_addr,(ecb_code | ecb_posted));
-}
-public void sleep_now(long mills){
-	/*
-	 * sleep for 1 monitor wait interval
-	 */
-	try {
-		Thread.sleep(mills);
-	} catch (Exception e){
-		log_error(92,"thread sleep error - " + e.toString());
-	}
 }
 private void svc_wtor(){
 	/*
@@ -6171,6 +6185,7 @@ private void tcpio_close_conn(int conn_index){
 	/*
 	 * close connection
 	 */
+	tcp_conn_server_port[conn_index] = 0;  // RPI 731
 	if (tcp_conn_socket[conn_index] == null){
 		return;
 	}
@@ -6182,7 +6197,6 @@ private void tcpio_close_conn(int conn_index){
 		tcp_conn_input[conn_index].close();
 		tcp_conn_socket[conn_index].close();
 		tcp_conn_socket[conn_index] = null;
-		tcp_conn_server_port[conn_index] = 0;
 	} catch (Exception e){
 		put_log("TCPIO close connection failed " + e.toString());
 	}
@@ -6319,8 +6333,8 @@ private void tcpio_conn_store_msg(int conn_index){
 	 *       if conn_read = true
 	 */
 	if (tz390.opt_traceall){
-		System.out.println("TCPIO storing msg from conn=" + conn_index);
-		sleep_now(tz390.monitor_wait);
+		put_con("TCPIO storing msg from conn=" + conn_index);
+		tz390.sleep_now(tz390.monitor_wait);
 	}
 	pz390.reg.putInt(pz390.r2,conn_index); // return conn index
     int cur_msg_len = 0;

@@ -1,4 +1,4 @@
-z390 v1.3.08a PTF 10/20/07
+z390 v1.3.08b PTF 11/07/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.08:
@@ -32,6 +32,40 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.08:
     from main GUI input if main program, GUAM dialog if active, or z390 parent task CMDPROC
     write command for CMDPROC concurrent processes.  z390 programs that use WTOR cannot be 
     executed from within nested BAT commands which depending on following BAT commands.
+8.  RPI 724 add new REPRO sequnntial file formats to support all VSAM file types
+    including record lengths to 2 GB.  Change RRDS fixed length to use VX0 index like
+    VRRDS does to save space in sparce files.  Add buffering and total record statistics.
+    See new regression tests and online documentation. Correct RRDS relative record
+    numbers to always start with 1.
+9.  RPI 725 - remove -Xmx java runtime option no longer required for Vista or other
+    systems with sufficient storage.  See updated EZ390.BAT with options documented.
+10. RPI 726 - supress error 187 for first address change in assembly if there are other errors.
+11. RPI 728 - changes to support assembly of ASMG sources from University of Waterloo:
+    a.  RENAME MVS macro DLETE.MAC to DELETE.MAC
+    b.  Support ICTL and ignore ISEQ during macro processing.  The generated BAL
+        source is in standard format and includes ICTL and ISEQ statements are
+        ignored by the assembler.
+12. RPI 729 - add CICS DFHRESP code ILLOGIC with value F'21'.  See rt\test\TESTCIC1.
+13. RPI 730 - correct LOG(filename) option to use program path if any.
+14. RPI 731 - Change CMDPROC started task handling as follows to suppor long running
+    CICS and SOA applications:
+    a.  Optimize CMDPROC messaging to use line at a time versus character at a time.
+    b.  Use option MAXLOG(mb) with default 1 mb to limit size of GUI scrolling log.
+        When size limit is reached the log is truncated 50% so it is no longer possible
+        to view entire log in GUI.  The log file still has all messages.
+    c.  Use option MAXQUE(msgs) with default 1000 to limit the number of messages
+        that a CMDPROC task can queue in memory before the parent task starts copying
+        them all to log and removing them from queue. 
+    d.  Add keyword CMDLOG=YES to CMDPROC macro to indicate default is to copy
+        all standard output messages to parent task log.  If CMDPROC=NO is specified
+        then the parent task must issue CMDPROC READ before queue reaches MAXQUE limit.
+    e.  Add support for CMDPROC tasks to request parent to abort by sending
+        standard output message "z390_abort_request". This message is processed
+        immediately and is not put on queue.  
+    See updated rt\test\TESTCMD1 and TESTCMD2 regression tests. 
+15. RPI 734 - correct structured macro ELSEIF to fix code generation error for
+    second condition connected by OR on ELSEIF.  
+
 
 To install this cumulative PTF for z390 follow these steps.
 
@@ -45,11 +79,15 @@ To install this cumulative PTF for z390 follow these steps.
 
 4.  Copy the vsam directory to the z390 install directory.
 
-5.  If you need to change Java source for this PTF version, all
+5.  Copy the linklib directory to the z390 install directory.
+
+6.  Copy the mac directory to the z390 install directory/
+
+7.  If you need to change Java source for this PTF version, all
     the Java source is in src directory and can be copied to 
     z390\src directory.
 
-6.  Run IVP.BAT command from the z390 directory and verify 
+8.  Run IVP.BAT command from the z390 directory and verify 
     the new z390 version running matches this PTF version.
 
 Visit www.z390.org for more information on latest updates.

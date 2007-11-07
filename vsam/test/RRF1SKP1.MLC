@@ -8,6 +8,7 @@
 * 09/19/07 INITIAL CODING OF ESDS FIXED SKP SEQ ACCESS USING GENCB    
 * 09/20/07 RPI 702 CHANGE TO USE POINT TO SET START FOR SEQ RWD/BWD   
 * 09/26/07 RPI 702 FOR SEQ, SKIP NULL RCDS AND RETURN ARG=REC#        
+* 10/24/07 RPI 724 CHANGE FOR RRN STARTING AT 1                       
 *********************************************************************
 ESF1SKP1 RT1   MAIN 
 REC#     DC    XL4'00'
@@ -15,9 +16,9 @@ REC#     DC    XL4'00'
          EQUREGS
          RT1   START
 *
-* READ SEQ FWD STARTING AT REC 2 USING KEY and SEQ
+* READ SEQ FWD STARTING AT REC 3 USING KEY and SEQ
 *
-         WTO   'GEN ACB/RPL AND SKP SEQ READ STARTING AT REC 2'
+         WTO   'GEN ACB/RPL AND SKP SEQ READ STARTING AT REC 3'
          GENCB BLK=ACB,DDNAME=VFILE,MACRF=(KEY,SEQ)
          LTR   R15,R15
          RT1   CC0
@@ -31,8 +32,8 @@ REC#     DC    XL4'00'
          LTR   R15,R15
          RT1   CC0
          LR    R3,R1             R3=RPL
-         MVC   REC#,=F'2'
-         POINT RPL=(R3)          SET CUR POS TO REC 2       
+         MVC   REC#,=F'3'
+         POINT RPL=(R3)          SET CUR POS TO REC 3       
          LTR   R15,R15
          RT1   CC0
          MVC   REC#,=F'-1'       RESET TO TEST ARG ON SEQ GET
@@ -42,16 +43,16 @@ REC#     DC    XL4'00'
          GET   RPL=(R3)          READ REC2 SEQ FWD
          LTR   R15,R15
          RT1   CC0
-         CLC   REC#,=F'2'
+         CLC   REC#,=F'3'
          RT1   CC0
-         CLC   0(80,R4),=80C'2'  VERIFY REC 2
+         CLC   0(80,R4),=80C'3'  VERIFY REC 3
          RT1   CC0
-         GET   RPL=(R3)          READ REC 4 SEQ FWD SKIPPING REC 3      
+         GET   RPL=(R3)          READ REC 5 SEQ FWD SKIPPING REC 4      
          LTR   R15,R15
          RT1   CC0
-         CLC   REC#,=F'4'
+         CLC   REC#,=F'5'
          RT1   CC0
-         CLC   0(80,R4),=80C'4'  VERIFY REC 4
+         CLC   0(80,R4),=80C'5'  VERIFY REC 5
          RT1   CC0
          GET   RPL=(R3)          READ EOF                               
          CHI   R15,8  
@@ -59,12 +60,12 @@ REC#     DC    XL4'00'
 *
 * REPOSITION TO REC3 FOR READING REC 2 AND REC 0 BACKWARD
 *
-         WTO   'SKP SEQ READ BACKWARD STARTING AT REC 2'
+         WTO   'SKP SEQ READ BACKWARD STARTING AT REC 3'
          MODCB RPL=(R3),OPTCD=(KEY)
          LTR   R15,R15
          RT1   CC0
-         MVC   REC#,=F'3'                                     
-         POINT RPL=(R3)          SET CUR POS TO REC 3        
+         MVC   REC#,=F'4'                                     
+         POINT RPL=(R3)          SET CUR POS TO REC 4        
          LTR   R15,R15
          RT1   CC0
          MVC   REC#,=F'-1'       RESET TO TEST SEQ ARG 
@@ -74,24 +75,24 @@ REC#     DC    XL4'00'
          GET   RPL=(R3)          READ REC2 SEQ BWD
          LTR   R15,R15
          RT1   CC0
-         CLC   REC#,=F'2'        VERIFY REC# 2
+         CLC   REC#,=F'3'        VERIFY REC# 3
          RT1   CC0
-         CLC   0(80,R4),=80C'2'  VERIFY REC 2
+         CLC   0(80,R4),=80C'3'  VERIFY REC 3
          RT1   CC0
          GET   RPL=(R3)          READ REC 0 SEQUENTIALLY BACKWARD
          LTR   R15,R15
          RT1   CC0
-         CLC   REC#,=F'0'        VERIFY REC# 0
+         CLC   REC#,=F'1'        VERIFY REC# 1
          RT1   CC0
-         CLC   0(80,R4),=80C'0'  VERIF REC 0
+         CLC   0(80,R4),=80C'1'  VERIF REC 0
          RT1   CC0
          GET   RPL=(R3)          READ EOF                               
          CHI   R15,8  
          RT1   CC0
 *
-* REPOSITION TO EOF FOR READING REC 4, 2 BACKWARD
+* REPOSITION TO EOF FOR READING REC 5, 3 BACKWARD
 *
-         WTO   'SKP SEQ READ BACKWARD STARTING AT REC 4'
+         WTO   'SKP SEQ READ BACKWARD STARTING AT REC 5'
          MODCB RPL=(R3),OPTCD=(KEY)
          LTR   R15,R15
          RT1   CC0
@@ -105,23 +106,23 @@ REC#     DC    XL4'00'
          GET   RPL=(R3)          READ REC4 SEQ BWD
          LTR   R15,R15
          RT1   CC0
-         CLC   REC#,=F'4'        VERIFY REC#
+         CLC   REC#,=F'5'        VERIFY REC# 5
          RT1   CC0
-         CLC   0(80,R4),=80C'4'  VERIFY REC 3
+         CLC   0(80,R4),=80C'5'  VERIFY REC 5
          RT1   CC0
-         GET   RPL=(R3)          READ REC 2 SEQUENTIALLY BACKWARD
+         GET   RPL=(R3)          READ REC 3 SEQUENTIALLY BACKWARD
          LTR   R15,R15
          RT1   CC0
-         CLC   REC#,=F'2'        VERIFY REC# 2
+         CLC   REC#,=F'3'        VERIFY REC# 3
          RT1   CC0
-         CLC   0(80,R4),=80C'2'  VERIF REC 2
+         CLC   0(80,R4),=80C'3'  VERIF REC 2
          RT1   CC0
-         GET   RPL=(R3)          READ REC 0 SEQUENTIALLY BACKWARD
+         GET   RPL=(R3)          READ REC 1 SEQUENTIALLY BACKWARD
          LTR   R15,R15
          RT1   CC0
-         CLC   REC#,=F'0'        VERIFY REC# 0
+         CLC   REC#,=F'1'        VERIFY REC# 1
          RT1   CC0
-         CLC   0(80,R4),=80C'0'  VERIF REC 0
+         CLC   0(80,R4),=80C'1'  VERIF REC 1
          RT1   CC0
          GET   RPL=(R3)          READ REC 0 SEQUENTIALLY BACKWARD
          CHI   R15,8             VERIFY EOF
