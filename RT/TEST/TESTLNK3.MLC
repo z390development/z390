@@ -1,0 +1,18 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 11/09/07 RP 732 TEST TESTLNK2.LNK TO INCLUDE TESTLNK2 AND TESTLNK3 
+*          TO BUILD TESTLNK2.390 WITH ENTRY TESTLNK3 AND ALIAS TESTLNK3
+*********************************************************************
+         TITLE 'TESTLNK3 CSECT AND ENTRY POINT FOR TESTLNK2.390'
+TESTLNK3 CSECT
+         USING *,15
+         L    1,=V(WTOLNK2)
+         WTO  MF=(E,(1))
+         SR   15,15
+         BR   14
+         END

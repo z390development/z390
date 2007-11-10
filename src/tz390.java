@@ -143,6 +143,8 @@ public  class  tz390 {
     * 10/18/07 RPI 713 replace \ with / for Linux   
     * 10/26/07 RPI 728 pass ictl end, cont to trim_continue
     * 10/26/07 RPI 731 add option MAXLOG(mb) to limit visible log size
+    * 11/07/07 RPI 733 consolidate TRACE(AEGILMQTV)
+    * 11/08/07 RPI 732 add lnk_type for linker commands
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -151,7 +153,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.08b";  //dsh
+    String version    = "V1.3.08c";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -201,10 +203,10 @@ public  class  tz390 {
     boolean opt_trace    = false; // trace pz390 instructions to LOG
     boolean opt_tracea   = false;  // trace az390
     boolean opt_traceall = false; // trace all details
+    boolean opt_traceg   = false; // trace memory FQE updates to LOG
     boolean opt_tracel   = false;  // trace lz390
     boolean opt_tracem   = false; // trace mz390
     boolean opt_tracep   = false; // trace pseudo code
-    boolean opt_tracemem = false; // trace memory FQE updates to LOG
     boolean opt_traceq   = false; // trace QSAM file I/O
     boolean opt_tracet   = false; // trace TCPIO and TGET/TPUT data I/O
     boolean opt_tracev   = false; // trace VSAM file I/O
@@ -272,7 +274,8 @@ public  class  tz390 {
     String dat_type = ".DAT"; // AREAD default input for mz390
 	String err_type = ".ERR"; // step error and rc log
     String log_type = ".LOG"; // log for z390, ez390, sz390, pz390
-	String mac_type = ".MAC"; // macro source
+	String lnk_type = ".LNK"; // linker commands INCLUDE, ENTRY, ALIAS, NAME RPI 732
+    String mac_type = ".MAC"; // macro source
     String mlc_type = ".MLC"; // macro assembler source program
     String obj_type = ".OBJ"; // relocatable object code for az390 and lz390
     String pch_type = ".PCH"; // punch output from mz390
@@ -3954,6 +3957,33 @@ public void init_options(String[] args,String pgm_type){
            	if (!opt_test){
            		opt_con   = false; // RPI 569 leave on if TEST
            	}
+        } else if (token.length() > 6
+          		&& token.substring(0,6).toUpperCase().equals("TRACE(")){
+           	String trace_options = token.substring(6,token.length()-1).toUpperCase();
+           	opt_con = false;
+           	int index = 0;
+           	while (index < trace_options.length()){
+           		if (trace_options.charAt(index) == 'A'){
+           			opt_tracea = true;
+           		} else if (trace_options.charAt(index) == 'E'){
+           			opt_trace = true;
+           		} else if (trace_options.charAt(index) == 'G'){
+           			opt_traceg = true;
+           		} else if (trace_options.charAt(index) == 'L'){
+           			opt_tracel = true;
+           		} else if (trace_options.charAt(index) == 'M'){
+           			opt_tracem = true;
+           		} else if (trace_options.charAt(index) == 'P'){
+           			opt_tracep = true;	
+           		} else if (trace_options.charAt(index) == 'Q'){
+           			opt_traceq = true;
+           		} else if (trace_options.charAt(index) == 'T'){
+           			opt_tracet = true;
+           		} else if (trace_options.charAt(index) == 'V'){
+           			opt_tracev = true;
+           		}
+           		index++;
+           	}
         } else if (token.toUpperCase().equals("TRACEA")){
            	opt_tracea = true;
            	opt_list = true;
@@ -3968,7 +3998,7 @@ public void init_options(String[] args,String pgm_type){
            	opt_traceq   = true;
            	opt_tracet   = true;
            	opt_tracev   = true;
-           	opt_tracemem = true;
+           	opt_traceg = true;
            	opt_list     = true;
            	opt_con   = false;
         } else if (token.toUpperCase().equals("TRACEL")){
@@ -3980,7 +4010,7 @@ public void init_options(String[] args,String pgm_type){
             	opt_list = true;
             	opt_con   = false;
         } else if (token.toUpperCase().equals("TRACEMEM")){
-           	opt_tracemem = true;
+           	opt_traceg = true;
            	opt_con   = false;
         } else if (token.toUpperCase().equals("TRACEP")){
         	opt_tracep = true;

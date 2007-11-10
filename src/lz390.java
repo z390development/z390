@@ -73,7 +73,9 @@ public  class  lz390 {
     * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
     * 07/15/07 RPI 656 change error message 19 to indicate missing code
     * 07/21/07 RPI 659 add LZ390I to stats on LST
-    * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files 
+    * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files
+    * 10/08/07 RPI 732 add support for .LNK command input file
+    *          with INCLUDE, ALIAS, ENTRY, NAME commands
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -89,6 +91,15 @@ public  class  lz390 {
     int tot_find_gbl_esd = 0;
     boolean load_esds_only = true;
     int max_obj_esd = 0;
+    String lnk_file_name = null;      // RPI 732
+    RandomAccessFile lnk_file = null; // RPI 732
+    String lnk_cmd = null;            // RPI 732
+    String lnk_op = null;
+    String lnk_parm = null;
+    String lnk_entry = null;          // RPI 732
+    int    lnk_entry_loc = -1;         // RPI 732
+    String lnk_alias = null;          // RPI 732
+    String lnk_name  = null;          // RPI 732
     String obj_file_name = null;
     boolean obj_file_bin = false;
     byte    obj_bin_id   = 0x02;
@@ -97,6 +108,13 @@ public  class  lz390 {
     RandomAccessFile z390_file = null;
     File lst_file = null;
     BufferedWriter lst_file_buff = null;
+    int tot_name  = 0;  // RPI 724
+    int max_alias = 10;
+    int tot_alias = 0;
+    String alias_name[] = new String[10];
+    File alias_file = null;
+    String alias_file_name = null;
+    BufferedWriter alias_file_buff = null;
     String obj_line = null;
     boolean obj_eof = false;
     SimpleDateFormat mmddyy = new SimpleDateFormat("MM/dd/yy");
@@ -199,27 +217,33 @@ public static void main(String[] args) {
 }
 public int process_lz390(String[] args,JTextArea log_text){
    /*
-    *  link obj include files into single 390 load module
+    *  link 1 or more obj files into single 390 load module
     *
     *  Note this may be called directly from z390 GUI or
     *  from main when lz370 run from windows command line.
-    *  if called from main, the log_text balect will be null
+    *  if called from main, the log_text will be null
     *  and local put_log function will route to console instead
     *  of the z390 log window.
     */
 	    init_lz390(args,log_text);
     	if (tz390.opt_trap){
      	   try {
-               resolve_esds();
-               load_obj_code();
-               gen_load_module();
+     		   process_lnk_cmds(); // RPI 732
+               if (tot_name == 0){
+            	   resolve_esds();
+            	   load_obj_code();
+            	   gen_load_module();
+               }
      	   } catch (Exception e){
      		   abort_error(23,"internal system exception - " + e.toString());
      	   }
      	} else {
-            resolve_esds();
-            load_obj_code();
-            gen_load_module();
+ 		    process_lnk_cmds(); // RPI 732
+            if (tot_name == 0){
+            	resolve_esds();
+            	load_obj_code();
+            	gen_load_module();
+            }
      	}
 	    exit_lz390();
 	    if (log_text == null){
@@ -280,7 +304,6 @@ private void exit_lz390(){
 	  if  (lz390_errors > 0 || tz390.z390_abort){
     	  lz390_rc = 16;
       }
-  	  put_stats();
       close_files();
    	  System.exit(lz390_rc);
 }
@@ -448,19 +471,117 @@ private void open_files(){
        	    }
        	}
 }
+private void process_lnk_cmds(){
+	/*
+	 * process .LNK input commands
+	 *   1.  INCLUDE name - load obj
+	 *   2.  ENTRY   name - set entry addr
+	 *   3.  ALIAS   name - gen stub
+	 *   4.  NAME    name - rename 390
+	 * If no .LNK try loading primary obj
+	 */
+	String inc_ddname = "";
+	String inc_path = "";
+	String inc_pgm = "";
+	lnk_file_name = tz390.find_file_name(tz390.dir_mlc,tz390.pgm_name,tz390.lnk_type,tz390.dir_cur); 
+	if (lnk_file_name != null){
+		try {
+			lnk_file = new RandomAccessFile(lnk_file_name,"r");
+			tz390.systerm_io++;
+			lnk_cmd = lnk_file.readLine();
+			while (lnk_cmd != null){
+				put_log("LNK command - " + lnk_cmd);
+				if (lnk_cmd != null
+					&& lnk_cmd.length() > 1
+					&& lnk_cmd.charAt(0) != '*'){		
+					tz390.split_line(lnk_cmd);
+					lnk_op = tz390.split_op.toUpperCase();
+					tz390.split_line(tz390.split_parms);
+					lnk_parm = tz390.split_label;
+					if (lnk_op != null){
+						if (lnk_op.equals("INCLUDE")){
+							// INCLUDE
+							int index1 = lnk_parm.indexOf('(');
+							int index2 = lnk_parm.indexOf(')');
+							if (index1 > 0  && index2 > index1 + 1){
+								inc_ddname = lnk_parm.substring(0,index1);
+								inc_pgm    = lnk_parm.substring(index1+1,index2);
+								inc_path = System.getenv(inc_ddname);
+								obj_file_name = tz390.find_file_name(inc_path,inc_pgm,tz390.obj_type,tz390.dir_cur); 
+								if (obj_file_name != null 
+									&& load_obj_file(load_esds_only)){
+									add_gbl_esds();
+								} else {
+									log_error(46,"LNK INCLUDE NOT FOUND - " + lnk_cmd);
+								}
+							} else {
+								log_error(48,"LNK INCLUDE SYNTAX ERROR - " + lnk_cmd);
+							}
+						} else	if (lnk_op.equals("ENTRY")){
+							// ENTRY
+							lnk_entry = lnk_parm;
+						} else	if (lnk_op.equals("ALIAS")){
+							// ALIAS - write 8 byte alias.390 containing name to load
+							if (tot_alias < max_alias){
+								alias_name[tot_alias] = lnk_parm;
+								tot_alias++;
+							}
+						} else	if (lnk_op.equals("NAME")){
+							// NAME
+							tot_name++;
+							tz390.pgm_name = lnk_parm;
+							int index = tz390.pgm_name.indexOf('(');
+							if (index > 0){  // strip off (R) if any
+								tz390.pgm_name = tz390.pgm_name.substring(0,index);
+							}
+			            	resolve_esds();
+			            	load_obj_code();
+			            	gen_load_module();
+			            	while (tot_alias > 0){
+								tot_alias--;
+								create_alias_390(alias_name[tot_alias],tz390.pgm_name);
+							}
+							reset_esds();
+						} else {
+							log_error(40,"LNK unknown command - " + lnk_cmd);
+						}
+					} else {
+						log_error(41,"LNK unknown command - " + lnk_cmd);
+					}
+				}
+				lnk_cmd = lnk_file.readLine();
+			}
+		} catch (Exception e){
+			log_error(39,"LNK command file I/O error " + e.toString());
+		}
+	} else {
+		obj_file_name = tz390.find_file_name(tz390.dir_obj,tz390.pgm_name,tz390.obj_type,tz390.dir_cur); 
+		if (obj_file_name != null 
+			&& load_obj_file(load_esds_only)){
+			add_gbl_esds();
+		}
+	}
+}
+private void create_alias_390(String alias,String pgm){
+	/*
+	 * create ascii 390 file 
+	 * named alias.390 containing ascii pgm name
+	 */
+	try {
+		alias_file_name = tz390.get_first_dir(tz390.dir_390) + alias + ".390";
+		alias_file = new File(alias_file_name);
+		alias_file_buff = new BufferedWriter(new FileWriter(alias_file));
+		alias_file_buff.write(pgm.toUpperCase());
+		alias_file_buff.close();
+	} catch (Exception e){
+		log_error(47,"LNK ALIAS CREATE FAILED FOR - " + alias);
+	}
+}
 private void resolve_esds(){
 	/*
-	 * 1. load primary obj with any include
-	 *    and name commands to define initial
-	 *    list of obj files to load.
-	 * 2. load all explicit include obj files
-	 *    to get initial list of external esds
-	 * 3. search and load obj files for extrns
-	 *    until all found or no more can be resolved 
+	 * search and load obj files for extrns
+	 * until all found or no more can be resolved 
 	 */
-	obj_file_name = tz390.find_file_name(tz390.dir_obj,tz390.pgm_name,tz390.pgm_type,tz390.dir_cur); 
-	if (obj_file_name != null && load_obj_file(load_esds_only)){
-	   add_gbl_esds();
        while (find_ext_file()){ 
     	  if (load_obj_file(load_esds_only)){
              add_gbl_esds();
@@ -472,10 +593,20 @@ private void resolve_esds(){
     	      log_error(27,"unresolved external reference - " + gbl_esd_name[cur_gbl_ext]);
     	   } else if (gbl_esd_type[cur_gbl_ext] == gbl_esd_wxt){
     		   tot_missing_wxtrn++;
+    	   } else if (lnk_entry != null 
+      			      && gbl_esd_type[cur_gbl_ext] == gbl_esd_ent
+      			      && lnk_entry.equals(gbl_esd_name[cur_gbl_ext])){
+    		   lnk_entry_loc = gbl_esd_loc[cur_gbl_ext];  // RPI 732
     	   }
     	   cur_gbl_ext++;
        }
-    }
+       if (lnk_entry_loc == -1){
+    	   if (lnk_entry == null || lnk_entry.equals(tz390.pgm_name)){
+    		   lnk_entry_loc = 0;
+    	   } else {
+    		   log_error(41,"LNK ENTRY " + lnk_entry + " NOT FOUND"); // RPI 732
+    	   }
+       }
 }
 private boolean load_obj_file(boolean esds_only){
 	/*
@@ -940,6 +1071,7 @@ private void gen_load_module(){
 	 * output 390 load module in binary format
 	 * skipping rlds for unresolved wxtrn's 
 	 */
+	put_stats();
     if (loc_ctr > tz390.max_file_size){
     	abort_error(32,"maximum 390 file size exceeded");
     }
@@ -952,7 +1084,7 @@ private void gen_load_module(){
         z390_flags = "" + tz390.z390_amode31 + tz390.z390_rmode31 + "??";
         z390_file.writeBytes(z390_flags);  // z390_flags
         z390_file.writeInt(loc_ctr);       // z390_code_len
-        z390_file.writeInt(0);             // z390_code_ent offset
+        z390_file.writeInt(lnk_entry_loc);             // z390_code_ent offset RPI 732
         z390_file.writeInt(tot_rld);       // z390_code_rlds 
         z390_file.write(z390_code,0,loc_ctr);
         int cur_rld = 0;
@@ -970,6 +1102,38 @@ private void gen_load_module(){
 	} catch (Exception e){
 	 	abort_error(22,"I/O error on z390 load module file - " + e.toString());
 	}
+}
+private void reset_esds(){
+	/*
+	 * reset ESD global data for next
+	 * LNK name command
+	 */
+	tot_obj_bytes = 0;
+	tot_find_gbl_esd = 0;
+	tot_obj_files = 0;
+    load_esds_only = true;
+    max_obj_esd = 0;
+    lnk_file_name = null;      // RPI 732
+    lnk_cmd = null;            // RPI 732
+    lnk_entry = null;          // RPI 732
+    lnk_entry_loc = -1;         // RPI 732
+    lnk_alias = null;          // RPI 732
+    lnk_name  = null;          // RPI 732
+    obj_file_name = null;
+    obj_file_bin = false;
+    obj_eod = false;
+    tot_alias = 0;
+    alias_file_name = null;
+    obj_line = null;
+    obj_eof = false;
+    log_tod = true; 
+    tot_csect   = 0;
+    tot_entry   = 0;
+    tot_missing_wxtrn = 0;
+    tot_gbl_esd = 0;
+    cur_gbl_esd = 0;
+    cur_gbl_ext = 0;
+    loc_ctr = 0;
 }
 /*
  *  end of lz390code 

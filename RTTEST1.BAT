@@ -107,6 +107,11 @@ set DDTODEMO=demo\DEMO.390
 call RT1 %~dps0rt\test\TESTCAL1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTCAL2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTLNK1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT2 %~dps0rt\test\TESTLNK2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT2 %~dps0rt\test\TESTLNK3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+SET  MYLIB=rt\test
+call LINK %~dps0rt\test\TESTLNK2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call EXEC %~dps0rt\test\TESTLNK3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTLOD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT5 %~dps0rt\test\TESTLOD2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTXCL4 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9

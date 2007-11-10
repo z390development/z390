@@ -155,7 +155,8 @@ public  class  sz390 implements Runnable {
     * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files 
     * 10/18/07 RPI 713 replace \ with / and insert cur dir for rel path 
     * 10/28/07 RPI 732 set cmd_proc_cmdlog if R0 byte 1 == 1 for start 
-    * 10/31/07 RPI 731 add support for CMD parent abort request                      
+    * 10/31/07 RPI 731 add support for CMD parent abort request 
+    * 11/08/07 RPI 732 change LOAD R0 = ENTRY vs LOAD POINT                     
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -435,6 +436,7 @@ public  class  sz390 implements Runnable {
     int    load_dsn_addr  = 0;
     String load_pgm_dir   = null;
     String load_pgm_name  = null;
+    byte[] alias_name_byte = new byte[8];
     String load_pgm_type  = null;
     String load_vcdt_entry = null;
     boolean load_vcdt_mode = false;
@@ -809,7 +811,7 @@ public synchronized void put_log(String msg) {
 		tz390.log_text_append(z390_log_text,msg);  // RPI 731
    	}
     if (tz390.opt_trace
-    	|| tz390.opt_tracemem
+    	|| tz390.opt_traceg
     	|| tz390.opt_tracet
     	|| tz390.opt_tracev
     	|| tz390.opt_test){ // RPI 490 RPI 689
@@ -1336,7 +1338,7 @@ private void svc_load_set_regs(){
 	/*
 	 * set r0, r1, and r15 for load
 	 */
-	pz390.reg.putInt(pz390.r0,cde_loc[cur_cde]);
+	pz390.reg.putInt(pz390.r0,cde_ent[cur_cde]);  // RPI 732
 	if (cde_ent[cur_cde] != -1){
 		pz390.reg.putInt(pz390.r1,cde_len[cur_cde] >>> 3); // RPI 102 390 double words
 	} else {
@@ -1351,6 +1353,15 @@ private void svc_load_390(){
 	 */
   try {
     z390_file = new RandomAccessFile(load_file_name,"r");
+    if (z390_file.length() <= 10){
+    	z390_file.seek(0);
+    	load_pgm_name = z390_file.readLine().toUpperCase();
+    	load_file_name = tz390.find_file_name(load_pgm_dir,load_pgm_name,load_pgm_type,tz390.dir_cur); 
+    	if (load_file_name == null){
+    		abort_error(118,"ALIAS LOAD FAILED FOR " + load_pgm_name);
+    	}
+    	z390_file = new RandomAccessFile(load_file_name,"r");
+    }
     z390_file.seek(0);
     load_code_ver[0] = (char)z390_file.read();
     load_code_ver[1] = (char)z390_file.read();
@@ -1358,7 +1369,7 @@ private void svc_load_390(){
     load_code_ver[3] = (char)z390_file.read();
     z390_flags[0]    = (char)z390_file.read();
     z390_flags[1]    = (char)z390_file.read();
-    z390_flags[2]    = (char)z390_file.read();
+    z390_flags[2]    = (char)z390_file.read(); 
     z390_flags[3]    = (char)z390_file.read();
     load_code_len    = z390_file.readInt();
     load_code_ent    = z390_file.readInt();
@@ -1811,16 +1822,16 @@ public void svc_getmain(){
 			cur_fqe_len = cur_fqe_len - req_len;
 			pz390.reg.putInt(pz390.r0,req_len);               // RPI 542
 			pz390.reg.putInt(pz390.r1,cur_fqe + cur_fqe_len); // RPI 542
-			if (tz390.opt_tracemem){
+			if (tz390.opt_traceg){
 				trace_mem("GETMAIN ",cur_fqe+cur_fqe_len,req_len,0);
 			}
 			if (cur_fqe_len > 0){
 				pz390.mem.putInt(cur_fqe+4,cur_fqe_len);
-				if (tz390.opt_tracemem){
+				if (tz390.opt_traceg){
 					trace_mem("FQE UPDT",cur_fqe,cur_fqe_len,next_fqe);
 				}
 			} else {
-				if (tz390.opt_tracemem){
+				if (tz390.opt_traceg){
 					trace_mem("FQE DEL ",cur_fqe,req_len,next_fqe);
 				}
 				pz390.mem.putInt(prev_fqe,next_fqe);
@@ -1881,20 +1892,20 @@ public void svc_freemain(){
         }
 		if (req_addr < cur_fqe){
 			// insert after prior fqe or cvt
-			if (tz390.opt_tracemem){
+			if (tz390.opt_traceg){
                 trace_mem("FREEMAIN",req_addr,req_len,0);
 			}
 			if (req_addr + req_len == cur_fqe){
 				// merge insert with cur_fqe
 				pz390.mem.putInt(req_addr,next_fqe);
 				pz390.mem.putInt(req_addr+4,req_len + cur_fqe_len); // RPI 491 (was + cur_fqe)
-				if (tz390.opt_tracemem){
+				if (tz390.opt_traceg){
 					trace_mem("FQE IMRG",req_addr,req_len+cur_fqe,next_fqe);
 				}
 			} else {
 				pz390.mem.putInt(req_addr,cur_fqe);
 				pz390.mem.putInt(req_addr+4,req_len);
-				if (tz390.opt_tracemem){
+				if (tz390.opt_traceg){
 					trace_mem("FQE INST",req_addr,req_len,cur_fqe);
 				}
 			}
@@ -1904,7 +1915,7 @@ public void svc_freemain(){
 			return;
 		} else if (req_addr == cur_fqe + cur_fqe_len){
 			// append to current fqe
-			if (tz390.opt_tracemem){
+			if (tz390.opt_traceg){
                 trace_mem("FREEMAIN",req_addr,req_len,0);
 			}
 			cur_fqe_len = cur_fqe_len + req_len;
@@ -1914,7 +1925,7 @@ public void svc_freemain(){
             	next_fqe = pz390.mem.getInt(next_fqe);
             	pz390.mem.putInt(cur_fqe,next_fqe);
             	pz390.mem.putInt(cur_fqe+4,cur_fqe_len+next_fqe_len);
-    			if (tz390.opt_tracemem){
+    			if (tz390.opt_traceg){
                     trace_mem("FQE MRGE",cur_fqe,req_len,next_fqe);
     			}
             } else if (next_fqe > 0 
@@ -1937,13 +1948,13 @@ public void svc_freemain(){
 		}
 	}
 	// insert after last fqe or cvt
-	if (tz390.opt_tracemem){
+	if (tz390.opt_traceg){
         trace_mem("FREEMAIN",req_addr,req_len,0);
 	}
 	pz390.mem.putInt(req_addr,0);
 	pz390.mem.putInt(req_addr+4,req_len);
 	pz390.mem.putInt(prev_fqe,req_addr);
-	if (tz390.opt_tracemem){
+	if (tz390.opt_traceg){
 		trace_mem("FQE ADD ",req_addr,req_len,0);
 	}
 	pz390.tot_mem_alloc = pz390.tot_mem_alloc - req_len;
@@ -1954,7 +1965,7 @@ private boolean check_fqe_ok(){
 	 * trace fqe if option tracemem on and
 	 * verify address and length ok
 	 */
-	if (tz390.opt_tracemem){
+	if (tz390.opt_traceg){
 		trace_mem("FQE     ",cur_fqe,cur_fqe_len,next_fqe);
 	}
 	if (cur_fqe <= prev_fqe 

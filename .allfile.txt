@@ -4615,6 +4615,9 @@ C:\z390\rt\test\TESTIPL2.MLC
 C:\z390\rt\test\TESTLAB1.MLC
 C:\z390\rt\test\TESTLCT1.MLC
 C:\z390\rt\test\TESTLNK1.MLC
+C:\z390\rt\test\TESTLNK2.LNK
+C:\z390\rt\test\TESTLNK2.MLC
+C:\z390\rt\test\TESTLNK3.MLC
 C:\z390\rt\test\TESTLOC1.MLC
 C:\z390\rt\test\TESTLOD1.MLC
 C:\z390\rt\test\TESTLOD2.MLC

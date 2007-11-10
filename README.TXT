@@ -1,4 +1,4 @@
-z390 v1.3.08b PTF 11/07/07
+z390 v1.3.08c PTF 11/09/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.08:
@@ -64,7 +64,29 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.08:
         immediately and is not put on queue.  
     See updated rt\test\TESTCMD1 and TESTCMD2 regression tests. 
 15. RPI 734 - correct structured macro ELSEIF to fix code generation error for
-    second condition connected by OR on ELSEIF.  
+    second condition connected by OR on ELSEIF. 
+16. RPI 732 - add linker support for optional command file with .LNK suffix containing
+    one or more sets of the following linker commands:
+    a)  INCLUDE ddnam(name) - default is linkname.obj 
+    b)  ENTRY   name        - default is offset 0 in load module 
+    c)  ALIAS   name        - creates stub 390 file with ascii name of 390 file to run
+    d)  NAME    name        - creates name.390 with included obj files and specified entry
+    With this PTF a single LINK command file was used to link the 44 ASMG obj files into 24
+    390 load modules with 3 aliases.  See new regression test TESTLNK2.LNK
+    using 2 INCLUDE's, ENTRY, and ALIAS execution.  See RTTEST1 for commands used.
+17. RPI 734 - consolidate all the TRACE options into TRACE(AEGLMPQTV)
+    where letters represent the following:
+    A - trace az390 assembler creating .TRA file
+    E - trace ez390 instruction execution creating .TRE file
+    G - trace all GETMAIN/FREEMAIN requests on .TRE
+    L - trace lz390 linker creating .TRL file
+    M - trace mz390 macro propcessor creating .TRM file
+    P - trace mz390 macro pseudo code generation/execution on .TRM file
+    Q - trace all QSAM DCB I/O data transfers on .TRE file
+    T - trace all TCPIO messaging transfers on .TRE file
+    V - trace all VSAM ACB I/O data transfers on .TRE file
+   The existing TRACE option is the same as TRACE(E) and
+   the TRACEALL option is the same as TRACE(AEGLMQTV)
 
 
 To install this cumulative PTF for z390 follow these steps.
