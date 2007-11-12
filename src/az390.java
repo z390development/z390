@@ -283,7 +283,10 @@ public  class  az390 implements Runnable {
     * 10/24/07 RPI 726 only issue error 187 if trace
     * 10/24/07 RPI 728 ignore ISEQ and ICTL instructions
     *          handled by mz390 and reformated to std 1,71,16
-    * 10/30/07 RPI 729 add DFHRESP code ILLOGIC=F'21'         
+    * 10/30/07 RPI 729 add DFHRESP code ILLOGIC=F'21' 
+    * 11/12/07 RPI 737 correct handling of F/H constant Enn exponent 
+    *          prevent trap on ASCII char > 127 causing trap on cvt to EBCDIC   
+    * 11/12/07 RPI 737 add STATS(file) option    
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -887,7 +890,7 @@ public static void main(String[] args) {
 	  pgm.init_az390(args,null);
       pgm.process_az390();
 }
-public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFile mz390_systerm_file){
+public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFile mz390_systerm_file,RandomAccessFile mz390_stats_file){
 	/*
 	 * initialize z390 when called from mz390
 	 * to receive bal directly and share the
@@ -897,7 +900,8 @@ public void start_az390_thread(String[] args,JTextArea z390_log, RandomAccessFil
 	init_az390(args,null);
 	tz390.systerm_file = mz390_systerm_file; // share the ERR file
     tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " AZ390 ";
-	az390_thread = new Thread(this);
+	tz390.stats_file = mz390_stats_file; // RPI 737
+    az390_thread = new Thread(this);
     az390_running = true;
     az390_thread.start();
     set_sym_lock("az390 startup");    // proceed to waiting for bal and lock sym table
@@ -4301,25 +4305,25 @@ private void put_stats(){
 	}
 	force_print = true; // RPI 285
 	if (tz390.opt_stats){  // RPI 453
-	   put_log(msg_id + "BAL lines             = " + (tot_bal_line-1));
-	   put_log(msg_id + "symbols               = " + tot_sym);
-	   put_log(msg_id + "Literals              = " + tot_lit);
-	   put_log(msg_id + "alloc passes          = " + (cur_pass-1));
-	   put_log(msg_id + "Keys                  = " + tz390.tot_key);
-	   put_log(msg_id + "Key searches          = " + tz390.tot_key_search);
+	   put_stat_line("BAL lines             = " + (tot_bal_line-1));
+	   put_stat_line("symbols               = " + tot_sym);
+	   put_stat_line("Literals              = " + tot_lit);
+	   put_stat_line("alloc passes          = " + (cur_pass-1));
+	   put_stat_line("Keys                  = " + tz390.tot_key);
+	   put_stat_line("Key searches          = " + tz390.tot_key_search);
 	   if (tz390.tot_key_search > 0){
 	       tz390.avg_key_comp = tz390.tot_key_comp/tz390.tot_key_search;
 	   }
-	   put_log(msg_id + "Key avg comps         = " + tz390.avg_key_comp);
-	   put_log(msg_id + "Key max comps         = " + tz390.max_key_comp);
-	   put_log(msg_id + "ESD symbols           = " + tot_esd);
-	   put_log(msg_id + "object bytes          = " + tot_obj_bytes);
-	   put_log(msg_id + "object rlds           = " + tot_rld);
+	   put_stat_line("Key avg comps         = " + tz390.avg_key_comp);
+	   put_stat_line("Key max comps         = " + tz390.max_key_comp);
+	   put_stat_line("ESD symbols           = " + tot_esd);
+	   put_stat_line("object bytes          = " + tot_obj_bytes);
+	   put_stat_line("object rlds           = " + tot_rld);
 	   if (tz390.opt_timing){
 	      cur_date = new Date();
 	      tod_end = cur_date.getTime();
 	      tot_sec = (tod_end - tod_start)/1000;
-	      put_log(msg_id + "total seconds         = " + tot_sec);
+	      put_stat_line("total seconds         = " + tot_sec);
 	   }
 	}
 	int index = 0;
@@ -4340,8 +4344,18 @@ private void put_stats(){
 	if (mz390_call){
 		put_log(msg_id + "total mz390 errors   = " + mz390_errors); // RPI 659
 	}
-	put_log(msg_id +     "total az390 errors   = " + az390_errors); // RPI 659
+	put_log(msg_id + "total az390 errors   = " + az390_errors); // RPI 659
 	put_log(msg_id + "return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + az390_rc); // RPI 312
+}
+private void put_stat_line(String msg){
+	/*
+	 * routine statistics line to PRN or STATS(file)
+	 */
+	if (tz390.stats_file != null){
+		tz390.put_stat_line(msg);
+	} else {
+		put_log(msg_id + msg);
+	}
 }
 private void close_files(){
 	/*
@@ -4765,7 +4779,7 @@ private void put_copyright(){
             	if (ascii){
             		work_int = text.charAt(index) & 0xff;
             	} else {
-            		work_int = tz390.ascii_to_ebcdic[text.charAt(index)] & 0xff;
+            		work_int = tz390.ascii_to_ebcdic[text.charAt(index) & 0xff] & 0xff; // RPI 737
             	}
 				String temp_string = Integer.toHexString(work_int);
                 if  (temp_string.length() == 1){
@@ -5743,7 +5757,7 @@ private void get_dc_field_modifiers(){
 			 && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'L'){
 			 dc_len_explicit = true;
 			 if (!bal_abort){
-				 dc_attr_elt = tz390.ascii_to_ebcdic[dc_type_explicit.charAt(dc_type_index)];
+				 dc_attr_elt = tz390.ascii_to_ebcdic[dc_type_explicit.charAt(dc_type_index) & 0xff];  // RPI 737
 			 }
 			 if (dc_index+1 < dc_field.length() && dc_field.charAt(dc_index+1) == '.'){
 				 dc_index++;  // RPI 438 limited bit lenght support
@@ -6274,6 +6288,12 @@ private boolean get_dc_bd_val(){
 	    		   .multiply(fp_bd_two.pow(dc_scale))
 	    		   .divideToIntegralValue(BigDecimal.ONE); 
 	    	}
+			if (dc_exp > 0){ // RPI 737
+				dc_bd_val = dc_bd_val.movePointRight(dc_exp);
+			} else if (dc_exp < 0){
+				dc_bd_val = dc_bd_val.movePointLeft(-dc_exp);
+				
+			}
 		    return true;
 		} else {
 			dc_index++;

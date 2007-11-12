@@ -123,7 +123,8 @@ public  class  z390 extends JApplet
      * 07/06/07 RPI 646 synchronize abort_error to prevent other task abort errors
      * 08/16/07 RPI 630 prevent PF10 causing file menu popup
      *          use get_window_size() for all GUI's
-     * 08/23/07 RPI 685 adjust GUI height for status line         
+     * 08/23/07 RPI 685 adjust GUI height for status line 
+     * 11/12/07 RPI 737 route all commands to CMD process if running        
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -2371,7 +2372,11 @@ public  class  z390 extends JApplet
   		   	   cmd_line = " ";
   		   }
            reset_z390_cmd();
-           process_command(cmd_line); 
+           if (cmd_running){  // RPI 737
+        	   process_command("CMD " + cmd_line);
+           } else {
+        	   process_command(cmd_line);
+           }
    	  } 
    	  private void perm_command(){
    	  /*

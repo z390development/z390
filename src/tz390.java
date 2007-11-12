@@ -145,6 +145,8 @@ public  class  tz390 {
     * 10/26/07 RPI 731 add option MAXLOG(mb) to limit visible log size
     * 11/07/07 RPI 733 consolidate TRACE(AEGILMQTV)
     * 11/08/07 RPI 732 add lnk_type for linker commands
+    * 11/10/07 RPI 735 change LNK to LKD to avoid conflict
+    *          ignore LKD file if explicit .OBJ coded on link file name
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -153,7 +155,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.08c";  //dsh
+    String version    = "V1.3.08d";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -274,12 +276,14 @@ public  class  tz390 {
     String dat_type = ".DAT"; // AREAD default input for mz390
 	String err_type = ".ERR"; // step error and rc log
     String log_type = ".LOG"; // log for z390, ez390, sz390, pz390
-	String lnk_type = ".LNK"; // linker commands INCLUDE, ENTRY, ALIAS, NAME RPI 732
-    String mac_type = ".MAC"; // macro source
+	String lkd_type = ".LKD"; // linker commands INCLUDE, ENTRY, ALIAS, NAME RPI 735
+    Boolean lkd_ignore = false; // RPI 735 ignore LKD if explicit .OBJ
+	String mac_type = ".MAC"; // macro source
     String mlc_type = ".MLC"; // macro assembler source program
     String obj_type = ".OBJ"; // relocatable object code for az390 and lz390
     String pch_type = ".PCH"; // punch output from mz390
     String prn_type = ".PRN"; // assembly listing for az390
+    String sta_type = ".STA"; // statistics mod file for option stats(filename) RPI 737
     String tra_type = ".TRA"; // az390 trace file
     String tre_type = ".TRE"; // ez390 trace file
     String trl_type = ".TRL"; // lz390 trace file
@@ -320,6 +324,8 @@ public  class  tz390 {
     String systerm_prefix = null; // pgm_name plus space
     int    systerm_io     = 0;    // total file io count
     int    systerm_ins    = 0;    // ez390 instruction count
+    String stats_file_name      = null;
+    RandomAccessFile stats_file = null;
     /*
      * log, trace file used by mz390, az390, lz390, ez390
      */
@@ -3891,6 +3897,9 @@ public void init_options(String[] args,String pgm_type){
            	opt_rmode24 = false;
           	opt_rmode31 = true;
            	z390_rmode31 = 'T';
+        } else if (token.length() > 6
+          		&& token.substring(0,6).toUpperCase().equals("STATS(")){
+         	stats_file_name = token.substring(6,token.length()-1); // RPI 736
         } else if (token.length() > 7
            		&& token.substring(0,7).toUpperCase().equals("SYS390(")){
            	dir_390 = token.substring(7,token.length()-1) + File.separator;	
@@ -4050,7 +4059,18 @@ public void open_systerm(String z390_pgm){
 	 * open systerm file else set null
 	 */
 	systerm_prefix = left_justify(pgm_name,9) + " " + z390_pgm + " ";
-    if (systerm_file != null)return; // rpi 415
+    if (stats_file == null 
+   		&& stats_file_name != null){
+    	stats_file_name = get_file_name(dir_err,stats_file_name,sta_type);
+    	try {
+            stats_file = new RandomAccessFile(stats_file_name,"rw"); 
+            stats_file.seek(stats_file.length());
+        } catch (Exception e){
+        	stats_file = null;
+        	abort_error(20,"stats file open error " + e.toString());
+        }
+    }
+	if (systerm_file != null)return; // rpi 415
 	systerm_file_name = get_file_name(dir_err,systerm_file_name,err_type);
     try {
         systerm_file = new RandomAccessFile(systerm_file_name,"rw"); 
@@ -4089,6 +4109,22 @@ public synchronized void put_systerm(String msg){ // RPI 397
 		}
 	}
 }
+public synchronized void put_stat_line(String msg){ // RPI 397
+	/*
+	 * mod stat record on stats.sta file
+	 */
+	if (opt_timing){
+        systerm_time = sdf_HHmmss.format(new Date()) + " ";;
+	}
+	if (stats_file != null){
+		try {
+			systerm_io++;
+			stats_file.writeBytes(systerm_time + systerm_prefix + msg + newline); // RPI 500
+		} catch (Exception e){
+	        abort_error(19,"I/O error on stats file " + e.toString());
+		}
+	}
+}
 public synchronized void close_systerm(int rc){ // RPI 397
 	/*
 	 * close systerm error file if open
@@ -4119,6 +4155,14 @@ public synchronized void close_systerm(int rc){ // RPI 397
     		 System.out.println("TZ390E systerm file close error - " + e.toString());
     	 }
     	 systerm_file = null;  // RPI 622
+     }
+     if (stats_file != null){
+    	 try {
+    		 stats_file.close();
+    	 } catch (Exception e){
+    		 System.out.println("TZ390E stats file close error - " + e.toString());
+    	 }
+    	 stats_file = null;  
      }
 }
 public void close_trace_file(){
@@ -4438,7 +4482,9 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
 	 * set pgm_dir, pgm_name, pgm_type from parm 
 	 * Notes:
 	 *   1.  Only allow file type override for MLC.
+	 *   2.  Set lkd_ignore true if explicit .OBJ found RPI 735
 	 */
+	lkd_ignore = false;
 	set_dir_cur(); //RPI168
 	if (file_name.charAt(0) == '\"'   // strip lsn quotes
 		|| file_name.charAt(0) == '\''){
@@ -4463,6 +4509,9 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
     index = file_name.lastIndexOf('.');
     if (index != -1){  // strip extension if any
     	pgm_name = file_name.substring(0,index);
+    	if (file_name.substring(index).toUpperCase().equals(".OBJ")){
+    		lkd_ignore = true;  // RPI 735 ignore LKD for link with explicit OBJ file
+    	}
     	if (!file_type.equals(mlc_type)){ //RPI169
     		pgm_type=file_type;
     	} else {

@@ -291,7 +291,9 @@ public  class  mz390 {
     *           3. Total errror counts all reported on ERR, PRN, CON
     *           4. ERRSUM turned on automatically if #1 != 0
     * 09/12/07 RPI 695 replace single null macro call parm with comma if comments  
-    * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files                   
+    * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files
+    * 11/12/07 RPI 736 issue error if statements follow END with ASM option  
+    * 11/12/07 RPI 737 add STATS(file) option                 
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -312,6 +314,7 @@ public  class  mz390 {
 	int mz390_rc = 0;
 	int mz390_errors = 0;
 	boolean mac_abort = false;
+	boolean batch_asm_error = false; // RPI 736
 	Date cur_date = null;
 	boolean copyright_mode = false;
 	GregorianCalendar cur_date_cal = null;
@@ -1075,7 +1078,7 @@ public  class  mz390 {
 		}
 		if (tz390.opt_asm){
 			az390 = new az390(); // RPI 415
-			az390.start_az390_thread(args,z390_log_text,tz390.systerm_file);
+			az390.start_az390_thread(args,z390_log_text,tz390.systerm_file,tz390.stats_file); // RPI 737
 		}
 		open_files();
 		compile_patterns();
@@ -1350,10 +1353,14 @@ public  class  mz390 {
 			if   (bal_line != null){
 				if (tz390.opt_asm){
 					if (bal_op != null && bal_op.equals("END")){
-						if (tz390.opt_asm){ // RPI 549
-							end_found = true;
-							put_stats(); // RPI 425
-						}
+						end_found = true;
+						put_stats(); // RPI 425
+					} else if (end_found 
+							   && !batch_asm_error
+							   && bal_line.length() > 0
+							   && bal_line.charAt(0) != '*'){
+						batch_asm_error = true;
+						log_error(223,"batch assemblies not supported");
 					}
 				}
 				put_bal_line(bal_line);
@@ -7329,6 +7336,9 @@ public  class  mz390 {
 		 * 3.  If asm pass file names and merge file errors
 		 *     from mz390 and lookahead phase of az390
 		 *     for use in file xref at end of PRN..
+		 * Notes:
+		 *   1.  Use tz390.put_stat_line to route
+		 *       line to end of BAL or stat(file) option
 		 */
 		boolean save_opt_con = tz390.opt_con;
 		if (tz390.opt_bal || tz390.opt_asm){ // RPI 453
@@ -7338,49 +7348,49 @@ public  class  mz390 {
 		if  (tz390.opt_stats){ // RPI 453
 			log_to_bal = true;
             put_copyright(); // RPI 453
-			put_log(msg_id + "total MLC/MAC loaded  = " + tot_mac_line);
-			put_log(msg_id + "total BAL output lines= " + tot_bal_line);
+			put_stat_line("total MLC/MAC loaded  = " + tot_mac_line);
+			put_stat_line("total BAL output lines= " + tot_bal_line);
 			if (tot_aread_io + tot_punch_io > 0){
-				put_log(msg_id + "total AREAD input     = " + tot_aread_io);
-				put_log(msg_id + "total PUNCH output    = " + tot_punch_io);
+				put_stat_line("total AREAD input     = " + tot_aread_io);
+				put_stat_line("total PUNCH output    = " + tot_punch_io);
 			}
-			put_log(msg_id + "total BAL instructions= " + tot_ins);
-			put_log(msg_id + "total macros          = " + tot_mac_name);
-			put_log(msg_id + "total macro loads     = " + tot_mac_load);
-			put_log(msg_id + "total macro calls     = " + tot_mac_call);	
-			put_log(msg_id + "total global set names= " + tot_gbl_name);
-			put_log(msg_id + "tot global seta cells = " + tot_gbl_seta);
-			put_log(msg_id + "tot global setb cells = " + tot_gbl_setb);
-			put_log(msg_id + "tot global setc cells = " + tot_gbl_setc);
-			put_log(msg_id + "max local pos parms   = " + hwm_pos_parm);
-			put_log(msg_id + "max local key parms   = " + hwm_kwd_parm);
-			put_log(msg_id + "max local set names   = " + hwm_lcl_name);
-			put_log(msg_id + "max local seta cells  = " + hwm_lcl_seta);
-			put_log(msg_id + "max local setb cells  = " + hwm_lcl_setb);
-			put_log(msg_id + "max local setc cells  = " + hwm_lcl_setc);
-			put_log(msg_id + "total array expansions= " + tot_expand);
-			put_log(msg_id + "total Keys            = " + tz390.tot_key);
-			put_log(msg_id + "Key searches          = " + tz390.tot_key_search);
+			put_stat_line("total BAL instructions= " + tot_ins);
+			put_stat_line("total macros          = " + tot_mac_name);
+			put_stat_line("total macro loads     = " + tot_mac_load);
+			put_stat_line("total macro calls     = " + tot_mac_call);	
+			put_stat_line("total global set names= " + tot_gbl_name);
+			put_stat_line("tot global seta cells = " + tot_gbl_seta);
+			put_stat_line("tot global setb cells = " + tot_gbl_setb);
+			put_stat_line("tot global setc cells = " + tot_gbl_setc);
+			put_stat_line("max local pos parms   = " + hwm_pos_parm);
+			put_stat_line("max local key parms   = " + hwm_kwd_parm);
+			put_stat_line("max local set names   = " + hwm_lcl_name);
+			put_stat_line("max local seta cells  = " + hwm_lcl_seta);
+			put_stat_line("max local setb cells  = " + hwm_lcl_setb);
+			put_stat_line("max local setc cells  = " + hwm_lcl_setc);
+			put_stat_line("total array expansions= " + tot_expand);
+			put_stat_line("total Keys            = " + tz390.tot_key);
+			put_stat_line("Key searches          = " + tz390.tot_key_search);
 			if (tz390.tot_key_search > 0){
 				tz390.avg_key_comp = tz390.tot_key_comp/tz390.tot_key_search;
 			}
-			put_log(msg_id + "Key avg comps         = " + tz390.avg_key_comp);
-			put_log(msg_id + "Key max comps         = " + tz390.max_key_comp);
-			put_log(msg_id + "total macro line exec = " + tot_mac_ins);
-			put_log(msg_id + "total pcode line exec = " + tot_pcl_exec);
-			put_log(msg_id + "total pcode line gen. = " + tot_pcl_gen);
-			put_log(msg_id + "total pcode line reuse= " + tot_pcl_reuse);
-			put_log(msg_id + "total pcode op   gen. = " + tot_pc_gen);
-			put_log(msg_id + "total pcode op   exec = " + tot_pc_exec);
-			put_log(msg_id + "total pcode gen  opt  = " + tot_pc_gen_opt);
-			put_log(msg_id + "total pcode exec opt  = " + tot_pc_exec_opt);
+			put_stat_line("Key avg comps         = " + tz390.avg_key_comp);
+			put_stat_line("Key max comps         = " + tz390.max_key_comp);
+			put_stat_line("total macro line exec = " + tot_mac_ins);
+			put_stat_line("total pcode line exec = " + tot_pcl_exec);
+			put_stat_line("total pcode line gen. = " + tot_pcl_gen);
+			put_stat_line("total pcode line reuse= " + tot_pcl_reuse);
+			put_stat_line("total pcode op   gen. = " + tot_pc_gen);
+			put_stat_line("total pcode op   exec = " + tot_pc_exec);
+			put_stat_line("total pcode gen  opt  = " + tot_pc_gen_opt);
+			put_stat_line("total pcode exec opt  = " + tot_pc_exec_opt);
 			if  (tz390.opt_timing){
 				cur_date = new Date();
 				tod_end = cur_date.getTime();
 				tot_msec = tod_end-tod_start+1;
-				put_log(msg_id + "total milliseconds    = " + tot_msec);
+				put_stat_line("total milliseconds    = " + tot_msec);
 				ins_rate = tot_mac_ins*1000/tot_msec;
-				put_log(msg_id + "instructions/second   = " + ins_rate);
+				put_stat_line("instructions/second   = " + ins_rate);
 			}
 		}
 		int index = 0;
@@ -7412,6 +7422,16 @@ public  class  mz390 {
 			put_log(msg_id + "return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + mz390_rc); // RPI 312
 		}
 		log_to_bal = false;
+	}
+	private void put_stat_line(String msg){
+		/*
+		 * routine statistics line to BAL or STATS(file)
+		 */
+		if (tz390.stats_file != null){
+			tz390.put_stat_line(msg);
+		} else {
+			put_log(msg_id + msg);
+		}
 	}
 	private void close_files(){
 		/*

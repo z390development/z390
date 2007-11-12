@@ -357,8 +357,11 @@ public  class  vz390 {
     /*
      * KSDS insert top control block ZKSITD
      */
+    byte[] cb_byte = null;
+    ByteBuffer cb = null;
     long cur_ksit_xrba = 0;
     int  cur_ksit_id   = 0; // C'KSIT'
+    int  ksit_id_val   = 0x4b534954;
     long cur_ksit_top  = 0; // top of balanced tree KSIR
     long cur_ksit_fst  = 0; // next first and lowest KSIR XRBA (-1 none, high bit if last add)
     long cur_ksit_lst  =  0; // next last  and higher KSIR XRBA (-1 none, high bit if last add)
@@ -367,11 +370,13 @@ public  class  vz390 {
     int  ksit_fst      = 12; // first and lowest  KSIR
     int  ksit_lst      = 20; // last  and highest KSIR
     int  ksit_len      = 28; // KSIT length
+    byte[] cbksit_byte   = new byte[ksit_len];
     /*
-     * KSDS insert top control block ZKSITD
+     * KSDS insert record control block ZKSIRD
      */
     long cur_ksir_xrba = 0;
     int  cur_ksir_id   = 0; // C'KSIT'
+    int  ksir_id_val   = 0x4b534952;
     long cur_ksir_top  = 0; // top of balanced tree KSIR
     long cur_ksir_fst  = 0; // next first and lowest KSIR XRBA (-1 none, high bit if last add)
     long cur_ksir_lst  =  0; // next last  and higher KSIR XRBA (-1 none, high bit if last add)
@@ -1238,7 +1243,7 @@ public  class  vz390 {
     	if (cur_ves_xrba == -1){
     		return false;
     	}
-    	cur_ves_xrba = - cur_ves_xrba;
+    	cur_ksit_xrba = - cur_ves_xrba;
     	if (get_ksit()){
     		cur_ksir_xrba = cur_ksit_top;
     		while (cur_ksir_xrba != -1){
@@ -1915,32 +1920,39 @@ public  class  vz390 {
     		}
     	}
     }
-    private boolean read_ves_cb(long xrba,byte[] cb_byte,int cb_len){
+    private boolean read_ves_cb(long cb_xrba,int cb_len){
     	/*
     	 * read control block in ves
     	 * at xrba into cb byte array
     	 * Notes: 
     	 */
-    	if (xrba > tz390.max_file_size){
+    	if (cb_xrba > tz390.max_file_size){
     		set_feedback(pdf_def,rc_log,cmp_ves,rn_inv_rba_req);
 			return false;
     	}
     	try {
     		// read ves at xrba into cb for cb_len
         	if (cb_byte == null 
-                	|| cb_byte.length < cb_len){
-                	cb_byte = new byte[cb_len];
+               	|| cb_byte.length < cb_len){
+               	cb_byte = new byte[cb_len];
+               	cb = ByteBuffer.wrap(cb_byte,0,cb_len);
             }
-        	tot_ves_read++;
-    		sz390.tiot_file[cur_ves_tiot_index].seek(xrba);
-    		sz390.tiot_file[cur_ves_tiot_index].read(cb_byte,0,cb_len); 
-			if (get_vcb_buff(cur_ves_tiot_index,xrba,cb_len)){
+			if (get_vcb_buff(cur_ves_tiot_index,cb_xrba,cb_len)){
             	tot_ves_cache++;
         		System.arraycopy(vcb_byte,vcb_addr[vcb_index]+8,cb_byte,0,cb_len);
-        	}
-    		if (tz390.opt_tracev){
-				tz390.put_trace("VSAM EXCP WRITE VES READ CB XRBA=" + tz390.get_long_hex(xrba,16));
+			} else {
+            	tot_ves_read++;
+            	// read ksds ves xrba+pri key
+        		sz390.tiot_file[cur_ves_tiot_index].seek(cb_xrba);
+        		sz390.tiot_file[cur_ves_tiot_index].read(cb_byte,0,cb_len);
+        		if (vcb_alloc){
+        			vcb_buff.putLong(vcb_addr[vcb_index],cb_xrba);
+        			System.arraycopy(cb_byte,0,vcb_byte,vcb_addr[vcb_index]+8,cb_len);
+        		}
 			}
+    		if (tz390.opt_tracev){
+				tz390.put_trace("VSAM EXCP READ CB XRBA=" + tz390.get_long_hex(cb_xrba,16));
+    		}
     		sz390.tot_dcb_read++;
     		sz390.tot_dcb_oper++;
     		return true;
@@ -2340,7 +2352,19 @@ public  class  vz390 {
     	 * load top of insert tree KSIt
     	 * from cur_ves_xrba
     	 */
-    	return false;
+    	if (read_ves_cb(cur_ksit_xrba,ksit_len)){
+    		cur_ksit_id  = cb.getInt(ksit_id);
+    		if (cur_ksit_id != ksit_id_val){
+    			set_feedback(pdf_def,rc_phy,cmp_ves,rn_read_data_err);
+    			return false;
+    		}
+    		cur_ksit_top = cb.getLong(ksit_top);
+    		cur_ksit_fst = cb.getLong(ksit_fst);
+    		cur_ksit_lst = cb.getLong(ksit_lst);
+    		return true;
+    	} else {
+    		return false;
+    	}
 //dshx 
     }
     private boolean get_ksir(long xrba){

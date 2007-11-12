@@ -1,4 +1,4 @@
-z390 v1.3.08c PTF 11/09/07
+z390 v1.3.08d PTF 11/12/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.08:
@@ -87,6 +87,33 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.08:
     V - trace all VSAM ACB I/O data transfers on .TRE file
    The existing TRACE option is the same as TRACE(E) and
    the TRACEALL option is the same as TRACE(AEGLMQTV)
+18> RPI 735 - Correct new linker LNK support:
+    1) Change LNK to LKD to avoid conflict with Windows shortcuts
+    2) Ignore CTRL-Z (hex 1A end of file codes in LKD source code
+    3) Prevent trap when INCLUDE DDNAME is not defined
+    4) Issue message ignoring all unrecognized command such as SETOPT and PARM(....)
+    5) Check for explicit .OBJ on lz390 file parm and ignore LKD
+    6) Assign default starting address of load module to matching EXTRN
+       if there is no matching CSECT/ENTRY in load module.
+19. RPI 737 - Misc. corrections and enhancements:
+    1) Add mz390 warning message if non-comment type statements found after
+       END statement with option ASM.  
+    2) Add option STATS(filename) to append all statistics output from mz390,
+       az390, lz390, and ez390 to filename.STA.  Use of this option turns off
+       statistics as comments at end of BAL, PRN, LST, and LOG files.
+    3) Correct spelling of "version" in IVP message.
+    4) Correct superzap spelling on command prompt
+    5) Correct superzap.bat rem, spelling, and remove pause
+    6) Correct superzap display of each command read once
+    8) Correct superzap SYSIN file I/O error to display error message and exit
+       rather than issue user abend.
+    9) Correct z390 GUI interface to route all input to running CMD task until
+       it terminates.  Enter exit or ctrl-break to force CMD end.
+    10) Update superzap web page documentation
+    11) Correct az390 assembler to handle Enn exponent modifier on F and H type constants.
+    12) Prevent trap on ASCII character literal conversion to EBCDIC for hex codes 00-ff.          ASCII with high bit maps to same EBCDIC character as ASCII with no high bit.
+        When converting EBCDIC source to ASCII for use with z390, translation use a tool
+        that reports any hex literals with non-ASCII characters as errors.  These must be         converted from C'...' to X'....' format for portability to ascii systems.
 
 
 To install this cumulative PTF for z390 follow these steps.

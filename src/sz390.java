@@ -156,7 +156,8 @@ public  class  sz390 implements Runnable {
     * 10/18/07 RPI 713 replace \ with / and insert cur dir for rel path 
     * 10/28/07 RPI 732 set cmd_proc_cmdlog if R0 byte 1 == 1 for start 
     * 10/31/07 RPI 731 add support for CMD parent abort request 
-    * 11/08/07 RPI 732 change LOAD R0 = ENTRY vs LOAD POINT                     
+    * 11/08/07 RPI 732 change LOAD R0 = ENTRY vs LOAD POINT 
+    * 11/12/07 RPI 737 add STATS(filename) option                   
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -187,6 +188,7 @@ public  class  sz390 implements Runnable {
     tz390 tz390 = null;
     pz390 pz390 = null;
     vz390 vz390 = null; // RPI 644
+	String msg_id = "EZ390I ";
     boolean pz390_running = false;
     boolean put_stats_running = false; // RPI 646
     String ez390_pgm = null; // saved by link for gz390 title
@@ -956,40 +958,40 @@ private void put_stats(){
 		tz390.opt_con = false;
 	}
 	if (tz390.opt_stats){
-		put_log("EZ390I Stats total instructions    = " + tz390.systerm_ins);
+		put_stat_line("Stats total instructions    = " + tz390.systerm_ins);
 		
-		put_log("EZ390I stats TCPIO operations      = " + tot_tcpio_oper);
+		put_stat_line("stats TCPIO operations      = " + tot_tcpio_oper);
 		if (tot_tcpio_oper > 0){ // RPI 566
-			put_log("EZ390I stats TCPIO open client     = " + tot_tcpio_openc);
-			put_log("EZ390I stats TCPIO open server     = " + tot_tcpio_opens);
-			put_log("EZ390I stats TCPIO close_client    = " + tot_tcpio_closec);
-			put_log("EZ390I stats TCPIO close server    = " + tot_tcpio_closes);
-			put_log("EZ390I stats TCPIO send message    = " + tot_tcpio_send);
-			put_log("EZ390I stats TCPIO receive message = " + tot_tcpio_recv);
+			put_stat_line("stats TCPIO open client     = " + tot_tcpio_openc);
+			put_stat_line("stats TCPIO open server     = " + tot_tcpio_opens);
+			put_stat_line("stats TCPIO close_client    = " + tot_tcpio_closec);
+			put_stat_line("stats TCPIO close server    = " + tot_tcpio_closes);
+			put_stat_line("stats TCPIO send message    = " + tot_tcpio_send);
+			put_stat_line("stats TCPIO receive message = " + tot_tcpio_recv);
 		}
-		put_log("EZ390I stats DCB operations        = " + tot_dcb_oper);
+		put_stat_line("stats DCB operations        = " + tot_dcb_oper);
 		if (tot_dcb_oper > 0){ // RPI 566
-			put_log("EZ390I stats DCB open              = " + tot_dcb_open);
-			put_log("EZ390I stats DCB close             = " + tot_dcb_close);
-			put_log("EZ390I stats DCB get               = " + tot_dcb_get);
-			put_log("EZ390I stats DCB put               = " + tot_dcb_put);
-			put_log("EZ390I stats DCB read              = " + tot_dcb_read);
-			put_log("EZ390I stats DCB write             = " + tot_dcb_write);
+			put_stat_line("stats DCB open              = " + tot_dcb_open);
+			put_stat_line("stats DCB close             = " + tot_dcb_close);
+			put_stat_line("stats DCB get               = " + tot_dcb_get);
+			put_stat_line("stats DCB put               = " + tot_dcb_put);
+			put_stat_line("stats DCB read              = " + tot_dcb_read);
+			put_stat_line("stats DCB write             = " + tot_dcb_write);
 		}
-		put_log("EZ390I stats VSAM operations       = " + vz390.tot_vsam_oper);
+		put_stat_line("stats VSAM operations       = " + vz390.tot_vsam_oper);
 		if (vz390.tot_vsam_oper > 0){ // RPI 566
-			put_log("EZ390I stats VSAM ACB open         = " + vz390.tot_acb_open);
-			put_log("EZ390I stats VSAM ACB close        = " + vz390.tot_acb_close);
-			put_log("EZ390I stats VSAM RPL get          = " + vz390.tot_rpl_get);
-			put_log("EZ390I stats VSAM RPL put          = " + vz390.tot_rpl_put);
-			put_log("EZ390I stats VSAM ACB point        = " + vz390.tot_rpl_point);
-			put_log("EZ390I stats VSAM ACB erase        = " + vz390.tot_rpl_erase);
-			put_log("EZ390I stats VSAM VES read  cache  = " + vz390.tot_ves_cache);
-			put_log("EZ390I stats VSAM VES read  file   = " + vz390.tot_ves_read);
-			put_log("EZ390I stats VSAM VES write file   = " + vz390.tot_ves_write);
-			put_log("EZ390I stats VSAM VXN read  cache  = " + vz390.tot_vxn_cache);
-			put_log("EZ390I stats VSAM VXN read  file   = " + vz390.tot_vxn_read);
-			put_log("EZ390I stats VSAM VXN write file   = " + vz390.tot_vxn_write);
+			put_stat_line("stats VSAM ACB open         = " + vz390.tot_acb_open);
+			put_stat_line("stats VSAM ACB close        = " + vz390.tot_acb_close);
+			put_stat_line("stats VSAM RPL get          = " + vz390.tot_rpl_get);
+			put_stat_line("stats VSAM RPL put          = " + vz390.tot_rpl_put);
+			put_stat_line("stats VSAM ACB point        = " + vz390.tot_rpl_point);
+			put_stat_line("stats VSAM ACB erase        = " + vz390.tot_rpl_erase);
+			put_stat_line("stats VSAM VES read  cache  = " + vz390.tot_ves_cache);
+			put_stat_line("stats VSAM VES read  file   = " + vz390.tot_ves_read);
+			put_stat_line("stats VSAM VES write file   = " + vz390.tot_ves_write);
+			put_stat_line("stats VSAM VXN read  cache  = " + vz390.tot_vxn_cache);
+			put_stat_line("stats VSAM VXN read  file   = " + vz390.tot_vxn_read);
+			put_stat_line("stats VSAM VXN write file   = " + vz390.tot_vxn_write);
 		}
 		if (tz390.opt_trace){
 			tz390.put_trace("EZ390I Stats Keys                  = " + tz390.tot_key);
@@ -1002,18 +1004,28 @@ private void put_stats(){
 		}
 		if (tz390.opt_timing){ // display instr rate
 		   	pz390.cur_date = new Date();
-		   	put_log("EZ390I Stats current date " + cur_date_MMddyy.format(pz390.cur_date)
+		   	put_stat_line("Stats current date " + cur_date_MMddyy.format(pz390.cur_date)
 		   			+ " time " + cur_tod_hhmmss.format(pz390.cur_date)); // RPI 209
 			tod_end_pgm = pz390.cur_date.getTime();
 			tot_sec = (tod_end_pgm - tod_start_pgm)/1000;
-			put_log("EZ390I Stats total seconds         = " + tot_sec);
+			put_stat_line("Stats total seconds         = " + tot_sec);
 			long ins_rate = ((long) tz390.systerm_ins)*1000/(tod_end_pgm - tod_start_pgm + 1);
-			put_log("EZ390I Stats instructions/sec      = " + ins_rate);
+			put_stat_line("Stats instructions/sec      = " + ins_rate);
 		}
 	}
 	tz390.opt_con = save_opt_con; // rpi 453
-	put_log("EZ390I total errors         = " + ez390_errors);
-	put_log("EZ390I return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + ez390_rc); // RPI 312
+	put_log(msg_id + "total errors         = " + ez390_errors);
+	put_log(msg_id + "return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + ez390_rc); // RPI 312
+}
+private void put_stat_line(String msg){
+	/*
+	 * routine statistics line to LOG or STATS(file)
+	 */
+	if (tz390.stats_file != null){
+		tz390.put_stat_line(msg);
+	} else {
+		put_log(msg_id + msg);
+	}
 }
 private synchronized void close_files(){  // RPI 661
 	/*
@@ -2583,7 +2595,8 @@ private String get_dcb_file_name(String dsnam_path){
         	file_name = file_name.replace('\\','/');
         }
         if (!file_name.substring(0,1).equals(File.separator)
-        		&& file_name.charAt(1) != ':'){
+        	&& (file_name.length() == 1 
+        		||file_name.charAt(1) != ':')){
         	file_name = tz390.dir_cur + file_name; // RPI 713
         }
         return file_name;

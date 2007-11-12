@@ -76,7 +76,7 @@ SUPERZAP SUBENTRY BASES=(R13,R7,R8)
          COPY  ASMMSP
          LR    R2,R1
          PM    CMD_INIT
-         LA    R2,=CL80'SUPERZAP V1.0 04/13/07 Z390 FILE UTILITY'
+         LA    R2,=CL80'SUPERZAP V1.1 11/11/07 Z390 FILE UTILITY'
          PM    DISPLAY
          PM    GET_CMD
          DO    UNTIL=(CLI,EOF,EQ,TRUE)
@@ -134,7 +134,7 @@ GET_CMD  PENTRY
          ENDIF
          IF    (CLI,CONSOLE,EQ,TRUE)
                XC   WTORECB,WTORECB
-               WTOR 'ENTER SUPERZAP COMMAOND OR HELP',CMD,80,WTORECB 
+               WTOR 'ENTER SUPERZAP COMMAND OR HELP',CMD,80,WTORECB 
                WAIT ECB=WTORECB
          ELSE 
                GET   SYSIN,CMD
@@ -155,8 +155,10 @@ GET_EOF  DS    0H
          MVI   EOF,TRUE
          PEXIT     
 CMD_PROCESS  PENTRY
-         LA    R2,CMD
-         PM    DISPLAY
+         IF    (CLI,CONSOLE,NE,TRUE)
+               LA    R2,CMD
+               PM    DISPLAY
+         ENDIF
          MVI   PARM_ERROR,FALSE   
          LA    R2,CMD
          PM    FIND_OP

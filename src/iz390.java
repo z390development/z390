@@ -60,7 +60,7 @@ public class iz390{
     	tz390.init_tables();
         z390_ver = tz390.version;
         z390_base_ver = z390_ver.substring(0,7);
-        System.out.println("IVP OS   verison = " + os_ver);
+        System.out.println("IVP OS   version = " + os_ver);
         System.out.println("IVP J2SE version = " + j2se_ver);
         System.out.println("IVP z390 version = " + z390_ver);
 	    ivp_file_name = z390_dir + File.separator + "Z390.IVP"; // RPI 713
