@@ -147,6 +147,7 @@ public  class  tz390 {
     * 11/08/07 RPI 732 add lnk_type for linker commands
     * 11/10/07 RPI 735 change LNK to LKD to avoid conflict
     *          ignore LKD file if explicit .OBJ coded on link file name
+    * 11/16/07 RPI 740 add option CHKMAC         
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -155,7 +156,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.08d";  //dsh
+    String version    = "V1.3.08e";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -172,6 +173,7 @@ public  class  tz390 {
     boolean opt_asm      = true;  // run az390 assembler as mz390 subtask  RPI 415
     boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
     boolean opt_bs2000   = false; // Seimens BS2000 asm compatibility
+    boolean opt_chkmac   = false; // check macros for statements beyond final MEND
     boolean opt_cics     = false; // exec cics program honoring prolog,epilog
     boolean opt_con      = true;  // log msgs to console
     boolean opt_dump     = false; // only indicative dump on abend unless on
@@ -3738,6 +3740,8 @@ public void init_options(String[] args,String pgm_type){
     		opt_amode24 = true;
     		opt_amode31 = false;
     		z390_amode31 = 'F';
+    	} else if (token.toUpperCase().equals("CHKMAC")){
+           	opt_chkmac = true;
     	} else if (token.toUpperCase().equals("CICS")){
            	opt_cics = true;
     	} else if (token.toUpperCase().equals("CON")){

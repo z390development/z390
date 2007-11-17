@@ -53,7 +53,8 @@ public  class  vz390 {
     *          (VSAM OUTPUT treated like UPDATE for other programs) 
     * 09/28/07 RPI 706 set FDBK and RC for POINT.  
     * 10/22/07 RPI 723 add KSDS insert support using ZKSITD and ZKSIRD DSECT blocks 
-    * 10/25/07 RPI 724 start RRDS/VRRDS rel rcd at 1                                      
+    * 10/25/07 RPI 724 start RRDS/VRRDS rel rcd at 1  
+    * 11/13/07 RPI 739 change RRDS and KSDS seq/key to test opt_seq                                    
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -885,16 +886,16 @@ public  class  vz390 {
            		set_feedback(pdf_def,rc_log,cmp_ves,rn_inv_rpl_opt);
            		return;
        		}
-   			if ((cur_rpl_opt & rpl_opt_key) != 0){
-   				rpl_get_rrds_key(); // RPI 672 var length
+   			if ((cur_rpl_opt & rpl_opt_seq) != 0){ // RPI 739
+   				rpl_get_rrds_seq(); 
    			} else {
-   				rpl_get_rrds_seq(); // RPI 702
+   				rpl_get_rrds_key(); 
    			}
        	} else if ((cur_vclr_flag & vclr_flag_ksds) != 0){
-   			if ((cur_rpl_opt & rpl_opt_key) != 0){
-   				rpl_get_ksds_key();  // fixed length - no vx0
+   			if ((cur_rpl_opt & rpl_opt_seq) != 0){  // RPI 739
+   				rpl_get_ksds_seq();  
    			} else {
-   				rpl_get_ksds_seq(); // rpi 702
+   				rpl_get_ksds_key(); 
    			}
        	} else {
        		// add LDS support

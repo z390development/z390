@@ -293,7 +293,9 @@ public  class  mz390 {
     * 09/12/07 RPI 695 replace single null macro call parm with comma if comments  
     * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files
     * 11/12/07 RPI 736 issue error if statements follow END with ASM option  
-    * 11/12/07 RPI 737 add STATS(file) option                 
+    * 11/12/07 RPI 737 add STATS(file) option      
+    * 11/15/07 RPI 740 warning for macro proto-type name mismatch
+    *          add option CHKMAC for checking for stmts after final mend
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -395,6 +397,7 @@ public  class  mz390 {
 	int[]        mac_ictl_cont  = null; // RPI 728
 	int cur_mac_line_num = 0;
 	int cur_mac_file_num = 0;
+	boolean mac_mend_eof = false;  // RPI 740
 	String mac_line = null;
 	String mac_label = null;
 	String mac_op = null;
@@ -1484,6 +1487,7 @@ public  class  mz390 {
 			load_proto_type = false;
 			break;
 		}
+		mac_mend_eof = false; // RPI 740
 		load_get_mac_line();
 		while (mac_line != null
 				&& mac_line_index < tz390.opt_maxline){
@@ -1524,6 +1528,9 @@ public  class  mz390 {
 					}
 					if (load_macro_mend_level == 0
 							&& load_type != load_mlc_file){
+						if (tz390.opt_chkmac){
+							check_past_mend();  // RPI 740
+						}
 						mac_line = null; // eof at level 0 for macro
 					}
 				}
@@ -1542,7 +1549,7 @@ public  class  mz390 {
 					mac_line_index++;
 					update_sysstmt();
 				}
-				load_get_mac_line();
+				load_get_mac_line();			
 			}
 		}
 		if (mac_line_index >= tz390.opt_maxline){
@@ -1585,6 +1592,24 @@ public  class  mz390 {
 		load_mac_name_index = mac_name_index;
 		mac_name_index = save_mac_name_index;
 		loading_mac = false;
+	}
+	private void check_past_mend(){
+		/* 
+		 * scan for macro statement following
+		 * final MEND ignoring comments 
+		 */
+		mac_mend_eof = true; // dont inc cur_mac_line in get
+		load_get_mac_line();
+		while (mac_line != null){
+			if (mac_line.length() >= 2){
+				if (!(mac_line.charAt(0) == '*') 
+                    && !mac_line.substring(0,2).equals(".*")){
+					create_mnote(4,"statements beyond MEND found in macro file - " + mac_name[mac_name_index]);
+					return; //skip rest after error
+				}
+			}
+			load_get_mac_line();
+		}
 	}
 	private void set_ictl(){  // RPI 728
 		/*
@@ -1660,7 +1685,7 @@ public  class  mz390 {
 		if (load_type == load_mac_file){
 			mac_name_line_start[mac_name_index] = mac_line_index; // RPI 331 
 			if (!mac_op.equals(load_macro_name.toUpperCase())){ // RPI 519
-				log_error(132,"macro proto-type name " + mac_op + " not = file name " + load_macro_name);
+				create_mnote(4,"MACRO PROTO-TYPE NAME DOES NOT MATCH FILE NAME " + load_macro_name); // RPI 740
 			}
 		} else {  // define inline macro
 			load_macro_name = mac_op;
@@ -2045,8 +2070,10 @@ public  class  mz390 {
 				retry = false;  
 				tz390.systerm_io++;
 				temp_line = mac_file_buff[cur_mac_file].readLine();
-				cur_mac_line_num++;
-				store_mac_line(); // RPI 273 update now for any cont. error
+				if (!mac_mend_eof){
+					cur_mac_line_num++;
+					store_mac_line(); // RPI 273 update now for any cont. error
+				}
 				if (temp_line == null){
 					mac_file_buff[cur_mac_file].close();
 					cur_mac_file--;
@@ -2095,7 +2122,9 @@ public  class  mz390 {
 							&& temp_line.substring(mac_ictl_start[cur_mac_file]-1,mac_ictl_cont[cur_mac_file]-1).trim().equals("")  // RPI 728 check all spaces on preceeding cont
 						){ // RPI 167
 						mac_line = mac_line + tz390.trim_continue(temp_line,tz390.split_cont,mac_ictl_end[cur_mac_file],mac_ictl_cont[cur_mac_file]); // RPI 315, RPI 463 RPI 728
-					} else if (temp_line.length() != 0) { // RPI 492 blank line 
+					} else if (temp_line.length() != 0               // RPI 492 blank line 
+							   && (mac_line.charAt(0) != '*'
+							       || temp_line.charAt(0) != '*')) { // RPI 740 allow comment char for continued comm
 						log_error(11,"continuation line < " + mac_ictl_cont[cur_mac_file] + " characters - " + temp_line);
 					}
 				} 

@@ -1869,7 +1869,7 @@ public class pz390 {
 		       50,   // 5850 "E35E" "ALY" "RXY" 18
 		       50,   // 5860 "E35F" "SLY" "RXY" 18
 		       53,  // 5870 "E370" "STHY" "RXY" 18
-		       180,  // 5880 "E371" "LAY" "RXY" 18
+		       189,  // 5880 "E371" "LAY" "RXY" 18  RPI 738
 		       186,  // 5890 "E372" "STCY" "RXY" 18
 		       186,  // 5900 "E373" "ICY" "RXY" 18
 		       186,  // 5910 "E376" "LB" "RXY" 18
@@ -9210,7 +9210,7 @@ public class pz390 {
 			ex_restore();
 		}
 		psw_loc = psw_loc + 6;
-		if (xbd2_loc >= tot_mem) { // RPI 299
+		if (xbd2_loc >= tot_mem && opcode2 != 0x71) { // RPI 299 RPI 738 LAY
 			set_psw_check(psw_pic_addr);
 		}
 	}
@@ -14075,6 +14075,11 @@ public class pz390 {
 							+ get_long_hex(reg.getLong(rf1)) + " S2("
 							+ tz390.get_hex(xbd2_loc, 8) + ")="
 							+ bytes_to_hex(mem, xbd2_loc, 16, 0);
+			break;
+		case 189:// "RXY" LAY oorxbdddhhoo
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+					+ get_long_hex(reg.getLong(rf1)) + " S2("
+					+ tz390.get_hex(xbd2_loc, 8) + ")"; // RPI 738
 			break;
 		case 190:// "SSE" 5 LASP oooobdddbddd
 			trace_parms = " S1(" + tz390.get_hex(bd1_loc, 8) + ")="

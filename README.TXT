@@ -1,4 +1,4 @@
-z390 v1.3.08d PTF 11/12/07
+z390 v1.3.08e PTF 11/17/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.08:
@@ -114,6 +114,11 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.08:
     12) Prevent trap on ASCII character literal conversion to EBCDIC for hex codes 00-ff.          ASCII with high bit maps to same EBCDIC character as ASCII with no high bit.
         When converting EBCDIC source to ASCII for use with z390, translation use a tool
         that reports any hex literals with non-ASCII characters as errors.  These must be         converted from C'...' to X'....' format for portability to ascii systems.
+20. RPI 738 - correct trace for LAY instruction to prevent address exception
+    when target address is beyond memory.
+21. RPI 739 - correct RRDS and KSDS VSAM access to use OPTCD=(SEQ) to determine
+    sequential versus KEY.
+22. RPI 740 - issue warning MNOTE if macro proto-type name does not match macro file.  Add     option CHKMAC to issue MNOTE warning if macro statments follow final MEND in macro file. 
 
 
 To install this cumulative PTF for z390 follow these steps.
