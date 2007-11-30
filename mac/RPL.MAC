@@ -14,6 +14,7 @@
 .* 09/16/07 RPI 682 SHARE ZGENOPTD TO GEN OPTCD BITS                     
 .* 09/24/07 RPI 702 REPLACE RPLXRBA WITH RPLLXRTA AND RPLCXRBA           
 .*          ADD RPLOPENC UNIQUE ACB OPEN COUNT FOR REPOSITION REQ'D
+.* 11/26/07 RPI 723 MOVE GETOK, GETNF FLAGS TO RPLFLAG, ADD KSIT,KSIR
 .*********************************************************************
 .*
 .* RPL 28 VSAM OPTCD OPTIONS - MODELED ON MVS 3.8 IDAVSOPT
@@ -88,6 +89,9 @@
          DC    XL8'00'            RPLCXRBA  CURR POS VES/VX0 XRBA  
          DC    A(0)               RPLOPENC  UNIQUE ACB OPEN COUNT 
          DC    A(&AREALEN)        RPLAREAL  AREA LENGTH
+         DC    F'0'               RPLFLAG   UPD GETOK,GETNF FLAGS ETC
+         DC    XL8'00'            RPLKSIT   CURRENT KSIT XRBA
+         DC    XL8'00'            RPLKSIR   CURRENT KSIR XRBA
          RPLD
          MEXIT
 .ERR1    MNOTE 12,'ONLY AM=VSAM IS SUPPORTED'

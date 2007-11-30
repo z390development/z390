@@ -285,17 +285,19 @@ public  class  mz390 {
      * 07/20/07 MZ390 error 218 if * or . in substituted model label 
      * 08/14/07 support macro name symbolic substitution for inline proto-type 
      * 09/04/07 RPI 691 remove exp_index++ for alloc_set subsc. 
-    * 09/11/07 RPI 694 add option ERRSUM to summarize critical errors 
-    *           1. List missing COPY and MACRO files.
-    *           2. List undefined symbols if #1 = 0
-    *           3. Total errror counts all reported on ERR, PRN, CON
-    *           4. ERRSUM turned on automatically if #1 != 0
-    * 09/12/07 RPI 695 replace single null macro call parm with comma if comments  
-    * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files
-    * 11/12/07 RPI 736 issue error if statements follow END with ASM option  
-    * 11/12/07 RPI 737 add STATS(file) option      
-    * 11/15/07 RPI 740 warning for macro proto-type name mismatch
-    *          add option CHKMAC for checking for stmts after final mend
+     * 09/11/07 RPI 694 add option ERRSUM to summarize critical errors 
+     *           1. List missing COPY and MACRO files.
+     *           2. List undefined symbols if #1 = 0
+     *           3. Total errror counts all reported on ERR, PRN, CON
+     *           4. ERRSUM turned on automatically if #1 != 0
+     * 09/12/07 RPI 695 replace single null macro call parm with comma if comments  
+     * 10/15/07 RPI 719 support LOG(file) override of log, trace, err files
+     * 11/12/07 RPI 736 issue error if statements follow END with ASM option  
+     * 11/12/07 RPI 737 add STATS(file) option      
+     * 11/15/07 RPI 740 warning for macro proto-type name mismatch
+     *          add option CHKMAC for checking for stmts after final mend
+     * 11/27/07 RPI 743 allow comments on proto-type follwoing keyword parm
+     * 11/29/07 RPI 745 add support for AREAD NOPRINT, NOSTMT, CLOCKB/D                   
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -347,7 +349,12 @@ public  class  mz390 {
 	int tot_punch_io = 0;
 	int ap_file_index = 0;
 	String ap_file_name = null;
-	boolean ap_format = false; // format PCH extension
+	boolean ap_format = false;  // format PCH extension
+	boolean ap_noprint = false; // RPI 745 ignore AREAD option
+	boolean ap_nostmt  = false; // RPI 745 ignore AREAD option
+	boolean ap_clockb  = false; // RPI 745 return 8 char TOD in 0.01 sec in AREAD string
+	boolean ap_clockd  = false; // RPI 745 return 8 char TOD as HHMMSSTH in AREAD string
+	boolean ap_file_io = false; // RPI 745 set if DDNAME, DSNAME, DSN, or ID on AREAD
 	int dat_file_index = 0;
 	int pch_file_index = 0;
 	File[] dat_file = new File[max_ap_files];
@@ -377,6 +384,7 @@ public  class  mz390 {
 	SimpleDateFormat sdf_sysdate_bs2000 = new SimpleDateFormat("MMddyyDDD");
 	SimpleDateFormat sdf_systime = new SimpleDateFormat("HH.mm");
 	SimpleDateFormat sdf_systime_bs2000 = new SimpleDateFormat("HHmmss");
+	SimpleDateFormat sdf_systime_clockd = new SimpleDateFormat("HHmmssSSS");
 	boolean log_tod = true; 
 	JTextArea z390_log_text = null;
 	/*
@@ -1073,7 +1081,7 @@ public  class  mz390 {
 			cur_date = new Date();
 		} else {
 			cur_date_cal = new GregorianCalendar(2005,0,2,22,33,44);
-			cur_date = new Date(cur_date_cal.getTime().getTime()+567);
+			cur_date = new Date(cur_date_cal.getTime().getTime()+567); 
 		}
 		tod_start = cur_date.getTime();
 		if (!tz390.init_opcode_name_keys()){
@@ -1139,7 +1147,7 @@ public  class  mz390 {
 					+ "|([cC][!]([^!]|([!][!]))+[!])"        // C"ABCD" ebcdic self def. term  RPI84, 274
 					+ "|([xX]['][0-9a-fA-F]+['])"        // X'0F'   hex self defining term
 					+ "|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"   // symbol or logical operator (AND, OR, XOR, NOT, GT, LT etc.) // RPI 253
-					+ "|([^',()\\s]+)"   // RPI 223, RPI 250                  // any other text
+			  		+ "|([^',()\\s]+)"   // RPI 223, RPI 250 // any other text
 			);
 		} catch (Exception e){
 			abort_error(2,"proto pattern error - " + e.toString());
@@ -2108,10 +2116,14 @@ public  class  mz390 {
 					store_mac_line(); // RPI 273 update now for any cont. error
 					if (temp_line == null){
 						log_error(139,"missing continuation line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getAbsolutePath());
+						mac_cont_line = false;
+						temp_line = "";
 					}
 					temp_line = tz390.trim_trailing_spaces(temp_line,72);
 					if (!tz390.verify_ascii_source(temp_line)){
 						log_error(140,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getAbsolutePath());
+						mac_cont_line = false;
+						temp_line = tz390.trim_trailing_spaces(temp_line,72);
 					}
 					if (temp_line.length() < 72 
 						|| temp_line.charAt(71) <= asc_space_char){ //RPI181
@@ -2126,6 +2138,8 @@ public  class  mz390 {
 							   && (mac_line.charAt(0) != '*'
 							       || temp_line.charAt(0) != '*')) { // RPI 740 allow comment char for continued comm
 						log_error(11,"continuation line < " + mac_ictl_cont[cur_mac_file] + " characters - " + temp_line);
+						mac_cont_line = false;
+						temp_line = tz390.trim_trailing_spaces(temp_line,72);
 					}
 				} 
 			}
@@ -3449,11 +3463,12 @@ public  class  mz390 {
 		 *   1.  Only DDNAME or DSNAME can be coded
 		 *   2.  empty lines (CR,LF) returned as single space " "
 		 *   3.  end of file returns 0 length string "".
+		 *   4.  Options NOPRINT and NOSTMT ignored
 		 */
 		dat_file_index = 0;
-		if (bal_parms.length() > 0 ){
+        set_aread_punch_options(bal_parms,tz390.dir_dat,tz390.dat_type);
+		if (ap_file_io){
 			// read text from aread file 0-9
-            set_aread_punch_file_options(bal_parms,tz390.dir_dat,tz390.dat_type);
             dat_file_index = ap_file_index;
 			if (ap_file_name == null){
 				ap_file_name = tz390.get_file_name(tz390.dir_dat,tz390.pgm_name,tz390.dat_type); // RPI 431
@@ -3498,6 +3513,23 @@ public  class  mz390 {
 				abort_error(71,"I/O error on AREAD file read - " + e.toString());
 				return "";
 			}		
+		} else if (ap_clockb){  // rpi 745
+			if (tz390.opt_timing){
+				cur_date = new Date();
+			}
+			String hhmmssmmm = sdf_systime_clockd.format(cur_date);
+			int hh  = new Integer(hhmmssmmm.substring(0,2));
+			int mm  = new Integer(hhmmssmmm.substring(2,4));
+			int ss  = new Integer(hhmmssmmm.substring(4,6));
+			int th  = new Integer(hhmmssmmm.substring(6,9))/10;
+			int tod = th + 100*(ss + 60*(mm + 60*hh));
+	        String tod_str = "" + tod;
+			return ("00000000" + tod_str).substring(tod_str.length());
+		} else if (ap_clockd){ // RPI 745
+			if (tz390.opt_timing){
+				cur_date = new Date();
+			}
+            return sdf_systime_clockd.format(cur_date).substring(0,8);
 		} else {
 			// read aread text from inline source
 			if (mac_call_level > 0
@@ -3510,18 +3542,30 @@ public  class  mz390 {
 		}
 		return "";
 	}
-	private void set_aread_punch_file_options(String parms,String file_dir,String file_type){
+	private void set_aread_punch_options(String parms,String file_dir,String file_type){
 		/*
-		 * set ap_file_index and ap_file_name
-		 * from the following AREAD or PUNCH parss:
-		 *   1.  DDNAME= environment variable to get file name
-		 *   2.  DSNAME= explicit file name string
-		 *   3.  DSN=    epxlicit file name string (alias)
-		 *   4.  ID=n    file index 0-9 (0 is default)
+		 * 1. set ap_file_index and ap_file_name
+		 *    from the following AREAD or PUNCH parss:
+		 *    1.  DDNAME= environment variable to get file name
+		 *    2.  DSNAME= explicit file name string
+		 *    3.  DSN=    epxlicit file name string (alias)
+		 *    4.  ID=n    file index 0-9 (0 is default)
+		 *    and set ap_file_io if file I/O requested.
+		 * 2. Set AREAD option flags for NOPRINT, NOSTMT,
+		 *    CLOCKB, CLOCKD.  RPI 745
+		 * 3. Set PUNCH option FORMAT.
 		 */
+		ap_noprint = false;
+		ap_nostmt  = false;
+		ap_clockb  = false;
+		ap_clockd  = false;
+		ap_format  = false;
+		ap_file_io = false;
+		if (bal_parms.length() == 0 ){
+			return;
+		}
 		ap_file_index = 0;
 		ap_file_name = null;
-		ap_format = false;
 		parms = replace_vars(parms,true,false); // RPI 659 
 		String parm = null;
 		while (parms.length() > 0){
@@ -3541,22 +3585,35 @@ public  class  mz390 {
 				parms = "";
 			}
 			if (parm.length() > 7 && parm.substring(0,7).toUpperCase().equals("DDNAME=")){
+				ap_file_io = true;
 				String ddname = parm.substring(7);
 				ap_file_name = get_ddname_file_name(ddname);
 				ap_file_name = tz390.get_file_name(file_dir,ap_file_name,file_type);
 			} else if (parm.length() > 7 && parm.substring(0,7).toUpperCase().equals("DSNAME=")){
+				ap_file_io = true;
 				ap_file_name = parm.substring(7);
 				ap_file_name = tz390.get_file_name(file_dir,ap_file_name,file_type);
 			} else if (parm.length() > 4 && parm.substring(0,4).toUpperCase().equals("DSN=")){
+				ap_file_io = true;
 				ap_file_name = parm.substring(4);
 				ap_file_name = tz390.get_file_name(file_dir,ap_file_name,file_type);
 			} else if (parm.length() > 3 && parm.substring(0,3).toUpperCase().equals("ID=")
 					   && parm.substring(3).compareTo("0") >= 0
 					   && parm.substring(3).compareTo("9") <= 0
 			          ){
+				ap_file_io = true;
 				ap_file_index = Integer.valueOf(parm.substring(3));
 			} else if (parm.length() == 6 && parm.substring(0,6).toUpperCase().equals("FORMAT")){
+				ap_file_io = true;
 				ap_format = true; // RPI 530
+			} else if (parm.toUpperCase().equals("NOPRINT")){
+			    ap_noprint = true;
+			} else if (parm.toUpperCase().equals("NOSTMT")){
+			    ap_nostmt = true;
+			} else if (parm.toUpperCase().equals("CLOCKB")){
+			    ap_clockb = true;
+			} else if (parm.toUpperCase().equals("CLOCKD")){
+			    ap_clockd = true;
 			} else {
 				log_error(185,"invalid parm " + parm);
 			}
@@ -3609,13 +3666,14 @@ public  class  mz390 {
 			log_error(73,"invalid punch parm " + pch_parms);
 		} else {
 			pch_file_index = 0;
-			if (pch_match.end()+2 < pch_parms.length()){
+			if (pch_match.end()+2 < pch_parms.length()
+				&& pch_parms.charAt(pch_match.end()+1) == ','){  // RPI 743
 				pch_parms = pch_parms.substring(pch_match.end()+2);
 			} else {
 				pch_parms = "";
 			}
-			if (pch_parms.length() > 0){
-				set_aread_punch_file_options(pch_parms,tz390.dir_pch,tz390.pch_type);
+			set_aread_punch_options(pch_parms,tz390.dir_pch,tz390.pch_type);
+			if (ap_file_io){				
                 pch_file_index = ap_file_index;
 				if (ap_file_name == null){
 					ap_file_name = tz390.get_file_name(tz390.dir_pch,tz390.pgm_name,tz390.pch_type);
@@ -7091,11 +7149,15 @@ public  class  mz390 {
 					}
 					break;
 				case 2: // possible keyword parm initial value text
-					if  (key_value_level == 0 //RPI 223
+				    if  (key_value_level == 0 //RPI 223
 							&& (parm_value.equals(",")
 									|| parm_value.charAt(0) <= asc_space_char)){ // RPI 239
 						init_key_parm(key_name,key_value);
-						state = 1;
+						if (parm_value.charAt(0) == ','){
+							state = 1;
+						} else {
+							state = 4;  // RPI 743
+						}
 					} else {
 						if (parm_value.equals("(")){ //RPI 223
 							key_value_level++;

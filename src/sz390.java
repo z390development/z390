@@ -2353,7 +2353,7 @@ private void dump_req(boolean req_dump){
 		dump_tiot();
 		put_dump("");
 		dump_cde_pgms();
-		dump_mem(0,pz390.tot_mem);  // RPI 583
+		dump_mem(pz390.mem,0,pz390.tot_mem);  // RPI 583
 	}
 }
 public void dump_gpr(int reg_offset){
@@ -2390,7 +2390,7 @@ public void dump_fpr(int reg_offset){
 		tz390.put_trace(" F" + reg_num + "=" + pz390.get_long_hex(pz390.trace_reg.getLong(reg_offset)));
 	}
 }
-public void dump_mem(int mem_addr,int mem_len){
+public void dump_mem(ByteBuffer memory,int mem_addr,int mem_len){
 	/*
 	 * dump specified area of memory
 	 */
@@ -2413,14 +2413,14 @@ public void dump_mem(int mem_addr,int mem_len){
 		int index = 0;
 		while (index < dump_len){
 			if (tz390.opt_ascii){
-				dump_text = dump_text + tz390.ascii_table.charAt(pz390.mem_byte[mem_addr+index] & 0xff);
+				dump_text = dump_text + tz390.ascii_table.charAt(memory.array()[mem_addr+index] & 0xff);
 			} else {
-				dump_text = dump_text + tz390.ebcdic_table.charAt(pz390.mem_byte[mem_addr+index] & 0xff);
+				dump_text = dump_text + tz390.ebcdic_table.charAt(memory.array()[mem_addr+index] & 0xff);
 			}
 			index++;
 		}
 		dump_text = tz390.left_justify(dump_text,16); // RPI 411
-	    dump_hex = pz390.bytes_to_hex(pz390.mem,mem_addr,dump_len,4); 
+	    dump_hex = pz390.bytes_to_hex(memory,mem_addr,dump_len,4); 
 		if (!last_saved){
 			last_saved = true;
 			last_addr  = mem_addr;
@@ -2717,7 +2717,7 @@ private void svc_get_move(){
                 tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area + 4,cur_vrec_lrecl - 4);
 				if (tz390.opt_traceq){
 					tz390.put_trace("QSAM EXCP READ  VREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_vrec_lrecl,8));
-					dump_mem(cur_dcb_area,cur_vrec_lrecl);
+					dump_mem(pz390.mem,cur_dcb_area,cur_vrec_lrecl);
 				}
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
 	        } catch (Exception e){
@@ -2751,7 +2751,7 @@ private void svc_get_move(){
                 tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area + 4,cur_vrec_lrecl - 4);
 				if (tz390.opt_traceq){
 					tz390.put_trace("QSAM EXCP READ  VREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_vrec_lrecl,8));
-					dump_mem(cur_dcb_area,cur_vrec_lrecl);
+					dump_mem(pz390.mem,cur_dcb_area,cur_vrec_lrecl);
 				}
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
                 tiot_vrec_blksi[cur_tiot_index] = tiot_vrec_blksi[cur_tiot_index] - cur_vrec_lrecl;
@@ -2793,7 +2793,7 @@ private void svc_get_move(){
                 }                
 				if (tz390.opt_traceq){
 					tz390.put_trace("QSAM EXCP READ  VREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index]-cur_rec_len-4,16) + " LEN=" + tz390.get_hex(cur_rec_len+4,8));
-					dump_mem(cur_dcb_area,cur_rec_len+4);
+					dump_mem(pz390.mem,cur_dcb_area,cur_rec_len+4);
 				}
 	        } catch (Exception e){
 		        dcb_synad_error(47,"i/o error on get move variable from ascii - " + e.toString());
@@ -2814,7 +2814,7 @@ private void svc_get_move(){
                 tiot_file[cur_tiot_index].read(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
 				if (tz390.opt_traceq){
 					tz390.put_trace("QSAM EXCP READ  FREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_dcb_lrecl_f,8));
-					dump_mem(cur_dcb_area,cur_dcb_lrecl_f);
+					dump_mem(pz390.mem,cur_dcb_area,cur_dcb_lrecl_f);
 				}
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
 	        } catch (Exception e){
@@ -2855,7 +2855,7 @@ private void svc_get_move(){
                 	}
         			if (tz390.opt_traceq){
     					tz390.put_trace("QSAM EXCP READ  FREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index]-cur_dcb_lrecl_f,16) + " LEN=" + tz390.get_hex(cur_dcb_lrecl_f,8));
-    					dump_mem(cur_dcb_area,cur_dcb_lrecl_f);
+    					dump_mem(pz390.mem,cur_dcb_area,cur_dcb_lrecl_f);
     				}
                 }
 	        } catch (Exception e){
@@ -2907,7 +2907,7 @@ private void svc_put_move(){
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_dcb_lrecl_f);
 				if (tz390.opt_traceq){
 					tz390.put_trace("QSAM EXCP WRITE FREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_dcb_lrecl_f,8));
-					dump_mem(cur_dcb_area,cur_dcb_lrecl_f);
+					dump_mem(pz390.mem,cur_dcb_area,cur_dcb_lrecl_f);
 				}
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_dcb_lrecl_f;
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
@@ -2933,7 +2933,7 @@ private void svc_put_move(){
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_vrec_lrecl);
 				if (tz390.opt_traceq){
 					tz390.put_trace("QSAM EXCP WRITE VREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_vrec_lrecl,8));
-					dump_mem(cur_dcb_area,cur_vrec_lrecl);
+					dump_mem(pz390.mem,cur_dcb_area,cur_vrec_lrecl);
 				}
                 tiot_cur_rba[cur_tiot_index] = tiot_cur_rba[cur_tiot_index]+cur_vrec_lrecl;
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
@@ -2977,7 +2977,7 @@ private void svc_put_move(){
                 tiot_file[cur_tiot_index].write(pz390.mem_byte,cur_dcb_area,cur_vrec_lrecl);
 				if (tz390.opt_traceq){
 					tz390.put_trace("QSAM EXCP WRITE VREC  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_vrec_lrecl,8));
-					dump_mem(cur_dcb_area,cur_vrec_lrecl);
+					dump_mem(pz390.mem,cur_dcb_area,cur_vrec_lrecl);
 				}
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(103,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
@@ -3004,7 +3004,7 @@ private void svc_put_move(){
                 tiot_file[cur_tiot_index].writeBytes(cur_rec_text + tz390.newline); // RPI 500
 				if (tz390.opt_traceq){
 					tz390.put_trace("QSAM EXCP WRITE VTXT  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_rec_len+4,8));
-					dump_mem(cur_dcb_area,cur_rec_len+4);
+					dump_mem(pz390.mem,cur_dcb_area,cur_rec_len+4);
 				}
                 tiot_cur_rba[cur_tiot_index] = tiot_file[cur_tiot_index].getFilePointer();
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
@@ -3029,7 +3029,7 @@ private void svc_put_move(){
                 tiot_file[cur_tiot_index].writeBytes(cur_rec_text + tz390.newline); // RPI 500
 				if (tz390.opt_traceq){
 					tz390.put_trace("QSAM EXCP WRITE FTXT  XRBA=" + tz390.get_long_hex(tiot_cur_rba[cur_tiot_index],16) + " LEN=" + tz390.get_hex(cur_dcb_lrecl_f,8));
-					dump_mem(cur_dcb_area,cur_dcb_lrecl_f);
+					dump_mem(pz390.mem,cur_dcb_area,cur_dcb_lrecl_f);
 				}
                 if (tiot_file[cur_tiot_index].length() > tz390.max_file_size){
                 	abort_error(105,"maximum file size exceeded for " + tiot_dsn[cur_tiot_index]);
@@ -3789,7 +3789,7 @@ private void svc_tget_tput(){
 			gz390.tput_buff.put(pz390.mem_byte,buff_addr,buff_len);
 			if (tz390.opt_tracet){ // RPI 671
 				tz390.put_trace("");
-				dump_mem(buff_addr,buff_len);
+				dump_mem(pz390.mem,buff_addr,buff_len);
 				tz390.put_trace("");
 			}
 			gz390.guam_tput();
@@ -3810,7 +3810,7 @@ private void svc_tget_tput(){
 				if (tz390.opt_tracet){  // RPI 671
 					tz390.put_trace("");
 					tz390.put_trace(" TGET bytes received = " + tz390.get_hex(gz390.tget_len,4));
-					dump_mem(buff_addr,gz390.tget_len);
+					dump_mem(pz390.mem,buff_addr,gz390.tget_len);
 					tz390.put_trace("");
 				}
 				pz390.reg.putInt(pz390.r1,gz390.tget_len);
@@ -4082,9 +4082,9 @@ private void svc_snap(){
 	if ((flags & 0x8000) != 0){
 		int dump_addr = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
 		int dump_len  = (pz390.reg.getInt(pz390.r15) & pz390.psw_amode) - dump_addr;
- 		dump_mem(dump_addr,dump_len);
+ 		dump_mem(pz390.mem,dump_addr,dump_len);
 	} else if ((flags & 0x0400) != 0){ // RPI 583
-		dump_mem(0,pz390.tot_mem);
+		dump_mem(pz390.mem,0,pz390.tot_mem);
 	}
 }
 private void dump_cde_pgms(){
@@ -5080,7 +5080,7 @@ private void check_test_break_mem(){
 	if (test_break_mem){
         pz390.test_trace_count = 0;
     	tz390.put_trace("test break on " + test_break_mem_cmd);
-        dump_mem(test_break_mem_loc,test_break_mem_sdt.length);
+        dump_mem(pz390.mem,test_break_mem_loc,test_break_mem_sdt.length);
         pz390.trace_psw();
 	}
 }
@@ -5159,7 +5159,7 @@ private void exec_test_cmd(){
 					pz390.mem_byte[test_mem_loc+index] = test_mem_sdt[index];
 				    index++;
 				}
-				dump_mem(test_mem_loc,test_mem_sdt.length);
+				dump_mem(pz390.mem,test_mem_loc,test_mem_sdt.length);
 			} else {  // nR=sdt gpr register change
 		    	test_reg_loc = test_addr * 8;
 				test_reg_sdt = get_test_reg_sdt(test_sdt);
@@ -5178,7 +5178,7 @@ private void exec_test_cmd(){
 			test_token = get_next_test_token();
 			if (test_token != null){
 				test_base_addr = get_next_test_addr();
-				dump_mem(test_base_addr,16);
+				dump_mem(pz390.mem,test_base_addr,16);
 				break;
 			}
 		} 
@@ -5297,7 +5297,7 @@ private void exec_test_cmd(){
 			    if (!test_cmd_abort){
 			    	if (test_mem_len > 0
 			    		&& test_mem_loc + test_mem_len <= pz390.tot_mem){
-			    		dump_mem(test_mem_loc,test_mem_len);
+			    		dump_mem(pz390.mem,test_mem_loc,test_mem_len);
 			    	} else {
 			    		test_error("invalid address or length");
 			    		return;
@@ -5490,7 +5490,7 @@ private void set_test_break_addr(int addr){
 	test_break_addr_cmd  = test_cmd;
 	test_break_addr[tot_test_break_addr] = addr & 0x7fffffff; // RPI 428
 	tot_test_break_addr++;
-	dump_mem(test_break_addr[tot_test_break_addr-1],16);
+	dump_mem(pz390.mem,test_break_addr[tot_test_break_addr-1],16);
 }
 private void set_test_break_reg(){
 	/*
@@ -5516,7 +5516,7 @@ private void set_test_break_mem(){
     if (test_sdt != null){
     	test_break_mem_sdt = get_test_mem_sdt(test_sdt);
     	if (test_break_mem_sdt != null){
-    		dump_mem(test_break_mem_loc,test_break_mem_sdt.length);
+    		dump_mem(pz390.mem,test_break_mem_loc,test_break_mem_sdt.length);
     	} else {
         	test_error("missing sdt for break");
         	test_cmd_abort = true;
@@ -6042,7 +6042,7 @@ private void svc_tcpio(){
 				if (tz390.opt_tracet){
 					put_log("TCPIO send port=" + tcpio_port 
 							     + " length=" + tcpio_lmsg);
-					dump_mem(tcpio_amsg,tcpio_lmsg);
+					dump_mem(pz390.mem,tcpio_amsg,tcpio_lmsg);
 				}
 			} else {
 				put_log("TCPIO errpr semd failed for port=" + tcpio_port);
@@ -6060,7 +6060,7 @@ private void svc_tcpio(){
 						put_log("TCPIO send port=" + tcpio_port 
 							  + " conn=" + conn_index	
 							  + " length=" + tcpio_lmsg);
-						dump_mem(tcpio_amsg,tcpio_lmsg);
+						dump_mem(pz390.mem,tcpio_amsg,tcpio_lmsg);
 					}
 				} else {
 					put_log("TCPIO error send failed on port=" + tcpio_port);
@@ -6245,7 +6245,7 @@ private void tcpio_receive_client_port(){
 			if (tz390.opt_tracet){
 				put_log("TCPIO receive client port=" + tcpio_port 
 						     + " length=" + cur_msg_len);
-				dump_mem(tcpio_amsg,cur_msg_len);
+				dump_mem(pz390.mem,tcpio_amsg,cur_msg_len);
 			}
 			pz390.reg.putInt(pz390.r1,cur_msg_len);
 			return; // return with msg stored in mem
@@ -6392,7 +6392,7 @@ private void tcpio_conn_store_msg(int conn_index){
 		put_log("TCPIO receive server msg from port=" + tcpio_port 
 		      + " conn=" + conn_index
 					     + " length=" + cur_msg_len);
-		dump_mem(tcpio_amsg,cur_msg_len);
+		dump_mem(pz390.mem,tcpio_amsg,cur_msg_len);
 	}
     tcpio_set_conn_msg_ready(conn_index,false);
 }

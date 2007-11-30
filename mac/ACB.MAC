@@ -10,6 +10,7 @@
 .* 08/19/07 RPI 680 FIX 10 MUTUALLY MISSPELLED
 .* 09/04/07 RPI 691 ADD ACBNAME, ACBDCBN, ACBDCBS, ACBDCBP
 .* 09/24/07 RPI 702 ADD ACBOPENC UNIQUE ACB OPEN COUNT FOR RPL RESET
+.* 11/26/07 RPI 723 MOVE GETOK, GETNF FROM ACB TO RPL               
 .*********************************************************************
 &N       ACB   &AM=VSAM,      VSAM VS VTAM                             X
                &BUFSP=0,      MAXIMUM BUFFER SPACE FOR CLUSTER         X

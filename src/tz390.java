@@ -1,6 +1,8 @@
 import java.awt.GraphicsEnvironment;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.RandomAccessFile;
 import java.lang.management.ManagementFactory;
@@ -87,7 +89,7 @@ public  class  tz390 {
     *          2) Fix parsing for comma continuation to
     *          support prefix operators L' etc.
     *          3) Improve preformance replacing .split with
-    *             find_parm_pattern precompiled rex parser
+    *             find_non_space_pattern precompiled rex parser
     * 05/13/06 RPI 314 add AGOB and AIFB    
     * 05/13/06 RPI 315 allow ,space within (...) for
     *          macro ops prior to ,space continuation
@@ -147,7 +149,15 @@ public  class  tz390 {
     * 11/08/07 RPI 732 add lnk_type for linker commands
     * 11/10/07 RPI 735 change LNK to LKD to avoid conflict
     *          ignore LKD file if explicit .OBJ coded on link file name
-    * 11/16/07 RPI 740 add option CHKMAC         
+    * 11/16/07 RPI 740 add option CHKMAC    
+    * 11/25/07 RPI 742 abort if option invalid  
+    *          add @file option to read options from file 
+    * 11/29/07 RPI 744 validate prinatable ASCII source code  
+    * 11/30/07 RPI 742 add option @file support with default
+    *          suffix .OPT and search path SYSOPT which defaults
+    *          to program path.  Any number of file
+    *          and nested files with options * comments.
+    *          Change SYSCPY to default to SYSMAC.         
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -156,7 +166,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.08e";  //dsh
+    String version    = "V1.3.08f";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -167,7 +177,8 @@ public  class  tz390 {
 	byte    z390_os_linux = 2;
 	String  z390_font    = "Monospaced";  // RPI 509 was Courier
 	boolean z390_abort   = false;  // global abort request
-    boolean opt_amode24  = false;  // link to run amode24
+    String  invalid_options = "";  // RPI 742
+	boolean opt_amode24  = false;  // link to run amode24
     boolean opt_amode31  = true;   // link to run amode31
     boolean opt_ascii    = false; // use ascii vs ebcdic
     boolean opt_asm      = true;  // run az390 assembler as mz390 subtask  RPI 415
@@ -219,7 +230,7 @@ public  class  tz390 {
     boolean opt_vcb      = true;  // vsam cache operational
     boolean opt_xref     = true;   // cross reference symbols
     boolean max_cmd_queue_exceeded = false;  // RPI 731
-    String  cmd_parms = " "; // all options from command
+    String  cmd_parms = ""; // all options from command
     String  test_ddname = null;
     char    z390_amode31 = 'T';
     char    z390_rmode31 = 'F';
@@ -283,6 +294,7 @@ public  class  tz390 {
 	String mac_type = ".MAC"; // macro source
     String mlc_type = ".MLC"; // macro assembler source program
     String obj_type = ".OBJ"; // relocatable object code for az390 and lz390
+    String opt_type = ".OPT"; // @file option file with one option per line plus comments 
     String pch_type = ".PCH"; // punch output from mz390
     String prn_type = ".PRN"; // assembly listing for az390
     String sta_type = ".STA"; // statistics mod file for option stats(filename) RPI 737
@@ -293,7 +305,7 @@ public  class  tz390 {
     String z390_type = ".390"; // z390 executable load module for lz390 and ez390
     String dir_390 = null; // SYS390() load module
     String dir_bal = null; // SYSBAL() az390 source input
-    String dir_cpy = null; // SYSCPY() mz390 copybook lib
+    String dir_cpy = null; // SYSCPY() mz390 copybook lib defaults to dir_mac RPI 742
     String dir_dat = null; // SYSDAT() mz390 AREAD extended option
     String dir_err = null; // SYSERR() ?z390 systerm error file directory
     String dir_log = null; // SYSLOG() ez390 log // RPI 243
@@ -303,6 +315,7 @@ public  class  tz390 {
     String dir_pch = null; // SYSPCH() mz390 punch output dir
     String dir_prn = null; // SYSPRN() az390 listing
     String dir_obj = null; // SYSOBJ() lz390 object lib
+    String dir_opt = null; // SYSOPT() OPT options @file path defaults to dir_mac RPI 742
     String dir_trc = null; // SYSTRC() trace file directory
     int max_opsyn = 1000;
     int tot_opsyn = 0;
@@ -355,7 +368,7 @@ public  class  tz390 {
      * statement parsing to find comma used by 
      * both mz390 and az390.
      */
-    Pattern find_parm_pattern = null;
+    Pattern find_non_space_pattern = null;
     Matcher find_parm_match = null;
     Pattern parm_pattern = null;
     Matcher parm_match = null;
@@ -3582,11 +3595,11 @@ public void init_tables(){
 		abort_error(3,"opcode total out of sync - aborting");
 	}
     /*
-     * find_parm_pattern tokens:
+     * find_non_space_pattern tokens:
      * skip while space and return next non-white space token
      * */
 	try {
-	    find_parm_pattern = Pattern.compile(
+	    find_non_space_pattern = Pattern.compile(
 	    		  "([^\\s]+)"  //RPI 313	    	      
 				  );
 	} catch (Exception e){
@@ -3689,7 +3702,6 @@ public void init_options(String[] args,String pgm_type){
     	}
     	dir_390 = pgm_dir + "+linklib"; // RPI 700
     	dir_bal = pgm_dir;
-    	dir_cpy = pgm_dir;
         dir_dat = pgm_dir;
         dir_err = pgm_dir;
         dir_log = pgm_dir;
@@ -3697,17 +3709,10 @@ public void init_options(String[] args,String pgm_type){
         dir_mac = pgm_dir;
     	dir_mlc = pgm_dir;
     	dir_obj = pgm_dir;
+    	dir_opt = pgm_dir; // RPI 742
     	dir_pch = pgm_dir;
     	dir_prn = pgm_dir;
     	dir_trc = pgm_dir;
-        if (args.length > 1){
-           cmd_parms = args[1];
-           int index1 = 2;
-           while (index1 < args.length){
-            	cmd_parms = cmd_parms.concat(" " + args[index1]);
-           	 	index1++;
-           }
-        }
     } else {
 	    abort_error(5,"missing file option");
     }
@@ -3720,331 +3725,12 @@ public void init_options(String[] args,String pgm_type){
     		&& token.charAt(token.length()-1) == '"'){
     		token = token.substring(1,token.length()-1);
     	}
-    	if (token.toUpperCase().equals("AMODE24")){
-    		opt_amode24 = true;
-    		opt_amode31 = false;
-    		z390_amode31 = 'F';
-    		z390_rmode31 = 'F';
-    	} else if (token.toUpperCase().equals("AMODE31")){
-    		opt_amode24 = false;
-    		opt_amode31 = true;
-    		z390_amode31 = 'T';
-    	} else if (token.toUpperCase().equals("ASCII")){
-    		opt_ascii = true; 
-    	} else if (token.toUpperCase().equals("ASM")){
-    		opt_asm = true; 
-    	} else if (token.toUpperCase().equals("BAL")){
-    		opt_bal = true; 
-    	} else if (token.toUpperCase().equals("BS2000")){
-    		opt_bs2000 = true;  // RPI 604
-    		opt_amode24 = true;
-    		opt_amode31 = false;
-    		z390_amode31 = 'F';
-    	} else if (token.toUpperCase().equals("CHKMAC")){
-           	opt_chkmac = true;
-    	} else if (token.toUpperCase().equals("CICS")){
-           	opt_cics = true;
-    	} else if (token.toUpperCase().equals("CON")){
-           	opt_con = true;
-        } else if (token.toUpperCase().equals("DUMP")){
-           	opt_dump = true;
-        } else if (token.length() > 4
-        	&& token.substring(0,4).toUpperCase().equals("ERR(")){
-           	try {
-           		max_errors = Integer.valueOf(token.substring(4,token.length()-1)).intValue(); 
-          	} catch (Exception e){
-           		abort_error(6,"invalid error limit - " + token);
-           	}
-        } else if (token.toUpperCase().equals("ERRSUM")){
-           	init_errsum();
-        } else if (token.toUpperCase().equals("GUAM")){
-           	opt_guam = true;
-        } else if (token.length() > 4
-         		&& token.substring(0,4).toUpperCase().equals("IPL(")){
-        	opt_ipl = token.substring(4,token.length()-1); 
-        } else if (token.length() > 8
-         		&& token.substring(0,8).toUpperCase().equals("INSTALL(")){
-        	opt_install_loc = token.substring(8,token.length()-1); 	
-        } else if (token.length() >= 8
-          		&& token.substring(0,8).toUpperCase().equals("LISTCALL")){
-           	opt_listcall = true;
-        } else if (token.length() >= 7
-          		&& token.substring(0,7).toUpperCase().equals("LISTUSE")){
-           	opt_listuse = true;
-        } else if (token.length() > 4
-          		&& token.substring(0,4).toUpperCase().equals("LOG(")){
-         	log_file_name = token.substring(4,token.length()-1); // RPI 719
-        } else if (token.length() > 8
-          		&& token.substring(0,8).toUpperCase().equals("MAXCALL(")){
-           	opt_maxcall = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
-        } else if (token.length() > 7
-          		&& token.substring(0,7).toUpperCase().equals("MAXESD(")){
-           	opt_maxesd = Integer.valueOf(token.substring(7,token.length()-1)).intValue();   	
-        } else if (token.length() > 8
-        	&& token.substring(0,8).toUpperCase().equals("MAXFILE(")){
-           	try {
-           		opt_maxfile = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
-           	} catch (Exception e){
-           		abort_error(7,"invalid maxfile limit = " + token);
-           	}
-        } else if (token.length() > 7
-          		&& token.substring(0,7).toUpperCase().equals("MAXGBL(")){
-           	opt_maxgbl = Integer.valueOf(token.substring(7,token.length()-1)).intValue();
-        } else if (token.length() > 7
-          		&& token.substring(0,7).toUpperCase().equals("MAXLCL(")){
-           	opt_maxlcl = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
-        } else if (token.length() > 8
-          		&& token.substring(0,8).toUpperCase().equals("MAXLINE(")){
-           	opt_maxline = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
-        } else if (token.length() > 8
-          		&& token.substring(0,7).toUpperCase().equals("MAXLOG(")){
-           	opt_maxlog = Integer.valueOf(token.substring(7,token.length()-1)).intValue() << 20; 
-        } else if (token.length() > 8
-          		&& token.substring(0,8).toUpperCase().equals("MAXPARM(")){
-           	opt_maxparm = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
-        } else if (token.length() > 6
-          		&& token.substring(0,6).toUpperCase().equals("MAXPC(")){ // RPI 439
-           	opt_maxpc = Integer.valueOf(token.substring(6,token.length()-1)).intValue();
-        } else if (token.length() > 7
-          		&& token.substring(0,7).toUpperCase().equals("MAXQUE(")){
-           	opt_maxque = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
-        } else if (token.length() > 7
-          		&& token.substring(0,7).toUpperCase().equals("MAXRLD(")){
-           	opt_maxrld = Integer.valueOf(token.substring(7,token.length()-1)).intValue();  
-        } else if (token.length() > 8
-            	&& token.substring(0,8).toUpperCase().equals("MAXSIZE(")){
-               	try {
-               		max_file_size = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20; 
-               	} catch (Exception e){
-               		abort_error(8,"invalid maxsize limit (mb) - " + token);
-               	}
-        } else if (token.length() > 7
-          		&& token.substring(0,7).toUpperCase().equals("MAXSYM(")){
-           	opt_maxsym = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
-        } else if (token.length() >= 5
-          		&& token.substring(0,5).toUpperCase().equals("MCALL")){
-           	opt_mcall = true; // RPI 511
-           	opt_listcall = true;
-        } else if (token.length() > 5
-        	&& token.substring(0,4).toUpperCase().equals("MEM(")){
-           	try {
-           	    max_mem = Integer.valueOf(token.substring(4,token.length()-1)).intValue();
-           	} catch (Exception e){
-           		abort_error(9,"invalid memory option " + token);
-           	}
-        } else if (token.toUpperCase().equals("NOASM")){
-           	opt_asm = false;
-        } else if (token.toUpperCase().equals("NOBAL")){
-           	opt_bal = false;    	
-        } else if (token.toUpperCase().equals("NOCON")){
-           	opt_con = false;
-        } else if (token.toUpperCase().equals("NOEPILOG")){
-           	opt_epilog = false;   	
-        } else if (token.toUpperCase().equals("NOLIST")){
-           	opt_list = false;
-        } else if (token.toUpperCase().equals("NOLISTCALL")){
-           	opt_listcall = false;
-        } else if (token.equals("NOLISTFILE")){
-           	opt_listfile = false;
-        } else if (token.equals("NOLISTUSE")){
-           	opt_listuse = false; 
-        } else if (token.toUpperCase().equals("NOOBJ")){ // RPI694
-           	opt_obj = false;
-        } else if (token.toUpperCase().equals("NOPC")){
-            opt_pc = false; 
-        } else if (token.toUpperCase().equals("NOPCOPT")){
-            opt_pcopt = false;
-        } else if (token.toUpperCase().equals("NOPROLOG")){
-            opt_prolog = false;
-        } else if (token.toUpperCase().equals("NOPROTECT")){
-            opt_protect = false;
-        } else if (token.toUpperCase().equals("NOSTATS")){
-           	opt_stats = false;
-        } else if (token.toUpperCase().equals("NOTIME")){
-        	opt_time = false; // no time limit
-        } else if (token.toUpperCase().equals("NOTIMING")){
-          	opt_timing = false; // no date/time changes
-          	opt_time   = false;
-        } else if (token.toUpperCase().equals("NOTRAP")){
-           	opt_trap = false;
-        } else if (token.toUpperCase().equals("NOVCB")){
-           	opt_vcb = false;
-        } else if (token.toUpperCase().equals("NOXREF")){
-           	opt_xref = false;
-        } else if (token.toUpperCase().equals("OBJHEX")){
-           	opt_objhex = true;
-        } else if (token.length() > 5
-           		&& token.substring(0,5).toUpperCase().equals("PARM(")){
-            	opt_parm = token.substring(5,token.length()-1);
-            	if (opt_parm.length() > 2 
-            		&& opt_parm.charAt(0) == '\''
-            		&& opt_parm.charAt(opt_parm.length()-1) == '\''){
-            		opt_parm = opt_parm.substring(1,opt_parm.length()-1); 		
-            	}
-        } else if (token.toUpperCase().equals("PC")){
-            opt_pc = true;
-        } else if (token.toUpperCase().equals("PCOPT")){
-            opt_pcopt = true;
-        } else if (token.length() > 8
-          		&& token.substring(0,8).toUpperCase().equals("PROFILE(")){
-         	opt_profile = token.substring(8,token.length()-1);
-        } else if (token.toUpperCase().equals("REFORMAT")){
-            	opt_reformat = true; 
-        } else if (token.toUpperCase().equals("REGS")){
-           	opt_regs = true;
-           	opt_list  = true;
-        } else if (token.toUpperCase().equals("RMODE24")){
-           	opt_rmode24 = true;
-           	opt_rmode31 = false;
-           	z390_rmode31 = 'F';
-        } else if (token.toUpperCase().equals("RMODE31")){
-           	opt_rmode24 = false;
-          	opt_rmode31 = true;
-           	z390_rmode31 = 'T';
-        } else if (token.length() > 6
-          		&& token.substring(0,6).toUpperCase().equals("STATS(")){
-         	stats_file_name = token.substring(6,token.length()-1); // RPI 736
-        } else if (token.length() > 7
-           		&& token.substring(0,7).toUpperCase().equals("SYS390(")){
-           	dir_390 = token.substring(7,token.length()-1) + File.separator;	
-        } else if (token.length() > 7 
-           		&& token.substring(0,7).toUpperCase().equals("SYSBAL(")){
-          	dir_bal = token.substring(7,token.length()-1) + File.separator; 
-        } else if (token.length() > 7 
-          		&& token.substring(0,7).toUpperCase().equals("SYSCPY(")){
-           	dir_cpy = token.substring(7,token.length()-1); 
-        } else if (token.length() > 7 
-          		&& token.substring(0,7).toUpperCase().equals("SYSDAT(")){
-           	dir_dat = token.substring(7,token.length()-1) + File.separator; 
-        } else if (token.length() > 7
-           		&& token.substring(0,7).toUpperCase().equals("SYSERR(")){
-            	dir_err = token.substring(7,token.length()-1) + File.separator; // RPI 243 
-        } else if (token.length() > 7
-          		&& token.substring(0,7).toUpperCase().equals("SYSLOG(")){
-           	dir_log = token.substring(7,token.length()-1) + File.separator;
-        } else if (token.length() > 7 
-           		&& token.substring(0,7).toUpperCase().equals("SYSMAC(")){
-           	dir_mac = token.substring(7,token.length()-1);  
-        } else if (token.length() > 7 
-           		&& token.substring(0,7).toUpperCase().equals("SYSMLC(")){
-          	dir_mlc = get_short_file_name(token.substring(7,token.length()-1) + File.separator); 
-        } else if (token.length() > 7 
-           		&& token.substring(0,7).toUpperCase().equals("SYSOBJ(")){
-           	dir_obj = token.substring(7,token.length()-1) + File.separator; 
-        } else if (token.length() > 8
-         		&& token.substring(0,8).toUpperCase().equals("SYSPARM(")){
-        	opt_sysparm = token.substring(8,token.length()-1); 
-        } else if (token.length() > 7 
-           		&& token.substring(0,7).toUpperCase().equals("SYSPCH(")){
-          	dir_pch = get_short_file_name(token.substring(7,token.length()-1) + File.separator); 
-        } else if (token.length() > 7 
-          		&& token.substring(0,7).toUpperCase().equals("SYSPRN(")){
-          	dir_prn = token.substring(7,token.length()-1) + File.separator; 	
-        } else if (token.length() > 8
-          		&& token.substring(0,8).toUpperCase().equals("SYSTERM(")){
-         	systerm_file_name = token.substring(8,token.length()-1); // RPI 730
-        } else if (token.length() > 7 
-           		&& token.substring(0,7).toUpperCase().equals("SYSTRC(")){
-          	dir_trc = token.substring(7,token.length()-1) + File.separator; 
-        } else if (token.length() > 5
-          		&& token.substring(0,5).toUpperCase().equals("TIME(")){
-           	max_time_seconds = Long.valueOf(token.substring(5,token.length()-1)).longValue();
-           	if (max_time_seconds > 0){
-           		opt_time = true;
-           		opt_timing = true;
-           	} else {
-           		opt_time = false;
-           		opt_timing = false;
-           	}
-        } else if (token.toUpperCase().equals("TEST")){
-           	opt_test = true;
-           	opt_time = false;
-           	opt_con  = true;
-        } else if (token.length() > 5
-          		&& token.substring(0,5).toUpperCase().equals("TEST(")){
-           	test_ddname = token.substring(5,token.length()-1);	
-           	opt_test = true;
-        } else if (token.toUpperCase().equals("TRACE")){
-           	opt_trace = true;
-           	opt_list   = true;
-           	if (!opt_test){
-           		opt_con   = false; // RPI 569 leave on if TEST
-           	}
-        } else if (token.length() > 6
-          		&& token.substring(0,6).toUpperCase().equals("TRACE(")){
-           	String trace_options = token.substring(6,token.length()-1).toUpperCase();
-           	opt_con = false;
-           	int index = 0;
-           	while (index < trace_options.length()){
-           		if (trace_options.charAt(index) == 'A'){
-           			opt_tracea = true;
-           		} else if (trace_options.charAt(index) == 'E'){
-           			opt_trace = true;
-           		} else if (trace_options.charAt(index) == 'G'){
-           			opt_traceg = true;
-           		} else if (trace_options.charAt(index) == 'L'){
-           			opt_tracel = true;
-           		} else if (trace_options.charAt(index) == 'M'){
-           			opt_tracem = true;
-           		} else if (trace_options.charAt(index) == 'P'){
-           			opt_tracep = true;	
-           		} else if (trace_options.charAt(index) == 'Q'){
-           			opt_traceq = true;
-           		} else if (trace_options.charAt(index) == 'T'){
-           			opt_tracet = true;
-           		} else if (trace_options.charAt(index) == 'V'){
-           			opt_tracev = true;
-           		}
-           		index++;
-           	}
-        } else if (token.toUpperCase().equals("TRACEA")){
-           	opt_tracea = true;
-           	opt_list = true;
-           	opt_con   = false;
-        } else if (token.toUpperCase().equals("TRACEALL")){
-           	opt_traceall = true;
-           	opt_trace    = true;
-          	opt_tracea   = true;
-           	opt_tracem   = true;
-           	opt_tracep   = true;
-           	opt_tracel   = true;
-           	opt_traceq   = true;
-           	opt_tracet   = true;
-           	opt_tracev   = true;
-           	opt_traceg = true;
-           	opt_list     = true;
-           	opt_con   = false;
-        } else if (token.toUpperCase().equals("TRACEL")){
-           	opt_tracel = true;
-           	opt_list = true;
-           	opt_con   = false;
-        } else if (token.toUpperCase().equals("TRACEM")){
-            	opt_tracem = true;
-            	opt_list = true;
-            	opt_con   = false;
-        } else if (token.toUpperCase().equals("TRACEMEM")){
-           	opt_traceg = true;
-           	opt_con   = false;
-        } else if (token.toUpperCase().equals("TRACEP")){
-        	opt_tracep = true;
-        	opt_tracem = true;
-        	opt_list = true;
-        	opt_con   = false;
-        } else if (token.toUpperCase().equals("TRACEQ")){
-        	opt_traceq = true;
-        	opt_con   = false;
-        } else if (token.toUpperCase().equals("TRACET")){
-        	opt_tracet = true;
-        	opt_con   = false;
-        } else if (token.toUpperCase().equals("TRACEV")){
-        	opt_tracev = true;
-        	opt_con   = false;
-        } else if (token.toUpperCase().equals("TS")){
-        	opt_ts = true; // timestamp traces
-        } else if (token.toUpperCase().equals("VCB")){
-        	opt_vcb = true; // VSAM Cache Buffering to reduce I/O
-        } 
-        index1++;
+    	process_option(token);  // RPI 742
+    	index1++;
+    }
+    if (cmd_parms.length() > 0 
+    	&& cmd_parms.charAt(cmd_parms.length()-1) == ' '){
+    	cmd_parms = cmd_parms.substring(0,cmd_parms.length()-1);
     }
     if (log_file_name != null){ // RPI 719
     	if (systerm_file_name == null){  // RPI 730
@@ -4057,6 +3743,383 @@ public void init_options(String[] args,String pgm_type){
     if (systerm_file_name == null){  // RPI 425 RPI 546
     	systerm_file_name = pgm_name; // RPI 546
     }
+    if (dir_cpy == null){
+    	dir_cpy = dir_mac; // RPI 742
+    }
+}
+private void process_option(String token){
+	/*
+	 * process option from command line or
+	 * from @file optionsfile.
+	 */
+	cmd_parms = cmd_parms + token + " ";
+	if (token.charAt(0) == '@'){
+		process_options_file(token.substring(1));  // RPI 742
+	} else if (token.toUpperCase().equals("AMODE24")){
+		opt_amode24 = true;
+		opt_amode31 = false;
+		z390_amode31 = 'F';
+		z390_rmode31 = 'F';
+	} else if (token.toUpperCase().equals("AMODE31")){
+		opt_amode24 = false;
+		opt_amode31 = true;
+		z390_amode31 = 'T';
+	} else if (token.toUpperCase().equals("ASCII")){
+		opt_ascii = true; 
+	} else if (token.toUpperCase().equals("ASM")){
+		opt_asm = true; 
+	} else if (token.toUpperCase().equals("BAL")){
+		opt_bal = true; 
+	} else if (token.toUpperCase().equals("BS2000")){
+		opt_bs2000 = true;  // RPI 604
+		opt_amode24 = true;
+		opt_amode31 = false;
+		z390_amode31 = 'F';
+	} else if (token.toUpperCase().equals("CHKMAC")){
+       	opt_chkmac = true;
+	} else if (token.toUpperCase().equals("CICS")){
+       	opt_cics = true;
+	} else if (token.toUpperCase().equals("CON")){
+       	opt_con = true;
+    } else if (token.toUpperCase().equals("DUMP")){
+       	opt_dump = true;
+    } else if (token.length() > 4
+    	&& token.substring(0,4).toUpperCase().equals("ERR(")){
+       	try {
+       		max_errors = Integer.valueOf(token.substring(4,token.length()-1)).intValue(); 
+      	} catch (Exception e){
+       		abort_error(6,"invalid error limit - " + token);
+       	}
+    } else if (token.toUpperCase().equals("ERRSUM")){
+       	init_errsum();
+    } else if (token.toUpperCase().equals("GUAM")){
+       	opt_guam = true;
+    } else if (token.length() > 4
+     		&& token.substring(0,4).toUpperCase().equals("IPL(")){
+    	opt_ipl = token.substring(4,token.length()-1); 
+    } else if (token.length() > 8
+     		&& token.substring(0,8).toUpperCase().equals("INSTALL(")){
+    	opt_install_loc = token.substring(8,token.length()-1); 	
+    } else if (token.length() >= 8
+      		&& token.substring(0,8).toUpperCase().equals("LISTCALL")){
+       	opt_listcall = true;
+    } else if (token.length() >= 7
+      		&& token.substring(0,7).toUpperCase().equals("LISTUSE")){
+       	opt_listuse = true;
+    } else if (token.length() > 4
+      		&& token.substring(0,4).toUpperCase().equals("LOG(")){
+     	log_file_name = token.substring(4,token.length()-1); // RPI 719
+    } else if (token.length() > 8
+      		&& token.substring(0,8).toUpperCase().equals("MAXCALL(")){
+       	opt_maxcall = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
+    } else if (token.length() > 7
+      		&& token.substring(0,7).toUpperCase().equals("MAXESD(")){
+       	opt_maxesd = Integer.valueOf(token.substring(7,token.length()-1)).intValue();   	
+    } else if (token.length() > 8
+    	&& token.substring(0,8).toUpperCase().equals("MAXFILE(")){
+       	try {
+       		opt_maxfile = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
+       	} catch (Exception e){
+       		abort_error(7,"invalid maxfile limit = " + token);
+       	}
+    } else if (token.length() > 7
+      		&& token.substring(0,7).toUpperCase().equals("MAXGBL(")){
+       	opt_maxgbl = Integer.valueOf(token.substring(7,token.length()-1)).intValue();
+    } else if (token.length() > 7
+      		&& token.substring(0,7).toUpperCase().equals("MAXLCL(")){
+       	opt_maxlcl = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
+    } else if (token.length() > 8
+      		&& token.substring(0,8).toUpperCase().equals("MAXLINE(")){
+       	opt_maxline = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
+    } else if (token.length() > 8
+      		&& token.substring(0,7).toUpperCase().equals("MAXLOG(")){
+       	opt_maxlog = Integer.valueOf(token.substring(7,token.length()-1)).intValue() << 20; 
+    } else if (token.length() > 8
+      		&& token.substring(0,8).toUpperCase().equals("MAXPARM(")){
+       	opt_maxparm = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
+    } else if (token.length() > 6
+      		&& token.substring(0,6).toUpperCase().equals("MAXPC(")){ // RPI 439
+       	opt_maxpc = Integer.valueOf(token.substring(6,token.length()-1)).intValue();
+    } else if (token.length() > 7
+      		&& token.substring(0,7).toUpperCase().equals("MAXQUE(")){
+       	opt_maxque = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
+    } else if (token.length() > 7
+      		&& token.substring(0,7).toUpperCase().equals("MAXRLD(")){
+       	opt_maxrld = Integer.valueOf(token.substring(7,token.length()-1)).intValue();  
+    } else if (token.length() > 8
+        	&& token.substring(0,8).toUpperCase().equals("MAXSIZE(")){
+           	try {
+           		max_file_size = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20; 
+           	} catch (Exception e){
+           		abort_error(8,"invalid maxsize limit (mb) - " + token);
+           	}
+    } else if (token.length() > 7
+      		&& token.substring(0,7).toUpperCase().equals("MAXSYM(")){
+       	opt_maxsym = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
+    } else if (token.length() >= 5
+      		&& token.substring(0,5).toUpperCase().equals("MCALL")){
+       	opt_mcall = true; // RPI 511
+       	opt_listcall = true;
+    } else if (token.length() > 5
+    	&& token.substring(0,4).toUpperCase().equals("MEM(")){
+       	try {
+       	    max_mem = Integer.valueOf(token.substring(4,token.length()-1)).intValue();
+       	} catch (Exception e){
+       		abort_error(9,"invalid memory option " + token);
+       	}
+    } else if (token.toUpperCase().equals("NOASM")){
+       	opt_asm = false;
+    } else if (token.toUpperCase().equals("NOBAL")){
+       	opt_bal = false;    	
+    } else if (token.toUpperCase().equals("NOCON")){
+       	opt_con = false;
+    } else if (token.toUpperCase().equals("NOEPILOG")){
+       	opt_epilog = false;   	
+    } else if (token.toUpperCase().equals("NOLIST")){
+       	opt_list = false;
+    } else if (token.toUpperCase().equals("NOLISTCALL")){
+       	opt_listcall = false;
+    } else if (token.equals("NOLISTFILE")){
+       	opt_listfile = false;
+    } else if (token.equals("NOLISTUSE")){
+       	opt_listuse = false; 
+    } else if (token.toUpperCase().equals("NOOBJ")){ // RPI694
+       	opt_obj = false;
+    } else if (token.toUpperCase().equals("NOPC")){
+        opt_pc = false; 
+    } else if (token.toUpperCase().equals("NOPCOPT")){
+        opt_pcopt = false;
+    } else if (token.toUpperCase().equals("NOPROLOG")){
+        opt_prolog = false;
+    } else if (token.toUpperCase().equals("NOPROTECT")){
+        opt_protect = false;
+    } else if (token.toUpperCase().equals("NOSTATS")){
+       	opt_stats = false;
+    } else if (token.toUpperCase().equals("NOTIME")){
+    	opt_time = false; // no time limit
+    } else if (token.toUpperCase().equals("NOTIMING")){
+      	opt_timing = false; // no date/time changes
+      	opt_time   = false;
+    } else if (token.toUpperCase().equals("NOTRAP")){
+       	opt_trap = false;
+    } else if (token.toUpperCase().equals("NOVCB")){
+       	opt_vcb = false;
+    } else if (token.toUpperCase().equals("NOXREF")){
+       	opt_xref = false;
+    } else if (token.toUpperCase().equals("OBJHEX")){
+       	opt_objhex = true;
+    } else if (token.length() > 5
+       		&& token.substring(0,5).toUpperCase().equals("PARM(")){
+        	opt_parm = token.substring(5,token.length()-1);
+        	if (opt_parm.length() > 2 
+        		&& opt_parm.charAt(0) == '\''
+        		&& opt_parm.charAt(opt_parm.length()-1) == '\''){
+        		opt_parm = opt_parm.substring(1,opt_parm.length()-1); 		
+        	}
+    } else if (token.toUpperCase().equals("PC")){
+        opt_pc = true;
+    } else if (token.toUpperCase().equals("PCOPT")){
+        opt_pcopt = true;
+    } else if (token.length() > 8
+      		&& token.substring(0,8).toUpperCase().equals("PROFILE(")){
+     	opt_profile = token.substring(8,token.length()-1);
+    } else if (token.toUpperCase().equals("REFORMAT")){
+        	opt_reformat = true; 
+    } else if (token.toUpperCase().equals("REGS")){
+       	opt_regs = true;
+       	opt_list  = true;
+    } else if (token.toUpperCase().equals("RMODE24")){
+       	opt_rmode24 = true;
+       	opt_rmode31 = false;
+       	z390_rmode31 = 'F';
+    } else if (token.toUpperCase().equals("RMODE31")){
+       	opt_rmode24 = false;
+      	opt_rmode31 = true;
+       	z390_rmode31 = 'T';
+    } else if (token.length() > 6
+      		&& token.substring(0,6).toUpperCase().equals("STATS(")){
+     	stats_file_name = token.substring(6,token.length()-1); // RPI 736
+    } else if (token.length() > 7
+       		&& token.substring(0,7).toUpperCase().equals("SYS390(")){
+       	dir_390 = set_path_option(dir_390,token.substring(7,token.length()-1));	
+    } else if (token.length() > 7 
+       		&& token.substring(0,7).toUpperCase().equals("SYSBAL(")){
+      	dir_bal = set_path_option(dir_bal,token.substring(7,token.length()-1)); 
+    } else if (token.length() > 7 
+      		&& token.substring(0,7).toUpperCase().equals("SYSCPY(")){
+       	dir_cpy = set_path_option(dir_cpy,token.substring(7,token.length()-1)); 
+    } else if (token.length() > 7 
+      		&& token.substring(0,7).toUpperCase().equals("SYSDAT(")){
+       	dir_dat = set_path_option(dir_dat,token.substring(7,token.length()-1)); 
+    } else if (token.length() > 7
+       		&& token.substring(0,7).toUpperCase().equals("SYSERR(")){
+        	dir_err = set_path_option(dir_err,token.substring(7,token.length()-1)); // RPI 243 
+    } else if (token.length() > 7
+      		&& token.substring(0,7).toUpperCase().equals("SYSLOG(")){
+       	dir_log = set_path_option(dir_log,token.substring(7,token.length()-1));
+    } else if (token.length() > 7 
+       		&& token.substring(0,7).toUpperCase().equals("SYSMAC(")){
+       	dir_mac = set_path_option(dir_mac,token.substring(7,token.length()-1));  
+    } else if (token.length() > 7 
+       		&& token.substring(0,7).toUpperCase().equals("SYSMLC(")){
+      	dir_mlc = set_path_option(dir_mlc,get_short_file_name(token.substring(7,token.length()-1))); 
+    } else if (token.length() > 7 
+       		&& token.substring(0,7).toUpperCase().equals("SYSOBJ(")){
+       	dir_obj = set_path_option(dir_obj,token.substring(7,token.length()-1)); 
+    } else if (token.length() > 7 
+       		&& token.substring(0,7).toUpperCase().equals("SYSOPT(")){
+       	dir_opt = set_path_option(dir_opt,token.substring(7,token.length()-1)); // RPI 742
+    } else if (token.length() > 8
+     		&& token.substring(0,8).toUpperCase().equals("SYSPARM(")){
+    	opt_sysparm = token.substring(8,token.length()-1); 
+    } else if (token.length() > 7 
+       		&& token.substring(0,7).toUpperCase().equals("SYSPCH(")){
+      	dir_pch = set_path_option(dir_pch,get_short_file_name(token.substring(7,token.length()-1))); 
+    } else if (token.length() > 7 
+      		&& token.substring(0,7).toUpperCase().equals("SYSPRN(")){
+      	dir_prn = set_path_option(dir_prn,token.substring(7,token.length()-1)); 	
+    } else if (token.length() > 8
+      		&& token.substring(0,8).toUpperCase().equals("SYSTERM(")){
+     	systerm_file_name = token.substring(8,token.length()-1); // RPI 730
+    } else if (token.length() > 7 
+       		&& token.substring(0,7).toUpperCase().equals("SYSTRC(")){
+      	dir_trc = set_path_option(dir_trc,token.substring(7,token.length()-1)); 
+    } else if (token.length() > 5
+      		&& token.substring(0,5).toUpperCase().equals("TIME(")){
+       	max_time_seconds = Long.valueOf(token.substring(5,token.length()-1)).longValue();
+       	if (max_time_seconds > 0){
+       		opt_time = true;
+       		opt_timing = true;
+       	} else {
+       		opt_time = false;
+       		opt_timing = false;
+       	}
+    } else if (token.toUpperCase().equals("TEST")){
+       	opt_test = true;
+       	opt_time = false;
+       	opt_con  = true;
+    } else if (token.length() > 5
+      		&& token.substring(0,5).toUpperCase().equals("TEST(")){
+       	test_ddname = token.substring(5,token.length()-1);	
+       	opt_test = true;
+    } else if (token.toUpperCase().equals("TRACE")){
+       	opt_trace = true;
+       	opt_list   = true;
+       	if (!opt_test){
+       		opt_con   = false; // RPI 569 leave on if TEST
+       	}
+    } else if (token.length() > 6
+      		&& token.substring(0,6).toUpperCase().equals("TRACE(")){
+       	String trace_options = token.substring(6,token.length()-1).toUpperCase();
+       	opt_con = false;
+       	int index = 0;
+       	while (index < trace_options.length()){
+       		if (trace_options.charAt(index) == 'A'){
+       			opt_tracea = true;
+       		} else if (trace_options.charAt(index) == 'E'){
+       			opt_trace = true;
+       		} else if (trace_options.charAt(index) == 'G'){
+       			opt_traceg = true;
+       		} else if (trace_options.charAt(index) == 'L'){
+       			opt_tracel = true;
+       		} else if (trace_options.charAt(index) == 'M'){
+       			opt_tracem = true;
+       		} else if (trace_options.charAt(index) == 'P'){
+       			opt_tracep = true;	
+       		} else if (trace_options.charAt(index) == 'Q'){
+       			opt_traceq = true;
+       		} else if (trace_options.charAt(index) == 'T'){
+       			opt_tracet = true;
+       		} else if (trace_options.charAt(index) == 'V'){
+       			opt_tracev = true;
+       		}
+       		index++;
+       	}
+    } else if (token.toUpperCase().equals("TRACEA")){
+       	opt_tracea = true;
+       	opt_list = true;
+       	opt_con   = false;
+    } else if (token.toUpperCase().equals("TRACEALL")){
+       	opt_traceall = true;
+       	opt_trace    = true;
+      	opt_tracea   = true;
+       	opt_tracem   = true;
+       	opt_tracep   = true;
+       	opt_tracel   = true;
+       	opt_traceq   = true;
+       	opt_tracet   = true;
+       	opt_tracev   = true;
+       	opt_traceg = true;
+       	opt_list     = true;
+       	opt_con   = false;
+    } else if (token.toUpperCase().equals("TRACEL")){
+       	opt_tracel = true;
+       	opt_list = true;
+       	opt_con   = false;
+    } else if (token.toUpperCase().equals("TRACEM")){
+        	opt_tracem = true;
+        	opt_list = true;
+        	opt_con   = false;
+    } else if (token.toUpperCase().equals("TRACEMEM")){
+       	opt_traceg = true;
+       	opt_con   = false;
+    } else if (token.toUpperCase().equals("TRACEP")){
+    	opt_tracep = true;
+    	opt_tracem = true;
+    	opt_list = true;
+    	opt_con   = false;
+    } else if (token.toUpperCase().equals("TRACEQ")){
+    	opt_traceq = true;
+    	opt_con   = false;
+    } else if (token.toUpperCase().equals("TRACET")){
+    	opt_tracet = true;
+    	opt_con   = false;
+    } else if (token.toUpperCase().equals("TRACEV")){
+    	opt_tracev = true;
+    	opt_con   = false;
+    } else if (token.toUpperCase().equals("TS")){
+    	opt_ts = true; // timestamp traces
+    } else if (token.toUpperCase().equals("VCB")){
+    	opt_vcb = true; // VSAM Cache Buffering to reduce I/O
+    } else {
+    	invalid_options = invalid_options + " " + token;
+    }
+}
+private void process_options_file(String file_name){
+	/*
+	 * process option file as follows:
+	 * 1.  Default suffix .OPT
+	 * 2.  Uses SYSOPT path which defaults to program path
+	 * 3.  Comments starting with * to end of line
+	 * 4.  @file option can be nested.
+	 */
+    String file_name_path = find_file_name(dir_opt,file_name,opt_type,dir_cur);
+	if (file_name_path != null){
+		try {
+			cmd_parms = cmd_parms.trim() + "=(";
+			File opt_file = new File(file_name_path);
+			BufferedReader opt_file_buff = new BufferedReader(new FileReader(opt_file));
+			String option_line = opt_file_buff.readLine();
+			while (option_line != null){
+				if (option_line.length() > 1 
+					&& option_line.charAt(0) != '*'){
+					Matcher find_option_match = find_non_space_pattern.matcher(option_line);
+					while (find_option_match.find() 
+						&& find_option_match.group().charAt(0) != '*'){
+						String option = find_option_match.group();
+						process_option(option);
+					}
+				}
+				option_line = opt_file_buff.readLine();
+			}
+			opt_file_buff.close();
+			cmd_parms = cmd_parms.trim() + ") ";
+		} catch (Exception e){
+			invalid_options = invalid_options + " @" + file_name; 
+		}
+	} else {
+		invalid_options = invalid_options + " @" + file_name; 
+	}
 }
 public void open_systerm(String z390_pgm){
 	/*
@@ -4079,6 +4142,9 @@ public void open_systerm(String z390_pgm){
     try {
         systerm_file = new RandomAccessFile(systerm_file_name,"rw"); 
         systerm_file.seek(systerm_file.length());
+        if (invalid_options.length() > 0){
+        	abort_error(21,"invalid options - " + invalid_options);
+        }
     } catch (Exception e){
     	systerm_file = null;
     	abort_error(10,"systerm file open error " + e.toString());
@@ -4216,11 +4282,13 @@ public synchronized void abort_error(int error,String msg){ // RPI 397
 	 * display options error on system out
 	 * and exit with rc 16.
 	 */
-	System.out.println("TZ390E abort error " + error + " - " + msg);
+	msg = "TZ390E abort error " + error + " - " + msg;
+	System.out.println(msg);
     System.out.println("z390_abort_request"); // RPI 731 request parent shutdown
 	System.out.flush();
+	put_systerm(msg);
 	z390_abort = true;
-    sleep_now(3000);
+    sleep_now(1000);
 	close_systerm(16);
 	System.exit(16);
 }
@@ -4686,15 +4754,19 @@ public boolean get_sdt_char_int(String sdt){
 public boolean verify_ascii_source(String temp_line){
 	/*
 	 * 1.  Verify ascii source code and
-	 *     length <= 80 
+	 *     length <= 80 if not * in col 1.
 	 *
 	 */
 	if (temp_line.length() > max_line_len){ // RPI 437
 		return false; 
 	}
+	if (temp_line.length() > 0 
+		&& temp_line.charAt(0) == '*'){
+		return true;
+	}
 	int index = 0;
     while (index < temp_line.length()){
-    	int next_char = temp_line.charAt(0) & 0xff;
+    	int next_char = temp_line.charAt(index) & 0xff; // RPI 744
         if (next_char != 9  // RPI 302
         	&& next_char != '.' 
         	&& ascii_table.charAt(next_char) == '.'
@@ -4929,7 +5001,7 @@ public void split_line(String line){  // RPI 313
 	 * 3 fields are null if none and 
 	 * there may be trailing comment on parms
 	 */
-	find_parm_match = find_parm_pattern.matcher(line);
+	find_parm_match = find_non_space_pattern.matcher(line);
 	if (line.charAt(0) > ' '){
 		find_parm_match.find();
 		split_label = find_parm_match.group();
@@ -5291,4 +5363,15 @@ public void put_trace(String text){
     	    Thread.yield();
     	}
     }
+	private String set_path_option(String old_path,String new_path){
+		/*
+		 * if new path starts with +, concat with existing path
+		 * else replace existing path option.
+		 */
+		if (new_path.charAt(0) == '+'){
+			return old_path + new_path + File.separator;
+		} else {
+			return new_path + File.separator;
+		}
+	}
 }

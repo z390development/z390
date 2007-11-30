@@ -1,0 +1,15 @@
+*********************************************************************
+* Copyright 2007 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 11/30/07                                                 *
+*********************************************************************
+* 11/30/07 RPI 742 TEST NESTED @FILE OPTIONS USING
+*          COMMAND RT1 RT\TEST\TESTOPT1 @TESTOPT1
+*          SEE OPTIONS IN TESTOPT1.OPT, TESTOPTA.OPT, TESTOPTB.OPT
+*********************************************************************
+TESTOPT1 SUBENTRY
+         WTO   'TESTOPT1 TEST NESTED @FILE OPTIONS'
+         SUBEXIT
+         END

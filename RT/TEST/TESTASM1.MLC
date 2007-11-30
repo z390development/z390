@@ -29,6 +29,8 @@
 * 11/12/06 RPI 494 TEST DS BIT LENGTH SUPPORT FOR LAST FIELD               
 * 11/28/06 RPI 501 TEST LITERAL-ABS EXPRESSION                             
 * 08/22/07 RPI 673 TEST DROP WITH EXPRESSION 1+1 ETC.                      
+* 11/30/07 RPI 743 TEST COMMENT ON PROTOTYPE, CNOP ATTR I, PUNCH CMTS      
+* 11/30/07 RPI 745 TEST AREAD SKIP NOPRINT,NOSTMT, SUPPORT CLOCKB/D        
 *********************************************************************
          START , RPI 230 TEST START CSECT
          USING *,R15
@@ -161,6 +163,31 @@ SKIP_IPK EQU   *
          LA    1,X4
          USING X4,2
          DROP  1+1,15
+* RPI 743 test CNOP LABEL ATTR I
+CNOPLAB  CNOP  0,4
+         AIF   (T'CNOPLAB EQ 'I').CNOPOK
+         MNOTE 8,'CNOP LABEL TYPE NOT I'
+         AGO  .CNOPEND
+.CNOPOK  ANOP
+         MNOTE 'CNOP TYPE I OK'
+.CNOPEND ANOP
+* RPI 743 test comment on prototype after last keyword parm
+         TESTASM1
+         PUNCH ' PHASE SECTEXIT,*'  *BX
+* RPI 743 test PUNCH with following comments
+         PUNCH ' PHASE SECTEXIT,*'  *BX
+* RPI 745 test AREAD with CLOCKB and CLOCKD
+&TOD     AREAD NOPRINT,NOSTMT,CLOCKB
+&SS      SETA  &TOD/100
+&MM      SETA  &SS/60
+&DHH      SETA  &MM/60
+&DMM      SETA  &MM-&DHH*60
+&DSS      SETA  &SS-60*(&DMM+60*&DHH))
+&DTH      SETA  &TOD-&SS*100
+         MNOTE 'CLOCKB=&TOD HH=&DHH MM=&DMM SS=&DSS TH=&DTH'
+&TOD     AREAD CLOCKD
+         MNOTE 'CLOCKD=&TOD'
+         WTO   'TEST1 ENDED OK'
          RT1   END
          LTORG
 X4       DS    X 

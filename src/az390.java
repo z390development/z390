@@ -287,6 +287,8 @@ public  class  az390 implements Runnable {
     * 11/12/07 RPI 737 correct handling of F/H constant Enn exponent 
     *          prevent trap on ASCII char > 127 causing trap on cvt to EBCDIC   
     * 11/12/07 RPI 737 add STATS(file) option    
+    * 11/27/07 RPI 743 set CNOP label attribute type to 'I'
+    *          allow comments without , on PR as on other 12 ops without operands
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -1549,7 +1551,7 @@ private void process_bal_op(){
 	 * 
 	 * 1.  Note op_type index values must match
 	 *     op_name array values.  
-	 * 2.  Indexes < 100 are machine instr. types
+	 * 2.  Indexes < 100 and CNOP are machine instr. types RPI 743
 	 * 3.  Indexes > 100 are assembler instr.
 	 *
 	 */
@@ -1573,7 +1575,7 @@ private void process_bal_op(){
 	bal_label_ok = true;    // assume label updates ok RPI 451
 	cur_sym_sect = false;   // assume RX/ABS label RPI 553
 	int index = tz390.op_type[bal_op_index];
-	if (index < tz390.max_ins_type){ // RPI 340
+	if (index < tz390.max_ins_type || bal_op.equals("CNOP")){ // RPI 340 RPI 743
 		bal_lab_attr = tz390.ascii_to_ebcdic['I']; 
 	} else {
 		bal_lab_attr = tz390.ascii_to_ebcdic['U'];
@@ -1617,10 +1619,7 @@ private void process_bal_op(){
     	loc_ctr = (loc_ctr+1)/2*2;
     	loc_start = loc_ctr;
     	loc_len = 2;
-	    get_hex_op(1,4);
-	    if (bal_parms != null && bal_parms.length() > 0 && bal_parms.charAt(0) != ','){
-	    	log_error(191,"comma required  before comments");// RPI 609
-	    }
+	    get_hex_op(1,4); // rpi 743 remove op check
     	put_obj_text();
     	break;
     case 2:  // "RR" 60  LR  oorr

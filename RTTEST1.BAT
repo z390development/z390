@@ -33,6 +33,7 @@ call RT1 %~dps0rt\test\TESTMAC8 sysmac(rt\test+mac) systerm(RTTEST) %1 %2 %3 %4 
 call RT1 %~dps0rt\test\TESTMAC9 sysmac(rt\test+mac) syscpy(rt\test) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTPRO1 profile(TESTPRO1) sysmac(rt\test+mac) syscpy(rt\test) systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTOPR1 tracep systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTOPT1 @TESTOPT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTORG1 trace  systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSET1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTSET2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -75,7 +76,7 @@ call RT1 %~dps0rt\test\TESTSDT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTLOC1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy %~dps0rt\test\TESTSDT1.MLC %~dps0rt\test\TESTASC2.MLC
 call RT1 %~dps0rt\test\TESTASC2 ascii systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call RT1 %~dps0rt\test\TESTASM1 systerm(RTTEST) mcall %1 %2 %3 %4 %5 %6 %7 %8 %9
+call RT1 %~dps0rt\test\TESTASM1 systerm(RTTEST) mcall SYSMAC(RT\TEST+MAC) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTASM2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT1 %~dps0rt\test\TESTENV1 TRACE systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call RT4 %~dps0rt\test\TESTERR2 systerm(RTTEST) ERR(0) %1 %2 %3 %4 %5 %6 %7 %8 %9

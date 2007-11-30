@@ -1,4 +1,4 @@
-z390 v1.3.08e PTF 11/17/07
+z390 v1.3.08f PTF 11/30/07
 Copyright 2007 Automated Software Tools Corporation
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.08:
@@ -118,8 +118,23 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.08:
     when target address is beyond memory.
 21. RPI 739 - correct RRDS and KSDS VSAM access to use OPTCD=(SEQ) to determine
     sequential versus KEY.
-22. RPI 740 - issue warning MNOTE if macro proto-type name does not match macro file.  Add     option CHKMAC to issue MNOTE warning if macro statments follow final MEND in macro file. 
-
+22. RPI 740 - issue warning MNOTE if macro proto-type name does not match macro file.  Add        option CHKMAC to issue MNOTE warning if macro statments follow final MEND in macro file. 
+23. RPI 742 - issue error and abort if any option not recognized.
+    Add support for new option @filename where filename.OPT contains options
+    in free format with any comments preceeded by *.  The @Filename directory can be
+    specified by SYSOPT(path) and defaults to the program path.  @files can contain 
+    nested @files.  See rt\test\TESTOPT1.MLC and TESTOPT?.OPT regression test.
+    Allow any option specifying paths to start with '+' to concatenate prior option setting.
+24. RPI 743 - correct mz390 to allow comments on proto-type statement.
+    Allow comments on PR instruction with no leading comma.
+    Set attribute of label for CNOP to 'I' versus 'U'.
+    Allow comments after operands on PUNCH statement.
+25. RPI 744 - issue error on any source statements containing non-printable ASCII
+    characters with the exception of comments starting with '*'.  This is to flag
+    any DC C'...' or self defining character strings with hex that must be converted to 
+    X'..' type for portability between EBCDIC and ASCII.
+26. RPI 745 add support for AREAD operands CLOCKB and CLOCKD and ignore NOPRINT and NOSMT.    
+  
 
 To install this cumulative PTF for z390 follow these steps.
 
