@@ -29,7 +29,7 @@
          DEFINE CLUSTER,NAME=RRV2,                                     X
                RECORDSIZE=(300,500),INDEX=NUMBERED
          DEFINE CLUSTER,NAME=KSF1NAME,                                 X
-               RECORDSIZE=80,KEYS=(20,0)
+               RECORDSIZE=70,KEYS=(20,0)
          DEFINE ALTERNATEINDEX,NAME=KSF1ADDR,                          X
                RELATE=KSF1NAME,KEYS=(20,20)
          DEFINE ALTERNATEINDEX,NAME=KSF1CITY,                          X

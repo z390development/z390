@@ -18,6 +18,8 @@
 * 02/22/07 RPI 553 add tests for duplicate symbols                   
 * 05/07/07 RPI 609 dc without data, comment                    
 * 06/10/07 RPI 637 test missing close ) on explicit off(len,base) arg
+* 11/29/07 RPI 745 allow comments without comma on PR                 
+* 12/07/07 RPI 749 test X EQU X and =CL(FWDLEN)' ' errors             
 *********************************************************************
          TITLE 'TESTERR2 - TEST AZ390 ERRORS'
 TESTERR2 CSECT
@@ -99,8 +101,11 @@ EQU1     EQU   2   BAD
 * TEST DC NO DATA, COMMENT * AFTER 1, E type comma before comments
          DC    CL3
  * BAD COMMENT
-         PR    , GOOD COMMENT
-         PR    BAD COMMENT
+         PR    GOOD COMMENT
+* TEST EQU CIRCULAR ERROR AND LITERAL MOD FORWARD REF ERRORS RPI 739
+X749     EQU   X749              CIRCULAR EQU ERROR
+         LA    0,=CL(FWDLEN)' '  LIT MOD FORWARD REF ERROR
+FWDLEN   EQU   1
 * TEST MISSING CLOSE ) ON EXPLICIT ARGS
          CLI   1(2,3      BAD
          L     1,2(3,4    BAD

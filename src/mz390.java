@@ -297,7 +297,12 @@ public  class  mz390 {
      * 11/15/07 RPI 740 warning for macro proto-type name mismatch
      *          add option CHKMAC for checking for stmts after final mend
      * 11/27/07 RPI 743 allow comments on proto-type follwoing keyword parm
-     * 11/29/07 RPI 745 add support for AREAD NOPRINT, NOSTMT, CLOCKB/D                   
+     * 11/29/07 RPI 745 add support for AREAD NOPRINT, NOSTMT, CLOCKB/D  
+     * 12/01/07 RPI 746 gen LISTCALL before macro load to help identify error source 
+     *          correct TRM file/line numbers off by 1 after created MNOTE
+     * 12/04/07 RPI 747 CHKSRC(0-2), CHKMAC(0-2) options 
+     * 12/05/07 RPI 754 exit macro after ACTR limit error vs abort
+     *          incr AGO for PC AGO and only if computed AGO taken        
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -451,7 +456,7 @@ public  class  mz390 {
 	 */
 	int old_mac_line_index = 0; //prev    mac_line_index
 	int new_mac_line_index = 0; //target  mac_line_index
-	int mac_line_index = 0;     //current mac line index
+	int mac_line_index = 1;     //current mac line index
 	int bal_xref_index = 0;     // last mac line ref to pass to az390
 	int tot_mac_line = 0;       // next avail line
 	String[] mac_file_line     = null;  // mlc, mac, and cpy source line including continued text
@@ -1054,6 +1059,7 @@ public  class  mz390 {
 		load_type = load_mlc_file;
 		load_file_name = tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type;
 		load_mac();
+		mac_line_index = 0; // RPI 746
 		mlc_line_end = tot_mac_line;
 		init_lcl_sys();
 		if (tz390.opt_trap){
@@ -1295,7 +1301,7 @@ public  class  mz390 {
 				bal_line = null;
 				if (mac_call_level >= 0){
 					mac_name_index = mac_call_name_index[mac_call_level];
-					mac_line_index = mac_call_return[mac_call_level];
+					mac_line_index  = mac_call_return[mac_call_level];
 					update_sysstmt();
 					actr_count     = mac_call_actr[mac_call_level];
 					tot_pos_parm = mac_call_pos_start[mac_call_level + 1];
@@ -1323,6 +1329,7 @@ public  class  mz390 {
 			    } else if (pc_loc < 0){ 
 			    	// jump for ago, gbl?, etc.
 			    	mac_line_index = - pc_loc;
+			    	actr_count--; // RPI 754
 			    	bal_line = null;
 				} else {
 					bal_line = mac_file_line[mac_line_index];
@@ -1346,6 +1353,10 @@ public  class  mz390 {
 							}
 						} else { 
 							find_mac_name_index = -2; // RPI 331 don't search for opsyn rep.
+						}	
+						if (tz390.opt_listcall
+							&& find_mac_name_index != -2){
+							put_listcall(); // RPI 746
 						}
 						if (find_mac_name_index == -1){
 							find_and_load_mac_file();
@@ -1377,7 +1388,8 @@ public  class  mz390 {
 				put_bal_line(bal_line);
 			}
 			if (!mlc_eof && actr_count <= 0){
-				abort_error(82,"actr limit exceeded");
+				log_error(82,"actr limit exceeded");  // RPI 754
+				mac_line_index = mac_name_line_end[mac_call_name_index[mac_call_level]]; // RPI 754
 			}
 			if (tz390.opt_time
 					&& (tot_mac_ins > next_time_check)){
@@ -1535,8 +1547,9 @@ public  class  mz390 {
 						load_macro_mend_level--;
 					}
 					if (load_macro_mend_level == 0
-							&& load_type != load_mlc_file){
-						if (tz390.opt_chkmac){
+						&& load_type != load_mlc_file){
+						if (tz390.opt_chkmac == 2 
+							&& load_type == load_mac_file){ // RPI 747
 							check_past_mend();  // RPI 740
 						}
 						mac_line = null; // eof at level 0 for macro
@@ -1557,7 +1570,7 @@ public  class  mz390 {
 					mac_line_index++;
 					update_sysstmt();
 				}
-				load_get_mac_line();			
+				load_get_mac_line();
 			}
 		}
 		if (mac_line_index >= tz390.opt_maxline){
@@ -1692,7 +1705,8 @@ public  class  mz390 {
 		mac_op = replace_vars(mac_op,false,false); // RPI 673
 		if (load_type == load_mac_file){
 			mac_name_line_start[mac_name_index] = mac_line_index; // RPI 331 
-			if (!mac_op.equals(load_macro_name.toUpperCase())){ // RPI 519
+			if (!mac_op.equals(load_macro_name.toUpperCase())
+				&& tz390.opt_chkmac > 0){ // RPI 519  RPI 747
 				create_mnote(4,"MACRO PROTO-TYPE NAME DOES NOT MATCH FILE NAME " + load_macro_name); // RPI 740
 			}
 		} else {  // define inline macro
@@ -2038,7 +2052,8 @@ public  class  mz390 {
 		 */
 		int index = mac_name_lab_start[mac_index];
 		while (index < mac_name_lab_end[mac_index]){
-			if (mac_lab_index[index] <= 0){
+			if (mac_lab_index[index] <= 0
+				&& tz390.opt_chkmac > 0){  // RPI 747
 				int old_mac_line_index = mac_line_index;
 				mac_line_index = -mac_lab_index[index];
 				create_mnote(4,"Macro " + mac_name[mac_index] 
@@ -2049,7 +2064,7 @@ public  class  mz390 {
                             		                               mac_call_level,
                             		                               mac_file_type[mac_file_num[mac_line_index]])
                              );
-				mac_line_index = old_mac_line_index;
+				mac_line_index = old_mac_line_index; 
 			}
 			index++;
 		}
@@ -2095,8 +2110,12 @@ public  class  mz390 {
 					}
 				} else {
 					temp_line = tz390.trim_trailing_spaces(temp_line,mac_ictl_end[cur_mac_file]+1);  // RPI 728 include cont col.
-					if (!tz390.verify_ascii_source(temp_line)){
-						log_error(138,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getAbsolutePath());
+					if (tz390.opt_chksrc > 0){  // RPI 747
+						if 	((load_type == load_mlc_file
+							 || tz390.opt_chksrc == 2)
+						&& !tz390.verify_ascii_source(temp_line)){
+							log_error(138,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getAbsolutePath());
+						}
 					}
 				}
 			}
@@ -2120,10 +2139,14 @@ public  class  mz390 {
 						temp_line = "";
 					}
 					temp_line = tz390.trim_trailing_spaces(temp_line,72);
-					if (!tz390.verify_ascii_source(temp_line)){
-						log_error(140,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getAbsolutePath());
-						mac_cont_line = false;
-						temp_line = tz390.trim_trailing_spaces(temp_line,72);
+					if (tz390.opt_chksrc > 0){  // RPI 747
+						if 	((load_type == load_mlc_file
+							 || tz390.opt_chksrc == 2)
+							&& !tz390.verify_ascii_source(temp_line)){
+							log_error(140,"invalid ascii source line " + cur_mac_line_num + " in " + mac_file[cur_mac_file].getAbsolutePath());
+							mac_cont_line = false;
+							temp_line = tz390.trim_trailing_spaces(temp_line,72);
+						}						
 					}
 					if (temp_line.length() < 72 
 						|| temp_line.charAt(71) <= asc_space_char){ //RPI181
@@ -2356,12 +2379,11 @@ public  class  mz390 {
 		}
 		if (tz390.opt_tracem && text_line != null){
 			tz390.put_trace(trace_id 
-				+ tz390.get_cur_bal_line_id(mac_file_num[mac_line_index],
-						                    mac_file_line_num[mac_line_index],
-						                    tz390.
-						                    cur_bal_line_num,
+				+ tz390.get_cur_bal_line_id(mac_file_num[bal_xref_index],      // rpi 746
+						                    mac_file_line_num[bal_xref_index], // rpi 746
+						                    tz390.cur_bal_line_num,
 						                    mac_call_level,
-						                    mac_file_type[mac_file_num[mac_line_index]]) 
+						                    mac_file_type[mac_file_num[bal_xref_index]]) // rpi 746
 						                  + text_line); // RPI 549
 		}
 		if (!tz390.opt_bal){
@@ -6652,7 +6674,6 @@ public  class  mz390 {
 		tot_mac_call++;
 		gbl_seta[gbl_sysm_sev_index] = 0;
 		mac_name_index = find_mac_name_index;
-		int save_mac_line_index = mac_line_index;
 		mac_call_return[mac_call_level] = mac_line_index + 1;
 		mac_call_actr[mac_call_level] = actr_count;
 		actr_count = actr_limit;
@@ -6680,39 +6701,6 @@ public  class  mz390 {
 			 * add lcl system variables 
 			 */
 			init_lcl_sys();
-			if  (tz390.opt_listcall){
-				String call_label = bal_label;
-				String call_parms = bal_parms;
-				if (call_label == null){
-					call_label = "        ";
-				} else {
-					if (call_label.length() > 1 && call_label.charAt(0) == '.'){
-						call_label = tz390.left_justify(" ",call_label.length());
-					}
-					call_label = tz390.left_justify(call_label,8);
-				}
-				String call_op = save_bal_op;
-				call_op = tz390.left_justify(call_op,5);
-				String sysndx = tz390.right_justify("" + lcl_sysndx,4);
-				String sysnest = tz390.right_justify("" + mac_call_level,2);
-				if (call_parms == null)call_parms = "";
-				String call_line = null;
-				if (tz390.opt_reformat){
-					call_line = call_label + " " + call_op + " " + call_parms;
-				} else { 
-					if (bal_label != null && bal_label.length() > 1 && bal_label.charAt(0) == '.'){
-						call_line = tz390.left_justify(" ",bal_label.length()) + bal_line.substring(bal_label.length());
-					} else {
-						call_line = bal_line;
-					}
-				}
-				bal_xref_index = save_mac_line_index; 
-				mac_call_level--;
-				put_bal_line("*MCALL #=" + sysndx 
-						        + " LV=" +  sysnest 
-						        + " " + call_line);
-			    mac_call_level++;
-			}
 			/*
 			 * 1.  parse proto-type and add initial
 			 *     key word parms with values
@@ -6727,6 +6715,41 @@ public  class  mz390 {
 		} else {
 			abort_error(30,"max level of nested macros exceeded");
 		}
+	}
+	private void put_listcall(){
+		/*
+		 * gen listcall comment
+		 * before load or call  RPI 746
+		 */
+			String call_label = bal_label;
+			String call_parms = bal_parms;
+			if (call_label == null){
+				call_label = "        ";
+			} else {
+				if (call_label.length() > 1 && call_label.charAt(0) == '.'){
+					call_label = tz390.left_justify(" ",call_label.length());
+				}
+				call_label = tz390.left_justify(call_label,8);
+			}
+			String call_op = save_bal_op;
+			call_op = tz390.left_justify(call_op,5);
+			String sysndx = tz390.right_justify("" + (lcl_sysndx+1),4);
+			String sysnest = tz390.right_justify("" + (mac_call_level+1),2);
+			if (call_parms == null)call_parms = "";
+			String call_line = null;
+			if (tz390.opt_reformat){
+				call_line = call_label + " " + call_op + " " + call_parms;
+			} else { 
+				if (bal_label != null && bal_label.length() > 1 && bal_label.charAt(0) == '.'){
+					call_line = tz390.left_justify(" ",bal_label.length()) + bal_line.substring(bal_label.length());
+				} else {
+					call_line = bal_line;
+				}
+			}
+			bal_xref_index = mac_line_index;   
+			put_bal_line("*MCALL #=" + sysndx 
+					        + " LV=" +  sysnest 
+					        + " " + call_line);
 	}
 	private void init_pc_arrays(){
 		/*
@@ -9866,9 +9889,9 @@ public  class  mz390 {
     	 *      +2 = ago line index array for macro labels
     	 *   2. ago_index = current index
     	 */
-    	actr_count--;
 		if (ago_index >= 1
 			&& ago_index <= gbl_seta[ago_gbla_index + 1]){
+	    	actr_count--;  // RPI 754
 			mac_line_index = gbl_seta[ago_gbla_index + 1 + ago_index];
 		}
 		update_sysstmt();

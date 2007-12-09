@@ -289,6 +289,8 @@ public  class  az390 implements Runnable {
     * 11/12/07 RPI 737 add STATS(file) option    
     * 11/27/07 RPI 743 set CNOP label attribute type to 'I'
     *          allow comments without , on PR as on other 12 ops without operands
+        * 12/06/07 RPI 751 add DFHRESP(EXPIRED)=F'31'
+        * 12/07/07 RPI 749 error for X EQU X and lit mod forward refs.
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -684,7 +686,9 @@ public  class  az390 implements Runnable {
     boolean exp_sym_pushed = false;
     boolean exp_sym_last = false; 
     boolean exp_first_sym_len = true; // is this first exp sym len
-    int exp_len = 1;
+    boolean exp_equ     = false; // RPI 749
+    boolean exp_lit_mod = false; // RPI 749
+    int exp_len = 1;    
     int tot_exp_stk_sym = 0;
     int tot_exp_stk_op  = 0;
     int[]     exp_stk_sym_esd  = (int[])Array.newInstance(int.class,max_exp_stk);
@@ -858,8 +862,9 @@ public  class  az390 implements Runnable {
     		  "LENGERR)",         //11 - =F'22'   		  
     		  "ITEMERR)",         //12 - =F'26'  RPI 662
     		  "PGMIDERR)",        //13 - =F'27'
-    		  "QIDERR)",          //14 - =F'44'  RPI 662
-    		  "DISABLED)",        //15 - =F'84' RPI 687
+    		  "EXPIRED)",          //14   =F'31'  RPU 751
+    		  "QIDERR)",          //15 - =F'44'  RPI 662
+    		  "DISABLED)",        //16 - =F'84' RPI 687
     		  };
       String[] dfhresp_lit = {
     		  "=F'0'",           // 0 "NORMAL)" 
@@ -876,8 +881,9 @@ public  class  az390 implements Runnable {
     		  "=F'22'",          //11 "LENGERR)" 
     		  "=F'26'",          //12 "ITEMERR)" RPI 662
     		  "=F'27'",          //13 "PGMIDERR)"
-    		  "=F'44'",          //14 "QIDERR)"  RPI 662
-    		  "=F'84'",          //15 "DISABLED)" RPI 687
+    		  "=F'31'",          //14 "EXPIRED)"  RPI 751
+    		  "=F'44'",          //15 "QIDERR)"  RPI 662
+    		  "=F'84'",          //16 "DISABLED)" RPI 687
     		  };
   /* 
    * end of global az390 class data and start of procs
@@ -1576,6 +1582,9 @@ private void process_bal_op(){
 	cur_sym_sect = false;   // assume RX/ABS label RPI 553
 	int index = tz390.op_type[bal_op_index];
 	if (index < tz390.max_ins_type || bal_op.equals("CNOP")){ // RPI 340 RPI 743
+		if (index > 0 && mac_inline_level == 0){
+			check_private_csect(); // rpi 747
+		}
 		bal_lab_attr = tz390.ascii_to_ebcdic['I']; 
 	} else {
 		bal_lab_attr = tz390.ascii_to_ebcdic['U'];
@@ -2536,7 +2545,7 @@ private void list_bal_line(){
                       bal_line_xref_file_line[bal_line_index],
                       bal_line_num[bal_line_index],
                       mac_call_level,
-                      cur_line_type)
+                      cur_line_type) 
     		  + bal_line);
 	    }
 	    force_print = false;   // RPI 285
@@ -3318,6 +3327,10 @@ public int find_sym(String name){ // RPI 415 public
 			add_sym_xref(index);
 			if (sym_type[index] == sym_und){  // RPI 694
 			  	log_error(198,"symbol not defined " + sym_name[index]);
+			} else if (exp_equ && bal_line_index == sym_def[index]){
+				log_error(200,"circular EQL expression error for " + sym_name[index]); // RPI 749
+			} else if (exp_lit_mod && bal_line_index < sym_def[index]){
+				log_error(201,"literal modifier forward reference for " + sym_name[index]); // RPI 749
 			}
 		} else if (dcv_type){
 			add_extrn(index,name);
@@ -3495,9 +3508,13 @@ public void process_dc(int request_type){ // RPI 415
 	       } else if (dc_field.charAt(dc_index) <= ' '){ //RPI181
 	       	  dc_index = dc_field.length();  // flush trailing comments
 	       }
+	       if (dc_lit_ref){
+	    	   exp_lit_mod = true; // RPI 749
+	       }
 	       get_dc_field_dup();
 	       get_dc_field_type();
 	       get_dc_field_modifiers(); // RPI 368
+	       exp_lit_mod = false; // RPI 749
 	       if  (dc_index < dc_field.length() 
 	       		&& dc_field.charAt(dc_index) != ','
 	       	    && dc_field.charAt(dc_index) > ' '){ //RPI181
@@ -6897,6 +6914,7 @@ public void process_equ(){ // RPI 415
 		}
 		exp_text = bal_parms;
 		exp_index = 0;
+		exp_equ = true; // rpi 749
 		if (calc_exp()){
 			// equ value and defaults
 			sym_type[store_sid] = exp_type;
@@ -6982,6 +7000,7 @@ public void process_equ(){ // RPI 415
 	} else {
 		log_error(184,"missing EQU label");  // RPI 597
 	}
+	exp_equ = false; // RPI 749
 }
 private void process_org(){
 	/*

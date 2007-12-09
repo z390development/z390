@@ -157,7 +157,8 @@ public  class  tz390 {
     *          suffix .OPT and search path SYSOPT which defaults
     *          to program path.  Any number of file
     *          and nested files with options * comments.
-    *          Change SYSCPY to default to SYSMAC.         
+    *          Change SYSCPY to default to SYSMAC. 
+    * 12/04/07 RPI 747 add CHKSRC(0-2) CHKMAC(0-2) checking options                 
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -166,7 +167,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.08f";  //dsh
+    String version    = "V1.3.08g";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -184,7 +185,6 @@ public  class  tz390 {
     boolean opt_asm      = true;  // run az390 assembler as mz390 subtask  RPI 415
     boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
     boolean opt_bs2000   = false; // Seimens BS2000 asm compatibility
-    boolean opt_chkmac   = false; // check macros for statements beyond final MEND
     boolean opt_cics     = false; // exec cics program honoring prolog,epilog
     boolean opt_con      = true;  // log msgs to console
     boolean opt_dump     = false; // only indicative dump on abend unless on
@@ -234,6 +234,8 @@ public  class  tz390 {
     String  test_ddname = null;
     char    z390_amode31 = 'T';
     char    z390_rmode31 = 'F';
+    int opt_chkmac   = 0; // RPI 747 0-none,1-labels, 2-labels and src after MEND
+    int opt_chksrc   = 1; // RPI 747 0-none,1-MLC only,2-all
     int opt_maxcall  = 50;
     int opt_maxesd   = 1000;
     int opt_maxfile = 1000;     // RPI 707 max concourrent files open
@@ -3775,8 +3777,18 @@ private void process_option(String token){
 		opt_amode24 = true;
 		opt_amode31 = false;
 		z390_amode31 = 'F';
-	} else if (token.toUpperCase().equals("CHKMAC")){
-       	opt_chkmac = true;
+    } else if (token.length() == 9
+        	&& token.substring(0,7).toUpperCase().equals("CHKMAC(")){
+       	opt_chkmac = token.charAt(7) - '0';
+      	if (opt_chkmac < 0 || opt_chkmac > 2){
+           		invalid_options = invalid_options + " " + token;
+           	}
+    } else if (token.length() == 9
+        	&& token.substring(0,7).toUpperCase().equals("CHKSRC(")){
+           	opt_chksrc = token.charAt(7) - '0';
+          	if (opt_chksrc < 0 || opt_chksrc > 2){
+           		invalid_options = invalid_options + " " + token;
+           	}
 	} else if (token.toUpperCase().equals("CICS")){
        	opt_cics = true;
 	} else if (token.toUpperCase().equals("CON")){
@@ -3788,7 +3800,7 @@ private void process_option(String token){
        	try {
        		max_errors = Integer.valueOf(token.substring(4,token.length()-1)).intValue(); 
       	} catch (Exception e){
-       		abort_error(6,"invalid error limit - " + token);
+        	invalid_options = invalid_options + " " + token;
        	}
     } else if (token.toUpperCase().equals("ERRSUM")){
        	init_errsum();
@@ -3820,7 +3832,7 @@ private void process_option(String token){
        	try {
        		opt_maxfile = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
        	} catch (Exception e){
-       		abort_error(7,"invalid maxfile limit = " + token);
+        	invalid_options = invalid_options + " " + token;
        	}
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("MAXGBL(")){
@@ -3851,7 +3863,7 @@ private void process_option(String token){
            	try {
            		max_file_size = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20; 
            	} catch (Exception e){
-           		abort_error(8,"invalid maxsize limit (mb) - " + token);
+            	invalid_options = invalid_options + " " + token;
            	}
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("MAXSYM(")){
@@ -3865,7 +3877,7 @@ private void process_option(String token){
        	try {
        	    max_mem = Integer.valueOf(token.substring(4,token.length()-1)).intValue();
        	} catch (Exception e){
-       		abort_error(9,"invalid memory option " + token);
+        	invalid_options = invalid_options + " " + token;
        	}
     } else if (token.toUpperCase().equals("NOASM")){
        	opt_asm = false;
@@ -5080,7 +5092,7 @@ public void put_trace(String text){
 	 * 2.  Set number of continuation lines for next call.
 	 */
     	if (text_line == null)return;
-	    cur_bal_line_num = cur_bal_line_num + 1 + prev_bal_cont_lines;
+	    	cur_bal_line_num = cur_bal_line_num + 1 + prev_bal_cont_lines;
 	    if (text_line != null && text_line.length() > 71){ // RPI 415 adj for continuations for xref
 	        prev_bal_cont_lines = 1 + (text_line.length()-72)/56;	
 	    } else {
@@ -5106,7 +5118,7 @@ public void put_trace(String text){
     	}
     	if (bal_line_num == 0){
     		return right_justify("(" + (file_num+1)
-    			                 + "/" + file_line_num 
+    			                 + "/" + file_line_num
     			                 + ")"
     			                 + line_type,10); // RPI 549
     	}
@@ -5115,7 +5127,7 @@ public void put_trace(String text){
     		line_type = '+'; // RPI 581 inline macro generated code
     	}
     	return right_justify("(" + (file_num+1)
-    			                 + "/" + file_line_num 
+    			                 + "/" + file_line_num
     			                 + ")" + bal_line_num 
     			                 + line_type,15); // RPI 549
     }

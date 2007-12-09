@@ -23,6 +23,7 @@
 * 08/04/06 RPI 391 - replace trailing output nulls with spaces  
 * 12/11/06 RPI 514 - add DD, ED, and LD DFP conversion support  
 * 04/27/07 RPI 600 - add GBLA &ARCHLVL to FPCON_CALL  
+* 12/07/07 RPI 749 - move LBUFF to front of pgm to avoid lit errors
 *********************************************************************
          PRINT DATA
          COPY  ASMMSP       STRUCTURED PROGRAM MACROS AND EQUS
@@ -48,6 +49,7 @@
 .END_CALL ANOP
          MEND
 FPCONMFC SUBENTRY
+LBUFF    EQU    45 CONSTANT PER CFD AND CTD MACRO DEFINITIONS
          LM    R3,R5,0(R1)  R3=TYPE, R4=ARG2, R5=ARG3
          STC   R3,TYPE
          IF    (CLI,TYPE,GE,21)     RPI 514
@@ -450,7 +452,6 @@ COMP128  EQU   *
 *
 MYSAVE   DC    A(0)
 BIGSAVE  DC    18D'0' FOR ARCH=5 GREG SAVE AREA
-LBUFF    EQU    45 CONSTANT PER CFD AND CTD MACRO DEFINITIONS
 INT_1E26 DC    FL16'1E26' MULTIPLIER FOR FIRST 1-13 DIGITS
          LTORG
          EQUREGS REGS=GPR

@@ -1,5 +1,7 @@
-z390 v1.3.08f PTF 11/30/07
+z390 v1.3.08g PTF 12/09/07
 Copyright 2007 Automated Software Tools Corporation
+
+See install directions below.
 
 The enclosed z390.jar contains following cumulative fixes for v1.3.08:
 
@@ -133,7 +135,25 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.08:
     characters with the exception of comments starting with '*'.  This is to flag
     any DC C'...' or self defining character strings with hex that must be converted to 
     X'..' type for portability between EBCDIC and ASCII.
-26. RPI 745 add support for AREAD operands CLOCKB and CLOCKD and ignore NOPRINT and NOSMT.    
+26. RPI 745 add support for AREAD operands CLOCKB and CLOCKD and ignore NOPRINT and NOSMT. 
+27. RPI 746 move LISTCALL generated comment before macro load on first call to help
+    identify the source of any macro load errors or warnings during initial loading.
+    Also correct several TRM line reference errors for TRACEM.
+28. RPI 747 add new option CHKSRC(n) where n = 0 for no source file
+    checking for non-printable ASCII characters, 1 = check MLC only(default), 
+    and 3 = check all sources including macros.  All option CHKMAC(n) where 
+    n = 0 for no macro checking (default), 1 = check macros for missing macro
+    labels and issue MNOTE warning, 2 = check macros for missing labels and
+    also check for source statements beyond final MEND.
+29. RPI 749 issue errors for circular EQU expressions such as X EQU X, and
+    issue error for literals with forward referenced symbols in modifiers.
+30. RPI 750 add KSDS support for KGE option and generic keys including support
+    for MODCB setting of RPL KEYLEN= value.  Change tracev to skip feedback = 0
+    and add trace of RPL, RPLARG, and RPLAREA at end of each RPL operation. Change
+    RPLD to define one byte flag fields.
+31. RPI 751 add CICS DFHRESP code EXPIRED with value F'31'.
+32. RPI 754 correct ACTR limit processing to issue error and exit current macro
+    instead of aborting.  Also correct pseudo code AGO to decrement ACTR counter. 
   
 
 To install this cumulative PTF for z390 follow these steps.

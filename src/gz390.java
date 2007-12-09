@@ -1613,7 +1613,7 @@ public  class  gz390
          	  if (!tn_kb_lock){
          	  	  tn_aid = 0x6d; // clear key
          	  	  tn_attn = true;
-         	  	  tn_clear_screen(); // dshx
+         	  	  tn_clear_screen(); 
          	  }
     	   }
   	   }
@@ -2619,10 +2619,10 @@ private synchronized void tn_clear_screen(){
 		Arrays.fill(scn_attr,0,max_addr,0);
 		fld_tot = 0;
 		fld_input_tot = 0;
-	    scn_addr = 0;           // dshx
-	    tn_cursor_scn_addr = 0; // dshx
-	    tn_cursor = true;       // dshx 
-	    tn_cursor_alt = false;  // dshx
+	    scn_addr = 0;           
+	    tn_cursor_scn_addr = 0; 
+	    tn_cursor = true;        
+	    tn_cursor_alt = false;  
         tn_scn.scn_grid.clearRect(0,0,tn_scn.scn_width,tn_scn.scn_height);
 }
 private void tn_reset_mdt(){
