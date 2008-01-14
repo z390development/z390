@@ -56,7 +56,12 @@ public  class  vz390 {
     * 10/25/07 RPI 724 start RRDS/VRRDS rel rcd at 1  
     * 11/13/07 RPI 739 change RRDS and KSDS seq/key to test opt_seq  
     * 12/05/07 RPI 750 add RPL, RPLARG, and RPLAREA tracev at feedback
-    *          add support for KSDS KGE search                                  
+    *          add support for KSDS KGE search 
+    * 12/19/07 RPI 757 support POINT and GET with GEN, KGE generic key 
+    * 01/08/08 RPI 779 1) return key in RPLARG for gen key access
+    *          2)correct TRACEV to show RPL KLEN and VCLR KLEN and full key
+    *          3)show 4 or 8 byte RPLARG RBA for ESDS/RRDS
+    *          4)set POINT with KSDS high value key to EOF                                        
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -359,9 +364,11 @@ public  class  vz390 {
 	long last_key_rec = 0;
 	long last_key_vx0_xrba = 0;
 	long last_key_ves_xrba = 0;
+	int  last_key_gen_rc = 0;
 	long prev_key_rec = 0;
 	long prev_key_vx0_xrba = 0;
 	long prev_key_ves_xrba = 0;
+	int  prev_key_gen_rc = 0;
     /*
      * stats option statistics for log
      */
@@ -382,6 +389,7 @@ public  class  vz390 {
      * KSDS work areas
      */
     int  comp_rc = 0; // result of last key compare
+    int  comp_key_gen_rc = 0; // RPI 757
     int  key_pfx_addr = 0;
     long key_pfx_save = 0;
     /*
@@ -1077,7 +1085,6 @@ public  class  vz390 {
         	// eod or error finding ves xrba from vx0
         	return;
         }
-        cur_rpl_flag = 0; //dshx temp bypass for v1309g
         if ((cur_rpl_flag & rpl_flag_ksit) != 0){
         	if (!read_ves_rec()){ // rpi 672
         		return;
@@ -1088,13 +1095,16 @@ public  class  vz390 {
         		cur_rpl_ksir = cur_ksir_fwd;
         	}
         	set_rpl_ksds_next();
+        	set_rpl_cxrba(cur_vx0_xrba);
         } else {
         	set_rpl_lxrba(cur_vx0_xrba);
         	// read ves record  
         	if (!read_ves_rec()){ // rpi 672
         		return;
         	}
-            set_rpl_ksds_next();
+        	if ((cur_rpl_opt & rpl_opt_bwd) == 0){ // RPI 779
+        		set_rpl_ksds_next();
+        	}
         	set_rpl_cxrba(cur_vx0_xrba);
         }
     	if ((cur_rpl_opt & rpl_opt_upd) != 0){
@@ -1110,7 +1120,7 @@ public  class  vz390 {
     	 * either in KSIT or VX0 index
     	 * and turn off rpl_flag_ksit if done
     	 */
-    	if ((cur_rpl_flag & rpl_flag_ksit) == 0){
+    	if ((cur_rpl_flag & rpl_flag_ksit) != 0){
     		if (cur_rpl_ksir != -1){
     			cur_rpl_flag = cur_rpl_flag ^ rpl_flag_ksit;
     			set_rpl_flag();
@@ -1122,6 +1132,7 @@ public  class  vz390 {
     	} else {
             set_vx0_ksds_next();
     	}
+    	set_rpl_cxrba(cur_vx0_xrba);
     }
     private void set_rpl_flag(){
     	/*
@@ -1157,6 +1168,11 @@ public  class  vz390 {
     	if (!read_ves_rec()){ // RPI 688 RPI 672
     		return;
     	}
+		if ((cur_rpl_opt & rpl_opt_gen) != 0){
+			System  // RPI 779
+			.arraycopy(pz390.mem_byte, cur_rpl_area + cur_vclr_koff,
+				       pz390.mem_byte, cur_rpl_arg,cur_vclr_klen);
+		}
     	set_rpl_cxrba(cur_vx0_xrba);
     	if ((cur_rpl_opt & rpl_opt_upd) != 0){
     		// set successful get flag for possible UPD put update
@@ -1315,10 +1331,13 @@ public  class  vz390 {
     			prev_key_rec = last_key_rec;
     			prev_key_vx0_xrba = last_key_vx0_xrba;
     			prev_key_ves_xrba = last_key_ves_xrba;
+    			prev_key_gen_rc = last_key_gen_rc;
     			last_key_rec = next_key_rec;
     			last_key_vx0_xrba = cur_vx0_xrba;
     			last_key_ves_xrba = cur_ves_xrba;
-    			if (comp_key(cur_rpl_arg,cur_key) == 0){
+    			comp_key(cur_rpl_arg,cur_key);
+    			last_key_gen_rc = comp_key_gen_rc;
+    			if (comp_rc == 0){
     			  	if (cur_ves_xrba < 0){
     		    		if (find_ksir()){
     		    			set_rpl_cur_rec(true);
@@ -1338,8 +1357,7 @@ public  class  vz390 {
     			next_key_rec = (high_key_rec + low_key_rec + 1)/2;
     			if (next_key_rec == last_key_rec && next_key_rec > 0){
     				next_key_rec--;
-    			}
-    			
+    			}    			
     		} else {
     			return false;
     		}
@@ -1352,11 +1370,33 @@ public  class  vz390 {
     	} else if ((cur_rpl_opt & rpl_opt_kge) != 0){  // RPI 750
     		if (comp_rc > 0 
     			&& prev_key_rec > last_key_rec){ // RPI 750
+    			// if this rec key is low
+    			// and prec rec key was higher
+    			// than return prev key for KGE
                 cur_vx0_xrba = prev_key_vx0_xrba;
-                cur_ves_xrba = prev_key_vx0_xrba;
+                cur_ves_xrba = prev_key_ves_xrba;
+                comp_key_gen_rc = prev_key_gen_rc;
     		}
+    		if ((cur_rpl_opt & rpl_opt_gen) != 0
+   				&& comp_key_gen_rc > 0){
+    			return false;        		
+        	}
 			set_rpl_cur_rec(true);
 			return true;
+    	} else if ((cur_rpl_opt & rpl_opt_gen) != 0){
+    		if (comp_rc > 0 
+        			&& prev_key_rec > last_key_rec){ // RPI 750
+        			// if this rec key is low
+        			// and prec rec key was higher
+        			// than return prev key for KGE
+                    cur_vx0_xrba = prev_key_vx0_xrba;
+                    cur_ves_xrba = prev_key_ves_xrba;
+                    comp_key_gen_rc = prev_key_gen_rc;
+    		}
+   			if (comp_key_gen_rc == 0){
+   				set_rpl_cur_rec(true);
+   				return true;
+   			}
     	}
     	return false;
     }
@@ -1379,7 +1419,7 @@ public  class  vz390 {
     	/*
     	 * reset flags for RPL current record
     	 */
-		cur_rpl_flag = cur_rpl_flag ^ (rpl_flag_ksit |rpl_flag_getok | rpl_flag_getnf);
+		cur_rpl_flag = cur_rpl_flag & (-1 ^ (rpl_flag_ksit |rpl_flag_getok | rpl_flag_getnf));
 		pz390.mem.putInt(cur_rpl_addr + rpl_flag,cur_rpl_flag);
     }
     private boolean find_ksds_insert_key(){
@@ -1808,7 +1848,8 @@ public  class  vz390 {
     		set_rpl_cxrba(cur_ves_xrba);
    		} else if ((cur_vclr_flag & vclr_flag_ksds) != 0){
     		// KSDS POINT
-    		if  ((cur_rpl_opt & rpl_opt_lrd) != 0){
+    		if  ((cur_rpl_opt & rpl_opt_lrd) != 0
+    			|| rpl_key_high_values()){  // RPI 779
                 // position to  eof xrba
 	    		cur_vx0_xrba = sz390.tiot_eof_rba[cur_vx0_tiot_index];
     		} else {
@@ -1892,8 +1933,18 @@ public  class  vz390 {
         	}
 			tz390.put_trace("VSAM RPL ADDR=" + tz390.get_hex(cur_rpl_addr,8) + " LEN=" + tz390.get_hex(rpl_len,8));
 			sz390.dump_mem(pz390.mem,cur_rpl_addr,rpl_len);
-			tz390.put_trace("VSAM RPL ARG =" + tz390.get_hex(cur_rpl_arg,8) + " LEN=" + tz390.get_hex(comp_key_len,8));
-			sz390.dump_mem(pz390.mem,cur_rpl_arg,comp_key_len);
+            int cur_rpl_arg_len = cur_vclr_klen;  // RPI 779
+			if ((cur_vclr_flag & vclr_flag_ksds) == 0){
+				if ((cur_rpl_opt & rpl_opt_xrba) != 0){
+					cur_rpl_arg_len = 8;
+				} else {
+					cur_rpl_arg_len = 4;
+				}
+            }
+			tz390.put_trace("VSAM RPL ARG =" + tz390.get_hex(cur_rpl_arg,8) 					
+					               + " LEN=" + tz390.get_hex(cur_rpl_arg_len,8)
+					               + " KLEN=" + tz390.get_hex(cur_vclr_klen,8)); // RPI 779
+			sz390.dump_mem(pz390.mem,cur_rpl_arg,cur_rpl_arg_len); // RPI 779
 			tz390.put_trace("VSAM RPL AREA=" + tz390.get_hex(cur_rpl_area,8) + " LEN=" + tz390.get_hex(cur_rpl_lrec,8));
 			sz390.dump_mem(pz390.mem,cur_rpl_area,cur_rpl_lrec);
         }
@@ -2475,6 +2526,9 @@ public  class  vz390 {
     	 * key in last_vx0_key or cur_vx0_key array
     	 * using comp_key_len set by rpl fetch
     	 * -1, 0, 1 for low, equal, high.
+    	 * Notes:
+    	 *   1.  Set matching_key_bytes for 
+    	 *       generic key processing
     	 */
     	int key1_end = key1_loc + cur_vclr_klen;
     	int comp_key_end = key1_loc + comp_key_len;
@@ -2492,6 +2546,11 @@ public  class  vz390 {
 				} else {
 					comp_rc = -1;
 				}
+				if (key1_loc >= comp_key_end){
+					comp_key_gen_rc = 0;
+				} else {
+					comp_key_gen_rc = comp_rc;
+				}
 				return comp_rc;
 			} else {
 				key1_loc++;
@@ -2500,6 +2559,24 @@ public  class  vz390 {
 		}
 		comp_rc = 0;
 		return comp_rc;
+    }
+    private boolean rpl_key_high_values(){
+    	/*
+    	 * compare key in RPLAREA+KEYOFF with 
+    	 * high values RPI 779
+    	 * using cur_vclr_klen
+    	 * -1, 0, 1 for low, equal, high.
+    	 */
+        int index = 0;
+		while (index < cur_vclr_klen
+			&& (pz390.mem_byte[cur_rpl_arg + index] & 0xff) == 0xff){;
+            index++;
+		}
+        if (index == cur_vclr_klen){
+        	return true;
+        } else {
+        	return false;
+        }
     }
     private boolean get_vcb_buff(int tiot_index,long xrba,int rec_len){
     	/*
@@ -2803,6 +2880,14 @@ public  class  vz390 {
     	 * add ksds record to existing KSIT
     	 * at current KSIR and balanee the tree
     	 */
+    	// if  (cur_rpl_flag & rpl_flag_comp_low) != 0){
+    		// add lowest record and update vx0 also
+    	//dshx} else {
+    		// add
+    		if (cur_ksir_high != -1){
+    			
+    		}
+    	//dshx }
     	// dshx
     	return false;
     }

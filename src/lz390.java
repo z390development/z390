@@ -78,12 +78,15 @@ public  class  lz390 {
     *          with INCLUDE, ALIAS, ENTRY, NAME commands
     * 11/10/07 RPI 735 change LNK to LKD 
     *          assign EXTRN with matching OBJ to start if no CSECT/ENTRY
-    * 11/12/07 RPI 737 add STATS(file) option            
+    * 11/12/07 RPI 737 add STATS(file) option 
+    * 12/24/07 RPI 759 align stats for all pgms on STA file 
+    * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, CON 
+    * 12/27/07 RPI 770 don't search for EXTRN's if NOAUTOLINK         
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
     tz390 tz390 = null;
-    String msg_id = "LZ390 ";
+    String msg_id = "LZ390I ";
     int lz390_rc = 0;
     int lz390_errors = 0;
     Date cur_date = new Date();
@@ -269,6 +272,9 @@ private void init_lz390(String[] args, JTextArea log_text){
         tz390.init_options(args,".OBJ");
 		tz390.open_systerm("LZ390");
         open_files();
+		tz390.force_nocon = true;   // RPI 755
+		put_log(tz390.started_msg); // RPI 755
+		tz390.force_nocon = false;  // RPI 755
         put_copyright();
         init_arrays();
         tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
@@ -314,35 +320,32 @@ private void put_stats(){
 	/*
 	 * display statistics as comments at end of bal
 	 */
-	boolean save_opt_con = tz390.opt_con; // RPI 453
-	if (tz390.opt_list){
-		tz390.opt_con = false;
-	}
+	tz390.force_nocon = true; // RPI 755
 	if (tz390.opt_stats){
-	   put_stat_line("Stats total obj files       = " + tot_obj_files);
-	   put_stat_line("Stats total esds            = " + tot_gbl_esd);
-	   put_stat_line("Stats total csects          = " + tot_csect);
-	   put_stat_line("Stats total entries         = " + tot_entry);
-	   put_stat_line("Stats missing wxtrn's       = " + tot_missing_wxtrn);
-	   put_stat_line("Stats Keys                  = " + tz390.tot_key);
-	   put_stat_line("Stats Key searches          = " + tz390.tot_key_search);
+	   tz390.put_stat_final_options(); // rpi 755
+	   put_stat_line("Stats total obj files = " + tot_obj_files);
+	   put_stat_line("Stats total esds      = " + tot_gbl_esd);
+	   put_stat_line("Stats total csects    = " + tot_csect);
+	   put_stat_line("Stats total entries   = " + tot_entry);
+	   put_stat_line("Stats missing wxtrn's = " + tot_missing_wxtrn);
+	   put_stat_line("Stats Keys            = " + tz390.tot_key);
+	   put_stat_line("Stats Key searches    = " + tz390.tot_key_search);
 	   if (tz390.tot_key_search > 0){
 	       tz390.avg_key_comp = tz390.tot_key_comp/tz390.tot_key_search;
 	   }
-	   put_stat_line("Stats Key avg comps         = " + tz390.avg_key_comp);
-	   put_stat_line("Stats Key max comps         = " + tz390.max_key_comp);
-	   put_stat_line("Stats total obj bytes       = " + tot_obj_bytes);
-	   put_stat_line("Stats total obj rlds        = " + tot_rld);
+	   put_stat_line("Stats Key avg comps   = " + tz390.avg_key_comp);
+	   put_stat_line("Stats Key max comps   = " + tz390.max_key_comp);
+	   put_stat_line("Stats total obj byte  = " + tot_obj_bytes);
+	   put_stat_line("Stats total obj rlds  = " + tot_rld);
 	   if (tz390.opt_timing){
 	      cur_date = new Date();
 	      tod_end = cur_date.getTime();
 	      tot_sec = (tod_end - tod_start)/1000;
-	      put_stat_line("Stats total seconds         = " + tot_sec);
 	   }
+		put_stat_line("total errors          = " + lz390_errors);
 	}
-	tz390.opt_con = save_opt_con; // RPI 453
 	put_log(msg_id +"total errors         = " + lz390_errors);
-	put_log(msg_id +"return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + lz390_rc); // RPI 312
+	tz390.force_nocon = false; // RPI 755
 }
 private void put_stat_line(String msg){
 	/*
@@ -365,6 +368,10 @@ private void close_files(){
 	  	  	  abort_error(3,"I/O error on obj close - " + e.toString());
 	  	  }
 	  }
+	  tz390.close_systerm(lz390_rc);
+      tz390.force_nocon = true;   // rpi 755
+	  put_log(tz390.ended_msg);   // rpi 755
+	  tz390.force_nocon = false;  // rpi 755
 	  if  (tz390.opt_list){
 		  if (lst_file != null && lst_file.isFile()){
 		  	  try {
@@ -374,7 +381,6 @@ private void close_files(){
 		  	  }
 		  }
 	  }
-	  tz390.close_systerm(lz390_rc);
 	  tz390.close_trace_file();
 }
 private void log_error(int error,String msg){
@@ -416,22 +422,22 @@ private void put_copyright(){
 	    * display lz390 version, timestamp,
 	    * and copyright if running standalone
 	    */
-	   	if  (tz390.opt_timing){
-			cur_date = new Date();
-	   	    put_log(msg_id + tz390.version 
-	   			+ " Current Date " +mmddyy.format(cur_date)
-	   			+ " Time " + hhmmss.format(cur_date));
-	   	} else {
-	   	    put_log(msg_id + tz390.version);
-	   	}
+	    tz390.force_nocon = true; // RPI 755
 	   	if  (z390_log_text == null){
 	   	    put_log(msg_id + "Copyright 2006 Automated Software Tools Corporation");
 	   	    put_log(msg_id + "z390 is licensed under GNU General Public License");
 	   	}
+		if (tz390.opt_stats){
+			put_stat_line("Copyright 2006 Automated Software Tools Corporation");
+			put_stat_line("z390 is licensed under GNU General Public License");
+			put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
+			put_stat_line("options = " + tz390.cmd_parms);
+		}
 	   	// RPI 378
-	   	put_log(msg_id + "program = " + tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.pgm_type);
+	   	put_log(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 	   	put_log(msg_id + "options = " + tz390.cmd_parms);
-	   }
+	    tz390.force_nocon = false; // RPI 755
+       }
 	   private synchronized void put_log(String msg) {
 	   	/*
 	   	 * Write message to z390_log_text or console
@@ -439,6 +445,9 @@ private void put_copyright(){
 	   	 * 
 	   	 */
    	    	put_lst_line(msg);
+   	    	if (tz390.force_nocon){
+   	    		return; // RPI 755
+   	    	}
 	        if  (z390_log_text != null){
   	        	z390_log_text.append(msg + "\n");
    	        }
@@ -558,7 +567,7 @@ private void process_lkd_cmds(){
 						if (index > 0){  // strip off (R) if any
 							tz390.pgm_name = tz390.pgm_name.substring(0,index);
 						}
-		            	resolve_esds();
+						resolve_esds();
 		            	load_obj_code();
 		            	gen_load_module();
 		            	while (tot_alias > 0){
@@ -1043,10 +1052,14 @@ private boolean find_ext_file(){
 		if (gbl_esd_type[cur_gbl_ext] == gbl_esd_ext
 			&& gbl_esd_name[cur_gbl_ext] != null){ // RPI 459
 			// RPI 378
-			obj_file_name = tz390.find_file_name(tz390.dir_obj,gbl_esd_name[cur_gbl_ext],tz390.pgm_type,tz390.dir_cur);
-			if (obj_file_name != null){ // RPI 378
-				open_obj_file(obj_file_name);
-				return true;
+			if (tz390.opt_autolink){ // RPI 770
+				obj_file_name = tz390.find_file_name(tz390.dir_obj,gbl_esd_name[cur_gbl_ext],tz390.pgm_type,tz390.dir_cur);
+				if (obj_file_name != null){ // RPI 378
+					open_obj_file(obj_file_name);
+					return true;
+				}
+			} else {
+				return false;
 			}
 		}
 		cur_gbl_ext++;

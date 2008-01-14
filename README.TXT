@@ -1,4 +1,4 @@
-z390 v1.3.08g PTF 12/09/07
+z390 v1.3.08h PTF 01/12/08
 Copyright 2007 Automated Software Tools Corporation
 
 See install directions below.
@@ -153,8 +153,49 @@ The enclosed z390.jar contains following cumulative fixes for v1.3.08:
     RPLD to define one byte flag fields.
 31. RPI 751 add CICS DFHRESP code EXPIRED with value F'31'.
 32. RPI 754 correct ACTR limit processing to issue error and exit current macro
-    instead of aborting.  Also correct pseudo code AGO to decrement ACTR counter. 
-  
+    instead of aborting.  Also correct pseudo code AGO to decrement ACTR counter.
+33. RPI 755 change LOG and STATS optionsChange LOG and STATS options as follows:
+    1.  Wrap options to 80.
+    2.  Change default to NOSTATS.
+    3.  If option STATS or STATS(file) is specified, direct all statistics to the statistics         file rather than to BAL, PRN, LST, and LOG files. 
+    4.  List all changed options on STA file.
+    5.  List all macro/copybook file cross reference on STA file.
+    6) Add ECHO OFF to all batch commands such as ASMLG.BAT to suppress output listing of BAT 
+       file commands.
+    7) Echo start and stop messages on console and ERR file regardless of CON setting and        include z390 and J2SE version on start message.
+    8) Only put copyright and license msgs on PRN, LST, and LOG files.
+34. RPI 756 correct file name processing as follows:
+    1)  Fix all file parameters to accept relative or explicit path for file including paths         with double quotes if needed, and paths starting with drive and no explicit path         (i.e. relative path on specified drive.
+    2)  Fix GUI file selection to not include 2 sets of double quotes for paths with spaces.
+    3)  Fix @file processing to handle parms with spaces in "...".
+    4)  Fix file processing to issue error on unrecognized file name formats such as one         ending with dot.  
+35. RPI 757 Add KSDS POINT for generic keys
+36. RPI 758 Correct double GPR instructions to issue specification exception if not even.
+37. RPI 759 align lz390 statistics on STA files with other program statistics.
+38. RPI 763 correct ACTR limit count off by 1.
+39. RPI 765 Change z390 GUI to force line split before "EXIT" request from CMD process.
+40. RPI 768 Correct LXR failure under certain conditions.  Correct square root routine to use     ronding as required to prevent exception.
+41. RPI 769 Change z390 to issue line errors for invalid ASCII versus abort and check     comments for ASCII also.
+42. RPI 770 Add lz390 linker option AUTOLINK with default on.  Use NOAUTOLINK to require
+    explicit INCLUDE for each mocule.
+43. RPI 771 support zeros for CCW addresses.
+44. RPI 772 correct LISTCALL comments to prevent truncating line numbers over 9999.
+45. RPI 773 issue abort if the OPSYN table is exceeded.
+46. RPI 774 correct mz390 pseudo code to correctly handle 0 duplication factor and 
+    complex AIF statements executed repeatedly.
+47. RPI 776 correct error on USING statement with commas in the comments.
+48. RPI 777 Add support for decimal point in P and Z constants and set scale.
+49. RPI 778 correct continuation of section after ORG with negative offset.
+50. RPI 779 Correct VSAM to return current key in RPLARG fo generic key.  Support high value
+    key positioning to end of KSDS file.
+51. RPI 781 correct handling of cached packed decimal when value exceeds long format and     required switch to BigInteger.  Add check for DLG and DLGR overflow.
+52. RPI 782 stop the interval timer before terminating ez390 to prevent possible spurious traps during shutdown of multiple threads.
+53. RPI 786 change az390 to generate DFP constants with preferred exponent of -2 rather than
+    previous smallest quantum.  Note TESTFPC1, TESTDFP1, and TESTCFD1 regression tests all 
+    changed to use arithmetic compares versus CLC to account for different canonical forms.
+54. RPI 787 correct support for unnormalized DFP instructions by flushing result from cache
+    to register.  Also fix ESDTR and ESXTR to return 0 significant digits for zero.
+55. RPI 788 correct overflow exceptions for DFP conversions to packed decimal requiring     truncation.
 
 To install this cumulative PTF for z390 follow these steps.
 

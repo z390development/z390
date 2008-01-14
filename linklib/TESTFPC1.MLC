@@ -11,6 +11,7 @@
 * 12/15/06 RPI 406 add additional ED and LD tests                    
 * 12/22/06 RPI 406 skip bug in DFP MF and skip slow BFP/HFP extended MF               
 *                  add check that SVC and MF display values match
+* 01/13/08 RPI 786 use fp compares to handle equivalent DFP values                    
 *********************************************************************
 * Test conversion from and to 128 bit integer and all 6 floating 
 * point types using default svc 170 and 171 and also using 
@@ -41,6 +42,8 @@ LHT1     DC    LH'-567678867789987898'
          TEST  &TYPE,&VAL
          AIF   ('&TYPE'(2,1) EQ 'D').SKPMF SKIP DFP MF FOR NOW (BUG?)
          AIF   ('&TYPE'(1,1) EQ 'L').SKPMF SKIP EXT MF FOR NOW (SLOW)
+         BALR  R10,0                              RPI 786
+         USING *,R10                              RPI 786
          TEST1 MF,&TYPE,&VAL
          MVC   SAVE_DECIMAL,DECIMAL
          TEST1 SVC,&TYPE,&VAL
@@ -86,11 +89,36 @@ LHT1     DC    LH'-567678867789987898'
                ABEND 102
          ENDIF
          AP    RT1_TOT,=P'1'
+* RPI 786 START TEST FOR DFP
+         AIF   (&TYPE EQ 'ED').ED_COMP
+         AIF   (&TYPE EQ 'DD').DD_COMP
+         AIF   (&TYPE EQ 'LD').LD_COMP 
+         AGO   .CLC_COMP     
+.ED_COMP ANOP
+         LE    R0,&VAL
+         LDETR R0,R0,0
+         LE    R1,WORK16
+         LDETR R1,R1,0
+         CDTR  R0,R1
+         AGO   .END_COMP
+.DD_COMP ANOP
+         LD    R0,&VAL
+         LD    R1,WORK16
+         CDTR  R0,R1
+         AGO   .END_COMP
+.LD_COMP ANOP
+         LX    R0,&VAL
+         LX    R1,WORK16
+         CXTR  R0,R1
+         AGO   .END_COMP
+.CLC_COMP ANOP
          LA    R1,L'&VAL
          BCTR  R1,0
          EX    R1,*+4+4
          B     *+4+6
          CLC   WORK16(0),&VAL  VERIFY CTD CONSTANT WITH CFD RESULT
+.END_COMP ANOP
+* RPI 786 START TEST FOR DFP
          RT1   CCE
          B     EXIT&TESTNO
          LTORG

@@ -40,6 +40,8 @@
 .* PLUS THE COPYBOOK ZSTRMAC\ZSTREQU.CPY WHICH DEFINES EQU SYMBOLS
 .* FOR BRANCH ON CONDITION MASKS SUCH AS E, NE, LT, GT, P, M, O, Z ETC.
 .********************************************************************
+         PUSH PRINT
+         PRINT OFF
          COPY DO.MAC       
          COPY ENDDO.MAC     
          COPY IF.MAC 
@@ -47,3 +49,4 @@
          COPY ELSE.MAC
          COPY ENDIF.MAC
          COPY ZSTREQU.CPY
+         POP  PRINT

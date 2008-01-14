@@ -6,6 +6,7 @@
 * Date   - 12/05/07                                                 *
 *********************************************************************
 * 12/05/07 RPI 750 COPY FROM KSF1TEST AND ADD POINT, KGE, GENERIC TESTS                  
+* 01/08/08 RPI 779 TEST SEQ BWD FROM POINT WITH KGE DSH2 (READ DSH,AK)                                     
 *********************************************************************
 KSF1TEST SUBENTRY   
 *
@@ -83,7 +84,6 @@ KSF1TEST SUBENTRY
          WTO   MF=(E,WTOREC)
          CLC   NAME,KEY
          BNE   ERR4   
-***      B     DSHX
 *
 * CHANGE TO SKIP SEQ WITH POINT USING KGE FULL KEYS
 *
@@ -112,6 +112,49 @@ KSF1TEST SUBENTRY
          CLC   NAME,=CL20'AK'
          BNE   ERR4   
 *
+* CHANGE TO SKIP SEQ BACKWARD WITH POINT USING KEQ FULL KEYS
+*
+         WTO   'KSF1TEST POINT AND SEQ READ BACKWARD WITH KEQ'
+         MODCB RPL=VRPL,OPTCD=(SEQ,BWD)
+         LTR   R15,R15
+         BNZ   ERR5
+         MVC   KEY,=CL20'MM'
+         POINT RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR6
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'DSH'
+         BNE   ERR4   
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'AK'
+         BNE   ERR4   
+*
+* POINT TO EOF VIA HIGH VALUES KEY AND READ BACKWARDS
+*
+         WTO   'KSF1TEST POINT TO EOF VIA HIGH KEY SEQ READ BACKWARD'
+         MVC   KEY,=20X'FF'
+         POINT RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR6
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'RM'
+         BNE   ERR4   
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'MW'
+         BNE   ERR4   
+*
 * CHANGE TO SKIP SEQ WITH POINT USING KGE GENERIC KEYS
 *
          WTO   'KSF1TEST POINT AND SEQ READ WITH KGE GENERIC KEYS'
@@ -133,6 +176,50 @@ KSF1TEST SUBENTRY
          POINT RPL=VRPL
          LTR   R15,R15
          BNZ   ERR6
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'AK'
+         BNE   ERR4   
+*
+* CHANGE TO KEY ACCESS WITH GEN,KGE
+*
+         WTO   'KSF1TEST KEY ACCESS WITH GENERIC KEY AND KGE'
+         MODCB RPL=VRPL,OPTCD=(GEN,KGE),KEYLEN=1
+         LTR   R15,R15
+         BNZ   ERR5
+         MVC   KEY,=20X'FF'
+         MVI   KEY,C'D'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'DSH'
+         BNE   ERR4   
+         MVI   KEY,X'00'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'AK'
+         BNE   ERR4   
+*
+* CHANGE TO KEY ACCESS WITH GENERIC KEY AND KEQ
+*
+         WTO   'KSF1TEST KEY ACCESS WITH GENERIC KEYS AND KEQ'
+         MODCB RPL=VRPL,OPTCD=(GEN),KEYLEN=1
+         LTR   R15,R15
+         BNZ   ERR5
+         MVC   KEY,=20X'FF'
+         MVI   KEY,C'D'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,=CL20'DSH'
+         BNE   ERR4   
+         MVI   KEY,C'A'
          GET   RPL=VRPL   
          LTR   R15,R15
          BNZ   ERR2

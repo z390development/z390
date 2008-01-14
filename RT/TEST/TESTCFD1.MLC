@@ -10,107 +10,82 @@
 * 12/02/06 RPI 511 SUPPORT FLOATING POINT FORMAT FOR INT128 INPUT  
 * 12/03/06 RPI 513 ADD RC TESTS                                    
 * 12/11/06 RPI 514 ADD DFP DD, ED, AND LD TESTS                                    
+* 01/14/08 RPI 786 USE DFP COMP TO HANDLE DIFF CANONIZATIONS                       
 *********************************************************************
          PRINT DATA
 TESTCTD1 RT1   MAIN
-WORK     DC    XL16'00' INT128,E,D,L WORK AREA
+WORK   DC    XL16'00' INT128,E,D,L WORK AREA
 DECIMAL  DC    CL45' '  DECIMAL WORK AREA
          EQUREGS
 ABORT    ABEND 111
+         MACRO
+         TEST  &TYPE,&IN,&VER
+         BALR  R10,0                             RPI 786
+         USING *,R10                             RPI 786
+         MVC   DECIMAL,&IN 
+* TEST CFD OUT=RX
+         CFD   CFD_&TYPE,OUT=WORK,IN=DECIMAL
+         LTR   R15,R15
+         BNZ   ABORT
+         LX    R4,WORK
+         TESTC &TYPE,&VER
+* TEST CFD OUT=(REG)    
+         LA    R2,WORK 
+         CFD   CFD_&TYPE,OUT=(R2),IN=DECIMAL
+         LTR   R15,R15
+         BNZ   ABORT
+         LX    R4,WORK
+         TESTC &TYPE,&VER
+* TEST CFD OUT-REG (VALUE 0-15)
+         CFD   CFD_&TYPE,OUT=R4,IN=DECIMAL
+         LTR   R15,R15
+         BNZ   ABORT
+         TESTC &TYPE,&VER
+         MEND
+         MACRO
+         TESTC &TYPE,&VAL
+         AIF   (&TYPE EQ 'ED').ED_COMP
+         AIF   (&TYPE EQ 'DD').DD_COMP
+         AIF   (&TYPE EQ 'LD').LD_COMP 
+         AGO   .CLC_COMP     
+.ED_COMP ANOP
+         LE    R0,&VAL
+         LDETR R0,R0,0
+         LDETR R4,R4,0
+         CDTR  R0,R4
+         AGO   .END_COMP
+.DD_COMP ANOP
+         LD    R0,&VAL
+         CDTR  R0,R4
+         AGO   .END_COMP
+.LD_COMP ANOP
+         LX    R0,&VAL
+         CXTR  R0,R4
+         AGO   .END_COMP
+.CLC_COMP ANOP
+         STX   R4,WORK
+         LA    R1,L'&VAL
+         BCTR  R1,0
+         EX    R1,*+4+4
+         B     *+4+6
+         CLC   WORK(0),&VAL  VERIFY CTD CONSTANT WITH CFD RESULT
+.END_COMP ANOP
+         RT1   CCE
+         MEND
          RT1   START
          WTO   'TEST CFD CONVERT FROM DISPLAY MACRO/SVC 171 SERVICE'
-*********************************************************************
-         WTO   'TEST CTD USING OUT=RX FIELDS'
-*********************************************************************
-         MACRO
-         TEST  &TYPE,&IN,&VER
-         MVC   DECIMAL,&IN 
-         CFD   &TYPE,OUT=WORK,IN=DECIMAL
-         LTR   R15,R15
-         BNZ   ABORT
-         LD    R0,WORK
-         LD    R1,WORK+8
-         CLC   &VER,WORK
-         RT1   CCE
-         MEND
-         TEST  CFD_INT128,=CL45'2',=FL16'2'
-         TEST  CFD_INT128,=CL45'123E2',=FL16'12300'
-         TEST  CFD_INT128,=CL45'123.5',=FL16'123'
-         TEST  CFD_EH,=CL45'2',=EH'2'
-         TEST  CFD_EB,=CL45'2',=EB'2'
-         TEST  CFD_DH,=CL45'2',=DH'2'
-         TEST  CFD_DB,=CL45'2',=DB'2'
-         TEST  CFD_LH,=CL45'2',=LH'2'
-         TEST  CFD_LB,=CL45'2',=LB'2'
-         TEST  CFD_DD,=CL45'2',=DD'2'
-         TEST  CFD_ED,=CL45'2',=ED'2'
-         TEST  CFD_LD,=CL45'2',=LD'2'
-*********************************************************************
-         WTO   'TEST CTD USING OUT=(REG) RX FIELD ADDR'
-*********************************************************************
-         MACRO
-         TEST  &TYPE,&IN,&VER
-         MVC   DECIMAL,&IN        
-         LA    R2,WORK 
-         CFD   &TYPE,OUT=(R2),IN=DECIMAL
-         LTR   R15,R15
-         BNZ   ABORT
-         LD    R0,WORK
-         LD    R1,WORK+8
-         CLC   &VER,WORK
-         RT1   CCE
-         MEND
-         TEST  CFD_INT128,=CL45'2',=FL16'2'
-         TEST  CFD_INT128,=CL45'123E2',=FL16'12300'
-         TEST  CFD_INT128,=CL45'123.5',=FL16'123'
-         TEST  CFD_EH,=CL45'2',=EH'2'
-         TEST  CFD_EB,=CL45'2',=EB'2'
-         TEST  CFD_DH,=CL45'2',=DH'2'
-         TEST  CFD_DB,=CL45'2',=DB'2'
-         TEST  CFD_LH,=CL45'2',=LH'2'
-         TEST  CFD_LB,=CL45'2',=LB'2'
-*********************************************************************
-         WTO   'TEST CTD USING OUT=REG GPR/FPR REG VALUES'
-*********************************************************************
-         MACRO
-         TEST  &TYPE,&IN
-         MVC   DECIMAL,&IN        
-         CFD   &TYPE,OUT=R4,IN=DECIMAL
-         LTR   R15,R15
-         BNZ   ABORT
-         MEND
-         TEST  CFD_INT128,=CL45'2'
-         STMG  R4,R5,WORK
-         CLC   WORK,=FL16'2'
-         RT1   CCE
-         TEST  CFD_INT128,=CL45'123E2'
-         STMG  R4,R5,WORK
-         CLC   WORK,=FL16'12300'
-         RT1   CCE
-         TEST  CFD_INT128,=CL45'123.5'
-         STMG  R4,R5,WORK
-         CLC   WORK,=FL16'123'
-         RT1   CCE
-         TEST  CFD_EH,=CL45'2'
-         CE    F4,=EH'2'
-         RT1   CCE
-         TEST  CFD_EB,=CL45'2'
-         CEB   F4,=EB'2'
-         RT1   CCE
-         TEST  CFD_DH,=CL45'2'
-         CD    F4,=DH'2'
-         RT1   CCE
-         TEST  CFD_DB,=CL45'2'
-         CDB   F4,=DB'2'
-         RT1   CCE
-         TEST  CFD_LH,=CL45'2'
-         LX    F0,=LH'2'
-         CXR   F0,R4
-         RT1   CCE
-         TEST  CFD_LB,=CL45'2'
-         LX    F0,=LB'2'
-         CXBR  F0,R4
-         RT1   CCE
+         TEST  INT128,=CL45'2',=FL16'2'
+         TEST  INT128,=CL45'123E2',=FL16'12300'
+         TEST  INT128,=CL45'123.5',=FL16'123'
+         TEST  EH,=CL45'2',=EH'2'
+         TEST  EB,=CL45'2',=EB'2'
+         TEST  DH,=CL45'2',=DH'2'
+         TEST  DB,=CL45'2',=DB'2'
+         TEST  LH,=CL45'2',=LH'2'
+         TEST  LB,=CL45'2',=LB'2'
+         TEST  DD,=CL45'2',=DD'2'
+         TEST  ED,=CL45'2',=ED'2'
+         TEST  LD,=CL45'2',=LD'2'
          RT1   END
          EQUREGS REGS=FPR 
          END

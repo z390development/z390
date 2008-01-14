@@ -9,6 +9,7 @@
 * 04/06/06 RPI 274 support DSECT dependent using                   
 * 05/07/07 RPI 609 remove label on non-specific dependant using
 * 05/30/07 RPI 629 correct drop of prev unlabeled USING
+* 01/14/08 RPI 776 correct using to ignore comments with commas
 *********************************************************************
 TESTUSE1 SUBENTRY
          WTO   'TESTUSE1 TEST LABELD AND DEPENDANT USING'
@@ -21,7 +22,7 @@ TESTUSE1 SUBENTRY
 *
 * TEST MULT REG USING AND RANGE LIMITS
 *
-         USING CST2,1,2
+         USING CST2,1,2       RPI 776 A,B,C TEST
          CLC   =S(CST2+4095,CST2+4096),=X'1FFF2000'
          BNE   ERR
          USING (CST2+10,CST2+20),3

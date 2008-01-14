@@ -124,7 +124,9 @@ public  class  z390 extends JApplet
      * 08/16/07 RPI 630 prevent PF10 causing file menu popup
      *          use get_window_size() for all GUI's
      * 08/23/07 RPI 685 adjust GUI height for status line 
-     * 11/12/07 RPI 737 route all commands to CMD process if running        
+     * 11/12/07 RPI 737 route all commands to CMD process if running 
+     * 12/19/07 RPI 756 don't add ".." twice  
+     * 12/19/07 RPI 765 force line break to prvent EXIT being split     
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -544,7 +546,8 @@ public  class  z390 extends JApplet
   						if (index1 < args.length){
   	  						parm_ok = true;
   							startup_cmd_file = args[index1];
-  							if (startup_cmd_file.indexOf(' ') != -1){
+  							if (startup_cmd_file.charAt(0) != '\"'  // RPI 756
+  								&& startup_cmd_file.indexOf(' ') != -1){
   								startup_cmd_file = '\"' + startup_cmd_file + '\"';
   							}
   						}
@@ -3499,7 +3502,7 @@ public  class  z390 extends JApplet
 					// if ez390 issues exit request close down gui
 					// this is trigged when ez390 exits if 
 					// z390 sent "exit_request to input queue
-				    cmd_exec_input("exit");  // RPI 98, RPI 500 RPI 731
+				    cmd_exec_input("exit");  // RPI 98, RPI 500 RPI 731 RPI 765
 				} else {
 					put_log(cmd_exec_output_msg);
 				}

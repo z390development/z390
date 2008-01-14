@@ -7,6 +7,7 @@
 *********************************************************************
 * 01/09/06 RPI 162 TEST EXTENSIONS LV=NNNK AND LV=NNNM
 * 01/22/07 RPI 542 CORRECT GETMAIN OUTPUT R1=ADDR
+* 12/17/07 RPI 758 FIX CLCL WHICH WAS WRONG AND FAILED WITH 0C6
 *********************************************************************
          TITLE 'TESTMEM2 TEST GETMAIN EXTENSIONS'
 TESTMEM2 RT1   MAIN
@@ -23,7 +24,7 @@ TESTMEM2 RT1   MAIN
          MVCL  R4,R0               FILL 1K WITH X'EE'
          LR    R4,R2
          L     R5,=A(1024)
-         CLCL  R5,R0               VERIFY FILL
+         CLCL  R4,R0               VERIFY FILL  rpi 758
          RT1   CCE
          GETMAIN R,LV=1M     GET 1M
          LTR   R15,R15
@@ -36,7 +37,7 @@ TESTMEM2 RT1   MAIN
          MVCL  R4,R0               FILL 1M WITH X'EE'
          LR    R4,R2
          L     R5,=A(1024*1024)
-         CLCL  R5,R0               VERIFY FILL
+         CLCL  R4,R0               VERIFY FILL   RPI 758
          RT1   CCE
          RT1   END
          END

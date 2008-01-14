@@ -291,6 +291,14 @@ public  class  az390 implements Runnable {
     *          allow comments without , on PR as on other 12 ops without operands
         * 12/06/07 RPI 751 add DFHRESP(EXPIRED)=F'31'
         * 12/07/07 RPI 749 error for X EQU X and lit mod forward refs.
+        * 12/23/07 RPI 769 change abort to log error for invalid ASCII
+        * 12/25/07 RPI 755 cleanup msgs to log, sta, tr* 
+        * 01/08/08 RPI 776 fix parsing error on USING comments
+        * 01/10/08 RPI 777 add decimal point and scale factor for P/Z type
+        *          and correct sign in low digit zone for Z.
+        * 01/10/08 RPI 778 save loc_ctr in esd_loc[cur_esd] for use
+        *          in continued sections following neq ORG's.
+        * 01/13/08 RPI 786 set fp_form for preferred exp DFP constants                    
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -299,6 +307,7 @@ public  class  az390 implements Runnable {
     int az390_rc = 0;
     int az390_errors = 0;
     int mz390_errors = 0; // RPI 415 passed from mz390 if option asm
+    String mz390_started_msg = ""; // RPI 755
     boolean mz390_abort = false;
     int mz390_rc     = 0; // RPI 415 passed from mz390 if option asm
     int cur_pass = 1;
@@ -442,12 +451,13 @@ public  class  az390 implements Runnable {
 	int cur_esd_sid = 0;
     int tot_esd = 0;
     int cur_esd = 0;
-    int cur_esd_base = 0;   // RPI 301
+    int cur_esd_base = 0;   // RPI 301 first section 
     int first_cst_esd = 0;
     int esd_sdt = 0;
     int esd_cpx_rld = -1;
     int[]     esd_sid  = null;
     int[]     esd_base = null; // RPI 301
+    int[]     esd_loc  = null; // RPI 778 current loc within section
     /*
      * using global data
      */
@@ -465,7 +475,6 @@ public  class  az390 implements Runnable {
     int cur_use_neg_reg = -1;
     int cur_use_off = 0x80000; // RPI 387 max 20 bit+1
     int cur_use_neg_off = 0xfff00000; // RPI 387 min 20 bit-1
-    String cur_use_parms = null;
     String cur_use_lab = "";
     String[] use_lab      = null;
     int[]    use_base_esd = null;
@@ -473,6 +482,7 @@ public  class  az390 implements Runnable {
     int[]    use_base_len = null;
     int[]    use_reg      = null;
     int[]    use_reg_loc  = null;
+    int      use_domain_tot = 0; // rpi 776
     /*
      * push, pop, and, print data
      */
@@ -768,6 +778,8 @@ public  class  az390 implements Runnable {
       boolean dc_op   = false;  // ds vs dc bal op
       boolean dc_eod  = false;  // ds/dc end of fields
       boolean dc_len_explicit = false;
+      boolean dc_scale_explicit = false; // RPI 777
+      boolean dc_exp_explicit = false;   // RPI 777
       boolean dc_bit_len     = false;  // RPI 417
       BigInteger dc_bit_buff  = null;
       byte[]     dc_bit_bytes = null;
@@ -824,6 +836,9 @@ public  class  az390 implements Runnable {
       int    dc_dup_loc = 0; // rel offset for dup of a/v/s data with loc_ctr
       int    dc_len   = 0;
       int    dc_scale = 0;
+      String  dc_digits = "";       // rpi 777 digits in P or Z value
+      boolean dc_dec_point = false; // rpi 777 decimal point found in P/Z
+      int     dc_dec_scale = 0;     // rpi 777 decimals to right of poind
       int    dc_exp   = 0;
       int    dc_first_len = 0;
       int    dc_first_loc = 0;
@@ -997,8 +1012,12 @@ private void init_az390(String[] args, JTextArea log_text){
     	tz390 = new tz390();
     	tz390.init_tables();
     	tz390.init_options(args,tz390.bal_type);
-   		if (!mz390_call){
+    	tz390.fp_form = tz390.fp_form_constant; // RPI 786
+    	if (!mz390_call){
    			tz390.open_systerm("AZ390");
+   		} else {
+   			tz390.systerm_start = System.currentTimeMillis();
+   			tz390.started_msg = mz390_started_msg;
    		}
 	    if (!tz390.init_opcode_name_keys()){
 	    	abort_error(87,"opcode key search table exceeded");
@@ -1006,7 +1025,13 @@ private void init_az390(String[] args, JTextArea log_text){
         init_arrays();
 	    init_push_pop();
 		open_files();
-        put_copyright();
+		tz390.force_nocon = true;   // RPI 755
+		put_log(tz390.started_msg); // RPI 755
+		tz390.force_nocon = false;  // RPI 755
+		if (!tz390.opt_asm && tz390.opt_tracea){
+			tz390.put_trace(tz390.started_msg); // RPI 755
+		}
+		put_copyright();
         compile_patterns();
         tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
 }
@@ -1050,6 +1075,7 @@ private void init_arrays(){
 	 */
     esd_sid   = (int[])Array.newInstance(int.class,tz390.opt_maxesd);
     esd_base  = (int[])Array.newInstance(int.class,tz390.opt_maxesd); // RPI 301
+    esd_loc   = (int[])Array.newInstance(int.class,tz390.opt_maxesd); // RPI 778 cur loc within section for continue
     /*
 	 * opt_maxline - maximum BAL loaded in memory
 	 */
@@ -1329,6 +1355,7 @@ private void update_sects(){
 	/*
 	 * update each section starting address
 	 * and max length, and reset current length
+	 * and current esd_loc
 	 * 
 	 * Notes:
 	 *   1.  If any section start address or 
@@ -1353,6 +1380,7 @@ private void update_sects(){
 			&& sym_sect_prev[cur_sid] == 0){
 			// new CSECT/RSECT aligned to double word
 			loc_ctr = (cst_ctr+7)/8*8;  // RPI 632
+			esd_loc[index] = loc_ctr; // RPI 778
 			if (sym_loc[cur_sid] != loc_ctr){
 				sect_change_error();;
 				bal_abort = false; // force all change errors
@@ -1385,6 +1413,7 @@ private void update_sects(){
 			       && sym_sect_prev[cur_sid] == 0){
 			loc_ctr = 0;
 			sym_loc[esd_sid[index]] = loc_ctr;
+			esd_loc[sym_esd[cur_sid]] = loc_ctr; // RPI 778
 			loc_ctr = loc_ctr + sym_len[cur_sid];
 			if (sym_max_loc[cur_sid] != loc_ctr){
 				sect_change_error();
@@ -1430,6 +1459,7 @@ private void update_loctrs(){
 						);
 		}
 		sym_loc[index] = loc_ctr;
+		esd_loc[sym_esd[index]] = loc_ctr; // RPI 778
         loc_ctr = loc_ctr + sym_len[index];
 		if (loc_ctr != sym_max_loc[index]){
 			sect_change_error();
@@ -2975,7 +3005,7 @@ private void get_bal_line(){
    				   || temp_line.charAt(tz390.bal_ictl_end) <= ' '){  //RPI181 RPI 728
    			bal_line = tz390.trim_trailing_spaces(temp_line,tz390.bal_ictl_end + 1);  //RPI124 RPI 728
     	    if (!tz390.verify_ascii_source(bal_line)){
-    	    	abort_error(116,"invalid ascii source line " + tz390.cur_bal_line_num + " in " + bal_file.getAbsolutePath());  // RPI 694
+    	    	log_error(116,"invalid ascii source line " + tz390.cur_bal_line_num + " in " + bal_file.getAbsolutePath());  // RPI 694 RPI 769
     	    }
    		} else {
    		    bal_line = temp_line.substring(0,tz390.bal_ictl_end);  // RPI 728
@@ -2989,7 +3019,7 @@ private void get_bal_line(){
             	    }
             	    temp_line = tz390.trim_trailing_spaces(temp_line,tz390.bal_ictl_end + 1);  // RPI 728
             	    if (!tz390.verify_ascii_source(temp_line)){
-            	    	abort_error(118,"invalid ascii source line " + tz390.cur_bal_line_num + " in " + bal_file.getAbsolutePath()); // RPI 694
+            	    	abort_error(118,"invalid ascii source line " + tz390.cur_bal_line_num + " in " + bal_file.getAbsolutePath()); // RPI 694 RPI 769
             	    }
             	    if (temp_line.length() < tz390.bal_ictl_end + 1 || temp_line.charAt(tz390.bal_ictl_end) <= ' '){ //RPI181 RPI 278
             	    	bal_cont = false; // RPI 315
@@ -3028,7 +3058,7 @@ private void parse_bal_line(){
 		if (bal_line_xref_file_num[bal_line_index] == 0){
 			trace_pfx = "OPEN CODE" + tz390.right_justify("" + bal_line_xref_file_line[bal_line_index],6) + tz390.right_justify("" + bal_line_num[bal_line_index],7) + " ";
 		} else {
-			trace_pfx = tz390.left_justify(xref_file_name[bal_line_xref_file_num[bal_line_index]],9) + tz390.right_justify("" + bal_line_xref_file_line[bal_line_index],6) + tz390.right_justify("" + bal_line_num[bal_line_index],7) + " ";
+			trace_pfx = tz390.left_justify(get_base_name(xref_file_name[bal_line_xref_file_num[bal_line_index]]),9) + tz390.right_justify("" + bal_line_xref_file_line[bal_line_index],6) + tz390.right_justify("" + bal_line_num[bal_line_index],7) + " ";
 		}
 		tz390.put_trace(trace_pfx + tz390.get_hex(loc_ctr,6) + " " + bal_line); // RPI 605
 	}
@@ -3049,6 +3079,17 @@ private void parse_bal_line(){
     	bal_op = null;
     }
     bal_parms = tz390.split_parms;
+}
+private String get_base_name(String file_name){
+	/*
+	 * return base file name from path\file.sfx
+	 */
+	int index1 = file_name.lastIndexOf(File.separator);
+    int index2 = file_name.lastIndexOf('.');
+    if (index2 == -1){
+    	index2 = file_name.length();
+    }
+    return file_name.substring(index1+1,index2);
 }
 private int find_bal_op(){
 	/*
@@ -3218,7 +3259,7 @@ private void process_sect(byte sect_type,String sect_name){
 	 */
 	cur_sym_sect = true;  // RPI 553
 	if (cur_esd_sid > 0){
-		update_sect_len();
+		update_sect();
 	}
 	if (sect_name == null 
 		|| sect_name.length() == 0){
@@ -3302,7 +3343,7 @@ private void process_sect(byte sect_type,String sect_name){
                   ){ // RPI 553  
 			// update prev section
 			cur_esd = sym_esd[cur_esd_sid];
-			loc_ctr = sym_loc[cur_esd_sid] + sym_len[cur_esd_sid];
+			loc_ctr = esd_loc[cur_esd]; // rpi 778
 		} else {
 			log_error(182,"Duplicate section name of different type");
 		}
@@ -3432,13 +3473,15 @@ private int get_sym_len(int index){
     	return sym_len[index];
     }
 }
-private void update_sect_len(){
+private void update_sect(){
 	/*
 	 * update length of current section
+	 * and save current loc_ctr for continue
 	 */
 	 if (loc_ctr - sym_loc[cur_esd_sid] > sym_len[cur_esd_sid]){
 	 	sym_len[cur_esd_sid] = loc_ctr - sym_loc[cur_esd_sid];
 	 }
+	 esd_loc[cur_esd] = loc_ctr; // rpi 778
 }
 public void process_dc(int request_type){ // RPI 415
     /*
@@ -3585,7 +3628,7 @@ public void process_dc(int request_type){ // RPI 415
 			       	     process_dca_data();
 	   	  	             break;
    	  	          case 'Z': // 'zoned decimals'
-    	  	       	     process_dcc_data();
+    	  	       	     process_dcz_data();
     	  	       	     break;
    	  	          default:
    	  	       	     log_error(44,"invalid dc type delimiter");
@@ -4315,11 +4358,9 @@ private void put_stats(){
 	/*
 	 * display statistics as comments at end of bal
 	 */
-	boolean save_opt_con = tz390.opt_con; // RPI 453
-	if (tz390.opt_list){
-		tz390.opt_con = false;
-	}
 	force_print = true; // RPI 285
+	tz390.force_nocon = true; // RPI 755
+	tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " " + "AZ390 "; // RPI 755
 	if (tz390.opt_stats){  // RPI 453
 	   put_stat_line("BAL lines             = " + (tot_bal_line-1));
 	   put_stat_line("symbols               = " + tot_sym);
@@ -4339,29 +4380,37 @@ private void put_stats(){
 	      cur_date = new Date();
 	      tod_end = cur_date.getTime();
 	      tot_sec = (tod_end - tod_start)/1000;
-	      put_stat_line("total seconds         = " + tot_sec);
 	   }
 	}
 	int index = 0;
 	while (index < tot_xref_files){
 		if (tz390.opt_asm && xref_file_errors[index] > 0){
-			String xref_msg = msg_id + "FID=" + tz390.right_justify(""+(index+1),3) 
+			String xref_msg = "FID=" + tz390.right_justify(""+(index+1),3) 
 					        + " ERR=" + tz390.right_justify(""+xref_file_errors[index],4) 
  	                        + " " + xref_file_name[index];
-		    put_log(xref_msg);
-		    tz390.put_systerm(xref_msg);
+			put_log(msg_id + xref_msg);
+		    tz390.put_systerm(msg_id + xref_msg);
 		}
 		index++;
 	}
-	tz390.opt_con = save_opt_con; // RPI 453
+	if (tz390.opt_stats){
+		put_stat_line("total mnote warnings  = " + tot_mnote_warning); // RPI 402
+		put_stat_line("total mnote errors    = " + tot_mnote_errors);
+		put_stat_line("max   mnote level     = " + max_mnote_level);
+		if (mz390_call){
+			put_stat_line("total mz390 errors    = " + mz390_errors); // RPI 659
+		}
+		put_stat_line("total az390 errors    = " + az390_errors); // RPI 659
+	}
 	put_log(msg_id + "total mnote warnings = " + tot_mnote_warning); // RPI 402
-	put_log(msg_id + "total mnote errors   = " + tot_mnote_errors 
-			+ "  max level= " + max_mnote_level);
+	put_log(msg_id + "total mnote errors   = " + tot_mnote_errors);
+	put_log(msg_id + "max   mnote level    = " + max_mnote_level);
 	if (mz390_call){
 		put_log(msg_id + "total mz390 errors   = " + mz390_errors); // RPI 659
 	}
 	put_log(msg_id + "total az390 errors   = " + az390_errors); // RPI 659
-	put_log(msg_id + "return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + az390_rc); // RPI 312
+	tz390.systerm_prefix = tz390.left_justify(tz390.pgm_name,9) + " " + "MZ390 "; // RPI 755
+	tz390.force_nocon = false; // RPI 755
 }
 private void put_stat_line(String msg){
 	/*
@@ -4384,6 +4433,17 @@ private void close_files(){
 	  	  	  tz390.abort_error(24,"I/O error on obj close - " + e.toString());
 	  	  }
 	  }
+	  if (!mz390_call){ // RPI 415 let mz390 close it
+		  tz390.close_systerm(az390_rc);
+	  } else {
+		  if (mz390_rc > az390_rc){
+			  az390_rc = mz390_rc;
+		  }
+		  tz390.set_ended_msg(az390_rc);
+	  }
+      tz390.force_nocon = true;
+	  put_log(tz390.ended_msg);
+	  tz390.force_nocon = false;
 	  if  (tz390.opt_list){
 		  if (prn_file != null && prn_file.isFile()){
 		  	  try {
@@ -4392,10 +4452,10 @@ private void close_files(){
 		  	  	  tz390.abort_error(24,"I/O error on prn close - " + e.toString());
 		  	  }
 		  }
-	  }
-	  if (!mz390_call){ // RPI 415 let mz390 close it
-		  tz390.close_systerm(az390_rc);
-	  }
+	    }
+		if (!tz390.opt_asm && tz390.opt_tracea){
+			tz390.put_trace(tz390.ended_msg);
+		}
 	  tz390.close_trace_file();
 }
 private void log_error(int error,String msg){
@@ -4487,20 +4547,14 @@ private void put_copyright(){
 	    * display az390 version, timestamp,
 	    * and copyright if running standalone
 	    */
-	   	if  (tz390.opt_timing){
-			cur_date = new Date();
-	   	    put_log(msg_id + tz390.version 
-	   			+ " Current Date " +mmddyy.format(cur_date)
-	   			+ " Time " + hhmmss.format(cur_date));
-	   	} else {
-	   	    put_log(msg_id + tz390.version);
-	   	}
+	    tz390.force_nocon = true; // RPI 755
 	   	if  (z390_log_text == null){
 	   	    put_log(msg_id + "Copyright 2006 Automated Software Tools Corporation");
 	   	    put_log(msg_id + "z390 is licensed under GNU General Public License");
 	   	}
-	   	put_log(msg_id + "program = " + tz390.dir_bal + tz390.pgm_name + tz390.pgm_type);
+	   	put_log(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name);
 	   	put_log(msg_id + "options = " + tz390.cmd_parms);
+	    tz390.force_nocon = false; // RPI 755
        }
 	   private synchronized void put_log(String msg) {
 	   	/*
@@ -4509,6 +4563,9 @@ private void put_copyright(){
 	   	 * 
 	   	 */
    	    	put_prn_line(msg);
+   	    	if (tz390.force_nocon){
+   	    		return; // RPI 755
+   	    	}
 	        if  (z390_log_text != null){
   	        	z390_log_text.append(msg + "\n");
    	        } else {
@@ -4921,8 +4978,10 @@ private void add_using(){
 		cur_use_lab = "";
 	}
 	use_eof = false;
+	use_domain_tot = 0; // rpi 776
     get_use_domain();
     while (!use_eof){
+    	use_domain_tot++;
     	if (cur_use_lab.length() == 0 
     		&& !cur_use_depend){
     		drop_cur_use_reg(); // RPI 629
@@ -4930,6 +4989,9 @@ private void add_using(){
       	add_use_entry();
        	get_use_domain();
        	cur_use_base_loc = cur_use_base_loc + 4096;
+    }
+    if (use_domain_tot == 0){ // RPI 776
+    	log_error(202,"USING missing domain operand");
     }
     if (tz390.opt_listuse){
     	list_use = true;
@@ -4942,45 +5004,35 @@ private void get_use_range(){
 	cur_use_base_esd = 0;
 	cur_use_base_loc = 0;
 	cur_use_base_len = 0;
-	int next_comma = 0;
-	cur_use_parms = bal_parms.toUpperCase();
-	if (cur_use_parms.length() > 0){
-		if (cur_use_parms.charAt(0) == '('){
-			next_comma = cur_use_parms.indexOf(",");
-			if (next_comma != -1){
-				exp_text = cur_use_parms.substring(1,next_comma);
-				exp_index = 0;
-				if (calc_rel_exp()){
-					cur_use_base_esd = exp_esd;
-					cur_use_base_loc = exp_val;
-				}
-				cur_use_parms = cur_use_parms.substring(next_comma +1);
-				next_comma = cur_use_parms.indexOf(",");
-				if (next_comma != -1){
-				    exp_text = cur_use_parms.substring(0,next_comma-1); // RPI 369
-				    exp_index = 0;
-				    cur_use_parms = cur_use_parms.substring(next_comma+1);
-				} else {
-					log_error(104,"missing domain for using");
-					return;
-				}
-				if (calc_rel_exp() && cur_use_base_esd == exp_esd){
-					cur_use_base_len = exp_val - cur_use_base_loc;
-				}				
+	exp_text = bal_parms.toUpperCase();  // RPI 776
+	exp_index = 0;
+	if (exp_text.length() > 1){  // RPI 776
+		if (exp_text.charAt(0) == '('){
+			exp_index = 1;
+			if (calc_rel_exp()){
+				cur_use_base_esd = exp_esd;
+				cur_use_base_loc = exp_val;
+			}
+			if (exp_text.charAt(exp_index) == ','){
+                exp_index++;
+			} else {
+				log_error(104,"missing domain for using");
+				return;
+			}
+			if (calc_rel_exp() && cur_use_base_esd == exp_esd){
+				cur_use_base_len = exp_val - cur_use_base_loc;
+			} else {
+				log_error(103,"missing end of range value");
+				return;
+			}
+			if (exp_text.length() > exp_index
+				&& exp_text.charAt(exp_index) == ')'){
+				exp_index++;
 			} else {
 				log_error(103,"missing end of range value");
 				return;
 			}
 		} else {
-			next_comma = cur_use_parms.indexOf(",");
-			if (next_comma != -1){
-				exp_text = cur_use_parms.substring(0,next_comma);
-				cur_use_parms = cur_use_parms.substring(next_comma+1);
-			} else {
-				log_error(104,"missing domain for using");
-				return;
-			}
-			exp_index = 0;
 			if (calc_rel_exp()){
 				cur_use_base_esd = exp_esd;
 				cur_use_base_loc = exp_val;
@@ -4992,7 +5044,7 @@ private void get_use_range(){
 private void get_use_domain(){
 	/*
 	 * set cur_use_reg and cur_use_off
-	 * from cur_use_parms set by get_range
+	 * from exp_text at exp_index set by get_use_range
 	 * Notes:
 	 *   1.  get_rel_exp_bddd is called for dependant
 	 *       using expressions to find reg and loc
@@ -5000,16 +5052,9 @@ private void get_use_domain(){
 	cur_use_depend = false;
 	cur_use_reg = 0;
 	cur_use_off = 0;
-	if (cur_use_parms.length() > 0){
-		int next_comma = cur_use_parms.indexOf(",");
-		if (next_comma != -1){
-			exp_text = cur_use_parms.substring(0,next_comma);
-            cur_use_parms = cur_use_parms.substring(next_comma+1);
-		} else {
-			exp_text = cur_use_parms;
-			cur_use_parms = "";
-		}
-		exp_index = 0;
+	if (exp_text.length() > exp_index 
+		&& exp_text.charAt(exp_index) == ','){
+        exp_index++;  // RPI 776
 		if (calc_exp()){
 			if (exp_type == sym_sdt){
 				cur_use_reg = exp_val;
@@ -5765,12 +5810,15 @@ private void get_dc_field_modifiers(){
 	 	dc_len = 1;
 	}
 	dc_len_explicit = false;
+	dc_scale_explicit = false; // RPI 777
+	dc_exp_explicit = false;   // RPI 777
 	dc_scale = 0; // 2**N  mantissa multiplier
 	dc_exp   = 0; // 10**N exponent offset
 	boolean check_mod = true;
 	while (!bal_abort && check_mod){
 		 if (dc_index < dc_field.length() 
 			 && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'L'){
+			 // explicit length
 			 dc_len_explicit = true;
 			 if (!bal_abort){
 				 dc_attr_elt = tz390.ascii_to_ebcdic[dc_type_explicit.charAt(dc_type_index) & 0xff];  // RPI 737
@@ -5791,9 +5839,13 @@ private void get_dc_field_modifiers(){
 			 }
 		 } else if (dc_index < dc_field.length() 
 			 && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'S'){
+			 // explicit scale
+			 dc_scale_explicit = true; // RPI 777
 			 dc_scale = get_dc_mod_int();
 		 } else if (dc_index < dc_field.length() 
 			 && dc_field.substring(dc_index,dc_index+1).toUpperCase().charAt(0) == 'E'){
+			 // explicit exponent
+			 dc_exp_explicit = true;
 			 dc_exp = get_dc_mod_int();
 		 } else {
 			 check_mod = false;
@@ -6506,30 +6558,39 @@ private void process_dcp_data(){
 				&& dc_index < dc_field.length()
 				&& dc_field.charAt(dc_index) != '\''){
 			    dcp_sign = 'C';
-			    int index1 = dc_index;
+				dc_dec_point = false; // RPI 777
+				dc_dec_scale = 0;     // RPI 777
+			    dc_digits = "";
 			    while (!bal_abort  // RPI 617 
 			    		&& dc_index < dc_field.length() 
 			    		&& dc_field.charAt(dc_index) != ','
 			    	    && dc_field.charAt(dc_index) != '\''){
 			         if (dc_field.charAt(dc_index) >= '0'
 			         	&& dc_field.charAt(dc_index) <= '9'){
+			        	dc_digits = dc_digits + dc_field.charAt(dc_index); // RPI 777
+			        	if (dc_dec_point){
+			        		dc_dec_scale++; // RPI 777
+			        	}
 			         	dc_index++;
+			         } else if (dc_field.charAt(dc_index) == '.'){
+			        	 dc_dec_point = true;
+			        	 dc_index++;
 			         } else if (dc_field.charAt(dc_index) == '+'){
 			         	dc_index++;
-			         	index1 = dc_index;
 			         } else if (dc_field.charAt(dc_index) == '-'){
 			         	dcp_sign = 'D';
 			         	dc_index++;
-			         	index1 = dc_index;
 			         } else {
 			         	log_error(67,"invalid character in P type data field - " + dc_field);
 			         }
 			    }
-			    int dcp_digits = dc_index - index1;
-			    if (dcp_digits - dcp_digits/2*2 == 0){
-			    	dc_hex = '0' + dc_field.substring(index1,dc_index) + dcp_sign;
+				if (!dc_scale_explicit && dc_first_field){
+					dc_first_scale = dc_dec_scale;
+				}
+			    if (dc_digits.length() - dc_digits.length()/2*2 == 0){
+			    	dc_hex = '0' + dc_digits + dcp_sign;
 			    } else {
-			    	dc_hex = dc_field.substring(index1,dc_index) + dcp_sign;
+			    	dc_hex = dc_digits + dcp_sign;
 			    }
 			    dcp_len = dc_hex.length()/2;
                 if (dc_bit_len){
@@ -6597,6 +6658,79 @@ private void gen_dcp_bytes(){
     if (!dc_lit_ref && dc_dup > 0){
 	   loc_ctr = loc_ctr + dc_len;
     }
+}
+private void process_dcz_data(){
+	/*
+	 * alloc or gen DS/DC Z type parms using prev.
+	 * settings for dc_dup and dc_len.  Also save
+	 * first field dc_type, dc_len
+	 */
+	dc_index++;   // start inside delimiter 'n,n'
+	dc_data_start = dc_index; 
+	while (!dc_eod && !bal_abort){
+		while (!dc_eod && !bal_abort
+				&& dc_index < dc_field.length()
+				&& dc_field.charAt(dc_index) != '\''){
+			    dcp_sign = 'C';
+				dc_dec_point = false; // RPI 777
+				dc_dec_scale = 0;     // RPI 777
+			    dc_digits = "";
+			    while (!bal_abort  // RPI 617 
+			    		&& dc_index < dc_field.length() 
+			    		&& dc_field.charAt(dc_index) != ','
+			    	    && dc_field.charAt(dc_index) != '\''){
+			         if (dc_field.charAt(dc_index) >= '0'
+			         	&& dc_field.charAt(dc_index) <= '9'){
+			        	if (tz390.opt_ascii){ // RPI 777
+			        		dc_digits = dc_digits + "3" + dc_field.charAt(dc_index); // RPI 777
+			        	} else {
+			        		dc_digits = dc_digits + "F" + dc_field.charAt(dc_index); 
+			        	}
+			        	if (dc_dec_point){
+			        		dc_dec_scale++; // RPI 777
+			        	}
+			         	dc_index++;
+			         } else if (dc_field.charAt(dc_index) == '.'){
+			        	 dc_dec_point = true;
+			        	 dc_index++;
+			         } else if (dc_field.charAt(dc_index) == '+'){
+			         	dc_index++;
+			         } else if (dc_field.charAt(dc_index) == '-'){
+			         	dcp_sign = 'D';
+			         	dc_index++;
+			         } else {
+			         	log_error(67,"invalid character in P type data field - " + dc_field);
+			         }
+			    }
+				if (!dc_scale_explicit && dc_first_field){
+					dc_first_scale = dc_dec_scale;
+				}
+			    if (dc_digits.length() > 2){
+			    	dc_hex = dc_digits.substring(0,dc_digits.length()-2) + dcp_sign + dc_digits.charAt(dc_digits.length()-1);
+			    } else {
+			    	dc_hex = "" + dcp_sign + dc_digits.charAt(dc_digits.length()-1);
+			    }
+			    dcp_len = dc_hex.length()/2;
+                if (dc_bit_len){
+                	gen_dcp_bits();
+                } else {
+                	gen_dcp_bytes();
+                }
+			    if (dc_field.charAt(dc_index) == ','){
+			    	dc_index++;
+			    }
+		}
+	    dc_index++; // skip dcp terminator
+	    if  (!bal_abort){
+		    if  (dc_dup > 1){
+			    dc_index = dc_data_start;
+			    dc_dup--;
+		    } else {
+			    dc_eod = true;
+		    }
+	    }
+	}
+	dc_len = 0; // don't double count RPI 538
 }
 private void process_dcs_data(){
 	/*
@@ -6851,7 +6985,7 @@ private void process_end(){
 	 * statement or end of MLC source
 	 */
 	if (cur_esd > 0){
-  		update_sect_len();
+  		update_sect();
 	}
 	list_bal_line();
 	if (tot_lit > 0){
@@ -6867,7 +7001,7 @@ private void process_end(){
 	   	    }
 	   	    loc_ctr = (sym_loc[cur_esd_sid] + sym_len[cur_esd_sid] + 7)/8*8;
 			gen_ltorg();
-			update_sect_len();
+			update_sect();
 		} else {
 			cur_esd = 0;
 		}
@@ -7006,7 +7140,7 @@ private void process_org(){
 	/*
 	 * reset current location in same csect
 	 */
-	update_sect_len(); // RPI 340 
+	update_sect(); // RPI 340 
 	loc_start = loc_ctr;
 	if (bal_parms == null 
 		|| bal_parms.length() == 0
@@ -7024,11 +7158,9 @@ private void process_org(){
 	if (cur_esd > 0
 		&& calc_rel_exp()
 		&& exp_esd == esd_base[cur_esd]){ // RPI 301
-		if (loc_ctr > exp_val){
-			update_sect_len();  //RPI10
-		}
 		loc_ctr = exp_val;
 		hex_bddd1_loc = tz390.get_hex(loc_ctr,6); // RPI 632
+		update_sect();  // RPI 10, RPI 778
 	} else {
 		log_error(102,"org expression must be in same section");
 	}
@@ -7417,7 +7549,7 @@ private void gen_ccw0(){  // RPI 567
 		if (exp_text.charAt(exp_index) == ','){
 			 exp_index++;
 			 exp_rld_len = 3;
-			 if (calc_rel_exp()){
+			 if (calc_exp()){  // RPI 771
 				 obj_code = obj_code + tz390.get_hex(exp_val,6);
 				 put_obj_text();        // RPI 632 
 				 loc_ctr = loc_ctr + 3; // RPI 632
@@ -7467,7 +7599,7 @@ private void gen_ccw1(){  // RPI 567
 		if (exp_text.charAt(exp_index) == ','){
 			 exp_index++;
 			 exp_rld_len = 4;
-			 if (calc_rel_exp()){
+			 if (calc_exp()){  // RPI 771
 				 obj_code = obj_code + tz390.get_hex(exp_val,8);
 				 put_obj_text();
 				 exp_rld_len = 0;
@@ -7932,17 +8064,17 @@ private String get_dfp_hex(int dfp_type,BigDecimal dfp_bd){
 	 */
 	switch (dfp_type){
 	case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){
+        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){  
         	log_error(179,"DD dfp constant out of range");
         }
         return tz390.get_long_hex(tz390.fp_work_reg.getLong(0),16);
 	case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50
-        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){
+        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){ 
         	log_error(180,"ED dfp constant out of range");
         }
 		return tz390.get_hex(tz390.fp_work_reg.getInt(0),8);
 	case 7: // tz390.fp_ld_type s1,cf5,bxdf12,ccf110
-        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){
+        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){ 
         	log_error(181,"LD dfp constant out of range");
         }
 		return tz390.get_long_hex(tz390.fp_work_reg.getLong(0),16)

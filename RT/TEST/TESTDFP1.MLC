@@ -22,7 +22,29 @@
 *   LPDFR, LNDFR, CPSDR, LCDFR, LDGR, LGDR            
 * 01/08/07 RPI 527 CORRECT CGDTR, CGXTR ROUNDING
 * 01/10/07 RPI 533 CORRECT CGDTR, CGXTR ROUNDING 
+* 01/12/08 RPI 786 CHANGE BIAS BAASED ON NEW CANONIZATION    
+* 01/13/08 RPI 786 use fp compares to handle equivalent DFP values                    
 *********************************************************************
+         MACRO
+&N       CLCED &S1,&S2
+&N       LE    F0,&S1
+         LDETR F0,F0,0
+         LE    F1,&S2
+         LDETR F1,F1,0
+         CDTR  F0,R1
+         MEND
+         MACRO
+&N       CLCDD &S1,&S2
+&N       LD    F0,&S1
+         LD    F1,&S2
+         CDTR  F0,F1
+         MEND
+         MACRO
+&N       CLCLD &S1,&S2
+&N       LX    F0,&S1
+         LX    F1,&S2
+         CXTR  F0,F1
+         MEND
          PRINT DATA
 TESTDFP1 RT1   MAIN
 DD1      DC    DD'0'
@@ -179,73 +201,85 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LD    3,=DD'20'
          MDTR  1,2,3
          STD   1,DD1
-         RT1   CCE,DD1,=DD'600'
+         CLCDD DD1,=DD'600'
+         RT1   CCE
          LD    2,=DD'-30'
          LD    3,=DD'-20'
          MDTR  1,2,3
          STD   1,DD1
-         RT1   CCE,DD1,=DD'600'
+         CLCDD DD1,=DD'600'
+         RT1   CCE
 * B3D1 DDTR
          LD    2,=DD'600'
          LD    3,=DD'20'
          DDTR  1,2,3
          STD   1,DD1
-         RT1   CCE,DD1,=DD'30'
+         CLCDD DD1,=DD'30'
+         RT1   CCE
          LD    2,=DD'10'
          LD    3,=DD'3'
          DDTR  1,2,3
          STD   1,DD1
-         RT1   CCE,DD1,=DD'3.333333333333333'
+         CLCDD DD1,=DD'3.333333333333333'
+         RT1   CCE
 * B3D2 ADTR
          LD    2,=DD'1234567890123456'
          LD    3,=DD'1111111111111111'
          ADTR  1,2,3
          RT1   CC2
          STD   1,DD1
-         RT1   CCE,DD1,=DD'2345679001234567'
+         CLCDD DD1,=DD'2345679001234567'
+         RT1   CCE
          LD    2,=DD'1'
          LD    3,=DD'2'
          ADTR  1,2,3
          RT1   CC2
          STD   1,DD1
-         RT1   CCE,DD1,=DD'3'
+         CLCDD DD1,=DD'3'
+         RT1   CCE
          LD    2,=DD'1.1'
          LD    3,=DD'2.2'
          ADTR  1,2,3
          RT1   CC2
          STD   1,DD1
-         RT1   CCE,DD1,=DD'3.3'
+         CLCDD DD1,=DD'3.3'
+         RT1   CCE
          LD    2,=DD'1'
          LD    3,=DD'-1'
          ADTR  1,2,3
          RT1   CC0
          STD   1,DD1
-         RT1   CCE,DD1,=DD'0'
+         CLCDD DD1,=DD'0'
+         RT1   CCE
          LD    2,=DD'1'
          LD    3,=DD'-2'
          ADTR  1,2,3
          RT1   CC1
          STD   1,DD1
-         RT1   CCE,DD1,=DD'-1'
+         CLCDD DD1,=DD'-1'
+         RT1   CCE
 * B3D3 SDTR
          LD    2,=DD'1234567890123456'
          LD    3,=DD'1111111111111111'
          SDTR  1,2,3
          RT1   CC2
          STD   1,DD1
-         RT1   CCE,DD1,=DD'123456779012345'
+         CLCDD DD1,=DD'123456779012345'
+         RT1   CCE
          LD    2,=DD'1'
          LD    3,=DD'1'
          SDTR  1,2,3
          RT1   CC0
          STD   1,DD1
-         RT1   CCE,DD1,=DD'0'
+         CLCDD DD1,=DD'0'
+         RT1   CCE
          LD    2,=DD'0'
          LD    3,=DD'1'
          SDTR  1,2,3
          RT1   CC1
          STD   1,DD1
-         RT1   CCE,DD1,=DD'-1'
+         CLCDD DD1,=DD'-1'
+         RT1   CCE
 * B3D4 LDETR
          LE    4,=ED'123'
          LDETR 1,4,0
@@ -256,22 +290,22 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LD    4,=DD'1234568.5'
          LEDTR 1,0,4,0 DEFAULT NEAREST HALF EVEN
          STE   1,ED1
-         CLC   ED1,=ED'1234568'
+         CLCED ED1,=ED'1234568'
          RT1   CC0
          LD    4,=DD'1234565.5'
          LEDTR 1,0,4,0 DEFAULT NEAREST HALF EVEN
          STE   1,ED1
-         CLC   ED1,=ED'1234566'
+         CLCED ED1,=ED'1234566'
          RT1   CC0
          LD    4,=DD'1234568.5'
          LEDTR 1,8+1,4,0 ROUND TOWARD ZERO
          STE   1,ED1
-         CLC   ED1,=ED'1234568'
+         CLCED ED1,=ED'1234568'
          RT1   CC0
          LD    4,=DD'1234567.5'
          LEDTR 1,8+1,4,0 ROUND TOWARD ZERO
          STE   1,ED1
-         CLC   ED1,=ED'1234567'
+         CLCED ED1,=ED'1234567'
          RT1   CC0
 * B3D6 LTDTR
          LD    4,=DD'1'
@@ -305,73 +339,85 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LX    5,=LD'20'
          MXTR  1,4,5
          STX   1,LD1
-         RT1   CCE,LD1,=LD'600'
+         CLCLD LD1,=LD'600'
+         RT1   CCE
          LX    4,=LD'-30'
          LX    5,=LD'-20'
          MXTR  1,4,5
          STX   1,LD1
-         RT1   CCE,LD1,=LD'600'
+         CLCLD LD1,=LD'600'
+         RT1   CCE
 * B3D9 DXTR
          LX    4,=LD'600'
          LX    5,=LD'20'
          DXTR  1,4,5
          STX   1,LD1
-         RT1   CCE,LD1,=LD'30'
+         CLCLD LD1,=LD'30'
+         RT1   CCE
          LX    4,=LD'10'
          LX    5,=LD'3'
          DXTR  1,4,5
          STX   1,LD1
-         RT1   CCE,LD1,=LD'3.333333333333333333333333333333333'
+         CLCLD LD1,=LD'3.333333333333333333333333333333333'
+         RT1   CCE
 * B3DA AXTR
          LX    4,=LD'1234567890123456789012345678901234'
          LX    5,=LD'1111111111111111111111111111111111'
          AXTR  1,4,5
          RT1   CC2
          STX   1,LD1
-         RT1   CCE,LD1,=LD'2345679001234567900123456790012345'
+         CLCLD LD1,=LD'2345679001234567900123456790012345'
+         RT1   CCE
          LX    4,=LD'1'
          LX    5,=LD'2'
          AXTR  1,4,5
          RT1   CC2
          STX   1,LD1
-         RT1   CCE,LD1,=LD'3'
+         CLCLD LD1,=LD'3'
+         RT1   CCE
          LX    4,=LD'1.1'
          LX    5,=LD'2.2'
          AXTR  1,4,5
          RT1   CC2
          STX   1,LD1
-         RT1   CCE,LD1,=LD'3.3'
+         CLCLD LD1,=LD'3.3'
+         RT1   CCE
          LX    4,=LD'1'
          LX    5,=LD'-1'
          AXTR  1,4,5
          RT1   CC0
          STX   1,LD1
-         RT1   CCE,LD1,=LD'0'
+         CLCLD LD1,=LD'0'
+         RT1   CCE
          LX    4,=LD'1'
          LX    5,=LD'-2'
          AXTR  1,4,5
          RT1   CC1
          STX   1,LD1
-         RT1   CCE,LD1,=LD'-1'
+         CLCLD LD1,=LD'-1'
+         RT1   CCE
 * B3DB SXTR
          LX    4,=LD'1234567890123456789012345678901234'
          LX    5,=LD'1111111111111111111111111111111111'
          SXTR  1,4,5
          RT1   CC2
          STX   1,LD1
-         RT1   CCE,LD1,=LD'123456779012345677901234567790123'
+         CLCLD LD1,=LD'123456779012345677901234567790123'
+         RT1   CCE
          LX    4,=LD'1'
          LX    5,=LD'1'
          SXTR  1,4,5
          RT1   CC0
          STX   1,LD1
-         RT1   CCE,LD1,=LD'0'
+         CLCLD LD1,=LD'0'
+         RT1   CCE
          LX    4,=LD'0'
          LX    5,=LD'1'
          SXTR  1,4,5
          RT1   CC1
          STX   1,LD1
-         RT1   CCE,LD1,=LD'-1'
+         CLCLD LD1,=LD'-1'
+         RT1   CCE
 * B3DC LXDTR
          LD    4,=DD'123'
          LXDTR 1,4,0
@@ -612,34 +658,34 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * B3E2 CUDTR
          LD    1,=DD'1'
          CUDTR 0,1
-         CG    0,=XL8'1'
+         CG    0,=XL8'100'                 RPI 786
          RT1   CCE 
          LD    1,=DD'-1'
          CUDTR 0,1
-         CG    0,=XL8'1'
+         CG    0,=XL8'100'                 RPI 786
          RT1   CCE 
-         LD    1,=DD'123456789012345'
+         LD    1,=DD'1234567890123456'     RPI 786 
          CUDTR 0,1
-         CG    0,=XL8'123456789012345'
+         CG    0,=XL8'1234567890123456'    RPI 786
          RT1   CCE 
 * B3E3 CSDTR
          LD    1,=DD'1'
          CSDTR 0,1,0
-         CG    0,=PL8'1'
+         CG    0,=PL8'100'                 RPI 786
          RT1   CCE 
          CSDTR 0,1,1
-         CG    0,=XL8'000000000000001F'
+         CG    0,=XL8'000000000000100F'    RPI 786
          RT1   CCE 
          LD    1,=DD'-1'
          CSDTR 0,1,0
-         CG    0,=PL8'-1'
+         CG    0,=PL8'-100'                RPI 786
          RT1   CCE 
          CSDTR 0,1,1
-         CG    0,=XL8'000000000000001D'
+         CG    0,=XL8'000000000000100D'    RPI 786
          RT1   CCE 
-         LD    1,=DD'123456789012345'
+         LD    1,=DD'123456789012345'     
          CSDTR 0,1,0
-         CG    0,=PL8'123456789012345'
+         CG    0,=PL8'123456789012345'    
          RT1   CCE 
 * B3E4 CDTR
          LD    1,=DD'1'
@@ -656,21 +702,21 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          RT1   CC2
 * B3E5 EEDTR
          LD    2,=DD'1'
-         EEDTR 1,2
-         CG    1,=FD'398'
+         EEDTR 1,2                         
+         CG    1,=FD'396'                  RPI 786
          RT1   CC0
          LD    2,=DD'1E1'
          EEDTR 1,2
-         CG    1,=FD'399'
+         CG    1,=FD'396'                  RPI 786
          RT1   CC0
          LD    2,=DD'.1'
          EEDTR 1,2
-         CG    1,=FD'397'
+         CG    1,=FD'396'                  RPI 786
          RT1   CC0
 * B3E7 ESDTR
          LD    4,=DD'0'
          ESDTR 1,4
-         CG    1,=FD'1'
+         CG    1,=FD'0'                    RPI 786
          RT1   CC0
          LD    4,=DD'1'
          ESDTR 1,4
@@ -871,59 +917,59 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          CUXTR 0,1
          CG    0,=XL8'0'
          RT1   CCE
-         CG    1,=XL8'1'
+         CG    1,=XL8'100'           RPI 786
          RT1   CCE 
          LX    1,=LD'-1'
          CUXTR 0,1
          CG    0,=XL8'0'
          RT1   CCE
-         CG    1,=XL8'1'
+         CG    1,=XL8'100'           RPI 786
          RT1   CCE 
-         LX    1,=LD'12345678901234567890123456789012'
+         LX    1,=LD'1234567890123456789012345678901234'    RPI 788
          CUXTR 0,1
          STMG  0,1,WORK
-         CLC   WORK,=XL16'12345678901234567890123456789012'
+         CLC   WORK,=XL16'34567890123456789012345678901234' RPI 788
          RT1   CCE 
 * B3EB CSXTR
          LX    1,=LD'1'
          CSXTR 0,1,0
-         CG    0,=FL8'0'
+         CG    0,=FL8'0'                    
          RT1   CCE
-         CG    1,=PL8'1'
+         CG    1,=PL8'100'              RPI 786
          RT1   CCE 
          CSXTR 0,1,1
          CG    0,=FL8'0'
          RT1   CCE
-         CG    1,=XL8'000000000000001F'
+         CG    1,=XL8'000000000000100F' RPI 786
          RT1   CCE 
          LX    1,=LD'-1'
          CSXTR 0,1,0
          CG    0,=FL8'0'
          RT1   CCE
-         CG    1,=PL8'-1'
+         CG    1,=PL8'-100'             RPI 786
          RT1   CCE 
          CSXTR 0,1,1
          CG    0,=FL8'0'
          RT1   CCE
-         CG    1,=XL8'000000000000001D'
+         CG    1,=XL8'000000000000100D' RPI 786
          RT1   CCE 
-         LX    1,=LD'1234567890123456789012345678901'
+         LX    1,=LD'1234567890123456789012345678901234'   RPI 788
          CSXTR 0,1,0
          STMG  0,1,PL16
-         CP    PL16,=PL16'1234567890123456789012345678901'
+         CP    PL16,=PL16'4567890123456789012345678901234' RPI 788
          RT1   CCE 
 * B3ED EEXTR
          LX    4,=LD'1'
          EEXTR 1,4
-         CG    1,=FD'6176'
+         CG    1,=FD'6174'   RPI 786 PREFERRED EXP = BIAS-2 
          RT1   CC0
          LX    4,=LD'1E1'
          EEXTR 1,4
-         CG    1,=FD'6177'
+         CG    1,=FD'6174'   RPI 786
          RT1   CC0
          LX    4,=LD'.1'
          EEXTR 1,4
-         CG    1,=FD'6175'
+         CG    1,=FD'6174'   RPI 786
          RT1   CC0
 * B3EC CXTR
          LX    4,=LD'1'
@@ -941,7 +987,7 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * B3EF ESXTR
          LX    4,=LD'0'
          ESXTR 1,4
-         CG    1,=FD'1'
+         CG    1,=FD'0'     RPI 787
          RT1   CC0
          LX    4,=LD'1'
          ESXTR 1,4
@@ -978,16 +1024,16 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          CDTR  1,4
          RT1   CC0
 * B3F4 CEDTR
-         LD    1,=DD'1'
-         LD    2,=DD'1E1'
+         LD    1,=DD'.123'
+         LD    2,=DD'.123E1'
          CEDTR 1,2
          RT1   CC1
-         LD    1,=DD'1'
-         LD    2,=DD'1'
+         LD    1,=DD'.123'
+         LD    2,=DD'.123'
          CEDTR 1,2
          RT1   CC0
-         LD    1,=DD'1E1'
-         LD    2,=DD'1'
+         LD    1,=DD'.123E1'
+         LD    2,=DD'.123'
          CEDTR 1,2
          RT1   CC2
 * B3F5 QADTR
@@ -1003,15 +1049,15 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          RT1   CCE
 * B3F6 IEDTR
          LD    4,=DD'1'
-         LG    2,=AD(DD_BIAS+2)
+         LG    2,=AD(DD_BIAS) RPI786 CHANGE FROM BIAS -2 > BIAS
          IEDTR 1,4,2
-         LD    5,=DD'100'
+         LD    5,=DD'100'     RPI786
          CDTR  1,5
          RT1   CC0
          LD    4,=DD'100'
-         LG    2,=AD(DD_BIAS-2)
+         LG    2,=AD(DD_BIAS) RPI 786 CHANGE FROM BIAS-2 TO BIAS
          IEDTR 1,4,2
-         LD    5,=DD'1'
+         LD    5,=DD'10000'   RPI 786
          CDTR  1,5
          RT1   CC0
 * B3F7 LLDTR
@@ -1046,16 +1092,16 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          CXTR  1,4
          RT1   CC0
 * B3FC CEXTR
-         LX    4,=LD'1'
-         LX    5,=LD'1E1'
+         LX    4,=LD'.123'   RPI 786 FORCE -3 EXP
+         LX    5,=LD'.123E1' RPI 786 ROCE  -2 EXP
          CEXTR 4,5
          RT1   CC1
-         LX    4,=DD'1'
-         LX    5,=DD'1'
+         LX    4,=DD'.123'   RPI 786
+         LX    5,=DD'.123'   RPI 786
          CEXTR 4,5
          RT1   CC0
-         LX    4,=DD'1E1'
-         LX    5,=DD'1'
+         LX    4,=DD'.123E1' RPI 786
+         LX    5,=DD'.123'   RPI 786
          CEXTR 4,5
          RT1   CC2
 * B3FD QAXTR
@@ -1071,15 +1117,15 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          RT1   CCE
 * B3FE IEXTR
          LX    4,=LD'1'
-         LG    2,=AD(LD_BIAS+2)
+         LG    2,=AD(LD_BIAS)  RPI 786 CHANGE BIAS-2 TO BIAS
          IEXTR 1,4,2
          LX    5,=LD'100'
          CXTR  1,5
          RT1   CC0
          LX    4,=LD'100'
-         LG    2,=AD(LD_BIAS-2)
+         LG    2,=AD(LD_BIAS)  RPI 786 CHANGE BIAS-2 TO BIAS
          IEXTR 1,4,2
-         LX    5,=LD'1'
+         LX    5,=LD'10000'
          CXTR  1,5
          RT1   CC0
 * B3FF RRXTR
@@ -1119,7 +1165,7 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * ED41 SRDT
          LD    4,=DD'1234'
          SRDT  1,4,2
-         LD    5,=DD'12'
+         LD    5,=DD'12.34'  RPI 786 (2 DECIMALS DUE TO BIAS -2)
          CDTR  1,5
          RT1   CCE
 * ED48 SLXT
@@ -1146,7 +1192,7 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * ED49 SRXT
          LX    4,=LD'1234'
          SRXT  1,4,2
-         LX    5,=LD'12'
+         LX    5,=LD'12.34' RPI 786 (3 DECIMALS DUE TO BIAS-2)
          CXTR  1,5
          RT1   CCE
 * ED50 TDCET
@@ -1321,4 +1367,6 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * END OF TESTS
 *
          RT1   END
+         EQUREGS REGS=GPR
+         EQUREGS REGS=FPR
          END         

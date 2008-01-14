@@ -158,7 +158,17 @@ public  class  tz390 {
     *          to program path.  Any number of file
     *          and nested files with options * comments.
     *          Change SYSCPY to default to SYSMAC. 
-    * 12/04/07 RPI 747 add CHKSRC(0-2) CHKMAC(0-2) checking options                 
+    * 12/04/07 RPI 747 add CHKSRC(0-2) CHKMAC(0-2) checking options 
+    * 12/19/07 RPI 756 support explicit path for any file 
+    *          and don't add ".." twice  
+    * 12/23/07 RPI 767 add option NORM default NONORM  
+    * 12/27/07 RPI 755 cleanup msgs to log, sta, tr*, con
+    * 12/27/07 RPI 769 check * comments when CHKSRC active 
+    * 12/27/07 RPI 770 add AUTOLINK default and NOAUTOLINK 
+    * 12/27/07 RPI 773 raise max_opsyn to 10000  
+    * 12/28/07 RPI 774 return empty string if dup count <= 0
+    * 01/11/08 RPI 786 support DFP preferred exp.
+    * 01/14/08 RPI 787 support DFP unnormalized instructions
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -167,7 +177,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.08g";  //dsh
+    String version    = "V1.3.08h";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -179,14 +189,16 @@ public  class  tz390 {
 	String  z390_font    = "Monospaced";  // RPI 509 was Courier
 	boolean z390_abort   = false;  // global abort request
     String  invalid_options = "";  // RPI 742
-	boolean opt_amode24  = false;  // link to run amode24
+    boolean opt_amode24  = false;  // link to run amode24
     boolean opt_amode31  = true;   // link to run amode31
     boolean opt_ascii    = false; // use ascii vs ebcdic
     boolean opt_asm      = true;  // run az390 assembler as mz390 subtask  RPI 415
+    boolean opt_autolink = true;  // search SYSOBJ for missing externals
     boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
     boolean opt_bs2000   = false; // Seimens BS2000 asm compatibility
     boolean opt_cics     = false; // exec cics program honoring prolog,epilog
     boolean opt_con      = true;  // log msgs to console
+    boolean force_nocon  = false; // override option con RPI 755
     boolean opt_dump     = false; // only indicative dump on abend unless on
     boolean opt_epilog   = true;  // if cics, insert DFHEIRET
     boolean opt_errsum   = false; // just list critical errors and summary on ERR file and console 
@@ -210,7 +222,7 @@ public  class  tz390 {
     boolean opt_regs     = false; // show registers on trace
     boolean opt_rmode24  = true;  // link to load below line
     boolean opt_rmode31  = false; // link to load above line
-    boolean opt_stats    = true;  // show statistics on LOG file
+    boolean opt_stats    = false;  // show statistics on STA file
     String  opt_sysparm  = "";    // user parm string for mz390  
     boolean opt_test     = false; // invoke interactive test cmds
     boolean opt_time     = true;  // abend 422 if out of time TIME (sec)
@@ -231,7 +243,10 @@ public  class  tz390 {
     boolean opt_xref     = true;   // cross reference symbols
     boolean max_cmd_queue_exceeded = false;  // RPI 731
     String  cmd_parms = ""; // all options from command
-    String  test_ddname = null;
+    String  final_options = ""; // RPI 755
+    int     cmd_parms_len = 34; // RPI 755
+    int     max_cmd_parms_line = 78; // RPI 755
+    String  test_ddname = "";
     char    z390_amode31 = 'T';
     char    z390_rmode31 = 'F';
     int opt_chkmac   = 0; // RPI 747 0-none,1-labels, 2-labels and src after MEND
@@ -270,6 +285,7 @@ public  class  tz390 {
 	long   max_time_seconds  = 15;      // TIME(15)max elapsed time - override time(sec)
 	int    monitor_wait = 300;          // fix interval in milliseconds
     int    max_mem           = 1;       // MEM(1)  MB memory default (see mem(mb) override)
+    String trace_options = "";
     /*
      * shared date and time formats
      */
@@ -283,7 +299,7 @@ public  class  tz390 {
 	String job_date = null; // job date mm/dd/yy  RPI 558
 	String pgm_name = null; // from first parm else abort
 	String pgm_type = null; // from first parm override if mlc else def.
-	String file_dir;        // dir for find_file_name RPI 700
+	String file_dir;        // dir for _name RPI 700
 	String file_type;       // type for find_file_name
 	String ada_type = ".ADA"; // ADATA type (not supported yet)
 	String bal_type = ".BAL"; // basic assembler output from mz390, input to az390
@@ -319,7 +335,7 @@ public  class  tz390 {
     String dir_obj = null; // SYSOBJ() lz390 object lib
     String dir_opt = null; // SYSOPT() OPT options @file path defaults to dir_mac RPI 742
     String dir_trc = null; // SYSTRC() trace file directory
-    int max_opsyn = 1000;
+    int max_opsyn = 1000; 
     int tot_opsyn = 0;
     int opsyn_index = -1;
     String[]  opsyn_new_name = new String[max_opsyn];
@@ -338,15 +354,17 @@ public  class  tz390 {
     String systerm_file_name      = null;
     RandomAccessFile systerm_file = null;
 	String systerm_time = "";     // hh:mm:ss if opt_timing
-    String systerm_prefix = null; // pgm_name plus space
+    String systerm_prefix = ""; // pgm_name plus space
     int    systerm_io     = 0;    // total file io count
     int    systerm_ins    = 0;    // ez390 instruction count
+    String started_msg = "";
+    String ended_msg   = "";
     String stats_file_name      = null;
     RandomAccessFile stats_file = null;
     /*
      * log, trace file used by mz390, az390, lz390, ez390
      */
-    String         log_file_name = null;
+    String         log_file_name = ""; // RPI 755
     String         trace_file_name = null;
 	File           trace_file = null;
 	BufferedWriter trace_file_buff = null;
@@ -541,7 +559,16 @@ public  class  tz390 {
         int fp_sign = 0;
         int fp_exp   = 0; // scale * log10/log2
         String dfp_digits = null;
+    	int    dfp_dec_index = 0;  // RPI 786
+    	int    dfp_exp_index = 0;  // RPI 786
+    	int    dfp_exp = 0;        // RPI 786
+    	int    dfp_scf = 0;        // RPI 786
+    	int    dfp_preferred_exp = -2; // RPI 786
         byte[] dfp_work = new byte[16];
+        int fp_form          = 2; // cur dfp form request type RPI 786 RPI 787
+        int fp_form_constant = 1; // preferred exponent for constants RPI 786
+        int fp_form_calc     = 2; // smallest quantum for cal. RPI 786
+        int fp_form_unnorm   = 3; // unnormalized (no shifts) RPI 787
    /* 
    * dfp_exp_bcd_to_cf5 returns CF5 5 bit 
    * combination field using index made up of 
@@ -3602,7 +3629,8 @@ public void init_tables(){
      * */
 	try {
 	    find_non_space_pattern = Pattern.compile(
-	    		  "([^\\s]+)"  //RPI 313	    	      
+	    		"([\"][^\"]+[\"])"  
+	    	  +	"|([^\\s]+)"  //RPI 313	    	      
 				  );
 	} catch (Exception e){
 		  abort_error(13,"find parm pattern errror - " + e.toString());
@@ -3722,11 +3750,6 @@ public void init_options(String[] args,String pgm_type){
     int index1 = 1;
     while (index1 < args.length){
     	token = args[index1];
-    	if (token.length() > 2 //RPI201
-    		&& token.charAt(0) == '"'
-    		&& token.charAt(token.length()-1) == '"'){
-    		token = token.substring(1,token.length()-1);
-    	}
     	process_option(token);  // RPI 742
     	index1++;
     }
@@ -3734,7 +3757,7 @@ public void init_options(String[] args,String pgm_type){
     	&& cmd_parms.charAt(cmd_parms.length()-1) == ' '){
     	cmd_parms = cmd_parms.substring(0,cmd_parms.length()-1);
     }
-    if (log_file_name != null){ // RPI 719
+    if (log_file_name.length() > 0){ // RPI 719  RPI 755
     	if (systerm_file_name == null){  // RPI 730
     		systerm_file_name = log_file_name;
     	}
@@ -3754,7 +3777,27 @@ private void process_option(String token){
 	 * process option from command line or
 	 * from @file optionsfile.
 	 */
-	cmd_parms = cmd_parms + token + " ";
+	if (cmd_parms_len + token.length() + 1 > max_cmd_parms_line){
+		String temp_token = token;
+		while (temp_token.length() > max_cmd_parms_line - 2){
+			cmd_parms = cmd_parms + "\r\n  " + temp_token.substring(0,max_cmd_parms_line - 2);
+			temp_token = temp_token.substring(max_cmd_parms_line - 2);
+		}
+		if (temp_token.length() > 0){
+			cmd_parms = cmd_parms + "\r\n  " + temp_token + " ";
+			cmd_parms_len = temp_token.length() + 3;
+		} else {
+			cmd_parms_len = max_cmd_parms_line;
+		}
+	} else {
+		cmd_parms = cmd_parms + token + " ";
+		cmd_parms_len = cmd_parms_len + token.length() + 1;
+	}
+	if (token.length() > 2 //RPI201 RPI 756
+    		&& token.charAt(0) == '"'
+    		&& token.charAt(token.length()-1) == '"'){
+    		token = token.substring(1,token.length()-1);
+    }
 	if (token.charAt(0) == '@'){
 		process_options_file(token.substring(1));  // RPI 742
 	} else if (token.toUpperCase().equals("AMODE24")){
@@ -3881,8 +3924,10 @@ private void process_option(String token){
        	}
     } else if (token.toUpperCase().equals("NOASM")){
        	opt_asm = false;
+    } else if (token.toUpperCase().equals("NOAUTOLINK")){
+       	opt_autolink = false;  	// RPI 770
     } else if (token.toUpperCase().equals("NOBAL")){
-       	opt_bal = false;    	
+       	opt_bal = false;    
     } else if (token.toUpperCase().equals("NOCON")){
        	opt_con = false;
     } else if (token.toUpperCase().equals("NOEPILOG")){
@@ -3907,6 +3952,7 @@ private void process_option(String token){
         opt_protect = false;
     } else if (token.toUpperCase().equals("NOSTATS")){
        	opt_stats = false;
+       	stats_file_name = null; // RPI 755
     } else if (token.toUpperCase().equals("NOTIME")){
     	opt_time = false; // no time limit
     } else if (token.toUpperCase().equals("NOTIMING")){
@@ -3948,9 +3994,13 @@ private void process_option(String token){
        	opt_rmode24 = false;
       	opt_rmode31 = true;
        	z390_rmode31 = 'T';
+    } else if (token.toUpperCase().equals("STATS")){
+       	opt_stats = true;  // RPI 755
+       	stats_file_name = pgm_name;
     } else if (token.length() > 6
       		&& token.substring(0,6).toUpperCase().equals("STATS(")){
      	stats_file_name = token.substring(6,token.length()-1); // RPI 736
+     	opt_stats = true; // RPI 755
     } else if (token.length() > 7
        		&& token.substring(0,7).toUpperCase().equals("SYS390(")){
        	dir_390 = set_path_option(dir_390,token.substring(7,token.length()-1));	
@@ -4022,7 +4072,7 @@ private void process_option(String token){
        	}
     } else if (token.length() > 6
       		&& token.substring(0,6).toUpperCase().equals("TRACE(")){
-       	String trace_options = token.substring(6,token.length()-1).toUpperCase();
+       	trace_options = token.substring(6,token.length()-1).toUpperCase();
        	opt_con = false;
        	int index = 0;
        	while (index < trace_options.length()){
@@ -4038,6 +4088,7 @@ private void process_option(String token){
        			opt_tracem = true;
        		} else if (trace_options.charAt(index) == 'P'){
        			opt_tracep = true;	
+       			opt_tracem = true;
        		} else if (trace_options.charAt(index) == 'Q'){
        			opt_traceq = true;
        		} else if (trace_options.charAt(index) == 'T'){
@@ -4135,11 +4186,12 @@ private void process_options_file(String file_name){
 }
 public void open_systerm(String z390_pgm){
 	/*
-	 * open systerm file else set null
+	 * open systerm file and sta statistics file
+	 * positions to add to end of existing files.
 	 */
 	systerm_prefix = left_justify(pgm_name,9) + " " + z390_pgm + " ";
     if (stats_file == null 
-   		&& stats_file_name != null){
+    	&& stats_file_name != null){
     	stats_file_name = get_file_name(dir_err,stats_file_name,sta_type);
     	try {
             stats_file = new RandomAccessFile(stats_file_name,"rw"); 
@@ -4170,7 +4222,12 @@ public void open_systerm(String z390_pgm){
 	}
 	try {
 		systerm_io++;
-		systerm_file.writeBytes(systerm_time + systerm_prefix + "STARTED" + newline); // RPI 500
+		started_msg = systerm_time + systerm_prefix + "STARTED USING z390 " + version + " ON J2SE " + System.getProperty("java.version");
+		System.out.println(started_msg);
+		systerm_file.writeBytes(started_msg + newline); // RPI 500
+		if (stats_file != null){
+			stats_file.writeBytes(started_msg + newline); // RPI 755
+		}
 	} catch (Exception e){
         abort_error(11,"I/O error on systerm file " + e.toString());
 	}
@@ -4213,22 +4270,14 @@ public synchronized void close_systerm(int rc){ // RPI 397
 	 * 
 	 */
      if (systerm_file != null){
-     	 if (opt_timing){
-     		systerm_sec  = " SEC=" + right_justify("" + ((System.currentTimeMillis()-systerm_start)/1000),2);
-    	    systerm_time = sdf_HHmmss.format(new Date()) + " ";;
-    	 }
+		 systerm_io++;
+     	 set_ended_msg(rc);
     	 try {
-    		 systerm_io++;
-    		 String systerm_ins_text = "";
-    		 if (systerm_ins > 0){
-    			 systerm_ins_text = " INS=" + systerm_ins;
-    		 }
-    		 systerm_file.writeBytes(systerm_time + systerm_prefix
-    				 + "ENDED   RC=" + right_justify("" + rc,2) 
-    				 + systerm_sec 
-    				 + " MEM(MB)=" + right_justify("" + get_mem_usage(),3) 
-    				 + " IO=" + systerm_io 
-    				 + systerm_ins_text + newline); // RPI 500
+    		 System.out.println(ended_msg);
+    		 systerm_file.writeBytes(ended_msg + newline); // RPI 500
+    	     if (stats_file != null){
+    	    	 stats_file.writeBytes(ended_msg + newline); // RPI 755
+    	     }
     	 } catch (Exception e){
     	 }
     	 try {
@@ -4247,6 +4296,26 @@ public synchronized void close_systerm(int rc){ // RPI 397
     	 stats_file = null;  
      }
 }
+public void set_ended_msg(int rc){
+	/*
+	 * set ended_msg for use by mz390, az390,
+	 * lz390, and ez390.
+	 */
+	if (opt_timing){
+ 		systerm_sec  = " SEC=" + right_justify("" + ((System.currentTimeMillis()-systerm_start)/1000),2);
+	    systerm_time = sdf_HHmmss.format(new Date()) + " ";;
+	 }
+	 String systerm_ins_text = "";
+	 if (systerm_ins > 0){
+		 systerm_ins_text = " INS=" + systerm_ins;
+	 }
+	 ended_msg = systerm_time + systerm_prefix
+	    + "ENDED   RC=" + right_justify("" + rc,2) 
+	    + systerm_sec 
+	    + " MEM(MB)=" + right_justify("" + get_mem_usage(),3) 
+	    + " IO=" + systerm_io 
+	    + systerm_ins_text;
+}
 public void close_trace_file(){
 	/*
 	 * close trace file if open RPI 484
@@ -4259,7 +4328,7 @@ public void close_trace_file(){
     	 }
      }
 }
-private int get_mem_usage(){
+public int get_mem_usage(){
 	/*
 	 * return max memory usage by J2SE in MB
 	 */
@@ -4284,7 +4353,8 @@ private String get_short_file_name(String file_name){
 		}
 	}
 	int index = file_name.indexOf(" ");
-	if (index >=0){
+	if (file_name.charAt(0) != '"' // RPI 756
+		&& index >=0){
 		return "\"" + file_name + "\""; // LSN
 	}
 	return file_name;
@@ -4477,9 +4547,10 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 	 *       (plus sign) verus semi-colon is used in BAT parms 
 	 *       to avoid conflict with Windows BAT parsing.
 	 *   2.  If file_name has type use it.
-	 *       Else if directory path has *.type use
+	 *       else if directory path has *.type use
 	 *       the type instead of default file_type. 
 	 */
+	boolean explicit_type = false;
 	if (file_name == null)return null; // RPI 459
 	if (z390_os_type == z390_os_linux){ 
 		file_name = file_name.replace('\\','/'); // RPI 713
@@ -4487,48 +4558,64 @@ public String find_file_name(String parm_dir_list, String file_name, String file
 	String temp_file_name;
 	File   temp_file;
 	int index = file_name.indexOf('.');
-	boolean file_type_set = false;
-	if (index > 0){
-		file_type_set = true;
+	if (index != -1){
+		file_type_def = file_name.substring(index); // RPI 756
+		explicit_type = true;
+		file_name = file_name.substring(0,index);   // RPI 756
 	}
-	index = 0;
-	int path_len = 0;  
-	while (index <= parm_dir_list.length()){
-		file_type = file_type_def;
-		int index1 = parm_dir_list.substring(index).indexOf(";");
-		if (index1 == -1)index1 = parm_dir_list.substring(index).indexOf("+");
-		if (index1 > 0){
-			path_len = path_len + index1;   
-			file_dir = parm_dir_list.substring(index,path_len); // RPI123
-			index = index + index1 + 1;
-			path_len = path_len + 1;    
-		} else {
-			file_dir = parm_dir_list.substring(index);
-			index = parm_dir_list.length()+1;
-		}
-		if (file_dir.equals(".")){
-			file_dir = dir_cur;
-		}
-		int index2 = file_dir.indexOf("*.");
-		if (index2 > 0){
-			file_type = file_dir.substring(index2+1);
-			file_dir  = file_dir.substring(0,index2);
-		}
-		if (file_dir.length() > 0){
-			if (!file_dir.substring(file_dir.length()-1,file_dir.length()).equals(File.separator)){
-				file_dir = file_dir + File.separator;
-			}
-			if (file_type_set){
-				temp_file_name = file_dir + file_name;
-			} else {
-				temp_file_name = file_dir + file_name + file_type;
-			}
-			temp_file = new File(temp_file_name);
-		} else {
-			temp_file = new File(file_name + file_type);
-		}
+	index = file_name.lastIndexOf(File.separator);
+	if (index == -1
+		&& (file_name.length() > 2 
+			&& file_name.charAt(1) == ':')){
+		index = 2;
+	}
+	if (index >= 0){
+		// file_name has explicit path so use it
+		temp_file = new File(file_name + file_type_def);
 		if (temp_file.isFile()){
-			return temp_file.getPath(); // RPI 499 drop upper case
+			return temp_file.getPath(); // RPI 756
+		}
+	} else {
+		// search directory list for file
+		index = 0;
+		int path_len = 0;  
+		while (index <= parm_dir_list.length()){
+			file_type = file_type_def;
+			int index1 = parm_dir_list.substring(index).indexOf(";");
+			if (index1 == -1)index1 = parm_dir_list.substring(index).indexOf("+");
+			if (index1 > 0){
+				path_len = path_len + index1;   
+				file_dir = parm_dir_list.substring(index,path_len); // RPI123
+				index = index + index1 + 1;
+				path_len = path_len + 1;    
+			} else {
+				file_dir = parm_dir_list.substring(index);
+				index = parm_dir_list.length()+1;
+			}
+			if (file_dir.equals(".")){
+				file_dir = dir_cur;
+			}
+			int index2 = file_dir.indexOf("*.");
+			if (index2 >= 0){  // RPI 756
+				if (!explicit_type){
+					file_type = file_dir.substring(index2+1);
+				}
+				file_dir  = file_dir.substring(0,index2);
+			}
+			if (file_dir.length() > 0){
+				if (!file_dir.substring(file_dir.length()-1,file_dir.length()).equals(File.separator)){
+					if (file_dir.length() != 2 || file_dir.charAt(1) != ':'){
+						file_dir = file_dir + File.separator;
+					}
+				}
+				temp_file_name = file_dir + file_name + file_type;
+				temp_file = new File(temp_file_name);
+			} else {
+				temp_file = new File(file_name + file_type);
+			}
+			if (temp_file.isFile()){
+				return temp_file.getPath(); // RPI 499 drop upper case
+			}
 		}
 	}
 	return null;
@@ -4597,7 +4684,7 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
     		lkd_ignore = true;  // RPI 735 ignore LKD for link with explicit OBJ file
     	}
     	if (!file_type.equals(mlc_type)){ //RPI169
-    		pgm_type=file_type;
+    		pgm_type = file_type;
     	} else {
     		pgm_type = file_name.substring(index);
     	}
@@ -4630,7 +4717,7 @@ public boolean update_opsyn(String new_name,String old_name){
 	 *   1.  Add new alias name for opcode
 	 *   2.  Add null entry to cancel opcode  // RPI 306
 	 *   3.  Restore opcode to previous alias
-	 *       and remove any cancel entry.  // R{O 404
+	 *       and remove any cancel entry.  // RPI 404
 	 * Notes:
 	 *   1.  Indexes pointing to new name entries
 	 *       in opsyn table are only added once.
@@ -4662,7 +4749,7 @@ public boolean update_opsyn(String new_name,String old_name){
 			add_key_index(opsyn_index);
 			opsyn_new_name[opsyn_index] = new_name;
 		} else {
-			return false;
+			return false;  // RPI 773
 		}
 	}
 	if (old_name != null){
@@ -4772,10 +4859,6 @@ public boolean verify_ascii_source(String temp_line){
 	if (temp_line.length() > max_line_len){ // RPI 437
 		return false; 
 	}
-	if (temp_line.length() > 0 
-		&& temp_line.charAt(0) == '*'){
-		return true;
-	}
 	int index = 0;
     while (index < temp_line.length()){
     	int next_char = temp_line.charAt(index) & 0xff; // RPI 744
@@ -4839,6 +4922,9 @@ public String get_dup_string(String text,int dup_count){
 	 * return string with text dupicated
 	 * dup_count times
 	 */
+	if (dup_count <= 0){
+		return ""; // RPI 774
+	}
 	if (dup_char_len < dup_count){
 		dup_char_len = dup_count;
 		if (dup_char_len < 4096){
@@ -5145,6 +5231,11 @@ public void put_trace(String text){
     	/*
     	 * store binary DD,ED, or LD format
     	 * in fp_work_reg.  Return true if value within range.
+    	 * 
+    	 * fp_form:
+    	 *  1 - canonical - preferred exp for exact constants
+    	 *  2 - smallest quantum (default for result calculations
+    	 *  3 - unnormalized - no shifting
     	 */
     	/*
     	 * round to specified precision using default 
@@ -5158,10 +5249,10 @@ public void put_trace(String text){
     		return true; 
     	}
     	dfp_digits = dfp_bd.toString().toUpperCase(); 
-    	int  dfp_dec_index = dfp_digits.indexOf('.');
-    	int  dfp_exp_index = dfp_digits.indexOf('E');
-    	int  dfp_exp = 0;
-    	long dfp_scf = 0;
+    	dfp_dec_index = dfp_digits.indexOf('.');
+    	dfp_exp_index = dfp_digits.indexOf('E');
+    	dfp_exp = 0;
+    	dfp_scf = 0;
     	if (dfp_exp_index != -1){
     		dfp_exp = Integer.valueOf(dfp_digits.substring(dfp_exp_index+2));
     		if (dfp_digits.charAt(dfp_exp_index+1) == '-'){
@@ -5180,34 +5271,25 @@ public void put_trace(String text){
     			           + dfp_digits.substring(dfp_dec_index+1);
     		}
     	}
-    	/* strip any leading zero and then
-    	 * issue error and return null if out of
-    	 * range.
+    	/*
+    	 * strip leading zeros
     	 */
     	int index = 0;
-    	while (index < dfp_dec_index      
+    	int limit = dfp_digits.length() - 1;
+    	while (index < limit 
     		   && dfp_digits.charAt(index) == '0'){
-    		index++;  // RPI 518
+    		index++;
     	}
     	if (index > 0){
     		dfp_digits = dfp_digits.substring(index);
-    	}
-    	/*
-    	 * strip trailing zeros if decimal point
-    	 */
-    	if (dfp_dec_index != -1){
-    		index = dfp_digits.length()-1;
-    		while (index > 0 
-    				&& dfp_digits.charAt(index) == '0'){
-    			index--;  // RPI 518
-    			dfp_exp++;
+        }
+    	if (fp_form != fp_form_unnorm){
+    		// strip trailing zeros for smallest quantum
+    		normalize_dfp();
+    		if (fp_form == fp_form_constant){  // RPI 786
+    			// adjust to preferred exponent for constants
+    			constant_dfp_value(dfp_type);
     		}
-    		if (index < dfp_digits.length()-1){
-    			dfp_digits = dfp_digits.substring(0,index+1);
-    		}
-    	}
-    	if (dfp_digits.length() > fp_digits_max[dfp_type]){
-    		return false;
     	}
     	dfp_exp = dfp_exp + fp_exp_bias[dfp_type];
     	if (dfp_exp < 0
@@ -5251,6 +5333,39 @@ public void put_trace(String text){
     		return true;
     	}
     	return false;
+    }
+    private void normalize_dfp(){
+    	/*
+    	 * normaize dfp to smallest quantum by
+    	 * striping trailing zeros
+    	 * with corresponding exp adjustment.
+    	 */
+    	int limit = dfp_digits.length()-1; // new length
+ 		int index = limit;
+ 		while (index > 0
+ 		       && dfp_digits.charAt(index) == '0'){
+ 			index--;
+ 		}
+ 		if (index < limit){
+ 			dfp_exp = dfp_exp + limit - index;
+ 			dfp_digits = dfp_digits.substring(0,index+1);
+ 		}
+    }
+    private void constant_dfp_value(int dfp_type){
+    	/* 
+    	 * Set constant DFP value by adding
+    	 * trailing zeros to yield
+    	 * preferred exponent value if
+    	 * possible without losing significance
+    	 * 
+    	 */
+    	int dfp_exp_adj = dfp_exp - dfp_preferred_exp;
+    	if (dfp_exp_adj > 0 
+    		&& dfp_exp_adj + dfp_digits.length() <= fp_digits_max[dfp_type]){
+    		// add zeros to set preferred exp
+    		dfp_exp = dfp_preferred_exp;
+    		dfp_digits = dfp_digits + get_dup_string("0",dfp_exp_adj); 
+    	}
     }
     private long get_dfp_ccf_digits(int tot_digits,int digit_offset, int digit_count){
     	/*
@@ -5315,6 +5430,7 @@ public void put_trace(String text){
     		max_errors = 0;
     		opt_obj    = false;
     		opt_stats  = false;
+           	stats_file_name = null; // RPI 755
     	}
     }
     public String get_ascii_var_string(byte[] byte_array,int mem_addr,int max_len){
@@ -5381,9 +5497,326 @@ public void put_trace(String text){
 		 * else replace existing path option.
 		 */
 		if (new_path.charAt(0) == '+'){
-			return old_path + new_path + File.separator;
+			return old_path + new_path;  
 		} else {
-			return new_path + File.separator;
+			return new_path; 
+		}
+	}
+	public void put_stat_final_options(){
+		/*
+		 * list final value of all changed 
+		 * options on stats file
+		 */
+		/*
+		 * option flags
+		 */
+		cmd_parms_len = systerm_time.length() + systerm_prefix.length() + 13;
+	    if (opt_amode24 ){ // link to run amode24
+	        add_final_opt("AMODE24");
+	     } else {
+	        add_final_opt("NOAMODE24");
+	     }
+	     if (opt_amode31 ){ // link to run amode31
+	        add_final_opt("AMODE31");
+	     } else {
+	        add_final_opt("NOAMODE31");
+	     }
+	     if (opt_ascii   ){ // use ascii vs ebcdic
+	        add_final_opt("ASCII");
+	     } else {
+	        add_final_opt("NOASCII");
+	     }
+	     if (opt_asm     ){ // run az390 assembler as mz390 subtask  RPI 415
+	        add_final_opt("ASM");
+	     } else {
+	        add_final_opt("NOASM");
+	     }
+	     if (opt_bal     ){ // generate bal source output from mz390 RPI 415
+	        add_final_opt("BAL");
+	     } else {
+	        add_final_opt("NOBAL");
+	     }
+	     if (opt_bs2000  ){ // Seimens BS2000 asm compatibility
+	        add_final_opt("BS2000");
+	     } else {
+	        add_final_opt("NOBS2000");
+	     }
+	     if (opt_cics    ){ // exec cics program honoring prolog,epilog
+	        add_final_opt("CICS");
+	     } else {
+	        add_final_opt("NOCICS");
+	     }
+	     if (opt_con     ){ // log msgs to console
+	        add_final_opt("CON");
+	     } else {
+	        add_final_opt("NOCON");
+	     }
+	     if (opt_dump    ){ // only indicative dump on abend unless on
+	        add_final_opt("DUMP");
+	     } else {
+	        add_final_opt("NODUMP");
+	     }
+	     if (opt_epilog  ){ // if cics, insert DFHEIRET
+	        add_final_opt("EPILOG");
+	     } else {
+	        add_final_opt("NOEPILOG");
+	     }
+	     if (opt_errsum  ){ // just list critical errors and summary on ERR file and console 
+	        add_final_opt("ERRSUM");
+	     } else {
+	        add_final_opt("NOERRSUM");
+	     }
+	     if (opt_guam    ){ // use gz390 GUAM GUI access method interface
+	        add_final_opt("GUAM");
+	     } else {
+	        add_final_opt("NOGUAM");
+	     }
+	     if (opt_list    ){ // generate LOG file
+	        add_final_opt("LIST");
+	     } else {
+	        add_final_opt("NOLIST");
+	     }
+	     if (opt_listcall){ // list macro calls
+	        add_final_opt("LISTCALL");
+	     } else {
+	        add_final_opt("NOLISTCALL");
+	     }
+	     if (opt_listfile){ // list each file path
+	        add_final_opt("LISTFILE");
+	     } else {
+	        add_final_opt("NOLISTFILE");
+	     }
+	     if (opt_listuse ){ // list usage at USING and DROP
+	        add_final_opt("LISTUSE");
+	     } else {
+	        add_final_opt("NOLISTUSE");
+	     }
+	     if (opt_mcall   ){ // list MCALL and MEXIT on PRN // RPI 511
+	        add_final_opt("MCALL");
+	     } else {
+	        add_final_opt("NOMCALL");
+	     }
+	     if (opt_obj     ){ // generate binary MVS compatible OBJ file RPI 694
+	        add_final_opt("OBJ");
+	     } else {
+	        add_final_opt("NOOBJ");
+	     }
+	     if (opt_objhex  ){ // generate ascii hex obj records (lz390 accepts bin or hex)
+	        add_final_opt("OBJHEX");
+	     } else {
+	        add_final_opt("NOOBJHEX");
+	     }
+	     if (opt_pc      ){ // generate macro pseudo code
+	        add_final_opt("PC");
+	     } else {
+	        add_final_opt("NOPC");
+	     }
+	     if (opt_pcopt   ){ // optimize pc code for speed
+	        add_final_opt("PCOPT");
+	     } else {
+	        add_final_opt("NOPCOPT");
+	     }
+	     if (opt_prolog  ){ // if cics, insert DFHEIBLK and DFHEIENT
+	        add_final_opt("PROLOG");
+	     } else {
+	        add_final_opt("NOPROLOG");
+	     }
+	     if (opt_protect ){ // prevent PSA mods by user
+	        add_final_opt("PROTECT");
+	     } else {
+	        add_final_opt("NOPROTECT");
+	     }
+	     if (opt_reformat){ // reformat BAL statements
+	        add_final_opt("REFORMAT");
+	     } else {
+	        add_final_opt("NOREFORMAT");
+	     }
+	     if (opt_regs    ){ // show registers on trace
+	        add_final_opt("REGS");
+	     } else {
+	        add_final_opt("NOREGS");
+	     }
+	     if (opt_rmode24 ){ // link to load below line
+	        add_final_opt("RMODE24");
+	     } else {
+	        add_final_opt("NORMODE24");
+	     }
+	     if (opt_rmode31 ){ // link to load above line
+	        add_final_opt("RMODE31");
+	     } else {
+	        add_final_opt("NORMODE31");
+	     }
+	     if (opt_stats   ){ // show statistics on STA file
+	        add_final_opt("STATS");
+	     } else {
+	        add_final_opt("NOSTATS");
+	     }
+	     if (opt_test    ){ // invoke interactive test cmds
+	        add_final_opt("TEST");
+	     } else {
+	        add_final_opt("NOTEST");
+	     }
+	     if (opt_time    ){ // abend 422 if out of time TIME (sec)
+	        add_final_opt("TIME");
+	     } else {
+	        add_final_opt("NOTIME");
+	     }
+	     if (opt_timing  ){ // display current date, time, rate
+	        add_final_opt("TIMING");
+	     } else {
+	        add_final_opt("NOTIMING");
+	     }
+	     if (opt_trace   ){ // trace(e) trace ez390 to TRE
+	        add_final_opt("TRACE");
+	     } else {
+	        add_final_opt("NOTRACE");
+	     }
+	     if (opt_tracea  ){ // trace(a) az390 assembler to TRA
+	        add_final_opt("TRACEA");
+	     } else {
+	        add_final_opt("NOTRACEA");
+	     }
+	     if (opt_traceall){ // trace(aeglmpqtv) trace all TRM,TRA,TRL,TRE
+	        add_final_opt("TRACEALL");
+	     } else {
+	        add_final_opt("NOTRACEALL");
+	     }
+	     if (opt_traceg  ){ // trace(g) memory FQE updates to TRE
+	        add_final_opt("TRACEG");
+	     } else {
+	        add_final_opt("NOTRACEG");
+	     }
+	     if (opt_tracel  ){ // trace(L) lz390 to TRL
+	        add_final_opt("TRACEL");
+	     } else {
+	        add_final_opt("NOTRACEL");
+	     }
+	     if (opt_tracem  ){ // trace mz390 to TRM
+	        add_final_opt("TRACEM");
+	     } else {
+	        add_final_opt("NOTRACEM");
+	     }
+	     if (opt_tracep  ){ // trace mz390 pseudo code to TRM
+	        add_final_opt("TRACEP");
+	     } else {
+	        add_final_opt("NOTRACEP");
+	     }
+	     if (opt_traceq  ){ // trace(q) QSAM file I/O to TRE
+	        add_final_opt("TRACEQ");
+	     } else {
+	        add_final_opt("NOTRACEQ");
+	     }
+	     if (opt_tracet  ){ // trace(t) TCPIO and TGET/TPUT I/O to TRE
+	        add_final_opt("TRACET");
+	     } else {
+	        add_final_opt("NOTRACET");
+	     }
+	     if (opt_tracev  ){ // trace(v) VSAM file I/O to TRE
+	        add_final_opt("TRACEV");
+	     } else {
+	        add_final_opt("NOTRACEV");
+	     }
+	     if (opt_trap    ){ // trap exceptions as 0C5
+	        add_final_opt("TRAP");
+	     } else {
+	        add_final_opt("NOTRAP");
+	     }
+	     if (opt_ts      ){ // time-stamp logs RPI 662
+	        add_final_opt("TS");
+	     } else {
+	        add_final_opt("NOTS");
+	     }
+	     if (opt_vcb     ){ // vsam cache operational
+	        add_final_opt("VCB");
+	     } else {
+	        add_final_opt("NOVCB");
+	     }
+	     if (opt_xref    ){ // cross reference symbols
+	        add_final_opt("XREF");
+	     } else {
+	        add_final_opt("NOXREF");
+	     }
+	     /*
+	      * option limits
+	      */
+	     add_final_opt("CHKMAC=" + opt_chkmac); // RPI 747 0-none,1-labels, 2-labels and src after MEND
+	     add_final_opt("CHKSRC=" + opt_chksrc); // RPI 747 0-none,1-MLC only,2-all
+	     add_final_opt("ERR=" + max_errors);
+	     add_final_opt("MAXCALL=" + opt_maxcall);
+	     add_final_opt("MAXESD=" + opt_maxesd);
+	     add_final_opt("MAXFILE=" + opt_maxfile);
+	     add_final_opt("MAXGBL=" + opt_maxgbl);
+	     add_final_opt("MAXHEIGHT=" + max_main_height);
+	     add_final_opt("MAXLCL=" + opt_maxlcl);
+	     add_final_opt("MAXLEN=" + max_line_len);
+	     add_final_opt("MAXLINE=" + opt_maxline);
+	     add_final_opt("MAXLOG=" + opt_maxlog); // max gui log before trunc
+	     add_final_opt("MAXPARM=" + opt_maxparm);
+	     add_final_opt("MAXPC=" + opt_maxpc); // pseudo code cache size
+	     add_final_opt("MAXQUE=" + opt_maxque); // max cmd out before trunc
+	     add_final_opt("MAXRLD=" + opt_maxrld);
+	     add_final_opt("MAXSIZE=" + max_file_size);
+	     add_final_opt("MAXSYM=" + opt_maxsym);
+	     add_final_opt("MAXWARN=" + max_mnote_warning);
+	     add_final_opt("MAXWIDTH=" + max_main_width);
+	     add_final_opt("MEM=" + max_mem);
+	     add_final_opt("MINHEIGHT=" + min_main_height);
+	     add_final_opt("MINWIDTH=" + min_main_width);
+	     add_final_opt("PARM=" + opt_parm);
+	     add_final_opt("PROFILE=" + opt_profile);
+	     add_final_opt("STATS=" + stats_file_name);
+	     add_final_opt("SYSPARM=" + opt_sysparm);
+	     add_final_opt("SYSTERM=" + systerm_file_name);
+	     add_final_opt("TESTDD=" + test_ddname);
+	     add_final_opt("TIME=" + max_time_seconds);
+	     add_final_opt("TRACE=" + trace_options);
+	     add_final_opt("Z390ACROBAT=" + z390_acrobat);
+	     add_final_opt("Z390BROWSER=" + z390_browser);
+	     add_final_opt("Z390COMMAND=" + z390_command);
+	     add_final_opt("Z390EDITOR=" + z390_editor);
+	     /*
+	      * option directories and files
+	      */
+	     
+	     add_final_opt("INSTALL=" + opt_install_loc);
+	     add_final_opt("IPL=" + opt_ipl);
+	     add_final_opt("LOG=" + log_file_name);
+	     add_final_opt("SYS390=" + dir_390); // SYS390() load module
+	     add_final_opt("SYSBAL=" + dir_bal); // SYSBAL() az390 source input
+	     add_final_opt("SYSCPY=" + dir_cpy); // SYSCPY() mz390 copybook lib defaults to dir_mac RPI 742
+	     add_final_opt("SYSDAT=" + dir_dat); // SYSDAT() mz390 AREAD extended option
+	     add_final_opt("SYSERR=" + dir_err); // SYSERR() ?z390 systerm error file directory
+	     add_final_opt("SYSLOG=" + dir_log); // SYSLOG() ez390 log // RPI 243
+	     add_final_opt("SYSLST=" + dir_lst); // SYSLST() lz390 listing 
+	     add_final_opt("SYSMAC=" + dir_mac); // SYSMAC() mz390 macro lib
+	     add_final_opt("SYSMLC=" + dir_mlc); // SYSMLC() mz390 source input
+	     add_final_opt("SYSPCH=" + dir_pch); // SYSPCH() mz390 punch output dir
+	     add_final_opt("SYSPRN=" + dir_prn); // SYSPRN() az390 listing
+	     add_final_opt("SYSOBJ=" + dir_obj); // SYSOBJ() lz390 object lib
+	     add_final_opt("SYSOPT=" + dir_opt); // SYSOPT() OPT options @file path defaults to dir_mac RPI 742
+	     add_final_opt("SYSTRC=" + dir_trc); // SYSTRC() trace file directory
+	     put_stat_line("final options=" + final_options);
+	}
+	private void add_final_opt(String token){
+		/*
+		 * add final option value to final_option
+		 * formatted string.
+		 */
+		if (cmd_parms_len + token.length() + 1 > max_cmd_parms_line){
+			String temp_token = token;
+			while (temp_token.length() > max_cmd_parms_line - 2){
+				final_options = final_options + "\r\n  " + temp_token.substring(0,max_cmd_parms_line - 2);
+				temp_token = temp_token.substring(max_cmd_parms_line - 2);
+			}
+			if (temp_token.length() > 0){
+				final_options = final_options + "\r\n  " + temp_token + " ";
+				cmd_parms_len = temp_token.length() + 3;
+			} else {
+				cmd_parms_len = max_cmd_parms_line;
+			}
+		} else {
+			final_options = final_options + token + " ";
+			cmd_parms_len = cmd_parms_len + token.length() + 1;
 		}
 	}
 }

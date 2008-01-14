@@ -208,7 +208,19 @@ public class pz390 {
 	 * 08/09/07 RPI 672 prevent trace_psw switch being left on during
 	 *          trace of undefined opcode causing EX target instruction
 	 *          to be left modified.   
-	 * 08/30/07 RPI 689 route all TRACE output to TRE vs LOG               
+	 * 08/30/07 RPI 689 route all TRACE output to TRE vs LOG 
+	 * 12/17/07 RPI 758 add specification exception for M, D, etc.  
+	 *          and fix MVST to store ending address in first oper reg vs R1 
+	 * 12/22/07 RPI 768 fix setting fp_ctl_bd2 for LXR 
+	 *          and fix setscale rounding for SQRT   
+	 * 12/23/07 rpi 767 enable unnormalized instr with normalization if option NORM
+	 * 01/02/08 RPI 767 add IEXTR, IEDTR, LXDTR, LEDTR, 
+	 *          LDXTR, LEDTR, SLXT, SLDT, SRXT, SRDT   
+	 * 01/07/08 RPI 781 switch PD long to BigInt to prevent overflow
+	 *          and detect overflow for DLG, DLGR   
+	 * 01/14/08 RPI 786 support DFP preferred exp.
+	 * 01/14/08 RPI 787 support DFP unnormalized instructions.
+	 * 01/14/08 RPI 788 correct overflow on DFP packed conversion                                     
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -270,11 +282,14 @@ public class pz390 {
 	long max_pos_long = ((long) -1) >>> 1;
 
 	long min_neg_long = ((long) 1) << 63;
-
+    long max_srp_long = max_pos_long / 10; // RPI 781
+    long min_srp_long = min_neg_long / 10; // RPI 781
 	BigInteger bi_max_pos_long = BigInteger.valueOf(max_pos_long);
 
 	BigInteger bi_min_neg_long = BigInteger.valueOf(min_neg_long);
+	BigInteger bi_max_pos_int = BigInteger.valueOf(max_pos_int); // rpi 781
 
+	BigInteger bi_min_neg_int = BigInteger.valueOf(min_neg_int); // rpi 781
 	long long_num_bits = ((long) -1) ^ long_high_bit;
 
 	long long_low32_bits = (((long) 1) << 32) - 1;
@@ -671,7 +686,7 @@ public class pz390 {
 	int pdf_zeros = 0;
 
 	char pdf_sign = '+';
-
+    boolean pdf_trunc = false; // RPI 788
 	int pdf_zone = 0xf0;
 
 	byte pdf_next_out = 0;
@@ -2168,11 +2183,23 @@ public class pz390 {
 		case 0x0E: // 330 "0E" "MVCL" "RR"
 			psw_check = false;
 			ins_setup_rr();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
+			if ((mf2 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			exec_mvcl();
 			break;
 		case 0x0F: // 340 "0F" "CLCL" "RR"
 			psw_check = false;
 			ins_setup_rr();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
+			if ((mf2 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			exec_clcl();
 			break;
 		case 0x10: // 350 "10" "LPR" "RR"
@@ -2288,6 +2315,9 @@ public class pz390 {
 		case 0x1C: // 470 "1C" "MR" "RR"
 			psw_check = false;
 			ins_setup_rr();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = (long) reg.getInt(rf1 + 12) * (long) reg.getInt(rf2 + 4); // RPI
 																				// 272
 			reg.putInt(rf1 + 4, (int) (rlv1 >> 32));
@@ -2296,6 +2326,9 @@ public class pz390 {
 		case 0x1D: // 480 "1D" "DR" "RR"
 			psw_check = false;
 			ins_setup_rr();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = (long) (reg.getInt(rf1 + 4)) << 32
 					| ((long) reg.getInt(rf1 + 12) & long_low32_bits); // RPI
 																		// 398
@@ -2440,6 +2473,7 @@ public class pz390 {
 					+ fp_get_db_from_dh(fp_reg, rf2);
 			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
 			psw_cc = fp_get_dh_add_sub_cc();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x2F: // 670 "2F" "SWR" "RR"
 			psw_check = false;
@@ -2448,6 +2482,7 @@ public class pz390 {
 					- fp_get_db_from_dh(fp_reg, rf2);
 			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
 			psw_cc = fp_get_dh_add_sub_cc();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x30: // 680 "30" "LPER" "RR"
 			psw_check = false;
@@ -2559,6 +2594,7 @@ public class pz390 {
 					+ fp_get_db_from_eh(fp_reg, rf2);
 			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
 			psw_cc = fp_get_eh_add_sub_cc();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x3F: // 850 "3F" "SUR" "RR"
 			psw_check = false;
@@ -2567,6 +2603,7 @@ public class pz390 {
 					- fp_get_db_from_eh(fp_reg, rf2);
 			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
 			psw_cc = fp_get_eh_add_sub_cc();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		}
 	}
@@ -2710,7 +2747,12 @@ public class pz390 {
 			ins_setup_rx();
 			if (get_pd(mem,xbd2_loc, 8)) { // RPI 305
 				if (pdf_is_big) { // RPI 389
-					set_psw_check(psw_pic_fx_div);
+					if (pdf_big_int.compareTo(bi_max_pos_int) <= 0  // RPI 781
+						&& pdf_big_int.compareTo(bi_min_neg_int) >= 0){
+						reg.putInt(rf1 + 4, pdf_big_int.intValue());
+					} else {
+						set_psw_check(psw_pic_fx_div);
+					}
 				} else {
 					if (pdf_long <= max_pos_int && pdf_long >= min_neg_int) {
 						reg.putInt(rf1 + 4, (int) pdf_long);
@@ -2803,6 +2845,9 @@ public class pz390 {
 		case 0x5C: // 1280 "5C" "M" "RX"
 			psw_check = false;
 			ins_setup_rx();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = (long) reg.getInt(rf1 + 8 + 4) * (long) mem.getInt(xbd2_loc);
 			work_reg.putLong(0, rlv1);
 			reg.putInt(rf1 + 4, work_reg.getInt(0));
@@ -2811,6 +2856,9 @@ public class pz390 {
 		case 0x5D: // 1290 "5D" "D" "RX"
 			psw_check = false;
 			ins_setup_rx();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = (long) (reg.getInt(rf1 + 4)) << 32
 					| ((long) reg.getInt(rf1 + 12) & long_low32_bits); // RPI
 																		// 398
@@ -2915,6 +2963,7 @@ public class pz390 {
 					+ fp_get_db_from_dh(mem, xbd2_loc);
 			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
 			psw_cc = fp_get_dh_add_sub_cc();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x6F: // 1410 "6F" "SW" "RX"
 			psw_check = false;
@@ -2923,6 +2972,7 @@ public class pz390 {
 					- fp_get_db_from_dh(mem, xbd2_loc);
 			fp_put_db(rf1, tz390.fp_dh_type, fp_rdv1);
 			psw_cc = fp_get_dh_add_sub_cc();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x70: // 1420 "70" "STE" "RX"
 			psw_check = false;
@@ -2992,6 +3042,7 @@ public class pz390 {
 					+ fp_get_db_from_eh(mem, xbd2_loc);
 			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
 			psw_cc = fp_get_eh_comp_cc(fp_rdv1, 0);
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x7F: // 1520 "7F" "SU" "RX"
 			psw_check = false;
@@ -3000,6 +3051,7 @@ public class pz390 {
 					- fp_get_db_from_eh(mem, xbd2_loc);
 			fp_put_db(rf1, tz390.fp_eh_type, fp_rdv1);
 			psw_cc = fp_get_eh_comp_cc(fp_rdv1, 0);
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		}
 	}
@@ -3095,6 +3147,9 @@ public class pz390 {
 		case 0x8C: // 1660 "8C" "SRDL" "RS"
 			psw_check = false;
 			ins_setup_rs();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = ((long) (reg.getInt(rf1 + 4)) << 32 | ((long) reg
 					.getInt(rf1 + 12) & long_low32_bits)) >>> (bd2_loc & 0x3f); // RPI
 																				// 398
@@ -3104,6 +3159,9 @@ public class pz390 {
 		case 0x8D: // 1670 "8D" "SLDL" "RS"
 			psw_check = false;
 			ins_setup_rs();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = ((long) (reg.getInt(rf1 + 4)) << 32 | ((long) reg
 					.getInt(rf1 + 12) & long_low32_bits)) << (bd2_loc & 0x3f); // RPI
 																				// 398
@@ -3113,6 +3171,9 @@ public class pz390 {
 		case 0x8E: // 1680 "8E" "SRDA" "RS"
 			psw_check = false;
 			ins_setup_rs();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = ((long) (reg.getInt(rf1 + 4)) << 32 | ((long) reg
 					.getInt(rf1 + 12) & long_low32_bits)) >> (bd2_loc & 0x3f); // RPI
 																				// 398
@@ -3123,6 +3184,9 @@ public class pz390 {
 		case 0x8F: // 1690 "8F" "SLDA" "RS"
 			psw_check = false;
 			ins_setup_rs();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = get_sla64(((long) (reg.getInt(rf1 + 4)) << 32 | ((long) reg
 					.getInt(rf1 + 12) & long_low32_bits)), bd2_loc & 0x3f); // RPI
 																			// 398
@@ -3267,11 +3331,23 @@ public class pz390 {
 		case 0xA8: // 2500 "A8" "MVCLE" "RS"
 			psw_check = false;
 			ins_setup_rs();
+			if ((mf3 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			exec_mvcle();
 			break;
 		case 0xA9: // 2510 "A9" "CLCLE" "RS"
 			psw_check = false;
 			ins_setup_rs();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
+			if ((mf3 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			exec_clcle();
 			break;
 		case 0xAC: // 2520 "AC" "STNSM" "SI"
@@ -3318,6 +3394,9 @@ public class pz390 {
 		case 0xBB: // 5130 "BB" "CDS" "RS"
 			psw_check = false;
 			ins_setup_rs();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			if (reg.getInt(rf1 + 4) == mem.getInt(bd2_loc)
 					&& reg.getInt(rf1 + 12) == mem.getInt(bd2_loc + 4)) {
 				psw_cc = psw_cc0;
@@ -3760,6 +3839,12 @@ public class pz390 {
 			int shift = bd2_loc & 0x3f;
 			if (shift < 0x20) {
 				while (shift > 0) {
+					if (!pdf_is_big   // RPI 781
+						&& (pdf_long > max_srp_long
+							|| pdf_long < min_srp_long)){
+						pdf_is_big = true;
+						pdf_big_int = BigInteger.valueOf(pdf_long);
+					}
 					if (pdf_is_big) {
 						pdf_big_int = pdf_big_int.multiply(BigInteger
 								.valueOf(10));
@@ -4517,12 +4602,15 @@ public class pz390 {
 			rflen = bd2_loc - bd2_start + 1;
 			System.arraycopy(mem_byte, bd2_start, mem_byte, bd1_loc, rflen); // RPI
 																				// 411
-			reg.putInt(r1, bd1_loc + rflen - 1);
+			reg.putInt(rf1 + 4, bd1_loc + rflen - 1);  // rpi 758
 			psw_cc = psw_cc1;
 			break;
 		case 0x57: // 3190 "B257" "CUSE" "RRE"
 			psw_check = false;
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			exec_cuse();
 			break;
 		case 0x58: // 3200 "B258" "BSG" "RRE"
@@ -5001,6 +5089,7 @@ public class pz390 {
 					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x39: // 3840 "B339" "MYLR" "RRF" Z9-5
 			psw_check = false; // RPI 298
@@ -5010,6 +5099,7 @@ public class pz390 {
 					fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x3A: // 3850 "B33A" "MAYR" "RRF" Z9-6
 			psw_check = false;
@@ -5019,6 +5109,7 @@ public class pz390 {
 					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x3B: // 3860 "B33B" "MYR" "RRF" Z9-7
 			psw_check = false;
@@ -5028,6 +5119,7 @@ public class pz390 {
 					fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x3C: // 3870 "B33C" "MAYHR" "RRF" Z9-8
 			psw_check = false; // RPI 298
@@ -5037,6 +5129,7 @@ public class pz390 {
 					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x3D: // 3880 "B33D" "MYHR" "RRF" Z9-9
 			psw_check = false; // RPI 298
@@ -5046,6 +5139,7 @@ public class pz390 {
 					fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x3E: // 3800 "B33E" "MADR" "RRF"
 			psw_check = false;
@@ -5134,6 +5228,9 @@ public class pz390 {
 		case 0x4A: // 3920 "B34A" "AXBR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			fp_rbdv1 = fp_get_bd_from_lb(fp_reg, rf1);
 			fp_rbdv2 = fp_get_bd_from_lb(fp_reg, rf2);
 			fp_rbdv1 = fp_rbdv1.add(fp_rbdv2, fp_x_context).round(
@@ -5595,13 +5692,15 @@ public class pz390 {
 			ins_setup_rrf4();
 			fp_rbdv1 = fp_get_bd_from_ed(fp_reg, rf2);
            	fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-			break;
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
+           	break;
 		case 0xD5: // "LEDTR" "B3D5" "RRF4" DFP 6
 			psw_check = false;
 			ins_setup_rrf3();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg,rf2)
 			           .round(fp_ed_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf3)]);
 			fp_put_bd(rf1, tz390.fp_ed_type, fp_rbdv1);
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0xD6: // "LTDTR" "B3D6" "RRE" DFP 7
 			psw_check = false;
@@ -5666,13 +5765,15 @@ public class pz390 {
 			ins_setup_rrf4();
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2);
            	fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
-			break;
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
+           	break;
 		case 0xDD: // "LDXTR" "B3DD" "RRF4" DFP 14
 			psw_check = false;
 			ins_setup_rrf3();
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg,rf2)
 			           .round(fp_dd_rnd_context[fp_get_rnd_mode(fp_dfp_class,mf3)]);
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0xDE: // "LTXTR" "B3DE" "RRE" DFP 15
 			psw_check = false;
@@ -5724,14 +5825,18 @@ public class pz390 {
 			pdf_big_int = fp_get_bd_from_dd(fp_reg, rf2).unscaledValue();
 			pdf_is_big = true;
 			pdf_signed = false;
+			pdf_trunc = true; // RPI 788
 			put_pd(reg_byte, rf1, 8);
+			pdf_trunc = false; // RPI 788
 			break;
 		case 0xE3: // "CSDTR" "B3E3" "RRF4" DFP 20
 			psw_check = false;
 			ins_setup_rrf4();
 			pdf_big_int = fp_get_bd_from_dd(fp_reg, rf2).unscaledValue();
 			pdf_is_big = true;
+			pdf_trunc = true; // RPI 788
 			put_pd(reg_byte, rf1, 8);
+			pdf_trunc = false; // RPI 788
 			if (mf4 == 1 && pdf_big_int.signum() >= 0) {
 				reg.put(rf1 + 7, (byte) (reg.get(rf1 + 7) | 0xf));
 			}
@@ -5754,11 +5859,15 @@ public class pz390 {
 		case 0xE7: // "ESDTR" "B3E7" "RRE" DFP 23
 			psw_check = false;
 			ins_setup_rre();
-			rv1 = fp_get_bd_from_dd(fp_reg, rf2)
+			tz390.dfp_digits = fp_get_bd_from_dd(fp_reg, rf2)
+			      .stripTrailingZeros()      // RPI 787
 			      .unscaledValue()
 			      .abs()
-			      .toString()
-			      .length();
+			      .toString();
+			rv1 = tz390.dfp_digits.length(); // RPI 787
+			if (rv1 == 1 && tz390.dfp_digits.charAt(0) == '0'){
+				rv1 = 0;
+			}
             reg.putLong(rf1,rv1);
 			break;
 		case 0xE8: // "KXTR" "B3E8" "RRE" DFP 24
@@ -5786,14 +5895,18 @@ public class pz390 {
 			pdf_big_int = fp_get_bd_from_ld(fp_reg, rf2).unscaledValue();
 			pdf_is_big = true;
 			pdf_signed = false;
-			put_pd(reg_byte, rf1, 16);
+			pdf_trunc = true; // RPI 788
+			put_pd(reg_byte, rf1,16);
+			pdf_trunc = false; // RPI 788
 			break;
 		case 0xEB: // "CSXTR" "B3EB" "RRF4" DFP 27
 			psw_check = false;
 			ins_setup_rrf4();
 			pdf_big_int = fp_get_bd_from_ld(fp_reg, rf2).unscaledValue();
 			pdf_is_big = true;
-			put_pd(reg_byte, rf1, 16);
+			pdf_trunc = true; // RPI 788
+			put_pd(reg_byte, rf1,16);
+			pdf_trunc = false; // RPI 788
 			if (mf4 == 1 && pdf_big_int.signum() >= 0) {
 				reg.put(rf1 + 15, (byte) (reg.get(rf1 + 15) | 0xf));
 			}
@@ -5816,11 +5929,15 @@ public class pz390 {
 		case 0xEF: // "ESXTR" "B3EF" "RRE" DFP 30
 			psw_check = false;
 			ins_setup_rre();
-			rv1 = fp_get_bd_from_ld(fp_reg, rf2)
+			tz390.dfp_digits = fp_get_bd_from_ld(fp_reg, rf2)
+		      .stripTrailingZeros()      // RPI 787
 		      .unscaledValue()
-			  .abs()
-			  .toString()
-			  .length();
+		      .abs()
+		      .toString();
+			rv1 = tz390.dfp_digits.length(); // RPI 787
+			if (rv1 == 1 && tz390.dfp_digits.charAt(0) == '0'){
+				rv1 = 0;
+			}
 			reg.putLong(rf1,rv1);
 			break;
 		case 0xF1: // "CDGTR" "B3F1" "RRE" DFP 31
@@ -5891,6 +6008,7 @@ public class pz390 {
 			} else {
 				fp_put_bd(rf1,tz390.fp_dd_type,fp_rbdv1.abs().negate());
 			}
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0xF7: // "RRDTR" "B3F7" "RRF3" DFP 37
 			psw_check = false;
@@ -5975,7 +6093,8 @@ public class pz390 {
 		    } else {
 				fp_put_bd(rf1,tz390.fp_ld_type,fp_rbdv1.abs().negate());
 		    }
-			break;
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
+		    break;
 		case 0xFF: // "RRXTR" "B3FF" "RRF3" DFP 44
 			psw_check = false;
 			ins_setup_rrf3();
@@ -6099,6 +6218,9 @@ public class pz390 {
 		case 0x0D: // 4560 "B90D" "DSGR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = reg.getLong(rf1 + 8);
 			rlv2 = reg.getLong(rf2);
 			if (rlv2 != 0) {
@@ -6235,6 +6357,9 @@ public class pz390 {
 		case 0x1D: // 4710 "B91D" "DSGFR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = reg.getLong(rf1 + 8);
 			rlv2 = (long) reg.getInt(rf2 + 4);
 			if (rlv2 != 0) {
@@ -6352,6 +6477,9 @@ public class pz390 {
 		case 0x83: // 5000 "B983" "FLOGR" "RRE" Z9-14
 			psw_check = false;
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv2 = reg.getLong(rf2);
 			reg.putLong(rf1, Long.numberOfLeadingZeros(rlv2));
 			reg.putLong(rf1 + 8, rlv2 ^ Long.highestOneBit(rlv2));
@@ -6374,6 +6502,9 @@ public class pz390 {
 		case 0x86: // 4870 "B986" "MLGR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 8, 8)); // RPI
 																			// 383
 			big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2, 8));
@@ -6383,6 +6514,9 @@ public class pz390 {
 		case 0x87: // 4880 "B987" "DLGR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1, 16)); // RPI 540
 			big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2, 8));
 			if (big_int2.signum() == 0) {
@@ -6390,6 +6524,10 @@ public class pz390 {
 				break;
 			}
 			big_int_array = big_int1.divideAndRemainder(big_int2);
+			if (big_int_array[0].bitLength() > 64){
+				set_psw_check(psw_pic_fx_ovf); // RPI 781
+				break;
+			}
 			zcvt_big_int(reg_byte,rf1,big_int_array[1], 8);  // RPI 540												// remainder
 			zcvt_big_int(reg_byte,rf1+8,big_int_array[0], 8); // RPI 540										// quotent
 			break;
@@ -6423,6 +6561,9 @@ public class pz390 {
 		case 0x90: // 4940 "B990" "TRTT" "RRE"
 			psw_check = false; // RPI 454
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2
 			test_byte1 = reg.get(r0 + 2);
 			test_byte2 = reg.get(r0 + 3);
@@ -6461,6 +6602,9 @@ public class pz390 {
 		case 0x91: // 4950 "B991" "TRTO" "RRE"
 			psw_check = false; // RPI 454
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2
 			test_byte1 = reg.get(r0 + 3);
 			xbd2_loc = reg.getInt(r1) & psw_amode;
@@ -6494,6 +6638,9 @@ public class pz390 {
 		case 0x92: // 4960 "B992" "TROT" "RRE"
 			psw_check = false; // RPI 454
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2													// bit
 			test_byte1 = reg.get(r0 + 2); // RPI 580
 			test_byte2 = reg.get(r0 + 3); // RPI 580
@@ -6529,6 +6676,9 @@ public class pz390 {
 		case 0x93: // 4970 "B993" "TROO" "RRE"
 			psw_check = false; // RPI 454
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			test_control = (byte) (mem_byte[psw_loc - 2] & 0x10); // eft2														// bit
 			test_byte1 = reg.get(r0 + 3);
 			xbd2_loc = reg.getInt(r1) & psw_amode;
@@ -6569,6 +6719,9 @@ public class pz390 {
 		case 0x96: // 4980 "B996" "MLR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 12, 4)); // RPI
 																				// 275
 			big_int2 = new BigInteger(get_log_bytes(reg_byte, rf2 + 4, 4));
@@ -6580,6 +6733,9 @@ public class pz390 {
 		case 0x97: // 4990 "B997" "DLR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			work_reg.putInt(0, reg.getInt(rf1 + 4));
 			work_reg.putInt(4, reg.getInt(rf1 + 12));
 			big_int1 = new BigInteger(get_log_bytes(work_reg_byte, 0, 8));
@@ -6851,7 +7007,12 @@ public class pz390 {
 			ins_setup_rxy();
 			if (get_pd(mem,xbd2_loc, 8)) { // RPI 305
 				if (pdf_is_big) { // RPI 389
-					set_psw_check(psw_pic_fx_div);
+					if (pdf_big_int.compareTo(bi_max_pos_int) <= 0  // RPI 781
+							&& pdf_big_int.compareTo(bi_min_neg_int) >= 0){
+							reg.putInt(rf1 + 4, pdf_big_int.intValue());
+						} else {
+							set_psw_check(psw_pic_fx_div);
+						}
 				} else {
 					if (pdf_long <= max_pos_int && pdf_long >= min_neg_int) {
 						reg.putInt(rf1 + 4, (int) pdf_long);
@@ -6905,6 +7066,9 @@ public class pz390 {
 		case 0x0D: // 5480 "E30D" "DSG" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = reg.getLong(rf1 + 8);
 			rlv2 = mem.getLong(xbd2_loc);
 			if (rlv2 != 0) {
@@ -6921,14 +7085,16 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rxy();
 			if (get_pd(mem,xbd2_loc, 16)) { // RPI 305
-				if (pdf_big_int.compareTo(bi_max_pos_long) != 1
+				if (pdf_is_big){  // rpi 781
+					if (pdf_big_int.compareTo(bi_max_pos_long) != 1
 						&& pdf_big_int.compareTo(bi_min_neg_long) != -1) {
-					reg.putLong(rf1, pdf_big_int.longValue());
+						reg.putLong(rf1, pdf_big_int.longValue());
+					} else {
+						set_psw_check(psw_pic_fx_div);
+					}
 				} else {
-					set_psw_check(psw_pic_fx_div);
+					reg.putLong(rf1, pdf_long);
 				}
-			} else {
-				reg.putLong(rf1, pdf_long);
 			}
 			break;
 		case 0x0F: // 5500 "E30F" "LRVG" "RXY"
@@ -7016,6 +7182,9 @@ public class pz390 {
 		case 0x1D: // 5610 "E31D" "DSGF" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			rlv1 = reg.getLong(rf1 + 8);
 			rlv2 = (long) mem.getInt(xbd2_loc);
 			if (rlv2 != 0) {
@@ -7316,6 +7485,9 @@ public class pz390 {
 		case 0x86: // 6000 "E386" "MLG" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 8, 8)); // RPI
 																			// 383
 			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 8));
@@ -7325,6 +7497,9 @@ public class pz390 {
 		case 0x87: // 6010 "E387" "DLG" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1, 16)); // RPI 540
 			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 8));
 			if (big_int2.signum() == 0) { // RPI 540
@@ -7332,6 +7507,10 @@ public class pz390 {
 				break;
 			}
 			big_int_array = big_int1.divideAndRemainder(big_int2);
+			if (big_int_array[0].bitLength() > 64){
+				set_psw_check(psw_pic_fx_ovf); // RPI 781
+				break;
+			}
 			zcvt_big_int(reg_byte,rf1,big_int_array[1], 8); // get remainder RPI 540
 			zcvt_big_int(reg_byte,rf1+8,big_int_array[0], 8); // get big quotent RPI 540
 			break;
@@ -7356,12 +7535,18 @@ public class pz390 {
 		case 0x8E: // 6040 "E38E" "STPQ" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			mem.putLong(xbd2_loc, reg.getLong(rf1));
 			mem.putLong(xbd2_loc + 8, reg.getLong(rf1 + 8));
 			break;
 		case 0x8F: // 6050 "E38F" "LPQ" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			reg.putLong(rf1, mem.getLong(xbd2_loc));
 			reg.putLong(rf1 + 8, mem.getLong(xbd2_loc + 8));
 			break;
@@ -7388,6 +7573,9 @@ public class pz390 {
 		case 0x96: // 6080 "E396" "ML" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf1 + 12, 4)); // RPI
 																				// 275
 			big_int2 = new BigInteger(get_log_bytes(mem_byte, xbd2_loc, 4));
@@ -7399,6 +7587,9 @@ public class pz390 {
 		case 0x97: // 6090 "E397" "DL" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			work_reg.putInt(0, reg.getInt(rf1 + 4));
 			work_reg.putInt(4, reg.getInt(rf1 + 12));
 			big_int1 = new BigInteger(get_log_bytes(work_reg_byte, 0, 8));
@@ -7601,6 +7792,9 @@ public class pz390 {
 		case 0x31: // 6380 "EB31" "CDSY" "RSY"
 			psw_check = false;
 			ins_setup_rsy();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			if (reg.getInt(rf1 + 4) == mem.getInt(bd2_loc)
 					&& reg.getInt(rf1 + 12) == mem.getInt(bd2_loc + 4)) {
 				psw_cc = psw_cc0;
@@ -7615,6 +7809,9 @@ public class pz390 {
 		case 0x3E: // 6390 "EB3E" "CDSG" "RSY"
 			psw_check = false;
 			ins_setup_rsy();
+			if ((mf1 & 1) != 0){ // RPI 758
+				set_psw_check(psw_pic_spec);
+			}
 			if (reg.getLong(rf1) == mem.getLong(bd2_loc)
 					&& reg.getLong(rf1 + 8) == mem.getLong(bd2_loc + 8)) {
 				psw_cc = psw_cc0;
@@ -8194,6 +8391,7 @@ public class pz390 {
 					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x39: // 7420 "ED39" "MYL" "RXF" Z9-47
 			psw_check = false; // RPI 298
@@ -8203,6 +8401,7 @@ public class pz390 {
 					fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x3A: // 7430 "ED3A" "MAY" "RXF" Z9-48
 			psw_check = false;
@@ -8212,6 +8411,7 @@ public class pz390 {
 					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x3B: // 7440 "ED3B" "MY" "RXF" Z9-49 RPI 298
 			psw_check = false;
@@ -8221,6 +8421,7 @@ public class pz390 {
 					fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x3C: // 7450 "ED3C" "MAYH" "RXF" Z9-50
 			psw_check = false; // RPI 298
@@ -8230,6 +8431,7 @@ public class pz390 {
 					fp_get_bd_from_dh(fp_reg, rf1)).round(fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x3D: // 7460 "ED3D" "MYH" "RXF" Z9-51 // RPI 298
 			psw_check = false; // RPI 298
@@ -8239,6 +8441,7 @@ public class pz390 {
 					fp_x_context);
 			fp_put_bd(rf1, tz390.fp_lh_type, fp_rbdv1);
 			check_lh_mpy();
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x3E: // 6960 "ED3E" "MAD" "RXF"
 			psw_check = false;
@@ -8268,6 +8471,7 @@ public class pz390 {
 			              .mod(fp_dd_mod_bi);
 			fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x41: // "SRDT" "ED41" "RXF" DFP 46
 			psw_check = false;
@@ -8278,6 +8482,7 @@ public class pz390 {
 			              .divide(BigInteger.TEN.pow((xbd2_loc & 0x3f)));
 			fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x48: // "SLXT" "ED48" "RXF" DFP 47
 			psw_check = false;
@@ -8289,6 +8494,7 @@ public class pz390 {
 			              .mod(fp_ld_mod_bi);
 			fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x49: // "SRXT" "ED49" "RXF" DFP 48
 			psw_check = false;
@@ -8299,6 +8505,7 @@ public class pz390 {
 			              .divide(BigInteger.TEN.pow(xbd2_loc & 0x3f));
 			fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			fp_unnormalized_store_reg(fp_reg, rf1); // RPI 787
 			break;
 		case 0x50: // "TDCET" "ED50" "RXE" DFP 49
 			psw_check = false;
@@ -9807,9 +10014,16 @@ public class pz390 {
 
 	private int get_int_log_add_cc() {
 		/*
-		 * set psw_carry and return cc for logical add as follows: rv1 carry 0 0
-		 * cc0 !0 0 cc1 0 1 cc2 !0 1 cc3 Notes: 1. rvw = r1 input 2. rv2 = r2
-		 * input 3. rv1 = result r1+r2
+		 * set psw_carry and return cc for logical add as follows: 
+		 *   rv1 carry
+		 *    0 0 - cc0
+		 *   !0 0 cc1
+		 *    0 1 cc2
+		 *   !0 1 cc3
+		 * Notes: 
+		 *   1. rvw = r1 input 
+		 *   2. rv2 = r2 input 
+		 *   3. rv1 = result r1+r2
 		 */
 		boolean rv1_carry = false;
 		if (rv1 >= 0) { // RPI 376
@@ -9836,15 +10050,19 @@ public class pz390 {
 
 	private int get_long_log_add_cc() {
 		/*
-		 * set psw_carry and return cc for logical add as follows: rlv1 carry 0
-		 * 0 cc0 !0 0 cc1 0 1 cc2 !0 1 cc3
+		 * set psw_carry and return cc for logical add as follows:
+		 *  rlv1 carry
+		 *   0     0 cc0
+		 *  !0     0 cc1
+		 *   0 1 cc2
+		 *  !0 1 cc3
 		 */
 		boolean rlv1_carry = false;
 		if (rlv1 >= 0) { // RPI 376
 			if (rlvw < 0 || rlv2 < 0) {
 				rlv1_carry = true;
 			}
-		} else if (rlvw < 0 && rlv2 < 0) {
+		} else if (rlvw < 0 && rlv2 < 0) { 
 			rlv1_carry = true;
 		}
 		if (rlv1 == 0) {
@@ -11794,7 +12012,7 @@ public class pz390 {
 		 */
 		int fp_bd_sqrt_scale = fp_rbdv2.scale();
 		if ((fp_bd_sqrt_scale & 1) != 0) {
-			fp_rbdv2 = fp_rbdv2.setScale(fp_bd_sqrt_scale - 1);
+			fp_rbdv2 = fp_rbdv2.setScale(fp_bd_sqrt_scale - 1,fp_bdg_context.getRoundingMode());  // RPI 768 
 			fp_bd_sqrt_scale--;
 		}
 		fp_rbdv2 = fp_rbdv2.multiply(BigDecimal.TEN.pow(fp_bd_sqrt_scale,
@@ -12240,11 +12458,13 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 						.valueOf(fp_reg_eb[fp_ctl_index2]);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
 				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 						.valueOf(fp_reg_eb[fp_ctl_index2]);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
 				return;
 			}
 			break;
@@ -12270,11 +12490,13 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 						.valueOf(fp_reg_db[fp_ctl_index2]);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
 				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = BigDecimal
 						.valueOf(fp_reg_db[fp_ctl_index2]);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
 				return;
 			}
 			break;
@@ -12303,10 +12525,12 @@ public class pz390 {
 			case 6: // tz390.fp_lb_type
 				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
 				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = fp_reg_bd[fp_ctl_index2];
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
 				return;
 			}
 			break;
@@ -12563,11 +12787,13 @@ public class pz390 {
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
 				return;
 			case 8: // tz390.fp_lh_type
 				fp_reg_bd[fp_ctl_index1] = fp_get_bd_from_lh(reg_buff2,
 						reg_buff_index2);
 				fp_reg_ctl[fp_ctl_index1] = fp_ctl_bd1;
+				fp_reg_ctl[fp_ctl_index1+2] = fp_ctl_bd2;  // RPI 768 
 				return;
 			}
 			break;
@@ -12597,7 +12823,24 @@ public class pz390 {
 			fp_reg_type[reg_ctl_index + 2] = reg_type; // RPI 229
 		}
 	}
-
+    private void fp_unnormalized_store_reg(ByteBuffer reg_buff, int reg_index){
+    	/*
+    	 * if NONORM default option set
+    	 *    then flush fp cache value to registers
+    	 *    without normalizing.
+    	 * Note:
+    	 *   1.  Default is NONORM since many programs use
+    	 *       unnormalized results for data conversions.
+    	 *   2.  Specifying NORM will speed up processing by
+    	 *       leaving results of unnormalized results in
+    	 *       cache.  However, subsequent store will 
+    	 *       default to normalized result when value
+    	 *       is flushed from cache.
+    	 */
+   		tz390.fp_form = tz390.fp_form_unnorm;
+   		fp_store_reg(fp_reg, rf1);  // RPI 787
+   		tz390.fp_form = tz390.fp_form_calc;
+    }
 	public void fp_store_reg(ByteBuffer reg_buff, int reg_index) {
 		/*
 		 * convert co-reg back to fp_reg storage format for use by STE or STD.
@@ -12725,8 +12968,11 @@ public class pz390 {
 		int exp = ((exp2 << 8) | bxcf8) // or in 2 high bits of exp from cf5
 				- tz390.fp_exp_bias[tz390.fp_dd_type]; // adjust exp by bias
 		long digits = tz390.dfp_dpd_to_bcd[(int) (dd1 & 0x3ff)]
-				+ 1000
-				* (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 10) & 0x3ff)] + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 20) & 0x3ff)] + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 30) & 0x3ff)] + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 40) & 0x3ff)] + 1000 * (tz390.dfp_cf5_to_bcd[cf5])))));
+				    + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 10) & 0x3ff)] 
+				    + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 20) & 0x3ff)] 
+				    + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 30) & 0x3ff)] 
+	                + 1000 * (tz390.dfp_dpd_to_bcd[(int) ((dd1 >>> 40) & 0x3ff)] 
+	                + 1000 * (tz390.dfp_cf5_to_bcd[cf5])))));
 		if (dd1 < 0) {
 			digits = -digits;
 		}
@@ -13048,14 +13294,14 @@ public class pz390 {
 		switch (fp_type) {
 		case 1: // fp_dd_type
 			fp_bd = fp_bd.round(fp_dd_rnd_context[fp_dfp_rnd]); 
-			if (!tz390.get_dfp_bin(tz390.fp_dd_type, fp_bd)) {
+			if (!tz390.get_dfp_bin(tz390.fp_dd_type, fp_bd)) { // rpi 786
 				set_psw_check(psw_pic_fp_ovf);
 				return;
 			}
 			break;
 		case 4: // fp_ed_type
 			fp_bd = fp_bd.round(fp_ed_rnd_context[fp_dfp_rnd]); 
-			if (!tz390.get_dfp_bin(tz390.fp_ed_type, fp_bd)) {
+			if (!tz390.get_dfp_bin(tz390.fp_ed_type, fp_bd)){  // RPI 786
 				set_psw_check(psw_pic_fp_ovf);
 				return;
 			}
@@ -13065,7 +13311,7 @@ public class pz390 {
 			break;
 		case 7: // fp_ld_type
 			fp_bd = fp_bd.round(fp_ld_rnd_context[fp_dfp_rnd]); 
-			if (!tz390.get_dfp_bin(tz390.fp_ld_type, fp_bd)) {
+			if (!tz390.get_dfp_bin(tz390.fp_ld_type, fp_bd)) { // RPI 786
 				set_psw_check(psw_pic_fp_ovf);
 			}
 			break;
@@ -13319,7 +13565,7 @@ public class pz390 {
 		 */
 		pdf_is_big = false; // RPI 389
 		pd_cc = psw_cc0;
-		if (pdf_len <= 4) {
+		if (pdf_len <= 4) { 
 			pdf_str = Integer.toHexString(pd_buff.getInt(pdf_loc));
 			pdf_zeros = 8 - pdf_str.length();
 		} else if (pdf_len <= 8) {
@@ -13377,16 +13623,11 @@ public class pz390 {
 			pdf_signed = true;
 		}
 		try {
-			if (pdf_str.length() < 10) { // RPI 389 long can have up to 20
+			if (pdf_str.length() < 9){  // RPI 389 <= 18 digits, RPI 781 <= 16 digits to allow carry w/o ovf
 				pdf_long = Long.valueOf(pdf_str);
 			} else {
 				pdf_big_int = new BigInteger(pdf_str);
-				if (pdf_big_int.compareTo(bi_max_pos_long) != 1
-						&& pdf_big_int.compareTo(bi_min_neg_long) != -1) {
-					pdf_long = pdf_big_int.longValue();
-				} else {
-					pdf_is_big = true;
-				}
+				pdf_is_big = true;
 			}
 		} catch (Exception e) {
 			if (pd_cc == psw_cc0) {
@@ -13399,6 +13640,7 @@ public class pz390 {
 				set_psw_check(psw_pic_data);
 				return false; // RPI 305
 			}
+			return false; // RPI 781
 		}
 		return true;
 	}
@@ -13413,7 +13655,9 @@ public class pz390 {
 		 *   1.  If pdf_signed is false store
 		 *       unsigned value with low order
 		 *       digit in low nibble, and
-		 *       do not set psw_cc
+		 *       do not set psw_cc.
+		 *   2.  If pdf_trunc, truncate to fit
+		 *       else raise pgm exception.
 		 */
 		int save_psw_cc = psw_cc;
 		if (pdf_is_big) {
@@ -13434,10 +13678,24 @@ public class pz390 {
 			} else {
 				pd_cc = psw_cc_high;
 			}
+			if (pdf_trunc){
+				int skip = pdf_str.length()- pdf_len * 2 + 1;
+				if (skip > 0){  // RPI 788
+					pdf_str = pdf_str.substring(skip);
+				}
+			}
+			pdf_trunc = false;
 		} else {
 			if (pdf_str.charAt(0) == '-'){
 				pdf_str = pdf_str.substring(1);
 			}
+			if (pdf_trunc){
+				int skip = pdf_str.length()- pdf_len * 2;
+				if (skip > 0){  // RPI 788
+					pdf_str = pdf_str.substring(skip);
+				}
+			}
+			pdf_trunc = false;
 			left_digit = false;
 		}
 		int index = pdf_str.length() - 1;
@@ -13536,6 +13794,7 @@ public class pz390 {
 		/*
 		 * init fp constants that use tz390 shared variables
 		 */
+		tz390.fp_form  = tz390.fp_form_calc; // RPI 786 default normaize to smalled quantum
 		fp_bdg_context = new MathContext(tz390.fp_precision[tz390.fp_lb_type]);
 		fp_dbg_context = new MathContext(tz390.fp_precision[tz390.fp_db_type]);
 		fp_ebg_context = new MathContext(tz390.fp_precision[tz390.fp_eb_type]);

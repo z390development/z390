@@ -302,7 +302,11 @@ public  class  mz390 {
      *          correct TRM file/line numbers off by 1 after created MNOTE
      * 12/04/07 RPI 747 CHKSRC(0-2), CHKMAC(0-2) options 
      * 12/05/07 RPI 754 exit macro after ACTR limit error vs abort
-     *          incr AGO for PC AGO and only if computed AGO taken        
+     *          incr AGO for PC AGO and only if computed AGO taken 
+     * 12/19/07 RPI 763 correct ACTR limit to allow 4096 versus 4095 
+     * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, con   
+     * 12/27/07 RPI 772 correct MEXIT ref # truncation
+     * 12/27/07 RPI 774 exit aif pc code on first branch            
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -325,7 +329,6 @@ public  class  mz390 {
 	boolean mac_abort = false;
 	boolean batch_asm_error = false; // RPI 736
 	Date cur_date = null;
-	boolean copyright_mode = false;
 	GregorianCalendar cur_date_cal = null;
 	long tod_start = 0;
 	long tod_end   = 0;
@@ -1095,9 +1098,13 @@ public  class  mz390 {
 		}
 		if (tz390.opt_asm){
 			az390 = new az390(); // RPI 415
+			az390.mz390_started_msg = tz390.started_msg; // RPI 755
 			az390.start_az390_thread(args,z390_log_text,tz390.systerm_file,tz390.stats_file); // RPI 737
 		}
 		open_files();
+		if (tz390.opt_tracem){
+			tz390.put_trace(tz390.started_msg); // RPI 755
+		}
 		compile_patterns();
 		tod_time_limit = tz390.max_time_seconds * 1000 + tod_start;
 		put_copyright();
@@ -1294,7 +1301,7 @@ public  class  mz390 {
 					if (mac_call_level > 0){			 	     
 						String sysnest = "  " + mac_call_level;
 						sysnest = sysnest.substring(sysnest.length() - 2);
-						put_bal_line("*MEXIT #=" + get_set_string("&SYSNDX",1) + " LV=" + sysnest + " " + mac_name[mac_call_name_index[mac_call_level]]);
+						put_bal_line("*MEXIT #=" + tz390.right_justify("" + mac_call_sysndx[mac_call_level],4) + " LV=" + sysnest + " " + mac_name[mac_call_name_index[mac_call_level]]); // RPI 772
 					}
 				}
 				mac_call_level--;
@@ -1318,6 +1325,9 @@ public  class  mz390 {
 						if (tz390.opt_bal && !end_found){
 							put_stats(); // RPI 425
 						}
+						az390.tz390.systerm_prefix = tz390.systerm_prefix;  // RPI 755
+						az390.tz390.systerm_io = az390.tz390.systerm_io + tz390.systerm_io; // RPI 755
+						az390.mz390_rc = mz390_rc;
                         call_az390_pass_bal_line(bal_line);    
 					}
 				}
@@ -1387,7 +1397,7 @@ public  class  mz390 {
 				}
 				put_bal_line(bal_line);
 			}
-			if (!mlc_eof && actr_count <= 0){
+			if (!mlc_eof && actr_count < 0){  // RPI 763
 				log_error(82,"actr limit exceeded");  // RPI 754
 				mac_line_index = mac_name_line_end[mac_call_name_index[mac_call_level]]; // RPI 754
 			}
@@ -2346,7 +2356,6 @@ public  class  mz390 {
 		 * 4.  optional pass to az390
 		 * 5.  optional write to BAL 
 		 */
-		if (copyright_mode)return; // RPI 453 use az390 copyright
 	    if (text_line != null && !bal_eof){
 	       tot_bal_line++;	// includes stats after END
 	    }
@@ -2716,29 +2725,7 @@ public  class  mz390 {
 			return "";
 		}
 	}
-	private String get_set_string(String name,int sub){
-		/*
-		 * return string value of set variable
-		 * else return null
-		 */
-		if (find_set(name,sub)){
-			switch (var_type){
-			case 21:
-				return "" + seta_value;
-			case 22:
-				return "" + setb_value;
-			case 23:
-				if (setc_value == null){
-					return "";
-				} else {
-					return setc_value;
-				}
-			default: 
-				abort_case();
-			}
-		}
-		return null;
-	}
+	
 	private synchronized void abort_case(){ // RPI 646
 		/*
 		 * abort case with invalide index
@@ -3121,7 +3108,9 @@ public  class  mz390 {
 			bal_line = replace_vars(bal_line,true,true); // RPI 274 RPI 659
 			parse_bal_line();  // RPI 306
 			put_bal_line(bal_line);
-			tz390.update_opsyn(bal_label,bal_parms);
+			if (!tz390.update_opsyn(bal_label,bal_parms)){
+				abort_error(224,"OPSYN table exceeded"); // RPI 773
+			}
 			break;
 		default: 
 			abort_case();
@@ -7420,6 +7409,7 @@ public  class  mz390 {
 			while (tz390.opt_asm && az390.az390_running){
 				tz390.sleep_now(tz390.monitor_wait);
 			}
+			tz390.systerm_io = az390.tz390.systerm_io;  // RPI 755
 			if (az390.az390_rc > mz390_rc){
 				mz390_rc = az390.az390_rc;
 			}
@@ -7454,14 +7444,9 @@ public  class  mz390 {
 		 *   1.  Use tz390.put_stat_line to route
 		 *       line to end of BAL or stat(file) option
 		 */
-		boolean save_opt_con = tz390.opt_con;
-		if (tz390.opt_bal || tz390.opt_asm){ // RPI 453
-			tz390.opt_con = false;
-		}
 		log_to_bal = false;
 		if  (tz390.opt_stats){ // RPI 453
-			log_to_bal = true;
-            put_copyright(); // RPI 453
+			tz390.put_stat_final_options(); // rpi 755
 			put_stat_line("total MLC/MAC loaded  = " + tot_mac_line);
 			put_stat_line("total BAL output lines= " + tot_bal_line);
 			if (tot_aread_io + tot_punch_io > 0){
@@ -7509,14 +7494,14 @@ public  class  mz390 {
 		}
 		int index = 0;
 		while (index < tot_mac_file_name){
-			if (tz390.opt_listfile){  // RPI 549
-				String xref_msg = msg_id + "FID=" + tz390.right_justify(""+(index+1),3)
+			String xref_msg = "FID=" + tz390.right_justify(""+(index+1),3)
 						        + " ERR=" + tz390.right_justify(""+mac_file_errors[index],2)
 						        + " " + mac_file_path[index];
-			    put_log(xref_msg);
-			    if (!tz390.opt_asm && mac_file_errors[index] > 0){  // RPI 425
-			    	tz390.put_systerm(xref_msg);
-			    }
+            if (tz390.opt_stats){
+			    put_stat_line(xref_msg);
+            }			    
+			if (!tz390.opt_asm && mac_file_errors[index] > 0){  // RPI 425
+			   	tz390.put_systerm(msg_id + xref_msg);
 			}
 			if (tz390.opt_asm){ // RPI 426
 				// transfer xref file/line to az390 for
@@ -7527,13 +7512,23 @@ public  class  mz390 {
 			}
 			index++;
 		}
-		tz390.opt_con = save_opt_con;  // RPI 453
+		if (tz390.opt_stats){
+			put_stat_line("total mnote warnings  = " + tot_mnote_warning); // RPI 402
+			put_stat_line("total mnote errors    = " + tot_mnote_errors);
+			put_stat_line("max   mnote level     = " + gbl_seta[gbl_sysm_hsev_index]);
+			put_stat_line("total errors          = " + mz390_errors);
+		}
 		if (!tz390.opt_asm){
+			log_to_bal = true;
 			put_log(msg_id + "total mnote warnings = " + tot_mnote_warning); // RPI 402
-			put_log(msg_id + "total mnote errors   = " + tot_mnote_errors
-				  + "  max level= " + gbl_seta[gbl_sysm_hsev_index]);
+			put_log(msg_id + "total mnote errors   = " + tot_mnote_errors);
+			put_log(msg_id + "max   mnote level    = " + gbl_seta[gbl_sysm_hsev_index]);
 			put_log(msg_id + "total errors         = " + mz390_errors);
-			put_log(msg_id + "return code(" + tz390.left_justify(tz390.pgm_name,8) + ")= " + mz390_rc); // RPI 312
+		} else if (tz390.opt_tracem){
+			tz390.put_trace(msg_id + "total mnote warnings  = " + tot_mnote_warning); // RPI 402
+			tz390.put_trace(msg_id + "total mnote errors    = " + tot_mnote_errors);
+			tz390.put_trace(msg_id + "max   mnote level     = " + gbl_seta[gbl_sysm_hsev_index]);
+			tz390.put_trace(msg_id + "total errors          = " + mz390_errors);
 		}
 		log_to_bal = false;
 	}
@@ -7566,6 +7561,9 @@ public  class  mz390 {
 			pch_file_index++;
 		}
 		tz390.close_systerm(mz390_rc);
+		if (tz390.opt_tracem){
+			tz390.put_trace(tz390.ended_msg);
+		}
 		tz390.close_trace_file();
 	}
 	private void close_dat_file(int index){
@@ -7702,22 +7700,23 @@ public  class  mz390 {
 		 * display mz390 version, timestamp,
 		 * and copyright if running standalone
 		 */
-		copyright_mode = true;
+		tz390.force_nocon = true; // RPI 755
 		if  (tz390.opt_timing){
 			cur_date = new Date();
-			put_log(msg_id + tz390.version 
-					+ " Current Date " +tz390.sdf_MMddyy.format(cur_date)
-					+ " Time " + tz390.sdf_HHmmss.format(cur_date));
-		} else {
-			put_log(msg_id + tz390.version);
 		}
-		if  (z390_log_text == null){
-			put_log(msg_id + "Copyright 2006 Automated Software Tools Corporation");
-			put_log(msg_id + "z390 is licensed under GNU General Public License");
+		if (tz390.opt_stats){
+			put_stat_line("Copyright 2006 Automated Software Tools Corporation");
+			put_stat_line("z390 is licensed under GNU General Public License");
+			put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
+			put_stat_line("options = " + tz390.cmd_parms);
 		}
-		put_log(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
-		put_log(msg_id + "options = " + tz390.cmd_parms);
-	    copyright_mode = false;
+		if (tz390.opt_tracem){
+			tz390.put_trace(msg_id + "Copyright 2006 Automated Software Tools Corporation");
+			tz390.put_trace(msg_id + "z390 is licensed under GNU General Public License");
+			tz390.put_trace(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
+			tz390.put_trace(msg_id + "options = " + tz390.cmd_parms);
+		}
+		tz390.force_nocon = true; // RPI 755
 	}
 	private synchronized void put_log(String msg) {
 		/*
@@ -7727,7 +7726,8 @@ public  class  mz390 {
 		 */
 		if  (log_to_bal){
 			put_bal_line("* " + msg);
-		} else if (tz390.opt_tracem){
+		}
+		if (tz390.opt_tracem){
 			tz390.put_trace(trace_id + msg);
 		}
 		if  (z390_log_text != null){
@@ -8066,6 +8066,10 @@ public  class  mz390 {
 						if (tz390.opt_traceall){
 							tz390.put_trace("AIF BRANCH " + pc_setc[pc_loc]);
 						}
+						if (tz390.opt_tracep){
+							trace_pc();
+						}
+						return; // RPI 774 exit pc oode on first branch
 					}
 			    } else {
 			    	abort_pc("invalid aif stack");
@@ -8827,7 +8831,11 @@ public  class  mz390 {
     		break;
     	case 13: // named positional parm
     		val_type = val_setc_type;
-    		setc_value = mac_call_pos_parm[var_name_index];
+    		if (var_name_index > -1){
+    			setc_value = mac_call_pos_parm[var_name_index];
+    		} else {
+    			setc_value = "";
+    		}
     		break;
     	case 14: // keyword parm
     		val_type = val_setc_type;

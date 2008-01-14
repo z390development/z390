@@ -163,6 +163,8 @@ import javax.swing.Timer;
     * 05/07/07 RPI 610 correct XCTL link on mult link,xctl,exit 
     * 06/22/07 RPI 644 add init for vz390 VSAM access method
     * 10/18/07 RPI 722 move wtor_reply_buff to sz390
+    * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, con
+    * 01/08/08 RPI 782 stop interval timer before exit
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -261,6 +263,7 @@ public void process_ez390(String[] args,JTextArea log_text,JTextField command_te
     	sz390.tot_link_stk = 0;
     }
     run_pgm(pz390.zcvt_user_pgm);
+    monitor_timer.stop();  // RPI 782
 	sz390.exit_ez390();
 }
 private void run_pgm(int zcvt_pgm_addr){
@@ -349,7 +352,13 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
 	    sz390.init_sz390(tz390,pz390,vz390);
 	    pz390.init_pz390(tz390,sz390);
 		sz390.open_files(); // RPI 357
-        sz390.init_time();
+		tz390.force_nocon = true;
+		sz390.put_log(tz390.started_msg); // RPI 755
+		tz390.force_nocon = false;
+		if (tz390.opt_trace){
+			tz390.put_trace(tz390.started_msg); // RPI 755
+		}
+		sz390.init_time();
         sz390.init_test();
         put_copyright();
         monitor_startup();
@@ -518,21 +527,22 @@ private void put_copyright(){
 	    * display ez390 version, timestamp,
 	    * and copyright if running standalone
 	    */
-	   	if  (tz390.opt_timing){ // display current date/time
-			pz390.cur_date = new Date();
-	   	    sz390.put_log("EZ390I " + tz390.version 
-	   			+ " Current Date " + cur_date_MMddyy.format(pz390.cur_date)
-	   			+ " Time " + cur_tod_hhmmss.format(pz390.cur_date));
-	   	} else {
-	   		sz390.put_log("EZ390I " + tz390.version);
-	   	}
+	    tz390.force_nocon = true;  // RPI 755
 	   	if  (z390_log_text == null){
 	   		sz390.put_log("EZ390I Copyright 2006 Automated Software Tools Corporation");
 	   		sz390.put_log("EZ390I z390 is licensed under GNU General Public License");
 	   	}
-	   	sz390.put_log("EZ390I program = " + tz390.pgm_name);
+	   	sz390.put_log("EZ390I program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 	   	sz390.put_log("EZ390I options = " + tz390.cmd_parms);
-	   }
+		if (tz390.opt_stats){
+			tz390.put_stat_line("Copyright 2006 Automated Software Tools Corporation");
+			tz390.put_stat_line("z390 is licensed under GNU General Public License");
+			tz390.put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
+			tz390.put_stat_line("options = " + tz390.cmd_parms);
+		}
+	   	tz390.force_nocon = false; // RPI 755
+	 }
+
 /*
  *  end of ez390 code 
  */
