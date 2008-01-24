@@ -4,18 +4,20 @@ rem rt1 - assemble, link, and execute with notiming
 rem rt6 - assemble and link with notiming
 rem rtcomp - compare mvs\test files with mvs\save files to build mvs\dif files
 rem rtlist - display mvs\dif dir in descending size order
-erase %~dps0mvs\dif\*.* /q
-call RTCLEAN1 mvs\demo *
-call RTCLEAN1 mvs\test *
+call rt\RTCLEAN1 mvs\demo *
+call rt\RTCLEAN1 mvs\test *
 rem
 rem assemble, link, and execute demo wto 'hello world'
 rem
-call RT1 %~dps0mvs\demo\DEMO sysmac(mvs\maclib+mac) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 mvs\demo\DEMO sysmac(mvs\maclib+mac) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem assemble common application macros as test (not executable pgm)
 rem
-call RT6 %~dps0mvs\test\TESTMVS1 sysmac(mvs\maclib+mac) objhex %1 %2 %3 %4 %5 %6 %7 %8 %9
-call RT6 %~dps0mvs\test\TESTCVTX sysmac(mvs\maclib+mac) objhex %1 %2 %3 %4 %5 %6 %7 %8 %9
-call RT6 %~dps0mvs\test\TESTCVT1 sysmac(mvs\maclib+mac) objhex %1 %2 %3 %4 %5 %6 %7 %8 %9
-call RTCOMP %~dps0mvs\demo %~dps0mvs\demo\save %~dps0mvs\dif
-call RTCOMP %~dps0mvs\test %~dps0mvs\test\save %~dps0mvs\dif
+call rt\RT6 mvs\test\TESTMVS1 sysmac(mvs\maclib+mac) objhex %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT6 mvs\test\TESTCVTX sysmac(mvs\maclib+mac) objhex %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT6 mvs\test\TESTCVT1 sysmac(mvs\maclib+mac) objhex %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTCOMP mvs\demo rt\mvs\demo\save rt\mvs\demo\dif
+call rt\RTCOMP mvs\test rt\mvs\test\save rt\mvs\test\dif
+erase rt\mvs\dif\*.* /q
+copy  rt\mvs\demo\dif\*.* rt\mvs\dif
+copy  rt\mvs\test\dif\*.* rt\mvs\dif

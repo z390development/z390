@@ -5,15 +5,39 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-* 01/29/06 RPI193 test mz390 symbol length for implicit CPZ
-* 08/29/06 RPI415 test AIF reference to ordinary symbol length
-* 08/30/06 RPI419 test AIF reference to ordinary symbol setc parm
+* 01/29/06 RPI 193 test mz390 symbol length for implicit CPZ
+* 08/29/06 RPI 415 test AIF reference to ordinary symbol length
+* 08/30/06 RPI 419 test AIF reference to ordinary symbol setc parm
 *          with labeled using prefix and trailing expression oper. 
-* 09/08/06 RPI442 test AIF reference to dsect sym defined via *  loc
+* 09/08/06 RPI 442 test AIF reference to dsect sym defined via *  loc
+* 01/22/08 RPI 790 update tests for I' and S'                        
 *********************************************************************
 TESTSYM1 SUBENTRY
-         WTO   'TESTSYM1 - TEST SYMBOL T AND L OPERATORS'
-         SUBEXIT
+         WTO   'TESTSYM1 - TEST SYMBOL T,L,I,S OPERATORS'
+* TEST I' AND S'
+         MACRO
+&N       TESTIS &DC,&I,&S
+         B     TESTIS&SYSNDX
+&N       DC    &DC
+TESTIS&SYSNDX DS 0H
+         CLC  =AL1(I'&N),=AL1(&I)
+         BNE  ERR2
+         CLC  =AL1(S'&N),=AL1(&S)
+         BNE  ERR3
+         MEND
+PI1S2    TESTIS P'7.50,8.1',1,2
+ZI1S2    TESTIS Z'7.50,8.1',1,2
+DDI14S2  TESTIS DD'7.50,8.1',14,2
+EDI5S2   TESTIS ED'7.50,8.1',5,2
+LDI32S2  TESTIS LD'7.50,8.1',32,2
+FI26S5   TESTIS FS5'1',26,5
+HI10S5   TESTIS HS5'1',10,5
+         WTO    'TESTSYM1 ENDED OK'
+         SUBEXIT   
+ERR2     WTO   'INVALID I' VALUE'
+         SUBEXIT RC=16
+ERR3     WTO   'INVALID S' VALUE'
+         SUBEXIT RC=16
 * TEST DS/DC SYMBOL TYPE AND LENGTH
          MACRO
          TSYM  &SDS,&ST,&SL
@@ -125,15 +149,4 @@ CVT      EQU  CVTMAP,,T'CVTMAP
          AIF  (&LCVT EQ 8).OK3
          MNOTE 8,'LCVT NOT EQUAL 8 ERROR'
 .OK3     ANOP
-* TEST I' AND S'
-INT4     EQU  4
-         AIF  (I'INT4 NE 4).ERR2
-SCALE5   DC   FS5'1'
-         AIF  (S'SCALE5 NE 5).ERR3
-         AGO  .EXIT
-.ERR2    MNOTE 12,'INVALID I' VALUE'
-         MEXIT
-.ERR3    MNOTE 12,'INVALID S' VALUE'
-         MEXIT
-.EXIT    ANOP
          END

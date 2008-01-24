@@ -26,6 +26,7 @@ Management descriptions...
    HANDLE/IGNORE CONDITION
    Temporary Storage
    File Control
+   Sequential Terminal support
 
 Event Tracing
 Internal Abends (Z390CICS)
@@ -143,7 +144,7 @@ VSAM Work Area (DFHVSWAD)
 Also contains the RPL for file operations.
    Eye catcher: None
    Acquired   : Z390CICS at File Control process start
-   Released   : Z390CICS at File Control process end
+   Released   : Z390CICS at File Control process end or task abend
    Anchor     : FCTVSWA
    Chain      : VSWCHAIN
    DSECT      : DFHVSWAD
@@ -314,7 +315,7 @@ Temporary Storage Management
          The DSECT for the TS data chain prefix is internal (TSDPREFX),
          the data follows the prefix.
 
-         WRITEQ TS  will add a new item to the chain end.
+         WRITEQ TS will add a new item to the chain end.
          WRITEQ TS REWRITE will free the old item, create a new one,
          and repair the chain.
 
@@ -341,36 +342,79 @@ File Control Management
 
    b) Request processing
 
-      Any feedback codes are converted to RESP/RESP2 values and sent
-      back to the Client.
+      No error conditions are explained here, they are listed in the
+      Z390/CICS Application Programming Guide, and in the IBM Manuals.
+
+      Any VSAM feedback codes and errors are converted to RESP/RESP2
+      values and sent back to the Client.
 
       When a task ends or abends all VSWAs owned by the task are
-      released.
+      released. An exception to this occurs when a condition is raised
+      after a browse command is issued and there is a HANDLE CONDITION.
+      In this case, the VSWA is not released unless the transaction is
+      abended and will require an ENDBR.
+
+      A READ will always release the VSWA regardless of HANDLE CONDITION.
 
       i) READ (ESDS)
          A VSWA is acquired.
          RPL OPTCD is set to (ADR) or (ADR,XRBA).
-         RPLARG is set to the address of (X)RBA.
+         RPLARG is set to the address of FCP(X)RBA.
          Area of the maximum or fixed length is GETMAINd and RPLAREA
          is set. GET issued and the data is sent to the program.
          The VSWA is released.
 
+         READ (RRDS)
+         A VSWA is acquired.
+         RPL OPTCD is set to (KEY).
+         RPLARG is set to the address of FCPRRN.
+         Area of the maximum or fixed length is GETMAINd and RPLAREA
+         is set. GET issued and the data is sent to the program.
+         The VSWA is released.
+
+         READ (KSDS)
+         A VSWA is acquired.
+         RPL OPTCD is set to (KEY,FKS,KEQ).
+            Options KGE and/or GEN are also set if specified.
+            KEYLENGTH(0) is a special case and forces GEN and KGE.
+         RPLARG is set to the address of FCPRID.
+         Area of the maximum or fixed length is GETMAINd and RPLAREA
+         is set.
+         If GEN or KGE is specified, then POINT is issued.
+         GET issued and the data is sent to the program.
+         The VSWA is released.
+
      ii) STARTBR (ESDS)
-         A check is made to ensure that a VSWA for the same REQID has
-         not already been acquired for this task (INVREQ/33).
          A VSWA is acquired.
          The REQID is set (default is zero).
          RPL OPTCD is set to (ADR,SEQ) or (ADR,SEQ,XRBA).
-         RPLARG is set to the address of (X)RBA.
+         RPLARG is set to the address of FCP(X)RBA.
          A POINT is issued.
-         The current XRBA is saved in the VSWA and returned to the
-         program.
+         The current XRBA is saved in the VSWA.
+
+         STARTBR (RRDS)
+         A VSWA is acquired.
+         The REQID is set (default is zero).
+         RPL OPTCD is set to (KEY,SEQ).
+         RPLARG is set to the address of FCPRRN.
+         A POINT is issued.
+         The current RRN is saved in the VSWA.
+
+         STARTBR (KSDS)
+         A VSWA is acquired.
+         The REQID is set (default is zero).
+         RPL OPTCD is set to (KEY,SEQ,FKS,KEQ).
+            Options KGE and/or GEN are also set if specified.
+            KEYLENGTH(0) is a special case and forces GEN and KGE.
+         RPLARG is set to the address of FCPRID.
+         A POINT is issued.
+         The current (generic) FCPRID is saved in the VSWA.
+         The current KEYLENGTH is saved in the VSWA.
 
     iii) READNEXT (ESDS)
-         The VSWA created by the STARTBR is searched for, an error is
-         raised if not found (INVREQ/34).
+         The VSWA created by the STARTBR is located.
          RPL OPTCD is set to (ADR,SEQ,FWD) or (ADR,SEQ,FWD,XRBA).
-         RPLARG is set to the address of (X)RBA.
+         RPLARG is set to the address of FCP(X)RBA.
          A check is made to see if the XRBA supplied differs from the
          current XRBA, if it does then a POINT is issued. This allows
          skip-sequential processing to occur.
@@ -379,32 +423,123 @@ File Control Management
          The current XRBA is saved in the VSWA, a GET is issued, and
          the current (X)RBA and the data are sent to the program.
 
-    iii) READPREV (ESDS)
-         The VSWA created by the STARTBR is searched for, an error is
-         raised if not found (INVREQ/41).
-         RPL OPTCD is set to (ADR,SEQ,BWD) or (ADR,SEQ,BWD,XRBA).
-         RPLARG is set to the address of (X)RBA.
-         A check is made to see if the XRBA supplied differs from the
-         current XRBA, if it does then a POINT is issued. This allows
+         READNEXT (RRDS)
+         The VSWA created by the STARTBR is located.
+         RPL OPTCD is set to (KEY,SEQ,FWD).
+         RPLARG is set to the address of FCPRRN.
+         A check is made to see if the RRN supplied differs from the
+         current RRN, if it does then a POINT is issued. This allows
          skip-sequential processing to occur.
          Area of the maximum or fixed length is GETMAINd and RPLAREA
          is set.
-         The current XRBA is saved in the VSWA, a GET is issued, and
-         the current (X)RBA and the data are sent to the program.
+         The current RRN is saved in the VSWA, a GET is issued, and
+         the current RRN and the data are sent to the program.
 
-     iv) RESETBR (ESDS)
-         The VSWA created by the STARTBR is searched for, an error is
-         raised if not found (INVREQ/36).
-         RPL OPTCD is set to (ADR,SEQ) or (ADR,SEQ,XRBA).
-         RPLARG is set to the address of (X)RBA.
-         A POINT is issued.
-         The current XRBA is saved in the VSWA and returned to the
+         READNEXT (KSDS)
+         The VSWA created by the STARTBR is located.
+         RPL OPTCD is set to (KEY,SEQ,FKS,KEQ,FWD).
+            Options KGE and/or GEN are also set if specified in the
+            STARTBR,
+         RPLARG is set to the address of FCPRID.
+         POINT is issued for skip-sequential:
+            If the keylength has changed and/or the (generic) key in
+            FCPRID has changed.
+         Area of the maximum or fixed length is GETMAINd and RPLAREA
+         is set.
+         The current (generic) FCPRID is saved in the VSWA, a GET is
+         issued, and the current full key and the data are sent to the
          program.
 
-      v) ENDBR (ESDS)
-         The VSWA created by the STARTBR is searched for, an error is
-         raised if not found (INVREQ/35).
+     iv) READPREV (ESDS)
+         The VSWA created by the STARTBR is located.
+         RPL OPTCD is set to (ADR,SEQ,BWD) or (ADR,SEQ,BWD,XRBA).
+         RPLARG is set to the address of FCP(X)RBA.
+         A check is made to see if the XRBA supplied differs from the
+         current XRBA, if it does then a POINT is issued. This allows
+         skip-sequential processing to occur.
+         Area of the maximum or fixed length is GETMAINd and RPLAREA
+         is set.
+         The current XRBA is saved in the VSWA, a GET is issued, and
+         the current (X)RBA and the data are sent to the program.
+
+         READPREV (RRDS)
+         The VSWA created by the STARTBR is located.
+         RPL OPTCD is set to (KEY,SEQ,BWD).
+         RPLARG is set to the address of FCPRRN.
+         A check is made to see if the RRN supplied differs from the
+         current RRN, if it does then a POINT is issued. This allows
+         skip-sequential processing to occur.
+         Area of the maximum or fixed length is GETMAINd and RPLAREA
+         is set.
+         The current RRN is saved in the VSWA, a GET is issued, and
+         the current RRN and the data are sent to the program.
+
+         READPREV (KSDS)
+         The VSWA created by the STARTBR is located.
+         RPL OPTCD is set to (KEY,SEQ,FKS,KEQ,BWD).
+            Note: GEN is invalid and KGE is ignored.
+         RPLARG is set to the address of FCPRID.
+         POINT is issued for skip-sequential if the keylength has
+         changed.
+         Area of the maximum or fixed length is GETMAINd and RPLAREA
+         is set.
+         The current FCPRID is saved in the VSWA, a GET is issued, and
+         the current full key and the data are sent to the program.
+
+      v) RESETBR (ESDS)
+         The VSWA created by the STARTBR is located.
+         RPL OPTCD is set to (ADR,SEQ) or (ADR,SEQ,XRBA).
+         RPLARG is set to the address of FCP(X)RBA.
+         A POINT is issued.
+         The current XRBA is saved in the VSWA.
+
+         RESETBR (RRDS)
+         The VSWA created by the STARTBR is located.
+         RPL OPTCD is set to (KEY,SEQ).
+         RPLARG is set to the address of FCPRRN.
+         A POINT is issued.
+         The current RRN is saved in the VSWA.
+
+         RESETBR (KSDS)
+         The VSWA created by the STARTBR is located.
+         RPL OPTCD is set to (KEY,SEQ,FKS,KEQ).
+            Options KGE and/or GEN are also set if specified.
+            KEYLENGTH(0) is a special case and forces GEN and KGE.
+         RPLARG is set to the address of FCPRID.
+         A POINT is issued.
+         The current (generic) FCPRID is saved in the VSWA.
+         The current KEYLENGTH is saved in the VSWA.
+
+     vi) ENDBR (ESDS, RRDS, KSDS)
+         The VSWA created by the STARTBR is located.
          The VSWA is released.
+
+Sequential Terminal support
+   Please read the Doc for this feature in "Z390/CICS Sequential
+   Terminal Support" (Z390SEQ). This section does not cover the batch
+   programs Z390SEQ or Z390COMP.
+
+   When the INI parameter SEQ_TERM=YES is specified then Z390CICS will
+   start a special CMDPROC terminal with a terminal id. of SQ01.
+   This will reduce the total terminals that may be started to nine.
+
+   When Z390KCP is invoked for SQ01, two QSAM files are opened, one to
+   process the input streams, and the other to write the output streams
+   to SEQO0001. The TCTTE contains the DCB addresses and other supporting
+   fields.
+
+   The internal EXEC CICS RECEIVE in Z390KCP and any in user programs
+   read the next data stream from the input QSAM file.
+   The internal EXEC CICS SEND in Z390KCP and any in user programs
+   writes all data streams to the output QSAM file and displays it
+   on the SQ01 terminal.
+
+   When an input file reaches the end, the file number is incremented
+   and the file is closed and re-opened.
+
+   When all of the input streams are exhausted, the terminal is closed
+   via an emulated CEMT S TER OUT unless the last input data stream was
+   CEMT P SHU (recommended), in which case Z390/CICS is shut down.
 
 -----------------------------------------------------------------------
 
@@ -429,12 +564,18 @@ Internal Abends (Z390CICS)
    780   TCPIO SEND failed
    790   VSAM feedback code was not expected
 
+Change Summary
+--------------
+January 18, 2008
+   Extensive updates to File Control
+
 Trademarks
 ----------
-CICS is a registered trademark of International Business Corporation.
+IBM, CICS and VSAM are registered trademarks of International Business
+Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: October 1st, 2007
-Z390 version: V1.3.08
-Z390/CICS version: V3
+Shipping Date: January 18, 2008
+Z390 version: V1.3.08h
+Z390/CICS version: V4
 

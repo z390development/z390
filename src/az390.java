@@ -298,7 +298,10 @@ public  class  az390 implements Runnable {
         *          and correct sign in low digit zone for Z.
         * 01/10/08 RPI 778 save loc_ctr in esd_loc[cur_esd] for use
         *          in continued sections following neq ORG's.
-        * 01/13/08 RPI 786 set fp_form for preferred exp DFP constants                    
+        * 01/13/08 RPI 786 set fp_form for preferred exp DFP constants
+        * 01/17/08 RPI 790 set DFP exp to explicit decimal point or zero for const.
+        *          set scale factor if no explicit modifier
+        *          support I' and S' operators in expression                    
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -522,6 +525,8 @@ public  class  az390 implements Runnable {
     String[]  sym_name         = null;
     int[]     sym_def          = null;
     byte[]    sym_type         = null;
+    byte[]    sym_dc_type      = null; // RPI 790
+    byte[]    sym_dc_type_sfx  = null; // RPI 790
     byte[]    sym_attr         = null; // RPI 340
     byte[]    sym_attr_elt     = null; // RPI 415 explicit length type attribute
 	int[]     sym_scale        = null; // scale factor for int or fp exp
@@ -644,6 +649,9 @@ public  class  az390 implements Runnable {
     int[]     lit_esd          = null;
     int[]     lit_loc          = null;
     int[]     lit_len          = null;
+    int[]     lit_scale        = null;  // RPI 790
+    byte[]    lit_dc_type      = null;  // RPI 790
+    byte[]    lit_dc_type_sfx  = null;  // RPI 790
     byte[]    lit_gen          = null;
     int[]     lit_def          = null;
     TreeSet<Integer>[] lit_xref = null;
@@ -807,6 +815,7 @@ public  class  az390 implements Runnable {
       boolean dcv_type = false;
       boolean dca_ignore_refs = false;
       char   dc_type_sfx = ' ';
+      String fp_text  = null; // RPI 790 fp text for use by DFP
       double fp_log2  = Math.log(2);
 	  double fp_log10 = Math.log(10);
       MathContext fp_context = null;
@@ -843,6 +852,7 @@ public  class  az390 implements Runnable {
       int    dc_first_len = 0;
       int    dc_first_loc = 0;
       char   dc_first_type = ' ';  // dc first field type char
+      char   dc_first_type_sfx = ' '; // dc first type suffix  RPI 790
       int    dc_first_scale = 0;   // RPI 481
       byte   dc_first_attr_elt = ' '; // dc first explicit length field type char 
       String dc_hex = null;
@@ -1012,7 +1022,6 @@ private void init_az390(String[] args, JTextArea log_text){
     	tz390 = new tz390();
     	tz390.init_tables();
     	tz390.init_options(args,tz390.bal_type);
-    	tz390.fp_form = tz390.fp_form_constant; // RPI 786
     	if (!mz390_call){
    			tz390.open_systerm("AZ390");
    		} else {
@@ -1097,6 +1106,8 @@ private void init_arrays(){
     sym_name         = new String[tz390.opt_maxsym];
     sym_def          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
     sym_type         = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
+    sym_dc_type      = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym); // RPI 790
+    sym_dc_type_sfx  = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym); // RPI 790
     sym_attr         = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
     sym_attr_elt     = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
     sym_attrp        = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
@@ -1117,6 +1128,9 @@ private void init_arrays(){
     lit_esd          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
     lit_loc          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
     lit_len          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
+    lit_scale        = (int[])Array.newInstance(int.class,tz390.opt_maxsym); // RPI 790
+    lit_dc_type      = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym); // RPI 790
+    lit_dc_type_sfx  = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym); // RPI 790
     lit_gen          = (byte[])Array.newInstance(byte.class,tz390.opt_maxsym);
     lit_def          = (int[])Array.newInstance(int.class,tz390.opt_maxsym);
     lit_xref = (TreeSet<Integer>[])Array.newInstance(TreeSet.class,tz390.opt_maxsym);
@@ -1156,13 +1170,13 @@ private void compile_patterns(){
         	try {
         	    exp_pattern = Pattern.compile(
       				"([0-9]+([.][0-9]*)*([eE]([\\+]|[\\-])*[0-9]+)*)" // RPI 232 fp/int
-     		      + "|([\\s,'\\+\\-\\*\\/\\(\\)=])"  // RPI 159, RPI181
-  		    	  + "|([bB]['][0|1]+['])" 
+     		      + "|([\\s,'\\+\\-\\*\\/\\(\\)=])"        // RPI 159, RPI181
+  		    	  + "|([bB]['][0|1]+['])"                  // sdt B'01'
   		    	  +	"|([cC][aAeE]*[']([^']|(['][']))*['])" // ebcdic/ascii mode //RPI 270
-  		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"       // ebcdic always
-  		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"  // ascii  always
-	    		  +	"|([xX]['][0-9a-fA-F]+['])" 
-        		  + "|([lL]['])"                           // length op  RPI9
+  		    	  +	"|([cC][!]([^!]|([!][!]))*[!])"        // ebcdic always
+  		    	  +	"|([cC][\"]([^\"]|([\"][\"]))*[\"])"   // ascii  always
+	    		  +	"|([xX]['][0-9a-fA-F]+['])"            // sdt X'1F'
+        		  + "|([iIlLsS]['])"                       // length op  RPI9 RPI 790 add I',S' ops
         		  +	"|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*[\\.]?)" // labeled using or symbol  RPI 253
         	    );
         	} catch (Exception e){
@@ -1179,8 +1193,10 @@ private void compile_patterns(){
              exp_op_class['/'] = 2;
              exp_op_class['('] = 3;
              exp_op_class[')'] = 4;
-             exp_op_class['L'] = 5; // length pfx
-             exp_op_class['U'] = 5; // unary  pfx
+             exp_op_class['I'] = 5; // Integer pfx // RPI 790
+             exp_op_class['L'] = 5; // length  pfx
+             exp_op_class['S'] = 5; // Scale   pfx // RPI 790
+             exp_op_class['U'] = 5; // unary   pfx
              exp_op_class[' '] = 6;
              exp_op_class[','] = 6;
              exp_op_class['~'] = 6;
@@ -3416,6 +3432,8 @@ public void update_label(){ // RPI 415
 	   	    if (loc_len == 0){
 	   	        sym_len[cur_sid] = dc_first_len;
 	   	        sym_scale[cur_sid] = dc_first_scale; // RPI 481
+	   	        sym_dc_type[cur_sid]     = (byte) dc_first_type; // RPI 790
+	   	        sym_dc_type_sfx[cur_sid] = (byte) dc_first_type_sfx; // RIP 790
 	   	    } else {
 	   	        sym_len[cur_sid] = loc_len;
 	   	    }
@@ -3449,6 +3467,8 @@ private void init_sym_entry(){
 	   if (loc_len == 0){
 		   sym_len[cur_sid]   = dc_first_len;
 		   sym_scale[cur_sid] = dc_first_scale; // RPI 481
+		   sym_dc_type[cur_sid]     = (byte)dc_first_type; // RPI 790
+		   sym_dc_type_sfx[cur_sid] = (byte)dc_first_type_sfx;
 	   } else {
 		   sym_len[cur_sid] = loc_len;
 	   }
@@ -3834,7 +3854,21 @@ private void proc_exp_token(){
 	        	   proc_exp_sym();
 	        	}
 	            break;
+	        case 'I':  // RPI 790 I' operator
+	        	if (exp_token.length() > 1 && exp_token.charAt(1) == '\''){
+	        	   proc_exp_op();
+	        	} else {
+	        	   proc_exp_sym();
+	        	}
+	            break;
 	        case 'L':
+	        	if (exp_token.length() > 1 && exp_token.charAt(1) == '\''){
+	        	   proc_exp_op();
+	        	} else {
+	        	   proc_exp_sym();
+	        	}
+	            break;
+	        case 'S':  // RPI 790 S' operator
 	        	if (exp_token.length() > 1 && exp_token.charAt(1) == '\''){
 	        	   proc_exp_op();
 	        	} else {
@@ -3960,12 +3994,18 @@ private void proc_exp_op(){
   	   }
   	   check_prev_op = false;
        break;
-    case 5: //  PFX operators (L' or U+ or U-
+    case 5: //  PFX operators (I', L', S', or U+ or U-) RPI 790
     	 exp_pop_op();          //RPI9
     	 switch (exp_stk_op[tot_exp_stk_op].charAt(0)){
+    	 case 'I': // Integer operator
+    		 exp_integer_op();
+    		 break;
     	 case 'L': // length operator
     	 	 exp_len_op();
     	 	 break;
+    	 case 'S': // Scale operator
+    		 exp_scale_op();
+    		 break;
     	 case 'U': // unary operator
     		 if (exp_sym_pushed){
     			 if (exp_stk_op[tot_exp_stk_op].charAt(1) == '-'){
@@ -4095,6 +4135,28 @@ private void exp_div(){
 	}
 	put_stk_sym();
 }
+private void exp_integer_op(){ // RPI 790
+	/*
+	 * replace sym or lit on stack
+	 * with integer I' attribute value
+	 */
+	if (tot_exp_stk_sym >= 1){
+		int temp_int = -1;
+		if (cur_sid >  0){
+			temp_int = get_int_pfx(sym_dc_type[cur_sid],sym_dc_type_sfx[cur_sid],sym_len[cur_sid],sym_scale[cur_sid]);
+		} else if (cur_lit >= 0){
+			temp_int = get_int_pfx(lit_dc_type[cur_lit],lit_dc_type_sfx[cur_lit],lit_len[cur_lit],lit_scale[cur_lit]);
+		}
+		if (temp_int >= 0){
+		   exp_stk_sym_val[tot_exp_stk_sym - 1] = temp_int;
+		   exp_stk_sym_esd[tot_exp_stk_sym - 1] = sym_sdt;
+		} else {
+		   log_error(25,"invalid symbol for length attribute operator");
+		}
+	} else {
+		log_error(26,"missing symbol for integer attribute");
+	}
+}
 private void exp_len_op(){
 	/*
 	 * replace sym or lit on stack
@@ -4112,6 +4174,28 @@ private void exp_len_op(){
 		   exp_stk_sym_esd[tot_exp_stk_sym - 1] = sym_sdt;
 		} else {
 		   log_error(25,"invalid symbol for length attribute operator");
+		}
+	} else {
+		log_error(26,"missing symbol for length attribute");
+	}
+}
+private void exp_scale_op(){ // RPI 790
+	/*
+	 * replace sym or lit on stack
+	 * with scale value
+	 */
+	if (tot_exp_stk_sym >= 1){
+		int temp_scale = -1;
+		if (cur_sid >  0){
+			temp_scale = sym_scale[cur_sid];
+		} else if (cur_lit >= 0){
+			temp_scale = lit_scale[cur_lit];
+		}
+		if (temp_scale >= 0){
+			exp_stk_sym_val[tot_exp_stk_sym - 1] = temp_scale;
+			exp_stk_sym_esd[tot_exp_stk_sym - 1] = sym_sdt;
+		} else {
+			   log_error(25,"invalid symbol for scale attribute operator");
 		}
 	} else {
 		log_error(26,"missing symbol for length attribute");
@@ -5856,6 +5940,7 @@ private void get_dc_field_modifiers(){
 	 }
 	 if (dc_first_field){
 		dc_first_type  = dc_type;
+		dc_first_type_sfx = dc_type_sfx; // RPI 790
 		bal_lab_attr   = tz390.ascii_to_ebcdic[dc_type];
 		dc_first_attr_elt = dc_attr_elt;
 		bal_lab_attr_elt  = dc_attr_elt;
@@ -6285,6 +6370,7 @@ private void process_dc_fp_data(){
 		    } else {
 			    log_error(150,"invalid data field terminator - " + dc_field);
 		    }
+			dc_first_field = false; // RPI 790
 		}
 	    dc_index++; // skip dca ) terminator
 	    dc_len = 0; // don't double count
@@ -6441,7 +6527,8 @@ private void get_dc_fp_hex(String text,int index){
 		text_end = text_comma; // rpi 463
 	}
 	dc_index = index + text_end;
-	get_fp_hex(text.substring(index,index+text_end));
+	fp_text = text.substring(index,index+text_end); // RPI 790
+	get_fp_hex();
 }
 private void process_dcf_data(){
 	/*
@@ -6601,6 +6688,7 @@ private void process_dcp_data(){
 			    if (dc_field.charAt(dc_index) == ','){
 			    	dc_index++;
 			    }
+			    dc_first_field = false; // RPI 790
 		}
 	    dc_index++; // skip dcp terminator
 	    if  (!bal_abort){
@@ -6719,6 +6807,7 @@ private void process_dcz_data(){
 			    if (dc_field.charAt(dc_index) == ','){
 			    	dc_index++;
 			    }
+			    dc_first_field = false; // RPI 790
 		}
 	    dc_index++; // skip dcp terminator
 	    if  (!bal_abort){
@@ -7413,6 +7502,9 @@ private void get_lit_addr(){
 			lit_esd[cur_lit] = cur_esd;
 			lit_loc[cur_lit] = -1; // set by gen_lit
 			lit_len[cur_lit] = dc_first_len;
+			lit_scale[cur_lit] = dc_first_scale; // RPI 790
+			lit_dc_type[cur_lit]  = (byte) dc_first_type;  // RPI 790
+			lit_dc_type_sfx[cur_lit] = (byte) dc_first_type_sfx; // RPI 790
 			lit_gen[cur_lit] = 0;  // set by gen_lit;
 			exp_val = -1;
 		} else {
@@ -7631,9 +7723,10 @@ private void gen_ccw1(){  // RPI 567
 		list_obj_code = list_obj_code.substring(8)+list_obj_code.substring(0,8);
 	}
 }
-private void get_fp_hex(String fp_text){
+private void get_fp_hex(){
 	/*
-	 * set dc_hex for floating point string
+	 * set dc_hex for floating point
+	 * string fp_text
 	 * in scientific notation 0.314159E1 etc.
 	 * format is based on fp type 0-8 (db,dd,dh,eb,ed,eh,lb,ld,lh)
 	 *
@@ -7647,6 +7740,11 @@ private void get_fp_hex(String fp_text){
 	 *       decimal digits plus 3 to insure 
 	 *       sufficient significant bits for proper
 	 *       rounding occurs.
+	 *   4.  The preferred DFP exponent  
+	 *       (BigDecimal scale factor) is
+	 *       set based on explicit decimal poiint
+	 *       with significant trailing decimal places
+	 *       including zeros else use 0. RPI 790
 	 * 
 	 * First convert string constant to positive
 	 * big_dec1 value with sufficent sig. bits.
@@ -7737,11 +7835,10 @@ private void get_fp_hex(String fp_text){
 		log_error(162,"invalid decimal floating point constant");
 		fp_big_dec1 = BigDecimal.ZERO;
 	}
-	if (dc_exp > 0){ // RPI 368
+	if (dc_exp > 0){ // RPI 368 adj by DC E modifer
 		fp_big_dec1 = fp_big_dec1.movePointLeft(dc_exp);
 	} else if (dc_exp < 0){
-		fp_big_dec1 = fp_big_dec1.movePointRight(-dc_exp);
-		
+		fp_big_dec1 = fp_big_dec1.movePointRight(-dc_exp);		
 	}
 	if (fp_big_dec1.signum() > 0){
 		tz390.fp_sign = 0;
@@ -7751,56 +7848,79 @@ private void get_fp_hex(String fp_text){
 	} else {
 		switch (tz390.fp_type){  // gen zero hex for tz390.fp_type
 		case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+			dc_hex = "0000000000000000"; // RPI 384
+			return;
 		case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50 // RPI 407
+			dc_hex = "2238000000000000"; // RPI 384 RPI 790
+			return;
 		case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
 			dc_hex = "0000000000000000"; // RPI 384
 			return;
 		case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+			dc_hex = "00000000"; // RPI 384
+			return;
 		case 4: // tz390.fp_ed_type s1,cf5,bxdf6,ccf20 // RPI 407
+			dc_hex = "22500000"; // RPI 384 RPI 790
+			return;
 		case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
 			dc_hex = "00000000"; // RPI 384
 			return;
 		case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
-		case 7: // tz390.fp_ed_type s1,cf5,bxdf12,ccf110 // RPI 407	
+			dc_hex = "00000000000000000000000000000000";  // RPI 384
+			return;
+		case 7: // tz390.fp_ld_type s1,cf5,bxdf12,ccf110 // RPI 407	
+			dc_hex = "22080000000000000000000000000000";  // RPI 384 RPI 790
+			return;
 		case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
 			dc_hex = "00000000000000000000000000000000";  // RPI 384
 			return;
 		}
 	}
 	/*
-	 * convert bfp and hfp to binary exp and mantissa
+	 * 1.  Convert BFP and HFP to base 2 exp
+	 *     and mantissa from base 10.
+	 * 2.  For DFP adjust base 10 exponent
+	 *     based on explicit decimal point
+	 *     and significant trailing digits
+	 *     includeing zeros.
 	 */
 	switch (tz390.fp_type){
 	case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
-	    cvt_fp_to_bfp();
+	    cvt_fp_exp_to_base_2();
+	    cvt_fp_bd_to_hex();
 	    break;
 	case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50 // RPI 407
-		cvt_fp_to_hex();
+		cvt_fp_bd_to_hex();
 		break;
 	case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
-	    cvt_fp_to_bfp();
+	    cvt_fp_exp_to_base_2();
+	    cvt_fp_bd_to_hex();
 	    break;
 	case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
-	    cvt_fp_to_bfp();
+	    cvt_fp_exp_to_base_2();
+	    cvt_fp_bd_to_hex();
 	    break;
 	case 4: // tz390.fp_ed_type s1,cf5,bxdf6,ccf20 // RPI 407
-		cvt_fp_to_hex();
+		cvt_fp_bd_to_hex();
 		break;
 	case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
-	    cvt_fp_to_bfp();
+	    cvt_fp_exp_to_base_2();
+	    cvt_fp_bd_to_hex();
 	    break;
 	case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
-	    cvt_fp_to_bfp();
+	    cvt_fp_exp_to_base_2();
+	    cvt_fp_bd_to_hex();
 	    break;
 	case 7: // tz390.fp_ld_type s1,cf5,bxdf12,ccf110 // RPI 407	
-		cvt_fp_to_hex();
+		cvt_fp_bd_to_hex();
 		break;
 	case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
-	    cvt_fp_to_bfp();
+	    cvt_fp_exp_to_base_2();
+	    cvt_fp_bd_to_hex();
 	    break;
 	}
 }
-	private void cvt_fp_to_bfp(){
+	private void cvt_fp_exp_to_base_2(){
 	/*******************************************
 	 * calc tz390.fp_exp and big_dec2 such that:      
 	 * big_dec1 = big_dec2 * 2  ** tz390.fp_exp      
@@ -7853,14 +7973,18 @@ private void get_fp_hex(String fp_text){
 	 */
 	fp_big_int1 = fp_big_dec2.toBigInteger();
     tz390.fp_exp = tz390.fp_exp + tz390.fp_man_bits[tz390.fp_type];
-    cvt_fp_to_hex();
 	}
-	private void cvt_fp_to_hex(){
+	private void cvt_fp_bd_to_hex(){
 	/*
-	 * adjust mantiss and base 2 exponent to
-	 * align for assumed 1 bit for IEEE binary
-	 * or IBM base 16 hex exponent and return
-	 * hex sign bit, exponent, and mantissa bytes
+	 * 1.  BFP - Adjust mantiss and base 2 exponent
+	 *     to align for assumed 1 bit.
+	 * 2.  HFP - Adjust mantissa and base 2
+	 *     exponent to base 16 exponent.
+	 * 3.  DFP - Set base 10 exponent based on
+	 *     explicit decimal point and trailing
+	 *     significant digits including zeros
+	 *     else use preferred exponent of 0.  RPI 790
+	 * 
 	 */
 	switch (tz390.fp_type){  // gen hex for fp type
 	case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
@@ -7886,11 +8010,13 @@ private void get_fp_hex(String fp_text){
 		}
         break;
 	case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50 // RPI 50
-	    dc_hex = get_dfp_hex(tz390.fp_dd_type,fp_big_dec1);
-	    if (dc_hex == null){
-	    	log_error(176,"decimal floating point value invalid");
+		set_dfp_preferred_exp();
+		if (!tz390.get_dfp_bin(tz390.fp_dd_type, fp_big_dec1)){  
+        	log_error(179,"DD dfp constant out of range");
 	    	dc_hex = "0000000000000000";
-	    }
+        } else {
+        	dc_hex = tz390.get_long_hex(tz390.fp_work_reg.getLong(0),16);
+        }
 		break;
 	case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
 		fp_long1 = fp_big_int1.longValue();
@@ -7938,11 +8064,13 @@ private void get_fp_hex(String fp_text){
 		}
 		break;
 	case 4: // tz390.fp_ed_type s1,cf5,bxcf6,ccf20 // RPI 407
-	    dc_hex = get_dfp_hex(tz390.fp_ed_type,fp_big_dec1);
-	    if (dc_hex == null){
-	    	log_error(177,"decimal floating point value invalid");
+		set_dfp_preferred_exp();
+		if (!tz390.get_dfp_bin(tz390.fp_ed_type, fp_big_dec1)){ // RPI 790
+        	log_error(180,"ED dfp constant out of range");
 	    	dc_hex = "00000000";
-	    }
+        } else {
+        	dc_hex = tz390.get_hex(tz390.fp_work_reg.getInt(0),8);
+        }
 		break;
 	case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
 		fp_int1 = fp_big_int1.intValue();
@@ -8003,11 +8131,14 @@ private void get_fp_hex(String fp_text){
 		}
 	    break;
 	case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110 // RPI 407
-	    dc_hex = get_dfp_hex(tz390.fp_ld_type,fp_big_dec1);
-	    if (dc_hex == null){
-	    	log_error(178,"decimal floating point value invalid");
+		set_dfp_preferred_exp();
+		if (!tz390.get_dfp_bin(tz390.fp_ld_type, fp_big_dec1)){ // RPI 790
+        	log_error(181,"LD dfp constant out of range");
 	    	dc_hex = "00000000000000000000000000000000";
-	    }
+        } else {
+        	dc_hex = tz390.get_long_hex(tz390.fp_work_reg.getLong(0),16)
+	               + tz390.get_long_hex(tz390.fp_work_reg.getLong(8),16)	;
+		}
 		break;
 	case 8: // tz390.fp_lh_type s1,e7,m112 with split hex
         fp_round_bit = 0;
@@ -8056,36 +8187,34 @@ private void get_fp_hex(String fp_text){
 	    break;
 	}	
 }
-private String get_dfp_hex(int dfp_type,BigDecimal dfp_bd){
-	/*
-	 * return hex string representation of
-	 * dd, ed, or ld decimal floating point value
-	 * else null if invalid digits or out of range
-	 */
-	switch (dfp_type){
-	case 1: // tz390.fp_dd_type s1,cf5,bxcf6,ccf20
-        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){  
-        	log_error(179,"DD dfp constant out of range");
-        }
-        return tz390.get_long_hex(tz390.fp_work_reg.getLong(0),16);
-	case 4: // tz390.fp_ed_type s1,cf5,bxcf8,ccf50
-        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){ 
-        	log_error(180,"ED dfp constant out of range");
-        }
-		return tz390.get_hex(tz390.fp_work_reg.getInt(0),8);
-	case 7: // tz390.fp_ld_type s1,cf5,bxdf12,ccf110
-        if (!tz390.get_dfp_bin(dfp_type, dfp_bd)){ 
-        	log_error(181,"LD dfp constant out of range");
-        }
-		return tz390.get_long_hex(tz390.fp_work_reg.getLong(0),16)
-	         + tz390.get_long_hex(tz390.fp_work_reg.getLong(8),16)	;
+	private void set_dfp_preferred_exp(){
+		/*
+		 * set DFP preferred base 10 exponent
+		 * for fp_big_dec1 value if explicit
+		 * decimal found in fp_text.
+		 */
+		int tot   = 0;
+		int index = fp_text.indexOf('.');
+		if (index != -1){
+			index++;
+			while (index < fp_text.length() && fp_text.charAt(index) >= '0'
+				   && fp_text.charAt(index) <= '9'){
+				tot++;
+				index++;
+			}
+			if (tot > tz390.fp_digits_max[tz390.fp_type]){
+				tot = tz390.fp_digits_max[tz390.fp_type];
+			}
+			fp_big_dec1.setScale(tot);			
+		}
+		if (!dc_scale_explicit && dc_first_field){
+			dc_first_scale = tot; // RPI 790
+		}
+		dc_scale = fp_big_dec1.scale();
 	}
-	log_error(181,"invalid decimal floating point type " + dfp_type);
-	return null;
-}
-public boolean add_missing_copy(String name){
+    public boolean add_missing_copy(String name){
 	/*
-	 * add nussubg ciot file for ERRSUM
+	 * add missing copy file for ERRSUM
 	 */
 	int index = 0;
 	while (index < tot_missing_copy){
@@ -8165,6 +8294,41 @@ private void put_errsum(String msg){
 		put_prn_line(msg);
 	}
 	tz390.put_systerm(msg);
+}
+public int get_int_pfx(byte type,byte type_sfx,int len,int scale){
+	/*
+	 * return I' integer pfx value for symbol
+	 * based on length and scale per ref.
+	 */
+	switch (type){  // RPI 790
+	case 'F':
+	case 'H':
+		return 8 * len - scale - 1;
+	case 'D':
+	case 'E':
+	case 'L':
+		if (type_sfx == 'D'){ // DFP
+			if (len == 4){
+				return 7 - scale;
+			} else if (len == 8){
+				return 16 - scale;
+			} else {
+				return 34 - scale;
+			}			
+		} else { // HFP and BFP
+			if (len <= 8){
+				return 2 * (len - 1) - scale;
+			} else {
+				return 2 * (len - 1) - scale - 2;
+			}
+		}
+	case 'P':
+		return 2 * len - scale - 1;
+	case 'Z':
+		return len - scale;
+	default:
+		return 0;
+	}
 }
 /*
  *  end of az390 code 

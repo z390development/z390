@@ -1,0 +1,69 @@
+P9       ZMFACC CODE,START,NAME='MELVYN MALTZ'
+*
+         LA    R1,OUT1+5          PRESET CURRENCY SYMBOL IF ZERO
+         MVC   OUT1(10),MASK      SET EDIT MASK
+         EDMK  OUT1(10),TEST1     EDIT
+         BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL
+         MVI   0(R1),C'$'         SET CURRENCY SYMBOL
+         TM    TEST1+3,X'01'      NEGATIVE TEST ?
+         BNO   NEXT1              EXIT IF NOT
+         BCTR  R1,0               BACK OFF FROM CURRENCY SYMBOL
+         MVI   0(R1),C'('         SET BEG PAREN
+         MVI   OUT1+10,C')'       SET END PAREN
+*
+NEXT1    DS    0H
+         LA    R1,OUT2+5          PRESET CURRENCY SYMBOL IF ZERO
+         MVC   OUT2(10),MASK      SET EDIT MASK
+         EDMK  OUT2(10),TEST2     EDIT
+         BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL
+         MVI   0(R1),C'$'         SET CURRENCY SYMBOL
+         TM    TEST2+3,X'01'      NEGATIVE TEST ?
+         BNO   NEXT2              EXIT IF NOT
+         BCTR  R1,0               BACK OFF FROM CURRENCY SYMBOL
+         MVI   0(R1),C'('         SET BEG PAREN
+         MVI   OUT2+10,C')'       SET END PAREN
+*
+NEXT2    DS    0H
+         LA    R1,OUT3+5          PRESET CURRENCY SYMBOL IF ZERO
+         MVC   OUT3(10),MASK      SET EDIT MASK
+         EDMK  OUT3(10),TEST3     EDIT
+         BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL
+         MVI   0(R1),C'$'         SET CURRENCY SYMBOL
+         TM    TEST3+3,X'01'      NEGATIVE TEST ?
+         BNO   NEXT3              EXIT IF NOT
+         BCTR  R1,0               BACK OFF FROM CURRENCY SYMBOL
+         MVI   0(R1),C'('         SET BEG PAREN
+         MVI   OUT3+10,C')'       SET END PAREN
+*
+NEXT3    DS    0H
+         LA    R1,OUT4+5          PRESET CURRENCY SYMBOL IF ZERO
+         MVC   OUT4(10),MASK      SET EDIT MASK
+         EDMK  OUT4(10),TEST4     EDIT
+         BCTR  R1,0               BACK OFF 1 FOR CURRENCY SYMBOL
+         MVI   0(R1),C'$'         SET CURRENCY SYMBOL
+         TM    TEST4+3,X'01'      NEGATIVE TEST ?
+         BNO   SNAPIT             EXIT IF NOT
+         BCTR  R1,0               BACK OFF FROM CURRENCY SYMBOL
+         MVI   0(R1),C'('         SET BEG PAREN
+         MVI   OUT4+10,C')'       SET END PAREN
+*
+SNAPIT   DS    0H
+         ZMFACC CODE,END
+*
+         ZMFACC INPUT,START
+         DS    0D
+TEST1    DC    PL4'89378'
+TEST2    DC    PL4'-9142536'
+TEST3    DC    PL4'0'
+TEST4    DC    PL4'-0'
+         ZMFACC INPUT,END
+*
+MASK     DC    X'4020206B2021204B2020'
+         DS    0D
+         ZMFACC OUTPUT,START
+OUT1     DC    CL11' '
+OUT2     DC    CL11' '
+OUT3     DC    CL11' '
+OUT4     DC    CL11' '
+         ZMFACC OUTPUT,END
+         END

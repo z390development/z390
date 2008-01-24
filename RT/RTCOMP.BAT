@@ -1,3 +1,4 @@
+echo on
 rem compare %1 test files with %2 save files and gen %3 dif files
 if exist /usr/local/lib/z390/z390.jar goto linux
 :windows

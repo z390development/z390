@@ -38,6 +38,34 @@
                RECFORM=FIXED,                                          X
                SERVREQ=(READ,BROWSE,UPDATE,DELETE,ADD)
 *
+* TEST FIXED RRDS
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYFILE06,                                       X
+               FILSTAT=(CLOSED,ENABLED),                               X
+               RECFORM=FIXED,                                          X
+               SERVREQ=(READ,BROWSE,UPDATE,DELETE,ADD)
+*
+* TEST VARIABLE RRDS
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYFILE07,                                       X
+               FILSTAT=(CLOSED,ENABLED),                               X
+               RECFORM=VARIABLE,                                       X
+               SERVREQ=(READ,BROWSE,UPDATE,DELETE,ADD)
+*
+* TEST FIXED KSDS
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYFILE08,                                       X
+               FILSTAT=(CLOSED,ENABLED),                               X
+               RECFORM=FIXED,                                          X
+               SERVREQ=(READ,BROWSE,UPDATE,DELETE,ADD)
+*
+* TEST VARIABLE KSDS
+         DFHFCT TYPE=DATASET,                                          X
+               DATASET=MYFILE09,                                       X
+               FILSTAT=(CLOSED,ENABLED),                               X
+               RECFORM=VARIABLE,                                       X
+               SERVREQ=(READ,BROWSE,UPDATE,DELETE,ADD)
+*
          COPY   DFHFCTUS
 *
          DFHFCT TYPE=FINAL

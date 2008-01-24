@@ -1,0 +1,61 @@
+LCDSECT  DSECT
+INBUF    DS    CL32
+OUTBUF   DS    CL32
+OSTRING  DS    CL32
+LCSIZE   EQU   256
+         YREGS
+***********************************************************************
+**       EZSAMPLE start;                                             **
+***********************************************************************
+EZSAMPLE AMODE 31
+EZSAMPLE RMODE ANY
+EZSAMPLE CSECT
+         USING EZSAMPLE,R12
+         BAKR  R14,0
+         LR    R12,R15
+*
+*        **************************************************************
+*        *   Allocate terminal I/O Amode 24 buffers;                  *
+*        **************************************************************
+         STORAGE OBTAIN,LENGTH=LCSIZE,LOC=(BELOW,ANY),COND=NO
+*
+         USING LCDSECT,R10
+         LR    R10,R1
+         XC    0(LCSIZE,R10),0(R10)
+*
+CTOBIN20 EQU   *
+         MVC   OSTRING(32),=CL32'Enter char or "?" to end'
+         TPUT  OSTRING,32
+*
+         TGET  INBUF,1                Get a byte via TGET
+*
+         CLI   INBUF,C'?'             Want to end session?
+         JE    CTOBINX                Then end
+*
+         MVC   OUTBUF(8),TABTR1T8
+         TR    OUTBUF(8),INBUF
+         NC    OUTBUF(8),TABNC1T8
+         TR    OUTBUF(8),TABXTBIN
+*
+         TPUT  OUTBUF,8               Display the result
+*
+         J     CTOBIN20               Try next I/char
+*
+CTOBINX  EQU   *
+         SR    R15,R15
+         PR
+*
+***********************************************************************
+**       Tranlation tables;                                          **
+***********************************************************************
+TABTR1T8 DC    256AL1((*-TABTR1T8)/8)
+*
+TABNC1T8 DC    32X'8040201008040201'
+*
+TABXTBIN DC    C'0',255C'1'
+*
+*        **************************************************************
+*        *   EZSAMPLE end;                                            *
+*        **************************************************************
+         LTORG
+         END   EZSAMPLE

@@ -1,0 +1,18 @@
+* Problem - swap register 0 and 1 without using other regs
+* Date    - 12/10/07
+* Author  - Mark Dixon  (modifed to std form by dsh)   
+* Ref.    - z390 Mainframe Assembler Coding Contest on www.z390.org
+P2MD1    ZMFACC  CODE,START,NAME='Mark Dixon'
+         LM      R0,R1,LM01
+         XR      R0,R1
+         XR      R1,R0
+         XR      R0,R1
+         STM     R0,R1,STM01
+         ZMFACC  CODE,END
+         ZMFACC  INPUT,START
+LM01     DC      F'0,1'
+         ZMFACC  INPUT,END
+         ZMFACC  OUTPUT,START
+STM01    DS      2F
+         ZMFACC  OUTPUT,END
+         END

@@ -1,0 +1,4 @@
+         MACRO
+         TESTASMX
+         MNOTE 'TESTMAC1 WITH TESTMACX PROTOTYPE OK'
+         MEND

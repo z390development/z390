@@ -48,13 +48,43 @@
          L     R1,&FROM           INDIRECT FROM ADDRESS
 .FROMOK  ANOP
          MVC   EIBFN,=X'0404'     SET EIBFN
-         TPUT  (R1),(0),FULLSCR   SEND TN3270 DATA STREAM
+         CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
+         BNE   CICS_SEND_&SYSNDX._TPUT EXIT IF NOT
+         LR    R14,R1             SAVE FROM ADDRESS
+         L     R1,TCTTEQDO        R2=SEND FILE DCB
+         USING IHADCB,R1
+         LR    R2,R0              R2=LENGTH
+         AHI   R2,2               ALLOW FOR CRLF
+         ST    R2,DCBBLKSIF       SAVE BLOCKSIZE
+         ST    R2,DCBLRECLF       SAVE LRECL
+         AHI   R2,-2              RESTORE LENGTH
+         LA    R2,0(R14,R2)       ADDRESS 2 BYTES FOLLOWING DATA
+         MVC   CICS_SEND_&SYSNDX._SAVE,0(R2) SAVE THE 2 BYTES
+         MVC   0(2,R2),=X'0D0A'   SET CRLF
+         PUT   (R1),(R14)         WRITE DATA STREAM
+         MVC   0(2,R2),CICS_SEND_&SYSNDX._SAVE RESTORE THE 2 BYTES
+         L     R1,TCTTEQDO        R2=SEND FILE DCB
+         L     R0,DCBBLKSIF       RESTORE LENGTH+2
+         AHI   R0,-2              LENGTH-2
+         DROP  R1
+         LR    R1,R14             RESTORE FROM ADDRESS
+         B     CICS_SEND_&SYSNDX._TPUT EXIT
+CICS_SEND_&SYSNDX._SAVE DS H
+*
+CICS_SEND_&SYSNDX._TPUT EQU *
+         TPUT  (R1),(R0),FULLSCR  SEND TN3270 DATA STREAM
+*
+         DCBD
+*
          MEXIT
+.*
 .BADFROM ANOP
          MNOTE 12,'FROM IS MANDATORY'
          MEXIT
+.*
 .BADLEN  ANOP
          MNOTE 12,'LENGTH IS MANDATORY'
          MEXIT
+.*
          MEND
 

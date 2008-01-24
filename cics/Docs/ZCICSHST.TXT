@@ -2,13 +2,58 @@ Z390/CICS History
 =================
 
 This is only a brief summary, please refer to the Application
-Programmers Guide and the System Programmers Guide for the details.
+Programming Guide and the System Programmers Guide for the details.
 
 The Ship Date is the date the package is given to Don, there may be
-a delay before he can include it in a PTF or release.
+a delay before he can include it in a PTF or Release.
 
 Ver  Ship Date           Z390 version
 ---  -----------------   ------------
+V4   January 18, 2008    V1.3.08h
+
+   File control commands now support all fixed and variable VSAM
+   datasets for all applicable read and browse functions.
+
+   Interval Control
+      ASKTIME, DELAY and FORMATTIME supported
+
+   Dump Control
+      DUMP TRANSACTION
+
+   Enhancements and changes...
+      HANDLE/IGNORE extra conditions
+         ILLOGIC, EXPIRED
+      Z390KCP amended to cater for conditions that default to ignore.
+
+      INI parm DATE_FORMAT changed to single byte:
+         K=DMY  (UK format)
+         S=MDY  (US format)
+         R=YMD  (Reverse format)
+      This is also reflected in CEMT I SYS
+
+   Implementation of new LOG() parameter.
+      When the INI parameter TRACE_LOCAL=YES is specified, the ERR,
+      LOG and TRE files are prefixed with the terminal id. and not
+      Z390KCP.
+
+   Sequential Terminal support
+      Enables regression testing of all transactions.
+      See the documentation about this major new feature...
+         Z390/CICS Sequential Terminal Support (Z390SEQ).
+
+   Bug fixes...
+      Abends may occur if INI parm LOCAL_TERMINALS=0
+
+      EIBRSRCE was being used in abend messages, but this may not
+      contain the program name. New field EIBPROG fixes this.
+
+      Minor error in DFHHCBLK, 5 fullwords reserved for ILLOGIC
+      instead of one.
+
+   Other...
+      Programs RTZCICSn are no longer supplied and are now classified
+      'internal use only'.
+
 V3   October 1st, 2007   V1.3.08
    Improvements to the shutdown process.
 
@@ -127,10 +172,11 @@ V1   May 1, 2007     V1.3.03b
 
 Trademarks
 ----------
-CICS is a registered trademark of International Business Corporation.
+IBM, CICS and VSAM are registered trademarks of International Business
+Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: October 1st, 2007
-Z390 version: V1.3.08
-Z390/CICS version: V3
+Shipping Date: January 18, 2008
+Z390 version: V1.3.08h
+Z390/CICS version: V4
 

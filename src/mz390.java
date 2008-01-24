@@ -9657,7 +9657,7 @@ public  class  mz390 {
 			} else {
 				int cur_sym = mz390_find_sym(setc_value1);
 				if (cur_sym != -1 && az390.sym_def[cur_sym] > az390.sym_def_ref){
-					seta_value = az390.sym_loc[cur_sym];
+                    seta_value = az390.get_int_pfx(az390.sym_type[cur_sym],az390.sym_dc_type_sfx[cur_sym],az390.sym_len[cur_sym],az390.sym_scale[cur_sym]);
 				} else {
 					seta_value = 0;
 				}

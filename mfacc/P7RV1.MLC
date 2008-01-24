@@ -1,0 +1,44 @@
+*********************************************************************
+* MAINFRAME ASSEMBLER PROBLEM 7 - CALC AND DISPLAY 311/99 
+* USING SINGLE PRECISION FLOATING POINT WITHOUT USING CTD OR
+* OTHER LIBRARY SERVICES.
+*********************************************************************
+* 12/22/07 RV1 R Voles more direct solution using AD
+*********************************************************************
+P7RV1    ZMFACC CODE,START,NAME='R Voles'
+         LE    F0,=E'311'
+         DE    F0,=E'99'
+         MVI   ESign,C'+'
+         MVI   EDecimal,C'.'
+         MD    F0,=D'1E6'
+         STD   F0,DWord                                     
+         L     R0,DWord+4                                    
+         CVD   R0,DWord
+         OI    DWord+7,X'0F'
+         UNPK  EDigits,DWord
+         MVI   ExoneE,C'E'
+         MVI   ExpSign,C'+'
+         LHI   R1,1
+         CVD   R1,DWord
+         OI    DWord+7,X'0F'
+         UNPK  Exponent,DWord
+         ZMFACC CODE,END
+EH       DC    E'0'                                     DSH1
+DH       DC    D'0'                                     DSH1
+MSG      DC    AL2(MSGEND-MSG,0)                        DSH1
+DMSG     DC    CL15' ',C'='                             DSH1
+DNUM     DC    CL45' '                                  DSH1
+MSGEND   EQU   *                                        DSH1
+DWord    DC    D'0'
+UnNormer DC    X'4E00000000000000'
+         ZMFACC INPUT,START
+         ZMFACC OUTPUT,START
+ESign    DS    C
+EDecimal DS    C
+EDigits  DS    CL6
+ExoneE   DS    C
+ExpSign  DS    C
+Exponent DS    CL2
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,END
+         END

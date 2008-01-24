@@ -1,0 +1,82 @@
+*********************************************************************
+* MAINFRAME ASSEMBLER PROBLEM 7 - CALC AND DISPLAY 311/99 
+* USING SINGLE PRECISION FLOATING POINT WITHOUT USING CTD OR
+* OTHER LIBRARY SERVICES.
+*********************************************************************
+* 12/20/07 EH1  SOLUTION SUBMITTED BY JOHN ERHMAN USING AW INSTR.
+* 12/21/07 DSH1 ADDED Z390 DISPLAY OF EH AND DH INTERMEDIATE RESULTS
+*               USING CTD AND WTO FOR VERIFICATION
+* 12/21/07 DSH2 ADDED Z390 ALTERNATE CODE PATH FOR AW SINCE
+*               Z390 MAINTANINS ALL FP VALUES IN CACHE
+*               USING NORMALIZED SINGLE, DOUBLE, OR BIGDECIMAL JAVA
+*               FORMAT WHICH PREVENTS AW UNNORMALIZED INSTR. FROM
+*               WORKING AS INTENDED. SEE NEW Z390 PTF 767 TO DISABLE
+*               ALL THE UNNORMALIZED FP INSTRUCTIONS RATHER THAN 
+*               RETURNING NORMALIZED RESULT WHICH MAY NOT BE DESIRED. 
+*********************************************************************
+P7EH1    ZMFACC CODE,START,NAME='John Erhman'
+         LE    F0,=E'311'
+         DE    F0,=E'99'
+         GBLC  &ZRUNSYS  SET TO 390,MVS,ZOS,CMS, OR VSE DSH1
+         AIF   ('&ZRUNSYS' NE '390').SKPCTD1            DSH1
+         STE   F0,EH                                    DSH1
+         CTD   CTD_EH,IN=EH,OUT=DNUM                    DSH1
+         MVC   DMSG,=CL10'EH=311./99.'                  DSH1
+         WTO   MF=(E,MSG)                               DSH1
+.SKPCTD1 ANOP                                           DSH1
+         MVI   ESign,C'+'
+         MVI   EDecimal,C'.'
+         MD    F0,=D'.1'
+         MD    F0,=D'1.E6'
+         AD    F0,=D'.5'
+         AIF   ('&ZRUNSYS' NE '390').SKPCTD2            DSH1
+         STD   F0,DH                                    DSH1
+         CTD   CTD_DH,IN=DH,OUT=DNUM                    DSH1
+         MVC   DMSG,=CL10'DH=EH*1E7+.5'                 DSH1
+         WTO   MF=(E,MSG)                               DSH1
+.SKPCTD2 ANOP                                           DSH1
+         AIF   ('&ZRUNSYS' EQ '390').AWFIX              DSH2
+         AW    F0,UnNormer                                 
+         STD   F0,DWord
+         L     R0,DWord+4
+         AGO   .CVD                                     DSH2
+.AWFIX   ANOP                                           DSH2
+         STD   F0,DWord                                 DSH2
+         SR    R2,R2                                    DSH2
+         IC    R2,Dword         exp from DH value       DSH2
+         MVI   DWord,x'00'      clear exponent          DSH2
+         LG    R0,DWord         R0=64 bit normalized DH DSH2
+         LA    R1,X'4E'         exp when decimal at end DSH2
+         SR    R1,R2            nibbles to shift        DSH2
+         SLL   R1,2             bits to shift           DSH2
+         SRLG  R0,R0,0(R1)      shift 64 bits to align  DSH2
+.CVD     ANOP                                           DSH2
+         CVD   R0,DWord
+         OI    DWord+7,X'0F'
+         UNPK  EDigits,DWord
+         MVI   ExoneE,C'E'
+         MVI   ExpSign,C'+'
+         LHI   R1,1
+         CVD   R1,DWord
+         OI    DWord+7,X'0F'
+         UNPK  Exponent,DWord
+         ZMFACC CODE,END
+EH       DC    E'0'
+DH       DC    D'0'
+MSG      DC    AL2(MSGEND-MSG,0)
+DMSG     DC    CL10' ',C'='
+DNUM     DC    CL45' '
+MSGEND   EQU   *
+DWord    DC    D'0'
+UnNormer DC    X'4E00000000000000'
+         ZMFACC INPUT,START
+         ZMFACC OUTPUT,START
+ESign    DS    C
+EDecimal DS    C
+EDigits  DS    CL6
+ExoneE   DS    C
+ExpSign  DS    C
+Exponent DS    CL2
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,END
+         END

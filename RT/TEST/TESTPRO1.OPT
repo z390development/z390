@@ -1,0 +1,4 @@
+* TESTPRO1 test profile
+profile(TESTPRO1)
+sysmac(rt\test+mac)
+syscpy(rt\test)

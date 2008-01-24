@@ -1,0 +1,22 @@
+pause press ok to remove all diff and output files for %1
+erase %1.bal
+erase %1.svb
+erase %1.dib
+erase %1.obj
+erase %1.svo
+erase %1.dio
+erase %1.prn
+erase %1.svp
+erase %1.dip
+erase %1.lst
+erase %1.svl
+erase %1.dil
+erase %1.390
+erase %1.sv3
+erase %1.di3
+erase %1.log
+erase %1.svg
+erase %1.dig
+erase %1.sta
+erase %1.tr?
+dir %1.*

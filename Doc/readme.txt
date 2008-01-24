@@ -1,9 +1,9 @@
-z390 V1.3.08 Portable Mainframe Assembler
-Copyright 2007 Automated Software Tools Corporation
+z390 V1.3.09 Portable Mainframe Assembler
+Copyright 2008 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
  * Microsoft Windows Vista, Windows XP, or Ubuntu Linux 6.06 LTS (others not tested)
- * Sun Microsystems Java Runtime J2SE 5.0_12 or 6.0u2 (latest fully tested on XP/Vista)
+ * Sun Microsystems Java Runtime J2SE 5.0_12 or 6.0u3 (latest fully tested on XP/Vista)
  * Minimum of 512 MB memory (default Java user memory allocation set to 100 MB)
  * Adobe Acrobat or later for viewing User Guide and other documentation
 
@@ -27,13 +27,13 @@ o All problem state instructions including 128 bit HFP, BFP, and DFP floating po
 o TEST option for interactive debugging with dump, modify, and trace options
 o TRACE option for instruction trace with operand register and memory data
 o SVC support for the z390 provided MVS compatible macros including QSAM, VSAM, GETMAIN, FREEMAIN, TIME, etc. plus extensions such as TCPIO for SOA and CICS TCP/IP network messaging.
-* z390 EXEC CICS compatible transaction manager V3 contributed by Melvyn Maltz:
+* z390 EXEC CICS compatible transaction manager V4 contributed by Melvyn Maltz:
 o Multiple local and remote CICS TN3270 compatible clients connected to single CICS server over TCP/IP network.
 o EXEC CICS commands include SEND, RECEIVE, RETURN, LOAD, LINK, XCTL, HANDLE, PUSH, POP, etc.
-o VSAM ESDS file browse.
+o VSAM ESDS, RRDS, and KSDS file browse.
 o See the cics directory for additional documentation, demos, and startup commands.
 * Z390 Utilities written in z390 assembler with source included:
-o REPRO – load or unload VSAM data set from/to QSAM data set
+o REPRO – load or unload VSAM data set from/to sequential file.
 o SUPERZAP – verify, replace, and dump any Windows or Linux file up to 2 GB.
 o UNREF – scan PRN assembly listing and list unreferenced symbols contributed by Melvyn Maltz.
 
@@ -45,7 +45,7 @@ A Service Oriented Architecture (SOA) client server application generation servi
 
 A TPUT and TGET macro based demo TN3270 application to update and display name, address, and numeric zip fields on screen can be assembled and executed with the command “ASMLG DEMO\DEMOGUI6 GUAM”.  Use PF1 for help screen and PF3 for exit.  The arrow, backspace, and tab keys can be used to control blinking cursor.  An alarm and status line error is issued if attempt is made to modify protected field or enter alpha data in numeric field.
 
-Z390 v1.3.08 includes full support for VSAM ESDS, RRDS, and VRRDS files plus initial random and skip sequential browse support for KSDS VSAM files.  Z390 VSAM supports fixed or variable length records up to 2 GB.  Support includes ACB, RPL, GENCB, GET, POINT, PUT, MODCB, SHOWCB, TESTCB, type macros plus DEFINE macro to define loadable VSAM catalogs.  Additional support for KSDS inserts and alternate indexes plus LDS linear support is planned.
+Z390 v1.3.09 includes full support for VSAM ESDS and RRDS plus browse support for KSDS files.  Z390 VSAM supports fixed or variable length records up to 2 GB.  Support includes ACB, RPL, GENCB, GET, POINT, PUT, MODCB, SHOWCB, TESTCB, type macros plus DEFINE macro to define loadable VSAM catalogs.  Additional support for KSDS inserts and alternate indexes plus LDS linear support is planned.
 
 For latest Windows and Linux downloads and additional information about z390 and the open source project visit:
 
@@ -54,11 +54,12 @@ www.z390.org
 z390 Windows Vista and XP installation instructions:
 
 1. Uninstall any old z390 releases and delete residual files left in the install directory
-    Which could be read-only and prevent proper install of new release.
+    Which could be read-only and prevent proper install of new release.  Also the v1.3.09
+    basic  foot print is smalled than v1.3.08 so this will free up disk space.
 2. Download latest z390 InstallShield setup.exe file from www.z390.org 
 3. Run z390 setup.exe to install it on Windows Vista or XP system
 4. Remove old versions of J2SE runtime such as 1.4.2 etc.
-5. Download and install Java 1.5.0_12 or 1.6.0u2 runtime from: 
+5. Download and install Java 1.5.0_12 or 1.6.0u3 runtime from: 
     http://java.sun.com/j2se/
 6. Double click on the z390 desktop icon to start z390 GUI
     a. Enter the command IVP to run installation verification program 
@@ -89,7 +90,7 @@ z390 Windows Vista and XP installation instructions:
 
 7. Click on help menu for links to additional information.
 
-IBM, CICS, and z/OS are registered trademarks of International Business Machine Corporation.
+IBM, CICS, VSAM, and z/OS are registered trademarks of International Business Machine Corporation.
 
 Don Higgins, President
 Automated Software Tools Corporation

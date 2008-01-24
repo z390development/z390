@@ -20,23 +20,31 @@ FCPTASKN DS    PL4                TASK NUMBER
 FCPFILNM DS    CL8                FILE
 FCPRETCD DS    XL4                RETURN CODE
 FCPRESP2 DS    XL4                RESP2 CODE
+*                                 1ST 2 BYTES MAY CONTAIN RPLFEEDB
 FCPRID   DS    XL128              MAXIMUM KEY LENGTH, CAN EXTEND
          ORG   FCPRID
 FCPXRBA  DS    XL8                EXTENDED RBA
          ORG   FCPRID
          DS    XL4
 FCPRBA   DS    XL4                NORMAL RBA
+         ORG   FCPRID
+FCPRRN   DS    XL4                RRN
          ORG
-FCPRDOPT DS    X                  RID IDENTIFIER (BYTE, NOT BITS)
-FCPRDRBA EQU   X'01'              -- RID IS RBA
-FCPRDXRB EQU   X'02'              -- RID IS XRBA
+FCPRDOPT DS    X                  RIDFLD IDENTIFIER (BYTE, NOT BITS)
+FCPRDKEY EQU   X'00'              -- BY DEFAULT A FULL KEY READ/BROWSE
+FCPRDRBA EQU   X'01'              -- RBA
+FCPRDXRB EQU   X'02'              -- XRBA
+FCPRDRRN EQU   X'03'              -- RRN
+FCPRDGEN EQU   X'04'              -- GENERIC
 FCPCTYPE DS    X                  COMMAND TYPE (BYTE, NOT BITS)
 FCPCREAD EQU   X'01'              -- READ
 FCPCBRWS EQU   X'02'              -- BROWSE
-FCPBROPT DS    X                  BROWSE OPTIONS (BYTE, NOT BITS)
+FCPBROPT DS    X                  READ/BROWSE OPTIONS (BYTE, NOT BITS)
 FCPBRGTE EQU   X'01'              -- GTEQ
 FCPBREQU EQU   X'02'              -- EQUAL
 FCPREQID DS    XL2                REQID FOR BROWSE
+FCPKEYLN DS    XL2                KEYLENGTH FOR GENERIC READ/BROWSE
+*                                 X'7FFF' IF NO KEYLENGTH
 FCPACLEN DS    FL4                READ ACTUAL RECORD LENGTH
 FCPLEN   DS    FL4                LENGTH OF FOLLOWING DATA
          DS    0D

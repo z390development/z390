@@ -7,14 +7,15 @@
 *********************************************************************
 * 09/11/06 RPI 363 CHANGE FROM TEST TO RT\TEST DIRECTORY              
 * 02/02/07 RPI 532 REMOVE WINDOWS PROMPT AND FIX PATH CASE FOR LINUX  
+* 10/30/07 RPI 731 ADD CMDLOG=NO TO ALLOW PARENT TASK TO READ OUTPUT  
 *********************************************************************
          TITLE 'TESTCMD2 TEST USE OF SVC 34 COMMAND PROCESSOR'
 TESTCMD2 SUBENTRY
          COPY  ASMMSP
          WTO   'TESTCMD2 TEST SVC 34 CMDPROC MULT TASK SUPPORT'
-         CMDPROC START,ID=0
+         CMDPROC START,ID=0,CMDLOG=NO  RPI 731
          CMDPROC WRITE,=C'"rt\test\TESTCMDA.BAT"',ID=0
-         CMDPROC START,ID=1
+         CMDPROC START,ID=1,CMDLOG=NO  RPI 731
          CMDPROC WRITE,=C'"rt\test\TESTCMDB.BAT"',ID=1
          LA    R4,50
 CMDLOOP  EQU   *

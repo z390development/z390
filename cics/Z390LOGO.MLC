@@ -39,7 +39,7 @@ LOGO     TN3270 ESC,WRT_EW,WCC_KD
          DC    C'ZZZZZZZZZ  33333     9999     00000  //          CCCCC-
                  IIII   CCCCC   SSSSS'
          TN3270 (SBA,17,39)
-         DC    C'Version 3'
+         DC    C'Version 4'
 LOGOLEN  DC    AL2(*-LOGO)
 *
          TN3270 SYMBOLS

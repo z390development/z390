@@ -1,0 +1,80 @@
+*********************************************************************
+* Calc extended precision PI using the Chudnovsky series:
+* http://en.wikipedia.org/wiki/Chudnovsky_brothers
+* 
+* 1/Pi = 12*sum(k) for k=0 to infinity where:
+*
+* sum(k) =   ( (-1)**k * (6k)!     * (12591409 + 545140134k)  )
+*          / ( 3k!     * (k!)**3 * (640320**(3k+3/2))       )
+* This series converges at 14 digits per term and is considere by
+* many to be the fastest.  Since extended precision 128 HFP only
+* has 34 digits, 2 or 3 terms should be all that are needed.
+*
+* for k=0 sum(k) = 0
+* for k=1 sum(k) =(-1 * 6! * (c1+c2))/(3! * 1 * (c3**1.5))
+*********************************************************************
+P8DSH2   ZMFACC CODE,START,NAME='Don Higgins'
+         MACRO
+&N       LX    &F1,&S2      LOAD EXTENDED FP REG PAIR FROM LONG FP
+&XREGS(1) SETA 1,1,0,0,4,5,0,0,8,9,0,0,12,13
+         AIF   (&XREGS(&F1+1) NE 0).OK
+         MNOTE 12,'LX INVALID EXTENDED REGISTER PAIR LOAD'
+.OK      ANOP
+         LD    &F1,&S2
+         LD    &F1+2,&S2+8
+         MEND
+         MACRO
+&N       STX   &F1,&S2      STORE EXTENDED FP REG PAIR TO LONG FP
+&XREGS(1) SETA 1,1,0,0,4,5,0,0,8,9,0,0,12,13
+         AIF   (&XREGS(&F1+1) NE 0).OK
+         MNOTE 12,'STX INVALID EXTENDED REGISTER PAIR STORE'
+.OK      ANOP
+         STD   &F1,&S2
+         STD   &F1+2,&S2+8
+         MEND
+         LX    F0,=LH'1'     F0=SUM
+         LX    F1,=LH'1'     F1=N
+         LX    F4,=LH'1'     F4=1
+         LX    F5,=LH'1E-34' F5=ERROR LIMIT
+         LA    R10,100       MAX INTERATIONS
+LOOP     DS    0H
+         AXR   F1,F4         N=N+1
+         LXR   F8,F4
+         STX   F8,LH
+         CTD   CTD_LH,IN=LH,OUT=SNX
+         SNAP  PDATA=,STORAGE=(SNX,SNX+45),TEXT='TRIAL'
+         LXR   F9,F1
+         MXR   F9,F9
+         DXR   F8,F9         F8=1/(N*N)
+         CXR   R8,F5
+         BL    DONE
+         CLI   SIGN,C'-'
+         BE    SUB
+ADD      DS    0H
+         MVI   SIGN,C'-'
+         AXR   F0,F8
+         B     NEXT
+SUB      DS    0H
+         MVI   SIGN,C'+'
+         SXR   F0,F8
+NEXT     DS    0H
+         STX   F0,LH
+         CTD   CTD_LH,IN=LH,OUT=SNX
+         SNAP  PDATA=,STORAGE=(SNX,SNX+45),TEXT='TRIAL'
+         BCT   R10,LOOP
+DONE     DS    0H
+         LX    F8,=LH'12'
+         MXR   F0,F8
+         LXR   F1,F0
+         SQXR  F0,F1
+         STX   F0,LH
+         CTD   CTD_LH,IN=LH,OUT=SNX
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+SNX      DC     CL45' '
+         ZMFACC OUTPUT,END
+LH       DC     LH'0'
+SIGN     DC     C'-'
+         END

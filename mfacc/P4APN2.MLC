@@ -1,0 +1,124 @@
+* PROBLEM - SORT ARRAY OF FULL WORD INTEGERS USING FASTEST EXEC METHOD
+* DATE    - 05/01/2008
+* AUTHOR  - Alfred Nykolyn - Second attempt using CountSort
+* REF     - WWW.Z390.ORG MAINFRAME ASSEMBLER CODING CONTEST
+* REMARKS - Counting Sort
+*
+P4APN2   ZMFACC   CODE,START,NAME='Alfred Nykolyn - Try 2'
+         CALL CNTSORT,(AREAIN,AREAOUT,AREA#)
+         ZMFACC   CODE,END                                                 
+
+         ZMFACC   INPUT,START                                              
+AREAIN   DC    20A(AREAEND-*)                                           
+AREAEND  EQU *                                                          
+
+         ZMFACC   INPUT,END 
+AREA#    DC     A((AREAEND-AREAIN)/4)                                               
+
+      ZMFACC   OUTPUT,START                                             
+AREAOUT  DS    XL80                                                     
+      ZMFACC   OUTPUT,END 
+*
+*-------------------------------------------------
+*
+*   Input:
+*     R1 -> 3 words
+*           +0 -> source array A[] elements between 0 and 512
+*           +4 -> target array B[]
+*           +8 =  N array length 
+*   Output:
+*     B[] sorted ascending
+*
+*-------------------------------------------------
+*
+CNTSORT  CSECT
+         save  (14,12)
+         basr  r12,0
+         using *,r12
+
+         lm    r7,r9,0(r1)        * r7 -> source, r8 -> target, r9 -> N
+         l     r9,0(,r9)          * r9 = N
+         stm   r7,r9,A            * save parms
+*
+* build counts array
+* counts[source[i]] =  counts[source[i]] + 1
+*
+         using sourceD,r2
+         using targetD,r3
+
+         l     r2,A               * r2 -> source
+         xr    r4,r4              * r4 =  largest element
+         l     r11,N              * r11 = N
+
+nextcount      equ *
+         l     r9,source          * r9 = source[i]
+         cr    r9,r4
+         bnh   *+4+2
+         lr    r4,r9              * new max
+         sll   r9,2
+         l     r8,counts(r9)
+         la    r8,1(,r8)
+         st    r8,counts(r9)
+         la    r2,4(,r2)
+         bct   r11,nextcount
+*
+* build offsets array
+* counts[i] = counts[i] + counts[i-1]
+*
+         st    r4,max
+         xr    r5,r5
+         xr    r6,r6              * last offsets entry
+         xr    r7,r7              * last counts entry
+         la    r11,1(,r4)         * counts is 0 offset!
+
+nextoffset     equ *
+         ar    r6,r7
+         l     r7,counts(r5)
+         st    r6,counts(r5)
+         la    r5,4(,r5)          * next element
+         bct   r11,nextoffset
+*
+* build target array - from start to end
+*   dest[offsets[source[i]]] = source[i]
+*   offsets[source[i]] = offsets[source[i]] + 1
+*
+         l     r11,N              * r11 = N
+         l     r2,A               * r2 -> source
+         l     r3,B               * r3 -> target
+
+nextdest equ   *
+         l     r9,source          * r9 = source[i]
+         lr    r8,r9              * r8 = source[i]
+         sll   r9,2
+         l     r7,counts(r9)      * r7 = target offset
+         lr    r6,r7
+         sll   r7,2
+         st    r8,target(r7)
+         la    r6,1(,r6)          * increment offset for next save
+         st    r6,counts(r9)
+         la    r2,4(,r2)          * next element
+         bct   r11,nextdest
+
+done     equ   *
+         return (14,12),rc=0
+
+         ds    0d
+A        ds    a                  * source addr
+B        ds    a                  * target addr
+N        ds    a                  * # elements
+max      ds    a                  * max element
+
+counts   dc    513f'0'
+$countLN equ   *-counts
+*
+*  Source Descriptor
+*
+sourceD  dsect
+source   ds    f
+*
+*  Target Descriptor
+*
+targetD  dsect
+target   ds    f                                              
+      END                                                              
+

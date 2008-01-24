@@ -1,0 +1,24 @@
+P6PL1    ZMFACC CODE,START,NAME='Philippe Leite'                                          
+         LA    R2,8               LOOP COUNTER          
+         LA    R3,128             LOAD FLOATING BIT     
+         XR    R4,R4              CLEAR R4              
+         IC    R4,BYTE            INSERT SOURCE BYTE    
+         LA    R6,BCD             LOAD TARGET ADDRESS   
+LOOP     LR    R5,R4              TEMP COPY             
+         NR    R5,R3              TURN OFF OTHER BITS   
+         XR    R5,R3              TEST BIT              
+         BZ    SETF1                                    
+         MVI   0(R6),X'F0'                              
+         B     CONT                                     
+SETF1    MVI   0(R6),X'F1'                              
+CONT     SRL   R3,1               SHIFT RIGHT 1 POSITION
+         LA    R6,1(R6)           NEXT TARGET BYTE      
+         BCT   R2,LOOP            BACK TO LOOP          
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+BYTE     DC    B'00001111'                              
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+BCD      DS    CL8                                      
+         ZMFACC OUTPUT,END
+         END   

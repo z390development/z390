@@ -1,0 +1,100 @@
+P8MM1    ZMFACC CODE,START,NAME='MELVYN MALTZ',RUNSYS=390
+*
+* I THINK THIS IS CALLED THE INVERSE TANGENT METHOD
+* ATTRIBUTED TO GREGORY/MACHIN 17TH CENTURY
+*
+* OPTIMIZED FOR SPEED AND GIVES PI TO 31 DEC POS
+* CHECKED WITH WEB SITE, LAST DIGITS ARE ...33832795 0288
+*********************************************************************
+* 12/22/07 DSH1 Don Higgins - added diff from ref. calc of PI
+*********************************************************************
+         LA    R2,45              CYCLE CONTROL
+*
+         LA    R3,1               N
+         LXD   F1,=DH'5'          F1/F3=5
+         LXD   F4,=DH'1'          F4/F6=1  MULTIPLIER
+         LZXR  R8                 ZERO THE 5'S TERMS
+         LZXR  R9                 ZERO THE 239'S TERMS
+         LXD   F12,=DH'2'         F12/F13  INCREMENT
+LOOP5    DS    0H
+         LR    R4,R3              SAVE FOR LOOPING
+         LXD   F0,=DH'1'          F0/F1=1  POWER
+         LXD   F5,=DH'1'          F5/F7=1  FORM RECIPROCAL
+POWER5   DS    0H
+         MXR   F0,F1              5^N
+         BCT   R4,POWER5          LOOP
+         MXR   F0,F4              N*5^N
+         DXR   F5,F0              1/(N*5^N)
+         CLI   SIGN,X'00'         +VE ?
+         BNE   NEG5               EXIT IF NOT
+         AXR   F8,F5              ADD TERM
+         XI    SIGN,X'FF'         FLIP SIGN
+         B     CYCLE5             EXIT
+*
+NEG5     DS    0H
+         SXR   F8,F5              SUBTRACT TERM
+         XI    SIGN,X'FF'         FLIP SIGN
+CYCLE5   DS    0H
+         CR    R3,R2              CYCLE DONE ?
+         BE    DO239              EXIT IF IT IS
+         AHI   R3,2               N+2
+         AXR   F4,F12             MULTIPLIER+2
+         B     LOOP5              LOOP THRU TERMS5
+*
+DO239    EQU   *
+* OPTIMAL SOLUTION FOR TERMS239 REACHED AFTER 7 CYCLES
+         LA    R2,13              RESTRICT TO 7 CYCLES
+         MVI   SIGN,X'00'         RESET SIGN
+         LA    R3,1               N
+         LXD   F1,=DH'239'        F1/F3=239
+         LXD   F4,=DH'1'          F4/F6=1  MULTIPLIER
+LOOP239  DS    0H
+         LR    R4,R3              SAVE FOR LOOPING
+         LXD   F0,=DH'1'          F0/F1=1  POWER
+         LXD   F5,=DH'1'          F5/F7=1  FORM RECIPROCAL
+POWER239 DS    0H
+         MXR   F0,F1              239^N
+         BCT   R4,POWER239        LOOP
+         MXR   F0,F4              N*239^N
+         DXR   F5,F0              1/(N*239^N)
+         CLI   SIGN,X'00'         +VE ?
+         BNE   NEG239             EXIT IF NOT
+         AXR   F9,F5              ADD TERM
+         XI    SIGN,X'FF'         FLIP SIGN
+         B     CYCLE239           EXIT
+*
+NEG239   DS    0H
+         SXR   F9,F5              SUBTRACT TERM
+         XI    SIGN,X'FF'         FLIP SIGN
+CYCLE239 DS    0H
+         CR    R3,R2              CYCLE DONE ?
+         BE    DUNBOTH            EXIT IF IT IS
+         AHI   R3,2               N+2
+         AXR   F4,F12             MULTIPLIER+2
+         B     LOOP239            LOOP THRU TERMS239
+*
+DUNBOTH  DS    0H
+         LXD   F0,=DH'4'          F0/F1=4
+         MXR   R8,R0              TERMS5*4
+         SXR   R8,R9              TERMS5*4-TERMS239
+         MXR   R8,R0              4*(TERMS5*4-TERMS239)
+         CTD   CTD_LH,IN=R8,OUT=PI
+         LD    F0,LHPI                                         DSH1
+         LD    F0+2,LHPI+8                                     DSH1
+         SXR   F0,F8                                           DSH1
+         CTD   CTD_LH,IN=F0,OUT=PIDIF                          DSH1
+         SNAP  ID=3,PDATA=,STORAGE=(PIDIF,PIDIF+45),TEXT='DIF' DSH1
+*
+         ZMFACC CODE,END
+*
+         ZMFACC INPUT,START
+         ZMFACC INPUT,END
+*
+SIGN     DC    X'00'
+         ZMFACC OUTPUT,START
+PI       DS    CL45
+         ZMFACC OUTPUT,END
+* PI REF http://www.jimloy.com/geometry/pi.htm                 DSH1
+LHPI     DC    LH'3.141592653589793238462643383279502'         DSH1
+PIDIF    DC    CL45' '                                         DSH1
+         END

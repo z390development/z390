@@ -1,0 +1,204 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         CICS_DUMP
+         LCLB  &TRANS,&COMP
+         LCLC  &DCODE,&FROM,&LENGTH,&FLENGTH
+         LCLC  &SLIST,&LLIST,&NUMSEG
+&NP      SETA  N'&SYSLIST
+&IP      SETA  0
+.PLOOP   ANOP
+&IP      SETA  &IP+1
+         AIF   (&IP GT &NP).ELOOP
+&PARM    SETC  &SYSLIST(&IP)
+         AIF   ('&PARM'(1,11) EQ 'TRANSACTION').TRANS
+         AIF   ('&PARM'(1,9)  EQ 'DUMPCODE(').DCODE
+         AIF   ('&PARM'(1,8)  EQ 'COMPLETE').COMP
+         AIF   ('&PARM'(1,5)  EQ 'FROM(').FROM
+         AIF   ('&PARM'(1,7)  EQ 'LENGTH(').LENGTH
+         AIF   ('&PARM'(1,8)  EQ 'FLENGTH(').FLENGTH
+         AIF   ('&PARM'(1,12) EQ 'SEGMENTLIST(').SLIST
+         AIF   ('&PARM'(1,11) EQ 'LENGTHLIST(').LLIST
+         AIF   ('&PARM'(1,12) EQ 'NUMSEGMENTS(').NUMSEG
+         MNOTE 12,'BAD PARM &PARM'
+         AGO   .PLOOP
+.*
+.TRANS   ANOP
+&TRANS   SETB  1
+         AGO   .PLOOP
+.*
+.DCODE   ANOP
+&DCODE   SETC  '&PARM'(10,K'&PARM-10)
+         AGO   .PLOOP
+.*
+.COMP    ANOP
+&COMP    SETB  1
+         AGO   .PLOOP
+.*
+.FROM    ANOP
+&FROM    SETC  '&PARM'(6,K'&PARM-6)
+         AGO   .PLOOP
+.*
+.LENGTH  ANOP
+&LENGTH  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.FLENGTH ANOP
+&FLENGTH SETC  '&PARM'(9,K'&PARM-9)
+         AGO   .PLOOP
+.*
+.SLIST   ANOP
+&SLIST   SETC  '&PARM'(13,K'&PARM-13)
+         AGO   .PLOOP
+.*
+.LLIST   ANOP
+&LLIST   SETC  '&PARM'(12,K'&PARM-12)
+         AGO   .PLOOP
+.*
+.NUMSEG  ANOP
+&NUMSEG  SETC  '&PARM'(13,K'&PARM-13)
+         AGO   .PLOOP
+.*
+.ELOOP   ANOP
+         AIF   (NOT &TRANS).NOTRANS
+         AIF   (&DCODE EQ '').NODCODE
+         AIF   (&LENGTH NE '' AND &FLENGTH NE '').BADLEN
+         AIF   (&FROM NE '' AND &LENGTH EQ '' AND &FLENGTH EQ '').NEEDL-
+               EN
+         AIF   (&FROM EQ '' AND (&LENGTH NE '' OR &FLENGTH NE '')).NOFR-
+               OM
+         AIF   (&SLIST EQ '' AND &LLIST EQ '' AND &NUMSEG EQ '').SEGSOK
+         AIF   (&SLIST NE '' AND &LLIST NE '' AND &NUMSEG NE '').SEGSOK
+         AGO   .BADSEG
+.*
+.SEGSOK  ANOP
+         MVC   EIBFN,=X'1C02'     SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+.*
+         AIF   ('&DCODE'(1,1) EQ '''').STRING
+         MVC   CICS_DUMP_&SYSNDX._DCODE,&DCODE MOVE DUMP CODE FROM LABE-
+               L
+         AGO   .NOSTRING
+.*
+.STRING  ANOP
+&DCODLEN SETA  K'&DCODE
+         AIF   (&DCODLEN GT 6).INVDCOD
+         MVC   CICS_DUMP_&SYSNDX._DCODE,=CL4&DCODE MOVE DUMP CODE
+.NOSTRING ANOP
+         AIF   (&FROM EQ '' AND &SLIST EQ '').DEFCOMP
+         AGO   .COMPOK
+.*
+.DEFCOMP ANOP
+&COMP    SETB  1
+.COMPOK  ANOP
+         AIF   (NOT &COMP).TRYFROM
+.* COMPLETE
+         MVC   CICS_DUMP_&SYSNDX._ID(8),=C'COMPLETE' SET SNAP TEXT
+         LA    R1,CICS_DUMP_&SYSNDX._SNAPTXT ADDRESS TEXT
+         SNAP  PDATA=ALL,ID=997,TEXT=(R1)
+.TRYFROM ANOP
+         AIF   (&FROM EQ '').TRYSEGS
+         LA    R14,&FROM          LOAD STORAGE START
+         LR    R15,R14            PREPARE FOR STORAGE END
+.* FROM LENGTH/FLENGTH
+.* LENGTH MAY BE L' OR CONSTANT LIKE C'.' X'..'
+         AIF   (&FLENGTH NE '').FLEN
+         AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
+         AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
+.LENNUM  ANOP
+         AH    R15,=AL2(&LENGTH) ADD NUMERIC LENGTH
+         AGO   .SNAPFRM
+.*
+.LENLABL ANOP
+         AH    R15,&LENGTH        ADD LENGTH FROM LABEL
+         AGO   .SNAPFRM
+.*
+.FLEN    ANOP
+         AIF   ('&FLENGTH'(2,1) EQ '''').FLENNUM
+         AIF   ('&FLENGTH'(1,1) LT '0' OR '&FLENGTH'(1,1) GT '9').FLENL-
+               AB
+.FLENNUM ANOP
+         A     R15,=AL4(&FLENGTH+1) ADD NUMERIC LENGTH
+         AGO   .SNAPFRM
+.*
+.FLENLAB ANOP
+         A     R15,&FLENGTH       ADD LENGTH FROM LABEL
+.SNAPFRM ANOP
+         MVC   CICS_DUMP_&SYSNDX._ID(8),=C'AREA    ' SET SNAP TEXT
+         LA    R1,CICS_DUMP_&SYSNDX._SNAPTXT ADDRESS TEXT
+         SNAP  STORAGE=((R14),(R15)),ID=997,TEXT=(R1)
+.TRYSEGS ANOP
+         AIF   (&SLIST EQ '').ALLDONE
+.* SEGMENTLIST/LENGTHLIST/NUMSEGMENTS
+         AIF   ('&NUMSEG'(2,1) EQ '''').NSGNUM
+         AIF   ('&NUMSEG'(1,1) LT '0' OR '&NUMSEG'(1,1) GT '9').NSGLABL
+.NSGNUM  ANOP
+         L     R0,=AL4(&NUMSEG)   LOAD NUMSEGMENTS
+         AGO   .EACHSEG
+.*
+.NSGLABL ANOP
+         L     R0,&NUMSEG         LOAD NUMSEGMENTS FROM LABEL
+.EACHSEG ANOP
+         MVC   CICS_DUMP_&SYSNDX._ID(7),=C'SEGMENT' SET SNAP TEXT
+         SR    R2,R2              CLEAR INDEX
+CICS_DUMP_&SYSNDX._SEGLOOP DS 0H
+         SLL   R2,2               INDEX*4
+         L     R14,&SLIST.(R2)    LOAD INDEXED STORAGE START
+         LR    R15,R14            PREPARE FOR STORAGE END
+         A     R15,&LLIST.(R2)    ADD INDEXED STORAGE LENGTH
+         SRL   R2,2               RESET INDEX
+         AHI   R2,1               BUMP SEGMENT NUMBER
+         CVD   R2,CICS_DUMP_&SYSNDX._DEC CONVERT TO DECIMAL
+         MVC   CICS_DUMP_&SYSNDX._ID+7(4),=X'40202020' MOVE EDIT WORD
+         ED    CICS_DUMP_&SYSNDX._ID+7(4),CICS_DUMP_&SYSNDX._DEC+6 EDIT-
+                SEGMENT NUMBER
+         LA    R1,CICS_DUMP_&SYSNDX._SNAPTXT ADDRESS TEXT
+         ST    R0,CICS_DUMP_&SYSNDX._DEC SAVE R0
+         SNAP  STORAGE=((R14),(R15)),ID=997,TEXT=(R1)
+         L     R0,CICS_DUMP_&SYSNDX._DEC RESTORE R0
+         BCT   R0,CICS_DUMP_&SYSNDX._SEGLOOP LOOP
+.*
+.ALLDONE ANOP
+         B     CICS_DUMP_&SYSNDX._BYPCONS EXIT
+.*
+CICS_DUMP_&SYSNDX._SNAPTXT DC C'DUMP '
+CICS_DUMP_&SYSNDX._DCODE DC CL4' ' DUMP CODE
+         DC    C' '
+CICS_DUMP_&SYSNDX._ID DC CL11' ' COMPLETE/AREA/SEGMENT NNN
+         DC    X'00'
+         AIF   (&SLIST EQ '').NODEC
+CICS_DUMP_&SYSNDX._DEC DC PL8'0'
+.NODEC   ANOP
+.*
+CICS_DUMP_&SYSNDX._BYPCONS DS 0H
+         MEXIT
+.*
+.NOTRANS MNOTE 12,'TRANSACTION MUST BE SPECIFIED'
+         MEXIT
+.*
+.NODCODE MNOTE 12,'DUMPCODE MUST BE SPECIFIED'
+         MEXIT
+.*
+.BADLEN  MNOTE 12,'BOTH LENGTH AND FLENGTH ARE SPECIFIED'
+         MEXIT
+.*
+.NEEDLEN MNOTE 12,'LENGTH OR FLENGTH MUST BE SPECIFIED'
+         MEXIT
+.*
+.NOFROM  MNOTE 12,'LENGTH OR FLENGTH REQUIRES FROM'
+         MEXIT
+.*
+.BADSEG  MNOTE 12,'SEGMENTLIST, LENGTHLIST AND NUMSEGMENTS MUST ALL BE -
+               SPECIFIED OR ALL ABSENT'
+         MEXIT
+.*
+.INVDCOD MNOTE 12,'DUMPCODE IS GREATER THAN 4 BYTES'
+         MEXIT
+         MEND
+

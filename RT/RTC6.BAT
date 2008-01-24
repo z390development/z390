@@ -6,4 +6,4 @@ erase %1.PRN
 erase %1.LST
 erase %1.390
 erase %1.TR?
-call %~dps0ASML %1 bal notiming %2 %3 %4 %5 %6 %7 %8 %9
+call ASML %1 bal notiming stats %2 %3 %4 %5 %6 %7 %8 %9

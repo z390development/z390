@@ -3333,8 +3333,296 @@ set GIT_COMMITTER_DATE=2021-03-22 19:58:00 +0100
 git commit -m "Reconstructed version v1.3.08h of z390 committed on behalf of Don Higgins"
 git tag -a v1.3.08h -m "Reconstructed version v1.3.08h of z390 committed on behalf of Don Higgins"
 
+==> Rename files
+MOVE COMP1.BAT            rt\COMP1.BAT
+MOVE DIRCLEAN.BAT         rt\DIRCLEAN.BAT
+MOVE RT*.BAT              rt\
+REN  mvs\maclib\DLETE.MAC DELETE.MAC
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+git rm  COMP1.BAT
+git rm  DIRCLEAN.BAT
+git rm  RT.BAT
+git rm  RT1.BAT
+git rm  RT2.BAT
+git rm  RT3.BAT
+git rm  RT4.BAT
+git rm  RT5.BAT
+git rm  RT6.BAT
+git rm  RT7.BAT
+git rm  RTC4.BAT
+git rm  RTC6.BAT
+git rm  RTCLEAN1.BAT
+git rm  RTCOMP.BAT
+git rm  RTDEMO.BAT
+git rm  RTDEMO1.BAT
+git rm  RTGUAM.BAT
+git rm  RTLINK.BAT
+git rm  RTLINK1.BAT
+git rm  RTLIST.BAT
+git rm  RTMVS.BAT
+git rm  RTMVS1.BAT
+git rm  RTSOA.BAT
+git rm  RTSOA1.BAT
+git rm  RTTEST.BAT
+git rm  RTTEST1.BAT
+git rm  RTUTIL.BAT
+git rm  RTUTIL1.BAT
+git rm  RTVSAM.BAT
+git rm  RTVSAM1.BAT
+git rm  RTVSE.BAT
+git rm  RTVSE1.BAT
+git rm  mvs/maclib/DLETE.MAC
+git add mvs/maclib/DELETE.MAC
+git add rt/COMP1.BAT
+git add rt/DIRCLEAN.BAT
+git add rt/RT.BAT
+git add rt/RT1.BAT
+git add rt/RT2.BAT
+git add rt/RT3.BAT
+git add rt/RT4.BAT
+git add rt/RT5.BAT
+git add rt/RT6.BAT
+git add rt/RT7.BAT
+git add rt/RTC4.BAT
+git add rt/RTC6.BAT
+git add rt/RTCLEAN1.BAT
+git add rt/RTCOMP.BAT
+git add rt/RTDEMO.BAT
+git add rt/RTDEMO1.BAT
+git add rt/RTGUAM.BAT
+git add rt/RTLINK.BAT
+git add rt/RTLINK1.BAT
+git add rt/RTLIST.BAT
+git add rt/RTMVS.BAT
+git add rt/RTMVS1.BAT
+git add rt/RTSOA.BAT
+git add rt/RTSOA1.BAT
+git add rt/RTTEST.BAT
+git add rt/RTTEST1.BAT
+git add rt/RTUTIL.BAT
+git add rt/RTUTIL1.BAT
+git add rt/RTVSAM.BAT
+git add rt/RTVSAM1.BAT
+git add rt/RTVSE.BAT
+git add rt/RTVSE1.BAT
 
+SetGit ++Abe 2021-03-22 20:35:00 +0100
+set GIT_COMMITTER_DATE=2021-03-22 20:35:00 +0100
+git commit -m "Intermediate commit to trace renamed files"
+
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.3.09
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
+
+==> Add to .gitignore file:
+# Assembler/emulator and other input stuff
+# **/*.man --> Manifesto file
+
+==> Stage files for V1.3.09
+git add ASM.BAT
+git add ASML.BAT
+git add ASMLG.BAT
+git add AZ390.BAT
+git add Doc/readme.rtf
+git add Doc/readme.txt
+git add EXEC.BAT
+git add LINK.BAT
+git add LZ390.BAT
+git add MAC.BAT
+git add MZ390.BAT
+git rm  README.TXT
+git add RT/DIRCLEAN.BAT
+git add RT/README.TXT
+git add RT/RT.BAT
+git add RT/RT1.BAT
+git add RT/RT2.BAT
+git add RT/RT3.BAT
+git add RT/RT4.BAT
+git add RT/RT5.BAT
+git add RT/RT6.BAT
+git add RT/RT7.BAT
+git add RT/RTC4.BAT
+git add RT/RTC6.BAT
+git add RT/RTCLEAN1.BAT
+git add RT/RTCOMP.BAT
+git add RT/RTDEMO.BAT
+git add RT/RTDEMO1.BAT
+git add RT/RTGUAM.BAT
+git add RT/RTLINK.BAT
+git add RT/RTLINK1.BAT
+git add RT/RTMVS.BAT
+git add RT/RTMVS1.BAT
+git add RT/RTSOA.BAT
+git add RT/RTSOA1.BAT
+git add RT/RTTEST.BAT
+git add RT/RTTEST1.BAT
+git rm  RT/RTUTIL.BAT
+git rm  RT/RTUTIL1.BAT
+git add RT/RTVSAM.BAT
+git add RT/RTVSAM1.BAT
+git add RT/RTVSE.BAT
+git add RT/RTVSE1.BAT
+git add RT/TEST/TESTASC1.MLC
+git add RT/TEST/TESTCMD1.MLC
+git add RT/TEST/TESTCMD2.MLC
+git add RT/TEST/TESTDFP1.MLC
+git add RT/TEST/TESTSYM1.MLC
+git add RT/Z390.IVP
+git add SOA/DEMO/DEMOBLD.BAT
+git add SOA/DEMO/DEMORUN.BAT
+git add SOA/DEMO/DEMORUNC.BAT
+git add SOA/DEMO/DEMORUNS.BAT
+git add SOA/MACLIB/SOAGEN.MAC
+git rm  VDIFF.BAT
+git add Z390.IVP
+git add bmk/INSTTIME.MLC
+git add cics/CICS_ABEND.MAC
+git add cics/CICS_ENDBR.MAC
+git add cics/CICS_HANDLE.MAC
+git add cics/CICS_IGNORE.MAC
+git add cics/CICS_LINK.MAC
+git add cics/CICS_LOAD.MAC
+git add cics/CICS_READ.MAC
+git add cics/CICS_READNEXT.MAC
+git add cics/CICS_READPREV.MAC
+git add cics/CICS_RECEIVE.MAC
+git add cics/CICS_RELEASE.MAC
+git add cics/CICS_RESETBR.MAC
+git add cics/CICS_SEND.MAC
+git add cics/CICS_STARTBR.MAC
+git add cics/CICS_XCTL.MAC
+git add cics/DFHALL.BAT
+git add cics/DFHALLV.BAT
+git add cics/DFHEIBLK.MAC
+git add cics/DFHFCBLK.MAC
+git add cics/DFHFCT.MLC
+git add cics/DFHHCBLK.MAC
+git add cics/DFHPCT.MLC
+git add cics/DFHTCTTE.MAC
+git add cics/DFHVSWAD.MAC
+git add cics/Docs/ZCICSAPP.TXT
+git add cics/Docs/ZCICSDRF.TXT
+git add cics/Docs/ZCICSHST.TXT
+git add cics/Docs/ZCICSRME.TXT
+git add cics/Docs/ZCICSSTR.TXT
+git add cics/Docs/ZCICSSYS.TXT
+git add cics/Docs/ZCICSVSM.TXT
+git rm  cics/RTZCICS1.BAT
+git rm  cics/RTZCICS1.MLC
+git rm  cics/RTZCICS2.BAT
+git rm  cics/RTZCICS2.MLC
+git add cics/TESTBED4.MLC
+git add cics/TESTBED6.MLC
+git add cics/TESTBED9.MLC
+git add cics/TESTVSM1.MLC
+git add cics/VSAM/Z390CAT1.MLC
+git add cics/Z390CEBR.MLC
+git add cics/Z390CEMT.MLC
+git add cics/Z390CICG.BAT
+git add cics/Z390CICS.INI
+git add cics/Z390CICS.MLC
+git add cics/Z390FILE.BAT
+git add cics/Z390KCP.MLC
+git add cics/Z390LOGO.MLC
+git add linklib/UNREF.MLC
+git add mvs/Z390.IVP
+git add mvs/maclib/DCBD.MAC
+git add mvs/maclib/IHB01.MAC
+git add src/az390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/tz390.java
+git add vsam/demo/ESF1DEMO.BAT
+git add vsam/demo/ESV1DEMO.BAT
+git add vsam/demo/KSF1RPO1.BAT
+git add vsam/demo/KSF1RPO2.BAT
+git rm  vsam/test/ESF1REPO.BAT
+git add vsam/test/ESF1RPO1.BAT
+git add vsam/test/ESF1RPQ1.BAT
+git rm  vsam/test/ESF4REPO.BAT
+git add vsam/test/ESF4RPO1.BAT
+git add vsam/test/ESF4RPQ1.BAT
+git rm  vsam/test/ESV1REPO.BAT
+git add vsam/test/ESV1RPO1.BAT
+git add vsam/test/ESV1RPQ1.BAT
+git rm  vsam/test/ESV5REPO.BAT
+git add vsam/test/ESV5RPO1.BAT
+git add vsam/test/ESV5RPQ1.BAT
+git add vsam/test/RRF1RPO1.BAT
+git add vsam/test/RRF2RPO1.BAT
+git add vsam/test/RRF2RPQ1.BAT
+git add vsam/test/RRV1RPO1.BAT
+git add vsam/test/RRV1RPQ1.BAT
+git add cics/CICS_ASKTIME.MAC
+git add cics/CICS_DELAY.MAC
+git add cics/CICS_DUMP.MAC
+git add cics/CICS_FORMATTIME.MAC
+git add cics/TESTIC01.MLC
+git add cics/TESTVSM2.MLC
+git add cics/TESTVSM3.MLC
+git add cics/VSAM/MYFILE6F.TF1
+git add cics/VSAM/MYFILE6F.TF2
+git add cics/VSAM/MYFILE6F.TXT
+git add cics/VSAM/MYFILE7V.TF1
+git add cics/VSAM/MYFILE7V.TF2
+git add cics/VSAM/MYFILE7V.TXT
+git add cics/VSAM/MYFILE8F.TF2
+git add cics/VSAM/MYFILE8F.TXT
+git add cics/VSAM/MYFILE9V.TF2
+git add cics/VSAM/MYFILE9V.TXT
+git add cics/Z390CMPG.BAT
+git add cics/Z390COMP.MLC
+git add cics/Z390SEQ.MLC
+git add cics/Z390SEQG.BAT
+git add cics/docs/ZCICSPRE.txt
+git add cics/docs/ZCICSSEQ.TXT
+git add mfacc/
+git add rt/CLEANPGM.BAT
+git add rt/RC1.BAT
+git add rt/RC2.BAT
+git add rt/RESET1.BAT
+git add rt/RT1.OPT
+git add rt/RTBMK.BAT
+git add rt/RTCICS.BAT
+git add rt/RTCOMP1.BAT
+git add rt/RTGENCMP.BAT
+git add rt/RTGENCMP.DAT
+git add rt/RTMAX.BAT
+git add rt/RTMFACC.BAT
+git add rt/RTMFACC1.BAT
+git add rt/RTVIEW.BAT
+git add rt/SAVE1.BAT
+git add rt/SAVEALL.BAT
+git add rt/SAVEBMK.BAT
+git add rt/SAVEDEMO.BAT
+git add rt/SAVEGUAM.BAT
+git add rt/SAVELINK.BAT
+git add rt/SAVEMFA.BAT
+git add rt/SAVEMVS.BAT
+git add rt/SAVESOA.BAT
+git add rt/SAVETEST.BAT
+git add rt/SAVEVSAM.BAT
+git add rt/SAVEVSE.BAT
+git add rt/rtcomp4.bat
+git add rt/test/TESTASM1.MAC
+git add rt/test/TESTDFP2.MLC
+git add rt/test/TESTOBJ2.OPT
+git add rt/test/TESTPRM4.OPT
+git add rt/test/TESTPRO1.OPT
+git add src/Z390.MAN
+
+==> Create commit for V1.3.09
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2008-01-23 20:07:00 -0500
+set GIT_COMMITTER_DATE=2021-03-22 20:46:00 +0100
+git commit -m "Reconstructed version v1.3.09 of z390 committed on behalf of Don Higgins"
+git tag -a v1.3.09 -m "Reconstructed version v1.3.09 of z390 committed on behalf of Don Higgins"
+git gc --aggressive
 
 
 

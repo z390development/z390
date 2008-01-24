@@ -1,0 +1,587 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+Z390COMP SUBENTRY
+*
+* READ THE SEQCNNNN.TXT SET OF FILES AND COMPARE WITH SEQO0001.TXT
+* PRODUCE A DIFFERENCE LISTING
+*
+* LATER CONSIDER A BYPASS FILE TO EXCLUDE COMPARE AREAS LIKE DATE/TIME
+*
+* OUTPUT STRUCTURE
+*   WHEN DIFFERENT SHOW 32 BYTE SECTIONS, WHOLE STREAM ALWAYS SHOWN
+*   SAME 32-BYTES ONLY SHOWN ONCE
+*   DIFFERENT 32-BYTES, SHOW BOTH AND LINE WITH ? MARKING DIFFS
+*   INDEX LINE ONLY SHOWN FOR DIFF DISPLAY, FOR EACH CHUNK DIFF
+*
+*   FILE 0002  STREAM 00001
+*             +00              08              10              18
+*     C+0000   C3115CF0C4C6C8C1C3F2F0F0F140F1F67AF0F87AF0F14BF2F8...
+*                      D F H A C 2 0 0 1   1 6 : 0 8 : 0 1 . 2 8
+*     N+0000   C3115CF0C4C6C8C1C3F2F0F0F140F1F67AF1F47AF2F44BF2F8...
+*                      D F H A C 2 0 0 1   1 6 : 1 4 : 2 4 . 2 8
+*                                                ? ?   ? ?
+*
+*     C+0020   C1C2C3C4000000000000000000000000000000000000000000
+*              A B C D
+*     C+0040   C5C6C7C8000000000000000000000000000000000000000000
+*              E F G H
+*
+         GETENV CMPENV
+         LA    R9,CMPFILE         R9=PATHNAME ADDRESS
+Z390CMPL EQU   *
+         MVC   0(1,R9),0(R2)      MOVE DSN A BYTE AT A TIME
+         AHI   R2,1               BUMP SOURCE
+         AHI   R9,1               BUMP DESTINATION
+         CLI   0(R2),X'00'        END OF DSN ?
+         BNE   Z390CMPL           LOOP IF NOT
+         AHI   R9,-10             POINT TO QC0000
+         ST    R9,CMPFILAD        SAVE IT
+         OPEN  (SEQCMP,(INPUT),SEQNEW,(INPUT),SEQOUT,(OUTPUT),         X
+               SEQEXCL,(INPUT))
+*
+GETREC   EQU   *
+* NEW DATA STREAMS
+         LA    R2,CMPAREA         COMP I/O AREA
+         LAY   R3,NEWAREA         NEW FILE I/O AREA
+         SR    R4,R4              CLEAR BYTE COUNT
+         XC    OFFSET,OFFSET      RESET OFFSET
+         AP    STREAM,=P'1'       INCREMENT STREAM NUMBER
+GETDATA  EQU   *
+* BUILD CHUNK
+         GET   SEQCMP             GET COMP FILE BYTE
+         CLI   CMPBYTE,EOF        END OF FILE ?
+         BE    EOFCOMP            EXIT IF IT IS
+         GET   SEQNEW             GET NEW FILE BYTE
+         CLI   NEWBYTE,EOF        END OF FILE ?
+         BE    EOFNEW             EXIT IF IT IS
+         MVC   0(1,R2),CMPBYTE    MOVE COMP FILE BYTE
+         MVC   0(1,R3),NEWBYTE    MOVE NEW FILE BYTE
+         AHI   R2,1               BUMP COMP FILE POINTER
+         AHI   R3,1               BUMP NEW FILE POINTER
+         AHI   R4,1               COUNT BYTES
+* CHECK BOTH RECORDS ENDED TOGETHER
+         CLI   CMPBYTE,LF         COMP RECORD ENDED ?
+         BE    EORCOMP            EXIT IF IT HAS
+* COMP RECORD HAS NOT ENDED
+         CLI   NEWBYTE,LF         NEW RECORD ENDED ?
+         BE    SEQERR1            EXIT IF COMP NOT ENDED, BUT NEW HAS
+         B     GETDATA            LOOP
+*
+EORCOMP  EQU   *
+* COMP RECORD ENDED
+         CLI   NEWBYTE,LF         NEW RECORD ENDED ?
+         BE    RECMATCH           EXIT IF BOTH ENDED
+         B     SEQERR2            EXIT IF COMP ENDED, BUT NEW HASN'T
+*
+EOFCOMP  EQU   *
+* COMP FILE HAS ENDED
+         CLI   NEWBYTE,LF         NEW RECORD ENDED ?
+         BNE   SEQERR3            EXIT IF COMP ENDED BUT NEW REC HASN'T
+* COMP FILE HAS ENDED AND NEW RECORD HAS, SEE IF WE HAVE ANOTHER COMP
+* SYNAD OCCURS IF WE DON'T
+         CLOSE SEQCMP             CLOSE FILE
+         AP    CMPFILNM,=P'1'     INCREMENT FILE NUMBER
+         L     R2,CMPFILAD        R2=FILE NUMBER ADDRESS
+         MVC   0(6,R2),=X'F02020202020' MOVE EDIT WORD
+         ED    0(6,R2),CMPFILNM   EDIT FILE NUMBER
+         MVC   0(2,R2),=C'QC'     RESTORE FILENAME
+         OPEN  (SEQCMP,INPUT)     OPEN NEXT FILE
+         SP    STREAM,STREAM      RESET STREAM NUMBER
+         B     GETREC             LOOP
+*
+EOFNEW   EQU   *
+* NEW FILE HAS ENDED
+* IT'S LIKELY THAT THE SIMULATION HASN'T BEEN RUN AFTER CREATING
+* THE DATA STREAMS
+         B     SEQERR4            EXIT
+*
+EOFEXC   EQU   *
+* EXCLUDE FILE HAS ENDED
+         MVI   EXCIND,X'FF'       INDICATE WE HAVE NO EXCLUDE FILE
+         B     NOEXC              EXIT
+*
+SYNCMP   EQU   *
+* NO MORE COMP FILES TO OPEN
+         CLI   NEWBYTE,LF         NEW RECORD ENDED ?
+         BNE   SEQERR5            EXIT IF COMP ENDED, BUT NEW HASN'T
+         CLOSE (SEQNEW,,SEQOUT)   CLOSE
+         MVC   STRMSHW,=X'402020202120' MOVE EDIT WORD
+         ED    STRMSHW,STRMCNT    EDIT STREAM COUNT
+         WTO   MF=(E,WTORDW)      SHOW STREAMS PRINTED
+         SUBEXIT
+*
+SYNEXC   EQU   *
+* EXCLUDE FILE IS MISSING
+         MVI   EXCIND,X'FF'       INDICATE WE HAVE NO EXCLUDE FILE
+         B     GETREC             EXIT
+*
+* VARIOUS ERRORS
+SEQERR1  ABEND 901,DUMP           COMP REC NOT ENDED, NEW REC HAS
+SEQERR2  ABEND 902,DUMP           COMP REC ENDED, NEW REC HASN'T
+SEQERR3  ABEND 903,DUMP           COMP FILE ENDED, NEW REC HASN'T
+SEQERR4  ABEND 904,DUMP           NEW FILE ENDED BEFORE COMP
+SEQERR5  ABEND 905,DUMP           NO MORE COMP FILES, MORE NEW RECS
+*
+RECMATCH EQU   *
+         AHI   R4,-2              IGNORE CRLF
+         LA    R6,CMPAREA         COMP I/O AREA
+         LAY   R8,NEWAREA         NEW FILE I/O AREA
+         LR    R7,R4              LENGTH
+         LR    R9,R4              LENGTH
+         CLCL  R6,R8              RECORDS MATCH ?
+         BE    GETREC             YES, EXIT TO GET NEXT RECORD PAIR
+* RECORDS MISMATCH
+* CHECK EXCLUSION LIST (IF PRESENT)
+         CLI   EXCIND,X'FF'       ANY EXCLUSION FILE ?
+         BE    NOEXC              EXIT IF NOT
+         CLI   EXCHIGH,X'FF'      EXCLUDE RECORD YET TO BE MATCHED ?
+         MVI   EXCHIGH,X'00'      RESET HIGH INDICATOR
+         BE    MISSEXC            EXIT IF IT IS
+GETEXC   EQU   *
+         GET   SEQEXCL            GET AN EXCLUSION RECORD
+MISSEXC  EQU   *
+         LAY   R2,EXCAREA         ADDRESS EXCLUSION RECORD
+         USING EXCDSECT,R2
+         CLI   EXCSTAR,C'*'       COMMENT LINE ?
+         BE    GETEXC             EXIT IF IT IS
+         L     R3,CMPFILAD        R3=FILE NUMBER ADDRESS
+         CLC   EXCFILNM,2(R3)     FILE NUMBERS MATCH ?
+         BL    GETEXC             EXIT IF EXCLUDE NOT NEEDED
+         BE    GOTFILEX           EXIT IF FILE MATCH
+* FILE NUMBER IS HIGHER
+         MVI   EXCHIGH,X'FF'      SET HIGH INDICATOR
+         B     NOEXC              EXIT
+*
+GOTFILEX EQU   *
+* MATCHED FILE NUMBER, CHECK STREAM
+         PACK  WORK(3),EXCSTRM    PACK EXCLUDE STREAM NUMBER
+         XI    WORK+2,X'0C'       CHANGE 3-SIGN TO F-SIGN
+         CP    WORK(3),STREAM     STREAM NUMBERS MATCH ?
+         BL    GETEXC             EXIT IF EXCLUDE NOT NEEDED
+         BE    GOTEXCL            EXIT IF STREAM MATCH
+* STREAM NUMBER IS HIGHER
+         MVI   EXCHIGH,X'FF'      SET HIGH INDICATOR
+         B     NOEXC              EXIT
+*
+GOTEXCL  EQU   *
+* EXCLUDE FILE AND STREAM MATCH
+* PROCESS UP TO 4 EXCLUDE RANGES
+         MVC   EXCST1(16),=8X'7FFF' INITIALISE RANGES
+         CLI   EXCSTRT1,C'0'      ANY RANGE HERE ?
+         BL    EXCRNG2            EXIT TO TRY NEXT
+         TR    EXCSTRT1(4),TRANASCH-X'30' TRANSLATE TO UNPACKED HEX
+         PACK  EXCST1(3),EXCSTRT1(5) CONVERT TO REAL HEX
+         TR    EXCEND1(4),TRANASCH-X'30' TRANSLATE TO UNPACKED HEX
+         PACK  EXCEN1(3),EXCEND1(5) CONVERT TO REAL HEX
+EXCRNG2  EQU   *
+         CLI   EXCSTRT2,C'0'      ANY RANGE HERE ?
+         BL    EXCRNG3            EXIT TO TRY NEXT
+         TR    EXCSTRT2(4),TRANASCH-X'30' TRANSLATE TO UNPACKED HEX
+         PACK  EXCST2(3),EXCSTRT2(5) CONVERT TO REAL HEX
+         TR    EXCEND2(4),TRANASCH-X'30' TRANSLATE TO UNPACKED HEX
+         PACK  EXCEN2(3),EXCEND2(5) CONVERT TO REAL HEX
+EXCRNG3  EQU   *
+         CLI   EXCSTRT3,C'0'      ANY RANGE HERE ?
+         BL    EXCRNG4            EXIT TO TRY NEXT
+         TR    EXCSTRT3(4),TRANASCH-X'30' TRANSLATE TO UNPACKED HEX
+         PACK  EXCST3(3),EXCSTRT3(5) CONVERT TO REAL HEX
+         TR    EXCEND3(4),TRANASCH-X'30' TRANSLATE TO UNPACKED HEX
+         PACK  EXCEN3(3),EXCEND3(5) CONVERT TO REAL HEX
+EXCRNG4  EQU   *
+         CLI   EXCSTRT4,C'0'      ANY RANGE HERE ?
+         BL    EXCDUN             EXIT TO TRY NEXT
+         TR    EXCSTRT4(4),TRANASCH-X'30' TRANSLATE TO UNPACKED HEX
+         PACK  EXCST4(3),EXCSTRT4(5) CONVERT TO REAL HEX
+         TR    EXCEND4(4),TRANASCH-X'30' TRANSLATE TO UNPACKED HEX
+         PACK  EXCEN4(3),EXCEND4(5) CONVERT TO REAL HEX
+EXCDUN   EQU   *
+         LA    R6,CMPAREA         COMP I/O AREA
+         LAY   R8,NEWAREA         NEW FILE I/O AREA
+         SR    R7,R7              CLEAR OFFSET
+         LR    R9,R4              LENGTH
+EXCLOOP  EQU   *
+         CLC   0(1,R6),0(R8)      BYTES MATCH ?
+         BE    EXCMATCH           EXIT IF THEY DO
+* NOT MATCHED, CHECK RANGE 1
+         CH    R7,EXCST1          CHECK RANGE 1 START ?
+         BL    EXCCHK2            EXIT IF NOT IN RANGE 1
+         BE    EXCMATCH           EXIT IF IN RANGE 1, EXCLUDE
+* HIGHER THAN START, CHECK UPPER LIMIT
+         CH    R7,EXCEN1          CHECK RANGE 1 END ?
+         BNH   EXCMATCH           EXIT IF IN RANGE 1, EXCLUDE
+EXCCHK2  EQU   *
+* NOT MATCHED, CHECK RANGE 2
+         CH    R7,EXCST2          CHECK RANGE 2 START ?
+         BL    EXCCHK3            EXIT IF NOT IN RANGE 2
+         BE    EXCMATCH           EXIT IF IN RANGE 2, EXCLUDE
+* HIGHER THAN START, CHECK UPPER LIMIT
+         CH    R7,EXCEN2          CHECK RANGE 2 END ?
+         BNH   EXCMATCH           EXIT IF IN RANGE 2, EXCLUDE
+EXCCHK3  EQU   *
+* NOT MATCHED, CHECK RANGE 3
+         CH    R7,EXCST3          CHECK RANGE 3 START ?
+         BL    EXCCHK4            EXIT IF NOT IN RANGE 3
+         BE    EXCMATCH           EXIT IF IN RANGE 3, EXCLUDE
+* HIGHER THAN START, CHECK UPPER LIMIT
+         CH    R7,EXCEN3          CHECK RANGE 3 END ?
+         BNH   EXCMATCH           EXIT IF IN RANGE 3, EXCLUDE
+EXCCHK4  EQU   *
+* NOT MATCHED, CHECK RANGE 4
+         CH    R7,EXCST4          CHECK RANGE 4 START ?
+         BL    NOEXC              EXIT IF NOT IN ANY RANGE
+         BE    EXCMATCH           EXIT IF IN RANGE 4, EXCLUDE
+* HIGHER THAN START, CHECK UPPER LIMIT
+         CH    R7,EXCEN4          CHECK RANGE 4 END ?
+         BNH   EXCMATCH           EXIT IF IN RANGE 4, EXCLUDE
+         B     NOEXC              EXIT IF NOT IN ANY RANGE
+*
+EXCMATCH EQU   *
+* BYTES MATCH OR ARE EXCLUDED
+         AHI   R6,1               BUMP COMP AREA
+         AHI   R8,1               BUMP NEW  AREA
+         AHI   R7,1               BUMP BYTE COUNT
+         BCT   R9,EXCLOOP         LOOP
+         B     GETREC             EXIT, EXCLUDES MEAN MATCH
+*
+NOEXC    EQU   *
+* DISPLAY IN 32-BYTE CHUNKS
+         XC    OUTAREA,OUTAREA    CLEAR OUTPUT AREA
+         L     R2,CMPFILAD        R2=FILE NUMBER ADDRESS
+         MVC   FILENUM,2(R2)      MOVE FILE NUMBER TO OUTPUT
+         MVC   STRMNUM,=X'402020202020' MOVE EDIT WORD
+         ED    STRMNUM,STREAM     EDIT STREAM NUMBER
+         MVC   OUTAREA(HEADLEN),HEADER MOVE HEADER
+         AP    STRMCNT,=P'1'      COUNT STREAMS
+         PUT   SEQOUT             WRITE OUTPUT RECORD
+*
+         LA    R2,CMPAREA         COMP I/O AREA
+         LAY   R3,NEWAREA         NEW FILE I/O AREA
+CHUNKNXT EQU   *
+         LA    R5,32              MAXIMUM DISPLAY LENGTH
+         CR    R4,R5              REMAINING LENGTH > 32 ?
+         BNL   CHUNKOK            EXIT IF IT IS
+         LR    R5,R4              SET REMAINING LENGTH
+CHUNKOK  EQU   *
+* SHOW INDEX
+         XC    OUTAREA,OUTAREA    CLEAR OUTPUT AREA
+         MVC   OUTAREA(INDXLEN),INDX MOVE TO OUTPUT AREA
+         PUT   SEQOUT             WRITE OUTPUT RECORD
+*
+* SHOW CHUNK
+         MVC   HEXTYPE,=C'C+'     SET TYPE TO COMP
+CHUNKNEW EQU   *
+         UNPK  WORK,OFFSET(3)     UNPACK OFFSET
+         TR    WORK(4),TABLE-C'0' TRANSLATE TO ASCII HEX
+         MVC   HEXOFFST,WORK      MOVE TO OUTPUT AREA
+         XC    HEXDISP,HEXDISP    CLEAR HEX DISPLAY AREA
+         LA    R1,TRANHEX         R1=TRANSLATE TABLE ADDRESS
+         LA    R6,HEXDISP         DESTINATION ADDRESS
+         LR    R7,R5              SOURCE LENGTH
+         SH    R2,RESIDUAL        BACK TO PARTIAL 3270 CODE
+         CLI   CHUNKSW+1,X'F0'    2ND CYCLE ?
+         BE    CHUNK2ND           EXIT IF IT IS
+* 1ST CYCLE
+         ST    R2,SAVECOMP        SAVE COMP POSITION
+         ST    R3,SAVENEW         SAVE NEW POSITION
+         TROT  R6,R2,1            TRANSLATE TO PRINTABLE HEX
+         L     R2,SAVECOMP        RESTORE COMP POSITION
+         B     CHUNKGO            EXIT
+*
+CHUNK2ND EQU   *
+* 2ND CYCLE
+         TROT  R6,R2,1            TRANSLATE TO PRINTABLE HEX
+         L     R2,SAVENEW         RESTORE NEW POSITION
+CHUNKGO  EQU   *
+         XC    OUTAREA,OUTAREA    CLEAR OUTPUT AREA
+         MVC   OUTAREA(HEXLEN),HEXLINE MOVE TO OUTPUT AREA
+         PUT   SEQOUT             WRITE OUTPUT RECORD
+*
+* INTELLIGENT TRANSLATION TO CHAR
+         XC    HEXDISP,HEXDISP    CLEAR HEX DISPLAY AREA
+         LA    R8,HEXDISP         OUTPUT AREA
+         SR    R6,R6              OUTPUT COUNT
+         OC    OFFSET,OFFSET      IS OFFSET ZERO ?
+         BNZ   INTTNNT0           EXIT IF NOT
+* OFFSET ZERO
+         CLI   0(R2),ESC          STARTS WITH ESC ?
+         BNE   INTTN1             EXIT IF NOT
+         B     INTTN3             EXIT
+*
+INTTNNT0 EQU   *
+* NOT OFFSET ZERO
+         AH    R2,RESIDUAL        MISS PARTIAL HEX
+         AH    R8,RESIDUAL        MISS PARTIAL CHARS 1
+         AH    R8,RESIDUAL        MISS PARTIAL CHARS 2
+         AH    R6,RESIDUAL        COUNT MISSED OUTPUT BYTES
+         XC    RESIDUAL,RESIDUAL  CLEAR RESIDUAL
+INTTNMOR EQU   *
+         CLI   0(R2),SBA          SBA ?
+         BE    INTTN3             EXIT IF IT IS
+         CLI   0(R2),IC           IC ?
+         BE    INTTN1             EXIT IF IT IS
+         CLI   0(R2),SF           SF ?
+         BE    INTTN2             EXIT IF IT IS
+         CLI   0(R2),RA           RA ?
+         BE    INTTN4             EXIT IF IT IS
+         MVC   0(1,R8),0(R2)      MOVE CHAR
+INTTN1   EQU   *
+* OFFSET ZERO, NOT ESC
+* PLACED CHAR
+         AHI   R2,1               MISS 1
+         AHI   R8,2               MISS 1 CHAR
+         AHI   R6,1               COUNT OUTPUT BYTES
+         B     INTTNINC           EXIT
+*
+INTTN2   EQU   *
+         AHI   R2,2               MISS 2
+         AHI   R8,4               MISS 2 AS CHAR
+         AHI   R6,2               COUNT OUTPUT BYTES
+         B     INTTNINC           EXIT
+*
+INTTN3   EQU   *
+         AHI   R2,3               MISS 3
+         AHI   R8,6               MISS 3 AS CHAR
+         AHI   R6,3               COUNT OUTPUT BYTES
+         B     INTTNINC           EXIT
+*
+INTTN4   EQU   *
+         AHI   R2,4               MISS 4
+         AHI   R8,8               MISS 4 AS CHAR
+         AHI   R6,4               COUNT OUTPUT BYTES
+*
+INTTNINC EQU   *
+* IF 3270 CODE WAS LAST CHAR IN CHUNK, WE MUST REMEMBER HOW MANY CHARS
+* TO MISS AT THE START OF NEXT CHUNK
+         LR    R7,R6              SAVE CURRENT COUNT
+         SR    R7,R5              FIND DIFFERENCE
+         BZ    INTTNDUN           EXIT IF NONE
+         BM    INTTNMOR           EXIT IF MORE BYTES
+* GONE PAST END, SAVE RESIDUAL FOR NEXT CHUNK
+         STH   R7,RESIDUAL        SAVE IT
+INTTNDUN EQU   *
+* CHUNK OR LINE COMPLETED
+         OC    HEXDISP,HEXDISP    ANYTHING TO PRINT ?
+         BZ    INTTNNUL           EXIT IF NOT
+         XC    HEXTYPE(6),HEXTYPE CLEAR HEXTYPE AND OFFSET
+         XC    OUTAREA,OUTAREA    CLEAR OUTPUT AREA
+         MVC   OUTAREA(HEXLEN),HEXLINE MOVE TO OUTPUT AREA
+         XLATE OUTAREA,HEXLEN,TO=A TRANSLATE TO ASCII
+         PUT   SEQOUT             WRITE OUTPUT RECORD
+*
+INTTNNUL EQU   *
+* COMP CHUNK COMPLETED
+CHUNKSW  NOP   CHUNKNEQ           SWITCH FOR COMP/NEW
+         L     R2,SAVECOMP        POINT TO COMP CHUNK
+         BCTR  R5,0               -1 FOR EXECUTE
+         EX    R5,CHUNKCLC        CHUNKS EQUAL ?
+         BE    CHUNKEQ            EXIT IF THEY ARE
+* CHUNKS UNEQUAL
+         AHI   R5,1               RESTORE DATA LENGTH
+         MVI   CHUNKSW+1,X'F0'    SET SWITCH
+         L     R2,SAVENEW         POINT TO NEW CHUNK AS IF COMP
+         MVC   HEXTYPE,=C'N+'     SET NEW CHUNK
+         B     CHUNKNEW           EXIT
+*
+CHUNKNEQ EQU   *
+* BOTH UNEQUAL STREAMS DISPLAYED, NOW DISPLAY THE DIFFERENCE LINE
+         L     R2,SAVECOMP        POINT TO COMP CHUNK
+         LA    R8,HEXDISP         OUTPUT AREA
+         LR    R7,R5              R7=LENGTH
+         XC    HEXDISP,HEXDISP    CLEAR HEX DISPLAY AREA
+CHUNKDLP EQU   *
+         CLC   0(1,R2),0(R3)      COMPARE BYTES ?
+         BE    CHUNKDIN           EXIT IF EQUAL
+         MVI   0(R8),C'?'         SET MARKER
+CHUNKDIN EQU   *
+         AHI   R2,1               BUMP COMP
+         AHI   R3,1               BUMP NEW
+         AHI   R8,2               BUMP OUTPUT
+         BCT   R7,CHUNKDLP        LOOP
+         MVC   HEXTYPE(5),=C'DIFFS' SET HEXTYPE LABEL
+         XC    OUTAREA,OUTAREA    CLEAR OUTPUT AREA
+         MVC   OUTAREA(HEXLEN),HEXLINE MOVE TO OUTPUT AREA
+         PUT   SEQOUT             WRITE OUTPUT RECORD
+         XC    OUTAREA,OUTAREA    CLEAR OUTPUT AREA
+         PUT   SEQOUT             WRITE BLANK LINE
+         B     CHUNKEQ2           EXIT
+*
+CHUNKEQ  EQU   *
+         AHI   R5,1               RESTORE DATA LENGTH, 1ST TIME ONLY
+CHUNKEQ2 EQU   *
+         L     R2,SAVECOMP        RESTORE COMP CHUNK ADDRESS
+         AR    R2,R5              POINT TO NEXT
+         L     R3,SAVENEW         RESTORE NEW CHUNK ADDRESS
+         AR    R3,R5              POINT TO NEXT
+         MVI   CHUNKSW+1,X'00'    RESET SWITCH
+         LH    R7,OFFSET          CURRENT OFFSET
+         AHI   R7,32              NEXT OFFSET
+         STH   R7,OFFSET          SAVE OFFSET
+         S     R4,=F'32'          TOTAL LENGTH-32
+         BP    CHUNKNXT           EXIT IF MORE DATA
+         XC    OUTAREA,OUTAREA    CLEAR OUTPUT AREA
+         PUT   SEQOUT             WRITE BLANK LINE
+         B     GETREC             EXIT TO GET NEXT STREAM
+CHUNKCLC CLC   0(0,R2),0(R3)      COMPARE CHUNKS
+*
+         LTORG
+*
+SEQCMP   DCB   DSORG=PS,                                               X
+               EODAD=EOFCOMP,                                          X
+               RECFM=F,                                                X
+               DSNAME=CMPFILE,                                         X
+               MACRF=GM,                                               X
+               BLKSIZE=1,                                              X
+               LRECL=1,                                                X
+               RECORD=CMPBYTE,                                         X
+               SYNAD=SYNCMP
+*
+SEQNEW   DCB   DSORG=PS,                                               X
+               EODAD=EOFNEW,                                           X
+               RECFM=F,                                                X
+               DDNAME=SEQNEW,                                          X
+               MACRF=GM,                                               X
+               BLKSIZE=1,                                              X
+               LRECL=1,                                                X
+               RECORD=NEWBYTE
+*
+SEQOUT   DCB   DSORG=PS,                                               X
+               RECFM=FT,                                               X
+               DDNAME=SEQOUT,                                          X
+               MACRF=PM,                                               X
+               BLKSIZE=80,                                             X
+               LRECL=80,                                               X
+               RECORD=OUTAREA
+*
+SEQEXCL  DCB   DSORG=PS,                                               X
+               EODAD=EOFEXC,                                           X
+               RECFM=FT,                                               X
+               DDNAME=SEQEXC,                                          X
+               MACRF=GM,                                               X
+               BLKSIZE=80,                                             X
+               LRECL=80,                                               X
+               RECORD=EXCAREA,                                         X
+               SYNAD=SYNEXC
+*
+CMPENV   DC    C'SEQCMP',X'00'    COMP ENV VARIABLE
+CMPFILE  DC    CL80' ',X'00'      COMP PATH/FILE
+CMPFILAD DS    AL4                COMP FILE NUMBER ADDRESS>>>QCNNNN
+CMPFILNM DC    PL3'1'             COMP CURRENT FILE NUMBER
+*
+EXCIND   DC    X'00'              FF=NO EXCLUDE FILE OR EOF
+EXCHIGH  DC    X'00'              FF=EXCLUDE RECORD YET TO BE MATCHED
+EXCST1   DS    H                  EXCLUDE RANGE START 1
+EXCEN1   DS    H                  EXCLUDE RANGE END   1
+EXCST2   DS    H                  EXCLUDE RANGE START 2
+EXCEN2   DS    H                  EXCLUDE RANGE END   2
+EXCST3   DS    H                  EXCLUDE RANGE START 3
+EXCEN3   DS    H                  EXCLUDE RANGE END   3
+EXCST4   DS    H                  EXCLUDE RANGE START 4
+EXCEN4   DS    H                  EXCLUDE RANGE END   4
+         DS    X                  RESIDUAL BYTE
+*
+SAVECOMP DS    AL4                SAVE POINTER IN COMP STREAM
+SAVENEW  DS    AL4                SAVE POINTER IN NEW  STREAM
+*
+CMPBYTE  DS    X                  COMP FILE BYTE
+NEWBYTE  DS    X                  NEW FILE BYTE
+WORK     DS    XL5                WORK AREA
+STREAM   DC    PL3'0'             STREAM NUMBER WITHIN FILE
+STRMCNT  DC    PL3'0'             NO. OF STREAMS PRINTED
+OFFSET   DC    H'0'               OFFSET WITHIN RECORD
+RESIDUAL DC    H'0'               BYTES TO MISS IN NEXT CHUNK
+TABLE    DC    C'0123456789ABCDEF' TRANSLATE TABLE
+*
+TRANHEX  DC    C'000102030405060708090A0B0C0D0E0F'  00-0F
+         DC    C'101112131415161718191A1B1C1D1E1F'  10-1F
+         DC    C'202122232425262728292A2B2C2D2E2F'  20-2F
+         DC    C'303132333435363738393A3B3C3D3E3F'  30-3F
+         DC    C'404142434445464748494A4B4C4D4E4F'  40-4F
+         DC    C'505152535455565758595A5B5C5D5E5F'  50-5F
+         DC    C'606162636465666768696A6B6C6D6E6F'  60-6F
+         DC    C'707172737475767778797A7B7C7D7E7F'  70-7F
+         DC    C'808182838485868788898A8B8C8D8E8F'  80-8F
+         DC    C'909192939495969798999A9B9C9D9E9F'  90-9F
+         DC    C'A0A1A2A3A4A5A6A7A8A9AAABACADAEAF'  A0-AF
+         DC    C'B0B1B2B3B4B5B6B7B8B9BABBBCBDBEBF'  B0-BF
+         DC    C'C0C1C2C3C4C5C6C7C8C9CACBCCCDCECF'  C0-CF
+         DC    C'D0D1D2D3D4D5D6D7D8D9DADBDCDDDEDF'  D0-DF
+         DC    C'E0E1E2E3E4E5E6E7E8E9EAEBECEDEEEF'  E0-EF
+         DC    C'F0F1F2F3F4F5F6F7F8F9FAFBFCFDFEFF'  F0-FF
+*
+*                30313233343536373839
+TRANASCH DC    X'00010203040506070809000000000000'  30-3F
+*                  414243444546
+         DC    X'000A0B0C0D0E0F000000000000000000'  40-4F
+*
+HEADER   DC    C'FILE '
+FILENUM  DS    CL4
+         DC    C'  STREAM'
+STRMNUM  DS    CL6
+HEADLEN  EQU   *-HEADER
+*
+INDX     DC    11C' '
+         DC    C'+00'
+         DC    14C' '
+         DC    C'08'
+         DC    14C' '
+         DC    C'10'
+         DC    14C' '
+         DC    C'18'
+         DC    12C' '
+         DC    C'1F'
+INDXLEN  EQU   *-INDX
+*
+HEXLINE  DC    3C' '
+HEXTYPE  DS    CL2                C+ OR N+  OR DIFFS
+HEXOFFST DS    CL4
+         DC    3C' '
+HEXDISP  DS    CL64
+HEXLEN   EQU   *-HEXLINE
+*
+WTORDW   DC    AL2(WTOLEN+4,0)
+WTOMSG   EQU   *
+         DC    C'No. of streams written to SEQCOMP.TXT :'
+STRMSHW  DS    CL6
+WTOLEN   EQU   *-WTOMSG
+*
+OUTAREA  DS    CL80               OUTPUT FILE RECORD AREA
+CMPAREA  DS    CL2000             COMP FILE RECORD AREA
+NEWAREA  DS    CL2000             NEW FILE RECORD AREA
+EXCAREA  DS    CL80               EXCLUDE FILE RECORD AREA
+*
+* DSECT FOR EXCLUSION RECORD AREA
+EXCDSECT DSECT
+EXCSTAR  DS    C                  ASTERISK COMMENT
+         DS    C
+EXCFILNM DS    CL4                FILE NUMBER
+         DS    CL3
+EXCSTRM  DS    CL5                STREAM NUMBER
+         DS    CL3
+EXCSTRT1 DS    CL4                START 1
+         DS    CL2
+EXCEND1  DS    CL4                END 1
+         DS    CL3
+EXCSTRT2 DS    CL4                START 2
+         DS    CL2
+EXCEND2  DS    CL4                END 2
+         DS    CL3
+EXCSTRT3 DS    CL4                START 3
+         DS    CL2
+EXCEND3  DS    CL4                END 3
+         DS    CL3
+EXCSTRT4 DS    CL4                START 4
+         DS    CL2
+EXCEND4  DS    CL4                END 4
+*
+LF       EQU   X'0A'
+EOF      EQU   X'1A'
+*
+         TN3270 SYMBOLS
+         EQUREGS
+* R12  BASE 1
+         END
+

@@ -1,0 +1,110 @@
+*********************************************************************
+* ZMFACC Problem #8 - calculate PI to as many decimal places as 
+* possible using extended precision floating point
+*********************************************************************
+* Lindy Mayfield solution based on this model program in REXX
+* /* Rexx */
+* size = 1165  /*    1165 gives 1000 digits    */     
+*  numeric digits size                                 
+*  n = 0                                               
+*  asubn = 3                                           
+*  sum = 3                                              
+*  last = no                                           
+*  do size                                             
+*    n = n + 1                                         
+*    n1 = n * 2                                        
+*    n1 = n1 * 2                                       
+*    n2 = n * n                                        
+*    n2 = n2 * 4                                       
+*    d1 = n2 - n1 + 1                                  
+*    d2 = (n2 * 2) + n1                                
+*    d2 = d2 * 2                                       
+*    asubn = asubn * d1 / d2                           
+*    sum = sum + asubn                                 
+*  end                                                 
+*    say n 'iterations'                                
+*    say 'pi =' sum * 1                                
+*    say                                               
+*  exit 0                                              
+*********************************************************************
+* 12/26/07 DSH1 Don Higgins changed to run on z390 with auto
+*          termination when error from known PI is < 1E-33,
+*          use LX and STX to simplify load and store extended fp
+*          and display trial PI and error at each iteration.
+*********************************************************************
+P8LM1    ZMFACC CODE,START,NAME='Lindy Mayfield'
+         MACRO
+&N       LX    &F1,&S2      LOAD EXTENDED FP REG PAIR FROM LONG FP
+&XREGS(1) SETA 1,1,0,0,4,5,0,0,8,9,0,0,12,13
+         AIF   (&XREGS(&F1+1) NE 0).OK
+         MNOTE 12,'LX INVALID EXTENDED REGISTER PAIR LOAD'
+.OK      ANOP
+         LD    &F1,&S2
+         LD    &F1+2,&S2+8
+         MEND
+         MACRO
+&N       STX   &F1,&S2      STORE EXTENDED FP REG PAIR TO LONG FP
+&XREGS(1) SETA 1,1,0,0,4,5,0,0,8,9,0,0,12,13
+         AIF   (&XREGS(&F1+1) NE 0).OK
+         MNOTE 12,'STX INVALID EXTENDED REGISTER PAIR STORE'
+.OK      ANOP
+         STD   &F1,&S2
+         STD   &F1+2,&S2+8
+         MEND
+MAIN     LA    R2,80              Number of iterations MAX      DSH1   
+         XR    R3,R3              N                       
+         XR    R4,R4              N1                      
+         XR    R6,R6              N2 high (not used)      
+         XR    R7,R7              N2 low                  
+         XR    R8,R8              D1                      
+         XR    R9,R9              D2                      
+         LX    F0,=L'3'           ASUBN initalized to 3         DSH1
+         LX    F4,=L'3'           Result initalized to 3        DSH1
+         LX    F8,=L'0'           Work                          DSH1
+LOOP     DS    0H                                         
+         LA    R3,1(,R3)          R3= n = n + 1               
+         LR    R4,R3              R4= n1 = n                  
+         SLA   R4,2               R4= n1 = n1 * 4             
+         LR    R7,R3              R7= n2 = n * n              
+         MR    R6,R3                                      
+         SLA   R7,2               R7= n2 = 4 * n * n             
+         LR    R8,R7              R8= d1 = n2 - n1 + 1        
+         SR    R8,R4                                      
+* DSH1   LA    R8,1(,R8)                                        DSH1
+         AHI   R8,1                                             DSH1
+         LR    R9,R7              R9= d2 = (n2 * 2) + n1      
+         SLA   R9,1                                       
+         AR    R9,R4                        
+         SLA   R9,1               R9= d2 = d2 + d2              
+         CXFR  F8,R8              asubn = asubn * d1 / d2       DSH1
+         MXR   F0,F8              multiply                
+         CXFR  F8,R9              asubn = asubn * d1 / d2       DSH1
+         DXR   F0,F8              divide                        
+         AXR   F4,F0              sum = sum + asubn  
+         STX   F4,LH
+         CTD    CTD_LH,IN=LH,OUT=SNX                            DSH1
+         SNAP  ID=(R2),PDATA=,STORAGE=(SNX,SNX+45),             DSH1   X  
+               TEXT='NEXT TRIAL VALUE'   
+         STX   F4,LH
+         LX    F1,LHPI
+         SXR   F1,F4
+         CTD   CTD_LH,IN=F1,OUT=PIDIF                           DSH1
+         SNAP  ID=(R2),PDATA=,STORAGE=(PIDIF,PIDIF+45),         DSH1   X
+               TEXT='PI DIFF'                                   DSH1
+         LX    F5,=L'1E-33'                                     DSH1
+         CXR   F1,R5                                            DSH1
+         BL    DONE                                             DSH1
+         BCT   R2,LOOP                Loop for up to max limit  DSH1
+DONE     DS    0H             
+         CTD   CTD_LH,IN=LH,OUT=SNX
+         ZMFACC CODE,END ZMFACC INPUT,START                     DSH1
+         ZMFACC INPUT,START
+         ZMFACC OUTPUT,START
+SNX      DC    CL45' ' SCIENTIFIC NOTATION DISPLAY OF X VALUE   DSH1 
+         ZMFACC INPUT,END 
+         ZMFACC OUTPUT,END
+LH       DC    LH'0' ZMFACC OUTPUT,END                          DSH1
+* PI REF http://www.jimloy.com/geometry/pi.htm                  DSH1
+LHPI     DC    LH'3.141592653589793238462643383279502'          DSH1
+PIDIF    DC    CL45' '                                          DSH1
+         END

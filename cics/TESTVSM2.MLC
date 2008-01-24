@@ -1,0 +1,470 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+         DFHEIGBL
+         DFHEISTG
+MYDATA   DS    CL50               DATA AREA
+MYLEN    DS    XL2                RECEIVED LENGTH
+MYRID    DS    XL4                RIDFLD (RRN)
+MYRID1   DS    XL4                RIDFLD (RRN)
+MYRID2   DS    XL4                RIDFLD (RRN)
+FWTSBA   DS    XL4                WCC,SBA FOR FOP MSG
+FWTMSG   DS    CL(FOPLN)          FOP MESSAGE
+TESTVSM2 DFHEIENT CODEREG=(R12,R3,R4,R5,R6)
+*
+* TEST VSAM 2
+*
+* RRDS/FIX MYFILE06 READ/RRN  3 REC  3   Merry Wives of Windsor
+* RRDS/FIX MYFILE06 READ/RRN  2 REC  2   Two Gentlemen of Verona
+* RRDS/FIX MYFILE06 READ/RRN  1 REC  1   The Tempest
+* RRDS/VAR MYFILE07 READ/RRN  5 REC  1   All's Well That Ends Well
+* RRDS/VAR MYFILE07 READ/RRN 10 REC  3   The Winter's Tale
+* NOTFND       CONDITION RAISED (READ INVALID RRN)
+* ILLOGIC      CONDITION RAISED (READ WITH RBA)
+* LENGERR      CONDITION RAISED          The Ta
+* RRDS/VAR MYFILE07 BROWSE FORWARD RRN 7-11 (READ RECS 2-4)
+*                                        The Taming of the Shrew
+*                                        The Winter's Tale
+*                                        The Comedy of Errors
+* RRDS/VAR MYFILE07 BROWSE BACK    RRN 11-8 (READ RECS 4-2)
+*                                        The Comedy of Errors
+*                                        The Winter's Tale
+*                                        The Taming of the Shrew
+* RRDS/VAR MYFILE07 BROWSE RANDOM  RRN 17 (REC 7) NEXT
+*                                        First Part of Henry IV
+*                                  RRN 22 (REC 6) PREV
+*                                        Richard II
+*                                  RRN 1  (REC 1)
+*                                        All's Well That Ends Well
+* ENDFILE      CONDITION RAISED (READNEXT RRN 99 BEYOND END)
+* ENDFILE      CONDITION RAISED (READPREV RRN 1)
+* RRDS COMPLEX TEST...DONE IN THIS SEQUENCE
+*    BROWSE FORWARD MYFILE06 RRN 6-9  (RECS 5-7)
+*    BROWSE BACK    MYFILE06 RRN 10-6 (RECS 7-5)
+*                                        Measure for Measure
+*                                        A Midsummer Night's Dream
+*                                        Much Ado About Nothing
+*                                        Much Ado About Nothing
+*                                        A Midsummer Night's Dream
+*                                        Measure for Measure
+* RRDS/VAR MYFILE07, RRN 10 (RECS 3-5), RESETBR, RRN 99 (RECS 10-8)
+*                                        The Winter's Tale
+*                                        The Comedy of Errors
+*                                        King John
+*                                        Henry V
+*                                        Second Part of Henry IV
+*                                        First Part of Henry IV
+*
+         CLI   FOPSEP+1,C' '      SEND LENGTH ADJUSTED ?
+         BNE   NOTADJL            EXIT IF NOT
+         MVI   FOPSEP+1,C'|'      SET SEPARATOR
+         LH    R7,FOPL            MESSAGE LENGTH
+         AHI   R7,1               LENGTHEN BY 1
+         STH   R7,FOPL            STORE BACK
+NOTADJL  EQU   *
+         CLI   FHSEP,C' '         SEND CONDITION LENGTH ADJUSTED ?
+         BNE   NOTADJC            EXIT IF NOT
+         MVI   FHSEP,C'|'         SET SEPARATOR
+         LH    R7,FHANDL          MESSAGE LENGTH
+         AHI   R7,1               LENGTHEN BY 1
+         STH   R7,FHANDL          STORE BACK
+NOTADJC  EQU   *
+         MVC   FOPTYPE,=C'RRDS'   SET FILE TYPE IN MESSAGE
+         MVC   FOPFIXVR,=C'FIX'   SET FIX/VAR IN MESSAGE
+         MVC   FOPNAME,=C'MYFILE06' SET FILENAME IN MESSAGE
+         MVC   FOPFUNC,=CL8'READ' SET FUNCTION IN MESSAGE
+         MVC   FOPMETH,=CL4'RRN'  SET METHOD IN MESSAGE
+         MVC   MYRID,=F'3'        RECORD 3
+         MVC   MYLEN,=H'30'       SET MAXIMUM LENGTH
+         EXEC  CICS READ FILE('MYFILE06') INTO(MYDATA) LENGTH(MYLEN)   X
+               RIDFLD(MYRID) RRN
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   FWTSBA,FOP1        MOVE WCC,SBA
+         MVC   FOPRECNO,=C'  3'   SET RECORD NUMBER IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+*
+         MVC   MYRID,=F'2'        RECORD 2
+         MVC   MYLEN,=H'30'       SET MAXIMUM LENGTH
+         EXEC  CICS READ FILE('MYFILE06') INTO(MYDATA) LENGTH(MYLEN)   X
+               RIDFLD(MYRID) RRN
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   FWTSBA,FOP2        MOVE WCC,SBA
+         MVC   FOPRECNO,=C'  2'   SET RECORD NUMBER IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+*
+         MVC   MYRID,=F'1'        RECORD 1
+         MVC   MYLEN,=H'30'       SET MAXIMUM LENGTH
+         EXEC  CICS READ FILE('MYFILE06') INTO(MYDATA) LENGTH(MYLEN)   X
+               RIDFLD(MYRID) RRN
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   FWTSBA,FOP3        MOVE WCC,SBA
+         MVC   FOPRECNO,=C'  1'   SET RECORD NUMBER IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+*
+         MVC   FOPFIXVR,=C'VAR'   SET FIX/VAR IN MESSAGE
+         MVC   FOPNAME,=C'MYFILE07' SET FILENAME IN MESSAGE
+         MVC   MYRID,=F'5'        RRN 5  RECORD 1
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         EXEC  CICS READ FILE('MYFILE07') INTO(MYDATA) LENGTH(MYLEN)   X
+               RIDFLD(MYRID) RRN
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   FWTSBA,FOP4        MOVE WCC,SBA
+         MVC   FOPRECNO,=C'  5'   SET RECORD NUMBER IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+*
+         MVC   MYRID,=F'10'       RRN 10  RECORD 3
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         EXEC  CICS READ FILE('MYFILE07') INTO(MYDATA) LENGTH(MYLEN)   X
+               RIDFLD(MYRID) RRN
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   FWTSBA,FOP5        MOVE WCC,SBA
+         MVC   FOPRECNO,=C' 10'   SET RECORD NUMBER IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+*
+* RAISE SOME CONDITIONS, WE MAY NOT DO ALL THESE FOR EVERY FUNCTION
+*
+         EXEC  CICS HANDLE CONDITION                                   X
+               NOTFND(VSAMNOTF)                                        X
+               LENGERR(VSAMLNG)                                        X
+               ENDFILE(VSAMENDF)                                       X
+               ILLOGIC(VSAMILL)
+*
+* NOTFND
+         MVC   FWTSBA,FOP6        MOVE WCC,SBA
+         MVC   FOPNAME,=CL8'MYFILE06' SET FILENAME IN MESSAGE
+         MVC   FOPRECNO,=C'  4'   SET RECORD NUMBER IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         MVC   MYRID,=F'4'        RECORD 4  EMPTY RECORD
+         MVC   MYLEN,=H'30'       SET MAXIMUM LENGTH
+         LA    R7,VSAMRTN1        R7=HANDLE RETURN
+         EXEC  CICS READ FILE('MYFILE06') INTO(MYDATA) LENGTH(MYLEN)   X
+               RIDFLD(MYRID) RRN
+*
+VSAMRTN1 DS    0H
+* ILLOGIC
+         MVC   FWTSBA,FOP8        MOVE WCC,SBA
+         MVC   FOPRECNO,=C'  2'   SET RECORD NUMBER IN MESSAGE
+         MVC   FOPMETH,=CL4'RBA'  SET METHOD IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         MVC   MYRID,=F'2'        RECORD 2
+         MVC   MYLEN,=H'30'       SET MAXIMUM LENGTH
+         LA    R7,VSAMRTN2        R7=HANDLE RETURN
+         EXEC  CICS READ FILE('MYFILE06') INTO(MYDATA) LENGTH(MYLEN)   X
+               RIDFLD(MYRID) RBA
+VSAMRTN2 DS    0H
+*
+* LENGERR/11
+         MVC   FWTSBA,FOP10       MOVE WCC,SBA
+         MVC   FOPNAME,=CL8'MYFILE07' SET FILENAME IN MESSAGE
+         MVC   FOPRECNO,=C'  8'   SET RECORD NUMBER IN MESSAGE
+         MVC   FOPMETH,=CL4'RRN'  SET METHOD IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         MVC   MYRID,=F'8'        RECORD 8
+         MVC   MYLEN,=H'6'        LENGTH TOO SHORT
+         LA    R7,VSAMRTN3        R7=HANDLE RETURN
+         EXEC  CICS READ FILE('MYFILE07') INTO(MYDATA) LENGTH(MYLEN)   X
+               RIDFLD(MYRID) RRN
+*
+VSAMRTN3 DS    0H
+         MVC   MYLEN,=H'6'        LENGTH REQUESTED
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         SR    R7,R7              NO ERROR RETURN
+*
+* START BROWSE, POINT AT EMPTY SLOT 7
+         MVC   FWTSBA,FOP12       MOVE WCC,SBA
+         MVC   FOPRECNO,=C'  7'   SET RECORD NUMBER IN MESSAGE
+         MVC   FOPFUNC,=CL8'STARTBR' SET FUNCTION IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         MVC   MYRID,=F'7'        RECORD 7 (EMPTY SLOT)
+         EXEC  CICS STARTBR FILE('MYFILE07') RIDFLD(MYRID) RRN
+*
+* READNEXT 3 RECORDS
+         MVC   FWTSBA,FOP13       MOVE WCC,SBA
+         MVC   FOPRECNO,=C'S  '   SET RECORD NUMBERS IN MESSAGE
+         MVC   FOPFUNC,=CL8'READNEXT' SET FUNCTION IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         LA    R8,3               READ 3 FORWARDS
+RDNXLOOP EQU   *
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         EXEC  CICS READNEXT FILE('MYFILE07') INTO(MYDATA)             X
+               LENGTH(MYLEN) RIDFLD(MYRID) RRN
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         BCT   R8,RDNXLOOP        LOOP
+*
+* READPREV 3 RECORDS
+         MVC   FWTSBA,FOP14       MOVE WCC,SBA
+         MVC   FOPRECNO,=C'S  '   SET RECORD NUMBERS IN MESSAGE
+         MVC   FOPFUNC,=CL8'READPREV' SET FUNCTION IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         LA    R8,3               READ 3 BACKWARDS
+RDPVLOOP EQU   *
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         EXEC  CICS READPREV FILE('MYFILE07') INTO(MYDATA)             X
+               LENGTH(MYLEN) RIDFLD(MYRID) RRN
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         BCT   R8,RDPVLOOP        LOOP
+*
+* READ RANDOM 3 RECORDS
+         MVC   FWTSBA,FOP15       MOVE WCC,SBA
+         MVC   FOPRECNO,=C'S  '   SET RECORD NUMBERS IN MESSAGE
+         MVC   FOPFUNC,=CL8'READ RND' SET FUNCTION IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         MVC   MYRID,=F'17'       RRN 17
+* POINT AT RRN 17, READ RECORD 7
+         EXEC  CICS READNEXT FILE('MYFILE07') INTO(MYDATA)             X
+               LENGTH(MYLEN) RIDFLD(MYRID) RRN
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         MVC   MYRID,=F'22'       RRN 22
+* POINT AT RRN 22, READ RECORD 6
+         EXEC  CICS READPREV FILE('MYFILE07') INTO(MYDATA)             X
+               LENGTH(MYLEN) RIDFLD(MYRID) RRN
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         MVC   MYRID,=F'1'        RRN 1
+* POINT AT RRN 1, READ RECORD 1
+         EXEC  CICS READNEXT FILE('MYFILE07') INTO(MYDATA)             X
+               LENGTH(MYLEN) RIDFLD(MYRID) RRN
+         BAL   R9,WQTS            WRITE IT TO TS Q
+*
+* END BROWSE
+         MVC   FWTSBA,FOP16       MOVE WCC,SBA
+         MVC   FOPRECNO,=C'   '   SET RECORD NUMBERS IN MESSAGE
+         MVC   FOPFUNC,=CL8'ENDBR' SET FUNCTION IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         EXEC  CICS ENDBR FILE('MYFILE07')
+*
+* ENDFILE 1 RAISED BY READING FORWARD FROM END
+         MVC   FWTSBA,FOP17       MOVE WCC,SBA
+         MVC   FOPNAME,=CL8'MYFILE06' SET FILENAME IN MESSAGE
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         MVC   MYRID,=F'99'       RRN 99   RRN BEYOND END
+         MVC   FOPRECNO,=C' 99'   SET RECORD NUMBER IN MESSAGE
+         MVC   FOPFUNC,=CL8'READNEXT' SET FUNCTION IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         MVI   ENDFLENO,C'1'      SET 1ST ENDFILE
+         LA    R7,VSAMRTN4        R7=HANDLE RETURN
+         EXEC  CICS STARTBR FILE('MYFILE06') RIDFLD(MYRID) RRN
+         EXEC  CICS READNEXT FILE('MYFILE06') INTO(MYDATA)             X
+               LENGTH(MYLEN) RIDFLD(MYRID) RRN
+*
+VSAMRTN4 EQU   *
+*
+* ENDFILE 2 RAISED BY READING BACK FROM START
+         MVC   FWTSBA,FOP19       MOVE WCC,SBA
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         MVC   MYRID,=F'1'        RRN 1  FIRST RECORD
+         MVC   FOPRECNO,=C'  1'   SET RECORD NUMBER IN MESSAGE
+         MVC   FOPFUNC,=CL8'READPREV' SET FUNCTION IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         MVI   ENDFLENO,C'2'      SET 2ND ENDFILE
+         LA    R7,VSAMRTN5        R7=HANDLE RETURN
+         EXEC  CICS READPREV FILE('MYFILE06') INTO(MYDATA)             X
+               LENGTH(MYLEN) RIDFLD(MYRID) RRN
+*
+VSAMRTN5 EQU   *
+         EXEC  CICS ENDBR FILE('MYFILE06')
+*
+* COMPLEX TEST, 2 OVERLAPPING BROWSES OF SAME FILE
+         MVC   FWTSBA,FOP21       MOVE WCC,SBA
+         MVC   FOPNAME,=CL8'COMPLEX' SET FILENAME IN MESSAGE
+         MVC   FOPRECNO,=C'S  '   SET RECORD NUMBERS IN MESSAGE
+         MVC   FOPFUNC,=CL8'COMPLEX' SET FUNCTION IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         MVC   MYRID1,=F'6'       RRN 6  RECORD 5
+         EXEC  CICS STARTBR FILE('MYFILE06') RIDFLD(MYRID1) RRN        X
+               REQID(1)
+         MVC   MYRID2,=F'10'      RRN 10 RECORD 8(BACK TO 7)
+         EXEC  CICS STARTBR FILE('MYFILE06') RIDFLD(MYRID2) RRN        X
+               REQID(2)
+         LA    R8,3               R8=LOOP LIMIT
+PLEXLOOP EQU   *
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         EXEC  CICS READNEXT FILE('MYFILE06') INTO(MYDATA)             X
+               LENGTH(MYLEN) RIDFLD(MYRID1) RRN REQID(1)
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         EXEC  CICS READPREV FILE('MYFILE06') INTO(MYDATA)             X
+               LENGTH(MYLEN) RIDFLD(MYRID2) RRN REQID(2)
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         BCT   R8,PLEXLOOP        LOOP
+         EXEC  CICS ENDBR FILE('MYFILE06') REQID(1)
+         EXEC  CICS ENDBR FILE('MYFILE06') REQID(2)
+*
+* MYFILE07, RRN 10 (RECS 3-5), RESETBR, RRN 99 (RECS 10-8)
+         MVC   FWTSBA,FOP1C2      MOVE WCC,SBA
+         LH    R7,FOPL            MESSAGE LENGTH
+         AHI   R7,-1              SHORTEN BY 1
+         STH   R7,FOPL            STORE BACK
+         MVI   FOPSEP+1,C' '      RESET SEPARATOR
+         MVC   FOPNAME,=CL8'MYFILE07' SET FILENAME IN MESSAGE
+         MVC   FOPRECNO,=C'S  '   SET RECORD NUMBERS IN MESSAGE
+         MVC   FOPFUNC,=CL8'RESETBR' SET FUNCTION IN MESSAGE
+         MVC   FWTMSG,FOPTYPE     MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FOPL)
+         MVC   MYRID1,=F'10'      RRN 3  RECORD 3
+         EXEC  CICS STARTBR FILE('MYFILE07') RIDFLD(MYRID1) RRN        X
+               REQID(1)
+         LA    R8,3               R8=LOOP LIMIT
+RSBRLP1  EQU   *
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         EXEC  CICS READNEXT FILE('MYFILE07') INTO(MYDATA)             X
+               LENGTH(MYLEN) RIDFLD(MYRID1) RRN REQID(1)
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         BCT   R8,RSBRLP1         LOOP
+         MVC   MYRID1,=F'99'      RRN 99  PAST END
+         EXEC  CICS RESETBR FILE('MYFILE07') RIDFLD(MYRID1) RRN        X
+               REQID(1)
+         LA    R8,3               R8=LOOP LIMIT
+RSBRLP2  EQU   *
+         MVC   MYLEN,=H'50'       SET MAXIMUM LENGTH
+         EXEC  CICS READPREV FILE('MYFILE07') INTO(MYDATA)             X
+               LENGTH(MYLEN) RIDFLD(MYRID1) RRN REQID(1)
+         BAL   R9,WQTS            WRITE IT TO TS Q
+         BCT   R8,RSBRLP2         LOOP
+         EXEC  CICS ENDBR FILE('MYFILE07') REQID(1)
+*
+         EXEC  CICS SEND FROM(ENDMSG) LENGTH(ENDMSGL)
+*
+         EXEC  CICS RETURN
+*
+* HANDLE ROUTINES
+*
+VSAMNOTF DS    0H
+         MVC   FWTSBA,FOP7        MOVE WCC,SBA
+         MVC   FHANDCON,=CL12'NOTFND' MOVE CONDITION
+         BAL   R9,HEXFDBK         DISPLAY FEEDBACK CODES
+         B     FWTHSEND           EXIT
+*
+VSAMILL  DS    0H
+         MVC   FWTSBA,FOP9        MOVE WCC,SBA
+         L     R8,EIBRESP2        R8=RESP2
+         CVD   R8,DEC             CONVERT TO DECIMAL
+         XC    FHANDCON,FHANDCON  CLEAR CONDITION
+         MVC   FHANDCON+7(4),=X'40202020' MOVE EDIT WORD
+         ED    FHANDCON+7(4),DEC+6 EDIT RESP2
+         MVC   FHANDCON(8),=C'ILLOGIC/' MOVE CONDITION
+         BAL   R9,HEXFDBK         DISPLAY FEEDBACK CODES
+         B     FWTHSEND           EXIT
+*
+VSAMLNG  DS    0H
+         MVC   FWTSBA,FOP11       MOVE WCC,SBA
+         L     R8,EIBRESP2        R8=RESP2
+         CVD   R8,DEC             CONVERT TO DECIMAL
+         XC    FHANDCON,FHANDCON  CLEAR CONDITION
+         MVC   FHANDCON+6(4),=X'40202020' MOVE EDIT WORD
+         ED    FHANDCON+6(4),DEC+6 EDIT RESP2
+         MVC   FHANDCON(8),=C'LENGERR/' MOVE CONDITION
+         BAL   R9,HEXFDBK         DISPLAY FEEDBACK CODES
+         B     FWTHSEND           EXIT
+*
+VSAMENDF DS    0H
+         MVC   FWTSBA,FOP18       MOVE WCC,SBA
+         CLI   ENDFLENO,C'1'      1ST ?
+         BE    ENDFLEGO           EXIT IF IT IS
+         MVC   FWTSBA,FOP20       MOVE WCC,SBA
+ENDFLEGO EQU   *
+         MVC   FHANDCON,=CL12'ENDFILE' MOVE CONDITION
+         BAL   R9,HEXFDBK         DISPLAY FEEDBACK CODES
+*
+FWTHSEND EQU   *
+         MVC   FWTMSG,FHANDCON    MOVE MESSAGE TEXT
+         EXEC  CICS SEND FROM(FWTSBA) LENGTH(FHANDL)
+         BR    R7                 RETURN TO MAIN LINE
+*
+ENDFLENO DC    C'1'               DISPLAY INDICATOR
+*
+* SUBROUTINES
+*
+WQTS     DS    0H
+         EXEC  CICS WRITEQ TS QUEUE('VSM2') FROM(MYDATA) LENGTH(MYLEN)
+         BR    R9                 RETURN
+*
+HEXFDBK  DS    0H
+         UNPK  WORK(5),EIBRCODE+1(3) UNPACK VSAM FEEDBACK CODES
+         TR    WORK(4),TABLE-240  TRANSLATE TO PRINTABLE HEX
+         MVC   FHFDBK1,WORK       MOVE FDBK RETURN
+         MVC   FHFDBK2,WORK+2     MOVE FDBK CODE
+         BR    R9                 RETURN
+*
+FOP1     TN3270 WCC_KD,(SBA,3,1)
+FOP2     TN3270 WCC_KD,(SBA,4,1)
+FOP3     TN3270 WCC_KD,(SBA,5,1)
+FOP4     TN3270 WCC_KD,(SBA,6,1)
+FOP5     TN3270 WCC_KD,(SBA,7,1)
+FOP6     TN3270 WCC_KD,(SBA,8,1)
+FOP7     TN3270 WCC_KD,(SBA,9,1)
+FOP8     TN3270 WCC_KD,(SBA,10,1)
+FOP9     TN3270 WCC_KD,(SBA,11,1)
+FOP10    TN3270 WCC_KD,(SBA,12,1)
+FOP11    TN3270 WCC_KD,(SBA,13,1)
+FOP12    TN3270 WCC_KD,(SBA,14,1)
+FOP13    TN3270 WCC_KD,(SBA,15,1)
+FOP14    TN3270 WCC_KD,(SBA,16,1)
+FOP15    TN3270 WCC_KD,(SBA,17,1)
+FOP16    TN3270 WCC_KD,(SBA,18,1)
+FOP17    TN3270 WCC_KD,(SBA,19,1)
+FOP18    TN3270 WCC_KD,(SBA,20,1)
+FOP19    TN3270 WCC_KD,(SBA,21,1)
+FOP20    TN3270 WCC_KD,(SBA,22,1)
+FOP21    TN3270 WCC_KD,(SBA,23,1)
+FOP1C2   TN3270 WCC_KD,(SBA,3,42)
+*
+* ESDS MYFILE01 READ   RBA REC  3
+FOPTYPE  DS    CL4
+         DC    C'/'
+FOPFIXVR DS    CL3
+         DC    C' '
+FOPNAME  DS    CL8
+         DC    C' '
+FOPFUNC  DC    C'READNEXT'
+         DC    C' '
+FOPMETH  DC    C'RBA '
+         DC    C' REC'
+FOPRECNO DS    CL3
+FOPSEP   DC    C' |'
+FOPLN    EQU   *-FOPTYPE
+FOPL     DC    AL2(*-(FOPTYPE-4))
+*
+FHANDCON DC    CL12' '
+         DC    C' CONDITION RAISED '
+FHFDBK1  DS    CL2
+         DC    C' '
+FHFDBK2  DS    CL2
+         DC    4C' '
+FHSEP    DC    C'|'
+FHANDL   DC    AL2(*-(FHANDCON-4))
+*
+ENDMSG   TN3270 WCC_KD,(SBA,24,1)
+         DC    C'TESTVSM2 COMPLETED, PRESS CLEAR'
+ENDMSGL  DC    AL2(*-ENDMSG)
+*
+DEC      DC    PL8'0'
+WORK     DS    XL5
+*
+TABLE    DC    C'0123456789ABCDEF'
+*
+         TN3270 SYMBOLS
+         EQUREGS
+         END
+

@@ -122,10 +122,13 @@ ISYS     EQU   *
          MVC   ISYSJPTH,ISYSDJRP  MOVE JARPATH
          MVC   ISYSCPTH,ISYSDCSP  MOVE CICSPATH
          MVC   ISYSTPFX,ISYSDPFX  MOVE TERMID_PREFIX
-         MVC   ISYSTDAT,=C'UK'    SET DEFAULT DATE FORMAT
-         CLI   ISYSDDTE,C'K'      IS DATE=UK ?
+         MVC   ISYSTDAT,=C'DMY'   SET DATE FORMAT DMY
+         CLI   ISYSDDTE,C'K'      IS DATE=K ?
          BE    ISYSDTDN           EXIT IF IT IS
-         MVC   ISYSTDAT,=C'US'    SET US FORMAT
+         MVC   ISYSTDAT,=C'MDY'   SET DATE FORMAT MDY
+         CLI   ISYSDDTE,C'U'      IS DATE=U ?
+         BE    ISYSDTDN           EXIT IF IT IS
+         MVC   ISYSTDAT,=C'YMD'   SET DATE FORMAT YMD
 ISYSDTDN EQU   *
          MVC   ISYSMAXU+1(1),ISYSDTUS MOVE MAXTHREADS IN USE
          OI    ISYSMAXU+1,C'0'    CONVERT TO CHAR
@@ -166,6 +169,7 @@ ISYSHEX6 EQU   *
          MVC   ISYSLTRC,ISYSDTRL  MOVE TRACE_LOCALS
          MVC   ISYSZTRC,ISYSDTRZ  MOVE TRACE_Z390CICS
          MVC   ISYSINIT,ISYSDINT  MOVE INITIAL_TRANSID
+         MVC   ISYSSEQT,ISYSDSEQ  MOVE SEQ_TERM
          EXEC  CICS SEND FROM(SNDISYST) LENGTH(ISYSLEN)
          B     RETURN             END OF PROGRAM
 *
@@ -192,11 +196,15 @@ ITER     EQU   *
          USING ITERDSCT,R6
          LA    R7,CEMTDATA        R7=RECEIVED DATA
          USING THRDDSCT,R7
-         LA    R8,10              R8=MAX THREADS
+         LA    R8,11              R8=MAX THREADS + 1 FOR SEQ TERM
          LA    R9,C'0'            R9=TERMID SUFFIX
 ITERLOOP EQU   *
-         MVC   ITERTERM(3),EIBTRMID MOVE TERMID PREFIX
+         MVC   ITERTERM(3),CEMTDATA+11*THRDLEN MOVE TERMID PREFIX
          STC   R9,ITERTERM+3      MOVE TERMID SUFFIX
+         C     R8,=F'1'           LAST TERMINAL ?
+         BNE   ITERNTSQ           EXIT IF NOT
+         MVC   ITERTERM,=C'SQ01'  SET SEQ TERM
+ITERNTSQ EQU   *
          CLI   THRDTYPE,THRDTYPR  IS IT UNALLOCATED ?
          BE    ITERLOC            EXIT IF IT IS
          MVC   ITERTYPE,=CL6'LOCAL' PRESUME LOCAL
@@ -222,7 +230,7 @@ ITERNXT  EQU   *
 *
 ITRN     EQU   *
 * PROCESS CEMT I TRA, IGNORE OTHER PARMS
-* ### LIMIT OF 15
+* ### LIMIT OF 17
 * ### LATER, EXTEND AND CODE PAGE FORWARD (PF7) AND BACK (PF8)
          EXEC  CICS LOAD PROGRAM('DFHPCT') SET(R6)
          ST    R6,DFHPCTAD        SAVE LOAD POINT
@@ -235,7 +243,7 @@ ITRN     EQU   *
          LA    R6,SNDITRNL        R6=LIST ADDRESS
          USING ITRNDSCT,R6
          L     R7,DFHPCTAD        R7=PCT ADDRESS
-         LA    R8,15              R8=MAX TRANSIDS
+         LA    R8,17              R8=MAX TRANSIDS
 ITRNLOOP EQU   *
          MVC   ITRNTRAN,0(R7)     MOVE TRANSID
          MVC   ITRNPROG,4(R7)     MOVE PROGRAM
@@ -461,7 +469,7 @@ ISYSLIST EQU   *
          DC    CL3' '
          TN3270 (SBA,7,2)
          DC    CL18'DATE_FORMAT'
-         DC    CL2' '
+         DC    CL3' '
          TN3270 (SBA,8,2)
          DC    CL18'THREADS'
          DC    C' N OF  N ALLOCATED'
@@ -479,6 +487,9 @@ ISYSLIST EQU   *
          DC    CL3' '
          TN3270 (SBA,13,2)
          DC    CL18'TRACE_Z390CICS'
+         DC    CL3' '
+         TN3270 (SBA,14,2)
+         DC    CL18'SEQ_TERM'
          DC    CL3' '
 ISYSLSTL EQU   *-ISYSLIST
 ISYSLEN  DC    AL2(*-ISYSTITL)
@@ -517,6 +528,8 @@ ITERLIST EQU   *
          TN3270 (SBA,12,2)
          DC    CL(ITERLEN-3)' '
          TN3270 (SBA,13,2)
+         DC    CL(ITERLEN-3)' '
+         TN3270 (SBA,14,2)
          DC    CL(ITERLEN-3)' '
 ITERLSTL EQU   *-ITERLIST
 ITERMLEN DC    AL2(*-ITERTITL)
@@ -564,6 +577,10 @@ ITRNLIST EQU   *
          TN3270 (SBA,17,2)
          DC    CL(ITRNLEN-3)' '
          TN3270 (SBA,18,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,19,2)
+         DC    CL(ITRNLEN-3)' '
+         TN3270 (SBA,20,2)
          DC    CL(ITRNLEN-3)' '
 ITRNLSTL EQU   *-ITRNLIST
 ITRNMLEN DC    AL2(*-ITRNTITL)
@@ -661,7 +678,7 @@ ISYSCPTH DS    CL50               CICSPATH
 ISYSTPFX DS    CL3                TERMID_PREFIX
          DS    CL3                SBA
          DS    CL18               HEADER
-ISYSTDAT DS    CL2                DATE FORMAT
+ISYSTDAT DS    CL3                DATE FORMAT
          DS    CL3                SBA
          DS    CL18               HEADER
 * NN OF NN ALLOCATED
@@ -690,6 +707,9 @@ ISYSLTRC DS    CL3                TRACE_LOCALS
          DS    CL3                SBA
          DS    CL18               HEADER
 ISYSZTRC DS    CL3                TRACE_Z390CICS
+         DS    CL3                SBA
+         DS    CL18               HEADER
+ISYSSEQT DS    CL3                SEQ_TERM
 *
 * I SYS -- REQUESTED DATA FORMAT
 *
@@ -707,6 +727,7 @@ ISYSDRUS DS    X                  REMOTE TERMINALS IN USE
 ISYSDINT DS    CL4                INITIAL_TRANSID
 ISYSDTRL DS    CL3                TRACE_LOCALS
 ISYSDTRZ DS    CL3                TRACE_Z390CICS
+ISYSDSEQ DS    CL3                SEQ_TERM
 *
 * I TER -- DSECT OUTPUT
 *

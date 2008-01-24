@@ -8,4 +8,5 @@ erase %1\*.OBJ
 erase %1\*.LST
 erase %1\*.390
 erase %1\*.LOG
+erase %1\*.STA
 erase %1\*.TR?

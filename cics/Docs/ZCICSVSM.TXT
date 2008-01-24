@@ -38,12 +38,19 @@ b) Skip-sequential access (browse) of an ESDS by RBA (fixed or variable),
    Note: Knowledge of the file will be necessary for variable ESDS in
          order to set the initial RBA.
 
+VSAM limits
+-----------
+
+For KSDSs and AIXs, there is an internal limit on all keylengths of
+128 bytes. Please raise an RPI if this is not sufficient for you.
+
 Trademarks
 ----------
-CICS is a registered trademark of International Business Corporation.
+IBM, CICS and VSAM are registered trademarks of International Business
+Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: October 1st, 2007
-Z390 version: V1.3.08
-Z390/CICS version: V3
+Shipping Date: January 18, 2008
+Z390 version: V1.3.08h
+Z390/CICS version: V4
 

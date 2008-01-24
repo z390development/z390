@@ -12,6 +12,7 @@
 # **/*.ivp --> Data for Installation Verification Procedure
 # **/*.lkd --> Link-edit instructions
 # **/*.mac --> Macro definitions
+# **/*.man --> Manifesto file
 # **/*.mcr --> Macro definitions
 # **/*.mlc --> Assembler source code
 # **/*.opt --> Assembler options file

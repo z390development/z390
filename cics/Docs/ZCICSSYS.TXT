@@ -1,5 +1,5 @@
-Z390/CICS System Programmers Guide
-==================================
+Z390/CICS System Programmer's Guide
+===================================
 
 This document describes the Z390/CICS environment, how it operates and
 the modifications that can be made to it.
@@ -40,7 +40,7 @@ Application programmers are somewhat limited at present. These are
 early days, and functions will be added gradually.
 
 The currently supported Application environment is described in the
-Z390/CICS Application Programmers Guide (ZCICSAPP.TXT).
+Z390/CICS Application Programming Guide (ZCICSAPP.TXT).
 
 Requests for commands and extra parameters are very welcome and will
 help to set a priority list.
@@ -53,14 +53,6 @@ re-entrancy rules required of mainframe CICS.
 If you are developing an application for later transfer to the
 mainframe, you must obey all the re-entrancy rules. There is no
 checking yet for rule breaking.
-
-Regression testing
-------------------
-The programs RTZCICS1 and 2 test good and bad forms of supported EXEC
-CICS functions. They are not part of DFHALL.BAT and must be re-assembled
-separately.
-
-There should be no assembler errors, only a collection of sev 12 MNOTEs.
 
 How it works
 ------------
@@ -99,7 +91,7 @@ DFHPCT.MLC has a basic set of test transaction codes which are listed
 later. Users should add their own transactions to DFHPCTUS.CPY and
 re-assemble the PCT.
 
-DFHFCT.MLC has a basic set of test files.  Users should add their own
+DFHFCT.MLC has a basic set of test files. Users should add their own
 files to DFHFCTUS.CPY and re-assemble the FCT.
 File creation and setup is more fully described in the Z390/CICS VSAM
 Guide (ZCICSVSM.TXT).
@@ -151,8 +143,8 @@ From the Z390 GUI (recommended), or in your own Command Prompt...
       Z390KCPL does not use the current Command Prompt, but creates
       the specified number of remote terminals in other windows.
 
-      The use of TEST or TRACE is not recommended and will only affect
-      the launcher program Z390RMTE.
+      The use of TEST or TRACE is not recommended as they will only
+      affect the launcher program Z390RMTE.
 
       The number of terminals actually started is subject to both the
       REMOTE_TERMINALS= and the MAXTHREADS= parameters.
@@ -179,6 +171,7 @@ From the 'initial screen' you can perform the following tests...
 
    BED2        HANDLE AID testing
                Follow the on-screen instructions.
+               DUMP TRANSACTION testing.
 
    BED3        HANDLE CONDITION/IGNORE CONDITION/PUSH/POP testing
                GETMAIN/FREEMAIN testing
@@ -195,9 +188,20 @@ From the 'initial screen' you can perform the following tests...
                Also builds an environment for testing CEBR.
                Can be run multiple times to extend the CEBR test queues.
 
+   IC01        Test Interval Control functions.
+               This task may take up to 2 mins to complete.
+
    VSM1        Read and browse of ESDS files.
                Records successfully read are written to the TS queue
                VSM1.
+
+   VSM2        Read and browse of RRDS files.
+               Records successfully read are written to the TS queue
+               VSM2.
+
+   VSM3        Read and browse of KSDS files.
+               Records successfully read are written to the TS queue
+               VSM3.
 
 Shutdown
 --------
@@ -240,6 +244,10 @@ will occur. This won't produce a dump and cannot be HANDLEd.
 The ID of the SNAP indicates its origin...
    999 : Abend ASRA   TEXT='ABEND ASRA'
    998 : Requested dump by EXEC CICS ABEND  TEXT='ABEND abcode'
+   997 : Requested dump by EXEC CICS DUMP
+         COMPLETE     TEXT='DUMP dumpcode COMPLETE'
+         SIngle area  TEXT='DUMP dumpcode AREA'
+         Segments     TEXT='DUMP dumpcode SEGMENT nnn'
 
    Other values : The EIBRESP field, ie. 27=PGMIDERR has occured
                   TEXT='ABEND xxxx' ie. AEI0=PGMIDERR
@@ -263,10 +271,11 @@ e) Select End Process and Yes.
 
 Trademarks
 ----------
-CICS is a registered trademark of International Business Corporation.
+IBM, CICS and VSAM are registered trademarks of International Business
+Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: October 1st, 2007
-Z390 version: V1.3.08
-Z390/CICS version: V3
+Shipping Date: January 18, 2008
+Z390 version: V1.3.08h
+Z390/CICS version: V4
 

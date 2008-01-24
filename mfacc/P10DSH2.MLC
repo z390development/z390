@@ -1,0 +1,129 @@
+*              CONVERT 128 UNSIGNED INTEGER TO DISPLAY DECIMAL
+* 01/07/08 DSH1 USE MB1 ROUTINE TO CONVERT 128 BIT #'S IN DSH1
+P10DSH2  ZMFACC   CODE,START,NAME='MATS BROBERG AT SEB SWEDEN'
+         LA     R3,INT128       R3=TABLE OF 128 BIT UNSIGNED INTEGERS
+         LA     R4,INTDEC       R4=TABLE OF OUTPUT DISPLAY INTEGERS
+         LA     R5,TOTINTS      R5=TOTAL INTEGERS
+LOOP     DS     0H
+         BAS    R10,CVTI128     CONVERT 128 BIT INTO TO DISPLAY
+         AHI    R3,16           INC INPUT
+         AHI    R4,L'RES        INC OUTPUT
+         BCT    R5,LOOP
+         LM     R0,R3,=A(INTDEC,LINTDEC,VERDEC,LINTDEC)
+         CLCL   R0,R2
+         BZ     VEROK
+         WTO    'VERIFY ERROR - CALCULATED VERSUS EXPECTED DIFFERENCE'
+         B      EXIT 
+VEROK    DS     0H
+         WTO    'VERIFY OK - CALCULATED EQUALS EXPECTED DISPLAY VALUES'                
+EXIT     DS     0H
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+INT128   DS     0D            TABLE OF 128 BIT UNSIGNED INTS TO CVT
+         DC     FL8'0,0'                            0
+         DC     FL8'0,1'                            1
+         DC     FL8'0,1E18'                         10**18
+         DC     FL8'0',X'7F',7X'FF'                 2**63-1
+         DC     FL8'0',X'8AC7230489E80000' 10**19 = 1E18 * 10 VIA MLG
+         DC     FL8'0',8X'FF'                       2**64-1
+         DC     FL8'1',8X'FF'                       2**65-1
+         DC     X'00000000000000056BC75E2D63100000' 10**20
+         DC     X'3F',15X'FF'                       2**126-1
+         DC     X'7F',15X'FF'                       2**127-1
+         DC     16x'BB'                             P10MB1 CONSTANT
+         DC     X'FF',15X'FF'                       2**128-1
+INTEND   EQU    *
+TOTINTS  EQU    (INTEND-INT128)/16
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC     C'TABLE OF EXPECTED DISPLAY INTEGERS='
+* Ref: http://www.newdream.net/~sage/old/numbers/pow2.htm
+VERDEC   DS     0D      TABLE OF EXPECTED DECIMAL RESULTS
+ DC C'                                                     0'  0
+ DC C'                                                     1'  1
+ DC C'                             1,000,000,000,000,000,000'  1E18
+ DC C'                             9,223,372,036,854,775,807'  2**63-1
+ DC C'                            10,000,000,000,000,000,000'  1E19
+ DC C'                            18,446,744,073,709,551,615'  2**64-1
+ DC C'                            36,893,488,147,419,103,231'  2**65-1
+ DC C'                           100,000,000,000,000,000,000'  1E20
+ DC C'    85,070,591,730,234,615,865,843,651,857,942,052,863'  2**126-1
+ DC C'   170,141,183,460,469,231,731,687,303,715,884,105,727'  2**127-1
+ DC C'   249,540,402,408,688,206,539,808,045,449,963,355,067'  P10MB1 #
+ DC C'   340,282,366,920,938,463,463,374,607,431,768,211,455'  2**128-1
+         DC     C'TABLE OF CALCULATED DISPLAY INTEGERS='
+INTDEC   DS    0D       TABLE OF DISPLAY INTEGERS
+         DC    ((INTEND-INT128)/16)CL(L'RES)' '
+LINTDEC  EQU   *-INTDEC
+         ZMFACC OUTPUT,END
+*
+* CONVERT 128 BIT UNSIGEND INT AT R3 TO DISPLAY AT R4
+*
+CVTI128  DS     0H
+         LMG   6,7,0(R3)  R6-R7 = 128 BIT INSIGNED INT
+* 2**64 = 10**19 + 8446 744 073 709 551 616 = POT10 + B
+* R6*2**64 + R7 =
+* R6*(POT10 + B) + R7  =
+* R6*POT10  + R6*B + R7
+*
+* ONLY R6*B + R7 CONTRIBUTE TO THE RIGHTMOST 19 DECIMAL DIGITS
+* IT MAY VERY WELL CONTRIBUTE TO THE LEFTMOST 20 DIGITS ALSO.
+* WE WILL FIRST COMPUTE R6*B + R7
+*
+         LGR   9,6              COMPUTE R6 ...
+
+         MLG   8,B              ... TIMES B INTO R8-R9
+         ALGR  9,7              ADD R7
+         ALCG  8,NULL           ADD ANY CARRY INTO R8
+
+* R6*B + R7 NOW EQUALS R8*2**64 + R9
+
+* DIVIDING BY POT10 WILL GIVE THE REMAINDER IN R8 AND THAT IS THE
+* RIGHTMOST 19 DIGITS. R9 CONTAINS WHAT CONTRIBUTES TO THE LEFTMOST
+* 20 DIGITS.
+         DLG   8,POT10
+
+* AND NOW THE SAME NUMBER (R6*B + R7) IS R9*POT10 + R8
+
+* THE NUMBER WE STARTED WITH IS           R6*POT10 + R9*POT10 + R8 =
+* THE NUMBER WE STARTED WITH IS           (R6 + R9)*POT10 + R8
+* IN THE PACKED FORMAT THEY WILL GO INTO   L2   L1          H
+
+* SO FAR THE ARITHMETIC HAS BEEN UNSIGNED, BUT CVDG IS SENSITIVE TO
+* THE SIGN. SO WE MUST COMPENSATE FOR THAT.
+* FIRST THE RIGHTMOST 19 DIGITS IN R8
+         CVDG  8,H
+         LTGR  8,8
+         BNM   NOTMIN0
+          AP   H,TVATO64
+* THEN ONE PART OF THE VALUE IN THE FIRST 20 POSITIONS
+NOTMIN0  CVDG  9,L1
+         LTGR  9,9
+         BNM   NOTMIN1
+          AP   L1,TVATO64
+* AND THE NEXT PART
+NOTMIN1  CVDG  6,L2
+         LTGR  6,6
+         BNM   NOTMIN2
+          AP   L2,TVATO64
+* FINALLY ADD THE TWO LEFT PARTS.
+NOTMIN2  AP    L2,L1
+         SRP   L2,1,0
+         MVC   HD(10),L2+5
+         MVC   RES,MASK
+         ED    RES,HD
+         MVC   0(L'RES,R4),RES
+         BR    R10
+RES      DS    CL(MASKL)
+MASK     DC    3X'40',12X'2020206B',X'202120'
+MASKL    EQU   *-MASK
+         DS    0FD
+NULL     DC    16X'0'
+POT10    DC    X'8AC7230489E80000'      10000000000000000000 (10**19)
+B        DC    X'7538DCFB76180000'       8446744073709551616
+TVATO64  DC    PL16'18446744073709551616' X'10000000000000000'
+HD       DS    XL20
+H        EQU   HD+4,16,C'P'
+L1       DS    PL16
+L2       DS    PL16
+      END                                                              

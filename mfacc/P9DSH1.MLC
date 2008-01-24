@@ -1,0 +1,22 @@
+P9DSH1   ZMFACC CODE,START,NAME='Don Higgins'
+         COPY  ASMMSP
+         LA    R1,DNUM+L'DNUM-6
+         MVC   DNUM,MASK
+         IF    (EDMK,DNUM,M,PNUM)
+               AHI R1,-2
+               MVC 0(2,R1),=C'($'
+               MVI DNUM+L'DNUM-1,C')'
+         ELSE
+               AHI R1,-1
+               MVI 0(R1),C'$'
+         ENDIF
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+PNUM     DC    PL8'-1234567890'
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+DNUM     DC    C'  Z,ZZZ,ZZZ,ZZZ,ZZZ,Z9 '
+         ZMFACC OUTPUT,END
+MASK     DC    C'  ',X'20',C',',X'202020',C',',X'202020',C',',X'202020'X
+               ,C',',X'202120',C'.',X'2020',C' '
+         END

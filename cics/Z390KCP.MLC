@@ -31,6 +31,7 @@ Z390KCP  SUBENTRY BASES=(R13,R3)
          USING DFHTCTTE,TCTTEAR
          XC    DFHTCTTE(TCTTELEN),DFHTCTTE CLEAR TCTTE
          MVC   TCTTEHED,=CL8'DFHTCTTE' SET HEADER
+         MVC   TCTTEQFN,=PL3'1'   SET SEQ TERM FILE NUMBER
 *
 * THE LKA CARRIES THE DSA ADDRESS FOR EACH LINK LEVEL (TCTTELNK)
 * IT'S USED TO DETERMINE WHERE WE GO BACK TO AT PROGRAM END
@@ -75,6 +76,27 @@ Z390PARM EQU   *
          MVC   TCTTETI,ZCVTPARM+3 SET TERMID
          MVC   TCTTEINT,ZCVTPARM+7 SET INITIAL TRANSID
          MVC   INIDATE,ZCVTPARM+11 SET DATE FORMAT
+         CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
+         BNE   OPEN3270           EXIT IF NOT
+* SET UP SEQUENTIAL TERMINAL PATH AND FILENAME
+         GETENV SEQENV            GET Z390SEQ ENV VARIABLE
+         LA    R9,SEQFILE         R9=PATHNAME ADDRESS
+Z390SEQL EQU   *
+         MVC   0(1,R9),0(R2)      MOVE DSN A BYTE AT A TIME
+         AHI   R2,1               BUMP SOURCE
+         AHI   R9,1               BUMP DESTINATION
+         CLI   0(R2),X'00'        END OF DSN ?
+         BNE   Z390SEQL           LOOP IF NOT
+         MVC   0(12,R9),=C'SEQI0001.TXT'
+         ST    R9,TCTTEQFL        SAVE FILENAME ADDRESS
+         LA    R9,SEQRCVE         RECEIVE DCB
+         ST    R9,TCTTEQDI        SAVE IT
+         LA    R9,SEQSEND         SEND DCB
+         ST    R9,TCTTEQDO        SAVE IT
+* OPEN OF SEQRCVE IS HANDLED IN EXEC CICS RECEIVE
+         L     R9,TCTTEQFL        R9=FILENAME ADDRESS
+         MVI   3(R9),C'O'         SET TO SEQO0001.TXT
+         OPEN  (SEQSEND,OUTPUT)   OPEN SEND FILE
          B     OPEN3270           EXIT
 *
 OPENRMTE EQU   *
@@ -127,6 +149,7 @@ LOCAL_MANAGER EQU *
          MVO   EIBTIME,TIMEDEC(3) MOVE AS PACKED
          OI    EIBTIME+3,X'0C'    SET +VE SIGN
          ST    R1,EIBDATE         SET DATE AS CCYYDDD+
+         MVC   EIBDTFRM,INIDATE   SET DATE FORMAT
          OC    TCTTECA,TCTTECA    ANY RETURN COMMAREA ?
          BZ    INITTSET           EXIT IF NONE
          MVC   EIBCALEN,TCTTECAL  SET COMMAREA LENGTH
@@ -193,9 +216,9 @@ INITPROC EQU   *
          ST    R6,TCTTEDA         SET IN TCTTE
          MVC   EIBAID,INITBUFF    SET AID
 * PROCESS CLEAR KEY
-         CLI   EIBAID,CLEAR       CLEAR KEY ?
+         CLI   EIBAID,DFHCLEAR    CLEAR KEY ?
          BNE   NOCLEAR            EXIT IF NOT
-         GUAM  WINDOW,VIEW,SCREEN,24,80,0 RESET SCREEN TO 24 X 80
+         EXEC CICS SEND FROM(CLEARIT) LENGTH(CLEARLEN)
          B     INITTSET           EXIT
 *
 NOCLEAR  EQU   *
@@ -279,6 +302,8 @@ PCTFOUND EQU   *
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         MVC   EIBRSRCE,BLDLNAME  SET RESOURCE NAME
+         MVC   EIBPROG,BLDLNAME   SET PROGRAM NAME
          LOAD  EPLOC=BLDLNAME     LOAD INITIAL PROGRAM
          LA    R1,TCTTECA         ADDRESS PARM TO BE PASSED
          LA    R14,TASKRETN       SET RETURN ADDRESS
@@ -426,6 +451,10 @@ SHUTKCP  EQU   *
          TCPIO CLOSE,PORT=3900    CLOSE CLIENT
          LTR   R15,R15            CHECK RC ?
          BNZ   TCPIOERR           EXIT IF BAD
+         CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
+         BNE   SHUTIT             EXIT IF NOT
+         CLOSE SEQSEND            CLOSE IT
+SHUTIT   EQU   *
          SUBEXIT
 *
 * ESTAE APPLICATION ABEND ROUTINE
@@ -484,6 +513,7 @@ APPHANDL EQU   *
          CLC   0(4,R8),=4X'FF'    IS IT IGNORE CONDITION ?
          BNE   APPNTIGN           EXIT IF NOT
 * IT'S AN IGNORE, GO TO THE IGNORE ADDRESS (IT MIGHT BE 0)
+APPIGNOR EQU   *
          L     R8,ESTAPSW+4       ABEND ADDRESS
          L     R0,8(R8)           SET IGNORE ADDRESS
          LA    R15,4              TELL SVC 3 TO USE R0
@@ -529,16 +559,20 @@ APPDUMP  EQU   *
 APPNODMP EQU   *
          L     R7,=A(AC2206)      MSG ADDRESS
          USING MSG,R7
-         MVC   MSGPROG,EIBRSRCE   ABENDING PROGRAM TO MSG
+         MVC   MSGPROG,EIBPROG    ABENDING PROGRAM TO MSG
          DROP  R7                 DROP MSG BASE
          B     APPTABDN           EXIT
 *
 APPABBLK EQU   *
 * CONDITION RAISED BUT NO HANDLE OR IGNORE
 * TAKE DUMP WITH CONDITION ABEND CODE
+*
+* SOME CONDITIONS HAVE IGNORE AS DEFAULT
+         CLC   EIBRESP,DFHRESP(EXPIRED) EXPIRED ?
+         BE    APPIGNOR           EXIT IF IT IS
          L     R7,=A(AC2206)      MSG ADDRESS
          USING MSG,R7
-         MVC   MSGPROG,EIBRSRCE   ABENDING PROGRAM TO MSG
+         MVC   MSGPROG,EIBPROG    ABENDING PROGRAM TO MSG
          MVC   MSGABCDE,=4C'?'    DEFAULT ABEND CODE TO MSG
          MVC   APPABMSG+6(4),=4C'?' DEFAULT ABEND CODE TO SNAP TEXT
          LA    R8,APPABTAB        R8=ABEND CODE TABLE
@@ -559,6 +593,7 @@ APPABTAB DS    0F
          DC    F'18',C'AEIR'      NOSPACE
          DC    F'19',C'AEIS'      NOTOPEN
          DC    F'20',C'AEIT'      ENDFILE
+         DC    F'21',C'AEIU'      ILLOGIC
          DC    F'22',C'AEIV'      LENGERR
          DC    F'26',C'AEIZ'      ITEMERR
          DC    F'27',C'AEI0'      PGMIDERR
@@ -806,16 +841,25 @@ TMDTPROC EQU   *
          BALR  R14,0              SET TEMPORARY BASE
          USING *,R14
          USING MSG,R7
+         CLI   INIDATE,C'K'       DMY FORMAT ?
+         BNE   TMDTNTUK           EXIT IF NOT
          TIME  DEC,TIMEDEC,DATETYPE=DDMMYYYY,LINKAGE=SYSTEM
-         MVO   TMDTPACK,DATEDEC   PACKED DATE
          MVC   DATEHERE,DATEEDIT  MOVE EDIT WORD
-         ED    DATEHERE,TMDTPACK  EDIT DATE
-         CLI   INIDATE,C'K'       UK FORMAT ?
-         BE    TMDTNTUK           EXIT IF IT IS
-         XC    DATEHERE+2(2),DATEHERE+5 ) INVERT
-         XC    DATEHERE+5(2),DATEHERE+2 )        DD AND
-         XC    DATEHERE+2(2),DATEHERE+5 )               MM
+         B     TMDTEDIT
+*
 TMDTNTUK EQU   *
+         CLI   INIDATE,C'U'       MDY FORMAT ?
+         BNE   TMDTNTUS           EXIT IF NOT
+         TIME  DEC,TIMEDEC,DATETYPE=MMDDYYYY,LINKAGE=SYSTEM
+         MVC   DATEHERE,DATEEDIT  MOVE EDIT WORD
+         B     TMDTEDIT
+*
+TMDTNTUS EQU   *
+         TIME  DEC,TIMEDEC,DATETYPE=YYYYMMDD,LINKAGE=SYSTEM
+         MVC   DATEHERE,DATEEDT2  MOVE EDIT WORD
+TMDTEDIT EQU   *
+         MVO   TMDTPACK,DATEDEC   PACKED DATE
+         ED    DATEHERE,TMDTPACK  EDIT DATE
          MVC   MSGDATE,DATEHERE+2 MOVE DATE TO MSG
          MVO   TMDTPACK,TIMEDEC   PACKED TIME
          MVC   TIMEHERE,TIMEEDIT  MOVE EDIT WORD
@@ -829,6 +873,7 @@ TIMEDEC  DS    XL4                SAVE TIME HHMMSSTT
 DATEDEC  DS    CL4                SAVE DATE DDMMYYYY
 TMDTPACK DC    PL5'0'
 DATEEDIT DC    X'F02120206120206120202020'
+DATEEDT2 DC    X'F02120202020612020612020'
 TIMEEDIT DC    X'F02120207A20207A20204B2020'
 DATEHERE DS    CL12
 TIMEHERE DS    CL13
@@ -858,16 +903,22 @@ INITBUFF DS    CL2000             INITIAL BUFFER
 INITRC   DS    F                  RECEIVE RETURN CODE
 INITDLAY DC    F'200'             NOWAIT DELAY OF 2 SECONDS
 INITLEN  DS    H                  RECEIVED LENGTH
-INIDATE  DS    C                  DATE FORMAT  K=UK S=US
+INIDATE  DS    C                  DATE FORMAT: K=DMY  S=MDY  R=YMD
 *
 BLDLLIST DC    H'1'               BLDL LIST WITH 1 ENTRY
          DC    H'12'              BLDL ENTRY LENGTH
 BLDLNAME DC    CL8' '             BLDL ENTRY NAME TO FIND
          DC    XL4'00'
 *
+SEQENV   DC    C'Z390SEQ',X'00'   Z390SEQ ENV VARIABLE
+SEQFILE  DC    XL80'00'           PATH AND FILE FOR SEQ TERM
+*
 * MESSAGES
 *
 TERM_TITLE DC C'TERMINAL TTTT',X'00'
+*
+CLEARIT  TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,1),IC
+CLEARLEN DC    AL2(*-CLEARIT)
 *
 AC2001   TN3270 WCC_KD,(SBA,24,1)
          DC    C'DFHAC2001 '
@@ -989,6 +1040,22 @@ KCPRCTSK DS    CL7                TASK NUMBER
 KCPSQIND DS    C                  SHUTDOWN INDICATOR
          ORG
 *
+SEQRCVE  DCB   DSORG=PS,                                               X
+               RECFM=F,                                                X
+               EODAD=0,                                                X
+               DSNAME=SEQFILE,                                         X
+               MACRF=GM,                                               X
+               BLKSIZE=1,                                              X
+               LRECL=1,                                                X
+               SYNAD=0
+*
+SEQSEND  DCB   DSORG=PS,                                               X
+               RECFM=F,                                                X
+               DSNAME=SEQFILE,                                         X
+               MACRF=PM,                                               X
+               BLKSIZE=2000,                                           X
+               LRECL=2000
+*
          LTORG
 *
 * CICS MESSAGE STRUCTURE
@@ -1014,6 +1081,7 @@ MSGABCDE DS    CL4                ABEND CODE
 *
          TN3270 SYMBOLS   DEFINE AID ENTER AND PF3 CODES
          GUAM   SYMBOLS   DEFINE GUAM GUI DIALOG WINDOW OPTIONS
+         COPY   DFHAID    AID KEYS
          ZCVTD  ,         ZCVT
          ESTAD  ,         ESTAE CONTROL BLOCK
          EQUREGS

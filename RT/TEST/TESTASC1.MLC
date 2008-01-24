@@ -8,31 +8,31 @@
 * NOTE: This program is bi-modal supporting EBCDIC and ASCII mode
 *       This program is copied to testasc1 to test using ascii
 *********************************************************************
-* Maintenance:
-* 10/02/05 RPI2   - add tests for mul dup DC's
-* 10/04/05 RPI5   - add ASCII support (see TESTASC1.MLC test als)
-* 10/20/05 RPI34  - full ASCII and EBCDIC translation test
-* 01/06/06 RPI157 - correct operand errors caught by this fix
-* 01/06/06 RPI192 - test && and '' in setc, sdt, and models   
-* 04/02/06 RPI265 - test alignment within DS/DC fields     
-* 04/05/06 RPI270 - test DS/DC CA/CE/AD/FD/VD (SEE TESTSDT1 CA/CE) 
-* 07/19/06 RPI371 - support spaces within X'...' data fields          
-* 07/19/06 RPI373 - align L type 16 byte fields to multiple of 8 vs 16
-* 07/19/06 RPI367 - support floating point (MIN) and (MAX) constants     
-* 07/19/06 RPI368 - support S scale factor for F, H, EH, DH, and LH      
-* 08/03/06 RPI388 - test fix dup count for E, D, F and FD                     
-* 09/21/06 RPI458 - test DC S(rel and off(base)) constants                            
-* 12/09/06 RPI407 - test DC DD, ED, and LD (min) and (max) constants                  
-* 01/19/07 RPI538 - test duplication factors for P and all types                           
-* 03/01/07 RPI555 - test LQ quad word hex                                                  
-* 03/16/07 RPI578 - test corrected M3 complex mult S type
-* 04/01/07 RPI567 - add CCW, CCW0, and CCW1 tests                
+* 10/02/05 RPI   2   - add tests for mul dup DC's
+* 10/04/05 RPI   5   - add ASCII support (see TESTASC1.MLC test als)
+* 10/20/05 RPI  34  - full ASCII and EBCDIC translation test
+* 01/06/06 RPI 157 - correct operand errors caught by this fix
+* 01/06/06 RPI 192 - test && and '' in setc, sdt, and models   
+* 04/02/06 RPI 265 - test alignment within DS/DC fields     
+* 04/05/06 RPI 270 - test DS/DC CA/CE/AD/FD/VD (SEE TESTSDT1 CA/CE) 
+* 07/19/06 RPI 371 - support spaces within X'...' data fields          
+* 07/19/06 RPI 373 - align L type 16 byte fields to multiple of 8 vs 16
+* 07/19/06 RPI 367 - support floating point (MIN) and (MAX) constants     
+* 07/19/06 RPI 368 - support S scale factor for F, H, EH, DH, and LH      
+* 08/03/06 RPI 388 - test fix dup count for E, D, F and FD                     
+* 09/21/06 RPI 458 - test DC S(rel and off(base)) constants                            
+* 12/09/06 RPI 407 - test DC DD, ED, and LD (min) and (max) constants                  
+* 01/19/07 RPI 538 - test duplication factors for P and all types                           
+* 03/01/07 RPI 555 - test LQ quad word hex                                                  
+* 03/16/07 RPI 578 - test corrected M3 complex mult S type
+* 04/01/07 RPI 567 - add CCW, CCW0, and CCW1 tests                
+* 01/10/08 RPI 777 - add decimal and scale for P/Z, add sign for Z 
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
 M1       DC    AL1(1),B'10',C'3',FL1'4',HL1'5',P'6',X'7',Z'8',X'FF'
-V1E      DC    X'0102F304056C07F8FF'
-V1A      DC    X'01023304056C0738FF'
+V1E      DC    X'0102F304056C07C8FF' RPI 777
+V1A      DC    X'01023304056C07C8FF' RPI 777
 M2       DC    L'1',D'1',E'1',X'FF'
 V2       DC    X'41100000000000003300000000000000'
          DC    X'4110000000000000'
@@ -126,7 +126,7 @@ LEN      EQU   X'5678'
          RT1   CCE,=C'1',=X'F1'
          RT1   CCE,=C'ABC',=X'C1C2C3'
          RT1   CCE,=CL3'A',=X'C14040'
-         RT1   CCE,=Z'123',=X'F1F2F3'
+         RT1   CCE,=Z'123',=X'F1F2C3' RPI 777
          RT1   CCE,=C'1''2',=X'F17DF2'
          RT1   CCE,=C"1""2",=X'312232'
          RT1   CCE,=C!1!!2!,=X'F15AF2'
@@ -135,7 +135,7 @@ LEN      EQU   X'5678'
          RT1   CCE,=C'1',=X'31'
          RT1   CCE,=C'ABC',=X'414243'
          RT1   CCE,=CL3'A',=X'412020'
-         RT1   CCE,=Z'123',=X'313233'
+         RT1   CCE,=Z'123',=X'3132C3' RPI 777
          RT1   CCE,=C'1''2',=X'312732'
          RT1   CCE,=C"1""2",=X'312232'
          RT1   CCE,=C!1!!2!,=X'F15AF2'
@@ -150,6 +150,8 @@ LEN      EQU   X'5678'
          RT1   CCE,=HL1'1,-1,3',=X'01FF03',3
          RT1   CCE,=L'1',=X'41100000000000003300000000000000'
          RT1   CCE,=P'1',=X'1C'
+         RT1   CCE,=P'1.5',=X'015C'
+         RT1   CCE,=P'-1.5',=X'015D'
          RT1   CCE,=PL2'1,-1,12',=X'001C001D012C',6
          RT1   CCE,=P'12,1234',=X'012C01234C',5
          RT1   CCE,=X'1,1',=X'0101',2
@@ -169,14 +171,14 @@ LEN      EQU   X'5678'
          RT1   CCE,=2C'1',=2X'F1',2
          RT1   CCE,=2C'ABC',=2X'C1C2C3',6
          RT1   CCE,=2CL3'A',=2X'C14040',6
-         RT1   CCE,=2Z'123',=2X'F1F2F3',6
+         RT1   CCE,=2Z'123',=2X'F1F2C3',6   RPI 777
          RT1   CCE,=2C"1""2",=2X'312232',6
          AGO   .TEST3_END
 .TEST3_ASCII ANOP
          RT1   CCE,=2C'1',=2X'31',2
          RT1   CCE,=2C'ABC',=2X'414243',6
          RT1   CCE,=2CL3'A',=2X'412020',6
-         RT1   CCE,=2Z'123',=2X'313233',6
+         RT1   CCE,=2Z'123',=2X'3132C3',6  RPI 777
          RT1   CCE,=2C"1""2",=2X'312232',6
 .TEST3_END ANOP
          RT1   CCE,=2D'1',=2X'4110000000000000',16
@@ -315,7 +317,7 @@ LEN      EQU   X'5678'
          RT1   CCE,=FD'123',=FL8'123'
 VDX      RT1   CCE,=VD(VDX),=AL8(VDX)
          RT1   CCE,=2C'1',=2X'F1',2
-         RT1   CCE,=2Z'1',=2X'F1',2
+         RT1   CCE,=2Z'1',=2X'C1',2    RPI 777
          AGO   .TEST5_END
 .TEST5_ASCII ANOP
          CLC   =C'&AMP&AMP',=X'26'
@@ -347,7 +349,7 @@ VDX      RT1   CCE,=VD(VDX),=AL8(VDX)
          RT1   CCE,=FD'123',=FL8'123'
 VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
          RT1   CCE,=2C'1',=2X'31',2
-         RT1   CCE,=2Z'1',=2X'31',2
+         RT1   CCE,=2Z'1',=2X'C1',2  RPI 777
 .TEST5_END ANOP
 * TEST 2E,2D,2L, AND 2FD
          RT1   CCE,=XL8'00',TE     

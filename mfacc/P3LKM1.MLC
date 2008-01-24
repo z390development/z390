@@ -1,0 +1,26 @@
+*********************************************************************
+* ZMFACC Problem #3 - Convert memory bytes to hex display bytes
+*********************************************************************
+* December 28, 2007 - Lindy Mayfield 
+*                     SAS Institute, Helsinki, Finland 
+*********************************************************************
+P3LKM1   ZMFACC CODE,START,NAME='Lindy Mayfield'
+START    LA    R0,8               R0 loop counter               
+         LA    R1,HEXNUM          R1 contains address of output 
+         L     R3,HEXBYTES        Move bytes to R3              
+LOOP     LA    R2,X'0F'           Prime R2 with 0F              
+         SLDL  R2,4               Shift first nibble from R3    
+         CH    R2,=X'00FA'        Is it F0 to F9?               
+         BL    SKIP               ...No, skip subtract                              
+         SH    R2,=X'0039'        Subtract 39 to get Hex letter 
+SKIP     STC   R2,0(R1)           Store character               
+         LA    R1,1(R1)           Increment R1                  
+         BCT   R0,LOOP            Loop until done               
+         ZMFACC CODE,END 
+         ZMFACC INPUT,START            
+HEXBYTES DC    X'BABE1976'        Bytes to convert 
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+HEXNUM   DS    CL8                Converted Number              
+         ZMFACC OUTPUT,END
+         END

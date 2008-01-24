@@ -1,0 +1,238 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+Z390SEQ  SUBENTRY
+*
+* READ A .TRE FILE AND CREATE THE SEQIN AND SEQOUT FILES FOR
+* SEQUENTIAL TERMINAL SUPPORT
+*
+         WTOR  'Enter File Number',FILENUMB,,WTORECB
+         WAIT  ECB=WTORECB
+*
+         GETENV SEQIENV           GET ENV VARIABLE
+         LA    R9,SEQIPATH        R9=PATHNAME ADDRESS
+SEQILOOP EQU   *
+         MVC   0(1,R9),0(R2)      MOVE DSN A BYTE AT A TIME
+         AHI   R2,1               BUMP SOURCE
+         AHI   R9,1               BUMP DESTINATION
+         CLI   0(R2),X'00'        END OF DSN ?
+         BNE   SEQILOOP           LOOP IF NOT
+         AHI   R9,-8              POINT TO FILE NUMBER
+         ST    R9,SEQIADDR        SAVE IT
+         GETENV SEQOENV           GET ENV VARIABLE
+         LA    R9,SEQOPATH        R9=PATHNAME ADDRESS
+SEQOLOOP EQU   *
+         MVC   0(1,R9),0(R2)      MOVE DSN A BYTE AT A TIME
+         AHI   R2,1               BUMP SOURCE
+         AHI   R9,1               BUMP DESTINATION
+         CLI   0(R2),X'00'        END OF DSN ?
+         BNE   SEQOLOOP           LOOP IF NOT
+         AHI   R9,-8              POINT TO FILE NUMBER
+         ST    R9,SEQOADDR        SAVE IT
+*
+         L     R9,SEQIADDR        INPUT FILE NUMBER ADDRESS
+         MVC   0(4,R9),FILENUMB   SET INPUT FILE NUMBER
+         L     R9,SEQOADDR        OUTPUT FILE NUMBER ADDRESS
+         MVC   0(4,R9),FILENUMB   SET OUTPUT FILE NUMBER
+*
+         OPEN  (Z390TRE,(INPUT),SEQIN,(OUTPUT),SEQOUT,(OUTPUT))
+         USING IHADCB,R5
+*
+TREGET   EQU   *
+         GET   Z390TRE            GET A TRACE RECORD
+* FIND START OF TGET OR TPUT
+         CLC   TREAREA+31(L'TGETLOC),TGETLOC FOUND A TGET ?
+         BE    TGETPROC           EXIT IF WE DID
+         CLC   TREAREA+61(L'TPUTLOC),TPUTLOC FOUND A TPUT ?
+         BE    TPUTPROC           EXIT IF WE DID
+         B     TREGET             LOOP UNTIL END
+*
+TGETPROC EQU   *
+         GET   Z390TRE            GET DATA LINE
+         LAY   R11,SQINAREA       SET AREA TO USE
+         LA    R5,SEQIN           ADDRESS DCB
+         BAL   R12,GETDATA        EXTRACT DUMPED DATA
+* ELIMINATE ALL FORMS AND PLACES FOR CEMT
+         CLC   SQINAREA+3(4),=C!CEMT! UPPER/NO SBA ?
+         BE    TREGET             EXIT IF IT IS
+         CLC   SQINAREA+3(4),=C!cemt! LOWER/NO SBA ?
+         BE    TREGET             EXIT IF IT IS
+         CLC   SQINAREA+6(4),=C!CEMT! UPPER/SBA ?
+         BE    TREGET             EXIT IF IT IS
+         CLC   SQINAREA+6(4),=C!cemt! LOWER/SBA ?
+         BE    TREGET             EXIT IF IT IS
+         PUT   SEQIN              WRITE TGET RECORD
+         B     TREGET             EXIT
+*
+TPUTPROC EQU   *
+         GET   Z390TRE            SKIP BLANK LINE
+         GET   Z390TRE            GET DATA LINE
+         LAY   R11,SQOTAREA       SET AREA TO USE
+         LA    R5,SEQOUT          ADDRESS DCB
+         BAL   R12,GETDATA        EXTRACT DUMPED DATA
+         PUT   SEQOUT             WRITE TPUT RECORD
+         B     TREGET             EXIT
+*
+EOFTRE   EQU   *
+         CLOSE (Z390TRE,,SEQIN,,SEQOUT) CLOSE FILES
+         SUBEXIT
+*
+* SUBROUTINES
+GETDATA  DS    0H
+* EXTRACT DATA FROM .TRE FILE
+         LAY   R7,HEXDATA         OUTPUT AREA
+         SR    R10,R10            CLEAR BYTE COUNT
+NEXTLINE EQU   *
+         MVC   WORK(8),TREAREA+31 COPY START ADDRESS
+         TR    WORK(8),TRANASCH-X'30' TRANSLATE TO UNPACKED HEX
+         PACK  HEXADDR,WORK(9)    CONVERT TO REAL HEX
+         LA    R8,TREAREA+41      R8=1ST DUMPED WORD
+         LA    R9,4               LOOP COUNT
+SECT1    EQU   *
+         CLI   0(R8),C' '         IS THIS THE END ?
+         BE    SECTEND            EXIT IF NOT
+         MVC   0(2,R7),0(R8)      MOVE DATA BYTES
+         AHI   R7,2               BUMP OUTPUT AREA POINTER
+         AHI   R8,2               BUMP DUMPED WORD
+         AHI   R10,1              COUNT BYTES
+         BCT   R9,SECT1           LOOP
+*
+         AHI   R8,1               R8=2ND DUMPED WORD
+         LA    R9,4               LOOP COUNT
+SECT2    EQU   *
+         CLI   0(R8),C' '         IS THIS THE END ?
+         BE    SECTEND            EXIT IF NOT
+         MVC   0(2,R7),0(R8)      MOVE DATA BYTES
+         AHI   R7,2               BUMP OUTPUT AREA POINTER
+         AHI   R8,2               BUMP DUMPED WORD
+         AHI   R10,1              COUNT BYTES
+         BCT   R9,SECT2           LOOP
+*
+         AHI   R8,1               R8=2ND DUMPED WORD
+         LA    R9,4               LOOP COUNT
+SECT3    EQU   *
+         CLI   0(R8),C' '         IS THIS THE END ?
+         BE    SECTEND            EXIT IF NOT
+         MVC   0(2,R7),0(R8)      MOVE DATA BYTES
+         AHI   R7,2               BUMP OUTPUT AREA POINTER
+         AHI   R8,2               BUMP DUMPED WORD
+         AHI   R10,1              COUNT BYTES
+         BCT   R9,SECT3           LOOP
+*
+         AHI   R8,1               R8=2ND DUMPED WORD
+         LA    R9,4               LOOP COUNT
+SECT4    EQU   *
+         CLI   0(R8),C' '         IS THIS THE END ?
+         BE    SECTEND            EXIT IF NOT
+         MVC   0(2,R7),0(R8)      MOVE DATA BYTES
+         AHI   R7,2               BUMP OUTPUT AREA POINTER
+         AHI   R8,2               BUMP DUMPED WORD
+         AHI   R10,1              COUNT BYTES
+         BCT   R9,SECT4           LOOP
+*
+* END OF DATA FOR THIS LINE
+         GET   Z390TRE            GET NEXT DATA LINE
+         CLI   TREAREA+31,C'.'    IS IT A DOT LINE ?
+         BNE   NEXTLINE           EXIT IF NOT
+* HAVE TO CALCULATE HOW MANY REPEATS OF LAST 32 BYTES THERE ARE
+         GET   Z390TRE            GET NEXT LINE
+         MVC   WORK(8),TREAREA+31 COPY NEXT ADDRESS
+         TR    WORK(8),TRANASCH-X'30' TRANSLATE TO UNPACKED HEX
+         PACK  HEXADR2,WORK(9)    CONVERT TO REAL HEX
+         L     R6,HEXADR2         R6=ENDING ADDRESS
+         S     R6,HEXADDR         - STARTING ADDRESS
+         AHI   R6,-16             -16 (1ST IS PROCESSED)
+         SRL   R6,4               R6=NO. OF REPEATS
+         AHI   R7,-32             BACK TO REPEATED SECTION
+REPEATS  EQU   *
+         MVC   32(32,R7),0(R7)    REPEAT DATA
+         AHI   R7,32              BUMP DATA POINTER
+         AHI   R10,16             BUMP BYTE COUNT
+         BCT   R6,REPEATS         LOOP
+         AHI   R7,32              REPOSITION FOR MORE DATA
+         B     NEXTLINE           EXIT
+*
+SECTEND  EQU   *
+* CONVERT TO REAL HEX
+* R7  = POINTER TO DISPLAY HEX AREA END
+* R10 = DATA LENGTH OF TRUE HEX OUTPUT
+* R11 = POINTER TO TRUE HEX OUTPUT
+         MVC   0(4,R7),=C'0D0A'   ADD CRLF (CHAR)
+         LAY   R7,HEXDATA         INPUT AREA
+         AHI   R10,2              ALLOW FOR CRLF (HEX)
+         ST    R10,DCBBLKSIF      SAVE AS BLKSIZE
+         ST    R10,DCBLRECLF      SAVE AS LRECL
+* EASIER TO DO A BYTE AT A TIME, RECONSIDER IF IT'S TOO SLOW
+HEXIT    EQU   *
+         MVC   WORK(2),0(R7)      MOVE DATA BYTE
+         TR    WORK(2),TRANASCH-X'30' TRANSLATE TO UNPACKED HEX
+         PACK  0(2,R11),WORK(3)   CONVERT TO REAL HEX
+         AHI   R7,2               BUMP INPUT POINTER
+         AHI   R11,1              BUMP OUTPUT POINTER
+         BCT   R10,HEXIT          LOOP
+         BR    R12                RETURN
+*
+Z390TRE  DCB   DSORG=PS,                                               X
+               EODAD=EOFTRE,                                           X
+               RECFM=FT,                                               X
+               DDNAME=Z390TRE,                                         X
+               MACRF=GM,                                               X
+               BLKSIZE=200,                                            X
+               LRECL=200,                                              X
+               RECORD=TREAREA
+*
+SEQIN    DCB   DSORG=PS,                                               X
+               RECFM=F,                                                X
+               DSNAME=SEQIPATH,                                        X
+               MACRF=PM,                                               X
+               BLKSIZE=2000,                                           X
+               LRECL=2000,                                             X
+               RECORD=SQINAREA
+*
+SEQOUT   DCB   DSORG=PS,                                               X
+               RECFM=F,                                                X
+               DSNAME=SEQOPATH,                                        X
+               MACRF=PM,                                               X
+               BLKSIZE=2000,                                           X
+               LRECL=2000,                                             X
+               RECORD=SQOTAREA
+*
+SEQIENV  DC    C'SEQIN',X'00'     SEQIN  ENV VARIABLE
+SEQOENV  DC    C'SEQOUT',X'00'    SEQOUT ENV VARIABLE
+SEQIPATH DC    CL80' ',X'00'      SEQIN  PATH/FILENAME
+SEQOPATH DC    CL80' ',X'00'      SEQOUT PATH/FILENAME
+SEQIADDR DS    AL4                SEQIN  FILE NUMBER POINTER
+SEQOADDR DS    AL4                SEQOUT FILE NUMBER POINTER
+*
+TGETLOC  DC    C'TGET bytes received'
+TPUTLOC  DC    C'I1=5D TPUT'
+WORK     DS    CL9
+HEXADDR  DS    XL5                ADDRESS OF DATA START
+HEXADR2  DS    XL5                ADDRESS REPEATED DATA END
+*
+*                30313233343536373839
+TRANASCH DC    X'00010203040506070809000000000000'  30-3F
+*                  414243444546
+         DC    X'000A0B0C0D0E0F000000000000000000'  40-4F
+*
+FILENUMB DC    CL4' '             FILE NUMBER FROM WTOR INPUT
+WTORECB  DC    F'0'
+*
+* I/O AREAS
+*
+         LTORG
+*
+TREAREA  DS    CL200              INPUT AREA
+SQINAREA DS    CL2000             TGET INPUT AREA
+SQOTAREA DS    CL2000             TGET OUTPUT AREA
+*
+HEXDATA  DS    CL4000
+*
+         EQUREGS
+* R5   IHADCB BASE
+* R12  BASE 1
+         END
+

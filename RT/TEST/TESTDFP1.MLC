@@ -23,7 +23,9 @@
 * 01/08/07 RPI 527 CORRECT CGDTR, CGXTR ROUNDING
 * 01/10/07 RPI 533 CORRECT CGDTR, CGXTR ROUNDING 
 * 01/12/08 RPI 786 CHANGE BIAS BAASED ON NEW CANONIZATION    
-* 01/13/08 RPI 786 use fp compares to handle equivalent DFP values                    
+* 01/13/08 RPI 786 USE FP COMPARES TO HANDLE EQUIVALENT DFP VALUES                    
+* 01/17/08 RPI 790 CORRECT TEST FOR EXPECTED BIAS BASED ON DFP CONST.                 
+* 01/22/08 RPI 791 TEST CGDTR AND CGXTR SETTING CC3 IF TOO BIG                        
 *********************************************************************
          MACRO
 &N       CLCED &S1,&S2
@@ -511,6 +513,9 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          RT1   CCH
          CLG   1,=FD'2'
          RT1   CC0
+         LD    1,=DD'(MAX)'  RPI 791
+         CGDTR 0,0,1
+         RT1   CC3
 * MORE THAN HALF
          LD    4,=DD'999.99'
          CGDTR 1,8+0,4          RPI 533 NEAREST, HALF EVEN DEFAULT
@@ -658,11 +663,11 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * B3E2 CUDTR
          LD    1,=DD'1'
          CUDTR 0,1
-         CG    0,=XL8'100'                 RPI 786
+         CG    0,=XL8'1'                   RPI 790
          RT1   CCE 
          LD    1,=DD'-1'
          CUDTR 0,1
-         CG    0,=XL8'100'                 RPI 786
+         CG    0,=XL8'1'                   RPI 790
          RT1   CCE 
          LD    1,=DD'1234567890123456'     RPI 786 
          CUDTR 0,1
@@ -671,17 +676,17 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * B3E3 CSDTR
          LD    1,=DD'1'
          CSDTR 0,1,0
-         CG    0,=PL8'100'                 RPI 786
+         CG    0,=PL8'1'                   RPI 790
          RT1   CCE 
          CSDTR 0,1,1
-         CG    0,=XL8'000000000000100F'    RPI 786
+         CG    0,=XL8'000000000000001F'    RPI 790
          RT1   CCE 
          LD    1,=DD'-1'
          CSDTR 0,1,0
-         CG    0,=PL8'-100'                RPI 786
+         CG    0,=PL8'-1'                  RPI 790
          RT1   CCE 
          CSDTR 0,1,1
-         CG    0,=XL8'000000000000100D'    RPI 786
+         CG    0,=XL8'000000000000001D'    RPI 790
          RT1   CCE 
          LD    1,=DD'123456789012345'     
          CSDTR 0,1,0
@@ -703,15 +708,15 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * B3E5 EEDTR
          LD    2,=DD'1'
          EEDTR 1,2                         
-         CG    1,=FD'396'                  RPI 786
+         CG    1,=FD'398'                  RPI 790
          RT1   CC0
          LD    2,=DD'1E1'
          EEDTR 1,2
-         CG    1,=FD'396'                  RPI 786
+         CG    1,=FD'399'                  RPI 790
          RT1   CC0
          LD    2,=DD'.1'
          EEDTR 1,2
-         CG    1,=FD'396'                  RPI 786
+         CG    1,=FD'397'                  RPI 790
          RT1   CC0
 * B3E7 ESDTR
          LD    4,=DD'0'
@@ -768,6 +773,9 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          RT1   CCH
          CLG   1,=FD'2'
          RT1   CC0
+         LX    1,=LD'(MAX)'  RPI 791
+         CGDTR 0,0,1
+         RT1   CC3
 * MORE THAN HALF
          LX    4,=LD'999.99'
          CGXTR 1,8+0,4          RPI 533 NEAREST, HALF EVEN DEFAULT
@@ -917,13 +925,13 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          CUXTR 0,1
          CG    0,=XL8'0'
          RT1   CCE
-         CG    1,=XL8'100'           RPI 786
+         CG    1,=XL8'1'             RPI 790
          RT1   CCE 
          LX    1,=LD'-1'
          CUXTR 0,1
          CG    0,=XL8'0'
          RT1   CCE
-         CG    1,=XL8'100'           RPI 786
+         CG    1,=XL8'1'             RPI 790
          RT1   CCE 
          LX    1,=LD'1234567890123456789012345678901234'    RPI 788
          CUXTR 0,1
@@ -935,23 +943,23 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          CSXTR 0,1,0
          CG    0,=FL8'0'                    
          RT1   CCE
-         CG    1,=PL8'100'              RPI 786
+         CG    1,=PL8'1'                RPI 790
          RT1   CCE 
          CSXTR 0,1,1
          CG    0,=FL8'0'
          RT1   CCE
-         CG    1,=XL8'000000000000100F' RPI 786
+         CG    1,=XL8'000000000000001F' RPI 790
          RT1   CCE 
          LX    1,=LD'-1'
          CSXTR 0,1,0
          CG    0,=FL8'0'
          RT1   CCE
-         CG    1,=PL8'-100'             RPI 786
+         CG    1,=PL8'-1'               RPI 790
          RT1   CCE 
          CSXTR 0,1,1
          CG    0,=FL8'0'
          RT1   CCE
-         CG    1,=XL8'000000000000100D' RPI 786
+         CG    1,=XL8'000000000000001D' RPI 790
          RT1   CCE 
          LX    1,=LD'1234567890123456789012345678901234'   RPI 788
          CSXTR 0,1,0
@@ -961,15 +969,15 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * B3ED EEXTR
          LX    4,=LD'1'
          EEXTR 1,4
-         CG    1,=FD'6174'   RPI 786 PREFERRED EXP = BIAS-2 
+         CG    1,=FD'6176'   RPI 790                        
          RT1   CC0
          LX    4,=LD'1E1'
          EEXTR 1,4
-         CG    1,=FD'6174'   RPI 786
+         CG    1,=FD'6177'   RPI 790
          RT1   CC0
          LX    4,=LD'.1'
          EEXTR 1,4
-         CG    1,=FD'6174'   RPI 786
+         CG    1,=FD'6175'   RPI 790
          RT1   CC0
 * B3EC CXTR
          LX    4,=LD'1'
@@ -1049,15 +1057,15 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          RT1   CCE
 * B3F6 IEDTR
          LD    4,=DD'1'
-         LG    2,=AD(DD_BIAS) RPI786 CHANGE FROM BIAS -2 > BIAS
+         LG    2,=AD(DD_BIAS) RPI790                           
          IEDTR 1,4,2
-         LD    5,=DD'100'     RPI786
+         LD    5,=DD'1'       RPI790
          CDTR  1,5
          RT1   CC0
          LD    4,=DD'100'
-         LG    2,=AD(DD_BIAS) RPI 786 CHANGE FROM BIAS-2 TO BIAS
+         LG    2,=AD(DD_BIAS) RPI 790                              
          IEDTR 1,4,2
-         LD    5,=DD'10000'   RPI 786
+         LD    5,=DD'100'     RPI 790
          CDTR  1,5
          RT1   CC0
 * B3F7 LLDTR
@@ -1117,15 +1125,15 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          RT1   CCE
 * B3FE IEXTR
          LX    4,=LD'1'
-         LG    2,=AD(LD_BIAS)  RPI 786 CHANGE BIAS-2 TO BIAS
+         LG    2,=AD(LD_BIAS)  RPI 790                           
          IEXTR 1,4,2
-         LX    5,=LD'100'
+         LX    5,=LD'1'        RPI 790
          CXTR  1,5
          RT1   CC0
          LX    4,=LD'100'
-         LG    2,=AD(LD_BIAS)  RPI 786 CHANGE BIAS-2 TO BIAS
+         LG    2,=AD(LD_BIAS)  RPI 790                          
          IEXTR 1,4,2
-         LX    5,=LD'10000'
+         LX    5,=LD'100'      RPI 790
          CXTR  1,5
          RT1   CC0
 * B3FF RRXTR
@@ -1165,7 +1173,7 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * ED41 SRDT
          LD    4,=DD'1234'
          SRDT  1,4,2
-         LD    5,=DD'12.34'  RPI 786 (2 DECIMALS DUE TO BIAS -2)
+         LD    5,=DD'12'  RPI 790                                
          CDTR  1,5
          RT1   CCE
 * ED48 SLXT
@@ -1192,7 +1200,7 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * ED49 SRXT
          LX    4,=LD'1234'
          SRXT  1,4,2
-         LX    5,=LD'12.34' RPI 786 (3 DECIMALS DUE TO BIAS-2)
+         LX    5,=LD'12' RPI 790                              
          CXTR  1,5
          RT1   CCE
 * ED50 TDCET

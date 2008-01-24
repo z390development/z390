@@ -27,12 +27,14 @@ HCNERROR DS    A                   1=ERROR
          DS    A                  18=NOSPACE
          DS    A                  19=NOTOPEN
          DS    A                  20=ENDFILE
-         DS    5A                 21 UNUSED
+         DS    A                  21=ILLOGIC
          DS    A                  22=LENGERR
          DS    3A                 23-25 UNUSED
          DS    A                  26=ITEMERR
          DS    A                  27=PGMIDERR
-         DS    16A                28-43 UNUSED
+         DS    3A                 28-30 UNUSED
+         DS    A                  31=EXPIRED
+         DS    12A                32-43 UNUSED
          DS    A                  44=QIDERR
          DS    39A                45-83 UNUSED
          DS    A                  84=DISABLED

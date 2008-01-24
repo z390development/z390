@@ -4,4 +4,4 @@ erase %1.BAL
 erase %1.OBJ
 erase %1.PRN
 erase %1.TR?
-call %~dps0ASM %1 bal notiming %2 %3 %4 %5 %6 %7 %8 %9
+call ASM %1 bal notiming stats %2 %3 %4 %5 %6 %7 %8 %9

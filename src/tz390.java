@@ -169,6 +169,8 @@ public  class  tz390 {
     * 12/28/07 RPI 774 return empty string if dup count <= 0
     * 01/11/08 RPI 786 support DFP preferred exp.
     * 01/14/08 RPI 787 support DFP unnormalized instructions
+    * 01/17/08 RPI 790 set DFP exp from explicit decimal else use 0
+    *          add fp_normalization for HFP unnormalized instructions
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -177,7 +179,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.3.08h";  //dsh
+    String version    = "V1.3.09";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -207,7 +209,6 @@ public  class  tz390 {
     String  opt_install_loc = ""; // optional install location for source debugging
     boolean opt_list     = true;  // generate LOG file
     boolean opt_listcall = true;  // list macro calls
-    boolean opt_listfile = true;  // list each file path
     boolean opt_listuse  = true;  // list usage at USING and DROP
     boolean opt_mcall    = false; // list MCALL and MEXIT on PRN // RPI 511
     boolean opt_obj      = true;  // generate binary MVS compatible OBJ file RPI 694
@@ -503,7 +504,8 @@ public  class  tz390 {
          * developed earlier to convert string to
          * floating point constants (moved for RPI 407
          */
-        byte fp_type    = 0; 
+        byte fp_type    = 0;
+        boolean fp_unnormalized = false; // RPI 790 set for HFP unnormalized instr.
         byte fp_db_type = 0; // BFP long
         byte fp_dd_type = 1; // DPF long
         byte fp_dh_type = 2; // HFP long
@@ -538,13 +540,13 @@ public  class  tz390 {
          */
         int[]  fp_precision = {
         		fp_db_digits+fp_guard_digits,
-        		fp_dd_digits+fp_guard_digits,
+        		fp_dd_digits,  // RPI 790 
         		fp_dh_digits+fp_guard_digits,
         		fp_eb_digits+fp_guard_digits,
-        		fp_ed_digits+fp_guard_digits,
+        		fp_ed_digits,  // RPI 790 
         		fp_eh_digits+fp_guard_digits,
         		fp_lb_digits+fp_guard_digits,
-        		fp_ld_digits+fp_guard_digits,
+        		fp_ld_digits,  // RPI 790 
         		fp_lh_digits+fp_guard_digits
         		}; 
         int[]  fp_digits_max  = {0,16,0,0,7,0,0,34,0};
@@ -565,10 +567,6 @@ public  class  tz390 {
     	int    dfp_scf = 0;        // RPI 786
     	int    dfp_preferred_exp = -2; // RPI 786
         byte[] dfp_work = new byte[16];
-        int fp_form          = 2; // cur dfp form request type RPI 786 RPI 787
-        int fp_form_constant = 1; // preferred exponent for constants RPI 786
-        int fp_form_calc     = 2; // smallest quantum for cal. RPI 786
-        int fp_form_unnorm   = 3; // unnormalized (no shifts) RPI 787
    /* 
    * dfp_exp_bcd_to_cf5 returns CF5 5 bit 
    * combination field using index made up of 
@@ -3936,8 +3934,6 @@ private void process_option(String token){
        	opt_list = false;
     } else if (token.toUpperCase().equals("NOLISTCALL")){
        	opt_listcall = false;
-    } else if (token.equals("NOLISTFILE")){
-       	opt_listfile = false;
     } else if (token.equals("NOLISTUSE")){
        	opt_listuse = false; 
     } else if (token.toUpperCase().equals("NOOBJ")){ // RPI694
@@ -5232,10 +5228,9 @@ public void put_trace(String text){
     	 * store binary DD,ED, or LD format
     	 * in fp_work_reg.  Return true if value within range.
     	 * 
-    	 * fp_form:
-    	 *  1 - canonical - preferred exp for exact constants
-    	 *  2 - smallest quantum (default for result calculations
-    	 *  3 - unnormalized - no shifting
+         * Notes:
+         *   1.  Set DFP exponent to explicit decimal point
+         *       else preferred exponent is 0.
     	 */
     	/*
     	 * round to specified precision using default 
@@ -5283,14 +5278,6 @@ public void put_trace(String text){
     	if (index > 0){
     		dfp_digits = dfp_digits.substring(index);
         }
-    	if (fp_form != fp_form_unnorm){
-    		// strip trailing zeros for smallest quantum
-    		normalize_dfp();
-    		if (fp_form == fp_form_constant){  // RPI 786
-    			// adjust to preferred exponent for constants
-    			constant_dfp_value(dfp_type);
-    		}
-    	}
     	dfp_exp = dfp_exp + fp_exp_bias[dfp_type];
     	if (dfp_exp < 0
     		|| dfp_exp > fp_exp_max[dfp_type]){
@@ -5333,39 +5320,6 @@ public void put_trace(String text){
     		return true;
     	}
     	return false;
-    }
-    private void normalize_dfp(){
-    	/*
-    	 * normaize dfp to smallest quantum by
-    	 * striping trailing zeros
-    	 * with corresponding exp adjustment.
-    	 */
-    	int limit = dfp_digits.length()-1; // new length
- 		int index = limit;
- 		while (index > 0
- 		       && dfp_digits.charAt(index) == '0'){
- 			index--;
- 		}
- 		if (index < limit){
- 			dfp_exp = dfp_exp + limit - index;
- 			dfp_digits = dfp_digits.substring(0,index+1);
- 		}
-    }
-    private void constant_dfp_value(int dfp_type){
-    	/* 
-    	 * Set constant DFP value by adding
-    	 * trailing zeros to yield
-    	 * preferred exponent value if
-    	 * possible without losing significance
-    	 * 
-    	 */
-    	int dfp_exp_adj = dfp_exp - dfp_preferred_exp;
-    	if (dfp_exp_adj > 0 
-    		&& dfp_exp_adj + dfp_digits.length() <= fp_digits_max[dfp_type]){
-    		// add zeros to set preferred exp
-    		dfp_exp = dfp_preferred_exp;
-    		dfp_digits = dfp_digits + get_dup_string("0",dfp_exp_adj); 
-    	}
     }
     private long get_dfp_ccf_digits(int tot_digits,int digit_offset, int digit_count){
     	/*
@@ -5580,11 +5534,6 @@ public void put_trace(String text){
 	        add_final_opt("LISTCALL");
 	     } else {
 	        add_final_opt("NOLISTCALL");
-	     }
-	     if (opt_listfile){ // list each file path
-	        add_final_opt("LISTFILE");
-	     } else {
-	        add_final_opt("NOLISTFILE");
 	     }
 	     if (opt_listuse ){ // list usage at USING and DROP
 	        add_final_opt("LISTUSE");

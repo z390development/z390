@@ -15,13 +15,20 @@ VSWTASKN DS    PL4                TASK NUMBER
 VSWCTYPE DS    X                  COMMAND TYPE (BYTE, NOT BITS)
 VSWCREAD EQU   X'01'              -- READ
 VSWCBRWS EQU   X'02'              -- BROWSE
+VSWOPT   DS    X                  GTEQ/GENERIC (BITS)
+VSWGTEQ  EQU   B'1000000'         0=EQUAL     1=GTEQ
+VSWGEN   EQU   B'0100000'         0=FULL KEY  1=GENERIC KEY
 VSWREQID DS    XL2                REQID FOR BROWSE
-VSWARID  DS    XL128              MAXIMUM KEY LENGTH, CAN EXTEND
+VSWKEYLN DS    XL2                KEYLENGTH
+VSWARID  DS    XL128              MAXIMUM KEY SIZE, CAN EXTEND
          ORG   VSWARID
 VSWAXRBA DS    XL8                EXTENDED RBA
          ORG   VSWARID
          DS    XL4
 VSWARBA  DS    XL4                NORMAL RBA
+         ORG   VSWARID
+         DS    XL4
+VSWARRN  DS    XL4                RRN
          ORG
          DS    0D
 VSWRPL   EQU   *

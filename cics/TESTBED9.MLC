@@ -37,7 +37,7 @@ TSREC    DS    CL200              TS RECORD
 TSNUMIT  DS    H                  NUMITEMS
 QWTSBA   DS    XL4                WCC,SBA FOR QOP MSG
 QWTMSG   DS    CL(QOPLN)          QOP MESSAGE
-TESTBED9 DFHEIENT CODEREG=(R12,R3,R4)
+TESTBED9 DFHEIENT CODEREG=(R12,R3,R4,R5)
          MVI   QOPSEP+1,C'|'      SET COL MARKER
          MVI   QHSEP,C'|'         SET COL MARKER
          MVI   QIDNUM,C'1'        RESET QIDERR NUMBER
@@ -215,7 +215,7 @@ BED9RTN5 EQU   *
          MVC   QWTMSG,QOP         MOVE MESSAGE TEXT
          EXEC  CICS SEND FROM(QWTSBA) LENGTH(QOPL)
          SR    R7,R7              DUMP IF CONDITION RAISED
-         EXEC  CICS READQ TS QUEUE('MYQUEUE1') SET(R5) LENGTH(200)     X
+         EXEC  CICS READQ TS QUEUE('MYQUEUE1') SET(R8) LENGTH(200)     X
                NEXT
 *
 * 1ST Q NAME, READ NEXT (3RD) ITEM, RAISE ITEMERR 2
@@ -228,7 +228,7 @@ BED9RTN5 EQU   *
          EXEC  CICS SEND FROM(QWTSBA) LENGTH(QOPL)
          LA    R7,BED9RTN6        R7=HANDLE RETURN
          MVI   ITMNUM,C'2'        SET ITEMERR 2
-         EXEC  CICS READQ TS QUEUE('MYQUEUE1') SET(R5) LENGTH(200)     X
+         EXEC  CICS READQ TS QUEUE('MYQUEUE1') SET(R8) LENGTH(200)     X
                NEXT
 *
 BED9RTN6 EQU   *
@@ -245,7 +245,7 @@ BED9RTN6 EQU   *
          EXEC  CICS SEND FROM(QWTSBA) LENGTH(QOPL)
          LA    R7,BED9RTN7        R7=HANDLE RETURN
          MVI   QIDNUM,C'3'        SET QIDERR 3
-         EXEC  CICS READQ TS QUEUE('BERT') SET(R5) LENGTH(200) ITEM(1)
+         EXEC  CICS READQ TS QUEUE('BERT') SET(R8) LENGTH(200) ITEM(1)
 *
 BED9RTN7 EQU   *
 *
@@ -259,7 +259,7 @@ BED9RTN7 EQU   *
          EXEC  CICS SEND FROM(QWTSBA) LENGTH(QOPL)
          LA    R7,BED9RTN8        R7=HANDLE RETURN
          MVI   LNGNUM,C'2'        SET LENGERR 2
-         EXEC  CICS READQ TS QUEUE('MYQUEUE1') SET(R5) LENGTH(20)      X
+         EXEC  CICS READQ TS QUEUE('MYQUEUE1') SET(R8) LENGTH(20)      X
                ITEM(2)
 *
 BED9RTN8 EQU   *
@@ -272,27 +272,27 @@ BED9RTN8 EQU   *
          EXEC  CICS DELETEQ TS QNAME('MYLONGQUEUE2')
 * MYQUEUE1 IS HEX TABLE IN 16 ROWS OF 16
          LA    R6,HEXTAB          R6=HEX TABLE
-         LA    R5,256             ALL THE HEX CHARS
+         LA    R8,256             ALL THE HEX CHARS
 HEXLOOP  EQU   *
          STC   R7,0(R6)           SAVE IT
          AHI   R6,1               BUMP HEX TABLE POINTER
          AHI   R7,1               NEXT HEX
-         BCT   R5,HEXLOOP         LOOP
+         BCT   R8,HEXLOOP         LOOP
 *
          LA    R6,HEXTAB          R6=HEX TABLE
-         LA    R5,16              R5=ITEMS TO WRITE
+         LA    R8,16              R8=ITEMS TO WRITE
          SR    R7,R7              DUMP IF CONDITION RAISED
 HEXQ     EQU   *
          EXEC  CICS WRITEQ TS QUEUE('MYQUEUE1') FROM(0(R6)) LENGTH(16)
          AHI   R6,16              BUMP POINTER
-         BCT   R5,HEXQ            LOOP
+         BCT   R8,HEXQ            LOOP
 * MYQUEUE2 IS 50 ROWS OF THE WHOLE HEX TABLE
-         LA    R5,50              R5=ITEMS TO WRITE
+         LA    R8,50              R8=ITEMS TO WRITE
          SR    R7,R7              DUMP IF CONDITION RAISED
 HEXBIGQ  EQU   *
          EXEC  CICS WRITEQ TS QUEUE('MYQUEUE2') FROM(HEXTAB)           X
                LENGTH(256)
-         BCT   R5,HEXBIGQ         LOOP
+         BCT   R8,HEXBIGQ         LOOP
 * X'01CB458F' IS HEX QUEUE NAME
 * 20 LINES OF HELLO WORLD
 * 20 LINES OF ASCII HELLO WORLD
@@ -300,33 +300,33 @@ HEXBIGQ  EQU   *
 * 20 LINES OF 36 BYTES OF HEXTAB
          SR    R7,R7              DUMP IF CONDITION RAISED
          LA    R6,1               CROSS CHECK ITEM NUMBER
-         LA    R5,20              R5=ITEMS TO WRITE
+         LA    R8,20              R8=ITEMS TO WRITE
 HEXQ1    EQU   *
          STH   R6,HWORLD          SAVE ITEM NUMBER
          EXEC  CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HWORLD) LENGTH(13)
          AHI   R6,1               ITEM COUNT
-         BCT   R5,HEXQ1           LOOP
+         BCT   R8,HEXQ1           LOOP
 *
-         LA    R5,20              R5=ITEMS TO WRITE
+         LA    R8,20              R8=ITEMS TO WRITE
 HEXQ2    EQU   *
          STH   R6,HWORLDAS        SAVE ITEM NUMBER
          EXEC  CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HWORLDAS) LENGTH(13)
          AHI   R6,1               ITEM COUNT
-         BCT   R5,HEXQ2           LOOP
+         BCT   R8,HEXQ2           LOOP
 *
-         LA    R5,20              R5=ITEMS TO WRITE
+         LA    R8,20              R8=ITEMS TO WRITE
 HEXQ3    EQU   *
          STH   R6,HEXCOUNT        SAVE ITEM NUMBER
          EXEC  CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HEXCOUNT) LENGTH(72)
          AHI   R6,1               ITEM COUNT
-         BCT   R5,HEXQ3           LOOP
+         BCT   R8,HEXQ3           LOOP
 *
-         LA    R5,20              R5=ITEMS TO WRITE
+         LA    R8,20              R8=ITEMS TO WRITE
 HEXQ4    EQU   *
          STH   R6,HEXCOUNT        SAVE ITEM NUMBER
          EXEC  CICS WRITEQ TS QUEUE(HEXQNAME) FROM(HEXCOUNT) LENGTH(36)
          AHI   R6,1               ITEM COUNT
-         BCT   R5,HEXQ4           LOOP
+         BCT   R8,HEXQ4           LOOP
 *
          EXEC  CICS SEND FROM(CEBRMSG2) LENGTH(CEBR2LEN)
 *

@@ -1,4 +1,4 @@
-Z390/CICS Application Programmers Guide
+Z390/CICS Application Programming Guide
 =======================================
 
 The EXEC CICS commands and parameters listed here are the only ones
@@ -117,14 +117,16 @@ Supported EXEC CICS commands (summary by type)
 
  3) File Control (06)
     a) READ FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
-       RIDFLD() RBA/XRBA
-    b) STARTBR FILE()/DATASET() RIDFLD() REQID() RBA/XRBA GTEQ/EQUAL
+       RIDFLD() RBA/XRBA/RRN/GENERIC GTEQ/EQUAL KEYLENGTH()
+    b) STARTBR FILE()/DATASET() RIDFLD() REQID()
+       RBA/XRBA/RRN/GENERIC GTEQ/EQUAL KEYLENGTH()
     c) READNEXT FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
-       RIDFLD() REQID() RBA/XRBA
+       RIDFLD() REQID() RBA/XRBA/RRN KEYLENGTH()
     d) READPREV FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
-       RIDFLD() REQID() RBA/XRBA
+       RIDFLD() REQID() RBA/XRBA/RRN KEYLENGTH()
     e) ENDBR FILE()/DATASET() REQID()
-    f) RESETBR FILE()/DATASET() RIDFLD() REQID() RBA/XRBA GTEQ/EQUAL
+    f) RESETBR FILE()/DATASET() RIDFLD() REQID()
+       RBA/XRBA/RRN/GENERIC GTEQ/EQUAL KEYLENGTH()
 
  4) Storage Control (08)
     a) FREEMAIN DATA()/DATAPOINTER()
@@ -145,6 +147,15 @@ Supported EXEC CICS commands (summary by type)
     e) RELEASE PROGRAM()
     f) RETURN TRANSID() COMMAREA() LENGTH()
     g) XCTL PROGRAM() COMMAREA() LENGTH()
+
+ 7) Interval Control (10 and 4A)
+    a) ASKTIME ABSTIME()
+    b) DELAY INTERVAL()/TIME() FOR/UNTIL HOURS() MINUTES() SECONDS()
+    c) FORMATTIME   all parameters
+
+  8) Dump Control (1C)
+     DUMP TRANSACTION DUMPCODE() COMPLETE FROM() LENGTH()/FLENGTH()
+     SEGMENTLIST()/LENGTHLIST()/NUMSEGMENTS()
 
 Supported EXEC CICS commands (detail by type)
 ---------------------------------------------
@@ -198,7 +209,6 @@ Supported EXEC CICS commands (detail by type)
           cannot ignore a RETURN.
 
           LENGERR or ERROR by default...
-            Only on EXEC CICS RECEIVE.
             NOHANDLE and any outstanding HANDLE AID will not invoke
             this condition.
 
@@ -265,15 +275,22 @@ Supported EXEC CICS commands (detail by type)
 
  3) File Control (06)
 
-    a) READ FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
-       RIDFLD() RBA/XRBA
+    Notes:
+       FLENGTH and XRBA are extensions, do not use these parameters
+       if the source code is likely to be ported back to a mainframe
+       environment.
 
-       Note: FLENGTH and XRBA are extensions, do not use these
-             parameters if the source code is likely to be ported
-             back to a mainframe environment.
+       RBA access to a KSDS is not supported.
 
        DATASET is supported for legacy applications. It is noted that
        this parameter no longer appears in the Manuals.
+
+       When conditions are raised as a result of a VSAM error, the
+       RPL feedback codes (2nd and 4th bytes) are placed in EIBRCODE
+       +1 and +2.
+
+    a) READ FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
+       RIDFLD() RBA/XRBA/RRN/GENERIC GTEQ/EQUAL KEYLENGTH()
 
        LENGTH
           Can be specified as a constant, literal or label.
@@ -300,35 +317,60 @@ Supported EXEC CICS commands (detail by type)
              data length is larger. The true data length is returned in
              label.
 
+       KEYLENGTH
+          Can be specified as a constant or label.
+          A constant must not exceed 32767.
+          A label must be 2 bytes and must not exceed 32767.
+          Keylengths greater than 128 are ignored.
+
+          The parameter is ignored for ESDS and RRDS.
+          KEYLENGTH and GENERIC must be paired.
+
+          If KEYLENGTH is zero by constant or label then parameters are
+          changed internally:
+             GENERIC/EQUAL or GENERIC/GTEQ
+                Becomes KEYLENGTH(1) Key=X'00' GENERIC GTEQ
+
        RBA   RIDFLD has a 4-byte RBA
        XRBA  RIDFLD has an 8-byte RBA
-          Note: For an ESDS, if neither is specified, RBA is assumed.
+       RRN   RIDFLD has a 4-byte relative record number
+
+       GTEQ/EQUAL
+          The parameter is ignored for ESDS and RRDS.
+
+       GENERIC
+          KEYLENGTH must be specified.
+          The parameter is ignored for ESDS and RRDS.
 
        Errors
           BAD PARM
           BOTH FILE AND DATASET ARE SPECIFIED
+          BOTH GTEQ AND EQUAL ARE SPECIFIED
           BOTH INTO AND SET ARE SPECIFIED
           BOTH LENGTH AND FLENGTH ARE SPECIFIED
           BOTH RBA AND XRBA ARE SPECIFIED
+          BOTH RRN AND (X)RBA ARE SPECIFIED
           FILE OR DATASET MUST BE SPECIFIED
+          GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA
+          GENERIC REQUIRES KEYLENGTH
           INTO OR SET MUST BE SPECIFIED
           INVALID FILE OR DATASET
+          KEYLENGTH REQUIRES GENERIC
           RIDFLD IS MANDATORY
 
        Conditions (RESP/RESP2)
           FILENOTFOUND/1
           DISABLED/50
-          NOTOPEN/60
+          ILLOGIC/110
           INVREQ/20
+          INVREQ/25
+          INVREQ/42
+          LENGERR/E1
+          NOTFND/80
+          NOTOPEN/60
 
-    b) STARTBR FILE()/DATASET() RIDFLD() REQID() RBA/XRBA GTEQ/EQUAL
-
-       Note: XRBA is an extension, do not use this parameter if the
-             source code is likely to be ported back to a mainframe
-             environment.
-
-       DATASET is supported for legacy applications. It is noted that
-       this parameter no longer appears in the Manuals.
+    b) STARTBR FILE()/DATASET() RIDFLD() REQID() RBA/XRBA/RRN/GENERIC
+       GTEQ/EQUAL KEYLENGTH()
 
        REQID
           Can be specified as a constant, literal or label.
@@ -338,38 +380,57 @@ Supported EXEC CICS commands (detail by type)
 
        RBA   RIDFLD has a 4-byte RBA
        XRBA  RIDFLD has an 8-byte RBA
-          Note: For an ESDS, if neither is specified, RBA is assumed.
+       RRN   RIDFLD has a 4-byte relative record number
 
-       GTEQ/EQUAL currently not used
+       KEYLENGTH
+          Can be specified as a constant or label.
+          A constant must not exceed 32767.
+          A label must be 2 bytes and must not exceed 32767.
+          Keylengths greater than 128 are ignored.
+
+          The parameter is ignored for ESDS and RRDS.
+          KEYLENGTH and GENERIC must be paired.
+
+          If KEYLENGTH is zero by constant or label then parameters are
+          changed internally:
+             GENERIC/EQUAL or GENERIC/GTEQ
+                Becomes KEYLENGTH(1) Key=X'00' GENERIC GTEQ
+
+       GTEQ/EQUAL
+          The parameter is ignored for ESDS and RRDS.
+
+       GENERIC
+          KEYLENGTH must be specified.
+          The parameter is ignored for ESDS and RRDS.
 
        Errors
           BAD PARM
           BOTH FILE AND DATASET ARE SPECIFIED
           BOTH GTEQ AND EQUAL ARE SPECIFIED
           BOTH RBA AND XRBA ARE SPECIFIED
+          BOTH RRN AND (X)RBA ARE SPECIFIED
           FILE OR DATASET MUST BE SPECIFIED
+          GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA
+          GENERIC REQUIRES KEYLENGTH
           INVALID FILE OR DATASET
+          KEYLENGTH REQUIRES GENERIC
           RIDFLD IS MANDATORY
 
        Conditions (RESP/RESP2)
-          FILENOTFOUND/1
           DISABLED/50
+          FILENOTFOUND/1
+          ILLOGIC/110
+          INVREQ/20
+          INVREQ/25
+          INVREQ/33
+          INVREQ/42
           NOTFND/80
           NOTOPEN/60
-          INVREQ/20
-          INVREQ/33
 
-          Note: NOTFND cannot occur for an ESDS
+          Note: NOTFND cannot occur for an ESDS or RRDS
 
     c) READNEXT FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
-       RIDFLD() REQID() RBA/XRBA
-
-       Note: FLENGTH and XRBA are extensions, do not use these
-             parameters if the source code is likely to be ported
-             back to a mainframe environment.
-
-       DATASET is supported for legacy applications. It is noted that
-       this parameter no longer appears in the Manuals.
+       RIDFLD() REQID() RBA/XRBA/RRN KEYLENGTH()
 
        LENGTH
           Can be specified as a constant, literal or label.
@@ -404,7 +465,20 @@ Supported EXEC CICS commands (detail by type)
 
        RBA   RIDFLD has a 4-byte RBA
        XRBA  RIDFLD has an 8-byte RBA
-          Note: For an ESDS, if neither is specified, RBA is assumed.
+       RRN   RIDFLD has a 4-byte relative record number
+
+       KEYLENGTH
+          Can be specified as a constant or label.
+          A constant must not exceed 32767.
+          A label must be 2 bytes and must not exceed 32767.
+          Keylengths greater than 128 are ignored.
+
+          The parameter is ignored for ESDS and RRDS.
+
+          If KEYLENGTH is zero by constant or label then parameters are
+          changed internally:
+             GENERIC/EQUAL or GENERIC/GTEQ
+                Becomes KEYLENGTH(1) Key=X'00' GENERIC GTEQ
 
        Errors
           BAD PARM
@@ -412,28 +486,28 @@ Supported EXEC CICS commands (detail by type)
           BOTH INTO AND SET ARE SPECIFIED
           BOTH LENGTH AND FLENGTH ARE SPECIFIED
           BOTH RBA AND XRBA ARE SPECIFIED
+          BOTH RRN AND (X)RBA ARE SPECIFIED
           FILE OR DATASET MUST BE SPECIFIED
           INTO OR SET MUST BE SPECIFIED
           INVALID FILE OR DATASET
           RIDFLD IS MANDATORY
 
        Conditions (RESP/RESP2)
-          ENDFILE/90
           DISABLED/50
+          ENDFILE/90
           FILENOTFOUND/1
+          ILLOGIC/110
           INVREQ/20
-          INVREQ/33
+          INVREQ/25
+          INVREQ/26
+          INVREQ/34
+          INVREQ/42
+          LENGERR/E1
+          NOTFND/80
           NOTOPEN/60
 
     c) READPREV FILE()/DATASET() INTO()/SET() LENGTH()/FLENGTH()
-       RIDFLD() REQID() RBA/XRBA
-
-       Note: FLENGTH and XRBA are extensions, do not use these
-             parameters if the source code is likely to be ported
-             back to a mainframe environment.
-
-       DATASET is supported for legacy applications. It is noted that
-       this parameter no longer appears in the Manuals.
+       RIDFLD() REQID() RBA/XRBA/RRN KEYLENGTH()
 
        LENGTH
           Can be specified as a constant, literal or label.
@@ -468,7 +542,17 @@ Supported EXEC CICS commands (detail by type)
 
        RBA   RIDFLD has a 4-byte RBA
        XRBA  RIDFLD has an 8-byte RBA
-          Note: For an ESDS, if neither is specified, RBA is assumed.
+       RRN   RIDFLD has a 4-byte relative record number
+
+       KEYLENGTH
+          Can be specified as a constant or label.
+          A constant must not exceed 32767.
+          A label must be 2 bytes and must not exceed 32767.
+          Keylengths greater than 128 are ignored.
+
+          The parameter is ignored for ESDS and RRDS.
+          If KEYLENGTH is specified, the value must be equal to the
+          keylength defined for the file.
 
        Errors
           BAD PARM
@@ -476,6 +560,7 @@ Supported EXEC CICS commands (detail by type)
           BOTH INTO AND SET ARE SPECIFIED
           BOTH LENGTH AND FLENGTH ARE SPECIFIED
           BOTH RBA AND XRBA ARE SPECIFIED
+          BOTH RRN AND (X)RBA ARE SPECIFIED
           FILE OR DATASET MUST BE SPECIFIED
           INTO OR SET MUST BE SPECIFIED
           INVALID FILE OR DATASET
@@ -485,11 +570,16 @@ Supported EXEC CICS commands (detail by type)
           DISABLED/50
           ENDFILE/90
           FILENOTFOUND/1
+          ILLOGIC/110
           INVREQ/20
-          INVREQ/33
+          INVREQ/24
+          INVREQ/26
+          INVREQ/41
+          LENGERR/E1
+          NOTFND/80
           NOTOPEN/60
 
-          Note: ENDFILE occurs when a READPREV attempts to read past
+          Note: ENDFILE can occur when a READPREV attempts to read past
                 the beginning of the file.
 
     d) ENDBR FILE()/DATASET() REQID()
@@ -516,18 +606,13 @@ Supported EXEC CICS commands (detail by type)
        Conditions (RESP/RESP2)
           DISABLED/50
           FILENOTFOUND/1
+          ILLOGIC/110
           INVREQ/20
           INVREQ/35
           NOTOPEN/60
 
-    e) RESETBR FILE()/DATASET() RIDFLD() REQID() RBA/XRBA GTEQ/EQUAL
-
-       Note: XRBA is an extension, do not use this parameter if the
-             source code is likely to be ported back to a mainframe
-             environment.
-
-       DATASET is supported for legacy applications. It is noted that
-       this parameter no longer appears in the Manuals.
+    e) RESETBR FILE()/DATASET() RIDFLD() REQID() RBA/XRBA/RRN/GENERIC
+       GTEQ/EQUAL KEYLENGTH()
 
        REQID
           Can be specified as a constant, literal or label.
@@ -537,9 +622,28 @@ Supported EXEC CICS commands (detail by type)
 
        RBA   RIDFLD has a 4-byte RBA
        XRBA  RIDFLD has an 8-byte RBA
-          Note: For an ESDS, if neither is specified, RBA is assumed.
+       RRN   RIDFLD has a 4-byte relative record number
 
-       GTEQ/EQUAL currently not used
+       KEYLENGTH
+          Can be specified as a constant or label.
+          A constant must not exceed 32767.
+          A label must be 2 bytes and must not exceed 32767.
+          Keylengths greater than 128 are ignored.
+
+          The parameter is ignored for ESDS and RRDS.
+          KEYLENGTH and GENERIC must be paired.
+
+          If KEYLENGTH is zero by constant or label then parameters are
+          changed internally:
+             GENERIC/EQUAL or GENERIC/GTEQ
+                Becomes KEYLENGTH(1) Key=X'00' GENERIC GTEQ
+
+       GTEQ/EQUAL
+          The parameter is ignored for ESDS and RRDS.
+
+       GENERIC
+          KEYLENGTH must be specified.
+          The parameter is ignored for ESDS and RRDS.
 
        Note: In real CICS, RESETBR cannot cause a file to open, but it
              will in Z390/CICS. The RESETBR command will be invalid, and
@@ -550,16 +654,26 @@ Supported EXEC CICS commands (detail by type)
           BOTH FILE AND DATASET ARE SPECIFIED
           BOTH GTEQ AND EQUAL ARE SPECIFIED
           BOTH RBA AND XRBA ARE SPECIFIED
+          BOTH RRN AND (X)RBA ARE SPECIFIED
           FILE OR DATASET MUST BE SPECIFIED
+          GENERIC CANNOT BE SPECIFIED WITH RRN OR (X)RBA
+          GENERIC REQUIRES KEYLENGTH
           INVALID FILE OR DATASET
+          KEYLENGTH REQUIRES GENERIC
           RIDFLD IS MANDATORY
 
        Conditions (RESP/RESP2)
           DISABLED/50
           FILENOTFOUND/1
+          ILLOGIC/110
           INVREQ/20
+          INVREQ/25
           INVREQ/36
+          INVREQ/42
+          NOTFND/80
           NOTOPEN/60
+
+          Note: NOTFND cannot occur for an ESDS or RRDS
 
  4) Storage Control (08)
 
@@ -943,6 +1057,138 @@ Supported EXEC CICS commands (detail by type)
        Conditions (RESP/RESP2)
           PGMIDERR/3
 
+ 7) Interval Control (10 and 4A)
+
+    a) ASKTIME ABSTIME()
+
+       Errors
+          BAD PARM
+
+    b) DELAY INTERVAL()/TIME() FOR/UNTIL HOURS() MINUTES() SECONDS()
+
+       INTERVAL
+          Can be specified as INTERVAL(s) through to INTERVAL(hhmmss).
+          ie. INTERVAL(234) means wait for 2 minutes 34 seconds.
+
+          INTERVAL(label) is also permitted (extension).
+          label must point to a 6-byte character field with leading
+          character zeros as needed.
+          eg. INTERVAL(MYTIME)
+              ...
+              MYTIME DC C'000234'
+
+       TIME
+          Can be specified as TIME(s) through to TIME(hhmmss).
+          ie. TIME(234) means resume the task at 2 mins 34secs after
+          midnight. Expiration time rules apply, see the IBM Application
+          Programming Guide.
+
+          TIME(label) is also permitted (extension).
+          label must point to a 6-byte character field with leading
+          character zeros as needed.
+          eg. TIME(MYTIME)
+              ...
+              MYTIME DC C'000234'
+
+       FOR HOURS() MINUTES() SECONDS()
+          FOR is an alternative to INTERVAL.
+          HOURS/MINUTES/SECONDS must be numeric values.
+
+       UNTIL HOURS() MINUTES() SECONDS()
+          UNTIL is an alternative to TIME.
+          HOURS/MINUTES/SECONDS must be numeric values.
+          The result from the parameters is a time-of-day.
+          eg. UNTIL SECONDS(10000) means resume the task at 02:46:40.
+          Expiration time rules apply, see the IBM Application
+          Programming Guide.
+
+       If no parameters are specified, then DELAY INTERVAL(0) is
+       assumed.
+
+       Errors
+          BAD PARM
+          BOTH FOR AND UNTIL ARE SPECIFIED
+          BOTH INTERVAL AND TIME ARE SPECIFIED
+          FOR/UNTIL SPECIFIED, BUT NO TIME PARMS
+          HOURS/MINUTES/SECONDS ARE INVALID WITH INTERVAL OR TIME
+          HOURS/MINUTES/SECONDS ARE SPECIFIED WITHOUT FOR/UNTIL
+          INTERVAL/TIME CANNOT BE SPECIFIED WITH FOR/UNTIL
+          INTERVAL/TIME MUST BE 1 TO 6 BYTES
+          REQID NOT SUPPORTED
+
+       Conditions (RESP/RESP2)
+          INVREQ/4
+          INVREQ/5
+          INVREQ/6
+
+    c) FORMATTIME  all parameters
+
+       Notes:
+          STRINGFORMAT is discarded as there is only one option.
+
+          DATESEP(label) and TIMESEP(label) are added as extensions.
+          Only the first byte is used.
+
+          DATESTRING returns the following 25-byte string.
+          The timezone (eg. GMT) is not returned.
+             eg. "Mon, 17 Dec 2007 10:20:30"
+
+       Errors
+          ABSTIME IS MANDATORY
+          BAD PARM
+
+       Conditions (RESP/RESP2)
+          INVREQ/1
+
+ 8) Dump Control (1C)
+    DUMP TRANSACTION DUMPCODE() COMPLETE FROM() LENGTH()/FLENGTH()
+    SEGMENTLIST()/LENGTHLIST()/NUMSEGMENTS()
+
+    TRANSACTION is mandatory.
+
+    DUMPCODE is mandatory and can be a constant or label.
+    label must point to a 4-byte field.
+    No syntax checking is done.
+
+    COMPLETE
+       If there are no storage area parameters then COMPLETE is the
+       default. Produces a SNAP dump ID=997,TEXT='DUMP dddd COMPLETE'
+
+       If there are storage area parameters and COMPLETE is not
+       specified, only the storage areas are dumped.
+
+    FROM() LENGTH()/FLENGTH()
+       Produces a SNAP dump ID=997,TEXT='DUMP dddd AREA'
+
+       LENGTH
+          Can be specified as a constant or label.
+          A constant must not exceed 32767.
+          A label must be 2 bytes and must not exceed 32767.
+
+       FLENGTH
+          Can be specified as a constant or label.
+          A constant must not exceed 2G-1.
+          A label must be 4 bytes and must not exceed 2G-1.
+
+    SEGMENTLIST/LENGTHLIST/NUMSEGMENTS
+       Produces multiple SNAP dumps ID=997,TEXT='DUMP dddd SEGMENT nnn'
+
+       NUMSEGMENTS
+          Can be specified as a constant or label.
+          A constant must not exceed 2G-1.
+          A label must be 4 bytes and must not exceed 2G-1.
+
+    Errors
+       BAD PARM
+       BOTH LENGTH AND FLENGTH ARE SPECIFIED
+       DUMPCODE IS GREATER THAN 4 BYTES
+       DUMPCODE MUST BE SPECIFIED
+       LENGTH OR FLENGTH REQUIRES FROM
+       LENGTH OR FLENGTH MUST BE SPECIFIED
+       SEGMENTLIST, LENGTHLIST AND NUMSEGMENTS MUST ALL BE SPECIFIED
+          OR ALL ABSENT
+       TRANSACTION MUST BE SPECIFIED
+
 Appendicies
 -----------
 
@@ -955,17 +1201,27 @@ Keypress information
    PF1-PF12   F1 to F12
    PF13-PF24  CTRL+ALT+F1 to CTRL+ALT+F12
 
+Change Summary
+--------------
+January 18, 2008
+   Added READ/STARTBR/RESETBR parameters:
+      RRN, GTEQ, EQUAL, GENERIC, KEYLENGTH
+   Added READNEXT/READPREV parameters RRN, KEYLENGTH
+   Added ASKTIME, DELAY, FORMATTIME
+   Added DUMP TRANSACTION
+
 References
 ----------
-SC34-6433 CICS Application Programmers Guide
-SC34-6434 CICS Application Programmers Reference
+SC34-6433 CICS Application Programming Guide
+SC34-6434 CICS Application Programming Reference
 
 Trademarks
 ----------
-CICS is a registered trademark of International Business Corporation.
+IBM, CICS and VSAM are registered trademarks of International Business
+Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: October 1st, 2007
-Z390 version: V1.3.08
-Z390/CICS version: V3
+Shipping Date: January 18, 2008
+Z390 version: V1.3.08h
+Z390/CICS version: V4
 

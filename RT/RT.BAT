@@ -6,44 +6,37 @@ rem process stops on errors
 REM ******************************************************************
 REM * 07/10/07 RPI 652 ADD RTVSE1 AND RTUTIL1 TO TEST VSE AND UTILS
 REM * 07/18/07 RPI 658 CHANGE RTCLEAN TO DIRCLEAN                   
+REM * 01/22/08 RPI 716 MOVE ALL RT SAVE DIRECTORIES AND BAT FILES TO RT
 REM ******************************************************************
-erase %~dps0rt\all\*.* /q 
-erase %~dps0linklib\dif\*.* /q 
-erase %~dps0demo\dif\*.* /q 
-rem erase %~dps0cics\dif\*.* /q 
-erase %~dps0mvs\dif\*.* /q 
-erase %~dps0util\dif\*.* /q 
-erase %~dps0vsam\test\dif\*.* /q 
-erase %~dps0vse\dif\*.* /q 
-erase %~dps0rt\dif\*.* /q 
-call DIRCLEAN
-call %~dps0RTLINK1 %1 %2 %3 %4 %5 %6 %7 %8 %9
-call %~dps0RTDEMO1 %1 %2 %3 %4 %5 %6 %7 %8 %9
-rem call %~dps0RTCICS1 %1 %2 %3 %4 %5 %6 %7 %8 %9
-call %~dps0RTMVS1  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call %~dps0RTUTIL1  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call %~dps0RTVSAM1  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call %~dps0RTVSE1  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call %~dps0RTTEST1 %1 %2 %3 %4 %5 %6 %7 %8 %9
-copy %~dps0linklib\dif\*.*       %~dps0rt\all
-rem copy %~dps0cics\dif\*.*      %~dps0rt\all
-copy %~dps0demo\dif\*.*          %~dps0rt\all
-copy %~dps0mvs\dif\*.*           %~dps0rt\all
-copy %~dps0rt\dif\*.*            %~dps0rt\all
-copy %~dps0util\dif\*.*          %~dps0rt\all
-copy %~dps0vsam\test\dif\*.*     %~dps0rt\all
-copy %~dps0vse\dif\*.*           %~dps0rt\all
-copy %~dps0linklib\dif\DIFF.TXT  %~dps0rt\all\RTLINK.DIF
-rem copy %~dps0cics\dif\DIFF.TXT %~dps0rt\all\RTCICS.DIF
-copy %~dps0demo\dif\DIFF.TXT     %~dps0rt\all\RTDEMO.DIF
-copy %~dps0mvs\dif\DIFF.TXT      %~dps0rt\all\RTMVS.DIF
-copy %~dps0vsam\dif\DIFF.TXT     %~dps0rt\all\RTVSAM.DIF
-copy %~dps0vse\dif\DIFF.TXT      %~dps0rt\all\RTVSE.DIF
-copy %~dps0util\dif\DIFF.TXT     %~dps0rt\all\RTUTIL.DIF
-copy %~dps0rt\dif\DIFF.TXT       %~dps0rt\all\RTTEST.DIF
-erase %~dps0rt\all\RTGEN*.BAL
-erase %~dps0rt\all\RTGEN*.PCH
-erase %~dps0rt\all\RTGEN*.DAT
-call RTLIST %~dps0rt\all 
+erase rt\all\*.* /q 
+call rt\DIRCLEAN
+call rt\RTLINK1   %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTDEMO1   %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTMFACC1  %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTMVS1    %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTVSAM1   %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTVSE1    %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTTEST1   %1 %2 %3 %4 %5 %6 %7 %8 %9
+copy rt\linklib\dif\*.*         rt\all
+copy rt\demo\dif\*.*            rt\all
+copy rt\mfacc\dif\*.*           rt\all
+copy rt\mvs\demo\dif\*.*        rt\all
+copy rt\mvs\test\dif\*.*        rt\all
+copy rt\test\dif\*.*            rt\all
+copy rt\vsam\demo\dif\*.*       rt\all
+copy rt\vsam\test\dif\*.*       rt\all
+copy rt\vse\demo\dif\*.*        rt\all
+copy rt\vse\test\dif\*.*        rt\all
+copy rt\linklib\dif\DIFF.TXT    rt\all\RTLINK.DIF
+copy rt\demo\dif\DIFF.TXT       rt\all\RTDEMO.DIF
+copy rt\mfacc\dif\DIFF.TXT      rt\all\RTNFACC.DIF
+copy rt\mvs\dif\DIFF.TXT        rt\all\RTMVS.DIF
+copy rt\vsam\test\dif\DIFF.TXT  rt\all\RTVSAM.DIF
+copy rt\vse\test\dif\DIFF.TXT   rt\all\RTVSE.DIF
+copy rt\test\dif\DIFF.TXT       rt\all\RTTEST.DIF
+erase rt\all\RTGEN*.BAL
+erase rt\all\RTGEN*.PCH
+erase rt\all\RTGEN*.DAT
+call  rt\RTLIST rt\all 
 rem end of rt.bat
 
