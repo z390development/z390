@@ -1,9 +1,9 @@
-z390 V1.3.09 Portable Mainframe Assembler
+z390 V1.4.00 Portable Mainframe Assembler
 Copyright 2008 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
  * Microsoft Windows Vista, Windows XP, or Ubuntu Linux 6.06 LTS (others not tested)
- * Sun Microsystems Java Runtime J2SE 5.0_12 or 6.0u3 (latest fully tested on XP/Vista)
+ * Sun Microsystems Java Runtime J2SE 6.0+ (latest fully tested on XP/Vista)
  * Minimum of 512 MB memory (default Java user memory allocation set to 100 MB)
  * Adobe Acrobat or later for viewing User Guide and other documentation
 
@@ -45,7 +45,7 @@ A Service Oriented Architecture (SOA) client server application generation servi
 
 A TPUT and TGET macro based demo TN3270 application to update and display name, address, and numeric zip fields on screen can be assembled and executed with the command “ASMLG DEMO\DEMOGUI6 GUAM”.  Use PF1 for help screen and PF3 for exit.  The arrow, backspace, and tab keys can be used to control blinking cursor.  An alarm and status line error is issued if attempt is made to modify protected field or enter alpha data in numeric field.
 
-Z390 v1.3.09 includes full support for VSAM ESDS and RRDS plus browse support for KSDS files.  Z390 VSAM supports fixed or variable length records up to 2 GB.  Support includes ACB, RPL, GENCB, GET, POINT, PUT, MODCB, SHOWCB, TESTCB, type macros plus DEFINE macro to define loadable VSAM catalogs.  Additional support for KSDS inserts and alternate indexes plus LDS linear support is planned.
+Z390 v1.4.00 includes full support for VSAM ESDS and RRDS plus browse support for KSDS files.  Z390 VSAM supports fixed or variable length records up to 2 GB.  Support includes ACB, RPL, GENCB, GET, POINT, PUT, MODCB, SHOWCB, TESTCB, type macros plus DEFINE macro to define loadable VSAM catalogs.  Additional support for KSDS inserts and alternate indexes plus LDS linear support is planned.
 
 For latest Windows and Linux downloads and additional information about z390 and the open source project visit:
 
@@ -54,12 +54,11 @@ www.z390.org
 z390 Windows Vista and XP installation instructions:
 
 1. Uninstall any old z390 releases and delete residual files left in the install directory
-    Which could be read-only and prevent proper install of new release.  Also the v1.3.09
-    basic  foot print is smalled than v1.3.08 so this will free up disk space.
+    Which could be read-only and prevent proper install of new release.  
 2. Download latest z390 InstallShield setup.exe file from www.z390.org 
 3. Run z390 setup.exe to install it on Windows Vista or XP system
 4. Remove old versions of J2SE runtime such as 1.4.2 etc.
-5. Download and install Java 1.5.0_12 or 1.6.0u3 runtime from: 
+5. Download and install Java 1.6.0u3+ runtime from: 
     http://java.sun.com/j2se/
 6. Double click on the z390 desktop icon to start z390 GUI
     a. Enter the command IVP to run installation verification program 

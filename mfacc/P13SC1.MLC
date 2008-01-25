@@ -1,0 +1,22 @@
+         TITLE 'P13SC.MLC - Calc unit price to 2 decimal places'
+P13SC1   ZMFACC CODE,START,NAME='Steve Comstock'
+         zap   work,cost      work has 00 00 00 00 42 37 5c
+         srp   work,3,0       work has 00 00 04 23 75 00 0c
+         dp    work,qty       work has 11 45 27 0c / 00 01 0c
+*                         (4 bytes of quotient, 3 bytes of remainder)
+         srp   work(4),61,5   00 01 14 5c / 00 01 0c round up half
+         zap   un_pr,work(4)
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         DC    C'TOTAL COST = '
+cost  dc  pl5'42375'    dd dd dd d.d ds
+         DC    C'QUANTITY = '
+qty   dc  pl3'37'       dd ds
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC     C'UNIT PRICE = '
+un_pr ds  pl5    dd dd dd d.d ds
+         DC     C'WORK AREA = '
+work  ds  pl7    dd dd dd dd dd dd dd ds
+         ZMFACC OUTPUT,END
+         END

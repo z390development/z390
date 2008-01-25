@@ -28,7 +28,7 @@ public  class  az390 implements Runnable {
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2006 Automated Software Tools Corporation
+    Copyright 2008 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -4633,7 +4633,7 @@ private void put_copyright(){
 	    */
 	    tz390.force_nocon = true; // RPI 755
 	   	if  (z390_log_text == null){
-	   	    put_log(msg_id + "Copyright 2006 Automated Software Tools Corporation");
+	   	    put_log(msg_id + "Copyright 2008 Automated Software Tools Corporation");
 	   	    put_log(msg_id + "z390 is licensed under GNU General Public License");
 	   	}
 	   	put_log(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name);

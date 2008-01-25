@@ -69,7 +69,7 @@ public  class  z390 extends JApplet
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2006 Automated Software Tools Corporation
+    Copyright 2008 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -746,7 +746,7 @@ public  class  z390 extends JApplet
 	    * display z390 version and copyright
 	    */
 	   	put_log("Z390I " + tz390.version);
-	   	put_log("Copyright 2006 Automated Software Tools Corporation");
+	   	put_log("Copyright 2008 Automated Software Tools Corporation");
 	   	put_log("z390 is licensed under GNU General Public License");
 	   	if  (mode_msg1 != null){
 	   		put_log(mode_msg1);

@@ -14,7 +14,7 @@ import javax.swing.Timer;
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2006 Automated Software Tools Corporation
+    Copyright 2008 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -529,13 +529,13 @@ private void put_copyright(){
 	    */
 	    tz390.force_nocon = true;  // RPI 755
 	   	if  (z390_log_text == null){
-	   		sz390.put_log("EZ390I Copyright 2006 Automated Software Tools Corporation");
+	   		sz390.put_log("EZ390I Copyright 2008 Automated Software Tools Corporation");
 	   		sz390.put_log("EZ390I z390 is licensed under GNU General Public License");
 	   	}
 	   	sz390.put_log("EZ390I program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 	   	sz390.put_log("EZ390I options = " + tz390.cmd_parms);
 		if (tz390.opt_stats){
-			tz390.put_stat_line("Copyright 2006 Automated Software Tools Corporation");
+			tz390.put_stat_line("Copyright 2008 Automated Software Tools Corporation");
 			tz390.put_stat_line("z390 is licensed under GNU General Public License");
 			tz390.put_stat_line("program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			tz390.put_stat_line("options = " + tz390.cmd_parms);

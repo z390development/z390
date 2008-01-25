@@ -1,0 +1,20 @@
+         TITLE 'P13DSH1.MLC - Calc unit price to 2 decimal places'
+*********************************************************************
+* Program ID.  P12DSH1.MLC
+* Author.      Don Higgins.
+* Date.        01/24/08.
+*********************************************************************
+P13DSH1  ZMFACC CODE,START,NAME='DON HIGGINS'
+         LD     F4,=DD'123.45'
+         LD     F5,=DD'10'
+         DDTR   F0,F4,F5
+         LD     F1,=DD'12.35'
+         CTD    CTD_DD,IN=F0,OUT=DEC
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC     C'UNIT PRICE = '
+DEC      DC     CL45' '
+         ZMFACC OUTPUT,END
+         END

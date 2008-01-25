@@ -60,7 +60,7 @@ public  class  gz390
 	
     z390 portable mainframe assembler and emulator.
 	
-    Copyright 2006 Automated Software Tools Corporation
+    Copyright 2008 Automated Software Tools Corporation
 	 
     z390 is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -866,7 +866,7 @@ public  class  gz390
 	   private void about_command(){
 		    guam_put_log("\nz390 GUAM GUI gz390 Graphical User Access Method "
 				  + tz390.version); 
- 	   	    guam_put_log("Copyright 2006 Automated Software Tools Corporation");
+ 	   	    guam_put_log("Copyright 2008 Automated Software Tools Corporation");
 			guam_put_log("z390 is licensed under GNU General Public License");
 	   	    guam_put_log("gz390 supports MCS, TN3270, and Graphic panel views");
 	   	    guam_put_log("gz390 J2SE Java source is distributed as part of z390");

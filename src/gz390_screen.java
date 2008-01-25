@@ -15,7 +15,7 @@ import javax.swing.JScrollPane;
 
 z390 portable mainframe assembler and emulator.
 
-Copyright 2006 Automated Software Tools Corporation
+Copyright 2008 Automated Software Tools Corporation
  
 z390 is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

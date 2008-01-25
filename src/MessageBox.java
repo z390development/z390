@@ -18,7 +18,7 @@ public class MessageBox implements
   /*
    * Popup message box with title and message
    * and exit when ok button clicked
-	Copyright 2006 Automated Software Tools Corporation
+	Copyright 2008 Automated Software Tools Corporation
 	
     This file is part of z390.
 	
