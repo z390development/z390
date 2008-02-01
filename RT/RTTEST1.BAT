@@ -22,7 +22,7 @@ call rt\RT1 rt\test\TESTPRM1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTPRM2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTPRM3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTMAC1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RT1 rt\test\TESTMAC2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTMAC2 tracep systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTMAC3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTMAC4 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTMAC5 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9

@@ -222,7 +222,9 @@ public class pz390 {
 	 * 01/14/08 RPI 787 support DFP unnormalized instructions.
 	 * 01/14/08 RPI 788 correct overflow on DFP packed conversion 
      * 01/17/08 RPI 790 remove DFP normalization, add fp_normalization for HFP 
-     * 01/22/08 RPI 791 set cc3 for CGDTR and CGXTR if too big                                   
+     * 01/22/08 RPI 791 set cc3 for CGDTR and CGXTR if too big 
+     * 01/25/08 RPI 798 correct RRDTR/RRXTR to remove exact check
+     *          fix trace format, and fix ESDTR/ESXTR to include trailing zeros                                  
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1654,14 +1656,14 @@ public class pz390 {
 		       142, // "KDTR" "B3E0" "RRE" DFP 17
 		       342, // "CGDTR" "B3E1" "RRF4" DFP 18
 		       145, // "CUDTR" "B3E2" "RRE" DFP 19
-		       350, // "CSDTR" "B3E3" "RRF4" DFP 20
+		       351, // "CSDTR" "B3E3" "RRF4" DFP 20  // RPI 798
 		       142, // "CDTR" "B3E4" "RRE" DFP 21
 		       145, // "EEDTR" "B3E5" "RRE" DFP 22
 		       145, // "ESDTR" "B3E7" "RRE" DFP 23
 		       142, // "KXTR" "B3E8" "RRE" DFP 24
 		       342, // "CGXTR" "B3E9" "RRF4" DFP 25
 		       145, // "CUXTR" "B3EA" "RRE" DFP 26
-		       350, // "CSXTR" "B3EB" "RRF4" DFP 27
+		       351, // "CSXTR" "B3EB" "RRF4" DFP 27  // RPI 798
 		       142, // "CXTR" "B3EC" "RRE" DFP 28
 		       145, // "EEXTR" "B3ED" "RRE" DFP 29
 		       145, // "ESXTR" "B3EF" "RRE" DFP 30
@@ -1671,14 +1673,14 @@ public class pz390 {
 		       142, // "CEDTR" "B3F4" "RRE" DFP 34
 		       300, // "QADTR" "B3F5" "RRF3" DFP 35
 		       343, // "IEDTR" "B3F6" "RRF2" DFP 36
-		       300, // "RRDTR" "B3F7" "RRF3" DFP 37
+		       302, // "RRDTR" "B3F7" "RRF3" DFP 37 RPI 798
 		       141, // "CXGTR" "B3F9" "RRE" DFP 38
 		       141, // "CXUTR" "B3FA" "RRE" DFP 39
 		       141, // "CXSTR" "B3FB" "RRE" DFP 40
 		       142, // "CEXTR" "B3FC" "RRE" DFP 41
 		       300, // "QAXTR" "B3FD" "RRF3" DFP 42
 		       343, // "IEXTR" "B3FE" "RRF2" DFP 43
-		       300, // "RRXTR" "B3FF" "RRF3" DFP 44
+		       302, // "RRXTR" "B3FF" "RRF3" DFP 44 RPI 798
 		       100,  // 4430 "B6" "STCTL" "RS" 10
 		       100,  // 4440 "B7" "LCTL" "RS" 10
 		       144,  // 4450 "B900" "LPGR" "RRE" 14
@@ -5882,7 +5884,6 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			tz390.dfp_digits = fp_get_bd_from_dd(fp_reg, rf2)
-			      .stripTrailingZeros()      // RPI 787
 			      .unscaledValue()
 			      .abs()
 			      .toString();
@@ -5958,7 +5959,6 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_rre();
 			tz390.dfp_digits = fp_get_bd_from_ld(fp_reg, rf2)
-		      .stripTrailingZeros()      // RPI 787
 		      .unscaledValue()
 		      .abs()
 		      .toString();
@@ -6049,7 +6049,6 @@ public class pz390 {
 	        		fp_rbdv1 = fp_rbdv1.round(new MathContext(fp_sig_req,fp_dfp_rnd_mode[fp_get_rnd_mode(fp_dfp_class,mf4)]));
 	        	}
 	        }
-            check_bd12_exact();
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			break;
 		case 0xF9: // "CXGTR" "B3F9" "RRE" DFP 38
@@ -6134,7 +6133,6 @@ public class pz390 {
 	        		fp_rbdv1 = fp_rbdv1.round(new MathContext(fp_sig_req,fp_dfp_rnd_mode[fp_get_rnd_mode(fp_dfp_class,mf4)]));
 	        	}
 	        }
-            check_bd12_exact();
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			break;
 		}
@@ -14423,7 +14421,7 @@ public class pz390 {
 					+ bytes_to_hex(mem, bd1_loc, rflen1, 0);
 			break;
 		case 230:// "RIE" 4 BRXLG oorriiii00oo
-			trace_parms = " R1" + tz390.get_hex(mf1, 1) + "="
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 					+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " R3"
 					+ tz390.get_hex(mf3, 1) + "="
 					+ tz390.get_hex(reg.getInt(rf3 + 4), 8) + " I2="
@@ -14514,6 +14512,16 @@ public class pz390 {
 				    + "="  + get_fp_long_hex(rf2) 
 				    + " M4=" + tz390.get_hex(mf4, 1);
 		break;
+		case 302:// RRF3" RRDTR/RRXTR oooormrr (r1,r3,r2,m4 maps to
+			// oooo3412)  RPI 798
+		trace_parms = " F" + tz390.get_hex(mf1, 1) 
+		            + "="  + get_fp_long_hex(rf1) 
+		            + " F" + tz390.get_hex(mf3, 1) 
+		            + "="  + get_fp_long_hex(rf3) 
+				    + " R" + tz390.get_hex(mf2, 1) 
+				    + "="  + get_long_hex(reg.getLong(rf2)) // RPI 798
+				    + " M4=" + tz390.get_hex(mf4, 1);
+		break;
 		case 310:// "SS" PKA oollbdddbddd ll from S2
 		case 320: // "SSF" MVCOS oor0bdddbddd (s1,s2,r3) z9-41
 			maxlen = rflen;
@@ -14560,12 +14568,18 @@ public class pz390 {
 			            + get_long_hex(reg.getLong(rf2)			
 				        );
 			break;
-		case 350: // b3e3, b3ed  CSDTR, CSXTR, LDETR, LXDTR
+		case 350: // b3d4, b3dc  LDETR, LXDTR
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
 						       + get_fp_long_hex(rf1) 
 						+ " F" + tz390.get_hex(mf2, 1) + "=" + get_fp_long_hex(rf2)
 						+ " M4=" + tz390.get_hex(mf4, 1);
 			break;	
+		case 351: // b3e3, b3ed  CSDTR, CSXTR  RPI 798
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+						       + get_long_hex(reg.getLong(rf1))   // RPI 798
+						+ " F" + tz390.get_hex(mf2, 1) + "=" + get_fp_long_hex(rf2)
+						+ " M4=" + tz390.get_hex(mf4, 1);
+			break;
 		case 360: // "RRR" "MDTR"
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
 					+ get_fp_long_hex(rf1) + " F" + tz390.get_hex(mf2, 1) + "="

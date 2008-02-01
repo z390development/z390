@@ -16,6 +16,9 @@ call rt\RT1 mfacc\P11FIND2  systerm(rtmfacc) SYSCPY(mfacc+mac) %1 %2 %3 %4 %5 %6
 call rt\RT1 mfacc\P11DSH2   systerm(rtmfacc) SYSCPY(mfacc+mac) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P12DSH1   systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P13SC1    systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 mfacc\P13DSH1   systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 mfacc\P14MW1    systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 mfacc\P14DSH1   systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P1C1      systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P1DSH1    systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P1DSH1A   systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9

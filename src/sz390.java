@@ -159,7 +159,8 @@ public  class  sz390 implements Runnable {
     * 11/08/07 RPI 732 change LOAD R0 = ENTRY vs LOAD POINT 
     * 11/12/07 RPI 737 add STATS(filename) option  
     * 12/24/07 RPI 759 align stats for all pgms on STA file  
-    * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, con                
+    * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, con  
+    * 01/31/08 RPI 318 synchronize TGET/TPUT               
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -3768,7 +3769,7 @@ public synchronized String cmd_get_queue(int cmd_id){
 		return null;
 	}
 }
-private void svc_tget_tput(){
+private synchronized void svc_tget_tput(){ // RPI 318
 	/*
 	 * Read or write to TN3270 terminal
 	 * Notes:

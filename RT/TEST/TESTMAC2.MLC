@@ -9,6 +9,7 @@
 * 04/07/06 RPI 274 ADD TEST FOR AIF ('A' EQ 'B' AND ('C' EQ 'D')).ERR       
 * 05/13/06 RPI 314 ADD AIFB and AGOB ALIAS TESTS                            
 * 05/14/06 RPI 315 ADD AIF alternate fomrat and computed ago                
+* 01/31/08 RPI 803 TEST REPEATED EXECUTION OF AGO                           
 *********************************************************************
 TESTMAC2 SUBENTRY
          WTO   'TESTMAC2 - TEST CONDITIONAL COMPARES'
@@ -69,7 +70,7 @@ XYZ      TEST  XYZ
 .TOK1    MNOTE 'TOK1'
 .TOK2    MNOTE 'TOK2' 
 * TEST COMPUTED AGO
-&I       SETA  2
+&I       SETA  0
 .T1      AGO   (&I).T11,.T12,.T13
          MNOTE 'AGO NO BRANCH'
          AGO    .E1
@@ -79,6 +80,8 @@ XYZ      TEST  XYZ
          AGO   .E1
 .T13     MNOTE '.T13'
 .E1      ANOP
+&i       SETA  &I+1
+         AIF   (&I LE 4).T1
          WTO   'TESTMAC2 ENDED OK'
          SUBEXIT
          AGO   .EXIT

@@ -36,8 +36,10 @@
 #   4) Support DIR and CD as dos commands outside BAT file
 # 10/20/07 RPI 713 fix SET to  support = in file extended parms (ie [RECFM=FT]
 #                  set return code for DIFF command, ignore white space changes
-#                  and show brief results in log along with rc
+#                  and show brief results in log along with rcexit
+
 #                  pause on unknown BAT command file
+# 01/29/08 RPI 792 Support Windows compatible ECHO ON/OFF, IF EXIST file cmd
 ##################################################################
 # Notes:
 #   1. Paths must be correct case with \ separators
@@ -51,6 +53,7 @@ sub set_meta($);
 sub split_args($);
 
 $| = 1;
+my $ECHO = 1;
 my $HOME = $ENV{'HOME'} || $ENV{'LOGDIR'} ||
 		(getpwuid($<))[7] || die "You're homeless!\n";
 my $dir; # Base directory for support files
@@ -155,7 +158,9 @@ sub batch_file($$) {
     $line =~ s/\%([1-9])/$args[$1]/g;   # substitute current bat parms 1-9
     $line =~ s/\s+$//;                  # Trim trailing spaces.
     $line =~ s/\\/\//g;              # replace \ with /
-    print "$line\n";
+    if ($ECHO == 1){
+      print "$line\n";
+    }
 
 # exec dos command or assume it is native command
     if ($line =~ /^\s*$/) {
@@ -193,6 +198,13 @@ sub batch_file($$) {
       if ($errorlevel) {
           print "dir errorlevel: $errorlevel\n";
       }
+# echo on/off
+    } elsif ($line =~ /^echo\s+(\S+)$/i) { 
+      if ($1 eq "ON"){
+         $ECHO = 1;
+      } else {
+         $ECHO = 0;
+      }
 # erase file
     } elsif ($line =~ /^erase\s+(\S+)$/i) { 
       $errorlevel = system("rm $1");
@@ -202,9 +214,6 @@ sub batch_file($$) {
 # erase files /q    
     } elsif ($line =~ /^erase\s+(\S+)\s+(\S+)$/i) {
       $errorlevel = system("rm $1");
-      if ($errorlevel) {
-          print "erase errorlevel: $errorlevel\n";
-      };
 # exit
     } elsif ($line =~ /^exit\s$/i) { 
       die "EXIT\n";
@@ -219,6 +228,12 @@ sub batch_file($$) {
       $i = $labline{lc $1}; 
       die "Label $1 not found!\n" unless defined($i);
       next;
+# if exist file erase file
+    } elsif ($line =~ /^if\s+exist\s+(\S+)+\s+erase\s+(\S+)$/i) {
+      if (-f "$1") {
+          $errorlevel = system("rm $2");
+	  next;
+      }
 # if exist file goto label
     } elsif ($line =~ /^if\s+exist\s+(\S+)+\s+goto\s+(\S+)$/i) {
       if (-f "$1") {
@@ -229,7 +244,6 @@ sub batch_file($$) {
 # if errorlevel 1 goto label
     } elsif ($line =~ /^if\s+errorlevel\s+(\d+)\s+goto\s+(\S+)$/i) {
       my $RC = $errorlevel/256; ## RPI 548
-      printf "Return code = $RC";
       if ($RC >= $1) {
 	$i = $labline{lc $2}; 
 	die "Label $2 not found!\n" unless defined($i);
@@ -238,7 +252,6 @@ sub batch_file($$) {
 # if errorlevel 1 pause text
     } elsif ($line =~ /^if\s+errorlevel\s+(\d+)\s+pause\s+(.*)$/i) {
       my $RC = $errorlevel/256; ## RPI 548
-      printf "Return code = $RC\n";
       if ($RC >= $1) {
           open(TTY,"/dev/tty");  ## RPI 548
           my $REPLY = getc(TTY);

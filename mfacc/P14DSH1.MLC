@@ -1,0 +1,43 @@
+         TITLE 'P14DSH1.MLC - Calc Ackerman function a(4,1)=65533'
+* SEE REFERENCE: http://en.wikipedia.org/wiki/Ackermann_function
+P143DSH1  ZMFACC CODE,START,NAME='DON HIGGINS'
+         GBLA  &A
+         MACRO
+         ACK  &M,&N
+         GBLA &A
+         AIF   (&M EQ 0).MEQ0
+.MGT0    ANOP
+         AIF   (&N EQ 0).NEQ0
+.NGT0    ANOP
+.*
+.* OPTIMIZE SPEED BY HANDLING M=1 OR 2
+.* 
+         AIF   (&M EQ 1).MEQ1
+         AIF   (&M EQ 2).MEQ2
+&NV      SETA  &N-1
+         ACK   &M,&NV
+&MV      SETA  &M-1
+         ACK   &MV,&A
+         MEXIT
+.MEQ1    ANOP
+&A       SETA  &N+2
+         MEXIT
+.MEQ2    ANOP
+&A       SETA  2*&N+3
+         MEXIT
+.NEQ0    ANOP
+&MV      SETA  &M-1
+         ACK   &MV,1  
+         MEXIT
+.MEQ0    ANOP
+&A       SETA  &N+1
+         MEXIT
+         MEND
+         ACK   4,1
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC     C'ACKERMAN A(4,1)=&A'
+         ZMFACC OUTPUT,END
+         END

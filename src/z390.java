@@ -126,7 +126,8 @@ public  class  z390 extends JApplet
      * 08/23/07 RPI 685 adjust GUI height for status line 
      * 11/12/07 RPI 737 route all commands to CMD process if running 
      * 12/19/07 RPI 756 don't add ".." twice  
-     * 12/19/07 RPI 765 force line break to prvent EXIT being split     
+     * 12/19/07 RPI 765 force line break to prvent EXIT being split  
+     * 01/30/08 RPI 792 remove put error msg before checking for null   
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -3387,7 +3388,7 @@ public  class  z390 extends JApplet
                 		rc = cmd_exec_rc();
                 	    if (rc != 0){
                 	    	if (rc == -1){
-                	    		log_error(70,"previous command execution cancelled");
+                	    		log_error(75,"previous command execution cancelled"); // RPI 792
                 	    	    cmd_exec_cancel();
                 	    	} else {
                 	    		log_error(71,"previous command execution ended with rc =" + rc);
@@ -3517,20 +3518,17 @@ public  class  z390 extends JApplet
      }
      private void copy_cmd_error_to_log(){
         /*
-         * copy cmd error to log a byte at a time
-         * to handle cmds such as time with input
-         * request and error msgs without CR/LF
+         * copy cmd error to log a line at a time
          */	
         	try {
         		cmd_exec_error_msg = cmd_exec_error_reader.readLine();
-        		put_log(cmd_exec_error_msg);
    			   	while (cmd_exec_error_msg != null){
 		   			put_log(cmd_exec_error_msg);
 		   			cmd_exec_error_msg = cmd_exec_error_reader.readLine();
    			   	}
         	} catch (Exception ex) {
         		if (cmd_exec_rc() == -1){  // RPI 731
-        			log_error(67,"exec execution output error");
+        			log_error(73,"exec execution output error"); // RPI 792
         			cmd_exec_cancel();
         		}
         	}

@@ -1,0 +1,93 @@
+*********************************************************************
+*  ACKERMAN PROGRAM                                                 *
+*                                                                   *
+*  Input is M and N (PL16)                                          *
+*  Output is RESULT (PL16)                                          *
+*                                                                   *
+*********************************************************************
+*
+P14MW1   ZMFACC CODE,START,RUNSYS=390,NAME='Martin Ward'
+*
+* START OF ACKERMAN COMPUTATION: RESULT = A(M,N)
+*
+ACKERMAN EQU   *
+         ZAP   RESULT,N
+         CP    M,=P'1'
+	 BH    M2
+* M=0 or 1, RESULT=N+M+1
+         AP    RESULT,M
+         BO    TOOBIG
+         AP    RESULT,=P'1'
+         BO    TOOBIG
+         B     ACK999
+*
+M2       EQU   *
+         CP    M,=P'2'
+         BH    M3
+* M=2, RESULT=2N+3
+         MP    RESULT,=P'2'
+         AP    RESULT,=P'3'
+         BO    TOOBIG
+         B     ACK999
+*
+M3       EQU   *
+         CP    M,=P'3'
+         BH    M4
+* M=3, RESULT=2**(N+3)-3
+         CP    N,=P'99'  A(3,99) is the limit for 31 digits
+         BH    TOOBIG
+         ZAP   WORK,N
+	 AP    WORK,=P'3'
+	 ZAP   RESULT,=P'1'
+M3LOOP	 CP    WORK,=P'0'
+	 BE    M3EXIT
+         MP    RESULT,=P'2'
+         SP    WORK,=P'1'
+         B     M3LOOP
+M3EXIT   SP    RESULT,=P'3'
+         B     ACK999
+*
+M4       EQU   *
+         CP    M,=P'4'
+         BH    M5
+* M=4, CHECK N
+         CP    N,=P'0'
+         BH    M51
+         ZAP   RESULT,A40
+         B     ACK999
+M51      CP    N,=P'1'
+         BH    TOOBIG
+         ZAP   RESULT,A41
+         B     ACK999
+*
+M5       EQU   *
+         CP    M,=P'5'
+         BH    TOOBIG
+* M=5, CHECK N
+         CP    N,=P'0'
+         BH    TOOBIG
+         ZAP   RESULT,A50
+         B     ACK999
+TOOBIG   ZAP   RESULT,=P'-1'
+*
+ACK999   EQU   *
+*
+         ZMFACC CODE,END
+*
+         ZMFACC INPUT,START
+M        DC    PL16'4'
+N        DC    PL16'1'
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+RESULT   DC    PL16'0'
+         ZMFACC OUTPUT,END
+WORK     DC    PL16'0'                 USED TO COMPUTE 2**(N+3)
+A40      DC    P'13'                   A(4,0)
+A41      DC    P'65533'                A(4,1)
+* NOTE: A(4,2) = 2**65536-3 IS TOO BIG FOR PL16
+A50      DC    P'65533'                A(5,0)
+* ALL LARGER VALUES OF M ARE TOO BIG FOR PL16
+*
+         LTORG
+*
+         END

@@ -118,7 +118,7 @@ public  class  gz390
 	 *          4.  ConsumePF10-PF22 KeyPressed events to prevent Windows file menu popup
 	 * 08/23/07 RPI 685 adjust GUI height for status line 
 	 * 08/24/07 RPI 671 return all modified bytes when no 
-	 *          fields on screen and add TRACET support       
+	 *          fields on screen and add TRACET support          
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -276,8 +276,8 @@ public  class  gz390
     boolean tn_delete_request = false;  // RPI 630
     boolean tn_cursor = false;
     boolean tn_cursor_alt = false;
-    char tn_cursor_sym = '_';      // alternate cursor char with underline
-    char tn_cursor_sym_alt = '?';  // alternate cursor underline with ?
+    char tn_cursor_sym = '?';      // alternate cursor char ?
+    char tn_cursor_sym_alt = ' ';  // alternate cursor space if ?
     int tn_cursor_scn_addr = 0;
     int tn_cursor_count = 1;
     int tn_cursor_wait_int = 1;
@@ -1052,7 +1052,9 @@ public  class  gz390
     	title_height = 56;
   	    menu_height = font_size + font_space;
  	    log_char_height = font_size + font_space;
-		log_height = tn_scn.main_height - title_height - menu_height - tool_height - command_height - status_height;
+		log_height = tn_scn.main_height - title_height 
+		           - menu_height - tool_height 
+		           - command_height - status_height +10;//dshx
 		log_width  = tn_scn.main_width - scrollbar_width - 4 * main_border;
 	    lines_per_page = log_height / log_char_height;
    	    command_height = font_size + font_space 
@@ -3206,7 +3208,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
         	 */
 
         }
-    public void guam_tget(){
+    public void guam_tget(){  
     	/*
     	 * 1.  Return last tn3270 data stream input
     	 *     if available following keyboard enter
@@ -3248,7 +3250,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
             keyboard_readline();
     	}
     }
-    public void guam_tput(){
+    public void guam_tput(){ 
     	/*
     	 * 1.  Display TN3290 data stream buffer on
     	 *     GUAM GUI 3270 screen and return true of ok.

@@ -306,7 +306,9 @@ public  class  mz390 {
      * 12/19/07 RPI 763 correct ACTR limit to allow 4096 versus 4095 
      * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, con   
      * 12/27/07 RPI 772 correct MEXIT ref # truncation
-     * 12/27/07 RPI 774 exit aif pc code on first branch            
+     * 12/27/07 RPI 774 exit aif pc code on first branch 
+     * 01/31/08 RPI 803 correct computed AGO pseudo code gen
+     * 02/01/08 RPI 805 support comma/period comments delimiter on EXEC CICS           
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1170,7 +1172,7 @@ public  class  mz390 {
 		 *   1.  &vvv=  var followed by = for detecting key vs pos
 		 *   2.  C'xxx' spaces and '' ok in xxx
 		 *   3.  'xxx' spaces and '' ok in xxx
-		 *   4.  xxx    no spaces or commas in xxx ('s ok)
+		 *   4.  xxx    no spaces, commas, or periods in xxx ('s ok)
 		 *   5.  ,      return commas for detecting null pos
 		 *   6.  space  return space for detecting  comments
 		 *   7.  return ( and ) to parse kw parm value (a,b)  RPI 223
@@ -1182,7 +1184,7 @@ public  class  mz390 {
 					+ "|([&][a-zA-Z$@#_][a-zA-Z0-9$@#_]*[=]*)" // &var or &var= for keyword  RPI 253
 					+ "|([0-9]+)"                        // number
 					+ "|([']([^']|(['][']))*['])"        // parm in quotes
-					+ "|([\\s/()',\\.\\+\\-\\*=;])"       // operators and white space RPI181 (\\ for reg exp. opers) add ";" RPI 640 
+					+ "|([\\s/()',\\.\\+\\-\\*=;])"       // operators and white space RPI181 (\\ for reg exp. opers) add ";" RPI 640
 					+ "|([dD]['])"                       // D' defined symbol test 0 or 1  RPI 336
 					+ "|([iIkKlLnNoOsStT]['])"           // ?' prefix operators  RPI 481
 					+ "|([bB]['][0|1]+['])"              // B'0110' binary self def. term
@@ -1191,7 +1193,7 @@ public  class  mz390 {
 					+ "|([cC][!]([^!]|([!][!]))+[!])"        // C"ABCD" ebcdic self def. term  RPI84, 274
 					+ "|([xX]['][0-9a-fA-F]+['])"        // X'0F'   hex self defining term
 					+ "|([a-zA-Z$@#_][a-zA-Z0-9$@#_]*)"   // symbol or logical operator (AND, OR, XOR, NOT, GT, LT etc.) // RPI 253
-					+ "|([^',()\\s]+)"   // RPI 223, RPI 250                  // any other text
+					+ "|([.]+)"   // RPI 223, RPI 250, RPI 805 // any other text
 			);
 		} catch (Exception e){
 			abort_error(2,"exec pattern error - " + e.toString());
@@ -1755,15 +1757,26 @@ public  class  mz390 {
 		char   exec_parm_char;
 		boolean exec_eof = false;
 		boolean exec_space = false;
+		int     exec_parm_lvl = 0; // RPI 805 
 		while (!exec_eof 
 				&& exec_match.find()){
 			exec_parm = exec_match.group();
 			exec_parm_char = exec_parm.charAt(0);
+			if (exec_parm_char == '('){ // RPI 805
+				exec_parm_lvl++;
+			} else if (exec_parm_char == ')'){
+				exec_parm_lvl--;
+			}
 			if (!exec_space){
 				if (exec_parm_char <= ' '){
 					exec_space = true;
 				} else {
-					if (exec_parm_char != ';'){
+					if (exec_parm_lvl > 0  // RPI 805
+						|| (exec_parm_char != ';'
+						    && exec_parm_char != ','    
+						    && exec_parm_char != '.'
+						    )
+						){
 						exec_parms = exec_parms.concat(exec_parm);
 					} else {
 						exec_eof = true;
@@ -1772,7 +1785,12 @@ public  class  mz390 {
 			} else {
 				if (exec_parm_char > ' '){
 					exec_space = false;
-					if (exec_parm_char != ';'){
+					if (exec_parm_lvl > 0    // RPI 805
+						|| (exec_parm_char != ';'  
+							&& exec_parm_char != ','
+							&& exec_parm_char != '.'
+							)
+						){
 						exec_parms = exec_parms.concat("," + exec_parm);
 					} else {
 						exec_eof = true;
@@ -2774,7 +2792,7 @@ public  class  mz390 {
 		 *           of zero indicates error during construction.
 		 *       b.  Maximum index value from 1 to n
 		 *       c.  mac_line_index for each label.
-		 *   3.  Key index to AGO GBLA array in stored
+		 *   3.  Key index to AGO GBLA array is stored
 		 *       using "A:mac_line_index to retrieve
 		 *       array if AGO is reused.      
 		 */
@@ -2803,10 +2821,10 @@ public  class  mz390 {
 					exec_pc_ago();
 					return;
 				} else {
-					// set ago array pointer
+					// set ago array pointer for first time gen
 					ago_gbla_index = tot_gbl_seta;
 					if (!tz390.add_key_index(ago_gbla_index)){
-						abort_error(202,"GBLA limit exceeded for computed AGO");
+						abort_error(202,"GBLA add failed for computed AGO");
 					}
 					if  (tz390.opt_tracem){
 						// set ago gblc array pointer
@@ -2814,59 +2832,58 @@ public  class  mz390 {
 					}
 				}
 				ago_line_index = 0;
-				if (ago_index >= 1){
-					ago_lab_index = exp_next_index;
-					int index = 0;
-					while (ago_lab_index < bal_parms.length()){
-						index++;
-						label_match = label_pattern.matcher(bal_parms.substring(ago_lab_index));
-						if (label_match.find()){
-							new_mac_line_index = exp_ago_branch(ago_lab_index);
-							if (index == ago_index){		
-								ago_line_index = new_mac_line_index;
-							}
-							// store mac line index in 
-							// ago gbla array
-							gbl_seta[ago_gbla_index + 1 + index] = ago_line_index; 
-							if (tz390.opt_tracem){
-								// store ago label in 
-								// ago setc array if tracem or tracep
-								label_name = label_match.group();
-								gbl_setc[ago_gblc_index -1 + index] = label_name;
-							}
-							ago_lab_index = ago_lab_index + label_match.end()+1;
-							if (ago_lab_index >= bal_parms.length() 
-								|| bal_parms.charAt(ago_lab_index-1) != ','){
-								// complete gbla and gblc array updates 
-                                if (tz390.opt_tracem){
-                                    gbl_seta[ago_gbla_index] = ago_gblc_index;
-                                    tot_gbl_setc = tot_gbl_setc + index;
-                                } else {
-								    gbl_seta[ago_gbla_index] = -1;
-                                }
-                                gbl_seta[ago_gbla_index+1] = index; 
-                                tot_gbl_seta = tot_gbl_seta + 2 + index;
-                                // add key index to retrieve ago arrays 
-                                // for reuse with or without pseudo code
-                                if  (tz390.find_key_index('A',"" + mac_line_index) == -1){
-                                	if (!tz390.add_key_index(ago_gbla_index)){
-                                		abort_error(203,"key index table overflow for ago");
-                                	}
-                                }
-							    gen_pc(pc_op_ago);
-                                // and force exit to 
-								// indexed branch label or next line
-								if (ago_line_index > 0){
-									mac_line_index = ago_line_index;
-								}
-                                ago_lab_index = bal_parms.length();
-							}
-						} else {
-							log_error(150,"AGO invald macro label operand - " + bal_parms.substring(ago_lab_index));
+				ago_lab_index = exp_next_index;
+				// RPI 803 gen all labels first time
+				int index = 0;
+				while (ago_lab_index < bal_parms.length()){
+					index++; // index value for current label
+					label_match = label_pattern.matcher(bal_parms.substring(ago_lab_index));
+					if (label_match.find()){
+						new_mac_line_index = exp_ago_branch(ago_lab_index);
+						if (index == ago_index){		
+							ago_line_index = new_mac_line_index;
 						}
+						// store mac line index in 
+						// ago gbla array
+						gbl_seta[ago_gbla_index + 1 + index] = new_mac_line_index; // RPI 803 
+						if (tz390.opt_tracem){
+							// store ago label in 
+							// ago setc array if tracem or tracep
+							label_name = label_match.group();
+							gbl_setc[ago_gblc_index -1 + index] = label_name;
+						}
+						ago_lab_index = ago_lab_index + label_match.end()+1;
+						if (ago_lab_index >= bal_parms.length() 
+							|| bal_parms.charAt(ago_lab_index-1) != ','){
+							// complete gbla and gblc array updates 
+                            if (tz390.opt_tracem){
+                               gbl_seta[ago_gbla_index] = ago_gblc_index;
+                               tot_gbl_setc = tot_gbl_setc + index;
+                            } else {
+                               gbl_seta[ago_gbla_index] = -1;
+                            }
+                            gbl_seta[ago_gbla_index+1] = index; 
+                            tot_gbl_seta = tot_gbl_seta + 2 + index;
+                            // add key index to retrieve ago arrays 
+                            // for reuse with or without pseudo code
+                            if  (tz390.find_key_index('A',"" + mac_line_index) == -1){
+                            	if (!tz390.add_key_index(ago_gbla_index)){
+                            		abort_error(203,"key index table overflow for ago");
+                            	}
+                            }
+						    gen_pc(pc_op_ago);
+                            // and force exit to 
+							// indexed branch label or next line
+							if (ago_line_index > 0){
+								mac_line_index = ago_line_index;
+							}
+                            ago_lab_index = bal_parms.length();
+						}
+					} else {
+						log_error(150,"AGO invald macro label operand - " + bal_parms.substring(ago_lab_index));
 					}
 				}
-			}
+			} 
 		} else {
 			log_error(149,"AGO missing macro label operand");
 		}
@@ -8502,8 +8519,12 @@ public  class  mz390 {
     	String text = "";
     	switch (pc_op[pc_loc]){
     	case  1: // trace pc_op_ago
-    		ago_gblc_index = gbl_seta[ago_gbla_index];
-    		text = "(" + seta_value + ")=" + gbl_setc[ago_gblc_index + ago_index -1] + " BRANCH";
+    		if (seta_value > 0 && seta_value <= gbl_seta[ago_gbla_index+1]){
+    			ago_gblc_index = gbl_seta[ago_gbla_index];
+    			text = "(" + seta_value + ")=" + gbl_setc[ago_gblc_index + ago_index -1] + " BRANCH";
+    		} else { // RPI 803
+    			text = "(" + seta_value + ")= NO BRANCH";
+    		}
     	    break;
     	case  2: // trace pc_op_aif
     		if (setb_value != 0){

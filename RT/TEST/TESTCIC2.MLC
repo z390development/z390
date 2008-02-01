@@ -5,6 +5,7 @@
 * Author - Don Higgins                                              *
 *********************************************************************
 * 06/13/07 RPI 640 TEST QUOTED STRINGS IN EXEC CICS
+* 02/01/08 RPI 805 TEST EXEC CICS COMMENTS WITH LEADING COMMA/PERIOD
 *********************************************************************
 DFHEISTG DSECT       DSA STORAGE
 MSGSBA   DS   CL4
@@ -18,6 +19,10 @@ MMMMCIC2 CSECT
          BAL   R14,GETTIME
          MVC   SENDMSG(13),TIMEHERE
     EXEC  CICS SEND FROM(MSGSBA) LENGTH(L'MSG1+4+C' '-C' ') ;RPI640
+    EXEC  CICS SEND FROM(MSGSBA) LENGTH(L'MSG1+4+C','-C'.'), RPI805
+    EXEC  CICS SEND FROM(MSGSBA) LENGTH(L'MSG1+4+C','-C'.'). RPI805
+    EXEC  CICS SEND FROM(MSGSBA) LENGTH(L'MSG1+4+C','-C'.') ,RPI805
+    EXEC  CICS SEND FROM(MSGSBA) LENGTH(L'MSG1+4+C','-C'.') .RPI805
     EXEC  CICS RETURN
 *
 GETTIME  EQU   *
