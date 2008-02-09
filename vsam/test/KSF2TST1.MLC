@@ -1,0 +1,161 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 02/01/08                                                 *
+*********************************************************************
+* 02/01/08 RPI 723 TEST KSDS UPDATE WITH INSERTS                                                           
+*********************************************************************
+KSF2TEST SUBENTRY   
+         WTO   'KSF2TEST UPDATE WITH DSH2'
+         OPEN  (VFILE,(UPDATE))
+         LTR   R15,R15
+         BNZ   ERR1
+*
+* INSERT DSH2 AFTER DSH          
+*
+         MVC   KEY,=CL20'DSH2'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BZ    ERR2     ERROR IF FOUND
+         USING RECDSECT,RECORD
+         MVC   NAME,=CL20'DSH2'
+         MVC   ADDR,=CL20'29 VILLA AVE'
+         MVC   CITY,=CL20'CHARLOTTETOWN'
+         MVC   STATE,=CL5'PEI'
+         MVC   ZIP,=CL5'12345'
+         PUT   RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR3
+*
+* RETRIEVE OTHER RECORDS AND THEN DSH2 BY KEY
+*
+         WTO   MF=(E,WTOREC)
+         MVC   KEY,=CL20'MW'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+         MVC   KEY,=CL20'DSH2'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+         MVC   KEY,=CL20'MT'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+         MVC   KEY,=CL20'DSH'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+         MVC   KEY,=CL20'AK'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+DSHX1    B     DSHX
+*
+* UPDATE BY INSERTING DSH1 BETWEEN DSH AND DSH1 IN TREE          
+*
+         MVC   KEY,=CL20'DSH1'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BZ    ERR2     ERROR IF FOUND
+         USING RECDSECT,RECORD
+         MVC   NAME,=CL20'DSH1'
+         MVC   ADDR,=CL20'6365 32 AVE'
+         MVC   CITY,=CL20'ST. PETE'
+         MVC   STATE,=CL5'FL'
+         MVC   ZIP,=CL5'12345'
+         PUT   RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR3
+         WTO   MF=(E,WTOREC)
+*
+* UPDATE BY INSERTING DSH3 AFTER DSH2 IN TREE          
+*
+         MVC   KEY,=CL20'DSH3'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BZ    ERR2     ERROR IF FOUND
+         USING RECDSECT,RECORD
+         MVC   NAME,=CL20'DSH3'
+         MVC   ADDR,=CL20'4120 71 AVE'
+         MVC   CITY,=CL20'PINELLAS PARK'
+         MVC   STATE,=CL5'FL'
+         MVC   ZIP,=CL5'12345'
+         PUT   RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR3
+         WTO   MF=(E,WTOREC)
+*
+* RETRIVE DSH1 DSH3 BY KEY
+*
+         MVC   KEY,=CL20'DSH1'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+         MVC   KEY,=CL20'DSH3'
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+*
+* CLOSE AND EXIT
+*
+DSHX     EQU   *
+         CLOSE (VFILE)
+         LTR   R15,R15
+         BNZ   ERR3
+         WTO   'KSF2TEST ENDED OK'
+         SUBEXIT
+ERR1     WTO   'KSF2TEST OPEN ERROR'
+         ABEND 111,DUMP
+ERR2     WTO   'KSF2TEST GET BY KEY ERROR'
+         ABEND 222,DUMP
+ERR3     WTO   'KSF2TEST CLOSE ERROR'
+         ABEND 333,DUMP
+ERR4     WTO   'KSF2TEST NAME NOT EQUAL KEY REQUESTED'
+         ABEND 444,DUMP
+ERR5     WTO   'KSF2TEST MODCB ERROR'
+         ABEND 555,DUMP
+ERR6     WTO   'KSF2TEST POINT ERROR'
+         ABEND 666,DUMP
+ERR7     WTO   'KSF2TEST GET SEQ ERROR'
+         ABEND 777,DUMP
+ERR8     WTO   'KSF2TEST PUT UPD ERROR'
+         ABEND 888,DUMP
+VFILE    ACB   DDNAME=VFILE,MACRF=(KEY,OUT)
+VRPL     RPL   ACB=VFILE,AREA=RECORD,OPTCD=(KEY,UPD),ARG=KEY
+         LTORG
+         EQUREGS
+WTOREC   DC    AL2(WTOEND-*,0),C'REC='
+RECORD   DC    CL70' '
+WTOEND   EQU   *
+KEY      DC    CL20' '
+RECDSECT DSECT
+NAME     DS    CL20
+ADDR     DS    CL20
+CITY     DS    CL20
+STATE    DS    CL5
+ZIP      DS    CL5
+         END

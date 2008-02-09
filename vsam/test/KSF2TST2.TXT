@@ -1,0 +1,14 @@
+KSF2TST2 KSIT and KSIR CB DOCS for debugging
+
+KSIT 1A4
+TOP  1F4
+FST  1C0
+LST  2E8
+     DSH  DSH2  DSH1  DSH3
+KSIR 1C0  1F4   26E   2E8
+PAR  1F4  1A4   1F4   1F4
+LOW  -1   26E   -1    -1
+HIGH 26E  2E8   -1    -1
+BWD  -1   26E   1C0   1F4
+FWD  26E  2E8   1F4   -1
+REC   46  228   2A2   31C

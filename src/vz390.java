@@ -61,7 +61,8 @@ public  class  vz390 {
     * 01/08/08 RPI 779 1) return key in RPLARG for gen key access
     *          2)correct TRACEV to show RPL KLEN and VCLR KLEN and full key
     *          3)show 4 or 8 byte RPLARG RBA for ESDS/RRDS
-    *          4)set POINT with KSDS high value key to EOF                                        
+    *          4)set POINT with KSDS high value key to EOF
+    * 02/08/08 RPI 723 add insert and key/seq access                                                
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -276,7 +277,7 @@ public  class  vz390 {
 	 */
 	int rpl_flag_getok = 0x80000000; // prev RPL GET successful
 	int rpl_flag_getnf = 0x40000000; // prev RPL GET record not found
-	int rpl_flag_ksit  = 0x20000000; // insert in current KSIT
+	int rpl_flag_ksit  = 0x20000000; // get/put in KSIT
 	/*
 	 * RPL field offsets
 	 */
@@ -390,8 +391,6 @@ public  class  vz390 {
      */
     int  comp_rc = 0; // result of last key compare
     int  comp_key_gen_rc = 0; // RPI 757
-    int  key_pfx_addr = 0;
-    long key_pfx_save = 0;
     /*
      * KSDS insert top control block ZKSITD
      */
@@ -399,7 +398,7 @@ public  class  vz390 {
     ByteBuffer cb = null;
     long cur_ksit_xrba = 0;
     int  cur_ksit_id   = 0; // C'KSIT'
-    int  ksit_id_val   = 0x4b534954;
+    int  ksit_id_val   = 0xD2E2C9E3; // RPI 723 C'KSIT"
     long cur_ksit_top  = 0; // top of balanced tree KSIR
     long cur_ksit_fst  = 0; // next first and lowest KSIR XRBA (-1 none, high bit if last add)
     long cur_ksit_lst  =  0; // next last  and higher KSIR XRBA (-1 none, high bit if last add)
@@ -413,9 +412,10 @@ public  class  vz390 {
      * KSDS insert record control block ZKSIRD
      */
     long cur_ksir_xrba = 0;
-    long last_add_high_bit = (long)1 << 63 ;
-    int  cur_ksir_id   = 0; // C'KSIT'
-    int  ksir_id_val   = 0x4b534952;
+    long xrba_high_bit = (long)1 << 63 ;
+    long xrba_max_pos  = (long)-1 >>> 1;
+    int  cur_ksir_id   = 0; // C'KSIR'
+    int  ksir_id_val   = 0xD2E2C9D9;  // RPI 723 C'KSIR'
     long cur_ksir_par  =  0; // parent KSIR or KSIT
     long cur_ksir_low  =  0; // lower  KSIR XRBA (-1 none, high bit if last add)
     long cur_ksir_high =  0; // higer  KSIR XRBA (-1 none, high bit if last add)
@@ -426,10 +426,15 @@ public  class  vz390 {
     int  ksir_par      =  4; // parent KSIR or KSIT
     int  ksir_low      = 12; // next lower   KSIR or -1 (high bit if last add)
     int  ksir_high     = 20; // next highest KSIR or -1 (high bit if last add)
-    int  ksir_fwd      = 28; // next foward   KSIR or -1
-    int  ksir_bwd      = 36; // next backward KSIR or -1
+    int  ksir_bwd      = 28; // next backward KSIR or -1
+    int  ksir_fwd      = 36; // next foward   KSIR or -1
     int  ksir_rec      = 44; // xrba of cur record (may change for var update)
     int  ksir_len      = 52; // KSIR length
+	long prev_ksir_xrba = 0;
+	long prev_ksir_low  = 0;
+	long prev_ksir_bwd  = 0;
+	long prev_ksir_high = 0;
+	long prev_ksir_fwd  = 0;
     /*
      * VSAM Cache Buffer (vcb_) data areas
      */
@@ -1072,47 +1077,123 @@ public  class  vz390 {
     }
     private void rpl_get_ksds_seq(){
     	/*
-    	 * get KSDS seq
+    	 * get next KSDS seq. rcd else eof/error
+    	 */
+    	if ((cur_rpl_flag & rpl_flag_ksit) != 0){
+            // read rec for cur ksir in ksit
+    		// and pos to next ksir or next index
+    		if (!read_ksir_cur_rec()){
+    			return;
+    		}
+    	} else {
+    	   // set cur_vx0_xrba to next ksds index
+    	   // else eod or error
+    	   if (!set_ksds_next_index()){
+    		   return;
+    	   }
+    	   // read ksds index else error
+           if (!read_ksds_index()){
+        	   return;
+           }
+           if (cur_ves_xrba < 0){
+        	   // position to first KSIR in KSIT else error
+        	   if (!get_first_seq_ksir()){
+        		   return;
+        	   }
+        	   // read rec for cur ksir and
+        	   // pos to next ksir or next index
+       		   if (!read_ksir_cur_rec()){
+       			   return;
+       		   }
+           } else {
+        	   // read rec for cur ksds index
+           	   if (!read_ves_rec()){ // rpi 672
+        		  return;
+        	   }
+           	   if ((cur_rpl_opt & rpl_opt_bwd) == 0){ // RPI 779
+           		   // if fwd advance to next index now 
+           		   set_rpl_ksds_next();
+           	   }
+           	   set_rpl_cxrba(cur_vx0_xrba);
+           }
+    	}
+    	// return successful read
+    	// of next record
+    	set_feedback(pdf_def,rc_ok,cmp_ves,rn_ok);
+    }
+    private boolean get_first_seq_ksir(){
+    	/*
+    	 * position to first KSIR in KSIT	 
+    	 * for either FWD or BWD seq. access.
+    	 */
+    	if (!read_ksit()){
+    		return false;
+    	} 
+    	if ((cur_rpl_opt & rpl_opt_bwd) != 0){ // RPI 779
+       	    cur_rpl_ksir = cur_ksit_lst;
+    	} else {
+    		cur_rpl_ksir = cur_ksit_fst;
+       	}
+    	return true;
+    }   
+    private boolean read_ksir_cur_rec(){
+    	/*
+    	 * read record from current KSIR and
+    	 * postion to next KSIR or index entry
+    	 * or return eod 
+    	 */
+		// read cur KSIR in KSIT
+		if (!read_ksir(cur_rpl_ksir)){
+			return false;
+		}
+		cur_ves_xrba = cur_ksir_rec;
+    	if (!read_ves_rec()){ // rpi 672
+     	     return false;
+     	}
+		if ((cur_rpl_opt & rpl_opt_bwd) != 0){
+			cur_rpl_ksir = cur_ksir_bwd;
+		} else {
+			cur_rpl_ksir = cur_ksir_fwd;
+		}
+		if (cur_rpl_ksir == -1){
+			// at end of KSIT reset for next
+			// read ksds index entry
+			reset_rpl_cur_rec_flags();
+			if ((cur_rpl_opt & rpl_opt_bwd) == 0){
+				set_rpl_ksds_next();
+			}
+		}
+		set_rpl_cur_rec(true);
+		return true;
+    }
+    private boolean set_ksds_next_index(){
+    	/* 
+    	 * set cur_vx0_xrba to next ksds index
+    	 * going forward or backward else set eod
     	 */
     	if ((cur_rpl_opt & rpl_opt_bwd) != 0){
-    		if (!set_ksds_bwd_next()){
-    			return; // RPI 672 error or eod
-    		}
+        	cur_vx0_xrba = cur_rpl_cxrba;
+        	if (cur_vx0_xrba == 0){
+        		set_feedback(pdf_def,rc_log,cmp_ves,rn_eod);
+            	// return logical end of data to front of file
+        		return false;
+        	}
+        	cur_vx0_xrba = cur_vx0_xrba - 8 - cur_vclr_klen;
+        	set_rpl_cxrba(cur_vx0_xrba);
     	} else {
     		cur_vx0_xrba = cur_rpl_cxrba;
     	}
-        if (!get_ksds_ves_xrba(false)){
-        	// eod or error finding ves xrba from vx0
-        	return;
+    	if (cur_vx0_xrba > tz390.max_file_size
+        	|| cur_vx0_xrba < 0){
+        	set_feedback(pdf_def,rc_log,cmp_ves,rn_inv_rba_req);
+    		return false;
         }
-        if ((cur_rpl_flag & rpl_flag_ksit) != 0){
-        	if (!read_ves_rec()){ // rpi 672
-        		return;
-        	}
-        	if ((cur_rpl_opt & rpl_opt_bwd) == 0){
-        		cur_rpl_ksir = cur_ksir_bwd;
-        	} else {
-        		cur_rpl_ksir = cur_ksir_fwd;
-        	}
-        	set_rpl_ksds_next();
-        	set_rpl_cxrba(cur_vx0_xrba);
-        } else {
-        	set_rpl_lxrba(cur_vx0_xrba);
-        	// read ves record  
-        	if (!read_ves_rec()){ // rpi 672
-        		return;
-        	}
-        	if ((cur_rpl_opt & rpl_opt_bwd) == 0){ // RPI 779
-        		set_rpl_ksds_next();
-        	}
-        	set_rpl_cxrba(cur_vx0_xrba);
-        }
-    	if ((cur_rpl_opt & rpl_opt_upd) != 0){
-    		// set successful get flag for possible UPD put update
-            set_rpl_cur_rec(true);
+        if (cur_vx0_xrba >= sz390.tiot_eof_rba[cur_vx0_tiot_index]){
+        	// return eod at end of index
+        	set_feedback(pdf_def,rc_log,cmp_ves,rn_eod);
+    		return false;
     	}
-    	// return successful write of ves rec and vx0 index
-    	set_feedback(pdf_def,rc_ok,cmp_ves,rn_ok);
+        return true;
     }
     private void set_rpl_ksds_next(){
     	/*
@@ -1147,16 +1228,17 @@ public  class  vz390 {
     	/*
     	 * inc or dec vx0 for next key index entry
     	 */
-    	if ((cur_rpl_opt & rpl_opt_bwd) == 0){
-    		cur_vx0_xrba = cur_vx0_xrba + 8 + cur_vclr_klen;
-    	} else {
+    	if ((cur_rpl_opt & rpl_opt_bwd) != 0){
     		cur_vx0_xrba = cur_vx0_xrba - 8 - cur_vclr_klen;
+    	} else {
+    		cur_vx0_xrba = cur_vx0_xrba + 8 + cur_vclr_klen;
     	}
     }
     private void rpl_get_ksds_key(){
     	/*
     	 * get KSDS get by key
     	 */
+       	reset_rpl_cur_rec_flags();
         if (!find_ksds_key()){
         	// key not found - set get not found flag for possible UPD insert
             set_rpl_cur_rec(false);
@@ -1174,10 +1256,7 @@ public  class  vz390 {
 				       pz390.mem_byte, cur_rpl_arg,cur_vclr_klen);
 		}
     	set_rpl_cxrba(cur_vx0_xrba);
-    	if ((cur_rpl_opt & rpl_opt_upd) != 0){
-    		// set successful get flag for possible UPD put update
-            set_rpl_cur_rec(true);
-    	}    	
+        set_rpl_cur_rec(true);
     	// return successful read of ves rec and vx0 index
     	set_feedback(pdf_def,rc_ok,cmp_ves,rn_ok);
     }
@@ -1261,53 +1340,6 @@ public  class  vz390 {
    		// return successful rrds read
    		set_feedback(pdf_def,rc_ok,cmp_ves,rn_ok);
     }
-    private boolean get_ksds_ves_xrba(boolean key){
-    	/*
-    	 * 1.  if random access by key,
-    	 *       then cur_ves_xrba = index xrba
-    	 *     else
-    	 *       cur_vx0_xrba = cur_rpl_lxrba.
-    	 * 2.  Set cur_ves_xrba as follows
-    	 *     if cur_vx0_xrba > eod
-    	 *        set cur_ves_xrba = -1 (not found)
-    	 *        and return false
-    	 * 3.  Set cur_ves_xrba as follows:
-    	 *     a.  -1 if 0 return false (no rec found)
-    	 *     b.  xrba and return true.
-    	 * Note:
-    	 *   1.  VX0 XRBA's for valid records are stored +1.
-    	 *       to distinguish 0 as unwritten VES XRBA. 
-    	 */
-    	if (key){
-    		if (!find_ksds_key()){
-    			return false;
-    		}
-    	} else {
-    		cur_vx0_xrba = cur_rpl_cxrba;
-    	}
-    	if (cur_vx0_xrba > tz390.max_file_size
-    		|| cur_vx0_xrba < 0){
-    		set_feedback(pdf_def,rc_log,cmp_ves,rn_inv_rba_req);
-			return false;
-    	}
-    	if (cur_vx0_xrba >= sz390.tiot_eof_rba[cur_vx0_tiot_index]){
-    		// return eod at end of index
-    		set_feedback(pdf_def,rc_log,cmp_ves,rn_eod);
-			return false;
-		}
-		if (!read_ksds_index()){
-			// I/O error on index
-			set_feedback(pdf_def,rc_phy,cmp_vx0,rn_read_index_err);
-			cur_ves_xrba = -1;
-			return false;
-		}
-		if (cur_ves_xrba < 0){
-            if (!find_ksds_insert_key()){
-            	return false;
-            }
-		}
-		return true;
-    }
     private boolean find_ksds_key(){
     	/*
     	 * search vx0 for ksds key in rplarg
@@ -1340,6 +1372,7 @@ public  class  vz390 {
     			if (comp_rc == 0){
     			  	if (cur_ves_xrba < 0){
     		    		if (find_ksir()){
+    		    			cur_ves_xrba = cur_ksir_rec;
     		    			set_rpl_cur_rec(true);
     		    			return true;
     		    		} else {
@@ -1381,6 +1414,13 @@ public  class  vz390 {
    				&& comp_key_gen_rc > 0){
     			return false;        		
         	}
+		    if (cur_ves_xrba < 0){ // RPI 723 
+
+   		    	if (!find_ksir()){
+   		    		return false;
+   		    	}
+   		    	cur_ves_xrba = cur_ksir_rec;
+   		    }
 			set_rpl_cur_rec(true);
 			return true;
     	} else if ((cur_rpl_opt & rpl_opt_gen) != 0){
@@ -1394,6 +1434,12 @@ public  class  vz390 {
                     comp_key_gen_rc = prev_key_gen_rc;
     		}
    			if (comp_key_gen_rc == 0){
+   		    	if (cur_ves_xrba < 0){
+   		    		if (!find_ksir()){
+   		    			return false;
+   		    		}
+   		    		cur_ves_xrba = cur_ksir_rec;
+   		    	}
    				set_rpl_cur_rec(true);
    				return true;
    			}
@@ -1403,7 +1449,7 @@ public  class  vz390 {
     private void set_rpl_cur_rec(boolean found){
     	/*
     	 * set rpl_flag_getok or rpl_flag_getnf
-    	 * and save rpl_ksit and rpl_ksir for
+    	 * and save along with rpl_flag_ksit
     	 * possible following put or insert.
     	 */
     	if (found){
@@ -1415,49 +1461,68 @@ public  class  vz390 {
 		pz390.mem.putLong(cur_rpl_addr + rpl_ksit,cur_rpl_ksit);
 		pz390.mem.putLong(cur_rpl_addr + rpl_ksir,cur_rpl_ksir);
     }
-    private void reset_rpl_cur_rec(){
+    private void reset_rpl_cur_rec_flags(){
     	/*
     	 * reset flags for RPL current record
     	 */
 		cur_rpl_flag = cur_rpl_flag & (-1 ^ (rpl_flag_ksit |rpl_flag_getok | rpl_flag_getnf));
 		pz390.mem.putInt(cur_rpl_addr + rpl_flag,cur_rpl_flag);
     }
-    private boolean find_ksds_insert_key(){
+    private boolean find_ksir(){
     	/*
     	 * search ksit balanced binary tree at
     	 * cur_vx0_xrba (negative)
     	 * 1.  Set cur_ves_xrba to record if found
+    	 * 2.  Set cur_rpl_ksir to last ksir
+    	 *     for use by insert_ksir 
     	 */
     	if (cur_ves_xrba == -1){
     		return false; // vx0 key record deleted
     	}
-    	cur_ksit_xrba = - cur_ves_xrba;
-    	if (get_ksit()){
+    	if (read_ksit()){
+        	long last_gen_ksir = -1;
     		cur_ksir_xrba = cur_ksit_top;
     		while (cur_ksir_xrba != -1){
-    			if (!get_ksir(cur_ksir_xrba)){
+    			if (!read_ksir(cur_ksir_xrba)){
     				return false; // io error
     			}
                 if (!read_ksir_key()){
                 	return false; // io error
                 }
     			if (comp_key(cur_rpl_arg,cur_key) == 0){
-    				if (cur_ksir_rec > 0){
-    					// KSIR with matching record found
-    					cur_ves_xrba = cur_ksir_rec;
-   						return true;
-    				} else {
-    					return false; // deleted record
-    				}
+                    return get_ksir_rec();
     			}
-    			if (comp_rc == -1){
+				if ((cur_rpl_opt & rpl_opt_gen) != 0){ // RPI 723 
+ 				   if (comp_key_gen_rc == 0 
+ 				       || (cur_rpl_opt & rpl_opt_kge) != 0){
+ 				       last_gen_ksir = cur_ksir_xrba;
+ 				   }
+ 				}
+    			if (comp_rc < 0){
     				cur_ksir_xrba = cur_ksir_low;
     			} else {
     				cur_ksir_xrba = cur_ksir_high;
     			}
     		}
+    		if (last_gen_ksir != -1){
+    			cur_ksir_xrba = last_gen_ksir;
+    			return get_ksir_rec();
+    		}
     	}
     	return false;
+    }
+    private boolean get_ksir_rec(){
+    	/*
+    	 * set cur_ves_xrba to ksir rec
+    	 * unless deleted
+    	 */
+		if (cur_ksir_rec > 0){
+			// KSIR with matching record found
+			cur_ves_xrba = cur_ksir_rec;
+			return true;
+		} else {
+			return false; // deleted record
+		}
     }
     private boolean get_rrds_ves_xrba(boolean key){
     	/*
@@ -1500,7 +1565,7 @@ public  class  vz390 {
 			cur_ves_xrba = -1;
 			return false;
 		}
-		if (!read_rrds_index()){
+		if (!read_xrba_ptr()){
 			// I/O error on index
 			set_feedback(pdf_def,rc_phy,cmp_vx0,rn_read_index_err);
 			cur_ves_xrba = -1;
@@ -1566,7 +1631,7 @@ public  class  vz390 {
         	|| (cur_rpl_opt & rpl_opt_adr) != 0){
         	if ((cur_rpl_flag & rpl_flag_getok) != 0){
         		// turn off successful get flag and set xrba to rewrite record
-                reset_rpl_cur_rec();
+                reset_rpl_cur_rec_flags();
         		cur_ves_xrba = cur_rpl_lxrba;
         	} else {
         		// required get not done successfully
@@ -1604,13 +1669,13 @@ public  class  vz390 {
         		if (!update_ksds_rec()){
         			return;
         		}
-                reset_rpl_cur_rec();
+                reset_rpl_cur_rec_flags();
         	} else if ((cur_rpl_flag & rpl_flag_getnf) != 0){
         		// turn off unsuccessful get flag and set xrba to rewrite record
         	    if (!insert_ksds_rec()){
         	    	return;
         	    }
-                reset_rpl_cur_rec();
+                reset_rpl_cur_rec_flags();
         	} else {
         		// required ksds get not done successfully
         		set_feedback(pdf_def,rc_log,cmp_ves,rn_inv_acc_type);
@@ -1645,7 +1710,8 @@ public  class  vz390 {
    			} catch (Exception e){
    				set_feedback(pdf_def,rc_phy,cmp_ves,rn_write_data_err);
    			}
-    		// update vx0 index to VES XRBA and key
+    		// update vx0 index to new ves xrba
+   			// and key added to eof
     		if (!write_ksds_index()){ 
     			return;
     		}
@@ -1678,11 +1744,11 @@ public  class  vz390 {
     	}
 		if (get_rrds_ves_xrba(true)){
 			// rewrite or replace with bigger added record at end
-   			if (rewrite_rec(cur_vx0_tiot_index,cur_vx0_xrba)){
+   			if (rewrite_ves_rec(cur_vx0_tiot_index,cur_vx0_xrba)){
    				return;
     		}
 		} else if (cur_ves_xrba == -1) {
-			if (!add_rec(cur_vx0_tiot_index,cur_vx0_xrba)){
+			if (!add_ves_rec(cur_vx0_tiot_index,cur_vx0_xrba)){
 				return;
 			}
 		} else {
@@ -1698,7 +1764,7 @@ public  class  vz390 {
 		// return successful write of ves rec and vx0 index
 		set_feedback(pdf_def,rc_ok,cmp_ves,rn_ok);
     }
-    private boolean rewrite_rec(int tiot_index,long xrba_index){
+    private boolean rewrite_ves_rec(int tiot_index,long xrba_index){
     	/*
     	 * rewrite RRDS or KSDS record at cur_ves_xrba
     	 * and update index xrba if it changed due to
@@ -1727,7 +1793,7 @@ public  class  vz390 {
 					return false;
 				}
 			} else {
-				if (!add_rec(tiot_index,xrba_index)){
+				if (!add_ves_rec(tiot_index,xrba_index)){
 					return false;
 				}
 			}
@@ -1737,7 +1803,7 @@ public  class  vz390 {
 		}
 		return true;
     }
-    private boolean add_rec(int tiot_index,long index_xrba){
+    private boolean add_ves_rec(int tiot_index,long index_xrba){
     	/*
 		 * add RRDS or KSDS record to VES 
          * and update index XRBA address which may
@@ -1754,11 +1820,20 @@ public  class  vz390 {
 				set_feedback(pdf_def,rc_phy,cmp_ves,rn_write_data_err);
 				return false;
 			}
-			cur_ves_xrba = last_ves_xrba;
-			cur_vx0_xrba = cur_rpl_lxrba;
-			// update vx0 index to VES XRBA+1 to indicate valid record
-			if (!write_index(cur_vx0_tiot_index,cur_vx0_xrba,cur_ves_xrba+1)){ // rpi 688
-				return false;
+			if (tiot_index > -1){ // RPI 723
+				cur_ves_xrba = last_ves_xrba;
+				cur_vx0_xrba = cur_rpl_lxrba;
+				if ((cur_vclr_flag & vclr_flag_rrds) != 0){
+			        // update RRDS vx0 index to VES XRBA+1 to indicate valid record
+					if (!write_xrba_ptr(cur_vx0_tiot_index,cur_vx0_xrba,cur_ves_xrba+1)){ // rpi 688
+						return false;
+					}
+				} else {
+			        // update KSDS vx0 index to VES XRBA+1 to indicate valid record
+					if (!write_xrba_ptr(cur_vx0_tiot_index,cur_vx0_xrba,cur_ves_xrba)){ // RPI 723
+						return false;
+					}
+				}
 			}
 			return true;
 		}	
@@ -1795,6 +1870,7 @@ public  class  vz390 {
     		return;
     	}
     	// cancel last rec position
+    	reset_rpl_cur_rec_flags();
 		set_rpl_lxrba(-1);
     	if  ((cur_vclr_flag & vclr_flag_esds) != 0){
     	    // ESDS POINT
@@ -2177,10 +2253,8 @@ public  class  vz390 {
     		}
 			if (tz390.opt_tracev){
 				tz390.put_trace("VSAM EXCP WRITE CB XRBA=" + tz390.get_long_hex(cb_xrba,16) + " LEN=" + tz390.get_hex(cb_len,8));
-				sz390.dump_mem(cb,cur_rpl_area,cur_rpl_lrec);
+				sz390.dump_mem(cb,0,cb_len);  // RPI 723
 			}
-			last_ves_xrba = cur_ves_xrba;  
-			cur_ves_xrba = cur_ves_xrba + cur_rpl_lrec;
 			sz390.tot_dcb_write++;
     		sz390.tot_dcb_oper++;
 			return true;
@@ -2208,19 +2282,19 @@ public  class  vz390 {
             }
 			if (get_vcb_buff(cur_ves_tiot_index,cb_xrba,cb_len)){
             	tot_ves_cache++;
-        		System.arraycopy(vcb_byte,vcb_addr[vcb_index]+8,cb_byte,0,cb_len);
+        		System.arraycopy(vcb_byte,vcb_addr[vcb_index],cb_byte,0,cb_len);
 			} else {
             	tot_ves_read++;
             	// read ksds ves xrba+pri key
         		sz390.tiot_file[cur_ves_tiot_index].seek(cb_xrba);
         		sz390.tiot_file[cur_ves_tiot_index].read(cb_byte,0,cb_len);
         		if (vcb_alloc){
-        			vcb_buff.putLong(vcb_addr[vcb_index],cb_xrba);
-        			System.arraycopy(cb_byte,0,vcb_byte,vcb_addr[vcb_index]+8,cb_len);
+        			System.arraycopy(cb_byte,0,vcb_byte,vcb_addr[vcb_index],cb_len);
         		}
 			}
     		if (tz390.opt_tracev){
 				tz390.put_trace("VSAM EXCP READ CB XRBA=" + tz390.get_long_hex(cb_xrba,16));
+    		    sz390.dump_mem(cb,0,cb_len);  // RPI 723
     		}
     		sz390.tot_dcb_read++;
     		sz390.tot_dcb_oper++;
@@ -2237,7 +2311,10 @@ public  class  vz390 {
     	 * cur_ves_xrba and cur_key
     	 * 
     	 */
-    	if (cur_vx0_xrba > tz390.max_file_size){
+    	if (!read_xrba_ptr()){
+    		return false;
+    	}
+    	if (cur_vx0_xrba+8 > tz390.max_file_size){
     		set_feedback(pdf_def,rc_log,cmp_ves,rn_inv_rba_req);
 			return false;
     	}
@@ -2247,23 +2324,20 @@ public  class  vz390 {
                 	cur_key = new byte[cur_vclr_klen];
                 	cur_key_buff = ByteBuffer.wrap(cur_key,0,cur_vclr_klen);
             }
-        	if (get_vcb_buff(cur_vx0_tiot_index,cur_vx0_xrba,8+cur_vclr_klen)){
+        	if (get_vcb_buff(cur_vx0_tiot_index,cur_vx0_xrba+8,cur_vclr_klen)){
             	tot_vxn_cache++;
-        		cur_ves_xrba = vcb_buff.getLong(vcb_addr[vcb_index]);
-        		System.arraycopy(vcb_byte,vcb_addr[vcb_index]+8,cur_key,0,cur_vclr_klen);
+        		System.arraycopy(vcb_byte,vcb_addr[vcb_index],cur_key,0,cur_vclr_klen);
         	} else {
             	tot_vxn_read++;
             	// read ksds ves xrba+pri key
-        		sz390.tiot_file[cur_vx0_tiot_index].seek(cur_vx0_xrba);
-        		cur_ves_xrba = sz390.tiot_file[cur_vx0_tiot_index].readLong();
+        		sz390.tiot_file[cur_vx0_tiot_index].seek(cur_vx0_xrba+8);
         		sz390.tiot_file[cur_vx0_tiot_index].read(cur_key,0,cur_vclr_klen);
         		if (vcb_alloc){
-        			vcb_buff.putLong(vcb_addr[vcb_index],cur_ves_xrba);
-        			System.arraycopy(cur_key,0,vcb_byte,vcb_addr[vcb_index]+8,cur_vclr_klen);
+        			System.arraycopy(cur_key,0,vcb_byte,vcb_addr[vcb_index],cur_vclr_klen);
         		}
         	}
     		if (tz390.opt_tracev){
-				tz390.put_trace("VSAM EXCP READ KSDS INDEX XRBA=" + tz390.get_long_hex(cur_vx0_xrba,16) + " ESDS XRBA=" + tz390.get_long_hex(cur_ves_xrba,16));
+				tz390.put_trace("VSAM EXCP READ KSDS INDEX KEY XRBA=" + tz390.get_long_hex(cur_vx0_xrba+8,16));
 				sz390.dump_mem(cur_key_buff,0,cur_vclr_klen);  // RPI 750
 				
     		}
@@ -2311,7 +2385,7 @@ public  class  vz390 {
         	}
     		if (tz390.opt_tracev){
 				tz390.put_trace("VSAM EXCP READ KSIR KEY AT XRBA=" + tz390.get_long_hex(cur_ves_xrba,16));
-	    		tz390.put_trace("VSAM KSIR KEY=" + tz390.get_ascii_var_string(cur_key,0,cur_vclr_klen));
+	    		sz390.dump_mem(cur_key_buff,0,cur_vclr_klen); // RPI 723
     		}
     		sz390.tot_dcb_read++;
     		sz390.tot_dcb_oper++;
@@ -2321,10 +2395,10 @@ public  class  vz390 {
     		return false;
     	}
     }
-    private boolean read_rrds_index(){
+    private boolean read_xrba_ptr(){
     	/*
-    	 * read VRRDS index entry 
-    	 * in vx0 at xrba and
+    	 * read ves xrba prt 
+    	 * in vx0 at cur_vx0_xrba and
     	 * set cur_ves_xrba
     	 * 
     	 */
@@ -2346,7 +2420,7 @@ public  class  vz390 {
     			}
     		}
     		if (tz390.opt_tracev){
-				tz390.put_trace("VSAM EXCP READ  VRRDS INDEX XRBA=" + tz390.get_long_hex(cur_vx0_xrba,16) + " ESDS XRBA=" + tz390.get_long_hex(cur_ves_xrba,16));
+				tz390.put_trace("VSAM EXCP READ  XRBA PTR AT VX0 XRBA=" + tz390.get_long_hex(cur_vx0_xrba,16) + " VES XRBA=" + tz390.get_long_hex(cur_ves_xrba,16));
 			}
     		sz390.tot_dcb_read++;
     		sz390.tot_dcb_oper++;
@@ -2359,30 +2433,29 @@ public  class  vz390 {
     private boolean write_ksds_index(){
     	/*
     	 * write ksds primary index entry
-    	 * with cur_ves_xrba and key.
+    	 * with last_ves_xrba ptr and key.
     	 */
-    	if (cur_vx0_xrba > tz390.max_file_size){
+    	if (!write_xrba_ptr(cur_vx0_tiot_index,cur_vx0_xrba,last_ves_xrba)){
+    		return false;
+    	}
+    	if (cur_vx0_xrba + 8 > tz390.max_file_size){
     		set_feedback(pdf_def,rc_log,cmp_ves,rn_inv_rba_req);
 			return false;
     	}
     	try {
         	tot_vxn_write++;
     		// write ves xrba and key from rpl area + koff - 8
-    		key_pfx_addr = cur_rpl_area+cur_vclr_koff-8;
-    		key_pfx_save = pz390.mem.getLong(key_pfx_addr);
-    		pz390.mem.putLong(key_pfx_addr,last_ves_xrba);
-    		sz390.tiot_file[cur_vx0_tiot_index].seek(cur_vx0_xrba);
-    		sz390.tiot_file[cur_vx0_tiot_index].write(pz390.mem_byte,key_pfx_addr,8 + cur_vclr_klen);
-			if (get_vcb_buff(cur_vx0_tiot_index,cur_vx0_xrba,8 + cur_vclr_klen)
+    		sz390.tiot_file[cur_vx0_tiot_index].seek(cur_vx0_xrba+8);
+    		sz390.tiot_file[cur_vx0_tiot_index].write(pz390.mem_byte,cur_rpl_area + cur_vclr_koff,cur_vclr_klen);
+			if (get_vcb_buff(cur_vx0_tiot_index,cur_vx0_xrba+8,cur_vclr_klen)
        			|| vcb_alloc){
-        		System.arraycopy(pz390.mem_byte,key_pfx_addr,vcb_byte,vcb_addr[vcb_index],8 + cur_vclr_klen);
+        		System.arraycopy(pz390.mem_byte,cur_rpl_area + cur_vclr_koff,vcb_byte,vcb_addr[vcb_index],cur_vclr_klen);
         	}
     		if (tz390.opt_tracev){
-				tz390.put_trace("VSAM EXCP WRITE KSDS  INDEX XRBA=" + tz390.get_long_hex(cur_vx0_xrba,16) + " VES XRBA=" + tz390.get_long_hex(cur_ves_xrba,16));
-			    sz390.dump_mem(pz390.mem,key_pfx_addr+8, cur_vclr_klen);
+				tz390.put_trace("VSAM EXCP WRITE KSDS  INDEX KEY XRBA=" + tz390.get_long_hex(cur_vx0_xrba+8,16));
+			    sz390.dump_mem(pz390.mem,cur_rpl_area + cur_vclr_koff, cur_vclr_klen);
 			}
     		cur_vx0_xrba = cur_vx0_xrba + 8 + cur_vclr_klen;
-    		pz390.mem.putLong(key_pfx_addr,key_pfx_save);
     		sz390.tot_dcb_write++;
     		sz390.tot_dcb_oper++;
     		return true;
@@ -2391,13 +2464,10 @@ public  class  vz390 {
     		return false;
     	}
     }
-    private boolean write_index(int tiot_index,long xrba_index,long xrba_rec){
+    private boolean write_xrba_ptr(int tiot_index,long xrba_index,long xrba_rec){
     	/*
-    	 * write cur_ves_xrba+1 at index entry
-    	 * Notes:
-    	 *   1.  rrds uses ves xrba+1 to disinguish
-    	 *       real xrba from system generated null
-    	 *       record xrba value of 0.  
+    	 * write ves rcd xrba ptr at vx0/ves(KSIR) index xrba in 
+         * and update cache for reuse 
     	 */
     	if (xrba_index > tz390.max_file_size){
     		set_feedback(pdf_def,rc_log,cmp_ves,rn_inv_rba_req);
@@ -2501,23 +2571,6 @@ public  class  vz390 {
     		}
     	}
 		set_rpl_cxrba(bwd_xrba);
-    	return true;
-    }
-    private boolean set_ksds_bwd_next(){
-    	/*
-    	 * backup to next record for 
-    	 * KSDS SEQ BWD retrieval
-    	 * and return logical EOD error
-    	 * if at front of file.
-    	 */
-    	cur_vx0_xrba = cur_rpl_cxrba;
-    	if (cur_vx0_xrba == 0){
-    		set_feedback(pdf_def,rc_log,cmp_ves,rn_eod);
-        	// return logical end of data to front of file
-    		return false;
-    	}
-    	cur_vx0_xrba = cur_vx0_xrba - 8 - cur_vclr_klen;
-    	set_rpl_cxrba(cur_vx0_xrba);
     	return true;
     }
     private int comp_key(int key1_loc, byte[] key_byte){
@@ -2696,11 +2749,12 @@ public  class  vz390 {
         }
     	return hash;
     }
-    private boolean get_ksit(){
+    private boolean read_ksit(){
     	/*
-    	 * load top of insert tree KSIT
-    	 * from cur_ves_xrba
+    	 * read KSIT into cb array and set cur_ksit xrbas
     	 */
+    	cur_rpl_flag = cur_rpl_flag | rpl_flag_ksit; 
+    	cur_ksit_xrba = xrba_max_pos & cur_ves_xrba;
     	if (read_ves_cb(cur_ksit_xrba,ksit_len)){
     		cur_ksit_id  = cb.getInt(ksit_id);
     		if (cur_ksit_id != ksit_id_val){
@@ -2716,12 +2770,18 @@ public  class  vz390 {
 			return false;
     	}
     }
-    private boolean get_ksir(long xrba){
+    private boolean read_ksir(long xrba){
     	/*
-    	 * load top of insert tree KSIt
-    	 * from cur_ves_xrba
+    	 * read KSIR int cb and set cur_ksit xrba's
     	 */
-    	if (read_ves_cb(xrba,ksit_len)){
+    	cur_ksir_xrba = xrba & xrba_max_pos;
+    	if (cur_ksir_xrba < cur_ksit_xrba){
+    		// file corruption error as
+    		// ksir's always beyond ksit
+    		set_feedback(pdf_def,rc_log,cmp_ves,rn_inv_rba_req);
+    		return false;
+    	}
+    	if (read_ves_cb(cur_ksir_xrba,ksir_len)){
     		cur_ksir_id  = cb.getInt(ksir_id);
     		if (cur_ksir_id != ksir_id_val){
     			set_feedback(pdf_def,rc_phy,cmp_ves,rn_read_data_err);
@@ -2732,6 +2792,8 @@ public  class  vz390 {
     		cur_ksir_high = cb.getLong(ksir_high);
     		cur_ksir_fwd  = cb.getLong(ksir_fwd);
     		cur_ksir_bwd  = cb.getLong(ksir_bwd);
+    		cur_ksir_rec  = cb.getLong(ksir_rec);
+    		cur_rpl_ksir = cur_ksir_xrba;
     		return true;
     	} else {
 			set_feedback(pdf_def,rc_phy,cmp_ves,rn_read_data_err);
@@ -2748,17 +2810,23 @@ public  class  vz390 {
    			return false;
    		}
     	if (cur_ves_xrba >= 0){
-   			if (rewrite_rec(cur_vx0_tiot_index,cur_vx0_xrba)){
+   			if (rewrite_ves_rec(cur_vx0_tiot_index,cur_vx0_xrba)){
    				return false;
     		}
     	} else {
-    		if (!get_ksir(cur_rpl_ksir)){
+    		if (!read_ksir(cur_rpl_ksir)){
     			return false;
     		}
     		cur_ves_xrba = cur_ksir_rec;
-   			if (rewrite_rec(cur_ves_tiot_index,cur_rpl_ksir + ksir_rec)){
+   			if (rewrite_ves_rec(-1,-1)){ // RPI 723
    				return false;
     		}
+   			if (cur_ves_xrba != cur_ksir_rec){ // RPI 723
+   				cur_ksir_rec = cur_ves_xrba;
+   	    		if (!write_ksir()){
+   	    			return false;
+   	    		}
+   			}
     	}
     	return true;
     }
@@ -2769,37 +2837,37 @@ public  class  vz390 {
     	 */
     	if ((cur_rpl_flag & rpl_flag_ksit) != 0){
     		// insert in current KSIT
-    	    if (!add_ksds_insert_tree_rec()){
+    	    if (!insert_ksir()){
     	    	return false;
     	    }
     	} else if (cur_vx0_xrba + 8 + cur_vclr_klen >= sz390.tiot_eof_rba[cur_vx0_tiot_index]){
     		// add record to vx0 index at end
     		cur_vx0_xrba = sz390.tiot_eof_rba[cur_vx0_tiot_index];
-    		if (!add_rec(cur_vx0_tiot_index,cur_vx0_xrba)){
+    		if (!add_ves_rec(cur_vx0_tiot_index,cur_vx0_xrba)){
     	        return false;
     		}
     	} else {
-    		// build new KSIT for current vx0 index
-    	    if (!build_ksds_insert_tree()){
+    		// insert new KSIT for current vx0 index
+    	    if (!insert_ksit()){
     	    	return false;
     	    }
     	}
     	return true;
     }
-    private boolean build_ksds_insert_tree(){
+    private boolean insert_ksit(){
     	/*
-    	 * build new KSIT for cur_vx0 entry
+    	 * insert new KSIT for cur_vx0 entry
     	 * with KSIR for existing record
     	 * and KSIR for new inserted record
     	 */
     	cur_ksit_xrba = alloc_ves(ksit_len);
     	cur_ksit_fst  = alloc_ves(ksir_len);
     	cur_ksit_lst  = alloc_ves(ksir_len);
-		cur_ksit_top = cur_ksit_fst;
-        if (!write_ves_ksit()){
+		cur_ksit_top = cur_ksit_lst;
+        if (!write_ksit()){
         	return false;
         }
-        if (read_ves_cb(cur_vx0_xrba+8,cur_vclr_klen)){
+        if (!read_ksds_index()){ // RPI 723
         	return false;
         }
     	if (comp_key(cur_rpl_arg,cur_key) > 0){
@@ -2807,59 +2875,60 @@ public  class  vz390 {
     		cur_ksir_xrba = cur_ksit_fst;
     		cur_ksir_par  = cur_ksit_xrba;
     		cur_ksir_low  = -1;
-    		cur_ksir_high = cur_ksit_lst | last_add_high_bit;;
+    		cur_ksir_high = -1;
     		cur_ksir_bwd  = -1;
     		cur_ksir_fwd  = cur_ksit_lst;
     		cur_ksir_rec  = cur_ves_xrba;
-    		if (!write_ves_ksir()){
+    		if (!write_ksir()){
     			return false;
     		}
     		// write new high ksir with existing index rec
             cur_ksir_xrba = cur_ksit_lst;
     		cur_ksir_par  = cur_ksit_fst;
-    		cur_ksir_low  = -1;
+    		cur_ksir_low  = xrba_high_bit | cur_ksit_fst;
     		cur_ksir_high = -1;
     		cur_ksir_bwd  = cur_ksit_fst;
     		cur_ksir_fwd  = -1;
-    		if (!add_rec(cur_ves_tiot_index,sz390.tiot_eof_rba[cur_ves_tiot_index])){
+    		if (!add_ves_rec(-1,-1)){  // RPI 723
 				return false;
 			}
-    		cur_ksir_rec  = cur_ves_xrba;
-    		if (!write_ves_ksir()){
+    		cur_ksir_rec  = last_ves_xrba; // RPI 723     		
+    		if (!write_ksir()){
     			return false;
     		}
     		// rewrite the new vx0 neg ksit pointer
-    		if (!write_index(cur_vx0_tiot_index,cur_vx0_xrba,-cur_ksit_xrba)){
+    		if (!write_xrba_ptr(cur_vx0_tiot_index,cur_vx0_xrba,xrba_high_bit | cur_ksit_xrba)){
     			return false;
     		}
     	} else {
+    		// this is a new low key for first vx0 index KSIT insert
     		// write high ksir for index rec first
             cur_ksir_xrba = cur_ksit_lst;
     		cur_ksir_par  = cur_ksit_fst;
-    		cur_ksir_low  = -1;
+    		cur_ksir_low  = xrba_high_bit | cur_ksit_fst;
     		cur_ksir_high = -1;
     		cur_ksir_bwd  = cur_ksit_fst;
     		cur_ksir_fwd  = -1;
     		cur_ksir_rec  = cur_ves_xrba;
-    		if (!write_ves_ksir()){
+    		if (!write_ksir()){
     			return false;
     		}
     		// write new low ksir 
             cur_ksir_xrba = cur_ksit_fst;
     		cur_ksir_par  = cur_ksit_xrba;
     		cur_ksir_low  = -1;
-    		cur_ksir_high = cur_ksit_lst | last_add_high_bit;
+    		cur_ksir_high = -1;
     		cur_ksir_bwd  = -1;
     		cur_ksir_fwd  = cur_ksit_lst;    		
-    		if (!add_rec(cur_ves_tiot_index,sz390.tiot_eof_rba[cur_ves_tiot_index])){
+    		if (!add_ves_rec(-1,-1)){
 				return false;
 			}
     		cur_ksir_rec  = cur_ves_xrba;
-    		if (!write_ves_ksir()){
+    		if (!write_ksir()){
     			return false;
     		}
     		// rewrite the new vx0 ksit neg pointer plus new index key 
-    		cur_ves_xrba = - cur_ksit_xrba;
+    		last_ves_xrba = xrba_high_bit | cur_ksit_xrba;  // RPI 723
     		if (!write_ksds_index()){
     			return false;
     		}
@@ -2871,27 +2940,121 @@ public  class  vz390 {
     	 * return xrba of new ves cb/rec area
     	 * and update eof xrba
     	 */
-    	long xrba = cur_ksir_xrba = sz390.tiot_eof_rba[cur_ves_tiot_index];
+    	long xrba = sz390.tiot_eof_rba[cur_ves_tiot_index];
     	sz390.tiot_eof_rba[cur_ves_tiot_index] = xrba + cb_len;
     	return xrba;
     }
-    private boolean add_ksds_insert_tree_rec(){
+    private boolean insert_ksir(){
     	/* 
     	 * add ksds record to existing KSIT
     	 * at current KSIR and balanee the tree
     	 */
-    	// if  (cur_rpl_flag & rpl_flag_comp_low) != 0){
-    		// add lowest record and update vx0 also
-    	//dshx} else {
-    		// add
-    		if (cur_ksir_high != -1){
-    			
+    	if (!read_ksir(cur_rpl_ksir)){
+    		return false;
+    	}
+    	if (!read_ksir_key()){
+    		return false;
+    	}
+    	if (comp_key(cur_rpl_area,cur_key) < 0){
+    		// insert on low side of cur ksir
+    		prev_ksir_xrba = cur_ksir_xrba;
+    		prev_ksir_low  = cur_ksir_low;
+    		prev_ksir_bwd  = cur_ksir_bwd;
+			// rewrite cur ksir with ptrs to 
+			// new lower ksir
+    		cur_ksir_low   = alloc_ves(ksir_len);
+        	cur_ksir_bwd   = cur_ksir_low;
+    		if (!write_ksir()){
+    			return false;
     		}
-    	//dshx }
-    	// dshx
-    	return false;
+    		// write inserted record
+    		if (!add_ves_rec(-1,-1)){  // RPI 723
+				return false;
+			}
+    		cur_ksir_rec  = last_ves_xrba; // RPI 723 
+    		// write new inserted ksir
+      		cur_ksir_xrba = cur_ksir_low;
+    		cur_ksir_par  = prev_ksir_xrba;
+      		cur_ksir_low  = -1;
+    		cur_ksir_high = -1;
+    		cur_ksir_bwd  = prev_ksir_bwd;
+    		cur_ksir_fwd  = prev_ksir_xrba;    		
+    		if (!write_ksir()){
+    			return false;
+    		} 
+    		if (cur_ksir_bwd != -1){
+    			// update fwd for bwd ksir
+    			prev_ksir_xrba = cur_ksir_xrba;
+    			if (!read_ksir(cur_ksir_bwd)){
+    				return false;
+    			}
+    			cur_ksir_fwd = prev_ksir_xrba;
+    			if (!write_ksir()){
+    				return false;
+    			}
+    		} else {
+    			// this is new lowest KSIR
+    			// update KSIT first KSIR pointer
+    			cur_ksit_fst = cur_ksir_xrba;
+    			if (!write_ksit()){
+    				return false;
+    			}
+        		// rewrite the new vx0 ksit neg pointer plus new index key 
+        		last_ves_xrba = xrba_high_bit | cur_ksit_xrba;  // RPI 723
+        		if (!write_ksds_index()){
+        			return false;
+        		}
+    		}
+    	} else {
+    		// insert on high side
+    		prev_ksir_xrba = cur_ksir_xrba;
+    		prev_ksir_high = cur_ksir_high;
+    		prev_ksir_fwd  = cur_ksir_fwd;
+        	cur_ksir_high  = alloc_ves(ksir_len);
+        	cur_ksir_fwd   = cur_ksir_high;
+        	// rewrite cur with new KSIR on high side
+    		if (!write_ksir()){
+    			// rewrite ksir with ptrs to 
+    			// new higher ksir
+    			return false;
+    		}
+    		// write new KSIR on high side
+      		cur_ksir_xrba = cur_ksir_high;
+    		cur_ksir_par  = prev_ksir_xrba;
+      		cur_ksir_low  = -1;
+    		cur_ksir_high = -1;
+    		cur_ksir_bwd  = prev_ksir_xrba;
+    		cur_ksir_fwd  = prev_ksir_fwd;
+    		if (!add_ves_rec(-1,-1)){  // RPI 723
+				return false;
+			}
+    		cur_ksir_rec  = last_ves_xrba; // RPI 723
+    		// write new KSIR
+    		if (!write_ksir()){
+    			return false;
+    		}
+    		if (cur_ksir_fwd != -1){
+    			// update bwd for fwd ksir
+    			prev_ksir_xrba = cur_ksir_xrba;
+    			if (!read_ksir(cur_ksir_fwd)){
+    				return false;
+    			}
+    			cur_ksir_bwd = prev_ksir_xrba;
+    			if (!write_ksir()){
+    				return false;
+    			}
+    		} else {
+    			// this is new highest KSIR in KSIT
+    			// update ksit last KSIR
+    			cur_ksit_lst = cur_ksir_xrba;
+    			if (!write_ksit()){
+    				return false;
+    			}
+    		}
+   		}
+    	return true;
     }
-    private boolean write_ves_ksit(){
+    private boolean write_ksit(){
     	/*
     	 * write new KSIT at ves eof xrba
     	 */
@@ -2907,9 +3070,10 @@ public  class  vz390 {
     	if (!write_ves_cb(cur_ksit_xrba,ksit_len)){
     		return false;
     	}
+    	cur_rpl_ksit = cur_ksit_xrba;
     	return true;
     }
-    private boolean write_ves_ksir(){
+    private boolean write_ksir(){
     	/*
     	 * write ves KSIR at cur_ksir_xrba
     	 */
@@ -2930,14 +3094,7 @@ public  class  vz390 {
     	}
     	return true;    	
     }
-    private boolean find_ksir(){
-    	/*
-    	 * search existing KSIT for 
-    	 * current record
-    	 */
-    	//dshx
-    	return false;
-    }
+    
 /*
  *  end of vz390 code 
  */

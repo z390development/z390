@@ -1,4 +1,4 @@
-z390 v1.4.00c PTF 02/01/08
+z390 v1.4.00d PTF 02/08/08
 Copyright 2008 Automated Software Tools Corporation
 
 To install this cumulative PTF, perform the following steps:
@@ -7,7 +7,7 @@ To install this cumulative PTF, perform the following steps:
 these optional downloads are installed before applying PTF to pickup any
 updates to regression tests or MVS 3.8 macros.
 
-2.  For Windows, download and run the InstallShield setup in the z390_v1400c_ptf.zip file.  For Linux unzip the z390_v1400c_ptf.zip and copy the z390 sub-directory structure to the corresponding install directory overlaying or adding updated files since the initial install of v1.4.00. Rerun Linux command to reset z390 attributes to RWX.
+2.  For Windows, download and run the InstallShield setup in the z390_v1400d_ptf.zip file.  For Linux unzip the z390_v1400d_ptf.zip and copy the z390 sub-directory structure to the corresponding install directory overlaying or adding updated files since the initial install of v1.4.00. Rerun Linux command to reset z390 attributes to RWX.
 
 3.  Start z390 GUI and run command IVP to verify z390 version is now v1.4.00c
 
