@@ -1,4 +1,6 @@
 rem run rtvsam pgms and gen rt\dif
+erase rt\vsam\test\dif\*.* /q
+erase rt\vsam\demo\dif\*.* /q
 call rt\RTCLEAN1 vsam\demo *
 call rt\RTCLEAN1 vsam\test *
 call vsam\test\BUILDCAT notiming
@@ -22,6 +24,7 @@ call vsam\test\KSF1TEST notiming tracev stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\KSF2TST1 notiming tracev stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\KSF2TST2 notiming tracev stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\KSF2TST3 notiming tracev stats %1 %2 %3 %4 %5 %6 %7 %8 %9
+call vsam\test\KSF2TST4 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\ESF4RPO1 notiming tracev stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\ESV1RPO1 notiming tracev stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call vsam\test\ESV5RPO1 notiming tracev stats %1 %2 %3 %4 %5 %6 %7 %8 %9

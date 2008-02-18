@@ -160,7 +160,8 @@ public  class  sz390 implements Runnable {
     * 11/12/07 RPI 737 add STATS(filename) option  
     * 12/24/07 RPI 759 align stats for all pgms on STA file  
     * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, con  
-    * 01/31/08 RPI 318 synchronize TGET/TPUT               
+    * 01/31/08 RPI 318 synchronize TGET/TPUT   
+    * 02/13/08 RPI 806 add AVL statistics on insert, rotate, max height            
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -985,6 +986,19 @@ private void put_stats(){
 			put_stat_line("VSAM ACB close        = " + vz390.tot_acb_close);
 			put_stat_line("VSAM RPL get          = " + vz390.tot_rpl_get);
 			put_stat_line("VSAM RPL put          = " + vz390.tot_rpl_put);
+			put_stat_line("VSAM VXN find         = " + vz390.tot_vxn_find);   // RPI 806
+			put_stat_line("VSAM VXN max height   = " + vz390.max_vxn_height); // RPI 806
+			put_stat_line("VSAM AVL find         = " + vz390.tot_avl_find);   // RPI 806
+			put_stat_line("VSAM AVL max height   = " + vz390.max_avl_height); // RPI 806
+			put_stat_line("VSAM AVL insert tree  = " + vz390.tot_avl_insert_ksit); // RPI 806	
+			put_stat_line("VSAM AVL insert record= " + vz390.tot_avl_insert_ksir); // RPI 806
+			if (vz390.tot_avl_insert_ksir > 0){
+				put_stat_line("VSAM AVL rotate total = " + vz390.tot_avl_rotate); // RPI 806
+				put_stat_line("VSAM AVL rotate LL    = " + vz390.tot_avl_rotate_ll); // RPI 806
+				put_stat_line("VSAM AVL rotate LR    = " + vz390.tot_avl_rotate_lr); // RPI 806
+				put_stat_line("VSAM AVL rotate RR    = " + vz390.tot_avl_rotate_rr); // RPI 806
+				put_stat_line("VSAM AVL rotate RL    = " + vz390.tot_avl_rotate_rl); // RPI 806
+			}
 			put_stat_line("VSAM ACB point        = " + vz390.tot_rpl_point);
 			put_stat_line("VSAM ACB erase        = " + vz390.tot_rpl_erase);
 			put_stat_line("VSAM VES read  cache  = " + vz390.tot_ves_cache);

@@ -1,0 +1,124 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 02/01/08                                                 *
+*********************************************************************
+* 02/14/08 RPI 806 TEST AVL PERF WITH 1000 INSERTS                                                           
+*********************************************************************
+KSF2TST4 SUBENTRY   
+         WTO   'KSF2TST4 TEST AVL INSERTS'
+         OPEN  (VFILE,(UPDATE))
+         LTR   R15,R15
+         BNZ   ERR1
+*
+* N = RECORDS 
+*
+&N       SETA  1000   MUST BE MULTIPLE OF TEN
+*
+* INSERT RECORDS 1-N USING HIGH/LOW SEQ TO FORCE LL,LR,RR,RL ROTATES         
+*
+         ZAP   PREC,=P'0'    
+LOOP1    DS    0H
+         AP    PREC,=PL3'3'   3
+         BAL   R12,INSERT
+         AP    PREC,=PL3'-1'  2
+         BAL   R12,INSERT
+         AP    PREC,=PL3'-1'  1
+         BAL   R12,INSERT
+         AP    PREC,=PL3'3'   4
+         BAL   R12,INSERT   
+         AP    PREC,=PL3'4'   8
+         BAL   R12,INSERT
+         AP    PREC,=PL3'1'   9
+         BAL   R12,INSERT
+         AP    PREC,=PL3'-2'  7
+         BAL   R12,INSERT
+         AP    PREC,=PL3'-2'  5
+         BAL   R12,INSERT
+         AP    PREC,=PL3'5'  10
+         BAL   R12,INSERT
+         AP    PREC,=PL3'-4'  6 
+         BAL   R12,INSERT
+         AP    PREC,=P'4'
+         CP    PREC,=P'&N'
+         BL    LOOP1    
+*
+* RETRIVE RECORDS 1-N AND LIST
+*
+         ZAP   PREC,=P'0'
+         LA    R4,&N
+LOOP2    DS    0H
+         AP    PREC,=PL3'1'
+         USING RECDSECT,RECORD
+         MVC   KEY,=CL20'DSH'
+         MVC   KEY+3(6),=X'F02020202020'
+         ED    KEY+3(6),PREC
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BNZ   ERR2     ERROR IF FOUND
+         WTO   MF=(E,WTOREC)
+         CLC   NAME,KEY
+         BNE   ERR4   
+         BCT   R4,LOOP2
+*
+* CLOSE AND EXIT
+*
+         CLOSE (VFILE)
+         LTR   R15,R15
+         BNZ   ERR3
+         WTO   'KSF2TST4 ENDED OK'
+         SUBEXIT
+*
+* INSERT RECORD USING KEY DSH+PREC AND RETURN R12
+*
+INSERT   DS    0H
+         USING RECDSECT,RECORD
+         MVC   KEY,=CL20'DSH'
+         MVC   KEY+3(6),=X'F02020202020'
+         ED    KEY+3(6),PREC
+         GET   RPL=VRPL   
+         LTR   R15,R15
+         BZ    ERR2     ERROR IF FOUND
+         MVC   NAME,KEY
+         MVC   ADDR,=CL20'29 VILLA AVE'
+         MVC   CITY,=CL20'CHARLOTTETOWN'
+         MVC   STATE,=CL5'PEI'
+         MVC   ZIP,=CL5'12345'
+         PUT   RPL=VRPL
+         LTR   R15,R15
+         BNZ   ERR8
+         BR    R12
+ERR1     WTO   'KSF2TST4 OPEN ERROR'
+         ABEND 111,DUMP
+ERR2     WTO   'KSF2TST4 GET BY KEY ERROR'
+         ABEND 222,DUMP
+ERR3     WTO   'KSF2TST4 CLOSE ERROR'
+         ABEND 333,DUMP
+ERR4     WTO   'KSF2TST4 NAME NOT EQUAL KEY REQUESTED'
+         ABEND 444,DUMP
+ERR5     WTO   'KSF2TST4 MODCB ERROR'
+         ABEND 555,DUMP
+ERR6     WTO   'KSF2TST4 POINT ERROR'
+         ABEND 666,DUMP
+ERR7     WTO   'KSF2TST4 GET SEQ ERROR'
+         ABEND 777,DUMP
+ERR8     WTO   'KSF2TST4 PUT UPD ERROR'
+         ABEND 888,DUMP
+VFILE    ACB   DDNAME=VFILE,MACRF=(KEY,OUT)
+VRPL     RPL   ACB=VFILE,AREA=RECORD,OPTCD=(KEY,UPD),ARG=KEY
+         LTORG
+         EQUREGS
+PREC     DC    PL3'0'
+WTOREC   DC    AL2(WTOEND-*,0),C'REC='
+RECORD   DC    CL70' '
+WTOEND   EQU   *
+KEY      DC    CL20' '
+RECDSECT DSECT
+NAME     DS    CL20
+ADDR     DS    CL20
+CITY     DS    CL20
+STATE    DS    CL5
+ZIP      DS    CL5
+         END

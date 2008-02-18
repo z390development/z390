@@ -8805,6 +8805,15 @@ C:\z390\rt\vsam\test\save\KSF2TST3.OBJ
 C:\z390\rt\vsam\test\save\KSF2TST3.PRN
 C:\z390\rt\vsam\test\save\KSF2TST3.STA
 C:\z390\rt\vsam\test\save\KSF2TST3.TRE
+C:\z390\rt\vsam\test\save\KSF2TST4.390
+C:\z390\rt\vsam\test\save\KSF2TST4.BAT
+C:\z390\rt\vsam\test\save\KSF2TST4.ERR
+C:\z390\rt\vsam\test\save\KSF2TST4.LOG
+C:\z390\rt\vsam\test\save\KSF2TST4.LST
+C:\z390\rt\vsam\test\save\KSF2TST4.MLC
+C:\z390\rt\vsam\test\save\KSF2TST4.OBJ
+C:\z390\rt\vsam\test\save\KSF2TST4.PRN
+C:\z390\rt\vsam\test\save\KSF2TST4.STA
 C:\z390\rt\vsam\test\save\RRF1.TF1
 C:\z390\rt\vsam\test\save\RRF1.TF2
 C:\z390\rt\vsam\test\save\RRF1.VES
@@ -9226,6 +9235,8 @@ C:\z390\vsam\test\KSF2TST2.MLC
 C:\z390\vsam\test\KSF2TST2.TXT
 C:\z390\vsam\test\KSF2TST3.BAT
 C:\z390\vsam\test\KSF2TST3.MLC
+C:\z390\vsam\test\KSF2TST4.BAT
+C:\z390\vsam\test\KSF2TST4.MLC
 C:\z390\vsam\test\RRF1.TF1
 C:\z390\vsam\test\RRF1.TF2
 C:\z390\vsam\test\RRF1.VES
