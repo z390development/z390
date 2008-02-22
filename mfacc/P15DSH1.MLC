@@ -1,0 +1,44 @@
+         TITLE 'P15DSH1.MLC - Calc PD divide with rounding'
+*********************************************************************
+* Program ID.  P15DSH1.MLC
+* Author.      Don Higgins.
+* Date.        02/22/08.
+*********************************************************************
+         MACRO
+&N       DPR    &DIVIDEND,&DIVISOR,&QUOTIENT
+.*       
+.* ADD PACKED ROUNDED (EVEN UP)
+.*
+&N       ZAP    PWORK,&DIVIDEND        MOVE DIVIDENT TO 16 BYTE WORK
+         DP     PWORK,&DIVISOR         DIVIDE GIVING QUOTIENT+RMAINDER
+         ZAP    &QUOTIENT,PWORK(L'PWORK-L'&DIVISOR)  MOVE QUOTIENT
+&RMO     SETA   L'PWORK-L'&DIVISOR-1   DEFINE OFFSET TO REMAINDER+1
+&RML     SETA   L'&DIVISOR+1           DEFINE LENGTH OF REMAINDER+1
+         MVI    PWORK+&RMO,0           CLEAR HIGH BYTE OF REMAINER
+         AP     PWORK+&RMO.(&RML),PWORK+&RMO.(&RML) DOUBLE REMAINDER
+         CP     PWORK+&RMO.(&RML),&DIVISOR  IF REMAINDER*2 < DIVISOR
+         BM     *+4+6                          THEN SKIP ADD
+         AP     QUOTIENT1,=P'1'             ELSE ADD 1 TO QUOTIENT 
+         MEND
+P15DSH1  ZMFACC CODE,START,NAME='DON HIGGINS'
+         DPR    DIVIDEND1,DIVISOR1,QUOTIENT1   EXAMPLE  WITH ADD 1
+         DPR    DIVIDEND2,DIVISOR2,QUOTIENT2   EXAMPLE  WITH NO ADD
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC    CL8'DIVD1'
+DIVIDEND1 DC    P'12345678.1234567'
+         DC    CL8'DIVR1'
+DIVISOR1  DC    P'00000000.0001000'
+         DC    CL8'QUOT1'
+QUOTIENT1 DC    PL8'0'
+         DC    CL8'DIVD2'
+DIVIDEND2 DC    P'12345678.1234567'
+         DC    CL8'DIVR2'
+DIVISOR2  DC    P'00000000.0010000'
+         DC    CL8'QUOT2'
+QUOTIENT2 DC    PL8'0'
+         ZMFACC OUTPUT,END
+PWORK    DC    PL16'0'
+         END

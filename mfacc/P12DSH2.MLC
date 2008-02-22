@@ -1,0 +1,92 @@
+         TITLE 'P12DSH2.MLC - Calc HFP 128 Bit Standard Deviation'
+*********************************************************************
+* Program ID.  P12DSH2.MLC
+* Author.      Don Higgins.
+* Date.        06/20/07.
+*********************************************************************
+* 02/20/08 DSH2 CALC STANDARD DEVIATION USING HFP INSTEAD OF BFP   
+*********************************************************************
+P10DSH2  ZMFACC CODE,START,NAME='DON HIGGINS'
+         COPY  ASMMSP      STRUCTURED PROGRAMMING MACRO LIBRARY
+         CALL  STDDEVLH,(LHX,N,LHSD)  CALCULATE STANDARD DEVIATION
+*
+* DISPLAY STD DEVIATION IN SCIENTIFIC NOTATION FOR DEBUGGIN
+*
+         CTD   CTD_LH,IN=LHSD,OUT=DLHSD
+         ZMFACC CODE,END
+N        DC    F'4'        INTEGER NUMBER OF ARRAY ELEMENTS
+         DS     0D
+         ZMFACC INPUT,START
+LHX      DC    LH'1,2,3,6' BINARY EXTENDED PRECISION (HFP) ARRAY 
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+LHSD     DC    LH'0'       STANDARD DEVIATION HFP VALUE
+DLHSD    DC    CL45' '     STANDARD DEVIATION IN SCIENTIFIC NOTATION 
+         ZMFACC OUTPUT,END
+         TITLE 'STDDEVLH - CALC HFP 128 BIT STANDARD DEVIATION'
+STDDEVLH CSECT
+         USING *,15
+         SAVE  (14,12)
+         BALR  12,0
+         USING *,12
+*
+* CALCULATE HFP 128 BIT STANDARD DEVIATION FOR ARRAY OF HFP ELEMENTS
+*
+* CALL PARAMETERS:
+*
+*  1 = INPUT  ADDRESS OF BFP ARRAY ELEMENTS (16 BYTE HFP LH FORMAT)
+*  2 - INPUT  FULL WORD ARRAY ELEMENT COUNT (MUST BE >= 1)
+*  3 - OUTPUT STANDARD DEVIATION IN 16 BYTE HFP LH FORMAT
+*
+* RETURN CODES:
+*
+*   0 - STANDARD DEVIATION STORED SUCCESSFULLY IN PARAMETER 3
+*  16 - ELEMENT COUNT LESS THAN 1 (STD.DEV. UNDEFINED)
+*
+*
+* CALCULATE HFP LHXM MEAN = (SUM X(I))/N AND SAVE IN F4+F6
+*
+         LM    R3,R5,0(R1) R3=A(ARRAY) R4=A(N) R5=A(LHSD)
+         L     R4,0(R4)    R4=N ELEMENT COUNT
+         LR    R6,R3       R6=AARRY ELEMENT ADDRESS
+         LR    R7,R4       R7=ELEMENTS TO PROCESS IN LOOP         
+         IF    (CHI,R7,LT,1)
+               RETURN (14,12),RC=16  EXIT WITH RC=16 IF COUNT < 1
+         ENDIF
+         SXR   F4,F4       F4+F6 = SUM X(I) TO CALC MEAN
+         DO    WHILE=(CHI,R7,GT,0)
+               LD  F1,0(R6) F1+F3 = ELEMENT
+               LD  F3,8(R6)
+               AXR F4,F1   ADD ELEMENT TO SUM
+               AHI R6,16   NEXT ELEMENT
+               AHI R7,-1   REDUCE ELEMENTS REMAINING
+         ENDDO
+         CXFR  F1,R4       F1+F3 = N
+         DXR   F4,F1       F4+F6 = F4+F6 / F1+F3 = BFP LH MEAN
+*
+* CALCULATE SUM OF VARIANCE SQUARED IN F0+F2
+*       
+         LR    R6,R3       R6 = ADDRESS FIRST ARRAY ELEMENT
+         LR    R7,R4       R7 = ELEMENTS TO PROCESS IN LOOP
+         SXR   F0,F0       F0+F2 = (SUM X(I)-MEAN)**2
+         DO    WHILE=(CHI,R7,GT,0)
+               LD  F1,0(R6) F1+F3 = HFP LH ELEMENT
+               LD  F3,8(R6)
+               SXR  F1,F4  SUBTRACT MEAN
+               MXR  F1,F1  SQUARE   DIFF
+               AXR  F0,F1  ADD      DIFF * DIFF
+               AHI R6,16   NEXT ELEMENT
+               AHI R7,-1   REDUCE ELEMENTS REMAINING
+         ENDDO
+         CXFR  F1,R4       F1+F3 = N
+         DXR   F0,F1       F0+F2 = F0+F2 / F1+F3 = (SUM DIFF*DIFF)/N
+*
+* CALCULATE STANDARD DEVIATION
+*
+         SQXR  F0,F0     CALC SQRT SUM OF VAR**2 IN F0+F2
+         STD   F0,0(R5)  STORE F0+F2 LH STANDARD DEVIATION RESULT
+         STD   F2,8(R5)
+         RETURN (14,12),RC=0
+LHXM     DS    LH        VARIANCE FOR DEBUG DISPLAY
+LHXV2    DS    LH        (SUM DIFF*DIFF)/N FOR DEBUG DISPLAY
+         END

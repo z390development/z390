@@ -1,0 +1,170 @@
+         TITLE 'P12DSH3.MLC - Calc DFP 128 Bit Standard Deviation'
+*********************************************************************
+* Program ID.  P12DSH3.MLC
+* Author.      Don Higgins.
+* Date.        06/20/07.
+*********************************************************************
+* 02/20/08 DSH3 CALC STANDARD DEVIATION USING ONLY DFP INSTRUCTIONS
+*********************************************************************
+         MACRO
+&N       SQXTR &FR1,&FR2
+.*
+.* CALCULATE DFP LD EXTENED SQUARE ROOT OF FR2 IN FR1
+.* (THIS INSTRUCTION IS MISSING FROM POP - SEE HFP SQXR AND BFP SQXBR)
+.* (THIS MACRO CALLS SQXTR CSECT PASSING LD ARG AT +8 IN CSECT)
+.* (RESULT IS RETURNED AT +8 ELSE PGM EXCEPTION FOR NEG VALUE ETC.)
+.*
+&N       DS   0H
+         L    15,=V(SQXTR)
+         STD  &FR2,8+0(15)
+         STD  &FP2+2,8+8(15)
+         BASR 14,15
+         LD   &FR1,8+0(15)
+         LD   &FR1+2,8+8(15)
+         MEND
+P10DSH3  ZMFACC CODE,START,NAME='DON HIGGINS'
+         COPY  ASMMSP      STRUCTURED PROGRAMMING MACRO LIBRARY
+         CALL  STDDEVLD,(LDX,N,LDSD)  CALCULATE STANDARD DEVIATION
+*
+* DISPLAY STD DEVIATION IN SCIENTIFIC NOTATION FOR DEBUGGIN
+*
+         CTD   CTD_LD,IN=LDSD,OUT=DLDSD
+         ZMFACC CODE,END
+N        DC    F'4'        INTEGER NUMBER OF ARRAY ELEMENTS
+         DS     0D
+         ZMFACC INPUT,START
+LDX      DC    LD'1,2,3,6' DECIMAL EXTENDED PRECISION (DFP) ARRAY 
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+LDSD     DC    LD'0'       STANDARD DEVIATION DFP VALUE
+DLDSD    DC    CL45' '     STANDARD DEVIATION IN SCIENTIFIC NOTATION 
+         ZMFACC OUTPUT,END
+         TITLE 'STDDEVLD - CALC DFP 128 BIT STANDARD DEVIATION'
+STDDEVLD CSECT
+         USING *,15
+         SAVE  (14,12)
+         BALR  12,0
+         USING *,12
+*
+* CALCULATE DFP 128 BIT STANDARD DEVIATION FOR ARRAY OF DFP ELEMENTS
+*
+* CALL PARAMETERS:
+*
+*  1 = INPUT  ADDRESS OF DFP ARRAY ELEMENTS (16 BYTE DFP LD FORMAT)
+*  2 - INPUT  FULL WORD ARRAY ELEMENT COUNT (MUST BE >= 1)
+*  3 - OUTPUT STANDARD DEVIATION IN 16 BYTE DFP LD FORMAT
+*
+* RETURN CODES:
+*
+*   0 - STANDARD DEVIATION STORED SUCCESSFULLY IN PARAMETER 3
+*  16 - ELEMENT COUNT LESS THAN 1 (STD.DEV. UNDEFINED)
+*
+*
+* CALCULATE DFP LDXM MEAN = (SUM X(I))/N AND SAVE IN F4+F6
+*
+         LM    R3,R5,0(R1) R3=A(ARRAY) R4=A(N) R5=A(LDSD)
+         LGF   R4,0(R4)    R4=N ELEMENT COUNT
+         LR    R6,R3       R6=AARRY ELEMENT ADDRESS
+         LR    R7,R4       R7=ELEMENTS TO PROCESS IN LOOP         
+         IF    (CHI,R7,LT,1)
+               RETURN (14,12),RC=16  EXIT WITH RC=16 IF COUNT < 1
+         ENDIF
+         SXTR  F4,F4,F4    F4+F6 = SUM X(I) TO CALC MEAN
+         DO    WHILE=(CHI,R7,GT,0)
+               LD  F1,0(R6) F1+F3 = ELEMENT
+               LD  F3,8(R6)
+               AXTR F4,F4,F1  ADD ELEMENT TO SUM
+               AHI  R6,16   NEXT ELEMENT
+               AHI  R7,-1   REDUCE ELEMENTS REMAINING
+         ENDDO
+         CXGTR F1,R4       F1+F3 = N
+         DXTR  F4,F4,F1    F4+F6 = F4+F6 / F1+F3 = DFP LD MEAN
+*
+* CALCULATE SUM OF VARIANCE SQUARED IN F0+F2
+*       
+         LR    R6,R3       R6 = ADDRESS FIRST ARRAY ELEMENT
+         LR    R7,R4       R7 = ELEMENTS TO PROCESS IN LOOP
+         SXTR  F0,F0,F0    F0+F2 = (SUM X(I)-MEAN)**2
+         DO    WHILE=(CHI,R7,GT,0)
+               LD  F1,0(R6) F1+F3 = DFP LD ELEMENT
+               LD  F3,8(R6)
+               SXTR F1,F1,F4  SUBTRACT MEAN
+               MXTR F1,F1,F1  SQUARE   DIFF
+               AXTR F0,F0,F1  ADD      DIFF * DIFF
+               AHI R6,16      NEXT ELEMENT
+               AHI R7,-1      REDUCE ELEMENTS REMAINING
+         ENDDO
+         CXGTR F1,R4          F1+F3 = N
+         DXTR  F0,F0,F1       F0+F2 = F0+F2 / F1+F3 = (SUM DIFF*DIFF)/N
+*
+* CALCULATE STANDARD DEVIATION 
+*
+         SQXTR F0,F0     CALC SQRT SUM OF VAR**2 IN F0+F2
+         STD   F0,0(R5)  STORE F0+F2 LD STANDARD DEVIATION RESULT
+         STD   F2,8(R5)
+         RETURN (14,12),RC=0
+LDXM     DS    LD        VARIANCE FOR DEBUG DISPLAY
+LDXV2    DS    LD        (SUM DIFF*DIFF)/N FOR DEBUG DISPLAY
+DSQXT    DS    CL45
+*
+* CALCULATE SQUARE ROOT OF LD VALUE IN ARG AT SQXTR+8 REPLACING ARG   
+* (THIS ROUTINE WILL HOPEFULLY BE REPLACED BY POP INSTRUCTION)
+* (THIS ROUTINE USES NEWTON-RAPHSON TO BEST RESULT USING EXTENDED DFP)
+*              
+SQXTR    CSECT
+         USING SQXTR,R15
+         ST    R14,SAVER14
+         B     SKIPARG
+ARG      DS    LD      DFP LD ARGUMENT TO BE REPLACED WITH SQUARE ROOT
+SKIPARG  DS    0H
+         ST    R12,SAVER12
+         LR    R12,R15
+         USING SQXTR,R12
+         DROP  R15
+         STX   F0,SAVEF0      X
+         STX   F1,SAVEF1      SQRT(X)
+         STX   F4,SAVEF4      0.5       
+         STX   F5,SAVEF5      WORK
+         STX   F8,SAVEF8      ERROR LIMIT
+         LX    F0,ARG         F0 = X
+         LX    F4,=LD'.5'     F4 = 0.5
+         LX    F8,=LD'(MIN)'  F8 = ERROR LIMIT
+         LX    F1,=LD'1'
+         AXTR  F1,F0,F1
+         MXTR  F1,F1,F4       F1 = SQRT(X) FIRST GUESS (HALF DIST TO 1)
+LOOP     DS    0H
+         CTD   CTD_LD,IN=F1,OUT=DSQXT
+         SNAP  ID=1,PDATA=,STORAGE=(DSQXT,DSQXT+45)
+         DXTR  F5,F0,F1
+         AXTR  F5,F5,F1
+         MXTR  F1,F5,F4       F1 = (X/SQRT(X)+SQRT(X))*.5
+         MXTR  F5,F1,F1       F5 = SQRT(X)*SQRT(X)
+         CXTR  F5,F0
+         BM    NEGERR
+         SXTR  R5,R5,F0       F5 = DIFF SQRT(X)*SQRT(X) - X
+         CXTR  F5,F8
+         BH    LOOP           REPEAT UNTIL ERROR < LIMIT
+         B     EXIT
+NEGERR   DS    0H
+         SXTR  F5,F0,F5       F9 = X - SQRT(X)*SQRT(X)
+         CXTR  F9,F8
+         BH    LOOP           REPEAT UNTIL ERROR < LIMIT
+EXIT     DS    0H
+         STX   F1,ARG
+         LX    F0,SAVEF0
+         LX    F1,SAVEF1
+         LX    F4,SAVEF4
+         LX    F5,SAVEF5
+         LX    F8,SAVEF8
+         LA    R15,SQXTR
+         L     R14,SAVER14
+         L     R12,SAVER12
+         BR    R14
+SAVER12  DS    F
+SAVER14  DS    F
+SAVEF0   DS    LD 0+2
+SAVEF1   DS    LD 1+3
+SAVEF4   DS    LD 4+6
+SAVEF5   DS    LD 5+7
+SAVEF8   DS    LD 8+10
+         END

@@ -635,6 +635,8 @@ C:\z390\mfacc\P11FIND2.MLC
 C:\z390\mfacc\P11MODEL.MLC
 C:\z390\mfacc\P11WR1.MLC
 C:\z390\mfacc\P12DSH1.MLC
+C:\z390\mfacc\P12DSH2.MLC
+C:\z390\mfacc\P12DSH3.MLC
 C:\z390\mfacc\p13dsh1.390
 C:\z390\mfacc\P13DSH1.BAK
 C:\z390\mfacc\p13dsh1.ERR
@@ -646,6 +648,8 @@ C:\z390\mfacc\p13dsh1.PRN
 C:\z390\mfacc\P13SC1.MLC
 C:\z390\mfacc\P14DSH1.MLC
 C:\z390\mfacc\P14MW1.MLC
+C:\z390\mfacc\P15DSH1.MLC
+C:\z390\mfacc\P16DSH1.MLC
 C:\z390\mfacc\P1C1.MLC
 C:\z390\mfacc\P1DSH1.MLC
 C:\z390\mfacc\P1DSH1A.MLC

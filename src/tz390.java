@@ -179,7 +179,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.00e";  //dsh
+    String version    = "V1.4.00f";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -505,7 +505,7 @@ public  class  tz390 {
          * floating point constants (moved for RPI 407
          */
         byte fp_type    = 0;
-        boolean fp_unnormalized = false; // RPI 790 set for HFP unnormalized instr.
+        boolean fp_unnormalized[] = new boolean[16]; // RPI 790 set for HFP unnormalized instr.
         byte fp_db_type = 0; // BFP long
         byte fp_dd_type = 1; // DPF long
         byte fp_dh_type = 2; // HFP long
