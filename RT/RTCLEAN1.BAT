@@ -10,3 +10,6 @@ erase %1\*.390
 erase %1\*.LOG
 erase %1\*.STA
 erase %1\*.TR?
+erase %1\*.XPR
+erase %1\*.TPH
+erase %1\*.XPT

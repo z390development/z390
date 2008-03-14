@@ -1043,10 +1043,10 @@ public void put_stat_line(String msg){
 }
 private synchronized void close_files(){  // RPI 661
 	/*
-	 * close log, err, tre
+	 * close log, err, tre, 
+	 * xrd, xpr, xph, xgt, and xpt Assist files RPI 812
 	 */
-	  tz390.close_systerm(ez390_rc);
-      tz390.force_nocon = true;
+	  tz390.force_nocon = true;
 	  put_log(tz390.ended_msg);
 	  tz390.force_nocon = false;
 	  if (log_file != null && log_file.isFile()){
@@ -1056,10 +1056,16 @@ private synchronized void close_files(){  // RPI 661
 	  	  	  tz390.abort_error(3,"I/O error on log file close - " + e.toString()); // RPI 646
 	  	  }
 	  }
-		if (tz390.opt_trace){
-			tz390.put_trace(tz390.ended_msg);
-		}
+	  if (tz390.opt_trace){
+		  tz390.put_trace(tz390.ended_msg);
+	  }
+	  ast_close_file(pz390.ast_xread_tiot);
+	  ast_close_file(pz390.ast_xprnt_tiot);
+	  ast_close_file(pz390.ast_xpnch_tiot);
+	  ast_close_file(pz390.ast_xget_tiot);
+	  ast_close_file(pz390.ast_xput_tiot);
 	  tz390.close_trace_file();
+	  tz390.close_systerm(ez390_rc);
 }
 private void close_cmd(){
 	/*
@@ -2621,17 +2627,26 @@ private String get_dcb_file_name(String dsnam_path){
         }
         return file_name;
 	} else {
-		file_name = get_ascii_env_var_string(tiot_ddnam[cur_tiot_index]);
-		if (file_name != null && file_name.length() > 0){
-	        if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
-	        	file_name = file_name.replace('\\','/');
-	        }
-			return file_name;
-		} else {
+        file_name = get_file_name(cur_tiot_index);
+		if (file_name == null){
 			dcb_synad_error(62,"ddname=" + tiot_ddnam[cur_tiot_index] + " not found");
+		} else {
+			return file_name;  
 		}
 	}
 	return "";
+}
+private String get_file_name(int tiot_index){
+	/*
+	 * return file name for tiot using ddname for tiot
+	 */
+	String file_name = get_ascii_env_var_string(tiot_ddnam[tiot_index]);
+	if (file_name != null && file_name.length() > 0){
+        if (tz390.z390_os_type == tz390.z390_os_linux){ // RPI 532 file separator fix
+        	file_name = file_name.replace('\\','/');
+        }
+	}
+	return file_name;
 }
 private void svc_close(){
 	/*
@@ -3269,25 +3284,31 @@ private void get_cur_tiot_index(){
     	}
     } else {
     	cur_dcb_ddnam = get_ascii_string(cur_dcb_addr + dcb_ddnam,8,true);
-        cur_tiot_index = 0;
-        while (cur_tiot_index < tot_tiot_files){
-        	if (!tiot_dcb_open[cur_tiot_index]){
-        		pz390.mem.putInt(cur_dcb_addr + dcb_iobad,cur_tiot_index + 1);
-        		tiot_ddnam[cur_tiot_index] = cur_dcb_ddnam;
-        		tiot_dcb_addr[cur_tiot_index] = cur_dcb_addr;
-        		return;
-        	}
-        	cur_tiot_index++;
-        }
-        if (tot_tiot_files < max_tiot_files){
-        	tot_tiot_files++;
-    		pz390.mem.putInt(cur_dcb_addr + dcb_iobad,cur_tiot_index + 1);
-    		tiot_ddnam[cur_tiot_index] = cur_dcb_ddnam;
-    		tiot_dcb_addr[cur_tiot_index] = cur_dcb_addr;
-    		return;
-        } else {
-        	abort_error(21,"maximum tiot files open exceeded");
-        }
+    	pz390.mem.putInt(cur_dcb_addr + dcb_iobad,get_new_tiot_index(cur_dcb_ddnam,cur_dcb_addr));
+    }
+}
+private int get_new_tiot_index(String ddname,int dcb_addr){
+	/*
+	 * return new tiot index or abort
+	 * (used by DCB I/O and ASSIST)
+	 */
+	cur_tiot_index = 0;
+    while (cur_tiot_index < tot_tiot_files){
+    	if (!tiot_dcb_open[cur_tiot_index]){    		
+    		tiot_ddnam[cur_tiot_index] = ddname;
+    		tiot_dcb_addr[cur_tiot_index] = dcb_addr;
+    		return cur_tiot_index + 1;
+    	}
+    	cur_tiot_index++;
+    }
+    if (tot_tiot_files < max_tiot_files){
+    	tot_tiot_files++;		
+		tiot_ddnam[cur_tiot_index] = ddname;
+		tiot_dcb_addr[cur_tiot_index] = dcb_addr;
+		return cur_tiot_index + 1;
+    } else {
+    	abort_error(21,"maximum tiot files open exceeded");
+    	return -1;
     }
 }
 public String get_ascii_env_var_string(String env_var_name){
@@ -4163,7 +4184,7 @@ private void dump_cde(){
 		index++;
 	}
 }
-private void dump_tiot(){
+public void dump_tiot(){
 	/*
 	 * dump content of tiot entries
 	 */
@@ -6493,6 +6514,7 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
 		return false;
 	}
 }
+
  	private void check_mem_area(int addr, int len){
 		/*
 		 * check area start end and abort S0C5
@@ -6504,6 +6526,63 @@ private boolean check_dfp_finite(byte[] dfp_bytes,int dfp_byte_index){
 			pz390.set_psw_check(pz390.psw_pic_addr);
 		}
 	}
+/*
+ * ASSIST I/O file handling functions RPI 812
+ */ 	
+ 	public int ast_open_file(String ddname,boolean input_type,int dcb_addr){
+ 		/*
+ 		 * open ASSIST file by ddname and
+ 		 * return TIOT index if open successful
+ 		 * else return -1
+ 		 */
+ 		tot_dcb_open++; 
+ 		tot_dcb_oper++;
+ 		cur_tiot_index = get_new_tiot_index(ddname,dcb_addr)-1;
+ 		if (cur_tiot_index != -1){
+ 		    cur_dcb_file_name = get_file_name(cur_tiot_index);
+ 		    tiot_dsn[cur_tiot_index] = cur_dcb_file_name;
+ 	        cur_dcb_addr = dcb_addr;
+ 		    tiot_dcb_addr[cur_tiot_index] = dcb_addr;
+ 		    tiot_cur_rba[cur_tiot_index] = 0; // RPI101
+ 		    if (input_type){
+ 		    	try {
+ 	                tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"r");
+ 	                tiot_eof_rba[cur_tiot_index] = tiot_file[cur_tiot_index].length();
+ 			    } catch (Exception e){
+ 				    dcb_synad_error(23,"i/o error on open - " + e.toString());
+ 					pz390.psw_cc = pz390.psw_cc3;
+ 				    return cur_tiot_index;
+ 			    }
+ 		    } else {
+ 		    	try {
+ 		    		tiot_file[cur_tiot_index] = new RandomAccessFile(cur_dcb_file_name,"rw");
+ 		    		tiot_file[cur_tiot_index].setLength(0);
+ 				} catch (Exception e){
+ 				    dcb_synad_error(23,"i/o error on open - " + e.toString());
+ 				    return -1;
+ 				}
+ 		    }
+ 		}
+ 		tiot_dcb_open[cur_tiot_index] = true;  //RPI110
+ 		return cur_tiot_index;
+ 	}
+ 	public void ast_close_file(int tiot_index){
+ 		/*
+ 		 * close assist file
+ 		 */
+ 		if (tiot_index < 0){ 
+ 			return;
+ 		}
+ 		tot_dcb_close++; 
+ 		tot_dcb_oper++; 
+        try {
+        	tiot_file[tiot_index].close();
+        	tiot_dcb_open[tiot_index] = false;  //RPI110
+        } catch (Exception e){
+        	dcb_synad_error(26,"i/o error on close - " + e.toString());
+        	pz390.set_psw_check(pz390.psw_pic_io);
+        }
+ 	}
 /*
  *  end of ez390 code 
  */

@@ -1,0 +1,942 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 03/03/08                                                 *
+*********************************************************************
+* 03/03/08 RPI 817 COPY FROM TESTINS2 AND ADD Z10 INSTRUCTION TESTS  
+* 03/03/08 RPI 817 ADD Z10 COMP AND TRAP   B960-EC73 USING TESTCAT MAC
+* 03/03/08 RPI 817 ADD Z10 COMP AND BRANCH EC64-ECFF USING TESTCAB MAC
+* 03/08/08 RPI 817 ADD Z10 MISC PROBLEM STATE INSTR. TESTS              
+*********************************************************************
+         PRINT DATA
+         TITLE 'TESTINS3 - UNIT TEST Z10 EZ390 PROBLEM STATE INSTR.'
+*
+* RT1 MACRO USED TO AUTOMATE CODE GENERATED FOR MAINLINE
+* AND TEST PSW CC ROUTINES. THE MACROS DEFINE NEW BASE REG
+* FOR EACH TEST SO THEY CAN EXTEND FOR ANY LENGTH.
+*
+* SEE TESTINS1 FOR ASSEMBLY TEST OF ALL POP INSTRUCTIONS
+* SEE TESTINS2 FOR UNIT TEST OF PROB. STATE INSTR. UP TO Z9
+* SEE TESTFP1  FOR HFP AND BFP FLOATING POINT INSTR TESTS
+* SEE TESTDFP1 FOR DFP FLOATING POINT INSTR TESTS
+*********************************************************************
+         MACRO 
+         TESTCAT &OP,&TYPE,&L1,&L2
+.*
+.* TEST COMPARE AND TRAP INSTRUCTIONS WITH EXTENDED MNEMONICS
+.*  OP   - BASE OP NAME (WITHOUT EXTENDED E,H,L,NE,NH,NL SUFFIX)
+.*  TYPE - A=ARITH, L=LOGICAL
+.*  L1   - FIRST ARG TYPE  - 32,64
+.*  L2   - SECOND ARG TYPE - 32,64,1
+.*
+         GBLA  &CAT
+&CAT     SETA  &CAT+1 COMPARE AND TRAP TEST COUNTER FOR LABELS
+         AIF   (&TYPE EQ 'L').LVAL
+.AVAL    ANOP
+&VL      SETC  '-1'
+&VE      SETC  '0'
+&VH      SETC  '1'
+         AGO   .INIT
+.LVAL    ANOP
+&VL      SETC  '0'
+&VE      SETC  '1'
+&VH      SETC  '-1'
+.INIT    ANOP
+.R1      ANOP
+         AIF   (&L1 EQ 64).R1_64
+.R1_32   ANOP
+         L     R5,=F'&VE'
+         AGO   .OP2
+.R1_64   LG    R5,=FL8'&VE'
+.OP2     ANOP
+         AIF   (&L2 LT 32).I2
+.R2      ANOP
+         AIF   (&L1 EQ 64).R2_64
+.R2_32   ANOP
+         L     R2,=F'&VE' R2 E
+         L     R3,=F'&VH' R3 H
+         L     R4,=F'&VL' R4 L
+         AGO   .ROP2
+.R2_64   ANOP
+         LG    R2,=FL8'&VE' R2 E
+         LG    R3,=FL8'&VH' R3 H
+         LG    R4,=FL8'&VL' R4 L
+.ROP2    ANOP
+&OP2E    SETC  'R2'
+&OP2H    SETC  'R3'
+&OP2L    SETC  'R4'
+         AGO   .TEST
+.I2      ANOP
+&OP2E    SETC  '&VE'
+&OP2H    SETC  '&VH'
+&OP2L    SETC  '&VL'
+.TEST    ANOP
+         ESTAE ESTAE_EXIT,PARAM=&OP.8_E&CAT
+&OP.8_T&CAT &OP   R5,&OP2E,8
+         RT1   ABORT
+&OP.8_E&CAT ESTAE 0
+         RT1   OK
+         ESTAE ESTAE_EXIT,PARAM=&OP.2_E&CAT
+&OP.2_T&CAT &OP   R5,&OP2L,2
+         RT1   ABORT
+&OP.2_E&CAT ESTAE 0
+         RT1   OK
+         ESTAE ESTAE_EXIT,PARAM=&OP.4_E&CAT
+&OP.4_T&CAT &OP   R5,&OP2H,4
+         RT1   ABORT
+&OP.4_E&CAT ESTAE 0
+         RT1   OK
+         ESTAE ESTAE_EXIT,PARAM=&OP.E_E&CAT
+&OP.E_T&CAT &OP.E   R5,&OP2E
+         RT1   ABORT
+&OP.E_E&CAT ESTAE 0
+         RT1   OK
+         ESTAE ESTAE_EXIT,PARAM=&OP.H_E&CAT
+&OP.H_T&CAT &OP.H   R5,&OP2L
+         RT1   ABORT
+&OP.H_E&CAT ESTAE 0
+         RT1   OK
+         ESTAE ESTAE_EXIT,PARAM=&OP.L_E&CAT
+&OP.L_T&CAT &OP.L   R5,&OP2H
+         RT1   ABORT
+&OP.L_E&CAT ESTAE 0
+         RT1   OK
+         ESTAE ESTAE_EXIT,PARAM=&OP.NE_E&CAT
+&OP.NE_T&CAT &OP.NE   R5,&OP2L   
+         RT1   ABORT
+&OP.NE_E&CAT ESTAE 0
+         RT1   OK
+         ESTAE ESTAE_EXIT,PARAM=&OP.NH_E&CAT
+&OP.NH_T&CAT &OP.NH   R5,&OP2H       
+         RT1   ABORT
+&OP.NH_E&CAT ESTAE 0
+         RT1   OK
+         ESTAE ESTAE_EXIT,PARAM=&OP.NL_E&CAT
+&OP.NL_T&CAT &OP.NL   R5,&OP2L      
+         RT1   ABORT
+&OP.NL_E&CAT ESTAE 0
+         RT1   OK
+         ESTAE ESTAE_EXIT,PARAM=RT1_ABORT
+&OP.8_NT&CAT &OP   R5,&OP2L,8
+         RT1   OK
+&OP.2_NT&CAT &OP   R5,&OP2E,2
+         RT1   OK
+&OP.4_NT&CAT &OP   R5,&OP2E,4
+         RT1   OK
+&OP.E_NT&CAT &OP.E   R5,&OP2H
+         RT1   OK
+&OP.H_NT&CAT &OP.H   R5,&OP2H
+         RT1   OK
+&OP.L_NT&CAT &OP.L   R5,&OP2L
+         RT1   OK
+&OP.NE_NT&CAT &OP.NE   R5,&OP2E
+         RT1   OK
+&OP.NH_NT&CAT &OP.NH   R5,&OP2L
+         RT1   OK
+&OP.NL_NT&CAT &OP.NL   R5,&OP2H
+         RT1   OK
+         ESTAE 0
+         MEND   
+         MACRO 
+         TESTCAB &OP,&TYPE,&L1,&L2
+.*
+.* TEST COMPARE AND BRANCH INSTRUCTIONS WITH EXTENDED MNEMONICS
+.*  OP   - BASE OP NAME (WITHOUT EXTENDED E,H,L,NE,NH,NL SUFFIX)
+.*  TYPE - A=ARITH, L=LOGICAL
+.*  L1   - FIRST ARG TYPE  - 32,64
+.*  L2   - SECOND ARG TYPE - 32,64,1
+.*
+         GBLA  &CAB
+&CAB     SETA  &CAB+1 COMPARE AND BRANCH TEST COUNTER
+         AIF   (&TYPE EQ 'L').LVAL
+.AVAL    ANOP
+&VL      SETC  '-1'
+&VE      SETC  '0'
+&VH      SETC  '1'
+         AGO   .INIT
+.LVAL    ANOP
+&VL      SETC  '0'
+&VE      SETC  '1'
+&VH      SETC  '-1'
+.INIT    ANOP
+.R1      ANOP
+         AIF   (&L1 EQ 64).R1_64
+.R1_32   ANOP
+         L     R5,=F'&VE'
+         AGO   .OP2
+.R1_64   LG    R5,=FL8'&VE'
+.OP2     ANOP
+         AIF   (&L2 LT 32).I2
+.R2      ANOP
+         AIF   (&L1 EQ 64).R2_64
+.R2_32   ANOP
+         L     R2,=F'&VE' R2 E
+         L     R3,=F'&VH' R3 H
+         L     R4,=F'&VL' R4 L
+         AGO   .ROP2
+.R2_64   ANOP
+         LG    R2,=FL8'&VE' R2 E
+         LG    R3,=FL8'&VH' R3 H
+         LG    R4,=FL8'&VL' R4 L
+.ROP2    ANOP
+&OP2E    SETC  'R2'
+&OP2H    SETC  'R3'
+&OP2L    SETC  'R4'
+         AGO   .TEST
+.I2      ANOP
+&OP2E    SETC  '&VE'
+&OP2H    SETC  '&VH'
+&OP2L    SETC  '&VL'
+.TEST    ANOP
+&OP.8_B&CAB &OP   R5,&OP2E,8,*+10
+         RT1   ABORT
+         RT1   OK
+&OP.2_B&CAB &OP   R5,&OP2L,2,*+10
+         RT1   ABORT
+         RT1   OK
+&OP.4_B&CAB &OP   R5,&OP2H,4,*+10
+         RT1   ABORT
+         RT1   OK
+&OP.E_B&CAB &OP.E   R5,&OP2E,*+10
+         RT1   ABORT
+         RT1   OK
+&OP.H_B&CAB &OP.H   R5,&OP2L,*+10
+         RT1   ABORT
+         RT1   OK
+&OP.L_B&CAB &OP.L   R5,&OP2H,*+10
+         RT1   ABORT
+         RT1   OK
+&OP.NE_B&CAB &OP.NE   R5,&OP2L,*+10
+         RT1   ABORT
+         RT1   OK
+&OP.NH_B&CAB &OP.NH   R5,&OP2H,*+10
+         RT1   ABORT
+         RT1   OK
+&OP.NL_B&CAB &OP.NL   R5,&OP2L,*+10
+         RT1   ABORT
+         RT1   OK
+&OP.8_NB&CAB &OP   R5,&OP2L,8,RT1_ABORT
+         RT1   OK
+&OP.2_NB&CAB &OP   R5,&OP2E,2,RT1_ABORT
+         RT1   OK
+&OP.4_NB&CAB &OP   R5,&OP2E,4,RT1_ABORT
+         RT1   OK
+&OP.E_NB&CAB &OP.E   R5,&OP2H,RT1_ABORT
+         RT1   OK
+&OP.H_NB&CAB &OP.H   R5,&OP2H,RT1_ABORT
+         RT1   OK
+&OP.L_NB&CAB &OP.L   R5,&OP2L,RT1_ABORT
+         RT1   OK
+&OP.NE_NB&CAB &OP.NE   R5,&OP2E,RT1_ABORT
+         RT1   OK
+&OP.NH_NB&CAB &OP.NH   R5,&OP2L,RT1_ABORT
+         RT1   OK
+&OP.NL_NB&CAB &OP.NL   R5,&OP2H,RT1_ABORT
+         RT1   OK
+         MEND   
+TESTINS3 RT1   MAIN
+         EQUREGS
+ESPIE_EXIT DS  0H
+         USING *,R15
+         USING IHAEPIE,R1
+         L     R0,EPIEPARM
+         ST    R0,EPIEPSW+4
+         BR    R14
+         DROP  R15,R1
+ESTAE_EXIT DS  0H
+         USING *,R15
+         USING IHAESTA,R1
+         L     R0,ESTAPARM
+         ST    R0,ESTAPSW+4
+         LA    R15,4   REQUEST RESTART RPI 636
+         BR    R14
+         DROP  R15,R1
+PWORK    DS    D
+PWORK16  DS    XL16
+PL1      DS    PL1
+WORD     DS    F
+DWORD    DS    D
+BYTE     DS    X
+REGS     DS    XL(16*8)
+EBMIN    DC    EB'1.2E-38'
+FPCREG   DS    F        BFP CONTROL REG WITH MASKS AND DXC CODE
+FPCDXC   EQU   FPCREG+2 REASON CODES FOR 0C7 DATA EXCEPTIONS
+*********************************************************************
+* TRTE TEST TABLES AND FIELDS
+*********************************************************************
+TRT_F1    DC    C'1234X6'  1 BYTE ARG AND 1 BYTE TAB
+TRT_TAB1  DC    0D,240X'FF',10X'00',6X'FF'
+TRT_F2    DC    C'123X56'  1 BYTE ARG AND 2 BYTE TABLE 
+TRT_TAB2  DC    0D,240XL2'FFFF',10XL2'0000',6XL2'FFFF'
+TRT_F3    DC    0XL8,AL2(0,1,2,3) 2 BYTE ARG AND 1 BYTE TAB 65K
+TRT_TAB3  DC    0D,AL1(0,0,X'33',0)  OMITTING REST OF 65K TABLE
+TRT_F4    DC    0XL8,AL2(0,1,2,3) 2 BYTE ARG AND 1 BYTE TAB 128K
+TRT_TAB4  DC    0D,AL2(0,0,X'4444',0)  OMITTING REST OF 128K TABLE
+*********************************************************************
+* START z10 INSTRUCTION TESTS
+*********************************************************************
+         RT1   START
+* B960 CRT R1,R2,M3 COMPARE AND TRAP
+         TESTCAT CRT,A,32,32
+* B961 CLRT R1,R2,M3 COMPARE LOGICAL AND TRAP
+         TESTCAT CLRT,L,32,32
+* B972 CGRT R1,R2,M3 COMPARE AND TRAP
+         TESTCAT CGRT,A,64,64
+* B973 CLGRT R1,R2,M3 COMPARE LOG AND TRAP
+         TESTCAT CLGRT,L,64,64
+* B9BF   TRTE  rpi 818
+         LA    R1,TRT_TAB1
+         LM    R6,R7,=A(TRT_F1,L'TRT_F1)
+         TRTE  R6,R8      1 BYTE ARG AND 1 BYTE TABLE
+         BRC   3,*-4      RESTART TRTE UNTIL ENDED
+         RT1   CC1
+         CL    R8,=A(X'FF')
+         RT1   CCE
+         CL    R6,=A(TRT_F1+4)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F1-4)
+         RT1   CCE
+         LA    R1,TRT_TAB2
+         LM    R6,R7,=A(TRT_F2,L'TRT_F2)
+         TRTE  R6,R8,X'4' 1 BYTE ARG, 2 BYTE TABLE
+         BRC   3,*-4      RESTART TRTE UNTIL ENDED
+         RT1   CC1
+         CL    R8,=A(X'FFFF')
+         RT1   CCE
+         CL    R6,=A(TRT_F2+3)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F2-3)
+         RT1   CCE
+         LA    R1,TRT_TAB3
+         LM    R6,R7,=A(TRT_F3,L'TRT_F3)
+         TRTE  R6,R8,X'8' 2 BYTE ARG, 1 BYTE 65K TAB AND NO LIMIT
+         BRC   3,*-4      RESTART TRTE UNTIL ENDED
+         RT1   CC1
+         CL    R8,=A(X'33')
+         RT1   CCE
+         CL    R6,=A(TRT_F3+2*2)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F3-2*2)
+         RT1   CCE
+         LA    R1,TRT_TAB3
+         LM    R6,R7,=A(TRT_F3,L'TRT_F3)
+         MVI   TRT_F3+2*2,X'FF' SET HIGH BYTE OF 3RD ENTRY
+         TRTE  R6,R8,X'A' 2 BYTE ARG, 1 BYTE 65K TAB AND LIMIT
+         BRC   3,*-4      RESTART TRTE UNTIL ENDED
+         MVI   TRT_F3+2*2,X'00' RESET HIGH BYTE OF 3RD ENTRY
+         RT1   CC0
+         CL    R8,=A(0)
+         RT1   CCE
+         CL    R6,=A(TRT_F3+4*2)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F3-4*2)
+         RT1   CCE
+         LA    R1,TRT_TAB4
+         LM    R6,R7,=A(TRT_F4,L'TRT_F4)
+         TRTE  R6,R8,X'C' 2 BYTE ARG, 2 BYTE 128K TAB AND NO LIMIT
+         BRC   3,*-4      RESTART TRTE UNTIL ENDED
+         RT1   CC1
+         CL    R8,=A(X'4444')
+         RT1   CCE
+         CL    R6,=A(TRT_F4+2*2)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F4-2*2)
+         RT1   CCE
+         LA    R1,TRT_TAB4
+         LM    R6,R7,=A(TRT_F4,L'TRT_F4)
+         MVI   TRT_F4+2*2,X'FF' SET HIGH BYTE OF 3RD ENTRY
+         TRTE  R6,R8,X'E' 2 BYTE ARG, 2 BYTE 128K TAB AND LIMIT
+         BRC   3,*-4      RESTART TRTE UNTIL ENDED
+         MVI   TRT_F4+2*2,X'00' RESET HIGH BYTE OF 3RD ENTRY
+         RT1   CC0
+         CL    R8,=A(0)
+         RT1   CCE
+         CL    R6,=A(TRT_F4+4*2)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F4-4*2)
+         RT1   CCE
+* B9BD'  TRTRE RPI 818
+         LA    R1,TRT_TAB1
+         LM    R6,R7,=A(TRT_F1+L'TRT_F1-1,L'TRT_F1)
+         TRTRE R6,R8
+         BRC   3,*-4      RESTART TRTRE UNTIL ENDED
+         RT1   CC1
+         CL    R8,=A(X'FF')
+         RT1   CCE
+         CL    R6,=A(TRT_F1+L'TRT_F1-1-1)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F1-1)
+         RT1   CCE
+         LA    R1,TRT_TAB2
+         LM    R6,R7,=A(TRT_F2+L'TRT_F2-1,L'TRT_F2)
+         TRTRE R6,R8,X'4' 1 BYTE ARG, 2 BYTE TABLE
+         BRC   3,*-4      RESTART TRTRE UNTIL ENDED
+         RT1   CC1
+         CL    R8,=A(X'FFFF')
+         RT1   CCE
+         CL    R6,=A(TRT_F2+L'TRT_F2-1-2)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F2-2)
+         RT1   CCE
+         LA    R1,TRT_TAB3
+         LM    R6,R7,=A(TRT_F3+L'TRT_F3-2,L'TRT_F3)
+         TRTRE R6,R8,X'8' 2 BYTE ARG, 1 BYTE TAB AND NO LIMIT
+         BRC   3,*-4      RESTART TRTRE UNTIL ENDED
+         RT1   CC1
+         CL    R8,=A(X'33')
+         RT1   CCE
+         CL    R6,=A(TRT_F3+L'TRT_F3-2-1*2)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F3-1*2)
+         RT1   CCE
+         LA    R1,TRT_TAB3
+         LM    R6,R7,=A(TRT_F3+L'TRT_F3-2,L'TRT_F3)
+         MVI   TRT_F3+2*2,X'FF' SET HIGH BYTE OF 3RD ENTRY
+         TRTRE R6,R8,X'A' 2 BYTE ARG, 1 BYTE TAB AND LIMIT
+         BRC   3,*-4      RESTART TRTRE UNTIL ENDED
+         MVI   TRT_F3+2*2,X'00' RESET HIGH BYTE OF 3RD ENTRY
+         RT1   CC0
+         CL    R8,=A(0)
+         RT1   CCE
+         CL    R6,=A(TRT_F3+L'TRT_F3-2-4*2)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F3-4*2)
+         RT1   CCE
+         LA    R1,TRT_TAB4
+         LM    R6,R7,=A(TRT_F4+L'TRT_F4-2,L'TRT_F4)
+         TRTRE R6,R8,X'C' 2 BYTE ARG, 2 BYTE 128K TAB AND NO LIMIT
+         BRC   3,*-4      RESTART TRTRE UNTIL ENDED
+         RT1   CC1
+         CL    R8,=A(X'4444')
+         RT1   CCE
+         CL    R6,=A(TRT_F4+L'TRT_F4-2-1*2)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F4-1*2)
+         RT1   CCE
+         LA    R1,TRT_TAB4
+         LM    R6,R7,=A(TRT_F4+L'TRT_F4-2,L'TRT_F4)
+         MVI   TRT_F4+2*2,X'FF' SET HIGH BYTE OF 3RD ENTRY
+         TRTRE R6,R8,X'E' 2 BYTE ARG, 2 BYTE 128K TAB AND LIMIT
+         BRC   3,*-4      RESTART TRTRE UNTIL ENDED
+         MVI   TRT_F4+2*2,X'00' RESET HIGH BYTE OF 3RD ENTRY
+         RT1   CC0
+         CL    R8,=A(0)
+         RT1   CCE
+         CL    R6,=A(TRT_F4+L'TRT_F4-2-4*2)
+         RT1   CCE
+         CL    R7,=A(L'TRT_F4-4*2)
+         RT1   CCE
+* C20  MSGFI
+         LG    R5,=FL8'20'
+         MSGFI R5,30
+         CLG   R5,=FL8'600'
+         RT1   CCE
+* C21  MSFI
+         L     R5,=F'20'
+         MSFI  R5,30
+         CL    R5,=F'600'
+         RT1   CCE
+* C42  LLHRL
+         LG    R5,=C'12345678'
+         LLHRL R5,=H'-1'
+         CL    R5,=X'0000FFFF'
+         RT1   CCE
+* C44    LGHRL  
+         LG    R5,=C'12345678'
+         LGHRL R5,=H'-1'
+         CLG   R5,=FL8'-1'
+         RT1   CCE
+* C45    LHRL   
+         LG    R5,=C'12345678'
+         LHRL  R5,=H'-1'
+         CL    R5,=F'-1'
+         RT1   CCE
+* C46    LLGHRL 
+         LG    R5,=C'12345678'
+         LLGHRL R5,=H'-1'
+         CLG   R5,=XL8'000000000000FFFF'
+         RT1   CCE
+* C47    STHRL  
+         LG    R5,=C'12345678'
+         STHRL R5,PWORK 
+         CLC   PWORK(2),=C'78'
+         RT1   CCE
+* C48    LGRL   
+         LG    R5,=C'12345678'
+         LGRL  R5,=FL8'-1'
+         CLG   R5,=FL8'-1'
+         RT1   CCE
+* C4B    STGRL  
+         LG    R5,=C'12345678'
+         STGRL R5,PWORK 
+         CLC   PWORK,=CL8'12345678'
+         RT1   CCE
+* C4C    LGFRL  
+         LG    R5,=C'12345678'
+         LGFRL R5,=F'-1' 
+         CLG   R5,=FL8'-1'
+         RT1   CCE
+* C4D    LRL     
+         LG    R5,=C'12345678'
+         LRL   R5,=F'-1'
+         CL    R5,=F'-1'
+         RT1   CCE
+* C4E    LLGFRL 
+         LG    R5,=C'12345678'
+         LLGFRL R5,=F'-1' 
+         CLG   R5,=X'00000000FFFFFFFF'
+         RT1   CCE
+* C4F    STRL
+         LG    R5,=C'12345678'
+         STRL  R5,PWORK 
+         CLC   PWORK(4),=C'5678'
+         RT1   CCE
+* C60    EXRL
+         MVC   PWORK(4),=C'ABCD'
+         LA    R5,3-1
+         EXRL  R5,MVC3
+         CLC   PWORK(4),=C'123D'
+         B     *+10
+MVC3     MVC   PWORK(0),=C'1234'
+* C62    PFDRL (NOP ON Z390)
+* C64    CGHRL
+         LG    R5,=FL8'-1'
+         CGHRL R5,=H'-1'
+         RT1   CCE
+         LG    R5,=FL8'-1'
+         CGHRL R5,=H'1'
+         RT1   CCL
+* C65    CHRL
+         LG    R5,=XL8'00000000FFFFFFFF'
+         CHRL  R5,=H'-1'
+         RT1   CCE
+         LG    R5,=XL8'00000000FFFFFFFF'
+         CHRL  R5,=H'1'
+         RT1   CCL
+* C66    CLGHRL
+         LG     R5,=XL8'000000000000F1F2'
+         CLGHRL R5,=X'F1F2'
+         RT1    CCE
+         LG     R5,=XL8'FFFFFFFFFFFFFFFF'
+         CLGHRL R5,=X'FFFF'
+         RT1    CCH
+* C67    CLHRL
+         LG     R5,=XL8'000000000000F1F2'
+         CLHRL  R5,=X'F1F2'
+         RT1    CCE
+         LG     R5,=XL8'00000000FFFFFFFF'
+         CLHRL  R5,=X'FFFF'
+         RT1    CCH
+* C68    CGRL
+         LG    R5,=XL8'F1F2F3F4F5F6F7F8'
+         CGRL  R5,=X'F1F2F3F4F5F6F7F8'
+         RT1   CCE
+         LG    R5,=XL8'F1F2F3F4F5F6F7F8'
+         CGRL  R5,=FL8'1'                   
+         RT1   CCL
+* C6A    CLGRL
+         LG    R5,=XL8'F1F2F3F4F5F6F7F8'
+         CLGRL R5,=X'F1F2F3F4F5F6F7F8'
+         RT1   CCE
+         LG    R5,=XL8'F1F2F3F4F5F6F7F8'
+         CLGRL R5,=FL8'1'                  
+         RT1   CCH
+* C6C    CGFRL
+         LG    R5,=FL8'-1'
+         CGFRL R5,=F'-1'
+         RT1   CCE
+         LG    R5,=FL8'-1'
+         CGFRL R5,=F'1'
+         RT1   CCL
+* C6D    CRL     
+         LG    R5,=2F'0,-1'
+         CRL   R5,=F'-1'
+         RT1   CCE
+         LG    R5,=2F'0,-1'
+         CRL   R5,=F'1'
+         RT1   CCL
+* C6E    CLGFRL 
+         LG    R5,=2F'0,-1'
+         CLGFRL R5,=F'-1'
+         RT1   CCE
+         LG    R5,=2F'0,-1'
+         CLGFRL R5,=F'1'
+         RT1   CCH
+* C6F    CLRL    
+         LG    R5,=2F'0,-1'
+         CLRL  R5,=F'-1'
+         RT1   CCE
+         LG    R5,=2F'0,-1'
+         CLRL  R5,=F'1'
+         RT1   CCH
+* C80    MVCOS   UPDATE PRIOR RPI 606 SUPPORT FOR CC 0/3 AND 31 BIT LEN
+         MVC   PWORK,=C'12345678'
+         LA    R5,3        R5 = MVCOS LENGTH
+         LHI   R0,0        R0 = ALL CONTROL BITS OFF
+         CLI   =C'A',C'B'  SET CC NZ
+         MVCOS PWORK+1,=CL3'ABC',R5
+         RT1   CCE
+         CLC   PWORK,=C'1ABC5678'
+         RT1   CCE
+         GETMAIN R,LV=8000
+         LR    R6,R1
+         LHI   R7,8000-1   R7 = MVCOS LENGTH
+         LHI   R0,0        R0 = ALL CONTROL BITS OFF
+         CLI   =C'A',C'B'  SET CC NZ
+         MVI   0(R6),X'FF'
+         MVCOS 1(R6),0(R6),R7
+         RT1   CC3
+         LHI   R7,8000
+         L     R1,=X'FF000000'
+         CLCL  R6,R0
+         RT1   CCE
+* E332   LTGF
+         LTGF  R5,=F'-1'
+         RT1   CCL
+         CLG   R5,=FL8'-1'
+         RT1   CCE
+         LTGF  R5,=F'0'
+         RT1   CCE
+         CLG   R5,=FL8'0'
+         RT1   CCE
+         LTGF  R5,=F'1'
+         RT1   CCH
+         CLG   R5,=FL8'1'
+         RT1   CCE
+* E334   CGH     
+         LG    R5,=FL8'-1'
+         CGH   R5,=H'-1'
+         RT1   CCE
+         LG    R5,=FL8'-1'
+         CGH   R5,=H'1'
+         RT1   CCL
+* E336   PFD   PREFETCH IS A NOP
+         PFD   0,0
+* E35C   MFY
+         LM    R6,R7,=A(0,X'10000')
+         CLI   =C'A',C'B' SET CCL
+         MFY   R6,=A(X'10000')
+         RT1   CCL
+         CL    R6,=A(1)
+         RT1   CCE
+         CL    R7,=A(0)
+         RT1   CCE     
+* E375   LAEY   
+         LAEY  R5,123
+         CL    R5,=A(123)
+         RT1   CCE
+* E37C   MHY     
+         L     R5,=A(10000)
+         MHY   R5,=H'1000'
+         CL    R5,=A(10000000)
+         RT1   CCE
+* E544   MVHHI
+         MVC   PWORK,=C'12345678'
+         MVHHI PWORK+2,C'AB'
+         CLC   PWORK,=C'12AB5678'
+         RT1   CCE   
+* E548   MVGHI   
+         MVC   PWORK,=C'12345678'
+         MVGHI PWORK,-1
+         CLC   PWORK,=FL8'-1'     
+         RT1   CCE   
+* E54C   MVHI    
+         MVC   PWORK,=C'12345678'
+         MVHI  PWORK+2,-1   
+         CLC   PWORK,=X'F1F2FFFFFFFFF7F8'
+         RT1   CCE   
+* E554   CHHSI   
+         CHHSI =H'-1',-1   
+         RT1   CCE   
+         CHHSI =H'1',-1   
+         RT1   CCH   
+* E555   CLHHSI 
+         CLHHSI =H'-1',-1   
+         RT1   CCE   
+         CLHHSI =H'1',-1   
+         RT1   CCL   
+* E558   CGHSI  
+         CGHSI =FL8'-1',-1   
+         RT1   CCE   
+         CGHSI =FL8'1',-1   
+         RT1   CCH   
+* E559   CLGHSI 
+         CLGHSI =FL2'0,0,0,-1',-1   
+         RT1   CCE   
+         CLGHSI =FL8'1',-1   
+         RT1   CCL   
+* E55C   CHSI   
+         CHSI  =F'-1',-1   
+         RT1   CCE   
+         CHSI  =F'1',-1   
+         RT1   CCH   
+* E55D   CLFHSI 
+         CLFHSI =FL2'0,-1',-1   
+         RT1   CCE   
+         CLFHSI =F'1',-1  
+         RT1   CCL   
+* EB4C   ECAG  EXTRACT CACHE ATTRIBUTE NOT YET 
+* EB6A   ASI    
+         MVC   WORD,=F'12'
+         ASI   WORD,12
+         RT1   CCH
+         CLC   WORD,=F'24'
+         RT1   CCE
+         MVC   WORD,=F'12'
+         ASI   WORD,-12
+         RT1   CC0
+         CLC   WORD,=F'0'
+         RT1   CCE
+* EB6E   ALSI    
+         MVC   WORD,=F'12'
+         ALSI  WORD,12
+         RT1   CC1
+         CLC   WORD,=F'24'
+         RT1   CCE
+         MVC   WORD,=F'1'
+         ALSI  WORD,X'F1'
+         RT1   CC1
+         CLC   WORD,=F'242'
+         RT1   CCE
+* EB7A   AGSI   
+         MVC   DWORD,=FL8'12'
+         AGSI  DWORD,12
+         RT1   CCH
+         CLC   DWORD,=FL8'24'
+         RT1   CCE
+         MVC   DWORD,=FL8'12'
+         AGSI  DWORD,-12
+         RT1   CC0
+         CLC   DWORD,=FL8'0'
+         RT1   CCE
+* EB7E   ALGSI   
+         MVC   DWORD,=FL8'12'
+         ALGSI DWORD,12
+         RT1   CC1
+         CLC   DWORD,=FL8'24'
+         RT1   CCE
+         MVC   DWORD,=FL8'1'
+         ALGSI DWORD,X'F1'
+         RT1   CC1
+         CLC   DWORD,=FL8'242'
+         RT1   CCE
+* EC54   RNSBG
+         LG    R5,=C'12345678'
+         LG    R6,=C'ABCDEFGC'
+         RNSBG R5,R6,0,7,64-8  MOVE C TO FIRST CHAR AND AND WITH F1= A
+         RT1   CC1
+         CLG   R5,=C'A2345678'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         RNSBG R5,R6,32,39,24  MOVE C TO 5TH CHAR AND AND WITH F5=A
+         RT1   CC1
+         CLG   R5,=C'1234A672'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         RNSBG R5,R6,56,7,0  AND 21 WITH CA = BA IN LAST AND FIRST
+         RT1   CC1
+         CLG   R5,=C'A234567B'
+         RT1   CCE
+* EC54T  RNSBGT 
+         LG    R5,=C'12345678'
+         LG    R6,=C'ABCDEFGC'
+         RNSBGT R5,R6,0,7,64-8  MOVE C TO FIRST CHAR AND AND WITH F1= A
+         RT1   CC1
+         CLG   R5,=C'12345678'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         RNSBGT R5,R6,32,39,24  MOVE C TO 5TH CHAR AND AND WITH F5=A
+         RT1   CC1
+         CLG   R5,=C'12345672'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         RNSBGT R5,R6,56,7,0  AND 21 WITH CA = BA IN LAST AND FIRST
+         RT1   CC1
+         CLG   R5,=C'12345672'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=X'00FFFFFFFFFFFF00'
+         RNSBGT R5,R6,56,7,0  AND 21 WITH CA = BA IN LAST AND FIRST
+         RT1   CC0
+         CLG   R5,=C'12345672'
+         RT1   CCE
+* EC55   RISBG   
+         LG    R5,=C'12345678'
+         LG    R6,=C'ABCDEFGC'
+         RISBG R5,R6,0,7,64-8  MOVE C TO FIRST CHAR AND INSERT       
+         RT1   CC1
+         CLG   R5,=C'C2345678'
+         RT1   CCE
+         LG    R5,=C'12345678'
+         LG    R6,=C'ABCDEFGC'
+         RISBG R5,R6,32,39,24  MOVE C TO F5 AND INSERT 0'S
+         RT1   CC1
+         CLG   R5,=C'1234C678'
+         RT1   CCE
+* EC55Z  RISBGZ 
+         LG    R5,=C'12345678'
+         LG    R6,=C'ABCDEFGC'
+         RISBGZ R5,R6,0,7,64-8  MOVE C TO FIRST CHAR AND INSERT 0'S
+         RT1   CC1
+         CLG   R5,=X'C300000000000000'
+         RT1   CCE
+         LG    R5,=C'12345678'
+         LG    R6,=C'ABCDEFGC'
+         RISBGZ R5,R6,32,39,24  MOVE C TO F5 AND INSERT 0'S
+         RT1   CC2
+         CLG   R5,=X'00000000C3000000'
+         RT1   CCE
+         LG    R5,=FL8'-1'     
+         LG    R6,=C'ABCDEFGC'
+         RISBGZ R5,R6,32,39,24  MOVE C TO F5 AND INSERT 0'S
+         RT1   CC2
+         CLG   R5,=X'00000000C3000000'
+         RT1   CCE
+         LG    R5,=FL8'-1'     
+         LG    R6,=X'FFFFFFFFFFFFFF00'
+         RISBGZ R5,R6,32,39,24  MOVE C TO F5 AND INSERT 0'S
+         RT1   CC0  
+         CLG   R5,=X'0000000000000000'
+         RT1   CCE
+* EC56   ROSBG   
+         LG    R5,=C'12345678'
+         LG    R6,=C'ABCDEFGC'
+         ROSBG R5,R6,0,7,64-8  MOVE C TO FIRST CHAR AND OR WITH F1= 3
+         RT1   CC1
+         CLG   R5,=C'32345678'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         ROSBG R5,R6,32,39,24  MOVE C TO 5TH CHAR AND AND WITH F5= 7
+         RT1   CC1
+         CLG   R5,=C'12347672'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         ROSBG R5,R6,56,7,0  AND 21 WITH CA = 31 IN LAST AND FIRST
+         RT1   CC1
+         CLG   R5,=C'12345673'
+         RT1   CCE
+* EC56T  ROSBGT  
+         LG    R5,=C'12345678'
+         LG    R6,=C'ABCDEFGC'
+         ROSBGT R5,R6,0,7,64-8  MOVE C TO FIRST CHAR AND OR WITH F1= 3
+         RT1   CC1
+         CLG   R5,=C'12345678'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         ROSBGT R5,R6,32,39,24  MOVE C TO 5TH CHAR AND OR WITH F5= 7
+         RT1   CC1
+         CLG   R5,=C'12345672'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         ROSBGT R5,R6,56,7,0  OR 21 WITH CA = 31 IN LAST AND FIRST
+         RT1   CC1
+         CLG   R5,=C'12345672'
+         RT1   CCE
+         LG    R5,=X'00FFFFFFFFFFFF00'
+         LG    R6,=X'0000FFFFFFFFFFFF'
+         ROSBG R5,R6,56,7,8  AND 21 WITH CA = 31 IN LAST AND FIRST
+         RT1   CC0
+         CLG   R5,=X'00FFFFFFFFFFFF00'
+         RT1   CCE
+* EC57   RXSBG  
+         LG    R5,=C'12345678'
+         LG    R6,=C'ABCDEFGC'
+         RXSBG R5,R6,0,7,64-8  MOVE C TO FIRST CHAR AND XOR WITH F1= 2
+         RT1   CC1
+         CLG   R5,=X'32F2F3F4F5F6F7F8' F1 XOR C3 = 32 ETC.
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         RXSBG R5,R6,32,39,24  MOVE C TO 5TH CHAR AND XOR WITH F5= 6
+         RT1   CC1
+         CLG   R5,=X'F1F2F3F436F6F7F2'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         RXSBG R5,R6,56,7,0  XOR 21 WITH CA = 31 IN LAST AND FIRST
+         RT1   CC1
+         CLG   R5,=X'30F2F3F4F5F6F731'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'1BCDEFG2'
+         RXSBG R5,R6,56,7,0  XOR 21 WITH 21 = 00 IN LAST AND FIRST
+         RT1   CC0
+         CLG   R5,=X'00F2F3F4F5F6F700'
+         RT1   CCE
+* EC57T  RXSBGT 
+         LG    R5,=C'12345678'
+         LG    R6,=C'ABCDEFGC'
+         RXSBGT R5,R6,0,7,64-8  MOVE C TO FIRST CHAR AND XOR WITH F1= 2
+         RT1   CC1
+         CLG   R5,=C'12345678'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         RXSBGT R5,R6,32,39,24  MOVE C TO 5TH CHAR AND XOR WITH F5= 6
+         RT1   CC1
+         CLG   R5,=C'12345672'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'ABCDEFGC'
+         RXSBGT R5,R6,56,7,0  XOR 21 WITH CA = 31 IN LAST AND FIRST
+         RT1   CC1
+         CLG   R5,=C'12345672'
+         RT1   CCE
+         LG    R5,=C'12345672'
+         LG    R6,=C'1BCDEFG2'
+         RXSBGT R5,R6,56,7,0  XOR 21 WITH 21 = 00 IN LAST AND FIRST
+         RT1   CC0
+         CLG   R5,=C'12345672'
+         RT1   CCE
+* EC64 CGRJ R1,R2,M3,I4 COMPARE R64 AND BRANCH RELATIVE
+         TESTCAB CGRJ,A,64,64
+* EC65 CLGRJ R1,R2,M3,I4 COMPARE LOGIVSL R64 AND BRANCH RELATIVE
+         TESTCAB CLGRJ,L,64,64
+* EC70 CGIT R1,I2,M3 COMPARE IMMEDIATE AND TRAP
+         TESTCAT CGIT,A,64,8
+* EC71 CLGIT R1,I2,M3 COMPARE LOG IMMEDIATE AND TRAP
+         TESTCAT CLGIT,L,64,8
+* EC72 CIT R1,I2,M3 COMPARE IMMEDIATE AND TRAP
+         TESTCAT CIT,A,32,8
+* EC73 CLFIT R1,I2,M3 COMPARE LOG IMMEDIATE AND TRAP
+         TESTCAT CLFIT,L,32,8
+* EC76 CRJ R1,R2,M3,I4 COMPARE R32 AND BRANCH RELATIVE
+         TESTCAB CRJ,A,32,32
+* EC7C CGIJ R1,I2,M3,I4 COMPARE IMMEDIATE R64 AND BRANCH RELATIVE
+         TESTCAB CGIJ,A,64,8
+* EC7D CLGIJ R1,I2,M3,I4 COMPARE LOG IMMEDIATE R64 AND BRANCH RELATIVE
+         TESTCAB CLGIJ,L,64,8
+* EC7E CIJ R1,I2,M3,I4 COMPARE IMMEDIATE R32 AND BRANCH RELATIVE
+         TESTCAB CIJ,A,32,8
+* EC7F CLIJ R1,I2,M3,I4 COMPARE LOG IMMEDIATE R32 AND BRANCH RELATIVE
+         TESTCAB CLIJ,L,32,8
+* ECF4 CGRB R1,R2,M3,I4 COMPARE R64 AND BRANCH 
+         TESTCAB CGRB,A,64,64
+* ECF5 CLGRB R1,R2,M3,I4 COMPARE LOGIVSL R64 AND BRANCH 
+         TESTCAB CLGRB,L,64,64
+* ECF6 CRB R1,R2,M3,I4 COMPARE R32 AND BRANCH 
+         TESTCAB CRB,A,32,32
+* ECFC CGIB R1,I2,M3,I4 COMPARE IMMEDIATE R64 AND BRANCH 
+         TESTCAB CGIB,A,64,8
+* ECFD CLGIB R1,I2,M3,I4 COMPARE LOG IMMEDIATE R64 AND BRANCH
+         TESTCAB CLGIB,L,64,8
+* ECFE CIB R1,I2,M3,I4 COMPARE IMMEDIATE R32 AND BRANCH 
+         TESTCAB CIB,A,32,8
+* ECFF CLIB R1,I2,M3,I4 COMPARE LOG IMMEDIATE R32 AND BRANCH
+         TESTCAB CLIB,L,32,8
+* END
+         RT1   END
+         EPIED
+         ESTAD
+         END         
+

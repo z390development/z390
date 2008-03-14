@@ -11,6 +11,7 @@ REM ******************************************************************
 erase rt\all\*.* /q 
 call rt\DIRCLEAN
 call rt\RTLINK1   %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTAST1    %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RTDEMO1   %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RTMFACC1  %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RTMVS1    %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -18,6 +19,7 @@ call rt\RTVSAM1   %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RTVSE1    %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RTTEST1   %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy rt\linklib\dif\*.*         rt\all
+copy rt\assist\dif\*.*          rt\all
 copy rt\demo\dif\*.*            rt\all
 copy rt\mfacc\dif\*.*           rt\all
 copy rt\mvs\demo\dif\*.*        rt\all
@@ -28,6 +30,7 @@ copy rt\vsam\test\dif\*.*       rt\all
 copy rt\vse\demo\dif\*.*        rt\all
 copy rt\vse\test\dif\*.*        rt\all
 copy rt\linklib\dif\DIFF.TXT    rt\all\RTLINK.DIF
+copy rt\assist\dif\DIFF.TXT     rt\all\RTAST.DIF
 copy rt\demo\dif\DIFF.TXT       rt\all\RTDEMO.DIF
 copy rt\mfacc\dif\DIFF.TXT      rt\all\RTNFACC.DIF
 copy rt\mvs\dif\DIFF.TXT        rt\all\RTMVS.DIF

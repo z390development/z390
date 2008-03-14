@@ -350,8 +350,8 @@ private void init_ez390(String[] args, JTextArea log_text, JTextField command_te
 	    tz390.open_systerm("EZ390");
 	    vz390.init_vz390(tz390,pz390,sz390);
 	    sz390.init_sz390(tz390,pz390,vz390);
+		sz390.open_files(); // RPI 357 RPI 812 moved before init_pz390
 	    pz390.init_pz390(tz390,sz390);
-		sz390.open_files(); // RPI 357
 		tz390.force_nocon = true;
 		sz390.put_log(tz390.started_msg); // RPI 755
 		tz390.force_nocon = false;

@@ -1,0 +1,138 @@
+*********************************************************************
+* Z390 MAINFRAME ASSEMBLER CODING CONTEST PROBLEM #17.
+********************************************************************* 
+*********************************************************************
+P17WR1   ZMFACC CODE,START,NAME='WERNER RAMS',RUNSYS=390
+         LA     R10,EIN1
+         LA     R11,COMP1
+         LA     R12,LENG1
+         BAS    R14,COMPR000
+         LA     R10,EIN2
+         LA     R11,COMP2
+         LA     R12,LENG2
+         BAS    R14,COMPR000
+         LA     R10,EIN3
+         LA     R11,COMP3
+         LA     R12,LENG3
+         BAS    R14,COMPR000
+
+         LA     R10,COMP1
+         LA     R11,DCOMP1
+         BAS    R14,DCOMP000
+         LA     R10,COMP2
+         LA     R11,DCOMP2
+         BAS    R14,DCOMP000
+         LA     R10,COMP3
+         LA     R11,DCOMP3
+         BAS    R14,DCOMP000
+
+         B      END000
+
+*     COMPRESS STRING ADR IN R10 TO ADR IN R11 
+
+COMPR000 EQU    *
+         ST     R14,SAR14
+         LR     R14,R10         EIN
+         LA     R15,80          LENGTH OF INPUT
+         LR     R9,R11          ANFADDR COMPX 
+COMPR010 EQU    *
+         LR     R2,R14          CURRENT ADDRESS IN INPUT
+         LTR    R15,R15         R15=LENGTH OF REST
+         BZ     COMPR100        
+         LR     R1,R15          REST-LENGTH 
+         CLI    0(R14),X'40'
+         BNE    COMPR020        FIRST BYTE IS NOT BLANK           
+         SR     R0,R0
+         SR     R1,R1
+         ICM    R1,8,=X'40'     PADDING CHAR = BLANK         
+         CLCL   R14,R0          SEARCH FOR NEXT NONBLANK
+         LR     R1,R14          = ADDRESS OF FIRST NONBLANK CHAR 
+         SR     R1,R2           COUNT OF BLANK BYTES   
+         STC    R1,0(R11)       LENGHT OF BLANKS
+         OI     0(R11),X'80'    MARK AS COUNT OF BLANKS 
+         AHI    R11,1           NEXT ADDRESS IN OUTPUT
+         B      COMPR010        
+           
+COMPR020 EQU    *
+         LA     R0,X'40'         SEARCH FOR NEXT BLANK            
+COMPR030 EQU    *
+         LR     R1,R10
+         AR     R1,R15           ENDADDRESS OF SEARCH
+         SRST   R1,R14           LOOK FOR NEXT BLANK
+         BC     1,COMPR030       REPEAT SEARCH  
+COMPR040 EQU    *
+         LR     R14,R1           ADDRESS OF NEXT BLANK 
+         SR     R1,R2            LENGTH OF NON-BLANK 
+         SR     R15,R1           LENGTH OF REST
+         STC    R1,0(R11)                
+         AHI    R1,-1
+         EX     R1,MVCDATEN      MVC    1(0,R11),0(R2)
+         LA     R11,2(R1,R11)    NEXT ADDRESS IN OUTPUT
+         B      COMPR010        
+COMPR100 EQU    *
+         MVI    0(R11),X'00'     MARK END OF COMPRESSED STRING   
+         LA     R11,1(R11)
+         SR     R11,R9           LENG AUS
+         STH    R11,0(R12)
+COMPR900 EQU    *
+         L      R14,SAR14
+         BR     R14                          
+
+
+*     DECOMPRESS STRING ADR IN R10 TO ADR IN R11 
+
+DCOMP000 EQU    *
+         ST     R14,SAR14
+         SR     R1,R1
+DCOMP010 EQU    *
+         CLI    0(R10),0
+         BE     DCOMP100
+         TM     0(R10),X'80'
+         BO     DCOMP020
+         IC     R1,0(R10)      LENGTH OF TEXT
+         AHI    R1,-1
+         EX     R1,MVCTEXT     MVC   0(0,R11),1(R10) 
+         LA     R10,2(R1,R10)  NEXT ADDRESS IN COMPRESSED INPUT 
+         LA     R11,1(R1,R11)  NEXT ADDRESS IN DECOMPRESSED FIELD 
+         B      DCOMP010
+DCOMP020 EQU    *              DECOMPRESS COMPRESSED BLANKS
+         IC     R1,0(R10)
+         AHI    R1,-129        -X'80' AND -1 FOR EX
+         EX     R1,MVCBLANK    MVC   0(0,R11),BLANK                     
+         AHI    R10,1          NEXT ADDRESS IN COMPRESSED INPUT 
+         LA     R11,1(R1,R11)  NEXT ADDRESS IN DECOMPRESSED FIELD 
+         B      DCOMP010         
+DCOMP100 EQU    *
+         L      R14,SAR14
+         BR     R14
+   
+MVCDATEN MVC    1(0,R11),0(R2)
+MVCTEXT  MVC    0(0,R11),1(R10) 
+MVCBLANK MVC    0(0,R11),BLANK                     
+
+END000   EQU    *         
+         ZMFACC CODE,END 
+SAR14    DS     F
+BLANK    DC     CL80' '
+         ZMFACC INPUT,START 
+EIN1     DC     CL80'LABEL     OPCODE PARMS'
+EIN2     DC     CL80'          AP    FELD1,FELD2'    
+EIN3     DC     CL80'ANF010    CLC   FELD1,FELD2   COMPARE F1 WITH F2'    
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+DCOMP1   DS     CL80
+DCOMP2   DS     CL80
+DCOMP3   DS     CL80
+LENG1    DS     H  
+COMP1    DC     78X'FF'
+LENG2    DS     H  
+COMP2    DC     78X'FF'
+LENG3    DS     H  
+COMP3    DC     78X'FF'
+         ZMFACC OUTPUT,END
+         LTORG
+*  THIS MAKES THE LAST 3 BYTES OF THE REAL ADDRESS 
+*  EQUAL TO THE RELATIVE ADDRESS IN THE .PRN-FILE
+         ORG    P17WR1+X'1000'     
+*
+         END

@@ -26,6 +26,10 @@
 * 01/13/08 RPI 786 USE FP COMPARES TO HANDLE EQUIVALENT DFP VALUES                    
 * 01/17/08 RPI 790 CORRECT TEST FOR EXPECTED BIAS BASED ON DFP CONST.                 
 * 01/22/08 RPI 791 TEST CGDTR AND CGXTR SETTING CC3 IF TOO BIG                        
+* 02/27/08 RPI 811 TEST THE FOLLOWING FIXES
+*                  1.  CSDTR FIX FOR HIGH DIGIT 0 IF NEGATIVE
+*                  2.  SRDT/SLDT/SRXT/SLXT INCORRECT FOR EXP > 0                        
+* 03/13/08 RPI 820 TEST IEEE DIV,OVF,UNF EXCEPTION HANDLING 
 *********************************************************************
          MACRO
 &N       CLCED &S1,&S2
@@ -57,7 +61,12 @@ WORK     DC    XL16'00'
 ED_BIAS  EQU   101    S,C5,BXCF6,CCF20
 DD_BIAS  EQU   398    S,C5,BXCF8,CCF50
 LD_BIAS  EQU   6176   S,C5,BXDF12,CCF110
+DDMIN    DC    DD'(MIN)'  RPI 820
+DDMAX    DC    DD'(MAX)'  RPI 820
+LDMIN    DC    LD'(MIN)'  RPI 820
+LDMAX    DC    LD'(MAX)'  RPI 820
 FPCREG   DC    F'0'   FPC BFP/DFP CONTROL REG WORK AREA
+FPCDXC   EQU   FPCREG+2 REASON CODES FOR 0C7 DATA EXCEPTIONS
 TDCPZ    EQU   X'800' TEST DFP DATA CLASS PLUS  ZERO
 TDCMZ    EQU   X'400' TEST DFP DATA CLASS MINUS ZERO
 TDCPSN   EQU   X'200' TEST DFP DATA CLASS PLUS  SUBNORMAL  <MIN OR >MAX
@@ -82,6 +91,15 @@ TDGPDF   EQU   X'008' TEST DFP DATA GROUP PLUS  FIRST DIGIT NON EXT EXP
 TDGMDF   EQU   X'004' TEST DFP DATA GROUP MINUS FIRST DIGIT NON EXT EXP 
 TDGPIN   EQU   X'002' TEST DFP DATA GROUP PLUS  INFINITY OR NAN         
 TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM         
+         EQUREGS REGS=GPR
+         EQUREGS REGS=FPR
+ESPIE_EXIT DS  0H
+         USING *,R15
+         USING IHAEPIE,R1
+         L     R0,EPIEPARM
+         ST    R0,EPIEPSW+4
+         BR    R14
+         DROP  R15,R1
          RT1   START
 * B2B9 SRNMT
          SRNMT 1 SET DFP ROUND TO ZERO
@@ -211,6 +229,13 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          STD   1,DD1
          CLCDD DD1,=DD'600'
          RT1   CCE
+         ESPIE SET,ESPIE_EXIT,7,PARAM=MDTR1 DFP OVERFLOW FPCDXC=20
+         LD    R0,=DD'1'
+         LD    R1,DDMAX
+         MDTR  R0,R0,R1 
+         RT1   ABORT
+MDTR1    ESPIE RESET
+         WTO  'ESPIE DFP MDTR OVERFLOW OK'
 * B3D1 DDTR
          LD    2,=DD'600'
          LD    3,=DD'20'
@@ -224,6 +249,16 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          STD   1,DD1
          CLCDD DD1,=DD'3.333333333333333'
          RT1   CCE
+         ESPIE SET,ESPIE_EXIT,7,PARAM=DDTR1 DFP DIV FPCDXC=40 RPI 820
+         LD    R4,=DD'1'
+         LD    R5,=DD'0'
+         DDTR  R1,R4,R5
+         RT1   ABORT
+DDTR1    ESPIE RESET
+         STFPC FPCREG
+         CLI   FPCDXC,X'40'
+         RT1   CCE
+         WTO   'ESPIE DFP DDTR DIVIDE OK'
 * B3D2 ADTR
          LD    2,=DD'1234567890123456'
          LD    3,=DD'1111111111111111'
@@ -260,6 +295,16 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          STD   1,DD1
          CLCDD DD1,=DD'-1'
          RT1   CCE
+         ESPIE SET,ESPIE_EXIT,7,PARAM=ADTR1 DFP OVERFLOW FPCDXC=20
+         LD    R0,DDMAX
+         LD    R1,DDMAX
+         ADTR  R0,R0,R1 
+         RT1   ABORT
+ADTR1    ESPIE RESET
+         STFPC FPCREG
+         CLI   FPCDXC,X'20'
+         RT1   CCE
+         WTO   'ESPIE DFP ADTR OVERFLOW OK'
 * B3D3 SDTR
          LD    2,=DD'1234567890123456'
          LD    3,=DD'1111111111111111'
@@ -282,6 +327,17 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          STD   1,DD1
          CLCDD DD1,=DD'-1'
          RT1   CCE
+         ESPIE SET,ESPIE_EXIT,7,PARAM=SDTR1 DFP UNDERFLOW FPCDXC=10
+         LD    R4,DDMIN
+         LD    R5,DDMIN
+         ADTR  R4,R4,R5 
+         SDTR  R4,R4,R5
+         RT1   ABORT     
+SDTR1    ESPIE RESET
+         STFPC FPCREG
+         CLI   FPCDXC,X'10'
+         RT1   CCE
+         WTO   'ESPIE DFP SDTR UNDERFLOW OK'
 * B3D4 LDETR
          LE    4,=ED'123'
          LDETR 1,4,0
@@ -349,6 +405,13 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          STX   1,LD1
          CLCLD LD1,=LD'600'
          RT1   CCE
+         ESPIE SET,ESPIE_EXIT,7,PARAM=MXTR1 DFP OVERFLOW FPCDXC=20
+         LX    R0,=LD'1'
+         LX    R1,LDMAX
+         MXTR  R0,R0,R1 
+         RT1   ABORT
+MXTR1    ESPIE RESET
+         WTO  'ESPIE DFP MXTR OVERFLOW OK'
 * B3D9 DXTR
          LX    4,=LD'600'
          LX    5,=LD'20'
@@ -362,6 +425,16 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          STX   1,LD1
          CLCLD LD1,=LD'3.333333333333333333333333333333333'
          RT1   CCE
+         ESPIE SET,ESPIE_EXIT,7,PARAM=DXTR1 DFP DIV FPCDXC=40 RPI 820
+         LX    R4,=LD'1'
+         LX    R5,=LD'0'
+         DXTR  R0,R4,R5
+         RT1   ABORT
+DXTR1    ESPIE RESET
+         STFPC FPCREG
+         CLI   FPCDXC,X'40'
+         RT1   CCE
+         WTO   'ESPIE DFP DXTR DIVIDE OK'
 * B3DA AXTR
          LX    4,=LD'1234567890123456789012345678901234'
          LX    5,=LD'1111111111111111111111111111111111'
@@ -398,6 +471,16 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          STX   1,LD1
          CLCLD LD1,=LD'-1'
          RT1   CCE
+         ESPIE SET,ESPIE_EXIT,7,PARAM=AXTR1 DFP OVERFLOW FPCDXC=20
+         LX    R0,LDMAX
+         LX    R1,LDMAX
+         AXTR  R0,R0,R1 
+         RT1   ABORT
+AXTR1    ESPIE RESET
+         STFPC FPCREG
+         CLI   FPCDXC,X'20'
+         RT1   CCE
+         WTO   'ESPIE DFP AXTR OVERFLOW OK'
 * B3DB SXTR
          LX    4,=LD'1234567890123456789012345678901234'
          LX    5,=LD'1111111111111111111111111111111111'
@@ -420,6 +503,17 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          STX   1,LD1
          CLCLD LD1,=LD'-1'
          RT1   CCE
+         ESPIE SET,ESPIE_EXIT,7,PARAM=SXTR1 DFP UNDERFLOW FPCDXC=10
+         LX    R4,LDMIN
+         LX    R5,LDMIN
+         AXTR  R4,R4,R5 
+         SXTR  R4,R4,R5
+         RT1   ABORT     
+SXTR1    ESPIE RESET
+         STFPC FPCREG
+         CLI   FPCDXC,X'10'
+         RT1   CCE
+         WTO   'ESPIE DFP SXTR UNDERFLOW OK'
 * B3DC LXDTR
          LD    4,=DD'123'
          LXDTR 1,4,0
@@ -692,6 +786,10 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          CSDTR 0,1,0
          CG    0,=PL8'123456789012345'    
          RT1   CCE 
+         LD    1,=DD'-123456789012345'     
+         CSDTR 0,1,0
+         CG    0,=PL8'-123456789012345'    
+         RT1   CCE 
 * B3E4 CDTR
          LD    1,=DD'1'
          LD    2,=DD'2'
@@ -738,6 +836,11 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LD    4,=DD'1234567890123456'
          ESDTR 1,4
          CG    1,=FD'16'
+         RT1   CC0
+         LD    0,=DD'1000000'
+         LD    0,=XL8'2238000000100000'
+         ESDTR 1,0
+         CG    1,=FD'7'
          RT1   CC0
 * B3E8 KXTR
          LX    4,=LD'1'
@@ -1155,6 +1258,11 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LD    5,=DD'123000'
          CDTR  1,5
          RT1   CCE
+         LD    4,=DD'123E3'
+         SLDT  1,4,3
+         LD    5,=DD'123000E3'
+         CDTR  1,5
+         RT1   CCE
          LD    4,=DD'1234567890123456'
          SLDT  1,4,1
          LD    5,=DD'2345678901234560'
@@ -1176,10 +1284,20 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LD    5,=DD'12'  RPI 790                                
          CDTR  1,5
          RT1   CCE
+         LD    4,=DD'1234E5'
+         SRDT  1,4,2
+         LD    5,=DD'12E5'  RPI 790                                
+         CDTR  1,5
+         RT1   CCE
 * ED48 SLXT
          LX    4,=LD'123'
          SLXT  1,4,3
          LX    5,=LD'123000'
+         CXTR  1,5
+         RT1   CCE
+         LX    4,=LD'123E3'
+         SLXT  1,4,3
+         LX    5,=LD'123E6'
          CXTR  1,5
          RT1   CCE
          LX    4,=LD'1234567890123456789012345678901234'
@@ -1201,6 +1319,11 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          LX    4,=LD'1234'
          SRXT  1,4,2
          LX    5,=LD'12' RPI 790                              
+         CXTR  1,5
+         RT1   CCE
+         LX    4,=LD'1234E3'
+         SRXT  1,4,2
+         LX    5,=LD'12E3' RPI 790                              
          CXTR  1,5
          RT1   CCE
 * ED50 TDCET
@@ -1375,6 +1498,5 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
 * END OF TESTS
 *
          RT1   END
-         EQUREGS REGS=GPR
-         EQUREGS REGS=FPR
+         EPIED
          END         

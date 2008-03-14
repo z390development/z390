@@ -1,0 +1,86 @@
+         TITLE 'TESTAST1 - TEST ASSIST OPTION INSTRUCTIONS'
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 02/29/08                                                 *
+*********************************************************************
+* 02/29/08 RPI 812 TEST OPTION ASSIST 11 INSTRUCTIONS                   
+*********************************************************************
+TESTAST1 CSECT
+         USING *,R15
+*
+* CONVERT TABLE OF DECIMAL VALUES TO BINARY AND BACK AND PRINT LINE
+*
+         LA    R2,DECTAB
+         LA    R4,LINE
+DECLOOP  DS    0H
+         XDECI R3,0(R2)  GET NEXT DECIMAL NUMBER
+         BO    DECEND
+         XDECO R3,0(R4)  ADD DECIMAL VALUE TO LINE
+         AHI   R4,12
+         LR    R2,R1
+         B     DECLOOP
+DECEND   DS    0H
+         XPRNT LINE,80  PRINT LINE DECIMAL VALUES
+*                                 
+* CONVERT TABLE OF HEX VALUES TO BINARY AND BACK AND PRINT LINE
+*
+         LA    R2,HEXTAB
+         MVC   LINE,=CL80' '
+         LA    R4,LINE
+HEXLOOP  DS    0H
+         XHEXI R3,0(R2)  GET NEXT HEX NUMBER
+         BO    ENDHEX
+         XHEXO R3,0(R4)  ADD HEX VALUE TO LINE
+         AHI   R4,9
+         LR    R2,R1
+         B     HEXLOOP
+ENDHEX   DS    0H
+         XPRNT LINE,80    PRINT LINE OF HEX VALUES
+*
+* READ RCDS AND PRINT AND PUNCH USING XREAD, XPRNT, AND XPNCH
+*
+READLOOP DS    0H
+         XREAD LINE
+         BNZ   ENDREAD
+         XPRNT LINE,80
+         XPNCH LINE
+         B     READLOOP
+ENDREAD  DS    0H 
+*
+* GET RCDS AND PRINT AND PUT USING XGET, XPRNT, AND XPUT
+*
+         LA    R2,80
+GETLOOP  DS    0H
+         XGET  LINE,(R2)
+         BNZ   ENDGET
+         XPRNT LINE,(R2)
+         XPUT  LINE,80
+         B     GETLOOP
+ENDGET   DS    0H 
+*
+* PRINT FULL DUMP AND THEN SELECTED AREA DUMP
+         XDUMP , DUMP REGISTERS AND ALL OF STORAGE
+         XLIMD LINE,L'LINE SET DEFAULT STORAGE FOR XDUMP, THEN XDUMP
+         XDUMP
+         XDUMP HEXTAB,L'HEXTAB
+         XDUMP DECTAB,L'DECTAB
+         SR    R15,R15
+         BR    R14
+*
+* DATA AREAS
+*
+R0       EQU   0
+R1       EQU   1
+R2       EQU   2
+R3       EQU   3
+R4       EQU   4
+R5       EQU   5
+R14      EQU   14
+R15      EQU   15
+LINE     DC    CL80' '
+DECTAB   DC    CL80'1 12 123 1234',X'FF'
+HEXTAB   DC    CL80'A AB ABC ABCD',X'FF'
+         END         

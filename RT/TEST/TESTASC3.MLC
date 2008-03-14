@@ -49,6 +49,8 @@
 * 03/18/07 RPI 580 CORRECT TEST CHAR FOR TR??
 * 05/07/07 RPI 606 add MVCOS tests
 * 06/10/07 RPI 636 set ESTAE required exit RC=4 for restart request
+* 02/27/08 RPI 815 correct support for negative index register 24/31
+* 03/12/08 RPI 820 test fix to prevent S0C5 on negative SRP b2 reg  
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -741,6 +743,14 @@ DR1      ESPIE RESET
          SR    R0,R0
          IC    R0,=C'A'
          CL    R0,=A(C'A')
+         RT1   CCE
+         LA    R1,=C'AB'
+         L     R2,=F'-1'
+         IC    R0,1(R1)
+         CLM   R0,1,=C'B'
+         RT1   CCE
+         IC    R0,1(R1,R2)      RPI 815 INDEX BY -1
+         CLM   R0,1,=C'A'
          RT1   CCE
 * 44   EX
          MVI   BYTE,C'A'
@@ -4766,6 +4776,18 @@ BRXLG3   EQU   *
          RT1   CCE
          ZAP   PWORK,=P'12349'
          SRP   PWORK,64-2,5
+         RT1   CCH
+         CP    PWORK+5(3),=P'123'
+         RT1   CCE
+         ZAP   PWORK,=P'12350'
+         LHI   R1,-2               RPI 820 TEST NEG REG
+         SRP   PWORK,0(R1),5       RPI 820
+         RT1   CCH
+         CP    PWORK+5(3),=P'124'
+         RT1   CCE
+         ZAP   PWORK,=P'12349'
+         LHI   R1,-2               RPI 820 TEST NEG REG
+         SRP   PWORK,0(R1),5       RPI 820 
          RT1   CCH
          CP    PWORK+5(3),=P'123'
          RT1   CCE

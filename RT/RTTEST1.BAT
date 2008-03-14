@@ -59,10 +59,10 @@ call rt\RT1 rt\test\TESTPC1  tracep systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 rem
 rem az390 assembler
 rem
-call rt\RT1 rt\test\TESTINS1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTINS1 assist systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy rt\test\TESTINS1.BAL rt\test\TESTASC5.BAL
 erase rt\test\TESTASC5.STA
-call AZ390 rt\test\TESTASC5 notiming systerm(RTTEST) stats %1 %2 %3 %4 %5 %6 %7 %8 %9
+call AZ390 rt\test\TESTASC5 assist notiming systerm(RTTEST) stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTDST1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTLCT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTSYM1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -101,6 +101,7 @@ call rt\RT1 rt\test\TESTERR5 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT7 rt\test\TESTERR6 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT7 rt\test\TESTERR7 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTINS2 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTINS3 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy rt\test\TESTINS2.MLC rt\test\TESTASC3.MLC
 call rt\RT1 rt\test\TESTASC3 ascii trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTFP1  trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9

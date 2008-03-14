@@ -226,7 +226,17 @@ public class pz390 {
      * 01/25/08 RPI 798 correct RRDTR/RRXTR to remove exact check
      *          fix trace format, and fix ESDTR/ESXTR to include trailing zeros 
      * 02/20/08 RPI 808 prevent trap on LA for addr > max memory
-     *          prevent underflow if value exactly zero                                        
+     *          prevent underflow if value exactly zero  
+     * 02/27/08 rpi 811 fix CSDTR high digit 0 if negative 
+     *                  fix SLDT/SRDT/SLXT/SRXT to handle pos exp. 
+     * 02/27/08 RPI 815 correct support for negative index register
+     * 02/27/08 RPI 816 correct LDR and LXR to simply copy ctl registers 
+     * 03/03/08 RPI 817 add 226 z10 instructions 
+     * 03/12/08 RPI 820 misc. fixes:
+     *   1.  Prevent S0C5 for neg SRP b2 reg, and optimize
+     *       performance of RLL/RLLG using int/long rotate function.
+     *   2.  Honor DD/LD IEEE de, ue, oe exception on DDTR,MDTR
+     *   3.  Support un-normalized HFP input values                                                             
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -374,7 +384,7 @@ public class pz390 {
 	int psw_pgm_mask = 0x6; // enable all but fixed and fp sig.//RPI33
 
 	/*
-	 * FPC IEEE BFP control registers
+	 * FPC IEEE BFP/DFP control registers
 	 */
 	int fp_fpc_mask_inv = 0x80000000;
 
@@ -432,10 +442,27 @@ public class pz390 {
 	int fp_dxc_div = 0x40; // IEEE division by zero
 
 	int fp_dxc_oper = 0x80; // IEEE invalid operation
-
+	int fp_dxc_trap = 0xff; // compare and trap exception RPI 817
 	int fp_dxc = 0; // byte 2 of fp_fpc_reg with IEEE exceptions
     String fp_dfp_digits = null;
-	/*
+	
+    /*
+     * ASSIST global execution data areas RPI 812
+     */
+    int ast_xdump_addr = 0; // default xdump area
+    int ast_xdump_len  = 0; // default xdump area length
+    int ast_xread_tiot = -1;
+    int ast_xprnt_tiot = -1;
+    int ast_xpnch_tiot = -1;
+    int ast_xget_tiot  = -1;
+    int ast_xput_tiot  = -1; 
+    int ast_xread_dcb = 0xe00;
+    int ast_xprnt_dcb = 0xe02;
+    int ast_xpnch_dcb = 0xe04;
+    int ast_xget_dcb  = 0xe0a;
+    int ast_xput_dcb  = 0xe0c;
+    String ast_file_line;
+    /*
 	 * program check and program interruption fields
 	 */
 	boolean psw_check = false;
@@ -482,7 +509,6 @@ public class pz390 {
 	int psw_pic_link_err = 0x806; // link failed
 
 	int psw_pic_no_mem = 0x80a; // out of memory
-
 	int psw_pic_fm_err = 0x90a; // freemain request invalid
 
 	int psw_pic_bad_mem = 0xa0a; // memory corruption
@@ -513,7 +539,7 @@ public class pz390 {
 
 	int opcode2 = -1;
 	int opcode_clc = 0xd5; // allow psw clc RPI 538
-
+    int opcode_srp = 0xf0; // RPI 820 don't S0c5 on neg shift
 	int opcode2_offset_e = 1; // E PR oooo
 
 	int opcode2_offset_ri = 1; // RI IIHH ooroiiii
@@ -589,8 +615,10 @@ public class pz390 {
 	int if1 = 0;
 
 	int if2 = 0;
-
-	int sv1 = 0;
+	int if3 = 0; // RIE8 RNSBG RPI 817
+    int if4 = 0; // RIE4 RNSBG and CGIJ  RPI 817
+	int if5 = 0; // RIE8 RNSBG RPI 817
+	int sv1 = 0; 
 
 	int rflen = 0;
 
@@ -633,7 +661,7 @@ public class pz390 {
 	int bf1 = 0;
 
 	int df1 = 0;
-
+    int xf1 = 0; // RPI 812 for ASSIST
 	int xf2 = 0;
 
 	int bf2 = 0;
@@ -643,12 +671,15 @@ public class pz390 {
 	int bd1_loc = 0;
 
 	int bd2_loc = 0;
-
+	int bf4     = 0;
+	int df4     = 0;
+    int bd4_loc = 0;  // RRS1/RRS3 RPI 817
 	int bd1_start = 0;
 
 	int bd2_start = 0;
 
 	int xbd2_loc = 0;
+	int xbd1_loc = 0; // RPI 812 for ASSIST
 
 	int bd1_end = 0;
 
@@ -676,8 +707,9 @@ public class pz390 {
 
 	boolean ex_mode = false;
 
-	int ex_opcode = 0x44;
-
+	int ex_opcode1 = 0x44;   // EX   "44"   RPI 817
+	int exrl_opcode1 = 0xc6; // EXRL "C6x0" RPI 817
+    int exrl_opcode2 = 0x00; // EXR: "C6x0" RPI 817
 	byte ex_mod_byte = 0; // save targe+1 byte
 
 	int ex_psw_return = 0; // return from ex
@@ -726,7 +758,13 @@ public class pz390 {
 	BigInteger[] big_int_array = null;
 
 	int pd_cc = 0;
-
+    /*
+     * R?SBG rotate selected bits data RPI 817  
+     */
+	boolean rsbg_test = false;
+	boolean rsbg_zero = false;
+	long rsbg_mask_zeros = 0;
+	long rsbg_mask_ones = 0;	
 	/*
 	 * 16 gpr registers
 	 */
@@ -960,7 +998,7 @@ public class pz390 {
 			new MathContext(34,RoundingMode.HALF_UP),   // 7
 	};
 	MathContext fp_ed_context = new MathContext(7,fp_dfp_rnd_mode[fp_rnd_near_even]);  // fp_ed default
-	MathContext fp_dd_context = new MathContext(16,fp_dfp_rnd_mode[fp_rnd_near_even]); // fp_dd default
+	MathContext fp_dd_context = new MathContext(16,fp_dfp_rnd_mode[fp_rnd_near_even]); // fp_dd default 
 	MathContext fp_ld_context = new MathContext(34,fp_dfp_rnd_mode[fp_rnd_near_even]); // fp_ld default
 	
 	double fp_log2 = Math.log(2);
@@ -1298,7 +1336,9 @@ public class pz390 {
 		       57,  // 1160 "4E" "CVD" "RX" 5  RPI 588
 		       57,  // 1170 "4F" "CVB" "RX" 5  RPI 588
 		       50,  // 1180 "50" "ST" "RX" 5
-		       50,  // 1190 "51" "LAE" "RX" 5
+		       52,  // 1190 "51" "LAE" "RX" 5
+		       50,  // 1193 "52" "XDECO" "RX" 37 RPI 812
+		       50,  // 1196 "53" "XDECI" "RX" 37 RPI 812	
 		       50,  // 1200 "54" "N" "RX" 5
 		       50,  // 1210 "55" "CL" "RX" 5
 		       50,  // 1220 "56" "O" "RX" 5
@@ -1312,6 +1352,8 @@ public class pz390 {
 		       50,  // 1300 "5E" "AL" "RX" 5
 		       50,  // 1310 "5F" "SL" "RX" 5
 		       54,  // 1320 "60" "STD" "RX" 5
+		       50,  // 1323 "61" "XHEXI" "RX" 37 RPI 812
+		       50,  // 1326 "62" "XHEXO" "RX" 37 RPI 812
 		       54,  // 1330 "67" "MXD" "RX" 5
 		       54,  // 1340 "68" "LD" "RX" 5
 		       54,  // 1350 "69" "CD" "RX" 5
@@ -1728,6 +1770,34 @@ public class pz390 {
 		       144,  // 4810 "B93E" "KIMD" "RRE" 14
 		       144,  // 4820 "B93F" "KLMD" "RRE" 14
 		       144,  // 4830 "B946" "BCTGR" "RRE" 14
+		       151,  // 10 "B960" "CGRT" "RRF5" 39 RPI 817
+		       151,  // 20 "B9608" "CGRTE" "RRF6" 40 RPI 817
+		       151,  // 30 "B9602" "CGRTH" "RRF6" 40 RPI 817
+		       151,  // 40 "B9604" "CGRTL" "RRF6" 40 RPI 817
+		       151,  // 50 "B9606" "CGRTNE" "RRF6" 40 RPI 817
+		       151,  // 60 "B960C" "CGRTNH" "RRF6" 40 RPI 817
+		       151,  // 70 "B960A" "CGRTNL" "RRF6" 40 RPI 817
+		       151,  // 10 "B961" "CLGRT" "RRF5" 39 RPI 817
+		       151,  // 20 "B9618" "CLGRTE" "RRF6" 40 RPI 817
+		       151,  // 30 "B9612" "CLGRTH" "RRF6" 40 RPI 817
+		       151,  // 40 "B9614" "CLGRTL" "RRF6" 40 RPI 817
+		       151,  // 50 "B9616" "CLGRTNE" "RRF6" 40 RPI 817
+		       151,  // 60 "B961C" "CLGRTNH" "RRF6" 40 RPI 817
+		       151,  // 70 "B961A" "CLGRTNL" "RRF6" 40 RPI 817
+		       152,  // 150 "B972" "CRT" "RRF5" 39 RPI 817
+		       152,  // 160 "B9728" "CRTE" "RRF6" 40 RPI 817
+		       152,  // 170 "B9722" "CRTH" "RRF6" 40 RPI 817
+		       152,  // 180 "B9724" "CRTL" "RRF6" 40 RPI 817
+		       152,  // 190 "B9726" "CRTNE" "RRF6" 40 RPI 817
+		       152,  // 200 "B972C" "CRTNH" "RRF6" 40 RPI 817
+		       152,  // 210 "B972A" "CRTNL" "RRF6" 40 RPI 817		       
+		       152,  // 80 "B973" "CLRT" "RRF5" 39 RPI 817
+		       152,  // 90 "B9738" "CLRTE" "RRF6" 40 RPI 817
+		       152,  // 100 "B9732" "CLRTH" "RRF6" 40 RPI 817
+		       152,  // 110 "B9734" "CLRTL" "RRF6" 40 RPI 817
+		       152,  // 120 "B9736" "CLRTNE" "RRF6" 40 RPI 817
+		       152,  // 130 "B973C" "CLRTNH" "RRF6" 40 RPI 817
+		       152,  // 140 "B973A" "CLRTNL" "RRF6" 40 RPI 817
 		       144,  // 4840 "B980" "NGR" "RRE" 14
 		       144,  // 4850 "B981" "OGR" "RRE" 14
 		       144,  // 4860 "B982" "XGR" "RRE" 14
@@ -1756,12 +1826,16 @@ public class pz390 {
 		       144,  // 5040 "B99D" "ESEA" "RRE" 14
 		       144,  // 5050 "B99E" "PTI" "RRE" 14
 		       144,  // 5060 "B99F" "SSAIR" "RRE" 14
+		       147,  // 10 "B9A2" "PTF" "RRE" 14  RPI 817
+		       144,  // 20 "B9AF" "PFMF" "RRF5" 39  RPI 817
 		       144,  //      "B9AA" "LPTEA" "RRE" 14 Z9-19
 		       144,  // 5070 "B9B0" "CU14" "RRE" 14
 		       144,  // 5080 "B9B1" "CU24" "RRE" 14
 		       144,  // 5090 "B9B2" "CU41" "RRE" 14
 		       144,  // 5100 "B9B3" "CU42" "RRE" 14
+		       144,  // 30 "B9BD" "TRTRE" "RRF5" 39  RPI 817
 		       144,  // 5110 "B9BE" "SRSTU" "RRE" 14
+		       144,  // 40 "B9BF" "TRTE" "RRF5" 39  RPI 817
 		       100,  // 5120 "BA" "CS" "RS" 10
 		       100,  // 5130 "BB" "CDS" "RS" 10
 		       101,  // 5140 "BD" "CLM" "RS" 10
@@ -1813,17 +1887,42 @@ public class pz390 {
 		       160,  //      "C0D" "OILF" "RIL" 16 Z9-28
 		       160,  //      "C0E" "LLIHF" "RIL" 16 Z9-29
 		       160,  //      "C0F" "LLILF" "RIL" 16 Z9-30
+		       160,  // 50 "C20" "MSGFI" "RIL" 16  RPI 817
+		       161,  // 60 "C21" "MSFI" "RIL" 16  RPI 817
 		       160,  //      "C24" "SLGFI" "RIL" 16 Z9-31
-		       160,  //      "C25" "SLFI" "RIL" 16 Z9-32
+		       161,  //      "C25" "SLFI" "RIL" 16 Z9-32
 		       160,  //      "C28" "AGFI" "RIL" 16 Z9-33
-		       160,  //      "C29" "AFI" "RIL" 16 Z9-34
+		       161,  //      "C29" "AFI" "RIL" 16 Z9-34
 		       160,  //      "C2A" "ALGFI" "RIL" 16 Z9-35
-		       160,  //      "C2B" "ALFI" "RIL" 16 Z9-36
+		       161,  //      "C2B" "ALFI" "RIL" 16 Z9-36
 		       160,  //      "C2C" "CGFI" "RIL" 16 Z9-37
-		       160,  //      "C2D" "CFI" "RIL" 16 Z9-38
+		       161,  //      "C2D" "CFI" "RIL" 16 Z9-38
 		       160,  //      "C2E" "CLGFI" "RIL" 16 Z9-39
-		       160,  //      "C2F" "CLFI" "RIL" 16 Z9-40
-		       320,  //      "C80" "MVCOS" "SSF" 32 Z9-41		       
+		       161,  //      "C2F" "CLFI" "RIL" 16 Z9-40
+		       164,  // 70 "C42" "LLHRL" "RIL" 16  RPI 817
+		       168,  // 80 "C44" "LGHRL" "RIL" 16  RPI 817
+		       164,  // 90 "C45" "LHRL" "RIL" 16  RPI 817
+		       168,  // 100 "C46" "LLGHRL" "RIL" 16  RPI 817
+		       164,  // 110 "C47" "STHRL" "RIL" 16  RPI 817
+		       165,  // 120 "C48" "LGRL" "RIL" 16  RPI 817
+		       165,  // 130 "C4B" "STGRL" "RIL" 16  RPI 817
+		       166, // 140 "C4C" "LGFRL" "RIL" 16  RPI 817
+		       167, // 150 "C4D" "LRL" "RIL" 16  RPI 817
+		       166, // 160 "C4E" "LLGFRL" "RIL" 16  RPI 817
+		       167, // 170 "C4F" "STRL" "RIL" 16  RPI 817
+		       163,  // 180 "C60" "EXRL" "RIL" 16  RPI 817
+		       169,  // 190 "C62" "PFDRL" "RIL" 16  RPI 817
+		       168,  // 200 "C64" "CGHRL" "RIL" 16  RPI 817
+		       164,  // 210 "C65" "CHRL" "RIL" 16  RPI 817
+		       168,  // 220 "C66" "CLGHRL" "RIL" 16  RPI 817
+		       164,  // 230 "C67" "CLHRL" "RIL" 16  RPI 817
+		       165,  // 240 "C68" "CGRL" "RIL" 16  RPI 817
+		       165,  // 250 "C6A" "CLGRL" "RIL" 16  RPI 817
+		       166,  // 260 "C6C" "CGFRL" "RIL" 16  RPI 817
+		       167,  // 270 "C6D" "CRL" "RIL" 16  RPI 817
+		       166,  // 280 "C6E" "CLGFRL" "RIL" 16  RPI 817
+		       167,  // 290 "C6F" "CLRL" "RIL" 16  RPI 817
+		       320,  // "C80" "MVCOS" "SSF" 32 Z9-41 RPI 817
 		       170,  // 5230 "D0" "TRTR" "SS" 17
 		       170,  // 5240 "D1" "MVN" "SS" 17
 		       170,  // 5250 "D2" "MVC" "SS" 17
@@ -1839,6 +1938,13 @@ public class pz390 {
 		       170,  // 5350 "DD" "TRT" "SS" 17
 		       170,  // 5360 "DE" "ED" "SS" 17
 		       170,  // 5370 "DF" "EDMK" "SS" 17
+		       171,  // 5375 "E00" "XREAD" "RXSS" 38 RPI 812
+		       171,  // 5375 "E02" "XPRNT" "RXSS" 38 RPI 812
+		       171,  // 5375 "E04" "XPNCH" "RXSS" 38 RPI 812
+		       171,  // 5375 "E06" "XDUMP" "RXSS" 38 RPI 812
+		       171,  // 5375 "E08" "XLIMD" "RXSS" 38 RPI 812
+		       171,  // 5375 "E0A" "XGET"  "RXSS" 38 RPI 812
+		       171,  // 5375 "E0C" "XPUT"  "RXSS" 38 RPI 812
 		       170,  // 5380 "E1" "PKU" "SS" 17
 		       170,  // 5390 "E2" "UNPKU" "SS" 17
 		       180,  //      "E302" "LTG" "RXY" 18 Z9-42
@@ -1875,6 +1981,9 @@ public class pz390 {
 		       180,  // 5690 "E32F" "STRVG" "RXY" 18
 		       184,  // 5700 "E330" "CGF" "RXY" 18
 		       184,  // 5710 "E331" "CLGF" "RXY" 18
+		       184,  // 310 "E332" "LTGF" "RXY" 18  RPI 817
+		       182,  // 320 "E334" "CGH" "RXY" 18  RPI 817
+		       189,  // 330 "E336" "PFD" "RXY" 18  RPI 817
 		       180,  // 5720 "E33E" "STRV" "RXY" 18
 		       182,  // 5730 "E33F" "STRVH" "RXY" 18
 		       180,  // 5740 "E346" "BCTG" "RXY" 18
@@ -1888,18 +1997,21 @@ public class pz390 {
 		       50,   // 5820 "E359" "CY" "RXY" 18
 		       50,   // 5830 "E35A" "AY" "RXY" 18
 		       50,   // 5840 "E35B" "SY" "RXY" 18
+		       50,  // 340 "E35C" "MFY" "RXY" 18  RPI 817
 		       50,   // 5850 "E35E" "ALY" "RXY" 18
 		       50,   // 5860 "E35F" "SLY" "RXY" 18
 		       53,  // 5870 "E370" "STHY" "RXY" 18
 		       189,  // 5880 "E371" "LAY" "RXY" 18  RPI 738
 		       186,  // 5890 "E372" "STCY" "RXY" 18
 		       186,  // 5900 "E373" "ICY" "RXY" 18
+		       52,  // 350 "E375" "LAEY" "RXY" 18  RPI 817
 		       186,  // 5910 "E376" "LB" "RXY" 18
 		       185,  // 5920 "E377" "LGB" "RXY" 18
 		       53,  // 5930 "E378" "LHY" "RXY" 18
 		       53,  // 5940 "E379" "CHY" "RXY" 18
 		       53,  // 5950 "E37A" "AHY" "RXY" 18
 		       53,  // 5960 "E37B" "SHY" "RXY" 18
+		       53,  // 360 "E37C" "MHY" "RXY" 18  RPI 817
 		       180,  // 5970 "E380" "NG" "RXY" 18
 		       180,  // 5980 "E381" "OG" "RXY" 18
 		       180,  // 5990 "E382" "XG" "RXY" 18
@@ -1922,6 +2034,15 @@ public class pz390 {
 		       190,  // 6140 "E502" "STRAG" "SSE" 19
 		       190,  // 6150 "E50E" "MVCSK" "SSE" 19
 		       190,  // 6160 "E50F" "MVCDK" "SSE" 19
+		       390,  // 370 "E544" "MVHHI" "SIL" 51  RPI 817
+		       391,  // 380 "E548" "MVGHI" "SIL" 51  RPI 817
+		       392,  // 390 "E54C" "MVHI" "SIL" 51  RPI 817
+		       390,  // 400 "E554" "CHHSI" "SIL" 51  RPI 817
+		       390,  // 410 "E555" "CLHHSI" "SIL" 51  RPI 817
+		       391,  // 420 "E558" "CGHSI" "SIL" 51  RPI 817
+		       391,  // 430 "E559" "CLGHSI" "SIL" 51  RPI 817
+		       392,  // 440 "E55C" "CHSI" "SIL" 51  RPI 817
+		       392,  // 450 "E55D" "CLFHSI" "SIL" 51  RPI 817
 		       170,  // 6170 "E8" "MVCIN" "SS" 17
 		       310,  // 6180 "E9" "PKA" "SS" 31
 		       170,  // 6190 "EA" "UNPKA" "SS" 17
@@ -1947,12 +2068,17 @@ public class pz390 {
 		       206,  // 6390 "EB3E" "CDSG" "RSY" 20
 		       205,  // 6400 "EB44" "BXHG" "RSY" 20
 		       205,  // 6410 "EB45" "BXLEG" "RSY" 20
+		       203,  // 460 "EB4C" "ECAG" "RSY" 20  RPI 817
 		       210,  // 6420 "EB51" "TMY" "SIY" 21
 		       210,  // 6430 "EB52" "MVIY" "SIY" 21
 		       210,  // 6440 "EB54" "NIY" "SIY" 21
 		       210,  // 6450 "EB55" "CLIY" "SIY" 21
 		       210,  // 6460 "EB56" "OIY" "SIY" 21
 		       210,  // 6470 "EB57" "XIY" "SIY" 21
+		       211,  // 470 "EB6A" "ASI" "SIY" 21  RPI 817
+		       211,  // 480 "EB6E" "ALSI" "SIY" 21  RPI 817
+		       212,  // 490 "EB7A" "AGSI" "SIY" 21  RPI 817
+		       212,  // 500 "EB7E" "ALGSI" "SIY" 21  RPI 817
 		       201,  // 6480 "EB80" "ICMH" "RSY" 20
 		       202,  // 6490 "EB81" "ICMY" "RSY" 20
 		       200,  // 6500 "EB8E" "MVCLU" "RSY" 20
@@ -1967,6 +2093,154 @@ public class pz390 {
 		       230,  // 6590 "EC44" "JXHG" "RIE" 23
 		       230,  // 6600 "EC45" "BRXLG" "RIE" 23
 		       230,  // 6610 "EC45" "JXLEG" "RIE" 23
+		       400,  // 510 "EC54" "RNSBG" "RIE8" 52  RPI 817
+		       400,  // 520 "EC54T" "RNSBGT" "RIE8" 52  RPI 817
+		       400,  // 530 "EC55" "RISBG" "RIE8" 52  RPI 817
+		       400,  // 540 "EC55Z" "RISBGZ" "RIE8" 52  RPI 817
+		       400,  // 550 "EC56" "ROSBG" "RIE8" 52  RPI 817
+		       400,  // 560 "EC56T" "ROSBGT" "RIE8" 52  RPI 817
+		       400,  // 570 "EC57" "RXSBG" "RIE8" 52  RPI 817
+		       400,  // 580 "EC57T" "RXSBGT" "RIE8" 52  RPI 817
+		       234,  // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
+		       234,  // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
+		       234,  // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
+		       234,  // 40 "EC644" "CGRJL" "RIE7" 50 RPI 817
+		       234,  // 50 "EC646" "CGRJNE" "RIE7" 50 RPI 817
+		       234,  // 60 "EC64C" "CGRJNH" "RIE7" 50 RPI 817
+		       234,  // 70 "EC64A" "CGRJNL" "RIE7" 50 RPI 817
+		       234,  // 80 "EC65" "CLGRJ" "RIE6" 49 RPI 817
+		       234,  // 90 "EC658" "CLGRJE" "RIE7" 50 RPI 817
+		       234,  // 100 "EC652" "CLGRJH" "RIE7" 50 RPI 817
+		       234,  // 110 "EC654" "CLGRJL" "RIE7" 50 RPI 817
+		       234,  // 120 "EC656" "CLGRJNE" "RIE7" 50 RPI 817
+		       234,  // 130 "EC65C" "CLGRJNH" "RIE7" 50 RPI 817
+		       234,  // 140 "EC65A" "CLGRJNL" "RIE7" 50 RPI 817		       
+		       232,  // 1010 "EC70" "CGIT" "RIE2" 41 RPI 817
+		       232,  // 1020 "EC708" "CGITE" "RIE3" 42 RPI 817
+		       232,  // 1030 "EC702" "CGITH" "RIE3" 42 RPI 817
+		       232,  // 1040 "EC704" "CGITL" "RIE3" 42 RPI 817
+		       232,  // 1050 "EC706" "CGITNE" "RIE3" 42 RPI 817
+		       232,  // 1060 "EC70C" "CGITNH" "RIE3" 42 RPI 817
+		       232,  // 1070 "EC70A" "CGITNL" "RIE3" 42 RPI 817 
+		       232,  // 150 "EC71" "CLGIT" "RIE2" 41 RPI 817
+		       232,  // 160 "EC718" "CLGITE" "RIE3" 42 RPI 817
+		       232,  // 170 "EC712" "CLGITH" "RIE3" 42 RPI 817
+		       232,  // 180 "EC714" "CLGITL" "RIE3" 42 RPI 817
+		       232,  // 190 "EC716" "CLGITNE" "RIE3" 42 RPI 817
+		       232,  // 200 "EC71C" "CLGITNH" "RIE3" 42 RPI 817
+		       232,  // 210 "EC71A" "CLGITNL" "RIE3" 42 RPI 817
+		       231,  // 1150 "EC72" "CIT" "RIE2" 41 RPI 817
+		       231,  // 1160 "EC728" "CITE" "RIE3" 42 RPI 817
+		       231,  // 1170 "EC722" "CITH" "RIE3" 42 RPI 817
+		       231,  // 1180 "EC724" "CITL" "RIE3" 42 RPI 817
+		       231,  // 1190 "EC726" "CITNE" "RIE3" 42 RPI 817
+		       231,  // 1200 "EC72C" "CITNH" "RIE3" 42 RPI 817
+		       231,  // 1210 "EC72A" "CITNL" "RIE3" 42 RPI 817
+		       231,  // 220 "EC73" "CLFIT" "RIE2" 41 RPI 817
+		       231,  // 230 "EC738" "CLFITE" "RIE3" 42 RPI 817
+		       231,  // 240 "EC732" "CLFITH" "RIE3" 42 RPI 817
+		       231,  // 250 "EC734" "CLFITL" "RIE3" 42 RPI 817
+		       231,  // 260 "EC736" "CLFITNE" "RIE3" 42 RPI 817
+		       231,  // 270 "EC73C" "CLFITNH" "RIE3" 42 RPI 817
+		       231,  // 280 "EC73A" "CLFITNL" "RIE3" 42 RPI 817		       
+		       235,  // 150 "EC76" "CRJ" "RIE6" 49 RPI 817
+		       235,  // 160 "EC768" "CRJE" "RIE7" 50 RPI 817
+		       235,  // 170 "EC762" "CRJH" "RIE7" 50 RPI 817
+		       235,  // 180 "EC764" "CRJL" "RIE7" 50 RPI 817
+		       235,  // 190 "EC766" "CRJNE" "RIE7" 50 RPI 817
+		       235,  // 200 "EC76C" "CRJNH" "RIE7" 50 RPI 817
+		       235,  // 210 "EC76A" "CRJNL" "RIE7" 50 RPI 817
+		       235,  // 220 "EC77" "CLRJ" "RIE6" 49 RPI 817
+		       235,  // 230 "EC778" "CLRJE" "RIE7" 50 RPI 817
+		       235,  // 240 "EC772" "CLRJH" "RIE7" 50 RPI 817
+		       235,  // 250 "EC774" "CLRJL" "RIE7" 50 RPI 817
+		       235,  // 260 "EC776" "CLRJNE" "RIE7" 50 RPI 817
+		       235,  // 270 "EC77C" "CLRJNH" "RIE7" 50 RPI 817
+		       235,  // 280 "EC77A" "CLRJNL" "RIE7" 50 RPI 817
+		       233,  // 290 "EC7C" "CGIJ" "RIE4" 43 RPI 817
+		       233,  // 300 "EC7C8" "CGIJE" "RIE5" 44 RPI 817
+		       233,  // 310 "EC7C2" "CGIJH" "RIE5" 44 RPI 817
+		       233,  // 320 "EC7C4" "CGIJL" "RIE5" 44 RPI 817
+		       233,  // 330 "EC7C6" "CGIJNE" "RIE5" 44 RPI 817
+		       233,  // 340 "EC7CC" "CGIJNH" "RIE5" 44 RPI 817
+		       233,  // 350 "EC7CA" "CGIJNL" "RIE5" 44 RPI 817
+		       233,  // 360 "EC7D" "CLGIJ" "RIE4" 43 RPI 817
+		       233,  // 370 "EC7D8" "CLGIJE" "RIE5" 44 RPI 817
+		       233,  // 380 "EC7D2" "CLGIJH" "RIE5" 44 RPI 817
+		       233,  // 390 "EC7D4" "CLGIJL" "RIE5" 44 RPI 817
+		       233,  // 400 "EC7D6" "CLGIJNE" "RIE5" 44 RPI 817
+		       233,  // 410 "EC7DC" "CLGIJNH" "RIE5" 44 RPI 817
+		       233,  // 420 "EC7DA" "CLGIJNL" "RIE5" 44 RPI 817
+		       236,  // 430 "EC7E" "CIJ" "RIE4" 43 RPI 817
+		       236,  // 440 "EC7E8" "CIJE" "RIE5" 44 RPI 817
+		       236,  // 450 "EC7E2" "CIJH" "RIE5" 44 RPI 817
+		       236,  // 460 "EC7E4" "CIJL" "RIE5" 44 RPI 817
+		       236,  // 470 "EC7E6" "CIJNE" "RIE5" 44 RPI 817
+		       236,  // 480 "EC7EC" "CIJNH" "RIE5" 44 RPI 817
+		       236,  // 490 "EC7EA" "CIJNL" "RIE5" 44 RPI 817
+		       236,  // 500 "EC7F" "CLIJ" "RIE4" 43 RPI 817
+		       236,  // 510 "EC7F8" "CLIJE" "RIE5" 44 RPI 817
+		       236,  // 520 "EC7F2" "CLIJH" "RIE5" 44 RPI 817
+		       236,  // 530 "EC7F4" "CLIJL" "RIE5" 44 RPI 817
+		       236,  // 540 "EC7F6" "CLIJNE" "RIE5" 44 RPI 817
+		       236,  // 550 "EC7FC" "CLIJNH" "RIE5" 44 RPI 817
+		       236,  // 560 "EC7FA" "CLIJNL" "RIE5" 44 RPI 817
+		       370,  // 570 "ECE4" "CGRB" "RRS1" 45 RPI 817
+		       370,  // 580 "ECE48" "CGRBE" "RRS2" 4370, RPI 817
+		       370,  // 590 "ECE42" "CGRBH" "RRS2" 46 RPI 817
+		       370,  // 600 "ECE44" "CGRBL" "RRS2" 46 RPI 817
+		       370,  // 610 "ECE46" "CGRBNE" "RRS2" 46 RPI 817
+		       370,  // 620 "ECE4C" "CGRBNH" "RRS2" 46 RPI 817
+		       370,  // 630 "ECE4A" "CGRBNL" "RRS2" 46 RPI 817
+		       370,  // 640 "ECE5" "CLGRB" "RRS1" 45 RPI 817
+		       370,  // 650 "ECE58" "CLGRBE" "RRS2" 46 RPI 817
+		       370,  // 660 "ECE52" "CLGRBH" "RRS2" 46 RPI 817
+		       370,  // 670 "ECE54" "CLGRBL" "RRS2" 46 RPI 817
+		       370,  // 680 "ECE56" "CLGRBNE" "RRS2" 46 RPI 817
+		       370,  // 690 "ECE5C" "CLGRBNH" "RRS2" 46 RPI 817
+		       370,  // 700 "ECE5A" "CLGRBNL" "RRS2" 46 RPI 817
+		       371,  // 710 "ECF6" "CRB" "RRS1" 45 RPI 817
+		       371,  // 720 "ECF68" "CRBE" "RRS2" 46 RPI 817
+		       371,  // 730 "ECF62" "CRBH" "RRS2" 46 RPI 817
+		       371,  // 740 "ECF64" "CRBL" "RRS2" 46 RPI 817
+		       371,  // 750 "ECF66" "CRBNE" "RRS1" 45 RPI 817
+		       371,  // 760 "ECF6C" "CRBNH" "RRS2" 46 RPI 817
+		       371,  // 770 "ECF6A" "CRBNL" "RRS2" 46 RPI 817
+		       371,  // 780 "ECF7" "CLRB" "RRS1" 45 RPI 817
+		       371,  // 790 "ECF78" "CLRBE" "RRS2" 46 RPI 817
+		       371,  // 800 "ECF72" "CLRBH" "RRS2" 46 RPI 817
+		       371,  // 810 "ECF74" "CLRBL" "RRS2" 46 RPI 817
+		       371,  // 820 "ECF76" "CLRBNE" "RRS2" 46 RPI 817
+		       371,  // 830 "ECF7C" "CLRBNH" "RRS2" 46 RPI 817
+		       371,  // 840 "ECF7A" "CLRBNL" "RRS2" 46 RPI 817
+		       380,  // 850 "ECFC" "CGIB" "RRS3" 47 RPI 817
+		       380,  // 860 "ECFC8" "CGIBE" "RRS4" 48 RPI 817
+		       380,  // 870 "ECFC2" "CGIBH" "RRS4" 48 RPI 817
+		       380,  // 880 "ECFC4" "CGIBL" "RRS4" 48 RPI 817
+		       380,  // 890 "ECFC6" "CGIBNE" "RRS4" 48 RPI 817
+		       380,  // 900 "ECFCC" "CGIBNH" "RRS4" 48 RPI 817
+		       380,  // 910 "ECFCA" "CGIBNL" "RRS4" 48 RPI 817
+		       380,  // 920 "ECFD" "CLGIB" "RRS3" 47 RPI 817
+		       380,  // 930 "ECFD8" "CLGIBE" "RRS4" 48 RPI 817
+		       380,  // 940 "ECFD2" "CLGIBH" "RRS4" 48 RPI 817
+		       380,  // 950 "ECFD4" "CLGIBL" "RRS4" 48 RPI 817
+		       380,  // 960 "ECFD6" "CLGIBNE" "RRS4" 48 RPI 817
+		       380,  // 970 "ECFDC" "CLGIBNH" "RRS4" 48 RPI 817
+		       380,  // 980 "ECFDA" "CLGIBNL" "RRS4" 48 RPI 817
+		       381,  // 990 "ECFE" "CIB" "RRS3" 47 RPI 817
+		       381,  // 1000 "ECFE8" "CIBE" "RRS4" 48 RPI 817
+		       381,  // 1010 "ECFE2" "CIBH" "RRS4" 48 RPI 817
+		       381,  // 1020 "ECFE4" "CIBL" "RRS4" 48 RPI 817
+		       381,  // 1030 "ECFE6" "CIBNE" "RRS4" 48 RPI 817
+		       381,  // 1040 "ECFEC" "CIBNH" "RRS4" 48 RPI 817
+		       381,  // 1050 "ECFEA" "CIBNL" "RRS4" 48 RPI 817
+		       381,  // 1060 "ECFF" "CLIB" "RRS3" 47 RPI 817
+		       381,  // 1070 "ECFF8" "CLIBE" "RRS4" 48 RPI 817
+		       381,  // 1080 "ECFF2" "CLIBH" "RRS4" 48 RPI 817
+		       381,  // 1090 "ECFF4" "CLIBL" "RRS4" 48 RPI 817
+		       381,  // 1100 "ECFF6" "CLIBNE" "RRS4" 48 RPI 817
+		       381,  // 1110 "ECFFC" "CLIBNH" "RRS4" 48 RPI 817
+		       381,  // 1120 "ECFFA" "CLIBNL" "RRS4" 48 RPI 817		       
 		       240,  // 6620 "ED04" "LDEB" "RXE" 24
 		       240,  // 6630 "ED05" "LXDB" "RXE" 24
 		       240,  // 6640 "ED06" "LXEB" "RXE" 24
@@ -2080,7 +2354,11 @@ public class pz390 {
 				}
 				set_psw_check(psw_pic_oper);
 			}
-			if (ex_mode && (opcode1 != ex_opcode)) {
+			if (ex_mode 
+				&& !(opcode1 == ex_opcode1)
+				&& !((opcode1 == exrl_opcode1)
+					&& opcode2 == exrl_opcode2) 
+				){
 				set_psw_loc(ex_psw_return);
 			}
 		}
@@ -2433,7 +2711,9 @@ public class pz390 {
 		case 0x28: // 600 "28" "LDR" "RR"
 			psw_check = false;
 			ins_setup_rr();
-			fp_load_reg(rf1, tz390.fp_dh_type, fp_reg, rf2, tz390.fp_dh_type);
+			int fp_ctl_index1 = rf1 >>> 3;
+			int fp_ctl_index2 = rf2 >>> 3;
+			fp_copy_reg(fp_ctl_index1,fp_ctl_index2); // RPI 816
 			break;
 		case 0x29: // 610 "29" "CDR" "RR"
 			psw_check = false;
@@ -2657,18 +2937,7 @@ public class pz390 {
 		case 0x44: // 900 "44" "EX" "RX"
 			psw_check = false;
 			ins_setup_rx();
-			if (!ex_mode) {
-				ex_psw_return = psw_loc;
-				set_psw_loc(xbd2_loc);
-				ex_mode = true;
-				ex_mod_byte = mem_byte[psw_loc + 1];
-				if (rf1 != 0) {
-					mem_byte[psw_loc + 1] = (byte) (ex_mod_byte | reg
-							.get(rf1 + 7));
-				}
-			} else {
-				set_psw_check(psw_pic_exec);
-			}
+            exec_ex(xbd2_loc);
 			break;
 		case 0x45: // 910 "45" "BAL" "RX"
 			psw_check = false;
@@ -2784,8 +3053,43 @@ public class pz390 {
 			mem.putInt(xbd2_loc, reg.getInt(rf1 + 4));
 			break;
 		case 0x51: // 1190 "51" "LAE" "RX"
+			psw_check = false;
 			ins_setup_rx();
+			reg.putInt(rf1+4,xbd2_loc);
 			break;
+		case 0x52: // 1193 "52" "XDECO" "RX" 37 RPI 812
+			if (tz390.opt_assist){
+				psw_check = false;
+				ins_setup_rx();
+				sz390.put_ascii_string(
+				    tz390.right_justify("" + reg.getInt(rf1+4),12)
+	                ,xbd2_loc,12,' ');				
+			}
+			break;
+		case 0x53: // 1196 "53" "XDECI" "RX" 37 RPI 812
+			if (tz390.opt_assist){
+				psw_check = false;
+				ins_setup_rx();
+				rv1 = 0;
+				boolean digit_found = false;
+				while (mem.get(xbd2_loc) == 0x40){
+					xbd2_loc++;
+				}
+				while ((mem.get(xbd2_loc) & 0xff) >= 0xf0
+						&& (mem.get(xbd2_loc) & 0xff) <= 0xf9){
+					digit_found = true;
+					rv1 = rv1*10 + (mem.get(xbd2_loc) & 0xff) - 0xf0;
+					xbd2_loc++;
+				}
+				if (digit_found){
+					reg.putInt(rf1+4,rv1);
+					reg.putInt(r1,xbd2_loc);
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc3;
+				}
+			}
+			break;	
 		case 0x54: // 1200 "54" "N" "RX"
 			psw_check = false;
 			ins_setup_rx();
@@ -2914,6 +3218,49 @@ public class pz390 {
 			}
 			mem.putLong(xbd2_loc, fp_reg.getLong(rf1));
 			break;
+		case 0x61: // 1323 "61" "XHEXI" "RX" 37 RPI 812
+			if (tz390.opt_assist){
+				psw_check = false;
+				ins_setup_rx();
+				rv1 = 0;
+				boolean hex_digit_found = false;
+				while (mem.get(xbd2_loc) == 0x40){
+					xbd2_loc++;
+				}
+				while (((mem.get(xbd2_loc) & 0xff) >= 0xf0
+						&& (mem.get(xbd2_loc) & 0xff) <= 0xf9)
+						||
+						((mem.get(xbd2_loc) & 0xff) >= 0xc1
+								&& (mem.get(xbd2_loc) & 0xff) <= 0xc6)
+				       ){
+					hex_digit_found = true;
+					int hex_digit = mem.get(xbd2_loc) & 0xff;
+					if (hex_digit >= 0xf0){
+						hex_digit = hex_digit - 0xf0;
+					} else {
+						hex_digit = hex_digit - 0xc1 + 10;
+					}
+					rv1 = rv1*16 + hex_digit;
+					xbd2_loc++;
+				}
+				if (hex_digit_found){
+					reg.putInt(rf1+4,rv1);
+					reg.putInt(r1,xbd2_loc);
+					psw_cc = psw_cc0;
+				} else {
+					psw_cc = psw_cc3;
+				}
+			}
+			break;
+		case 0x62: // 1326 "62" "XHEXO" "RX" 37 RPI 812
+			if (tz390.opt_assist){
+				psw_check = false;
+				ins_setup_rx();
+				sz390.put_ascii_string(
+				    tz390.get_hex(reg.getInt(rf1+4),8)
+	                ,xbd2_loc,8,' ');				
+			}
+			break;	
 		case 0x67: // 1330 "67" "MXD" "RX"
 			psw_check = false;
 			ins_setup_rx();
@@ -3141,27 +3488,27 @@ public class pz390 {
 			break;
 		case 0x88: // 1620 "88" "SRL" "RS"
 			psw_check = false;
-			ins_setup_rs();
+			ins_setup_rs_shift(); // RPI 820
 			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) >>> (bd2_loc & 0x3f));
 			break;
 		case 0x89: // 1630 "89" "SLL" "RS"
 			psw_check = false;
-			ins_setup_rs();
+			ins_setup_rs_shift(); // RPI 820
 			reg.putInt(rf1 + 4, reg.getInt(rf1 + 4) << (bd2_loc & 0x3f));
 			break;
 		case 0x8A: // 1640 "8A" "SRA" "RS"
 			psw_check = false;
-			ins_setup_rs();
+			ins_setup_rs_shift(); // RPI 820
 			reg.putInt(rf1 + 4, get_sra32(reg.getInt(rf1 + 4), bd2_loc & 0x3f));
 			break;
 		case 0x8B: // 1650 "8B" "SLA" "RS"
 			psw_check = false;
-			ins_setup_rs();
+			ins_setup_rs_shift(); // RPI 820
 			reg.putInt(rf1 + 4, get_sla32(reg.getInt(rf1 + 4), bd2_loc & 0x3f));
 			break;
 		case 0x8C: // 1660 "8C" "SRDL" "RS"
 			psw_check = false;
-			ins_setup_rs();
+			ins_setup_rs_shift(); // RPI 820
 			if ((mf1 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
@@ -3173,7 +3520,7 @@ public class pz390 {
 			break;
 		case 0x8D: // 1670 "8D" "SLDL" "RS"
 			psw_check = false;
-			ins_setup_rs();
+			ins_setup_rs_shift(); // RPI 820
 			if ((mf1 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
@@ -3185,7 +3532,7 @@ public class pz390 {
 			break;
 		case 0x8E: // 1680 "8E" "SRDA" "RS"
 			psw_check = false;
-			ins_setup_rs();
+			ins_setup_rs_shift(); // RPI 820
 			if ((mf1 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
@@ -3198,7 +3545,7 @@ public class pz390 {
 			break;
 		case 0x8F: // 1690 "8F" "SLDA" "RS"
 			psw_check = false;
-			ins_setup_rs();
+			ins_setup_rs_shift(); // RPI 820
 			if ((mf1 & 1) != 0){ // RPI 758
 				set_psw_check(psw_pic_spec);
 			}
@@ -3265,7 +3612,7 @@ public class pz390 {
 					&& bd1_loc < psa_len){ 
 					set_psw_check(psw_pic_addr);
 					break;
-				}
+			}
 			sv1 = mem_byte[bd1_loc] & if2;
 			mem_byte[bd1_loc] = (byte) sv1;
 			if (sv1 == 0) {
@@ -3455,6 +3802,12 @@ public class pz390 {
 			break;
 		case 0xC2:
 			ins_C2XX();
+			break;
+		case 0xC4: // "C42" LLHRL RPI 817
+			ins_C4XX();
+			break;
+		case 0xC6: // "C60" EXRL RPI 817
+			ins_C6XX();
 			break;
 		case 0xC8: // 5630 "C80" "MVCOS" "SSF" Z9-41
 			ins_C8XX();
@@ -3749,6 +4102,11 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_ss();
 			exec_ed_edmk(true);
+			break;
+		case 0xE0: // 5375 "E00" "XREAD" "RXSS" 38 RPI 812
+			if (tz390.opt_assist){
+				ins_E0X(); // RPI 802 ASSIST extended I/O instructions
+			}
 			break;
 		case 0xE1: // 5380 "E1" "PKU" "SS"
 			ins_setup_ss();
@@ -5397,8 +5755,10 @@ public class pz390 {
 		case 0x65: // 4080 "B365" "LXR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
-			fp_load_reg(rf1, tz390.fp_lh_type, fp_reg, rf2,
-					tz390.fp_lh_type);
+			int fp_ctl_index1 = rf1 >>> 3;
+			int fp_ctl_index2 = rf2 >>> 3;
+			fp_copy_reg(fp_ctl_index1,fp_ctl_index2);  // RPI 816
+			fp_copy_reg(fp_ctl_index1+2,fp_ctl_index2+2);
 			break;
 		case 0x66: // 4090 "B366" "LEXR" "RRE"
 			psw_check = false;
@@ -5679,19 +6039,19 @@ public class pz390 {
 			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
             .multiply(fp_get_bd_from_dd(fp_reg, rf3),fp_dd_context); // RPI 517
             fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
+            check_dd_mpy(); // RPI 820
 			break;
 		case 0xD1: // "DDTR" "B3D1" "RRR" DFP 2
 			psw_check = false;
 			ins_setup_rrr();
 			fp_rbdv3 = fp_get_bd_from_dd(fp_reg, rf3);
-			if (fp_rbdv3.signum() == 0){
-				set_psw_check(psw_pic_fp_div);
-				break;
+			if (fp_rbdv3.signum() != 0){  // RPI 820
+				fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
+				.divide(fp_rbdv3,fp_dd_context); // RPI 517
 			}
-			fp_rbdv1 = fp_get_bd_from_dd(fp_reg, rf2)
-            .divide(fp_rbdv3,fp_dd_context); // RPI 517
             fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
-			break;
+			check_dd_div(); // RPI 820
+            break;
 		case 0xD2: // "ADTR" "B3D2" "RRR" DFP 3
 			psw_check = false;
 			ins_setup_rrr();
@@ -5752,18 +6112,18 @@ public class pz390 {
 			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
             .multiply(fp_get_bd_from_ld(fp_reg, rf3),fp_ld_context);  // RPI 517
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			check_ld_mpy(); // RPI 820
 			break;
 		case 0xD9: // "DXTR" "B3D9" "RRR" DFP 10
 			psw_check = false;
 			ins_setup_rrr();
 			fp_rbdv3 = fp_get_bd_from_ld(fp_reg, rf3);
-			if (fp_rbdv3.signum() == 0){
-				set_psw_check(psw_pic_fp_div);
-				return;
+			if (fp_rbdv3.signum() != 0){
+				fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
+				.divide(fp_rbdv3,fp_ld_context);  // RPI 517
 			}
-			fp_rbdv1 = fp_get_bd_from_ld(fp_reg, rf2)
-            .divide(fp_rbdv3,fp_ld_context);  // RPI 517
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
+			check_ld_div(); // RPI 820
 			break;
 		case 0xDA: // "AXTR" "B3DA" "RRR" DFP 11
 			psw_check = false;
@@ -6469,6 +6829,42 @@ public class pz390 {
 				set_psw_loc(reg.getInt(rf2 + 4));
 			}
 			break;
+		case 0x60:  // 10 "B960" "CGRT" "RRF5" RPI 817
+			psw_check = false; 
+			ins_setup_rrf5();
+			 if ((mf3 & get_long_comp_cc(reg.getLong(rf1), reg.getLong(rf2)))
+					!= 0){
+					fp_dxc = fp_dxc_trap; // raise trap
+					set_psw_check(psw_pic_data);
+			 }
+			 break;
+		case 0x61:  // 10 "B961" "CLGRT" "RRF5"
+	        psw_check = false;
+	        ins_setup_rrf5();
+			if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), reg.getLong(rf2)))
+				!= 0){
+				fp_dxc = fp_dxc_trap; // raise trap
+				set_psw_check(psw_pic_data);
+			 }
+	         break;
+	     case 0x72:  // 80 "B972" "CRT" "RRF5" RPI 817
+			 psw_check = false;
+	    	 ins_setup_rrf5();
+			 if ((mf3 & get_int_comp_cc(reg.getInt(rf1+4),reg.getInt(rf2+4)))
+						!= 0){
+						fp_dxc = fp_dxc_trap; // raise trap
+						set_psw_check(psw_pic_data);
+				 }
+	         break;
+	     case 0x73:  // 80 "B973" "CLRT" "RRF5"
+	         psw_check = false;
+	    	 ins_setup_rrf5();
+			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4),reg.getInt(rf2+4)))
+						!= 0){
+						fp_dxc = fp_dxc_trap; // raise trap
+						set_psw_check(psw_pic_data);
+				 }
+	         break;
 		case 0x80: // 4840 "B980" "NGR" "RRE"
 			psw_check = false;
 			ins_setup_rre();
@@ -6809,9 +7205,15 @@ public class pz390 {
 		case 0x9F: // 5060 "B99F" "SSAIR" "RRE"
 			ins_setup_rre();
 			break;
+	     case 0xA2:  // 10 "B9A2" "PTF" "RRE" 14 RPI 817
+	         ins_setup_rre();
+	         break;
 		case 0xAA: // 5250 "B9AA" "LPTEA" "RRE" Z9-19
 			ins_setup_rre();
 			break;
+		case 0xAF:  // 20 "B9AF" "PFMF" "RRF5" 39 RPI 817
+	         ins_setup_rrf5();
+	         break;
 		case 0xB0: // 5070 "B9B0" "CU14" "RRE"
 			ins_setup_rre();
 			break;
@@ -6824,9 +7226,19 @@ public class pz390 {
 		case 0xB3: // 5100 "B9B3" "CU42" "RRE"
 			ins_setup_rre();
 			break;
-		case 0xBE: // 5110 "B9BE" "SRSTU" "RRE"
+	     case 0xBD:  // 30 "B9BD" "TRTRE" "RRF5" 39 RPI 817
+	         psw_check = false;
+	    	 ins_setup_rrf5();
+	    	 exec_trt_ext(true);
+	         break;	
+		 case 0xBE: // 5110 "B9BE" "SRSTU" "RRE"
 			ins_setup_rre();
 			break;
+	     case 0xBF:  // 40 "B9BF" "TRTE" "RRF5" 39 RPI 817
+	         psw_check = false;
+	    	 ins_setup_rrf5();
+	    	 exec_trt_ext(false);;
+	         break;	
 		}
 	}
 	private void ins_C0XX(){
@@ -6835,7 +7247,7 @@ public class pz390 {
 		case 0x0: // 5170 "C00" "LARL" "RIL"
 			psw_check = false;
 			ins_setup_ril();
-			reg.putInt(rf1 + 4, (psw_loc - 6 + 2 * if2) & psw_amode);
+			reg.putInt(rf1 + 4, bd2_loc); // RPI 817
 			break;
 		case 0x1: // 5370 "C01" "LGFI" "RIL" Z9-20
 			psw_check = false;
@@ -6846,7 +7258,7 @@ public class pz390 {
 			psw_check = false;
 			ins_setup_ril();
 			if ((mf1 & psw_cc) != 0) {
-				set_psw_loc(psw_loc - 6 + 2 * if2);
+				set_psw_loc(bd2_loc); // RPI 817
 			}
 			break;
 		case 0x5: // 5210 "C05" "BRASL" "RIL"
@@ -6857,7 +7269,7 @@ public class pz390 {
 			} else {
 				reg.putInt(rf1 + 4, psw_loc | psw_amode_bit);
 			}
-			set_psw_loc(psw_loc - 6 + 2 * if2);
+			set_psw_loc(bd2_loc); // RPI 817
 			break;
 		case 0x6: // 5430 "C06" "XIHF" "RIL" Z9-21
 			psw_check = false;
@@ -6914,6 +7326,16 @@ public class pz390 {
 	private void ins_C2XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f; // RPI202
 		switch (opcode2) {
+		case 0x0:  // 50 "C20" "MSGFI" "RIL" 16 RPI 817
+	         psw_check = false; 
+			 ins_setup_ril();
+			 reg.putLong(rf1, reg.getLong(rf1) * if2);
+	         break;
+	    case 0x1:  // 60 "C21" "MSFI" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	         reg.putInt(rf1+4, reg.getInt(rf1+4) * if2);
+	         break;
 		case 0x4: // 5530 "C24" "SLGFI" "RIL" Z9-31
 			psw_check = false;
 			ins_setup_ril();
@@ -6991,6 +7413,140 @@ public class pz390 {
 			break;
 		}
 	}
+	private void ins_C4XX(){
+		opcode2 = mem_byte[psw_loc + opcode2_offset_ril] & 0x0f; // RPI202
+		switch (opcode2) {
+	     case 0x2:  // 70 "C42" "LLHRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+			 reg.putInt(rf1 + 4,mem.getShort(bd2_loc) & 0xffff);
+	         break;
+	     case 0x4:  // 80 "C44" "LGHRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	    	 reg.putLong(rf1,mem.getShort(bd2_loc));
+	    	 break;
+	     case 0x5:  // 90 "C45" "LHRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	    	 reg.putInt(rf1 + 4,mem.getShort(bd2_loc));
+	    	 break;
+	     case 0x6:  // 100 "C46" "LLGHRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	    	 reg.putLong(rf1,mem.getShort(bd2_loc) & 0xffff);
+	         break;
+	     case 0x7:  // 110 "C47" "STHRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	    	 mem.putShort(bd2_loc,reg.getShort(rf1+6));
+	    	 break;
+	     case 0x8:  // 120 "C48" "LGRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	    	 reg.putLong(rf1,mem.getLong(bd2_loc));
+	         break;
+	     case 0xB:  // 130 "C4B" "STGRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	    	 mem.putLong(bd2_loc,reg.getLong(rf1));
+	    	 break;
+	     case 0xC:  // 140 "C4C" "LGFRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	    	 reg.putLong(rf1,mem.getInt(bd2_loc));
+	    	 break;
+	     case 0xD:  // 150 "C4D" "LRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	    	 reg.putInt(rf1 + 4,mem.getInt(bd2_loc));
+	         break;
+	     case 0xE:  // 160 "C4E" "LLGFRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	    	 reg.putLong(rf1,mem.getInt(bd2_loc) & long_low32_bits);
+	         break;
+	     case 0xF:  // 170 "C4F" "STRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	    	 mem.putInt(bd2_loc,reg.getInt(rf1+4));
+	         break;
+		}
+	}
+	private void ins_C6XX(){  // RPI 817
+	     opcode2 = mem_byte[psw_loc+opcode2_offset_ril] & 0x0f;
+	     switch (opcode2){
+	     case 0x0:  // 180 "C60" "EXRL" "RIL" 16 RPI 817
+	         psw_check = false;
+	    	 ins_setup_ril();
+	    	 exec_ex(bd2_loc);
+	         break;
+	     case 0x2:  // 190 "C62" "PFDRL" "RIL" 16 RPI 817
+	    	 psw_check = false;
+	    	 ins_setup_ril(); // nothing to do but trace this one
+	         break;
+	     case 0x4:  // 200 "C64" "CGHRL" "RIL" 16 RPI 817
+	    	 psw_check = false;
+	    	 ins_setup_ril();
+			 psw_cc = get_long_comp_cc(reg.getLong(rf1), mem
+						.getShort(bd2_loc));
+	         break;
+	     case 0x5:  // 210 "C65" "CHRL" "RIL" 16 RPI 817
+	    	 psw_check = false;
+	    	 ins_setup_ril();
+			 psw_cc = get_int_comp_cc(reg.getInt(rf1+4), mem
+						.getShort(bd2_loc));
+	    	 break;
+	     case 0x6:  // 220 "C66" "CLGHRL" "RIL" 16 RPI 817
+	    	 psw_check = false;
+	    	 ins_setup_ril();
+			 psw_cc = get_long_log_comp_cc(reg.getLong(rf1), mem
+						.getShort(bd2_loc) & 0xffff);
+	         break;
+	     case 0x7:  // 230 "C67" "CLHRL" "RIL" 16 RPI 817
+	    	 psw_check = false;
+	    	 ins_setup_ril();
+			 psw_cc = get_int_log_comp_cc(reg.getInt(rf1+4), mem
+						.getShort(bd2_loc) & 0xffff);
+	         break;
+	     case 0x8:  // 240 "C68" "CGRL" "RIL" 16 RPI 817
+	    	 psw_check = false;
+	    	 ins_setup_ril();
+			 psw_cc = get_long_comp_cc(reg.getLong(rf1), mem
+						.getLong(bd2_loc));
+	         break;
+	     case 0xA:  // 250 "C6A" "CLGRL" "RIL" 16 RPI 817
+	    	 psw_check = false;
+	    	 ins_setup_ril();
+			 psw_cc = get_long_log_comp_cc(reg.getLong(rf1), mem
+						.getLong(bd2_loc));
+	         break;
+	     case 0xC:  // 260 "C6C" "CGFRL" "RIL" 16 RPI 817
+	    	 psw_check = false;
+	    	 ins_setup_ril();
+			 psw_cc = get_long_comp_cc(reg.getLong(rf1), mem
+						.getInt(bd2_loc));
+	         break;
+	     case 0xD:  // 270 "C6D" "CRL" "RIL" 16 RPI 817
+	    	 psw_check = false;
+	    	 ins_setup_ril();
+			 psw_cc = get_int_comp_cc(reg.getInt(rf1+4), mem
+						.getInt(bd2_loc));
+	         break;
+	     case 0xE:  // 280 "C6E" "CLGFRL" "RIL" 16 RPI 817
+	    	 psw_check = false;
+	    	 ins_setup_ril();
+			 psw_cc = get_long_log_comp_cc(reg.getLong(rf1)
+					 ,mem.getInt(bd2_loc) & long_low32_bits);
+	         break;
+	     case 0xF:  // 290 "C6F" "CLRL" "RIL" 16 RPI 817
+	    	 psw_check = false;
+	    	 ins_setup_ril();
+			 psw_cc = get_int_log_comp_cc(reg.getInt(rf1+4), mem
+						.getInt(bd2_loc));
+	         break;
+	     }
+	}
 	private void ins_C8XX(){
 		opcode2 = mem_byte[psw_loc + opcode2_offset_ssf] & 0x0f; // RPI202 RPI 606
 		switch (opcode2) {
@@ -7001,7 +7557,6 @@ public class pz390 {
 				psw_cc = psw_cc0;
 				if (rflen > 0){
 					if (rflen > 4096){
-						rflen = 4096;
 						psw_cc = psw_cc3;
 					}
 					exec_mvc_rflen();
@@ -7009,7 +7564,163 @@ public class pz390 {
 			} else {
 				set_psw_check(psw_pic_spec);
 			}
-		break;
+		    break;
+		}
+	}
+	private void ins_E0X(){
+		/*
+		 * ASSIST extended I/O instructions RPI 812
+		 */
+    	opcode2 = (mem_byte[psw_loc + 1] & 0xf0) >>> 4;
+		switch (opcode2) {
+		case 0x00:  // 5375 "E00" "XREAD" "RXSS" 38 RPI 812
+			psw_check = false;
+			ins_setup_rxss();
+			psw_cc = psw_cc0;
+			if (bd2_loc == 0){
+				bd2_loc = 80;
+			}
+			if (ast_xread_tiot == -1){
+				ast_xread_tiot = sz390.ast_open_file("XREAD",true,ast_xread_dcb);
+			}
+			if (ast_xread_tiot != -1){
+				try {
+					ast_file_line = sz390.tiot_file[ast_xread_tiot].readLine();
+					if (ast_file_line == null){
+						sz390.ast_close_file(ast_xread_tiot);
+						ast_xread_tiot = -1;
+						psw_cc = psw_cc1;
+					} else {
+						sz390.put_ascii_string(ast_file_line,xbd1_loc,bd2_loc,' ');
+					}
+				} catch (Exception e){
+					set_psw_check(psw_pic_io);
+				}
+			}
+			break;
+		case 0x02:  // 5375 "E02" "XPRNT" "RXSS" 38 RPI 812
+			psw_check = false;
+			ins_setup_rxss();
+			if (bd2_loc == 0){
+				bd2_loc = 133;
+			}
+			ast_file_line = sz390.get_ascii_string(xbd1_loc,bd2_loc,false);
+			sz390.put_log(ast_file_line);
+			if (ast_xprnt_tiot == -1){
+				ast_xprnt_tiot = sz390.ast_open_file("XPRNT",false,ast_xprnt_dcb);
+				if (ast_xprnt_tiot == -1){
+					set_psw_check(psw_pic_io);
+				}
+			} 
+			if (ast_xprnt_tiot >= 0){
+				try {
+					sz390.tiot_file[ast_xprnt_tiot].writeBytes(ast_file_line + tz390.newline);
+				} catch (Exception e){
+					set_psw_check(psw_pic_io);
+				}
+			}
+			break;
+		case 0x04:  // 5375 "E04" "XPNCH" "RXSS" 38 RPI 812
+			psw_check = false;
+			ins_setup_rxss();
+			if (bd2_loc == 0){
+				bd2_loc = 80;
+			}
+			ast_file_line = sz390.get_ascii_string(xbd1_loc,bd2_loc,false);
+			if (ast_xpnch_tiot == -1){
+				ast_xpnch_tiot = sz390.ast_open_file("XPNCH",false,ast_xpnch_dcb);
+				if (ast_xpnch_tiot == -1){
+					set_psw_check(psw_pic_io);
+				}
+			} 
+			if (ast_xpnch_tiot >= 0){
+				try {
+					sz390.tiot_file[ast_xpnch_tiot].writeBytes(ast_file_line + tz390.newline);
+				} catch (Exception e){
+					set_psw_check(psw_pic_io);
+				}
+			}
+			break;
+		case 0x06:  // 5375 "E06" "XDUMP" "RXSS" 38 RPI 812
+			psw_check = false;
+			ins_setup_rxss();
+			sz390.dump_gpr(-1);
+			sz390.dump_fpr(-1);
+			if (bd2_loc == 0){
+				// dump default regs and area
+				if (ast_xdump_len != 0){
+					sz390.dump_mem(mem,ast_xdump_addr,ast_xdump_len);
+				} else {
+					sz390.dump_mem(mem,0,tot_mem);
+				}
+			} else {			
+				sz390.dump_mem(mem,xbd1_loc,bd2_loc);
+			}
+			break;
+		case 0x08:  // 5375 "E08" "XLIMD" "RXSS" 38 RPI 812
+			psw_check = false;
+			ins_setup_rxss();
+			ast_xdump_addr = xbd1_loc;
+			ast_xdump_len  = bd2_loc;
+			break;
+		case 0x0A:  // 5375 "E0A" "XGET" "RXSS" 38 RPI 812
+			psw_check = false;
+			ins_setup_rxss();
+			psw_cc = psw_cc0;
+			if (bd2_loc == 0){
+				psw_cc = psw_cc2;
+				break;
+			}
+			if (ast_xget_tiot < 0){
+				if (ast_xget_tiot == -1){
+					ast_xget_tiot = sz390.ast_open_file("XGET",true,ast_xget_dcb);
+				}
+				if (ast_xget_tiot < 0){
+					ast_xget_tiot = -2; // prevent mult open errors
+					psw_cc = psw_cc3;
+				}
+			}
+			if (ast_xget_tiot >= 0){
+				try {
+					ast_file_line = sz390.tiot_file[ast_xget_tiot].readLine();
+					if (ast_file_line == null){
+						sz390.ast_close_file(ast_xget_tiot);
+						ast_xget_tiot = -1;
+						psw_cc = psw_cc1;
+					} else {
+						sz390.put_ascii_string(ast_file_line,xbd1_loc,bd2_loc,' ');
+					}
+				} catch (Exception e){
+					psw_cc = psw_cc2;
+				}
+			}
+			break;
+		case 0x0C:  // 5375 "E0C" "XPUT" "RXSS" 38 RPI 812
+			psw_check = false;
+			ins_setup_rxss();
+			psw_cc = psw_cc0;
+			if (bd2_loc == 0){
+				psw_cc = psw_cc2;
+				break;
+			}
+			ast_file_line = sz390.get_ascii_string(xbd1_loc,bd2_loc,false);
+			if (ast_xput_tiot < 0){
+				if (ast_xput_tiot == -1){
+					ast_xput_tiot = sz390.ast_open_file("XPUT",false,ast_xput_dcb);
+				}
+				if (ast_xput_tiot < 0){
+					psw_cc = psw_cc3;
+					ast_xput_tiot = -2; // prevent opens and just log
+				}
+			} 
+			if (ast_xput_tiot >= 0){
+				try {
+					sz390.tiot_file[ast_xput_tiot].writeBytes(ast_file_line + tz390.newline);
+				} catch (Exception e){
+					psw_cc = psw_cc2;
+				}
+			}
+			break;
 		}
 	}
     private void ins_E2XX(){
@@ -7295,6 +8006,23 @@ public class pz390 {
 					.getInt(xbd2_loc)
 					& long_low32_bits);
 			break;
+		case 0x32:  // 310 "E332" "LTGF" "RXY" 18 RPI 817
+	        psw_check = false; 
+			ins_setup_rxy();
+			rv1 = mem.getInt(xbd2_loc);
+			reg.putLong(rf1,rv1);
+			psw_cc = get_int_comp_cc(rv1,0);
+			break;
+	     case 0x34:  // 320 "E334" "CGH" "RXY" 18 RPI 817
+	         psw_check = false;
+	    	 ins_setup_rxy();
+			 psw_cc = get_long_comp_cc(reg.getLong(rf1), (long) mem
+						.getShort(xbd2_loc));
+	    	 break;
+	     case 0x36:  // 330 "E336" "PFD" "RXY" 18 RPI 817
+	         psw_check = false;
+	    	 ins_setup_rxy(); // othing to do but trace	         
+	         break;
 		case 0x3E: // 5720 "E33E" "STRV" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
@@ -7400,6 +8128,18 @@ public class pz390 {
 			reg.putInt(rf1 + 4, rv3);
 			psw_cc = get_int_sub_cc();
 			break;
+		case 0x5C:  // 340 "E35C" "MFY" "RXY" 18 RPI 817
+	        psw_check = false; 
+			ins_setup_rxy();
+			if ((mf1 & 0x1) != 0){
+				set_psw_check(psw_pic_spec);
+			}
+			rlv1 = reg.getInt(rf1 + 12);
+			rlv2 = mem.getInt(xbd2_loc);
+			rlv3 = rlv1 * rlv2;
+			reg.putInt(rf1+4,(int)(rlv3 >> 32));
+			reg.putInt(rf1+12,(int)(rlv3));
+	        break;
 		case 0x5E: // 5850 "E35E" "ALY" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
@@ -7438,6 +8178,11 @@ public class pz390 {
 			ins_setup_rxy();
 			reg.put(rf1 + 7, mem_byte[xbd2_loc]);
 			break;
+	     case 0x75:  // 350 "E375" "LAEY" "RXY" 18 RPI 817
+	         psw_check = false;
+	    	 ins_setup_rxy();
+	    	 reg.putInt(rf1+4,xbd2_loc);
+	         break;
 		case 0x76: // 5910 "E376" "LB" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
@@ -7477,6 +8222,11 @@ public class pz390 {
 			reg.putInt(rf1 + 4, rv3);
 			psw_cc = get_int_sub_cc();
 			break;
+	     case 0x7C:  // 360 "E37C" "MHY" "RXY" 18 RPI 817
+	         psw_check = false;
+	    	 ins_setup_rxy();
+	    	 reg.putInt(rf1+4,reg.getInt(rf1+4) * mem.getShort(xbd2_loc));
+	         break;
 		case 0x80: // 5970 "E380" "NG" "RXY"
 			psw_check = false;
 			ins_setup_rxy();
@@ -7668,6 +8418,51 @@ public class pz390 {
 		case 0x0F: // 6160 "E50F" "MVCDK" "SSE"
 			ins_setup_sse();
 			break;
+		case 0x44:  // 370 "E544" "MVHHI" "SIL" 51 RPI 817
+			psw_check = false; 
+			ins_setup_sil();
+			mem.putShort(bd1_loc,(short)if2);
+	        break;
+	     case 0x48:  // 380 "E548" "MVGHI" "SIL" 51 RPI 817
+	    	psw_check = false; 
+	    	ins_setup_sil();
+	    	mem.putLong(bd1_loc,if2);
+	    	break;
+	     case 0x4C:  // 390 "E54C" "MVHI" "SIL" 51 RPI 817
+	    	psw_check = false; 
+	    	ins_setup_sil();
+	    	mem.putInt(bd1_loc,if2);
+	    	break;
+	     case 0x54:  // 400 "E554" "CHHSI" "SIL" 51 RPI 817
+	    	psw_check = false; 
+			ins_setup_sil();
+			psw_cc = get_int_comp_cc(mem.getShort(bd1_loc), if2);
+		    break;
+	     case 0x55:  // 410 "E555" "CLHHSI" "SIL" 51 RPI 817
+		    psw_check = false; 
+			ins_setup_sil();
+			psw_cc = get_int_log_comp_cc(mem.getShort(bd1_loc) & 0xffff, if2 & 0xffff);
+		    break;
+	     case 0x58:  // 420 "E558" "CGHSI" "SIL" 51 RPI 817
+	    	psw_check = false; 
+	    	ins_setup_sil();
+			psw_cc = get_long_comp_cc(mem.getLong(bd1_loc), if2);
+	    	break;
+	     case 0x59:  // 430 "E559" "CLGHSI" "SIL" 51 RPI 817
+	    	psw_check = false; 
+			ins_setup_sil();
+			psw_cc = get_long_log_comp_cc(mem.getLong(bd1_loc), if2 & 0xffff);
+			break;
+	     case 0x5C:  // 440 "E55C" "CHSI" "SIL" 51 RPI 817
+		    psw_check = false; 
+			ins_setup_sil();
+			psw_cc = get_int_comp_cc(mem.getInt(bd1_loc), if2);
+		    break;
+	     case 0x5D:  // 450 "E55D" "CLFHSI" "SIL" 51 RPI 817
+		    psw_check = false; 
+			ins_setup_sil();
+			psw_cc = get_int_log_comp_cc(mem.getInt(bd1_loc), if2 & 0xffff);
+		    break;
 		}
     }
     private void ins_EBXX(){
@@ -7728,19 +8523,13 @@ public class pz390 {
 			break;
 		case 0x1C: // 6270 "EB1C" "RLLG" "RSY"
 			psw_check = false;
-			ins_setup_rsy();
-			big_int1 = new BigInteger(get_log_bytes(reg_byte, rf3, 8));
-			big_int1 = big_int1.multiply(BigInteger.valueOf(2).pow(
-					bd2_loc & 0x3f));
-			zcvt_big_int(work_reg_byte,0,big_int1, 16);
-			reg.putLong(rf1, work_reg.getLong(8) | work_reg.getLong(0));
+			ins_setup_rsy_shift(); // RPI 820
+			reg.putLong(rf1,long_rotate_left(reg.getLong(rf3),bd2_loc & 0x3f)); // RPI 820
 			break;
 		case 0x1D: // 6280 "EB1D" "RLL" "RSY"
 			psw_check = false;
-			ins_setup_rsy();
-			rlv1 = ((long) reg.getInt(rf3 + 4) & long_low32_bits) << (bd2_loc & 0x3f);
-			reg.putInt(rf1 + 4,
-					(int) ((rlv1 & long_low32_bits) | (rlv1 >>> 32)));
+			ins_setup_rsy_shift();
+			reg.putInt(rf1 + 4,int_rotate_left(reg.getInt(rf3 + 4),bd2_loc & 0x1f));
 			break;
 		case 0x20: // 6290 "EB20" "CLMH" "RSY"
 			psw_check = false;
@@ -7877,6 +8666,9 @@ public class pz390 {
 				set_psw_loc(bd2_loc);
 			}
 			break;
+	     case 0x4C:  // 460 "EB4C" "ECAG" "RSY" 20 RPI 817
+	         ins_setup_rsy();
+	         break;	
 		case 0x51: // 6420 "EB51" "TMY" "SIY"
 			psw_check = false;
 			ins_setup_siy();
@@ -7933,6 +8725,42 @@ public class pz390 {
 				psw_cc = psw_cc1;
 			}
 			break;
+		case 0x6A:  // 470 "EB6A" "ASI" "SIY" 21 RPI 817
+	        psw_check = false; 
+			ins_setup_siy();
+			rv1 = mem.getInt(bd1_loc);
+			rv2 = if2;
+			rv3 = rv1 + rv2;
+			mem.putInt(bd1_loc, rv3);
+			psw_cc = get_int_add_cc();
+	        break;
+	     case 0x6E:  // 480 "EB6E" "ALSI" "SIY" 21 RPI 817
+		    psw_check = false; 
+			ins_setup_siy();
+			rvw = mem.getInt(bd1_loc);
+			rv2 = if2 & 0xff;
+			rv1 = rvw + rv2;
+			mem.putInt(bd1_loc, rv1);
+			psw_cc = get_int_log_add_cc();
+		    break;
+	     case 0x7A:  // 490 "EB7A" "AGSI" "SIY" 21 RPI 817
+		    psw_check = false; 
+			ins_setup_siy();
+			rlv1 = mem.getLong(bd1_loc);
+			rlv2 = if2;
+			rlv3 = rlv1 + rlv2;
+			mem.putLong(bd1_loc, rlv3);
+			psw_cc = get_long_add_cc();
+		    break;
+	     case 0x7E:  // 500 "EB7E" "ALGSI" "SIY" 21 RPI 817
+		    psw_check = false; 
+			ins_setup_siy();
+			rlvw = mem.getLong(bd1_loc);
+			rlv2 = if2 & 0xff;
+			rlv1 = rlvw + rlv2;
+			mem.putLong(bd1_loc, rlv1);
+			psw_cc = get_long_log_add_cc();
+		    break;
 		case 0x80: // 6480 "EB80" "ICMH" "RSY"
 			psw_check = false;
 			ins_setup_rsy();
@@ -8047,7 +8875,233 @@ public class pz390 {
 				set_psw_loc(psw_loc - 6 + 2 * if2);
 			}
 			break;
+	     case 0x54:  // 510 "EC54" "RNSBG" "RIE2" 52 RPI 817
+	        psw_check = false;
+	    	ins_setup_rie8();
+	    	rsbg_setup_and_rotate();
+	    	rlv1 = rlv1 & (rlv2 | rsbg_mask_zeros);
+	    	if (!rsbg_test){
+	    		reg.putLong(rf1,rlv1);
+	    	}
+	    	if ((rlv1 & rsbg_mask_ones) == 0){
+	    		psw_cc = psw_cc0;
+	    	} else {
+	    		psw_cc = psw_cc1;
+	    	}
+	    	break;
+	     case 0x55:  // 530 "EC55" "RISBG" "RIE8" 52 RPI 817
+		    psw_check = false;
+		    ins_setup_rie8();
+	    	rsbg_setup_and_rotate();
+	    	rlv2 = rlv2 & rsbg_mask_ones;
+	    	if (rsbg_zero){
+	    		rlv1 = rlv2;
+	    	} else {
+	    		rlv1 = (rlv1 & rsbg_mask_zeros) | rlv2; 
+	    	}
+	    	reg.putLong(rf1,rlv1);
+	    	if (rlv1 == 0){
+	    		psw_cc = psw_cc0;
+	    	} else if (rlv1 < 0){
+	    		psw_cc = psw_cc1;
+	    	} else {
+	    		psw_cc = psw_cc2;
+	    	}
+		    break;
+	     case 0x56:  // 550 "EC56" "ROSBG" "RIE8" 52 RPI 817
+	        psw_check = false;
+	    	ins_setup_rie8();
+	    	rsbg_setup_and_rotate();   	
+	    	rlv1 = rlv1 | (rlv2 & rsbg_mask_ones);
+	    	if (!rsbg_test){
+	    		reg.putLong(rf1,rlv1);
+	    	}
+	    	if ((rlv1 & rsbg_mask_ones) == 0){
+	    		psw_cc = psw_cc0;
+	    	} else {
+	    		psw_cc = psw_cc1;
+	    	}
+	        break;
+	     case 0x57:  // 570 "EC57" "RXSBG" "RIE8" 52 RPI 817
+	        psw_check = false;
+	    	ins_setup_rie8();
+	    	rsbg_setup_and_rotate();   	
+	    	rlv1 = rlv1 ^ (rlv2 & rsbg_mask_ones);
+	    	if (!rsbg_test){
+	    		reg.putLong(rf1,rlv1);
+	    	}
+	    	if ((rlv1 & rsbg_mask_ones) == 0){
+	    		psw_cc = psw_cc0;
+	    	} else {
+	    		psw_cc = psw_cc1;
+	    	}
+	        break;	
+	     case 0x64:  // 10 "EC64" "CGRJ" "RIE6"
+	         psw_check = false;
+	    	 ins_setup_rie6();
+			 if ((mf3 & get_long_comp_cc(reg.getLong(rf1), reg.getLong(rf2)))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;
+	     case 0x65:  // 80 "EC65" "CLGRJ" "RIE6"
+	         psw_check = false;
+	    	 ins_setup_rie6();
+			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), reg.getLong(rf2)))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;	
+		 case 0x70:  // 150 "EC70" "CGIT" "RIE2" RPI 817
+			 psw_check = false;
+			 ins_setup_rie2();
+			 if ((mf3 & get_long_comp_cc(reg.getLong(rf1),if2))
+						!= 0){
+						fp_dxc = fp_dxc_trap; // raise trap
+						set_psw_check(psw_pic_data);
+				 }
+	         break;
+	     case 0x71:  // 150 "EC71" "CLGIT" "RIE2"
+	         psw_check = false;
+	    	 ins_setup_rie2();
+			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1),if2 & 0xffff))
+						!= 0){
+						fp_dxc = fp_dxc_trap; // raise trap
+						set_psw_check(psw_pic_data);
+				 }
+	         break;
+	     case 0x72:  // 220 "EC72" "CIT" "RIE2" RPI 817
+			 psw_check = false;
+	    	 ins_setup_rie2();
+			 if ((mf3 & get_int_comp_cc(reg.getInt(rf1+4),if2))
+						!= 0){
+						fp_dxc = fp_dxc_trap; // raise trap
+						set_psw_check(psw_pic_data);
+				 }
+	         break;
+	     case 0x73:  // 220 "EC73" "CLFIT" "RIE2"
+	         psw_check = false;
+	    	 ins_setup_rie2();
+	    	 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4),if2 & 0xffff))
+						!= 0){
+						fp_dxc = fp_dxc_trap; // raise trap
+						set_psw_check(psw_pic_data);
+				 }
+	         break;
+	     case 0x76:  // 150 "EC76" "CRJ" "RIE6"
+	         psw_check = false;
+	    	 ins_setup_rie6();
+			 if ((mf3 & get_int_comp_cc(reg.getInt(rf1+4), reg.getInt(rf2+4)))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0x77:  // 220 "EC77" "CLRJ" "RIE6"
+	         psw_check = false;
+	    	 ins_setup_rie6();
+			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), reg.getInt(rf2+4)))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0x7C:  // 290 "EC7C" "CGIJ" "RIE4"
+	         psw_check = false;
+	    	 ins_setup_rie4();
+			 if ((mf3 & get_long_comp_cc(reg.getLong(rf1), if2))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0x7D:  // 360 "EC7D" "CLGIJ" "RIE4"
+	         psw_check = false;
+	    	 ins_setup_rie4();
+			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), if2))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0x7E:  // 430 "EC7E" "CIJ" "RIE4"
+	         psw_check = false;
+	    	 ins_setup_rie4();
+			 if ((mf3 & get_int_comp_cc(reg.getInt(rf1+4), if2))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0x7F:  // 500 "EC7F" "CLIJ" "RIE4"
+	         psw_check = false;
+	    	 ins_setup_rie4();
+			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), if2))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0xE4:  // 570 "ECE4" "CGRB" "RRS1"
+	         psw_check = false;
+	    	 ins_setup_rrs1();
+			 if ((mf3 & get_long_comp_cc(reg.getLong(rf1), reg.getLong(rf2)))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0xE5:  // 640 "ECE5" "CLGRB" "RRS1"
+	         psw_check = false;
+	    	 ins_setup_rrs1();
+			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), reg.getLong(rf2)))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0xF6:  // 710 "ECF6" "CRB" "RRS1"
+	         psw_check = false;
+	    	 ins_setup_rrs1();
+			 if ((mf3 & get_int_comp_cc(reg.getInt(rf1+4), reg.getInt(rf2+4)))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;
+	     case 0xF7:  // 780 "ECF7" "CLRB" "RRS1"
+	         psw_check = false;
+	    	 ins_setup_rrs1();
+			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), reg.getInt(rf2+4)))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0xFC:  // 850 "ECFC" "CGIB" "RRS3"
+	         psw_check = false;
+	    	 ins_setup_rrs3();
+			 if ((mf3 & get_long_comp_cc(reg.getLong(rf1), if2))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0xFD:  // 920 "ECFD" "CLGIB" "RRS3"
+	         psw_check = false;
+	    	 ins_setup_rrs3();
+			 if ((mf3 & get_long_log_comp_cc(reg.getLong(rf1), if2))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0xFE:  // 990 "ECFE" "CIB" "RRS3"
+	         psw_check = false;
+	    	 ins_setup_rrs3();
+			 if ((mf3 & get_int_comp_cc(reg.getInt(rf1+4), if2))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;     
+	     case 0xFF:  // 1060 "ECFF" "CLIB" "RRS3"
+	         psw_check = false;
+	    	 ins_setup_rrs3();
+			 if ((mf3 & get_int_log_comp_cc(reg.getInt(rf1+4), if2))
+						!= 0){
+						set_psw_loc(bd4_loc);
+			 }
+	         break;
 		}
+		
     }
     private void ins_EDXX(){
     	opcode2 = mem_byte[psw_loc + opcode2_offset_rxe] & 0xff;
@@ -8503,7 +9557,7 @@ public class pz390 {
 			              .unscaledValue()
 			              .multiply(BigInteger.TEN.pow(xbd2_loc & 0x3f))
 			              .mod(fp_dd_mod_bi);
-			fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
+			fp_rbdv1 = new BigDecimal(work_fp_bi1).scaleByPowerOfTen(-fp_rbdv1.scale()); // rpi 811
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
 			break;
@@ -8514,7 +9568,7 @@ public class pz390 {
 			work_fp_bi1 = fp_rbdv1
 			              .unscaledValue()
 			              .divide(BigInteger.TEN.pow((xbd2_loc & 0x3f)));
-			fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
+			fp_rbdv1 = new BigDecimal(work_fp_bi1).scaleByPowerOfTen(-fp_rbdv1.scale()); // rpi 811
 			fp_put_bd(rf1, tz390.fp_dd_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
 			break;
@@ -8526,7 +9580,7 @@ public class pz390 {
 			              .unscaledValue()
 			              .multiply(BigInteger.TEN.pow(xbd2_loc & 0x3f))
 			              .mod(fp_ld_mod_bi);
-			fp_rbdv1 = new BigDecimal(work_fp_bi1).movePointLeft(fp_rbdv1.scale());
+			fp_rbdv1 = new BigDecimal(work_fp_bi1).scaleByPowerOfTen(-fp_rbdv1.scale()); // rpi 811
 			fp_put_bd(rf1, tz390.fp_ld_type, fp_rbdv1);
 			fp_store_reg(fp_reg, rf1); // RPI 787
 			break;
@@ -9091,13 +10145,129 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 6;
 	}
-
+	private void ins_setup_rie2() { // "RIE2" CIT oor0iiiim0oo
+		psw_ins_len = 6;
+		rf1 = (mem_byte[psw_loc + 1] & 0xf0) >> 1;
+		mf1 = rf1 >> 3;
+		if2 = mem.getShort(psw_loc + 2);
+		mf3 = (mem_byte[psw_loc +4] & 0xf0) >> 4;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+	}
+	private void ins_setup_rie4() { // "RIE4" CGIJ oorm444422oo r1,i2,m3,i4
+		psw_ins_len = 6;
+		mf3 = mem_byte[psw_loc + 1];
+		rf1 = (mf3 & 0xf0) >> 1;
+		mf1 = rf1 >> 3;
+		if2 = mem.get(psw_loc + 4);
+		mf3 = mf3 & 0xf;
+		if4 = mem.getShort(psw_loc+2);
+		bd4_loc = psw_loc + 2 * if4;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+	}
+	private void ins_setup_rie6() { // "RIE6" CGRJ oorr4444m0oo r1,r2,m3,i4
+		psw_ins_len = 6;
+		rf1 = mem_byte[psw_loc + 1] & 0xff;
+		mf2 = rf1 & 0xf;
+		rf2 = mf2 << 3;
+		rf1 = (rf1 & 0xf0) >> 1;
+		mf1 = rf1 >> 3;
+		if4 = mem.getShort(psw_loc + 2);
+		bd4_loc = psw_loc + 2 * if4;
+		mf3 = (mem_byte[psw_loc+4] & 0xf0) >> 4;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+	}
+	private void ins_setup_rie8() { // "RIE8" RNSBG oo12334455oo r1,r2,i3,i4,i5
+		psw_ins_len = 6;
+		rf1 = mem_byte[psw_loc + 1] & 0xff;
+		mf2 = rf1 & 0xf;
+		rf2 = mf2 << 3;
+		rf1 = (rf1 & 0xf0) >> 1;
+		mf1 = rf1 >> 3;
+		rlv1 = reg.getLong(rf1);
+		rlv2 = reg.getLong(rf2);
+		if3 = mem.get(psw_loc + 2);
+		if4 = mem.get(psw_loc + 3);		
+		if5 = mem.get(psw_loc + 4) & 0x3f;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+	}
+	private void ins_setup_rrs1() { // "RRS1" CGRB oo12dbbbm0oo r1,r2,m3,s4
+		psw_ins_len = 6;
+		rf1 = mem_byte[psw_loc + 1] & 0xff;
+		mf2 = rf1 & 0xf;
+		rf2 = mf2 << 3;
+		mf1 = rf1 >> 4;
+		rf1 = mf1 << 3;
+		if2 = mem.get(psw_loc + 4);
+		mf3 = (mem_byte[psw_loc + 4] & 0xf0) >> 4;
+		bf4 = mem.getShort(psw_loc + 2) & 0xffff;
+		df4 = bf4 & 0xfff;
+		bf4 = (bf4 & 0xf000) >> 9;
+		if (bf4 > 0) {
+			bd4_loc = (reg.getInt(bf4 + 4) + df4) & psw_amode; // rpi 815
+		} else {
+			bd4_loc = df4;
+		}
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+	}
+	private void ins_setup_rrs3() { // "RRS3" CGIB oormdbbb22oo r1,i2,m3,i4
+		psw_ins_len = 6;
+		mf3 = mem_byte[psw_loc + 1];
+		rf1 = (mf3 & 0xf0) >> 1;
+		mf1 = rf1 >> 3;
+		if2 = mem.get(psw_loc + 4);
+		mf3 = mf3 & 0xf;
+		bf4 = mem.getShort(psw_loc + 2) & 0xffff;
+		df4 = bf4 & 0xfff;
+		bf4 = (bf4 & 0xf000) >> 9;
+		if (bf4 > 0) {
+			bd4_loc = (reg.getInt(bf4 + 4) + df4) & psw_amode; // rpi 815
+		} else {
+			bd4_loc = df4;
+		}
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+	}
 	private void ins_setup_ril() { // "RIL" 6 BRCL oomollllllll
 		psw_ins_len = 6;
 		rf1 = (mem_byte[psw_loc + 1] & 0xf0) >> 1;
 		mf1 = rf1 >> 3;
 		if2 = mem.getInt(psw_loc + 2);
-		bd2_loc = psw_loc + 2 * if2;
+		bd2_loc = (psw_loc + 2 * if2) & psw_amode; // RPI 817
 		if (tz390.opt_trace) {
 			trace_ins();
 		}
@@ -9220,6 +10390,23 @@ public class pz390 {
 		}
 		psw_loc = psw_loc + 4;
 	}
+	private void ins_setup_rrf5() { // RPI 817 "RRF2" 28 FIEBR oooo3012
+		// maps r1,r2,m3 to 3012
+		psw_ins_len = 4;
+		mf3 = (mem_byte[psw_loc + 2] & 0xf0) >> 4; 
+		rf1 = mem_byte[psw_loc + 3];
+		mf2 = rf1 & 0x0f;
+		rf2 = mf2 << 3;
+		rf1 = (rf1 & 0xf0) >> 1;
+		mf1 = rf1 >> 3;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 4;
+	}
 
 	private void ins_setup_rrr() { // RPI 407 "ADTR" oooo3012 (r1,r2,r3
 		psw_ins_len = 4;
@@ -9252,7 +10439,7 @@ public class pz390 {
 		df2 = bf2 & 0xfff;
 		bf2 = (bf2 & 0xf000) >> 9;
 		if (bf2 > 0) {
-			bd2_loc = (reg.getInt(bf2 + 4) & psw_amode) + df2;
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode;  // rpi 815
 		} else {
 			bd2_loc = df2;
 		}
@@ -9264,11 +10451,37 @@ public class pz390 {
 			ex_restore();
 		}
 		psw_loc = psw_loc + 4;
-		if (bd2_loc >= tot_mem) {
+		if (bd2_loc >= tot_mem) {  // RPI 820
 			set_psw_check(psw_pic_addr);
 		}
 	}
-
+	private void ins_setup_rs_shift() { // "RS" 25 SLL oorrbddd RPI 820
+		/*
+		 * fetch rf1,rf3,bf2,df2 and update psw
+		 * with no bd2 addr check for shifts
+		 */
+		rf1 = mem_byte[psw_loc + 1] & 0xff;
+		mf3 = rf1 & 0xf;
+		rf3 = mf3 << 3;
+		rf1 = (rf1 & 0xf0) >> 1;
+		mf1 = rf1 >> 3;
+		bf2 = mem.getShort(psw_loc + 2) & 0xffff;
+		df2 = bf2 & 0xfff;
+		bf2 = (bf2 & 0xf000) >> 9;
+		if (bf2 > 0) {
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode;  // rpi 815
+		} else {
+			bd2_loc = df2;
+		}
+		psw_ins_len = 4;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 4;
+	}
 	private void ins_setup_rsi() { // "RSI" 4 BRXH oorriiii
 		psw_ins_len = 4;
 		rf1 = mem_byte[psw_loc + 1] & 0xff;
@@ -9293,7 +10506,7 @@ public class pz390 {
 		df1 = bf1 & 0xfff;
 		bf1 = (bf1 & 0xf000) >> 9;
 		if (bf1 > 0) {
-			bd1_loc = (reg.getInt(bf1 + 4) & psw_amode) + df1;
+			bd1_loc = (reg.getInt(bf1 + 4) + df1) & psw_amode; // rpi 815
 		} else {
 			bd1_loc = df1;
 		}
@@ -9317,7 +10530,7 @@ public class pz390 {
 		df2 = (bf2 & 0xfff) | (mem.get(psw_loc + 4) << 12); // RPI 387
 		bf2 = (bf2 & 0xf000) >> 9;
 		if (bf2 > 0) {
-			bd2_loc = (reg.getInt(bf2 + 4) & psw_amode) + df2;
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode; // rpi 815
 		} else {
 			bd2_loc = df2;
 		}
@@ -9332,6 +10545,29 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+	private void ins_setup_rsy_shift() { // "RSY" 31 RLL/RLLG oorrbdddhhoo RPI 820
+		psw_ins_len = 6;
+		rf1 = mem_byte[psw_loc + 1] & 0xff;
+		mf3 = rf1 & 0xf;
+		rf3 = mf3 << 3;
+		rf1 = (rf1 & 0xf0) >> 1;
+		mf1 = rf1 >> 3;
+		bf2 = mem.getShort(psw_loc + 2);
+		df2 = (bf2 & 0xfff) | (mem.get(psw_loc + 4) << 12); // RPI 387
+		bf2 = (bf2 & 0xf000) >> 9;
+		if (bf2 > 0) {
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode; // rpi 815
+		} else {
+			bd2_loc = df2;
+		}
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+	}
 
 	private void ins_setup_rx() { // "RX" 52 L oorxbddd
 		/*
@@ -9345,12 +10581,12 @@ public class pz390 {
 		df2 = bf2 & 0xfff;
 		bf2 = (bf2 & 0xf000) >> 9;
 		if (xf2 > 0) {
-			xbd2_loc = (reg.getInt(xf2 + 4) & psw_amode) + df2;
+			xbd2_loc = (reg.getInt(xf2 + 4) + df2) & psw_amode;  // rpi 815
 		} else {
 			xbd2_loc = df2;
 		}
 		if (bf2 > 0) {
-			xbd2_loc = xbd2_loc + (reg.getInt(bf2 + 4) & psw_amode);
+			xbd2_loc = (xbd2_loc + reg.getInt(bf2 + 4)) & psw_amode; // rpi 815
 		}
 		psw_ins_len = 4;
 		if (tz390.opt_trace) {
@@ -9360,6 +10596,43 @@ public class pz390 {
 			ex_restore();
 		}
 		psw_loc = psw_loc + 4;
+		if (xbd2_loc >= tot_mem && opcode1 != 0x41) { // RPI 299
+			set_psw_check(psw_pic_addr);
+		}
+	}
+	private void ins_setup_rxss() { // "RX" 52 L oorxbddd
+		/*
+		 * fetch rf1,xf1,bf1,df1, bf2, and df2
+		 * for ASSIST extended I/O instructions
+		 */
+		xf1 = (mem_byte[psw_loc + 1] & 0xf) << 3;
+		bf1 = mem.getShort(psw_loc + 2) & 0xffff;
+		df1 = bf1 & 0xfff;
+		bf1 = (bf1 & 0xf000) >> 9;
+		if (xf1 > 0) {
+			xbd1_loc = (reg.getInt(xf1 + 4) + df1) & psw_amode;  // rpi 815
+		} else {
+			xbd1_loc = df1;
+		}
+		if (bf1 > 0) {
+			xbd1_loc = (xbd1_loc + reg.getInt(bf1 + 4)) & psw_amode; // rpi 815
+		}
+		bf2 = mem.getShort(psw_loc + 4) & 0xffff;
+		df2 = bf2 & 0xfff;
+		bf2 = (bf2 & 0xf000) >> 9;
+		if (bf2 > 0) {
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode; // PRI 815
+		} else {
+			bd2_loc = df2;
+		}
+		psw_ins_len = 6;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
 		if (xbd2_loc >= tot_mem && opcode1 != 0x41) { // RPI 299
 			set_psw_check(psw_pic_addr);
 		}
@@ -9379,12 +10652,12 @@ public class pz390 {
 		df2 = bf2 & 0xfff;
 		bf2 = (bf2 & 0xf000) >> 9;
 		if (xf2 > 0) {
-			xbd2_loc = (reg.getInt(xf2 + 4) & psw_amode) + df2;
+			xbd2_loc = (reg.getInt(xf2 + 4) + df2) & psw_amode;  // rpi 815
 		} else {
 			xbd2_loc = df2;
 		}
 		if (bf2 > 0) {
-			xbd2_loc = xbd2_loc + (reg.getInt(bf2 + 4) & psw_amode);
+			xbd2_loc = (xbd2_loc + reg.getInt(bf2 + 4)) & psw_amode; // rpi 815
 		}
 		if (tz390.opt_trace) {
 			trace_ins();
@@ -9408,12 +10681,12 @@ public class pz390 {
 		df2 = bf2 & 0xfff;
 		bf2 = (bf2 & 0xf000) >> 9;
 		if (xf2 > 0) {
-			xbd2_loc = (reg.getInt(xf2 + 4) & psw_amode) + df2;
+			xbd2_loc = (reg.getInt(xf2 + 4) + df2) & psw_amode;  // rpi 815
 		} else {
 			xbd2_loc = df2;
 		}
 		if (bf2 > 0) {
-			xbd2_loc = xbd2_loc + (reg.getInt(bf2 + 4) & psw_amode);
+			xbd2_loc = (xbd2_loc + reg.getInt(bf2 + 4)) & psw_amode; // rpi 815
 		}
 		if (tz390.opt_trace) {
 			trace_ins();
@@ -9437,12 +10710,12 @@ public class pz390 {
 		df2 = (bf2 & 0xfff) | (mem.get(psw_loc + 4) << 12); // RPI 387
 		bf2 = (bf2 & 0xf000) >> 9;
 		if (xf2 > 0) {
-			xbd2_loc = (reg.getInt(xf2 + 4) & psw_amode) + df2;
+			xbd2_loc = (reg.getInt(xf2 + 4) + df2) & psw_amode;  // rpi 815
 		} else {
 			xbd2_loc = df2;
 		}
 		if (bf2 > 0) {
-			xbd2_loc = xbd2_loc + (reg.getInt(bf2 + 4) & psw_amode);
+			xbd2_loc = (xbd2_loc + reg.getInt(bf2 + 4)) & psw_amode;  // rpi 815
 		}
 		if (tz390.opt_trace) {
 			trace_ins();
@@ -9461,7 +10734,7 @@ public class pz390 {
 		df2 = bf2 & 0xfff;
 		bf2 = (bf2 & 0xf000) >> 9;
 		if (bf2 > 0) {
-			bd2_loc = (reg.getInt(bf2 + 4) & psw_amode) + df2;
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode; // rpi 815
 		} else {
 			bd2_loc = df2;
 		}
@@ -9487,7 +10760,7 @@ public class pz390 {
 		df1 = bf1 & 0xfff;
 		bf1 = (bf1 & 0xf000) >> 9;
 		if (bf1 > 0) {
-			bd1_loc = (reg.getInt(bf1 + 4) & psw_amode) + df1;
+			bd1_loc = (reg.getInt(bf1 + 4) + df1) & psw_amode;  // rpi 815
 		} else {
 			bd1_loc = df1;
 		}
@@ -9503,15 +10776,40 @@ public class pz390 {
 			set_psw_check(psw_pic_addr);
 		}
 	}
+	private void ins_setup_sil() { // "SIL" MVHHI oooobdddiiii RPI 817
+		/*
+		 * fetch bd1,if2
+		 */
+		if2 = mem.getShort(psw_loc + 4);
+		bf1 = mem.getShort(psw_loc + 2) & 0xffff;
+		df1 = bf1 & 0xfff;
+		bf1 = (bf1 & 0xf000) >> 9;
+		if (bf1 > 0) {
+			bd1_loc = (reg.getInt(bf1 + 4) + df1) & psw_amode;  // rpi 815
+		} else {
+			bd1_loc = df1;
+		}
+		psw_ins_len = 6;
+		if (tz390.opt_trace) {
+			trace_ins();
+		}
+		if (ex_mode) {
+			ex_restore();
+		}
+		psw_loc = psw_loc + 6;
+		if (bd1_loc >= tot_mem) { // RPI 299
+			set_psw_check(psw_pic_addr);
+		}
+	}
 
 	private void ins_setup_siy() { // "SIY" 6 TMY ooiibdddhhoo
 		psw_ins_len = 6;
-		if2 = mem_byte[psw_loc + 1] & 0xff;
+		if2 = mem_byte[psw_loc + 1];
 		bf1 = mem.getShort(psw_loc + 2);
 		df1 = (bf1 & 0xfff) | (mem.get(psw_loc + 4) << 12); // RPI 387
 		bf1 = (bf1 & 0xf000) >> 9;
 		if (bf1 > 0) {
-			bd1_loc = (reg.getInt(bf1 + 4) & psw_amode) + df1;
+			bd1_loc = (reg.getInt(bf1 + 4) + df1) & psw_amode;  // rpi 815
 		} else {
 			bd1_loc = df1;
 		}
@@ -9538,7 +10836,7 @@ public class pz390 {
 		df1 = bf1 & 0xfff;
 		bf1 = (bf1 & 0xf000) >> 9;
 		if (bf1 > 0) {
-			bd1_loc = (reg.getInt(bf1 + 4) & psw_amode) + df1;
+			bd1_loc = (reg.getInt(bf1 + 4) + df1) & psw_amode; // rpi 815
 		} else {
 			bd1_loc = df1;
 		}
@@ -9546,7 +10844,7 @@ public class pz390 {
 		df2 = bf2 & 0xfff;
 		bf2 = (bf2 & 0xf000) >> 9;
 		if (bf2 > 0) {
-			bd2_loc = (reg.getInt(bf2 + 4) & psw_amode) + df2;
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode;  // rpi 815
 		} else {
 			bd2_loc = df2;
 		}
@@ -9558,8 +10856,8 @@ public class pz390 {
 			ex_restore();
 		}
 		psw_loc = psw_loc + 6;
-		if (bd1_loc + rflen1 > tot_mem || bd2_loc + rflen2 > tot_mem) { // RPI
-																		// 299
+		if (bd1_loc + rflen1 > tot_mem 
+			|| (opcode1 != opcode_srp && bd2_loc + rflen2 > tot_mem)) { // RPI 299, RPI 820
 			set_psw_check(psw_pic_addr);
 		}
 		if (tz390.opt_protect // RPI 538
@@ -9577,7 +10875,7 @@ public class pz390 {
 		df1 = bf1 & 0xfff;
 		bf1 = (bf1 & 0xf000) >> 9;
 		if (bf1 > 0) {
-			bd1_loc = (reg.getInt(bf1 + 4) & psw_amode) + df1;
+			bd1_loc = (reg.getInt(bf1 + 4) + df1) & psw_amode; // rpi 815
 		} else {
 			bd1_loc = df1;
 		}
@@ -9585,7 +10883,7 @@ public class pz390 {
 		df2 = bf2 & 0xfff;
 		bf2 = (bf2 & 0xf000) >> 9;
 		if (bf2 > 0) {
-			bd2_loc = (reg.getInt(bf2 + 4) & psw_amode) + df2;
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode; // PRI 815
 		} else {
 			bd2_loc = df2;
 		}
@@ -9613,7 +10911,7 @@ public class pz390 {
 		df1 = bf1 & 0xfff;
 		bf1 = (bf1 & 0xf000) >> 9;
 		if (bf1 > 0) {
-			bd1_loc = (reg.getInt(bf1 + 4) & psw_amode) + df1;
+			bd1_loc = (reg.getInt(bf1 + 4) + df1) & psw_amode; // rpi 815
 		} else {
 			bd1_loc = df1;
 		}
@@ -9621,7 +10919,7 @@ public class pz390 {
 		df2 = bf2 & 0xfff;
 		bf2 = (bf2 & 0xf000) >> 9;
 		if (bf2 > 0) {
-			bd2_loc = (reg.getInt(bf2 + 4) & psw_amode) + df2;
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode; // rpi 815
 		} else {
 			bd2_loc = df2;
 		}
@@ -9652,7 +10950,7 @@ public class pz390 {
 		df1 = bf1 & 0xfff;
 		bf1 = (bf1 & 0xf000) >> 9;
 		if (bf1 > 0) {
-			bd1_loc = (reg.getInt(bf1 + 4) & psw_amode) + df1;
+			bd1_loc = (reg.getInt(bf1 + 4) + df1) & psw_amode; // rpi 815
 		} else {
 			bd1_loc = df1;
 		}
@@ -9660,7 +10958,7 @@ public class pz390 {
 		df2 = bf2 & 0xfff;
 		bf2 = (bf2 & 0xf000) >> 9;
 		if (bf2 > 0) {
-			bd2_loc = (reg.getInt(bf2 + 4) & psw_amode) + df2;
+			bd2_loc = (reg.getInt(bf2 + 4) + df2) & psw_amode; // rpi 815
 		} else {
 			bd2_loc = df2;
 		}
@@ -10549,6 +11847,132 @@ public class pz390 {
 			bd2_loc++;
 		}
 	}
+	private void exec_trt_ext(boolean reversed){
+		/*
+		 * perform TRTE or TRTRE
+		 */
+		if ((mf1 & 1) != 0){ 
+			// check even/odd arg register pair
+			set_psw_check(psw_pic_spec);
+		}
+		bd1_loc = reg.getInt(rf1+4) & psw_amode;
+		rflen1 = reg.getInt(rf1+12);
+		// get table addr forcing double word bound
+		bd2_loc = reg.getInt(r1) & psw_amode & 0xfffffff8;
+		boolean limit = (mf3 & 2) != 0;
+        int incr;
+        int bd1_end;
+        int arg_val;
+        int funct_val;
+        try { // catch S0C5 on table accesses
+        	if ((mf3 & 8) == 0){     // 1 byte arg ent
+        		if (reversed){
+        			incr = -1;
+        			bd1_end = bd1_loc - rflen1;
+        		} else {
+        			incr = 1;
+        			bd1_end = bd1_loc + rflen1;
+        		}
+        		if ((mf3 & 4) == 0){ // 1 byte tab ent
+        			while (bd1_loc != bd1_end){
+        				funct_val = mem_byte[bd2_loc + (mem.get(bd1_loc) & 0xff)];
+        				if (funct_val != 0){
+        					psw_cc = psw_cc1;
+        					reg.putInt(rf2+4,funct_val & 0xff);
+        					reg.putInt(rf1+4,bd1_loc);
+        					if (reversed){
+        						reg.putInt(rf1+12,bd1_loc - bd1_end);
+        					} else {
+        						reg.putInt(rf1+12,bd1_end - bd1_loc);
+        					}
+        					return;
+        				}
+        				bd1_loc = bd1_loc + incr;
+        			}
+        		} else { 
+        			// 1 byte arg
+        			// 2 byte fun in 512 table
+        			while (bd1_loc != bd1_end){
+        				funct_val = mem.getShort(bd2_loc + ((mem.get(bd1_loc) & 0xff) << 1));
+        				if (funct_val != 0){
+        					psw_cc = psw_cc1;
+        					reg.putInt(rf2+4,funct_val & 0xffff);
+        					reg.putInt(rf1+4,bd1_loc);
+        					if (reversed){
+        						reg.putInt(rf1+12,bd1_loc - bd1_end);
+        					} else {
+        						reg.putInt(rf1+12,bd1_end - bd1_loc);
+        					}
+        					return;
+        				}
+        				bd1_loc = bd1_loc + incr;
+        			}
+        		}
+        	} else { 
+        		// 2 byte arugments
+        		if ((rflen1 & 1) != 0){ 
+        			// check for odd length 
+        			set_psw_check(psw_pic_spec);
+        		}
+        		if (reversed){
+        			incr = -2;
+        			bd1_end = bd1_loc - rflen1;
+        		} else {
+        			incr = 2;
+        			bd1_end = bd1_loc + rflen1;
+        		}
+        		if ((mf3 & 4) == 0){
+        			// 2 byte argument
+        			// 1 byte function in 65k table
+        			while (bd1_loc != bd1_end){
+        				arg_val   = mem.getShort(bd1_loc) & 0xffff;
+        				if (!limit || arg_val <= 255){
+        					funct_val = mem_byte[bd2_loc + (arg_val & 0xffff)];
+        					if (funct_val != 0){
+        						psw_cc = psw_cc1;
+        						reg.putInt(rf2+4,funct_val &0xff);
+        						reg.putInt(rf1+4,bd1_loc);
+        						if (reversed){
+        							reg.putInt(rf1+12,bd1_loc - bd1_end);
+        						} else {
+        							reg.putInt(rf1+12,bd1_end - bd1_loc);
+        						}
+        						return;
+        					}
+        				}
+        				bd1_loc = bd1_loc + incr;
+        			}
+        		} else {
+        			// 2 byte arg
+        			// 2 byte function 128k table
+        			while (bd1_loc != bd1_end){
+        				arg_val   = mem.getShort(bd1_loc) & 0xffff;
+        				if (!limit || arg_val <= 255){
+        					funct_val = mem.getShort(bd2_loc + ((mem.getShort(bd1_loc) & 0xff) << 1));
+        					if (funct_val != 0){
+        						psw_cc = psw_cc1;
+        						reg.putInt(rf2+4,funct_val);
+        						reg.putInt(rf1+4,bd1_loc);
+        						if (reversed){
+        							reg.putInt(rf1+12,bd1_loc - bd1_end);
+        						} else {
+        							reg.putInt(rf1+12,bd1_end - bd1_loc);
+        						}
+        						return;
+        					}
+        				}
+        				bd1_loc = bd1_loc + incr;
+        			}
+        		}
+        	}
+        } catch (Exception e){
+        	set_psw_check(psw_pic_addr);
+        }
+		psw_cc = psw_cc0;
+		reg.putInt(rf2+4,0);
+		reg.putInt(rf1+4,bd1_loc);
+		reg.putInt(rf1+12,0);
+	}
     private void exec_unpka(){
     	if (rflen <= 32) {
 			rflen1 = rflen;
@@ -10995,6 +12419,36 @@ public class pz390 {
 		case 36: // RPI 527 "RRF4" FIXTR
 			ins_setup_rrr();
 			break;
+		case 37: // RPI 812 ASSIST "XDECO"
+			ins_setup_rx();
+			break;
+		case 38: // RPI 812 ASSIST "XREAD" 	
+			ins_setup_rxss();
+			break;
+		case 39: // RPI 817 "CGRT"
+		case 40: // RPI 817 "CGRTE"
+			ins_setup_rrf5();
+			break;
+		case 41: // RPI 817 "CGIT"
+		case 42: // RPI 817 "GGITE"
+			ins_setup_rie2();
+			break;
+		case 43: // RPI 817 "CGIJ"
+		case 44: // RPI 817 "CGIJE"
+			ins_setup_rie4();
+			break;
+		case 45: // RPI 817 "CGRB:
+		case 46: // RPI 817 "CGRBE"
+			ins_setup_rrs1();
+			break;
+		case 47: // RPI 817 "CGIB"
+		case 48: // RPI 817 "CGIBE"
+			ins_setup_rrs3();
+			break;
+		case 49: // RPI 817 "CGRJ"
+		case 50: // RPI 817 "CGRJE"
+			ins_setup_rie6();
+			break;
 		default: 
 			trace_ins(); // unknown op RPI 527
 		}
@@ -11350,7 +12804,20 @@ public class pz390 {
 			}
 		}
 	}
-
+	private void check_dd_mpy() { // RPI 820
+		/*
+		 * check for DD overflow or underflow
+		 */
+		if (fp_rbdv1.signum() != 0){
+			if (fp_rbdv1.abs().compareTo(fp_dd_pos_max) >= 0) {
+				fp_dxc = fp_dxc_oe;
+				set_psw_check(psw_pic_data);
+			} else if (fp_rbdv1.abs().compareTo(fp_dd_pos_min) <= 0) {
+				fp_dxc = fp_dxc_ue;
+				set_psw_check(psw_pic_data);
+			}
+		}
+	}
 	private void check_dh_mpy() {
 		/*
 		 * check for DH overflow or underflow
@@ -11378,7 +12845,20 @@ public class pz390 {
 			}
 		}
 	}
-
+	private void check_ld_mpy() {  // RPI 820
+		/*
+		 * check for LD overflow or underflow
+		 */
+		if (fp_rbdv1.signum() != 0){ // RPI 808
+			if (fp_rbdv1.abs().compareTo(fp_ld_pos_max) >= 0) {
+				fp_dxc = fp_dxc_oe;
+				set_psw_check(psw_pic_data);
+			} else if (fp_rbdv1.abs().compareTo(fp_ld_pos_min) <= 0) {
+				fp_dxc = fp_dxc_ue;
+				set_psw_check(psw_pic_data);
+			}
+		}
+	}
 	private void check_lh_mpy() {
 		/*
 		 * check for LH overflow or underflow
@@ -11444,7 +12924,23 @@ public class pz390 {
 			}
 		}
 	}
-
+	private void check_dd_div() {  // RPI 820
+		/*
+		 * check for DDTR overflow or underflow
+		 */
+		if (fp_rbdv3.signum() == 0) {
+			fp_dxc = fp_dxc_div;
+			set_psw_check(psw_pic_data);
+		} else if (fp_rbdv1.signum() != 0){ // RPI 808
+			if (fp_rbdv1.abs().compareTo(fp_dd_pos_max) >= 0) {
+				fp_dxc = fp_dxc_oe;
+				set_psw_check(psw_pic_data);
+			} else if (fp_rbdv1.abs().compareTo(fp_dd_pos_min) <= 0) {
+				fp_dxc = fp_dxc_ue;
+				set_psw_check(psw_pic_data);
+			}
+		}
+	}
 	private void check_dh_div() {
 		/*
 		 * check for DH overflow or underflow
@@ -11477,7 +12973,23 @@ public class pz390 {
 			}
 		}
 	}
-
+	private void check_ld_div() {  // RPI 820
+		/*
+		 * check for DXTR overflow or underflow
+		 */
+		if (fp_rbdv3.signum() == 0) {
+			fp_dxc = fp_dxc_div;
+			set_psw_check(psw_pic_data);
+		} else if (fp_rbdv1.signum() != 0.){ // RPI 808
+			if (fp_rbdv1.abs().compareTo(fp_ld_pos_max) >= 0) {
+				fp_dxc = fp_dxc_oe;
+				set_psw_check(psw_pic_data);
+			} else if (fp_rbdv1.abs().compareTo(fp_ld_pos_min) <= 0) {
+				fp_dxc = fp_dxc_ue;
+				set_psw_check(psw_pic_data);
+			}
+		}
+	}
 	private void check_lh_div() {
 		/*
 		 * check for LH overflow or underflow
@@ -11743,7 +13255,8 @@ public class pz390 {
 
 	private int fp_get_db_add_sub_cc() {
 		/*
-		 * return psw_cc for db add/sub result fp_rdv1 and raise BFP sig, ovf,
+		 * return psw_cc for db add/sub
+		 * result fp_rdv1 and raise BFP sig, ovf,
 		 * or unf exceptions
 		 */
 		if (fp_rdv1 == 0) {
@@ -11888,10 +13401,10 @@ public class pz390 {
 			return psw_cc_equal;
 		} else {
 			if (fp_rbdv1.signum() > 0) {
-				if (fp_rbdv1.compareTo(fp_dd_pos_max) > 0){
+				if (fp_rbdv1.compareTo(fp_dd_pos_max) >= 0){ 
 					fp_dxc = fp_dxc_oe;
 					set_psw_check(psw_pic_data);
-				} else if (fp_rbdv1.compareTo(fp_dd_pos_min) < 0) {
+				} else if (fp_rbdv1.compareTo(fp_dd_pos_min) <= 0) { 
 					fp_dxc = fp_dxc_ue;
 					set_psw_check(psw_pic_data);
 				}
@@ -12176,9 +13689,11 @@ public class pz390 {
 			return fp_reg_db[fp_ctl_index];
 		case 3: // fp_ctl_bd
 			return fp_reg_bd[fp_ctl_index].doubleValue();
+		case 4: // fp_ctl_bd2 
+			return (double)0;  // RPI 820 return 0 for reuse of bd2 reg.
 		default:
 			set_psw_check(psw_pic_spec);
-			return (double) 0;
+			return (double) 0;  
 		}
 	}
 
@@ -12219,6 +13734,28 @@ public class pz390 {
 		 */
 		return new BigDecimal(fp_get_db_from_db(fp_buff, fp_index),
 				fp_d_context);
+	}
+	private void fp_copy_reg(int index1,int index2){
+		/*
+		 * copy fp reg for LD or LXD  RPI 816
+		 */
+		fp_reg_ctl[index1]  = fp_reg_ctl[index2];
+		fp_reg_type[index1] = fp_reg_type[index2];
+		switch (fp_reg_ctl[index2]){
+		case 0:
+			fp_reg.putLong(index1 << 3,fp_reg.getLong(index2 << 3));
+			break;
+		case 1:
+			fp_reg_eb[index1] = fp_reg_eb[index2];
+			break;
+		case 2:
+			fp_reg_db[index1] = fp_reg_db[index2];
+			break;
+		case 3:
+		case 4:
+			fp_reg_bd[index1] = fp_reg_bd[index2];
+			break;
+		}
 	}
     private void set_fpc_reg(int fpc_reg){
     	/*
@@ -13068,10 +14605,7 @@ public class pz390 {
 		if (long_man == 0) {
 			return 0;
 		}
-		while (long_man > long_db_one_bits) {
-			long_man = long_man >> 1;
-			long_exp++;
-		}
+		align_db_first_bit();  // RPI 820
 		work_fp_reg.putLong(0, long_sign | ((long_exp + 0x3ff) << 52)
 				| (long_man & long_db_man_bits));
 		return work_fp_reg.getDouble(0);
@@ -13086,25 +14620,46 @@ public class pz390 {
 		} else {
 			long_sign = 0;
 		}
-		long_exp = (long) ((((dh1 & long_dh_exp_bits) >>> 56) - 0x40) << 2) - 4;
+		// set IEEE long exponent = 
+		//  hfp exp * 4 - 4 (adj for assumed . at +12)
+		long_exp = (long) (
+			(((dh1 & long_dh_exp_bits) >>> 56) 
+			   - 0x40) << 2) - 4;
 		long_man = dh1 & long_dh_man_bits;
 		if (long_man == 0) {
 			return 0;
 		}
-		fp_round = 0;
-		while (long_man > long_db_one_bits) {
-			fp_round = (int) (long_man & 1);
-			long_man = long_man >> 1;
-			long_exp++;
-			if (fp_round == 1 && long_man <= long_db_one_bits) {
-				long_man++;
-			}
-		}
+        align_db_first_bit(); // RPI 820
 		work_fp_reg.putLong(0, long_sign | ((long_exp + 0x3ff) << 52)
 				| (long_man & long_db_man_bits));
 		return work_fp_reg.getDouble(0);
 	}
-
+    private void align_db_first_bit(){
+    	/* 
+    	 * shift right or left to align
+    	 * unnormailized mantissa to db 
+    	 * normalized format where first 
+    	 * bit is assumed. 
+    	 */
+		if (long_man >= long_db_one_bit){ // RPI 820
+			// shift right to align 1st bit
+			fp_round = 0;
+			while (long_man > long_db_one_bits) {  // RPI 820 was _bits
+				fp_round = (int) (long_man & 1);
+				long_man = long_man >> 1;
+				long_exp++;
+				if (fp_round == 1 && long_man <= long_db_one_bit) {
+					long_man++;
+				}
+			}
+		} else { // RPI 820 add unnormaized input support
+			// shift left to align 1st bit
+			while (long_man < long_db_one_bit){
+				long_man = long_man << 1;
+				long_exp--;
+			}
+		}
+    }
 	public int zcvt_db_to_eh(double db1) {
 		/*
 		 * convert db float to eh int
@@ -13544,7 +15099,23 @@ public class pz390 {
 			rflen--;
 		}
 	}
-
+    private void exec_ex(int target_addr){
+    	/*
+    	 * share code for EX and EXRL RPI 817
+    	 */
+		if (!ex_mode) {
+			ex_psw_return = psw_loc;
+			set_psw_loc(target_addr);
+			ex_mode = true;
+			ex_mod_byte = mem_byte[psw_loc + 1];
+			if (rf1 != 0) {
+				mem_byte[psw_loc + 1] = (byte) (ex_mod_byte | reg
+						.get(rf1 + 7));
+			}
+		} else {
+			set_psw_check(psw_pic_exec);
+		}
+    }
 	private void get_pdf_ints() {
 		/*
 		 * set pdf_is_big to true or false and set pdf_big_int1 and pdf_big_int2
@@ -13709,6 +15280,9 @@ public class pz390 {
 			}
 			if (pdf_trunc){
 				int skip = pdf_str.length()- pdf_len * 2 + 1;
+				if (pd_cc == psw_cc_low){
+					skip--;  // rpi 811
+				}
 				if (skip > 0){  // RPI 788
 					pdf_str = pdf_str.substring(skip);
 				}
@@ -13848,13 +15422,20 @@ public class pz390 {
 	private void init_opcode_keys() {
 		/*
 		 * add all opcodes to key index table for use by trace and test options
-		 * Notes: 1. trace and test do lookup by hex for display 2. test break
-		 * on opcode does lookup by name to get hex code for break 3.
-		 * op_type_index is used by test break on opcode to get opcode2 offset
-		 * and mask
+		 * Notes:
+		 * 1. Verify tz390 and ptz390 trace type tables match 
+		 * 2. trace and test do lookup by hex for display 
+		 * 3. test break on opcode does lookup
+		 *    by name to get hex code for break 
+		 * 4. op_type_index is used by test break
+		 *    on opcode to get opcode2 offset
+		 *    and mask
+		 * 
 		 */
-		if (!tz390.init_opcode_name_keys()) {
-			set_psw_check(psw_pic_operr);
+		tz390.init_opcode_name_keys();
+		if (tz390.op_code.length != op_trace_type.length){
+			tz390.abort_error(22,"op code and op trace type tables out of sync "
+				+ tz390.op_code.length + " vs " + op_trace_type.length);			
 		}
 		String hex_key = null;
 		int index = 1;
@@ -13904,6 +15485,21 @@ public class pz390 {
 		op_type_offset[34] = 1; // RRF2 FIEBR ooooM012
 		op_type_offset[35] = 1; // RRF4 CSDTR oooo0m12 RPI 407
 		op_type_offset[36] = 1; // RRR ADTR oooo3012
+		op_type_offset[38] = 1; // RXSS ASSIST I/O E0X RPI 812
+		op_type_offset[39] = 1; // RRF5 CRT  RPI 817
+		op_type_offset[40] = 1; // RRF6 CRTE RPI 817
+		op_type_offset[41] = 5; // RIE2 CIT  RPI 817
+		op_type_offset[42] = 5; // RIE3 CITE RPI 817
+		op_type_offset[43] = 5; // RIE4 CGIJ RPI 817
+		op_type_offset[44] = 5; // RIE5 CGIJE RPI 817
+		op_type_offset[45] = 5; // RRS1 CGRB  RPI 817
+		op_type_offset[46] = 5; // RRS2 CGRBE RPI 817
+		op_type_offset[47] = 5; // RRS3 CGIB  RPI 817
+		op_type_offset[48] = 5; // RRS4 CGIBE RPI 817
+		op_type_offset[49] = 5; // RIE6 CGRJ  RPI 817
+		op_type_offset[50] = 5; // RIE7 CGRJE RPI 817
+		op_type_offset[51] = 1; // SIL  MVHHI RPI 817
+		op_type_offset[52] = 5; // RIE8 RNSBG RPI 817
 		op_type_mask[1] = 0xff; // E PR oooo
 		op_type_mask[7] = 0xff; // S SSM oooobddd
 		op_type_mask[12] = 0x0f; // RI IIHH ooroiiii
@@ -13924,6 +15520,22 @@ public class pz390 {
 		op_type_mask[34] = 0xff; // RRF2 DIEBR oooo3012
 		op_type_mask[35] = 0xff; // RRF4 CSDTR oooo0m12 RPI 407
 		op_type_mask[36] = 0xff; // RRR ADTR oooo3012 RPI 407
+		op_type_mask[37] = 0xff; // RX   XDECI ASSIST RPI 812
+		op_type_mask[38] = 0xff; // RXSS XREAD ASSIST RPI 812
+		op_type_mask[39] = 0xff; // RRF5 CGRT  RPI 817
+		op_type_mask[40] = 0xff; // RRF6 CGRTE RPI 817 (AZ ONLY)
+		op_type_mask[41] = 0xff; // RIE2 CGIT  RPI 817
+		op_type_mask[42] = 0xff; // RIE3 CGITE RPI 817 (AZ ONLY)
+		op_type_mask[43] = 0xff; // RIE4 CGIJ  RPI 817
+		op_type_mask[44] = 0xff; // RIE5 CGIJE RPI 813 (AZ ONLY)
+		op_type_mask[45] = 0xff; // RRS1 CGRB  RPI 817
+		op_type_mask[46] = 0xff; // RRS2 CGRBE RPI 817 (AZ ONLY)
+		op_type_mask[47] = 0xff; // RRS3 CGIB  RPI 817
+		op_type_mask[48] = 0xff; // RRS4 CGIBE RPI 817 (AZ ONLY)
+		op_type_mask[49] = 0xff; // RIE6 CGRJ  RPI 817
+		op_type_mask[50] = 0xff; // RIE7 CGRJE RPI 817
+		op_type_mask[51] = 0xff; // SIL  MVHHI RPI 817
+		op_type_mask[52] = 0xff; // RIE8 RNSBG RPI 817
 		// init op2 offset and mask arrays indexed by op1
 		index = 1; // skip 0 comment code entry
 		while (index < tz390.op_code.length) {
@@ -14043,6 +15655,7 @@ public class pz390 {
 		 * trace instruction based on
 		 * opcode_type
 		 */
+		
 		String trace_name = get_ins_name(psw_loc);
 		String trace_parms = "";
 		int    trace_type = 0;
@@ -14280,17 +15893,36 @@ public class pz390 {
 					    + " R" + tz390.get_hex(mf2, 1)
 					    + "="  + tz390.get_hex(reg.getInt(rf2+4),8);
 			break;	
+		case 147: // b9A2 ptf R64 rpi 817
+			trace_parms = " R" + tz390.get_hex(mf1, 1) 
+			            + "="  + get_fp_long_hex(rf1);				    
+			break;
 		case 150:// "RRF1" 28 MAER oooor0rr
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
 					+ get_fp_long_hex(rf1) + " F" + tz390.get_hex(mf3, 1) + "="
 					+ get_fp_long_hex(rf3) + " F" + tz390.get_hex(mf2, 1) + "="
 					+ get_fp_long_hex(rf2);
 			break;
+		case 151:// "RRF2" CGRT oooom0rr RPI 817
+			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
+					+ get_long_hex(reg.getLong(rf1)) + " F" + tz390.get_hex(mf2, 1) + "="
+					+ get_long_hex(reg.getLong(rf2)) + " M3=" + tz390.get_hex(mf3, 1);
+			break;
+		case 152:// "RRF2" CRT oooom0rr RPI 817
+			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
+					+ tz390.get_hex(reg.getInt(rf1+4),8) + " F" + tz390.get_hex(mf2, 1) + "="
+					+ tz390.get_hex(reg.getInt(rf2+4),8) + " M3=" + tz390.get_hex(mf3, 1);
+			break;
 		case 160: // c2?? AGFI etc., C01 LGFI, C06 LXHI  RPI 200
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
-						+ get_long_hex(reg.getLong(rf1)) + " I2="
-						+ tz390.get_hex(if2, 8);
+						+ get_long_hex(reg.getLong(rf1)) 
+						+ " I2=" + tz390.get_hex(if2, 8);
 			break;
+		case 161: // c2?? MSFI RPI 817
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+						+ tz390.get_hex(reg.getInt(rf1+4),8) 
+						+ " I2=" + tz390.get_hex(if2, 8);
+			break;	
 		case 162: // C00 LARL
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
 						+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " S2("
@@ -14298,9 +15930,43 @@ public class pz390 {
 			break;
 		case 163: // C05 BRASL
 			trace_parms =" R" + tz390.get_hex(mf1, 1) + "="
+			+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " S2("
+			+ tz390.get_hex(bd2_loc, 8) + ")="
+			+ get_ins_target(bd2_loc);
+break;
+		case 164: // C42 LLHRL
+			trace_parms =" R" + tz390.get_hex(mf1, 1) + "="
 						+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " S2("
 						+ tz390.get_hex(bd2_loc, 8) + ")="
-						+ get_ins_target(bd2_loc);
+						+ bytes_to_hex(mem, bd2_loc, 2, 0);
+			break;
+		case 165: // C48 LGRL
+			trace_parms =" R" + tz390.get_hex(mf1, 1) + "="
+						+ tz390.get_long_hex(reg.getLong(rf1), 16)
+						+ " S2(" + tz390.get_hex(bd2_loc, 8) 
+						+ ")="   + bytes_to_hex(mem, bd2_loc, 8, 0);
+			break;	
+		case 166: // C4C LGFRL
+			trace_parms =" R" + tz390.get_hex(mf1, 1) + "="
+						+ tz390.get_long_hex(reg.getLong(rf1), 16)
+						+ " S2(" + tz390.get_hex(bd2_loc, 8) 
+						+ ")="   + bytes_to_hex(mem, bd2_loc, 4, 0);
+			break;
+		case 167: // C4D LRL
+			trace_parms =" R" + tz390.get_hex(mf1, 1) + "="
+						+ tz390.get_hex(reg.getInt(rf1+4), 8)
+						+ " S2(" + tz390.get_hex(bd2_loc, 8) 
+						+ ")="   + bytes_to_hex(mem, bd2_loc, 4, 0);
+			break;
+		case 168: // C44 LGHRL
+			trace_parms =" R" + tz390.get_hex(mf1, 1) + "="
+						+ tz390.get_long_hex(reg.getLong(rf1), 16)
+						+ " S2(" + tz390.get_hex(bd2_loc, 8) 
+						+ ")="   + bytes_to_hex(mem, bd2_loc, 2, 0);
+			break;
+		case 169: // C62 PFDRL
+			trace_parms = " M" + tz390.get_hex(mf1, 1) 
+			            + " S2(" + tz390.get_hex(bd2_loc & psw_amode, 8) + ")";
 			break;
 		case 170:// "SS" 32 MVC oollbdddbddd
 			maxlen = rflen;
@@ -14311,6 +15977,16 @@ public class pz390 {
 					+ bytes_to_hex(mem, bd1_loc, maxlen, 0) + " S2("
 					+ tz390.get_hex(bd2_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd2_loc, maxlen, 0);
+			break;
+		case 171: // ASSIST RXSS I/O Instructions RPI 812
+			maxlen = bd2_loc;
+			if (maxlen <= 0 || maxlen > 8){
+				maxlen = 8; // RPI 395
+			}
+			trace_parms = 
+				" S1(X1)(" + tz390.get_hex(xbd1_loc, 8) 
+                + ")="   + bytes_to_hex(mem, xbd1_loc, maxlen, 0)
+                + " S2(" + tz390.get_hex(bd2_loc, 8) + ")";
 			break;
 		case 180:// "RXY" LTG oorxbdddhhoo
 			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
@@ -14431,6 +16107,16 @@ public class pz390 {
 					+ bytes_to_hex(mem, bd1_loc, 1, 0) + " I2="
 					+ tz390.get_hex(if2, 2);
 			break;
+		case 211:// "SIY" ASI ooiibdddhhoo
+			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
+					+ bytes_to_hex(mem, bd1_loc, 4, 0) + " I2="
+					+ tz390.get_hex(if2, 2);
+			break;
+		case 212:// "SIY" AGSI ooiibdddhhoo
+			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
+					+ bytes_to_hex(mem, bd1_loc, 8, 0) + " I2="
+					+ tz390.get_hex(if2, 2);
+			break;	
 		case 220:// "RSL" 1 TP oor0bddd00oo
 			trace_parms = " S1(" + tz390.get_hex(bd1_loc, 8) + ")="
 					+ bytes_to_hex(mem, bd1_loc, rflen1, 0);
@@ -14441,6 +16127,52 @@ public class pz390 {
 					+ tz390.get_hex(mf3, 1) + "="
 					+ tz390.get_hex(reg.getInt(rf3 + 4), 8) + " I2="
 					+ tz390.get_hex(if2, 8);
+			break;
+		case 231:// "RIE2" CIT oor0iiiim0oo  RPI 817
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+					+ tz390.get_hex(reg.getInt(rf1 + 4), 8) + " I2="
+					+ tz390.get_hex(if2, 4)
+					+ " M3=" + tz390.get_hex(mf3, 1);
+			break;
+		case 232:// "RIE2" CGIT oor0iiiim0oo  RPI 817
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+					+ tz390.get_long_hex(reg.getLong(rf1), 16) + " I2="
+					+ tz390.get_hex(if2, 4)
+					+ " M3=" + tz390.get_hex(mf3, 1);
+			break;
+		case 233:// "RIE4" CGIJ oorm444422oo  RPI 817
+			trace_parms = " R" + tz390.get_hex(mf1, 1) + "="
+					+ tz390.get_long_hex(reg.getLong(rf1), 16) + " I2="
+					+ tz390.get_hex(if2, 2)
+					+ " M3=" + tz390.get_hex(mf3, 1)
+			            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+			            + ")="   + get_ins_target(bd4_loc);
+			break;
+		case 234:// "RIE6" CGRB oorriiiim0oo
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			        + "=" + tz390.get_long_hex(reg.getLong(rf1), 16)
+			        + " R" + tz390.get_hex(mf2, 1) + "="
+					+ tz390.get_long_hex(reg.getLong(rf2), 16)
+					+ " M=" + tz390.get_hex(mf3,1)
+					+ " S4(" + tz390.get_hex(bd4_loc,8)
+					+ "=" + get_ins_target(bd4_loc); 
+			break;	
+		case 235:// "RIE6" CRB oorriiiim0oo
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			        + "=" + tz390.get_hex(reg.getInt(rf1+4), 8)
+			        + " R" + tz390.get_hex(mf2, 1) + "="
+					+ tz390.get_hex(reg.getInt(rf2+4), 8)
+					+ " M=" + tz390.get_hex(mf3,1)
+					+ " S4(" + tz390.get_hex(bd4_loc,8)
+					+ "=" + get_ins_target(bd4_loc); 
+			break;	
+		case 236:// "RIE4" CIJ oorm444422oo  RPI 817
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			        + "=" + tz390.get_hex(reg.getInt(rf1+4), 8)
+					+ " I2=" + tz390.get_hex(if2, 2)
+					+ " M3=" + tz390.get_hex(mf3, 1)
+			            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+			            + ")="   + get_ins_target(bd4_loc);
 			break;
 		case 240:// "RXE" 28 ADB oorxbddd00oo
 			trace_parms = " F" + tz390.get_hex(mf1, 1) + "="
@@ -14601,6 +16333,63 @@ public class pz390 {
 					+ get_fp_long_hex(rf2) + " F" + tz390.get_hex(mf3, 1) + "="
 					+ get_fp_long_hex(rf3);
 			break;
+		case 370: // "RRS1" "CGRB" r1,r2,m3,s4 oorrbdddm0oo RPI 817
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			+ "=" + tz390.get_long_hex(reg.getLong(rf1), 16)
+			+ " R" + tz390.get_hex(mf2,1)
+			+ "=" + tz390.get_long_hex(reg.getLong(rf2), 16)
+			+ " M3=" + tz390.get_hex(mf3, 1)
+	            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+	            + ")="   + get_ins_target(bd4_loc);
+			break;
+		case 371: // "RRS1" "CRB" r1,r2,m3,s4 oorrbdddm0oo RPI 817
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			+ "=" + tz390.get_hex(reg.getInt(rf1+4), 8)
+			+ " R" + tz390.get_hex(mf2,1)
+			+ "=" + tz390.get_hex(reg.getInt(rf2+4), 8)
+			+ " M3=" + tz390.get_hex(mf3, 1)
+	            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+	            + ")="   + get_ins_target(bd4_loc);
+			break;
+		case 380: // "RRS3" "CGIB" r1,i2,m3,i4 oorm444422oo RPI 817
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			+ "=" + tz390.get_long_hex(reg.getLong(rf1), 16)
+			+ " I2=" + tz390.get_hex(if2, 2)
+			+ " M3=" + tz390.get_hex(mf3, 1)
+	            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+	            + ")="   + get_ins_target(bd4_loc);
+			break;
+		case 381: // "RRS3" "CIB" r1,i2,m3,i4 oorm444422oo RPI 817
+			trace_parms = " R" + tz390.get_hex(mf1, 1)
+			+ "=" + tz390.get_hex(reg.getInt(rf1+4), 8)
+			+ " I2=" + tz390.get_hex(if2, 2)
+			+ " M3=" + tz390.get_hex(mf3, 1)
+	            + " S4(" + tz390.get_hex(bd4_loc, 8) 
+	            + ")="   + get_ins_target(bd4_loc);
+			break;
+		case 390: // "SIL" "MVHHI" d1(b1),i2
+			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
+			+ bytes_to_hex(mem, bd1_loc, 2, 0) + " I2="
+			+ tz390.get_hex(if2, 4);
+			break;
+		case 391: // "SIL" "MVGHI" d1(b1),i2
+			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
+			+ bytes_to_hex(mem, bd1_loc, 8, 0) + " I2="
+			+ tz390.get_hex(if2, 4);
+			break;
+		case 392: // "SIL" "MVHI" d1(b1),i2
+			trace_parms = " S2(" + tz390.get_hex(bd1_loc, 8) + ")="
+			+ bytes_to_hex(mem, bd1_loc, 4, 0) + " I2="
+			+ tz390.get_hex(if2, 4);
+			break;
+		case 400: // "RIE8" "RNSBG" r1,r2,i3,i4,i5
+			trace_parms = " R" + tz390.get_hex(mf1, 1) 
+			+ "=" + tz390.get_long_hex(reg.getLong(rf1),16) 
+			+ " R2=" + tz390.get_hex(mf2, 1)
+			+ "=" + tz390.get_long_hex(reg.getLong(rf2),16)
+			+ " I3=" + tz390.get_hex(if3,2)
+			+ " I4=" + tz390.get_hex(if4,2)
+			+ " I5=" + tz390.get_hex(if5,2);
 		}
 		ins_trace_line = " " + tz390.get_hex(psw_loc | psw_amode_bit, 8) + " "
 		               + psw_cc_code[psw_cc] + " " + get_ins_hex(psw_loc) + " "
@@ -14618,5 +16407,68 @@ public class pz390 {
 		} else {
 			return mem.getLong(xbd2_loc);
 		}
+	}
+	private void rsbg_setup_and_rotate(){
+		/*
+		 * set flags, masks, and rotate
+		 */
+		if (if3 < 0){
+			rsbg_test = true;
+		} else {
+			rsbg_test = false;
+		}
+		if3 = if3 & 0x3f;
+		if (if4 < 0){
+			rsbg_zero = true;
+		} else {
+			rsbg_zero = false;
+		}
+		if4 = if4 & 0x3f;
+		/*
+		 * 1.  Set rsbg_mask_ones to all 0's
+		 *     except the selected bits.
+		 * 2.  Set rsbg_mask_zeros to all 1's
+		 *     except the selected bits
+		 */
+		if (if3 <= if4){
+			if (if3 > 0){
+				rsbg_mask_ones = (long)(-1) >>> if3;
+			} else {
+				rsbg_mask_ones = -1;
+			}
+		    rsbg_mask_ones = (rsbg_mask_ones >>> (63-if4)) << (63-if4);	    	
+		    rsbg_mask_zeros = rsbg_mask_ones ^ -1;
+		} else { // selected field wraps 63-0
+			rsbg_mask_zeros = (((long)(-1) >>> (if4+1)) >>> (64-if3)) << (64-if3);	
+			rsbg_mask_ones = rsbg_mask_zeros ^ -1;
+		}
+		/*
+		 * rotate rlv1 left or right 
+		 */
+    	if (if5 != 0){
+    		if (if5 < 32){
+    			rlv2 = long_rotate_left(rlv2,if5);
+    		} else {
+    			rlv2 = long_rotate_right(rlv2,64 - if5);
+    		}
+    	}
+	}
+	private long long_rotate_left(long value,int n ){
+	   /*
+	    * rotate long n bits left (0-63)
+	    */
+	   return (value << n) | (value >>> (64 - n));
+	}
+	private long long_rotate_right(long value,int n ){
+	   /*
+	    * rotate long right n bits 0-83
+	    */
+	   return (value >>> n) | (value << (64- n));
+	}
+	private int int_rotate_left(int value,int n ){
+		   /*
+		    * rotate int n bits left (0-31)
+		    */
+		   return (value << n) | (value >>> (32 - n));
 	}
 }

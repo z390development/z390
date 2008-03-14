@@ -127,6 +127,10 @@ TDCMS    EQU   X'001' TEST FP DATA CLASS MINUS SIGNAL NAN
          RT1   CCE
          CDR   R0,R2
          RT1   CCE
+         LD    1,=X'4E00000000000001' RPI 820 TEST UNNORMALIZED INPUT
+         LD    0,=X'4110000000000000'
+         CDR   0,1
+         RT1   CCE
 * 21   LNDR
          LD    R1,=DH'1'
          LD    R2,=DH'-1'

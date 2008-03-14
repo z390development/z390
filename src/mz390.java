@@ -1095,6 +1095,7 @@ public  class  mz390 {
 			cur_date = new Date(cur_date_cal.getTime().getTime()+567); 
 		}
 		tod_start = cur_date.getTime();
+		open_files();
 		if (!tz390.init_opcode_name_keys()){
 			abort_error(118,"opcode key table error - aborting");
 		}
@@ -1103,7 +1104,7 @@ public  class  mz390 {
 			az390.mz390_started_msg = tz390.started_msg; // RPI 755
 			az390.start_az390_thread(args,z390_log_text,tz390.systerm_file,tz390.stats_file); // RPI 737
 		}
-		open_files();
+//dshx		open_files();
 		if (tz390.opt_tracem){
 			tz390.put_trace(tz390.started_msg); // RPI 755
 		}
@@ -2404,7 +2405,7 @@ public  class  mz390 {
 			&& !bal_eof){
 			call_az390_pass_bal_line(text_line); // RPI 415
 		}
-		if (tz390.opt_tracem && text_line != null){
+		if (tz390.opt_tracem && text_line != null && mac_file_num != null){
 			tz390.put_trace(trace_id 
 				+ tz390.get_cur_bal_line_id(mac_file_num[bal_xref_index],      // rpi 746
 						                    mac_file_line_num[bal_xref_index], // rpi 746
@@ -2431,27 +2432,29 @@ public  class  mz390 {
 		 * pass text_line to az390 and update
 		 * the az390 copy of mz390_errors
 		 */
-		if (az390.lookahead_mode){
-			if (text_line == null || text_line.length() == 0 || text_line.charAt(0) != '*'){
-				abort_error(193,"invalid pass request during lookahead");
+		if (az390 != null){
+			if (az390.lookahead_mode){
+				if (text_line == null || text_line.length() == 0 || text_line.charAt(0) != '*'){
+					abort_error(193,"invalid pass request during lookahead");
+				}
+				// ignore trace comments during lookahead
+				return;
 			}
-			// ignore trace comments during lookahead
-			return;
-		}
-		az390.mz390_errors = mz390_errors; //update mz390 errors for PRN
-		if (mac_call_level >=0){
-			if (mac_call_level == 0){
-				temp_file = new File(tz390.dir_bal + tz390.pgm_name + tz390.pgm_type);
-				cur_mac_name = temp_file.getAbsolutePath(); // RPI 694
+			az390.mz390_errors = mz390_errors; //update mz390 errors for PRN
+			if (mac_call_level >=0){
+				if (mac_call_level == 0){
+					temp_file = new File(tz390.dir_bal + tz390.pgm_name + tz390.pgm_type);
+					cur_mac_name = temp_file.getAbsolutePath(); // RPI 694
+				} else {
+					cur_mac_name = mac_name[mac_call_name_index[mac_call_level]];
+				}
 			} else {
-				cur_mac_name = mac_name[mac_call_name_index[mac_call_level]];
+				cur_mac_name = null;
 			}
-		} else {
-			cur_mac_name = null;
-		}
-		az390.pass_bal_line(text_line,cur_mac_name,mac_file_type[mac_file_num[bal_xref_index]],mac_file_num[bal_xref_index],mac_file_line_num[bal_xref_index]); // RPI 549
-		if (az390.pass_bal_eof){
-			bal_eof = true;
+			az390.pass_bal_line(text_line,cur_mac_name,mac_file_type[mac_file_num[bal_xref_index]],mac_file_num[bal_xref_index],mac_file_line_num[bal_xref_index]); // RPI 549
+			if (az390.pass_bal_eof){
+				bal_eof = true;
+			}
 		}
 	}
 	private String reformat_bal(){
@@ -7412,10 +7415,10 @@ public  class  mz390 {
 		 * display total errors
 		 * close files and exit to system or caller
 		 */
-		if (tz390.opt_asm && !end_found){
+		if (tz390.opt_asm && !end_found && az390 != null){
 			put_stats();
 		}
-		if (tz390.opt_asm){  // RPI 433 finish az390 even if mz390 abort
+		if (tz390.opt_asm && az390 != null){  // RPI 433 finish az390 even if mz390 abort
 			if (az390.az390_running){
 				if (tz390.z390_abort){
 					az390.mz390_abort = true; // RPI 433
@@ -7440,7 +7443,7 @@ public  class  mz390 {
 			put_stats();
 		}
 		close_files();
-		if (tz390.opt_asm 
+		if (tz390.opt_asm && az390 != null
 			&& az390.az390_rc > mz390_rc){
 			mz390_rc = az390.az390_rc;  // RPI 425
 		}
@@ -7697,13 +7700,15 @@ public  class  mz390 {
 		tz390.z390_abort = true;
 		tz390.opt_con = true; // RPI 453
 		log_to_bal = true;
-		int file_index = mac_file_num[mac_line_index];
-		mac_file_errors[file_index]++;  // RPI 432
 		String err_line_and_num = "";
-		if (mac_line_index < tz390.opt_maxline){
-			err_line_and_num =
-				" file=" + (file_index+1)
-				+ " line=" + mac_file_line_num[mac_line_index];
+		if (mac_file_num != null){ // RPI 812
+			int file_index = mac_file_num[mac_line_index];
+			mac_file_errors[file_index]++;  // RPI 432
+			if (mac_line_index < tz390.opt_maxline){
+				err_line_and_num =
+				   " file=" + (file_index+1)
+				 + " line=" + mac_file_line_num[mac_line_index];
+		    }
 		}
 		msg = "MZ390E error " + error 
 		+ err_line_and_num

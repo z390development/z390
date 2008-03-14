@@ -1,9 +1,9 @@
-z390 V1.4.00 Portable Mainframe Assembler
+z390 V1.4.01 Portable Mainframe Assembler
 Copyright 2008 Automated Software Tools Corporation
 
 Minimum Requirements for z390:
  * Microsoft Windows Vista, Windows XP, or Ubuntu Linux 6.06 LTS (others not tested)
- * Sun Microsystems Java Runtime J2SE 6.0+ (latest fully tested on XP/Vista)
+ * Sun Microsystems Java Runtime J2SE 6.0+ 
  * Minimum of 512 MB memory (default Java user memory allocation set to 100 MB)
  * Adobe Acrobat or later for viewing User Guide and other documentation
 
@@ -23,7 +23,13 @@ o Structured programming macros including IF, ELSE, ENDIF, DO UNTIL, etc.
 * az390 - assembler to translate BAL source code into OBJ file and generate PRN listing
 * lz390 - linker to translate OBJ files into 390 binary load module
 * ez390 - runtime emulator to exec 390 load modules running in 24/31 bit mode
-o All problem state instructions including 128 bit HFP, BFP, and DFP floating point and 64 bit register instructions.
+o All problem state instructions including 128 bit HFP, BFP, and DFP floating point and 64 bit register instructions for IBM z9 and z10 mainframe computers.  See the following instruction regression tests:
+* Rt\test\TESTINS1 – test the assembly of all z9, z10, and ASSIST instructions totaling over 1000.
+* Rt\test\TESTINS2 – test execution of basic problem state instructions
+* Rt\test\TESTFP1 – test HFP and BFP 32, 64, and 128 bit floating point
+* Rt\test\TESTDFP1 – test DFP 32, 64, and 128 bit decimal floating point
+* Rt\test\TESTINS3 – test over 220 new z10 problem state instructions 
+o ASSIST extended instructions to simplify I/O for use by students in mainframe assembler computer science classes.
 o TEST option for interactive debugging with dump, modify, and trace options
 o TRACE option for instruction trace with operand register and memory data
 o SVC support for the z390 provided MVS compatible macros including QSAM, VSAM, GETMAIN, FREEMAIN, TIME, etc. plus extensions such as TCPIO for SOA and CICS TCP/IP network messaging.
@@ -58,7 +64,7 @@ z390 Windows Vista and XP installation instructions:
 2. Download latest z390 InstallShield setup.exe file from www.z390.org 
 3. Run z390 setup.exe to install it on Windows Vista or XP system
 4. Remove old versions of J2SE runtime such as 1.4.2 etc.
-5. Download and install Java 1.6.0u3+ runtime from: 
+5. Download and install latest J2SE 6.0+ runtime from: 
     http://java.sun.com/j2se/
 6. Double click on the z390 desktop icon to start z390 GUI
     a. Enter the command IVP to run installation verification program 
@@ -76,9 +82,12 @@ z390 Windows Vista and XP installation instructions:
         5)  DEMO.LST – linker listing
         6)  DEMO.LOG – execution log including WTO display message
     e. Optional downloads from www.z390.org for use with z390 install include the following:
-        1)   Regression tests for all z390 components - these tests have been successfully run
-               on Windows Vista, Windows XP, and Ubuntu Linux 6.06 LTS using J2RE 1.5.0_12.           
-        2)   Public domain MVS 3.8 macro library with associated WTO demo and test programs.
+        1)   PTF fix and enhancement zip files with InstallShield install for Windows.  These
+               Optional hot fixes and enhancements are published between full releases for users
+               that need specific fixes or enhancements.  See the README.TXT file in zip for help.
+        2)   Regression tests for all z390 components - these tests have been successfully run
+               on Windows Vista, Windows XP, and Ubuntu Linux 6.06 LTS using J2RE 1.6.0_04.           
+        3)   Public domain MVS 3.8 macro library with associated WTO demo and test programs.
                Note the WTO demo using the MVS 3.8 macros works because the SVC interface is the
                same for z390.  Most other SVC interfaces are different.  These macros are made
                available for reference only as z390 automatically installs its only version of MVS
@@ -89,7 +98,7 @@ z390 Windows Vista and XP installation instructions:
 
 7. Click on help menu for links to additional information.
 
-IBM, CICS, VSAM, and z/OS are registered trademarks of International Business Machine Corporation.
+IBM, CICS, VSAM, z9, z10, and z/OS are registered trademarks of International Business Machine Corporation.
 
 Don Higgins, President
 Automated Software Tools Corporation

@@ -3779,7 +3779,69 @@ set GIT_COMMITTER_DATE=2021-03-22 21:32:00 +0100
 git commit -m "Reconstructed version v1.4.00f of z390 committed on behalf of Don Higgins"
 git tag -a v1.4.00f -m "Reconstructed version v1.4.00f of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.4.01
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.4.01
+git add BLDJAR6.BAT
+git add Doc/readme.rtf
+git add Doc/readme.txt
+git rm  README.TXT
+git add RT/DIRCLEAN.BAT
+git add RT/RT.BAT
+git add RT/RTCLEAN1.BAT
+git add RT/RTGENCMP.BAT
+git add RT/RTGENCMP.DAT
+git add RT/RTLINK1.BAT
+git add RT/RTMFACC1.BAT
+git add RT/RTTEST1.BAT
+git add RT/RTVIEW.BAT
+git add RT/SAVE1.BAT
+git add RT/SAVEALL.BAT
+git add RT/TEST/TESTASC3.MLC
+git add RT/TEST/TESTDFP1.MLC
+git add RT/TEST/TESTFP1.MLC
+git add RT/TEST/TESTINS1.MLC
+git add RT/TEST/TESTINS2.MLC
+git add RT/Z390.IVP
+git add Z390.IVP
+git add mac/RT1.MAC
+git add mfacc/P12DSH3.MLC
+git add mvs/Z390.IVP
+git add src/az390.java
+git add src/ez390.java
+git add src/lz390.java
+git add src/mz390.java
+git add src/pz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add vsam/demo/BUILDCAT.BAT
+git add vsam/demo/RRF1DEMO.BAT
+git add vsam/demo/RRV1DEMO.BAT
+git add ASSIST.BAT
+git add assist/
+git add linklib/SQXTR.MLC
+git add mac/SQXTR.MAC
+git add mfacc/P15WR1.MLC
+git add mfacc/P16WR1.MLC
+git add mfacc/P17WR1.MLC
+git add mfacc/P18DSH1.MLC
+git add rt/RTAST.BAT
+git add rt/RTAST1.BAT
+git add rt/SAVEAST.BAT
+git add rt/test/TESTINS3.MLC
+git add vsam/test/KSF2REST.BAT
+
+==> Create commit for V1.4.01
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2008-03-14 09:32:00 -0500
+set GIT_COMMITTER_DATE=2021-03-22 21:42:00 +0100
+git commit -m "Reconstructed version v1.4.01 of z390 committed on behalf of Don Higgins"
+git tag -a v1.4.01 -m "Reconstructed version v1.4.01 of z390 committed on behalf of Don Higgins"
 
 
 

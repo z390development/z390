@@ -1,0 +1,91 @@
+         TITLE 'SQXTR - CALC LD EXTENDED DFP SQUARE ROOT'
+*********************************************************************
+* 1.  ROUTINE CALLED BY SQXTR.MAC AFTER STORING ARG AT SQXTR+8 
+* 2.  CALCULATES SQUARE ROOT OF ARG AND REPLACES ARG   
+* 3.  USES NEWTON-RAPHSON STARTING WITH GUESS OF X**(EXP/2)
+* 4.  RESULTS FOR ARG  SQRT(ARG) ITERATIONS
+*                 1E4  1E2       1
+*                 1E-4 1E-2      1
+*                 3.5  1.87...   7
+* 5. FIRST GUESS CAN STILL BE IMPROVED BUT MAY NOT BE WORTH OVERHEAD?
+*********************************************************************
+* 02/28/08 DSH RPI 814 ADD SQXTR.MAC AND SQXTR.MLC AS EXTENDED INS.
+*********************************************************************
+SQXTR    CSECT
+         USING SQXTR,R15
+         ST    R14,SAVER14
+         B     SKIPARG
+ARG      DS    LD      DFP LD ARGUMENT TO BE REPLACED WITH SQUARE ROOT
+SKIPARG  DS    0H
+         ST    R12,SAVER12
+         LR    R12,R15
+         USING SQXTR,R12
+         DROP  R15
+         STX   F0,SAVEF0      X
+         STX   F1,SAVEF1      SQRT(X)
+         STX   F4,SAVEF4      0.5       
+         STX   F5,SAVEF5      WORK
+         STX   F8,SAVEF8      ERROR LIMIT
+         LX    F0,ARG         F0 = X
+         LXR   F1,F0          F1 = X 
+         EEXTR R0,F1
+         AHI   R0,-LD_BIAS
+         TMLL  R0,1
+         BZ    EXPOK
+         LTR   R0,R0
+         BM    DIV10
+MPY10    DS    0H
+         LX    F4,=LD'10'
+         MXTR  F1,F1,F4       F1 = X * 10 IF EXP +ODD
+         B     EXPOK
+DIV10    DS    0H
+         LX    F4,=LD'.1'
+         MXTR  F1,F1,F4       F1 = X / 10 IF EXP -ODD
+EXPOK    DS    0H
+         SRA   R0,1
+         AHI   R0,LD_BIAS
+         IEXTR F1,F1,R0       F1 = X**(EXP/2)
+         LX    F4,=LD'.5'     F4 = 0.5
+         LX    F8,=LD'(MIN)'  F8 = ERROR LIMIT
+         LA    R0,0
+LOOP     DS    0H
+         AHI   R0,1
+         CTD   CTD_LD,IN=F1,OUT=DSQXT
+         SNAP  ID=(0),PDATA=,STORAGE=(DSQXT,DSQXT+45)
+         DXTR  F5,F0,F1
+         AXTR  F5,F5,F1
+         MXTR  F1,F5,F4       F1 = (X/SQRT(X)+SQRT(X))*.5
+         MXTR  F5,F1,F1       F5 = SQRT(X)*SQRT(X)
+         CXTR  F5,F0
+         BM    NEGERR
+         SXTR  F5,F5,F0       F5 = DIFF SQRT(X)*SQRT(X) - X
+         CXTR  F5,F8
+         BH    LOOP           REPEAT UNTIL ERROR < LIMIT
+         B     EXIT
+NEGERR   DS    0H
+         SXTR  F5,F0,F5       F9 = X - SQRT(X)*SQRT(X)
+         CXTR  F9,F8
+         BH    LOOP           REPEAT UNTIL ERROR < LIMIT
+EXIT     DS    0H
+         STX   F1,ARG
+         LX    F0,SAVEF0
+         LX    F1,SAVEF1
+         LX    F4,SAVEF4
+         LX    F5,SAVEF5
+         LX    F8,SAVEF8
+         LA    R15,SQXTR
+         L     R14,SAVER14
+         L     R12,SAVER12
+         BR    R14
+LD_BIAS  EQU   6176   S,C5,BXDF12,CCF110  DFP EXP BIAS
+SAVER12  DS    F
+SAVER14  DS    F
+SAVEF0   DS    LD 0+2
+SAVEF1   DS    LD 1+3
+SAVEF4   DS    LD 4+6
+SAVEF5   DS    LD 5+7
+SAVEF8   DS    LD 8+10
+         EQUREGS REGS=FPR
+         EQUREGS REGS=GPR
+DSQXT    DS      CL45
+         END

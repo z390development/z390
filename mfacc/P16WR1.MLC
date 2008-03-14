@@ -1,0 +1,66 @@
+*********************************************************************
+* Z390 MAINFRAME ASSEMBLER CODING CONTEST PROBLEM #16.
+********************************************************************* 
+*********************************************************************
+P16WR1   ZMFACC CODE,START,NAME='WERNER RAMS',RUNSYS=390
+         LA     R4,TABELLE  
+         LA     R5,MAXPRIME 
+         SR     R2,R2
+         LA     R6,2          FIRST PRIME
+LOOP010  EQU    *         
+         CVD    R6,DW
+         MVC    PRIMNR,=X'40202120'
+         ED     PRIMNR,DW+6        
+         WTO    MF=(E,WTOMSG)
+         BAS    R12,SETBIT
+         BAS    R12,SUCHBIT
+         MVI    LAR6+3,2      INCREASE BY 2 FROM PRIME NR 3   
+         CR     R6,R5
+         BL     LOOP010       NEXT PRIME NR IN R6
+         B      END000
+SETBIT   EQU    *   SET ALL BITS THAT ARE MULTIPE OF CURRENT PRIM
+         LA     R1,0(R6,R6)   LET BIT OF CURRENT PRIME REMAIN ZERO         
+SET010   EQU    *
+         CR     R1,R5
+         BNL    SET100
+         LR     R14,R1
+         SRDL   R14,3      R14 = DISPLACEMENT IN TABELLE
+         SRL    R15,29     R15 = DISPLACEMENT IN BITTAB
+         AR     R14,R4 
+         IC     R2,BITTAB(R15)
+         EX     R2,OIBIT   OI    0(R14),0   
+         AR     R1,R6
+         B      SET010
+SET100   EQU    *
+         BR     R12
+SUCHBIT  EQU    *    SEARCH NEXT BIT, THAT IS ZERO 
+LAR6     LA     R6,1(R6)  
+         CR     R6,R5
+         BNL    SUCH100
+         LR     R14,R6
+         SRDL   R14,3      R14 = DISPLACEMENT IN TABELLE
+         SRL    R15,29     R15 = DISPLACEMENT IN BITTAB
+         AR     R14,R4 
+         IC     R2,BITTAB(R15)
+         EX     R2,TMBIT   TM    0(R14),0   
+         BO     SUCHBIT    BIT ALREADY SET
+SUCH100  EQU    *
+         BR     R12 
+END000   EQU    *
+         ZMFACC CODE,END 
+*
+OIBIT    OI     0(R14),0
+TMBIT    TM     0(R14),0
+*
+         ZMFACC INPUT,START 
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+MAXPRIME EQU    100
+TABELLE  DC     (MAXPRIME/8+1)X'00'
+         ZMFACC OUTPUT,END
+WTOMSG   DC     AL2(WTOEND-WTOMSG,0),C'PRIME ='
+PRIMNR   DS     CL4
+WTOEND   EQU    * 
+DW       DS     D 
+BITTAB   DC     X'8040201008040201' 
+         END

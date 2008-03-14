@@ -301,7 +301,9 @@ public  class  az390 implements Runnable {
         * 01/13/08 RPI 786 set fp_form for preferred exp DFP constants
         * 01/17/08 RPI 790 set DFP exp to explicit decimal point or zero for const.
         *          set scale factor if no explicit modifier
-        *          support I' and S' operators in expression                    
+        *          support I' and S' operators in expression 
+        * 02/28/08 RPI 812 assemble ASSIST opcodes if ASSIST option on 
+        * 03/03/08 RPI 817 assemble all 226 new z10 opcodes                          
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -1849,7 +1851,7 @@ private void process_bal_op(){
     		get_hex_reg();
     		if (exp_index >= exp_text.length()
     			|| exp_text.charAt(exp_index) != ','){ 
-    			obj_code = obj_code.concat("0"); // IPM,EFPC,SFPC
+    			obj_code = obj_code.concat("0"); // IPM,EFPC,SFPC,PTF RPI 817
     		} else {
     			skip_comma();
     			get_hex_reg();
@@ -2190,7 +2192,7 @@ private void process_bal_op(){
     	check_end_parms();
     	put_obj_text();
     	break;
-    case 34:   // RPI 206 CG?R, CF?R, FI?R, IDTE, TB?R RRF2 34 (r1,m3,r2 maps to oooo3012)
+    case 34:   // RPI 206 "RRF2" CG?R, CF?R, FI?R, IDTE, TB?R RRF2 34 (r1,m3,r2 maps to oooo3012)
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;
     	loc_start = loc_ctr;
@@ -2228,7 +2230,7 @@ private void process_bal_op(){
     	check_end_parms();
     	put_obj_text();
     	break;	
-    case  36:  // RPI 407 "ADTR" "RRR" oooo3012 
+    case 36:  // RPI 407 "ADTR" "RRR" oooo3012 
     	bal_op_ok = true;
     	loc_ctr = (loc_ctr+1)/2*2;
     	loc_start = loc_ctr;
@@ -2246,6 +2248,355 @@ private void process_bal_op(){
 	    	+ obj_code.substring(4,5)  // r1
     	    + obj_code.substring(6,7); // r2
 	    check_end_parms();
+    	put_obj_text();
+    	break;
+    case 37:  // "RXAS" XDECI for ASSIST RPI 812
+    	if (tz390.opt_assist){
+    		bal_op_ok = true;
+    		loc_ctr = (loc_ctr+1)/2*2;
+    		loc_start = loc_ctr;
+    		loc_len = 4;
+    		get_hex_op(1,2);
+    		get_hex_reg();
+    		skip_comma();
+    		get_hex_xbddd();
+    		check_end_parms();
+    		put_obj_text();
+    	}
+    	break;
+    case 38:  // "RXSS" XREAD for ASSIST RPI 812
+    	if (tz390.opt_assist){
+    		bal_op_ok = true;
+    		loc_ctr = (loc_ctr+1)/2*2;
+    		loc_start = loc_ctr;
+    		loc_len = 6;
+    		get_hex_op(1,3);
+    		if ((bal_parms == null
+    			|| bal_parms.length() == 0
+    			|| bal_parms.charAt(0) == ',')
+    			&& bal_op.equals("XDUMP")){
+    			exp_text = "0,0"; // force zeros for default XDUMP	
+    		}
+    		get_hex_xbddd();
+    		if (exp_index < exp_text.length() 
+    			&& exp_text.charAt(exp_index) == ','){
+    			skip_comma();
+    			if(exp_index < exp_text.length() 
+    				&& exp_text.charAt(exp_index) == '('){
+    				exp_text = "0" + exp_text.substring(exp_index);
+    				exp_index = 0; // allow (reg) vs 0(reg)
+    			}
+    			get_hex_bddd2(true);
+    		} else {
+    			get_hex_zero(4);
+    		}
+    		check_end_parms();
+    		put_obj_text();
+    	} else if (tz390.op_name[bal_op_index].equals("PKU")){
+        	bal_op_ok = true;
+        	loc_ctr = (loc_ctr+1)/2*2;
+        	loc_start = loc_ctr;
+        	loc_len = 6;
+        	get_hex_op(1,2); 
+           	get_hex_llbddd();
+           	hex_bddd1     = hex_bddd;
+           	hex_bddd1_loc = hex_bddd_loc;
+        	obj_code = obj_code + hex_ll + hex_bddd1;
+           	skip_comma();
+        	get_hex_bddd2(true);
+        	check_end_parms();
+        	put_obj_text();	    		
+    	}
+    	break;	
+    case 39:   // RPI 817 "RRF5" CRT (r1,r2,m3 maps to oooo3012)
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 4;
+    	get_hex_op(1,4);
+     	get_hex_reg();
+     	get_hex_zero(1);
+     	skip_comma();
+     	get_hex_reg();
+     	if (!bal_abort && exp_next_char(',')){
+     		skip_comma();
+     		get_hex_reg();
+     	} else {
+     		get_hex_zero(1); // RPI 817 optional m3 PFMF 
+     	}
+    	obj_code = obj_code.substring(0,4)  // oooo
+     	    + obj_code.substring(7,8)   // m3
+	    	+ "0"
+	    	+ obj_code.substring(4,5)  // r1
+	    	+ obj_code.substring(6,7); // r2
+    	check_end_parms();
+    	put_obj_text();
+    	break;
+    case 40:   // RPI 817 "RRF6" CRTE (r1,r2 maps to oooo0012)
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 4;
+    	get_hex_op(1,5);
+     	get_hex_zero(1);
+     	get_hex_reg();
+     	skip_comma();
+     	get_hex_reg();     	
+    	check_end_parms();
+    	put_obj_text();
+    	break;
+    case 41:  // "RIE2" CIT oor0iiiim0oo
+    	// r1,i2,m3
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2);  // OP1
+    	get_hex_reg();    // R1
+    	get_hex_zero(1);
+       	skip_comma();
+       	get_hex_rel();    // I2
+       	skip_comma();
+       	get_hex_reg();    // M3
+       	get_hex_zero(1);
+       	get_hex_op(3,2);  // OP2
+    	check_end_parms();
+    	put_obj_text();
+    	break;
+    case 42:  // "RIE3" CITE oorriiiim0oo
+    	// r1,i2
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2);  // op1
+    	get_hex_reg();    // r1f
+    	get_hex_zero(1);
+       	skip_comma();
+       	get_hex_rel();    // i2
+       	get_hex_op(5,1);  // m3 from opcode
+       	get_hex_zero(1);  // 0
+       	get_hex_op(3,2);  // op2
+    	check_end_parms();
+    	put_obj_text();
+    	break;	
+    case 43:  // "RIE4" CITE oo13444422oo
+    	// r1,i2,m3,i4
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2);  // op1
+    	get_hex_reg();    // r1 
+       	skip_comma();
+       	get_hex_byte();   // i2
+        skip_comma();
+        get_hex_reg();    // m3
+       	skip_comma();
+       	get_hex_rel();    //i4 rel 
+       	get_hex_op(3,2);
+    	check_end_parms();
+    	obj_code = obj_code.substring(0,3)  // op1+r1
+ 	    + obj_code.substring(5,6)          // m3
+    	+ obj_code.substring(6,10)          // i4 4444 rel
+    	+ obj_code.substring(3,5)           // i2 22 byte
+    	+ obj_code.substring(10,12); // op2
+    	put_obj_text();
+    	break;
+    case 44:  // "RIE5" CGIJ oorm444422oo r1,i2,m3,i4
+    	// r1,i2,i4
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2); // op1
+    	get_hex_reg();   // r1 
+    	get_hex_op(5,1); // m3
+    	skip_comma();
+       	get_hex_byte();  // i2
+       	skip_comma();
+       	get_hex_rel(); // i4 rel 
+       	get_hex_op(3,2);
+    	check_end_parms();
+    	obj_code = obj_code.substring(0,4)  // op1+r1+m3
+    	+ obj_code.substring(6,10)          // i4 4444 rel
+    	+ obj_code.substring(4,6)           // i2 22 byte
+    	+ obj_code.substring(10,12); // op2
+    	put_obj_text();
+    	break;
+    case 45:  // "RRS1" CGIB oorrbdddm0oo
+    	// r1,r2,m3,s4
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2);
+    	get_hex_reg(); // r1
+        skip_comma();
+        get_hex_reg(); // r2 
+       	skip_comma();
+       	get_hex_reg(); // m3
+       	get_hex_zero(1);
+       	skip_comma();
+       	get_hex_bddd2(true); // bddd4
+       	get_hex_op(3,2);
+    	check_end_parms();
+    	obj_code = obj_code.substring(0,4)  // op1+r1+r2
+    	+ obj_code.substring(6,10)          // s4 bddd    
+        + obj_code.substring(4,6)           // m3 + 0
+    	+ obj_code.substring(10,12); // op2
+    	put_obj_text();
+    	break;
+    case 46:  // "RRS2" CGRBE oorriiiim0oo
+    	// r1,r2,s4
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2); // op1
+    	get_hex_reg();   // r1
+    	skip_comma();
+    	get_hex_reg();   // r2
+       	skip_comma();
+       	get_hex_bddd2(true);  // s4 bddd
+       	get_hex_op(5,1); // m3 from op
+       	get_hex_zero(1); // 0
+       	get_hex_op(3,2); // op2
+    	check_end_parms();
+    	put_obj_text();
+    	break;	
+    case 47:  // "RRS3" CGIB oo13bddd22oo
+    	// r1,i2,m3,i4
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2); // op1
+    	get_hex_reg();   // r1 
+       	skip_comma();
+       	get_hex_byte();  // i2
+       	skip_comma();
+    	get_hex_reg();   // m3
+       	skip_comma();
+       	get_hex_bddd2(true);  // s4 bddd 
+       	get_hex_op(3,2); // op2
+    	check_end_parms();
+    	obj_code = obj_code.substring(0,3)  // op1+r1
+ 	    + obj_code.substring(5,6)           // m3
+    	+ obj_code.substring(6,10)          // s4 bddd 
+    	+ obj_code.substring(3,5)           // i2 22 byte
+    	+ obj_code.substring(10,12);        // op2
+    	put_obj_text();
+    	break;
+    case 48:  // "RRS4" CGIBE oormbddd22oo r1,i2,m3,i4
+    	// r1,i2,s4
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2);  // op1
+    	get_hex_reg();    // r1 
+    	get_hex_op(5,1);  // m3 from opcode
+    	skip_comma();
+       	get_hex_byte();   // i2
+       	skip_comma();
+       	get_hex_bddd2(true);   // s4 bddd 
+       	get_hex_op(3,2);  // op2
+    	check_end_parms();
+    	obj_code = obj_code.substring(0,4)  // op1+r1+m3
+    	+ obj_code.substring(6,10)          // i4 4444 rel
+    	+ obj_code.substring(4,6)           // i2 22 byte
+    	+ obj_code.substring(10,12); // op2
+    	put_obj_text();
+    	break;
+    case 49:  // "RIE6" CGRJ oorriiiim0oo
+    	// r1,r2,m3,s4
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2);  // OP1
+    	get_hex_reg();    // R1
+    	skip_comma();
+    	get_hex_reg();    // r2
+       	skip_comma();
+       	get_hex_reg();    // m3
+       	skip_comma();
+       	get_hex_rel();    // I2
+       	get_hex_zero(1);
+       	get_hex_op(3,2);  // OP2
+    	check_end_parms();
+    	obj_code = obj_code.substring(0,4)  // op1+r1+r2
+    	+ obj_code.substring(5,9)          // s4 bddd    
+        + obj_code.substring(4,5)           // m3 + 0
+    	+ obj_code.substring(9,12);        // op2
+    	put_obj_text();
+    	break;
+    case 50:  // "RIE7" CGRJE oorriiiim0oo
+    	// r1,r2,s4
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2);  // OP1
+    	get_hex_reg();    // R1
+    	skip_comma();
+    	get_hex_reg();    // R2
+    	skip_comma();
+       	get_hex_rel();    // I2
+       	get_hex_op(5,1);  // M3
+       	get_hex_zero(1);  // 0
+       	get_hex_op(3,2);  // OP2
+    	check_end_parms();
+    	put_obj_text();
+    	break;
+    case 51: // "SIL" "MVHHI" d1(b1),i2 oooobdddiiii
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,4); 
+    	get_hex_bddd2(true);
+    	skip_comma();
+    	get_hex_rel();
+    	check_end_parms();
+    	put_obj_text();
+    	break;
+    case 52: // "RIE8" "RNSBG" oo12334455oo RPI 817
+        // r1,r2,i3,i4[,i5]
+    	// i3 high bit for test RNSBGT
+    	// i4 high bit for zero RISBGZ
+    	bal_op_ok = true;
+    	loc_ctr = (loc_ctr+1)/2*2;
+    	loc_start = loc_ctr;
+    	loc_len = 6;
+    	get_hex_op(1,2);  // OP1
+    	get_hex_reg();    // R1
+       	skip_comma();
+       	get_hex_reg();    // R2
+       	skip_comma();
+       	get_hex_byte();   // I3
+       	if (!bal_abort 
+       		&& bal_op.length() == 6 
+       		&& bal_op.charAt(5) == 'T'){ // turn on test bit if OP=?????T
+    		obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(exp_val + 0x80,2);
+       	}
+       	skip_comma();
+       	get_hex_byte();   // I4
+       	if (!bal_abort 
+       		&& bal_op.length() == 6 
+       		&& bal_op.charAt(5) == 'Z'){ // turn on XZERO bit if OP=?????Z
+    		obj_code = obj_code.substring(0,obj_code.length()-2) + tz390.get_hex(exp_val + 0x80,2);
+       	}
+       	if (exp_text.length() > exp_index 
+       		&& exp_text.charAt(exp_index) == ','){
+       		skip_comma();
+       		get_hex_byte();   // I5
+       	} else {
+       		get_hex_zero(1);  // I5 default 0 rotate
+       	}
+       	get_hex_op(3,2);  // OP2
+    	check_end_parms();
     	put_obj_text();
     	break;
     case 101:  // CCW  0 
@@ -5344,7 +5695,9 @@ private void get_hex_byte(){
 	/*
 	 * append hex byte from next parm
 	 */
-	if (calc_abs_exp() && exp_val >= 0 && exp_val <= 255){
+	if (calc_abs_exp() 
+		&& exp_val <= 255
+		&& exp_val >= -256){  // RPI 817 allow -256 to 255
 		obj_code = obj_code + tz390.get_hex(exp_val,2);
 	} else {
 		log_error(42,"invalid byte value");
@@ -6051,18 +6404,23 @@ private void process_dca_data(){
 			    } else {
 			    	gen_dca_bytes();
 			    }
-			    if (dc_field.charAt(dc_index) == ','){
-			    	exp_index++;
-			    } else if (dc_field.charAt(dc_index) == ')'){
-			    	if (dc_dup > 1){         //RPI2 start
-					    dc_index = dc_data_start;
-					    exp_index = dc_index; 
-					    dc_dup--; 
-			    	} else { 
-			    		dc_eod = true;	
-			    	}                        //RPI2
-			    } else {
-			    	log_error(105,"invalid dc data terminator - " + dc_field.substring(dc_index));
+			    if (dc_field.length() > dc_index){
+			    	if (dc_field.charAt(dc_index) == ','){
+			    		exp_index++;
+			    	} else if (dc_field.charAt(dc_index) == ')'){
+			    		if (dc_dup > 1){         //RPI2 start
+			    			dc_index = dc_data_start;
+			    			exp_index = dc_index; 
+			    			dc_dup--; 
+			    		} else { 
+			    			dc_eod = true;	
+			    		}                        //RPI2
+			    	} else {
+			    		log_error(105,"invalid dc data terminator - " + dc_field.substring(dc_index));
+			    	}
+			    } else { // prevent trap on missing ) etc. RPI 817
+			    	log_error(203,"missing dc data terminator");
+			    	
 			    }
 		    }
 		}

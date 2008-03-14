@@ -171,6 +171,10 @@ public  class  tz390 {
     * 01/14/08 RPI 787 support DFP unnormalized instructions
     * 01/17/08 RPI 790 set DFP exp from explicit decimal else use 0
     *          add fp_normalization for HFP unnormalized instructions
+    * 02/28/08 RPI 814 change pgm_dir to dir_pgm for consistency 
+    * 02/28/08 RPI 812 add ASSIST option for assembly and emulation of ASSIST 
+    * 03/03/08 RPI 817 add 226 z10 instructions  
+    * 03/13/08 RPI 820 prevent cf5 array exception due to overflow    
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -179,7 +183,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.00f";  //dsh
+    String version    = "V1.4.01";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -195,6 +199,7 @@ public  class  tz390 {
     boolean opt_amode31  = true;   // link to run amode31
     boolean opt_ascii    = false; // use ascii vs ebcdic
     boolean opt_asm      = true;  // run az390 assembler as mz390 subtask  RPI 415
+    boolean opt_assist   = false; // enable assembly and emulation of ASSIST instructions
     boolean opt_autolink = true;  // search SYSOBJ for missing externals
     boolean opt_bal      = false; // generate bal source output from mz390 RPI 415
     boolean opt_bs2000   = false; // Seimens BS2000 asm compatibility
@@ -295,8 +300,6 @@ public  class  tz390 {
     /*
 	 * shared pgm dir, name, type and associated dirs
 	 */
-	String dir_cur = null; // default current dir
-	String pgm_dir  = null; // from first parm else dir_cur
 	String job_date = null; // job date mm/dd/yy  RPI 558
 	String pgm_name = null; // from first parm else abort
 	String pgm_type = null; // from first parm override if mlc else def.
@@ -325,6 +328,7 @@ public  class  tz390 {
     String dir_390 = null; // SYS390() load module
     String dir_bal = null; // SYSBAL() az390 source input
     String dir_cpy = null; // SYSCPY() mz390 copybook lib defaults to dir_mac RPI 742
+	String dir_cur = null; // default current dir
     String dir_dat = null; // SYSDAT() mz390 AREAD extended option
     String dir_err = null; // SYSERR() ?z390 systerm error file directory
     String dir_log = null; // SYSLOG() ez390 log // RPI 243
@@ -332,6 +336,7 @@ public  class  tz390 {
     String dir_mac = null; // SYSMAC() mz390 macro lib
     String dir_mlc = null; // SYSMLC() mz390 source input
     String dir_pch = null; // SYSPCH() mz390 punch output dir
+	String dir_pgm = null; // from first parm else dir_cur
     String dir_prn = null; // SYSPRN() az390 listing
     String dir_obj = null; // SYSOBJ() lz390 object lib
     String dir_opt = null; // SYSOPT() OPT options @file path defaults to dir_mac RPI 742
@@ -517,7 +522,7 @@ public  class  tz390 {
         byte fp_lh_type = 8; // HFP extended
         byte fp_db_digits = 15;
         byte fp_dd_digits = 16;
-        byte fp_dh_digits = 15;
+        byte fp_dh_digits = 15; 
         byte fp_eb_digits = 7;
         byte fp_ed_digits = 7;
         byte fp_eh_digits = 6;
@@ -910,6 +915,8 @@ public  class  tz390 {
 		       "CVB",      // 1170 "4F" "CVB" "RX" 5
 		       "ST",       // 1180 "50" "ST" "RX" 5
 		       "LAE",      // 1190 "51" "LAE" "RX" 5
+		       "XDECO",    // 1193 "52" "XDECO" "RX" 37 RPI 812
+		       "XDECI",    // 1196 "53" "XDECI" "RX" 37 RPI 812	       
 		       "N",        // 1200 "54" "N" "RX" 5
 		       "CL",       // 1210 "55" "CL" "RX" 5
 		       "O",        // 1220 "56" "O" "RX" 5
@@ -923,6 +930,8 @@ public  class  tz390 {
 		       "AL",       // 1300 "5E" "AL" "RX" 5
 		       "SL",       // 1310 "5F" "SL" "RX" 5
 		       "STD",      // 1320 "60" "STD" "RX" 5
+		       "XHEXI",    // 1323 "61" "XHEXI" "RX" 37 RPI 812
+		       "XHEXO",    // 1326 "62" "XHEXO" "RX" 37 RPI 812
 		       "MXD",      // 1330 "67" "MXD" "RX" 5
 		       "LD",       // 1340 "68" "LD" "RX" 5
 		       "CD",       // 1350 "69" "CD" "RX" 5
@@ -1339,6 +1348,34 @@ public  class  tz390 {
 		       "KIMD",     // 4810 "B93E" "KIMD" "RRE" 14
 		       "KLMD",     // 4820 "B93F" "KLMD" "RRE" 14
 		       "BCTGR",    // 4830 "B946" "BCTGR" "RRE" 14
+		       "CGRT",     // 10 "B960" "CGRT" "RRF5" 39 RPI 817
+		       "CGRTE",    // 20 "B9608" "CGRTE" "RRF6" 40 RPI 817
+		       "CGRTH",    // 30 "B9602" "CGRTH" "RRF6" 40 RPI 817
+		       "CGRTL",    // 40 "B9604" "CGRTL" "RRF6" 40 RPI 817
+		       "CGRTNE",   // 50 "B9606" "CGRTNE" "RRF6" 40 RPI 817
+		       "CGRTNH",   // 60 "B960C" "CGRTNH" "RRF6" 40 RPI 817
+		       "CGRTNL",   // 70 "B960A" "CGRTNL" "RRF6" 40 RPI 817
+		       "CLGRT",    // 10 "B961" "CLGRT" "RRF5" 39 RPI 817
+		       "CLGRTE",   // 20 "B9618" "CLGRTE" "RRF6" 40 RPI 817
+		       "CLGRTH",   // 30 "B9612" "CLGRTH" "RRF6" 40 RPI 817
+		       "CLGRTL",   // 40 "B9614" "CLGRTL" "RRF6" 40 RPI 817
+		       "CLGRTNE",  // 50 "B9616" "CLGRTNE" "RRF6" 40 RPI 817
+		       "CLGRTNH",  // 60 "B961C" "CLGRTNH" "RRF6" 40 RPI 817
+		       "CLGRTNL",  // 70 "B961A" "CLGRTNL" "RRF6" 40 RPI 817
+		       "CRT",      // 150 "B972" "CRT" "RRF5" 39 RPI 817
+		       "CRTE",     // 160 "B9728" "CRTE" "RRF6" 40 RPI 817
+		       "CRTH",     // 170 "B9722" "CRTH" "RRF6" 40 RPI 817
+		       "CRTL",     // 180 "B9724" "CRTL" "RRF6" 40 RPI 817
+		       "CRTNE",    // 190 "B9726" "CRTNE" "RRF6" 40 RPI 817
+		       "CRTNH",    // 200 "B972C" "CRTNH" "RRF6" 40 RPI 817
+		       "CRTNL",    // 210 "B972A" "CRTNL" "RRF6" 40 RPI 817
+		       "CLRT",     // 80 "B973" "CLRT" "RRF5" 39 RPI 817
+		       "CLRTE",    // 90 "B9738" "CLRTE" "RRF6" 40 RPI 817
+		       "CLRTH",    // 100 "B9732" "CLRTH" "RRF6" 40 RPI 817
+		       "CLRTL",    // 110 "B9734" "CLRTL" "RRF6" 40 RPI 817
+		       "CLRTNE",   // 120 "B9736" "CLRTNE" "RRF6" 40 RPI 817
+		       "CLRTNH",   // 130 "B973C" "CLRTNH" "RRF6" 40 RPI 817
+		       "CLRTNL",   // 140 "B973A" "CLRTNL" "RRF6" 40 RPI 817
 		       "NGR",      // 4840 "B980" "NGR" "RRE" 14
 		       "OGR",      // 4850 "B981" "OGR" "RRE" 14
 		       "XGR",      // 4860 "B982" "XGR" "RRE" 14
@@ -1367,12 +1404,16 @@ public  class  tz390 {
 		       "ESEA",     // 5040 "B99D" "ESEA" "RRE" 14
 		       "PTI",      // 5050 "B99E" "PTI" "RRE" 14
 		       "SSAIR",    // 5060 "B99F" "SSAIR" "RRE" 14
+		       "PTF",      // 10 "B9A2" "PTF" "RRE" 14 RPI 817
 		       "LPTEA",    //      "B9AA" "LPTEA" "RRE" 14 Z9-19
+		       "PFMF",     // 20 "B9AF" "PFMF" "RRF5" 39 RPI 817
 		       "CU14",     // 5070 "B9B0" "CU14" "RRE" 14
 		       "CU24",     // 5080 "B9B1" "CU24" "RRE" 14
 		       "CU41",     // 5090 "B9B2" "CU41" "RRE" 14
 		       "CU42",     // 5100 "B9B3" "CU42" "RRE" 14
-		       "SRSTU",    // 5110 "B9BE" "SRSTU" "RRE" 14
+		       "TRTRE",    // 30 "B9BD" "TRTRE" "RRF5" 39 RPI 817
+		       "SRSTU",    // 5110 "B9BE" "SRSTU" "RRE" 14     
+		       "TRTE",     // 40 "B9BF" "TRTE" "RRF5" 39 RPI 817
 		       "CS",       // 5120 "BA" "CS" "RS" 10
 		       "CDS",      // 5130 "BB" "CDS" "RS" 10
 		       "CLM",      // 5140 "BD" "CLM" "RS" 10
@@ -1424,6 +1465,8 @@ public  class  tz390 {
 		       "OILF",     //      "C0D" "OILF" "RIL" 16 Z9-28
 		       "LLIHF",    //      "C0E" "LLIHF" "RIL" 16 Z9-29
 		       "LLILF",    //      "C0F" "LLILF" "RIL" 16 Z9-30
+		       "MSGFI",    // 50 "C20" "MSGFI" "RIL" 16 RPI 817
+		       "MSFI",     // 60 "C21" "MSFI" "RIL" 16 RPI 817
 		       "SLGFI",    //      "C24" "SLGFI" "RIL" 16 Z9-31
 		       "SLFI",     //      "C25" "SLFI" "RIL" 16 Z9-32
 		       "AGFI",     //      "C28" "AGFI" "RIL" 16 Z9-33
@@ -1434,6 +1477,29 @@ public  class  tz390 {
 		       "CFI",      //      "C2D" "CFI" "RIL" 16 Z9-38
 		       "CLGFI",    //      "C2E" "CLGFI" "RIL" 16 Z9-39
 		       "CLFI",     //      "C2F" "CLFI" "RIL" 16 Z9-40
+		       "LLHRL",    // 70 "C42" "LLHRL" "RIL" 16 RPI 817
+		       "LGHRL",    // 80 "C44" "LGHRL" "RIL" 16 RPI 817
+		       "LHRL",     // 90 "C45" "LHRL" "RIL" 16 RPI 817
+		       "LLGHRL",   // 100 "C46" "LLGHRL" "RIL" 16 RPI 817
+		       "STHRL",    // 110 "C47" "STHRL" "RIL" 16 RPI 817
+		       "LGRL",     // 120 "C48" "LGRL" "RIL" 16 RPI 817
+		       "STGRL",    // 130 "C4B" "STGRL" "RIL" 16 RPI 817
+		       "LGFRL",    // 140 "C4C" "LGFRL" "RIL" 16 RPI 817
+		       "LRL",      // 150 "C4D" "LRL" "RIL" 16 RPI 817
+		       "LLGFRL",   // 160 "C4E" "LLGFRL" "RIL" 16 RPI 817
+		       "STRL",     // 170 "C4F" "STRL" "RIL" 16 RPI 817
+		       "EXRL",     // 180 "C60" "EXRL" "RIL" 16 RPI 817
+		       "PFDRL",    // 190 "C62" "PFDRL" "RIL" 16 RPI 817
+		       "CGHRL",    // 200 "C64" "CGHRL" "RIL" 16 RPI 817
+		       "CHRL",     // 210 "C65" "CHRL" "RIL" 16 RPI 817
+		       "CLGHRL",   // 220 "C66" "CLGHRL" "RIL" 16 RPI 817
+		       "CLHRL",    // 230 "C67" "CLHRL" "RIL" 16 RPI 817
+		       "CGRL",     // 240 "C68" "CGRL" "RIL" 16 RPI 817
+		       "CLGRL",    // 250 "C6A" "CLGRL" "RIL" 16 RPI 817
+		       "CGFRL",    // 260 "C6C" "CGFRL" "RIL" 16 RPI 817
+		       "CRL",      // 270 "C6D" "CRL" "RIL" 16 RPI 817
+		       "CLGFRL",   // 280 "C6E" "CLGFRL" "RIL" 16 RPI 817
+		       "CLRL",     // 290 "C6F" "CLRL" "RIL" 16 RPI 817
 		       "MVCOS",    //      "C80" "MVCOS" "SSF" 32 Z9-41 // RPI 606
 		       "TRTR",     // 5230 "D0" "TRTR" "SS" 17
 		       "MVN",      // 5240 "D1" "MVN" "SS" 17
@@ -1450,7 +1516,14 @@ public  class  tz390 {
 		       "TRT",      // 5350 "DD" "TRT" "SS" 17
 		       "ED",       // 5360 "DE" "ED" "SS" 17
 		       "EDMK",     // 5370 "DF" "EDMK" "SS" 17
-		       "PKU",      // 5380 "E1" "PKU" "SS" 17
+		       "XREAD",    // 5375 "E00" "XREAD" "RXSS" 38 RPI 812
+		       "XPRNT",    // 5375 "E02" "XPRNT" "RXSS" 38 RPI 812
+		       "XPNCH",    // 5375 "E04" "XPNCH" "RXSS" 38 RPI 812
+		       "XDUMP",    // 5375 "E06" "XDUMP" "RXSS" 38 RPI 812
+		       "XLIMD",    // 5375 "E08" "XLIMD" "RXSS" 38 RPI 812
+		       "XGET",     // 5375 "E0A" "XGET"  "RXSS" 38 RPI 812
+		       "XPUT",     // 5375 "E0C" "XPUT"  "RXSS" 38 RPI 812
+		       "PKU",      // 5380 "E1" "PKU" "RXSS" 17
 		       "UNPKU",    // 5390 "E2" "UNPKU" "SS" 17
 		       "LTG",      //      "E302" "LTG" "RXY" 18 Z9-42
 		       "LRAG",     // 5400 "E303" "LRAG" "RXY" 18
@@ -1486,6 +1559,9 @@ public  class  tz390 {
 		       "STRVG",    // 5690 "E32F" "STRVG" "RXY" 18
 		       "CGF",      // 5700 "E330" "CGF" "RXY" 18
 		       "CLGF",     // 5710 "E331" "CLGF" "RXY" 18
+		       "LTGF",     // 310 "E332" "LTGF" "RXY" 18 RPI 817
+		       "CGH",      // 320 "E334" "CGH" "RXY" 18 RPI 817
+		       "PFD",      // 330 "E336" "PFD" "RXY" 18 RPI 817
 		       "STRV",     // 5720 "E33E" "STRV" "RXY" 18
 		       "STRVH",    // 5730 "E33F" "STRVH" "RXY" 18
 		       "BCTG",     // 5740 "E346" "BCTG" "RXY" 18
@@ -1499,18 +1575,21 @@ public  class  tz390 {
 		       "CY",       // 5820 "E359" "CY" "RXY" 18
 		       "AY",       // 5830 "E35A" "AY" "RXY" 18
 		       "SY",       // 5840 "E35B" "SY" "RXY" 18
+		       "MFY",      // 340 "E35C" "MFY" "RXY" 18 RPI 817
 		       "ALY",      // 5850 "E35E" "ALY" "RXY" 18
 		       "SLY",      // 5860 "E35F" "SLY" "RXY" 18
 		       "STHY",     // 5870 "E370" "STHY" "RXY" 18
 		       "LAY",      // 5880 "E371" "LAY" "RXY" 18
 		       "STCY",     // 5890 "E372" "STCY" "RXY" 18
 		       "ICY",      // 5900 "E373" "ICY" "RXY" 18
+		       "LAEY",     // 350 "E375" "LAEY" "RXY" 18 RPI 817
 		       "LB",       // 5910 "E376" "LB" "RXY" 18
 		       "LGB",      // 5920 "E377" "LGB" "RXY" 18
 		       "LHY",      // 5930 "E378" "LHY" "RXY" 18
 		       "CHY",      // 5940 "E379" "CHY" "RXY" 18
 		       "AHY",      // 5950 "E37A" "AHY" "RXY" 18
 		       "SHY",      // 5960 "E37B" "SHY" "RXY" 18
+		       "MHY",      // 360 "E37C" "MHY" "RXY" 18 RPI 817
 		       "NG",       // 5970 "E380" "NG" "RXY" 18
 		       "OG",       // 5980 "E381" "OG" "RXY" 18
 		       "XG",       // 5990 "E382" "XG" "RXY" 18
@@ -1533,6 +1612,15 @@ public  class  tz390 {
 		       "STRAG",    // 6140 "E502" "STRAG" "SSE" 19
 		       "MVCSK",    // 6150 "E50E" "MVCSK" "SSE" 19
 		       "MVCDK",    // 6160 "E50F" "MVCDK" "SSE" 19
+		       "MVHHI",    // 370 "E544" "MVHHI" "SIL" 51 RPI 817
+		       "MVGHI",    // 380 "E548" "MVGHI" "SIL" 51 RPI 817
+		       "MVHI",     // 390 "E54C" "MVHI" "SIL" 51 RPI 817
+		       "CHHSI",    // 400 "E554" "CHHSI" "SIL" 51 RPI 817
+		       "CLHHSI",   // 410 "E555" "CLHHSI" "SIL" 51 RPI 817
+		       "CGHSI",    // 420 "E558" "CGHSI" "SIL" 51 RPI 817
+		       "CLGHSI",   // 430 "E559" "CLGHSI" "SIL" 51 RPI 817
+		       "CHSI",     // 440 "E55C" "CHSI" "SIL" 51 RPI 817
+		       "CLFHSI",   // 450 "E55D" "CLFHSI" "SIL" 51 RPI 817
 		       "MVCIN",    // 6170 "E8" "MVCIN" "SS" 17
 		       "PKA",      // 6180 "E9" "PKA" "SS" 31
 		       "UNPKA",    // 6190 "EA" "UNPKA" "SS" 17
@@ -1558,12 +1646,17 @@ public  class  tz390 {
 		       "CDSG",     // 6390 "EB3E" "CDSG" "RSY" 20
 		       "BXHG",     // 6400 "EB44" "BXHG" "RSY" 20
 		       "BXLEG",    // 6410 "EB45" "BXLEG" "RSY" 20
+		       "ECAG",     // 460 "EB4C" "ECAG" "RSY" 20 RPI 817
 		       "TMY",      // 6420 "EB51" "TMY" "SIY" 21
 		       "MVIY",     // 6430 "EB52" "MVIY" "SIY" 21
 		       "NIY",      // 6440 "EB54" "NIY" "SIY" 21
 		       "CLIY",     // 6450 "EB55" "CLIY" "SIY" 21
 		       "OIY",      // 6460 "EB56" "OIY" "SIY" 21
 		       "XIY",      // 6470 "EB57" "XIY" "SIY" 21
+		       "ASI",      // 470 "EB6A" "ASI" "SIY" 21 RPI 817
+		       "ALSI",     // 480 "EB6E" "ALSI" "SIY" 21 RPI 817
+		       "AGSI",     // 490 "EB7A" "AGSI" "SIY" 21 RPI 817
+		       "ALGSI",    // 500 "EB7E" "ALGSI" "SIY" 21 RPI 817
 		       "ICMH",     // 6480 "EB80" "ICMH" "RSY" 20
 		       "ICMY",     // 6490 "EB81" "ICMY" "RSY" 20
 		       "MVCLU",    // 6500 "EB8E" "MVCLU" "RSY" 20
@@ -1577,7 +1670,155 @@ public  class  tz390 {
 		       "BRXHG",    // 6580 "EC44" "BRXHG" "RIE" 23
 		       "JXHG",     // 6590 "EC44" "JXHG" "RIE" 23
 		       "BRXLG",    // 6600 "EC45" "BRXLG" "RIE" 23
-		       "JXLEG",    // 6610 "EC45" "JXLEG" "RIE" 23
+		       "JXLEG",    // 6610 "EC45" "JXLEG" "RIE" 23    
+		       "RNSBG",    // 510 "EC54" "RNSBG" "RIE8" 52 RPI 817
+		       "RNSBGT",   // 520 "EC54T" "RNSBGT" "RIE8" 52 RPI 817
+		       "RISBG",    // 530 "EC55" "RISBG" "RIE8" 52 RPI 817
+		       "RISBGZ",   // 540 "EC55Z" "RISBGZ" "RIE8" 52 RPI 817
+		       "ROSBG",    // 550 "EC56" "ROSBG" "RIE8" 52 RPI 817
+		       "ROSBGT",   // 560 "EC56T" "ROSBGT" "RIE8" 52 RPI 817
+		       "RXSBG",    // 570 "EC57" "RXSBG" "RIE8" 52 RPI 817
+		       "RXSBGT",   // 580 "EC57T" "RXSBGT" "RIE8" 52 RPI 817
+		       "CGRJ",     // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
+		       "CGRJE",    // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
+		       "CGRJH",    // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
+		       "CGRJL",    // 40 "EC644" "CGRJL" "RIE7" 50 RPI 817
+		       "CGRJNE",   // 50 "EC646" "CGRJNE" "RIE7" 50 RPI 817
+		       "CGRJNH",   // 60 "EC64C" "CGRJNH" "RIE7" 50 RPI 817
+		       "CGRJNL",   // 70 "EC64A" "CGRJNL" "RIE7" 50 RPI 817
+		       "CLGRJ",    // 80 "EC65" "CLGRJ" "RIE6" 49 RPI 817
+		       "CLGRJE",   // 90 "EC658" "CLGRJE" "RIE7" 50 RPI 817
+		       "CLGRJH",   // 100 "EC652" "CLGRJH" "RIE7" 50 RPI 817
+		       "CLGRJL",   // 110 "EC654" "CLGRJL" "RIE7" 50 RPI 817
+		       "CLGRJNE",  // 120 "EC656" "CLGRJNE" "RIE7" 50 RPI 817
+		       "CLGRJNH",  // 130 "EC65C" "CLGRJNH" "RIE7" 50 RPI 817
+		       "CLGRJNL",  // 140 "EC65A" "CLGRJNL" "RIE7" 50 RPI 817		       
+		       "CGIT",     // 1010 "EC70" "CGIT" "RIE2" 41 RPI 817
+		       "CGITE",    // 1020 "EC708" "CGITE" "RIE3" 42 RPI 817
+		       "CGITH",    // 1030 "EC702" "CGITH" "RIE3" 42 RPI 817
+		       "CGITL",    // 1040 "EC704" "CGITL" "RIE3" 42 RPI 817
+		       "CGITNE",   // 1050 "EC706" "CGITNE" "RIE3" 42 RPI 817
+		       "CGITNH",   // 1060 "EC70C" "CGITNH" "RIE3" 42 RPI 817
+		       "CGITNL",   // 1070 "EC70A" "CGITNL" "RIE3" 42 RPI 817
+		       "CLGIT",    // 150 "EC71" "CLGIT" "RIE2" 41 RPI 817
+		       "CLGITE",   // 160 "EC718" "CLGITE" "RIE3" 42 RPI 817
+		       "CLGITH",   // 170 "EC712" "CLGITH" "RIE3" 42 RPI 817
+		       "CLGITL",   // 180 "EC714" "CLGITL" "RIE3" 42 RPI 817
+		       "CLGITNE",  // 190 "EC716" "CLGITNE" "RIE3" 42 RPI 817
+		       "CLGITNH",  // 200 "EC71C" "CLGITNH" "RIE3" 42 RPI 817
+		       "CLGITNL",  // 210 "EC71A" "CLGITNL" "RIE3" 42 RPI 817
+		       "CIT",      // 1150 "EC72" "CIT" "RIE2" 41 RPI 817
+		       "CITE",     // 1160 "EC728" "CITE" "RIE3" 42 RPI 817
+		       "CITH",     // 1170 "EC722" "CITH" "RIE3" 42 RPI 817
+		       "CITL",     // 1180 "EC724" "CITL" "RIE3" 42 RPI 817
+		       "CITNE",    // 1190 "EC726" "CITNE" "RIE3" 42 RPI 817
+		       "CITNH",    // 1200 "EC72C" "CITNH" "RIE3" 42 RPI 817
+		       "CITNL",    // 1210 "EC72A" "CITNL" "RIE3" 42 RPI 817
+		       "CLFIT",    // 220 "EC73" "CLFIT" "RIE2" 41 RPI 817
+		       "CLFITE",   // 230 "EC738" "CLFITE" "RIE3" 42 RPI 817
+		       "CLFITH",   // 240 "EC732" "CLFITH" "RIE3" 42 RPI 817
+		       "CLFITL",   // 250 "EC734" "CLFITL" "RIE3" 42 RPI 817
+		       "CLFITNE",  // 260 "EC736" "CLFITNE" "RIE3" 42 RPI 817
+		       "CLFITNH",  // 270 "EC73C" "CLFITNH" "RIE3" 42 RPI 817
+		       "CLFITNL",  // 280 "EC73A" "CLFITNL" "RIE3" 42 RPI 817
+		       "CRJ",      // 150 "EC76" "CRJ" "RIE6" 49 RPI 817
+		       "CRJE",     // 160 "EC768" "CRJE" "RIE7" 50 RPI 817
+		       "CRJH",     // 170 "EC762" "CRJH" "RIE7" 50 RPI 817
+		       "CRJL",     // 180 "EC764" "CRJL" "RIE7" 50 RPI 817
+		       "CRJNE",    // 190 "EC766" "CRJNE" "RIE7" 50 RPI 817
+		       "CRJNH",    // 200 "EC76C" "CRJNH" "RIE7" 50 RPI 817
+		       "CRJNL",    // 210 "EC76A" "CRJNL" "RIE7" 50 RPI 817
+		       "CLRJ",     // 220 "EC77" "CLRJ" "RIE6" 49 RPI 817
+		       "CLRJE",    // 230 "EC778" "CLRJE" "RIE7" 50 RPI 817
+		       "CLRJH",    // 240 "EC772" "CLRJH" "RIE7" 50 RPI 817
+		       "CLRJL",    // 250 "EC774" "CLRJL" "RIE7" 50 RPI 817
+		       "CLRJNE",   // 260 "EC776" "CLRJNE" "RIE7" 50 RPI 817
+		       "CLRJNH",   // 270 "EC77C" "CLRJNH" "RIE7" 50 RPI 817
+		       "CLRJNL",   // 280 "EC77A" "CLRJNL" "RIE7" 50 RPI 817
+		       "CGIJ",     // 290 "EC7C" "CGIJ" "RIE4" 43 RPI 817
+		       "CGIJE",    // 300 "EC7C8" "CGIJE" "RIE5" 44 RPI 817
+		       "CGIJH",    // 310 "EC7C2" "CGIJH" "RIE5" 44 RPI 817
+		       "CGIJL",    // 320 "EC7C4" "CGIJL" "RIE5" 44 RPI 817
+		       "CGIJNE",   // 330 "EC7C6" "CGIJNE" "RIE5" 44 RPI 817
+		       "CGIJNH",   // 340 "EC7CC" "CGIJNH" "RIE5" 44 RPI 817
+		       "CGIJNL",   // 350 "EC7CA" "CGIJNL" "RIE5" 44 RPI 817
+		       "CLGIJ",    // 360 "EC7D" "CLGIJ" "RIE4" 43 RPI 817
+		       "CLGIJE",   // 370 "EC7D8" "CLGIJE" "RIE5" 44 RPI 817
+		       "CLGIJH",   // 380 "EC7D2" "CLGIJH" "RIE5" 44 RPI 817
+		       "CLGIJL",   // 390 "EC7D4" "CLGIJL" "RIE5" 44 RPI 817
+		       "CLGIJNE",  // 400 "EC7D6" "CLGIJNE" "RIE5" 44 RPI 817
+		       "CLGIJNH",  // 410 "EC7DC" "CLGIJNH" "RIE5" 44 RPI 817
+		       "CLGIJNL",  // 420 "EC7DA" "CLGIJNL" "RIE5" 44 RPI 817
+		       "CIJ",      // 430 "EC7E" "CIJ" "RIE4" 43 RPI 817
+		       "CIJE",     // 440 "EC7E8" "CIJE" "RIE5" 44 RPI 817
+		       "CIJH",     // 450 "EC7E2" "CIJH" "RIE5" 44 RPI 817
+		       "CIJL",     // 460 "EC7E4" "CIJL" "RIE5" 44 RPI 817
+		       "CIJNE",    // 470 "EC7E6" "CIJNE" "RIE5" 44 RPI 817
+		       "CIJNH",    // 480 "EC7EC" "CIJNH" "RIE5" 44 RPI 817
+		       "CIJNL",    // 490 "EC7EA" "CIJNL" "RIE5" 44 RPI 817
+		       "CLIJ",     // 500 "EC7F" "CLIJ" "RIE4" 43 RPI 817
+		       "CLIJE",    // 510 "EC7F8" "CLIJE" "RIE5" 44 RPI 817
+		       "CLIJH",    // 520 "EC7F2" "CLIJH" "RIE5" 44 RPI 817
+		       "CLIJL",    // 530 "EC7F4" "CLIJL" "RIE5" 44 RPI 817
+		       "CLIJNE",   // 540 "EC7F6" "CLIJNE" "RIE5" 44 RPI 817
+		       "CLIJNH",   // 550 "EC7FC" "CLIJNH" "RIE5" 44 RPI 817
+		       "CLIJNL",   // 560 "EC7FA" "CLIJNL" "RIE5" 44 RPI 817
+		       "CGRB",     // 570 "ECE4" "CGRB" "RRS1" 45 RPI 817
+		       "CGRBE",    // 580 "ECE48" "CGRBE" "RRS2" 46 RPI 817
+		       "CGRBH",    // 590 "ECE42" "CGRBH" "RRS2" 46 RPI 817
+		       "CGRBL",    // 600 "ECE44" "CGRBL" "RRS2" 46 RPI 817
+		       "CGRBNE",   // 610 "ECE46" "CGRBNE" "RRS2" 46 RPI 817
+		       "CGRBNH",   // 620 "ECE4C" "CGRBNH" "RRS2" 46 RPI 817
+		       "CGRBNL",   // 630 "ECE4A" "CGRBNL" "RRS2" 46 RPI 817
+		       "CLGRB",    // 640 "ECE5" "CLGRB" "RRS1" 45 RPI 817
+		       "CLGRBE",   // 650 "ECE58" "CLGRBE" "RRS2" 46 RPI 817
+		       "CLGRBH",   // 660 "ECE52" "CLGRBH" "RRS2" 46 RPI 817
+		       "CLGRBL",   // 670 "ECE54" "CLGRBL" "RRS2" 46 RPI 817
+		       "CLGRBNE",  // 680 "ECE56" "CLGRBNE" "RRS2" 46 RPI 817
+		       "CLGRBNH",  // 690 "ECE5C" "CLGRBNH" "RRS2" 46 RPI 817
+		       "CLGRBNL",  // 700 "ECE5A" "CLGRBNL" "RRS2" 46 RPI 817
+		       "CRB",      // 710 "ECF6" "CRB" "RRS1" 45 RPI 817
+		       "CRBE",     // 720 "ECF68" "CRBE" "RRS2" 46 RPI 817
+		       "CRBH",     // 730 "ECF62" "CRBH" "RRS2" 46 RPI 817
+		       "CRBL",     // 740 "ECF64" "CRBL" "RRS2" 46 RPI 817
+		       "CRBNE",    // 750 "ECF66" "CRBNE" "RRS2" 45 RPI 817
+		       "CRBNH",    // 760 "ECF6C" "CRBNH" "RRS2" 46 RPI 817
+		       "CRBNL",    // 770 "ECF6A" "CRBNL" "RRS2" 46 RPI 817
+		       "CLRB",     // 780 "ECF7" "CLRB" "RRS1" 45 RPI 817
+		       "CLRBE",    // 790 "ECF78" "CLRBE" "RRS2" 46 RPI 817
+		       "CLRBH",    // 800 "ECF72" "CLRBH" "RRS2" 46 RPI 817
+		       "CLRBL",    // 810 "ECF74" "CLRBL" "RRS2" 46 RPI 817
+		       "CLRBNE",   // 820 "ECF76" "CLRBNE" "RRS2" 46 RPI 817
+		       "CLRBNH",   // 830 "ECF7C" "CLRBNH" "RRS2" 46 RPI 817
+		       "CLRBNL",   // 840 "ECF7A" "CLRBNL" "RRS2" 46 RPI 817
+		       "CGIB",     // 850 "ECFC" "CGIB" "RRS3" 47 RPI 817
+		       "CGIBE",    // 860 "ECFC8" "CGIBE" "RRS4" 48 RPI 817
+		       "CGIBH",    // 870 "ECFC2" "CGIBH" "RRS4" 48 RPI 817
+		       "CGIBL",    // 880 "ECFC4" "CGIBL" "RRS4" 48 RPI 817
+		       "CGIBNE",   // 890 "ECFC6" "CGIBNE" "RRS4" 48 RPI 817
+		       "CGIBNH",   // 900 "ECFCC" "CGIBNH" "RRS4" 48 RPI 817
+		       "CGIBNL",   // 910 "ECFCA" "CGIBNL" "RRS4" 48 RPI 817
+		       "CLGIB",    // 920 "ECFD" "CLGIB" "RRS3" 47 RPI 817
+		       "CLGIBE",   // 930 "ECFD8" "CLGIBE" "RRS4" 48 RPI 817
+		       "CLGIBH",   // 940 "ECFD2" "CLGIBH" "RRS4" 48 RPI 817
+		       "CLGIBL",   // 950 "ECFD4" "CLGIBL" "RRS4" 48 RPI 817
+		       "CLGIBNE",  // 960 "ECFD6" "CLGIBNE" "RRS4" 48 RPI 817
+		       "CLGIBNH",  // 970 "ECFDC" "CLGIBNH" "RRS4" 48 RPI 817
+		       "CLGIBNL",  // 980 "ECFDA" "CLGIBNL" "RRS4" 48 RPI 817
+		       "CIB",      // 990 "ECFE" "CIB" "RRS3" 47 RPI 817
+		       "CIBE",     // 1000 "ECFE8" "CIBE" "RRS4" 48 RPI 817
+		       "CIBH",     // 1010 "ECFE2" "CIBH" "RRS4" 48 RPI 817
+		       "CIBL",     // 1020 "ECFE4" "CIBL" "RRS4" 48 RPI 817
+		       "CIBNE",    // 1030 "ECFE6" "CIBNE" "RRS4" 48 RPI 817
+		       "CIBNH",    // 1040 "ECFEC" "CIBNH" "RRS4" 48 RPI 817
+		       "CIBNL",    // 1050 "ECFEA" "CIBNL" "RRS4" 48 RPI 817
+		       "CLIB",     // 1060 "ECFF" "CLIB" "RRS3" 47 RPI 817
+		       "CLIBE",    // 1070 "ECFF8" "CLIBE" "RRS4" 48 RPI 817
+		       "CLIBH",    // 1080 "ECFF2" "CLIBH" "RRS4" 48 RPI 817
+		       "CLIBL",    // 1090 "ECFF4" "CLIBL" "RRS4" 48 RPI 817
+		       "CLIBNE",   // 1100 "ECFF6" "CLIBNE" "RRS4" 48 RPI 817
+		       "CLIBNH",   // 1110 "ECFFC" "CLIBNH" "RRS4" 48 RPI 817
+		       "CLIBNL",   // 1120 "ECFFA" "CLIBNL" "RRS4" 48 RPI 817		       
 		       "LDEB",     // 6620 "ED04" "LDEB" "RXE" 24
 		       "LXDB",     // 6630 "ED05" "LXDB" "RXE" 24
 		       "LXEB",     // 6640 "ED06" "LXEB" "RXE" 24
@@ -1758,8 +1999,24 @@ public  class  tz390 {
          4,  //34 "RRF2" FIXBR oooom0rr (r1,m3,r2 maps to m3,r1,r2) RPI 407 fix was 6
          4,  //35 "FFR4" CSDTR oooo0mrr (r1,r2,m4 maps to m4,r1,r2) RPI 407 add new
          4,  //36 "RRR"  
-         };
-	int    max_op_type_offset = 36; // see changes required
+         4,  //37 "RXAS" RX    if ASSIST
+         6,   //38 "RXSS" RX-SS if ASSIST else PKU x'E1'
+         4,   //39 "RRF5" CRT   RPI 817
+         4,   //40 "RRF6" CRTE  RPI 817
+         6,   //41 "RIE2" CIT   RPI 817
+         6,   //42 "RIE3" CITE  RPI 817
+         6,   //43 "RIE4" CGIJ  RPI 817
+         6,   //44 "RIE5" CGIJE RPI 817
+         6,   //45 "RRS1" CGRB  RPI 817
+         6,   //46 "RRS2" CGRBE RPI 817
+         6,   //47 "RRS3" CGIB  RPI 817
+         6,   //48 "RRS4" CGIBE RPI 817
+         6,   //49 "RIE6" CGRJ  RPI 817
+         6,   //50 "RIE7" CGRJE RPI 817
+         6,   //51 "SIL"  MVHHI RPI 817
+         6,   //52 "RIE2"
+    };
+	int    max_op_type_offset = 52; // see changes required RPI 812, RPI 817
     int    max_ins_type = 100;    // RPI 315 
     int    max_asm_type = 200;
     int    max_mac_type = 300;
@@ -1767,8 +2024,8 @@ public  class  tz390 {
 	//  1.  Increase the above max.
 	//  2.  Change above op_type_len table which must match
     //  3.  Change az390 instruction format cases and
-    //  4.  Change pz390 op_type_offset and op_type_mask
-    //  5.  Change pz390 trace_psw to add new case
+    //  4.  Change pz390 op_type_offset and op_type_mask if new primary opcode
+    //  5.  Change pz390 trace_psw to add new case formats
   	int[]    op_type  = {
 			   0,  // comments
 		       1,  // 10 "0101" "PR" "E" 1
@@ -1891,6 +2148,8 @@ public  class  tz390 {
 		       5,  // 1170 "4F" "CVB" "RX" 5
 		       5,  // 1180 "50" "ST" "RX" 5
 		       5,  // 1190 "51" "LAE" "RX" 5
+		       37, // 1193 "52" "XDECO" "RX" 37 RPI 812
+		       37, // 1196 "53" "XDECI" "RX" 37 RPI 812	
 		       5,  // 1200 "54" "N" "RX" 5
 		       5,  // 1210 "55" "CL" "RX" 5
 		       5,  // 1220 "56" "O" "RX" 5
@@ -1904,6 +2163,8 @@ public  class  tz390 {
 		       5,  // 1300 "5E" "AL" "RX" 5
 		       5,  // 1310 "5F" "SL" "RX" 5
 		       5,  // 1320 "60" "STD" "RX" 5
+		       37, // 1323 "61" "XHEXI" "RX" 37 RPI 812
+		       37, // 1326 "62" "XHEXO" "RX" 37 RPI 812
 		       5,  // 1330 "67" "MXD" "RX" 5
 		       5,  // 1340 "68" "LD" "RX" 5
 		       5,  // 1350 "69" "CD" "RX" 5
@@ -2320,6 +2581,35 @@ public  class  tz390 {
 		       14,  // 4810 "B93E" "KIMD" "RRE" 14
 		       14,  // 4820 "B93F" "KLMD" "RRE" 14
 		       14,  // 4830 "B946" "BCTGR" "RRE" 14
+		       39,  // 10 "B960" "CGRT" "RRF5" 39 RPI 817
+		       40,  // 20 "B9608" "CGRTE" "RRF6" 40 RPI 817
+		       40,  // 30 "B9602" "CGRTH" "RRF6" 40 RPI 817
+		       40,  // 40 "B9604" "CGRTL" "RRF6" 40 RPI 817
+		       40,  // 50 "B9606" "CGRTNE" "RRF6" 40 RPI 817
+		       40,  // 60 "B960C" "CGRTNH" "RRF6" 40 RPI 817
+		       40,  // 70 "B960A" "CGRTNL" "RRF6" 40 RPI 817
+		       
+		       39,  // 10 "B961" "CLGRT" "RRF5" 39 RPI 817
+		       40,  // 20 "B9618" "CLGRTE" "RRF6" 40 RPI 817
+		       40,  // 30 "B9612" "CLGRTH" "RRF6" 40 RPI 817
+		       40,  // 40 "B9614" "CLGRTL" "RRF6" 40 RPI 817
+		       40,  // 50 "B9616" "CLGRTNE" "RRF6" 40 RPI 817
+		       40,  // 60 "B961C" "CLGRTNH" "RRF6" 40 RPI 817
+		       40,  // 70 "B961A" "CLGRTNL" "RRF6" 40 RPI 817
+		       39,  // 150 "B972" "CRT" "RRF5" 39 RPI 817
+		       40,  // 160 "B9728" "CRTE" "RRF6" 40 RPI 817
+		       40,  // 170 "B9722" "CRTH" "RRF6" 40 RPI 817
+		       40,  // 180 "B9724" "CRTL" "RRF6" 40 RPI 817
+		       40,  // 190 "B9726" "CRTNE" "RRF6" 40 RPI 817
+		       40,  // 200 "B972C" "CRTNH" "RRF6" 40 RPI 817
+		       40,  // 210 "B972A" "CRTNL" "RRF6" 40 RPI 817      
+		       39,  // 80 "B973" "CLRT" "RRF5" 39 RPI 817
+		       40,  // 90 "B9738" "CLRTE" "RRF6" 40 RPI 817
+		       40,  // 100 "B9732" "CLRTH" "RRF6" 40 RPI 817
+		       40,  // 110 "B9734" "CLRTL" "RRF6" 40 RPI 817
+		       40,  // 120 "B9736" "CLRTNE" "RRF6" 40 RPI 817
+		       40,  // 130 "B973C" "CLRTNH" "RRF6" 40 RPI 817
+		       40,  // 140 "B973A" "CLRTNL" "RRF6" 40 RPI 817
 		       14,  // 4840 "B980" "NGR" "RRE" 14
 		       14,  // 4850 "B981" "OGR" "RRE" 14
 		       14,  // 4860 "B982" "XGR" "RRE" 14
@@ -2348,12 +2638,16 @@ public  class  tz390 {
 		       14,  // 5040 "B99D" "ESEA" "RRE" 14
 		       14,  // 5050 "B99E" "PTI" "RRE" 14
 		       14,  // 5060 "B99F" "SSAIR" "RRE" 14
+		       14,  // 10 "B9A2" "PTF" "RRE" 14  RPI 817
 		       14,  //      "B9AA" "LPTEA" "RRE" 14 Z9-19
+		       39,  // 20 "B9AF" "PFMF" "RRF5" 39  RPI 817
 		       14,  // 5070 "B9B0" "CU14" "RRE" 14
 		       14,  // 5080 "B9B1" "CU24" "RRE" 14
 		       14,  // 5090 "B9B2" "CU41" "RRE" 14
 		       14,  // 5100 "B9B3" "CU42" "RRE" 14
+		       39,  // 30 "B9BD" "TRTRE" "RRF5" 39  RPI 817
 		       14,  // 5110 "B9BE" "SRSTU" "RRE" 14
+		       39,  // 40 "B9BF" "TRTE" "RRF5" 39  RPI 817
 		       10,  // 5120 "BA" "CS" "RS" 10
 		       10,  // 5130 "BB" "CDS" "RS" 10
 		       10,  // 5140 "BD" "CLM" "RS" 10
@@ -2405,6 +2699,8 @@ public  class  tz390 {
 		       16,  //      "C0D" "OILF" "RIL" 16 Z9-28
 		       16,  //      "C0E" "LLIHF" "RIL" 16 Z9-29
 		       16,  //      "C0F" "LLILF" "RIL" 16 Z9-30
+		       16,  // 50 "C20" "MSGFI" "RIL" 16  RPI 817
+		       16,  // 60 "C21" "MSFI" "RIL" 16  RPI 817
 		       16,  //      "C24" "SLGFI" "RIL" 16 Z9-31
 		       16,  //      "C25" "SLFI" "RIL" 16 Z9-32
 		       16,  //      "C28" "AGFI" "RIL" 16 Z9-33
@@ -2415,6 +2711,29 @@ public  class  tz390 {
 		       16,  //      "C2D" "CFI" "RIL" 16 Z9-38
 		       16,  //      "C2E" "CLGFI" "RIL" 16 Z9-39
 		       16,  //      "C2F" "CLFI" "RIL" 16 Z9-40
+		       16,  // 70 "C42" "LLHRL" "RIL" 16  RPI 817
+		       16,  // 80 "C44" "LGHRL" "RIL" 16  RPI 817
+		       16,  // 90 "C45" "LHRL" "RIL" 16  RPI 817
+		       16,  // 100 "C46" "LLGHRL" "RIL" 16  RPI 817
+		       16,  // 110 "C47" "STHRL" "RIL" 16  RPI 817
+		       16,  // 120 "C48" "LGRL" "RIL" 16  RPI 817
+		       16,  // 130 "C4B" "STGRL" "RIL" 16  RPI 817
+		       16,  // 140 "C4C" "LGFRL" "RIL" 16  RPI 817
+		       16,  // 150 "C4D" "LRL" "RIL" 16  RPI 817
+		       16,  // 160 "C4E" "LLGFRL" "RIL" 16  RPI 817
+		       16,  // 170 "C4F" "STRL" "RIL" 16  RPI 817
+		       16,  // 180 "C60" "EXRL" "RIL" 16  RPI 817
+		       16,  // 190 "C62" "PFDRL" "RIL" 16  RPI 817
+		       16,  // 200 "C64" "CGHRL" "RIL" 16  RPI 817
+		       16,  // 210 "C65" "CHRL" "RIL" 16  RPI 817
+		       16,  // 220 "C66" "CLGHRL" "RIL" 16  RPI 817
+		       16,  // 230 "C67" "CLHRL" "RIL" 16  RPI 817
+		       16,  // 240 "C68" "CGRL" "RIL" 16  RPI 817
+		       16,  // 250 "C6A" "CLGRL" "RIL" 16  RPI 817
+		       16,  // 260 "C6C" "CGFRL" "RIL" 16  RPI 817
+		       16,  // 270 "C6D" "CRL" "RIL" 16  RPI 817
+		       16,  // 280 "C6E" "CLGFRL" "RIL" 16  RPI 817
+		       16,  // 290 "C6F" "CLRL" "RIL" 16  RPI 817
 		       32,  //      "C80" "MVCOS" "SSF" 32 Z9-41		       
 		       17,  // 5230 "D0" "TRTR" "SS" 17
 		       17,  // 5240 "D1" "MVN" "SS" 17
@@ -2431,7 +2750,14 @@ public  class  tz390 {
 		       17,  // 5350 "DD" "TRT" "SS" 17
 		       17,  // 5360 "DE" "ED" "SS" 17
 		       17,  // 5370 "DF" "EDMK" "SS" 17
-		       17,  // 5380 "E1" "PKU" "SS" 17
+		       38,  // 5375 "E00" "XREAD" "RXSS" 38 RPI 812
+		       38,  // 5375 "E02" "XPRNT" "RXSS" 38 RPI 812
+		       38,  // 5375 "E04" "XPNCH" "RXSS" 38 RPI 812
+		       38,  // 5375 "E06" "XDUMP" "RXSS" 38 RPI 812
+		       38,  // 5375 "E08" "XLIMD" "RXSS" 38 RPI 812
+		       38,  // 5375 "E0A" "XGET"  "RXSS" 38 RPI 812
+		       38,  // 5375 "E0C" "XPUT"  "RXSS" 38 RPI 812
+		       17,  // 5380 "E1" "PKU" "RXSS" 17
 		       17,  // 5390 "E2" "UNPKU" "SS" 17
 		       18,  //      "E302" "LTG" "RXY" 18 Z9-42
 		       18,  // 5400 "E303" "LRAG" "RXY" 18
@@ -2467,6 +2793,9 @@ public  class  tz390 {
 		       18,  // 5690 "E32F" "STRVG" "RXY" 18
 		       18,  // 5700 "E330" "CGF" "RXY" 18
 		       18,  // 5710 "E331" "CLGF" "RXY" 18
+		       18,  // 310 "E332" "LTGF" "RXY" 18  RPI 817
+		       18,  // 320 "E334" "CGH" "RXY" 18  RPI 817
+		       18,  // 330 "E336" "PFD" "RXY" 18  RPI 817
 		       18,  // 5720 "E33E" "STRV" "RXY" 18
 		       18,  // 5730 "E33F" "STRVH" "RXY" 18
 		       18,  // 5740 "E346" "BCTG" "RXY" 18
@@ -2480,18 +2809,21 @@ public  class  tz390 {
 		       18,  // 5820 "E359" "CY" "RXY" 18
 		       18,  // 5830 "E35A" "AY" "RXY" 18
 		       18,  // 5840 "E35B" "SY" "RXY" 18
+		       18,  // 340 "E35C" "MFY" "RXY" 18  RPI 817
 		       18,  // 5850 "E35E" "ALY" "RXY" 18
 		       18,  // 5860 "E35F" "SLY" "RXY" 18
 		       18,  // 5870 "E370" "STHY" "RXY" 18
 		       18,  // 5880 "E371" "LAY" "RXY" 18
 		       18,  // 5890 "E372" "STCY" "RXY" 18
 		       18,  // 5900 "E373" "ICY" "RXY" 18
+		       18,  // 350 "E375" "LAEY" "RXY" 18  RPI 817
 		       18,  // 5910 "E376" "LB" "RXY" 18
 		       18,  // 5920 "E377" "LGB" "RXY" 18
 		       18,  // 5930 "E378" "LHY" "RXY" 18
 		       18,  // 5940 "E379" "CHY" "RXY" 18
 		       18,  // 5950 "E37A" "AHY" "RXY" 18
 		       18,  // 5960 "E37B" "SHY" "RXY" 18
+		       18,  // 360 "E37C" "MHY" "RXY" 18  RPI 817
 		       18,  // 5970 "E380" "NG" "RXY" 18
 		       18,  // 5980 "E381" "OG" "RXY" 18
 		       18,  // 5990 "E382" "XG" "RXY" 18
@@ -2514,6 +2846,15 @@ public  class  tz390 {
 		       19,  // 6140 "E502" "STRAG" "SSE" 19
 		       19,  // 6150 "E50E" "MVCSK" "SSE" 19
 		       19,  // 6160 "E50F" "MVCDK" "SSE" 19
+		       51,  // 370 "E544" "MVHHI" "SIL" 51  RPI 817
+		       51,  // 380 "E548" "MVGHI" "SIL" 51  RPI 817
+		       51,  // 390 "E54C" "MVHI" "SIL" 51  RPI 817
+		       51,  // 400 "E554" "CHHSI" "SIL" 51  RPI 817
+		       51,  // 410 "E555" "CLHHSI" "SIL" 51  RPI 817
+		       51,  // 420 "E558" "CGHSI" "SIL" 51  RPI 817
+		       51,  // 430 "E559" "CLGHSI" "SIL" 51  RPI 817
+		       51,  // 440 "E55C" "CHSI" "SIL" 51  RPI 817
+		       51,  // 450 "E55D" "CLFHSI" "SIL" 51  RPI 817
 		       17,  // 6170 "E8" "MVCIN" "SS" 17
 		       31,  // 6180 "E9" "PKA" "SS" 31
 		       17,  // 6190 "EA" "UNPKA" "SS" 17
@@ -2539,12 +2880,17 @@ public  class  tz390 {
 		       20,  // 6390 "EB3E" "CDSG" "RSY" 20
 		       20,  // 6400 "EB44" "BXHG" "RSY" 20
 		       20,  // 6410 "EB45" "BXLEG" "RSY" 20
+		       20,  // 460 "EB4C" "ECAG" "RSY" 20  RPI 817
 		       21,  // 6420 "EB51" "TMY" "SIY" 21
 		       21,  // 6430 "EB52" "MVIY" "SIY" 21
 		       21,  // 6440 "EB54" "NIY" "SIY" 21
 		       21,  // 6450 "EB55" "CLIY" "SIY" 21
 		       21,  // 6460 "EB56" "OIY" "SIY" 21
 		       21,  // 6470 "EB57" "XIY" "SIY" 21
+		       21,  // 470 "EB6A" "ASI" "SIY" 21  RPI 817
+		       21,  // 480 "EB6E" "ALSI" "SIY" 21  RPI 817
+		       21,  // 490 "EB7A" "AGSI" "SIY" 21  RPI 817
+		       21,  // 500 "EB7E" "ALGSI" "SIY" 21  RPI 817
 		       20,  // 6480 "EB80" "ICMH" "RSY" 20
 		       20,  // 6490 "EB81" "ICMY" "RSY" 20
 		       20,  // 6500 "EB8E" "MVCLU" "RSY" 20
@@ -2559,6 +2905,154 @@ public  class  tz390 {
 		       23,  // 6590 "EC44" "JXHG" "RIE" 23
 		       23,  // 6600 "EC45" "BRXLG" "RIE" 23
 		       23,  // 6610 "EC45" "JXLEG" "RIE" 23
+		       52,  // 510 "EC54" "RNSBG" "RIE8" 52  RPI 817
+		       52,  // 520 "EC54T" "RNSBGT" "RIE8" 52  RPI 817
+		       52,  // 530 "EC55" "RISBG" "RIE2" 58  RPI 817
+		       52,  // 540 "EC55Z" "RISBGZ" "RIE8" 52  RPI 817
+		       52,  // 550 "EC56" "ROSBG" "RIE8" 52  RPI 817
+		       52,  // 560 "EC56T" "ROSBGT" "RIE8" 52  RPI 817
+		       52,  // 570 "EC57" "RXSBG" "RIE8" 52  RPI 817
+		       52,  // 580 "EC57T" "RXSBGT" "RIE8" 52  RPI 817
+		       49,  // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
+		       50,  // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
+		       50,  // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
+		       50,  // 40 "EC644" "CGRJL" "RIE7" 50 RPI 817
+		       50,  // 50 "EC646" "CGRJNE" "RIE7" 50 RPI 817
+		       50,  // 60 "EC64C" "CGRJNH" "RIE7" 50 RPI 817
+		       50,  // 70 "EC64A" "CGRJNL" "RIE7" 50 RPI 817
+		       49,  // 80 "EC65" "CLGRJ" "RIE6" 49 RPI 817
+		       50,  // 90 "EC658" "CLGRJE" "RIE7" 50 RPI 817
+		       50,  // 100 "EC652" "CLGRJH" "RIE7" 50 RPI 817
+		       50,  // 110 "EC654" "CLGRJL" "RIE7" 50 RPI 817
+		       50,  // 120 "EC656" "CLGRJNE" "RIE7" 50 RPI 817
+		       50,  // 130 "EC65C" "CLGRJNH" "RIE7" 50 RPI 817
+		       50,  // 140 "EC65A" "CLGRJNL" "RIE7" 50 RPI 817		       
+		       41,  // 1010 "EC70" "CGIT" "RIE2" 41 RPI 817
+		       42,  // 1020 "EC708" "CGITE" "RIE3" 42 RPI 817
+		       42,  // 1030 "EC702" "CGITH" "RIE3" 42 RPI 817
+		       42,  // 1040 "EC704" "CGITL" "RIE3" 42 RPI 817
+		       42,  // 1050 "EC706" "CGITNE" "RIE3" 42 RPI 817
+		       42,  // 1060 "EC70C" "CGITNH" "RIE3" 42 RPI 817
+		       42,  // 1070 "EC70A" "CGITNL" "RIE3" 42 RPI 817 
+		       41,  // 150 "EC71" "CLGIT" "RIE2" 41 RPI 817
+		       42,  // 160 "EC718" "CLGITE" "RIE3" 42 RPI 817
+		       42,  // 170 "EC712" "CLGITH" "RIE3" 42 RPI 817
+		       42,  // 180 "EC714" "CLGITL" "RIE3" 42 RPI 817
+		       42,  // 190 "EC716" "CLGITNE" "RIE3" 42 RPI 817
+		       42,  // 200 "EC71C" "CLGITNH" "RIE3" 42 RPI 817
+		       42,  // 210 "EC71A" "CLGITNL" "RIE3" 42 RPI 817
+		       41,  // 1150 "EC72" "CIT" "RIE2" 41 RPI 817
+		       42,  // 1160 "EC728" "CITE" "RIE3" 42 RPI 817
+		       42,  // 1170 "EC722" "CITH" "RIE3" 42 RPI 817
+		       42,  // 1180 "EC724" "CITL" "RIE3" 42 RPI 817
+		       42,  // 1190 "EC726" "CITNE" "RIE3" 42 RPI 817
+		       42,  // 1200 "EC72C" "CITNH" "RIE3" 42 RPI 817
+		       42,  // 1210 "EC72A" "CITNL" "RIE3" 42 RPI 817
+		       41,  // 220 "EC73" "CLFIT" "RIE2" 41 RPI 817
+		       42,  // 230 "EC738" "CLFITE" "RIE3" 42 RPI 817
+		       42,  // 240 "EC732" "CLFITH" "RIE3" 42 RPI 817
+		       42,  // 250 "EC734" "CLFITL" "RIE3" 42 RPI 817
+		       42,  // 260 "EC736" "CLFITNE" "RIE3" 42 RPI 817
+		       42,  // 270 "EC73C" "CLFITNH" "RIE3" 42 RPI 817
+		       42,  // 280 "EC73A" "CLFITNL" "RIE3" 42 RPI 817
+		       49,  // 150 "EC76" "CRJ" "RIE6" 49 RPI 817
+		       50,  // 160 "EC768" "CRJE" "RIE7" 50 RPI 817
+		       50,  // 170 "EC762" "CRJH" "RIE7" 50 RPI 817
+		       50,  // 180 "EC764" "CRJL" "RIE7" 50 RPI 817
+		       50,  // 190 "EC766" "CRJNE" "RIE7" 50 RPI 817
+		       50,  // 200 "EC76C" "CRJNH" "RIE7" 50 RPI 817
+		       50,  // 210 "EC76A" "CRJNL" "RIE7" 50 RPI 817
+		       49,  // 220 "EC77" "CLRJ" "RIE6" 49 RPI 817
+		       50,  // 230 "EC778" "CLRJE" "RIE7" 50 RPI 817
+		       50,  // 240 "EC772" "CLRJH" "RIE7" 50 RPI 817
+		       50,  // 250 "EC774" "CLRJL" "RIE7" 50 RPI 817
+		       50,  // 260 "EC776" "CLRJNE" "RIE7" 50 RPI 817
+		       50,  // 270 "EC77C" "CLRJNH" "RIE7" 50 RPI 817
+		       50,  // 280 "EC77A" "CLRJNL" "RIE7" 50 RPI 817
+		       43,  // 290 "EC7C" "CGIJ" "RIE4" 43 RPI 817
+		       44,  // 300 "EC7C8" "CGIJE" "RIE5" 44 RPI 817
+		       44,  // 310 "EC7C2" "CGIJH" "RIE5" 44 RPI 817
+		       44,  // 320 "EC7C4" "CGIJL" "RIE5" 44 RPI 817
+		       44,  // 330 "EC7C6" "CGIJNE" "RIE5" 44 RPI 817
+		       44,  // 340 "EC7CC" "CGIJNH" "RIE5" 44 RPI 817
+		       44,  // 350 "EC7CA" "CGIJNL" "RIE5" 44 RPI 817
+		       43,  // 360 "EC7D" "CLGIJ" "RIE4" 43 RPI 817
+		       44,  // 370 "EC7D8" "CLGIJE" "RIE5" 44 RPI 817
+		       44,  // 380 "EC7D2" "CLGIJH" "RIE5" 44 RPI 817
+		       44,  // 390 "EC7D4" "CLGIJL" "RIE5" 44 RPI 817
+		       44,  // 400 "EC7D6" "CLGIJNE" "RIE5" 44 RPI 817
+		       44,  // 410 "EC7DC" "CLGIJNH" "RIE5" 44 RPI 817
+		       44,  // 420 "EC7DA" "CLGIJNL" "RIE5" 44 RPI 817
+		       43,  // 430 "EC7E" "CIJ" "RIE4" 43 RPI 817
+		       44,  // 440 "EC7E8" "CIJE" "RIE5" 44 RPI 817
+		       44,  // 450 "EC7E2" "CIJH" "RIE5" 44 RPI 817
+		       44,  // 460 "EC7E4" "CIJL" "RIE5" 44 RPI 817
+		       44,  // 470 "EC7E6" "CIJNE" "RIE5" 44 RPI 817
+		       44,  // 480 "EC7EC" "CIJNH" "RIE5" 44 RPI 817
+		       44,  // 490 "EC7EA" "CIJNL" "RIE5" 44 RPI 817
+		       43,  // 500 "EC7F" "CLIJ" "RIE4" 43 RPI 817
+		       44,  // 510 "EC7F8" "CLIJE" "RIE5" 44 RPI 817
+		       44,  // 520 "EC7F2" "CLIJH" "RIE5" 44 RPI 817
+		       44,  // 530 "EC7F4" "CLIJL" "RIE5" 44 RPI 817
+		       44,  // 540 "EC7F6" "CLIJNE" "RIE5" 44 RPI 817
+		       44,  // 550 "EC7FC" "CLIJNH" "RIE5" 44 RPI 817
+		       44,  // 560 "EC7FA" "CLIJNL" "RIE5" 44 RPI 817
+		       45,  // 570 "ECE4" "CGRB" "RRS1" 45 RPI 817
+		       46,  // 580 "ECE48" "CGRBE" "RRS2" 446, RPI 817
+		       46,  // 590 "ECE42" "CGRBH" "RRS2" 46 RPI 817
+		       46,  // 600 "ECE44" "CGRBL" "RRS2" 46 RPI 817
+		       46,  // 610 "ECE46" "CGRBNE" "RRS2" 46 RPI 817
+		       46,  // 620 "ECE4C" "CGRBNH" "RRS2" 46 RPI 817
+		       46,  // 630 "ECE4A" "CGRBNL" "RRS2" 46 RPI 817
+		       45,  // 640 "ECE5" "CLGRB" "RRS1" 45 RPI 817
+		       46,  // 650 "ECE58" "CLGRBE" "RRS2" 46 RPI 817
+		       46,  // 660 "ECE52" "CLGRBH" "RRS2" 46 RPI 817
+		       46,  // 670 "ECE54" "CLGRBL" "RRS2" 46 RPI 817
+		       46,  // 680 "ECE56" "CLGRBNE" "RRS2" 46 RPI 817
+		       46,  // 690 "ECE5C" "CLGRBNH" "RRS2" 46 RPI 817
+		       46,  // 700 "ECE5A" "CLGRBNL" "RRS2" 46 RPI 817
+		       45,  // 710 "ECF6" "CRB" "RRS1" 45 RPI 817
+		       46,  // 720 "ECF68" "CRBE" "RRS2" 46 RPI 817
+		       46,  // 730 "ECF62" "CRBH" "RRS2" 46 RPI 817
+		       46,  // 740 "ECF64" "CRBL" "RRS2" 46 RPI 817
+		       46,  // 750 "ECF66" "CRBNE" "RRS2" 45 RPI 817
+		       46,  // 760 "ECF6C" "CRBNH" "RRS2" 46 RPI 817
+		       46,  // 770 "ECF6A" "CRBNL" "RRS2" 46 RPI 817
+		       45,  // 780 "ECF7" "CLRB" "RRS1" 45 RPI 817
+		       46,  // 790 "ECF78" "CLRBE" "RRS2" 46 RPI 817
+		       46,  // 800 "ECF72" "CLRBH" "RRS2" 46 RPI 817
+		       46,  // 810 "ECF74" "CLRBL" "RRS2" 46 RPI 817
+		       46,  // 820 "ECF76" "CLRBNE" "RRS2" 46 RPI 817
+		       46,  // 830 "ECF7C" "CLRBNH" "RRS2" 46 RPI 817
+		       46,  // 840 "ECF7A" "CLRBNL" "RRS2" 46 RPI 817
+		       47,  // 850 "ECFC" "CGIB" "RRS3" 47 RPI 817
+		       48,  // 860 "ECFC8" "CGIBE" "RRS4" 48 RPI 817
+		       48,  // 870 "ECFC2" "CGIBH" "RRS4" 48 RPI 817
+		       48,  // 880 "ECFC4" "CGIBL" "RRS4" 48 RPI 817
+		       48,  // 890 "ECFC6" "CGIBNE" "RRS4" 48 RPI 817
+		       48,  // 900 "ECFCC" "CGIBNH" "RRS4" 48 RPI 817
+		       48,  // 910 "ECFCA" "CGIBNL" "RRS4" 48 RPI 817
+		       47,  // 920 "ECFD" "CLGIB" "RRS3" 47 RPI 817
+		       48,  // 930 "ECFD8" "CLGIBE" "RRS4" 48 RPI 817
+		       48,  // 940 "ECFD2" "CLGIBH" "RRS4" 48 RPI 817
+		       48,  // 950 "ECFD4" "CLGIBL" "RRS4" 48 RPI 817
+		       48,  // 960 "ECFD6" "CLGIBNE" "RRS4" 48 RPI 817
+		       48,  // 970 "ECFDC" "CLGIBNH" "RRS4" 48 RPI 817
+		       48,  // 980 "ECFDA" "CLGIBNL" "RRS4" 48 RPI 817
+		       47,  // 990 "ECFE" "CIB" "RRS3" 47 RPI 817
+		       48,  // 1000 "ECFE8" "CIBE" "RRS4" 48 RPI 817
+		       48,  // 1010 "ECFE2" "CIBH" "RRS4" 48 RPI 817
+		       48,  // 1020 "ECFE4" "CIBL" "RRS4" 48 RPI 817
+		       48,  // 1030 "ECFE6" "CIBNE" "RRS4" 48 RPI 817
+		       48,  // 1040 "ECFEC" "CIBNH" "RRS4" 48 RPI 817
+		       48,  // 1050 "ECFEA" "CIBNL" "RRS4" 48 RPI 817
+		       47,  // 1060 "ECFF" "CLIB" "RRS3" 47 RPI 817
+		       48,  // 1070 "ECFF8" "CLIBE" "RRS4" 48 RPI 817
+		       48,  // 1080 "ECFF2" "CLIBH" "RRS4" 48 RPI 817
+		       48,  // 1090 "ECFF4" "CLIBL" "RRS4" 48 RPI 817
+		       48,  // 1100 "ECFF6" "CLIBNE" "RRS4" 48 RPI 817
+		       48,  // 1110 "ECFFC" "CLIBNH" "RRS4" 48 RPI 817
+		       48,  // 1120 "ECFFA" "CLIBNL" "RRS4" 48 RPI 817		       
 		       24,  // 6620 "ED04" "LDEB" "RXE" 24
 		       24,  // 6630 "ED05" "LXDB" "RXE" 24
 		       24,  // 6640 "ED06" "LXEB" "RXE" 24
@@ -2822,6 +3316,8 @@ public  class  tz390 {
 		       "4F",  // 1170 "4F" "CVB" "RX" 5
 		       "50",  // 1180 "50" "ST" "RX" 5
 		       "51",  // 1190 "51" "LAE" "RX" 5
+		       "52",  // 1193 "52" "XDECO" "RX" 37 RPI 812
+		       "53",  // 1196 "53" "XDECI" "RX" 37 RPI 812	
 		       "54",  // 1200 "54" "N" "RX" 5
 		       "55",  // 1210 "55" "CL" "RX" 5
 		       "56",  // 1220 "56" "O" "RX" 5
@@ -2835,6 +3331,8 @@ public  class  tz390 {
 		       "5E",  // 1300 "5E" "AL" "RX" 5
 		       "5F",  // 1310 "5F" "SL" "RX" 5
 		       "60",  // 1320 "60" "STD" "RX" 5
+		       "61",  // 1323 "61" "XHEXI" "RX" 37 RPI 812
+		       "62",  // 1326 "62" "XHEXO" "RX" 37 RPI 812
 		       "67",  // 1330 "67" "MXD" "RX" 5
 		       "68",  // 1340 "68" "LD" "RX" 5
 		       "69",  // 1350 "69" "CD" "RX" 5
@@ -3251,6 +3749,34 @@ public  class  tz390 {
 		       "B93E",  // 4810 "B93E" "KIMD" "RRE" 14
 		       "B93F",  // 4820 "B93F" "KLMD" "RRE" 14
 		       "B946",  // 4830 "B946" "BCTGR" "RRE" 14
+		       "B960",  // 10 "B960" "CGRT" "RRF5" 39 RPI 817
+		       "B9608",  // 20 "B9608" "CGRTE" "RRF6" 40 RPI 817
+		       "B9602",  // 30 "B9602" "CGRTH" "RRF6" 40 RPI 817
+		       "B9604",  // 40 "B9604" "CGRTL" "RRF6" 40 RPI 817
+		       "B9606",  // 50 "B9606" "CGRTNE" "RRF6" 40 RPI 817
+		       "B960C",  // 60 "B960C" "CGRTNH" "RRF6" 40 RPI 817
+		       "B960A",  // 70 "B960A" "CGRTNL" "RRF6" 40 RPI 817
+		       "B961",  // 10 "B961" "CLGRT" "RRF5" 39 RPI 817
+		       "B9618",  // 20 "B9618" "CLGRTE" "RRF6" 40 RPI 817
+		       "B9612",  // 30 "B9612" "CLGRTH" "RRF6" 40 RPI 817
+		       "B9614",  // 40 "B9614" "CLGRTL" "RRF6" 40 RPI 817
+		       "B9616",  // 50 "B9616" "CLGRTNE" "RRF6" 40 RPI 817
+		       "B961C",  // 60 "B961C" "CLGRTNH" "RRF6" 40 RPI 817
+		       "B961A",  // 70 "B961A" "CLGRTNL" "RRF6" 40 RPI 817
+		       "B972",  // 80 "B972" "CRT" "RRF5" 39 RPI 817
+		       "B9728",  // 90 "B9728" "CRTE" "RRF6" 40 RPI 817
+		       "B9722",  // 100 "B9722" "CRTH" "RRF6" 40 RPI 817
+		       "B9724",  // 110 "B9724" "CRTL" "RRF6" 40 RPI 817
+		       "B9726",  // 120 "B9726" "CRTNE" "RRF6" 40 RPI 817
+		       "B972C",  // 130 "B972C" "CRTNH" "RRF6" 40 RPI 817
+		       "B972A",  // 140 "B972A" "CRTNL" "RRF6" 40 RPI 817
+		       "B973",  // 80 "B973" "CLRT" "RRF5" 39 RPI 817
+		       "B9738",  // 90 "B9738" "CLRTE" "RRF6" 40 RPI 817
+		       "B9732",  // 100 "B9732" "CLRTH" "RRF6" 40 RPI 817
+		       "B9734",  // 110 "B9734" "CLRTL" "RRF6" 40 RPI 817
+		       "B9736",  // 120 "B9736" "CLRTNE" "RRF6" 40 RPI 817
+		       "B973C",  // 130 "B973C" "CLRTNH" "RRF6" 40 RPI 817
+		       "B973A",  // 140 "B973A" "CLRTNL" "RRF6" 40 RPI 817
 		       "B980",  // 4840 "B980" "NGR" "RRE" 14
 		       "B981",  // 4850 "B981" "OGR" "RRE" 14
 		       "B982",  // 4860 "B982" "XGR" "RRE" 14
@@ -3279,12 +3805,16 @@ public  class  tz390 {
 		       "B99D",  // 5040 "B99D" "ESEA" "RRE" 14
 		       "B99E",  // 5050 "B99E" "PTI" "RRE" 14
 		       "B99F",  // 5060 "B99F" "SSAIR" "RRE" 14
+		       "B9A2",  // 10 "B9A2" "PTF" "RRE" 14 RPI 817
 		       "B9AA",  //      "B9AA" "LPTEA" "RRE" 14 Z9-19
+		       "B9AF",  // 20 "B9AF" "PFMF" "RRF5" 39 RPI 817
 		       "B9B0",  // 5070 "B9B0" "CU14" "RRE" 14
 		       "B9B1",  // 5080 "B9B1" "CU24" "RRE" 14
 		       "B9B2",  // 5090 "B9B2" "CU41" "RRE" 14
 		       "B9B3",  // 5100 "B9B3" "CU42" "RRE" 14
+		       "B9BD",  // 30 "B9BD" "TRTRE" "RRF5" 39 RPI 817
 		       "B9BE",  // 5110 "B9BE" "SRSTU" "RRE" 14
+		       "B9BF",  // 40 "B9BF" "TRTE" "RRF5" 39 RPI 817
 		       "BA",  // 5120 "BA" "CS" "RS" 10
 		       "BB",  // 5130 "BB" "CDS" "RS" 10
 		       "BD",  // 5140 "BD" "CLM" "RS" 10
@@ -3336,6 +3866,8 @@ public  class  tz390 {
 		       "C0D",  //      "C0D" "OILF" "RIL" 16 Z9-28
 		       "C0E",  //      "C0E" "LLIHF" "RIL" 16 Z9-29
 		       "C0F",  //      "C0F" "LLILF" "RIL" 16 Z9-30
+		       "C20",  // 50 "C20" "MSGFI" "RIL" 16 RPI 817
+		       "C21",  // 60 "C21" "MSFI" "RIL" 16 RPI 817
 		       "C24",  //      "C24" "SLGFI" "RIL" 16 Z9-31
 		       "C25",  //      "C25" "SLFI" "RIL" 16 Z9-32
 		       "C28",  //      "C28" "AGFI" "RIL" 16 Z9-33
@@ -3346,6 +3878,29 @@ public  class  tz390 {
 		       "C2D",  //      "C2D" "CFI" "RIL" 16 Z9-38
 		       "C2E",  //      "C2E" "CLGFI" "RIL" 16 Z9-39
 		       "C2F",  //      "C2F" "CLFI" "RIL" 16 Z9-40
+		       "C42",  // 70 "C42" "LLHRL" "RIL" 16 RPI 817
+		       "C44",  // 80 "C44" "LGHRL" "RIL" 16 RPI 817
+		       "C45",  // 90 "C45" "LHRL" "RIL" 16 RPI 817
+		       "C46",  // 100 "C46" "LLGHRL" "RIL" 16 RPI 817
+		       "C47",  // 110 "C47" "STHRL" "RIL" 16 RPI 817
+		       "C48",  // 120 "C48" "LGRL" "RIL" 16 RPI 817
+		       "C4B",  // 130 "C4B" "STGRL" "RIL" 16 RPI 817
+		       "C4C",  // 140 "C4C" "LGFRL" "RIL" 16 RPI 817
+		       "C4D",  // 150 "C4D" "LRL" "RIL" 16 RPI 817
+		       "C4E",  // 160 "C4E" "LLGFRL" "RIL" 16 RPI 817
+		       "C4F",  // 170 "C4F" "STRL" "RIL" 16 RPI 817
+		       "C60",  // 180 "C60" "EXRL" "RIL" 16 RPI 817
+		       "C62",  // 190 "C62" "PFDRL" "RIL" 16 RPI 817
+		       "C64",  // 200 "C64" "CGHRL" "RIL" 16 RPI 817
+		       "C65",  // 210 "C65" "CHRL" "RIL" 16 RPI 817
+		       "C66",  // 220 "C66" "CLGHRL" "RIL" 16 RPI 817
+		       "C67",  // 230 "C67" "CLHRL" "RIL" 16 RPI 817
+		       "C68",  // 240 "C68" "CGRL" "RIL" 16 RPI 817
+		       "C6A",  // 250 "C6A" "CLGRL" "RIL" 16 RPI 817
+		       "C6C",  // 260 "C6C" "CGFRL" "RIL" 16 RPI 817
+		       "C6D",  // 270 "C6D" "CRL" "RIL" 16 RPI 817
+		       "C6E",  // 280 "C6E" "CLGFRL" "RIL" 16 RPI 817
+		       "C6F",  // 290 "C6F" "CLRL" "RIL" 16 RPI 817
 		       "C80",  //      "C80" "MVCOS" "SSF" 32 Z9-41
 		       "D0",  // 5230 "D0" "TRTR" "SS" 17
 		       "D1",  // 5240 "D1" "MVN" "SS" 17
@@ -3362,7 +3917,14 @@ public  class  tz390 {
 		       "DD",  // 5350 "DD" "TRT" "SS" 17
 		       "DE",  // 5360 "DE" "ED" "SS" 17
 		       "DF",  // 5370 "DF" "EDMK" "SS" 17
-		       "E1",  // 5380 "E1" "PKU" "SS" 17
+		       "E00", // 5375 "E00" "XREAD" "RXSS" 38 RPI 812
+		       "E02", // 5375 "E02" "XPRNT" "RXSS" 38 RPI 812
+		       "E04", // 5375 "E04" "XPNCH" "RXSS" 38 RPI 812
+		       "E06", // 5375 "E06" "XDUMP" "RXSS" 38 RPI 812
+		       "E08", // 5375 "E08" "XLIMD" "RXSS" 38 RPI 812
+		       "E0A", // 5375 "E0A" "XGET"  "RXSS" 38 RPI 812
+		       "E0C", // 5375 "E0C" "XPUT"  "RXSS" 38 RPI 812
+		       "E1",  // 5380 "E1" "PKU" "RXSS" 17
 		       "E2",  // 5390 "E2" "UNPKU" "SS" 17
 		       "E302",  //      "E302" "LTG" "RXY" 18 Z9-42
 		       "E303",  // 5400 "E303" "LRAG" "RXY" 18
@@ -3398,6 +3960,9 @@ public  class  tz390 {
 		       "E32F",  // 5690 "E32F" "STRVG" "RXY" 18
 		       "E330",  // 5700 "E330" "CGF" "RXY" 18
 		       "E331",  // 5710 "E331" "CLGF" "RXY" 18
+		       "E332",  // 310 "E332" "LTGF" "RXY" 18 RPI 817
+		       "E334",  // 320 "E334" "CGH" "RXY" 18 RPI 817
+		       "E336",  // 330 "E336" "PFD" "RXY" 18 RPI 817
 		       "E33E",  // 5720 "E33E" "STRV" "RXY" 18
 		       "E33F",  // 5730 "E33F" "STRVH" "RXY" 18
 		       "E346",  // 5740 "E346" "BCTG" "RXY" 18
@@ -3411,18 +3976,21 @@ public  class  tz390 {
 		       "E359",  // 5820 "E359" "CY" "RXY" 18
 		       "E35A",  // 5830 "E35A" "AY" "RXY" 18
 		       "E35B",  // 5840 "E35B" "SY" "RXY" 18
+		       "E35C",  // 340 "E35C" "MFY" "RXY" 18 RPI 817
 		       "E35E",  // 5850 "E35E" "ALY" "RXY" 18
 		       "E35F",  // 5860 "E35F" "SLY" "RXY" 18
 		       "E370",  // 5870 "E370" "STHY" "RXY" 18
 		       "E371",  // 5880 "E371" "LAY" "RXY" 18
 		       "E372",  // 5890 "E372" "STCY" "RXY" 18
 		       "E373",  // 5900 "E373" "ICY" "RXY" 18
+		       "E375",  // 350 "E375" "LAEY" "RXY" 18 RPI 817
 		       "E376",  // 5910 "E376" "LB" "RXY" 18
 		       "E377",  // 5920 "E377" "LGB" "RXY" 18
 		       "E378",  // 5930 "E378" "LHY" "RXY" 18
 		       "E379",  // 5940 "E379" "CHY" "RXY" 18
 		       "E37A",  // 5950 "E37A" "AHY" "RXY" 18
 		       "E37B",  // 5960 "E37B" "SHY" "RXY" 18
+		       "E37C",  // 360 "E37C" "MHY" "RXY" 18 RPI 817
 		       "E380",  // 5970 "E380" "NG" "RXY" 18
 		       "E381",  // 5980 "E381" "OG" "RXY" 18
 		       "E382",  // 5990 "E382" "XG" "RXY" 18
@@ -3445,6 +4013,15 @@ public  class  tz390 {
 		       "E502",  // 6140 "E502" "STRAG" "SSE" 19
 		       "E50E",  // 6150 "E50E" "MVCSK" "SSE" 19
 		       "E50F",  // 6160 "E50F" "MVCDK" "SSE" 19
+		       "E544",  // 370 "E544" "MVHHI" "SIL" 51 RPI 817
+		       "E548",  // 380 "E548" "MVGHI" "SIL" 51 RPI 817
+		       "E54C",  // 390 "E54C" "MVHI" "SIL" 51 RPI 817
+		       "E554",  // 400 "E554" "CHHSI" "SIL" 51 RPI 817
+		       "E555",  // 410 "E555" "CLHHSI" "SIL" 51 RPI 817
+		       "E558",  // 420 "E558" "CGHSI" "SIL" 51 RPI 817
+		       "E559",  // 430 "E559" "CLGHSI" "SIL" 51 RPI 817
+		       "E55C",  // 440 "E55C" "CHSI" "SIL" 51 RPI 817
+		       "E55D",  // 450 "E55D" "CLFHSI" "SIL" 51 RPI 817
 		       "E8",  // 6170 "E8" "MVCIN" "SS" 17
 		       "E9",  // 6180 "E9" "PKA" "SS" 31
 		       "EA",  // 6190 "EA" "UNPKA" "SS" 17
@@ -3470,12 +4047,17 @@ public  class  tz390 {
 		       "EB3E",  // 6390 "EB3E" "CDSG" "RSY" 20
 		       "EB44",  // 6400 "EB44" "BXHG" "RSY" 20
 		       "EB45",  // 6410 "EB45" "BXLEG" "RSY" 20
+		       "EB4C",  // 460 "EB4C" "ECAG" "RSY" 20 RPI 817
 		       "EB51",  // 6420 "EB51" "TMY" "SIY" 21
 		       "EB52",  // 6430 "EB52" "MVIY" "SIY" 21
 		       "EB54",  // 6440 "EB54" "NIY" "SIY" 21
 		       "EB55",  // 6450 "EB55" "CLIY" "SIY" 21
 		       "EB56",  // 6460 "EB56" "OIY" "SIY" 21
 		       "EB57",  // 6470 "EB57" "XIY" "SIY" 21
+		       "EB6A",  // 470 "EB6A" "ASI" "SIY" 21 RPI 817
+		       "EB6E",  // 480 "EB6E" "ALSI" "SIY" 21 RPI 817
+		       "EB7A",  // 490 "EB7A" "AGSI" "SIY" 21 RPI 817
+		       "EB7E",  // 500 "EB7E" "ALGSI" "SIY" 21 RPI 817
 		       "EB80",  // 6480 "EB80" "ICMH" "RSY" 20
 		       "EB81",  // 6490 "EB81" "ICMY" "RSY" 20
 		       "EB8E",  // 6500 "EB8E" "MVCLU" "RSY" 20
@@ -3490,6 +4072,154 @@ public  class  tz390 {
 		       "EC44",  // 6590 "EC44" "JXHG" "RIE" 23
 		       "EC45",  // 6600 "EC45" "BRXLG" "RIE" 23
 		       "EC45",  // 6610 "EC45" "JXLEG" "RIE" 23
+		       "EC54",  // 510 "EC54" "RNSBG" "RIE8" 52 RPI 817
+		       "EC54T",  // 520 "EC54T" "RNSBGT" "RIE8" 52 RPI 817
+		       "EC55",  // 530 "EC55" "RISBG" "RIE8" 52 RPI 817
+		       "EC55Z",  // 540 "EC55Z" "RISBGZ" "RIE8" 52 RPI 817
+		       "EC56",  // 550 "EC56" "ROSBG" "RIE8" 52 RPI 817
+		       "EC56T",  // 560 "EC56T" "ROSBGT" "RIE8" 52 RPI 817
+		       "EC57",  // 570 "EC57" "RXSBG" "RIE8" 52 RPI 817
+		       "EC57T",  // 580 "EC57T" "RXSBGT" "RIE8" 52 RPI 817
+		       "EC64",  // 10 "EC64" "CGRJ" "RIE6" 49 RPI 817
+		       "EC648",  // 20 "EC648" "CGRJE" "RIE7" 50 RPI 817
+		       "EC642",  // 30 "EC642" "CGRJH" "RIE7" 50 RPI 817
+		       "EC644",  // 40 "EC644" "CGRJL" "RIE7" 50 RPI 817
+		       "EC646",  // 50 "EC646" "CGRJNE" "RIE7" 50 RPI 817
+		       "EC64C",  // 60 "EC64C" "CGRJNH" "RIE7" 50 RPI 817
+		       "EC64A",  // 70 "EC64A" "CGRJNL" "RIE7" 50 RPI 817
+		       "EC65",  // 80 "EC65" "CLGRJ" "RIE6" 49 RPI 817
+		       "EC658",  // 90 "EC658" "CLGRJE" "RIE7" 50 RPI 817
+		       "EC652",  // 100 "EC652" "CLGRJH" "RIE7" 50 RPI 817
+		       "EC654",  // 110 "EC654" "CLGRJL" "RIE7" 50 RPI 817
+		       "EC656",  // 120 "EC656" "CLGRJNE" "RIE7" 50 RPI 817
+		       "EC65C",  // 130 "EC65C" "CLGRJNH" "RIE7" 50 RPI 817
+		       "EC65A",  // 140 "EC65A" "CLGRJNL" "RIE7" 50 RPI 817		       
+		       "EC70",  // 150 "EC70" "CGIT" "RIE2" 41 RPI 817
+		       "EC708",  // 160 "EC708" "CGITE" "RIE3" 42 RPI 817
+		       "EC702",  // 170 "EC702" "CGITH" "RIE3" 42 RPI 817
+		       "EC704",  // 180 "EC704" "CGITL" "RIE3" 42 RPI 817
+		       "EC706",  // 190 "EC706" "CGITNE" "RIE3" 42 RPI 817
+		       "EC70C",  // 200 "EC70C" "CGITNH" "RIE3" 42 RPI 817
+		       "EC70A",  // 210 "EC70A" "CGITNL" "RIE3" 42 RPI 817
+		       "EC71",  // 150 "EC71" "CLGIT" "RIE2" 41 RPI 817
+		       "EC718",  // 160 "EC718" "CLGITE" "RIE3" 42 RPI 817
+		       "EC712",  // 170 "EC712" "CLGITH" "RIE3" 42 RPI 817
+		       "EC714",  // 180 "EC714" "CLGITL" "RIE3" 42 RPI 817
+		       "EC716",  // 190 "EC716" "CLGITNE" "RIE3" 42 RPI 817
+		       "EC71C",  // 200 "EC71C" "CLGITNH" "RIE3" 42 RPI 817
+		       "EC71A",  // 210 "EC71A" "CLGITNL" "RIE3" 42 RPI 817
+		       "EC72",  // 220 "EC72" "CIT" "RIE2" 41 RPI 817
+		       "EC728",  // 230 "EC728" "CITE" "RIE3" 42 RPI 817
+		       "EC722",  // 240 "EC722" "CITH" "RIE3" 42 RPI 817
+		       "EC724",  // 250 "EC724" "CITL" "RIE3" 42 RPI 817
+		       "EC726",  // 260 "EC726" "CITNE" "RIE3" 42 RPI 817
+		       "EC72C",  // 270 "EC72C" "CITNH" "RIE3" 42 RPI 817
+		       "EC72A",  // 280 "EC72A" "CITNL" "RIE3" 42 RPI 817
+		       "EC73",  // 220 "EC73" "CLFIT" "RIE2" 41 RPI 817
+		       "EC738",  // 230 "EC738" "CLFITE" "RIE3" 42 RPI 817
+		       "EC732",  // 240 "EC732" "CLFITH" "RIE3" 42 RPI 817
+		       "EC734",  // 250 "EC734" "CLFITL" "RIE3" 42 RPI 817
+		       "EC736",  // 260 "EC736" "CLFITNE" "RIE3" 42 RPI 817
+		       "EC73C",  // 270 "EC73C" "CLFITNH" "RIE3" 42 RPI 817
+		       "EC73A",  // 280 "EC73A" "CLFITNL" "RIE3" 42 RPI 817
+		       "EC76",  // 150 "EC76" "CRJ" "RIE6" 49 RPI 817
+		       "EC768",  // 160 "EC768" "CRJE" "RIE7" 50 RPI 817
+		       "EC762",  // 170 "EC762" "CRJH" "RIE7" 50 RPI 817
+		       "EC764",  // 180 "EC764" "CRJL" "RIE7" 50 RPI 817
+		       "EC766",  // 190 "EC766" "CRJNE" "RIE7" 50 RPI 817
+		       "EC76C",  // 200 "EC76C" "CRJNH" "RIE7" 50 RPI 817
+		       "EC76A",  // 210 "EC76A" "CRJNL" "RIE7" 50 RPI 817
+		       "EC77",  // 220 "EC77" "CLRJ" "RIE6" 49 RPI 817
+		       "EC778",  // 230 "EC778" "CLRJE" "RIE7" 50 RPI 817
+		       "EC772",  // 240 "EC772" "CLRJH" "RIE7" 50 RPI 817
+		       "EC774",  // 250 "EC774" "CLRJL" "RIE7" 50 RPI 817
+		       "EC776",  // 260 "EC776" "CLRJNE" "RIE7" 50 RPI 817
+		       "EC77C",  // 270 "EC77C" "CLRJNH" "RIE7" 50 RPI 817
+		       "EC77A",  // 280 "EC77A" "CLRJNL" "RIE7" 50 RPI 817
+		       "EC7C",  // 290 "EC7C" "CGIJ" "RIE4" 43 RPI 817
+		       "EC7C8",  // 300 "EC7C8" "CGIJE" "RIE5" 44 RPI 817
+		       "EC7C2",  // 310 "EC7C2" "CGIJH" "RIE5" 44 RPI 817
+		       "EC7C4",  // 320 "EC7C4" "CGIJL" "RIE5" 44 RPI 817
+		       "EC7C6",  // 330 "EC7C6" "CGIJNE" "RIE5" 44 RPI 817
+		       "EC7CC",  // 340 "EC7CC" "CGIJNH" "RIE5" 44 RPI 817
+		       "EC7CA",  // 350 "EC7CA" "CGIJNL" "RIE5" 44 RPI 817
+		       "EC7D",  // 360 "EC7D" "CLGIJ" "RIE4" 43 RPI 817
+		       "EC7D8",  // 370 "EC7D8" "CLGIJE" "RIE5" 44 RPI 817
+		       "EC7D2",  // 380 "EC7D2" "CLGIJH" "RIE5" 44 RPI 817
+		       "EC7D4",  // 390 "EC7D4" "CLGIJL" "RIE5" 44 RPI 817
+		       "EC7D6",  // 400 "EC7D6" "CLGIJNE" "RIE5" 44 RPI 817
+		       "EC7DC",  // 410 "EC7DC" "CLGIJNH" "RIE5" 44 RPI 817
+		       "EC7DA",  // 420 "EC7DA" "CLGIJNL" "RIE5" 44 RPI 817
+		       "EC7E",  // 430 "EC7E" "CIJ" "RIE4" 43 RPI 817
+		       "EC7E8",  // 440 "EC7E8" "CIJE" "RIE5" 44 RPI 817
+		       "EC7E2",  // 450 "EC7E2" "CIJH" "RIE5" 44 RPI 817
+		       "EC7E4",  // 460 "EC7E4" "CIJL" "RIE5" 44 RPI 817
+		       "EC7E6",  // 470 "EC7E6" "CIJNE" "RIE5" 44 RPI 817
+		       "EC7EC",  // 480 "EC7EC" "CIJNH" "RIE5" 44 RPI 817
+		       "EC7EA",  // 490 "EC7EA" "CIJNL" "RIE5" 44 RPI 817
+		       "EC7F",  // 500 "EC7F" "CLIJ" "RIE4" 43 RPI 817
+		       "EC7F8",  // 510 "EC7F8" "CLIJE" "RIE5" 44 RPI 817
+		       "EC7F2",  // 520 "EC7F2" "CLIJH" "RIE5" 44 RPI 817
+		       "EC7F4",  // 530 "EC7F4" "CLIJL" "RIE5" 44 RPI 817
+		       "EC7F6",  // 540 "EC7F6" "CLIJNE" "RIE5" 44 RPI 817
+		       "EC7FC",  // 550 "EC7FC" "CLIJNH" "RIE5" 44 RPI 817
+		       "EC7FA",  // 560 "EC7FA" "CLIJNL" "RIE5" 44 RPI 817
+		       "ECE4",  // 570 "ECE4" "CGRB" "RRS1" 45 RPI 817
+		       "ECE48",  // 580 "ECE48" "CGRBE" "RRS2" 46 RPI 817
+		       "ECE42",  // 590 "ECE42" "CGRBH" "RRS2" 46 RPI 817
+		       "ECE44",  // 600 "ECE44" "CGRBL" "RRS2" 46 RPI 817
+		       "ECE46",  // 610 "ECE46" "CGRBNE" "RRS2" 46 RPI 817
+		       "ECE4C",  // 620 "ECE4C" "CGRBNH" "RRS2" 46 RPI 817
+		       "ECE4A",  // 630 "ECE4A" "CGRBNL" "RRS2" 46 RPI 817
+		       "ECE5",  // 640 "ECE5" "CLGRB" "RRS1" 45 RPI 817
+		       "ECE58",  // 650 "ECE58" "CLGRBE" "RRS2" 46 RPI 817
+		       "ECE52",  // 660 "ECE52" "CLGRBH" "RRS2" 46 RPI 817
+		       "ECE54",  // 670 "ECE54" "CLGRBL" "RRS2" 46 RPI 817
+		       "ECE56",  // 680 "ECE56" "CLGRBNE" "RRS2" 46 RPI 817
+		       "ECE5C",  // 690 "ECE5C" "CLGRBNH" "RRS2" 46 RPI 817
+		       "ECE5A",  // 700 "ECE5A" "CLGRBNL" "RRS2" 46 RPI 817
+		       "ECF6",  // 710 "ECF6" "CRB" "RRS1" 45 RPI 817
+		       "ECF68",  // 720 "ECF68" "CRBE" "RRS2" 46 RPI 817
+		       "ECF62",  // 730 "ECF62" "CRBH" "RRS2" 46 RPI 817
+		       "ECF64",  // 740 "ECF64" "CRBL" "RRS2" 46 RPI 817
+		       "ECF66",  // 750 "ECF66" "CRBNE" "RRS1" 45 RPI 817
+		       "ECF6C",  // 760 "ECF6C" "CRBNH" "RRS2" 46 RPI 817
+		       "ECF6A",  // 770 "ECF6A" "CRBNL" "RRS2" 46 RPI 817
+		       "ECF7",  // 780 "ECF7" "CLRB" "RRS1" 45 RPI 817
+		       "ECF78",  // 790 "ECF78" "CLRBE" "RRS2" 46 RPI 817
+		       "ECF72",  // 800 "ECF72" "CLRBH" "RRS2" 46 RPI 817
+		       "ECF74",  // 810 "ECF74" "CLRBL" "RRS2" 46 RPI 817
+		       "ECF76",  // 820 "ECF76" "CLRBNE" "RRS2" 46 RPI 817
+		       "ECF7C",  // 830 "ECF7C" "CLRBNH" "RRS2" 46 RPI 817
+		       "ECF7A",  // 840 "ECF7A" "CLRBNL" "RRS2" 46 RPI 817
+		       "ECFC",  // 850 "ECFC" "CGIB" "RRS3" 47 RPI 817
+		       "ECFC8",  // 860 "ECFC8" "CGIBE" "RRS4" 48 RPI 817
+		       "ECFC2",  // 870 "ECFC2" "CGIBH" "RRS4" 48 RPI 817
+		       "ECFC4",  // 880 "ECFC4" "CGIBL" "RRS4" 48 RPI 817
+		       "ECFC6",  // 890 "ECFC6" "CGIBNE" "RRS4" 48 RPI 817
+		       "ECFCC",  // 900 "ECFCC" "CGIBNH" "RRS4" 48 RPI 817
+		       "ECFCA",  // 910 "ECFCA" "CGIBNL" "RRS4" 48 RPI 817
+		       "ECFD",  // 920 "ECFD" "CLGIB" "RRS3" 47 RPI 817
+		       "ECFD8",  // 930 "ECFD8" "CLGIBE" "RRS4" 48 RPI 817
+		       "ECFD2",  // 940 "ECFD2" "CLGIBH" "RRS4" 48 RPI 817
+		       "ECFD4",  // 950 "ECFD4" "CLGIBL" "RRS4" 48 RPI 817
+		       "ECFD6",  // 960 "ECFD6" "CLGIBNE" "RRS4" 48 RPI 817
+		       "ECFDC",  // 970 "ECFDC" "CLGIBNH" "RRS4" 48 RPI 817
+		       "ECFDA",  // 980 "ECFDA" "CLGIBNL" "RRS4" 48 RPI 817
+		       "ECFE",  // 990 "ECFE" "CIB" "RRS3" 47 RPI 817
+		       "ECFE8",  // 1000 "ECFE8" "CIBE" "RRS4" 48 RPI 817
+		       "ECFE2",  // 1010 "ECFE2" "CIBH" "RRS4" 48 RPI 817
+		       "ECFE4",  // 1020 "ECFE4" "CIBL" "RRS4" 48 RPI 817
+		       "ECFE6",  // 1030 "ECFE6" "CIBNE" "RRS4" 48 RPI 817
+		       "ECFEC",  // 1040 "ECFEC" "CIBNH" "RRS4" 48 RPI 817
+		       "ECFEA",  // 1050 "ECFEA" "CIBNL" "RRS4" 48 RPI 817
+		       "ECFF",  // 1060 "ECFF" "CLIB" "RRS3" 47 RPI 817
+		       "ECFF8",  // 1070 "ECFF8" "CLIBE" "RRS4" 48 RPI 817
+		       "ECFF2",  // 1080 "ECFF2" "CLIBH" "RRS4" 48 RPI 817
+		       "ECFF4",  // 1090 "ECFF4" "CLIBL" "RRS4" 48 RPI 817
+		       "ECFF6",  // 1100 "ECFF6" "CLIBNE" "RRS4" 48 RPI 817
+		       "ECFFC",  // 1110 "ECFFC" "CLIBNH" "RRS4" 48 RPI 817
+		       "ECFFA",  // 1120 "ECFFA" "CLIBNL" "RRS4" 48 RPI 817		       
 		       "ED04",  // 6620 "ED04" "LDEB" "RXE" 24
 		       "ED05",  // 6630 "ED05" "LXDB" "RXE" 24
 		       "ED06",  // 6640 "ED06" "LXEB" "RXE" 24
@@ -3600,6 +4330,12 @@ public void init_tables(){
 	set_dir_cur();  //RPI168
 	init_os();
 	init_ascii_ebcdic();
+	init_opcodes();
+}
+private void init_opcodes(){
+	/*
+	 * init opcodes 
+	 */
 	if (op_name.length != op_type.length){
 		abort_error(1,"opcode tables out of sync - aborting");
 	}
@@ -3728,19 +4464,19 @@ public void init_options(String[] args,String pgm_type){
     	if (!set_pgm_dir_name_type(args[0],pgm_type)){
     		abort_error(4,"invalid input file option - " + args[0]);
     	}
-    	dir_390 = pgm_dir + "+linklib"; // RPI 700
-    	dir_bal = pgm_dir;
-        dir_dat = pgm_dir;
-        dir_err = pgm_dir;
-        dir_log = pgm_dir;
-        dir_lst = pgm_dir;
-        dir_mac = pgm_dir;
-    	dir_mlc = pgm_dir;
-    	dir_obj = pgm_dir;
-    	dir_opt = pgm_dir; // RPI 742
-    	dir_pch = pgm_dir;
-    	dir_prn = pgm_dir;
-    	dir_trc = pgm_dir;
+    	dir_390 = dir_pgm + "+linklib"; // RPI 700
+    	dir_bal = dir_pgm;
+        dir_dat = dir_pgm;
+        dir_err = dir_pgm;
+        dir_log = dir_pgm;
+        dir_lst = dir_pgm;
+        dir_mac = dir_pgm;
+    	dir_mlc = dir_pgm;
+    	dir_obj = dir_pgm;
+    	dir_opt = dir_pgm; // RPI 742
+    	dir_pch = dir_pgm;
+    	dir_prn = dir_pgm;
+    	dir_trc = dir_pgm;
     } else {
 	    abort_error(5,"missing file option");
     }
@@ -3811,6 +4547,8 @@ private void process_option(String token){
 		opt_ascii = true; 
 	} else if (token.toUpperCase().equals("ASM")){
 		opt_asm = true; 
+	} else if (token.toUpperCase().equals("ASSIST")){
+		opt_assist = true; 
 	} else if (token.toUpperCase().equals("BAL")){
 		opt_bal = true; 
 	} else if (token.toUpperCase().equals("BS2000")){
@@ -3922,6 +4660,8 @@ private void process_option(String token){
        	}
     } else if (token.toUpperCase().equals("NOASM")){
        	opt_asm = false;
+    } else if (token.toUpperCase().equals("NOASSIST")){
+       	opt_assist = false;
     } else if (token.toUpperCase().equals("NOAUTOLINK")){
        	opt_autolink = false;  	// RPI 770
     } else if (token.toUpperCase().equals("NOBAL")){
@@ -4659,18 +5399,18 @@ public boolean set_pgm_dir_name_type(String file_name,String file_type){
 	}
     int index = file_name.lastIndexOf(File.separator);
     if (index != -1){  // get dir path if any
-    	pgm_dir = file_name.substring(0,index+1);
+    	dir_pgm = file_name.substring(0,index+1);
     	file_name = file_name.substring(index + 1); // RPI 499 drop upper case
     } else if (file_name.length() > 1 && file_name.charAt(1) == ':'){
     	File temp_file = new File(file_name.substring(0,2));
     	try {
-    		pgm_dir = temp_file.getCanonicalPath() + File.separator;
+    		dir_pgm = temp_file.getCanonicalPath() + File.separator;
     	} catch (Exception e){
     		return false;
     	}
     	file_name = file_name.substring(2); //RPI113
     } else {
-    	pgm_dir = dir_cur;
+    	dir_pgm = dir_cur;
 	  	// RPI 499 drop upper case file_name = file_name.toUpperCase();
     }
     index = file_name.lastIndexOf('.');
@@ -5243,7 +5983,7 @@ public void put_trace(String text){
     		fp_work_reg.putLong(8,0);
     		return true; 
     	}
-    	dfp_digits = dfp_bd.toString().toUpperCase(); 
+    	dfp_digits = dfp_bd.toString().toUpperCase();
     	dfp_dec_index = dfp_digits.indexOf('.');
     	dfp_exp_index = dfp_digits.indexOf('E');
     	dfp_exp = 0;
@@ -5289,8 +6029,12 @@ public void put_trace(String text){
     	switch (dfp_type){
     	case 1: // fp_dd_type s1,cf5,bxcf6,ccf20
     		dfp_digits = ("0000000000000000" + dfp_digits).substring(dfp_digits.length());
-    		dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[(dfp_exp & 0x300) >>> 4 
-    		             | (dfp_digits.charAt(0) & 0xf)];
+    		int cf5_index = (dfp_exp & 0x300) >>> 4 
+                            | (dfp_digits.charAt(0) & 0xf); // RPI 820
+            if (cf5_index > dfp_exp_bcd_to_cf5.length){
+            	cf5_index = dfp_exp_bcd_to_cf5.length-1; // RPI 820
+            }
+    		dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[cf5_index]; // RPI 820
     		fp_work_reg.putLong(0,
     				       (long)dfp_scf << 58 
     				     | (long)(dfp_exp & 0xff) << 50
@@ -5308,7 +6052,11 @@ public void put_trace(String text){
     		return true;
     	case 7: // fp_ld_type s1,cf5,bxdf12,ccf110
             dfp_digits = ("0000000000000000000000000000000000" + dfp_digits).substring(dfp_digits.length());
-    		dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[(dfp_exp & 0x3000) >>> 8 | (dfp_digits.charAt(0) & 0xf)]; 
+    		cf5_index = (dfp_exp & 0x3000) >>> 8 | (dfp_digits.charAt(0) & 0xf); // RPI 820
+            if (cf5_index > dfp_exp_bcd_to_cf5.length){
+            	cf5_index = dfp_exp_bcd_to_cf5.length-1; // RPI 820
+            }
+            dfp_scf = fp_sign | dfp_exp_bcd_to_cf5[cf5_index]; // RPI 820
     		long dfp_ccf1 = get_dfp_ccf_digits(34,1,15);
     		fp_work_reg.putLong(0,
     				  (long)dfp_scf << 58 
@@ -5485,6 +6233,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOASM");
 	     }
+	     if (opt_assist     ){ // assemble and emulate ASSIST instr. RPI 812
+		        add_final_opt("ASSIST");
+		     } else {
+		        add_final_opt("NOASSIST");
+		     }
 	     if (opt_bal     ){ // generate bal source output from mz390 RPI 415
 	        add_final_opt("BAL");
 	     } else {

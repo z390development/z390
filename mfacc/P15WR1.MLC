@@ -1,0 +1,33 @@
+*********************************************************************
+* Z390 MAINFRAME ASSEMBLER CODING CONTEST PROBLEM #15.
+********************************************************************* 
+*********************************************************************
+P15WR1   ZMFACC CODE,START,NAME='WERNER RAMS'
+         PACK   Z16,EIN1(8)          
+         SRP    Z16,7,0          
+         PACK   TEILER,EIN1+9(7)
+         AP     Z16,TEILER
+         SRP    Z16,8,0        TO HAVE 8 DIGITS BEHIND DECIMAL POINT
+         PACK   TEILER,EIN2(8)
+         SRP    TEILER,7,0
+         PACK   P8,EIN2+9(7)
+         AP     TEILER,P8      
+         DP     Z16,TEILER
+         SRP    ERGEB,64-1,5   ROUND TO 7 DIGITS BEHIND DECIMAL POINT
+         MVC    AUSGABE,=X'4020206B2020206B2021204B20202020202020'    
+         ED     AUSGABE,ERGEB
+         ZMFACC CODE,END 
+         ZMFACC INPUT,START 
+EIN1     DC     C'87654321.9012347'
+EIN2     DC     C'00345678.1234567'
+         ZMFACC INPUT,END
+TEILER   DS     PL8
+P8       DS     PL8
+Z16      DS     0PL16
+ERGEB    DS     PL8
+REST     DS     PL8 
+         ZMFACC OUTPUT,START
+AUSGABE  DS     CL19
+         ZMFACC OUTPUT,END
+*
+         END

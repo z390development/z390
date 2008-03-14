@@ -1,4 +1,5 @@
 rem remove gnerated files from directories except cics, linklib
+call rt\RTCLEAN1 assist
 call rt\RTCLEAN1 bmk
 call rt\RTCLEAN1 demo
 call rt\RTCLEAN1 guam

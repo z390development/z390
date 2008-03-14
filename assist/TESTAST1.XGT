@@ -1,0 +1,4 @@
+Line 1 of 4 rt\test\TESTAST1.XGT test input file for ASSIST XGET 
+Line 2 of 4 XGET RXSS X'E0Axbdddbddd' s1(x1),s2  reads line
+Line 3 of 4 into area at s1(x1) for length of s2 (no default legth).
+Line 4 of 4 PSW CC=0 if ok else 3 if EOD else 2 if I/O error.

@@ -1,0 +1,56 @@
+         TITLE 'P18DSH1.MLC - Calc % gain replacing LTR,BNE with CIBNE'
+*********************************************************************
+* Program ID.  P16DSH1.MLC
+* Author.      Don Higgins.
+* Date.        03/07/08.
+*********************************************************************
+P18DSH1  ZMFACC CODE,START,NAME='DON HIGGINS'
+&N       SETA   50000000 ITERATIONS TO REDUCE CALC ERROR
+* TIME THE BCTR,LTR,BNE LOOP 1
+         TIME   BIN
+         ST     R0,START1
+         L      R1,=A(&N)
+LOOP1    DS     0H
+         BCTR   R1,0
+         LTR    R1,R1
+         JNZ    LOOP1
+         TIME   BIN
+         ST     R0,STOP1
+* TIME THE BCTR, CIBNE LOOP 2
+         TIME   BIN
+         ST     R0,START2
+         L      R1,=A(&N)
+LOOP2    DS     0H
+         BCTR   R1,0
+         CIJNE  R1,0,LOOP2
+         TIME   BIN
+         ST     R0,STOP2
+* CALC % REDUCTION IN TIME FOR LOOP 2 VS LOOP 1 (INT1-INT2)*1000/INT1
+         L      R1,STOP1
+         S      R1,START1   R1 = INT1 (IN 0.O1 SEC)
+         L      R2,STOP2
+         S      R2,START2   R2 = INT2 (IN 0.01 SEC)
+         LR     R3,R1       R3 = INT1
+         SR     R0,R0
+         SR     R1,R2       R0+R1 = INT1 - INT2
+         MHI    R1,10000    R0+R1 = (INT1 - INT2)*1000
+         DR     R0,R3       R1    = (INT1 - INT2)*1000/INT1
+         CVD    R1,PWORK
+         ED     DPERCENT,PWORK+5
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+         DC    C'PERCENT IMPROVEMENT='
+DPERCENT DC    0C' ZZZ.ZZ',X'40202021',C'.',X'2020'
+         ZMFACC OUTPUT,END
+START1   DC    F'0'
+STOP1    DC    F'0'
+START2   DC    F'0'
+STOP2    DC    F'0'
+PWORK    DC    D'0'
+         END
+
+                       
+
+

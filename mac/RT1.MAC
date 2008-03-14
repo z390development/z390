@@ -11,6 +11,7 @@
 .* 11/02/05 REMOVE ASCII MODE ED MASK WITH X'A0' NO LONGER REQUIRED
 .* 11/20/05 CHANGE LA 1,X'101', SVC 13 TO ABEND 101                  
 .* 09/22/06 ADD CCLE AND CCGE OPTIONS FOR USE IN TESTTIM2 TESTS        
+.* 03/05/08 ADD RT1 OK - INC COUNT BY 1                                
 .*********************************************************************
 &NAME    RT1   &CMD,&CLC1,&CLC2,&LL  
 .*
@@ -24,9 +25,9 @@
 .* 6.  RT1 CCGE  - TEST FOR PSW CC HIGH  (OPTIONAL CLC PARMS) RPI 461
 .* 7.  RT1 CCLE  - TEST FOR PSW CC HIGH  (OPTIONAL CLC PARMS) RPI 461
 .* 8.  RT1 CC?   - TEST FOR PSW CC = CC0-CC3     
+.* 9.  RT1 OK    - INC TEST COUNT BY 1                                    
 .* 9.  RT1 ABORT - ABORT WITH TOTAL TESTS TO FAILURE AND USER 101 DUMP
 .*10.  RT1 END   - DISPLAY TOTAL TESTS AND ENDED OK WTO
-
 .*
          GBLA  &RT1_TOT
          GBLC  &RT1NAME
@@ -34,6 +35,8 @@
          AIF   (&CMD EQ 'START').RT1START
          AIF   (&CMD EQ 'END').RT1END
 &NAME    DS    0H
+&RT1_TOT SETA  &RT1_TOT+1
+         AIF   (&CMD EQ 'OK').RT1OK
          AIF   (&CMD EQ 'ABORT').RT1ABORT
          AIF   (&CLC1 EQ '').NOCLC
          AIF   (&LL   EQ '').NOCLCLL
@@ -44,7 +47,6 @@
 .NOCLCLL ANOP
          CLC   &CLC1,&CLC2
 .NOCLC   ANOP
-&RT1_TOT SETA  &RT1_TOT+1
          AIF   (&CMD EQ 'CCE').RT1CCE
          AIF   (&CMD EQ 'CCL').RT1CCL
          AIF   (&CMD EQ 'CCH').RT1CCH
@@ -85,6 +87,7 @@ RT1_ABORTED DC C'F'
          LTORG
 RT1_TEST_CC0  DS    0H
          BNE   RT1_ABORT
+RT1_OK   DS    0H
          AP    RT1_TOT,RT1_ONE
          BR    RT1_LINK
 RT1_TEST_CC1  DS    0H
@@ -155,6 +158,13 @@ RT1_TEST&RT1_TOT BAS   RT1_LINK,RT1_TEST_CCGE
          B     RT1_CCGE&RT1_TOT
          LTORG
 RT1_CCGE&RT1_TOT DS 0H
+         MEXIT
+.RT1OK   ANOP
+         BAS   RT1_LINK,RT1_OK
+         USING *,RT1_LINK
+         B     RT1_OK&RT1_TOT
+         LTORG
+RT1_OK&RT1_TOT DS 0H
          MEXIT
 .RT1ABORT ANOP
          B      RT1_ABORT

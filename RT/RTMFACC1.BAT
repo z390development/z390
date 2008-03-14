@@ -22,7 +22,9 @@ call rt\RT1 mfacc\P13DSH1   systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P14MW1    systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P14DSH1   systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P15DSH1   systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 mfacc\P16WR1    systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P16DSH1   systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 mfacc\P17WR1    systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P1C1      systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P1DSH1    systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 mfacc\P1DSH1A   systerm(rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9

@@ -81,7 +81,8 @@ public  class  lz390 {
     * 11/12/07 RPI 737 add STATS(file) option 
     * 12/24/07 RPI 759 align stats for all pgms on STA file 
     * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, CON 
-    * 12/27/07 RPI 770 don't search for EXTRN's if NOAUTOLINK         
+    * 12/27/07 RPI 770 don't search for EXTRN's if NOAUTOLINK 
+    * 02/28/08 RPI 814 default search of obj+linklib for AUTOLINK       
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -1053,7 +1054,7 @@ private boolean find_ext_file(){
 			&& gbl_esd_name[cur_gbl_ext] != null){ // RPI 459
 			// RPI 378
 			if (tz390.opt_autolink){ // RPI 770
-				obj_file_name = tz390.find_file_name(tz390.dir_obj,gbl_esd_name[cur_gbl_ext],tz390.pgm_type,tz390.dir_cur);
+				obj_file_name = tz390.find_file_name(tz390.dir_obj + "+linklib",gbl_esd_name[cur_gbl_ext],tz390.pgm_type,tz390.dir_cur);  // RPI 814
 				if (obj_file_name != null){ // RPI 378
 					open_obj_file(obj_file_name);
 					return true;
