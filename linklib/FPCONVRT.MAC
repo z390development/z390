@@ -2,7 +2,7 @@
 *        FPCONVRT - Floating Point Conversion Routines for            *
 *                   IBM S/370, ESA/390 and z/Architecture             *
 *                                                                     *
-* Copyright (c) 2000-2006, Tachyon Software LLC and David Bond        *
+* Copyright (c) 2000-2008, David Bond                                 *
 *                                                                     *
 * Permission is hereby granted, free of charge, to any person         *
 * optaining a copy of this software and associated documentation      *
@@ -45,6 +45,10 @@
 *                      with long-displacement instructions            *
 *            ARCHLVL=5 generates for z/Architecture (AMODE 24/31/64)  *
 *                      with z9-109 instructions                       *
+*            ARCHLVL=6 generates for z/Architecture (AMODE 24/31/64)  *
+*                      with z9-BC instructions                        *
+*            ARCHLVL=7 generates for z/Architecture (AMODE 24/31/64)  *
+*                      with z10 instructions                          *
 *        LINKAGE=OS|LINUX                                             *
 *            LINKAGE=OS generates traditional MVS calling linkage     *
 *            LINKAGE=LINUX generates Linux for S/390 and zSeries      *
@@ -59,37 +63,46 @@
 *                                                                     *
 ***********************************************************************
 * Changes:                                                            *
-*    2006/08/05: DB                                                   *
+*    2006/08/05:                                                      *
 *        Corrected errors found by Don Higgins.                       *
 *        Corrected hexadecimal constant for DD'(MAX)'.                *
 *        H, B and D suffixes on floating point constants are only     *
 *        generated if the assembler supports them.                    *
-*    2006/12/21: DSH                                                  *
-*        Note DD'(MAX)' etc are now generated since the SRNMT opcode  *
-*        test succeeds with the addition of DFP opcode support.       *
-*                                                                     *
+*    2007/03/07:                                                      *
+*        Corrected detection of BFP infinities.                       *
+*    2008/03/19:                                                      *
+*        Clear upper register halves for AMODE 24/31 with ARCHLVL>=3  *
+*        Added ARCHLVL=7                                              *
+*    2008/03/20: (see DSH1 tag comments)                              *
+*        Cleared 2 more register high bits for AMODE 24/31 usg.       *
+*        This version ran TESTFPC1 and TESTFPC2 ok on z390 v1.4.01a   *
+*        using ARCHLVL 7 and the new z10 compare and branch instr.    *
 ***********************************************************************
          MACRO
 &lbl     FPCONVRT &PFX=Fpcon,&TYPE=DSECT,&ARCHLVL=2,&LINKAGE=OS,       +
                &REGS=EQU
+         aif   (T'&ARCHLVL NE 'N').archbad
+         gbla  &FpArchLvl
+&FpArchLvl seta &ARCHLVL
+         aif   (&FpArchLvl lt 0).archbad
 &gencode setb  0
 &j       setc  'B'
 &brct    setc  'BCT'
 &g       setc  ''
 &gf      setc  ''
 &d       setc  ''
-         aif   ('&ARCHLVL' eq '0').archok
-         aif   ('&ARCHLVL' eq '1').archok
+&rl      setc  ''
+         aif   (&FpArchLvl le 1).archok
 &j       setc  'J'
 &brct    setc  'BRCT'
-         aif   ('&ARCHLVL' eq '2').archok
+         aif   (&FpArchLvl le 2).archok
 &g       setc  'G'
 &gf      setc  'GF'
 &d       setc  'D'
-         aif   ('&ARCHLVL' eq '3').archok
-         aif   ('&ARCHLVL' eq '4').archok
-         aif   ('&ARCHLVL' eq '5').archok
-         mnote 12,'ARCHLVL=&ARCHLVL is invalid, must be 0-5'
+         aif   (&FpArchLvl le 6).archok
+&rl      setc  'RL'
+         aif   (&FpArchLvl le 7).archok
+.archbad mnote 12,'ARCHLVL=&ARCHLVL is invalid, must be 0-7'
          mexit
 .archok  anop
 &RR      setc  'R15'
@@ -101,7 +114,7 @@
 .linklnx anop
 &RR      setc  'R2'
 &linux   setb  1
-         aif   ('&ARCHLVL' ge '2').linkok
+         aif   (&FpArchLvl ge 2).linkok
          mnote 12,'ARCHLVL=&ARCHLVL is invalid with LINKAGE=&LINKAGE'
          mexit
 .linkok  anop
@@ -243,16 +256,16 @@
          Push  Print,NoPrint
          Print Off,NoPrint
 &LLC     setc  'LLC'
-         aif   ('&ARCHLVL' ge '5').enter005
+         aif   (&FpArchLvl ge 5).enter005
          Macro
          NILF  &R,&V
 &A       seta  &V
          N     &R,=F'&A'
          Mend
-         aif   ('&ARCHLVL' lt '3').enter001
+         aif   (&FpArchLvl lt 3).enter001
 &LLC     setc  'LLGC'
-         aif   ('&ARCHLVL' ge '4').enter005
-         ago   .enter009
+         aif   (&FpArchLvl ge 4).enter005
+         ago   .enter006
 .enter001 anop
          Macro
          LLC   &R,&A
@@ -264,7 +277,7 @@
 &A       seta  &V
          N     &R,=F'&A'
          Mend
-         aif   ('&ARCHLVL' ge '2').enter009
+         aif   (&FpArchLvl ge 2).enter006
          Macro
          CHI   &R,&V
          aif   ('&V'(1,1) eq '-').ch
@@ -301,7 +314,7 @@
          MHI   &R,&V
          MH    &R,=H'&V'
          Mend
-         ago   .enter009
+         ago   .enter006
 .enter005 anop
          Macro
          BCTGR &R1,&R2
@@ -320,15 +333,166 @@
          mexit
 .badr1   Mnote 12,'First operand must not be register 0'
          Mend
+.enter006 anop
+         aif   (&FpArchLvl ge 7).enter009
+         Macro
+         CIJ   &r,&i,&m,&a
+         gbla  &FpArchLvl
+&j       setc  'B'
+         aif   (&FpArchLvl le 1).archok
+&j       setc  'J'
+.archok  anop
+&mu      setc  (upper '&m')
+         aif   (T'&i ne 'N').notzero
+         aif   (&i ne 0).notzero
+         LTR   &r,&r
+&mu      setc  'Z'
+         aif   ('E' eq (upper '&m')).j
+&mu      setc  'NZ'
+         aif   ('NE' eq (upper '&m')).j
+&mu      setc  'P'
+         aif   ('H' eq (upper '&m')).j
+&mu      setc  'NP'
+         aif   ('NH' eq (upper '&m')).j
+&mu      setc  'M'
+         aif   ('L' eq (upper '&m')).j
+&mu      setc  'NM'
+         aif   ('NL' eq (upper '&m')).j
+.notzero CHI   &r,&i
+.j       &J.&mu &a
+         Mend
+         Macro
+         CIJE  &r,&i,&a
+         CIJ   &r,&i,E,&a
+         Mend
+         Macro
+         CIJNE &r,&i,&a
+         CIJ   &r,&i,NE,&a
+         Mend
+         Macro
+         CIJH  &r,&i,&a
+         CIJ   &r,&i,H,&a
+         Mend
+         Macro
+         CIJNH &r,&i,&a
+         CIJ   &r,&i,NH,&a
+         Mend
+         Macro
+         CIJL  &r,&i,&a
+         CIJ   &r,&i,L,&a
+         Mend
+         Macro
+         CIJNL &r,&i,&a
+         CIJ   &r,&i,NL,&a
+         Mend
+         Macro
+         CRJ   &r1,&r2,&m,&a
+         gbla  &FpArchLvl
+&j       setc  'B'
+         aif   (&FpArchLvl le 1).archok
+&j       setc  'J'
+.archok  anop
+         CR    &r1,&r2
+         &J.&m &a
+         Mend
+         Macro
+         CRJE  &r1,&r2,&a
+         CRJ   &r1,&r2,E,&a
+         Mend
+         Macro
+         CRJNE &r1,&r2,&a
+         CRJ   &r1,&r2,NE,&a
+         Mend
+         Macro
+         CRJH  &r1,&r2,&a
+         CRJ   &r1,&r2,H,&a
+         Mend
+         Macro
+         CRJNH &r1,&r2,&a
+         CRJ   &r1,&r2,NH,&a
+         Mend
+         Macro
+         CRJL  &r1,&r2,&a
+         CRJ   &r1,&r2,L,&a
+         Mend
+         Macro
+         CRJNL &r1,&r2,&a
+         CRJ   &r1,&r2,NL,&a
+         Mend
+         Macro
+         CLRJ  &r1,&r2,&m,&a
+         gbla  &FpArchLvl
+&j       setc  'B'
+         aif   (&FpArchLvl le 1).archok
+&j       setc  'J'
+.archok  anop
+         CLR   &r1,&r2
+         &J.&m &a
+         Mend
+         Macro
+         CLRJE &r1,&r2,&a
+         CLRJ  &r1,&r2,E,&a
+         Mend
+         Macro
+         CLRJNE &r1,&r2,&a
+         CLRJ  &r1,&r2,NE,&a
+         Mend
+         Macro
+         CLRJH &r1,&r2,&a
+         CLRJ  &r1,&r2,H,&a
+         Mend
+         Macro
+         CLRJNH &r1,&r2,&a
+         CLRJ  &r1,&r2,NH,&a
+         Mend
+         Macro
+         CLRJL &r1,&r2,&a
+         CLRJ  &r1,&r2,L,&a
+         Mend
+         Macro
+         CLRJNL &r1,&r2,&a
+         CLRJ  &r1,&r2,NL,&a
+         Mend
+         aif   (&FpArchLvl le 2).enter009
+         Macro
+         CLGRJ &r1,&r2,&m,&a
+         CLGR  &r1,&r2
+         J&m   &a
+         Mend
+         Macro
+         CLGRJE &r1,&r2,&a
+         CLGRJ &r1,&r2,E,&a
+         Mend
+         Macro
+         CLGRJNE &r1,&r2,&a
+         CLGRJ &r1,&r2,NE,&a
+         Mend
+         Macro
+         CLGRJH &r1,&r2,&a
+         CLGRJ &r1,&r2,H,&a
+         Mend
+         Macro
+         CLGRJNH &r1,&r2,&a
+         CLGRJ &r1,&r2,NH,&a
+         Mend
+         Macro
+         CLGRJL &r1,&r2,&a
+         CLGRJ &r1,&r2,L,&a
+         Mend
+         Macro
+         CLGRJNL &r1,&r2,&a
+         CLGRJ &r1,&r2,NL,&a
+         Mend
+         aif   (&FpArchLvl le 2).enter009
 .enter009 anop
          Pop   Print,NoPrint
 &name    Title 'Floating Point Conversion - Module Entry'
          Print On,Gen,Data,Uhead
          Acontrol Flag(0,Align,Cont,NoImplen,Page0,Substr)
 &name    &TYPE
-         aif   ('&ARCHLVL' eq '0').enter020
+         aif   (&FpArchLvl eq 0).enter020
 &name    Rmode Any
-         aif   ('&ARCHLVL' lt '3').enter010
+         aif   (&FpArchLvl lt 3).enter010
 &name    Amode Any64
          ago   .enter020
 .enter010 anop
@@ -338,7 +502,7 @@
 &name    Alias C'&lbl'
 .enter025 anop
          aif   (&linux).enter050
-         aif   ('&ARCHLVL' ge '3').enter040
+         aif   (&FpArchLvl ge 3).enter040
          STM   R14,R12,12(R13)     Save caller's registers
          L     R1,0(,R1)           Get FPCON address
          LA    R12,Static-&name.(,R15)   Get static storage address
@@ -357,9 +521,11 @@
          STG   R1,136(,R13)        Set forward chain
          MVC   4(4,R1),=C'F4SA'-Static(R12) Indicate format-4 save area
          LA    R13,0(,R1)          Get FPCON address
+         XC    &PFX.Work-&PFX.(14*4,R1),&PFX.Work-&PFX.(R1)
+         LMH   R14,R11,&PFX.Work-&PFX.(R1) Clear upper register halves
          ago   .enter070
 .enter050 anop
-         aif   ('&ARCHLVL' ge '3').enter060
+         aif   (&FpArchLvl ge 3).enter060
          STM   R6,R15,24(R15)      Save caller's registers
          LR    R13,R2              Get FPCON address
          BASR  R12,0               Get static storage address
@@ -375,7 +541,7 @@
          space 1
          XC    &PFX.ReturnCode,&PFX.ReturnCode Hope all is OK
          aif   ('&D' eq '').enter080
-         aif   ('&ARCHLVL' ge '5').enter085
+         aif   (&FpArchLvl ge 5).enter085
          L     R0,&PFX.StringAddr  String address is NULL?
          O     R0,&PFX.StringAddr+4    *
          ago   .enter090
@@ -387,8 +553,7 @@
 .enter090 anop
          &J.Z  ReturnBadParm           yes: branch
          LH    R0,&PFX.StringSize  Get string length
-         LTR   R0,R0                   *
-         &J.NP ReturnBadParm           bad: branch
+         CIJNH R0,0,ReturnBadParm      bad: branch
          CLI   &PFX.ValueLen,&PFX.ValueLenE Valid length code?
          &J.E  Enter000                yes: branch
          CLI   &PFX.ValueLen,&PFX.ValueLenD
@@ -463,23 +628,22 @@ Enter100 dc    0h'0'
          space 1
 .enter110 anop
          LH    R0,&PFX.MaxDigits   Get maximum digits
-         CHI   R0,34                   *
-         &J.H  ReturnBadParm           invalid: branch
+         CIJH  R0,34,ReturnBadParm     invalid: branch
          LTR   R0,R0                   *
          &J.P  Enter120                valid: branch
          &J.M  ReturnBadParm           bad: branch
          space 1
          CLI   &PFX.Base,&PFX.Base10 Decimal value?
          &J.E  Enter105                yes: branch
-         LA    R0,15               Get default for long (bin and hex)
+         LHI   R0,15               Get default for long (bin and hex)
          CLI   &PFX.ValueLen,&PFX.ValueLenD Long value?
          &J.E  Enter120                yes: branch
          CLI   &PFX.Base,&PFX.Base2 Binary value?
          &J.E  Enter110                yes: branch
-         LA    R0,6                Get default for short hex
+         LHI   R0,6                Get default for short hex
          CLI   &PFX.ValueLen,&PFX.ValueLenE Short value?
          &J.E  Enter120                yes: branch
-         LA    R0,32               Get default for extended hex
+         LHI   R0,32               Get default for extended hex
          &J    Enter120
 Enter105 dc    0h'0'
          LHI   R0,16               Get default for long decimal
@@ -494,23 +658,19 @@ Enter120 dc    0h'0'
          STH   R0,&PFX.GenDigits   Return maximum digits
          space 1
          LH    R1,&PFX.MaxDecimal  Get maximum decimal digits
-         LTR   R1,R1                   *
-         &J.M  ReturnBadParm           bad: branch
-         CR    R0,R1               Get greater of the
-         &J.H  Enter130                two values in R0
-         LR    R0,R1                   *
+         CIJL  R1,0,ReturnBadParm      bad: branch
+         CRJH  R0,R1,Enter130      Get greater of the
+         LR    R0,R1                   two values in R0
 Enter130 dc    0h'0'
          LH    R1,&PFX.MaxLeading  Get maximum leading digits
-         LTR   R1,R1                   *
-         &J.M  ReturnBadParm           bad: branch
+         CIJL  R1,0,ReturnBadParm      bad: branch
          LH    R2,&PFX.MinDecimal  Get minimum decimal digits
          CHI   R2,-1                   *
          &J.L  ReturnBadParm           bad: branch
          &J.E  Enter140                -1: branch
          AR    R1,R2               Get leading + trailing
 Enter140 dc    0h'0'
-         CR    R0,R1               Get string size
-         &J.H  Enter150                *
+         CRJH  R0,R1,Enter150      Get string size
          LR    R0,R1                   *
 Enter150 dc    0h'0'                   *
          LHI   R1,1                Get extra bytes needed
@@ -522,35 +682,28 @@ Enter155 dc    0h'0'                   *
          CH    R0,&PFX.StringSize  Buffer big enough?
          &J.H  ReturnBadParm           no: branch
          space 1
-         LTR   R2,R2               Is minimum decimal digits positive?
-         &J.P  Enter160                yes: branch
+         CIJH  R2,0,Enter160       Min. decimal digits positive: branch
          LH    R0,&PFX.MaxLeading  Is maximum leading digits zero?
-         LTR   R0,R0                   *
-         &J.NP ReturnBadParm           yes: branch
+         CIJNH R0,0,ReturnBadParm      yes: branch
          space 1
 Enter160 dc    0h'0'
          TM    &PFX.Flags,&PFX.FixedDec Fixed length decimal?
          &J.Z  Enter180                no: branch
          LH    R0,&PFX.MaxDecimal  Get maximum decimal digits
-         LTR   R0,R0                   *
-         &J.Z  Enter170                zero: branch
+         CIJE  R0,0,Enter170           zero: branch
          CH    R0,&PFX.MinDecimal  Maximum same as minimum?
          &J.E  Enter180                yes: branch
          &J    ReturnBadParm           no: branch
 Enter170 dc    0h'0'
          LH    R0,&PFX.MinDecimal  Minimum decimal digits 0 or -1?
-         LTR   R0,R0                   *
-         &J.P  ReturnBadParm           no: branch
+         CIJH  R0,0,ReturnBadParm      no: branch
          LH    R0,&PFX.MaxLeading  Maximum leading digits is zero?
-         LTR   R0,R0                   *
-         &J.NP ReturnBadParm           yes: branch
+         CIJNH R0,0,ReturnBadParm      yes: branch
          space 1
 Enter180 dc    0h'0'
          LH    R0,&PFX.MinExpon    Get minimum exponent digits
-         LTR   R0,R0                   *
-         &J.M  ReturnBadParm           bad: branch
-         CHI   R0,4                    *
-         &J.H  ReturnBadParm           bad: branch
+         CIJL  R0,0,ReturnBadParm      bad: branch
+         CIJH  R0,4,ReturnBadParm      bad: branch
          space 1
          aif   ('&J' eq 'J').enter190
          AH    R15,=Y(ToString-&name)    Get address of "ToString"
@@ -596,7 +749,7 @@ ReturnOk dc    0h'0'
          L&GF  &RR,&PFX.ReturnCode Get return code
 Return   dc    0h'0'
          aif   (&linux).return050
-         aif   ('&ARCHLVL' ge '3').return040
+         aif   (&FpArchLvl ge 3).return040
          L     R13,4(,R13)         Get caller's save area address
          L     R14,12(,R13)        Get return address to caller
          LM    R0,R12,20(R13)      Restore caller's registers
@@ -607,7 +760,7 @@ Return   dc    0h'0'
          LMG   R0,R12,24(R13)      Restore caller's registers
          ago   .return090
 .return050 anop
-         aif   ('&ARCHLVL' ge '3').return060
+         aif   (&FpArchLvl ge 3).return060
          L     R14,56(,R15)        Get return address to caller
          LM    R6,R13,24(R15)      Restore caller's registers
          ago   .return090
@@ -674,8 +827,7 @@ ToString0040 dc 0h'0'
          LA    R14,8(,R11)         Get end of mantissa
 * Note: base-16 exponent in R0 should be even at this point
 ToString0050 dc 0h'0'              Find last non-zero digit
-         CL&G.R R14,R11                *
-         &J.NH ToStringZero            all zero: branch
+         CL&G.RJNH R14,R11,ToStringZero all zero: branch
          BCT&G.R R14,0                 *
          CLI   0(R14),0                *
          &J.E  ToString0050            *
@@ -707,13 +859,14 @@ ToString0100 dc 0h'0'
          LHI   R2,16383            Get exponent bias
          LHI   R3,8                Get added fraction bits
          NR    R0,R1               Extract biased exponent
-         MVI   0(R11),1            Get the normalized mantissa
-         MVC   1(14,R11),&PFX.ValueL+2 *
-         LA    R14,15(,R11)        Get end of mantissa
-         LTR   R1,R0               Biased exponent is zero?
-         &J.NZ ToString0150            no: branch
          MVI   0(R11),0            Clear high digit
-         &J    ToString0130        Go handle denormalized number
+         MVC   1(14,R11),&PFX.ValueL+2 Get the mantissa
+         LA    R14,15(,R11)        Get end of mantissa
+         CIJE  R0,0,ToString0130   Biased exponent is zero: branch
+         SR    R0,R2               Compute unbiased exponent
+         CRJH  R0,R2,ToStringNanBin Invalid exponent: branch
+         MVI   0(R11),1            Set normalized mantissa
+         &J    ToString0150        Go handle normalized number
          space 1
 ToString0110 dc 0h'0'
          LHI   R0,255              Get exponent mask
@@ -722,12 +875,13 @@ ToString0110 dc 0h'0'
          SRL   R1,7                Extract biased exponent
          NR    R0,R1                   *
          MVC   0(3,R11),&PFX.ValueE+1 Get the normalized mantissa
-         OI    0(R11),X'80'            *
-         LA    R14,3(,R11)         Get end of mantissa
-         LTR   R1,R0               Biased exponent is zero?
-         &J.NZ ToString0150            no: branch
          NI    0(R11),X'7F'        Clear high digit
-         &J    ToString0130        Go handle denormalized number
+         LA    R14,3(,R11)         Get end of mantissa
+         CIJE  R0,0,ToString0130   Biased exponent is zero: branch
+         SR    R0,R2               Compute unbiased exponent
+         CRJH  R0,R2,ToStringNanBin Invalid exponent: branch
+         OI    0(R11),X'80'        Set normalized mantissa
+         &J    ToString0150        Go handle normalized number
          space 1
 ToString0120 dc 0h'0'
          LHI   R0,2047             Get exponent mask
@@ -736,27 +890,26 @@ ToString0120 dc 0h'0'
          SRL   R1,4                Extract biased exponent
          NR    R0,R1                   *
          MVC   0(7,R11),&PFX.ValueD+1 Get the normalized mantissa
-         MVZ   0(1,R11),=X'10'         *
-         LA    R14,7(,R11)         Get end of mantissa
-         LTR   R1,R0               Biased exponent is zero?
-         &J.NZ ToString0150            no: branch
          NI    0(R11),X'0F'        Clear high digit
+         LA    R14,7(,R11)         Get end of mantissa
+         CIJE  R0,0,ToString0130   Biased exponent is zero: branch
+         SR    R0,R2               Compute unbiased exponent
+         CRJH  R0,R2,ToStringNanBin Invalid exponent: branch
+         OI    0(R11),X'10'        Set normalized mantissa
+         &J    ToString0150        Go handle normalized number
          space 1
 ToString0130 dc 0h'0'              Denormal or zero:
          CLI   0(R11),0            Find first non-zero digit
          &J.NE ToString0140            found: branch
          AHI   R3,-8                   *
          LA    R11,1(,R11)             *
-         CL&G.R R11,R14                *
-         &J.L  ToString0130            *
+         CL&G.RJL R11,R14,ToString0130 *
          &J    ToStringZero            all zero: branch
 ToString0140 dc 0h'0'
          MVI   &PFX.ReturnCode+3,&PFX.RetDenorm Indicate denormalized
          LHI   R0,1                Compute unbiased exponent
-ToString0150 dc 0h'0'                  *
          SR    R0,R2                   *
-         CR    R0,R2               Valid exponent?
-         &J.H  ToStringNanBin          no: branch
+ToString0150 dc 0h'0'
          AR    R0,R3               Compute actual base-2 exponent
          LHI   R1,7                Compute bits to shift right
          NR    R1,R0                   to get base-256 exponent
@@ -775,8 +928,7 @@ ToString0160 dc 0h'0'                  *
          STC   R4,0(,R3)               *
          SLL   R2,8                    *
          LA    R3,1(,R3)               *
-         CL&G.R R3,R14                 *
-         &J.L  ToString0160            *
+         CL&G.RJL R3,R14,ToString0160  *
          SRL   R2,0(R1)                *
          STC   R2,0(,R14)              *
          LA    R14,1(,R14)             *
@@ -834,10 +986,8 @@ ToString0230 dc 0h'0'                  *
          STC   R5,0(,R2)               *
          LR    R5,R4                   *
          LA    R2,1(,R2)               *
-         CL&G.R R2,R1                  *
-         &J.L  ToString0230            *
-         CL&G.R R7,R6                  *
-         &J.NH ToString0240            *
+         CL&G.RJL R2,R1,ToString0230   *
+         CL&G.RJNH R7,R6,ToString0240  *
          MVC   &PFX.Work+2056(35),&PFX.Work+2057
          LR    R7,R6                   *
 ToString0240 dc 0h'0'                  *
@@ -847,8 +997,7 @@ ToString0240 dc 0h'0'                  *
          CLI   0(R11),0                *
          &J.NE ToString0220            *
          LA    R11,1(,R11)             *
-         CL&G.R R11,R1                 *
-         &J.L  ToString0220            *
+         CL&G.RJL R11,R1,ToString0220  *
          space 1
 ***********************************************************************
 *        Copy the decimal digits (up to GenDigits+1) into the         *
@@ -865,8 +1014,7 @@ ToString0240 dc 0h'0'                  *
          AH    R3,&PFX.GenDigits       *
 ToString0250 dc 0h'0'                  *
          BCT&G.R R7,0                  *
-         CL&G.R R7,R6                  *
-         &J.L  ToString0500            have all of them: branch
+         CL&G.RJL R7,R6,ToString0500   have all of them: branch
          MVC   0(1,R2),0(R7)           *
          LA    R2,1(,R2)               *
          &BRCT R3,ToString0250         *
@@ -886,7 +1034,7 @@ ToString0300 dc 0h'0'
          BCT&G.R R14,0             Point to last digit
          SR    R3,R3               Clear carry register
          L&G.R R5,R11              Get address of first non-zero
-         LC&GF.R R1,R0             Is decimal position at number?
+         LCR   R1,R0               Is decimal position at number?
          &J.NP ToString0310            yes: branch
          MVC   &PFX.Work+2064(16),0(R11) Move number to end
          SL&G.R R14,R11                of work area
@@ -907,16 +1055,13 @@ ToString0320 dc 0h'0'                  multiply the number by 10
          LR    R3,R4                   *
          BCT&G.R R2,0                  *
          SRL   R3,8                    *
-         CL&G.R R2,R5                  *
-         &J.NL ToString0320            *
+         CL&G.RJNL R2,R5,ToString0320  *
          CLI   0(R14),0                If last digit
          &J.NE ToString0330            is now zero,
          BCT&G.R R14,0                 decrement R14
 ToString0330 dc 0h'0'                  *
-         LTR   R3,R3                   carry?
-         &J.Z  ToString0310            no: branch
-         CL&G.R R5,R11                 carry from decimal point?
-         &J.NH ToString0340            yes: branch
+         CIJE  R3,0,ToString0310       no carry: branch
+         CL&G.RJNH R5,R11,ToString0340 carry from decimal point: branch
          BCT&G.R R5,0                  point to new high non-zero
          STC   R3,0(,R5)               set new high non-zero digit
          SR    R3,R3                   clear carry
@@ -941,20 +1086,17 @@ ToString0340 dc 0h'0'
 *        R14: address of end of number                                *
 ***********************************************************************
 ToString0500 dc 0h'0'
-         CL&G.R R11,R14            Any fraction left?
-         &J.NL ToString1000            no: branch
+         CL&G.RJNL R11,R14,ToString1000 No fraction left: branch
          BCT&G.R R14,0             Set R14 to address of last digit
          L&GF.R R0,R3              Don't need to use more than
          SRL   R0,1                    R3/2 digits of the fraction
          AL&G.R R0,R11                 *
-         CL&G.R R14,R0                 *
-         &J.L  ToString0520            *
+         CL&G.RJL R14,R0,ToString0520  *
          L&G.R R14,R0                  *
 ToString0510 dc 0h'0'              Find last non-zero digit
          CLI   0(R14),0                *
          &J.NE ToString0520            *
-         CL&G.R R14,R11                *
-         &J.NH ToString1000            *
+         CL&G.RJNH R14,R11,ToString1000
          &BRCT&G R14,ToString0510      *
 ToString0520 dc 0h'0'              For each needed digit:
          SR    R0,R0                   *
@@ -967,16 +1109,14 @@ ToString0530 dc 0h'0'                  multiply the number by 10
          LR    R0,R4                   *
          BCT&G.R R1,0                  *
          SRL   R0,8                    *
-         CL&G.R R1,R11                 *
-         &J.NL ToString0530            *
+         CL&G.RJNL R1,R11,ToString0530 *
          STC   R0,0(,R2)               extract carry as
          OC    0(1,R2),&PFX.Zero       next decimal digit
          LA    R2,1(,R2)               *
          CLI   0(R14),0                If last digit
          &J.NE ToString0540            is now zero,
          BCT&G.R R14,0                 decrement R14
-         CL&G.R R11,R14                any more fraction?
-         &J.H  ToString1000            no: branch
+         CL&G.RJH R11,R14,ToString1000 no more fraction: branch
 ToString0540 dc 0h'0'                  *
          &BRCT R3,ToString0520         go get next digit
          &J    ToString1000
@@ -1225,8 +1365,7 @@ ToString0790 dc 0h'0'
          OC    2(1,R2),&PFX.Zero       *
          space 1
 ToString0800 dc 0h'0'
-         LTR   R4,R4               Significant digits started?
-         &J.NZ ToString0840            yes: branch
+         CIJNE R4,0,ToString0840   Significant digits started: branch
          CLC   &PFX.Zero,0(R2)     1st digit is significant?
          &J.NE ToString0830            yes: branch
          BCTR  R8,0                Decrement exponent
@@ -1254,8 +1393,7 @@ ToString0840 dc 0h'0'
 ToString0850 dc 0h'0'
          AHI   R3,10               Done with 10 value bits
          &BRCT R1,ToString0700     Go decode next digit triplet
-         LTR   R4,R4               Any significant digits?
-         &J.Z  ToStringZero            no: branch
+         CIJE  R4,0,ToStringZero   No significant digits: branch
          space 1
 ***********************************************************************
 *        The significant decimal digits are now in the string buffer. *
@@ -1291,14 +1429,12 @@ ToString1000 dc 0h'0'
 ToString1010 dc 0h'0'
          MVC   0(1,R2),&PFX.Zero   Set number to 0
          LH    R8,&PFX.MaxLeading  Leading digits wanted?
-         LTR   R8,R8                   *
-         &J.Z  ToString1100            no: branch (.0)
+         CIJE  R8,0,ToString1100       no: branch (.0)
          LHI   R8,1                Set exponent to 1 (0.)
          &J    ToString1100
          space 1
 ToString1020 dc 0h'0'
-         CR    R4,R1               More digits than needed?
-         &J.NH ToString1050            no: branch
+         CRJNH R4,R1,ToString1050  Not more digits than needed: branch
          LA    R2,0(R1,R3)         Get address of rounding digit
          CLC   &PFX.Five,0(R2)     Need to round up?
          &J.NH ToString1030            yes: branch
@@ -1306,8 +1442,7 @@ ToString1020 dc 0h'0'
          &J    ToString1050
 ToString1030 dc 0h'0'              Increment the number
          MVI   0(R2),0                 *
-         CL&G.R R2,R3                  *
-         &J.NH ToString1040            overflow: branch
+         CL&G.RJNH R2,R3,ToString1040  overflow: branch
          BCT&G.R R2,0                  *
          &LLC  R1,0(,R2)               *
          AHI   R1,1                    *
@@ -1327,8 +1462,7 @@ ToString1050 dc 0h'0'
          CLI   &PFX.Base,&PFX.Base10 Decimal floating point?
          &J.E  ToString1100            yes: branch
 ToString1060 dc 0h'0'              Remove all trailing zeros
-         CL&G.R R2,R3                  from number
-         &J.NH ToString1100            *
+         CL&G.RJNH R2,R3,ToString1100  from number
          TM    0(R2),15                *
          &J.NZ ToString1100            *
          MVI   0(R2),0                 *
@@ -1347,8 +1481,8 @@ ToString1100 dc 0h'0'
          &J.NZ ToStringRetDigits       no: branch
          SL&G.R R2,R3              Compute digits-1
          LA    R4,&PFX.Work        Copy digits from string buffer
-         EX    R2,MVC_R4_R3            to work area
-         EX    R2,XC_R3_R3             and clear buffer
+         EX&RL R2,MVC_R4_R3            to work area
+         EX&RL R2,XC_R3_R3             and clear buffer
          TM    &PFX.ValueE,X'80'   Is value negative?
          &J.NZ ToString1110            yes: branch
          TM    &PFX.Flags,&PFX.ValuePlus Plus sign wanted?
@@ -1366,18 +1500,15 @@ ToString1110 dc 0h'0'
 *        R8:  base-10 exponent                                        *
 ***********************************************************************
 ToString1120 dc 0h'0'
-         LTR   R8,R8               Is number at least 1.0?
-         &J.NP ToString1200            no: branch
+         CIJNH R8,0,ToString1200   Number not at least 1.0: branch
          LH    R0,&PFX.MaxLeading  Get number of leading digits wanted
-         CHI   R0,1                .99999 or 9.9999 format?
-         &J.NH ToString1300            yes: branch
-         CR    R8,R0               Will number fit?
-         &J.H  ToString1300            no: branch
+         CIJNH R0,1,ToString1300   .99999 or 9.9999 format: branch
+         CRJH  R8,R0,ToString1300  Number won't fit: branch
          space 1
 ***********************************************************************
 *        Format number as 999999.999999                               *
 ***********************************************************************
-         EX    R2,MVC_R3_R4        Move digits to string
+         EX&RL R2,MVC_R3_R4        Move digits to string
          A&GF.R R3,R8              Point to decimal point position
          SR    R2,R8               Any digits after decimal?
          &J.NM ToString1150            yes: branch
@@ -1402,7 +1533,7 @@ ToString1150 dc 0h'0'
          A&GF.R R4,R8              Point to first decimal digit
          MVC   0(1,R3),&PFX.Decimal Set decimal point
          LA    R3,1(,R3)               *
-         EX    R2,MVC_R3_R4        Move decimal digits to string
+         EX&RL R2,MVC_R3_R4        Move decimal digits to string
          AHI   R2,1                    *
          AL&GF.R R3,R2                 *
          LH    R0,&PFX.MinDecimal  Get trailing decimal positions
@@ -1422,19 +1553,16 @@ ToString1190 dc 0h'0'
 ***********************************************************************
 ToString1200 dc 0h'0'
          LH    R0,&PFX.MaxDecimal  Get maximum decimal digits
-         LTR   R0,R0                   *
-         &J.Z  ToString1300            zero: branch
+         CIJE  R0,0,ToString1300       zero: branch
          LHI   R1,1                Will the number fit?
          AR    R1,R2                   *
          SR    R1,R8                   *
-         CR    R1,R0                   *
-         &J.H  ToString1300            no: branch
+         CRJH  R1,R0,ToString1300      no: branch
 ***********************************************************************
 *        Format as .00009999 or 0.00009999                            *
 ***********************************************************************
          LH    R0,&PFX.MaxLeading  .99999 format?
-         LTR   R0,R0                   *
-         &J.Z  ToString1210            yes: branch
+         CIJE  R0,0,ToString1210       yes: branch
          MVC   0(1,R3),&PFX.Zero   Set leading zero
          LA    R3,1(,R3)               *
 ToString1210 dc 0h'0'
@@ -1449,7 +1577,7 @@ ToString1220 dc 0h'0'              Set leading zeros
          LA    R3,1(,R3)               *
          &BRCT R8,ToString1220         *
 ToString1230 dc 0h'0'
-         EX    R2,MVC_R3_R4        Move the digits
+         EX&RL R2,MVC_R3_R4        Move the digits
          AHI   R2,1                    *
          AL&GF.R R3,R2                 *
          SR    R0,R2               Compute trailing zeros needed
@@ -1461,13 +1589,11 @@ ToString1230 dc 0h'0'
 ***********************************************************************
 ToString1300 dc 0h'0'
          LH    R0,&PFX.MaxLeading  .99999 format?
-         LTR   R0,R0                   *
-         &J.NP ToString1350            yes: branch
+         CIJNH R0,0,ToString1350       yes: branch
          BCTR  R8,0                Decrement exponent
          MVC   0(1,R3),0(R4)       Set units digit
          LA    R3,1(,R3)               *
-         LTR   R2,R2               Any decimal digits?
-         &J.P  ToString1310            yes: branch
+         CIJH  R2,0,ToString1310   Any decimal digits: branch
          LH    R0,&PFX.MinDecimal  Get trailing decimal positions
          LTR   R0,R0               Decimal point wanted?
          &J.M  ToString1500            no: branch
@@ -1486,7 +1612,7 @@ ToString1310 dc 0h'0'
 ToString1350 dc 0h'0'
          MVC   0(1,R3),&PFX.Decimal Set decimal point
          LA    R3,1(,R3)               *
-         EX    R2,MVC_R3_R4            *
+         EX&RL R2,MVC_R3_R4            *
          AHI   R2,1                    *
          AL&GF.R R3,R2                 *
          LH    R0,&PFX.MinDecimal  Get trailing decimal positions
@@ -1506,15 +1632,12 @@ ToString1400 dc 0h'0'              Fill minimum decimal digits
 ToString1500 dc 0h'0'
          STH   R8,&PFX.Exponent10  Return exponent
          LH    R0,&PFX.MinExpon    Get minimum exponent digits
-         LTR   R8,R8               Is exponent zero?
-         &J.NZ ToString1510            no: branch
-         LTR   R0,R0               Exponent required?
-         &J.NP ToString1590            no: branch
+         CIJNE R8,0,ToString1510   Nonzero exponent: branch
+         CIJNH R0,0,ToString1590   No exponent required: branch
 ToString1510 dc 0h'0'
          MVC   0(1,R3),&PFX.Exponent Set exponent indicator
          LA    R3,1(,R3)               *
-         LTR   R8,R8               Is exponent negative?
-         &J.M  ToString1520            yes: branch
+         CIJL  R8,0,ToString1520   Negative exponent: branch
          TM    &PFX.Flags,&PFX.ExponPlus Exponent sign required?
          &J.Z  ToString1530            no: branch
          MVC   0(1,R3),&PFX.Plus   Set exponent sign
@@ -1526,19 +1649,16 @@ ToString1520 dc 0h'0'
          LA    R3,1(,R3)               *
 ToString1530 dc 0h'0'              Determine minimum number of
          LHI   R1,1                    exponent digits needed
-         CHI   R8,10                   *
-         &J.L  ToString1540            *
+         CIJL  R8,10,ToString1540      *
          LHI   R1,2                    *
-         CHI   R8,100                  *
-         &J.L  ToString1540            *
+         CIJL  R8,100,ToString1540     *
          LHI   R1,3                    *
          CHI   R8,1000                 *
          &J.L  ToString1540            *
          LHI   R1,4                    *
 ToString1540 dc 0h'0'
-         CR    R1,R0               Determine number of exponent
-         &J.H  ToString1550            digits to generate
-         LR    R1,R0                   in R1
+         CRJH  R1,R0,ToString1550  Determine exponent digits
+         LR    R1,R0                   to generate in R1
 ToString1550 dc 0h'0'
          CVD   R8,&PFX.Work        Convert exponent to decimal
          UNPK  &PFX.Work(5),&PFX.Work+5(3)
@@ -1579,8 +1699,7 @@ ToStringZero030 dc 0h'0'
          LA    R2,1(,R2)           Skip the sign
 ToStringZero040 dc 0h'0'
          LH    R0,&PFX.MaxLeading  Leading digits wanted?
-         LTR   R0,R0                   *
-         &J.NP ToStringZero050         no: branch
+         CIJNH R0,0,ToStringZero050    no: branch
          MVC   0(1,R2),&PFX.Zero   Set leading zero
          LA    R2,1(,R2)               *
          LH    R0,&PFX.MinDecimal  Decimal point wanted?
@@ -1600,8 +1719,7 @@ ToStringZero060 dc 0h'0'               *
          &BRCT R0,ToStringZero060      *
 ToStringZero070 dc 0h'0'
          LH    R0,&PFX.MinExpon    Exponent required?
-         LTR   R0,R0                   *
-         &J.Z  ToStringZero090         no: branch
+         CIJE  R0,0,ToStringZero090    no: branch
          MVC   0(1,R2),&PFX.Exponent Set exponent indicator
          LA    R2,1(,R2)               *
          TM    &PFX.Flags,&PFX.ExponPlus Exponent sign required?
@@ -1679,8 +1797,7 @@ ToValue0010 dc 0h'0'               Skip any leading blanks
          &J.L  ToValue0020             start found: branch
          &J.H  ReturnBadString         bad character: branch
          LA    R1,1(,R1)               *
-         CL&G.R R1,R0                  *
-         &J.L  ToValue0010             *
+         CL&G.RJL R1,R0,ToValue0010    *
          &J    ReturnBadString         empty string: branch
          space 1
 ***********************************************************************
@@ -1737,23 +1854,20 @@ ToValue0025 dc 0h'0'
          MVI   &PFX.ValueL,X'80'   Indicate value is negative
 ToValue0030 dc 0h'0'
          LA    R1,1(,R1)           Skip leading sign
-         CL&G.R R1,R0              Any more characters?
-         &J.NL ReturnBadString         no: branch
+         CL&G.RJNL R1,R0,ReturnBadString No more characters: branch
          space 1
 ToValue0040 dc 0h'0'               Skip any leading zeros
          CLC   &PFX.Zero,0(R1)         *
          &J.NE ToValue0050             non-zero found: branch
          LHI   R2,1                    indicate digit seen
          LA    R1,1(,R1)               *
-         CL&G.R R1,R0                  *
-         &J.L  ToValue0040             *
+         CL&G.RJL R1,R0,ToValue0040    *
          &J    ToValue0200             all zero: branch
          space 1
 ToValue0050 dc 0h'0'               Convert the digits to binary:
          CLC   &PFX.Decimal,0(R1)      decimal point?
          &J.NE ToValue0060                 no: branch
-         LTR   R3,R3                   decimal point already seen?
-         &J.NZ ReturnBadString             yes: branch
+         CIJNE R3,0,ReturnBadString    decimal point seen: branch
          LHI   R3,1                    indicate decimal point seen
          &J    ToValue0190             done with character
 ToValue0060 dc 0h'0'                   *
@@ -1768,12 +1882,10 @@ ToValue0060 dc 0h'0'                   *
          &J.E  ToValue0130                 yes: branch
          CLI   &PFX.Work,24            enough digits seen?
          &J.NH ToValue0090                 no: branch
-         LTR   R3,R3                   decimal point seen?
-         &J.NZ ToValue0070                 yes: branch
+         CIJNE R3,0,ToValue0070        decimal point seen: branch
          AHI   R4,1                    increment exponent
 ToValue0070 dc 0h'0'                       *
-         LTR   R7,R7                   already truncated?
-         &J.NZ ToValue0190                 yes: branch
+         CIJNE R7,0,ToValue0190        already truncated: branch
          LHI   R7,1                    indicate truncation
          CLC   &PFX.Five,0(R1)         need to round up number?
          &J.NL ToValue0190                 no: branch
@@ -1788,14 +1900,11 @@ ToValue0080 dc 0h'0'                       *
          &J.NZ ToValue0080                     yes: branch
          &J    ToValue0190             done with character
 ToValue0090 dc 0h'0'                   *
-         LTR   R3,R3                   decimal point seen?
-         &J.Z  ToValue0100                 no: branch
+         CIJE  R3,0,ToValue0100        decimal point not seen: branch
          AHI   R4,-1                   decrement exponent
 ToValue0100 dc 0h'0'                   *
-         LTR   R5,R5                   any prior non-zero digits?
-         &J.NZ ToValue0110                 yes: branch
-         LTR   R8,R8                   another zero?
-         &J.Z  ToValue0190                 yes: branch
+         CIJNE R5,0,ToValue0110        prior non-zero digits: branch
+         CIJE  R8,0,ToValue0190        another zero: branch
          STC   R8,&PFX.Work+BinDigitsToString-1 set the first digit
          LHI   R5,1                    set length of binary number
          &J    ToValue0190             done with character
@@ -1812,22 +1921,18 @@ ToValue0120 dc 0h'0'                       *
          SRL   R11,8                       get the carry
          LR    R8,R11                          *
          &BRCT R7,ToValue0120              Go do next digit
-         LTR   R8,R8                   Any carry from high position?
-         &J.Z  ToValue0190                 no: branch
+         CIJE  R8,0,ToValue0190        No carry from high pos.: branch
          BCT&G.R R14,0                 Save the carry value
          STC   R8,0(,R14)                  *
          AHI   R5,1                    Increment binary number length
          &J    ToValue0190             Go get the next character
          space 1
 ToValue0130 dc 0h'0'                   Decimal floating point:
-         CR    R5,R7                   enough digits seen?
-         &J.L  ToValue0170                 no: branch
-         LTR   R3,R3                   decimal point seen?
-         &J.NZ ToValue0140                 yes: branch
+         CRJL  R5,R7,ToValue0170       not enough digits seen: branch
+         CIJNE R3,0,ToValue0140        decimal point seen: branch
          AHI   R4,1                    increment exponent
 ToValue0140 dc 0h'0'                   *
-         LTR   R7,R7                   already truncated?
-         &J.M  ToValue0190                 yes: branch
+         CIJL  R7,0,ToValue0190        already truncated: branch
          CLI   0(R1),C'5'              need to round up number?
          &J.L  ToValue0160                 no: branch
          LA    R14,&PFX.Work-1(R5)     address of end of number
@@ -1837,12 +1942,10 @@ ToValue0150 dc 0h'0'                       *
          IC    R15,0(,R14)                 get the digit
          AHI   R15,1                       increment it
          STC   R15,0(,R14)                 save new digit value
-         CHI   R15,9                       carry?
-         &J.NH ToValue0160                     no: branch
+         CIJNH R15,9,ToValue0160           no carry: branch
          MVI   0(R14),0                    reset digit to zero
          BCT&G.R R14,0                     last digit
-         CL&G.R R7,R14                     overflow?
-         &J.NH ToValue0150                     no: branch
+         CL&G.RJNH R7,R14,ToValue0150      no overflow: branch
          MVI   &PFX.Work,1             set to 100000...
          AHI   R4,1                    increment exponent
 ToValue0160 dc 0h'0'                   *
@@ -1850,8 +1953,7 @@ ToValue0160 dc 0h'0'                   *
          &J    ToValue0190             done with character
 ToValue0170 dc 0h'0'                   *
          LA    R14,&PFX.Work(R5)       get address of output digit
-         LTR   R3,R3                   decimal point seen?
-         &J.Z  ToValue0180                 no: branch
+         CIJE  R3,0,ToValue0180        no decimal point seen: branch
          AHI   R4,-1                   decrement exponent
 ToValue0180 dc 0h'0'                   *
          STC   R8,0(,R14)              save the digit
@@ -1859,8 +1961,7 @@ ToValue0180 dc 0h'0'                   *
          space 1
 ToValue0190 dc 0h'0'
          LA    R1,1(,R1)               point to next character
-         CL&G.R R1,R0                  any more characters?
-         &J.L  ToValue0050                 yes: branch
+         CL&G.RJL R1,R0,ToValue0050    more characters: branch
          space 1
 ***********************************************************************
 *        End of mantissa found.                                       *
@@ -1871,10 +1972,8 @@ ToValue0190 dc 0h'0'
 *        R5: number of bytes of FpconWork used for number             *
 ***********************************************************************
 ToValue0200 dc 0h'0'
-         LTR   R2,R2               Any digits seen?
-         &J.Z  ReturnBadString         no: branch
-         CL&G.R R1,R0              End of string?
-         &J.NL ToValue0300             yes: branch
+         CIJE  R2,0,ReturnBadString No digits seen: branch
+         CL&G.RJNL R1,R0,ToValue0300 End of string: branch
          SR    R6,R6               Exponent is zero so far
          CLC   &PFX.Blank,0(R1)    End of number?
          &J.E  ToValue0270             yes: branch
@@ -1884,8 +1983,7 @@ ToValue0200 dc 0h'0'
          &J.NE ReturnBadString         no: branch
 ToValue0210 dc 0h'0'
          LA    R1,1(,R1)           Point to next character
-         CL&G.R R1,R0              Any more characters?
-         &J.NL ReturnBadString         no: branch
+         CL&G.RJNL R1,R0,ReturnBadString No more characters: branch
 ***********************************************************************
 *        Convert the exponent (if any).                               *
 *        R0: address of end of string                                 *
@@ -1905,8 +2003,7 @@ ToValue0210 dc 0h'0'
          BCTR  R3,0                Indicate negative exponent
 ToValue0220 dc 0h'0'
          LA    R1,1(,R1)           Point to next character
-         CL&G.R R1,R0              Any more characters?
-         &J.NL ReturnBadString         no: branch
+         CL&G.RJNL R1,R0,ReturnBadString No more characters: branch
 ToValue0230 dc 0h'0'               For each exponent digit:
          CLC   &PFX.Blank,0(R1)        end of string?
          &J.E  ToValue0250                 yes: branch
@@ -1923,13 +2020,10 @@ ToValue0230 dc 0h'0'               For each exponent digit:
          AR    R6,R11                      *
 ToValue0240 dc 0h'0'               For each exponent digit:
          LA    R1,1(,R1)               Point to next character
-         CL&G.R R1,R0                  Any more characters?
-         &J.L  ToValue0230                 yes: branch
+         CL&G.RJL R1,R0,ToValue0230    More characters: branch
 ToValue0250 dc 0h'0'
-         LTR   R2,R2               Any exponent digits?
-         &J.Z  ReturnBadString         no: branch
-         LTR   R3,R3               Is exponent negative?
-         &J.Z  ToValue0280             no: branch
+         CIJE  R2,0,ReturnBadString No exponent digits: branch
+         CIJE  R3,0,ToValue0280    Non-negative exponent: branch
          LCR   R6,R6               convert to negative
          &J    ToValue0280         go check end of string
          space 1
@@ -1939,8 +2033,7 @@ ToValue0260 dc 0h'0'               Ensure rest of string is blank
 ToValue0270 dc 0h'0'                   *
          LA    R1,1(,R1)               *
 ToValue0280 dc 0h'0'                   *
-         CL&G.R R1,R0                  *
-         &J.L  ToValue0260             *
+         CL&G.RJL R1,R0,ToValue0260    *
          space 1
          CHI   R6,9999             Is exponent too big?
          &J.H  ToValueOverflow         yes: branch
@@ -1958,8 +2051,7 @@ ToValue0280 dc 0h'0'                   *
 *            point at FpconWork+BinDigitsToString                     *
 ***********************************************************************
 ToValue0300 dc 0h'0'
-         LTR   R5,R5               Is number zero?
-         &J.Z  ToValueZero             yes: branch
+         CIJE  R5,0,ToValueZero    Number is zero: branch
          CLI   &PFX.Base,&PFX.Base10 Decimal floating point?
          &J.E  ToValue1500             yes: branch
          space 1
@@ -2022,8 +2114,7 @@ ToValue0350 dc 0h'0'
 *        R11: address of first binary digit in FpconWork              *
 ***********************************************************************
 ToValue0400 dc 0h'0'
-         LTR   R4,R4               Positive exponent?
-         &J.P  ToValue0500             yes: branch
+         CIJH  R4,0,ToValue0500    Positive exponent: branch
 ***********************************************************************
 *    The number needs to be divided by a power of 10.  Since a        *
 *    a repeating fraction will result, compute how many digits        *
@@ -2031,16 +2122,16 @@ ToValue0400 dc 0h'0'
 *    for each LN(10)/LN(256)*exponent, or 0.41524101186*exponent.     *
 ***********************************************************************
          LCR   R4,R4               Get number of times to divide by 10
-         L&GF.R R1,R4              Compute fraction digits needed
+         LR    R1,R4               Compute fraction digits needed
          M     R0,=FS24'.415241'       *
          SRDA  R0,24                   *
-         LA    R1,BinDigitsToString+1(,R1)
-         SL&G.R R1,R5                  *
+         AHI   R1,BinDigitsToString+1  *
+         SLR   R1,R5                   *
          LHI   R0,L'&PFX.Work-BinDigitsToString
-         CR    R1,R0               Ensure within work area
-         &J.L  ToValue0410             *
+         CRJL  R1,R0,ToValue0410   Ensure within work area
          LR    R1,R0                   *
 ToValue0410 dc 0h'0'
+         SGR   R0,R0  DSH1 03/20/08
          LA    R0,&PFX.Work+BinDigitsToString
          SR    R3,R3               Clear fraction
          MVCL  R0,R2                   *
@@ -2051,8 +2142,7 @@ ToValue0410 dc 0h'0'
 *        R11: address of first binary digit in FpconWork              *
 *        R14: address of end of number in FpconWork                   *
 ***********************************************************************
-         LTR   R4,R4               Is exponent 0?
-         &J.NP ToValue0490             yes: branch
+         CIJNH R4,0,ToValue0490    Zero exponent: branch
 ToValue0430 dc 0h'0'               Until the exponent is zero:
          L&G.R R2,R11                  Point to first non-zero digit
          SR    R0,R0                   Set remainder to zero
@@ -2065,8 +2155,7 @@ ToValue0440 dc 0h'0'                   For each digit:
          DR    R0,R3                           *
          STC   R1,0(,R2)                   Save quotient
          LA    R2,1(,R2)                   point to next digit
-         CL&G.R R2,R14                     at end of number
-         &J.L  ToValue0440                     no: branch
+         CL&G.RJL R2,R14,ToValue0440       not end of number: branch
          CHI   R0,128                  Need to round?
          &J.L  ToValue0460                 no: branch
 ToValue0450 dc 0h'0'                   Increment the number
@@ -2080,9 +2169,8 @@ ToValue0460 dc 0h'0'                   Locate first non-zero digit
          CLI   0(R11),0                    *
          &J.NE ToValue0470                 *
          LA    R11,1(,R11)                 *
-         CL&G.R R11,R14                    underflow?
-         &J.L  ToValue0460                     no: branch
-         &J    ToValueUnderflow                yes: branch
+         CL&G.RJL R11,R14,ToValue0460      no underflow: branch
+         &J    ToValueUnderflow            underflow: branch
 ToValue0470 dc 0h'0'
          &BRCT R4,ToValue0430          Go divide by 10 again
          space 1
@@ -2117,12 +2205,9 @@ ToValue0530 dc 0h'0'                       *
          SRL   R1,8                        get the carry
          LR    R0,R1                           *
          BCT&G.R R2,0                      point to next digit
-         CL&G.R R2,R11                     start of number?
-         &J.NL ToValue0530                     no: branch
-         LTR   R0,R0                   carry from high-order?
-         &J.Z  ToValue0540                 no: branch
-         CL&G.R R2,R3                  value overflowed?
-         &J.L  ToValueOverflow             yes: branch
+         CL&G.RJNL R2,R11,ToValue0530      not start of number: branch
+         CIJE  R0,0,ToValue0540        no carry from high-order: branch
+         CL&G.RJL R2,R3,ToValueOverflow value overflowed: branch
          STC   R0,0(,R2)               set new high-order digit
          L&G.R R11,R2                      *
 ToValue0540 dc 0h'0'                   *
@@ -2149,8 +2234,7 @@ ToValue0600 dc 0h'0'
          SR    R1,R1               Shift the value 4 bits left
          SR    R4,R4                   *
          LA    R3,15(,R11)             (15 bytes maximum)
-         CL&G.R R3,R14                 *
-         &J.L  ToValue0610             *
+         CL&G.RJL R3,R14,ToValue0610   *
          L&G.R R3,R14                  *
 ToValue0610 dc 0h'0'                   *
          BCT&G.R R3,0                  *
@@ -2160,8 +2244,7 @@ ToValue0610 dc 0h'0'                   *
          STC   R4,0(,R3)               *
          SRL   R4,8                    *
          LR    R1,R4                   *
-         CL&G.R R3,R11                 *
-         &J.H  ToValue0610             *
+         CL&G.RJH R3,R11,ToValue0610   *
 ToValue0620 dc 0h'0'               Get address of bit past end of
          LA    R1,3(,R11)              floating point mantissa
          CLI   &PFX.ValueLen,&PFX.ValueLenE
@@ -2171,8 +2254,7 @@ ToValue0620 dc 0h'0'               Get address of bit past end of
          &J.E  ToValue0630             *
          LA    R1,14(,R11)             *
 ToValue0630 dc 0h'0'
-         CL&G.R R1,R14             Past end of number?
-         &J.NL ToValue0650             yes: branch
+         CL&G.RJNL R1,R14,ToValue0650 Past end of number: branch
          TM    0(R1),X'80'         Need to round?
          &J.Z  ToValue0650             no: branch
          SR    R2,R2               Increment number
@@ -2183,8 +2265,7 @@ ToValue0640 dc 0h'0'                   *
          STC   R2,0(,R1)               *
          SRA   R2,8                    *
          &J.Z  ToValue0650             no more carry: branch
-         CL&G.R R1,R11                 *
-         &J.NH ToValue0640             *
+         CL&G.RJNH R1,R11,ToValue0640  *
 * Overflow after rounding:
          AR    R0,R2               Increment exponent
          LA    R11,&PFX.Work       Set number to 1
@@ -2194,34 +2275,31 @@ ToValue0640 dc 0h'0'                   *
 ToValue0650 dc 0h'0'
          AHI   R0,64               Compute biased exponent
          &J.M  ToValue0700             still negative: branch
-         CHI   R0,127              Too large?
-         &J.H  ToValueOverflow         yes: branch
+         CIJH  R0,127,ToValueOverflow Too large: branch
          LA    R2,&PFX.ValueE+1    Point to start of output mantissa
          CLI   &PFX.ValueLen,&PFX.ValueLenE Short value?
          &J.E  ToValue0660             yes: branch
+         SGR   R1,R1 DSH1 03/20/08
          LA    R1,7(,R11)          Point to end of long number
-         CL&G.R R1,R14             Past end of number?
-         &J.H  ToValue0670             yes: branch
+         CL&G.RJH R1,R14,ToValue0670 Past end of number: branch
          MVC   0(7,R2),0(R11)      Copy long mantissa
          CLI   &PFX.ValueLen,&PFX.ValueLenD Long value?
          &J.E  ToValue0800             yes: branch
          LA    R2,&PFX.ValueE+9    Point to start of 2nd half
          L&G.R R11,R1                  *
          LA    R1,7(,R11)          Point to end of extended number
-         CL&G.R R1,R14             Past end of number?
-         &J.H  ToValue0670             yes: branch
+         CL&G.RJH R1,R14,ToValue0670 Past end of number: branch
          MVC   0(7,R2),0(R11)      Copy extended mantissa
          &J    ToValue0800
 ToValue0660 dc 0h'0'
          LA    R1,3(,R11)          Point to end of short number
-         CL&G.R R1,R14             Past end of number?
-         &J.H  ToValue0670             yes: branch
+         CL&G.RJH R1,R14,ToValue0670 Past end of number: branch
          MVC   0(3,R2),0(R11)      Copy short mantissa
          &J    ToValue0800
 ToValue0670 dc 0h'0'               Copy rest of number
          SL&G.R R14,R11                *
          BCTR  R14,0                   *
-         EX    R14,MVC_R2_R11          *
+         EX&RL R14,MVC_R2_R11          *
          &J    ToValue0800             *
          space 1
 ***********************************************************************
@@ -2307,18 +2385,16 @@ ToValue1050 dc 0h'0'                   *
          SRL   R4,0(R5)                *
          STC   R4,0(,R3)               *
          LA    R3,1(,R3)               *
-         CL&G.R R3,R14                 *
-         &J.NL ToValue1060             end of number: branch
+         CL&G.RJNL R3,R14,ToValue1060  end of number: branch
          &BRCT R6,ToValue1050          *
          &J    ToValue1080             *
 ToValue1060 dc 0h'0'
-         LA    R3,&PFX.Work+L'&PFX.Work Can number be extended
-         CL&G.R R14,R3                 in place?
-         &J.L  ToValue1100             yes: branch
+         LA    R3,&PFX.Work+L'&PFX.Work Number can be extended
+         CL&G.RJL R14,R3,ToValue1100   in place: branch
          SL&G.R R14,R11            Compute length of number
          LR    R3,R14              Move number to start
          BCTR  R3,0                    of work area
-         EX    R3,ToValue1060_MVC      *
+         EX&RL R3,ToValue1060_MVC      *
 Static   Loctr ,
 ToValue1060_MVC MVC &PFX.Work(0),0(R11) EXecuted instruction
 ToValue  Loctr ,
@@ -2348,8 +2424,7 @@ ToValue1100 dc 0h'0'
          LA    R5,L'&PFX.ValueL-2  Get length of mantissa
          LHI   R6,16383            Get maximum exponent
          SR    R7,R7               Get bits to shift exponent
-         CL&G.R R3,R14             Past end of number?
-         &J.H  ToValue1150             yes: branch
+         CL&G.RJH R3,R14,ToValue1150 Past end of number: branch
          L&G.R R14,R3              Truncate number
          TM    0(R3),X'80'         Need to round?
          &J.Z  ToValue1150             no: branch
@@ -2362,8 +2437,7 @@ ToValue1110 dc 0h'0'               Short binary:
          LA    R5,L'&PFX.ValueE-1  Get length of manissa
          LHI   R6,127              Get maximum exponent
          LHI   R7,7                Get bits to shift exponent
-         CL&G.R R3,R14             Past end of number?
-         &J.H  ToValue1150             yes: branch
+         CL&G.RJH R3,R14,ToValue1150 Past end of number: branch
          LA    R14,1(,R3)          Truncate number
          TM    0(R3),1             Need to round number?
          &J.Z  ToValue1150             no: branch
@@ -2376,8 +2450,7 @@ ToValue1120 dc 0h'0'               Long binary:
          LA    R5,L'&PFX.ValueD-2  Get length of mantissa
          LHI   R6,1023             Get maximum exponent
          LHI   R7,4                Get bits to shift exponent
-         CL&G.R R3,R14             Past end of number?
-         &J.H  ToValue1150             yes: branch
+         CL&G.RJH R3,R14,ToValue1150 Past end of number: branch
          LA    R14,1(,R3)          Truncate number
          TM    0(R3),X'08'         Need to round number
          &J.Z  ToValue1150             no: branch
@@ -2410,8 +2483,7 @@ ToValue1130 dc 0h'0'               Increment number due to rounding
 *        R14: address of end of number in FpconWork                   *
 ***********************************************************************
 ToValue1150 dc 0h'0'
-         CR    R0,R6               Is exponent too large?
-         &J.H  ToValueOverflow         yes: branch
+         CRJH  R0,R6,ToValueOverflow Exponent is too large: branch
          AR    R0,R6               Compute biased exponent
          &J.NP ToValueUnderflow        too small: branch
          CLI   &PFX.ValueLen,&PFX.ValueLenE Short?
@@ -2430,16 +2502,14 @@ ToValue1160 dc 0h'0'                   *
          STC   R2,0(,R3)               *
          SRL   R2,8                    *
          LR    R1,R2                   *
-         CL&G.R R3,R11                 *
-         &J.H  ToValue1160             *
+         CL&G.RJH R3,R11,ToValue1160   *
          BCT&G.R R14,0             Last byte is now zero
          MVN   &PFX.ValueD+1(1),0(R11) Copy the first digit
          &J    ToValue1200
          space 1
 ToValue1170 dc 0h'0'
          LA    R3,1(,R11)          Any fraction digits to shift?
-         CL&G.R R3,R14                 *
-         &J.NL ToValue1220             no: branch
+         CL&G.RJNL R3,R14,ToValue1220  no: branch
          SR    R1,R1               Shift the fraction 1 bit right
 ToValue1180 dc 0h'0'                   *
          &LLC  R2,0(,R3)               *
@@ -2449,19 +2519,17 @@ ToValue1180 dc 0h'0'                   *
          STC   R2,0(,R3)               *
          SLL   R1,8                    *
          LA    R3,1(,R3)               *
-         CL&G.R R3,R14                 *
-         &J.L  ToValue1180             *
+         CL&G.RJL R3,R14,ToValue1180   *
          space 1
 ToValue1200 dc 0h'0'
          LA    R11,1(,R11)         Skip X'01' byte
          S&G.R R14,R11             Copy the mantissa
          &J.NP ToValue1220             *
-         CR    R14,R5                  *
-         &J.L  ToValue1210             *
+         CRJL  R14,R5,ToValue1210      *
          LR    R14,R5                  *
 ToValue1210 dc 0h'0'                   *
          BCTR  R14,0                   *
-         EX    R14,MVC_R4_R11          *
+         EX&RL R14,MVC_R4_R11          *
 ToValue1220 dc 0h'0'
          SLL   R0,0(R7)            Get exponent in correct position
          LH    R1,&PFX.ValueE      OR into first halfword of value
@@ -2496,18 +2564,15 @@ ToValue1520 dc 0h'0'
          AHI   R4,398              Add exponent bias
          space 1
 ToValue1530 dc 0h'0'               While exponent is too large:
-         CR    R0,R4                   exponent is too large?
-         &J.NL ToValue1540                 no: branch
+         CRJNL R0,R4,ToValue1540       exponent not too large: branch
          LA    R14,&PFX.Work(R5)       get address of next digit
-         CR    R5,R1                   too many digits?
-         &J.NL ToValueOverflow             yes: branch
+         CRJNL R5,R1,ToValueOverflow   too many digits: branch
          MVI   0(R14),0                add another zero
          AHI   R5,1                    increment number of digits
          &BRCT R4,ToValue1530          decrement exponent
          space 1
 ToValue1540 dc 0h'0'
-         LTR   R4,R4               Exponent is too small?
-         &J.NM ToValue1560             no: branch
+         CIJNL R4,0,ToValue1560    Exponent not too small: branch
          AR    R5,R4               Are any digits left?
          &J.NP ToValueUnderflow        no: branch
          SR    R4,R4               Exponent is now zero
@@ -2520,12 +2585,10 @@ ToValue1550 dc 0h'0'                   *
          IC    R15,0(,R14)             *
          AHI   R15,1                   *
          STC   R15,0(,R14)             *
-         CHI   R15,9                   *
-         &J.NH ToValue1560             no carry: branch
+         CIJNH R15,9,ToValue1560       no carry: branch
          MVI   0(R14),0                *
          BCT&G.R R14,0                 *
-         CL&G.R R0,R14                 *
-         &J.NH ToValue1550             *
+         CL&G.RJNH R0,R14,ToValue1550  *
          MVI   &PFX.Work,1         All 9's, so set to 10000...
          AHI   R4,1                Increment exponent
          space 1
@@ -2540,10 +2603,10 @@ ToValue1570 dc 0h'0'                   *
          BCT&G.R R15,0                 *
          &BRCT R5,ToValue1570          *
          BCTR  R1,0                Set leading digits to zero
-         EX    R1,ToValue1570_XC       *
+         EX&RL R1,ToValue1570_XC       *
 Static   Loctr ,
 ToValue1570_XC XC &PFX.Work(0),&PFX.Work EXecuted instruction
-Code     Loctr ,
+ToValue  Loctr ,
          space 1
 ***********************************************************************
 *    Convert digits in FprbWork to decimal floating point value.      *
@@ -2587,10 +2650,9 @@ ToValue1620 dc 0h'0'
          space 1
 ToValue1630 dc 0h'0'
          &LLC  R15,&PFX.Work       Get the first digit
-         CHI   R15,8               Encode combination field
-         &J.L  ToValue1640             from first digit and
-         NILL  R15,1                   upper 2 exponent bits
-         AHI   R15,24                  *
+         CIJL  R15,8,ToValue1640   Encode combination field
+         NILL  R15,1                   from first digit and
+         AHI   R15,24                  upper 2 exponent bits
          SLL   R4,1                    *
          &J    ToValue1650             *
 ToValue1640 dc 0h'0'                   *
@@ -2619,15 +2681,12 @@ ToValue1700 dc 0h'0'               Encode digit triplet
          &LLC  R14,0(,R3)              *
          &LLC  R15,1(,R3)              *
          &LLC  R0,2(,R3)               *
-         CHI   R14,8                   *
-         &J.NL ToValue1740             *
-         CHI   R15,8                   *
-         &J.NL ToValue1720             *
+         CIJNL R14,8,ToValue1740       *
+         CIJNL R15,8,ToValue1720       *
          SLL   R14,3                   *
          OR    R14,R15                 *
          SLL   R14,4                   *
-         CHI   R0,8                    *
-         &J.L  ToValue1785             *
+         CIJL  R0,8,ToValue1785        *
 ToValue1710 dc 0h'0'                   *
          NR    R0,R7                   *
          LHI   R15,B'00001000'         *
@@ -2636,8 +2695,7 @@ ToValue1720 dc 0h'0'                   *
          NR    R15,R7                  *
          SLL   R14,3                   *
          OR    R14,R15                 *
-         CHI   R0,8                    *
-         &J.NL ToValue1730             *
+         CIJNL R0,8,ToValue1730        *
          LR    R15,R0                  *
          NR    R15,R6                  *
          NR    R0,R7                   *
@@ -2652,10 +2710,8 @@ ToValue1730 dc 0h'0'                   *
          &J    ToValue1780             *
 ToValue1740 dc 0h'0'                   *
          NR    R14,R7                  *
-         CHI   R15,8                   *
-         &J.NL ToValue1760             *
-         CHI   R0,8                    *
-         &J.NL ToValue1750             *
+         CIJNL R15,8,ToValue1760       *
+         CIJNL R0,8,ToValue1750        *
          SLL   R14,3                   *
          OR    R14,R15                 *
          LR    R15,R0                  *
@@ -2681,8 +2737,7 @@ ToValue1760 dc 0h'0'                   *
          NR    R15,R7                  *
          SLL   R14,3                   *
          OR    R14,R15                 *
-         CHI   R0,8                    *
-         &J.NL ToValue1770             *
+         CIJNL R0,8,ToValue1770        *
          LR    R15,R0                  *
          NR    R15,R6                  *
          NR    R0,R7                   *
@@ -2700,8 +2755,7 @@ ToValue1780 dc 0h'0'                   *
 ToValue1785 dc 0h'0'                   *
          OR    R14,R0                  *
          space 1
-         LTR   R4,R4               OR encoded digits into value
-         &J.NZ ToValue1790             *
+         CIJNE R4,0,ToValue1790    OR encoded digits into value
          A&G.HI R2,-2                  *
          STC   R14,1(,R2)              *
          &J    ToValue1800             *
@@ -2711,8 +2765,7 @@ ToValue1790 dc 0h'0'                   *
          OR    R15,R14                 *
          STC   R15,0(,R2)              *
          BCT&G.R R2,0                  *
-         CHI   R4,6                    *
-         &J.L  ToValue1800             *
+         CIJL  R4,6,ToValue1800        *
          STCM  R14,2,0(R2)             *
          SR    R4,R4                   *
          &J    ToValue1810             *

@@ -161,7 +161,11 @@ public  class  sz390 implements Runnable {
     * 12/24/07 RPI 759 align stats for all pgms on STA file  
     * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, con  
     * 01/31/08 RPI 318 synchronize TGET/TPUT   
-    * 02/13/08 RPI 806 add AVL statistics on insert, rotate, max height            
+    * 02/13/08 RPI 806 add AVL statistics on insert, rotate, max height  
+    * 03/18/08 RPI 825 add TIMER INS instruction count extension  
+    * 03/19/08 RPI 819 add trace table for last 10 instr. at abend
+    *          and format PSW with CC, ILC, MASK, at ABEND 
+    * 03/20/08 RPI 809 restore psw cc and amode for SPIE and ESTAE exits                    
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -210,6 +214,7 @@ public  class  sz390 implements Runnable {
     boolean svc_abend_type   = system_abend;
     boolean svc_req_dump     = false; // request dump
     boolean dump_taken = false;
+    long long_psw_amode31_bit = ((long) (1) << 31); // RPI 819
     long stimer_exit_time = 0;  // set by STIMER for update+monitor to check
     int  stimer_exit_addr = 0;  // exit when STIMER tod reached
     boolean stimer_exit_request = false; // set when time expired
@@ -367,7 +372,7 @@ public  class  sz390 implements Runnable {
     int     tot_test_break_addr  = 0;
     int     max_break_addr = 100;
     int[]   test_break_addr      = new int[max_break_addr];
-    int     test_break_op_ins    = 0;
+    long    test_break_op_ins    = 0; // RPI 825
     String  test_break_addr_cmd  = null;
     String  test_break_reg_cmd   = null;
     String  test_break_mem_cmd   = null;
@@ -901,7 +906,7 @@ public synchronized void abort_error(int error,String msg){  // RPI 646
 	  	 ez390_rc = 16;
 	  }
 	  stimer_exit_addr = 0; // RPI 471 cancel stimer exit
-	  String error_msg = "EZ390E error " + error + " " + msg;
+	  String error_msg = "EZ390E error " + tz390.right_justify("" + error,3) + " " + msg;
 	  put_log(error_msg);
 	  tz390.put_systerm(error_msg);
 	  if (!dump_taken && tz390.opt_dump){
@@ -1230,8 +1235,11 @@ public void open_files(){
 	} else if (pz390.estae_exit_running){
 		int estae_restart_psw = pz390.reg.getInt(pz390.r0);
 		int estae_exit_rc = pz390.reg.getInt(pz390.r15);
-		pz390.estae_last_ins = tz390.systerm_ins;
+		pz390.estae_last_ins_cnt = tz390.systerm_ins;
 		pz390.estae_exit_running = false;
+		pz390.psw_cc        = pz390.estae_psw_cc;        // RPI 809  
+		pz390.psw_amode     = pz390.estae_psw_amode;     // RPI 809
+		pz390.psw_amode_bit = pz390.estae_psw_amode_bit; // RPI 809
 		pz390.reg.position(0);
 		pz390.reg.put(pz390.mem_byte,pz390.esta_gpr,128);
 		if (estae_exit_rc == 4){ // RPI 636 restart at ESTAPSW
@@ -1250,8 +1258,11 @@ public void open_files(){
 		}
 		return;
 	} else if (pz390.espie_exit_running){
-		pz390.espie_last_ins = tz390.systerm_ins;
+		pz390.espie_last_ins_cnt = tz390.systerm_ins;
 		pz390.espie_exit_running = false;
+		pz390.psw_cc        = pz390.espie_psw_cc;        // RPI 809  
+		pz390.psw_amode     = pz390.espie_psw_amode;     // RPI 809
+		pz390.psw_amode_bit = pz390.espie_psw_amode_bit; // RPI 809
 		pz390.reg.position(0);
 		pz390.reg.put(pz390.mem_byte,pz390.epie_gpr,128);
 		pz390.set_psw_loc(pz390.mem.getInt(pz390.epie_psw+4));
@@ -1825,6 +1836,8 @@ public void svc_getmain(){
 	 *   1.  R1 = length to allocate
 	 *   2.  R0 = options
 	 *         bit 0 allocate memory above the line
+	 *   3.  If tz390.opt_loadhigh alloc from top down else bottom up
+	 *       RPI 819 for assist    
 	 * Output:    
 	 *   1.  Set r0 to length of allocated area rounded to *8 // RPI 542 (was address)
 	 *   2.  set r1 to address of area                        // RPI 542 not set previously                      
@@ -1856,24 +1869,47 @@ public void svc_getmain(){
         	return;
         }
 		if (cur_fqe_len >= req_len){
-			// allocate from end of cur_fqe
-			cur_fqe_len = cur_fqe_len - req_len;
-			pz390.reg.putInt(pz390.r0,req_len);               // RPI 542
-			pz390.reg.putInt(pz390.r1,cur_fqe + cur_fqe_len); // RPI 542
-			if (tz390.opt_traceg){
-				trace_mem("GETMAIN ",cur_fqe+cur_fqe_len,req_len,0);
-			}
-			if (cur_fqe_len > 0){
-				pz390.mem.putInt(cur_fqe+4,cur_fqe_len);
+			if (tz390.opt_loadhigh){
+				// allocate from end of cur_fqe
+				cur_fqe_len = cur_fqe_len - req_len;
+				pz390.reg.putInt(pz390.r0,req_len);               // RPI 542
+				pz390.reg.putInt(pz390.r1,cur_fqe + cur_fqe_len); // RPI 542
 				if (tz390.opt_traceg){
-					trace_mem("FQE UPDT",cur_fqe,cur_fqe_len,next_fqe);
+					trace_mem("GETMAIN ",cur_fqe+cur_fqe_len,req_len,0);
+				}
+				if (cur_fqe_len > 0){
+					pz390.mem.putInt(cur_fqe+4,cur_fqe_len);
+					if (tz390.opt_traceg){
+						trace_mem("FQE UPDT",cur_fqe,cur_fqe_len,next_fqe);
+					}
+				} else {
+					if (tz390.opt_traceg){
+						trace_mem("FQE DEL ",cur_fqe,req_len,next_fqe);
+					}
+					pz390.mem.putInt(prev_fqe,next_fqe);
 				}
 			} else {
+				// allocate from bottom up  RPI819
+				cur_fqe_len = cur_fqe_len - req_len;
+				pz390.reg.putInt(pz390.r0,req_len);               // RPI 542
+				pz390.reg.putInt(pz390.r1,cur_fqe); 
 				if (tz390.opt_traceg){
-					trace_mem("FQE DEL ",cur_fqe,req_len,next_fqe);
+					trace_mem("GETMAIN ",cur_fqe,req_len,0);
 				}
-				pz390.mem.putInt(prev_fqe,next_fqe);
-			}
+				if (cur_fqe_len > 0){
+					pz390.mem.putInt(prev_fqe,cur_fqe + req_len);
+					pz390.mem.putInt(cur_fqe + req_len,next_fqe);
+					pz390.mem.putInt(cur_fqe + req_len +4,cur_fqe_len);
+					if (tz390.opt_traceg){
+						trace_mem("FQE UPDT",cur_fqe + req_len,cur_fqe_len,next_fqe);
+					}
+				} else {
+					if (tz390.opt_traceg){
+						trace_mem("FQE DEL ",cur_fqe,req_len,next_fqe);
+					}
+					pz390.mem.putInt(prev_fqe,next_fqe);
+				}
+			}			
 			pz390.tot_mem_alloc = pz390.tot_mem_alloc + req_len;
 			pz390.reg.putInt(pz390.r15,0);
 			return;
@@ -2038,6 +2074,7 @@ private void svc_time(){
 	 *       This is used for regression testing date
 	 *       and time functions by comparing expected
 	 *       time and date output.
+	 *   2.  See mac\TIME.MAC for documentation. RPI 825  
 	 */
 	int date_type = pz390.reg.getShort(pz390.r0);
 	int time_type = pz390.reg.getShort(pz390.r0+2);
@@ -2103,6 +2140,9 @@ private void svc_time(){
 		pz390.mem.putLong(time_addr,((time_mil-tod_start_day)*1000) << (63-59));
 		pz390.mem.putLong(time_addr+8,0);
         return;
+	case 16: // ins - return r1 = 64 bit instruction counter rpi 825
+		pz390.reg.putLong(8,pz390.tz390.systerm_ins);
+		return;
 	case 0x80: // PTFF-QAF 0x00 - query ava8lable functions  
 		// 0-3 bits on for functions 0-3 problem state functions avail.
 		// 4-127 bits off for supervisor state functions not avail
@@ -2332,7 +2372,7 @@ private void svc_bldl(){
 }
 public void svc_abend(int pic, boolean type, boolean req_dump){
 	/*
-	 * 1.  Display abend code, psw, instr,and gpr's
+	 * 1.  Display trace table, abend code, psw, instr,and gpr's
 	 * 2.  If dump_reguested
 	 *        display gpr's
 	 *        display fpr'ss
@@ -2340,6 +2380,9 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 	 *        dump all storage
 	 * 3.  Abort if not in test mode
 	 */
+	if (!tz390.opt_trace){
+		list_trace_table(); // RPI 819 list last 10 instr
+	}
 	int dump_loc = pz390.psw_loc - pz390.psw_ins_len;
 	if (pic == 0x0c1 || pz390.psw_loc < 0){
 		dump_loc = pz390.psw_loc;
@@ -2351,10 +2394,11 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 		abend_code = "000" + pic;
 		abend_code = "U" + abend_code.substring(abend_code.length()-4);
 	}
-	log_error(11,"ABEND " + abend_code
-	       + " PSW=" + tz390.get_hex(dump_loc,8) 
-		   + " INS=" + pz390.get_ins_hex(dump_loc).trim()
-		   + " " + pz390.get_ins_name(dump_loc));
+	log_error(11,
+	         "PSW=" + dump_psw()
+		   + " " + pz390.get_ins_hex(dump_loc)
+		   + " " + pz390.get_ins_name(dump_loc)
+		   + " ABEND " + abend_code);
 	dump_req(req_dump);
 	if (!tz390.opt_test){
 		ez390_errors--; // don't count abend twice
@@ -2365,6 +2409,55 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 		pz390.psw_check = false; // reset default
 	}
     svc_abend_type = system_abend;
+}
+private void list_trace_table(){
+	/*
+	 * list last 10 instructions in trable table
+	 */
+	int cur_index = pz390.trace_table_index;
+	int index = pz390.trace_table_next[cur_index];
+	while (index != cur_index){
+		// list last 10 if any
+		int addr = pz390.trace_table_addr[index];
+		if (addr != 0){
+			put_dump("EZ390I Trace Table Entry      "
+					 + tz390.get_hex(addr,8)
+					 + " " + pz390.get_ins_hex(addr) + " " + pz390.get_ins_name(addr));
+		}
+		index = pz390.trace_table_next[index];
+	}
+}
+private String dump_psw(){ // RPI 819
+	/*
+	 * return 16 character hex PSW with
+	 * with the following bit settings:
+	 *   1. bits 0-7 x'07' translation, 
+	 *      I/O interrupts, and external
+	 *      interrupts enabled.
+	 *   2. Bits 8-15 x'05' key zero, machine
+	 *      checks enabled, and problem state
+	 *      enabled.
+	 *   3. Bits 16-23 AS(2),CC(2),MASK(4)
+	 *      AS   - translation mode zeros
+	 *      CC   - condition code 0=CC8, 1=CC4, 2=CC2, 3=CC1
+	 *      MASK - fixed, decimal, HFP exp, HFP sig. 
+	 *   4. Bits 24-31 zeros (64 bit addressing if 31 & 32 are one)
+	 *   5. Bit  31    basic addressing mode 0=24, 1=31
+	 *   6. Bits 32-63 - address of next instruction       
+	 */
+	int   cc    = pz390.psw_cc_code[pz390.psw_cc];
+	int   mask  = pz390.psw_pgm_mask;
+	int   amode_and_addr;
+	if (pz390.psw_amode == pz390.psw_amode31){
+		amode_and_addr = pz390.int_high_bit
+		        | pz390.psw_loc;
+	} else {
+		amode_and_addr = pz390.psw_loc;
+	}
+	int psw1 = 0x07050000   // bits  0-15
+			         | cc   << 12 // bits 18-19
+			         | mask <<  8; // bits 20-23			      
+	return tz390.get_hex(psw1,8) + " " + tz390.get_hex(amode_and_addr,8);		   
 }
 private void dump_req(boolean req_dump){
 	/*

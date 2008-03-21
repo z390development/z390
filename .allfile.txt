@@ -28,6 +28,7 @@ C:\z390\MAC.BAT
 C:\z390\mfacc
 C:\z390\mvs
 C:\z390\MZ390.BAT
+C:\z390\README.TXT
 C:\z390\REPRO.BAT
 C:\z390\rt
 C:\z390\soa
@@ -50,6 +51,7 @@ C:\z390\assist\TESTAST1.MLC
 C:\z390\assist\TESTAST1.XGT
 C:\z390\assist\TESTAST1.XPH
 C:\z390\assist\TESTAST1.XRD
+C:\z390\bmk\BMKINS1.MLC
 C:\z390\bmk\BMKSAVE.BAT
 C:\z390\bmk\BMKTIME.BAT
 C:\z390\bmk\BMKTIME.MLC
@@ -373,6 +375,7 @@ C:\z390\demo\DEMONUM2.MLC
 C:\z390\demo\DEMOSTR1.MLC
 C:\z390\demo\DEMOWTO1.MLC
 C:\z390\demo\DEMOWTO2.MLC
+C:\z390\demo\SIEVE.MLC
 C:\z390\demo\STDDEVLB.MLC
 C:\z390\doc\OSI_GPL_License_Agreement.rtf
 C:\z390\doc\OSI_GPL_License_Agreement.txt
@@ -443,6 +446,12 @@ C:\z390\linklib\CVTTOHEX.MLC
 C:\z390\linklib\CVTTOHEX.OBJ
 C:\z390\linklib\CVTTOHEX.PRN
 C:\z390\linklib\CVTTOHEX.STA
+C:\z390\linklib\DAT.BAL
+C:\z390\linklib\DAT.ERR
+C:\z390\linklib\DAT.MLC
+C:\z390\linklib\DAT.OBJ
+C:\z390\linklib\DAT.PRN
+C:\z390\linklib\DAT.STA
 C:\z390\linklib\FPCONMFC.BAL
 C:\z390\linklib\FPCONMFC.ERR
 C:\z390\linklib\FPCONMFC.MLC

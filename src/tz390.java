@@ -174,7 +174,8 @@ public  class  tz390 {
     * 02/28/08 RPI 814 change pgm_dir to dir_pgm for consistency 
     * 02/28/08 RPI 812 add ASSIST option for assembly and emulation of ASSIST 
     * 03/03/08 RPI 817 add 226 z10 instructions  
-    * 03/13/08 RPI 820 prevent cf5 array exception due to overflow    
+    * 03/13/08 RPI 820 prevent cf5 array exception due to overflow
+    * 03/15/08 RPI 822 add AUTOLINK to STATS file
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -183,7 +184,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.01";  //dsh
+    String version    = "V1.4.01a";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -215,6 +216,7 @@ public  class  tz390 {
     boolean opt_list     = true;  // generate LOG file
     boolean opt_listcall = true;  // list macro calls
     boolean opt_listuse  = true;  // list usage at USING and DROP
+    boolean opt_loadhigh = true;  // load pgms and alloc storage from top down
     boolean opt_mcall    = false; // list MCALL and MEXIT on PRN // RPI 511
     boolean opt_obj      = true;  // generate binary MVS compatible OBJ file RPI 694
     boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
@@ -362,7 +364,7 @@ public  class  tz390 {
 	String systerm_time = "";     // hh:mm:ss if opt_timing
     String systerm_prefix = ""; // pgm_name plus space
     int    systerm_io     = 0;    // total file io count
-    int    systerm_ins    = 0;    // ez390 instruction count
+    long   systerm_ins    = 0;    // ez390 instruction count
     String started_msg = "";
     String ended_msg   = "";
     String stats_file_name      = null;
@@ -4548,7 +4550,8 @@ private void process_option(String token){
 	} else if (token.toUpperCase().equals("ASM")){
 		opt_asm = true; 
 	} else if (token.toUpperCase().equals("ASSIST")){
-		opt_assist = true; 
+		opt_assist   = true; 
+		opt_loadhigh = false; // RPI 819
 	} else if (token.toUpperCase().equals("BAL")){
 		opt_bal = true; 
 	} else if (token.toUpperCase().equals("BS2000")){
@@ -4591,12 +4594,12 @@ private void process_option(String token){
     } else if (token.length() > 8
      		&& token.substring(0,8).toUpperCase().equals("INSTALL(")){
     	opt_install_loc = token.substring(8,token.length()-1); 	
-    } else if (token.length() >= 8
-      		&& token.substring(0,8).toUpperCase().equals("LISTCALL")){
+    } else if (token.toUpperCase().equals("LISTCALL")){
        	opt_listcall = true;
-    } else if (token.length() >= 7
-      		&& token.substring(0,7).toUpperCase().equals("LISTUSE")){
+    } else if (token.toUpperCase().equals("LISTUSE")){
        	opt_listuse = true;
+    } else if (token.toUpperCase().equals("LOADHIGH")){
+       	opt_loadhigh = true; // RPI 819
     } else if (token.length() > 4
       		&& token.substring(0,4).toUpperCase().equals("LOG(")){
      	log_file_name = token.substring(4,token.length()-1); // RPI 719
@@ -4647,8 +4650,7 @@ private void process_option(String token){
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("MAXSYM(")){
        	opt_maxsym = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
-    } else if (token.length() >= 5
-      		&& token.substring(0,5).toUpperCase().equals("MCALL")){
+    } else if (token.toUpperCase().equals("MCALL")){
        	opt_mcall = true; // RPI 511
        	opt_listcall = true;
     } else if (token.length() > 5
@@ -4676,6 +4678,8 @@ private void process_option(String token){
        	opt_listcall = false;
     } else if (token.equals("NOLISTUSE")){
        	opt_listuse = false; 
+    } else if (token.toUpperCase().equals("NOLOADHIGH")){
+       	opt_loadhigh = false; // RPI 819
     } else if (token.toUpperCase().equals("NOOBJ")){ // RPI694
        	opt_obj = false;
     } else if (token.toUpperCase().equals("NOPC")){
@@ -6238,6 +6242,11 @@ public void put_trace(String text){
 		     } else {
 		        add_final_opt("NOASSIST");
 		     }
+	     if (opt_autolink){ // search for external ref. in linklib RPI 822
+		        add_final_opt("AUTOLINK");
+		     } else {
+		        add_final_opt("NOAUTOLINK");
+		     }
 	     if (opt_bal     ){ // generate bal source output from mz390 RPI 415
 	        add_final_opt("BAL");
 	     } else {
@@ -6293,6 +6302,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOLISTUSE");
 	     }
+	     if (opt_loadhigh){ // load pgms and alloc storage from top down
+		        add_final_opt("LOADHIGH");
+		     } else {
+		        add_final_opt("NOLOADHIGH");
+		     }
 	     if (opt_mcall   ){ // list MCALL and MEXIT on PRN // RPI 511
 	        add_final_opt("MCALL");
 	     } else {

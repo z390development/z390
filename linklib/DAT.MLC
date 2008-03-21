@@ -1,0 +1,57 @@
+	TITLE 'DAT - DATE AND TIME SUBROUTINE'
+**********************************************************************
+*  AUTHOR.    DON HIGGINS.
+*  DATE.      04/01/85.
+**********************************************************************
+* 03/21/08 DSH1 UPGRADE FROM PC/370 TO Z390 AFTER 23 YEARS
+*  1.  DISPLAY DATE, TIME OF DAY, INSTRUCTION COUNTER, AND MIPS
+*  2.  DISPLAY JDBC TIME-STAMP WITH NANO-SECOND EXTENSION USING TIME TS
+*  3.  DISPLAY TOTAL Z390 INSTRUCTIONS EXECUTED USING TIME INS
+*  4.  FOR REPEATED CALLS, CALCULATE AND DISPLAY MIP RATE FOR INTERVAL
+**********************************************************************
+DAT      SUBENTRY         
+         TIME  TS,JDBCTS         GET JDBC TIME STAMP WITH NANO-SEC EXT.
+         LG    R3,NSPREV         R3 = PREV NS TIME   
+         TIME  NS,NSTIME         GET TOD IN NANO-SECONDS
+         MVC   NSPREV,NSTIME     SAVE CURR NS TIME    
+         LG    R4,LASTINS        R4 = PREV INSTR COUNT
+         TIME  INS               R1 = CURR INSTR COUNT
+         STG   R1,LASTINS        SAVE CURR INSTR COUNT
+         CVDG  R1,PWORK          CVT 64 BIT COUNT
+         MVC   DINS,MASKINS
+         ED    DINS,PWORK+10     DISPLAY LOW 11 DIGITS OF COUNT
+         LTGR  R3,R3             IS PREV NSTIME ZERO
+         BZ    NOMIPS            YES, SKIP MIP CALC
+         LG    R0,NSTIME
+         SGR   R0,R3
+         BZ    NOMIPS            SKIP MIP CALC IF NANO-SEC INT = 0 
+         STG   R0,NSDIFF         SAVE ELAPSED TIME IN NANO-SECONDS
+         LG    R1,LASTINS
+         SGR   R1,R4            R1 = INSTR INTERVAL COUNT
+         MSG   R1,=FL8'100000'  R1 = INSTR * 100,000         
+         DSG   R0,NSDIFF        R1 = MIPS * 100
+	CVD   R1,PWORK
+         MVC   DMIPS,MASKMIPS
+         ED    DMIPS,PWORK+5
+         B     DISPLAY
+NOMIPS   DS    0H
+         MVI   DMIPS,C' '
+         MVC   DMIPS(L'DMIPS-1),DMIPS
+DISPLAY  DS    0H
+         WTO   MF=(E,DATMSG)     DISPLAY TS, TOTAL INSTRUCTIONS, MIPS 
+         SUBEXIT 
+DATMSG   DC    AL2(MSGEND-*,0)  
+JDBCTS   DC    CL29' ',C' INS='
+DINS     DC    C' ZZ,ZZZ,ZZZ,ZZZ',C' MIPS='    
+DMIPS    DC    C'   0.00'    
+MSGEND   EQU   *
+PWORK    DC    PL16'0'
+LASTINS  DC    FL8'0'
+MASKINS  DC    C' ',X'2020',3AL1(C',',X'20',X'20',X'20')
+MASKMIPS DC    C' ',X'202120',C'.',X'2020'
+NSPREV   DC    FL8'0'  PREV NS
+NSTIME   DC    FL8'0'  CURR NS
+NSDIFF   DC    FL8'0'  NS IN INTERVAL
+         EQUREGS
+         LTORG
+         END

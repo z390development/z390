@@ -25,6 +25,8 @@
 * 07/04/06 RPI 333 ADD TESTS SRNM and FIEBR, FIDBR, and FIXBR    
 * 08/02/06 RPI 367 ADJ LB MIN VALUE REQUIRED TO TRAP FOR KXBR    
 * 12/16/06 RPI 518 CORRECT INVALID PAIR FETCH FOR FIXBR          
+* 03/19/08 RPI 819 CORRECT CFEBR, CFDBR, AND CFXBR TO USE CL VS CG
+* 03/20/08 RPI 824 TEST FLUSH OF LB/LD/LH WHEN CHANGING BD2 REG    
 *********************************************************************
          PRINT DATA
          MACRO
@@ -466,6 +468,12 @@ DDR1     ESPIE RESET
          RT1   CCE
          CXR   R0,R4
          RT1   CCE
+         LX    R0,=LH'3'   RPI 824 TEST START
+         AXR   R0,R0          R0,R2 = PAIR = LH'6'
+         SDR   2,2            R2    = DH'0' FLUSHING R1,R2 FIRST
+         LD    R1,=DH'6'
+         CDR   R0,R1
+         RT1   CCE         RPI 824 VERIFY R0 HAS FIRST HALF OF LH'6'
 * 37   SXR
          LX    R0,=LH'1'
          LX    R1,=LH'-2'
@@ -2045,17 +2053,17 @@ DXBR1    ESPIE RESET
 * B3A8 CGEBR
          LE    R2,=EB'123'
          CFEBR R0,0,R2
-         CG    R0,=FL8'123'
+         CL    R0,=F'123'    RPI 819 WAS CG IN ERROR (CAUGHT BY F4'S)
          RT1   CCE
 * B3A9 CGDBR
          LD    R2,=DB'123'
          CGDBR R0,0,R2
-         CG    R0,=FL8'123'
+         CL    R0,=F'123'    RPI 819 WAS CG IN ERROR (CAUGHT BY F4'S)
          RT1   CCE
 * B3AA CGXBR
          LX    R1,=LB'123'
          CGXBR R0,0,R1
-         CG    R0,=FL8'123'   
+         CL    R0,=F'123'    RPI 819 WAS CG IN ERROR (CAUGHT BY F4'S)
          RT1   CCE
 * B3B4 CEFR
          L     R2,=F'123'

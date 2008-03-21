@@ -5850,7 +5850,7 @@ private boolean exp_next_char(char next_char){
 	 * return true if next exp_text char
 	 * at exp_index is next_char
 	 */
-	if (exp_index < exp_text.length() 
+	if (exp_text != null && exp_index < exp_text.length() // RPI 822 
 		&& exp_text.charAt(exp_index) == next_char){
 		return true;
 	} else {
@@ -7748,7 +7748,7 @@ private void calc_lit_or_exp(){
 	 */
 	if (exp_next_char('=')){
 		calc_lit();
-	} else if (exp_text.substring(exp_index).length() > 8  // RPI 626
+	} else if (exp_text != null && exp_text.substring(exp_index).length() > 8  // RPI 626 rpi 822
 			   && exp_text.substring(exp_index,exp_index+8).toUpperCase().equals("DFHRESP(")){
 		String dfhresp_type_key = exp_text.substring(exp_index + 8).toUpperCase() + "         ";
 		int index = 0;

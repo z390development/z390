@@ -1,0 +1,21 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 03/19/08                                                 *
+*********************************************************************
+* 03/21/08 RPI 826- add new z390 instruction loop benchmark test
+*          program to measure MIP rate for loop using call to DAT.
+*********************************************************************
+BMKINS1  SUBENTRY
+         WTO   'BMKINS1 - CALC MIP RATE FOR INSTRUCITON LOOP'
+         CALL  DAT
+         L     R1,=A(1000000)
+LOOP     DS    0H
+         BCT   1,LOOP
+         CALL  DAT
+         WTO   'BMKINS1 ENDED OK'
+         SUBEXIT
+         EQUREGS
+         END

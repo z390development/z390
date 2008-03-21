@@ -14,8 +14,9 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 06/22/07 RPI 662 ADD SVC TS OPTION FOR 29 CHAR NANOSEC TIMESTAMP
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 03/18/08 RPI 825 ADD EXTENDED OPTION INS TO RETURN R1=INSTR. COUNT
 .*********************************************************************
-&N       TIME  &TYPE,               DEC,BIN,MIC,STCK,STCKE,NS,TS       X
+&N       TIME  &TYPE,               DEC,BIN,MIC,STCK,STCKE,NS,TS,INS   X
                &ADDR,               STORE RESULT ADDR                  X
                &CLOCKTYPE=,         STCK/STCKE(1900),EXT JAVA (1970)   X
                &DATETYPE=YYYYDDD,   SYSTEM DATE FORMATS                X
@@ -51,6 +52,7 @@
          AIF   (&TYPE EQ 'CLOCK').SVCCLOCK
          AIF   (&TYPE EQ 'NS').SVCNS
          AIF   (&TYPE EQ 'TS').SVCTS        RPI 662
+         AIF   (&TYPE EQ 'INS').SVCINS      RPI 825
          MNOTE 12,'TIME INVALID SVC LINKAGE TYPE - &TYPE'
          MEXIT
 .SVCDEC  ANOP             R1 = HEX CCYYDDDF
@@ -97,6 +99,9 @@
 .SVCTS   ANOP      RPI 662 YYYY-MM-DD HH:MM:SS.NNNNNNNNN (29 CHAR)
          LA    0,9 OBDC TIMESTAMP WITH 9 DIGIT NANOSECONDS 
          AGO   .SVCADDR
+.SVCINS  ANOP
+         LA    0,16 RPI 825 R1=INSTRUCTION COUNTER
+         AGO   .SVCSVC
 .*
 .* LINKAGE=SYSTEM 
 .*

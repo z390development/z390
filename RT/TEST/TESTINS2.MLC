@@ -51,6 +51,7 @@
 * 06/10/07 RPI 636 set ESTAE required exit RC=4 for restart request
 * 02/27/08 RPI 815 correct support for negative index register 24/31
 * 03/12/08 RPI 820 test fix to prevent S0C5 on negative SRP b2 reg  
+* 03/15/08 RPI 823 correct test for MVCIN using right most source addr
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -4161,7 +4162,7 @@ BCTG1    LA    R2,1(R2)
          MVCIN BYTE,=X'EE'
          CLI   BYTE,X'EE'
          RT1   CCE
-         MVCIN PWORK,=C'ABCDEFGH'
+         MVCIN PWORK,=C'ABCDEFGH'+7
          CLC   PWORK,=C'HGFEDCBA'
          RT1   CCE
 * E9   PKA

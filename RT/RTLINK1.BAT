@@ -12,6 +12,7 @@ call rt\RT4 linklib\FPCONVRT sysmac(mac+linklib)
 call rt\RT4 linklib\FPCONMFC sysmac(mac+linklib)
 call rt\RT4 linklib\CVTTOHEX 
 call rt\RT4 linklib\SQXTR 
+call rt\RT4 linklib\DAT   
 call rt\RT1 linklib\TESTFPC1 sysobj(linklib)
 call rt\RT1 linklib\TESTFPC2 sysobj(linklib) 
 rem test expansion of rtgendir and rtgencmp and copy gen'd files 

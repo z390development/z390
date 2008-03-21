@@ -165,6 +165,7 @@ import javax.swing.Timer;
     * 10/18/07 RPI 722 move wtor_reply_buff to sz390
     * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, con
     * 01/08/08 RPI 782 stop interval timer before exit
+    * 03/21/08 RPI 819 zero R15 at startup to get rid of x'F4's
     ********************************************************
     * Global variables                       (last RPI)
     *****************************************************/
@@ -272,6 +273,7 @@ private void run_pgm(int zcvt_pgm_addr){
 	 */
 	pz390.reg.putInt(pz390.r13,pz390.zcvt_save);
 	pz390.reg.putInt(pz390.r14,pz390.zcvt_exit);
+	pz390.reg.putInt(pz390.r15,0); // RPI 819 
 	pz390.reg.putInt(pz390.r0,zcvt_pgm_addr);
 	pz390.reg.putInt(pz390.r1,pz390.zcvt_exec_parma);              // RPI 582
 	pz390.mem.putInt(pz390.zcvt_exec_parma,pz390.zcvt_exec_parm);  // RPI 582
