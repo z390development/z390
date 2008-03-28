@@ -73,10 +73,8 @@
 *    2008/03/19:                                                      *
 *        Clear upper register halves for AMODE 24/31 with ARCHLVL>=3  *
 *        Added ARCHLVL=7                                              *
-*    2008/03/20: (see DSH1 tag comments)                              *
-*        Cleared 2 more register high bits for AMODE 24/31 usg.       *
-*        This version ran TESTFPC1 and TESTFPC2 ok on z390 v1.4.01a   *
-*        using ARCHLVL 7 and the new z10 compare and branch instr.    *
+*    2008/03/22:                                                      *
+*        Validate string address for non-address bits.                *
 ***********************************************************************
          MACRO
 &lbl     FPCONVRT &PFX=Fpcon,&TYPE=DSECT,&ARCHLVL=2,&LINKAGE=OS,       +
@@ -455,6 +453,35 @@
          Mend
          aif   (&FpArchLvl le 2).enter009
          Macro
+         CGIJ  &r,&i,&m,&a
+&mu      setc  (upper '&m')
+         aif   (T'&i ne 'N').notzero
+         aif   (&i ne 0).notzero
+         LTGR  &r,&r
+&mu      setc  'Z'
+         aif   ('E' eq (upper '&m')).j
+&mu      setc  'NZ'
+         aif   ('NE' eq (upper '&m')).j
+&mu      setc  'P'
+         aif   ('H' eq (upper '&m')).j
+&mu      setc  'NP'
+         aif   ('NH' eq (upper '&m')).j
+&mu      setc  'M'
+         aif   ('L' eq (upper '&m')).j
+&mu      setc  'NM'
+         aif   ('NL' eq (upper '&m')).j
+.notzero CGHI  &r,&i
+.j       J&mu  &a
+         Mend
+         Macro
+         CGIJE &r,&i,&a
+         CGIJ  &r,&i,E,&a
+         Mend
+         Macro
+         CGIJNE &r,&i,&a
+         CGIJ  &r,&i,NE,&a
+         Mend
+         Macro
          CLGRJ &r1,&r2,&m,&a
          CLGR  &r1,&r2
          J&m   &a
@@ -535,23 +562,16 @@
          STMG  R6,R15,48(R15)      Save caller's registers
          LGR   R13,R2              Get FPCON address
          LARL  R12,Static          Get static storage address
+         SGR   R0,R0               Clear high-order bits of R0
 .enter070 anop
          Using (&PFX,&PFX.End+1),R13
          Using (Static,StaticEnd),R12
          space 1
          XC    &PFX.ReturnCode,&PFX.ReturnCode Hope all is OK
-         aif   ('&D' eq '').enter080
-         aif   (&FpArchLvl ge 5).enter085
-         L     R0,&PFX.StringAddr  String address is NULL?
-         O     R0,&PFX.StringAddr+4    *
-         ago   .enter090
-.enter080 anop
-         ICM   R0,15,&PFX.StringAddr String address is NULL?
-         ago   .enter090
-.enter085 anop
-         LT&G  R0,&PFX.StringAddr  String address is NULL?
-.enter090 anop
-         &J.Z  ReturnBadParm           yes: branch
+         L&G   R1,&PFX.StringAddr  Get entire string address
+         LA    R0,0(,R1)           Remove non-address bits
+         C&G.IJE R0,0,ReturnBadParm Null string address: branch
+         CL&G.RJNE R0,R1,ReturnBadParm Non-address bits: branch
          LH    R0,&PFX.StringSize  Get string length
          CIJNH R0,0,ReturnBadParm      bad: branch
          CLI   &PFX.ValueLen,&PFX.ValueLenE Valid length code?
@@ -2131,7 +2151,6 @@ ToValue0400 dc 0h'0'
          CRJL  R1,R0,ToValue0410   Ensure within work area
          LR    R1,R0                   *
 ToValue0410 dc 0h'0'
-         SGR   R0,R0  DSH1 03/20/08
          LA    R0,&PFX.Work+BinDigitsToString
          SR    R3,R3               Clear fraction
          MVCL  R0,R2                   *
@@ -2279,7 +2298,6 @@ ToValue0650 dc 0h'0'
          LA    R2,&PFX.ValueE+1    Point to start of output mantissa
          CLI   &PFX.ValueLen,&PFX.ValueLenE Short value?
          &J.E  ToValue0660             yes: branch
-         SGR   R1,R1 DSH1 03/20/08
          LA    R1,7(,R11)          Point to end of long number
          CL&G.RJH R1,R14,ToValue0670 Past end of number: branch
          MVC   0(7,R2),0(R11)      Copy long mantissa

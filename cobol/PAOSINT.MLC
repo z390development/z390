@@ -1,0 +1,46 @@
+         TITLE 'PAOSINT Z390 INITERFACE FOR COBOL FOR OS/390 ASSEMBLER'
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 03/22/08                                                 *
+*********************************************************************
+* 03/26/08 INITIAL CODING TO SUPPORT COBOL\PAOS\OSDEMO1.MLC           
+*********************************************************************
+* VISIT Z390.SOURCEFORGE.NET/COBOL FOR DOCUMENTATION                 
+* WHEN CALLED VIA IGZCBSO BALR, DO THE FOLLOWING:                  
+*   1.  LOAD PAOSLIB.390 AND BRANCH TO ENTRY AT OFFSET 0 WITH
+*       PACVT ADDRESS IN R1.
+*   2.  ISSUE WTO ERROR MESSAGE AND EXIT RC=16 IF NOT FOUND
+*
+* NOTES:
+*********************************************************************
+PAOSINT  CSECT
+         DC    CL8'PAOSINT'
+IGZCBSO  CSECT
+         BALR  R2,0
+         USING *,R2
+         LOAD  EP=PAOSLIB
+         LTR   R15,R15
+         BZ    LOADOK
+         WTO   'PAOSLIB SUPPORT MODULE NOT FOUND - RC=16'
+         RETURN (14,12),RC=16
+LOADOK   DS    0H
+         LR    R15,R0
+         L     R1,=V(PACVT)
+         BR    R15
+         LTORG
+         EQUREGS
+*
+* RESOLVE LE VCONS NOT CURRENTLY USED
+*
+CEESTART CSECT
+         DC    CL8'CEESTART'
+CEEBETBL CSECT
+         DC    CL8'CEETBL'
+*
+* INCLUDE DSECTS USED BY IGZCBSO AND CEESTART MODULES
+*
+         COPY  PAOSINT 
+         END

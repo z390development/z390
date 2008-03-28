@@ -1,0 +1,1762 @@
+http://www.idugdb2-l.org/cgi-bin/wa?A3=ind0008D&L=DB2-L&E=quoted-
+Found with Gooble Query "COBOL B 40(,15) CL3'CEE"
+
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                             Date 08/24/2000  Time 14:28:09   Page     1
+0Invocation parameters:
+ F(I),NOADV,APOST,AWO,DATA(31),LIB,MAP,NOSEQ,X(FULL),NODYN,NORES,RENT,LIST,SOURCE,
+
+         IGYOS4047-W   The "NORESIDENT" option is not supported.  The resident runtime library support is always used.
+
+0PROCESS(CBL) statements:
+ CBL APOST,RENT                                                          00001005
+
+         IGYOS4020-W   The "OFFSET" option was discarded due to option conflict resolution.  The "LIST" option from compiler
+                       invocation parameter took precedence.
+
+0Options in effect:
+     NOADATA
+     NOADV
+     NOANALYZE
+       APOST
+       AWO
+       BUFSIZE(4096)
+     NOCMPR2
+       COMPILE
+     NOCURRENCY
+       DATA(31)
+     NODATEPROC
+     NODBCS
+     NODECK
+     NODLL
+     NODUMP
+     NODYNAM
+     NOEXIT
+     NOEXPORTALL
+       FASTSRT
+       FLAG(I)
+     NOFLAGMIG
+     NOFLAGSTD
+     NOIDLGEN
+       INTDATE(ANSI)
+       LANGUAGE(EN)
+       LIB
+       LINECOUNT(60)
+       LIST
+       MAP
+     NONAME
+     NONUMBER
+       NUMPROC(MIG)
+       OBJECT
+     NOOFFSET
+       OPTIMIZE(STD)
+       OUTDD(SYSOUT)
+       PGMNAME(COMPAT)
+       RENT
+       RMODE(AUTO)
+     NOSEQUENCE
+       SIZE(MAX)
+       SOURCE
+       SPACE(1)
+     NOSSRANGE
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                             Date 08/24/2000  Time 14:28:09   Page     2
+0      TERM
+     NOTEST
+       TRUNC(OPT)
+     NOTYPECHK
+     NOVBREF
+     NOWORD
+       XREF(FULL)
+       YEARWINDOW(1900)
+       ZWB
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page     3
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-³--+----8  Map and Cross Reference
+0  000001               * NOTE: Returns a table of all employees for a given project      00010003
+   000002               *       The input is project number. Output is a table of         00020003
+   000003               *       employee number, start date and end date                  00030003
+   000004               *                                                                 00040003
+   000005               *       EMPNO         CHAR(06),                                   00050003
+   000006               *       STARTDT       CHAR(10),                                   00060003
+   000007               *       ENDDT         CHAR(10)                                    00070003
+   000008               *                                                                 00080003
+   000009               *       Example invocation:                                       00090003
+   000010               *                                                                 00100003
+   000011               *       EXEC SQL DECLARE  EMPLIST                                 00110003
+   000012               *                 CURSOR  FOR                                     00120003
+   000013               *                 SELECT  EMPNO,                                  00130003
+   000014               *                         ENDDT                                   00140003
+   000015               *                   FROM  TABLE( DB2DA.PDFPGM02(PROJNO)) AS X     00150003
+   000016               *                  WHERE  STARTDT > 'XXXXXXX';                    00160003
+   000017               *                                                                 00170003
+   000018               *          Invoked via SQL UDF call                               00180003
+   000019               *                                                                 00190003
+   000020               *   Input: Parameters explicitly passed to this function:         00200003
+   000021               *          - PROJNO        : A CHAR(6) STRING                     00210003
+   000022               *                                                                 00220003
+   000023               *  Output: Parameters explicitly passed by this function:         00230003
+   000024               *          - EMPNO        : A CHAR(6) STRING                      00240003
+   000025               *          - STARTDT      : A CHAR(10) DATE                       00250003
+   000026               *          - ENDDT        : A CHAR(10) DATE                       00260003
+   000027               *          - NIEMPNO      : NULL INDICATOR FOR EMPNO              00270003
+   000028               *          - NISTARTDT    : NULL INDICATOR FOR STARTDT            00280003
+   000029               *          - NIENDDT      : NULL INDICATOR FOR ENDDT              00290003
+   000030               *          - SQLSTATE     : CHAR(5) STRING                        00300003
+   000031               *                                                                 00310003
+   000032               *  Normal Exit: Return Code: SQLSTATE = 00000                     00320003
+   000033               *          - Message: none                                        00330003
+   000034               *                                                                 00340003
+   000035               *          Return Code: SQLSTATE = 02000 (end of input)           00350003
+   000036               *          - Message: none                                        00360003
+   000037               *                                                                 00370003
+   000038               *  Pseudocode:                                                    00380003
+   000039               *   UDFPGM02:                                                     00390003
+   000040               *   - If SQLUDF call type is (-2)                                 00400003
+   000041               *     - DECLARE THE CURSOR TO FETCH DATA                          00410003
+   000042               *   - Else if SQLUDF call type is (-1)                            00420003
+   000043               *     - OPEN THE CURSOR TO FETCH DATA                             00430003
+   000044               *   - Else if SQLUDF call type is 0                               00440003
+   000045               *     - fetch rows. how is the cursor position passed from one    00450003
+   000046               *       call to another...Using the scratchpad ??                 00460007
+   000047               *     - if EOT, set sqlstate to 02000 to signal end of cursor to  00470003
+   000048               *       client                                                    00480003
+   000049               *     - else move data to return columns to populate the          00490003
+   000050               *       return rows                                               00500003
+   000051               *   - Else if SQLUDF call type is (1)                             00510003
+   000052               *     - close the cursor                                          00520003
+   000053               *   - Else (SQLUDF call type is (2)                               00530003
+   000054               *     - don't know what to do ...may be clean up                  00540003
+   000055               *   End DSN8DUWF                                                  00550003
+   000056               *                                                                 00560003
+   000057               ****************************************************************  00570003
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page     4
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-³--+----8  Map and Cross Reference
+0  000058                IDENTIFICATION DIVISION.                                         00590000
+   000059                PROGRAM-ID.    UDFPGM01.                                         00600000
+   000060                AUTHOR.        SANJAY JAIN.                                      00610000
+   000061                DATE-WRITTEN.  AUGUST 2000.                                      00620000
+   000062                REMARKS.       SAMPLE TABLE  UDF.                                00630005
+   000063               *                                                                 00640000
+   000064               *  THIS IS A SAMPLE SCALAR UDF DEFINED AS MAIN PROGRAM            00650000
+   000065               *                                                                 00660000
+   000066                ENVIRONMENT DIVISION.                                            00670000
+   000067               *                                                                 00680000
+   000068                INPUT-OUTPUT SECTION.                                            00690000
+   000069               *                                                                 00700000
+   000070                DATA DIVISION.                                                   00710000
+   000071               *                                                                 00720000
+   000072                 WORKING-STORAGE SECTION.                                        00730000
+   000073               *    SQL INCLUDE STATEMENTS:                                      00740009
+   000074               *****EXEC SQL INCLUDE SQLCA END-EXEC.                             00750009
+   000075                 01 SQLCA.                                                                 BLW=0000+000         0CL136
+   000076                    05 SQLCAID     PIC X(8).                                               BLW=0000+000,0000000 8C
+   000077                    05 SQLCABC     PIC S9(9) COMP-4.                                       BLW=0000+008,0000008 4C
+   000078                    05 SQLCODE     PIC S9(9) COMP-4.                                       BLW=0000+00C,000000C 4C
+   000079                    05 SQLERRM.                                                            BLW=0000+010,0000010 0CL72
+   000080                       49 SQLERRML PIC S9(4) COMP-4.                                       BLW=0000+010,0000010 2C
+   000081                       49 SQLERRMC PIC X(70).                                              BLW=0000+012,0000012 70C
+   000082                    05 SQLERRP     PIC X(8).                                               BLW=0000+058,0000058 8C
+   000083                    05 SQLERRD     OCCURS 6 TIMES                                          BLW=0000+060,0000060 4C
+   000084                                   PIC S9(9) COMP-4.
+   000085                    05 SQLWARN.                                                            BLW=0000+078,0000078 0CL8
+   000086                       10 SQLWARN0 PIC X.                                                  BLW=0000+078,0000078 1C
+   000087                       10 SQLWARN1 PIC X.                                                  BLW=0000+079,0000079 1C
+   000088                       10 SQLWARN2 PIC X.                                                  BLW=0000+07A,000007A 1C
+   000089                       10 SQLWARN3 PIC X.                                                  BLW=0000+07B,000007B 1C
+   000090                       10 SQLWARN4 PIC X.                                                  BLW=0000+07C,000007C 1C
+   000091                       10 SQLWARN5 PIC X.                                                  BLW=0000+07D,000007D 1C
+   000092                       10 SQLWARN6 PIC X.                                                  BLW=0000+07E,000007E 1C
+   000093                       10 SQLWARN7 PIC X.                                                  BLW=0000+07F,000007F 1C
+   000094                    05 SQLEXT.                                                             BLW=0000+080,0000080 0CL8
+   000095                       10 SQLWARN8 PIC X.                                                  BLW=0000+080,0000080 1C
+   000096                       10 SQLWARN9 PIC X.                                                  BLW=0000+081,0000081 1C
+   000097                       10 SQLWARNA PIC X.                                                  BLW=0000+082,0000082 1C
+   000098                       10 SQLSTATE PIC X(5).                                               BLW=0000+083,0000083 5C
+   000099               *****EXEC SQL INCLUDE SYSDBSV1 END-EXEC.                          00760009
+   000100               ******************************************************************
+   000101               * DCLGEN TABLE(DB2DBA.SYSDBSV1)                                  *
+   000102               *        LIBRARY(TST.DB2.INCLLIB(SYSDBSV1))                      *
+   000103               *        ACTION(REPLACE)                                         *
+   000104               *        LANGUAGE(COBOL)                                         *
+   000105               *        APOST                                                   *
+   000106               * ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS   *
+   000107               ******************************************************************
+   000108               *****EXEC SQL DECLARE DB2DBA.SYSDBSV1 TABLE
+   000109               *****( V_BPOOL                        CHAR(8) NOT NULL,
+   000110               *****  V_CREATEDBY                    CHAR(8) NOT NULL,
+   000111               *****  V_CREATOR                      CHAR(8) NOT NULL,
+   000112               *****  V_DBID                         SMALLINT NOT NULL,
+   000113               *****  V_IBMREQD                      CHAR(1) NOT NULL,
+   000114               *****  V_NAME                         CHAR(8) NOT NULL,
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page     5
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-³--+----8  Map and Cross Reference
+0  000115               *****  V_ROSHARE                      CHAR(1) NOT NULL,
+   000116               *****  V_STGROUP                      CHAR(8) NOT NULL,
+   000117               *****  V_TIMESTAMP                    TIMESTAMP NOT NULL
+   000118               *****) END-EXEC.
+   000119               ******************************************************************
+   000120               * COBOL DECLARATION FOR TABLE DB2DBA.SYSDBSV1                    *
+   000121               ******************************************************************
+   000122                01  DCLSYSDBSV1.                                                           BLW=0000+088         0CL70
+   000123                    10 V-BPOOL              PIC X(8).                                      BLW=0000+088,0000000 8C
+   000124                    10 V-CREATEDBY          PIC X(8).                                      BLW=0000+090,0000008 8C
+   000125                    10 V-CREATOR            PIC X(8).                                      BLW=0000+098,0000010 8C
+   000126                    10 V-DBID               PIC S9(4) USAGE COMP.                          BLW=0000+0A0,0000018 2C
+   000127                    10 V-IBMREQD            PIC X(1).                                      BLW=0000+0A2,000001A 1C
+   000128                    10 V-NAME               PIC X(8).                                      BLW=0000+0A3,000001B 8C
+   000129                    10 V-ROSHARE            PIC X(1).                                      BLW=0000+0AB,0000023 1C
+   000130                    10 V-STGROUP            PIC X(8).                                      BLW=0000+0AC,0000024 8C
+   000131                    10 V-TIMESTAMP          PIC X(26).                                     BLW=0000+0B4,000002C 26C
+   000132               ******************************************************************
+   000133               * THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 9       *
+   000134               ******************************************************************
+   000135               *****EXEC SQL INCLUDE SYSTBLV1 END-EXEC.                          00770009
+   000136               ******************************************************************
+   000137               * DCLGEN TABLE(DB2DBA.SYSTBLV1)                                  *
+   000138               *        LIBRARY(TST.DB2.INCLLIB(SYSTBLV1))                      *
+   000139               *        ACTION(REPLACE)                                         *
+   000140               *        LANGUAGE(COBOL)                                         *
+   000141               *        APOST                                                   *
+   000142               * ... IS THE DCLGEN COMMAND THAT MADE THE FOLLOWING STATEMENTS   *
+   000143               ******************************************************************
+   000144               *****EXEC SQL DECLARE DB2DBA.SYSTBLV1 TABLE
+   000145               *****( V_ALTEREDTS                    TIMESTAMP NOT NULL,
+   000146               *****  V_AUDITING                     CHAR(1) NOT NULL,
+   000147               *****  V_CARD                         INTEGER NOT NULL,
+   000148               *****  V_CHECKFLAG                    CHAR(1) NOT NULL,
+   000149               *****  V_CHECKRID                     CHAR(4) NOT NULL,
+   000150               *****  V_CHILDREN                     SMALLINT NOT NULL,
+   000151               *****  V_CLUSTERRID                   INTEGER NOT NULL,
+   000152               *****  V_CLUSTERTYPE                  CHAR(1) NOT NULL,
+   000153               *****  V_COLCOUNT                     SMALLINT NOT NULL,
+   000154               *****  V_CREATEDBY                    CHAR(8) NOT NULL,
+   000155               *****  V_CREATEDTS                    TIMESTAMP NOT NULL,
+   000156               *****  V_CREATOR                      CHAR(8) NOT NULL,
+   000157               *****  V_DATACAPTURE                  CHAR(1) NOT NULL,
+   000158               *****  V_DBID                         SMALLINT NOT NULL,
+   000159               *****  V_DBNAME                       CHAR(8) NOT NULL,
+   000160               *****  V_EDPROC                       CHAR(8) NOT NULL,
+   000161               *****  V_IBMREQD                      CHAR(1) NOT NULL,
+   000162               *****  V_KEYCOLUMNS                   SMALLINT NOT NULL,
+   000163               *****  V_KEYOBID                      SMALLINT NOT NULL,
+   000164               *****  V_LABEL                        VARCHAR(30) NOT NULL,
+   000165               *****  V_LOCATION                     CHAR(16) NOT NULL,
+   000166               *****  V_NAME                         VARCHAR(18) NOT NULL,
+   000167               *****  V_NPAGES                       INTEGER NOT NULL,
+   000168               *****  V_OBID                         SMALLINT NOT NULL,
+   000169               *****  V_PARENTS                      SMALLINT NOT NULL,
+   000170               *****  V_PCTPAGES                     SMALLINT NOT NULL,
+   000171               *****  V_PCTROWCOMP                   SMALLINT NOT NULL,
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page     6
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-³--+----8  Map and Cross Reference
+0  000172               *****  V_RBA1                         CHAR(6) NOT NULL,
+   000173               *****  V_RBA2                         CHAR(6) NOT NULL,
+   000174               *****  V_RECLENGTH                    SMALLINT NOT NULL,
+   000175               *****  V_REMARKS                      VARCHAR(254) NOT NULL,
+   000176               *****  V_STATSTIME                    TIMESTAMP NOT NULL,
+   000177               *****  V_STATUS                       CHAR(1) NOT NULL,
+   000178               *****  V_TBCREATOR                    CHAR(8) NOT NULL,
+   000179               *****  V_TBNAME                       VARCHAR(18) NOT NULL,
+   000180               *****  V_TSNAME                       CHAR(8) NOT NULL,
+   000181               *****  V_TYPE                         CHAR(1) NOT NULL,
+   000182               *****  V_VALPROC                      CHAR(8) NOT NULL
+   000183               *****) END-EXEC.
+   000184               ******************************************************************
+   000185               * COBOL DECLARATION FOR TABLE DB2DBA.SYSTBLV1                    *
+   000186               ******************************************************************
+   000187                01  DCLSYSTBLV1.                                                           BLW=0000+0D0         0CL533
+   000188                    10 V-ALTEREDTS          PIC X(26).                                     BLW=0000+0D0,0000000 26C
+   000189                    10 V-AUDITING           PIC X(1).                                      BLW=0000+0EA,000001A 1C
+   000190                    10 V-CARD               PIC S9(9) USAGE COMP.                          BLW=0000+0EB,000001B 4C
+   000191                    10 V-CHECKFLAG          PIC X(1).                                      BLW=0000+0EF,000001F 1C
+   000192                    10 V-CHECKRID           PIC X(4).                                      BLW=0000+0F0,0000020 4C
+   000193                    10 V-CHILDREN           PIC S9(4) USAGE COMP.                          BLW=0000+0F4,0000024 2C
+   000194                    10 V-CLUSTERRID         PIC S9(9) USAGE COMP.                          BLW=0000+0F6,0000026 4C
+   000195                    10 V-CLUSTERTYPE        PIC X(1).                                      BLW=0000+0FA,000002A 1C
+   000196                    10 V-COLCOUNT           PIC S9(4) USAGE COMP.                          BLW=0000+0FB,000002B 2C
+   000197                    10 V-CREATEDBY          PIC X(8).                                      BLW=0000+0FD,000002D 8C
+   000198                    10 V-CREATEDTS          PIC X(26).                                     BLW=0000+105,0000035 26C
+   000199                    10 V-CREATOR            PIC X(8).                                      BLW=0000+11F,000004F 8C
+   000200                    10 V-DATACAPTURE        PIC X(1).                                      BLW=0000+127,0000057 1C
+   000201                    10 V-DBID               PIC S9(4) USAGE COMP.                          BLW=0000+128,0000058 2C
+   000202                    10 V-DBNAME             PIC X(8).                                      BLW=0000+12A,000005A 8C
+   000203                    10 V-EDPROC             PIC X(8).                                      BLW=0000+132,0000062 8C
+   000204                    10 V-IBMREQD            PIC X(1).                                      BLW=0000+13A,000006A 1C
+   000205                    10 V-KEYCOLUMNS         PIC S9(4) USAGE COMP.                          BLW=0000+13B,000006B 2C
+   000206                    10 V-KEYOBID            PIC S9(4) USAGE COMP.                          BLW=0000+13D,000006D 2C
+   000207                    10 V-LABEL.                                                            BLW=0000+13F,000006F 0CL32
+   000208                       49 V-LABEL-LEN       PIC S9(4) USAGE COMP.                          BLW=0000+13F,000006F 2C
+   000209                       49 V-LABEL-TEXT      PIC X(30).                                     BLW=0000+141,0000071 30C
+   000210                    10 V-LOCATION           PIC X(16).                                     BLW=0000+15F,000008F 16C
+   000211                    10 V-NAME.                                                             BLW=0000+16F,000009F 0CL20
+   000212                       49 V-NAME-LEN        PIC S9(4) USAGE COMP.                          BLW=0000+16F,000009F 2C
+   000213                       49 V-NAME-TEXT       PIC X(18).                                     BLW=0000+171,00000A1 18C
+   000214                    10 V-NPAGES             PIC S9(9) USAGE COMP.                          BLW=0000+183,00000B3 4C
+   000215                    10 V-OBID               PIC S9(4) USAGE COMP.                          BLW=0000+187,00000B7 2C
+   000216                    10 V-PARENTS            PIC S9(4) USAGE COMP.                          BLW=0000+189,00000B9 2C
+   000217                    10 V-PCTPAGES           PIC S9(4) USAGE COMP.                          BLW=0000+18B,00000BB 2C
+   000218                    10 V-PCTROWCOMP         PIC S9(4) USAGE COMP.                          BLW=0000+18D,00000BD 2C
+   000219                    10 V-RBA1               PIC X(6).                                      BLW=0000+18F,00000BF 6C
+   000220                    10 V-RBA2               PIC X(6).                                      BLW=0000+195,00000C5 6C
+   000221                    10 V-RECLENGTH          PIC S9(4) USAGE COMP.                          BLW=0000+19B,00000CB 2C
+   000222                    10 V-REMARKS.                                                          BLW=0000+19D,00000CD 0CL256
+   000223                       49 V-REMARKS-LEN     PIC S9(4) USAGE COMP.                          BLW=0000+19D,00000CD 2C
+   000224                       49 V-REMARKS-TEXT    PIC X(254).                                    BLW=0000+19F,00000CF 254C
+   000225                    10 V-STATSTIME          PIC X(26).                                     BLW=0000+29D,00001CD 26C
+   000226                    10 V-STATUS             PIC X(1).                                      BLW=0000+2B7,00001E7 1C
+   000227                    10 V-TBCREATOR          PIC X(8).                                      BLW=0000+2B8,00001E8 8C
+   000228                    10 V-TBNAME.                                                           BLW=0000+2C0,00001F0 0CL20
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page     7
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-³--+----8  Map and Cross Reference
+0  000229                       49 V-TBNAME-LEN      PIC S9(4) USAGE COMP.                          BLW=0000+2C0,00001F0 2C
+   000230                       49 V-TBNAME-TEXT     PIC X(18).                                     BLW=0000+2C2,00001F2 18C
+   000231                    10 V-TSNAME             PIC X(8).                                      BLW=0000+2D4,0000204 8C
+   000232                    10 V-TYPE               PIC X(1).                                      BLW=0000+2DC,000020C 1C
+   000233                    10 V-VALPROC            PIC X(8).                                      BLW=0000+2DD,000020D 8C
+   000234               ******************************************************************
+   000235               * THE NUMBER OF COLUMNS DESCRIBED BY THIS DECLARATION IS 38      *
+   000236               ******************************************************************
+   000237                 77 SQL-TEMP      PIC X(18).                                               BLW=0000+2E8         18C
+   000238                 77 SQL-NULL      PIC S9(9) COMP-4 VALUE +0.                               BLW=0000+300         4C
+   000239                 77 SQL-INIT-FLAG PIC S9(4) COMP-4 VALUE +0.                               BLW=0000+308         2C
+   000240                    88 SQL-INIT-DONE VALUE +1.
+   000241                 01 SQL-PLIST4.                                                            BLW=0000+310         0CL100
+   000242                    05 SQL-PLIST-CON   PIC S9(9) COMP-4 VALUE +2637824.                    BLW=0000+310,0000000 4C
+   000243                    05 SQL-CALLTYPE    PIC S9(4) COMP-4 VALUE +50.                         BLW=0000+314,0000004 2C
+   000244                    05 SQL-PROG-NAME   PIC X(8)         VALUE 'UDFPGM02'.                  BLW=0000+316,0000006 8C
+   000245                    05 SQL-TIMESTAMP-1 PIC S9(9) COMP-4 VALUE +378624259.                  BLW=0000+31E,000000E 4C
+   000246                    05 SQL-TIMESTAMP-2 PIC S9(9) COMP-4 VALUE +63506110.                   BLW=0000+322,0000012 4C
+   000247                    05 SQL-SECTION     PIC S9(4) COMP-4 VALUE +1.                          BLW=0000+326,0000016 2C
+   000248                    05 SQL-CODEPTR     PIC S9(9) COMP-4.                                   BLW=0000+328,0000018 4C
+   000249                    05 SQL-VPARMPTR    PIC S9(9) COMP-4 VALUE +0.                          BLW=0000+32C,000001C 4C
+   000250                    05 SQL-APARMPTR    PIC S9(9) COMP-4 VALUE +0.                          BLW=0000+330,0000020 4C
+   000251                    05 SQL-STMT-NUM    PIC S9(4) COMP-4 VALUE +350.                        BLW=0000+334,0000024 2C
+   000252                    05 SQL-STMT-TYPE   PIC S9(4) COMP-4 VALUE +3.                          BLW=0000+336,0000026 2C
+   000253                    05 SQL-PVAR-LIST4.                                                     BLW=0000+338,0000028 0CL60
+   000254                       10 PRE-SQLDAID  PIC X(8)  VALUE 'SQLDA   '.                         BLW=0000+338,0000028 8C
+   000255                       10 PRE-SQLDABC  PIC S9(9) COMP-4 VALUE +60.                         BLW=0000+340,0000030 4C
+   000256                       10 PRE-SQLN     PIC S9(4) COMP-4 VALUE +1.                          BLW=0000+344,0000034 2C
+   000257                       10 PRE-SQLLD    PIC S9(4) COMP-4 VALUE +1.                          BLW=0000+346,0000036 2C
+   000258                       10 PRE-SQLVAR.                                                      BLW=0000+348,0000038 0CL44
+   000259                         12 SQLVAR-BASE1.                                                  BLW=0000+348,0000038 0CL44
+   000260                           15 SQL-PVAR-TYPE1      PIC S9(4) COMP-4 VALUE +452.             BLW=0000+348,0000038 2C
+   000261                           15 SQL-PVAR-LEN1       PIC S9(4) COMP-4 VALUE +6.               BLW=0000+34A,000003A 2C
+   000262                           15 SQL-PVAR-ADDRS1.                                             BLW=0000+34C,000003C 0CL8
+   000263                              20 SQL-PVAR-ADDR1   PIC S9(9) COMP-4.                        BLW=0000+34C,000003C 4C
+   000264                              20 SQL-PVAR-IND1    PIC S9(9) COMP-4.                        BLW=0000+350,0000040 4C
+   000265                           15 SQL-PVAR-NAME1.                                              BLW=0000+354,0000044 0CL32
+   000266                              20 SQL-PVAR-NAMEL1  PIC S9(4) COMP-4 VALUE +0.               BLW=0000+354,0000044 2C
+   000267                              20 SQL-PVAR-NAMEC1  PIC X(30) VALUE ' '.                     BLW=0000+356,0000046 30C
+   000268                 01 SQL-PLIST5.                                                            BLW=0000+378         0CL188
+   000269                    05 SQL-PLIST-CON   PIC S9(9) COMP-4 VALUE +2622464.                    BLW=0000+378,0000000 4C
+   000270                    05 SQL-CALLTYPE    PIC S9(4) COMP-4 VALUE +30.                         BLW=0000+37C,0000004 2C
+   000271                    05 SQL-PROG-NAME   PIC X(8)         VALUE 'UDFPGM02'.                  BLW=0000+37E,0000006 8C
+   000272                    05 SQL-TIMESTAMP-1 PIC S9(9) COMP-4 VALUE +378624259.                  BLW=0000+386,000000E 4C
+   000273                    05 SQL-TIMESTAMP-2 PIC S9(9) COMP-4 VALUE +63506110.                   BLW=0000+38A,0000012 4C
+   000274                    05 SQL-SECTION     PIC S9(4) COMP-4 VALUE +1.                          BLW=0000+38E,0000016 2C
+   000275                    05 SQL-CODEPTR     PIC S9(9) COMP-4.                                   BLW=0000+390,0000018 4C
+   000276                    05 SQL-VPARMPTR    PIC S9(9) COMP-4 VALUE +0.                          BLW=0000+394,000001C 4C
+   000277                    05 SQL-APARMPTR    PIC S9(9) COMP-4 VALUE +0.                          BLW=0000+398,0000020 4C
+   000278                    05 SQL-STMT-NUM    PIC S9(4) COMP-4 VALUE +355.                        BLW=0000+39C,0000024 2C
+   000279                    05 SQL-STMT-TYPE   PIC S9(4) COMP-4 VALUE +4.                          BLW=0000+39E,0000026 2C
+   000280                    05 SQL-AVAR-LIST5.                                                     BLW=0000+3A0,0000028 0CL148
+   000281                       10 PRE-SQLDAID  PIC X(8)  VALUE 'SQLDA   '.                         BLW=0000+3A0,0000028 8C
+   000282                       10 PRE-SQLDABC  PIC S9(9) COMP-4 VALUE +148.                        BLW=0000+3A8,0000030 4C
+   000283                       10 PRE-SQLN     PIC S9(4) COMP-4 VALUE +3.                          BLW=0000+3AC,0000034 2C
+   000284                       10 PRE-SQLLD    PIC S9(4) COMP-4 VALUE +3.                          BLW=0000+3AE,0000036 2C
+   000285                       10 PRE-SQLVAR.                                                      BLW=0000+3B0,0000038 0CL132
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page     8
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-³--+----8  Map and Cross Reference
+0  000286                         12 SQLVAR-BASE1.                                                  BLW=0000+3B0,0000038 0CL44
+   000287                           15 SQL-AVAR-TYPE1      PIC S9(4) COMP-4 VALUE +452.             BLW=0000+3B0,0000038 2C
+   000288                           15 SQL-AVAR-LEN1       PIC S9(4) COMP-4 VALUE +6.               BLW=0000+3B2,000003A 2C
+   000289                           15 SQL-AVAR-ADDRS1.                                             BLW=0000+3B4,000003C 0CL8
+   000290                              20 SQL-AVAR-ADDR1   PIC S9(9) COMP-4.                        BLW=0000+3B4,000003C 4C
+   000291                              20 SQL-AVAR-IND1    PIC S9(9) COMP-4.                        BLW=0000+3B8,0000040 4C
+   000292                           15 SQL-AVAR-NAME1.                                              BLW=0000+3BC,0000044 0CL32
+   000293                              20 SQL-AVAR-NAMEL1  PIC S9(4) COMP-4 VALUE +0.               BLW=0000+3BC,0000044 2C
+   000294                              20 SQL-AVAR-NAMEC1  PIC X(30) VALUE ' '.                     BLW=0000+3BE,0000046 30C
+   000295                         12 SQLVAR-BASE2.                                                  BLW=0000+3DC,0000064 0CL44
+   000296                           15 SQL-AVAR-TYPE2      PIC S9(4) COMP-4 VALUE +452.             BLW=0000+3DC,0000064 2C
+   000297                           15 SQL-AVAR-LEN2       PIC S9(4) COMP-4 VALUE +10.              BLW=0000+3DE,0000066 2C
+   000298                           15 SQL-AVAR-ADDRS2.                                             BLW=0000+3E0,0000068 0CL8
+   000299                              20 SQL-AVAR-ADDR2   PIC S9(9) COMP-4.                        BLW=0000+3E0,0000068 4C
+   000300                              20 SQL-AVAR-IND2    PIC S9(9) COMP-4.                        BLW=0000+3E4,000006C 4C
+   000301                           15 SQL-AVAR-NAME2.                                              BLW=0000+3E8,0000070 0CL32
+   000302                              20 SQL-AVAR-NAMEL2  PIC S9(4) COMP-4 VALUE +0.               BLW=0000+3E8,0000070 2C
+   000303                              20 SQL-AVAR-NAMEC2  PIC X(30) VALUE ' '.                     BLW=0000+3EA,0000072 30C
+   000304                         12 SQLVAR-BASE3.                                                  BLW=0000+408,0000090 0CL44
+   000305                           15 SQL-AVAR-TYPE3      PIC S9(4) COMP-4 VALUE +452.             BLW=0000+408,0000090 2C
+   000306                           15 SQL-AVAR-LEN3       PIC S9(4) COMP-4 VALUE +10.              BLW=0000+40A,0000092 2C
+   000307                           15 SQL-AVAR-ADDRS3.                                             BLW=0000+40C,0000094 0CL8
+   000308                              20 SQL-AVAR-ADDR3   PIC S9(9) COMP-4.                        BLW=0000+40C,0000094 4C
+   000309                              20 SQL-AVAR-IND3    PIC S9(9) COMP-4.                        BLW=0000+410,0000098 4C
+   000310                           15 SQL-AVAR-NAME3.                                              BLW=0000+414,000009C 0CL32
+   000311                              20 SQL-AVAR-NAMEL3  PIC S9(4) COMP-4 VALUE +0.               BLW=0000+414,000009C 2C
+   000312                              20 SQL-AVAR-NAMEC3  PIC X(30) VALUE ' '.                     BLW=0000+416,000009E 30C
+   000313                 01 SQL-PLIST6.                                                            BLW=0000+438         0CL40
+   000314                    05 SQL-PLIST-CON   PIC S9(9) COMP-4 VALUE +2621440.                    BLW=0000+438,0000000 4C
+   000315                    05 SQL-CALLTYPE    PIC S9(4) COMP-4 VALUE +45.                         BLW=0000+43C,0000004 2C
+   000316                    05 SQL-PROG-NAME   PIC X(8)         VALUE 'UDFPGM02'.                  BLW=0000+43E,0000006 8C
+   000317                    05 SQL-TIMESTAMP-1 PIC S9(9) COMP-4 VALUE +378624259.                  BLW=0000+446,000000E 4C
+   000318                    05 SQL-TIMESTAMP-2 PIC S9(9) COMP-4 VALUE +63506110.                   BLW=0000+44A,0000012 4C
+   000319                    05 SQL-SECTION     PIC S9(4) COMP-4 VALUE +1.                          BLW=0000+44E,0000016 2C
+   000320                    05 SQL-CODEPTR     PIC S9(9) COMP-4.                                   BLW=0000+450,0000018 4C
+   000321                    05 SQL-VPARMPTR    PIC S9(9) COMP-4 VALUE +0.                          BLW=0000+454,000001C 4C
+   000322                    05 SQL-APARMPTR    PIC S9(9) COMP-4 VALUE +0.                          BLW=0000+458,0000020 4C
+   000323                    05 SQL-STMT-NUM    PIC S9(4) COMP-4 VALUE +367.                        BLW=0000+45C,0000024 2C
+   000324                    05 SQL-STMT-TYPE   PIC S9(4) COMP-4 VALUE +5.                          BLW=0000+45E,0000026 2C
+   000325
+   000326                LINKAGE SECTION.                                                 00820000
+   000327               *********************************************************         00830000
+   000328               * DECLARE EACH OF THE PARAMETERS                        *         00840000
+   000329               *********************************************************         00850000
+   000330                01  PROJNO     PIC X(6).                                         00860013  BLL=0001+000         6C
+   000331               *******************************************************           00870012
+   000332               * DECLARE THESE VARIABLES FOR RESULT PARAMETERS                   00880012
+   000333               *******************************************************           00890012
+   000334                01  EMPNO      PIC X(6).                                         00900012  BLL=0002+000         6C
+   000335                01  STARTDT    PIC X(10).                                        00910012  BLL=0003+000         10C
+   000336                01  ENDDT      PIC X(10).                                        00920012  BLL=0004+000         10C
+   000337               *********************************************************         00920112
+   000338               * DECLARE A NULL INDICATOR FOR EACH PARAMETER           *         00920212
+   000339               *********************************************************         00920312
+   000340                01  NIPROJNO PIC S9(4) USAGE COMP.                               00920412  BLL=0005+000         2C
+   000341               *********************************************************         00921012
+   000342               * DECLARE A NULL INDICATOR FOR RESULT PARAMETER         *         00922012
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page     9
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-³--+----8  Map and Cross Reference
+0  000343               *********************************************************         00923012
+   000344                01  NIEMPNO   PIC S9(4) USAGE COMP.                              00924012  BLL=0006+000         2C
+   000345                01  NISTARTDT PIC S9(4) USAGE COMP.                              00925012  BLL=0007+000         2C
+   000346                01  NIENDDT   PIC S9(4) USAGE COMP.                              00926012  BLL=0008+000         2C
+   000347               *********************************************************         01030000
+   000348               * DECLARE THE SQLSTATE THAT CAN BE SET BY THE           *         01040000
+   000349               * USER-DEFINED FUNCTION                                 *         01050000
+   000350               *********************************************************         01060000
+   000351                01  UDF-SQLSTATE PIC X(5).                                       01070000  BLL=0009+000         5C
+   000352               *********************************************************         01080000
+   000353               * DECLARE THE QUALIFIED FUNCTION NAME                   *         01090000
+   000354               *********************************************************         01100000
+   000355                01  UDF-FUNC.                                                    01110000  BLL=000A+000         0CL139
+   000356                    49 UDF-FUNC-LEN PIC 9(4) USAGE BINARY.                       01120000  BLL=000A+000,0000000 2C
+   000357                    49 UDF-FUNC-TEXT PIC X(137).                                 01130000  BLL=000A+002,0000002 137C
+   000358               *********************************************************         01140000
+   000359               * DECLARE THE SPECIFIC FUNCTION NAME                    *         01150000
+   000360               *********************************************************         01160000
+   000361                01  UDF-SPEC.                                                    01170000  BLL=000B+000         0CL130
+   000362                    49 UDF-SPEC-LEN PIC 9(4) USAGE BINARY.                       01180000  BLL=000B+000,0000000 2C
+   000363                    49 UDF-SPEC-TEXT PIC X(128).                                 01190000  BLL=000B+002,0000002 128C
+   000364               *********************************************************         01200000
+   000365               * DECLARE SQL DIAGNOSTIC MESSAGE TOKEN                  *         01210000
+   000366               *********************************************************         01220000
+   000367                01  UDF-DIAG.                                                    01230000  BLL=000C+000         0CL72
+   000368                    49 UDF-DIAG-LEN PIC 9(4) USAGE BINARY.                       01240000  BLL=000C+000,0000000 2C
+   000369                    49 UDF-DIAG-TEXT PIC X(70).                                  01250000  BLL=000C+002,0000002 70C
+   000370               *********************************************************         01260000
+   000371               * DECLARE THE SCRATCHPAD                                *         01270000
+   000372               *********************************************************         01280000
+   000373                01  UDF-SCRATCHPAD.                                              01290000  BLL=000D+000         0CL104
+   000374                    49 UDF-SPAD-LEN PIC 9(9) USAGE BINARY.                       01300000  BLL=000D+000,0000000 4C
+   000375                    49 UDF-SPAD-TEXT PIC X(100).                                 01310000  BLL=000D+004,0000004 100C
+   000376               *********************************************************         01320000
+   000377               * DECLARE THE CALL TYPE                                 *         01330000
+   000378               *********************************************************         01340000
+   000379                01  UDF-CALL-TYPE PIC 9(9) USAGE BINARY.                         01350000  BLL=000E+000         4C
+   000380               *********************************************************         01360000
+   000381               * DECLARE THE DBINFO STRUCTURE                                    01370000
+   000382               *********************************************************         01380000
+   000383                01  UDF-DBINFO.                                                  01390000  BLL=000F+000         0CL768
+   000384               *       LOCATION LENGTH AND NAME                                  01400000
+   000385                    02 UDF-DBINFO-LOCATION.                                      01410000  BLL=000F+000,0000000 0CL130
+   000386                       49 UDF-DBINFO-LLEN PIC 9(4) USAGE BINARY.                 01420000  BLL=000F+000,0000000 2C
+   000387                       49 UDF-DBINFO-LOC  PIC X(128).                            01430000  BLL=000F+002,0000002 128C
+   000388               *       AUTHORIZATION ID LENGTH AND NAME                          01440000
+   000389                    02 UDF-DBINFO-AUTHORIZATION.                                 01450000  BLL=000F+082,0000082 0CL130
+   000390                       49 UDF-DBINFO-ALEN PIC 9(4) USAGE BINARY.                 01460000  BLL=000F+082,0000082 2C
+   000391                       49 UDF-DBINFO-AUTH PIC X(128).                            01470000  BLL=000F+084,0000084 128C
+   000392               *       CCSIDS FOR DB2 FOR OS/390                                 01480000
+   000393                    02 UDF-DBINFO-CCSID PIC X(48).                               01490000  BLL=000F+104,0000104 48C
+   000394                    02 UDF-DBINFO-CCSID-REDEFINE REDEFINES UDF-DBINFO-CCSID.     01500000  BLL=000F+104,0000104 0CL48
+                                                                                                    393
+   000395                       03 UDF-DBINFO-ESBCS   PIC 9(9) USAGE BINARY.              01510000  BLL=000F+104,0000104 4C
+   000396                       03 UDF-DBINFO-EMIXED  PIC 9(9) USAGE BINARY.              01520000  BLL=000F+108,0000108 4C
+   000397                       03 UDF-DBINFO-EDBCS   PIC 9(9) USAGE BINARY.              01530000  BLL=000F+10C,000010C 4C
+   000398                       03 UDF-DBINFO-ASBCS   PIC 9(9) USAGE BINARY.              01540000  BLL=000F+110,0000110 4C
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    10
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-³--+----8  Map and Cross Reference
+0  000399                       03 UDF-DBINFO-AMIXED  PIC 9(9) USAGE BINARY.              01550000  BLL=000F+114,0000114 4C
+   000400                       03 UDF-DBINFO-ADBCS   PIC 9(9) USAGE BINARY.              01560000  BLL=000F+118,0000118 4C
+   000401                       03 UDF-DBINFO-ENCODE  PIC 9(9) USAGE BINARY.              01570000  BLL=000F+11C,000011C 4C
+   000402                       03 UDF-DBINFO-RESERV0 PIC X(20).                          01580000  BLL=000F+120,0000120 20C
+   000403               *       SCHEMA LENGTH AND NAME                                    01590000
+   000404                    02 UDF-DBINFO-SCHEMA0.                                       01600000  BLL=000F+134,0000134 0CL130
+   000405                       49 UDF-DBINFO-SLEN PIC 9(4) USAGE BINARY.                 01610000  BLL=000F+134,0000134 2C
+   000406                       49 UDF-DBINFO-SCHEMA PIC X(128).                          01620000  BLL=000F+136,0000136 128C
+   000407               *       TABLE LENGTH AND NAME                                     01630000
+   000408                    02 UDF-DBINFO-TABLE0.                                        01640000  BLL=000F+1B6,00001B6 0CL130
+   000409                       49 UDF-DBINFO-TLEN PIC 9(4) USAGE BINARY.                 01650000  BLL=000F+1B6,00001B6 2C
+   000410                       49 UDF-DBINFO-TABLE  PIC X(128).                          01660000  BLL=000F+1B8,00001B8 128C
+   000411               *       COLUMN LENGTH AND NAME                                    01670000
+   000412                    02 UDF-DBINFO-COLUMN0.                                       01680000  BLL=000F+238,0000238 0CL130
+   000413                       49 UDF-DBINFO-CLEN PIC 9(4) USAGE BINARY.                 01690000  BLL=000F+238,0000238 2C
+   000414                       49 UDF-DBINFO-COLUMN  PIC X(128).                         01700000  BLL=000F+23A,000023A 128C
+   000415               *       DB2 RELEASE LEVEL                                         01710000
+   000416                    02 UDF-DBINFO-VERREL PIC X(8).                               01720000  BLL=000F+2BA,00002BA 8C
+   000417               *       UNUSED                                                    01730000
+   000418                    02 FILLER            PIC X(2).                               01740000  BLL=000F+2C2,00002C2 2C
+   000419               *       DATABASE PLATFORM                                         01750000
+   000420                    02 UDF-DBINFO-PLATFORM PIC 9(9) USAGE BINARY.                01760000  BLL=000F+2C4,00002C4 4C
+   000421               *       # OF ENTRIES IN TABLE FUNCTION COLUMN LIST                01770000
+   000422                    02 UDF-DBINFO-NUMTFCOL PIC 9(4) USAGE BINARY.                01780000  BLL=000F+2C8,00002C8 2C
+   000423               *       RESERVED                                                  01790000
+   000424                    02 UDF-DBINFO-RESERV1 PIC X(24).                             01800000  BLL=000F+2CA,00002CA 24C
+   000425               *       UNUSED                                                    01810000
+   000426                    02 FILLER            PIC X(2).                               01820000  BLL=000F+2E2,00002E2 2C
+   000427               *       POINTER TO TABLE FUNCTION COLUMN LIST                     01830000
+   000428                    02 UDF-DBINFO-TFCOLUMN PIC 9(9) USAGE BINARY.                01840000  BLL=000F+2E4,00002E4 4C
+   000429               *       POINTER TO APPLICATION ID                                 01850000
+   000430                    02 UDF-DBINFO-APPLID  PIC 9(9) USAGE BINARY.                 01860000  BLL=000F+2E8,00002E8 4C
+   000431               *       RESERVED                                                  01870000
+   000432                    02 UDF-DBINFO-RESERV2 PIC X(20).                             01880000  BLL=000F+2EC,00002EC 20C
+   000433               *                                                                 01890000
+   000434                PROCEDURE DIVISION USING PROJNO,                                 01900011  330
+   000435                                         EMPNO,STARTDT,ENDDT,                    01901012  334 335 336
+   000436                                         NIPROJNO,                               01910011  340
+   000437                                         NIEMPNO,NISTARTDT,NIENDDT,              01911012  344 345 346
+   000438                                         UDF-SQLSTATE, UDF-FUNC, UDF-SPEC,       01920000  351 355 361
+   000439                                         UDF-DIAG, UDF-SCRATCHPAD,               01930000  367 373
+   000440                                         UDF-CALL-TYPE, UDF-DBINFO.              01940000  379 383
+   000441                DSNSQL SECTION.
+   000442                SQL-SKIP.
+   000443                    GO TO SQL-INIT-END.                                                    461
+   000444                SQL-INITIAL.
+   000445                    MOVE 1 TO SQL-INIT-FLAG.                                               239
+   000446                    CALL 'DSNHADDR' USING SQL-VPARMPTR OF SQL-PLIST4 SQL-PVAR-LIS          EXT 249 241 253
+   000447               -    T4.
+   000448                    CALL 'DSNHADDR' USING SQL-PVAR-ADDRS1 IN                               EXT 262
+   000449                    SQL-PVAR-LIST4 PROJNO SQL-NULL                                         253 330 238
+   000450                    CALL 'DSNHADDR' USING SQL-CODEPTR OF SQL-PLIST4 SQLCA.                 EXT 248 241 75
+   000451                    CALL 'DSNHADDR' USING SQL-APARMPTR OF SQL-PLIST5 SQL-AVAR-LIS          EXT 277 268 280
+   000452               -    T5.
+   000453                    CALL 'DSNHADDR' USING SQL-AVAR-ADDRS1 IN                               EXT 289
+   000454                    SQL-AVAR-LIST5 EMPNO SQL-NULL                                          280 334 238
+   000455                    CALL 'DSNHADDR' USING SQL-AVAR-ADDRS2 IN                               EXT 298
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    11
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-³--+----8  Map and Cross Reference
+0  000456                    SQL-AVAR-LIST5 STARTDT SQL-NULL                                        280 335 238
+   000457                    CALL 'DSNHADDR' USING SQL-AVAR-ADDRS3 IN                               EXT 307
+   000458                    SQL-AVAR-LIST5 ENDDT SQL-NULL.                                         280 336 238
+   000459                    CALL 'DSNHADDR' USING SQL-CODEPTR OF SQL-PLIST5 SQLCA.                 EXT 275 268 75
+   000460                    CALL 'DSNHADDR' USING SQL-CODEPTR OF SQL-PLIST6 SQLCA.                 EXT 320 313 75
+   000461                SQL-INIT-END.
+   000462                    CONTINUE.
+   000463
+   000464                MAIN-PROC.                                                       01950005
+   000465               *************************************************************     01960000
+   000466               * First call: declare the cursor                                  01970009
+   000467               *************************************************************     01980000
+   000468                       IF UDF-CALL-TYPE = -2  THEN                               01990000  379
+   000469      1                   MOVE "000000" TO UDF-SQLSTATE                          02000000  351
+   000470               *  ADD CODE TO ASSIGN NULL TO DIAG TEXT                           02010000
+   000471               *  DECLARE A CURSOR HERE                                          02020001
+   000472               *****      EXEC SQL DECLARE  EMPLIST                              02030002
+   000473               *****               CURSOR  FOR                                   02040002
+   000474               *****               SELECT  EMPNO,                                02050002
+   000475               *****                       EMSTDATE,                             02060010
+   000476               *****                       EMENDATE                              02070010
+   000477               *****               FROM  DSN8610.EMPPROJACT                      02080002
+   000478               *****               WHERE  PROJNO = :PROJNO                       02090004
+   000479               *****      END-EXEC                                               02100002
+   000480      1                ELSE IF UDF-CALL-TYPE = -1 THEN                           02110001  379
+   000481               ********************************************************          02120000
+   000482               * Second call: Open the cursor                         *          02130009
+   000483               ********************************************************          02140000
+   000484               * OPEN CURSOR HERE                                                02150000
+   000485               *****     EXEC SQL OPEN EMPLIST END-EXEC                          02160002
+   000486      2             PERFORM SQL-INITIAL UNTIL SQL-INIT-DONE                                444 240
+   000487      2             CALL 'DSNHLI' USING SQL-PLIST4                                         EXT 241
+   000488      2                ELSE IF UDF-CALL-TYPE = 0 THEN                            02170001  379
+   000489               ***********************************************************       02180001
+   000490               * Subsequent calls: fetch from the cursor                         02190009
+   000491               ***********************************************************       02200001
+   000492               *****     EXEC SQL FETCH EMPLIST                                  02210002
+   000493               *****              INTO :EMPNO, :STARTDT, :ENDDT                  02220002
+   000494               *****     END-EXEC                                                02230002
+   000495      3             PERFORM SQL-INITIAL UNTIL SQL-INIT-DONE                                444 240
+   000496      3             CALL 'DSNHLI' USING SQL-PLIST5                                         EXT 268
+   000497      3                   IF ( SQLCODE = 100 )                                   02240002  78
+   000498      4                     MOVE "02000" TO SQLSTATE                             02250002  98
+   000499               *  SET NULL INDICATOR VARIABLES TO 0                              02260002
+   000500      4                     MOVE 0 TO NIEMPNO,NISTARTDT,NIENDDT                  02270002  344 345 346
+   000501      3                   END-IF                                                 02280002
+   000502      3                  ELSE IF UDF-CALL-TYPE = 1                               02290001  379
+   000503               ********************************************************          02300001
+   000504               * CLOSE THE CURSOR                                                02310002
+   000505               ********************************************************          02320001
+   000506               *****         EXEC SQL CLOSE EMPLIST END-EXEC                     02330002
+   000507      4             PERFORM SQL-INITIAL UNTIL SQL-INIT-DONE                                444 240
+   000508      4             CALL 'DSNHLI' USING SQL-PLIST6                                         EXT 313
+   000509      3                   ELSE                                                   02340001
+   000510      4                      DISPLAY 'WHAT TO DO'                                02340104
+   000511      3                   END-IF                                                 02341004
+   000512               **********************************************************        02350001
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    12
+   LineID  PL SL  ----+-*A-1-B--+----2----+----3----+----4----+----5----+----6----+----7-³--+----8  Map and Cross Reference
+0  000513               * Final call: DO WHAT  ?????????????????????                      02360002
+   000514               **********************************************************        02370001
+   000515      3                   STOP RUN.                                              02380005
+   000516                                                                                 02390000
+   000517                MAIN-PROC-EXIT.                                                  02400005
+   000518                    EXIT.                                                        02410005
+   000519                                                                                 02420000
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    13
+0An "M" preceding a data-name reference indicates that the data-name is modified by this reference.
+
+  Defined   Cross-reference of data names   References
+
+      122   DCLSYSDBSV1
+      187   DCLSYSTBLV1
+      334   EMPNO. . . . . . . . . . . . .  435 454
+      336   ENDDT. . . . . . . . . . . . .  435 458
+      344   NIEMPNO. . . . . . . . . . . .  437 M500
+      346   NIENDDT. . . . . . . . . . . .  437 M500
+      340   NIPROJNO . . . . . . . . . . .  436
+      345   NISTARTDT. . . . . . . . . . .  437 M500
+      255   PRE-SQLDABC
+      282   PRE-SQLDABC
+      254   PRE-SQLDAID
+      281   PRE-SQLDAID
+      257   PRE-SQLLD
+      284   PRE-SQLLD
+      256   PRE-SQLN
+      283   PRE-SQLN
+      258   PRE-SQLVAR
+      285   PRE-SQLVAR
+      330   PROJNO . . . . . . . . . . . .  434 449
+      250   SQL-APARMPTR
+      277   SQL-APARMPTR . . . . . . . . .  451
+      322   SQL-APARMPTR
+      289   SQL-AVAR-ADDRS1. . . . . . . .  453
+      298   SQL-AVAR-ADDRS2. . . . . . . .  455
+      307   SQL-AVAR-ADDRS3. . . . . . . .  457
+      290   SQL-AVAR-ADDR1
+      299   SQL-AVAR-ADDR2
+      308   SQL-AVAR-ADDR3
+      291   SQL-AVAR-IND1
+      300   SQL-AVAR-IND2
+      309   SQL-AVAR-IND3
+      288   SQL-AVAR-LEN1
+      297   SQL-AVAR-LEN2
+      306   SQL-AVAR-LEN3
+      280   SQL-AVAR-LIST5 . . . . . . . .  451 454 456 458
+      294   SQL-AVAR-NAMEC1
+      303   SQL-AVAR-NAMEC2
+      312   SQL-AVAR-NAMEC3
+      293   SQL-AVAR-NAMEL1
+      302   SQL-AVAR-NAMEL2
+      311   SQL-AVAR-NAMEL3
+      292   SQL-AVAR-NAME1
+      301   SQL-AVAR-NAME2
+      310   SQL-AVAR-NAME3
+      287   SQL-AVAR-TYPE1
+      296   SQL-AVAR-TYPE2
+      305   SQL-AVAR-TYPE3
+      243   SQL-CALLTYPE
+      270   SQL-CALLTYPE
+      315   SQL-CALLTYPE
+      248   SQL-CODEPTR. . . . . . . . . .  450
+      275   SQL-CODEPTR. . . . . . . . . .  459
+      320   SQL-CODEPTR. . . . . . . . . .  460
+      240   SQL-INIT-DONE. . . . . . . . .  486 495 507
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    14
+0 Defined   Cross-reference of data names   References
+
+0     239   SQL-INIT-FLAG. . . . . . . . .  M445
+      238   SQL-NULL . . . . . . . . . . .  449 454 456 458
+      242   SQL-PLIST-CON
+      269   SQL-PLIST-CON
+      314   SQL-PLIST-CON
+      241   SQL-PLIST4 . . . . . . . . . .  446 450 487
+      268   SQL-PLIST5 . . . . . . . . . .  451 459 496
+      313   SQL-PLIST6 . . . . . . . . . .  460 508
+      244   SQL-PROG-NAME
+      271   SQL-PROG-NAME
+      316   SQL-PROG-NAME
+      262   SQL-PVAR-ADDRS1. . . . . . . .  448
+      263   SQL-PVAR-ADDR1
+      264   SQL-PVAR-IND1
+      261   SQL-PVAR-LEN1
+      253   SQL-PVAR-LIST4 . . . . . . . .  446 449
+      267   SQL-PVAR-NAMEC1
+      266   SQL-PVAR-NAMEL1
+      265   SQL-PVAR-NAME1
+      260   SQL-PVAR-TYPE1
+      247   SQL-SECTION
+      274   SQL-SECTION
+      319   SQL-SECTION
+      251   SQL-STMT-NUM
+      278   SQL-STMT-NUM
+      323   SQL-STMT-NUM
+      252   SQL-STMT-TYPE
+      279   SQL-STMT-TYPE
+      324   SQL-STMT-TYPE
+      237   SQL-TEMP
+      245   SQL-TIMESTAMP-1
+      272   SQL-TIMESTAMP-1
+      317   SQL-TIMESTAMP-1
+      246   SQL-TIMESTAMP-2
+      273   SQL-TIMESTAMP-2
+      318   SQL-TIMESTAMP-2
+      249   SQL-VPARMPTR . . . . . . . . .  446
+      276   SQL-VPARMPTR
+      321   SQL-VPARMPTR
+       75   SQLCA. . . . . . . . . . . . .  450 459 460
+       77   SQLCABC
+       76   SQLCAID
+       78   SQLCODE. . . . . . . . . . . .  497
+       83   SQLERRD
+       79   SQLERRM
+       81   SQLERRMC
+       80   SQLERRML
+       82   SQLERRP
+       94   SQLEXT
+       98   SQLSTATE . . . . . . . . . . .  M498
+      259   SQLVAR-BASE1
+      286   SQLVAR-BASE1
+      295   SQLVAR-BASE2
+      304   SQLVAR-BASE3
+       85   SQLWARN
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    15
+0 Defined   Cross-reference of data names   References
+
+0      97   SQLWARNA
+       86   SQLWARN0
+       87   SQLWARN1
+       88   SQLWARN2
+       89   SQLWARN3
+       90   SQLWARN4
+       91   SQLWARN5
+       92   SQLWARN6
+       93   SQLWARN7
+       95   SQLWARN8
+       96   SQLWARN9
+      335   STARTDT. . . . . . . . . . . .  435 456
+      379   UDF-CALL-TYPE. . . . . . . . .  440 468 480 488 502
+      383   UDF-DBINFO . . . . . . . . . .  440
+      400   UDF-DBINFO-ADBCS
+      390   UDF-DBINFO-ALEN
+      399   UDF-DBINFO-AMIXED
+      430   UDF-DBINFO-APPLID
+      398   UDF-DBINFO-ASBCS
+      391   UDF-DBINFO-AUTH
+      389   UDF-DBINFO-AUTHORIZATION
+      393   UDF-DBINFO-CCSID . . . . . . .  394
+      394   UDF-DBINFO-CCSID-REDEFINE
+      413   UDF-DBINFO-CLEN
+      414   UDF-DBINFO-COLUMN
+      412   UDF-DBINFO-COLUMN0
+      397   UDF-DBINFO-EDBCS
+      396   UDF-DBINFO-EMIXED
+      401   UDF-DBINFO-ENCODE
+      395   UDF-DBINFO-ESBCS
+      386   UDF-DBINFO-LLEN
+      387   UDF-DBINFO-LOC
+      385   UDF-DBINFO-LOCATION
+      422   UDF-DBINFO-NUMTFCOL
+      420   UDF-DBINFO-PLATFORM
+      402   UDF-DBINFO-RESERV0
+      424   UDF-DBINFO-RESERV1
+      432   UDF-DBINFO-RESERV2
+      406   UDF-DBINFO-SCHEMA
+      404   UDF-DBINFO-SCHEMA0
+      405   UDF-DBINFO-SLEN
+      410   UDF-DBINFO-TABLE
+      408   UDF-DBINFO-TABLE0
+      428   UDF-DBINFO-TFCOLUMN
+      409   UDF-DBINFO-TLEN
+      416   UDF-DBINFO-VERREL
+      367   UDF-DIAG . . . . . . . . . . .  439
+      368   UDF-DIAG-LEN
+      369   UDF-DIAG-TEXT
+      355   UDF-FUNC . . . . . . . . . . .  438
+      356   UDF-FUNC-LEN
+      357   UDF-FUNC-TEXT
+      373   UDF-SCRATCHPAD . . . . . . . .  439
+      374   UDF-SPAD-LEN
+      375   UDF-SPAD-TEXT
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    16
+0 Defined   Cross-reference of data names   References
+
+0     361   UDF-SPEC . . . . . . . . . . .  438
+      362   UDF-SPEC-LEN
+      363   UDF-SPEC-TEXT
+      351   UDF-SQLSTATE . . . . . . . . .  438 M469
+      188   V-ALTEREDTS
+      189   V-AUDITING
+      123   V-BPOOL
+      190   V-CARD
+      191   V-CHECKFLAG
+      192   V-CHECKRID
+      193   V-CHILDREN
+      194   V-CLUSTERRID
+      195   V-CLUSTERTYPE
+      196   V-COLCOUNT
+      124   V-CREATEDBY
+      197   V-CREATEDBY
+      198   V-CREATEDTS
+      125   V-CREATOR
+      199   V-CREATOR
+      200   V-DATACAPTURE
+      126   V-DBID
+      201   V-DBID
+      202   V-DBNAME
+      203   V-EDPROC
+      127   V-IBMREQD
+      204   V-IBMREQD
+      205   V-KEYCOLUMNS
+      206   V-KEYOBID
+      207   V-LABEL
+      208   V-LABEL-LEN
+      209   V-LABEL-TEXT
+      210   V-LOCATION
+      128   V-NAME
+      211   V-NAME
+      212   V-NAME-LEN
+      213   V-NAME-TEXT
+      214   V-NPAGES
+      215   V-OBID
+      216   V-PARENTS
+      217   V-PCTPAGES
+      218   V-PCTROWCOMP
+      219   V-RBA1
+      220   V-RBA2
+      221   V-RECLENGTH
+      222   V-REMARKS
+      223   V-REMARKS-LEN
+      224   V-REMARKS-TEXT
+      129   V-ROSHARE
+      225   V-STATSTIME
+      226   V-STATUS
+      130   V-STGROUP
+      227   V-TBCREATOR
+      228   V-TBNAME
+      229   V-TBNAME-LEN
+      230   V-TBNAME-TEXT
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    17
+0 Defined   Cross-reference of data names   References
+
+0     131   V-TIMESTAMP
+      231   V-TSNAME
+      232   V-TYPE
+      233   V-VALPROC
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    18
+0Context usage is indicated by the letter preceding a procedure-name reference.
+ These letters and their meanings are:
+     A = ALTER (procedure-name)
+     D = GO TO (procedure-name) DEPENDING ON
+     E = End of range of (PERFORM) through (procedure-name)
+     G = GO TO (procedure-name)
+     P = PERFORM (procedure-name)
+     T = (ALTER) TO PROCEED TO (procedure-name)
+     U = USE FOR DEBUGGING (procedure-name)
+
+  Defined   Cross-reference of procedures   References
+
+      441   DSNSQL
+      464   MAIN-PROC
+      517   MAIN-PROC-EXIT
+      461   SQL-INIT-END . . . . . . . . .  G443
+      444   SQL-INITIAL. . . . . . . . . .  P486 P495 P507
+      442   SQL-SKIP
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    19
+0 Defined   Cross-reference of programs     References
+
+ EXTERNAL   DSNHADDR . . . . . . . . . . .  446 448 450 451 453 455 457 459 460
+ EXTERNAL   DSNHLI . . . . . . . . . . . .  487 496 508
+       59   UDFPGM01
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    20
+0Data Division Map
+0Data Definition Attribute codes (rightmost column) have the following meanings:
+     D = Object of OCCURS DEPENDING    G = GLOBAL                             S = Spanned file
+     E = EXTERNAL                      O = Has OCCURS clause                  U = Undefined format file
+     F = Fixed-length file             OG= Group has own length definition    V = Variable-length file
+     FB= Fixed-length blocked file     R = REDEFINES                          VB= Variable-length blocked file
+0Source   Hierarchy and                                    Base       Hex-Displacement  Asmblr Data                  Data Def
+ LineID   Data Name                                        Locator    Blk   Structure   Definition    Data Type      Attributes
+     59  PROGRAM-ID UDFPGM01--------------------------------------------------------------------------------------------------*
+     75   1  SQLCA . . . . . . . . . . . . . . . . . . . . BLW=0000   000               DS 0CL136     Group
+     76     2  SQLCAID . . . . . . . . . . . . . . . . . . BLW=0000   000   0 000 000   DS 8C         Display
+     77     2  SQLCABC . . . . . . . . . . . . . . . . . . BLW=0000   008   0 000 008   DS 4C         Binary
+     78     2  SQLCODE . . . . . . . . . . . . . . . . . . BLW=0000   00C   0 000 00C   DS 4C         Binary
+     79     2  SQLERRM . . . . . . . . . . . . . . . . . . BLW=0000   010   0 000 010   DS 0CL72      Group
+     80       3  SQLERRML. . . . . . . . . . . . . . . . . BLW=0000   010   0 000 010   DS 2C         Binary
+     81       3  SQLERRMC. . . . . . . . . . . . . . . . . BLW=0000   012   0 000 012   DS 70C        Display
+     82     2  SQLERRP . . . . . . . . . . . . . . . . . . BLW=0000   058   0 000 058   DS 8C         Display
+     83     2  SQLERRD . . . . . . . . . . . . . . . . . . BLW=0000   060   0 000 060   DS 4C         Binary          O
+     85     2  SQLWARN . . . . . . . . . . . . . . . . . . BLW=0000   078   0 000 078   DS 0CL8       Group
+     86       3  SQLWARN0. . . . . . . . . . . . . . . . . BLW=0000   078   0 000 078   DS 1C         Display
+     87       3  SQLWARN1. . . . . . . . . . . . . . . . . BLW=0000   079   0 000 079   DS 1C         Display
+     88       3  SQLWARN2. . . . . . . . . . . . . . . . . BLW=0000   07A   0 000 07A   DS 1C         Display
+     89       3  SQLWARN3. . . . . . . . . . . . . . . . . BLW=0000   07B   0 000 07B   DS 1C         Display
+     90       3  SQLWARN4. . . . . . . . . . . . . . . . . BLW=0000   07C   0 000 07C   DS 1C         Display
+     91       3  SQLWARN5. . . . . . . . . . . . . . . . . BLW=0000   07D   0 000 07D   DS 1C         Display
+     92       3  SQLWARN6. . . . . . . . . . . . . . . . . BLW=0000   07E   0 000 07E   DS 1C         Display
+     93       3  SQLWARN7. . . . . . . . . . . . . . . . . BLW=0000   07F   0 000 07F   DS 1C         Display
+     94     2  SQLEXT. . . . . . . . . . . . . . . . . . . BLW=0000   080   0 000 080   DS 0CL8       Group
+     95       3  SQLWARN8. . . . . . . . . . . . . . . . . BLW=0000   080   0 000 080   DS 1C         Display
+     96       3  SQLWARN9. . . . . . . . . . . . . . . . . BLW=0000   081   0 000 081   DS 1C         Display
+     97       3  SQLWARNA. . . . . . . . . . . . . . . . . BLW=0000   082   0 000 082   DS 1C         Display
+     98       3  SQLSTATE. . . . . . . . . . . . . . . . . BLW=0000   083   0 000 083   DS 5C         Display
+    122   1  DCLSYSDBSV1 . . . . . . . . . . . . . . . . . BLW=0000   088               DS 0CL70      Group
+    123     2  V-BPOOL . . . . . . . . . . . . . . . . . . BLW=0000   088   0 000 000   DS 8C         Display
+    124     2  V-CREATEDBY . . . . . . . . . . . . . . . . BLW=0000   090   0 000 008   DS 8C         Display
+    125     2  V-CREATOR . . . . . . . . . . . . . . . . . BLW=0000   098   0 000 010   DS 8C         Display
+    126     2  V-DBID. . . . . . . . . . . . . . . . . . . BLW=0000   0A0   0 000 018   DS 2C         Binary
+    127     2  V-IBMREQD . . . . . . . . . . . . . . . . . BLW=0000   0A2   0 000 01A   DS 1C         Display
+    128     2  V-NAME. . . . . . . . . . . . . . . . . . . BLW=0000   0A3   0 000 01B   DS 8C         Display
+    129     2  V-ROSHARE . . . . . . . . . . . . . . . . . BLW=0000   0AB   0 000 023   DS 1C         Display
+    130     2  V-STGROUP . . . . . . . . . . . . . . . . . BLW=0000   0AC   0 000 024   DS 8C         Display
+    131     2  V-TIMESTAMP . . . . . . . . . . . . . . . . BLW=0000   0B4   0 000 02C   DS 26C        Display
+    187   1  DCLSYSTBLV1 . . . . . . . . . . . . . . . . . BLW=0000   0D0               DS 0CL533     Group
+    188     2  V-ALTEREDTS . . . . . . . . . . . . . . . . BLW=0000   0D0   0 000 000   DS 26C        Display
+    189     2  V-AUDITING. . . . . . . . . . . . . . . . . BLW=0000   0EA   0 000 01A   DS 1C         Display
+    190     2  V-CARD. . . . . . . . . . . . . . . . . . . BLW=0000   0EB   0 000 01B   DS 4C         Binary
+    191     2  V-CHECKFLAG . . . . . . . . . . . . . . . . BLW=0000   0EF   0 000 01F   DS 1C         Display
+    192     2  V-CHECKRID. . . . . . . . . . . . . . . . . BLW=0000   0F0   0 000 020   DS 4C         Display
+    193     2  V-CHILDREN. . . . . . . . . . . . . . . . . BLW=0000   0F4   0 000 024   DS 2C         Binary
+    194     2  V-CLUSTERRID. . . . . . . . . . . . . . . . BLW=0000   0F6   0 000 026   DS 4C         Binary
+    195     2  V-CLUSTERTYPE . . . . . . . . . . . . . . . BLW=0000   0FA   0 000 02A   DS 1C         Display
+    196     2  V-COLCOUNT. . . . . . . . . . . . . . . . . BLW=0000   0FB   0 000 02B   DS 2C         Binary
+    197     2  V-CREATEDBY . . . . . . . . . . . . . . . . BLW=0000   0FD   0 000 02D   DS 8C         Display
+    198     2  V-CREATEDTS . . . . . . . . . . . . . . . . BLW=0000   105   0 000 035   DS 26C        Display
+    199     2  V-CREATOR . . . . . . . . . . . . . . . . . BLW=0000   11F   0 000 04F   DS 8C         Display
+    200     2  V-DATACAPTURE . . . . . . . . . . . . . . . BLW=0000   127   0 000 057   DS 1C         Display
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    21
+0Source   Hierarchy and                                    Base       Hex-Displacement  Asmblr Data                  Data Def
+ LineID   Data Name                                        Locator    Blk   Structure   Definition    Data Type      Attributes
+    201     2  V-DBID. . . . . . . . . . . . . . . . . . . BLW=0000   128   0 000 058   DS 2C         Binary
+    202     2  V-DBNAME. . . . . . . . . . . . . . . . . . BLW=0000   12A   0 000 05A   DS 8C         Display
+    203     2  V-EDPROC. . . . . . . . . . . . . . . . . . BLW=0000   132   0 000 062   DS 8C         Display
+    204     2  V-IBMREQD . . . . . . . . . . . . . . . . . BLW=0000   13A   0 000 06A   DS 1C         Display
+    205     2  V-KEYCOLUMNS. . . . . . . . . . . . . . . . BLW=0000   13B   0 000 06B   DS 2C         Binary
+    206     2  V-KEYOBID . . . . . . . . . . . . . . . . . BLW=0000   13D   0 000 06D   DS 2C         Binary
+    207     2  V-LABEL . . . . . . . . . . . . . . . . . . BLW=0000   13F   0 000 06F   DS 0CL32      Group
+    208       3  V-LABEL-LEN . . . . . . . . . . . . . . . BLW=0000   13F   0 000 06F   DS 2C         Binary
+    209       3  V-LABEL-TEXT. . . . . . . . . . . . . . . BLW=0000   141   0 000 071   DS 30C        Display
+    210     2  V-LOCATION. . . . . . . . . . . . . . . . . BLW=0000   15F   0 000 08F   DS 16C        Display
+    211     2  V-NAME. . . . . . . . . . . . . . . . . . . BLW=0000   16F   0 000 09F   DS 0CL20      Group
+    212       3  V-NAME-LEN. . . . . . . . . . . . . . . . BLW=0000   16F   0 000 09F   DS 2C         Binary
+    213       3  V-NAME-TEXT . . . . . . . . . . . . . . . BLW=0000   171   0 000 0A1   DS 18C        Display
+    214     2  V-NPAGES. . . . . . . . . . . . . . . . . . BLW=0000   183   0 000 0B3   DS 4C         Binary
+    215     2  V-OBID. . . . . . . . . . . . . . . . . . . BLW=0000   187   0 000 0B7   DS 2C         Binary
+    216     2  V-PARENTS . . . . . . . . . . . . . . . . . BLW=0000   189   0 000 0B9   DS 2C         Binary
+    217     2  V-PCTPAGES. . . . . . . . . . . . . . . . . BLW=0000   18B   0 000 0BB   DS 2C         Binary
+    218     2  V-PCTROWCOMP. . . . . . . . . . . . . . . . BLW=0000   18D   0 000 0BD   DS 2C         Binary
+    219     2  V-RBA1. . . . . . . . . . . . . . . . . . . BLW=0000   18F   0 000 0BF   DS 6C         Display
+    220     2  V-RBA2. . . . . . . . . . . . . . . . . . . BLW=0000   195   0 000 0C5   DS 6C         Display
+    221     2  V-RECLENGTH . . . . . . . . . . . . . . . . BLW=0000   19B   0 000 0CB   DS 2C         Binary
+    222     2  V-REMARKS . . . . . . . . . . . . . . . . . BLW=0000   19D   0 000 0CD   DS 0CL256     Group
+    223       3  V-REMARKS-LEN . . . . . . . . . . . . . . BLW=0000   19D   0 000 0CD   DS 2C         Binary
+    224       3  V-REMARKS-TEXT. . . . . . . . . . . . . . BLW=0000   19F   0 000 0CF   DS 254C       Display
+    225     2  V-STATSTIME . . . . . . . . . . . . . . . . BLW=0000   29D   0 000 1CD   DS 26C        Display
+    226     2  V-STATUS. . . . . . . . . . . . . . . . . . BLW=0000   2B7   0 000 1E7   DS 1C         Display
+    227     2  V-TBCREATOR . . . . . . . . . . . . . . . . BLW=0000   2B8   0 000 1E8   DS 8C         Display
+    228     2  V-TBNAME. . . . . . . . . . . . . . . . . . BLW=0000   2C0   0 000 1F0   DS 0CL20      Group
+    229       3  V-TBNAME-LEN. . . . . . . . . . . . . . . BLW=0000   2C0   0 000 1F0   DS 2C         Binary
+    230       3  V-TBNAME-TEXT . . . . . . . . . . . . . . BLW=0000   2C2   0 000 1F2   DS 18C        Display
+    231     2  V-TSNAME. . . . . . . . . . . . . . . . . . BLW=0000   2D4   0 000 204   DS 8C         Display
+    232     2  V-TYPE. . . . . . . . . . . . . . . . . . . BLW=0000   2DC   0 000 20C   DS 1C         Display
+    233     2  V-VALPROC . . . . . . . . . . . . . . . . . BLW=0000   2DD   0 000 20D   DS 8C         Display
+    237   77 SQL-TEMP. . . . . . . . . . . . . . . . . . . BLW=0000   2E8               DS 18C        Display
+    238   77 SQL-NULL. . . . . . . . . . . . . . . . . . . BLW=0000   300               DS 4C         Binary
+    239   77 SQL-INIT-FLAG . . . . . . . . . . . . . . . . BLW=0000   308               DS 2C         Binary
+    240   88 SQL-INIT-DONE . . . . . . . . . . . . . . . .
+    241   1  SQL-PLIST4. . . . . . . . . . . . . . . . . . BLW=0000   310               DS 0CL100     Group
+    242     2  SQL-PLIST-CON . . . . . . . . . . . . . . . BLW=0000   310   0 000 000   DS 4C         Binary
+    243     2  SQL-CALLTYPE. . . . . . . . . . . . . . . . BLW=0000   314   0 000 004   DS 2C         Binary
+    244     2  SQL-PROG-NAME . . . . . . . . . . . . . . . BLW=0000   316   0 000 006   DS 8C         Display
+    245     2  SQL-TIMESTAMP-1 . . . . . . . . . . . . . . BLW=0000   31E   0 000 00E   DS 4C         Binary
+    246     2  SQL-TIMESTAMP-2 . . . . . . . . . . . . . . BLW=0000   322   0 000 012   DS 4C         Binary
+    247     2  SQL-SECTION . . . . . . . . . . . . . . . . BLW=0000   326   0 000 016   DS 2C         Binary
+    248     2  SQL-CODEPTR . . . . . . . . . . . . . . . . BLW=0000   328   0 000 018   DS 4C         Binary
+    249     2  SQL-VPARMPTR. . . . . . . . . . . . . . . . BLW=0000   32C   0 000 01C   DS 4C         Binary
+    250     2  SQL-APARMPTR. . . . . . . . . . . . . . . . BLW=0000   330   0 000 020   DS 4C         Binary
+    251     2  SQL-STMT-NUM. . . . . . . . . . . . . . . . BLW=0000   334   0 000 024   DS 2C         Binary
+    252     2  SQL-STMT-TYPE . . . . . . . . . . . . . . . BLW=0000   336   0 000 026   DS 2C         Binary
+    253     2  SQL-PVAR-LIST4. . . . . . . . . . . . . . . BLW=0000   338   0 000 028   DS 0CL60      Group
+    254       3  PRE-SQLDAID . . . . . . . . . . . . . . . BLW=0000   338   0 000 028   DS 8C         Display
+    255       3  PRE-SQLDABC . . . . . . . . . . . . . . . BLW=0000   340   0 000 030   DS 4C         Binary
+    256       3  PRE-SQLN. . . . . . . . . . . . . . . . . BLW=0000   344   0 000 034   DS 2C         Binary
+    257       3  PRE-SQLLD . . . . . . . . . . . . . . . . BLW=0000   346   0 000 036   DS 2C         Binary
+    258       3  PRE-SQLVAR. . . . . . . . . . . . . . . . BLW=0000   348   0 000 038   DS 0CL44      Group
+    259         4  SQLVAR-BASE1. . . . . . . . . . . . . . BLW=0000   348   0 000 038   DS 0CL44      Group
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    22
+0Source   Hierarchy and                                    Base       Hex-Displacement  Asmblr Data                  Data Def
+ LineID   Data Name                                        Locator    Blk   Structure   Definition    Data Type      Attributes
+    260           5  SQL-PVAR-TYPE1. . . . . . . . . . . . BLW=0000   348   0 000 038   DS 2C         Binary
+    261           5  SQL-PVAR-LEN1 . . . . . . . . . . . . BLW=0000   34A   0 000 03A   DS 2C         Binary
+    262           5  SQL-PVAR-ADDRS1 . . . . . . . . . . . BLW=0000   34C   0 000 03C   DS 0CL8       Group
+    263             6  SQL-PVAR-ADDR1. . . . . . . . . . . BLW=0000   34C   0 000 03C   DS 4C         Binary
+    264             6  SQL-PVAR-IND1 . . . . . . . . . . . BLW=0000   350   0 000 040   DS 4C         Binary
+    265           5  SQL-PVAR-NAME1. . . . . . . . . . . . BLW=0000   354   0 000 044   DS 0CL32      Group
+    266             6  SQL-PVAR-NAMEL1 . . . . . . . . . . BLW=0000   354   0 000 044   DS 2C         Binary
+    267             6  SQL-PVAR-NAMEC1 . . . . . . . . . . BLW=0000   356   0 000 046   DS 30C        Display
+    268   1  SQL-PLIST5. . . . . . . . . . . . . . . . . . BLW=0000   378               DS 0CL188     Group
+    269     2  SQL-PLIST-CON . . . . . . . . . . . . . . . BLW=0000   378   0 000 000   DS 4C         Binary
+    270     2  SQL-CALLTYPE. . . . . . . . . . . . . . . . BLW=0000   37C   0 000 004   DS 2C         Binary
+    271     2  SQL-PROG-NAME . . . . . . . . . . . . . . . BLW=0000   37E   0 000 006   DS 8C         Display
+    272     2  SQL-TIMESTAMP-1 . . . . . . . . . . . . . . BLW=0000   386   0 000 00E   DS 4C         Binary
+    273     2  SQL-TIMESTAMP-2 . . . . . . . . . . . . . . BLW=0000   38A   0 000 012   DS 4C         Binary
+    274     2  SQL-SECTION . . . . . . . . . . . . . . . . BLW=0000   38E   0 000 016   DS 2C         Binary
+    275     2  SQL-CODEPTR . . . . . . . . . . . . . . . . BLW=0000   390   0 000 018   DS 4C         Binary
+    276     2  SQL-VPARMPTR. . . . . . . . . . . . . . . . BLW=0000   394   0 000 01C   DS 4C         Binary
+    277     2  SQL-APARMPTR. . . . . . . . . . . . . . . . BLW=0000   398   0 000 020   DS 4C         Binary
+    278     2  SQL-STMT-NUM. . . . . . . . . . . . . . . . BLW=0000   39C   0 000 024   DS 2C         Binary
+    279     2  SQL-STMT-TYPE . . . . . . . . . . . . . . . BLW=0000   39E   0 000 026   DS 2C         Binary
+    280     2  SQL-AVAR-LIST5. . . . . . . . . . . . . . . BLW=0000   3A0   0 000 028   DS 0CL148     Group
+    281       3  PRE-SQLDAID . . . . . . . . . . . . . . . BLW=0000   3A0   0 000 028   DS 8C         Display
+    282       3  PRE-SQLDABC . . . . . . . . . . . . . . . BLW=0000   3A8   0 000 030   DS 4C         Binary
+    283       3  PRE-SQLN. . . . . . . . . . . . . . . . . BLW=0000   3AC   0 000 034   DS 2C         Binary
+    284       3  PRE-SQLLD . . . . . . . . . . . . . . . . BLW=0000   3AE   0 000 036   DS 2C         Binary
+    285       3  PRE-SQLVAR. . . . . . . . . . . . . . . . BLW=0000   3B0   0 000 038   DS 0CL132     Group
+    286         4  SQLVAR-BASE1. . . . . . . . . . . . . . BLW=0000   3B0   0 000 038   DS 0CL44      Group
+    287           5  SQL-AVAR-TYPE1. . . . . . . . . . . . BLW=0000   3B0   0 000 038   DS 2C         Binary
+    288           5  SQL-AVAR-LEN1 . . . . . . . . . . . . BLW=0000   3B2   0 000 03A   DS 2C         Binary
+    289           5  SQL-AVAR-ADDRS1 . . . . . . . . . . . BLW=0000   3B4   0 000 03C   DS 0CL8       Group
+    290             6  SQL-AVAR-ADDR1. . . . . . . . . . . BLW=0000   3B4   0 000 03C   DS 4C         Binary
+    291             6  SQL-AVAR-IND1 . . . . . . . . . . . BLW=0000   3B8   0 000 040   DS 4C         Binary
+    292           5  SQL-AVAR-NAME1. . . . . . . . . . . . BLW=0000   3BC   0 000 044   DS 0CL32      Group
+    293             6  SQL-AVAR-NAMEL1 . . . . . . . . . . BLW=0000   3BC   0 000 044   DS 2C         Binary
+    294             6  SQL-AVAR-NAMEC1 . . . . . . . . . . BLW=0000   3BE   0 000 046   DS 30C        Display
+    295         4  SQLVAR-BASE2. . . . . . . . . . . . . . BLW=0000   3DC   0 000 064   DS 0CL44      Group
+    296           5  SQL-AVAR-TYPE2. . . . . . . . . . . . BLW=0000   3DC   0 000 064   DS 2C         Binary
+    297           5  SQL-AVAR-LEN2 . . . . . . . . . . . . BLW=0000   3DE   0 000 066   DS 2C         Binary
+    298           5  SQL-AVAR-ADDRS2 . . . . . . . . . . . BLW=0000   3E0   0 000 068   DS 0CL8       Group
+    299             6  SQL-AVAR-ADDR2. . . . . . . . . . . BLW=0000   3E0   0 000 068   DS 4C         Binary
+    300             6  SQL-AVAR-IND2 . . . . . . . . . . . BLW=0000   3E4   0 000 06C   DS 4C         Binary
+    301           5  SQL-AVAR-NAME2. . . . . . . . . . . . BLW=0000   3E8   0 000 070   DS 0CL32      Group
+    302             6  SQL-AVAR-NAMEL2 . . . . . . . . . . BLW=0000   3E8   0 000 070   DS 2C         Binary
+    303             6  SQL-AVAR-NAMEC2 . . . . . . . . . . BLW=0000   3EA   0 000 072   DS 30C        Display
+    304         4  SQLVAR-BASE3. . . . . . . . . . . . . . BLW=0000   408   0 000 090   DS 0CL44      Group
+    305           5  SQL-AVAR-TYPE3. . . . . . . . . . . . BLW=0000   408   0 000 090   DS 2C         Binary
+    306           5  SQL-AVAR-LEN3 . . . . . . . . . . . . BLW=0000   40A   0 000 092   DS 2C         Binary
+    307           5  SQL-AVAR-ADDRS3 . . . . . . . . . . . BLW=0000   40C   0 000 094   DS 0CL8       Group
+    308             6  SQL-AVAR-ADDR3. . . . . . . . . . . BLW=0000   40C   0 000 094   DS 4C         Binary
+    309             6  SQL-AVAR-IND3 . . . . . . . . . . . BLW=0000   410   0 000 098   DS 4C         Binary
+    310           5  SQL-AVAR-NAME3. . . . . . . . . . . . BLW=0000   414   0 000 09C   DS 0CL32      Group
+    311             6  SQL-AVAR-NAMEL3 . . . . . . . . . . BLW=0000   414   0 000 09C   DS 2C         Binary
+    312             6  SQL-AVAR-NAMEC3 . . . . . . . . . . BLW=0000   416   0 000 09E   DS 30C        Display
+    313   1  SQL-PLIST6. . . . . . . . . . . . . . . . . . BLW=0000   438               DS 0CL40      Group
+    314     2  SQL-PLIST-CON . . . . . . . . . . . . . . . BLW=0000   438   0 000 000   DS 4C         Binary
+    315     2  SQL-CALLTYPE. . . . . . . . . . . . . . . . BLW=0000   43C   0 000 004   DS 2C         Binary
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    23
+0Source   Hierarchy and                                    Base       Hex-Displacement  Asmblr Data                  Data Def
+ LineID   Data Name                                        Locator    Blk   Structure   Definition    Data Type      Attributes
+    316     2  SQL-PROG-NAME . . . . . . . . . . . . . . . BLW=0000   43E   0 000 006   DS 8C         Display
+    317     2  SQL-TIMESTAMP-1 . . . . . . . . . . . . . . BLW=0000   446   0 000 00E   DS 4C         Binary
+    318     2  SQL-TIMESTAMP-2 . . . . . . . . . . . . . . BLW=0000   44A   0 000 012   DS 4C         Binary
+    319     2  SQL-SECTION . . . . . . . . . . . . . . . . BLW=0000   44E   0 000 016   DS 2C         Binary
+    320     2  SQL-CODEPTR . . . . . . . . . . . . . . . . BLW=0000   450   0 000 018   DS 4C         Binary
+    321     2  SQL-VPARMPTR. . . . . . . . . . . . . . . . BLW=0000   454   0 000 01C   DS 4C         Binary
+    322     2  SQL-APARMPTR. . . . . . . . . . . . . . . . BLW=0000   458   0 000 020   DS 4C         Binary
+    323     2  SQL-STMT-NUM. . . . . . . . . . . . . . . . BLW=0000   45C   0 000 024   DS 2C         Binary
+    324     2  SQL-STMT-TYPE . . . . . . . . . . . . . . . BLW=0000   45E   0 000 026   DS 2C         Binary
+    330   1  PROJNO. . . . . . . . . . . . . . . . . . . . BLL=0001   000               DS 6C         Display
+    334   1  EMPNO . . . . . . . . . . . . . . . . . . . . BLL=0002   000               DS 6C         Display
+    335   1  STARTDT . . . . . . . . . . . . . . . . . . . BLL=0003   000               DS 10C        Display
+    336   1  ENDDT . . . . . . . . . . . . . . . . . . . . BLL=0004   000               DS 10C        Display
+    340   1  NIPROJNO. . . . . . . . . . . . . . . . . . . BLL=0005   000               DS 2C         Binary
+    344   1  NIEMPNO . . . . . . . . . . . . . . . . . . . BLL=0006   000               DS 2C         Binary
+    345   1  NISTARTDT . . . . . . . . . . . . . . . . . . BLL=0007   000               DS 2C         Binary
+    346   1  NIENDDT . . . . . . . . . . . . . . . . . . . BLL=0008   000               DS 2C         Binary
+    351   1  UDF-SQLSTATE. . . . . . . . . . . . . . . . . BLL=0009   000               DS 5C         Display
+    355   1  UDF-FUNC. . . . . . . . . . . . . . . . . . . BLL=000A   000               DS 0CL139     Group
+    356     2  UDF-FUNC-LEN. . . . . . . . . . . . . . . . BLL=000A   000   0 000 000   DS 2C         Binary
+    357     2  UDF-FUNC-TEXT . . . . . . . . . . . . . . . BLL=000A   002   0 000 002   DS 137C       Display
+    361   1  UDF-SPEC. . . . . . . . . . . . . . . . . . . BLL=000B   000               DS 0CL130     Group
+    362     2  UDF-SPEC-LEN. . . . . . . . . . . . . . . . BLL=000B   000   0 000 000   DS 2C         Binary
+    363     2  UDF-SPEC-TEXT . . . . . . . . . . . . . . . BLL=000B   002   0 000 002   DS 128C       Display
+    367   1  UDF-DIAG. . . . . . . . . . . . . . . . . . . BLL=000C   000               DS 0CL72      Group
+    368     2  UDF-DIAG-LEN. . . . . . . . . . . . . . . . BLL=000C   000   0 000 000   DS 2C         Binary
+    369     2  UDF-DIAG-TEXT . . . . . . . . . . . . . . . BLL=000C   002   0 000 002   DS 70C        Display
+    373   1  UDF-SCRATCHPAD. . . . . . . . . . . . . . . . BLL=000D   000               DS 0CL104     Group
+    374     2  UDF-SPAD-LEN. . . . . . . . . . . . . . . . BLL=000D   000   0 000 000   DS 4C         Binary
+    375     2  UDF-SPAD-TEXT . . . . . . . . . . . . . . . BLL=000D   004   0 000 004   DS 100C       Display
+    379   1  UDF-CALL-TYPE . . . . . . . . . . . . . . . . BLL=000E   000               DS 4C         Binary
+    383   1  UDF-DBINFO. . . . . . . . . . . . . . . . . . BLL=000F   000               DS 0CL768     Group
+    385     2  UDF-DBINFO-LOCATION . . . . . . . . . . . . BLL=000F   000   0 000 000   DS 0CL130     Group
+    386       3  UDF-DBINFO-LLEN . . . . . . . . . . . . . BLL=000F   000   0 000 000   DS 2C         Binary
+    387       3  UDF-DBINFO-LOC. . . . . . . . . . . . . . BLL=000F   002   0 000 002   DS 128C       Display
+    389     2  UDF-DBINFO-AUTHORIZATION. . . . . . . . . . BLL=000F   082   0 000 082   DS 0CL130     Group
+    390       3  UDF-DBINFO-ALEN . . . . . . . . . . . . . BLL=000F   082   0 000 082   DS 2C         Binary
+    391       3  UDF-DBINFO-AUTH . . . . . . . . . . . . . BLL=000F   084   0 000 084   DS 128C       Display
+    393     2  UDF-DBINFO-CCSID. . . . . . . . . . . . . . BLL=000F   104   0 000 104   DS 48C        Display
+    394     2  UDF-DBINFO-CCSID-REDEFINE . . . . . . . . . BLL=000F   104   0 000 104   DS 0CL48      Group           R
+    395       3  UDF-DBINFO-ESBCS. . . . . . . . . . . . . BLL=000F   104   0 000 104   DS 4C         Binary
+    396       3  UDF-DBINFO-EMIXED . . . . . . . . . . . . BLL=000F   108   0 000 108   DS 4C         Binary
+    397       3  UDF-DBINFO-EDBCS. . . . . . . . . . . . . BLL=000F   10C   0 000 10C   DS 4C         Binary
+    398       3  UDF-DBINFO-ASBCS. . . . . . . . . . . . . BLL=000F   110   0 000 110   DS 4C         Binary
+    399       3  UDF-DBINFO-AMIXED . . . . . . . . . . . . BLL=000F   114   0 000 114   DS 4C         Binary
+    400       3  UDF-DBINFO-ADBCS. . . . . . . . . . . . . BLL=000F   118   0 000 118   DS 4C         Binary
+    401       3  UDF-DBINFO-ENCODE . . . . . . . . . . . . BLL=000F   11C   0 000 11C   DS 4C         Binary
+    402       3  UDF-DBINFO-RESERV0. . . . . . . . . . . . BLL=000F   120   0 000 120   DS 20C        Display
+    404     2  UDF-DBINFO-SCHEMA0. . . . . . . . . . . . . BLL=000F   134   0 000 134   DS 0CL130     Group
+    405       3  UDF-DBINFO-SLEN . . . . . . . . . . . . . BLL=000F   134   0 000 134   DS 2C         Binary
+    406       3  UDF-DBINFO-SCHEMA . . . . . . . . . . . . BLL=000F   136   0 000 136   DS 128C       Display
+    408     2  UDF-DBINFO-TABLE0 . . . . . . . . . . . . . BLL=000F   1B6   0 000 1B6   DS 0CL130     Group
+    409       3  UDF-DBINFO-TLEN . . . . . . . . . . . . . BLL=000F   1B6   0 000 1B6   DS 2C         Binary
+    410       3  UDF-DBINFO-TABLE. . . . . . . . . . . . . BLL=000F   1B8   0 000 1B8   DS 128C       Display
+    412     2  UDF-DBINFO-COLUMN0. . . . . . . . . . . . . BLL=000F   238   0 000 238   DS 0CL130     Group
+    413       3  UDF-DBINFO-CLEN . . . . . . . . . . . . . BLL=000F   238   0 000 238   DS 2C         Binary
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    24
+0Source   Hierarchy and                                    Base       Hex-Displacement  Asmblr Data                  Data Def
+ LineID   Data Name                                        Locator    Blk   Structure   Definition    Data Type      Attributes
+    414       3  UDF-DBINFO-COLUMN . . . . . . . . . . . . BLL=000F   23A   0 000 23A   DS 128C       Display
+    416     2  UDF-DBINFO-VERREL . . . . . . . . . . . . . BLL=000F   2BA   0 000 2BA   DS 8C         Display
+    418     2  FILLER. . . . . . . . . . . . . . . . . . . BLL=000F   2C2   0 000 2C2   DS 2C         Display
+    420     2  UDF-DBINFO-PLATFORM . . . . . . . . . . . . BLL=000F   2C4   0 000 2C4   DS 4C         Binary
+    422     2  UDF-DBINFO-NUMTFCOL . . . . . . . . . . . . BLL=000F   2C8   0 000 2C8   DS 2C         Binary
+    424     2  UDF-DBINFO-RESERV1. . . . . . . . . . . . . BLL=000F   2CA   0 000 2CA   DS 24C        Display
+    426     2  FILLER. . . . . . . . . . . . . . . . . . . BLL=000F   2E2   0 000 2E2   DS 2C         Display
+    428     2  UDF-DBINFO-TFCOLUMN . . . . . . . . . . . . BLL=000F   2E4   0 000 2E4   DS 4C         Binary
+    430     2  UDF-DBINFO-APPLID . . . . . . . . . . . . . BLL=000F   2E8   0 000 2E8   DS 4C         Binary
+    432     2  UDF-DBINFO-RESERV2. . . . . . . . . . . . . BLL=000F   2EC   0 000 2EC   DS 20C        Display
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    25
+0    000000           UDFPGM01       DS   0H                      PROGRAM: UDFPGM01
+                                     USING *,15
+     000000  47F0 F028               B    40(,15)                 BYPASS CONSTANTS. BRANCH TO @STM
+     000004  00                      DC   AL1(0)                  ZERO NAME LENGTH FOR DUMPS
+     000005  C3C5C5                  DC   CL3'CEE'                CEE EYE CATCHER
+     000008  000000D8                DC   X'000000D8'             STACK FRAME SIZE
+     00000C  00000014                DC   A(@PPA1-UDFPGM01)       OFFSET TO PPA1 FROM PRIMARY ENTRY
+     000010  47F0 F001               B    1(,15)                  RESERVED
+     000014                 @PPA1    DS   0H                      PPA1 STARTS HERE
+     000014  98                      DC   X'98'                   OFFSET TO LENGTH OF NAME FROM PPA1
+     000015  CE                      DC   X'CE'                   CEL SIGNATURE
+     000016  AC                      DC   X'AC'                   CEL FLAGS: '10101100'B
+     000017  00                      DC   X'00'                   MEMBER FLAGS FOR COBOL
+     000018  000000B6                DC   A(@PPA2)                ADDRESS OF PPA2
+     00001C  00000000                DC   F'0'                    OFFSET TO THE BDI (NONE)
+     000020  00000000                DC   F'0'                    ADDRESS OF ENTRY POINT DESCRIPTORS
+     000024  00000000                DC   F'0'                    OFFSET FOR STACK OVERFLOW RETURN
+     000028                 @STM     DS   0H                      STM STARTS HERE
+     000028  90EC D00C               STM  14,12,12(13)    @STM:   SAVE CALLER'S REGISTERS
+     00002C  4110 F038               LA   1,56(,15)               GET ADDRESS OF PARMLIST INTO R1
+     000030  98EF F04C               LM   14,15,76(15)            LOAD ADDRESSES FROM @BRVAL
+     000034  07FF                    BR   15                      DO ANY NECESSARY INITIALIZATION
+     000036  0000                    DC   AL2'0'                  AVAILABLE HALF-WORD
+     000038                 @MAINENT DS   0H                      PRIMARY ENTRY POINT ADDRESS
+     000038  00000000                DC   A(UDFPGM01)     @PARMS: 1) PRIMARY ENTRY POINT ADDRESS
+     00003C  00000000                DC   AL4'0'                  2) Available
+     000040  00000828                DC   A(DAB)                  3) DAB ADDRESS
+     000044  000000AE                DC   A(@EPNAM)               4) ENTRY POINT NAME ADDRESS
+     000048  00000000                DC   A(UDFPGM01)             5) CURRENT ENTRY POINT ADDRESS
+     00004C  0000023C                DC   A(START)        @BRVAL: 6) PROCEDURE CODE ADDRESS
+     000050  00000000                DC   V(IGZCBSO)              7) INITIALIZATION ROUTINE
+     000054  000000CA                DC   A(@CEEPARM)             8) ADDRESS OF PARM LIST FOR CEEINT
+     000058  00104001                DC   X'00104001'             DSA WORD 0 CONSTANT
+     00005C  00000000                DC   AL4'0'                  AVAILABLE WORD
+     000060  00000000                DC   AL4'0'                  AVAILABLE WORD
+     000064  00000000                DC   AL4'0'                  AVAILABLE WORD
+     000068  F2F0F0F0                DC   CL4'2000'     @TIMEVRS: YEAR OF COMPILATION
+     00006C  F0F8F2F4                DC   CL4'0824'               MONTH/DAY OF COMPILATION
+     000070  F1F4F2F8                DC   CL4'1428'               HOURS/MINUTES OF COMPILATION
+     000074  F0F9                    DC   CL2'09'                 SECONDS FOR COMPILATION DATE
+     000076  F0F2F0F1F0F1            DC   CL6'020101'             VERSION/RELEASE/MOD LEVEL OF PROD
+     00007C  00000000                DC   AL4'0'                  AVAILABLE WORD
+     000080  0000                    DC   X'0000'                 INFO. BYTES 28-29
+     000082  076C                    DC   X'076C'                 SIGNED BINARY YEARWINDOW OPTION VALUE
+     000084  62EA6D0C9000            DC   X'62EA6D0C9000'         INFO. BYTES 1-6
+     00008A  000010080B09            DC   X'000010080B09'         INFO. BYTES 7-12
+     000090  002020000000            DC   X'002020000000'         INFO. BYTES 13-18
+     000096  0000008004              DC   X'0000008004'           INFO. BYTES 19-23
+     00009B  00                      DC   X'00'                   COBOL SIGNATURE LEVEL
+     00009C  000000DF                DC   X'000000DF'             # DATA DIVISION STATEMENTS
+     0000A0  0000001D                DC   X'0000001D'             # PROCEDURE DIVISION STATEMENTS
+     0000A4  000080                  DC   X'000080'               INFO. BYTES 24-26
+     0000A7  00                      DC   X'00'                   INFO. BYTE 27
+     0000A8  40404040                DC   C'    '                 USER LEVEL INFO (LVLINFO)
+     0000AC  0008                    DC   X'0008'                 LENGTH OF PROGRAM NAME
+     0000AE                 @EPNAM   DS   0H                      ENTRY POINT NAME
+     0000AE  E4C4C6D7C7D4F0F1        DC   C'UDFPGM01'             PROGRAM NAME
+     0000B6                 @PPA2    DS   0H                      PPA2 STARTS HERE
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    26
+0    0000B6  05                      DC   X'05'                   CEL MEMBER IDENTIFIER
+     0000B7  00                      DC   X'00'                   CEL MEMBER SUB-IDENTIFIER
+     0000B8  00                      DC   X'00'                   CEL MEMBER DEFINED BYTE
+     0000B9  01                      DC   X'01'                   CONTROL LEVEL OF PROLOG
+     0000BA  00000000                DC   V(CEESTART)             VCON FOR LOAD MODULE
+     0000BE  00000000                DC   F'0'                    OFFSET TO THE CDI (NONE)
+     0000C2  FFFFFFB2                DC   A(@TIMEVRS-@PPA2)       OFFSET TO TIMESTAMP/VERSION INFO
+     0000C6  00000000                DC   A(UDFPGM01)             ADDRESS OF CU PRIMARY ENTRY POINT
+     0000CA                 @CEEPARM DS   0H                      PARM LIST FOR CEEINT
+     0000CA  00000038                DC   A(@MAINENT)             POINTER TO PRIMARY ENTRY PT ADDR
+     0000CE  00000008                DC   A(@PARMCEE-@CEEPARM)    OFFSET TO PARAMETERS FOR CEEINT
+     0000D2                 @PARMCEE DS   0H                      PARAMETERS FOR CEEINT
+     0000D2  00000006                DC   F'6'                    1) NUMBER OF ENTRIES IN PARM LIST
+     0000D6  00000038                DC   A(@MAINENT)             2) POINTER TO PRIMARY ENTRY PT ADDR
+     0000DA  00000000                DC   V(CEESTART)             3) ADDRESS OF CEESTART
+     0000DE  00000000                DC   V(CEEBETBL)             4) ADDRESS OF CEEBETBL
+     0000E2  00000005                DC   F'5'                    5) CEL MEMBER IDENTIFIER
+     0000E6  00000000                DC   F'0'                    6) FOR CEL MEMBER USE
+     0000EA  00000000                DC   AL4'0'                  AVAILABLE WORD
+     0000EE  00000000                DC   AL4'0'                  AVAILABLE WORD
+     0000F2  00000000                DC   AL4'0'                  AVAILABLE WORD
+     0000F6  00000000                DC   AL4'0'                  AVAILABLE WORD
+     0000FA  0000                    DC   AL2'0'                  AVAILABLE HALF-WORD
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    27
+0PROGRAM GLOBAL TABLE BEGINS AT LOCATION 0000FC FOR 00002C BYTES
+ THE PGT CONTAINS 000001 CELL(S) FOR ADDRESSABILITY TO THE CGT
+ PBL1    AT LOCATION 00034A FOR LINE 59
+0
+ LITERAL POOL MAP FOR SYSTEM LITERALS IN THE PGT:
+ 0000FC  (LIT+0)      00000001 40404040 40404040 40404040 40404040 40404040 40404040 40404040  ³....                            ³
+ 00011C  (LIT+32)     40                                                                       ³                                ³
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    28
+0CONSTANT GLOBAL TABLE BEGINS AT LOCATION 000128 FOR 000113 BYTES
+ LITERAL POOL MAP FOR LITERALS IN THE CGT:
+
+ 00013C  (LIT+0)      FFFFFFFC 00001000 00000001 0064E6C8 C1E340E3 D640C4D6 E4C4C6D7 C7D4F0F1  ³..............WHAT TO DOUDFPGM01³
+ 00015C  (LIT+32)     00000000 00000128 00000001 0000012C 00000010 00000000 00000000 00000000  ³................................³
+ 00017C  (LIT+64)     00000000 00000000 00000000 00000000 80000000 40000000 00000000 00000000  ³.................... ...........³
+ 00019C  (LIT+96)     80000000 00000000 00000000 E2E8E2D6 E4E34040 C9C7E9E2 D9E3C3C4 E2D8D3C4  ³............SYSOUT  IGZSRTCDSQLD³
+ 0001BC  (LIT+128)    C1404040 E4C4C6D7 C7D4F0F2 F0F2F0F0 F0002800 00000000 94002804 00000000  ³A   UDFPGM0202000.......m.......³
+ 0001DC  (LIT+160)    3C03C906 BE169159 03002840 00000501 6F002D00 0A000401 63001E00 0601C400  ³..I...j.... ....?.............D.³
+ 0001FC  (LIT+192)    03015E00 32400000 000025C0 0001C000 08080000 24002C01 4000000A 08000024  ³..... .................. .......³
+ 00021C  (LIT+224)    0022FF40 00000000 40C00001 40000808 00002400 2C02C000 08080000 24002C    ³... .... ... .................. ³
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    29
+0    00023C                 START    EQU  *                       UDFPGM01
+     00023C  183F                    LR   3,15
+     00023E  4100 10D8               LA   0,216(0,1)
+     000242  5500 C00C               CL   0,12(0,12)
+     000246  05F0                    BALR 15,0
+     000248  47D0 F00C               BC   13,12(0,15)
+     00024C  58F0 C300               L    15,768(0,12)
+     000250  05EF                    BALR 14,15
+     000252  181F                    LR   1,15
+     000254  50D0 1004               ST   13,4(0,1)
+     000258  5000 104C               ST   0,76(0,1)
+     00025C  D203 1000 3058          MVC  0(4,1),88(3)
+     000262  18D1                    LR   13,1
+     000264  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     000268  1812                    LR   1,2
+     00026A  50D0 D058               ST   13,88(0,13)
+     00026E  5090 D05C               ST   9,92(0,13)
+     000272  58A0 C024               L    10,36(0,12)             CBL=1
+     000276  5820 1000               L    2,0(0,1)
+     00027A  4120 2000               LA   2,0(0,2)
+     00027E  5020 9130               ST   2,304(0,9)              BLL=1
+     000282  5820 1004               L    2,4(0,1)
+     000286  4120 2000               LA   2,0(0,2)
+     00028A  5020 9134               ST   2,308(0,9)              BLL=2
+     00028E  5820 1008               L    2,8(0,1)
+     000292  4120 2000               LA   2,0(0,2)
+     000296  5020 9138               ST   2,312(0,9)              BLL=3
+     00029A  5820 100C               L    2,12(0,1)
+     00029E  4120 2000               LA   2,0(0,2)
+     0002A2  5020 913C               ST   2,316(0,9)              BLL=4
+     0002A6  5820 1010               L    2,16(0,1)
+     0002AA  4120 2000               LA   2,0(0,2)
+     0002AE  5020 9140               ST   2,320(0,9)              BLL=5
+     0002B2  5820 1014               L    2,20(0,1)
+     0002B6  4120 2000               LA   2,0(0,2)
+     0002BA  5020 9144               ST   2,324(0,9)              BLL=6
+     0002BE  5820 1018               L    2,24(0,1)
+     0002C2  4120 2000               LA   2,0(0,2)
+     0002C6  5020 9148               ST   2,328(0,9)              BLL=7
+     0002CA  5820 101C               L    2,28(0,1)
+     0002CE  4120 2000               LA   2,0(0,2)
+     0002D2  5020 914C               ST   2,332(0,9)              BLL=8
+     0002D6  5820 1020               L    2,32(0,1)
+     0002DA  4120 2000               LA   2,0(0,2)
+     0002DE  5020 9150               ST   2,336(0,9)              BLL=9
+     0002E2  5820 1024               L    2,36(0,1)
+     0002E6  4120 2000               LA   2,0(0,2)
+     0002EA  5020 9154               ST   2,340(0,9)              BLL=10
+     0002EE  5820 1028               L    2,40(0,1)
+     0002F2  4120 2000               LA   2,0(0,2)
+     0002F6  5020 9158               ST   2,344(0,9)              BLL=11
+     0002FA  5820 102C               L    2,44(0,1)
+     0002FE  4120 2000               LA   2,0(0,2)
+     000302  5020 915C               ST   2,348(0,9)              BLL=12
+     000306  5820 1030               L    2,48(0,1)
+     00030A  4120 2000               LA   2,0(0,2)
+     00030E  5020 9160               ST   2,352(0,9)              BLL=13
+     000312  5820 1034               L    2,52(0,1)
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    30
+0    000316  4120 2000               LA   2,0(0,2)
+     00031A  5020 9164               ST   2,356(0,9)              BLL=14
+     00031E  5820 1038               L    2,56(0,1)
+     000322  4120 2000               LA   2,0(0,2)
+     000326  5020 9168               ST   2,360(0,9)              BLL=15
+     00032A  D203 90EC A01C          MVC  236(4,9),28(10)         TGTFIXD+236                       PGMLIT AT +8
+     000330  BF2F 91AC               ICM  2,15,428(9)             IPCB=1+16
+     000334  58B0 C028               L    11,40(0,12)             PBL=1
+     000338  4780 B000               BC   8,0(0,11)               GN=19(00034A)
+     00033C  5830 905C               L    3,92(0,9)               TGTFIXD+92
+     000340  58F0 30F4               L    15,244(0,3)             V(IGZCMSG )
+     000344  4110 A0F7               LA   1,247(0,10)             PGMLIT AT +227
+     000348  05EF                    BALR 14,15
+     00034A                 GN=19    EQU  *
+     00034A  5A20 C000               A    2,0(0,12)               SYSLIT AT +0
+     00034E  5020 91AC               ST   2,428(0,9)              IPCB=1+16
+     000352  9140 919C               TM   412(9),X'40'            IPCB=1
+     000356  4710 B156               BC   1,342(0,11)             GN=20(0004A0)
+     00035A  4120 0000               LA   2,0(0,0)
+     00035E  5830 9128               L    3,296(0,9)              BLW=0
+     000362  5020 3300               ST   2,768(0,3)              (BLW=0)+768
+     000366  4020 3308               STH  2,776(0,3)              (BLW=0)+776
+     00036A  D203 3310 A0BD          MVC  784(4,3),189(10)        (BLW=0)+784                       PGMLIT AT +169
+     000370  D201 3314 A0D7          MVC  788(2,3),215(10)        (BLW=0)+788                       PGMLIT AT +195
+     000376  D207 3316 A098          MVC  790(8,3),152(10)        (BLW=0)+790                       PGMLIT AT +132
+     00037C  5840 A0B9               L    4,185(0,10)             PGMLIT AT +165
+     000380  5040 331E               ST   4,798(0,3)              (BLW=0)+798
+     000384  5850 A0B5               L    5,181(0,10)             PGMLIT AT +161
+     000388  5050 3322               ST   5,802(0,3)              (BLW=0)+802
+     00038C  4160 0001               LA   6,1(0,0)
+     000390  4060 3326               STH  6,806(0,3)              (BLW=0)+806
+     000394  5020 332C               ST   2,812(0,3)              (BLW=0)+812
+     000398  5020 3330               ST   2,816(0,3)              (BLW=0)+816
+     00039C  D201 3334 A0D5          MVC  820(2,3),213(10)        (BLW=0)+820                       PGMLIT AT +193
+     0003A2  D201 3336 A0D3          MVC  822(2,3),211(10)        (BLW=0)+822                       PGMLIT AT +191
+     0003A8  D207 3338 A090          MVC  824(8,3),144(10)        (BLW=0)+824                       PGMLIT AT +124
+     0003AE  D203 3340 A0B1          MVC  832(4,3),177(10)        (BLW=0)+832                       PGMLIT AT +157
+     0003B4  4060 3344               STH  6,836(0,3)              (BLW=0)+836
+     0003B8  4060 3346               STH  6,838(0,3)              (BLW=0)+838
+     0003BC  D201 3348 A0D1          MVC  840(2,3),209(10)        (BLW=0)+840                       PGMLIT AT +189
+     0003C2  D201 334A A0CF          MVC  842(2,3),207(10)        (BLW=0)+842                       PGMLIT AT +187
+     0003C8  4020 3354               STH  2,852(0,3)              (BLW=0)+852
+     0003CC  9240 3356               MVI  854(3),X'40'            SQL-PVAR-NAMEC1
+     0003D0  D21C 3357 C004          MVC  855(29,3),4(12)         SQL-PVAR-NAMEC1+1                 SYSLIT AT +4
+     0003D6  D203 3378 A0AD          MVC  888(4,3),173(10)        (BLW=0)+888                       PGMLIT AT +153
+     0003DC  D201 337C A0CD          MVC  892(2,3),205(10)        (BLW=0)+892                       PGMLIT AT +185
+     0003E2  D207 337E A098          MVC  894(8,3),152(10)        (BLW=0)+894                       PGMLIT AT +132
+     0003E8  5040 3386               ST   4,902(0,3)              (BLW=0)+902
+     0003EC  5050 338A               ST   5,906(0,3)              (BLW=0)+906
+     0003F0  4060 338E               STH  6,910(0,3)              (BLW=0)+910
+     0003F4  5020 3394               ST   2,916(0,3)              (BLW=0)+916
+     0003F8  5020 3398               ST   2,920(0,3)              (BLW=0)+920
+     0003FC  D201 339C A0CB          MVC  924(2,3),203(10)        (BLW=0)+924                       PGMLIT AT +183
+     000402  D201 339E A0C9          MVC  926(2,3),201(10)        (BLW=0)+926                       PGMLIT AT +181
+     000408  D207 33A0 A090          MVC  928(8,3),144(10)        (BLW=0)+928                       PGMLIT AT +124
+     00040E  D203 33A8 A0A9          MVC  936(4,3),169(10)        (BLW=0)+936                       PGMLIT AT +149
+     000414  D201 33AC A0D3          MVC  940(2,3),211(10)        (BLW=0)+940                       PGMLIT AT +191
+     00041A  D201 33AE A0D3          MVC  942(2,3),211(10)        (BLW=0)+942                       PGMLIT AT +191
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    31
+0    000420  D201 33B0 A0D1          MVC  944(2,3),209(10)        (BLW=0)+944                       PGMLIT AT +189
+     000426  D201 33B2 A0CF          MVC  946(2,3),207(10)        (BLW=0)+946                       PGMLIT AT +187
+     00042C  4020 33BC               STH  2,956(0,3)              (BLW=0)+956
+     000430  9240 33BE               MVI  958(3),X'40'            SQL-AVAR-NAMEC1
+     000434  D21C 33BF C004          MVC  959(29,3),4(12)         SQL-AVAR-NAMEC1+1                 SYSLIT AT +4
+     00043A  D201 33DC A0D1          MVC  988(2,3),209(10)        (BLW=0)+988                       PGMLIT AT +189
+     000440  D201 33DE A0C7          MVC  990(2,3),199(10)        (BLW=0)+990                       PGMLIT AT +179
+     000446  4020 33E8               STH  2,1000(0,3)             (BLW=0)+1000
+     00044A  9240 33EA               MVI  1002(3),X'40'           SQL-AVAR-NAMEC2
+     00044E  D21C 33EB C004          MVC  1003(29,3),4(12)        SQL-AVAR-NAMEC2+1                 SYSLIT AT +4
+     000454  D201 3408 A0D1          MVC  1032(2,3),209(10)       (BLW=0)+1032                      PGMLIT AT +189
+     00045A  D201 340A A0C7          MVC  1034(2,3),199(10)       (BLW=0)+1034                      PGMLIT AT +179
+     000460  4020 3414               STH  2,1044(0,3)             (BLW=0)+1044
+     000464  9240 3416               MVI  1046(3),X'40'           SQL-AVAR-NAMEC3
+     000468  D21C 3417 C004          MVC  1047(29,3),4(12)        SQL-AVAR-NAMEC3+1                 SYSLIT AT +4
+     00046E  D203 3438 A0A5          MVC  1080(4,3),165(10)       (BLW=0)+1080                      PGMLIT AT +145
+     000474  D201 343C A0C5          MVC  1084(2,3),197(10)       (BLW=0)+1084                      PGMLIT AT +177
+     00047A  D207 343E A098          MVC  1086(8,3),152(10)       (BLW=0)+1086                      PGMLIT AT +132
+     000480  5040 3446               ST   4,1094(0,3)             (BLW=0)+1094
+     000484  5050 344A               ST   5,1098(0,3)             (BLW=0)+1098
+     000488  4060 344E               STH  6,1102(0,3)             (BLW=0)+1102
+     00048C  5020 3454               ST   2,1108(0,3)             (BLW=0)+1108
+     000490  5020 3458               ST   2,1112(0,3)             (BLW=0)+1112
+     000494  D201 345C A0C3          MVC  1116(2,3),195(10)       (BLW=0)+1116                      PGMLIT AT +175
+     00049A  D201 345E A0C1          MVC  1118(2,3),193(10)       (BLW=0)+1118                      PGMLIT AT +173
+     0004A0                 GN=20    EQU  *
+     0004A0  9140 919C               TM   412(9),X'40'            IPCB=1
+     0004A4  4710 B192               BC   1,402(0,11)             GN=22(0004DC)
+     0004A8  4120 0000               LA   2,0(0,0)
+     0004AC  5830 9124               L    3,292(0,9)              BL=1
+     0004B0  4020 3000               STH  2,0(0,3)                (BL=1)+0
+     0004B4  4020 3008               STH  2,8(0,3)                (BL=1)+8
+     0004B8  D207 3010 A088          MVC  16(8,3),136(10)         (BL=1)+16                         PGMLIT AT +116
+     0004BE  5020 3018               ST   2,24(0,3)               (BL=1)+24
+     0004C2  5020 3020               ST   2,32(0,3)               (BL=1)+32
+     0004C6  5020 3028               ST   2,40(0,3)               (BL=1)+40
+     0004CA  D207 3030 A080          MVC  48(8,3),128(10)         (BL=1)+48                         PGMLIT AT +108
+     0004D0  5020 3038               ST   2,56(0,3)               (BL=1)+56
+     0004D4  920E 3040               MVI  64(3),X'0E'             (BL=1)+64
+     0004D8  920F 3048               MVI  72(3),X'0F'             (BL=1)+72
+     0004DC                 GN=22    EQU  *
+     0004DC  D203 D0AC A010          MVC  172(4,13),16(10)        PVN=3                             PVNI=3
+     0004E2  9640 919C               OI   412(9),X'40'            IPCB=1
+ 000441  *DSNSQL
+ 000442  *SQL-SKIP
+ 000443  GO
+ 000488  IF
+     0004E6  5830 9164               L    3,356(0,9)              BLL=14
+     0004EA  5820 3000               L    2,0(0,3)                UDF-CALL-TYPE
+     0004EE  4920 A018               CH   2,24(0,10)              PGMLIT AT +4
+     0004F2  4770 B404               BC   7,1028(0,11)            GN=9(00074E)
+ 000495  PERFORM
+     0004F6  4140 B1B4               LA   4,436(0,11)             GN=17(0004FE)
+     0004FA  5040 D0AC               ST   4,172(0,13)             PVN=3
+     0004FE                 GN=17    EQU  *
+     0004FE  5820 9128               L    2,296(0,9)              BLW=0
+     000502  D501 2308 A01E          CLC  776(2,2),30(10)         SQL-INIT-FLAG                     PGMLIT AT +10
+     000508  58B0 C028               L    11,40(0,12)             PBL=1
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    32
+0    00050C  4770 B222               BC   7,546(0,11)             SQL-INITIAL
+ 000496  CALL
+     000510  4130 2378               LA   3,888(0,2)              SQL-PLIST5
+     000514  5030 D0C8               ST   3,200(0,13)             TS2=0
+     000518  9680 D0C8               OI   200(13),X'80'           TS2=0
+     00051C  4110 D0C8               LA   1,200(0,13)             TS2=0
+     000520  58F0 A004               L    15,4(0,10)              V(DSNHLI  )
+     000524  4100 9170               LA   0,368(0,9)              CLLE@=2
+     000528  58C0 9080               L    12,128(0,9)             TGTFIXD+128
+     00052C  05EF                    BALR 14,15
+     00052E  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     000532  5830 9124               L    3,292(0,9)              BL=1
+     000536  40F0 3000               STH  15,0(0,3)               RETURN-CODE
+ 000497  IF
+     00053A  5840 200C               L    4,12(0,2)               SQLCODE
+     00053E  4940 A020               CH   4,32(0,10)              PGMLIT AT +12
+     000542  4770 B482               BC   7,1154(0,11)            GN=11(0007CC)
+ 000498  MOVE
+     000546  D204 2083 A0A0          MVC  131(5,2),160(10)        (BLW=0)+131                       PGMLIT AT +140
+ 000500  MOVE
+     00054C  4140 0000               LA   4,0(0,0)
+     000550  5850 9144               L    5,324(0,9)              BLL=6
+     000554  4040 5000               STH  4,0(0,5)                (BLL=6)+0
+     000558  5860 9148               L    6,328(0,9)              BLL=7
+     00055C  4040 6000               STH  4,0(0,6)                (BLL=7)+0
+     000560  5870 914C               L    7,332(0,9)              BLL=8
+     000564  4040 7000               STH  4,0(0,7)                (BLL=8)+0
+     000568  47F0 B482               BC   15,1154(0,11)           GN=11(0007CC)
+ 000444  *SQL-INITIAL
+ 000445  MOVE
+     00056C  5820 9128               L    2,296(0,9)              BLW=0
+     000570  D201 2308 A039          MVC  776(2,2),57(10)         (BLW=0)+776                       PGMLIT AT +37
+ 000446  CALL
+     000576  4130 232C               LA   3,812(0,2)              SQL-VPARMPTR
+     00057A  5030 D0C8               ST   3,200(0,13)             TS2=0
+     00057E  4130 2338               LA   3,824(0,2)              SQL-PVAR-LIST4
+     000582  5030 D0CC               ST   3,204(0,13)             TS2=4
+     000586  9680 D0CC               OI   204(13),X'80'           TS2=4
+     00058A  4110 D0C8               LA   1,200(0,13)             TS2=0
+     00058E  58F0 A000               L    15,0(0,10)              V(DSNHADDR)
+     000592  4100 916C               LA   0,364(0,9)              CLLE@=1
+     000596  58C0 9080               L    12,128(0,9)             TGTFIXD+128
+     00059A  05EF                    BALR 14,15
+     00059C  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     0005A0  5830 9124               L    3,292(0,9)              BL=1
+     0005A4  40F0 3000               STH  15,0(0,3)               RETURN-CODE
+ 000448  CALL
+     0005A8  4140 234C               LA   4,844(0,2)              SQL-PVAR-ADDRS1
+     0005AC  5040 D0C8               ST   4,200(0,13)             TS2=0
+     0005B0  5850 9130               L    5,304(0,9)              BLL=1
+     0005B4  4140 5000               LA   4,0(0,5)                PROJNO
+     0005B8  5040 D0CC               ST   4,204(0,13)             TS2=4
+     0005BC  4140 2300               LA   4,768(0,2)              SQL-NULL
+     0005C0  5040 D0D0               ST   4,208(0,13)             TS2=8
+     0005C4  9680 D0D0               OI   208(13),X'80'           TS2=8
+     0005C8  4110 D0C8               LA   1,200(0,13)             TS2=0
+     0005CC  58F0 A000               L    15,0(0,10)              V(DSNHADDR)
+     0005D0  4100 916C               LA   0,364(0,9)              CLLE@=1
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    33
+0    0005D4  58C0 9080               L    12,128(0,9)             TGTFIXD+128
+     0005D8  05EF                    BALR 14,15
+     0005DA  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     0005DE  40F0 3000               STH  15,0(0,3)               RETURN-CODE
+ 000450  CALL
+     0005E2  4140 2328               LA   4,808(0,2)              SQL-CODEPTR
+     0005E6  5040 D0C8               ST   4,200(0,13)             TS2=0
+     0005EA  4140 2000               LA   4,0(0,2)                SQLCA
+     0005EE  5040 D0CC               ST   4,204(0,13)             TS2=4
+     0005F2  9680 D0CC               OI   204(13),X'80'           TS2=4
+     0005F6  4110 D0C8               LA   1,200(0,13)             TS2=0
+     0005FA  58F0 A000               L    15,0(0,10)              V(DSNHADDR)
+     0005FE  4100 916C               LA   0,364(0,9)              CLLE@=1
+     000602  58C0 9080               L    12,128(0,9)             TGTFIXD+128
+     000606  05EF                    BALR 14,15
+     000608  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     00060C  40F0 3000               STH  15,0(0,3)               RETURN-CODE
+ 000451  CALL
+     000610  4140 2398               LA   4,920(0,2)              SQL-APARMPTR*
+     000614  5040 D0C8               ST   4,200(0,13)             TS2=0
+     000618  4140 23A0               LA   4,928(0,2)              SQL-AVAR-LIST5
+     00061C  5040 D0CC               ST   4,204(0,13)             TS2=4
+     000620  9680 D0CC               OI   204(13),X'80'           TS2=4
+     000624  4110 D0C8               LA   1,200(0,13)             TS2=0
+     000628  58F0 A000               L    15,0(0,10)              V(DSNHADDR)
+     00062C  4100 916C               LA   0,364(0,9)              CLLE@=1
+     000630  58C0 9080               L    12,128(0,9)             TGTFIXD+128
+     000634  05EF                    BALR 14,15
+     000636  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     00063A  40F0 3000               STH  15,0(0,3)               RETURN-CODE
+ 000453  CALL
+     00063E  4140 23B4               LA   4,948(0,2)              SQL-AVAR-ADDRS1
+     000642  5040 D0C8               ST   4,200(0,13)             TS2=0
+     000646  5860 9134               L    6,308(0,9)              BLL=2
+     00064A  4140 6000               LA   4,0(0,6)                EMPNO
+     00064E  5040 D0CC               ST   4,204(0,13)             TS2=4
+     000652  4140 2300               LA   4,768(0,2)              SQL-NULL
+     000656  5040 D0D0               ST   4,208(0,13)             TS2=8
+     00065A  9680 D0D0               OI   208(13),X'80'           TS2=8
+     00065E  4110 D0C8               LA   1,200(0,13)             TS2=0
+     000662  58F0 A000               L    15,0(0,10)              V(DSNHADDR)
+     000666  4100 916C               LA   0,364(0,9)              CLLE@=1
+     00066A  58C0 9080               L    12,128(0,9)             TGTFIXD+128
+     00066E  05EF                    BALR 14,15
+     000670  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     000674  40F0 3000               STH  15,0(0,3)               RETURN-CODE
+ 000455  CALL
+     000678  4140 23E0               LA   4,992(0,2)              SQL-AVAR-ADDRS2
+     00067C  5040 D0C8               ST   4,200(0,13)             TS2=0
+     000680  5870 9138               L    7,312(0,9)              BLL=3
+     000684  4140 7000               LA   4,0(0,7)                STARTDT
+     000688  5040 D0CC               ST   4,204(0,13)             TS2=4
+     00068C  4140 2300               LA   4,768(0,2)              SQL-NULL
+     000690  5040 D0D0               ST   4,208(0,13)             TS2=8
+     000694  9680 D0D0               OI   208(13),X'80'           TS2=8
+     000698  4110 D0C8               LA   1,200(0,13)             TS2=0
+     00069C  58F0 A000               L    15,0(0,10)              V(DSNHADDR)
+     0006A0  4100 916C               LA   0,364(0,9)              CLLE@=1
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    34
+0    0006A4  58C0 9080               L    12,128(0,9)             TGTFIXD+128
+     0006A8  05EF                    BALR 14,15
+     0006AA  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     0006AE  40F0 3000               STH  15,0(0,3)               RETURN-CODE
+ 000457  CALL
+     0006B2  4140 240C               LA   4,1036(0,2)             SQL-AVAR-ADDRS3
+     0006B6  5040 D0C8               ST   4,200(0,13)             TS2=0
+     0006BA  5880 913C               L    8,316(0,9)              BLL=4
+     0006BE  4140 8000               LA   4,0(0,8)                ENDDT
+     0006C2  5040 D0CC               ST   4,204(0,13)             TS2=4
+     0006C6  4140 2300               LA   4,768(0,2)              SQL-NULL
+     0006CA  5040 D0D0               ST   4,208(0,13)             TS2=8
+     0006CE  9680 D0D0               OI   208(13),X'80'           TS2=8
+     0006D2  4110 D0C8               LA   1,200(0,13)             TS2=0
+     0006D6  58F0 A000               L    15,0(0,10)              V(DSNHADDR)
+     0006DA  4100 916C               LA   0,364(0,9)              CLLE@=1
+     0006DE  58C0 9080               L    12,128(0,9)             TGTFIXD+128
+     0006E2  05EF                    BALR 14,15
+     0006E4  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     0006E8  40F0 3000               STH  15,0(0,3)               RETURN-CODE
+ 000459  CALL
+     0006EC  4140 2390               LA   4,912(0,2)              SQL-CODEPTR*
+     0006F0  5040 D0C8               ST   4,200(0,13)             TS2=0
+     0006F4  4140 2000               LA   4,0(0,2)                SQLCA
+     0006F8  5040 D0CC               ST   4,204(0,13)             TS2=4
+     0006FC  9680 D0CC               OI   204(13),X'80'           TS2=4
+     000700  4110 D0C8               LA   1,200(0,13)             TS2=0
+     000704  58F0 A000               L    15,0(0,10)              V(DSNHADDR)
+     000708  4100 916C               LA   0,364(0,9)              CLLE@=1
+     00070C  58C0 9080               L    12,128(0,9)             TGTFIXD+128
+     000710  05EF                    BALR 14,15
+     000712  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     000716  40F0 3000               STH  15,0(0,3)               RETURN-CODE
+ 000460  CALL
+     00071A  4140 2450               LA   4,1104(0,2)             SQL-CODEPTR*
+     00071E  5040 D0C8               ST   4,200(0,13)             TS2=0
+     000722  4140 2000               LA   4,0(0,2)                SQLCA
+     000726  5040 D0CC               ST   4,204(0,13)             TS2=4
+     00072A  9680 D0CC               OI   204(13),X'80'           TS2=4
+     00072E  4110 D0C8               LA   1,200(0,13)             TS2=0
+     000732  58F0 A000               L    15,0(0,10)              V(DSNHADDR)
+     000736  4100 916C               LA   0,364(0,9)              CLLE@=1
+     00073A  58C0 9080               L    12,128(0,9)             TGTFIXD+128
+     00073E  05EF                    BALR 14,15
+     000740  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     000744  40F0 3000               STH  15,0(0,3)               RETURN-CODE
+     000748  5840 D0AC               L    4,172(0,13)             PVN=3
+     00074C  07F4                    BCR  15,4
+     00074E                 GN=9     EQU  *
+ 000502  IF
+     00074E  4920 A01E               CH   2,30(0,10)              PGMLIT AT +10
+     000752  4770 B454               BC   7,1108(0,11)            GN=12(00079E)
+ 000507  PERFORM
+     000756  4120 B414               LA   2,1044(0,11)            GN=18(00075E)
+     00075A  5020 D0AC               ST   2,172(0,13)             PVN=3
+     00075E                 GN=18    EQU  *
+     00075E  5820 9128               L    2,296(0,9)              BLW=0
+     000762  D501 2308 A01E          CLC  776(2,2),30(10)         SQL-INIT-FLAG                     PGMLIT AT +10
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    35
+0    000768  58B0 C028               L    11,40(0,12)             PBL=1
+     00076C  4770 B222               BC   7,546(0,11)             SQL-INITIAL
+ 000508  CALL
+     000770  4130 2438               LA   3,1080(0,2)             SQL-PLIST6
+     000774  5030 D0C8               ST   3,200(0,13)             TS2=0
+     000778  9680 D0C8               OI   200(13),X'80'           TS2=0
+     00077C  4110 D0C8               LA   1,200(0,13)             TS2=0
+     000780  58F0 A004               L    15,4(0,10)              V(DSNHLI  )
+     000784  4100 9170               LA   0,368(0,9)              CLLE@=2
+     000788  58C0 9080               L    12,128(0,9)             TGTFIXD+128
+     00078C  05EF                    BALR 14,15
+     00078E  58C0 90E8               L    12,232(0,9)             TGTFIXD+232
+     000792  5830 9124               L    3,292(0,9)              BL=1
+     000796  40F0 3000               STH  15,0(0,3)               RETURN-CODE
+     00079A  47F0 B462               BC   15,1122(0,11)           GN=13(0007AC)
+     00079E                 GN=12    EQU  *
+ 000510  DISPLAY
+     00079E  5820 905C               L    2,92(0,9)               TGTFIXD+92
+     0007A2  58F0 202C               L    15,44(0,2)              V(IGZCDSP )
+     0007A6  4110 A0EB               LA   1,235(0,10)             PGMLIT AT +215
+     0007AA  05EF                    BALR 14,15
+     0007AC                 GN=13    EQU  *
+ 000515  STOP
+     0007AC  D20B D0C8 A074          MVC  200(12,13),116(10)      TS2=0                             PGMLIT AT +96
+     0007B2  5830 9124               L    3,292(0,9)              BL=1
+     0007B6  4820 3000               LH   2,0(0,3)                RETURN-CODE
+     0007BA  5020 D0D4               ST   2,212(0,13)             TS2=12
+     0007BE  4110 D0C8               LA   1,200(0,13)             TS2=0
+     0007C2  5820 905C               L    2,92(0,9)               TGTFIXD+92
+     0007C6  58F0 2224               L    15,548(0,2)             V(IGZETRM )
+     0007CA  05EF                    BALR 14,15
+     0007CC                 GN=11    EQU  *
+ 000517  *MAIN-PROC-EXIT
+ 000518  EXIT
+     0007CC  9120 9054               TM   84(9),X'20'             TGTFIXD+84
+     0007D0  47E0 B498               BC   14,1176(0,11)           GN=2(0007E2)
+     0007D4  5840 905C               L    4,92(0,9)               TGTFIXD+92
+     0007D8  58F0 40F4               L    15,244(0,4)             V(IGZCMSG )
+     0007DC  4110 A0D9               LA   1,217(0,10)             PGMLIT AT +197
+     0007E0  05EF                    BALR 14,15
+     0007E2                 GN=2     EQU  *
+     0007E2  5840 91AC               L    4,428(0,9)              IPCB=1+16
+     0007E6  5B40 C000               S    4,0(0,12)               SYSLIT AT +0
+     0007EA  5040 91AC               ST   4,428(0,9)              IPCB=1+16
+     0007EE  9128 9054               TM   84(9),X'28'             TGTFIXD+84
+     0007F2  4770 B4BE               BC   7,1214(0,11)            GN=24(000808)
+     0007F6  48F0 3000               LH   15,0(0,3)               RETURN-CODE
+     0007FA  58D0 D004               L    13,4(0,13)
+     0007FE  58E0 D00C               L    14,12(0,13)
+     000802  980C D014               LM   0,12,20(13)
+     000806  07FE                    BCR  15,14
+     000808                 GN=24    EQU  *
+     000808  D20B D0C8 A068          MVC  200(12,13),104(10)      TS2=0                             PGMLIT AT +84
+     00080E  4840 3000               LH   4,0(0,3)                RETURN-CODE
+     000812  5040 D0D4               ST   4,212(0,13)             TS2=12
+     000816  4110 D0C8               LA   1,200(0,13)             TS2=0
+     00081A  5840 905C               L    4,92(0,9)               TGTFIXD+92
+     00081E  58F0 4224               L    15,548(0,4)             V(IGZETRM )
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    36
+0    000822  05EF                    BALR 14,15
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    37
+0                   *** TGT MEMORY MAP ***
+                    TGTLOC
+
+                    000000  RESERVED - 72 BYTES
+                    000048  TGT IDENTIFIER
+                    00004C  RESERVED - 4 BYTES
+                    000050  TGT LEVEL INDICATOR
+                    000051  RESERVED - 3 SINGLE BYTE FIELDS
+                    000054  32 BIT SWITCH
+                    000058  POINTER TO RUNCOM
+                    00005C  POINTER TO COBVEC
+                    000060  POINTER TO PROGRAM DYNAMIC BLOCK TABLE
+                    000064  NUMBER OF FCB'S
+                    000068  WORKING-STORAGE LENGTH
+                    00006C  RESERVED - 4 BYTES
+                    000070  ADDRESS OF IGZESMG WORK AREA
+                    000074  ADDRESS OF 1ST GETMAIN BLOCK (SPACE MGR)
+                    000078  RESERVED - 2 BYTES
+                    00007A  RESERVED - 2 BYTES
+                    00007C  RESERVED - 2 BYTES
+                    00007E  MERGE FILE NUMBER
+                    000080  ADDRESS OF CEL COMMON ANCHOR AREA
+                    000084  LENGTH OF TGT
+                    000088  RESERVED - 1 SINGLE BYTE FIELD
+                    000089  PROGRAM MASK USED BY THIS PROGRAM
+                    00008A  RESERVED - 2 SINGLE BYTE FIELDS
+                    00008C  NUMBER OF SECONDARY FCB CELLS
+                    000090  LENGTH OF THE ALTER VN(VNI) VECTOR
+                    000094  COUNT OF NESTED PROGRAMS IN COMPILE UNIT
+                    000098  DDNAME FOR DISPLAY OUTPUT
+                    0000A0  RESERVED - 8 BYTES
+                    0000A8  POINTER TO COM-REG SPECIAL REGISTER
+                    0000AC  CALC ROUTINE REGISTER SAVE AREA
+                    0000E0  ALTERNATE COLLATING SEQUENCE TABLE PTR.
+                    0000E4  ADDRESS OF SORT G.N. ADDRESS BLOCK
+                    0000E8  ADDRESS OF PGT
+                    0000EC  CURRENT INTERNAL PROGRAM NUMBER
+                    0000F0  POINTER TO 1ST IPCB
+                    0000F4  ADDRESS OF THE CLLE FOR THIS PROGRAM
+                    0000F8  POINTER TO ABEND INFORMATION TABLE
+                    0000FC  POINTER TO TEST INFO FIELDS IN THE TGT
+                    000100  ADDRESS OF START OF COBOL PROGRAM
+                    000104  POINTER TO ALTER VNI'S IN CGT
+                    000108  POINTER TO ALTER VN'S IN TGT
+                    00010C  POINTER TO FIRST PBL IN THE PGT
+                    000110  POINTER TO FIRST FCB CELL
+                    000114  WORKING-STORAGE ADDRESS
+                    000118  POINTER TO FIRST SECONDARY FCB CELL
+                    00011C  POINTER TO STATIC CLASS INFO BLOCK
+
+                    *** VARIABLE PORTION OF TGT ***
+
+                    000120  BASE LOCATORS FOR SPECIAL REGISTERS
+                    000128  BASE LOCATORS FOR WORKING-STORAGE
+                    00012C  BASE LOCATORS FOR LINKAGE-SECTION
+                    00016C  CLLE ADDR. CELLS FOR CALL LIT. SUB-PGMS.
+                    00019C  INTERNAL PROGRAM CONTROL BLOCKS
+
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    38
+0                   *** DSA MEMORY MAP ***
+                    DSALOC
+
+                    000000  REGISTER SAVE AREA
+                    00004C  STACK NAB (NEXT AVAILABLE BYTE)
+                    000058  ADDRESS OF INLINE-CODE PRIMARY DSA
+                    00005C  ADDRESS OF TGT
+                    000080  PROCEDURE DIVISION RETURNING VALUE
+
+                    *** VARIABLE PORTION OF DSA ***
+
+                    000084  BACKSTORE CELLS FOR SYMBOLIC REGISTERS
+                    0000A4  VARIABLE NAME (VN) CELLS FOR PERFORM
+                    0000B0  PERFORM SAVE CELLS
+                    0000C8  TEMPORARY STORAGE-2
+0
+ TGT      WILL BE ALLOCATED FOR 000001B0 BYTES
+ SPEC-REG WILL BE ALLOCATED FOR 00000049 BYTES
+ WRK-STOR WILL BE ALLOCATED FOR 00000460 BYTES
+ DSA      WILL BE ALLOCATED FOR 000000D8 BYTES
+0CONSTANT GLOBAL TABLE FOR DYNAMIC STORAGE INITIALIZATION AT LOCATION 000858
+0INITD CODE FOR DYNAMIC STORAGE INITIALIZATION BEGINS AT LOCATION 0009F8 FOR LENGTH 000088
+1PP 5648-A25 IBM COBOL for OS/390 & VM  2.1.1                   UDFPGM01  Date 08/24/2000  Time 14:28:09   Page    39
+0LineID  Message code  Message text
+
+         IGYDS0139-W   Diagnostic messages were issued during processing of compiler options.  These messages are located at the
+                       beginning of the listing.
+
+     61  IGYDS1128-W   "DATE-WRITTEN" paragraph commentary was found in area "A".  Processed as if found in area "B".
+
+    435  IGYPS0001-W   A blank was missing before character "S" in column 39.  A blank was assumed.
+
+    435  IGYPS0001-W   A blank was missing before character "E" in column 47.  A blank was assumed.
+
+    437  IGYPS0001-W   A blank was missing before character "N" in column 41.  A blank was assumed.
+
+    437  IGYPS0001-W   A blank was missing before character "N" in column 51.  A blank was assumed.
+
+    468  IGYPG3173-W   The result of the comparison of operands UDF-CALL-TYPE and -2 is known at compile time, based on the
+                       attributes of the operands.  Unconditional code was generated.
+
+    469  IGYOP3091-W   Code from "MOVE (line 469.01)" to "MOVE (line 469.01)" can never be executed and was therefore discarded.
+
+    480  IGYPG3173-W   The result of the comparison of operands UDF-CALL-TYPE and -1 is known at compile time, based on the
+                       attributes of the operands.  Unconditional code was generated.
+
+    486  IGYOP3091-W   Code from "PERFORM (line 486.01)" to "CALL (line 487.01)" can never be executed and was therefore discarded.
+
+    500  IGYPS0001-W   A blank was missing before character "N" in column 38.  A blank was assumed.
+
+    500  IGYPS0001-W   A blank was missing before character "N" in column 48.  A blank was assumed.
+-Messages    Total    Informational    Warning    Error    Severe    Terminating
+0Printed:      14                         14
+-* Statistics for COBOL program UDFPGM01:
+ *    Source records = 519
+ *    Data Division statements = 223
+ *    Procedure Division statements = 29
+0End of compilation 1,  program UDFPGM01,  highest severity 4.
+0Return code 4
+
+
+

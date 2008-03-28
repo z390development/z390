@@ -245,7 +245,11 @@ public class pz390 {
      * 03/20/08 RPI 824 flush LB/LD/LH value before rplacing 2nd reg 
      *          and correct DDTR, DXTR, DXR, and DXBR
      *          to prevent null value stored in register cache  
-     * 03/21/08 RPI 822 fix trace for LGFR type instr. using case 148                                                                         
+     * 03/21/08 RPI 822 fix trace for LGFR type instr. using case 148 
+     * 03/27/08 RPI 827 add opt_init support  
+     * 03/27/08 RPI 828 fix TRT and EDMK to set high bit r1 = 0 in AMODE31  
+     * 03/27/08 RPI 831 fix SLR,SL, SLY, SLGR, SLG, SLGFR, SLGF
+     *          to set CC1 when 2 neg values & result neg.                                                                    
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -335,13 +339,10 @@ public class pz390 {
 
 	int psw_amode31 = 0x7fffffff;
 
-	int psw_amode24_high_bits = 0xff000000;
-
-	int psw_amode31_high_bit = 0x80000000;
-
 	int psw_amode = psw_amode31;
-
-	int psw_amode_high_bits = (-1) ^ psw_amode;
+	int psw_amode24_high_bits = 0xff000000;          // RPI 828
+	int psw_amode31_high_bits = 0;                   // RPI 828
+	int psw_amode_high_bits = psw_amode31_high_bits; // RPI 828
 
 	int psw_amode24_bit = 0;
 
@@ -3850,7 +3851,7 @@ public class pz390 {
 					} else {
 						psw_cc = psw_cc1;
 					}
-					reg.putInt(r1, (reg.getInt(r1 + 4) & psw_amode_high_bits)
+					reg.putInt(r1, (reg.getInt(r1) & psw_amode_high_bits) // RPI 828
 							| bd1_loc);
 					reg.put(r2 + 3, mem_byte[bd2_loc
 							+ (mem_byte[bd1_loc] & 0xff)]);
@@ -4107,7 +4108,7 @@ public class pz390 {
 					} else {
 						psw_cc = psw_cc1;
 					}
-					reg.putInt(r1, (reg.getInt(r1 + 4) & psw_amode_high_bits)
+					reg.putInt(r1, (reg.getInt(r1) & psw_amode_high_bits) // RPI 828
 							| bd1_loc);
 					reg.put(r2 + 3, mem_byte[bd2_loc
 							+ (mem_byte[bd1_loc] & 0xff)]);
@@ -11280,11 +11281,12 @@ public class pz390 {
 		if ((amode_bit & psw_amode31_bit) != 0) {
 			psw_amode = psw_amode31;
 			psw_amode_bit = psw_amode31_bit;
+			psw_amode_high_bits = psw_amode31_high_bits;
 		} else {
 			psw_amode = psw_amode24;
 			psw_amode_bit = psw_amode24_bit;
+			psw_amode_high_bits = psw_amode24_high_bits;
 		}
-		psw_amode_high_bits = (-1) ^ psw_amode;
 	}
 
 	public void set_psw_loc(int addr) {
@@ -11450,9 +11452,16 @@ public class pz390 {
 
 	private int get_int_log_sub_cc() {
 		/*
-		 * return cc for logical subtract as follows: rlv borrow 0 1 cc0 (slb
-		 * only) !0 1 cc1 0 0 cc2 !0 0 cc3 Notes: 1. rvw = r1 input 2. rv2 = r2
-		 * input 3. rv1 = result
+		 * return cc for logical subtract as follows: 
+		 * rlv borrow 
+		 *   0 1 cc0 (slb only)
+		 *  !0 1 cc1 
+		 *   0 0 cc2 
+		 *  !0 0 cc3 
+		 * Notes:
+		 *  1. rvw = r1 input
+		 *  2. rv2 = r2 input 
+		 *  3. rv1 = result
 		 */
 		boolean rv1_borrow = false;
 		if (rvw >= 0) {
@@ -11460,8 +11469,8 @@ public class pz390 {
 				rv1_borrow = true;
 			}
 		} else {
-			if (rv2 < 0 && rv1 >= 0) {
-				rv1_borrow = true;
+			if (rv2 < 0 ) { // RPI 831 WAS && rv1 >= 0
+					rv1_borrow = true;
 			}
 		}
 		if (rv1 == 0) {
@@ -11490,7 +11499,7 @@ public class pz390 {
 				rlv1_borrow = true;
 			}
 		} else {
-			if (rlv2 < 0 && rlv1 >= 0) {
+			if (rlv2 < 0) { // RPI 831 WAS && rlv1 >= 0
 				rlv1_borrow = true;
 			}
 		}
@@ -15143,7 +15152,7 @@ public class pz390 {
 					sig_digit = true;
 					if (edmk_store) {
 						edmk_store = false;
-						reg.putInt(r1, bd1_loc);
+						reg.putInt(r1,(reg.getInt(r1) & psw_amode_high_bits) | bd1_loc);  // RPI 828
 					}
 					if (next_digit != 0) { // assume pos if not zero
 						psw_cc = psw_cc_high;
@@ -15461,6 +15470,10 @@ public class pz390 {
 		 */
 		tz390 = shared_tz390;
 		sz390 = shared_sz390;
+		if (!tz390.opt_init){  // RPI 827
+			fill_reg_char = 0;
+			fill_mem_char = 0;
+		}
 		init_gpr();
 		init_fpr();
 		init_opcode_keys();

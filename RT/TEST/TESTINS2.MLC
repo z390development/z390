@@ -52,6 +52,9 @@
 * 02/27/08 RPI 815 correct support for negative index register 24/31
 * 03/12/08 RPI 820 test fix to prevent S0C5 on negative SRP b2 reg  
 * 03/15/08 RPI 823 correct test for MVCIN using right most source addr
+* 03/28/08 RPI 828 test clearing high bit in AMODE31 for TRT/EDMK     
+* 03/28/08 RPI 831 test SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF FOR CC1  
+*          WHEN BORROW FOR TWO VALUES WITH HIGH BIT ON.
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -692,6 +695,12 @@ DR1      ESPIE RESET
          CL    R0,=X'00000000'
          RT1   CCE
 * 1F   SLR
+         L     R0,=X'80000000'  RPI 831
+         L     R2,=X'A0000000'
+         SLR   R0,R2
+         RT1   CC1        NZ,B
+         CL    R0,=X'E0000000'
+         RT1   CCE
          L     R0,=F'3'
          L     R2,=F'2'
          SLR   R0,R2
@@ -1006,6 +1015,11 @@ BAS2     EQU   *
          CL    R0,=X'00000000'
          RT1   CCE
 * 5F   SL 
+         L     R0,=X'80000000'  RPI 831
+         SL    R0,=X'A0000000'
+         RT1   CC1        NZ,B
+         CL    R0,=X'E0000000'
+         RT1   CCE
          L     R0,=F'3'
          SL    R0,=F'2'
          RT1   CC3        NZ,NB
@@ -2096,6 +2110,12 @@ SGR2     ESTAE 0
          CLG   R0,=X'0000000000000000'
          RT1   CCE
 * B90B SLGR
+         LG    R0,=X'8000000000000000'  RPI 831
+         LG    R2,=X'A000000000000000'
+         SLGR  R0,R2
+         RT1   CC1        NZ,B
+         CLG   R0,=X'E000000000000000'
+         RT1   CCE
          LG    R0,=FL8'3'
          LG    R2,=FL8'2'
          SLGR  R0,R2
@@ -3327,7 +3347,7 @@ BRASL2   EQU   *
          RT1   CCE
 * DD   TRT
          MVC   WORD,=AL1(3,2,1,0)
-         LA    R1,0
+         LHI   R1,-1               RPI 828
          LA    R2,0
          TRT   WORD,=C'ABCD'
          RT1   CC1
@@ -3336,7 +3356,7 @@ BRASL2   EQU   *
          CL    R2,=A(C'D')
          RT1   CCE
          MVC   WORD,=AL1(3,2,1,0)
-         LA    R1,0
+         LHI   R1,-1               RPI 828
          LA    R2,0
          TRT   WORD,=AL1(0,X'FF',0,0)
          RT1   CC1
@@ -3345,7 +3365,7 @@ BRASL2   EQU   *
          CL    R2,=A(X'FF')
          RT1   CCE
          MVC   WORD,=AL1(3,2,1,0)
-         LA    R1,0
+         LHI   R1,-1               RPI 828
          LA    R2,0
          TRT   WORD,=AL1(X'FF',0,0,0)
          RT1   CC2
@@ -3390,7 +3410,9 @@ BRASL2   EQU   *
          CLC   PWORK,=CL8' 123-'
          RT1   CCE
 * DF   EDMK
+         LHI   R1,-1                 RPI 828
          MVC   WORD,=X'40202020'
+         LHI   R1,-1                 RPI 828
          EDMK  WORD,=P'123'
          BCTR  R1,0
          MVI   0(R1),C'$'
@@ -3450,6 +3472,11 @@ BRASL2   EQU   *
          CLG   R0,=X'0000000000000000'
          RT1   CCE
 * E30B SLG
+         LG    R0,=X'8000000000000000'  RPI 831
+         SLG   R0,=X'A000000000000000'
+         RT1   CC1        NZ,B
+         CLG   R0,=X'E000000000000000'
+         RT1   CCE
          LG    R0,=FL8'3'
          SLG   R0,=FL8'2'
          RT1   CC3        NZ,NB
@@ -3765,6 +3792,11 @@ BCTG1    LA    R2,1(R2)
          C     R0,=F'-2'
          RT1   CCE
 * E35F SLY 
+         L     R0,=X'80000000'  RPI 831
+         SLY    R0,=X'A0000000'
+         RT1   CC1        NZ,B
+         CL    R0,=X'E0000000'
+         RT1   CCE
          L     R0,=F'3'
          SLY   R0,=F'2'
          RT1   CC3        NZ,NB

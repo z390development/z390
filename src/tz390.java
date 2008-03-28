@@ -176,6 +176,7 @@ public  class  tz390 {
     * 03/03/08 RPI 817 add 226 z10 instructions  
     * 03/13/08 RPI 820 prevent cf5 array exception due to overflow
     * 03/15/08 RPI 822 add AUTOLINK to STATS file
+    * 03/27/08 RPI 828 add option INIT to set regs to x'F4' and mem to x'F5' vs 0's
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -184,7 +185,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.01a";  //dsh
+    String version    = "V1.4.01b";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -211,6 +212,7 @@ public  class  tz390 {
     boolean opt_epilog   = true;  // if cics, insert DFHEIRET
     boolean opt_errsum   = false; // just list critical errors and summary on ERR file and console 
     boolean opt_guam     = false; // use gz390 GUAM GUI access method interface
+    boolean opt_init     = true;  // init regs to x'F4", mem to x'F5'
     String  opt_ipl      = "";    // program to execute at startup
     String  opt_install_loc = ""; // optional install location for source debugging
     boolean opt_list     = true;  // generate LOG file
@@ -4588,6 +4590,8 @@ private void process_option(String token){
        	init_errsum();
     } else if (token.toUpperCase().equals("GUAM")){
        	opt_guam = true;
+    } else if (token.toUpperCase().equals("INIT")){
+       	opt_init = true;
     } else if (token.length() > 4
      		&& token.substring(0,4).toUpperCase().equals("IPL(")){
     	opt_ipl = token.substring(4,token.length()-1); 
@@ -4671,7 +4675,9 @@ private void process_option(String token){
     } else if (token.toUpperCase().equals("NOCON")){
        	opt_con = false;
     } else if (token.toUpperCase().equals("NOEPILOG")){
-       	opt_epilog = false;   	
+       	opt_epilog = false;  
+    } else if (token.toUpperCase().equals("NOINIT")){
+       	opt_init = false;
     } else if (token.toUpperCase().equals("NOLIST")){
        	opt_list = false;
     } else if (token.toUpperCase().equals("NOLISTCALL")){
@@ -6287,6 +6293,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOGUAM");
 	     }
+	     if (opt_init    ){ // init regs x'F4' and mem x'F5' vs 0's
+		        add_final_opt("INIT");  // RPI 828
+		     } else {
+		        add_final_opt("NOINIT");
+		     }
 	     if (opt_list    ){ // generate LOG file
 	        add_final_opt("LIST");
 	     } else {

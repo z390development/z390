@@ -82,7 +82,8 @@ public  class  lz390 {
     * 12/24/07 RPI 759 align stats for all pgms on STA file 
     * 12/25/07 RPI 755 cleanup msgs to log, sta, tr*, CON 
     * 12/27/07 RPI 770 don't search for EXTRN's if NOAUTOLINK 
-    * 02/28/08 RPI 814 default search of obj+linklib for AUTOLINK       
+    * 02/28/08 RPI 814 default search of obj+linklib for AUTOLINK 
+    * 03/27/08 RPI 827 show obj file name on I/O errors      
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -658,7 +659,7 @@ private boolean load_obj_file(boolean esds_only){
     obj_eod = false;
 	get_obj_line();
 	if (obj_line == null){ // PRI 483
-		abort_error(38,"object file truncated");
+		abort_error(38,"object file truncated " + obj_file_name); // RPI 827
 	} else if (esds_only && !obj_line.substring(0,4).equals(".ESD")){
 		obj_eod = true;
 	}
@@ -691,7 +692,7 @@ private boolean load_obj_file(boolean esds_only){
 		} else if (obj_line.substring(0,4).equals(".TXT")){
 			int    obj_text_esd = Integer.valueOf(obj_line.substring(9,13),16).intValue();
 			if (obj_text_esd < 1 || obj_text_esd > max_obj_esd){
-				abort_error(29,"invalid object text esd - " + obj_text_esd);
+				abort_error(29,"invalid object text esd - " + obj_text_esd + " in " + obj_file_name); // RPI 827
 				return false;  // RPI 301
 			}
 			int    obj_text_loc = Integer.valueOf(obj_line.substring(18,26),16).intValue();
@@ -699,7 +700,7 @@ private boolean load_obj_file(boolean esds_only){
 			String obj_text = obj_line.substring(34,34 + 2 * obj_text_len);
 			int code_off = gbl_esd_loc[obj_gbl_esd[obj_text_esd]] + obj_text_loc;
 			if (code_off > loc_ctr){
-				abort_error(25,"invalid object code offset - " + obj_line);
+				abort_error(25,"invalid object code offset - " + obj_line + " in " + obj_file_name); // RPI 827
 				return false;
 			} 
 			z390_code_buff.position(code_off);
@@ -712,7 +713,7 @@ private boolean load_obj_file(boolean esds_only){
 		} else if (obj_line.substring(0,4).equals(".RLD")){
 			int  obj_rld_esd = Integer.valueOf(obj_line.substring(9,13),16).intValue();
 			if (obj_rld_esd < 1 || obj_rld_esd > max_obj_esd){
-				abort_error(30,"invalid rld esd - " + obj_rld_esd);
+				abort_error(30,"invalid rld esd - " + obj_rld_esd + " in " + obj_file_name);  // RPI 827
 				return false;  // RPI 301
 			}
 			int  obj_rld_loc = Integer.valueOf(obj_line.substring(18,26),16).intValue();
@@ -780,7 +781,7 @@ private boolean load_obj_file(boolean esds_only){
 		}
         get_obj_line();
 		if (obj_line == null){ // RPI 483
-			abort_error(38,"object file truncated - " + obj_file_name);
+			abort_error(38,"object file truncated - " + obj_file_name); // RPI 827
 		} else if (esds_only && !obj_line.substring(0,4).equals(".ESD")
 			|| obj_line.substring(0,4).equals(".END")){
 			obj_eod = true;
@@ -852,7 +853,7 @@ private String cvt_obj_bin_to_hex(){
 			esd_loc = tz390.get_hex(bin_byte_buff.getInt(24),8);
 			esd_align = bin_byte[28];
 			if (esd_align != 7){
-				abort_error(138,"unsupported SD alignment code - " + esd_align);
+				abort_error(138,"unsupported SD alignment code - " + esd_align + " in " + obj_file_name); // RPI 827
 			}
 			bin_byte[28] = 0;
 			esd_len = tz390.get_hex(bin_byte_buff.getInt(28),8);
@@ -878,7 +879,7 @@ private String cvt_obj_bin_to_hex(){
 			esd_len = tz390.get_hex(0,8);
 			break;
 		default:
-			abort_error(37,"invalid ESD type");
+			abort_error(37,"invalid ESD type in " + obj_file_name); // RPI 827
 		}
 		text = text + " ESD=" + esd_id + " LOC=" + esd_loc + " LEN=" + esd_len + " TYPE=" + esd_type + " NAME=" + esd_name.trim();
 	} else if (text.equals(".TXT")){
@@ -913,7 +914,7 @@ private String cvt_obj_bin_to_hex(){
 	} else if (text.equals(".END")){
 		
 	} else {
-		abort_error(36,"invalid object record type - " + text);
+		abort_error(36,"invalid object record type - " + text + " in " + obj_file_name); // RPI 827
 	}
 	return text;
 }
@@ -1081,7 +1082,7 @@ private boolean open_obj_file(String file){
     	} else if (test_byte == '.') {
     		obj_file_bin = false;
     	} else {
-    		abort_error(35,"invalid obj file id");
+    		abort_error(35,"invalid obj file " + file); // RPI 827
     	}
     	obj_file.seek(0);
     	return true;
@@ -1098,7 +1099,7 @@ private void load_obj_code(){
 		z390_code = new byte[loc_ctr];
 		z390_code_buff = ByteBuffer.wrap(z390_code,0,loc_ctr);
 	} else {
-		abort_error(19,"no csect object code text defined for load module");  // RPI 656
+		abort_error(19,"no csect object code text defined for load module " + obj_file_name);  // RPI 656 RPI 827
 	}
 	cur_obj_file = 0;
 	while (cur_obj_file < tot_obj_files){
