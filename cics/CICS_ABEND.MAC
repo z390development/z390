@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_ABEND
          LCLB  &CANCEL,&NODUMP
@@ -13,7 +15,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,7) EQ 'ABCODE(').ABCODE
          AIF   ('&PARM'(1,6) EQ 'CANCEL').CANCEL
          AIF   ('&PARM'(1,6) EQ 'NODUMP').NODUMP
@@ -89,4 +91,3 @@ CICS_ABEND_&SYSNDX._ABCODE DC CL4' ' ABEND CODE IF ANY
 .INVABCD MNOTE 12,'ABCODE IS INVALID'
          MEXIT
          MEND
-

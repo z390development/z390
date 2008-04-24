@@ -11,6 +11,7 @@
 * 08/29/06 DSH RPI 421 TEST DUPLICATION OPERATOR AFTER .
 * 10/22/06 DSH RPI 467 TEST DUPLICATION OPERATOR AFTER .
 * 07/05/07 DSH RPI 646 ADD TEST FOR INDEX AND FIND OLD/NEW FORMATS
+* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 *********************************************************************
 TESTOPR1 SUBENTRY
          WTO   'TESTOPR1 TEST OPERATORS UPPER, LOWER, ETC.'
@@ -22,50 +23,50 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          MNOTE 'TESTOPR1 PASS &PASS'
          MNOTE 'TESTING UPPER AND LOWER'
 &LC      SETC  'abc'
-         AIF   (&LC NE 'abc').LCERR 
+         AIF   ('&LC' NE 'abc').LCERR 
 &UC      SETC  (UPPER &LC)
-         AIF   (&UC NE 'ABC').UCERR
+         AIF   ('&UC' NE 'ABC').UCERR
 &UC      SETC  'ABC'
-         AIF   (&UC NE 'ABC').UCERR
+         AIF   ('&UC' NE 'ABC').UCERR
 &LC      SETC  (LOWER &UC)
-         AIF   (&LC NE 'abc').LCERR
+         AIF   ('&LC' NE 'abc').LCERR
          MNOTE 'TESTING ?2? PREFIX OPERATORS
 &A2B     SETC  (A2B(4))
          MNOTE 'A2B(4)=&A2B'
-         AIF   (&A2B NE '00000100').A2ERR
+         AIF   ('&A2B' NE '00000100').A2ERR
 &A2C     SETC  (A2C(241))
          MNOTE 'A2C(241)=&A2C'
          AIF   ('&A2C'(4,1) NE '1').A2ERR
 &A2D     SETC  (A2D(-241))
          MNOTE 'A2D(-241)=&A2D'
-         AIF   (&A2D NE '241').A2ERR
+         AIF   ('&A2D' NE '241').A2ERR
 &A2X     SETC  (A2X(241))
          MNOTE 'A2X(241)=&A2X'
-         AIF   (&A2X NE '000000F1').A2ERR
+         AIF   ('&A2X' NE '000000F1').A2ERR
 &B2A     SETA  (B2A('100'))
          MNOTE 'B2A(''100'')=&B2A'
-         AIF   (&B2A NE 4).B2ERR
+         AIF   ('&B2A' NE 4).B2ERR
 &B2C     SETC  (B2C('11110001'))
          MNOTE 'B2C(''11110001'')=&B2C'
          AIF   ('&B2C'(4,1) NE '1').B2ERR
 &B2D     SETC  (B2D('100'))
          MNOTE 'B2D(''100'')=&B2D'
-         AIF   (&B2D NE 4).B2ERR
+         AIF   ('&B2D' NE 4).B2ERR
 &B2X     SETC  (B2X('11110001'))
          MNOTE 'B2X(''11110001'')=&B2X'
-         AIF   (&B2X NE '000000F1').B2ERR
+         AIF   ('&B2X' NE '000000F1').B2ERR
 &C2A     SETA  (C2A('1'))
          MNOTE 'C2A(''1'')=&C2A'
-         AIF   (&C2A NE 241).C2ERR
+         AIF   ('&C2A' NE 241).C2ERR
 &C2B     SETC  (C2B('1'))
          MNOTE 'C2B(''1'')=&C2B'
          AIF   ('&C2B' NE '11110001').C2ERR
 &C2D     SETC  (C2D('1'))
          MNOTE 'C2D(''1'')=&C2D'
-         AIF   (&C2D NE '241').C2ERR
+         AIF   ('&C2D' NE '241').C2ERR
 &C2X     SETC  (C2X('1'))
          MNOTE 'C2X(''1'')=&C2X'
-         AIF   (&C2X NE '000000F1').C2ERR
+         AIF   ('&C2X' NE '000000F1').C2ERR
 &D2A     SETA  (D2A('-1'))
          MNOTE 'D2A(''-1'')=&D2A'
          AIF   (&D2A NE -1).D2ERR
@@ -77,7 +78,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          AIF   ('&D2C'(4,1) NE '1').D2ERR
 &D2X     SETC  (D2X('241'))
          MNOTE 'D2X(''241'')=&D2X'
-         AIF   (&D2X NE '000000F1').D2ERR
+         AIF   ('&D2X' NE '000000F1').D2ERR
 &X2A     SETA  (X2A('F1'))
          MNOTE 'X2A(''F1'')=&X2A'
          AIF   (&X2A NE 241).X2ERR
@@ -89,7 +90,7 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          AIF   ('&X2C'(4,1) NE '1').X2ERR
 &X2D     SETC  (X2D('F1'))
          MNOTE 'X2D(''F1'')=&X2D'
-         AIF   (&X2D NE '241').X2ERR
+         AIF   ('&X2D' NE '241').X2ERR
          MNOTE 'TESTING DCLEN, DCVAL, DCEQUOTE
 &DCLSTR  SETC  'C''''&&&&1'''''
 &DCLEN   SETA  (DCLEN(&DCLSTR))
@@ -98,11 +99,11 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
 &DCVSTR  SETC  'C''''&&&&1'''''
 &DCVAL   SETC  (DCVAL(&DCVSTR))
          MNOTE 'DCVAL(&DCVSTR)=&DCVAL'
-         AIF   (&DCVAL NE 'C''&&1''').DCVERR
+         AIF   ('&DCVAL' NE 'C''&&1''').DCVERR
 &DCESTR  SETC  '''ABC'''
 &DCEQUOTE SETC  (DCEQUOTE(&DCESTR))
          MNOTE 'DCQUOTE(&DCESTR)=&DCEQUOTE'
-         AIF   (&DCEQUOTE NE 'ABC').DCEERR
+         AIF   ('&DCEQUOTE' NE 'ABC').DCEERR
          MNOTE 'TESTING ISBIN, ISDEC, ISHEX, ISSYM'
 &ISBIN   SETC  (ISBIN('100'))
          MNOTE 'ISBIN(''100'')=&ISBIN'
@@ -131,13 +132,13 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          MNOTE 'TESTING SIGNED, SYSATTRA, SYSATTRP'
 &SIGNED  SETC  (SIGNED(-241))
          MNOTE 'SIGNED(-241)=&SIGNED'
-         AIF   (&SIGNED NE '-241').SIGNERR
+         AIF   ('&SIGNED' NE '-241').SIGNERR
 &SYSATTRP SETC  (SYSATTRP(SYM))
          MNOTE 'SYSATTRP(SYM)=&SYSATTRP'
-         AIF   (&SYSATTRP NE 'PGMA').SYERR
+         AIF   ('&SYSATTRP' NE 'PGMA').SYERR
 &SYSATTRA SETC  (SYSATTRA(SYM))
          MNOTE 'SYSATTRA(SYM)=&SYSATTRA'
-         AIF   (&SYSATTRA NE 'GR32').SYERR
+         AIF   ('&SYSATTRA' NE 'GR32').SYERR
          MNOTE 'TESTING SLA, SLL, SRA, SRL'
 &SLA     SETA  (1 SLA 2)
          MNOTE '1 SLA 2 = &SLA'
@@ -179,23 +180,23 @@ SYM      EQU   1,2,C'3',C'PGMA',gr32
          MNOTE 'TESTING STRING DUPLICATION IN EXPRESSION'
          AIF   ('A'.2'B' NE 'ABB').DUPERR
 &A       SETC  'A'
-         AIF   (&A..2'B' NE 'ABB').DUPERR
-         AIF   (&A..(2)'B' NE 'ABB').DUPERR
+         AIF   ('&A'.2'B' NE 'ABB').DUPERR
+         AIF   ('&A'.(2)'B' NE 'ABB').DUPERR
          AIF   ('A'.(2)'B' NE 'ABB').DUPERR
          MNOTE 'TEST FIND'
 &IB      SETC  FIND('ABC','B')
-         AIF   (&IB NE 2).FINDERR
+         AIF   ('&IB' NE 2).FINDERR
 &IB      SETC  ('ABC' FIND 'XB')
-         AIF   (&IB NE 2).FINDERR
+         AIF   ('&IB' NE 2).FINDERR
 &IB      SETC  FIND('ABC' 'CB')
-         AIF   (&IB NE 2).FINDERR
+         AIF   ('&IB' NE 2).FINDERR
          MNOTE 'TEST INDEX'
 &IB      SETC  INDEX('ABXBC','BC')
-         AIF   (&IB NE 4).INDEXERR
+         AIF   ('&IB' NE 4).INDEXERR
 &IB      SETC  ('ABXBC' INDEX 'BC')
-         AIF   (&IB NE 4).INDEXERR
+         AIF   ('&IB' NE 4).INDEXERR
 &IB      SETC  INDEX('ABXBC' 'BC')
-         AIF   (&IB NE 4).INDEXERR
+         AIF   ('&IB' NE 4).INDEXERR
          AGO   .LOOP
 .ENDLOOP ANOP
          MNOTE 'TESTOPR1 ENDED OK'

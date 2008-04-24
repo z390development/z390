@@ -308,7 +308,14 @@ public  class  mz390 {
      * 12/27/07 RPI 772 correct MEXIT ref # truncation
      * 12/27/07 RPI 774 exit aif pc code on first branch 
      * 01/31/08 RPI 803 correct computed AGO pseudo code gen
-     * 02/01/08 RPI 805 support comma/period comments delimiter on EXEC CICS           
+     * 02/01/08 RPI 805 support comma/period comments delimiter on EXEC CICS
+     * 04/07/08 RPI 835 allow T'parm when using NOASM
+     *          and allow * in label var
+     *          and issue error if NOASM, NOBAL, and macro not found  
+     * 04/22/08 RPI 836 issue error if ordinary symbol value reference
+     *          undefined and issue error for array
+     *          reference without subscript 
+     * 04/23/08 RPI 839 support skipping values in SETA/B/C list                          
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -530,7 +537,6 @@ public  class  mz390 {
 	/*
 	 * global and local macro variables
 	 */
-	boolean var_subscript_calc = false;
 	byte val_seta_type      = 1;      // int    RPI 447
 	byte val_setb_type      = 2;      // byte   RPI 447
 	byte val_setc_type      = 3;      // String RPI 447
@@ -576,6 +582,8 @@ public  class  mz390 {
 	 * global set variables set by find_set
 	 * and add_lcl_set, add_gbl_set
 	 */
+	boolean var_subscript_calc = false;
+	boolean var_set_array; // rpi 836 set subscript required for set array
 	String var_name  = null;
 	int    var_name_index = 0;
 	byte   var_loc   = var_lcl_loc;
@@ -586,6 +594,7 @@ public  class  mz390 {
 	int    setc_index = 0;
 	String store_name = null;
 	int    store_name_index = 0;
+	int    store_inc   = 0;  // RPI 839
 	byte   store_loc   = var_lcl_loc;
 	byte   store_type = val_seta_type;
 	int    store_seta_value = 0;
@@ -892,6 +901,7 @@ public  class  mz390 {
     byte pc_op_pfx_s  = 38; // S' scale factor  
     byte pc_op_pfx_t  = 39; // T' symbol type
     byte pc_op_pushs  = 40; // push symbol value abs value if found else 0
+    byte pc_op_stori  = 41; // inc store index by seta
     byte pc_op_a2b    = 45; // convert value to binary string (3 = '11')
     byte pc_op_a2c    = 46; // convert value to character string (240 = '1')
     byte pc_op_a2d    = 47; //  convert value to decimal string (1 = '1')
@@ -978,7 +988,7 @@ public  class  mz390 {
 			"S'",      //38 pc_op_pfx_s
 			"T'",      //39 pc_op_pfx_t
 			"PUSHS",   //40 pc_op_pushs
-			"?",       //41              
+			"STORI",   //41 pc_op_stori             
 			"?",       //42             
 			"?",       //43              
 			"?",       //44                
@@ -1104,7 +1114,6 @@ public  class  mz390 {
 			az390.mz390_started_msg = tz390.started_msg; // RPI 755
 			az390.start_az390_thread(args,z390_log_text,tz390.systerm_file,tz390.stats_file); // RPI 737
 		}
-//dshx		open_files();
 		if (tz390.opt_tracem){
 			tz390.put_trace(tz390.started_msg); // RPI 755
 		}
@@ -1377,6 +1386,10 @@ public  class  mz390 {
 						if (find_mac_name_index >= 0){
 							call_mac();      // call a nested macro
 							bal_line = null; // force macro execution cycle
+						} else if (!tz390.opt_asm 
+								   && !tz390.opt_bal
+								   && !bal_op.equals("END")){
+							log_error(225,"missing macro - " + bal_op);  // RPI 835
 						}
 					} else if (bal_line != null && bal_line.length() == 0){
 						bal_line = null; // RPI 498 ignore blank lines
@@ -2604,7 +2617,8 @@ public  class  mz390 {
 						&& bal_text_index1 == 0
 						&& parm_value != null
 						&& parm_value.length() > 0
-						&& parm_value.charAt(0) > ' '){
+						&& parm_value.charAt(0) > ' '
+						&& parm_value.charAt(0) != '*'){ // RPI 835
 					symbol_match = symbol_pattern.matcher(parm_value);  
 					if (!symbol_match.find() 
 						|| symbol_match.start() > 0){ 
@@ -2642,6 +2656,7 @@ public  class  mz390 {
 		 *   1.  First search parms and then set variables
 		 *   2.  Convert to upper case
 		 */
+		var_set_array = false; // rpi 836
 		var_name = name.toUpperCase(); 
 		if  (var_name.equals("&SYSLIST")) {
 			var_type = var_sublist_type;
@@ -3032,21 +3047,40 @@ public  class  mz390 {
 		case 215:  // SETA 
 			bal_op_ok = true;
 			get_set_target(var_seta_type);
-			while (bal_parms != null){
+			exp_next_index = 0; // RPI 839 
+			while (!mac_abort 
+					&& bal_parms != null
+					&& bal_parms.length() > exp_next_index
+					&& bal_parms.charAt(exp_next_index) > ' '){
 				if (tz390.opt_pc){
 					pc_gen_exp = true;
 				}
-				store_seta_value = calc_seta_exp(bal_parms,0);
+				store_seta_value = calc_seta_exp(bal_parms,exp_next_index);
 				seta_value = store_seta_value;
 				gen_pc(store_pc_op);
 				store_seta_value(store_pc_op);
-				if (bal_parms.length() >= exp_next_index 
+				store_pc_op = pc_op_storvn;
+				store_inc = -1;
+				if (bal_parms.length() > exp_next_index
 					&& bal_parms.charAt(exp_next_index-1) == ','){
-					bal_parms = bal_parms.substring(exp_next_index);
-					store_sub++; // RPI 401
-					store_pc_op = pc_op_storvn;
+					exp_next_index--;
 				} else {
 					bal_parms = null;
+				}
+				while (!mac_abort
+						&& bal_parms != null
+						&& bal_parms.length() > exp_next_index 
+						&& bal_parms.charAt(exp_next_index) == ','){
+					exp_next_index++;
+					store_inc++; // RPI 839
+					store_sub++;
+				}	
+				if (store_inc > 0){
+					if (tz390.opt_pc){
+						pc_gen_exp = true;
+					}
+					seta_value = store_inc;
+					gen_pc(pc_op_stori); // RPI 839
 				}				
 			}
 			break;
@@ -3055,43 +3089,87 @@ public  class  mz390 {
 		case 217:  // SETB 
 			bal_op_ok = true;
 			get_set_target(var_setb_type);
-			while (bal_parms != null){
+			exp_next_index = 0; // RPI 839 
+			while (bal_parms != null
+				   && bal_parms.length() > exp_next_index
+				   && bal_parms.charAt(exp_next_index) > ' '){
 				if (tz390.opt_pc){
 					pc_gen_exp = true;
 				}
-				store_setb_value = calc_setb_exp(bal_parms,0);
+				store_setb_value = calc_setb_exp(bal_parms,exp_next_index);
 				setb_value = store_setb_value;
 				gen_pc(store_pc_op);
 				store_setb_value();
-				if (bal_parms.length() >= exp_next_index 
-					&& bal_parms.charAt(exp_next_index-1) == ','){
-					bal_parms = bal_parms.substring(exp_next_index);
-					store_sub++;  // RPI 401
-					store_pc_op = pc_op_storvn;
+				store_pc_op = pc_op_storvn;
+				store_inc = -1;
+				if (bal_parms.length() > exp_next_index
+					&& bal_parms.charAt(exp_next_index-1) == ','	){
+					exp_next_index--;
 				} else {
 					bal_parms = null;
 				}
+				while (!mac_abort 
+						&& bal_parms != null
+						&& bal_parms.length() > exp_next_index 
+						&& bal_parms.charAt(exp_next_index) == ','){
+					exp_next_index++;
+					store_inc++; // RPI 839
+					store_sub++;
+				}	
+				if (store_inc > 0){
+					if (tz390.opt_pc){
+						pc_gen_exp = true;
+					}
+					seta_value = store_inc;
+					gen_pc(pc_op_stori); // RPI 839
+				}				
 			}
 			break;
 		case 218:  // SETC  
 			bal_op_ok = true;
 			get_set_target(var_setc_type);
-			while (!mac_abort && bal_parms != null){ 
+			if (!tz390.opt_allow // HLASM compat required       
+				&& bal_parms.length() > 1
+				&& bal_parms.charAt(0) == '&' 
+			    ){
+				// For HLASM compatibility
+				// don't allow SETC parm variable without quotes
+				log_error(227,"missing quotes for SETC operand");
+			} 
+			exp_next_index = 0; // RPI 839 
+			while (bal_parms != null
+				   && bal_parms.length() > exp_next_index
+				   && bal_parms.charAt(exp_next_index) > ' '){
 				if (tz390.opt_pc){
 					pc_gen_exp = true;
 				}
-				store_setc_value = calc_setc_exp(bal_parms,0);
+				store_setc_value = calc_setc_exp(bal_parms,exp_next_index);
 				setc_value = store_setc_value;
 				gen_pc(store_pc_op);
 				store_setc_value();
-				if  (bal_parms.length() >= exp_next_index
-					 && bal_parms.charAt(exp_next_index-1) == ','){
-					 bal_parms = bal_parms.substring(exp_next_index);
-					 store_sub++; // RPI 401
-					 store_pc_op = pc_op_storvn;
+				store_pc_op = pc_op_storvn;
+				store_inc = -1;
+				if (bal_parms.length() > exp_next_index
+					&& bal_parms.charAt(exp_next_index-1) == ','){
+					exp_next_index--;
 				} else {
 					bal_parms = null;
-				}                
+				}
+				while (!mac_abort 
+						&& bal_parms != null
+						&& bal_parms.length() > exp_next_index 
+						&& bal_parms.charAt(exp_next_index) == ','){
+					exp_next_index++;
+					store_inc++; // RPI 839
+					store_sub++;
+				}	
+				if (store_inc > 0){
+					if (tz390.opt_pc){
+						pc_gen_exp = true;
+					}
+					seta_value = store_inc;
+					gen_pc(pc_op_stori); // RPI 839
+				}				
 			}
 			break;
 		case 219:  // SETCF
@@ -3815,6 +3893,19 @@ public  class  mz390 {
 		if  (tot_exp_stk_op > 0){
 			exp_prev_op = exp_stk_op[tot_exp_stk_op - 1];
 			exp_prev_class = exp_stk_op_class[tot_exp_stk_op - 1];
+			if (!tz390.opt_allow // HLASM compat required       
+				&& exp_prev_class == exp_class_comp
+				&& tot_exp_stk_var >= 2
+				&& exp_stk_val_type[tot_exp_stk_var-1] == val_setc_type
+				&& exp_stk_val_type[tot_exp_stk_var-2] == val_setc_type
+				&& (exp_stk_var_name_index[tot_exp_stk_var-1] != -1
+				    || exp_stk_var_name_index[tot_exp_stk_var-2] != -1
+				   )
+				){
+				// for HLASM compatibility don't allow
+				// compare of SETC variables without quotes
+			    log_error(226,"missing SETC variable quotes");
+			}
 		} else {
 			exp_prev_op = "" + exp_start_op;
 			exp_prev_class = exp_class_term;
@@ -4863,7 +4954,7 @@ public  class  mz390 {
 				exp_stk_seta[tot_exp_stk_var - 1] = seta_value;  
 				break;
 			case 2: // not setb
-				if (seta_value1 != 1){ //RPI147
+				if (seta_value1 != 1){ //RPI147 ??
 					setb_value = 1; 
 				} else {
 					setb_value = 0;
@@ -4873,7 +4964,7 @@ public  class  mz390 {
 				break;
 			case 3: // not setc				
 				exp_stk_val_type[tot_exp_stk_var - 1] = val_setb_type;
-				if (seta_value1 != 1){ //RPI147
+				if (seta_value1 != 1){ //RPI147 
 					setb_value = 1; 
 				} else {
 					setb_value = 0;
@@ -4902,12 +4993,12 @@ public  class  mz390 {
 				exp_stk_seta[tot_exp_stk_var - 2] = seta_value;
 				break;
 			case 2: // and setb
-				setb_value = (byte) seta_value;
+				setb_value = (byte) seta_value; 
 				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			case 3: // and setc
 				exp_stk_val_type[tot_exp_stk_var - 2] = val_setb_type;
-				setb_value = (byte) seta_value;
+				setb_value = (byte) seta_value; 
 				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			}
@@ -4932,12 +5023,12 @@ public  class  mz390 {
 				exp_stk_seta[tot_exp_stk_var - 2] = seta_value;
 				break;
 			case 2: // or setb
-				setb_value = (byte) seta_value;
+				setb_value = (byte) seta_value; 
 				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			case 3: // or setc
 				exp_stk_val_type[tot_exp_stk_var - 2] = val_setb_type;
-				setb_value = (byte) seta_value;
+				setb_value = (byte) seta_value; 
 				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			}
@@ -4962,12 +5053,12 @@ public  class  mz390 {
 				exp_stk_seta[tot_exp_stk_var - 2] = seta_value;
 				break;
 			case 2: // xor setb
-				setb_value = (byte) seta_value;
+				setb_value = (byte) seta_value; 
 				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			case 3: // xor setc
 				exp_stk_val_type[tot_exp_stk_var - 2] = val_setb_type;
-				setb_value = (byte) seta_value;
+				setb_value = (byte) seta_value;  
 				exp_stk_setb[tot_exp_stk_var - 2] = setb_value;
 				break;
 			}
@@ -5256,12 +5347,16 @@ public  class  mz390 {
 	}
 	private boolean inc_tot_exp_stk_var(){
 		/*
-		 * inc tot_exp_stk_var if ok else
-		 * abort and return false
+		 * if not over max
+		 *    inc tot_exp_stk_var
+		 *    and init stk name index -1
+		 * else
+		 *    abort and return false
 		 */
 		if (tot_exp_stk_var < max_exp_stk){
 			exp_var_pushed = true;
 			tot_exp_stk_var++;
+			exp_stk_var_name_index[tot_exp_stk_var-1] = -1; // RP 833
 			return true;
 		} else {
 			abort_error(19,"exp variable stack exceeded");
@@ -5720,6 +5815,9 @@ public  class  mz390 {
 				if (exp_prev_first == exp_string_op
 					|| exp_prev_first == exp_create_set_op){
 					// concatentate var to string
+					if (var_set_array){  // rpi 836 
+   						log_error(229,"subscript required for " + exp_token);
+   					}
                     exp_concat_var();
             		pc_push_var_setc_value = "'" + setc_value2 + "'";
                     if (exp_created_var[exp_level]){
@@ -5740,6 +5838,10 @@ public  class  mz390 {
                     	gen_exp_pc(pc_op_pushd);
                     	exp_created_var[exp_level] = false;
                     } else {
+    					if (var_set_array  // rpi 836 
+    						&& exp_prev_class != exp_class_oper){
+    						log_error(230,"subscript required for " + exp_token);
+    					}
                         gen_exp_pc(pc_op_pushv);
                     }
 				}
@@ -6180,6 +6282,7 @@ public  class  mz390 {
 		 * 4.  set_sub  = set variable subscript
 		 * 5.  seta_value|setb_value|setc_value
 		 * 6.  seta_index|setb_index|setc_index 
+		 * 7.  var_set_array set true if subscripted RPI 836
 		 *
 		 * Notes:
 		 *  1.  Saves create set name for possible
@@ -6192,11 +6295,16 @@ public  class  mz390 {
 				&& exp_level == 0){
 			exp_parse_set_name = var_name;
 		}
+		var_set_array = false;
 		if (find_lcl_set(var_name,var_sub)){
-			if (exp_parse_set_name_index == -1 && exp_level == 0){ // RPI 345
+			if (exp_parse_set_name_index == -1 
+				&& exp_level == 0){ // RPI 345
 				exp_parse_set_name_index = var_name_index;
 				exp_parse_set_loc = var_lcl_loc;
 				exp_parse_set_type = lcl_set_type[var_name_index];
+			}
+			if (lcl_set_end[var_name_index]-lcl_set_start[var_name_index] > 01){
+				var_set_array = true; // RPI 836
 			}
 			return true;
 		}
@@ -6212,6 +6320,9 @@ public  class  mz390 {
 				exp_parse_set_name_index = var_name_index;
 				exp_parse_set_loc = var_gbl_loc;
 				exp_parse_set_type = gbl_set_type[var_name_index];
+			}
+			if (gbl_set_end[var_name_index]-gbl_set_start[var_name_index] > 01){
+				var_set_array = true; // RPI 836
 			}
 			return true;
 		}
@@ -7989,6 +8100,11 @@ public  class  mz390 {
 			get_pc(op);
 			pc_setc[pc_loc] = setc_value;
 			break;
+		case 41: // gen gen pc_op_storei inc store index by seta
+			get_pc(op);
+			pc_seta[pc_loc] = seta_value;
+			pc_setc[pc_loc] = setc_value;
+            break;
 		case 45: // gen pc_op_a2b  convert value to binary string (3 = '11')
 		case 46: // gen pc_op_a2c  convert value to character string (240 = '1')
 		case 47: // gen pc_op_a2d   convert value to decimal string (1 = '1')
@@ -8276,6 +8392,9 @@ public  class  mz390 {
 			case 40: // exec pc_op_pushs push symbol abs value else 0
 				setc_value = pc_setc[pc_loc];
 				exec_pc_pushs();
+				break;
+			case 41: // exec pc_op_stori inc store index by seta
+				store_sub = store_sub + pc_seta[pc_loc];
 				break;
 			case 45: // exec pc_op_a2b  convert value to binary string (3 = '11')
 			    exec_pc_a2b();
@@ -8650,6 +8769,9 @@ public  class  mz390 {
 			break; 
 		case 40: // trace pc_op_pushs push symbol abs value else 0
 	        text = "(" + pc_setc[pc_loc] + ")=" + seta_value;
+			break;
+		case 41: // trace pc_op_stori inc store sub by seta
+			text = "()=" + pc_setc[pc_loc];
 			break;
 		case 45: // trace pc_op_a2b  convert value to binary string (3 = '00000011')
 		case 46: // trace pc_op_a2c  convert value to character string (240 = '1')
@@ -9845,7 +9967,7 @@ public  class  mz390 {
     	/*
     	 * T'var/sym returns symbol type
     	 */
-		if (tz390.opt_asm && tot_exp_stk_var > 0){
+		if (tot_exp_stk_var > 0){  // RPI 835
 			setc_value1 = get_setc_stack_value();
 			if (!tz390.opt_asm){
 				setc_value = "U";
@@ -10446,15 +10568,17 @@ public  class  mz390 {
     }
     private void exec_pc_pushs(){
     	/*
-    	 * push ordinary symbol abs value on
-    	 * stack else 0
+    	 * push ordinary symbol abs value
+    	 * on stack else issue error
     	 */
 		int index = mz390_find_sym(setc_value);
-		if (index >= 0){
+		if (index >= 0){ 
 			seta_value = az390.sym_loc[index];
 			put_seta_stack_var();
-		} else {
-			put_setc_stack_var();
+		} else if (exp_prev_class == exp_class_oper) {
+			put_setc_stack_var(); // push the setc name
+		 } else {  // RPI 836
+			log_error(228,"undefined symbol - " + setc_value); 
 		}
     }
     private byte get_val_type(){

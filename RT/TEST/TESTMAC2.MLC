@@ -10,13 +10,14 @@
 * 05/13/06 RPI 314 ADD AIFB and AGOB ALIAS TESTS                            
 * 05/14/06 RPI 315 ADD AIF alternate fomrat and computed ago                
 * 01/31/08 RPI 803 TEST REPEATED EXECUTION OF AGO                           
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 *********************************************************************
 TESTMAC2 SUBENTRY
          WTO   'TESTMAC2 - TEST CONDITIONAL COMPARES'
          MACRO
 &N       TEST  &P1
          MNOTE 'N=&N P1=&P1'
-         AIF   (&N NE &P1).SKIP
+         AIF   ('&N' NE '&P1').SKIP
          MNOTE '&N EQ &P1'
          MEXIT
 .SKIP    ANOP
@@ -47,7 +48,7 @@ XYZ      TEST  XYZ
 * TEST COMPLEX AIF
          MACRO
          TEST  &MF=I,&SF=I                                               
-         AIF   (&MF EQ 'L' OR('&SF' EQ 'L' AND '&MF(1)' EQ 'E')).ERR         
+         AIF   ('&MF' EQ 'L' OR('&SF' EQ 'L' AND '&MF(1)' EQ 'E')).ERR         
          MNOTE 'AIF NO BRANCH OK - MF=&MF SF=&SF'
          AGO   .SKPERR
 .ERR     MNOTE 12,'AIF BRANCDED TO ERR'

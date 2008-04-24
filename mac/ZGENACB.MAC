@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 09/16/07 RPI 682 INITIAL CODING TO GENERATE ACB AT R1 ADDR
 .* 09/20/07 RPI 703 SKIP GEN FOR ZERO VALUE FIELDS           
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
          ZGENACB &BUFSP=0,    MAXIMUM BUFFER SPACE FOR CLUSTER         X
                &DDNAME=,      DDNAME FOR VSAM CLUSTER DEFINITION TABLE X
@@ -21,7 +22,7 @@
 &NPOS    SETA  &NPOS-1
          AGO   .POSLOOP
 .POSEND  ANOP  
-         AIF   (&EXLST EQ '0').NOEXLST
+         AIF   ('&EXLST' EQ '0').NOEXLST
          MNOTE 12,'ZGENACB EXLST NOT SUPPORTED YET'
 .NOEXLST ANOP
 .*
@@ -35,15 +36,15 @@
 .*
 .* SET ACBDDNAM OR DEFAULT ACB#&SYSNDX
 .*
-&ACBDDNAM SETC &DDNAME
-         AIF   (&DDNAME NE '').DDMOD
+&ACBDDNAM SETC '&DDNAME'
+         AIF   ('&DDNAME' NE '').DDMOD
 &ACBDDNAM SETC 'ACB#&SYSNDX'
 .DDMOD   ANOP
          MODCB  ACB=(1),DDNAME=&ACBDDNAM
 *
 * SET DSNAME OVERRIDE ADDRESS IF SPECIFIED
 * 
-         AIF   (&DSNAME EQ '0').END_DSNAME     RPI 703
+         AIF   ('&DSNAME' EQ '0').END_DSNAME     RPI 703
          ZMODCB (1),ACBDSNAM-IHAACB,&DSNAME,4
 .END_DSNAME ANOP
 .*

@@ -17,6 +17,7 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 06/23/07 RPI 642 SUPPORT TEXT=(REG)
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .* SNAP WILL GENERATE DUMP ON LOG FILE BASED ON THESE PARMS:
 .*  1. PDATA= (DEFAULT IS ALL)
@@ -49,29 +50,29 @@
                &SUBPLST=,    NOT SUPPORTED                             X
                &TCB=,        IGNORED                                   X
                &TEXT=        EXTENSION TEXT TO DISPLAY                 
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST EQ 0).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'                 
          MEXIT
 .NPOK    ANOP
-         AIF   (&LIST    NE '').ERR2
-         AIF   (&STRHDR  NE '').ERR3
-         AIF   (&SUBPLST NE '').ERR4
-         AIF   (&MF NE 'I').ERR5
+         AIF   ('&LIST' NE '').ERR2
+         AIF   ('&STRHDR' NE '').ERR3
+         AIF   ('&SUBPLST' NE '').ERR4
+         AIF   ('&MF' NE 'I').ERR5
 &FLAGS   SETA  0
 &NP      SETA  N'&PDATA+1
 .NPLOOP  ANOP
 &NP      SETA  &NP-1
          AIF   (&NP EQ 0).NPOK2
-         AIF   (&PDATA(&NP) EQ 'ALL').ALL
-         AIF   (&PDATA(&NP) EQ 'REGS').REGS
-         AIF   (&PDATA(&NP) EQ 'GPR').GPR
-         AIF   (&PDATA(&NP) EQ 'FPR').FPR
-         AIF   (&PDATA(&NP) EQ 'CDE').CDE
-         AIF   (&PDATA(&NP) EQ 'DCB').DCB 
-         AIF   (&PDATA(&NP) EQ 'PSW').PSW 
+         AIF   ('&PDATA(&NP)' EQ 'ALL').ALL
+         AIF   ('&PDATA(&NP)' EQ 'REGS').REGS
+         AIF   ('&PDATA(&NP)' EQ 'GPR').GPR
+         AIF   ('&PDATA(&NP)' EQ 'FPR').FPR
+         AIF   ('&PDATA(&NP)' EQ 'CDE').CDE
+         AIF   ('&PDATA(&NP)' EQ 'DCB').DCB 
+         AIF   ('&PDATA(&NP)' EQ 'PSW').PSW 
          MNOTE 8,'SNAP UNSUPPORTED PARM - &PDATA(&NP)'
          AGO   .NPLOOP
 .ALL     ANOP                       8     4   2   1   8   4
@@ -99,7 +100,7 @@
 .* SNAP A MEMORY DUMP OF SPECIFIED AREA
 .*
 .CHKSTOR ANOP
-         AIF   (&STORAGE EQ '').SETUP
+         AIF   ('&STORAGE' EQ '').SETUP
          AIF   (N'&STORAGE NE 2).ERR1
 &FLAGS   SETA  &FLAGS+X'8000'           RPI110 
          AIF   ('&STORAGE(1)'(1,1) EQ '(').ADDR1_REG
@@ -112,7 +113,8 @@
          L     15,=A(&STORAGE(2))
          AGO   .SETUP
 .ADDR2_REG ANOP
-         AIF   (&STORAGE(2,1) EQ '14' OR &STORAGE(2,1) EQ 'R14').ERR1
+         AIF   ('&STORAGE(2,1)' EQ '14' OR '&STORAGE(2,1)' EQ 'R14').ERX
+               R1
          ZOPTLR 15,&STORAGE(2,1)
 .SETUP   ANOP
          AIF   ('&ID'(1,1) EQ '(').IDREG     RPI 623
@@ -122,9 +124,9 @@
          ZOPTLR 0,&ID(1)                      RPI 623
 .SETFLAGS ANOP
          IILH  0,&FLAGS               RPI158
-         AIF   (&TEXT EQ '').NOTEXT
+         AIF   ('&TEXT' EQ '').NOTEXT
          AIF   ('&TEXT'(1,1) EQ '(').REGTEXT  RPI 642
-&TEMP    SETC  &TEXT
+&TEMP    SETC  '&TEXT'
          AIF   ('&TEMP'(1,1) NE '''').SKIP
 &TEMP    SETC  '&TEMP'(2,K'&TEMP-2)
 .SKIP    ANOP

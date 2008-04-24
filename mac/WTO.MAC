@@ -18,6 +18,7 @@
 .* 04/25/06 RPI290 ALWAYS GEN LABEL IF ANY, CHECK MF=                
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 .*********************************************************************
 &N       WTO   &MSG,         'TEXT' OR TEXT= REQUIRED                  X
                &TEXT=,       MULTIPLE QUOTED TEXT ELSE ERROR           X
@@ -30,17 +31,17 @@
                &MCSFLAG=,    IGNORED                                   X
                &ROUTCDE=,    IGNORED                                   X
                &TOKEN=       IGNORED                                           
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST LE 1).NPOK
          MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(2)'
          MEXIT
 .NPOK    ANOP
-         AIF   (&MF NE 'I').MF
-         AIF   (&TEXT NE '').ERR2
-         AIF   (&MSG EQ '').ERR3
-&MSGTEXT SETC  &MSG
+         AIF   ('&MF' NE 'I').MF
+         AIF   ('&TEXT' NE '').ERR2
+         AIF   ('&MSG' EQ '').ERR3
+&MSGTEXT SETC  '&MSG'
          AIF   ('&MSG'(1,1) EQ '''').WTOMSG
          AIF   ('&MSG'(1,2) NE '(''').ERR2
 &MSGTEXT SETC  '&MSG'(2,K'&MSG-2)
@@ -51,11 +52,11 @@ WTO#&SYSNDX._EOT EQU *
          SVC   35
          MEXIT
 .TEXT    ANOP
-         AIF   (&TEXT EQ '').ERR3
+         AIF   ('&TEXT' EQ '').ERR3
 .MF      ANOP
-         AIF   (&MF EQ 'L').MFL
-         AIF   (&MF(1) NE 'E').ERR1
-         AIF   (&MF(2) EQ '').SVC
+         AIF   ('&MF' EQ 'L').MFL
+         AIF   ('&MF(1)' NE 'E').ERR1
+         AIF   ('&MF(2)' EQ '').SVC
          AIF   ('&MF(2)'(1,1) EQ '(').MFEREG
          LA    1,&MF(2)
          AGO   .SVC

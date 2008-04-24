@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
 .* FILE CONTROL TABLE
          DFHFCT &TYPE=,                                                X
@@ -16,8 +18,8 @@
          LCLB  &RECFIX,&RECVAR
          LCLB  &SVQREAD,&SVQDELT,&SVQUPDT,&SVQADD,&SVQBRWS
 .*
-         AIF   (&TYPE EQ 'DATASET').FILE
-         AIF   (&TYPE EQ 'FINAL').FINAL
+         AIF   ('&TYPE' EQ 'DATASET').FILE
+         AIF   ('&TYPE' EQ 'FINAL').FINAL
          MNOTE 12,'INVALID TYPE - &TYPE'
          MEXIT
 .*
@@ -107,4 +109,3 @@ DFHFCT   CSECT
 .NOTVSAM MNOTE 12,'RECFORM=(UNBLOCKED) NOT ALLOWED IN VSAM'
          MEXIT
          MEND
-

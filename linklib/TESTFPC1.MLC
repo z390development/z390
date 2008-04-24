@@ -12,6 +12,8 @@
 * 12/22/06 RPI 406 skip bug in DFP MF and skip slow BFP/HFP extended MF               
 *                  add check that SVC and MF display values match
 * 01/13/08 RPI 786 use fp compares to handle equivalent DFP values                    
+* 03/19/08 RPI 819 clear high 32 bits of gprs to avoid bugs in fpconvrt               
+* 04/19/08 RPI 833 add SETC quotes for HLASM compatibilitys in fpconvrt               
 *********************************************************************
 * Test conversion from and to 128 bit integer and all 6 floating 
 * point types using default svc 170 and 171 and also using 
@@ -37,7 +39,6 @@ LBT1     DC    LB'-567678867789987898'
 LDT1     DC    LD'-567678867789987898'
 LHT1     DC    LH'-567678867789987898'
          EQUREGS
-         RT1   START
          MACRO
          TEST  &TYPE,&VAL
          AIF   ('&TYPE'(2,1) EQ 'D').SKPMF SKIP DFP MF FOR NOW (BUG?)
@@ -90,9 +91,9 @@ LHT1     DC    LH'-567678867789987898'
          ENDIF
          AP    RT1_TOT,=P'1'
 * RPI 786 START TEST FOR DFP
-         AIF   (&TYPE EQ 'ED').ED_COMP
-         AIF   (&TYPE EQ 'DD').DD_COMP
-         AIF   (&TYPE EQ 'LD').LD_COMP 
+         AIF   ('&TYPE' EQ 'ED').ED_COMP
+         AIF   ('&TYPE' EQ 'DD').DD_COMP
+         AIF   ('&TYPE' EQ 'LD').LD_COMP 
          AGO   .CLC_COMP     
 .ED_COMP ANOP
          LE    R0,&VAL
@@ -124,6 +125,13 @@ LHT1     DC    LH'-567678867789987898'
          LTORG
 EXIT&TESTNO DS 0H
          MEND
+         RT1   START
+&I       SETA  0
+.HL      ANOP
+         IIHH  R&I,0            RPI 819 FIX
+         IIHL  R&I,0            RPI 819 FIX
+&I       SETA  &I+1
+         AIF   (&I LT 16).HL
 * DB
          TEST   DB,=DB'0'
          TEST   DB,=DB'1E-307'     

@@ -4,13 +4,15 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_READQ
          LCLB  &NEXT
          LCLC  &TYPE
          LCLC  &QUEUE,&QNAME,&INTO,&SET,&LENGTH,&NUMITEMS,&ITEM
-&TYPE    SETC  &SYSLIST(1)
-         AIF   (&TYPE EQ 'TS').TS
+&TYPE    SETC  '&SYSLIST(1)'
+         AIF   ('&TYPE' EQ 'TS').TS
          MNOTE 12,'READQ TYPE NOT RECOGNIZED'
          MEXIT
 .*
@@ -20,7 +22,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
 .* DISCARDED PARMS
          AIF   ('&PARM'(1,4)  EQ 'MAIN').PLOOP
          AIF   ('&PARM'(1,9)  EQ 'AUXILIARY').PLOOP
@@ -69,13 +71,13 @@
          AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         AIF   (&QUEUE EQ '' AND &QNAME EQ '').NOQUEUE
-         AIF   (&QUEUE NE '' AND &QNAME NE '').BOTHQ
-         AIF   (&INTO  EQ '' AND &SET   EQ '').NOINTOST
-         AIF   (&INTO  NE '' AND &SET   NE '').BOTHINST
-         AIF   (&ITEM  EQ '' AND (NOT &NEXT)).NOITMNXT
-         AIF   (&ITEM  NE '' AND &NEXT).BOTHITNX
-         AIF   (&SET   NE '' AND &LENGTH EQ '').NEEDLEN
+         AIF   ('&QUEUE' EQ '' AND '&QNAME' EQ '').NOQUEUE
+         AIF   ('&QUEUE' NE '' AND '&QNAME' NE '').BOTHQ
+         AIF   ('&INTO'  EQ '' AND '&SET'   EQ '').NOINTOST
+         AIF   ('&INTO'  NE '' AND '&SET'   NE '').BOTHINST
+         AIF   ('&ITEM'  EQ '' AND (NOT &NEXT)).NOITMNXT
+         AIF   ('&ITEM'  NE '' AND &NEXT).BOTHITNX
+         AIF   ('&SET'   NE '' AND '&LENGTH' EQ '').NEEDLEN
 .*
          MVC   EIBFN,=X'0A04'     SET EIBFN
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
@@ -92,7 +94,7 @@
          MVC   TSPTERM,TCTTETI    SET TERMINAL ID
          MVC   TSPTRAN,EIBTRNID   SET TRANSID
 .*
-         AIF   (&QUEUE EQ '').DOQNAME
+         AIF   ('&QUEUE' EQ '').DOQNAME
 .* GOT QUEUE
          AIF   ('&QUEUE'(1,1) EQ '''').QUSTRING
          MVC   EIBRSRCE,&QUEUE    SET EIBRSRCE AS LABEL
@@ -132,7 +134,7 @@
          CLC   TSPNAME(2),=C'DF'  RESERVED ID ?
          BE    CICS_READQ_&SYSNDX._INVREQ ERROR IF IT IS
 .* PROCESS ITEM
-         AIF   (&ITEM NE '').DOITEM
+         AIF   ('&ITEM' NE '').DOITEM
          MVC   TSPITEM,=X'FFFF'   SET ITEM NUMBER TO NEXT
          AGO   .DUNITEM
 .DOITEM  ANOP
@@ -143,7 +145,7 @@
 .ITMLABL ANOP
          MVC   TSPITEM,&ITEM      MOVE ITEM AS LABEL
 .DUNITEM ANOP
-         AIF   (&LENGTH EQ '').NOLEN
+         AIF   ('&LENGTH' EQ '').NOLEN
          AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
          MVC   TSPLEN,=AL2(&LENGTH) MOVE NUMERIC LENGTH
          AGO   .DUNLEN
@@ -176,7 +178,7 @@
          B     CICS_READQ_&SYSNDX._INVREQ SHOULD NOT OCCUR
 .*
 CICS_READQ_&SYSNDX._01 DS 0H
-         AIF   (&SET EQ '').DOINTO
+         AIF   ('&SET' EQ '').DOINTO
          EXEC  CICS GETMAIN SET(&SET) LENGTH(&LENGTH)
          L     R1,DFHEITSP        RESTORE TS BLOCK ADDRESS
 .* RESET EIB FIELDS
@@ -201,7 +203,7 @@ CICS_READQ_&SYSNDX._01 DS 0H
 .NOLEN2  ANOP
          CLC   TSPLEN,TSPACLEN    PARTIAL DATA RECEIVED ?
          BL    CICS_READQ_&SYSNDX._LENGERR ERROR IF IT WAS
-         AIF   (&NUMITEMS EQ '').NONUMIT
+         AIF   ('&NUMITEMS' EQ '').NONUMIT
          MVC   &NUMITEMS.(2),TSPNUMIT SET NUMITEMS
 .NONUMIT ANOP
          DROP  R1                 DROP TS BLOCK BASE
@@ -268,4 +270,3 @@ CICS_READQ_&SYSNDX._END DS 0H
          MEXIT
 .*
          MEND
-

@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_LINK
          GBLB  &LINKBLDL
@@ -13,7 +15,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,8)  EQ 'PROGRAM(').PROGRAM
          AIF   ('&PARM'(1,9)  EQ 'COMMAREA(').COMMAREA
          AIF   ('&PARM'(1,7)  EQ 'LENGTH(').LENGTH
@@ -33,7 +35,7 @@
          AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         AIF   (&PROGRAM EQ '').MISPROG
+         AIF   ('&PROGRAM' EQ '').MISPROG
          MVC   EIBFN,=X'0E02'     SET EIBFN
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
@@ -71,32 +73,32 @@ CICS_LINK_&SYSNDX._01 DS 0H
          DC    AL4(CICS_LINK_&SYSNDX._IGNORE) ENTPT FOR IGNORE COND
 .*
 CICS_LINK_&SYSNDX._02 DS 0H
-         AIF   (&COMMAREA NE '').COMMCHK
-         AIF   (&LENGTH EQ '').COMMCHK
+         AIF   ('&COMMAREA' NE '').COMMCHK
+         AIF   ('&LENGTH' EQ '').COMMCHK
          MNOTE 12,'LENGTH WITHOUT COMMAREA'
 CICS_LINK_&SYSNDX._IGNORE DS 0H
          MEXIT
 .*
 .COMMCHK ANOP
          MVC   DFHEICAL,EIBCALEN  SAVE EIB COMMAREA LENGTH
-         AIF   (&COMMAREA NE '').GOTCOMM
+         AIF   ('&COMMAREA' NE '').GOTCOMM
          XC    DFHEICAP,DFHEICAP  CLEAR COMMAREA ADDRESS
          XC    EIBCALEN,EIBCALEN  CLEAR COMMAREA LENGTH
          AGO   .ALLDONE
 .*
 .GOTCOMM ANOP
 &COMMTQ  SETC  T'&COMMAREA
-         AIF   ('&COMMAREA'(1,1) EQ '=' OR &COMMTQ EQ 'A').COMADLIT
+         AIF   ('&COMMAREA'(1,1) EQ '=' OR '&COMMTQ' EQ 'A').COMADLIT
          LA    R0,&COMMAREA       COMMAREA ADDRESS
          AGO   .COMMLEN
 .*
 .COMADLIT ANOP
          L     R0,&COMMAREA       INDIRECT COMMAREA ADDRESS
 .* LENGTH IS COMPULSORY FOR INDIRECT
-         AIF   (&LENGTH EQ '').BADLEN
+         AIF   ('&LENGTH' EQ '').BADLEN
 .COMMLEN ANOP
          ST    R0,DFHEICAP        SET COMMAREA ADDRESS
-         AIF   (&LENGTH NE '').LENVAL
+         AIF   ('&LENGTH' NE '').LENVAL
 &LENGTH  SETC  'L''&COMMAREA'
          AGO   .LENNUM
 .*
@@ -133,4 +135,3 @@ CICS_LINK_&SYSNDX._IGNORE DS 0H
 CICS_LINK_&SYSNDX._IGNORE DS 0H
          MEXIT
          MEND
-

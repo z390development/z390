@@ -11,6 +11,7 @@
 .* 09/04/07 RPI 691 ADD ACBNAME, ACBDCBN, ACBDCBS, ACBDCBP
 .* 09/24/07 RPI 702 ADD ACBOPENC UNIQUE ACB OPEN COUNT FOR RPL RESET
 .* 11/26/07 RPI 723 MOVE GETOK, GETNF FROM ACB TO RPL               
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       ACB   &AM=VSAM,      VSAM VS VTAM                             X
                &BUFSP=0,      MAXIMUM BUFFER SPACE FOR CLUSTER         X
@@ -25,8 +26,8 @@
 &NPOS    SETA  &NPOS-1
          AGO   .POSLOOP
 .POSEND  ANOP  
-         AIF   (&AM NE 'VSAM').ERR1                
-         AIF   (&EXLST NE 0).ERR2
+         AIF   ('&AM' NE 'VSAM').ERR1                
+         AIF   ('&EXLST' NE 0).ERR2
 &N       DS    0D
          DC    X'A0'                    ACBID    VSAM VS VTAM
          DC    X'11'                    ACBSTYPE 11-1F VSAM 20-2F VTAM
@@ -44,7 +45,7 @@
          DC    B'&ZGENMACF4' ACBMACF4         
          DC    X'00'                    ACBOFLAGS OPEN FLAGS
          DC    XL3'00'                  ALIGNMENT
-         AIF   (&DDNAME EQ '').DDDEF
+         AIF   ('&DDNAME' EQ '').DDDEF
          DC    CL8'&DDNAME'
          AGO   .DDEND                   ACBDDNAM  DDNAME FOR VCDT CAT
 .DDDEF   ANOP

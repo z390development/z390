@@ -6,13 +6,14 @@
 * Date   - 09/30/05                                                 *
 *********************************************************************
 * 02/24/06 RPI214 * OP IN SUBSTRING EXP, NO CONCAT AFTER SUBSTRING
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 *********************************************************************
 TESTMAC5 SUBENTRY 
          WTO   'TESTMAC5 TEST RPI 214 * LAST OP, AND NO CONCAT .'
 &T1      SETC  'ABC'(1+2*1,1)
-         AIF   (&T1 NE 'C').ERR
+         AIF   ('&T1' NE 'C').ERR
 &T2      SETC  'ABC'(2,1)'DEF'
-         AIF   (&T2 NE 'BDEF').ERR
+         AIF   ('&T2' NE 'BDEF').ERR
          WTO   'TESTMAC5 ENDED OK'
          SUBEXIT   
          AGO   .EXIT

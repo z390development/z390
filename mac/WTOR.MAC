@@ -11,6 +11,7 @@
 .* 04/12/06 RPI244 IGNORE UNUSED KW PARMS, MNOTE ERROR FOR TEXT=
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .*
 .*  WTOR - write to operator with reply (routed to GUAM window if 
@@ -52,15 +53,15 @@
                &RPLYISUR=,   IGNORED                                   X
                &ROUTCDE=,    IGNORED                                   X
                &TOKEN=       IGNORED                                           
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST LE 4).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
          MEXIT
 .NPOK    ANOP
-         AIF   (&TEXT NE '').ERR1
-         AIF   (&MF   NE 'I').ERR2
+         AIF   ('&TEXT' NE '').ERR1
+         AIF   ('&MF'   NE 'I').ERR2
          BAL   1,*+(WTOR#&SYSNDX._EOT-*+1)/2*2
          DC    AL2(WTOR#&SYSNDX._EOT-*,0),C&MSG
 WTOR#&SYSNDX._EOT EQU *
@@ -69,17 +70,17 @@ WTOR#&SYSNDX._EOT EQU *
          AGO   .CHKLEN
 .REPLY_REG ANOP
          ZOPTLR 0,&REPLY(1)
-         AIF   (&REPLYLEN NE '').CHKLENREG
+         AIF   ('&REPLYLEN' NE '').CHKLENREG
          MNOTE 12,'WTOR REPLY LENGTH REQUIRED'
          MEXIT
 .CHKLEN  ANOP
-         AIF   (&REPLYLEN EQ '').DEFLEN
+         AIF   ('&REPLYLEN' EQ '').DEFLEN
 .CHKLENREG ANOP
          AIF   ('&REPLYLEN'(1,1) EQ '(').LEN_REG
          LA    14,&REPLYLEN
          AGO   .CHKECB
 .LEN_REG ANOP
-         AIF   (&REPLYLEN(1) EQ '0' OR &REPLYLEN(1) EQ 'R0').ERR3
+         AIF   ('&REPLYLEN(1)' EQ '0' OR '&REPLYLEN(1)' EQ 'R0').ERR3
          ZOPTLR 14,&REPLYLEN(1)
          AGO   .CHKECB
 .DEFLEN  ANOP

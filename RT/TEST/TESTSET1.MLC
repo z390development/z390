@@ -13,6 +13,8 @@
 * 09/21/06 RPI 446 TEST NOT D'SYMBOL                                  
 * 09/21/06 RPI 456 TEST DUPLICATION OPERATOR WITHIN EXPRESSION
 * 02/15/07 RPI 559 TEST &VAR(N'&VAR)                            
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+* 04/24/08 RPI 839 TEST SKIPPING ELEMENTS IN MULT SET STORE       
 *********************************************************************
 TESTSET1 SUBENTRY
          WTO   'TESTSET1 - TEST SUBSCRIPTED VARIABLES'
@@ -50,7 +52,7 @@ TESTSET1 SUBENTRY
 &TEXT    SETC  '&TEXT.&T2(2).C'
          MNOTE 'T1(1)=&T1(1). T2(2)=&T2(2).'
          MNOTE 'TEXT=Z&TEXT.Z'
-         AIF   (&TEXT NE 'XABC').ERR
+         AIF   ('&TEXT' NE 'XABC').ERR
 .*
 .*  test lower case var and opcode
 .*
@@ -87,13 +89,13 @@ ok3      equ   *
 &LB(2)   SETB  2,3
          AIF   (&LB(2) NE 2 OR &LB(3) NE 3).ERR
 &LC(2)   SETC  '2','3'
-         AIF   (&LC(2) NE '2' OR &LC(3) NE '3').ERR
+         AIF   ('&LC(2)' NE '2' OR '&LC(3)' NE '3').ERR
 &GA(2)   SETA  2,3
          AIF   (&GA(2) NE 2 OR &GA(3) NE 3).ERR
 &GB(2)   SETB  2,3
          AIF   (&GB(2) NE 2 OR &GB(3) NE 3).ERR
 &GC(2)   SETC  '2','3'
-         AIF   (&GC(2) NE '2' OR &GC(3) NE '3').ERR
+         AIF   ('&GC(2)' NE '2' OR '&GC(3)' NE '3').ERR
 * TEST UNARY +- IN PARENS
 &X       SETA  -1
          AIF   (&X NE -1).ERR
@@ -111,9 +113,9 @@ ok3      equ   *
          AIF   (&X NE 3).ERR
 * TEST LCLC AND GBLC INIT ERROR
          LCLC  &TEST_LCLC(100)
-         AIF   (&TEST_LCLC(100) NE '').ERR
+         AIF   ('&TEST_LCLC(100)' NE '').ERR
          GBLC  &TEST_GBLC(100)
-         AIF   (&TEST_GBLC(100) NE '').ERR
+         AIF   ('&TEST_GBLC(100)' NE '').ERR
 * TEST EXPANSION VIA MULT. STORE
          LCLA  &EA(1)
          LCLB  &EB(1)
@@ -126,13 +128,13 @@ ok3      equ   *
 &EB(1)   SETB  1,2,3
          AIF   (&EB(3) NE 3).ERR
 &EC(1)   SETC  '1','2','3'
-         AIF   (&EC(3) NE '3').ERR
+         AIF   ('&EC(3)' NE '3').ERR
 &EGA(1)   SETA  1,2,3
          AIF   (&EGA(3) NE 3).ERR
 &EGB(1)   SETB  1,2,3
          AIF   (&EGB(3) NE 3).ERR
 &EGC(1)   SETC  '1','2','3'
-         AIF   (&EGC(3) NE '3').ERR
+         AIF   ('&EGC(3)' NE '3').ERR
 * TEST ALLOC OF SUBSCRIPTED ARRAY WITHOUT DECLARATION
 &DX(3)   SETB  1
          AIF   (&DX(3) EQ 1 AND &DX(8) EQ 0).DXOK
@@ -170,6 +172,42 @@ ok3      equ   *
 &VAR(1)  SETA  1,2,3
          MNOTE 'VAR(3)=3=&VAR(N'&VAR)'
          AIF   (&VAR(N'&VAR) NE 3).ERR
+* TEST SKIPPING ELEMENTS AND PC CODE RPI 839
+.LOOP    ANOP
+&I       SETA  &I+1
+&MAA      SETA  0     COMMENT
+&MCC      SETC  'C'   COMMENT
+         LCLA  &MA(10)
+&MA(1)    SETA  1,,3
+         MNOTE 'MA(1)=&MA(1)'
+         MNOTE 'MA(2)=&MA(2)'
+         MNOTE 'MA(3)=&MA(3)'
+&MA(4)    SETA  4,5,6
+         MNOTE 'MA(4)=&MA(4)'
+         MNOTE 'MA(5)=&MA(5)'
+         MNOTE 'MA(6)=&MA(6)'
+         LCLB  &MB(10)
+&MB(1)    SETB  1,,3
+         MNOTE 'MB(1)=&MB(1)'
+         MNOTE 'MB(2)=&MB(2)'
+         MNOTE 'MB(3)=&MB(3)'
+&MB(4)    SETB  4,5,6
+         MNOTE 'MB(4)=&MB(4)'
+         MNOTE 'MB(5)=&MB(5)'
+         MNOTE 'MB(6)=&MB(6)'
+         LCLC  &MC(10)
+&MC(1)    SETC  '1',,'3'
+         MNOTE 'MC(1)=&MC(1)'
+         MNOTE 'MC(2)=&MC(2)'
+         MNOTE 'MC(3)=&MC(3)'
+&MC(4)    SETC  '4','5','6'
+         MNOTE 'MC(4)=&MC(4)'
+         MNOTE 'MC(5)=&MC(5)'
+         MNOTE 'MC(6)=&MC(6)'
+         AIF   (&I LT 2).LOOP
+*
+* END OF TESTS
+*
          WTO   'TESTSET1 ENDED OK'
          SUBEXIT
          AGO   .EXIT

@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_DELAY
          LCLB  &FOR,&UNTIL
@@ -14,7 +16,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,9) EQ 'INTERVAL(').INTVAL
          AIF   ('&PARM'(1,5) EQ 'TIME(').TIME
          AIF   ('&PARM'(1,6) EQ 'HOURS(').HOURS
@@ -59,27 +61,27 @@
          AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         AIF   (&REQID  NE '').BADREQ
-         AIF   (&INTVAL NE '' AND &TIME NE '').BOTHIT
+         AIF   ('&REQID'  NE '').BADREQ
+         AIF   ('&INTVAL' NE '' AND '&TIME' NE '').BOTHIT
          AIF   (&FOR AND &UNTIL).BOTHFU
-         AIF   (&INTVAL NE '' AND &FOR).BADFORUN
-         AIF   (&INTVAL NE '' AND &UNTIL).BADFORUN
-         AIF   (&TIME   NE '' AND &FOR).BADFORUN
-         AIF   (&TIME   NE '' AND &UNTIL).BADFORUN
-         AIF   (&INTVAL NE '' AND &HOURS NE '').BADHMS
-         AIF   (&INTVAL NE '' AND &MINS  NE '').BADHMS
-         AIF   (&INTVAL NE '' AND &SECS  NE '').BADHMS
-         AIF   (&TIME   NE '' AND &HOURS NE '').BADHMS
-         AIF   (&TIME   NE '' AND &MINS  NE '').BADHMS
-         AIF   (&TIME   NE '' AND &SECS  NE '').BADHMS
-         AIF   (&HOURS  NE '' AND NOT(&FOR OR &UNTIL)).BADHMS2
-         AIF   (&MINS   NE '' AND NOT(&FOR OR &UNTIL)).BADHMS2
-         AIF   (&SECS   NE '' AND NOT(&FOR OR &UNTIL)).BADHMS2
-         AIF   ((&FOR OR &UNTIL) AND &HOURS EQ '' AND &MINS EQ '' AND &-
-               SECS EQ '').BADFUN
+         AIF   ('&INTVAL' NE '' AND &FOR).BADFORUN
+         AIF   ('&INTVAL' NE '' AND &UNTIL).BADFORUN
+         AIF   ('&TIME'   NE '' AND &FOR).BADFORUN
+         AIF   ('&TIME'   NE '' AND &UNTIL).BADFORUN
+         AIF   ('&INTVAL' NE '' AND '&HOURS' NE '').BADHMS
+         AIF   ('&INTVAL' NE '' AND '&MINS'  NE '').BADHMS
+         AIF   ('&INTVAL' NE '' AND '&SECS'  NE '').BADHMS
+         AIF   ('&TIME'   NE '' AND '&HOURS' NE '').BADHMS
+         AIF   ('&TIME'   NE '' AND '&MINS'  NE '').BADHMS
+         AIF   ('&TIME'   NE '' AND '&SECS'  NE '').BADHMS
+         AIF   ('&HOURS'  NE '' AND NOT(&FOR OR &UNTIL)).BADHMS2
+         AIF   ('&MINS'   NE '' AND NOT(&FOR OR &UNTIL)).BADHMS2
+         AIF   ('&SECS'   NE '' AND NOT(&FOR OR &UNTIL)).BADHMS2
+         AIF   ((&FOR OR &UNTIL) AND '&HOURS' EQ '' AND '&MINS' EQ '' AX
+               ND '&SECS' EQ '').BADFUN
 .* DEFAULT SETTING IS INTERVAL(0)
-         AIF   (&INTVAL EQ '' AND &TIME EQ '' AND &HOURS EQ '' AND &MIN-
-               S EQ '' AND &SECS EQ '').DEFINT
+         AIF   ('&INTVAL' EQ '' AND '&TIME' EQ '' AND '&HOURS' EQ '' ANX
+               D '&MINS' EQ '' AND '&SECS' EQ '').DEFINT
          AGO   .PARMOK
 .*
 .DEFINT  ANOP
@@ -90,13 +92,13 @@
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
 .* JOIN UP INTERVAL AND TIME
-         AIF   (&INTVAL EQ '').NOTINT
-&HHMMSS  SETC  &INTVAL
+         AIF   ('&INTVAL' EQ '').NOTINT
+&HHMMSS  SETC  '&INTVAL'
          AGO   .DOHMS
 .*
 .NOTINT  ANOP
-         AIF   (&TIME EQ '').NOTIT
-&HHMMSS  SETC  &TIME
+         AIF   ('&TIME' EQ '').NOTIT
+&HHMMSS  SETC  '&TIME'
 .DOHMS   ANOP
 .* PROCESS INTERVAL/TIME
 &ONLYH   SETB  1
@@ -147,7 +149,7 @@
 .GENCHK  ANOP
          CVB   R1,CICS_DELAY_&SYSNDX._IVB CONVERT TO BINARY
          ST    R1,CICS_DELAY_&SYSNDX._IVF SAVE REQUESTED TIME
-         AIF   (&TIME EQ '').GOINT
+         AIF   ('&TIME' EQ '').GOINT
 .* SEPARATE PROCESSING FOR TIME
          TIME  BIN                GET TIME NOW IN 0.01 SECS
 .* IF REQUESTED TIME-TIME NOW = 0 TO -6 TIME HAS EXPIRED
@@ -183,7 +185,7 @@ CICS_DELAY_&SYSNDX._IVT DS FL4 TIME LAPSE IN 0.01 SECS BINARY
 .GOINT   ANOP
          LTR   R1,R1              ZERO PERIOD ?
          BNZ   CICS_DELAY_&SYSNDX._NOTEXP EXIT IF NOT
-         AIF   (&TIME EQ '').GOINT2
+         AIF   ('&TIME' EQ '').GOINT2
 CICS_DELAY_&SYSNDX._NOSTMR DS 0H
 .GOINT2  ANOP
 .* INTERVAL(0) OR TIME HAS EXPIRED
@@ -201,20 +203,23 @@ CICS_DELAY_&SYSNDX._NOTEXP DS 0H
 .* A SINGLE PARAMETER FORMS HOURS (0-99), MINUTES (0-5999) OR
 .* SECONDS (0-359999)
 .*
-         AIF   (&HOURS NE '' AND &MINS EQ '' AND &SECS EQ '').ONLYH
-         AIF   (&HOURS EQ '' AND &MINS NE '' AND &SECS EQ '').ONLYM
-         AIF   (&HOURS EQ '' AND &MINS EQ '' AND &SECS NE '').ONLYS
+         AIF   ('&HOURS' NE '' AND '&MINS' EQ '' AND '&SECS' EQ '').ONLX
+               YH
+         AIF   ('&HOURS' EQ '' AND '&MINS' NE '' AND '&SECS' EQ '').ONLX
+               YM
+         AIF   ('&HOURS' EQ '' AND '&MINS' EQ '' AND '&SECS' NE '').ONLX
+               YS
 .* MORE THAN ONE PARM
 &ONLYH   SETB  1
 &ONLYM   SETB  1
 &ONLYS   SETB  1
-         AIF   (&HOURS NE '').TRYM
+         AIF   ('&HOURS' NE '').TRYM
 &HOURS   SETC  '0'
 .TRYM    ANOP
-         AIF   (&MINS NE '').TRYS
+         AIF   ('&MINS' NE '').TRYS
 &MINS    SETC  '0'
 .TRYS    ANOP
-         AIF   (&SECS NE '').DOFUHMS
+         AIF   ('&SECS' NE '').DOFUHMS
 &SECS    SETC  '0'
 .DOFUHMS ANOP
          ZAP   CICS_DELAY_&SYSNDX._IVB,=P'&HOURS' SET HOURS
@@ -341,4 +346,3 @@ CICS_DELAY_&SYSNDX._IGNORE DS 0H
 .BADFUN  MNOTE 12,'FOR/UNTIL SPECIFIED, BUT NO TIME PARMS'
          MEXIT
          MEND
-

@@ -303,7 +303,9 @@ public  class  az390 implements Runnable {
         *          set scale factor if no explicit modifier
         *          support I' and S' operators in expression 
         * 02/28/08 RPI 812 assemble ASSIST opcodes if ASSIST option on 
-        * 03/03/08 RPI 817 assemble all 226 new z10 opcodes                          
+        * 03/03/08 RPI 817 assemble all 226 new z10 opcodes 
+        * 04/17/08 RPI 834 correct neg 0 fp value    
+        * 04/24/08 RPI 840 ignore spaces in P and Z data fields                     
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -7025,6 +7027,8 @@ private void process_dcp_data(){
 			         } else if (dc_field.charAt(dc_index) == '-'){
 			         	dcp_sign = 'D';
 			         	dc_index++;
+			         } else if (dc_field.charAt(dc_index) == ' '){
+			        	 dc_index++; // RPI 840
 			         } else {
 			         	log_error(67,"invalid character in P type data field - " + dc_field);
 			         }
@@ -7144,6 +7148,8 @@ private void process_dcz_data(){
 			         } else if (dc_field.charAt(dc_index) == '-'){
 			         	dcp_sign = 'D';
 			         	dc_index++;
+			         } else if (dc_field.charAt(dc_index) == ' '){
+			        	 dc_index++; // RPI 840
 			         } else {
 			         	log_error(67,"invalid character in P type data field - " + dc_field);
 			         }
@@ -8109,7 +8115,7 @@ private void get_fp_hex(){
 	 * Exit with artbitrary format if zero.
 	 */
 	char fp_sign = '+';
-	if (fp_text.length() > 1 && fp_text.substring(0,2).equals("-(")){
+	if (fp_text.charAt(0) =='-'){ // RPI 834
 		fp_sign = '-';
 		fp_text = fp_text.substring(1);
 	}
@@ -8199,11 +8205,12 @@ private void get_fp_hex(){
 		fp_big_dec1 = fp_big_dec1.movePointRight(-dc_exp);		
 	}
 	if (fp_big_dec1.signum() > 0){
-		tz390.fp_sign = 0;
-	} else if (fp_big_dec1.signum() < 0){
-		tz390.fp_sign = tz390.fp_sign_bit[tz390.fp_type];
-		fp_big_dec1 = fp_big_dec1.abs();
-	} else {
+		if (fp_sign == '+'){  // RPI 834
+			tz390.fp_sign = 0;
+		} else {
+			tz390.fp_sign = tz390.fp_sign_bit[tz390.fp_type];
+		}
+	} else if (fp_sign == '+'){ // RPI 834
 		switch (tz390.fp_type){  // gen zero hex for tz390.fp_type
 		case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
 			dc_hex = "0000000000000000"; // RPI 384
@@ -8231,6 +8238,36 @@ private void get_fp_hex(){
 			return;
 		case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
 			dc_hex = "00000000000000000000000000000000";  // RPI 384
+			return;
+		}
+	} else { // RPI 834 negative zero values
+		switch (tz390.fp_type){  // gen zero hex for tz390.fp_type
+		case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
+			dc_hex = "8000000000000000"; // RPI 384
+			return;
+		case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50 // RPI 407
+			dc_hex = "A238000000000000"; // RPI 384 RPI 790
+			return;
+		case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
+			dc_hex = "8000000000000000"; // RPI 384
+			return;
+		case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
+			dc_hex = "80000000"; // RPI 384
+			return;
+		case 4: // tz390.fp_ed_type s1,cf5,bxdf6,ccf20 // RPI 407
+			dc_hex = "A2500000"; // RPI 384 RPI 790
+			return;
+		case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
+			dc_hex = "80000000"; // RPI 384
+			return;
+		case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
+			dc_hex = "80000000000000000000000000000000";  // RPI 384
+			return;
+		case 7: // tz390.fp_ld_type s1,cf5,bxdf12,ccf110 // RPI 407	
+			dc_hex = "A2080000000000000000000000000000";  // RPI 384 RPI 790
+			return;
+		case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
+			dc_hex = "80000000000000000000000000000000";  // RPI 384
 			return;
 		}
 	}

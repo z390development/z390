@@ -4,14 +4,16 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_IGNORE
          LCLA  &CONDRNG
          LCLC  &TYPE
          LCLC  &CONDS(100)
 &CONDRNG SETA  100
-&TYPE    SETC  &SYSLIST(1)
-         AIF   (&TYPE EQ 'CONDITION').COND
+&TYPE    SETC  '&SYSLIST(1)'
+         AIF   ('&TYPE' EQ 'CONDITION').COND
          MNOTE 12,'IGNORE TYPE NOT RECOGNIZED'
          MEXIT
 .*
@@ -62,14 +64,14 @@ CICS_IGNORE_&SYSNDX._01 DS 0H
 .PLOOPC  ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
 .* INNER LOOP
 &INNER   SETA  0
 .ILOOPC  ANOP
 &INNER   SETA  &INNER+1
          AIF   (&INNER GT &CONDRNG).BADPARM
          AIF   (K'&CONDS(&INNER) EQ 0).ILOOPC
-         AIF   (&PARM EQ &CONDS(&INNER)).GOTCOND
+         AIF   ('&PARM' EQ '&CONDS(&INNER)').GOTCOND
          AGO   .ILOOPC
 .*
 .GOTCOND ANOP
@@ -87,4 +89,3 @@ CICS_IGNORE_&SYSNDX._01 DS 0H
          DROP  R1
          MEXIT
          MEND
-

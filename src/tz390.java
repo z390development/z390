@@ -177,6 +177,8 @@ public  class  tz390 {
     * 03/13/08 RPI 820 prevent cf5 array exception due to overflow
     * 03/15/08 RPI 822 add AUTOLINK to STATS file
     * 03/27/08 RPI 828 add option INIT to set regs to x'F4' and mem to x'F5' vs 0's
+    * 04/18/08 RPI 833 option ALLOW to permit HLASM extensions
+    * 04/23/08 RPI 837 update EZ390 ENDING msg only once and add to log
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -185,7 +187,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.01b";  //dsh
+    String version    = "V1.4.01c";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -197,6 +199,7 @@ public  class  tz390 {
 	String  z390_font    = "Monospaced";  // RPI 509 was Courier
 	boolean z390_abort   = false;  // global abort request
     String  invalid_options = "";  // RPI 742
+    boolean opt_allow    = false;  // allow extensions such as no quotes for SETC var
     boolean opt_amode24  = false;  // link to run amode24
     boolean opt_amode31  = true;   // link to run amode31
     boolean opt_ascii    = false; // use ascii vs ebcdic
@@ -4538,6 +4541,8 @@ private void process_option(String token){
     }
 	if (token.charAt(0) == '@'){
 		process_options_file(token.substring(1));  // RPI 742
+	} else if (token.toUpperCase().equals("ALLOW")){
+		opt_allow = true; // RPI 833
 	} else if (token.toUpperCase().equals("AMODE24")){
 		opt_amode24 = true;
 		opt_amode31 = false;
@@ -4664,6 +4669,8 @@ private void process_option(String token){
        	} catch (Exception e){
         	invalid_options = invalid_options + " " + token;
        	}
+    } else if (token.toUpperCase().equals("NOALLOW")){
+       	opt_allow = false;  // RPI 833
     } else if (token.toUpperCase().equals("NOASM")){
        	opt_asm = false;
     } else if (token.toUpperCase().equals("NOASSIST")){
@@ -5047,6 +5054,9 @@ public void set_ended_msg(int rc){
 	 * set ended_msg for use by mz390, az390,
 	 * lz390, and ez390.
 	 */
+	if (ended_msg.length() > 0){ // RPI 837
+		return;
+	}
 	if (opt_timing){
  		systerm_sec  = " SEC=" + right_justify("" + ((System.currentTimeMillis()-systerm_start)/1000),2);
 	    systerm_time = sdf_HHmmss.format(new Date()) + " ";;
@@ -6223,7 +6233,12 @@ public void put_trace(String text){
 		 * option flags
 		 */
 		cmd_parms_len = systerm_time.length() + systerm_prefix.length() + 13;
-	    if (opt_amode24 ){ // link to run amode24
+	    if (opt_allow){ // rpi 833 allow HLASM extensions
+	        add_final_opt("ALLOW");
+	     } else {
+	        add_final_opt("NOALLOW");
+	     }
+		if (opt_amode24 ){ // link to run amode24
 	        add_final_opt("AMODE24");
 	     } else {
 	        add_final_opt("NOAMODE24");

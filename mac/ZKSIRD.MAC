@@ -11,6 +11,7 @@
 .* 08/06/07 RPI 668 VCDTPATH ADDR KSDS ALT PATH IHAAIX SECTION                         
 .* 09/03/07 RPI 681 EXPAND TO IHAVCDT, IHACLR, IHAAIX, IHAPTH                          
 .* 09/23/07 RPI 704 ADD VCLRCI OPTIONAL CI SIZE TO SUPPORT LINEAR                      
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
          ZKSIRD
 .*
@@ -37,7 +38,8 @@ ZKSIRF   DS    XL8   28 XRBA OF FORWARD  ZKSIR RECORD
 ZKSIRB   DS    XL8   36 XRBA OF BACKWARD ZKSIR RECORD
 ZKSIREC  EQU   *     44 START OF FIXED OR VARIABLE KSDS DATA RECORD
 ZKSIRLEN EQU   *-IHAZKSIR
-         AIF   (&Z390_ZKSIR_NAME EQ '' OR &Z390_ZKSIR_TYPE EQ '').EXIT
+         AIF   ('&Z390_ZKSIR_NAME' EQ '' OR '&Z390_ZKSIR_TYPE' EQ '').EX
+               XIT
 &Z390_ZKSIR_NAME &Z390_ZKSIR_TYPE                    
 .EXIT    ANOP
          MEND

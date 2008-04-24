@@ -4,6 +4,9 @@
                &NAME=,        P? SOLUTION NAME REQ'D ON 1ST CALL  DSH2 X
                &RUNSYS=,      MVS, CMS, VSE, ZOS (DEFAULT IS 390) DSH2 X
                &ST=,&LEN=,&END=,&ID=  DUMP OPTIONS USED BY CMS    DSH2  
+.********************************************************************
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.********************************************************************
          GBLC  &ZRUNSYS           Global OS TARGET EXECUTION ID         
          GBLB  &SYPOPN            IS SYSPRINT OPEN                      
          LCLA  &N,&L,&K                                                 
@@ -13,7 +16,7 @@
 &N       SETA  1                  Start index                           
 &L       SETA  K'&SYSPARM-7       Max loop                              
 .SYSPLP ANOP                                                            
-      AIF   (&N GT &L).NOSYS            STOP IF TOO FAR                 
+      AIF   ('&N' GT &L).NOSYS            STOP IF TOO FAR                 
       AIF   ('&SYSPARM'(&N,7) EQ 'RUNSYS=').GOTSYS IF MAGIC WORD GO     
 &N       SETA  &N+1               Bump index                            
       AGO   .SYSPLP               Loop de loop                          

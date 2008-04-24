@@ -8,9 +8,10 @@
 .*********************************************************************
 .* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
 .* 07/10/07 RPI 655 CORRECT RC= HANDLING OF EXPRESSION AND (REG)
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       EOJ   &RC=0      SET RETURN CODE TO 0 OR SPECIFIED VALUE       
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST EQ 0).NPOK

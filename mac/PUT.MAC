@@ -14,31 +14,32 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 07/22/07 RPI 644 ADD RPL VSAM SUPPORT VIA SVC 121 R0=2, R1=A(RPL)
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       PUT   &DCB,                                                   X
                &REC,                                                   X
                &RPL=,    VSAM REQUEST PARAMETER LIST                   X
                &MF=I  NOT SUPPORTED
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR2
+         AIF   ('&MF' NE 'I').ERR2
          AIF   (N'&SYSLIST LE 2).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
 .NPOK    ANOP
-         AIF   (&RPL NE '').VSAM
+         AIF   ('&RPL' NE '').VSAM
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          LA    1,&DCB
          AGO   .CHKREC
 .DCBREG  ANOP
          ZOPTLR 1,&DCB(1)
 .CHKREC  ANOP
-         AIF   (&REC EQ '').RECDEF
+         AIF   ('&REC' EQ '').RECDEF
          AIF   ('&REC'(1,1) EQ '(').RECREG
          LA    0,&REC
          AGO   .SVC
 .RECREG  ANOP
-         AIF   (&REC(1) EQ '1' OR &REC(1) EQ 'R1').ERR1
+         AIF   ('&REC(1)' EQ '1' OR '&REC(1)' EQ 'R1').ERR1
          ZOPTLR 0,&REC(1)
          AGO   .SVC
 .RECDEF  ANOP

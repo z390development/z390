@@ -5,6 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+*********************************************************************
 TESTSET2 SUBENTRY
          WTO   'TESTSET2 - TEST CREATED SET VARIABLES'
 .*
@@ -57,7 +59,7 @@ TESTSET2 SUBENTRY
 &(SC1)   SETC  1
          MNOTE 'SC1=&(SC1)'
          AIF   (&SC1 NE 1).ERR
-&(SAVEC&(SC1)) SETC &(SC1)
+&(SAVEC&(SC1)) SETC '&(SC1)'
 &(SC&(SC1)) SETC 2
          MNOTE 'SC1=&(SC&(SAVEC1))'
          AIF   (&SC1 NE 2).ERR
@@ -71,7 +73,7 @@ TESTSET2 SUBENTRY
 &TEXT    SETC  '&TEXT.&T2(2).C'
          MNOTE 'T1(1)=&T1(1). T2(2)=&T2(2).'
          MNOTE 'TEXT=Z&TEXT.Z'
-         AIF   (&TEXT NE 'XABC').ERR
+         AIF   ('&TEXT' NE 'XABC').ERR
          WTO   'TESTSET2 ENDED OK'
          SUBEXIT
          AGO   .EXIT

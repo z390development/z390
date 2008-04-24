@@ -27,6 +27,8 @@
 * 12/16/06 RPI 518 CORRECT INVALID PAIR FETCH FOR FIXBR          
 * 03/19/08 RPI 819 CORRECT CFEBR, CFDBR, AND CFXBR TO USE CL VS CG
 * 03/20/08 RPI 824 TEST FLUSH OF LB/LD/LH WHEN CHANGING BD2 REG    
+* 04/06/08 RPI 834 CORRECT MSE?? AND MSD?? TO SUBTRACT FROM PRODUCT
+*          AND CORRECT TCEB, TCDB, AND TCXB MINUS -0 TESTS
 *********************************************************************
          PRINT DATA
          MACRO
@@ -1183,7 +1185,7 @@ DEBR1    ESPIE RESET
          LE    R1,=EB'2'
          LE    R2,=EB'3'
          MSEBR R0,R1,R2
-         CEB   R0,=EB'-5'
+         CEB   R0,=EB'5' RPI 834
          RT1   CCE
 * B310 LPDBR
          LD    R1,=DB'-1'
@@ -1435,7 +1437,7 @@ DDBR1    ESPIE RESET
          LD    R1,=DB'2'
          LD    R2,=DB'3'
          MSDBR R0,R1,R2
-         CDB   R0,=DB'-5'
+         CDB   R0,=DB'5'  RPI 834
          RT1   CCE
 * B324 LDER
          LE    R1,=EH'1'
@@ -1467,7 +1469,7 @@ DDBR1    ESPIE RESET
          LE    R1,=EH'2'
          LE    R2,=EH'3'
          MSER  R0,R1,R2
-         CE    R0,=EH'-5'
+         CE    R0,=EH'5' RPI 834
          RT1   CCE
 * B336 SQXR
          LX    R1,=LH'4'
@@ -1546,7 +1548,7 @@ DDBR1    ESPIE RESET
          LD    R1,=DH'2'
          LD    R2,=DH'3'
          MSDR  R0,R1,R2
-         CD    R0,=DH'-5'
+         CD    R0,=DH'5'  RPI 834
          RT1   CCE
 * B340 LPXBR
          LX    R1,=LB'-1'
@@ -2256,12 +2258,13 @@ DEB1     ESPIE RESET
          LE    R0,=EB'1'
          LE    R1,=EB'2'
          MSEB  R0,R1,=EB'3'
-         CEB   R0,=EB'-5'
+         CEB   R0,=EB'5' RPI 834
          RT1   CCE
 * ED10 TCEB
          LE    R0,=EB'0'
          TCEB  R0,TDCPZ
          RT1   CC1
+         LE    R0,=EB'-0'  RPI 834
          TCEB  R0,TDCMZ
          RT1   CC1
          LE    R0,=EB'1'
@@ -2278,6 +2281,7 @@ DEB1     ESPIE RESET
          LD    R0,=DB'0'
          TCDB  R0,TDCPZ
          RT1   CC1
+         LD    R0,=DB'-0'  RPI 834
          TCDB  R0,TDCMZ
          RT1   CC1
          LD    R0,=DB'1'
@@ -2294,6 +2298,7 @@ DEB1     ESPIE RESET
          LX    R0,=LB'0'
          TCXB  R0,TDCPZ
          RT1   CC1
+         LX    R0,=LB'-0' RPI 834
          TCXB  R0,TDCMZ
          RT1   CC1
          LX    R0,=LB'1'
@@ -2410,7 +2415,7 @@ KDB2     ESPIE RESET
          LD    R0,=DB'1'
          LD    R1,=DB'2'
          MSDB  R0,R1,=DB'3'
-         CDB   R0,=DB'-5'
+         CDB   R0,=DB'5'  RPI 834
          RT1   CCE
 * ED24 LDE 
          LDE   R0,=EH'123'
@@ -2436,7 +2441,7 @@ KDB2     ESPIE RESET
          LE    R0,=EH'1'
          LE    R1,=EH'2'
          MSE   R0,R1,=EH'3'
-         CE    R0,=EH'-5'
+         CE    R0,=EH'5'  RPI 834
          RT1   CCE
 * ED34 SQE
          SQE   R0,=EH'4'
@@ -2500,7 +2505,7 @@ KDB2     ESPIE RESET
          LD    R0,=DH'1'
          LD    R1,=DH'2'
          MSD   R0,R1,=DH'3'
-         CD    R0,=DH'-5'
+         CD    R0,=DH'5'  RPI 834
          RT1   CCE
 * ED64 LEY
          LEY   R0,=EH'1'

@@ -12,6 +12,7 @@
 *  1.  CURRENT SUPPORT BASED ON COBOL\PAOS\OSDEMO1.TXT              * 
 *********************************************************************
 * 03/22/08 INITIAL CODING                                           *
+* 04/24/08 RPI 833 ADD SETC QUOTES FOR HLASM COMPATIBILITY          *
 *********************************************************************
 *  AREAD SYSUT1 AND PUNCH REFORMATED STATEMENTS ON SYSUT2
 *   1.  OUTPUT COMMENTS WITH PROGRAM, DATE, AND TIME
@@ -53,7 +54,7 @@
 .LOOP    ANOP
 &TEXT    AREAD DDNAME=SYSUT1
          ACTR 1000              RESET FOR LARGE PROGAMS (4096 LINES+)
-         AIF  (&TEXT EQ '').EOF
+         AIF  ('&TEXT' EQ '').EOF
 *
 * GEN COMMENT IF LESS THAN 8 CHAR (MINIMUM REQ FOR STMT NO
 *
@@ -99,10 +100,10 @@
 &LINE_DESC SETC '&TEXT'(9,*)
          PUNCH 'LINE_&LINE_NUM DS     0H &LINE_DESC',DDNAME=SYSUT2
          AIF   (K'&LINE1 NE 0).NOFIRST
-&LINE1   SETC  &LINE_NUM
+&LINE1   SETC  '&LINE_NUM'
 .NOFIRST ANOP
          AIF   (K'LINE2 NE 0).NOLINE
-&LINE2   SETC  &LINE_NUM
+&LINE2   SETC  '&LINE_NUM'
 .NOLINE  ANOP
 *
 * GEN COMMENT IF LESS THAN 28 CHAR (MINIMUM REQ FOR ASM STMT

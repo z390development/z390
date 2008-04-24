@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 09/16/07 RPI 682 INITIAL CODING                  
 .* 09/20/07 RPI 703 CORRECT NISSING QUOTE IN AIF    
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       GENCB &AM=VSAM, VSAM VS VTAM                                  X
                &BLK=,    ACB OR RPL CONTROL BLOCK GENERATION           X
@@ -35,15 +36,15 @@
 &NPOS    SETA  &NPOS-1
          AGO   .POSLOOP
 .POSEND  ANOP  
-         AIF   (&AM EQ 'VSAM').CHK_EXLST                
+         AIF   ('&AM' EQ 'VSAM').CHK_EXLST                
          MNOTE 12,'GENCB ONLY AM=VSAM IS SUPPORTED'
          MEXIT
 .CHK_EXLST ANOP
-         AIF   (&EXLST EQ '0').NOEXLST
+         AIF   ('&EXLST' EQ '0').NOEXLST
          MNOTE 12,'GENCB ACB EXLST NOT CURRENTLY SUPPORTED'
          MEXIT
 .NOEXLST ANOP
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          &BLK.D , GEN ACB/RPL DSECT AND &BLK.LEN IF NOT ALREADY DONE
@@ -57,12 +58,12 @@
 .*
 .* INIT R14 = USER WORK AREA OR DYNAMIC ALLOC AREA
 .*
-         AIF   (&LENGTH EQ '' AND &WAREA EQ '').ALLOC
-         AIF   (&LENGTH NE '').WAREA  
+         AIF   ('&LENGTH' EQ '' AND '&WAREA' EQ '').ALLOC
+         AIF   ('&LENGTH' NE '').WAREA  
          MNOTE 12,'GENCB MISSING LENGTH FOR WAREA'
          MEXIT
 .WAREA   ANOP
-         AIF   (&WAREA  NE '').WAREA2
+         AIF   ('&WAREA'  NE '').WAREA2
          MNOTE 12,'GENCB MISSING WAREA FOR LENGTH'
          MEXIT
 .WAREA2  ANOP
@@ -73,7 +74,7 @@
 .REGWAREA ANOP
          ZOPTLR 14,&WAREA(1) 
 .LENGTH  ANOP
-         AIF   (&LENGTH GE &LBLKS).CLEAR
+         AIF   ('&LENGTH' GE '&LBLKS').CLEAR
          MNOTE 12,'GENCB &LENGTH TOO SHORT FOR &COPIES COPIES OF &BLK'
          MEXIT
 .ALLOC   ANOP
@@ -83,8 +84,8 @@
          MVC   1(&LBLK-1,1),0(1) CLEAR FIRST &BLK
 .CHKTYPE ANOP 
 &TCOPY   SETA  &COPIES
-         AIF   (&BLK EQ 'ACB').GENACB
-         AIF   (&BLK EQ 'RPL').GENRPL
+         AIF   ('&BLK' EQ 'ACB').GENACB
+         AIF   ('&BLK' EQ 'RPL').GENRPL
          MNOTE 12,'GENCB ONLY BLK=ACB OR BLK=RPL SUPPORTED'
          MEXIT
 .*

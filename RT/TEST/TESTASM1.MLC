@@ -31,6 +31,7 @@
 * 08/22/07 RPI 673 TEST DROP WITH EXPRESSION 1+1 ETC.                      
 * 11/30/07 RPI 743 TEST COMMENT ON PROTOTYPE, CNOP ATTR I, PUNCH CMTS      
 * 11/30/07 RPI 745 TEST AREAD SKIP NOPRINT,NOSTMT, SUPPORT CLOCKB/D        
+* 04/23/08 RPI 835 - TEST * IN SETC LABEL VAR CREATES COMMENT        
 *********************************************************************
          START , RPI 230 TEST START CSECT
          USING *,R15
@@ -187,6 +188,12 @@ CNOPLAB  CNOP  0,4
          MNOTE 'CLOCKB=&TOD HH=&DHH MM=&DMM SS=&DSS TH=&DTH'
 &TOD     AREAD CLOCKD
          MNOTE 'CLOCKD=&TOD'
+* RPI 835 * IN LABEL VAR CREATES COMMENT                          
+&COMM    SETC  '* THIS IS TEST FOR RPI 835'
+&COMM   
+*
+* END OF TESTS
+*
          WTO   'TEST1 ENDED OK'
          RT1   END
          LTORG

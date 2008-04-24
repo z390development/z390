@@ -11,6 +11,7 @@
 .*                  (NOTE REG MUST NOT BE GPR 1)
 .*                  (NOTE IN=(REG) INDICATES FIELD ADDR IN GPR)
 .* 12/10/06 RPI 514 ADD DFP DECIMAL FLOATING POINT TYPES          
+.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
 .*********************************************************************
 .*
 .*  CONVERT INPUT NUMERIC FIELD TO DISPLAY EBCDIC FORMAT
@@ -35,7 +36,7 @@
                &IN=,         SOURCE FIELD (RX OR REG)                  X
                &OUT=,        TARGET FIELD (RX OR REG)                  X
                &LINKAGE=SVC  USE Z390 SVC ELSE USE CALL TO FPCONMFC
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP 
          GBLB  &CTD_EQUS
@@ -69,7 +70,7 @@ CTD_LD   EQU  10 CONVERT DFP EXT.  LD TO 45 BYTE EBCDIC N.N(34)+ENNNN
          AIF   ('&OUT'(1,1) NE '(').SVC
          ST    &OUT(1),8(1)
 .SVC     ANOP
-         AIF   (&LINKAGE NE 'SVC').CALL
+         AIF   ('&LINKAGE' NE 'SVC').CALL
          SVC   170 CTD R1=A(TYPE,IN,OUT)
          MEXIT
 .CALL    ANOP

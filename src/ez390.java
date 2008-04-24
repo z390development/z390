@@ -414,7 +414,7 @@ private void monitor_update(){
     	pz390.cur_date = new Date();
     	if (tz390.opt_time 
     		&& !pz390.psw_check
-            && tod_end_pgm > tod_time_limit){
+            && monitor_next_time > sz390.tod_time_limit){ // RPI 837
     		pz390.set_psw_check(pz390.psw_pic_timeout);  // timeout
     	}
 	}

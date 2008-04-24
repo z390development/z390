@@ -7,6 +7,7 @@
 * Date   - 08/12/06                                                 *
 *********************************************************************
 * 08/12/06 RPI 363 REPACKAGE MVS_MACLIB.ZIP AND Z390_RT.ZIP RT TESTS
+* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility               
 *********************************************************************
 *
 *  RTGENBAT READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
@@ -25,7 +26,7 @@
          ACTR 1000000
 .LOOP    ANOP
 &NEXT_FILE AREAD DSNAME='&SYSPARM'  
-         AIF (&NEXT_FILE NE &LAST_FILE).NEW_FILE 
+         AIF ('&NEXT_FILE' NE '&LAST_FILE').NEW_FILE 
          AIF (&BREAK EQ 0).OK1 OK TO COMPARE MATCHING FILES
 &TOT_ERR SETA &TOT_ERR+1
          PUNCH 'PAUSE MORE THAN 2 FILES FOR %1\&NEXT_FILE',            X
@@ -45,8 +46,8 @@
                DSNAME='&SYSPARM'
          MNOTE 8,'RTGENBAT MISSING MATCHING FILE FOR &LAST_FILE'
 .OK2     ANOP
-         AIF   (&NEXT_FILE EQ '').EOF
-&LAST_FILE SETC &NEXT_FILE       
+         AIF   ('&NEXT_FILE' EQ '').EOF
+&LAST_FILE SETC '&NEXT_FILE'       
 &BREAK   SETB  0
          AGO   .LOOP
 .EOF     ANOP

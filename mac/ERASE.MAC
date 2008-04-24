@@ -8,18 +8,19 @@
 .*********************************************************************
 .* 08/07/07 RPI 644 INITIAL CODING FOR VSAM ERASE FOLLOWING GET UPD
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       ERASE &RPL=,   VSAM REQUEST PARAMETER LIST                    X
                &MF=I    NOT SUPPORTED                                   
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR2
+         AIF   ('&MF' NE 'I').ERR2
          AIF   (N'&SYSLIST LE 0).NPOK
          MNOTE 12,'ERASE UNSUPPORTED OPERANDS - &SYSLIST(1)'
          MEXIT
 .NPOK    ANOP
-         AIF   (&RPL EQ '').ERR1
+         AIF   ('&RPL' EQ '').ERR1
          AIF   ('&RPL'(1,1) EQ '(').RPLREG
          LA    1,&RPL
          AGO   .VSVC

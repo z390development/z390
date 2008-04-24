@@ -14,12 +14,13 @@
 .* 05/14/06 DSH Z390 RPI 316 UPDATED FOR COMPAT.
 .* 07/21/06 DSH Z390 RPI 379 USE IF TO SUPPORT COMPOUND WHILE/UNTIL
 .* 04/11/07 DSH Z390 RPI 589 USE ZSTRGBL AND EXPAND LEVELS TO 100   
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .********************************************************************
          AIF   (&ZSTR_DOLVL EQ &ZSTR_MAX_LEVEL).ERR1                                         
-         AIF   (&WHILE NE '').WHILE
-         AIF   (&UNTIL NE '').UNTIL
-         AIF   (&END EQ 'END').END
-&PARM    SETC  &END
+         AIF   ('&WHILE' NE '').WHILE
+         AIF   ('&UNTIL' NE '').UNTIL
+         AIF   ('&END' EQ 'END').END
+&PARM    SETC  '&END'
          AGO   .ERR3
 .UNTIL   ANOP 
 &UNTIL_LAB SETA &UNTIL_LAB+1
@@ -49,7 +50,7 @@ ZSTR_DO_&ZSTR_DOLAB._TEST EQU   *
 ZSTR_DO_&ZSTR_DOLAB._CODE EQU *                                                             
          AGO   .EXIT                                                       
 .END     ANOP                                                              
-&PARM    SETC  &SYSLIST(2)
+&PARM    SETC  '&SYSLIST(2)'
          AIF   (&N GT 1).ERR3                                              
          AIF   (&ZSTR_DOLVL EQ 0).ERR4                                          
          AIF   (&ZSTR_DOSEQ(&ZSTR_DOLVL) NE 1).ERR4                                  

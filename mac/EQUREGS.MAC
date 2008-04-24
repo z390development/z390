@@ -16,22 +16,23 @@
 .*********************************************************************
 .* 10/20/05 RPI27  - issue error for any undefined operands     
 .* 12/07/05 RPI119 - add FPR and hex options                     
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
         EQUREGS &REGS=GPR,&TYPE=DEC
 &PFX    SETC   'R'
-        AIF    (&REGS EQ 'GPR').SKPFPR
+        AIF    ('&REGS' EQ 'GPR').SKPFPR
 &PFX    SETC   'F'
 .SKPFPR ANOP
         LCLC   &HEX(16)
 &HEX(1) SETC   '0','1','2','3','4','5','6','7',                        X
                '8','9','A','B','C','D','E','F'
-        AIF   (&SYSLIST(1) EQ '').NPOK
+        AIF   ('&SYSLIST(1)' EQ '').NPOK
         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
 .NPOK   ANOP
 &I      SETA   -1
 .LOOP   ANOP
 &I      SETA   &I+1
-        AIF    (&TYPE EQ 'HEX').GENHEX
+        AIF    ('&TYPE' EQ 'HEX').GENHEX
 &PFX&I  EQU    &I
         AIF    (&I LT 15).LOOP
         MEXIT

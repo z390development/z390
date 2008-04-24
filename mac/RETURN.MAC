@@ -10,23 +10,24 @@
 .* 06/08/07 RPI 639 - add RC=(reg) support                       
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       RETURN &REGS,                                                 X
                &SETFLAG,                                               X
                &MF=I,      NOT SUPPORTED                               X
                &RC=
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR1
+         AIF   ('&MF' NE 'I').ERR1
          AIF   (N'&SYSLIST LE 2).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
 .NPOK    ANOP
          RESTORE &REGS
-         AIF   (&SETFLAG NE 'T').SETRC
+         AIF   ('&SETFLAG' NE 'T').SETRC
          OI    15(13),1 
 .SETRC   ANOP
-         AIF   (&RC EQ '').EXIT
+         AIF   ('&RC' EQ '').EXIT
          AIF   ('&RC'(1,1) EQ '(').RCREG
          LA    15,&RC
          AGO   .EXIT

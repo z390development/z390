@@ -6,6 +6,7 @@
 .*********************************************************************
 .* 04/25/06 RPI 293 ADD EXEC SQL INCLUDE SUPPORT VIA COPY
 .* 05/05/06 RPI 308 GENERALIZED FOR CICS, DLI, AND SQL    
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .*
 .* The mz390 loader parses space delimited EXEC parms and forms to
@@ -15,12 +16,12 @@
 .*********************************************************************
          MACRO
 &N       EXEC
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-&EXEC_TYPE      SETC  &SYSLIST(1)
-&EXEC_CMD       SETC  &SYSLIST(2)
-&EXEC_CMD_PARMS SETC  &SYSLIST(3)
+&EXEC_TYPE      SETC  '&SYSLIST(1)'
+&EXEC_CMD       SETC  '&SYSLIST(2)'
+&EXEC_CMD_PARMS SETC  '&SYSLIST(3)'
 &NP      SETA  N'&SYSLIST
 &I       SETA  3
 .PLOOP   ANOP

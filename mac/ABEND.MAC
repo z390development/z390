@@ -11,6 +11,7 @@
 .* 04/10/06 RPI 244 - update parm support                        
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       ABEND &COMP,      COMPLETION CODE NNN OR (REG)                X
                &DUMP,      DUMP ALLOCATED PROGRAM STORAGE              X
@@ -20,10 +21,10 @@
                &REASON=,   IGNORED                                     X
                &DUMPOPT=,  IGNORED                                     X
                &DUMPOPX=   IGNORED                                     
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR1
+         AIF   ('&MF' NE 'I').ERR1
          AIF   (N'&SYSLIST GE 1).CHKHIGH
          MNOTE 12,'ABEND COMPLETION CODE REQUIRED'
          MEXIT
@@ -40,7 +41,7 @@
 .REGCOMP ANOP
          ZOPTLR 1,&COMP(1)
 .CHKDUMP ANOP
-         AIF  (&DUMP EQ '').SKIPDUMP
+         AIF  ('&DUMP' EQ '').SKIPDUMP
          OILH 1,X'8000'
 .SKIPDUMP ANOP  
          SVC  13 ABEND R1=COMP CODE AND HIGH BIT = DUMP PGM STORAGE

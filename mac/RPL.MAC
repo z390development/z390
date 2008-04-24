@@ -15,6 +15,7 @@
 .* 09/24/07 RPI 702 REPLACE RPLXRBA WITH RPLLXRTA AND RPLCXRBA           
 .*          ADD RPLOPENC UNIQUE ACB OPEN COUNT FOR REPOSITION REQ'D
 .* 11/26/07 RPI 723 MOVE GETOK, GETNF FLAGS TO RPLFLAG, ADD KSIT,KSIR
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .*
 .* RPL 28 VSAM OPTCD OPTIONS - MODELED ON MVS 3.8 IDAVSOPT
@@ -58,14 +59,14 @@
                &NXTRPL=0, NEXT RPL IN CHAINED RPL LIST                 X
                &OPTCD=,   OPTIONS (SEE SUPPORTED OPTIONS ABOVE)        X
                &RECLEN=0  RECORD LENGTH FOR VARIABLE LENGTH PUT
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0D
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST EQ 0).NPOK
          MNOTE 12,'RPL UNSUPPORTED OPERANDS - &SYSLIST(1)'
          MEXIT
 .NPOK    ANOP
-         AIF   (&AM NE 'VSAM').ERR1
+         AIF   ('&AM' NE 'VSAM').ERR1
          GBLC  &ZGENOPT1,&ZGENOPT2
          ZGENOPTD OPTCD=&OPTCD
 .*

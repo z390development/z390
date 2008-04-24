@@ -13,6 +13,7 @@
 .*                  ALSO ADD RPLOPENC UNIQUE ACB OPEN COUNT                         
 .* 11/26/07 RPI 723 MOVE GETOK, GETNF FLAGS TO RPLFLAG, ADD KSIT,KSIR
 .* 12/08/07 RPI 750 SPLIT RPLFLAG INTO 4 BYTE FIELDS WITH EQUATES     
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
          RPLD   
 .*
@@ -84,7 +85,7 @@ RPLOPGET  EQU  1 GET
 RPLOPPUT  EQU  2 PUT
 RPLOPERA  EQU  3 ERASE
 RPLOPPNT  EQU  4 POINT
-          AIF  (&Z390_RPL_NAME EQ '' OR &Z390_RPL_TYPE EQ '').EXIT
+          AIF  ('&Z390_RPL_NAME' EQ '' OR '&Z390_RPL_TYPE' EQ '').EXIT
 &Z390_RPL_NAME &Z390_RPL_TYPE                    
 .EXIT    ANOP
          MEND

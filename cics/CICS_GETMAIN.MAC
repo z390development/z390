@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_GETMAIN
          LCLC  &SET,&LENGTH,&FLENGTH,&INITIMG
@@ -12,7 +14,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,4) EQ 'SET(').SET
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
          AIF   ('&PARM'(1,8) EQ 'FLENGTH(').FLENGTH
@@ -37,15 +39,15 @@
          AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         AIF   (&LENGTH NE '' AND &FLENGTH NE '').BADLEN
-         AIF   (&LENGTH EQ '' AND &FLENGTH EQ '').NEEDLEN
-         AIF   (&SET EQ '').BADSET
+         AIF   ('&LENGTH' NE '' AND '&FLENGTH' NE '').BADLEN
+         AIF   ('&LENGTH' EQ '' AND '&FLENGTH' EQ '').NEEDLEN
+         AIF   ('&SET' EQ '').BADSET
          MVC   EIBFN,=X'0C02'     SET EIBFN
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
 .* LENGTH MAY BE L' OR CONSTANT LIKE C'.' X'..'
-         AIF   (&FLENGTH NE '').FLEN
+         AIF   ('&FLENGTH' NE '').FLEN
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
          AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
 .LENNUM  ANOP
@@ -85,7 +87,7 @@ CICS_GETMAIN_&SYSNDX._CHAIN EQU *
          B     CICS_GETMAIN_&SYSNDX._LOOP LOOP THRU CHAIN
 .*
 CICS_GETMAIN_&SYSNDX._INIT EQU *
-         AIF   (&INITIMG EQ '').DUNGETM
+         AIF   ('&INITIMG' EQ '').DUNGETM
          LR    R14,&SET           SET ADDRESS TO CLEAR
          LR    R15,R0             SET LENGTH TO CLEAR
          AHI   R15,-8             ADJUST FOR PREFIX
@@ -115,4 +117,3 @@ CICS_GETMAIN_&SYSNDX._INIT EQU *
 .NEEDLEN MNOTE 12,'LENGTH OR FLENGTH MUST BE SPECIFIED'
          MEXIT
          MEND
-

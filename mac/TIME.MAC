@@ -15,6 +15,7 @@
 .* 06/22/07 RPI 662 ADD SVC TS OPTION FOR 29 CHAR NANOSEC TIMESTAMP
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 03/18/08 RPI 825 ADD EXTENDED OPTION INS TO RETURN R1=INSTR. COUNT
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       TIME  &TYPE,               DEC,BIN,MIC,STCK,STCKE,NS,TS,INS   X
                &ADDR,               STORE RESULT ADDR                  X
@@ -23,7 +24,7 @@
                &LINKAGE=SVC,        SVC/SYSTEM                         X
                &MF=I,               NOT SUPPORTED                      X
                &ZONE=LT             LOCAL TIME (GMT/UTC NOT SUPPORTED)
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST LE 2).NPOK
@@ -33,26 +34,26 @@
 .*
 .* RETURN TIME AND DATE IN REQUESTED FORMAT
 .*
-         AIF   (&MF NE 'I').ERR3
-         AIF   (&ZONE NE 'LT').ERR2
-         AIF   (&LINKAGE EQ 'SVC').SVCLINK
-         AIF   (&LINKAGE EQ 'SYSTEM').SYSLINK
+         AIF   ('&MF' NE 'I').ERR3
+         AIF   ('&ZONE' NE 'LT').ERR2
+         AIF   ('&LINKAGE' EQ 'SVC').SVCLINK
+         AIF   ('&LINKAGE' EQ 'SYSTEM').SYSLINK
          MNOTE 12,'TIME INVALID LINKAGE TYPE - &LINKAGE'
          MEXIT
 .*
 .* LINKAGE=SVC DEFAULT
 .*
 .SVCLINK ANOP
-         AIF   (&TYPE EQ '').SVCDEC
-         AIF   (&TYPE EQ 'DEC').SVCDEC
-         AIF   (&TYPE EQ 'BIN').SVCBIN
-         AIF   (&TYPE EQ 'TU').SVCTU
-         AIF   (&TYPE EQ 'MIC').SVCMIC
-         AIF   (&TYPE EQ 'STCK').SVCSTCK
-         AIF   (&TYPE EQ 'CLOCK').SVCCLOCK
-         AIF   (&TYPE EQ 'NS').SVCNS
-         AIF   (&TYPE EQ 'TS').SVCTS        RPI 662
-         AIF   (&TYPE EQ 'INS').SVCINS      RPI 825
+         AIF   ('&TYPE' EQ '').SVCDEC
+         AIF   ('&TYPE' EQ 'DEC').SVCDEC
+         AIF   ('&TYPE' EQ 'BIN').SVCBIN
+         AIF   ('&TYPE' EQ 'TU').SVCTU
+         AIF   ('&TYPE' EQ 'MIC').SVCMIC
+         AIF   ('&TYPE' EQ 'STCK').SVCSTCK
+         AIF   ('&TYPE' EQ 'CLOCK').SVCCLOCK
+         AIF   ('&TYPE' EQ 'NS').SVCNS
+         AIF   ('&TYPE' EQ 'TS').SVCTS        RPI 662
+         AIF   ('&TYPE' EQ 'INS').SVCINS      RPI 825
          MNOTE 12,'TIME INVALID SVC LINKAGE TYPE - &TYPE'
          MEXIT
 .SVCDEC  ANOP             R1 = HEX CCYYDDDF
@@ -70,7 +71,7 @@
 .SVCSTCK ANOP
          LA    0,4   STCK 0(8,R1) = TOD DOUBLE WORD (BIT 51=MIC)
 .SVCADDR ANOP
-         AIF   (&ADDR EQ '').ERR1
+         AIF   ('&ADDR' EQ '').ERR1
          AIF   ('&ADDR'(1,1) EQ '(').SVCAREG
          LA    1,&ADDR
          AGO   .SVCSVC
@@ -106,12 +107,12 @@
 .* LINKAGE=SYSTEM 
 .*
 .SYSLINK ANOP
-         AIF   (&TYPE EQ '').SYSDEC
-         AIF   (&TYPE EQ 'DEC').SYSDEC
-         AIF   (&TYPE EQ 'BIN').SYSBIN
-         AIF   (&TYPE EQ 'MIC').SYSMIC
-         AIF   (&TYPE EQ 'STCK').SYSSTCK
-         AIF   (&TYPE EQ 'STCKE').SYSSTCKE
+         AIF   ('&TYPE' EQ '').SYSDEC
+         AIF   ('&TYPE' EQ 'DEC').SYSDEC
+         AIF   ('&TYPE' EQ 'BIN').SYSBIN
+         AIF   ('&TYPE' EQ 'MIC').SYSMIC
+         AIF   ('&TYPE' EQ 'STCK').SYSSTCK
+         AIF   ('&TYPE' EQ 'STCKE').SYSSTCKE
          MNOTE 12,'TIME INVALID SYS LINKAGE TYPE - &TYPE'
          MEXIT
 .SYSDEC  ANOP
@@ -129,18 +130,18 @@
 .SYSSTCKE ANOP
          LA    0,15   SKCKE 0(16,R1) = ECLOCK (BIT 59 = MIC)
 .SYSADDR ANOP
-         AIF   (&ADDR EQ '').ERR1
+         AIF   ('&ADDR' EQ '').ERR1
          AIF   ('&ADDR'(1,1) EQ '(').SYSAREG
          LA    1,&ADDR
          AGO   .SYSDATE
 .SYSAREG ANOP
          ZOPTLR 1,&ADDR(1)
 .SYSDATE ANOP
-         AIF   (&TYPE EQ 'STCKE').SYSSVC NO DATE
-         AIF   (&DATETYPE EQ 'YYYYDDD').SYSYYYYDDD
-         AIF   (&DATETYPE EQ 'MMDDYYYY').SYSMMDDYYYY
-         AIF   (&DATETYPE EQ 'DDMMYYYY').SYSDDMMYYYY
-         AIF   (&DATETYPE EQ 'YYYYMMDD').SYSYYYYMMDD
+         AIF   ('&TYPE' EQ 'STCKE').SYSSVC NO DATE
+         AIF   ('&DATETYPE' EQ 'YYYYDDD').SYSYYYYDDD
+         AIF   ('&DATETYPE' EQ 'MMDDYYYY').SYSMMDDYYYY
+         AIF   ('&DATETYPE' EQ 'DDMMYYYY').SYSDDMMYYYY
+         AIF   ('&DATETYPE' EQ 'YYYYMMDD').SYSYYYYMMDD
          MNOTE 12,'TIME INVALID SYS LINKAGE DATETYPE - &DATETYPE'
          MEXIT
 .SYSYYYYDDD ANOP

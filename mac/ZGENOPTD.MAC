@@ -7,6 +7,7 @@
 .* Date   - 09/16/07                                                 *
 .*********************************************************************
 .* 09/16/07 RPI 687 INITIAL CODING TO GEN RPL OPTCD BITS               
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
          ZGENOPTD &OPTCD=
 .*
@@ -54,7 +55,7 @@
 .FINDOPT ANOP
 &J       SETA  &J+1
          AIF   (&J GT N'&OPTS).OPT_NOT_FND
-         AIF   (&OPTCD(&I) EQ &OPTS(&J)).OPT_FND
+         AIF   ('&OPTCD(&I)' EQ '&OPTS(&J)').OPT_FND
          AGO   .FINDOPT
 .OPT_NOT_FND ANOP
          MNOTE 12,'ZGENRPL OPTCD NOT FOUND - &OPTCD(&I)'

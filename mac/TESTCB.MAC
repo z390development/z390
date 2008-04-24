@@ -10,6 +10,7 @@
 .* 08/19/07 RPI 680 SHOWCB TO TESTCB                       
 .* 09/14/07 RPI 672 VERIFY RPL VS ACB                                              
 .* 09/19/07 RPI 697 SET RC=0                                                       
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       TESTCB &RPL=,        RPL REQUEST PARAMATER LIST ADDRESS       X
                &ACB=,         ACB ACCESS CONTROL BLOCK ADDRESS         X
@@ -23,23 +24,23 @@
 &NPOS    SETA  &NPOS-1
          AGO   .POSLOOP
 .POSEND  ANOP  
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          SR    15,15 RC=0
-         AIF   (&FDBK   NE '').FDBK
-         AIF   (&RECLEN NE '').RECLEN
+         AIF   ('&FDBK'   NE '').FDBK
+         AIF   ('&RECLEN' NE '').RECLEN
          MNOTE 12,'TESTCB FIELD NOT SUPPORTED YET'
 .EXIT    ANOP
          MEXIT
 .FDBK    ANOP
          ZTESTCB &RPL,RPLFEEDB-IHARPL+3,&FDBK,1
-         AIF   (&RPL NE '').EXIT
+         AIF   ('&RPL' NE '').EXIT
          MNOTE 'TESTCB RPL REQUIRED FOR FDBK'
          AGO   .EXIT
 .RECLEN  ANOP
          ZTESTCB &RPL,RPLLREC-IHARPL,&RECLEN,4
-         AIF   (&RPL NE '').EXIT
+         AIF   ('&RPL' NE '').EXIT
          MNOTE 'TESTCB RPL REQUIRED FOR RECLEN'
          AGO     .EXIT
          MEND

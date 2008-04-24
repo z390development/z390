@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_HANDLE
          LCLA  &CONDRNG
@@ -11,10 +13,10 @@
          LCLC  &KEYS(60)
          LCLC  &CONDS(200)
 &CONDRNG SETA  100                HALF THE COND TABLE
-&TYPE    SETC  &SYSLIST(1)
-         AIF   (&TYPE EQ 'AID').AID
-         AIF   (&TYPE EQ 'CONDITION').COND
-         AIF   (&TYPE EQ 'ABEND').ABEND
+&TYPE    SETC  '&SYSLIST(1)'
+         AIF   ('&TYPE' EQ 'AID').AID
+         AIF   ('&TYPE' EQ 'CONDITION').COND
+         AIF   ('&TYPE' EQ 'ABEND').ABEND
          MNOTE 12,'HANDLE TYPE NOT RECOGNIZED'
          MEXIT
 .*
@@ -111,7 +113,7 @@ CICS_HANDLE_AID_&SYSNDX._01 DS 0H
 .PLOOPA  ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
 .* INNER LOOP
 &INNER   SETA  0
 .ILOOPA  ANOP
@@ -123,7 +125,7 @@ CICS_HANDLE_AID_&SYSNDX._01 DS 0H
          AGO   .ILOOPA
 .*
 .NOLABA  ANOP
-         AIF   (&PARM EQ &KEYS(&INNER)).GOTKEY
+         AIF   ('&PARM' EQ '&KEYS(&INNER)').GOTKEY
          AGO   .ILOOPA
 .*
 .GOTKEY  ANOP
@@ -144,7 +146,7 @@ CICS_HANDLE_AID_&SYSNDX._01 DS 0H
 .* ANYKEY IS A SPECIAL CASE, INSERT LABEL IN ALL ENTRIES EXCEPT ENTER
 &KEYLABL SETC  '&PARM'(K'&KEYS(&INNER)+1,K'&PARM-(K'&KEYS(&INNER)+1))
 &LABELTQ SETC  T'&KEYLABL
-         AIF   ('&KEYLABL'(1,1) EQ '=' OR &LABELTQ EQ 'A').LABADLIT
+         AIF   ('&KEYLABL'(1,1) EQ '=' OR '&LABELTQ' EQ 'A').LABADLIT
          LA    R0,&KEYLABL        R0=LABEL
          AGO   .LABSTKEY
 .LABADLIT ANOP
@@ -210,7 +212,7 @@ CICS_HANDLE_COND_&SYSNDX._01 DS 0H
 .* SET CONDITION LIST WITHOUT LABEL
 &IPC     SETA  1
 .COLOOP  ANOP
-         AIF   (&CONDS(&IPC) EQ '').COINCR
+         AIF   ('&CONDS(&IPC)' EQ '').COINCR
 &CONDS(&IPC+&CONDRNG) SETC '&CONDS(&IPC)'(1,K'&CONDS(&IPC)-1)
 .COINCR  ANOP
 &IPC     SETA  &IPC+1
@@ -223,7 +225,7 @@ CICS_HANDLE_COND_&SYSNDX._01 DS 0H
 .PLOOPC  ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
 .* INNER LOOP
 &INNER   SETA  0
 .ILOOPC  ANOP
@@ -236,7 +238,7 @@ CICS_HANDLE_COND_&SYSNDX._01 DS 0H
          AGO   .ILOOPC
 .*
 .NOLABC  ANOP
-         AIF   (&PARM EQ &CONDS(&INNER)).GOTCOND
+         AIF   ('&PARM' EQ '&CONDS(&INNER)').GOTCOND
          AGO   .ILOOPC
 .*
 .GOTCOND ANOP
@@ -252,7 +254,7 @@ CICS_HANDLE_COND_&SYSNDX._01 DS 0H
 &HCNLABL SETC '&PARM'(K'&CONDS(&INNER)+1,K'&PARM-(K'&CONDS(&INNER)+1))
 &LABELTQ SETC T'&HCNLABL
 .*
-         AIF   ('&HCNLABL'(1,1) EQ '=' OR &LABELTQ EQ 'A').LABHCLIT
+         AIF   ('&HCNLABL'(1,1) EQ '=' OR '&LABELTQ' EQ 'A').LABHCLIT
          LA    R0,&HCNLABL        R0=LABEL
          AGO   .LABSTHCN
 .LABHCLIT ANOP
@@ -290,8 +292,8 @@ CICS_HANDLE_ABEND_&SYSNDX._01 DS 0H
          AHI   R14,-1             -1 FOR INDEX
          MS    R14,=AL4(ABDLENG)  * ENTRY LENGTH
          AR    R1,R14             R1=CORRECT ABEND BLOCK ENTRY
-&PARM    SETC  &SYSLIST(2)
-         AIF   (&PARM NE 'CANCEL').TRYRES
+&PARM    SETC  '&SYSLIST(2)'
+         AIF   ('&PARM' NE 'CANCEL').TRYRES
 .*
 .* CANCEL FUNCTION
 .*
@@ -300,7 +302,7 @@ CICS_HANDLE_ABEND_&SYSNDX._01 DS 0H
          MEXIT
 .*
 .TRYRES  ANOP
-         AIF   (&PARM NE 'RESET').TRYLAB
+         AIF   ('&PARM' NE 'RESET').TRYLAB
 .*
 .* RESET FUNCTION
 .*
@@ -316,7 +318,7 @@ CICS_HANDLE_ABEND_&SYSNDX._01 DS 0H
 &LABELAB SETC '&PARM'(7,K'&PARM-7)
 &LABELTQ SETC T'&LABELAB
 .*
-         AIF   ('&LABELAB'(1,1) EQ '=' OR &LABELTQ EQ 'A').LABABLIT
+         AIF   ('&LABELAB'(1,1) EQ '=' OR '&LABELTQ' EQ 'A').LABABLIT
          LA    R0,&LABELAB        R0=LABEL
          AGO   .LABSTLAB
 .LABABLIT ANOP
@@ -363,4 +365,3 @@ CICS_HANDLE_ABEND_&SYSNDX._01 DS 0H
          DROP  R1
          MEXIT
          MEND
-

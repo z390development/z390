@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 08/27/07 INITIAL CODING TO SUPPORT MODCB ACB OR RPL FIELD TESTS                         
 .* 09/01/07 RPI 688 USE L,CL VS CLC TO FORCE 4 BYTE RECLEN TEST                            
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       ZTESTCB &CB,        ACB/RPL ADDRESS OR (REG)                  X
                &OFFSET,      OFFSET TO TARGET FIELD                    X
@@ -20,8 +21,8 @@
 &TADDR   SETC  '&OFFSET.&CB'
 .SOURCE  ANOP
          AIF   ('&SOURCE'(1,1) EQ '(').CHK_SCON
-         AIF   (&LSOURCE EQ 1).CLI
-         AIF   (&LSOURCE EQ 4).CL
+         AIF   ('&LSOURCE' EQ '1').CLI
+         AIF   ('&LSOURCE' EQ '4').CL
          MNOTE 12,'ZTESTCB INVALID TESTCB SOURCE LENGTH - &LSOURCE'
          MEXIT
 .CLI     ANOP

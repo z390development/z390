@@ -5,6 +5,8 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+*********************************************************************
          MACRO
          TEST1
 &TEXT    AREAD
@@ -20,7 +22,7 @@ TEST1 RECORD 2
          TEST2
 .LOOP    ANOP
 &TEXT    AREAD
-         AIF   (&TEXT EQ 'TEST2 END OF DATA').ENDLOOP
+         AIF   ('&TEXT' EQ 'TEST2 END OF DATA').ENDLOOP
          WTO   '&TEXT'
          AGO   .LOOP
 .ENDLOOP ANOP

@@ -7,6 +7,7 @@
 .* Date   - 10/05/07                                                 *
 .*********************************************************************
 .* 10/05/07 RPI INITIAL CODING OF KSDS INSERT TREE ZKSITD        
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .*
 .* ZKSIT - Z390 VSAM KSDS INSERT TREE CONTROL BLOCK
@@ -52,7 +53,8 @@ ZKSITTOP DS    XL8    4 XRBA OF TOP   KSIR RECORD
 ZKSITFST DS    XL8   12 XRBA OF FIRST KSIR RECORD 
 ZKSITLST DS    XL8   20 XRBA OF LAST  KSIR RECORD 
 ZKSITLEN EQU   *-IHAZKSIT
-         AIF   (&Z390_ZKSIT_NAME EQ '' OR &Z390_ZKSIT_TYPE EQ '').EXIT
+         AIF   ('&Z390_ZKSIT_NAME' EQ '' OR '&Z390_ZKSIT_TYPE' EQ '').EX
+               XIT
 &Z390_ZKSIT_NAME &Z390_ZKSIT_TYPE                    
 .EXIT    ANOP
          MEND

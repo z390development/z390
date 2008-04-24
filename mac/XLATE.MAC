@@ -10,9 +10,10 @@
 .*********************************************************************
 .* 01/09/06 RPI 163 SKIP LR FOR SAME REGISTER
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       XLATE &AREA,&LEN,&TO=
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST EQ 2).NPOK
@@ -31,8 +32,8 @@
 .LENREG  ANOP
          ZOPTLR 1,&LEN(1)
 .CHKTO   ANOP
-         AIF   (&TO EQ 'E').SVC
-         AIF   (&TO NE 'A').ERR
+         AIF   ('&TO' EQ 'E').SVC
+         AIF   ('&TO' NE 'A').ERR
          OILH  0,X'8000' HIGH ADDR BIT ON FOR EBCDIC TO ASCII
 .SVC     ANOP
          SVC   X'67' TRANSLATE R0=AREA R1=LEN R0 HIGH BIT FOR E>A         

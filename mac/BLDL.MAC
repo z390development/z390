@@ -8,6 +8,7 @@
 .* 04/12/06 RPI244 ADD BLDL FOR SUPPORT OF DE= ON LINK, LOAD, XCTL
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
 .*********************************************************************
 .* BLDL SEARCH SYS390 DIRECTORIES FOR MEMBER NAMES IN LIST AND 
 .* SET R15 RETURN CODE:
@@ -30,11 +31,11 @@
                &MF=I,     NOT SUPPORTED                                X
                &START=,   INGORED                                      X
                &STOP=     IGNORED                                       
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR2
-         AIF   (&LIST EQ '').ERR1
+         AIF   ('&MF' NE 'I').ERR2
+         AIF   ('&LIST' EQ '').ERR1
          AIF   ('&LIST'(1,1) EQ '(').REGLIST
          LA    1,&LIST
          AGO   .SVC

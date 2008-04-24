@@ -31,6 +31,7 @@
 * 03/03/08 RPI 817 ADD Z10 OPCODES COMP/BRANCH EC64 - ECFF RIE/RRS
 * 03/08/08 RPI 817 ADD Z10 OPCODES 59 FROM B9A2-EC57               
 * 03/19/08 RPI 819 CLEAR R3 TO REMOVE F4'S BEFORE USING AS TEST BASE          
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 *********************************************************************
          TITLE 'TESTINS1 - VERIFY ASSEMBLY OF EACH INSTRUCTION'
 * THIS PROGRAM GENERATES ASSEMBLED INSTRUCTIONS AND    
@@ -226,7 +227,7 @@ INS&N    &OP1 R1
 &CODE    SETC  '&HEXOP'(2,2).'10'
          AGO   .VER
 .RRE     ANOP
-         AIF  (&NOP EQ 'T').RRENOP
+         AIF  ('&NOP' EQ 'T').RRENOP
 INS&N    &OP1 R1,R2
 &CODE    SETC  '&HEXOP'(2,4).'0012'
          AGO   .VER
@@ -323,7 +324,7 @@ INS&N    &OP1 R1,S2(X4)
 &CODE    SETC  '&HEXOP'(2,2).'14D00200'.'&HEXOP'(4,2)
          AGO   .VER
 .S       ANOP
-         AIF   (&NOP EQ 'T').SNOP
+         AIF   ('&NOP' EQ 'T').SNOP
 INS&N    &OP1  S1   
 &CODE    SETC  '&HEXOP'(2,4).'D001'
          AGO   .VER

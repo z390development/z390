@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_DUMP
          LCLB  &TRANS,&COMP
@@ -14,7 +16,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,11) EQ 'TRANSACTION').TRANS
          AIF   ('&PARM'(1,9)  EQ 'DUMPCODE(').DCODE
          AIF   ('&PARM'(1,8)  EQ 'COMPLETE').COMP
@@ -65,14 +67,16 @@
 .*
 .ELOOP   ANOP
          AIF   (NOT &TRANS).NOTRANS
-         AIF   (&DCODE EQ '').NODCODE
-         AIF   (&LENGTH NE '' AND &FLENGTH NE '').BADLEN
-         AIF   (&FROM NE '' AND &LENGTH EQ '' AND &FLENGTH EQ '').NEEDL-
-               EN
-         AIF   (&FROM EQ '' AND (&LENGTH NE '' OR &FLENGTH NE '')).NOFR-
-               OM
-         AIF   (&SLIST EQ '' AND &LLIST EQ '' AND &NUMSEG EQ '').SEGSOK
-         AIF   (&SLIST NE '' AND &LLIST NE '' AND &NUMSEG NE '').SEGSOK
+         AIF   ('&DCODE' EQ '').NODCODE
+         AIF   ('&LENGTH' NE '' AND '&FLENGTH' NE '').BADLEN
+         AIF   ('&FROM' NE '' AND '&LENGTH' EQ '' AND '&FLENGTH' EQ '')X
+               .NEEDLEN
+         AIF   ('&FROM' EQ '' AND ('&LENGTH' NE '' OR '&FLENGTH' NE '')X
+               ).NOFROM
+         AIF   ('&SLIST' EQ '' AND '&LLIST' EQ '' AND '&NUMSEG' EQ '').X
+               SEGSOK
+         AIF   ('&SLIST' NE '' AND '&LLIST' NE '' AND '&NUMSEG' NE '').X
+               SEGSOK
          AGO   .BADSEG
 .*
 .SEGSOK  ANOP
@@ -91,7 +95,7 @@
          AIF   (&DCODLEN GT 6).INVDCOD
          MVC   CICS_DUMP_&SYSNDX._DCODE,=CL4&DCODE MOVE DUMP CODE
 .NOSTRING ANOP
-         AIF   (&FROM EQ '' AND &SLIST EQ '').DEFCOMP
+         AIF   ('&FROM' EQ '' AND '&SLIST' EQ '').DEFCOMP
          AGO   .COMPOK
 .*
 .DEFCOMP ANOP
@@ -103,12 +107,12 @@
          LA    R1,CICS_DUMP_&SYSNDX._SNAPTXT ADDRESS TEXT
          SNAP  PDATA=ALL,ID=997,TEXT=(R1)
 .TRYFROM ANOP
-         AIF   (&FROM EQ '').TRYSEGS
+         AIF   ('&FROM' EQ '').TRYSEGS
          LA    R14,&FROM          LOAD STORAGE START
          LR    R15,R14            PREPARE FOR STORAGE END
 .* FROM LENGTH/FLENGTH
 .* LENGTH MAY BE L' OR CONSTANT LIKE C'.' X'..'
-         AIF   (&FLENGTH NE '').FLEN
+         AIF   ('&FLENGTH' NE '').FLEN
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
          AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
 .LENNUM  ANOP
@@ -134,7 +138,7 @@
          LA    R1,CICS_DUMP_&SYSNDX._SNAPTXT ADDRESS TEXT
          SNAP  STORAGE=((R14),(R15)),ID=997,TEXT=(R1)
 .TRYSEGS ANOP
-         AIF   (&SLIST EQ '').ALLDONE
+         AIF   ('&SLIST' EQ '').ALLDONE
 .* SEGMENTLIST/LENGTHLIST/NUMSEGMENTS
          AIF   ('&NUMSEG'(2,1) EQ '''').NSGNUM
          AIF   ('&NUMSEG'(1,1) LT '0' OR '&NUMSEG'(1,1) GT '9').NSGLABL
@@ -172,7 +176,7 @@ CICS_DUMP_&SYSNDX._DCODE DC CL4' ' DUMP CODE
          DC    C' '
 CICS_DUMP_&SYSNDX._ID DC CL11' ' COMPLETE/AREA/SEGMENT NNN
          DC    X'00'
-         AIF   (&SLIST EQ '').NODEC
+         AIF   ('&SLIST' EQ '').NODEC
 CICS_DUMP_&SYSNDX._DEC DC PL8'0'
 .NODEC   ANOP
 .*
@@ -201,4 +205,3 @@ CICS_DUMP_&SYSNDX._BYPCONS DS 0H
 .INVDCOD MNOTE 12,'DUMPCODE IS GREATER THAN 4 BYTES'
          MEXIT
          MEND
-

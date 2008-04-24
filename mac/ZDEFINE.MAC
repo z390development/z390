@@ -7,11 +7,12 @@
 .*********************************************************************
 .* 09/04/07 RPI 681 DEFINE ZDEFINE TO GENERATE VCDT CATALOG TABLE      
 .* 09/23/07 RPI 704 DEFINE VCLRCI OPTIONAL CONTROL INTERVAL SIZE       
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
          MACRO
          ZDEFINE 
          COPY  ZDEFINE.CPY       INCLUDE GLOBALS SET BY DEFINE
-         AIF   (&CATALOG NE '').GEN_VCDT
+         AIF   ('&CATALOG' NE '').GEN_VCDT
          MNOTE 12,'ZDEFINE MISSING DEFINE CATALOG NAME='
          MEXIT
 *
@@ -67,8 +68,8 @@ VCLRAIXS CSECT
 .AIX_UPGRADE_LOOP ANOP
 &AIX_CUR SETA  &AIX_CUR+1
          AIF   (&AIX_CUR GT &AIX_TOT).AIX_UPGRADE_END
-         AIF   (&CLR_NAME(&CLR_CUR) EQ &AIX_RELATE(&AIX_CUR) AND &AIX_UX
-               PGRADE(&AIX_CUR)).AIX_UPGRADE_LOOP
+         AIF   ('&CLR_NAME(&CLR_CUR)' EQ '&AIX_RELATE(&AIX_CUR)' AND &AX
+               IX_UPGRADE(&AIX_CUR)).AIX_UPGRADE_LOOP
 &CLR_AIX_UPGRADE(&CLR_CUR) SETA &CLR_AIX_UPGRADE(&CLR_CUR)+1
          DC    A(&AIX_NAME(&AIX_CUR))
          AGO   .AIX_UPGRADE_LOOP

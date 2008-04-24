@@ -9,10 +9,10 @@
 *********************************************************************
          MACRO
          TESTGM &TYPE,&LV,&LOC,&HL,&REG
-&VSELOC  SETC &LOC
-         AIF  (&VSELOC NE '').SKIP_DEFAULT
+&VSELOC  SETC '&LOC'
+         AIF  ('&VSELOC' NE '').SKIP_DEFAULT
 &VSELOC  SETC 'BELOW'
-         AIF  (&TYPE EQ 'R').SKIP_DEFAULT
+         AIF  ('&TYPE' EQ 'R').SKIP_DEFAULT
 &VSELOC  SETC 'ABOVE'
 .SKIP_DEFAULT ANOP
          GETVIS LENGTH=&LV,LOC=&VSELOC

@@ -6,19 +6,20 @@
 * Date   - 08/30/06                                                 *
 *********************************************************************
 * 09/08/06 RPI 436 TEST COMMENTS AFTER AREAD/PUNCH PARMS
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 *********************************************************************
 TESTPCH3 SUBENTRY
          WTO   'START TESTPCH3 COPY AND MERGE 2 TEST FILES'               
 .COPY1   ANOP
 &TEXT    AREAD DDNAME=IN1,ID=1          TEST COMMENT 1
-         AIF   (&TEXT EQ '').ENDCOPY1
+         AIF   ('&TEXT' EQ '').ENDCOPY1
          PUNCH '&TEXT',DDNAME=OT1,ID=1  TEST COMMENT 2
          PUNCH '&TEXT',DDNAME=OT3,ID=2
          AGO   .COPY1
 .ENDCOPY1 ANOP
 .COPY2   ANOP
 &TEXT    AREAD DDNAME=IN2,ID=1
-         AIF   (&TEXT EQ '').ENDCOPY2
+         AIF   ('&TEXT' EQ '').ENDCOPY2
          PUNCH '&TEXT',DDNAME=OT2,ID=1
          PUNCH '&TEXT',DDNAME=OT3,ID=2
          AGO   .COPY2

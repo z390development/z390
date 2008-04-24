@@ -8,20 +8,21 @@
 .*********************************************************************
 .* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
 .* 10/01/07 RPI 709 CHANGE CLOCK=NO AND FIX MIC STORE/LOAD OFFSETS
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       GETIME &TYPE,     STANDARD(PD)/BINARY/TU/MIC                  X  
                &ZONE,       LOCAL/GMT                      (IGNORED)   X
                &CLOCK=NO,   R0-R1 CONTAINTS STCK TOD INPUT             X
                &MFG=        RX 64 BYTE WORK AREA FOR RENT  (IGNORED)
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&CLOCK EQ 'YES').ERR1
-         AIF   (&TYPE EQ '').STANDARD
-         AIF   (&TYPE EQ 'STANDARD').STANDARD
-         AIF   (&TYPE EQ 'BINARY').BINARY
-         AIF   (&TYPE EQ 'TU').TU
-         AIF   (&TYPE EQ 'MIC').MIC
+         AIF   ('&CLOCK' EQ 'YES').ERR1
+         AIF   ('&TYPE' EQ '').STANDARD
+         AIF   ('&TYPE' EQ 'STANDARD').STANDARD
+         AIF   ('&TYPE' EQ 'BINARY').BINARY
+         AIF   ('&TYPE' EQ 'TU').TU
+         AIF   ('&TYPE' EQ 'MIC').MIC
          MNOTE 12,'GETIME INVALID TYPE - &TYPE'
          MEXIT
 .STANDARD ANOP

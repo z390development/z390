@@ -13,6 +13,7 @@
 .* 11/10/06 RPI 475 SUPPORT CT AS IF OV            
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N      ESTAE  &ADDR,          ADDRESS OF ABEND RECOVERY EXIT          X
                &TYPE,          OV=REPLACE EXIT, CT=ADD NEW EXIT        X
@@ -24,10 +25,10 @@
                &SDWALOC31=NO,  IGNORE                                  X
                &TERM=NO,       IGNORE                                  X
                &XCTL=NO        IGNORE
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR1
+         AIF   ('&MF' NE 'I').ERR1
          AIF   (N'&SYSLIST LE 2).NPOK  R[ 475
          MNOTE 12,'ESTAE UNSUPPORTED OPERANDS - &SYSLIST(2)'
 .NPOK    ANOP
@@ -37,7 +38,7 @@
 .AREG   ANOP
         ZOPTLR 0,&ADDR(1)
 .CHKP   ANOP
-        AIF    (&PARAM EQ '').ZPARM
+        AIF    ('&PARAM' EQ '').ZPARM
         AIF    ('&PARAM'(1,1) EQ '(').PREG
         LA     1,&PARAM
         AGO    .CHKTYPE
@@ -47,7 +48,7 @@
 .ZPARM  ANOP
         SR     1,1
 .CHKTYPE ANOP
-        AIF    (&TYPE NE 'OV').SVC
+        AIF    ('&TYPE' NE 'OV').SVC
         OILH   0,X'8000' 
 .SVC    ANOP
         SVC    X'3C' ESTAE R0=EXIT, R0+=CT, R0-=OV,R1=PARAM OR 0

@@ -14,6 +14,7 @@
 .* 07/11/07 RPI 654 CORRECT TO SUPPORT DCBBLKSIF
 .* 08/07/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       POINT &DCB,         DCB                                       X
                &REL,         RELATIVE BLOCK                            X
@@ -21,15 +22,15 @@
                &RBA=,        EXTENSION RELATIVE BYTE ADDR              X
                &RPL=,        VSAM RPL ADDR FOR KSDS/RRDS/ESDS          X
                &TYPE=REL     REL (ABS NOT SUPPORTED)
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR2
+         AIF   ('&MF' NE 'I').ERR2
          AIF   (N'&SYSLIST LE 2).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(3)'
          MEXIT
 .NPOK    ANOP
-         AIF   (&RPL NE '').VSAM
+         AIF   ('&RPL' NE '').VSAM
 .*
 .* SET FILE POINTER FOR READ/WRITE RANDOM ACCESS
 .*   DCB  - REQUIRED WITH DCBBLKSI DEFINED 
@@ -38,14 +39,14 @@
 .*
 .*   NOTE RBA= IS EXTENSION OF POINT FOR UP TO 2 GB RANDOM ACCESS
 .*
-         AIF   (&TYPE NE 'REL').ERR1
+         AIF   ('&TYPE' NE 'REL').ERR1
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          LA    1,&DCB
          AGO   .CHKRBA
 .DCBREG  ANOP
          ZOPTLR 1,&DCB(1)
 .CHKRBA  ANOP
-         AIF   (&RBA EQ '').CHKREL
+         AIF   ('&RBA' EQ '').CHKREL
          AIF   ('&RBA'(1,1) EQ '(').RBAREG
          LG    0,&RBA
          AGO   .SVC

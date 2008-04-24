@@ -27,6 +27,8 @@
 * 03/16/07 RPI 578 - test corrected M3 complex mult S type
 * 04/01/07 RPI 567 - add CCW, CCW0, and CCW1 tests                
 * 01/10/08 RPI 777 - add decimal and scale for P/Z, add sign for Z 
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+* 04/24/08 RPI 840 TEST SPACES IGNORED IN P AND Z DATA FIELDS 
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -279,11 +281,11 @@ LEN      EQU   X'5678'
 .TEST4_END ANOP
 * test && and '' in comments (this), setc, sdt, and models
 &AMP     SETC  '&&'
-         AIF   (&AMP EQ '&&').AMPOK
+         AIF   ('&AMP' EQ '&&').AMPOK
          RT1   ABORT
 .AMPOK   ANOP
 &SQ      SETC  ''''
-         AIF   (&SQ EQ '''').SQOK
+         AIF   ('&SQ' EQ '''').SQOK
          RT1   ABORT
 .SQOK    ANOP
          AIF   (C'A' NE C!A!).TEST5_ASCII
@@ -387,5 +389,12 @@ VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
          RT1   CCE,CCW,CCWV,8
          RT1   CCE,CCW0,CCW0V,8
          RT1   CCE,CCW1,CCW1V,8
+* TEST IGNORE SPACES IN P AND Z DATA FIELDS RPI 840
+         RT1   CCE,=P'1',=P' 1'
+         RT1   CCE,=P'1',=P'1 '
+         RT1   CCE,=P'1',=P' 1 '
+         RT1   CCE,=Z'1',=Z' 1'
+         RT1   CCE,=Z'1',=Z'1 '
+         RT1   CCE,=Z'1',=Z' 1 '
          RT1   END
          END         

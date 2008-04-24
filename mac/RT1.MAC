@@ -12,6 +12,7 @@
 .* 11/20/05 CHANGE LA 1,X'101', SVC 13 TO ABEND 101                  
 .* 09/22/06 ADD CCLE AND CCGE OPTIONS FOR USE IN TESTTIM2 TESTS        
 .* 03/05/08 ADD RT1 OK - INC COUNT BY 1                                
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &NAME    RT1   &CMD,&CLC1,&CLC2,&LL  
 .*
@@ -31,15 +32,15 @@
 .*
          GBLA  &RT1_TOT
          GBLC  &RT1NAME
-         AIF   (&CMD EQ 'MAIN').RT1MAIN
-         AIF   (&CMD EQ 'START').RT1START
-         AIF   (&CMD EQ 'END').RT1END
+         AIF   ('&CMD' EQ 'MAIN').RT1MAIN
+         AIF   ('&CMD' EQ 'START').RT1START
+         AIF   ('&CMD' EQ 'END').RT1END
 &NAME    DS    0H
 &RT1_TOT SETA  &RT1_TOT+1
-         AIF   (&CMD EQ 'OK').RT1OK
-         AIF   (&CMD EQ 'ABORT').RT1ABORT
-         AIF   (&CLC1 EQ '').NOCLC
-         AIF   (&LL   EQ '').NOCLCLL
+         AIF   ('&CMD' EQ 'OK').RT1OK
+         AIF   ('&CMD' EQ 'ABORT').RT1ABORT
+         AIF   ('&CLC1' EQ '').NOCLC
+         AIF   ('&LL'   EQ '').NOCLCLL
          LA    1,&CLC1
          LA    2,&CLC2
          CLC   0(&LL,1),0(2)
@@ -47,15 +48,15 @@
 .NOCLCLL ANOP
          CLC   &CLC1,&CLC2
 .NOCLC   ANOP
-         AIF   (&CMD EQ 'CCE').RT1CCE
-         AIF   (&CMD EQ 'CCL').RT1CCL
-         AIF   (&CMD EQ 'CCH').RT1CCH
-         AIF   (&CMD EQ 'CCLE').RT1CCLE
-         AIF   (&CMD EQ 'CCGE').RT1CCGE
-         AIF   (&CMD EQ 'CC0').RT1CC0
-         AIF   (&CMD EQ 'CC1').RT1CC1
-         AIF   (&CMD EQ 'CC2').RT1CC2
-         AIF   (&CMD EQ 'CC3').RT1CC3
+         AIF   ('&CMD' EQ 'CCE').RT1CCE
+         AIF   ('&CMD' EQ 'CCL').RT1CCL
+         AIF   ('&CMD' EQ 'CCH').RT1CCH
+         AIF   ('&CMD' EQ 'CCLE').RT1CCLE
+         AIF   ('&CMD' EQ 'CCGE').RT1CCGE
+         AIF   ('&CMD' EQ 'CC0').RT1CC0
+         AIF   ('&CMD' EQ 'CC1').RT1CC1
+         AIF   ('&CMD' EQ 'CC2').RT1CC2
+         AIF   ('&CMD' EQ 'CC3').RT1CC3
          MNOTE 8,'RT1 INVALID COMMAND - &CMD'
          MEXIT
 .RT1MAIN ANOP

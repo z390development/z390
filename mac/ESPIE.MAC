@@ -15,16 +15,17 @@
 .* 06/03/06 RPI321 CORRECT MNOTE MSG TO INCLUDE MACRO NAME            
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       ESPIE &OP,     SET/RESET                                      X
                &ADDR,   EXIT ADDRESS                                   X
                &LIST,   INTERRUPTION LIST (1,2...15)                   X
                &MF=I,   NOT SUPPORTED                                  X
                &PARAM=  OPTIONAL PARM TO PASS TO EXIT
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR1
+         AIF   ('&MF' NE 'I').ERR1
          AIF   (N'&SYSLIST LE 3).NPOK
          MNOTE 12,'ESPIE UNSUPPORTED OPERANDS - &SYSLIST(4)'
          MEXIT
@@ -74,7 +75,7 @@
 .*      or ESTAE user defined exit will result in 0Cx abend.
 .*
         LCLA   B(31)
-        AIF    (&PARAM EQ '').ZPARM
+        AIF    ('&PARAM' EQ '').ZPARM
         AIF    ('&PARAM'(1,1) EQ '(').REGPARM
         LA     15,&PARAM
         AGO    .ENDPARM
@@ -84,8 +85,8 @@
 .ZPARM  ANOP
         SR     15,15
 .ENDPARM ANOP
-        AIF    (&OP EQ 'SET').SET
-        AIF    (&OP EQ 'RESET').RESET
+        AIF    ('&OP' EQ 'SET').SET
+        AIF    ('&OP' EQ 'RESET').RESET
         MNOTE  8,'ESPIE INVALID OPERATION - SET/RESET - &OP'
         MEXIT
 .SET    ANOP

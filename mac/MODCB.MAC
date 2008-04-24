@@ -18,6 +18,7 @@
 .*          and use ZGENMACF and ZGENOPTD
 .* 09/19/07 RPI 697 SET RC=0                                                       
 .* 12/08/07 RPI 750 ADD RPL KEYLEN= PARM FOR GENERIC KEY LENGTH                    
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       MODCB &ACB=,        ACB CONTROL BLOCK ADDRESS (ALSO RPL FIELD)X
                &DDNAME=,     ACB DDNAME FOR VCDT VSAM CATALOG.ENTRY    X
@@ -39,37 +40,37 @@
          AIF   (&NPOS GT 0).POSLOOP
          MEXIT
 .POSEND  ANOP  
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
 .*
 .*  CHECK ACB FIELDS
 .*
-         AIF   (&ACB  EQ '').CHK_RPL_FIELDS
-         AIF   (&DDNAME NE '').DDNAME
+         AIF   ('&ACB'  EQ '').CHK_RPL_FIELDS
+         AIF   ('&DDNAME' NE '').DDNAME
 .DDNAME_END ANOP
-         AIF   (&DSNAME NE '').DSNAME
+         AIF   ('&DSNAME' NE '').DSNAME
 .DSNAME_END ANOP
-         AIF   (&MACRF  NE '').MACRF
+         AIF   ('&MACRF'  NE '').MACRF
 .MACRF_END ANOP
-         AIF   (&VCLRN NE '').VCLRN 
+         AIF   ('&VCLRN' NE '').VCLRN 
 .VCLRN_END ANOP
 .*      
 .* CHECK RPL FIELDS
 .*
 .CHK_RPL_FIELDS ANOP
-         AIF   (&RPL  EQ '').CHK_MODS
-         AIF   (&ACB  NE '').ACB
+         AIF   ('&RPL'  EQ '').CHK_MODS
+         AIF   ('&ACB'  NE '').ACB
 .ACB_END ANOP
-         AIF   (&AREA NE '').AREA
+         AIF   ('&AREA' NE '').AREA
 .AREA_END ANOP
-         AIF   (&ARG    NE '').ARG
+         AIF   ('&ARG'    NE '').ARG
 .ARG_END ANOP
-         AIF   (&KEYLEN NE '').KEYLEN
+         AIF   ('&KEYLEN' NE '').KEYLEN
 .KEYLEN_END ANOP
-         AIF   (&OPTCD  NE '').OPTCD
+         AIF   ('&OPTCD'  NE '').OPTCD
 .OPTCD_END ANOP
-         AIF   (&RECLEN NE '').RECLEN
+         AIF   ('&RECLEN' NE '').RECLEN
 .RECLEN_END ANOP
 .*
 .* CHECK IF ANY FIELDS FOUND

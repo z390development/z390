@@ -14,6 +14,7 @@
 .* 02/20/07 RPI 551 ADD SUPPORT FOR IP=(REG)                       
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 10/29/07 RPI 731 ADD CMDLOG=YES TO COPY ALL CMD STD OUTPUT TO LOG
+.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
 .*********************************************************************
 .*
 .* CMDPROC PROVIDES INTERFACE TO SUPPORT UP TO 10 CONCURRENT 
@@ -35,21 +36,21 @@
 .*   12 - PROCESS ERROR OCCURRED - SEE ERROR MESSAGE ON LOG 
 .*********************************************************************
 &N       CMDPROC &OP,&REC,&LEN,&ID=0,&WAIT=500,&CMDLOG=YES
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST LE 3).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(5)'
 .NPOK    ANOP
-         AIF   (&OP EQ 'START').START
-         AIF   (&OP EQ 'STOP').STOP
-         AIF   (&OP EQ 'WRITE').WRITE
-         AIF   (&OP EQ 'READ').READ 
+         AIF   ('&OP' EQ 'START').START
+         AIF   ('&OP' EQ 'STOP').STOP
+         AIF   ('&OP' EQ 'WRITE').WRITE
+         AIF   ('&OP' EQ 'READ').READ 
          MNOTE 12,'CMDPROC UNDEFINED OPERATION - &OP'
          MEXIT
 .START   ANOP
          LA    0,0 ASSUME START WITH NO CMDLOG
-         AIF   (&CMDLOG NE 'YES').SETID
+         AIF   ('&CMDLOG' NE 'YES').SETID
          ICM   0,4,=X'01' SET CMDLOG ON TO ROUTE ALL OUTPUT TO LOG
          AGO   .SETID
 .START_CMDLOG ANOP
@@ -73,11 +74,11 @@
          AGO   .READ_LEN
 .READ_REC_REG ANOP
          ZOPTLR 1,&REC(1)
-         AIF   (&LEN NE '').READ_LEN
+         AIF   ('&LEN' NE '').READ_LEN
          MNOTE 12,'CMDPROC READ MISSING LENGTH FOR REGISTER REC FORM'
          MEXIT
 .READ_LEN ANOP
-         AIF   (&LEN EQ '').LREC
+         AIF   ('&LEN' EQ '').LREC
          AIF   ('&LEN'(1,1) EQ '(').READ_LEN_REG
          LA    2,&LEN
          AGO   .READ_WAIT
@@ -93,7 +94,7 @@
 .READ_WAIT_REG  ANOP
          ZOPTLR 3,&WAIT(1)
 .SETID   ANOP                                              RPI 551
-         AIF   (&ID EQ '0').SVC
+         AIF   ('&ID' EQ '0').SVC
          AIF   ('&ID'(1,1) EQ '(').IDREG
          ICM   0,2,=AL1(&ID)  
          AGO   .SVC

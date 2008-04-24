@@ -12,6 +12,7 @@
 .* 02/25/06 RPI211 MAKE TGET/TPUT MAINFRAME COMPATIBLE (DEMOGUI4 TEST)
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .*
 .* TGET BUFFER,LBUFFER,OPTIONS
@@ -49,10 +50,10 @@
 &N       TGET  &BUFF,                                                  X
                &LBUFF,                                                 X
                &MF=I      NOT SUPPORTED  
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR1
+         AIF   ('&MF' NE 'I').ERR1
          AIF   ('&BUFF'(1,1) EQ '(').RECREG
          LA    1,&BUFF
          AGO   .CHKLEN
@@ -82,10 +83,10 @@
 .OPTLOOP ANOP
 &I       SETA  &I+1
          AIF   (&I GT &NP).OPTEND
-         AIF   (&SYSLIST(&I) EQ 'EDIT').EDIT
-         AIF   (&SYSLIST(&I) EQ 'ASIS').ASIS
-         AIF   (&SYSLIST(&I) EQ 'WAIT').WAIT
-         AIF   (&SYSLIST(&I) EQ 'NOWAIT').NOWAIT
+         AIF   ('&SYSLIST(&I)' EQ 'EDIT').EDIT
+         AIF   ('&SYSLIST(&I)' EQ 'ASIS').ASIS
+         AIF   ('&SYSLIST(&I)' EQ 'WAIT').WAIT
+         AIF   ('&SYSLIST(&I)' EQ 'NOWAIT').NOWAIT
          MNOTE 12,'TGET INVALID OPTION - &SYSLIST(&I)'
          AGO   .OPTLOOP
 .EDIT    ANOP

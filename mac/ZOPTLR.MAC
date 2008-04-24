@@ -7,6 +7,7 @@
 .* Date   - 08/22/07                                                 *
 .*********************************************************************
 .* 08/22/07 RPI 680 ADD ZOPTLR TO OPTIMIZE LR GENERATION        
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .*
 .* TEST FOR SOURCE AND TARGET MATCH TO SKIP GEN OF LR.
@@ -17,12 +18,12 @@
 .*   3. ELSE GENERATE LR TO BE SAFE. 
 .*********************************************************************
 &N       ZOPTLR &P1,&P2                                                 
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   ('&P1' EQ '&P2').EXIT
          AIF   ('&P1' EQ 'R&P2' OR 'R&P1' EQ '&P2').EXIT
-         AIF   (D'&P2 EQ 1 AND &P1 EQ &P2).EXIT
+         AIF   (D'&P2 EQ 1 AND '&P1' EQ '&P2').EXIT
          LR    &P1,&P2
 .EXIT    ANOP
          MEND

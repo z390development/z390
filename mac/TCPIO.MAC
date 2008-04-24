@@ -21,6 +21,7 @@
 .*                  (CONN ID IS RETURNED IN R2 BY SERVER RECEIVE)
 .* 03/11/07 RPI 573 ALLOW CONN=-1 IN ADDITION TO DEFAULT CONN=-1
 .* 08/21/07 RPI 670 ADD REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .* SVC INPUT:
 .*   R0 OP CODE 1=OPEN SERVER ON CURRENT HOST TO ACCEPT CONNECTIONS
@@ -47,19 +48,19 @@
 .*     R1  = ACTUAL MESSAGE LENGTH RETURNED FOR RECEIVE        
 .*     R2  = CONNECTION ID FOR SERVER PORT RECEIVE (REQUIRED FOR SEND)                          
 .*********************************************************************
-         AIF   (&OP EQ 'OPEN').OPEN
-         AIF   (&OP EQ 'CLOSE').CLOSE
-         AIF   (&OP EQ 'SEND').SEND
-         AIF   (&OP EQ 'RECEIVE').RECEIVE
+         AIF   ('&OP' EQ 'OPEN').OPEN
+         AIF   ('&OP' EQ 'CLOSE').CLOSE
+         AIF   ('&OP' EQ 'SEND').SEND
+         AIF   ('&OP' EQ 'RECEIVE').RECEIVE
          AGO   .ERR1
 .OPEN    ANOP
-         AIF   (&HOST NE '').OPEN_CLIENT
+         AIF   ('&HOST' NE '').OPEN_CLIENT
 .OPEN_SERVER ANOP
          LA    0,1           R0 = TCPIO OP OPEN SERVER PORT ON HOST
          AGO   .PORT
 .OPEN_CLIENT ANOP
          LA    0,2           R0 = TCPIO OP OPEN CLIENT PORT CONN7ECTION
-         AIF   (&HOST EQ '*').HOST_LOCAL
+         AIF   ('&HOST' EQ '*').HOST_LOCAL
          AIF   ('&HOST'(1,1) EQ '(').HOSTREG
          LA    14,&HOST      R14= TCPIO HOST IP NULL TERMINATED
          AGO   .PORT
@@ -77,13 +78,13 @@
          AGO   .CONN
 .RECEIVE ANOP
          LA    0,5           R0 = TCPIO OP RECV MSG VIA PORT CONNECTION
-         AIF   (&OPTION EQ '').CONN
-         AIF   (UPPER &OPTION EQ 'NOWAIT').NOWAIT
+         AIF   ('&OPTION' EQ '').CONN
+         AIF   (UPPER '&OPTION' EQ 'NOWAIT').NOWAIT
          AGO   .ERR5
 .NOWAIT  ANOP
          OILH  0,1           R0 BIT 15 FOR NOWAIT  RPI 554
-.CONN    AIF   (&CONN EQ '').NOCONN 
-         AIF   (&CONN EQ '-1').NOCONN
+.CONN    AIF   ('&CONN' EQ '').NOCONN 
+         AIF   ('&CONN' EQ '-1').NOCONN
          AIF   ('&CONN'(1,1) EQ '(').CONNREG
          L     2,&CONN
          AGO   .MSG
@@ -94,14 +95,14 @@
 .CONNREG ANOP
          ZOPTLR 2,&CONN(1)
 .MSG     ANOP
-         AIF   (&MSG EQ '').ERR2
+         AIF   ('&MSG' EQ '').ERR2
          AIF   ('&MSG'(1,1) EQ '(').MSGREG
          LA    14,&MSG
          AGO   .LMSG
 .MSGREG  ANOP
          ZOPTLR 14,&MSG(1)
 .LMSG    ANOP
-         AIF   (&LMSG EQ '').ERR4
+         AIF   ('&LMSG' EQ '').ERR4
          AIF   ('&LMSG'(1,1) EQ '(').LMSGREG
          AIF   (T'&LMSG EQ 'N').LMSGLIT
          L     15,&LMSG
@@ -112,7 +113,7 @@
 .LMSGREG ANOP
          ZOPTLR 15,&LMSG(1)
 .PORT    ANOP
-         AIF   (&PORT EQ '').ERR3
+         AIF   ('&PORT' EQ '').ERR3
          AIF   ('&PORT'(1,1) EQ '(').PORTREG
          LA    1,&PORT
          AGO   .SVC

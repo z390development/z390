@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_READ
 .* XRBA AND FLENGTH ARE EXTENSIONS
@@ -16,7 +18,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
 .*
          AIF   ('&PARM'(1,5)  EQ 'FILE(').FILE
          AIF   ('&PARM'(1,8)  EQ 'DATASET(').DATASET
@@ -92,20 +94,20 @@
          AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         AIF   (&FILE EQ '' AND &DATASET EQ '').NOFILE
-         AIF   (&FILE NE '' AND &DATASET NE '').BOTHF
-         AIF   (&INTO EQ '' AND &SET EQ '').NOINTOST
-         AIF   (&INTO NE '' AND &SET NE '').BOTHINST
-         AIF   (&LENGTH NE '' AND &FLENGTH NE '').BOTHLEN
-         AIF   (&RIDFLD EQ '').NEEDRID
+         AIF   ('&FILE' EQ '' AND '&DATASET' EQ '').NOFILE
+         AIF   ('&FILE' NE '' AND '&DATASET' NE '').BOTHF
+         AIF   ('&INTO' EQ '' AND '&SET' EQ '').NOINTOST
+         AIF   ('&INTO' NE '' AND '&SET' NE '').BOTHINST
+         AIF   ('&LENGTH' NE '' AND '&FLENGTH' NE '').BOTHLEN
+         AIF   ('&RIDFLD' EQ '').NEEDRID
          AIF   (&RBA AND &XRBA).BADRBA
          AIF   (&RRN AND &RBA).BOTHTYP
          AIF   (&RRN AND &XRBA).BOTHTYP
          AIF   (&GENERIC AND &RBA).BADGEN1
          AIF   (&GENERIC AND &XRBA).BADGEN1
          AIF   (&GENERIC AND &RRN).BADGEN1
-         AIF   (&KLENGTH EQ '' AND &GENERIC).BADGEN2
-         AIF   (&KLENGTH NE '' AND NOT(&GENERIC)).BADGEN3
+         AIF   ('&KLENGTH' EQ '' AND &GENERIC).BADGEN2
+         AIF   ('&KLENGTH' NE '' AND NOT(&GENERIC)).BADGEN3
          AIF   (&GTEQ AND &EQUAL).BOTHBWS
 .*
          MVC   EIBFN,=X'0602'     SET EIBFN
@@ -125,7 +127,7 @@
          MVI   FCPCTYPE,FCPCREAD  SET READ
          MVC   FCPKEYLN,=X'7FFF'  SET MISSING KEYLENGTH
 .*
-         AIF   (&FILE EQ '').DODTAST
+         AIF   ('&FILE' EQ '').DODTAST
 .* GOT FILE
          AIF   ('&FILE'(1,1) EQ '''').FLSTRING
          MVC   EIBRSRCE,&FILE     SET EIBRSRCE AS LABEL
@@ -153,12 +155,12 @@
          MVC   FCPFILNM,=CL8&DATASET SET DATASET NAME AS STRING
 .*
 .CHKLEN  ANOP
-         AIF   (&SET    EQ '').NOSET
+         AIF   ('&SET'    EQ '').NOSET
          MVC   FCPLEN,=X'7FFFFFFF' SET MAXIMUM LENGTH
          AGO   .DUNLEN
 .*
 .NOSET   ANOP
-         AIF   (&LENGTH EQ '').NOLENG
+         AIF   ('&LENGTH' EQ '').NOLENG
          AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
          MVC   FCPLEN,=AL4(&LENGTH) MOVE NUMERIC LENGTH
          AGO   .DUNLEN
@@ -167,7 +169,7 @@
          AGO   .DUNLEN
 .*
 .NOLENG  ANOP
-         AIF   (&FLENGTH EQ '').NOLENS
+         AIF   ('&FLENGTH' EQ '').NOLENS
          AIF   ('&FLENGTH'(1,1) LT '0' OR '&FLENGTH'(1,1) GT '9').FLENL-
                BL
          MVC   FCPLEN,=AL4(&FLENGTH) MOVE NUMERIC FLENGTH
@@ -181,7 +183,7 @@
          MVC   FCPLEN,=AL4(&LENGTH) MOVE IMPLIED LENGTH OF INTO
 .*
 .DUNLEN  ANOP
-         AIF   (&KLENGTH EQ '').CHKOPT
+         AIF   ('&KLENGTH' EQ '').CHKOPT
          AIF   ('&KLENGTH'(2,1) EQ '''').KLENNUM
          AIF   ('&KLENGTH'(1,1) LT '0' OR '&KLENGTH'(1,1) GT '9').KLENL-
                AB
@@ -273,7 +275,7 @@ CICS_READ_&SYSNDX._NOKEY EQU *
          B     CICS_READ_&SYSNDX._INVREQ SHOULD NOT OCCUR
 .*
 CICS_READ_&SYSNDX._01 DS 0H
-         AIF   (&SET EQ '').DOINTO
+         AIF   ('&SET' EQ '').DOINTO
          EXEC  CICS GETMAIN SET(&SET) FLENGTH(FCPACLEN)
          L     R1,DFHEIFCP        RESTORE FC BLOCK ADDRESS
 .* RESET EIB FIELDS
@@ -290,7 +292,7 @@ CICS_READ_&SYSNDX._01 DS 0H
          LTR   R15,R15            CHECK RC ?
          BNZ   CICS_READ_&SYSNDX._INVREQ ERROR IF BAD
          L     R1,DFHEIFCP        RESTORE FC BLOCK ADDRESS
-         AIF   (&LENGTH EQ '').NOLENG2
+         AIF   ('&LENGTH' EQ '').NOLENG2
          AIF   ('&LENGTH'(1,1) EQ 'L').NOLEN2
          AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').MVLEN
          AGO   .NOLEN2
@@ -300,7 +302,7 @@ CICS_READ_&SYSNDX._01 DS 0H
          AGO   .NOLEN2
 .*
 .NOLENG2 ANOP
-         AIF   (&FLENGTH EQ '').NOLEN2
+         AIF   ('&FLENGTH' EQ '').NOLEN2
          AIF   ('&FLENGTH'(1,1) LT '0' OR '&FLENGTH'(1,1) GT '9').MVFLE-
                N
          AGO   .NOLEN2
@@ -420,4 +422,3 @@ CICS_READ_&SYSNDX._END DS 0H
 .BADGEN3 MNOTE 12,'KEYLENGTH REQUIRES GENERIC'
          MEXIT
          MEND
-

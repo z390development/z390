@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 08/27/07 INITIAL CODING TO SUPPORT MODCB ACB OR RPL FIELD MODS                         
 .* 09/14/07 RPI 672 CORRECT TARGET > AREA                                                 
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       ZSHOWCB &CB,        ACB/RPL ADDRESS OR (REG)                  X
                &CBOFF,       OFFSET TO ACB/RPL FIELD                   X
@@ -21,9 +22,9 @@
 &SADDR   SETC  '&CBOFF.&CB'
 .AREA    ANOP
          AIF   ('&AREA'(1,1) EQ '(').CHK_SCON
-         AIF   (&LAREA EQ 1).MOV1
-         AIF   (&LAREA EQ 4).MOV4
-         AIF   (&LAREA EQ 8).MOV8
+         AIF   ('&LAREA' EQ '1').MOV1
+         AIF   ('&LAREA' EQ '4').MOV4
+         AIF   ('&LAREA' EQ '8').MOV8
          MNOTE 12,'ZSHOWCB INVALID AREA FIELD LENGTH - &LAREA'
          MEXIT
 .MOV1    ANOP

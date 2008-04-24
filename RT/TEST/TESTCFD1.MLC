@@ -11,6 +11,7 @@
 * 12/03/06 RPI 513 ADD RC TESTS                                    
 * 12/11/06 RPI 514 ADD DFP DD, ED, AND LD TESTS                                    
 * 01/14/08 RPI 786 USE DFP COMP TO HANDLE DIFF CANONIZATIONS                       
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 *********************************************************************
          PRINT DATA
 TESTCTD1 RT1   MAIN
@@ -44,9 +45,9 @@ ABORT    ABEND 111
          MEND
          MACRO
          TESTC &TYPE,&VAL
-         AIF   (&TYPE EQ 'ED').ED_COMP
-         AIF   (&TYPE EQ 'DD').DD_COMP
-         AIF   (&TYPE EQ 'LD').LD_COMP 
+         AIF   ('&TYPE' EQ 'ED').ED_COMP
+         AIF   ('&TYPE' EQ 'DD').DD_COMP
+         AIF   ('&TYPE' EQ 'LD').LD_COMP 
          AGO   .CLC_COMP     
 .ED_COMP ANOP
          LE    R0,&VAL

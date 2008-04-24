@@ -9,6 +9,7 @@
 .* 11/26/07 INITIAL CODING OF KSIR KSDS INSERT TREE RECORD CONTROL BLK                   
 .* 01/08/08 RPI 723 REVERSE FWD/BWD FOR CONSISTENCE WITH LOW/HIGH SEQ                    
 .* 02/18/08 RPI 807 ADD KSIRLOWH AND KSIRHGHH                    
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
          KSIRD  
 .*
@@ -42,7 +43,8 @@ KSIRREC  DS   XL8 XRBA TO RECORD OR -1 IF DELETED
 KSIRLHT  DS   X   LOW  BRANCH AVL TREE HEIGHT (0-63)
 KSIRHHT  DS   X   HIGH BRANCH AVL TREE HEIGHT (0-63)
 KSIRLEN  EQU  *-IHAKSIR                                 
-          AIF  (&Z390_KSIR_NAME EQ '' OR &Z390_KSIR_TYPE EQ '').EXIT
+          AIF  ('&Z390_KSIR_NAME' EQ '' OR '&Z390_KSIR_TYPE' EQ '').EXIX
+               T
 &Z390_KSIR_NAME &Z390_KSIR_TYPE                    
 .EXIT    ANOP
          MEND

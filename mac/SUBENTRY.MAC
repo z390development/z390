@@ -82,7 +82,7 @@
          AIF   ('&RENT'(1,1) EQ 'N').NORENT                              
 &RENTOPT SETB  1                                                         
          AIF   ('&BASES(1)' EQ 'R13').ERR2  RPI 654
-         AIF   ('&BASES(1)' EQ 13).ERR2     RPI 654
+         AIF   (&BASES(1) EQ 13).ERR2     RPI 654
          STM   14,12,12(13)                                              
          BAL   &BASES(1),40(15)                                          
          USING &NAME+8,&BASES(1)                                         
@@ -177,7 +177,7 @@
          AIF   (&BASES(1) EQ 13).GENB13                                  
          AGO   .GENBX                                                    
 .CHKR13  ANOP                                                            
-         AIF   (&BASES(1) EQ 'R13').GENB13      RPI 654                         
+         AIF   ('&BASES(1)' EQ 'R13').GENB13      RPI 654                         
 .GENBX   ANOP
          ZOPTLR &BASES(1),13             
 .SKIPR13 ANOP               

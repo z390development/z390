@@ -165,7 +165,8 @@ public  class  sz390 implements Runnable {
     * 03/18/08 RPI 825 add TIMER INS instruction count extension  
     * 03/19/08 RPI 819 add trace table for last 10 instr. at abend
     *          and format PSW with CC, ILC, MASK, at ABEND 
-    * 03/20/08 RPI 809 restore psw cc and amode for SPIE and ESTAE exits                    
+    * 03/20/08 RPI 809 restore psw cc and amode for SPIE and ESTAE exits 
+    * 04/23/08 RPI 837 update EZ390 ENDING msg only once and add to log                   
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -1052,6 +1053,7 @@ private synchronized void close_files(){  // RPI 661
 	 * xrd, xpr, xph, xgt, and xpt Assist files RPI 812
 	 */
 	  tz390.force_nocon = true;
+	  tz390.set_ended_msg(ez390_rc); // RPI 837
 	  put_log(tz390.ended_msg);
 	  tz390.force_nocon = false;
 	  if (log_file != null && log_file.isFile()){

@@ -7,9 +7,10 @@
 .* Date   - 03/12/07                                                 *
 .*********************************************************************
 .* 03/12/07 RPI 558 convert z390 macros to VSE macros        
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       OPEN  &DTFLIST    (DTF1,DFT2,,,,DFTN)                          
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST GE 1).NPOK

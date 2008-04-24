@@ -16,6 +16,7 @@
 .* 11/10/06 RPI 473 - correct macro bugs and update RT\TEST\TESTCAL1
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
 .*********************************************************************
 &N      CALL   &NAME,                                                  X
                &PARMS,                                                 X
@@ -24,16 +25,16 @@
                &LINKINST=BALR,                                         X
                &MF=I           I/L/E FORMS SUPPORTED
          CNOP  0,4
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0F
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST GT 3).ERR1
 .NPOK    ANOP
 &NPARMS  SETA   N'&PARMS
-         AIF    (&NPARMS EQ 0 AND &VL NE '').ERR3 RPI 473
-         AIF   (&MF EQ 'I').STD
-         AIF   (&MF EQ 'L').LIST
-         AIF   (&MF(1) EQ 'E').EXEC
+         AIF    (&NPARMS EQ 0 AND '&VL' NE '').ERR3 RPI 473
+         AIF   ('&MF' EQ 'I').STD
+         AIF   ('&MF' EQ 'L').LIST
+         AIF   ('&MF(1)' EQ 'E').EXEC
          MNOTE 12,'CALL INVALID MF=&MF'
          MEXIT
 .STD     ANOP
@@ -49,12 +50,12 @@
          ST     &PARMS(&I),&OFF.(1)
          AGO    .REGLOOP
 .REGEND  ANOP       
-         AIF    (&VL NE 'VL').SKIPVL1 
+         AIF    ('&VL' NE 'VL').SKIPVL1 
 &OFF     SETA   N'&PARMS*4-4
          OI     &OFF.(1),X'80'
 .SKIPVL1 ANOP
 .ENDPARM ANOP
-         AIF   (&NAME EQ '').BALR
+         AIF   ('&NAME' EQ '').BALR
          AIF    ('&NAME'(1,1) EQ '(').REG
          L      15,=V(&NAME)
          AGO    .BALR
@@ -64,7 +65,7 @@
          &LINKINST 14,15
          MEXIT
 .LIST    ANOP
-         AIF    (&VL EQ 'VL').VLLIST    
+         AIF    ('&VL' EQ 'VL').VLLIST    
          DC    A&PARMS
          MEXIT       
 .VLLIST  ANOP
@@ -92,7 +93,7 @@
 .EXLOOP  ANOP
 &I       SETA   &I+1
          AIF    (&I GT &NPARMS).EXLEND
-&EXPARM  SETC   &PARMS(&I)     
+&EXPARM  SETC   '&PARMS(&I)'     
          AIF    ('&EXPARM'(1,1) EQ '(').EXREGP
          LA     0,&EXPARM
          ST     0,&EXOFF.(1)
@@ -103,7 +104,7 @@
 &EXOFF   SETA   &EXOFF+4
          AGO    .EXLOOP
 .EXLEND  ANOP    
-         AIF    (&VL NE 'VL' OR &EXOFF EQ 0).ENDPARM RPI 473
+         AIF    ('&VL' NE 'VL' OR &EXOFF EQ 0).ENDPARM RPI 473
          OI     &EXOFF-4(1),X'80'
          AGO    .ENDPARM  RPI 473
 .ERR1    MNOTE 12,'CALL UNSUPPORTED OPERANDS - &SYSLIST(4)'

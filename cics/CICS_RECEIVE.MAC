@@ -5,6 +5,7 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 05/06/06 RPI 308 ADD EXEC CICS SUPPORT FOR RECEIVE
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 .*********************************************************************
          MACRO
          CICS_RECEIVE
@@ -16,7 +17,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,5) EQ 'INTO(').INTO
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
@@ -41,7 +42,7 @@
          AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         AIF   (&INTO NE '' AND &LENGTH NE '').EIBAID
+         AIF   ('&INTO' NE '' AND '&LENGTH' NE '').EIBAID
          MNOTE 12,'BOTH INTO AND LENGTH ARE REQUIRED'
          MEXIT
 .*
@@ -221,4 +222,3 @@ CICS_RECEIVE_&SYSNDX._IX DS 0H
          DROP  R1
 .NOAIDCHK ANOP
          MEND
-

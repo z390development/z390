@@ -10,6 +10,7 @@
 .* 11/29/06 RPI 507 SUPPORT OUT=REG (GPR OR FPR OUTPUT REG)
 .*                  (NOTE OUT=(REG) INDICATES FIELD ADDR IN GPR)
 .* 12/10/06 RPI 514 ADD DFP SUPPORT FOR DD, ED, AND LD TYPES
+.* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
 .*********************************************************************
 .*
 .*  CONVERT FROM EBCDIC DECIMAL FIELD TO BINARY FIELD FORMAT
@@ -40,7 +41,7 @@
                &IN=,          SOURCE FIELD (RX OR REG)                 X
                &OUT=,         TARGET FIELD (RX OR REG)                 X
                &LINKAGE=SVC   SVC= Z390 171, MF=CALL TO FPCONMFC          
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP 
          GBLB  &CFD_EQUS
@@ -67,7 +68,7 @@ CFD_LD   EQU   30 CONVERT TO DFP EXT.  LD FROM 45 BYTE SN.N(34)+ENNNN
          AIF   ('&OUT'(1,1) NE '(').SVC
          ST    &OUT(1),4(1)                 RPI 507
 .SVC     ANOP
-         AIF   (&LINKAGE NE 'SVC').CALL
+         AIF   ('&LINKAGE' NE 'SVC').CALL
          SVC   171 CFD Z390 SVC R1=A(TYPE,OUT,IN)
          MEXIT
 .CALL    ANOP

@@ -10,6 +10,7 @@
 * 03/03/08 RPI 817 ADD Z10 COMP AND BRANCH EC64-ECFF USING TESTCAB MAC
 * 03/08/08 RPI 817 ADD Z10 MISC PROBLEM STATE INSTR. TESTS              
 * 03/15/08 RPI 822 CORRECT BRC 1,*-4 TO BRC 1,*-4 FOR TRTE/TRTRE        
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 *********************************************************************
          PRINT DATA
          TITLE 'TESTINS3 - UNIT TEST Z10 EZ390 PROBLEM STATE INSTR.'
@@ -34,7 +35,7 @@
 .*
          GBLA  &CAT
 &CAT     SETA  &CAT+1 COMPARE AND TRAP TEST COUNTER FOR LABELS
-         AIF   (&TYPE EQ 'L').LVAL
+         AIF   ('&TYPE' EQ 'L').LVAL
 .AVAL    ANOP
 &VL      SETC  '-1'
 &VE      SETC  '0'
@@ -151,7 +152,7 @@
 .*
          GBLA  &CAB
 &CAB     SETA  &CAB+1 COMPARE AND BRANCH TEST COUNTER
-         AIF   (&TYPE EQ 'L').LVAL
+         AIF   ('&TYPE' EQ 'L').LVAL
 .AVAL    ANOP
 &VL      SETC  '-1'
 &VE      SETC  '0'

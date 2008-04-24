@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 07/12/07 RPI 413 INITIAL CODING                                    
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/29/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .*
 .* GETENV - GET ENVIRONMENT VARIABLE VALUE
@@ -24,10 +25,10 @@
 .*
 .*********************************************************************
 &N       GETENV &NAME                                                   
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&NAME EQ '').ERR1
+         AIF   ('&NAME' EQ '').ERR1
          AIF   ('&NAME'(1,1) EQ '(').REGNAME
          LA    1,&NAME
          AGO   .SVC

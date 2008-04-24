@@ -18,6 +18,7 @@
 .* 04/11/07 RPI 587  support 32 bit DCBLRECLF and DCBBLKSIF fields  
 .* 04/23/07 RPI 599  add call to DCBD to define referened fields       
 .* 08/03/07 RPI 644  zero DCBOFLGS and fix DCBMACRF when 2 operands     
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 .*********************************************************************
 &N       DCB   &DSORG=PS,    PHYSICAL SEQUENTIAL                       X
                &BFALN=,      IGNORE                                    X
@@ -48,23 +49,23 @@
 &NPOS    SETA  &NPOS-1
          AGO   .POSLOOP
 .POSEND  ANOP        
-         AIF   (&DEVD   NE '').ERR2
-         AIF   (&EXLST  NE '').ERR3
-         AIF   (&KEYLEN NE '').ERR4
-         AIF   (&RECFM EQ 'F').CHKF
-         AIF   (&RECFM EQ 'FA').CHKF
-         AIF   (&RECFM EQ 'FM').CHKF
-         AIF   (&RECFM EQ 'FB').CHKFB
-         AIF   (&RECFM EQ 'FBA').CHKFB
-         AIF   (&RECFM EQ 'FBM').CHKFB
-         AIF   (&RECFM EQ 'V').CHKV
-         AIF   (&RECFM EQ 'VA').CHKV
-         AIF   (&RECFM EQ 'VM').CHKV
-         AIF   (&RECFM EQ 'VB').CHKVB
-         AIF   (&RECFM EQ 'VBA').CHKVB
-         AIF   (&RECFM EQ 'VBM').CHKVB
-         AIF   (&RECFM EQ 'FT').CHKFT
-         AIF   (&RECFM EQ 'VT').CHKVT
+         AIF   ('&DEVD'   NE '').ERR2
+         AIF   ('&EXLST'  NE '').ERR3
+         AIF   ('&KEYLEN' NE '').ERR4
+         AIF   ('&RECFM' EQ 'F').CHKF
+         AIF   ('&RECFM' EQ 'FA').CHKF
+         AIF   ('&RECFM' EQ 'FM').CHKF
+         AIF   ('&RECFM' EQ 'FB').CHKFB
+         AIF   ('&RECFM' EQ 'FBA').CHKFB
+         AIF   ('&RECFM' EQ 'FBM').CHKFB
+         AIF   ('&RECFM' EQ 'V').CHKV
+         AIF   ('&RECFM' EQ 'VA').CHKV
+         AIF   ('&RECFM' EQ 'VM').CHKV
+         AIF   ('&RECFM' EQ 'VB').CHKVB
+         AIF   ('&RECFM' EQ 'VBA').CHKVB
+         AIF   ('&RECFM' EQ 'VBM').CHKVB
+         AIF   ('&RECFM' EQ 'FT').CHKFT
+         AIF   ('&RECFM' EQ 'VT').CHKVT
          MNOTE 12,'INVALID RECFM - &RECFM'
          MEXIT
 .CHKF    ANOP
@@ -92,7 +93,7 @@
          AIF   (&LRECL GT 0 AND &BLKSIZE GT 0 AND &BLKSIZE NE &LRECL).EX
                RR_LRECL
 .CHKEND  ANOP
-         AIF   (&DDNAME EQ '' OR &DSNAME EQ '0').DSNOK
+         AIF   ('&DDNAME' EQ '' OR '&DSNAME' EQ '0').DSNOK
          MNOTE 12,'DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
          MEXIT
 .DSNOK   ANOP
@@ -106,7 +107,7 @@
          ORG   &N+DCBRECFM-IHADCB
          DC    AL1(DCBRECFM_&RECFM) DCBRECFM
          ORG   &N+DCBDDNAM-IHADCB
-         AIF   (&DDNAME EQ '').DDDEF
+         AIF   ('&DDNAME' EQ '').DDDEF
          DC    CL8'&DDNAME' DCBDDNAM
          AGO   .DDEND
 .DDDEF   ANOP

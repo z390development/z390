@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_ASKTIME
          LCLC  &ABSTIME
@@ -12,7 +14,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,8) EQ 'ABSTIME(').ABSTIME
          MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
@@ -31,7 +33,7 @@
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
-         AIF   (&ABSTIME EQ '').DUNASK
+         AIF   ('&ABSTIME' EQ '').DUNASK
          MVC   EIBFN,=X'4A02'     SET EIBFN
          TIME  CLOCK,&ABSTIME,CLOCKTYPE=STCK
          LG    R0,&ABSTIME        LOAD STCK VALUE
@@ -46,4 +48,3 @@ CICS_ASKTIME_&SYSNDX._BYP EQU *
 .DUNASK  ANOP
          MEXIT
          MEND
-

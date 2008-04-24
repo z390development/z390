@@ -12,6 +12,7 @@
 .* 09/24/07 RPI 702 ADD ACBOPENC UNIQUE OPEN COUNT FOR RPL RESET       
 .* 11/25/07 RPI 723 ADD ACBGETNF PRE-REQ FOR KSDS UPD INSERT VS REWRITE 
 .* 11/26/07 RPI 723 MOVE GETOK, GETNF FROM ACB TO RPL               
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
          ACBD   
 .*
@@ -79,7 +80,8 @@ ACBDCBT  DS    F              TOTAL DCBS FOR VES,VX0, AND VXN UGRADES
 ACBDCBA  DS    A              ADDR OF DYN ALLOC DCB TABLE
 ACBOPENC DS    F              UNIQUE ACB OPEN COUNT FOR RPL RESET
 ACBEND   EQU  *
-          AIF  (&Z390_ACBD_NAME EQ '' OR &Z390_ACBD_TYPE EQ '').EXIT
+          AIF  ('&Z390_ACBD_NAME' EQ '' OR '&Z390_ACBD_TYPE' EQ '').EXIX
+               T
 &Z390_ACBD_NAME &Z390_ACBD_TYPE                    
 .EXIT    ANOP
          MEND

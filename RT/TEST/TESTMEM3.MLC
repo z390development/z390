@@ -6,14 +6,15 @@
 * Date   - 09/30/05                                                 *
 *********************************************************************
 * 01/22/07 RPI 542 CORRECT STORAGE OUTPUT R1=ADDR
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 *********************************************************************
          MACRO
          TESTGM &TYPE,&LV,&LOC,&HL,&REG
 &RES     SETC  'BELOW' 
-         AIF    (&TYPE EQ 'R').OBTAIN
+         AIF    ('&TYPE' EQ 'R').OBTAIN
 &RES     SETC  'ABOVE'
-         AIF   (&LOC EQ '').OBTAIN
-&RES     SETC  &LOC
+         AIF   ('&LOC' EQ '').OBTAIN
+&RES     SETC  '&LOC'
 .OBTAIN  ANOP
          STORAGE OBTAIN,LENGTH=&LV,LOC=&RES
          CL    R1,=A(LINE)                      RPI 542

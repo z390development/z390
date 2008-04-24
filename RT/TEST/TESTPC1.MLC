@@ -7,6 +7,7 @@
 *********************************************************************
 * 09/29/06 RPI 467 test pseudo code for set and aif          
 * 12/22/06 RPI 521 test aif undefined label ok if not taken       
+* 04/20/08 RPI 833 setc quotes for HLASM compatibility
 *********************************************************************
 TESTPC1  SUBENTRY
          WTO   'TESTPC1 - TEST PSEUOD CODE FOR SET AND AIF'
@@ -28,7 +29,7 @@ TESTPC1  SUBENTRY
 * TEST COMPLEX AIF
          MACRO
          TEST  &MF=I,&SF=I                                               
-         AIF   (&MF EQ 'L' OR('&SF' EQ 'L' AND '&MF(1)' EQ 'E')).ERR
+         AIF   ('&MF' EQ 'L' OR('&SF' EQ 'L' AND '&MF(1)' EQ 'E')).ERR
          MNOTE 'AIF NO BRANCH OK - MF=&MF SF=&SF'
          AGO   .SKPERR
 .ERR     MNOTE 12,'AIF BRANCDED TO ERR'

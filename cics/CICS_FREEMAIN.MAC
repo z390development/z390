@@ -4,6 +4,8 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_FREEMAIN
          LCLC  &DATA,&DATAPTR
@@ -12,7 +14,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,5)  EQ 'DATA(').DATA
          AIF   ('&PARM'(1,12) EQ 'DATAPOINTER(').DATAPNT
          MNOTE 12,'BAD PARM &PARM'
@@ -27,14 +29,14 @@
          AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         AIF   (&DATA NE '' AND &DATAPTR NE '').BADDATA
-         AIF   (&DATA EQ '' AND &DATAPTR EQ '').NEEDDTA
+         AIF   ('&DATA' NE '' AND '&DATAPTR' NE '').BADDATA
+         AIF   ('&DATA' EQ '' AND '&DATAPTR' EQ '').NEEDDTA
          MVC   EIBFN,=X'0C04'     SET EIBFN
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
 .*
-         AIF   (&DATAPTR NE '').DOPTR
+         AIF   ('&DATAPTR' NE '').DOPTR
          L     R1,&DATA           INDIRECT FREEMAIN ADDRESS
          AGO   .DUNDATA
 .*
@@ -74,4 +76,3 @@ CICS_FREEMAIN_&SYSNDX._IGNORE EQU *
 .NEEDDTA MNOTE 12,'DATA OR DATAPOINTER MUST BE SPECIFIED'
          MEXIT
          MEND
-

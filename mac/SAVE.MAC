@@ -9,15 +9,16 @@
 .* 10/20/05 RPI  27 - issue error for any undefined operands     
 .* 04/27/07 RPI 601 - support R0-R15 register references     
 .* 06/14/07 RPI 641 DEFAULT MF=I
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       SAVE  &REGS,   (REGS TO SAVE)                                 X
                &T,      IGNORED                                        X
                &ID,     IGNORED                                        X
                &MF=I    NOT SUPPORTED
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR1
+         AIF   ('&MF' NE 'I').ERR1
          AIF   (N'&SYSLIST LE 3).NPOK
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(4)'
 .NPOK    ANOP
@@ -28,7 +29,7 @@
 &R1      SETA  '&REGS(1)'(2,K'&REGS(1)-1)
 .CHKR2   ANOP
 &R2      SETA  &R1
-         AIF   (&REGS(2) EQ '').CHKREGS
+         AIF   ('&REGS(2)' EQ '').CHKREGS
          AIF   ('&REGS(2)'(1,1) EQ 'R').SETR2
 &R2      SETA  &REGS(2)
          AGO   .CHKREGS

@@ -7,6 +7,7 @@
 * Date   - 08/12/06                                                 *
 *********************************************************************
 * 08/12/06 RPI 363 REPACKAGE MVS_MACLIB.ZIP AND Z390_RT.ZIP RT TESTS
+* 04/19/08 RPI 833 add SETC quotes for HLASM compatibilitys               
 *********************************************************************
 *
 *  RTGENDIR READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
@@ -21,7 +22,7 @@
          ACTR  1000000
 .LOOP    ANOP
 &TEXT    AREAD DSNAME='&SYSPARM'  
-         AIF  (&TEXT EQ '').EOF              END OF FILE IF NULL
+         AIF  ('&TEXT' EQ '').EOF              END OF FILE IF NULL
          AIF  (K'&TEXT LT 40).LOOP           SKIP LINES < 40
          AIF  ('&TEXT'(26,3) EQ 'DIR').LOOP  SKIP DIRS
          AIF  ('&TEXT'(3,1)  NE '/').LOOP    SKIP IF NO MM/DD/YYYY

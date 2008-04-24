@@ -5,6 +5,7 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 05/05/06 RPI 308 CICS RETURN CALLED FROM EXEC
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 .*********************************************************************
          MACRO
          CICS_SEND
@@ -14,7 +15,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,5) EQ 'FROM(').FROM
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
          MNOTE 12,'BAD PARM &PARM'
@@ -29,8 +30,8 @@
          AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         AIF   (&FROM EQ '').BADFROM
-         AIF   (&LENGTH EQ '').BADLEN
+         AIF   ('&FROM' EQ '').BADFROM
+         AIF   ('&LENGTH' EQ '').BADLEN
          AIF   ('&LENGTH'(2,1) EQ '''').LENNUM
          AIF   ('&LENGTH'(1,1) LT '0' OR '&LENGTH'(1,1) GT '9').LENLABL
 .LENNUM  ANOP
@@ -40,7 +41,7 @@
          LH    R0,&LENGTH         SET LENGTH FROM LABEL
 .ALLDONE ANOP
 &FROMTQ  SETC  T'&FROM
-         AIF   ('&FROM'(1,1) EQ '=' OR &FROMTQ EQ 'A').FRMADLIT
+         AIF   ('&FROM'(1,1) EQ '=' OR '&FROMTQ' EQ 'A').FRMADLIT
          LA    R1,&FROM           FROM ADDRESS
          AGO   .FROMOK
 .*
@@ -87,4 +88,3 @@ CICS_SEND_&SYSNDX._TPUT EQU *
          MEXIT
 .*
          MEND
-

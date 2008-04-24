@@ -13,6 +13,7 @@
 .* 05/05/06 RPI308 CORRECT BUT IN .ASIS CODE FOUND DEBUGGING TESTCIC1
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .*
 .* TPUT BUFFER,LBUFFER,OPTIONS
@@ -52,10 +53,10 @@
 &N       TPUT  &BUFF,                                                  X
                &LBUFF,                                                 X
                &MF=I      NOT SUPPORTED
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR1
+         AIF   ('&MF' NE 'I').ERR1
          AIF   ('&BUFF'(1,1) EQ '(').RECREG
          LA    1,&BUFF
          AGO   .CHKLEN
@@ -85,17 +86,17 @@
 .OPTLOOP ANOP
 &I       SETA  &I+1
          AIF   (&I GT &NP).OPTEND
-         AIF   (&SYSLIST(&I) EQ 'EDIT').EDIT
-         AIF   (&SYSLIST(&I) EQ 'NOEDIT').NOEDIT
-         AIF   (&SYSLIST(&I) EQ 'ASIS').ASIS
-         AIF   (&SYSLIST(&I) EQ 'WAIT').WAIT
-         AIF   (&SYSLIST(&I) EQ 'NOWAIT').NOWAIT
-         AIF   (&SYSLIST(&I) EQ 'CONTROL').CONTROL
-         AIF   (&SYSLIST(&I) EQ 'HOLD').HOLD
-         AIF   (&SYSLIST(&I) EQ 'NOHOLD').NOHOLD
-         AIF   (&SYSLIST(&I) EQ 'BREAKIN').BREAKIN
-         AIF   (&SYSLIST(&I) EQ 'NOBREAK').NOBREAK
-         AIF   (&SYSLIST(&I) EQ 'FULLSCR').FULLSCR
+         AIF   ('&SYSLIST(&I)' EQ 'EDIT').EDIT
+         AIF   ('&SYSLIST(&I)' EQ 'NOEDIT').NOEDIT
+         AIF   ('&SYSLIST(&I)' EQ 'ASIS').ASIS
+         AIF   ('&SYSLIST(&I)' EQ 'WAIT').WAIT
+         AIF   ('&SYSLIST(&I)' EQ 'NOWAIT').NOWAIT
+         AIF   ('&SYSLIST(&I)' EQ 'CONTROL').CONTROL
+         AIF   ('&SYSLIST(&I)' EQ 'HOLD').HOLD
+         AIF   ('&SYSLIST(&I)' EQ 'NOHOLD').NOHOLD
+         AIF   ('&SYSLIST(&I)' EQ 'BREAKIN').BREAKIN
+         AIF   ('&SYSLIST(&I)' EQ 'NOBREAK').NOBREAK
+         AIF   ('&SYSLIST(&I)' EQ 'FULLSCR').FULLSCR
          MNOTE 12,'TPUT INVALID OPTION - &SYSLIST(&I)'
          AGO   .OPTLOOP
 .EDIT    ANOP

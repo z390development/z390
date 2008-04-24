@@ -16,34 +16,35 @@
 .* 06/22/07 RPI 644 ADD VSAM RPL SUPPORT VIA SVC 221 R0=1 R1=A(RPL)
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 10/01/07 RPI 709 CORRECT MNOTE TEXT                                    
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       GET   &DCB,    DCB                                            X
                &REC,    RECORD                                         X
                &MF=I,   NOT SUPPORTED                                  X
                &RPL=,   VSAM REQUEST PARAMETER LIST                    X
                &TYPE=   TYPE=P NOT SUPPORTED
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR3
+         AIF   ('&MF' NE 'I').ERR3
          AIF   (N'&SYSLIST LE 2).NPOK
          MNOTE 12,'GET UNSUPPORTED OPERANDS - &SYSLIST(3)'
          MEXIT
 .NPOK    ANOP
-         AIF   (&RPL NE '').VSAM
-         AIF   (&TYPE NE '').ERR1
+         AIF   ('&RPL' NE '').VSAM
+         AIF   ('&TYPE' NE '').ERR1
          AIF   ('&DCB'(1,1) EQ '(').DCBREG
          LA    1,&DCB
          AGO   .CHKREC
 .DCBREG  ANOP
          ZOPTLR 1,&DCB(1)
 .CHKREC  ANOP
-         AIF   (&REC EQ '').RECDEF
+         AIF   ('&REC' EQ '').RECDEF
          AIF   ('&REC'(1,1) EQ '(').RECREG
          LA    0,&REC
          AGO   .SVC
 .RECREG  ANOP
-         AIF   (&REC(1) EQ '1' OR &REC(1) EQ 'R1').ERR2
+         AIF   ('&REC(1)' EQ '1' OR '&REC(1)' EQ 'R1').ERR2
          ZOPTLR 0,&REC(1)
          AGO   .SVC
 .RECDEF  ANOP

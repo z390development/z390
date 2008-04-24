@@ -10,6 +10,7 @@
 .* 09/03/07 RPI 690 ADD OPTCD LENGTH 2 SUPPORT                                            
 .* 09/15/07 RPI 696 CORRECT SUPPORT FOR 1 BYTE FIELD LENGHTS                              
 .* 09/15/07 RPI 682 ADD SUPPORT FOR 8 BYTE DDNAME,VCLRN TYPE MODS                         
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       ZMODCB &CB,         ACB/RPL ADDRESS OR (REG)                  X
                &OFFSET,      OFFSET TO TARGET FIELD                    X
@@ -22,9 +23,9 @@
 &STADDR  SETC  '&OFFSET.&CB'
 .SOURCE  ANOP
          AIF   ('&SOURCE'(1,1) EQ '(').CHK_SCON
-         AIF   (&LENGTH EQ 4).MV4
-         AIF   (&LENGTH EQ 1).MV1  
-         AIF   (&LENGTH EQ 8).MV8
+         AIF   ('&LENGTH' EQ '4').MV4
+         AIF   ('&LENGTH' EQ '1').MV1  
+         AIF   ('&LENGTH' EQ '8').MV8
          MNOTE 12,'ZMODCB INVALID LENGTH - &LENGTH'
          MEXIT
 .MV1     ANOP

@@ -10,8 +10,9 @@
 .*             REMARKS.  CONTROL STRUCTURE FOR CONDITIONAL EXECUTION.      
 .********************************************************************
 .* 05/23/76 DSH - SUPPORT ELSEIF.                         
-.* 05/15/06 DSH - Z390 RPI 316 UPDATE FOR COMPAT.         
-.* 04/11/07 DSH - USE ZSTRGBL COPY AND EXPAND LEVELS TO 100
+.* 05/15/06 RPI 316 UPDATE FOR COMPAT.         
+.* 04/11/07 RPI     USE ZSTRGBL COPY AND EXPAND LEVELS TO 100
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .********************************************************************
          AIF   (&ZSTR_LEVEL EQ &ZSTR_MAX_LEVEL).ERR1                                         
 &ZSTR_LEVEL   SETA  &ZSTR_LEVEL+1                                                    
@@ -26,17 +27,17 @@
 &S       SETA  &S+1                                                        
          AIF   (&S GT &N).ERR2                                             
 &SN      SETA  N'&SYSLIST(&S)                                              
-&OP      SETC  &SYSLIST(&S,1)
+&OP      SETC  '&SYSLIST(&S,1)'
          AIF   (&SN EQ 4).OPRM4
          AIF   (&SN NE 1).ERR3
 .OPRM1   ANOP
-&BC      SETC  &SYSLIST(&S+2)
+&BC      SETC  '&SYSLIST(&S+2)'
          AIF   (&N LT &S+3).ERR3
 &OPR     SETC  '&SYSLIST(&S+1),&SYSLIST(&S+3)'
 &S       SETA  &S+4
          AGO   .TESTGEN
 .OPRM4   ANOP
-&BC      SETC  &SYSLIST(&S,3)
+&BC      SETC  '&SYSLIST(&S,3)'
 &OPR     SETC  '&SYSLIST(&S,2),&SYSLIST(&S,4)'
 .TESTGEN ANOP         
          &OP   &OPR                                                        

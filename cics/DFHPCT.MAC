@@ -4,12 +4,14 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          DFHPCT &TYPE=,&TRANSID=,&PROGRAM=
 .* TABLE OF TRANSIDS AND INITIAL PROGRAMS
 
-         AIF   (&TYPE EQ 'ENTRY').ENTRY
-         AIF   (&TYPE EQ 'FINAL').FINAL
+         AIF   ('&TYPE' EQ 'ENTRY').ENTRY
+         AIF   ('&TYPE' EQ 'FINAL').FINAL
          MNOTE 12,'INVALID TYPE - &TYPE'
          MEXIT
 .*
@@ -30,4 +32,3 @@
 .ERR2    MNOTE 12,'PROGRAM MISSING OR TOO LARGE'
          MEXIT
          MEND
-

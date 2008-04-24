@@ -15,6 +15,7 @@
 .* 04/02/07 RPI 572 CHANGE ATTR BYTES TO EBCDIC GRAPHIC CHARS.   
 .* 04/03/07 RPI 572 CHANGE SBA TRANSLATE X'E1' TO X'61'           
 .* 04/03/07 RPI 572 ADD 4 ADDITIONAL ATTR EQU'S WITH MDT SET                   
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 .* 
 .* TN3270 MACRO TO SUPPORT DEFINITION OF TN3270 DATA STREAMS 
@@ -30,10 +31,10 @@
 .*
 .*********************************************************************
 &N       TN3270 
-         AIF   (&N EQ '').SKPEQU
+         AIF   ('&N' EQ '').SKPEQU
 &N       EQU   *
 .SKPEQU  ANOP
-         AIF   (&SYSLIST(1) EQ 'SYMBOLS').SYMBOLS
+         AIF   ('&SYSLIST(1)' EQ 'SYMBOLS').SYMBOLS
          LCLA  &TAB(64)
 &TAB(1)  SETA  X'40',X'C1',X'C2',X'C3',X'C4',X'C5',X'C6',X'C7',        X
                X'C8',X'C9',X'4A',X'4B',X'4C',X'4D',X'4E',X'4F',        X
@@ -50,18 +51,18 @@
          AIF   (&I GT &NP).EOF
 &NPS     SETA  N'&SYSLIST(&I)
          AIF   (&NPS EQ 1).GENONE
-         AIF   (&OPS EQ '').FLUSH1  
+         AIF   ('&OPS' EQ '').FLUSH1  
 &OPS     SETC  '&OPS'(2,K'&OPS-1)
          DC    AL1(&OPS)
 &OPS     SETC  ''
 .FLUSH1  ANOP
-         AIF   (&SYSLIST(&I,1) EQ 'SBA').GENSBA
-         AIF   (&SYSLIST(&I,1) EQ 'RA').GENRA
+         AIF   ('&SYSLIST(&I,1)' EQ 'SBA').GENSBA
+         AIF   ('&SYSLIST(&I,1)' EQ 'RA').GENRA
 &J       SETA  0
 .LOOP2   ANOP
 &J       SETA  &J+1
          AIF   (&J LE &NPS).NEXT
-         AIF   (&OPS EQ '').LOOP1    
+         AIF   ('&OPS' EQ '').LOOP1    
 &OPS     SETC  '&OPS'(2,K'&OPS-1)
          DC    AL1(&OPS)
 &OPS     SETC  ''
@@ -72,7 +73,7 @@
 &OPS     SETC  '&OPS,&SYSLIST(&I,&J)'
          AGO   .LOOP2
 .GENLITN ANOP
-         AIF   (&OPS EQ '').GENLITN1
+         AIF   ('&OPS' EQ '').GENLITN1
 &OPS     SETC  '&OPS'(2,K'&OPS-1)
          DC    AL1(&OPS)
 &OPS     SETC  ''
@@ -80,7 +81,7 @@
          DC    &SYSLIST(&I,&J)
          AGO   .LOOP2         
 .EOF     ANOP
-         AIF   (&OPS EQ '').SKPDC
+         AIF   ('&OPS' EQ '').SKPDC
 &OPS     SETC  '&OPS'(2,K'&OPS-1)
          DC    AL1(&OPS)
 .SKPDC   ANOP
@@ -91,7 +92,7 @@
 &OPS     SETC  '&OPS,&SYSLIST(&I)'
          AGO   .LOOP1
 .GENLIT1 ANOP
-         AIF   (&OPS EQ '').GENLIT11
+         AIF   ('&OPS' EQ '').GENLIT11
 &OPS     SETC  '&OPS'(2,K'&OPS-1)
          DC    AL1(&OPS)
 &OPS     SETC  ''

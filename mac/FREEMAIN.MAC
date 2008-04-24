@@ -17,6 +17,7 @@
 .* 04/16/06 RPI 293 IGNORE SP= AND FIX MNOTES
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       FREEMAIN &TYPE,      IGNORED                                  X
                &A=,        ADDRESS                                     X
@@ -26,10 +27,10 @@
                &MF=I,      NOT SUPPORTED                               X
                &RELATED=,  IGNORED                                     X
                &SP=        IGNORED                                  
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR5
+         AIF   ('&MF' NE 'I').ERR5
          AIF   (N'&SYSLIST LE 1).NPOK   RPI 210
          MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
          MEXIT
@@ -46,17 +47,17 @@
 .* OUTPUT
 .*    ABORT WITH A0A ABEND IF REQUEST FAILS
 .*
-         AIF   (&KEY NE '').ERR2
+         AIF   ('&KEY' NE '').ERR2
 .LA      ANOP                 RPI 210
-         AIF  (&LA EQ '').LV
+         AIF  ('&LA' EQ '').LV
          AIF  ('&LA'(1,1) EQ '(').LAREG
          L    0,&LA
          AGO  .A
 .LAREG   ANOP
-         L    0,0(&LA(1))
+         L    0,0777(&LA(1))
          AGO  .A 
 .LV      ANOP
-         AIF  (&LV NE '').CHKLV
+         AIF  ('&LV' NE '').CHKLV
          MNOTE 12,'FREEMAIN LV= MISSING'
          MEXIT
 .CHKLV   ANOP
@@ -80,12 +81,12 @@
 .LVREG   ANOP
          ZOPTLR 0,&LV(1)
 .A       ANOP
-         AIF  (&A EQ '').SVC
+         AIF  ('&A' EQ '').SVC
          AIF  ('&A'(1,1) EQ '(').AREG
          L    1,&A
          AGO  .SVC
 .AREG    ANOP
-         AIF   (&A(1) EQ '1' OR &A(1) EQ 'R1').SVC  RPI163
+         AIF   ('&A(1)' EQ '1' OR '&A(1)' EQ 'R1').SVC  RPI163
          ZOPTLR 1,&A(1)
 .SVC     ANOP
          SVC   5 FREEMAIN R0=LEN, R1=ADDR

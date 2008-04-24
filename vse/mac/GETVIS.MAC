@@ -7,6 +7,7 @@
 .* Date   - 03/11/07                                                 *
 .*********************************************************************
 .* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       GETVIS &LENGTH=(0),   INPUT LENGTH VALUE OR FROM REG (DEF R0) X
                &ADDRESS=(1),   RETURN ADDR IN RX FIELD OR REG (DEF R1) X
@@ -19,7 +20,7 @@
                &SPID=,         SUBPOOL ID    (IGNORED)                 X
                &SVA=NO,        SYS KEY 0     (IGNORED)                 X
                &TSKSUBP=NO     TASK SUBPOOL  (IGNORED)                  
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST EQ 0).NPOK

@@ -12,13 +12,14 @@
 .* 03/11/07 RPI 558 - ADD ZCVTVSE_COMRG COMMUNICATIONS AREA       
 .* 04/07/07 RPI 582 - SET ZCVT_PARMA TO ADDR OF ADDR OF ZCVT_PARM 
 .* 05/17/07 RPI 625 - SUPPORT LOCTR AS WELL AS CSECT/DSECT        
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
          ZCVTD
 .*
 .* IF ZCVTD ALREADY DEFINED EXIT NOW
 .*
          GBLC  &Z390_ZCVTD  
-         AIF   (&Z390_ZCVTD NE '').EXIT
+         AIF   ('&Z390_ZCVTD' NE '').EXIT
 &Z390_ZCVTD SETC '&SYSLOC &SYSSTYP'       
 .*
 .* EZ390 ZCVT DSECT - LOCATED AT X'2000' FOLLOWING PSA IN MEMORY

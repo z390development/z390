@@ -8,9 +8,10 @@
 .*********************************************************************
 .* 12/06/05 RPI 118- use RESTORE in RETURN and XCTL to restore regs
 .* 04/26/07 RPI 601- support R0-R15 format args                         
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       RESTORE &REGS
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST EQ 1).NPOK
@@ -24,7 +25,7 @@
 &R1      SETA  '&REGS(1)'(2,K'&REGS(1)-1)
 .CHKR2   ANOP
 &R2      SETA  &R1
-         AIF   (&REGS(2) EQ '').R2OK
+         AIF   ('&REGS(2)' EQ '').R2OK
          AIF   ('&REGS(2)'(1,1) EQ 'R').SETR2
 &R2      SETA  &REGS(2)
          AGO   .R2OK

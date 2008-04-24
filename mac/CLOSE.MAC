@@ -1,78 +1,16 @@
          MACRO
 .*********************************************************************
-.* Copyright 2005 Automated Software Tools Corporation               *
+.* Copyright 2008 Automated Software Tools Corporation               *
 .* This source code is part of z390 assembler/emulator package       *
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
-.* Date   - 09/30/05                                                 *
+.* Date   - 04/15/08                                                 *
 .*********************************************************************
-.* 10/20/05 RPI27 - issue error for any undefined operands     
-.* 11/13/05 RPI88 - correct error in checking for DCB register parm
-.* 11/26/05 RPI112- check for invalid DCB RX form (reg) vs ((reg)) 
-.* 01/09/06 RPI163 SKIP LR FOR SAME REGISTER
-.* 04/10/06 RPI244 support (reg) and ignore other keywords
-.* 06/14/07 RPI 641 DEFAULT MF=I
-.* 08/03/07 RPI 668 check return code for each svc and exit if nz
-.* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
-.* 10/14/07 RPI 718 ISSUE MNOTE ERR FOR NN OR RNN WITHOUT ((REG),OPT)   
+.* 04/15/08 RPI 838 CHANGE OPEN, CLOSE, READ, WRITE TO CALL Z VERSION                     
 .*********************************************************************
 &N       CLOSE &DCBLIST, ((DCB,OPT),(DCB2,OPT2)..) OR (DCB) OR DCB     X
                &MODE=,   IGNORED AS IT WORKS IN EITHER MODE            X
                &MF=I,    NOT SUPPORTED                                 X
                &TYPE=    IGNORED
-         AIF   (&N EQ '').SKIPDS
-&N       DS    0H
-.SKIPDS  ANOP
-         AIF   (&MF NE 'I').ERR1
-         AIF   (N'&SYSLIST EQ 1).NPOK
-         MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(2)'
-         MEXIT
-.NPOK    ANOP
-.*
-.* CLOSE 1 OR MORE FILES DEFINED IN DCBLIST 
-.*
-&NP      SETA  N'&DCBLIST
-&I       SETA  -1
-.LOOP    ANOP
-&I       SETA   &I+2
-         AIF   (&I GT &NP).EXIT
-         AIF   (&NP GT 1 OR '&DCBLIST'(1,1) NE '('                     X
-               OR '&DCBLIST'(1,2) NE '(').SUBLISTS
-&DCB     SETC  &DCBLIST
-&OPTION  SETC  ''
-         AGO   .DCBREG
-.SUBLISTS ANOP
-&DCB     SETC  &SYSLIST(1,&I)
-&OPTION  SETC  &SYSLIST(1,&I+1,1)
-         AIF   ('&DCB'(1,1) EQ '(').DCBREG
-         AIF   (T'&DCB EQ 'N').RXERR    NUMERIC REG REQ'S (NNN)  RPI718
-         AIF   (D'&DCB AND T'&DCB NE 'N').RXOK NON NUM SYM OK    RPI718
-         AIF   ('&DCB'(1,1) NE 'R' OR K'&DCB EQ 1).RXOK NOT RNN  RPI718
-&NN      SETC  '&DCB'(2,K'&DCB-1)                                RPI718
-         AIF   (T'&NN NE 'N').RXOK ASSUME NOT RNN OK             RPI718
-.RXERR   ANOP                                                    RPI718
-         MNOTE 12,'OPEN INVALID DCB RX ADDRESS - &DCB'           RPI718
-         MNOTE 12,'DCB INVALID DCB RX ADDRESS - &DCB'
-         MEXIT
-.RXOK    ANOP
-         LA    1,&DCB
-         AGO   .CHKOPT
-.DCBREG  ANOP
-         ZOPTLR 1,&DCB(1)
-.CHKOPT  ANOP
-         AIF   ('&OPTION' EQ '').SVC
-         MNOTE 12,'CLOSE OPTION NOT SUPPORTED - &OPTION'
-         MEXIT
-.SVC     ANOP
-         SVC   20 CLOSE R1=DCB/ACB
-         AIF   (&I+2 GT &NP).EXIT
-         LTR   15,15
-         BNZ   Z390_CLOSE_EXIT&SYSNDX RPI 668
-         AGO   .LOOP
-.EXIT    ANOP
-         AIF   (&NP LE 2).EXIT1
-Z390_CLOSE_EXIT&SYSNDX EQU *
-.EXIT1   ANOP
-         MEXIT
-.ERR1    MNOTE 12,'CLOSE MF= NOT SUPPORTED'
+&N       ZCLOSE &DCBLIST,MODE=&MODE,MF=&MF,TYPE=&TYPE
          MEND

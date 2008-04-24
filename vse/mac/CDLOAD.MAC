@@ -7,12 +7,13 @@
 .* Date   - 03/11/07                                                 *
 .*********************************************************************
 .* 03/11/07 RPI 558 ADD Z390 VSE MACRO SUPPORT                  
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &N       CDLOAD &PHASENAME,    PROGRAM TO LOAD                         X     
                &PAGE=NO,       PAGE BOUNDARY (IGNORED)                 X
                &RETPNF=NO,     REUSE PROGRAM (IGNORED)                 X
                &SVA=NO         RETURN EXISTING LOAD POINTS  
-         AIF   (&N EQ '').SKIPDS
+         AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP
          AIF   (N'&SYSLIST EQ 1).NPOK

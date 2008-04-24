@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 09/14/07 RPI 682 INITIAL CODING TO GEN RPL AT R1                   
 .* 09/14/07 RPI 703 SKIP GENERATING ZERO VALUE ARGS                   
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
          ZGENRPL &ACB=0,  VSAM ACCESS CONTROL BLOCK ADDRESS            X
                &AREA=0,   RECORD WORK AREA (DATA FOR MVE, ADDR FOR LOC)X
@@ -28,37 +29,37 @@
 .*
 .* SET RPL ECB
 .*
-         AIF   (&ECB EQ '0').END_ECB              RPI 703
+         AIF   ('&ECB' EQ '0').END_ECB              RPI 703
          ZMODCB (1),RPLECB-IHARPL,&ECB,4
 .END_ECB ANOP
 .*
 .* SET RPL KEYLEN
 .*
-         AIF   (&KEYLEN EQ '0').END_KEYLEN        RPI 703
+         AIF   ('&KEYLEN' EQ '0').END_KEYLEN        RPI 703
          ZMODCB (1),RPLLKEY-IHARPL,&KEYLEN,4
 .END_KEYLEN ANOP
 .*
 .* SET RPL ACB
 .*
-         AIF   (&ACB EQ '0').END_ACB              RPI 703
+         AIF   ('&ACB' EQ '0').END_ACB              RPI 703
          ZMODCB (1),RPLACB-IHARPL,&ACB,4
 .END_ACB ANOP
 .*
 .* SET RPL AREA
 .*
-         AIF   (&AREA EQ '0').END_AREA            RPI 703
+         AIF   ('&AREA' EQ '0').END_AREA            RPI 703
          ZMODCB (1),RPLAREA-IHARPL,&AREA,4
 .END_AREA ANOP
 .*
 .* SET RPL ARG
 .*
-         AIF   (&ARG EQ '0').END_ARG              RPI 703
+         AIF   ('&ARG' EQ '0').END_ARG              RPI 703
          ZMODCB (1),RPLARG-IHARPL,&ARG,4
 .END_ARG ANOP
 .*
 .* SET RPL OPTCD NON-ZERO FIELD
 .*
-         AIF   (&OPTCD EQ '').END_OPTCD
+         AIF   ('&OPTCD' EQ '').END_OPTCD
          GBLC  ZGENOPT1,&ZGENOPT2
          ZGENOPTD OPTCD=&OPTCD
          MVC   RPLOPTCD-IHARPL(2,1),=B'&ZGENOPT1&ZGENOPT2'
@@ -66,13 +67,13 @@
 .*
 .* SET RPL RECLEN
 .*
-         AIF   (&RECLEN EQ '0').END_RECLEN        RPI 703
+         AIF   ('&RECLEN' EQ '0').END_RECLEN        RPI 703
          ZMODCB (1),RPLLREC-IHARPL,&RECLEN,4
 .END_RECLEN ANOP
 .*
 .* SET RPL AREALEN
 .*
-         AIF   (&AREALEN EQ '0').END_AREALEN      RPI 703
+         AIF   ('&AREALEN' EQ '0').END_AREALEN      RPI 703
          ZMODCB (1),RPLLAREA-IHARPL,&AREALEN,4
 .END_AREALEN ANOP
          MEND

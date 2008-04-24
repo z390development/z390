@@ -5,6 +5,7 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 05/05/06 RPI 308 CICS RETURN CALLED FROM EXEC
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 .*********************************************************************
          MACRO
          CICS_RETURN
@@ -14,7 +15,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,8) EQ 'TRANSID(').TRANSID
          AIF   ('&PARM'(1,9) EQ 'COMMAREA(').COMMAREA
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
@@ -39,8 +40,8 @@
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
 .* IF JUST RETURN, WE ARE FINISHED
-         AIF   (&TRANSID EQ '' AND &COMMAREA EQ '' AND &LENGTH EQ '').R-
-               ETDONE
+         AIF   ('&TRANSID' EQ '' AND '&COMMAREA' EQ '' AND '&LENGTH' EQX
+                '').RETDONE
 .* IT'S NOT JUST EXEC CICS RETURN
 .* IF LINK-LEVEL NOT ONE, AND OTHER PARMS, THEN IT'S AN ERROR
          CLC   TCTTELNK,=H'1'     ARE WE AT ROOT LEVEL ?
@@ -53,7 +54,7 @@
          DC    AL4(0)             IGNORE HERE IS NOT PERMITTED
 .*
 CICS_RETURN_&SYSNDX._01 DS 0H
-         AIF   (&TRANSID NE '').GOTTRAN
+         AIF   ('&TRANSID' NE '').GOTTRAN
          XC    TCTTETC,TCTTETC    CLEAR PRESET TRANSID
          AGO   .DOCOMM
 .*
@@ -67,30 +68,30 @@ CICS_RETURN_&SYSNDX._01 DS 0H
          AIF   (&TRANLEN LT 3 OR &TRANLEN GT 6).BADTRAN
          MVC   TCTTETC,=CL4&TRANSID
 .DOCOMM  ANOP
-         AIF   (&COMMAREA NE '').COMMCHK
-         AIF   (&LENGTH EQ '').COMMCHK
+         AIF   ('&COMMAREA' NE '').COMMCHK
+         AIF   ('&LENGTH' EQ '').COMMCHK
          MNOTE 12,'LENGTH WITHOUT COMMAREA'
          MEXIT
 .*
 .COMMCHK ANOP
-         AIF   (&COMMAREA NE '').GOTCOMM
+         AIF   ('&COMMAREA' NE '').GOTCOMM
          XC    TCTTECA,TCTTECA    CLEAR COMMAREA ADDRESS
          AGO   .EIRET
 .*
 .GOTCOMM ANOP
-         AIF   (&TRANSID EQ '').MISTRAN
+         AIF   ('&TRANSID' EQ '').MISTRAN
 &COMMTQ  SETC  T'&COMMAREA
-         AIF   ('&COMMAREA'(1,1) EQ '=' OR &COMMTQ EQ 'A').COMADLIT
+         AIF   ('&COMMAREA'(1,1) EQ '=' OR '&COMMTQ' EQ 'A').COMADLIT
          LA    R0,&COMMAREA       COMMAREA ADDRESS
          AGO   .COMMLEN
 .*
 .COMADLIT ANOP
          L     R0,&COMMAREA       INDIRECT COMMAREA ADDRESS
 .* LENGTH IS COMPULSORY FOR INDIRECT
-         AIF   (&LENGTH EQ '').BADLEN
+         AIF   ('&LENGTH' EQ '').BADLEN
 .COMMLEN ANOP
          ST    R0,TCTTECA         SET COMMAREA ADDRESS
-         AIF   (&LENGTH NE '').LENVAL
+         AIF   ('&LENGTH' NE '').LENVAL
 &LENGTH  SETC  'L''&COMMAREA'
          AGO   .LENNUM
 .*
@@ -130,4 +131,3 @@ CICS_RETURN_&SYSNDX._02 DS 0H
 .BADLEN  MNOTE 12,'LENGTH IS MANDATORY FOR INDIRECT COMMAREA'
          MEXIT
          MEND
-

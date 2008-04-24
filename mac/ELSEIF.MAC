@@ -12,6 +12,7 @@
 .* 05/12/06 Z390 RPI 316 UPDATE FOR COMPAT.
 .* 04/11/07 Z390 RPI 589 USE ZSTRGBL AND EXPAND LEVELS TO 100
 .* 11/02/07 Z390 RPI 734 CORRECT BAD CONDITION CODE FOR OR CONNECTOR 
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .********************************************************************
          AIF   (&ZSTR_LEVEL EQ &ZSTR_MAX_LEVEL).ERR1                                         
          ELSE                                                              
@@ -27,17 +28,17 @@
 &S       SETA  &S+1                                                        
          AIF   (&S GT &N).ERR2                                             
 &SN      SETA  N'&SYSLIST(&S)                                              
-&OP      SETC  &SYSLIST(&S,1)
+&OP      SETC  '&SYSLIST(&S,1)'
          AIF   (&SN EQ 4).OPRM4
          AIF   (&SN NE 1).ERR3
 .OPRM1   ANOP
-&BC      SETC  &SYSLIST(&S+2)
+&BC      SETC  '&SYSLIST(&S+2)'
          AIF   (&N LT &S+3).ERR3
 &OPR     SETC  '&SYSLIST(&S+1),&SYSLIST(&S+3)'
 &S       SETA  &S+4
          AGO   .TESTGEN
 .OPRM4   ANOP
-&BC      SETC  &SYSLIST(&S,3)
+&BC      SETC  '&SYSLIST(&S,3)'
 &OPR     SETC  '&SYSLIST(&S,2),&SYSLIST(&S,4)'
 .TESTGEN ANOP         
          &OP   &OPR                                                        

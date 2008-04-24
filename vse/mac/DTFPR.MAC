@@ -8,6 +8,7 @@
 .*********************************************************************
 .* 03/12/07 RPI 558 CONVERT Z390 MVS MACROS TO VSE MACROS     
 .* 07/10/07 RPI 655 CORRECT .DDDEF MISSING LABEL              
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
 &DDNAME  DTFPR &ASOCFILE=,   ASSOCIATED FILE (IGNORED)                 X
                &BLKSIZE=,    RECORD LENGTH                             X
@@ -44,7 +45,7 @@
          ORG   &DDNAME+DCBRECFM-IHADCB
          DC    AL1(DCBRECFM_&RECFM) DCBRECFM
          ORG   &DDNAME+DCBDDNAM-IHADCB
-         AIF   (&DDNAME EQ '').DDDEF
+         AIF   ('&DDNAME' EQ '').DDDEF
          DC    CL8'&DDNAME' DCBDDNAM
          AGO   .DDDEF_END
 .DDDEF   ANOP

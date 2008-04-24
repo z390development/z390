@@ -4,13 +4,15 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.*********************************************************************
          MACRO
          CICS_WRITEQ
          LCLC  &TYPE
          LCLB  &REWRITE
          LCLC  &QUEUE,&QNAME,&FROM,&LENGTH,&NUMITEMS,&ITEM
-&TYPE    SETC  &SYSLIST(1)
-         AIF   (&TYPE EQ 'TS').TS
+&TYPE    SETC  '&SYSLIST(1)'
+         AIF   ('&TYPE' EQ 'TS').TS
          MNOTE 12,'WRITEQ TYPE NOT RECOGNIZED'
          MEXIT
 .*
@@ -20,7 +22,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
 .* DISCARDED PARMS
          AIF   ('&PARM'(1,4)  EQ 'MAIN').PLOOP
          AIF   ('&PARM'(1,9)  EQ 'AUXILIARY').PLOOP
@@ -64,36 +66,36 @@
          AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         AIF   (&QUEUE EQ '' AND &QNAME EQ '').NOQUEUE
-         AIF   (&QUEUE NE '' AND &QNAME NE '').BOTHQ
-         AIF   (&ITEM NE '' AND (NOT &REWRITE)).BADITEM
-         AIF   (&REWRITE AND &ITEM EQ '').BADITEM
-         AIF   (&NUMITEMS NE '' AND &ITEM NE '').BADNUM
-         AIF   (&NUMITEMS NE '' AND &REWRITE).BADNUM
-         AIF   (&FROM EQ '').BADFROM
+         AIF   ('&QUEUE' EQ '' AND '&QNAME' EQ '').NOQUEUE
+         AIF   ('&QUEUE' NE '' AND '&QNAME' NE '').BOTHQ
+         AIF   ('&ITEM' NE '' AND (NOT &REWRITE)).BADITEM
+         AIF   (&REWRITE AND '&ITEM' EQ '').BADITEM
+         AIF   ('&NUMITEMS' NE '' AND '&ITEM' NE '').BADNUM
+         AIF   ('&NUMITEMS' NE '' AND &REWRITE).BADNUM
+         AIF   ('&FROM' EQ '').BADFROM
 .*
          MVC   EIBFN,=X'0A02'     SET EIBFN
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
 .*
-         AIF   (&FROM NE '').GOTFROM
-         AIF   (&LENGTH EQ '').GOTFROM
+         AIF   ('&FROM' NE '').GOTFROM
+         AIF   ('&LENGTH' EQ '').GOTFROM
          MNOTE 12,'LENGTH WITHOUT FROM'
          MEXIT
 .*
 .GOTFROM ANOP
 &FROMTQ  SETC  T'&FROM
-         AIF   ('&FROM'(1,1) EQ '=' OR &FROMTQ EQ 'A').FRMADLIT
+         AIF   ('&FROM'(1,1) EQ '=' OR '&FROMTQ' EQ 'A').FRMADLIT
          LA    R14,&FROM          FROM ADDRESS
          AGO   .FROMLEN
 .*
 .FRMADLIT ANOP
          L     R14,&FROM          INDIRECT FROM ADDRESS
 .* LENGTH IS COMPULSORY FOR INDIRECT
-         AIF   (&LENGTH EQ '').BADLEN
+         AIF   ('&LENGTH' EQ '').BADLEN
 .FROMLEN ANOP
-         AIF   (&LENGTH NE '').LENVAL
+         AIF   ('&LENGTH' NE '').LENVAL
 &LENGTH  SETC  'L''&FROM'
          AGO   .LENNUM
 .*
@@ -121,7 +123,7 @@
          MVC   TSPTRAN,EIBTRNID   SET TRANSID
          STH   R2,TSPLEN          SET DATA LENGTH
 .*
-         AIF   (&QUEUE EQ '').DOQNAME
+         AIF   ('&QUEUE' EQ '').DOQNAME
 .* GOT QUEUE
          AIF   ('&QUEUE'(1,1) EQ '''').QUSTRING
          MVC   EIBRSRCE,&QUEUE    SET EIBRSRCE AS LABEL
@@ -161,7 +163,7 @@
          CLC   TSPNAME(2),=C'DF'  RESERVED ID ?
          BE    CICS_WRITEQ_&SYSNDX._INVREQ ERROR IF IT IS
 .* PROCESS ITEM
-         AIF   (&ITEM NE '').DOITEM
+         AIF   ('&ITEM' NE '').DOITEM
          XC    TSPITEM,TSPITEM    CLEAR ITEM NUMBER
          AGO   .DUNITEM
 .DOITEM  ANOP
@@ -199,7 +201,7 @@
          B     CICS_WRITEQ_&SYSNDX._INVREQ SHOULD NOT OCCUR
 *
 CICS_WRITEQ_&SYSNDX._01 DS 0H
-         AIF   (&NUMITEMS EQ '').NONUMIT
+         AIF   ('&NUMITEMS' EQ '').NONUMIT
          MVC   &NUMITEMS.(2),TSPNUMIT SET NUMITEMS
 .NONUMIT ANOP
          DROP  R1                 DROP TS BLOCK BASE
@@ -264,4 +266,3 @@ CICS_WRITEQ_&SYSNDX._LENGERR DS 0H
 .BADLEN  MNOTE 12,'LENGTH IS MANDATORY FOR INDIRECT FROM'
          MEXIT
          MEND
-

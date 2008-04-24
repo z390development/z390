@@ -1,0 +1,46 @@
+         TITLE 'PAC3INT Z390 INITERFACE FOR COBOL/370 ASSEMBLER'
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 03/22/08                                                 *
+*********************************************************************
+* 03/29/08 INITIAL CODING TO SUPPORT COBOL\PAC3\C3DEMO1.MLC           
+*********************************************************************
+* VISIT Z390.SOURCEFORGE.NET/COBOL FOR DOCUMENTATION                 
+* WHEN CALLED VIA IGZCBSN BALR, DO THE FOLLOWING:                  
+*   1.  LOAD PAC3LIB.390 AND BRANCH TO ENTRY AT OFFSET 0 WITH
+*       PACVT ADDRESS IN R1.
+*   2.  ISSUE WTO ERROR MESSAGE AND EXIT RC=16 IF NOT FOUND
+*
+* NOTES:
+*********************************************************************
+PAC3INT  CSECT
+         DC    CL8'PAC3INT'
+IGZCBSN  CSECT
+         BALR  R2,0
+         USING *,R2
+         LOAD  EP=PAC3LIB
+         LTR   R15,R15
+         BZ    LOADOK
+         WTO   'PAC3LIB SUPPORT MODULE NOT FOUND - RC=16'
+         RETURN (14,12),RC=16
+LOADOK   DS    0H
+         LR    R15,R0
+         L     R1,=V(PACVT)
+         BR    R15
+         LTORG
+         EQUREGS
+*
+* RESOLVE LE VCONS NOT CURRENTLY USED
+*
+CEESTART CSECT
+         DC    CL8'CEESTART'
+CEEBETBL CSECT
+         DC    CL8'CEETBL'
+*
+* INCLUDE DSECTS USED BY PAC3INT AND PAC3LIB
+*
+         COPY  PAC3INT 
+         END

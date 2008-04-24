@@ -5,6 +5,7 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 05/05/06 RPI 308 ADD EXEC CICS LOAD
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 .*********************************************************************
          MACRO
          CICS_LOAD
@@ -15,7 +16,7 @@
 .PLOOP   ANOP
 &IP      SETA  &IP+1
          AIF   (&IP GT &NP).ELOOP
-&PARM    SETC  &SYSLIST(&IP)
+&PARM    SETC  '&SYSLIST(&IP)'
          AIF   ('&PARM'(1,8) EQ 'PROGRAM(').PROGRAM
          AIF   ('&PARM'(1,6) EQ 'ENTRY(').ENTRY
          AIF   ('&PARM'(1,4) EQ 'SET(').SET
@@ -45,8 +46,8 @@
          AGO   .PLOOP
 .*
 .ELOOP   ANOP
-         AIF   (&LENGTH NE '' AND &FLENGTH NE '').BADLEN
-         AIF   (&PROGRAM EQ '').MISPROG
+         AIF   ('&LENGTH' NE '' AND '&FLENGTH' NE '').BADLEN
+         AIF   ('&PROGRAM' EQ '').MISPROG
          MVC   EIBFN,=X'0E06'     SET EIBFN
          XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
@@ -85,17 +86,17 @@ CICS_LOAD_&SYSNDX._01 DS 0H
 .*
 CICS_LOAD_&SYSNDX._02 DS 0H
          LOAD  EPLOC=EIBRSRCE
-         AIF   (&ENTRY EQ '').NOSVENT
+         AIF   ('&ENTRY' EQ '').NOSVENT
          LR    &ENTRY,R0          SET ENTRY POINT
 .NOSVENT ANOP
-         AIF   (&SET EQ '').NOSVSET
+         AIF   ('&SET' EQ '').NOSVSET
          LR    &SET,R0            SET ENTRY POINT
 .NOSVSET ANOP                     SET LOAD POINT
-         AIF   (&LENGTH EQ '').NOSVLEN
+         AIF   ('&LENGTH' EQ '').NOSVLEN
          SLL   R1,3               LENGTH * 8
          STH   R1,&LENGTH         SAVE LENGTH
 .NOSVLEN ANOP
-         AIF   (&FLENGTH EQ '').NOSVFLEN
+         AIF   ('&FLENGTH' EQ '').NOSVFLEN
          SLL   R1,3               LENGTH * 8
          ST    R1,&FLENGTH        SAVE FLENGTH
 .NOSVFLEN ANOP
@@ -111,4 +112,3 @@ CICS_LOAD_&SYSNDX._IGNORE DS 0H
 .BADPROG MNOTE 12,'INVALID PROGRAM'
          MEXIT
          MEND
-

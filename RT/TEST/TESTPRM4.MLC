@@ -7,8 +7,9 @@
 *********************************************************************
 * 02/08/06 RPI 198 TEST PARM(...) USING SYSPARM(...) TO COMPARE 
 * 04/07/06 RPI 582 CORRECT LR TO L TO FETCH ADDR OF PARM                   
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 *********************************************************************
-&PARM    SETC  &SYSPARM
+&PARM    SETC  '&SYSPARM'
          AIF   ('&PARM'(1,1) NE '''').SKP1
 &PARM    SETC  '&PARM'(2,K'&PARM-2)
 .SKP1    ANOP

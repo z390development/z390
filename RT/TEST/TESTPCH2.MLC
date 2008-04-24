@@ -5,11 +5,13 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
+* 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+*********************************************************************
 TESTPCH2 SUBENTRY
          WTO   'START TESTPCH2 AREAD AND PUNCH USING DDNAME FILES'
 .LOOP    ANOP
 &TEXT    AREAD DDNAME=SYSUT1
-         AIF   (&TEXT EQ '').ENDLOOP
+         AIF   ('&TEXT' EQ '').ENDLOOP
          WTO   '&TEXT'
          AGO   .LOOP
 .ENDLOOP ANOP
