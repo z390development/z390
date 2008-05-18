@@ -166,7 +166,8 @@ public  class  sz390 implements Runnable {
     * 03/19/08 RPI 819 add trace table for last 10 instr. at abend
     *          and format PSW with CC, ILC, MASK, at ABEND 
     * 03/20/08 RPI 809 restore psw cc and amode for SPIE and ESTAE exits 
-    * 04/23/08 RPI 837 update EZ390 ENDING msg only once and add to log                   
+    * 04/23/08 RPI 837 update EZ390 ENDING msg only once and add to log 
+    * 05/08/08 RPI 821 change CTF/CFD DF from double to big decimal                  
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -2401,7 +2402,7 @@ public void svc_abend(int pic, boolean type, boolean req_dump){
 		   + " " + pz390.get_ins_hex(dump_loc)
 		   + " " + pz390.get_ins_name(dump_loc)
 		   + " ABEND " + abend_code);
-	dump_req(req_dump);
+	dump_req(req_dump || tz390.opt_dump);  // RPI 821 add dump option  
 	if (!tz390.opt_test){
 		ez390_errors--; // don't count abend twice
 		abort_error(12,"program aborting due to abend "
@@ -4623,14 +4624,14 @@ private void svc_ctd(){
 		break;
 	case 4: // dh 
 		if (addr_in >= 16){ // RPI 507
-			ctd_d = pz390.fp_get_db_from_dh(pz390.mem,addr_in); 
+			ctd_bd = pz390.fp_get_bd_from_dh(pz390.mem,addr_in); 
 		} else {
 		 	if (pz390.fp_reg_ctl[addr_in] != pz390.fp_ctl_ld){
 			 	pz390.fp_store_reg(pz390.fp_reg,addr_in * 8);
 			}
-			ctd_d = pz390.fp_get_db_from_dh(pz390.fp_reg,addr_in * 8);
+			ctd_bd = pz390.fp_get_bd_from_dh(pz390.fp_reg,addr_in * 8);  // RPI 821
 		}
-        ctd_text = Double.toString(ctd_d);
+        ctd_text = ctd_bd.round(pz390.fp_dh_context).toString(); // RPI 821 
         ctd_trunc(tz390.fp_dh_digits); 
         break;
 	case 5: // db
@@ -4658,7 +4659,7 @@ private void svc_ctd(){
 			}
 			ctd_bd = pz390.fp_get_bd_from_lh(pz390.fp_reg,addr_in * 8);
 		}
-        ctd_text = ctd_bd.toString();
+        ctd_text = ctd_bd.round(pz390.fp_lh_context).toString(); // RPI 821 
         ctd_trunc(tz390.fp_lh_digits); 
         break;
 	case 7: // lb
@@ -4674,7 +4675,7 @@ private void svc_ctd(){
 			}
 			ctd_bd = pz390.fp_get_bd_from_lb(pz390.fp_reg,addr_in * 8);
 		}
-        ctd_text = ctd_bd.toString();
+        ctd_text = ctd_bd.round(pz390.fp_x_context).toString(); // RPI 821 
         ctd_trunc(tz390.fp_lb_digits); 
         break;	
 	case 8: // dd 
@@ -4772,6 +4773,9 @@ private void ctd_trunc(byte max_digits){
                d_index = e_index-1;
             }
     	} else {
+    		if (d_index > 0 && ctd_text.length() > max_digits+2){
+    			ctd_text = ctd_text.substring(0,max_digits+2); // RPI 821
+    		}
     		d_index = ctd_text.length()-1;
     	}
     	while (ctd_text.charAt(d_index) == '0'){
@@ -4872,15 +4876,16 @@ private void svc_cfd(){
 		break;
 	case 24: // dh 
 		try {
-			cfd_d = Double.valueOf(cfd_text);  // RPI 526
+			cfd_bd = new BigDecimal(cfd_text,pz390.fp_dh_context);  // RPI 526 RPI 821  was dhg
 		} catch (Exception e){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
-		}		 
-		if (addr_out >= 16){  // RPI 507
-			pz390.mem.putLong(addr_out,pz390.zcvt_db_to_dh(cfd_d));
+		}	
+		pz390.zcvt_bd_to_wreg(tz390.fp_dh_type, cfd_bd); // RPI 821
+		if (addr_out >= 16){  // RPI 507           
+			pz390.mem.putLong(addr_out, tz390.fp_work_reg.getLong(0)); // RPI 821
 		} else {
-			pz390.fp_reg.putLong(addr_out * 8,pz390.zcvt_db_to_dh(cfd_d));
+			pz390.fp_reg.putLong(addr_out * 8,tz390.fp_work_reg.getLong(0)); // RPI 821
 			pz390.fp_reg_ctl[addr_out] = pz390.fp_ctl_ld;
 		}
 		break;
@@ -4900,12 +4905,12 @@ private void svc_cfd(){
 		break;	
 	case 26: // lh 
 		try {
-			cfd_bd = new BigDecimal(cfd_text,pz390.fp_bdg_context);   // RPI 526
+			cfd_bd = new BigDecimal(cfd_text,pz390.fp_lxg_context);   // RPI 526 RPI 821
 		} catch (Exception e){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
 		}		
-		pz390.zcvt_bd(tz390.fp_lh_type,cfd_bd);
+		pz390.zcvt_bd_to_wreg(tz390.fp_lh_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
 			pz390.mem.put(tz390.fp_work_reg_byte,0,16);
@@ -4925,12 +4930,12 @@ private void svc_cfd(){
 		break;
 	case 27: // lb
 		try {
-			cfd_bd = new BigDecimal(cfd_text,pz390.fp_bdg_context);   // RPI 526
+			cfd_bd = new BigDecimal(cfd_text,pz390.fp_lxg_context);   // RPI 526 RPI 821
 		} catch (Exception e){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
 		}
-		pz390.zcvt_bd(tz390.fp_lb_type,cfd_bd);
+		pz390.zcvt_bd_to_wreg(tz390.fp_lb_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
 			pz390.mem.put(tz390.fp_work_reg_byte,0,16);
@@ -4955,7 +4960,7 @@ private void svc_cfd(){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
 		}
-		pz390.zcvt_bd(tz390.fp_dd_type,cfd_bd);
+		pz390.zcvt_bd_to_wreg(tz390.fp_dd_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
 			pz390.mem.put(tz390.fp_work_reg_byte,0,8);
@@ -4972,7 +4977,7 @@ private void svc_cfd(){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
 		}
-		pz390.zcvt_bd(tz390.fp_ed_type,cfd_bd);
+		pz390.zcvt_bd_to_wreg(tz390.fp_ed_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
 			pz390.mem.put(tz390.fp_work_reg_byte,0,4);
@@ -4989,7 +4994,7 @@ private void svc_cfd(){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
 		}
-		pz390.zcvt_bd(tz390.fp_ld_type,cfd_bd);
+		pz390.zcvt_bd_to_wreg(tz390.fp_ld_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
 			pz390.mem.put(tz390.fp_work_reg_byte,0,16);

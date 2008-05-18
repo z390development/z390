@@ -305,7 +305,10 @@ public  class  az390 implements Runnable {
         * 02/28/08 RPI 812 assemble ASSIST opcodes if ASSIST option on 
         * 03/03/08 RPI 817 assemble all 226 new z10 opcodes 
         * 04/17/08 RPI 834 correct neg 0 fp value    
-        * 04/24/08 RPI 840 ignore spaces in P and Z data fields                     
+        * 04/24/08 RPI 840 ignore spaces in P and Z data fields  
+        * 04/28/08 RPI 841 add DFHRESP MAPFAIL, INVMPSZ, OVERFLOW  
+        * 05/05/08 rpi 846 sync stats with mz390 
+        * 05/10/08 RPI 821 switch DH from double to BigDecimal cache                
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -315,6 +318,8 @@ public  class  az390 implements Runnable {
     int az390_errors = 0;
     int mz390_errors = 0; // RPI 415 passed from mz390 if option asm
     String mz390_started_msg = ""; // RPI 755
+    boolean az390_ended = false; // rpi 846 signal mz390 that az390 has ended
+    boolean mz390_ended = false; // rpi 846 signal az390 taht mz390 has finished stats
     boolean mz390_abort = false;
     int mz390_rc     = 0; // RPI 415 passed from mz390 if option asm
     int cur_pass = 1;
@@ -833,7 +838,8 @@ public  class  az390 implements Runnable {
       BigInteger fp_big_int1 = BigInteger.ZERO;
       BigInteger fp_big_int2 = BigInteger.ZERO;
 	  BigInteger fp_big_int_one_bits = BigInteger.ONE.shiftLeft(113).subtract(BigInteger.ONE);
-	  BigInteger fp_big_int_man_bits = BigInteger.ONE.shiftLeft(112).subtract(BigInteger.ONE);
+	  BigInteger fp_big_int_lx_man_bits = BigInteger.ONE.shiftLeft(112).subtract(BigInteger.ONE); // RPI 821
+	  BigInteger fp_big_int_dh_man_bits = BigInteger.ONE.shiftLeft(56).subtract(BigInteger.ONE);  // RPI 821
 	  int    fp_int1 = 0;
 	  int    fp_round_bit = 0;
       int fp_int_eb_one_bits  = 0xffffff;
@@ -891,9 +897,12 @@ public  class  az390 implements Runnable {
     		  "LENGERR)",         //11 - =F'22'   		  
     		  "ITEMERR)",         //12 - =F'26'  RPI 662
     		  "PGMIDERR)",        //13 - =F'27'
-    		  "EXPIRED)",          //14   =F'31'  RPU 751
-    		  "QIDERR)",          //15 - =F'44'  RPI 662
-    		  "DISABLED)",        //16 - =F'84' RPI 687
+    		  "EXPIRED)",          //14   =F'31'  RPI 751
+    		  "MAPFAIL)",          //15   =F'36'  RPI 841
+    		  "INVMPSZ)",          //16   =F'38'  RPI 841
+    		  "OVERFLOW)",         //17   =F'40'  RPI 841
+    		  "QIDERR)",           //18 - =F'44'  RPI 662
+    		  "DISABLED)",         //19 - =F'84' RPI 687
     		  };
       String[] dfhresp_lit = {
     		  "=F'0'",           // 0 "NORMAL)" 
@@ -911,8 +920,11 @@ public  class  az390 implements Runnable {
     		  "=F'26'",          //12 "ITEMERR)" RPI 662
     		  "=F'27'",          //13 "PGMIDERR)"
     		  "=F'31'",          //14 "EXPIRED)"  RPI 751
-    		  "=F'44'",          //15 "QIDERR)"  RPI 662
-    		  "=F'84'",          //16 "DISABLED)" RPI 687
+    		  "=F'36'",          //15 "MAPFAIL)"  RPI 841
+    		  "=F'38'",          //16 "INVMPSZ)"  RPI 841
+    		  "=F'40'",          //17 "OVERFLOW)"  RPI 841
+    		  "=F'44'",          //18 "QIDERR)"  RPI 662
+    		  "=F'84'",          //19 "DISABLED)" RPI 687
     		  };
   /* 
    * end of global az390 class data and start of procs
@@ -4772,19 +4784,25 @@ private void push_exp_sdt(String sdt){
 
 public void exit_az390(){
 	/*
-	 * display total errors
-	 * and close files.
+	 * put stats and display total errors
+	 * after nz3890 is done and close files.
 	 * Note:
 	 *   1.  return az390 return code for use by mz390
 	 *       when called from mz390 when mfc option on.
 	 */
+	  az390_ended = true;
+	  while (mz390_call // rpi 846
+			  && !mz390_abort
+			  && !mz390_ended){
+		  tz390.sleep_now(tz390.monitor_wait);
+	  }
+	  put_stats(); // rpi 846
 	  if (az390_errors > 0 || tz390.z390_abort){
 		  az390_rc = 16;
       }
 	  if (tz390.opt_errsum){
 		report_critical_errors();
 	  }
-  	  put_stats();
       close_files();
 	  if (mz390_call){ // RPI 415
 		  return;
@@ -4793,7 +4811,9 @@ public void exit_az390(){
 }
 private void put_stats(){
 	/*
-	 * display statistics as comments at end of bal
+	 * display statistics on STA and 
+	 * totals on STA and TRM including
+	 * MZ and AZ totals.
 	 */
 	force_print = true; // RPI 285
 	tz390.force_nocon = true; // RPI 755
@@ -5019,7 +5039,7 @@ private void put_copyright(){
 	    */
 		   String temp_hex;
 		   if (tz390.opt_tracea){
-			   tz390.put_trace(msg); // RPI 564 additional tracea info
+		   	   tz390.put_trace(msg); // RPI 564 additional tracea info
 		   }
 	   	   if (tz390.opt_list 
 	   		  && !tz390.opt_errsum){ // RPI 484  RPI 694
@@ -8336,7 +8356,8 @@ private void get_fp_hex(){
 	 * irrational values is done by shifting right.
 	 * 
 	 */ 
-	int    work_scale  =  - fp_big_dec1.stripTrailingZeros().scale();
+	fp_big_dec1 = fp_big_dec1.stripTrailingZeros(); // RPI 821	
+	int    work_scale  =  - fp_big_dec1.scale();
 	double work_man    =    fp_big_dec1.multiply(
 		BigDecimal.TEN.pow(-work_scale,fp_context),fp_context).doubleValue();
 	tz390.fp_exp   =  (int)((Math.log(work_man) 
@@ -8416,13 +8437,16 @@ private void get_fp_hex(){
 	case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
 		fp_long1 = fp_big_int1.longValue();
 		fp_round_bit = 0;
-		while (fp_long1 > fp_long_dh_man_bits
-				|| (tz390.fp_exp & 0x3) != 0){
+		while ((tz390.fp_exp & 0x3) != 0
+	           || fp_long1 > fp_long_dh_man_bits
+			   ){
 			fp_round_bit = (int)(fp_long1 & 1);
 			fp_long1 = fp_long1 >>> 1;
 			tz390.fp_exp++;
-			if (fp_long1 <= fp_long_dh_man_bits){
-				fp_long1 = fp_long1 + fp_round_bit;	
+			if (fp_round_bit == 1
+				&& (tz390.fp_exp & 0x3) == 0  // RPI 821
+				&& fp_long1 <= fp_long_dh_man_bits){
+				fp_long1++;	
 			}
 		}
 		tz390.fp_exp = (tz390.fp_exp >> 2) + tz390.fp_exp_bias[tz390.fp_type] + dc_scale; // RPI 368
@@ -8470,13 +8494,16 @@ private void get_fp_hex(){
 	case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
 		fp_int1 = fp_big_int1.intValue();
 		fp_round_bit = 0;
-		while (fp_int1 > fp_int_eh_man_bits 
-				|| (tz390.fp_exp & 0x3) != 0){
+		while ((tz390.fp_exp & 0x3) != 0  // RPI 821
+				|| fp_int1 > fp_int_eh_man_bits 
+				){
 			fp_round_bit = fp_int1 & 1;
 			fp_int1 = fp_int1 >>> 1;
 			tz390.fp_exp++;
-			if (fp_int1 <= fp_int_eh_man_bits){
-				fp_int1 = fp_int1 + fp_round_bit;	
+			if (fp_round_bit == 1   // RPI 821
+				&& (tz390.fp_exp & 0x3) != 0  
+				&&	fp_int1 <= fp_int_eh_man_bits){
+				fp_int1++;	// RPI 821
 			}
 		}
 		tz390.fp_exp = (tz390.fp_exp >> 2) + tz390.fp_exp_bias[tz390.fp_type] + dc_scale;  // RPI 368
@@ -8537,8 +8564,9 @@ private void get_fp_hex(){
 		break;
 	case 8: // tz390.fp_lh_type s1,e7,m112 with split hex
         fp_round_bit = 0;
-		while (fp_big_int1.compareTo(fp_big_int_man_bits) > 0
-				|| (tz390.fp_exp & 0x3) != 0){
+		while ((tz390.fp_exp & 0x3) != 0  // RPI 821
+				|| fp_big_int1.compareTo(fp_big_int_lx_man_bits) > 0
+				){
 			if (fp_big_int1.testBit(0)){
 				fp_round_bit = 1;
 			} else {
@@ -8547,7 +8575,9 @@ private void get_fp_hex(){
 			fp_big_int1 = fp_big_int1.shiftRight(1);
 			tz390.fp_exp++;
 			if (fp_round_bit == 1 
-				&& fp_big_int1.compareTo(fp_big_int_man_bits) <= 0){
+				&& (tz390.fp_exp & 0x3) == 0  // RPI 821
+				&& fp_big_int1.compareTo(fp_big_int_lx_man_bits) <= 0
+				){
 				fp_big_int1 = fp_big_int1.add(BigInteger.ONE);
 			}
 		}

@@ -315,7 +315,9 @@ public  class  mz390 {
      * 04/22/08 RPI 836 issue error if ordinary symbol value reference
      *          undefined and issue error for array
      *          reference without subscript 
-     * 04/23/08 RPI 839 support skipping values in SETA/B/C list                          
+     * 04/23/08 RPI 839 support skipping values in SETA/B/C list
+     * 05/05/08 RPI 846 sync stats for mz390/az390 and include total az390 errors  
+     * 05/07/08 RPI 849 use shared abort_case to catch logic errors                        
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1334,9 +1336,6 @@ public  class  mz390 {
 				} else {
 					mlc_eof = true;
 					if (tz390.opt_asm){ // RPI 415
-						if (tz390.opt_bal && !end_found){
-							put_stats(); // RPI 425
-						}
 						az390.tz390.systerm_prefix = tz390.systerm_prefix;  // RPI 755
 						az390.tz390.systerm_io = az390.tz390.systerm_io + tz390.systerm_io; // RPI 755
 						az390.mz390_rc = mz390_rc;
@@ -1402,7 +1401,6 @@ public  class  mz390 {
 				if (tz390.opt_asm){
 					if (bal_op != null && bal_op.equals("END")){
 						end_found = true;
-						put_stats(); // RPI 425
 					} else if (end_found 
 							   && !batch_asm_error
 							   && bal_line.length() > 0
@@ -2761,13 +2759,6 @@ public  class  mz390 {
 			return "";
 		}
 	}
-	
-	private synchronized void abort_case(){ // RPI 646
-		/*
-		 * abort case with invalide index
-		 */
-		abort_error(68,"internal error - invalid case index");
-	}
 	private int find_opcode_type(String opcode){
 		/*
 		 * set mac_opcode_index and return
@@ -2943,7 +2934,7 @@ public  class  mz390 {
 				actr_count--;
 				if (new_mac_line_index < mac_name_line_start[mac_name_index]
 				    || new_mac_line_index >= mac_name_line_end[mac_name_index]){
-					log_error(142,"AIF macro label not found - " + bal_parms.substring(aif_test_index+exp_next_index));
+					log_error(142,mac_name[mac_name_index] + " AIF macro label not found - " + bal_parms.substring(aif_test_index+exp_next_index));
 				} else {
 					if (tz390.opt_pc){
 						aif_branch_index = new_mac_line_index;
@@ -3211,7 +3202,7 @@ public  class  mz390 {
 			}
 			break;
 		default: 
-			abort_case();
+			tz390.abort_case();
 		}
 		if (!bal_op_ok){
 			put_bal_line(bal_line);
@@ -3299,7 +3290,7 @@ public  class  mz390 {
 		case 3:
 			return get_int_from_string(exp_setc,10);
 		default: 
-			abort_case();
+			tz390.abort_case();
 		}
 		return -1;
 	}
@@ -3318,7 +3309,7 @@ public  class  mz390 {
 		case 3:
             log_error(212,"invalid string in SETB expression"); // RPI 609
 		default: 
-			abort_case();
+			tz390.abort_case();
 		}
 		return 0;
 	}
@@ -3340,7 +3331,7 @@ public  class  mz390 {
 		case 3:
 			return exp_setc;
 		default: 
-			abort_case();
+			tz390.abort_case();
 		}
 		return "";
 	}
@@ -5288,7 +5279,7 @@ public  class  mz390 {
 			setc_value2 = exp_stk_setc[tot_exp_stk_var - 1];
 			break;
 		default: 
-			abort_case();
+			tz390.abort_case();
 		}
 		setc_value = setc_value1 + setc_value2;
 		exp_stk_setc[tot_exp_stk_var - 2] = setc_value;
@@ -5340,7 +5331,7 @@ public  class  mz390 {
 					tz390.put_trace("COMPARE '" + setc_value1 + "' "+ exp_prev_op  + " '" + setc_value2 + "' = " + exp_stk_setb[tot_exp_stk_var -1]);
 					break;
 				default:
-					abort_case();
+					tz390.abort_case();
 				}
 			}
 		}
@@ -5431,7 +5422,7 @@ public  class  mz390 {
 						}
 						break;
 					default: 
-						abort_case();
+						tz390.abort_case();
 					}
 				} else {
 					log_error(63,"expression compare error");
@@ -5569,7 +5560,7 @@ public  class  mz390 {
 				log_error(214,"invalid string in SETB expression"); // RPI 609
 				break;
 			default: 
-				abort_case();
+				tz390.abort_case();
 			}
 			switch (exp_stk_val_type[tot_exp_stk_var - 1]){
 			case 1:
@@ -5582,7 +5573,7 @@ public  class  mz390 {
 				log_error(215,"invalid string in SETB expression"); // RPI 609
 				break;
 			default: 
-				abort_case();
+				tz390.abort_case();
 			}
 			setc_value1 = "" + setb_value1; // for RPI 274 trace
 			setc_value2 = "" + setb_value2; // for RPI 274 trace
@@ -5616,7 +5607,7 @@ public  class  mz390 {
 			case 3:	
 				return exp_stk_setc[tot_exp_stk_var];
 			default: 
-				abort_case();
+				tz390.abort_case();
 			}
 		}
 		log_error(20,"expression error");
@@ -5683,7 +5674,7 @@ public  class  mz390 {
 					exp_seta = get_int_from_string(exp_stk_setc[0],10);
 					break;
 				default: 
-					abort_case();
+					tz390.abort_case();
 				}
 				break;
 			case 2:
@@ -5698,7 +5689,7 @@ public  class  mz390 {
 					log_error(216,"invalid string in SETB expression"); // RPI 609
 					break;
 				default: 
-					abort_case();
+					tz390.abort_case();
 				}
 				break;
 			case 3:
@@ -5713,7 +5704,7 @@ public  class  mz390 {
 					exp_setc = exp_stk_setc[0];
 					break;
 				default: 
-					abort_case();
+					tz390.abort_case();
 				}
 				break;
 			}
@@ -6130,7 +6121,7 @@ public  class  mz390 {
 			}
 			break;
 		default: 
-			abort_case();
+			tz390.abort_case();
 		return -1;
 		}
 		return var_name_index;
@@ -6214,7 +6205,7 @@ public  class  mz390 {
 			}
 			break;
 		default: 
-			abort_case();
+			tz390.abort_case();
 		}
 	}
 	private boolean parse_set_var(String text,int text_index){
@@ -6426,7 +6417,7 @@ public  class  mz390 {
 			setc_value = lcl_setc[setc_index];
 			break;
 		default: 
-			abort_case();
+			tz390.abort_case();
 		}
 	}
 	private int expand_set(int expand_name_index,byte expand_type,byte expand_loc,int expand_sub){
@@ -6527,7 +6518,7 @@ public  class  mz390 {
 				return lcl_set_start[expand_name_index] 
 				                     + expand_sub - 1;
 			default:
-				abort_case();
+				tz390.abort_case();
 			return -1;
 			}
 		} else {
@@ -6618,7 +6609,7 @@ public  class  mz390 {
 				return gbl_set_start[expand_name_index] 
 				                     + expand_sub - 1;
 			default:
-				abort_case();
+				tz390.abort_case();
 			return -1;
 			}
 		}
@@ -6699,7 +6690,7 @@ public  class  mz390 {
 			setc_value = gbl_setc[setc_index];
 			break;
 		default: 
-			abort_case();
+			tz390.abort_case();
 		}
 	}
 	private int get_label_index(String label_source){
@@ -7322,7 +7313,7 @@ public  class  mz390 {
 				case 4: // ignore spaces and comments
 					break;
 				default: 
-					abort_case();
+					tz390.abort_case();
 				}
 			}
 			if (state == 2){
@@ -7415,7 +7406,7 @@ public  class  mz390 {
 				case 4:  // ignore spaces and comments
 					break;
 				default: 
-					abort_case();
+					tz390.abort_case();
 				}
 			}
 			if (state == 2){
@@ -7523,12 +7514,10 @@ public  class  mz390 {
 	}
 	private void exit_mz390(){
 		/*
-		 * display total errors
+		 * wait for az390 to end and
+		 * display total errors for both
 		 * close files and exit to system or caller
 		 */
-		if (tz390.opt_asm && !end_found && az390 != null){
-			put_stats();
-		}
 		if (tz390.opt_asm && az390 != null){  // RPI 433 finish az390 even if mz390 abort
 			if (az390.az390_running){
 				if (tz390.z390_abort){
@@ -7537,10 +7526,18 @@ public  class  mz390 {
 				call_az390_pass_bal_line(null);
 				bal_eof = true;
 			}
-			while (tz390.opt_asm && az390.az390_running){
+			while (!tz390.z390_abort
+				&& az390.az390_running
+				&& !az390.az390_ended){ // rpi 846 remove redundant test
 				tz390.sleep_now(tz390.monitor_wait);
 			}
-			tz390.systerm_io = az390.tz390.systerm_io;  // RPI 755
+			put_stats(); // rpi 846 put stats and totals to STA and TRM with mz and az total errors
+			az390.mz390_ended = true;
+			while (!tz390.z390_abort 
+					&& az390.az390_running){ // rpi 846 remove redundant test
+					tz390.sleep_now(tz390.monitor_wait);
+			}
+			tz390.systerm_io = tz390.systerm_io+az390.tz390.systerm_io;  // RPI 755 rpi 846
 			if (az390.az390_rc > mz390_rc){
 				mz390_rc = az390.az390_rc;
 			}
@@ -7563,14 +7560,13 @@ public  class  mz390 {
 	private void put_stats(){
 		/*
 		 * 1.  Display mz390 statistics
-		 *     as comments on BAL file prior
-		 *     to END statement if option STATS.
-		 * 2.  Force BAL display of files
-		 *     with errors for cross reference
-		 *     if nolistfile and noasm.  
-		 * 3.  If asm pass file names and merge file errors
+		 *     on STA file if option STATS.
+		 * 2.  If asm pass file names and merge file errors
 		 *     from mz390 and lookahead phase of az390
-		 *     for use in file xref at end of PRN..
+		 *     for use in file xref at end of PRN.
+		 * 3.  put_stats called from mz390 to sync 
+		 *     with mz390 put_stats on STA and to include total
+		 *     mz and az errors on TRM.  rpi 846    .
 		 * Notes:
 		 *   1.  Use tz390.put_stat_line to route
 		 *       line to end of BAL or stat(file) option
@@ -7647,19 +7643,23 @@ public  class  mz390 {
 			put_stat_line("total mnote warnings  = " + tot_mnote_warning); // RPI 402
 			put_stat_line("total mnote errors    = " + tot_mnote_errors);
 			put_stat_line("max   mnote level     = " + gbl_seta[gbl_sysm_hsev_index]);
-			put_stat_line("total errors          = " + mz390_errors);
+			put_stat_line("total mz390 errors    = " + mz390_errors);
+			if (tz390.opt_asm){ // rpi 846
+				put_stat_line("total az390 errors    = " + az390.az390_errors);
+			}
 		}
 		if (!tz390.opt_asm){
 			log_to_bal = true;
 			put_log(msg_id + "total mnote warnings = " + tot_mnote_warning); // RPI 402
 			put_log(msg_id + "total mnote errors   = " + tot_mnote_errors);
 			put_log(msg_id + "max   mnote level    = " + gbl_seta[gbl_sysm_hsev_index]);
-			put_log(msg_id + "total errors         = " + mz390_errors);
+			put_log(msg_id + "total mz390 errors   = " + mz390_errors);
 		} else if (tz390.opt_tracem){
 			tz390.put_trace(msg_id + "total mnote warnings  = " + tot_mnote_warning); // RPI 402
 			tz390.put_trace(msg_id + "total mnote errors    = " + tot_mnote_errors);
 			tz390.put_trace(msg_id + "max   mnote level     = " + gbl_seta[gbl_sysm_hsev_index]);
-			tz390.put_trace(msg_id + "total errors          = " + mz390_errors);
+			tz390.put_trace(msg_id + "total mz390 errors    = " + mz390_errors);
+			tz390.put_trace(msg_id + "total az390 errors    = " + az390.az390_errors); // rpi 846
 		}
 		log_to_bal = false;
 	}
@@ -8916,7 +8916,7 @@ public  class  mz390 {
 			exp_stk_setc[tot_exp_stk_var - 1] = setc_value;
 			break;
 		default: 
-			abort_case();
+			tz390.abort_case();
 		}
     }
     private void push_pc_var(){
@@ -8956,7 +8956,7 @@ public  class  mz390 {
 			pc_push_var_setc_value = "'" + setc_value + "'";
 			break;
 		default: 
-			abort_case();
+			tz390.abort_case();
 		}
 		exp_stk_var_type[tot_exp_stk_var - 1] = var_type; // RPI 447
 		exp_stk_var_loc[tot_exp_stk_var -1]   = var_loc;  // RPI 447
@@ -9024,7 +9024,7 @@ public  class  mz390 {
 			}
 			break;
 		default: 
-			abort_case();
+			tz390.abort_case();
 		}
     }
     private void exec_pc_compge(){
@@ -9055,7 +9055,7 @@ public  class  mz390 {
 				}
 				break;
 			default: 
-				abort_case();
+				tz390.abort_case();
 			}
     }
     private void exec_pc_compgt(){
@@ -9086,7 +9086,7 @@ public  class  mz390 {
 				}
 				break;
 			default: 
-				abort_case();
+				tz390.abort_case();
 			}
     }
     private void exec_pc_comple(){
@@ -9117,7 +9117,7 @@ public  class  mz390 {
 				}
 				break;
 			default: 
-				abort_case();
+				tz390.abort_case();
 			}
     }
     private void exec_pc_complt(){
@@ -9148,7 +9148,7 @@ public  class  mz390 {
 				}
 				break;
 			default: 
-				abort_case();
+				tz390.abort_case();
 			}
     }
     private void exec_pc_compne(){
@@ -9179,7 +9179,7 @@ public  class  mz390 {
 				}
 				break;
 			default: 
-				abort_case();
+				tz390.abort_case();
 			}
     }
     private void exec_pc_pushvs(){
@@ -9221,7 +9221,7 @@ public  class  mz390 {
 						}
 						break;
 					default: 
-						abort_case();
+						tz390.abort_case();
 					}
 					break;
 				case 12: // gbl set var(sub)
@@ -9254,7 +9254,7 @@ public  class  mz390 {
 						}
 						break;
 					default: 
-						abort_case();
+						tz390.abort_case();
 					}
 					break;
 				case 13: // pos parm var(sub) or var(sub,
@@ -9294,7 +9294,7 @@ public  class  mz390 {
 					}					
 					break;
 				default:
-					abort_case();
+					tz390.abort_case();
 				}
 				exp_stk_val_type[tot_exp_stk_var-1] = val_type; 
 				if (tz390.opt_tracep){
@@ -9388,7 +9388,7 @@ public  class  mz390 {
 				return "'" + setc_value + "'";
 			}
 		default:
-			abort_case();	
+			tz390.abort_case();	
 		    return "";
 		}
     }
@@ -9465,7 +9465,7 @@ public  class  mz390 {
     		val_type = val_setc_type;
     		break;
     	default:
-    		abort_case();
+    		tz390.abort_case();
     	}
         return true;
     }

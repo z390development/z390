@@ -12,6 +12,7 @@
 * 08/25/07 RPI 690 CORRECT NOTEND TO NOTFND                   
 * 10/30/07 RPI 729 ADD DFHRESP ILLOGIC=F'21'                  
 * 12/06/07 RPI 751 ADD DFHRESP EXPIRED=F'31'                  
+* 04/28/08 RPI 841 ADD DFHRESP MAPFAIL,INVMPSZ,OVERFLOW       
 *********************************************************************
 TESTCIC1 RT1   MAIN
          EQUREGS
@@ -33,6 +34,9 @@ X        DS    F
          MVC   X,DFHRESP(ITEMERR)       RPI 662
          MVC   X,DFHRESP(QIDERR)        RPI 662
          MVC   X,DFHRESP(EXPIRED)       RPI 751
+         MVC   X,DFHRESP(MAPFAIL)       RPI 841
+         MVC   X,DFHRESP(INVMPSZ)       RPI 841
+         MVC   X,DFHRESP(OVERFLOW)       RPI 841
          MVC   X,DFHRESP(DISABLED)      RPI 687
          MVC   X,DFHRESP(ILLOGIC)       RPI 729
          CLC   =F'0',DFHRESP(NORMAL)      
@@ -65,6 +69,12 @@ X        DS    F
          RT1   CCE
          CLC   =F'31',DFHRESP(EXPIRED)   RPI 751
          RT1   CCE
+         CLC   =F'36',DFHRESP(MAPFAIL)   RPI 841
+         RT1   CCE
+         CLC   =F'38',DFHRESP(INVMPSZ)   RPI 841
+         RT1   CCE
+         CLC   =F'40',DFHRESP(OVERFLOW)   RPI 841
+         RT1   CCE
          CLC   =F'44',DFHRESP(QIDERR)    RPI 662
          RT1   CCE
          CLC   =F'84',DFHRESP(DISABLED)     RPI 687      
@@ -84,6 +94,9 @@ X        DS    F
          RT1   CCE,=F'26',DFHRESP(ITEMERR)      RPI 662
          RT1   CCE,=F'27',DFHRESP(PGMIDERR)
          RT1   CCE,=F'31',DFHRESP(EXPIRED)      RPI 751
+         RT1   CCE,=F'36',DFHRESP(MAPFAIL)      RPI 841
+         RT1   CCE,=F'38',DFHRESP(INVMPSZ)      RPI 841
+         RT1   CCE,=F'40',DFHRESP(OVERFLOW)     RPI 841
          RT1   CCE,=F'44',DFHRESP(QIDERR)       RPI 662
          RT1   CCE,=F'84',DFHRESP(DISABLED)     RPI 687
          RT1   END

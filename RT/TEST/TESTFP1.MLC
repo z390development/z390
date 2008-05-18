@@ -29,6 +29,8 @@
 * 03/20/08 RPI 824 TEST FLUSH OF LB/LD/LH WHEN CHANGING BD2 REG    
 * 04/06/08 RPI 834 CORRECT MSE?? AND MSD?? TO SUBTRACT FROM PRODUCT
 *          AND CORRECT TCEB, TCDB, AND TCXB MINUS -0 TESTS
+* 05/16/08 RPI 821 ADD TEST FOR HIGH/LOW DH/LH NIBBLE PRECISION 
+*                  ANDDJUST LBMAX FOR TESTING NEW LIMITS 
 *********************************************************************
          PRINT DATA
          MACRO
@@ -58,14 +60,15 @@ PWORK    DS    D
 PWORK16  DS    XL16
 WORD     DS    F
 DWORD    DS    D
+DWORD2   DS    D
 BYTE     DS    X
 LWORK    DS    XL16
 EBMIN    DC    EB'1.2E-38'    SEE POP BFP 19-5 (MATCH EZ390 VALUES)
 EBMAX    DC    EB'3.4E+38'                                      
 DBMIN    DC    DB'2.2E-308'
 DBMAX    DC    DB'1.79E+308'  (1.8 too big for double?)
-LBMIN    DC    LB'3.3E-4932'  RPI 396 WAS 3.4
-LBMAX    DC    LB'1.2E+4932'
+LBMIN    DC    LB'3.3E-4932'  RPI 396 WAS 3.4 
+LBMAX    DC    LB'1.3E+4932'  RPI 821 WAS 1.2      
 EHMIN    DC    EH'5.4E-79'    SEE POP HFP 18-4
 EHMAX    DC    EH'7.2E+75'
 DHMIN    DC    DH'5.4E-79'
@@ -309,7 +312,7 @@ TDCMS    EQU   X'001' TEST FP DATA CLASS MINUS SIGNAL NAN
          RT1   CCE
          ESPIE SET,ESPIE_EXIT,12,PARAM=MDR1 HFP OVERFLOW
          LD    R0,DHMAX
-         LD    R1,=DH'1'
+         LD    R1,=DH'2'  RPI 821 MAKE RESULT LARGER THAN DHMAX
          MDR   R0,R1
          RT1   ABORT
 MDR1     ESPIE RESET
@@ -476,6 +479,11 @@ DDR1     ESPIE RESET
          LD    R1,=DH'6'
          CDR   R0,R1
          RT1   CCE         RPI 824 VERIFY R0 HAS FIRST HALF OF LH'6'
+         LX    0,=X'4E000000000000000000000000000001' RPI 821 TEST LH
+         LX    1,=X'4E800000000000000000000000000000' HFP PRECISION    
+         AXR   0,1
+         STX   0,LWORK            
+         RT1   CCE,LWORK,=X'4E800000000000004000000000000001'
 * 37   SXR
          LX    R0,=LH'1'
          LX    R1,=LH'-2'
@@ -654,6 +662,10 @@ DER1     ESPIE RESET
          RT1   CCE
          CD    R0,=DH'0'
          RT1   CCE
+         LD    0,=X'4E00000000000001' RPI 821 TEST 56 BIT PRECISION
+         AD    0,=X'4E80000000000000' HFP WITH UNIT AS LAST DIGIT    
+         STD   0,DWORD             
+         RT1   CCE,DWORD,=X'4E80000000000001'             
 * 6B   SD
          LD    R0,=DH'3'
          SD    R0,=DH'2'
@@ -1272,7 +1284,7 @@ DEBR1    ESPIE RESET
          MXBR  R0,R0
          SXBR  R0,R1
          LPXBR R0,R0
-         LX    R4,=LB'1E-34'
+         LX    R4,=LB'1E-33' RPI 821 WAS 1E-34 DSHX
          CXBR  R0,R4
          RT1   CCL
 * B317 MEEBR

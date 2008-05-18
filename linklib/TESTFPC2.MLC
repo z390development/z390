@@ -40,7 +40,7 @@ WTOPRC_END   EQU   *
          MVC   SAVE_DECIMAL,DECIMAL
          TEST1 SVC,&TYPE,&VAL
 .*       CLC   DECIMAL,SAVE_DECIMAL  SKIP DUE TO ERROR IN EB LAST DIGIT 
-.*       RT1   CCE
+.*       RT1   CCE       
          MEXIT
 .SKPMF   ANOP  dshx test
          TEST1 SVC,&TYPE,&VAL

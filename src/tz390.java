@@ -179,6 +179,8 @@ public  class  tz390 {
     * 03/27/08 RPI 828 add option INIT to set regs to x'F4' and mem to x'F5' vs 0's
     * 04/18/08 RPI 833 option ALLOW to permit HLASM extensions
     * 04/23/08 RPI 837 update EZ390 ENDING msg only once and add to log
+    * 05/07/08 RPI 849 use shared abort_case for logic errors
+    * 05/10/08 RPI 821 switch DH from double to BigDecimal cache
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -187,7 +189,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.01c";  //dsh
+    String version    = "V1.4.01d";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -518,26 +520,25 @@ public  class  tz390 {
          */
         byte fp_type    = 0;
         boolean fp_unnormalized[] = new boolean[16]; // RPI 790 set for HFP unnormalized instr.
-        byte fp_db_type = 0; // BFP long
-        byte fp_dd_type = 1; // DPF long
-        byte fp_dh_type = 2; // HFP long
-        byte fp_eb_type = 3; // BFP short
-        byte fp_ed_type = 4; // DFP short
-        byte fp_eh_type = 5; // HFP short
-        byte fp_lb_type = 6; // BFP extended
-        byte fp_ld_type = 7; // DFP extended
-        byte fp_lh_type = 8; // HFP extended
+        byte fp_db_type = 0; // BFP long - double
+        byte fp_dd_type = 1; // DPF long - big dec
+        byte fp_dh_type = 2; // HFP long - big dec
+        byte fp_eb_type = 3; // BFP short - float
+        byte fp_ed_type = 4; // DFP short - big dec
+        byte fp_eh_type = 5; // HFP short - double
+        byte fp_lb_type = 6; // BFP extended - big dec
+        byte fp_ld_type = 7; // DFP extended - big dec
+        byte fp_lh_type = 8; // HFP extended - big dec
         byte fp_db_digits = 15;
         byte fp_dd_digits = 16;
-        byte fp_dh_digits = 15; 
+        byte fp_dh_digits = 15;   
         byte fp_eb_digits = 7;
         byte fp_ed_digits = 7;
-        byte fp_eh_digits = 6;
+        byte fp_eh_digits = 7;   // RPI 821
         byte fp_lb_digits = 34;
         byte fp_ld_digits = 34;
-        byte fp_lh_digits = 34;
-        byte fp_guard_digits = 3;
-        /*
+        byte fp_lh_digits = 32; // RPI 821  
+        byte fp_guard_digits = 3;         /*
          * follow fp_work_reg used to format
          * edl types to binary storage formats
          */
@@ -563,10 +564,10 @@ public  class  tz390 {
         		}; 
         int[]  fp_digits_max  = {0,16,0,0,7,0,0,34,0};
         int[]  fp_sign_bit    = {0x800,0x20,0x80,0x100,0x20,0x80,0x8000,0x20,0x80}; // RPI 407
-        int[]  fp_one_bit_adj = {2,-1,1,2,-1,1,2,-1,1}; // RPI 407
+        int[]  fp_one_bit_adj = {2,-1,2,2,-1,1,2,-1,1}; // RPI 407 RPI 821 from 1 to 2 
         int[]  fp_exp_bias    = {0x3ff,398,0x40,0x7f,101,0x40,0x3fff,6176,0x40}; // RPI 407
         int[]  fp_exp_max     = {0x7ff,0x3ff,0x7f,0xff,0xff,0x7f,0x7fff,0x3fff,0x7f}; // RPI 407
-        int[]  fp_man_bits = {52,-1,56,23,-1,24,112,-1,112};
+        int[]  fp_man_bits = {52,-1,56,23,-1,24,112,-1,112}; 
   /*
    * DFP Decimal Floating Point shared tables
    */
@@ -6560,5 +6561,12 @@ public void put_trace(String text){
 			final_options = final_options + token + " ";
 			cmd_parms_len = cmd_parms_len + token.length() + 1;
 		}
+	}
+	public synchronized void abort_case(){ // RPI 646
+		/*
+		 * abort case with invalide index
+		 * RPI 849 used by pz390, mz390
+		 */
+		abort_error(22,"internal error - invalid case index");
 	}
 }

@@ -31,14 +31,28 @@ public class zcobol{
          b.  labels with dashes converted to underscores.     
          c.  Continuation of words and literals
              handled. 
+         d.  Periods and commas allowed within parms which
+             are then enclosed in single quotes to avoid
+             conflict with macro assembler parm parsing.
+         e.  Open/close () put in single quotes to avoid 
+             conflict with macro assembler parm parsing.
+         f.  Literals with single or double quotes allowed
+             with double single/double quotes inclosed.
+         g.  Single '" wrapped in
+             opposite type quotes.  
+         h.  Single () wrapped in single quotes.
+         i.  Single . generates PERIOD vero in Proc. Div. 
+         j.  Generate DATA END, PROCEDURE END,and END      
     ****************************************************
     * Maintenance
     ****************************************************
     * 04/06/08 initial coding
     * 04/11/08 add continuation line support and
     *          verb lookup for mult verbs on a line.
+    * 04/28/08 allow period within pictures.
     ****************************************************
-    *                                           last RPI
+    *                                         last RPI *
+	****************************************************
 	*/
 	/*
 	 * Global variables
@@ -67,10 +81,14 @@ public class zcobol{
     /*
      * zcob token variables
      */
+	int     zcob_token_count = 0;
 	String  zcob_prev_token = null;
 	String  zcob_next_token = null;
 	char    zcob_prev_area  = 'A';
 	char    zcob_next_area  = 'A';
+	boolean zcob_prev_first = true;
+	boolean zcob_next_first;
+	boolean zcob_token_first = true;
 	String  zcob_token   = null;   // next token or null at eof
 	Pattern zcob_pattern = null;   // parsing regular expression pattern
 	Matcher zcob_match   = null;   // token pattern matching class
@@ -114,15 +132,18 @@ public class zcobol{
 		/*
 		 * 1.  Display zcobol version
 		 * 2.  Compile regular expression pattern
-		 * 3.  Open CBLand MLC files
+		 * 3.  Open CBL and MLC files
 		 */	
         System.out.println("zcobol version = " + zcobol_ver);
 		try {
 			zcob_pattern = Pattern.compile(
-					"([']([^']|(['][']))*['])"  // parm in quotes
-				  +	"|([0-9]+[.][0-9]+)" // number with embedded .
-				  +	"|([^\\s\\.\\,\\']+)"	    // any parm except .,'
-                  + "|([\\.\\,\\'])"            // .,' char
+					 // parm in single or double quotes
+				   	"([']([^']|(['][']))+['])"  // parm in quotes
+				  +	"|([\"]([^\"]|([\"][\"]))+[\"])"  // parm in quotes
+					 // any parm such as PIC may have embedded ., but not '"()
+				  +	"|([^\\s\\.\\,\\'\"()]+(([^\\s\\.\\,\\'\"()]+)|([\\.\\,][^\\s\\.\\,\\'\"()]+))*)"	 
+				     // .,'"() single special char requiring processing
+				  + "|([\\.\\,\\'\"()])"            
 			);
 		} catch (Exception e){
 			abort_error("zcobol cbl pattern errror - " + e.toString());
@@ -214,7 +235,8 @@ public class zcobol{
 			if (!zcob_eof){
 				set_next_token();
 				zcob_prev_token = zcob_next_token;
-				zcob_prev_area  = zcob_next_area;		
+				zcob_prev_area  = zcob_next_area;
+				zcob_prev_first = zcob_next_first;
 			}
 			if (zcob_eof){
 				// return null at eof
@@ -224,6 +246,7 @@ public class zcobol{
 		} else {
 			zcob_prev_token = zcob_next_token;
 			zcob_prev_area  = zcob_next_area;
+			zcob_prev_first = zcob_next_first;
 		}
 		if (zcob_prev_token.equals("'")){
 			// start split literal found
@@ -271,12 +294,13 @@ public class zcobol{
         // we now have a complete prev token
 		zcob_token      = zcob_prev_token;
 		zcob_token_area = zcob_prev_area;
+		zcob_token_first = zcob_prev_first;
 		return;
 	}
 	private void set_next_token(){
 		/*
 		 * get next token from CBL file
-		 * and put new CBL lines on MLC as comments
+		 * and set pending CBL comment line
 		 */
 		if (zcob_line != null){
 			if (zcob_next_token != null){
@@ -312,7 +336,7 @@ public class zcobol{
 			 * 4.  ignore lines < 8 or blank
 			 */
 			try {
-                flush_cbl_line();
+                flush_pend_mlc_line();
 				zcob_line = zcob_buff.readLine();
 				boolean check_zcob = true;
 				while (zcob_line != null
@@ -321,7 +345,11 @@ public class zcobol{
 						if (zcob_line.charAt(6) == '*'
 							|| zcob_line.charAt(6) == '/'){
 							tot_zcob++;
-							put_mlc_line("* " + zcob_line);
+							if (zcob_line.length() > 70){
+								put_mlc_line("*" + zcob_line.substring(0,70));
+							} else {
+								put_mlc_line("*" + zcob_line);
+							}
 							zcob_line = zcob_buff.readLine();
 						} else {
 							check_zcob = false;
@@ -333,6 +361,7 @@ public class zcobol{
 				}
 				if (zcob_line != null){
 					tot_zcob++;
+					zcob_token_count = 0;
 					zcob_put_pending = true;
 					zcob_line_pending = "* " + zcob_line;
 				} else {
@@ -343,7 +372,7 @@ public class zcobol{
 				abort_error("zcobol read error on MLC file - " + e.toString());
 			}
 		}
-	private void flush_cbl_line(){
+	private void flush_pend_mlc_line(){
 		/*
 		 * write pending CBL line comment
 		 * if pending
@@ -361,6 +390,12 @@ public class zcobol{
 		if (!zcob_match.find()){
 			zcob_line = null;
 		} else {
+			zcob_token_count++;
+			if (zcob_token_count == 1){
+				zcob_next_first = true;
+			} else {
+			    zcob_next_first = false;
+			}
 			zcob_next_token = zcob_match.group();
 			if (zcob_match.start() < 3){
 				zcob_next_area = 'A';
@@ -372,15 +407,31 @@ public class zcobol{
 	private void process_zcob_token(){
 		/*
 		 * process zcob_token
+		 *   1.  If token length > 1 and not literal
+		 *       replace - with _ and if ., included
+		 *       wrap in single quotes.
+		 *   2.  Single char processing
+		 *       a.  Flush line at . and gen PERIOD if Proc. div.
+		 *           else ignore period.
+		 *       b.  Ignore commas.
+		 *       c.  If '" wrap in opposite quotes
+		 *       d.  If () wrap in single quotes.          
 		 */
 		if (zcob_token.length() > 1){
 			if (zcob_token.charAt(0) != '\''
-			    && zcob_token.indexOf('-') >= 0){
-				// replace token "-" with "_"
-				// for z390 meta macro assembler compatiblity
-				zcob_token = zcob_token.replaceAll("-","_");
+				&& zcob_token.charAt(0) != '"'){
+				if (zcob_token.indexOf('.') >= 0 
+					|| zcob_token.indexOf(',') >= 0){
+					// wrap strings with ., in quotes
+					zcob_token = "'" + zcob_token + "'";				
+				} else if (zcob_token.indexOf('-') >= 0){
+			    	// replace token "-" with "_"
+			    	// for z390 meta macro assembler compatiblity
+			    	zcob_token = zcob_token.replaceAll("-","_");
+			    }
+			    
 			}
-		} else {
+		} else if (zcob_token.length() == 1){
 			// signle char token . or ,
 			if (zcob_token.charAt(0) == '.'){
 				if (mlc_line != null 
@@ -390,42 +441,56 @@ public class zcobol{
 					if (zcob_proc_div){
 						new_mlc_line("             PERIOD");
 					}
-					flush_mlc_line();
+					flush_last_mlc_line();
 				}
 				// ignore period
 				return;
 			} else if (zcob_token.charAt(0) == ','){
 				// ignore commas
 				return;
-			}
+			} else if (zcob_token.charAt(0) == '\''){
+				zcob_token = "'" + zcob_token + "'";
+			} else if (zcob_token.charAt(0) == '"'){
+				zcob_token = "\"" + zcob_token + "\"";
+ 			} else if (zcob_token.charAt(0) == '(' || zcob_token.charAt(0) == ')'){
+ 				zcob_token = "'" + zcob_token + "'";
+ 			}			
 			// may be single char label 
+		} else {
+			abort_error("zero length token parsing error");
 		}
 		if (zcob_token_area == 'A'){
 			// non procedure division section operation
 			// or procedure division label
-			if (mlc_line != null){
-				flush_mlc_line();
-			}
 			if (zcob_proc_div){				
 				// gen procedure div label
 				new_mlc_line("         LABEL " + zcob_token);
 			} else {
-				if  (zcob_token.charAt(0) <= '9'){
+				if  (!zcob_proc_div 
+					&& zcob_token.charAt(0) >= '0' 
+					&& zcob_token.charAt(0) <= '9'){
 					new_ws_line();
 				} else {
 					if (zcob_token.equals("PROCEDURE")){
+						put_mlc_line("         DATA END");
 						zcob_proc_div = true;
 					}
 					new_mlc_line("         " + zcob_token);
 				}
 			}
 		} else if (find_verb()){
+			if (zcob_token_first){
+				flush_last_mlc_line();
+				flush_pend_mlc_line();
+			}
             new_mlc_line("             " + zcob_token);		
 		} else {
 			// unknown verb or parm
 			if (mlc_line == null){
-				flush_cbl_line();
-				if (zcob_token.charAt(0) <= '9'){
+				flush_pend_mlc_line();
+				if (!zcob_proc_div 
+					&& zcob_token.charAt(0) >= '0' 
+					&& zcob_token.charAt(0) <= '9'){
 					new_ws_line();
 				} else {
 					new_mlc_line("         " + zcob_token);
@@ -492,11 +557,11 @@ public class zcobol{
     	 * and start new line
     	 * and reset parm count
     	 */
-        flush_mlc_line();
+        flush_last_mlc_line();
 		mlc_line = line;
 		mlc_parms = 0;
     }
-    private void flush_mlc_line(){
+    private void flush_last_mlc_line(){
     	/*
     	 * write pending mlc_line if any
     	 */
