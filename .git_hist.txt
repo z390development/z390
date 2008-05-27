@@ -4124,6 +4124,44 @@ set GIT_COMMITTER_DATE=2021-03-23 16:49:00 +0100
 git commit -m "Reconstructed version v1.4.01d of z390 committed on behalf of Don Higgins"
 git tag -a v1.4.01d -m "Reconstructed version v1.4.01d of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.4.01e
+dir *.* /B /on /s >.allfile.txt
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.4.01e
+git add README.TXT
+git add SOA/DEMO/DEMOBLD.BAT
+git add SOA/DEMO/DEMORUN.BAT
+git add SOA/DEMO/DEMORUNC.BAT
+git add SOA/DEMO/DEMORUNS.BAT
+git add SOA/MACLIB/SOAGEN.MAC
+git add SOA/MACLIB/SOAMSG.MAC
+git add src/az390.java
+git add src/sz390.java
+git add src/tz390.java
+git add soa/demo/DEMOBLDC.BAT
+git add soa/demo/DEMOCMGR.CBL
+git add soa/demo/DEMOMAIN.CBL
+git add soa/demo/DEMOSOAC.BAT
+git add soa/demo/DEMOSUB1.CBL
+git add soa/demo/DEMOSUB2.CBL
+git add soa/demo/SOACMGR1.CPY
+git add soa/demo/SOACMGR2.CPY
+git add soa/demo/SOACMGR3.CPY
+git add soa/demo/SOASTUB1.CPY
+git add soa/demo/SOASTUB2.CPY
+git add soa/demo/SOASTUB3.CPY
+git add soa/maclib/SOAMSG.CPY
+
+==> Create commit for V1.4.01e
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2008-05-27 11:38:00 -0500
+set GIT_COMMITTER_DATE=2021-03-23 17:11:00 +0100
+git commit -m "Reconstructed version v1.4.01e of z390 committed on behalf of Don Higgins"
+git tag -a v1.4.01e -m "Reconstructed version v1.4.01e of z390 committed on behalf of Don Higgins"
 
 
 

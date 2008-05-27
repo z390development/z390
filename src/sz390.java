@@ -167,7 +167,9 @@ public  class  sz390 implements Runnable {
     *          and format PSW with CC, ILC, MASK, at ABEND 
     * 03/20/08 RPI 809 restore psw cc and amode for SPIE and ESTAE exits 
     * 04/23/08 RPI 837 update EZ390 ENDING msg only once and add to log 
-    * 05/08/08 RPI 821 change CTF/CFD DF from double to big decimal                  
+    * 05/08/08 RPI 821 change CTF/CFD DF from double to big decimal   
+    * 05/26/08 RPI 854 display host name on open socker server tracet 
+    *          and force test prompt on first command              
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -340,6 +342,7 @@ public  class  sz390 implements Runnable {
 	/*
      * test option interactive debug variables
      */
+    boolean test_first_cmd = true; // RPI 854
     String  test_file_name = null;
     boolean test_cmd_abort = false;
     int     test_loop_count = 0;
@@ -561,8 +564,9 @@ public  class  sz390 implements Runnable {
 	int    tcpio_lmsg = 0;       // r15 message length (max for receive)
 	int    tcpio_lmax = 1000000; // max lmsg set by send/recv
 	int    tcpio_lmin = 1;       // min lmsg
-	int    tcpio_host_addr   = 0;
-	String tcpio_host_text   = null;
+	int    tcpio_host_ip_addr   = 0;
+	String tcpio_host_ip_text   = null; 
+	String tcpio_host_name = null; // RPI 854
 	InetAddress tcpio_host_ip = null;
 	int    tcpio_port        = 0;
 	int    tot_tcpio_oper    = 0;
@@ -5077,6 +5081,7 @@ private void get_test_cmd(){
 	 * with the test(ddname) option
 	 */
 	if (!tz390.z390_abort && z390_command_text != null){
+		// z390 GUI test interface active
 		try {
 			z390_command_text.wait();
 			test_cmd = z390_command_text.getText();
@@ -5087,8 +5092,11 @@ private void get_test_cmd(){
 		}
 	} else {
 		try {
-			if (tz390.test_ddname == null
-				&& test_loop_count == 0){ // RPI 98
+			if (test_first_cmd  // RPI 854 
+				|| (tz390.test_ddname == null
+				    && test_loop_count == 0) // RPI 89
+				){ 
+				test_first_cmd = false;
 				tz390.put_trace("test enter command or h for help");
 			}
 			tz390.systerm_io++;
@@ -5097,7 +5105,7 @@ private void get_test_cmd(){
 				test_cmd = "Q";
 			}
 		} catch (Exception e){
-			test_error("i/o on command line");
+			test_error("i/o error on command line");
 			test_cmd = "Q";  // quit now
 		}
 	}
@@ -6079,18 +6087,19 @@ private void svc_tcpio(){
 		}
        	try {
        		tcpio_host_ip = InetAddress.getLocalHost();
-       		tcpio_host_text = tcpio_host_ip.getHostAddress();      		
+       		tcpio_host_ip_text = tcpio_host_ip.getHostAddress();      		
+       	    tcpio_host_name = tcpio_host_ip.getHostName(); // RPI 854
        	} catch (Exception e){
            	put_log("TCPIO error on open get local host failed");
            	pz390.reg.putInt(pz390.r15,12);
            	break;
        	}
-       	tcp_server_host_text[cur_tcp_server_index] = tcpio_host_text;
+       	tcp_server_host_text[cur_tcp_server_index] = tcpio_host_ip_text;
        	tcp_server_host_ip[cur_tcp_server_index] = tcpio_host_ip;
        	tcp_server_port[cur_tcp_server_index] = tcpio_port;
        	if (tz390.opt_tracet){
     		put_log("TCPIO open server socket" 
-    				+ " host=" + tcpio_host_text
+    				+ " host=" + tcpio_host_ip_text + " " + tcpio_host_name // RPI 854
     				+ " port=" + tcpio_port);
     	}
     	try {
@@ -6117,31 +6126,33 @@ private void svc_tcpio(){
 			}
 		} else if (cur_tcp_client_index != -1){
             tcp_client_port[cur_tcp_client_index] = tcpio_port;
-			tcpio_host_addr = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
-			if (tcpio_host_addr > 0){
-				tcpio_host_text = tz390.get_ascii_var_string(pz390.mem_byte,tcpio_host_addr,265);
+			tcpio_host_ip_addr = pz390.reg.getInt(pz390.r14) & pz390.psw_amode;
+			if (tcpio_host_ip_addr > 0){
+				tcpio_host_ip_text = tz390.get_ascii_var_string(pz390.mem_byte,tcpio_host_ip_addr,265);
 				try {
-					tcpio_host_ip   = InetAddress.getByName(tcpio_host_text);
+					tcpio_host_ip   = InetAddress.getByName(tcpio_host_ip_text);
+				    tcpio_host_name = tcpio_host_ip.getHostName();
 				} catch(Exception e) {
-					put_log("TCPIO error open client host not found " + tcpio_host_text);
+					put_log("TCPIO error open client host not found " + tcpio_host_ip_text);
 					pz390.reg.putInt(pz390.r15,12);
 					break;
 				}
 			} else {
 				try {
 					tcpio_host_ip   = InetAddress.getLocalHost();
-					tcpio_host_text = tcpio_host_ip.getHostAddress();
+					tcpio_host_ip_text = tcpio_host_ip.getHostAddress();
+				    tcpio_host_name = tcpio_host_ip.getHostName();
 				} catch(Exception e) {
 					put_log("TCPIO error open client get host failed");
 					pz390.reg.putInt(pz390.r15,12);
 					break;
 				}
 			}
-			tcp_client_host_text[cur_tcp_client_index] = tcpio_host_text;
+			tcp_client_host_text[cur_tcp_client_index] = tcpio_host_ip_text;
 			tcp_client_host_ip[cur_tcp_client_index] = tcpio_host_ip;
 			if (tz390.opt_tracet){
 				put_log("TCPIO open client"
-					  + " HOST=" + tcpio_host_text 
+					  + " HOST=" + tcpio_host_ip_text 
 					  + " PORT=" + tcpio_port);
 			}
 			try {

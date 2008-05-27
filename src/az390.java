@@ -308,7 +308,8 @@ public  class  az390 implements Runnable {
         * 04/24/08 RPI 840 ignore spaces in P and Z data fields  
         * 04/28/08 RPI 841 add DFHRESP MAPFAIL, INVMPSZ, OVERFLOW  
         * 05/05/08 rpi 846 sync stats with mz390 
-        * 05/10/08 RPI 821 switch DH from double to BigDecimal cache                
+        * 05/10/08 RPI 821 switch DH from double to BigDecimal cache 
+        * 05/20/08 RPI 851 prevent recursive abort after failing ORG               
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -5172,7 +5173,8 @@ private void put_copyright(){
 					bin_byte[27] = (byte)Integer.valueOf(hex_rcd.substring(24,26),16).intValue();
 					bin_byte[28] = 0x07;  // double word align at entry 13
 					if (!hex_rcd.substring(31,33).equals("00")){
-						abort_error(133,"SD invalid 24 bit length - " + hex_rcd);
+						log_error(133,"SD invalid 24 bit length - " + hex_rcd); // RPI 851
+					    return;
 					}
 					bin_byte[29] = (byte)Integer.valueOf(hex_rcd.substring(33,35),16).intValue();
 					bin_byte[30] = (byte)Integer.valueOf(hex_rcd.substring(35,37),16).intValue();
@@ -5198,7 +5200,8 @@ private void put_copyright(){
 					bin_byte[24] = 0x01; // LD type at entry 9
 					Arrays.fill(bin_byte,25,28,ebcdic_space); // blank ESD type 12-14 for LD
 					if (!hex_rcd.substring(18,20).equals("00")){
-						abort_error(134,"LD invalid 24 bit address - " + hex_rcd);
+						log_error(134,"LD invalid 24 bit address - " + hex_rcd); // RPI 851
+					    return;
 					}
 					bin_byte[25] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
 					bin_byte[26] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
@@ -5209,7 +5212,8 @@ private void put_copyright(){
 					bin_byte[31] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
 					Arrays.fill(bin_byte,32,80,ebcdic_space);
 				} else {
-					abort_error(131,"invalid ESD type " + hex_rcd);
+					log_error(131,"invalid ESD type " + hex_rcd); // RPI 851
+					return;
 				}
 		   } else if (type.equals("TXT")){
 				bin_byte[1] = tz390.ascii_to_ebcdic['T'];
@@ -5218,7 +5222,8 @@ private void put_copyright(){
 				bin_byte[4] = ebcdic_space;
 				                        // 6-8 address at 
 				if (!hex_rcd.substring(18,20).equals("00")){
-					abort_error(134,"TXT invalid 24 bit address - " + hex_rcd);
+					log_error(134,"TXT invalid 24 bit address - " + hex_rcd);
+					return;
 				}
 				bin_byte[5] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
 				bin_byte[6] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
@@ -5270,7 +5275,8 @@ private void put_copyright(){
 				}
 				                         // 22-24 address at 
 				if (!hex_rcd.substring(18,20).equals("00")){
-					abort_error(135,"RLD invalid 24 bit address - " + hex_rcd);
+					log_error(135,"RLD invalid 24 bit address - " + hex_rcd); // RPI 851
+					return;
 				}
 				bin_byte[21] = (byte)Integer.valueOf(hex_rcd.substring(20,22),16).intValue();
 				bin_byte[22] = (byte)Integer.valueOf(hex_rcd.substring(22,24),16).intValue();
@@ -5282,7 +5288,8 @@ private void put_copyright(){
 				bin_byte[3] = tz390.ascii_to_ebcdic['D'];
 				Arrays.fill(bin_byte,4,80,ebcdic_space);
 		   } else {
-			   abort_error(130,"invalid object record - " + hex_rcd);
+			   log_error(130,"invalid object record - " + hex_rcd); // RPI 851
+			   return;
 		   }
 		} catch (Exception e){
 			if (az390_errors == 0){ // ignore if prior errors
@@ -5388,7 +5395,7 @@ private void put_obj_text(){
 		put_obj_line(temp_obj_line);
 		cur_text_len = 0; 
 	}
-	if (bal_eof)return;
+	if (bal_eof || bal_abort)return;  // rpi 851
 	if (cur_text_len == 0){
 		cur_text_esd = esd_base[sym_esd[esd_sid[cur_esd]]]; // RPI 301
 		cur_text_loc = loc_ctr;
@@ -7619,6 +7626,7 @@ private void process_org(){
 		|| bal_parms.length() == 0
 		|| bal_parms.charAt(0) == ','){  // RPI 258
 		if (cur_esd > 0){  //RPI10, RPI87
+			// org to end of current CSECT
 			loc_ctr = sym_loc[esd_sid[cur_esd]] + sym_len[esd_sid[cur_esd]];
 			hex_bddd1_loc = tz390.get_hex(loc_ctr,6); // RPI 632
 		} else {
@@ -7634,7 +7642,8 @@ private void process_org(){
 		loc_ctr = exp_val;
 		hex_bddd1_loc = tz390.get_hex(loc_ctr,6); // RPI 632
 		update_sect();  // RPI 10, RPI 778
-	} else {
+	} else { 
+		loc_ctr = loc_start; // rpi 851
 		log_error(102,"org expression must be in same section");
 	}
 }
