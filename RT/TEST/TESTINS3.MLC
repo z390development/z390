@@ -11,6 +11,14 @@
 * 03/08/08 RPI 817 ADD Z10 MISC PROBLEM STATE INSTR. TESTS              
 * 03/15/08 RPI 822 CORRECT BRC 1,*-4 TO BRC 1,*-4 FOR TRTE/TRTRE        
 * 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+* 06/09/08 RPI 859 CHANGES FOR Z10/HLASM ASSEMBLY AND EXECUTION
+*          1) CHANGE MVCOS TO ISSUE SPEC. EXCEPT. FOR OVERLAP (EXT.)
+*          2) CHANGE CLHHSI =H'-1',-1 TO CLHHSI =H'-1',X'FFFF' 
+*          3) CORRECT ALSI, ALGSI TESTS FOR SIGN EXTENDED I2
+*          4) ADD ADDITIONAL ASI AND AGSI TESTS FOR NEG. I2 
+*          5) CHANGE TESTCAT FOR POSITIVE IMMED. VALUES FOR HLASM
+*             AND CHANGE CGIT,CLGIT,CIT,CLFIT IMMED. LENGTH TO 16
+*          6) CHANGE TESTCAB FOR POSITIVE IMMED. VALUES FOR HLASM
 *********************************************************************
          PRINT DATA
          TITLE 'TESTINS3 - UNIT TEST Z10 EZ390 PROBLEM STATE INSTR.'
@@ -31,7 +39,7 @@
 .*  OP   - BASE OP NAME (WITHOUT EXTENDED E,H,L,NE,NH,NL SUFFIX)
 .*  TYPE - A=ARITH, L=LOGICAL
 .*  L1   - FIRST ARG TYPE  - 32,64
-.*  L2   - SECOND ARG TYPE - 32,64,1
+.*  L2   - SECOND ARG TYPE - 32,64,16,8 OR 1  RPI 859
 .*
          GBLA  &CAT
 &CAT     SETA  &CAT+1 COMPARE AND TRAP TEST COUNTER FOR LABELS
@@ -45,6 +53,12 @@
 &VL      SETC  '0'
 &VE      SETC  '1'
 &VH      SETC  '-1'
+.* RPI 859 FOLLOWING 4 FIX VALUE FOR HLASM COMPAT.
+         AIF   (&L2 GT 16).INIT
+&VH      SETC  '65535'
+         AIF   (&L2 GT 8).INIT
+&VH      SETC  '255'       
+.* END OF FIX
 .INIT    ANOP
 .R1      ANOP
          AIF   (&L1 EQ 64).R1_64
@@ -162,6 +176,12 @@
 &VL      SETC  '0'
 &VE      SETC  '1'
 &VH      SETC  '-1'
+.* RPI 859 FOLLOWING 4 FIX VALUE FOR HLASM COMPAT.
+         AIF   (&L2 GT 16).INIT
+&VH      SETC  '65535'
+         AIF   (&L2 GT 8).INIT
+&VH      SETC  '255'       
+.* END OF FIX
 .INIT    ANOP
 .R1      ANOP
          AIF   (&L1 EQ 64).R1_64
@@ -584,15 +604,15 @@ MVC3     MVC   PWORK(0),=C'1234'
          RT1   CCE
          GETMAIN R,LV=8000
          LR    R6,R1
-         LHI   R7,8000-1   R7 = MVCOS LENGTH
+         LHI   R7,8000     R7 = MVCOS LENGTH
          LHI   R0,0        R0 = ALL CONTROL BITS OFF
          CLI   =C'A',C'B'  SET CC NZ
-         MVI   0(R6),X'FF'
-         MVCOS 1(R6),0(R6),R7
+         LA    R5,0
+         MVCOS 0(R6),0(R5),R7  RPI 859 COPY PSA TO GETMAIN AREA
          RT1   CC3
-         LHI   R7,8000
-         L     R1,=X'FF000000'
-         CLCL  R6,R0
+         LR    R0,R5
+         LR    R1,R7
+         CLCL  R6,R0           RPI 859 COPMARE PAS TO GETMAIN AREA
          RT1   CCE
 * E332   LTGF
          LTGF  R5,=F'-1'
@@ -691,16 +711,36 @@ MVC3     MVC   PWORK(0),=C'1234'
          RT1   CC0
          CLC   WORD,=F'0'
          RT1   CCE
+         MVC   WORD,=F'12'   RPI 589 NEW TESTS
+         ASI   WORD,-12
+         RT1   CC0
+         CLC   WORD,=F'0'
+         RT1   CCE
+         MVC   WORD,=F'12'
+         ASI   WORD,-24
+         RT1   CC1
+         CLC   WORD,=F'-12'
+         RT1   CCE
 * EB6E   ALSI    
          MVC   WORD,=F'12'
          ALSI  WORD,12
          RT1   CC1
          CLC   WORD,=F'24'
          RT1   CCE
+         MVC   WORD,=F'3'  RPI 859 CORRECT AND ADD TESTS FOR NEG I2
+         ALSI  WORD,-1
+         RT1   CC3
+         CLC   WORD,=F'2'
+         RT1   CCE
          MVC   WORD,=F'1'
-         ALSI  WORD,X'F1'
+         ALSI  WORD,-1
+         RT1   CC2
+         CLC   WORD,=F'0'
+         RT1   CCE
+         MVC   WORD,=F'1'
+         ALSI  WORD,-2
          RT1   CC1
-         CLC   WORD,=F'242'
+         CLC   WORD,=F'-1'
          RT1   CCE
 * EB7A   AGSI   
          MVC   DWORD,=FL8'12'
@@ -719,10 +759,20 @@ MVC3     MVC   PWORK(0),=C'1234'
          RT1   CC1
          CLC   DWORD,=FL8'24'
          RT1   CCE
+         MVC   DWORD,=FL8'3'  RPI 859 CORRECT AND ADD TESTS FOR NEG I2
+         ALGSI DWORD,-1
+         RT1   CC3
+         CLC   DWORD,=FL8'2'
+         RT1   CCE
          MVC   DWORD,=FL8'1'
-         ALGSI DWORD,X'F1'
+         ALGSI DWORD,-1
+         RT1   CC2
+         CLC   DWORD,=FL8'0'
+         RT1   CCE
+         MVC   DWORD,=FL8'1'
+         ALGSI DWORD,-2
          RT1   CC1
-         CLC   DWORD,=FL8'242'
+         CLC   DWORD,=FL8'-1'
          RT1   CCE
 * EC54   RNSBG
          LG    R5,=C'12345678'
@@ -905,25 +955,25 @@ MVC3     MVC   PWORK(0),=C'1234'
 * EC65 CLGRJ R1,R2,M3,I4 COMPARE LOGIVSL R64 AND BRANCH RELATIVE
          TESTCAB CLGRJ,L,64,64
 * EC70 CGIT R1,I2,M3 COMPARE IMMEDIATE AND TRAP
-         TESTCAT CGIT,A,64,8
+         TESTCAT CGIT,A,64,16  RPI 589 WAS 8
 * EC71 CLGIT R1,I2,M3 COMPARE LOG IMMEDIATE AND TRAP
-         TESTCAT CLGIT,L,64,8
+         TESTCAT CLGIT,L,64,16 RPI 589 WAS 8
 * EC72 CIT R1,I2,M3 COMPARE IMMEDIATE AND TRAP
-         TESTCAT CIT,A,32,8
+         TESTCAT CIT,A,32,16   RPI 589 WAS 8
 * EC73 CLFIT R1,I2,M3 COMPARE LOG IMMEDIATE AND TRAP
-         TESTCAT CLFIT,L,32,8
+         TESTCAT CLFIT,L,32,16 RPI 589 WAS 8
 * EC76 CRJ R1,R2,M3,I4 COMPARE R32 AND BRANCH RELATIVE
          TESTCAB CRJ,A,32,32
 * EC7C CGIJ R1,I2,M3,I4 COMPARE IMMEDIATE R64 AND BRANCH RELATIVE
-         TESTCAB CGIJ,A,64,8
+         TESTCAB CGIJ,A,64,8 
 * EC7D CLGIJ R1,I2,M3,I4 COMPARE LOG IMMEDIATE R64 AND BRANCH RELATIVE
-         TESTCAB CLGIJ,L,64,8
+         TESTCAB CLGIJ,L,64,8                             
 * EC7E CIJ R1,I2,M3,I4 COMPARE IMMEDIATE R32 AND BRANCH RELATIVE
-         TESTCAB CIJ,A,32,8
+         TESTCAB CIJ,A,32,8                                 
 * EC7F CLIJ R1,I2,M3,I4 COMPARE LOG IMMEDIATE R32 AND BRANCH RELATIVE
-         TESTCAB CLIJ,L,32,8
+         TESTCAB CLIJ,L,32,8                                         
 * ECF4 CGRB R1,R2,M3,I4 COMPARE R64 AND BRANCH 
-         TESTCAB CGRB,A,64,64
+         TESTCAB CGRB,A,64,64  
 * ECF5 CLGRB R1,R2,M3,I4 COMPARE LOGIVSL R64 AND BRANCH 
          TESTCAB CLGRB,L,64,64
 * ECF6 CRB R1,R2,M3,I4 COMPARE R32 AND BRANCH 

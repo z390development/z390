@@ -181,6 +181,7 @@ public  class  tz390 {
     * 04/23/08 RPI 837 update EZ390 ENDING msg only once and add to log
     * 05/07/08 RPI 849 use shared abort_case for logic errors
     * 05/10/08 RPI 821 switch DH from double to BigDecimal cache
+    * 05/28/08 RPI 855 skip line on TRACEM/P AIF/AGO branch
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -189,7 +190,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.01e";  //dsh
+    String version    = "V1.4.01f";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -519,7 +520,6 @@ public  class  tz390 {
          * floating point constants (moved for RPI 407
          */
         byte fp_type    = 0;
-        boolean fp_unnormalized[] = new boolean[16]; // RPI 790 set for HFP unnormalized instr.
         byte fp_db_type = 0; // BFP long - double
         byte fp_dd_type = 1; // DPF long - big dec
         byte fp_dh_type = 2; // HFP long - big dec
@@ -4693,7 +4693,7 @@ private void process_option(String token){
     } else if (token.equals("NOLISTUSE")){
        	opt_listuse = false; 
     } else if (token.toUpperCase().equals("NOLOADHIGH")){
-       	opt_loadhigh = false; // RPI 819
+       	opt_loadhigh = false; // RPI 819   	
     } else if (token.toUpperCase().equals("NOOBJ")){ // RPI694
        	opt_obj = false;
     } else if (token.toUpperCase().equals("NOPC")){
@@ -5984,7 +5984,7 @@ public void put_trace(String text){
      	path.delete(path.lastIndexOf(File.separator), path.length());
         return path.toString();
     }
-    public boolean get_dfp_bin(int dfp_type,BigDecimal dfp_bd){
+    public boolean fp_get_dfp_bin(int dfp_type,BigDecimal dfp_bd){
     	/*
     	 * store binary DD,ED, or LD format
     	 * in fp_work_reg.  Return true if value within range.

@@ -11,9 +11,14 @@
                perform open-client-socket
            end-if
            display 'SOACMGR ' soa-msg-svc-name ' request sent'
+           call 'GETTIME' using micro-start.
            perform send-soa-request
            move zero to soa-msg-len
            perform receive-soa-reply
+           call 'GETTIME' using micro-end,
+           compute micro-sec = micro-end - micro-start.
+           display 'SOACMGR ' soa-msg-svc-name
+                   ' response time = ' micro-sec ' micro-sec'.
            goback.
        send-soa-request.
            move soa-msg-len to nbyte

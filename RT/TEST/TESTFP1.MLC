@@ -31,6 +31,8 @@
 *          AND CORRECT TCEB, TCDB, AND TCXB MINUS -0 TESTS
 * 05/16/08 RPI 821 ADD TEST FOR HIGH/LOW DH/LH NIBBLE PRECISION 
 *                  ANDDJUST LBMAX FOR TESTING NEW LIMITS 
+* 05/29/08 RPI 767 ADD TESTS FOR AW, SW, AWR, SWR UNNORMALIZED  
+*                  ADD TESTS FOR AU, SU, AUR, SUR UNNORMALIZED
 *********************************************************************
          PRINT DATA
          MACRO
@@ -47,6 +49,7 @@
          MEND
 TESTFP1  RT1   MAIN
          EQUREGS
+         EQUREGS REGS=FPR
 ESPIE_EXIT DS  0H
          USING *,R15
          USING IHAEPIE,R1
@@ -347,6 +350,12 @@ DDR1     ESPIE RESET
          RT1   CCE
          CD    R0,=DH'0'
          RT1   CCE
+         LD    F0,=DH'1'
+         LD    F1,=X'4E00000000000000'
+         AWR   F0,R1
+         STD   F0,DWORD
+         CLC   DWORD,=X'4E00000000000001'
+         RT1   CCE
 * 2F   SWR
          LD    R0,=DH'3'
          LD    R1,=DH'2'
@@ -365,6 +374,12 @@ DDR1     ESPIE RESET
          SWR   R0,R1
          RT1   CCE
          CD    R0,=DH'0'
+         RT1   CCE
+         LD    F0,=DH'1'
+         LD    F1,=X'4E00000000000000'
+         SWR   F0,R1
+         STD   F0,DWORD
+         CLC   DWORD,=X'4E00000000000001'
          RT1   CCE
 * 30   LPER
          LE    R1,=EH'-1'
@@ -599,6 +614,12 @@ DER1     ESPIE RESET
          RT1   CCE
          CE    R0,=EH'0'
          RT1   CCE
+         LE    F0,=EH'1'
+         LE    F1,=X'46000000'
+         AUR   F0,F1
+         STD   F0,WORD
+         CLC   WORD,=X'46000001'
+         RT1   CCE
 * 3F   SUR
          LE    R0,=EH'3'
          LE    R1,=EH'2'
@@ -617,6 +638,12 @@ DER1     ESPIE RESET
          SUR   R0,R1
          RT1   CCE
          CE    R0,=EH'0'
+         RT1   CCE
+         LE    F0,=EH'1'
+         LE    F1,=X'46000000'
+         AUR   F0,F1
+         STD   F0,WORD
+         CLC   WORD,=X'46000001'
          RT1   CCE
 * 60   STD
          LD    R0,=DH'1'
@@ -713,6 +740,11 @@ DD1      ESPIE RESET
          RT1   CCE
          CD    R0,=DH'0'
          RT1   CCE
+         LD    F0,=DH'1'
+         AW    F0,=X'4E00000000000000'
+         STD   F0,DWORD
+         CLC   DWORD,=X'4E00000000000001'
+         RT1   CCE
 * 6F   SW
          LD    R0,=DH'3'
          SW    R0,=DH'2'
@@ -728,6 +760,11 @@ DD1      ESPIE RESET
          SW    R0,=DH'1'
          RT1   CCE
          CD    R0,=DH'0'
+         RT1   CCE
+         LD    F0,=DH'1'
+         SW    F0,=X'4E00000000000000'
+         STD   F0,DWORD
+         CLC   DWORD,=X'4E00000000000001'
          RT1   CCE
 * 70   STE
          LE    R0,=EH'1'
@@ -839,6 +876,11 @@ DE1      ESPIE RESET
          RT1   CCE
          CE    R0,=EH'0'
          RT1   CCE
+         LE    F0,=EH'1'
+         AU    F0,=X'46000000'
+         STD   F0,WORD
+         CLC   WORD,=X'46000001'
+         RT1   CCE
 * 7F   SU
          LE    R0,=EH'3'
          SU    R0,=EH'2'
@@ -854,6 +896,11 @@ DE1      ESPIE RESET
          SU    R0,=EH'1'
          RT1   CCE
          CE    R0,=EH'0'
+         RT1   CCE
+         LE    F0,=EH'1'
+         SU    F0,=X'46000000'
+         STD   F0,WORD
+         CLC   WORD,=X'46000001'
          RT1   CCE
 * B22D DXR
          LX    R0,=LH'6'
@@ -1504,25 +1551,23 @@ DDBR1    ESPIE RESET
          CE    R0,=EH'6'
          RT1   CCE
 * B338 MAYLR Z9 MULTIPLY AND ADD L > E
-         LX    R0,=L'10'
-         LD    R2,=D'2'
-         LD    R3,=D'3'
-         MAYLR R0,R2,R3
-         LX    R4,=LH'16'
-         CXR   R0,R4
+         LD    R0,=X'4E0000000000000A'
+         LD    R5,=X'4E00000000000002'
+         LD    R6,=X'4E00000000000003'
+         MAYLR R0,R5,R6    RPI 767 FIX TEST
+         CD    R0,=D'16'
          RT1   CCE
 * B339 MYLR Z9 MULTIPLY L > E
-         LD    R2,=D'2'
-         LD    R3,=D'3'
-         MYLR   R0,R2,R3
-         LX    R4,=LH'6'
-         CXR   R0,R4
+         LD    R2,=X'4E00000000000002'
+         LD    R3,=X'4E00000000000003'
+         MYLR  R0,R2,R3
+         CD    R0,=X'4E00000000000006'  RPI 767 FIX TEST
          RT1   CCE
 * B33A MAYR Z9 MULTIPLY AND ADD L > E
          LX    R0,=L'10'
-         LD    R2,=D'2'
-         LD    R3,=D'3'
-         MAYR  R0,R2,R3
+         LD    R5,=D'2'   RPI 767
+         LD    R6,=D'3'   RPI 767
+         MAYR  R0,R5,R6   RPI 767 FIX TEST BUG
          LX    R4,=LH'16'
          CXR   R0,R4
          RT1   CCE
@@ -1534,19 +1579,17 @@ DDBR1    ESPIE RESET
          CXR   R0,R4
          RT1   CCE
 * B33C MAYHR Z9 MULTIPLY AND ADD L > E
-         LX    R0,=L'10'
-         LD    R2,=D'2'
-         LD    R3,=D'3'
-         MAYHR R0,R2,R3
-         LX    R4,=LH'16'
-         CXR   R0,R4
+         LD    R0,=D'10'
+         LD    R5,=D'2'
+         LD    R6,=D'3'
+         MAYHR R0,R5,R6    RPI 767 FIX TEST
+         CD    R0,=D'16'
          RT1   CCE
 * B33D MYLR Z9 MULTIPLY L > E
          LD    R2,=D'2'
          LD    R3,=D'3'
          MYHR  R0,R2,R3
-         LX    R4,=LH'6'
-         CXR   R0,R4
+         CD    R0,=DH'6' RPI 767 FIX TEST
          RT1   CCE
 * B33E MADR
          LD    R0,=DH'1'
@@ -2469,17 +2512,15 @@ KDB2     ESPIE RESET
          CE    R0,=EH'6'
          RT1   CCE
 * ED38 MAYL Z9 MULTIPLY AND ADD L > E
-         LX    R0,=L'10'
-         LD    R1,=D'3'
-         MAYL  R0,R1,=D'2'
-         LX    R4,=LH'16'
-         CXR   R0,R4
+         LD    R0,=X'4E0000000000000A'
+         LD    R5,=X'4E00000000000002'
+         MAYL  R0,R5,=X'4E00000000000003'
+         CD    R0,=D'16'
          RT1   CCE
 * ED39 MYL Z9 MULTIPLY L > E
-         LD    R1,=D'3'
-         MYL   R0,R1,=D'2'
-         LX    R4,=LH'6'
-         CXR   R0,R4
+         LD    R2,=X'4E00000000000002'
+         MYL   R0,R2,=X'4E00000000000003'
+         CD    R0,=X'4E00000000000006'    RPI 767 FIX TEST
          RT1   CCE
 * ED3A MAY Z9 MULTIPLY AND ADD L > E
          LX    R0,=L'10'
@@ -2495,17 +2536,15 @@ KDB2     ESPIE RESET
          CXR   R0,R4
          RT1   CCE
 * ED3C MAYH Z9 MULTIPLY AND ADD L > E
-         LX    R0,=L'10'
-         LD    R1,=D'3'
-         MAYH  R0,R1,=D'2'
-         LX    R4,=LH'16'
-         CXR   R0,R4
+         LD    R0,=D'10'
+         LD    R5,=D'2'
+         MAYH  R0,R5,=D'3'    RPI 767 FIX TEST
+         CD    R0,=D'16'
          RT1   CCE
 * ED3D MYH Z9 MULTIPLY L > E
          LD    R1,=D'3'
          MYH   R0,R1,=D'2'
-         LX    R4,=LH'6'
-         CXR   R0,R4
+         CD    R0,=DH'6'  RPI 767 FIX TEST
          RT1   CCE
 * ED3E MAD 
          LD    R0,=DH'1'

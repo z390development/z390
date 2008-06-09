@@ -55,6 +55,16 @@
 * 03/28/08 RPI 828 test clearing high bit in AMODE31 for TRT/EDMK     
 * 03/28/08 RPI 831 test SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF FOR CC1  
 *          WHEN BORROW FOR TWO VALUES WITH HIGH BIT ON.
+* 06/07/08 RPI 844 corrections for compatibility with z9,z10 tests 
+*          1) Align TROO, TROT, TRTO, TRTT table to dword else 0C4
+*          2) TMHH, TMHL, TMLH, TMLL set CC1 high sel bit 0 else cc2   
+*          3) FORCE AMODE31 WITH SAM31 FOR TRT TEST ON Z9/Z10
+*          4) CORRECT TESTS FOR TMY MIXED
+*          5) RECODE LMD TEST USING DC VS LITERALS FOR HLASM COMPAT.
+*          6) ISSUE S0C7 ABEND FOR X'3' PD SIGN UNLESS OPTION ASCII
+*          7) ALIGN REGS ON 16 BYTE BOUNDARY TO ELIM. HLASM WARNING
+* 06/09/08 RPI 859 move MVCOS updated test to TESTINS3 removing overlap
+*          2) Set R0 to 7 for STFLE  store faciliies.
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -83,11 +93,15 @@ ESTAE_EXIT DS  0H
          LA    R15,4   REQUEST RESTART RPI 636
          BR    R14
          DROP  R15,R1
+LMD1     DC    0D,X'01234567',X'01234567' RPI 844
+LMD2     DC    0D,X'89ABCDEF',X'89ABCDEF' RPI 844
+         CNOP  8,16      RPI 844 PREVENT STPQ WARNING MESSAGE
 PWORK    DS    D
 PWORK16  DS    XL16
 PL1      DS    PL1
 WORD     DS    F
 BYTE     DS    X
+         CNOP  0,16      RPI 844 PREVENT CDS WARNING MESSAGE
 REGS     DS    XL(16*8)
 EBMIN    DC    EB'1.2E-38'
 FPCREG   DS    F        BFP CONTROL REG WITH MASKS AND DXC CODE
@@ -112,25 +126,26 @@ TREV1    DC    C!ABCD!
 TREF2    DC    X'F0F1EEF3'  EOD IN 3RD BYTE
 TREV2    DC    X'C1C2EEF3'
 TROOEOD  EQU   X'C3' TROO EOD TEST BYTE RPI 580
-TROOTAB  DC    240X'FF',C!ABCD!,12X'FF' TROO TRANS TAB 0123 > ABCD
+* RPI 844 ALIGN TROOTAB, TROTTAB, TRTTTAB TO DOUBLE WORK
+TROOTAB  DC    0D,240X'FF',C!ABCD!,12X'FF' TROO TRANS TAB 0123 > ABCD
 TROOF1   DC    C!9999!
 TROOF1V1 DC    X'C1C2C3C4'  RESULT WITH NO TESTING FOR 4 BYTES
 TROOF1V2 DC    X'C1C2F9F9'  RESULT WITH TESTING STOP ON 3RD BYTE
 TROOF2   DC    X'F0F1F2F3'                     
 TROTEOD  EQU   X'C3C3' TROO EOD TEST BYTE RPI 580
-TROTTAB  DC    240X'FFFF',C!AABBCCDD!,12X'FFFF' (F0 * 2 > C1C1) ETC
+TROTTAB  DC    0D,240X'FFFF',C!AABBCCDD!,12X'FFFF' (F0 * 2 > C1C1) ETC
 TROTF1   DC    C!99999999!
 TROTF1V1 DC    X'C1C1C2C2C3C3C4C4'  RESULT WITH NO TESTING FOR 4 BYTES
 TROTF1V2 DC    X'C1C1C2C2F9F9F9F9'  RESULT WITH STOP ON 3RD BYTE
 TROTF2   DC    X'F0F1F2F3'                     
 TRTOEOD  EQU   X'C3' TROO EOD TEST BYTES RPI 580
-TRTOTAB  DC    128X'FFFF',C!ABCD! (X'0100' > C'A' ETC
+TRTOTAB  DC    0D,128X'FFFF',C!ABCD! (X'0100' > C'A' ETC
 TRTOF1   DC    C!9999!
 TRTOF1V1 DC    C!ABCD!  RESULT WITH NO TESTING FOR 4 BYTES
 TRTOF1V2 DC    C!AB99!  RESULT WITH STOP ON 3RD BYTE
 TRTOF2   DC    X'0100010101020103'                     
 TRTTEOD  EQU   X'C3C3' TROO EOD TEST BYTES RPI 580
-TRTTTAB  DC    256X'FFFF',C!AABBCCDD! (X'0100' > C'AA' ETC
+TRTTTAB  DC    0D,256X'FFFF',C!AABBCCDD! (X'0100' > C'AA' ETC
 TRTTF1   DC    C!99999999!
 TRTTF1V1 DC    C!AABBCCDD!  RESULT WITH NO TESTING
 TRTTF1V2 DC    C!AABB9999!  RESULT WITH STOP ON 3RD ENTRY
@@ -1525,11 +1540,17 @@ BXLE3    EQU   *
          IILH  R0,X'FFFF'
          TMLH  R0,X'FFFF'
          RT1   CC3
-         IILH  R0,X'FFFF'
+         IILH  R0,X'BFFF'  RPI 844
          TMLH  R0,X'FF00'
          RT1   CC2
          IILH  R0,X'7FFF'
          TMLH  R0,X'FF00'
+         RT1   CC1
+         IILH  R0,X'F9FF'  RPI 844
+         TMLH  R0,X'0F00'
+         RT1   CC2
+         IILH  R0,X'F3FF'
+         TMLH  R0,X'0F00'
          RT1   CC1
 * A71  TMLL / TML
          IILL  R0,X'0000'
@@ -1544,11 +1565,17 @@ BXLE3    EQU   *
          IILL  R0,X'FFFF'
          TMLL  R0,X'FFFF'
          RT1   CC3
-         IILL  R0,X'FFFF'
+         IILL  R0,X'BFFF'  RPI 844
          TMLL  R0,X'FF00'
          RT1   CC2
          IILL  R0,X'7FFF'
          TMLL  R0,X'FF00'
+         RT1   CC1
+         IILL  R0,X'F9FF'  RPI 844
+         TMLL  R0,X'0F00'
+         RT1   CC2
+         IILL  R0,X'F3FF'
+         TMLL  R0,X'0F00'
          RT1   CC1
 * A72  TMHH 
          IIHH  R0,X'0000'
@@ -1563,11 +1590,17 @@ BXLE3    EQU   *
          IIHH  R0,X'FFFF'
          TMHH  R0,X'FFFF'
          RT1   CC3
-         IIHH  R0,X'FFFF'
+         IIHH  R0,X'BFFF'  RPI 844
          TMHH  R0,X'FF00'
          RT1   CC2
          IIHH  R0,X'7FFF'
          TMHH  R0,X'FF00'
+         RT1   CC1
+         IIHH  R0,X'F9FF'  RPI 844
+         TMHH  R0,X'0F00'
+         RT1   CC2
+         IIHH  R0,X'F3FF'
+         TMHH  R0,X'0F00'
          RT1   CC1
 * A73  TMHL 
          IIHL  R0,X'0000'
@@ -1582,11 +1615,17 @@ BXLE3    EQU   *
          IIHL  R0,X'FFFF'
          TMHL  R0,X'FFFF'
          RT1   CC3
-         IIHL  R0,X'FFFF'
+         IIHL  R0,X'BFFF'  RPI 844
          TMHL  R0,X'FF00'
          RT1   CC2
          IIHL  R0,X'7FFF'
          TMHL  R0,X'FF00'
+         RT1   CC1
+         IIHL  R0,X'F9FF'  RPI 844
+         TMHL  R0,X'0F00'
+         RT1   CC2
+         IIHL  R0,X'F3FF'
+         TMHL  R0,X'0F00'
          RT1   CC1
 * A74  BRC
          J     BRCOK
@@ -1701,6 +1740,7 @@ BRCTG1   LA    R2,1(R2)
          LM    R0,R1,=A(WORD,4)
          LM    R2,R3,=A(PWORK,4)
          MVCLE R0,R2,0
+         JO    *-4                    RPI 844
          RT1   CCE
          CLC   WORD,=C'ABCD'
          RT1   CCE
@@ -1717,6 +1757,7 @@ BRCTG1   LA    R2,1(R2)
          LM    R0,R1,=A(WORD,4)
          LM    R2,R3,=A(PWORK,2)
          MVCLE R0,R2,C' '
+         JO    *-4                    RPI 844
          RT1   CCH
          CL    R0,=A(WORD+4)
          RT1   CCE
@@ -1733,6 +1774,7 @@ BRCTG1   LA    R2,1(R2)
          LM    R0,R1,=A(WORD,3)
          LM    R2,R3,=A(PWORK,4)
          MVCLE R0,R2,0
+         JO    *-4                    RPI 844
          RT1   CCL
          CL    R0,=A(WORD+3)
          RT1   CCE
@@ -1750,6 +1792,7 @@ BRCTG1   LA    R2,1(R2)
          LM    R0,R1,=A(WORD,4)
          LM    R2,R3,=A(PWORK,4)
          CLCLE R0,R2,0
+         JO    *-4                    RPI 844
          RT1   CCE
          CL    R0,=A(WORD+4)
          RT1   CCE
@@ -1764,6 +1807,7 @@ BRCTG1   LA    R2,1(R2)
          LM    R0,R1,=A(WORD,4)
          LM    R2,R3,=A(PWORK,2)
          CLCLE R0,R2,C' '
+         JO    *-4                    RPI 844
          RT1   CCE
          CL    R0,=A(WORD+4)
          RT1   CCE
@@ -1778,6 +1822,7 @@ BRCTG1   LA    R2,1(R2)
          LM    R0,R1,=A(WORD,3)
          LM    R2,R3,=A(PWORK,4)
          CLCLE R0,R2,C' ' 
+         JO    *-4                    RPI 844
          RT1   CCE
          CL    R0,=A(WORD+3)
          RT1   CCE
@@ -1792,6 +1837,7 @@ BRCTG1   LA    R2,1(R2)
          LM    R0,R1,=A(WORD,4)
          LM    R2,R3,=A(PWORK,2)
          CLCLE R0,R2,C' '
+         JO    *-4                    RPI 844
          RT1   CCL
          CL    R0,=A(WORD+1)
          RT1   CCE
@@ -1806,6 +1852,7 @@ BRCTG1   LA    R2,1(R2)
          LM    R0,R1,=A(WORD,4)
          LM    R2,R3,=A(PWORK,2)
          CLCLE R0,R2,C' '
+         JO    *-4                    RPI 844
          RT1   CCH
          CL    R0,=A(WORD+3)
          RT1   CCE
@@ -1961,13 +2008,10 @@ SEBR1    ESPIE RESET
          CLC   TREF2,TREV2
          RT1   CCE 
 * B2B0 STFLE Z9 STORE FACILITIES BIT LIST EXTENDED
-         SR    R0,R0
+         LA    R0,7    RPI 859 LENGTH OF FACILITY BIT FIELD - 1
          STFLE PWORK
-         RT1   CC0
          CLC   PWORK(8),=X'E1000DC000000000'
          RT1   CCE          VERIFY ZOS FACILITIES INSTALLED AND ACTIVE
-         LTR   R0,R0
-         RT1   CC0          VERIFY 0 FOR 1 DOUBLE WORD OF BITS
 * B384 LFPC
 * B38C EFPC
          EFPC  R0
@@ -2445,13 +2489,13 @@ SGR2     ESTAE 0
          LA    R1,X'FF'
          SGR   R0,R0
          LLGCR R0,R1
-         CLG   R0,=AL8(X'FF')
+         CLG   R0,=AD(X'FF')
          RT1   CCE
 * B907 LLGHR Z9 LOAD LOGICAL HALFWORD
          ICM   R1,3,=X'FFFF'
          SGR   R0,R0
          LLGHR R0,R1
-         CLG   R0,=AL8(X'FFFF')
+         CLG   R0,=AD(X'FFFF')
          RT1   CCE
 * B986 MLGR
          LG    R1,=FL8'3'
@@ -2995,7 +3039,7 @@ SGR2     ESTAE 0
          ICM   R1,1,=X'00'
          RT1   CCE
 * C00  LARL
-         LARL  R1,3
+         LARL  R1,*+6     RPI 844 WAS LARL R1,3
          CL    R1,=A(*)
          RT1   CCE
          LARL  R1,LARL1
@@ -3218,36 +3262,6 @@ BRASL2   EQU   *
          L     R0,=X'FFFFFFFF'
          CLFI  R0,X'FFFFFFFF'
          RT1   CCE
-* C80  MVCOS
-         SR    R0,R0
-         MVC   WORD,=4X'AA'
-         LA    R3,2
-         MVCOS WORD+1,=2X'BB',R3
-         RT1   CCE
-         CLC   WORD,=X'AABBBBAA'
-         RT1   CCE
-         GETMAIN RU,LV=8192
-         LR    R4,R1
-         LR    R0,R4
-         LHI   R1,8192
-         SR    R2,R2
-         L     R3,=X'AA000000'     
-         MVCL  R0,R2
-         SR    R0,R0
-         LHI   R5,8191
-         MVI   0(R4),X'BB'
-         MVCOS 1(R4),0(R4),R5
-         RT1   CC3
-         AHI   R4,4096
-         AHI   R5,-4096
-         MVCOS 1(R4),0(R4),R5
-         RT1   CC0
-         AHI   R4,-4096
-         LR    R0,R4
-         LHI   R1,8192
-         SR    R2,R2
-         L     R3,=X'BB000000'
-         RT1   CCE 
 * D0   TRTR
          MVC   WORD,=AL1(3,2,1,0)
          LA    R1,0
@@ -3346,6 +3360,7 @@ BRASL2   EQU   *
          CLC   WORD,=C'DCBA'
          RT1   CCE
 * DD   TRT
+         SAM31 ,                   RPI 844 FORCE AMODE31 FOR Z9/Z10
          MVC   WORD,=AL1(3,2,1,0)
          LHI   R1,-1               RPI 828
          LA    R2,0
@@ -4224,10 +4239,10 @@ BCTG1    LA    R2,1(R2)
          UNPKA PWORK(3),=XL16'1234' 
          RT1   CC3
 * EB04 LMG
-         LMG   R15,R0,=AL8(123,456)
-         CLG   R15,=AL8(123)
+         LMG   R15,R0,=AD(123,456)
+         CLG   R15,=AD(123)
          RT1   CCE                        
-         CLG   R0,=AL8(456)
+         CLG   R0,=AD(456)
          RT1   CCE                        
 * EB0A SRAG
          LG    R1,=FL8'2'
@@ -4402,21 +4417,21 @@ BCTG1    LA    R2,1(R2)
          CLC   WORD(2),=C'47'
          RT1   CCE
 * EB30 CSG
-         LMG   R1,R2,=AL8(1,2)
-         MVC   PWORK,=AL8(3)
+         LMG   R1,R2,=AD(1,2)
+         MVC   PWORK,=AD(3)
          CSG   R1,R2,PWORK
          RT1   CC1
-         CLG   R1,=AL8(3)
+         CLG   R1,=AD(3)
          RT1   CCE
-         CLC   PWORK,=AL8(3)
+         CLC   PWORK,=AD(3)
          RT1   CCE
-         LMG   R1,R2,=AL8(4,5)
-         MVC   PWORK,=AL8(4)
+         LMG   R1,R2,=AD(4,5)
+         MVC   PWORK,=AD(4)
          CSG   R1,R2,PWORK
          RT1   CC0
-         CLG   R1,=AL8(4)
+         CLG   R1,=AD(4)
          RT1   CCE
-         CLC   PWORK,=AL8(5)
+         CLC   PWORK,=AD(5)
          RT1   CCE
 * BB31 CDSY
          LM    R0,R3,=A(1,2,3,4)
@@ -4440,65 +4455,65 @@ BCTG1    LA    R2,1(R2)
          CLC   REGS(8),=A(3,4)
          RT1   CCE
 * EB3E CDSG
-         LMG   R0,R3,=AL8(1,2,3,4)
-         MVC   REGS(16),=AL8(5,6)
+         LMG   R0,R3,=AD(1,2,3,4)
+         MVC   REGS(16),=AD(5,6)
          CDSG  R0,R2,REGS
          RT1   CC1
-         CLG   R0,=AL8(5)
+         CLG   R0,=AD(5)
          RT1   CCE
-         CLG   R1,=AL8(6)
+         CLG   R1,=AD(6)
          RT1   CCE
-         CLC   REGS(16),=AL8(5,6)
+         CLC   REGS(16),=AD(5,6)
          RT1   CCE
-         LMG   R0,R3,=AL8(1,2,3,4)
-         MVC   REGS,=AL8(1,2)
+         LMG   R0,R3,=AD(1,2,3,4)
+         MVC   REGS,=AD(1,2)
          CDSG  R0,R2,REGS
          RT1   CC0
-         CLG   R0,=AL8(1)
+         CLG   R0,=AD(1)
          RT1   CCE
-         CLG   R1,=AL8(2)
+         CLG   R1,=AD(2)
          RT1   CCE
-         CLC   REGS(16),=AL8(3,4)
+         CLC   REGS(16),=AD(3,4)
          RT1   CCE
 * EB44 BXHG
-         LMG   R1,R3,=AL8(2,-1,0)
+         LMG   R1,R3,=AD(2,-1,0)
          BXHG  R1,R2,BXHG2
          B     RT1_ABORT
 BXHG2    EQU   *
-         CLG   R1,=AL8(1)
+         CLG   R1,=AD(1)
          RT1   CCE
          BXHG  R1,R2,RT1_ABORT
-         CLG   R1,=AL8(0)
+         CLG   R1,=AD(0)
          RT1   CCE
-         LMG   R1,R3,=AL8(2,-10,-1)
+         LMG   R1,R3,=AD(2,-10,-1)
          BXHG  R1,R3,BXHG3
          B     RT1_ABORT
 BXHG3    EQU   *
-         CLG   R1,=AL8(1)
+         CLG   R1,=AD(1)
          RT1   CCE
          BXHG  R1,R3,BXHG4
          B     RT1_ABORT
 BXHG4    EQU   *
-         CLG   R1,=AL8(0)
+         CLG   R1,=AD(0)
          RT1   CCE
          BXHG  R1,R3,RT1_ABORT
          CLG   R1,=FL8'-1'
          RT1   CCE
 * EB45 BXLEG
-         LMG   R1,R3,=AL8(1,1,2)
+         LMG   R1,R3,=AD(1,1,2)
          BXLEG R1,R2,BXLEG2
          B     RT1_ABORT
 BXLEG2   EQU   *
-         CLG   R1,=AL8(2)
+         CLG   R1,=AD(2)
          RT1   CCE
          BXLEG R1,R2,RT1_ABORT 
-         CLG   R1,=AL8(3)
+         CLG   R1,=AD(3)
          RT1   CCE
-         LMG   R1,R3,=AL8(0,-10,1)
+         LMG   R1,R3,=AD(0,-10,1)
          BXLEG R1,R3,BXLEG3
          B     RT1_ABORT
 BXLEG3   EQU   *
-         CLG   R1,=AL8(1)
+         CLG   R1,=AD(1)
          RT1   CCE
          BXLEG R1,R3,RT1_ABORT 
          CLG   R1,=FL8'2'
@@ -4513,13 +4528,17 @@ BXLEG3   EQU   *
          TMY   =X'FF',X'FF'
          RT1   CC3
          TMY   =X'FF',X'F0'
-         RT1   CC1
+         RT1   CC3             RPI 844
          LA    2,=X'FF'
          TMY   0(2),X'FF'
          RT1   CC3
          LA    2,=X'00'
          TMY   0(2),X'00'
          RT1   CC0
+         TMY   =X'CF',X'F0'    RPI 844
+         RT1   CC1             RPI 844
+         TMY   =X'F3',X'0F'    RPI 844
+         RT1   CC1             RPI 844
 * EB52 MVIY
          MVIY  BYTE,C'A'
          CLI   BYTE,C'A'
@@ -4741,51 +4760,50 @@ BXLEG3   EQU   *
          TP    =XL16'A1'                          
          RT1   CC3
 * EC44 BRXHG           
-         LMG   R1,R3,=AL8(2,-1,0)
+         LMG   R1,R3,=AD(2,-1,0)
          BRXHG R1,R2,BRXHG2
 BRXHG1   RT1   ABORT
 BRXHG2   EQU   *
-         CLG   R1,=AL8(1)
+         CLG   R1,=AD(1)
          RT1   CCE
          BRXHG R1,R2,BRXHG1
-         CLG   R1,=AL8(0)
+         CLG   R1,=AD(0)
          RT1   CCE
-         LMG   R1,R3,=AL8(2,-10,-1)
+         LMG   R1,R3,=AD(2,-10,-1)
          BRXHG R1,R3,BRXHG3
          RT1   ABORT
 BRXHG3   EQU   *
-         CLG   R1,=AL8(1)
+         CLG   R1,=AD(1)
          RT1   CCE
          BRXHG R1,R3,BRXHG4
          RT1   ABORT
 BRXHG4   EQU   *
-         CLG   R1,=AL8(0)
+         CLG   R1,=AD(0)
          RT1   CCE
          BRXHG R1,R3,BRXHG1
          CLG   R1,=FL8'-1'
          RT1   CCE
 * EC45 BRXLG
-         LMG   R1,R3,=AL8(1,1,2)
+         LMG   R1,R3,=AD(1,1,2)
          BRXLG R1,R2,BRXLG2
 BRXLG1   RT1   ABORT
 BRXLG2   EQU   *
-         CLG   R1,=AL8(2)
+         CLG   R1,=AD(2)
          RT1   CCE
          BRXLG R1,R2,BRXLG1
-         CLG   R1,=AL8(3)
+         CLG   R1,=AD(3)
          RT1   CCE
-         LMG   R1,R3,=AL8(0,-10,1)
+         LMG   R1,R3,=AD(0,-10,1)
          BRXLG R1,R3,BRXLG3
          RT1   ABORT
 BRXLG3   EQU   *
-         CLG   R1,=AL8(1)
+         CLG   R1,=AD(1)
          RT1   CCE
          BRXLG R1,R3,BRXLG1
          CLG   R1,=FL8'2'
          RT1   CCE
 * EF   LMD
-         LMD   R15,R0,=A(X'01234567',X'01234567'),=A(X'89ABCDEF',X'89ABX
-               CDEF')
+         LMD   R15,R0,LMD1,LMD2           RPI 844
          CLG   R15,=X'0123456789ABCDEF'
          RT1   CCE
          CLG   R0,=X'0123456789ABCDEF'
@@ -4857,8 +4875,8 @@ SRP1     ESPIE RESET
          RT1   CCE
          CP    PWORK+6(2),=P'-123'
          RT1   CCE
-         PACK  PWORK,=X'313233'
-         CP    PWORK+6(2),=X'1233'
+         PACK  PWORK,=X'3132F3'    RPI 844 (3>F 3 CAUSED 0C7)
+         CP    PWORK+6(2),=X'123F'
          RT1   CCE
          CP    PWORK+6(2),=P'123'
          RT1   CCE

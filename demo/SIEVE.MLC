@@ -17,6 +17,7 @@
 *   5. REPLACE GMAIN SVC WITH GETMAIN MACRO
 *   6. REPLACE CALLS TO PET.ALC WITH CALLS TO UPDATED LINLIB\DAT.MLC
 *      WHICH DISPLAYS JDBC TIME-STAMP, TOTAL INSTRUCTIONS, AND MIPS
+* 06/09/08 RPI 549 CHANGE MVCOS TO ELIMINATE OVERLAPPED STORAGE EXECT.
 *********************************************************************
 SIEVE    SUBENTRY
          WTO   ' '
@@ -61,9 +62,19 @@ INIT     EQU   *
 	MVC   0(6,TABS),INITDATA
          LA    R3,TABS          
          L     R2,=A(MAXPRIME-6)
-         SGR   R0,R0
-         MVCOS 6(TABS),0(TABS),R2  INIT TABLE
+         LR    R3,TABS
+INITLOOP EQU   *
+         AHI   R2,-256
+         BM    LAST
+         MVC   6(256,R3),0(R3)  INIT TABLE  RPI 859
+         AHI   R3,256
+         B     INITLOOP
+LAST     EQU   *
+         AHI   R2,255
+         BMR   LINK
+         EX    R2,LASTMVC
          BR    LINK
+LASTMVC  MVC   6(0,R3),0(R3)
 	TITLE 'PRTNUM - PRINT PRIME NUMBER'
 PRTNUM   EQU   *
 	CVD   NUMBER,PWORK

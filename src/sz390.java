@@ -4858,9 +4858,9 @@ private void svc_cfd(){
 		}
 		
 		if (addr_out >= 16){  // RPI 507
-			pz390.mem.putInt(addr_out,pz390.zcvt_db_to_eh(cfd_d));
+			pz390.mem.putInt(addr_out,pz390.fp_db_to_eh(cfd_d));
 		} else {
-			pz390.fp_reg.putInt(addr_out * 8,pz390.zcvt_db_to_eh(cfd_d));
+			pz390.fp_reg.putInt(addr_out * 8,pz390.fp_db_to_eh(cfd_d));
 			pz390.fp_reg_ctl[addr_out] = pz390.fp_ctl_ld;
 		}
 		break;
@@ -4885,7 +4885,7 @@ private void svc_cfd(){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
 		}	
-		pz390.zcvt_bd_to_wreg(tz390.fp_dh_type, cfd_bd); // RPI 821
+		pz390.fp_bd_to_wreg(tz390.fp_dh_type, cfd_bd); // RPI 821
 		if (addr_out >= 16){  // RPI 507           
 			pz390.mem.putLong(addr_out, tz390.fp_work_reg.getLong(0)); // RPI 821
 		} else {
@@ -4914,7 +4914,7 @@ private void svc_cfd(){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
 		}		
-		pz390.zcvt_bd_to_wreg(tz390.fp_lh_type,cfd_bd);
+		pz390.fp_bd_to_wreg(tz390.fp_lh_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
 			pz390.mem.put(tz390.fp_work_reg_byte,0,16);
@@ -4939,7 +4939,7 @@ private void svc_cfd(){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
 		}
-		pz390.zcvt_bd_to_wreg(tz390.fp_lb_type,cfd_bd);
+		pz390.fp_bd_to_wreg(tz390.fp_lb_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
 			pz390.mem.put(tz390.fp_work_reg_byte,0,16);
@@ -4964,7 +4964,7 @@ private void svc_cfd(){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
 		}
-		pz390.zcvt_bd_to_wreg(tz390.fp_dd_type,cfd_bd);
+		pz390.fp_bd_to_wreg(tz390.fp_dd_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
 			pz390.mem.put(tz390.fp_work_reg_byte,0,8);
@@ -4981,7 +4981,7 @@ private void svc_cfd(){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
 		}
-		pz390.zcvt_bd_to_wreg(tz390.fp_ed_type,cfd_bd);
+		pz390.fp_bd_to_wreg(tz390.fp_ed_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
 			pz390.mem.put(tz390.fp_work_reg_byte,0,4);
@@ -4998,7 +4998,7 @@ private void svc_cfd(){
 			pz390.reg.putInt(pz390.r15,12);
 		    return;
 		}
-		pz390.zcvt_bd_to_wreg(tz390.fp_ld_type,cfd_bd);
+		pz390.fp_bd_to_wreg(tz390.fp_ld_type,cfd_bd);
 		if (addr_out >= 16){  // RPI 507
 			pz390.mem.position(addr_out);
 			pz390.mem.put(tz390.fp_work_reg_byte,0,16);

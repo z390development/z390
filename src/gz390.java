@@ -118,7 +118,15 @@ public  class  gz390
 	 *          4.  ConsumePF10-PF22 KeyPressed events to prevent Windows file menu popup
 	 * 08/23/07 RPI 685 adjust GUI height for status line 
 	 * 08/24/07 RPI 671 return all modified bytes when no 
-	 *          fields on screen and add TRACET support          
+	 *          fields on screen and add TRACET support 
+	 * 06/03/08 RPI 856 skip to next input field when
+	 *          input text reaches end of current field  
+	 *          insert nulls for delete key from right 
+	 *          init screen to nulls instead of blanks
+	 *          allow field input for PF keys
+	 *          return 1 byte PA1-3 or CLEAR key 
+	 * 06/07/08 RPI 628 support WRT_EAU see cics\TESTGUI6.MLC 
+	 *          support EEOF CTRL-F6, EINP CTRL-F7                             
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -263,8 +271,12 @@ public  class  gz390
     /*
      * global tn3270 data
      */
-    byte tn_tab_code = 0x09;
-    byte tn_enter_code = 0x7d;
+    byte tn_tab_code       = 0x09;
+    byte tn_pa1_code       = 0x6c; // RPI 856
+    byte tn_pa2_code       = 0x6e; // RPI 856
+    byte tn_pa3_code       = 0x6b; // RPI 856
+    byte tn_clear_code     = 0x6d; // RPI 856
+    byte tn_enter_code     = 0x7d;
     byte tn_sba_cmd = 0x11; // set buffer addr (sba)
     byte tn_sf_cmd  = 0x1d; // set field (attr byte)
     byte tn_ic_cmd  = 0x13; // insert cursor
@@ -281,7 +293,7 @@ public  class  gz390
     int tn_cursor_scn_addr = 0;
     int tn_cursor_count = 1;
     int tn_cursor_wait_int = 1;
-    char scn_space = ' ';
+    char scn_null  = (byte)0x00; // rpi 856
     boolean tn_full_screen = false;
     byte tn_null  = 0;
     byte tn_field = 1;
@@ -296,7 +308,8 @@ public  class  gz390
     int tn_write_cmd    = 0;   // vtam write command after escape
     int tn_write = 0xF1;       // tput tso write screen
     int tn_erase_write = 0xF5; // tput tso erase write
-    int tn_write_alt = 0xF1;       // tput tso write screen
+    int tn_write_alt = 0xF1;   // tput tso write screen
+    int tn_write_eau = 0x6F;   // RPI 628
     byte tn_attr_prot_text = 0x30; // protected unmodified text 
     boolean tn_kb_lock = true; 
     boolean tn_attn = false;
@@ -1054,7 +1067,7 @@ public  class  gz390
  	    log_char_height = font_size + font_space;
 		log_height = tn_scn.main_height - title_height 
 		           - menu_height - tool_height 
-		           - command_height - status_height +10;//dshx
+		           - command_height - status_height +10;
 		log_width  = tn_scn.main_width - scrollbar_width - 4 * main_border;
 	    lines_per_page = log_height / log_char_height;
    	    command_height = font_size + font_space 
@@ -1476,31 +1489,48 @@ public  class  gz390
         		   }
         	   }
           	   if (keyMods == KeyEvent.CTRL_MASK){
-              	   if (keyCode == KeyEvent.VK_F1){   // F1 help
+              	   if (keyCode == KeyEvent.VK_F1){ 
+              		  // CTRL-F1 = PA1
                	   	  if (!tn_kb_lock){
-               	   		  tn_aid = 0x6c;  // PA1
+               	   		  tn_aid = tn_pa1_code;  // PA1
                	   		  tn_attn = true;
                	   	  }
                	   	  return;
                	   }
-              	   if (keyCode == KeyEvent.VK_F2){   // F3 exit
+              	   if (keyCode == KeyEvent.VK_F2){   
+              		      // CTRL-F2 = PA2
                  	   	  if (!tn_kb_lock){
-                 	   		  tn_aid = 0x6e;  //PA2
+                 	   		  tn_aid = tn_pa2_code;  //PA2
                  	   		  tn_attn = true;
                  	   	  }
                  	   	  return;
               	   }
-               	   if (keyCode == KeyEvent.VK_F3){   // F3 exit
+               	   if (keyCode == KeyEvent.VK_F3){   
+               		      // CTRL-F3 = PA3
                 	   	  if (!tn_kb_lock){
-                	   		  tn_aid = 0x6b;  //PA3
+                	   		  tn_aid = tn_pa3_code;  //PA3
                 	   		  tn_attn = true;
-                	   		  return;
                 	   	  }
                 	   	  return;
              	   }
+               	   if (keyCode == KeyEvent.VK_F6){   
+            		  // CTRL-F6 = EEOF erase to end of current field
+             	   	  if (!tn_kb_lock){
+             	   		  tn_erase_to_end(); // RPI 628
+             	   	  }
+             	   	  return;
+          	       }
+               	   if (keyCode == KeyEvent.VK_F7){   
+       		           // CTRL-F7 = EINF erase all unprotected fields
+               		   if (!tn_kb_lock){
+               			   tn_erase_all_unprotected(); // RPI 628
+               		   }
+               		   return;
+               	   }
                	   return;
           	   }
-          	   if (keyMods == (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK)){ // RPI 216
+          	   if (keyMods == (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK)){ 
+          		   // RPI 216  CTRL-ALT-F1-12 = F13-24
        		     if (keyCode >= KeyEvent.VK_F1
           			   && keyCode <= KeyEvent.VK_F9){
             	   	  if (!tn_kb_lock){
@@ -1533,7 +1563,7 @@ public  class  gz390
           	   	  }
           	   	  return;
           	   }
-         	   if (keyCode == KeyEvent.VK_F2){   // F3 exit
+         	   if (keyCode == KeyEvent.VK_F2){   
             	   	  if (!tn_kb_lock){
             	   		  tn_aid = 0xf2;
             	   		  tn_attn = true;
@@ -1613,7 +1643,7 @@ public  class  gz390
      	   if (keyCode == KeyEvent.VK_CLEAR
      			   || (keyCode == KeyEvent.VK_C && keyMods == KeyEvent.CTRL_MASK)){
          	  if (!tn_kb_lock){
-         	  	  tn_aid = 0x6d; // clear key
+         	  	  tn_aid = tn_clear_code; // clear key
          	  	  tn_attn = true;
          	  	  tn_clear_screen(); 
          	  }
@@ -1844,6 +1874,7 @@ public  class  gz390
 	    	if (tn_delete_request){
             	tn_delete_request = false;
             	if (tn_input_field() && tn_cursor){
+            		   scn_attr[scn_fld[scn_addr]] = scn_attr[scn_fld[scn_addr]] | tn_mdt_mask;
 		    		   int save_scn_addr = scn_addr;
 		    		   scn_addr++;
 		    		   while (scn_addr < max_addr 
@@ -1853,7 +1884,7 @@ public  class  gz390
 		    			   tn_update_scn(scn_addr-1);
 		    			   scn_addr++;
 		    		   }
-		    		   scn_char[scn_addr-1]= ' ';
+		    		   scn_char[scn_addr-1]= scn_null; // RPI 856
 	    			   tn_update_scn(scn_addr-1);
 		    		   scn_addr = save_scn_addr;
 		    		   refresh_request = true;
@@ -2195,6 +2226,8 @@ private void tn_tput_buffer(){
 		    tn_get_tput_byte(); // wrt,wcc follows esc
 			if (tput_buff_byte == tn_erase_write){
 				tn_clear_screen();
+			} else if (tput_buff_byte == tn_write_eau){ 
+				tn_erase_all_unprotected(); // RPI 628
 			}
 			tn_get_tput_byte(); // wcc following esc,wrt
 		}
@@ -2244,17 +2277,57 @@ private void tn_tput_buffer(){
 		    scn_attr[scn_addr]  = cur_fld_attr;
 		    scn_hl[scn_addr]    = cur_fld_hl;
 		    scn_color[scn_addr] = cur_fld_color;
-			if (tput_buff_byte == 0){
- 		    	scn_char[scn_addr] = scn_space;
- 		    } else {
- 		    	scn_char[scn_addr] = (char)tz390.ebcdic_to_ascii[tput_buff_byte];
- 		    }
+	    	scn_char[scn_addr] = (char)tz390.ebcdic_to_ascii[tput_buff_byte];
 			tn_update_scn(scn_addr);
 			tn_next_field_addr();
 		}
 	}
 	scn_addr = tn_cursor_scn_addr; // RPI 630 reset to last insert cursor
 	tn_scn.start_scn_updates(); 
+}
+private void tn_erase_all_unprotected(){
+	/*
+	 * execute tn_write_eau as follows:
+	 *   1.  erase all unprotected fields
+	 *   2.  Reset modified data flags
+	 *   2.  position cursor to first field
+	 *   3.  unlock keyboard
+	 */
+	int first_input_sba = -1;
+	int index = 0;
+	while (index < fld_input_tot){
+		scn_addr = fld_input_addr[index]+1;
+		if (first_input_sba == -1){
+			first_input_sba = scn_addr;
+		}
+		tn_erase_to_end();	           	
+		index++;
+	}
+	tn_reset_mdt();
+	if (first_input_sba == -1){
+	    first_input_sba = 0; 
+	}
+	scn_addr = first_input_sba;
+	tn_update_cursor();
+    tn_kb_lock = false; // allows kb input
+    status_line.setText(status_line_view + " Ready for input");
+	refresh_request = true;
+}
+private void tn_erase_to_end(){ // RPI 628
+	/*
+	 * erase to end of current input field
+	 */
+	int this_field = scn_fld[scn_addr];
+	int index = scn_addr;
+	while (scn_fld[index] == this_field
+			&& index != this_field){
+		scn_char[index] = scn_null;
+ 		tn_update_scn(index);
+ 		index++;
+		if (index > max_addr){
+			index = 0;
+		}
+	}
 }
 private void tn_get_tput_byte(){
 	/*
@@ -2281,13 +2354,14 @@ private void tn_next_input_addr(){
 	/*
 	 * incr scn_addr to next input field addr
 	 */
+	int cur_field = scn_fld[scn_addr];
 	scn_addr++;
 	if (scn_addr >= max_addr){
 		scn_addr = 0;
 	}
-	if  ((scn_attr[scn_addr] & tn_protect_mask) == tn_protect_mask){
+	if (scn_fld[scn_addr] != cur_field){ // RPI 586
 		tn_next_input_field();
-	} 
+	}
 }
 private void tn_eua(){
 	/*
@@ -2300,7 +2374,7 @@ private void tn_eua(){
 		if ((scn_attr[sba] & tn_protect_mask) == 0){ 
 			// erase and reset mdt in unprotected fields
 			scn_fld[sba] = tn_null;
-			scn_char[sba] = scn_space;
+			scn_char[sba] = scn_null;
  		    tn_update_scn(sba);
 			scn_attr[sba] = scn_attr[sba] & tn_mdt_off;
 		}
@@ -2324,11 +2398,7 @@ private void tn_ra(){
 			tn_drop_field(sba);
 		}
 		scn_fld[sba] = tn_char;
-		if (ra_byte == 0){
-			scn_char[sba] = scn_space;
-		} else {
-			scn_char[sba] = (char)tz390.ebcdic_to_ascii[ra_byte & 0xff];
-		}
+		scn_char[sba] = (char)tz390.ebcdic_to_ascii[ra_byte & 0xff]; // RPI 628
 		tn_update_scn(sba);
 		sba++;
 		if (sba >= max_addr){
@@ -2387,7 +2457,7 @@ private boolean tn_input_field(){
 	cur_fld_addr = 0; 
 	if (fld_tot == 0){
 		return true;
-	}
+	}	
 	cur_fld_addr = fld_addr[fld_tot-1];
     int index = 0;
 	while (index < fld_tot 
@@ -2440,6 +2510,10 @@ private synchronized void tn_update_scn(int sba){
 	 * update screen character with field
 	 * attributes and extended attributes
 	 */
+	char save_char = scn_char[sba]; // RPI 638
+	if (scn_char[sba] == (char)0x00){
+		scn_char[sba] = ' '; // RPI 638
+	}
 	tn_scn.scn_layout   = new TextLayout("" + scn_char[sba],tn_scn.scn_font, tn_scn.scn_context);  // RPI 630 scn_addr > sba
     int row = sba / max_cols;
     int col = sba - row * max_cols;
@@ -2461,28 +2535,31 @@ private synchronized void tn_update_scn(int sba){
     }
    	tn_scn.scn_grid.clearRect(x-1,y-tn_scn.scn_char_height,tn_scn.scn_char_width+1,tn_scn.scn_char_height);
    	tn_scn.scn_grid.drawChars(scn_char,sba,1,x,y-tn_scn.scn_char_base);  // RPI 630 
-	tn_scn.scn_repaint = true;
+	scn_char[sba] = save_char; // RPI 628
+   	tn_scn.scn_repaint = true;
 }
 private void tn_get_screen_input(){
 	/*
 	 * fill tget_byte buffer with the following:
 	 *   1, action key  = enter, PF, PA, or clear key)
-	 *   2, sba of cursor
+	 *   2, sba of cursor (if enter or PF only) RPI 856
 	 *   3. sba code x'11', sba addr, modified data bytes
 	 *      for each unprotected field else
 	 *   4. Modified data bytes for unformated
 	 *      screen with no input fields 
 	 */
 	tget_byte[0] = (byte) tn_aid;
-	if (tget_len == 1){
-		return;  // RPI 592
+	if (tget_len == 1 
+		|| tn_aid == tn_clear_code  // RPI 856
+		|| tn_aid == tn_pa1_code    // RPI 856
+		|| tn_aid == tn_pa2_code    // RPI 856
+		|| tn_aid == tn_pa3_code    // RPI 856
+	    ){
+		tget_len = 1; // RPI 856
+		return;       // RPI 592
 	}
 	tget_byte[1] = (byte)sba_to_ebc[scn_addr >> 6];
 	tget_byte[2] = (byte)sba_to_ebc[scn_addr & 0x3f];
-	if (tn_aid != tn_enter_code){
-		tget_len = 3; // return aid with sba for cursor
-		return;
-	}
 	if (fld_input_tot == 0){
 		tn_unformatted_input();
 	} else {
@@ -2542,7 +2619,7 @@ private void tn_formatted_input(){
             }
             while (scn_fld[sba] != tn_field){
             	if (scn_fld[sba] != tn_null){
-            		if (tget_index < tget_len){
+            		if (tget_index < tget_len ){
             			if (tz390.opt_ascii){
             				tget_byte[tget_index] = (byte)scn_char[sba];
             			} else {
@@ -2616,7 +2693,7 @@ private synchronized void tn_clear_screen(){
 	/*
 	 * clear screen and reset fields
 	 */
-		Arrays.fill(scn_char,0,max_addr,scn_space);
+		Arrays.fill(scn_char,0,max_addr,scn_null); // RPI 856
 		Arrays.fill(scn_fld,0,max_addr,(byte)0);
 		Arrays.fill(scn_attr,0,max_addr,0);
 		fld_tot = 0;
@@ -2690,7 +2767,7 @@ private void tn_start_field(){
 	 if ((cur_fld_attr & tn_protect_mask) == 0){
 		 tn_add_input_field_addr();
 	 }
-	 scn_char[scn_addr] = scn_space;
+	 scn_char[scn_addr] = scn_null; // RPI 628
 	 tn_update_scn(scn_addr);
 	 tn_next_field_addr();
 }
@@ -2876,7 +2953,7 @@ private void keyboard_readline(){
 	    		index--;
 	    		if (guam_cur_col > 1){
 	    			guam_cur_col--;
-	    			scn_write_char(' ');
+	    			scn_write_char(scn_null); // RPI 856
 	    			guam_cur_col--;
 	    		}
 	    	}

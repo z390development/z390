@@ -9,6 +9,7 @@ import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
+import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -309,7 +310,8 @@ public  class  az390 implements Runnable {
         * 04/28/08 RPI 841 add DFHRESP MAPFAIL, INVMPSZ, OVERFLOW  
         * 05/05/08 rpi 846 sync stats with mz390 
         * 05/10/08 RPI 821 switch DH from double to BigDecimal cache 
-        * 05/20/08 RPI 851 prevent recursive abort after failing ORG               
+        * 05/20/08 RPI 851 prevent recursive abort after failing ORG 
+        * 06/06/08 RPI 843 round half-even for FP constants              
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -6915,7 +6917,7 @@ private void get_dc_fp_hex(String text,int index){
 	}
 	dc_index = index + text_end;
 	fp_text = text.substring(index,index+text_end); // RPI 790
-	get_fp_hex();
+	fp_get_hex();
 }
 private void process_dcf_data(){
 	/*
@@ -8116,7 +8118,7 @@ private void gen_ccw1(){  // RPI 567
 		list_obj_code = list_obj_code.substring(8)+list_obj_code.substring(0,8);
 	}
 }
-private void get_fp_hex(){
+private void fp_get_hex(){
 	/*
 	 * set dc_hex for floating point
 	 * string fp_text
@@ -8221,7 +8223,7 @@ private void get_fp_hex(){
 			log_error(112,"unrecognized floating point constant " + fp_text);
 		}
 	}
-	fp_context = new MathContext(tz390.fp_precision[tz390.fp_type]);
+	fp_context = new MathContext(tz390.fp_precision[tz390.fp_type],RoundingMode.HALF_EVEN); // RPI 843
 	try { // RPI 424
 		fp_big_dec1 = new BigDecimal(fp_text,fp_context);
 	} catch (Exception e){
@@ -8311,36 +8313,36 @@ private void get_fp_hex(){
 	switch (tz390.fp_type){
 	case 0: // tz390.fp_db_type s1,e11,m52 with assumed 1
 	    cvt_fp_exp_to_base_2();
-	    cvt_fp_bd_to_hex();
+	    fp_cvt_bd_to_hex();
 	    break;
 	case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50 // RPI 407
-		cvt_fp_bd_to_hex();
+		fp_cvt_bd_to_hex();
 		break;
 	case 2: // tz390.fp_dh_type s1,e7,m56 with hex exp
 	    cvt_fp_exp_to_base_2();
-	    cvt_fp_bd_to_hex();
+	    fp_cvt_bd_to_hex();
 	    break;
 	case 3: // tz390.fp_eb_type s1,e7,m24 with assumed 1
 	    cvt_fp_exp_to_base_2();
-	    cvt_fp_bd_to_hex();
+	    fp_cvt_bd_to_hex();
 	    break;
 	case 4: // tz390.fp_ed_type s1,cf5,bxdf6,ccf20 // RPI 407
-		cvt_fp_bd_to_hex();
+		fp_cvt_bd_to_hex();
 		break;
 	case 5: // tz390.fp_eh_type s1,e7,m24 with hex exp
 	    cvt_fp_exp_to_base_2();
-	    cvt_fp_bd_to_hex();
+	    fp_cvt_bd_to_hex();
 	    break;
 	case 6: // tz390.fp_lb_type s1,e15,m112 with assumed 1
 	    cvt_fp_exp_to_base_2();
-	    cvt_fp_bd_to_hex();
+	    fp_cvt_bd_to_hex();
 	    break;
 	case 7: // tz390.fp_ld_type s1,cf5,bxdf12,ccf110 // RPI 407	
-		cvt_fp_bd_to_hex();
+		fp_cvt_bd_to_hex();
 		break;
 	case 8: // tz390.fp_lh_type s1,e7,m112 with split hex	
 	    cvt_fp_exp_to_base_2();
-	    cvt_fp_bd_to_hex();
+	    fp_cvt_bd_to_hex();
 	    break;
 	}
 }
@@ -8399,7 +8401,7 @@ private void get_fp_hex(){
 	fp_big_int1 = fp_big_dec2.toBigInteger();
     tz390.fp_exp = tz390.fp_exp + tz390.fp_man_bits[tz390.fp_type];
 	}
-	private void cvt_fp_bd_to_hex(){
+	private void fp_cvt_bd_to_hex(){
 	/*
 	 * 1.  BFP - Adjust mantiss and base 2 exponent
 	 *     to align for assumed 1 bit.
@@ -8436,7 +8438,7 @@ private void get_fp_hex(){
         break;
 	case 1: // tz390.fp_dd_type s1,cf5,bxcf8,ccf50 // RPI 50
 		set_dfp_preferred_exp();
-		if (!tz390.get_dfp_bin(tz390.fp_dd_type, fp_big_dec1)){  
+		if (!tz390.fp_get_dfp_bin(tz390.fp_dd_type, fp_big_dec1)){  
         	log_error(179,"DD dfp constant out of range");
 	    	dc_hex = "0000000000000000";
         } else {
@@ -8493,7 +8495,7 @@ private void get_fp_hex(){
 		break;
 	case 4: // tz390.fp_ed_type s1,cf5,bxcf6,ccf20 // RPI 407
 		set_dfp_preferred_exp();
-		if (!tz390.get_dfp_bin(tz390.fp_ed_type, fp_big_dec1)){ // RPI 790
+		if (!tz390.fp_get_dfp_bin(tz390.fp_ed_type, fp_big_dec1)){ // RPI 790
         	log_error(180,"ED dfp constant out of range");
 	    	dc_hex = "00000000";
         } else {
@@ -8563,7 +8565,7 @@ private void get_fp_hex(){
 	    break;
 	case 7: // tz390.fp_ld_type s1,cf5,bxcf12,ccf110 // RPI 407
 		set_dfp_preferred_exp();
-		if (!tz390.get_dfp_bin(tz390.fp_ld_type, fp_big_dec1)){ // RPI 790
+		if (!tz390.fp_get_dfp_bin(tz390.fp_ld_type, fp_big_dec1)){ // RPI 790
         	log_error(181,"LD dfp constant out of range");
 	    	dc_hex = "00000000000000000000000000000000";
         } else {
