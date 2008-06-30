@@ -19,12 +19,15 @@ to pass data and status back to the Client on a TCP/IP network.
 Starting with V1.3.08h, the CICS compatible transaction manager supports
 all VSAM base datasets for read and browse functions.
 
-All the documentation included with each new release is in the CICS\docs
+Starting with V1.4.02, Basic Mapping Support is included.
+
+All the documentation included with each new release is in the cics\docs
 directory as follows:
 
   Z390/CICS Readme for current version
   Z390/CICS History
   Z390/CICS Application Programming Guide
+  Z390/CICS Basic Mapping Support
   Z390/CICS VSAM Guide
   Z390/CICS Supplied Transactions
   Z390/CICS Diagnosis Reference
@@ -39,7 +42,7 @@ CICS compatible transaction manager include the following:
    are in the CICS directory.
 
    The MZ390 macro processor replaces standard DFHRESP(error code)
-   references with the corresponding standard full word literal error
+   references with the corresponding standard fullword literal error
    code constant.
 
    The EZ390 runtime GUAM user interface dialog is used by each client
@@ -51,5 +54,5 @@ Trademarks
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
-This page last updated January 18, 2008
+This page last updated June 27, 2008
 

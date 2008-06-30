@@ -1,0 +1,1021 @@
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+         MACRO
+&FLDNAME DFHMDF                                                        X
+               &POS=,                                                  X
+               &LENGTH=,                                               X
+               &ATTRB=,                                                X
+               &JUSTIFY=,                                              X
+               &INITIAL=,                                              X
+               &XINIT=,                                                X
+               &PICIN=,                                                X
+               &PICOUT=,                                               X
+               &OCCURS=,                                               X
+               &GRPNAME=
+.*
+         GBLA  &MTYPE             TYPE REQUEST
+         GBLA  &SIZEROW           NO. OF ROWS
+         GBLA  &SIZECOL           NO. OF COLUMNS
+         GBLA  &MDFALL            LENGTH OF ALL MDF'S
+         GBLA  &MDFALLC           NO. OF ALL MDF'S
+         GBLA  &MDFALLN           LENGTH OF ALL MDF FIELDS
+         GBLA  &MDFNAMD           LENGTH OF ALL NAMED MDF FIELDS
+         GBLA  &MDFNAMC           NO. OF NAMED MDF'S
+         GBLA  &GFELEN            SUN OF GROUP FIELD ENTRY LENGTHS
+.*
+         GBLB  &MDIMODE(2)        1=OUT 2=IN BOTH=INOUT
+         GBLB  &IC                IC HAS OCCURRED IN MDF SET
+.*
+         GBLC  &MDINAME           MAP NAME
+         GBLC  &MDIORG            CURSOR POSITION LABEL
+         GBLC  &SCREEN(24*80)     POS CROSS-CHECK
+         GBLC  &GNAME             CURRENT GROUP NAME
+         GBLC  &MDFORG            GROUP LENGTH LABEL
+.*
+         LCLA  &ATTRIB(62)
+         LCLA  &OCC
+         LCLA  &KPICIN,&KPICOUT
+.*
+         LCLB  &ATTYPE(8)
+         LCLB  &JSTYPE(4)
+         LCLB  &ZERO,&RIGHT,&INIT,&DSCT
+         LCLB  &PROT,&HUM,&DRK,&FSET
+         LCLB  &ICPOS
+.*
+.* ENSURE NO BAD PARMS
+         AIF   (N'&SYSLIST NE 0).BADPOSI
+.GOON12  ANOP
+.*
+.* ANALYSE LENGTH
+         AIF   (T'&LENGTH NE 'N').BADLEN
+         AIF   ('&FLDNAME' NE '' AND &LENGTH EQ 0).LENZERO
+         AIF   ('&INITIAL' NE '' AND &LENGTH EQ 0).ZERINIT
+         AIF   ('&XINIT' NE '' AND &LENGTH EQ 0).ZERINIT
+.GOON07  ANOP
+.*
+.* ANALYSE OCCURS
+&OCC     SETA  1                  DEFAULT
+         AIF   (T'&OCCURS EQ 'O' OR &OCCURS EQ 1).DUNOCC
+         AIF   (T'&OCCURS NE 'N' OR &OCCURS EQ 0).BADOCC
+&OCC     SETA  &OCCURS
+.DUNOCC  ANOP
+.GOON08  ANOP
+.*
+.* ANALYSE GRPNAME
+&GFE     SETB  0
+&GFD     SETB  0
+         AIF   (T'&GRPNAME EQ 'O').NOGRP
+.* GRPNAME EXISTS
+         AIF   (T'&OCCURS NE 'O').BADGRP
+         AIF   ('&FLDNAME' EQ '').GRPFLD
+         AIF   ('&GRPNAME' NE '&GNAME').NEWGRP
+.* MATCHING GRPNAME
+&GFE     SETB  1                  SET GROUP FIELD ENTRY
+         AGO   .DUNGRP
+.*
+.NEWGRP  ANOP
+.* NEW GROUP
+&GNAME   SETC  '&GRPNAME'         SAVE GROUP NAME
+&GFD     SETB  1                  SET GROUP FIELD DESCRIPTOR
+&GFELEN  SETA  0                  CLEAR GROUP FIELD ENTRY LENGTHS
+         AGO   .DUNGRP
+.*
+.NOGRP   ANOP
+&GNAME   SETC  ''
+.*
+.DUNGRP  ANOP
+.GOON11  ANOP
+.*
+         AIF   (&MTYPE EQ 1).DSECT
+.*
+.* INITIALIZE ATTRIBUTE ARRAY
+&ATTRIB(01) SETA X'40',X'C1',X'4C',X'4D'
+&ATTRIB(09) SETA X'C8',X'C9'
+&ATTRIB(17) SETA X'50',X'D1',X'5C',X'5D'
+&ATTRIB(21) SETA X'D8',X'D9'
+&ATTRIB(33) SETA X'60',X'61',X'6C',X'6D'
+&ATTRIB(41) SETA X'E8',X'E9'
+&ATTRIB(49) SETA X'F0',X'F1',X'7C',X'7D'
+&ATTRIB(57) SETA X'F8',X'F9'
+.*
+.* ANALYSE JUSTIFY
+&NJUST   SETA  N'&JUSTIFY         SET NO. OF OPERANDS IN JUSTIFY
+         AIF   (&NJUST EQ 0).DUNJUST
+         AIF   (&NJUST GT 2).BIGJUST
+&I       SETA  1
+.LJUST   ANOP
+         AIF   ('&JUSTIFY(&I)' EQ 'LEFT').JSLEFT
+         AIF   ('&JUSTIFY(&I)' EQ 'RIGHT').JSRITE
+         AIF   ('&JUSTIFY(&I)' EQ 'BLANK').JSBLNK
+         AIF   ('&JUSTIFY(&I)' EQ 'ZERO').JSZERO
+         MNOTE 12,'INVALID JUSTIFY OPTION - &JUSTIFY(&I)'
+         AGO   .GOON01
+.*
+.PJUST   ANOP
+&I       SETA  &I+1
+         AIF   (&I GT &NJUST).CHKJUST
+         AGO   .LJUST
+.*
+.JSLEFT  ANOP
+         AIF   (&RIGHT).BADJUST
+&RIGHT   SETB  0
+&JSTYPE(1) SETB 1
+         AGO   .PJUST
+.*
+.JSRITE  ANOP
+&RIGHT   SETB  1
+&JSTYPE(2) SETB 1
+         AGO   .PJUST
+.*
+.JSBLNK  ANOP
+         AIF   (&ZERO).BADJUST
+&ZERO    SETB  0
+&JSTYPE(3) SETB 1
+         AGO   .PJUST
+.*
+.JSZERO  ANOP
+&ZERO    SETB  1
+&JSTYPE(4) SETB 1
+         AGO   .PJUST
+.*
+.CHKJUST ANOP
+.* CROSS CHECK JUSTIFY
+.* 1=LEFT 2=RIGHT 3=BLANK 4=ZERO
+.* IF ONLY 1 PARAMETER IS SPECIFIED, MAKE THE OTHER COMPATIBLE
+         AIF   (&NJUST NE 1).VERJUST
+         AIF   (NOT &JSTYPE(1)).JSR
+&ZERO    SETB  0
+&JSTYPE(3) SETB 1
+         AGO   .VERJUST
+.*
+.JSR     ANOP
+         AIF   (NOT &JSTYPE(2)).JSB
+&ZERO    SETB  1
+&JSTYPE(4) SETB 1
+         AGO   .VERJUST
+.*
+.JSB     ANOP
+         AIF   (NOT &JSTYPE(3)).JSZ
+&RIGHT   SETB  0
+&JSTYPE(1) SETB 1
+         AGO   .VERJUST
+.*
+.JSZ     ANOP
+&RIGHT   SETB  1
+&JSTYPE(2) SETB 1
+.VERJUST ANOP
+         AIF   (&JSTYPE(1) AND &JSTYPE(2)).JUSERR1
+         AIF   (&JSTYPE(3) AND &JSTYPE(4)).JUSERR2
+.DUNJUST ANOP
+.GOON01  ANOP
+.*
+.* ANALYZE INITIAL/XINIT
+&KXINIT  SETA  K'&XINIT
+         AIF   ('&INITIAL' EQ '' AND '&XINIT' EQ '').NOINIT
+         AIF   (K'&INITIAL-2 GT &LENGTH).BIGINIT
+         AIF   (&KXINIT/2 GT &LENGTH).BIGINIT
+         AIF   ('&INITIAL' NE '' AND '&XINIT' NE '').BOTHINI
+&INIT    SETB  1
+         AIF   ('&XINIT' EQ '').NOINIT
+.* ANALYZE XINIT
+         AIF   (&KXINIT/2*2 NE &KXINIT).BADXNIT
+         AIF   ('&XINIT'(1,2) NE 'FF').NOINIT
+.* SPECIAL XINIT
+         AIF   (&LENGTH LT 8).BADXSPC
+.*
+.NOINIT  ANOP
+.GOON02  ANOP
+.*
+.* ANALYZE ATTRIBUTE AND SET DEFAULTS
+&NATTR   SETA  N'&ATTRB           SET NO. OF OPERANDS IN ATTRB
+         AIF   (&NATTR GT 0).DOATTR
+.* MISSING ATTRB ASSUMES (ASKIP,NORM)
+&PROT    SETB  1
+&NUM     SETB  1
+&ATTYPE(1) SETB 1
+&BRT     SETB  0
+&DRK     SETB  0
+&ATTYPE(7) SETB 1
+         AGO   .DUNATTR
+.*
+.DOATTR  ANOP
+&I       SETA  1
+.LATTR   ANOP
+         AIF   ('&ATTRB(&I)' EQ 'ASKIP').ATASKIP
+         AIF   ('&ATTRB(&I)' EQ 'PROT').ATPROT
+         AIF   ('&ATTRB(&I)' EQ 'UNPROT').ATUNPRT
+         AIF   ('&ATTRB(&I)' EQ 'ALPHA').ATALPH
+         AIF   ('&ATTRB(&I)' EQ 'NUM').ATNUM
+         AIF   ('&ATTRB(&I)' EQ 'BRT').ATBRT
+         AIF   ('&ATTRB(&I)' EQ 'NORM').ATNORM
+         AIF   ('&ATTRB(&I)' EQ 'DRK').ATDRK
+         AIF   ('&ATTRB(&I)' EQ 'FSET').ATFSET
+         AIF   ('&ATTRB(&I)' EQ 'IC').ATIC
+         MNOTE 12,'INVALID ATTRB OPTION - &ATTRB(&I)'
+         AGO   .GOON05
+.*
+.PATTR   ANOP
+&I       SETA  &I+1
+         AIF   (&I GT &NATTR).DUNATTR
+         AGO   .LATTR
+.*
+.ATASKIP ANOP
+&PROT    SETB  1
+&NUM     SETB  1
+&ATTYPE(1) SETB 1
+         AGO   .PATTR
+.*
+.ATPROT  ANOP
+&PROT    SETB  1
+&ATTYPE(2) SETB 1
+         AGO   .PATTR
+.*
+.ATUNPRT ANOP
+&PROT    SETB  0
+&ATTYPE(3) SETB 1
+         AGO   .PATTR
+.*
+.ATALPH  ANOP
+&NUM     SETB  0
+&ATTYPE(4) SETB 1
+         AGO   .PATTR
+.*
+.ATNUM   ANOP
+&NUM     SETB  1
+&ATTYPE(5) SETB 1
+         AGO   .PATTR
+.*
+.ATBRT   ANOP
+&BRT     SETB  1
+&DRK     SETB  0
+&ATTYPE(6) SETB 1
+         AGO   .PATTR
+.*
+.ATNORM  ANOP
+&BRT     SETB  0
+&DRK     SETB  0
+&ATTYPE(7) SETB 1
+         AGO   .PATTR
+.*
+.ATDRK   ANOP
+&BRT     SETB  0
+&DRK     SETB  1
+&ATTYPE(8) SETB 1
+         AGO   .PATTR
+.*
+.ATFSET  ANOP
+&FSET    SETB  1
+         AGO   .PATTR
+.*
+.ATIC    ANOP
+         AIF   (&IC).BADIC
+&IC      SETB  1
+&ICPOS   SETB  1
+         AGO   .PATTR
+.*
+.DUNATTR ANOP
+.GOON05  ANOP
+.* CROSS CHECK ATTRIBUTES
+.* 1=ASKIP 2=PROT 3=UNPROT 4=ALPHA 5=NUM 6=BRT 7=NORM 8=DRK
+.* IF ASKIP/PROT/UNPROT ARE MISSING ASSUME ASKIP
+.* IF ASKIP/ALPHA/NUM   ARE MISSING ASSUME ALPHA
+.* IF BRT/NORM/DRK      ARE MISSING ASSUME NORM
+         AIF   (&ATTYPE(1) OR &ATTYPE(2) OR &ATTYPE(3)).ATAUPOK
+&PROT    SETB  0
+&ATTYPE(3) SETB 1
+.ATAUPOK ANOP
+         AIF   (&ATTYPE(1) OR &ATTYPE(4) OR &ATTYPE(5)).ATALNOK
+&NUM     SETB  0
+&ATTYPE(4) SETB 1
+.ATALNOK ANOP
+         AIF   (&ATTYPE(6) OR &ATTYPE(7) OR &ATTYPE(8)).ATBNDOK
+&BRT     SETB  0
+&DRK     SETB  0
+&ATTYPE(7) SETB 1
+.ATBNDOK ANOP
+         AIF   (&ATTYPE(1) AND &ATTYPE(2)).ATTERR1
+         AIF   (&ATTYPE(1) AND &ATTYPE(3)).ATTERR2
+         AIF   (&ATTYPE(1) AND &ATTYPE(4)).ATTERR3
+         AIF   (&ATTYPE(1) AND &ATTYPE(5)).ATTERR4
+         AIF   (&ATTYPE(2) AND &ATTYPE(3)).ATTERR5
+         AIF   (&ATTYPE(4) AND &ATTYPE(5)).ATTERR6
+         AIF   (&ATTYPE(6) AND &ATTYPE(7)).ATTERR7
+         AIF   (&ATTYPE(6) AND &ATTYPE(8)).ATTERR8
+         AIF   (&ATTYPE(7) AND &ATTYPE(8)).ATTERR9
+.*
+.* PREVENT UNPROT/FSET ON UNNAMED FIELD, I DON'T LIKE IT
+         AIF   ('&FLDNAME' EQ '' AND &ATTYPE(3)).FLDERR
+         AIF   ('&FLDNAME' EQ '' AND &FSET).FLDERR
+.*
+.GOON03  ANOP
+.* ENSURE CORRECT JUSTIFY IF NOT SPECIFIED
+         AIF   (&GFE).DEFJUST GROUP FIELD ENTRY
+         AIF   (&NJUST NE 0).GOTJUST
+         AIF   (&NUM).SETJRZ
+.DEFJUST ANOP
+.* SET DEFAULT JUSTIFY LEFT,BLANK
+&RIGHT   SETB  0
+&ZERO    SETB  0
+         AGO   .GOTJUST
+.*
+.SETJRZ  ANOP
+.* SET DEFAULT JUSTIFY RIGHT,ZERO
+&RIGHT   SETB  1
+&ZERO    SETB  1
+.GOTJUST ANOP
+.* ANALYSE POS
+.* POSITION IS RELATIVE TO SIZE, AND STARTS AT ZERO
+         AIF   (N'&POS NE 1).POS2
+         AIF   (T'&POS NE 'N').BADPOS2
+&FPOS    SETA  &POS
+         AIF   (&FPOS GT (&SIZEROW*&SIZECOL)-1).BIGPOS1
+         AGO   .DUNPOS
+.*
+.POS2    ANOP
+         AIF   (N'&POS NE 2).BADPOS1
+         AIF   (T'&POS(1) NE 'N').BADPOS2
+         AIF   (T'&POS(2) NE 'N').BADPOS2
+         AIF   (&POS(1) GT &SIZEROW).BIGPOS
+         AIF   (&POS(2) GT &SIZECOL).BIGPOS
+         AIF   (&POS(2)+&LENGTH GT &SIZECOL).BIGPOS2
+.GOON04  ANOP
+&FPOS    SETA  (&POS(1)-1)*&SIZECOL+&POS(2)-1
+.DUNPOS  ANOP
+.GOON09  ANOP
+.*
+.* ANALYSE PICIN/PICOUT
+         AIF   ('&PICIN' EQ '' AND '&PICOUT' EQ '').DUNPIC
+.* PICIN AND/OR PICOUT PRESENT
+         AIF   ('&FLDNAME' EQ '').BADPCDS
+         AIF   ('&PICIN' EQ '').PICOUT
+.* PROCESS PICIN
+&KPICIN  SETA  K'&PICIN
+         AIF   (&KPICIN/2*2 NE &KPICIN).BADPIC
+         AIF   (&KPICIN/2 NE &LENGTH).BADPCLN
+.* VALIDATE PICIN
+         AIF   ('&PICIN'(1,2) EQ '40').PICI1OK
+         AIF   ('&PICIN'(1,2) EQ '5C').PICI1OK
+         AIF   ('&PICIN'(1,2) EQ '5B').PICI1OK
+         AIF   ('&PICIN'(1,2) EQ '4D').PICI1OK
+         AGO   .BADPMCI1
+.*
+.PICI1OK ANOP
+&PICNDX  SETA  3
+&PICI20  SETA  0
+&PICI21  SETA  0
+.PICILP  ANOP
+         AIF   ('&PICIN'(&PICNDX,2) NE '20').PICI21
+&PICI20  SETA  &PICI20+1
+         AGO   .PICIBMP
+.*
+.PICI21  ANOP
+         AIF   ('&PICIN'(&PICNDX,2) NE '21').PICI4B
+&PICI21  SETA  &PICI21+1
+         AGO   .PICIBMP
+.*
+.PICI4B  ANOP
+         AIF   ('&PICIN'(&PICNDX,2) NE '4B').PICI6B
+         AGO   .PICIBMP
+.*
+.PICI6B  ANOP
+         AIF   ('&PICIN'(&PICNDX,2) NE '6B').BADPCHX
+.PICIBMP ANOP
+&PICNDX SETA   &PICNDX+2
+         AIF   (&PICNDX LT &KPICIN).PICILP
+         AIF   (&PICI21 GT 1).BADPCHX   MORE THAN ONE 21
+&PICISEL SETA  &PICI20+&PICI21
+         AIF   (&PICISEL EQ 0).BADPCHX  NO 20/21
+         AIF   (&PICISEL/2*2 EQ &PICISEL).BADPCSL EVEN NO. OF 20/21
+         AIF   (&KPICIN GT 100).BADPCBG
+.*
+.PICOUT  ANOP
+         AIF   ('&PICOUT' EQ '').DUNPIC
+.* PROCESS PICOUT
+&KPICOUT SETA  K'&PICOUT
+         AIF   (&KPICOUT/2*2 NE &KPICOUT).BADPIC
+         AIF   (&KPICOUT/2 NE &LENGTH).BADPCLN
+.* VALIDATE PICOUT
+         AIF   ('&PICOUT'(1,2) EQ '40').PICO1OK
+         AIF   ('&PICOUT'(1,2) EQ '5C').PICO1OK
+         AIF   ('&PICOUT'(1,2) EQ '5B').PICO1OK
+         AIF   ('&PICOUT'(1,2) EQ '4D').PICO1OK
+         AGO   .BADPMCI1
+.*
+.PICO1OK ANOP
+&PICNDX  SETA  3
+&PICO20  SETA  0
+&PICO21  SETA  0
+.PICOLP  ANOP
+         AIF   ('&PICOUT'(&PICNDX,2) NE '20').PICO21
+&PICO20  SETA  &PICO20+1
+         AGO   .PICOBMP
+.*
+.PICO21  ANOP
+         AIF   ('&PICOUT'(&PICNDX,2) NE '21').PICO4B
+&PICO21  SETA  &PICO21+1
+         AGO   .PICOBMP
+.*
+.PICO4B  ANOP
+         AIF   ('&PICOUT'(&PICNDX,2) NE '4B').PICO6B
+         AGO   .PICOBMP
+.*
+.PICO6B  ANOP
+         AIF   ('&PICOUT'(&PICNDX,2) NE '6B').BADPCHX
+.PICOBMP ANOP
+&PICNDX  SETA  &PICNDX+2
+         AIF   (&PICNDX LT &KPICOUT).PICOLP
+         AIF   (&PICO21 GT 1).BADPCHX   MORE THAN ONE 21
+&PICOSEL SETA  &PICO20+&PICO21
+         AIF   (&PICOSEL EQ 0).BADPCHX  NO 20/21
+         AIF   ((&PICOSEL)/2*2 EQ &PICOSEL).BADPCSL ODD NO. OF 20/21
+         AIF   (&KPICOUT GT 100).BADPCBG
+.DUNPIC  ANOP
+.GOON13  ANOP
+.*
+.* GENERATE PHYSICAL MAP
+.*
+.OCCLOOP ANOP
+.* CALCULATE MDF SIZE
+&MDFLEN  SETA  8                  PREFIX
+         AIF   (NOT &INIT).NOINIT3
+.* ADD INITIAL/XINIT
+&MDFLEN  SETA  &MDFLEN+&LENGTH    ADD INITIAL/XINIT
+.NOINIT3 ANOP
+&MDFLEN  SETA  &MDFLEN+2+(&KPICIN/2)+2+(&KPICOUT/2) ADD PICIN/PICOUT
+&SPACES  SETC  '  '
+         AIF   (&MDFLEN LT 10).MDFOK
+&SPACES  SETC  ' '
+         AIF   (&MDFLEN LT 100).MDFOK
+&SPACES  SETC  ''
+.MDFOK   ANOP
+         DC    AL2(&MDFLEN)           &SPACES.BMSMDF   -- MDF LENGTH
+         AIF   ('&FLDNAME' EQ '').NOFLD
+&DSCT    SETB  1
+.NOFLD   ANOP
+         AIF   (NOT &GFD).NOTGFD
+.* GROUP FIELD DESCRIPTOR
+&MDFORG  SETC  '&SYSNDX'
+&GNAME._&MDFORG._GRPLEN EQU *
+         DC    AL2(0)             BMSFL    -- GROUP LENGTH
+         AGO   .FDFB
+.*
+.NOTGFD  ANOP
+&SPACES  SETC  '  '
+         AIF   (&LENGTH LT 10).LENOK
+&SPACES  SETC  ' '
+         AIF   (&LENGTH LT 100).LENOK
+&SPACES  SETC  ''
+.LENOK   ANOP
+         DC    AL2(&LENGTH)           &SPACES.BMSFL    -- FIELD LENGTH
+.FDFB    ANOP
+         DC    B'0&GFE&GFD.0&ZERO&RIGHT&INIT&DSCT'        BMSFDFB  -- F-
+               IELD DESCRIPTOR FLAG BYTE
+         AIF   (NOT &GFE).NOTGFE1 GROUP FIELD ENTRY
+         DC    AL1(0)             BMSFA    -- NO GROUP ENTRY ATTRIBUTE
+         AGO   .FP
+.*
+.NOTGFE1 ANOP
+&ATINDX  SETA  B2A('00&PROT&NUM&BRT.0&DRK&FSET')
+         AIF   (&ATTRIB(&ATINDX+1) EQ 0).BADATT
+&SPACES  SETC  ' '
+         AIF   (&ATTRIB(&ATINDX+1) LT 100).ATTOK
+&SPACES  SETC  ''
+.ATTOK   ANOP
+         DC    AL1(&ATTRIB(&ATINDX+1))           &SPACES.BMSFA    -- AT-
+               TRIBUTE
+.FP      ANOP
+&SPACES  SETC  '   '
+         AIF   (&FPOS LT 10).POSOK
+&SPACES  SETC  '  '
+         AIF   (&FPOS LT 100).POSOK
+&SPACES  SETC  ' '
+         AIF   (&FPOS LT 1000).POSOK
+&SPACES  SETC  ''
+.POSOK   ANOP
+         AIF   (NOT &ICPOS).NOTIC
+         ORG   &MDINAME._&MDIORG._CURSOR
+         DC    AL2(&FPOS+1)
+         ORG
+.NOTIC   ANOP
+         DC    AL2(&FPOS)          &SPACES.BMSFP    -- POSITION
+.* GENERATE PICIN/PICOUT/INITIAL/XINIT
+&SPACES  SETC  '     '
+         AIF   (&KPICIN LT 10).PICIOK
+&SPACES  SETC  '    '
+.PICIOK  ANOP
+         DC    AL2(&KPICIN/2)      &SPACES.         -- PICIN LENGTH
+         AIF   (&KPICIN EQ 0).GENPICO
+         DC    X'&PICIN'
+.*
+.GENPICO ANOP
+&SPACES  SETC  '     '
+         AIF   (&KPICOUT LT 10).PICOOK
+&SPACES  SETC  '    '
+.PICOOK  ANOP
+         DC    AL2(&KPICOUT/2)      &SPACES.         -- PICOUT LENGTH
+         AIF   (&KPICOUT EQ 0).OLAP
+         DC    X'&PICOUT'
+.*
+.OLAP    ANOP
+.* OVERLAP CHECKING
+&I       SETA  1
+.* GROUP FIELD ENTRY DOES NOT HAVE AN ATTRIBUTE
+         AIF   (NOT &GFE).NOGFATT
+&I       SETA  2
+.NOGFATT ANOP
+         AIF   (T'&INITIAL EQ 'O').NOINIT4
+.* EXTRACT INITIAL
+&ACTINIT SETC  '&INITIAL'(2,K'&INITIAL-2)
+.NOINIT4 ANOP
+         AIF   (T'&XINIT EQ 'O').OVERLAP
+.* EXTRACT XINIT ONLY IF FFXX SPECIAL
+         AIF   ('&XINIT'(1,2) NE 'FF').OVERLAP
+.* XINIT SPECIAL, FILL ACTINIT WITH REPEATS
+&J       SETA  1
+&REP     SETC  '&XINIT'(3,2)
+&REP     SETC  X2C('&REP')
+&REP     SETC  '&REP'(4,1)
+&ACTINIT SETC  ''
+.ACTLOOP ANOP
+&ACTINIT SETC  '&ACTINIT&REP'
+&J       SETA  &J+1
+         AIF   (&J GT &LENGTH).OVERLAP
+         AGO   .ACTLOOP
+.*
+.OVERLAP ANOP
+         AIF   (&SCREEN(&FPOS+&I) NE ' ').OVERPOS
+.GOON06  ANOP
+&SCRTYPE SETC  '@'                ASSUME ATTRIBUTE
+         AIF   (&I NE 1).NOTATT
+.* ATTRIBUTE POSITION, CHECK FOR ADJACENT ATTRIBUTE
+.* POS BEFORE
+&NEXTPOS SETA  &FPOS-1
+         AIF   (&FPOS NE 0).FPOSBF
+&NEXTPOS SETA  &SIZEROW*&SIZECOL-1
+.FPOSBF  ANOP
+         AIF   (&SCREEN(&NEXTPOS+1) EQ '@').ADJATT
+.* POS AFTER
+&NEXTPOS SETA  &FPOS+1
+         AIF   (&FPOS NE &SIZEROW*&SIZECOL-1).FPOSAF
+&NEXTPOS SETA  0
+.FPOSAF  ANOP
+         AIF   (&SCREEN(&NEXTPOS+1) EQ '@').ADJATT
+.GOON10  ANOP
+         AGO   .SETSCR
+.*
+.NOTATT  ANOP
+&SCRTYPE SETC  '&ACTINIT'(&I-1,1) ASSUME BYTE FROM INITIAL
+         AIF   ('&SCRTYPE' NE '').SETSCR
+&SCRTYPE SETC  ' '                ASSUME BLANK FILL
+         AIF   (T'&INITIAL NE 'O').SETSCR
+&SCRTYPE SETC  '.'                SET EMPTY FIELD MARKER
+.SETSCR  ANOP
+&SCREEN(&FPOS+&I) SETC '&SCRTYPE' SET POSITION USED
+         AIF   (&GFD).NOXINIT     GROUP FIELD DESCRIPTOR
+&I       SETA  &I+1
+         AIF   (&I NE &LENGTH+2).OVERLAP
+.*
+         AIF   ('&INITIAL' EQ '').NOINIT2
+         DC    CL&LENGTH&INITIAL
+         AGO   .NOXINIT
+.*
+.NOINIT2 ANOP
+         AIF   ('&XINIT' EQ '').NOXINIT
+         DC    X'&XINIT'
+         AIF   (&LENGTH-&KXINIT/2 EQ 0).NOXINIT
+         DC    CL(&LENGTH-&KXINIT/2)' '
+.NOXINIT ANOP
+.* ACCUMULATE BOTH ALL AND UNNAMED FIELDS
+&MDFALL  SETA  &MDFALL+&MDFLEN
+.* GROUP FIELD DESCRIPTOR HAS NO LENGTH, LENGTH WILL COME FROM ENTRIES
+         AIF   (&GFD).GFDLEN1     GROUP FIELD DESCRIPTOR
+&MDFALLN SETA  &MDFALLN+&LENGTH
+.GFDLEN1 ANOP
+&MDFALLC SETA  &MDFALLC+1
+         AIF   (NOT &DSCT).NODSCT
+.* DSECT EXISTS
+.* GROUP FIELD DESCRIPTOR HAS NO LENGTH, BUT WILL HAVE AN SBA
+.* GROUP FIELD ENTRY HAS LENGTH, BUT WILL NOT HAVE AN SBA
+         AIF   (&GFD).GFDLEN2     GROUP FIELD DESCRIPTOR
+&MDFNAMD SETA  &MDFNAMD+&LENGTH
+         AIF   (&GFE).NODSCT      GROUP FIELD ENTRY
+.GFDLEN2 ANOP
+&MDFNAMC SETA  &MDFNAMC+1
+.NODSCT  ANOP
+.* MAP SIZE = 26 (MDI) + LENGTH OF ALL MDF'S
+         ORG   &MDINAME._&MDIORG._TOTLEN
+         DC    AL2(26+&MDFALL)
+.* INPUT SIZE = 3 (AID, CURSOR) + 3*NO. OF NAMED FIELDS (SBA)
+.*              + LENGTH OF ALL NAMED FIELDS
+         ORG   &MDINAME._&MDIORG._INPLEN
+         DC    AL2(3+(3*&MDFNAMC)+&MDFNAMD)
+.* OUTPUT SIZE = 3 (ESC, WRT, WCC) + 5*NO. OF FIELDS (SBA, SF)
+.*               + LENGTH OF ALL FIELDS + 4 (FOR ANY CURSOR)
+&OUTSIZE SETA  3+(5*&MDFALLC)+&MDFALLN+4
+         AIF   (&OUTSIZE GT 2000).BIGMAP
+         ORG   &MDINAME._&MDIORG._OUTLEN
+         DC    AL2(&OUTSIZE)
+         ORG
+.*
+&OCC     SETA  &OCC-1
+.* DON'T INCREMENT POS FOR GROUP FIELD DESCRIPTOR
+         AIF   (&GFD).NOINCPS
+&FPOS    SETA  &FPOS+&LENGTH+1
+.NOINCPS ANOP
+         AIF   (&OCC NE 0).STARIT
+.* ACCUMULATE ALL LENGTHS FOR GROUP FIELD ENTRIES
+.* AND ORG IT INTO THE GROUP FIELD DESCRIPTOR
+         AIF   (NOT &GFE).NOTGFE2
+.* GROUP FIELD ENTRY
+&GFELEN  SETA  &GFELEN+&LENGTH
+&SPACES  SETC  '  '
+         AIF   (&GFELEN LT 10).GFLENOK
+&SPACES  SETC  ' '
+         AIF   (&GFELEN LT 100).GFLENOK
+&SPACES  SETC  ''
+.GFLENOK ANOP
+         ORG   &GNAME._&MDFORG._GRPLEN
+         DC    AL2(&GFELEN)           &SPACES.BMSFL    -- GROUP LENGTH
+         ORG
+         AGO   .DUNALL
+.*
+.NOTGFE2 ANOP
+.* IF WE JUST PROCESSED A GROUP FIELD DESCRIPTOR, WE NOW NEED A GROUP
+.* FIELD ENTRY
+         AIF   (NOT &GFD).DUNALL
+.* GROUP FIELD DESCRIPTOR
+&GFD     SETB  0                  RESET GROUP FIELD DESCRIPTOR
+&GFE     SETB  1                  SET GROUP FIELD ENTRY
+&OCC     SETA  1                  SET OCCURS=1
+.STARIT  ANOP
+*
+         AGO   .OCCLOOP
+.*
+.DUNALL  ANOP
+         MEXIT
+.*
+.DSECT   ANOP
+.*
+.* GENERATE DSECT
+.*
+         AIF   ('&FLDNAME' EQ '').DUNMDF
+&KFLD    SETA  K'&FLDNAME
+&SPACES2 SETC  '  '
+         AIF   (&LENGTH LT 10).LENOK2
+&SPACES2 SETC  ' '
+         AIF   (&LENGTH LT 100).LENOK2
+&SPACES2 SETC  ''
+.LENOK2  ANOP
+         AIF   (NOT &MDIMODE(1) AND &MDIMODE(2)).TISIN
+         AGO   .TRYOUT
+.*
+.TISIN   ANOP
+.* MODE=IN DSECT
+         AIF   (NOT &GFD).NOTGFD1
+.* GROUP FIELD DESCRIPTOR
+&SPACES  SETC  '        '(1,7-K'&GNAME)
+         PUNCH '*'
+         PUNCH '&GNAME.L&SPACES DS    AL2                INPUT GROUP FI-
+               ELD LENGTH'
+         PUNCH '&GNAME.F&SPACES DS    X                  INPUT GROUP FI-
+               ELD FLAG'
+&SPACES  SETC  '        '(1,8-K'&GNAME)
+         PUNCH '&GNAME&SPACES DS    0C                 INPUT GROUP FIEL-
+               D ORIGIN'
+&SPACES  SETC  '        '(1,8-&KFLD)
+         PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.I-
+               NPUT GROUP FIELD'
+         MEXIT
+.*
+.NOTGFD1 ANOP
+         AIF   (NOT &GFE).NOTGFE3
+.* GROUP FIELD ENTRY
+&SPACES  SETC  '        '(1,8-&KFLD)
+         PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.I-
+               NPUT GROUP FIELD'
+         MEXIT
+.*
+.NOTGFE3 ANOP
+&SPACES  SETC  '        '(1,7-&KFLD)
+         AIF   (&OCC EQ 1).NOOCI1
+.* FIRST OF MULTIPLE OCCURS
+         PUNCH '*'
+         PUNCH '&FLDNAME.D&SPACES DS    0C                 INPUT FIELD -
+               FIRST OCCURRING'
+         AGO   .NOSTAR
+.*
+.NOOCI1  ANOP
+         PUNCH '*'
+.NOSTAR  ANOP
+         PUNCH '&FLDNAME.L&SPACES DS    AL2                INPUT FIELD -
+               LENGTH'
+         PUNCH '&FLDNAME.F&SPACES DS    X                  INPUT FIELD -
+               FLAG'
+&SPACES  SETC  '        '(1,8-&KFLD)
+         PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.I-
+               NPUT FIELD'
+         AIF   (&OCC EQ 1).NOOCI2
+&SPACES  SETC  '        '(1,7-&KFLD)
+         PUNCH '&FLDNAME.N&SPACES DS    0C                 INPUT FIELD -
+               NEXT OCCURRING'
+         PUNCH '         ORG   &FLDNAME.D+&OCC*(&FLDNAME.N-&FLDNAME.D)'
+.NOOCI2  ANOP
+         MEXIT
+.*
+.TRYOUT  ANOP
+         AIF   (&MDIMODE(1) AND NOT &MDIMODE(2)).TISOUT
+         AGO   .TISIO
+.*
+.TISOUT  ANOP
+.* MODE=OUT DSECT
+         AIF   (NOT &GFD).NOTGFD2
+.* GROUP FIELD DESCRIPTOR
+&SPACES  SETC  '        '(1,7-K'&GNAME)
+         PUNCH '*'
+         PUNCH '&GNAME.A&SPACES DS    X                  OUTPUT GROUP F-
+               IELD ATTRIBUTE'
+&SPACES  SETC  '        '(1,8-K'&GNAME)
+         PUNCH '&GNAME&SPACES DS    0C                 OUTPUT GROUP FIE-
+               LD ORIGIN'
+&SPACES  SETC  '        '(1,8-&KFLD)
+         PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.O-
+               UTPUT GROUP FIELD'
+         MEXIT
+.*
+.NOTGFD2 ANOP
+         AIF   (NOT &GFE).NOTGFE4
+.* GROUP FIELD ENTRY
+&SPACES  SETC  '        '(1,8-&KFLD)
+         PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.O-
+               UTPUT GROUP FIELD'
+         MEXIT
+.*
+.NOTGFE4 ANOP
+&SPACES  SETC  '        '(1,7-&KFLD)
+         AIF   (&OCC EQ 1).NOOCO1
+         PUNCH '*'
+         PUNCH '&FLDNAME.D&SPACES DS    0C                 OUTPUT FIELD-
+                FIRST OCCURRING'
+         AGO   .NOSTAR2
+.NOOCO1  ANOP
+         PUNCH '*'
+.NOSTAR2 ANOP
+         PUNCH '&FLDNAME.A&SPACES DS    X                  OUTPUT ATTRI-
+               BUTE'
+&SPACES  SETC  '        '(1,8-&KFLD)
+         PUNCH '&FLDNAME&SPACES DS    CL&LENGTH              &SPACES2.O-
+               UTPUT FIELD'
+         AIF   (&OCC EQ 1).NOOCO2
+&SPACES  SETC  '        '(1,7-&KFLD)
+         PUNCH '&FLDNAME.N&SPACES DS    0C                 OUTPUT FIELD-
+                NEXT OCCURRING'
+         PUNCH '         ORG   &FLDNAME.D+&OCC*(&FLDNAME.N-&FLDNAME.D)'
+.NOOCO2  ANOP
+         MEXIT
+.*
+.TISIO   ANOP
+.* MODE=INOUT DSECT
+         AIF   (NOT &GFD).NOTGFD3
+.* GROUP FIELD DESCRIPTOR
+&SPACES  SETC  '        '(1,7-K'&GNAME)
+         PUNCH '*'
+         PUNCH '&GNAME.L&SPACES DS    AL2                INPUT GROUP FI-
+               ELD LENGTH'
+         PUNCH '&GNAME.F&SPACES DS    0X                 INPUT GROUP FI-
+               ELD FLAG'
+         PUNCH '&GNAME.A&SPACES DS    X                  OUTPUT GROUP F-
+               IELD ATTRIBUTE'
+         PUNCH '&GNAME.I&SPACES DS    0C                 INPUT GROUP FI-
+               ELD ORIGIN'
+         PUNCH '&GNAME.O&SPACES DS    0C                 OUTPUT GROUP F-
+               IELD ORIGIN'
+&SPACES  SETC  '        '(1,7-&KFLD)
+         PUNCH '&FLDNAME.I&SPACES DS    CL&LENGTH              &SPACES2-
+               .INPUT GROUP FIELD'
+         PUNCH '         ORG   &FLDNAME.I'
+         PUNCH '&FLDNAME.O&SPACES DS    CL&LENGTH              &SPACES2-
+               .OUTPUT GROUP FIELD'
+         MEXIT
+.*
+.NOTGFD3 ANOP
+         AIF   (NOT &GFE).NOTGFE5
+.* GROUP FIELD ENTRY
+&SPACES  SETC  '        '(1,7-&KFLD)
+         PUNCH '&FLDNAME.I&SPACES DS    CL&LENGTH              &SPACES2-
+               .INPUT GROUP FIELD'
+         PUNCH '         ORG   &FLDNAME.I'
+         PUNCH '&FLDNAME.O&SPACES DS    CL&LENGTH              &SPACES2-
+               .OUTPUT GROUP FIELD'
+         MEXIT
+.*
+.NOTGFE5 ANOP
+&SPACES  SETC  '        '(1,7-&KFLD)
+         AIF   (&OCC EQ 1).NOOCIO1
+         PUNCH '*'
+         PUNCH '&FLDNAME.D&SPACES DS    0C                 I/O FIELD FI-
+               RST OCCURRING'
+         AGO   .NOSTAR3
+.*
+.NOOCIO1 ANOP
+         PUNCH '*'
+.NOSTAR3 ANOP
+         PUNCH '&FLDNAME.L&SPACES DS    AL2                INPUT FIELD -
+               LENGTH'
+         PUNCH '&FLDNAME.F&SPACES DS    0X                 INPUT FIELD -
+               FLAG'
+         PUNCH '&FLDNAME.A&SPACES DS    X                  OUTPUT ATTRI-
+               BUTE'
+         PUNCH '&FLDNAME.I&SPACES DS    CL&LENGTH              &SPACES2-
+               .INPUT FIELD'
+         PUNCH '         ORG   &FLDNAME.I'
+         PUNCH '&FLDNAME.O&SPACES DS    CL&LENGTH              &SPACES2-
+               .OUTPUT FIELD'
+         AIF   (&OCC EQ 1).DUNMDF
+&SPACES  SETC  '        '(1,7-&KFLD)
+         PUNCH '&FLDNAME.N&SPACES DS    0C                 I/O FIELD NE-
+               XT OCCURRING'
+         PUNCH '         ORG   &FLDNAME.D+&OCC*(&FLDNAME.N-&FLDNAME.D)'
+.DUNMDF  ANOP
+         MEXIT
+.*
+.BADJUST ANOP
+         MNOTE 12,'CONFLICTING JUSTIFY PARMS'
+         AGO   .GOON01
+.*
+.BIGJUST ANOP
+         MNOTE 12,'A MAXIMUM OF 2 OPERANDS ALLOWED IN JUSTIFY'
+         AGO   .GOON01
+.*
+.JUSERR1 ANOP
+         MNOTE 12,'JUSTIFY CONFLICT - LEFT AND RIGHT'
+         AGO   .GOON01
+.*
+.JUSERR2 ANOP
+         MNOTE 12,'JUSTIFY CONFLICT - BLANK AND ZERO'
+         AGO   .GOON01
+.*
+.BOTHINI ANOP
+         MNOTE 12,'BOTH INITIAL AND XINIT ARE SPECIFIED'
+         AGO   .GOON02
+.*
+.BADXNIT ANOP
+         MNOTE 12,'XINIT HAS ODD NUMBER OF HEX DIGITS'
+         AGO   .GOON02
+.*
+.BIGINIT ANOP
+         MNOTE 12,'INITIAL/XINIT IS GREATER THAN LENGTH'
+         AGO   .GOON02
+.*
+.ATTERR1 ANOP
+         MNOTE 12,'ATTRIBUTE CONFLICT - ASKIP AND PROT'
+         AGO   .GOON03
+.*
+.ATTERR2 ANOP
+         MNOTE 12,'ATTRIBUTE CONFLICT - ASKIP AND UNPROT'
+         AGO   .GOON03
+.*
+.ATTERR3 ANOP
+         MNOTE 12,'ATTRIBUTE CONFLICT - ASKIP AND ALPHA'
+         AGO   .GOON03
+.*
+.ATTERR4 ANOP
+         MNOTE 12,'ATTRIBUTE CONFLICT - ASKIP AND NUM'
+         AGO   .GOON03
+.*
+.ATTERR5 ANOP
+         MNOTE 12,'ATTRIBUTE CONFLICT - PROT AND UNPROT'
+         AGO   .GOON03
+.*
+.ATTERR6 ANOP
+         MNOTE 12,'ATTRIBUTE CONFLICT - ALPHA AND NUM'
+         AGO   .GOON03
+.*
+.ATTERR7 ANOP
+         MNOTE 12,'ATTRIBUTE CONFLICT - BRT AND NORM'
+         AGO   .GOON03
+.*
+.ATTERR8 ANOP
+         MNOTE 12,'ATTRIBUTE CONFLICT - BRT AND DRK'
+         AGO   .GOON03
+.*
+.ATTERR9 ANOP
+         MNOTE 12,'ATTRIBUTE CONFLICT - NORM AND DRK'
+         AGO   .GOON03
+.*
+.BADPOS1 ANOP
+         MNOTE 12,'POS HAS TOO MANY PARAMETERS'
+         AGO   .GOON04
+.*
+.BADPOS2 ANOP
+         MNOTE 12,'INVALID POS - &POS'
+         AGO   .GOON04
+.*
+.BIGPOS  ANOP
+         MNOTE 12,'POS EXCEEDS DEFINED MAP SIZE'
+         AGO   .GOON04
+.*
+.BIGPOS1 ANOP
+         MNOTE 12,'SINGLE POS EXCEEDS DEFINED MAP SIZE'
+         AGO   .GOON09
+.*
+.BIGPOS2 ANOP
+         MNOTE 12,'POS COLUMN+LENGTH EXCEEDS DEFINED MAP SIZE'
+         AGO   .GOON04
+.*
+.BADIC   ANOP
+         MNOTE 12,'IC ATTRIBUTE HAS OCCURRED IN ANOTHER MDF MACRO'
+         AGO   .GOON05
+.*
+.BADLEN  ANOP
+         MNOTE 12,'BAD LENGTH - &LENGTH'
+         AGO   .GOON07
+.*
+.FLDERR  ANOP
+         MNOTE 12,'UNNAMED FIELD HAS UNPROT OR FSET, INPUT DATA CANNOT -
+               BE MAPPED'
+         AGO   .GOON03
+.*
+.OVERPOS ANOP
+&OVERERR SETA  &FPOS+&I-1
+         MNOTE 12,'POS &OVERERR OVERLAPS WITH ANOTHER FIELD'
+         AGO   .GOON06
+.*
+.BADATT  ANOP
+         MNOTE *,'AN INTERNAL ERROR HAS OCCURRED'
+         MNOTE 12,'ERROR IN ATTRIBUTE TABLE &ATINDX+1'
+         MEXIT
+.*
+.BIGMAP  ANOP
+         MNOTE *,'AN INTERNAL ERROR HAS OCCURRED'
+         MNOTE 12,'MAPSIZE TOO LARGE - &OUTSIZE'
+         MEXIT
+.*
+.BADOCC  ANOP
+         MNOTE 12,'INVALID OCCURS - &OCCURS'
+         AGO   .GOON08
+.*
+.ADJATT  ANOP
+         MNOTE 12,'ADJACENT ATTRIBUTE AT POS &NEXTPOS'
+         AGO   .GOON10
+.*
+.LENZERO ANOP
+         MNOTE 12,'LENGTH=0 IS INVALID FOR NAMED FIELD'
+         AGO   .GOON07
+.*
+.ZERINIT ANOP
+         MNOTE 12,'INITIAL/XINIT IS INVALID WITH LENGTH=0'
+         AGO   .GOON07
+.*
+.BADGRP  ANOP
+         MNOTE 12,'GRPNAME AND OCCURS ARE SPECIFIED'
+         AGO   .GOON11
+.*
+.GRPFLD  ANOP
+         MNOTE 12,'GRPNAME SPECIFIED WITHOUT FLDNAME'
+         AGO   .GOON11
+.*
+.BADPOSI ANOP
+         MNOTE 12,'POSITIONAL OPERAND &SYSLIST(1) INVALID'
+         AGO   .GOON12
+.*
+.BADPIC  ANOP
+         MNOTE 12,'PICIN/PICOUT HAS ODD NUMBER OF HEX DIGITS'
+         AGO   .GOON13
+.*
+.BADPCLN ANOP
+         MNOTE 12,'PICIN/PICOUT HEX LENGTH NOT EQUAL TO LENGTH'
+         AGO   .GOON13
+.*
+.BADPCI1 ANOP
+         MNOTE 12,'PICIN/PICOUT: 1ST PAIR NOT 40, 5C, 5B, 4D'
+         AGO   .GOON13
+.*
+.BADPCHX ANOP
+         MNOTE 12,'PICIN/PICOUT IS INVALID'
+         AGO   .GOON13
+.*
+.BADPCSL ANOP
+         MNOTE 12,'PICIN/PICOUT: NUMBER OF 20/21 IS NOT ODD'
+         AGO   .GOON13
+.*
+.BADPCDS ANOP
+         MNOTE 12,'PICIN/PICOUT CAN ONLY BE SPECIFIED FOR A NAMED FIELD-
+               '
+         AGO   .GOON13
+.*
+.BADPCBG ANOP
+         MNOTE *,'AN INTERNAL ERROR HAS OCCURRED'
+         MNOTE 12,'PICIN/PICOUT LENGTH GREATER THAN 50 BYTES'
+         AGO   .GOON13
+.*
+.BADXSPC ANOP
+         MNOTE 12,'SPECIAL FORMAT XINIT CANNOT BE SPECIFIED IF LENGTH I-
+               S LESS THAN 8'
+         AGO   .GOON02
+.*
+         MEND
+

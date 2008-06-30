@@ -1,0 +1,17 @@
+         MACRO
+         DFHFEND
+         GBLB  &TYPED,&FINAL
+         AIF   (NOT &TYPED).BADFIN1
+         AIF   (NOT &FINAL).BADFIN2
+         AGO   .DUNEND
+.*
+.BADFIN1 MNOTE 12,'NO TYPE=DATASET'
+         AGO   .DUNEND
+.*
+.BADFIN2 MNOTE 12,'NO TYPE=FINAL'
+.*
+.DUNEND  ANOP
+END      OPSYN
+         END
+         MEND
+

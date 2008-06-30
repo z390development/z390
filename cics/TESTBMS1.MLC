@@ -1,0 +1,292 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+*
+* TEST SEND/RECEIVE MAP AND SEND CONTROL
+*
+* CODE AND DISPLAYS ARE ALMOST IDENTICAL TO GUI4/6
+* AFTER GUI4 IS ENDED, THE PROGRAM SWITCHES INTO GUI6
+*
+         DFHEIGBL
+         DFHEISTG
+         COPY  MAP01
+COMMIND  DS    C
+COMMNAME DS    CL40
+COMMADDR DS    CL40
+COMMZIP  DS    CL5
+*
+TESTBMS1 DFHEIENT CODEREG=(R12,R3)
+*
+         XC    COMMIND(86),COMMIND CLEAR COMMAREA
+         ICM   R5,15,TCTTECA      ADDRESS RECEIVED COMMAREA ?
+         BNZ   NOT1ST             EXIT IF OK
+* SETUP DSA COMMAREA
+         LA    R5,COMMIND         ADDRESS DSA COMMAREA
+         USING COMMIND,R5
+RESEND4  EQU   *
+* INITIAL GUI4 MAP
+         EXEC  CICS SEND MAP('GUI4') MAPSET('MAP01') MAPONLY ERASE
+         MVI   COMMIND,C'1'       SET GUI4 REENTRY POINT
+         B     RETURN             EXIT
+*
+NOT1ST   EQU   *
+* PROCESS INPUT
+         CLI   COMMIND,C'1'       COMMAREA=1 ?
+         BE    GUI4RENT           EXIT IF IT IS
+         CLI   COMMIND,C'2'       COMMAREA=2 ?
+         BE    GUI6RENT           EXIT IF IT IS
+         CLI   COMMIND,C'3'       COMMAREA=3 ?
+         BE    GUI6HRNT           EXIT IF IT IS
+         DC    H'0'               BAD COMMAREA
+*
+GUI4RENT EQU   *
+* PROCESS GUI4 INPUT
+         EXEC  CICS IGNORE CONDITION MAPFAIL
+         EXEC  CICS RECEIVE MAP('GUI4') MAPSET('MAP01')
+*        EXEC  CICS DUMP TRANSACTION DUMPCODE('MEL1')
+*              FROM(GUI4S) LENGTH(=AL2(GUI4L))
+         CLI   EIBAID,DFHPF3      PF3 ?
+         BE    GUI6               YES, EXIT TO START GUI6
+         CLI   EIBAID,DFHCLEAR    CLEAR ?
+         BE    RESEND4            YES, EXIT TO REFRESH DISPLAY
+         CLC   INPUTI,=C'END'     REQUEST TO END ?
+         BE    GUI6               EXIT IF IT IS
+         MVC   REPLYO,INPUTI      DISPLAY THE INPUT
+         EXEC  CICS SEND MAP('GUI4') MAPSET('MAP01')
+         B     RETURN             LOOP
+*
+GUI6     EQU   *
+* INITIAL GUI6 MAP
+         XC    COMMIND(86),COMMIND CLEAR COMMAREA
+         EXEC  CICS SEND MAP('GUI6') MAPSET('MAP01') MAPONLY ERASE
+         MVI   COMMIND,C'2'       SET GUI6 REENTRY POINT
+         B     RETURN             EXIT
+*
+GUI6RENT EQU   *
+         EXEC  CICS IGNORE CONDITION MAPFAIL
+         EXEC  CICS RECEIVE MAP('GUI6') MAPSET('MAP01')
+*        EXEC  CICS DUMP TRANSACTION DUMPCODE('MEL1')
+*              FROM(GUI6S) LENGTH(=AL2(GUI6L))
+         CLI   EIBAID,DFHENTER    ENTER ?
+         BE    GUI6DATA           EXIT IF IT IS
+         CLI   EIBAID,DFHPF1      PF1 ?
+         BE    GUI6HELP           EXIT IF IT IS
+         CLI   EIBAID,DFHPF2      PF2 ?
+         BE    EAU                EXIT IF IT IS
+         CLI   EIBAID,DFHPF3      PF3 ?
+         BE    ALLDONE            EXIT IF IT IS
+         CLI   EIBAID,DFHCLEAR    CLEAR ?
+         BE    GUI6               YES, EXIT TO REFRESH DISPLAY
+* BAD KEY
+         UNPK  HEXKEY(3),EIBAID(2) UNPACK AID
+         TR    HEXKEY(2),HEXTAB-240 TRANSLATE
+         MVI   HEXKEY+2,C' '      CLEAR EXTRA BYTE
+         MVC   ERRMSGO,BADKEY     MOVE BAD KEY MESSAGE
+         B     REDISP             EXIT
+*
+EAU      EQU   *
+         EXEC  CICS SEND CONTROL ERASEAUP CURSOR
+         B     RETURN             EXIT
+*
+GUI6DATA EQU   *
+* ENTER PRESSED
+*
+* DISPLAY CURSOR LOCATION
+         MVC   CURSO,=9C'?'       MARK CURSOR LOCATION UNKNOWN
+         TM    NAMEF,DFHBMCUR     CURSOR ON NAME ?
+         BNO   CURS01             EXIT IF NOT
+         MVC   CURSO,=CL9'NAME'   MARK CURSOR LOCATION
+         B     GUI6PROC           EXIT
+*
+CURS01   EQU   *
+         TM    ADDRF,DFHBMCUR     CURSOR ON ADDR ?
+         BNO   CURS02             EXIT IF NOT
+         MVC   CURSO,=CL9'ADDR'   MARK CURSOR LOCATION
+         B     GUI6PROC           EXIT
+*
+CURS02   EQU   *
+         TM    ZIPF,DFHBMCUR      CURSOR ON ZIP ?
+         BNO   CURS03             EXIT IF NOT
+         MVC   CURSO,=CL9'ZIP'    MARK CURSOR LOCATION
+         B     GUI6PROC           EXIT
+*
+CURS03   EQU   *
+         LA    R6,1               COUNT OCCURS
+         LA    R7,TESTOCCF        ADDRESS OCCURS
+OCCLOOP  EQU   *
+         TM    0(R7),DFHBMCUR     CURSOR ON THIS OCCURS ?
+         BO    CURSOCC            EXIT IF IT IS
+         AHI   R6,1               BUMP OCCURS COUNT
+         CHI   R6,6               GOT TO END ?
+         BE    CURS04             EXIT
+         AHI   R7,3+5             BUMP TO NEXT OCCURS
+         B     OCCLOOP            LOOP
+*
+CURSOCC  EQU   *
+         MVC   CURSO,=CL9'OCCURS(.)' MARK CURSOR LOCATION
+         STC   R6,CURSO+7         STORE OCCURS NUMBER
+         OI    CURSO+7,X'F0'      CONVERT TO CHAR
+         B     GUI6PROC           EXIT
+*
+CURS04   EQU   *
+         TM    DATEF,DFHBMCUR     CURSOR ON DATE ?
+         BNO   CURS05             EXIT IF NOT
+         MVC   CURSO,=CL9'GRPNAME' MARK CURSOR LOCATION
+         B     GUI6PROC           EXIT
+*
+CURS05   EQU   *
+         TM    TESTPCOF,DFHBMCUR  CURSOR ON TESTPCO ?
+         BNO   GUI6PROC           EXIT IF NOT
+         MVC   CURSO,=CL9'TESTPCO' MARK CURSOR LOCATION
+*
+GUI6PROC EQU   *
+         LH    R6,NAMEL           TOTAL
+         AH    R6,ADDRL                 ALL
+         AH    R6,ZIPL                      LENGTHS
+         BNZ   SOMEDATA           EXIT IF NOT ZERO
+* NO FIELDS MODIFIED
+         MVC   ERRMSGO,NOMODS     MOVE NO FIELDS MESSAGE
+REDISP   EQU   *
+         CLI   COMMNAME,X'00'     ANY PREVIOUS NAME ?
+         BE    TRYADDR2           EXIT IF NOT
+         MVC   NAMEHDO,=C'NAME'   SHOW HEADER
+         MVC   NEWNAMEO,COMMNAME  MOVE ANY PREVIOUS NAME
+TRYADDR2 EQU   *
+         CLI   COMMADDR,X'00'     ANY PREVIOUS ADDR ?
+         BE    TRYZIP2            EXIT IF NOT
+         MVC   ADDRHDO,=C'ADDR'   SHOW HEADER
+         MVC   NEWADDRO,COMMADDR  MOVE ANY PREVIOUS ADDR
+TRYZIP2  EQU   *
+         CLI   COMMZIP,X'00'      ANY PREVIOUS ZIP ?
+         BE    TRYPAY             EXIT IF NOT
+         MVC   ZIPHDO,=C'ZIP '    SHOW HEADER
+         MVC   NEWZIPO,COMMZIP    MOVE ANY PREVIOUS ZIP
+         B     TRYPAY             EXIT
+*
+SOMEDATA EQU   *
+         XC    ERRMSGO,ERRMSGO    CLEAR ERROR MESSAGE
+         MVI   NAMEHDO,X'00'      ASSUME NO NAME HEADER
+         MVI   NEWNAMEO,X'00'     ASSUME NO NAME
+         OC    NAMEL,NAMEL        ANY NAME ENTERED ?
+         BZ    NONAME             EXIT IF NOT
+         MVC   NAMEHDO,=C'NAME'   SHOW HEADER
+         MVC   NEWNAMEO,NAMEI     SHOW NAME
+         MVC   COMMNAME,NAMEI     SAVE NAME
+         B     TRYADDR            EXIT
+*
+NONAME   EQU   *
+         CLI   COMMNAME,X'00'     ANY PREVIOUS NAME ?
+         BE    TRYADDR            EXIT IF NONE
+         MVC   NAMEHDO,=C'NAME'   SHOW HEADER
+         MVC   NEWNAMEO,COMMNAME  SHOW PREVIOUS NAME
+TRYADDR  EQU   *
+         MVI   ADDRHDO,X'00'      ASSUME NO ADDR HEADER
+         MVI   NEWADDRO,X'00'     ASSUME NO ADDR
+         OC    ADDRL,ADDRL        ANY ADDR ENTERED ?
+         BZ    NOADDR             EXIT IF NOT
+         MVC   ADDRHDO,=C'ADDR'   SHOW HEADER
+         MVC   NEWADDRO,ADDRI     SHOW ADDR
+         MVC   COMMADDR,ADDRI     SAVE ADDR
+         B     TRYZIP             EXIT
+*
+NOADDR   EQU   *
+         CLI   COMMADDR,X'00'     ANY PREVIOUS ADDR ?
+         BE    TRYZIP             EXIT IF NONE
+         MVC   ADDRHDO,=C'ADDR'   SHOW HEADER
+         MVC   NEWADDRO,COMMADDR  SHOW PREVIOUS ADDR
+TRYZIP   EQU   *
+         MVI   ZIPHDO,X'00'       ASSUME NO ZIP HEADER
+         MVI   NEWZIPO,X'00'      ASSUME NO ZIP
+         OC    ZIPL,ZIPL          ANY ZIP ENTERED ?
+         BZ    NOZIP              EXIT IF NOT
+         MVC   ZIPHDO,=C'ZIP '    SHOW HEADER
+         MVC   NEWZIPO,ZIPI       SHOW ZIP
+         MVC   COMMZIP,ZIPI       SAVE ZIP
+         B     TRYPAY             EXIT
+*
+NOZIP    EQU   *
+         CLI   COMMZIP,X'00'      ANY PREVIOUS ZIP ?
+         BE    TRYPAY             EXIT IF NONE
+         MVC   ZIPHDO,=C'ZIP '    SHOW HEADER
+         MVC   NEWZIPO,COMMZIP    SHOW PREVIOUS ZIP
+TRYPAY   EQU   *
+         OC    TESTPCOL,TESTPCOL  ANY TESTPCO ?
+         BZ    DOGRP              EXIT IF NONE
+         MVC   PAYMEO,=C'Pay the Author' MOVE MESSAGE
+         MVC   PAYME1O,TESTPCOI   MOVE INPUT DATA
+         XC    TESTPCOO,TESTPCOO  CLEAR THE INPUT DATA, NOT WANTED
+DOGRP    EQU   *
+* PROCESS GRPNAME
+         MVC   SHOWMDYO,=C'MO=.. DAY=.. YR=..' MOVE MESSAGE
+         MVC   SHOWMDYO+3(2),MOO  MOVE MONTH
+         MVC   SHOWMDYO+10(2),DAYO MOVE DAY
+         MVC   SHOWMDYO+16(2),YRO MOVE YEAR
+* PROCESS OCCURS
+         SP    OCCSUM,OCCSUM      CLEAR OCCURS SUM
+         LA    R6,5               R6=NO. OF OCCURS
+         LA    R7,TESTOCCO        OCCURS DATA
+OCCSUMLP EQU   *
+         CLI   0(R7),X'00'        ANY DATA HERE ?
+         BE    OCCSUMIN           EXIT IF NONE
+         PACK  WORK,0(5,R7)       PACK DATA
+         AP    OCCSUM,WORK        SUM IT
+OCCSUMIN EQU   *
+         AHI   R7,3+5             BUMP TO NEXT OCCURS
+         BCT   R6,OCCSUMLP        LOOP
+         UNPK  OCCSUMO(7),OCCSUM  UNPACK RESULT
+         B     RETRY6             EXIT
+*
+GUI6HELP EQU   *
+* GUI6 HELP MAP
+         EXEC  CICS SEND MAP('GUI6H') MAPSET('MAP01') MAPONLY ERASE
+         MVI   COMMIND,C'3'       SET GUI6 REENTRY POINT
+*
+RETURN   EQU   *
+         EXEC  CICS RETURN TRANSID('BMS1') COMMAREA(COMMIND) LENGTH(86)
+*
+GUI6HRNT EQU   *
+* RETURN FROM HELP SCREEN
+         MVI   COMMIND,C'2'       SET GUI6 REENTRY POINT
+         CLI   EIBAID,DFHCLEAR    CLEAR ?
+         BE    GUI6               YES, EXIT TO REFRESH DISPLAY
+         CLI   EIBAID,DFHPF3      PF3 ?
+         BNE   REDISP             EXIT IF NOT
+*
+ALLDONE  EQU   *
+         MVC   ERRMSGO,ENDMSG     MOVE ENDING MESSAGE
+         EXEC  CICS SEND MAP('GUI6') MAPSET('MAP01')
+         EXEC  CICS RETURN
+*
+RETRY6   EQU   *
+         EXEC  CICS HANDLE CONDITION MAPFAIL(MAPFAILS)
+SENDIT   EQU   *
+         EXEC  CICS SEND MAP('GUI6') MAPSET('MAP01') ERASE
+         B     RETURN             EXIT
+*
+MAPFAILS EQU   *
+         MVC   FAILMSG+8(1),EIBRESP2+3 SET RESP2
+         OI    FAILMSG+8,X'F0'    CONVERT TO CHAR
+         MVC   ERRMSGO,FAILMSG    MOVE FAILURE MESSAGE
+         EXEC  CICS IGNORE CONDITION MAPFAIL
+         B     SENDIT             EXIT
+*
+BADKEY   DC    CL34'NO ACTION FOR AID KEY HEX HH'
+         ORG   *-8
+HEXKEY   DC    CL3' '
+         ORG
+NOMODS   DC    CL34'NO FIELDS CHANGED'
+FAILMSG  DC    CL34'MAPFAIL/? HAS OCCURRED'
+ENDMSG   DC    CL34'TRANSACTION COMPLETE - PRESS CLEAR'
+*
+HEXTAB   DC    C'0123456789ABCDEF'
+OCCSUM   DC    PL4'0'
+WORK     DS    XL3
+*
+         COPY  DFHAID
+         COPY  DFHBMSCA
+         EQUREGS
+         END
+

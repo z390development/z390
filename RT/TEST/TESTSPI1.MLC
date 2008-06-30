@@ -5,6 +5,7 @@
 * Author - Don Higgins                                              *
 *********************************************************************
 * 05/01/06 RPI305 TEST ESPIE EXIT WITH PARM AND RESTART                
+* 06/20/08 RPI 845 CHANGE EPIED TO IHAEPIE                          
 *********************************************************************
          TITLE 'TESTSPI1 - TEST ESPIE'
 TESTSPI1 SUBENTRY
@@ -17,9 +18,9 @@ RESTART  WTO   'TESTSPI1 RESTART SUCCESSFUL'
          DROP
 EXIT     DS    0H
          USING *,15
-         USING IHAEPIE,1
+         USING EPIE,1
          L     0,EPIEPARM
          ST    0,EPIEPSW+4
          BR    14
-         EPIED
+         IHAEPIE
          END         

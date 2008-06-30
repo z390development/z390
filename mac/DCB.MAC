@@ -19,6 +19,7 @@
 .* 04/23/07 RPI 599  add call to DCBD to define referened fields       
 .* 08/03/07 RPI 644  zero DCBOFLGS and fix DCBMACRF when 2 operands     
 .* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 06/23/08 RPI 867 JUST ISSUE WARNING FOR EXLST NOT SUPPORTED
 .*********************************************************************
 &N       DCB   &DSORG=PS,    PHYSICAL SEQUENTIAL                       X
                &BFALN=,      IGNORE                                    X
@@ -50,7 +51,9 @@
          AGO   .POSLOOP
 .POSEND  ANOP        
          AIF   ('&DEVD'   NE '').ERR2
-         AIF   ('&EXLST'  NE '').ERR3
+         AIF   ('&EXLST'  EQ '').NO_EXLST
+         MNOTE 4,'DCB EXLST NOT SUPPORTED YET - IGNORED'  RPI 867
+.NO_EXLST ANOP
          AIF   ('&KEYLEN' NE '').ERR4
          AIF   ('&RECFM' EQ 'F').CHKF
          AIF   ('&RECFM' EQ 'FA').CHKF

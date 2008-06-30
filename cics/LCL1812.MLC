@@ -1,0 +1,154 @@
+***********************************************************************
+* Copyright 2006 Automated Software Tools Corporation                 *
+* This source code is part of z390 assembler/emulator package         *
+* The z390 package is distributed under GNU general public license    *
+* Author - Don Higgins                                                *
+***********************************************************************
+LCL1812  SUBENTRY
+*
+* FN=1812  EXEC CICS SEND CONTROL
+*
+* R1  >>> P1812 BLOCK POINTER
+* R14 = RETURN ADDRESS
+*
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P1812,P1812END),R3
+         L     DFHEIBR,P1812EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P1812TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P1812FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         L     R6,P1812OUT        R6=OUTPUT AREA
+* SET UP ESC,WRT
+         MVI   0(R6),ESC          ESCAPE
+         MVI   1(R6),WRT          DEFAULT WRITE
+         TM    P1812OPT,P1812ERS  IS IT ERASE ?
+         BNO   NOTERASE           EXIT IF NOT
+         MVI   1(R6),WRT_EW       ERASE/WRITE
+         B     DUNWRTE            EXIT
+*
+NOTERASE EQU   *
+         TM    P1812OPT,P1812EAU  IS IT ERASEAUP ?
+         BNO   DUNWRTE            EXIT IF NOT
+         MVI   1(R6),WRT_EAU      ERASEAUP/WRITE
+DUNWRTE  EQU   *
+* SET UP WCC
+         MVI   2(R6),X'40'        SET DEFAULT WCC
+         TM    P1812OPT,P1812ALM+P1812FKB+P1812FRS TEST WCC BITS
+         BZ    NOWCC              EXIT IF NO OVERRIDES
+         MVI   2(R6),X'C0'+P1812ALM+P1812FKB+P1812FRS SET WCC BITS
+NOWCC    EQU   *
+         AHI   R6,3               BUMP OUTPUT POINTER
+* CONSTRUCT CURSOR POSITION...ALWAYS AS SBA,IC
+*
+* IF CURSOR() SPECIFIED...USE THAT
+* IF CURSOR   SPECIFIED...DO NOTHING
+* IF NEITHER  SPECIFIED...PUT CURSOR AT (1,1)
+*
+         TM    P1812OPT,P1812CSM  SYMBOLIC CURSOR ?
+         BO    SENDIT             EXIT IF IT IS
+         CLI   P1812CRS,X'FF'     ANY VALID CURSOR() ?
+         BE    CURSAT1            EXIT IF NOT
+* CURSOR(NNN)
+         LH    R7,P1812CRS        R7=CURSOR ON SEND CONTROL
+         B     SETCURS            EXIT
+*
+CURSAT1  EQU   *
+* NO CURSOR PARAMETER DEFAULTS TO (1,1)
+         LA    R7,1               SET CURSOR TO (1,1)
+*
+SETCURS  EQU   *
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         MVI   3(R6),IC           SET IC
+         AHI   R6,4               BUMP OUTPUT POINTER
+SENDIT   EQU   *
+         L     R1,P1812OUT        R1=OUTPUT AREA
+         SR    R6,R1              R6=STREAM LENGTH
+         CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
+         BNE   NOTSEQ             EXIT IF NOT
+         LR    R0,R6              R0=STREAM LENGTH
+         LR    R14,R1             R14=OUTPUT AREA
+         L     R1,TCTTEQDO        R1=SEND FILE DCB
+         USING IHADCB,R1
+         LR    R4,R6              R4=LENGTH
+         AHI   R4,2               ALLOW FOR CRLF
+         ST    R4,DCBBLKSIF       SAVE BLOCKSIZE
+         ST    R4,DCBLRECLF       SAVE LRECL
+         AHI   R4,-2              RESTORE LENGTH
+         LA    R4,0(R14,R4)       ADDRESS 2 BYTES FOLLOWING DATA
+         MVC   SAVEDATA,0(R4)     SAVE THE 2 BYTES
+         MVC   0(2,R4),=X'0D0A'   SET CRLF
+         PUT   (R1),(R14)         WRITE DATA STREAM
+         MVC   0(2,R4),SAVEDATA   RESTORE THE 2 BYTES
+         L     R1,TCTTEQDO        R1=SEND FILE DCB
+         L     R0,DCBBLKSIF       RESTORE LENGTH+2
+         AHI   R0,-2              LENGTH-2
+         DROP  R1
+         LR    R1,R14             RESTORE OUTPUT AREA
+*
+SAVEDATA DS    H
+*
+NOTSEQ   EQU   *
+         TPUT  (R1),(R6),FULLSCR  SEND TN3270 DATA STREAM
+         SUBEXIT
+*
+* SUBROUTINES
+*
+SBACONV  EQU   *
+* CONVERT POSITION TO SBA
+*
+* R7  = POSITION
+* R12 = RESULT
+*
+         SR    R0,R0              CLEAR R0
+         LR    R1,R7              R1=POSITION
+         D     R0,=F'64'          R0=COL OFFSET  R1=ROW OFFSET
+         LA    R15,SBATAB(R1)     R15=SBA TABLE ADDRESS+ROW INDEX
+         ICM   R12,2,0(R15)       INSERT HIGH SBA
+         LR    R1,R0              SET COL OFFSET
+         LA    R15,SBATAB(R1)     R15=SBA TABLE ADDRESS+COL INDEX
+         ICM   R12,1,0(R15)       INSERT LOW SBA
+         BR    R14                RETURN
+*
+SBATAB   DC    X'40C1C2C3C4C5C6C7C8C94A4B4C4D4E4F'
+         DC    X'50D1D2D3D4D5D6D7D8D95A5B5C5D5E5F'
+         DC    X'6061E2E3E4E5E6E7E8E96A6B6C6D6E6F'
+         DC    X'F0F1F2F3F4F5F6F7F8F97A7B7C7D7E7F'
+*
+         LTORG
+*
+P1812    DSECT
+P1812FN  DS    XL2                FUNCTION CODE
+P1812EIB DS    AL4                EIB
+P1812TCT DS    AL4                TCTTE
+P1812OUT DS    AL4                OUTPUT AREA
+P1812CRS DS    AL2                CURSOR POSITION (X'FFFF'=NONE)
+P1812OPT DS    X                  OPTION BITS...
+P1812ERS EQU   X'80'                 ERASE
+P1812EAU EQU   X'40'                 ERASEAUP
+P1812CSM EQU   X'20'                 SYMBOLIC CURSOR
+P1812ALM EQU   X'04'                 ALARM
+P1812FKB EQU   X'02'                 FREEKB
+P1812FRS EQU   X'01'                 FRSET
+P1812END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DCBD ,                   DCB
+         TN3270 SYMBOLS
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+* R6  TIOA POINTER
+* R10 TCTTE
+* R11 EIB
+* R13 SAVE AREA AND BASE 1
+*
+         END
+

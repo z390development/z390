@@ -53,6 +53,9 @@ set OT2=rt\test\TESTPCH3.OT2
 set OT3=rt\test\TESTPCH3.OT3
 call rt\RT5 rt\test\TESTPCH3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 erase rt\test\TESTMCR1.STA
+copy  mac\SUBENTRY.MAC rt\test\SUBENTRY.MCR
+copy  mac\SUBEXIT.MAC rt\test\SUBEXIT.MCR
+copy  mac\WTO.MAC rt\test\WTO.MCR
 call MAC    rt\test\TESTMCR1.ASM stats sysmac(rt\test\*.mcr) notiming systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 rt\test\TESTTXT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTPC1  tracep systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9

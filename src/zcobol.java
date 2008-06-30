@@ -42,7 +42,9 @@ public class zcobol{
              opposite type quotes.  
          h.  Single () wrapped in single quotes.
          i.  Single . generates PERIOD vero in Proc. Div. 
-         j.  Generate DATA END, PROCEDURE END,and END      
+         j.  Generate DATA END, PROCEDURE END,and END  
+         k.  Treat verbs as parms within EXEC to END-EXEC.
+             
     ****************************************************
     * Maintenance
     ****************************************************
@@ -50,6 +52,7 @@ public class zcobol{
     * 04/11/08 add continuation line support and
     *          verb lookup for mult verbs on a line.
     * 04/28/08 allow period within pictures.
+    * 06/10/08 truncate source to 72 characters, add EXEC verb
     ****************************************************
     *                                         last RPI *
 	****************************************************
@@ -70,6 +73,9 @@ public class zcobol{
 	BufferedReader zcob_buff = null;
 	boolean zcob_eof = false;
 	boolean zcob_put_pending = false;
+	boolean exec_mode = false;
+	boolean data_div  = false;
+	boolean allow_verb = false;
 	String  zcob_line_pending;
 	/*
 	 * MLC meta macro assembler output file variables
@@ -317,6 +323,10 @@ public class zcobol{
 				} else if (zcob_line.length() > 72){
 					zcob_line = zcob_line.substring(0,72);
 				}
+				if  (zcob_line.charAt(6) != ' '){
+					put_mlc_line("*" + zcob_line);
+					zcob_line = null;
+				}
 			}
 			if  (zcob_line != null){
 			    zcob_match = zcob_pattern
@@ -334,6 +344,7 @@ public class zcobol{
 			 * 2.  set cbl_eof if end of file
 			 * 3.  write each line as comment on MLC
 			 * 4.  ignore lines < 8 or blank
+			 * 5.  ignore comment lines with non-space in 7
 			 */
 			try {
                 flush_pend_mlc_line();
@@ -342,6 +353,9 @@ public class zcobol{
 				while (zcob_line != null
 						&& check_zcob){ 
 					if (zcob_line.length() >= 7){
+						if (zcob_line.length() > 72){
+							zcob_line = zcob_line.substring(0,72);
+						}
 						if (zcob_line.charAt(6) == '*'
 							|| zcob_line.charAt(6) == '/'){
 							tot_zcob++;
@@ -432,7 +446,7 @@ public class zcobol{
 			    
 			}
 		} else if (zcob_token.length() == 1){
-			// signle char token . or ,
+			// single char token . or ,
 			if (zcob_token.charAt(0) == '.'){
 				if (mlc_line != null 
 					&& mlc_parms > 0){
@@ -442,6 +456,7 @@ public class zcobol{
 						new_mlc_line("             PERIOD");
 					}
 					flush_last_mlc_line();
+					exec_mode = false;
 				}
 				// ignore period
 				return;
@@ -466,13 +481,18 @@ public class zcobol{
 				// gen procedure div label
 				new_mlc_line("         LABEL " + zcob_token);
 			} else {
-				if  (!zcob_proc_div 
-					&& zcob_token.charAt(0) >= '0' 
-					&& zcob_token.charAt(0) <= '9'){
+				if  (zcob_token.charAt(0) >= '0' 
+					 && zcob_token.charAt(0) <= '9'){
 					new_ws_line();
 				} else {
-					if (zcob_token.equals("PROCEDURE")){
-						put_mlc_line("         DATA END");
+					if (zcob_token.equals("DATA")){
+						data_div = true;
+					} else if (zcob_token.equals("PROCEDURE")){
+						if (!data_div){
+							data_div = true;
+							put_mlc_line("         DATA DIVISION");
+						}
+						put_mlc_line("         DATA END");						
 						zcob_proc_div = true;
 					}
 					new_mlc_line("         " + zcob_token);
@@ -576,7 +596,7 @@ public class zcobol{
     	 */
     	if (mlc_parms == 0) {
 			mlc_line = mlc_line + " " + zcob_token;
-		} else {
+		} else if (zcob_token.compareTo("END_EXEC") != 0){
 			mlc_line = mlc_line + "," + zcob_token;
 		}
     	mlc_parms++;
@@ -586,6 +606,14 @@ public class zcobol{
 		 * return true if zcob_token
 		 * is a known COBOL verb
 		 */
+		if (allow_verb){
+			allow_verb = false;
+			return false;
+		}
+		if (exec_mode){
+			// ignore verbs within exec statement
+			return false;
+		}
 		String key = zcob_token.toUpperCase();
 		switch (key.charAt(0)){
 		case 'A':
@@ -614,15 +642,24 @@ public class zcobol{
 					return true;
 				}		
 				return false;
-		case 'E': 
-			if (key.equals("END_IF")
+		case 'E':
+			if (key.equals("EXEC")){
+				exec_mode = true;
+				return true;
+			}
+			if (key.equals("END_EXEC")){
+				exec_mode = false;
+				return false;
+			}
+			if (key.equals("EJECT")
+				|| key.equals("END_IF")
 				|| key.equals("END_EVALUATE")
 				|| key.equals("EVALUATE")
-			    || key.equals("EXIT")
+		        || key.equals("EXIT")
 			    || key.equals("EXIT_PROGRAM")
 			    ){
 				return true;
-			}		
+			}
 			return false;
 		case 'G': 
 			if (key.equals("GO")
@@ -654,11 +691,11 @@ public class zcobol{
 				}		
 				return false;
 		case 'P': 
-			if (key.equals("PERFORM")
-			        ){
-					return true;
-				}		
-				return false;
+			if (key.equals("PERFORM")){
+				allow_verb = true;
+				return true;
+			}		
+			return false;
 		case 'R': 
 			if (key.equals("READ")
 			        || key.equals("RELEASE")

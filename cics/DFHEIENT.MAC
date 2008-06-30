@@ -5,7 +5,6 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 05/06/06 RPI 308 - ADD EXEC CICS SUPPORT FOR CICS PROLOG
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 .*********************************************************************
          MACRO
 &N       DFHEIENT &CODEREG=(R12),&DATAREG=(R13)
@@ -16,7 +15,7 @@
 .* CICS AND PROLOG OPTIONS ON
 .*
          GBLC  &DFHEIENT_CSECT
-&DFHEIENT_CSECT SETC '&N'        SAVE CSECT FOR DFHEIEND RESET
+&DFHEIENT_CSECT SETC '&N'         SAVE CSECT FOR DFHEIEND RESET
 &N       CSECT
 *            R1 >>> A(COMMAREA)
 * TCTTEAR (R10) >>> TCTTE
@@ -119,3 +118,4 @@ CICS_EIENT_&SYSNDX._02 DS 0H
 .*
 .DEXIT   ANOP
          MEND
+

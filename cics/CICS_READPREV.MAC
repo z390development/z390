@@ -4,7 +4,7 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
 .*********************************************************************
          MACRO
          CICS_READPREV
@@ -139,7 +139,7 @@
          MVC   FCPFILNM,=CL8&DATASET SET DATASET NAME AS STRING
 .*
 .CHKLEN  ANOP
-         AIF   ('&SET'    EQ '').NOSET
+         AIF   ('&SET' EQ '').NOSET
          MVC   FCPLEN,=X'7FFFFFFF' SET MAXIMUM LENGTH
          AGO   .DUNLEN
 .*
@@ -414,3 +414,4 @@ CICS_READPREV_&SYSNDX._END DS 0H
 .BOTHTYP MNOTE 12,'BOTH RRN AND (X)RBA ARE SPECIFIED'
          MEXIT
          MEND
+

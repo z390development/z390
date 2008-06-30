@@ -8,11 +8,11 @@ I would advise keeping a document relating the file number to the
 transaction and functions being tested.
 My tests are in cics\seq\SEQDOC.TXT
 
-a) In the Z390CICS.INI file, ensure...
+a) In the Z390CICS.INI file, set SEQ_TERM=TRACE
+   This will automatically adjust other INI parms:
       LOCAL_TERMINALS=1
-      Comment out INITIAL_TRANSID=LOGO
+      No INITIAL_TRANSID=
       TRACE_LOCALS=YES
-      SEQ_TERM=NO
 
 b) Start Z390\CICS
 c) Run a planned test of your transaction
@@ -37,11 +37,11 @@ f) Repeat the above steps for each of your transactions
 Stage 2 -- Running the simulation
 ---------------------------------
 
-g) In the Z390CICS.INI file, ensure...
+g) In the Z390CICS.INI file, set SEQ_TERM=YES
+   This will automatically adjust other INI parms:
       LOCAL_TERMINALS=0
-      Comment out INITIAL_TRANSID=LOGO
+      No INITIAL_TRANSID=
       TRACE_LOCALS=NO
-      SEQ_TERM=YES
 
 h) If you want the simulation to shut down after running, a sample
    stream is provided called SEQISHUT.TXT, copy this to a new file
@@ -95,7 +95,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: January 18, 2008
-Z390 version: V1.3.08h
-Z390/CICS version: V4
+Shipping Date: June 27, 2008
+Z390 version: V1.4.02
+Z390/CICS version: V5
 

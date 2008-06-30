@@ -1,11 +1,12 @@
-.*********************************************************************
-.* Copyright 2006 Automated Software Tools Corporation               *
-.* This source code is part of z390 assembler/emulator package       *
-.* The z390 package is distributed under GNU general public license  *
-.* Author - Don Higgins                                              *
-.*********************************************************************
-.* 05/07/06 RPI 308 - ADD INITIAL EXEC CICS SUPPORT COMMAND PROCESSOR
-.*********************************************************************
+.**********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation                *
+.* This source code is part of z390 assembler/emulator package        *
+.* The z390 package is distributed under GNU general public license   *
+.* Author - Don Higgins                                               *
+.**********************************************************************
+.* 05/07/06 RPI 308 - ADD INITIAL EXEC CICS SUPPORT COMMAND PROCESSOR *
+.* 06/17/08 RPI 845 - CHANGE ESTAE ROUTINES TO USE NEW SDWA           *
+.**********************************************************************
 Z390KCP  SUBENTRY BASES=(R13,R3)
 *
 * THE Z390/CICS LOCAL MANAGER, PREVIOUSLY CALLED CICS.MLC
@@ -169,7 +170,7 @@ INITTSET EQU   *
 INITGO   EQU   *
          LA    R6,INITBUFF        AREA TO CLEAR
          LA    R7,L'INITBUFF      LENGTH TO CLEAR
-         LA    R8,INITBUFF        AREA TO CLEAR
+         LR    R8,R6              AREA TO CLEAR
          SR    R9,R9              CLEAR SECOND LENGTH
          MVCLE R6,R8,X'00'        CLEAR INITBUFF
 *
@@ -215,10 +216,12 @@ INITPROC EQU   *
          LA    R6,INITBUFF        R6=INITIAL TIOA ADDRESS
          ST    R6,TCTTEDA         SET IN TCTTE
          MVC   EIBAID,INITBUFF    SET AID
-* PROCESS CLEAR KEY
+* PROCESS CLEAR KEY, PASS IT IF WE HAVE A PRESET TRANSID
+         OC    TCTTETC,TCTTETC    ANY PRESET TRANSID ?
+         BNZ   NOCLEAR            EXIT IF WE HAVE ONE
          CLI   EIBAID,DFHCLEAR    CLEAR KEY ?
          BNE   NOCLEAR            EXIT IF NOT
-         EXEC CICS SEND FROM(CLEARIT) LENGTH(CLEARLEN)
+         EXEC  CICS SEND FROM(CLEARIT) LENGTH(CLEARLEN)
          B     INITTSET           EXIT
 *
 NOCLEAR  EQU   *
@@ -258,7 +261,6 @@ GOTRAN   EQU   *
 * SCAN FAILURE ISSUES 'INVALID TRANSID' MSG
 * BLDL FAILURE ISSUES APCT ABEND
 *
-* ### DO A PCT DSECT SOMETIME, REFLECT IN Z390CEMT
          L     R6,DFHPCTAD        R6=PCT ADDRESS
 PCTLOOP  EQU   *
          CLC   0(4,R6),EIBTRNID   FOUND TRANSID ?
@@ -292,7 +294,7 @@ PCTFOUND EQU   *
 * SAVE PASSED COMMAREA INFO
 *
          MVC   COMMADDR,TCTTECA   SAVE COMMAREA ADDRESS
-         MVC   COMMLEN+2(2),EIBCALEN SAVE COMMAREA LENGTH
+         MVC   COMMLEN+2(2),TCTTECAL SAVE COMMAREA LENGTH
 *
 * GO TO THE INITIAL PROGRAM
 * THE ONLY COMMAREA WE CAN PASS HERE IS ONE FROM RETURN COMMAREA
@@ -348,44 +350,27 @@ FREEEIB  EQU   *
          FREEMAIN A=(DFHEIBR),LV=EIBLENG
 *
 * POST RETURN COMMAREA PROCESSING
+*    ANY PREVIOUS COMMAREA ?
+*       NO  --- EXIT
+*       YES --- ANY RETURN COMMAREA ?
+*               NO  --- FREEMAIN PREVIOUS COMMAREA
+*               YES --- SAME ADDRESS ?
+*                          YES --- EXIT
+*                          NO  --- FREEMAIN PREVIOUS COMMAREA
 *
+         OC    COMMADDR,COMMADDR  ANY PREVIOUS COMMAREA SUPPLIED ?
+         BZ    LOCAL_MANAGER      EXIT IF NOT
+* THERE IS A PREVIOUS COMMAREA
+         OC    TCTTECA,TCTTECA    ANY COMMAREA PASSED ?
+         BZ    FREECOMM           EXIT IF NONE
+* RETURN WITH COMMAREA
          CLC   TCTTECA,COMMADDR   SAME ADDRESS ?
-         BNE   DIFFCOMM           EXIT IF NOT
-         CLC   TCTTECAL,COMMLEN+2 SAME OR SMALLER LENGTH ?
-         BH    DIFFCOMM           EXIT IF NOT
-         MVC   TCTTECAL,COMMLEN+2 SET ACTUAL LENGTH ACQUIRED
-         B     LOCAL_MANAGER      EXIT IF IT IS
+         BE    LOCAL_MANAGER      EXIT IF IT IS
 *
-DIFFCOMM EQU   *
-*
-* LAST COMMAREA (IF ANY) NOT THE SAME AS THE NEW ONE (IF ANY)
-*
-         MVC   COMMSAVA,COMMADDR  SAVE LAST COMMAREA ADDRESS
-         MVC   COMMSAVL,COMMLEN   SAVE LAST COMMAREA LENGTH
-         OC    TCTTECA,TCTTECA    ANY NEW COMMAREA ?
-         BZ    NONEWCOM           EXIT IF NONE
-*
-* TAKE A COPY OF THE NEW COMMAREA
-*
-         LH    R1,TCTTECAL        R1=COMMAREA LENGTH
-         GETMAIN R,LV=(R1),A=COMMADDR
-         ST    R0,COMMLEN         SAVE ACTUAL LENGTH ACQUIRED
-         L     R6,COMMADDR        DESTINATION ADDRESS
-         LR    R7,R0              LENGTH
-         L     R8,TCTTECA         SOURCE ADDRESS
-         LR    R9,R0              LENGTH
-         MVCL  R6,R8              COPY DATA
-         MVC   TCTTECA,COMMADDR   SET AS NEW COMMAREA
-         MVC   TCTTECAL,COMMLEN+2 SET AS NEW COMMAREA LENGTH
-*
-NONEWCOM EQU   *
-         OC    COMMSAVA,COMMSAVA  ANY COMMAREA PASSED LAST TIME ?
-         BZ    LOCAL_MANAGER      EXIT IF NONE
-*
-* FREE THE PREVIOUS COMMAREA
-*
-         FREEMAIN A=COMMSAVA,LA=COMMSAVL
-         XC    COMMSAVA,COMMSAVA  CLEAR SAVED COMMAREA ADDRESS
+FREECOMM EQU   *
+* THERE WAS A PREVIOUS COMMAREA, FREEMAIN IT
+         FREEMAIN A=COMMADDR,LA=COMMLEN
+         XC    COMMADDR,COMMADDR  CLEAR PREVIOUS COMMAREA ADDRESS
          B     LOCAL_MANAGER      EXIT
 *
 INVTRAN  EQU   *
@@ -396,7 +381,7 @@ INVTRAN  EQU   *
          USING MSG,R7
          BAL   R9,TMDTPROC        ERROR MSG TO SCREEN
          XC    TCTTETC,TCTTETC    NO PRESET TRANSID
-         EXEC CICS SEND FROM(AC2001) LENGTH(AC2001L)
+         EXEC  CICS SEND FROM(AC2001) LENGTH(AC2001L)
          DROP  R7                 DROP MSG BASE
          B     FREEEIB2           EXIT
 *
@@ -477,15 +462,19 @@ APPABEND DS    0H
 *
 *    IF NO MARKER RECOGNISED, WE HAVE REALLY ABENDED
 *
-         USING IHAESTA,R1
+         USING SDWA,R1            SDWA PASSED TO ESTAE EXIT RPI 845
 * SWITCH BASE
          USING *,R12
          LR    R12,R15            R12=NEW BASE
-         L     R6,ESTAPSW+4       R6=ABEND ADDRESS
+         L     R6,SDWAEC1+4       R6=ABEND ADDRESS (EC1 PSW RPI 845)
          CLC   0(8,R6),APPABCDE   IS IT AN HC MARKER ?
          BNE   APPABORT           NO, IT'S A REAL ABEND
 * ABEND CONDITION HAS ARISEN
-         L     R9,ESTAGPR+(8*R13)+4 R9=DSA ADDRESS
+         L     R9,SDWAXPAD        GET SDWA PTRS TO EXTENSIONS   RPI 845
+         USING SDWAPTRS,R9                                      RPI 845
+         L     R9,SDWAXEME        GET SDWA RC4 REGISTER EXTENSION   845
+         USING SDWARC4,R9                                       RPI 845
+         L     R9,SDWAG64+(8*R13)+4 R9=DSA ADDRESS              RPI 845
          USING DFHEISTG,R9
          ICM   R7,15,DFHEIHCN     ANY HANDLE CONDITION BLOCK ?
          BZ    APPABBLK           EXIT IF NONE
@@ -514,7 +503,7 @@ APPHANDL EQU   *
          BNE   APPNTIGN           EXIT IF NOT
 * IT'S AN IGNORE, GO TO THE IGNORE ADDRESS (IT MIGHT BE 0)
 APPIGNOR EQU   *
-         L     R8,ESTAPSW+4       ABEND ADDRESS
+         L     R8,SDWAEC1+4       ABEND ADDRESS FROM SDWA PSW RPI 845
          L     R0,8(R8)           SET IGNORE ADDRESS
          LA    R15,4              TELL SVC 3 TO USE R0
          BR    R14                GO TO THE IGNORE ADDRESS
@@ -597,6 +586,10 @@ APPABTAB DS    0F
          DC    F'22',C'AEIV'      LENGERR
          DC    F'26',C'AEIZ'      ITEMERR
          DC    F'27',C'AEI0'      PGMIDERR
+         DC    F'31',C'AEI4'      EXPIRED
+         DC    F'36',C'AEI9'      MAPFAIL
+         DC    F'38',C'AEYB'      INVMPSZ
+*                40               OVERFLOW CANNOT ABEND
          DC    F'44',C'AEYH'      QIDERR
          DC    F'84',C'AEXL'      DISABLED
          DC    X'FF'              STOPPER
@@ -645,8 +638,13 @@ APPHALAB EQU   *
          DROP  R7                 DROP TEMP BASE
          L     R15,ABDDEST+4      SET LABEL() ADDRESS
          LM    R2,R12,ABDREGS     RESTORE HANDLE ABEND ISSUER REGS
-         LA    R1,ZCVTESTA        RE-ESTABLISH ESTAE BASE
-         L     R13,ESTAGPR+(8*R13)+4 RESTORE THE ABENDING PROGRAMS DSA
+         LA    R1,ZCVTSDWA        RE-ESTABLISH SDWA BASE RPI 845
+         USING SDWA,R1
+         L     R9,SDWAXPAD        GET SDWA PTRS TO EXTENSIONS   RPI 845
+         USING SDWAPTRS,R9                                      RPI 845
+         L     R9,SDWAXEME        GET SDWA RC4 REGISTER EXTENSION   845
+         USING SDWARC4,R9                                       RPI 845
+         L     R13,SDWAG64+(8*R13)+4 RESTORE THE ABENDING PROGRAMS DSA
          BR    R15                GO TO LABEL()
 *
 * NO CONDITION HANDLING
@@ -677,8 +675,13 @@ APPHAPRG EQU   *
          MVC   APPPROG,ABDDEST    COPY PROGRAM NAME
          MVC   APPCOMM,ABDCOMM    COPY COMMAREA ADDRESS
          MVC   APPCALEN,ABDCALEN  COPY COMMAREA LENGTH
-         LA    R1,ZCVTESTA        RE-ESTABLISH ESTAE BASE
-         L     R13,ESTAGPR+(8*R13)+4 RESTORE THE ABENDING PROGRAMS DSA
+         LA    R1,ZCVTSDWA        RE-ESTABLISH ESTAE BASE     RPI 845
+         USING SDWA,R1
+         L     R9,SDWAXPAD        GET SDWA PTRS TO EXTENSIONS   RPI 845
+         USING SDWAPTRS,R9                                      RPI 845
+         L     R9,SDWAXEME        GET SDWA RC4 REGISTER EXTENSION   845
+         USING SDWARC4,R9                                       RPI 845
+         L     R13,SDWAG64+(8*R13)+4 RESTORE THE ABENDING PROGRAMS DSA
          DROP  R1                 DROP ESTAD BASE
          USING DFHEISTG,R13
          OC    APPCOMM,APPCOMM    ANY COMMAREA ?
@@ -713,8 +716,9 @@ APPTERMT DS    0H
          BZ    CLEANPRT           EXIT IF NONE
          LH    R0,TCTTECAL        R0=COMMAREA LENGTH
          FREEMAIN A=TCTTECA,LV=(R0)
-         XC    TCTTECA,TCTTECA    CLEAR RETURN COMMAREA ADDRESS
-         XC    TCTTECAL,TCTTECAL  CLEAR RETURN COMMAREA LENGTH
+         CLC   TCTTECA,COMMADDR   SAME AS LAST PASSED COMMAREA ?
+         BNE   CLEANPRT           EXIT IF NOT
+         XC    COMMADDR,COMMADDR  CLEAR LAST PASSED COMMAREA
 CLEANPRT EQU   *
 *
 * CLEAR PRESET TRANSID
@@ -741,6 +745,8 @@ CLEANDLP EQU   *
 * CLEAR LKA (BUT NOT 1ST ENTRY)
 *
 CLEANLKA EQU   *
+         XC    TCTTECA,TCTTECA    CLEAR RETURN COMMAREA ADDRESS
+         XC    TCTTECAL,TCTTECAL  CLEAR RETURN COMMAREA LENGTH
          L     R7,TCTTELKA        R7=LKA ADDRESS
          XC    4(96,R7),4(R7)     CLEAR LKA (NOT 1ST ENTRY)
 *
@@ -792,6 +798,8 @@ CLEANSUB DS    0H
 CLEANCA  EQU   *
          OC    DFHEICAP,DFHEICAP  ANY COMMAREA ?
          BZ    CLEANAID           EXIT IF NONE
+         CLC   DFHEICAP,TCTTECA   SAME COMMAREA JUST FREED ?
+         BE    CLEANAID           EXIT IF IT IS
          LH    R0,EIBCALEN        R0=COMMAREA LENGTH
          FREEMAIN A=DFHEICAP,LV=(R0)
          XC    EIBCALEN,EIBCALEN  CLEAR COMMAREA LENGTH
@@ -896,8 +904,6 @@ DFHPCTAD DS    A                  PCT ADDRESS
 *
 COMMADDR DC    A(0)               COMMAREA ADDRESS LAST PASSED
 COMMLEN  DC    F'0'               COMMAREA LENGTH LAST PASSED
-COMMSAVA DC    A(0)               TEMP SAVED COMMAREA ADDRESS
-COMMSAVL DC    F'0'               TEMP SAVED COMMAREA LENGTH
 *
 INITBUFF DS    CL2000             INITIAL BUFFER
 INITRC   DS    F                  RECEIVE RETURN CODE
@@ -1083,7 +1089,7 @@ MSGABCDE DS    CL4                ABEND CODE
          GUAM   SYMBOLS   DEFINE GUAM GUI DIALOG WINDOW OPTIONS
          COPY   DFHAID    AID KEYS
          ZCVTD  ,         ZCVT
-         ESTAD  ,         ESTAE CONTROL BLOCK
+         IHASDWA ,        SDWA CONTROL BLOCK FOR ESTAE EXIT RPI 845
          EQUREGS
 * R3  BASE 2
 * R4  ZCVT

@@ -1,11 +1,11 @@
 Z390/CICS Readme
 ================
 
-Recommended Z390 release is V1.3.09+
+Recommended Z390 release is V1.4.02
 
 All user-written Z390/CICS Application programs must be re-assembled.
 
-A brief summary of updates is in ZCICSHST.TXT
+A brief summary of updates is in Z390/CICS History.
 
 Trademarks
 ----------
@@ -13,7 +13,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: January 21, 2008
-Z390 version: V1.3.09
-Z390/CICS version: V4
+Shipping Date: June 27, 2008
+Z390 version: V1.4.02
+Z390/CICS version: V5
 

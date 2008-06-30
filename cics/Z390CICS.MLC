@@ -4,12 +4,21 @@
 * The z390 package is distributed under GNU general public license  *
 * Author - Don Higgins                                              *
 *********************************************************************
-* 04/22/08 RPI 833 ADD NOTIME TO PREVENT 422 ABEND IN 15 SECONDS
+* 04/22/08 RPI 837 ADD NOTIME TO PREVENT 422 ABEND IN 15 SECONDS
 *********************************************************************
-Z390CICS SUBENTRY BASES=(R13,R3,R4)
-* ### IN PROCESS OF CHANGING ALL WTO MESSAGES TO USE CICSTMSG
-* ### FOR THE PRESENT LEAVE MESSAGES THAT CAN HAVE MODS
-* ### SCAN FOR XENIC TO FIND LATEST POS
+Z390CICS SUBENTRY BASES=(R13)
+         LA    R3,SECTOR2         BASE 2
+         USING SECTOR2,R3
+         LR    R4,R3              FORM
+         AHI   R4,4096                 BASE 3
+         USING SECTOR2+4096,R4
+*
+* IN PROCESS OF CHANGING ALL PROCESSES TO CALLED ROUTINES
+*
+* NOTE TO ME: CALLED ROUTINES MUST NOT BE IN THE 1ST 4K
+* BECAUSE OF R13 CONFLICT, MOVE ALL NON-CALLS TO START
+* R13 SPAN IS D0C, SO FFF-D0C=755 LEFT
+* SECTOR2 SPAN IS 198D-D0C=3201   8192-3201=4991 LEFT
 *
 * THE GLOBAL MAMAGER OF Z390/CICS
 *
@@ -123,18 +132,31 @@ PROCDATE EQU   *
          B     INIGET             EXIT
 *
 PROCSEQT EQU   *
-* SEQ_TERM=YES OR NO
-         MVC   INISEQT,INIAREA+9  SAVE DATE FORMAT
+* SEQ_TERM=YES, NO OR TRACE
+         MVC   INISEQT,INIAREA+9  SAVE SEQ_TERM PARAMETER
          B     INIGET             EXIT
 *
 EOFINI   EQU   *
          CLOSE Z390INI            CLOSE INI FILE
-* CHECK LOCAL AND REMOTE NUMBERS ARE SENSIBLE
          L     R6,MAXLOCS         R6=LOCALS
+         CLI   INISEQT,C'T'       SEQUENTIAL TERMINAL TRACE MODE ?
+         BNE   NOSEQTR            EXIT IF NOT
+* SEQ TERM TRACE MODE
+         MVC   INITRAN,=4C'-'     RESET INITIAL_TRANSID
+         MVC   MAXLOCS,=F'1'      FORCE LOCAL_TERMINALS=1
+         LA    R6,1               MAXLOCS=1
+         MVC   KCPTRPOS,KCPTRACE  FORCE TRACE_LOCALS=YES
+         B     NOSEQT             EXIT
+*
+NOSEQTR  EQU   *
          CLI   INISEQT,C'Y'       SEQUENTIAL TERMINAL ON ?
          BNE   NOSEQT             EXIT IF NOT
          AHI   R6,1               EXTRA TERMINAL
+         XC    MAXLOCS,MAXLOCS    FORCE LOCAL_TERMINALS=0
+         MVC   INITRAN,=4C'-'     RESET INITIAL_TRANSID
+         XC    KCPTRPOS,KCPTRPOS  FORCE TRACE_LOCALS=NO
 NOSEQT   EQU   *
+* CHECK LOCAL AND REMOTE NUMBERS ARE SENSIBLE
          A     R6,MAXREMS         R6=LOCALS+REMOTES
          BZ    BADPARM2           ERROR IF NO TERMINALS
          C     R6,THREADS         SUM CANNOT EXCEED THREADS
@@ -791,1705 +813,6 @@ TERMRQSN EQU   *
          BNZ   ABEND780           EXIT IF BAD
          J     REQRETRN           EXIT
 *
-FOP1REF DS     0H
-* OPEN ON 1ST REFERENCE
-         LA    R6,REQLEN          ADDRESS RECEIVED DATA
-         USING DFHFCBLK,R6
-* CHECK THE FCT STATUS
-         L     R7,DFHFCTAD        ADDRESS FCT
-         USING DFHFCTDS,R7
-FOP1LOOP EQU   *
-         CLC   FCPFILNM,FCTFILNM  MATCH REQUESTED FILENAME TO FCT ?
-         BNE   FOP1INCR           EXIT IF NOT MATCHED
-* FILE FOUND
-         LA    R8,FCTTELEN(R7)    ADDRESS ACB
-         USING IHAACB,R8
-         TM    FCTFILST,FCTOPEN   IS FILE OPEN ?
-         BOR   R12                RETURN IF IT IS
-* FILE NOT OPEN
-* TEST FILSTAT OPTIONS
-*    OPENED,ENABLED   -- FILE OPENED AT START, CANNOT OCCUR HERE
-*                     -- BUT TREATED AS OPEN ON 1ST REF
-*    OPENED,DISABLED  -- FILE OPENED AT START, CANNOT OCCUR HERE
-*                     -- BUT TREATED AS OPEN ON 1ST REF
-*                     -- DISABLED STATUS RETURNED
-*    OPENED,UNENABLED -- CANNOT OCCUR
-*
-*    CLOSED,ENABLED   -- FILE OPENED NOW (1ST REF)
-*    CLOSED,DISABLED  -- DISABLED STATUS RETURNED
-*    CLOSED,UNENABLED -- NOTOPEN STATUS RETURNED
-         TM    FCTFILST,FCTOPCLO  FILSTAT=OPENED ?
-         BO    FOP1OPEN           EXIT IF IT IS
-* FILSTAT=CLOSED
-         TM    FCTFILST,FCTENDIS  FILSTAT=ENABLED ?
-         BO    FOP1OPEN           EXIT IF IT IS
-* FILSTAT=CLOSED AND NOT ENABLED
-         TM    FCTFILST,FCTUNENA  FILSTAT=UNENABLED ?
-         BO    FOP1NOTO           EXIT IF NOTOPEN
-         B     FOP1DISA           EXIT IF DISABLED
-*
-FOP1INCR EQU   *
-         AHI   R7,FCTABLEN        POINT TO NEXT FCT ENTRY
-         CLI   0(R7),X'FF'        END OF FCT ?
-         BNE   FOP1LOOP           LOOP IF NOT
-* FILE NOT FOUND
-         B     FOP1FNTF           EXIT IF FILENOTFOUND
-*
-FOP1OPEN EQU   *
-* OPEN ON 1ST REF
-* INITIALIZE MESSAGE
-         MVC   WTOFN,=C'06FE'     1ST REF FILE OPENS
-         MVC   WTOTERM,=4C' '     NO TERMID
-         MVC   WTOTRAN,=4C' '     NO PRESET TRANSID
-         MVI   WTOTYPE,C' '       NO TRANSID TYPE
-         MVC   WTOTASKN,=7C' '    NO TASK NUMBER
-         MVC   WTODESC,=CL45'FILE ........ OPEN  FAILED'
-         MVC   WTODESC+5(8),FCTFILNM MOVE FILENAME TO MSG
-         TM    FCTSERV,FCTDELT+FCTUPDT+FCTADD REASON TO OPEN OUTPUT ?
-         BZ    FOP1IN             EXIT IF NONE
-* SET ALL BITS WE ARE LIKELY TO USE
-*    ADR = ACCESS BY RBA
-*    DIR = DIRECT ACCESS
-*    KEY = ACCESS BY KEY
-*    SEQ = SEQUENTIAL ACCESS
-*    IN  = READ ONLY
-*    OUT = READ OR WRITE
-* OPEN FOR OUTPUT
-         MODCB ACB=IHAACB,MACRF=(ADR,DIR,KEY,SEQ,OUT)
-         OPEN  (IHAACB,OUTPUT)    OPEN FOR OUTPUT
-         LTR   R15,R15            OK ?
-         BNZ   FOP1OPER           EXIT IF NOT
-         B     FOP1OPOK           EXIT
-*
-FOP1IN   EQU   *
-* OPEN FOR INPUT
-         MODCB ACB=IHAACB,MACRF=(ADR,DIR,KEY,SEQ,IN)
-         OPEN  (IHAACB,INPUT)     OPEN FOR INPUT
-         LTR   R15,R15            OK ?
-         BNZ   FOP1OPER           EXIT IF NOT
-FOP1OPOK EQU   *
-* OPEN SUCCESSFUL, SAY SO
-         MVC   WTODESC+20(6),=C'OK    ' SET OK
-         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
-         ST    R12,FOP1SV12       SAVE RETURN ADDRESS
-         BAL   R12,CICSTRCE       TRACE IT
-         L     R12,FOP1SV12       RESTORE RETURN ADDRESS
-         OI    FCTFILST,FCTOPEN   SET FILE OPEN
-         OI    FCTFILST,FCTOPCLO  SET FILSTAT=OPENED
-         B     FOP1DIST           EXIT
-*
-FOP1OPER EQU   *
-* OPEN UNSUCCESSFUL, SAY SO
-         MVC   WTODESC+20(6),=C'FAILED' SET FAILED
-         MVI   CICSTIND,C'I'      SET INTERNAL TYPE
-         ST    R12,FOP1SV12       SAVE RETURN ADDRESS
-         BAL   R12,CICSTRCE       TRACE IT
-         L     R12,FOP1SV12       RESTORE RETURN ADDRESS
-         MVI   FCTFILST,X'00'     SET FILE CLOSED,DISABLED
-         B     FOP1DISA           EXIT IF DISABLED
-*
-FOP1DIST EQU   *
-         TM    FCTFILST,FCTENDIS  IS FILSTAT=DISABLED ?
-         BZ    FOP1DISA           EXIT IF DISABLED
-         BR    R12                RETURN
-*
-FOP1FNTF EQU   *
-         MVC   FCPRETCD,DFHRESP(FILENOTFOUND) SET FILENOTFOUND
-         MVC   FCPRESP2,=F'1'     SET RESP2
-         MVC   WTODESC,=CL45'>>>Z390KCP READ     FAILED'
-         MVC   WTODESC+11(8),FOP1OPTN SET FILE OPERATION
-         MVC   WTODESC+27(12),=C'FILENOTFOUND'
-         B     FOP1SEND           EXIT
-*
-FOP1DISA EQU   *
-         MVC   FCPRETCD,DFHRESP(DISABLED) SET DISABLED
-         MVC   FCPRESP2,=F'50'    SET RESP2
-         MVC   WTODESC,=CL45'>>>Z390KCP READ     FAILED'
-         MVC   WTODESC+11(8),FOP1OPTN SET FILE OPERATION
-         MVC   WTODESC+27(12),=C'DISABLED'
-         B     FOP1SEND           EXIT
-*
-FOP1NOTO EQU   *
-         MVC   FCPRETCD,DFHRESP(NOTOPEN) SET NOTOPEN
-         MVC   FCPRESP2,=F'60'    SET RESP2
-         MVC   WTODESC,=CL45'>>>Z390KCP READ     FAILED'
-         MVC   WTODESC+11(8),FOP1OPTN SET FILE OPERATION
-         MVC   WTODESC+27(7),=C'NOTOPEN'
-FOP1SEND EQU   *
-         LR    R9,R6              SET AS IF NEW DFHFCBLK
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,FCPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=(R9),LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         J     REQRETRN           EXIT
-FOP1SV12 DS    A                  SAVE R12
-FOP1OPTN DC    C'READNEXT'        FILE OPERATION
-*
-READFILE DS    0H
-* FN=0602  READ FILE
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTOTRAN,REQTRAN    SET TRANSID
-         MVI   WTOTYPE,C' '       NO TRANSID TYPE
-         MVC   CICSTMSG,=X'060201' <<<Z390KCP READ REQUEST
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         MVC   FOP1OPTN,=CL8'READ' SET OPERATION FOR MESSAGES
-         BAL   R12,FOP1REF        OPEN ON 1ST REFERENCE
-* SET UP VSWA FOR REQUEST
-* R6=REQUEST DATA  (DFHFCBLK)
-* R7=FCTTE ADDRESS (DFHFCTDS)
-* R8=ACB
-* R9=VSWA AND RPL
-         TM    FCTSERV,FCTREAD    IS READ ALLOWED ?
-         BNO   RDFLIV20           EXIT IF NOT
-         LA    R5,FCTVSWA         R5=CHAINED FROM ADDRESS
-         ICM   R9,15,FCTVSWA      R9=VSWA ANCHOR
-         BZ    RDFLNSLT           EXIT IF NO VSWAS
-         USING DFHVSWAD,R9
-* SCAN TO END OF CHAIN, CREATE A NEW VSWA
-RDFLFLP  EQU   *
-         LTR   R9,R9              END OF CHAIN ?
-         BZ    RDFLNSLT           EXIT IF IT IS
-         LR    R5,R9              R5=CHAINED FROM ADDRESS
-         L     R9,VSWCHAIN        NEXT ENTRY
-         B     RDFLFLP            LOOP
-*
-RDFLNSLT EQU   *
-* LOCATED LAST (OR 1ST) VSWA
-* GETMAIN A NEW ONE AND CHAIN
-         LA    R1,VSWLEN          R1=VSWA LENGTH
-         GETMAIN R,LV=(R1),A=0(R5)
-         LR    R9,R1              NEW VSWA
-         XC    DFHVSWAD(VSWLEN),DFHVSWAD CLEAR IT
-         MVC   VSWTASKN,FCPTASKN  SET TASK NUMBER
-         MVC   VSWCTYPE,FCPCTYPE  SET COMMAND TYPE
-         USING IHARPL,VSWRPL
-         L     R10,ACBVCLRA       R10=VCLR (CLUSTER ENTRY)
-         USING IHAVCLR,R10
-         CLI   FCPRDOPT,FCPRDXRB  XRBA REQUEST ?
-         BE    RDFLXRBA           EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDRRN  RRN REQUEST ?
-         BE    RDFLRRN            EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDKEY  FULL KEY REQUEST ?
-         BE    RDFLKEY            EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDGEN  GENERIC KEY REQUEST ?
-         BE    RDFLKEY            EXIT IF IT IS
-         GENCB BLK=RPL,                                                X
-               ACB=(R8),                                               X
-               OPTCD=(ADR),                                            X
-               ARG=(S,FCPRBA),                                         X
-               WAREA=IHARPL,                                           X
-               LENGTH=RPLEND-IHARPL
-         B     RDFLGETR           EXIT
-*
-RDFLXRBA EQU   *
-         GENCB BLK=RPL,                                                X
-               ACB=(R8),                                               X
-               OPTCD=(ADR,XRBA),                                       X
-               ARG=(S,FCPXRBA),                                        X
-               WAREA=IHARPL,                                           X
-               LENGTH=RPLEND-IHARPL
-         B     RDFLGETR           EXIT
-*
-RDFLRRN  EQU   *
-         GENCB BLK=RPL,                                                X
-               ACB=(R8),                                               X
-               OPTCD=(KEY),                                            X
-               ARG=(S,FCPRRN),                                         X
-               WAREA=IHARPL,                                           X
-               LENGTH=RPLEND-IHARPL
-         B     RDFLGETR           EXIT
-*
-RDFLKEY  EQU   *
-         GENCB BLK=RPL,                                                X
-               ACB=(R8),                                               X
-               OPTCD=(KEY,FKS,KEQ),                                    X
-               ARG=(S,FCPRID),                                         X
-               WAREA=IHARPL,                                           X
-               LENGTH=RPLEND-IHARPL
-         MVC   RPLLKEY,VCLRKLEN   DEFAULT TO CATALOG KEYLENGTH
-         CLI   FCPRDOPT,FCPRDGEN  GENERIC ?
-         BNE   RDFLGTE            EXIT IF NOT
-* KSDS GENERIC
-         TM    FCPKEYLN,X'80'     IS IT NEGATIVE ?
-         BO    RDFLIV42           ERROR IF IT IS
-         CLC   FCPKEYLN,VCLRKLEN+2 VALIDATE GENERIC KEYLENGTH ?
-         BNL   RDFLIV25           EXIT IF BAD
-         MVC   RPLLKEY+2(2),FCPKEYLN MOVE REQUESTED GENERIC KEYLENGTH
-         OI    RPLOPT1,RPLOPT1_GEN SET IN RPL
-RDFLGTE  EQU   *
-         CLI   FCPBROPT,FCPBRGTE  GTEQ ?
-         BNE   RDFLNTGE           EXIT IF NOT
-* KSDS GTEQ
-         OI    RPLOPT1,RPLOPT1_KGE SET IN RPL
-RDFLNTGE EQU   *
-* IF GENERIC OR GTEQ HAS BEEN SPECIFIED WE NEED POINT
-         TM    RPLOPT1,RPLOPT1_KGE+RPLOPT1_GEN GTEQ AND/OR GEN ?
-         BZ    RDFLGETR           EXIT IF NEITHER
-         CLI   FCPKEYLN,X'7F'     ANY REQUESTED KEYLENGTH ?
-         BE    RDFLPNT            EXIT IF NONE
-         OC    FCPKEYLN,FCPKEYLN  KEYLENGTH=0 ?
-         BNZ   RDFLPNT            EXIT IF NOT
-* KSDS KEYLENGTH(0) AND (GENERIC AND/OR GTEQ) SPECIFIED
-*    ARG IS ALWAYS X'00' TO GET 1ST RECORD
-*    GENERIC=KEYLENGTH(1) AND GTEQ FORCED
-         XC    FCPRID,FCPRID      SET KEY TO X'00'
-         OI    RPLOPT1,RPLOPT1_KGE FORCE GTEQ
-         MVC   RPLLKEY,=F'1'      SET KEYLENGTH=1
-RDFLPNT  EQU   *
-         XC    RDFLGETL,RDFLGETL  NO FREEMAIN IF POINT ERROR
-         LR    R5,R6              DEFAULT TO CUR FCBLK IF POINT ERROR
-         POINT RPL=IHARPL         POSITION
-         LTR   R15,R15            CHECK RC ?
-         BNZ   RDFLFAIL           EXIT IF BAD
-*
-RDFLGETR EQU   *
-         L     R5,VCLRLREC        R5=LENGTH
-         TM    VCLRFLG1,VCLRVREC  IS IT VARIABLE ?
-         BNO   RDFLFIX            EXIT IF NOT
-         AHI   R5,4               +4 FOR VARIABLE LENGTH
-RDFLFIX  EQU   *
-         LA    R1,FCPREFIX(R5)    FC PREFIX LENGTH + MAX RECORD SIZE
-         GETMAIN R,LV=(R1)
-         ST    R0,RDFLGETL        SAVE LENGTH FOR FREEMAIN
-         LR    R5,R1              ADDRESS NEW FC BLOCK
-         MVC   0(FCPREFIX,R5),DFHFCBLK MOVE PREFIX INTO NEW BLOCK
-         XC    FCPRETCD-DFHFCBLK(4,R5),FCPRETCD-DFHFCBLK(R5) CLEAR RC
-         XC    FCPRESP2-DFHFCBLK(4,R5),FCPRESP2-DFHFCBLK(R5) CLEAR RSP2
-         MODCB RPL=IHARPL,AREA=(S,FCPREFIX(R5))
-         GET   RPL=IHARPL         READ RECORD
-         LTR   R15,R15            CHECK RC ?
-         BNZ   RDFLFAIL           EXIT IF ERROR
-         TM    VCLRFLG1,VCLRVREC  IS IT VARIABLE ?
-         BNO   RDFLFIX2           EXIT IF NOT
-         MVC   FCPACLEN-DFHFCBLK(4,R5),RPLLREC SAVE ACTUAL LRECL
-         B     RDFLLEN            EXIT
-*
-RDFLFIX2 EQU   *
-         MVC   FCPACLEN-DFHFCBLK(4,R5),VCLRLREC SAVE FIXED LRECL
-         DROP  R10
-RDFLLEN  EQU   *
-         L     R1,FCPLEN          R1=LENGTH REQUESTED
-         CLC   FCPACLEN-DFHFCBLK(4,R5),FCPLEN IS ACT DATA LENGTH LESS ?
-         BH    RDFLLNOK           EXIT IF NOT
-         L     R1,FCPACLEN-DFHFCBLK(R5) R1=LENGTH OF DATA
-RDFLLNOK EQU   *
-         LA    R15,FCPREFIX(R1)   R15=ACTUAL LENGTH SENT
-         ST    R15,FCPTCPIO-DFHFCBLK(R5) SAVE IT
-         MVC   CICSTMSG,=X'060202' <<<Z390KCP READ COMPLETED
-RDFLSEND EQU   *
-* READ COMPLETED, PASS DATA TO CLIENT, FREE NEW FCBLK, FREE VSWA
-         L     R8,CONNID          R8=CONN ID
-         TCPIO SEND,MSG=(R5),LMSG=0(R5),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         OC    RDFLGETL,RDFLGETL  ANY NEW FCBLK ?
-         BZ    RDFLNOFB           EXIT IF NOT
-         MVC   0(4,R5),RDFLGETL   SET REAL STORAGE LENGTH
-         FREEMAIN LA=RDFLGETL,A=(R5)
-RDFLNOFB EQU   *
-         LA    R8,FCTVSWA         PREVIOUS CHAIN ADDRESS
-         L     R9,FCTVSWA         R9=VSWA CHAIN
-RDFLFRVS EQU   *
-         CLC   VSWTASKN,FCPTASKN  OUR TASK NUMBER ?
-         BNE   RDFLVSNF           EXIT IF NOT
-         CLI   VSWCTYPE,VSWCREAD  READ COMMAND ?
-         BE    RDFLGOTV           EXIT IF IT IS
-RDFLVSNF EQU   *
-         LR    R8,R9              PREVIOUS CHAIN ADDRESS
-         L     R9,VSWCHAIN        NEXT VSWA
-         B     RDFLFRVS           LOOP IF NOT OURS
-*
-RDFLGOTV EQU   *
-* REMAKE THE CHAIN AND FREEMAIN THE VSWA
-         MVC   0(4,R8),VSWCHAIN   REMAKE THE CHAIN
-         FREEMAIN LV=VSWLEN,A=(R9) FREE VSWA
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         J     REQRETRN           EXIT
-*
-RDFLFAIL EQU   *
-* READ FAILURE PROCESSING
-         BAL   R12,FILEERR        FIND THE ERROR CODES
-         MVI   CICSTMSG,X'00'     INVALIDATE MESSAGE ID
-         MVC   WTODESC,=CL45'>>>Z390KCP READ FAILED'
-         MVC   WTODESC+23(8),12(R15) MOVE CONDITION
-         LA    R15,FCPREFIX       R15=ONLY SEND NEW PREFIX
-         ST    R15,FCPTCPIO-DFHFCBLK(R5) SAVE IT
-         B     RDFLSEND           EXIT
-*
-RDFLIV20 EQU   *
-         MVC   FCPRESP2,=F'20'    SET RESP2 (FUNCTION NOT PERMITTED)
-         B     RDFLINVQ           EXIT
-*
-RDFLIV25 EQU   *
-         MVC   FCPRESP2,=F'25'    SET RESP2 (KEYLENGTH>=ACTUAL)
-         B     RDFLINVQ           EXIT
-*
-RDFLIV42 EQU   *
-         MVC   FCPRESP2,=F'42'    SET RESP2 (KEYLENGTH<0)
-RDFLINVQ EQU   *
-         MVC   FCPRETCD,DFHRESP(INVREQ) SET INVREQ
-         MVI   CICSTMSG,X'00'     INVALIDATE MESSAGE ID
-         MVC   WTODESC,=CL45'>>>Z390KCP READ FAILED'
-         MVC   WTODESC+23(7),=C'INVREQ'
-         LR    R9,R6              SET AS IF NEW DFHFCBLK
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,FCPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=(R9),LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-* FREE THE VSWA, ONLY INVREQ/20 DOESN'T CREATE ONE
-         OC    FCPRESP2,FCPRESP2  ANY ERROR OCCURRED ?
-         JZ    REQRETRN           EXIT IF NONE
-         CLC   FCPRESP2,=F'20'    READ NOT PERMITTED ?
-         JE    REQRETRN           EXIT IF IT IS
-         LA    R8,FCTVSWA         PREVIOUS CHAIN ADDRESS
-         L     R9,FCTVSWA         R9=VSWA CHAIN
-RDFLFRV2 EQU   *
-         CLC   VSWTASKN,FCPTASKN  OUR TASK NUMBER ?
-         BNE   RDFLVSN2           EXIT IF NOT
-         CLI   VSWCTYPE,VSWCREAD  READ COMMAND ?
-         BE    RDFLGOT2           EXIT IF IT IS
-RDFLVSN2 EQU   *
-         LR    R8,R9              PREVIOUS CHAIN ADDRESS
-         L     R9,VSWCHAIN        NEXT VSWA
-         B     RDFLFRV2           LOOP IF NOT OURS
-*
-RDFLGOT2 EQU   *
-* REMAKE THE CHAIN AND FREEMAIN THE VSWA
-         MVC   0(4,R8),VSWCHAIN   REMAKE THE CHAIN
-         FREEMAIN LV=VSWLEN,A=(R9) FREE VSWA
-         J     REQRETRN           EXIT
-*
-RDFLGETL DS    F                  SAVE GETMAIN LENGTH
-*
-STBRFILE DS    0H
-* FN=060C  START BROWSE FILE
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTOTRAN,REQTRAN    SET TRANSID
-         MVI   WTOTYPE,C' '       NO TRANSID TYPE
-         MVC   CICSTMSG,=X'060C01' <<<Z390KCP STARTBR REQUEST
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         MVC   FOP1OPTN,=CL8'STARTBR' SET OPERATION FOR MESSAGES
-         BAL   R12,FOP1REF        OPEN ON 1ST REFERENCE
-* SET UP VSWA FOR REQUEST
-* R6=REQUEST DATA  (DFHFCBLK)
-* R7=FCTTE ADDRESS (DFHFCTDS)
-* R8=ACB
-* R9=VSWA AND RPL
-         TM    FCTSERV,FCTBRWSE   IS BROWSE ALLOWED ?
-         BNO   STBRIV20           EXIT IF NOT
-         LA    R5,FCTVSWA         R5=CHAINED FROM ADDRESS
-         ICM   R9,15,FCTVSWA      R9=VSWA ANCHOR
-         BZ    STBRNSLT           EXIT IF NO VSWAS
-         USING DFHVSWAD,R9
-* SCAN TO END OF CHAIN, CREATE A NEW VSWA
-STBRFLP  EQU   *
-         LTR   R9,R9              END OF CHAIN ?
-         BZ    STBRNSLT           EXIT IF IT IS
-* CHECK VSWA FOR BROWSE AND DUPLICATE TASKNO/REQID
-         CLC   VSWTASKN,FCPTASKN  IS IT OURS ?
-         BNE   STBRVCHN           CHAIN IF NOT
-         CLI   VSWCTYPE,VSWCBRWS  IS IT BROWSE TYPE ?
-         BNE   STBRVCHN           CHAIN IF NOT
-         CLC   VSWREQID,FCPREQID  IS IT OUR REQID ?
-         BE    STBRIV33           ERROR IF IT IS
-STBRVCHN EQU   *
-         LR    R5,R9              R5=CHAINED FROM ADDRESS
-         L     R9,VSWCHAIN        NEXT ENTRY
-         B     STBRFLP            LOOP
-*
-STBRNSLT EQU   *
-* LOCATED LAST (OR 1ST) VSWA
-* GETMAIN A NEW ONE AND CHAIN
-         LA    R1,VSWLEN          R1=VSWA LENGTH
-         GETMAIN R,LV=(R1),A=0(R5)
-         LR    R9,R1              NEW VSWA
-         XC    DFHVSWAD(VSWLEN),DFHVSWAD CLEAR IT
-         MVC   VSWTASKN,FCPTASKN  SET TASK NUMBER
-         MVC   VSWCTYPE,FCPCTYPE  SET COMMAND TYPE
-         MVC   VSWREQID,FCPREQID  SET REQID
-         USING IHARPL,VSWRPL
-         L     R10,ACBVCLRA       R10=VCLR (CLUSTER ENTRY)
-         USING IHAVCLR,R10
-         CLI   FCPRDOPT,FCPRDXRB  XRBA REQUEST ?
-         BE    STBRXRBA           EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDRRN  RRN REQUEST ?
-         BE    STBRRRN            EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDKEY  FULL KEY REQUEST ?
-         BE    STBRKEY            EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDGEN  GENERIC KEY REQUEST ?
-         BE    STBRKEY            EXIT IF IT IS
-* ESDS RBA
-         GENCB BLK=RPL,                                                X
-               ACB=(R8),                                               X
-               OPTCD=(ADR,SEQ),                                        X
-               ARG=(S,FCPRBA),                                         X
-               WAREA=IHARPL,                                           X
-               LENGTH=RPLEND-IHARPL
-         B     STBRPNT            EXIT
-*
-STBRXRBA EQU   *
-* ESDS XRBA
-         GENCB BLK=RPL,                                                X
-               ACB=(R8),                                               X
-               OPTCD=(ADR,SEQ,XRBA),                                   X
-               ARG=(S,FCPXRBA),                                        X
-               WAREA=IHARPL,                                           X
-               LENGTH=RPLEND-IHARPL
-         B     STBRPNT            EXIT
-*
-STBRRRN  EQU   *
-* RRDS RRN
-         GENCB BLK=RPL,                                                X
-               ACB=(R8),                                               X
-               OPTCD=(KEY,SEQ),                                        X
-               ARG=(S,FCPRRN),                                         X
-               WAREA=IHARPL,                                           X
-               LENGTH=RPLEND-IHARPL
-         B     STBRPNT            EXIT
-*
-STBRKEY  EQU   *
-* KSDS
-         GENCB BLK=RPL,                                                X
-               ACB=(R8),                                               X
-               OPTCD=(KEY,SEQ,FKS,KEQ),                                X
-               ARG=(S,FCPRID),                                         X
-               WAREA=IHARPL,                                           X
-               LENGTH=RPLEND-IHARPL
-         MVC   RPLLKEY,VCLRKLEN   DEFAULT TO CATALOG KEYLENGTH
-         CLI   FCPRDOPT,FCPRDGEN  GENERIC ?
-         BNE   STBRGTE            EXIT IF NOT
-* KSDS GENERIC
-         OI    VSWOPT,VSWGEN      SET IN VSWA
-         OI    RPLOPT1,RPLOPT1_GEN SET IN RPL
-         MVC   RPLLKEY+2(2),FCPKEYLN MOVE REQUESTED GENERIC KEYLENGTH
-         TM    RPLLKEY+2,X'80'    IS IT NEGATIVE ?
-         BO    STBRIV42           EXIT IF BAD
-         CLC   FCPKEYLN,VCLRKLEN+2 VALIDATE GENERIC KEYLENGTH ?
-         BNL   STBRIV25           EXIT IF BAD
-STBRGTE  EQU   *
-         CLI   FCPBROPT,FCPBRGTE  GTEQ ?
-         BNE   STBRNTGE           EXIT IF NOT
-* KSDS GTEQ
-         OI    VSWOPT,VSWGTEQ     SET IN VSWA
-         OI    RPLOPT1,RPLOPT1_KGE SET IN RPL
-STBRNTGE EQU   *
-         OC    FCPKEYLN,FCPKEYLN  KEYLENGTH=0 ?
-         BNZ   STBRPNT            EXIT IF NOT
-* KSDS KEYLENGTH(0)
-*    ARG IS ALWAYS X'00' TO GET 1ST RECORD
-*    GENERIC=KEYLENGTH(1) AND GTEQ FORCED
-         XC    FCPRID,FCPRID      SET KEY TO X'00'
-         OI    RPLOPT1,RPLOPT1_KGE FORCE GTEQ
-         MVC   RPLLKEY,=F'1'      SET KEYLENGTH=1
-*
-STBRPNT  EQU   *
-         POINT RPL=IHARPL         POSITION FILE FOR START BROWSE
-         LTR   R15,R15            CHECK RC ?
-         BNZ   STBRFAIL           EXIT IF BAD
-* STARTBR COMPLETED
-*   ESDS - SAVE   XRBA IN VSWA FOR CHECKING SKIP SEQUENTIAL
-*   RRDS - SAVE FCPRRN IN VSWA FOR CHECKING SKIP SEQUENTIAL
-*   KSDS - SAVE FCPRID AND KEYLENGTH IN VSWA FOR CHECKING SKIP
-*          SEQUENTIAL
-*   PASS REQUEST BLOCK BACK
-         CLI   FCPRDOPT,FCPRDKEY  FULL KEY REQUEST ?
-         BE    STBRSAVK           EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDGEN  GENERIC KEY REQUEST ?
-         BE    STBRSAVK           EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDRRN  RRN REQUEST ?
-         BE    STBRSAVR           EXIT IF IT IS
-* ESDS
-         MVC   VSWAXRBA,RPLCXRBA  SAVE XRBA
-         B     STBRDONE           EXIT
-*
-STBRSAVR EQU   *
-* RRDS
-         MVC   VSWARRN,FCPRRN     SAVE RRN
-         B     STBRDONE           EXIT
-*
-STBRSAVK EQU   *
-* KSDS
-         MVC   VSWARID,FCPRID     SAVE KEY
-         MVC   VSWKEYLN,RPLLKEY+2 SAVE KEYLENGTH
-*
-STBRDONE EQU   *
-         MVC   CICSTMSG,=X'060C02' <<<Z390KCP STARTBR COMPLETED
-STBRSEND EQU   *
-         L     R8,CONNID          R8=CONN ID
-         TCPIO SEND,MSG=DFHFCBLK,LMSG=FCPTCPIO,CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         B     STBRTRCE           EXIT
-*
-STBRFAIL EQU   *
-* STARTBR FAILURE PROCESSING
-         BAL   R12,FILEERR        FIND THE ERROR CODES
-         MVI   CICSTMSG,X'00'     INVALIDATE MESSAGE ID
-         MVC   WTODESC,=CL45'>>>Z390KCP STARTBR FAILED'
-         MVC   WTODESC+26(8),12(R15) MOVE CONDITION
-         B     STBRSEND           EXIT
-*
-STBRIV20 EQU   *
-         MVC   FCPRESP2,=F'20'    SET RESP2 (FUNCTION NOT PERMITTED)
-         B     STBRINVQ           EXIT
-*
-STBRIV25 EQU   *
-         MVC   FCPRESP2,=F'25'    SET RESP2 (KEYLENGTH>=ACTUAL)
-         B     STBRINVQ           EXIT
-*
-STBRIV33 EQU   *
-         MVC   FCPRESP2,=F'33'    SET RESP2 (DUPLICATE REQID)
-         B     STBRINVQ           EXIT
-*
-STBRIV42 EQU   *
-         MVC   FCPRESP2,=F'42'    SET RESP2 (KEYLENGTH<0)
-STBRINVQ EQU   *
-         MVC   FCPRETCD,DFHRESP(INVREQ) SET INVREQ
-         MVI   CICSTMSG,X'00'     INVALIDATE MESSAGE ID
-         MVC   WTODESC,=CL45'>>>Z390KCP STARTBR FAILED'
-         MVC   WTODESC+26(7),=C'INVREQ'
-         LR    R9,R6              SET AS IF NEW DFHFCBLK
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,FCPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=(R9),LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-STBRTRCE EQU   *
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         J     REQRETRN           EXIT
-*
-RDNXFILE DS    0H
-* FN=060E  READNEXT FILE
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTOTRAN,REQTRAN    SET TRANSID
-         MVI   WTOTYPE,C' '       NO TRANSID TYPE
-         MVC   CICSTMSG,=X'060E01' <<<Z390KCP READNEXT REQUEST
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         MVC   FOP1OPTN,=CL8'READNEXT' SET OPERATION FOR MESSAGES
-         BAL   R12,FOP1REF        OPEN ON 1ST REFERENCE
-         L     R10,ACBVCLRA       R10=VCLR (CLUSTER ENTRY)
-         USING IHAVCLR,R10
-* R6= REQUEST DATA  (DFHFCBLK)
-* R7= FCTTE ADDRESS (DFHFCTDS)
-* R8= ACB
-* R9= VSWA AND RPL
-* R10=VCLR (CLUSTER ENTRY)
-         TM    FCTSERV,FCTBRWSE   IS BROWSE ALLOWED ?
-         BNO   RDNXIV20           EXIT IF NOT
-         ICM   R9,15,FCTVSWA      R9=VSWA ANCHOR
-         BZ    RDNXIV34           EXIT IF NO VSWAS
-         USING DFHVSWAD,R9
-* SCAN VSWAS AND FIND OUR STARTBR ONE
-RDNXFLP  EQU   *
-         LTR   R9,R9              END OF CHAIN ?
-         BZ    RDNXIV34           ERROR IF IT IS
-         CLC   VSWTASKN,FCPTASKN  IS IT OURS ?
-         BNE   RDNXVCHN           CHAIN IF NOT
-         CLI   VSWCTYPE,VSWCBRWS  IS IT BROWSE TYPE ?
-         BNE   RDNXVCHN           CHAIN IF NOT
-         CLC   VSWREQID,FCPREQID  IS IT OUR REQID ?
-         BE    RDNXVSGT           EXIT IF IT IS
-RDNXVCHN EQU   *
-         L     R9,VSWCHAIN        NEXT ENTRY
-         B     RDNXFLP            LOOP
-*
-RDNXVSGT EQU   *
-* FOUND OUR STARTBR VSWA
-         USING IHARPL,VSWRPL
-         CLI   FCPRDOPT,FCPRDRBA  RBA REQUEST ?
-         BNE   RDNXXRBA           EXIT IF NOT
-* ESDS/RBA
-         MODCB RPL=IHARPL,OPTCD=(ADR,SEQ,FWD),ARG=(S,FCPRBA)
-         CLC   FCPRBA,VSWARBA     HAS RBA CHANGED ?
-         BE    RDNXNOPT           EXIT IF NOT
-         B     RDNXGETR           EXIT
-*
-RDNXXRBA EQU   *
-         CLI   FCPRDOPT,FCPRDXRB  XRBA REQUEST ?
-         BNE   RDNXRRN            EXIT IF NOT
-* ESDS/XRBA
-         MODCB RPL=IHARPL,OPTCD=(ADR,SEQ,FWD,XRBA),ARG=(S,FCPXRBA)
-         CLC   FCPXRBA,VSWAXRBA   HAS XRBA CHANGED ?
-         BE    RDNXNOPT           EXIT IF NOT
-         B     RDNXGETR           EXIT
-*
-RDNXRRN  EQU   *
-         CLI   FCPRDOPT,FCPRDRRN  RRN REQUEST ?
-         BNE   RDNXKSD            EXIT IF NOT
-* RRDS
-         MODCB RPL=IHARPL,OPTCD=(KEY,SEQ,FWD),ARG=(S,FCPRRN)
-         CLC   FCPRRN,VSWARRN     HAS RRN CHANGED ?
-         BE    RDNXNOPT           EXIT IF NOT
-         B     RDNXGETR           EXIT
-*
-RDNXKSD  EQU   *
-* KSDS
-         MODCB RPL=IHARPL,OPTCD=(KEY,SEQ,FKS,KEQ,FWD),ARG=(S,FCPRID)
-         TM    VSWOPT,VSWGEN      GENERIC ?
-         BNO   RDNXGTE            EXIT IF NOT
-* KSDS GENERIC
-         OI    RPLOPT1,RPLOPT1_GEN SET IN RPL
-RDNXGTE  EQU   *
-         TM    VSWOPT,VSWGTEQ     GTEQ ?
-         BNO   RDNXKEYL           EXIT IF NOT
-* KSDS GTEQ
-         OI    RPLOPT1,RPLOPT1_KGE SET IN RPL
-RDNXKEYL EQU   *
-         CLC   FCPKEYLN,VSWKEYLN  HAS KEYLENGTH CHANGED ?
-         BE    RDNXKEY            EXIT IF NOT
-* KEYLENGTH CHANGED
-         TM    VSWOPT,VSWGEN      GENERIC ?
-         BO    RDNXGENK           EXIT IF IT IS
-* KEYLENGTH CHANGED AND FULL KEY
-*    IF OMITTED, IT IS IGNORED
-*    IF KL NE CAT KL RAISE INVREQ/26
-         CLI   FCPKEYLN,X'7F'     ANY REQUESTED KEYLENGTH ?
-         BE    RDNXKEY            EXIT IF NONE
-         CLC   FCPKEYLN,VCLRKLEN+2 IS THE NEW KL=CATALOG KL ?
-         BNE   RDNXIV26           ERROR IF NOT
-         B     RDNXKEY            EXIT
-*
-RDNXGENK EQU   *
-* KEYLENGTH CHANGED AND GENERIC
-*    IF OMITTED, IT IS IGNORED
-*    IF = CAT KL, IT IS IGNORED
-*    IF > CAT KL, RAISE INVREQ/25
-*    IF -VE, RAISE INVREQ/42
-*    IF ZERO, SET KEYLENGTH=1, FORCE GTEQ
-         CLI   FCPKEYLN,X'7F'     ANY REQUESTED KEYLENGTH ?
-         BE    RDNXKEY            EXIT IF NONE
-         CLC   FCPKEYLN,VCLRKLEN+2 IS THE NEW KL=CATALOG KL ?
-         BE    RDNXKEY            EXIT IF IT IS
-         CLC   FCPKEYLN,VCLRKLEN+2 IS THE NEW KL>CATALOG KL ?
-         BH    RDNXIV25           ERROR IF IT IS
-         TM    FCPKEYLN,X'80'     IS IT NEGATIVE ?
-         BO    RDNXIV42           ERROR IF IT IS
-         OC    FCPKEYLN,FCPKEYLN  KEYLENGTH=0 ?
-         BZ    RDNXKEY0           EXIT IF NOT
-* KEYLENGTH NOT 0
-         MVC   RPLLKEY+2(2),FCPKEYLN SET TO NEW RPL KEYLENGTH
-         MVC   VSWKEYLN,FCPKEYLN  SET TO NEW VSWA KEYLENGTH
-         B     RDNXGETR           EXIT
-*
-RDNXKEY0 EQU   *
-* KEYLENGTH CHANGED TO ZERO AND GENERIC
-* ARG IS ALWAYS X'00' TO GET 1ST RECORD
-* KEYLENGTH(1) AND GTEQ FORCED
-         XC    FCPRID,FCPRID      SET KEY TO X'00'
-         OI    RPLOPT1,RPLOPT1_KGE FORCE GTEQ
-         MVC   RPLLKEY,=F'1'      SET KEYLENGTH=1
-         MVC   VSWKEYLN,=H'1'     SET VSWA KEYLENGTH=1
-         B     RDNXGETR           EXIT
-*
-RDNXKEY  EQU   *
-* SO FAR, NO DETECTED REASON FOR POINT
-         L     R2,RPLLKEY         R2=CURRENT KEYLENGTH
-         BCTR  R2,0               -1 FOR OFFSET
-         STC   R2,RDNXCLC+1       STORE LENGTH
-RDNXCLC  EQU   *
-         CLC   FCPRID(0),VSWARID  RIDFLD CHANGED ?
-         BE    RDNXNOPT           EXIT IF NOT
-*
-RDNXGETR EQU   *
-         XC    RDNXGETL,RDNXGETL  NO FREEMAIN IF POINT ERROR
-         LR    R5,R6              DEFAULT TO CUR FCBLK IF POINT ERROR
-         POINT RPL=IHARPL         REPOSITION
-         LTR   R15,R15            CHECK RC ?
-         BNZ   RDNXFAIL           EXIT IF BAD
-RDNXNOPT EQU   *
-         L     R5,VCLRLREC        R5=LENGTH
-         TM    VCLRFLG1,VCLRVREC  IS IT VARIABLE ?
-         BNO   RDNXFIX            EXIT IF NOT
-         AHI   R5,4               +4 FOR VARIABLE LENGTH
-RDNXFIX  EQU   *
-         LA    R1,FCPREFIX(R5)    FC PREFIX LENGTH + MAX RECORD SIZE
-         GETMAIN R,LV=(R1)
-         ST    R0,RDNXGETL        SAVE LENGTH FOR FREEMAIN
-         LR    R5,R1              ADDRESS NEW FC BLOCK
-         MVC   0(FCPREFIX,R5),DFHFCBLK MOVE PREFIX INTO NEW BLOCK
-         XC    FCPRETCD-DFHFCBLK(4,R5),FCPRETCD-DFHFCBLK(R5) CLEAR RC
-         XC    FCPRESP2-DFHFCBLK(4,R5),FCPRESP2-DFHFCBLK(R5) CLEAR RSP2
-         MODCB RPL=IHARPL,AREA=(S,FCPREFIX(R5)) READ AREA
-         GET   RPL=IHARPL         READ RECORD
-         LTR   R15,R15            CHECK RC ?
-         BNZ   RDNXFAIL           EXIT IF ERROR
-         TM    VCLRFLG1,VCLRVREC  IS IT VARIABLE ?
-         BNO   RDNXFIX2           EXIT IF NOT
-         MVC   FCPACLEN-DFHFCBLK(4,R5),RPLLREC SAVE ACTUAL LRECL
-         B     RDNXLEN            EXIT
-*
-RDNXFIX2 EQU   *
-         MVC   FCPACLEN-DFHFCBLK(4,R5),VCLRLREC SAVE FIXED LRECL
-         DROP  R10
-RDNXLEN  EQU   *
-         L     R1,FCPLEN          R1=LENGTH REQUESTED
-         CLC   FCPACLEN-DFHFCBLK(4,R5),FCPLEN IS ACT DATA LENGTH LESS ?
-         BH    RDNXLNOK           EXIT IF NOT
-         L     R1,FCPACLEN-DFHFCBLK(R5) R1=LENGTH OF DATA
-RDNXLNOK EQU   *
-         LA    R15,FCPREFIX(R1)   R15=ACTUAL LENGTH SENT
-         ST    R15,FCPTCPIO-DFHFCBLK(R5) SAVE IT
-* READNEXT COMPLETED, PASS DATA TO CLIENT, FREE NEW FCBLK
-*   ESDS - SAVE   XRBA IN VSWA FOR CHECKING SKIP SEQUENTIAL
-*   RRDS - SAVE FCPRRN IN VSWA FOR CHECKING SKIP SEQUENTIAL
-*   KSDS - SAVE FCPRID IN VSWA FOR CHECKING SKIP SEQUENTIAL
-*   PASS REQUEST BLOCK BACK WITH MODIFIED RIDFLD
-         CLI   FCPRDOPT,FCPRDKEY  FULL KEY REQUEST ?
-         BE    RDNXSAVK           EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDGEN  GENERIC KEY REQUEST ?
-         BE    RDNXSAVK           EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDRRN  RRN REQUEST ?
-         BE    RDNXSAVR           EXIT IF IT IS
-* ESDS
-         MVC   VSWAXRBA,RPLLXRBA  SAVE XRBA FOR SKIP SEQ
-         MVC   FCPXRBA-DFHFCBLK(8,R5),RPLLXRBA RETURN XRBA
-         B     RDNXDONE           EXIT
-*
-RDNXSAVR EQU   *
-* RRDS
-         L     R8,RPLAREA         ADDRESS RETURNED RRN
-         MVC   VSWARRN,0(R8)      SAVE RRN FOR SKIP SEQ
-         MVC   FCPRRN-DFHFCBLK(8,R5),0(R8) RETURN RRN
-         B     RDNXDONE           EXIT
-*
-RDNXSAVK EQU   *
-* KSDS
-         L     R8,RPLAREA         ADDRESS RETURNED RID
-         MVC   VSWARID,0(R8)      SAVE RID FOR SKIP SEQ
-         MVC   FCPRID-DFHFCBLK(128,R5),0(R8) RETURN RID
-*
-RDNXDONE EQU   *
-         MVC   CICSTMSG,=X'060E02' <<<Z390KCP READNEXT COMPLETED
-RDNXSEND EQU   *
-         L     R8,CONNID          R8=CONN ID
-         TCPIO SEND,MSG=(R5),LMSG=0(R5),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         OC    RDNXGETL,RDNXGETL  ANY NEW FCBLK ?
-         BZ    RDNXTRCE           EXIT IF NOT
-         MVC   0(4,R5),RDNXGETL   SET REAL STORAGE LENGTH
-         FREEMAIN LA=RDNXGETL,A=(R5)
-         B     RDNXTRCE           EXIT
-*
-RDNXFAIL EQU   *
-* READNEXT FAILURE PROCESSING
-         BAL   R12,FILEERR        FIND THE ERROR CODES
-         MVI   CICSTMSG,X'00'     INVALIDATE MESSAGE ID
-         MVC   WTODESC,=CL45'>>>Z390KCP READNEXT FAILED'
-         MVC   WTODESC+27(8),12(R15) MOVE CONDITION
-         LA    R15,FCPREFIX       R15=ONLY SEND NEW PREFIX
-         ST    R15,FCPTCPIO-DFHFCBLK(R5) SAVE IT
-         B     RDNXSEND           EXIT
-*
-RDNXIV20 EQU   *
-         MVC   FCPRESP2,=F'20'    SET RESP2 (FUNCTION NOT PERMITTED)
-         B     RDNXINVQ           EXIT
-*
-RDNXIV25 EQU   *
-         MVC   FCPRESP2,=F'25'    SET RESP2 (GENERIC AND KL > CAT KL)
-         B     RDNXINVQ           EXIT
-*
-RDNXIV26 EQU   *
-         MVC   FCPRESP2,=F'26'    SET RESP2 (FULL KEY AND KL NE CAT KL)
-         B     RDNXINVQ           EXIT
-*
-RDNXIV34 EQU   *
-         MVC   FCPRESP2,=F'34'    SET RESP2 (REQID NOT FOUND)
-         B     RDNXINVQ           EXIT
-*
-RDNXIV42 EQU   *
-         MVC   FCPRESP2,=F'42'    SET RESP2 (GENERIC AND NEGATIVE KL)
-RDNXINVQ EQU   *
-         MVC   FCPRETCD,DFHRESP(INVREQ) SET INVREQ
-         MVI   CICSTMSG,X'00'     INVALIDATE MESSAGE ID
-         MVC   WTODESC,=CL45'>>>Z390KCP READNEXT FAILED'
-         MVC   WTODESC+27(7),=C'INVREQ'
-         LR    R9,R6              SET AS IF NEW DFHFCBLK
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,FCPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=(R9),LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-RDNXTRCE EQU   *
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         J     REQRETRN           EXIT
-RDNXGETL DS    F                  SAVE GETMAIN LENGTH
-*
-RDPVFILE DS    0H
-* FN=0610  READPREV FILE
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTOTRAN,REQTRAN    SET TRANSID
-         MVI   WTOTYPE,C' '       NO TRANSID TYPE
-         MVC   CICSTMSG,=X'061001' <<<Z390KCP READPREV REQUEST
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         MVC   FOP1OPTN,=CL8'READPREV' SET OPERATION FOR MESSAGES
-         BAL   R12,FOP1REF        OPEN ON 1ST REFERENCE
-         L     R10,ACBVCLRA       R10=VCLR (CLUSTER ENTRY)
-         USING IHAVCLR,R10
-* R6= REQUEST DATA  (DFHFCBLK)
-* R7= FCTTE ADDRESS (DFHFCTDS)
-* R8= ACB
-* R9= VSWA AND RPL
-* R10=VCLR (CLUSTER ENTRY)
-         TM    FCTSERV,FCTBRWSE   IS BROWSE ALLOWED ?
-         BNO   RDPVIV20           EXIT IF NOT
-         ICM   R9,15,FCTVSWA      R9=VSWA ANCHOR
-         BZ    RDPVIV41           EXIT IF NO VSWAS
-         USING DFHVSWAD,R9
-* SCAN VSWAS AND FIND OUR STARTBR ONE
-RDPVFLP  EQU   *
-         LTR   R9,R9              END OF CHAIN ?
-         BZ    RDPVIV41           ERROR IF IT IS
-         CLC   VSWTASKN,FCPTASKN  IS IT OURS ?
-         BNE   RDPVVCHN           CHAIN IF NOT
-         CLI   VSWCTYPE,VSWCBRWS  IS IT BROWSE TYPE ?
-         BNE   RDPVVCHN           CHAIN IF NOT
-         CLC   VSWREQID,FCPREQID  IS IT OUR REQID ?
-         BE    RDPVVSGT           EXIT IF IT IS
-RDPVVCHN EQU   *
-         L     R9,VSWCHAIN        NEXT ENTRY
-         B     RDPVFLP            LOOP
-*
-RDPVVSGT EQU   *
-* FOUND OUR STARTBR VSWA
-         USING IHARPL,VSWRPL
-         CLI   FCPRDOPT,FCPRDRBA  RBA REQUEST ?
-         BNE   RDPVXRBA           EXIT IF NOT
-* ESDS/RBA
-         MODCB RPL=IHARPL,OPTCD=(ADR,SEQ,BWD),ARG=(S,FCPRBA)
-         CLC   FCPRBA,VSWARBA     HAS RBA CHANGED ?
-         BE    RDPVNOPT           EXIT IF NOT
-         B     RDPVGETR           EXIT
-*
-RDPVXRBA EQU   *
-         CLI   FCPRDOPT,FCPRDXRB  XRBA REQUEST ?
-         BNE   RDPVRRN            EXIT IF NOT
-* ESDS/XRBA
-         MODCB RPL=IHARPL,OPTCD=(ADR,SEQ,BWD,XRBA),ARG=(S,FCPXRBA)
-         CLC   FCPXRBA,VSWAXRBA   HAS XRBA CHANGED ?
-         BE    RDPVNOPT           EXIT IF NOT
-         B     RDPVGETR           EXIT
-*
-RDPVRRN  EQU   *
-         CLI   FCPRDOPT,FCPRDRRN  RRN REQUEST ?
-         BNE   RDPVKSD            EXIT IF NOT
-* RRDS
-         MODCB RPL=IHARPL,OPTCD=(KEY,SEQ,BWD),ARG=(S,FCPRRN)
-         CLC   FCPRRN,VSWARRN     HAS RRN CHANGED ?
-         BE    RDPVNOPT           EXIT IF NOT
-         B     RDPVGETR           EXIT
-*
-RDPVKSD  EQU   *
-* KSDS
-* CICS MANUAL: CREATES ERROR FOR GENERIC
-* VSAM MANUAL: BWD MEANS GEN/KGE ARE IGNORED AND DEFAULT TO FKS/KEQ
-         TM    VSWOPT,VSWGEN      GENERIC ?
-         BO    RDPVIV24           ERROR IF IT IS
-         MODCB RPL=IHARPL,OPTCD=(KEY,SEQ,FKS,KEQ,BWD),ARG=(S,FCPRID)
-* KEYLENGTH MUST BE = CATALOG KEYLENGTH
-         CLI   FCPKEYLN,X'7F'     ANY REQUESTED KEYLENGTH ?
-         BE    RDPVKEY            EXIT IF NONE
-         CLC   FCPKEYLN,VCLRKLEN+2 VALID KEYLENGTH ?
-         BNE   RDPVIV26           EXIT IF NOT
-*
-RDPVKEY  EQU   *
-* ONLY RID CHANGE CAN CAUSE REPOSITION
-         L     R2,VCLRKLEN        R2=CATALOG KEYLENGTH
-         BCTR  R2,0               -1 FOR OFFSET
-         STC   R2,RDPVCLC+1       STORE LENGTH
-RDPVCLC  EQU   *
-         CLC   FCPRID(0),VSWARID  RIDFLD CHANGED ?
-         BE    RDPVNOPT           EXIT IF NOT
-*
-RDPVGETR EQU   *
-         XC    RDPVGETL,RDPVGETL  NO FREEMAIN IF POINT ERROR
-         LR    R5,R6              DEFAULT TO CUR FCBLK IF POINT ERROR
-         POINT RPL=IHARPL         REPOSITION
-         LTR   R15,R15            CHECK RC ?
-         BNZ   RDPVFAIL           EXIT IF BAD
-RDPVNOPT EQU   *
-         L     R5,VCLRLREC        R5=LENGTH
-         TM    VCLRFLG1,VCLRVREC  IS IT VARIABLE ?
-         BNO   RDPVFIX            EXIT IF NOT
-         AHI   R5,4               +4 FOR VARIABLE LENGTH
-RDPVFIX  EQU   *
-         LA    R1,FCPREFIX(R5)    FC PREFIX LENGTH + MAX RECORD SIZE
-         GETMAIN R,LV=(R1)
-         ST    R0,RDPVGETL        SAVE LENGTH FOR FREEMAIN
-         LR    R5,R1              ADDRESS NEW FC BLOCK
-         MVC   0(FCPREFIX,R5),DFHFCBLK MOVE PREFIX INTO NEW BLOCK
-         XC    FCPRETCD-DFHFCBLK(4,R5),FCPRETCD-DFHFCBLK(R5) CLEAR RC
-         XC    FCPRESP2-DFHFCBLK(4,R5),FCPRESP2-DFHFCBLK(R5) CLEAR RSP2
-         MODCB RPL=IHARPL,AREA=(S,FCPREFIX(R5)) READ AREA
-         GET   RPL=IHARPL         READ RECORD
-         LTR   R15,R15            CHECK RC ?
-         BNZ   RDPVFAIL           EXIT IF ERROR
-         TM    VCLRFLG1,VCLRVREC  IS IT VARIABLE ?
-         BNO   RDPVFIX2           EXIT IF NOT
-         MVC   FCPACLEN-DFHFCBLK(4,R5),RPLLREC SAVE ACTUAL LRECL
-         B     RDPVLEN            EXIT
-*
-RDPVFIX2 EQU   *
-         MVC   FCPACLEN-DFHFCBLK(4,R5),VCLRLREC SAVE FIXED LRECL
-         DROP  R10
-RDPVLEN  EQU   *
-         L     R1,FCPLEN          R1=LENGTH REQUESTED
-         CLC   FCPACLEN-DFHFCBLK(4,R5),FCPLEN IS ACT DATA LENGTH LESS ?
-         BH    RDPVLNOK           EXIT IF NOT
-         L     R1,FCPACLEN-DFHFCBLK(R5) R1=LENGTH OF DATA
-RDPVLNOK EQU   *
-         LA    R15,FCPREFIX(R1)   R15=ACTUAL LENGTH SENT
-         ST    R15,FCPTCPIO-DFHFCBLK(R5) SAVE IT
-* READPREV COMPLETED, PASS DATA TO CLIENT, FREE NEW FCBLK
-*   ESDS - SAVE   XRBA IN VSWA FOR CHECKING SKIP SEQUENTIAL
-*   RRDS - SAVE FCPRRN IN VSWA FOR CHECKING SKIP SEQUENTIAL
-*   KSDS - SAVE FCPRID IN VSWA FOR CHECKING SKIP SEQUENTIAL
-*   PASS REQUEST BLOCK BACK WITH MODIFIED RIDFLD
-         CLI   FCPRDOPT,FCPRDKEY  FULL KEY REQUEST ?
-         BE    RDPVSAVK           EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDGEN  GENERIC KEY REQUEST ?
-         BE    RDPVSAVK           EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDRRN  RRN REQUEST ?
-         BE    RDPVSAVR           EXIT IF IT IS
-* ESDS
-         MVC   VSWAXRBA,RPLLXRBA  SAVE XRBA FOR SKIP SEQ
-         MVC   FCPXRBA-DFHFCBLK(8,R5),RPLLXRBA RETURN XRBA
-         B     RDPVDONE           EXIT
-*
-RDPVSAVR EQU   *
-* RRDS
-         L     R8,RPLAREA         ADDRESS RETURNED RRN
-         MVC   VSWARRN,0(R8)      SAVE RRN FOR SKIP SEQ
-         MVC   FCPRRN-DFHFCBLK(8,R5),0(R8) RETURN RRN
-         B     RDPVDONE           EXIT
-*
-RDPVSAVK EQU   *
-* KSDS
-         L     R8,RPLAREA         ADDRESS RETURNED RID
-         MVC   VSWARID,0(R8)      SAVE RID FOR SKIP SEQ
-         MVC   FCPRID-DFHFCBLK(128,R5),0(R8) RETURN RID
-*
-RDPVDONE EQU   *
-         MVC   CICSTMSG,=X'061002' <<<Z390KCP READPREV COMPLETED
-RDPVSEND EQU   *
-         L     R8,CONNID          R8=CONN ID
-         TCPIO SEND,MSG=(R5),LMSG=0(R5),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         OC    RDPVGETL,RDPVGETL  ANY NEW FCBLK ?
-         BZ    RDPVTRCE           EXIT IF NOT
-         MVC   0(4,R5),RDPVGETL   SET REAL STORAGE LENGTH
-         FREEMAIN LA=RDPVGETL,A=(R5)
-         B     RDPVTRCE           EXIT
-*
-RDPVFAIL EQU   *
-* READPREV FAILURE PROCESSING
-         BAL   R12,FILEERR        FIND THE ERROR CODES
-         MVI   CICSTMSG,X'00'     INVALIDATE MESSAGE ID
-         MVC   WTODESC,=CL45'>>>Z390KCP READPREV FAILED'
-         MVC   WTODESC+27(8),12(R15) MOVE CONDITION
-         LA    R15,FCPREFIX       R15=ONLY SEND NEW PREFIX
-         ST    R15,FCPTCPIO-DFHFCBLK(R5) SAVE IT
-         B     RDPVSEND           EXIT
-*
-RDPVIV20 EQU   *
-         MVC   FCPRESP2,=F'20'    SET RESP2 (FUNCTION NOT PERMITTED)
-         B     RDPVINVQ           EXIT
-*
-RDPVIV24 EQU   *
-         MVC   FCPRESP2,=F'24'    SET RESP2 (READPREV AND GENERIC)
-         B     RDPVINVQ           EXIT
-*
-RDPVIV26 EQU   *
-         MVC   FCPRESP2,=F'26'    SET RESP2 (KL NE CAT KL)
-         B     RDPVINVQ           EXIT
-*
-RDPVIV41 EQU   *
-         MVC   FCPRESP2,=F'41'    SET RESP2 (REQID NOT FOUND)
-RDPVINVQ EQU   *
-         MVC   FCPRETCD,DFHRESP(INVREQ) SET INVREQ
-         MVI   CICSTMSG,X'00'     INVALIDATE MESSAGE ID
-         MVC   WTODESC,=CL45'>>>Z390KCP READPREV FAILED'
-         MVC   WTODESC+27(7),=C'INVREQ'
-         LR    R9,R6              SET AS IF NEW DFHFCBLK
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,FCPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=(R9),LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-RDPVTRCE EQU   *
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         J     REQRETRN           EXIT
-RDPVGETL DS    F                  SAVE GETMAIN LENGTH
-*
-NDBRFILE DS    0H
-* FN=0612  ENDBR FILE
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTOTRAN,REQTRAN    SET TRANSID
-         MVI   WTOTYPE,C' '       NO TRANSID TYPE
-         MVC   CICSTMSG,=X'061201' <<<Z390KCP ENDBR REQUEST
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-* NOTE: REAL CICS DOES NOT OPEN A FILE ON ENDBR
-         MVC   FOP1OPTN,=CL8'ENDBR' SET OPERATION FOR MESSAGES
-         BAL   R12,FOP1REF        OPEN ON 1ST REFERENCE
-* R6=REQUEST DATA  (DFHFCBLK)
-* R7=FCTTE ADDRESS (DFHFCTDS)
-* R8=ACB
-* R9=VSWA AND RPL
-         TM    FCTSERV,FCTBRWSE   IS BROWSE ALLOWED ?
-         BNO   NDBRIV20           EXIT IF NOT
-         LA    R5,FCTVSWA         R5=CHAINED FROM ADDRESS
-         ICM   R9,15,FCTVSWA      R9=VSWA ANCHOR
-         BZ    NDBRIV35           ERROR IF NO VSWAS
-         USING DFHVSWAD,R9
-* SCAN VSWAS AND FIND OUR STARTBR ONE
-NDBRFLP  EQU   *
-         LTR   R9,R9              END OF CHAIN ?
-         BZ    NDBRIV35           ERROR IF IT IS
-         CLC   VSWTASKN,FCPTASKN  IS IT OURS ?
-         BNE   NDBRVCHN           CHAIN IF NOT
-         CLI   VSWCTYPE,VSWCBRWS  IS IT BROWSE TYPE ?
-         BNE   NDBRVCHN           CHAIN IF NOT
-         CLC   VSWREQID,FCPREQID  IS IT OUR REQID ?
-         BE    NDBRVSGT           EXIT IF IT IS
-NDBRVCHN EQU   *
-         LR    R5,R9              R5=CHAINED FROM ADDRESS
-         L     R9,VSWCHAIN        NEXT ENTRY
-         B     NDBRFLP            LOOP
-*
-NDBRVSGT EQU   *
-* FOUND OUR VSWA
-         USING IHARPL,VSWRPL
-* ENDBR COMPLETED, PASS REQUEST BLOCK BACK, FREE VSWA
-         L     R8,CONNID          R8=CONN ID
-         TCPIO SEND,MSG=DFHFCBLK,LMSG=FCPTCPIO,CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-* REMAKE THE CHAIN AND FREEMAIN THE VSWA
-         MVC   0(4,R5),VSWCHAIN   REMAKE THE CHAIN
-         FREEMAIN LV=VSWLEN,A=(R9) FREE VSWA
-         MVC   CICSTMSG,=X'061202' <<<Z390KCP ENDBR COMPLETED
-         B     NDBRTRCE           EXIT
-*
-NDBRIV20 EQU   *
-         MVC   FCPRESP2,=F'20'    SET RESP2 (FUNCTION NOT PERMITTED)
-         B     NDBRINVQ           EXIT
-*
-NDBRIV35 EQU   *
-         MVC   FCPRESP2,=F'35'    SET RESP2 (NO STARTBR)
-NDBRINVQ EQU   *
-         MVC   FCPRETCD,DFHRESP(INVREQ) SET INVREQ
-         MVI   CICSTMSG,X'00'     INVALIDATE MESSAGE ID
-         MVC   WTODESC,=CL45'>>>Z390KCP ENDBR FAILED'
-         MVC   WTODESC+24(7),=C'INVREQ'
-         LR    R9,R6              SET AS IF NEW DFHFCBLK
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,FCPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=(R9),LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-NDBRTRCE EQU   *
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         J     REQRETRN           EXIT
-*
-RSBRFILE DS    0H
-* FN=0614  RESET BROWSE FILE
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTOTRAN,REQTRAN    SET TRANSID
-         MVI   WTOTYPE,C' '       NO TRANSID TYPE
-         MVC   CICSTMSG,=X'061401' <<<Z390KCP RESETBR REQUEST
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         MVC   FOP1OPTN,=CL8'RESETBR' SET OPERATION FOR MESSAGES
-         BAL   R12,FOP1REF        OPEN ON 1ST REFERENCE
-* R6=REQUEST DATA  (DFHFCBLK)
-* R7=FCTTE ADDRESS (DFHFCTDS)
-* R8=ACB
-* R9=VSWA AND RPL
-         TM    FCTSERV,FCTBRWSE   IS BROWSE ALLOWED ?
-         BNO   RSBRIV20           EXIT IF NOT
-         ICM   R9,15,FCTVSWA      R9=VSWA ANCHOR
-         BZ    RSBRIV36           ERROR IF NO VSWAS
-         USING DFHVSWAD,R9
-RSBRFLP  EQU   *
-* SCAN VSWAS AND FIND OUR STARTBR ONE
-         LTR   R9,R9              END OF CHAIN ?
-         BZ    RSBRIV36           ERROR IF IT IS
-* CHECK VSWA FOR BROWSE AND DUPLICATE TASKNO/REQID
-         CLC   VSWTASKN,FCPTASKN  IS IT OURS ?
-         BNE   RSBRVCHN           CHAIN IF NOT
-         CLI   VSWCTYPE,VSWCBRWS  IS IT BROWSE TYPE ?
-         BNE   RSBRVCHN           CHAIN IF NOT
-         CLC   VSWREQID,FCPREQID  IS IT OUR REQID ?
-         BE    RSBRNSLT           EXIT IF IT IS
-RSBRVCHN EQU   *
-         L     R9,VSWCHAIN        NEXT ENTRY
-         B     RSBRFLP            LOOP
-*
-RSBRNSLT EQU   *
-* FOUND OUR STARTBR VSWA, MODIFY IT
-         USING IHARPL,VSWRPL
-         L     R10,ACBVCLRA       R10=VCLR (CLUSTER ENTRY)
-         USING IHAVCLR,R10
-         CLI   FCPRDOPT,FCPRDXRB  XRBA REQUEST ?
-         BE    RSBRXRBA           EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDRRN  RRN REQUEST ?
-         BE    RSBRRRN            EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDKEY  FULL KEY REQUEST ?
-         BE    RSBRKEY            EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDGEN  GENERIC KEY REQUEST ?
-         BE    RSBRKEY            EXIT IF IT IS
-* ESDS RBA
-         MODCB RPL=IHARPL,OPTCD=(ADR,SEQ),ARG=(S,FCPRBA)
-         B     RSBRPNT            EXIT
-*
-RSBRXRBA EQU   *
-* ESDS XRBA
-         MODCB RPL=IHARPL,OPTCD=(ADR,SEQ,XRBA),ARG=(S,FCPXRBA)
-         B     RSBRPNT            EXIT
-*
-RSBRRRN  EQU   *
-* RRDS
-         MODCB RPL=IHARPL,OPTCD=(KEY,SEQ),ARG=(S,FCPRRN)
-         B     RSBRPNT            EXIT
-*
-RSBRKEY  EQU   *
-* KSDS
-         MODCB RPL=IHARPL,OPTCD=(KEY,SEQ,FKS,KEQ),ARG=(S,FCPRID)
-         MVI   VSWOPT,X'00'       DEFAULT TO FKS,KEQ
-         MVC   RPLLKEY,VCLRKLEN   DEFAULT TO CATALOG KEYLENGTH
-         CLI   FCPRDOPT,FCPRDGEN  GENERIC ?
-         BNE   RSBRGTE            EXIT IF NOT
-* KSDS GENERIC
-         OI    VSWOPT,VSWGEN      SET IN VSWA
-         OI    RPLOPT1,RPLOPT1_GEN SET IN RPL
-         MVC   RPLLKEY+2(2),FCPKEYLN MOVE REQUESTED GENERIC KEYLENGTH
-         TM    RPLLKEY+2,X'80'    IS IT NEGATIVE ?
-         BO    RSBRIV42           EXIT IF BAD
-         CLC   FCPKEYLN,VCLRKLEN+2 VALIDATE GENERIC KEYLENGTH ?
-         BNL   RSBRIV25           EXIT IF BAD
-RSBRGTE  EQU   *
-         CLI   FCPBROPT,FCPBRGTE  GTEQ ?
-         BNE   RSBRNTGE           EXIT IF NOT
-* KSDS GTEQ
-         OI    VSWOPT,VSWGTEQ     SET IN VSWA
-         OI    RPLOPT1,RPLOPT1_KGE SET IN RPL
-RSBRNTGE EQU   *
-         OC    FCPKEYLN,FCPKEYLN  KEYLENGTH=0 ?
-         BNZ   RSBRPNT            EXIT IF NOT
-* KSDS KEYLENGTH(0)
-*    ARG IS ALWAYS X'00' TO GET 1ST RECORD
-*    KEYLENGTH(1) AND GTEQ FORCED
-         XC    FCPRID,FCPRID      SET KEY TO X'00'
-         OI    RPLOPT1,RPLOPT1_KGE FORCE GTEQ
-         MVC   RPLLKEY,=F'1'      SET KEYLENGTH=1
-*
-RSBRPNT  EQU   *
-         POINT RPL=IHARPL         POSITION FILE FOR RESET BROWSE
-         LTR   R15,R15            CHECK RC ?
-         BNZ   RSBRFAIL           EXIT IF BAD
-* RESETBR COMPLETED
-*   ESDS - SAVE   XRBA IN VSWA FOR CHECKING SKIP SEQUENTIAL
-*   RRDS - SAVE FCPRRN IN VSWA FOR CHECKING SKIP SEQUENTIAL
-*   KSDS - SAVE FCPRID AND KEYLENGTH IN VSWA FOR CHECKING SKIP
-*          SEQUENTIAL
-*   PASS REQUEST BLOCK BACK
-         CLI   FCPRDOPT,FCPRDKEY  FULL KEY REQUEST ?
-         BE    RSBRSAVK           EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDGEN  GENERIC KEY REQUEST ?
-         BE    RSBRSAVK           EXIT IF IT IS
-         CLI   FCPRDOPT,FCPRDRRN  RRN REQUEST ?
-         BE    RSBRSAVR           EXIT IF IT IS
-* ESDS
-         MVC   VSWAXRBA,RPLCXRBA  SAVE XRBA
-         B     RSBRDONE           EXIT
-*
-RSBRSAVR EQU   *
-* RRDS
-         MVC   VSWARRN,FCPRRN     SAVE RRN
-         B     RSBRDONE           EXIT
-*
-RSBRSAVK EQU   *
-* KSDS
-         MVC   VSWARID,FCPRID     SAVE KEY
-         MVC   VSWKEYLN,RPLLKEY+2 SAVE KEYLENGTH
-*
-RSBRDONE EQU   *
-         MVC   CICSTMSG,=X'061402' <<<Z390KCP RESETBR COMPLETED
-RSBRSEND EQU   *
-         L     R8,CONNID          R8=CONN ID
-         TCPIO SEND,MSG=DFHFCBLK,LMSG=FCPTCPIO,CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         B     RSBRTRCE           EXIT
-*
-RSBRFAIL EQU   *
-* RESETBR FAILURE PROCESSING
-         BAL   R12,FILEERR        FIND THE ERROR CODES
-         MVI   CICSTMSG,X'00'     INVALIDATE MESSAGE ID
-         MVC   WTODESC,=CL45'>>>Z390KCP RESETBR FAILED'
-         MVC   WTODESC+26(8),12(R15) MOVE CONDITION
-         B     RSBRSEND           EXIT
-*
-RSBRIV20 EQU   *
-         MVC   FCPRESP2,=F'20'    SET RESP2 (FUNCTION NOT PERMITTED)
-         B     RSBRINVQ           EXIT
-*
-RSBRIV25 EQU   *
-         MVC   FCPRESP2,=F'25'    SET RESP2 (KEYLENGTH>=ACTUAL)
-         B     RSBRINVQ           EXIT
-*
-RSBRIV36 EQU   *
-         MVC   FCPRESP2,=F'36'    SET RESP2 (NO STARTBR)
-         B     RSBRINVQ           EXIT
-*
-RSBRIV42 EQU   *
-         MVC   FCPRESP2,=F'42'    SET RESP2 (KEYLENGTH<0)
-RSBRINVQ EQU   *
-         MVC   FCPRETCD,DFHRESP(INVREQ) SET INVREQ
-         MVI   CICSTMSG,X'00'     INVALIDATE MESSAGE ID
-         MVC   WTODESC,=CL45'>>>Z390KCP RESETBR FAILED'
-         MVC   WTODESC+26(7),=C'INVREQ'
-         LR    R9,R6              SET AS IF NEW DFHFCBLK
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,FCPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=(R9),LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-RSBRTRCE EQU   *
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         J     REQRETRN           EXIT
-*
-FILEERR  EQU   *
-* FILE ERROR HANDLER
-         LA    R15,FILEERTB       R15=ERROR TABLE ADDRESS
-FILEERLP EQU   *
-         CLC   0(4,15),RPLFEEDB   MATCH TO TABLE
-         BNE   FILEERIN           EXIT IF NOT
-         MVC   FCPRETCD-DFHFCBLK(4,R5),4(R15) MOVE RETURN CODE
-         MVC   FCPRESP2-DFHFCBLK(4,R5),8(R15) MOVE RESP2
-         MVC   FCPRESP2-DFHFCBLK(1,R5),1(R15) MOVE RPLFEEDB+1
-         MVC   FCPRESP2+1-DFHFCBLK(1,R5),3(R15) MOVE RPLFEEDB+3
-         BR    R12                RETURN
-*
-FILEERIN EQU   *
-         AHI   R15,20             BUMP TABLE POINTER
-         CLI   0(R15),X'FF'       STOPPER ?
-         BNE   FILEERLP           LOOP IF NOT
-         J     ABEND790           MISSING TABLE ENTRY SHOULD NOT OCCUR
-*
-FILEERTB DS    0F
-*                RPLFEEDB  RESP  RESP2
-         DC    X'00080004',F'20',F'90',CL8'ENDFILE' END-OF-FILE
-         DC    X'00080010',F'13',F'80',CL8'NOTFND'  RRDS INVALID RRN
-         DC    X'00080020',F'13',F'80',CL8'NOTFND'  ESDS INVALID RBA
-         DC    X'00080068',F'21',F'110',CL8'ILLOGIC' ANY INVALID OPT
-         DC    X'0008006C',F'13',F'80',CL8'NOTFND'  INVALID LRECL
-         DC    X'FF'              STOPPER
-*
-         DROP  R6,R7,R8,R9,R10
-*
-WRTEQTS  DS    0H
-* FN=0A02  WRITEQ TS
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTOTRAN,REQTRAN    SET TRANSID
-         MVI   WTOTYPE,C' '       NO TRANSID TYPE
-         MVC   CICSTMSG,=X'0A0201' <<<Z390KCP WRITEQ TS REQUEST
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         LA    R6,REQLEN          ADDRESS RECEIVED DATA
-         USING DFHTSBLK,R6
-         USING TSNAMES,R7
-         ICM   R7,15,TSNANCHR     R7=TS NAME TABLE
-         BZ    WQTSNOQ            EXIT IF NO NAMES
-* TS NAME CHAIN EXISTS, SEARCH FOR Q NAME
-WQTSNLP  EQU   *
-         CLC   TSNQNAME,TSPNAME   GOT OUR Q NAME ?
-         BE    WQTSGOT            EXIT IF WE HAVE
-         ICM   R7,15,TSNCHAIN     NEXT TS NAME ENTRY
-         BNZ   WQTSNLP            LOOP IF NOT OURS
-* NO TS NAME CHAIN
-* TS NAME CHAIN EXISTS, QNAME NOT FOUND
-WQTSNOQ  EQU   *
-         OC    TSPITEM,TSPITEM    ANY ITEM NUMBER ?
-         BNZ   WQTSQIDE           QIDERR IF THERE IS
-* NEW TS Q
-         L     R7,TSNANCHR        R7=1ST TS NAME TABLE ADDRESS
-         LA    R8,TSNANCHR        R8=CHAINED FROM ADDRESS
-WQTSFLP  EQU   *
-         LTR   R7,R7              END OF CHAIN ?
-         BZ    WQTSNSLT           EXIT IF IT IS
-         LR    R8,R7              R8=CHAINED FROM ADDRESS
-         L     R7,TSNCHAIN        NEXT ENTRY
-         B     WQTSFLP            LOOP
-*
-WQTSGOT  EQU   *
-* FOUND A Q NAME
-         OC    TSPITEM,TSPITEM    ANY ITEM NUMBER ?
-         BZ    WQTSADD            EXIT IF NONE
-* WRITEQ TS REWRITE
-         CLC   TSPITEM,TSNNUMIT   IS REWRITE POSSIBLE ?
-         BH    WQTSITME           ITEMERR IF NOT
-         LA    R14,1              ITEM NUMBER
-         L     R10,TSNITEM1       DATA CHAIN START
-         USING TSDPREFX,R10
-         LA    R8,TSNITEM1-4      R8=CHAINED FROM ADDRESS
-WQTSRWLP EQU   *
-         CH    R14,TSPITEM        OUR ITEM NUMBER ?
-         BE    WQTSREWT           EXIT IF IT IS
-         AHI   R14,1              BUMP ITEM NUMBER
-         LR    R8,R10             R8=CHAINED FROM ADDRESS
-         L     R10,TSDCHAIN       NEXT ITEM
-         B     WQTSRWLP           LOOP TILL FOUND
-*
-WQTSREWT EQU   *
-* FREE OLD ONE, WRITE NEW ONE
-         L     R0,TSDFREE         LENGTH TO FREE
-         L     R9,TSDCHAIN        SAVE CHAIN TO NEXT ITEM
-         LR    R1,R10             R1=ADDRESS TO FREE
-         FREEMAIN LV=(R0)
-         LH    R1,TSPLEN          TS DATA LENGTH
-         AHI   R1,TSDLEN          + LENGTH OF TS DATA PREFIX
-         GETMAIN R,LV=(R1)
-         ST    R1,4(R8)           RESTORE PREVIOUS CHAINER
-         LR    R10,R1             ADDRESS TS DATA AREA
-         ST    R9,TSDCHAIN        RESTORE FORWARD CHAIN
-         B     WQTSMOVE           EXIT
-*
-WQTSADD  EQU   *
-* ADD A NEW ITEM
-         L     R10,TSNITEM1       DATA CHAIN START
-WQTSADLP EQU   *
-         LR    R8,R10             R8=CHAINED FROM ADDRESS
-         ICM   R10,15,TSDCHAIN    END OF CHAIN ?
-         BZ    WQTSADIT           EXIT IF IT IS
-         B     WQTSADLP           LOOP TILL FOUND
-*
-WQTSADIT EQU   *
-         LH    R1,TSPLEN          TS DATA LENGTH
-         AHI   R1,TSDLEN          + LENGTH OF TS DATA PREFIX
-         GETMAIN R,LV=(R1)
-         XC    0(TSDLEN,R1),0(R1) CLEAR TS DATA PREFIX
-         ST    R1,4(R8)           CHAIN NEW ITEM
-         LR    R10,R1             ADDRESS TS DATA AREA
-         LH    R1,TSNNUMIT        NUMITEMS
-         AHI   R1,1               +1
-         STH   R1,TSNNUMIT        STORE BACK
-         B     WQTSMOVE           EXIT
-*
-WQTSNSLT EQU   *
-* LOCATED LAST (OR 1ST) TS NAME ENTRY
-* GETMAIN A NEW ONE AND CHAIN
-         LA    R1,TSNLEN          R1=TS NAME TABLE LENGTH
-         GETMAIN R,LV=(R1),A=0(R8)
-         LR    R7,R1              NEW NAME TABLE ENTRY
-         XC    TSNAMES(TSNLEN),TSNAMES CLEAR IT
-         MVC   TSNQNAME,TSPNAME   MOVE Q NAME
-         MVC   TSNNUMIT,=H'1'     SET NUMITEMS=1
-* GETMAIN AN AREA FOR THE 1ST ITEM AND CHAIN
-         LH    R1,TSPLEN          TS DATA LENGTH
-         AHI   R1,TSDLEN          + LENGTH OF TS DATA PREFIX
-         GETMAIN R,LV=(R1),A=TSNITEM1
-         LR    R10,R1             ADDRESS TS DATA AREA
-         XC    TSDCHAIN,TSDCHAIN  CLEAR CHAIN
-WQTSMOVE EQU   *
-         ST    R0,TSDFREE         SAVE LENGTH FOR DELETEQ TS
-         MVC   TSDLNGTH,TSPLEN    SAVE TS DATA LENGTH
-* WE GOT ALL THE TS DATA, MOVE IT
-         LH    R1,TSPLEN          R1=TS DATA LENGTH
-         LR    R15,R1             R15=SOURCE LENGTH
-         LA    R0,TSDDATA         R0=DESTINATION ADDRESS
-         LA    R14,TSPDATA        R14=SOURCE ADDRESS
-         MVCL  R0,R14             MOVE TS DATA
-* WRITEQ TS COMPLETED, TELL THE CLIENT
-         MVC   TSPNUMIT,TSNNUMIT  SEND NUMITEMS BACK
-         XC    TSPRETCD,TSPRETCD  CLEAR RETURN CODE
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,TSPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=DFHTSBLK,LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   WQTSINVR           EXIT IF BAD
-         MVC   CICSTMSG,=X'0A0202' <<<Z390KCP WRITEQ TS COMPLETED
-         B     WQTSTRCE           EXIT
-*
-WQTSINVR EQU   *
-         MVC   TSPRETCD,DFHRESP(INVREQ) SET INVREQ
-         MVC   WTODESC,=CL45'>>>Z390KCP WRITEQ TS FAILED'
-         MVC   WTODESC+28(6),=C'INVREQ'
-         B     WQTSSEND           EXIT
-*
-WQTSITME EQU   *
-         MVC   TSPRETCD,DFHRESP(ITEMERR) SET ITEMERR
-         MVC   WTODESC,=CL45'>>>Z390KCP WRITEQ TS FAILED'
-         MVC   WTODESC+28(7),=C'ITEMERR'
-         B     WQTSSEND           EXIT
-*
-WQTSQIDE EQU   *
-         MVC   TSPRETCD,DFHRESP(QIDERR) SET QIDERR
-         MVC   WTODESC,=CL45'>>>Z390KCP WRITEQ TS FAILED'
-         MVC   WTODESC+28(6),=C'QIDERR'
-*
-WQTSSEND EQU   *
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,TSPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=DFHTSBLK,LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-WQTSTRCE EQU   *
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         J     REQRETRN           EXIT
-         DROP  R6,R7,R10
-*
-READQTS  DS    0H
-* FN=0A04  READQ TS
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTOTRAN,REQTRAN    SET TRANSID
-         MVI   WTOTYPE,C' '       NO TRANSID TYPE
-         MVC   CICSTMSG,=X'0A0401' <<<Z390KCP READQ TS REQUEST
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         LA    R6,REQLEN          ADDRESS RECEIVED DATA
-         USING DFHTSBLK,R6
-         USING TSNAMES,R7
-         ICM   R7,15,TSNANCHR     R7=TS NAME TABLE
-         BZ    RQTSQIDE           ERROR IF NO NAMES
-* TS NAME CHAIN EXISTS, SEARCH FOR Q NAME
-RQTSNLP  EQU   *
-         CLC   TSNQNAME,TSPNAME   GOT OUR Q NAME ?
-         BE    RQTSGOT            EXIT IF WE HAVE
-         ICM   R7,15,TSNCHAIN     NEXT TS NAME ENTRY
-         BZ    RQTSQIDE           ERROR IF NOT FOUND
-         B     RQTSNLP            LOOP IF NOT OURS
-*
-RQTSGOT  EQU   *
-         CLI   TSPITEM,X'FF'      NEXT ITEM REQUESTED ?
-         BNE   RQTSSPEC           EXIT IF NOT
-* NEXT ITEM REQUESTED
-         LH    R14,TSNITRED       R14=ITEM LAST READ
-         AHI   R14,1              NEXT ONE
-         CH    R14,TSNNUMIT       VALID ITEM ?
-         BH    RQTSITME           ITEMERR IF NOT
-         STH   R14,TSNITRED       SET AS LAST ITEM READ
-         STH   R14,TSPITEM        SET AS ITEM RETRIEVED
-         B     RQTSGET1           EXIT
-*
-RQTSSPEC EQU   *
-* SPECIFIC ITEM REQUESTED
-         CLC   TSPITEM,TSNNUMIT   VALID ITEM ?
-         BH    RQTSITME           ITEMERR IF NOT
-         MVC   TSNITRED,TSPITEM   SET AS LAST ITEM READ
-RQTSGET1 EQU   *
-* READQ TS ITEM
-         LA    R14,1              ITEM NUMBER
-         L     R10,TSNITEM1       DATA CHAIN START
-         USING TSDPREFX,R10
-RQTSITLP EQU   *
-         CH    R14,TSPITEM        OUR ITEM NUMBER ?
-         BE    RQTSITEM           EXIT IF IT IS
-         AHI   R14,1              BUMP ITEM NUMBER
-         L     R10,TSDCHAIN       NEXT ITEM
-         B     RQTSITLP           LOOP TILL FOUND
-*
-RQTSITEM EQU   *
-* READQ ITEM LOCATED
-         LA    R1,TSPREFIX        TS PREFIX LENGTH
-         AH    R1,TSPLEN          + LENGTH OF DATA REQUESTED
-         GETMAIN R,LV=(R1)
-         ST    R0,RQTSGETL        SAVE LENGTH FOR FREEMAIN
-         LR    R9,R1              ADDRESS NEW TS BLOCK
-         MVC   0(TSPREFIX,R9),DFHTSBLK MOVE PREFIX INTO NEW BLOCK
-         XC    TSPRETCD-DFHTSBLK(4,R9),TSPRETCD-DFHTSBLK(R9) CLEAR RC
-         MVC   TSPNUMIT-DFHTSBLK(2,R9),TSNNUMIT MOVE NUMITEMS
-         MVC   TSPACLEN-DFHTSBLK(2,R9),TSDLNGTH MOVE ACTUAL ITEM LENGTH
-         LA    R0,TSPDATA-DFHTSBLK(R9) ADDRESS OF DESTINATION
-         LA    R14,TSDDATA        R14=ADDRESS OF SOURCE
-         LH    R1,TSPLEN          R1=LENGTH REQUESTED
-         CLC   TSDLNGTH,TSPLEN    IS ACTUAL DATA LENGTH LESS ?
-         BH    RQTSLNOK           EXIT IF NOT
-         LH    R1,TSDLNGTH        R1=LENGTH OF ITEM
-RQTSLNOK EQU   *
-         LA    R15,TSPREFIX(R1)   R15=ACTUAL LENGTH SENT
-         ST    R15,TSPTCPIO-DFHTSBLK(R9) SAVE IT
-         LR    R15,R1             LENGTH
-         MVCL  R0,R14             MOVE REQUESTED DATA
-* READQ TS COMPLETED, PASS DATA TO CLIENT
-         L     R8,CONNID          R8=CONN ID
-         TCPIO SEND,MSG=(R9),LMSG=0(R9),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         FREEMAIN LA=RQTSGETL,A=(R9)
-         MVC   CICSTMSG,=X'0A0402' <<<Z390KCP READQ TS COMPLETED
-         B     RQTSTRCE           EXIT
-*
-RQTSITME EQU   *
-         MVC   TSPRETCD,DFHRESP(ITEMERR) SET ITEMERR
-         MVC   WTODESC,=CL45'>>>Z390KCP READQ TS FAILED'
-         MVC   WTODESC+27(7),=C'ITEMERR'
-         LR    R9,R6              SET AS IF NEW DFHTSBLK
-         B     RQTSSEND           EXIT
-*
-RQTSQIDE EQU   *
-         MVC   TSPRETCD,DFHRESP(QIDERR) SET QIDERR
-         MVC   WTODESC,=CL45'>>>Z390KCP READQ TS FAILED'
-         MVC   WTODESC+27(6),=C'QIDERR'
-         LR    R9,R6              SET AS IF NEW DFHTSBLK
-*
-RQTSSEND EQU   *
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,TSPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=(R9),LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-RQTSTRCE EQU   *
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         J     REQRETRN           EXIT
-RQTSGETL DS    A
-         DROP  R6,R7,R10
-*
-DELTQTS  DS    0H
-* FN=0A06  DELETEQ TS
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTOTRAN,REQTRAN    SET TRANSID
-         MVI   WTOTYPE,C' '       NO TRANSID TYPE
-         MVC   CICSTMSG,=X'0A0601' <<<Z390KCP DELETEQ TS REQUEST
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         LA    R6,REQLEN          ADDRESS RECEIVED DATA
-         USING DFHTSBLK,R6
-         USING TSNAMES,R7
-         ICM   R7,15,TSNANCHR     R7=TS NAME TABLE
-         BZ    DQTSQIDE           ERROR IF NO NAMES
-* TS NAME CHAIN EXISTS, SEARCH FOR Q NAME
-         LA    R8,TSNANCHR        PREVIOUS CHAIN ADDRESS
-DQTSNLP  EQU   *
-         CLC   TSNQNAME,TSPNAME   GOT OUR Q NAME ?
-         BE    DQTSGOT            EXIT IF WE HAVE
-         LA    R8,TSNCHAIN        PREVIOUS CHAIN ADDRESS
-         ICM   R7,15,TSNCHAIN     NEXT TS NAME ENTRY
-         BZ    DQTSQIDE           ERROR IF NOT FOUND
-         B     DQTSNLP            LOOP IF NOT OURS
-*
-DQTSGOT  EQU   *
-* FREEMAIN THE DATA CHAIN
-         L     R1,TSNITEM1        R1=1ST ITEM
-         USING TSDPREFX,R1
-DQTSLOOP EQU   *
-         L     R2,TSDCHAIN        R2=NEXT ITEM
-         FREEMAIN LA=0(R1)        FREEMAIN ITEM
-         LTR   R2,R2              END OF ITEM CHAIN ?
-         BZ    DQTSNFRE           EXIT IF IT IS
-         LR    R1,R2              R1=NEXT ITEM
-         B     DQTSLOOP           LOOP TILL DONE
-*
-DQTSNFRE EQU   *
-* REMAKE THE CHAIN AND FREEMAIN THE TS NAME ENTRY
-         MVC   0(4,R8),TSNCHAIN   REMAKE THE CHAIN
-         FREEMAIN LV=TSNLEN,A=(R7) FREE TS NAME
-* DELETEQ TS COMPLETED, TELL THE CLIENT
-         XC    TSPRETCD,TSPRETCD  CLEAR RETURN CODE
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,TSPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=DFHTSBLK,LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   DQTSINVR           EXIT IF BAD
-         MVC   CICSTMSG,=X'0A0602' <<<Z390KCP DELETEQ TS COMPLETED
-         B     DQTSTRCE           EXIT
-*
-DQTSINVR EQU   *
-         MVC   TSPRETCD,DFHRESP(INVREQ) SET INVREQ
-         MVC   WTODESC,=CL45'>>>Z390KCP DELETEQ TS FAILED'
-         MVC   WTODESC+29(6),=C'INVREQ'
-         B     DQTSSEND           EXIT
-*
-DQTSQIDE EQU   *
-         MVC   WTODESC,=CL45'>>>Z390KCP DELETEQ TS FAILED'
-         MVC   WTODESC+29(6),=C'QIDERR'
-         MVC   TSPRETCD,DFHRESP(QIDERR) SET QIDERR
-*
-DQTSSEND EQU   *
-         L     R8,CONNID          R8=CONN ID
-         LA    R15,TSPREFIX       R15=LENGTH TO SEND
-         TCPIO SEND,MSG=DFHTSBLK,LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-DQTSTRCE EQU   *
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         J     REQRETRN           EXIT
-         DROP  R1,R6,R7
-*
-CEBRQNAM DS    0H
-* FN=0AFF  CEBR REQUEST QNAMES
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVI   WTOTYPE,C' '       NO TRANSID TYPE
-         MVC   WTOTRAN,REQTRAN    MOVE TRANSID
-         MVC   CICSTMSG,=X'0AFF01' <<<Z390KCP CEBR REQUEST QNAMES
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         USING TSNAMES,R7
-         ICM   R7,15,TSNANCHR     R7=TS NAME TABLE
-         BNZ   CEBRGETS           EXIT IF WE HAVE SOME
-         XC    CEBRQUS,CEBRQUS    CLEAR NO. OF Q NAMES
-         B     CEBRSEND           EXIT
-*
-CEBRGETS EQU   *
-* TS NAME CHAIN EXISTS, COLLECT THE Q NAMES
-* SEND THE NO. OF NAMES, AND THEN THE WHOLE TABLE
-* TABLE HAS NO DSECT
-*    DS CL16  Q NAME
-*    DS AL2   NUMITEMS
-         LA    R1,60*18           MAX OF 60 NAMES AT 18 BYTES EACH
-         GETMAIN R,LV=(R1)
-         LR    R6,R1              NAME TABLE ADDRESS
-         LR    R9,R1              SAVE ADDRESS FOR FREEMAIN/TCPIO
-         SR    R8,R8              CLEAR COUNT
-CEBRLOOP EQU   *
-         MVC   0(16,R6),TSNQNAME  MOVE Q NAME
-         MVC   16(2,R6),TSNNUMIT  MOVE NUMITEMS
-         AHI   R6,18              BUMP NAME TABLE
-         AHI   R8,1               BUMP COUNT
-         CHI   R8,60              COLLECTION LIMIT ?
-         BE    CEBRDONE           EXIT IF REACHED
-         ICM   R7,15,TSNCHAIN     NEXT TS NAME ENTRY
-         BNZ   CEBRLOOP           LOOP TILL DONE
-CEBRDONE EQU   *
-         STH   R8,CEBRQUS         SAVE NO. OF Q NAMES
-CEBRSEND EQU   *
-         L     R8,CONNID          R8=CONN ID
-* SEND NO. OF Q NAMES
-         TCPIO SEND,MSG=MSGLEN,LMSG=14,CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         ICM   R15,3,CEBRQUS      R15=NO. OF Q NAMES
-         JZ    REQRETRN           EXIT IF NONE
-         MS    R15,=F'18'         * 18
-* SEND THE Q NAME TABLE
-         TCPIO SEND,MSG=(R9),LMSG=(R15),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         LA    R0,60*18           R0=LENGTH
-         FREEMAIN LV=(R0),A=(R9)  FREE Q NAME TABLE
-         J     REQRETRN           EXIT
-*
 TRANGO   DS    0H
 * FN=0E00  TRANSACTION STARTED, PASS BACK THE TASK NUMBER
 * IF SHUTDOWN IN PROGRESS, REJECT REQUEST, TELL Z390KCP
@@ -2591,98 +914,11 @@ PSHTINCR EQU   *
          BCT   R6,PSHTLOOP        LOOP
          B     SHUTSERV           GO AND SHUT THE SERVER
 *
-CEMTITER DS    0H
-* FN=FE00  CEMT I TER REQUESTED
-*
-* FN=FE00  THRDCNTL SENT BACK
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   CICSTMSG,=X'FE0001' <<<Z390KCP CEMT I TER REQUEST
-* ### XENIC
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         MVC   MSGDATA(THRDLEN*11),THRDCNTL MOVE THREAD DATA
-         MVC   MSGDATA+THRDLEN*11(3),TRMPREFX MOVE TERM PREFIX
-         L     R8,CONNID          R8=CONN ID
-         TCPIO SEND,MSG=MSGLEN,LMSG=200,CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         J     REQRETRN           EXIT
-*
-CEMTISYS DS    0H
-* FN=FE01  CEMT I SYS REQUESTED
-*
-* FN=FE01  ISYSDATA SENT BACK
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTODESC,=CL45'<<<Z390KCP CEMT I SYS REQUEST'
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-         MVC   ISYSTERM,REQTERM   PASS BACK TERMID
-         LH    R6,CMD1LEN         LENGTH OF ENV VARIABLE
-         CLI   CMD0+1,C' '        ANY DRIVE ID ?
-         BE    CEMTISNV           EXIT IF NONE
-         MVC   ISYSJARP(2),CMD0+1 MOVE DRIVE ID
-         EX    R6,ISYSMVCJ        MOVE JARPATH AFTER DRIVE ID
-         B     CEMTISCP           EXIT
-*
-CEMTISNV EQU   *
-         EX    R6,ISYSMVJ2        MOVE JARPATH WITHOUT DRIVE ID
-CEMTISCP EQU   *
-         ICM   R6,15,CICSADDR     R6=ADDRESS OF CICSPATH
-         BZ    CEMTNOCP           EXIT IF NONE
-         LA    R8,ISYSCICP        DESTINATION
-CEMTCPLP EQU   *
-         MVC   0(1,R8),0(R6)      MOVE CICSPATH A BYTE AT A TIME
-         AHI   R6,1               BUMP ORIGIN
-         AHI   R8,1               BUMP DESTINATION
-         CLI   0(R6),X'00'        NULL TERMINATOR ?
-         BNE   CEMTCPLP           LOOP IF NOT
-CEMTNOCP EQU   *
-         MVC   ISYSTPFX,TRMPREFX  MOVE TERMID_PREFIX
-         MVC   ISYSDATE,INIDATE   MOVE DATE FORMAT
-         MVC   ISYSTHRD,THREADS+3 MOVE MAXTHREADS
-         L     R8,LOCALS          R8=LOCALS IN USE
-         A     R8,REMOTES         +REMOTES IN USE=THREADS IN USE
-         STC   R8,ISYSTHDU        SAVE IT
-         MVC   ISYSLOCL,MAXLOCS+3 MOVE LOCAL_TERMINALS
-         MVC   ISYSLOCU,LOCALS+3  MOVE LOCAL TERMINALS IN USE
-         MVC   ISYSRMTE,MAXREMS+3 MOVE REMOTE_TERMINALS
-         MVC   ISYSRMTU,REMOTES+3 MOVE REMOTE TERMINALS IN USE
-         MVC   ISYSINIT,INITRAN   MOVE INITIAL_TRANSID
-         MVC   ISYSLTRC,=C'NO '   ASSUME TRACE_LOCALS=NO
-         CLI   KCPTRPOS,C'L'      IS TRACE SET ?
-         BNE   CEMTISTN           EXIT IF NOT
-         MVC   ISYSLTRC,=C'YES'   TRACE_LOCALS=YES
-CEMTISTN EQU   *
-         MVC   ISYSZTRC,=C'NO '   ASSUME TRACE_Z390CICS=NO
-         CLI   TRCEZ390,C'N'      IS IT NO ?
-         BE    CEMTISOK           EXIT IF IT IS
-         MVC   ISYSZTRC,=C'INT'   ASSUME TRACE_Z390CICS=INT
-         CLI   TRCEZ390,C'I'      IS IT INT ?
-         BE    CEMTISOK           EXIT IF IT IS
-         MVC   ISYSZTRC,=C'APP'   ASSUME TRACE_Z390CICS=APP
-         CLI   TRCEZ390,C'A'      IS IT APP ?
-         BE    CEMTISOK           EXIT IF IT IS
-         MVC   ISYSZTRC,=C'YES'   MUST BE TRACE_Z390CICS=YES
-CEMTISOK EQU   *
-         MVC   ISYSSEQT,=C'NO '   ASSUME SEQ_TERM=NO
-         CLI   INISEQT,C'Y'       IS IT YES ?
-         BNE   CEMTISNQ           EXIT IF NOT
-         MVC   ISYSSEQT,=C'YES'   SEQ_TERM=YES
-CEMTISNQ EQU   *
-         L     R8,CONNID          R8=CONN ID
-         LA    R6,ISYSLEN         R6=MESSAGE LENGTH
-         TCPIO SEND,MSG=ISYSDATA,LMSG=(R6),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         J     REQRETRN           EXIT
-ISYSMVCJ MVC   ISYSJARP+2(0),CMD1+4 MOVE JARPATH AFTER DRIVE ID
-ISYSMVJ2 MVC   ISYSJARP(0),CMD1+4 MOVE JARPATH WITHOUT DRIVE ID
-*
 CEMTPSHT DS    0H
 * FN=FE02  CEMT P SHUT REQUESTED
          OI    REQTERM+3,X'F0'    RESET TERMID
          MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTODESC,=CL45'<<<Z390KCP SHUTDOWN REQUEST'
+         MVC   CICSTMSG,=X'FE0201' <<<Z390KCP SHUTDOWN REQUEST
          MVI   CICSTIND,C'A'      SET APPLICATION TYPE
          BAL   R12,CICSTRCE       TRACE IT
          MVI   SHUTIND,X'FF'      SET SHUTDOWN IN PROGRESS
@@ -2692,7 +928,7 @@ CEMTPSHI DS    0H
 * FN=FE03  CEMT P SHUT IMM REQUESTED
          OI    REQTERM+3,X'F0'    RESET TERMID
          MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTODESC,=CL45'<<<Z390KCP IMMEDIATE SHUTDOWN REQUEST'
+         MVC   CICSTMSG,=X'FE0301' <<<Z390KCP IMMED SHUTDOWN REQUEST
          MVI   CICSTIND,C'A'      SET APPLICATION TYPE
          BAL   R12,CICSTRCE       TRACE IT
          MVI   SHUTIND,X'FF'      SET SHUTDOWN IN PROGRESS
@@ -2714,7 +950,7 @@ SHUTQURY DS    0H
 *
 * FN=FE04  SHUT QUERY
          MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTODESC,=CL45'<<<Z390KCP QUERY SHUTDOWN'
+         MVC   CICSTMSG,=X'FE0401' <<<Z390KCP QUERY SHUTDOWN
          MVI   CICSTIND,C'I'      SET INTERNAL TYPE
          BAL   R12,CICSTRCE       TRACE IT
          MVC   MSGFN,REQFN        SET REQUEST FOR SEND
@@ -2725,84 +961,128 @@ SHUTQURY DS    0H
          BNZ   ABEND780           EXIT IF BAD
          J     REQRETRN           EXIT
 *
+SECTOR2  DS    0H
+*
+RDNXFILE DS    0H
+* FN=060E  READNEXT FILE
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL060E,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+RDPVFILE DS    0H
+* FN=0610  READPREV FILE
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL0610,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+STBRFILE DS    0H
+* FN=060C  START BROWSE FILE
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL060C,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+READFILE DS    0H
+* FN=0602  READ FILE
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL0602,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+NDBRFILE DS    0H
+* FN=0612  ENDBR FILE
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL0612,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+RSBRFILE DS    0H
+* FN=0614  RESET BROWSE FILE
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL0614,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+WRTEQTS  DS    0H
+* FN=0A02  WRITEQ TS
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL0A02,(WTOMSG,(R11),TSNANCHR,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+READQTS  DS    0H
+* FN=0A04  READQ TS
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL0A04,(WTOMSG,(R11),TSNANCHR,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+DELTQTS  DS    0H
+* FN=0A06  DELETEQ TS
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL0A06,(WTOMSG,(R11),TSNANCHR,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+CEBRQNAM DS    0H
+* FN=0AFF  CEBR REQUEST QNAMES
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBL0AFF,(WTOMSG,(R11),MSGLEN,CEBRQUS,TSNANCHR,CONNID,   X
+               TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+CEMTITER DS    0H
+* FN=FE00  CEMT I TER REQUESTED
+*
+* FN=FE00  THRDCNTL SENT BACK
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBLFE00,(WTOMSG,(R11),MSGLEN,MSGDATA+9,THRDCNTL,        X
+               THRDLEN*11,CONNID,TRCEZ390,TRMPREFX),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
+CEMTISYS DS    0H
+* FN=FE01  CEMT I SYS REQUESTED
+*
+* FN=FE01  ISYSDATA SENT BACK
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBLFE01,(WTOMSG,(R11),CONNID,TRCEZ390,ISYSDATA,CMD1LEN, X
+               CMD0+1,CMD1+4,CICSADDR,TRMPREFX,INIDATE,THREADS+3,      X
+               LOCALS,REMOTES,MAXLOCS+3,MAXREMS+3,INITRAN,KCPTRPOS,    X
+               INISEQT),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
+         J     REQRETRN           EXIT
+*
 CEMTIFIL DS    0H
 * FN=FE05  CEMT I FIL REQUESTED
 *
 * FN=FE05  IFILDATA SENT BACK
-         MVC   WTOTERM,REQTERM    SET TERMID
-         MVC   WTODESC,=CL45'<<<Z390KCP CEMT I FIL REQUEST'
-         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
-         BAL   R12,CICSTRCE       TRACE IT
-* COUNT FILES
-         SR    R8,R8              CLEAR R8
-         L     R6,DFHFCTAD        ADDRESS FCT
-CEMTIFCT EQU   *
-         CLI   0(R6),X'FF'        END OF FCT ?
-         BE    CEMTIFGO           EXIT IF IT IS
-         AHI   R8,1               COUNT THEM
-         AHI   R6,FCTABLEN        POINT TO NEXT FCT ENTRY
-         B     CEMTIFCT           LOOP
-*
-CEMTIFGO EQU   *
-* GETMAIN AN AREA TO SEND BACK
-         MS    R8,=AL4(IFILLEN)   * LENGTH OF SENT DATA
-         AHI   R8,13              + PREFIX + STOPPER
-         GETMAIN R,LV=(R8),A=CEMTIFGM
-         ST    R0,0(R1)           SAVE LENGTH TO SEND
-         MVC   4(4,R1),=C'FE05'   SET REQUEST ID
-         MVC   8(4,R1),REQTERM    SET TERMID
-         L     R6,DFHFCTAD        ADDRESS FCT
-         USING DFHFCTDS,R6
-         LA    R7,12(R1)          ADDRESS SEND AREA
-         USING IFILDATA,R7
-CEMTIFLP EQU   *
-         MVC   IFILDFLE,FCTFILNM  MOVE FILENAME
-         MVC   IFILDSTA,FCTFILST  MOVE STATUS
-         MVC   IFILDSRV,FCTSERV   MOVE SERVREQ
-         MVC   IFILDFXV,FCTRECFM  MOVE RECFORM
-         MVC   CEMTIFGV,FCTFILNM  MOVE FILENAME FOR GETENV
-         MVI   IFILDDSN,C' '      SET FILL
-         MVC   IFILDDSN+1(L'IFILDDSN-1),IFILDDSN BLANK DSNAME
-         GETENV CEMTIFGV
-         LTR   R15,R15            CHECK RC ?
-         BNZ   CEMTIFLD           EXIT IF BAD
-* GOT A DSN, R2 IS THE POINTER
-         LA    R9,IFILDDSN        DESTINATION
-CEMTIFL2 EQU   *
-         MVC   0(1,R9),0(R2)      MOVE DSN A BYTE AT A TIME
-         AHI   R2,1               BUMP SOURCE
-         AHI   R9,1               BUMP DESTINATION
-         AHI   R15,1              BUMP COUNT
-         CHI   R15,L'IFILDDSN+1   LIMIT REACHED ?
-         BE    CEMTIFLD           EXIT IF REACHED
-         CLI   0(R2),X'00'        END OF DSN ?
-         BNE   CEMTIFL2           LOOP IF NOT
-CEMTIFLD EQU   *
-         AHI   R6,FCTABLEN        POINT TO NEXT FCT ENTRY
-         AHI   R7,IFILLEN         POINT TO NEXT SEND ENTRY
-         CLI   0(R6),X'FF'        END OF FCT ?
-         BE    CEMTIFSD           EXIT IF IT IS
-         B     CEMTIFLP           LOOP
-*
-CEMTIFSD EQU   *
-         MVI   IFILDFLE,X'FF'     MARK END OF FILES
-         L     R8,CONNID          R8=CONN ID
-         L     R14,CEMTIFGM       R14=DATA TO SEND
-         TCPIO SEND,MSG=(R14),LMSG=0(R14),CONN=(R8),PORT=3900
-         LTR   R15,R15            CHECK RC ?
-         BNZ   ABEND780           EXIT IF BAD
-         FREEMAIN LA=0(R14),A=(R14) FREE FCT SEND AREA
+         ST    R13,SUBRSAVE       SAVE BASE REG R13
+         LA    R13,SUBRSAVE       ADDRESS OUR SAVEAREA
+         CALL  GBLFE05,(WTOMSG,(R11),DFHFCTAD,CONNID,TRCEZ390),MF=I
+         L     R13,SUBRSAVE       RESTORE BASE REG R13
          J     REQRETRN           EXIT
-         DROP  R6,R7
-CEMTIFGM DS    A
-CEMTIFGV DC    CL8' ',X'00'
 *
 ABEND555 ABEND 555                BAD REQUEST
 ABEND666 ABEND 666                CMDPROC FAILED
 ABEND777 ABEND 777                TCPIO OPEN/CLOSE SERVER FAILED
 ABEND778 ABEND 778                TCPIO RECEIVE FAILED
 ABEND780 ABEND 780                TCPIO SEND FAILED
-ABEND790 ABEND 790                VSAM FEEDBACK NOT EXPECTED
 *
 CMD0     DC    C'"  "'            "DRIVE ID"
 CMD1     DC    CL84'"CD '         "PATH"
@@ -2811,14 +1091,13 @@ CMD2     DC    C'SET Z390SEQ=%CICSPATH%\SEQ\',X'00'
 TRMPREFX DS    CL3                TERMINAL ID PREFIX
 INITRAN  DC    C'----'            INITIAL TRANSID
 INIDATE  DC    C'K'               DATE FORMAT  K=DMY  S=MDY  R=YMD
-INISEQT  DC    C'N'               SEQ_TERM Y/N
+INISEQT  DC    C'N'               SEQ_TERM Y/N/T
 JARENV   DC    C'JARPATH',X'00'   JARPATH ENV VARIABLE
 CICSENV  DC    C'CICSPATH',X'00'  CICSPATH ENV VARIABLE
 CICSADDR DC    F'0'               CICSPATH ADDRESS
 *
-* CALL EZ390 %CICSPATH%\Z390KCP GUAM PARM(LTERMTRANK)
-KCPSTART DC    C'CALL EZ390 %CICSPATH%\Z390KCP NOTIME GUAM PARM(' RPI  X
-               833 ADD NOTIME TO PREVENT 422 ABEND
+* CALL EZ390 %CICSPATH%\Z390KCP NOTIME GUAM PARM(LTERMTRANK)
+KCPSTART DC    C'CALL EZ390 %CICSPATH%\Z390KCP NOTIME GUAM PARM('
 KCPTRMTP DS    C                  LOCAL TERMINAL
 KCPTRMID DS    CL4                TERMINAL ID
 KCPTRNID DS    CL4                INITIAL TRANSID
@@ -2897,24 +1176,29 @@ WTOMEND  EQU   *
 *
 * CEMT I SYS DATA AREA
 *
+* REFLECTED BY DSECT IN CEMTISYS
+*
 ISYSDATA DS    0F
          DC    A(ISYSLEN)
          DC    C'FE01'            REQUEST CODE
-ISYSTERM DS    CL4                TERMID
-ISYSJARP DC    CL50' '            JARPATH
-ISYSCICP DC    CL50' '            CICSPATH
-ISYSTPFX DS    CL3                TERMID_PREFIX
-ISYSDATE DS    C                  DATE FORMAT
-ISYSTHRD DS    X                  MAXTHREADS
-ISYSTHDU DS    X                  THREADS IN USE
-ISYSLOCL DS    X                  LOCAL_TERMINALS
-ISYSLOCU DS    X                  LOCAL TERMINALS IN USE
-ISYSRMTE DS    X                  REMOTE_TERMINALS
-ISYSRMTU DS    X                  REMOTE TERMINALS IN USE
-ISYSINIT DS    CL4                INITIAL_TRANSID
-ISYSLTRC DS    CL3                TRACE_LOCALS
-ISYSZTRC DS    CL3                TRACE_Z390CICS
-ISYSSEQT DS    CL3                SEQ_TERM
+         DS    CL4                TERMID
+         DS    CL4                TRANSID
+         DS    C                  TRANSID TYPE
+         DS    PL4                TASK NO.
+         DC    CL50' '            JARPATH
+         DC    CL50' '            CICSPATH
+         DS    CL3                TERMID_PREFIX
+         DS    C                  DATE FORMAT
+         DS    X                  MAXTHREADS
+         DS    X                  THREADS IN USE
+         DS    X                  LOCAL_TERMINALS
+         DS    X                  LOCAL TERMINALS IN USE
+         DS    X                  REMOTE_TERMINALS
+         DS    X                  REMOTE TERMINALS IN USE
+         DS    CL4                INITIAL_TRANSID
+         DS    CL3                TRACE_LOCALS
+         DS    CL3                TRACE_Z390CICS
+         DS    CL3                SEQ_TERM
 ISYSLEN  EQU   *-ISYSDATA
 *
 * WORK AREAS
@@ -2922,6 +1206,7 @@ ISYSLEN  EQU   *-ISYSDATA
 DEC      DC    PL8'0'
 TSNANCHR DC    A(0)               ANCHOR POINT FOR TS NAME TABLE
 DFHFCTAD DS    A                  FCT ADDRESS
+SUBRSAVE DS    18F                SAVEAREA FOR CALLED ROUTINES
 *
 Z390INI  DCB   DSORG=PS,                                               X
                EODAD=EOFINI,                                           X
@@ -2939,28 +1224,9 @@ MSGTABLE EQU   *
 * XL2  FUNCTION CODE
 * X    MESSAGE CODE
 * MUST BE IN ORDER
-* NOT CURRENTLY SUITABLE FOR MODIFYABLE MESSAGES
+* NOT CURRENTLY SUITABLE FOR MODIFIABLE MESSAGES
          DC    X'04FE01',CL45'>>>Z390KCP REQUESTED TERMID'
          DC    X'04FE02',CL45'>>>Z390KCP REQUEST TERMID FAILED'
-         DC    X'060201',CL45'<<<Z390KCP READ       REQUEST'
-         DC    X'060202',CL45'<<<Z390KCP READ       COMPLETED'
-         DC    X'060C01',CL45'<<<Z390KCP STARTBR    REQUEST'
-         DC    X'060C02',CL45'<<<Z390KCP STARTBR    COMPLETED'
-         DC    X'060E01',CL45'<<<Z390KCP READNEXT   REQUEST'
-         DC    X'060E02',CL45'<<<Z390KCP READNEXT   COMPLETED'
-         DC    X'061001',CL45'<<<Z390KCP READPREV   REQUEST'
-         DC    X'061002',CL45'<<<Z390KCP READPREV   COMPLETED'
-         DC    X'061201',CL45'<<<Z390KCP ENDBR      REQUEST'
-         DC    X'061202',CL45'<<<Z390KCP ENDBR      COMPLETED'
-         DC    X'061401',CL45'<<<Z390KCP RESETBR    REQUEST'
-         DC    X'061402',CL45'<<<Z390KCP RESETBR    COMPLETED'
-         DC    X'0A0201',CL45'<<<Z390KCP WRITEQ  TS REQUEST'
-         DC    X'0A0202',CL45'<<<Z390KCP WRITEQ  TS COMPLETED'
-         DC    X'0A0401',CL45'<<<Z390KCP READQ   TS REQUEST'
-         DC    X'0A0402',CL45'<<<Z390KCP READQ   TS COMPLETED'
-         DC    X'0A0601',CL45'<<<Z390KCP DELETEQ TS REQUEST'
-         DC    X'0A0602',CL45'<<<Z390KCP DELETEQ TS COMPLETED'
-         DC    X'0AFF01',CL45'<<<Z390KCP CEBR REQUEST QNAMES'
          DC    X'0E0001',CL45'<<<Z390KCP - Z390/CICS SHUTDOWN IN PROGRE-
                SS'
          DC    X'0E0002',CL45'<<<Z390KCP TRAN STARTED'
@@ -2968,7 +1234,9 @@ MSGTABLE EQU   *
          DC    X'120101',CL45'START Z390KCP'
          DC    X'12FE01',CL45'<<<Z390KCP SHUTTERM'
          DC    X'12FF01',CL45'<<<Z390KCP READY'
-         DC    X'FE0001',CL45'<<<Z390KCP CEMT I TER REQUEST'
+         DC    X'FE0201',CL45'<<<Z390KCP SHUTDOWN REQUEST'
+         DC    X'FE0301',CL45'<<<Z390KCP IMMEDIATE SHUTDOWN REQUEST'
+         DC    X'FE0401',CL45'<<<Z390KCP QUERY SHUTDOWN'
          DC    X'FE0601',CL45'SEQUENTIAL TERMINAL STARTED'
          DC    X'FF0001',CL45'OPEN SERVER'
          DC    X'FF0101',CL45'CLOSE SERVER'
@@ -3030,7 +1298,7 @@ REQTYPE  DS    C                  TRANSID TYPE
 REQDATA  DS    CL183              REQUEST DATA
 *
          ORG   REQDATA
-* 0EFF FIELD RECEIVED
+* 0EFF/FE05 FIELD RECEIVED
 REQTASKN DS    PL4                PACKED TASK NUMBER
 * 0EFE ADDITIONAL FIELD RECEIVED
 REQABCDE DS    CL4                ABEND CODE
@@ -3039,16 +1307,6 @@ REQABCDE DS    CL4                ABEND CODE
 * 12FD FIELDS RECEIVED
 REQABEND DS    CL4                INTERNAL ABEND CODE
          ORG
-*
-* CEMT I FIL DATA AREA
-*
-IFILDATA DSECT
-IFILDFLE DS    CL8                FILENAME
-IFILDSTA DS    X                  STATUS
-IFILDSRV DS    X                  SERVREQ
-IFILDFXV DS    X                  FIXED/VARIABLE
-IFILDDSN DS    CL40               DSNAME
-IFILLEN  EQU   *-IFILDATA
 *
 THRDDSCT DSECT
 * MUST KEEP THRDCNTL AND Z390CEMT IN SYNC
@@ -3069,31 +1327,8 @@ UNALLOC  EQU   X'00'
 THRDTRAN DS    CL4                THREAD CURRENT TRANSACTION
 THRDLEN  EQU   *-THRDDSCT
 *
-* TEMPORARY STORAGE NAME TABLE
-*
-TSNAMES  DSECT
-TSNCHAIN DS    A                  CHAIN TO NEXT TS Q NAME
-TSNQNAME DS    CL16               TS Q NAME
-TSNITEM1 DS    A                  POINTER TO ITEM 1
-TSNNUMIT DS    H                  CURRENT NO. OF ITEMS
-TSNITRED DS    H                  ITEM NUMBER LAST READ
-TSNLEN   EQU   *-TSNAMES
-*
-* TEMPORARY STORAGE DATA CHAIN PREFIX
-*
-TSDPREFX DSECT
-TSDFREE  DS    A                  LENGTH FOR DELETEQ FREEMAIN
-TSDCHAIN DS    A                  POINTER TO NEXT ITEM
-TSDLNGTH DS    H                  LENGTH OF DATA FOLLOWING
-TSDLEN   EQU   *-TSDPREFX
-TSDDATA  EQU   *
-*
          ACBD  ,                  VSAM ACB
-         DCBD                     DCB FOR INI FILE
-         VCDTD ,                  VSAM CLUSTER DEFINITION TABLE
-         DFHTSBLK                 TEMPORARY STORAGE TCPIO BLOCK
          DFHFCTDS                 FILE CONTROL TABLE
-         DFHFCBLK                 FILE CONTROL TCPIO BLOCK
          DFHVSWAD                 FILE CONTROL VSAM WORK AREA
 *
          EQUREGS REGS=GPR
@@ -3110,3 +1345,4 @@ TSDDATA  EQU   *
 * R13  BASE 1
 *
          END
+

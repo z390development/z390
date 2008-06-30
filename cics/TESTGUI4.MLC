@@ -20,6 +20,7 @@ LOOP     EQU   *
          BE    EXIT
          CLI   INPUT,DFHENTER     IGNORE IF NOT ENTRY WITH TEXT FIELD
          BNE   LOOP
+         LH    R1,LENINPUT        INSERTED BY MM
          LA    R2,REPLY
          LA    R3,REPLYL
          LA    R4,INPUT+3+3  FIRST FIELD DATA AFTER (KEY,SBA,SF,SBA)

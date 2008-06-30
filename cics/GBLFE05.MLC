@@ -1,0 +1,168 @@
+GBLFE05  SUBENTRY
+*
+* FN=FE05  CEMT I FIL REQUESTED
+*
+* FN=FE05  IFILDATA SENT BACK
+*
+*         +0/DSCT +4/DSECT  +8/IND   +12/IND +16
+* R1  >>> WTOMSG, REQDSECT ,DFHFCTAD,CONNID, TRCEZ390
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SAVE PARM POINTER
+         L     R4,16(R3)          TRCEZ390 ADDRESS
+         MVC   TRCEZ390,0(R4)     MOVE IT
+         L     R5,4(R3)           REQDSECT ADDRESS
+         USING REQDSECT,R5
+         L     R9,0(R3)           WTODSECT ADDRESS
+         USING WTODSECT,R9
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTOTRAN,REQTRAN    SET TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         UNPK  WTOTASKN,REQTASKN  UNPACK TASK NUMBER
+         OI    WTOTASKN+6,X'F0'   CLEAR SIGN
+         MVC   WTODESC,=CL45'<<<Z390KCP CEMT I FIL REQUEST'
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+* MODIFIED CICSTRCE
+         CLI   TRCEZ390,C'N'      NO TRACING ?
+         BE    CICSTRDN           EXIT IF IT IS
+         CLI   TRCEZ390,C'Y'      ALL TRACING ?
+         BE    CICSTRGO           TRACE IF IT IS
+         CLC   TRCEZ390,CICSTIND  TRACE TYPE=TRACE REQUEST ?
+         BNE   CICSTRDN           EXIT IF NOT
+CICSTRGO EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM GET TIME
+         MVO   TIMEPACK,TIME      MOVE TO PACKED FIELD
+         MVC   TIMEHERE(13),TIMEEDIT MOVE EDIT WORD
+         ED    TIMEHERE(13),TIMEPACK EDIT TIME
+         MVC   WTOTIME,TIMEHERE   SET TIME
+         WTO   MF=(E,WTOMSG)      TRACE IT
+         DROP  R9
+*
+CICSTRDN DS    0H
+* COUNT FILES
+         SR    R8,R8              CLEAR R8
+*        L     R6,DFHFCTAD        ADDRESS FCT
+         L     R6,8(R3)           ADDRESS FCT ADDRESS
+         L     R6,0(R6)           ADDRESS FCT
+CEMTIFCT EQU   *
+         CLI   0(R6),X'FF'        END OF FCT ?
+         BE    CEMTIFGO           EXIT IF IT IS
+         AHI   R8,1               COUNT THEM
+         AHI   R6,FCTABLEN        POINT TO NEXT FCT ENTRY
+         B     CEMTIFCT           LOOP
+*
+CEMTIFGO EQU   *
+* GETMAIN AN AREA TO SEND BACK
+         MS    R8,=AL4(IFILLEN)   * LENGTH OF SENT DATA
+         AHI   R8,REQLEN+1        + PREFIX + STOPPER
+         GETMAIN R,LV=(R8),A=CEMTIFGM
+         ST    R0,0(R1)           SAVE LENGTH TO SEND
+         MVC   4(4,R1),=C'FE05'   SET REQUEST ID
+         MVC   8(4,R1),REQTERM    SET TERMID
+*        L     R6,DFHFCTAD        ADDRESS FCT
+         L     R6,8(R3)           ADDRESS FCT ADDRESS
+         L     R6,0(R6)           ADDRESS FCT
+         USING DFHFCTDS,R6
+         LA    R7,12(R1)          ADDRESS SEND AREA
+         USING IFILDATA,R7
+CEMTIFLP EQU   *
+         MVC   IFILDFLE,FCTFILNM  MOVE FILENAME
+         MVC   IFILDSTA,FCTFILST  MOVE STATUS
+         MVC   IFILDSRV,FCTSERV   MOVE SERVREQ
+         MVC   IFILDFXV,FCTRECFM  MOVE RECFORM
+         MVC   CEMTIFGV,FCTFILNM  MOVE FILENAME FOR GETENV
+         MVI   IFILDDSN,C' '      SET FILL
+         MVC   IFILDDSN+1(L'IFILDDSN-1),IFILDDSN BLANK DSNAME
+         GETENV CEMTIFGV
+         LTR   R15,R15            CHECK RC ?
+         BNZ   CEMTIFLD           EXIT IF BAD
+* GOT A DSN, R2 IS THE POINTER
+         LA    R9,IFILDDSN        DESTINATION
+CEMTIFL2 EQU   *
+         MVC   0(1,R9),0(R2)      MOVE DSN A BYTE AT A TIME
+         AHI   R2,1               BUMP SOURCE
+         AHI   R9,1               BUMP DESTINATION
+         AHI   R15,1              BUMP COUNT
+         CHI   R15,L'IFILDDSN+1   LIMIT REACHED ?
+         BE    CEMTIFLD           EXIT IF REACHED
+         CLI   0(R2),X'00'        END OF DSN ?
+         BNE   CEMTIFL2           LOOP IF NOT
+CEMTIFLD EQU   *
+         AHI   R6,FCTABLEN        POINT TO NEXT FCT ENTRY
+         AHI   R7,IFILLEN         POINT TO NEXT SEND ENTRY
+         CLI   0(R6),X'FF'        END OF FCT ?
+         BE    CEMTIFSD           EXIT IF IT IS
+         B     CEMTIFLP           LOOP
+*
+CEMTIFSD EQU   *
+         MVI   IFILDFLE,X'FF'     MARK END OF FILES
+*        L     R8,CONNID          R8=CONN ID
+         L     R8,12(R3)          R8=CONN ID ADDRESS
+         L     R8,0(R8)           R8=CONNID
+         L     R14,CEMTIFGM       R14=DATA TO SEND
+         TCPIO SEND,MSG=(R14),LMSG=0(R14),CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         FREEMAIN LA=0(R14),A=(R14) FREE FCT SEND AREA
+         SUBEXIT
+*
+ABEND780 ABEND 780                TCPIO SEND FAILED
+*
+CEMTIFGM DS    A
+CEMTIFGV DC    CL8' ',X'00'
+CICSTIND DS    C                  TRACE TYPE INDICATOR
+TRCEZ390 DS    C                  Z390 TRACE OPTION
+*
+* TIME CONVERSION FIELDS
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402021207A20207A20204B2020'
+TIMEHERE DS    CL13
+*
+* CEMT I FIL DATA AREA
+*
+IFILDATA DSECT
+IFILDFLE DS    CL8                FILENAME
+IFILDSTA DS    X                  STATUS
+IFILDSRV DS    X                  SERVREQ
+IFILDFXV DS    X                  FIXED/VARIABLE
+IFILDDSN DS    CL40               DSNAME
+IFILLEN  EQU   *-IFILDATA
+*
+* RECEIVE MESSAGE AREA
+*
+REQDSECT DSECT
+         DS    AL4                REQUEST LENGTH
+         DS    CL4                REQUEST CODE
+REQTERM  DS    CL4                TERMINAL ID
+REQTRAN  DS    CL4                TRANSID
+         DS    C                  TRANSID TYPE
+REQTASKN DS    PL4                TASK NO
+REQLEN   EQU   *-REQDSECT
+*
+* WTO AREA DSECT
+*
+WTODSECT DSECT
+WTOMSG   DS    AL4
+WTOTIME  DS    CL13               TIME STAMP
+         DS    C
+         DS    CL4                MODULE/FUNCTION REFERENCE (EIBFN)
+         DS    C
+WTOTERM  DS    CL4                TERMID
+         DS    C
+WTOTRAN  DS    CL4                TRANSID (OR BLANK)
+         DS    C
+WTOTYPE  DS    C                  TRANSID TYPE
+         DS    C
+WTOTASKN DS    CL7                TASK NUMBER
+         DS    C
+WTODESC  DS    CL45               DESCRIPTION
+*
+         ACBD  ,                  VSAM ACB
+         DFHFCTDS                 FILE CONTROL TABLE
+*
+         EQUREGS
+*
+         END
+

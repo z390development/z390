@@ -6,5 +6,5 @@ set SYSPRINT=%1.RPT
 call EXEC SUPERZAP %2 %3 %4 %5
 goto :end
 :console
-call EXEC SUPERZAP PARM(CON) %1 %2 %3 %4 %5
+call EXEC SUPERZAP PARM(CON) NOTIME %1 %2 %3 %4 %5
 :end

@@ -11,6 +11,7 @@
 .*                  (NOTE OUT=(REG) INDICATES FIELD ADDR IN GPR)
 .* 12/10/06 RPI 514 ADD DFP SUPPORT FOR DD, ED, AND LD TYPES
 .* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
+.* 06/14/08 RPI 863 add error messages for extra positional parms 
 .*********************************************************************
 .*
 .*  CONVERT FROM EBCDIC DECIMAL FIELD TO BINARY FIELD FORMAT
@@ -41,7 +42,13 @@
                &IN=,          SOURCE FIELD (RX OR REG)                 X
                &OUT=,         TARGET FIELD (RX OR REG)                 X
                &LINKAGE=SVC   SVC= Z390 171, MF=CALL TO FPCONMFC          
-         AIF   ('&N' EQ '').SKIPDS
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS LE 1).POSEND
+         MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.POSEND  ANOP        
 &N       DS    0H
 .SKIPDS  ANOP 
          GBLB  &CFD_EQUS

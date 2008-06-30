@@ -182,6 +182,12 @@ public  class  tz390 {
     * 05/07/08 RPI 849 use shared abort_case for logic errors
     * 05/10/08 RPI 821 switch DH from double to BigDecimal cache
     * 05/28/08 RPI 855 skip line on TRACEM/P AIF/AGO branch
+    * 06/12/08 RPI 862 add TRACEC with default NOTRACEC to suppress copybooks
+    *          and turn on LISTCALL for TRACEM and TRACEP
+    * 06/23/08 RPI 866 add SYSLST and lst_type for use by lz390 
+    *          and update get_file_name to allow parm_dir to
+    *          override basemane and ext or parm to override path
+    *          (SYSPCH and SYSPRN used in DFHALL for BMS map gens)
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -190,7 +196,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.01f";  //dsh
+    String version    = "V1.4.02";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -244,10 +250,11 @@ public  class  tz390 {
     boolean opt_time     = true;  // abend 422 if out of time TIME (sec)
     boolean opt_timing   = true;  // display current date, time, rate
     boolean opt_trace    = false; // trace pz390 instructions to LOG
-    boolean opt_tracea   = false;  // trace az390
+    boolean opt_tracea   = false; // trace az390
     boolean opt_traceall = false; // trace all details
+    boolean opt_tracec   = false; // trace copybooks for tracep // RPI 862
     boolean opt_traceg   = false; // trace memory FQE updates to LOG
-    boolean opt_tracel   = false;  // trace lz390
+    boolean opt_tracel   = false; // trace lz390
     boolean opt_tracem   = false; // trace mz390
     boolean opt_tracep   = false; // trace pseudo code
     boolean opt_traceq   = false; // trace QSAM file I/O
@@ -322,7 +329,8 @@ public  class  tz390 {
 	String err_type = ".ERR"; // step error and rc log
     String log_type = ".LOG"; // log for z390, ez390, sz390, pz390
 	String lkd_type = ".LKD"; // linker commands INCLUDE, ENTRY, ALIAS, NAME RPI 735
-    Boolean lkd_ignore = false; // RPI 735 ignore LKD if explicit .OBJ
+    String lst_type = ".LST"; // linker list file
+	Boolean lkd_ignore = false; // RPI 735 ignore LKD if explicit .OBJ
 	String mac_type = ".MAC"; // macro source
     String mlc_type = ".MLC"; // macro assembler source program
     String obj_type = ".OBJ"; // relocatable object code for az390 and lz390
@@ -475,7 +483,7 @@ public  class  tz390 {
         byte[] ascii_to_ebcdic = new byte[256];
         String ascii_to_ebcdic_hex = 
                         "00010203372D2E2F1605250B0C0D0E0F" + //00 ................ 
-                        "101112003C3D322618193F2722003500" + //20 ................ 
+                        "101112003C3D322618193F2722003500" + //10 ................ 
                         "405A7F7B5B6C507D4D5D5C4E6B604B61" + //20  !"#$%&'()*+,-./ 
                         "F0F1F2F3F4F5F6F7F8F97A5E4C7E6E6F" + //30 0123456789:;<=>? 
                         "7CC1C2C3C4C5C6C7C8C9D1D2D3D4D5D6" + //40 @ABCDEFGHIJKLMNO  
@@ -4712,6 +4720,8 @@ private void process_option(String token){
     } else if (token.toUpperCase().equals("NOTIMING")){
       	opt_timing = false; // no date/time changes
       	opt_time   = false;
+    } else if (token.toUpperCase().equals("NOTRACEC")){
+       	opt_tracec = false;  // RPI 862
     } else if (token.toUpperCase().equals("NOTRAP")){
        	opt_trap = false;
     } else if (token.toUpperCase().equals("NOVCB")){
@@ -4774,6 +4784,9 @@ private void process_option(String token){
       		&& token.substring(0,7).toUpperCase().equals("SYSLOG(")){
        	dir_log = set_path_option(dir_log,token.substring(7,token.length()-1));
     } else if (token.length() > 7 
+      		&& token.substring(0,7).toUpperCase().equals("SYSLST(")){  // RPI 866
+      	dir_lst = set_path_option(dir_lst,token.substring(7,token.length()-1)); 
+    } else if (token.length() > 7 
        		&& token.substring(0,7).toUpperCase().equals("SYSMAC(")){
        	dir_mac = set_path_option(dir_mac,token.substring(7,token.length()-1));  
     } else if (token.length() > 7 
@@ -4832,6 +4845,8 @@ private void process_option(String token){
        	while (index < trace_options.length()){
        		if (trace_options.charAt(index) == 'A'){
        			opt_tracea = true;
+       		} else if (trace_options.charAt(index) == 'C'){
+           		opt_tracec = true; // RPI 862
        		} else if (trace_options.charAt(index) == 'E'){
        			opt_trace = true;
        		} else if (trace_options.charAt(index) == 'G'){
@@ -4840,9 +4855,11 @@ private void process_option(String token){
        			opt_tracel = true;
        		} else if (trace_options.charAt(index) == 'M'){
        			opt_tracem = true;
+       			opt_listcall = true; // RPI 862
        		} else if (trace_options.charAt(index) == 'P'){
        			opt_tracep = true;	
        			opt_tracem = true;
+       			opt_listcall = true; // RPI 862
        		} else if (trace_options.charAt(index) == 'Q'){
        			opt_traceq = true;
        		} else if (trace_options.charAt(index) == 'T'){
@@ -4856,10 +4873,13 @@ private void process_option(String token){
        	opt_tracea = true;
        	opt_list = true;
        	opt_con   = false;
+    } else if (token.toUpperCase().equals("TRACEC")){
+       	opt_tracec = true;
     } else if (token.toUpperCase().equals("TRACEALL")){
        	opt_traceall = true;
        	opt_trace    = true;
       	opt_tracea   = true;
+      	opt_tracec   = true; // RPI 862
        	opt_tracem   = true;
        	opt_tracep   = true;
        	opt_tracel   = true;
@@ -4868,6 +4888,7 @@ private void process_option(String token){
        	opt_tracev   = true;
        	opt_traceg = true;
        	opt_list     = true;
+       	opt_listcall = true; // RPI 862
        	opt_con   = false;
     } else if (token.toUpperCase().equals("TRACEL")){
        	opt_tracel = true;
@@ -4876,6 +4897,7 @@ private void process_option(String token){
     } else if (token.toUpperCase().equals("TRACEM")){
         	opt_tracem = true;
         	opt_list = true;
+        	opt_listcall = true; // RPI 862
         	opt_con   = false;
     } else if (token.toUpperCase().equals("TRACEMEM")){
        	opt_traceg = true;
@@ -4884,6 +4906,7 @@ private void process_option(String token){
     	opt_tracep = true;
     	opt_tracem = true;
     	opt_list = true;
+    	opt_listcall = true; // RPI 862
     	opt_con   = false;
     } else if (token.toUpperCase().equals("TRACEQ")){
     	opt_traceq = true;
@@ -5258,40 +5281,52 @@ public boolean update_key_index(int user_key){
 	key_tab_index[key_index] = user_key;
 	return true;
 }
-public String get_file_name(String parm_dir,String parm,String parm_type){
+public String get_file_name(String file_dir,String file_name,String file_type){
 	   /*
-	    * 1.  Strip long spacey name quotes if found
-	    * 2.  Add directory and type if not specified
+	    * 1.  Strip long spacey name quotes if found from path and file.
+	    * 2.  Replace . and ..\ with current directory  RPI 866
+	    * 3.  Check for overriding path in filename and ignore path RPI 866
+	    * 4.  Check for overriding file in path and ignore file RPI 866
+	    * 2.  Add directory, name, and/or type if not specified  
 	    * 3.  Replace \ with / if Linux
 	    */
 	        if (z390_os_type == z390_os_linux){ // RPI 532 file separator fix
-	        	parm_dir = parm_dir.replace('\\','/');
-	        	parm     = parm.replace('\\','/');
+	        	file_dir = file_dir.replace('\\','/');
+	        	file_name     = file_name.replace('\\','/');
 	        }
-	   	    String file_name = null;
-	    	if (parm.charAt(0) == '\"' 
-	    		|| parm.charAt(0) == '\''){
-	    		file_name = parm.substring(1,parm.length() - 1);
+	    	if (file_name.charAt(0) == '\"' 
+	    		|| file_name.charAt(0) == '\''){
+	    		file_name = file_name.substring(1,file_name.length() - 1);
+	    	}
+	    	File temp_file;
+	    	int index = file_name.indexOf(File.separator); // RPI 866
+	    	if (index >= 0
+	    		|| (file_name.length() > 2 && file_name.charAt(1) == ':')){
+	    		// path found in file_name so ignore file_dir
+	    		temp_file = new File(file_name);
+	    		file_name = temp_file.getAbsolutePath(); 
 	    	} else {
-	    	    file_name = parm;
-	    	}
-	    	if  (parm_dir.length() > 0 && !parm_dir.substring(parm_dir.length()-1).equals(File.separator)){
-	    		parm_dir = parm_dir.concat(File.separator); // RPI 508
-	    	}
-	    	if  (file_name.length() > 0
-	            && !file_name.substring(0,1).equals(File.separator) // RPI 532 
-	    		&& file_name.indexOf(':')  == -1
-	    		){
-	    		if (file_name.indexOf('\\') != -1 // RPI 546
-	    			|| file_name.indexOf('/') != -1){
-	    			file_name = dir_cur.concat(file_name);
+	    		if (file_dir == null 
+	    			|| file_dir.length() == 0
+	    			|| file_dir.equals(".")){
+	    			temp_file = new File(dir_cur);
+	    			file_name = temp_file.getAbsolutePath() + File.separator + file_name;
 	    		} else {
-	    			file_name = parm_dir.concat(file_name);	 // RPI 508
+	    			temp_file = new File(file_dir);
+	    			index = file_dir.indexOf(".");
+	    			if (index > 0){
+	    				// file_dir has file name so ignore file_name
+	    				file_name = temp_file.getAbsolutePath();
+	    			} else {
+	    				// concatenate file_dir with file_name
+	    				file_name = temp_file.getAbsolutePath() + File.separator + file_name;
+	    			}
 	    		}
 	    	}
-	    	int index = file_name.indexOf(".");
+	    	index = file_name.indexOf(".");
 	    	if (index == -1){
-	    		file_name = file_name.trim() + parm_type;
+	    		// concat default type if none
+	    		file_name = file_name.trim() + file_type;
 	    	}
 	    	return file_name;
 }
@@ -6424,6 +6459,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOTRACEALL");
 	     }
+	     if (opt_tracec){ // trace(aceglmpqtv) trace all TRM,TRA,TRL,TRE
+		        add_final_opt("TRACEC"); // RPI 862
+		     } else {
+		        add_final_opt("NOTRACEC");
+		     }
 	     if (opt_traceg  ){ // trace(g) memory FQE updates to TRE
 	        add_final_opt("TRACEG");
 	     } else {

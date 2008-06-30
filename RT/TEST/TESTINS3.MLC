@@ -19,6 +19,8 @@
 *          5) CHANGE TESTCAT FOR POSITIVE IMMED. VALUES FOR HLASM
 *             AND CHANGE CGIT,CLGIT,CIT,CLFIT IMMED. LENGTH TO 16
 *          6) CHANGE TESTCAB FOR POSITIVE IMMED. VALUES FOR HLASM
+* 06/20/08 RPI 845 change EPIED to IHAEPIE (NOTE ESPIEPSW OFFSET CHG)      
+* 06/21/08 RPI 845 change ESTAD to IHASDWA AND REMOVE ESTAPSW REF          
 *********************************************************************
          PRINT DATA
          TITLE 'TESTINS3 - UNIT TEST Z10 EZ390 PROBLEM STATE INSTR.'
@@ -262,16 +264,15 @@ TESTINS3 RT1   MAIN
          EQUREGS
 ESPIE_EXIT DS  0H
          USING *,R15
-         USING IHAEPIE,R1
+         USING EPIE,R1
          L     R0,EPIEPARM
-         ST    R0,EPIEPSW+4
+         ST    R0,EPIEPSW+4                                   
          BR    R14
          DROP  R15,R1
 ESTAE_EXIT DS  0H
          USING *,R15
-         USING IHAESTA,R1
-         L     R0,ESTAPARM
-         ST    R0,ESTAPSW+4
+         USING SDWA,R1
+         L     R0,SDWAPARM     USE SDWA PARM VS ESTA PARM RPI 845
          LA    R15,4   REQUEST RESTART RPI 636
          BR    R14
          DROP  R15,R1
@@ -988,7 +989,7 @@ MVC3     MVC   PWORK(0),=C'1234'
          TESTCAB CLIB,L,32,8
 * END
          RT1   END
-         EPIED
-         ESTAD
+         IHAEPIE
+         IHASDWA
          END         
 

@@ -114,8 +114,6 @@ a) CEBR
 
 b) CEMT
 
-   The conversational mode of CEMT has not yet been implemented.
-
    The commands shown below are the minimum abbreviations, the full
    text may also be typed, eg. CEMT INQUIRE TERMINAL
 
@@ -140,13 +138,28 @@ b) CEMT
 
    CEMT P SHU IMM   Shut down the server immediately.
 
+   Conversational Mode
+      If any syntax error occurs then CEMT is switched into
+      conversational mode and all the above parameters can be cursor
+      selected from the screen.
+
+      You cannot retype the command here, cursor selection or CLEAR are
+      the only options.
+
+      The cursor may be placed anywhere on the selection line.
+
+Change Summary
+--------------
+June 27, 2008
+   Added CEMT conversational mode.
+
 Trademarks
 ----------
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: January 18, 2008
-Z390 version: V1.3.08h
-Z390/CICS version: V4
+Shipping Date: June 27, 2008
+Z390 version: V1.4.02
+Z390/CICS version: V5
 

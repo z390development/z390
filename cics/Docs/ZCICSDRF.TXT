@@ -29,7 +29,11 @@ Management descriptions...
    Sequential Terminal support
 
 Event Tracing
-Internal Abends (Z390CICS)
+
+Z390CICS
+   Operation
+   Submodules
+   Internal Abends
 
 -----------------------------------------------------------------------
 
@@ -328,7 +332,7 @@ File Control Management
 
    The FCT (DSECT DFHFCTDS) defines the status of each file.
    Each FCTTE contains the ACB for that file.
-   See ZCICSVSM - Z390/CICS VSAM Guide to see how files are created and
+   See the Z390/CICS VSAM Guide to see how files are created and
    defined to Z390/CICS.
 
    a) File opening
@@ -515,9 +519,9 @@ File Control Management
          The VSWA is released.
 
 Sequential Terminal support
-   Please read the Doc for this feature in "Z390/CICS Sequential
-   Terminal Support" (Z390SEQ). This section does not cover the batch
-   programs Z390SEQ or Z390COMP.
+   Please read the Doc for this feature in Z390/CICS Sequential
+   Terminal Support. This section does not cover the batch programs
+   Z390SEQ or Z390COMP.
 
    When the INI parameter SEQ_TERM=YES is specified then Z390CICS will
    start a special CMDPROC terminal with a terminal id. of SQ01.
@@ -553,19 +557,49 @@ Event Tracing
    event would have to be sent to the server and may be too great an
    overhead in this environment.
 
-Internal Abends (Z390CICS)
-   These are mostly caused by programming errors or situations I had
-   not anticipated. Please report all of these to Don.
+-----------------------------------------------------------------------
 
-   555   Unknown request sent to Server
-   666   CMDPROC failed
-   777   TCPIO OPEN/CLOSE Server failed
-   778   TCPIO RECEIVE failed
-   780   TCPIO SEND failed
-   790   VSAM feedback code was not expected
+Z390CICS
+   Operation
+      ### to be done
+
+   Modules
+         -FN-   Description            Program-
+      GBL0602   READ                   Any
+      GBL060C   STARTBR                Any
+      GBL060E   READNEXT               Any
+      GBL0610   READPREV               Any
+      GBL0612   ENDBR                  Any
+      GBL0614   RESETBR                Any
+
+      GBL0A02   WRITEQ  TS             Any
+      GBL0A04   READQ   TS             Any
+      GBL0A06   DELETEQ TS             Any
+      GBL0AFF   CEBR Request Qnames    Z390CEBR
+
+      GBLFE00   CEMT I TERm            Z390CEMT
+      GBLFE01   CEMT I SYStem          Z390CEMT
+      GBLFE05   CEMT I FILe            Z390CEMT
+
+   Copy Books
+      FILEERTB  VSAM Error Code Table  Z390CICS
+
+   Internal Abends
+      These are mostly caused by programming errors or situations I had
+      not anticipated. Please report all of these to Don.
+
+      555   Unknown request sent to Server
+      666   CMDPROC failed
+      777   TCPIO OPEN/CLOSE Server failed
+      778   TCPIO RECEIVE failed
+      780   TCPIO SEND failed
+      790   VSAM feedback code was not expected
 
 Change Summary
 --------------
+June 27, 2008
+   Z390CICS operation extensively expanded
+
 January 18, 2008
    Extensive updates to File Control
 
@@ -575,7 +609,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: January 18, 2008
-Z390 version: V1.3.08h
-Z390/CICS version: V4
+Shipping Date: June 27, 2008
+Z390 version: V1.4.02
+Z390/CICS version: V5
 

@@ -1,0 +1,207 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+LCL0402  SUBENTRY
+*
+* FN=0402  EXEC CICS RECEIVE
+*
+* R1  >>> P0402 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0402,P0402END),R3
+         L     DFHEIBR,P0402EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0402TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         L     R4,P0402ADB        LOAD AID BLOCK ADDRESS
+         USING DFHADBLK,R4
+* TEST IF RECALL TO PROCESS IGNORE CONDITION
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BNZ   DUNLENCK           EXIT IF IT IS
+         MVC   EIBFN,P0402FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
+         BNE   NOTSEQ             EXIT IF NOT
+* SEQUENTIAL TERMINAL PROCESSING
+         L     R1,TCTTEQDI        RECEIVE DCB
+         USING IHADCB,R1
+         LA    R2,EODAD           EODAD ADDRESS
+         ST    R2,DCBEODAD        SAVE IN DCB
+         LA    R2,SYNAD           SYNAD ADDRESS
+         ST    R2,DCBSYNAD        SAVE IN DCB
+         DROP  R1
+NEWFILE  EQU   *
+         CLI   TCTTEQFO,X'FF'     INPUT FILE OPEN ?
+         BE    OPENOK             EXIT IF IT IS
+* OPEN SEQUENTIAL FILE
+         L     R2,TCTTEQFL        R2 POINTS TO SEQ?NNNN
+         MVC   3(5,R2),=X'2120202020' MOVE EDIT WORD
+         ED    3(5,R2),TCTTEQFN   EDIT FILE NUMBER
+         MVI   3(R2),C'I'         SET INPUT FILE
+         OPEN  ((R1),INPUT)       OPEN IT
+         MVI   TCTTEQFO,X'FF'     SET OPEN
+OPENOK   EQU   *
+         L     R2,P0402INT        R2=INPUT AREA
+         SR    R14,R14            CLEAR LENGTH
+GETBYTE  EQU   *
+         GET   (R1),(R2)          GET INPUT STREAM ONE BYTE
+         CLI   0(R2),X'0D'        IS IT CR ?
+         LA    R2,1(R2)           BUMP INPUT POINTER ANYWAY
+         LA    R14,1(R14)         BUMP BYTE COUNT
+         BNE   GETBYTE            EXIT IF NOT
+         GET   (R1),(R2)          GET THE X'0A'
+         AHI   R14,-1             -1 FOR THE X'0D'
+         AHI   R2,-1              BACK TO CRLF
+         XC    0(2,R2),0(R2)      CLEAR CRLF
+         LR    R1,R14             SAVE LENGTH
+         L     R6,P0402INT        R6=A(INTO)
+         B     DUNGET             EXIT
+*
+EODAD    EQU   *
+         CLOSE ((R1))             CLOSE IT
+         AP    TCTTEQFN,=P'1'     INCREMENT FILE NUMBER
+         MVI   TCTTEQFO,X'00'     SET FILE CLOSED
+         B     NEWFILE            EXIT
+*
+SYNAD    EQU   *
+* NO MORE SEQUENTIAL TERMINAL INPUT, REVERT TO GUI
+         MVI   TCTTETS,X'FF'      SET SHUTTERM REQUEST
+*
+NOTSEQ   EQU   *
+         L     R6,P0402INT        R6=A(INTO)
+         LH    R7,P0402INL        R7=L'INTO
+         CLI   P0402NOW,X'FF'     NOWAIT ?
+         BE    DONOWAIT           EXIT IF IT IS
+         TGET  (R6),(R7),ASIS
+         B     DUNGET             EXIT
+*
+DONOWAIT EQU   *
+         TGET  (R6),(R7),ASIS,NOWAIT
+         C     R15,=F'4'          ANY INPUT ?
+         BE    NOINPUT            EXIT IF NOT
+DUNGET   EQU   *
+         L     R8,P0402LEN        R8=A(LENGTH)
+         STH   R1,0(R8)           SET RECEIVED LENGTH
+* NOHANDLE AVOIDS CONDITION CHECKS
+         CLI   P0402NOH,X'FF'     NOHANDLE ?
+         BE    DUNLENCK           EXIT IF IT IS
+         LH    R14,P0402INL       R14=REQUESTED LENGTH
+         CR    R14,R1             ACTUAL LENGTH EXCEEDS REQUESTED ?
+         BNL   DUNLENCK           EXIT IF NOT
+* INVOKE LENGERR
+         MVI   EIBRCODE,X'E1'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
+         B     RETURN             RETURN
+*
+DUNLENCK DS    0H
+* ALSO RE-ENTRY POINT FOR IGNORE CONDITION
+         MVC   EIBAID,0(R6)       SET EIBAID
+* SET EIBCPOSN IF ENOUGH DATA
+         CH    R1,=H'3'           LENGTH >= 3 ?
+         BL    NOINPUT            EXIT IF NOT
+* CURSOR POS TO HEX EG. C1C6, ROW 1 COL 71, POS 70 (X'46')
+         SR    R0,R0              CLEAR R0
+         LR    R1,R0              CLEAR R1
+         ICM   R0,8,1(R6)         1ST BYTE TO TOP OF R0  C1..
+         SLL   R0,2               SHIFT OUT PARITY BITS  04..
+         SRL   R0,26              CONVERT TO 6 BIT VALUE ..01
+         ICM   R1,8,2(R6)         2ND BYTE TO TOP OF R1  ..01/C6...
+         SLL   R1,2               SHIFT OUT PARITY BITS  ..01/18...
+         SRDL  R0,26              COMBINE TO 12-BITS     ..../...46
+         STH   R1,EIBCPOSN        SAVE IT
+NOINPUT  EQU   *
+* PROCESS ANY HANDLE AID
+* NOHANDLE AVOIDS HANDLE AID CHECKS
+         CLI   P0402NOH,X'FF'     NOHANDLE ?
+         BE    RETURN             RETURN IF IT IS
+         LTR   R4,R4              ANY AID BLOCKS ?
+         BZ    RETURN             RETURN IF NONE
+ADBLKLP  EQU   *
+         OC    AIDCHAIN,AIDCHAIN  ANY CHAIN ?
+         BZ    LASTAID            EXIT IF LAST AID BLOCK
+         L     R4,AIDCHAIN        CHAIN TO NEXT AID BLOCK
+         B     ADBLKLP            LOOP
+*
+LASTAID  EQU   *
+         LA    R14,AIDINDEX       R14=AID INDEX
+AIDLOOP  EQU   *
+         CLC   0(1,R14),EIBAID    OUR AID ?
+         BE    GOTAID             EXIT IF IT IS
+         AHI   R14,3              BUMP POINTER
+         CLI   0(R14),X'FF'       STOPPER ?
+         BNE   AIDLOOP            LOOP IF NOT
+         ABEND 999,DUMP           EIBAID IN ERROR
+*
+GOTAID   DS    0H
+* TEST AID BLOCK SLOT
+         LH    R8,1(R14)          R8=AID INDEX
+         SLL   R8,2               * 4
+         LA    R8,12(R8,R4)       + 12 (HEADER+CHAIN) + ADBLK ADDRESS
+         OC    0(4,R8),0(R8)      ANY LABEL HERE ?
+         BZ    RETURN             RETURN IF NONE
+         L     R7,4(R13)          R7=CALLERS SAVEAREA
+         MVC   12(4,R7),0(R8)     SET ROUTINE ADDRESS AS RETURN ADDRESS
+*
+RETURN   EQU   *
+         SUBEXIT RC=(R15)
+*
+AIDINDEX EQU   *
+         DC    X'7D',AL2(0)       ENTER
+         DC    X'6D',AL2(1)       CLEAR
+         DC    X'6C',AL2(2)       PA1
+         DC    X'6E',AL2(3)       PA2
+         DC    X'6B',AL2(4)       PA3
+         DC    X'F1',AL2(5)       PF1
+         DC    X'F2',AL2(6)       PF2
+         DC    X'F3',AL2(7)       PF3
+         DC    X'F4',AL2(8)       PF4
+         DC    X'F5',AL2(9)       PF5
+         DC    X'F6',AL2(10)      PF6
+         DC    X'F7',AL2(11)      PF7
+         DC    X'F8',AL2(12)      PF8
+         DC    X'F9',AL2(13)      PF9
+         DC    X'7A',AL2(14)      PF10
+         DC    X'7B',AL2(15)      PF11
+         DC    X'7C',AL2(16)      PF12
+         DC    X'C1',AL2(17)      PF13
+         DC    X'C2',AL2(18)      PF14
+         DC    X'C3',AL2(19)      PF15
+         DC    X'C4',AL2(20)      PF16
+         DC    X'C5',AL2(21)      PF17
+         DC    X'C6',AL2(22)      PF18
+         DC    X'C7',AL2(23)      PF19
+         DC    X'C8',AL2(24)      PF20
+         DC    X'C9',AL2(25)      PF21
+         DC    X'4A',AL2(26)      PF22
+         DC    X'4B',AL2(27)      PF23
+         DC    X'4C',AL2(28)      PF24
+         DC    X'FF'              STOPPER
+*
+         LTORG
+*
+P0402    DSECT
+P0402FN  DS    XL2                FUNCTION CODE
+P0402EIB DS    AL4                EIB
+P0402TCT DS    AL4                TCTTE
+P0402ADB DS    AL4                ADBLK
+P0402INT DS    AL4                INTO
+P0402INL DS    AL2                L'INTO
+P0402LEN DS    AL4                LENGTH
+P0402NOH DS    X                  FF=NOHANDLE
+P0402NOW DS    X                  FF=NOWAIT
+P0402END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHADBLK                 AID BLOCK
+*
+         EQUREGS REGS=GPR
+*
+         END
+

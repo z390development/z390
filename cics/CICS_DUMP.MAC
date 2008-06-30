@@ -4,7 +4,7 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
 .*********************************************************************
          MACRO
          CICS_DUMP
@@ -69,13 +69,13 @@
          AIF   (NOT &TRANS).NOTRANS
          AIF   ('&DCODE' EQ '').NODCODE
          AIF   ('&LENGTH' NE '' AND '&FLENGTH' NE '').BADLEN
-         AIF   ('&FROM' NE '' AND '&LENGTH' EQ '' AND '&FLENGTH' EQ '')X
+         AIF   ('&FROM' NE '' AND '&LENGTH' EQ '' AND '&FLENGTH' EQ '')-
                .NEEDLEN
-         AIF   ('&FROM' EQ '' AND ('&LENGTH' NE '' OR '&FLENGTH' NE '')X
+         AIF   ('&FROM' EQ '' AND ('&LENGTH' NE '' OR '&FLENGTH' NE '')-
                ).NOFROM
-         AIF   ('&SLIST' EQ '' AND '&LLIST' EQ '' AND '&NUMSEG' EQ '').X
+         AIF   ('&SLIST' EQ '' AND '&LLIST' EQ '' AND '&NUMSEG' EQ '').-
                SEGSOK
-         AIF   ('&SLIST' NE '' AND '&LLIST' NE '' AND '&NUMSEG' NE '').X
+         AIF   ('&SLIST' NE '' AND '&LLIST' NE '' AND '&NUMSEG' NE '').-
                SEGSOK
          AGO   .BADSEG
 .*
@@ -205,3 +205,4 @@ CICS_DUMP_&SYSNDX._BYPCONS DS 0H
 .INVDCOD MNOTE 12,'DUMPCODE IS GREATER THAN 4 BYTES'
          MEXIT
          MEND
+

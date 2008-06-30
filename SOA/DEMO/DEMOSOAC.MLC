@@ -1,0 +1,13 @@
+        SOAGEN CTYPE=CBL,               GENERATE COBOL STUBS AND CMGR  X
+               MAIN=DEMOMAIN,           MAIN CLIENT APPLICATION PGM    X
+               CLIENT=DEMOCMGR,         SOA CLIENT MSG MGR NAME        X
+               SERVER=DEMOSMGR,         SOA SERVER MSG MGR NAME        X
+               HOST=DSH3, (MY PC NAME)  HOST SERVER NAME               X
+               PORT=3900,               HOST SERVER PORT               X
+               SERVICES=((DEMOSUB1,-45,-45,45), SERVICES WITH PARM LEN X
+               (DEMOSUB2,-4,-4,4)),     (NEG -LENGTH MEANS READ ONLY)  X
+               MACDIR=soa\maclib, SOA GEN MACRO DIRECTORY              X
+               GENDIR=soa\demo, DIRECTORY FOR SOA APPL                 X
+               GENBLD=DEMOBLDC,         GENERATED BUILD BAT FILE       X
+               GENRUN=                  GENERATED RUN, RUNS, RUNC FILES          
+        END

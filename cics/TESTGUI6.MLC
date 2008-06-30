@@ -5,7 +5,6 @@
 * Author - Don Higgins                                              *
 *********************************************************************
 * 05/08/06 RPI 308 CONVERT DEMOGUI6 APPLICATION TO EXEC CICS TESTGUI6
-* 06/06/08 RPI 628 CONVERT DEMOGUI6 APPLICATION TO EXEC CICS TESTGUI6
 *********************************************************************
 DFHEISTG DSECT
 RECAREA  DS    CL80               RECEIVE AREA
@@ -65,8 +64,6 @@ REFRESH  EQU   *
 LOOP     EQU   *
 * PROMPT FOR ANY OR ALL INPUT FIELDS
          EXEC  CICS SEND FROM(PROMPT) LENGTH(PROMPTLN)
-* INPUT
-LOOP2    EQU   *
          XC    INPUT(L'INPUT),INPUT CLEAR INPUT
          MVC   RECLEN,=AL2(L'INPUT) SET INPUT LENGTH
          EXEC  CICS RECEIVE INTO(INPUT) LENGTH(RECLEN)
@@ -74,8 +71,6 @@ LOOP2    EQU   *
          BE    REFRESH
          CLI   INPUT,DFHPF1       DISPLAY HELP SCREEN
          BE    HELP
-         CLI   INPUT,DFHPF2       RESET INPUT FIELDS
-         BE    RESET
          CLI   INPUT,DFHPF3       EXIT ON PF3
          BE    EXIT
          CLI   INPUT,DFHENTER     UPDATE CHANGED FIELDS ON ENTER
@@ -94,10 +89,6 @@ HELP     EQU   *
          EXEC CICS SEND FROM(SHOW_HELP) LENGTH(HELPLEN)
          EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN)
          B     REFRESH
-*
-RESET    EQU   *
-         EXEC CICS SEND FROM(EAU) LENGTH(EAULEN)
-         B     LOOP2
 *
 UPDATE   EQU   *
 * UPDATE LOWER SCREEN FROM MODIFIED INPUT FIELDS
@@ -238,10 +229,8 @@ SHOW_HELP TN3270 ESC,WRT_EW,WCC_KD
          DC     C'SUBMIT RPI IF YOU FIND ANY ERRORS VIA WWW.Z390.ORG'
 HELPLEN  DC    AL2(*-SHOW_HELP)
 *
-EAU      TN3270 ESC,WRT_EAU,WCC_KD
-EAULEN   DC    AL2(*-EAU) 
-*
          COPY  DFHAID
          TN3270 SYMBOLS
          EQUREGS
          END
+

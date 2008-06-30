@@ -1,0 +1,148 @@
+Z390 Macro and Copybook Index
+=============================
+
+Most items in the mac library are documented.
+Items marked VSE are found in the \vse\mac library.
+This provides an index to the document for each item.
+
+Document  Title                                    Format(s)
+--------   ---------------------------------        ---------
+Dummy      -- Function not supported --
+File       Z390_File_Access_Method_Guide            PDF
+GUAM       Z390_GUAM_GUI_Access_Method_Guide        PDF/Word
+Contest    See Z390 Contest on-line
+Internal   -- Internal use only --
+Program    Z390_Program_Services_Guide              PDF
+Structure  Z390_Structured_Programming_Macro_Guide  PDF/Word
+Service    Z390_Macro_and_SVC_Services_Guide        PDF
+SOA        Z390_SOA_User_Guide                      PDF/Word
+Storage    Z390_Storage_Services_Guide              PDF
+VSAM       Z390_VSAM_User_Guide                     PDF/Word
+VSE        Z390_VSE_User_Guide                      PDF/Word
+ZCICSAPP   Z390/CICS Application Programming Guide  TXT
+
+MAC/CPY      Document
+-------      --------
+ABEND        Program
+ACB          VSAM
+ACBD         VSAM
+ASMMSP.CPY   Structure
+BLDL         Program
+CALL         Program
+CDDELETE     Program and VSE
+CDLOAD       Program and VSE
+CFD          Service
+CHECK        File
+CLOSE        File and VSE
+CMDPROC      Service
+COMRG        Service and VSE
+CTD          Service
+CVTD         Program
+DCB          File
+DCBD         File
+DCBE         File
+DECBD        File
+DEFINE       VSAM
+DEFLMOD.CPY  Internal
+DELETE       Program
+DEQ          Dummy
+DO           Structure
+DTFPR        File and VSE
+DTFSD        File and VSE
+ELSE         Structure
+ELSEIF       Structure
+ENDDO        Structure
+ENDIF        Structure
+ENQ          Dummy
+EOJ          Program and VSE
+EPIED        Program
+EQUREGS      Program
+ERASE        VSAM
+ESPIE        Program
+ESTAD        Program
+ESTAE        Program
+ESTAEX       Program
+EXEC         ZCICSAPP
+EXIT         Program
+EXTRACT      Dummy
+FREEMAIN     Storage
+FREEVIS      Storage and VSE
+GENCB        VSAM
+GET          File and VSAM
+GETENV       Service
+GETTIME      Service and VSE
+GETMAIN      Storage
+GETVIS       Storage and VSE
+GPARMOD      Internal
+GUAM         GUAM
+IF           Structure
+IHADCBE      File
+KSIRD        VSAM
+KSITD        VSAM
+LINK         Program
+LOAD         Program
+LX           Internal
+MODCB        VSAM
+OPEN         File and VSE
+PENTRY       Program
+PERFORM      Program
+PEXIT        Program
+PM           Program
+POINT        File and VSAM
+POST         Service
+PSAD         Program
+PUT          File and VSAM
+READ         File
+RESTORE      Program
+RETURN       Program
+RPL          VSAM
+RPLD         VSAM
+SAVE         Program
+SHOWCB       VSAM
+SNAP         Program
+SQL_INCLUDE  Dummy
+STFSMODE     Dummy
+STIMER       Service
+STLINENO     Dummy
+STORAGE      Storage
+STTMPMD      Dummy
+STX          Internal
+SUBENTRY     Program
+SUBEXIT      Program
+TCPIO        SOA
+TESTCB       VSAM
+TGET         GUAM
+TIME         Service
+TN3270       GUAM
+TPUT         GUAM
+TTIMER       Service
+VCDTD        VSAM
+WAIT         Service
+WRITE        File
+WTO          Service
+WTOR         Service
+XCTL         Program
+XLATE        Service
+YREGS        Program
+ZCVTD        Program
+ZDEFINE.CPY  Internal
+ZDEFINE      Internal
+ZGENACB      Internal
+ZGENMACF     Internal
+ZGENOPTD     Internal
+ZGENRPL      Internal
+ZKSIRD       Internal
+ZKSITD       Internal
+ZMFACC       Contest
+ZMODCB       Internal
+ZOPTLR       Internal
+ZSHOWCB      Internal
+ZSTREQU.CPY  Structure
+ZSTRGBL.CPY  Structure
+ZSTRMAC.CPY  Structure
+ZTESTCB      Internal
+
+Author: Melvyn Maltz
+Publication date: June 23, 2008
+Z390 version: V1.4.02
+

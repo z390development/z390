@@ -4,7 +4,7 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
 .*********************************************************************
          MACRO
 .* FILE CONTROL TABLE
@@ -13,6 +13,11 @@
                &FILSTAT=(ENABLED,CLOSED),                              X
                &RECFORM=(VARIABLE,BLOCKED),                            X
                &SERVREQ=
+.*
+         GBLB  &TYPED,&FINAL
+         AIF   (&TYPED).BYPOPSN
+END      OPSYN DFHFEND
+.BYPOPSN ANOP
 .*
          LCLB  &FILOPEN,&FILCLOS,&FILENAB,&FILDISA,&FILUNEN
          LCLB  &RECFIX,&RECVAR
@@ -25,6 +30,8 @@
 .*
 .FILE    ANOP
          AIF   (K'&DATASET EQ 0 OR K'&DATASET GT 8).ERR1
+         AIF   (&FINAL).BADTYP
+&TYPED   SETB  1
 DFHFCT   CSECT
          DS    0D
          DC    CL8'&DATASET'
@@ -93,6 +100,9 @@ DFHFCT   CSECT
          MEXIT
 .*
 .FINAL   ANOP
+         AIF   (NOT &TYPED).BADFIN1
+         AIF   (&FINAL).BADFIN2
+&FINAL   SETB  1
          DS    0D
          DC    X'FF'              STOPPER
          MEXIT
@@ -108,4 +118,14 @@ DFHFCT   CSECT
 .*
 .NOTVSAM MNOTE 12,'RECFORM=(UNBLOCKED) NOT ALLOWED IN VSAM'
          MEXIT
+.*
+.BADTYP  MNOTE 12,'TYPE=DATASET OCCURS AFTER TYPE=FINAL'
+         MEXIT
+.*
+.BADFIN1 MNOTE 12,'TYPE=FINAL WITHOUT PRECEDING TYPE=DATASET'
+         MEXIT
+.*
+.BADFIN2 MNOTE 12,'MORE THAN ONE TYPE=FINAL'
+         MEXIT
          MEND
+

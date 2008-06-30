@@ -37,6 +37,7 @@ TSREC    DS    CL200              TS RECORD
 TSNUMIT  DS    H                  NUMITEMS
 QWTSBA   DS    XL4                WCC,SBA FOR QOP MSG
 QWTMSG   DS    CL(QOPLN)          QOP MESSAGE
+*
 TESTBED9 DFHEIENT CODEREG=(R12,R3,R4,R5)
          MVI   QOPSEP+1,C'|'      SET COL MARKER
          MVI   QHSEP,C'|'         SET COL MARKER

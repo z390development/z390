@@ -5,7 +5,7 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 05/05/06 RPI 308 CICS RETURN CALLED FROM EXEC
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
 .*********************************************************************
          MACRO
          CICS_RETURN
@@ -40,7 +40,7 @@
          XC    EIBRESP,EIBRESP    CLEAR EIBRESP
          XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
 .* IF JUST RETURN, WE ARE FINISHED
-         AIF   ('&TRANSID' EQ '' AND '&COMMAREA' EQ '' AND '&LENGTH' EQX
+         AIF   ('&TRANSID' EQ '' AND '&COMMAREA' EQ '' AND '&LENGTH' EQ-
                 '').RETDONE
 .* IT'S NOT JUST EXEC CICS RETURN
 .* IF LINK-LEVEL NOT ONE, AND OTHER PARMS, THEN IT'S AN ERROR
@@ -66,7 +66,7 @@ CICS_RETURN_&SYSNDX._01 DS 0H
 .STRING  ANOP
 &TRANLEN SETA  K'&TRANSID
          AIF   (&TRANLEN LT 3 OR &TRANLEN GT 6).BADTRAN
-         MVC   TCTTETC,=CL4&TRANSID
+         MVC   TCTTETC,=CL4&TRANSID NEXT TRANSID
 .DOCOMM  ANOP
          AIF   ('&COMMAREA' NE '').COMMCHK
          AIF   ('&LENGTH' EQ '').COMMCHK
@@ -131,3 +131,4 @@ CICS_RETURN_&SYSNDX._02 DS 0H
 .BADLEN  MNOTE 12,'LENGTH IS MANDATORY FOR INDIRECT COMMAREA'
          MEXIT
          MEND
+

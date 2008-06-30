@@ -1,0 +1,215 @@
+Storage Services Guide
+======================
+
+--SVC--   FUNCTION
+DEC HEX
+  4  04   GETMAIN
+  4  04   GETVIS (VSE)
+  5  05   FREEMAIN
+  5  05   FREEVIS (VSE)
+
+Other Macros
+------------
+STORAGE
+
+Documentation
+-------------
+name STORAGE OBTAIN,LENGTH=,LOC=,COND=    Acquire storage
+name STORAGE RELEASE,ADDR=,LENGTH=        Free storage
+
+   An alternative to GETMAIN and FREEMAIN.
+
+   See the equivalent descriptions below:
+      LENGTH= becomes the GETMAIN/FREEMAIN parameter LV=
+      LOC= is the same
+      COND=NO (default) is the GETMAIN type R
+      COND=YES          is the GETMAIN type RC
+      ADDR= becomes the GETMAIN/FREEMAIN parameter A=
+
+name GETMAIN type,LV=,LOC=,A=
+   Acquire storage.
+
+   type is mandatory
+      R   Obtain storage unconditionally.
+          The default location is below 16M.
+
+      RC  Obtain storage conditionally.
+          The default location is above 16M.
+          The return code indicates whether the acquisition
+          was successful.
+
+      RU  Obtain storage unconditionally.
+          The default location is above 16M.
+
+   LV= is mandatory
+      LV=n       Obtain n bytes  (maximum value of n is 2G-1)
+      LV=nK      Obtain nK bytes (maximum value of n is 2097151)
+      LV=nM      Obtain nM bytes (maximum value of n is 2047)
+      LV=(reg)   Length required is in GRreg
+
+      Note: All storage requests will be rounded up to the next
+            8-byte boundary and is not initialised.
+
+   LOC= is optional
+      If omitted, type R will default to LOC=ABOVE, types RC and RU
+      will default to LOC=BELOW.
+
+      LOC=BELOW     }
+      LOC=RES       }
+      LOC=24        } Try to acquire storage below 16M.
+      LOC=(24)      }
+
+      LOC=ABOVE     }
+      LOC=ANY       }
+      LOC=31        } Try to acquire storage above 16M.
+      LOC=(31)      }
+      LOC=(24,31)   }
+
+   A=label is optional
+   A=(reg) is optional
+      After successful completion GR1 will contain the address of
+      the acquired storage. This 4-byte address may be placed at label,
+      or at the address in GRreg.
+
+      The length will be returned in GR0, rounded as necessary.
+
+   Also see 'Advanced topics' below
+
+   Examples:
+   Getmain 1024 bytes below 16M, unconditionally
+      GETMAIN R,LV=1024
+
+   Getmain number of bytes in GR3 below 16M, conditionally,
+      GETMAIN RC,LV=(R3),LOC=BELOW
+
+   Advanced topics:
+      Storage is limited by the MEM(nnn) parameter on CALL EZ390,
+      with nnn in Megabytes. The default is MEM(1).
+      When the value is 16 or less then all GETMAINs will allocate
+      storage LOC=BELOW. When the value is above 16, then 16M is
+      available LOC=BELOW and the rest LOC=ABOVE.
+
+      There is a preset maximum of MEM(50) set by Java.
+
+      If this is insufficient, then code -Xmx nnnnnnnnn after the -Xrs
+      option on CALL EZ370 to extend the MEM limit.
+      WARNING: Over-extending memory this way may degrade the
+               performance of your operating system (eg. Windows).
+
+   Register Usage:
+      R0 = Input flags, output length
+      R1 = Input length, output address
+      R15= Return code
+
+   GR15 has a return code:
+      0  GETMAIN ok
+      4  Conditional request unsuccessful
+
+   Abends:
+      S804  Invalid request
+      S80A  Unconditional out of memory
+
+name GETVIS LENGTH=,ADDRESS=,LOC=
+   Acquire storage (VSE only).
+   All forms map to GETMAIN R,
+   LENGTH and ADDRESS are mandatory.
+
+   Parameters map to GETMAIN as follows:
+      LENGTH=n             Maps to LV=n
+      LENGTH=(reg)         Maps to LV=(reg)
+      ADDRESS=label        Maps to A=label
+      ADDRESS=(reg)        GRreg is not a pointer, the GETMAINd area
+                           address is placed in GRreg.
+      LOC=                 Maps the same.
+
+   Register Usage:
+      R0 = Input flags, output length
+      R1 = Input length, output address
+      R15= Return code
+
+   GR15 has a return code:
+      0  GETVIS ok
+
+   Abends:
+      S804  Invalid request
+      S80A  Unconditional out of memory
+
+name FREEMAIN LV=,LA=,A=
+   Free storage.
+
+   Specify either LV= or LA=, if both are present LV= will be
+   ignored.
+
+      LV=n       Free n bytes  (maximum value of n is 2G-1)
+      LV=nK      Free nK bytes (maximum value of n is 2097151)
+      LV=nM      Free nM bytes (maximum value of n is 2047)
+      LV=label   label must be an equated value
+      LV=(reg)   Length to be freed is in GRreg
+
+      LA=label   The location of a 4-byte length
+      LA=(reg)   GRreg must point to a 4-byte length
+
+      A= is optional
+         If A= is omitted then GR1 must contain the address of the
+         storage to be freed.
+         A=label  The location of the 4-byte address of the storage to
+                  be freed.
+         A=(reg)  The 4-byte address of the storage to be freed is in
+                  GRreg.
+
+      Note: A section of a previous GETMAIN may be freed. It is the
+      programmer's responsibility to manage the resulting fragmentation.
+
+   Register Usage:
+      R0 = length
+      R1 = address
+      R15= return code
+
+   GR15 has a return code:
+      0  FREEMAIN ok
+
+   Abends:
+      S804  Invalid request
+      SA0A  Attempt to FREEMAIN an area already free
+
+name FREEVIS LENGTH=,ADDRESS=
+   Free storage (VSE only).
+   All forms map to FREEMAIN R,
+   Defaults are LENGTH=(0) and ADDRESS=(1).
+
+   Parameters map to FREEMAIN as follows:
+      LENGTH=n             Maps to LV=n
+      LENGTH=(reg)         Maps to LV=(reg)
+      ADDRESS=label        Maps to A=label
+      ADDRESS=(reg)        Maps to A=(reg)
+
+   Register Usage:
+      R0 = length
+      R1 = address
+      R15= return code
+
+   GR15 has a return code:
+      0  FREEVIS ok
+
+   Abends:
+      S804  Invalid request
+
+Change Summary
+--------------
+June 27, 2008
+   Added abend SA0A to FREEMAIN
+
+January 18, 2008
+   Added abend and return code sections.
+
+September 28, 2007
+   Added VSE Macros GETVIS and FREEVIS
+   Added LOC=RES
+
+July 10, 2007
+   All macros now list possible general register usage.
+
+Author: Melvyn Maltz
+Publication date: June 23, 2008
+Z390 version: V1.4.02
+

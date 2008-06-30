@@ -405,6 +405,8 @@ private void monitor_update(){
 	 *     b.  Set r13 to save, r14 to svc 3 instr, and r15 to exit
 	 *     c.  Set stimer_exit_pending for svc 3
 	 *     d.  change PSW to r15 exit addr
+	 * 6.  If GUAM TN3270 screen active, 
+	 *     process pending typed keys    
 	 */
 	monitor_next_time = System.currentTimeMillis();
 	monitor_next_ins_count = ins_count;
@@ -494,8 +496,9 @@ public void run() {
 			try {
 				pz390.exec_pz390();
 			} catch (Exception e){
+				sz390.log_error(204,"pz390 internal system exception " + e.toString()); // RPI 861 
 				sz390.svc_abend(pz390.psw_pic_error,sz390.system_abend,true); // RPI 536
-				sz390.abort_error(204,"pz390 internal system exception " + e.toString());
+				
 			}
 		} else {
 			pz390.exec_pz390();

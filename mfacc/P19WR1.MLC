@@ -1,0 +1,28 @@
+*********************************************************************
+* Z390 MAINFRAME ASSEMBLER CODING CONTEST PROBLEM #19.
+********************************************************************* 
+*********************************************************************
+P19WR1   ZMFACC CODE,START,NAME='WERNER RAMS',RUNSYS=390
+         TRTR   EINEND(L'EIN),TRTTAB    (REVERSE TRT) 
+         BNE    SUCH010       LAST NON BLANK CHAR FOUND, ADR IN R1
+         LA     R1,EIN        ALL CHARS ARE BLANKS
+SUCH010  EQU    *
+         ST     R1,SUCHADR
+         ZMFACC CODE,END 
+         ZMFACC INPUT,START 
+EIN      DC     CL80'TEST LINE'
+EINEND   EQU    *-1
+         ZMFACC INPUT,END
+TRTTAB   DC     256X'01'      ' STOP BY ALL CHARS BUT OF BLANK
+         ORG    TRTTAB+C' '   
+         DC     X'00'
+         ORG   
+         ZMFACC OUTPUT,START
+SUCHADR  DS     F     
+         ZMFACC OUTPUT,END
+         LTORG
+*  THIS MAKES THE LAST 3 BYTES OF THE REAL ADDRESS 
+*  EQUAL TO THE RELATIVE ADDRESS IN THE .PRN-FILE
+         ORG    P19WR1+X'1000'     
+*
+         END

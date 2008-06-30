@@ -1,0 +1,35 @@
+* Exclusion list
+* All lines starting with * are ignored
+* All values with leading zeros must have them
+* File and Stream are decimal, Start and End are hex offsets from 0
+* The data must be in sequence by File and then Stream
+* Start and End are inclusive, there is a maximum of 4 ranges
+*
+* File  Stream  Start  -End  Start  -End  Start  -End  Start  -End
+  0001       1   000E  0017   0019  0023
+  0001       3   000E  0017   0019  0023
+*
+  0002       1   000E  0023
+  0002       3   000E  0023
+*
+  0003       1   0006  0010
+  0003       3   0006  0010
+*
+  0009      12   0006  0010
+  0009      15   000E  0023
+  0009      32   0006  0010
+  0009      35   000E  0023
+*
+  0013       1   0023  0030
+  0013       2   0023  0030
+  0013       3   0023  0040
+  0013       4   0023  0040
+  0013       5   0023  0040
+  0013       6   0023  0040
+  0013       7   0023  0040
+  0013      12   000F  004F
+  0013      13   000F  0035
+  0013      14   000F  004F
+  0013      15   0010  002B
+  0013      16   000F  0040
+

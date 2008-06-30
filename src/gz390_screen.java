@@ -138,7 +138,7 @@ public class gz390_screen extends JPanel implements Runnable {
         public void run() {
             while (scn_update_thread == Thread.currentThread()) {              
             	try {  // RPI 423 catch repaint exception too
-                	if (scn_ready && scn_repaint){
+            		if (scn_ready && scn_repaint){
                 		repaint();
                 		scn_repaint = false;
                 	}

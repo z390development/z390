@@ -1,0 +1,345 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+&MAPNAME DFHMDI                                                        X
+               &TYPE=,                                                 X
+               &MODE=,                                                 X
+               &LANG=ASM,                                              X
+               &CTRL=,                                                 X
+               &CURSLOC=,                                              X
+               &SIZE=(24,80),                                          X
+               &LINE=1,                                                X
+               &COLUMN=1,                                              X
+               &STORAGE=,                                              X
+               &TIOAPFX=NO
+.*
+         GBLA  &MTYPE             TYPE REQUEST
+         GBLA  &NCTRL             NO. OF OPERANDS IN CTRL
+         GBLA  &SIZEROW           NO. OF ROWS
+         GBLA  &SIZECOL           NO. OF COLUMNS
+         GBLA  &MDFALL            LENGTH OF ALL MDF'S
+         GBLA  &MDFALLC           NO. OF ALL MDF'S
+         GBLA  &MDFALLN           LENGTH OF ALL MDF FIELDS
+         GBLA  &MDFNAMD           LENGTH OF ALL NAMED MDF FIELDS
+         GBLA  &MDFNAMC           NO. OF NAMED MDF'S
+.*
+         GBLB  &MSD               MSD SPECIFIED
+         GBLB  &DEFMODE(2)        1=OUT 2=IN BOTH=INOUT (DEFAULT)
+         GBLB  &MDIMODE(2)        1=OUT 2=IN BOTH=INOUT
+         GBLB  &MSTG              1= STORAGE=AUTO
+         GBLB  &IC                IC HAS OCCURRED IN MDF SET
+.*
+         GBLC  &MSN               MAPSET NAME
+         GBLC  &MDINAME           MAP NAME
+         GBLC  &MCTRL(3)          DEFAULT CTRL OPERANDS
+         GBLC  &MCURSLC           CURSLOC
+         GBLC  &MDIORG            CURSOR POSITION LABEL
+         GBLC  &SCREEN(24*80)     POS CROSS-CHECK
+.*
+         LCLA  &I
+         LCLB  &ALRM,&FRKB,&FRST  CTRL OPTIONS FOR WCC
+         LCLC  &WCTRL(3)          ACTUAL CTRL OPERANDS
+         LCLC  &ROW               SCREEN DISPLAY
+.*
+.* ENSURE NO BAD PARMS
+         AIF   (N'&SYSLIST NE 0).BADPOSI
+.GOON05  ANOP
+.*
+.* SCREEN DISPLAY CONSTANTS
+&STARS   SETC  '   ****************************************************-
+               *************************************************'
+&MARKS1  SETC  '             1         2         3         4         5 -
+                       6         7         8         9'
+&MARKS2  SETC  '    1...+....0....+....0....+....0....+....0....+....0.-
+               ...+....0....+....0....+....0....+....0....+....'
+.*
+         AIF   (&MTYPE NE 1).NEWMDI TYPE=MAP
+         AIF   ('&MDINAME' EQ '').NEWMDI 1ST MAP
+&KMAP    SETA  K'&MDINAME
+&SPACES  SETC  '        '(1,7-&KMAP)
+         PUNCH '*'
+         PUNCH '&MDINAME.E&SPACES EQU   *'
+         PUNCH '&MDINAME.L&SPACES EQU   &MDINAME.E-&MDINAME.S'
+         AIF   (&MSTG).GOTAUTO
+         PUNCH '         ORG   &MDINAME.S'
+.GOTAUTO ANOP
+         PUNCH '*'
+         PUNCH '* * * END OF MAP DEFINITION     * * *'
+         PUNCH '*'
+         AIF   ('&TYPE' NE 'LAST').NEWMDI
+         MEXIT
+.*
+.NEWMDI  ANOP
+         AIF   (&MSD).GOTMSD
+&MAPNAME DFHMSD                                                        X
+               TYPE=&TYPE,                                             X
+               MODE=&MODE,                                             X
+               LANG=&LANG,                                             X
+               CTRL=&CTRL,                                             X
+               CURSLOC=&CURSLOC,                                       X
+               STORAGE=&STORAGE,                                       X
+               TIOAPFX=&TIOAPFX
+.*
+.GOTMSD  ANOP
+&IC      SETB  0                  RESET MAP IC FLAG
+&MDFALL  SETA  0                  RESET LENGTH OF ALL MDF'S
+&MDFALLC SETA  0                  RESET NO. OF ALL MDF'S
+&MDFALLN SETA  0                  RESET LENGTH OF ALL MDF FIELDS
+&MDFNAMD SETA  0                  RESET LENGTH OF ALL NAMED MDF FIELDS
+&MDFNAMC SETA  0                  RESET NO. OF NAMED MDF'S
+&MDIMODE(1) SETB 0                RESET MODE=OUT
+&MDIMODE(2) SETB 0                RESET MODE=IN
+         AIF   ('&MDINAME' EQ '').NODISP 1ST MAP
+         AIF   (&MTYPE EQ 1).NODISP TYPE=DSECT
+.* DISPLAY SCREEN ARRAY
+&CUTSTAR SETC  '&STARS'(1,&SIZECOL+5)
+&CUTMRK1 SETC  '&MARKS1'(1,&SIZECOL+4)
+&CUTMRK2 SETC  '&MARKS2'(1,&SIZECOL+4)
+         PUNCH '&CUTMRK1',DSNAME=&MDINAME..IMG
+         PUNCH '&CUTMRK2'
+         PUNCH '&CUTSTAR'
+&I       SETA  1                  SCREEN INDEX
+&J       SETA  1                  COL INDEX
+&K       SETA  1                  ROW COUNTER
+.COLLOOP ANOP
+&ROW     SETC  '&ROW&SCREEN(&I)'
+&I       SETA  &I+1               BUMP SCREEN INDEX
+&J       SETA  &J+1               BUMP COL INDEX
+         AIF   (&J NE &SIZECOL+1).COLLOOP
+&SPACES  SETC  ' '
+         AIF   (&K LT 10).SIZEKOK
+&SPACES  SETC  ''
+.SIZEKOK ANOP
+         PUNCH '&SPACES&K *&ROW.* &SPACES&K'
+&ROW     SETC  ''                 RESET ROW STRING
+&J       SETA  1                  RESET COL INDEX
+&K       SETA  &K+1               BUMP ROW COUNTER
+         AIF   (&K NE &SIZEROW+1).COLLOOP
+         PUNCH '&CUTSTAR'
+         PUNCH '&CUTMRK1'
+         PUNCH '&CUTMRK2'
+.NODISP  ANOP
+         AIF   ('&TYPE' NE 'LAST').CLRSCRN
+         MEXIT
+.*
+.CLRSCRN ANOP
+.* CLEAR SCREEN ARRAY
+&I       SETA  1
+.CLRLOOP ANOP
+&SCREEN(&I) SETC ' '
+&I       SETA  &I+1
+         AIF   (&I NE 1921).CLRLOOP
+         AIF   ('&MAPNAME' EQ '').BADNAME
+&MDINAME SETC  '&MAPNAME'
+.*
+.* CHECK FOR CONFLICTING TYPE
+         AIF   (&MTYPE EQ 1 AND '&TYPE' EQ 'MAP').BADTYPE
+         AIF   (&MTYPE EQ 2 AND '&TYPE' EQ 'DSECT').BADTYPE
+.*
+.* MODE OVERRIDE IS ALLOWED
+         AIF   ('&MODE' NE '').NEWMODE
+&MDIMODE(1) SETB &DEFMODE(1)
+&MDIMODE(2) SETB &DEFMODE(2)
+         AGO   .DUNMODE
+.*
+.NEWMODE ANOP
+         AIF   ('&MODE' EQ 'IN').MODEIN
+         AIF   ('&MODE' EQ 'OUT').MODEOUT
+         AIF   ('&MODE' EQ 'INOUT').MODEIO
+         AGO   .BADMODE
+.*
+.MODEIN  ANOP
+&MDIMODE(1) SETB  0               MODE=OUT
+&MDIMODE(2) SETB  1               MODE=IN
+         AGO   .DUNMODE
+.*
+.MODEOUT ANOP
+&MDIMODE(1) SETB  1               MODE=OUT
+&MDIMODE(2) SETB  0               MODE=IN
+         AGO   .DUNMODE
+.*
+.MODEIO  ANOP
+&MDIMODE(1) SETB  1               MODE=OUT
+&MDIMODE(2) SETB  1               MODE=IN
+.*
+.GOON03  ANOP
+.DUNMODE ANOP
+         AIF   ('&TIOAPFX' NE 'NO').BADTIOA
+.GOON01  ANOP
+.*
+.* CTRL OVERRIDE IS ALLOWED
+.* MANUAL SAYS OK, IBM RAISES ERROR IF IN MSD AND MDI, I DON'T
+         AIF   ('&CTRL' EQ '').DEFCTRL
+.* OVERRIDE DEFAULT CTRL
+&NCTRL   SETA  N'&CTRL            SET NO. OF OPERANDS IN CTRL
+         AIF   (&NCTRL GT 3).BIGCTRL
+&I       SETA  1
+.LPCTRL1 ANOP
+&WCTRL(&I) SETC '&CTRL(&I)'
+&I       SETA  &I+1
+         AIF   (&I GT &NCTRL).DOCTRL
+         AGO   .LPCTRL1
+.*
+.* USE DEFAULT CTRL
+.DEFCTRL ANOP
+&I       SETA  1
+.LPCTRL2 ANOP
+&WCTRL(&I) SETC '&MCTRL(&I)'
+&I       SETA  &I+1
+         AIF   (&I EQ 4).DOCTRL
+         AGO   .LPCTRL2
+.*
+.DOCTRL  ANOP
+.* ANALYSE CTRL
+&I       SETA  1
+.LCTRL   ANOP
+         AIF   ('&WCTRL(&I)' EQ '').PCTRL
+         AIF   ('&WCTRL(&I)' EQ 'FREEKB').CTFRKB
+         AIF   ('&WCTRL(&I)' EQ 'FRSET').CTFRST
+         AIF   ('&WCTRL(&I)' EQ 'ALARM').CTALRM
+         MNOTE 12,'INVALID CTRL OPTION - &WCTRL(&I)'
+         MEXIT
+.*
+.PCTRL   ANOP
+&I       SETA  &I+1
+         AIF   (&I GT 4).DUNCTRL
+         AGO   .LCTRL
+.*
+.CTFRKB  ANOP
+&FRKB    SETB  1
+         AGO   .PCTRL
+.*
+.CTFRST  ANOP
+&FRST    SETB  1
+         AGO   .PCTRL
+.*
+.CTALRM  ANOP
+&ALRM    SETB  1
+         AGO   .PCTRL
+.*
+.DUNCTRL ANOP
+.*
+.* CURSLOC OVERRIDE IS ALLOWED
+         AIF   ('&CURSLOC' EQ '').DUNCSLC
+&MCURSLC SETC  '&CURSLOC'
+.DUNCSLC ANOP
+&CURS    SETB  0
+         AIF   ('&MCURSLC' EQ 'NO').DUNMSD
+&CURS    SETB  1
+         AIF   ('&MCURSLC' EQ 'YES').DUNMSD
+         AGO   .BADCURS
+.*
+.GOON02  ANOP
+.DUNMSD  ANOP
+         AIF   (T'&SIZE(1) NE 'N').BADSIZE
+         AIF   (T'&SIZE(2) NE 'N').BADSIZE
+&SIZEROW SETA  &SIZE(1)
+&SIZECOL SETA  &SIZE(2)
+.*
+.GOON04  ANOP
+         AIF   (&MTYPE EQ 1).DSECT
+.*
+.* GENERATE PHYSICAL MAP
+.*
+         DC    AL2(26)            BMSMHLL  -- MAP DESCRIPTOR LENGTH
+&KMAP    SETA  K'&MAPNAME
+&BLANKS  SETC  '        '(1,8-&KMAP)
+         DC    C'&MAPNAME&BLANKS'        BMSMNAME -- MAP NAME
+&MDIORG  SETC  '&SYSNDX'
+&MAPNAME._&MDIORG._TOTLEN EQU *
+         DC    AL2(0)             BMSMS    -- MAP LENGTH
+&MAPNAME._&MDIORG._INPLEN EQU *
+         DC    AL2(0)             BMSMSI   -- INPUT WORK AREA LENGTH
+&MAPNAME._&MDIORG._OUTLEN EQU *
+         DC    AL2(0)             BMSMSO   -- OUTPUT WORK AREA LENGTH
+         DC    B'&MDIMODE(1)&MDIMODE(2)000000'        BMSMODE  -- IN/OU-
+               T/INOUT
+         AIF   (NOT (&ALRM OR &FRKB OR &FRST)).NULWCC
+         DC    B'11000&ALRM&FRKB&FRST'        BMSWCC   -- WRITE CONTROL-
+                CHARACTER
+         AGO   .DUNWCC
+.*
+.NULWCC  ANOP
+         DC    X'40'              BMSWCC   -- WRITE CONTROL CHARACTER
+.DUNWCC  ANOP
+.*
+&MAPNAME._&MDIORG._CURSOR EQU *
+         DC    AL2(0)             BMSCURSR -- CURSOR POSITION
+         DC    X'00'              BMSMARG  -- MAP MARGIN
+&SPACES  SETC  ' '
+         AIF   (&SIZE(1) LT 10).SIZE1OK
+&SPACES  SETC  ''
+.SIZE1OK ANOP
+         DC    AL1(&SIZE(1))            &SPACES.BMSML    -- NO. OF ROWS
+&SPACES  SETC  ' '
+         AIF   (&SIZE(2) LT 10).SIZE2OK
+&SPACES  SETC  ''
+.SIZE2OK ANOP
+         DC    AL1(&SIZE(2))            &SPACES.BMSMW    -- NO. OF COLU-
+               MNS
+&SPACES  SETC  ' '
+         AIF   (&LINE LT 10).LINEOK
+&SPACES  SETC  ''
+.LINEOK  ANOP
+         DC    AL1(&LINE)            &SPACES.BMSMSL   -- STARTING ROW N-
+               UMBER
+&SPACES  SETC  ' '
+         AIF   (&COLUMN LT 10).COLOK
+&SPACES  SETC  ''
+.COLOK   ANOP
+         DC    AL1(&COLUMN)            &SPACES.BMSMSC   -- STARTING COL-
+               UMN NUMBER
+         DC    B'0001&CURS.000'        BMSMI    -- MAP INDICATORS
+*
+         MEXIT
+.*
+.DSECT   ANOP
+.*
+.* GENERATE DSECT
+.*
+         AIF   ('&TYPE' EQ 'LAST').NOTOUT
+&KMAP    SETA  K'&MAPNAME
+&SPACES  SETC  '        '(1,7-&KMAP)
+         PUNCH '&MAPNAME.S&SPACES DS    0H                 START OF MAP-
+                DEFINITION',DSNAME=&MSN..CPY
+.NOTOUT  ANOP
+         MEXIT
+.*
+.BADNAME ANOP
+         MNOTE 12,'MAPNAME IS MISSING'
+         MEXIT
+.*
+.BADTYPE ANOP
+         MNOTE 12,'MSD AND MDI TYPE MISMATCH'
+         MEXIT
+.*
+.BADTIOA ANOP
+         MNOTE 12,'INVALID TIOAPFX -- &TIOAPFX'
+         AGO   .GOON01
+.*
+.BADCURS ANOP
+         MNOTE 12,'INVALID CURSLOC -- &CURSLOC'
+         AGO   .GOON02
+.*
+.BIGCTRL ANOP
+         MNOTE 12,'A MAXIMUM OF 3 OPERANDS ALLOWED IN CTRL'
+         MEXIT
+.*
+.BADMODE ANOP
+         MNOTE 12,'INVALID MODE -- &MODE'
+         AGO   .GOON03
+.*
+.BADSIZE ANOP
+         MNOTE 12,'INVALID SIZE -- &SIZE'
+         AGO   .GOON04
+.*
+.BADPOSI ANOP
+         MNOTE 12,'POSITIONAL OPERAND &SYSLIST(1) INVALID'
+         AGO   .GOON15
+.*
+         MEND
+

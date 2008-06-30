@@ -5,13 +5,13 @@
 .* Author - Don Higgins                                              *
 .*********************************************************************
 .* 05/06/06 RPI 308 ADD EXEC CICS SUPPORT FOR RECEIVE
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
 .*********************************************************************
          MACRO
          CICS_RECEIVE
-         GBLB  &AIDIX
+         GBLB  &PARMS_0402,&PARMS_1802
          LCLB  &NOHAND,&NOWAIT
-         LCLC  &INTO,&LENGTH
+         LCLC  &INTO,&LENGTH,&MAP,&MAPSET
 &NP      SETA  N'&SYSLIST
 &IP      SETA  0
 .PLOOP   ANOP
@@ -22,6 +22,11 @@
          AIF   ('&PARM'(1,7) EQ 'LENGTH(').LENGTH
          AIF   ('&PARM'(1,8) EQ 'NOHANDLE').NOHAND
          AIF   ('&PARM'(1,6) EQ 'NOWAIT').NOWAIT
+.* ADDED FOR MAPPING SUPPORT
+         AIF   ('&PARM'(1,4) EQ 'MAP(').MAP
+         AIF   ('&PARM'(1,7) EQ 'MAPSET(').MAPSET
+         AIF   ('&PARM'(1,8) EQ 'TERMINAL').DISCARD
+         AIF   ('&PARM'(1,4) EQ 'ASIS').DISCARD
          MNOTE 12,'BAD PARM &PARM'
          AGO   .PLOOP
 .*
@@ -41,7 +46,22 @@
 &NOWAIT  SETB  1
          AGO   .PLOOP
 .*
+.MAP     ANOP
+&MAP     SETC  '&PARM'(5,K'&PARM-5)
+         AGO   .PLOOP
+.*
+.MAPSET  ANOP
+&MAPSET  SETC  '&PARM'(8,K'&PARM-8)
+         AGO   .PLOOP
+.*
+.DISCARD ANOP
+         AGO   .PLOOP
+.*
 .ELOOP   ANOP
+         AIF   ('&MAP' EQ '' AND '&MAPSET' EQ '').NOTMAP
+         AGO   .MAPPING
+.*
+.NOTMAP  ANOP
          AIF   ('&INTO' NE '' AND '&LENGTH' NE '').EIBAID
          MNOTE 12,'BOTH INTO AND LENGTH ARE REQUIRED'
          MEXIT
@@ -59,166 +79,148 @@
          MEXIT
 .*
 .LENLABL ANOP
-         MVC   EIBFN,=X'0402'     SET EIBFN
-         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
-         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
-         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
-         CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
-         BNE   CICS_RECEIVE_&SYSNDX._NQ EXIT IF NOT
-* SEQUENTIAL TERMINAL PROCESSING
-         L     R1,TCTTEQDI        RECEIVE DCB
-         USING IHADCB,R1
-         LA    R2,CICS_RECEIVE_&SYSNDX._EODAD EODAD ADDRESS
-         ST    R2,DCBEODAD        SAVE IN DCB
-         LA    R2,CICS_RECEIVE_&SYSNDX._SYNAD SYNAD ADDRESS
-         ST    R2,DCBSYNAD        SAVE IN DCB
-         DROP  R1
-CICS_RECEIVE_&SYSNDX._NEWFILE EQU *
-         CLI   TCTTEQFO,X'FF'     INPUT FILE OPEN ?
-         BE    CICS_RECEIVE_&SYSNDX._OPOK EXIT IF IT IS
-* OPEN SEQUENTIAL FILE
-         L     R2,TCTTEQFL        R1 POINTS TO SEQ?NNNN
-         MVC   3(5,R2),=X'2120202020' MOVE EDIT WORD
-         ED    3(5,R2),TCTTEQFN   EDIT FILE NUMBER
-         MVI   3(R2),C'I'         SET INPUT FILE
-         OPEN  ((R1),INPUT)       OPEN IT
-         MVI   TCTTEQFO,X'FF'     SET OPEN
-CICS_RECEIVE_&SYSNDX._OPOK EQU *
-         LA    R2,&INTO           R2=INPUT AREA
-         SR    R14,R14            CLEAR LENGTH
-CICS_RECEIVE_&SYSNDX._GETBYTE EQU *
-         GET   (R1),(R2)          GET INPUT STREAM ONE BYTE
-         CLI   0(R2),X'0D'        IS IT CR ?
-         LA    R2,1(R2)           BUMP INPUT POINTER ANYWAY
-         LA    R14,1(R14)         BUMP BYTE COUNT
-         BNE   CICS_RECEIVE_&SYSNDX._GETBYTE
-         GET   (R1),(R2)          GET THE X'0A'
-         AHI   R14,-1             -1 FOR THE X'0D'
-         AHI   R2,-1              BACK TO CRLF
-         XC    0(2,R2),0(R2)      CLEAR CRLF
-         LR    R1,R14             SAVE LENGTH
-         B     CICS_RECEIVE_&SYSNDX._DUNGET EXIT
-*
-CICS_RECEIVE_&SYSNDX._EODAD EQU *
-         CLOSE ((R1))             CLOSE IT
-         AP    TCTTEQFN,=P'1'     INCREMENT FILE NUMBER
-         MVI   TCTTEQFO,X'00'     SET FILE CLOSED
-         B     CICS_RECEIVE_&SYSNDX._NEWFILE EXIT
-*
-CICS_RECEIVE_&SYSNDX._SYNAD EQU *
-* NO MORE SEQUENTIAL TERMINAL INPUT, REVERT TO GUI
-         MVI   TCTTETS,X'FF'      SET SHUTTERM REQUEST
-*
-CICS_RECEIVE_&SYSNDX._NQ EQU *
-         AIF   (&NOWAIT).DONOWAIT
-         TGET  &INTO,L'&INTO,ASIS
+         L     R2,=A(P0402)       LOAD PARM ADDRESS
+         USING (P0402,P0402END),R2
+         ST    DFHEIBR,P0402EIB   SET EIB ADDRESS
+         ST    TCTTEAR,P0402TCT   SET TCTTE ADDRESS
+         AIF   (&NOHAND).CLRADB
+         MVC   P0402ADB,DFHEIAID  SET AID BLOCK ADDRESS
+         AGO   .DUNADB
+.*
+.CLRADB  ANOP
+         XC    P0402ADB,P0402ADB  RESET AID BLOCK ADDRESS
+.DUNADB  ANOP
+         LA    R1,&INTO           R1=ADDRESS OF INTO
+         ST    R1,P0402INT        SET A(INTO)
+         LA    R1,L'&INTO         R1=LENGTH OF INTO
+         STH   R1,P0402INL        SET L'INTO
+         LA    R1,&LENGTH         R1=ADDRESS OF LENGTH
+         ST    R1,P0402LEN        SET A(LENGTH)
+         AIF   (&NOHAND).DOHAND
+         MVI   P0402NOH,X'00'     RESET NOHANDLE
+         AGO   .TRYWAIT
+.*
+.DOHAND  ANOP
+         MVI   P0402NOH,X'FF'     SET NOHANDLE
+.TRYWAIT ANOP
+         AIF   (&NOWAIT).DOWAIT
+         MVI   P0402NOW,X'00'     RESET NOWAIT
          AGO   .DUNWAIT
-.DONOWAIT ANOP
-         TGET  &INTO,L'&INTO,ASIS,NOWAIT
-         C     R15,=F'4'          ANY INPUT ?
-         BE    CICS_RECEIVE_&SYSNDX._02 EXIT IF NOT
+.*
+.DOWAIT  ANOP
+         MVI   P0402NOW,X'FF'     SET NOWAIT
 .DUNWAIT ANOP
-CICS_RECEIVE_&SYSNDX._DUNGET DS 0H
-         STH   R1,&LENGTH         SET RECEIVED LENGTH
-.* NOHANDLE AVOIDS CONDITION CHECKS
-         AIF   (&NOHAND).NOLENCHK
-         LA    R14,L'&INTO        R14=REQUESTED LENGTH
-         CR    R14,R1             ACTUAL LENGTH EXCEEDS REQUESTED ?
-         BNL   CICS_RECEIVE_&SYSNDX._01 EXIT IF NOT
-.* INVOKE LENGERR
-         MVI   EIBRCODE,X'E1'     SET EIBRCODE
-         MVC   EIBRESP,DFHRESP(LENGERR) SET EIBRESP=LENGERR
+         CALL  LCL0402,(P0402),MF=I CALL RECEIVE PROCESSOR
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BZ    P0402BYP_&SYSNDX   EXIT IF NONE
+* LENGERR
          DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
-         DC    AL4(CICS_RECEIVE_&SYSNDX._01) ENTPT FOR IGNORE COND
-.*
-CICS_RECEIVE_&SYSNDX._01 DS 0H
-.NOLENCHK ANOP
-.* SET EIBAID
-         MVC   EIBAID,&INTO       SET EIBAID
-.* SET EIBCPOSN IF ENOUGH DATA
-         CH    R1,=H'3'           LENGTH >= 3 ?
-         BL    CICS_RECEIVE_&SYSNDX._02 EXIT IF NOT
-* CURSOR POS TO HEX EG. C1C6, ROW 1 COL 71, POS 70 (X'46')
-         SR    R0,R0              CLEAR R0
-         LR    R1,R0              CLEAR R1
-         ICM   R0,8,&INTO+1       1ST BYTE TO TOP OF R0  C1..
-         SLL   R0,2               SHIFT OUT PARITY BITS  04..
-         SRL   R0,26              CONVERT TO 6 BIT VALUE ..01
-         ICM   R1,8,&INTO+2       2ND BYTE TO TOP OF R1  ..01/C6...
-         SLL   R1,2               SHIFT OUT PARITY BITS  ..01/18...
-         SRDL  R0,26              COMBINE TO 12-BITS     ..../...46
-         STH   R1,EIBCPOSN        SAVE IT
-CICS_RECEIVE_&SYSNDX._02 DS 0H
-.* PROCESS ANY HANDLE AID
-.* NOHANDLE AVOIDS HANDLE AID CHECKS
-         AIF   (&NOHAND).NOAIDCHK
-         USING DFHADBLK,R1
-         ICM   R1,15,DFHEIAID     ANY AID BLOCKS ?
-         BZ    CICS_RECEIVE_&SYSNDX._03 EXIT IF NONE
-CICS_RECEIVE_&SYSNDX._07 DS 0H
-         OC    AIDCHAIN,AIDCHAIN  ANY CHAIN ?
-         BZ    CICS_RECEIVE_&SYSNDX._05 EXIT IF LAST AID BLOCK
-         L     R1,AIDCHAIN        CHAIN TO NEXT AID BLOCK
-         B     CICS_RECEIVE_&SYSNDX._07 LOOP
+         DC    AL4(P0402IGN_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
 *
-CICS_RECEIVE_&SYSNDX._05 DS 0H
-         LA    R14,CICS_RECEIVE_AIDIX R14=AID INDEX
-CICS_RECEIVE_&SYSNDX._06 DS 0H
-         CLC   0(1,R14),EIBAID    OUR AID ?
-         BE    CICS_RECEIVE_&SYSNDX._04 EXIT IF IT IS
-         AHI   R14,3              BUMP POINTER
-         CLI   0(R14),X'FF'       STOPPER ?
-         BNE   CICS_RECEIVE_&SYSNDX._06 LOOP IF NOT
-         ABEND 999,DUMP           EIBAID IN ERROR
-CICS_RECEIVE_&SYSNDX._04 DS 0H
-.* TEST AID BLOCK SLOT
-         LH    R15,1(R14)         R15=AID INDEX
-         SLL   R15,2              * 4
-         LA    R15,12(R15,R1)     + 12 (HEADER+CHAIN) + ADBLK ADDRESS
-         OC    0(4,R15),0(R15)    ANY LABEL HERE ?
-         BZ    CICS_RECEIVE_&SYSNDX._03 EXIT IF NONE
-         L     R14,0(R15)         LOAD ROUTINE ADDRESS
-         BR    R14                GO TO IT
-.*
-CICS_RECEIVE_&SYSNDX._03 DS 0H
-.* ONE OFF AID INDEX GENERATION
-         AIF   (&AIDIX).MISAIDIX
-&AIDIX   SETB  1
-         B     CICS_RECEIVE_&SYSNDX._IX BRANCH ROUND AID INDEX
+P0402IGN_&SYSNDX EQU *
+* RECALL RECEIVE TO HANDLE IGNORE
+         CALL  LCL0402,(P0402),MF=I CALL RECEIVE PROCESSOR
 *
-CICS_RECEIVE_AIDIX DS 0H
-         DC    X'7D',AL2(0)       ENTER
-         DC    X'6D',AL2(1)       CLEAR
-         DC    X'6C',AL2(2)       PA1
-         DC    X'6E',AL2(3)       PA2
-         DC    X'6B',AL2(4)       PA3
-         DC    X'F1',AL2(5)       PF1
-         DC    X'F2',AL2(6)       PF2
-         DC    X'F3',AL2(7)       PF3
-         DC    X'F4',AL2(8)       PF4
-         DC    X'F5',AL2(9)       PF5
-         DC    X'F6',AL2(10)      PF6
-         DC    X'F7',AL2(11)      PF7
-         DC    X'F8',AL2(12)      PF8
-         DC    X'F9',AL2(13)      PF9
-         DC    X'7A',AL2(14)      PF10
-         DC    X'7B',AL2(15)      PF11
-         DC    X'7C',AL2(16)      PF12
-         DC    X'C1',AL2(17)      PF13
-         DC    X'C2',AL2(18)      PF14
-         DC    X'C3',AL2(19)      PF15
-         DC    X'C4',AL2(20)      PF16
-         DC    X'C5',AL2(21)      PF17
-         DC    X'C6',AL2(22)      PF18
-         DC    X'C7',AL2(23)      PF19
-         DC    X'C8',AL2(24)      PF20
-         DC    X'C9',AL2(25)      PF21
-         DC    X'4A',AL2(26)      PF22
-         DC    X'4B',AL2(27)      PF23
-         DC    X'4C',AL2(28)      PF24
-         DC    X'FF'              STOPPER
-CICS_RECEIVE_&SYSNDX._IX DS 0H
-.MISAIDIX ANOP
-         DROP  R1
-.NOAIDCHK ANOP
+         AIF   (&PARMS_0402).BYP0402
+         B     P0402BYP_&SYSNDX   EXIT
+*
+         LTORG
+*
+&PARMS_0402 SETB 1
+P0402    EQU   *
+         DC    X'0402'            FUNCTION CODE
+P0402EIB DS    AL4                EIB
+P0402TCT DS    AL4                TCTTE
+P0402ADB DS    AL4                ADBLK
+P0402INT DS    AL4                INTO
+P0402INL DS    AL2                L'INTO
+P0402LEN DS    AL4                LENGTH
+P0402NOH DS    X                  FF=NOHANDLE
+P0402NOW DS    X                  FF=NOWAIT
+P0402END EQU   *                  END MARKER
+*
+.BYP0402 ANOP
+P0402BYP_&SYSNDX DS 0H
+         DROP  R2
+         MEXIT
+.*
+.MAPPING ANOP
+         AIF   ('&MAP' NE '').MAPOK
+         MNOTE 12,'MAP IS MANDATORY'
+         MEXIT
+.*
+.MAPOK   ANOP
+         AIF   ('&LENGTH' EQ '').LENOK
+         MNOTE 12,'LENGTH NOT SUPPORTED'
+         MEXIT
+.*
+.LENOK   ANOP
+         L     R2,=A(P1802)       LOAD PARM ADDRESS
+         USING (P1802,P1802END),R2
+         ST    DFHEIBR,P1802EIB   SET EIB ADDRESS
+         ST    TCTTEAR,P1802TCT   SET TCTTE ADDRESS
+.*
+         AIF   ('&MAPSET' NE '').MSETOK
+&MAPSET  SETC  '&MAP'
+.MSETOK  ANOP
+&MAPLEN  SETA  K'&MAP
+         AIF   ('&MAP'(1,1) NE '''').BADMAP
+         AIF   (&MAPLEN LT 3 OR &MAPLEN GT 9).BADMAP
+.*
+         AIF   (T'&MAPSET EQ 'A').LOADIT
+&MAPSLEN SETA  K'&MAPSET
+         AIF   (&MAPSLEN LT 3 OR &MAPSLEN GT 9).BADMAPS
+.LOADIT  ANOP
+         EXEC  CICS LOAD PROGRAM(&MAPSET) ENTRY(R14) LENGTH(P1802MLN)
+         ST    R14,P1802MSA       SAVE MAPSET ADDRESS
+         MVC   P1802MAP,=CL7&MAP  MOVE MAPNAME
+.*
+.DUNMAP  ANOP
+&MAPANDS SETC  '&MAP'(2,&MAPLEN-2).'S'
+&MAPANDL SETC  '&MAP'(2,&MAPLEN-2).'L'
+         LA    R14,&MAPANDS       R14=MAP STRUCTURE ADDRESS
+         ST    R14,P1802DSC       SAVE IT
+         LA    R14,&MAPANDL       R14=MAP STRUCTURE LENGTH
+         STH   R14,P1802DSL       SAVE IT
+         CALL  LCL1802,(P1802),MF=I CALL RECEIVE MAP PROCESSOR
+         OC    EIBRESP,EIBRESP    ANY BAD RESPONSE ?
+         BZ    P1802IGN_&SYSNDX   EXIT IF NONE
+* MAPFAIL, INVMPSZ
+         DC    AL3(0),C'ABEND'    MARKER FOR Z390KCP ESTAE
+         DC    AL4(P1802IGN_&SYSNDX) ENTRYPOINT FOR IGNORE CONDITION
+*
+P1802IGN_&SYSNDX EQU *
+         EXEC  CICS RELEASE PROGRAM(&MAPSET)
+         AIF   (&PARMS_1802).BYP1802
+         B     P1802BYP_&SYSNDX   EXIT
+*
+         LTORG
+*
+&PARMS_1802 SETB 1
+P1802    EQU   *
+         DC    X'1802'            FUNCTION CODE
+P1802EIB DS    AL4                EIB
+P1802TCT DS    AL4                TCTTE
+P1802MSA DS    AL4                MAPSET ADDRESS
+P1802MAP DS    CL7                MAP NAME
+P1802MLN DS    XL2                MAPSET LENGTH
+P1802DSC DS    AL4                STRUCTURE ADDRESS
+P1802DSL DS    AL2                STRUCTURE LENGTH
+P1802END EQU   *                  END MARKER
+*
+P1802BYP_&SYSNDX DS 0H
+.BYP1802 ANOP
+         DROP  R2
+*
+         MEXIT
+.*
+.BADMAP  ANOP
+         MNOTE 12,'INVALID MAP NAME'
+         MEXIT
+.*
+.BADMAPS ANOP
+         MNOTE 12,'INVALID MAPSET NAME'
+         MEXIT
+.*
          MEND
+

@@ -50,6 +50,7 @@ Other macros...
 
 Copy books...
    DFHAID     Standard CICS equates for AID keys
+   DFHBMSCA   Mapping support equates
    DFHPCTUS   User transaction codes
    DFHFCTUS   User file definitions
 
@@ -98,9 +99,15 @@ Notes: You cannot override the first DATAREG value, it will always be R13
 
 VSAM Notes
 ----------
-See ZCICSVSM, Z390/CICS VSAM Guide for guidance in the setup of a
-VSAM environment. This document also contains extensions to the VSAM
+See the Z390/CICS VSAM Guide for guidance in the setup of a VSAM
+environment. This document also contains extensions to the VSAM
 facilities currently available.
+
+Basic Mapping Support
+---------------------
+The commands RECEIVE MAP, SEND MAP and SEND CONTROL are documented here.
+For general BMS documentation and the mapping macros DFHMSD, DFHMDI and
+DFHMDF see the Z390/CICS BMS Guide.
 
 Supported EXEC CICS commands (summary by type)
 ----------------------------------------------
@@ -153,9 +160,18 @@ Supported EXEC CICS commands (summary by type)
     b) DELAY INTERVAL()/TIME() FOR/UNTIL HOURS() MINUTES() SECONDS()
     c) FORMATTIME   all parameters
 
-  8) Dump Control (1C)
-     DUMP TRANSACTION DUMPCODE() COMPLETE FROM() LENGTH()/FLENGTH()
-     SEGMENTLIST()/LENGTHLIST()/NUMSEGMENTS()
+ 8) BMS (18)
+    a) RECEIVE MAP(name) MAPSET(name)
+    b) SEND MAP(name) MAPSET(name)
+       CURSOR/CURSOR() DATAONLY/MAPONLY ERASE/ERASEAUP
+       ALARM FREEKB FRSET
+    c) SEND CONTROL CURSOR/CURSOR() ERASE/ERASEAUP
+       ALARM FREEKB FRSET
+
+ 9) Dump Control (1C)
+    DUMP TRANSACTION DUMPCODE() COMPLETE
+    FROM() LENGTH()/FLENGTH()
+    SEGMENTLIST() LENGTHLIST() NUMSEGMENTS()
 
 Supported EXEC CICS commands (detail by type)
 ---------------------------------------------
@@ -1140,9 +1156,110 @@ Supported EXEC CICS commands (detail by type)
        Conditions (RESP/RESP2)
           INVREQ/1
 
- 8) Dump Control (1C)
-    DUMP TRANSACTION DUMPCODE() COMPLETE FROM() LENGTH()/FLENGTH()
-    SEGMENTLIST()/LENGTHLIST()/NUMSEGMENTS()
+ 8) BMS (18)
+    a) RECEIVE MAP(name) MAPSET(name)
+
+       TERMINAL and ASIS are accepted and discarded.
+       INTO, SET, FROM and LENGTH are not supported.
+
+       MAP is mandatory and must be a quoted string with a maximum of
+       7 characters.
+
+       MAPSET can be a quoted string, maximum 7 characters. or an
+       address pointing to an 8-byte field containing no more than
+       7 characters.
+       If MAPSET is omitted, then the MAPname is used.
+
+       Errors
+          BAD PARM
+          INVALID MAP NAME
+          INVALID MAPSET NAME
+          LENGTH NOT SUPPORTED
+          MAP IS MANDATORY
+
+       Conditions (RESP/RESP2)
+       Note: EIBRESP2 is an extension for MAPFAIL, please see the
+             Z390/CICS BMS Guide for more information.
+
+             Many of the conditions can arise through a mismatch of
+             map and structure. Typically a map is re-assembled but
+             the programs using it are not.
+
+          INVMPSZ/0
+
+          MAPFAIL/1  The map cannot be found in the mapset.
+          MAPFAIL/2  A short read key (CLEAR or PA) has been pressed
+                     or there are no modified fields.
+          MAPFAIL/3  Data has been received, but there are no named
+                     fields in the map.
+          MAPFAIL/4  An SBA has been located, but there is no field
+                     in the map that matches.
+          MAPFAIL/5  An SBA has been located, but it matches an unnamed
+                     field.
+          MAPFAIL/6  The data received for this field is longer than
+                     the DFHMDF LENGTH= parameter.
+          MAPFAIL/7  There has been a mismatch between the physical
+                     map and the DSECT.
+          MAPFAIL/8  Data to be processed by PICIN is over 31 digits or
+                     is not numeric after being PACKed.
+
+    b) SEND MAP(name) MAPSET(name)
+       CURSOR/CURSOR() DATAONLY/MAPONLY ERASE/ERASEAUP
+       ALARM FREEKB FRSET
+
+       TERMINAL and WAIT are accepted and discarded.
+       ACCUM, FROM and LENGTH are not supported.
+
+       MAP is mandatory and must be a quoted string with a maximum of
+       7 characters.
+
+       MAPSET can be a quoted string, maximum 7 characters. or an
+       address pointing to an 8-byte field containing no more than
+       7 characters.
+       If MAPSET is omitted, then the MAPname is used.
+
+       Errors
+          BAD PARM
+          CONTROL IS NOT COMPATABLE WITH SEND MAP
+          CURSOR POSITION AND SYMBOLIC CURSOR SPECIFIED
+          DATAONLY AND MAPONLY SPECIFIED
+          ERASE AND ERASEAUP SPECIFIED
+          FROM NOT SUPPORTED
+          INVALID MAP NAME
+          INVALID MAPSET NAME
+          LENGTH NOT SUPPORTED
+          MAP IS MANDATORY
+
+       Conditions (RESP/RESP2)
+       Note: EIBRESP2 is an extension for MAPFAIL, please see the
+             Z390/CICS BMS Guide for more information.
+
+          INVMPSZ/0
+
+          MAPFAIL/1  The map cannot be found in the mapset.
+          MAPFAIL/8  Data to be processed by PICOUT is over 31 digits or
+                     is not numeric after being PACKed.
+
+    c) SEND CONTROL CURSOR/CURSOR() ERASE/ERASEAUP
+       ALARM FREEKB FRSET
+
+       TERMINAL and WAIT are accepted and discarded.
+       ACCUM and SET are not supported.
+
+       CURSOR() refers to the 24x80 screen.
+       CURSOR is not documented.
+          SEND CONTROL CURSOR ERASEAUP means erase all input fields
+          and don't move the cursor.
+
+       Errors
+          BAD PARM
+          CURSOR POSITION AND SYMBOLIC CURSOR SPECIFIED
+          ERASE AND ERASEAUP SPECIFIED
+
+ 9) Dump Control (1C)
+    DUMP TRANSACTION DUMPCODE() COMPLETE
+    FROM() LENGTH()/FLENGTH()
+    SEGMENTLIST() LENGTHLIST() NUMSEGMENTS()
 
     TRANSACTION is mandatory.
 
@@ -1193,16 +1310,24 @@ Appendicies
 -----------
 
 Keypress information
-   Aid        Press
-   -----      -----
-   ENTER      Enter or Return
-   CLEAR      CTRL+C
-   PA1-PA3    CTRL+F1 to CTRL+F3
-   PF1-PF12   F1 to F12
-   PF13-PF24  CTRL+ALT+F1 to CTRL+ALT+F12
+   Aid/Function  Press
+   ------------  -----
+   ENTER         Enter or Return
+   CLEAR         CTRL+C
+   PA1-PA3       CTRL+F1 to CTRL+F3
+   PF1-PF12      F1 to F12
+   PF13-PF24     CTRL+ALT+F1 to CTRL+ALT+F12
+
+   ERASE EOF     CTRL+F6
+   ERASE INPUT   CTRL+F7
 
 Change Summary
 --------------
+June 27, 2008
+   Added ERASE EOF and ERASE INPUT to the keypress table
+   Added commands RECEIVE MAP, SEND MAP, SEND CONTROL and references
+   to the new BMS document.
+
 January 18, 2008
    Added READ/STARTBR/RESETBR parameters:
       RRN, GTEQ, EQUAL, GENERIC, KEYLENGTH
@@ -1221,7 +1346,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: January 18, 2008
-Z390 version: V1.3.08h
-Z390/CICS version: V4
+Shipping Date: June 27, 2008
+Z390 version: V1.4.02
+Z390/CICS version: V5
 

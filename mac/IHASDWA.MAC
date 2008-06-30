@@ -1,0 +1,42 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/01/06 RPI 305 - define DSECT for ESTAE PIE control block    
+.* 06/21/08 RPI 845 - change name from ESTAD.NAC to IHAESTA.MAC       
+.*                    and redefine fields for z/OS compatibility
+.*                    Note ESTAPSW and ESTAG64 removed as only
+.*                    restart request allowed via R15=4, R0=restart
+.* 06/22/08 RPI 845 - add IHASDWA passed to ESTAE exit in R1 for  
+.*                    access to SDWAEC1 EC PSW and SDWAG64 regs 
+.*                    in SDWARC4 extension.
+.*********************************************************************
+.* SYSTEM DIAGNOSTIC WORK AREA PASSED TO ESTA EXIT IN R1
+.*  1.  Abend code stored in SDWAABSS
+.*  2.  PSW at abend stored in SDWAEC1 
+.*  3.  16 - 64 bit GPR regs stored in SDWAG64 in SDWARC4 extension
+.*  4.  For restart set R0 to new PSW address, and R15=4 
+.*  5.  All GPR's are restored from SDWAG64 on restart.
+.*********************************************************************
+         MACRO
+         IHASDWA
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'IHASDWA NSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+SDWA     DSECT
+SDWAPARM DS    A    ESTAE PARM ADDRESS
+SDWAABSS DS    0BL4 COMPLETION CODE
+SDWACMPF DS    B    COMPLETION CODE FLAGS
+SDWACMPC DS    BL3  COMPLETION CODE (FIRST 12 BITS SYS,LAST 12 USER)
+         ORG   SDWA+X'68'
+SDWAEC1  DS    XL8  EXTENDED CONTROL PSW AT ERROR
+         ORG   SDWA+X'170'
+SDWAXPAD DS    A    ADDR OF POINTERS EXTENSION SDWAPTRS
+SDWAPTRS DSECT
+         ORG   SDWAPTRS+X'18'
+SDWAXEME DS    A    ADDR OF 64 BIT REGISTER INFO
+SDWARC4  DSECT
+SDWAG64  DS    16XL8 16 - 64 BIT GPRS AT ERROR
+         MEND

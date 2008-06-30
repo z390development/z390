@@ -4,12 +4,15 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
 .*********************************************************************
          MACRO
          DFHPCT &TYPE=,&TRANSID=,&PROGRAM=
 .* TABLE OF TRANSIDS AND INITIAL PROGRAMS
-
+         GBLB  &ENTRY,&FINAL
+         AIF   (&ENTRY).BYPOPSN
+END      OPSYN DFHPEND
+.BYPOPSN ANOP
          AIF   ('&TYPE' EQ 'ENTRY').ENTRY
          AIF   ('&TYPE' EQ 'FINAL').FINAL
          MNOTE 12,'INVALID TYPE - &TYPE'
@@ -20,15 +23,31 @@
          AIF   (K'&TRANSID GT 4).ERR1
          AIF   (K'&PROGRAM EQ 0).ERR2
          AIF   (K'&PROGRAM GT 8).ERR2
+         AIF   (&FINAL).BADENT
+&ENTRY   SETB  1
          DC    CL4'&TRANSID',CL8'&PROGRAM'
          MEXIT
 .*
 .FINAL   ANOP
+         AIF   (NOT &ENTRY).BADFIN1
+         AIF   (&FINAL).BADFIN2
+&FINAL   SETB  1
          DC    X'FF'              STOPPER
          MEXIT
 .*
 .ERR1    MNOTE 12,'TRANSID MISSING OR TOO LARGE'
          MEXIT
+.*
 .ERR2    MNOTE 12,'PROGRAM MISSING OR TOO LARGE'
          MEXIT
+.*
+.BADENT  MNOTE 12,'TYPE=ENTRY OCCURS AFTER TYPE=FINAL'
+         MEXIT
+.*
+.BADFIN1 MNOTE 12,'TYPE=FINAL WITHOUT PRECEDING TYPE=ENTRY'
+         MEXIT
+.*
+.BADFIN2 MNOTE 12,'MORE THAN ONE TYPE=FINAL'
+         MEXIT
          MEND
+

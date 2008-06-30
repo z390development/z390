@@ -65,6 +65,8 @@
 *          7) ALIGN REGS ON 16 BYTE BOUNDARY TO ELIM. HLASM WARNING
 * 06/09/08 RPI 859 move MVCOS updated test to TESTINS3 removing overlap
 *          2) Set R0 to 7 for STFLE  store faciliies.
+* 06/17/08 RPI 845 change EPIED to IHAEPIE (NOTE ESPIEPSW OFFSET CHG)      
+* 06/21/08 RPI 845 change ESTAD to IHASDWA and remove ESTAPSW ref.                                 
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -80,16 +82,15 @@ TESTINS2 RT1   MAIN
          EQUREGS
 ESPIE_EXIT DS  0H
          USING *,R15
-         USING IHAEPIE,R1
-         L     R0,EPIEPARM
+         USING EPIE,R1         RPI 845 NEW DSECT NAME
+         L     R0,EPIEPARM                            
          ST    R0,EPIEPSW+4
          BR    R14
          DROP  R15,R1
 ESTAE_EXIT DS  0H
          USING *,R15
-         USING IHAESTA,R1
-         L     R0,ESTAPARM
-         ST    R0,ESTAPSW+4
+         USING SDWA,R1
+         L     R0,SDWAPARM     RPI 845 USE SDWA PARM VS ESTAD
          LA    R15,4   REQUEST RESTART RPI 636
          BR    R14
          DROP  R15,R1
@@ -5004,7 +5005,7 @@ DP1      ESPIE RESET
          WTO   'ESPIE FOR PACKED DIVIDE OK'
 * END
          RT1   END
-         EPIED
-         ESTAD
+         IHAEPIE         
+         IHASDWA
          END         
 

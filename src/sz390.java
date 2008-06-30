@@ -169,7 +169,9 @@ public  class  sz390 implements Runnable {
     * 04/23/08 RPI 837 update EZ390 ENDING msg only once and add to log 
     * 05/08/08 RPI 821 change CTF/CFD DF from double to big decimal   
     * 05/26/08 RPI 854 display host name on open socker server tracet 
-    *          and force test prompt on first command              
+    *          and force test prompt on first command   
+    * 06/21/08 RPI 845 remove ESTAPSW and ESTAEGPR refs.  
+    * 06/23/08 RPI 866 use get_file_name to parse LOG file name                                   
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -1199,8 +1201,8 @@ public void open_files(){
 	 * 1.  Set trace file for TRACE and TRACEALL
 	 * 2.  Open 390 and lst files
 	 */
-    	if (tz390.log_file_name.length() == 0){ // RPI 719  RPI 755
-    		tz390.log_file_name = tz390.dir_log + tz390.pgm_name + tz390.log_type;
+    	if (tz390.log_file_name.length() == 0){ // RPI 719  RPI 755    		
+    		tz390.log_file_name = tz390.get_file_name(tz390.dir_log,tz390.pgm_name,tz390.log_type); // RPI 866
     	} else {
     		tz390.log_file_name = tz390.dir_log + tz390.log_file_name + tz390.log_type;  // RPI 730
     	}
@@ -1248,7 +1250,7 @@ public void open_files(){
 		pz390.psw_amode     = pz390.estae_psw_amode;     // RPI 809
 		pz390.psw_amode_bit = pz390.estae_psw_amode_bit; // RPI 809
 		pz390.reg.position(0);
-		pz390.reg.put(pz390.mem_byte,pz390.esta_gpr,128);
+        pz390.reg.put(pz390.mem_byte,pz390.sdwa_g64,128); // RPI 845
 		if (estae_exit_rc == 4){ // RPI 636 restart at ESTAPSW
 			pz390.set_psw_loc(estae_restart_psw);  // RPI 659
 			if (tz390.opt_trace){

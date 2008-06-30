@@ -84,6 +84,7 @@ public  class  lz390 {
     * 12/27/07 RPI 770 don't search for EXTRN's if NOAUTOLINK 
     * 02/28/08 RPI 814 default search of obj+linklib for AUTOLINK 
     * 03/27/08 RPI 827 show obj file name on I/O errors      
+    * 06/23/08 RPI 866 use get_file_name to parse LST and ALIAS 390 file names 
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -487,7 +488,8 @@ private void open_files(){
 	    	tz390.trace_file_name = tz390.trace_file_name + tz390.trl_type;
 	    }
        	if (tz390.opt_list){
-            lst_file = new File(tz390.dir_lst + tz390.pgm_name + ".LST");
+       		String lst_file_name = tz390.get_file_name(tz390.dir_lst,tz390.pgm_name,tz390.lst_type); // RPI 866
+            lst_file = new File(lst_file_name);
          	try {
        	       lst_file_buff = new BufferedWriter(new FileWriter(lst_file));
        	    } catch (IOException e){
@@ -600,7 +602,7 @@ private void create_alias_390(String alias,String pgm){
 	 * named alias.390 containing ascii pgm name
 	 */
 	try {
-		alias_file_name = tz390.get_first_dir(tz390.dir_390) + alias + ".390";
+		alias_file_name = tz390.get_file_name(tz390.get_first_dir(tz390.dir_390),alias,tz390.z390_type); // RPI 866
 		alias_file = new File(alias_file_name);
 		alias_file_buff = new BufferedWriter(new FileWriter(alias_file));
 		alias_file_buff.write(pgm.toUpperCase());

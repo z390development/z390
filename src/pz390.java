@@ -265,7 +265,10 @@ public class pz390 {
      * 06/07/08 RPI 844 compatibility fixes for z9/z10 testins2
      *          1) Raise spec error for TR?? table not on dword 
      *          2) Correct TMXX for high bit mixed tests 
-     * 06/09/08 RPI 859 correct ALSI and ALGSI immediate sign extension                                                                                  
+     * 06/09/08 RPI 859 correct ALSI and ALGSI immediate sign extension 
+     * 06/17/08 RPI 845 change EPIE offsets to match z/OS
+     * 06/21/08 RPI 845 replace ESTAD.MAC with IHASDWA passed in R1 
+     * 06/23/08 RPI 866 init mem to F5 starting at mem24_start     
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -565,8 +568,8 @@ public class pz390 {
 
 	int[] psw_borrow = { -1, 0, 0, -1, 1, -1, -1, -1, 1 }; // index by psw_cc
 
-	int psw_ins_len = 0;
-
+	byte psw_ins_len = 0;
+    byte last_psw_ins_len = 0; // RPI 845
 	int opcode1 = 0;
 
 	int opcode2 = -1;
@@ -1211,7 +1214,7 @@ public class pz390 {
 
 	int zcvt_epie = zcvt_start + 0x400; // espie passed in r1
 
-	int zcvt_esta = zcvt_start + 0x500; // estae passed in r1
+	int zcvt_sdwa = zcvt_start + 0x500; // sdwa passed in r1 to ESTAE exit RPI 845
     int zcvt_comrg = zcvt_start + 0x600; // start of VSE COMRG area RPI 558
 	/*
 	 * OS/MVS compatible CVT with pointer at x'10'
@@ -1232,23 +1235,25 @@ public class pz390 {
 	 */
 	int epie_id = zcvt_epie; // C'EPIE'
 
-	int epie_parm = zcvt_epie + 4; // ESPIE PARAM addr
+	int epie_parm  = zcvt_epie + 0x04; // ESPIE PARAM addr
 
-	int epie_psw = zcvt_epie + 8; // PSW int,addr
-
-	int epie_gpr = zcvt_epie + 16; // GPR 64 bit regs R0-R15
+	int epie_psw   = zcvt_epie + 0x48; // PSW int,addr RPI 845
+    int epie_ilc   = zcvt_epie + 0x51; // RPI 845 last instruction length byte (2,4,6)
+	int epie_inc   = zcvt_epie + 0x52; // RPI 845 interruption code (2 bytes)
+    int epie_flags = zcvt_epie + 0x99; // RPI 845 set X'40' 64 bit reg flag
+	int epie_gpr   = zcvt_epie + 0xA0; // GPR 64 bit regs R0-R15 RPI 845
 
 	/*
-	 * epie fields
+	 * sdwa dsect fields (r1 at exit entry) 
 	 */
-	int esta_id = zcvt_esta; // C'EPIE'
-
-	int esta_parm = zcvt_esta + 4; // ESPIE PARAM addr
-
-	int esta_psw = zcvt_esta + 8; // PSW int,addr
-
-	int esta_gpr = zcvt_esta + 16; // GPR 64 bit regs R0-R15
-
+	int sdwa_parm = zcvt_sdwa + 0x00; // SDWA ESPIE PARAM addr
+    int sdwa_cmp  = zcvt_sdwa + 0x04; // SDWA SDWAABSS completion code FFSSSUUU RPI 845
+	int sdwa_psw  = zcvt_sdwa + 0x68; // SDWA SDWAEC1 PSW at error RPI 845
+    int sdwa_xpad = zcvt_sdwa + 0x170; // SDWA addr extensions RPI 845
+    int sdwa_ptrs = zcvt_sdwa + 0x200; // SDWA address for extensions RPI 845
+    int sdwa_xeme = sdwa_ptrs + 0x18;  // SDWA PTRS addr of SDWARC4 regs RPI 845
+    int sdwa_rc4  = zcvt_sdwa + 0x300; // SDWA RC4 registers extension RPI 834
+    int sdwa_g64  = sdwa_rc4  + 0x00;  // SDWA RC4 extension 16 - 64 bit regs at error RPI 845
 	/*
 	 * opcode lookup tables unique to ez390
 	 */
@@ -2362,6 +2367,7 @@ public class pz390 {
 		 * execute 390 code at psw_addr in mem[]
 		 */
 		psw_check = false;
+		last_psw_ins_len = 0;
 		while (!tz390.z390_abort && !psw_check) { // RPI208 run until check or													// abort
 			if (sz390.stimer_exit_request) { // RPI 323 allow opcode break on											// first stimer exit opcode
 				sz390.start_stimer_exit();
@@ -2376,7 +2382,8 @@ public class pz390 {
 					      psw_loc | int_high_bit;
 			} else {
 				trace_table_addr[trace_table_index] = psw_loc;
-			}			
+			}
+			last_psw_ins_len = psw_ins_len; // RPI 845 
 			opcode1 = mem_byte[psw_loc] & 0xff;
 			opcode2 = -1;
 			psw_check = true;
@@ -11317,8 +11324,12 @@ public class pz390 {
 		 */
 		mem.putInt(epie_id, 0xc5d7c9c5); // id=c'EPIE'
 		mem.putInt(epie_parm, espie_parm[tot_espie - 1]);
-		mem.putInt(epie_psw, psw_pic); // intterrupt
-		mem.putInt(epie_psw + 4, psw_loc); // psw addr
+		mem.putShort(epie_psw,(short) 0x07ED); // EC PSW 7=dat,I/O,ext E=key D=EMWP 
+		mem_byte[epie_psw+2] = (byte)(psw_cc_code[psw_cc] << 4 | psw_pgm_mask); // PRI 845 00ccmmmm
+		mem.putInt(epie_psw + 4, psw_loc); // EC PSW amode bit and 24/31 bit addr 
+		mem_byte[epie_ilc] = last_psw_ins_len; // RPI 845 last instruction length 2,4, 6
+		mem.putShort(epie_inc,(short)psw_pic); // RPI 845 interrupt code
+		mem_byte[epie_flags] = 0x40; // RPI 845 set 64 bit reg flag
 		mem.position(epie_gpr); // gpr64 r0-r15
 		reg.position(0); // RPI 357
 		mem.put(reg);
@@ -11338,16 +11349,20 @@ public class pz390 {
 
 	public void setup_estae_exit() { // RPI 636 used by sz390 percolate
 		/*
-		 * initialize zcvt_esta and pass addr to estae exit via r1
+		 * initialize zcvt_sdwa and pass addr to estae exit via r1
 		 */
-		mem.putInt(esta_id, 0xc5e2e3c1); // id=c'ESTA'
-		mem.putInt(esta_parm, estae_parm[tot_estae - 1]);
-		mem.putInt(esta_psw, psw_pic); // intterrupt
-		mem.putInt(esta_psw + 4, psw_loc); // psw addr
-		mem.position(esta_gpr); // gpr64 r0-r15
-		reg.position(0); // RPI 357
-		mem.put(reg);
-		reg.putInt(r1, zcvt_esta); // r1 = epie
+		mem.putInt(sdwa_parm,estae_parm[tot_estae - 1]); // RPI 845
+		mem.putInt(sdwa_cmp,psw_pic); // RPI 845
+		mem.putShort(sdwa_psw,(short) 0x07ED); // EC PSW 7=dat,I/O,ext E=key D=EMWP RPI 845
+		mem_byte[sdwa_psw+2] = (byte)(psw_cc_code[psw_cc] << 4 | psw_pgm_mask); // PRI 845 00ccmmmm
+        mem.putInt(sdwa_psw + 4, psw_loc); // psw addr
+        mem.putInt(sdwa_xpad,sdwa_ptrs); // addr extension ptrs RPI 845
+        mem.putInt(sdwa_xeme,sdwa_g64); // addr RC4 regsiter extension RPI 845
+        mem.position(sdwa_g64); // gpr64 r0-r15
+        reg.position(0); // RPI 357
+        mem.put(reg);
+		reg.putInt(r1, zcvt_sdwa);                 // r1 = sdwa RPI 845
+		reg.putInt(r2, estae_parm[tot_estae - 1]); // r2 = ESTAE PARM RPI 845
 		reg.putInt(r14, zcvt_exit); // r14 = exit
 		reg.putInt(r15, estae_exit[tot_estae - 1]);
 		set_psw_loc(estae_exit[tot_estae - 1]);
@@ -16100,7 +16115,7 @@ public class pz390 {
 		try {
 			mem_byte = new byte[tot_mem + 8];
 			mem = ByteBuffer.wrap(mem_byte, 0, tot_mem + 6);
-			Arrays.fill(mem_byte, psa_len, tot_mem, fill_mem_char);
+			Arrays.fill(mem_byte, mem24_start, tot_mem, fill_mem_char); // ZRPI 866
 		} catch (Exception e) {
 			set_psw_check(psw_pic_memerr);
 		}

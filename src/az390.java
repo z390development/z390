@@ -311,7 +311,8 @@ public  class  az390 implements Runnable {
         * 05/05/08 rpi 846 sync stats with mz390 
         * 05/10/08 RPI 821 switch DH from double to BigDecimal cache 
         * 05/20/08 RPI 851 prevent recursive abort after failing ORG 
-        * 06/06/08 RPI 843 round half-even for FP constants              
+        * 06/06/08 RPI 843 round half-even for FP constants  
+        * 06/23/08 RPI 866 use get_file_name to parse PRN and BAL file names            
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -1283,7 +1284,8 @@ private void open_files(){
        		}
        	}
        	if (tz390.opt_list){
-            prn_file = new File(tz390.dir_prn + tz390.pgm_name + tz390.prn_type);
+       		String prn_file_name = tz390.get_file_name(tz390.dir_prn,tz390.pgm_name,tz390.prn_type); // RPI 866
+            prn_file = new File(prn_file_name);
          	try {
        	       prn_file_buff = new BufferedWriter(new FileWriter(prn_file));
        	    } catch (IOException e){
@@ -3238,7 +3240,8 @@ private void load_bal(){
 	 *     continuation must start at position 16.
 	 */
 	    if (!mz390_call){ // RPI 415
-	    	bal_file = new File(tz390.dir_bal + tz390.pgm_name + tz390.pgm_type);
+       		String bal_file_name = tz390.get_file_name(tz390.dir_bal,tz390.pgm_name,tz390.pgm_type); // RPI 866
+	    	bal_file = new File(bal_file_name);
      	    try {
      	    	bal_file_buff = new BufferedReader(new FileReader(bal_file));
      	    } catch (IOException e){

@@ -4,7 +4,7 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
 .*********************************************************************
          MACRO
          CICS_DELAY
@@ -77,10 +77,10 @@
          AIF   ('&HOURS'  NE '' AND NOT(&FOR OR &UNTIL)).BADHMS2
          AIF   ('&MINS'   NE '' AND NOT(&FOR OR &UNTIL)).BADHMS2
          AIF   ('&SECS'   NE '' AND NOT(&FOR OR &UNTIL)).BADHMS2
-         AIF   ((&FOR OR &UNTIL) AND '&HOURS' EQ '' AND '&MINS' EQ '' AX
+         AIF   ((&FOR OR &UNTIL) AND '&HOURS' EQ '' AND '&MINS' EQ '' A-
                ND '&SECS' EQ '').BADFUN
 .* DEFAULT SETTING IS INTERVAL(0)
-         AIF   ('&INTVAL' EQ '' AND '&TIME' EQ '' AND '&HOURS' EQ '' ANX
+         AIF   ('&INTVAL' EQ '' AND '&TIME' EQ '' AND '&HOURS' EQ '' AN-
                D '&MINS' EQ '' AND '&SECS' EQ '').DEFINT
          AGO   .PARMOK
 .*
@@ -203,11 +203,11 @@ CICS_DELAY_&SYSNDX._NOTEXP DS 0H
 .* A SINGLE PARAMETER FORMS HOURS (0-99), MINUTES (0-5999) OR
 .* SECONDS (0-359999)
 .*
-         AIF   ('&HOURS' NE '' AND '&MINS' EQ '' AND '&SECS' EQ '').ONLX
+         AIF   ('&HOURS' NE '' AND '&MINS' EQ '' AND '&SECS' EQ '').ONL-
                YH
-         AIF   ('&HOURS' EQ '' AND '&MINS' NE '' AND '&SECS' EQ '').ONLX
+         AIF   ('&HOURS' EQ '' AND '&MINS' NE '' AND '&SECS' EQ '').ONL-
                YM
-         AIF   ('&HOURS' EQ '' AND '&MINS' EQ '' AND '&SECS' NE '').ONLX
+         AIF   ('&HOURS' EQ '' AND '&MINS' EQ '' AND '&SECS' NE '').ONL-
                YS
 .* MORE THAN ONE PARM
 &ONLYH   SETB  1
@@ -346,3 +346,4 @@ CICS_DELAY_&SYSNDX._IGNORE DS 0H
 .BADFUN  MNOTE 12,'FOR/UNTIL SPECIFIED, BUT NO TIME PARMS'
          MEXIT
          MEND
+

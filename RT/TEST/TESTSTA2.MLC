@@ -6,6 +6,7 @@
 *********************************************************************
 * 06/10/07 RPI 636 TEST R15=0 FOR PERCOLATE AND CANCEL LINKS
 * 07/18/07 RPI 659 TEST RESTART EXIT WITH R15=4 AND R0=NEW RESTART PSW
+* 06/22/08 RPI 845 CHANGE ESTAE EXIT TO USE R1=SDWA, R2=ESAEPARM        
 *********************************************************************
          TITLE 'TESTSTA2 - TEST ESTAE EXIT RESTART AND PERCOLATE'
 TESTSTA2 SUBENTRY
@@ -32,11 +33,11 @@ EXIT     DS    0H
 * AFTER REMOVING TESTSTA3 FROM LINK STACK
 *
          USING *,R15
-         USING IHAESTA,R1
-         L     R0,ESTAPARM
+         USING SDWA,R1
          WTO   'TESTSTA2 ESTAE EXIT REQUESTING RESTART'
-         LA    R15,4          RESTART CURRENT TASK AT ESTAPSW DSH
+         LR    R0,R2          REQUEST RESTART TASK AR ESAEPARM ADDR
+         LA    R15,4          REQUEST RESTART CURRENT TASK AT (R0)
          BR    R14
-         ESTAD
+         IHASDWA
          EQUREGS
          END         

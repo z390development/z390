@@ -9,6 +9,7 @@
 * 11/10/06 RPI 475 TEST ESTAE EXIT,CT,PARAM=RESTART                     
 * 06/10/07 RPI 636 REQUIRE R15=4 FOR RESTART, R15=0 FOR PERCOLATE       
 * 07/18/07 RPI 659 TEST RESTART WITH R15=4 AND R0=RESTART PSW           
+* 06/22/08 RPI 845 CHANGE ESTAE EXIT TO USE R1=SDWA, R2=ESAEPARM        
 *********************************************************************
          TITLE 'TESTSTA1 - TEST ESTAE'
 TESTSTA1 SUBENTRY
@@ -32,11 +33,11 @@ RESTART3 WTO   'TESTSTA1 RESTART3 SUCCESSFUL'
          DROP
 EXIT     DS    0H
          USING *,R15
-         USING IHAESTA,R1
-         L     R0,ESTAPARM
-         LA    R15,4          RESTART CURRENT TASK AT ESTAPSW DSH
+         USING SDWA,R1        SYSTEM DIAGNOSTIC WORK AREA 
+         LR    R0,R2          SET RESTART ADDRESS TO ESTAPARM ADDR
+         LA    R15,4          REQUEST RESTART CURRENT TASK AT (R0)
          BR    R14
 COUNT    DC    P'0'
-         ESTAD
+         IHASDWA 
          EQUREGS
          END         

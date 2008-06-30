@@ -4,7 +4,7 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
 .*********************************************************************
          MACRO
          CICS_ASKTIME
@@ -48,3 +48,4 @@ CICS_ASKTIME_&SYSNDX._BYP EQU *
 .DUNASK  ANOP
          MEXIT
          MEND
+

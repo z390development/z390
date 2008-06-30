@@ -1,0 +1,61 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+.* 05/01/06 RPI 305 - define DSECT for ESPIE PIE control block    
+.* 06/17/08 RPI 845 - rename from EPIED to IHAEPIE macro and change
+.*          offsets to be z/OS compatible with 64 bit reg flag on.
+.*********************************************************************
+         MACRO
+         IHAEPIE
+         AIF   (N'&SYSLIST EQ 0).NPOK
+         MNOTE 12,'IHAEPIE UNSUPPORTED OPERANDS - &SYSLIST(1)'
+.NPOK    ANOP
+.*
+.*  ESPIE EXTENDED PROGRAM INTERRUPTION ELEMENT (EPIE)            
+.*  
+.*  ESPIE EXIT MUST MODIFY PSW AND ANY REGS BEFORE BR 14 EXIT
+.*
+EPIE     DSECT
+EPIEEPIE DS    CL4   C'EPIE'
+EPIEPARM DS    A     A(PARAM PASSED AT ESPIE OR 0)
+         DS    16F   32 bit regs not used by z390 (see EPIEG64)
+EPIEPSW  DS    0XL8  (OLD PSW  (EC 24/31 BIT ONLY)
+EPIEEMK1 DS    X     PSW MASK      
+EPIEMWP1 DS    X     PSW KEY AND MWP
+EPIECCPM DS    X     PSW CONDITION CODE AND PGM MASK                                          
+         DS    X     RESERVED                                                        
+EPIENXT1 DS    0F    PSW 31 BIT ADDR NEXT INSTRUCTION                                               
+EPIEAMF1 DS    X     PSW ADDRESS HIGH BYTE WITH AMODE BIT         
+EPIEMOD1 EQU   X'80' PSW 31 BIT AMODE BIT                  
+EPIEADD1 DS    XL3   PSW 24 BIT ADDRESSS OF NEXT INSTRUCTION 
+EPIEINT  DS    0XL4  PROGRAM INTERRUPTION INFO                                            
+EPIEIRSV DS    XL1   RESERVED                      
+EPIEILC1 DS    B     INSTRUCTION LENGTH BYTE     
+EPIEIL1  EQU   X'06' INSTRUCTION LENGTH MASK (2, 4, 6 LENGTH)                               
+EPIEINC1 DS    0CL2  INTERRUPTION CODE
+         ORG   EPIE+X'99'
+EPIEFLGS DS    XL1   EPIE OPTION FLAGS  
+EPIEUP64 EQU   X'40' USE 64 BIT REGS INSTEAD OF 32 BIT      
+         DS    XL6   RESERVED
+EPIEG64   DS   0D               
+EPIEG6400 DS   D 
+EPIEG6401 DS   D 
+EPIEG6402 DS   D 
+EPIEG6403 DS   D 
+EPIEG6404 DS   D 
+EPIEG6405 DS   D 
+EPIEG6406 DS   D 
+EPIEG6407 DS   D 
+EPIEG6408 DS   D 
+EPIEG6409 DS   D 
+EPIEG6410 DS   D 
+EPIEG6411 DS   D 
+EPIEG6412 DS   D 
+EPIEG6413 DS   D 
+EPIEG6414 DS   D 
+EPIEG6415 DS   D 
+EPIELEN  EQU   *-EPIE  
+         MEND

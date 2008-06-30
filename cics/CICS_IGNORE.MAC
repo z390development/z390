@@ -4,7 +4,7 @@
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
 .*********************************************************************
-.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
+.* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY
 .*********************************************************************
          MACRO
          CICS_IGNORE
@@ -56,6 +56,9 @@ CICS_IGNORE_&SYSNDX._01 DS 0H
 &CONDS(26) SETC 'ITEMERR'
 &CONDS(27) SETC 'PGMIDERR'
 &CONDS(31) SETC 'EXPIRED'
+&CONDS(36) SETC 'MAPFAIL'
+&CONDS(38) SETC 'INVMPSZ'
+&CONDS(40) SETC 'OVERFLOW'
 &CONDS(44) SETC 'QIDERR'
 &CONDS(84) SETC 'DISABLED'
 .*
@@ -89,3 +92,4 @@ CICS_IGNORE_&SYSNDX._01 DS 0H
          DROP  R1
          MEXIT
          MEND
+

@@ -30,6 +30,7 @@
 *                  1.  CSDTR FIX FOR HIGH DIGIT 0 IF NEGATIVE
 *                  2.  SRDT/SLDT/SRXT/SLXT INCORRECT FOR EXP > 0                        
 * 03/13/08 RPI 820 TEST IEEE DIV,OVF,UNF EXCEPTION HANDLING 
+* 06/20/08 RPI 845 CHANGE EPIED TO IHAEPIE                          
 *********************************************************************
          MACRO
 &N       CLCED &S1,&S2
@@ -95,7 +96,7 @@ TDGMIN   EQU   X'001' TEST DFP DATA GROUP MINUS INFINITY OR NAM
          EQUREGS REGS=FPR
 ESPIE_EXIT DS  0H
          USING *,R15
-         USING IHAEPIE,R1
+         USING EPIE,R1
          L     R0,EPIEPARM
          ST    R0,EPIEPSW+4
          BR    R14
@@ -1498,5 +1499,5 @@ SXTR1    ESPIE RESET
 * END OF TESTS
 *
          RT1   END
-         EPIED
+         IHAEPIE
          END         

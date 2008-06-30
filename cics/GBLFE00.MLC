@@ -1,0 +1,107 @@
+GBLFE00  SUBENTRY
+*
+* FN=FE00  CEMT I TER REQUESTED
+*
+* FN=FE00  THRDCNTL SENT BACK
+*
+*         +0/DSCT +4/DSECT  +8      +12       +16      +20/ABS
+* R1  >>> WTOMSG, REQDSECT, MSGLEN, MSGDATA+9,THRDCNTL,THRDLEN*11,
+*         +24/IND +28      +32
+*         CONNID, TRCEZ390,TRMPREFX
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SAVE PARM POINTER
+         L     R4,28(R3)          TRCEZ390 ADDRESS
+         MVC   TRCEZ390,0(R4)     MOVE IT
+         L     R5,4(R3)           REQDSECT ADDRESS
+         USING REQDSECT,R5
+         L     R9,0(R3)           WTODSECT ADDRESS
+         USING WTODSECT,R9
+         MVC   WTOTERM,REQTERM    SET TERMID
+         MVC   WTOTRAN,REQTRAN    SET TRANSID
+         MVI   WTOTYPE,C' '       NO TRANSID TYPE
+         UNPK  WTOTASKN,REQTASKN  UNPACK TASK NUMBER
+         OI    WTOTASKN+6,X'F0'   CLEAR SIGN
+         MVC   WTODESC,=CL45'<<<Z390KCP CEMT I TER REQUEST'
+         MVI   CICSTIND,C'A'      SET APPLICATION TYPE
+* MODIFIED CICSTRCE
+         CLI   TRCEZ390,C'N'      NO TRACING ?
+         BE    CICSTRDN           EXIT IF IT IS
+         CLI   TRCEZ390,C'Y'      ALL TRACING ?
+         BE    CICSTRGO           TRACE IF IT IS
+         CLC   TRCEZ390,CICSTIND  TRACE TYPE=TRACE REQUEST ?
+         BNE   CICSTRDN           EXIT IF NOT
+CICSTRGO EQU   *
+         TIME  DEC,TIME,LINKAGE=SYSTEM GET TIME
+         MVO   TIMEPACK,TIME      MOVE TO PACKED FIELD
+         MVC   TIMEHERE(13),TIMEEDIT MOVE EDIT WORD
+         ED    TIMEHERE(13),TIMEPACK EDIT TIME
+         MVC   WTOTIME,TIMEHERE   SET TIME
+         WTO   MF=(E,WTOMSG)      TRACE IT
+         DROP  R9
+*
+CICSTRDN DS    0H
+         L     R4,12(R3)          ADDRESS MSGDATA+9
+         L     R6,20(R3)          R6=THRDLEN*11
+         L     R7,16(R3)          ADDRESS THRDCNTL
+         BCTR  R6,0               -1 FOR EX
+         EX    R6,EXMVC           MOVE THREAD DATA
+         L     R7,32(R3)          ADDRESS TRMPREFX
+         LA    R4,1(R4,R6)        ADDRESS MSGDATA+9+(THRDLEN*11)
+*        MVC   MSGDATA+9+THRDLEN*11(3),TRMPREFX MOVE TERM PREFIX
+         MVC   0(3,R4),0(R7)      MOVE TERM PREFIX
+*        L     R8,CONNID          R8=CONN ID
+         L     R8,24(R3)          R8=CONN ID ADDRESS
+         L     R8,0(R8)           R8=CONNID
+         L     R7,8(R3)           ADDRESS MSGLEN
+         TCPIO SEND,MSG=(R7),LMSG=200,CONN=(R8),PORT=3900
+         LTR   R15,R15            CHECK RC ?
+         BNZ   ABEND780           EXIT IF BAD
+         SUBEXIT
+*
+ABEND780 ABEND 780                TCPIO SEND FAILED
+*
+*        MVC   MSGDATA+9(THRDLEN*11),THRDCNTL MOVE THREAD DATA
+EXMVC    MVC   0(0,R4),0(R7)      MOVE THREAD DATA
+CICSTIND DS    C                  TRACE TYPE INDICATOR
+TRCEZ390 DS    C                  Z390 TRACE OPTION
+*
+* TIME CONVERSION FIELDS
+*
+TIME     DS    CL4                HHMMSSTT
+         DS    CL8                SPACE FOR DATE
+TIMEPACK DC    PL5'0'             0HHMMSSTTC
+TIMEEDIT DC    X'402021207A20207A20204B2020'
+TIMEHERE DS    CL13
+*
+* RECEIVE MESSAGE AREA
+*
+REQDSECT DSECT
+         DS    AL4                REQUEST LENGTH
+         DS    CL4                REQUEST CODE
+REQTERM  DS    CL4                TERMINAL ID
+REQTRAN  DS    CL4                TRANSID
+         DS    C                  TRANSID TYPE
+REQTASKN DS    PL4                TASK NO
+*
+* WTO AREA DSECT
+*
+WTODSECT DSECT
+WTOMSG   DS    AL4
+WTOTIME  DS    CL13               TIME STAMP
+         DS    C
+         DS    CL4                MODULE/FUNCTION REFERENCE (EIBFN)
+         DS    C
+WTOTERM  DS    CL4                TERMID
+         DS    C
+WTOTRAN  DS    CL4                TRANSID (OR BLANK)
+         DS    C
+WTOTYPE  DS    C                  TRANSID TYPE
+         DS    C
+WTOTASKN DS    CL7                TASK NUMBER
+         DS    C
+WTODESC  DS    CL45               DESCRIPTION
+*
+         EQUREGS
+*
+         END
+

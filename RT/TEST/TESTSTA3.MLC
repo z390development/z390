@@ -6,6 +6,8 @@
 *********************************************************************
 * 06/10/07 RPI 636 TEST R15=0 FOR PERCOLATE IN TESTSTA2
 * 07/18/07 RPI 659 TEST RESTART R15=0 WITH NEW R0=NEW RESTART PSW
+* 06/21/08 RPI 845 change ESTAD to IHAEPIE and remove ESTAPSW ref.                                 
+* 06/22/08 RPI 845 CHANGE ESTAE EXIT TO USE R1=SDWA, R2=ESAEPARM        
 *********************************************************************
          TITLE 'TESTSTA3 - TEST ESTAE RESTART AND PERCOLATE'
 TESTSTA3 SUBENTRY
@@ -21,16 +23,16 @@ RESTART1 BALR  R2,0
 ABEND2   DC    X'0002'
 EXIT     EQU   *
          USING *,R15
-         USING IHAESTA,R1
-         L     R3,ESTAPSW+4
+         USING SDWA,R1
+         L     R3,SDWAEC1+4  USE SDWA EC1 PSW RPI 845
          CLI   1(R3),1
          BNE   PERCOLATE
 *
 * RESTART ON FIRST ABEND IN TESTSTA3
 *
-         L     R0,ESTAPARM
          WTO   'TESTSTA3 ESTAE EXIT REQUESTING RESTART'
-         LA    R15,4
+         LR    R0,R2 SET R0 TO ESTAPARM ADDR
+         LA    R15,4 REQUEST TASK RESTART AT (R0)
          BR    R14
 PERCOLATE EQU  *         
 *
@@ -41,6 +43,6 @@ PERCOLATE EQU  *
          WTO   'TESTSTA3 ESTAE EXIT REQUESTING PERCOLATE'
          LA    R15,0
          BR    R14
-         ESTAD
+         IHASDWA
          EQUREGS
          END         

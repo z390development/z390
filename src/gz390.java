@@ -126,7 +126,9 @@ public  class  gz390
 	 *          allow field input for PF keys
 	 *          return 1 byte PA1-3 or CLEAR key 
 	 * 06/07/08 RPI 628 support WRT_EAU see cics\TESTGUI6.MLC 
-	 *          support EEOF CTRL-F6, EINP CTRL-F7                             
+	 *          support EEOF CTRL-F6, EINP CTRL-F7 
+	 * 06/16/08 RPI 861 don't send nulls, support fields with no data 
+	 * 06/23/08 RPI 850 support attr fld_attr_nd non-display                                   
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -311,18 +313,23 @@ public  class  gz390
     int tn_write_alt = 0xF1;   // tput tso write screen
     int tn_write_eau = 0x6F;   // RPI 628
     byte tn_attr_prot_text = 0x30; // protected unmodified text 
-    boolean tn_kb_lock = true; 
+    boolean tn_kb_lock = true;  // no TN3270 key input allowed
+    boolean tn_scn_lock = true; // no TN3270 key mapping to screen
     boolean tn_attn = false;
     int cur_fld_addr  = 0;
     int cur_fld_attr  = 0;
     int fld_attr_hl   = 0x08; // hl high intensity field bit
+    int fld_attr_nd   = 0x0c; // non-display RPI 850
     int cur_fld_hl    = 0;
     int cur_fld_color = 0;
+    // Array with address of all fields ascending
     int fld_tot;            // protected and unprotected
-    int fld_input_tot = 0;  // unprotected fields
     int[]  fld_addr       = new int[max_addr];
+    // Array of all input fields ascending
+    int fld_input_tot = 0;  // unprotected fields
     int[]  fld_input_addr = new int[max_addr];
-    byte[] scn_fld        = new byte[max_addr];
+    // TN3270 screen
+    boolean[] scn_fld     = new boolean[max_addr];
     int[]  scn_attr       = new int[max_addr];
     int[]  scn_hl         = new int[max_addr];
     int[]  scn_color      = new int[max_addr];
@@ -803,7 +810,7 @@ public  class  gz390
 			 log_error(7,"command error on -" + cmd_line);
 		 }
        }
-	   private void add_cmd_hist(){
+	   private void add_cmd_hist(){ 
 		   /*
 		    * add command cmd_line to rolling history
 		    */
@@ -813,6 +820,9 @@ public  class  gz390
               cur_cmd = 1;
            } else {
               last_cmd = cur_cmd;
+           }
+           if (cur_cmd >= max_cmd){
+        	   cur_cmd = 0;
            }
            cmd_history[cur_cmd] = cmd_line;
 	   }
@@ -829,9 +839,12 @@ public  class  gz390
    	   	           view_cmd = last_cmd;
    	   	       }
    	   	   }
+           if (view_cmd >= max_cmd){ 
+        	   view_cmd = 0;
+           }
    	   	   gz390_cmd_line.setText(cmd_history[view_cmd]);
 	   }
-	   private void get_next_cmd(){
+	   private void get_next_cmd(){ 
 		   /*
 		    * restore next cmd to gz390_cmd_line
 		    */
@@ -844,7 +857,10 @@ public  class  gz390
   	  	           view_cmd = 0;
   	   	       }
   	   	   }
- 	   	   gz390_cmd_line.setText(cmd_history[view_cmd]);
+  	   	   if (view_cmd >= max_cmd){
+  	   		   view_cmd = 0;
+  	   	   }
+  	   	   gz390_cmd_line.setText(cmd_history[view_cmd]);
 	   }
 	   private String get_next_parm(StringTokenizer st,boolean ignore_spaces){
 	   /*
@@ -965,7 +981,7 @@ public  class  gz390
 	    * 1.  At monitor_wait intervals, update the
 	    *     GUAM GUI title date and time and the status
 	    *     line information.
-	    * 
+	    * 2.  Update TN3270 screen from key typed buffer
 	    * 2.  reset focus to gz390_cmd_line after wto
 	    */
 		    refresh_wait = false;  // reset main_view wait
@@ -976,6 +992,9 @@ public  class  gz390
 	   	    monitor_cmd_time_total = (monitor_next_time - start_cmd_time)/1000;
    	    	cur_date = new Date();
     	    title_update();
+    		if (!tn_scn_lock){
+    			process_typed_keys(); // RPI 861		
+    		}
 	   	    check_main_view(); 
 	   	    monitor_last_time = monitor_next_time;
 	   	    monitor_last_ins_count  = monitor_next_ins_count;
@@ -1359,7 +1378,7 @@ public  class  gz390
       	 if (event_name.equals("TN3270")){
       	    if (!opt_tn3270){
         	   	set_view_screen(0,0,0);
-        	   	tn_kb_lock = false; 
+        	   	tn_kb_lock = false;
             }
       	 } 
       	 break;
@@ -1442,85 +1461,98 @@ public  class  gz390
         * Handle key pressed events
         */
            //dsh displayInfo(e, "KEY PRESSED: "); 
-           int keyCode = e.getKeyCode();
-           int keyMods = e.getModifiers();
+           int key_code = e.getKeyCode();
+           int key_mods = e.getModifiers();
            if  (e.isActionKey()){
-        	   if (tn_kb_lock){ 
-        		   if (keyCode == KeyEvent.VK_UP){
-           	   			get_prev_cmd();
+               process_action_key_pressed(key_code,key_mods,e);
+           } else {  // not action key
+        	   process_non_action_key_pressed(key_code,key_mods,e);        	   
+           }
+     	   if (key_code == KeyEvent.VK_CLEAR
+     			   || (key_code == KeyEvent.VK_C && key_mods == KeyEvent.CTRL_MASK)){
+         	  if (!tn_kb_lock){
+         	  	  tn_aid = tn_clear_code; // clear key
+         	  	  tn_attn = true;
+         	  	  tn_clear_screen(); 
+         	  }
+    	   }
+  	   }
+       private void process_action_key_pressed(int key_code,int key_mods, KeyEvent e){
+    	   /*
+    	    * process action key after
+    	    * processing any pending typed keys
+    	    */
+    	           	   process_typed_keys();
+        	   if (tn_kb_lock){
+        		   // MCS mode action keys
+            	   switch (key_code){
+            	   case KeyEvent.VK_UP:
+          	   			get_prev_cmd();
            	   			return;
-        		   }
-        		   if (keyCode == KeyEvent.VK_DOWN){
-          	   	   		get_next_cmd();
-          	   	   		return;
-        		   }
+            	   case KeyEvent.VK_DOWN:
+            		   get_next_cmd();
+             	   	   return;
+           		   }
         	   } else {
-        		   if (keyCode == KeyEvent.VK_UP){
+        		   switch (key_code){
+        		   case KeyEvent.VK_UP:
           	   			scn_addr = scn_addr - max_cols;
           	   			if (scn_addr < 0){
           	   				scn_addr = scn_addr + max_addr;
           	   			}
       	   				tn_update_cursor();
           	   			return;
-        		   }
-        		   if (keyCode == KeyEvent.VK_DOWN){
+        		   case KeyEvent.VK_DOWN:
             		    scn_addr = scn_addr + max_cols;
             		    if (scn_addr >= max_addr){
              	   			scn_addr = scn_addr - max_addr;
              	   		}
          	   			tn_update_cursor();
          	   	   		return;
-        		   }
-        		   if (keyCode == KeyEvent.VK_LEFT){
-        			   scn_addr--;
-        			   if (scn_addr < 0){
-        				   scn_addr = scn_addr + max_addr;
-        			   }
+        		   case KeyEvent.VK_LEFT:
+        			   tn_scn_addr_dec();
     				   tn_update_cursor();
         			   return;
-        		   }
-        		   if (keyCode == KeyEvent.VK_RIGHT){
-        			   	scn_addr++;
-           		    	if (scn_addr >= max_addr){
-            	   			scn_addr = 0;
-            	   		}
+        		   case KeyEvent.VK_RIGHT:
+        			   	tn_scn_addr_inc();
         	   			tn_update_cursor();
         	   	   		return;
         		   }
         	   }
-          	   if (keyMods == KeyEvent.CTRL_MASK){
-              	   if (keyCode == KeyEvent.VK_F1){ 
+          	   if (key_mods == KeyEvent.CTRL_MASK){
+          		   switch (key_code){
+          		   case KeyEvent.VK_F1: 
               		  // CTRL-F1 = PA1
                	   	  if (!tn_kb_lock){
                	   		  tn_aid = tn_pa1_code;  // PA1
                	   		  tn_attn = true;
                	   	  }
                	   	  return;
-               	   }
-              	   if (keyCode == KeyEvent.VK_F2){   
+          		   case KeyEvent.VK_F2:  
               		      // CTRL-F2 = PA2
                  	   	  if (!tn_kb_lock){
                  	   		  tn_aid = tn_pa2_code;  //PA2
                  	   		  tn_attn = true;
                  	   	  }
                  	   	  return;
-              	   }
-               	   if (keyCode == KeyEvent.VK_F3){   
+          		   case KeyEvent.VK_F3:   
                		      // CTRL-F3 = PA3
                 	   	  if (!tn_kb_lock){
                 	   		  tn_aid = tn_pa3_code;  //PA3
                 	   		  tn_attn = true;
                 	   	  }
                 	   	  return;
-             	   }
-               	   if (keyCode == KeyEvent.VK_F6){   
+          		   case KeyEvent.VK_F6:   
             		  // CTRL-F6 = EEOF erase to end of current field
-             	   	  if (!tn_kb_lock){
+             	   	  if (!tn_kb_lock
+             	   		 && tn_input_field()){
              	   		  tn_erase_to_end(); // RPI 628
+             	   		  tn_modify_field();  // RPI 861
+             	   	  } else {
+             	   		  sound_alarm_beep();
              	   	  }
              	   	  return;
-          	       }
-               	   if (keyCode == KeyEvent.VK_F7){   
+          		   case KeyEvent.VK_F7:   
        		           // CTRL-F7 = EINF erase all unprotected fields
                		   if (!tn_kb_lock){
                			   tn_erase_all_unprotected(); // RPI 628
@@ -1529,32 +1561,33 @@ public  class  gz390
                	   }
                	   return;
           	   }
-          	   if (keyMods == (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK)){ 
+          	   if (key_mods == (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK)){ 
           		   // RPI 216  CTRL-ALT-F1-12 = F13-24
-       		     if (keyCode >= KeyEvent.VK_F1
-          			   && keyCode <= KeyEvent.VK_F9){
+          		   if (key_code >= KeyEvent.VK_F1
+          			   && key_code <= KeyEvent.VK_F9){
             	   	  if (!tn_kb_lock){
-              	   		  tn_aid = 0xc1 + keyCode
+              	   		  tn_aid = 0xc1 + key_code
               	   		                    - KeyEvent.VK_F1;
               	   		  tn_attn = true;
                	   	  }
             	   	  return;
           	     }
-          	     if (keyCode >= KeyEvent.VK_F10
-          			   && keyCode <= KeyEvent.VK_F12){
+          	     if (key_code >= KeyEvent.VK_F10
+          			   && key_code <= KeyEvent.VK_F12){
             	   	  if (!tn_kb_lock){
-              	   		  tn_aid = 0x4a + keyCode 
+              	   		  tn_aid = 0x4a + key_code 
               	   		                    - KeyEvent.VK_F10;
               	   		  tn_attn = true;
                	   	  }
-            	   	  if (keyCode == KeyEvent.VK_F10){
+            	   	  if (key_code == KeyEvent.VK_F10){
             	   		  e.consume(); // RPI 630 consume Windows annoying file menu popup for PF10
             	   	  }
             	   	  return;
           	     }
           	     return;
           	   }
-          	   if (keyCode == KeyEvent.VK_F1){   // F1 help
+          	   switch (key_code){
+          	   case KeyEvent.VK_F1:   // F1 help
           	   	  if (!tn_kb_lock){
           	   		  tn_aid = 0xf1;
           	   		  tn_attn = true;
@@ -1562,15 +1595,13 @@ public  class  gz390
           	   		  help_command();
           	   	  }
           	   	  return;
-          	   }
-         	   if (keyCode == KeyEvent.VK_F2){   
+          	   case KeyEvent.VK_F2:   
             	   	  if (!tn_kb_lock){
             	   		  tn_aid = 0xf2;
             	   		  tn_attn = true;
             	   	  }
             	   	  return;
-         	   }
-          	   if (keyCode == KeyEvent.VK_F3){   // F3 exit
+          	   case KeyEvent.VK_F3:   // F3 exit
            	   	  if (!tn_kb_lock){
            	   		  tn_aid = 0xf3;
            	   		  tn_attn = true;
@@ -1580,75 +1611,79 @@ public  class  gz390
            	   	  }
            	   	  return;
         	   }
-          	   if (keyCode >= KeyEvent.VK_F4
-          			   && keyCode <= KeyEvent.VK_F9){
+          	   if (key_code >= KeyEvent.VK_F4
+          			   && key_code <= KeyEvent.VK_F9){
             	   	  if (!tn_kb_lock){
-              	   		  tn_aid = 0xf4 + keyCode
+              	   		  tn_aid = 0xf4 + key_code
               	   		                    - KeyEvent.VK_F4;
               	   		  tn_attn = true;
                	   	  }
             	   	  return;
           	   }
-          	   if (keyCode >= KeyEvent.VK_F10
-          			   && keyCode <= KeyEvent.VK_F12){
+          	   if (key_code >= KeyEvent.VK_F10
+          			   && key_code <= KeyEvent.VK_F12){
             	   	  if (!tn_kb_lock){
-              	   		  tn_aid = 0x7a + keyCode 
+              	   		  tn_aid = 0x7a + key_code 
               	   		                    - KeyEvent.VK_F10;
               	   		  tn_attn = true;
                	   	  }
-            	   	  if (keyCode == KeyEvent.VK_F10){
+            	   	  if (key_code == KeyEvent.VK_F10){
             	   		  e.consume(); // RPI 630 consume Windows annoying file menu popup for PF10
             	   	  }
             	   	  return;
           	   }
-       		   if (keyCode >= KeyEvent.VK_F13
-          			   && keyCode <= KeyEvent.VK_F21){
+       		   if (key_code >= KeyEvent.VK_F13
+          			   && key_code <= KeyEvent.VK_F21){
             	   	  if (!tn_kb_lock){
-              	   		  tn_aid = 0xc1 + keyCode
+              	   		  tn_aid = 0xc1 + key_code
               	   		                    - KeyEvent.VK_F13;
               	   		  tn_attn = true;
                	   	  }
             	   	  return;
           	   }
-          	   if (keyCode >= KeyEvent.VK_F22
-          			   && keyCode <= KeyEvent.VK_F24){
+          	   if (key_code >= KeyEvent.VK_F22
+          			   && key_code <= KeyEvent.VK_F24){
             	   	  if (!tn_kb_lock){
-              	   		  tn_aid = 0x4a + keyCode 
+              	   		  tn_aid = 0x4a + key_code 
               	   		                    - KeyEvent.VK_F22;
               	   		  tn_attn = true;
                	   	  }
             	   	  return;
-          	   }
-           } else {  // not action key
-        	   if (keyCode == KeyEvent.VK_ENTER){
-        		   if (!tn_kb_lock){
-        			   tn_attn = true;
-        			   tn_aid = tn_enter_code;
-        		   }
-        	   } else if (keyCode == KeyEvent.VK_BACK_SPACE){
-        		   if (!tn_kb_lock){
-                       if (scn_addr > 0){
-                    	   scn_addr--;
-                       } else {
-                    	   scn_addr = max_addr - 1;
-                       }
-                       tn_update_cursor();
-        		   }
-        	   } else if (keyCode == KeyEvent.VK_DELETE){ // RPI 630
-		    	   tn_delete_request = true;
-		       } else if (keyCode == KeyEvent.VK_CANCEL){
-           	   	  process_cancel_key();
-           	   }
-           }
-     	   if (keyCode == KeyEvent.VK_CLEAR
-     			   || (keyCode == KeyEvent.VK_C && keyMods == KeyEvent.CTRL_MASK)){
-         	  if (!tn_kb_lock){
-         	  	  tn_aid = tn_clear_code; // clear key
-         	  	  tn_attn = true;
-         	  	  tn_clear_screen(); 
-         	  }
-    	   }
-  	   }
+          	   }          	   
+       }
+       private void process_non_action_key_pressed(int key_code, int key_mods, KeyEvent e){
+    	   /*
+    	    *   process enter, cancel
+    	    * , backspace, and delete
+    	    * (the rest are handled by keytyped
+    	    */
+    	   switch (key_code){
+    	   case KeyEvent.VK_ENTER:
+    		   if (!tn_kb_lock){
+        		   process_typed_keys();
+    			   tn_attn = true;
+    			   tn_aid = tn_enter_code;
+    		   }
+    		   break;
+    	   case KeyEvent.VK_BACK_SPACE:
+    		   if (!tn_kb_lock){
+        		   process_typed_keys();
+                   tn_scn_addr_dec();
+                   tn_update_cursor();
+    		   }    		   
+    		   break;
+    	   case KeyEvent.VK_DELETE: // RPI 630
+    		   if (!tn_kb_lock){
+    			   process_typed_keys();
+    		   }
+    		   tn_delete_request = true; 
+	    	   break;
+    	   case KeyEvent.VK_CANCEL:
+    		  process_typed_keys();
+       	   	  process_cancel_key();
+       	   	  break;
+       	   }
+       }
        private void process_cancel_key(){
        /*
         * cancel cmd, or GUAM GUI cmd in response to
@@ -1662,120 +1697,140 @@ public  class  gz390
     	   }
        }
        public void keyTyped(KeyEvent e) {
-       /*
-        * Handle key typed events
-        */
-    //dsh displayInfo(e, "KEY TYPED: "); 
-       	  /*
-       	   * collect any characters for accept
-       	   * which are placed in gz390_cmd_line
-       	   * by accept wait loop if not there 
-       	   * already.  First accept they are there,
-       	   * but following ones not?  Hooky fix!
-       	   */
-      	   if (e.getKeyChar() == tn_tab_code){
-      		   if (!tn_kb_lock){
-      			   tn_tab();
-      		   }
-      		   return;
-      	   }
-      	   if (!tn_kb_lock 
-      			   && e.getKeyChar() != KeyEvent.VK_ENTER
-      			   && e.getKeyChar() != KeyEvent.VK_BACK_SPACE
-      			   && e.getKeyChar() != KeyEvent.VK_DELETE // RPI 630
-      			   && (e.getModifiers() & KeyEvent.CTRL_MASK) == 0){
-             if (guam_tot_key < max_keys){        	   
-        	   if (tn_input_field()){
-        		   if ((scn_attr[cur_fld_addr] & tn_numeric_mask) == tn_numeric_mask
-        				&& (e.getKeyChar() < '0'
-        						|| e.getKeyChar() > '9')){
-        			   scn_addr--;
-        			   sound_alarm();
-        			   status_line.setText(status_line_view + " Alarm - invalid key for numeric field");
-        		   } else {
-            		   tn_modify_field();
-            		   scn_fld[scn_addr] = tn_char;
-            		   scn_char[scn_addr] = e.getKeyChar();
-        		   }
-        		   tn_update_scn(scn_addr);
-        		   tn_next_input_addr();
-        		   tn_update_cursor();
-        	   } else {
-    			   scn_addr--;
-    			   sound_alarm();
-    			   status_line.setText(status_line_view + " Alarm - invalid key for protected field");
-        	   }
-             }
-    	   } else {
-    		   guam_key_code_char[guam_tot_key] = e.getKeyCode() << 16 | (int)e.getKeyChar();
-    		   guam_tot_key++;
+		/*
+		 * Handle key typed events
+		 */
+		// dsh displayInfo(e, "KEY TYPED: ");
+		/*
+		 * collect any characters for accept which are placed in gz390_cmd_line
+		 * by accept wait loop if not there already. First accept they are
+		 * there, but following ones not? Hooky fix!
+		 */
+		if (guam_tot_key < max_keys){
+			guam_key_code_char[guam_tot_key] = e.getKeyCode() << 16
+					| (int) e.getKeyChar();
+			guam_tot_key++;
+		}		
+	   }
+       public synchronized void process_typed_keys() { // RPI 861
+    	   /*
+    	    * process pending typed keys
+    	    * on monitor thread in ez390
+    	    * and for all action keys.
+    	    */
+    	   char key_char = ' ';
+    	   int index = 0;
+    	   while (index < guam_tot_key){
+    		   key_char = (char) guam_key_code_char[index];
+    		   switch (key_char){
+    		   case KeyEvent.VK_TAB:
+    			   	if (!tn_kb_lock) {
+    			   		tn_tab();
+    			   	}
+    		   		break;
+    		   case KeyEvent.VK_ENTER:
+        	   case KeyEvent.VK_BACK_SPACE:   		   
+        	   case KeyEvent.VK_DELETE: // RPI 630 
+        	   case KeyEvent.VK_CANCEL:	
+        		   // ignore keys handled in keypress
+        		   break;
+    		   default:
+    			   if (!tn_kb_lock){
+    				   if (tn_input_field()) {
+    					   if ((scn_attr[cur_fld_addr] & tn_numeric_mask) == tn_numeric_mask
+    						   && (key_char < '0' || key_char > '9')) {
+    						   sound_alarm_beep();
+    						   status_line.setText(status_line_view
+    							   + " Alarm - invalid key for numeric field");
+    						   guam_tot_key = 0;
+    						   return; 
+    					   } else {
+    						   tn_modify_field();
+    						   scn_char[scn_addr] = key_char;
+    					   }
+    					   tn_update_scn(scn_addr);
+    					   tn_next_input_addr();
+    					   tn_update_cursor();
+    				   } else {
+    					   sound_alarm_beep();
+    					   status_line.setText(status_line_view
+    						   + " Alarm - invalid key for protected field");
+    					   guam_tot_key = 0;
+    					   return;
+    				   }
+    			   } else {
+    		   		   sound_alarm_beep();
+    		   		   status_line.setText(status_line_view
+    					   + " Alarm - keyboard locked");
+    		   		   guam_tot_key = 0;
+    		   		   return;
+    			   }
+    		   }
+    		   index++;
     	   }
+    	   guam_tot_key = 0;
        }
        public void keyReleased(KeyEvent e) {
-       /* 
-        * Handle key released events
-        */
-  //dsh         displayInfo(e, "KEY RELEASED: ");
-       }
-       protected void displayInfo(KeyEvent e, String s){
-        String keyString, modString, tmpString,
-               actionString, locationString;
+		/*
+		 * Handle key released events
+		 */
+		// dsh displayInfo(e, "KEY RELEASED: ");
+	}
 
-        //You should only rely on the key char if the event
-        //is a key typed event.
-        int id = e.getID();
-        if (id == KeyEvent.KEY_TYPED) {
-            char c = e.getKeyChar();
-            keyString = "key character = '" + c + "'";
-        } else {
-            int keyCode = e.getKeyCode();
-            keyString = "key code = " + keyCode
-                        + " ("
-                        + KeyEvent.getKeyText(keyCode)
-                        + ")";
-        }
+	protected void displayInfo(KeyEvent e, String s) {
+		String keyString, modString, tmpString, actionString, locationString;
 
-        int modifiers = e.getModifiersEx();
-        modString = "modifiers = " + modifiers;
-        tmpString = KeyEvent.getModifiersExText(modifiers);
-        if (tmpString.length() > 0) {
-            modString += " (" + tmpString + ")";
-        } else {
-            modString += " (no modifiers)";
-        }
+		// You should only rely on the key char if the event
+		// is a key typed event.
+		int id = e.getID();
+		if (id == KeyEvent.KEY_TYPED) {
+			char c = e.getKeyChar();
+			keyString = "key character = '" + c + "'";
+		} else {
+			int key_code = e.getKeyCode();
+			keyString = "key code = " + key_code + " ("
+					+ KeyEvent.getKeyText(key_code) + ")";
+		}
 
-        actionString = "action key? ";
-        if (e.isActionKey()) {
-            actionString += "YES";
-        } else {
-            actionString += "NO";
-        }
+		int modifiers = e.getModifiersEx();
+		modString = "modifiers = " + modifiers;
+		tmpString = KeyEvent.getModifiersExText(modifiers);
+		if (tmpString.length() > 0) {
+			modString += " (" + tmpString + ")";
+		} else {
+			modString += " (no modifiers)";
+		}
 
-        locationString = "key location: ";
-        int location = e.getKeyLocation();
-        if (location == KeyEvent.KEY_LOCATION_STANDARD) {
-            locationString += "standard";
-        } else if (location == KeyEvent.KEY_LOCATION_LEFT) {
-            locationString += "left";
-        } else if (location == KeyEvent.KEY_LOCATION_RIGHT) {
-            locationString += "right";
-        } else if (location == KeyEvent.KEY_LOCATION_NUMPAD) {
-            locationString += "numpad";
-        } else { // (location == KeyEvent.KEY_LOCATION_UNKNOWN)
-            locationString += "unknown";
-        }
-        String newline = "\n";
-        System.out.println(s + newline
-                           + "    " + keyString + newline
-                           + "    " + modString + newline
-                           + "    " + actionString + newline
-                           + "    " + locationString + newline);
-       
-    }
+		actionString = "action key? ";
+		if (e.isActionKey()) {
+			actionString += "YES";
+		} else {
+			actionString += "NO";
+		}
+
+		locationString = "key location: ";
+		int location = e.getKeyLocation();
+		if (location == KeyEvent.KEY_LOCATION_STANDARD) {
+			locationString += "standard";
+		} else if (location == KeyEvent.KEY_LOCATION_LEFT) {
+			locationString += "left";
+		} else if (location == KeyEvent.KEY_LOCATION_RIGHT) {
+			locationString += "right";
+		} else if (location == KeyEvent.KEY_LOCATION_NUMPAD) {
+			locationString += "numpad";
+		} else { // (location == KeyEvent.KEY_LOCATION_UNKNOWN)
+			locationString += "unknown";
+		}
+		String newline = "\n";
+		System.out.println(s + newline + "    " + keyString + newline + "    "
+				+ modString + newline + "    " + actionString + newline
+				+ "    " + locationString + newline);
+
+	}
     public void mousePressed(MouseEvent e) {
     /*
-     * Popup edit menu on right mouse ck
-     */	
+	 * Popup edit menu on right mouse ck
+	 */	
     	   check_main_view();
              if (e.getButton() == MouseEvent.BUTTON3){	
               if (popup_edit_menu == null){
@@ -1859,75 +1914,86 @@ public  class  gz390
 	            return null;
 	        }
 	    }
-	    private void check_main_view(){ 
-	    /*
-	     * 1.  If screen not ready, exit
-	     * 2.  If delete key pending, do it now
-	     * 3.  If cursor active, update it now
-	     * 4.  If main window size has changed due to
-	     * user streching without window event handler
-	     * triggering update, do it now.
-	     */
-	    	if (!tn_scn.scn_ready){
-	    		return; 
-	    	}
-	    	if (tn_delete_request){
-            	tn_delete_request = false;
-            	if (tn_input_field() && tn_cursor){
-            		   scn_attr[scn_fld[scn_addr]] = scn_attr[scn_fld[scn_addr]] | tn_mdt_mask;
-		    		   int save_scn_addr = scn_addr;
-		    		   scn_addr++;
-		    		   while (scn_addr < max_addr 
-		    				   && scn_addr > save_scn_addr
-		    				   && tn_input_field()){
-		    			   scn_char[scn_addr-1] = scn_char[scn_addr];
-		    			   tn_update_scn(scn_addr-1);
-		    			   scn_addr++;
-		    		   }
-		    		   scn_char[scn_addr-1]= scn_null; // RPI 856
-	    			   tn_update_scn(scn_addr-1);
-		    		   scn_addr = save_scn_addr;
-		    		   refresh_request = true;
-		    	   } else {
-		    		   sound_alarm();
-		    		   status_line.setText(status_line_view + " Alarm - invalid key in protected field");
-		    	   }
-            }
-	    	if (tn_scn.scn_ready && tn_cursor){ 
-    			tn_cursor_count--;
-    			if (tn_cursor_count <= 0){
-    				tn_cursor_count = tn_cursor_wait_int;
-                    char save_cursor_char = scn_char[tn_cursor_scn_addr];
-    				if (!tn_cursor_alt){
-    					tn_cursor_alt = true;
-    					if (save_cursor_char == tn_cursor_sym){
-    						scn_char[tn_cursor_scn_addr] = tn_cursor_sym_alt;
-    					} else {
-    						scn_char[tn_cursor_scn_addr] = tn_cursor_sym;
-    					}
-    				} else {
-    					tn_cursor_alt = false;
-    				}
-    				tn_update_scn(tn_cursor_scn_addr);
-    				scn_char[tn_cursor_scn_addr] = save_cursor_char;
-    			}
-    		}
-	    	if (refresh_request  
-	    		|| tn_scn.main_width != main_frame.getSize().getWidth()
-	    		|| tn_scn.main_height != main_frame.getSize().getHeight()
-	    		){
-	    		tn_scn.main_width = (int) main_frame.getSize().getWidth();
-	    		tn_scn.main_height = (int) main_frame.getSize().getHeight();
-	    		update_main_view();
-	            gz390_cmd_line.requestFocus();
-            	refresh_request = false;
-	    	}
-	    }
+	    private void check_main_view() {
+		/*
+		 * 1. If screen not ready, exit 2. If delete key pending, do it now 3.
+		 * If cursor active, update it now 4. If main window size has changed
+		 * due to user streching without window event handler triggering update,
+		 * do it now.
+		 */
+		if (!tn_scn.scn_ready) {
+			return;
+		}
+		if (tn_delete_request) {
+			process_delete_key(); // RPI 845
+		}
+		if (tn_scn.scn_ready && tn_cursor) {
+			tn_cursor_count--;
+			if (tn_cursor_count <= 0) {
+				tn_cursor_count = tn_cursor_wait_int;
+				if (tn_cursor_scn_addr >= max_addr){
+					tn_cursor_scn_addr = 0;
+				}
+				char save_cursor_char = scn_char[tn_cursor_scn_addr];
+				if (!tn_cursor_alt) {
+					tn_cursor_alt = true;
+					if (save_cursor_char == tn_cursor_sym) {
+						scn_char[tn_cursor_scn_addr] = tn_cursor_sym_alt;
+					} else {
+						scn_char[tn_cursor_scn_addr] = tn_cursor_sym;
+					}
+				} else {
+					tn_cursor_alt = false;
+				}
+				tn_update_scn(tn_cursor_scn_addr);
+				scn_char[tn_cursor_scn_addr] = save_cursor_char;
+			}
+		}
+		if (refresh_request
+				|| tn_scn.main_width != main_frame.getSize().getWidth()
+				|| tn_scn.main_height != main_frame.getSize().getHeight()) {
+			tn_scn.main_width = (int) main_frame.getSize().getWidth();
+			tn_scn.main_height = (int) main_frame.getSize().getHeight();
+			update_main_view();
+			gz390_cmd_line.requestFocus();
+			refresh_request = false;
+		}
+	}
+	private synchronized void process_delete_key(){
+		/* 
+		 * shift input field left 1 char to end
+		 * if not at null char.
+		 */
+		tn_delete_request = false;
+		if (tn_cursor
+			&&	tn_input_field()
+			&&  scn_char[scn_addr] != tn_null) { // RPI 845
+			tn_modify_field(); // RPI 861
+			int save_scn_addr = scn_addr;
+			tn_scn_addr_inc();
+			while (scn_addr < max_addr
+				&& tn_input_field()){ // RPI 845					&& scn_addr != save_scn_addr) {
+				scn_char[scn_addr - 1] = scn_char[scn_addr];
+				tn_update_scn(scn_addr - 1);
+				tn_scn_addr_inc();
+			}
+			scn_char[scn_addr - 1] = scn_null; // RPI 856
+			tn_update_scn(scn_addr - 1);
+			scn_addr = save_scn_addr;
+			tn_update_scn(scn_addr);
+			tn_update_cursor();
+			refresh_request = true;
+		} else {
+			sound_alarm_beep();
+			status_line.setText(status_line_view
+					+ " Alarm - null or protected field");
+		}
+	}
         private void update_main_view(){
         /*
-         * update main_view and command line size 
-         * following change in window size
-         */	
+		 * update main_view and command line size following change in window
+		 * size
+		 */	
         	if (refresh_wait){
         		refresh_request = true;
         		return; // wait for next monitor interal
@@ -2191,7 +2257,6 @@ private void tput_edit_buffer(byte[] buff, int lbuff){
         int index = text_start;
         int addr  = scn_addr;
         while (index < text_end){
-        	scn_fld[addr] = tn_char;
         	scn_char[addr] = text.charAt(index);
         	tn_update_scn(addr);
         	index++;
@@ -2242,7 +2307,6 @@ private void tn_tput_buffer(){
 			break;
 		case 0x08: // GE  graphic escape
 		    tn_get_tput_byte();
-		    scn_fld[scn_addr] = tn_char;
 		    scn_char[scn_addr] = apl_char[tput_buff_byte]; 		  
 			tn_update_scn(scn_addr);
 			tn_next_field_addr();
@@ -2270,10 +2334,9 @@ private void tn_tput_buffer(){
             tn_ra();
 			break;
 		default: // write data in next input field postion
-			if (scn_fld[scn_addr] == tn_field){
+			if (scn_fld[scn_addr]){ // RPI 861
 				tn_drop_field(scn_addr);
 			}
-		    scn_fld[scn_addr]   = tn_char;
 		    scn_attr[scn_addr]  = cur_fld_attr;
 		    scn_hl[scn_addr]    = cur_fld_hl;
 		    scn_color[scn_addr] = cur_fld_color;
@@ -2317,15 +2380,16 @@ private void tn_erase_to_end(){ // RPI 628
 	/*
 	 * erase to end of current input field
 	 */
-	int this_field = scn_fld[scn_addr];
 	int index = scn_addr;
-	while (scn_fld[index] == this_field
-			&& index != this_field){
+	while (!scn_fld[index]){  // RPI 861
 		scn_char[index] = scn_null;
  		tn_update_scn(index);
  		index++;
 		if (index > max_addr){
 			index = 0;
+		}
+		if (index == scn_addr){
+			return;
 		}
 	}
 }
@@ -2345,40 +2409,52 @@ private void tn_next_field_addr(){
 	/*
 	 * incr scn_addr and wrap if at end of screen
 	 */
-	scn_addr++;
-	if (scn_addr >= max_addr){
-		scn_addr = 0;
-	}
+	tn_scn_addr_inc();
 }
 private void tn_next_input_addr(){
 	/*
 	 * incr scn_addr to next input field addr
 	 */
-	int cur_field = scn_fld[scn_addr];
-	scn_addr++;
-	if (scn_addr >= max_addr){
-		scn_addr = 0;
-	}
-	if (scn_fld[scn_addr] != cur_field){ // RPI 586
+    tn_scn_addr_inc();
+	if (scn_fld[scn_addr]){
+		tn_scn_addr_dec(); // RPI 861
 		tn_next_input_field();
 	}
 }
+private void tn_scn_addr_inc(){
+	/*
+	 * next screen position with wrap
+	 */
+	scn_addr++;
+	if (scn_addr > max_addr){
+		scn_addr = 0;
+	}
+
+}
+private void tn_scn_addr_dec(){
+	/*
+	 * prev screen position with wrap
+	 */
+	scn_addr--;
+	if (scn_addr < 0){
+		scn_addr = max_addr-1;
+	}
+
+}
 private void tn_eua(){
 	/*
-	 * erase unprotected fields from current sba
-	 * to ending sba
+	 * store nulls in unprotected fields
+	 * to ending addess
 	 */
 	int sba_end = tn_get_buff_addr();
-	int sba = scn_addr;
-	while (sba != sba_end){
-		if ((scn_attr[sba] & tn_protect_mask) == 0){ 
+	while (scn_addr != sba_end){
+		if (tn_input_field()){  // RPI 861 
 			// erase and reset mdt in unprotected fields
-			scn_fld[sba] = tn_null;
-			scn_char[sba] = scn_null;
- 		    tn_update_scn(sba);
-			scn_attr[sba] = scn_attr[sba] & tn_mdt_off;
+			scn_char[scn_addr] = scn_null;
+ 		    tn_update_scn(scn_addr);
 		}
-	}
+		tn_scn_addr_inc();
+	}	
 }
 private void tn_ra(){
 	/* 
@@ -2394,10 +2470,9 @@ private void tn_ra(){
 	int sba = scn_addr;
 	boolean ra_done = false;
 	while (!ra_done){
-		if (scn_fld[sba] == tn_field){
+		if (scn_fld[sba]){  // RPI 861
 			tn_drop_field(sba);
 		}
-		scn_fld[sba] = tn_char;
 		scn_char[sba] = (char)tz390.ebcdic_to_ascii[ra_byte & 0xff]; // RPI 628
 		tn_update_scn(sba);
 		sba++;
@@ -2419,9 +2494,9 @@ private void tn_next_input_field(){
 	 * find next input field starting at scn_addr
 	 * with wrap and set scn_addr and cursor if on.
 	 */
-    int index = 0;
     int sba_first = scn_addr;
     int sba_next = max_addr;
+    int index = 0;
     while (index < fld_input_tot){
     	cur_fld_addr = fld_input_addr[index];
     	if (cur_fld_addr > scn_addr
@@ -2449,7 +2524,7 @@ private void tn_next_input_field(){
 private boolean tn_input_field(){
 	/*
 	 * return true if scn_addr is in unprotected
-	 * input field and set fld_addr
+	 * input field and set cur_fld_addr
 	 * Note:
 	 *  1. True also returned if no fields
 	 *     and fld_addr set to -1 indicating none
@@ -2457,11 +2532,15 @@ private boolean tn_input_field(){
 	cur_fld_addr = 0; 
 	if (fld_tot == 0){
 		return true;
-	}	
-	cur_fld_addr = fld_addr[fld_tot-1];
-    int index = 0;
+	}
+	if (fld_input_tot == 0 
+		|| scn_fld[scn_addr]){
+		return false;
+	}
+	cur_fld_addr = fld_addr[0]; // RPI 861
+    int index = 1;
 	while (index < fld_tot 
-			&& fld_addr[index] < scn_addr){
+		&& fld_addr[index] < scn_addr){
 		cur_fld_addr = fld_addr[index];
 		index++;
 	}
@@ -2502,6 +2581,9 @@ private void tn_update_cursor(){
 		tn_cursor_alt = false; // RPI 630
 		tn_update_scn(tn_cursor_scn_addr);
 	}
+	if (scn_addr >= max_addr){
+		tn_cursor_scn_addr = 0; // RPI 861
+	}
 	tn_cursor_scn_addr = scn_addr;
     refresh_request = true;
 }
@@ -2510,8 +2592,12 @@ private synchronized void tn_update_scn(int sba){
 	 * update screen character with field
 	 * attributes and extended attributes
 	 */
+	if (sba >= max_addr){
+		return;
+	}
 	char save_char = scn_char[sba]; // RPI 638
-	if (scn_char[sba] == (char)0x00){
+	if (scn_char[sba] == (char)0x00
+		|| (scn_attr[sba] & fld_attr_nd) == fld_attr_nd){ // RPI 850
 		scn_char[sba] = ' '; // RPI 638
 	}
 	tn_scn.scn_layout   = new TextLayout("" + scn_char[sba],tn_scn.scn_font, tn_scn.scn_context);  // RPI 630 scn_addr > sba
@@ -2617,8 +2703,8 @@ private void tn_formatted_input(){
             if (sba == max_addr){
             	sba = 0;
             }
-            while (scn_fld[sba] != tn_field){
-            	if (scn_fld[sba] != tn_null){
+            while (!scn_fld[sba]){   // RPI 861
+            	if (scn_char[sba] != tn_null){  // RPI 861
             		if (tget_index < tget_len ){
             			if (tz390.opt_ascii){
             				tget_byte[tget_index] = (byte)scn_char[sba];
@@ -2659,7 +2745,7 @@ private void tn_write_control_char(){
         // RPI 222 removed tn_clear_screen()
 	}
 	if  ((tput_buff_byte & 0x04) != 0){ // sound alarm	
-		sound_alarm();
+		sound_alarm_beep();
 		status_line.setText(status_line_view + " Alarm message");
 	}
 	if  ((tput_buff_byte & 0x02) != 0){ // reset keyboard
@@ -2673,7 +2759,7 @@ private void tn_write_control_char(){
 		tn_reset_mdt();
 	}
 }
-private void sound_alarm(){
+private void sound_alarm_beep(){
 	/*
 	 * sound alarm by sending ascii bell x'07' 
 	 * to System.out
@@ -2694,7 +2780,7 @@ private synchronized void tn_clear_screen(){
 	 * clear screen and reset fields
 	 */
 		Arrays.fill(scn_char,0,max_addr,scn_null); // RPI 856
-		Arrays.fill(scn_fld,0,max_addr,(byte)0);
+		Arrays.fill(scn_fld,0,max_addr,false);  // RPI 861
 		Arrays.fill(scn_attr,0,max_addr,0);
 		fld_tot = 0;
 		fld_input_tot = 0;
@@ -2709,10 +2795,14 @@ private void tn_reset_mdt(){
 	 * reset all mdt bits so only changes will 
 	 * be input.
 	 */
-	int index = 0;
-	while (index < fld_input_tot){
-	    scn_attr[fld_input_addr[index]] = scn_attr[fld_input_addr[index]] & tn_mdt_off;
-	    index++;
+	if (fld_input_tot > 0){
+		int index = 0;
+		while (index < fld_input_tot){
+			scn_attr[fld_input_addr[index]] = scn_attr[fld_input_addr[index]] & tn_mdt_off;
+			index++;
+		}
+	} else {
+		Arrays.fill(scn_attr,0,max_addr,0);
 	}
 }
 private int tn_get_buff_addr(){
@@ -2757,7 +2847,6 @@ private void tn_start_field(){
 	 * bit  6   - reserved
 	 * bit  7   - modified data tag
 	 */
-	 scn_fld[scn_addr] = tn_field;
 	 cur_fld_attr  = tput_byte[tput_index] & 0x3f; // RPI 572
 	 cur_fld_hl    = 0;
 	 cur_fld_color = 0;
@@ -2773,9 +2862,11 @@ private void tn_start_field(){
 }
 private void tn_add_field_addr(){
 	/*
-	 * add scn_addr to fld_addr array if new
-	 * and sort after new add.
+	 * 1. add scn_addr to fld_addr if new
+	 * 2. sort after new add.
+	 * 3. set scn_fld_addr up to next
 	 */
+	 scn_fld[scn_addr] = true; // RPI 861
 	 int index = 0;
 	 while (index < fld_tot){
 		 if (scn_addr == fld_addr[index]){
@@ -2813,7 +2904,6 @@ private void tn_drop_field(int sba){
 	/*
 	 * remove field definition at sba
 	 */
-	scn_fld[sba] = 0;
 	int index = 0;
 	while (index < fld_tot){
 		if (fld_addr[index] == sba){
@@ -2826,6 +2916,7 @@ private void tn_drop_field(int sba){
 			if ((scn_attr[sba] & tn_protect_mask) == 0){
 				tn_drop_input_field(sba);
 			}
+			scn_fld[sba] = false; // 861
 			return;
 		}
 		index++;
@@ -2975,7 +3066,6 @@ private void scn_write_char(char key){
 	 * write 1 character at current screen location
 	 */
     scn_addr = (guam_cur_row-1)*max_cols + (guam_cur_col-1);
-    scn_fld[scn_addr] = tn_char;
     scn_char[scn_addr] = key;
 	tn_update_scn(scn_addr);
     guam_cur_col++;
@@ -3306,6 +3396,7 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
     	if ((tpg_flags & tpg_type_mask) == tpg_type_asis){
         	if (!tn_attn){
         		tn_kb_lock = false;
+        		tn_scn_lock = false;
         		status_line.setText(status_line_view + " Ready for input");
         	}
     		if ((tpg_flags & tpg_wait_mask) == tpg_wait){

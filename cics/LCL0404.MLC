@@ -1,0 +1,70 @@
+********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+LCL0404  SUBENTRY
+*
+* FN=0404  EXEC CICS SEND
+*
+* R1  >>> P0404 BLOCK POINTER
+* R14 = RETURN ADDRESS
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P0404,P0404END),R3
+         L     DFHEIBR,P0404EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P0404TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P0404FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         L     R1,P0404FRM        R1=FROM ADDRESS
+         LH    R0,P0404LEN        R0=LENGTH
+         CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
+         BNE   NOTSEQ             EXIT IF NOT
+         L     R14,P0404FRM       R14=FROM ADDRESS
+         L     R1,TCTTEQDO        R1=SEND FILE DCB
+         USING IHADCB,R1
+         LH    R4,P0404LEN        R4=LENGTH
+         AHI   R4,2               ALLOW FOR CRLF
+         ST    R4,DCBBLKSIF       SAVE BLOCKSIZE
+         ST    R4,DCBLRECLF       SAVE LRECL
+         AHI   R4,-2              RESTORE LENGTH
+         LA    R4,0(R14,R4)       ADDRESS 2 BYTES FOLLOWING DATA
+         MVC   SAVEDATA,0(R4)     SAVE THE 2 BYTES
+         MVC   0(2,R4),=X'0D0A'   SET CRLF
+         PUT   (R1),(R14)         WRITE DATA STREAM
+         MVC   0(2,R4),SAVEDATA   RESTORE THE 2 BYTES
+         L     R1,TCTTEQDO        R1=SEND FILE DCB
+         L     R0,DCBBLKSIF       RESTORE LENGTH+2
+         AHI   R0,-2              LENGTH-2
+         DROP  R1
+         LR    R1,R14             RESTORE FROM ADDRESS
+*
+NOTSEQ   EQU   *
+         TPUT  (R1),(R0),FULLSCR  SEND TN3270 DATA STREAM
+         SUBEXIT
+*
+SAVEDATA DS    H
+*
+         LTORG
+*
+P0404    DSECT
+P0404FN  DS    XL2                FUNCTION CODE
+P0404EIB DS    AL4                EIB
+P0404TCT DS    AL4                TCTTE
+P0404FRM DS    AL4                FROM
+P0404LEN DS    AL2                LENGTH
+P0404END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DCBD ,                   DCB
+*
+         EQUREGS REGS=GPR
+*
+         END
+

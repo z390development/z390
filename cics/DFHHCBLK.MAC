@@ -34,7 +34,13 @@ HCNERROR DS    A                   1=ERROR
          DS    A                  27=PGMIDERR
          DS    3A                 28-30 UNUSED
          DS    A                  31=EXPIRED
-         DS    12A                32-43 UNUSED
+         DS    4A                 32-35 UNUSED
+         DS    A                  36=MAPFAIL
+         DS    A                  37 UNUSED
+         DS    A                  38=INVMPSZ
+         DS    A                  39 UNUSED
+         DS    A                  40=OVERFLOW
+         DS    3A                 41-43 UNUSED
          DS    A                  44=QIDERR
          DS    39A                45-83 UNUSED
          DS    A                  84=DISABLED

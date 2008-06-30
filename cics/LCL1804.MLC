@@ -1,0 +1,755 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+LCL1804  SUBENTRY
+*
+* FN=1804  EXEC CICS SEND MAP
+*
+* R1  >>> P1804 BLOCK POINTER
+* R14 = RETURN ADDRESS
+*
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P1804,P1804END),R3
+         L     DFHEIBR,P1804EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P1804TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P1804FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         L     R4,P1804MSA        ADDRESS MAPSET STRUCTURE
+         AHI   R4,8               BYPASS MAPSET NAME
+         USING BMSMHLL,R4
+         LH    R5,P1804MLN        R5=MAPSET LENGTH ROUNDED TO DWORD
+         AHI   R5,-8              -LENGTH OF MAPSET NAME
+MAPLOOP  EQU   *
+* FIND THE MAP WITHIN THE MAPSET
+         CLC   P1804MAP,BMSMNAME  RIGHT MAP ?
+         BE    GOTMAP             EXIT IF IT IS
+         AH    R4,BMSMS           BUMP TO NEXT MAP
+         SH    R5,BMSMS           ADJUST LENGTH
+         CHI   R5,8               ANYTHING LEFT, APART FROM ALIGN ?
+         BL    MAPFAIL1           EXIT IF WE DIDN'T FIND THE MAP
+         B     MAPLOOP            LOOP
+*
+GOTMAP   EQU   *
+         LH    R5,BMSMS           R5=MAP LENGTH
+         CLI   BMSMW,80           MAP WIDTH VALID ?
+         BH    INVMPSZ            ERROR IF NOT
+         CLI   BMSML,24           MAP HEIGHT VALID ?
+         BH    INVMPSZ            ERROR IF NOT
+         L     R6,P1804OUT        R6=OUTPUT AREA
+* SET UP ESC,WRT
+         MVI   0(R6),ESC          ESCAPE
+         MVI   1(R6),WRT          DEFAULT WRITE
+         TM    P1804OPT,P1804ERS  IS IT ERASE ?
+         BNO   NOTERASE           EXIT IF NOT
+         MVI   1(R6),WRT_EW       ERASE/WRITE
+         B     DUNWRTE            EXIT
+*
+NOTERASE EQU   *
+         TM    P1804OPT,P1804EAU  IS IT ERASEAUP ?
+         BNO   DUNWRTE            EXIT IF NOT
+         MVI   1(R6),WRT_EAU      ERASEAUP/WRITE
+DUNWRTE  EQU   *
+* SET UP WCC, ANY SETTINGS HERE OVERRIDE ALL CTRL SETTINGS FROM MAP
+         MVC   2(1,R6),BMSWCC     SET MAP WCC
+         TM    P1804OPT,P1804ALM+P1804FKB+P1804FRS TEST WCC BITS
+         BZ    NOWCC              EXIT IF NO OVERRIDES
+         MVI   2(R6),X'C0'+P1804ALM+P1804FKB+P1804FRS SET WCC BITS
+NOWCC    EQU   *
+         AHI   R6,3               BUMP OUTPUT POINTER
+* SCAN MAP AND STRUCTURE
+         SH    R5,BMSMHLL         R5=REMAINING MAP LENGTH
+         BZ    SENDIT             EXIT IF NO FIELDS
+         L     R8,P1804DSC        R8=INPUT MAP STRUCTURE ADDRESS
+         USING DFHMAPST,R8
+         LR    R9,R4              R9=NEW BASE FOR MAP FIELDS
+         AH    R9,BMSMHLL         MISS MAP DESCRIPTOR
+         USING BMSMDF,R9
+FLDLOOP  EQU   *
+*
+* MAPONLY
+*    GROUP FIELD DESCRIPTOR...SBA,SF
+*    GROUP FIELD ENTRY     ...SBA,DATA IF INITIAL
+*    STANDARD              ...SBA,SF,(DATA IF INITIAL)
+*
+* DATAONLY (ONLY NAMED FIELDS ARE PROCESSED)
+*    GROUP FIELD DESCRIPTOR...SBA,SF IF ATTRIBUTE OVERRIDE
+*    GROUP FIELD ENTRY     ...SBA,DATA IF DATA PRESENT
+*    STANDARD              ...SBA,SF IF ATTRIBUTE OVERRIDE ONLY
+*                          ...SBA, DATA IF ONLY DATA
+*                          ...SBA, SF, DATA IF BOTH
+*
+* NOT MAPONLY/DATAONLY
+*    GROUP FIELD DESCRIPTOR...SBA,SF STRUCTURE OR MAP
+*    GROUP FIELD ENTRY     ...SBA,DATA FROM STRUCTURE OR INITIAL
+*    STANDARD              ...SBA,SF STRUCTURE OR MAP
+*                          ...DATA FROM STRUCTURE OR INITIAL
+*
+         LH    R7,BMSFP           POSITION OF ATTRIBUTE BYTE
+         BAL   R14,RELPOS         CALC RELATIVE POS RELATED TO MAP SIZE
+         TM    P1804OPT,P1804MNY  IS IT MAPONLY ?
+         BNO   FLDNTMNY           EXIT IF NOT
+* MAPONLY
+         TM    BMSFDFB,BMSFDGFD   GROUP FIELD DESCRIPTOR ?
+         BNO   FLDMPNTD           EXIT IF NOT
+* MAPONLY AND GROUP FIELD DESCRIPTOR...SBA,SF
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         MVI   3(R6),SF           SET SF
+         MVC   4(1,R6),BMSFA      ATTRIBUTE FROM MAP
+         AHI   R6,5               BUMP OUTPUT POINTER
+         B     DOCURS             EXIT
+*
+FLDMPNTD EQU   *
+         TM    BMSFDFB,BMSFDGFE   GROUP FIELD ENTRY ?
+         BNO   FLDMPNTE           EXIT IF NOT
+* MAPONLY AND GROUP FIELD ENTRY...SBA,DATA IF INITIAL
+         TM    BMSFDFB,BMSFDDD    ANY INITIAL ?
+         BNO   DOCURS             EXIT IF NONE
+         AHI   R7,1               BUMP TO DATA POSITION
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         AHI   R6,3               BUMP OUTPUT POINTER
+         LA    R1,BMSDATA         ADDRESS VARIABLE FIELDS
+         AH    R1,0(R1)           MISS PICIN LENGTH
+         AHI   R1,2               MISS PICIN LENGTH FIELD
+         AH    R1,0(R1)           MISS PICOUT LENGTH
+         AHI   R1,2               MISS PICOUT LENGTH FIELD
+         BAL   R14,DATAMOVE       MOVE DATA TO OUTPUT
+         B     DOCURS             EXIT
+*
+FLDMPNTE EQU   *
+* MAPONLY AND STANDARD ENTRY...SBA,SF,(DATA IF INITIAL)
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         MVI   3(R6),SF           SET SF
+         MVC   4(1,R6),BMSFA      ATTRIBUTE FROM MAP
+         AHI   R6,5               BUMP OUTPUT POINTER
+         TM    BMSFDFB,BMSFDDD    ANY INITIAL ?
+         BNO   DOCURS             EXIT IF NONE
+         LA    R1,BMSDATA         ADDRESS VARIABLE FIELDS
+         AH    R1,0(R1)           MISS PICIN LENGTH
+         AHI   R1,2               MISS PICIN LENGTH FIELD
+         AH    R1,0(R1)           MISS PICOUT LENGTH
+         AHI   R1,2               MISS PICOUT LENGTH FIELD
+         BAL   R14,DATAMOVE       MOVE DATA TO OUTPUT
+         B     DOCURS             EXIT
+*
+FLDNTMNY EQU   *
+         TM    P1804OPT,P1804DNY  DATAONLY ?
+         BNO   FLDNTDNY           EXIT IF NOT
+* DATAONLY (ONLY NAMED FIELDS ARE PROCESSED)
+         TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
+         BNO   DOCURS             EXIT IF NOT
+         TM    BMSFDFB,BMSFDGFD   GROUP FIELD DESCRIPTOR ?
+         BNO   FLDDTNTD           EXIT IF NOT
+* DATAONLY AND GROUP FIELD DESCRIPTOR...SBA,SF IF ATTRIBUTE OVERRIDE
+* FLAG AND ATTRIBUTE OVERLAY, X'02, X'80', X'82' ARE NOT ATTRIBUTES
+         CLI   BMSATTR,X'00'      ANY OVERRIDE ATTRIBUTE ?
+         BE    DOCURS             EXIT IF NONE
+         CLI   BMSATTR,DFHBMCUR   ANY OVERRIDE ATTRIBUTE ?
+         BE    DOCURS             EXIT IF NONE
+         CLI   BMSATTR,DFHBMEOF   ANY OVERRIDE ATTRIBUTE ?
+         BE    DOCURS             EXIT IF NONE
+         CLI   BMSATTR,DFHBMCUR+DFHBMEOF ANY OVERRIDE ATTRIBUTE ?
+         BE    DOCURS             EXIT IF NONE
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         MVI   3(R6),SF           SET SF
+         MVC   4(1,R6),BMSATTR    ATTRIBUTE FROM STRUCTURE
+         AHI   R6,5               BUMP OUTPUT POINTER
+         B     DOCURS             EXIT
+*
+FLDDTNTD EQU   *
+         TM    BMSFDFB,BMSFDGFE   GROUP FIELD ENTRY ?
+         BNO   FLDDTNTE           EXIT IF NOT
+* DATAONLY AND GROUP FIELD ENTRY...SBA,DATA IF DATA PRESENT
+         CLI   BMSGRPDT,X'00'     ANY GFE STRUCTURE DATA ?
+         BE    DOCURS             EXIT IF NONE
+         AHI   R7,1               BUMP TO DATA POSITION
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         AHI   R6,3               BUMP OUTPUT POINTER
+         LA    R1,BMSGRPDT        ADDRESS GFE STRUCTURE DATA
+         BAL   R14,DATAMOVE       MOVE DATA TO OUTPUT
+         B     DOCURS             EXIT
+*
+FLDDTNTE EQU   *
+* DATAONLY AND STANDARD ENTRY...SBA,SF IF ATTRIBUTE OVERRIDE ONLY
+*                            ...SBA, DATA IF ONLY DATA
+*                            ...SBA, SF, DATA IF BOTH
+         MVI   FLDDTSBA,X'00'     RESET SBA SWITCH
+* FLAG AND ATTRIBUTE OVERLAY, X'02, X'80', X'82' ARE NOT ATTRIBUTES
+         CLI   BMSATTR,X'00'      ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDDTNAT           EXIT IF NONE
+         CLI   BMSATTR,DFHBMCUR   ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDDTNAT           EXIT IF NONE
+         CLI   BMSATTR,DFHBMEOF   ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDDTNAT           EXIT IF NONE
+         CLI   BMSATTR,DFHBMCUR+DFHBMEOF ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDDTNAT           EXIT IF NONE
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         MVI   3(R6),SF           SET SF
+         MVC   4(1,R6),BMSATTR    ATTRIBUTE FROM STRUCTURE
+         AHI   R6,5               BUMP OUTPUT POINTER
+         MVI   FLDDTSBA,X'FF'     SET SBA SWITCH
+FLDDTNAT EQU   *
+         CLI   BMSOUT,X'00'       ANY STRUCTURE DATA ?
+         BE    DOCURS             EXIT IF NONE
+         CLI   FLDDTSBA,X'FF'     SBA SWITCH ON ?
+         BE    FLDDTNSB           EXIT IF IT IS
+* SBA NOT SET
+         AHI   R7,1               BUMP TO DATA POSITION
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         AHI   R6,3               BUMP OUTPUT POINTER
+FLDDTNSB EQU   *
+         LA    R1,BMSOUT          ADDRESS STRUCTURE DATA
+         BAL   R14,PIC            PROCESS PICOUT IF ANY
+         BAL   R14,DATAMOVE       MOVE DATA TO OUTPUT
+         B     DOCURS             EXIT
+FLDDTSBA DC    H'0'               SBA SWITCH
+*
+FLDNTDNY EQU   *
+* NOT MAPONLY/DATAONLY
+         TM    BMSFDFB,BMSFDGFD   GROUP FIELD DESCRIPTOR ?
+         BNO   FLDBHNTD           EXIT IF NOT
+* NOT MAPONLY/DATAONLY GROUP FIELD DESCRIPTOR...SBA,SF STRUCTURE OR MAP
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         MVI   3(R6),SF           SET SF
+* FLAG AND ATTRIBUTE OVERLAY, X'02, X'80', X'82' ARE NOT ATTRIBUTES
+         CLI   BMSATTR,X'00'      ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDBDMAT           EXIT IF NONE
+         CLI   BMSATTR,DFHBMCUR   ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDBDMAT           EXIT IF NONE
+         CLI   BMSATTR,DFHBMEOF   ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDBDMAT           EXIT IF NONE
+         CLI   BMSATTR,DFHBMCUR+DFHBMEOF ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDBDMAT           EXIT IF NONE
+         MVC   4(1,R6),BMSATTR    ATTRIBUTE FROM STRUCTURE
+         B     FLDBDNAT           EXIT
+*
+FLDBDMAT EQU   *
+         MVC   4(1,R6),BMSFA      ATTRIBUTE FROM MAP
+FLDBDNAT EQU   *
+         AHI   R6,5               BUMP OUTPUT POINTER
+         B     DOCURS             EXIT
+*
+FLDBHNTD EQU   *
+         TM    BMSFDFB,BMSFDGFE   GROUP FIELD ENTRY ?
+         BNO   FLDBHNTE           EXIT IF NOT
+* NOT MAPONLY/DATAONLY GROUP FIELD ENTRY...SBA,DATA FROM STRUC OR INIT
+* CHECK IF WE HAVE ONE OR THE OTHER
+         TM    BMSFDFB,BMSFDDD    ANY INITIAL ?
+         BO    FLDBEGOT           EXIT IF THERE IS
+         CLI   BMSGRPDT,X'00'     ANY GFE STRUCTURE DATA ?
+         BE    DOCURS             EXIT IF NONE
+FLDBEGOT EQU   *
+         AHI   R7,1               BUMP TO DATA POSITION
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         AHI   R6,3               BUMP OUTPUT POINTER
+         LA    R1,BMSGRPDT        ADDRESS GFE STRUCTURE DATA
+         CLI   BMSGRPDT,X'00'     ANY GFE STRUCTURE DATA ?
+         BNE   FLDBEDAT           EXIT IF THERE IS
+         LA    R1,BMSDATA         ADDRESS VARIABLE FIELDS
+         AH    R1,0(R1)           MISS PICIN LENGTH
+         AHI   R1,2               MISS PICIN LENGTH FIELD
+         AH    R1,0(R1)           MISS PICOUT LENGTH
+         AHI   R1,2               MISS PICOUT LENGTH FIELD
+FLDBEDAT EQU   *
+         BAL   R14,DATAMOVE       MOVE DATA TO OUTPUT
+         B     DOCURS             EXIT
+*
+FLDBHNTE EQU   *
+* NOT MAPONLY/DATAONLY STANDARD ENTRY...SBA,SF STRUCTURE OR MAP
+*                                    ...DATA FROM STRUCTURE OR INITIAL
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         MVI   3(R6),SF           SET SF
+         TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
+         BNO   FLDBSMAT           EXIT IF NOT
+* FLAG AND ATTRIBUTE OVERLAY, X'02, X'80', X'82' ARE NOT ATTRIBUTES
+         CLI   BMSATTR,X'00'      ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDBSMAT           EXIT IF NONE
+         CLI   BMSATTR,DFHBMCUR   ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDBSMAT           EXIT IF NONE
+         CLI   BMSATTR,DFHBMEOF   ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDBSMAT           EXIT IF NONE
+         CLI   BMSATTR,DFHBMCUR+DFHBMEOF ANY OVERRIDE ATTRIBUTE ?
+         BE    FLDBSMAT           EXIT IF NONE
+         MVC   4(1,R6),BMSATTR    ATTRIBUTE FROM STRUCTURE
+         B     FLDBSNAT           EXIT
+*
+FLDBSMAT EQU   *
+         MVC   4(1,R6),BMSFA      ATTRIBUTE FROM MAP
+FLDBSNAT EQU   *
+         AHI   R6,5               BUMP OUTPUT POINTER
+* CHECK IF WE HAVE ANY DATA
+         TM    BMSFDFB,BMSFDDD    ANY INITIAL ?
+         BO    FLDBSGOT           EXIT IF THERE IS
+         TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
+         BNO   DOCURS             EXIT IF NOT
+         CLI   BMSOUT,X'00'       ANY STRUCTURE DATA ?
+         BE    DOCURS             EXIT IF NONE
+FLDBSGOT EQU   *
+* EITHER INITIAL OR STRUCTURE DATA
+         LA    R1,BMSDATA         ADDRESS VARIABLE FIELDS
+         AH    R1,0(R1)           MISS PICIN LENGTH
+         AHI   R1,2               MISS PICIN LENGTH FIELD
+         AH    R1,0(R1)           MISS PICOUT LENGTH
+         AHI   R1,2               MISS PICOUT LENGTH FIELD
+         TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
+         BNO   FLDBSDAT           EXIT IF NOT
+         CLI   BMSOUT,X'00'       ANY STRUCTURE DATA ?
+         BE    FLDBSDAT           EXIT IF NONE
+         LA    R1,BMSOUT          ADDRESS STRUCTURE DATA
+         BAL   R14,PIC            PROCESS PICOUT IF ANY
+FLDBSDAT EQU   *
+         BAL   R14,DATAMOVE       MOVE DATA TO OUTPUT
+*
+DOCURS   EQU   *
+* CONSTRUCT CURSOR POSITION...ALWAYS AS SBA,IC
+*
+* IF CURSOR() SPECIFIED...USE THAT
+*
+* MAPONLY
+*    CURSOR WILL COME FROM BMSCURSR (ATTRIBUTE IC)
+*    OR DEFAULT TO ZERO (TOP LEFT)
+*
+* DATAONLY
+*    IF CURSOR (NO POS), TEST FOR SYMBOLIC CURSOR
+*    ONLY THE FIRST IS USED
+*
+* NEITHER MAPONLY NOR DATAONLY
+*    IF CURSOR PARM (NO POS), TEST FOR SYMBOLIC CURSOR
+*    ONLY THE FIRST IS USED
+*    IF NOT, USE BMSCURSR
+*
+         CLI   P1804CRS,X'FF'     ANY VALID CURSOR() ?
+         BE    NOCRSPOS           EXIT IF NOT
+* CURSOR(NNN) OVERRIDES EVERYTHING
+         LH    R7,P1804CRS        R7=CURSOR ON SEND MAP
+         B     SETCURS            EXIT
+*
+NOCRSPOS EQU   *
+         TM    P1804OPT,P1804MNY  IS IT MAPONLY ?
+         BNO   NTMAPLY2           EXIT IF NOT
+* MAPONLY
+*    CURSOR WILL COME FROM BMSCURSR (ATTRIBUTE IC)
+*    OF DEFAULT TO ZERO (TOP LEFT)
+         TM    BMSCURSR,X'80'     USED CURSOR ADDRESS ?
+         BO    NEXTFLD            EXIT IF WE HAVE
+         LH    R7,BMSCURSR        R7=IC CURSOR OR ZERO DEFAULT
+         OI    BMSCURSR,X'80'     INVALIDATE CURSOR ADDRESS
+         B     CNVDTPOS           EXIT
+*
+NTMAPLY2 EQU   *
+         TM    P1804OPT,P1804DNY  IS IT DATAONLY ?
+         BNO   NTMPDT2            EXIT IF NOT
+* DATAONLY
+*    IF CURSOR (NO POS), TEST FOR SYMBOLIC CURSOR
+*    ONLY THE FIRST IS USED
+         TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
+         BNO   NEXTFLD            EXIT IF NOT
+* DATAONLY AND STRUCTURE
+         TM    P1804OPT,P1804CSM  IS SYMBOLIC CURSOR REQUESTED ?
+         BNO   NEXTFLD            EXIT IF NOT
+* DATAONLY AND STRUCTURE AND SYMBOLIC CURSOR REQUESTED
+         CLC   BMSLEN,=X'FFFF'    IS IT MARKED ?
+         BNE   NEXTFLD            EXIT IF NOT
+         NI    P1804OPT,255-P1804CSM DON'T DO THIS AGAIN
+         LH    R7,BMSFP           R7=FIELD POSITION
+         B     CNVDTPOS           EXIT
+*
+NTMPDT2  EQU   *
+* NEITHER MAPONLY NOR DATAONLY
+*    IF CURSOR (NO POS), TEST FOR SYMBOLIC CURSOR
+*    ONLY THE FIRST IS USED
+*    IF NOT, USE BMSCURSR
+         TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
+         BNO   USEIC              EXIT IF NOT
+* STRUCTURE EXISTS
+         TM    P1804OPT,P1804CSM  IS SYMBOLIC CURSOR REQUESTED ?
+         BNO   USEIC              EXIT IF NOT
+* STRUCTURE AND SYMBOLIC CURSOR REQUESTED
+         CLC   BMSLEN,=X'FFFF'    IS IT MARKED ?
+         BNE   NEXTFLD            EXIT IF NOT
+         NI    P1804OPT,255-P1804CSM DON'T DO THIS AGAIN
+         LH    R7,BMSFP           R7=FIELD POSITION
+         B     CNVDTPOS           EXIT
+*
+USEIC    EQU   *
+         TM    BMSCURSR,X'80'     USED CURSOR ADDRESS ?
+         BO    NEXTFLD            EXIT IF WE HAVE
+         LH    R7,BMSCURSR        R7=IC CURSOR OR ZERO DEFAULT
+         OI    BMSCURSR,X'80'     INVALIDATE CURSOR ADDRESS
+CNVDTPOS EQU   *
+         BAL   R14,RELPOS         CALC RELATIVE POS RELATED TO MAP SIZE
+*
+SETCURS  EQU   *
+         BAL   R14,SBACONV        CONVERT TO SBA
+         MVI   0(R6),SBA          SET
+         STH   R12,1(R6)              SBA
+         MVI   3(R6),IC           SET IC
+         AHI   R6,4               BUMP OUTPUT POINTER
+*
+NEXTFLD  EQU   *
+         TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
+         BNO   FLDBYP             EXIT IF NOT
+* MAP STRUCTURE EXISTS
+*    A GROUP FIELD DESCRIPTOR IS 3
+*    A GROUP FIELD ENTRY IS FIELD LENGTH
+*    ALL OTHERS ARE 3+FIELD LENGTH
+         TM    BMSFDFB,BMSFDGFD   GROUP FIELD DESCRIPTOR ?
+         BNO   FLDNTGFD           EXIT IF NOT
+* GROUP FIELD DESCRIPTOR
+         AHI   R8,3               BUMP OVER PREFIX
+         B     FLDBYP             EXIT
+*
+FLDNTGFD EQU   *
+         TM    BMSFDFB,BMSFDGFE   GROUP FIELD ENTRY ?
+         BNO   FLDNTGFE           EXIT IF NOT
+* GROUP FIELD ENTRY
+         AH    R8,BMSFL           BUMP OVER FIELD LENGTH
+         B     FLDBYP             EXIT
+*
+FLDNTGFE EQU   *
+* STANDARD ENTRY
+* BYPASS STRUCTURE ENTRY
+         AHI   R8,3               BUMP OVER PREFIX
+         AH    R8,BMSFL           BUMP OVER FIELD LENGTH
+FLDBYP   EQU   *
+* BYPASS THIS FIELD ENTRY
+         SH    R5,BMSMDF          R5=REMAINING MAP LENGTH
+         AH    R9,BMSMDF          BUMP TO NEXT FIELD
+         LTR   R5,R5              ANY MAP REMAINING ?
+         BNZ   FLDLOOP            LOOP IF SOME LEFT
+*
+SENDIT   EQU   *
+         L     R1,P1804OUT        R1=OUTPUT AREA
+         SR    R6,R1              R6=STREAM LENGTH
+         CLC   TCTTETI,=C'SQ01'   SEQUENTIAL TERMINAL ?
+         BNE   NOTSEQ             EXIT IF NOT
+         LR    R0,R6              R0=STREAM LENGTH
+         LR    R14,R1             R14=OUTPUT AREA
+         L     R1,TCTTEQDO        R1=SEND FILE DCB
+         USING IHADCB,R1
+         LR    R4,R6              R4=LENGTH
+         AHI   R4,2               ALLOW FOR CRLF
+         ST    R4,DCBBLKSIF       SAVE BLOCKSIZE
+         ST    R4,DCBLRECLF       SAVE LRECL
+         AHI   R4,-2              RESTORE LENGTH
+         LA    R4,0(R14,R4)       ADDRESS 2 BYTES FOLLOWING DATA
+         MVC   SAVEDATA,0(R4)     SAVE THE 2 BYTES
+         MVC   0(2,R4),=X'0D0A'   SET CRLF
+         PUT   (R1),(R14)         WRITE DATA STREAM
+         MVC   0(2,R4),SAVEDATA   RESTORE THE 2 BYTES
+         L     R1,TCTTEQDO        R1=SEND FILE DCB
+         L     R0,DCBBLKSIF       RESTORE LENGTH+2
+         AHI   R0,-2              LENGTH-2
+         DROP  R1
+         LR    R1,R14             RESTORE OUTPUT AREA
+*
+NOTSEQ   EQU   *
+         TPUT  (R1),(R6),FULLSCR  SEND TN3270 DATA STREAM
+         NI    BMSCURSR,X'7F'     RESTORE CURSOR ADDRESS
+*
+RETURN   EQU   *
+         SUBEXIT
+*
+SAVEDATA DS    H
+*
+MAPFAIL1 EQU   *
+* MAP NOT FOUND
+         MVC   EIBRESP2,=F'1'     SET EIBRESP2
+         B     MAPFAIL            EXIT
+*
+MAPFAIL8 EQU   *
+* ERROR WHILE PROCESSING PICOUT
+*    DATA LONGER THAN 31 DIGITS
+*    DATA IS NOT NUMERIC
+         L     R6,PICR6           RESTORE OUTPUT POINTER
+         MVC   EIBRESP2,=F'8'     SET EIBRESP2
+MAPFAIL  EQU   *
+         MVI   EIBRCODE,X'04'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(MAPFAIL) SET EIBRESP=MAPFAIL
+         B     SENDIT             EXIT
+*
+INVMPSZ  EQU   *
+* BAD MAP DIMENSIONS
+         MVI   EIBRCODE,X'08'     SET EIBRCODE
+         MVI   EIBRCODE+3,C' '    SET EIBRCODE+3 TO GENERIC 3270
+         MVC   EIBRESP,DFHRESP(INVMPSZ) SET EIBRESP=INVMPSZ
+         B     RETURN             RETURN
+*
+* SUBROUTINES
+*
+RELPOS   EQU   *
+* CALCULATE SCREEN POSITION RELATED TO MAP SIZE
+* INCLUDE OFFSET INDICATED BY LINE= AND COLUMN= FROM DFHMDI
+*
+* R7 = POSITION (OFFSET 0) AND RESULT
+*
+*              1         2         3    3
+*     1        0         0         0    5
+*    +-----------------------------------
+*  1 |
+*  2 |@.....@
+*  3 |
+*    +-----------------------------------
+*
+*  MAP SIZE IS 3x35
+*  @=ATTRIBUTE
+*  ATTRIBUTE POS IS 35 (OFFSET 0)
+*  35+1=36 (OFFSET 1)
+*
+*  THE OUTGOING ATTRIBUTE IS 80 (OFFSET 0)
+*
+*  36/35= 1 REMAINDER 1
+*  1*80=80+1=81-1=80 (-1 FOR OFFSET 0)
+         AHI   R7,1               ATTRIBUTE POS (OFFSET 1)
+         SR    R0,R0              CLEAR R0
+         LR    R1,R7              R1=POSITION
+         LB    R12,BMSMW          R12=MAP WIDTH (35)
+         DR    R0,R12             R0=COLUMN  R1=ROW
+         LB    R12,BMSMSL         R12=MAP OFFSET ROW
+         AR    R1,R12             ADD OFFSET
+         BCTR  R1,0                          ROW-1
+         LB    R12,BMSMSC         R12=MAP OFFSET COLUMN
+         AR    R0,R12             ADD OFFSET
+         BCTR  R0,0                          COLUMN-1
+         MS    R1,=F'80'          R1=ROW*SCREEN WIDTH
+         AR    R1,R0              ADD COLUMN
+         BCTR  R1,0               -1 FOR OFFSET 0
+         LR    R7,R1              REPLACE INPUT WITH RESULT
+         BR    R14                RETURN
+*
+SBACONV  EQU   *
+* CONVERT POSITION TO SBA
+*
+* R7  = POSITION
+* R12 = RESULT
+*
+         SR    R0,R0              CLEAR R0
+         LR    R1,R7              R1=POSITION
+         D     R0,=F'64'          R0=COL OFFSET  R1=ROW OFFSET
+         LA    R15,SBATAB(R1)     R15=SBA TABLE ADDRESS+ROW INDEX
+         ICM   R12,2,0(R15)       INSERT HIGH SBA
+         LR    R1,R0              SET COL OFFSET
+         LA    R15,SBATAB(R1)     R15=SBA TABLE ADDRESS+COL INDEX
+         ICM   R12,1,0(R15)       INSERT LOW SBA
+         BR    R14                RETURN
+*
+DATAMOVE EQU   *
+* MOVE DATA TO OUTPUT, ELIMINATE NULLS
+* IF 1ST BYTE OF DATA=X'FF' IT'S A SPECIAL XINIT, USE RA FOR THIS
+*
+* R1 = DATA ADDRESS
+* R6 = OUTPUT POINTER
+*
+         LH    R0,BMSFL           R0=DATA LENGTH
+         CLI   0(R1),X'FF'        IS IT SPECIAL XINIT ?
+         BNE   DATLOOP            EXIT IF NOT
+* SPECIAL XINIT PROCESSING
+         MVI   0(R6),RA           MOVE RA ORDER
+         MVC   3(1,R6),1(R1)      SET CHAR TO REPEAT
+         AR    R7,R0              STOP ADDRESS
+         AHI   R7,1                            FOR RA
+         ST    R14,DATAMR14       SAVE RETURN ADDRESS
+         BAL   R14,SBACONV        CONVERT TO SBA
+         L     R14,DATAMR14       RESTORE RETURN ADDRESS
+         STH   R12,1(R6)          SET ENDING SBA
+         AHI   R6,4               BUMP OUTPUT POINTER
+         BR    R14                RETURN
+*
+DATLOOP  EQU   *
+         CLI   0(R1),X'00'        NULL ?
+         BE    DATINCR            EXIT IF IT IS
+         MVC   0(1,R6),0(R1)      MOVE DATA BYTE
+DATINCR  EQU   *
+         AHI   R1,1               BUMP DATA POINTER
+         AHI   R6,1               BUMP OUTPUT POINTER
+         BCT   R0,DATLOOP         LOOP
+         BR    R14                RETURN
+DATAMR14 DS    F
+*
+PIC      EQU   *
+* PROCESS PICOUT (IF ANY)
+*
+* R1 = DATA ADDRESS
+*
+         XC    PICOUT,PICOUT      CLEAR EDIT WORD FIELD
+         LA    R15,BMSDATA        R15=PIC FIELDS
+         AH    R15,0(R15)         BYPASS PICIN
+         AHI   R15,2                           AND LENGTH
+         ICM   R2,3,0(R15)        R2=PICOUT LENGTH
+         BZR   R14                RETURN IF NONE
+* SAVE THE EDIT WORD
+         BCTR  R2,0               -1 FOR EXECUTE
+         EX    R2,PICMVC          MOVE THE EDIT WORD
+         ST    R6,PICR6           SAVE OUTPUT POINTER
+* MOVE THE DATA WITHOUT NULLS, BLANKS OR LEADING ZEROS
+         LA    R6,PICDATA         R6=OUTPUT POINTER
+         LH    R0,BMSFL           R0=DATA LENGTH
+         MVI   PICLEAD0,X'00'     RESET LEADING ZERO SWITCH
+PICLOOP  EQU   *
+         CLI   0(R1),X'00'        NULL ?
+         BE    PICINCR            EXIT IF IT IS
+         CLI   0(R1),C' '         BLANK ?
+         BE    PICINCR            EXIT IF IT IS
+         CLI   0(R1),C'0'         ZERO ?
+         BNE   PICNOT0            EXIT IF NOT
+         CLI   PICLEAD0,X'FF'     IS IT A LEADING ZERO ?
+         BNE   PICINCR            EXIT IF IT IS
+PICNOT0  EQU   *
+         MVC   0(1,R6),0(R1)      MOVE DATA BYTE
+         AHI   R6,1               BUMP OUTPUT POINTER
+         MVI   PICLEAD0,X'FF'     SET LEADING ZERO SWITCH
+PICINCR  EQU   *
+         AHI   R1,1               BUMP DATA POINTER
+         BCT   R0,PICLOOP         LOOP
+*
+         CLI   PICLEAD0,X'FF'     ANY DATA MOVED ?
+         BE    PICGTDTA           EXIT IF SOME
+         MVI   0(R6),C'0'         MOVE A ZERO
+         AHI   R6,1               BUMP OUTPUT POINTER
+PICGTDTA EQU   *
+         ST    R14,PICR14         SAVE RETURN ADDRESS
+         LA    R14,PICDATA        R14=DATA START
+         SR    R6,R14             R6=DATA LENGTH MOVED
+         CHI   R6,31              MORE THAN 31 DIGITS
+         BH    MAPFAIL8           ERROR IF IT IS
+         TMLL  R6,1               IS IT EVEN ?
+         BZ    PICEVEN            EXIT IF IT IS
+         LA    R1,PICDATA         R1=DATA ADDRESS IF ODD BYTES
+         BCTR  R6,0               -1 FOR EXECUTE
+         B     PICEXPK            EXIT
+PICLEAD0 DC    H'0'
+*
+PICEVEN  EQU   *
+         LA    R1,PICDATA0        R1=DATA ADDRESS IF EVEN BYTES
+PICEXPK  EQU   *
+         EX    R6,PICPACK         PACK INPUT
+         TP    PICDEC             VALID NUMERIC ?
+         BNZ   MAPFAIL8           EXIT IF INVALID
+* CALCULATE INDEX INTO PICDEC
+* COUNT NO. OF 20/21
+         LA    R14,PICOUT         R14=EDIT WORD
+         SR    R15,R15            R15=0
+PICEDLP  EQU   *
+         CLI   0(R14),X'20'       IS IT 20 ?
+         BE    PICINCR2           EXIT IF IT IS
+         CLI   0(R14),X'21'       IS IT 21 ?
+         BNE   PICBUMP            EXIT IF IT IS
+PICINCR2 EQU   *
+         AHI   R15,1              COUNT 20/21
+PICBUMP  EQU   *
+         AHI   R14,1              BUMP POINTER
+         CLI   0(R14),X'00'       IS IT END ?
+         BNE   PICEDLP            LOOP IF NOT
+*
+         SRL   R15,1              INT(N/2)
+         LNR   R15,R15            -INT(N/2)
+         AHI   R15,15             15-INT(N/2)
+         LA    R15,PICDEC(R15)    +PACKED INPUT ADDRESS
+         LA    R1,PICOUT+1        R1=LOCATION OF DEFAULT FLOAT BYTE+1
+         SR    R14,R14            CLEAR R14
+         CLI   PICOUT,X'5B'       FLOAT CHAR ?
+         BE    PICFLOAT           EXIT IF IT IS
+         CLI   PICOUT,X'4D'       FLOAT CHAR ?
+         BNE   PICDOED            EXIT IF NOT
+PICFLOAT EQU   *
+         IC    R14,PICOUT         R14=FLOAT CHAR
+         MVI   PICOUT,C' '        REPLACE WITH BLANK FILL
+PICDOED  EQU   *
+         EX    R2,PICEDMK         EDIT THE INPUT
+         LTR   R14,R14            ANY FLOAT CHAR ?
+         BZ    PICNOFLT           EXIT IF NOT
+         BCTR  R1,0               BYTE BEFORE 1ST CHAR
+         STC   R14,0(R1)          STORE IT
+PICNOFLT EQU   *
+         L     R6,PICR6           RESTORE OUTPUT POINTER
+         LA    R1,PICOUT          R1=PICOUT DATA ADDRESS
+         L     R14,PICR14         RESTORE RETURN ADDRESS
+         BR    R14                RETURN
+PICMVC   MVC   PICOUT(0),2(R15)   MOVE THE EDIT WORD
+PICPACK  PACK  PICDEC,0(0,R1)     PACK INPUT
+PICEDMK  EDMK  PICOUT(0),0(R15)   EDIT INPUT
+PICOUT   DC    XL50'00'           SAVE PICOUT
+PICDATA0 DC    C'0'               PREFIX ZERO
+PICDATA  DC    CL50' '            DATA AREA
+PICDEC   DC    PL16'0'            PACKED INPUT
+PICR6    DS    F                  R6 SAVE AREA
+PICR14   DS    F                  R14 SAVE AREA
+*
+SBATAB   DC    X'40C1C2C3C4C5C6C7C8C94A4B4C4D4E4F'
+         DC    X'50D1D2D3D4D5D6D7D8D95A5B5C5D5E5F'
+         DC    X'6061E2E3E4E5E6E7E8E96A6B6C6D6E6F'
+         DC    X'F0F1F2F3F4F5F6F7F8F97A7B7C7D7E7F'
+*
+         LTORG
+*
+P1804    DSECT
+P1804FN  DS    XL2                FUNCTION CODE
+P1804EIB DS    AL4                EIB
+P1804TCT DS    AL4                TCTTE
+P1804MSA DS    AL4                MAPSET ADDRESS
+P1804MAP DS    CL7                MAP NAME
+P1804MLN DS    XL2                MAPSET LENGTH
+P1804DSC DS    AL4                STRUCTURE ADDRESS
+         DS    AL2                STRUCTURE LENGTH
+P1804OUT DS    AL4                OUTPUT AREA
+P1804CRS DS    AL2                CURSOR POSITION (X'FFFF'=NONE)
+P1804OPT DS    X                  OPTION BITS...
+P1804ERS EQU   X'80'                 ERASE
+P1804EAU EQU   X'40'                 ERASEAUP
+P1804CSM EQU   X'20'                 SYMBOLIC CURSOR
+P1804MNY EQU   X'10'                 MAPONLY
+P1804DNY EQU   X'08'                 DATAONLY
+P1804ALM EQU   X'04'                 ALARM
+P1804FKB EQU   X'02'                 FREEKB
+P1804FRS EQU   X'01'                 FRSET
+P1804END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DCBD ,                   DCB
+         DFHMAPDS                 MAPSET DSECT
+         DFHMAPST                 MAP STRUCTURE DSECT
+         COPY  DFHBMSCA           MAP ATTRIBUTES
+         COPY  DFHAID             AIDS
+         TN3270 SYMBOLS
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+* R4  MAP STRUCTURE
+* R5  MAPSET AND MAP LENGTH CONTROL
+* R6  TIOA POINTER
+* R8  MAP DSECT STRUCTURE
+* R9  MAP FIELD STRUCTURE
+* R10 TCTTE
+* R11 EIB
+* R13 SAVE AREA AND BASE 1
+*
+         END
+

@@ -9,6 +9,52 @@ a delay before he can include it in a PTF or Release.
 
 Ver  Ship Date           Z390 version
 ---  -----------------   ------------
+V5   June 27, 2008       V1.4.02
+
+   Maintenance...
+      RPI833: All macros now changed for HLASM compatability.
+      RPI837: Add NOTIME parameter to Z390CICS to prevent S422 abend
+              for terminals.
+      RPI844: Use of TROT now need aligned tables.
+              Z390CEBR and Z390COMP needed amending.
+      RPI845: Recode ESTAE routines in Z390KCP to use new SDWA
+
+      TESTBED3: Bug fixed, final lines not displayed.
+                Rebuilt the sequential terminal streams for BED1.
+
+      Z390KCP : Bug fixed, CLEAR key not passed to pseudo-
+                conversational task.
+
+                Bug fixed, abend ASRA after RETURN COMMAREA received
+                may lead to recursive abends owing to multiple
+                FREEMAINs of the COMMAREA.
+
+   Enhancements and changes...
+      CEMT conversational mode implemented.
+      DFHFCT and DFHPCT have protection against missing TYPE=FINAL.
+      Z390CICS future-proofed with a new modular design.
+          Global managed functions now in GBLxxxx modules
+
+      Sequential terminal support improved:
+         Only the SEQ_TERM parameter needs to be amended.
+         Added TRACE option to set parms for trace data collection.
+
+      HANDLE/IGNORE extra conditions
+         MAPFAIL, INVMPSZ, OVERFLOW
+
+      New LCLxxxx modules to handle EXEC CICS processing.
+         This conversion is not complete.
+
+   New Features...
+      Basic Mapping Support
+        Macros DFHMSD, DFHMDI, DFHMDF.
+        EXEC CICS SEND MAP
+        EXEC CICS RECEIVE MAP
+        EXEC CICS SEND CONTROL
+
+   New Doc...
+      Z390/CICS Basic Mapping Support (ZCICSBMS).
+
 V4   January 18, 2008    V1.3.08h
 
    File control commands now support all fixed and variable VSAM
@@ -39,7 +85,7 @@ V4   January 18, 2008    V1.3.08h
    Sequential Terminal support
       Enables regression testing of all transactions.
       See the documentation about this major new feature...
-         Z390/CICS Sequential Terminal Support (Z390SEQ).
+         Z390/CICS Sequential Terminal Support
 
    Bug fixes...
       Abends may occur if INI parm LOCAL_TERMINALS=0
@@ -106,10 +152,9 @@ V3   October 1st, 2007   V1.3.08
       CEMT I FIL
 
    Documentation
-      CEMT and CEBR are now moved to ZCICSSTR -- Z390/CICS Supplied
-      Transactions.
+      CEMT and CEBR are now moved to Z390/CICS Supplied Transactions.
 
-      New document ZCICSVSM - Z390/CICS VSAM Guide
+      New document - Z390/CICS VSAM Guide.
 
 -----------------------------------------------------------------------
 
@@ -176,7 +221,7 @@ IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: January 18, 2008
-Z390 version: V1.3.08h
-Z390/CICS version: V4
+Shipping Date: June 27, 2008
+Z390 version: V1.4.02
+Z390/CICS version: V5
 

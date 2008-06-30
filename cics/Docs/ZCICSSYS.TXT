@@ -25,8 +25,8 @@ Version compatability
 Versions of Java and Z390 are tested by Don and there are mechanisms
 for checking compatability.
 
-In Z390/CICS History (ZCICSHST) each Z390/CICS release has a Z390
-version. This is the release/PTF that was used to test Z390/CICS.
+In Z390/CICS History each Z390/CICS release has a Z390 version.
+This is the release/PTF that was used to test Z390/CICS.
 Previous releases of Z390 may not work.
 
 Future releases of Z390 will work unless there is a PTF that requires
@@ -40,7 +40,7 @@ Application programmers are somewhat limited at present. These are
 early days, and functions will be added gradually.
 
 The currently supported Application environment is described in the
-Z390/CICS Application Programming Guide (ZCICSAPP.TXT).
+Z390/CICS Application Programming Guide.
 
 Requests for commands and extra parameters are very welcome and will
 help to set a priority list.
@@ -94,7 +94,7 @@ re-assemble the PCT.
 DFHFCT.MLC has a basic set of test files. Users should add their own
 files to DFHFCTUS.CPY and re-assemble the FCT.
 File creation and setup is more fully described in the Z390/CICS VSAM
-Guide (ZCICSVSM.TXT).
+Guide.
 
 Local and Remote terminals
 --------------------------
@@ -127,6 +127,7 @@ From the Z390 GUI (recommended), or in your own Command Prompt...
       If interactive debugging of an application is wanted...
       Create a Command Prompt window and use CD to navigate to, and
       invoke Z390KCPR. Parameters like TEST and TRACE may be added.
+      Any test session will be recorded in Z390KCP.TRE.
 
       The remote terminal will be started in the Command Prompt.
 
@@ -203,6 +204,8 @@ From the 'initial screen' you can perform the following tests...
                Records successfully read are written to the TS queue
                VSM3.
 
+   BMS1        Test all functions of mapping support.
+
 Shutdown
 --------
 CEMT P SHU IMM may still leave a Z390/CICS window behind.
@@ -269,13 +272,18 @@ d) Right click on java.exe
 e) Select End Process and Yes.
    All the Z390/CICS environment and terminals should go away.
 
+Change Summary
+--------------
+June 27, 2008
+   Added BMS1 to list of test transactions
+
 Trademarks
 ----------
 IBM, CICS and VSAM are registered trademarks of International Business
 Machines Corporation.
 
 Author: Melvyn Maltz
-Shipping Date: January 18, 2008
-Z390 version: V1.3.08h
-Z390/CICS version: V4
+Shipping Date: June 27, 2008
+Z390 version: V1.4.02
+Z390/CICS version: V5
 

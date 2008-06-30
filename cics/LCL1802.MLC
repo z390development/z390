@@ -1,0 +1,494 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+LCL1802  SUBENTRY
+*
+* FN=1802  EXEC CICS RECEIVE MAP
+*
+* R1  >>> P1802 BLOCK POINTER
+* R14 = RETURN ADDRESS
+*
+* THE DATA STREAM IS ALWAYS INITBUFF (CL2000) FROM TCTTEDA
+* FROM() IS NOT IMPLEMENTED
+* THE AID AND CURSOR ARE ALREADY IN THE EIB
+*
+* THE AREA ONTO WHICH THE MAP IS PLACED IS ALWAYS 24x80
+* EVERY MAP IS ASSUMED TO BE PLACED AT LINE 1 COLUMN 1, JUSTIFY LEFT
+* THE POSITION OF EACH FIELD IS RELATIVE TO THE MAP SIZE (SIZE=)
+*
+         LR    R3,R1              SET BASE
+         L     R3,0(R3)                    FOR PARMS
+         USING (P1802,P1802END),R3
+         L     DFHEIBR,P1802EIB   LOAD EIB ADDRESS
+         USING DFHEIBLK,DFHEIBR
+         L     TCTTEAR,P1802TCT   LOAD TCT ADDRESS
+         USING DFHTCTTE,TCTTEAR
+         MVC   EIBFN,P1802FN      SET EIBFN
+         XC    EIBRCODE,EIBRCODE  CLEAR EIBRCODE
+         XC    EIBRESP,EIBRESP    CLEAR EIBRESP
+         XC    EIBRESP2,EIBRESP2  CLEAR EIBRESP2
+         L     R4,P1802MSA        ADDRESS MAPSET STRUCTURE
+         AHI   R4,8               BYPASS MAPSET NAME
+         USING BMSMHLL,R4
+         LH    R5,P1802MLN        R5=MAPSET LENGTH ROUNDED TO DWORD
+         AHI   R5,-8              -LENGTH OF MAPSET NAME
+MAPLOOP  EQU   *
+* FIND THE MAP WITHIN THE MAPSET
+         CLC   P1802MAP,BMSMNAME  RIGHT MAP ?
+         BE    GOTMAP             EXIT IF IT IS
+         AH    R4,BMSMS           BUMP TO NEXT MAP
+         SH    R5,BMSMS           ADJUST LENGTH
+         CHI   R5,8               ANYTHING LEFT, APART FROM ALIGN ?
+         BL    MAPFAIL1           EXIT IF WE DIDN'T FIND THE MAP
+         B     MAPLOOP            LOOP
+*
+GOTMAP   EQU   *
+         L     R8,P1802DSC        R8=INPUT MAP STRUCTURE ADDRESS
+         LH    R9,P1802DSL        R9=INPUT MAP STRUCTURE LENGTH
+         LR    R14,R8             AREA TO CLEAR
+         SR    R15,R15            CLEAR SECOND LENGTH
+         MVCLE R8,R14,X'00'       CLEAR INPUT MAP STRUCTURE
+         CLI   BMSMW,80           MAP WIDTH VALID ?
+         BH    INVMPSZ            ERROR IF NOT
+         CLI   BMSML,24           MAP HEIGHT VALID ?
+         BH    INVMPSZ            ERROR IF NOT
+* TEST FOR SHORT READ, CANNOT MAP
+         CLI   EIBAID,DFHCLEAR    CLEAR ?
+         BE    MAPFAIL2           EXIT IF IT IS
+         CLI   EIBAID,DFHPA1      PA1 ?
+         BE    MAPFAIL2           EXIT IF IT IS
+         CLI   EIBAID,DFHPA2      PA2 ?
+         BE    MAPFAIL2           EXIT IF IT IS
+         CLI   EIBAID,DFHPA3      PA3 ?
+         BE    MAPFAIL2           EXIT IF IT IS
+* CURSOR PROCESSING
+         TM    BMSMI,BMSMICL      CURSOR INDICATOR REQUIRED ?
+         BNO   STREAM             EXIT IF NOT
+         LGH   R9,EIBCPOSN        R9=CURSOR POSITION
+         AHI   R9,1               AS OFFSET 1
+         BAL   R14,RELPOS         CALC RELATIVE POS RELATED TO MAP SIZE
+         BCTR  R1,0               R1=TRUE OFFSET OF CURSOR
+         LR    R9,R4              R9=NEW BASE FOR MAP FIELDS
+         AH    R9,BMSMHLL         MISS MAP DESCRIPTOR
+         USING BMSMDF,R9
+         LH    R5,BMSMS           R5=MAP LENGTH
+         SH    R5,BMSMHLL         R5=REMAINING MAP LENGTH
+         BZ    MAPFAIL3           ERROR IF NO FIELDS
+         L     R8,P1802DSC        R8=INPUT MAP STRUCTURE ADDRESS
+         USING DFHMAPST,R8
+         LH    R7,BMSMSI          R7=INPUT MAP STRUCTURE LENGTH
+CURSLOOP EQU   *
+         TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
+         BNO   CURSNOST           EXIT IF NOT
+* STRUCTURE EXISTS
+* GROUP FIELD ENTRIES ARE NOT PART OF STRUCTURE LENGTH
+         TM    BMSFDFB,BMSFDGFE   GROUP FIELD ENTRY ?
+         BO    CURSNOST           EXIT IF IT IS
+         MVI   BMSFLAG,X'00'      INITIALIZE FLAG
+         LH    R0,BMSFP           R0=FIELD POSITION (ATTRIBUTE)
+         CR    R1,R0              CURSOR POS MATCHES ATTRIB LOCATION ?
+         BE    CURSSET            EXIT IF IT DOES
+         BL    CURSNXMP           EXIT IF NOT
+         AH    R0,BMSFL           R0=LAST DATA POSITION
+         CR    R1,R0              CURS POS MATCHES ANY DATA LOCATION ?
+         BNH   CURSSET            EXIT IF IT DOES
+CURSNXMP EQU   *
+* THIS FIELD NOT GOT CURSOR
+* BYPASS THIS STRUCTURE
+         AHI   R8,3               BUMP TO FIELD LENGTH
+         AH    R8,BMSFL           BUMP OVER FIELD LENGTH
+         AHI   R7,-3              ADJUST MAP
+         SH    R7,BMSFL                      STRUCTURE LENGTH
+         BM    MAPFAIL7           ERROR IF LESS STRUCTURE THAN EXPECTED
+CURSNOST EQU   *
+* BYPASS THIS FIELD ENTRY
+         SH    R5,BMSMDF          R5=REMAINING MAP LENGTH
+         AH    R9,BMSMDF          BUMP TO NEXT FIELD
+         LTR   R5,R5              ANY MAP REMAINING ?
+         BZ    STREAM             EXIT IF NO MATCHING FIELD
+         B     CURSLOOP           LOOP
+*
+CURSSET  EQU   *
+         OI    BMSFLAG,DFHBMCUR   SET CURSOR FLAG
+*
+STREAM   EQU   *
+         L     R6,TCTTEDA         R6=ADDRESS OF INPUT DATA STREAM
+         AHI   R6,3               MISS AID, CURSOR ADDRESS
+SBALOOP  EQU   *
+         LH    R5,BMSMS           R5=MAP LENGTH
+         LH    R7,BMSMSI          R7=INPUT MAP STRUCTURE LENGTH
+         CLI   0(R6),SBA          SBA ?
+         BNE   MAPFAIL2           ERROR IF NOT
+         AHI   R6,1               MISS SBA
+* SBA TO HEX EG. C1C6, ROW 1 COL 71, POS 70
+         SGR   R8,R8              CLEAR R8
+         LGR   R9,R8              CLEAR R9
+         ICM   R8,8,0(R6)         1ST BYTE TO TOP OF R8  C1..
+         SLL   R8,2               SHIFT OUT PARITY BITS  04..
+         SRL   R8,26              CONVERT TO 6 BIT VALUE ..01
+         ICM   R9,8,1(R6)         2ND BYTE TO TOP OF R9  ..01/C6...
+         SLL   R9,2               SHIFT OUT PARITY BITS  ..01/18...
+         SRDL  R8,26              COMBINE TO 12-BITS     ..../...46
+         AHI   R9,1               CONVERT RESULT TO OFFSET 1
+         BAL   R14,RELPOS         CALC RELATIVE POS RELATED TO MAP SIZE
+         AHI   R1,-2              R1=TRUE OFFSET OF ATTRIBUTE (37-2=35)
+         BNZ   NOTEND             EXIT IF NO FIELD WRAP
+         LA    R1,1919            ATTRIBUTE IS LAST POS
+NOTEND   EQU   *
+* NOW HUNT FOR THE RIGHT FIELD
+         SH    R5,BMSMHLL         R5=REMAINING MAP LENGTH
+         BZ    MAPFAIL3           ERROR IF NO FIELDS
+         L     R8,P1802DSC        R8=INPUT MAP STRUCTURE ADDRESS
+         LR    R9,R4              R9=NEW BASE FOR MAP FIELDS
+         AH    R9,BMSMHLL         MISS MAP DESCRIPTOR
+* REGISTER CHECK:
+*    R1 = SBA CONVERTED TO ATTRIBUTE POSITION RELATIVE TO MAP
+*    R3 = BASE OF P1802 STRUCTURE
+*    R4 = BASE OF MAP HEADER (DFHMDI)
+*    R5 = REMAINING MAP LENGTH
+*    R6 = INPUT BUFFER POINTER
+*    R7 = REMAINING INPUT MAP STRUCTURE LENGTH
+*    R8 = INPUT MAP STRUCTURE ADDRESS
+*    R9 = BASE OF MAP FIELD (DFHMDF)
+FLDLOOP  EQU   *
+         CH    R1,BMSFP           IS THIS OUR FIELD ?
+         BE    GOTFIELD           YES, GO PROCESS IT
+* FIELD POS UNMATCHED
+         TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
+         BNO   NOSTRUC            EXIT IF NOT
+* MAP STRUCTURE EXISTS
+* GROUP FIELD ENTRIES ARE NOT PART OF STRUCTURE LENGTH
+         TM    BMSFDFB,BMSFDGFE   GROUP FIELD ENTRY ?
+         BO    NOSTRUC            EXIT IF IT IS
+* BYPASS THIS STRUCTURE
+         AHI   R8,3               BUMP TO FIELD LENGTH
+         AH    R8,BMSFL           BUMP OVER FIELD LENGTH
+         AHI   R7,-3              ADJUST MAP
+         SH    R7,BMSFL                      STRUCTURE LENGTH
+         BM    MAPFAIL7           ERROR IF LESS STRUCTURE THAN EXPECTED
+NOSTRUC  EQU   *
+* BYPASS THIS FIELD ENTRY
+         SH    R5,BMSMDF          R5=REMAINING MAP LENGTH
+         AH    R9,BMSMDF          BUMP TO NEXT FIELD
+         LTR   R5,R5              ANY MAP REMAINING ?
+         BZ    MAPFAIL4           EXIT IF NO MATCHING FIELD
+         B     FLDLOOP            LOOP
+*
+GOTFIELD EQU   *
+* FIELD POSITION MATCHED
+         TM    BMSFDFB,BMSFDNF    DOES A STRUCTURE EXIST ?
+         BNO   MAPFAIL5           ERROR IF NOT
+* MAP STRUCTURE EXISTS
+* CAN NOW PROCESS FOLLOWING DATA (IF ANY)
+         AHI   R6,2               BUMP TO DATA START
+         CLI   0(R6),X'00'        END OF DATA ?
+         BE    NULLFLD            EXIT IF IT IS
+         CLI   0(R6),SBA          NO DATA ?
+         BE    NULLFLD            EXIT IF IT IS
+* WE HAVE DATA
+         LH    R0,BMSFL           R0=MAXIMUM FIELD LENGTH
+         LA    R15,BMSINP         R15=INPUT DATA
+DATLOOP  EQU   *
+         MVC   0(1,R15),0(R6)     MOVE BYTE OF DATA
+         AHI   R6,1               BUMP BUFFER POINTER
+         AHI   R15,1              BUMP DATA POINTER
+         CLI   0(R6),X'00'        END OF DATA ?
+         BE    DUNDATA            EXIT IF IT IS
+         CLI   0(R6),SBA          NEXT SBA ?
+         BE    DUNDATA            EXIT IF IT IS
+         BCT   R0,DATLOOP         LOOP
+         B     MAPFAIL6           ERROR, DATA OVERRUN
+*
+NULLFLD  EQU   *
+* NO DATA FOR THIS FIELD
+         XC    BMSLEN,BMSLEN      CLEAR LENGTH
+         OI    BMSFLAG,DFHBMEOF   SET FIELD ERASED FLAG
+         B     ANYMORE            EXIT
+*
+DUNDATA  EQU   *
+         BCTR  R0,0               ALLOW FOR SHORT DATA LENGTH
+         LH    R1,BMSFL           R1=MAXIMUM FIELD LENGTH
+         SR    R1,R0              R1=ACTUAL DATA LENGTH
+         STH   R1,BMSLEN          SAVE IN INPUT MAP
+         LTR   R0,R0              FIELD FILLED ?
+         BZ    ANYMORE            EXIT IF IT IS
+* OPERATE JUSTIFY
+         TM    BMSFDFB,BMSFDJR    IT IS JUSTIFY RIGHT ?
+         BNO   DUNSHIFT           EXIT IF NOT
+* JUSTIFY RIGHT, SHIFT THE DATA
+* F50000 ==> 0000F5
+         LH    R0,BMSLEN          R0=ACTUAL DATA LENGTH     1
+         LA    R7,BMSINP          R7=INPUT DATA             F50000
+         LR    R15,R7             R15=INPUT DATA            F50000
+         AH    R7,BMSFL           + MAXIMUM LENGTH                ??
+         BCTR  R7,0               POINT TO LAST POSITION        00
+         AR    R15,R0             + ACTUAL LENGTH             00
+         BCTR  R15,0              POINT TO LAST DATA BYTE   F5
+SHFTLOOP EQU   *
+         MVC   0(1,R7),0(R15)     MOVE DATA BYTE            F500F5
+         MVI   0(R15),X'00'       ERASE ORIGINAL            0000F5
+         BCTR  R7,0               BUMP TO PREVIOUS DEST
+         BCTR  R15,0              BUMP TO PREVIOUS SOURCE
+         BCT   R0,SHFTLOOP        LOOP
+*
+DUNSHIFT EQU   *
+* FIELD SHIFT (IF ANY) IS COMPLETE
+* NOW REPLACE NULLS WITH ZERO/BLANK
+         LA    R7,BMSINP          R7=INPUT DATA
+         LH    R0,BMSFL           R0=MAXIMUM FIELD LENGTH
+JSLOOP   EQU   *
+         CLI   0(R7),X'00'        IS IT NULL ?
+         BNE   JSINCR             EXIT IF NOT
+         MVI   0(R7),C' '         ASSUME BLANK FILL
+         TM    BMSFDFB,BMSFDJZ    IT IS JUSTIFY ZERO ?
+         BNO   JSINCR             EXIT IF NOT
+         MVI   0(R7),C'0'         ZERO FILL
+JSINCR   EQU   *
+         AHI   R7,1               BUMP DATA POINTER
+         BCT   R0,JSLOOP          LOOP
+         LA    R1,BMSINP          R1=INPUT DATA
+         BAL   R14,PIC            PROCESS PICIN IF ANY
+*
+ANYMORE  EQU   *
+         CLI   0(R6),X'00'        END OF DATA ?
+         BE    RETURN             RETURN IF IT IS
+         B     SBALOOP            EXIT TO PROCESS NEXT SBA
+*
+MAPFAIL1 EQU   *
+* MAP NOT FOUND
+         MVC   EIBRESP2,=F'1'     SET EIBRESP2
+         B     MAPFAIL            EXIT
+*
+MAPFAIL2 EQU   *
+* SHORT READ OR NO SBA
+         MVC   EIBRESP2,=F'2'     SET EIBRESP2
+         B     MAPFAIL            EXIT
+*
+MAPFAIL3 EQU   *
+* SBA FOUND BUT NO FIELDS IN MAP
+         MVC   EIBRESP2,=F'3'     SET EIBRESP2
+         B     MAPFAIL            EXIT
+*
+MAPFAIL4 EQU   *
+* SBA FOUND BUT NO FIELD MATCHED
+         MVC   EIBRESP2,=F'4'     SET EIBRESP2
+         B     MAPFAIL            EXIT
+*
+MAPFAIL5 EQU   *
+* SBA FOUND, UNNAMED FIELD MATCHED
+         MVC   EIBRESP2,=F'5'     SET EIBRESP2
+         B     MAPFAIL            EXIT
+*
+MAPFAIL6 EQU   *
+* SBA FOUND, FIELD MATCHED BUT DATA > LENGTH
+         MVC   EIBRESP2,=F'6'     SET EIBRESP2
+         B     MAPFAIL            EXIT
+*
+MAPFAIL7 EQU   *
+* ATTEMPT TO POINT BEYOND END OF MAP STRUCTURE
+* MAY MEAN MAP AND STRUCTURE ARE OUT OF SYNC
+         MVC   EIBRESP2,=F'7'     SET EIBRESP2
+         B     MAPFAIL            EXIT
+*
+MAPFAIL8 EQU   *
+* ERROR WHILE PROCESSING PICIN
+*    DATA LONGER THAN 31 DIGITS
+*    DATA IS NOT NUMERIC
+         MVC   EIBRESP2,=F'8'     SET EIBRESP2
+MAPFAIL  EQU   *
+         MVI   EIBRCODE,X'04'     SET EIBRCODE
+         MVC   EIBRESP,DFHRESP(MAPFAIL) SET EIBRESP=MAPFAIL
+         B     RETURN             RETURN
+*
+INVMPSZ  EQU   *
+* BAD MAP DIMENSIONS
+         MVI   EIBRCODE,X'08'     SET EIBRCODE
+         MVI   EIBRCODE+3,C' '    SET EIBRCODE+3 TO GENERIC 3270
+         MVC   EIBRESP,DFHRESP(INVMPSZ) SET EIBRESP=INVMPSZ
+*
+RETURN   EQU   *
+         SUBEXIT
+*
+* SUBROUTINES
+*
+RELPOS   EQU   *
+* CALCULATE MAP POSITION RELATED TO SCREEN SIZE
+*
+* R1 = RESULT
+* R9 = POSITION (OFFSET 1)
+*
+*              1         2         3    3
+*     1        0         0         0    5
+*    +-----------------------------------
+*  1 |
+*  2 |@.....@
+*  3 |
+*    +-----------------------------------
+*
+*  MAP SIZE IS 3x35
+*  X=ATTRIBUTE
+*  FIELD POS IS 36-1=35 (OFFSET 0)
+*
+*  THE INCOMING SBA FOR THE FIELD IS 11C1D1 = POSITION 81
+*
+*  81+1=82 (OFFSET 1)
+*  82/80= 1 REMAINDER 2
+*  1*35=35+2=37-2=35 (-1 FOR OFFSET 0, -1 FOR ATTRIBUTE)
+         SR    R0,R0              CLEAR R0
+         LR    R1,R9              R1=POSITION
+         D     R0,=F'80'          R0=COLUMN  R1=ROW
+         LB    R12,BMSMSL         R12=MAP OFFSET ROW
+         SR    R1,R12             SUBTRACT OFFSET
+         AHI   R1,1                               ROW+1
+         LB    R12,BMSMSC         R12=MAP OFFSET COLUMN
+         SR    R0,R12             SUBTRACT OFFSET
+         AHI   R0,1                               COLUMN+1
+         LB    R15,BMSMW          R15=MAP WIDTH (35)
+         MSR   R1,R15             R1=ROW*MAP WIDTH
+         AR    R1,R0              ADD COLUMN
+         BR    R14                RETURN
+*
+PIC      EQU   *
+* PROCESS PICIN (IF ANY)
+*
+* R1 = DATA ADDRESS
+*
+         XC    PICIN,PICIN        CLEAR EDIT WORD FIELD
+         LA    R15,BMSDATA        R15=PIC FIELDS
+         ICM   R2,3,0(R15)        R2=PICIN LENGTH
+         BZR   R14                RETURN IF NONE
+* SAVE THE EDIT WORD
+         BCTR  R2,0               -1 FOR EXECUTE
+         EX    R2,PICMVC          MOVE THE EDIT WORD
+* MOVE THE DATA WITHOUT NULLS, BLANKS OR LEADING ZEROS
+         LA    R6,PICDATA         R6=INPUT POINTER
+         LH    R0,BMSFL           R0=DATA LENGTH
+         MVI   PICLEAD0,X'00'     RESET LEADING ZERO SWITCH
+PICLOOP  EQU   *
+         CLI   0(R1),X'00'        NULL ?
+         BE    PICINCR            EXIT IF IT IS
+         CLI   0(R1),C' '         BLANK ?
+         BE    PICINCR            EXIT IF IT IS
+         CLI   0(R1),C'0'         ZERO ?
+         BNE   PICNOT0            EXIT IF NOT
+         CLI   PICLEAD0,X'FF'     IS IT A LEADING ZERO ?
+         BNE   PICINCR            EXIT IF IT IS
+PICNOT0  EQU   *
+         MVC   0(1,R6),0(R1)      MOVE DATA BYTE
+         AHI   R6,1               BUMP INPUT POINTER
+         MVI   PICLEAD0,X'FF'     SET LEADING ZERO SWITCH
+PICINCR  EQU   *
+         AHI   R1,1               BUMP DATA POINTER
+         BCT   R0,PICLOOP         LOOP
+*
+         CLI   PICLEAD0,X'FF'     ANY DATA MOVED ?
+         BE    PICGTDTA           EXIT IF SOME
+         MVI   0(R6),C'0'         MOVE A ZERO
+         AHI   R6,1               BUMP INPUT POINTER
+PICGTDTA EQU   *
+         ST    R14,PICR14         SAVE RETURN ADDRESS
+         LA    R14,PICDATA        R14=DATA START
+         SR    R6,R14             R6=DATA LENGTH MOVED
+         CHI   R6,31              MORE THAN 31 DIGITS
+         BH    MAPFAIL8           ERROR IF IT IS
+         TMLL  R6,1               IS IT EVEN ?
+         BZ    PICEVEN            EXIT IF IT IS
+         LA    R1,PICDATA         R1=DATA ADDRESS IF ODD BYTES
+         BCTR  R6,0               -1 FOR EXECUTE
+         B     PICEXPK            EXIT
+PICLEAD0 DC    H'0'
+*
+PICEVEN  EQU   *
+         LA    R1,PICDATA0        R1=DATA ADDRESS IF EVEN BYTES
+PICEXPK  EQU   *
+         EX    R6,PICPACK         PACK INPUT
+         TP    PICDEC             VALID NUMERIC ?
+         BNZ   MAPFAIL8           EXIT IF INVALID
+* CALCULATE INDEX INTO PICDEC
+* COUNT NO. OF 20/21
+         LA    R14,PICIN          R14=EDIT WORD
+         SR    R15,R15            R15=0
+PICEDLP  EQU   *
+         CLI   0(R14),X'20'       IS IT 20 ?
+         BE    PICINCR2           EXIT IF IT IS
+         CLI   0(R14),X'21'       IS IT 21 ?
+         BNE   PICBUMP            EXIT IF IT IS
+PICINCR2 EQU   *
+         AHI   R15,1              COUNT 20/21
+PICBUMP  EQU   *
+         AHI   R14,1              BUMP POINTER
+         CLI   0(R14),X'00'       IS IT END ?
+         BNE   PICEDLP            LOOP IF NOT
+*
+         SRL   R15,1              INT(N/2)
+         LNR   R15,R15            -INT(N/2)
+         AHI   R15,15             15-INT(N/2)
+         LA    R15,PICDEC(R15)    +PACKED INPUT ADDRESS
+         LA    R1,PICIN+1         R1=LOCATION OF DEFAULT FLOAT BYTE+1
+         SR    R14,R14            CLEAR R14
+         CLI   PICIN,X'5B'        FLOAT CHAR ?
+         BE    PICFLOAT           EXIT IF IT IS
+         CLI   PICIN,X'4D'        FLOAT CHAR ?
+         BNE   PICDOED            EXIT IF NOT
+PICFLOAT EQU   *
+         IC    R14,PICIN          R14=FLOAT CHAR
+         MVI   PICIN,C' '         REPLACE WITH BLANK FILL
+PICDOED  EQU   *
+         EX    R2,PICEDMK         EDIT THE INPUT
+         LTR   R14,R14            ANY FLOAT CHAR ?
+         BZ    PICNOFLT           EXIT IF NOT
+         BCTR  R1,0               BYTE BEFORE 1ST CHAR
+         STC   R14,0(R1)          STORE IT
+PICNOFLT EQU   *
+         LH    R14,BMSFL          R14=INPUT LENGTH
+         BCTR  R14,0              -1 FOR EXECUTE
+         EX    R14,PICMVDAT       MOVE EDITTED INPUT DATA
+         L     R14,PICR14         RESTORE RETURN ADDRESS
+         BR    R14                RETURN
+PICMVC   MVC   PICIN(0),2(R15)    MOVE THE EDIT WORD
+PICPACK  PACK  PICDEC,0(0,R1)     PACK INPUT
+PICEDMK  EDMK  PICIN(0),0(R15)    EDIT INPUT
+PICMVDAT MVC   BMSINP(0),PICIN    MOVE EDITTED INPUT DATA
+PICIN    DC    XL50'00'           SAVE PICIN
+PICDATA0 DC    C'0'               PREFIX ZERO
+PICDATA  DC    CL50' '            DATA AREA
+PICDEC   DC    PL16'0'            PACKED INPUT
+PICR14   DS    F                  R14 SAVE AREA
+*
+         LTORG
+*
+P1802    DSECT
+P1802FN  DS    XL2                FUNCTION CODE
+P1802EIB DS    AL4                EIB
+P1802TCT DS    AL4                TCTTE
+P1802MSA DS    AL4                MAPSET ADDRESS
+P1802MAP DS    CL7                MAP NAME
+P1802MLN DS    XL2                MAPSET LENGTH
+P1802DSC DS    AL4                STRUCTURE ADDRESS
+P1802DSL DS    AL2                STRUCTURE LENGTH
+P1802END EQU   *                  END MARKER
+*
+         DFHEIBLK                 EIB
+         DFHTCTTE                 TCTTE
+         DFHMAPDS                 MAPSET DSECT
+         DFHMAPST                 MAP STRUCTURE DSECT
+         COPY  DFHBMSCA           MAP ATTRIBUTES
+         COPY  DFHAID             AIDS
+         TN3270 SYMBOLS
+*
+         EQUREGS REGS=GPR
+* R3  PARM POINTER
+* R4  MAP STRUCTURE
+* R5  MAPSET AND MAP LENGTH CONTROL
+* R6  TIOA POINTER
+* R8  MAP DSECT STRUCTURE
+* R9  MAP FIELD STRUCTURE
+* R10 TCTTE
+* R11 EIB
+* R13 SAVE AREA AND BASE 1
+*
+         END
+

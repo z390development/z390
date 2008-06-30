@@ -318,7 +318,9 @@ public  class  mz390 {
      * 04/23/08 RPI 839 support skipping values in SETA/B/C list
      * 05/05/08 RPI 846 sync stats for mz390/az390 and include total az390 errors  
      * 05/07/08 RPI 849 use shared abort_case to catch logic errors  
-     * 06/03/08 RPI 855 show macro labels, ago, and space on branch for tracem                   
+     * 06/03/08 RPI 855 show macro labels, ago, and space on branch for tracem 
+     * 06/10/08 RPI 860 allow EXEC operands separated by commas 
+     * 06/23/08 RPI 866 use get_file_name to parse BAL file names                  
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1288,7 +1290,8 @@ public  class  mz390 {
 		if (!tz390.opt_bal){
 			return;
 		}
-		bal_file = new File(tz390.dir_bal + tz390.pgm_name + tz390.bal_type);
+		String bal_file_name = tz390.get_file_name(tz390.dir_bal,tz390.pgm_name,tz390.bal_type); // RPI 866
+		bal_file = new File(bal_file_name);
 		try {
 			bal_file_buff = new BufferedWriter(new FileWriter(bal_file));
 		} catch (IOException e){
@@ -1349,13 +1352,19 @@ public  class  mz390 {
 				    exec_pc();
 				    bal_line = null;
 			    } else if (pc_loc < 0){ 
-					if (tz390.opt_tracem){ // rpi 855
+					if (tz390.opt_tracem
+						&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+							|| mac_file_type[mac_file_num[mac_line_index]] != '=')
+						){ // rpi 855
 						trace_id = tz390.left_justify(mac_name[mac_call_name_index[mac_call_level]],9) + tz390.right_justify("" + mac_file_line_num[mac_line_index],6) + "        ";	
 						tz390.put_trace(trace_id + " " + mac_file_line[mac_line_index]);
 					}
 			    	// jump for ago, gbl?, etc.
 			    	mac_line_index = - pc_loc;
-					if (tz390.opt_tracem){
+					if (tz390.opt_tracem
+						&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+							|| mac_file_type[mac_file_num[mac_line_index]] != '=') 	
+					    ){
 						tz390.put_trace(" "); // RPI 
 					}
 			    	actr_count--; // RPI 754
@@ -1788,7 +1797,8 @@ public  class  mz390 {
 				exec_parm_lvl--;
 			}
 			if (!exec_space){
-				if (exec_parm_char <= ' '){
+				if (exec_parm_char <= ' '
+					|| exec_parm_char == ','){  // RPI 860
 					exec_space = true;
 				} else {
 					if (exec_parm_lvl > 0  // RPI 805
@@ -2149,7 +2159,10 @@ public  class  mz390 {
 					mac_file_buff[cur_mac_file].close();
 					cur_mac_file--;
 					if (cur_mac_file >= 0){
-						if (tz390.opt_tracem){
+						if (tz390.opt_tracem
+							&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+								|| mac_file_type[mac_file_num[mac_line_index]] != '=') 
+							){
 							tz390.put_trace("COPY ENDING FID=" + cur_mac_file_num + " LVL=" + (cur_mac_file+2) + " " + mac_file[cur_mac_file+1].getName()); 
 						}
 						retry = true;
@@ -2371,7 +2384,9 @@ public  class  mz390 {
 				set_mac_file_num();
 				mac_file_cur_line_num[cur_mac_file - 1] = cur_mac_line_num;
 				cur_mac_line_num = 0;
-				if (tz390.opt_tracem){
+				if (tz390.opt_tracem
+					&& tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace			
+				   ){
 					tz390.put_trace("LOADING COPY LVL=" + (cur_mac_file+1) + " " + new_mac_name);
 				}
 			} catch (IOException e){
@@ -2398,7 +2413,12 @@ public  class  mz390 {
 	       tot_bal_line++;	// includes stats after END
 	    }
 	    // move tracem before macro label removal RPI 855
-		if (tz390.opt_tracem && text_line != null && mac_file_num != null){
+		if (tz390.opt_tracem
+			&& text_line != null 
+			&& mac_file_num != null
+			&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+				|| mac_file_type[mac_file_num[mac_line_index]] != '=') 
+			){
 			tz390.put_trace(trace_id 
 				+ tz390.get_cur_bal_line_id(mac_file_num[bal_xref_index],      // rpi 746
 						                    mac_file_line_num[bal_xref_index], // rpi 746
@@ -2463,7 +2483,8 @@ public  class  mz390 {
 			az390.mz390_errors = mz390_errors; //update mz390 errors for PRN
 			if (mac_call_level >=0){
 				if (mac_call_level == 0){
-					temp_file = new File(tz390.dir_bal + tz390.pgm_name + tz390.pgm_type);
+					String bal_file_name = tz390.get_file_name(tz390.dir_bal,tz390.pgm_name,tz390.pgm_type); // RPI 866
+					temp_file = new File(bal_file_name);
 					cur_mac_name = temp_file.getAbsolutePath(); // RPI 694
 				} else {
 					cur_mac_name = mac_name[mac_call_name_index[mac_call_level]];
@@ -2531,9 +2552,14 @@ public  class  mz390 {
 			exp_var_replacement_change = true; // set for mac stmts
 		}
 		if (tz390.opt_tracem 
-			&& exp_var_replacement_change){
+			&& exp_var_replacement_change
+			&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+				|| mac_file_type[mac_file_num[mac_line_index]] != '=') 
+			){
 			pc_trace_gen = true;
-			tz390.put_trace(trace_id + "        " + mac_file_line[mac_line_index]);
+			tz390.put_trace(trace_id 
+					+ "        " 
+					+ mac_file_line[mac_line_index]);
 		}
 		save_bal_op = bal_op;    
 		if (bal_op != null && bal_op.length() > 0){
@@ -2820,7 +2846,10 @@ public  class  mz390 {
 				new_mac_line_index = exp_ago_branch(0);
 				pcl_start[mac_line_index] = - new_mac_line_index;		
                	mac_line_index = new_mac_line_index;
-               	if (tz390.opt_tracem){ // RPI 855
+               	if (tz390.opt_tracem
+            		&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+            			|| mac_file_type[mac_file_num[mac_line_index]] != '=') 
+               		){ // RPI 855
                		tz390.put_trace(" ");
                	}
 				return;
@@ -2943,7 +2972,10 @@ public  class  mz390 {
 				if (tz390.opt_traceall){
 					tz390.put_trace("AIF BRANCH " + label_name);
 				}
-				if (tz390.opt_tracem){
+				if (tz390.opt_tracem
+					&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+						|| mac_file_type[mac_file_num[mac_line_index]] != '=') 	
+				    ){
 					tz390.put_trace(" "); // RPI 855
 				}
 				actr_count--;
@@ -3190,7 +3222,10 @@ public  class  mz390 {
 		case 222:  // MEXIT 
 			mac_line_index = mac_name_line_end[mac_call_name_index[mac_call_level]] - 1;
 			bal_op_ok = true;
-			if (tz390.opt_tracem){
+			if (tz390.opt_tracem
+				&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+				    || mac_file_type[mac_file_num[mac_line_index]] != '=') 	
+			    ){
 				tz390.put_trace(" "); // RPI 
 			}
 			break;
@@ -6841,7 +6876,10 @@ public  class  mz390 {
 			set_call_parm_values();
 			mac_line_index = mac_name_line_start[mac_name_index];
 			update_sysstmt();
-			if (tz390.opt_tracem){
+			if (tz390.opt_tracem
+				&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+					|| mac_file_type[mac_file_num[mac_line_index]] != '=') 	
+			    ){
 				tz390.put_trace(" "); // RPI 
 			}
 		} else {
@@ -8189,9 +8227,14 @@ public  class  mz390 {
 	    // exec pc code
 		pc_trace_gen = false;
 		if (tz390.opt_tracem 
-				&& !(mac_file_line[mac_line_index].length() > 0 
-						&& mac_file_line[mac_line_index].charAt(0) == '*')){
-			trace_id = tz390.left_justify(mac_name[mac_call_name_index[mac_call_level]],9) + tz390.right_justify("" + mac_file_line_num[mac_line_index],6) + "        ";	
+			&& !(mac_file_line[mac_line_index].length() > 0 
+			     && mac_file_line[mac_line_index].charAt(0) == '*')
+			&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+				|| mac_file_type[mac_file_num[mac_line_index]] != '=')     
+			){
+			trace_id = tz390.left_justify(mac_name[mac_call_name_index[mac_call_level]],9)
+			         + tz390.right_justify("" + mac_file_line_num[mac_line_index],6) 
+			         + "        ";	
 			tz390.put_trace(trace_id + " " + mac_file_line[mac_line_index]);
 		}
 	    tot_exp_stk_var = 0;
@@ -8225,7 +8268,10 @@ public  class  mz390 {
 						if (tz390.opt_traceall){
 							tz390.put_trace("AIF BRANCH " + pc_setc[pc_loc]);
 						}
-						if (tz390.opt_tracem){
+						if (tz390.opt_tracem
+							&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+								|| mac_file_type[mac_file_num[mac_line_index]] != '=') 	
+						    ){
 							tz390.put_trace(" "); // RPI 855
 						}
 						if (tz390.opt_tracep){
@@ -8664,6 +8710,10 @@ public  class  mz390 {
     	 * trace pc entry gen or exec
     	 */
     	if (!tz390.opt_pc)return;
+    	if (!tz390.opt_tracec 
+    		&& mac_file_type[mac_file_num[mac_line_index]] == '='){
+    		return; // RPI 862 skip COPY trace
+    	}
     	String text = "";
     	switch (pc_op[pc_loc]){
     	case  1: // trace pc_op_ago
@@ -10074,7 +10124,10 @@ public  class  mz390 {
 	    	actr_count--;  // RPI 754
 			mac_line_index = gbl_seta[ago_gbla_index + 1 + ago_index];
 		}
-		if (tz390.opt_tracem){
+		if (tz390.opt_tracem
+			&& (tz390.opt_tracec // RPI 862 skip copy trace // RPI 862 skip COPY trace
+				|| mac_file_type[mac_file_num[mac_line_index]] != '=') 	
+		    ){
 			tz390.put_trace(" "); // RPI 855
 		}
 		update_sysstmt();

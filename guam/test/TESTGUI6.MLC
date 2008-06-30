@@ -1,0 +1,287 @@
+*********************************************************************
+* Copyright 2006 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 05/08/06 RPI 308 CONVERT DEMOGUI6 APPLICATION TO EXEC CICS TESTGUI6
+* 06/16/08 RPI 861 CORRECT TO HANDLE NO NULLS VARIABLE INPUT         
+* 06/17/08 RPI 861 FIX SBA ADDRESS FOR END OF ZIP 22+5 = 27          
+*********************************************************************
+DFHEISTG DSECT
+RECAREA  DS    CL80               RECEIVE AREA
+RECLEN   DS    AL2                RECEIVED LENGTH
+*
+PROMPT   TN3270 WCC_KD
+         TN3270 (SBA,3,10),(SF,ATT_PA)
+         DC    C'ENTER NAME'
+         TN3270 (SF,ATT_UA)
+*DSHX    DC    40C'_'             NAME FIELD
+         TN3270 (SBA,3,51)
+         TN3270 (SF,ATT_PA)
+         TN3270 (SBA,5,10),(SF,ATT_PA)
+         DC    C'ENTER ADDR'
+         TN3270 (SF,ATT_UA)
+*DSHX    DC    40C'_'             ADDRESS FIELD
+         TN3270 (SBA,5,51)
+         TN3270 (SF,ATT_PA)
+         TN3270 (SBA,7,10),(SF,ATT_PA)
+         DC    C'ENTER  ZIP'
+         TN3270 (SF,ATT_UN)
+*DSHX    DC    5C'_'              ZIP FIELD
+         TN3270 (SBA,7,27)
+         TN3270 (SF,ATT_PA),(SBA,3,22),IC
+*
+INPUT    DS    XL200              STANDARD INPUT: AID, CURSOR, FIELDS
+*
+SHOW_NAME TN3270 WCC_KD,(SBA,9,10),(SF,ATT_PA)
+         DC    C'NAME'
+         TN3270 (SF,ATT_PA)
+DNAME    DC    CL40' '
+         TN3270 (SBA,15,10),(RA,15,80,0)
+*
+SHOW_ADDR TN3270 WCC_KD,(SBA,11,10),(SF,ATT_PA)
+         DC    C'ADDR'
+         TN3270 (SF,ATT_PA)
+DADDR    DC    CL40' '
+         TN3270 (SBA,15,10),(RA,15,80,0)
+*
+SHOW_ZIP TN3270 WCC_KD,(SBA,13,10),(SF,ATT_PA)
+         DC    C'ZIP '
+         TN3270 (SF,ATT_PA)
+DZIP     DC    CL5' '
+         TN3270 (SBA,15,10),(RA,15,80,0)
+*
+SHOW_AID TN3270 WCC_BKD,(SBA,15,10),(SF,ATT_PA)
+         DC    C'NO ACTION FOR AID KEY HEX '
+         TN3270 (SF,ATT_PA)
+SHOW_HEX DC     C'HH ' EXTRA SPACE FOR UNPACK
+         TN3270 (RA,15,80,0),(SF,ATT_PA)
+*
+TESTGUI6 CSECT
+         MVC   PROMPT(LPROMPTD),PROMPTD
+         MVC   SHOW_NAME(LSHOW_NAMED),SHOW_NAMED
+         MVC   SHOW_ADDR(LSHOW_ADDRD),SHOW_ADDRD
+         MVC   SHOW_ZIP(LSHOW_ZIPD),SHOW_ZIPD
+         MVC   SHOW_AID(LSHOW_AIDD),SHOW_AIDD
+REFRESH  EQU   *
+         EXEC  CICS SEND FROM(TITLE) LENGTH(LTITLELN)
+LOOP     EQU   *
+* PROMPT FOR ANY OR ALL INPUT FIELDS
+         EXEC  CICS SEND FROM(PROMPT) LENGTH(PROMPTLN)
+* INPUT
+LOOP2    EQU   *
+         XC    INPUT(L'INPUT),INPUT CLEAR INPUT
+         MVC   RECLEN,=AL2(L'INPUT) SET INPUT LENGTH
+         EXEC  CICS RECEIVE INTO(INPUT) LENGTH(RECLEN)
+         CLI   INPUT,DFHCLEAR     REFRESH SCREEN ON CLEAR
+         BE    REFRESH
+         CLI   INPUT,DFHPF1       DISPLAY HELP SCREEN
+         BE    HELP
+         CLI   INPUT,DFHPF2       RESET INPUT FIELDS
+         BE    RESET
+         CLI   INPUT,DFHPF3       EXIT ON PF3
+         BE    EXIT
+         CLI   INPUT,DFHENTER     UPDATE CHANGED FIELDS ON ENTER
+         BE    UPDATE
+         UNPK  SHOW_HEX(3),INPUT(2)
+         TR    SHOW_HEX(2),HEXTAB-240
+         MVI   SHOW_HEX+2,C' '
+         EXEC  CICS SEND FROM(SHOW_AID) LENGTH(AIDLEN)
+         B     LOOP
+*
+EXIT     EQU   *
+         EXEC  CICS RETURN
+*
+HELP     EQU   *
+* DISPLAY HELP SCREEN AND WAIT FOR ENTER TO REFRESH
+         EXEC CICS SEND FROM(SHOW_HELP) LENGTH(HELPLEN)
+         EXEC CICS RECEIVE INTO(RECAREA) LENGTH(RECLEN)
+         B     REFRESH
+*
+RESET    EQU   *
+         EXEC CICS SEND FROM(EAU) LENGTH(EAULEN)
+         B     LOOP2
+*
+UPDATE   EQU   *
+* UPDATE LOWER SCREEN FROM MODIFIED INPUT FIELDS
+         CLI   RECLEN+1,X'03' ANY REAL INPUT ?
+         BNH   ERROR_NOFIELD SHOW NO FIELDS UPDATED ERROR
+         LH    R1,RECLEN     R1=INPUT RECEIVED LENGTH
+         LA    R4,INPUT+3    FIRST FIELD AFTER AID AND CURSOR
+NEXT_FIELD EQU   *
+         CLI   0(R4),X'00'   ANY MORE DATA ?
+         BE    LOOP          EXIT IF NONE
+         CLC   0(3,R4),NAME_KEY
+         BE    UPDATE_NAME
+         CLC   0(3,R4),ADDR_KEY
+         BE    UPDATE_ADDR
+         CLC   0(3,R4),ZIP_KEY
+         BE    UPDATE_ZIP
+         B     ERROR_BADFIELD      NO SBA MATCH, SHOW BAD SBA ERROR
+UPDATE_NAME EQU *
+         MVC   DNAME,=40C' '
+         LA    R1,DNAME
+         LA    R4,3(R4)
+NAME_LOOP EQU *
+         CLI   0(R4),X'00'   ANY MORE DATA ?
+         BE    NAME_LOOP_END  EXIT IF NONE
+         CLI   0(R4),SBA
+         BE    NAME_LOOP_END
+         MVC   0(1,R1),0(R4)
+         AHI   R1,1
+         AHI   R4,1
+         B     NAME_LOOP
+NAME_LOOP_END EQU *
+         EXEC CICS SEND FROM(SHOW_NAME) LENGTH(NAMELEN)
+         B     NEXT_FIELD
+*
+UPDATE_ADDR EQU *
+         MVC   DADDR,=40C' '
+         LA    R1,DADDR
+         LA    R4,3(R4)
+ADDR_LOOP EQU *
+         CLI   0(R4),X'00'   ANY MORE DATA ?
+         BE    ADDR_LOOP_END   EXIT IF NONE
+         CLI   0(R4),SBA
+         BE    ADDR_LOOP_END
+         MVC   0(1,R1),0(R4)
+         AHI   R1,1
+         AHI   R4,1
+         B     ADDR_LOOP
+ADDR_LOOP_END EQU *
+         EXEC CICS SEND FROM(SHOW_ADDR) LENGTH(ADDRLEN)
+         B     NEXT_FIELD
+*
+UPDATE_ZIP EQU *
+         MVC   DZIP,=5C' '
+         LA    R1,DZIP
+         LA    R4,3(R4)
+ZIP_LOOP EQU *
+         CLI   0(R4),X'00'   ANY MORE DATA ?
+         BE    ZIP_LOOP_END   EXIT IF NONE
+         CLI   0(R4),SBA
+         BE    ZIP_LOOP_END
+         MVC   0(1,R1),0(R4)
+         AHI   R1,1
+         AHI   R4,1
+         B     ZIP_LOOP
+ZIP_LOOP_END EQU *
+         EXEC CICS SEND FROM(SHOW_ZIP) LENGTH(ZIPLEN)
+         B     NEXT_FIELD
+*
+ERROR_NOFIELD EQU   *
+         EXEC CICS SEND FROM(SHOW_NOFIELD) LENGTH(FIELDLEN)
+         B     LOOP
+*
+ERROR_BADFIELD EQU *
+         EXEC CICS SEND FROM(SHOW_BADFIELD) LENGTH(BADLEN)
+         B     LOOP
+*
+         PRINT DATA
+TITLE    TN3270 ESC,WRT_EW,WCC_KD,(SBA,1,10),(SF,ATT_PA)
+         DC    C'TESTGUI6 UPDATE NAME, ADDR, AND/OR ZIP (PF1=HELP PF3=EX
+               XIT)'
+         TN3270 (SBA,15,10),(SF,ATT_PA,C'PRESS F1 FOR HELP')
+LTITLELN DC    AL2(*-TITLE)
+*
+PROMPTD  TN3270 WCC_KD
+         TN3270 (SBA,3,10),(SF,ATT_PA)
+         DC    C'ENTER NAME'
+         TN3270 (SF,ATT_UA)
+*DSHX    DC    40C'_'             NAME FIELD
+         TN3270 (SBA,3,51)
+         TN3270 (SF,ATT_PA)
+         TN3270 (SBA,5,10),(SF,ATT_PA)
+         DC    C'ENTER ADDR'
+         TN3270 (SF,ATT_UA)
+*DSHX    DC    40C'_'             ADDRESS FIELD
+         TN3270 (SBA,5,51)
+         TN3270 (SF,ATT_PA)
+         TN3270 (SBA,7,10),(SF,ATT_PA)
+         DC    C'ENTER  ZIP'
+         TN3270 (SF,ATT_UN)
+*DSHX    DC    5C'_'              ZIP FIELD
+         TN3270 (SBA,7,27)
+         TN3270 (SF,ATT_PA),(SBA,3,22),IC
+LPROMPTD EQU   *-PROMPTD
+PROMPTLN DC    AL2(*-PROMPTD)
+*
+NAME_KEY TN3270 (SBA,3,22)
+ADDR_KEY TN3270 (SBA,5,22)
+ZIP_KEY  TN3270 (SBA,7,22)
+*
+SHOW_NAMED TN3270 WCC_KD,(SBA,9,10),(SF,ATT_PA)
+         DC    C'NAME'
+         TN3270 (SF,ATT_PA)
+         DC    CL40' '            NAME
+         TN3270 (SBA,15,10),(RA,15,80,0)
+LSHOW_NAMED EQU *-SHOW_NAMED
+NAMELEN  DC    AL2(*-SHOW_NAMED)
+*
+SHOW_ADDRD TN3270 WCC_KD,(SBA,11,10),(SF,ATT_PA)
+         DC    C'ADDR'
+         TN3270 (SF,ATT_PA)
+         DC    CL40' '            ADDRESS
+         TN3270 (SBA,15,10),(RA,15,80,0)
+LSHOW_ADDRD EQU *-SHOW_ADDRD
+ADDRLEN  DC    AL2(*-SHOW_ADDRD)
+*
+SHOW_ZIPD TN3270 WCC_KD,(SBA,13,10),(SF,ATT_PA)
+         DC    C'ZIP '
+         TN3270 (SF,ATT_PA)
+          DC    CL5' '            ZIP
+         TN3270 (SBA,15,10),(RA,15,80,0)
+LSHOW_ZIPD EQU *-SHOW_ZIPD
+ZIPLEN   DC    AL2(*-SHOW_ZIPD)
+*
+SHOW_AIDD TN3270 WCC_BKD,(SBA,15,10),(SF,ATT_PA)
+         DC    C'NO ACTION FOR AID KEY HEX '
+         TN3270 (SF,ATT_PA)
+         DC    C'HH ' EXTRA SPACE FOR UNPACK
+         TN3270 (RA,15,80,0),(SF,ATT_PA)
+LSHOW_AIDD EQU *-SHOW_AIDD
+AIDLEN   DC    AL2(*-SHOW_AIDD)
+*
+HEXTAB   DC    C'0123456789ABCDEF'
+*
+SHOW_NOFIELD TN3270 WCC_BKD,(SBA,15,10),(SF,ATT_PA)
+         DC    C'NO FIELDS CHANGED'
+         TN3270 (RA,15,80,0),(SF,ATT_PA)
+FIELDLEN DC    AL2(*-SHOW_NOFIELD)
+*
+SHOW_BADFIELD TN3270 WCC_BKD,(SBA,15,10),(SF,ATT_PA)
+         DC    C'FIELD COMMAND AND/OR SBA NOT FOUND'
+         TN3270 (RA,15,80,0),(SF,ATT_PA)
+BADLEN   DC    AL2(*-SHOW_BADFIELD)
+*
+SHOW_HELP TN3270 ESC,WRT_EW,WCC_KD
+         TN3270 (SBA,2,10),(SF,ATT_PA)
+         DC     C'TESTGUI6 TEST EXEC CICS TN3270 WITH 3 FIELDS'
+         TN3270 (SBA,3,10),(SF,ATT_PA)
+         DC     C'PRESS ENTER OR ANY AID KEY TO RETURN TO MAIN SCREEN'
+         TN3270 (SBA,4,10),(SF,ATT_PA)
+         DC     C'TAB CURSOR TO FIELD YOU WISH TO CHANGE'
+         TN3270 (SBA,5,10),(SF,ATT_PA)
+         DC     C'ENTER DATA IN ONE OR MORE FIELDS AND PRESS ENTER'
+         TN3270 (SBA,6,10),(SF,ATT_PA)
+         DC     C'THE ZIP FIELD IS NUMERIC SO ALPHA IS IGNORED'
+         TN3270 (SBA,7,10),(SF,ATT_PA)
+         DC     C'USE BACK SPACE WITHIN FIELD TO CORRECT FIELD'
+         TN3270 (SBA,8,10),(SF,ATT_PA)
+         DC     C'USE CLEAR TO REFRESH SCREEN'
+         TN3270 (SBA,9,10),(SF,ATT_PA)
+         DC     C'USE PF3 TO EXIT APPLICATION FROM MAIN SCREEN'
+         TN3270 (SBA,10,10),(SF,ATT_PA)
+         DC     C'ANY UNUSED AID KEY SUCH AS PF4-PF24 SHOWS HEX VALUE'
+         TN3270 (SBA,11,10),(SF,ATT_PA)
+         DC     C'SUBMIT RPI IF YOU FIND ANY ERRORS VIA WWW.Z390.ORG'
+HELPLEN  DC    AL2(*-SHOW_HELP)
+*
+EAU      TN3270 ESC,WRT_EAU,WCC_KD
+EAULEN   DC    AL2(*-EAU) 
+*
+         COPY  DFHAID
+         TN3270 SYMBOLS
+         EQUREGS
+         END

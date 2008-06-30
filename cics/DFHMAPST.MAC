@@ -1,0 +1,21 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         DFHMAPST
+*
+* MAP DSECT STRUCTURE
+*
+DFHMAPST DSECT
+BMSGRPDT EQU   *                  GRPNAME DATA STARTS HERE
+BMSLEN   DS    XL2                FIELD LENGTH       name.L
+BMSFLAG  DS    X                  FIELD FLAG         name.F
+         ORG   BMSFLAG
+BMSATTR  DS    X                  FIELD ATTRIBUTE    name.A
+BMSINP   DS    0C                 FIELD INPUT        name.I
+BMSOUT   DS    0C                 FIELD OUTPUT       name.O
+         MEND
+

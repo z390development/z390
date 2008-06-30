@@ -1,0 +1,69 @@
+.*********************************************************************
+.* Copyright 2006 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.*********************************************************************
+         MACRO
+         DFHMAPDS
+*
+* PHYSICAL MAP STRUCTURE
+*
+DFHMAPDS DSECT
+*
+* MAP SET STRUCTURE -- ONLY ONE
+*
+BMSNAME  DS    CL8                MAPSET NAME
+*
+* MAP STRUCTURE -- ONE PER MAP
+*
+BMSMHLL  DS    XL2                MAP DESCRIPTOR LENGTH
+BMSMNAME DS    CL8                MAP NAME
+*                                 INPUT/OUTPUT/ACTIVE PARTITION
+BMSMS    DS    XL2                MAP LENGTH
+*                                 MAP SPEC LENGTH
+BMSMSI   DS    XL2                INPUT WORK AREA LENGTH
+BMSMSO   DS    XL2                OUTPUT WORK AREA LENGTH
+BMSMODE  DS    X                  MAP DESCRIPTOR FLAG BYTE
+BMSMODO  EQU   X'80'                 MODE=OUT
+BMSMODI  EQU   X'40'                 MODE=IN
+BMSMODIO EQU   X'C0'                 MODE=INOUT
+BMSWCC   DS    X                  WCC
+BMSCURSR DS    XL2                CURSOR POSITION (FROM ATTRB IC)
+BMSMARG  DS    X                  MAP MARGIN
+BMSMARGB EQU   X'08'                 JUSTIFY=BOTTOM
+BMSMARGR EQU   X'04'                 JUSTIFY=RIGHT
+BMSMARGL EQU   X'02'                 JUSTIFY=LAST
+BMSMARGF EQU   X'01'                 JUSTIFY=FIRST
+BMSML    DS    X                  NO. OF ROWS
+BMSMW    DS    X                  NO. OF COLUMNS
+BMSMSL   DS    X                  STARTING ROW NUMBER
+BMSMSC   DS    X                  STARTING COLUMN NUMBER
+BMSMI    DS    X                  MAP INDICATORS
+*        EQU   X'10'                 MAP AT V1.6 OR GREATER
+BMSMICL  EQU   X'08'                 CURSOR IN FIELD IND REQUIRED
+BMSMIH   EQU   X'04'                 HEADER MAP
+BMSMIT   EQU   X'02'                 TRAILER MAP
+*
+* FIELD STRUCTURE -- MULTIPLE PER MAP
+*
+BMSMDF   DS    XL2                FIELD ENTRY LENGTH
+BMSFL    DS    XL2                FIELD LENGTH
+BMSFDFB  DS    X                  FIELD DESCRIPTOR FLAG BYTE
+BMSFDGFE EQU   X'40'                 GROUP FIELD ENTRY
+BMSFDGFD EQU   X'20'                 GROUP FIELD DESCRIPTOR
+BMSFDJZ  EQU   X'08'                 JUSTIFY=ZERO
+BMSFDJR  EQU   X'04'                 JUSTIFY=RIGHT
+BMSFDDD  EQU   X'02'                 INITIAL= PRESENT
+BMSFDNF  EQU   X'01'                 DSECT ENTRY EXISTS
+BMSFA    DS    X                  ATTRIBUTE
+BMSFP    DS    XL2                POSITION
+* DYNAMIC FIELDS: PICIN/PICOUT LENGTHS WILL ALWAYS BE GENERATED
+BMSDATA  DS    0X                 VARIABLE FIELDS ANCHOR
+*        DS    XL2                LENGTH OF FOLLOWING PICIN
+*        DS    0C                 PICIN IF PRESENT
+*        DS    XL2                LENGTH OF FOLLOWING PICOUT
+*        DS    0C                 PICOUT IF PRESENT
+*        DS    0C                 INITIAL/XINIT OF LENGTH BMSFL
+         MEND
+

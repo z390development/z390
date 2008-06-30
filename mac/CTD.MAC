@@ -12,6 +12,7 @@
 .*                  (NOTE IN=(REG) INDICATES FIELD ADDR IN GPR)
 .* 12/10/06 RPI 514 ADD DFP DECIMAL FLOATING POINT TYPES          
 .* 04/19/06 RPI 833 add SETC quotes for HLASM compatibility       
+.* 06/14/08 RPI 863 add error messages for extra positional parms 
 .*********************************************************************
 .*
 .*  CONVERT INPUT NUMERIC FIELD TO DISPLAY EBCDIC FORMAT
@@ -36,6 +37,13 @@
                &IN=,         SOURCE FIELD (RX OR REG)                  X
                &OUT=,        TARGET FIELD (RX OR REG)                  X
                &LINKAGE=SVC  USE Z390 SVC ELSE USE CALL TO FPCONMFC
+&NPOS    SETA  N'&SYSLIST
+.POSLOOP ANOP
+         AIF   (&NPOS LE 1).POSEND
+         MNOTE 12,'UNSUPPORTED OPERAND - &SYSLIST(&NPOS)'
+&NPOS    SETA  &NPOS-1
+         AGO   .POSLOOP
+.POSEND  ANOP        
          AIF   ('&N' EQ '').SKIPDS
 &N       DS    0H
 .SKIPDS  ANOP 

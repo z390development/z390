@@ -1,0 +1,46 @@
+Sequential Terminal Streams
+===========================
+
+0001  Invalid transaction AAAA executed twice
+0002  MMM1 causing APCT message executed twice
+0003  MMM2 executed twice
+0004  GUI4 2 inputs, then END
+0005  GUI6 fields 1, then 2, then 3, PF1, PF3
+           fields 3, then 2, then 1, PF3 to end
+0006  TST1 executed once
+0007  BED1 executed twice
+0008  BED2 executed twice, different key sequences
+0009  BED3 executed twice
+0010  BED4 executed twice
+0011  BED5 executed twice
+0012  BED9 clear
+      CEBR various tests
+           a) CEBR               clear
+           b) CEBR FRED          clear
+           c) CEBR MYQUEUE1      clear
+           d) CEBR X'01CB458F'   clear
+           e) CEBR, cursor select MYQUEUE1
+           f) PF11/PF5/PF4/PF8/PF4/PF1/ENTER/PF2/PF2/PF2/PF3
+           g) Queue names display
+              PF2/PF2/PF2
+              cursor select MYQUEUE2
+              PF9/PF9/PF9/c 5/l 30/PF7/PF8/PF8/PF12/PF9/PF10
+              PF4/PF5/t/b
+              q MYQUEUE1
+              q x'01cb458f'
+              PF2/PF2/PF2/PF11/PF2/PF2/PF2/PF11/c 36/PF7/PF12/PF2
+              PURGE/CLEAR
+0013  IC01 executed once
+0014  VSM1 executed once
+      CEBR VSM1
+      PF5/CLEAR
+0015  VSM2 executed once
+      CEBR VSM2
+      PF5/CLEAR
+0016  VSM3 executed once
+      CEBR VSM3
+      PF11/PF11/PF5
+0017  BMS1 executed once
+      Test all functions of mapping support
+0018  shutdown
+
