@@ -28,6 +28,7 @@ C:\z390\MAC.BAT
 C:\z390\mfacc
 C:\z390\mvs
 C:\z390\MZ390.BAT
+C:\z390\README.TXT
 C:\z390\REPRO.BAT
 C:\z390\rt
 C:\z390\soa

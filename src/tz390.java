@@ -188,6 +188,7 @@ public  class  tz390 {
     *          and update get_file_name to allow parm_dir to
     *          override basemane and ext or parm to override path
     *          (SYSPCH and SYSPRN used in DFHALL for BMS map gens)
+    * 07/03/08 RPI 874 support all option set/reset regardless of default         
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -196,7 +197,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.02";  //dsh
+    String version    = "V1.4.02a";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -4552,29 +4553,60 @@ private void process_option(String token){
 		process_options_file(token.substring(1));  // RPI 742
 	} else if (token.toUpperCase().equals("ALLOW")){
 		opt_allow = true; // RPI 833
+	} else if (token.toUpperCase().equals("NOALLOW")){
+       	opt_allow = false;  // RPI 833
 	} else if (token.toUpperCase().equals("AMODE24")){
 		opt_amode24 = true;
 		opt_amode31 = false;
 		z390_amode31 = 'F';
 		z390_rmode31 = 'F';
+    } else if (token.toUpperCase().equals("NOAMODE24")){
+		opt_amode24 = false;
+		opt_amode31 = true;
+		z390_amode31 = 'T';
 	} else if (token.toUpperCase().equals("AMODE31")){
 		opt_amode24 = false;
 		opt_amode31 = true;
 		z390_amode31 = 'T';
+	} else if (token.toUpperCase().equals("NOAMODE31")){
+		opt_amode24 = true;
+		opt_amode31 = false;
+		z390_amode31 = 'F';
+		z390_rmode31 = 'F';
 	} else if (token.toUpperCase().equals("ASCII")){
 		opt_ascii = true; 
+	} else if (token.toUpperCase().equals("NOASCII")){
+		opt_ascii = false; 
 	} else if (token.toUpperCase().equals("ASM")){
 		opt_asm = true; 
+	} else if (token.toUpperCase().equals("NOASM")){
+		opt_asm = false; 
 	} else if (token.toUpperCase().equals("ASSIST")){
 		opt_assist   = true; 
 		opt_loadhigh = false; // RPI 819
-	} else if (token.toUpperCase().equals("BAL")){
+	} else if (token.toUpperCase().equals("NOASSIST")){
+		opt_assist   = false; 
+		opt_loadhigh = true; // RPI 819
+	 } else if (token.toUpperCase().equals("AUTOLINK")){
+	    opt_autolink = true; // RPI 874
+	 } else if (token.toUpperCase().equals("NOAUTOLINK")){
+	    opt_autolink = false;
+	 } else if (token.toUpperCase().equals("BAL")){
 		opt_bal = true; 
+	 } else if (token.toUpperCase().equals("NOBAL")){
+			opt_bal = false; 
 	} else if (token.toUpperCase().equals("BS2000")){
 		opt_bs2000 = true;  // RPI 604
 		opt_amode24 = true;
 		opt_amode31 = false;
 		z390_amode31 = 'F';
+		z390_rmode31 = 'F';
+	} else if (token.toUpperCase().equals("NOBS2000")){
+		opt_bs2000 = false;  // RPI 604
+		opt_amode24 = false;
+		opt_amode31 = true;
+		z390_amode31 = 'T';
+		z390_rmode31 = 'F';
     } else if (token.length() == 9
         	&& token.substring(0,7).toUpperCase().equals("CHKMAC(")){
        	opt_chkmac = token.charAt(7) - '0';
@@ -4589,10 +4621,21 @@ private void process_option(String token){
            	}
 	} else if (token.toUpperCase().equals("CICS")){
        	opt_cics = true;
+	} else if (token.toUpperCase().equals("NOCICS")){
+       	opt_cics = false;
 	} else if (token.toUpperCase().equals("CON")){
        	opt_con = true;
+	} else if (token.toUpperCase().equals("NOCON")){
+       	opt_con = false;
     } else if (token.toUpperCase().equals("DUMP")){
        	opt_dump = true;
+    } else if (token.toUpperCase().equals("NODUMP")){
+       	opt_dump = false;
+    } else if (token.toUpperCase().equals("EPILOG")){
+       	opt_epilog = true;
+       	opt_cics   = true;
+    } else if (token.toUpperCase().equals("NOEPILOG")){
+       	opt_epilog = false;
     } else if (token.length() > 4
     	&& token.substring(0,4).toUpperCase().equals("ERR(")){
        	try {
@@ -4602,22 +4645,40 @@ private void process_option(String token){
        	}
     } else if (token.toUpperCase().equals("ERRSUM")){
        	init_errsum();
+    } else if (token.toUpperCase().equals("NOERRSUM")){
+       	opt_errsum = false;
+		max_errors = 100;
+		opt_obj    = true;
     } else if (token.toUpperCase().equals("GUAM")){
        	opt_guam = true;
+    } else if (token.toUpperCase().equals("NOGUAM")){
+       	opt_guam = false;
     } else if (token.toUpperCase().equals("INIT")){
        	opt_init = true;
+    } else if (token.toUpperCase().equals("NOINIT")){
+       	opt_init = false;
     } else if (token.length() > 4
      		&& token.substring(0,4).toUpperCase().equals("IPL(")){
     	opt_ipl = token.substring(4,token.length()-1); 
     } else if (token.length() > 8
      		&& token.substring(0,8).toUpperCase().equals("INSTALL(")){
     	opt_install_loc = token.substring(8,token.length()-1); 	
+    } else if (token.toUpperCase().equals("LIST")){
+       	opt_list = true;
+    } else if (token.toUpperCase().equals("NOLIST")){
+       	opt_list = false;
     } else if (token.toUpperCase().equals("LISTCALL")){
        	opt_listcall = true;
+    } else if (token.toUpperCase().equals("NOLISTCALL")){
+       	opt_listcall = false;
     } else if (token.toUpperCase().equals("LISTUSE")){
        	opt_listuse = true;
+    } else if (token.toUpperCase().equals("NOLISTUSE")){
+       	opt_listuse = false;
     } else if (token.toUpperCase().equals("LOADHIGH")){
        	opt_loadhigh = true; // RPI 819
+    } else if (token.toUpperCase().equals("NOLOADHIGH")){
+       	opt_loadhigh = false;
     } else if (token.length() > 4
       		&& token.substring(0,4).toUpperCase().equals("LOG(")){
      	log_file_name = token.substring(4,token.length()-1); // RPI 719
@@ -4671,6 +4732,9 @@ private void process_option(String token){
     } else if (token.toUpperCase().equals("MCALL")){
        	opt_mcall = true; // RPI 511
        	opt_listcall = true;
+    } else if (token.toUpperCase().equals("NOMCALL")){
+       	opt_mcall = false; 
+       	opt_listcall = false;
     } else if (token.length() > 5
     	&& token.substring(0,4).toUpperCase().equals("MEM(")){
        	try {
@@ -4678,58 +4742,14 @@ private void process_option(String token){
        	} catch (Exception e){
         	invalid_options = invalid_options + " " + token;
        	}
-    } else if (token.toUpperCase().equals("NOALLOW")){
-       	opt_allow = false;  // RPI 833
-    } else if (token.toUpperCase().equals("NOASM")){
-       	opt_asm = false;
-    } else if (token.toUpperCase().equals("NOASSIST")){
-       	opt_assist = false;
-    } else if (token.toUpperCase().equals("NOAUTOLINK")){
-       	opt_autolink = false;  	// RPI 770
-    } else if (token.toUpperCase().equals("NOBAL")){
-       	opt_bal = false;    
-    } else if (token.toUpperCase().equals("NOCON")){
-       	opt_con = false;
-    } else if (token.toUpperCase().equals("NOEPILOG")){
-       	opt_epilog = false;  
-    } else if (token.toUpperCase().equals("NOINIT")){
-       	opt_init = false;
-    } else if (token.toUpperCase().equals("NOLIST")){
-       	opt_list = false;
-    } else if (token.toUpperCase().equals("NOLISTCALL")){
-       	opt_listcall = false;
-    } else if (token.equals("NOLISTUSE")){
-       	opt_listuse = false; 
-    } else if (token.toUpperCase().equals("NOLOADHIGH")){
-       	opt_loadhigh = false; // RPI 819   	
-    } else if (token.toUpperCase().equals("NOOBJ")){ // RPI694
+    } else if (token.toUpperCase().equals("OBJ")){
+       	opt_obj = true;
+    } else if (token.toUpperCase().equals("NOOBJ")){
        	opt_obj = false;
-    } else if (token.toUpperCase().equals("NOPC")){
-        opt_pc = false; 
-    } else if (token.toUpperCase().equals("NOPCOPT")){
-        opt_pcopt = false;
-    } else if (token.toUpperCase().equals("NOPROLOG")){
-        opt_prolog = false;
-    } else if (token.toUpperCase().equals("NOPROTECT")){
-        opt_protect = false;
-    } else if (token.toUpperCase().equals("NOSTATS")){
-       	opt_stats = false;
-       	stats_file_name = null; // RPI 755
-    } else if (token.toUpperCase().equals("NOTIME")){
-    	opt_time = false; // no time limit
-    } else if (token.toUpperCase().equals("NOTIMING")){
-      	opt_timing = false; // no date/time changes
-      	opt_time   = false;
-    } else if (token.toUpperCase().equals("NOTRACEC")){
-       	opt_tracec = false;  // RPI 862
-    } else if (token.toUpperCase().equals("NOTRAP")){
-       	opt_trap = false;
-    } else if (token.toUpperCase().equals("NOVCB")){
-       	opt_vcb = false;
-    } else if (token.toUpperCase().equals("NOXREF")){
-       	opt_xref = false;
     } else if (token.toUpperCase().equals("OBJHEX")){
        	opt_objhex = true;
+    } else if (token.toUpperCase().equals("NOOBJHEX")){
+       	opt_objhex = false;
     } else if (token.length() > 5
        		&& token.substring(0,5).toUpperCase().equals("PARM(")){
         	opt_parm = token.substring(5,token.length()-1);
@@ -4740,27 +4760,56 @@ private void process_option(String token){
         	}
     } else if (token.toUpperCase().equals("PC")){
         opt_pc = true;
+    } else if (token.toUpperCase().equals("NOPC")){
+        opt_pc = false;
     } else if (token.toUpperCase().equals("PCOPT")){
         opt_pcopt = true;
+    } else if (token.toUpperCase().equals("NOPCOPT")){
+        opt_pcopt = false;
     } else if (token.length() > 8
       		&& token.substring(0,8).toUpperCase().equals("PROFILE(")){
      	opt_profile = token.substring(8,token.length()-1);
+    } else if (token.toUpperCase().equals("PROLOG")){
+        opt_prolog = true;
+        opt_cics = true;
+    } else if (token.toUpperCase().equals("NOPROLOG")){
+        opt_prolog = false;
+    } else if (token.toUpperCase().equals("PROTECT")){
+        opt_protect = true;
+    } else if (token.toUpperCase().equals("NOPROTECT")){
+        opt_protect = false;
     } else if (token.toUpperCase().equals("REFORMAT")){
-        	opt_reformat = true; 
+        opt_reformat = true; 
+    } else if (token.toUpperCase().equals("NOREFORMAT")){
+        opt_reformat = false; 
     } else if (token.toUpperCase().equals("REGS")){
        	opt_regs = true;
        	opt_list  = true;
+    } else if (token.toUpperCase().equals("NOREGS")){
+       	opt_regs = false;
     } else if (token.toUpperCase().equals("RMODE24")){
        	opt_rmode24 = true;
        	opt_rmode31 = false;
        	z390_rmode31 = 'F';
+    } else if (token.toUpperCase().equals("NORMODE24")){
+       	opt_rmode24 = false;
+       	opt_rmode31 = true;
+       	z390_rmode31 = 'T';
+       	z390_amode31 = 'T';
     } else if (token.toUpperCase().equals("RMODE31")){
        	opt_rmode24 = false;
       	opt_rmode31 = true;
        	z390_rmode31 = 'T';
+    } else if (token.toUpperCase().equals("NORMODE31")){
+       	opt_rmode24 = true;
+      	opt_rmode31 = false;
+       	z390_rmode31 = 'F';
     } else if (token.toUpperCase().equals("STATS")){
        	opt_stats = true;  // RPI 755
        	stats_file_name = pgm_name;
+    } else if (token.toUpperCase().equals("NOSTATS")){
+       	opt_stats = false;  // RPI 755
+       	stats_file_name = null;
     } else if (token.length() > 6
       		&& token.substring(0,6).toUpperCase().equals("STATS(")){
      	stats_file_name = token.substring(6,token.length()-1); // RPI 736
@@ -4779,7 +4828,7 @@ private void process_option(String token){
        	dir_dat = set_path_option(dir_dat,token.substring(7,token.length()-1)); 
     } else if (token.length() > 7
        		&& token.substring(0,7).toUpperCase().equals("SYSERR(")){
-        	dir_err = set_path_option(dir_err,token.substring(7,token.length()-1)); // RPI 243 
+        dir_err = set_path_option(dir_err,token.substring(7,token.length()-1)); // RPI 243 
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("SYSLOG(")){
        	dir_log = set_path_option(dir_log,token.substring(7,token.length()-1));
@@ -4823,10 +4872,23 @@ private void process_option(String token){
        		opt_time = false;
        		opt_timing = false;
        	}
+    } else if (token.toUpperCase().equals("TIME")){
+       	opt_time = true;  
+       	max_time_seconds = 15;
+    } else if (token.toUpperCase().equals("NOTIME")){
+       	opt_time = false;  
+       	opt_timing = false;
+    } else if (token.toUpperCase().equals("TIMING")){
+       	opt_timing = true;  
+    } else if (token.toUpperCase().equals("NOTIMING")){
+       	opt_timing = false;
+       	opt_time = false; 
     } else if (token.toUpperCase().equals("TEST")){
        	opt_test = true;
        	opt_time = false;
        	opt_con  = true;
+    } else if (token.toUpperCase().equals("NOTEST")){
+       	opt_test = false;
     } else if (token.length() > 5
       		&& token.substring(0,5).toUpperCase().equals("TEST(")){
        	test_ddname = token.substring(5,token.length()-1);	
@@ -4837,6 +4899,8 @@ private void process_option(String token){
        	if (!opt_test){
        		opt_con   = false; // RPI 569 leave on if TEST
        	}
+    } else if (token.toUpperCase().equals("NOTRACE")){
+       	opt_trace = false;
     } else if (token.length() > 6
       		&& token.substring(0,6).toUpperCase().equals("TRACE(")){
        	trace_options = token.substring(6,token.length()-1).toUpperCase();
@@ -4873,8 +4937,12 @@ private void process_option(String token){
        	opt_tracea = true;
        	opt_list = true;
        	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACEA")){
+       	opt_tracea = false;
     } else if (token.toUpperCase().equals("TRACEC")){
        	opt_tracec = true;
+    } else if (token.toUpperCase().equals("NOTRACEC")){
+       	opt_tracec = false;
     } else if (token.toUpperCase().equals("TRACEALL")){
        	opt_traceall = true;
        	opt_trace    = true;
@@ -4890,37 +4958,76 @@ private void process_option(String token){
        	opt_list     = true;
        	opt_listcall = true; // RPI 862
        	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACEALL")){
+       	opt_traceall = false;
+       	opt_trace    = false;
+      	opt_tracea   = false;
+      	opt_tracec   = false;
+       	opt_tracem   = false;
+       	opt_tracep   = false;
+       	opt_tracel   = false;
+       	opt_traceq   = false;
+       	opt_tracet   = false;
+       	opt_tracev   = false;
+       	opt_traceg = false;
     } else if (token.toUpperCase().equals("TRACEL")){
        	opt_tracel = true;
        	opt_list = true;
        	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACEL")){
+       	opt_tracel = false;
     } else if (token.toUpperCase().equals("TRACEM")){
         	opt_tracem = true;
         	opt_list = true;
         	opt_listcall = true; // RPI 862
         	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACEM")){
+    	opt_tracem = false;
     } else if (token.toUpperCase().equals("TRACEMEM")){
        	opt_traceg = true;
        	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACEMEM")){
+       	opt_traceg = false;
     } else if (token.toUpperCase().equals("TRACEP")){
     	opt_tracep = true;
     	opt_tracem = true;
     	opt_list = true;
     	opt_listcall = true; // RPI 862
     	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACEP")){
+    	opt_tracep = false;
     } else if (token.toUpperCase().equals("TRACEQ")){
     	opt_traceq = true;
     	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACEQ")){
+    	opt_traceq = false;
     } else if (token.toUpperCase().equals("TRACET")){
     	opt_tracet = true;
     	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACET")){
+    	opt_tracet = false;
     } else if (token.toUpperCase().equals("TRACEV")){
     	opt_tracev = true;
     	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACEV")){
+    	opt_tracev = false;
+    } else if (token.toUpperCase().equals("TRAP")){
+       	opt_trap = true;
+    } else if (token.toUpperCase().equals("NOTRAP")){
+       	opt_trap = false;
     } else if (token.toUpperCase().equals("TS")){
     	opt_ts = true; // timestamp traces
+    } else if (token.toUpperCase().equals("NOTS")){
+    	opt_ts = false; 
     } else if (token.toUpperCase().equals("VCB")){
     	opt_vcb = true; // VSAM Cache Buffering to reduce I/O
+    } else if (token.toUpperCase().equals("NOVCB")){
+    	opt_vcb = false;
+    } else if (token.toUpperCase().equals("NOXREF")){
+       	opt_xref = false;
+    } else if (token.toUpperCase().equals("XREF")){
+       	opt_xref = true;
+       	opt_list = true;
     } else {
     	invalid_options = invalid_options + " " + token;
     }

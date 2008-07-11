@@ -67,6 +67,9 @@
 *          2) Set R0 to 7 for STFLE  store faciliies.
 * 06/17/08 RPI 845 change EPIED to IHAEPIE (NOTE ESPIEPSW OFFSET CHG)      
 * 06/21/08 RPI 845 change ESTAD to IHASDWA and remove ESTAPSW ref.                                 
+* 07/05/08 RPI 875 correct test for CLIY bug introduced by RPI 859                                 
+* 07/08/08 RPI 875 add missing test for ALY, LTGF, CGH,MFY,MHY,                                    
+*          ASI, ALSI, AGSI, ALGSI
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -99,6 +102,7 @@ LMD2     DC    0D,X'89ABCDEF',X'89ABCDEF' RPI 844
          CNOP  8,16      RPI 844 PREVENT STPQ WARNING MESSAGE
 PWORK    DS    D
 PWORK16  DS    XL16
+DWORD    DS    D
 PL1      DS    PL1
 WORD     DS    F
 BYTE     DS    X
@@ -3713,10 +3717,27 @@ BRASL2   EQU   *
          LG    R1,=XL8'80000001'
          CLG   R1,=X'80000002'
          RT1   CCL
+* E334 CGH                    RPI 875
+         LG    R1,=FL8'1'
+         CGH   R1,=H'1'       
+         RT1   CCE
+         LG    R1,=FL8'-1'
+         CGH   R1,=H'1'       
+         RT1   CCL
+         LG    R1,=FL8'1'
+         CGH   R1,=H'-1'       
+         RT1   CCH
 * E33E STRV 
          L     R1,=X'01234567'
          STRV  R1,PWORK
          CLC   PWORK(4),=X'67452301'
+         RT1   CCE
+* E332 LTGF              RPI 875
+         LTGF  R0,=f'1'
+         RT1   CCH
+         LTGF  R0,=f'-1'
+         RT1   CCL
+         LTGF  R0,=f'0'
          RT1   CCE
 * E33F STRVH 
          L     R1,=X'01234567'
@@ -3806,6 +3827,45 @@ BCTG1    LA    R2,1(R2)
          SY    R0,=F'3'
          RT1   CCL
          C     R0,=F'-2'
+         RT1   CCE
+* E35C MFY                   RPI 875
+         L     R0,=C'JUNK' 
+         L     R1,=F'2'
+         MFY   R0,=F'3'
+         C     R0,=F'0'
+         RT1   CCE
+         C     R1,=F'6'
+         RT1   CCE
+* E35E ALY                        RPI 875
+         L     R0,=F'3'
+         ALY   R0,=F'2'
+         RT1   CC1        NZ,NC
+         CL    R0,=F'5'
+         RT1   CCE
+         L     R0,=X'80000000'
+         ALY   R0,=X'00000001'
+         RT1   CC1        NZ,NC
+         CL    R0,=X'80000001'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         ALY   R0,=X'00000001'
+         RT1   CC2        Z,C
+         CL    R0,=X'00000000'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'
+         ALY   R0,=X'00000002'
+         RT1   CC3        NZ,C
+         CL    R0,=X'00000001'
+         RT1   CCE
+         L     R0,=X'FFFFFFFF'  RPI 376
+         ALY   R0,=X'FFFFFFFF'
+         RT1   CC3        NZ,C
+         CL    R0,=X'FFFFFFFE'
+         RT1   CCE
+         L     R0,=X'00000000'
+         ALY   R0,=X'00000000'
+         RT1   CC0        Z,NC
+         CL    R0,=X'00000000'
          RT1   CCE
 * E35F SLY 
          L     R0,=X'80000000'  RPI 831
@@ -3900,6 +3960,11 @@ BCTG1    LA    R2,1(R2)
          SHY   R0,=H'3'
          RT1   CCL
          CH    R0,=H'-2'
+         RT1   CCE
+* E37C MHY                 RPI 875
+         LH    R0,=H'2'
+         MHY   R0,=H'3'
+         CH    R0,=H'6'
          RT1   CCE
 * E380 NG
          LG    R0,=X'0123456789ABCDEF'
@@ -4552,14 +4617,20 @@ BXLEG3   EQU   *
          RT1   CCE
 * EB55 CLIY
          MVI   BYTE,C'B'
-         CLIY  BYTE,C'B'
-         RT1   CCE,BYTE,=C'B'
+         CLIY  BYTE,C'B'      
+         RT1   CCE         RPI 875
          MVI   BYTE,C'A'
          CLIY  BYTE,C'B'
-         RT1   CCL,BYTE,=C'B'
+         RT1   CCL         RPI 875
          MVI   BYTE,C'C'
          CLIY  BYTE,C'B'
-         RT1   CCH,BYTE,=C'B'
+         RT1   CCH         RPI 875      
+         MVI   BYTE,X'01'
+         CLIY  BYTE,X'81'
+         RT1   CCL         RPI 875
+         MVI   BYTE,X'81'
+         CLIY  BYTE,X'01'
+         RT1   CCH         RPI 875      
 * EB56 OIY
          MVI   BYTE,X'32'
          OIY   BYTE,X'23'
@@ -4571,6 +4642,90 @@ BXLEG3   EQU   *
          XIY   BYTE,X'23'
          RT1   CCL
          CLI   BYTE,X'11'
+         RT1   CCE
+* EB6A ASI                 RPI 875                     
+         MVC   WORD,=F'2'
+         ASI   WORD,3
+         RT1   CCH
+         CLC   WORD,=F'5'
+         RT1   CCE
+         MVC   WORD,=F'1'
+         ASI   WORD,-2
+         RT1   CCL
+         CLC   WORD,=F'-1'
+         RT1   CCE
+* EB6E ALSI                RPI 875                     
+         MVC   WORD,=F'3'
+         ALSI  WORD,2
+         RT1   CC1        NZ,NC
+         CLC   WORD,=F'5'
+         RT1   CCE
+         MVC   WORD,=X'80000000'
+         ALSI  WORD,1
+         RT1   CC1        NZ,NC
+         CLC   WORD,=X'80000001'
+         RT1   CCE
+         MVC   WORD,=X'FFFFFFFF'
+         ALSI  WORD,1
+         RT1   CC2        Z,C
+         CLC   WORD,=X'00000000'
+         RT1   CCE
+         MVC   WORD,=X'FFFFFFFF'
+         ALSI  WORD,2
+         RT1   CC3        NZ,C
+         CLC   WORD,=X'00000001'
+         RT1   CCE
+         MVC   WORD,=X'FFFFFFFF'             
+         ALSI  WORD,-1
+         RT1   CC3        NZ,C
+         CLC   WORD,=X'FFFFFFFE'
+         RT1   CCE
+         MVC   WORD,=X'00000000'
+         ALSI  WORD,0
+         RT1   CC0        Z,NC
+         CLC   WORD,=X'00000000'
+         RT1   CCE
+* EB7A AGSI                RPI 875                      
+         MVC   DWORD,=FL8'2'
+         AGSI  DWORD,3
+         RT1   CCH
+         CLC   DWORD,=FL8'5'
+         RT1   CCE
+         MVC   DWORD,=FL8'1'
+         AGSI  DWORD,-2
+         RT1   CCL
+         CLC   DWORD,=FL8'-1'
+         RT1   CCE
+* EB7E ALGSI               RPI 875                        
+         MVC   DWORD,=FL8'3'
+         ALGSI DWORD,2
+         RT1   CC1        NZ,NC
+         CLC   DWORD,=FL8'5'
+         RT1   CCE
+         MVC   DWORD,=X'8000000000000000'
+         ALGSI DWORD,1
+         RT1   CC1        NZ,NC
+         CLC   DWORD,=X'8000000000000001'
+         RT1   CCE
+         MVC   DWORD,=FL8'-1'
+         ALGSI DWORD,1
+         RT1   CC2        Z,C
+         CLC   DWORD,=FL8'0'
+         RT1   CCE
+         MVC   DWORD,=FL8'-1'
+         ALGSI DWORD,2
+         RT1   CC3        NZ,C
+         CLC   DWORD,=FL8'1'
+         RT1   CCE
+         MVC   DWORD,=FL8'-1'                
+         ALGSI DWORD,-1
+         RT1   CC3        NZ,C
+         CLC   DWORD,=FL8'-2'
+         RT1   CCE
+         MVC   DWORD,=FL8'0'      
+         ALGSI DWORD,0
+         RT1   CC0        Z,NC
+         CLC   DWORD,=FL8'0'
          RT1   CCE
 * EB80 ICMH
          SGR   R0,R0                       

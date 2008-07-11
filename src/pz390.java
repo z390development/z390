@@ -268,7 +268,9 @@ public class pz390 {
      * 06/09/08 RPI 859 correct ALSI and ALGSI immediate sign extension 
      * 06/17/08 RPI 845 change EPIE offsets to match z/OS
      * 06/21/08 RPI 845 replace ESTAD.MAC with IHASDWA passed in R1 
-     * 06/23/08 RPI 866 init mem to F5 starting at mem24_start     
+     * 06/23/08 RPI 866 init mem to F5 starting at mem24_start  
+     * 07/05/08 RPI 875 correct CLIY error introduced by RPI 859 
+     *          and masked by incorrect CLIY test in TESTINS2.   
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -8799,7 +8801,7 @@ public class pz390 {
 		case 0x55: // 6450 "EB55" "CLIY" "SIY"
 			psw_check = false;
 			ins_setup_siy();
-			psw_cc = get_int_comp_cc((mem_byte[bd1_loc] & 0xff), if2);
+			psw_cc = get_int_comp_cc((mem_byte[bd1_loc]) & 0xff, if2 & 0xff);  // RPI 875
 			break;
 		case 0x56: // 6460 "EB56" "OIY" "SIY"
 			psw_check = false;
@@ -11611,8 +11613,12 @@ public class pz390 {
 
 	private int get_long_log_sub_cc() {
 		/*
-		 * return cc for logical subtract as follows: rlv borrow 0 1 cc0 (slb
-		 * only) !0 1 cc1 0 0 cc2 !0 0 cc3
+		 * return cc for logical subtract as follows:
+		 *  rlv borrow 
+		 *    0 1 cc0 (slb only)
+		 *   !0 1 cc1 
+		 *    0 0 cc2 
+		 *   !0 0 cc3
 		 */
 		boolean rlv1_borrow = false;
 		if (rlvw >= 0) {
