@@ -197,7 +197,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.02a";  //dsh
+    String version    = "V1.4.02b";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -208,7 +208,7 @@ public  class  tz390 {
 	byte    z390_os_linux = 2;
 	String  z390_font    = "Monospaced";  // RPI 509 was Courier
 	boolean z390_abort   = false;  // global abort request
-    String  invalid_options = "";  // RPI 742
+	String  invalid_options = "";  // RPI 742
     boolean opt_allow    = false;  // allow extensions such as no quotes for SETC var
     boolean opt_amode24  = false;  // link to run amode24
     boolean opt_amode31  = true;   // link to run amode31
@@ -379,7 +379,7 @@ public  class  tz390 {
     String systerm_file_name      = null;
     RandomAccessFile systerm_file = null;
 	String systerm_time = "";     // hh:mm:ss if opt_timing
-    String systerm_prefix = ""; // pgm_name plus space
+    String systerm_prefix = "";   // pgm_name plus space
     int    systerm_io     = 0;    // total file io count
     long   systerm_ins    = 0;    // ez390 instruction count
     String started_msg = "";
@@ -4526,8 +4526,9 @@ public void init_options(String[] args,String pgm_type){
 private void process_option(String token){
 	/*
 	 * process option from command line or
-	 * from @file optionsfile.
+	 * from @file optionsfile line.
 	 */
+  try {
 	if (cmd_parms_len + token.length() + 1 > max_cmd_parms_line){
 		String temp_token = token;
 		while (temp_token.length() > max_cmd_parms_line - 2){
@@ -4611,14 +4612,14 @@ private void process_option(String token){
         	&& token.substring(0,7).toUpperCase().equals("CHKMAC(")){
        	opt_chkmac = token.charAt(7) - '0';
       	if (opt_chkmac < 0 || opt_chkmac > 2){
-           		invalid_options = invalid_options + " " + token;
-           	}
+           		add_invalid_option(token);
+        }
     } else if (token.length() == 9
         	&& token.substring(0,7).toUpperCase().equals("CHKSRC(")){
            	opt_chksrc = token.charAt(7) - '0';
           	if (opt_chksrc < 0 || opt_chksrc > 2){
-           		invalid_options = invalid_options + " " + token;
-           	}
+          		add_invalid_option(token);
+          	}
 	} else if (token.toUpperCase().equals("CICS")){
        	opt_cics = true;
 	} else if (token.toUpperCase().equals("NOCICS")){
@@ -4641,8 +4642,8 @@ private void process_option(String token){
        	try {
        		max_errors = Integer.valueOf(token.substring(4,token.length()-1)).intValue(); 
       	} catch (Exception e){
-        	invalid_options = invalid_options + " " + token;
-       	}
+      		add_invalid_option(token);
+      	}
     } else if (token.toUpperCase().equals("ERRSUM")){
        	init_errsum();
     } else if (token.toUpperCase().equals("NOERRSUM")){
@@ -4693,11 +4694,14 @@ private void process_option(String token){
        	try {
        		opt_maxfile = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
        	} catch (Exception e){
-        	invalid_options = invalid_options + " " + token;
-       	}
+       		add_invalid_option(token);
+       	}   
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("MAXGBL(")){
        	opt_maxgbl = Integer.valueOf(token.substring(7,token.length()-1)).intValue();
+    } else if (token.length() > 10
+      		&& token.substring(0,10).toUpperCase().equals("MAXHEIGHT(")){
+       	max_main_height = Integer.valueOf(token.substring(10,token.length()-1)).intValue();
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("MAXLCL(")){
        	opt_maxlcl = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
@@ -4724,11 +4728,17 @@ private void process_option(String token){
            	try {
            		max_file_size = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20; 
            	} catch (Exception e){
-            	invalid_options = invalid_options + " " + token;
+           		add_invalid_option(token);
            	}
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("MAXSYM(")){
        	opt_maxsym = Integer.valueOf(token.substring(7,token.length()-1)).intValue(); 
+    } else if (token.length() > 7
+      		&& token.substring(0,8).toUpperCase().equals("MAXWARN(")){
+       	max_main_height = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
+    } else if (token.length() > 9
+    		   && token.substring(0,9).toUpperCase().equals("MAXWIDTH(")){
+       	max_mnote_warning = Integer.valueOf(token.substring(9,token.length()-1)).intValue();
     } else if (token.toUpperCase().equals("MCALL")){
        	opt_mcall = true; // RPI 511
        	opt_listcall = true;
@@ -4740,8 +4750,14 @@ private void process_option(String token){
        	try {
        	    max_mem = Integer.valueOf(token.substring(4,token.length()-1)).intValue();
        	} catch (Exception e){
-        	invalid_options = invalid_options + " " + token;
+       		add_invalid_option(token);
        	}
+    } else if (token.length() > 10
+      		&& token.substring(0,10).toUpperCase().equals("MINHEIGHT(")){
+       	min_main_height = Integer.valueOf(token.substring(10,token.length()-1)).intValue();
+    } else if (token.length() > 9
+      		&& token.substring(0,9).toUpperCase().equals("MINWIDTH(")){
+       	min_main_width = Integer.valueOf(token.substring(9,token.length()-1)).intValue();
     } else if (token.toUpperCase().equals("OBJ")){
        	opt_obj = true;
     } else if (token.toUpperCase().equals("NOOBJ")){
@@ -4867,7 +4883,6 @@ private void process_option(String token){
        	max_time_seconds = Long.valueOf(token.substring(5,token.length()-1)).longValue();
        	if (max_time_seconds > 0){
        		opt_time = true;
-       		opt_timing = true;
        	} else {
        		opt_time = false;
        		opt_timing = false;
@@ -4877,12 +4892,11 @@ private void process_option(String token){
        	max_time_seconds = 15;
     } else if (token.toUpperCase().equals("NOTIME")){
        	opt_time = false;  
-       	opt_timing = false;
     } else if (token.toUpperCase().equals("TIMING")){
        	opt_timing = true;  
     } else if (token.toUpperCase().equals("NOTIMING")){
        	opt_timing = false;
-       	opt_time = false; 
+       	opt_time   = false;
     } else if (token.toUpperCase().equals("TEST")){
        	opt_test = true;
        	opt_time = false;
@@ -4970,6 +4984,11 @@ private void process_option(String token){
        	opt_tracet   = false;
        	opt_tracev   = false;
        	opt_traceg = false;
+    } else if (token.toUpperCase().equals("TRACEG")){
+       	opt_traceg = true;
+       	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACEG")){
+       	opt_traceg = false;
     } else if (token.toUpperCase().equals("TRACEL")){
        	opt_tracel = true;
        	opt_list = true;
@@ -5023,14 +5042,23 @@ private void process_option(String token){
     	opt_vcb = true; // VSAM Cache Buffering to reduce I/O
     } else if (token.toUpperCase().equals("NOVCB")){
     	opt_vcb = false;
-    } else if (token.toUpperCase().equals("NOXREF")){
-       	opt_xref = false;
     } else if (token.toUpperCase().equals("XREF")){
        	opt_xref = true;
        	opt_list = true;
+    } else if (token.toUpperCase().equals("NOXREF")){
+       	opt_xref = false;
     } else {
-    	invalid_options = invalid_options + " " + token;
+        add_invalid_option(token);
     }
+  } catch (Exception e){
+	  add_invalid_option(token);
+  }
+}
+private void add_invalid_option(String option){
+	/*
+	 * collect invalid options for single error
+	 */
+	invalid_options = invalid_options + option;
 }
 private void process_options_file(String file_name){
 	/*
@@ -5045,27 +5073,24 @@ private void process_options_file(String file_name){
 		try {
 			cmd_parms = cmd_parms.trim() + "=(";
 			File opt_file = new File(file_name_path);
-			BufferedReader opt_file_buff = new BufferedReader(new FileReader(opt_file));
+			BufferedReader opt_file_buff = new BufferedReader(new FileReader(opt_file));       
 			String option_line = opt_file_buff.readLine();
 			while (option_line != null){
-				if (option_line.length() > 1 
-					&& option_line.charAt(0) != '*'){
-					Matcher find_option_match = find_non_space_pattern.matcher(option_line);
-					while (find_option_match.find() 
+				Matcher find_option_match = find_non_space_pattern.matcher(option_line);
+				while (find_option_match.find() 
 						&& find_option_match.group().charAt(0) != '*'){
 						String option = find_option_match.group();
 						process_option(option);
-					}
 				}
 				option_line = opt_file_buff.readLine();
 			}
 			opt_file_buff.close();
 			cmd_parms = cmd_parms.trim() + ") ";
 		} catch (Exception e){
-			invalid_options = invalid_options + " @" + file_name; 
+			add_invalid_option("@" + file_name_path); 
 		}
 	} else {
-		invalid_options = invalid_options + " @" + file_name; 
+		add_invalid_option("@" + file_name_path);
 	}
 }
 public void open_systerm(String z390_pgm){
@@ -5121,7 +5146,7 @@ public synchronized void put_systerm(String msg){ // RPI 397
 	 * log error to systerm file
 	 */
 	if (opt_timing){
-           systerm_time = sdf_HHmmss.format(new Date()) + " ";;
+        systerm_time = sdf_HHmmss.format(new Date()) + " ";;
 	}
 	if (systerm_file != null){
 		try {

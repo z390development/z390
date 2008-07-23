@@ -163,6 +163,11 @@ RX    CVB     P8   XB
 RX    ST      F    0BS
 RX    ST      F    XBS
 *
+AST   XDECO        0B           V1.4.02
+AST   XDECO        XB           V1.4.02
+AST   XDECI        0B           V1.4.02
+AST   XDECI        XB           V1.4.02
+*
 RX    N       F    00
 RX    N       F    0B
 RX    N       F    X0
@@ -223,6 +228,11 @@ RX    SL      F    XB
 *
 RX    STD     DPH  0BS          V1.0.14
 RX    STD     DPH  XBS          V1.0.14
+*
+AST   XHEXI        0B           V1.4.02
+AST   XHEXI        XB           V1.4.02
+AST   XHEXO        0B           V1.4.02
+AST   XHEXO        XB           V1.4.02
 *
 RX    MXD     XPH  0B           V1.0.14
 RX    MXD     XPH  XB           V1.0.14
@@ -453,7 +463,6 @@ RRE   SRST          10000
 *
 S     STCKE
 S     STCKF                     V1.0.12
-RRE   SFASR                     V1.2.00f
 S     SRNM                      V1.1.01
 S     STFPC
 S     LFPC
@@ -572,6 +581,7 @@ RRE   FIER    EPH               V1.0.14
 RRE   FIDR    DPH               V1.0.14
 *
 RRE   SFPC
+RRE   SFASR                     V1.2.00f
 RRE   EFPC
 *
 RRE   CEFBR   EPB               V1.0.14
@@ -692,6 +702,15 @@ RRE   BCTGR   B0
 RRE   BCTGR   B
 RRE   BCTGR   B0
 *
+RRF   CGRT    B                 V1.4.02
+RRF   CGRT    B0                V1.4.02
+RRF   CLGRT   B                 V1.4.02
+RRF   CLGRT   B0                V1.4.02
+RRF   CRT     B                 V1.4.02
+RRF   CRT     B0                V1.4.02
+RRF   CLRT    B                 V1.4.02
+RRF   CLRT    B0                V1.4.02
+*
 RRE   NGR
 RRE   OGR
 RRE   XGR
@@ -734,6 +753,44 @@ RRE   DLR
 RRE   ALCR
 RRE   SLBR
 *
+RRF   TRTRE   00       10       V1.4.02
+RRF   TRTRE   00      100       V1.4.02
+RRF   TRTRE   00     1000       V1.4.02
+RRF   TRTRE   04       10       V1.4.02
+RRF   TRTRE   04      100       V1.4.02
+RRF   TRTRE   04     1000       V1.4.02
+RRF   TRTRE   08       10       V1.4.02
+RRF   TRTRE   08      100       V1.4.02
+RRF   TRTRE   08     1000       V1.4.02
+RRF   TRTRE   10       10       V1.4.02
+RRF   TRTRE   10      100       V1.4.02
+RRF   TRTRE   10     1000       V1.4.02
+RRF   TRTRE   12       10       V1.4.02
+RRF   TRTRE   12      100       V1.4.02
+RRF   TRTRE   12     1000       V1.4.02
+RRF   TRTRE   14       10       V1.4.02
+RRF   TRTRE   14      100       V1.4.02
+RRF   TRTRE   14     1000       V1.4.02
+*
+RRF   TRTE    00       10       V1.4.02
+RRF   TRTE    00      100       V1.4.02
+RRF   TRTE    00     1000       V1.4.02
+RRF   TRTE    04       10       V1.4.02
+RRF   TRTE    04      100       V1.4.02
+RRF   TRTE    04     1000       V1.4.02
+RRF   TRTE    08       10       V1.4.02
+RRF   TRTE    08      100       V1.4.02
+RRF   TRTE    08     1000       V1.4.02
+RRF   TRTE    10       10       V1.4.02
+RRF   TRTE    10      100       V1.4.02
+RRF   TRTE    10     1000       V1.4.02
+RRF   TRTE    12       10       V1.4.02
+RRF   TRTE    12      100       V1.4.02
+RRF   TRTE    12     1000       V1.4.02
+RRF   TRTE    14       10       V1.4.02
+RRF   TRTE    14      100       V1.4.02
+RRF   TRTE    14     1000       V1.4.02
+*
 RS    CS      E
 RS    CS      N
 *
@@ -759,6 +816,8 @@ RIL   OIHF                      V1.0.12
 RIL   OILF                      V1.0.12
 RIL   LLIHF                     V1.0.12
 RIL   LLILF                     V1.0.12
+RIL   MSGFI                     V1.4.02
+RIL   MSFI                      V1.4.02
 *
 RIL   SLGFI                     V1.0.12
 RIL   SLFI                      V1.0.12
@@ -770,6 +829,29 @@ RIL   CGFI                      V1.0.12
 RIL   CFI                       V1.0.12
 RIL   CLGFI                     V1.0.12
 RIL   CLFI                      V1.0.12
+RIL   LLHRL                     V1.4.02
+RIL   LGHRL                     V1.4.02
+RIL   LHRL                      V1.4.02
+RIL   LLGHRL                    V1.4.02
+RIL   STHRL          S          V1.4.02
+RIL   LGRL                      V1.4.02
+RIL   STGRL          S          V1.4.02
+RIL   LGFRL                     V1.4.02
+RIL   LRL                       V1.4.02
+RIL   LLGFRL                    V1.4.02
+RIL   STRL           S          V1.4.02
+RIL   EXRL                      V1.4.02
+RIL   EXRL    R0                V1.4.02
+RIL   CGHRL                     V1.4.02
+RIL   CHRL                      V1.4.02
+RIL   CLGHRL                    V1.4.02
+RIL   CLHRL                     V1.4.02
+RIL   CGRL                      V1.4.02
+RIL   CLGRL                     V1.4.02
+RIL   CGFRL                     V1.4.02
+RIL   CRL                       V1.4.02
+RIL   CLGFRL                    V1.4.02
+RIL   CLRL                      V1.4.02
 *
 SSF   MVCOS            10       V1.3.03b
 SSF   MVCOS            50       V1.3.03b
@@ -875,6 +957,9 @@ SS1   EDMK             32
 SS1   EDMK             64
 SS1   EDMK            128
 SS1   EDMK            256
+*
+AST   XLIMD        0B           V1.4.02
+AST   XLIMD        XB           V1.4.02
 *
 RXY   LTG     D    00           V1.0.12
 RXY   LTG     D    0B           V1.0.12
@@ -1020,6 +1105,16 @@ RXY   CLGF    F    0B
 RXY   CLGF    F    X0
 RXY   CLGF    F    XB
 *
+RXY   LTGF    F    00           V1.4.02
+RXY   LTGF    F    0B           V1.4.02
+RXY   LTGF    F    X0           V1.4.02
+RXY   LTGF    F    XB           V1.4.02
+*
+RXY   CGH     H    00           V1.4.02
+RXY   CGH     H    0B           V1.4.02
+RXY   CGH     H    X0           V1.4.02
+RXY   CGH     H    XB           V1.4.02
+*
 RXY   STRV    F    0BS
 RXY   STRV    F    XBS
 *
@@ -1079,6 +1174,11 @@ RXY   SY      F    0B
 RXY   SY      F    X0
 RXY   SY      F    XB
 *
+RXY   MFY     F    00           V1.4.02
+RXY   MFY     F    0B           V1.4.02
+RXY   MFY     F    X0           V1.4.02
+RXY   MFY     F    XB           V1.4.02
+*
 RXY   ALY     F    00
 RXY   ALY     F    0B
 RXY   ALY     F    X0
@@ -1134,6 +1234,11 @@ RXY   SHY     H    00
 RXY   SHY     H    0B
 RXY   SHY     H    X0
 RXY   SHY     H    XB
+*
+RXY   MHY     H    00           V1.4.02
+RXY   MHY     H    0B           V1.4.02
+RXY   MHY     H    X0           V1.4.02
+RXY   MHY     H    XB           V1.4.02
 *
 RXY   NG      D    00
 RXY   NG      D    0B
@@ -1213,6 +1318,16 @@ RXY   SLB     F    00
 RXY   SLB     F    0B
 RXY   SLB     F    X0
 RXY   SLB     F    XB
+*
+SIL   MVHHI                     V1.4.02
+SIL   MVGHI                     V1.4.02
+SIL   MVHI                      V1.4.02
+SIL   CHHSI                     V1.4.02
+SIL   CLHHSI                    V1.4.02
+SIL   CGHSI                     V1.4.02
+SIL   CLGHSI                    V1.4.02
+SIL   CHSI                      V1.4.02
+SIL   CLFHSI                    V1.4.02
 *
 SS1   MVCIN             1
 SS1   MVCIN             8
@@ -1295,6 +1410,10 @@ SIY   NIY
 SIY   CLIY
 SIY   OIY
 SIY   XIY
+SIY   ASI                       V1.4.02
+SIY   ALSI                      V1.4.02
+SIY   AGSI                      V1.4.02
+SIY   ALGSI                     V1.4.02
 *
 RSY   ICMH
 RSY   ICMY
@@ -1321,11 +1440,60 @@ RSL   TP                1       V1.1.02
 RSL   TP                8
 RSL   TP               16
 *
-RIE   BRXHG
+RIE   BRXHG   B
 RIE   BRXHG   B0
 *
-RIE   BRXLG
+RIE   BRXLG   B
 RIE   BRXLG   B0
+*
+RIE   RNSBG                     V1.4.02
+RIE   RISBG                     V1.4.02
+RIE   ROSBG                     V1.4.02
+RIE   RXSBG                     V1.4.02
+*
+RIE   CGRJ    B                 V1.4.02
+RIE   CGRJ    B0                V1.4.02
+RIE   CLGRJ   B                 V1.4.02
+RIE   CLGRJ   B0                V1.4.02
+RIE   CGIT    B                 V1.4.02
+RIE   CGIT    B0                V1.4.02
+RIE   CLGIT   B                 V1.4.02
+RIE   CLGIT   B0                V1.4.02
+RIE   CIT     B                 V1.4.02
+RIE   CIT     B0                V1.4.02
+RIE   CLFIT   B                 V1.4.02
+RIE   CLFIT   B0                V1.4.02
+*
+RIE   CRJ     B                 V1.4.02
+RIE   CRJ     B0                V1.4.02
+RIE   CLRJ    B                 V1.4.02
+RIE   CLRJ    B0                V1.4.02
+RIE   CGIJ    B                 V1.4.02
+RIE   CGIJ    B0                V1.4.02
+RIE   CLGIJ   B                 V1.4.02
+RIE   CLGIJ   B0                V1.4.02
+RIE   CIJ     B                 V1.4.02
+RIE   CIJ     B0                V1.4.02
+RIE   CLIJ    B                 V1.4.02
+RIE   CLIJ    B0                V1.4.02
+*
+RRS   CGRB    B                 V1.4.02
+RRS   CGRB    B0                V1.4.02
+RRS   CLGRB   B                 V1.4.02
+RRS   CLGRB   B0                V1.4.02
+RRS   CRB     B                 V1.4.02
+RRS   CRB     B0                V1.4.02
+RRS   CLRB    B                 V1.4.02
+RRS   CLRB    B0                V1.4.02
+*
+RIS   CGIB    B                 V1.4.02
+RIS   CGIB    B0                V1.4.02
+RIS   CLGIB   B                 V1.4.02
+RIS   CLGIB   B0                V1.4.02
+RIS   CIB     B                 V1.4.02
+RIS   CIB     B0                V1.4.02
+RIS   CLIB    B                 V1.4.02
+RIS   CLIB    B0                V1.4.02
 *
 RXE   LDEB    DPB  0B           V1.0.14
 RXE   LDEB    DPB  XB           V1.0.14
@@ -1675,22 +1843,6 @@ SVC   GETMAIN RU                V1.2.00
 *
 SVC   FREEMAIN                  V1.2.00
 *
-SVC   XLATE   E        10       V1.1.02
-SVC   XLATE   E        50       V1.1.02
-SVC   XLATE   E       100       V1.1.02
-SVC   XLATE   E       500       V1.1.02
-SVC   XLATE   E      1000       V1.1.02
-SVC   XLATE   E      5000       V1.1.02
-SVC   XLATE   E     10000       V1.1.02
-*
-SVC   XLATE   A        10       V1.1.02
-SVC   XLATE   A        50       V1.1.02
-SVC   XLATE   A       100       V1.1.02
-SVC   XLATE   A       500       V1.1.02
-SVC   XLATE   A      1000       V1.1.02
-SVC   XLATE   A      5000       V1.1.02
-SVC   XLATE   A     10000       V1.1.02
-*
 SVC   TIME    DEC/SVC           DEC
 SVC   TIME    BIN/SVC           BIN
 SVC   TIME    TU/SVC            TU
@@ -1718,6 +1870,29 @@ SVC   TIME    STK/SYS/MDY       STCK,LABEL,DATETYPE=MMDDYYYY,LINKAGE=SYSTEM
 SVC   TIME    STK/SYS/DMY       STCK,LABEL,DATETYPE=DDMMYYYY,LINKAGE=SYSTEM
 SVC   TIME    STK/SYS/YMD       STCK,LABEL,DATETYPE=YYYYMMDD,LINKAGE=SYSTEM
 SVC   TIME    STCKE/SYS         STCKE,LABEL,LINKAGE=SYSTEM
+SVC   TIME    INS/SVC           INS V1.4.02
+*
+SVC   GETENV
+*
+SVC   ESTAE   CT                CT V1.4.02
+SVC   ESTAE   OV                OV V1.4.02
+SVC   ESTAE   0                 0  V1.4.02
+*
+SVC   XLATE   E        10       V1.1.02
+SVC   XLATE   E        50       V1.1.02
+SVC   XLATE   E       100       V1.1.02
+SVC   XLATE   E       500       V1.1.02
+SVC   XLATE   E      1000       V1.1.02
+SVC   XLATE   E      5000       V1.1.02
+SVC   XLATE   E     10000       V1.1.02
+*
+SVC   XLATE   A        10       V1.1.02
+SVC   XLATE   A        50       V1.1.02
+SVC   XLATE   A       100       V1.1.02
+SVC   XLATE   A       500       V1.1.02
+SVC   XLATE   A      1000       V1.1.02
+SVC   XLATE   A      5000       V1.1.02
+SVC   XLATE   A     10000       V1.1.02
 *
 SVC   CTD     INT               INT128
 SVC   CTD     EH                SHORT HFP
@@ -1740,6 +1915,4 @@ SVC   CFD     DD                LONG DFP
 SVC   CFD     LH                EXTENDED HFP
 SVC   CFD     LB                EXTENDED BFP
 SVC   CFD     LD                EXTENDED DFP
-*
-SVC   GETINV
 

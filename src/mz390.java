@@ -1745,7 +1745,7 @@ public  class  mz390 {
 		load_proto_index = mac_line_index;
 		mac_op = replace_vars(mac_op,false,false); // RPI 673
 		if (load_type == load_mac_file){
-			mac_name_line_start[mac_name_index] = mac_line_index; // RPI 331 
+			mac_name_line_start[mac_name_index] = mac_line_index; // RPI 1 
 			if (!mac_op.equals(load_macro_name.toUpperCase())
 				&& tz390.opt_chkmac > 0){ // RPI 519  RPI 747
 				create_mnote(4,"MACRO PROTO-TYPE NAME DOES NOT MATCH FILE NAME " + load_macro_name); // RPI 740

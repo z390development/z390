@@ -270,7 +270,8 @@ public class pz390 {
      * 06/21/08 RPI 845 replace ESTAD.MAC with IHASDWA passed in R1 
      * 06/23/08 RPI 866 init mem to F5 starting at mem24_start  
      * 07/05/08 RPI 875 correct CLIY error introduced by RPI 859 
-     *          and masked by incorrect CLIY test in TESTINS2.   
+     *          and masked by incorrect CLIY test in TESTINS2
+     * 07/23/08 RPI 878 fix XDECI to support ASCII mode            
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -3126,14 +3127,26 @@ public class pz390 {
 				ins_setup_rx();
 				rv1 = 0;
 				boolean digit_found = false;
-				while (mem.get(xbd2_loc) == 0x40){
-					xbd2_loc++;
-				}
-				while ((mem.get(xbd2_loc) & 0xff) >= 0xf0
+				if (!tz390.opt_ascii){ // RPI 878
+					while (mem.get(xbd2_loc) == 0x40){
+						xbd2_loc++;
+					}
+					while ((mem.get(xbd2_loc) & 0xff) >= 0xf0
 						&& (mem.get(xbd2_loc) & 0xff) <= 0xf9){
-					digit_found = true;
-					rv1 = rv1*10 + (mem.get(xbd2_loc) & 0xff) - 0xf0;
-					xbd2_loc++;
+						digit_found = true;
+						rv1 = rv1*10 + (mem.get(xbd2_loc) & 0xf);
+						xbd2_loc++;
+					}
+				} else {
+					while (mem.get(xbd2_loc) == 0x20){
+						xbd2_loc++;
+					}
+					while ((mem.get(xbd2_loc) & 0xff) >= 0x30
+						&& (mem.get(xbd2_loc) & 0xff) <= 0x39){
+						digit_found = true;
+						rv1 = rv1*10 + (mem.get(xbd2_loc) & 0xf);
+						xbd2_loc++;
+					}
 				}
 				if (digit_found){
 					reg.putInt(rf1+4,rv1);

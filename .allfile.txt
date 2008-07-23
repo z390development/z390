@@ -5933,6 +5933,7 @@ C:\z390\rt\test\TESTOPT1.MLC
 C:\z390\rt\test\TESTOPT1.OPT
 C:\z390\rt\test\TESTOPTA.OPT
 C:\z390\rt\test\TESTOPTB.OPT
+C:\z390\rt\test\TESTOPTC.OPT
 C:\z390\rt\test\TESTORG1.MLC
 C:\z390\rt\test\TESTPC1.MLC
 C:\z390\rt\test\TESTPCH1.MLC
