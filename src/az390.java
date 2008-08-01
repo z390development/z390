@@ -3,7 +3,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
@@ -1279,7 +1278,7 @@ private void open_files(){
        	if (tz390.opt_obj){  // RPI 694
        		try {
        			obj_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_obj) + tz390.pgm_name + tz390.obj_type,"rw"); 
-       		} catch (IOException e){
+       		} catch (Exception e){
        			abort_error(4,"I/O error on obj open - " + e.toString());
        		}
        	}
@@ -1288,7 +1287,7 @@ private void open_files(){
             prn_file = new File(prn_file_name);
          	try {
        	       prn_file_buff = new BufferedWriter(new FileWriter(prn_file));
-       	    } catch (IOException e){
+       	    } catch (Exception e){
        		   abort_error(4,"I/O error on prn open - " + e.toString());
        	    }
        	}
@@ -3244,7 +3243,7 @@ private void load_bal(){
 	    	bal_file = new File(bal_file_name);
      	    try {
      	    	bal_file_buff = new BufferedReader(new FileReader(bal_file));
-     	    } catch (IOException e){
+     	    } catch (Exception e){
      	    	abort_error(6,"I/O error on bal open - " + e.toString());
      	    }
 	    }
@@ -3274,7 +3273,7 @@ private void load_bal(){
         if (!mz390_call){ // RPI 415
         	try {
         		bal_file_buff.close();
-        	} catch (IOException e){
+        	} catch (Exception e){
         		abort_error(7,"I/O error on BAL file close " + e.toString());
         	}
         }
@@ -3422,7 +3421,7 @@ private void get_bal_line(){
             	    }
             }   
    		}
-    } catch (IOException e){
+    } catch (Exception e){
        	abort_error(9,"I/O error on file read " + e.toString());
     }
 }
@@ -4892,7 +4891,7 @@ private void close_files(){
 	  if (obj_file != null){
 	  	  try {
 	  	  	  obj_file.close();
-	  	  } catch (IOException e){
+	  	  } catch (Exception e){
 	  	  	  tz390.abort_error(24,"I/O error on obj close - " + e.toString());
 	  	  }
 	  }
@@ -4911,7 +4910,7 @@ private void close_files(){
 		  if (prn_file != null && prn_file.isFile()){
 		  	  try {
 		  	  	  prn_file_buff.close();
-		  	  } catch (IOException e){
+		  	  } catch (Exception e){
 		  	  	  tz390.abort_error(24,"I/O error on prn close - " + e.toString());
 		  	  }
 		  }

@@ -1,0 +1,4 @@
+IEFBR14  CSECT
+         SR    15,15   ZERO RETURN CODE
+         BR    14      RETURN TO CALLER
+         END

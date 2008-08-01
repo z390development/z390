@@ -70,6 +70,8 @@
 * 07/05/08 RPI 875 correct test for CLIY bug introduced by RPI 859                                 
 * 07/08/08 RPI 875 add missing test for ALY, LTGF, CGH,MFY,MHY,                                    
 *          ASI, ALSI, AGSI, ALGSI
+* 07/23/08 RPI 879 test SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF
+*          FOR CC3 NZ,NB WHEN BOTH SIGNS MEG AND S1 > S2 
 *********************************************************************
          TITLE 'TESTINS2 - UNIT TEST EACH EZ390 INSTRUCTION SUPPORTED'
 * THIS PROGRAM INCLUDES UNIT TESTS OF EACH INSTRUCTION
@@ -715,6 +717,12 @@ DR1      ESPIE RESET
          CL    R0,=X'00000000'
          RT1   CCE
 * 1F   SLR
+         L     R0,=X'FFFFFFFF'  RPI 879
+         L     R2,=X'80000000'  RPI 879
+         SLR   R0,R2            RPI 879
+         RT1   CC3        NZ,NB RPI 879
+         CL    R0,=X'7FFFFFFF'  RPI 879
+         RT1   CCE              RPI 879
          L     R0,=X'80000000'  RPI 831
          L     R2,=X'A0000000'
          SLR   R0,R2
@@ -1035,6 +1043,11 @@ BAS2     EQU   *
          CL    R0,=X'00000000'
          RT1   CCE
 * 5F   SL 
+         L     R0,=X'FFFFFFFF'  RPI 879
+         SL    R0,=X'80000000'  RPI 879
+         RT1   CC3        NZ,NB RPI 879
+         CL    R0,=X'7FFFFFFF'  RPI 879
+         RT1   CCE              RPI 879
          L     R0,=X'80000000'  RPI 831
          SL    R0,=X'A0000000'
          RT1   CC1        NZ,B
@@ -2159,12 +2172,18 @@ SGR2     ESTAE 0
          CLG   R0,=X'0000000000000000'
          RT1   CCE
 * B90B SLGR
+         LG    R0,=X'FFFFFFFFFFFFFFFF'  RPI 879
+         LG    R2,=X'8000000000000000'  RPI 879
+         SLGR  R0,R2                    RPI 879
+         RT1   CC3        NZ,NB         RPI 879
+         CLG   R0,=X'7FFFFFFFFFFFFFFF'  RPI 879
+         RT1   CCE                      RPI 879
          LG    R0,=X'8000000000000000'  RPI 831
-         LG    R2,=X'A000000000000000'
-         SLGR  R0,R2
-         RT1   CC1        NZ,B
-         CLG   R0,=X'E000000000000000'
-         RT1   CCE
+         LG    R2,=X'A000000000000000'  RPI 831
+         SLGR  R0,R2                    RPI 831
+         RT1   CC1        NZ,B          RPI 831
+         CLG   R0,=X'E000000000000000'  RPI 831
+         RT1   CCE                      RPI 831
          LG    R0,=FL8'3'
          LG    R2,=FL8'2'
          SLGR  R0,R2
@@ -2322,6 +2341,12 @@ SGR2     ESTAE 0
          CLG   R0,=X'0000000000000000'
          RT1   CCE
 * B91B SLGFR
+         LG    R0,=X'FFFFFFFFFFFFFFFF'  RPI 879
+         L     R2,=X'80000000'          RPI 879
+         SLGFR R0,R2                    RPI 879
+         RT1   CC3        NZ,NB         RPI 879
+         CLG   R0,=X'FFFFFFFF7FFFFFFF'  RPI 879
+         RT1   CCE                      RPI 879
          LG    R0,=FL8'3'
          L     R2,=F'2'
          SLGFR  R0,R2
@@ -3492,6 +3517,11 @@ BRASL2   EQU   *
          CLG   R0,=X'0000000000000000'
          RT1   CCE
 * E30B SLG
+         LG    R0,=X'FFFFFFFFFFFFFFFF'  RPI 879
+         SLG   R0,=X'8000000000000000'  RPI 879
+         RT1   CC3        NZ,NB         RPI 879
+         CLG   R0,=X'7FFFFFFFFFFFFFFF'  RPI 879
+         RT1   CCE                      RPI 879
          LG    R0,=X'8000000000000000'  RPI 831
          SLG   R0,=X'A000000000000000'
          RT1   CC1        NZ,B
@@ -3599,6 +3629,11 @@ BRASL2   EQU   *
          CLG   R0,=X'0000000000000000'
          RT1   CCE
 * E31B SLGF
+         LG    R0,=X'FFFFFFFFFFFFFFFF'  RPI 879
+         SLGF  R0,=X'80000000'          RPI 879
+         RT1   CC3        NZ,NB         RPI 879
+         CLG   R0,=X'FFFFFFFF7FFFFFFF'  RPI 879
+         RT1   CCE                      RPI 879
          LG    R0,=FL8'3'
          SLGF  R0,=F'2'
          RT1   CC3        NZ,NB
@@ -3868,6 +3903,11 @@ BCTG1    LA    R2,1(R2)
          CL    R0,=X'00000000'
          RT1   CCE
 * E35F SLY 
+         L     R0,=X'FFFFFFFF'  RPI 879
+         SLY   R0,=X'80000000'  RPI 879
+         RT1   CC3        NZ,NB RPI 879
+         CL    R0,=X'7FFFFFFF'  RPI 879
+         RT1   CCE              RPI 879
          L     R0,=X'80000000'  RPI 831
          SLY    R0,=X'A0000000'
          RT1   CC1        NZ,B

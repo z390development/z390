@@ -3,7 +3,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -193,7 +192,7 @@ public  class  mz390 {
 	 *  D2X - convert decimal string to hex string ('240' = 'F0')
 	 *  DCLEN - length of string after reducing double ' and &
 	 *  DCVAL - return string with double ' and & reduced
-	 *  DCEQUO - return string without first and last ' if any
+	 *  DEQUOTE - return string without first and last ' if any // RPI 886
 	 *  DOUBLE - double quotes and & in string (NC)
 	 *  FIND - return index of any char in string2 found in string1 (NC)
 	 *  INDEX - return index of string2 found in string1 else 0 (NC)
@@ -320,7 +319,9 @@ public  class  mz390 {
      * 05/07/08 RPI 849 use shared abort_case to catch logic errors  
      * 06/03/08 RPI 855 show macro labels, ago, and space on branch for tracem 
      * 06/10/08 RPI 860 allow EXEC operands separated by commas 
-     * 06/23/08 RPI 866 use get_file_name to parse BAL file names                  
+     * 06/23/08 RPI 866 use get_file_name to parse BAL file names  
+     * 07/27/08 rpi 880 trap BAL open error and replace IOException with Exception 
+     * 07/29/08 RPI 882 if TRACEP, display source lines and erros on console             
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -926,7 +927,7 @@ public  class  mz390 {
     byte pc_op_d2x    = 61; // convert decimal string to hex string ('240' = 'F0')
     byte pc_op_dclen  = 62; // length of string after reducing double ' and &
     byte pc_op_dcval  = 63; // return string with double ' and & reduced
-    byte pc_op_dcequo = 64; // return string without first and last ' if any
+    byte pc_op_dequote = 64; // return string without first and last ' if any // RPI 886
     byte pc_op_double = 65; // double quotes and & in string (NC)
     byte pc_op_find   = 66; // return index of any char in string2 found in string1 (NC)
     byte pc_op_index  = 67; // return index of string2 found in string1 else 0 (NC)
@@ -1016,7 +1017,7 @@ public  class  mz390 {
 			"D2X",     //61 pc_op_d2x
 			"DCLEN",   //62 pc_op_dclen
 			"DCVAL",   //63 pc_op_dcval
-			"DCEQUO",  //64 pc_op_dcequo
+			"DEQUOTE",  //64 pc_opDEQUOTEte // RPI 886
 			"DOUBLE",  //65 pc_op_double
 			"FIND",    //66 pc_op_find 
 			"INDEX",   //67 pc_op_index
@@ -1291,10 +1292,10 @@ public  class  mz390 {
 			return;
 		}
 		String bal_file_name = tz390.get_file_name(tz390.dir_bal,tz390.pgm_name,tz390.bal_type); // RPI 866
-		bal_file = new File(bal_file_name);
 		try {
+			bal_file = new File(bal_file_name); // rpi 880 trap null error
 			bal_file_buff = new BufferedWriter(new FileWriter(bal_file));
-		} catch (IOException e){
+		} catch (Exception e){
 			abort_error(8,"I/O error on BAL open - " + e.toString());
 		}
 	}
@@ -1347,6 +1348,9 @@ public  class  mz390 {
 					}
 				}
 			} else {
+				if (tz390.opt_traces && mac_call_level == 0){
+					System.out.println("MZ390 OPEN CODE " + mac_file_line[mac_line_index]); // RPI 882
+				}
 				pc_loc = pcl_start[mac_line_index];
 			    if (pc_loc > 0){
 				    exec_pc();
@@ -1726,7 +1730,7 @@ public  class  mz390 {
 			cur_mac_file = 0;
 			mac_file_buff[cur_mac_file] = new BufferedReader(new FileReader(mac_file[cur_mac_file]));
 			set_mac_file_num();
-		} catch (IOException e){
+		} catch (Exception e){
 			abort_error(26,"I/O error opening file - " + e.toString());
 		}
 		if (tz390.opt_tracem){
@@ -2234,7 +2238,7 @@ public  class  mz390 {
 					mac_line = "";
 				}
 			}
-		} catch (IOException e){
+		} catch (Exception e){
 			abort_error(29,"I/O error on file read " + e.toString());
 		}
 	}
@@ -2389,7 +2393,7 @@ public  class  mz390 {
 				   ){
 					tz390.put_trace("LOADING COPY LVL=" + (cur_mac_file+1) + " " + new_mac_name);
 				}
-			} catch (IOException e){
+			} catch (Exception e){
 				cur_mac_file--;
 				abort_error(26,"I/O error opening file - " + e.toString());
 			}
@@ -2454,7 +2458,7 @@ public  class  mz390 {
 			&& !bal_eof){
 			call_az390_pass_bal_line(text_line); // RPI 415
 		}
-		if (!tz390.opt_bal){
+		if (!tz390.opt_bal || bal_file_buff == null){
 			return;
 		}
 		try {
@@ -2463,8 +2467,8 @@ public  class  mz390 {
 				abort_error(119,"maximum bal file size exceeded");
 			}
 		} catch (Exception e){    //RPI1
-			System.out.println(msg_id + "error 13 - I/O error on BAL write - " + e.toString());
-			System.exit(16);
+			log_to_bal = false;
+			abort_error(13,"I/O error on BAL write - " + e.toString());
 		}
 	}
 	private void call_az390_pass_bal_line(String text_line){
@@ -2483,9 +2487,13 @@ public  class  mz390 {
 			az390.mz390_errors = mz390_errors; //update mz390 errors for PRN
 			if (mac_call_level >=0){
 				if (mac_call_level == 0){
-					String bal_file_name = tz390.get_file_name(tz390.dir_bal,tz390.pgm_name,tz390.pgm_type); // RPI 866
-					temp_file = new File(bal_file_name);
-					cur_mac_name = temp_file.getAbsolutePath(); // RPI 694
+					String bal_file_name = tz390.get_file_name(tz390.dir_mlc,tz390.pgm_name,tz390.pgm_type); // RPI 866 rpi 880 was dir_bal
+					try {
+						temp_file = new File(bal_file_name);						
+						cur_mac_name = temp_file.getAbsolutePath(); // RPI 694
+					} catch (Exception e) {
+						abort_error(231,"I/O error on MLC open " + e.toString()); // rpi 880 
+					}
 				} else {
 					cur_mac_name = mac_name[mac_call_name_index[mac_call_level]];
 				}
@@ -3643,7 +3651,7 @@ public  class  mz390 {
 				try {
 					dat_file[dat_file_index] = new File(ap_file_name);
 					dat_file_buff[dat_file_index] = new BufferedReader(new FileReader(dat_file[dat_file_index]));
-				} catch (IOException e){
+				} catch (Exception e){
 					dat_file[dat_file_index] = null;	
 					return ""; // RPI 443 return eof if no file
 				}
@@ -3662,7 +3670,7 @@ public  class  mz390 {
 					}
 					return text;
 				}
-			} catch (IOException e){
+			} catch (Exception e){
 				abort_error(71,"I/O error on AREAD file read - " + e.toString());
 				return "";
 			}		
@@ -3857,7 +3865,7 @@ public  class  mz390 {
 				try {
 					pch_file[pch_file_index] = new File(ap_file_name);
 					pch_file_buff[pch_file_index] = new BufferedWriter(new FileWriter(pch_file[pch_file_index]));
-				} catch (IOException e){
+				} catch (Exception e){
 					abort_error(75,"I/O error on PUNCH open - " + e.toString());
 				}
 			}
@@ -3873,7 +3881,7 @@ public  class  mz390 {
 						abort_error(120,"maximum pch file size exceeded");
 					}
 				}
-			} catch (IOException e){
+			} catch (Exception e){
 				abort_error(76,"I/O error on PUNCH file write - " + e.toString());
 			}
 		}
@@ -4208,7 +4216,7 @@ public  class  mz390 {
 				exp_next_class = exp_class_oper;
 			} else if (exp_next_op.equals("DCVAL")){
 				exp_next_class = exp_class_oper;
-			} else if (exp_next_op.equals("DCEQUOTE")){
+			} else if (exp_next_op.equals("DEQUOTE")){ // RPI 886
 				exp_next_class = exp_class_oper;
 			} else if (exp_next_op.length() == 3 
 					&& exp_next_op.substring(0,2).equals("D2")){ // RPI 404
@@ -4653,9 +4661,9 @@ public  class  mz390 {
 			} else if (exp_stk_op[tot_exp_stk_op].equals("DCVAL")){
 				exec_pc_dcval();
 				gen_exp_pc(pc_op_dcval);
-			} else if (exp_stk_op[tot_exp_stk_op].equals("DCEQUOTE")){
-				exec_pc_dcequo();
-				gen_exp_pc(pc_op_dcequo);
+			} else if (exp_stk_op[tot_exp_stk_op].equals("DEQUOTE")){  // RPI 886
+				exec_pc_dequote(); // RPI 886
+				gen_exp_pc(pc_op_dequote);  // RPI 886
 			} else {
                 log_error(182,"undefined prefix operator");
 			}
@@ -7736,10 +7744,10 @@ public  class  mz390 {
 		/*
 		 * close bal, pch, err, trm
 		 */
-		if (tz390.opt_bal){
+		if (tz390.opt_bal && bal_file_buff != null){
 			try {
 				bal_file_buff.close();
-			} catch (IOException e){
+			} catch (Exception e){
 				abort_error(34,"I/O error on BAL close - " + e.toString());
 			}
 		}
@@ -7763,7 +7771,7 @@ public  class  mz390 {
 		try {
 			dat_file_buff[index].close();
 			dat_file[index] = null;
-		} catch (IOException e){
+		} catch (Exception e){
 			abort_error(69,"I/O error on AREAD file ID=" + index + " close - " + e.toString());
 		}
 	}
@@ -7774,7 +7782,7 @@ public  class  mz390 {
 		try {
 			pch_file_buff[index].close();
 			pch_file[index] = null;
-		} catch (IOException e){
+		} catch (Exception e){
 			abort_error(77,"I/O error on PUNCH file ID=" + index + " close - " + e.toString());
 		}
 	}
@@ -7792,6 +7800,9 @@ public  class  mz390 {
 			tz390.put_systerm("MNOTE " + msg); // RPI 330, RPI 440, RPI 444
 		}
 		if (level > tz390.max_mnote_warning){ 
+			if (tz390.opt_traces){
+				System.out.println("MZ390E MNOTE " + msg); // RPI 882
+			}
 			tot_mnote_errors++;
 		} else if (level > 0){
 			tot_mnote_warning++;
@@ -7842,6 +7853,9 @@ public  class  mz390 {
                 }
 			}
 		} else {
+			if (tz390.opt_traces){
+				System.out.println("MZ390E " + msg); // RPI 882
+			}
 			put_log(error_msg);
 			tz390.put_systerm(error_msg);
 		}
@@ -7850,7 +7864,7 @@ public  class  mz390 {
 			abort_error(83,"maximum errors exceeded");
 		}
 	}
-	private void abort_error(int error,String msg){
+	private synchronized void abort_error(int error,String msg){
 		/*
 		 * issue error msg to log with prefix and
 		 * inc error total
@@ -8183,7 +8197,7 @@ public  class  mz390 {
 		case 61: // gen pc_op_d2x    convert decimal string to hex string ('240' = 'F0') 
 		case 62: // gen pc_op_dclen  length of string after reducing double ' and & 
 		case 63: // gen pc_op_dcval  return string with double ' and & reduced 
-		case 64: // gen pc_op_dcequo return string without first and last ' if any 
+		case 64: // gen pc_op_DEQUOTE return string without first and last ' if any 
 		case 65: // gen pc_op_double double quotes and & in string (NC) 
 		case 66: // gen pc_op_find   return index of any char in string2 found in string1 (NC)
 		case 67: // gen pc_op_index  return index of string2 found in string1 else 0 (NC)
@@ -8523,8 +8537,8 @@ public  class  mz390 {
 			case 63: // exec pc_op_dcval  return string with double ' and & reduced 
 			    exec_pc_dcval();
 			    break;
-			case 64: // exec pc_op_dcequo return string without first and last ' if any 
-			    exec_pc_dcequo();
+			case 64: // exec pc_op_dequote return string without first and last ' if any // RPI 886
+			    exec_pc_dequote(); // RPI 886
 			    break;
 			case 65: // exec pc_op_double double quotes and & in string (NC)
 			    exec_pc_double();
@@ -8884,7 +8898,7 @@ public  class  mz390 {
 	        text = "('" + setc_value1 + "')=" + seta_value;
 			break;
 		case 63: // trace pc_op_dcval  return string with double ' and & reduced 
-		case 64: // trace pc_op_dcequo return string without first and last ' if any 
+		case 64: // trace pc_op_dequote return string without first and last ' if any // RPI 886
 		case 65: // trace pc_op_double double quotes and & in string (NC)
 			text = "('" + setc_value1 + "')='" + setc_value + "'";
 			break;	
@@ -10369,16 +10383,26 @@ public  class  mz390 {
     	setc_value = setc_value1.replaceAll("\\'\\'","\\'").replaceAll("\\&\\&","\\&"); 
 		put_setc_stack_var();
     }
-    private void exec_pc_dcequo(){
+    private void exec_pc_dequote(){ // RPI 886
     	/*
     	 * remove start and ending quote if any
     	 */
     	setc_value1 = get_setc_stack_value();
     	if (setc_value1.length() > 1
-			&& setc_value1.charAt(0) == '\'' 
+    		&& setc_value1.charAt(0) == '\'' 
 			&& setc_value1.charAt(setc_value1.length()-1) == '\''){
 			setc_value = setc_value1.substring(1,setc_value1.length()-1);
-    	} else {
+    	} else if (setc_value1.length() > 1
+        		   && ((setc_value1.charAt(0) == '\'' 
+        		        && setc_value1.charAt(setc_value1.length()-1) != '\''
+        		       )
+        		       || (setc_value1.charAt(0) != '\'' 
+           		           && setc_value1.charAt(setc_value1.length()-1) == '\''
+           		          )
+           		      )    
+        		  ){
+    		log_error(232,"unbalanced quotes in string"); // RPI 886
+    	} else { // return value if no first/last quotes
     		setc_value = setc_value1;
 		}
 		put_setc_stack_var();

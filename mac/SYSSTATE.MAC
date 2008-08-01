@@ -1,0 +1,25 @@
+         MACRO                                                          00002   
+.*********************************************************************
+.* Copyright 2008 Automated Software Tools Corporation               *
+.* This source code is part of z390 assembler/emulator package       *
+.* The z390 package is distributed under GNU general public license  *
+.* Author - Don Higgins                                              *
+.* Date   - 07/30/08                                                 *
+.*********************************************************************
+.* 07/30/078 RPI 885 ADD FOR COMPATIBILITY WITH ZOS APPLICATIONS       
+.*********************************************************************
+.* 1.  ISSUE WARNING IF AMODE64=YES, ASCENV=AR, OR ARCHLVL > 2 
+.*********************************************************************
+&N       SYSSTATE &AMODE64=NO,    DEFAULT IS AMODE24 OR AMODE31        X
+               &ASCENV=P,         PRIMARY MODE (AR MODE NOT SUPPORTED) X
+               &ARCHLVL=2         ARCHITECTURE LEVEL 2 FOR Z/OS  
+         AIF   ('&AMODE64' EQ 'NO').OK1
+         MNOTE 4,'SYSSTATE AMODE64 NOT SUPPORTED YET'
+.OK1     ANOP
+         AIF   ('&ASCENV' EQ 'P').OK2
+         MNOTE 4,'SYSSTATE ASCENV=P PRIMARY MODE ONLY SUPPORTED'
+.OK2     ANOP
+         AIF   (&ARCHLVL LE 2).OK3
+         MNOTE 4,'SYSSTATE ARCHLVL 2 ONLY SUPPORTED'
+.OK3     ANOP
+         MEND

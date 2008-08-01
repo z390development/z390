@@ -127,7 +127,9 @@ public  class  z390 extends JApplet
      * 11/12/07 RPI 737 route all commands to CMD process if running 
      * 12/19/07 RPI 756 don't add ".." twice  
      * 12/19/07 RPI 765 force line break to prvent EXIT being split  
-     * 01/30/08 RPI 792 remove put error msg before checking for null   
+     * 01/30/08 RPI 792 remove put error msg before checking for null 
+     * 07/30/08 RPI 888 add leading space which may be eaten by PAUSE before EXIT for batch command
+     *          also switch cmd_input_writer to do auto flush to prevent sporatic chopped commands  
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -1632,7 +1634,7 @@ public  class  z390 extends JApplet
 	   	    		 cmd_startup(null);
 	   	    		 cmd_exec_input(cmd);
 	   	    		 cmd_running = true;
-	   	    	     cmd_exec_input("exit");  //RPI15, RPI 98, RPI 500, RPI 731
+	   	    	     cmd_exec_input(" exit");  //RPI15, RPI 98, RPI 500, RPI 731 RPI 888 leading space may be eaten by pause
 	   	    	 }
   	 	     }
 	   }
@@ -3399,7 +3401,7 @@ public  class  z390 extends JApplet
                         cmd_exec_process = Runtime.getRuntime().exec(exec_cmd);
                		    cmd_exec_error_reader  = new BufferedReader(new InputStreamReader(cmd_exec_process.getErrorStream()));
                		    cmd_exec_output_reader = new BufferedReader(new InputStreamReader(cmd_exec_process.getInputStream()));
-                   	    cmd_exec_input_writer  = new PrintStream(cmd_exec_process.getOutputStream());  // RPI 731
+                   	    cmd_exec_input_writer  = new PrintStream(cmd_exec_process.getOutputStream(),true);  // RPI 731 RPI 888 add true for autoflush
                		    cmd_exec_process_thread = new Thread(this);
             		    cmd_exec_error_reader_thread   = new Thread(this);
             		    cmd_exec_output_reader_thread  = new Thread(this);
@@ -3426,7 +3428,6 @@ public  class  z390 extends JApplet
             /*
              * send input to exec command in process
              */
-
             	try {
             		if (cmd_line == null){  // RPI 731
             			cmd_exec_input_writer.println("");
@@ -3434,7 +3435,7 @@ public  class  z390 extends JApplet
             			cmd_exec_input_writer.println(cmd_line);
             		}
             		cmd_io_total++;
-            		cmd_exec_input_writer.flush();
+            		//dshx cmd_exec_input_writer.flush();
             		monitor_cmd_time_total = 0;
             		cmd_io_total = 0;
             	} catch (Exception e){
@@ -3503,7 +3504,7 @@ public  class  z390 extends JApplet
 					// if ez390 issues exit request close down gui
 					// this is trigged when ez390 exits if 
 					// z390 sent "exit_request to input queue
-				    cmd_exec_input("exit");  // RPI 98, RPI 500 RPI 731 RPI 765
+					cmd_exec_input(" exit");  // RPI 98, RPI 500 RPI 731 RPI 765 RPI 888 leading space may be eaten by PAUSE
 				} else {
 					put_log(cmd_exec_output_msg);
 				}

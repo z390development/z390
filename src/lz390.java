@@ -84,7 +84,8 @@ public  class  lz390 {
     * 12/27/07 RPI 770 don't search for EXTRN's if NOAUTOLINK 
     * 02/28/08 RPI 814 default search of obj+linklib for AUTOLINK 
     * 03/27/08 RPI 827 show obj file name on I/O errors      
-    * 06/23/08 RPI 866 use get_file_name to parse LST and ALIAS 390 file names 
+    * 06/23/08 RPI 866 use get_file_name to parse LST and ALIAS 390 file names
+    * 07/29/08 RPI 883 add MOD support for code.MOD with no header/trailer/rlds and no rounding 
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -149,6 +150,7 @@ public  class  lz390 {
     byte gbl_esd_ent = 1; // found cst/ent
     byte gbl_esd_wxt = 2; // undefined wxt
     int loc_ctr = 0;
+    int mod_loc_ctr = 0; // RPI 883
     /*
      * object files loaded
      */
@@ -712,6 +714,9 @@ private boolean load_obj_file(boolean esds_only){
 				index = index + 2;
 			}
 			tot_obj_bytes = tot_obj_bytes + obj_text_len;
+			if (code_off + obj_text_len > mod_loc_ctr){
+				mod_loc_ctr = code_off + obj_text_len; // RPI 883
+			}
 		} else if (obj_line.substring(0,4).equals(".RLD")){
 			int  obj_rld_esd = Integer.valueOf(obj_line.substring(9,13),16).intValue();
 			if (obj_rld_esd < 1 || obj_rld_esd > max_obj_esd){
@@ -1116,21 +1121,34 @@ private void gen_load_module(){
 	 * skipping rlds for unresolved wxtrn's 
 	 */
 	put_stats();
+	if (tz390.opt_mod && tot_rld > 0){
+		abort_error(40,"MOD file cannot contain RLD's =" + tot_rld); // RPI 883
+	}
     if (loc_ctr > tz390.max_file_size){
     	abort_error(32,"maximum 390 file size exceeded");
     }
 	try {
-        z390_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_390) + tz390.pgm_name + ".390","rw");
+		String z390_sfx = tz390.z390_type;
+		if (tz390.opt_mod){
+			z390_sfx = tz390.mod_type; // RPI 883
+		}
+        z390_file = new RandomAccessFile(tz390.get_first_dir(tz390.dir_390) + tz390.pgm_name + z390_sfx,"rw"); // RPI 883
         z390_file.setLength(0);
         z390_file.seek(0);
-        tz390.systerm_io = tz390.systerm_io + 6;
-        z390_file.writeBytes(z390_code_ver);
-        z390_flags = "" + tz390.z390_amode31 + tz390.z390_rmode31 + "??";
-        z390_file.writeBytes(z390_flags);  // z390_flags
-        z390_file.writeInt(loc_ctr);       // z390_code_len
-        z390_file.writeInt(lkd_entry_loc);             // z390_code_ent offset RPI 732
-        z390_file.writeInt(tot_rld);       // z390_code_rlds 
-        z390_file.write(z390_code,0,loc_ctr);
+        if (!tz390.opt_mod){  // RPI 883
+        	tz390.systerm_io = tz390.systerm_io + 6;
+        	z390_file.writeBytes(z390_code_ver);
+        	z390_flags = "" + tz390.z390_amode31 + tz390.z390_rmode31 + "??";
+        	z390_file.writeBytes(z390_flags);  // z390_flags
+        	z390_file.writeInt(loc_ctr);       // z390_code_len
+        	z390_file.writeInt(lkd_entry_loc); // z390_code_ent offset RPI 732
+        	z390_file.writeInt(tot_rld);       // z390_code_rlds 
+        }
+        if (tz390.opt_mod){
+        	z390_file.write(z390_code,0,mod_loc_ctr); // RPI 883
+        } else {
+        	z390_file.write(z390_code,0,loc_ctr);
+        }
         int cur_rld = 0;
         while (cur_rld < tot_rld){
         	tz390.systerm_io++;

@@ -4,7 +4,6 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.RandomAccessFile;
@@ -1066,7 +1065,7 @@ private synchronized void close_files(){  // RPI 661
 	  if (log_file != null && log_file.isFile()){
 	  	  try {
 	  	  	  log_file_buff.close();
-	  	  } catch (IOException e){
+	  	  } catch (Exception e){
 	  	  	  tz390.abort_error(3,"I/O error on log file close - " + e.toString()); // RPI 646
 	  	  }
 	  }
@@ -1215,7 +1214,7 @@ public void open_files(){
             log_file = new File(tz390.log_file_name); // RPI 719
          	try {
        	       log_file_buff = new BufferedWriter(new FileWriter(log_file));
-       	    } catch (IOException e){
+       	    } catch (Exception e){
        		   abort_error(9,"I/O error on log file open - " + e.toString());
        	    }
        	}

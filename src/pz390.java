@@ -271,7 +271,9 @@ public class pz390 {
      * 06/23/08 RPI 866 init mem to F5 starting at mem24_start  
      * 07/05/08 RPI 875 correct CLIY error introduced by RPI 859 
      *          and masked by incorrect CLIY test in TESTINS2
-     * 07/23/08 RPI 878 fix XDECI to support ASCII mode            
+     * 07/23/08 RPI 878 fix XDECI to support ASCII mode 
+     * 07/23/08 RPI 879 fix SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF
+     *          to set CC3 when both neg and no borrow          
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -11589,7 +11591,7 @@ public class pz390 {
 	private int get_int_log_sub_cc() {
 		/*
 		 * return cc for logical subtract as follows: 
-		 * rlv borrow 
+		 * rv1 borrow 
 		 *   0 1 cc0 (slb only)
 		 *  !0 1 cc1 
 		 *   0 0 cc2 
@@ -11600,15 +11602,18 @@ public class pz390 {
 		 *  3. rv1 = result
 		 */
 		boolean rv1_borrow = false;
-		if (rvw >= 0) {
-			if (rv2 < 0 || rv1 < 0) {
-				rv1_borrow = true;
-			}
-		} else {
-			if (rv2 < 0 ) { // RPI 831 WAS && rv1 >= 0
-					rv1_borrow = true;
-			}
-		}
+		int signs = rvw ^ rv2; // RPI 879
+        if (signs >= 0){
+        	// signs same
+        	if (rvw < rv2){
+        		rv1_borrow = true; // RPI 879
+        	}
+        } else {
+        	// signs different
+        	if (rvw > rv2){
+        		rv1_borrow = true;  // RPI 879
+        	}
+        }
 		if (rv1 == 0) {
 			if (!rv1_borrow) {
 				return psw_cc2; // Z,NB
@@ -11632,17 +11637,24 @@ public class pz390 {
 		 *   !0 1 cc1 
 		 *    0 0 cc2 
 		 *   !0 0 cc3
+		 * Notes:
+		 *   1.  rlvw = orig. rlv1
+		 *   2.  rlv1 = result
+		 *   3.  rlv2 = orig. rlv2
 		 */
 		boolean rlv1_borrow = false;
-		if (rlvw >= 0) {
-			if (rlv2 < 0 || rlv1 < 0) {
-				rlv1_borrow = true;
-			}
-		} else {
-			if (rlv2 < 0) { // RPI 831 WAS && rlv1 >= 0
-				rlv1_borrow = true;
-			}
-		}
+		long signs = rlvw ^ rlv2; // RPI 879
+        if (signs >= 0){
+        	// same signs
+        	if (rlvw < rlv2){
+        		rlv1_borrow = true; // RPI 879
+        	}
+        } else {
+        	// diffent signs
+        	if (rlvw > rlv2){
+        		rlv1_borrow = true;  // RPI 879
+        	}
+        }
 		if (rlv1 == 0) {
 			if (!rlv1_borrow) {
 				return psw_cc2; // Z,NB

@@ -188,7 +188,13 @@ public  class  tz390 {
     *          and update get_file_name to allow parm_dir to
     *          override basemane and ext or parm to override path
     *          (SYSPCH and SYSPRN used in DFHALL for BMS map gens)
-    * 07/03/08 RPI 874 support all option set/reset regardless of default         
+    * 07/03/08 RPI 874 support all option set/reset regardless of default  
+    * 07/26/08 RPI 880 allow trailing * without space on options, show invalid #file spec 
+    *          return null for invalid get_file_name path or file
+    *          display each invalid option with file/line #  
+    *          Support *.sfx override for BAL,ERR,LOG,LST,PCH,PRN  
+    * 07/28/08 RPI 882 if TRACES display source lines and errors on console  
+    * 07/28/08 RPI 883 add option MOD for LZ390 to generate raw code file with no header or rlds         
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -197,7 +203,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.02b";  //dsh
+    String version    = "V1.4.02c";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -209,7 +215,7 @@ public  class  tz390 {
 	String  z390_font    = "Monospaced";  // RPI 509 was Courier
 	boolean z390_abort   = false;  // global abort request
 	String  invalid_options = "";  // RPI 742
-    boolean opt_allow    = false;  // allow extensions such as no quotes for SETC var
+	boolean opt_allow    = false;  // allow extensions such as no quotes for SETC var
     boolean opt_amode24  = false;  // link to run amode24
     boolean opt_amode31  = true;   // link to run amode31
     boolean opt_ascii    = false; // use ascii vs ebcdic
@@ -233,6 +239,7 @@ public  class  tz390 {
     boolean opt_listuse  = true;  // list usage at USING and DROP
     boolean opt_loadhigh = true;  // load pgms and alloc storage from top down
     boolean opt_mcall    = false; // list MCALL and MEXIT on PRN // RPI 511
+    boolean opt_mod      = false;  // generate raw code output from lz390 with sfx .MOD
     boolean opt_obj      = true;  // generate binary MVS compatible OBJ file RPI 694
     boolean opt_objhex   = false; // generate ascii hex obj records (lz390 accepts bin or hex)
     String  opt_parm     = "";    // user parm string for ez390 (mapped to R1 > cvt_exec_parm)
@@ -259,6 +266,7 @@ public  class  tz390 {
     boolean opt_tracem   = false; // trace mz390
     boolean opt_tracep   = false; // trace pseudo code
     boolean opt_traceq   = false; // trace QSAM file I/O
+    boolean opt_traces   = false; // trace MLC source and errors on concole for mz390 // RPI 882    
     boolean opt_tracet   = false; // trace TCPIO and TGET/TPUT data I/O
     boolean opt_tracev   = false; // trace VSAM file I/O
     boolean opt_trap     = true;  // trap exceptions as 0C5
@@ -334,6 +342,7 @@ public  class  tz390 {
 	Boolean lkd_ignore = false; // RPI 735 ignore LKD if explicit .OBJ
 	String mac_type = ".MAC"; // macro source
     String mlc_type = ".MLC"; // macro assembler source program
+    String mod_type = ".MOD"; // load module file with no header, trailer,RLDs, and no rounding RPI 883
     String obj_type = ".OBJ"; // relocatable object code for az390 and lz390
     String opt_type = ".OPT"; // @file option file with one option per line plus comments 
     String pch_type = ".PCH"; // punch output from mz390
@@ -4381,7 +4390,7 @@ private void init_opcodes(){
 	try {
 	    find_non_space_pattern = Pattern.compile(
 	    		"([\"][^\"]+[\"])"  
-	    	  +	"|([^\\s]+)"  //RPI 313	    	      
+	    	  +	"|([^\\s]+)"  //RPI 313
 				  );
 	} catch (Exception e){
 		  abort_error(13,"find parm pattern errror - " + e.toString());
@@ -4501,7 +4510,7 @@ public void init_options(String[] args,String pgm_type){
     int index1 = 1;
     while (index1 < args.length){
     	token = args[index1];
-    	process_option(token);  // RPI 742
+    	process_option("CMD-LINE",index1+1,token);  // RPI 742
     	index1++;
     }
     if (cmd_parms.length() > 0 
@@ -4523,7 +4532,7 @@ public void init_options(String[] args,String pgm_type){
     	dir_cpy = dir_mac; // RPI 742
     }
 }
-private void process_option(String token){
+private void process_option(String opt_file_name,int opt_file_line,String token){
 	/*
 	 * process option from command line or
 	 * from @file optionsfile line.
@@ -4612,13 +4621,13 @@ private void process_option(String token){
         	&& token.substring(0,7).toUpperCase().equals("CHKMAC(")){
        	opt_chkmac = token.charAt(7) - '0';
       	if (opt_chkmac < 0 || opt_chkmac > 2){
-           		add_invalid_option(token);
+           		add_invalid_option(opt_file_name,opt_file_line,token);
         }
     } else if (token.length() == 9
         	&& token.substring(0,7).toUpperCase().equals("CHKSRC(")){
            	opt_chksrc = token.charAt(7) - '0';
           	if (opt_chksrc < 0 || opt_chksrc > 2){
-          		add_invalid_option(token);
+          		add_invalid_option(opt_file_name,opt_file_line,token);
           	}
 	} else if (token.toUpperCase().equals("CICS")){
        	opt_cics = true;
@@ -4634,15 +4643,14 @@ private void process_option(String token){
        	opt_dump = false;
     } else if (token.toUpperCase().equals("EPILOG")){
        	opt_epilog = true;
-       	opt_cics   = true;
     } else if (token.toUpperCase().equals("NOEPILOG")){
        	opt_epilog = false;
     } else if (token.length() > 4
     	&& token.substring(0,4).toUpperCase().equals("ERR(")){
        	try {
-       		max_errors = Integer.valueOf(token.substring(4,token.length()-1)).intValue(); 
+       		max_errors = Integer.valueOf(token.substring(4,token.length()-1)).intValue();
       	} catch (Exception e){
-      		add_invalid_option(token);
+      		add_invalid_option(opt_file_name,opt_file_line,token);
       	}
     } else if (token.toUpperCase().equals("ERRSUM")){
        	init_errsum();
@@ -4694,7 +4702,7 @@ private void process_option(String token){
        	try {
        		opt_maxfile = Integer.valueOf(token.substring(8,token.length()-1)).intValue();
        	} catch (Exception e){
-       		add_invalid_option(token);
+       		add_invalid_option(opt_file_name,opt_file_line,token);
        	}   
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("MAXGBL(")){
@@ -4728,7 +4736,7 @@ private void process_option(String token){
            	try {
            		max_file_size = Long.valueOf(token.substring(8,token.length()-1)).longValue() << 20; 
            	} catch (Exception e){
-           		add_invalid_option(token);
+           		add_invalid_option(opt_file_name,opt_file_line,token);
            	}
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("MAXSYM(")){
@@ -4750,7 +4758,7 @@ private void process_option(String token){
        	try {
        	    max_mem = Integer.valueOf(token.substring(4,token.length()-1)).intValue();
        	} catch (Exception e){
-       		add_invalid_option(token);
+       		add_invalid_option(opt_file_name,opt_file_line,token);
        	}
     } else if (token.length() > 10
       		&& token.substring(0,10).toUpperCase().equals("MINHEIGHT(")){
@@ -4758,6 +4766,10 @@ private void process_option(String token){
     } else if (token.length() > 9
       		&& token.substring(0,9).toUpperCase().equals("MINWIDTH(")){
        	min_main_width = Integer.valueOf(token.substring(9,token.length()-1)).intValue();
+    } else if (token.toUpperCase().equals("MOD")){
+       	opt_mod = true;
+    } else if (token.toUpperCase().equals("NOMOD")){
+       	opt_mod = false;
     } else if (token.toUpperCase().equals("OBJ")){
        	opt_obj = true;
     } else if (token.toUpperCase().equals("NOOBJ")){
@@ -4787,7 +4799,6 @@ private void process_option(String token){
      	opt_profile = token.substring(8,token.length()-1);
     } else if (token.toUpperCase().equals("PROLOG")){
         opt_prolog = true;
-        opt_cics = true;
     } else if (token.toUpperCase().equals("NOPROLOG")){
         opt_prolog = false;
     } else if (token.toUpperCase().equals("PROTECT")){
@@ -4836,6 +4847,10 @@ private void process_option(String token){
     } else if (token.length() > 7 
        		&& token.substring(0,7).toUpperCase().equals("SYSBAL(")){
       	dir_bal = set_path_option(dir_bal,token.substring(7,token.length()-1)); 
+        if (dir_bal.charAt(0) == '*'){ // RPI 880
+        	bal_type = dir_bal.substring(1);
+        	dir_bal = dir_pgm;
+        }
     } else if (token.length() > 7 
       		&& token.substring(0,7).toUpperCase().equals("SYSCPY(")){
        	dir_cpy = set_path_option(dir_cpy,token.substring(7,token.length()-1)); 
@@ -4845,12 +4860,24 @@ private void process_option(String token){
     } else if (token.length() > 7
        		&& token.substring(0,7).toUpperCase().equals("SYSERR(")){
         dir_err = set_path_option(dir_err,token.substring(7,token.length()-1)); // RPI 243 
+        if (dir_err.charAt(0) == '*'){ // RPI 880
+        	err_type = dir_err.substring(1);
+        	dir_err = dir_pgm;
+        }
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("SYSLOG(")){
        	dir_log = set_path_option(dir_log,token.substring(7,token.length()-1));
+        if (dir_log.charAt(0) == '*'){ // RPI 880
+        	log_type = dir_log.substring(1);
+        	dir_log = dir_pgm;
+        }
     } else if (token.length() > 7 
       		&& token.substring(0,7).toUpperCase().equals("SYSLST(")){  // RPI 866
       	dir_lst = set_path_option(dir_lst,token.substring(7,token.length()-1)); 
+        if (dir_lst.charAt(0) == '*'){ // RPI 880
+        	lst_type = dir_lst.substring(1);
+        	dir_lst = dir_pgm;
+        }
     } else if (token.length() > 7 
        		&& token.substring(0,7).toUpperCase().equals("SYSMAC(")){
        	dir_mac = set_path_option(dir_mac,token.substring(7,token.length()-1));  
@@ -4869,9 +4896,17 @@ private void process_option(String token){
     } else if (token.length() > 7 
        		&& token.substring(0,7).toUpperCase().equals("SYSPCH(")){
       	dir_pch = set_path_option(dir_pch,get_short_file_name(token.substring(7,token.length()-1))); 
+        if (dir_pch.charAt(0) == '*'){ // RPI 880
+        	pch_type = dir_pch.substring(1);
+        	dir_pch = dir_pgm;
+        }
     } else if (token.length() > 7 
       		&& token.substring(0,7).toUpperCase().equals("SYSPRN(")){
       	dir_prn = set_path_option(dir_prn,token.substring(7,token.length()-1)); 	
+        if (dir_prn.charAt(0) == '*'){ // RPI 880
+        	prn_type = dir_prn.substring(1);
+        	dir_prn = dir_pgm;
+        }
     } else if (token.length() > 8
       		&& token.substring(0,8).toUpperCase().equals("SYSTERM(")){
      	systerm_file_name = token.substring(8,token.length()-1); // RPI 730
@@ -4940,6 +4975,8 @@ private void process_option(String token){
        			opt_listcall = true; // RPI 862
        		} else if (trace_options.charAt(index) == 'Q'){
        			opt_traceq = true;
+       		} else if (trace_options.charAt(index) == 'S'){
+       			opt_traces = true; // RPI 882
        		} else if (trace_options.charAt(index) == 'T'){
        			opt_tracet = true;
        		} else if (trace_options.charAt(index) == 'V'){
@@ -4966,6 +5003,7 @@ private void process_option(String token){
        	opt_tracep   = true;
        	opt_tracel   = true;
        	opt_traceq   = true;
+       	opt_traces   = true; // RPI 882
        	opt_tracet   = true;
        	opt_tracev   = true;
        	opt_traceg = true;
@@ -4981,6 +5019,7 @@ private void process_option(String token){
        	opt_tracep   = false;
        	opt_tracel   = false;
        	opt_traceq   = false;
+       	opt_traces   = false; // RPI 882
        	opt_tracet   = false;
        	opt_tracev   = false;
        	opt_traceg = false;
@@ -5020,6 +5059,11 @@ private void process_option(String token){
     	opt_con   = false;
     } else if (token.toUpperCase().equals("NOTRACEQ")){
     	opt_traceq = false;
+    } else if (token.toUpperCase().equals("TRACES")){
+    	opt_traces = true; // RPI 882
+    	opt_con   = false;
+    } else if (token.toUpperCase().equals("NOTRACES")){
+    	opt_traces = false; // RPI 882
     } else if (token.toUpperCase().equals("TRACET")){
     	opt_tracet = true;
     	opt_con   = false;
@@ -5048,17 +5092,18 @@ private void process_option(String token){
     } else if (token.toUpperCase().equals("NOXREF")){
        	opt_xref = false;
     } else {
-        add_invalid_option(token);
+        add_invalid_option(opt_file_name,opt_file_line,token);
     }
   } catch (Exception e){
-	  add_invalid_option(token);
+	  add_invalid_option(opt_file_name,opt_file_line,token);
   }
 }
-private void add_invalid_option(String option){
+private void add_invalid_option(String opt_file_name,int opt_file_line,String option){
 	/*
 	 * collect invalid options for single error
 	 */
-	invalid_options = invalid_options + option;
+	invalid_options = invalid_options + " " + option; // RPI 880
+	System.out.println("TZ390E invalid option=" + option + "  (" + opt_file_name + "/" + opt_file_line + ")");
 }
 private void process_options_file(String file_name){
 	/*
@@ -5068,29 +5113,37 @@ private void process_options_file(String file_name){
 	 * 3.  Comments starting with * to end of line
 	 * 4.  @file option can be nested.
 	 */
-    String file_name_path = find_file_name(dir_opt,file_name,opt_type,dir_cur);
-	if (file_name_path != null){
+    String opt_file_name = find_file_name(dir_opt,file_name,opt_type,dir_cur); // rpi 880
+	int    opt_file_line = 0; // rpi 880
+    if (opt_file_name != null){
 		try {
 			cmd_parms = cmd_parms.trim() + "=(";
-			File opt_file = new File(file_name_path);
+			File opt_file = new File(opt_file_name);
 			BufferedReader opt_file_buff = new BufferedReader(new FileReader(opt_file));       
 			String option_line = opt_file_buff.readLine();
 			while (option_line != null){
+				opt_file_line++; // rpi 880
 				Matcher find_option_match = find_non_space_pattern.matcher(option_line);
+				boolean comment_found = false;  // RPI 880
 				while (find_option_match.find() 
-						&& find_option_match.group().charAt(0) != '*'){
+						&& find_option_match.group().charAt(0) != '*'
+						&& !comment_found){  // RPI 880
 						String option = find_option_match.group();
-						process_option(option);
+						if (option.charAt(option.length()-1) == '*'){
+							comment_found = true;
+							option = option.substring(0,option.length()-1);
+						}
+						process_option(opt_file_name,opt_file_line,option);
 				}
 				option_line = opt_file_buff.readLine();
 			}
 			opt_file_buff.close();
 			cmd_parms = cmd_parms.trim() + ") ";
 		} catch (Exception e){
-			add_invalid_option("@" + file_name_path); 
+			add_invalid_option(opt_file_name,opt_file_line,"@" + file_name); // RPI 880
 		}
 	} else {
-		add_invalid_option("@" + file_name_path);
+		add_invalid_option(opt_file_name,opt_file_line,"@" + file_name); // RPI 880
 	}
 }
 public void open_systerm(String z390_pgm){
@@ -5111,6 +5164,10 @@ public void open_systerm(String z390_pgm){
         }
     }
 	if (systerm_file != null)return; // rpi 415
+	if (systerm_file_name == null
+		|| systerm_file_name.length() == 0){
+		systerm_file_name = pgm_name; // RPI 880
+	}
 	systerm_file_name = get_file_name(dir_err,systerm_file_name,err_type);
     try {
         systerm_file = new RandomAccessFile(systerm_file_name,"rw"); 
@@ -5422,6 +5479,14 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	    * 2.  Add directory, name, and/or type if not specified  
 	    * 3.  Replace \ with / if Linux
 	    */
+	        if (file_dir == null 
+	        	|| file_name == null 
+	        	|| file_type == null
+	        	|| file_dir.length() == 0
+	        	|| file_name.length() == 0
+	        	|| file_type.length() == 0){
+	        	return null; // RPI 880
+	        }
 	        if (z390_os_type == z390_os_linux){ // RPI 532 file separator fix
 	        	file_dir = file_dir.replace('\\','/');
 	        	file_name     = file_name.replace('\\','/');
@@ -5442,16 +5507,28 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	    			|| file_dir.length() == 0
 	    			|| file_dir.equals(".")){
 	    			temp_file = new File(dir_cur);
-	    			file_name = temp_file.getAbsolutePath() + File.separator + file_name;
+	    			if (temp_file.isDirectory()){
+	    				file_name = temp_file.getAbsolutePath() + File.separator + file_name;
+	    			} else {
+	    				return null; // rpi 880
+	    			}
 	    		} else {
 	    			temp_file = new File(file_dir);
 	    			index = file_dir.indexOf(".");
 	    			if (index > 0){
 	    				// file_dir has file name so ignore file_name
-	    				file_name = temp_file.getAbsolutePath();
+	    				if (temp_file.isFile()){
+	    					file_name = temp_file.getAbsolutePath();
+	    			    } else {
+	    			    	return null; // rpi 880
+	    			    }
 	    			} else {
 	    				// concatenate file_dir with file_name
-	    				file_name = temp_file.getAbsolutePath() + File.separator + file_name;
+	    				if (temp_file.isDirectory()){
+	    					file_name = temp_file.getAbsolutePath() + File.separator + file_name;
+	    				} else {
+	    					return null; // rpi 880
+	    				}
 	    			}
 	    		}
 	    	}
@@ -6383,8 +6460,8 @@ public void put_trace(String text){
     }
 	private String set_path_option(String old_path,String new_path){
 		/*
-		 * if new path starts with +, concat with existing path
-		 * else replace existing path option.
+		 * 1.  if new path starts with +, concat with existing path
+		 *     else replace existing path option.
 		 */
 		if (new_path.charAt(0) == '+'){
 			return old_path + new_path;  
@@ -6506,6 +6583,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOMCALL");
 	     }
+	     if (opt_mod){ // generate code file from lz390 with no header/trailer, no rounding, no RLD's RPI 883
+		        add_final_opt("MOD");
+		     } else {
+		        add_final_opt("NOMOD");
+		     }
 	     if (opt_obj     ){ // generate binary MVS compatible OBJ file RPI 694
 	        add_final_opt("OBJ");
 	     } else {
@@ -6621,6 +6703,16 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOTRACEQ");
 	     }
+	     if (opt_traces  ){ // trace(s) show MLC source and errors on console
+		        add_final_opt("TRACES");
+		     } else {
+		        add_final_opt("NOTRACES");
+		     }
+	     if (opt_tracet  ){ // trace(q) QSAM file I/O to TRE
+		        add_final_opt("TRACET");
+		     } else {
+		        add_final_opt("NOTRACET");
+		     }
 	     if (opt_tracet  ){ // trace(t) TCPIO and TGET/TPUT I/O to TRE
 	        add_final_opt("TRACET");
 	     } else {
