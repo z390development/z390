@@ -194,7 +194,8 @@ public  class  tz390 {
     *          display each invalid option with file/line #  
     *          Support *.sfx override for BAL,ERR,LOG,LST,PCH,PRN  
     * 07/28/08 RPI 882 if TRACES display source lines and errors on console  
-    * 07/28/08 RPI 883 add option MOD for LZ390 to generate raw code file with no header or rlds         
+    * 07/28/08 RPI 883 add option MOD for LZ390 to generate raw code file with no header or rlds 
+    * 08/05/08 RPI 891 use variable mac_gen for setting ID + indicatior        
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -203,7 +204,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.02c";  //dsh
+    String version    = "V1.4.02d";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -390,7 +391,7 @@ public  class  tz390 {
 	String systerm_time = "";     // hh:mm:ss if opt_timing
     String systerm_prefix = "";   // pgm_name plus space
     int    systerm_io     = 0;    // total file io count
-    long   systerm_ins    = 0;    // ez390 instruction count
+    long systerm_ins    = 0;    // ez390 instruction count
     String started_msg = "";
     String ended_msg   = "";
     String stats_file_name      = null;
@@ -6186,7 +6187,7 @@ public void put_trace(String text){
 	    	prev_bal_cont_lines = 0; // RPI 550
 	    }
     }
-    public String get_cur_bal_line_id(int file_num, int file_line_num, int bal_line_num, int line_level, char line_type){
+    public String get_cur_bal_line_id(int file_num, int file_line_num, int bal_line_num, boolean mac_gen, char line_type){
     	/*
     	 * return unique BAL line id consisting of:  // RPI 549
     	 *   1.  FID file id number (See list of files in stats at end of BAL)
@@ -6210,7 +6211,7 @@ public void put_trace(String text){
     			                 + line_type,10); // RPI 549
     	}
     	if (line_type == ' ' 
-    		&& line_level > 0){
+    		&& mac_gen){ // RPI 891 
     		line_type = '+'; // RPI 581 inline macro generated code
     	}
     	return right_justify("(" + (file_num+1)

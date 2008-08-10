@@ -5,12 +5,13 @@
 * Author - Don Higgins                                              *
 * Date   - 09/30/05                                                 *
 *********************************************************************
-* 11/09/01 RP 732 TEST USING TESTLNK2.LNK TO BUILD TESTLNK2.390        
+* 11/09/07 RPI 732 TEST USING TESTLNK2.LNK TO BUILD TESTLNK2.390        
 *          INCLUDING TESTLNK3, ENTRY TESTLNK3, AND ALIAS TESTLNK3             
+* 08/10/08 RPI 893 CORRECT AL2(WTOEND,0) TO AL2(WTOEND-*,0)        
 *********************************************************************
          TITLE 'TESTLNK2 TEST USE OF TESTLNK2.LNK TO BUILD TESTLNK2'
 TESTLNK2 CSECT
          ENTRY WTOLNK2
-WTOLNK2  DC   AL2(WTOEND,0),C'HELLO FROM TESTLNK3 ENTRY'
+WTOLNK2  DC   AL2(WTOEND-*),C'HELLO FROM TESTLNK3 ENTRY'
 WTOEND   EQU  *
          END
