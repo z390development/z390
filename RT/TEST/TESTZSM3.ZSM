@@ -1,0 +1,26 @@
+* TEST ZSTRMAC2 ASELECT EXTENSIONS FOR V1,V2,(V3,V4) V=N,C'?',X'??'
+         :&I   SETA 0
+         AWHILE (&I LE 255)
+                 ASELECT (&I)
+                 AWHEN 0
+                        MNOTE 'AWHEN I=0'
+                 AWHEN 1
+                        MNOTE 'AWHEN I=1'
+                 AWHEN 3,(5,7),9
+                        MNOTE 'AWHEN I=&I (3,(5,7),9'
+                 AWHEN C'A'
+                        MNOTE 'AWHEN I=&I EBCIDC CHAR A'
+                 AWHEN C'1',(C'2',C'4'),C'5'
+                        MNOTE 'AWHEN I=&I EBCIDC CHAR 1,(2,4),5'
+                 AWHEN X'FA',(X'FB',X'FD'),X'FE'
+                        MNOTE 'AWHEN I=&I EBCIDC HEX FA,(FB,FD),FE'
+                 AWHEN X'FF'
+                        MNOTE 'AWHEN I=&I EBCIDC HEX FF'
+                 AEND
+                 :&I SETA &I+1
+         AEND         
+TESTZSM3 CSECT
+         SR    15,15
+         BR    14
+         END         
+

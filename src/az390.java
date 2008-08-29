@@ -313,7 +313,9 @@ public  class  az390 implements Runnable {
         * 06/06/08 RPI 843 round half-even for FP constants  
         * 06/23/08 RPI 866 use get_file_name to parse PRN and BAL file names   
         * 08/05/08 RPI 891 correct MCALL/MEXIT to correctly handle GEN/NOGEN   
-        * 08/08/08 RPI 893 add SY, AL2(*), and F/H'Unnn' for unsigned      
+        * 08/08/08 RPI 893 add SY, AL2(*), and F/H'Unnn' for unsigned 
+        * 08/12/08 RPI 894 change AL2(*) to support 2 byt RLD fields
+        * 08/11/08 RPI 895 always print PRN if ERR(0) regardless of ERRSUM     
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -2843,16 +2845,15 @@ private void process_bal_op(){
     case 213:  // MHELP 0 
     	break;
     case 214:  // MNOTE 0
-    	bal_op_ok = true;  // pass true from mz390
+    	bal_op_ok = true;  // pass through from mz390
     	if (gen_obj_code 
     		&& mac_inline_level == 0){ // RPI 581
         	force_list_bal = true;        // RPI 581
     		if (bal_parms != null // RPI 503
-    				&& !tz390.opt_errsum // RPI 694
-    				&& bal_parms.length() > 0
-    				&& bal_parms.charAt(0) != '\''
-    				&& bal_parms.charAt(0) != '*'){  // RPI 444
-    				tz390.put_systerm("MNOTE " + bal_parms); // RPI 440
+   				&& bal_parms.length() > 0
+   				&& bal_parms.charAt(0) != '\''
+   				&& bal_parms.charAt(0) != '*'){  // RPI 444
+   				tz390.put_systerm("MNOTE " + bal_parms); // RPI 440
     		}
     		if (bal_parms.length() > 0 
         		&& bal_parms.charAt(0) != '\''
@@ -2978,9 +2979,8 @@ private boolean check_list_bal_line(){
 	 * set true if ok to list BAL line
 	 * on PRN file
 	 */
-	if (!tz390.opt_list 
-		|| tz390.opt_errsum){
-		// no PRN file generated
+	if (!tz390.opt_list){ 
+		// no PRN file generated  // rpi 895 no ERRSUM check
 		return false; 
 	}
 	if (force_list_bal){
@@ -3069,12 +3069,6 @@ private void reduce_exp_rld(){
 	} else { 
 		exp_type = sym_rld;
 	}
-}
-private void gen_al2_bddd(){
-	/*
-	 * generate 2 byte BDDD for AL2 rl RPI 893
-	 */
-     exp_val = Integer.valueOf(get_exp_rel_bddd(),16);
 }
 private void gen_exp_rld(){
 	/*
@@ -4691,12 +4685,10 @@ private void exp_term(){
             }
         } else {  
         	if (gen_obj_code){
-        		if (exp_rld_len > 2){ // RPI 893
+        		if (exp_rld_len > 0){ // RPI 894
         			exp_rld_add_esd[0] = exp_esd;
         			tot_exp_rld_add = 1;
         			gen_exp_rld();
-        		} else if (exp_rld_len == 2){ // RPI 893
-        			gen_al2_bddd();
         		}
         	}
             exp_type = sym_rel;
@@ -4975,14 +4967,13 @@ private void log_error(int error,String msg){
 	            	 abort_error(199,"max missing copy exceeded");
 	             }
 		     }
-	     } else {
-		     String error_msg = "AZ390E error " + tz390.right_justify("" + error,3) + tz390.right_justify(xref_file_line + bal_line_num[bal_line_index],15) + "   " + bal_line_text[bal_line_index];
-	    	 put_log(error_msg);
-	    	 tz390.put_systerm(error_msg);
-	    	 error_msg = msg_id + msg;
-	    	 put_log(error_msg);
-	    	 tz390.put_systerm(error_msg);
-	     }
+	     } // RPI 895
+	     String error_msg = "AZ390E error " + tz390.right_justify("" + error,3) + tz390.right_justify(xref_file_line + bal_line_num[bal_line_index],15) + "   " + bal_line_text[bal_line_index];
+	     put_log(error_msg);
+	     tz390.put_systerm(error_msg);
+	     error_msg = msg_id + msg;
+	     put_log(error_msg);
+	     tz390.put_systerm(error_msg);
 	     force_list_bal = false;  // RPI 285
 	     list_bal_line = false; // RPI 891 suppress defail bal line 
 	  }
@@ -5282,9 +5273,9 @@ private void put_copyright(){
 				bin_byte[19] = (byte)Integer.valueOf(hex_rcd.substring(11,13),16).intValue();
                                          // 20 flags TTTTLLSN
 				int  rld_len =  Integer.valueOf(hex_rcd.substring(31,32),16).intValue()
-				             - 1; // rld field len -1  4=3, 3=2, 8=1 RPI 270
+				             - 1; // rld field len -1  4=3, 3=2, 2=1, 8=0 RPI 270 RPI 894
 				if (rld_len == 7){
-					rld_len = 1;  // RPI 280
+					rld_len = 0;  // RPI 270 RPI 894 
 				}
 				char rld_sign = hex_rcd.charAt(38);
 				if (rld_sign == '+'){
@@ -8784,9 +8775,9 @@ private void put_errsum(String msg){
 	 */
 	msg = "AZ390E " + msg;
 	System.out.println(msg);
-	if (prn_file != null){
-		// if ERRSUM turned on after open put msgs to PRN
-		put_prn_line(msg);
+	if (prn_file != null){ 
+		 // if ERRSUM turned on after open put msgs to PRN
+		 put_prn_line(msg);
 	}
 	tz390.put_systerm(msg);
 }

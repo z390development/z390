@@ -44,6 +44,7 @@ C:\z390\Z390.INI
 C:\z390\Z390.IVP
 C:\z390\z390.jar
 C:\z390\z390.pl
+C:\z390\ZSTRMAC.BAT
 C:\z390\assist\DEMOAST1.MLC
 C:\z390\assist\SOLP06.MLC
 C:\z390\assist\SOLP06.XRD
@@ -703,6 +704,8 @@ C:\z390\linklib\ZAPDEMO2.BAT
 C:\z390\linklib\ZAPDEMO2.RPT
 C:\z390\linklib\ZAPDEMO2.ZAP
 C:\z390\linklib\ZDOCUTIL.TXT
+C:\z390\linklib\ZSTRMAC.MLC
+C:\z390\linklib\ZSTRMAC.ZSM
 C:\z390\mac\ABEND.MAC
 C:\z390\mac\ACB.MAC
 C:\z390\mac\ACBD.MAC
@@ -5973,6 +5976,7 @@ C:\z390\rt\test\TESTPROS.MAC
 C:\z390\rt\test\TESTPROT.MAC
 C:\z390\rt\test\TESTPRT1.MLC
 C:\z390\rt\test\TESTRLD1.MLC
+C:\z390\rt\test\TESTRLD2.MLC
 C:\z390\rt\test\TESTSDT1.MLC
 C:\z390\rt\test\TESTSET1.MLC
 C:\z390\rt\test\TESTSET2.MLC
@@ -6010,7 +6014,13 @@ C:\z390\rt\test\TESTXCL3.MLC
 C:\z390\rt\test\TESTXCL4.MLC
 C:\z390\rt\test\TESTXLT1.MLC
 C:\z390\rt\test\TESTZCV1.MLC
+C:\z390\rt\test\TESTZSM1.ZSM
+C:\z390\rt\test\TESTZSM3.ZSM
+C:\z390\rt\test\TESTZSM4.ZSM
 C:\z390\rt\test\WTO.MCR
+C:\z390\rt\test\ZSTRMAC1.MLC
+C:\z390\rt\test\ZSTRMAC2.MLC
+C:\z390\rt\test\ZSTRMAC2.ZSM
 C:\z390\rt\test\dif\RTTEST.ERR
 C:\z390\rt\test\dif\SUBENTRY.MCR
 C:\z390\rt\test\dif\SUBEXIT.MCR

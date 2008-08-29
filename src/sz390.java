@@ -1473,10 +1473,23 @@ private void svc_load_rlds(){
 	    	tz390.systerm_io++;
 	    	rld_len = z390_file.readByte();
 	    	switch (rld_len){
+	    	case 2: // RPI 894
+		    	pz390.mem.position(load_code_load + rld_loc);
+		    	rld_field = pz390.mem.getInt();
+	    		rld_field = (rld_field >>> 16) + load_code_load;
+	    		if (rld_field > 0xffff){ // RPI 894
+	    			abort_error(120,"loader 2 byte RLD address too high in - " + tz390.pgm_name);
+	    		}
+	    		pz390.mem.position(load_code_load + rld_loc);
+	        	pz390.mem.putShort((short)(rld_field));
+	        	break;
 	    	case 3: //RPI71
 		    	pz390.mem.position(load_code_load + rld_loc);
 		    	rld_field = pz390.mem.getInt();
 	    		rld_field = (rld_field >>> 8) + load_code_load;
+	    		if (rld_field > 0xffffff){ // RPI 894
+	    			abort_error(121,"loader 3 byte RLD address too high in - " + tz390.pgm_name);
+	    		}
 	    		pz390.mem.position(load_code_load + rld_loc);
 	        	pz390.mem.putShort((short)(rld_field >>> 8));
 	        	pz390.mem.put((byte)(rld_field & 0xff));
@@ -1496,6 +1509,8 @@ private void svc_load_rlds(){
 	    		pz390.mem.position(load_code_load + rld_loc);
 	        	pz390.mem.putInt(rld_field);
 	        	break;	
+	    	default:
+	    		abort_error(119,"invalid RLD length in load module -" + tz390.pgm_name);
 	        }
 	    	cur_rld++;
 	    }

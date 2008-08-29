@@ -1,0 +1,21 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 08/13/08                                                 *
+*********************************************************************
+* 08/13/08 RPI 894 TEST AL2 RLD SUPPORT USING NOLOADHIGH
+*********************************************************************
+TESTRLD2 SUBENTRY 
+         WTO   'TESTRLD2 STARTED'
+         LLH   15,AL2SUB2
+         BALR  14,15
+         WTO   'TESTRLD2 ENDING OK'
+         SUBEXIT
+AL2SUB2  DC    AL2(SUB2)
+SUB2     SUBENTRY
+         WTO   'SUB2 ENTERED OK'
+         SUBEXIT
+         END
+

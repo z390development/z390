@@ -36,24 +36,28 @@ public class pz390 {
 	 * *************************************************** Maintenance
 	 * *************************************************** 04/18/05 copied from
 	 * lz390.java and modified 06/20/05 start adding and testing common instr.
-	 * 06/25/05 add opcodes to trace 07/11/05 add floating point instructions
-	 * 08/20/05 add svc 6 link, fix svc 8 to use r0 pgm name 08/22/05 add SYS390
+	 * 06/25/05 add opcodes to trace 
+	 * 07/11/05 add floating point instructions
+	 * 08/20/05 add svc 6 link, fix svc 8 to use r0 pgm name 
+	 * 08/22/05 add SYS390
 	 *   and SYSLOG dir options 
 	 * 09/04/05 add sequential and random DCB file I/O
 	 * support 
-	 * 09/16/05 fix DSG, DSGR, DSGF, DSGFR to use R1+1 dividend 09/18/05
-	 *   add CDE with usage and freemain info for DELETE 09/18/05 add link svc
-	 *   amode support 
-	 * 09/19/05 add TEST option interactive debug 09/27/05 add
-	 * MEM(MB) option and reduce default to MEM(1) 09/27/05 fix 0C5 at end of
-	 * mem using work_mem 
+	 * 09/16/05 fix DSG, DSGR, DSGF, DSGFR to use R1+1 dividend 
+	 * 09/18/05 add CDE with usage and freemain info for DELETE 
+	 * 09/18/05 add link svc amode support 
+	 * 09/19/05 add TEST option interactive debug 
+	 * 09/27/05 add MEM(MB) option and reduce default to MEM(1) 
+	 * 09/27/05 fix 0C5 at end of mem using work_mem 
 	 * 10/04/05 RPI5 - option ASCII use ASCII vs EBCDIC
-	 * zcvt_ipl_pgm = ascii name DCB DDNAME field ascii DCB FT RCDS = ascii SVC
+	 *          zcvt_ipl_pgm = ascii name DCB DDNAME field ascii DCB FT RCDS = ascii SVC
 	 * LOAD, LINK, DELETE EP/EPLOC ASCII dump text = ascii TEST C'...' SDT =
 	 * ASCII ED/EDMK remove high bit on chars SSP type instr. allow 0x3 sign
-	 * UNPK gen 0x3 zone 10/04/05 RPI6 - option ERR(nn) limit errors 10/05/05
-	 * RPI5 - add test C"..." sdt support 10/12/05 suppress stats if NOSTATS
-	 * option on 10/12/05 RPI20 fix error 62 on open of output file 10/14/05
+	 * UNPK gen 0x3 zone 
+	 * 10/04/05 RPI6 - option ERR(nn) limit errors 
+	 * 10/05/05 RPI5 - add test C"..." sdt support 
+	 * 10/12/05 suppress stats if NOSTATS option on 
+	 * 10/12/05 RPI20 fix error 62 on open of output file 10/14/05
 	 * RPI21 0C5 on PSW addr > mem 
 	 * 10/14/05 RPI22 turn off time limit if test
 	 * 10/14/05 RPI15 req z390 to issue exit at end of test 10/16/05 force
@@ -273,7 +277,8 @@ public class pz390 {
      *          and masked by incorrect CLIY test in TESTINS2
      * 07/23/08 RPI 878 fix XDECI to support ASCII mode 
      * 07/23/08 RPI 879 fix SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF
-     *          to set CC3 when both neg and no borrow          
+     *          to set CC3 when both neg and no borrow  
+     * 08/13/08 RPI 894 change low DSA addr from 64k to 32k for testing AL2 RLD                 
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -1161,7 +1166,7 @@ public class pz390 {
 	/*
 	 * virtual memory with 24 bit and 31 bit fqes all initialized by init_mem()
 	 */
-	int mem24_start = 0x10000; // RPI 276 start at 32k
+	int mem24_start = 0x8000; // RPI 276 start at 32k RPI 894 was 64k
 
 	int mem24_line = 0x1000000; // start at 1MB if avail.
 
@@ -1224,8 +1229,7 @@ public class pz390 {
 	/*
 	 * OS/MVS compatible CVT with pointer at x'10'
 	 */
-	int cvt_start = 0x8000;
-
+	int cvt_start = 0x2000;  // rpi 894 was 0x8000
 	int cvt_date = cvt_start + 0x38; // IPL date
 
 	int cvt_dcb = cvt_start + 0x74; // os flags (x'80' 31 bit, x'13' MVS+) RPI

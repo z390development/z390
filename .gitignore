@@ -91,6 +91,13 @@ zcobol/demo/vce/
 zcobol/demo/z390/
 zcobol/test/z390/
 
+# Generated .mlc files
+linklib/ZSTRMAC.[mM][lL][cC]
+rt/test/TESTZSM1.[mM][lL][cC]
+rt/test/TESTZSM3.[mM][lL][cC]
+rt/test/TESTZSM4.[mM][lL][cC]
+rt/test/ZSTRMAC2.[mM][lL][cC]
+
 # Unneeded documents
 **/[jJ][aA][vV][aA][dD][oO][cC]/
 **/[wW][eE][bB][dD][oO][cC]*/

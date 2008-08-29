@@ -195,7 +195,8 @@ public  class  tz390 {
     *          Support *.sfx override for BAL,ERR,LOG,LST,PCH,PRN  
     * 07/28/08 RPI 882 if TRACES display source lines and errors on console  
     * 07/28/08 RPI 883 add option MOD for LZ390 to generate raw code file with no header or rlds 
-    * 08/05/08 RPI 891 use variable mac_gen for setting ID + indicatior        
+    * 08/05/08 RPI 891 use variable mac_gen for setting ID + indicatior  
+    * 08/16/08 RPI 900 allow .\ in absolute path and add default suffix       
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -204,7 +205,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.02d";  //dsh
+    String version    = "V1.4.02e";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -5533,8 +5534,11 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	    			}
 	    		}
 	    	}
-	    	index = file_name.indexOf(".");
-	    	if (index == -1){
+	    	index = file_name.lastIndexOf(".");
+	    	if (index == -1 
+	    		|| (file_name.length() > index + 1  // RPI 900 allow .\ in absolute path
+	    			&& file_name.substring(index+1,index+2).equals(File.separator))
+   			){
 	    		// concat default type if none
 	    		file_name = file_name.trim() + file_type;
 	    	}
@@ -6388,17 +6392,17 @@ public void put_trace(String text){
     	 * if missing COPY or MACRO error
     	 * detected during pass 1 of az390.
     	 * Note:
-    	 *   1.  ASM and ERR() != 0 are prereq.
+    	 *   1.  ASM required
     	 *   2.  Any error limit can prevent finding
     	 *       all the missing copybooks and macros
     	 *       due to pre-mature abort on error limit.
+    	 *       There may still be additional nesting missing
+    	 *       macros and copybooks requiring multiple
+    	 *       passes after including missing files listed.
     	 */
-    	if (opt_asm && max_errors != 0){
+    	if (opt_asm){
     		opt_errsum = true;
     		max_errors = 0;
-    		opt_obj    = false;
-    		opt_stats  = false;
-           	stats_file_name = null; // RPI 755
     	}
     }
     public String get_ascii_var_string(byte[] byte_array,int mem_addr,int max_len){

@@ -85,7 +85,9 @@ public  class  lz390 {
     * 02/28/08 RPI 814 default search of obj+linklib for AUTOLINK 
     * 03/27/08 RPI 827 show obj file name on I/O errors      
     * 06/23/08 RPI 866 use get_file_name to parse LST and ALIAS 390 file names
-    * 07/29/08 RPI 883 add MOD support for code.MOD with no header/trailer/rlds and no rounding 
+    * 07/29/08 RPI 883 add MOD support for code.MOD
+    *          with no header/trailer/rlds and no rounding 
+    * 08/12/08 RPI 894 support RLD 2 byte fields in 390's upt to 64k         
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -744,16 +746,34 @@ private boolean load_obj_file(boolean esds_only){
 								        + " FLD=" + tz390.get_hex(rld_fld,obj_rld_len*2)
 								        + " EXT=" + tz390.get_hex(gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]],8));
 					}
+					int rld_save;
 			    	switch (obj_rld_len){
-					    case 3:
-					        int rld_save_byte = rld_fld & 0xff;
-					    	rld_fld = rld_fld/256;
+				    case 2:  // RPI 894 
+				        rld_save = rld_fld & 0xffff;
+				    	rld_fld = rld_fld >>> 16;  // rpi 894
+				    	if (obj_rld_sgn == '+'){
+				    	    rld_fld = rld_fld + gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]];
+				    	    if (gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]] > 0xffff){
+				    	    	log_error(42,"invalid 2 byte RLD offset over 64k"); // RPI 894
+				    	    }
+				    	} else {
+					    	rld_fld = rld_fld - gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]];
+				    	}
+				    	rld_fld = (rld_fld << 16) | rld_save;
+				    	z390_code_buff.putInt(rld_off,rld_fld);
+				    	break;    
+			    	case 3:
+					        rld_save = rld_fld & 0xff;
+					    	rld_fld = rld_fld >>> 8;  // rpi 894
 					    	if (obj_rld_sgn == '+'){
 					    	    rld_fld = rld_fld + gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]];
+					    	    if (gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]] > 0xffffff){
+					    	    	log_error(42,"invalid 3 byte RLD offset over 16 MB"); // RPI 894
+					    	    }
 					    	} else {
 						    	rld_fld = rld_fld - gbl_esd_loc[obj_gbl_esd[obj_rld_xesd]];
 					    	}
-					    	rld_fld = (rld_fld << 8) | rld_save_byte;
+					    	rld_fld = (rld_fld << 8) | rld_save;
 					    	z390_code_buff.putInt(rld_off,rld_fld);
 					    	break;
 					    case 4:
@@ -908,7 +928,7 @@ private String cvt_obj_bin_to_hex(){
 		String xesd_id  = tz390.get_hex(bin_byte_buff.getShort(16),4);;  // XESD ID number ref or RLD
 		esd_id   = tz390.get_hex(bin_byte_buff.getShort(18),4);          // ESD ID number SD with RLD
 		String esd_rld_len = tz390.get_hex((bin_byte[20] >> 2)+1,1);
-		if (esd_rld_len.charAt(0) == '2'){
+		if (esd_rld_len.charAt(0) == '1'){ // RPI 894 was 2
 			esd_rld_len = "8"; // RPI 270
 		}
     	String esd_rld_sign = "+";
