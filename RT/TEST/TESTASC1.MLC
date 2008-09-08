@@ -29,6 +29,7 @@
 * 01/10/08 RPI 777 - add decimal and scale for P/Z, add sign for Z 
 * 04/22/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 * 04/24/08 RPI 840 TEST SPACES IGNORED IN P AND Z DATA FIELDS 
+* 08/09/08 RPI 893 TEST SY LONG DISP, F'Unn', H'Unn'                          
 *********************************************************************
          PRINT DATA
 TESTDC1  RT1   MAIN
@@ -396,5 +397,9 @@ VDX2     RT1   CCE,=VD(VDX2),=AL8(VDX2)
          RT1   CCE,=Z'1',=Z' 1'
          RT1   CCE,=Z'1',=Z'1 '
          RT1   CCE,=Z'1',=Z' 1 '
+* TEST SY RPI 893
+         RT1   CCE,=SY(TESTDC1+8+4096),=SY(X'1000'(13))
+         RT1   CCE,=F'U4294967295',=X'FFFFFFFF'
+         RT1   CCE,=H'U65535',=X'FFFF'
          RT1   END
          END         

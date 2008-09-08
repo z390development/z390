@@ -130,6 +130,7 @@ public  class  z390 extends JApplet
      * 01/30/08 RPI 792 remove put error msg before checking for null 
      * 07/30/08 RPI 888 add leading space which may be eaten by PAUSE before EXIT for batch command
      *          also switch cmd_input_writer to do auto flush to prevent sporatic chopped commands  
+     * 09/08/08 RPI 872 help menu "Guide" link to www.z390.org or webdoc\index.html          
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -355,7 +356,7 @@ public  class  z390 extends JApplet
       */
         String web_site = "http://www.z390.org";
         String install_loc = null;
-        String install_doc = null;
+        String install_webdoc = null; // RPI 872
       /*
        * macro assembler command global variables
        */
@@ -600,12 +601,11 @@ public  class  z390 extends JApplet
 			  } else {
 				  abort_error(52,"invalid install directory - " + install_loc);
 			  }
-			  temp_file = new File(install_loc + File.separator + "doc"); // RPI 499 correct case for Linux RPI 532 
-			  if (temp_file.isDirectory()){
-				  install_doc = temp_file.getPath();
+			  temp_file = new File(install_loc + File.separator + "webdoc" + File.separator + "index.html"); // RPI 499 correct case for Linux RPI 532, RPI 872 
+			  if (temp_file.isFile()){  // RPI 872
+				  install_webdoc = temp_file.getPath();
 			  } else {
-				  install_doc = install_loc;
-				  put_log("install doc directory not found - " + install_doc + File.separator + "doc");  // RPI 532 
+                  install_webdoc = null; // RPI 872
 			  }
 			  log_file_name = tz390.get_file_name(tz390.dir_cur,"z390",tz390.log_type);
 		      try {
@@ -1411,7 +1411,7 @@ public  class  z390 extends JApplet
 	   	put_log("Option menu - toggle default options for above cmds");	  
 	   	put_log("View menu - toggle status line and cmd input mode");
         put_log("Type COMMANDS for alphabetical list of all commands");
-        put_log("Type GUIDE to view User Guide PDF documentation");
+        put_log("Type GUIDE to view online or local help (if installed)");
         put_log("Type SUPPORT to visit support web site");
            }
 	   private void monitor_startup(){
@@ -2074,7 +2074,7 @@ public  class  z390 extends JApplet
 	     view_menu_cmd.setToolTipText(text_font_pfx + "Windows batch command input Mode" + text_font_sfx);
 	     help_menu_help.setToolTipText(text_font_pfx + "Display summary of basic commands" + text_font_sfx);
 	     help_menu_commands.setToolTipText(text_font_pfx + "Display alphabetical list of all commands" + text_font_sfx);
-	     help_menu_guide.setToolTipText(text_font_pfx + "Link to PDF User Guide" + text_font_sfx);
+	     help_menu_guide.setToolTipText(text_font_pfx + "Link to online or local docs (if installed)" + text_font_sfx);
 	     help_menu_perm.setToolTipText(text_font_pfx + "Display Java security manager permissions" + text_font_sfx);
 	     help_menu_releases.setToolTipText(text_font_pfx + "Display OS, Java, and z390 verions" + text_font_sfx);
 	     help_menu_support.setToolTipText(text_font_pfx + "Link to www.z390.org online support" + text_font_sfx);
@@ -2441,17 +2441,13 @@ public  class  z390 extends JApplet
 	  }
    	  private void guide_command(){
    	  /*
-   	   * link to PDF User Guide
+   	   * link to z390\webdoc\index.html or www.z390.org
    	   * note start parms are /d"path" file 
    	   */
-   		  if (tz390.z390_os_type == tz390.z390_os_linux){
-   			  if  (tz390.exec_cmd(tz390.z390_acrobat + " " + install_doc + File.separator + "z390_User_Guide.pdf")) {
-   			      put_log("Start issued for z390_User_Guide.pdf");
-   			  } else {
-   			      log_error(41,"Start error for z390_User_Guide.pdf");
-   			  }
+   		  if (install_webdoc == null){
+   			  start_doc(web_site); // RPI 872
    		  } else {
-   			  start_doc("/d\"" + install_doc + "\" z390_User_Guide.pdf");
+   			  start_doc(install_webdoc); // RPI 872
    		  }
       }
    	  private void reset_z390_cmd(){

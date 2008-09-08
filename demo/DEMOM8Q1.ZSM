@@ -1,0 +1,46 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/30/05                                                 *
+*********************************************************************
+* 09/04/08 RPI 902 convert to ZSTRMAC structured code
+*********************************************************************
+         TITLE 'DEMOM8Q1.MLC - 8 QUEEENS CHESS PROBLEM SOLUTION'
+         MACRO
+         M8Q
+         GBLA  &N,&X(8)
+         GBLB  &COL(8),&UP(15),&DOWN(15)
+         LCLA  &H
+         :&H   SETA  1
+         AIF   (&N EQ 0)
+               :&N SETA  1
+         AEND
+         AWHILE (&H LE 8)
+             AIF (&COL(&H) EQ 0)
+                 AIF (&UP(&N-&H+8) EQ 0)
+                     AIF (&DOWN(&N+&H-1) EQ 0)
+                         :&X(&N)         SETA &H
+                         :&COL(&H)       SETB 1
+                         :&UP(&N-&H+8)   SETB 1
+                         :&DOWN(&N+&H-1) SETB 1
+                         :&N SETA &N+1
+                         AIF   (&N GT 8)
+                             MNOTE 'SOLUTION &X(1) &X(2) &X(3) &X(4) &XX
+               (5) &X(6) &X(7) &X(8)'
+                         AELSE
+                             M8Q
+                         AEND
+                         :&N SETA  &N-1
+                         :&DOWN(&N+&H-1) SETB 0
+                         :&UP(&N-&H+8)   SETB 0
+                         :&COL(&H)       SETB 0
+                     AEND
+                 AEND
+             AEND
+             :&H SETA  &H+1
+         AEND
+         MEND
+         M8Q
+         END

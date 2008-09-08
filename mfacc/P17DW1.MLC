@@ -1,0 +1,187 @@
+*=====================================================================*
+*
+*        PROBLEM #17 - COMPRESS AND DECOMPRESS 3 RECORDS USING
+*                      TRT'S FOR A TOTAL OF 628 INSTRUCTIONS
+*        DATE    - 11TH AUGUST 2008
+*        AUTHOR  - DAVID WILKINSON
+*
+*=====================================================================*
+P17DW1   ZMFACC CODE,START,ZRUNSYS=Z390,NAME='DAVID WILKINSON'
+*
+A1000    EQU   *
+         LA    R3,ILINE1               LOAD ADDR OF INPUT 
+         LA    R4,80                   LOAD LENGTH
+         LA    R5,OLINE1               LOAD ADDR OF OUTPUT 
+         BAS   R14,COSEC               COMPRESS LINE
+         LA    R3,OLINE1               LOAD ADDR OF INPUT
+         LA    R5,XLINE1               LOAD ADDR OF OUTPUT 
+         BAS   R14,UCSEC               UNCOMPRESS LINE
+*
+         LA    R3,ILINE2               LOAD ADDR OF INPUT 
+         LA    R4,80                   LOAD LENGTH
+         LA    R5,OLINE2               LOAD ADDR OF OUTPUT 
+         BAS   R14,COSEC               COMPRESS LINE
+         LA    R3,OLINE2               LOAD ADDR OF INPUT
+         LA    R5,XLINE2               LOAD ADDR OF OUTPUT 
+         BAS   R14,UCSEC               UNCOMPRESS LINE
+*
+         LA    R3,ILINE3               LOAD ADDR OF INPUT 
+         LA    R4,80                   LOAD LENGTH
+         LA    R5,OLINE3               LOAD ADDR OF OUTPUT 
+         BAS   R14,COSEC               COMPRESS LINE
+         LA    R3,OLINE3               LOAD ADDR OF INPUT
+         LA    R5,XLINE3               LOAD ADDR OF OUTPUT
+         BAS   R14,UCSEC               UNCOMPRESS LINE
+         B     A1999                   RETURN
+*---------------------------------------------------------------------*
+COSEC    DS    0H                      COMPRESS LINE
+*---------------------------------------------------------------------*
+*
+*        R2    WORK 
+*        R3    A(INPUT)
+*        R4    INPUT LENGTH
+*        R5    A(OUTPUT)
+*        R6    WORK
+*        R7    WORK - CONTAINS ZERO FOR CRB
+*        R8    WORK
+*        R9    WORK - CONTAINS -1 FOR LA
+*
+*---------------------------------------------------------------------*
+CO000    EQU   *                       
+         SR    R7,R7                   CLEAR R7 FOR CRB INSTRUCTION
+         LA    R8,0(R3,R4)             POINT PAST LINE
+         LHI   R9,-1                   SETUP R9 FOR LA INSTRUCTION
+*
+         CLI   0(R3),C' '              FIRST BYTE SPACE ?
+         BNE   CO060                   NO...
+*
+CO020    EQU   *                       ** FIND NEXT CHARACTER **
+         LR    R1,R8                   POINT PAST LINE
+         LA    R6,0(R9,R4)             LOAD LENGTH -1
+         EX    R6,CO100                FIND NEXT NON-SPACE        
+         SR    R1,R3                   CALCULATE LENGTH
+*
+         STC   R1,0(R5)                STORE NO OF SPACES
+         OI    0(R5),X'80'             SET HIGH ORDER BIT ON
+         AR    R3,R1                   POINT TO NEXT INPUT BYTE
+         SR    R4,R1                   CALCULATE REMAINING LENGTH    
+         LA    R5,1(R5)                POINT TO NEXT OUTPUT BYTE
+*
+CO040    EQU   *                       ** FIND NEXT SPACE **  
+         CRB   R4,R7,B'1000',CO080     BRANCH IF R4 EQ ZERO
+*
+CO060    EQU   * 
+         LR    R1,R8                   POINT PAST LINE 
+         LA    R6,0(R9,R4)             LOAD LENGTH -1
+         EX    R6,CO140                FIND NEXT SPACE
+         SR    R1,R3                   CALCULATE LENGTH
+*
+         STC   R1,0(R5)                STORE NO OF CHARACTERS
+         LA    R2,0(R9,R1)             LOAD LENGTH FOR MOVE
+         EX    R2,CO120                MOVE CHARACTERS
+         AR    R3,R1                   POINT TO NEXT INPUT BYTE
+         SR    R4,R1                   CALCULATE REMAINING LENGTH    
+         LA    R5,1(R1,R5)             POINT TO NEXT OUTPUT BYTE
+         CRB   R4,R7,B'0111',CO020     BRANCH IF R4 NE ZERO
+*
+CO080    EQU   *
+         MVI   0(R5),X'00'             SET END OF LINE
+         BR    R14                     RETURN
+*
+CO100    TRT   0(*-*,R3),TRTNS         FIND NEXT CHARACTER
+*
+CO120    MVC   1(*-*,R5),0(R3)         MOVE CHARACTERS
+*
+CO140    TRT   0(*-*,R3),TRTSP         FIND NEXT SPACE
+*
+TRTNS    DC    256X'00'                CHARACTER TRANSLATE TABLE
+         ORG   TRTNS+X'F0'
+         DC    C'0123456789'           NUMERIC DIGITS
+         ORG   TRTNS+X'81'
+         DC    C'abcdefghi'            LOWER CASE (a-i)
+         ORG   TRTNS+X'91'
+         DC    C'jklmnopqr'            LOWER CASE (j-r)
+         ORG   TRTNS+X'A2'
+         DC    C'stuvwxyz'             LOWER CASE (s-z)
+         ORG   TRTNS+X'C1'
+         DC    C'ABCDEFGHI'            UPPER CASE (A-I)
+         ORG   TRTNS+X'D1'
+         DC    C'JKLMNOPQR'            UPPER CASE (J-R)
+         ORG   TRTNS+X'E2'
+         DC    C'STUVWXYZ'             UPPER CASE (S-Z)
+         ORG   TRTNS+X'4A'             SPECIAL CHARACTERS
+         DC    X'4A'
+         ORG   TRTNS+X'4C'             SPECIAL CHARACTERS
+         DC    X'4C4D4E4F50'
+         ORG   TRTNS+X'5A'             SPECIAL CHARACTERS
+         DC    X'5A5B5C5D5E5F6061'
+         ORG   TRTNS+X'6B'             SPECIAL CHARACTERS
+         DC    X'6B6C6D6E6F'
+         ORG   TRTNS+X'7A'             SPECIAL CHARACTERS
+         DC    X'7A7B7C7D7E7F'
+         ORG   ,
+*
+TRTSP    DC    256X'00'                SPACE TRANSLATE TABLE
+         ORG   TRTSP+C' '
+         DC    C' '                    SPACE
+         ORG   ,
+*
+CO999    EQU   *
+*---------------------------------------------------------------------*
+*
+*---------------------------------------------------------------------*
+UCSEC    DS    0H                      UNCOMPRESS LINE
+*---------------------------------------------------------------------*
+*
+*        R3    A(INPUT)
+*        R5    A(OUTPUT)
+*        R6    WORK
+*
+*---------------------------------------------------------------------*
+UC000    EQU   *
+         TM    0(R3),X'80'             COMPRESSED SPACES ?
+         BO    UC010                   YES...
+         CLI   0(R3),X'00'             END OF INPUT ?
+         BER   R14                     YES, RETURN
+*
+UC020    EQU   *                       ** UNCOMPRESS CHARACTERS **
+         LB    R6,0(R3)                LOAD INPUT BYTE
+         BCTR  R6,0                    REDUCE BY 1
+         EX    R6,UC040                MOVE BYTES
+         LA    R3,2(R3,R6)             POINT TO NEXT INPUT BYTE
+         LA    R5,1(R5,R6)             POINT TO NEXT OUTPUT BYTE
+         B     UC000                   CONTINUE...
+*
+UC010    EQU   *                       ** UNCOMPRESS SPACES **
+         LB    R6,0(R3)                LOAD INPUT BYTE
+         AHI   R6,127                  TURN OFF HIGH BIT & REDUCE BY 1
+         EX    R6,UC060                MOVE BYTES
+         LA    R3,1(R3)                POINT TO NEXT INPUT BYTE
+         LA    R5,1(R5,R6)             POINT TO NEXT OUTPUT BYTE
+         B     UC000                   CONTINUE...
+*
+UC040    MVC   0(*-*,R5),1(R3)         MOVE BYTES
+*
+UC060    MVC   0(*-*,R5),=80C' '       MOVE SPACES
+*
+UC999    EQU   *
+*---------------------------------------------------------------------*
+*
+A1999    DS    0H                      RETURN
+*=====================================================================*
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+ILINE1   DC    CL80'LABEL     OPCODE PARMS'
+ILINE2   DC    CL80'          AP    FELD1,FELD2'   
+ILINE3   DC    CL80'ANF010    CLC   FELD1,FELD2   COMPARE F1 WITH F2' 
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,START
+OLINE1   DC    CL80' '
+OLINE2   DC    CL80' '
+OLINE3   DC    CL80' '
+*
+XLINE1   DC    XL80'00'
+XLINE2   DC    XL80'00'
+XLINE3   DC    XL80'00'
+         ZMFACC OUTPUT,END
+         END

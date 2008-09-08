@@ -44,6 +44,8 @@ call rt\RT1 rt\test\TESTSQL1 sysmac(rt\test+mac) syscpy(rt\test) systerm(RTTEST)
 call rt\RT3 rt\test\TESTEQU1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 rt\test\TESTERR1 systerm(RTTEST) chkmac(2) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT3 rt\test\TESTERR3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT3 rt\test\TESTERR8 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT3 rt\test\TESTERR9 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT5 rt\test\TESTPCH1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT5 rt\test\TESTPCH2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 set IN1=rt\test\TESTPCH3.IN1
@@ -89,6 +91,7 @@ rem
 rem lz390 linker
 rem
 call rt\RT1 rt\test\TESTRLD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTRLD2 systerm(RTTEST) NOLOADHIGH TRACE %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTENT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTEXT1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTEXT2 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
@@ -176,4 +179,33 @@ call rt\RT1 rt\test\TESTCTD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTCFD1 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTCVB1 trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT1 rt\test\TESTCVBG trace systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+rem test zstrmac basic structures using bootstrap version 1
+set sysut1=rt\test\testzsm1.zsm
+set sysut2=rt\test\testzsm1.mlc
+call MZ390 rt\test\zstrmac1 systerm(RTTEST) NOASM STATS NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTZSM1 systerm(RTTEST) STATS %1 %2 %3 %4 %5 %6 %7 %8 %9
+rem translate structured version 2 using bootstrap version 1
+set sysut1=rt\test\zstrmac2.zsm
+set sysut2=rt\test\zstrmac2.mlc
+call MZ390 rt\test\zstrmac1 systerm(RTTEST) NOASM STATS NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+rem translate structured version 2 using bootstrap version 2
+set sysut1=rt\test\zstrmac2.zsm
+set sysut2=rt\test\zstrmac2.txt
+call MZ390 rt\test\zstrmac2 systerm(RTTEST) NOASM STATS NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+REM verify TESTZSM1.ZSM runs produces same results with zstrmac2
+rem test zstrmac basic structures using structured version 2
+set sysut1=rt\test\testzsm1.zsm
+set sysut2=rt\test\testzsm2.mlc
+call MZ390 rt\test\zstrmac2 systerm(RTTEST) NOASM STATS NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTZSM2 systerm(RTTEST) STATS %1 %2 %3 %4 %5 %6 %7 %8 %9
+rem regen ZSTRMAC to verify txt version matches MLC ver from zstrmac1/2
+call zstrmac linklib\zstrmac.zsm rt\test\zstrmac.txt systerm(RTTEST) notiming
+rem test extensions to ASELECT added in zstrmac2 C,X,(v1,v2)
+call zstrmac rt\test\testzsm3.zsm rt\test\testzsm3.mlc systerm(RTTEST) NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RT1 rt\test\TESTZSM3 systerm(RTTEST) %1 %2 %3 %4 %5 %6 %7 %8 %9
+rem test zstrmac error messages
+set sysut1=rt\test\testzsm4.zsm
+set sysut2=rt\test\testzsm4.mlc
+call zstrmac systerm(RTTEST) NOTIMING %1 %2 %3 %4 %5 %6 %7 %8 %9
+erase rt\test\dif\*.* /q 
 call rt\RTCOMP rt\test rt\test\save rt\test\dif

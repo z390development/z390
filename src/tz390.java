@@ -196,7 +196,10 @@ public  class  tz390 {
     * 07/28/08 RPI 882 if TRACES display source lines and errors on console  
     * 07/28/08 RPI 883 add option MOD for LZ390 to generate raw code file with no header or rlds 
     * 08/05/08 RPI 891 use variable mac_gen for setting ID + indicatior  
-    * 08/16/08 RPI 900 allow .\ in absolute path and add default suffix       
+    * 08/16/08 RPI 900 allow .\ in absolute path and add default suffix
+    * 09/02/08 RPI 902 make pad_spaces(n) public for use by ZSTRMAC
+    * 09/06/08 RPI 797 suppress versions and mem for NOTIMING 
+    * 09/08/08 RPI 903 allow 0 length file type for CD command usage   
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -205,7 +208,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.02e";  //dsh
+    String version    = "V1.4.03";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -275,6 +278,7 @@ public  class  tz390 {
     boolean opt_ts       = false; // time-stamp logs RPI 662
     boolean opt_vcb      = true;  // vsam cache operational
     boolean opt_xref     = true;   // cross reference symbols
+    boolean opt_zstrmac  = true;   // allow ZSTRMAC extensions
     boolean max_cmd_queue_exceeded = false;  // RPI 731
     String  cmd_parms = ""; // all options from command
     String  final_options = ""; // RPI 755
@@ -387,6 +391,7 @@ public  class  tz390 {
      */
     long   systerm_start = 0; // start time
     String systerm_sec   = ""; // systerm elapsed seconds
+    String systerm_mem   = " MB"; // RPI 797 MB if 
     String systerm_file_name      = null;
     RandomAccessFile systerm_file = null;
 	String systerm_time = "";     // hh:mm:ss if opt_timing
@@ -5093,6 +5098,10 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
        	opt_list = true;
     } else if (token.toUpperCase().equals("NOXREF")){
        	opt_xref = false;
+    } else if (token.toUpperCase().equals("ZSTRMAC")){
+       	opt_zstrmac = true;
+    } else if (token.toUpperCase().equals("NOZSTRMAC")){
+       	opt_zstrmac = false;
     } else {
         add_invalid_option(opt_file_name,opt_file_line,token);
     }
@@ -5181,16 +5190,18 @@ public void open_systerm(String z390_pgm){
     	systerm_file = null;
     	abort_error(10,"systerm file open error " + e.toString());
     }
+    String z390_j2se_versions = "";  // RPI 797
 	if (opt_timing){
 		systerm_start = System.currentTimeMillis();
         systerm_time = sdf_HHmmss.format(new Date()) + " ";
         job_date = sdf_MMddyy.format(new Date());
+	    z390_j2se_versions = " USING z390 " + version + " ON J2SE " + System.getProperty("java.version"); // RPI 797
 	} else {
 		job_date = "MM/DD/YY";
 	}
 	try {
 		systerm_io++;
-		started_msg = systerm_time + systerm_prefix + "STARTED USING z390 " + version + " ON J2SE " + System.getProperty("java.version");
+		started_msg = systerm_time + systerm_prefix + "STARTED" + z390_j2se_versions; // RPI 797
 		System.out.println(started_msg);
 		systerm_file.writeBytes(started_msg + newline); // RPI 500
 		if (stats_file != null){
@@ -5275,6 +5286,7 @@ public void set_ended_msg(int rc){
 	if (opt_timing){
  		systerm_sec  = " SEC=" + right_justify("" + ((System.currentTimeMillis()-systerm_start)/1000),2);
 	    systerm_time = sdf_HHmmss.format(new Date()) + " ";;
+	    systerm_mem = right_justify("" + get_mem_usage(),3);
 	 }
 	 String systerm_ins_text = "";
 	 if (systerm_ins > 0){
@@ -5283,7 +5295,7 @@ public void set_ended_msg(int rc){
 	 ended_msg = systerm_time + systerm_prefix
 	    + "ENDED   RC=" + right_justify("" + rc,2) 
 	    + systerm_sec 
-	    + " MEM(MB)=" + right_justify("" + get_mem_usage(),3) 
+	    + " MEM(MB)=" + systerm_mem 
 	    + " IO=" + systerm_io 
 	    + systerm_ins_text;
 }
@@ -5374,6 +5386,7 @@ public int find_key_index(char user_key_type,String user_key){
 	 *       h.  "R:" - opcode and macro opsyn
 	 *       i.  "S:" - ordinary symbols
 	 *       j.  "X:" - executable macro command
+	 *       z.  "Z:" - ZSTRMAC opcodes and apm names RPI 902
 	 *   2.  Usage by az390
 	 *       a.  "L:" - literals
 	 *       b.  "O:" - opcode table (init_opcode_name_keys)
@@ -5485,8 +5498,7 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	        	|| file_name == null 
 	        	|| file_type == null
 	        	|| file_dir.length() == 0
-	        	|| file_name.length() == 0
-	        	|| file_type.length() == 0){
+	        	|| file_name.length() == 0){ // RPI 903 allow 0 length type
 	        	return null; // RPI 880
 	        }
 	        if (z390_os_type == z390_os_linux){ // RPI 532 file separator fix
@@ -5888,13 +5900,19 @@ public String left_justify(String text,int padded_len){
 	}
 	int pad_len = padded_len - text.length();
 	if (pad_len > 0){
-		if (pad_len > pad_spaces_len){
-	        init_pad_spaces(pad_len);
-		}
-		return text + String.valueOf(pad_spaces,0,pad_len);
+		return text + pad_spaces(pad_len); // RPI 902
 	} else {
 		return text;
 	}
+}
+public String pad_spaces(int n){ // RPI 902
+	/*
+	 * return n space characters
+	 */
+	if (n > pad_spaces_len){
+        init_pad_spaces(n);  
+	}
+	return String.valueOf(pad_spaces,0,n);
 }
 public String right_justify(String text,int padded_len){
 	/*
@@ -5903,10 +5921,7 @@ public String right_justify(String text,int padded_len){
 	 */
 	int pad_len = padded_len - text.length();
 	if (pad_len > 0){
-		if (pad_len > pad_spaces_len){
-           init_pad_spaces(pad_len);
-		}
-		return String.valueOf(pad_spaces,0,pad_len) + text;
+		return pad_spaces(pad_len) + text; // RPI 902
 	} else {
 		return text;
 	}
@@ -6105,12 +6120,16 @@ public void split_line(String line){  // RPI 313
 	 * 3 fields are null if none and 
 	 * there may be trailing comment on parms
 	 */
+	split_label = null;
+	split_op    = null;
+	split_parms = null;
+	if (line == null || line.length() == 0){
+		return;
+	}
 	find_parm_match = find_non_space_pattern.matcher(line);
 	if (line.charAt(0) > ' '){
 		find_parm_match.find();
 		split_label = find_parm_match.group();
-	} else {
-		split_label = null;
 	}
 	if (find_parm_match.find()){
 		split_op = find_parm_match.group().toUpperCase(); // RPI 532 
@@ -6118,12 +6137,8 @@ public void split_line(String line){  // RPI 313
 			split_parms = line.substring(find_parm_match.start());
 			split_parms_index = find_parm_match.start();
 		} else {
-			split_parms = null;
 			split_parms_index = -1;
 		}
-	} else {
-		split_op = null;
-		split_parms = null;
 	}
 }
 public String get_first_dir(String dirs){
@@ -6748,6 +6763,11 @@ public void put_trace(String text){
 	     } else {
 	        add_final_opt("NOXREF");
 	     }
+	     if (opt_zstrmac){ // allow ZSTRMAC structured macro extensions
+		        add_final_opt("ZSTRMAC");
+		     } else {
+		        add_final_opt("NOZSTRMAC");
+		     }
 	     /*
 	      * option limits
 	      */

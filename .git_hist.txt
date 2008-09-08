@@ -4493,7 +4493,7 @@ git tag -a v1.4.02d -m "Reconstructed version v1.4.02d of z390 committed on beha
 ==> Copy all files for V1.4.02e
 dir *.* /B /on /s >.allfile.txt
 dir *.zsm /B /on /s >\temp\.allzsm.lst
-==> Add generated .mlc files to .gitignore file: \ --> / and .zsm --> [mM][lL][cC]
+==> Add generated .mlc files to .gitignore file: \ --> / and .zsm --> .[mM][lL][cC]
 git status >\temp\.gitstat.lst
 
 ==> Stage files for V1.4.02e
@@ -4524,7 +4524,71 @@ set GIT_COMMITTER_DATE=2021-03-24 06:35:00 +0100
 git commit -m "Reconstructed version v1.4.02e of z390 committed on behalf of Don Higgins"
 git tag -a v1.4.02e -m "Reconstructed version v1.4.02e of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.4.03
+dir *.* /B /on /s >.allfile.txt
+dir *.zsm /B /on /s >\temp\.allzsm.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.4.03
+git add BLDJAR6.BAT
+git rm  Doc/OSI_GPL_License_Agreement.rtf
+git rm  Doc/OSI_GPL_License_Agreement.txt
+git rm  Doc/ZDOCFILE.TXT
+git rm  Doc/ZDOCINDX.TXT
+git rm  Doc/ZDOCPROG.TXT
+git rm  Doc/ZDOCSERV.TXT
+git rm  Doc/ZDOCSTOR.TXT
+git rm  Doc/readme.rtf
+git rm  Doc/readme.txt
+git rm  README.TXT
+git add RT/RTDEMO1.BAT
+git add RT/RTGENCMP.BAT
+git add RT/RTGENCMP.DAT
+git add RT/RTLINK1.BAT
+git add RT/RTLIST.BAT
+git add RT/RTTEST1.BAT
+git add RT/TEST/TESTASC1.MLC
+git add RT/TEST/TESTASC3.MLC
+git add RT/TEST/ZSTRMAC2.ZSM
+git add RT/Z390.IVP
+git add Z390.IVP
+git add ZSTRMAC.BAT
+git add bmk/INSTTIME.TXT
+git add bmk/INSTTIME.VER
+git add linklib/RTGENCMP.MLC
+git add linklib/RTGENDIR.MLC
+git add linklib/ZSTRMAC.ZSM
+git add mvs/Z390.IVP
+git add src/mz390.java
+git add src/tz390.java
+git add src/z390.java
+git rm  src/zcobol.java
+git add demo/DEMOM8Q1.ZSM
+git add linklib/RTGENDIF.MLC
+git add mfacc/P17DW1.MLC
+git add mfacc/P21DW1.MLC
+git add mfacc/P3DW1.MLC
+git add mfacc/P4DW1.MLC
+git add mfacc/P5DW1.MLC
+git add rt/RTGENDIF.DAT
+git add rt/test/TESTERR8.MLC
+git add rt/test/TESTERR9.MLC
+git add rt/test/TESTOPTX.OPT
+git add rt/test/TESTOPTY.OPT
+git add rt/test/testzsm2.mlc
+git add rt/test/zstrmac.txt
+git add rt/test/zstrmac2.txt
+
+==> Create commit for V1.4.03
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2008-09-08 14:29:00 -0500
+set GIT_COMMITTER_DATE=2021-03-24 07:43:00 +0100
+git commit -m "Reconstructed version v1.4.03 of z390 committed on behalf of Don Higgins"
+git tag -a v1.4.03 -m "Reconstructed version v1.4.03 of z390 committed on behalf of Don Higgins"
 
 
 

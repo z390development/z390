@@ -8,6 +8,7 @@
 *********************************************************************
 * 08/12/06 RPI 363 REPACKAGE MVS_MACLIB.ZIP AND Z390_RT.ZIP RT TESTS
 * 04/19/08 RPI 833 add SETC quotes for HLASM compatibilitys               
+* 09/05/08 rpi 797 upgrade to use ZSTRMAC structured programming
 *********************************************************************
 *
 *  RTGENDIR READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
@@ -16,20 +17,37 @@
 *  The ouput file is file names only (strip time stamps etc.)
 *
 *********************************************************************
-&TOT_FILES SETA 0
-&FILE    SETC  ''
+         :&TOT_FILES SETA 0
+         :&FILE    SETC  ''
+         :&TEXT    SETC  ''
          MNOTE 'RTGENDIR SYSPARM=&SYSPARM'
-         ACTR  1000000
-.LOOP    ANOP
-&TEXT    AREAD DSNAME='&SYSPARM'  
-         AIF  ('&TEXT' EQ '').EOF              END OF FILE IF NULL
-         AIF  (K'&TEXT LT 40).LOOP           SKIP LINES < 40
-         AIF  ('&TEXT'(26,3) EQ 'DIR').LOOP  SKIP DIRS
-         AIF  ('&TEXT'(3,1)  NE '/').LOOP    SKIP IF NO MM/DD/YYYY
-&FILE    SETC (UPPER '&TEXT'(40,265))
-&TOT_FILES SETA &TOT_FILES+1
-         PUNCH '&FILE',DSNAME='&SYSPARM'
-         AGO   .LOOP
-.EOF     ANOP
+         APM   READ_TEXT
+         AWHILE ('&TEXT' NE '')
+               ACTR 100
+               APM  PROC_TEXT
+               APM  READ_TEXT
+         AEND
          MNOTE 'RTGENDIR FILES=&TOT_FILES'
+.*
+.* READ_TEXT
+.*
+         AENTRY READ_TEXT
+         :&TEXT AREAD ID=0,DSNAME='&SYSPARM'
+         AEND
+.*
+.* PROC_TEXT - PUNCH FILE NAMES IF NOT RTGEN*.*
+.*
+         AENTRY PROC_TEXT  
+         AIF  (K'&TEXT GE 40)                   SKIP LINES < 40
+             AIF  ('&TEXT'(26,3) NE 'DIR')      SKIP DIRS
+                 AIF  ('&TEXT'(3,1)  EQ '/')    SKIP IF NO MM/DD/YYYY
+                   AIF ('&TEXT'(40,5) NE 'RTGEN')
+                     :&FILE    SETC (UPPER '&TEXT'(40,265))
+                     :&TOT_FILES SETA &TOT_FILES+1
+                     PUNCH '&FILE',DSNAME='&SYSPARM'
+                   AEND
+                 AEND
+             AEND
+         AEND
+         AEND
          END

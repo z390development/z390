@@ -10,4 +10,5 @@ call ASMLG demo\DEMONUM2 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ASMLG demo\DEMODFP1 notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call MAC demo\DEMOM8Q1   nolistcall notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
 call ASMLG demo\STDDEVLB notiming stats %1 %2 %3 %4 %5 %6 %7 %8 %9
+erase rt\demo\dif\*.* /q
 call rt\RTCOMP demo rt\demo\save rt\demo\dif

@@ -92,11 +92,24 @@ zcobol/demo/z390/
 zcobol/test/z390/
 
 # Generated .mlc files
+demo/DEMOM8Q1.[mM][lL][cC]
 linklib/ZSTRMAC.[mM][lL][cC]
+rt/demo/dif/DEMOM8Q1.[mM][lL][cC]
+rt/demo/save/DEMOM8Q1.[mM][lL][cC]
+rt/linklib/dif/ZSTRMAC.[mM][lL][cC]
+rt/linklib/save/ZSTRMAC.[mM][lL][cC]
 rt/test/TESTZSM1.[mM][lL][cC]
 rt/test/TESTZSM3.[mM][lL][cC]
 rt/test/TESTZSM4.[mM][lL][cC]
 rt/test/ZSTRMAC2.[mM][lL][cC]
+rt/test/dif/TESTZSM1.[mM][lL][cC]
+rt/test/dif/TESTZSM3.[mM][lL][cC]
+rt/test/dif/TESTZSM4.[mM][lL][cC]
+rt/test/dif/ZSTRMAC2.[mM][lL][cC]
+rt/test/save/TESTZSM1.[mM][lL][cC]
+rt/test/save/TESTZSM3.[mM][lL][cC]
+rt/test/save/TESTZSM4.[mM][lL][cC]
+rt/test/save/ZSTRMAC2.[mM][lL][cC]
 
 # Unneeded documents
 **/[jJ][aA][vV][aA][dD][oO][cC]/

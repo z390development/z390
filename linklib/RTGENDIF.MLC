@@ -1,0 +1,92 @@
+         TITLE 'RTGENDIF - READ DIF DIR FILES AND CHK FOR MATCHES'     
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/05/08                                                 *
+*********************************************************************
+* 09/05/08 RPI 797 READ FILENAMES FOR DIF DIR, GEN ERASE FOR MATCHES
+*********************************************************************
+*
+*  RTGENDIR READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
+*
+*  The input file is Windows dir command listing for dif compares
+*  The ouput file is erase commands for files that had no differeces.
+*
+*********************************************************************
+         :&TOT_FILES SETA 0
+         :&TOT_MATCH SETA 0
+         :&FILE    SETC  ''
+         :&TEXT    SETC  ''
+         :&DIF_DIR SETC  ''
+         MNOTE 'RTGENDIF SYSPARM=&SYSPARM'
+         APM   INIT_DIF_DIR
+         APM   READ_TEXT
+         AWHILE ('&TEXT' NE '')
+               ACTR 100
+               APM  PROC_TEXT
+               APM  READ_TEXT
+         AEND
+         MNOTE 'RTGENDIF FILES=&TOT_FILES MATCHES=&TOT_MATCH'
+         :&TOT_FILES SETA &TOT_FILES-1  SUBTRACT RTGENDIR.BAT
+         PUNCH '',ID=1,DSNAME='&DIF_DIR\RT_DIF_TOT_FILES_&TOT_FILES..TXX
+               T'
+         PUNCH '',ID=1,DSNAME='&DIF_DIR\RT_DIF_TOT_MATCH_&TOT_MATCH..TXX
+               T'
+.*
+.* INIT_DIF_DIR (SET DIF_DIR FROM SYSPARM
+.*
+         AENTRY INIT_DIF_DIR
+         :&IS SETA 0
+         :&I  SETA 1
+         AWHILE (&I LT K'&SYSPARM)
+             AIF ('&SYSPARM'(&I,1) EQ '\')
+                 :&IS SETA &I
+             AEND
+             :&I SETA &I+1
+         AEND
+         AIF   (&IS GT 1)
+               :&DIF_DIR SETC '&SYSPARM'(1,&IS-1)
+         AELSE
+               MNOTE 8,'RTGENDIF DIF DIR NOT FOUND IN SYSPARM'
+               MEXIT
+         AEND
+         AEND
+.*
+.* READ TEXT FROM DIR LISTING
+.*
+         AENTRY READ_TEXT
+         :&TEXT AREAD DSNAME='&SYSPARM'
+         AEND
+.*
+.* PROC_TEXT (CHECK FILES FOR FC MATCH AND GEN ERASE)
+.*
+         AENTRY PROC_TEXT  
+         AIF  (K'&TEXT GE 40)                   SKIP LINES < 40
+             AIF  ('&TEXT'(26,3) NE 'DIR')      SKIP DIRS
+                 AIF  ('&TEXT'(3,1)  EQ '/')    SKIP IF NO MM/DD/YYYY
+                     :&FILE    SETC (UPPER '&TEXT'(40,265))
+                     :&TOT_FILES SETA &TOT_FILES+1
+                     APM CHK_FILE
+                 AEND
+             AEND
+         AEND
+         AEND
+.*
+.* CHK_FILE
+.*
+         AENTRY CHK_FILE
+         :&LINE1 AREAD ID=1,DSNAME='&DIF_DIR\&FILE'
+         AIF   ('&LINE1' NE '')
+               :&LINE2   AREAD ID=1,DSNAME='&DIF_DIR\&FILE'
+               AIF  ('&LINE2' NE '')
+                    AIF ('&LINE2'(1,10) EQ 'FC: no dif')
+                        :&TOT_MATCH SETA &TOT_MATCH+1
+                        PUNCH 'ERASE &DIF_DIR\&FILE',DSNAME='&SYSPARM..X
+               BAT',ID=0
+                    AEND
+               AEND
+         AEND
+         AEND
+         END

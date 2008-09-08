@@ -1,0 +1,165 @@
+*=====================================================================*
+*
+*        PROBLEM #4 - SORT ARRAY OF FULL WORD INTEGERS USING FASTEST
+*                     EXECUTION METHOD
+*        DATE    - 3RD AUGUST 2008
+*        AUTHOR  - DAVID WILKINSON
+*
+*=====================================================================*
+P4DW1    ZMFACC CODE,START,ZRUNSYS=Z390,NAME='David Wilkinson'
+*
+         MVC   SOLEFT,=A(TABLEA)       SET INITIAL LEFT
+         MVC   SORIGHT,=A(TABLEAE-4)   SET INITIAL RIGHT
+         LHI   R8,4                    LOAD LENGTH
+*
+         LA    R2,SOLEFT               LOAD ADDR OF INITIAL PARM AREA
+         LR    R0,R13                  STORE R13
+         L     R15,=A(SQSEC)           LOAD ADDR OF ROUTINE
+         L     R13,=A(STACK)           LOAD ADDR OF STACK
+         BALR  R14,R15                 CALL QUICK SORT (0,N-1)
+         LR    R13,R0                  RESTORE R13
+         B     A1999                   RETURN
+*
+SOLEFT   DS    F                       LEFT INDEX
+SORIGHT  DS    F                       RIGHT INDEX
+         LTORG , 
+*=====================================================================*
+SQSEC    CSECT                         RECURSIVE QUICKSORT
+         STM   R14,R12,12(R13)         SAVE REGISTERS
+         LR    R11,R15                 LOAD BASE REGISTER
+         USING SQSEC,R11               ASSIGN BASE REGISTER
+*
+         LR    R14,R13                 LOAD SAVE AREA ADDR
+         A     R13,=A(SQAUTOL)         POINT TO NEXT SAVE AREA
+         ST    R14,4(,R13)             STORE OLD SAVE AREA ADDR
+         ST    R13,8(,R14)             STORE NEW SAVE AREA ADDR
+*---------------------------------------------------------------------*
+*                                                                     *
+*      QUICKSORT (LEFT, RIGHT)  - JOB BENTLEY (PROGRAMMING PEARLS)    * 
+*                                                                     *
+*      {                                                              *
+*         IF (RIGHT >= LEFT) RETURN                                   *
+*                                                                     *
+*            SWAP (A(LEFT), A(MID))                                   *
+*            TEMP = A(LEFT)                                           *
+*            J = LEFT                                                 *
+*            I = LEFT                                                 *
+*                                                                     *
+*            FOR I = 2 TO RIGHT                                       *
+*            DO                                                       *
+*               IF (A(I) < TEMP)                                      *
+*                  J = J + 1                                          *
+*                  SWAP (A(J), A(I))                                  *
+*               ENDIF                                                 *
+*            END                                                      *
+*                                                                     *
+*            SWAP (A(L), A(J))                                        *
+*            QUICKSORT (LEFT, J - 1)                                  *
+*            QUICKSORT (J + 1, RIGHT)                                 *
+*      }                                                              *
+*                                                                     *
+*---------------------------------------------------------------------*
+SQ000    EQU   *
+         USING SQAUTO,R13              ADDRESS AUTO STORAGE
+         USING SQPARM,R2               ADDRESS INPUT PARMS
+*
+SQ020    EQU   *
+         L     R3,SQLEFT               LOAD LEFT INDEX
+         L     R9,SQRIGHT              LOAD RIGHT INDEX
+*---------------------IF (RIGHT >= LEFT)-RETURN-----------------------*
+SQ040    EQU   *
+         CRB   R9,R3,B'1100',SQ999     BRANCH IF RIGHT >= LEFT  
+*
+         LR    R7,R9                   LOAD RIGHT
+         SR    R7,R3                   SUBTRACT LEFT
+         SRL   R7,1                    DIVIDE BY 2
+         AH    R7,=H'3'                ADD 3
+         SRL   R7,2                    DIVIDE BY 4
+         SLL   R7,2                    MULTIPLY BY 4
+         AR    R7,R3                   POINT TO A(MID)
+*------------------------SWAP (A(LEFT), A(MID))-----------------------*
+         XC    0(4,R3),0(R7)           SWAP A(I) WITH A(MID) 
+         XC    0(4,R7),0(R3)           
+         XC    0(4,R3),0(R7)           
+*------------------------TEMP = A(LEFT)-------------------------------*
+         MVC   SQTEMP,0(R3)            TEMP = A(LEFT) 
+*
+         LR    R6,R3                   J = LEFT
+         LR    R5,R3                   I = LEFT
+*------------------------FOR I = 2 TO RIGHT---------------------------*
+SQ060    EQU   *
+         BXH   R5,R8,SQ080             I = I + 1 & BRANCH IF I > RIGHT
+*---------------------------IF (A(I) < TEMP)--------------------------*
+SQ070    EQU   *
+         CLC   0(4,R5),SQTEMP          A(I) < TEMP ?    
+         BH    SQ060                   NO...  
+*
+         AR    R6,R8                   J = J + 1
+         CRB   R5,R6,B'1000',SQ060     BRANCH IF I = J
+*------------------------------SWAP (A(J), A(I))----------------------* 
+         XC    0(4,R6),0(R5)           
+         XC    0(4,R5),0(R6)           
+         XC    0(4,R6),0(R5)   
+*  
+         BXLE  R5,R8,SQ070             I = I + 1 & BRANCH IF I =< RIGHT  
+*
+SQ080    EQU   *
+         CRB   R3,R6,B'1000',SQ100     BRANCH IF LEFT = J
+*------------------------SWAP (A(L), A(J))----------------------------*
+         XC    0(4,R6),0(R3)            
+         XC    0(4,R3),0(R6)           
+         XC    0(4,R6),0(R3)           
+*------------------------QUICKSORT (LEFT, J - 1)----------------------*
+SQ100    EQU   *
+         ST    R3,SXLEFT               SETUP NEXT LEFT INDEX
+         LR    R7,R6                   LOAD R7 WITH J
+         AHI   R7,-4                   REDUCE BY 1 (J-1)
+         ST    R7,SXRIGHT              STORE NEXT RIGHT INDEX
+*
+         LA    R2,SXLEFT               LOAD ADDR OF PARMS
+         L     R15,=A(SQSEC)           LOAD ADDR OF ROUTINE
+         BALR  R14,R15                 CALL QUICKSORT  
+*------------------------QUICKSORT (J + 1, RIGHT)---------------------*
+SQ120    EQU   *
+         LR    R7,R6                   LOAD R7 WITH J
+         AHI   R7,4                    J = J + 1
+         ST    R7,SXLEFT               SETUP NEXT LEFT INDEX
+         ST    R9,SXRIGHT              SETUP NEXT RIGHT INDEX
+* 
+         L     R15,=A(SQSEC)           LOAD ADDR OF ROUTINE
+         BALR  R14,R15                 CALL QUICKSORT  
+*---------------------------------------------------------------------*
+SQ999    EQU   *
+         L     R13,4(R13)              LOAD OLD SAVE AREA ADDR
+         LM    R14,R12,12(R13)         RESTORE REGISTERS
+         BR    R14                     RETURN
+         DROP  R2                      RELEASE R2
+         LTORG ,
+*=====================================================================*
+STACK    CSECT                         STACK
+         DS    (2200)F                 100 RECURSION LEVELS
+*=====================================================================*
+P4DW1    CSECT
+         USING SV0001,R13              RESTORE R13 FOR P4DW1
+A1999    DS    0H                      RETURN
+         ZMFACC CODE,END
+         ZMFACC INPUT,START
+         ZMFACC OUTPUT,START
+TABLEA   DC    20A(TABLEAE-*)          TABLE TO SORT
+TABLEAE  EQU   *
+         ZMFACC INPUT,END
+         ZMFACC OUTPUT,END
+*=====================================================================*
+SQAUTO   DSECT                         AUTO STORAGE AREA
+SQSAVE   DS    18F                     REGISTER SAVE AREA
+SQTEMP   DS    F                       TEMP AREA
+SQSWAP   DS    F                       SWAP AREA
+SXLEFT   DS    F                       NEXT LEFT INDEX
+SXRIGHT  DS    F                       NEXT RIGHT INDEX
+SQAUTOL  EQU   *-SQAUTO                CALULATE LENGTH
+*
+SQPARM   DSECT                         INPUT PARM AREA
+SQLEFT   DS    F                       INPUT LEFT INDEX
+SQRIGHT  DS    F                       INPUT RIGHT INDEX
+*=====================================================================*
+         END

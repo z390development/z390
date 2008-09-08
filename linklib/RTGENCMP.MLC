@@ -8,6 +8,7 @@
 *********************************************************************
 * 08/12/06 RPI 363 REPACKAGE MVS_MACLIB.ZIP AND Z390_RT.ZIP RT TESTS
 * 04/19/08 RPI 833 add SETC quotes for HLASM compatibility               
+* 09/05/08 RPI 797 upgrade to use ZSTRMAC structruced programming
 *********************************************************************
 *
 *  RTGENBAT READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
@@ -19,43 +20,71 @@
 *  Matching files will generate fc %1file %2file > %3file. 
 *
 *********************************************************************
-&LAST_FILE SETC '(FILE EMPTY)' PREVIOUS FILE
-&BREAK   SETB  1 STARTING NEW MATCH
-&TOT_COMP SETA 0
-&TOT_ERR  SETA 0
-         ACTR 1000000
-.LOOP    ANOP
-&NEXT_FILE AREAD DSNAME='&SYSPARM'  
-         AIF ('&NEXT_FILE' NE '&LAST_FILE').NEW_FILE 
-         AIF (&BREAK EQ 0).OK1 OK TO COMPARE MATCHING FILES
-&TOT_ERR SETA &TOT_ERR+1
-         PUNCH 'PAUSE MORE THAN 2 FILES FOR %1\&NEXT_FILE',            X
-               DSNAME='&SYSPARM'
-         MNOTE 8,'RTGENBAT MORE THAN 2 DUP FILES FOR &NEXT_FILE'
-         AGO   .LOOP
-.OK1     ANOP
-&TOT_COMP SETA &TOT_COMP+1
-         PUNCH 'FC %1\&NEXT_FILE %2\&NEXT_FILE > %3\&NEXT_FILE',       X
-               DSNAME='&SYSPARM'
-&BREAK   SETB  1         
-         AGO   .LOOP
-.NEW_FILE ANOP
-         AIF   (&BREAK EQ 1).OK2 OK TO CHECK FOR EOF OR NEW FILE
-&TOT_ERR SETA &TOT_ERR+1
-         PUNCH 'PAUSE MISSING FILE FOR %1 OR %2 &LAST_FILE',           X
-               DSNAME='&SYSPARM'
-         MNOTE 8,'RTGENBAT MISSING MATCHING FILE FOR &LAST_FILE'
-.OK2     ANOP
-         AIF   ('&NEXT_FILE' EQ '').EOF
-&LAST_FILE SETC '&NEXT_FILE'       
-&BREAK   SETB  0
-         AGO   .LOOP
-.EOF     ANOP
+         :&LAST_FILE SETC '(FILE EMPTY)' PREVIOUS FILE
+         :&BREAK   SETB  1 STARTING NEW MATCH
+         :&TOT_COMP SETA 0
+         :&TOT_ERR  SETA 0
+         :&LAST_FILE SETC ''
+         :&NEXT_FILE SETC ''
+         :&DUP       SETA 0 
+         APM   READ_NEXT_FILE
+         AWHILE ('&NEXT_FILE' NE '')
+               ACTR 100
+               AIF ('&NEXT_FILE' EQ '&LAST_FILE')
+                   :&DUP SETA &DUP+1
+                   AIF  (&DUP EQ 2)
+                       APM COMP_FILES
+                   AEND
+               AELSE
+                   APM CHK_DUPS
+                   :&LAST_FILE SETC '&NEXT_FILE'
+                   :&DUP SETA 1
+               AEND
+               APM READ_NEXT_FILE
+         AEND
+         APM   CHK_DUPS
          PUNCH 'REM TOT COMPARES = &TOT_COMP  TOT ERRORS =&TOT_ERR',   X
                DSNAME='&SYSPARM'
-         AIF   (&TOT_ERR EQ 0).EXIT
-         MNOTE 8,'RTGENCOM FILE ERRORS FOUND - SEE RTCOMP4.BAT'
+         AIF   (&TOT_ERR GT 0)
+               MNOTE 8,'RTGENCOM FILE ERRORS FOUND - SEE RTCOMP4.BAT'
+         AEND
          PUNCH 'COPY RTGENCMP.BAT %3',                                 X
                DSNAME='&SYSPARM'
-.EXIT    ANOP
+.*
+.* READ_NEXT_FILE
+.*
+         AENTRY READ_NEXT_FILE    
+         :&NEXT_FILE AREAD DSNAME='&SYSPARM'
+         AEND  
+.*
+.* CHK_DUPS
+.*
+         AENTRY CHK_DUPS
+         AIF   (&DUP NE 2)
+               AIF (&DUP GT 2)
+                   :&MSG SETC 'MORE THAN 2 DUPLICATE FILES FOR &LAST_FIX
+               LE'
+                   APM ERR_MSG
+               AELSEIF (&DUP EQ 1)
+                   :&MSG SETC 'MISSING FILE FOR &LAST_FILE'
+                   APM ERR_MSG
+               AEND
+         AEND
+         AEND
+.*
+.* ERR_MSG
+.*
+         AENTRY ERR_MSG
+         :&TOT_ERR SETA &TOT_ERR+1
+         PUNCH 'PAUSE &MSG',DSNAME='&SYSPARM'
+         MNOTE 8,'RTGENBAT &MSG'
+         AEND
+.*
+.* COMP_FILES
+.*
+         AENTRY COMP_FILES
+         :&TOT_COMP SETA &TOT_COMP+1
+         PUNCH 'FC %1\&NEXT_FILE %2\&NEXT_FILE > %3\&NEXT_FILE',       X
+               DSNAME='&SYSPARM'
+         AEND      
          END
