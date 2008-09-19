@@ -315,7 +315,9 @@ public  class  az390 implements Runnable {
         * 08/05/08 RPI 891 correct MCALL/MEXIT to correctly handle GEN/NOGEN   
         * 08/08/08 RPI 893 add SY, AL2(*), and F/H'Unnn' for unsigned 
         * 08/12/08 RPI 894 change AL2(*) to support 2 byt RLD fields
-        * 08/11/08 RPI 895 always print PRN if ERR(0) regardless of ERRSUM     
+        * 08/11/08 RPI 895 always print PRN if ERR(0) regardless of ERRSUM    
+        * 09/16/08 RPI 908 prevent trap on SYSPRN file overide etc. 
+        * 09/19/08 RPI 905 add DFHRESP(DSIDERR)=F'12' for ompatiblity
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -885,45 +887,47 @@ public  class  az390 implements Runnable {
     		  "NORMAL)",          // 0 - =F'0'
     		  "ERROR)",           // 1 - =F'1'
     		  "FILENOTFOUND)",    // 2 - =F'12' RPI 687
-    		  "NOTFND)",          // 3 - =F'13' RPI 687, RPI 690
-    		  "DUPREC)",          // 4 - =F'14' RPI 687
-    		  "DUPKEY)",          // 5 - =F'15' RPI 687
-    		  "INVREQ)",          // 6 - =F'16'
-    		  "NOSPACE)",         // 7 - =F'18' RPI 687
-    		  "NOTOPEN)",         // 8 - =F'19' RPI 687
-    		  "ENDFILE)",         // 9 - =F'20' RPI 687
-    		  "ILLOGIC)",         //10 - =F'21'  RPI 729
-    		  "LENGERR)",         //11 - =F'22'   		  
-    		  "ITEMERR)",         //12 - =F'26'  RPI 662
-    		  "PGMIDERR)",        //13 - =F'27'
-    		  "EXPIRED)",          //14   =F'31'  RPI 751
-    		  "MAPFAIL)",          //15   =F'36'  RPI 841
-    		  "INVMPSZ)",          //16   =F'38'  RPI 841
-    		  "OVERFLOW)",         //17   =F'40'  RPI 841
-    		  "QIDERR)",           //18 - =F'44'  RPI 662
-    		  "DISABLED)",         //19 - =F'84' RPI 687
+    		  "DSIDERR)",         // 3 - =F'12' RPI 905
+    		  "NOTFND)",          // 4 - =F'13' RPI 687, RPI 690
+    		  "DUPREC)",          // 5 - =F'14' RPI 687
+    		  "DUPKEY)",          // 6 - =F'15' RPI 687
+    		  "INVREQ)",          // 7 - =F'16'
+    		  "NOSPACE)",         // 8 - =F'18' RPI 687
+    		  "NOTOPEN)",         // 9 - =F'19' RPI 687
+    		  "ENDFILE)",         //10 - =F'20' RPI 687
+    		  "ILLOGIC)",         //11 - =F'21'  RPI 729
+    		  "LENGERR)",         //12 - =F'22'   		  
+    		  "ITEMERR)",         //13 - =F'26'  RPI 662
+    		  "PGMIDERR)",        //14 - =F'27'
+    		  "EXPIRED)",         //15   =F'31'  RPI 751
+    		  "MAPFAIL)",         //16   =F'36'  RPI 841
+    		  "INVMPSZ)",         //17   =F'38'  RPI 841
+    		  "OVERFLOW)",        //18   =F'40'  RPI 841
+    		  "QIDERR)",          //19 - =F'44'  RPI 662
+    		  "DISABLED)",        //20 - =F'84'  RPI 687
     		  };
       String[] dfhresp_lit = {
     		  "=F'0'",           // 0 "NORMAL)" 
     		  "=F'1'",           // 1 "ERROR)" 
     		  "=F'12'",          // 2 "FILENOTFOUND)" RPI 687
-    		  "=F'13'",          // 3 "NOTFND)" RPI 687, RPI 690 
-    		  "=F'14'",          // 4 "DUPREC)" RPI 687
-    		  "=F'15'",          // 5 "DUPKEY)" RPI 687 
-    		  "=F'16'",          // 6 "INVREQ)" 
-    		  "=F'18'",          // 7 "NOSPACE)" RPI 687 
-    		  "=F'19'",          // 8 "NOTOPEN)" RPI 687 
-    		  "=F'20'",          // 9 "ENDFILE)" RPI 687 
-    		  "=F'21'",          //10 "ILLOGIC)" RPI 729
-    		  "=F'22'",          //11 "LENGERR)" 
-    		  "=F'26'",          //12 "ITEMERR)" RPI 662
-    		  "=F'27'",          //13 "PGMIDERR)"
-    		  "=F'31'",          //14 "EXPIRED)"  RPI 751
-    		  "=F'36'",          //15 "MAPFAIL)"  RPI 841
-    		  "=F'38'",          //16 "INVMPSZ)"  RPI 841
-    		  "=F'40'",          //17 "OVERFLOW)"  RPI 841
-    		  "=F'44'",          //18 "QIDERR)"  RPI 662
-    		  "=F'84'",          //19 "DISABLED)" RPI 687
+    		  "=F'12'",          // 3 "DSIDERR"       RPI 905
+    		  "=F'13'",          // 4 "NOTFND)" RPI 687, RPI 690 
+    		  "=F'14'",          // 5 "DUPREC)" RPI 687
+    		  "=F'15'",          // 6 "DUPKEY)" RPI 687 
+    		  "=F'16'",          // 7 "INVREQ)" 
+    		  "=F'18'",          // 8 "NOSPACE)" RPI 687 
+    		  "=F'19'",          // 9 "NOTOPEN)" RPI 687 
+    		  "=F'20'",          //10 "ENDFILE)" RPI 687 
+    		  "=F'21'",          //11 "ILLOGIC)" RPI 729
+    		  "=F'22'",          //12 "LENGERR)" 
+    		  "=F'26'",          //13 "ITEMERR)" RPI 662
+    		  "=F'27'",          //14 "PGMIDERR)"
+    		  "=F'31'",          //15 "EXPIRED)"  RPI 751
+    		  "=F'36'",          //16 "MAPFAIL)"  RPI 841
+    		  "=F'38'",          //17 "INVMPSZ)"  RPI 841
+    		  "=F'40'",          //18 "OVERFLOW)"  RPI 841
+    		  "=F'44'",          //19 "QIDERR)"  RPI 662
+    		  "=F'84'",          //20 "DISABLED)" RPI 687
     		  };
   /* 
    * end of global az390 class data and start of procs
@@ -1280,11 +1284,11 @@ private void open_files(){
        	}
        	if (tz390.opt_list){
        		String prn_file_name = tz390.get_file_name(tz390.dir_prn,tz390.pgm_name,tz390.prn_type); // RPI 866
-            prn_file = new File(prn_file_name);
-         	try {
-       	       prn_file_buff = new BufferedWriter(new FileWriter(prn_file));
+            try {
+            	prn_file = new File(prn_file_name); // RPI 908 catch null error
+       	        prn_file_buff = new BufferedWriter(new FileWriter(prn_file));
        	    } catch (Exception e){
-       		   abort_error(4,"I/O error on prn open - " + e.toString());
+       		    abort_error(4,"I/O error on prn open - " + e.toString());
        	    }
        	}
 }

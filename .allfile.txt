@@ -27,6 +27,7 @@ C:\z390\MAC.BAT
 C:\z390\mfacc
 C:\z390\mvs
 C:\z390\MZ390.BAT
+C:\z390\README.TXT
 C:\z390\REPRO.BAT
 C:\z390\rt
 C:\z390\soa
@@ -3653,6 +3654,7 @@ C:\z390\rt\test\TESTDCBD.TF3
 C:\z390\rt\test\TESTDCBE.MLC
 C:\z390\rt\test\TESTDCBE.TF2
 C:\z390\rt\test\TESTDCBE.TF3
+C:\z390\rt\test\TESTDCBF.MLC
 C:\z390\rt\test\TESTDFP1.MLC
 C:\z390\rt\test\TESTDFP2.MLC
 C:\z390\rt\test\TESTDMP1.MLC
@@ -3800,6 +3802,7 @@ C:\z390\rt\test\TESTZCV1.MLC
 C:\z390\rt\test\testzsm1.mlc
 C:\z390\rt\test\TESTZSM1.ZSM
 C:\z390\rt\test\testzsm2.mlc
+C:\z390\rt\test\TESTZSM2.ZSM
 C:\z390\rt\test\testzsm3.mlc
 C:\z390\rt\test\TESTZSM3.ZSM
 C:\z390\rt\test\TESTZSM4.MLC

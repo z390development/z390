@@ -1,0 +1,53 @@
+*********************************************************************
+* Copyright 2005 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+* Date   - 09/11/08                                                 *
+*********************************************************************
+* 09/11/08 RPI 764 test GL/PL mode support and OPEN/CLOSE (reg)
+*********************************************************************
+TESTDCBF SUBENTRY
+         WTO   'TESTDCBF COPY SYSUT1 FB FILE TO SYSUT2 FB USING GL/PL'
+         LA    3,SYSUT1
+         OPEN  (3)
+         OPEN  (SYSUT2,(OUTPUT),SYSOUT,(OUTPUT))
+         PUT   SYSUT2           PUT LOCATE NEXT RCD AT R1
+         LR    R4,R1            R4 = SYSUT2 PUT LOCATE NEXT RCD AREA
+LOOP     EQU   *
+         GET   SYSUT1           GET LOCATE RCD AT R1
+         MVC   RECORD,0(R1)    
+         AP    PTOT,=P'1'
+         MVC   DTOT,=X'40202020'
+         ED    DTOT,PTOT
+         PUT   SYSOUT,MSG
+         MVC   0(L'MSG,R4),MSG  MOVE MSG TO PUT LOCATE OUTPUT AREA
+         PUT   SYSUT2
+         LR    R4,R1            R4 = SYSUT2 PUT LOCATE NEXT RCD AREA 
+         B     LOOP
+EOF      DS    0H
+         LA    3,SYSUT1
+         CLOSE (3)
+         LA    3,SYSUT2
+         CLOSE (3)
+         LA    3,SYSOUT
+         CLOSE (3)
+         WTO   'TESTDCBF ENDED OK'
+         SUBEXIT
+ABORT    EQU   *
+         WTO   'TESTDCBF ABORTING DUE TO I/O ERROR NOW'
+         ABEND X'213',DUMP
+SYSUT1   DCB   DDNAME=SYSUT1,EODAD=EOF,MACRF=GL,SYNAD=ABORT,           X
+               RECFM=FB,LRECL=80,BLKSIZE=8000            
+SYSUT2   DCB   DDNAME=SYSUT2,MACRF=PL,SYNAD=ABORT,                     X
+               RECFM=FB,LRECL=80,BLKSIZE=8000
+SYSOUT   DCB   DDNAME=SYSOUT,RECFM=FT,BLKSIZE=120,MACRF=PM
+PTOT     DC    PL2'0'
+MSG      DS    0CL120
+         DC    C'REC#='
+DTOT     DC    CL4' ',C' TEXT='
+RECORD   DC    CL80' '
+         DC    (MSG+120-*)C' '
+         DCBD
+         EQUREGS
+         END

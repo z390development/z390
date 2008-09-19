@@ -4,7 +4,7 @@
 .* This source code is part of z390 assembler/emulator package       *
 .* The z390 package is distributed under GNU general public license  *
 .* Author - Don Higgins                                              *
-.* Date   - 09/30/05                                                 *
+.* Date   - 09/16/08                                                 *
 .*********************************************************************
 .* MAINTENANCE
 .* 10/12/05 ADD DCBREC AND DCBDSNAM FIELDS, AND DEFAULT DDNAME
@@ -20,6 +20,8 @@
 .* 08/03/07 RPI 644  zero DCBOFLGS and fix DCBMACRF when 2 operands     
 .* 04/19/08 RPI 833 ADD STRING QUOTES FOR HLASM COMPATIBILITY 
 .* 06/23/08 RPI 867 JUST ISSUE WARNING FOR EXLST NOT SUPPORTED
+.* 09/11/08 RPI 764 ADD DCBIO TOTAL IO REQUESTS SINCE OPEN USED BY PL       
+.* 09/16/08 RPI 91764 ADD DCBIO TOTAL IO REQUESTS SINCE OPEN USED BY PL       
 .*********************************************************************
 &N       DCB   &DSORG=PS,    PHYSICAL SEQUENTIAL                       X
                &BFALN=,      IGNORE                                    X
@@ -43,6 +45,7 @@
                &RECFM=FB,    RECORD FORMAT (F,FB,V,VB,RT,VT) IGNOR A/M X                       
                &RECORD=0,    RECORD AREA                               X
                &SYNAD=0      ERROR EXIT                                
+&N       DS    0D            RPI 915
 &NPOS    SETA  N'&SYSLIST
 .POSLOOP ANOP
          AIF   (&NPOS EQ 0).POSEND
@@ -100,7 +103,6 @@
          MNOTE 12,'DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
          MEXIT
 .DSNOK   ANOP
-&N       DS    0D
          ORG   &N+DCBID-IHADCB        RPI88
          DC    C'DCBV1001'            RPI88
          ORG   &N+DCBDSORG-IHADCB
@@ -137,6 +139,8 @@
          DC    A(&DSNAME) DCBDSNAM
          ORG   &N+DCBDCBE-IHADCB   RPI 281
          DC    A(&DCBE) DCBDCBE
+         ORG   &N+DCBIO-IHADCB     RPI 907
+         DC    A(0)     DCBIO      RPI 907 TOTAL IO COUNT SINCE OPEN
          ORG   &N+DCBLEN
 .EXIT    ANOP
          DCBD

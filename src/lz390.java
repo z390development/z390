@@ -87,7 +87,8 @@ public  class  lz390 {
     * 06/23/08 RPI 866 use get_file_name to parse LST and ALIAS 390 file names
     * 07/29/08 RPI 883 add MOD support for code.MOD
     *          with no header/trailer/rlds and no rounding 
-    * 08/12/08 RPI 894 support RLD 2 byte fields in 390's upt to 64k         
+    * 08/12/08 RPI 894 support RLD 2 byte fields in 390's upt to 64k 
+    * 09/16/08 RPI 908 trap error on SYSLST file output override        
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -493,8 +494,8 @@ private void open_files(){
 	    }
        	if (tz390.opt_list){
        		String lst_file_name = tz390.get_file_name(tz390.dir_lst,tz390.pgm_name,tz390.lst_type); // RPI 866
-            lst_file = new File(lst_file_name);
          	try {
+               lst_file = new File(lst_file_name); // RPI 908
        	       lst_file_buff = new BufferedWriter(new FileWriter(lst_file));
        	    } catch (IOException e){
        		   abort_error(9,"I/O error on lst open - " + e.toString());

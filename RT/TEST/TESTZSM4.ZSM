@@ -1,4 +1,5 @@
 * TEST ZSTRMAC ERROR MESSAGES
+* 09/17/08 RPI 911 CHANGE ASELECT TO ACASE AND APM TO ACALL
          AELSE
          AELSEIF
          AEND
@@ -6,15 +7,15 @@
          AWHEN
          AIF
          AELSEIF
-         APM
-         APM X
+         ACALL
+         ACALL X
          AEXIT AWHILE
          AEXIT AUNTIL
-         AEXIT ASELECT
+         AEXIT ACASE
          AEND
-         ASELECT
+         ACASE
          :&I SETA 1
-         ASELECT (&I)
+         ACASE (&I)
          AWHEN
          AWHEN -1
          AWHEN 256

@@ -63,8 +63,9 @@ public class vz390 {
 	 *          KSDS high value key to EOF 
 	 * 02/08/08 RPI 723 add insert and key/seq access
 	 * 02/10/08 RPI 806 add balance KSIT using AVT method and add statistics/tracev
-	 * ******************************************************* Global variables
-	 * (last RPI)
+	 * 09/12/08 RPI 764 change oflgs_pm to oflgs_w
+	 **************************************************************************
+	 *  Global variables                  (last RPI)
 	 **************************************************************************/
 	tz390 tz390 = null;
 
@@ -932,7 +933,7 @@ public class vz390 {
 		 */
 		tot_acb_open++;
 		tot_vsam_oper++;
-		if (pz390.reg.get(pz390.r0 + 3) == sz390.dcb_oflgs_pm
+		if (pz390.reg.get(pz390.r0 + 3) == sz390.dcb_oflgs_w  // RPI 764
 				&& tz390.pgm_name.toUpperCase().equals("REPRO")) { // RPI 701
 			open_acb_mod = false; // RPI 701
 		} else {

@@ -130,7 +130,8 @@ public  class  z390 extends JApplet
      * 01/30/08 RPI 792 remove put error msg before checking for null 
      * 07/30/08 RPI 888 add leading space which may be eaten by PAUSE before EXIT for batch command
      *          also switch cmd_input_writer to do auto flush to prevent sporatic chopped commands  
-     * 09/08/08 RPI 872 help menu "Guide" link to www.z390.org or webdoc\index.html          
+     * 09/08/08 RPI 872 help menu "Guide" link to www.z390.org or webdoc\index.html 
+     * 09/10/08 RPI 904 correct help menu "Guide" to support LSN path         
 	 ********************************************************
      * Global variables                  last RPI
      *****************************************************
@@ -601,9 +602,13 @@ public  class  z390 extends JApplet
 			  } else {
 				  abort_error(52,"invalid install directory - " + install_loc);
 			  }
-			  temp_file = new File(install_loc + File.separator + "webdoc" + File.separator + "index.html"); // RPI 499 correct case for Linux RPI 532, RPI 872 
-			  if (temp_file.isFile()){  // RPI 872
-				  install_webdoc = temp_file.getPath();
+			  temp_file = new File(install_loc + File.separator + "webdoc" + File.separator + "index.html"); // RPI 499 correct case for Linux RPI 532, RPI 872, RPI 904 
+			  if (temp_file.exists()){  // RPI 872
+		   		   try {
+		   			   install_webdoc = temp_file.toURI().toURL().toExternalForm();
+		   		   } catch (Exception e){
+		   			   install_webdoc = null;    // RPI 904
+		   		   }
 			  } else {
                   install_webdoc = null; // RPI 872
 			  }
@@ -2465,14 +2470,14 @@ public  class  z390 extends JApplet
    	   */	
  	  	start_doc(web_site);
       }
-   	public boolean start_doc(String file_name){
-	       if  (tz390.exec_cmd(tz390.z390_browser + " " +  file_name)){
-	  	       put_log("Start issued for " + file_name);
-	       	   return true;
-	       } else {
-	           log_error(41,"Start error for " + file_name);
-	       	   return false;
-	       }
+   	public boolean start_doc(String url){
+   		   if  (tz390.exec_cmd(tz390.z390_browser + " " + url)){  // RPI 904
+   			   put_log("Start issued for " + url);
+   			   return true;
+   		   } else {
+   			   log_error(41,"Start error for " + url);
+   			   return false;
+   		   }
 	  }
       public static String getClipboard() {
       /*
@@ -3431,7 +3436,6 @@ public  class  z390 extends JApplet
             			cmd_exec_input_writer.println(cmd_line);
             		}
             		cmd_io_total++;
-            		//dshx cmd_exec_input_writer.flush();
             		monitor_cmd_time_total = 0;
             		cmd_io_total = 0;
             	} catch (Exception e){

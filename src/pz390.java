@@ -278,7 +278,8 @@ public class pz390 {
      * 07/23/08 RPI 878 fix XDECI to support ASCII mode 
      * 07/23/08 RPI 879 fix SLR, SLGR, SLGFR, SL, SLY, SLG, SLGF
      *          to set CC3 when both neg and no borrow  
-     * 08/13/08 RPI 894 change low DSA addr from 64k to 32k for testing AL2 RLD                 
+     * 08/13/08 RPI 894 change low DSA addr from 64k to 32k for testing AL2 RLD 
+     * 09/12/08 RPI 764	change trace info for GL/PL svcs               
 	 ******************************************************** 
 	 * Global variables              (last RPI)
 	 ********************************************************/
@@ -12771,10 +12772,10 @@ public class pz390 {
 						+ tz390.get_hex(reg.getShort(r0 + 2), 4) + " ADDR="  // RPI 671
 						+ tz390.get_hex(addr, 6);
 			}
-		case 151: // dcb get move R0=REC,R1=DCB
-			return "GETMOVE R0=REC ADDR, R1=DCB";
-		case 152: // dcb put move R0=REC, R1=DCB
-			return "PUTMOVE R0=REC ADDR, R1=DCB";
+		case 151: // dcb get R0=REC,R1=DCB
+			return "GET R0=REC ADDR FOR GM, R1=DCB/BUFF FOR GL"; // RPI 764
+		case 152: // dcb put R0=REC, R1=DCB
+			return "PUT R0=REC ADDR FOR PM, R1=DCB/BUFF FOR PL"; // rpi 764
 		case 153: // dcb read R1=DECB
 			return "READ R1=DECB";
 		case 154: // dcb write R1=DECB

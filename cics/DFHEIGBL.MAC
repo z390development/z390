@@ -19,5 +19,5 @@
          DFHABBLK                 HANDLE ABEND BLOCK
          DFHTSBLK                 TEMPORARY STORAGE PREFIX AREA
          DFHFCBLK                 FILE CONTROL PREFIX AREA
+         EQUREGS ,                DEFINE GENERAL REGISTERS RPI 905
          MEND
-

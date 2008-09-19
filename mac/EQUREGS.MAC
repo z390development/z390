@@ -19,25 +19,30 @@
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
 .*********************************************************************
         EQUREGS &REGS=GPR,&TYPE=DEC
-&PFX    SETC   'R'
-        AIF    ('&REGS' EQ 'GPR').SKPFPR
-&PFX    SETC   'F'
-.SKPFPR ANOP
+        GBLB  &EQUREGS_GPR_DEC(16),&EQUREGS_GPR_HEX(16)
+        GBLB  &EQUREGS_FPR_DEC(16),&EQUREGS_FPR_HEX(16)
+        AIF    ('&REGS' EQ 'GPR')
+               :&PFX SETC 'R'
+        AELSE
+               :&PFX SETC 'F'
+        AEND
         LCLC   &HEX(16)
 &HEX(1) SETC   '0','1','2','3','4','5','6','7',                        X
                '8','9','A','B','C','D','E','F'
-        AIF   ('&SYSLIST(1)' EQ '').NPOK
-        MNOTE 12,'UNSUPPORTED OPERANDS - &SYSLIST(1)'
-.NPOK   ANOP
-&I      SETA   -1
-.LOOP   ANOP
-&I      SETA   &I+1
-        AIF    ('&TYPE' EQ 'HEX').GENHEX
-&PFX&I  EQU    &I
-        AIF    (&I LT 15).LOOP
-        MEXIT
-.GENHEX ANOP
-&HEX_SDT SETC   'X''&HEX(&I+1).'''
-&PFX&I  EQU    &HEX_SDT
-        AIF    (&I LT 15).LOOP
+        AIF   ('&SYSLIST(1)' NE '')
+              MNOTE 12,'EQUREGS UNSUPPORTED OPERANDS - &SYSLIST(1)'
+              MEXIT
+        AEND
+&I      SETA   0
+        AWHILE (&I LT 16)
+               AIF (NOT &(EQUREGS_&REGS._&TYPE)(&I+1))
+                   :&(EQUREGS_&REGS._&TYPE)(&I+1) SETB 1
+                   AIF ('&TYPE' EQ 'DEC')
+                       :&PFX&I EQU &I
+                   AELSE
+                       :&PFX&HEX(&I+1) EQU &I
+                   AEND
+               AEND
+               :&I SETA &I+1
+        AEND
         MEND

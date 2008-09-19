@@ -329,7 +329,9 @@ public  class  mz390 {
      * 08/13/08 RPI 898 correct &SYSM_HSEV and &SYSM_SEV 
      * 08/16/08 RPI 899 correct TRACEP line breaks for AIF/AGO 
      * 08/18/08 RPI 901 return 0 for N'SYSLIST or any undefine symbol 
-     * 09/01/08 RPI 902 add ZSTRMAC structured macro extensions      
+     * 09/01/08 RPI 902 add ZSTRMAC structured macro extensions 
+     * 09/15/08 RPI 905 add EXEC label, merge parm and (...) 
+     * 09/17/08 RPI 911 change ASELECT to ACASE, APM to ACALL, support lower case    
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -467,32 +469,44 @@ public  class  mz390 {
 	byte    zsm_type_aentry  = 4;
 	byte    zsm_type_aexit   = 5;
 	byte    zsm_type_aif     = 6;
-	byte    zsm_type_apm     = 7;
-	byte    zsm_type_aselect = 8;
+	byte    zsm_type_acall     = 7;
+	byte    zsm_type_acase = 8;
 	byte    zsm_type_awhen   = 9;
 	byte    zsm_type_auntil  = 10;
 	byte    zsm_type_awhile  = 11;
+	String[] zsm_type_pfx = {"???", // 0
+			                 "AIF", // 1 AELSE
+			                 "AIF", // 2 AEKSEUF
+			                 "???", // 3 AEND
+			                 "ACL", // 4 AENTRY
+			                 "???", // 5 AEXIT
+			                 "AIF", // 6 AIF
+			                 "ACL", // 7 ACALL
+			                 "ACS", // 8 ACASE
+			                 "ACS", // 9 AWHEN
+			                 "AUN", //10 AUNTIL
+			                 "AWH"};//11 AWHILE
 	int     zsm_lvl_tcnt[] = new int[max_zsm_lvl]; // type instance counter
 	boolean zsm_lvl_aelse[] = new boolean[max_zsm_lvl];
 	int     zsm_aif_tot         = 0;
-	int     zsm_apm_tot         = 0;
+	int     zsm_acall_tot         = 0;
 	int     zsm_aentry_tot      = 0;
-	int     zsm_aselect_tot     = 0;
+	int     zsm_acase_tot     = 0;
 	int     zsm_awhile_tot      = 0;
 	int     zsm_auntil_tot      = 0;
-	int     zsm_lvl_bcnt[] = new int[max_zsm_lvl]; // type block counter for AIF, ASELECT
+	int     zsm_lvl_bcnt[] = new int[max_zsm_lvl]; // type block counter for AIF, ACASE
     boolean zsm_lvl_tend[] = new boolean[max_zsm_lvl]; // req END label for type
-    String  zsm_lvl_ase_ago[]   = new String[max_zsm_lvl]; // ASELECT computed AGO with expression
+    String  zsm_lvl_ase_ago[]   = new String[max_zsm_lvl]; // ACASE computed AGO with expression
 	int     zsm_lvl_ase_fst[]   = new int[max_zsm_lvl]; // first index value assigend to awhen block
 	int     zsm_lvl_ase_lst[]   = new int[max_zsm_lvl]; // last index value assigned to awhen block
 	short   zsm_lvl_ase_blk[]   = new short[256*max_zsm_lvl];
 	String  zsm_aif_exp         = null;
-    int     zsm_apm_index       = 0;
-	int     zsm_apm_name_tot    = 1; // total apm blocks defined + 1 
-	int     max_zsm_apm_name    =1000; // maximum apm blocks
-	String  zsm_apm_name[]      = new String[max_zsm_apm_name];
-    int     zsm_apm_cnt[]       = new int[max_zsm_apm_name]; // unizue apm return counter
-    boolean zsm_apm_def[]       = new boolean[max_zsm_apm_name]; // apm block defined 
+    int     zsm_acall_index       = 0;
+	int     zsm_acall_name_tot    = 1; // total acall blocks defined + 1 
+	int     max_zsm_acall_name    =1000; // maximum acall blocks
+	String  zsm_acall_name[]      = new String[max_zsm_acall_name];
+    int     zsm_acall_cnt[]       = new int[max_zsm_acall_name]; // unizue acall return counter
+    boolean zsm_acall_def[]       = new boolean[max_zsm_acall_name]; // acall block defined 
 	/*
 	 * macro name table
 	 */
@@ -1184,14 +1198,14 @@ public  class  mz390 {
 		mac_name[0] = "OPEN CODE"; // for trace
 		init_gbl_sys();
 		if (tz390.opt_zstrmac){
+			add_zstrmac_key("ACALL",zsm_type_acall);
+			add_zstrmac_key("ACASE",zsm_type_acase);
 			add_zstrmac_key("AELSE",zsm_type_aelse);
 			add_zstrmac_key("AELSEIF",zsm_type_aelseif);
 			add_zstrmac_key("AEND",zsm_type_aend);
 			add_zstrmac_key("AENTRY",zsm_type_aentry);
 			add_zstrmac_key("AEXIT",zsm_type_aexit);
 			add_zstrmac_key("AIF",zsm_type_aif);
-			add_zstrmac_key("APM",zsm_type_apm);
-			add_zstrmac_key("ASELECT",zsm_type_aselect);
 			add_zstrmac_key("AUNTIL",zsm_type_auntil);
 			add_zstrmac_key("AWHEN",zsm_type_awhen);
 			add_zstrmac_key("AWHILE",zsm_type_awhile);
@@ -1581,9 +1595,9 @@ public  class  mz390 {
 		 *     PROFILE(copybook) specified.
 		 * 9.  Expand the following structured macro code extensions if ZSTRMAC:
 		 *     a.  AIF, AELSE, AELSEIF, AEND
-		 *     b.  APM, AENTRY, AEXIT. AEND
+		 *     b.  ACALL, AENTRY, AEXIT. AEND
 		 *     c.  AWHILE, AUNTIL, AEXIT, AEND
-		 *     d.  ASELECT, AWHEN, AELSE, AEXIT, AEND
+		 *     d.  ACASE, AWHEN, AELSE, AEXIT, AEND
 		 *
 		 * Notes:
 		 *   1.  At end of MLC load, turn off
@@ -1865,8 +1879,7 @@ public  class  mz390 {
 		 *   1.  Use the proto_pattern to handle all
 		 *       valid macro assembler parm expressions
 		 *       including quoted strings with spaces. RPI 640
-		 */
-		
+		 */		
 		exec_match = exec_pattern.matcher(mac_parms);
 		String exec_parms = "";
 		String exec_parm;
@@ -1908,14 +1921,18 @@ public  class  mz390 {
 							&& exec_parm_char != '.'
 							)
 						){
-						exec_parms = exec_parms.concat("," + exec_parm);
+						if (exec_parm.charAt(0) == '('){ // RPI 905
+							exec_parms = exec_parms.concat(exec_parm);
+						} else {
+							exec_parms = exec_parms.concat("," + exec_parm);
+						}
 					} else {
 						exec_eof = true;
 					}
 				}
 			}
 		}
-		mac_file_line[mac_line_index] = " EXEC " + exec_parms;
+		mac_file_line[mac_line_index] = mac_label + " EXEC " + exec_parms; // RPI 905 add label if any
 	}
 	private void load_macro_ago_aif_refs(){
 		/*
@@ -2385,7 +2402,7 @@ public  class  mz390 {
 			store_mac_line();
 			return;
 		}
-		int index = tz390.find_key_index('Z',tz390.split_op);
+		int index = tz390.find_key_index('Z',tz390.split_op.toUpperCase());  // RPI 911
 		if  (index > 0 && index != zsm_type_aif){  // aif may be explicit with label
 			mac_line = ".*" + mac_line.substring(2);
 		}
@@ -2393,9 +2410,9 @@ public  class  mz390 {
 		case 1: // AELSE
 			if  (zsm_lvl < 1
 				|| (zsm_lvl_type[zsm_lvl] != zsm_type_aif
-				    && zsm_lvl_type[zsm_lvl] != zsm_type_aselect)
+				    && zsm_lvl_type[zsm_lvl] != zsm_type_acase)
 				){	
-				log_error(238,"ZSM AELSE missing AIF or ASELECT");
+				log_error(238,"ZSM AELSE missing AIF or ACASE");
 				return;
 			}
 			if  (zsm_lvl_aelse[zsm_lvl]){
@@ -2419,15 +2436,15 @@ public  class  mz390 {
 				if (zsm_lvl_bcnt[zsm_lvl] > 0){
 					zsm_line_tot++;
 					zsm_gen_line[zsm_line_tot-1] = 
-				      " AGO .ASE_" + zsm_lvl_tcnt[zsm_lvl] + "_E";
+				      " AGO .ACS_" + zsm_lvl_tcnt[zsm_lvl] + "_E";
 				}
 				zsm_line_tot++;
 				zsm_gen_line[zsm_line_tot-1] = 
-				  ".ASE_" + zsm_lvl_tcnt[zsm_lvl]
+				  ".ACS_" + zsm_lvl_tcnt[zsm_lvl]
 				  + "_X ANOP";
 				break;
 			default:
-				log_error(244,"ZSM AELSE missing AIF or ASELECT");
+				log_error(244,"ZSM AELSE missing AIF or ACASE");
 			}
 			break;
 		case 2: // AELSEIF
@@ -2462,29 +2479,29 @@ public  class  mz390 {
 			}
 			switch (zsm_lvl_type[zsm_lvl]){
 			case 4:  // AEND AENTRY
-				if (zsm_apm_cnt[zsm_lvl] == 0){
-					log_error(248,"ZSM AENTRY not used - " + zsm_apm_name[zsm_apm_index]);
+				if (zsm_acall_cnt[zsm_lvl] == 0){
+					log_error(248,"ZSM AENTRY not used - " + zsm_acall_name[zsm_acall_index]);
 					return; 
 				}
-				zsm_apm_index = zsm_lvl_tcnt[zsm_lvl];
+				zsm_acall_index = zsm_lvl_tcnt[zsm_lvl];
 				if  (zsm_lvl_tend[zsm_lvl]){
 					zsm_line_tot++;
 					zsm_gen_line[zsm_line_tot-1] = 
-					  ".APM_" + zsm_apm_index + "_E ANOP"; 
+					  ".ACL_" + zsm_acall_index + "_E ANOP"; 
 				}
-				String ago = " AGO (&APM_" + zsm_apm_index
-				           + "_" + zsm_apm_name[zsm_apm_index]
-				           + ").APM_" + zsm_apm_index + "_1";
+				String ago = " AGO (&ACALL_" + zsm_acall_index
+				           + "_" + zsm_acall_name[zsm_acall_index]
+				           + ").ACL_" + zsm_acall_index + "_1";
 				index = 1;
-				while (index < zsm_apm_cnt[zsm_apm_index]){
+				while (index < zsm_acall_cnt[zsm_acall_index]){
 					index++;
-					ago = ago + ",.APM_" + zsm_apm_index + "_" + index;
+					ago = ago + ",.ACL_" + zsm_acall_index + "_" + index;
 				}
 				zsm_line_tot++;
 				zsm_gen_line[zsm_line_tot-1] = ago; 
 				zsm_line_tot++;
 				zsm_gen_line[zsm_line_tot-1] = 
-				  ".APM_" + zsm_apm_index + "_S ANOP"; 
+				  ".ACL_" + zsm_acall_index + "_S ANOP"; 
 				zsm_lvl--;
 				break;
 			case 6:  // AEND AIF
@@ -2506,19 +2523,19 @@ public  class  mz390 {
 				}
 				zsm_lvl--;
 				break;
-			case 8:  // AEND ASELECT
+			case 8:  // AEND ACASE
 				if (zsm_lvl_bcnt[zsm_lvl] == 0){
-					log_error(255,"ZSM ASELECT missing ASHEN");
+					log_error(255,"ZSM ACASE missing ASHEN");
 					return;
 				}
 				zsm_line_tot++;
 				zsm_gen_line[zsm_line_tot-1] =
-				  " AGO .ASE_" 
+				  " AGO .ACS_" 
 				  + zsm_lvl_tcnt[zsm_lvl] 
 				  + "_E";
 				zsm_line_tot++;
 				zsm_gen_line[zsm_line_tot-1] =
-				  ".ASE_" 
+				  ".ACS_" 
 				  + zsm_lvl_tcnt[zsm_lvl] 
 				  + "_G ANOP";
 				ago = zsm_lvl_ase_ago[zsm_lvl];
@@ -2529,17 +2546,17 @@ public  class  mz390 {
 				}
 				int offset = 256*(zsm_lvl-1);
 				String comma = "";
-				String else_lab = ".ASE_" + zsm_lvl_tcnt[zsm_lvl] 
+				String else_lab = ".ACS_" + zsm_lvl_tcnt[zsm_lvl] 
 				                + "_E";
 		        if (zsm_lvl_aelse[zsm_lvl]){
-		        	else_lab = ".ASE_" + zsm_lvl_tcnt[zsm_lvl] 
+		        	else_lab = ".ACS_" + zsm_lvl_tcnt[zsm_lvl] 
 		        	  		 + "_X";
 		        }
 				index = zsm_lvl_ase_fst[zsm_lvl];
 		        while (index <= zsm_lvl_ase_lst[zsm_lvl]){
 			        if (zsm_lvl_ase_blk[index+offset] > 0){
 			        	ago = ago + comma
-			        	  + ".ASE_" + zsm_lvl_tcnt[zsm_lvl]
+			        	  + ".ACS_" + zsm_lvl_tcnt[zsm_lvl]
 			        	  + "_" + zsm_lvl_ase_blk[index+offset];
 		            } else {
 		            	ago = ago + comma + else_lab;
@@ -2552,13 +2569,13 @@ public  class  mz390 {
 		        if (zsm_lvl_aelse[zsm_lvl]){
 					zsm_line_tot++;
 					zsm_gen_line[zsm_line_tot-1] =
-					  " AGO .ASE_" 
+					  " AGO .ACS_" 
 					  + zsm_lvl_tcnt[zsm_lvl] 
 					  + "_X";
 		        }
 		        zsm_line_tot++;
 		        zsm_gen_line[zsm_line_tot-1] = 
-		          ".ASE_" + zsm_lvl_tcnt[zsm_lvl]
+		          ".ACS_" + zsm_lvl_tcnt[zsm_lvl]
 		          + "_E ANOP";
 		        zsm_lvl--;
 				break;
@@ -2603,18 +2620,18 @@ public  class  mz390 {
 				log_error(246,"ZSM AENTRY name error");
 			    return;
 			}
-			if (zsm_apm_def[zsm_apm_index]){
+			if (zsm_acall_def[zsm_acall_index]){
 				log_error(247,"ZSM AENTRY duplicate name error");
 			    return;
 			}
-			zsm_lvl_tcnt[zsm_lvl] = zsm_apm_index;
+			zsm_lvl_tcnt[zsm_lvl] = zsm_acall_index;
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
-			  " AGO .APM_" + zsm_apm_index + "_S"; 
+			  " AGO .ACL_" + zsm_acall_index + "_S"; 
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
-				".APM_" + zsm_apm_index 
-			  + "_" + zsm_apm_name[zsm_apm_index]  
+				".ACL_" + zsm_acall_index 
+			  + "_" + zsm_acall_name[zsm_acall_index]  
               + " ANOP";
 			break;
 		case 5: // AEXIT
@@ -2640,10 +2657,10 @@ public  class  mz390 {
 			}
 			zsm_line_tot++;
 			if (type.equals("AENTRY")){
-				type = "APM";
+				type = "ACALL";
 			}
 			zsm_gen_line[zsm_line_tot-1] = 
-				" AGO ." + type.substring(0,3)
+				" AGO ." + zsm_type_pfx[type_index]
 				+ "_" + zsm_lvl_tcnt[zsm_exit_lvl]
 				+ "_E ANOP";
 			zsm_lvl_tend[zsm_exit_lvl] = true;
@@ -2669,37 +2686,37 @@ public  class  mz390 {
 				            + zsm_aif_exp
 			                + ").AIF_" + zsm_lvl_tcnt[zsm_lvl] + "_1";
 		    break;
-		case 7: // APM
-			zsm_apm_tot++;
+		case 7: // ACALL
+			zsm_acall_tot++;
 			if (!zsm_find_name()){
-				log_error(249,"ZSM APM name not found");
+				log_error(249,"ZSM ACALL name not found");
 				return;
 			}
-			zsm_apm_cnt[zsm_apm_index]++;
+			zsm_acall_cnt[zsm_acall_index]++;
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
-				"&APM_" + zsm_apm_index
-				+ "_" + zsm_apm_name[zsm_apm_index]
-				+ " SETA " + zsm_apm_cnt[zsm_apm_index];
+				"&ACALL_" + zsm_acall_index
+				+ "_" + zsm_acall_name[zsm_acall_index]
+				+ " SETA " + zsm_acall_cnt[zsm_acall_index];
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
-				" AGO .APM_" + zsm_apm_index 
-				+ "_" + zsm_apm_name[zsm_apm_index];
+				" AGO .ACL_" + zsm_acall_index 
+				+ "_" + zsm_acall_name[zsm_acall_index];
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
-				".APM_" + zsm_apm_index 
-				+ "_" + zsm_apm_cnt[zsm_apm_index] 
+				".ACL_" + zsm_acall_index 
+				+ "_" + zsm_acall_cnt[zsm_acall_index] 
 				+ " ANOP";
 			break;
-		case 8: // ASELECT
+		case 8: // ACASE
             if  (!zsm_find_aif_exp()){
-				log_error(252,"ZSM ASELECT missing (...)");
+				log_error(252,"ZSM ACASE missing (...)");
 				return;
 			}
 			zsm_lvl++;
-			zsm_lvl_type[zsm_lvl] = zsm_type_aselect;
-			zsm_aselect_tot++;
-			zsm_lvl_tcnt[zsm_lvl] = zsm_aselect_tot;
+			zsm_lvl_type[zsm_lvl] = zsm_type_acase;
+			zsm_acase_tot++;
+			zsm_lvl_tcnt[zsm_lvl] = zsm_acase_tot;
 			zsm_lvl_bcnt[zsm_lvl] = 0; // reset awhen block counter
 			zsm_lvl_aelse[zsm_lvl] = false; // reset aelse block flag
 			zsm_lvl_ase_ago[zsm_lvl] = " AGO " + zsm_aif_exp;
@@ -2713,17 +2730,17 @@ public  class  mz390 {
 			}
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
-				" AGO .ASE_" + zsm_lvl_tcnt[zsm_lvl]
+				" AGO .ACS_" + zsm_lvl_tcnt[zsm_lvl]
                 + "_G"; 
 			break;
 		case 9: // AWHEN
 			if (zsm_lvl < 1 
-				|| zsm_lvl_type[zsm_lvl] != zsm_type_aselect){
-				log_error(253,"ZSM AWHEN missing ASELECT");
+				|| zsm_lvl_type[zsm_lvl] != zsm_type_acase){
+				log_error(253,"ZSM AWHEN missing ACASE");
 				return;
 			}
 			zsm_lvl_bcnt[zsm_lvl]++;
-			if  (!zsm_ase_set_blk()){
+			if  (!zsm_acs_set_blk()){
 				log_error(254,"ZSM AWHEN invalid value -" + tz390.split_parms);
 				return;
 			}
@@ -2731,12 +2748,12 @@ public  class  mz390 {
 				|| zsm_lvl_aelse[zsm_lvl]){
 				zsm_line_tot++;
 				zsm_gen_line[zsm_line_tot-1] = 
-					" AGO .ASE_" + zsm_lvl_tcnt[zsm_lvl]
+					" AGO .ACS_" + zsm_lvl_tcnt[zsm_lvl]
 					+ "_E";
 			}; 
 			zsm_line_tot++;
 			zsm_gen_line[zsm_line_tot-1] = 
-			  ".ASE_" + zsm_lvl_tcnt[zsm_lvl] 
+			  ".ACS_" + zsm_lvl_tcnt[zsm_lvl] 
 			  + "_" + zsm_lvl_bcnt[zsm_lvl]
 			  + " ANOP";
 			break;
@@ -2787,7 +2804,7 @@ public  class  mz390 {
 		    break;
 		}
 	}
-	private boolean zsm_ase_set_blk(){
+	private boolean zsm_acs_set_blk(){
 		/*
 		 * process AWHEN index value parms
 		 * and set current block # in value
@@ -2814,13 +2831,13 @@ public  class  mz390 {
 				}
 			case '(': // next range (v1,v2)	
 				v1 = calc_seta_exp(tz390.split_parms,exp_next_index+1);
-				if (!zsm_ase_chk_val(v1)){
+				if (!zsm_acs_chk_val(v1)){
 					return false;
 				}
 				if (exp_next_index < tz390.split_parms.length() 
 					&& tz390.split_parms.charAt(exp_next_index-1) == ','){
 					v2 = calc_seta_exp(tz390.split_parms,exp_next_index);
-				    if (!zsm_ase_chk_val(v2)
+				    if (!zsm_acs_chk_val(v2)
 				    	|| v1 > v2){
 				    	return false;
 				    }
@@ -2841,7 +2858,7 @@ public  class  mz390 {
 				break;
 			default:  // next value
 				v = calc_seta_exp(tz390.split_parms,exp_next_index);
-			    if (!zsm_ase_chk_val(v)){
+			    if (!zsm_acs_chk_val(v)){
 			    	return false;
 			    }
 			    zsm_lvl_ase_blk[v+offset] = (short)zsm_lvl_bcnt[zsm_lvl];
@@ -2850,7 +2867,7 @@ public  class  mz390 {
 		}
 		return true;
 	}
-	private boolean zsm_ase_chk_val(int val){
+	private boolean zsm_acs_chk_val(int val){
 		/*
 		 * limit check AWHEN value and 
 		 * return false if not 0-255.
@@ -2890,29 +2907,29 @@ public  class  mz390 {
 	}
 	private boolean zsm_find_name(){
 		/*
-		 * find APM name or add new name
-		 * and set zsm_apm_index else false
+		 * find ACALL name or add new name
+		 * and set zsm_acall_index else false
 		 */
 		if (tz390.split_parms == null){
 			return false;
 		}
-		String name = tz390.split_parms;
+		String name = tz390.split_parms.toUpperCase();  // RPI 911
 		int index = name.indexOf(' ');
 		if (index > 0){
 			name = name.substring(0,index);
 		}
-		zsm_apm_index = tz390.find_key_index('Z',"N" + name);
-		if (zsm_apm_index >= 0){
+		zsm_acall_index = tz390.find_key_index('Z',"N" + name);
+		if (zsm_acall_index >= 0){
 			return true;
 		}
-		if (zsm_apm_name_tot < max_zsm_apm_name){
-			zsm_apm_index = zsm_apm_name_tot;
-			if (!tz390.add_key_index(zsm_apm_index)){
+		if (zsm_acall_name_tot < max_zsm_acall_name){
+			zsm_acall_index = zsm_acall_name_tot;
+			if (!tz390.add_key_index(zsm_acall_index)){
 				return false;
 			}
-			zsm_apm_name_tot++;
-			zsm_apm_name[zsm_apm_index] = name;
-			zsm_apm_cnt[zsm_apm_index] = 0;
+			zsm_acall_name_tot++;
+			zsm_acall_name[zsm_acall_index] = name;
+			zsm_acall_cnt[zsm_acall_index] = 0;
 			
 			return true;
 		} else {

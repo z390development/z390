@@ -13,6 +13,7 @@
 * 10/30/07 RPI 729 ADD DFHRESP ILLOGIC=F'21'                  
 * 12/06/07 RPI 751 ADD DFHRESP EXPIRED=F'31'                  
 * 04/28/08 RPI 841 ADD DFHRESP MAPFAIL,INVMPSZ,OVERFLOW       
+* 09/19/08 RPI 905 ADD DFHRESP DSIDERR=F'12'                  
 *********************************************************************
 TESTCIC1 RT1   MAIN
          EQUREGS
@@ -22,6 +23,7 @@ X        DS    F
          MVC   X,DFHRESP(NORMAL)     X   TEST COMMENTS
          MVC   X,DFHRESP(ERROR)      
          MVC   X,DFHRESP(FILENOTFOUND)  RPI 687
+         MVC   X,DFHRESP(DSIDERR)       RPI 905
          MVC   X,DFHRESP(NOTFND)        RPI 687 RPI 690
          MVC   X,DFHRESP(DUPREC)        RPI 687
          MVC   X,DFHRESP(DUPKEY)        RPI 687
@@ -44,6 +46,8 @@ X        DS    F
          CLC   =F'1',DFHRESP(ERROR)       
          RT1   CCE
          CLC   =F'12',DFHRESP(FILENOTFOUND) RPI 687      
+         RT1   CCE
+         CLC   =F'12',DFHRESP(DSIDERR)      RPI 905      
          RT1   CCE
          CLC   =F'13',DFHRESP(NOTFND)       RPI 687 RPI 690
          RT1   CCE
@@ -82,6 +86,7 @@ X        DS    F
          RT1   CCE,=F'0',DFHRESP(NORMAL) 
          RT1   CCE,=F'1',DFHRESP(ERROR)
          RT1   CCE,=F'12',DFHRESP(FILENOTFOUND) RPI 687
+         RT1   CCE,=F'12',DFHRESP(DSIDERR)      RPI 905
          RT1   CCE,=F'13',DFHRESP(NOTFND)       RPI 687 RPI 690
          RT1   CCE,=F'14',DFHRESP(DUPREC)       RPI 687
          RT1   CCE,=F'15',DFHRESP(DUPKEY)       RPI 687

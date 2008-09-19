@@ -199,7 +199,9 @@ public  class  tz390 {
     * 08/16/08 RPI 900 allow .\ in absolute path and add default suffix
     * 09/02/08 RPI 902 make pad_spaces(n) public for use by ZSTRMAC
     * 09/06/08 RPI 797 suppress versions and mem for NOTIMING 
-    * 09/08/08 RPI 903 allow 0 length file type for CD command usage   
+    * 09/08/08 RPI 903 allow 0 length file type for CD command usage 
+    * 09/15/08 RPI 905 remove ", " delimited comments on EXEC stmts  
+    * 09/16/08 RPI 908 support path\file overrides for output files and prevent traps
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -208,7 +210,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.03";  //dsh
+    String version    = "V1.4.03a";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -436,6 +438,7 @@ public  class  tz390 {
     boolean split_first = true; // first line of statement
     boolean split_cont  = false; // continuation line of statement
     boolean split_comment = false;
+    boolean exec_line = false; // RPI 905
     String  split_label = null;
     String  split_op    = null;
     int     split_op_index = -1; // opcode index else -1
@@ -4854,10 +4857,6 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     } else if (token.length() > 7 
        		&& token.substring(0,7).toUpperCase().equals("SYSBAL(")){
       	dir_bal = set_path_option(dir_bal,token.substring(7,token.length()-1)); 
-        if (dir_bal.charAt(0) == '*'){ // RPI 880
-        	bal_type = dir_bal.substring(1);
-        	dir_bal = dir_pgm;
-        }
     } else if (token.length() > 7 
       		&& token.substring(0,7).toUpperCase().equals("SYSCPY(")){
        	dir_cpy = set_path_option(dir_cpy,token.substring(7,token.length()-1)); 
@@ -4867,24 +4866,12 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     } else if (token.length() > 7
        		&& token.substring(0,7).toUpperCase().equals("SYSERR(")){
         dir_err = set_path_option(dir_err,token.substring(7,token.length()-1)); // RPI 243 
-        if (dir_err.charAt(0) == '*'){ // RPI 880
-        	err_type = dir_err.substring(1);
-        	dir_err = dir_pgm;
-        }
     } else if (token.length() > 7
       		&& token.substring(0,7).toUpperCase().equals("SYSLOG(")){
        	dir_log = set_path_option(dir_log,token.substring(7,token.length()-1));
-        if (dir_log.charAt(0) == '*'){ // RPI 880
-        	log_type = dir_log.substring(1);
-        	dir_log = dir_pgm;
-        }
     } else if (token.length() > 7 
       		&& token.substring(0,7).toUpperCase().equals("SYSLST(")){  // RPI 866
       	dir_lst = set_path_option(dir_lst,token.substring(7,token.length()-1)); 
-        if (dir_lst.charAt(0) == '*'){ // RPI 880
-        	lst_type = dir_lst.substring(1);
-        	dir_lst = dir_pgm;
-        }
     } else if (token.length() > 7 
        		&& token.substring(0,7).toUpperCase().equals("SYSMAC(")){
        	dir_mac = set_path_option(dir_mac,token.substring(7,token.length()-1));  
@@ -4903,17 +4890,9 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     } else if (token.length() > 7 
        		&& token.substring(0,7).toUpperCase().equals("SYSPCH(")){
       	dir_pch = set_path_option(dir_pch,get_short_file_name(token.substring(7,token.length()-1))); 
-        if (dir_pch.charAt(0) == '*'){ // RPI 880
-        	pch_type = dir_pch.substring(1);
-        	dir_pch = dir_pgm;
-        }
     } else if (token.length() > 7 
       		&& token.substring(0,7).toUpperCase().equals("SYSPRN(")){
       	dir_prn = set_path_option(dir_prn,token.substring(7,token.length()-1)); 	
-        if (dir_prn.charAt(0) == '*'){ // RPI 880
-        	prn_type = dir_prn.substring(1);
-        	dir_prn = dir_pgm;
-        }
     } else if (token.length() > 8
       		&& token.substring(0,8).toUpperCase().equals("SYSTERM(")){
      	systerm_file_name = token.substring(8,token.length()-1); // RPI 730
@@ -5489,8 +5468,8 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	   /*
 	    * 1.  Strip long spacey name quotes if found from path and file.
 	    * 2.  Replace . and ..\ with current directory  RPI 866
-	    * 3.  Check for overriding path in filename and ignore path RPI 866
-	    * 4.  Check for overriding file in path and ignore file RPI 866
+	    * 3.  Check for overriding path in filename and ignore default path RPI 866
+	    * 4.  Check for overriding filename in path and ignore default filename RPI 866
 	    * 2.  Add directory, name, and/or type if not specified  
 	    * 3.  Replace \ with / if Linux
 	    */
@@ -5530,12 +5509,17 @@ public String get_file_name(String file_dir,String file_name,String file_type){
 	    			temp_file = new File(file_dir);
 	    			index = file_dir.indexOf(".");
 	    			if (index > 0){
-	    				// file_dir has file name so ignore file_name
-	    				if (temp_file.isFile()){
-	    					file_name = temp_file.getAbsolutePath();
-	    			    } else {
-	    			    	return null; // rpi 880
-	    			    }
+	    				// file_dir has filename.sfx so ignore file_name
+		    			if (file_dir.charAt(index-1) == '*'){  // RPI 908
+		    				if (index > 1){
+		    					// path\*.sfx
+		    				   temp_file = new File(file_dir.substring(0,index-1) + file_name + file_dir.substring(index));
+		    				} else {
+		    					// *.sfx - replace sfx
+		    					temp_file = new File(dir_pgm + File.separator + file_name + file_dir.substring(index));
+		    				}
+		    			}
+    					file_name = temp_file.getAbsolutePath(); // RPI 908 remove file exist chk 
 	    			} else {
 	    				// concatenate file_dir with file_name
 	    				if (temp_file.isDirectory()){
@@ -6018,11 +6002,17 @@ public String trim_continue(String line, boolean first_line,int ictl_end,int ict
 		    if (split_parms_index != -1){
 		    	split_quote_text = line.substring(0,split_parms_index);
 		    }
+		    if (split_op.equals("EXEC")){ // RPI 905
+		    	exec_line = true;
+		    } else {
+		    	exec_line = false;
+		    }
 		} else {
 			split_op_index = -1;
 			split_op_type  = -1;
 		}
 	} else {
+		// continued line
 		if (split_comment){
 			if (line.length() > 16){
 				return line.substring(15,eol_index); // RPI 463
@@ -6102,7 +6092,8 @@ public String trim_continue(String line, boolean first_line,int ictl_end,int ict
 					&& !split_quote
 					&& (split_op_type < max_asm_type 
 						|| split_level == 0) // RPI 315 allow ,space within (...) for mac ops 	
-				   ){
+				    && !exec_line // rpi 905   
+				){
 					split_parm_end = true; // force end
 				}
 		}
