@@ -1,0 +1,42 @@
+         MACRO
+.********************************************************************
+.*             AUTHOR.   DON HIGGINS.
+.*             DATE.     09/23/08.
+.*             REMARKS.  ADD SPMS FOR SELECT,WHEN,OTHRWISE,ENDSEL
+.********************************************************************
+.* 09/23/08 RPI 909 upgrade to use ZSTRMAC SPE's and extend compat.
+.********************************************************************
+         ENDSEL
+         COPY  ZSTRGBL
+.*       AIF   (&ZSTR_LVL EQ 0)
+           AIF   (NOT(&ZSTR_LVL EQ 0)).AIF_1_1
+               MNOTE 8,'ENDSEL - MISSING SELECT'
+               MEXIT
+.*       AEND
+.AIF_1_1   ANOP
+.*       AIF   ('&ZSTR_LVL_TYPE(&ZSTR_LVL)' NE 'SELECT')
+           AIF   (NOT('&ZSTR_LVL_TYPE(&ZSTR_LVL)' NE 'SELECT')).AIF_2_1
+               MNOTE 8,'ENDSEL - MISSING SELECT'
+               MEXIT
+.*       AEND
+.AIF_2_1   ANOP
+.*       AIF   (&ZSTR_LVL_BCNT(&ZSTR_LVL) EQ 0)
+           AIF   (NOT(&ZSTR_LVL_BCNT(&ZSTR_LVL) EQ 0)).AIF_3_1
+               MNOTE 8,'ENDSEL - MISSING WHEN'
+               MEXIT
+.*       AEND
+.AIF_3_1   ANOP
+.*       AIF (NOT &ZSTR_LVL_ELSE(&ZSTR_LVL))
+           AIF (NOT(NOT &ZSTR_LVL_ELSE(&ZSTR_LVL))).AIF_4_1
+#@SEL_&ZSTR_LVL_TCNT(&ZSTR_LVL)_&ZSTR_LVL_BCNT(&ZSTR_LVL) DS 0H
+.*       AEND
+.AIF_4_1   ANOP
+.*       AIF   (&ZSTR_LVL_ELSE(&ZSTR_LVL)                              X
+                OR &ZSTR_LVL_BCNT(&ZSTR_LVL) GT 1))
+           AIF   (NOT(&ZSTR_LVL_ELSE(&ZSTR_LVL)                        X
+                      OR &ZSTR_LVL_BCNT(&ZSTR_LVL) GT 1))).AIF_5_1
+#@SEL_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E DS 0H
+.*       AEND
+.AIF_5_1   ANOP
+&ZSTR_LVL SETA &ZSTR_LVL-1
+         MEND

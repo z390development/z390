@@ -1,0 +1,85 @@
+         MACRO
+.********************************************************************
+.*             AUTHOR.   DON HIGGINS.
+.*             DATE.     03/27/74.
+.*             REMARKS.  MACRO TO ALLOW STRUCTURED PROGRAMMING USING
+.*                       IF, THEN, ELSE, AND DO UP TO TEN LEVELS DEEP
+.*                       AND NO BRANCH INSTRUCTIONS. SEE IF MACRO.
+.********************************************************************
+.* 05/23/76 DSH - SUPPORT ELSEIF
+.* 05/15/06 DSH - Z390 RPI 315 UPDATE FOR COMPAT.
+.* 04/11/07 DSH - RPI 589 USE ZSTRGBL COPY AND EXPAND LEVELS TO 100
+.* 09/23/08 DSH - RPI 909 USE ZSTRMAC SPE'S
+.********************************************************************
+         ELSE  &OPT
+         COPY  ZSTRGBL
+.*       AIF   (&ZSTR_LVL EQ 0)
+           AIF   (NOT(&ZSTR_LVL EQ 0)).AIF_1_1
+               MNOTE 8,'ELSE - MISSING IF'
+               MEXIT
+.*       AEND
+.AIF_1_1   ANOP
+.*       AIF   ('&ZSTR_LVL_TYPE(&ZSTR_LVL)' NE 'IF')
+           AIF   (NOT('&ZSTR_LVL_TYPE(&ZSTR_LVL)' NE 'IF')).AIF_2_1
+               MNOTE 8,'ELSE - MISSING IF'
+               MEXIT
+.*       AEND
+.AIF_2_1   ANOP
+.*       AIF   (T'&OPT EQ 'O' OR '&OPT' EQ 'BEGIN')
+           AIF   (NOT(T'&OPT EQ 'O' OR '&OPT' EQ 'BEGIN')).AIF_3_1
+.*             ACALL ELSE_BEGIN
+&ACALL_1_ELSE_BEGIN SETA    1
+                 AGO   .ACL_1_ELSE_BEGIN
+.ACL_1_1         ANOP
+.*       AELSEIF ('&OPT' EQ 'END')
+           AGO   .AIF_3_E
+.AIF_3_1   ANOP
+           AIF     (NOT('&OPT' EQ 'END')).AIF_3_2
+.*             ACALL ELSE_END
+&ACALL_2_ELSE_END SETA    1
+                 AGO   .ACL_2_ELSE_END
+.ACL_2_1         ANOP
+.*       AEND
+.AIF_3_2   ANOP
+.AIF_3_E   ANOP
+         MEXIT
+.*
+.* ELSE OR ELSE BEGIN - START ELSE BLOCK
+.*
+.*      AENTRY ELSE_BEGIN
+          AGO   .ACL_1_SKIP
+.ACL_1_ELSE_BEGIN ANOP
+.*      AIF   (&ZSTR_LVL_ELSE(&ZSTR_LVL))
+          AIF   (NOT(&ZSTR_LVL_ELSE(&ZSTR_LVL))).AIF_4_1
+              MNOTE 8,'ELSE - DUPLICATE ELSE'
+              MEXIT
+.*      AEND
+.AIF_4_1  ANOP
+&ZSTR_LVL_ELSE(&ZSTR_LVL) SETB 1  ELSE
+&ZSTR_LVL_TEND(&ZSTR_LVL) SETB 1  REQUEST END LABEL
+        B      #@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E
+#@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_&ZSTR_LVL_BCNT(&ZSTR_LVL) DS 0H
+.*       AEND
+           AGO   (&ACALL_1_ELSE_BEGIN).ACL_1_1
+.ACL_1_SKIP ANOP
+.*
+.* ELSE END (SAVE AS ENDIF)
+.*
+.*       AENTRY ELSE_END
+           AGO   .ACL_2_SKIP
+.ACL_2_ELSE_END ANOP
+.*       AIF   (NOT &ZSTR_LVL_ELSE(&ZSTR_LVL))
+           AIF   (NOT(NOT &ZSTR_LVL_ELSE(&ZSTR_LVL))).AIF_5_1
+#@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_&ZSTR_LVL_BCNT(&ZSTR_LVL) DS 0H
+.*       AEND
+.AIF_5_1   ANOP
+.*       AIF   (&ZSTR_LVL_TEND(&ZSTR_LVL))
+           AIF   (NOT(&ZSTR_LVL_TEND(&ZSTR_LVL))).AIF_6_1
+#@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E DS 0H
+.*       AEND
+.AIF_6_1   ANOP
+&ZSTR_LVL SETA &ZSTR_LVL-1
+.*       AEND
+           AGO   (&ACALL_2_ELSE_END).ACL_2_1
+.ACL_2_SKIP ANOP
+         MEND

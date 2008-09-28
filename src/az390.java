@@ -318,6 +318,7 @@ public  class  az390 implements Runnable {
         * 08/11/08 RPI 895 always print PRN if ERR(0) regardless of ERRSUM    
         * 09/16/08 RPI 908 prevent trap on SYSPRN file overide etc. 
         * 09/19/08 RPI 905 add DFHRESP(DSIDERR)=F'12' for ompatiblity
+        * 09/20/08 RPI 917 issue error if START not first CSECT
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -407,7 +408,6 @@ public  class  az390 implements Runnable {
     /*
      * static limits
      */
-    int max_pass = 6; // RPI 605 was 4
     int sort_index_bias = 100000; // must be > tz390.opt_maxsym and tz390.opt_maxsym
     int sort_index_len  = 6;      // digits in key_index_bias
     int max_exp_stk = 500;
@@ -477,6 +477,7 @@ public  class  az390 implements Runnable {
     int[]     esd_sid  = null;
     int[]     esd_base = null; // RPI 301
     int[]     esd_loc  = null; // RPI 778 current loc within section
+    int tot_loc_stmt   = 0;    // RPI 920
     /*
      * using global data
      */
@@ -543,7 +544,6 @@ public  class  az390 implements Runnable {
     int prev_sect_esd = 0;
     boolean cur_sym_sect = false; // RPI 553 indicate if sym is sect or not
     boolean sect_change = false;
-    boolean loctr_found = false;  // RPI 632
     byte prev_sect_type = sym_cst;
     String[] sym_type_desc = {
     	"ABS","CST","DST","ENT","EXT","REL","RLD","LCT","WXT","UND"}; //RPI182 RPI 694
@@ -1321,7 +1321,7 @@ private void resolve_symbols(){
 	tz390.reset_opsyn();
     if  (az390_errors > 0 || sect_change){ // RPI 605 
     	 int prev_az390_errors = az390_errors + 1;
-    	 while (cur_pass < max_pass
+    	 while (cur_pass <= tz390.opt_maxpass + tot_loc_stmt // RPI 920
     	 		&& (sect_change 
     	 			|| (az390_errors > 0 && az390_errors < prev_az390_errors) // RPI 632 repeat until 0 or no change
     	 			|| cur_pass <= 1  // RPI 264, RPI 632 was <=2
@@ -1341,8 +1341,9 @@ private void resolve_symbols(){
     		 reset_lits();
     		 tz390.reset_opsyn();
          }
-    	 az390_errors = 0;
     }
+    az390_errors = 0;  // RPI 920 restore from prev.
+    bal_abort = false; // RPI 920 prevent obj ESD error
 	cur_pass++;  // incr to last pass
 }
 private void update_symbols(){
@@ -1403,9 +1404,10 @@ private void update_sects(){
 	 *   5.  Set esd_base to root section
 	 *       for cst, dst, and loctors
 	 **/
-	sect_change = false;
-	if (loctr_found && cur_pass < 2){ // RPI 632 
+	if (tot_loc_stmt > 0 && cur_pass == 1){ // RPI 632 
 		sect_change_error();  // RPI 632 force first 2 passes if LOCTR found
+	} else {
+		sect_change = false;
 	}
 	int cst_ctr = 0;
 	int index = 1;
@@ -2692,7 +2694,7 @@ private void process_bal_op(){
     case 116:  // LOCTR 0 
     	bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
     	bal_op_ok = true;
-    	loctr_found = true; // RPI 632 indicate loctr exta passes req'd
+    	tot_loc_stmt++; // RPI 920
     	process_sect(sym_lct,bal_label);
     	bal_label_ok = false;
     	break;
@@ -2711,7 +2713,11 @@ private void process_bal_op(){
     	bal_lab_attr = tz390.ascii_to_ebcdic['J']; // RPI 340
     	bal_op_ok = true;
     	process_sect(sym_cst,bal_label);  // RPI 230
-    	if (first_cst_esd == 0)first_cst_esd = cur_esd;
+    	if (first_cst_esd == 0){
+    		first_cst_esd = cur_esd;
+    	} else if (cur_esd != first_cst_esd){
+    		log_error(204,"START must be first CSECT"); // RPI 917
+    	}
     	bal_label_ok = false;
     	break;
     case 120:  // WXTRN 0

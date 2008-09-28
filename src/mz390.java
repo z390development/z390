@@ -331,7 +331,9 @@ public  class  mz390 {
      * 08/18/08 RPI 901 return 0 for N'SYSLIST or any undefine symbol 
      * 09/01/08 RPI 902 add ZSTRMAC structured macro extensions 
      * 09/15/08 RPI 905 add EXEC label, merge parm and (...) 
-     * 09/17/08 RPI 911 change ASELECT to ACASE, APM to ACALL, support lower case    
+     * 09/17/08 RPI 911 change ASELECT to ACASE, APM to ACALL, support lower case 
+     * 09/18/08 RPI 907 show line # and text in MNOTE warning for chkmac(2)
+     * 09/27/08 RPI 922 suppress MCALL comments on BAL if NOLISTCALL
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -1761,18 +1763,23 @@ public  class  mz390 {
 		 * scan for macro statement following
 		 * final MEND ignoring comments 
 		 */
-		mac_mend_eof = true; // dont inc cur_mac_line in get
+		mac_line_index++;
 		load_get_mac_line();
-		while (mac_line != null){
+		while (mac_line != null && mac_line_index < tz390.opt_maxline){
 			if (mac_line.length() >= 2){
 				if (!(mac_line.charAt(0) == '*') 
                     && !mac_line.substring(0,2).equals(".*")){
-					create_mnote(4,"statements beyond MEND found in macro file - " + mac_name[mac_name_index]);
+					create_mnote(4,"stmt after MEND in " + mac_name[mac_name_index] + " at line " + mac_file_line_num[mac_line_index] + " =\"" + mac_line + "\""); // RPI 907
+					mac_line_index--; // backup to end
+					if (load_type == load_mac_inline){
+					   tot_mac_line = mac_line_index;
+					}
 					return; //skip rest after error
 				}
 			}
 			load_get_mac_line();
 		}
+		mac_line_index--;  // backup to MEND/END
 	}
 	private void set_ictl(){  // RPI 728
 		/*
@@ -7567,9 +7574,13 @@ public  class  mz390 {
 	}
 	private void put_listcall(){
 		/*
-		 * gen listcall comment
-		 * before load or call  RPI 746
+		 * if LISTCALL
+		 *   gen listcall comment on BAL
+		 *   before load or call  RPI 746
+		 * Notes:
+		 *   1.  If LISTCALL and MCALL, all calls are listed on PRN
 		 */
+		    if (!tz390.opt_listcall)return; // RPI 922
 			String call_label = bal_label;
 			String call_parms = bal_parms;
 			if (call_label == null){

@@ -4633,8 +4633,53 @@ set GIT_COMMITTER_DATE=2021-03-24 07:53:00 +0100
 git commit -m "Reconstructed version v1.4.03a of z390 committed on behalf of Don Higgins"
 git tag -a v1.4.03a -m "Reconstructed version v1.4.03a of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.4.03b
+dir *.* /B /on /s >.allfile.txt
+dir *.zsm /B /on /s >\temp\.allzsm.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
 
+==> Stage files for V1.4.03b
+git add README.TXT
+git add RT/TEST/TESTZSM1.ZSM
+git rm  RT/TEST/TESTZSM2.ZSM
+git add RT/TEST/TESTZSM3.ZSM
+git add RT/TEST/TESTZSM4.ZSM
+git add linklib/RTGENCMP.MLC
+git add linklib/RTGENDIF.MLC
+git add linklib/RTGENDIR.MLC
+git add linklib/SUPERZAP.MLC
+git add mac/DO.MAC
+git add mac/ELSE.MAC
+git add mac/ELSEIF.MAC
+git add mac/ENDIF.MAC
+git add mac/IF.MAC
+git add mac/ZSTRGBL.CPY
+git add mac/ZSTRMAC.CPY
+git add src/az390.java
+git add src/mz390.java
+git add src/tz390.java
+git add ZSTRSPM.BAT
+git add mac/CASE.MAC
+git add mac/CASENTRY.MAC
+git add mac/ENDCASE.MAC
+git add mac/ENDSEL.MAC
+git add mac/OTHRWISE.MAC
+git add mac/SELECT.MAC
+git add mac/WHEN.MAC
+git add mac/ZSTREQU.MAC
+git add mac/spm/
+git add rt/test/TESTSPM1.MLC
 
+==> Create commit for V1.4.03b
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2008-09-28 17:25:00 -0500
+set GIT_COMMITTER_DATE=2021-03-24 08:04:00 +0100
+git commit -m "Reconstructed version v1.4.03b of z390 committed on behalf of Don Higgins"
+git tag -a v1.4.03b -m "Reconstructed version v1.4.03b of z390 committed on behalf of Don Higgins"
 
 
 

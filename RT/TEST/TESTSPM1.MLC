@@ -1,0 +1,188 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 09/23/08 RPI 909 new regression test for SPM's                    
+*********************************************************************
+         TITLE 'TESTSPM1 - TEST ZSTRMAC STRUCTURED ASSEMBLER MACROS'
+TESTSPM1 SUBENTRY
+         WTO   'TESTSPM1 STARTED'
+*
+* TEST IF, ELSEIF, ELSE, ENDIF
+*
+         IF    (CLC,=C'A',LT,=C'B')               
+               AP  PTEST,=P'1'        
+         ENDIF
+         IF    (CLC,=C'A',LT,=C'B'),AND,(CLC,=C'A',EQ,=C'A')               
+               AP  PTEST,=P'1'        
+         ENDIF
+         IF    (CLC,=C'A',GT,=C'B'),OR,(CLC,=C'A',EQ,=C'A')               
+               AP  PTEST,=P'1'        
+         ENDIF
+         IF    (CLC,=C'B',LT,=C'A')                 
+               WTO 'TESTSPM1 ERROR B < A'
+               SUBEXIT RC=16
+         ELSEIF (CLC,=C'D',LT,=C'C')
+               WTO 'TESTSPM1 ERROR B < A'
+               SUBEXIT RC=16
+         ELSE
+               AP  PTEST,=P'1'        
+         ENDIF
+         IF    (CLC,=C'F',LT,=C'E')                 
+               WTO 'TESTSPM1 ERROR B < A'
+               SUBEXIT RC=16
+         ELSEIF (CLC,=C'A',LT,=C'B'),AND,(CLC,=C'C',LT,=C'D')
+               AP  PTEST,=P'1'        
+         ELSE
+               WTO 'TESTSPM1 ELSEIF AND TEST FAILED'
+               SUBEXIT RC=16
+         ENDIF
+         IF    (CLC,=C'F',LT,=C'E')                 
+               WTO 'TESTSPM1 ERROR B < A'
+               SUBEXIT RC=16
+         ELSEIF (CLC,=C'A',GT,=C'B'),OR,(CLC,=C'C',LT,=C'D')
+               AP  PTEST,=P'1'        
+         ELSE
+               WTO 'TESTSPM1 ELSEIF AND TEST FAILED'
+               SUBEXIT RC=16
+         ENDIF
+*
+* TEST DO WHILE=,ENDDO
+*
+         LA    1,5
+         DO    WHILE=(LTR,1,NZ,1)
+               AP  PTEST,=P'1'  
+               BCTR 1,0      
+         ENDDO
+         LA    1,5
+         DO    WHILE=((CLI,=C'A',EQ,C'B'),OR,(LTR,1,NZ,1))
+               AP  PTEST,=P'1'  
+               BCTR 1,0      
+         ENDDO
+*
+* TEST DO UNTIL=,ENDDO
+*
+         LA    1,5
+         DO    UNTIL=(LTR,1,EQ,1)
+               AP  PTEST,=P'1'  
+               BCTR 1,0      
+         ENDDO
+         LA    1,5
+         DO    UNTIL=((CLI,=C'A',EQ,C'B'),OR,(LTR,1,EQ,1))
+               AP  PTEST,=P'1'  
+               BCTR 1,0      
+         ENDDO
+*
+* TEST SELECT, WHEN, OTHRWISE, ENDSEL
+*
+         MVI    FLAG,2
+         SELECT CLI,FLAG,EQ
+         WHEN  1
+               WTO 'TESTSPM1 SELECT WHEN 1 ERROR'
+               SUBEXIT RC=16
+         WHEN 2
+               AP  PTEST,=P'1'        
+         OTHRWISE
+               WTO 'TESTSPM1 SELECT OTHRWISE ERROR'
+               SUBEXIT RC=16
+         ENDSEL
+         MVI    FLAG,0
+         SELECT CLI,FLAG,EQ
+         WHEN  1
+               WTO 'TESTSPM1 SELECT WHEN 1 ERROR'
+               SUBEXIT RC=16
+         OTHRWISE
+               AP  PTEST,=P'1'        
+         ENDSEL
+         MVI    FLAG,3
+         SELECT CLI,FLAG,EQ
+         WHEN  3
+               AP  PTEST,=P'1'  
+         ENDSEL
+         ZAP    DEC,=P'2'
+         SELECT CP,DEC,EQ
+         WHEN  =P'1'
+               WTO 'TESTSPM1 SELECT WHEN 1 ERROR'
+               SUBEXIT RC=16
+         WHEN =P'2'
+               AP  PTEST,=P'1'        
+         ENDSEL
+         MVI    FLAG,2
+         SELECT 
+         WHEN  CLI,FLAG,EQ,1
+               WTO 'TESTSPM1 SELECT WHEN 1 ERROR'
+               SUBEXIT RC=16
+         WHEN CLI,FLAG,EQ,2
+               AP  PTEST,=P'1'        
+         OTHRWISE
+               WTO 'TESTSPM1 SELECT OTHRWISE ERROR'
+               SUBEXIT RC=16
+         ENDSEL
+         MVI    FLAG,0
+         SELECT 
+         WHEN  CLI,FLAG,EQ,1
+               WTO 'TESTSPM1 SELECT WHEN 1 ERROR'
+               SUBEXIT RC=16
+         OTHRWISE
+               AP  PTEST,=P'1'        
+         ENDSEL
+         MVI    FLAG,3
+         SELECT
+         WHEN  CLI,FLAG,EQ,3
+               AP  PTEST,=P'1'  
+         ENDSEL
+         ZAP    DEC,=P'2'
+         SELECT 
+         WHEN  CP,DEC,EQ,=P'1'
+               WTO 'TESTSPM1 SELECT WHEN 1 ERROR'
+               SUBEXIT RC=16
+         WHEN  CP,DEC,EQ,=P'2'
+               AP  PTEST,=P'1'        
+         ENDSEL
+*
+* TEST CASENTRY, CASE, ENDCASE
+*
+         LA    R3,0   FIRST INDEX
+         CASENTRY R3
+         CASE  0
+               AP  PTEST,=P'1'        
+         ENDCASE       
+         LA    R3,4   LAST INDEX
+         CASENTRY R3
+         CASE  4
+               AP  PTEST,=P'1'        
+         ENDCASE       
+         LA    R3,1    INDEX LOW
+         CASENTRY R3
+         CASE  4
+               WTO 'TESTSPM1 CASE 4 ERROR'
+               SUBEXIT RC=16
+         ENDCASE       
+         LA    R3,5   INDEX HIGH
+         CASENTRY R3
+         CASE  4
+               WTO 'TESTSPM1 CASE 4 ERROR'
+               SUBEXIT RC=16
+         ENDCASE       
+*
+* DISPLAY AND VERIFY TOTAL TESTS
+*
+         ED    DTEST,PTEST
+         WTO   MF=(E,WTOMSG)
+         IF    (CP,PTEST,EQ,=P'36')
+               WTO 'TESTSPM1 ENDED OK'
+               SUBEXIT RC=0
+         ELSE
+               WTO 'TESTSPM1 ENDED WITH ERRORS'
+               SUBEXIT RC=16
+         ENDIF
+PTEST    DC    PL3'0'
+WTOMSG   DC    AL2(WTOEND-*,0),C'TESTSPM1 TOTAL TESTS ='
+DTEST    DC    X'402020202020'
+WTOEND   EQU   *
+FLAG     DC    X'00'
+DEC      DC    PL2'0'
+         EQUREGS
+         END

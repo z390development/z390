@@ -9,6 +9,7 @@
 * 04/13/07 INITIAL CODING OF SUPERZAP V1,0               
 * 07/11/07 RPI 654 REMOVE LOCAL PM, PENTRY, PEXIT AND USE MAC VERSIONS
 * 10/01/07 RPI 684 TEST FOR SYSIN DD AND IF NONE, DEFAULT TO CONSOLE.  
+* 09/27/08 RPI 909 CORRECT DO WHILE= TO INCLUDE IN (...)               
 *********************************************************************
 *
 *  SUPERZAP - UPDATE OR DUMP SECTIONS OF ANY FILE
@@ -409,8 +410,8 @@ CMD_NAME PENTRY
                      AHI  R2,1
                ENDDO
          ELSE
-               DO    WHILE=(CLI,0(R2),NE,C' '),                        X
-               AND,(CLI,0(R2),NE,C'*'))
+               DO    WHILE=((CLI,0(R2),NE,C' '),                       X
+               AND,(CLI,0(R2),NE,C'*'))   RPI 909 MISSING (
                      AHI  R2,1
                ENDDO
          ENDIF

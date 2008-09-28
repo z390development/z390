@@ -1,5 +1,4 @@
 * TEST ZSTRMAC CONVERSION UTILITY
-* 09/17/08 RPI 911 CHANGE ASELECT TO ACASE AND APM TO ACALL
          :&I   SETA  1
          AIF   (&I EQ 1)   TEST TRUE
                MNOTE 'AIF TRUE I=&I'        
@@ -32,18 +31,18 @@
                MNOTE 'AWHILE 1-5 I=&I'
                :&I SETA &I+1
          AEND       
-         ACALL COUNT
-         ACALL COUNT
+         APM   COUNT
+         APM   COUNT
          :&I   SETA 0
          AWHILE (&I LE 4)
-                 ACASE (&I)
+                 ASELECT (&I)
                  AWHEN 1
                         MNOTE 'AWHEN I=1'
                  AWHEN 2
                         MNOTE 'AWHEN I=2'
                         :&J SETA 0                      
                         AWHILE (&J LE 4)
-                                ACASE (&J)
+                                ASELECT (&J)
                                 AWHEN 1
                                        MNOTE 'AWHEN J=1'
                                 AWHEN 2

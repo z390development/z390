@@ -1,0 +1,35 @@
+         MACRO
+         ZSTREQU
+         GBLB  &ZSTR_EQU
+         AIF   (&ZSTR_EQU)
+               MEXIT
+         AEND
+         :&ZSTR_EQU SETB 1
+         PUSH  PRINT,NOPRINT
+         PRINT OFF,NOPRINT
+.********************************************************************
+.* EQUBC - DEFINE COMMON EQU SYMBOLS FOR USE IN STRUCTURED MACROS
+.********************************************************************
+.* 09/27/08 RPI 909 CHANGED FROM CPY TO MAC CALLED BY ZSTRGBL.CPY
+.********************************************************************
+H        EQU   2                                                           
+L        EQU   4                                                           
+E        EQU   8                                                           
+NH       EQU   13                                                          
+NL       EQU   11                                                          
+NE       EQU   7                                                           
+O        EQU   1                                                           
+P        EQU   2                                                           
+M        EQU   4                                                           
+Z        EQU   8                                                           
+NP       EQU   13                                                          
+NM       EQU   11                                                          
+NZ       EQU   7                                                           
+NO       EQU   14                                                          
+EQ       EQU   8                                                           
+GT       EQU   2                                                           
+LT       EQU   4                                                           
+GE       EQU   11                                                          
+LE       EQU   13 
+         POP   PRINT,NOPRINT
+         MEND

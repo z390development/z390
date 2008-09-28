@@ -1,7 +1,7 @@
 .********************************************************************
-.*             AUTHOR.   DON HIGGINS.                                      
-.*             DATE.     09/23/08.                                         
-.*             REMARKS.  SHARED GLOBAL VARIABLES FOR ZSTRMAC SPMS          
+.*             AUTHOR.   DON HIGGINS.
+.*             DATE.     09/23/08.
+.*             REMARKS.  SHARED GLOBAL VARIABLES FOR ZSTRMAC SPMS
 .********************************************************************
 .* 09/23/08 RPI 909 upgrade to use ZSTRMAC SPE's and extend compat.
 .********************************************************************
@@ -25,7 +25,7 @@
 .*
          GBLA  &ZSTR_AIF_CNT                AIF COUNTER
 .*
-.*  DO, ENDDO                     
+.*  DO, ENDDO
 .*
          GBLA  &ZSTR_DO_CNT
 .*
@@ -42,5 +42,5 @@
          GBLC &ZSTR_CASE_REG(&ZSTR_MAX_LVL)  REG WITH INDEX 1-N
          GBLA &ZSTR_CASE_MAX(&ZSTR_MAX_LVL)  MAX CASE INDEX 1-N VALUE
 .*
-.*  END OF ZSTRGBL.CPY                     
+.*  END OF ZSTRGBL.CPY
 .*

@@ -1,15 +1,26 @@
          MACRO                                                             
-&N       ENDIF
 .********************************************************************
 .* ENDIF - END OF ALTERATE SELECTION                                                                
 .********************************************************************                                                                
 .* 05/14/06 DSH Z390 RPI 316 UPDATE FOR COMPAT.
 .* 04/11/07 DSH Z390 RPI 589 USE ZSTRGBL COPY AND EXPAND LEVELS 100 
+.* 09/23/08 RPI 909 upgrade to use ZSTRMAC SPE's and extend compat.
 .********************************************************************                                                                
+&N       ENDIF
          COPY  ZSTRGBL
-         AIF   (&ZSTR_SEQ(&ZSTR_LEVEL) NE 4).CONT                                    
-&N       ELSE  END                                                         
-         MEXIT                                                             
-.CONT    ANOP                                                              
-&N       ELSE  CONTINUE                                                    
+         AIF   (&ZSTR_LVL EQ 0)
+               MNOTE 8,'ENDIF - MISSING IF'                                       
+               MEXIT
+         AEND                                          
+         AIF   ('&ZSTR_LVL_TYPE(&ZSTR_LVL)' NE 'IF')
+               MNOTE 8,'ENDIF - MISSING IF'                                       
+               MEXIT
+         AEND                                          
+         AIF   (NOT &ZSTR_LVL_ELSE(&ZSTR_LVL))
+#@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_&ZSTR_LVL_BCNT(&ZSTR_LVL) DS 0H    
+         AEND
+         AIF   (&ZSTR_LVL_TEND(&ZSTR_LVL))
+#@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E DS 0H    
+         AEND
+         :&ZSTR_LVL SETA &ZSTR_LVL-1
          MEND

@@ -9,6 +9,7 @@
 * 08/12/06 RPI 363 REPACKAGE MVS_MACLIB.ZIP AND Z390_RT.ZIP RT TESTS
 * 04/19/08 RPI 833 add SETC quotes for HLASM compatibilitys               
 * 09/05/08 rpi 797 upgrade to use ZSTRMAC structured programming
+* 09/18/08 rpi 911 replace ASELECT>ACASE, ACALL>ACALL               
 *********************************************************************
 *
 *  RTGENDIR READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
@@ -21,11 +22,11 @@
          :&FILE    SETC  ''
          :&TEXT    SETC  ''
          MNOTE 'RTGENDIR SYSPARM=&SYSPARM'
-         APM   READ_TEXT
+         ACALL   READ_TEXT
          AWHILE ('&TEXT' NE '')
                ACTR 100
-               APM  PROC_TEXT
-               APM  READ_TEXT
+               ACALL  PROC_TEXT
+               ACALL  READ_TEXT
          AEND
          MNOTE 'RTGENDIR FILES=&TOT_FILES'
 .*

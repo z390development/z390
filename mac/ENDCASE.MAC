@@ -1,0 +1,35 @@
+         MACRO                                                             
+.********************************************************************
+.*             AUTHOR.   DON HIGGINS.                                      
+.*             DATE.     09/23/08.                                         
+.*             REMARKS.  ADD SPM MACROS FOR CASENTRY, CASE, ENDCASE        
+.********************************************************************
+.* 09/23/08 RPI 909 upgrade to use ZSTRMAC SPE's and extend compat.
+.********************************************************************
+         ENDCASE                                                                       
+         COPY  ZSTRGBL
+         AIF   (&ZSTR_LVL EQ 0)
+               MNOTE 8,'ENDCASE - MISSING CASENTRY'                                   
+               MEXIT
+         AEND     
+         AIF   ('&ZSTR_LVL_TYPE(&ZSTR_LVL)' NE 'CASENTRY')
+               MNOTE 8,'ENDCASE - MISSING CASENTRY'                                   
+               MEXIT
+         AEND     
+         AIF   ('&ZSTR_LVL_BCNT(&ZSTR_LVL)' EQ 0)
+               MNOTE 8,'ENDCASE - MISSING CASE(S)'                                   
+               MEXIT
+         AEND     
+         B     #@CAS_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E
+#@CAS_&ZSTR_LVL_TCNT(&ZSTR_LVL)_A DC A(#@CAS_&ZSTR_LVL_TCNT(&ZSTR_LVL)_X
+               T)
+#@CAS_&ZSTR_LVL_TCNT(&ZSTR_LVL)_G DS 0H
+         CLFI  &ZSTR_CASE_REG(&ZSTR_LVL),&ZSTR_CASE_MAX(&ZSTR_LVL)
+         BH    #@CAS_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E
+         SLA   &ZSTR_CASE_REG(&ZSTR_LVL),2
+         A     &ZSTR_CASE_REG(&ZSTR_LVL),#@CAS_&ZSTR_LVL_TCNT(&ZSTR_LVLX
+               )_A
+         LT    &ZSTR_CASE_REG(&ZSTR_LVL),0(&ZSTR_CASE_REG(&ZSTR_LVL))
+         BNZR  &ZSTR_CASE_REG(&ZSTR_LVL)
+#@CAS_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E DS 0H
+         MEND

@@ -1,8 +1,7 @@
-* TEST ZSTRMAC2 ACASE EXTENSIONS FOR V1,V2,(V3,V4) V=N,C'?',X'??'
-* 09/17/08 RPI 911 CHANGE ASELECT TO ACASE AND APM TO ACALL
+* TEST ZSTRMAC2 ASELECT EXTENSIONS FOR V1,V2,(V3,V4) V=N,C'?',X'??'
          :&I   SETA 0
          AWHILE (&I LE 255)
-                 ACASE (&I)
+                 ASELECT (&I)
                  AWHEN 0
                         MNOTE 'AWHEN I=0'
                  AWHEN 1

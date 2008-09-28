@@ -7,6 +7,7 @@
 * Date   - 09/05/08                                                 *
 *********************************************************************
 * 09/05/08 RPI 797 READ FILENAMES FOR DIF DIR, GEN ERASE FOR MATCHES
+* 09/18/08 rpi 911 replace ASELECT>ACASE, APM>ACALL               
 *********************************************************************
 *
 *  RTGENDIR READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
@@ -21,12 +22,12 @@
          :&TEXT    SETC  ''
          :&DIF_DIR SETC  ''
          MNOTE 'RTGENDIF SYSPARM=&SYSPARM'
-         APM   INIT_DIF_DIR
-         APM   READ_TEXT
+         ACALL   INIT_DIF_DIR
+         ACALL   READ_TEXT
          AWHILE ('&TEXT' NE '')
                ACTR 100
-               APM  PROC_TEXT
-               APM  READ_TEXT
+               ACALL  PROC_TEXT
+               ACALL  READ_TEXT
          AEND
          MNOTE 'RTGENDIF FILES=&TOT_FILES MATCHES=&TOT_MATCH'
          :&TOT_FILES SETA &TOT_FILES-1  SUBTRACT RTGENDIR.BAT
@@ -68,7 +69,7 @@
                  AIF  ('&TEXT'(3,1)  EQ '/')    SKIP IF NO MM/DD/YYYY
                      :&FILE    SETC (UPPER '&TEXT'(40,265))
                      :&TOT_FILES SETA &TOT_FILES+1
-                     APM CHK_FILE
+                     ACALL CHK_FILE
                  AEND
              AEND
          AEND

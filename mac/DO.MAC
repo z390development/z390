@@ -1,9 +1,4 @@
          MACRO                                                             
-         DO    &END,&WHILE=,&UNTIL=                                                            
-         COPY  ZSTRGBL
-         LCLA  &N,&M,&S,&ZSTR_LAB1,&L,&I                                        
-         LCLA  &UNTIL_LAB                                                      
-         LCLC  &OP,&OPR                                                    
 .********************************************************************
 .*             AUTHOR.   DON HIGGINS.                                      
 .*             DATE.     03/27/74.                                         
@@ -15,56 +10,74 @@
 .* 07/21/06 DSH Z390 RPI 379 USE IF TO SUPPORT COMPOUND WHILE/UNTIL
 .* 04/11/07 DSH Z390 RPI 589 USE ZSTRGBL AND EXPAND LEVELS TO 100   
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 09/23/08 RPI 909 upgrade to use ZSTRMAC SPE's and extend compat.
 .********************************************************************
-         AIF   (&ZSTR_DOLVL EQ &ZSTR_MAX_LEVEL).ERR1                                         
-         AIF   ('&WHILE' NE '').WHILE
-         AIF   ('&UNTIL' NE '').UNTIL
-         AIF   ('&END' EQ 'END').END
-&PARM    SETC  '&END'
-         AGO   .ERR3
-.UNTIL   ANOP 
-&UNTIL_LAB SETA &UNTIL_LAB+1
-&ZSTR_DOLVL   SETA  &ZSTR_DOLVL+1                                                    
-&ZSTR_DOLAB   SETA  &ZSTR_DOLAB+1                                                    
-&ZSTR_DOSEQ(&ZSTR_DOLVL) SETA 1                                                      
-&ZSTR_DO(&ZSTR_DOLVL) SETA &ZSTR_DOLAB                                                    
-         B     ZSTR_DO_&ZSTR_DOLAB._CODE 
-ZSTR_DO_&ZSTR_DOLAB._TEST EQU *  
-&IFPARM  SETC  '&UNTIL'(2,K'&UNTIL-2)                                                         
-         IF    &IFPARM
-               B     ZSTR_DO_&ZSTR_DOLAB._END                                               
+         DO    &END,&WHILE=,&UNTIL=                                                            
+         COPY  ZSTRGBL
+         AIF   ('&END' NE '')
+               AIF ('&END' EQ 'END')
+                  ACALL DO_END
+                  MEXIT
+               AELSE
+                  MNOTE 8,'DO - UNSUPPORTED OPTION'      
+                  MEXIT                           
+               AEND
+         AEND
+         AIF   (&ZSTR_LVL EQ &ZSTR_MAX_LVL)
+               MNOTE 8,'DO - LEVEL OVERFLOW'                                     
+               MEXIT
+         AEND 
+         :&ZSTR_LVL SETA &ZSTR_LVL+1
+         :&ZSTR_LVL_TYPE(&ZSTR_LVL) SETC 'DO'
+         :&ZSTR_DO_CNT SETA &ZSTR_DO_CNT+1
+         :&ZSTR_LVL_TCNT(&ZSTR_LVL) SETA &ZSTR_DO_CNT
+         AIF   ('&WHILE' NE '')
+               ACALL DO_WHILE
+         AELSEIF ('&UNTIL' NE '')
+               ACALL DO_UNTIL
+         AELSE
+               MNOTE 8,'DO - MISSING WHILE=, UNTIL=, OR END'                                    
+         AEND
+         MEXIT
+.*      
+.* DO END     
+.*      
+         AENTRY DO_END
+         :&PARM    SETC  '&SYSLIST(2)'
+         AIF   (&ZSTR_LVL EQ 0)
+               MNOTE 8,'DO - END OUT OF SEQUENCE'                                
+               MEXIT
+         AEND                                          
+         AIF   ('&ZSTR_LVL_TYPE(&ZSTR_LVL)' NE 'DO')                                  
+               MNOTE 8,'DO END - MISSING DO'  
+               MEXIT
+         AEND                              
+         B     #@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_T           
+#@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E DS 0H                                    
+         :&ZSTR_LVL SETA &ZSTR_LVL-1                                                    
+         AEND
+.*
+.* DO WHILE=(CLC,A,EQ,B)
+.*
+         AENTRY DO_WHILE
+#@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_T DS 0H                                                           
+         :&IFPARM  SETC  '&WHILE'(2,K'&WHILE-2)                                                         
+         IF &IFPARM
+               B   #@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL-1)_1
          ENDIF
-ZSTR_DO_&ZSTR_DOLAB._CODE EQU *                                                             
-         AGO   .EXIT                                                       
-.WHILE   ANOP        
-&ZSTR_DOLVL   SETA  &ZSTR_DOLVL+1                                                    
-&ZSTR_DOLAB   SETA  &ZSTR_DOLAB+1                                                    
-&ZSTR_DOSEQ(&ZSTR_DOLVL) SETA 1                                                      
-&ZSTR_DO(&ZSTR_DOLVL) SETA &ZSTR_DOLAB                                                    
-ZSTR_DO_&ZSTR_DOLAB._TEST EQU   *                                                           
-&IFPARM  SETC  '&WHILE'(2,K'&WHILE-2)                                                         
+         B     #@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E                                                
+#@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_1 DS 0H                                                             
+         AEND
+.*
+.* DO UNTIL=(CLC,A,EQ,B)
+.*
+         AENTRY DO_UNTIL
+         B     #@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_1 
+#@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_T DS 0H  
+         :&IFPARM  SETC  '&UNTIL'(2,K'&UNTIL-2)                                                         
          IF    &IFPARM
-               B   ZSTR_DO_&ZSTR_DOLAB._CODE
+               B     #@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL-1)_E                                               
          ENDIF
-         B     ZSTR_DO_&ZSTR_DOLAB._END                                               
-ZSTR_DO_&ZSTR_DOLAB._CODE EQU *                                                             
-         AGO   .EXIT                                                       
-.END     ANOP                                                              
-&PARM    SETC  '&SYSLIST(2)'
-         AIF   (&N GT 1).ERR3                                              
-         AIF   (&ZSTR_DOLVL EQ 0).ERR4                                          
-         AIF   (&ZSTR_DOSEQ(&ZSTR_DOLVL) NE 1).ERR4                                  
-&ZSTR_DOSEQ(&ZSTR_DOLVL) SETA 0                                                      
-         B     ZSTR_DO_&ZSTR_DO(&ZSTR_DOLVL)._TEST           
-ZSTR_DO_&ZSTR_DO(&ZSTR_DOLVL)._END EQU *                                    
-&ZSTR_DOLVL   SETA  &ZSTR_DOLVL-1                                                    
-         AGO   .EXIT                                                       
-.ERR1    MNOTE 8,'DO - LEVEL OVERFLOW'                                     
-         AGO   .EXIT                                                       
-.ERR2    MNOTE 8,'DO - MISSING OPERAND'                                    
-         AGO   .EXIT                                                       
-.ERR3    MNOTE 8,'DO - INVALID OPERAND - &PARM'                                    
-         AGO   .EXIT                                                       
-.ERR4    MNOTE 8,'DO - END OUT OF SEQUENCE'                                
-.EXIT    ANOP                                                              
+#@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_1 DS 0H                                                             
+         AEND
          MEND

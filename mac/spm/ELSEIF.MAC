@@ -1,0 +1,121 @@
+         MACRO
+.********************************************************************
+.*             AUTHOR.   DON HIGGINS.
+.*             DATE.     05/23/76.
+.*             REMARKS.  CONTROL STRUCTURE FOR CONDITIONAL EXECUTION.
+.********************************************************************
+.* 05/12/06 Z390 RPI 316 UPDATE FOR COMPAT.
+.* 04/11/07 Z390 RPI 589 USE ZSTRGBL AND EXPAND LEVELS TO 100
+.* 11/02/07 Z390 RPI 734 CORRECT BAD CONDITION CODE FOR OR CONNECTOR
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 09/23/08 RPI 909 update using ZSTRMAC SPE's
+.********************************************************************
+         ELSEIF
+         COPY  ZSTRGBL
+.*       AIF   (&ZSTR_LVL EQ 0)
+           AIF   (NOT(&ZSTR_LVL EQ 0)).AIF_1_1
+               MNOTE 8,'ELSEIF - MISSING IF'
+               MEXIT
+.*       AEND
+.AIF_1_1   ANOP
+.*       AIF   ('&ZSTR_LVL_TYPE(&ZSTR_LVL)' NE 'IF')
+           AIF   (NOT('&ZSTR_LVL_TYPE(&ZSTR_LVL)' NE 'IF')).AIF_2_1
+               MNOTE 8,'ELSEIF - MISSING IF'
+               MEXIT
+.*       AEND
+.AIF_2_1   ANOP
+&ZSTR_LVL_TEND(&ZSTR_LVL) SETB 1  REQUEST END LABEL
+         B     #@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E
+#@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_&ZSTR_LVL_BCNT(&ZSTR_LVL) DS 0H
+&BLK_CNT SETA &ZSTR_LVL_BCNT(&ZSTR_LVL)+1 THIS BLK LAB FOR OR
+&ZSTR_LVL_BCNT(&ZSTR_LVL) SETA &ZSTR_LVL_BCNT(&ZSTR_LVL)+2
+&AND_CONN SETB 1             ASSUME AND CONNECTOR IF ANY
+&N       SETA N'&SYSLIST         TOTAL TEST AND CONNECTOR PARMS
+&S       SETA 1                  OPERAND INDEX
+.*       AWHILE (&S LE &N)
+.AWH_1_T   ANOP
+           AIF    (NOT(&S LE &N)).AWH_1_E
+&SN            SETA  N'&SYSLIST(&S)        TEST OPERANDS
+&OP            SETC  '&SYSLIST(&S,1)'      TEST OPCODE
+.*             AIF (&SN EQ 1)  COMPARE NOT IN QUOTES
+                 AIF (NOT(&SN EQ 1)).AIF_3_1   COMPARE NOT IN QUOTES
+&BC                SETC  '&SYSLIST(&S+2)'  TEST COMPARE MASK
+.*                 AIF (&N LT &S+3)
+                     AIF (NOT(&N LT &S+3)).AIF_4_1
+                       MNOTE 8,'IF - TEST SUBLIST LENGTH INVALID - &SYSX
+               LIST(&S)'
+                       MEXIT
+.*                 AEND
+.AIF_4_1             ANOP
+&OPR               SETC '&SYSLIST(&S+1),&SYSLIST(&S+3)'
+&S                 SETA  &S+4-1     POS TO TEST END-1
+.*             AELSEIF (&SN EQ 4)  OPERANDS IN QUOTES WITH CONNECTORS
+                 AGO   .AIF_3_E
+.AIF_3_1         ANOP
+                 AIF     (NOT(&SN EQ 4)).AIF_3_2   OPERANDS IN QUOTES WX
+               ITH CONNECTORS
+&BC                SETC  '&SYSLIST(&S,3)'
+&OPR               SETC  '&SYSLIST(&S,2),&SYSLIST(&S,4)'
+.*             AEND
+.AIF_3_2         ANOP
+.AIF_3_E         ANOP
+.*             AIF   (&AND_CONN)    IF AND EXIT IF COMPARE FAILS
+                 AIF   (NOT(&AND_CONN)).AIF_5_1     IF AND EXIT IF COMPX
+               ARE FAILS
+         &OP   &OPR
+         BC    15-&BC,#@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_&ZSTR_LVL_BCNT(&ZSX
+               TR_LVL)
+.*             AELSE                IF OR  EXEC BLOCK IF TEST OK
+                 AGO   .AIF_5_E
+.AIF_5_1         ANOP
+#@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_&ZSTR_LVL_BCNT(&ZSTR_LVL) DS 0H
+&ZSTR_LVL_BCNT(&ZSTR_LVL) SETA &ZSTR_LVL_BCNT(&ZSTR_LVL)+1
+         &OP   &OPR
+         BC    15-&BC,#@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_&ZSTR_LVL_BCNT(&ZSX
+               TR_LVL)
+.*             AEND
+.AIF_5_E         ANOP
+&S             SETA  &S+1       ADVANCE TO CONNECTOR OR END
+.*             AIF (&S LE &N)
+                 AIF (NOT(&S LE &N)).AIF_6_1
+&SN                SETA N'&SYSLIST(&S)
+.*                 AIF (&SN NE 1)
+                     AIF (NOT(&SN NE 1)).AIF_7_1
+                       MNOTE 8,'IF - INVALID CONNECTOR'
+                       MEXIT
+.*                 AEND
+.AIF_7_1             ANOP
+.*                 AIF   ('&SYSLIST(&S)' EQ 'OR')
+                     AIF   (NOT('&SYSLIST(&S)' EQ 'OR')).AIF_8_1
+         B     #@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_&BLK_CNT
+&AND_CONN              SETB 0
+.*                 AELSEIF  ('&SYSLIST(&S)' EQ 'AND')
+                     AGO   .AIF_8_E
+.AIF_8_1             ANOP
+                     AIF      (NOT('&SYSLIST(&S)' EQ 'AND')).AIF_8_2
+&AND_CONN              SETB 1
+.*                 AELSE
+                     AGO   .AIF_8_E
+.AIF_8_2             ANOP
+                       MNOTE 8,'IF - INVALID CONNECTOR'
+                       MEXIT
+.*                 AEND
+.AIF_8_E             ANOP
+&S                 SETA &S+1
+.*                 AIF (&S GT &N)
+                     AIF (NOT(&S GT &N)).AIF_9_1
+                       MNOTE 8,'IF - MISSING TEST AFTER CONNECTOR'
+                       MEXIT
+.*                 AEND
+.AIF_9_1             ANOP
+.*             AEND
+.AIF_6_1         ANOP
+.*       AEND
+           AGO   .AWH_1_T
+.AWH_1_E   ANOP
+.*       AIF   (NOT &AND_CONN)
+           AIF   (NOT(NOT &AND_CONN)).AIF_10_1
+#@IF_&ZSTR_LVL_TCNT(&ZSTR_LVL)_&BLK_CNT DS 0H
+.*       AEND
+.AIF_10_1  ANOP
+         MEND

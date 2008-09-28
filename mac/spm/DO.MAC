@@ -1,0 +1,123 @@
+         MACRO
+.********************************************************************
+.*             AUTHOR.   DON HIGGINS.
+.*             DATE.     03/27/74.
+.*             REMARKS.  MACRO TO ALLOW STRUCTURED PROGRAMMING USING
+.*                       IF, THEN, ELSE, AND DO UP TO TEN LEVELS DEEP
+.*                       AND NO BRANCH INSTRUCTIONS. SEE IF MACRO.
+.********************************************************************
+.* 05/14/06 DSH Z390 RPI 316 UPDATED FOR COMPAT.
+.* 07/21/06 DSH Z390 RPI 379 USE IF TO SUPPORT COMPOUND WHILE/UNTIL
+.* 04/11/07 DSH Z390 RPI 589 USE ZSTRGBL AND EXPAND LEVELS TO 100
+.* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 09/23/08 RPI 909 upgrade to use ZSTRMAC SPE's and extend compat.
+.********************************************************************
+         DO    &END,&WHILE=,&UNTIL=
+         COPY  ZSTRGBL
+.*       AIF   ('&END' NE '')
+           AIF   (NOT('&END' NE '')).AIF_1_1
+.*             AIF ('&END' EQ 'END')
+                 AIF (NOT('&END' EQ 'END')).AIF_2_1
+.*                ACALL DO_END
+&ACALL_1_DO_END     SETA    1
+                    AGO   .ACL_1_DO_END
+.ACL_1_1            ANOP
+                  MEXIT
+.*             AELSE
+                 AGO   .AIF_2_E
+.AIF_2_1         ANOP
+                  MNOTE 8,'DO - UNSUPPORTED OPTION'
+                  MEXIT
+.*             AEND
+.AIF_2_E         ANOP
+.*       AEND
+.AIF_1_1   ANOP
+.*       AIF   (&ZSTR_LVL EQ &ZSTR_MAX_LVL)
+           AIF   (NOT(&ZSTR_LVL EQ &ZSTR_MAX_LVL)).AIF_3_1
+               MNOTE 8,'DO - LEVEL OVERFLOW'
+               MEXIT
+.*       AEND
+.AIF_3_1   ANOP
+&ZSTR_LVL SETA &ZSTR_LVL+1
+&ZSTR_LVL_TYPE(&ZSTR_LVL) SETC 'DO'
+&ZSTR_DO_CNT SETA &ZSTR_DO_CNT+1
+&ZSTR_LVL_TCNT(&ZSTR_LVL) SETA &ZSTR_DO_CNT
+.*       AIF   ('&WHILE' NE '')
+           AIF   (NOT('&WHILE' NE '')).AIF_4_1
+.*             ACALL DO_WHILE
+&ACALL_2_DO_WHILE SETA    1
+                 AGO   .ACL_2_DO_WHILE
+.ACL_2_1         ANOP
+.*       AELSEIF ('&UNTIL' NE '')
+           AGO   .AIF_4_E
+.AIF_4_1   ANOP
+           AIF     (NOT('&UNTIL' NE '')).AIF_4_2
+.*             ACALL DO_UNTIL
+&ACALL_3_DO_UNTIL SETA    1
+                 AGO   .ACL_3_DO_UNTIL
+.ACL_3_1         ANOP
+.*       AELSE
+           AGO   .AIF_4_E
+.AIF_4_2   ANOP
+               MNOTE 8,'DO - MISSING WHILE=, UNTIL=, OR END'
+.*       AEND
+.AIF_4_E   ANOP
+         MEXIT
+.*
+.* DO END
+.*
+.*       AENTRY DO_END
+           AGO   .ACL_1_SKIP
+.ACL_1_DO_END ANOP
+&PARM    SETC  '&SYSLIST(2)'
+.*       AIF   (&ZSTR_LVL EQ 0)
+           AIF   (NOT(&ZSTR_LVL EQ 0)).AIF_5_1
+               MNOTE 8,'DO - END OUT OF SEQUENCE'
+               MEXIT
+.*       AEND
+.AIF_5_1   ANOP
+.*       AIF   ('&ZSTR_LVL_TYPE(&ZSTR_LVL)' NE 'DO')
+           AIF   (NOT('&ZSTR_LVL_TYPE(&ZSTR_LVL)' NE 'DO')).AIF_6_1
+               MNOTE 8,'DO END - MISSING DO'
+               MEXIT
+.*       AEND
+.AIF_6_1   ANOP
+         B     #@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_T
+#@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E DS 0H
+&ZSTR_LVL SETA &ZSTR_LVL-1
+.*       AEND
+           AGO   (&ACALL_1_DO_END).ACL_1_1
+.ACL_1_SKIP ANOP
+.*
+.* DO WHILE=(CLC,A,EQ,B)
+.*
+.*       AENTRY DO_WHILE
+           AGO   .ACL_2_SKIP
+.ACL_2_DO_WHILE ANOP
+#@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_T DS 0H
+&IFPARM  SETC  '&WHILE'(2,K'&WHILE-2)
+         IF &IFPARM
+               B   #@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL-1)_1
+         ENDIF
+         B     #@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_E
+#@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_1 DS 0H
+.*       AEND
+           AGO   (&ACALL_2_DO_WHILE).ACL_2_1
+.ACL_2_SKIP ANOP
+.*
+.* DO UNTIL=(CLC,A,EQ,B)
+.*
+.*       AENTRY DO_UNTIL
+           AGO   .ACL_3_SKIP
+.ACL_3_DO_UNTIL ANOP
+         B     #@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_1
+#@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_T DS 0H
+&IFPARM  SETC  '&UNTIL'(2,K'&UNTIL-2)
+         IF    &IFPARM
+               B     #@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL-1)_E
+         ENDIF
+#@DO_&ZSTR_LVL_TCNT(&ZSTR_LVL)_1 DS 0H
+.*       AEND
+           AGO   (&ACALL_3_DO_UNTIL).ACL_3_1
+.ACL_3_SKIP ANOP
+         MEND

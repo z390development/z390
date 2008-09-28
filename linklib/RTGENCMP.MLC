@@ -9,6 +9,7 @@
 * 08/12/06 RPI 363 REPACKAGE MVS_MACLIB.ZIP AND Z390_RT.ZIP RT TESTS
 * 04/19/08 RPI 833 add SETC quotes for HLASM compatibility               
 * 09/05/08 RPI 797 upgrade to use ZSTRMAC structruced programming
+* 09/18/08 rpi 911 replace ASELECT>ACASE, APM>ACALL               
 *********************************************************************
 *
 *  RTGENBAT READS FILE &SYSPARM.DAT AND GENERATES &SYSPARM.PCH
@@ -27,22 +28,22 @@
          :&LAST_FILE SETC ''
          :&NEXT_FILE SETC ''
          :&DUP       SETA 0 
-         APM   READ_NEXT_FILE
+         ACALL   READ_NEXT_FILE
          AWHILE ('&NEXT_FILE' NE '')
                ACTR 100
                AIF ('&NEXT_FILE' EQ '&LAST_FILE')
                    :&DUP SETA &DUP+1
                    AIF  (&DUP EQ 2)
-                       APM COMP_FILES
+                       ACALL COMP_FILES
                    AEND
                AELSE
-                   APM CHK_DUPS
+                   ACALL CHK_DUPS
                    :&LAST_FILE SETC '&NEXT_FILE'
                    :&DUP SETA 1
                AEND
-               APM READ_NEXT_FILE
+               ACALL READ_NEXT_FILE
          AEND
-         APM   CHK_DUPS
+         ACALL   CHK_DUPS
          PUNCH 'REM TOT COMPARES = &TOT_COMP  TOT ERRORS =&TOT_ERR',   X
                DSNAME='&SYSPARM'
          AIF   (&TOT_ERR GT 0)
@@ -64,10 +65,10 @@
                AIF (&DUP GT 2)
                    :&MSG SETC 'MORE THAN 2 DUPLICATE FILES FOR &LAST_FIX
                LE'
-                   APM ERR_MSG
+                   ACALL ERR_MSG
                AELSEIF (&DUP EQ 1)
                    :&MSG SETC 'MISSING FILE FOR &LAST_FILE'
-                   APM ERR_MSG
+                   ACALL ERR_MSG
                AEND
          AEND
          AEND

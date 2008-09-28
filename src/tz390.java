@@ -202,6 +202,7 @@ public  class  tz390 {
     * 09/08/08 RPI 903 allow 0 length file type for CD command usage 
     * 09/15/08 RPI 905 remove ", " delimited comments on EXEC stmts  
     * 09/16/08 RPI 908 support path\file overrides for output files and prevent traps
+    * 09/25/08 RPI 920 add MAXPASS(2) for nested forward sym refs (see az390 added LOCTR cnt)
     ********************************************************
     * Shared z390 tables                  (last RPI)
     *****************************************************/
@@ -210,7 +211,7 @@ public  class  tz390 {
 	 */
 	// dsh - change version for every release and ptf
 	// dsh - change dcb_id_ver for dcb field changes
-    String version    = "V1.4.03a";  //dsh
+    String version    = "V1.4.03b";  //dsh
 	String dcb_id_ver = "DCBV1001";  //dsh
 	byte   acb_id_ver = (byte)0xa0;  // ACB vs DCB id RPI 644 
 	/*
@@ -299,6 +300,7 @@ public  class  tz390 {
     int opt_maxline = 200000;
     int opt_maxlog  = 1000000; // RPI 731
     int opt_maxparm = 10000;
+    int opt_maxpass = 2;       // RPI 920 maximum az390 passes for nested symbol refs
     int opt_maxpc   = 50000;  // RPI 439 pseudo code working set
     int opt_maxque  = 1000;   // RPI 731 max CMD output queue
     int opt_maxrld  = 10000;
@@ -4732,6 +4734,9 @@ private void process_option(String opt_file_name,int opt_file_line,String token)
     } else if (token.length() > 8
       		&& token.substring(0,8).toUpperCase().equals("MAXPARM(")){
        	opt_maxparm = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
+    } else if (token.length() > 8
+      		&& token.substring(0,8).toUpperCase().equals("MAXPASS(")){ // RPI 920
+       	opt_maxpass = Integer.valueOf(token.substring(8,token.length()-1)).intValue(); 
     } else if (token.length() > 6
       		&& token.substring(0,6).toUpperCase().equals("MAXPC(")){ // RPI 439
        	opt_maxpc = Integer.valueOf(token.substring(6,token.length()-1)).intValue();
@@ -6775,6 +6780,7 @@ public void put_trace(String text){
 	     add_final_opt("MAXLINE=" + opt_maxline);
 	     add_final_opt("MAXLOG=" + opt_maxlog); // max gui log before trunc
 	     add_final_opt("MAXPARM=" + opt_maxparm);
+	     add_final_opt("MAXPASS=" + opt_maxpass); // RPI 920
 	     add_final_opt("MAXPC=" + opt_maxpc); // pseudo code cache size
 	     add_final_opt("MAXQUE=" + opt_maxque); // max cmd out before trunc
 	     add_final_opt("MAXRLD=" + opt_maxrld);
