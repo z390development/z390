@@ -88,7 +88,8 @@ public  class  lz390 {
     * 07/29/08 RPI 883 add MOD support for code.MOD
     *          with no header/trailer/rlds and no rounding 
     * 08/12/08 RPI 894 support RLD 2 byte fields in 390's upt to 64k 
-    * 09/16/08 RPI 908 trap error on SYSLST file output override        
+    * 09/16/08 RPI 908 trap error on SYSLST file output override
+    * 10/24/08 RPI 935 prevent recursive abort        
     ********************************************************
     * Global variables                    (last RPI)
     *****************************************************/
@@ -96,6 +97,7 @@ public  class  lz390 {
     String msg_id = "LZ390I ";
     int lz390_rc = 0;
     int lz390_errors = 0;
+    boolean lz390_recursive_abort = false; // RPI 935
     Date cur_date = new Date();
 	long tod_start = cur_date.getTime();
     long tod_end   = 0;
@@ -410,6 +412,11 @@ private synchronized void abort_error(int error,String msg){ // RPI 646
 	 * issue error msg to log with prefix and
 	 * inc error total
 	 */
+	if (lz390_recursive_abort){ // RPI 935
+		System.out.println("LZ390E recurive abort exit");
+		System.exit(16);
+	}
+	lz390_recursive_abort = true;
 	  String error_msg = null;
 	  lz390_errors++;
 	  if (tz390.z390_abort){

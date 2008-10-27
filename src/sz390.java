@@ -171,7 +171,8 @@ public  class  sz390 implements Runnable {
     *          and force test prompt on first command   
     * 06/21/08 RPI 845 remove ESTAPSW and ESTAEGPR refs.  
     * 06/23/08 RPI 866 use get_file_name to parse LOG file name 
-    * 09/16/08 RPI 908 catch trap on bad SYSLOG file override                                  
+    * 09/16/08 RPI 908 catch trap on bad SYSLOG file override
+    * 10/24/08 RPI 935 prevent recursive abort                                  
     ********************************************************
     * Global variables                   (last RPI)
     *****************************************************/
@@ -208,6 +209,7 @@ public  class  sz390 implements Runnable {
     String ez390_pgm = null; // saved by link for gz390 title
     int ez390_rc = 0;
     int ez390_errors = 0;
+    boolean ez390_recursive_abort = false; // RPI 935
     String load_file_name = null;
     RandomAccessFile z390_file = null;
     File log_file = null;
@@ -897,6 +899,11 @@ public synchronized void abort_error(int error,String msg){  // RPI 646
 	 * issue error msg to log with prefix and
 	 * inc error total
 	 */
+	if (ez390_recursive_abort){ // RPI 935
+		System.out.println("EZ390E recurive abort exit");
+		System.exit(16);
+	}
+	ez390_recursive_abort = true;
  	  if (tz390.z390_abort){
 		msg = "EZ390E shutdown for " + msg;
 		tz390.put_systerm(msg);

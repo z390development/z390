@@ -319,6 +319,11 @@ public  class  az390 implements Runnable {
         * 09/16/08 RPI 908 prevent trap on SYSPRN file overide etc. 
         * 09/19/08 RPI 905 add DFHRESP(DSIDERR)=F'12' for ompatiblity
         * 09/20/08 RPI 917 issue error if START not first CSECT
+        * 10/08/08 RPI 930 prevent trap on invalid Z char, leading Z x'F0'
+        * 10/24/08 RPI 935 prevent recursive abort
+        * 10/27/08 RPI 926 leave macro labels on inline and open code macro statements
+        * 10/27/08 RPI 928 add DFHRESP codes: 1) TERMIDERR=F'11' 2) IOERR=F'17' 
+                     3) TRANSIDERR=F'28' 4) ENDDATA=F'29' 5) ENVDEFERR=F'56'
     *****************************************************
     * Global variables                        (last RPI)
     *****************************************************/
@@ -328,9 +333,8 @@ public  class  az390 implements Runnable {
     int az390_errors = 0;
     int mz390_errors = 0; // RPI 415 passed from mz390 if option asm
     String mz390_started_msg = ""; // RPI 755
-    boolean az390_ended = false; // rpi 846 signal mz390 that az390 has ended
-    boolean mz390_ended = false; // rpi 846 signal az390 taht mz390 has finished stats
     boolean mz390_abort = false;
+    boolean az390_recursive_abort = false; // RPI 935
     int mz390_rc     = 0; // RPI 415 passed from mz390 if option asm
     int cur_pass = 1;
     Date cur_date = new Date();
@@ -886,48 +890,58 @@ public  class  az390 implements Runnable {
       String[] dfhresp_type = {
     		  "NORMAL)",          // 0 - =F'0'
     		  "ERROR)",           // 1 - =F'1'
-    		  "FILENOTFOUND)",    // 2 - =F'12' RPI 687
-    		  "DSIDERR)",         // 3 - =F'12' RPI 905
-    		  "NOTFND)",          // 4 - =F'13' RPI 687, RPI 690
-    		  "DUPREC)",          // 5 - =F'14' RPI 687
-    		  "DUPKEY)",          // 6 - =F'15' RPI 687
-    		  "INVREQ)",          // 7 - =F'16'
-    		  "NOSPACE)",         // 8 - =F'18' RPI 687
-    		  "NOTOPEN)",         // 9 - =F'19' RPI 687
-    		  "ENDFILE)",         //10 - =F'20' RPI 687
-    		  "ILLOGIC)",         //11 - =F'21'  RPI 729
-    		  "LENGERR)",         //12 - =F'22'   		  
-    		  "ITEMERR)",         //13 - =F'26'  RPI 662
-    		  "PGMIDERR)",        //14 - =F'27'
-    		  "EXPIRED)",         //15   =F'31'  RPI 751
-    		  "MAPFAIL)",         //16   =F'36'  RPI 841
-    		  "INVMPSZ)",         //17   =F'38'  RPI 841
-    		  "OVERFLOW)",        //18   =F'40'  RPI 841
-    		  "QIDERR)",          //19 - =F'44'  RPI 662
-    		  "DISABLED)",        //20 - =F'84'  RPI 687
+    		  "TERMIDERR)",       // 2 - =F'11' RPI 928
+    		  "FILENOTFOUND)",    // 3 - =F'12' RPI 687
+    		  "DSIDERR)",         // 4 - =F'12' RPI 905
+    		  "NOTFND)",          // 5 - =F'13' RPI 687, RPI 690
+    		  "DUPREC)",          // 6 - =F'14' RPI 687
+    		  "DUPKEY)",          // 7 - =F'15' RPI 687
+    		  "INVREQ)",          // 8 - =F'16'
+    		  "IOERR)",           // 9 - =F'17' RPI 928
+    		  "NOSPACE)",         //10 - =F'18' RPI 687
+    		  "NOTOPEN)",         //11 - =F'19' RPI 687
+    		  "ENDFILE)",         //12 - =F'20' RPI 687
+    		  "ILLOGIC)",         //13 - =F'21' RPI 729
+    		  "LENGERR)",         //14 - =F'22'   		  
+    		  "ITEMERR)",         //15 - =F'26' RPI 662
+    		  "PGMIDERR)",        //16 - =F'27'
+    		  "TRANSIDERR)",      //17 - =F'28' RPI 928
+    		  "ENDDATA)",         //18 - =F'29' RPI 928
+    		  "EXPIRED)",         //19   =F'31' RPI 751
+    		  "MAPFAIL)",         //20   =F'36' RPI 841
+    		  "INVMPSZ)",         //21   =F'38' RPI 841
+    		  "OVERFLOW)",        //22   =F'40' RPI 841
+    		  "QIDERR)",          //23 - =F'44' RPI 662
+    		  "ENVDEFERR)",       //24 - =F'56' RPI 928
+    		  "DISABLED)",        //25 - =F'84' RPI 687
     		  };
       String[] dfhresp_lit = {
     		  "=F'0'",           // 0 "NORMAL)" 
     		  "=F'1'",           // 1 "ERROR)" 
-    		  "=F'12'",          // 2 "FILENOTFOUND)" RPI 687
-    		  "=F'12'",          // 3 "DSIDERR"       RPI 905
-    		  "=F'13'",          // 4 "NOTFND)" RPI 687, RPI 690 
-    		  "=F'14'",          // 5 "DUPREC)" RPI 687
-    		  "=F'15'",          // 6 "DUPKEY)" RPI 687 
-    		  "=F'16'",          // 7 "INVREQ)" 
-    		  "=F'18'",          // 8 "NOSPACE)" RPI 687 
-    		  "=F'19'",          // 9 "NOTOPEN)" RPI 687 
-    		  "=F'20'",          //10 "ENDFILE)" RPI 687 
-    		  "=F'21'",          //11 "ILLOGIC)" RPI 729
-    		  "=F'22'",          //12 "LENGERR)" 
-    		  "=F'26'",          //13 "ITEMERR)" RPI 662
-    		  "=F'27'",          //14 "PGMIDERR)"
-    		  "=F'31'",          //15 "EXPIRED)"  RPI 751
-    		  "=F'36'",          //16 "MAPFAIL)"  RPI 841
-    		  "=F'38'",          //17 "INVMPSZ)"  RPI 841
-    		  "=F'40'",          //18 "OVERFLOW)"  RPI 841
-    		  "=F'44'",          //19 "QIDERR)"  RPI 662
-    		  "=F'84'",          //20 "DISABLED)" RPI 687
+    		  "=F'11'",          // 2 "TERMIDERR"     RPI 928
+    		  "=F'12'",          // 3 "FILENOTFOUND)" RPI 687
+    		  "=F'12'",          // 4 "DSIDERR"       RPI 905
+    		  "=F'13'",          // 5 "NOTFND)" RPI 687, RPI 690 
+    		  "=F'14'",          // 6 "DUPREC)" RPI 687
+    		  "=F'15'",          // 7 "DUPKEY)" RPI 687 
+    		  "=F'16'",          // 8 "INVREQ)" 
+    		  "=F'17'",          // 9 "IOERR"    RPI 928
+    		  "=F'18'",          //10 "NOSPACE)" RPI 687 
+    		  "=F'19'",          //11 "NOTOPEN)" RPI 687 
+    		  "=F'20'",          //12 "ENDFILE)" RPI 687 
+    		  "=F'21'",          //13 "ILLOGIC)" RPI 729
+    		  "=F'22'",          //14 "LENGERR)" 
+    		  "=F'26'",          //15 "ITEMERR)" RPI 662
+    		  "=F'27'",          //16 "PGMIDERR)"
+    		  "=F'28'",          //17 "TRANSIDERR"  RPI 928
+    		  "=F'29'",          //18 "ENDDATA"     RPI 928
+    		  "=F'31'",          //19 "EXPIRED)"  RPI 751
+    		  "=F'36'",          //20 "MAPFAIL)"  RPI 841
+    		  "=F'38'",          //21 "INVMPSZ)"  RPI 841
+    		  "=F'40'",          //22 "OVERFLOW)"  RPI 841
+    		  "=F'44'",          //23 "QIDERR)"  RPI 662
+    		  "=F'56'",          //24 "ENVDEFERR" RPI 928
+    		  "=F'84'",          //25 "DISABLED)" RPI 687
     		  };
   /* 
    * end of global az390 class data and start of procs
@@ -1056,7 +1070,7 @@ private void init_az390(String[] args, JTextArea log_text){
 		tz390.force_nocon = true;   // RPI 755
 		put_log(tz390.started_msg); // RPI 755
 		tz390.force_nocon = false;  // RPI 755
-		if (!tz390.opt_asm && tz390.opt_tracea){
+		if (!mz390_call && tz390.opt_tracea){ // RPI 935
 			tz390.put_trace(tz390.started_msg); // RPI 755
 		}
 		put_copyright();
@@ -1609,7 +1623,7 @@ private void gen_obj_text(){
 		if (tz390.opt_profile.length() == 0){	
 			bal_line_index = tot_bal_line-1;
 			if (mz390_abort){  // RPI 433
-				log_error(165,"input truncated due to mz390 abort");
+				log_error(165,"input truncated due to mz390 abort"); // RPI 935 
 			} else {
 				log_error(115,"END statement not found");
 			}
@@ -2935,7 +2949,9 @@ private void process_bal_op(){
 		if (!bal_op_ok){
 			log_error(62,"unsupported operation code " + bal_op); // RPI 563
 		}
-		if (bal_label != null && bal_label_ok){ // RPI 451
+		if (bal_label != null
+			&& index < tz390.max_asm_type  // RPI 926  
+			&& bal_label_ok){ // RPI 451
 			update_label();
 		}
 	}
@@ -4823,31 +4839,29 @@ private void push_exp_sdt(String sdt){
 public void exit_az390(){
 	/*
 	 * put stats and display total errors
-	 * after nz3890 is done and close files.
+	 * after mz390 is done and close files.
 	 * Note:
 	 *   1.  return az390 return code for use by mz390
 	 *       when called from mz390 when mfc option on.
 	 */
-	  az390_ended = true;
-	  while (mz390_call // rpi 846
-			  && !mz390_abort
-			  && !mz390_ended){
-		  tz390.sleep_now(tz390.monitor_wait);
-	  }
-	  put_stats(); // rpi 846
+      if (!mz390_call){ // RPI 935 let mz390 do it if running
+    	  put_stats(); // rpi 846
+      }
 	  if (az390_errors > 0 || tz390.z390_abort){
 		  az390_rc = 16;
       }
 	  if (tz390.opt_errsum){
 		report_critical_errors();
 	  }
-      close_files();
+	  if (!mz390_call){ // RPI 935
+		  close_files(); // RPI 935 let mz390 close after stats
+	  }
 	  if (mz390_call){ // RPI 415
 		  return;
 	  }
    	  System.exit(az390_rc);
 }
-private void put_stats(){
+public void put_stats(){
 	/*
 	 * display statistics on STA and 
 	 * totals on STA and TRM including
@@ -4879,7 +4893,7 @@ private void put_stats(){
 	}
 	int index = 0;
 	while (index < tot_xref_files){
-		if (tz390.opt_asm && xref_file_errors[index] > 0){
+		if (mz390_call && xref_file_errors[index] > 0){  // RPI 935
 			String xref_msg = "FID=" + tz390.right_justify(""+(index+1),3) 
 					        + " ERR=" + tz390.right_justify(""+xref_file_errors[index],4) 
  	                        + " " + xref_file_name[index];
@@ -4917,7 +4931,7 @@ private void put_stat_line(String msg){
 		put_log(msg_id + msg);
 	}
 }
-private void close_files(){
+public void close_files(){
 	/*
 	 * close output obj, prn, err, tra
 	 */
@@ -4948,7 +4962,7 @@ private void close_files(){
 		  	  }
 		  }
 	    }
-		if (!tz390.opt_asm && tz390.opt_tracea){
+		if (!mz390_call && tz390.opt_tracea){ // RPI 935
 			tz390.put_trace(tz390.ended_msg);
 		}
 	  tz390.close_trace_file();
@@ -4982,7 +4996,9 @@ private void log_error(int error,String msg){
 	     put_log(error_msg);
 	     tz390.put_systerm(error_msg);
 	     error_msg = msg_id + msg;
+	     tz390.force_nocon = true; // RPI 935 
 	     put_log(error_msg);
+	     tz390.force_nocon = false; // RPI 935
 	     tz390.put_systerm(error_msg);
 	     force_list_bal = false;  // RPI 285
 	     list_bal_line = false; // RPI 891 suppress defail bal line 
@@ -4997,8 +5013,10 @@ private void set_file_line_xref(){
 	 * set xref_file_line passed from mz390
 	 * if available for use in error messages
 	 */
-	     if (tz390.opt_asm && xref_bal_index > -1){  // RPI 425
-   	    	 xref_file_errors[bal_line_xref_file_num[xref_bal_index]]++;
+	     if (mz390_call && xref_bal_index > -1){  // RPI 425 RPI 935
+	    	 if (gen_obj_code){  // RPI 935 
+	    		 xref_file_errors[bal_line_xref_file_num[xref_bal_index]]++;
+	    	 }
    	    	 xref_file_line = " (" + (bal_line_xref_file_num[xref_bal_index]+1) + "/" + bal_line_xref_file_line[xref_bal_index] + ")";
    	     } else {
    	    	 xref_file_line = "";
@@ -5009,6 +5027,11 @@ private synchronized void abort_error(int error,String msg){ // RPI 646
 	 * issue error msg to log with prefix and
 	 * inc error total
 	 */
+	if (az390_recursive_abort){ // RPI 935
+		System.out.println("AZ390E recurive abort exit");
+		System.exit(16);
+	}
+	az390_recursive_abort = true;
 	  az390_errors++;
 	  if (tz390.z390_abort){
 		 msg = msg_id + "aborting due to recursive abort error " + error + " - " + msg;
@@ -5021,6 +5044,7 @@ private synchronized void abort_error(int error,String msg){ // RPI 646
 		 bal_line_full = false;
 	  	 System.exit(16);
 	  }
+
 	  bal_abort = true;        // RPI 415
 	  tz390.z390_abort = true;
 	  tz390.opt_con = true;    // RPI 453
@@ -7223,7 +7247,7 @@ private void process_dcz_data(){
 			         } else if (dc_field.charAt(dc_index) == ' '){
 			        	 dc_index++; // RPI 840
 			         } else {
-			         	log_error(67,"invalid character in P type data field - " + dc_field);
+			         	log_error(67,"invalid character in Z type data field - " + dc_field); // RPI 930
 			         }
 			    }
 				if (!dc_scale_explicit && dc_first_field){
@@ -7231,10 +7255,16 @@ private void process_dcz_data(){
 				}
 			    if (dc_digits.length() > 2){
 			    	dc_hex = dc_digits.substring(0,dc_digits.length()-2) + dcp_sign + dc_digits.charAt(dc_digits.length()-1);
-			    } else {
+			    } else if (dc_digits.length() == 2){  // RPI 930
 			    	dc_hex = "" + dcp_sign + dc_digits.charAt(dc_digits.length()-1);
+			    } else { // RPI 930
+			    	dc_hex = "0";
 			    }
 			    dcp_len = dc_hex.length()/2;
+			    while (dcp_len < dc_len){
+			    	dc_hex = dc_hex + "F0";
+			    	dcp_len++;  // RPI 930
+			    }
                 if (dc_bit_len){
                 	gen_dcp_bits();
                 } else {

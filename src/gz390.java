@@ -128,7 +128,8 @@ public  class  gz390
 	 * 06/07/08 RPI 628 support WRT_EAU see cics\TESTGUI6.MLC 
 	 *          support EEOF CTRL-F6, EINP CTRL-F7 
 	 * 06/16/08 RPI 861 don't send nulls, support fields with no data 
-	 * 06/23/08 RPI 850 support attr fld_attr_nd non-display                                   
+	 * 06/23/08 RPI 850 support attr fld_attr_nd non-display
+	 * 10/27/08 RPI 927 display '@' for x'ff' and wrap screen address for data                                   
 	 ********************************************************
      * Global variables                   (last rpi)
      *****************************************************
@@ -292,6 +293,7 @@ public  class  gz390
     boolean tn_cursor_alt = false;
     char tn_cursor_sym = '?';      // alternate cursor char ?
     char tn_cursor_sym_alt = ' ';  // alternate cursor space if ?
+    char ff_char = '@'; // RPI 927
     int tn_cursor_scn_addr = 0;
     int tn_cursor_count = 1;
     int tn_cursor_wait_int = 1;
@@ -2334,6 +2336,9 @@ private void tn_tput_buffer(){
             tn_ra();
 			break;
 		default: // write data in next input field postion
+			if (scn_addr >= max_addr){
+				scn_addr = scn_addr - max_addr; // RPI 927
+			}
 			if (scn_fld[scn_addr]){ // RPI 861
 				tn_drop_field(scn_addr);
 			}
@@ -2341,7 +2346,10 @@ private void tn_tput_buffer(){
 		    scn_hl[scn_addr]    = cur_fld_hl;
 		    scn_color[scn_addr] = cur_fld_color;
 	    	scn_char[scn_addr] = (char)tz390.ebcdic_to_ascii[tput_buff_byte];
-			tn_update_scn(scn_addr);
+			if ((tput_buff_byte & 0xff) == 255){
+				scn_char[scn_addr] = ff_char;  // RPi 927
+			}
+	    	tn_update_scn(scn_addr);
 			tn_next_field_addr();
 		}
 	}
@@ -2474,6 +2482,9 @@ private void tn_ra(){
 			tn_drop_field(sba);
 		}
 		scn_char[sba] = (char)tz390.ebcdic_to_ascii[ra_byte & 0xff]; // RPI 628
+		if ((ra_byte & 0xff) == 255){
+			scn_char[sba] = ff_char;  // RPi 927
+		}
 		tn_update_scn(sba);
 		sba++;
 		if (sba >= max_addr){
@@ -3104,6 +3115,9 @@ private String get_ascii_string(byte[] text_byte,int lbuff){
 			data_char = (char) data_byte;
 		} else {
 			data_char = (char) tz390.ebcdic_to_ascii[data_byte & 0xff]; //RPI42
+		}
+		if ((data_byte & 0xff) == 255){
+			data_char = ff_char;  // RPi 927
 		}
 		text = text + data_char;
 		index++;

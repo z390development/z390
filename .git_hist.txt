@@ -4681,6 +4681,85 @@ set GIT_COMMITTER_DATE=2021-03-24 08:04:00 +0100
 git commit -m "Reconstructed version v1.4.03b of z390 committed on behalf of Don Higgins"
 git tag -a v1.4.03b -m "Reconstructed version v1.4.03b of z390 committed on behalf of Don Higgins"
 
+==> Clear directory (except .git stuff)
+==> Copy all files for V1.4.03c
+dir *.* /B /on /s >.allfile.txt
+dir *.zsm /B /on /s >\temp\.allzsm.lst
+==> Add generated .mlc files to .gitignore file: \ --> / and .zsm --> .[mM][lL][cC]
+git status >\temp\.gitstat.lst
+
+==> Stage files for V1.4.03c
+git add README.TXT
+git add RT/RT.BAT
+git add RT/RTAST.BAT
+git add RT/RTAST1.BAT
+git add RT/RTDEMO.BAT
+git add RT/RTGENCMP.BAT
+git add RT/RTGENCMP.DAT
+git add RT/RTLINK.BAT
+git add RT/RTLINK1.BAT
+git add RT/RTMFACC.BAT
+git add RT/RTMFACC1.BAT
+git add RT/RTMVS.BAT
+git add RT/RTMVS1.BAT
+git add RT/RTSOA1.BAT
+git add RT/RTTEST.BAT
+git add RT/RTTEST1.BAT
+git add RT/RTVSAM.BAT
+git add RT/RTVSAM1.BAT
+git add RT/RTVSE.BAT
+git add RT/RTVSE1.BAT
+git add RT/TEST/TESTASM1.MLC
+git add RT/TEST/TESTCIC1.MLC
+git add RT/TEST/TESTLOD1.MLC
+git add RT/TEST/zstrmac.txt
+git add RT/TEST/zstrmac2.txt
+git add mac/LOAD.MAC
+git add src/az390.java
+git add src/gz390.java
+git add src/lz390.java
+git add src/mz390.java
+git add src/sz390.java
+git add src/tz390.java
+git add rt/test/TESTDCBF.TF1
+git add rt/test/TESTDCBF.TF2
+git add rt/test/TESTDCBF.TF3
+git add rt/test/TESTSPE1.ZSM
+git add rt/test/TESTSPE1.txt
+git add rt/test/TESTSPE2.ZSM
+git add rt/test/TESTSPE3.ZSM
+git add rt/test/TESTSPE4.ZSM
+git add rt/test/TESTXSM2.mlc
+
+==> Create commit for V1.4.03c
+git add .allfile.txt
+git add .git_hist.txt
+git add .gitignore
+SetGit ++Don 2008-10-27 13:20:00 -0500
+set GIT_COMMITTER_DATE=2021-03-24 18:33:00 +0100
+git commit -m "Reconstructed version v1.4.03c of z390 committed on behalf of Don Higgins"
+git tag -a v1.4.03c -m "Reconstructed version v1.4.03c of z390 committed on behalf of Don Higgins"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

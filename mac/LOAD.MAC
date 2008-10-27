@@ -17,6 +17,7 @@
 .* 06/14/07 RPI 641 DEFAULT MF=I
 .* 08/21/07 RPI 670 CORRECT REG OPTIMIZATION TO HANDLE ANY REG SYMBOL
 .* 04/19/08 RPI 833 add SETC quotes for HLASM compatibility
+.* 10/23/08 RPI 921 add support for ERRET= exit on load error, ZSTRMAC
 .*********************************************************************
 .* LOAD PGM VIA SVC 8
 .*
@@ -47,89 +48,95 @@
                &LOADPT=,  STORE LOAD ADDRESS                           X
                &MF=I,     NOT SUPPORTED                                X
                &RELATED=  IGNORED
-         AIF   ('&N' EQ '').SKIPDS
+       AIF   ('&N' NE '')  
 &N       DS    0H
-.SKIPDS  ANOP
-         AIF   ('&MF' NE 'I').ERR2
-         AIF   (N'&SYSLIST EQ 0).NPOK
-         MNOTE 12,'LOAD UNSUPPORTED OPERANDS - &SYSLIST(1)'
-.NPOK    ANOP
-         AIF   ('&DE' NE '').DE
-         AIF   ('&ERRET' NE '').ERR1
-         AIF   ('&EP' NE '').EP
-         AIF   ('&EPLOC' NE '').EPLOC
-         SR    0,0
-         AIF   ('&DDNAME' NE '' OR '&DSNAME' NE '').CHKDSN
-         MNOTE 12,'LOAD REQUIRES DE, EP, EPLOC, DDNAME, OR DSNAME'
-         MEXIT
-.DE      ANOP
-         AIF   ('&DE'(1,1) EQ '(').DEREG
-         LA    0,&DE
-         AGO   .DEADD
-.DEREG ANOP
+       AEND
+       AIF   ('&MF' NE 'I')
+               MNOTE 12,'LOAD MF= NOT SUPPORTED'
+               MEXIT
+       AEND
+       AIF   (N'&SYSLIST NE 0)    
+               MNOTE 12,'LOAD UNSUPPORTED OPERANDS - &SYSLIST(1)'
+               MEXIT
+       AEND
+       AIF   ('&DE' NE '')
+               AIF   ('&DE'(1,1) EQ '(')      
          ZOPTLR 0,&DE(1)
-.DEADD   ANOP
+               AELSE
+         LA    0,&DE
+               AEND
          AHI   0,2
-         AIF   ('&EP' EQ '' AND '&EPLOC' EQ '').CHKDSN
-         MNOTE 12,'LOAD DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
-         MEXIT
-.EP      ANOP
+               AIF   ('&EP' NE '' OR '&EPLOC' NE '')       
+                     MNOTE 12,'LOAD DE EP EPLOC MUTUALLY EXCLUSIVE'
+                     MEXIT
+               AEND
+       AELSEIF ('&EP' NE '')
          LA    0,=CL8'&EP'
-         AIF   ('&DE' EQ '' AND '&EPLOC' EQ '').CHKDSN
-         MNOTE 12,'LOAD DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
-         MEXIT
-.EPLOC   ANOP
-         AIF   ('&EPLOC'(1,1) EQ '(').EPLOCREG
-         LA    0,&EPLOC
-         AIF   ('&DE' EQ '' AND '&EP' EQ '').CHKDSN
-         MNOTE 12,'LOAD DE EP AND EPLOC ARE MUTUALLY EXCLUSIVE'
-         MEXIT
-.EPLOCREG ANOP
+               AIF   ('&EPLOC' NE '')
+                     MNOTE 12,'LOAD  EP AND EPLOC MUTUALLY EXCLUSIVE'
+                     MEXIT
+               AEND
+       AELSEIF ('&EPLOC' NE '')  
+               AIF   ('&EPLOC'(1,1) EQ '(')          
          ZOPTLR 0,&EPLOC(1)
-.CHKDSN  ANOP
-         AIF   ('&DSNAME' EQ '').CHKDD
-         AIF   ('&DDNAME' EQ '').DSNOK
-         MNOTE 12,'LOAD DSNAME AND DDNAME ARE MUTUALLY EXCLUSIVE'
-         MEXIT
-.DSNOK   ANOP
-         AIF   ('&DSNAME'(1,1) EQ '(').DSNREG
-         LA    15,&DSNAME
-         AGO   .SVC
-.DSNREG  ANOP
-         AIF   ('&DSNAME(1)' EQ '0' OR '&DSNAME(1)' EQ 'R0').DSNERR
-         ZOPTLR 15,&DSNAME(1)
-         AGO   .SVC
-.DSNERR  ANOP
-         MNOTE 12,'LOAD INVALID DSNAME REG'
-         MEXIT
-.CHKDD   ANOP
-         AIF   ('&DDNAME' EQ '').DEFPATH
-         AIF   ('&DDNAME'(1,1) EQ '(').DDREG
-         LA    15,=CL8'&DDNAME'
-         OILH  15,X'8000' DD VS DSN
-         AGO   .SVC
-.DDREG   ANOP
-         AIF   ('&DDNAME(1)' EQ '0' OR '&DDNAME(1)' EQ 'R0').DDERR
-         ZOPTLR 15,&DDNAME(1)
-.SKPLR1  ANOP
-         OILH  15,X'8000' DD VS DSN
-         AGO   .SVC
-.DDERR   ANOP
-         MNOTE 12,'LOAD DDNAME INVALID REG'
-         MEXIT
-.DEFPATH ANOP
+               AELSE
+         LA    0,&EPLOC
+               AEND
+       AELSE
+         SR    0,0
+               AIF   ('&DDNAME' EQ '' AND '&DSNAME' EQ '')
+                     MNOTE 12,'LOAD REQUIRES DE, EP, EPLOC, DDNAME, OR X
+               DSNAME'
+                     MEXIT
+               AEND
+       AEND
+       AIF   ('&DSNAME' EQ '')       
+             AIF   ('&DDNAME' EQ '')        
          SR    15,15 USE DEFAULT SYS390 SEARCH
-.SVC     ANOP
+               AELSE
+                   AIF   ('&DDNAME'(1,1) EQ '(')         
+                         AIF   ('&DDNAME(1)' EQ '0' OR '&DDNAME(1)' EQ X
+               'R0')
+                               MNOTE 12,'LOAD DDNAME INVALID REG'
+                               MEXIT
+                         AEND
+         ZOPTLR 15,&DDNAME(1)
+                   AELSE 
+         LA    15,=CL8'&DDNAME'
+                   AEND
+         OILH  15,X'8000' DD VS DSN
+               AEND
+       AELSE
+               AIF   ('&DDNAME' NE '')       
+                     MNOTE 12,'LOAD DSNAME AND DDNAME MUTUALLY EXCLUSIVX
+               E'
+                     MEXIT
+               AEND
+               AIF   ('&DSNAME'(1,1) NE '(')
+         LA    15,&DSNAME
+               AELSE
+                   AIF   ('&DSNAME(1)' EQ '0' OR '&DSNAME(1)' EQ 'R0')
+                         MNOTE 12,'LOAD DSNAME INVALID REG'
+                         MEXIT
+                   AEND
+         ZOPTLR 15,&DSNAME(1)
+               AEND
+         AEND
          SVC   8 LOAD R0=A(NAME) R15=DDNAME/DSNAME ADDR OR 0
-         AIF   ('&LOADPT' EQ '').EXIT
-         AIF   ('&LOADPT'(1,1) EQ '(').PTREC
-         ST    0,&LOADPT
-         MEXIT
-.PTREC   ANOP
+         AIF   ('&LOADPT' NE '')      
+               AIF   ('&LOADPT'(1,1) EQ '(')       
          ST    0,0(&LOADPT(1))
-.EXIT    MEXIT
-.ERR1    MNOTE 12,'LOAD ERRET= NOT SUPPORTED'
-         MEXIT
-.ERR2    MNOTE 12,'LOAD MF= NOT SUPPORTED'
+               AELSE
+         ST    0,&LOADPT
+               AEND
+         AEND
+         AIF   ('&ERRET' NE '')             RPI 921
+         LTR   15,15
+               AIF  ('&ERRET'(1,1) EQ '(')
+         BNZR  &ERRET(1)
+               AELSE
+         BNZ   &ERRET
+               AEND
+         AEND
          MEXIT
          MEND

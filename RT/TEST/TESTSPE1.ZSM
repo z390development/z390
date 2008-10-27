@@ -1,0 +1,84 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 09/17/08 RPI 911 CHANGE ASELECT TO ACASE AND APM TO ACALL
+* 09/23/08 RPI 911 new regression test for SPM's                    
+*********************************************************************
+         TITLE 'TESTSPE1 - TEST STRUCTURED PROGRAMMING EXTENSIONS'
+* TEST ZSTRMAC SPE'S FOR CONDITIONAL MACRO CODE VIA MZ390 OR TRANSLATOR
+         :&I   SETA  1
+         AIF   (&I EQ 1)   TEST TRUE
+               MNOTE 'AIF TRUE I=&I'        
+         AEND
+         :&I   SETA  2
+         AIF   (&I EQ 1)   TEST FALSE
+               MNOTE 8,'AIF FALSE I=&I'
+         AELSEIF (&I EQ 2) TEST TRUE
+               MNOTE 'AELSEIF TRUE I=&I'
+         AELSE
+               AIF   (&I EQ 1)   TEST FALSE
+                     MNOTE 8,'NESTED AIF FALSE I=&I'        
+               AELSEIF (&I EQ 3) TEST FALSE
+                     MNOTE 8,'NESTED AELSEIF FALSE I=&I'        
+               AELSE
+                     MNOTE 'NESTED AELSE TRUE I=&I'        
+               AEND
+         AEND
+         :&I   SETA  1
+         AUNTIL (&I GT 5)
+               MNOTE 'AUNTIL 1-5 I=&I'
+               AIF (&I EQ 3)
+                   MNOTE 'EXITING AUNTIL IF I=3'
+                   AEXIT AUNTIL
+               AEND
+               :&I SETA &I+1
+         AEND       
+         :&I   SETA  1
+         AWHILE (&I LE 5)
+               MNOTE 'AWHILE 1-5 I=&I'
+               :&I SETA &I+1
+         AEND       
+         ACALL COUNT
+         ACALL COUNT
+         :&I   SETA 0
+         AWHILE (&I LE 4)
+                 ACASE (&I)
+                 AWHEN 1
+                        MNOTE 'AWHEN I=1'
+                 AWHEN 2
+                        MNOTE 'AWHEN I=2'
+                        :&J SETA 0                      
+                        AWHILE (&J LE 4)
+                                ACASE (&J)
+                                AWHEN 1
+                                       MNOTE 'AWHEN J=1'
+                                AWHEN 2
+                                       MNOTE 'AWHEN J=2'
+                                AWHEN 3
+                                       MNOTE 'AWHEN J=3'
+                                AELSE
+                                       MNOTE 'AELSE J=&J'
+                                AEND
+                                :&J SETA &J+1
+                        AEND         
+                 AWHEN 3
+                        MNOTE 'AWHEN I=3'
+                 AELSE
+                        MNOTE 'AELSE I=&I'
+                 AEND
+                 :&I SETA &I+1
+         AEND         
+* PERFORMED ROUTINES
+         AENTRY COUNT
+         :&COUNT SETA &COUNT+1
+         MNOTE  'COUNT=&COUNT'
+         AEND
+* ASM PGM
+TESTSPE1 CSECT
+         SR    15,15
+         BR    14
+         END         
+

@@ -16,7 +16,9 @@ rem
 call rt\RT6 mvs\test\TESTMVS1 sysmac(mvs\maclib+mac) objhex %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT6 mvs\test\TESTCVTX sysmac(mvs\maclib+mac) objhex %1 %2 %3 %4 %5 %6 %7 %8 %9
 call rt\RT6 mvs\test\TESTCVT1 sysmac(mvs\maclib+mac) objhex %1 %2 %3 %4 %5 %6 %7 %8 %9
+erase rt\mvs\demo\dif\*.* /q
 call rt\RTCOMP mvs\demo rt\mvs\demo\save rt\mvs\demo\dif
+erase rt\mvs\test\dif\*.* /q
 call rt\RTCOMP mvs\test rt\mvs\test\save rt\mvs\test\dif
 erase rt\mvs\dif\*.* /q
 copy  rt\mvs\demo\dif\*.* rt\mvs\dif

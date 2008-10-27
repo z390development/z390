@@ -1,0 +1,37 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 09/17/08 RPI 911 CHANGE ASELECT TO ACASE AND APM TO ACALL
+* 09/23/08 RPI 911 new regression test for SPM's                    
+*********************************************************************
+         TITLE 'TESTSPE4 - TEST STRUCTURED PROGRAMMING EXTENSIONS'
+* TEST ZSTRMAC ERROR MESSAGES
+         AELSE
+         AELSEIF
+         AEND
+         AEXIT AENTRY
+         AWHEN
+         AIF
+         AELSEIF
+         ACALL
+         ACALL X
+         AEXIT AWHILE
+         AEXIT AUNTIL
+         AEXIT ACASE
+         AEND
+         ACASE
+         :&I SETA 1
+         ACASE (&I)
+         AWHEN
+         AWHEN -1
+         AWHEN 256
+         AELSE
+         AEND
+         AENTRY
+         AENTRY Y
+         AEXIT
+         AEND
+         END

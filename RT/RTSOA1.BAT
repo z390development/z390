@@ -7,7 +7,6 @@ rem test soa\demo again using SOA support to run services on server
 rem press enter to continue running client after server is started
 call soa\demo\CLEANUP    
 call soa\demo\DEMOSOA stats  %1 %2 %3 %4 %5 %6 %7 %8 %9
-erase soa\dif\*.* /q
 call rt\RTCOMP soa\demo rt\soa\demo\save rt\soa\demo\dif
 rem test TCPIO client sending msg to echo server on specified port
 rem press enter to continue running client after server is started

@@ -334,6 +334,13 @@ public  class  mz390 {
      * 09/17/08 RPI 911 change ASELECT to ACASE, APM to ACALL, support lower case 
      * 09/18/08 RPI 907 show line # and text in MNOTE warning for chkmac(2)
      * 09/27/08 RPI 922 suppress MCALL comments on BAL if NOLISTCALL
+     * 10/08/08 RPI 930 reset ZSTRMAC SPE for each macro load, allow (..) comments on AIF etc
+     *          add SYSTRACE to turn trace options on/off
+     * 10/24/08 RPI 935 display MNOTE with level > maxwarn if TRACES or CON
+     * 10/24/08 RPI 935 prevent recursive abort
+     * 10/24/08 RPI 935 abort error if no macro/mend in macros 
+     * 10/24/08 RPI 935 ignore comments following , for AREAD/PUNCH   
+     * 10/26/08 RPI 935 correct force_nocon left on after copyright    
 	 ********************************************************
 	 * Global variables                       (last RPI)
 	 *****************************************************/
@@ -354,6 +361,7 @@ public  class  mz390 {
 	boolean mac_branch = false; // RPI 899
 	int mz390_rc = 0;
 	int mz390_errors = 0;
+	boolean mz390_recursive_abort = false; // RPI 935
 	boolean mac_abort = false;
 	boolean batch_asm_error = false; // RPI 736
 	Date cur_date = null;
@@ -518,6 +526,7 @@ public  class  mz390 {
 	int tot_ins = 0; // count instr/cntl for MFC option
 	int tot_mac_name = 0;      // next avail name
 	int load_macro_mend_level = 0;
+	boolean macro_op_found = false; // RPI 935
 	boolean loading_mac = false;
 	boolean load_proto_type = false;
 	int load_mac_inline_end = 0;
@@ -675,6 +684,7 @@ public  class  mz390 {
 	byte   store_setb_value = 0;
 	String store_setc_value = null;
 	byte   store_pc_op = 0;
+	boolean tracem_pc_op    = false; // RPI 930 include on tracem TRM listing
 	boolean store_subscript = false;
 	boolean store_created   = false;
 	int    store_sub        = 0;
@@ -706,6 +716,7 @@ public  class  mz390 {
 	int    cur_sysm_hsev       = 0;  // RPI 898
 	int    gbl_sysm_sev_index = 0;   // highest mnote severity in last macro     
 	int    gbl_sysstmt_index = 0;    // next BAL statement number as 8 digit SETC
+	int    gbl_systrace_index = 0;   // set trace options on/off RPI 930
 	File sys_file = null; // RPI 259
 	String sys_job = null; // set to MLC filename without suffix
 	String sys_dsn = null; // full path, file name, and suffix
@@ -1474,7 +1485,11 @@ public  class  mz390 {
 					bal_xref_index = mac_line_index;
 					parse_bal_line();
 					mac_op_type = find_opcode_type(bal_op);
-					if (mac_op_type > tz390.max_asm_type){  // RPI 274 -2 for OPSYN cancel
+					if (bal_label != null                // RPI 929
+						&& bal_label.length() > 0        // RPI 929
+						&& bal_label.charAt(0) == '*'){  // RPI 929
+						find_mac_name_index = 0; // force comment for * in label field // RPI 929
+					} else if (mac_op_type > tz390.max_asm_type){  // RPI 274 -2 for OPSYN cancel
 						exec_mac_op();      // execute macro operation
 						bal_line = null;    // force macro execution cycle
 					} else if (bal_op != null) {
@@ -1607,6 +1622,14 @@ public  class  mz390 {
 		 */
 		loading_mac = true;
 		tot_mac_load++;
+		zsm_lvl = 0;  // RPI 930 reset
+		zsm_aif_tot         = 0;
+		zsm_acall_tot       = 0;
+		zsm_aentry_tot      = 0;
+		zsm_acase_tot       = 0;
+		zsm_awhile_tot      = 0;
+		zsm_auntil_tot      = 0;
+		zsm_acall_name_tot  = 1; // aentry names + 1
 		cur_mac_file = 0;
 		load_macro_mend_level = 0;
 		load_proto_index = 0;
@@ -1638,7 +1661,8 @@ public  class  mz390 {
 		case 1: // macro file
 			cur_mac_line_num = 0;
 			load_open_macro_file();
-			load_macro_mend_level = 0; // read macro from file
+			load_macro_mend_level = 0; // read macro from file 
+			macro_op_found = false; // RPI 935 check for macro/mend in macro
 			mac_line_index = tot_mac_line;
 			load_proto_type = false;
 			break;
@@ -1673,6 +1697,7 @@ public  class  mz390 {
 			}
 			if (mac_op != null && mac_op.length() > 0){
 				if (mac_op.equals("MACRO")){
+					macro_op_found = true; // RPI 935
 					load_macro_mend_level++;
 				} else if (mac_op.equals("ICTL")){
 					set_ictl();  // RPI 728
@@ -1739,8 +1764,9 @@ public  class  mz390 {
 			mac_line_index = save_mac_line_index;
 			break;
 		case 1: // macro file
-			if (load_macro_mend_level != 0){
-				log_error(134,"unbalanced macro mend in " + load_macro_name);
+			if (!macro_op_found   // RPI 935
+				|| load_macro_mend_level != 0){
+				abort_error(134,"unbalanced macro mend in " + load_macro_name);
 			}
 			tot_mac_line = mac_line_index;
 			mac_name_line_end[mac_name_index] = tot_mac_line;
@@ -2899,18 +2925,31 @@ public  class  mz390 {
 		if (tz390.split_parms == null){
 			return false;
 		}
-		int index = tz390.split_parms.indexOf(").");			
-		if (index > 0){
-			return false; // assume explicit AIF (...).lab
-		} else {
-			index = tz390.split_parms.lastIndexOf(')');
-			if (index <= 0){
-				return false;
+		int index1 = tz390.split_parms.indexOf("(");			
+		if (index1 >= 0){
+			// find (...) aif expression which may have trailing comments with (..)
+			tz390.parm_match = tz390.parm_pattern.matcher(tz390.split_parms.substring(index1+1));
+			int exp_lvl = 1;
+			while (tz390.parm_match.find()){  // RPI 930
+				String token = tz390.parm_match.group();
+				if (token.equals("(")){
+					exp_lvl++;
+				} else if (token.equals(")")){
+					exp_lvl--;
+					if (exp_lvl == 0){
+						int index2 = tz390.parm_match.end()+1;
+						if (tz390.split_parms.length() > index2
+							&& tz390.split_parms.charAt(index2) == '.'){
+							return false; // assume std AIF with label
+						} else {
+						    zsm_aif_exp = tz390.split_parms.substring(index1,index2);
+						    return true;
+						}
+					}
+				}
 			}
-			zsm_aif_exp = tz390.split_parms.substring(0,index+1);
-		    return true;
-		}
-		
+		}	
+		return false;
 	}
 	private boolean zsm_find_name(){
 		/*
@@ -3076,7 +3115,7 @@ public  class  mz390 {
 	}
 	private void put_bal_line(String text_line){
 		/*
-		 * 1.  strip .mac labels if mfc
+		 * 1.  strip .mac labels if ASM and not inline macro code
 		 * 2.  set symbol attr if mfc
 		 * 3.  optional reformatting
 		 * 4.  optional pass to az390
@@ -3115,8 +3154,8 @@ public  class  mz390 {
 			if (tz390.split_parms == null){
 				tz390.split_parms = "";
 			}
-	        if (text_line.charAt(0) == '.'){ 
-	        	// remove .mac label and force reformat
+	        if (text_line.charAt(0) == '.' && load_type != load_mac_inline){ // RPI 926
+	        	// remove .mac label if not inline and force reformat
                 text_line = tz390.left_justify(" ",tz390.split_label.length()) 
                          + text_line.substring(tz390.split_label.length());
 	        	tz390.split_label = "";
@@ -3910,6 +3949,7 @@ public  class  mz390 {
 			bal_op_ok = true;
 			load_type = load_mac_inline;
 			load_mac();
+			load_type = load_mac_exec; // RPI 926 reset to remove following mac labels
 			break;
 		case 221:  // MEND
 			break;
@@ -4291,6 +4331,9 @@ public  class  mz390 {
 			if (tz390.opt_traceall){
 				tz390.put_trace("SETC GBLC " + gbl_set_name[store_name_index] + "(" + (store_setc_index - gbl_set_start[store_name_index] + 1) + ")= " + gbl_setc[store_setc_index]);
 			}
+			if (store_setc_index == gbl_systrace_index){ // RPI 930
+				tz390.set_trace_options(setc_value);
+			}
 		}
 	}
 	private String get_aread_string(){
@@ -4405,7 +4448,8 @@ public  class  mz390 {
 		ap_clockd  = false;
 		ap_format  = false;
 		ap_file_io = false;
-		if (bal_parms.length() == 0 ){
+		if (bal_parms.length() == 0
+			|| bal_parms.charAt(0) == ','){ // RPI 935
 			return;
 		}
 		ap_file_index = 0;
@@ -7853,6 +7897,9 @@ public  class  mz390 {
 		} else {
 			gbl_setc[tot_gbl_setc-1] = sdf_systime.format(cur_date);
 		}
+		add_gbl_sys("&SYSTRACE",var_setc_type); // RPI 930
+		gbl_systrace_index = tot_gbl_setc-1;    // RPI 930
+		gbl_setc[tot_gbl_setc-1] = tz390.trace_options; // RPI 930
 		add_gbl_sys("&SYSVER",var_setc_type);
 		gbl_setc[tot_gbl_setc-1] = tz390.version;
 	    if (tz390.opt_bs2000){  // RPI 604
@@ -8283,30 +8330,24 @@ public  class  mz390 {
 				call_az390_pass_bal_line(null);
 				bal_eof = true;
 			}
-			while (!tz390.z390_abort
-				&& az390.az390_running
-				&& !az390.az390_ended){ // rpi 846 remove redundant test
+			while (az390.az390_running){ // rpi 846 RPI 935 wait for az390 to write stats etc.
 				tz390.sleep_now(tz390.monitor_wait);
-			}
-			put_stats(); // rpi 846 put stats and totals to STA and TRM with mz and az total errors
-			az390.mz390_ended = true;
-			while (!tz390.z390_abort 
-					&& az390.az390_running){ // rpi 846 remove redundant test
-					tz390.sleep_now(tz390.monitor_wait);
 			}
 			tz390.systerm_io = tz390.systerm_io+az390.tz390.systerm_io;  // RPI 755 rpi 846
 			if (az390.az390_rc > mz390_rc){
 				mz390_rc = az390.az390_rc;
 			}
-		}		
+		}
 		if  (mz390_errors > 0
 	        || hwm_mnote_level >= 16 // RPI 410
 			|| tz390.z390_abort){
 			mz390_rc = 16;
 		}
-		if (!tz390.opt_asm && tot_bal_line > 1){
-			put_stats();
-		}
+		put_stats();
+        if (tz390.opt_asm){ // RPI 935
+        	az390.put_stats();
+        	az390.close_files();
+        }
 		close_files();
 		if (tz390.opt_asm && az390 != null
 			&& az390.az390_rc > mz390_rc){
@@ -8401,9 +8442,6 @@ public  class  mz390 {
 			put_stat_line("total mnote errors    = " + tot_mnote_errors);
 			put_stat_line("max   mnote level     = " + cur_sysm_hsev);  // RPI 898
 			put_stat_line("total mz390 errors    = " + mz390_errors);
-			if (tz390.opt_asm){ // rpi 846
-				put_stat_line("total az390 errors    = " + az390.az390_errors);
-			}
 		}
 		if (!tz390.opt_asm){
 			log_to_bal = true;
@@ -8411,12 +8449,17 @@ public  class  mz390 {
 			put_log(msg_id + "total mnote errors   = " + tot_mnote_errors);
 			put_log(msg_id + "max   mnote level    = " + cur_sysm_hsev);  // RPI 898
 			put_log(msg_id + "total mz390 errors   = " + mz390_errors);
+			if (tz390.opt_asm){ // rpi 846
+				put_stat_line("total az390 errors    = " + az390.az390_errors);
+			}
 		} else if (tz390.opt_tracem){
 			tz390.put_trace(msg_id + "total mnote warnings  = " + tot_mnote_warning); // RPI 402
 			tz390.put_trace(msg_id + "total mnote errors    = " + tot_mnote_errors);
 			tz390.put_trace(msg_id + "max   mnote level     = " + cur_sysm_hsev);  // RPI 898
 			tz390.put_trace(msg_id + "total mz390 errors    = " + mz390_errors);
-			tz390.put_trace(msg_id + "total az390 errors    = " + az390.az390_errors); // rpi 846
+			if (tz390.opt_asm){  // RPI 935
+				tz390.put_trace(msg_id + "total az390 errors    = " + az390.az390_errors); // rpi 846
+			}
 		}
 		log_to_bal = false;
 	}
@@ -8490,7 +8533,7 @@ public  class  mz390 {
 			tz390.put_systerm("MNOTE " + msg); // RPI 330, RPI 440, RPI 444
 		}
 		if (level > tz390.max_mnote_warning){ 
-			if (tz390.opt_traces){
+			if (tz390.opt_traces || tz390.opt_con){  // RPI 935
 				System.out.println("MZ390E MNOTE " + msg); // RPI 882
 			}
 			tot_mnote_errors++;
@@ -8563,6 +8606,11 @@ public  class  mz390 {
 		 * issue error msg to log with prefix and
 		 * inc error total
 		 */
+		if (mz390_recursive_abort){ // RPI 935
+			System.out.println("MZ390E recurive abort exit");
+			System.exit(16);
+		}
+		mz390_recursive_abort = true;
 		if (tz390.z390_abort){
 			msg = msg_id + "aborting due to recursive abort for " + msg;
 			System.out.println(msg);
@@ -8616,7 +8664,7 @@ public  class  mz390 {
 			tz390.put_trace(msg_id + "program = " + tz390.dir_mlc + tz390.pgm_name + tz390.pgm_type);
 			tz390.put_trace(msg_id + "options = " + tz390.cmd_parms);
 		}
-		tz390.force_nocon = true; // RPI 755
+		tz390.force_nocon = false; // RPI 755 RPI 935
 	}
 	private synchronized void put_log(String msg) {
 		/*
@@ -8736,6 +8784,7 @@ public  class  mz390 {
     	if (!tz390.opt_pc){
     		return;
     	}
+    	tracem_pc_op = false;
 		switch (op){		
 		case  1: // gen pc_op_ago computed branch
 		    get_pc(op);
@@ -8786,6 +8835,7 @@ public  class  mz390 {
 		    }
 			break;
 		case  8: // gen pc_op_storv store scalar var
+			tracem_pc_op = true; // RPI 930
 			get_pc(op);
 			pc_var_type[pc_loc] = store_type; 
 			pc_var_loc[pc_loc]  = store_loc;  
@@ -8794,6 +8844,7 @@ public  class  mz390 {
 			var_type = store_type; 
 			break;
 		case  9: // gen pc_op_storvs store subscripted set var
+			tracem_pc_op = true; // RPI 930
 			get_pc(op);
 			pc_var_type[pc_loc] = store_type;
 			pc_var_loc[pc_loc]  = store_loc;
@@ -8802,6 +8853,7 @@ public  class  mz390 {
             var_type = store_type; 
             break;
 		case 10: // gen pc_op_storvn store next value in var(sub+1)
+			tracem_pc_op = true; // RPI 930
 			get_pc(op);
 			pc_var_type[pc_loc] = store_type;
 			pc_var_loc[pc_loc]  = store_loc;
@@ -8821,6 +8873,7 @@ public  class  mz390 {
 		case 20: // gen pc_op_compne           compare greater than or equal
 		case 21: // gen pc_op_ucomp        unary compliment value on stack    
 		case 22: // gen pc_op_dup          duplicate string
+			tracem_pc_op = true; // RPI 930
 			get_pc(op);
 			pc_var_type[pc_loc] = pc_parm_type;
         	if (pc_parm_type == var_pc_seta_sdt_type){
@@ -8840,7 +8893,8 @@ public  class  mz390 {
 	    	break;
 	    case 25: // gen pc_op_inc (see opt_pc)
 	    case 26: // gen pc_op_dec (see opt_pc)
-			get_pc(op);
+	       	tracem_pc_op = true; // rpi 930
+	    	get_pc(op);
 			break;
 	    case 27: // gen pc_op_pushd push scalar dynamic var using name on stack
 	    case 28: // gen pc_op_pushds push suscripted dynamic var using name and subscript on stack
@@ -8849,7 +8903,8 @@ public  class  mz390 {
 			break;
 	    case 29: // gen pc_op_stord  store scalar dynamic var using name on stack
 	    case 30: // gen pc_op_stords store subscripted dynamic var using name and subscript on stack
-			get_pc(op);
+	    	tracem_pc_op = true; // RPI 930
+	    	get_pc(op);
 			pc_setc[pc_loc] = store_name;
 			break;
 	    case 31: // gen pc_op_pfx_a A' lookahead defined symbol 
@@ -8868,6 +8923,7 @@ public  class  mz390 {
 			pc_setc[pc_loc] = setc_value;
 			break;
 		case 41: // gen gen pc_op_storei inc store index by seta
+			tracem_pc_op = true; // RPI 930
 			get_pc(op);
 			pc_seta[pc_loc] = seta_value;
 			pc_setc[pc_loc] = setc_value;
@@ -8920,7 +8976,8 @@ public  class  mz390 {
 		default:
 			abort_pc("invalid pc op - " + pc_op[pc_loc]);
 		}
-		if (tz390.opt_tracep){
+		if (tz390.opt_tracep
+			|| (tz390.opt_tracem && tracem_pc_op)){ // RPI 930
 			trace_pc();
 		}
     }
@@ -8955,6 +9012,7 @@ public  class  mz390 {
 	        	&& pc_req_opt[pc_loc]){
 	        	opt_pcl();
 	        }
+	        tracem_pc_op = false; // RPI 930
 			switch (pc_op[pc_loc]){
 			case 1: // exec pc_op_ago - branch to new mac line
 				ago_gbla_index = pc_seta[pc_loc];
@@ -9037,56 +9095,70 @@ public  class  mz390 {
                 put_setc_stack_var();
 				break;
 			case  8: // exec pc_op_storv - store scalar set
+				tracem_pc_op = true; // RPI 930
 				exec_pc_store(pc_op_storv);
 				break;
 			case  9:  // exec pc_op_storvs - store stack at set and incr set
-		    	exec_pc_store(pc_op_storvs);  	
+				tracem_pc_op = true; // RPI 930
+				exec_pc_store(pc_op_storvs);  	
 		    	break;
 			case 10: // exec pc_op_storvn store next var(sub+1)
-		    	exec_pc_store(pc_op_storvn);
+				tracem_pc_op = true; // RPI 930
+				exec_pc_store(pc_op_storvn);
 		    	break;
 			case 11: // exec pc_op_add
-                pc_parm_type = pc_var_type[pc_loc];
+				tracem_pc_op = true; // RPI 930
+				pc_parm_type = pc_var_type[pc_loc];
 				exec_pc_add();
                 break;
 			case 12: // exec pc_op_sub
+				tracem_pc_op = true; // RPI 930
 				pc_parm_type = pc_var_type[pc_loc];
 				exec_pc_sub();
 				break;
 			case 13: // exec pc_op_mpy
+				tracem_pc_op = true; // RPI 930
 				pc_parm_type = pc_var_type[pc_loc];
 				exec_pc_mpy();
 				break;
 			case 14: // exec pc_op_div
+				tracem_pc_op = true; // RPI 930
 				pc_parm_type = pc_var_type[pc_loc];
 				exec_pc_div();
 				break;
 			case 15: // exec pc_op_compeq
+				tracem_pc_op = true; // RPI 930
 				pc_parm_type = pc_var_type[pc_loc];
 				exec_pc_compeq();
 				break;
 			case 16: // exec pc_op_compge
+				tracem_pc_op = true; // RPI 930
 				pc_parm_type = pc_var_type[pc_loc];
 				exec_pc_compge();
 				break;
 			case 17: // exec pc_op_compgt
+				tracem_pc_op = true; // RPI 930
 				pc_parm_type = pc_var_type[pc_loc];
 				exec_pc_compgt();
 				break;
 			case 18: // exec pc_op_comple
+				tracem_pc_op = true; // RPI 930
 				pc_parm_type = pc_var_type[pc_loc];
 				exec_pc_comple();
 				break;
 			case 19: // exec pc_op_complt
+				tracem_pc_op = true; // RPI 930
 				pc_parm_type = pc_var_type[pc_loc];
 				exec_pc_complt();
 				break;
 			case 20: // exec pc_op_compne
+				tracem_pc_op = true; // RPI 930
 				pc_parm_type = pc_var_type[pc_loc];
 				exec_pc_compne();
 				break;	
 			case 21: // exec pc_op_ucomp  compliment value on stack
-			    exec_pc_ucomp();
+				tracem_pc_op = true; // RPI 930
+				exec_pc_ucomp();
 			    break;
 			case 22: // exec pc_op_dup    duplicate string
 			    exec_pc_dup();
@@ -9098,9 +9170,11 @@ public  class  mz390 {
 				exec_pc_substr();
 				break;
 			case 25: // exec pc_op_inc
+				tracem_pc_op = true; // rpi 930
 				exec_pc_store(pc_op_inc);
 				break;
 			case 26: // exec pc_op_dec
+				tracem_pc_op = true; // rpi 930
 				exec_pc_store(pc_op_dec);
 				break;
 		    case 27: // exec pc_op_pushd push scalar dynamic var using name on stack
@@ -9125,11 +9199,13 @@ public  class  mz390 {
 				}
 				break;
 		    case 29: // exec pc_op_stord  store scalar dynamic var using name on stack
+		    	tracem_pc_op = true; // RPI 930
 		    	get_pc_created_var(-2);
 		    	exec_pc_store(pc_op_stord);
 		    	tot_exp_stk_var--; // remove created name
 				break;
 		    case 30: // exec pc_op_stords store subscripted dynamic var using name and subscript on stack
+		    	tracem_pc_op = true; // RPI 930
 		    	get_pc_created_var(-3);
 		    	exec_pc_store(pc_op_stords);
 		    	tot_exp_stk_var--; // remove created name
@@ -9301,7 +9377,8 @@ public  class  mz390 {
 				abort_pc("invalid pc op=" + pc_op[pc_loc]);
 			    return;
 			}
-			if (tz390.opt_tracep){ // RPI 899
+			if (tz390.opt_tracep
+				|| (tz390.opt_tracem && tracem_pc_op)){ // RPI 899 RPI 930
 				trace_pc();
 			}
 			if (mac_branch && tz390.opt_tracem){ // RPI 899
@@ -9424,7 +9501,11 @@ public  class  mz390 {
     	case  1: // trace pc_op_ago
     		if (seta_value > 0 && seta_value <= gbl_seta[ago_gbla_index+1]){
     			ago_gblc_index = gbl_seta[ago_gbla_index];
-    			text = "(" + seta_value + ")=" + gbl_setc[ago_gblc_index + ago_index -1] + " BRANCH";
+    			if (ago_gblc_index >= 0){  // RPI 930 required due to SYSTRACE
+    			    text = "(" + seta_value + ")=" + gbl_setc[ago_gblc_index + ago_index -1] + " BRANCH";
+    			} else {
+    				text = "(" + seta_value + ") BRANCH";
+    			}
     		} else { // RPI 803
     			text = "(" + seta_value + ")= NO BRANCH";
     		}

@@ -1,4 +1,4 @@
-z390 v1.4.03b PTF 09/28/08
+z390 v1.4.03c PTF 10/27/08
 Copyright 2008 Automated Software Tools Corporation
 
 To install this cumulative PTF, perform the following steps:

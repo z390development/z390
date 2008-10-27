@@ -10,14 +10,14 @@ REM * 01/22/08 RPI 716 MOVE ALL RT SAVE DIRECTORIES AND BAT FILES TO RT
 REM ******************************************************************
 erase rt\all\*.* /q 
 call rt\DIRCLEAN
-call rt\RTLINK1   %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RTAST1    %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RTDEMO1   %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RTMFACC1  %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RTMVS1    %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RTVSAM1   %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RTVSE1    %1 %2 %3 %4 %5 %6 %7 %8 %9
-call rt\RTTEST1   %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTLINK1   systerm(linklib\rtlink) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTAST1    systerm(assist\rtast) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTDEMO1   systerm(demo\rtdemo) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTMFACC1  systerm(mfacc\rtmfacc) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTMVS1    systerm(mvs\test\rtmvs) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTVSAM1   systerm(vsam\test\rtvsam) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTVSE1    systerm(vse\test\rtvse) %1 %2 %3 %4 %5 %6 %7 %8 %9
+call rt\RTTEST1   systerm(rt\test\rttest) %1 %2 %3 %4 %5 %6 %7 %8 %9
 copy rt\linklib\dif\*.*         rt\all
 copy rt\assist\dif\*.*          rt\all
 copy rt\demo\dif\*.*            rt\all

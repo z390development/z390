@@ -1,0 +1,36 @@
+*********************************************************************
+* Copyright 2008 Automated Software Tools Corporation               *
+* This source code is part of z390 assembler/emulator package       *
+* The z390 package is distributed under GNU general public license  *
+* Author - Don Higgins                                              *
+*********************************************************************
+* 09/17/08 RPI 911 CHANGE ASELECT TO ACASE AND APM TO ACALL
+* 09/23/08 RPI 911 new regression test for SPM's                    
+*********************************************************************
+         TITLE 'TESTSPE3 - TEST STRUCTURED PROGRAMMING EXTENSIONS'
+* TEST ZSTRMAC2 ACASE EXTENSIONS FOR V1,V2,(V3,V4) V=N,C'?',X'??'
+         :&I   SETA 0
+         AWHILE (&I LE 255)
+                 ACASE (&I)
+                 AWHEN 0
+                        MNOTE 'AWHEN I=0'
+                 AWHEN 1
+                        MNOTE 'AWHEN I=1'
+                 AWHEN 3,(5,7),9
+                        MNOTE 'AWHEN I=&I (3,(5,7),9'
+                 AWHEN C'A'
+                        MNOTE 'AWHEN I=&I EBCIDC CHAR A'
+                 AWHEN C'1',(C'2',C'4'),C'5'
+                        MNOTE 'AWHEN I=&I EBCIDC CHAR 1,(2,4),5'
+                 AWHEN X'FA',(X'FB',X'FD'),X'FE'
+                        MNOTE 'AWHEN I=&I EBCIDC HEX FA,(FB,FD),FE'
+                 AWHEN X'FF'
+                        MNOTE 'AWHEN I=&I EBCIDC HEX FF'
+                 AEND
+                 :&I SETA &I+1
+         AEND         
+TESTSPE3 CSECT
+         SR    15,15
+         BR    14
+         END         
+
